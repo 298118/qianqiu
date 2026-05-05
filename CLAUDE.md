@@ -2,12 +2,13 @@
 
 This repository contains **Qianqiu / 千秋**, an AI-driven Chinese historical simulation text game.
 
-Before implementing anything, read [docs/SHARED_CONTEXT.md](docs/SHARED_CONTEXT.md) and [docs/QIANQIU_DEVELOPMENT_BRIEF.md](docs/QIANQIU_DEVELOPMENT_BRIEF.md). Treat the shared context as the handoff board between Codex and Claude Code, and the development brief as the canonical project brief for architecture, scope, gameplay, AI contracts, and development discipline.
+Before implementing anything, read [docs/SHARED_CONTEXT.md](docs/SHARED_CONTEXT.md), [docs/QIANQIU_DEVELOPMENT_BRIEF.md](docs/QIANQIU_DEVELOPMENT_BRIEF.md), and [docs/DEVELOPMENT_STEPS.md](docs/DEVELOPMENT_STEPS.md). Treat the shared context as the handoff board between Codex and Claude Code, the development brief as the canonical project brief, and the development steps file as the shared progress ledger.
 
 ## Required Habits
 
 - Maintain project context continuously. Any important decision, changed assumption, new route, new state field, prompt change, or setup requirement must be written back into the repository.
 - Keep Claude Code and Codex synchronized. Before finishing every coherent change, update [docs/SHARED_CONTEXT.md](docs/SHARED_CONTEXT.md) with the current state, important decisions, verification, and next recommended step.
+- Update [docs/DEVELOPMENT_STEPS.md](docs/DEVELOPMENT_STEPS.md) whenever a roadmap step starts, completes, blocks, or changes scope. Record the step ID, what changed, verification, and commit hash.
 - Save each coherent change in local Git. Check status first, make the change, verify it, then commit it with a descriptive message.
 - Keep the project immediately runnable with:
 

@@ -429,20 +429,23 @@ Mock 分数可结合：
 
 1. 先读 `AGENTS.md` 或 `CLAUDE.md`，再读本文件。
 2. 读取 `docs/SHARED_CONTEXT.md`，确认 Codex 与 Claude Code 共享的最新上下文。
-3. 执行 `git status --short`，确认当前工作树。
-4. 判断是否有别人未提交或未说明的改动，不要覆盖。
-5. 将本次任务涉及的设计变更写回文档或 README。
-6. 每次 coherent change 结束前更新 `docs/SHARED_CONTEXT.md`，写清当前状态、关键决策、验证结果和下一步建议，确保 Codex 与 Claude Code 都能看见。
-7. 保持 Mock 模式可运行。
-8. 完成后至少运行与本次改动相关的验证命令。
-9. 再次执行 `git status --short`。
-10. 用 Git 提交本次 coherent change。
-11. 在最终回复中说明改了什么、验证了什么、提交哈希是什么。
+3. 读取 `docs/DEVELOPMENT_STEPS.md`，确认当前应执行的小步骤和历史进度。
+4. 执行 `git status --short`，确认当前工作树。
+5. 判断是否有别人未提交或未说明的改动，不要覆盖。
+6. 将本次任务涉及的设计变更写回文档或 README。
+7. 每次 coherent change 结束前更新 `docs/SHARED_CONTEXT.md`，写清当前状态、关键决策、验证结果和下一步建议，确保 Codex 与 Claude Code 都能看见。
+8. 每次开始、完成、阻塞或调整开发步骤时更新 `docs/DEVELOPMENT_STEPS.md`，写明步骤 ID、完成内容、验证结果和提交哈希。
+9. 保持 Mock 模式可运行。
+10. 完成后至少运行与本次改动相关的验证命令。
+11. 再次执行 `git status --short`。
+12. 用 Git 提交本次 coherent change。
+13. 在最终回复中说明改了什么、验证了什么、提交哈希是什么。
 
 不要做：
 
 - 不要把关键决策只留在聊天记录里。
 - 不要只更新 `AGENTS.md` 或只更新 `CLAUDE.md`，跨工具上下文必须进入 `docs/SHARED_CONTEXT.md`。
+- 不要完成路线图中的步骤却不更新 `docs/DEVELOPMENT_STEPS.md`。
 - 不要让真实 API Key 成为本地启动的必要条件。
 - 不要让 AI 原始输出直接改写完整世界状态。
 - 不要绕过服务器的科举晋级和作弊规则。
