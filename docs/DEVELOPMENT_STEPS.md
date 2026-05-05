@@ -46,7 +46,7 @@
 | ID | 状态 | 目标 | 完成日期 | 工具 | 提交 |
 | --- | --- | --- | --- | --- | --- |
 | S20.1 | DONE | 归档第一阶段路线图，开启第二阶段活动规划，保持开发规范不变 | 2026-05-05 | Codex | 本次文档提交 |
-| S21.1 | TODO | 定义第二阶段世界 tick 状态契约：时间推进、资源变动、事件队列、可见反馈 |
+| S21.1 | DONE | 定义第二阶段世界 tick 状态契约：时间推进、资源变动、事件队列、可见反馈 | 2026-05-05 | Codex | 本次 S21.1 提交 |
 | S21.2 | TODO | 实现服务器拥有的 `worldTick` 模块，按回合或月份推进财政、粮储、民心、边患、腐败 |
 | S21.3 | TODO | 将世界 tick 接入 `/api/game/turn`，确保玩家行动与自然世界变化共同进入事件历史 |
 | S21.4 | TODO | 为世界 tick 增加自动化测试，覆盖数值边界、事件裁剪和 Mock 稳定性 |
@@ -149,6 +149,28 @@
 ```
 
 ### 2026-05-05
+
+工具：Codex
+
+步骤：S21.1
+
+提交：本次 S21.1 提交
+
+完成：
+- 新增 `docs/WORLD_TICK_CONTRACT.md`，定义第二阶段最小世界 tick 契约：服务器拥有、每个有效自由行动推进一个月、月份跨年规则、自然资源变动范围、事件反馈形态和验收标准。
+- 更新 `docs/ARCHITECTURE.md`，记录 S21.2-S21.4 接入时必须保持的服务器边界、单次 `turnCount` 增量、白名单/clamp 复用和完整书生主线保护。
+- 更新 `docs/QIANQIU_DEVELOPMENT_BRIEF.md`，把 S21.1 契约写入长期产品/架构说明，明确下一步实现 `src/game/worldTick.js`。
+
+验证：
+- `npm test` 通过，18 项测试全部通过。
+- `git diff --check` 通过。
+
+风险/遗留：
+- 本次只完成契约定义，尚未新增 `worldState.month` 或 `src/game/worldTick.js`。
+- `/api/game/turn` 还未显示世界 tick 反馈，需在 S21.3 接入。
+
+下一步：
+- S21.2：实现纯服务器模块 `src/game/worldTick.js`，返回 `{ statePatch, attributeChanges, events, summary }`，并准备 S21.3 路由接入。
 
 工具：Codex
 

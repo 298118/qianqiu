@@ -196,6 +196,21 @@ Allowed roles currently include `scholar`, `emperor`, `minister`, `general`, `ma
 
 Do not bypass this module when applying provider output.
 
+## Phase-Two World Tick Contract
+
+S21.1 defines the next server-owned simulation boundary in [docs/WORLD_TICK_CONTRACT.md](WORLD_TICK_CONTRACT.md). The implementation is not wired into routes yet.
+
+The contract for S21.2-S21.4 is:
+
+- Add `worldState.month` as a top-level calendar field, defaulting to `1`.
+- Run one minimal tick after each successful `POST /api/game/turn` action.
+- Advance one in-game month per valid free-text turn; roll month 12 to 1 and increment `year`.
+- Let the server, not the provider, compute natural changes to treasury, grain reserve, population, public order, corruption, army morale, border threat, and existing numeric faction keys.
+- Keep `turnCount` to one increment per player turn even when provider output and tick output both change state.
+- Apply tick changes through the same whitelist/clamp boundary used for provider patches.
+- Return short visible tick feedback and append tick events after provider events.
+- Do not touch exam rank, active exam, exam history, role promotion, session identity, or the complete scholar -> official path.
+
 ## Exam Rules
 
 The exam path is:

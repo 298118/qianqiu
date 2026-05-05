@@ -572,3 +572,19 @@ Phase-one documentation is now split by purpose:
 - `docs/PHASE_ONE_ACCEPTANCE.md` records the first automated Mock-mode phase-one acceptance pass.
 
 The 2026-05-05 S14 acceptance pass verified `npm install`, `npm test`, static asset loading, health, the complete scholar -> official path, saved exam history, short/modern/copy exam integrity penalties, and emperor/minister/official role-loop smoke checks. It did not call real providers because no API keys are present, and it did not run screenshot/browser automation because Playwright is unavailable in this workspace.
+
+## S21.1 World Tick Contract Note (2026-05-05)
+
+Phase two starts with a server-owned world tick contract, recorded in `docs/WORLD_TICK_CONTRACT.md`.
+
+The minimal contract is:
+
+- Add a top-level `worldState.month` field in the implementation slice, defaulting to `1`.
+- Advance one in-game month after each successful free-text turn; roll month 12 to 1 and increment `year`.
+- Keep `turnCount` to one increment per player turn, even when provider changes and tick changes both apply.
+- Let the server compute natural changes to treasury, grain reserve, population, public order, corruption, army morale, border threat, and existing numeric faction keys.
+- Apply tick output through the same state whitelist and numeric clamp boundary as provider patches.
+- Append short visible tick events after provider events, capped by the existing event-history limit.
+- Do not let the tick alter exam rank, active exams, promotion fields, session identity, or the complete scholar -> official path.
+
+S21.2 should implement `src/game/worldTick.js` as a pure module that returns `{ statePatch, attributeChanges, events, summary }`. S21.3 should wire that result into `/api/game/turn`, and S21.4 should add automated coverage for month/year rollover, clamps, event trimming, Mock-mode stability, and the full scholar path.

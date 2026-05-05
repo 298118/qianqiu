@@ -6,7 +6,7 @@ Both tools must read this file at the start of every development session, after 
 
 ## Current Snapshot
 
-- Repository status: phase-one playable vertical slice is implemented, accepted, and now archived as historical planning. Phase two is the active planning track and focuses on deeper world simulation, NPC/faction memory, richer role loops, stronger provider validation, and browser-level acceptance while preserving the existing development workflow.
+- Repository status: phase-one playable vertical slice is implemented, accepted, and now archived as historical planning. Phase two has started with the S21.1 server-owned world tick contract, and the next active implementation target is S21.2.
 - Canonical product brief: `docs/QIANQIU_DEVELOPMENT_BRIEF.md`.
 - Shared implementation roadmap and progress ledger: `docs/DEVELOPMENT_STEPS.md`.
 - Developer implementation map: `docs/ARCHITECTURE.md`.
@@ -61,6 +61,10 @@ Both tools must read this file at the start of every development session, after 
 - `docs/PHASE_ONE_ACCEPTANCE.md` records the first automated Mock-mode phase-one acceptance pass and known limitations.
 - Faction state patches now merge only existing numeric faction keys instead of replacing the full factions object, so provider output cannot introduce arbitrary faction names through `statePatch.factions`.
 - `src/utils/sse.js` owns SSE headers, event formatting, and narrative chunking for the turn route.
+- S21.1 world tick contract lives in `docs/WORLD_TICK_CONTRACT.md`.
+- Minimal world tick implementation should add `worldState.month`, advance one in-game month per successful `POST /api/game/turn`, roll month 12 to 1 with `year +1`, and keep `turnCount` to exactly one increment per player turn.
+- World tick output remains server-owned and must flow through the same whitelist/clamp boundaries as provider patches. It may naturally adjust `year`, `month`, treasury, grain reserve, population, public order, corruption, army morale, border threat, and existing numeric faction keys, but it must not alter exam rank, active exams, promotion fields, session identity, or the complete scholar -> official path.
+- S21.2 should implement `src/game/worldTick.js` as a pure module returning `{ statePatch, attributeChanges, events, summary }`; S21.3 should wire it into `/api/game/turn`; S21.4 should add rollover, clamp, event trimming, Mock stability, and full scholar-path tests.
 - Tooling note: if `rg` resolves to the packaged Codex app path under `C:\Program Files\WindowsApps\OpenAI.Codex_...\app\resources`, Windows may deny execution. This workspace now shadows it with a working ripgrep 15.1.0 binary at `C:\Users\ZZZ\AppData\Local\OpenAI\Codex\bin\rg.exe`, which appears earlier on PATH.
 - Any behavior/API/setup/architecture decision that affects future work must be recorded in this file or in the canonical development brief.
 - Any roadmap step that starts, completes, blocks, or changes scope must be recorded in `docs/DEVELOPMENT_STEPS.md`.
@@ -111,7 +115,8 @@ Before finishing each coherent change:
 - 2026-05-05: S04.4 SSE turn streaming code committed as `0fd8729`. Verified `node --check src/utils/sse.js`, `node --check src/routes/game.js`, `node --check public/app.js`, `node --check test/sse.test.js`, `git diff --check`, `npm test` with 18 passing tests, and a temporary Mock server on port 3226 confirming `POST /api/game/turn` returns SSE events with `Accept: text/event-stream` while preserving JSON fallback without the SSE accept header.
 - 2026-05-05: Local `rg` execution was repaired by creating `C:\Users\ZZZ\AppData\Local\OpenAI\Codex\bin\rg.exe` from the working Codex local-cache ripgrep 15.1.0 binary. Verified `Get-Command rg`, `rg --version`, `rg --files`, and `rg "SSE" docs src public test`.
 - 2026-05-05: Phase-one roadmap archived and phase-two roadmap opened in documentation. Verified `npm test` with 18 passing tests and `git diff --check`.
+- 2026-05-05: S21.1 world tick contract documented in `docs/WORLD_TICK_CONTRACT.md`, `docs/ARCHITECTURE.md`, `docs/QIANQIU_DEVELOPMENT_BRIEF.md`, and `docs/DEVELOPMENT_STEPS.md`. Verified `npm test` with 18 passing tests and `git diff --check`.
 
 ## Next Recommended Step
 
-Phase one is archived and phase two is now the active roadmap. Recommended next step is S21.1: define the minimum server-owned world tick contract, including time progression, natural resource changes, event generation, visible feedback, and tests that prove the complete scholar path remains intact.
+Recommended next step is S21.2: implement `src/game/worldTick.js` as a pure server-owned module that adds `worldState.month`, computes monthly natural resource changes, returns visible tick events, and is ready for `/api/game/turn` integration.
