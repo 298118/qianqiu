@@ -267,9 +267,12 @@ SSE 事件：
 
 - `score`
 - `authenticityCheck`
+- `virtualCandidates`
 - `ranking`
 - `promotionResult`
 - `worldState`
+
+第一版实现中，`/api/exam/submit` 使用普通 JSON 返回；服务器会先做本地反作弊检查，再调用 provider 评分，并在服务端应用作弊扣分。文章、评分、复核结果、虚拟考生与榜单会保存到 `player.examHistory`，同时清空 `activeExam`。本步骤只返回 `promotionResult`，暂不直接修改 `player.examRank` 或 `player.role`；正式晋级与严重作弊黜落由后续 S09 统一处理。
 
 ## 7. AI JSON 合约
 

@@ -87,10 +87,10 @@
 | S07.1 | DONE | 定义科举阶段、门槛、题型、晋级映射 | 2026-05-05 | Codex | 47dae05 |
 | S07.2 | DONE | 实现 `POST /api/exam/question` 和 activeExam 保存 | 2026-05-05 | Codex | 47dae05 |
 | S07.3 | DONE | 实现考试弹窗：题目、要求、大文本编辑区 | 2026-05-05 | Codex | 47dae05 |
-| S08.1 | TODO | 实现 Mock 考官评分算法 |  |  |  |
-| S08.2 | TODO | 实现本地防作弊检测：现代词、过短、疑似照抄 |  |  |  |
-| S08.3 | TODO | 生成 4-8 名虚拟同场考生与合理分数 |  |  |  |
-| S08.4 | TODO | 实现放榜排名、详细评语、文章保存 |  |  |  |
+| S08.1 | DONE | 实现 Mock 考官评分算法 | 2026-05-05 | Codex | 9c8ca76 |
+| S08.2 | DONE | 实现本地防作弊检测：现代词、过短、疑似照抄 | 2026-05-05 | Codex | 9c8ca76 |
+| S08.3 | DONE | 生成 4-8 名虚拟同场考生与合理分数 | 2026-05-05 | Codex | 9c8ca76 |
+| S08.4 | DONE | 实现放榜排名、详细评语、文章保存 | 2026-05-05 | Codex | 9c8ca76 |
 | S09.1 | TODO | 童试通过后成为秀才 |  |  |  |
 | S09.2 | TODO | 乡试通过后成为举人 |  |  |  |
 | S09.3 | TODO | 会试通过后成为贡士 |  |  |  |
@@ -391,3 +391,32 @@ Verification:
 Risk/leftover: `/api/exam/submit`, Mock grading, anti-cheat checks, virtual candidate ranking, promotion application, and a working final submit action remain for S08-S09.
 
 Next step: Implement S08.1-S08.4 so essays can be graded, checked for cheating, ranked against virtual candidates, and saved.
+
+---
+
+Codex progress note, 2026-05-05:
+
+Steps: S08.1, S08.2, S08.3, S08.4
+
+Commit: 9c8ca76
+
+Completed:
+
+- Added Mock `gradeExamEssay` with five score dimensions driven by essay length, classical vocabulary, structure markers, player attributes, readiness, and exam difficulty.
+- Added server-owned `src/game/essayChecks.js` for short essay, modern/anachronistic term, copied classic passage, and ghostwriting checks; penalties are applied after provider grading.
+- Added `src/game/candidates.js` to generate 4-8 virtual same-field candidates and rank them with the player.
+- Added `POST /api/exam/submit`, saving essays/results into `player.examHistory`, clearing `activeExam`, and returning `score`, `authenticityCheck`, `virtualCandidates`, `ranking`, `promotionResult`, and `worldState`.
+- Updated the frontend exam modal so the submit button calls `/api/exam/submit` and displays score, detailed comments, monitoring flags, and the ranking list.
+
+Verification:
+
+- `node --check src/game/essayChecks.js`
+- `node --check src/game/candidates.js`
+- `node --check src/ai/providers/mock.js`
+- `node --check src/routes/exam.js`
+- `node --check public/app.js`
+- Temporary server on port 3137 confirmed health, `POST /api/exam/question`, normal `POST /api/exam/submit`, 4-8 ranking entries, `examHistory` persistence, `activeExam` clearing, and too-short plus modern-term penalty flags.
+
+Risk/leftover: S08 records pass/fail in `promotionResult` but does not yet mutate `player.examRank` or `player.role`; S09 must apply promotion and severe-cheating consequences server-side.
+
+Next step: Implement S09.1-S09.5 so passed exams update ranks through 秀才 -> 举人 -> 贡士 -> 进士/official, with severe cheating causing 黜落 or downgrade.

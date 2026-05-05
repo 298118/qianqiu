@@ -6,14 +6,14 @@ Both tools must read this file at the start of every development session, after 
 
 ## Current Snapshot
 
-- Repository status: first playable vertical slice is implemented. The app installs with npm, starts an Express server, serves a plain HTML/CSS/JS frontend, can create/read/Mock-play a scholar session with richer daily scholar actions, and can open a saved exam writing flow with generated questions.
+- Repository status: first playable vertical slice is implemented. The app installs with npm, starts an Express server, serves a plain HTML/CSS/JS frontend, can create/read/Mock-play a scholar session with richer daily scholar actions, can open a saved exam writing flow with generated questions, and can submit essays for Mock grading/ranking.
 - Canonical product brief: `docs/QIANQIU_DEVELOPMENT_BRIEF.md`.
 - Shared implementation roadmap and progress ledger: `docs/DEVELOPMENT_STEPS.md`.
 - Codex entrypoint: `AGENTS.md`.
 - Claude Code entrypoint: `CLAUDE.md`.
 - Default development target: runnable Node.js + Express + pure HTML/CSS/JS game at `http://localhost:3000`.
 - Default AI mode: `mock`, playable without API keys.
-- Implemented API surface: `GET /api/health`, `POST /api/game/start`, `GET /api/game/state/:sessionId`, `POST /api/game/turn`, `POST /api/exam/question`.
+- Implemented API surface: `GET /api/health`, `POST /api/game/start`, `GET /api/game/state/:sessionId`, `POST /api/game/turn`, `POST /api/exam/question`, `POST /api/exam/submit`.
 - Local session files are written under `data/sessions/*.json`, which remains ignored by Git.
 
 ## Active Decisions
@@ -35,6 +35,10 @@ Both tools must read this file at the start of every development session, after 
 - `src/game/exams.js` is the server-owned source of truth for exam levels, thresholds, word-count guidance, pass scores, and promotion mappings.
 - `POST /api/exam/question` generates and saves a full `activeExam`; it reuses an existing unanswered exam instead of regenerating a new question.
 - The frontend scholar panel can open the next exam directly, and a free-text exam trigger now auto-opens the exam writing modal after the turn response.
+- `src/game/essayChecks.js` performs server-side local exam authenticity checks: short essays, modern/anachronistic terms, copied classic passages, and ghostwriting probability. Server penalties are applied after provider grading.
+- `src/game/candidates.js` generates 4-8 virtual same-session exam candidates and builds the displayed ranking.
+- `POST /api/exam/submit` grades the active essay, applies local penalties, saves the essay/result into `player.examHistory`, clears `activeExam`, and returns `score`, `authenticityCheck`, `virtualCandidates`, `ranking`, `promotionResult`, and `worldState`.
+- S08 deliberately records `promotionResult.applied = false`; actual examRank/official promotion is reserved for S09 server-owned promotion rules.
 - Any behavior/API/setup/architecture decision that affects future work must be recorded in this file or in the canonical development brief.
 - Any roadmap step that starts, completes, blocks, or changes scope must be recorded in `docs/DEVELOPMENT_STEPS.md`.
 - If the change is a short handoff note, update this file.
@@ -74,9 +78,10 @@ Before finishing each coherent change:
 - 2026-05-05: S06.1-S06.3 code committed as `9aa5263`; `node --check` passed for `src/ai/providers/mock.js`, `public/app.js`, and `src/routes/game.js`.
 - 2026-05-05: Local server at `http://localhost:3000` verified homepage/app/style assets return 200. A six-turn API smoke test covered study, teacher visit, travel, debate, money/work, and exam request; it confirmed studied book, teacher, connections, `child_exam` trigger, saved `activeExam`, event history cap, and turn count.
 - 2026-05-05: S07.1-S07.3 code committed as `47dae05`. Verified with `node --check` for `server.js`, `src/game/exams.js`, `src/routes/exam.js`, `src/ai/providers/mock.js`, and `public/app.js`. Temporary local server checks confirmed `/`, `/app.js`, and `/styles.css` return 200. API smoke tests confirmed `POST /api/exam/question` works both directly and after a free-text exam trigger, saves `activeExam.examQuestion`, and reuses the same `examId` for an unanswered exam.
+- 2026-05-05: S08.1-S08.4 code committed as `9c8ca76`. Verified with `node --check` for `src/game/essayChecks.js`, `src/game/candidates.js`, `src/ai/providers/mock.js`, `src/routes/exam.js`, and `public/app.js`. Temporary server on port 3137 confirmed health, question generation, normal essay submission, 4-8 candidate ranking, `examHistory` persistence, `activeExam` clearing, and short/modern-term penalty flags.
 
 ## Next Recommended Step
 
 Implement the next gameplay slice:
 
-- S08.1-S08.4: Add Mock exam grading, local anti-cheat checks, virtual candidates, `/api/exam/submit`, and the ranking/results interface.
+- S09.1-S09.5: Apply server-owned promotion rules after exam results, including child/provincial/metropolitan/palace rank changes and severe cheating consequences.
