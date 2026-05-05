@@ -47,7 +47,7 @@
 | --- | --- | --- | --- | --- | --- |
 | S20.1 | DONE | 归档第一阶段路线图，开启第二阶段活动规划，保持开发规范不变 | 2026-05-05 | Codex | 本次文档提交 |
 | S21.1 | DONE | 定义第二阶段世界 tick 状态契约：时间推进、资源变动、事件队列、可见反馈 | 2026-05-05 | Codex | 本次 S21.1 提交 |
-| S21.2 | TODO | 实现服务器拥有的 `worldTick` 模块，按回合或月份推进财政、粮储、民心、边患、腐败 |
+| S21.2 | DONE | 实现服务器拥有的 `worldTick` 模块，按回合或月份推进财政、粮储、民心、边患、腐败 | 2026-05-05 | Codex | 本次 S21.2 提交 |
 | S21.3 | TODO | 将世界 tick 接入 `/api/game/turn`，确保玩家行动与自然世界变化共同进入事件历史 |
 | S21.4 | TODO | 为世界 tick 增加自动化测试，覆盖数值边界、事件裁剪和 Mock 稳定性 |
 | S22.1 | TODO | 扩展 NPC 与派系关系账本，记录人物立场、恩怨、人脉来源和近期意图 |
@@ -149,6 +149,38 @@
 ```
 
 ### 2026-05-05
+
+工具：Codex
+
+步骤：S21.2
+
+提交：本次 S21.2 提交
+
+完成：
+- 新增 `src/game/worldTick.js`，实现纯服务器 `runWorldTick(worldState)`，返回 `{ statePatch, attributeChanges, events, summary }`，并保持输入状态不被原地修改。
+- `worldTick` 现在会推进 `year/month`，处理 12 月跨年，按确定性公式推演府库、粮储、人口、民心、贪腐、军心、边患和既有核心派系的小幅漂移。
+- `createInitialState()` 新增 `worldState.month = 1`；`stateRules` 新增 `year/month` 白名单和数值裁剪，并支持 `applyStatePatch(..., { incrementTurnCount: false })`，为 S21.3 避免 tick 二次增加 `turnCount` 做准备。
+- provider turn schema/prompt 不再允许模型 patch `year/month`；模型只能读取压缩后的日历上下文，日历推进保留给服务器 tick。
+- 新增 `test/worldTick.test.js`，并扩展 `test/stateRules.test.js`，覆盖初始月份、跨年、不修改考试/晋级字段、数值裁剪、派系边界和无二次回合计数。
+
+验证：
+- `node --check src/game/worldTick.js`
+- `node --check src/game/stateRules.js`
+- `node --check src/game/initialState.js`
+- `node --check src/ai/prompts.js`
+- `node --check src/ai/schemas.js`
+- `node --check test/worldTick.test.js`
+- `node --check test/stateRules.test.js`
+- `node --check test/aiSchemas.test.js`
+- `npm test` 通过，23 项测试全部通过。
+- `git diff --check` 通过。
+
+风险/遗留：
+- `worldTick` 仍未接入 `/api/game/turn`，玩家暂时还看不到月度反馈。
+- tick 公式目前是首版确定性模型，只覆盖全局资源和核心派系；后续 NPC/地方官/将领深度仍在 S22/S23。
+
+下一步：
+- S21.3：在 `/api/game/turn` 中先应用 provider patch，再运行 `runWorldTick()`，用 `{ incrementTurnCount: false }` 应用 tick patch，并按 provider events -> tick events 的顺序写入事件历史和响应。
 
 工具：Codex
 

@@ -72,6 +72,25 @@ test("turn schema rejects model attempts to patch non-whitelisted player fields"
   assert.throws(() => validatePayload("turn", payload), /schema validation/);
 });
 
+test("turn schema rejects model attempts to patch server-owned calendar fields", () => {
+  const payload = {
+    narrative: "A turn happened.",
+    statePatch: {
+      year: 1645,
+      month: 2
+    },
+    attributeChanges: [],
+    events: [],
+    examTrigger: {
+      shouldStart: false,
+      level: null,
+      reason: ""
+    }
+  };
+
+  assert.throws(() => validatePayload("turn", payload), /schema validation/);
+});
+
 test("exam question and grade schemas accept valid provider payloads", () => {
   const question = {
     level: "child_exam",

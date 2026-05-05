@@ -39,6 +39,21 @@ test("applyStatePatch applies only whitelisted fields and clamps numeric ranges"
   assert.equal(worldState.turnCount, 1);
 });
 
+test("applyStatePatch can apply server follow-up patches without incrementing turn count", () => {
+  const worldState = createInitialState({ playerName: "Tester" });
+
+  applyStatePatch(worldState, {
+    year: -50,
+    month: 99,
+    publicOrder: 80
+  }, { incrementTurnCount: false });
+
+  assert.equal(worldState.year, 1);
+  assert.equal(worldState.month, 12);
+  assert.equal(worldState.publicOrder, 80);
+  assert.equal(worldState.turnCount, 0);
+});
+
 test("appendEvents ignores empty values and trims history to the most recent entries", () => {
   const worldState = createInitialState({ playerName: "Tester" });
   const events = Array.from({ length: MAX_EVENT_HISTORY + 5 }, (_, index) => `event-${index}`);

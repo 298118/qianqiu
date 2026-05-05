@@ -49,7 +49,6 @@ const statePatchSchema = {
   type: "object",
   additionalProperties: false,
   properties: {
-    year: { type: "number" },
     treasury: { type: "number" },
     grainReserve: { type: "number" },
     population: { type: "number" },

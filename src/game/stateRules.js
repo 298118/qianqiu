@@ -1,6 +1,8 @@
 const MAX_EVENT_HISTORY = 20;
 
 const NUMERIC_RANGES = {
+  "year": [1, 9999],
+  "month": [1, 12],
   "health": [0, 100],
   "gold": [0, 100000],
   "academia": [0, 100],
@@ -35,7 +37,7 @@ const ALLOWED_PLAYER_PATCH_KEYS = new Set([
 const ALLOWED_TOP_LEVEL_PATCH_KEYS = new Set([
   "treasury", "grainReserve", "population", "publicOrder",
   "taxRate", "corruption", "armySize", "armyMorale", "borderThreat",
-  "factions", "characters", "eventHistory", "activeExam", "year"
+  "factions", "characters", "eventHistory", "activeExam", "year", "month"
 ]);
 
 function clamp(value, min, max) {
@@ -54,10 +56,12 @@ function isPlainObject(value) {
   return value !== null && typeof value === "object" && !Array.isArray(value);
 }
 
-function applyStatePatch(worldState, statePatch) {
+function applyStatePatch(worldState, statePatch, options = {}) {
   if (!isPlainObject(statePatch)) {
     return worldState;
   }
+
+  const { incrementTurnCount = true } = options;
 
   // Apply top-level patches. Factions are merged below so unknown faction keys cannot replace the object.
   for (const key of ALLOWED_TOP_LEVEL_PATCH_KEYS) {
@@ -100,8 +104,10 @@ function applyStatePatch(worldState, statePatch) {
     }
   }
 
-  // Increment turn count
-  worldState.turnCount = (worldState.turnCount || 0) + 1;
+  // Player turns increment once; server-owned follow-up patches can opt out.
+  if (incrementTurnCount) {
+    worldState.turnCount = (worldState.turnCount || 0) + 1;
+  }
 
   return worldState;
 }

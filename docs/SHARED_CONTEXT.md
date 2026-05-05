@@ -6,7 +6,7 @@ Both tools must read this file at the start of every development session, after 
 
 ## Current Snapshot
 
-- Repository status: phase-one playable vertical slice is implemented, accepted, and now archived as historical planning. Phase two has started with the S21.1 server-owned world tick contract, and the next active implementation target is S21.2.
+- Repository status: phase-one playable vertical slice is implemented, accepted, and now archived as historical planning. Phase two has started; S21.2 has implemented the pure server-owned world tick module, and the next active implementation target is S21.3 route integration.
 - Canonical product brief: `docs/QIANQIU_DEVELOPMENT_BRIEF.md`.
 - Shared implementation roadmap and progress ledger: `docs/DEVELOPMENT_STEPS.md`.
 - Developer implementation map: `docs/ARCHITECTURE.md`.
@@ -64,7 +64,9 @@ Both tools must read this file at the start of every development session, after 
 - S21.1 world tick contract lives in `docs/WORLD_TICK_CONTRACT.md`.
 - Minimal world tick implementation should add `worldState.month`, advance one in-game month per successful `POST /api/game/turn`, roll month 12 to 1 with `year +1`, and keep `turnCount` to exactly one increment per player turn.
 - World tick output remains server-owned and must flow through the same whitelist/clamp boundaries as provider patches. It may naturally adjust `year`, `month`, treasury, grain reserve, population, public order, corruption, army morale, border threat, and existing numeric faction keys, but it must not alter exam rank, active exams, promotion fields, session identity, or the complete scholar -> official path.
-- S21.2 should implement `src/game/worldTick.js` as a pure module returning `{ statePatch, attributeChanges, events, summary }`; S21.3 should wire it into `/api/game/turn`; S21.4 should add rollover, clamp, event trimming, Mock stability, and full scholar-path tests.
+- S21.2 implemented `src/game/worldTick.js` as a pure module returning `{ statePatch, attributeChanges, events, summary }`. It advances `year/month`, computes deterministic monthly resource drift, emits concise world events, and does not mutate the input state or touch player promotion/exam fields.
+- `worldState.month` now defaults to `1`, and `src/game/stateRules.js` whitelists/clamps `year` and `month`. `applyStatePatch(worldState, patch, { incrementTurnCount: false })` is available for S21.3 so a provider patch and a tick patch can share one player turn without double-counting `turnCount`.
+- Provider turn schemas/prompts no longer expose `year` as a model patch key and still reject `month`; models can read compact calendar context, but calendar changes are reserved for server-owned tick patches.
 - Tooling note: if `rg` resolves to the packaged Codex app path under `C:\Program Files\WindowsApps\OpenAI.Codex_...\app\resources`, Windows may deny execution. This workspace now shadows it with a working ripgrep 15.1.0 binary at `C:\Users\ZZZ\AppData\Local\OpenAI\Codex\bin\rg.exe`, which appears earlier on PATH.
 - Any behavior/API/setup/architecture decision that affects future work must be recorded in this file or in the canonical development brief.
 - Any roadmap step that starts, completes, blocks, or changes scope must be recorded in `docs/DEVELOPMENT_STEPS.md`.
@@ -116,7 +118,8 @@ Before finishing each coherent change:
 - 2026-05-05: Local `rg` execution was repaired by creating `C:\Users\ZZZ\AppData\Local\OpenAI\Codex\bin\rg.exe` from the working Codex local-cache ripgrep 15.1.0 binary. Verified `Get-Command rg`, `rg --version`, `rg --files`, and `rg "SSE" docs src public test`.
 - 2026-05-05: Phase-one roadmap archived and phase-two roadmap opened in documentation. Verified `npm test` with 18 passing tests and `git diff --check`.
 - 2026-05-05: S21.1 world tick contract documented in `docs/WORLD_TICK_CONTRACT.md`, `docs/ARCHITECTURE.md`, `docs/QIANQIU_DEVELOPMENT_BRIEF.md`, and `docs/DEVELOPMENT_STEPS.md`. Verified `npm test` with 18 passing tests and `git diff --check`.
+- 2026-05-05: S21.2 world tick module implemented in `src/game/worldTick.js`, with `worldState.month` defaulting to `1`, `year/month` patch whitelist and clamps, provider calendar patch rejection, and a no-double-turn-count patch option for future route integration. Verified `node --check` for changed runtime/test files, `npm test` with 23 passing tests, and `git diff --check`.
 
 ## Next Recommended Step
 
-Recommended next step is S21.2: implement `src/game/worldTick.js` as a pure server-owned module that adds `worldState.month`, computes monthly natural resource changes, returns visible tick events, and is ready for `/api/game/turn` integration.
+Recommended next step is S21.3: wire `runWorldTick()` into `POST /api/game/turn` after provider patches apply, append provider events before tick events, include tick feedback in JSON/SSE payloads, and use `{ incrementTurnCount: false }` for the tick patch.

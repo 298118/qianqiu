@@ -588,3 +588,16 @@ The minimal contract is:
 - Do not let the tick alter exam rank, active exams, promotion fields, session identity, or the complete scholar -> official path.
 
 S21.2 should implement `src/game/worldTick.js` as a pure module that returns `{ statePatch, attributeChanges, events, summary }`. S21.3 should wire that result into `/api/game/turn`, and S21.4 should add automated coverage for month/year rollover, clamps, event trimming, Mock-mode stability, and the full scholar path.
+
+## S21.2 World Tick Module Note (2026-05-05)
+
+`src/game/worldTick.js` now implements the minimal server-owned monthly tick as a pure module:
+
+- `worldState.month` defaults to `1`.
+- `runWorldTick(worldState)` returns `{ statePatch, attributeChanges, events, summary }` and does not mutate the input state.
+- The tick advances one month, rolls month 12 to month 1 with `year + 1`, and computes deterministic natural changes for treasury, grain reserve, population, public order, corruption, army morale, border threat, and known numeric faction keys.
+- Tick patches intentionally avoid player exam rank, active exams, exam history, promotion fields, session identity, role changes, scholar attributes, gold, and health.
+- `src/game/stateRules.js` now whitelists/clamps `year` and `month`, and `applyStatePatch()` accepts `{ incrementTurnCount: false }` for server-owned follow-up patches so S21.3 can integrate the tick without double-counting `turnCount`.
+- Provider turn schemas and prompts do not allow models to patch `year` or `month`; models may read the compact calendar context, but calendar movement is reserved for server-owned code.
+
+The tick is not yet connected to `/api/game/turn`; S21.3 should apply it after provider output, append provider events first and tick events second, and return concise tick feedback through both JSON and SSE responses.

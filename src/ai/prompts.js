@@ -1,5 +1,4 @@
 const TURN_ALLOWED_PATCH_KEYS = [
-  "year",
   "treasury",
   "grainReserve",
   "population",
@@ -77,6 +76,7 @@ function compactExam(activeExam) {
 function compactWorldState(worldState = {}) {
   return {
     year: worldState.year,
+    month: worldState.month,
     dynasty: worldState.dynasty,
     turnCount: worldState.turnCount,
     treasury: worldState.treasury,

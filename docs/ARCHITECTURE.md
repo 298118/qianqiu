@@ -175,7 +175,7 @@ Real provider adapters parse model text through `src/utils/json.js`, validate wi
 
 `createInitialState()` in `src/game/initialState.js` returns a `worldState` with:
 
-- Global fields: `sessionId`, `year`, `dynasty`, `turnCount`, `treasury`, `grainReserve`, `population`, `publicOrder`, `taxRate`, `corruption`, `armySize`, `armyMorale`, `borderThreat`.
+- Global fields: `sessionId`, `year`, `month`, `dynasty`, `turnCount`, `treasury`, `grainReserve`, `population`, `publicOrder`, `taxRate`, `corruption`, `armySize`, `armyMorale`, `borderThreat`.
 - Factions: `factions.eunuchs`, `factions.scholarOfficials`, `factions.militaryLords`.
 - Narrative and exam fields: `characters`, `eventHistory`, `activeExam`, `setup`.
 - Player identity: `player.role`, `roleLabel`, `name`, `health`, `gold`.
@@ -186,19 +186,20 @@ Allowed roles currently include `scholar`, `emperor`, `minister`, `general`, `ma
 
 ## State Patch Rules
 
-`applyStatePatch(worldState, statePatch)` enforces:
+`applyStatePatch(worldState, statePatch, options)` enforces:
 
 - Only whitelisted top-level and `player` keys can be changed.
 - Numeric fields are clamped to ranges in `NUMERIC_RANGES`.
 - `eventHistory` is trimmed to the latest 20 entries.
 - `statePatch.factions` may only update existing numeric faction keys; providers cannot invent arbitrary faction names.
 - `turnCount` increments when a turn patch is applied.
+- Server-owned follow-up patches may pass `{ incrementTurnCount: false }` so S21.3 can apply a tick patch without double-counting one player turn.
 
 Do not bypass this module when applying provider output.
 
 ## Phase-Two World Tick Contract
 
-S21.1 defines the next server-owned simulation boundary in [docs/WORLD_TICK_CONTRACT.md](WORLD_TICK_CONTRACT.md). The implementation is not wired into routes yet.
+S21.1 defines the server-owned simulation boundary in [docs/WORLD_TICK_CONTRACT.md](WORLD_TICK_CONTRACT.md). S21.2 implements the pure module in `src/game/worldTick.js`; it is not wired into routes yet.
 
 The contract for S21.2-S21.4 is:
 
@@ -210,6 +211,10 @@ The contract for S21.2-S21.4 is:
 - Apply tick changes through the same whitelist/clamp boundary used for provider patches.
 - Return short visible tick feedback and append tick events after provider events.
 - Do not touch exam rank, active exam, exam history, role promotion, session identity, or the complete scholar -> official path.
+
+`runWorldTick(worldState)` returns `{ statePatch, attributeChanges, events, summary }` without mutating `worldState`. Its first deterministic formulas cover treasury revenue/upkeep/leakage, grain consumption/harvest, population drift, public order, corruption, army morale, border threat, and small known-faction drift.
+
+Provider turn schemas and prompts do not expose `year` or `month` as allowed model patch keys; calendar changes are reserved for server-owned patches.
 
 ## Exam Rules
 
