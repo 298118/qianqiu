@@ -85,7 +85,30 @@ Request:
 }
 ```
 
-Returns plain JSON:
+Returns SSE when the request includes `Accept: text/event-stream`:
+
+```text
+event: state_preview
+data: {"sessionId":"uuid","status":"accepted"}
+
+event: narrative_chunk
+data: {"text":"..."}
+
+event: state_preview
+data: {"sessionId":"uuid","attributeChanges":[],"examTrigger":{}}
+
+event: final_state
+data: {"sessionId":"uuid","narrative":"...","attributeChanges":[],"examTrigger":{},"worldState":{}}
+```
+
+If a provider/session error happens after the stream has opened, the route writes:
+
+```text
+event: error
+data: {"error":"...","statusCode":500}
+```
+
+Requests without SSE negotiation still return plain JSON for tests and compatibility:
 
 ```json
 {
@@ -100,8 +123,6 @@ Returns plain JSON:
   "worldState": {}
 }
 ```
-
-Current implementation is non-streaming. The brief still lists SSE as a later step.
 
 ### `POST /api/exam/question`
 

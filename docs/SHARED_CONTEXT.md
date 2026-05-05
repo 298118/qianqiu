@@ -6,7 +6,7 @@ Both tools must read this file at the start of every development session, after 
 
 ## Current Snapshot
 
-- Repository status: phase-one playable vertical slice is implemented and accepted for the default Mock path. The app installs with npm, starts an Express server, serves a polished plain HTML/CSS/JS frontend, can create/read/Mock-play a scholar session with richer daily scholar actions, complete the scholar exam path into official status, play basic Mock loops for emperor, minister, and officials, and optionally use OpenAI, DeepSeek, or Claude providers with Mock fallback.
+- Repository status: phase-one playable vertical slice is implemented and accepted for the default Mock path. The app installs with npm, starts an Express server, serves a polished plain HTML/CSS/JS frontend, can create/read/Mock-play a scholar session with richer daily scholar actions, complete the scholar exam path into official status, play basic Mock loops for emperor, minister, and officials, stream turn feedback over SSE, and optionally use OpenAI, DeepSeek, or Claude providers with Mock fallback.
 - Canonical product brief: `docs/QIANQIU_DEVELOPMENT_BRIEF.md`.
 - Shared implementation roadmap and progress ledger: `docs/DEVELOPMENT_STEPS.md`.
 - Developer implementation map: `docs/ARCHITECTURE.md`.
@@ -31,7 +31,7 @@ Both tools must read this file at the start of every development session, after 
 - State patch whitelist: `src/game/stateRules.js` defines allowed patch keys for top-level state and player fields. Only whitelisted fields can be modified by AI output.
 - Numerical clamping: all numeric fields have defined min/max ranges in stateRules.js. Patches are clamped after merge.
 - Event history: capped at 20 entries, oldest trimmed first.
-- `POST /api/game/turn` is non-streaming JSON for now; SSE streaming is S04.4.
+- `POST /api/game/turn` now supports SSE when clients send `Accept: text/event-stream` or `?stream=1`. The route emits `state_preview`, `narrative_chunk`, `final_state`, and `error`; requests without SSE negotiation still return JSON for compatibility and tests.
 - Frontend restores session from localStorage on page load.
 - Mock provider `runTurn` recognizes scholar actions: study, teacher visit, travel/social, money/work, exam request, and rest.
 - Mock provider scholar actions now separately handle study, teacher visits, travel/social, debate, money/work, exam request, and rest.
@@ -57,6 +57,7 @@ Both tools must read this file at the start of every development session, after 
 - `docs/ARCHITECTURE.md` now records the current runtime shape, route ownership, API contracts, AI provider contracts, state fields, state patch rules, exam rules, persistence, and verification expectations for new developers.
 - `docs/PHASE_ONE_ACCEPTANCE.md` records the first automated Mock-mode phase-one acceptance pass and known limitations.
 - Faction state patches now merge only existing numeric faction keys instead of replacing the full factions object, so provider output cannot introduce arbitrary faction names through `statePatch.factions`.
+- `src/utils/sse.js` owns SSE headers, event formatting, and narrative chunking for the turn route.
 - Any behavior/API/setup/architecture decision that affects future work must be recorded in this file or in the canonical development brief.
 - Any roadmap step that starts, completes, blocks, or changes scope must be recorded in `docs/DEVELOPMENT_STEPS.md`.
 - If the change is a short handoff note, update this file.
@@ -103,12 +104,12 @@ Before finishing each coherent change:
 - 2026-05-05: S12.1-S12.3 UI polish committed as `7b4f349`. Verified `node --check public/app.js`, `node --check server.js`, `node --check src/routes/game.js`, `node --check src/routes/exam.js`, `git diff --check`, and a temporary Mock server on port 3188 confirming homepage/style/app assets, health, session creation, one turn, and `child_exam` question generation.
 - 2026-05-05: S13.1-S13.3 quality gate committed as `4a70f5a`. Verified `node --check src/game/stateRules.js`, `node --check` for all new `test/*.test.js` files, `git diff --check`, and `npm test` with 15 passing tests.
 - 2026-05-05: S14.1-S14.3 documentation and phase-one acceptance committed as `b67aadb`. Verified `npm install` with 0 vulnerabilities, `npm test` with 15 passing tests, and an automated temporary Mock server acceptance on port 3214 covering static assets, health, complete scholar -> official progression with four saved exam essays, exam integrity penalties for short/modern/copy submissions, and emperor/minister/official role loops. Playwright/browser screenshot automation was unavailable, so static assets plus API acceptance were verified and the manual browser checklist remains in `docs/MANUAL_ACCEPTANCE.md`.
+- 2026-05-05: S04.4 SSE turn streaming code committed as `0fd8729`. Verified `node --check src/utils/sse.js`, `node --check src/routes/game.js`, `node --check public/app.js`, `node --check test/sse.test.js`, `git diff --check`, `npm test` with 18 passing tests, and a temporary Mock server on port 3226 confirming `POST /api/game/turn` returns SSE events with `Accept: text/event-stream` while preserving JSON fallback without the SSE accept header.
 
 ## Next Recommended Step
 
-Phase one is accepted for Mock mode. Recommended next step is to define the phase-two roadmap, with likely candidates:
+Phase one is accepted for Mock mode and S04.4 SSE streaming is now implemented. Recommended next step is to define the phase-two roadmap, with likely candidates:
 
-- Implement SSE streaming for `POST /api/game/turn`.
 - Add browser automation or screenshot-based UI acceptance once a browser runner is available.
 - Expand general and magistrate Mock role loops.
 - Run real-provider smoke tests when API keys are available.

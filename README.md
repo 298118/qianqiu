@@ -86,7 +86,7 @@ POST /api/exam/question
 POST /api/exam/submit
 ```
 
-当前 `POST /api/game/turn` 返回普通 JSON，不是 SSE。`docs/QIANQIU_DEVELOPMENT_BRIEF.md` 中仍保留 SSE 作为后续路线图项。
+`POST /api/game/turn` 支持 SSE：客户端发送 `Accept: text/event-stream` 时会收到 `state_preview`、`narrative_chunk`、`final_state` 和 `error` 事件。未请求 SSE 的脚本仍会收到普通 JSON，便于测试和兼容旧调用。
 
 ## 项目结构
 

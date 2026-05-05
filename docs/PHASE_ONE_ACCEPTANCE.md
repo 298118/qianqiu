@@ -62,13 +62,12 @@ Automated Mock acceptance was run with a temporary Node script that:
 
 - No real provider API calls were made because no API keys are present in the local environment. Provider integration remains covered by no-key fallback checks and schema tests.
 - Browser visual/localStorage behavior was not screenshot-tested because Playwright is not installed in this workspace. Static frontend assets and the full API game path were verified; `docs/MANUAL_ACCEPTANCE.md` remains the browser click-through script for a human or future browser-capable run.
-- `POST /api/game/turn` is still non-streaming JSON. SSE remains a documented future roadmap item.
+- `POST /api/game/turn` now supports SSE after the phase-one acceptance pass. The original phase-one record was non-streaming, while S04.4 later added `state_preview`, `narrative_chunk`, `final_state`, and `error` events with JSON fallback compatibility.
 - General and magistrate identities still use generic Mock fallback behavior; emperor, minister, scholar, and official are the phase-one supported loops.
 
 ## Follow-Up Candidates
 
 - Define the phase-two roadmap in `docs/DEVELOPMENT_STEPS.md`.
-- Implement S04.4-style SSE streaming for turn feedback.
 - Add browser automation or screenshot-based UI acceptance once a browser runner is available.
 - Expand general and magistrate Mock loops.
 - Run real-provider smoke tests when keys are available.

@@ -238,6 +238,8 @@ SSE 事件：
 - `final_state`
 - `error`
 
+当前实现中，客户端发送 `Accept: text/event-stream` 或 `?stream=1` 时启用 SSE；未请求 SSE 的调用仍返回普通 JSON，用于测试脚本和旧客户端兼容。无论哪种响应形态，状态 patch、事件追加、考试触发和 session 保存仍由服务器执行。
+
 ### `POST /api/exam/question`
 
 生成并保存当前考试题目。

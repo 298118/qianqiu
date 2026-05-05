@@ -77,7 +77,7 @@
 | S04.1 | TODO | 实现 `POST /api/game/start` |  |  |  |
 | S04.2 | TODO | 实现 `GET /api/game/state/:sessionId` |  |  |  |
 | S04.3 | DONE | 实现 `POST /api/game/turn` 非流式基础版本 | 2026-05-05 | Claude Code | d119393 |
-| S04.4 | TODO | 将 `/api/game/turn` 升级为 SSE 流式反馈 |  |  |  |
+| S04.4 | DONE | 将 `/api/game/turn` 升级为 SSE 流式反馈 | 2026-05-05 | Codex | 0fd8729 |
 | S05.1 | DONE | 实现开局页：朝代、年份、身份、姓名、家境 | 2026-05-05 | Codex | c6e0537 |
 | S05.2 | DONE | 实现主界面状态栏、叙事历史、自由输入 | 2026-05-05 | Claude Code | d119393 |
 | S05.3 | DONE | 实现 session 恢复与刷新不丢失当前局 | 2026-05-05 | Claude Code | d119393 |
@@ -598,3 +598,34 @@ Verification:
 Risk/leftover: Playwright is not installed in this workspace, so browser screenshot/localStorage automation was not run. Static assets plus full API acceptance passed, and `docs/MANUAL_ACCEPTANCE.md` remains the human/browser click-through script. Real provider calls were not made because no API keys are present. General and magistrate still use generic Mock fallback behavior.
 
 Next step: Define a phase-two roadmap; likely candidates are SSE streaming for turns, browser automation, general/magistrate role loops, and real-provider smoke tests with keys.
+
+---
+
+Codex progress note, 2026-05-05:
+
+Step: S04.4
+
+Commit: 0fd8729
+
+Completed:
+
+- Added `src/utils/sse.js` for SSE headers, event formatting, stream closing, and deterministic narrative chunking.
+- Refactored `POST /api/game/turn` so the same server-owned turn processing path can return either SSE or plain JSON.
+- SSE mode is selected by `Accept: text/event-stream` or `?stream=1` and emits `state_preview`, `narrative_chunk`, `final_state`, and `error` events.
+- The frontend now sends `Accept: text/event-stream`, parses the fetch response stream, appends narrative chunks into a live narrative entry, and applies the final state once `final_state` arrives.
+- Requests without SSE negotiation still return the previous JSON payload shape for compatibility with tests and existing scripts.
+- Added `test/sse.test.js` for SSE event formatting and chunking.
+
+Verification:
+
+- `node --check src/utils/sse.js`
+- `node --check src/routes/game.js`
+- `node --check public/app.js`
+- `node --check test/sse.test.js`
+- `git diff --check`
+- `npm test` passed with 18 tests.
+- Temporary Mock server on port 3226 confirmed `POST /api/game/turn` returns SSE events when requested and JSON when no SSE accept header is sent.
+
+Risk/leftover: The current stream chunks the completed provider narrative after `provider.runTurn` resolves; true provider-token streaming can be added later per provider. Browser screenshot/localStorage automation is still unavailable in this workspace.
+
+Next step: Define a phase-two roadmap, or pick the next concrete slice: browser automation, general/magistrate Mock loops, or real-provider smoke tests when keys are available.
