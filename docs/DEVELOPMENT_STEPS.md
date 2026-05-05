@@ -96,9 +96,9 @@
 | S09.3 | DONE | 会试通过后成为贡士 | 2026-05-05 | Codex | bed515a |
 | S09.4 | DONE | 殿试定甲第并转为 official | 2026-05-05 | Codex | bed515a |
 | S09.5 | DONE | 为严重作弊实现黜落或降档规则 | 2026-05-05 | Codex | bed515a |
-| S10.1 | TODO | 实现皇帝身份基础自由输入推演 |  |  |  |
-| S10.2 | TODO | 实现大臣身份基础自由输入推演 |  |  |  |
-| S10.3 | TODO | 入仕后显示官员视角与基础政务输入 |  |  |  |
+| S10.1 | DONE | 实现皇帝身份基础自由输入推演 | 2026-05-05 | Codex | 592b7a1 |
+| S10.2 | DONE | 实现大臣身份基础自由输入推演 | 2026-05-05 | Codex | 592b7a1 |
+| S10.3 | DONE | 入仕后显示官员视角与基础政务输入 | 2026-05-05 | Codex | 592b7a1 |
 | S11.1 | TODO | 接入 OpenAI provider |  |  |  |
 | S11.2 | TODO | 接入 DeepSeek OpenAI-compatible provider |  |  |  |
 | S11.3 | TODO | 接入 Claude provider |  |  |  |
@@ -449,3 +449,34 @@ Verification:
 Risk/leftover: Official gameplay is still generic fallback text after入仕; S10 should add proper emperor/minister/official free-text loops and UI.
 
 Next step: Implement S10.1-S10.3 so non-scholar roles and newly promoted officials have basic playable actions.
+
+---
+
+Codex progress note, 2026-05-05:
+
+Steps: S10.1, S10.2, S10.3
+
+Commit: 592b7a1
+
+Completed:
+
+- Added role defaults and whitelisted/clamped state fields for `personalPower`, `courtControl`, `mandate`, `position`, `faction`, `influence`, and `integrity`.
+- Expanded Mock `runTurn` so emperor actions cover赈灾、用人、征税筹饷、军事备边 and廷议 fallback; minister actions cover上疏、经营人脉、督办公务 and攻讦; official actions cover观政、断案、抚民、同年人脉 and贪墨风险.
+- Palace exam promotion now seeds official `position`, `faction`, `influence`, and `integrity`, so the newly promoted role is immediately playable.
+- The frontend now renders a role panel for emperor, minister, and official sessions with key metrics,府库粮储,朝局派系,人脉, and action hints, while preserving the scholar exam panel.
+- Updated README and the development brief to document the role fields and basic role gameplay loops.
+
+Verification:
+
+- `node --check src/ai/providers/mock.js`
+- `node --check src/game/initialState.js`
+- `node --check src/game/stateRules.js`
+- `node --check src/game/promotions.js`
+- `node --check public/app.js`
+- `git diff --check`
+- Temporary Mock server on port 3158 confirmed emperor relief spends treasury and raises民心/天命, minister上疏 raises操守 and lowers贪腐, and official观政 raises影响 and机辩.
+- Direct promotion-to-official smoke test confirmed殿试 promotion seeds official fields and the official turn loop updates influence afterward.
+
+Risk/leftover: General and magistrate still use the generic fallback; real AI providers, automated tests, and SSE streaming are still TODO.
+
+Next step: S11.1-S11.4 real provider integration, keeping Mock as no-key default and fallback.
