@@ -16,6 +16,10 @@ const examRequirements = document.querySelector("#exam-requirements");
 const examEssay = document.querySelector("#exam-essay");
 const examResult = document.querySelector("#exam-result");
 const examSubmit = document.querySelector("#exam-submit");
+const examModal = document.querySelector(".exam-modal");
+const examWritingTools = document.querySelector("#exam-writing-tools");
+const examWordCount = document.querySelector("#exam-word-count");
+const examWordGuide = document.querySelector("#exam-word-guide");
 
 let currentSessionId = null;
 let currentWorldState = null;
@@ -322,9 +326,20 @@ function appendNarrative(text, className) {
   if (placeholder) placeholder.remove();
 
   const paragraph = document.createElement("p");
-  if (className) paragraph.className = className;
+  paragraph.className = ["narrative-entry", className].filter(Boolean).join(" ");
   paragraph.textContent = text;
   narrative.appendChild(paragraph);
+  narrative.scrollTop = narrative.scrollHeight;
+}
+
+function appendTurnDivider(label) {
+  const placeholder = narrative.querySelector(".placeholder");
+  if (placeholder) placeholder.remove();
+
+  const divider = document.createElement("div");
+  divider.className = "turn-divider";
+  divider.textContent = label;
+  narrative.appendChild(divider);
   narrative.scrollTop = narrative.scrollHeight;
 }
 
@@ -339,6 +354,9 @@ function appendAttributeChanges(changes) {
     const tag = document.createElement("span");
     tag.className = diff > 0 ? "attr-up" : diff < 0 ? "attr-down" : "";
     tag.textContent = `${label} ${change.before}→${change.after} (${sign}${diff})`;
+    if (change.reason) {
+      tag.title = change.reason;
+    }
     div.appendChild(tag);
   });
   narrative.appendChild(div);
@@ -347,6 +365,7 @@ function appendAttributeChanges(changes) {
 
 function renderExamModal(payload) {
   currentExamPayload = payload;
+  examModal.classList.remove("exam-modal--result");
   examMeta.textContent = `${payload.examName} · ${payload.questionType} · ${payload.difficulty}`;
   examTitle.textContent = payload.examName;
   examQuestion.textContent = payload.examQuestion;
@@ -360,12 +379,14 @@ function renderExamModal(payload) {
   });
   examEssay.value = "";
   examEssay.hidden = false;
+  examWritingTools.hidden = false;
   examResult.hidden = true;
   examResult.innerHTML = "";
   examSubmit.disabled = true;
   examSubmit.hidden = false;
   examSubmit.textContent = "交卷";
   examSubmit.title = "";
+  updateExamWordState();
   examBackdrop.hidden = false;
   examEssay.focus();
 }
@@ -374,7 +395,37 @@ function closeExamModal() {
   examBackdrop.hidden = true;
 }
 
+function getEssayCharacterCount() {
+  return [...examEssay.value.trim()].length;
+}
+
+function updateExamWordState() {
+  if (!examWritingTools || examWritingTools.hidden) return;
+
+  const count = getEssayCharacterCount();
+  const range = currentExamPayload?.wordCount;
+  examWordCount.textContent = `${count}字`;
+
+  if (!range) {
+    examWordGuide.textContent = "";
+    examWritingTools.dataset.state = "";
+    return;
+  }
+
+  if (count < range.min) {
+    examWordGuide.textContent = `未足${range.min}字`;
+    examWritingTools.dataset.state = "short";
+  } else if (count > range.max) {
+    examWordGuide.textContent = `已逾${range.max}字`;
+    examWritingTools.dataset.state = "long";
+  } else {
+    examWordGuide.textContent = `${range.min}-${range.max}字之间`;
+    examWritingTools.dataset.state = "ready";
+  }
+}
+
 function updateExamSubmitState() {
+  updateExamWordState();
   examSubmit.disabled = !currentExamPayload || !examEssay.value.trim();
 }
 
@@ -401,15 +452,28 @@ function describePromotionOutcome(promotionResult) {
   return "未取中";
 }
 
+function createResultSection(title, content, open = true) {
+  const details = document.createElement("details");
+  details.className = "result-section";
+  details.open = open;
+
+  const summary = document.createElement("summary");
+  summary.textContent = title;
+  details.append(summary, content);
+  return details;
+}
+
 function renderExamResult(payload) {
   const playerEntry = payload.ranking.find((entry) => entry.isPlayer);
   const flags = payload.authenticityCheck.flags || [];
   const promotionText = describePromotionOutcome(payload.promotionResult);
 
+  examModal.classList.add("exam-modal--result");
   examMeta.textContent = `${payload.examName} · 放榜`;
   examTitle.textContent = payload.promotionResult.passed ? "金榜有名" : payload.promotionResult.severeCheat ? "监试黜落" : "榜上无名";
   examQuestion.hidden = true;
   examRequirements.hidden = true;
+  examWritingTools.hidden = true;
   examEssay.hidden = true;
   examSubmit.hidden = true;
   examResult.hidden = false;
@@ -446,9 +510,6 @@ function renderExamResult(payload) {
 
   const checks = document.createElement("section");
   checks.className = "auth-checks";
-  const checksTitle = document.createElement("h3");
-  checksTitle.textContent = "监试复核";
-  checks.appendChild(checksTitle);
   if (flags.length) {
     flags.forEach((flag) => {
       const item = document.createElement("p");
@@ -474,7 +535,13 @@ function renderExamResult(payload) {
     ranking.appendChild(item);
   });
 
-  examResult.append(summary, feedback, dimensions, checks, ranking);
+  examResult.append(
+    summary,
+    feedback,
+    createResultSection("五维评卷", dimensions, true),
+    createResultSection("监试复核", checks, Boolean(flags.length)),
+    createResultSection("同场榜单", ranking, true)
+  );
 }
 
 async function openExamQuestion(level) {
@@ -570,7 +637,8 @@ async function submitAction() {
   actionInput.disabled = true;
 
   try {
-    appendNarrative(`> ${input}`, "player-input");
+    appendTurnDivider(`第${(currentWorldState?.turnCount || 0) + 1}回`);
+    appendNarrative(input, "player-input");
 
     const response = await fetch("/api/game/turn", {
       method: "POST",
@@ -674,6 +742,7 @@ async function restoreSession() {
     narrative.innerHTML = "";
     const history = payload.worldState.eventHistory || [];
     if (history.length) {
+      appendTurnDivider("存档记事");
       history.forEach((event) => appendNarrative(event));
     } else {
       appendNarrative("存档已恢复。继续你的旅程。");
