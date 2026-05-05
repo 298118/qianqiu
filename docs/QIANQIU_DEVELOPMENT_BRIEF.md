@@ -159,6 +159,8 @@ AI provider 约定：
     health: 100,
     gold: 10,
     examRank: null,
+    palaceRank: null,
+    officeTitle: null,
     academia: 10,
     literaryTalent: 10,
     adaptability: 10,
@@ -272,7 +274,7 @@ SSE 事件：
 - `promotionResult`
 - `worldState`
 
-第一版实现中，`/api/exam/submit` 使用普通 JSON 返回；服务器会先做本地反作弊检查，再调用 provider 评分，并在服务端应用作弊扣分。文章、评分、复核结果、虚拟考生与榜单会保存到 `player.examHistory`，同时清空 `activeExam`。本步骤只返回 `promotionResult`，暂不直接修改 `player.examRank` 或 `player.role`；正式晋级与严重作弊黜落由后续 S09 统一处理。
+当前实现中，`/api/exam/submit` 使用普通 JSON 返回；服务器会先做本地反作弊检查，再调用 provider 评分，并在服务端应用作弊扣分。文章、评分、复核结果、虚拟考生、榜单与 `promotionResult` 会保存到 `player.examHistory`，同时清空 `activeExam`。随后 `src/game/promotions.js` 执行服务器自有晋级规则：童试/乡试/会试通过后分别写入 `player.examRank = "秀才" / "举人" / "贡士"`；殿试通过后写入 `player.examRank = "进士"`、`player.role = "official"`、`player.roleLabel = "入仕官员"`，并记录 `palaceRank` 与 `officeTitle`。严重作伪会强制黜落，按当前名位降一档并扣减声望与心性。
 
 ## 7. AI JSON 合约
 

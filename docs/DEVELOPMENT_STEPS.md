@@ -91,11 +91,11 @@
 | S08.2 | DONE | 实现本地防作弊检测：现代词、过短、疑似照抄 | 2026-05-05 | Codex | 9c8ca76 |
 | S08.3 | DONE | 生成 4-8 名虚拟同场考生与合理分数 | 2026-05-05 | Codex | 9c8ca76 |
 | S08.4 | DONE | 实现放榜排名、详细评语、文章保存 | 2026-05-05 | Codex | 9c8ca76 |
-| S09.1 | TODO | 童试通过后成为秀才 |  |  |  |
-| S09.2 | TODO | 乡试通过后成为举人 |  |  |  |
-| S09.3 | TODO | 会试通过后成为贡士 |  |  |  |
-| S09.4 | TODO | 殿试定甲第并转为 official |  |  |  |
-| S09.5 | TODO | 为严重作弊实现黜落或降档规则 |  |  |  |
+| S09.1 | DONE | 童试通过后成为秀才 | 2026-05-05 | Codex | bed515a |
+| S09.2 | DONE | 乡试通过后成为举人 | 2026-05-05 | Codex | bed515a |
+| S09.3 | DONE | 会试通过后成为贡士 | 2026-05-05 | Codex | bed515a |
+| S09.4 | DONE | 殿试定甲第并转为 official | 2026-05-05 | Codex | bed515a |
+| S09.5 | DONE | 为严重作弊实现黜落或降档规则 | 2026-05-05 | Codex | bed515a |
 | S10.1 | TODO | 实现皇帝身份基础自由输入推演 |  |  |  |
 | S10.2 | TODO | 实现大臣身份基础自由输入推演 |  |  |  |
 | S10.3 | TODO | 入仕后显示官员视角与基础政务输入 |  |  |  |
@@ -420,3 +420,32 @@ Verification:
 Risk/leftover: S08 records pass/fail in `promotionResult` but does not yet mutate `player.examRank` or `player.role`; S09 must apply promotion and severe-cheating consequences server-side.
 
 Next step: Implement S09.1-S09.5 so passed exams update ranks through 秀才 -> 举人 -> 贡士 -> 进士/official, with severe cheating causing 黜落 or downgrade.
+
+---
+
+Codex progress note, 2026-05-05:
+
+Steps: S09.1, S09.2, S09.3, S09.4, S09.5
+
+Commit: bed515a
+
+Completed:
+
+- Added `src/game/promotions.js` as the server-owned promotion/consequence layer for exam results.
+- `POST /api/exam/submit` now applies promotion before saving `examHistory`: 童试 -> 秀才, 乡试 -> 举人, 会试 -> 贡士, 殿试 -> 进士 + `player.role = "official"`.
+- Palace exam outcomes now record `palaceRank` and `officeTitle` (`翰林院修撰`, `翰林院庶吉士`, or `六部观政进士`).
+- Severe exam fraud now forces 黜落, downgrades one rank where possible, clears palace/office fields, and reduces reputation and mentality.
+- The frontend放榜 panel now displays promotion, palace class, initial office, or cheating consequence text.
+
+Verification:
+
+- `git diff --check`
+- `node --check src/game/promotions.js`
+- `node --check src/routes/exam.js`
+- `node --check src/game/initialState.js`
+- `node --check public/app.js`
+- Temporary Mock server on port 3142 confirmed a four-exam path from scholar to official with four saved `examHistory` entries, and confirmed a copied provincial essay downgraded a `秀才` back to no rank.
+
+Risk/leftover: Official gameplay is still generic fallback text after入仕; S10 should add proper emperor/minister/official free-text loops and UI.
+
+Next step: Implement S10.1-S10.3 so non-scholar roles and newly promoted officials have basic playable actions.

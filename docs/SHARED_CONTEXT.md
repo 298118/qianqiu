@@ -6,7 +6,7 @@ Both tools must read this file at the start of every development session, after 
 
 ## Current Snapshot
 
-- Repository status: first playable vertical slice is implemented. The app installs with npm, starts an Express server, serves a plain HTML/CSS/JS frontend, can create/read/Mock-play a scholar session with richer daily scholar actions, can open a saved exam writing flow with generated questions, and can submit essays for Mock grading/ranking.
+- Repository status: first playable vertical slice is implemented. The app installs with npm, starts an Express server, serves a plain HTML/CSS/JS frontend, can create/read/Mock-play a scholar session with richer daily scholar actions, can open a saved exam writing flow with generated questions, submit essays for Mock grading/ranking, and complete the scholar exam path into official status.
 - Canonical product brief: `docs/QIANQIU_DEVELOPMENT_BRIEF.md`.
 - Shared implementation roadmap and progress ledger: `docs/DEVELOPMENT_STEPS.md`.
 - Codex entrypoint: `AGENTS.md`.
@@ -38,7 +38,9 @@ Both tools must read this file at the start of every development session, after 
 - `src/game/essayChecks.js` performs server-side local exam authenticity checks: short essays, modern/anachronistic terms, copied classic passages, and ghostwriting probability. Server penalties are applied after provider grading.
 - `src/game/candidates.js` generates 4-8 virtual same-session exam candidates and builds the displayed ranking.
 - `POST /api/exam/submit` grades the active essay, applies local penalties, saves the essay/result into `player.examHistory`, clears `activeExam`, and returns `score`, `authenticityCheck`, `virtualCandidates`, `ranking`, `promotionResult`, and `worldState`.
-- S08 deliberately records `promotionResult.applied = false`; actual examRank/official promotion is reserved for S09 server-owned promotion rules.
+- `src/game/promotions.js` is the server-owned promotion and severe-cheating consequence module; providers only influence score and authenticity inputs.
+- `POST /api/exam/submit` now applies promotion before saving the result: child/provincial/metropolitan passes set `player.examRank` to `秀才`/`举人`/`贡士`; palace pass sets `player.examRank = "进士"`, `player.role = "official"`, `player.roleLabel = "入仕官员"`, and records `palaceRank` plus `officeTitle`.
+- Severe exam fraud, currently copied classic passages or any authenticity flag with `severity: "severe"`, forces failure, downgrades one rank where possible, clears palace/office fields, and reduces reputation and mentality.
 - Any behavior/API/setup/architecture decision that affects future work must be recorded in this file or in the canonical development brief.
 - Any roadmap step that starts, completes, blocks, or changes scope must be recorded in `docs/DEVELOPMENT_STEPS.md`.
 - If the change is a short handoff note, update this file.
@@ -79,9 +81,10 @@ Before finishing each coherent change:
 - 2026-05-05: Local server at `http://localhost:3000` verified homepage/app/style assets return 200. A six-turn API smoke test covered study, teacher visit, travel, debate, money/work, and exam request; it confirmed studied book, teacher, connections, `child_exam` trigger, saved `activeExam`, event history cap, and turn count.
 - 2026-05-05: S07.1-S07.3 code committed as `47dae05`. Verified with `node --check` for `server.js`, `src/game/exams.js`, `src/routes/exam.js`, `src/ai/providers/mock.js`, and `public/app.js`. Temporary local server checks confirmed `/`, `/app.js`, and `/styles.css` return 200. API smoke tests confirmed `POST /api/exam/question` works both directly and after a free-text exam trigger, saves `activeExam.examQuestion`, and reuses the same `examId` for an unanswered exam.
 - 2026-05-05: S08.1-S08.4 code committed as `9c8ca76`. Verified with `node --check` for `src/game/essayChecks.js`, `src/game/candidates.js`, `src/ai/providers/mock.js`, `src/routes/exam.js`, and `public/app.js`. Temporary server on port 3137 confirmed health, question generation, normal essay submission, 4-8 candidate ranking, `examHistory` persistence, `activeExam` clearing, and short/modern-term penalty flags.
+- 2026-05-05: S09.1-S09.5 code committed as `bed515a`. Verified with `node --check` for `src/game/promotions.js`, `src/routes/exam.js`, `src/game/initialState.js`, and `public/app.js`; `git diff --check`; and a temporary Mock server on port 3142 that confirmed four-exam promotion from scholar to official plus severe-copy downgrade from `秀才` to no rank.
 
 ## Next Recommended Step
 
 Implement the next gameplay slice:
 
-- S09.1-S09.5: Apply server-owned promotion rules after exam results, including child/provincial/metropolitan/palace rank changes and severe cheating consequences.
+- S10.1-S10.3: Add basic free-text loops for emperor/minister and an initial official view/actions after passing the palace exam.
