@@ -81,9 +81,9 @@
 | S05.1 | DONE | 实现开局页：朝代、年份、身份、姓名、家境 | 2026-05-05 | Codex | c6e0537 |
 | S05.2 | DONE | 实现主界面状态栏、叙事历史、自由输入 | 2026-05-05 | Claude Code | d119393 |
 | S05.3 | DONE | 实现 session 恢复与刷新不丢失当前局 | 2026-05-05 | Claude Code | d119393 |
-| S06.1 | TODO | Mock 识别书生日常行动：读书、拜师、游学、谋生 |  |  |  |
-| S06.2 | TODO | 书生日常行动影响属性、金钱、人脉、事件历史 |  |  |  |
-| S06.3 | TODO | 实现书生专属面板与属性变化展示 |  |  |  |
+| S06.1 | DONE | Mock 识别书生日常行动：读书、拜师、游学、谋生 | 2026-05-05 | Codex | 9aa5263 |
+| S06.2 | DONE | 书生日常行动影响属性、金钱、人脉、事件历史 | 2026-05-05 | Codex | 9aa5263 |
+| S06.3 | DONE | 实现书生专属面板与属性变化展示 | 2026-05-05 | Codex | 9aa5263 |
 | S07.1 | TODO | 定义科举阶段、门槛、题型、晋级映射 |  |  |  |
 | S07.2 | TODO | 实现 `POST /api/exam/question` 和 activeExam 保存 |  |  |  |
 | S07.3 | TODO | 实现考试弹窗：题目、要求、大文本编辑区 |  |  |  |
@@ -336,6 +336,30 @@ Next step: Implement S02.3 and S04.3 together so free-text actions can change st
 - `GET /api/game/state/:sessionId` 恢复完整状态。
 - 错误处理：空 input 返回 400，缺 sessionId 返回 400。
 
-风险/遗留：SSE 流式（S04.4）、书生日常循环细化（S06.x）、考试出题与评卷（S07-S08）尚未实现。Mock provider 的行动识别可进一步丰富。
+风险/遗留：SSE 流式（S04.4）、考试出题与评卷（S07-S08）尚未实现。Mock provider 的其他身份行动识别仍可进一步丰富。
 
-下一步：S06.1-S06.3（书生日常循环）或 S07.1（科举阶段定义），取决于优先级。
+下一步：S07.1（科举阶段定义），然后实现 S07.2-S07.3 的出题接口和考试写作界面。
+
+---
+
+Codex progress note, 2026-05-05:
+
+Steps: S06.1, S06.2, S06.3
+
+Commit: 9aa5263
+
+Completed:
+
+- Expanded `src/ai/providers/mock.js` so scholar daily actions separately recognize study, teacher visits, travel/social, debate, money/work, exam request, and rest.
+- Daily actions now update numeric attributes plus `teacher`, `studiedBooks`, `connections`, `gold`, and event history through the existing server-side patch whitelist.
+- Added a scholar panel in the plain frontend showing exam progress, next exam, active exam, attribute meters, teacher, studied books, and connections.
+
+Verification:
+
+- `node --check src/ai/providers/mock.js`
+- `node --check public/app.js`
+- `node --check src/routes/game.js`
+- Local server returned 200 for `/`, `/app.js`, and `/styles.css`.
+- Six-turn API smoke test passed for study, teacher visit, travel, debate, money/work, and exam request; confirmed studied book recording, teacher recording, multiple connections, `child_exam` trigger, saved `activeExam`, event history cap, and `turnCount`.
+
+Risk/leftover: The exam question endpoint and real exam writing flow are still TODO; S07.1 is the next best step.

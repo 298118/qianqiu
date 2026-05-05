@@ -6,7 +6,7 @@ Both tools must read this file at the start of every development session, after 
 
 ## Current Snapshot
 
-- Repository status: first playable vertical slice is implemented. The app installs with npm, starts an Express server, serves a plain HTML/CSS/JS frontend, and can create/read/Mock-play a scholar session with free-text actions.
+- Repository status: first playable vertical slice is implemented. The app installs with npm, starts an Express server, serves a plain HTML/CSS/JS frontend, and can create/read/Mock-play a scholar session with richer daily scholar actions.
 - Canonical product brief: `docs/QIANQIU_DEVELOPMENT_BRIEF.md`.
 - Shared implementation roadmap and progress ledger: `docs/DEVELOPMENT_STEPS.md`.
 - Codex entrypoint: `AGENTS.md`.
@@ -29,6 +29,9 @@ Both tools must read this file at the start of every development session, after 
 - `POST /api/game/turn` is non-streaming JSON for now; SSE streaming is S04.4.
 - Frontend restores session from localStorage on page load.
 - Mock provider `runTurn` recognizes scholar actions: study, teacher visit, travel/social, money/work, exam request, and rest.
+- Mock provider scholar actions now separately handle study, teacher visits, travel/social, debate, money/work, exam request, and rest.
+- Scholar daily actions may update `studiedBooks`, `teacher`, and `connections` in addition to numeric attributes; these still pass through the server-side patch whitelist in `src/game/stateRules.js`.
+- The frontend now renders a scholar panel above the narrative with exam progress, next exam, current active exam, attribute meters, teacher, studied books, and connections.
 - Any behavior/API/setup/architecture decision that affects future work must be recorded in this file or in the canonical development brief.
 - Any roadmap step that starts, completes, blocks, or changes scope must be recorded in `docs/DEVELOPMENT_STEPS.md`.
 - If the change is a short handoff note, update this file.
@@ -65,10 +68,12 @@ Before finishing each coherent change:
 - 2026-05-05: `npm start` served `http://localhost:3000`; `GET /api/health`, homepage load, `POST /api/game/start`, and `GET /api/game/state/:sessionId` were verified with PowerShell web requests.
 - 2026-05-05: First runnable vertical slice committed as `c6e0537`.
 - 2026-05-05: `POST /api/game/turn` verified with study action (academia +1), exam trigger (activeExam set to child_exam), and state restore. Error handling tested for empty input and missing sessionId. All tests pass.
+- 2026-05-05: S06.1-S06.3 code committed as `9aa5263`; `node --check` passed for `src/ai/providers/mock.js`, `public/app.js`, and `src/routes/game.js`.
+- 2026-05-05: Local server at `http://localhost:3000` verified homepage/app/style assets return 200. A six-turn API smoke test covered study, teacher visit, travel, debate, money/work, and exam request; it confirmed studied book, teacher, connections, `child_exam` trigger, saved `activeExam`, event history cap, and turn count.
 
 ## Next Recommended Step
 
 Implement the next gameplay slice:
 
-- S06.1-S06.3: Expand Mock provider to better recognize scholar daily actions and update all relevant attributes. Add scholar-specific panel in frontend showing exam progress, stats, teacher, books, connections.
 - S07.1: Define exam levels, thresholds, question types, and promotion mappings in `src/game/exams.js`.
+- S07.2-S07.3: Add `POST /api/exam/question`, save `activeExam`, and show the exam writing interface in the frontend.
