@@ -629,3 +629,26 @@ Verification:
 Risk/leftover: The current stream chunks the completed provider narrative after `provider.runTurn` resolves; true provider-token streaming can be added later per provider. Browser screenshot/localStorage automation is still unavailable in this workspace.
 
 Next step: Define a phase-two roadmap, or pick the next concrete slice: browser automation, general/magistrate Mock loops, or real-provider smoke tests when keys are available.
+
+---
+
+Codex progress note, 2026-05-05:
+
+Step: Tooling maintenance
+
+Commit: pending at note time
+
+Completed:
+
+- Diagnosed `rg` failures in the Codex PowerShell environment. `Get-Command rg` resolved first to the packaged Codex app path under `C:\Program Files\WindowsApps\OpenAI.Codex_26.429.3425.0_x64__2p2nqsd0c76g0\app\resources\rg.exe`, which failed with `Access is denied`.
+- Found a working ripgrep 15.1.0 binary in the Codex local cache and copied it to `C:\Users\ZZZ\AppData\Local\OpenAI\Codex\bin\rg.exe`, a PATH entry that already appears before the protected packaged app resources.
+- Left project runtime code unchanged; this is an environment/tooling repair so future Codex sessions can use `rg` normally.
+
+Verification:
+
+- `Get-Command rg -All` now resolves first to `C:\Users\ZZZ\AppData\Local\OpenAI\Codex\bin\rg.exe`.
+- `rg --version` reports ripgrep 15.1.0.
+- `rg --files` lists repository files.
+- `rg "SSE" docs src public test` returns expected matches.
+
+Risk/leftover: If the Codex app rewrites PATH in a future update and removes `C:\Users\ZZZ\AppData\Local\OpenAI\Codex\bin`, the same shadowing fix may need to be re-applied.

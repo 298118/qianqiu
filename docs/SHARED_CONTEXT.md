@@ -58,6 +58,7 @@ Both tools must read this file at the start of every development session, after 
 - `docs/PHASE_ONE_ACCEPTANCE.md` records the first automated Mock-mode phase-one acceptance pass and known limitations.
 - Faction state patches now merge only existing numeric faction keys instead of replacing the full factions object, so provider output cannot introduce arbitrary faction names through `statePatch.factions`.
 - `src/utils/sse.js` owns SSE headers, event formatting, and narrative chunking for the turn route.
+- Tooling note: if `rg` resolves to the packaged Codex app path under `C:\Program Files\WindowsApps\OpenAI.Codex_...\app\resources`, Windows may deny execution. This workspace now shadows it with a working ripgrep 15.1.0 binary at `C:\Users\ZZZ\AppData\Local\OpenAI\Codex\bin\rg.exe`, which appears earlier on PATH.
 - Any behavior/API/setup/architecture decision that affects future work must be recorded in this file or in the canonical development brief.
 - Any roadmap step that starts, completes, blocks, or changes scope must be recorded in `docs/DEVELOPMENT_STEPS.md`.
 - If the change is a short handoff note, update this file.
@@ -105,6 +106,7 @@ Before finishing each coherent change:
 - 2026-05-05: S13.1-S13.3 quality gate committed as `4a70f5a`. Verified `node --check src/game/stateRules.js`, `node --check` for all new `test/*.test.js` files, `git diff --check`, and `npm test` with 15 passing tests.
 - 2026-05-05: S14.1-S14.3 documentation and phase-one acceptance committed as `b67aadb`. Verified `npm install` with 0 vulnerabilities, `npm test` with 15 passing tests, and an automated temporary Mock server acceptance on port 3214 covering static assets, health, complete scholar -> official progression with four saved exam essays, exam integrity penalties for short/modern/copy submissions, and emperor/minister/official role loops. Playwright/browser screenshot automation was unavailable, so static assets plus API acceptance were verified and the manual browser checklist remains in `docs/MANUAL_ACCEPTANCE.md`.
 - 2026-05-05: S04.4 SSE turn streaming code committed as `0fd8729`. Verified `node --check src/utils/sse.js`, `node --check src/routes/game.js`, `node --check public/app.js`, `node --check test/sse.test.js`, `git diff --check`, `npm test` with 18 passing tests, and a temporary Mock server on port 3226 confirming `POST /api/game/turn` returns SSE events with `Accept: text/event-stream` while preserving JSON fallback without the SSE accept header.
+- 2026-05-05: Local `rg` execution was repaired by creating `C:\Users\ZZZ\AppData\Local\OpenAI\Codex\bin\rg.exe` from the working Codex local-cache ripgrep 15.1.0 binary. Verified `Get-Command rg`, `rg --version`, `rg --files`, and `rg "SSE" docs src public test`.
 
 ## Next Recommended Step
 
