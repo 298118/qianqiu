@@ -494,6 +494,7 @@ button:disabled {
   border-left: 3px solid var(--cinnabar);
   padding-left: 12px;
   color: var(--muted);
+  white-space: pre-wrap;
 }
 
 .score-grid {

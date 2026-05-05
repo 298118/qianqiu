@@ -63,6 +63,8 @@ function createInitialState(input = {}) {
       health: 100,
       gold: 10,
       examRank: null,
+      palaceRank: null,
+      officeTitle: null,
       academia: 10,
       literaryTalent: 10,
       adaptability: 10,

@@ -10,6 +10,7 @@ const {
 } = require("../game/exams");
 const { applyAuthenticityPenalties, checkEssayAuthenticity } = require("../game/essayChecks");
 const { buildRanking, generateVirtualCandidates } = require("../game/candidates");
+const { applyExamPromotion } = require("../game/promotions");
 const { appendEvents } = require("../game/stateRules");
 const { readSession, writeSession } = require("../storage/sessionStore");
 
@@ -40,26 +41,11 @@ function fail(statusCode, message) {
   return error;
 }
 
-function buildPromotionResult(exam, score, authenticityCheck) {
-  const severeCheat = authenticityCheck.copy_detection?.is_copy;
-  const passed = exam.level === "palace_exam"
-    ? !severeCheat
-    : score.overall_score >= exam.passScore && !severeCheat;
-
-  return {
-    passed,
-    applied: false,
-    rank: passed ? exam.promotionRank : null,
-    nextLevel: passed ? exam.nextLevel : exam.level,
-    reason: passed
-      ? "本步骤仅记录取中结果，正式晋级将在后续科举晋升步骤应用。"
-      : "分数未达取中线或存在严重作伪。"
-  };
-}
-
 function summarizeResultEvent(worldState, activeExam, score, ranking, promotionResult) {
   const playerPlace = ranking.find((entry) => entry.isPlayer)?.place || ranking.length;
-  const outcome = promotionResult.passed ? `取中${promotionResult.rank}` : "未能取中";
+  const outcome = promotionResult.passed
+    ? `取中${promotionResult.rank}`
+    : promotionResult.consequence?.label || "未能取中";
   return `${worldState.player.name}交${activeExam.examName}卷，得${score.overall_score}分，榜列第${playerPlace}，${outcome}。`;
 }
 
@@ -187,7 +173,7 @@ router.post("/submit", async (req, res, next) => {
       },
       virtualCandidates
     );
-    const promotionResult = buildPromotionResult(exam, score, authenticityCheck);
+    const promotionResult = applyExamPromotion(worldState, exam, score, authenticityCheck);
     const submittedAt = new Date().toISOString();
     const historyEntry = {
       examId,

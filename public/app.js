@@ -143,6 +143,9 @@ function renderScholarPanel(worldState) {
       worldState.activeExam ? EXAM_LABELS[worldState.activeExam.level] || worldState.activeExam.level : "未入场"
     )
   );
+  if (player.role === "official") {
+    progressBlock.appendChild(createPanelValue("初授官职", player.officeTitle || "候选观政"));
+  }
 
   const entryLevel = getEntryExamLevel(worldState, progress);
   if (entryLevel) {
@@ -264,12 +267,25 @@ function createScoreItem(label, value) {
   return item;
 }
 
+function describePromotionOutcome(promotionResult) {
+  if (promotionResult.passed) {
+    return promotionResult.officeTitle
+      ? `${promotionResult.rank}，初授${promotionResult.officeTitle}`
+      : `取中${promotionResult.rank}`;
+  }
+  if (promotionResult.consequence) {
+    return promotionResult.consequence.label;
+  }
+  return "未取中";
+}
+
 function renderExamResult(payload) {
   const playerEntry = payload.ranking.find((entry) => entry.isPlayer);
   const flags = payload.authenticityCheck.flags || [];
+  const promotionText = describePromotionOutcome(payload.promotionResult);
 
   examMeta.textContent = `${payload.examName} · 放榜`;
-  examTitle.textContent = payload.promotionResult.passed ? "金榜有名" : "榜上无名";
+  examTitle.textContent = payload.promotionResult.passed ? "金榜有名" : payload.promotionResult.severeCheat ? "监试黜落" : "榜上无名";
   examQuestion.hidden = true;
   examRequirements.hidden = true;
   examEssay.hidden = true;
@@ -283,12 +299,15 @@ function renderExamResult(payload) {
     createScoreItem("总评", `${payload.score.overall_score}`),
     createScoreItem("等第", payload.score.rank),
     createScoreItem("名次", playerEntry ? `第${playerEntry.place}` : "未列榜"),
-    createScoreItem("结果", payload.promotionResult.passed ? payload.promotionResult.rank : "未取中")
+    createScoreItem("结果", promotionText)
   );
+  if (payload.promotionResult.palaceRank) {
+    summary.appendChild(createScoreItem("甲第", payload.promotionResult.palaceRank));
+  }
 
   const feedback = document.createElement("p");
   feedback.className = "result-feedback";
-  feedback.textContent = payload.score.detailed_feedback;
+  feedback.textContent = `${payload.score.detailed_feedback}\n${payload.promotionResult.reason}`;
 
   const dimensions = document.createElement("section");
   dimensions.className = "score-grid";
@@ -399,7 +418,7 @@ async function submitExamEssay() {
     renderWorldState(payload.worldState);
     renderExamResult(payload);
     appendNarrative(
-      `[放榜] ${payload.examName}得${payload.score.overall_score}分，${payload.promotionResult.passed ? `取中${payload.promotionResult.rank}` : "未能取中"}。`,
+      `[放榜] ${payload.examName}得${payload.score.overall_score}分，${describePromotionOutcome(payload.promotionResult)}。`,
       "exam-hint"
     );
   } catch (error) {
