@@ -631,4 +631,5 @@ S22.2 adds the controlled provider suggestion path while keeping the relationshi
 - `relationshipChanges` entries must target an existing visible character or faction id and use bounded deltas: `relationshipDelta` in `-12..12`, `resentmentDelta` in `-10..10`.
 - `src/game/relationships.js` applies suggestions through `applyRelationshipChanges()`, drops hidden/invented targets, caps text fields, updates `lastUpdatedTurn`, and normalizes the ledger before persistence.
 - `/api/game/turn` returns the normalized applied changes as `relationshipChanges` in JSON and SSE payloads.
-- Mock still returns an empty relationship suggestion list in this slice; S22.3 should make Mock turns produce concrete NPC/faction reactions through the same path.
+- S22.3 makes Mock produce concrete relationship suggestions for scholar, emperor, minister, and official turns through the same path. Mock classifies the resolved action from its own patch output, targets only visible ledger entries, and still relies on the route to call `applyRelationshipChanges()` before persistence.
+- The browser narrative now appends concise `[人脉]` feedback for applied relationship changes.

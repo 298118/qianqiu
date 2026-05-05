@@ -1,5 +1,6 @@
 const { getExamRequirements, getNextExamLevel } = require("../../game/exams");
 const { countEssayCharacters, scoreToRank } = require("../../game/essayChecks");
+const { summarizeRelationshipLedger } = require("../../game/relationships");
 
 function describeOpening(worldState) {
   const { dynasty, year, player, setup } = worldState;
@@ -154,14 +155,465 @@ function buildAttributeChanges(before, patch, reason = "行动影响") {
   return attributeChanges;
 }
 
-function makeResult({ narrative, patch, events, player, worldState, examTrigger, reason }) {
+function makeResult({ narrative, patch, events, player, worldState, examTrigger, reason, relationshipChanges }) {
   return {
     narrative,
     statePatch: patch,
     attributeChanges: buildAttributeChanges(worldState || player, patch, reason),
-    relationshipChanges: [],
+    relationshipChanges: relationshipChanges || [],
     events,
     examTrigger: examTrigger || { shouldStart: false, level: null, reason: "" }
+  };
+}
+
+function getVisibleRelationshipTargets(worldState) {
+  const summary = summarizeRelationshipLedger(
+    worldState?.relationshipLedger,
+    worldState || {},
+    { visibleOnly: true }
+  );
+
+  return {
+    characters: Array.isArray(summary.characters) ? summary.characters : [],
+    factions: Array.isArray(summary.factions) ? summary.factions : []
+  };
+}
+
+function firstVisibleCharacterId(targets) {
+  return targets.characters.find((entry) => entry.id === "C01")?.id || targets.characters[0]?.id || null;
+}
+
+function pushRelationshipChange(changes, targets, targetType, targetId, config) {
+  const bucket = targetType === "character" ? targets.characters : targets.factions;
+  if (!targetId || !bucket.some((entry) => entry.id === targetId)) return;
+
+  const change = {
+    targetType,
+    targetId,
+    relationshipDelta: config.relationshipDelta || 0,
+    resentmentDelta: config.resentmentDelta || 0,
+    reason: config.reason || config.note || "Mock relationship reaction."
+  };
+
+  if (config.stance) change.stance = config.stance;
+  if (config.recentIntent) change.recentIntent = config.recentIntent;
+  if (config.note) change.note = config.note;
+
+  changes.push(change);
+}
+
+function pushCharacterReaction(changes, targets, config) {
+  pushRelationshipChange(changes, targets, "character", firstVisibleCharacterId(targets), config);
+}
+
+function pushFactionReaction(changes, targets, targetId, config) {
+  pushRelationshipChange(changes, targets, "faction", targetId, config);
+}
+
+function buildMockRelationshipChanges(worldState, actionKey) {
+  const targets = getVisibleRelationshipTargets(worldState);
+  const changes = [];
+
+  switch (actionKey) {
+    case "scholar_study":
+      pushCharacterReaction(changes, targets, {
+        relationshipDelta: 2,
+        resentmentDelta: -1,
+        stance: "encouraging mentor",
+        recentIntent: "Keep testing the player's learning discipline.",
+        note: "Steady study improves the mentor's confidence.",
+        reason: "The player spent the turn studying classical texts."
+      });
+      pushFactionReaction(changes, targets, "scholarOfficials", {
+        relationshipDelta: 1,
+        resentmentDelta: 0,
+        stance: "attentive exam network",
+        recentIntent: "Watch whether the player can convert study into exam merit.",
+        note: "County scholars hear that the player is working steadily.",
+        reason: "Consistent study is noticed by the scholar-official network."
+      });
+      break;
+    case "scholar_teacher":
+      pushCharacterReaction(changes, targets, {
+        relationshipDelta: 5,
+        resentmentDelta: -2,
+        stance: "trusted mentor",
+        recentIntent: "Prepare a cautious recommendation if diligence continues.",
+        note: "A respectful teacher visit deepens the mentor bond.",
+        reason: "The player sought instruction through proper etiquette."
+      });
+      pushFactionReaction(changes, targets, "scholarOfficials", {
+        relationshipDelta: 2,
+        resentmentDelta: -1,
+        stance: "orthodox patronage",
+        recentIntent: "Treat the player as a possible county-school recommendation.",
+        note: "Formal study under a teacher strengthens exam-network trust.",
+        reason: "Teacher patronage connects the player to orthodox scholar circles."
+      });
+      break;
+    case "scholar_travel":
+      pushFactionReaction(changes, targets, "scholarOfficials", {
+        relationshipDelta: 2,
+        resentmentDelta: 0,
+        stance: "expanding acquaintance",
+        recentIntent: "Compare the player's reputation against other county students.",
+        note: "Travel and gatherings add the player to more scholar conversations.",
+        reason: "The player used social study to widen local contacts."
+      });
+      break;
+    case "scholar_debate":
+      pushCharacterReaction(changes, targets, {
+        relationshipDelta: 1,
+        resentmentDelta: 1,
+        stance: "demanding mentor",
+        recentIntent: "Push the player to argue more carefully.",
+        note: "Debate earns respect but also sharper scrutiny.",
+        reason: "Public debate made the player's learning more visible."
+      });
+      pushFactionReaction(changes, targets, "scholarOfficials", {
+        relationshipDelta: 1,
+        resentmentDelta: 1,
+        note: "A visible debate draws both praise and criticism.",
+        reason: "Argument in public affects the scholar-official network."
+      });
+      break;
+    case "scholar_work":
+      pushCharacterReaction(changes, targets, {
+        relationshipDelta: -1,
+        resentmentDelta: 1,
+        stance: "concerned mentor",
+        recentIntent: "Warn the player not to trade study time for quick money.",
+        note: "Taking paid writing work raises concern about distraction.",
+        reason: "The player spent the turn earning money instead of studying."
+      });
+      pushFactionReaction(changes, targets, "scholarOfficials", {
+        relationshipDelta: -1,
+        resentmentDelta: 1,
+        note: "Some local scholars see paid writing as a distraction from the exams.",
+        reason: "Money work slightly weakens the player's exam-network image."
+      });
+      break;
+    case "scholar_exam":
+      pushCharacterReaction(changes, targets, {
+        relationshipDelta: 3,
+        resentmentDelta: -1,
+        stance: "recommending mentor",
+        recentIntent: "Watch the player's exam performance closely.",
+        note: "Preparing for the exam makes the mentor more invested.",
+        reason: "The player formally moved toward the examination path."
+      });
+      pushFactionReaction(changes, targets, "scholarOfficials", {
+        relationshipDelta: 2,
+        resentmentDelta: -1,
+        note: "The examination network now has a concrete reason to notice the player.",
+        reason: "Exam entry creates a public scholar-official stake."
+      });
+      break;
+    case "scholar_rest":
+      pushCharacterReaction(changes, targets, {
+        relationshipDelta: 1,
+        resentmentDelta: -1,
+        stance: "patient mentor",
+        recentIntent: "Wait for the player to resume study.",
+        note: "Measured rest reassures the mentor that the player is not burning out.",
+        reason: "The player rested instead of forcing another risky action."
+      });
+      break;
+    case "emperor_relief":
+      pushFactionReaction(changes, targets, "scholarOfficials", {
+        relationshipDelta: 4,
+        resentmentDelta: -2,
+        stance: "publicly approving court",
+        recentIntent: "Praise benevolent relief while watching fiscal strain.",
+        note: "Relief policy wins scholar-official approval.",
+        reason: "Imperial disaster relief aligns with orthodox benevolent rule."
+      });
+      pushFactionReaction(changes, targets, "eunuchs", {
+        relationshipDelta: -2,
+        resentmentDelta: 2,
+        stance: "resentful palace network",
+        recentIntent: "Look for ways to recover influence over relief funds.",
+        note: "Palace intermediaries resent stricter relief accounting.",
+        reason: "Relief reduces room for inner-court handling of resources."
+      });
+      break;
+    case "emperor_tax":
+      pushFactionReaction(changes, targets, "eunuchs", {
+        relationshipDelta: 3,
+        resentmentDelta: -1,
+        stance: "useful revenue channel",
+        recentIntent: "Support fiscal extraction while avoiding blame.",
+        note: "New revenue gives palace channels room to maneuver.",
+        reason: "Tax increases favor factions that profit from revenue handling."
+      });
+      pushFactionReaction(changes, targets, "scholarOfficials", {
+        relationshipDelta: -4,
+        resentmentDelta: 4,
+        stance: "critical remonstrance",
+        recentIntent: "Press the throne to reduce pressure on common households.",
+        note: "Tax pressure angers civil officials concerned with local order.",
+        reason: "Heavier taxation damages the throne's scholar-official support."
+      });
+      break;
+    case "emperor_appointments":
+      pushFactionReaction(changes, targets, "scholarOfficials", {
+        relationshipDelta: 3,
+        resentmentDelta: -1,
+        stance: "empowered bureaucracy",
+        recentIntent: "Offer policy support if clean appointments continue.",
+        note: "Clean appointments strengthen civil confidence.",
+        reason: "Personnel reform favors scholar-official legitimacy."
+      });
+      pushFactionReaction(changes, targets, "eunuchs", {
+        relationshipDelta: -4,
+        resentmentDelta: 5,
+        stance: "threatened palace network",
+        recentIntent: "Protect old channels from further investigation.",
+        note: "Personnel cleanup threatens inner-court dependents.",
+        reason: "Appointments and investigations reduce factional shelter."
+      });
+      break;
+    case "emperor_military":
+      pushFactionReaction(changes, targets, "militaryLords", {
+        relationshipDelta: 5,
+        resentmentDelta: -2,
+        stance: "favored command bloc",
+        recentIntent: "Seek more funds and commissions after military attention.",
+        note: "Border preparation improves relations with armed interests.",
+        reason: "Military policy benefits garrison and command networks."
+      });
+      pushFactionReaction(changes, targets, "scholarOfficials", {
+        relationshipDelta: -1,
+        resentmentDelta: 1,
+        note: "Civil officials worry that soldiers are gaining leverage.",
+        reason: "Military expansion shifts court balance toward armed interests."
+      });
+      break;
+    case "minister_memorial":
+      pushFactionReaction(changes, targets, "scholarOfficials", {
+        relationshipDelta: 3,
+        resentmentDelta: -1,
+        stance: "admiring clean faction",
+        recentIntent: "Use the player's memorial as a rallying point.",
+        note: "Direct remonstrance improves clean-name standing.",
+        reason: "A principled memorial pleases orthodox officials."
+      });
+      pushFactionReaction(changes, targets, "eunuchs", {
+        relationshipDelta: -2,
+        resentmentDelta: 2,
+        note: "The memorial threatens interests tied to corrupt channels.",
+        reason: "Anti-corruption speech creates factional enemies."
+      });
+      break;
+    case "minister_network":
+      pushFactionReaction(changes, targets, "scholarOfficials", {
+        relationshipDelta: 4,
+        resentmentDelta: 1,
+        stance: "dense factional network",
+        recentIntent: "Trade favors while watching whether the player overreaches.",
+        note: "Networking builds allies but also factional suspicion.",
+        reason: "The player deliberately cultivated official networks."
+      });
+      break;
+    case "minister_affairs":
+      pushFactionReaction(changes, targets, "scholarOfficials", {
+        relationshipDelta: 2,
+        resentmentDelta: -1,
+        stance: "reliable administrator",
+        recentIntent: "Back the player on practical policy work.",
+        note: "Competent public work increases trust in the ministry.",
+        reason: "Administrative delivery gives the player bureaucratic credit."
+      });
+      break;
+    case "minister_attack":
+      pushFactionReaction(changes, targets, "scholarOfficials", {
+        relationshipDelta: -1,
+        resentmentDelta: 2,
+        stance: "uneasy factional operator",
+        recentIntent: "Use the attack if useful, but keep distance from scandal.",
+        note: "Political attacks create influence and stored grievance.",
+        reason: "Factional attacks make allies and enemies less stable."
+      });
+      pushFactionReaction(changes, targets, "eunuchs", {
+        relationshipDelta: 2,
+        resentmentDelta: -1,
+        note: "Palace channels appreciate pressure on civil rivals.",
+        reason: "A political attack can benefit palace-aligned interests."
+      });
+      break;
+    case "official_observe":
+      pushFactionReaction(changes, targets, "scholarOfficials", {
+        relationshipDelta: 2,
+        resentmentDelta: -1,
+        stance: "promising junior official",
+        recentIntent: "See whether the player learns office routines quickly.",
+        note: "Patient observation earns confidence from senior officials.",
+        reason: "The player approached office work with humility."
+      });
+      pushCharacterReaction(changes, targets, {
+        relationshipDelta: 1,
+        resentmentDelta: 0,
+        note: "A senior contact hears that the player is learning the rules.",
+        reason: "Observation improves the player's bureaucratic reputation."
+      });
+      break;
+    case "official_case":
+      pushFactionReaction(changes, targets, "scholarOfficials", {
+        relationshipDelta: 2,
+        resentmentDelta: -1,
+        stance: "lawful administrator",
+        recentIntent: "Recommend the player if case handling remains fair.",
+        note: "Fair casework improves bureaucratic trust.",
+        reason: "The player used office authority to settle disputes."
+      });
+      break;
+    case "official_relief":
+      pushFactionReaction(changes, targets, "scholarOfficials", {
+        relationshipDelta: 2,
+        resentmentDelta: -1,
+        stance: "benevolent local official",
+        recentIntent: "Credit the player for visible local relief.",
+        note: "Relief and farming work improve the player's clean-name reputation.",
+        reason: "The player spent resources on local welfare."
+      });
+      break;
+    case "official_network":
+      pushFactionReaction(changes, targets, "scholarOfficials", {
+        relationshipDelta: 3,
+        resentmentDelta: -1,
+        stance: "connected peer",
+        recentIntent: "Exchange favors through examination-year ties.",
+        note: "Meeting peers strengthens the player's official network.",
+        reason: "The player cultivated examination and office relationships."
+      });
+      pushCharacterReaction(changes, targets, {
+        relationshipDelta: 2,
+        resentmentDelta: -1,
+        note: "A personal contact becomes more willing to help.",
+        reason: "The player invested in direct social ties."
+      });
+      break;
+    case "official_bribe":
+      pushFactionReaction(changes, targets, "scholarOfficials", {
+        relationshipDelta: -5,
+        resentmentDelta: 5,
+        stance: "suspicious clean faction",
+        recentIntent: "Collect evidence if the player's conduct worsens.",
+        note: "Bribery stains the player's standing with clean officials.",
+        reason: "Corrupt conduct damages orthodox bureaucratic trust."
+      });
+      pushFactionReaction(changes, targets, "eunuchs", {
+        relationshipDelta: 3,
+        resentmentDelta: -1,
+        stance: "profitable private channel",
+        recentIntent: "Offer access while the player remains useful.",
+        note: "Corrupt channels become friendlier when money moves.",
+        reason: "Bribery aligns the player with informal palace-style brokerage."
+      });
+      break;
+    default:
+      pushFactionReaction(changes, targets, "scholarOfficials", {
+        relationshipDelta: 1,
+        resentmentDelta: 0,
+        note: "The action leaves a small trace in official gossip.",
+        reason: "The player's public action is visible to nearby social networks."
+      });
+      break;
+  }
+
+  return changes.slice(0, 5);
+}
+
+function numberIncreases(before, after) {
+  return typeof before === "number" && typeof after === "number" && after > before;
+}
+
+function numberDecreases(before, after) {
+  return typeof before === "number" && typeof after === "number" && after < before;
+}
+
+function arrayExpands(before, after) {
+  return Array.isArray(after) && after.length > (Array.isArray(before) ? before.length : 0);
+}
+
+function classifyScholarRelationshipAction(worldState, patch, examTrigger) {
+  const player = worldState.player || {};
+  const playerPatch = patch.player || {};
+
+  if (examTrigger?.shouldStart) return "scholar_exam";
+  if (Object.prototype.hasOwnProperty.call(playerPatch, "teacher")) return "scholar_teacher";
+  if (Object.prototype.hasOwnProperty.call(playerPatch, "studiedBooks")) return "scholar_study";
+  if (numberIncreases(player.gold, playerPatch.gold)) return "scholar_work";
+  if (arrayExpands(player.connections, playerPatch.connections)) {
+    return Object.prototype.hasOwnProperty.call(playerPatch, "literaryTalent")
+      ? "scholar_debate"
+      : "scholar_travel";
+  }
+  return "scholar_rest";
+}
+
+function classifyEmperorRelationshipAction(worldState, patch) {
+  if (numberIncreases(worldState.armySize, patch.armySize)) return "emperor_military";
+  if (numberIncreases(worldState.taxRate, patch.taxRate)) return "emperor_tax";
+  if (numberDecreases(worldState.treasury, patch.treasury) && numberDecreases(worldState.grainReserve, patch.grainReserve)) {
+    return "emperor_relief";
+  }
+  if (numberDecreases(worldState.corruption, patch.corruption)) return "emperor_appointments";
+  return "emperor_council";
+}
+
+function classifyMinisterRelationshipAction(worldState, patch) {
+  const player = worldState.player || {};
+  const playerPatch = patch.player || {};
+
+  if (arrayExpands(player.connections, playerPatch.connections)) return "minister_network";
+  if (numberIncreases(worldState.treasury, patch.treasury) || numberIncreases(worldState.grainReserve, patch.grainReserve)) {
+    return "minister_affairs";
+  }
+  if (numberDecreases(player.integrity, playerPatch.integrity)) return "minister_attack";
+  if (numberIncreases(player.integrity, playerPatch.integrity)) return "minister_memorial";
+  return "minister_default";
+}
+
+function classifyOfficialRelationshipAction(worldState, patch) {
+  const player = worldState.player || {};
+  const playerPatch = patch.player || {};
+
+  if (numberIncreases(worldState.corruption, patch.corruption) && numberIncreases(player.gold, playerPatch.gold)) {
+    return "official_bribe";
+  }
+  if (arrayExpands(player.connections, playerPatch.connections)) return "official_network";
+  if (numberIncreases(player.academia, playerPatch.academia) || numberIncreases(player.adaptability, playerPatch.adaptability)) {
+    return "official_observe";
+  }
+  if (numberIncreases(worldState.publicOrder, patch.publicOrder) && numberDecreases(worldState.corruption, patch.corruption)) {
+    return "official_case";
+  }
+  if (numberDecreases(worldState.grainReserve, patch.grainReserve) || numberIncreases(worldState.population, patch.population)) {
+    return "official_relief";
+  }
+  return "official_default";
+}
+
+function classifyRelationshipAction(worldState, result) {
+  const patch = result?.statePatch || {};
+  const examTrigger = result?.examTrigger || {};
+  const role = worldState?.player?.role;
+
+  if (role === "scholar") return classifyScholarRelationshipAction(worldState, patch, examTrigger);
+  if (role === "emperor") return classifyEmperorRelationshipAction(worldState, patch);
+  if (role === "minister") return classifyMinisterRelationshipAction(worldState, patch);
+  if (role === "official") return classifyOfficialRelationshipAction(worldState, patch);
+  return "generic";
+}
+
+function withMockRelationshipReactions(result, worldState) {
+  const existing = Array.isArray(result.relationshipChanges) ? result.relationshipChanges : [];
+  const generated = buildMockRelationshipChanges(worldState, classifyRelationshipAction(worldState, result));
+
+  return {
+    ...result,
+    relationshipChanges: [...existing, ...generated].slice(0, 5)
   };
 }
 
@@ -728,28 +1180,33 @@ function buildOfficialTurn(input, worldState) {
 
 async function runTurn(worldState, input) {
   const player = worldState.player;
+  let result;
 
   if (player.role === "scholar") {
-    return buildScholarTurn(input, player);
+    result = buildScholarTurn(input, player);
+    return withMockRelationshipReactions(result, worldState);
   }
 
   if (player.role === "emperor") {
-    return buildEmperorTurn(input, worldState);
+    result = buildEmperorTurn(input, worldState);
+    return withMockRelationshipReactions(result, worldState);
   }
 
   if (player.role === "minister") {
-    return buildMinisterTurn(input, worldState);
+    result = buildMinisterTurn(input, worldState);
+    return withMockRelationshipReactions(result, worldState);
   }
 
   if (player.role === "official") {
-    return buildOfficialTurn(input, worldState);
+    result = buildOfficialTurn(input, worldState);
+    return withMockRelationshipReactions(result, worldState);
   }
 
   const patch = { player: {} };
   const mentGain = Math.random() > 0.5 ? 1 : 0;
   if (mentGain) patch.player.mentality = player.mentality + mentGain;
 
-  return {
+  result = {
     narrative: `你下达了指令：“${input.trim()}”。幕僚们领命而去，数日后传来回音。事态正在缓慢推进。`,
     statePatch: patch,
     attributeChanges: buildAttributeChanges(player, patch),
@@ -757,6 +1214,7 @@ async function runTurn(worldState, input) {
     events: [`${player.name}下达指令：${input.trim().slice(0, 30)}`],
     examTrigger: { shouldStart: false, level: null, reason: "" }
   };
+  return withMockRelationshipReactions(result, worldState);
 }
 
 const QUESTION_BANK = {

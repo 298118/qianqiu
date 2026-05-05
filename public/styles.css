@@ -411,6 +411,12 @@ button:disabled {
   background: rgba(53, 75, 99, 0.06);
 }
 
+.narrative .relationship-change {
+  color: var(--jade);
+  border-left-color: rgba(47, 111, 94, 0.42);
+  background: rgba(47, 111, 94, 0.07);
+}
+
 .narrative .placeholder {
   color: var(--muted);
 }

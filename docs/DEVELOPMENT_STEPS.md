@@ -52,7 +52,7 @@
 | S21.4 | DONE | 为世界 tick 增加自动化测试，覆盖数值边界、事件裁剪和 Mock 稳定性 | 2026-05-05 | Codex | 543a966 |
 | S22.1 | DONE | 扩展 NPC 与派系关系账本，记录人物立场、恩怨、人脉来源和近期意图 | 2026-05-05 | Codex | 296928f |
 | S22.2 | DONE | 更新状态 patch 白名单和提示词摘要，让 provider 只能建议关系变化，服务器负责裁决 | 2026-05-05 | Codex | e5d2d51 |
-| S22.3 | TODO | 在 Mock 中加入人物/派系对玩家行动的可追踪反应 |
+| S22.3 | DONE | 在 Mock 中加入人物/派系对玩家行动的可追踪反应 | 2026-05-05 | Codex | 本次 S22.3 提交 |
 | S23.1 | TODO | 深化地方官身份：县库、乡绅、盗匪、诉讼、赋役、水利和地方民心 |
 | S23.2 | TODO | 深化将领身份：兵员、军粮、士气、侦察、战役风险和边境态势 |
 | S23.3 | TODO | 深化入仕官员身份：上官、同年、考成、升迁、弹劾和清浊操守 |
@@ -149,6 +149,35 @@
 ```
 
 ### 2026-05-05
+
+Tool: Codex
+
+Step: S22.3
+
+Commit: 本次 S22.3 提交
+
+Completed:
+- Mock turn output now generates concrete `relationshipChanges` for scholar, emperor, minister, and official actions instead of always returning an empty list.
+- Mock classifies the resolved action from its own `statePatch` and `examTrigger`, then targets only currently visible relationship ledger entries.
+- Relationship changes still do not mutate `relationshipLedger` directly; `POST /api/game/turn` applies them through `applyRelationshipChanges()` after the ordinary turn patch increments `turnCount`.
+- The browser narrative now renders applied relationship changes as concise `[人脉]` feedback.
+- Added `test/mockRelationshipReactions.test.js` to cover direct Mock suggestions and route-level server ledger persistence.
+
+Verification:
+- `node --check src/ai/providers/mock.js`
+- `node --check public/app.js`
+- `node --check test/mockRelationshipReactions.test.js`
+- `node --test test/mockRelationshipReactions.test.js` passed with 2 tests.
+- `node --test test/gameTurnRelationships.test.js` passed with 1 test.
+- `git diff --check`
+- `npm test` passed with 41 tests.
+
+Risk/leftover:
+- Relationship display is intentionally concise narrative feedback, not a dedicated ledger inspection panel.
+- General and magistrate role loops still remain future phase-two work.
+
+Next:
+- S23.1: deepen local magistrate identity loops.
 
 Tool: Codex
 

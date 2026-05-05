@@ -389,6 +389,27 @@ function appendAttributeChanges(changes) {
   narrative.scrollTop = narrative.scrollHeight;
 }
 
+function formatSignedDelta(value) {
+  return value > 0 ? `+${value}` : `${value}`;
+}
+
+function appendRelationshipChanges(changes) {
+  if (!Array.isArray(changes) || !changes.length) return;
+
+  changes.forEach((change) => {
+    const relationshipDelta = change.relationship?.delta || 0;
+    const resentmentDelta = change.resentment?.delta || 0;
+    const parts = [];
+    if (relationshipDelta) parts.push(`关系 ${formatSignedDelta(relationshipDelta)}`);
+    if (resentmentDelta) parts.push(`怨望 ${formatSignedDelta(resentmentDelta)}`);
+
+    const target = change.name || change.targetId || "未知人脉";
+    const detail = parts.length ? parts.join("，") : "态度有变";
+    const note = change.note ? `：${change.note}` : "";
+    appendNarrative(`[人脉] ${target} ${detail}${note}`, "relationship-change");
+  });
+}
+
 function appendWorldTickFeedback(worldTick) {
   if (!worldTick) return;
   const events = Array.isArray(worldTick.events) ? worldTick.events : [];
@@ -723,6 +744,7 @@ async function readSseResponse(response, handlers) {
 
 async function handleTurnPayload(payload) {
   appendAttributeChanges(payload.attributeChanges);
+  appendRelationshipChanges(payload.relationshipChanges);
   appendWorldTickFeedback(payload.worldTick);
   renderWorldState(payload.worldState);
   actionInput.value = "";

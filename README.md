@@ -74,7 +74,7 @@ ANTHROPIC_MODEL=claude-sonnet-4-5
 - 书生主线：日常读书、拜师、游学、辩经、谋生、赴考；科举路径为 `寒窗 -> 童试 -> 秀才 -> 乡试 -> 举人 -> 会试 -> 贡士 -> 殿试 -> 进士 -> 入仕官员`。
 - 考试系统：服务器定义四级考试规则，Mock/真实 provider 只负责出题和评卷建议；交卷后保存文章、五维评分、监试复核、虚拟同场榜单和晋级结果。
 - 反作弊：本地检查篇幅过短、现代词、疑似照抄经典片段和代笔概率；严重作伪会强制落第、降档并扣减声望与心性。
-- NPC/派系记忆：服务器维护 `relationshipLedger`，真实 provider 只能通过顶层 `relationshipChanges` 建议可见角色/派系关系变化，最终合并、裁剪和持久化仍由服务器裁决。
+- NPC/派系记忆：服务器维护 `relationshipLedger`；Mock 会按书生/皇帝/大臣/官员行动生成可见人物/派系反应，真实 provider 只能通过顶层 `relationshipChanges` 建议可见角色/派系关系变化，最终合并、裁剪和持久化仍由服务器裁决。
 - 身份循环：皇帝支持赈灾、用人、筹饷、整军和廷议；大臣支持上疏、经营人脉、督办公务和弹劾；入仕官员支持观政、断案、抚民、同年人脉和贪墨风险。
 - UI：宣纸/墨色/朱砂/青玉视觉语言，移动端单列布局，底部自由行动输入，科举面板、身份面板、考试弹窗和可折叠放榜详情。
 
@@ -89,7 +89,7 @@ POST /api/exam/question
 POST /api/exam/submit
 ```
 
-`POST /api/game/turn` 支持 SSE：客户端发送 `Accept: text/event-stream` 时会收到 `state_preview`、`narrative_chunk`、`final_state` 和 `error` 事件。未请求 SSE 的脚本仍会收到普通 JSON，便于测试和兼容旧调用。成功行动会运行服务器拥有的月度 `worldTick`，响应中包含 `summary`、`events` 和 `attributeChanges`，前端会显示当前年月与简短月度反馈；若 provider 提交了合法的关系建议，响应还会包含服务器实际应用后的 `relationshipChanges`。
+`POST /api/game/turn` 支持 SSE：客户端发送 `Accept: text/event-stream` 时会收到 `state_preview`、`narrative_chunk`、`final_state` 和 `error` 事件。未请求 SSE 的脚本仍会收到普通 JSON，便于测试和兼容旧调用。成功行动会运行服务器拥有的月度 `worldTick`，响应中包含 `summary`、`events` 和 `attributeChanges`，前端会显示当前年月与简短月度反馈；若 provider 提交了合法的关系建议，响应还会包含服务器实际应用后的 `relationshipChanges`，浏览器叙事区会追加简短 `[人脉]` 反馈。
 
 ## 项目结构
 

@@ -96,10 +96,10 @@ event: narrative_chunk
 data: {"text":"..."}
 
 event: state_preview
-data: {"sessionId":"uuid","attributeChanges":[],"examTrigger":{},"worldTick":{}}
+data: {"sessionId":"uuid","attributeChanges":[],"relationshipChanges":[],"examTrigger":{},"worldTick":{}}
 
 event: final_state
-data: {"sessionId":"uuid","narrative":"...","attributeChanges":[],"examTrigger":{},"worldTick":{},"worldState":{}}
+data: {"sessionId":"uuid","narrative":"...","attributeChanges":[],"relationshipChanges":[],"examTrigger":{},"worldTick":{},"worldState":{}}
 ```
 
 If a provider/session error happens after the stream has opened, the route writes:
@@ -178,7 +178,7 @@ Provider outputs must match the schemas in `src/ai/schemas.js`:
 
 Real provider adapters parse model text through `src/utils/json.js`, validate with Ajv, retry once on failure, then fall back to Mock for that method. The model never owns final game state. It can suggest `statePatch`; the server whitelists and clamps it.
 
-For turn responses, models may also suggest top-level `relationshipChanges`. These are not state patches. They are bounded social-memory deltas for existing visible relationship ledger ids, and the server is free to clamp or ignore them before persistence.
+For turn responses, providers may also suggest top-level `relationshipChanges`. These are not state patches. They are bounded social-memory deltas for existing visible relationship ledger ids, and the server is free to clamp or ignore them before persistence. Mock now emits these suggestions for scholar, emperor, minister, and official actions so local play can exercise social memory without real model keys.
 
 ## State Model
 
@@ -219,6 +219,8 @@ The S22 relationship contract is recorded in [docs/RELATIONSHIP_LEDGER_CONTRACT.
 The ledger is deliberately server-owned. It normalizes text fields, clamps relationship values to `-100..100`, clamps resentment to `0..100`, drops invented character/faction ledger ids, and preserves only short `recentNotes`.
 
 S22.2 adds the controlled relationship-suggestion path and prompt summary. Turn prompts include a compact visible-only relationship summary. Provider `relationshipChanges` suggestions are processed at most five per turn; they must target existing visible entries, use `relationshipDelta` clamped to `-12..12`, use `resentmentDelta` clamped to `-10..10`, and may only update short `stance`, `recentIntent`, and note text. Applied changes are returned in JSON and SSE payloads as `relationshipChanges`.
+
+S22.3 makes Mock produce concrete relationship suggestions after it classifies the resolved action from its own `statePatch` and `examTrigger`. The suggestions still target only visible ledger entries and still pass through `applyRelationshipChanges()` in the route before persistence. The browser appends concise `[人脉]` lines for applied changes.
 
 ## Phase-Two World Tick Contract
 
