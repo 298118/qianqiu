@@ -6,14 +6,14 @@ Both tools must read this file at the start of every development session, after 
 
 ## Current Snapshot
 
-- Repository status: first runnable vertical slice is implemented. The app installs with npm, starts an Express server, serves a plain HTML/CSS/JS frontend, and can create/read a Mock scholar session.
+- Repository status: first playable vertical slice is implemented. The app installs with npm, starts an Express server, serves a plain HTML/CSS/JS frontend, and can create/read/Mock-play a scholar session with free-text actions.
 - Canonical product brief: `docs/QIANQIU_DEVELOPMENT_BRIEF.md`.
 - Shared implementation roadmap and progress ledger: `docs/DEVELOPMENT_STEPS.md`.
 - Codex entrypoint: `AGENTS.md`.
 - Claude Code entrypoint: `CLAUDE.md`.
 - Default development target: runnable Node.js + Express + pure HTML/CSS/JS game at `http://localhost:3000`.
 - Default AI mode: `mock`, playable without API keys.
-- Implemented API surface: `GET /api/health`, `POST /api/game/start`, and `GET /api/game/state/:sessionId`.
+- Implemented API surface: `GET /api/health`, `POST /api/game/start`, `GET /api/game/state/:sessionId`, `POST /api/game/turn`.
 - Local session files are written under `data/sessions/*.json`, which remains ignored by Git.
 
 ## Active Decisions
@@ -23,6 +23,12 @@ Both tools must read this file at the start of every development session, after 
 - Every coherent project change must be committed locally with Git.
 - The first runtime slice uses Express, CORS, and dotenv only; session ids use Node.js `crypto.randomUUID()` to avoid adding a separate id dependency this early.
 - Non-`mock` AI providers are configured but not implemented yet; `src/ai/index.js` falls back to Mock when another provider is requested.
+- State patch whitelist: `src/game/stateRules.js` defines allowed patch keys for top-level state and player fields. Only whitelisted fields can be modified by AI output.
+- Numerical clamping: all numeric fields have defined min/max ranges in stateRules.js. Patches are clamped after merge.
+- Event history: capped at 20 entries, oldest trimmed first.
+- `POST /api/game/turn` is non-streaming JSON for now; SSE streaming is S04.4.
+- Frontend restores session from localStorage on page load.
+- Mock provider `runTurn` recognizes scholar actions: study, teacher visit, travel/social, money/work, exam request, and rest.
 - Any behavior/API/setup/architecture decision that affects future work must be recorded in this file or in the canonical development brief.
 - Any roadmap step that starts, completes, blocks, or changes scope must be recorded in `docs/DEVELOPMENT_STEPS.md`.
 - If the change is a short handoff note, update this file.
@@ -58,11 +64,11 @@ Before finishing each coherent change:
 - 2026-05-05: `npm install` completed with 0 vulnerabilities.
 - 2026-05-05: `npm start` served `http://localhost:3000`; `GET /api/health`, homepage load, `POST /api/game/start`, and `GET /api/game/state/:sessionId` were verified with PowerShell web requests.
 - 2026-05-05: First runnable vertical slice committed as `c6e0537`.
+- 2026-05-05: `POST /api/game/turn` verified with study action (academia +1), exam trigger (activeExam set to child_exam), and state restore. Error handling tested for empty input and missing sessionId. All tests pass.
 
 ## Next Recommended Step
 
 Implement the next gameplay slice:
 
-- Add `POST /api/game/turn` in a basic non-streaming form.
-- Add state patch rules and clamping before applying Mock AI changes.
-- Extend the frontend with a main free-text action input and narrative history.
+- S06.1-S06.3: Expand Mock provider to better recognize scholar daily actions and update all relevant attributes. Add scholar-specific panel in frontend showing exam progress, stats, teacher, books, connections.
+- S07.1: Define exam levels, thresholds, question types, and promotion mappings in `src/game/exams.js`.

@@ -69,18 +69,18 @@
 | S01.3 | TODO | 创建前端最小壳：开局按钮、状态区、叙事区 |  |  |  |
 | S02.1 | TODO | 实现 session JSON 存储与安全路径处理 |  |  |  |
 | S02.2 | TODO | 实现初始世界状态工厂 |  |  |  |
-| S02.3 | TODO | 实现状态 patch 白名单、clamp 与历史事件裁剪 |  |  |  |
+| S02.3 | DONE | 实现状态 patch 白名单、clamp 与历史事件裁剪 | 2026-05-05 | Claude Code | d119393 |
 | S03.1 | TODO | 定义 AI provider 接口与 Mock provider 骨架 |  |  |  |
 | S03.2 | TODO | 定义通用推演、出题、评卷 JSON schema |  |  |  |
 | S03.3 | TODO | 实现 prompt 模板文件并详细注释提示词意图 |  |  |  |
 | S03.4 | TODO | 实现 JSON 解析、schema 校验、失败降级 |  |  |  |
 | S04.1 | TODO | 实现 `POST /api/game/start` |  |  |  |
 | S04.2 | TODO | 实现 `GET /api/game/state/:sessionId` |  |  |  |
-| S04.3 | TODO | 实现 `POST /api/game/turn` 非流式基础版本 |  |  |  |
+| S04.3 | DONE | 实现 `POST /api/game/turn` 非流式基础版本 | 2026-05-05 | Claude Code | d119393 |
 | S04.4 | TODO | 将 `/api/game/turn` 升级为 SSE 流式反馈 |  |  |  |
-| S05.1 | TODO | 实现开局页：朝代、年份、身份、姓名、家境 |  |  |  |
-| S05.2 | TODO | 实现主界面状态栏、叙事历史、自由输入 |  |  |  |
-| S05.3 | TODO | 实现 session 恢复与刷新不丢失当前局 |  |  |  |
+| S05.1 | DONE | 实现开局页：朝代、年份、身份、姓名、家境 | 2026-05-05 | Codex | c6e0537 |
+| S05.2 | DONE | 实现主界面状态栏、叙事历史、自由输入 | 2026-05-05 | Claude Code | d119393 |
+| S05.3 | DONE | 实现 session 恢复与刷新不丢失当前局 | 2026-05-05 | Claude Code | d119393 |
 | S06.1 | TODO | Mock 识别书生日常行动：读书、拜师、游学、谋生 |  |  |  |
 | S06.2 | TODO | 书生日常行动影响属性、金钱、人脉、事件历史 |  |  |  |
 | S06.3 | TODO | 实现书生专属面板与属性变化展示 |  |  |  |
@@ -310,3 +310,32 @@ Verification: Ran `npm install` successfully with 0 vulnerabilities. Started the
 Risk/leftover: The turn loop, state patch whitelist/clamping, AI JSON schemas, exam endpoints, and complete scholar exam path are still TODO.
 
 Next step: Implement S02.3 and S04.3 together so free-text actions can change state only through server-side rules.
+
+---
+
+### 2026-05-05
+
+工具：Claude Code
+
+步骤：S02.3, S04.3, S05.2, S05.3
+
+提交：d119393
+
+完成：
+- S02.3：新增 `src/game/stateRules.js`，实现状态 patch 白名单（只允许预定义字段修改）、数值 clamp（如 health 0-100, gold 0-100000 等）、eventHistory 保留最近 20 条。
+- S04.3：新增 `POST /api/game/turn` 端点，接收 sessionId 和自由文本 input，通过 Mock provider 推演，经 stateRules 安全应用后写回 session。
+- S05.2：前端新增底部自由输入区（textarea + 行动按钮），叙事区改为追加历史模式，属性变化高亮显示（绿色增长/红色下降），科举提示内联显示。
+- S05.3：页面加载时自动从 localStorage 恢复 sessionId，读取并展示已有事件历史。
+
+验证：
+- `npm install` 无漏洞。
+- `npm start` 启动成功。
+- `POST /api/game/start` 创建 session。
+- `POST /api/game/turn` 研读《论语》→ 学识增加，turnCount 递增。
+- `POST /api/game/turn` 请求考试 → activeExam 设为 child_exam。
+- `GET /api/game/state/:sessionId` 恢复完整状态。
+- 错误处理：空 input 返回 400，缺 sessionId 返回 400。
+
+风险/遗留：SSE 流式（S04.4）、书生日常循环细化（S06.x）、考试出题与评卷（S07-S08）尚未实现。Mock provider 的行动识别可进一步丰富。
+
+下一步：S06.1-S06.3（书生日常循环）或 S07.1（科举阶段定义），取决于优先级。

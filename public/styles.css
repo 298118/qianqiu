@@ -7,6 +7,8 @@
   --cinnabar: #9b2f22;
   --line: rgba(58, 43, 30, 0.22);
   --shadow: rgba(50, 34, 20, 0.14);
+  --green: #2d6a2e;
+  --red: #9b2f22;
 }
 
 * {
@@ -111,7 +113,6 @@ textarea {
 }
 
 button {
-  grid-column: 1 / -1;
   min-height: 46px;
   border: 0;
   border-radius: 4px;
@@ -125,9 +126,13 @@ button:disabled {
   opacity: 0.7;
 }
 
+.start-form button {
+  grid-column: 1 / -1;
+}
+
 .game-panel {
   display: grid;
-  grid-template-rows: auto 1fr;
+  grid-template-rows: auto 1fr auto;
   min-height: 520px;
 }
 
@@ -153,10 +158,82 @@ button:disabled {
   font-size: 1.08rem;
   line-height: 1.9;
   white-space: pre-wrap;
+  overflow-y: auto;
+  max-height: 60vh;
 }
 
 .narrative p {
-  margin: 0;
+  margin: 0 0 12px;
+}
+
+.narrative .player-input {
+  color: var(--cinnabar);
+  font-style: italic;
+  opacity: 0.85;
+}
+
+.narrative .error {
+  color: var(--red);
+}
+
+.narrative .exam-hint {
+  color: var(--green);
+  font-weight: 700;
+  border: 1px solid var(--green);
+  border-radius: 4px;
+  padding: 6px 12px;
+  background: rgba(45, 106, 46, 0.06);
+  display: inline-block;
+}
+
+.narrative .placeholder {
+  color: var(--muted);
+}
+
+.attr-changes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 8px 0 16px;
+  padding: 8px 12px;
+  border-radius: 4px;
+  background: rgba(230, 213, 179, 0.3);
+  font-size: 0.88rem;
+}
+
+.attr-changes span {
+  padding: 2px 8px;
+  border-radius: 3px;
+}
+
+.attr-up {
+  color: var(--green);
+  background: rgba(45, 106, 46, 0.08);
+}
+
+.attr-down {
+  color: var(--red);
+  background: rgba(155, 47, 34, 0.08);
+}
+
+/* Action area */
+.action-area {
+  display: flex;
+  gap: 10px;
+  padding: 14px 20px;
+  border-top: 1px solid var(--line);
+  background: rgba(230, 213, 179, 0.42);
+}
+
+.action-area textarea {
+  flex: 1;
+  min-height: 46px;
+  resize: vertical;
+}
+
+.action-area button {
+  align-self: flex-end;
+  min-width: 80px;
 }
 
 @media (max-width: 820px) {
@@ -172,5 +249,13 @@ button:disabled {
 
   .start-form {
     grid-template-columns: 1fr;
+  }
+
+  .narrative {
+    max-height: 50vh;
+  }
+
+  .action-area {
+    flex-direction: column;
   }
 }
