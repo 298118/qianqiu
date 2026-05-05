@@ -109,9 +109,9 @@
 | S13.1 | DONE | 增加自动化测试：状态规则、session 存储 | 2026-05-05 | Codex | 4a70f5a |
 | S13.2 | DONE | 增加自动化测试：科举晋级与作弊惩罚 | 2026-05-05 | Codex | 4a70f5a |
 | S13.3 | DONE | 增加端到端手动验收脚本说明 | 2026-05-05 | Codex | 4a70f5a |
-| S14.1 | DONE | README 完整化：安装、配置、启动、provider 切换 | 2026-05-05 | Codex | pending |
-| S14.2 | DONE | 补齐开发者文档：架构、AI 合约、状态字段 | 2026-05-05 | Codex | pending |
-| S14.3 | DONE | 第一阶段完整验收与稳定化 | 2026-05-05 | Codex | pending |
+| S14.1 | DONE | README 完整化：安装、配置、启动、provider 切换 | 2026-05-05 | Codex | b67aadb |
+| S14.2 | DONE | 补齐开发者文档：架构、AI 合约、状态字段 | 2026-05-05 | Codex | b67aadb |
+| S14.3 | DONE | 第一阶段完整验收与稳定化 | 2026-05-05 | Codex | b67aadb |
 
 ## 4. 分阶段详细步骤
 
@@ -580,7 +580,7 @@ Codex progress note, 2026-05-05:
 
 Steps: S14.1, S14.2, S14.3
 
-Commit: pending
+Commit: b67aadb
 
 Completed:
 
