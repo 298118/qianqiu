@@ -84,9 +84,9 @@
 | S06.1 | DONE | Mock 识别书生日常行动：读书、拜师、游学、谋生 | 2026-05-05 | Codex | 9aa5263 |
 | S06.2 | DONE | 书生日常行动影响属性、金钱、人脉、事件历史 | 2026-05-05 | Codex | 9aa5263 |
 | S06.3 | DONE | 实现书生专属面板与属性变化展示 | 2026-05-05 | Codex | 9aa5263 |
-| S07.1 | DONE | 定义科举阶段、门槛、题型、晋级映射 | 2026-05-05 | Codex | PENDING |
-| S07.2 | DONE | 实现 `POST /api/exam/question` 和 activeExam 保存 | 2026-05-05 | Codex | PENDING |
-| S07.3 | DONE | 实现考试弹窗：题目、要求、大文本编辑区 | 2026-05-05 | Codex | PENDING |
+| S07.1 | DONE | 定义科举阶段、门槛、题型、晋级映射 | 2026-05-05 | Codex | 47dae05 |
+| S07.2 | DONE | 实现 `POST /api/exam/question` 和 activeExam 保存 | 2026-05-05 | Codex | 47dae05 |
+| S07.3 | DONE | 实现考试弹窗：题目、要求、大文本编辑区 | 2026-05-05 | Codex | 47dae05 |
 | S08.1 | TODO | 实现 Mock 考官评分算法 |  |  |  |
 | S08.2 | TODO | 实现本地防作弊检测：现代词、过短、疑似照抄 |  |  |  |
 | S08.3 | TODO | 生成 4-8 名虚拟同场考生与合理分数 |  |  |  |
@@ -370,7 +370,7 @@ Codex progress note, 2026-05-05:
 
 Steps: S07.1, S07.2, S07.3
 
-Commit: PENDING
+Commit: 47dae05
 
 Completed:
 
