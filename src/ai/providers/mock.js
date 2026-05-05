@@ -1,3 +1,5 @@
+const { getExamRequirements, getNextExamLevel } = require("../../game/exams");
+
 function describeOpening(worldState) {
   const { dynasty, year, player, setup } = worldState;
   const background = setup.background ? `出身记载：${setup.background}` : "家世未显，前路由一念开端。";
@@ -53,14 +55,6 @@ function extractBook(input) {
   const knownBooks = ["论语", "孟子", "大学", "中庸", "诗经", "尚书", "礼记", "春秋", "易经", "资治通鉴", "史记"];
   const found = knownBooks.find((book) => input.includes(book));
   return found ? `《${found}》` : "经义典籍";
-}
-
-function getNextExamLevel(examRank) {
-  if (examRank === null) return "child_exam";
-  if (examRank === "秀才") return "provincial_exam";
-  if (examRank === "举人") return "metropolitan_exam";
-  if (examRank === "贡士") return "palace_exam";
-  return null;
 }
 
 function buildAttributeChanges(beforePlayer, patch) {
@@ -317,7 +311,54 @@ async function runTurn(worldState, input) {
   };
 }
 
+const QUESTION_BANK = {
+  child_exam: [
+    "《论语》有言：“学而时习之，不亦说乎。”试论为学之本，在勤习还是在明理。",
+    "孟子论养气，首重志向。试述士子读书立志之义。",
+    "《大学》言修身齐家。试以一县士风为例，申论修身何以及于乡里。"
+  ],
+  provincial_exam: [
+    "岁歉之后，民多负租。请论减赋、赈粜与劝农三策何者先行。",
+    "边饷日急而府库不丰，试陈筹饷安民之策。",
+    "地方书院兴废关乎士风。请论官府应如何奖学而不扰民。"
+  ],
+  metropolitan_exam: [
+    "以“君子务本，本立而道生”为题，按制艺章法成篇。",
+    "以“民惟邦本，本固邦宁”为题，作八股一篇。",
+    "以“礼之用，和为贵”为题，申明经义并及治道。"
+  ],
+  palace_exam: [
+    "朕闻治天下者，贵在安民而不废法。今财赋、边防、吏治三者交迫，诸生各陈所见。",
+    "国家承平既久，积弊渐生。若欲清吏治、宽民力、修武备，宜先何务？",
+    "朝廷用人，或重资望，或重才干。试论取士与任官之道。"
+  ]
+};
+
+async function generateExamQuestion(worldState, exam) {
+  const player = worldState.player;
+  const bank = QUESTION_BANK[exam.level] || QUESTION_BANK.child_exam;
+  const question = pickRandom(bank);
+  const studied = (player.studiedBooks || []).slice(-2).join("、");
+  const studyNote = studied ? `近来所读${studied}，可择其义理佐证。` : "可援引四书五经义理，不必拘泥一章。";
+
+  return {
+    level: exam.level,
+    examName: exam.name,
+    examQuestion: [
+      `${worldState.dynasty}${worldState.year}年${exam.name}题：${question}`,
+      studyNote
+    ].join("\n"),
+    questionType: exam.questionType,
+    difficulty: exam.difficulty,
+    requirements: getExamRequirements(exam),
+    wordCount: exam.wordCount,
+    passScore: exam.passScore,
+    promotionRank: exam.promotionRank
+  };
+}
+
 module.exports = {
   startGame,
-  runTurn
+  runTurn,
+  generateExamQuestion
 };

@@ -197,6 +197,13 @@ button:disabled {
   overflow-wrap: anywhere;
 }
 
+.panel-action {
+  width: 100%;
+  min-height: 38px;
+  margin-top: 2px;
+  font-size: 0.92rem;
+}
+
 .exam-steps {
   display: grid;
   gap: 6px;
@@ -362,6 +369,91 @@ button:disabled {
   min-width: 80px;
 }
 
+.exam-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 20;
+  display: grid;
+  place-items: center;
+  padding: 22px;
+  background: rgba(44, 33, 24, 0.42);
+}
+
+.exam-backdrop[hidden] {
+  display: none;
+}
+
+.exam-modal {
+  width: min(780px, 100%);
+  max-height: min(92vh, 860px);
+  display: grid;
+  grid-template-rows: auto auto auto auto minmax(190px, 1fr) auto;
+  gap: 14px;
+  overflow: hidden;
+  border: 1px solid rgba(58, 43, 30, 0.32);
+  border-radius: 6px;
+  background: #fbf2dc;
+  box-shadow: 0 24px 60px rgba(20, 13, 8, 0.28);
+  padding: 22px;
+}
+
+.exam-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  color: var(--cinnabar);
+  font-weight: 700;
+}
+
+.exam-header button {
+  width: 36px;
+  min-height: 36px;
+  padding: 0;
+  border: 1px solid var(--line);
+  color: var(--ink);
+  background: rgba(255, 250, 239, 0.76);
+}
+
+.exam-modal h2 {
+  margin: 0;
+  font-size: 1.6rem;
+  line-height: 1.25;
+}
+
+.exam-modal p {
+  margin: 0;
+  line-height: 1.75;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.exam-requirements {
+  display: grid;
+  gap: 6px;
+  margin: 0;
+  padding: 12px 16px 12px 34px;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  background: rgba(230, 213, 179, 0.28);
+  color: var(--muted);
+  line-height: 1.55;
+}
+
+.exam-modal textarea {
+  min-height: 190px;
+  line-height: 1.8;
+}
+
+.exam-actions {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.exam-actions button {
+  min-width: 110px;
+}
+
 @media (max-width: 820px) {
   .app-shell {
     grid-template-columns: 1fr;
@@ -391,5 +483,15 @@ button:disabled {
 
   .action-area {
     flex-direction: column;
+  }
+
+  .exam-backdrop {
+    align-items: stretch;
+    padding: 10px;
+  }
+
+  .exam-modal {
+    max-height: calc(100vh - 20px);
+    padding: 16px;
   }
 }

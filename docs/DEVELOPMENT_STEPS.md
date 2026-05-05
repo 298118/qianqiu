@@ -84,9 +84,9 @@
 | S06.1 | DONE | Mock 识别书生日常行动：读书、拜师、游学、谋生 | 2026-05-05 | Codex | 9aa5263 |
 | S06.2 | DONE | 书生日常行动影响属性、金钱、人脉、事件历史 | 2026-05-05 | Codex | 9aa5263 |
 | S06.3 | DONE | 实现书生专属面板与属性变化展示 | 2026-05-05 | Codex | 9aa5263 |
-| S07.1 | TODO | 定义科举阶段、门槛、题型、晋级映射 |  |  |  |
-| S07.2 | TODO | 实现 `POST /api/exam/question` 和 activeExam 保存 |  |  |  |
-| S07.3 | TODO | 实现考试弹窗：题目、要求、大文本编辑区 |  |  |  |
+| S07.1 | DONE | 定义科举阶段、门槛、题型、晋级映射 | 2026-05-05 | Codex | PENDING |
+| S07.2 | DONE | 实现 `POST /api/exam/question` 和 activeExam 保存 | 2026-05-05 | Codex | PENDING |
+| S07.3 | DONE | 实现考试弹窗：题目、要求、大文本编辑区 | 2026-05-05 | Codex | PENDING |
 | S08.1 | TODO | 实现 Mock 考官评分算法 |  |  |  |
 | S08.2 | TODO | 实现本地防作弊检测：现代词、过短、疑似照抄 |  |  |  |
 | S08.3 | TODO | 生成 4-8 名虚拟同场考生与合理分数 |  |  |  |
@@ -363,3 +363,31 @@ Verification:
 - Six-turn API smoke test passed for study, teacher visit, travel, debate, money/work, and exam request; confirmed studied book recording, teacher recording, multiple connections, `child_exam` trigger, saved `activeExam`, event history cap, and `turnCount`.
 
 Risk/leftover: The exam question endpoint and real exam writing flow are still TODO; S07.1 is the next best step.
+
+---
+
+Codex progress note, 2026-05-05:
+
+Steps: S07.1, S07.2, S07.3
+
+Commit: PENDING
+
+Completed:
+
+- Added `src/game/exams.js` as the server-owned exam rules module, defining the four exam levels, requirements, thresholds, word-count ranges, pass scores, and promotion mappings.
+- Added `POST /api/exam/question`, wired under `/api/exam`, to generate a Mock question, save a full `activeExam`, append an exam-entry event, and reuse an unanswered exam instead of regenerating.
+- Added a frontend exam writing modal with exam metadata, question text, requirements, essay textarea, and visible submit button placeholder; scholar panel entry and free-text exam triggers both open the question flow.
+
+Verification:
+
+- `node --check server.js`
+- `node --check src/game/exams.js`
+- `node --check src/routes/exam.js`
+- `node --check src/ai/providers/mock.js`
+- `node --check public/app.js`
+- Temporary local server returned 200 for `/`, `/app.js`, and `/styles.css`.
+- Temporary-port API smoke tests confirmed direct `POST /api/exam/question`, free-text exam trigger into question generation, `activeExam.examQuestion` persistence, and unanswered exam reuse by stable `examId`.
+
+Risk/leftover: `/api/exam/submit`, Mock grading, anti-cheat checks, virtual candidate ranking, promotion application, and a working final submit action remain for S08-S09.
+
+Next step: Implement S08.1-S08.4 so essays can be graded, checked for cheating, ranked against virtual candidates, and saved.

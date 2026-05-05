@@ -63,6 +63,22 @@
           <button id="action-btn" type="button">行动</button>
         </div>
       </section>
+
+      <div class="exam-backdrop" id="exam-backdrop" hidden>
+        <section class="exam-modal" role="dialog" aria-modal="true" aria-labelledby="exam-title">
+          <header class="exam-header">
+            <span id="exam-meta">科举</span>
+            <button id="exam-close" type="button" aria-label="关闭考场">×</button>
+          </header>
+          <h2 id="exam-title">考试题目</h2>
+          <p id="exam-question"></p>
+          <ul id="exam-requirements" class="exam-requirements"></ul>
+          <textarea id="exam-essay" rows="11" placeholder="在此落笔成文"></textarea>
+          <div class="exam-actions">
+            <button id="exam-submit" type="button" disabled>交卷</button>
+          </div>
+        </section>
+      </div>
     </main>
 
     <script src="/app.js"></script>

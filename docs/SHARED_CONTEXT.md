@@ -6,14 +6,14 @@ Both tools must read this file at the start of every development session, after 
 
 ## Current Snapshot
 
-- Repository status: first playable vertical slice is implemented. The app installs with npm, starts an Express server, serves a plain HTML/CSS/JS frontend, and can create/read/Mock-play a scholar session with richer daily scholar actions.
+- Repository status: first playable vertical slice is implemented. The app installs with npm, starts an Express server, serves a plain HTML/CSS/JS frontend, can create/read/Mock-play a scholar session with richer daily scholar actions, and can open a saved exam writing flow with generated questions.
 - Canonical product brief: `docs/QIANQIU_DEVELOPMENT_BRIEF.md`.
 - Shared implementation roadmap and progress ledger: `docs/DEVELOPMENT_STEPS.md`.
 - Codex entrypoint: `AGENTS.md`.
 - Claude Code entrypoint: `CLAUDE.md`.
 - Default development target: runnable Node.js + Express + pure HTML/CSS/JS game at `http://localhost:3000`.
 - Default AI mode: `mock`, playable without API keys.
-- Implemented API surface: `GET /api/health`, `POST /api/game/start`, `GET /api/game/state/:sessionId`, `POST /api/game/turn`.
+- Implemented API surface: `GET /api/health`, `POST /api/game/start`, `GET /api/game/state/:sessionId`, `POST /api/game/turn`, `POST /api/exam/question`.
 - Local session files are written under `data/sessions/*.json`, which remains ignored by Git.
 
 ## Active Decisions
@@ -32,6 +32,9 @@ Both tools must read this file at the start of every development session, after 
 - Mock provider scholar actions now separately handle study, teacher visits, travel/social, debate, money/work, exam request, and rest.
 - Scholar daily actions may update `studiedBooks`, `teacher`, and `connections` in addition to numeric attributes; these still pass through the server-side patch whitelist in `src/game/stateRules.js`.
 - The frontend now renders a scholar panel above the narrative with exam progress, next exam, current active exam, attribute meters, teacher, studied books, and connections.
+- `src/game/exams.js` is the server-owned source of truth for exam levels, thresholds, word-count guidance, pass scores, and promotion mappings.
+- `POST /api/exam/question` generates and saves a full `activeExam`; it reuses an existing unanswered exam instead of regenerating a new question.
+- The frontend scholar panel can open the next exam directly, and a free-text exam trigger now auto-opens the exam writing modal after the turn response.
 - Any behavior/API/setup/architecture decision that affects future work must be recorded in this file or in the canonical development brief.
 - Any roadmap step that starts, completes, blocks, or changes scope must be recorded in `docs/DEVELOPMENT_STEPS.md`.
 - If the change is a short handoff note, update this file.
@@ -70,10 +73,10 @@ Before finishing each coherent change:
 - 2026-05-05: `POST /api/game/turn` verified with study action (academia +1), exam trigger (activeExam set to child_exam), and state restore. Error handling tested for empty input and missing sessionId. All tests pass.
 - 2026-05-05: S06.1-S06.3 code committed as `9aa5263`; `node --check` passed for `src/ai/providers/mock.js`, `public/app.js`, and `src/routes/game.js`.
 - 2026-05-05: Local server at `http://localhost:3000` verified homepage/app/style assets return 200. A six-turn API smoke test covered study, teacher visit, travel, debate, money/work, and exam request; it confirmed studied book, teacher, connections, `child_exam` trigger, saved `activeExam`, event history cap, and turn count.
+- 2026-05-05: S07.1-S07.3 code verified with `node --check` for `server.js`, `src/game/exams.js`, `src/routes/exam.js`, `src/ai/providers/mock.js`, and `public/app.js`. Temporary local server checks confirmed `/`, `/app.js`, and `/styles.css` return 200. API smoke tests confirmed `POST /api/exam/question` works both directly and after a free-text exam trigger, saves `activeExam.examQuestion`, and reuses the same `examId` for an unanswered exam.
 
 ## Next Recommended Step
 
 Implement the next gameplay slice:
 
-- S07.1: Define exam levels, thresholds, question types, and promotion mappings in `src/game/exams.js`.
-- S07.2-S07.3: Add `POST /api/exam/question`, save `activeExam`, and show the exam writing interface in the frontend.
+- S08.1-S08.4: Add Mock exam grading, local anti-cheat checks, virtual candidates, `/api/exam/submit`, and the ranking/results interface.

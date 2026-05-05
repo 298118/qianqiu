@@ -4,6 +4,7 @@ const path = require("path");
 require("dotenv").config();
 
 const gameRoutes = require("./src/routes/game");
+const examRoutes = require("./src/routes/exam");
 
 const app = express();
 const port = Number(process.env.PORT) || 3000;
@@ -20,6 +21,7 @@ app.get("/api/health", (req, res) => {
 });
 
 app.use("/api/game", gameRoutes);
+app.use("/api/exam", examRoutes);
 
 app.use((err, req, res, next) => {
   console.error(err);

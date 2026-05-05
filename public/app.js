@@ -7,8 +7,17 @@ const gamePanel = document.querySelector(".game-panel");
 const actionArea = document.querySelector("#action-area");
 const actionInput = document.querySelector("#action-input");
 const actionBtn = document.querySelector("#action-btn");
+const examBackdrop = document.querySelector("#exam-backdrop");
+const examClose = document.querySelector("#exam-close");
+const examMeta = document.querySelector("#exam-meta");
+const examTitle = document.querySelector("#exam-title");
+const examQuestion = document.querySelector("#exam-question");
+const examRequirements = document.querySelector("#exam-requirements");
+const examEssay = document.querySelector("#exam-essay");
+const examSubmit = document.querySelector("#exam-submit");
 
 let currentSessionId = null;
+let currentWorldState = null;
 
 const ATTRIBUTE_LABELS = {
   health: "体力",
@@ -43,6 +52,13 @@ function getExamProgress(player) {
   const index = Math.max(0, EXAM_PROGRESS.findIndex((step) => step.rank === player.examRank));
   const step = EXAM_PROGRESS[index] || EXAM_PROGRESS[0];
   return { index, label: step.label, next: step.next };
+}
+
+function getEntryExamLevel(worldState, progress) {
+  if (worldState.activeExam && worldState.activeExam.level) {
+    return worldState.activeExam.level;
+  }
+  return progress.next;
 }
 
 function createTag(text) {
@@ -118,6 +134,16 @@ function renderScholarPanel(worldState) {
     )
   );
 
+  const entryLevel = getEntryExamLevel(worldState, progress);
+  if (entryLevel) {
+    const entryButton = document.createElement("button");
+    entryButton.type = "button";
+    entryButton.className = "panel-action";
+    entryButton.textContent = worldState.activeExam && worldState.activeExam.examQuestion ? "继续写作" : "入场取题";
+    entryButton.addEventListener("click", () => openExamQuestion(entryLevel));
+    progressBlock.appendChild(entryButton);
+  }
+
   const stepList = document.createElement("ol");
   stepList.className = "exam-steps";
   EXAM_PROGRESS.forEach((step, index) => {
@@ -151,6 +177,7 @@ function renderScholarPanel(worldState) {
 }
 
 function renderWorldState(worldState) {
+  currentWorldState = worldState;
   setStatus(worldState);
   renderScholarPanel(worldState);
 }
@@ -181,6 +208,56 @@ function appendAttributeChanges(changes) {
   });
   narrative.appendChild(div);
   narrative.scrollTop = narrative.scrollHeight;
+}
+
+function renderExamModal(payload) {
+  examMeta.textContent = `${payload.examName} · ${payload.questionType} · ${payload.difficulty}`;
+  examTitle.textContent = payload.examName;
+  examQuestion.textContent = payload.examQuestion;
+  examRequirements.innerHTML = "";
+  (payload.requirements || []).forEach((requirement) => {
+    const item = document.createElement("li");
+    item.textContent = requirement;
+    examRequirements.appendChild(item);
+  });
+  examEssay.value = "";
+  examSubmit.disabled = true;
+  examSubmit.title = "评卷将在后续步骤接入";
+  examBackdrop.hidden = false;
+  examEssay.focus();
+}
+
+function closeExamModal() {
+  examBackdrop.hidden = true;
+}
+
+async function openExamQuestion(level) {
+  if (!currentSessionId) return;
+
+  try {
+    const response = await fetch("/api/exam/question", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ sessionId: currentSessionId, level })
+    });
+
+    if (!response.ok) {
+      let message = `取题失败：${response.status}`;
+      try {
+        const errorPayload = await response.json();
+        if (errorPayload.error) message = errorPayload.error;
+      } catch {
+        // Keep the status-based message when the server did not send JSON.
+      }
+      throw new Error(message);
+    }
+
+    const payload = await response.json();
+    renderWorldState(payload.worldState);
+    renderExamModal(payload);
+  } catch (error) {
+    appendNarrative(error.message, "error");
+  }
 }
 
 function showGameView() {
@@ -223,13 +300,16 @@ async function submitAction() {
 
     if (payload.examTrigger && payload.examTrigger.shouldStart) {
       appendNarrative(`[科举提示] 已可参加考试：${EXAM_LABELS[payload.examTrigger.level] || payload.examTrigger.level}`, "exam-hint");
+      await openExamQuestion(payload.examTrigger.level);
     }
   } catch (error) {
     appendNarrative(error.message, "error");
   } finally {
     actionBtn.disabled = false;
     actionInput.disabled = false;
-    actionInput.focus();
+    if (examBackdrop.hidden) {
+      actionInput.focus();
+    }
   }
 }
 
@@ -238,6 +318,18 @@ actionInput.addEventListener("keydown", (event) => {
   if (event.key === "Enter" && !event.shiftKey) {
     event.preventDefault();
     submitAction();
+  }
+});
+
+examClose.addEventListener("click", closeExamModal);
+examBackdrop.addEventListener("click", (event) => {
+  if (event.target === examBackdrop) {
+    closeExamModal();
+  }
+});
+window.addEventListener("keydown", (event) => {
+  if (event.key === "Escape" && !examBackdrop.hidden) {
+    closeExamModal();
   }
 });
 

@@ -243,8 +243,15 @@ SSE 事件：
 - `level`
 - `examName`
 - `examQuestion`
+- `questionType`
 - `difficulty`
 - `requirements`
+- `wordCount`
+- `passScore`
+- `promotionRank`
+- `worldState`
+
+第一版实现中，接口会复用尚未交卷的 `activeExam`，避免同一场考试反复刷题；若 `activeExam` 只是由自由行动触发的简略入场记录，则该接口负责补齐题目、要求、字数、通过线和保存后的状态。
 
 ### `POST /api/exam/submit`
 
