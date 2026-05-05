@@ -6,7 +6,7 @@ Both tools must read this file at the start of every development session, after 
 
 ## Current Snapshot
 
-- Repository status: first playable vertical slice is implemented. The app installs with npm, starts an Express server, serves a plain HTML/CSS/JS frontend, can create/read/Mock-play a scholar session with richer daily scholar actions, complete the scholar exam path into official status, play basic Mock loops for emperor, minister, and newly promoted officials, and optionally use OpenAI, DeepSeek, or Claude providers with Mock fallback.
+- Repository status: first playable vertical slice is implemented. The app installs with npm, starts an Express server, serves a polished plain HTML/CSS/JS frontend, can create/read/Mock-play a scholar session with richer daily scholar actions, complete the scholar exam path into official status, play basic Mock loops for emperor, minister, and newly promoted officials, and optionally use OpenAI, DeepSeek, or Claude providers with Mock fallback.
 - Canonical product brief: `docs/QIANQIU_DEVELOPMENT_BRIEF.md`.
 - Shared implementation roadmap and progress ledger: `docs/DEVELOPMENT_STEPS.md`.
 - Codex entrypoint: `AGENTS.md`.
@@ -48,6 +48,8 @@ Both tools must read this file at the start of every development session, after 
 - Palace exam promotion now seeds official `position`, `faction`, `influence`, and `integrity` so the official loop has immediate state to render and update.
 - Mock provider role loops now cover emperor relief/appointments/taxation/military/廷议, minister memorials/networking/政务/弹劾, and official 观政/断案/抚民/同年/贪墨 actions.
 - The frontend reuses the former scholar panel area as a role panel for emperor, minister, and official views, showing key metrics,府库粮储,朝局派系,人脉, and action hints.
+- The S12 UI polish remains buildless and dependency-free: CSS now carries the paper/ink/cinnabar/jade/indigo visual language, mobile uses a full-height single-column layout with sticky action input, and the exam modal adapts to small screens.
+- The frontend now adds turn dividers in narrative history, exposes attribute-change reasons as hover titles, shows live exam character-count guidance without changing server scoring rules, and renders exam results as collapsible 五维评卷/监试复核/同场榜单 sections.
 - Any behavior/API/setup/architecture decision that affects future work must be recorded in this file or in the canonical development brief.
 - Any roadmap step that starts, completes, blocks, or changes scope must be recorded in `docs/DEVELOPMENT_STEPS.md`.
 - If the change is a short handoff note, update this file.
@@ -91,9 +93,10 @@ Before finishing each coherent change:
 - 2026-05-05: S09.1-S09.5 code committed as `bed515a`. Verified with `node --check` for `src/game/promotions.js`, `src/routes/exam.js`, `src/game/initialState.js`, and `public/app.js`; `git diff --check`; and a temporary Mock server on port 3142 that confirmed four-exam promotion from scholar to official plus severe-copy downgrade from `秀才` to no rank.
 - 2026-05-05: S10.1-S10.3 code committed as `592b7a1`. Verified with `node --check` for `src/ai/providers/mock.js`, `src/game/initialState.js`, `src/game/stateRules.js`, `src/game/promotions.js`, and `public/app.js`; `git diff --check`; a temporary Mock server on port 3158 covering emperor relief, minister memorial, and official observation actions; and a direct promotion-to-official smoke test confirming official state seeding and official turn updates.
 - 2026-05-05: S11.1-S11.4 code committed as `0d779a2`. Verified `node --check` for the new provider/schema/prompt/json files plus `src/ai/index.js`; Ajv accepted a valid turn payload; no-key OpenAI/DeepSeek/Claude configurations returned Mock; an unreachable OpenAI endpoint retried twice then returned Mock output; and a temporary Mock server on port 3171 returned health ok, created a session, and advanced one turn.
+- 2026-05-05: S12.1-S12.3 UI polish committed as `7b4f349`. Verified `node --check public/app.js`, `node --check server.js`, `node --check src/routes/game.js`, `node --check src/routes/exam.js`, `git diff --check`, and a temporary Mock server on port 3188 confirming homepage/style/app assets, health, session creation, one turn, and `child_exam` question generation.
 
 ## Next Recommended Step
 
-Implement the next integration slice:
+Implement the next quality slice:
 
-- S12.1-S12.3: Polish the classical UI, mobile layout, and narrative/exam/ranking interactions.
+- S13.1-S13.3: Add automated tests for state/session/exam rules and write an end-to-end manual acceptance script.

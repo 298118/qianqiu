@@ -103,9 +103,9 @@
 | S11.2 | DONE | 接入 DeepSeek OpenAI-compatible provider | 2026-05-05 | Codex | 0d779a2 |
 | S11.3 | DONE | 接入 Claude provider | 2026-05-05 | Codex | 0d779a2 |
 | S11.4 | DONE | 真实 provider 失败时自动重试或降级 Mock | 2026-05-05 | Codex | 0d779a2 |
-| S12.1 | TODO | 前端古风视觉：宣纸、墨色、朱砂强调 |  |  |  |
-| S12.2 | TODO | 移动端布局与输入体验优化 |  |  |  |
-| S12.3 | TODO | 叙事区、考试区、放榜区交互打磨 |  |  |  |
+| S12.1 | DONE | 前端古风视觉：宣纸、墨色、朱砂强调 | 2026-05-05 | Codex | 7b4f349 |
+| S12.2 | DONE | 移动端布局与输入体验优化 | 2026-05-05 | Codex | 7b4f349 |
+| S12.3 | DONE | 叙事区、考试区、放榜区交互打磨 | 2026-05-05 | Codex | 7b4f349 |
 | S13.1 | TODO | 增加自动化测试：状态规则、session 存储 |  |  |  |
 | S13.2 | TODO | 增加自动化测试：科举晋级与作弊惩罚 |  |  |  |
 | S13.3 | TODO | 增加端到端手动验收脚本说明 |  |  |  |
@@ -516,3 +516,30 @@ Verification:
 Risk/leftover: Real API calls were not made because no API keys are present in the local environment. General and magistrate still use generic Mock fallback; SSE streaming and automated tests remain TODO.
 
 Next step: S12.1-S12.3 UI and interaction polish, or S13 if test coverage is preferred first.
+
+---
+
+Codex progress note, 2026-05-05:
+
+Steps: S12.1, S12.2, S12.3
+
+Commit: 7b4f349
+
+Completed:
+
+- Refined the buildless frontend visual language with layered paper texture, ink/cinnabar/jade/indigo accents, stronger button/panel hierarchy, and a subtle background seal watermark.
+- Improved mobile layout with full-height single-column game view, tighter status/scholar panels, sticky bottom action input, safe-area padding, and a taller mobile exam editor.
+- Added narrative turn dividers, archived-session history labeling, attribute-change reason tooltips, live exam character-count guidance, and collapsible exam result sections for 五维评卷, 监试复核, and 同场榜单.
+
+Verification:
+
+- `node --check public/app.js`
+- `node --check server.js`
+- `node --check src/routes/game.js`
+- `node --check src/routes/exam.js`
+- `git diff --check`
+- Temporary Mock server on port 3188 confirmed `/`, `/styles.css`, `/app.js`, `GET /api/health`, `POST /api/game/start`, one `POST /api/game/turn`, and `POST /api/exam/question` for `child_exam`.
+
+Risk/leftover: Visual QA was verified through static resource and API smoke checks, not an interactive browser screenshot pass. Automated tests and the manual acceptance script are still TODO.
+
+Next step: S13.1-S13.3 should add automated coverage for state/session/exam rules and document a full end-to-end acceptance script.
