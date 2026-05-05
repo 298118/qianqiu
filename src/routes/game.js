@@ -3,8 +3,86 @@ const { createInitialState } = require("../game/initialState");
 const { applyStatePatch, appendEvents } = require("../game/stateRules");
 const { getProvider } = require("../ai");
 const { readSession, writeSession } = require("../storage/sessionStore");
+const { chunkTextForSse, closeSse, sendSseEvent, writeSseHeaders } = require("../utils/sse");
 
 const router = express.Router();
+
+function validateTurnInput(body) {
+  const { sessionId, input } = body;
+
+  if (!sessionId || typeof sessionId !== "string") {
+    const err = new Error("Missing sessionId");
+    err.statusCode = 400;
+    throw err;
+  }
+  if (!input || typeof input !== "string" || !input.trim()) {
+    const err = new Error("Missing or empty input");
+    err.statusCode = 400;
+    throw err;
+  }
+
+  return { sessionId, input: input.trim() };
+}
+
+function wantsSse(req) {
+  return req.query.stream === "1" || (req.get("accept") || "").includes("text/event-stream");
+}
+
+async function processTurn(sessionId, input) {
+  const worldState = await readSession(sessionId);
+  const provider = getProvider();
+  const result = await provider.runTurn(worldState, input);
+
+  // All model-suggested state changes pass through server-side boundaries.
+  applyStatePatch(worldState, result.statePatch);
+
+  appendEvents(worldState, result.events);
+
+  if (result.examTrigger && result.examTrigger.shouldStart) {
+    worldState.activeExam = {
+      level: result.examTrigger.level,
+      reason: result.examTrigger.reason,
+      requestedAt: new Date().toISOString()
+    };
+  }
+
+  await writeSession(worldState);
+
+  return {
+    sessionId: worldState.sessionId,
+    narrative: result.narrative,
+    attributeChanges: result.attributeChanges || [],
+    examTrigger: result.examTrigger || { shouldStart: false, level: null, reason: "" },
+    worldState
+  };
+}
+
+async function streamTurn(res, sessionId, input) {
+  writeSseHeaders(res);
+  sendSseEvent(res, "state_preview", { sessionId, status: "accepted" });
+
+  try {
+    const payload = await processTurn(sessionId, input);
+
+    for (const chunk of chunkTextForSse(payload.narrative)) {
+      sendSseEvent(res, "narrative_chunk", { text: chunk });
+    }
+
+    sendSseEvent(res, "state_preview", {
+      sessionId: payload.sessionId,
+      attributeChanges: payload.attributeChanges,
+      examTrigger: payload.examTrigger
+    });
+    sendSseEvent(res, "final_state", payload);
+  } catch (error) {
+    sendSseEvent(res, "error", {
+      error: error.message || "Internal server error",
+      statusCode: error.statusCode || 500
+    });
+  } finally {
+    closeSse(res);
+  }
+}
 
 router.post("/start", async (req, res, next) => {
   try {
@@ -36,47 +114,14 @@ router.get("/state/:sessionId", async (req, res, next) => {
 
 router.post("/turn", async (req, res, next) => {
   try {
-    const { sessionId, input } = req.body;
+    const { sessionId, input } = validateTurnInput(req.body);
 
-    if (!sessionId || typeof sessionId !== "string") {
-      const err = new Error("Missing sessionId");
-      err.statusCode = 400;
-      throw err;
-    }
-    if (!input || typeof input !== "string" || !input.trim()) {
-      const err = new Error("Missing or empty input");
-      err.statusCode = 400;
-      throw err;
+    if (wantsSse(req)) {
+      await streamTurn(res, sessionId, input);
+      return;
     }
 
-    const worldState = await readSession(sessionId);
-    const provider = getProvider();
-    const result = await provider.runTurn(worldState, input.trim());
-
-    // Apply state patch through server-side rules
-    applyStatePatch(worldState, result.statePatch);
-
-    // Append events
-    appendEvents(worldState, result.events);
-
-    // Apply exam trigger
-    if (result.examTrigger && result.examTrigger.shouldStart) {
-      worldState.activeExam = {
-        level: result.examTrigger.level,
-        reason: result.examTrigger.reason,
-        requestedAt: new Date().toISOString()
-      };
-    }
-
-    await writeSession(worldState);
-
-    res.json({
-      sessionId: worldState.sessionId,
-      narrative: result.narrative,
-      attributeChanges: result.attributeChanges || [],
-      examTrigger: result.examTrigger || { shouldStart: false, level: null, reason: "" },
-      worldState
-    });
+    res.json(await processTurn(sessionId, input));
   } catch (error) {
     next(error);
   }

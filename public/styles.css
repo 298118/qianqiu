@@ -353,6 +353,10 @@ button:disabled {
   border-left: 2px solid rgba(122, 90, 45, 0.22);
 }
 
+.narrative-entry.is-streaming {
+  border-left-color: rgba(30, 91, 78, 0.36);
+}
+
 .turn-divider {
   display: flex;
   align-items: center;

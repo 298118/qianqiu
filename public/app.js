@@ -24,6 +24,7 @@ const examWordGuide = document.querySelector("#exam-word-guide");
 let currentSessionId = null;
 let currentWorldState = null;
 let currentExamPayload = null;
+let activeNarrativeStream = null;
 
 const ATTRIBUTE_LABELS = {
   health: "体力",
@@ -332,6 +333,31 @@ function appendNarrative(text, className) {
   narrative.scrollTop = narrative.scrollHeight;
 }
 
+function beginNarrativeStream() {
+  activeNarrativeStream = null;
+}
+
+function appendNarrativeChunk(text) {
+  const placeholder = narrative.querySelector(".placeholder");
+  if (placeholder) placeholder.remove();
+
+  if (!activeNarrativeStream) {
+    activeNarrativeStream = document.createElement("p");
+    activeNarrativeStream.className = "narrative-entry is-streaming";
+    narrative.appendChild(activeNarrativeStream);
+  }
+
+  activeNarrativeStream.textContent += text;
+  narrative.scrollTop = narrative.scrollHeight;
+}
+
+function finishNarrativeStream() {
+  if (activeNarrativeStream) {
+    activeNarrativeStream.classList.remove("is-streaming");
+    activeNarrativeStream = null;
+  }
+}
+
 function appendTurnDivider(label) {
   const placeholder = narrative.querySelector(".placeholder");
   if (placeholder) placeholder.remove();
@@ -629,6 +655,72 @@ function showStartView() {
   actionArea.style.display = "none";
 }
 
+function parseSseBlock(block) {
+  let eventName = "message";
+  const dataLines = [];
+
+  block.split("\n").forEach((line) => {
+    if (!line || line.startsWith(":")) return;
+    if (line.startsWith("event:")) {
+      eventName = line.slice(6).trim() || "message";
+    } else if (line.startsWith("data:")) {
+      dataLines.push(line.slice(5).replace(/^ /, ""));
+    }
+  });
+
+  const rawData = dataLines.join("\n");
+  if (!rawData) {
+    return { eventName, data: null };
+  }
+
+  try {
+    return { eventName, data: JSON.parse(rawData) };
+  } catch {
+    return { eventName, data: rawData };
+  }
+}
+
+async function readSseResponse(response, handlers) {
+  const reader = response.body.getReader();
+  const decoder = new TextDecoder();
+  let buffer = "";
+
+  while (true) {
+    const { value, done } = await reader.read();
+    buffer += done ? decoder.decode() : decoder.decode(value, { stream: true });
+    buffer = buffer.replace(/\r\n/g, "\n");
+
+    let boundary = buffer.indexOf("\n\n");
+    while (boundary !== -1) {
+      const block = buffer.slice(0, boundary);
+      buffer = buffer.slice(boundary + 2);
+      const parsed = parseSseBlock(block);
+      const handler = handlers[parsed.eventName];
+      if (handler) handler(parsed.data);
+      boundary = buffer.indexOf("\n\n");
+    }
+
+    if (done) break;
+  }
+
+  if (buffer.trim()) {
+    const parsed = parseSseBlock(buffer);
+    const handler = handlers[parsed.eventName];
+    if (handler) handler(parsed.data);
+  }
+}
+
+async function handleTurnPayload(payload) {
+  appendAttributeChanges(payload.attributeChanges);
+  renderWorldState(payload.worldState);
+  actionInput.value = "";
+
+  if (payload.examTrigger && payload.examTrigger.shouldStart) {
+    appendNarrative(`[科举提示] 已可参加考试：${EXAM_LABELS[payload.examTrigger.level] || payload.examTrigger.level}`, "exam-hint");
+    await openExamQuestion(payload.examTrigger.level);
+  }
+}
+
 async function submitAction() {
   const input = actionInput.value.trim();
   if (!input || !currentSessionId) return;
@@ -642,25 +734,51 @@ async function submitAction() {
 
     const response = await fetch("/api/game/turn", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: { "Content-Type": "application/json", "Accept": "text/event-stream" },
       body: JSON.stringify({ sessionId: currentSessionId, input })
     });
 
     if (!response.ok) {
-      throw new Error(`行动失败：${response.status}`);
+      let message = `行动失败：${response.status}`;
+      try {
+        const errorPayload = await response.json();
+        if (errorPayload.error) message = errorPayload.error;
+      } catch {
+        // Keep the status-based message when the server did not send JSON.
+      }
+      throw new Error(message);
     }
 
-    const payload = await response.json();
-    appendNarrative(payload.narrative);
-    appendAttributeChanges(payload.attributeChanges);
-    renderWorldState(payload.worldState);
-    actionInput.value = "";
+    const contentType = response.headers.get("content-type") || "";
+    if (contentType.includes("text/event-stream") && response.body) {
+      let finalPayload = null;
+      let streamError = null;
+      beginNarrativeStream();
 
-    if (payload.examTrigger && payload.examTrigger.shouldStart) {
-      appendNarrative(`[科举提示] 已可参加考试：${EXAM_LABELS[payload.examTrigger.level] || payload.examTrigger.level}`, "exam-hint");
-      await openExamQuestion(payload.examTrigger.level);
+      await readSseResponse(response, {
+        narrative_chunk(data) {
+          appendNarrativeChunk(typeof data === "string" ? data : data?.text || "");
+        },
+        final_state(data) {
+          finalPayload = data;
+          finishNarrativeStream();
+        },
+        error(data) {
+          streamError = new Error(data?.error || "Stream error");
+        }
+      });
+
+      finishNarrativeStream();
+      if (streamError) throw streamError;
+      if (!finalPayload) throw new Error("Stream response missing final_state.");
+      await handleTurnPayload(finalPayload);
+    } else {
+      const payload = await response.json();
+      appendNarrative(payload.narrative);
+      await handleTurnPayload(payload);
     }
   } catch (error) {
+    finishNarrativeStream();
     appendNarrative(error.message, "error");
   } finally {
     actionBtn.disabled = false;
