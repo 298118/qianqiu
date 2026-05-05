@@ -106,9 +106,9 @@
 | S12.1 | DONE | 前端古风视觉：宣纸、墨色、朱砂强调 | 2026-05-05 | Codex | 7b4f349 |
 | S12.2 | DONE | 移动端布局与输入体验优化 | 2026-05-05 | Codex | 7b4f349 |
 | S12.3 | DONE | 叙事区、考试区、放榜区交互打磨 | 2026-05-05 | Codex | 7b4f349 |
-| S13.1 | TODO | 增加自动化测试：状态规则、session 存储 |  |  |  |
-| S13.2 | TODO | 增加自动化测试：科举晋级与作弊惩罚 |  |  |  |
-| S13.3 | TODO | 增加端到端手动验收脚本说明 |  |  |  |
+| S13.1 | DONE | 增加自动化测试：状态规则、session 存储 | 2026-05-05 | Codex | 4a70f5a |
+| S13.2 | DONE | 增加自动化测试：科举晋级与作弊惩罚 | 2026-05-05 | Codex | 4a70f5a |
+| S13.3 | DONE | 增加端到端手动验收脚本说明 | 2026-05-05 | Codex | 4a70f5a |
 | S14.1 | TODO | README 完整化：安装、配置、启动、provider 切换 |  |  |  |
 | S14.2 | TODO | 补齐开发者文档：架构、AI 合约、状态字段 |  |  |  |
 | S14.3 | TODO | 第一阶段完整验收与稳定化 |  |  |  |
@@ -543,3 +543,33 @@ Verification:
 Risk/leftover: Visual QA was verified through static resource and API smoke checks, not an interactive browser screenshot pass. Automated tests and the manual acceptance script are still TODO.
 
 Next step: S13.1-S13.3 should add automated coverage for state/session/exam rules and document a full end-to-end acceptance script.
+
+---
+
+Codex progress note, 2026-05-05:
+
+Steps: S13.1, S13.2, S13.3
+
+Commit: 4a70f5a
+
+Completed:
+
+- Added `npm test` using Node.js' built-in `node --test` runner, keeping the project dependency-free for automated tests.
+- Added tests for state patch whitelisting/clamping, event-history trimming, session JSON read/write, unsafe/missing session ids, AI JSON schema validation, exam gates/readiness, promotion to official, severe cheating downgrade, local essay penalties, and virtual candidate ranking.
+- Tightened `statePatch.factions` handling so only existing numeric faction keys can be updated; arbitrary faction names no longer replace the factions object.
+- Added `docs/MANUAL_ACCEPTANCE.md` with a Mock-mode browser/API acceptance script covering scholar-to-official progression, exam integrity checks, and emperor/minister/official role loop smoke checks.
+- Updated README with the `npm test` command and a pointer to the manual acceptance script.
+
+Verification:
+
+- `node --check src/game/stateRules.js`
+- `node --check test/stateRules.test.js`
+- `node --check test/sessionStore.test.js`
+- `node --check test/aiSchemas.test.js`
+- `node --check test/examRules.test.js`
+- `git diff --check`
+- `npm test` passed with 15 tests.
+
+Risk/leftover: The manual acceptance script is documented but was not fully executed in a live browser during this slice; S14.3 should run and record the full phase-one acceptance pass.
+
+Next step: S14.1-S14.3 should complete README/developer documentation and run the first phase acceptance checklist.

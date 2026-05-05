@@ -519,3 +519,17 @@ The first real-provider slice is implemented without changing the default local 
 - `AI_PROVIDER_TIMEOUT_MS` controls real provider request timeout and defaults to 30000.
 - All real provider methods build prompts through `src/ai/prompts.js`, parse JSON through `src/utils/json.js`, validate through Ajv schemas in `src/ai/schemas.js`, retry once on call/parse/schema failure, and then fall back to Mock.
 - The server still owns patch whitelisting, numeric clamps, exam gates, promotion rules, anti-cheat penalties, candidate ranking, and persistence.
+
+## S13 Quality Gate Note (2026-05-05)
+
+The repository now has a dependency-free automated test entrypoint:
+
+```bash
+npm test
+```
+
+`npm test` uses Node.js' built-in `node --test` runner. The first suite covers server-owned state patch boundaries, numeric clamps, event-history trimming, JSON session persistence, AI JSON schemas, exam gates/readiness, promotion and severe-cheating consequences, local essay penalties, and virtual candidate ranking.
+
+Manual end-to-end acceptance lives in `docs/MANUAL_ACCEPTANCE.md`. It should be used for the browser/API pass before phase-one acceptance, especially to verify the complete scholar -> official route and the emperor/minister/official role loops in Mock mode.
+
+State patch boundary note: `statePatch.factions` is now merged only into existing numeric faction keys. Providers may adjust known faction scores but cannot introduce arbitrary faction names by replacing the full factions object.
