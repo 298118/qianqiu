@@ -50,7 +50,7 @@
 | S21.2 | DONE | 实现服务器拥有的 `worldTick` 模块，按回合或月份推进财政、粮储、民心、边患、腐败 | 2026-05-05 | Codex | 本次 S21.2 提交 |
 | S21.3 | DONE | 将世界 tick 接入 `/api/game/turn`，确保玩家行动与自然世界变化共同进入事件历史 | 2026-05-05 | Codex | 70b14fd |
 | S21.4 | DONE | 为世界 tick 增加自动化测试，覆盖数值边界、事件裁剪和 Mock 稳定性 | 2026-05-05 | Codex | 543a966 |
-| S22.1 | TODO | 扩展 NPC 与派系关系账本，记录人物立场、恩怨、人脉来源和近期意图 |
+| S22.1 | DONE | 扩展 NPC 与派系关系账本，记录人物立场、恩怨、人脉来源和近期意图 | 2026-05-05 | Codex | this S22.1 commit |
 | S22.2 | TODO | 更新状态 patch 白名单和提示词摘要，让 provider 只能建议关系变化，服务器负责裁决 |
 | S22.3 | TODO | 在 Mock 中加入人物/派系对玩家行动的可追踪反应 |
 | S23.1 | TODO | 深化地方官身份：县库、乡绅、盗匪、诉讼、赋役、水利和地方民心 |
@@ -149,6 +149,38 @@
 ```
 
 ### 2026-05-05
+
+Tool: Codex
+
+Step: S22.1
+
+Commit: this S22.1 commit
+
+Completed:
+- Added `src/game/relationships.js` as the server-owned relationship ledger module for NPC/faction social memory.
+- `createInitialState()` now seeds `worldState.relationshipLedger` from current `characters` and existing numeric `factions`.
+- Game and exam routes call `ensureRelationshipLedger()` after reading sessions so older JSON saves are backfilled before return or persistence.
+- Ledger normalization records `stance`, `relationship`, `resentment`, `networkSource`, `recentIntent`, `visible`, and `lastUpdatedTurn`; it clamps relationship to `-100..100`, resentment to `0..100`, caps short text, and drops invented ledger ids.
+- Provider authority remains unchanged: `relationshipLedger` is not in the turn patch schema and `applyStatePatch()` ignores attempted ledger patches.
+- Added `docs/RELATIONSHIP_LEDGER_CONTRACT.md` and updated architecture/brief notes.
+
+Verification:
+- `node --check src/game/relationships.js`
+- `node --check src/game/initialState.js`
+- `node --check src/routes/game.js`
+- `node --check src/routes/exam.js`
+- `node --check test/relationshipLedger.test.js`
+- `node --check test/aiSchemas.test.js`
+- `node --test test/relationshipLedger.test.js` passed with 5 tests.
+- `node --test test/aiSchemas.test.js` passed with 6 tests.
+- `git diff --check`
+- `npm test` passed with 35 tests.
+
+Risk/leftover:
+- S22.1 only creates and protects the ledger. It does not yet let providers suggest relationship changes and does not yet make Mock turns produce NPC/faction reactions.
+
+Next:
+- S22.2: add a controlled relationship-change suggestion/merge path and compact prompt context while keeping final authority in server code.
 
 工具：Codex
 

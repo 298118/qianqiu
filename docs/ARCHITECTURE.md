@@ -43,6 +43,7 @@ Important route ownership:
 - `src/game/promotions.js` owns rank changes, official promotion and severe-cheating consequences.
 - `src/game/essayChecks.js` owns local anti-cheat checks and score penalties.
 - `src/game/candidates.js` owns virtual same-field candidates and ranking.
+- `src/game/relationships.js` owns NPC/faction relationship ledger creation, normalization, legacy backfill, and compact summaries.
 
 ## API Contract
 
@@ -182,10 +183,12 @@ Real provider adapters parse model text through `src/utils/json.js`, validate wi
 
 - Global fields: `sessionId`, `year`, `month`, `dynasty`, `turnCount`, `treasury`, `grainReserve`, `population`, `publicOrder`, `taxRate`, `corruption`, `armySize`, `armyMorale`, `borderThreat`.
 - Factions: `factions.eunuchs`, `factions.scholarOfficials`, `factions.militaryLords`.
-- Narrative and exam fields: `characters`, `eventHistory`, `activeExam`, `setup`.
+- Narrative, relationship, and exam fields: `characters`, `relationshipLedger`, `eventHistory`, `activeExam`, `setup`.
 - Player identity: `player.role`, `roleLabel`, `name`, `health`, `gold`.
 - Scholar fields: `examRank`, `palaceRank`, `officeTitle`, `academia`, `literaryTalent`, `adaptability`, `mentality`, `reputation`, `examHistory`, `teacher`, `studiedBooks`, `connections`.
 - Role fields: `personalPower`, `courtControl`, `mandate`, `position`, `faction`, `influence`, `integrity`.
+
+`relationshipLedger` is the S22.1 server-owned social memory layer. It records current character and faction entries with `stance`, `relationship`, `resentment`, `networkSource`, `recentIntent`, `visible`, and `lastUpdatedTurn`. Character entries are keyed by current `characters[].id`; faction entries are keyed by existing numeric `factions` keys.
 
 Allowed roles currently include `scholar`, `emperor`, `minister`, `general`, `magistrate`, and `official`. Mock gameplay is most complete for `scholar`, `emperor`, `minister`, and `official`; `general` and `magistrate` still use generic fallback behavior in phase one.
 
@@ -199,8 +202,19 @@ Allowed roles currently include `scholar`, `emperor`, `minister`, `general`, `ma
 - `statePatch.factions` may only update existing numeric faction keys; providers cannot invent arbitrary faction names.
 - `turnCount` increments when a turn patch is applied.
 - Server-owned follow-up patches may pass `{ incrementTurnCount: false }` so S21.3 can apply a tick patch without double-counting one player turn.
+- `relationshipLedger` is not an allowed provider patch key in S22.1. The AI schema rejects it, and `applyStatePatch()` ignores it if a non-schema provider tries to include it anyway.
 
 Do not bypass this module when applying provider output.
+
+## Relationship Ledger Contract
+
+The S22.1 contract is recorded in [docs/RELATIONSHIP_LEDGER_CONTRACT.md](RELATIONSHIP_LEDGER_CONTRACT.md).
+
+`createInitialState()` creates `worldState.relationshipLedger` from the starting character list and known numeric factions. Game and exam routes call `ensureRelationshipLedger()` after reading sessions so older JSON saves are backfilled before they are returned or written again.
+
+The ledger is deliberately server-owned in this slice. It normalizes text fields, clamps relationship values to `-100..100`, clamps resentment to `0..100`, drops invented character/faction ledger ids, and preserves only short `recentNotes`.
+
+S22.2 should add a controlled relationship-suggestion path and prompt summary, while keeping final merge authority in server code.
 
 ## Phase-Two World Tick Contract
 

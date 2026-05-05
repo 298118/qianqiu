@@ -11,6 +11,7 @@ const {
 const { applyAuthenticityPenalties, checkEssayAuthenticity } = require("../game/essayChecks");
 const { buildRanking, generateVirtualCandidates } = require("../game/candidates");
 const { applyExamPromotion } = require("../game/promotions");
+const { ensureRelationshipLedger } = require("../game/relationships");
 const { appendEvents } = require("../game/stateRules");
 const { readSession, writeSession } = require("../storage/sessionStore");
 
@@ -58,6 +59,7 @@ router.post("/question", async (req, res, next) => {
     }
 
     const worldState = await readSession(sessionId);
+    ensureRelationshipLedger(worldState);
     const requestedLevel = level || worldState.activeExam?.level || getNextExamLevel(worldState.player.examRank);
     const exam = getExam(requestedLevel);
 
@@ -135,6 +137,7 @@ router.post("/submit", async (req, res, next) => {
     }
 
     const worldState = await readSession(sessionId);
+    ensureRelationshipLedger(worldState);
     const activeExam = worldState.activeExam;
 
     if (!activeExam || !activeExam.examQuestion) {
@@ -192,6 +195,7 @@ router.post("/submit", async (req, res, next) => {
     worldState.player.examHistory = [...(worldState.player.examHistory || []), historyEntry];
     worldState.activeExam = null;
     appendEvents(worldState, [summarizeResultEvent(worldState, activeExam, score, ranking, promotionResult)]);
+    ensureRelationshipLedger(worldState);
 
     await writeSession(worldState);
 

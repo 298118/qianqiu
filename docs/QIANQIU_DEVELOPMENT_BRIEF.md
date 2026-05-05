@@ -611,3 +611,13 @@ S21.3 connects the tick to `/api/game/turn`: provider output is applied first, e
 - Tick resource changes and faction drift pass through `src/game/stateRules.js` with normal whitelist/clamp protection.
 - The response includes `worldTick: { summary, events, attributeChanges }`; the browser displays the current month in the status strip and appends short monthly feedback after the provider narrative.
 - The complete scholar -> exam -> official path remains unchanged; exam submission/question routes still do not run a tick in the minimal S21 slice.
+
+## S22.1 Relationship Ledger Note (2026-05-05)
+
+S22.1 adds the first server-owned NPC/faction relationship ledger without changing provider authority:
+
+- `worldState.relationshipLedger` records character and faction social memory: `stance`, `relationship`, `resentment`, `networkSource`, `recentIntent`, `visible`, and `lastUpdatedTurn`.
+- `src/game/relationships.js` owns ledger creation, normalization, legacy-session backfill, and compact summaries.
+- New sessions create ledger entries from current `characters` and existing numeric `factions`; game/exam routes backfill older JSON sessions through `ensureRelationshipLedger()`.
+- Relationship values are clamped to `-100..100`; resentment is clamped to `0..100`; invented ledger ids are dropped.
+- Providers still cannot patch `relationshipLedger` in S22.1. The AI turn schema rejects it and `applyStatePatch()` ignores it. S22.2 should add a controlled server-owned suggestion/merge path plus prompt context.

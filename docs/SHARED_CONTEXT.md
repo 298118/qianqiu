@@ -6,7 +6,7 @@ Both tools must read this file at the start of every development session, after 
 
 ## Current Snapshot
 
-- Repository status: phase-one playable vertical slice is implemented, accepted, and now archived as historical planning. Phase two has started; S21.4 automated world tick coverage is complete, and the next active implementation target is S22.1 NPC/faction relationship ledger design.
+- Repository status: phase-one playable vertical slice is implemented, accepted, and now archived as historical planning. Phase two has started; S22.1 NPC/faction relationship ledger foundation is complete, and the next active implementation target is S22.2 controlled relationship patch/prompt integration.
 - Canonical product brief: `docs/QIANQIU_DEVELOPMENT_BRIEF.md`.
 - Shared implementation roadmap and progress ledger: `docs/DEVELOPMENT_STEPS.md`.
 - Developer implementation map: `docs/ARCHITECTURE.md`.
@@ -70,6 +70,11 @@ Both tools must read this file at the start of every development session, after 
 - S21.3 route integration now runs `runWorldTick()` after provider state application and exam-trigger setup in `POST /api/game/turn`, applies the tick patch with `{ incrementTurnCount: false }`, appends provider events before tick events, and returns `worldTick: { summary, events, attributeChanges }` in JSON and SSE final payloads.
 - The browser status strip now displays `year/month`, and turn handling appends concise `[月度]` feedback after provider narrative so players can see natural world movement without opening event history.
 - S21.4 broadened `test/gameTurnTick.test.js` to cover route-level tick clamps, provider+tick event-history trimming, repeated Mock turns across multiple year rollovers, and the complete scholar -> official path after tick integration.
+- S22.1 added `worldState.relationshipLedger` as a server-owned social memory layer for current characters and numeric factions. Entries record `stance`, `relationship`, `resentment`, `networkSource`, `recentIntent`, `visible`, and `lastUpdatedTurn`.
+- `src/game/relationships.js` owns relationship ledger creation, normalization, legacy-session backfill, and compact summaries. `createInitialState()` seeds the ledger, and game/exam routes call `ensureRelationshipLedger()` after reading sessions so older JSON saves can continue.
+- Relationship ledger values are clamped and normalized server-side: relationship is `-100..100`, resentment is `0..100`, text fields are short, invented character/faction ledger ids are dropped, and `recentNotes` is capped.
+- Providers still cannot patch `relationshipLedger` in S22.1. The turn schema rejects it and `applyStatePatch()` ignores it if present; S22.2 should add a controlled server-owned suggestion/merge path and compact prompt context.
+- Durable S22.1 contract: `docs/RELATIONSHIP_LEDGER_CONTRACT.md`.
 - Tooling note: if `rg` resolves to the packaged Codex app path under `C:\Program Files\WindowsApps\OpenAI.Codex_...\app\resources`, Windows may deny execution. This workspace now shadows it with a working ripgrep 15.1.0 binary at `C:\Users\ZZZ\AppData\Local\OpenAI\Codex\bin\rg.exe`, which appears earlier on PATH.
 - Any behavior/API/setup/architecture decision that affects future work must be recorded in this file or in the canonical development brief.
 - Any roadmap step that starts, completes, blocks, or changes scope must be recorded in `docs/DEVELOPMENT_STEPS.md`.
@@ -124,7 +129,8 @@ Before finishing each coherent change:
 - 2026-05-05: S21.2 world tick module implemented in `src/game/worldTick.js`, with `worldState.month` defaulting to `1`, `year/month` patch whitelist and clamps, provider calendar patch rejection, and a no-double-turn-count patch option for future route integration. Verified `node --check` for changed runtime/test files, `npm test` with 23 passing tests, and `git diff --check`.
 - 2026-05-05: S21.3 world tick route integration committed as `70b14fd`, implemented in `src/routes/game.js`, `public/app.js`, and `public/styles.css`, with route-level JSON/SSE tests in `test/gameTurnTick.test.js`. Verified `node --check src/routes/game.js`, `node --check public/app.js`, `node --check test/gameTurnTick.test.js`, `git diff --check`, and `npm test` with 25 passing tests.
 - 2026-05-05: S21.4 automated world tick coverage committed as `543a966`, adding route-level clamps, provider+tick event-history trimming, 15 repeated Mock turns across year rollover, and the complete scholar -> official path after tick integration to `test/gameTurnTick.test.js`. Verified `node --check test/gameTurnTick.test.js`, `node --test test/gameTurnTick.test.js` with 6 passing tests, `git diff --check`, and `npm test` with 29 passing tests.
+- 2026-05-05: S22.1 relationship ledger foundation implemented in `src/game/relationships.js`, wired through initial state plus game/exam route legacy backfill, documented in `docs/RELATIONSHIP_LEDGER_CONTRACT.md`, and covered by `test/relationshipLedger.test.js` plus an AI schema rejection test. Verified `node --check src/game/relationships.js`, `node --check src/game/initialState.js`, `node --check src/routes/game.js`, `node --check src/routes/exam.js`, `node --check test/relationshipLedger.test.js`, `node --check test/aiSchemas.test.js`, focused `node --test` runs for relationship ledger and AI schemas, `git diff --check`, and `npm test` with 35 passing tests.
 
 ## Next Recommended Step
 
-Recommended next step is S22.1: design and implement the first NPC/faction relationship ledger slice, keeping server-owned merge boundaries and Mock-default playability intact.
+Recommended next step is S22.2: add a controlled relationship-change suggestion/merge path and compact prompt context, keeping final relationship ledger authority in server code.

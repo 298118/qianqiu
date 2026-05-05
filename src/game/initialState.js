@@ -1,4 +1,5 @@
 const { randomUUID } = require("crypto");
+const { createInitialRelationshipLedger } = require("./relationships");
 
 const ROLE_LABELS = {
   scholar: "书生",
@@ -77,7 +78,7 @@ function createInitialState(input = {}) {
   const dynasty = (input.dynasty || "明").trim() || "明";
   const year = toNumber(input.year, 1644);
 
-  return {
+  const worldState = {
     sessionId: randomUUID(),
     year,
     month: 1,
@@ -136,6 +137,9 @@ function createInitialState(input = {}) {
       ...getRoleStats(role)
     }
   };
+
+  worldState.relationshipLedger = createInitialRelationshipLedger(worldState);
+  return worldState;
 }
 
 module.exports = {

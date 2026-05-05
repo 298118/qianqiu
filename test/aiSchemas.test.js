@@ -91,6 +91,28 @@ test("turn schema rejects model attempts to patch server-owned calendar fields",
   assert.throws(() => validatePayload("turn", payload), /schema validation/);
 });
 
+test("turn schema rejects model attempts to patch relationship ledger fields", () => {
+  const payload = {
+    narrative: "A turn happened.",
+    statePatch: {
+      relationshipLedger: {
+        characters: {
+          C01: { relationship: 100 }
+        }
+      }
+    },
+    attributeChanges: [],
+    events: [],
+    examTrigger: {
+      shouldStart: false,
+      level: null,
+      reason: ""
+    }
+  };
+
+  assert.throws(() => validatePayload("turn", payload), /schema validation/);
+});
+
 test("exam question and grade schemas accept valid provider payloads", () => {
   const question = {
     level: "child_exam",

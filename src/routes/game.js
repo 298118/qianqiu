@@ -1,5 +1,6 @@
 const express = require("express");
 const { createInitialState } = require("../game/initialState");
+const { ensureRelationshipLedger } = require("../game/relationships");
 const { applyStatePatch, appendEvents } = require("../game/stateRules");
 const { runWorldTick } = require("../game/worldTick");
 const { getProvider } = require("../ai");
@@ -31,6 +32,7 @@ function wantsSse(req) {
 
 async function processTurn(sessionId, input) {
   const worldState = await readSession(sessionId);
+  ensureRelationshipLedger(worldState);
   const provider = getProvider();
   const result = await provider.runTurn(worldState, input);
   const providerAttributeChanges = Array.isArray(result.attributeChanges) ? result.attributeChanges : [];
@@ -52,6 +54,7 @@ async function processTurn(sessionId, input) {
 
   appendEvents(worldState, result.events);
   appendEvents(worldState, worldTick.events);
+  ensureRelationshipLedger(worldState);
 
   await writeSession(worldState);
 
@@ -121,6 +124,7 @@ router.post("/start", async (req, res, next) => {
 router.get("/state/:sessionId", async (req, res, next) => {
   try {
     const worldState = await readSession(req.params.sessionId);
+    ensureRelationshipLedger(worldState);
     res.json({ sessionId: worldState.sessionId, worldState });
   } catch (error) {
     next(error);
