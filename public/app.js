@@ -14,10 +14,12 @@ const examTitle = document.querySelector("#exam-title");
 const examQuestion = document.querySelector("#exam-question");
 const examRequirements = document.querySelector("#exam-requirements");
 const examEssay = document.querySelector("#exam-essay");
+const examResult = document.querySelector("#exam-result");
 const examSubmit = document.querySelector("#exam-submit");
 
 let currentSessionId = null;
 let currentWorldState = null;
+let currentExamPayload = null;
 
 const ATTRIBUTE_LABELS = {
   health: "体力",
@@ -43,6 +45,14 @@ const EXAM_PROGRESS = [
   { rank: "贡士", label: "贡士", next: "palace_exam" },
   { rank: "进士", label: "进士", next: null }
 ];
+
+const SCORE_LABELS = {
+  content_quality: "义理内容",
+  argument_strength: "论证力",
+  literary_style: "文笔修辞",
+  classical_format: "文体格式",
+  historical_appropriateness: "时代语境"
+};
 
 function getExamProgress(player) {
   if (player.role === "official") {
@@ -211,9 +221,12 @@ function appendAttributeChanges(changes) {
 }
 
 function renderExamModal(payload) {
+  currentExamPayload = payload;
   examMeta.textContent = `${payload.examName} · ${payload.questionType} · ${payload.difficulty}`;
   examTitle.textContent = payload.examName;
   examQuestion.textContent = payload.examQuestion;
+  examQuestion.hidden = false;
+  examRequirements.hidden = false;
   examRequirements.innerHTML = "";
   (payload.requirements || []).forEach((requirement) => {
     const item = document.createElement("li");
@@ -221,14 +234,106 @@ function renderExamModal(payload) {
     examRequirements.appendChild(item);
   });
   examEssay.value = "";
+  examEssay.hidden = false;
+  examResult.hidden = true;
+  examResult.innerHTML = "";
   examSubmit.disabled = true;
-  examSubmit.title = "评卷将在后续步骤接入";
+  examSubmit.hidden = false;
+  examSubmit.textContent = "交卷";
+  examSubmit.title = "";
   examBackdrop.hidden = false;
   examEssay.focus();
 }
 
 function closeExamModal() {
   examBackdrop.hidden = true;
+}
+
+function updateExamSubmitState() {
+  examSubmit.disabled = !currentExamPayload || !examEssay.value.trim();
+}
+
+function createScoreItem(label, value) {
+  const item = document.createElement("div");
+  item.className = "score-item";
+  const name = document.createElement("span");
+  name.textContent = label;
+  const score = document.createElement("strong");
+  score.textContent = value;
+  item.append(name, score);
+  return item;
+}
+
+function renderExamResult(payload) {
+  const playerEntry = payload.ranking.find((entry) => entry.isPlayer);
+  const flags = payload.authenticityCheck.flags || [];
+
+  examMeta.textContent = `${payload.examName} · 放榜`;
+  examTitle.textContent = payload.promotionResult.passed ? "金榜有名" : "榜上无名";
+  examQuestion.hidden = true;
+  examRequirements.hidden = true;
+  examEssay.hidden = true;
+  examSubmit.hidden = true;
+  examResult.hidden = false;
+  examResult.innerHTML = "";
+
+  const summary = document.createElement("section");
+  summary.className = "result-summary";
+  summary.append(
+    createScoreItem("总评", `${payload.score.overall_score}`),
+    createScoreItem("等第", payload.score.rank),
+    createScoreItem("名次", playerEntry ? `第${playerEntry.place}` : "未列榜"),
+    createScoreItem("结果", payload.promotionResult.passed ? payload.promotionResult.rank : "未取中")
+  );
+
+  const feedback = document.createElement("p");
+  feedback.className = "result-feedback";
+  feedback.textContent = payload.score.detailed_feedback;
+
+  const dimensions = document.createElement("section");
+  dimensions.className = "score-grid";
+  Object.entries(SCORE_LABELS).forEach(([key, label]) => {
+    const item = document.createElement("div");
+    const score = payload.score[key];
+    const heading = document.createElement("strong");
+    heading.textContent = `${label} ${score.score}`;
+    const comment = document.createElement("p");
+    comment.textContent = score.comment;
+    item.append(heading, comment);
+    dimensions.appendChild(item);
+  });
+
+  const checks = document.createElement("section");
+  checks.className = "auth-checks";
+  const checksTitle = document.createElement("h3");
+  checksTitle.textContent = "监试复核";
+  checks.appendChild(checksTitle);
+  if (flags.length) {
+    flags.forEach((flag) => {
+      const item = document.createElement("p");
+      item.textContent = `${flag.label}：${flag.detail}`;
+      checks.appendChild(item);
+    });
+  } else {
+    const clean = document.createElement("p");
+    clean.textContent = `未见明显作伪，正文约${payload.authenticityCheck.characterCount}字。`;
+    checks.appendChild(clean);
+  }
+
+  const ranking = document.createElement("ol");
+  ranking.className = "ranking-list";
+  payload.ranking.forEach((entry) => {
+    const item = document.createElement("li");
+    if (entry.isPlayer) item.className = "is-player";
+    const name = document.createElement("strong");
+    name.textContent = `${entry.place}. ${entry.name}`;
+    const detail = document.createElement("span");
+    detail.textContent = `${entry.origin} · ${entry.score}分 · ${entry.rank}`;
+    item.append(name, detail);
+    ranking.appendChild(item);
+  });
+
+  examResult.append(summary, feedback, dimensions, checks, ranking);
 }
 
 async function openExamQuestion(level) {
@@ -257,6 +362,50 @@ async function openExamQuestion(level) {
     renderExamModal(payload);
   } catch (error) {
     appendNarrative(error.message, "error");
+  }
+}
+
+async function submitExamEssay() {
+  if (!currentSessionId || !currentExamPayload) return;
+  const essay = examEssay.value.trim();
+  if (!essay) return;
+
+  examSubmit.disabled = true;
+  examSubmit.textContent = "评卷中...";
+
+  try {
+    const response = await fetch("/api/exam/submit", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        sessionId: currentSessionId,
+        examId: currentExamPayload.examId,
+        essay
+      })
+    });
+
+    if (!response.ok) {
+      let message = `交卷失败：${response.status}`;
+      try {
+        const errorPayload = await response.json();
+        if (errorPayload.error) message = errorPayload.error;
+      } catch {
+        // Keep the status-based message when the server did not send JSON.
+      }
+      throw new Error(message);
+    }
+
+    const payload = await response.json();
+    renderWorldState(payload.worldState);
+    renderExamResult(payload);
+    appendNarrative(
+      `[放榜] ${payload.examName}得${payload.score.overall_score}分，${payload.promotionResult.passed ? `取中${payload.promotionResult.rank}` : "未能取中"}。`,
+      "exam-hint"
+    );
+  } catch (error) {
+    appendNarrative(error.message, "error");
+    examSubmit.disabled = false;
+    examSubmit.textContent = "交卷";
   }
 }
 
@@ -322,6 +471,8 @@ actionInput.addEventListener("keydown", (event) => {
 });
 
 examClose.addEventListener("click", closeExamModal);
+examEssay.addEventListener("input", updateExamSubmitState);
+examSubmit.addEventListener("click", submitExamEssay);
 examBackdrop.addEventListener("click", (event) => {
   if (event.target === examBackdrop) {
     closeExamModal();

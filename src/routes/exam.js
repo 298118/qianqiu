@@ -8,6 +8,8 @@ const {
   getNextExamLevel,
   summarizeReadiness
 } = require("../game/exams");
+const { applyAuthenticityPenalties, checkEssayAuthenticity } = require("../game/essayChecks");
+const { buildRanking, generateVirtualCandidates } = require("../game/candidates");
 const { appendEvents } = require("../game/stateRules");
 const { readSession, writeSession } = require("../storage/sessionStore");
 
@@ -36,6 +38,29 @@ function fail(statusCode, message) {
   const error = new Error(message);
   error.statusCode = statusCode;
   return error;
+}
+
+function buildPromotionResult(exam, score, authenticityCheck) {
+  const severeCheat = authenticityCheck.copy_detection?.is_copy;
+  const passed = exam.level === "palace_exam"
+    ? !severeCheat
+    : score.overall_score >= exam.passScore && !severeCheat;
+
+  return {
+    passed,
+    applied: false,
+    rank: passed ? exam.promotionRank : null,
+    nextLevel: passed ? exam.nextLevel : exam.level,
+    reason: passed
+      ? "本步骤仅记录取中结果，正式晋级将在后续科举晋升步骤应用。"
+      : "分数未达取中线或存在严重作伪。"
+  };
+}
+
+function summarizeResultEvent(worldState, activeExam, score, ranking, promotionResult) {
+  const playerPlace = ranking.find((entry) => entry.isPlayer)?.place || ranking.length;
+  const outcome = promotionResult.passed ? `取中${promotionResult.rank}` : "未能取中";
+  return `${worldState.player.name}交${activeExam.examName}卷，得${score.overall_score}分，榜列第${playerPlace}，${outcome}。`;
 }
 
 router.post("/question", async (req, res, next) => {
@@ -104,6 +129,98 @@ router.post("/question", async (req, res, next) => {
     await writeSession(worldState);
 
     res.status(201).json(toExamPayload(worldState));
+  } catch (error) {
+    next(error);
+  }
+});
+
+router.post("/submit", async (req, res, next) => {
+  try {
+    const { sessionId, examId, essay } = req.body;
+
+    if (!sessionId || typeof sessionId !== "string") {
+      throw fail(400, "Missing sessionId");
+    }
+    if (!examId || typeof examId !== "string") {
+      throw fail(400, "Missing examId");
+    }
+    if (!essay || typeof essay !== "string" || !essay.trim()) {
+      throw fail(400, "Missing or empty essay");
+    }
+
+    const worldState = await readSession(sessionId);
+    const activeExam = worldState.activeExam;
+
+    if (!activeExam || !activeExam.examQuestion) {
+      throw fail(400, "当前没有可交卷的考试。");
+    }
+    if (activeExam.examId !== examId) {
+      throw fail(409, "交卷编号与当前考试不符。");
+    }
+    if (activeExam.status && activeExam.status !== "writing") {
+      throw fail(409, "当前考试已经交卷。");
+    }
+
+    const exam = getExam(activeExam.level);
+    if (!exam) {
+      throw fail(400, "Unknown exam level");
+    }
+
+    const provider = getProvider();
+    const trimmedEssay = essay.trim();
+    const authenticityCheck = checkEssayAuthenticity({
+      essay: trimmedEssay,
+      exam,
+      player: worldState.player
+    });
+    const grade = await provider.gradeExamEssay(worldState, exam, trimmedEssay, authenticityCheck);
+    const score = applyAuthenticityPenalties(grade.score, authenticityCheck, exam);
+    const virtualCandidates = generateVirtualCandidates(worldState, exam, score.overall_score);
+    const ranking = buildRanking(
+      {
+        id: "player",
+        name: worldState.player.name,
+        origin: worldState.dynasty,
+        background: "本局玩家",
+        score,
+        isPlayer: true
+      },
+      virtualCandidates
+    );
+    const promotionResult = buildPromotionResult(exam, score, authenticityCheck);
+    const submittedAt = new Date().toISOString();
+    const historyEntry = {
+      examId,
+      level: activeExam.level,
+      examName: activeExam.examName,
+      examQuestion: activeExam.examQuestion,
+      essay: trimmedEssay,
+      score,
+      authenticityCheck,
+      virtualCandidates,
+      ranking,
+      promotionResult,
+      submittedAt
+    };
+
+    worldState.player.examHistory = [...(worldState.player.examHistory || []), historyEntry];
+    worldState.activeExam = null;
+    appendEvents(worldState, [summarizeResultEvent(worldState, activeExam, score, ranking, promotionResult)]);
+
+    await writeSession(worldState);
+
+    res.json({
+      sessionId: worldState.sessionId,
+      examId,
+      level: exam.level,
+      examName: activeExam.examName,
+      score,
+      authenticityCheck,
+      virtualCandidates,
+      ranking,
+      promotionResult,
+      worldState
+    });
   } catch (error) {
     next(error);
   }

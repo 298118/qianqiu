@@ -387,7 +387,7 @@ button:disabled {
   width: min(780px, 100%);
   max-height: min(92vh, 860px);
   display: grid;
-  grid-template-rows: auto auto auto auto minmax(190px, 1fr) auto;
+  grid-template-rows: auto auto auto auto minmax(190px, 1fr) auto auto;
   gap: 14px;
   overflow: hidden;
   border: 1px solid rgba(58, 43, 30, 0.32);
@@ -454,6 +454,102 @@ button:disabled {
   min-width: 110px;
 }
 
+.exam-result {
+  overflow-y: auto;
+  display: grid;
+  gap: 14px;
+  line-height: 1.6;
+}
+
+.exam-result[hidden] {
+  display: none;
+}
+
+.result-summary {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.score-item {
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  padding: 10px;
+  background: rgba(255, 250, 239, 0.72);
+}
+
+.score-item span {
+  display: block;
+  color: var(--muted);
+  font-size: 0.76rem;
+}
+
+.score-item strong {
+  display: block;
+  margin-top: 3px;
+  font-size: 1.15rem;
+}
+
+.result-feedback {
+  border-left: 3px solid var(--cinnabar);
+  padding-left: 12px;
+  color: var(--muted);
+}
+
+.score-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.score-grid > div,
+.auth-checks {
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  padding: 10px;
+  background: rgba(230, 213, 179, 0.22);
+}
+
+.score-grid p,
+.auth-checks p {
+  margin: 5px 0 0;
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.auth-checks h3 {
+  margin: 0;
+  font-size: 1rem;
+}
+
+.ranking-list {
+  display: grid;
+  gap: 7px;
+  margin: 0;
+  padding-left: 22px;
+}
+
+.ranking-list li {
+  padding: 7px 9px;
+  border: 1px solid transparent;
+}
+
+.ranking-list .is-player {
+  border-color: rgba(155, 47, 34, 0.34);
+  border-radius: 4px;
+  background: rgba(155, 47, 34, 0.08);
+}
+
+.ranking-list strong,
+.ranking-list span {
+  display: block;
+}
+
+.ranking-list span {
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
 @media (max-width: 820px) {
   .app-shell {
     grid-template-columns: 1fr;
@@ -493,5 +589,10 @@ button:disabled {
   .exam-modal {
     max-height: calc(100vh - 20px);
     padding: 16px;
+  }
+
+  .result-summary,
+  .score-grid {
+    grid-template-columns: 1fr;
   }
 }

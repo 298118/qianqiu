@@ -1,4 +1,5 @@
 const { getExamRequirements, getNextExamLevel } = require("../../game/exams");
+const { countEssayCharacters, scoreToRank } = require("../../game/essayChecks");
 
 function describeOpening(worldState) {
   const { dynasty, year, player, setup } = worldState;
@@ -357,8 +358,91 @@ async function generateExamQuestion(worldState, exam) {
   };
 }
 
+function countHits(essay, terms) {
+  return terms.filter((term) => essay.includes(term)).length;
+}
+
+function gradeDimension(rawScore, comment) {
+  return {
+    score: Math.max(0, Math.min(100, Math.round(rawScore))),
+    comment
+  };
+}
+
+async function gradeExamEssay(worldState, exam, essay, authenticityCheck) {
+  const player = worldState.player;
+  const characterCount = countEssayCharacters(essay);
+  const classicalTerms = ["夫", "盖", "故", "是以", "仁", "义", "礼", "法", "民", "君", "臣", "赋", "吏", "经", "道"];
+  const structureTerms = ["一曰", "二曰", "三曰", "窃以为", "臣闻", "谨按", "综上", "由是观之"];
+  const classicalHit = countHits(essay, classicalTerms);
+  const structureHit = countHits(essay, structureTerms);
+  const lengthTarget = Math.min(1.15, characterCount / Math.max(1, exam.wordCount.min));
+  const lengthScore = 46 + lengthTarget * 28 - Math.max(0, characterCount - exam.wordCount.max) / 80;
+  const foundation = (
+    (player.academia || 0) * 0.32 +
+    (player.literaryTalent || 0) * 0.28 +
+    (player.adaptability || 0) * 0.18 +
+    (player.mentality || 0) * 0.14 +
+    (player.reputation || 0) * 0.08
+  );
+  const readinessBonus = worldState.activeExam?.readiness?.ready ? 4 : 0;
+  const difficultyPenalty = {
+    child_exam: 0,
+    provincial_exam: 4,
+    metropolitan_exam: 7,
+    palace_exam: 5
+  }[exam.level] || 0;
+
+  const base = lengthScore + foundation * 0.42 + classicalHit * 1.2 + structureHit * 2 + readinessBonus - difficultyPenalty;
+  const historicalPenalty = authenticityCheck.anachronism_detection?.has_anachronism ? 10 : 0;
+
+  const score = {
+    content_quality: gradeDimension(
+      base + (player.academia || 0) * 0.18,
+      "义理能扣住题旨，若能多引经义与时务例证，则更见根柢。"
+    ),
+    argument_strength: gradeDimension(
+      base + (player.adaptability || 0) * 0.18 + structureHit * 2,
+      "立论已有开合，层次越明，策论气象越稳。"
+    ),
+    literary_style: gradeDimension(
+      base + (player.literaryTalent || 0) * 0.22 + classicalHit * 1.4,
+      "文气尚称雅正，句法可再收束，使辞采不掩义理。"
+    ),
+    classical_format: gradeDimension(
+      base + structureHit * 3,
+      "格式大体可读，破题、承转与结语仍可更谨严。"
+    ),
+    historical_appropriateness: gradeDimension(
+      base - historicalPenalty,
+      historicalPenalty ? "夹有不合时宜词语，监试会据此扣分。" : "语境基本合乎时代，不见明显穿凿。"
+    )
+  };
+
+  const overall = Math.round((
+    score.content_quality.score * 0.25 +
+    score.argument_strength.score * 0.2 +
+    score.literary_style.score * 0.2 +
+    score.classical_format.score * 0.18 +
+    score.historical_appropriateness.score * 0.17
+  ));
+
+  return {
+    score: {
+      ...score,
+      overall_score: overall,
+      rank: scoreToRank(overall, exam),
+      detailed_feedback: `本文约${characterCount}字，${exam.questionType}体式已具雏形。宜继续补足经义依据、收紧段落层次，并少用浮泛套语。`
+    },
+    authenticity_check: authenticityCheck,
+    virtual_candidates: [],
+    ranking: []
+  };
+}
+
 module.exports = {
   startGame,
   runTurn,
-  generateExamQuestion
+  generateExamQuestion,
+  gradeExamEssay
 };
