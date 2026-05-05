@@ -49,7 +49,23 @@ PORT=3000
 AI_PROVIDER=mock
 ```
 
-OpenAI、DeepSeek、Claude 的环境变量已经预留，但真实 provider 尚未接入；非 `mock` provider 目前会降级到 Mock。
+AI provider can now be `mock`, `openai`, `deepseek`, `claude`, or `anthropic`. `mock` remains the default and needs no key. Real providers validate model JSON through Ajv before the server applies state, and each real provider retries once before falling back to Mock.
+
+Common provider settings:
+
+```text
+AI_PROVIDER_TIMEOUT_MS=30000
+OPENAI_API_KEY=
+OPENAI_MODEL=gpt-5.4-mini
+OPENAI_BASE_URL=
+DEEPSEEK_API_KEY=
+DEEPSEEK_BASE_URL=https://api.deepseek.com
+DEEPSEEK_MODEL=deepseek-v4-flash
+ANTHROPIC_API_KEY=
+ANTHROPIC_MODEL=claude-sonnet-4-5
+```
+
+Provider dependencies: `openai` powers both OpenAI Responses API and DeepSeek OpenAI-compatible chat completions, `@anthropic-ai/sdk` powers Claude Messages API, and `ajv` performs local schema validation for all model JSON.
 
 ## 开发文档
 

@@ -14,8 +14,11 @@
   ],
   "license": "UNLICENSED",
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.93.0",
+    "ajv": "^8.20.0",
     "cors": "latest",
     "dotenv": "latest",
-    "express": "latest"
+    "express": "latest",
+    "openai": "^6.36.0"
   }
 }

@@ -507,3 +507,15 @@ chore: update env example
 - 放榜界面包含虚拟考生和玩家排名。
 - AI JSON 有 schema 校验和失败降级。
 - README 说明安装、配置、启动和 provider 切换。
+
+## S11 Provider Integration Note (2026-05-05)
+
+The first real-provider slice is implemented without changing the default local experience:
+
+- `AI_PROVIDER=mock` remains the default and needs no API key.
+- `AI_PROVIDER=openai` uses the OpenAI SDK Responses API with `OPENAI_API_KEY`, optional `OPENAI_BASE_URL`, and `OPENAI_MODEL`.
+- `AI_PROVIDER=deepseek` uses the OpenAI SDK against `DEEPSEEK_BASE_URL` for OpenAI-compatible chat completions with `DEEPSEEK_API_KEY` and `DEEPSEEK_MODEL`.
+- `AI_PROVIDER=claude` and `AI_PROVIDER=anthropic` use `@anthropic-ai/sdk` Messages API with `ANTHROPIC_API_KEY` and `ANTHROPIC_MODEL`.
+- `AI_PROVIDER_TIMEOUT_MS` controls real provider request timeout and defaults to 30000.
+- All real provider methods build prompts through `src/ai/prompts.js`, parse JSON through `src/utils/json.js`, validate through Ajv schemas in `src/ai/schemas.js`, retry once on call/parse/schema failure, and then fall back to Mock.
+- The server still owns patch whitelisting, numeric clamps, exam gates, promotion rules, anti-cheat penalties, candidate ranking, and persistence.

@@ -6,7 +6,7 @@ Both tools must read this file at the start of every development session, after 
 
 ## Current Snapshot
 
-- Repository status: first playable vertical slice is implemented. The app installs with npm, starts an Express server, serves a plain HTML/CSS/JS frontend, can create/read/Mock-play a scholar session with richer daily scholar actions, complete the scholar exam path into official status, and play basic Mock loops for emperor, minister, and newly promoted officials.
+- Repository status: first playable vertical slice is implemented. The app installs with npm, starts an Express server, serves a plain HTML/CSS/JS frontend, can create/read/Mock-play a scholar session with richer daily scholar actions, complete the scholar exam path into official status, play basic Mock loops for emperor, minister, and newly promoted officials, and optionally use OpenAI, DeepSeek, or Claude providers with Mock fallback.
 - Canonical product brief: `docs/QIANQIU_DEVELOPMENT_BRIEF.md`.
 - Shared implementation roadmap and progress ledger: `docs/DEVELOPMENT_STEPS.md`.
 - Codex entrypoint: `AGENTS.md`.
@@ -22,7 +22,10 @@ Both tools must read this file at the start of every development session, after 
 - Use one shared step ledger for both Codex and Claude Code: `docs/DEVELOPMENT_STEPS.md`.
 - Every coherent project change must be committed locally with Git.
 - The first runtime slice uses Express, CORS, and dotenv only; session ids use Node.js `crypto.randomUUID()` to avoid adding a separate id dependency this early.
-- Non-`mock` AI providers are configured but not implemented yet; `src/ai/index.js` falls back to Mock when another provider is requested.
+- `AI_PROVIDER=mock` remains the default no-key mode. `AI_PROVIDER=openai`, `deepseek`, `claude`, or `anthropic` now creates a real provider when the matching API key is present.
+- Real providers use local prompt builders in `src/ai/prompts.js`, JSON schemas in `src/ai/schemas.js`, and `src/utils/json.js` parsing before route handlers apply any state changes.
+- OpenAI uses the Responses API through the `openai` SDK; DeepSeek uses the same SDK against `DEEPSEEK_BASE_URL` with OpenAI-compatible chat completions; Claude uses `@anthropic-ai/sdk` Messages API with `output_config.format`.
+- Real provider calls use `AI_PROVIDER_TIMEOUT_MS` (default 30000), retry once on call/JSON/schema failure, then fall back to Mock for that method.
 - State patch whitelist: `src/game/stateRules.js` defines allowed patch keys for top-level state and player fields. Only whitelisted fields can be modified by AI output.
 - Numerical clamping: all numeric fields have defined min/max ranges in stateRules.js. Patches are clamped after merge.
 - Event history: capped at 20 entries, oldest trimmed first.
@@ -87,9 +90,10 @@ Before finishing each coherent change:
 - 2026-05-05: S08.1-S08.4 code committed as `9c8ca76`. Verified with `node --check` for `src/game/essayChecks.js`, `src/game/candidates.js`, `src/ai/providers/mock.js`, `src/routes/exam.js`, and `public/app.js`. Temporary server on port 3137 confirmed health, question generation, normal essay submission, 4-8 candidate ranking, `examHistory` persistence, `activeExam` clearing, and short/modern-term penalty flags.
 - 2026-05-05: S09.1-S09.5 code committed as `bed515a`. Verified with `node --check` for `src/game/promotions.js`, `src/routes/exam.js`, `src/game/initialState.js`, and `public/app.js`; `git diff --check`; and a temporary Mock server on port 3142 that confirmed four-exam promotion from scholar to official plus severe-copy downgrade from `秀才` to no rank.
 - 2026-05-05: S10.1-S10.3 code committed as `592b7a1`. Verified with `node --check` for `src/ai/providers/mock.js`, `src/game/initialState.js`, `src/game/stateRules.js`, `src/game/promotions.js`, and `public/app.js`; `git diff --check`; a temporary Mock server on port 3158 covering emperor relief, minister memorial, and official observation actions; and a direct promotion-to-official smoke test confirming official state seeding and official turn updates.
+- 2026-05-05: S11.1-S11.4 implemented locally. Verified `node --check` for the new provider/schema/prompt/json files plus `src/ai/index.js`; Ajv accepted a valid turn payload; no-key OpenAI/DeepSeek/Claude configurations returned Mock; an unreachable OpenAI endpoint retried twice then returned Mock output; and a temporary Mock server on port 3171 returned health ok, created a session, and advanced one turn.
 
 ## Next Recommended Step
 
 Implement the next integration slice:
 
-- S11.1-S11.4: Add real AI providers while keeping Mock as the no-key default and fallback.
+- S12.1-S12.3: Polish the classical UI, mobile layout, and narrative/exam/ranking interactions.

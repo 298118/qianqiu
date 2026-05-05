@@ -99,10 +99,10 @@
 | S10.1 | DONE | 实现皇帝身份基础自由输入推演 | 2026-05-05 | Codex | 592b7a1 |
 | S10.2 | DONE | 实现大臣身份基础自由输入推演 | 2026-05-05 | Codex | 592b7a1 |
 | S10.3 | DONE | 入仕后显示官员视角与基础政务输入 | 2026-05-05 | Codex | 592b7a1 |
-| S11.1 | TODO | 接入 OpenAI provider |  |  |  |
-| S11.2 | TODO | 接入 DeepSeek OpenAI-compatible provider |  |  |  |
-| S11.3 | TODO | 接入 Claude provider |  |  |  |
-| S11.4 | TODO | 真实 provider 失败时自动重试或降级 Mock |  |  |  |
+| S11.1 | DONE | 接入 OpenAI provider | 2026-05-05 | Codex | pending |
+| S11.2 | DONE | 接入 DeepSeek OpenAI-compatible provider | 2026-05-05 | Codex | pending |
+| S11.3 | DONE | 接入 Claude provider | 2026-05-05 | Codex | pending |
+| S11.4 | DONE | 真实 provider 失败时自动重试或降级 Mock | 2026-05-05 | Codex | pending |
 | S12.1 | TODO | 前端古风视觉：宣纸、墨色、朱砂强调 |  |  |  |
 | S12.2 | TODO | 移动端布局与输入体验优化 |  |  |  |
 | S12.3 | TODO | 叙事区、考试区、放榜区交互打磨 |  |  |  |
@@ -480,3 +480,39 @@ Verification:
 Risk/leftover: General and magistrate still use the generic fallback; real AI providers, automated tests, and SSE streaming are still TODO.
 
 Next step: S11.1-S11.4 real provider integration, keeping Mock as no-key default and fallback.
+
+---
+
+Codex progress note, 2026-05-05:
+
+Steps: S11.1, S11.2, S11.3, S11.4
+
+Commit: pending; final response will report the created local commit hash.
+
+Completed:
+
+- Added `openai`, `@anthropic-ai/sdk`, and `ajv` dependencies for real provider calls and local JSON validation.
+- Added `src/ai/prompts.js`, `src/ai/schemas.js`, and `src/utils/json.js` so remote model output is parsed and schema-validated before route handlers apply state.
+- Added OpenAI, DeepSeek, and Claude provider modules. OpenAI uses Responses API; DeepSeek uses OpenAI-compatible chat completions with `DEEPSEEK_BASE_URL`; Claude uses Anthropic Messages API with JSON schema output config.
+- Updated `src/ai/index.js` so `AI_PROVIDER=mock` remains the no-key default, while real providers retry once on call, parse, or schema failure before falling back to Mock for that method.
+- Updated `.env.example` and README with provider names, model defaults, timeout setting, and dependency roles.
+
+Verification:
+
+- `npm install openai @anthropic-ai/sdk ajv`
+- `node --check src/utils/json.js`
+- `node --check src/ai/schemas.js`
+- `node --check src/ai/prompts.js`
+- `node --check src/ai/providers/remoteHelpers.js`
+- `node --check src/ai/providers/openai.js`
+- `node --check src/ai/providers/deepseek.js`
+- `node --check src/ai/providers/anthropic.js`
+- `node --check src/ai/index.js`
+- Ajv schema smoke accepted a valid `turn` payload.
+- No-key `AI_PROVIDER=openai`, `AI_PROVIDER=deepseek`, and `AI_PROVIDER=claude` each returned Mock.
+- Fake OpenAI endpoint `http://127.0.0.1:1/v1` retried twice and then returned Mock output from `startGame`.
+- Temporary Mock server on port 3171 returned `healthOk=true`, created a session, and advanced one turn.
+
+Risk/leftover: Real API calls were not made because no API keys are present in the local environment. General and magistrate still use generic Mock fallback; SSE streaming and automated tests remain TODO.
+
+Next step: S12.1-S12.3 UI and interaction polish, or S13 if test coverage is preferred first.
