@@ -6,19 +6,23 @@ Both tools must read this file at the start of every development session, after 
 
 ## Current Snapshot
 
-- Repository status: documentation scaffold and shared development roadmap are in place; game implementation has not started.
+- Repository status: first runnable vertical slice is implemented. The app installs with npm, starts an Express server, serves a plain HTML/CSS/JS frontend, and can create/read a Mock scholar session.
 - Canonical product brief: `docs/QIANQIU_DEVELOPMENT_BRIEF.md`.
 - Shared implementation roadmap and progress ledger: `docs/DEVELOPMENT_STEPS.md`.
 - Codex entrypoint: `AGENTS.md`.
 - Claude Code entrypoint: `CLAUDE.md`.
 - Default development target: runnable Node.js + Express + pure HTML/CSS/JS game at `http://localhost:3000`.
 - Default AI mode: `mock`, playable without API keys.
+- Implemented API surface: `GET /api/health`, `POST /api/game/start`, and `GET /api/game/state/:sessionId`.
+- Local session files are written under `data/sessions/*.json`, which remains ignored by Git.
 
 ## Active Decisions
 
 - Use one shared context file for both Codex and Claude Code: `docs/SHARED_CONTEXT.md`.
 - Use one shared step ledger for both Codex and Claude Code: `docs/DEVELOPMENT_STEPS.md`.
 - Every coherent project change must be committed locally with Git.
+- The first runtime slice uses Express, CORS, and dotenv only; session ids use Node.js `crypto.randomUUID()` to avoid adding a separate id dependency this early.
+- Non-`mock` AI providers are configured but not implemented yet; `src/ai/index.js` falls back to Mock when another provider is requested.
 - Any behavior/API/setup/architecture decision that affects future work must be recorded in this file or in the canonical development brief.
 - Any roadmap step that starts, completes, blocks, or changes scope must be recorded in `docs/DEVELOPMENT_STEPS.md`.
 - If the change is a short handoff note, update this file.
@@ -51,12 +55,13 @@ Before finishing each coherent change:
 - 2026-05-05: Shared context bridge added; Node.js verification confirmed `AGENTS.md`, `CLAUDE.md`, README, and the development brief all link to `docs/SHARED_CONTEXT.md`.
 - 2026-05-05: Development steps ledger added; Codex and Claude Code entrypoints now require updating `docs/DEVELOPMENT_STEPS.md` for every roadmap step.
 - 2026-05-05: Roadmap step S00.1 recorded as completed in `docs/DEVELOPMENT_STEPS.md` with commit `8e3cee3`.
+- 2026-05-05: `npm install` completed with 0 vulnerabilities.
+- 2026-05-05: `npm start` served `http://localhost:3000`; `GET /api/health`, homepage load, `POST /api/game/start`, and `GET /api/game/state/:sessionId` were verified with PowerShell web requests.
 
 ## Next Recommended Step
 
-Implement the first runnable vertical slice:
+Implement the next gameplay slice:
 
-- `package.json`, `.env.example`, and `server.js`.
-- Mock AI provider.
-- `POST /api/game/start`.
-- Static frontend shell that can start a scholar session.
+- Add `POST /api/game/turn` in a basic non-streaming form.
+- Add state patch rules and clamping before applying Mock AI changes.
+- Extend the frontend with a main free-text action input and narrative history.

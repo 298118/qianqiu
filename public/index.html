@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>千秋</title>
+    <link rel="stylesheet" href="/styles.css">
+  </head>
+  <body>
+    <main class="app-shell">
+      <section class="start-panel" aria-labelledby="title">
+        <div>
+          <p class="eyebrow">Qianqiu</p>
+          <h1 id="title">千秋</h1>
+          <p class="subtitle">一局从寒窗开始的历史文字模拟。</p>
+        </div>
+
+        <form id="start-form" class="start-form">
+          <label>
+            朝代
+            <input name="dynasty" value="明" autocomplete="off">
+          </label>
+          <label>
+            年份
+            <input name="year" type="number" value="1644">
+          </label>
+          <label>
+            身份
+            <select name="role">
+              <option value="scholar">书生</option>
+              <option value="emperor">皇帝</option>
+              <option value="minister">大臣</option>
+              <option value="general">将领</option>
+              <option value="magistrate">地方官</option>
+            </select>
+          </label>
+          <label>
+            姓名
+            <input name="playerName" value="沈砚" autocomplete="off">
+          </label>
+          <label class="full-span">
+            家境
+            <input name="background" value="寒门子弟，父以教书糊口。" autocomplete="off">
+          </label>
+          <label class="full-span">
+            自定义背景
+            <textarea name="customSetting" rows="3">县中连年歉收，士子多借书传抄。</textarea>
+          </label>
+          <button type="submit">开局</button>
+        </form>
+      </section>
+
+      <section class="game-panel" aria-live="polite">
+        <div class="status-strip" id="status-strip">
+          <span>尚未开局</span>
+        </div>
+        <article class="narrative" id="narrative">
+          <p>填写开局设定，进入千秋第一卷。</p>
+        </article>
+      </section>
+    </main>
+
+    <script src="/app.js"></script>
+  </body>
+</html>

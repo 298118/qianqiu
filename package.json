@@ -1,0 +1,21 @@
+{
+  "name": "qianqiu",
+  "version": "0.1.0",
+  "description": "Qianqiu / 千秋, a browser and Node.js historical simulation text game.",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js"
+  },
+  "keywords": [
+    "historical-simulation",
+    "text-game",
+    "qianqiu"
+  ],
+  "license": "UNLICENSED",
+  "dependencies": {
+    "cors": "latest",
+    "dotenv": "latest",
+    "express": "latest"
+  }
+}

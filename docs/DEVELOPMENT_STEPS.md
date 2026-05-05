@@ -287,3 +287,26 @@
 风险/遗留：游戏实现尚未开始。
 
 下一步：从 S01.1 开始创建 `package.json`、`.env.example` 和基础 npm scripts。
+
+---
+
+Codex progress note, 2026-05-05:
+
+Status updates:
+
+- S01.1 DONE: Added `package.json`, `package-lock.json`, `.env.example`, `start`, and `dev` scripts.
+- S01.2 DONE: Added `server.js`, Express setup, CORS, dotenv loading, static `public/` hosting, and `GET /api/health`.
+- S01.3 DONE: Added `public/index.html`, `public/styles.css`, and `public/app.js` with a usable opening form, status strip, and narrative area.
+- S02.1 DONE: Added `src/storage/sessionStore.js` with JSON read/write under `data/sessions/` and session id validation.
+- S02.2 DONE: Added `src/game/initialState.js` with the first structured `worldState`.
+- S03.1 DONE: Added `src/ai/index.js` and `src/ai/providers/mock.js`; non-Mock providers currently fall back to Mock.
+- S04.1 DONE: Added `POST /api/game/start`, including Mock opening narrative and session persistence.
+- S04.2 DONE: Added `GET /api/game/state/:sessionId` for reading saved sessions.
+
+Commit: pending until this coherent change is committed locally.
+
+Verification: Ran `npm install` successfully with 0 vulnerabilities. Started the app through `npm start`, confirmed `http://localhost:3000/` returned 200, `GET /api/health` returned ok, `POST /api/game/start` created a session, and `GET /api/game/state/:sessionId` read it back.
+
+Risk/leftover: The turn loop, state patch whitelist/clamping, AI JSON schemas, exam endpoints, and complete scholar exam path are still TODO.
+
+Next step: Implement S02.3 and S04.3 together so free-text actions can change state only through server-side rules.
