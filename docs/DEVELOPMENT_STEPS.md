@@ -51,7 +51,7 @@
 | S21.3 | DONE | 将世界 tick 接入 `/api/game/turn`，确保玩家行动与自然世界变化共同进入事件历史 | 2026-05-05 | Codex | 70b14fd |
 | S21.4 | DONE | 为世界 tick 增加自动化测试，覆盖数值边界、事件裁剪和 Mock 稳定性 | 2026-05-05 | Codex | 543a966 |
 | S22.1 | DONE | 扩展 NPC 与派系关系账本，记录人物立场、恩怨、人脉来源和近期意图 | 2026-05-05 | Codex | 296928f |
-| S22.2 | DONE | 更新状态 patch 白名单和提示词摘要，让 provider 只能建议关系变化，服务器负责裁决 | 2026-05-05 | Codex | 本次 S22.2 提交 |
+| S22.2 | DONE | 更新状态 patch 白名单和提示词摘要，让 provider 只能建议关系变化，服务器负责裁决 | 2026-05-05 | Codex | e5d2d51 |
 | S22.3 | TODO | 在 Mock 中加入人物/派系对玩家行动的可追踪反应 |
 | S23.1 | TODO | 深化地方官身份：县库、乡绅、盗匪、诉讼、赋役、水利和地方民心 |
 | S23.2 | TODO | 深化将领身份：兵员、军粮、士气、侦察、战役风险和边境态势 |
@@ -154,7 +154,7 @@ Tool: Codex
 
 Step: S22.2
 
-Commit: this S22.2 commit
+Commit: e5d2d51
 
 Completed:
 - Added top-level provider `relationshipChanges` to the turn schema as a suggestion-only path separate from `statePatch`.
