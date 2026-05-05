@@ -2,11 +2,12 @@
 
 This repository is the browser + Node.js historical simulation text game **Qianqiu / 千秋**.
 
-Always read [docs/QIANQIU_DEVELOPMENT_BRIEF.md](docs/QIANQIU_DEVELOPMENT_BRIEF.md) before planning or editing. That document is the source of truth for product goals, architecture, data contracts, and delivery standards.
+Always read [docs/SHARED_CONTEXT.md](docs/SHARED_CONTEXT.md) and [docs/QIANQIU_DEVELOPMENT_BRIEF.md](docs/QIANQIU_DEVELOPMENT_BRIEF.md) before planning or editing. The shared context is the handoff board between Codex and Claude Code; the development brief is the source of truth for product goals, architecture, data contracts, and delivery standards.
 
 ## Mandatory Workflow
 
 - Preserve context on every meaningful change: update the development brief, README, inline comments, or a short note in the relevant file when behavior, API shape, setup, or assumptions change.
+- Keep Codex and Claude Code synchronized: update [docs/SHARED_CONTEXT.md](docs/SHARED_CONTEXT.md) before finishing every coherent change, including the current state, important decisions, verification, and the next recommended step.
 - Use Git for every coherent local change. Before editing, check `git status --short`; after editing and verification, commit with a clear message.
 - Do not leave useful work only in chat. If a decision matters for future Codex or Claude Code sessions, write it into the repo.
 - Keep the game runnable with `npm install && npm start` and available at `http://localhost:3000`.
@@ -23,4 +24,3 @@ Always read [docs/QIANQIU_DEVELOPMENT_BRIEF.md](docs/QIANQIU_DEVELOPMENT_BRIEF.m
 - Storage: JSON files under `data/sessions/` for early development.
 - UI tone: classical Chinese historical atmosphere, readable first, ornamental second.
 - Comments: explain prompts, state transitions, anti-cheat logic, and non-obvious schema decisions.
-
