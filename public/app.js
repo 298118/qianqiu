@@ -39,6 +39,13 @@ const ATTRIBUTE_LABELS = {
   mandate: "天命",
   influence: "影响",
   integrity: "操守",
+  localTreasury: "县库",
+  localOrder: "地方民心",
+  gentryRelations: "乡绅",
+  banditPressure: "盗匪",
+  pendingLawsuits: "词讼",
+  corveeBurden: "赋役",
+  waterworks: "水利",
   treasury: "府库",
   grainReserve: "粮储",
   population: "人口",
@@ -54,13 +61,15 @@ const ACTION_PLACEHOLDERS = {
   scholar: "输入你的行动，例如：研读《论语》三日",
   emperor: "输入你的行动，例如：下诏开仓赈灾，或整饬吏治",
   minister: "输入你的行动，例如：上疏整顿漕运，或拜会清流同僚",
-  official: "输入你的行动，例如：入署观政，或审理乡民争讼"
+  official: "输入你的行动，例如：入署观政，或审理乡民争讼",
+  magistrate: "输入你的行动，例如：审理词讼、清查钱粮，或兴修水利"
 };
 
 const ROLE_ACTION_HINTS = {
   emperor: ["下诏赈灾", "任免官员", "加税筹饷", "练兵备边"],
   minister: ["上疏谏言", "督办公务", "结交同僚", "弹劾攻讦"],
-  official: ["入署观政", "断案平讼", "劝农抚民", "拜会同年"]
+  official: ["入署观政", "断案平讼", "劝农抚民", "拜会同年"],
+  magistrate: ["审理词讼", "清查钱粮", "安抚乡绅", "缉捕盗匪", "兴修水利"]
 };
 
 const EXAM_LABELS = {
@@ -133,6 +142,14 @@ function setStatus(worldState) {
 
   if (player.role === "scholar") {
     statusItems.splice(3, 0, `银钱 ${player.gold}`);
+  } else if (player.role === "magistrate") {
+    statusItems.splice(
+      3,
+      0,
+      `治所 ${player.countyName || "本县"}`,
+      `县库 ${player.localTreasury ?? "-"}`,
+      `盗匪 ${player.banditPressure ?? "-"}`
+    );
   } else {
     statusItems.splice(3, 0, `府库 ${worldState.treasury}`, `民心 ${worldState.publicOrder}`, `边患 ${worldState.borderThreat}`);
   }
@@ -189,7 +206,7 @@ function renderRolePanel(worldState) {
   overview.append(
     createPanelValue("身份视角", player.roleLabel),
     createPanelValue("官职/位置", player.officeTitle || player.position || "未授"),
-    createPanelValue("派系/根基", player.faction || "未定")
+    createPanelValue(player.role === "magistrate" ? "治所" : "派系/根基", player.role === "magistrate" ? player.countyName || "本县" : player.faction || "未定")
   );
 
   if (player.role === "official") {
@@ -222,6 +239,14 @@ function renderRolePanel(worldState) {
       ["学识", player.academia],
       ["民心", worldState.publicOrder],
       ["贪腐", worldState.corruption]
+    ],
+    magistrate: [
+      ["地方民心", player.localOrder],
+      ["乡绅", player.gentryRelations],
+      ["盗匪", player.banditPressure],
+      ["词讼", player.pendingLawsuits],
+      ["赋役", player.corveeBurden],
+      ["水利", player.waterworks]
     ]
   };
 
@@ -231,19 +256,28 @@ function renderRolePanel(worldState) {
 
   const lists = document.createElement("section");
   lists.className = "scholar-lists";
-  lists.append(
-    createPanelValue("府库", `${worldState.treasury} 银`, "p"),
-    createPanelValue("粮储", `${worldState.grainReserve} 石`, "p"),
-    createPanelValue("朝局", formatFactions(worldState.factions), "p"),
-    createPanelValue("人脉", (player.connections || []).join("、") || "尚无记录", "p")
-  );
+  if (player.role === "magistrate") {
+    lists.append(
+      createPanelValue("县库", `${player.localTreasury ?? 0} 银`, "p"),
+      createPanelValue("朝廷府库", `${worldState.treasury} 银`, "p"),
+      createPanelValue("粮储", `${worldState.grainReserve} 石`, "p"),
+      createPanelValue("人脉", (player.connections || []).join("、") || "尚无记录", "p")
+    );
+  } else {
+    lists.append(
+      createPanelValue("府库", `${worldState.treasury} 银`, "p"),
+      createPanelValue("粮储", `${worldState.grainReserve} 石`, "p"),
+      createPanelValue("朝局", formatFactions(worldState.factions), "p"),
+      createPanelValue("人脉", (player.connections || []).join("、") || "尚无记录", "p")
+    );
+  }
 
   scholarPanel.append(overview, renderActionHints(player.role), stats, lists);
 }
 
 function renderScholarPanel(worldState) {
   const player = worldState.player;
-  if (player.role === "emperor" || player.role === "minister" || player.role === "official") {
+  if (player.role === "emperor" || player.role === "minister" || player.role === "official" || player.role === "magistrate") {
     renderRolePanel(worldState);
     return;
   }

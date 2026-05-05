@@ -6,7 +6,7 @@ Both tools must read this file at the start of every development session, after 
 
 ## Current Snapshot
 
-- Repository status: phase-one playable vertical slice is implemented, accepted, and now archived as historical planning. Phase two has started; S22.3 Mock NPC/faction reactions are implemented, and the next active implementation target is S23.1 local magistrate identity depth.
+- Repository status: phase-one playable vertical slice is implemented, accepted, and now archived as historical planning. Phase two has started; S23.1 local magistrate identity depth is implemented, and the next active implementation target is S23.2 general identity depth.
 - Canonical product brief: `docs/QIANQIU_DEVELOPMENT_BRIEF.md`.
 - Shared implementation roadmap and progress ledger: `docs/DEVELOPMENT_STEPS.md`.
 - Developer implementation map: `docs/ARCHITECTURE.md`.
@@ -80,6 +80,11 @@ Both tools must read this file at the start of every development session, after 
 - S22.3 makes Mock provider turns generate concrete `relationshipChanges` for scholar, emperor, minister, and official actions. Mock classifies the resolved action from its own `statePatch` and `examTrigger`, targets only currently visible relationship ledger entries, and still relies on the game route to apply and persist changes through `applyRelationshipChanges()`.
 - The browser now appends concise `[人脉]` narrative feedback for applied relationship changes in both JSON and SSE turn paths.
 - Durable S22 relationship contract: `docs/RELATIONSHIP_LEDGER_CONTRACT.md`.
+- S23.1 adds magistrate-local player state fields: `countyName`, `localTreasury`, `localOrder`, `gentryRelations`, `banditPressure`, `pendingLawsuits`, `corveeBurden`, and `waterworks`.
+- Magistrate local fields are included in the AI turn schema, prompt compact player context, and `applyStatePatch()` whitelist/clamp boundary. Numeric local fields are server-clamped, and promotion/exam/relationship-ledger authority remains server-owned.
+- Mock magistrate turns now cover case hearings, money/grain work, gentry mediation, anti-bandit policing, corvee labor, waterworks, and routine yamen work.
+- Mock magistrate turns generate concrete `relationshipChanges` through the same suggestion-only path as S22.3; the route still applies and persists them through `applyRelationshipChanges()`.
+- The browser role panel now renders magistrate-specific status, action hints, county meters, county treasury, and local human-network feedback.
 - Tooling note: if `rg` resolves to the packaged Codex app path under `C:\Program Files\WindowsApps\OpenAI.Codex_...\app\resources`, Windows may deny execution. This workspace now shadows it with a working ripgrep 15.1.0 binary at `C:\Users\ZZZ\AppData\Local\OpenAI\Codex\bin\rg.exe`, which appears earlier on PATH.
 - Any behavior/API/setup/architecture decision that affects future work must be recorded in this file or in the canonical development brief.
 - Any roadmap step that starts, completes, blocks, or changes scope must be recorded in `docs/DEVELOPMENT_STEPS.md`.
@@ -137,7 +142,8 @@ Before finishing each coherent change:
 - 2026-05-05: S22.1 relationship ledger foundation committed as `296928f`, implemented in `src/game/relationships.js`, wired through initial state plus game/exam route legacy backfill, documented in `docs/RELATIONSHIP_LEDGER_CONTRACT.md`, and covered by `test/relationshipLedger.test.js` plus an AI schema rejection test. Verified `node --check src/game/relationships.js`, `node --check src/game/initialState.js`, `node --check src/routes/game.js`, `node --check src/routes/exam.js`, `node --check test/relationshipLedger.test.js`, `node --check test/aiSchemas.test.js`, focused `node --test` runs for relationship ledger and AI schemas, `git diff --check`, and `npm test` with 35 passing tests.
 - 2026-05-05: S22.2 controlled relationship suggestion/prompt integration committed as `e5d2d51`, implemented in `src/game/relationships.js`, `src/ai/schemas.js`, `src/ai/prompts.js`, `src/routes/game.js`, and Mock provider output shape. Added `test/gameTurnRelationships.test.js`, expanded relationship ledger tests and AI schema tests, and documented the new contract in README, architecture, product brief, and relationship ledger contract. Verified `node --check` for changed runtime/test files, focused `node --test` runs for relationship ledger, AI schemas, and game turn relationship route coverage, `git diff --check`, and `npm test` with 39 passing tests.
 - 2026-05-05: S22.3 Mock NPC/faction reactions implemented in `src/ai/providers/mock.js`, with browser `[人脉]` feedback in `public/app.js` and `public/styles.css`, plus route/direct Mock coverage in `test/mockRelationshipReactions.test.js`. Verified `node --check src/ai/providers/mock.js`, `node --check public/app.js`, `node --check test/mockRelationshipReactions.test.js`, focused relationship tests, `git diff --check`, and `npm test` with 41 passing tests.
+- 2026-05-05: S23.1 local magistrate identity loop implemented in `src/game/initialState.js`, `src/game/stateRules.js`, `src/ai/schemas.js`, `src/ai/prompts.js`, `src/ai/providers/mock.js`, `public/app.js`, and `test/magistrateRole.test.js`. Verified `node --check` for changed runtime/test files, focused `node --test` runs for magistrate, AI schema, and Mock relationship coverage, `git diff --check`, and `npm test` with 45 passing tests.
 
 ## Next Recommended Step
 
-Recommended next step is S23.1: deepen the local magistrate identity loop while preserving the complete scholar -> official path and existing relationship ledger boundaries.
+Recommended next step is S23.2: deepen the general identity loop while preserving the complete scholar -> official path, Mock default playability, and existing relationship ledger boundaries.

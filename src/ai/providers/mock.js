@@ -37,6 +37,16 @@ function describeOpening(worldState) {
     ].join("\n");
   }
 
+  if (player.role === "magistrate") {
+    return [
+      `${dynasty}${year}年，${player.name}以${player.position}到任${player.countyName || "本县"}，县署鼓楼初鸣。`,
+      background,
+      custom,
+      "案头有钱粮簿、词讼卷、盗匪缉捕牌票与河渠修浚图册，乡绅、胥吏、里甲都在看新官第一步如何落笔。",
+      "你可以审理诉讼、清查钱粮、安抚乡绅、缉捕盗匪、调发赋役，或兴修水利以稳地方民心。"
+    ].join("\n");
+  }
+
   return [
     `${dynasty}${year}年，${player.name}以${player.roleLabel}之身立于局中。`,
     background,
@@ -96,6 +106,13 @@ function buildAttributeChanges(before, patch, reason = "行动影响") {
     mandate: "天命",
     influence: "影响",
     integrity: "操守",
+    localTreasury: "县库",
+    localOrder: "地方民心",
+    gentryRelations: "乡绅",
+    banditPressure: "盗匪",
+    pendingLawsuits: "词讼",
+    corveeBurden: "赋役",
+    waterworks: "水利",
     treasury: "府库",
     grainReserve: "粮储",
     population: "人口",
@@ -511,6 +528,122 @@ function buildMockRelationshipChanges(worldState, actionKey) {
         reason: "Bribery aligns the player with informal palace-style brokerage."
       });
       break;
+    case "magistrate_case":
+      pushCharacterReaction(changes, targets, {
+        relationshipDelta: 4,
+        resentmentDelta: -1,
+        stance: "capable county deputy",
+        recentIntent: "Bring more difficult lawsuits once the magistrate proves steady.",
+        note: "Fair hearings make the county office more willing to cooperate.",
+        reason: "The magistrate spent the turn hearing lawsuits and settling disputes."
+      });
+      pushFactionReaction(changes, targets, "scholarOfficials", {
+        relationshipDelta: 2,
+        resentmentDelta: -1,
+        stance: "approving local literati",
+        recentIntent: "Watch whether fair judgments continue without private favors.",
+        note: "Local literati approve of visible judicial order.",
+        reason: "Fair casework strengthens orthodox local-government reputation."
+      });
+      break;
+    case "magistrate_tax":
+      pushCharacterReaction(changes, targets, {
+        relationshipDelta: -2,
+        resentmentDelta: 3,
+        stance: "strained yamen staff",
+        recentIntent: "Comply with the tax push while avoiding blame from villagers.",
+        note: "Money and grain work strains the county office.",
+        reason: "Tax and treasury pressure creates local resentment."
+      });
+      pushFactionReaction(changes, targets, "scholarOfficials", {
+        relationshipDelta: -2,
+        resentmentDelta: 3,
+        stance: "critical local gentry",
+        recentIntent: "Resist harsh collection if household pressure keeps rising.",
+        note: "Gentry networks dislike harsher fiscal pressure.",
+        reason: "County treasury work can look like harsh extraction."
+      });
+      break;
+    case "magistrate_gentry":
+      pushCharacterReaction(changes, targets, {
+        relationshipDelta: 3,
+        resentmentDelta: -1,
+        stance: "mediating county deputy",
+        recentIntent: "Use gentry goodwill to settle the next local pressure point.",
+        note: "Careful gentry mediation gives the yamen more room to move.",
+        reason: "The magistrate invested in local elite relationships."
+      });
+      pushFactionReaction(changes, targets, "scholarOfficials", {
+        relationshipDelta: 4,
+        resentmentDelta: -1,
+        stance: "cooperative gentry network",
+        recentIntent: "Offer help if the magistrate respects local face.",
+        note: "Gentry relations improve after a careful visit.",
+        reason: "The magistrate cultivated local scholar-gentry support."
+      });
+      break;
+    case "magistrate_bandits":
+      pushCharacterReaction(changes, targets, {
+        relationshipDelta: 2,
+        resentmentDelta: 1,
+        stance: "busy county deputy",
+        recentIntent: "Push constables harder if bandit cases keep falling.",
+        note: "Anti-bandit work earns confidence but adds pressure to the staff.",
+        reason: "The magistrate organized local patrol and arrest work."
+      });
+      pushFactionReaction(changes, targets, "militaryLords", {
+        relationshipDelta: 2,
+        resentmentDelta: -1,
+        stance: "useful patrol partner",
+        recentIntent: "Coordinate constables and small garrison support when needed.",
+        note: "Security work slightly improves ties with armed interests.",
+        reason: "Suppressing bandits creates a limited security partnership."
+      });
+      break;
+    case "magistrate_corvee":
+      pushCharacterReaction(changes, targets, {
+        relationshipDelta: -1,
+        resentmentDelta: 3,
+        stance: "overburdened county office",
+        recentIntent: "Warn that forced labor will draw complaints if continued.",
+        note: "Corvee mobilization makes the yamen and villages tense.",
+        reason: "The magistrate increased labor obligations."
+      });
+      pushFactionReaction(changes, targets, "scholarOfficials", {
+        relationshipDelta: -2,
+        resentmentDelta: 3,
+        stance: "watchful remonstrance network",
+        recentIntent: "Complain if forced labor turns into abuse.",
+        note: "Local scholars dislike heavy labor demands.",
+        reason: "Corvee pressure harms local civil reputation."
+      });
+      break;
+    case "magistrate_waterworks":
+      pushCharacterReaction(changes, targets, {
+        relationshipDelta: 3,
+        resentmentDelta: -1,
+        stance: "practical county deputy",
+        recentIntent: "Help track labor, materials, and village complaints.",
+        note: "Waterworks make the county staff see a practical program.",
+        reason: "The magistrate invested in irrigation and river works."
+      });
+      pushFactionReaction(changes, targets, "scholarOfficials", {
+        relationshipDelta: 3,
+        resentmentDelta: -2,
+        stance: "supportive local gentry",
+        recentIntent: "Claim credit if the works protect fields from drought and flood.",
+        note: "Waterworks win support from local literati and landholders.",
+        reason: "Useful public works strengthen local legitimacy."
+      });
+      break;
+    case "magistrate_default":
+      pushCharacterReaction(changes, targets, {
+        relationshipDelta: 1,
+        resentmentDelta: 0,
+        note: "Routine yamen work leaves a modest trace among local contacts.",
+        reason: "The magistrate handled ordinary county business."
+      });
+      break;
     default:
       pushFactionReaction(changes, targets, "scholarOfficials", {
         relationshipDelta: 1,
@@ -595,6 +728,22 @@ function classifyOfficialRelationshipAction(worldState, patch) {
   return "official_default";
 }
 
+function classifyMagistrateRelationshipAction(worldState, patch) {
+  const player = worldState.player || {};
+  const playerPatch = patch.player || {};
+  const corveeDelta = typeof player.corveeBurden === "number" && typeof playerPatch.corveeBurden === "number"
+    ? playerPatch.corveeBurden - player.corveeBurden
+    : 0;
+
+  if (numberIncreases(player.waterworks, playerPatch.waterworks)) return "magistrate_waterworks";
+  if (numberDecreases(player.banditPressure, playerPatch.banditPressure)) return "magistrate_bandits";
+  if (numberIncreases(player.gentryRelations, playerPatch.gentryRelations)) return "magistrate_gentry";
+  if (corveeDelta >= 4) return "magistrate_corvee";
+  if (numberIncreases(player.localTreasury, playerPatch.localTreasury)) return "magistrate_tax";
+  if (numberDecreases(player.pendingLawsuits, playerPatch.pendingLawsuits)) return "magistrate_case";
+  return "magistrate_default";
+}
+
 function classifyRelationshipAction(worldState, result) {
   const patch = result?.statePatch || {};
   const examTrigger = result?.examTrigger || {};
@@ -604,6 +753,7 @@ function classifyRelationshipAction(worldState, result) {
   if (role === "emperor") return classifyEmperorRelationshipAction(worldState, patch);
   if (role === "minister") return classifyMinisterRelationshipAction(worldState, patch);
   if (role === "official") return classifyOfficialRelationshipAction(worldState, patch);
+  if (role === "magistrate") return classifyMagistrateRelationshipAction(worldState, patch);
   return "generic";
 }
 
@@ -1178,6 +1328,183 @@ function buildOfficialTurn(input, worldState) {
   });
 }
 
+function buildMagistrateTurn(input, worldState) {
+  const text = input.trim();
+  const player = worldState.player;
+  const countyName = player.countyName || "本县";
+
+  if (/水利|河堤|渠道|沟渠|灌溉|旱|涝|堤|渠|荒政/.test(text)) {
+    const patch = {
+      grainReserve: shiftResource(worldState.grainReserve, -20),
+      population: shiftResource(worldState.population, 15),
+      publicOrder: shiftStat(worldState.publicOrder, 2),
+      player: {
+        localTreasury: shiftResource(player.localTreasury, -60),
+        localOrder: shiftStat(player.localOrder, 4),
+        banditPressure: shiftStat(player.banditPressure, -1),
+        corveeBurden: shiftStat(player.corveeBurden, 2),
+        waterworks: shiftStat(player.waterworks, 8),
+        influence: shiftStat(player.influence, 2),
+        integrity: shiftStat(player.integrity, 1),
+        reputation: shiftStat(player.reputation, 3)
+      },
+      factions: buildFactionState(worldState, { scholarOfficials: 1 })
+    };
+
+    return makeResult({
+      worldState,
+      player,
+      patch,
+      reason: "地方官兴修水利",
+      narrative: `你带县丞踏勘${countyName}旧渠，量定夫役与木石，先修最险的一段河堤。县库支出不少，百姓也要出力，但田畴有水，秋后口碑可期。`,
+      events: [`${player.name}督修${countyName}水利，地方民心与水利略稳。`]
+    });
+  }
+
+  if (/审案|断案|词讼|诉讼|讼|狱|平讼|民争|争讼|听断/.test(text)) {
+    const patch = {
+      publicOrder: shiftStat(worldState.publicOrder, 2),
+      corruption: shiftStat(worldState.corruption, -1),
+      player: {
+        localOrder: shiftStat(player.localOrder, 5),
+        pendingLawsuits: shiftStat(player.pendingLawsuits, -3),
+        influence: shiftStat(player.influence, 2),
+        integrity: shiftStat(player.integrity, 2),
+        reputation: shiftStat(player.reputation, 2)
+      },
+      factions: buildFactionState(worldState, { scholarOfficials: 1 })
+    };
+
+    return makeResult({
+      worldState,
+      player,
+      patch,
+      reason: "地方官审理词讼",
+      narrative: `你升堂听断，先令两造陈词，再命书吏核对契券与里甲证言。几桩积案虽未尽清，${countyName}百姓已看见县堂有章法。`,
+      events: [`${player.name}审理${countyName}词讼，积案稍减。`]
+    });
+  }
+
+  if (/捕盗|缉盗|盗匪|巡检|保甲|治安|夜巡|缉捕|贼/.test(text)) {
+    const patch = {
+      publicOrder: shiftStat(worldState.publicOrder, 2),
+      player: {
+        localTreasury: shiftResource(player.localTreasury, -25),
+        localOrder: shiftStat(player.localOrder, 4),
+        banditPressure: shiftStat(player.banditPressure, -7),
+        influence: shiftStat(player.influence, 3),
+        reputation: shiftStat(player.reputation, 2)
+      },
+      factions: buildFactionState(worldState, { militaryLords: 1 })
+    };
+
+    return makeResult({
+      worldState,
+      player,
+      patch,
+      reason: "地方官缉捕盗匪",
+      narrative: `你整点快手与巡检，按保甲册夜查出入道路。盗匪声势被压下几分，县库却为缉捕赏银和差役口粮耗去一笔。`,
+      events: [`${player.name}整饬${countyName}捕盗，盗匪压力下降。`]
+    });
+  }
+
+  if (/钱粮|县库|税粮|清丈|催科|粮册|赋税|田亩|核查/.test(text)) {
+    const cleanAudit = /清丈|核查|清查|复核/.test(text);
+    const patch = {
+      treasury: shiftResource(worldState.treasury, cleanAudit ? 20 : 35),
+      corruption: shiftStat(worldState.corruption, cleanAudit ? -1 : 1),
+      publicOrder: shiftStat(worldState.publicOrder, cleanAudit ? -1 : -2),
+      player: {
+        localTreasury: shiftResource(player.localTreasury, cleanAudit ? 70 : 95),
+        localOrder: shiftStat(player.localOrder, cleanAudit ? -1 : -3),
+        gentryRelations: shiftStat(player.gentryRelations, cleanAudit ? -2 : -4),
+        corveeBurden: shiftStat(player.corveeBurden, 1),
+        influence: shiftStat(player.influence, 2),
+        integrity: shiftStat(player.integrity, cleanAudit ? 2 : -1)
+      },
+      factions: buildFactionState(worldState, { scholarOfficials: cleanAudit ? 0 : -1 })
+    };
+
+    return makeResult({
+      worldState,
+      player,
+      patch,
+      reason: cleanAudit ? "地方官清查钱粮" : "地方官催科钱粮",
+      narrative: cleanAudit
+        ? `你抽查黄册与鱼鳞册，追问几处田亩隐漏。县库收入有补，吏胥不敢太露锋芒，只是乡绅面上多了几分冷色。`
+        : `你催里甲限期完纳钱粮，县库账面顿时厚实，州府也有回音。只是催科声急，乡间怨气随鼓梆一同传开。`,
+      events: [`${player.name}${cleanAudit ? "清查" : "催征"}${countyName}钱粮，县库有所增益。`]
+    });
+  }
+
+  if (/乡绅|士绅|宗族|豪强|里甲|拜会|调解|耆老|保正/.test(text)) {
+    const ally = pickRandom(["周里正", "沈族长", "顾监生", "陆耆老"]);
+    const riskyFavor = /请托|豪强|私情|关说/.test(text);
+    const patch = {
+      publicOrder: shiftStat(worldState.publicOrder, 1),
+      player: {
+        localOrder: shiftStat(player.localOrder, 2),
+        gentryRelations: shiftStat(player.gentryRelations, 6),
+        pendingLawsuits: shiftStat(player.pendingLawsuits, -1),
+        influence: shiftStat(player.influence, 2),
+        integrity: shiftStat(player.integrity, riskyFavor ? -1 : 0),
+        connections: uniqueAppend(player.connections, ally, 8)
+      },
+      factions: buildFactionState(worldState, { scholarOfficials: 2 })
+    };
+
+    return makeResult({
+      worldState,
+      player,
+      patch,
+      reason: "地方官安抚乡绅",
+      narrative: `你在县署后堂设茶，邀${ally}与几位里甲耆老同坐，先谈荒歉，再谈词讼与钱粮。地方人情稍通，日后推行政务可少几分硬碰硬。`,
+      events: [`${player.name}安抚${countyName}乡绅，结识${ally}。`]
+    });
+  }
+
+  if (/徭役|差役|赋役|派夫|修路|夫役|催役|工役/.test(text)) {
+    const patch = {
+      publicOrder: shiftStat(worldState.publicOrder, -2),
+      player: {
+        localTreasury: shiftResource(player.localTreasury, 30),
+        localOrder: shiftStat(player.localOrder, -4),
+        gentryRelations: shiftStat(player.gentryRelations, -2),
+        corveeBurden: shiftStat(player.corveeBurden, 6),
+        influence: shiftStat(player.influence, 2),
+        integrity: shiftStat(player.integrity, -2)
+      },
+      factions: buildFactionState(worldState, { scholarOfficials: -1 })
+    };
+
+    return makeResult({
+      worldState,
+      player,
+      patch,
+      reason: "地方官调发赋役",
+      narrative: `你按里甲派夫役，令各乡限日出人出车。工程与公差得以前推，县库压力也稍缓，但役重之家已在门外低声抱怨。`,
+      events: [`${player.name}调发${countyName}赋役，政务推进而民间承压。`]
+    });
+  }
+
+  const patch = {
+    player: {
+      localOrder: shiftStat(player.localOrder, 1),
+      influence: shiftStat(player.influence, 1),
+      mentality: shiftStat(player.mentality, 1)
+    }
+  };
+
+  return makeResult({
+    worldState,
+    player,
+    patch,
+    reason: "地方官坐堂视事",
+    narrative: `你将“${text}”记入县署日簿，先问县丞旧例，再召书吏备卷。此事暂未惊动全县，却让你更熟悉${countyName}的公门脉络。`,
+    events: [`${player.name}在${countyName}坐堂视事：${text.slice(0, 30)}`]
+  });
+}
+
 async function runTurn(worldState, input) {
   const player = worldState.player;
   let result;
@@ -1199,6 +1526,11 @@ async function runTurn(worldState, input) {
 
   if (player.role === "official") {
     result = buildOfficialTurn(input, worldState);
+    return withMockRelationshipReactions(result, worldState);
+  }
+
+  if (player.role === "magistrate") {
+    result = buildMagistrateTurn(input, worldState);
     return withMockRelationshipReactions(result, worldState);
   }
 

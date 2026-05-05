@@ -32,7 +32,15 @@ const PLAYER_ALLOWED_PATCH_KEYS = [
   "position",
   "faction",
   "influence",
-  "integrity"
+  "integrity",
+  "countyName",
+  "localTreasury",
+  "localOrder",
+  "gentryRelations",
+  "banditPressure",
+  "pendingLawsuits",
+  "corveeBurden",
+  "waterworks"
 ];
 
 function compactPlayer(player = {}) {
@@ -59,7 +67,15 @@ function compactPlayer(player = {}) {
     position: player.position,
     faction: player.faction,
     influence: player.influence,
-    integrity: player.integrity
+    integrity: player.integrity,
+    countyName: player.countyName,
+    localTreasury: player.localTreasury,
+    localOrder: player.localOrder,
+    gentryRelations: player.gentryRelations,
+    banditPressure: player.banditPressure,
+    pendingLawsuits: player.pendingLawsuits,
+    corveeBurden: player.corveeBurden,
+    waterworks: player.waterworks
   };
 }
 

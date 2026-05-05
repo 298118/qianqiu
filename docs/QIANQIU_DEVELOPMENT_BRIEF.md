@@ -199,7 +199,7 @@ AI provider 约定：
 - 大臣：`position`、`faction`、`influence`、`integrity`。
 - 入仕官员：`officeTitle`、`position`、`faction`、`influence`、`integrity`。
 - 将领：`command`、`troops`、`supply`、`battleReputation`。
-- 地方官：`countyName`、`localTreasury`、`localOrder`、`gentryRelations`。
+- 地方官：`countyName`、`localTreasury`、`localOrder`、`gentryRelations`、`banditPressure`、`pendingLawsuits`、`corveeBurden`、`waterworks`。
 
 状态更新规则：
 
@@ -631,5 +631,15 @@ S22.2 adds the controlled provider suggestion path while keeping the relationshi
 - `relationshipChanges` entries must target an existing visible character or faction id and use bounded deltas: `relationshipDelta` in `-12..12`, `resentmentDelta` in `-10..10`.
 - `src/game/relationships.js` applies suggestions through `applyRelationshipChanges()`, drops hidden/invented targets, caps text fields, updates `lastUpdatedTurn`, and normalizes the ledger before persistence.
 - `/api/game/turn` returns the normalized applied changes as `relationshipChanges` in JSON and SSE payloads.
-- S22.3 makes Mock produce concrete relationship suggestions for scholar, emperor, minister, and official turns through the same path. Mock classifies the resolved action from its own patch output, targets only visible ledger entries, and still relies on the route to call `applyRelationshipChanges()` before persistence.
+- S22.3 makes Mock produce concrete relationship suggestions for scholar, emperor, minister, and official turns through the same path. S23.1 extends the same suggestion path to local magistrate turns. Mock classifies the resolved action from its own patch output, targets only visible ledger entries, and still relies on the route to call `applyRelationshipChanges()` before persistence.
 - The browser narrative now appends concise `[人脉]` feedback for applied relationship changes.
+
+## S23.1 Local Magistrate Note (2026-05-05)
+
+S23.1 adds a dedicated local magistrate loop while keeping the server-owned state boundary unchanged:
+
+- Magistrate sessions now seed `player.countyName`, `localTreasury`, `localOrder`, `gentryRelations`, `banditPressure`, `pendingLawsuits`, `corveeBurden`, and `waterworks`.
+- These local fields are included in turn prompts, AI turn schemas, and `applyStatePatch()` whitelist/clamp rules. Numeric local fields are server-clamped; provider output still cannot change role, promotion fields, active exams, or relationship ledger state directly.
+- Mock magistrate turns recognize case hearings, money/grain work, gentry mediation, anti-bandit policing, corvee labor, and waterworks. They may update local county meters and modest global fields such as public order, treasury, grain reserve, population, corruption, and existing numeric factions.
+- Magistrate relationship reactions use the existing top-level `relationshipChanges` suggestion path and are persisted only by the route-owned `applyRelationshipChanges()` merge.
+- The browser role panel now renders magistrate-specific local meters and action hints.

@@ -98,6 +98,6 @@ S22.3 makes Mock turns produce visible NPC/faction reactions through the same su
 
 - `src/ai/providers/mock.js` classifies the resolved Mock action from its own `statePatch` and `examTrigger`, then builds top-level `relationshipChanges`.
 - Scholar actions can affect the visible mentor character and the scholar-official faction; hidden factions such as eunuchs remain hidden from scholar-mode Mock suggestions.
-- Emperor, minister, and official actions can affect visible court factions according to the action type, including relief, taxation, appointments, military work, memorials, networking, casework, welfare, and bribery.
+- Emperor, minister, magistrate, and official actions can affect visible court or local factions according to the action type, including relief, taxation, appointments, military work, memorials, networking, county casework, money/grain pressure, gentry mediation, anti-bandit policing, waterworks, welfare, and bribery.
 - Mock still does not mutate `relationshipLedger` directly. The game route applies these suggestions through `applyRelationshipChanges()` after the ordinary turn patch increments `turnCount`.
 - The browser appends concise `[人脉]` feedback lines for applied changes, while the canonical persisted memory remains `worldState.relationshipLedger`.

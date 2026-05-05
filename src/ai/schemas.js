@@ -131,7 +131,15 @@ const statePatchSchema = {
         position: { type: "string" },
         faction: { type: "string" },
         influence: { type: "number" },
-        integrity: { type: "number" }
+        integrity: { type: "number" },
+        countyName: { type: "string" },
+        localTreasury: { type: "number" },
+        localOrder: { type: "number" },
+        gentryRelations: { type: "number" },
+        banditPressure: { type: "number" },
+        pendingLawsuits: { type: "number" },
+        corveeBurden: { type: "number" },
+        waterworks: { type: "number" }
       }
     }
   }

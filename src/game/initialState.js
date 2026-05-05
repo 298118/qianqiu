@@ -50,7 +50,15 @@ const ROLE_STAT_DEFAULTS = {
     position: "知县",
     faction: "地方官",
     influence: 28,
-    integrity: 64
+    integrity: 64,
+    countyName: "清河县",
+    localTreasury: 320,
+    localOrder: 62,
+    gentryRelations: 45,
+    banditPressure: 38,
+    pendingLawsuits: 12,
+    corveeBurden: 30,
+    waterworks: 42
   },
   official: {
     position: "候选观政",
@@ -70,6 +78,34 @@ function getRoleStats(role) {
     ...BASE_ROLE_STATS,
     ...(ROLE_STAT_DEFAULTS[role] || {})
   };
+}
+
+function getInitialCharacters(role) {
+  if (role === "magistrate") {
+    return [
+      {
+        id: "C01",
+        name: "陆知事",
+        role: "县丞",
+        loyalty: 58,
+        ambition: 35,
+        skill: 68,
+        alive: true
+      }
+    ];
+  }
+
+  return [
+    {
+      id: "C01",
+      name: "顾文衡",
+      role: "乡中塾师",
+      loyalty: 65,
+      ambition: 20,
+      skill: 72,
+      alive: true
+    }
+  ];
 }
 
 function createInitialState(input = {}) {
@@ -98,17 +134,7 @@ function createInitialState(input = {}) {
       scholarOfficials: 40,
       militaryLords: 30
     },
-    characters: [
-      {
-        id: "C01",
-        name: "顾文衡",
-        role: "乡中塾师",
-        loyalty: 65,
-        ambition: 20,
-        skill: 72,
-        alive: true
-      }
-    ],
+    characters: getInitialCharacters(role),
     eventHistory: [],
     activeExam: null,
     setup: {
