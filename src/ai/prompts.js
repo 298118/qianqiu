@@ -1,3 +1,5 @@
+const { summarizeRelationshipLedger } = require("../game/relationships");
+
 const TURN_ALLOWED_PATCH_KEYS = [
   "treasury",
   "grainReserve",
@@ -89,6 +91,7 @@ function compactWorldState(worldState = {}) {
     armyMorale: worldState.armyMorale,
     borderThreat: worldState.borderThreat,
     factions: worldState.factions,
+    relationshipLedger: summarizeRelationshipLedger(worldState.relationshipLedger, worldState, { visibleOnly: true }),
     activeExam: compactExam(worldState.activeExam),
     recentEvents: (worldState.eventHistory || []).slice(-6),
     setup: worldState.setup || {},
@@ -104,6 +107,7 @@ function commonInstructions() {
     "The server owns state boundaries, promotion rules, exam gates, cheating penalties, persistence, and final application of patches.",
     "Never grant palace rank, office title, or role promotion in ordinary turn statePatch. Use examTrigger for exam entry requests.",
     "Keep statePatch small and only use allowed keys. Prefer modest numeric changes in the range of 1-8 unless the action clearly spends resources.",
+    "Never put relationshipLedger in statePatch.",
     `Allowed top-level patch keys: ${TURN_ALLOWED_PATCH_KEYS.join(", ")}.`,
     `Allowed player patch keys: ${PLAYER_ALLOWED_PATCH_KEYS.join(", ")}.`
   ].join("\n");
@@ -131,6 +135,9 @@ function buildTurnTask(worldState, input) {
       "Resolve one free-text player action.",
       "statePatch must contain only final absolute values for fields that changed, not deltas.",
       "attributeChanges should summarize important visible numeric changes; it may be an empty array.",
+      "If the action should affect social memory, use top-level relationshipChanges with existing visible target ids only.",
+      "relationshipChanges are suggestions: use relationshipDelta -12..12 and resentmentDelta -10..10; the server will clamp, ignore hidden or invented targets, and merge final ledger state.",
+      "relationshipChanges should summarize important NPC/faction relationship consequences; use [] when there is no meaningful social consequence.",
       "If the player clearly asks to take the next imperial exam, set examTrigger.shouldStart=true and use the next legal level.",
       `Player action: ${input}`,
       "World state:",

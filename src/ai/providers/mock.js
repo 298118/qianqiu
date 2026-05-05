@@ -159,6 +159,7 @@ function makeResult({ narrative, patch, events, player, worldState, examTrigger,
     narrative,
     statePatch: patch,
     attributeChanges: buildAttributeChanges(worldState || player, patch, reason),
+    relationshipChanges: [],
     events,
     examTrigger: examTrigger || { shouldStart: false, level: null, reason: "" }
   };
@@ -752,6 +753,7 @@ async function runTurn(worldState, input) {
     narrative: `你下达了指令：“${input.trim()}”。幕僚们领命而去，数日后传来回音。事态正在缓慢推进。`,
     statePatch: patch,
     attributeChanges: buildAttributeChanges(player, patch),
+    relationshipChanges: [],
     events: [`${player.name}下达指令：${input.trim().slice(0, 30)}`],
     examTrigger: { shouldStart: false, level: null, reason: "" }
   };

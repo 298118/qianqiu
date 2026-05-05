@@ -55,12 +55,43 @@ Text fields are capped to short strings before persistence.
 
 ## Provider Boundary
 
-S22.1 deliberately does not add `relationshipLedger` to the provider `statePatch` contract.
+Providers still must not write `relationshipLedger` through `statePatch`.
 
-- `src/ai/schemas.js` still rejects model attempts to patch `relationshipLedger`.
-- `src/game/stateRules.js` still ignores `relationshipLedger` if a provider output includes it anyway.
-- S22.2 should add a controlled relationship-change suggestion path, with the server owning final merge, clamping, visibility, and persistence.
+- `src/ai/schemas.js` rejects model attempts to patch `relationshipLedger`.
+- `src/game/stateRules.js` ignores `relationshipLedger` if a non-schema provider output includes it anyway.
+
+S22.2 adds a controlled top-level `relationshipChanges` suggestion path to the turn schema:
+
+```json
+{
+  "relationshipChanges": [
+    {
+      "targetType": "character",
+      "targetId": "C01",
+      "relationshipDelta": 3,
+      "resentmentDelta": -1,
+      "stance": "trusted mentor",
+      "recentIntent": "Recommend cautious study.",
+      "reason": "The player paid a respectful teacher visit."
+    }
+  ]
+}
+```
+
+Server merge rules:
+
+- Suggestions are deltas, not absolute ledger replacements.
+- `targetType` must be `character` or `faction`.
+- `targetId` must already exist in the current normalized ledger.
+- Provider suggestions can only affect visible entries; hidden entries stay server-owned.
+- At most five suggestions are processed per turn.
+- `relationshipDelta` is clamped to `-12..12`; `resentmentDelta` is clamped to `-10..10`.
+- Optional `stance`, `recentIntent`, and note text are length-capped before persistence.
+- `lastUpdatedTurn` is written by the server after the ordinary turn patch increments `turnCount`.
+- The route returns the normalized applied changes as `relationshipChanges` in JSON and SSE final payloads.
+
+`src/ai/prompts.js` includes a compact visible-only relationship summary in turn prompt context so real providers can suggest consequences without seeing hidden ledger entries.
 
 ## Next Work
 
-S22.2 should expose compact relationship context in prompts and define a server-owned merge path for relationship suggestions. S22.3 should make Mock turns produce visible NPC/faction reactions.
+S22.3 should make Mock turns produce visible NPC/faction reactions through this suggestion path.

@@ -1,6 +1,6 @@
 const express = require("express");
 const { createInitialState } = require("../game/initialState");
-const { ensureRelationshipLedger } = require("../game/relationships");
+const { applyRelationshipChanges, ensureRelationshipLedger } = require("../game/relationships");
 const { applyStatePatch, appendEvents } = require("../game/stateRules");
 const { runWorldTick } = require("../game/worldTick");
 const { getProvider } = require("../ai");
@@ -40,6 +40,7 @@ async function processTurn(sessionId, input) {
 
   // All model-suggested state changes pass through server-side boundaries.
   applyStatePatch(worldState, result.statePatch);
+  const relationshipChanges = applyRelationshipChanges(worldState, result.relationshipChanges);
 
   if (examTrigger.shouldStart) {
     worldState.activeExam = {
@@ -68,6 +69,7 @@ async function processTurn(sessionId, input) {
     sessionId: worldState.sessionId,
     narrative: result.narrative,
     attributeChanges: [...providerAttributeChanges, ...worldTickFeedback.attributeChanges],
+    relationshipChanges,
     examTrigger,
     worldTick: worldTickFeedback,
     worldState
@@ -88,6 +90,7 @@ async function streamTurn(res, sessionId, input) {
     sendSseEvent(res, "state_preview", {
       sessionId: payload.sessionId,
       attributeChanges: payload.attributeChanges,
+      relationshipChanges: payload.relationshipChanges,
       examTrigger: payload.examTrigger,
       worldTick: payload.worldTick
     });

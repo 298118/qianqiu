@@ -620,4 +620,15 @@ S22.1 adds the first server-owned NPC/faction relationship ledger without changi
 - `src/game/relationships.js` owns ledger creation, normalization, legacy-session backfill, and compact summaries.
 - New sessions create ledger entries from current `characters` and existing numeric `factions`; game/exam routes backfill older JSON sessions through `ensureRelationshipLedger()`.
 - Relationship values are clamped to `-100..100`; resentment is clamped to `0..100`; invented ledger ids are dropped.
-- Providers still cannot patch `relationshipLedger` in S22.1. The AI turn schema rejects it and `applyStatePatch()` ignores it. S22.2 should add a controlled server-owned suggestion/merge path plus prompt context.
+- Providers still cannot patch `relationshipLedger`. The AI turn schema rejects it and `applyStatePatch()` ignores it.
+
+## S22.2 Relationship Suggestion Note (2026-05-05)
+
+S22.2 adds the controlled provider suggestion path while keeping the relationship ledger server-owned:
+
+- Turn prompts now include a compact visible-only `relationshipLedger` summary so models can reason about known NPC/faction social context.
+- Provider turn output may include top-level `relationshipChanges`; this is separate from `statePatch` and represents suggestions only.
+- `relationshipChanges` entries must target an existing visible character or faction id and use bounded deltas: `relationshipDelta` in `-12..12`, `resentmentDelta` in `-10..10`.
+- `src/game/relationships.js` applies suggestions through `applyRelationshipChanges()`, drops hidden/invented targets, caps text fields, updates `lastUpdatedTurn`, and normalizes the ledger before persistence.
+- `/api/game/turn` returns the normalized applied changes as `relationshipChanges` in JSON and SSE payloads.
+- Mock still returns an empty relationship suggestion list in this slice; S22.3 should make Mock turns produce concrete NPC/faction reactions through the same path.

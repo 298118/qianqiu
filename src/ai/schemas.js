@@ -45,6 +45,30 @@ const examTriggerSchema = {
   }
 };
 
+const relationshipChangeSchema = {
+  type: "object",
+  required: ["targetType", "targetId", "relationshipDelta", "resentmentDelta", "reason"],
+  additionalProperties: false,
+  properties: {
+    targetType: { type: "string", enum: ["character", "faction"] },
+    targetId: { type: "string", minLength: 1 },
+    relationshipDelta: { type: "number", minimum: -12, maximum: 12 },
+    resentmentDelta: { type: "number", minimum: -10, maximum: 10 },
+    stance: { type: "string" },
+    recentIntent: { type: "string" },
+    note: { type: "string" },
+    reason: { type: "string" }
+  }
+};
+
+const relationshipChangesSchema = {
+  type: "array",
+  minItems: 0,
+  maxItems: 5,
+  items: relationshipChangeSchema,
+  default: []
+};
+
 const statePatchSchema = {
   type: "object",
   additionalProperties: false,
@@ -147,6 +171,7 @@ const turnSchema = {
       type: "array",
       items: attributeChangeSchema
     },
+    relationshipChanges: relationshipChangesSchema,
     events: eventSchema,
     examTrigger: examTriggerSchema
   }
@@ -302,6 +327,22 @@ const modelExamTriggerSchema = {
   }
 };
 
+const modelRelationshipChangeSchema = {
+  type: "object",
+  required: ["targetType", "targetId", "relationshipDelta", "resentmentDelta", "reason"],
+  additionalProperties: false,
+  properties: {
+    targetType: { type: "string" },
+    targetId: { type: "string" },
+    relationshipDelta: { type: "number" },
+    resentmentDelta: { type: "number" },
+    stance: { type: "string" },
+    recentIntent: { type: "string" },
+    note: { type: "string" },
+    reason: { type: "string" }
+  }
+};
+
 const modelExamQuestionSchema = {
   type: "object",
   required: [
@@ -382,6 +423,10 @@ const MODEL_SCHEMAS = {
       narrative: { type: "string" },
       statePatch: { type: "object", additionalProperties: true },
       attributeChanges: { type: "array", items: { type: "object", additionalProperties: true } },
+      relationshipChanges: {
+        type: "array",
+        items: modelRelationshipChangeSchema
+      },
       events: modelEventSchema,
       examTrigger: modelExamTriggerSchema
     }

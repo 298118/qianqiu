@@ -3,6 +3,7 @@ const assert = require("node:assert/strict");
 
 const { createInitialState } = require("../src/game/initialState");
 const {
+  applyRelationshipChanges,
   ensureRelationshipLedger,
   normalizeRelationshipLedger,
   summarizeRelationshipLedger
@@ -119,4 +120,58 @@ test("normalizeRelationshipLedger creates entries for newly present characters",
   assert.ok(ledger.characters.C99);
   assert.equal(ledger.characters.C99.name, "New court contact");
   assert.equal(ledger.characters.C99.relationship, 12);
+});
+
+test("applyRelationshipChanges clamps provider suggestions and drops unsafe targets", () => {
+  const worldState = createInitialState({ playerName: "Tester", role: "scholar" });
+  worldState.turnCount = 3;
+
+  const applied = applyRelationshipChanges(worldState, [
+    {
+      targetType: "character",
+      targetId: "C01",
+      relationshipDelta: 50,
+      resentmentDelta: 50,
+      stance: "trusted mentor",
+      recentIntent: "Recommend cautious study.",
+      reason: "The player paid respectful teacher visits."
+    },
+    {
+      targetType: "faction",
+      targetId: "eunuchs",
+      relationshipDelta: 8,
+      resentmentDelta: -4,
+      reason: "A hidden faction should not be changed from provider suggestions."
+    },
+    {
+      targetType: "character",
+      targetId: "invented",
+      relationshipDelta: 8,
+      resentmentDelta: 1,
+      reason: "Invented ids are ignored."
+    }
+  ]);
+
+  assert.equal(applied.length, 1);
+  assert.equal(worldState.relationshipLedger.characters.C01.relationship, 24);
+  assert.equal(worldState.relationshipLedger.characters.C01.resentment, 10);
+  assert.equal(worldState.relationshipLedger.characters.C01.stance, "trusted mentor");
+  assert.equal(worldState.relationshipLedger.characters.C01.lastUpdatedTurn, 3);
+  assert.equal(worldState.relationshipLedger.factions.eunuchs.relationship, -4);
+  assert.equal(worldState.relationshipLedger.recentNotes.length, 1);
+  assert.match(worldState.relationshipLedger.recentNotes[0], /teacher visits/);
+  assert.deepEqual(applied[0].relationship, { before: 12, after: 24, delta: 12 });
+  assert.deepEqual(applied[0].resentment, { before: 0, after: 10, delta: 10 });
+});
+
+test("summarizeRelationshipLedger can hide non-visible relationship context for prompts", () => {
+  const worldState = createInitialState({ playerName: "Tester", role: "scholar" });
+  const summary = summarizeRelationshipLedger(
+    worldState.relationshipLedger,
+    worldState,
+    { visibleOnly: true }
+  );
+
+  assert.ok(summary.factions.some((entry) => entry.id === "scholarOfficials"));
+  assert.ok(!summary.factions.some((entry) => entry.id === "eunuchs"));
 });

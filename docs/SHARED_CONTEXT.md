@@ -6,7 +6,7 @@ Both tools must read this file at the start of every development session, after 
 
 ## Current Snapshot
 
-- Repository status: phase-one playable vertical slice is implemented, accepted, and now archived as historical planning. Phase two has started; S22.1 NPC/faction relationship ledger foundation is complete, and the next active implementation target is S22.2 controlled relationship patch/prompt integration.
+- Repository status: phase-one playable vertical slice is implemented, accepted, and now archived as historical planning. Phase two has started; S22.2 controlled relationship suggestion/prompt integration is complete, and the next active implementation target is S22.3 Mock NPC/faction reactions.
 - Canonical product brief: `docs/QIANQIU_DEVELOPMENT_BRIEF.md`.
 - Shared implementation roadmap and progress ledger: `docs/DEVELOPMENT_STEPS.md`.
 - Developer implementation map: `docs/ARCHITECTURE.md`.
@@ -73,8 +73,12 @@ Both tools must read this file at the start of every development session, after 
 - S22.1 added `worldState.relationshipLedger` as a server-owned social memory layer for current characters and numeric factions. Entries record `stance`, `relationship`, `resentment`, `networkSource`, `recentIntent`, `visible`, and `lastUpdatedTurn`.
 - `src/game/relationships.js` owns relationship ledger creation, normalization, legacy-session backfill, and compact summaries. `createInitialState()` seeds the ledger, and game/exam routes call `ensureRelationshipLedger()` after reading sessions so older JSON saves can continue.
 - Relationship ledger values are clamped and normalized server-side: relationship is `-100..100`, resentment is `0..100`, text fields are short, invented character/faction ledger ids are dropped, and `recentNotes` is capped.
-- Providers still cannot patch `relationshipLedger` in S22.1. The turn schema rejects it and `applyStatePatch()` ignores it if present; S22.2 should add a controlled server-owned suggestion/merge path and compact prompt context.
-- Durable S22.1 contract: `docs/RELATIONSHIP_LEDGER_CONTRACT.md`.
+- Providers still cannot patch `relationshipLedger`. The turn schema rejects it and `applyStatePatch()` ignores it if present.
+- S22.2 adds a controlled provider suggestion path: turn outputs may include top-level `relationshipChanges`, separate from `statePatch`, with existing visible `character`/`faction` target ids, `relationshipDelta` clamped to `-12..12`, `resentmentDelta` clamped to `-10..10`, and short optional `stance`, `recentIntent`, `note`, and `reason` fields.
+- `src/game/relationships.js` now exports `applyRelationshipChanges()`; `POST /api/game/turn` applies provider relationship suggestions after the normal state patch increments `turnCount`, drops hidden/invented targets, updates `lastUpdatedTurn`, normalizes the ledger, and returns the applied changes as `relationshipChanges` in JSON and SSE payloads.
+- Turn prompts now include a compact visible-only relationship ledger summary through `summarizeRelationshipLedger(..., { visibleOnly: true })`, so real providers can suggest social consequences without seeing hidden ledger entries.
+- Mock provider returns `relationshipChanges: []` in S22.2; concrete Mock NPC/faction reaction generation is left to S22.3.
+- Durable S22 relationship contract: `docs/RELATIONSHIP_LEDGER_CONTRACT.md`.
 - Tooling note: if `rg` resolves to the packaged Codex app path under `C:\Program Files\WindowsApps\OpenAI.Codex_...\app\resources`, Windows may deny execution. This workspace now shadows it with a working ripgrep 15.1.0 binary at `C:\Users\ZZZ\AppData\Local\OpenAI\Codex\bin\rg.exe`, which appears earlier on PATH.
 - Any behavior/API/setup/architecture decision that affects future work must be recorded in this file or in the canonical development brief.
 - Any roadmap step that starts, completes, blocks, or changes scope must be recorded in `docs/DEVELOPMENT_STEPS.md`.
@@ -130,7 +134,8 @@ Before finishing each coherent change:
 - 2026-05-05: S21.3 world tick route integration committed as `70b14fd`, implemented in `src/routes/game.js`, `public/app.js`, and `public/styles.css`, with route-level JSON/SSE tests in `test/gameTurnTick.test.js`. Verified `node --check src/routes/game.js`, `node --check public/app.js`, `node --check test/gameTurnTick.test.js`, `git diff --check`, and `npm test` with 25 passing tests.
 - 2026-05-05: S21.4 automated world tick coverage committed as `543a966`, adding route-level clamps, provider+tick event-history trimming, 15 repeated Mock turns across year rollover, and the complete scholar -> official path after tick integration to `test/gameTurnTick.test.js`. Verified `node --check test/gameTurnTick.test.js`, `node --test test/gameTurnTick.test.js` with 6 passing tests, `git diff --check`, and `npm test` with 29 passing tests.
 - 2026-05-05: S22.1 relationship ledger foundation committed as `296928f`, implemented in `src/game/relationships.js`, wired through initial state plus game/exam route legacy backfill, documented in `docs/RELATIONSHIP_LEDGER_CONTRACT.md`, and covered by `test/relationshipLedger.test.js` plus an AI schema rejection test. Verified `node --check src/game/relationships.js`, `node --check src/game/initialState.js`, `node --check src/routes/game.js`, `node --check src/routes/exam.js`, `node --check test/relationshipLedger.test.js`, `node --check test/aiSchemas.test.js`, focused `node --test` runs for relationship ledger and AI schemas, `git diff --check`, and `npm test` with 35 passing tests.
+- 2026-05-05: S22.2 controlled relationship suggestion/prompt integration implemented in `src/game/relationships.js`, `src/ai/schemas.js`, `src/ai/prompts.js`, `src/routes/game.js`, and Mock provider output shape. Added `test/gameTurnRelationships.test.js`, expanded relationship ledger tests and AI schema tests, and documented the new contract in README, architecture, product brief, and relationship ledger contract. Verified `node --check` for changed runtime/test files, focused `node --test` runs for relationship ledger, AI schemas, and game turn relationship route coverage, `git diff --check`, and `npm test` with 39 passing tests.
 
 ## Next Recommended Step
 
-Recommended next step is S22.2: add a controlled relationship-change suggestion/merge path and compact prompt context, keeping final relationship ledger authority in server code.
+Recommended next step is S22.3: make Mock turns produce visible NPC/faction reactions through the S22.2 `relationshipChanges` suggestion path.

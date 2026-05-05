@@ -41,6 +41,15 @@ test("turn schema accepts whitelisted state patches", () => {
       }
     },
     attributeChanges: [],
+    relationshipChanges: [
+      {
+        targetType: "character",
+        targetId: "C01",
+        relationshipDelta: 3,
+        resentmentDelta: -1,
+        reason: "The player showed respect."
+      }
+    ],
     events: ["event"],
     examTrigger: {
       shouldStart: false,
@@ -50,6 +59,31 @@ test("turn schema accepts whitelisted state patches", () => {
   };
 
   assert.equal(validatePayload("turn", payload), payload);
+});
+
+test("turn schema rejects unsafe relationship change suggestions", () => {
+  const payload = {
+    narrative: "A turn happened.",
+    statePatch: {},
+    attributeChanges: [],
+    relationshipChanges: [
+      {
+        targetType: "secret",
+        targetId: "C01",
+        relationshipDelta: 30,
+        resentmentDelta: 0,
+        reason: "Invalid suggestion."
+      }
+    ],
+    events: [],
+    examTrigger: {
+      shouldStart: false,
+      level: null,
+      reason: ""
+    }
+  };
+
+  assert.throws(() => validatePayload("turn", payload), /schema validation/);
 });
 
 test("turn schema rejects model attempts to patch non-whitelisted player fields", () => {

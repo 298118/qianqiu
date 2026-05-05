@@ -116,6 +116,7 @@ Requests without SSE negotiation still return plain JSON for tests and compatibi
   "sessionId": "uuid",
   "narrative": "...",
   "attributeChanges": [],
+  "relationshipChanges": [],
   "examTrigger": {
     "shouldStart": false,
     "level": null,
@@ -171,11 +172,13 @@ Providers expose four methods:
 Provider outputs must match the schemas in `src/ai/schemas.js`:
 
 - `opening`: `{ narrative, events }`
-- `turn`: `{ narrative, statePatch, attributeChanges, events, examTrigger }`
+- `turn`: `{ narrative, statePatch, attributeChanges, relationshipChanges, events, examTrigger }`
 - `examQuestion`: exam level, name, question, type, difficulty, requirements, word count, pass score and promotion rank
 - `grade`: five score dimensions, `overall_score`, rank, detailed feedback, authenticity echo, candidates and ranking placeholders
 
 Real provider adapters parse model text through `src/utils/json.js`, validate with Ajv, retry once on failure, then fall back to Mock for that method. The model never owns final game state. It can suggest `statePatch`; the server whitelists and clamps it.
+
+For turn responses, models may also suggest top-level `relationshipChanges`. These are not state patches. They are bounded social-memory deltas for existing visible relationship ledger ids, and the server is free to clamp or ignore them before persistence.
 
 ## State Model
 
@@ -202,19 +205,20 @@ Allowed roles currently include `scholar`, `emperor`, `minister`, `general`, `ma
 - `statePatch.factions` may only update existing numeric faction keys; providers cannot invent arbitrary faction names.
 - `turnCount` increments when a turn patch is applied.
 - Server-owned follow-up patches may pass `{ incrementTurnCount: false }` so S21.3 can apply a tick patch without double-counting one player turn.
-- `relationshipLedger` is not an allowed provider patch key in S22.1. The AI schema rejects it, and `applyStatePatch()` ignores it if a non-schema provider tries to include it anyway.
+- `relationshipLedger` is not an allowed provider patch key. The AI schema rejects it, and `applyStatePatch()` ignores it if a non-schema provider tries to include it anyway.
+- Provider social-memory effects must go through top-level `relationshipChanges`, which `src/routes/game.js` applies through `applyRelationshipChanges()` after the ordinary turn patch increments `turnCount`.
 
 Do not bypass this module when applying provider output.
 
 ## Relationship Ledger Contract
 
-The S22.1 contract is recorded in [docs/RELATIONSHIP_LEDGER_CONTRACT.md](RELATIONSHIP_LEDGER_CONTRACT.md).
+The S22 relationship contract is recorded in [docs/RELATIONSHIP_LEDGER_CONTRACT.md](RELATIONSHIP_LEDGER_CONTRACT.md).
 
 `createInitialState()` creates `worldState.relationshipLedger` from the starting character list and known numeric factions. Game and exam routes call `ensureRelationshipLedger()` after reading sessions so older JSON saves are backfilled before they are returned or written again.
 
-The ledger is deliberately server-owned in this slice. It normalizes text fields, clamps relationship values to `-100..100`, clamps resentment to `0..100`, drops invented character/faction ledger ids, and preserves only short `recentNotes`.
+The ledger is deliberately server-owned. It normalizes text fields, clamps relationship values to `-100..100`, clamps resentment to `0..100`, drops invented character/faction ledger ids, and preserves only short `recentNotes`.
 
-S22.2 should add a controlled relationship-suggestion path and prompt summary, while keeping final merge authority in server code.
+S22.2 adds the controlled relationship-suggestion path and prompt summary. Turn prompts include a compact visible-only relationship summary. Provider `relationshipChanges` suggestions are processed at most five per turn; they must target existing visible entries, use `relationshipDelta` clamped to `-12..12`, use `resentmentDelta` clamped to `-10..10`, and may only update short `stance`, `recentIntent`, and note text. Applied changes are returned in JSON and SSE payloads as `relationshipChanges`.
 
 ## Phase-Two World Tick Contract
 

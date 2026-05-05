@@ -1,5 +1,8 @@
 const MAX_LEDGER_NOTES = 12;
 const MAX_TEXT_LENGTH = 120;
+const MAX_RELATIONSHIP_CHANGES = 5;
+const MAX_RELATIONSHIP_DELTA = 12;
+const MAX_RESENTMENT_DELTA = 10;
 const RELATIONSHIP_MIN = -100;
 const RELATIONSHIP_MAX = 100;
 const RESENTMENT_MIN = 0;
@@ -177,6 +180,72 @@ function normalizeNotes(notes) {
     .slice(-MAX_LEDGER_NOTES);
 }
 
+function normalizeTargetType(value) {
+  return value === "character" || value === "faction" ? value : null;
+}
+
+function applyRelationshipDelta(entry, suggestion, worldState) {
+  const relationshipBefore = entry.relationship;
+  const resentmentBefore = entry.resentment;
+  const relationshipDelta = clampNumber(
+    suggestion.relationshipDelta,
+    -MAX_RELATIONSHIP_DELTA,
+    MAX_RELATIONSHIP_DELTA,
+    0
+  );
+  const resentmentDelta = clampNumber(
+    suggestion.resentmentDelta,
+    -MAX_RESENTMENT_DELTA,
+    MAX_RESENTMENT_DELTA,
+    0
+  );
+  const stance = cleanText(suggestion.stance, "");
+  const recentIntent = cleanText(suggestion.recentIntent, "");
+
+  entry.relationship = clampNumber(
+    relationshipBefore + relationshipDelta,
+    RELATIONSHIP_MIN,
+    RELATIONSHIP_MAX,
+    relationshipBefore
+  );
+  entry.resentment = clampNumber(
+    resentmentBefore + resentmentDelta,
+    RESENTMENT_MIN,
+    RESENTMENT_MAX,
+    resentmentBefore
+  );
+
+  if (stance) entry.stance = stance;
+  if (recentIntent) entry.recentIntent = recentIntent;
+
+  const changed = entry.relationship !== relationshipBefore ||
+    entry.resentment !== resentmentBefore ||
+    Boolean(stance) ||
+    Boolean(recentIntent);
+
+  if (changed) {
+    entry.lastUpdatedTurn = turnCount(worldState);
+  }
+
+  return {
+    changed,
+    relationshipBefore,
+    resentmentBefore,
+    relationshipDelta,
+    resentmentDelta
+  };
+}
+
+function appendRelationshipNote(ledger, entry, suggestion) {
+  const reason = cleanText(suggestion.reason, "");
+  const note = cleanText(suggestion.note, reason);
+  if (!note) return null;
+
+  const storedNote = cleanText(`${entry.name}: ${note}`, "", MAX_TEXT_LENGTH);
+  ledger.recentNotes = normalizeNotes([...(ledger.recentNotes || []), storedNote]);
+  return storedNote;
+}
+
 function normalizeRelationshipLedger(ledger, worldState = {}) {
   const source = isPlainObject(ledger) ? ledger : {};
   const sourceCharacters = isPlainObject(source.characters) ? source.characters : {};
@@ -213,8 +282,60 @@ function ensureRelationshipLedger(worldState) {
   return worldState;
 }
 
-function summarizeRelationshipLedger(ledger, worldState = {}) {
+function applyRelationshipChanges(worldState, suggestions, options = {}) {
+  if (!isPlainObject(worldState) || !Array.isArray(suggestions)) return [];
+
+  const { allowHidden = false } = options;
+  ensureRelationshipLedger(worldState);
+  const ledger = worldState.relationshipLedger;
+  const applied = [];
+
+  for (const suggestion of suggestions.slice(0, MAX_RELATIONSHIP_CHANGES)) {
+    if (!isPlainObject(suggestion)) continue;
+
+    const targetType = normalizeTargetType(suggestion.targetType);
+    const targetId = cleanText(suggestion.targetId, "", 48);
+    if (!targetType || !targetId) continue;
+
+    const bucket = targetType === "character" ? ledger.characters : ledger.factions;
+    const entry = bucket[targetId];
+    if (!entry || (!allowHidden && entry.visible === false)) continue;
+
+    const deltaResult = applyRelationshipDelta(entry, suggestion, worldState);
+    const note = appendRelationshipNote(ledger, entry, suggestion);
+
+    if (!deltaResult.changed && !note) continue;
+    if (!deltaResult.changed && note) {
+      entry.lastUpdatedTurn = turnCount(worldState);
+    }
+
+    applied.push({
+      targetType,
+      targetId,
+      name: entry.name,
+      relationship: {
+        before: deltaResult.relationshipBefore,
+        after: entry.relationship,
+        delta: entry.relationship - deltaResult.relationshipBefore
+      },
+      resentment: {
+        before: deltaResult.resentmentBefore,
+        after: entry.resentment,
+        delta: entry.resentment - deltaResult.resentmentBefore
+      },
+      stance: entry.stance,
+      recentIntent: entry.recentIntent,
+      note
+    });
+  }
+
+  worldState.relationshipLedger = normalizeRelationshipLedger(ledger, worldState);
+  return applied;
+}
+
+function summarizeRelationshipLedger(ledger, worldState = {}, options = {}) {
   const normalized = normalizeRelationshipLedger(ledger, worldState);
+  const { visibleOnly = false } = options;
   const summarizeEntry = (entry) => ({
     id: entry.id,
     name: entry.name,
@@ -225,15 +346,17 @@ function summarizeRelationshipLedger(ledger, worldState = {}) {
     recentIntent: entry.recentIntent,
     visible: entry.visible
   });
+  const isVisible = (entry) => !visibleOnly || entry.visible;
 
   return {
-    characters: Object.values(normalized.characters).map(summarizeEntry),
-    factions: Object.values(normalized.factions).map(summarizeEntry),
+    characters: Object.values(normalized.characters).filter(isVisible).map(summarizeEntry),
+    factions: Object.values(normalized.factions).filter(isVisible).map(summarizeEntry),
     recentNotes: normalized.recentNotes
   };
 }
 
 module.exports = {
+  applyRelationshipChanges,
   createInitialRelationshipLedger,
   ensureRelationshipLedger,
   normalizeRelationshipLedger,
