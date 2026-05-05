@@ -303,7 +303,7 @@ Status updates:
 - S04.1 DONE: Added `POST /api/game/start`, including Mock opening narrative and session persistence.
 - S04.2 DONE: Added `GET /api/game/state/:sessionId` for reading saved sessions.
 
-Commit: pending until this coherent change is committed locally.
+Commit: c6e0537
 
 Verification: Ran `npm install` successfully with 0 vulnerabilities. Started the app through `npm start`, confirmed `http://localhost:3000/` returned 200, `GET /api/health` returned ok, `POST /api/game/start` created a session, and `GET /api/game/state/:sessionId` read it back.
 

@@ -57,6 +57,7 @@ Before finishing each coherent change:
 - 2026-05-05: Roadmap step S00.1 recorded as completed in `docs/DEVELOPMENT_STEPS.md` with commit `8e3cee3`.
 - 2026-05-05: `npm install` completed with 0 vulnerabilities.
 - 2026-05-05: `npm start` served `http://localhost:3000`; `GET /api/health`, homepage load, `POST /api/game/start`, and `GET /api/game/state/:sessionId` were verified with PowerShell web requests.
+- 2026-05-05: First runnable vertical slice committed as `c6e0537`.
 
 ## Next Recommended Step
 
