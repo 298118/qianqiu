@@ -6,11 +6,12 @@ Both tools must read this file at the start of every development session, after 
 
 ## Current Snapshot
 
-- Repository status: phase-one playable vertical slice is implemented and accepted for the default Mock path. The app installs with npm, starts an Express server, serves a polished plain HTML/CSS/JS frontend, can create/read/Mock-play a scholar session with richer daily scholar actions, complete the scholar exam path into official status, play basic Mock loops for emperor, minister, and officials, stream turn feedback over SSE, and optionally use OpenAI, DeepSeek, or Claude providers with Mock fallback.
+- Repository status: phase-one playable vertical slice is implemented, accepted, and now archived as historical planning. Phase two is the active planning track and focuses on deeper world simulation, NPC/faction memory, richer role loops, stronger provider validation, and browser-level acceptance while preserving the existing development workflow.
 - Canonical product brief: `docs/QIANQIU_DEVELOPMENT_BRIEF.md`.
 - Shared implementation roadmap and progress ledger: `docs/DEVELOPMENT_STEPS.md`.
 - Developer implementation map: `docs/ARCHITECTURE.md`.
 - Phase-one acceptance record: `docs/PHASE_ONE_ACCEPTANCE.md`.
+- Phase-one roadmap archive: `docs/PHASE_ONE_ROADMAP_ARCHIVE.md`.
 - Codex entrypoint: `AGENTS.md`.
 - Claude Code entrypoint: `CLAUDE.md`.
 - Default development target: runnable Node.js + Express + pure HTML/CSS/JS game at `http://localhost:3000`.
@@ -22,6 +23,8 @@ Both tools must read this file at the start of every development session, after 
 
 - Use one shared context file for both Codex and Claude Code: `docs/SHARED_CONTEXT.md`.
 - Use one shared step ledger for both Codex and Claude Code: `docs/DEVELOPMENT_STEPS.md`.
+- `docs/DEVELOPMENT_STEPS.md` is now the phase-two active roadmap. The completed first-phase roadmap is archived in `docs/PHASE_ONE_ROADMAP_ARCHIVE.md`; first-phase acceptance details remain in `docs/PHASE_ONE_ACCEPTANCE.md`.
+- The phase-two planning transition does not change the mandatory development workflow, Git discipline, Mock-default requirement, provider-optional requirement, or server-owned state/rules boundary.
 - Every coherent project change must be committed locally with Git.
 - The first runtime slice uses Express, CORS, and dotenv only; session ids use Node.js `crypto.randomUUID()` to avoid adding a separate id dependency this early.
 - `AI_PROVIDER=mock` remains the default no-key mode. `AI_PROVIDER=openai`, `deepseek`, `claude`, or `anthropic` now creates a real provider when the matching API key is present.
@@ -107,11 +110,8 @@ Before finishing each coherent change:
 - 2026-05-05: S14.1-S14.3 documentation and phase-one acceptance committed as `b67aadb`. Verified `npm install` with 0 vulnerabilities, `npm test` with 15 passing tests, and an automated temporary Mock server acceptance on port 3214 covering static assets, health, complete scholar -> official progression with four saved exam essays, exam integrity penalties for short/modern/copy submissions, and emperor/minister/official role loops. Playwright/browser screenshot automation was unavailable, so static assets plus API acceptance were verified and the manual browser checklist remains in `docs/MANUAL_ACCEPTANCE.md`.
 - 2026-05-05: S04.4 SSE turn streaming code committed as `0fd8729`. Verified `node --check src/utils/sse.js`, `node --check src/routes/game.js`, `node --check public/app.js`, `node --check test/sse.test.js`, `git diff --check`, `npm test` with 18 passing tests, and a temporary Mock server on port 3226 confirming `POST /api/game/turn` returns SSE events with `Accept: text/event-stream` while preserving JSON fallback without the SSE accept header.
 - 2026-05-05: Local `rg` execution was repaired by creating `C:\Users\ZZZ\AppData\Local\OpenAI\Codex\bin\rg.exe` from the working Codex local-cache ripgrep 15.1.0 binary. Verified `Get-Command rg`, `rg --version`, `rg --files`, and `rg "SSE" docs src public test`.
+- 2026-05-05: Phase-one roadmap archived and phase-two roadmap opened in documentation. Verified `npm test` with 18 passing tests and `git diff --check`.
 
 ## Next Recommended Step
 
-Phase one is accepted for Mock mode and S04.4 SSE streaming is now implemented. Recommended next step is to define the phase-two roadmap, with likely candidates:
-
-- Add browser automation or screenshot-based UI acceptance once a browser runner is available.
-- Expand general and magistrate Mock role loops.
-- Run real-provider smoke tests when API keys are available.
+Phase one is archived and phase two is now the active roadmap. Recommended next step is S21.1: define the minimum server-owned world tick contract, including time progression, natural resource changes, event generation, visible feedback, and tests that prove the complete scholar path remains intact.

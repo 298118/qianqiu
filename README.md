@@ -4,6 +4,8 @@
 
 第一阶段的核心体验已经可玩：默认 Mock AI 模式下，无需 API Key，可以从书生开始，经历童试、乡试、会试、殿试并入仕为官；皇帝、大臣、入仕官员也已有基础自由行动循环。
 
+当前项目已经进入第二阶段规划。第一阶段路线图归档见 [docs/PHASE_ONE_ROADMAP_ARCHIVE.md](docs/PHASE_ONE_ROADMAP_ARCHIVE.md)，第二阶段活动台账见 [docs/DEVELOPMENT_STEPS.md](docs/DEVELOPMENT_STEPS.md)。开发规范不变：继续保持 Mock 默认可玩、真实 provider 可选、服务器拥有状态边界和科举规则。
+
 ## 快速启动
 
 需要 Node.js 18+。首次运行：
@@ -123,6 +125,7 @@ data/sessions/
 - [docs/SHARED_CONTEXT.md](docs/SHARED_CONTEXT.md)：Codex 与 Claude Code 共同维护的当前上下文交接板。
 - [docs/QIANQIU_DEVELOPMENT_BRIEF.md](docs/QIANQIU_DEVELOPMENT_BRIEF.md)：产品目标、架构、AI 合约、数据契约和交付标准。
 - [docs/DEVELOPMENT_STEPS.md](docs/DEVELOPMENT_STEPS.md)：逐步开发路线图与进度台账。
+- [docs/PHASE_ONE_ROADMAP_ARCHIVE.md](docs/PHASE_ONE_ROADMAP_ARCHIVE.md)：第一阶段路线图归档。
 - [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)：当前实现的开发者导览。
 
 每个 coherent change 都应更新共享上下文和路线图，运行相关验证，并用 Git 本地提交。

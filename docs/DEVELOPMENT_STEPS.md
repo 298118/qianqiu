@@ -1,13 +1,12 @@
-# 《千秋》逐步开发路线图与进度台账
+# 《千秋》第二阶段开发路线图与进度台账
 
-本文件是 Codex 与 Claude Code 共同维护的实现路线图。它解决两个问题：
+本文件仍是 Codex 与 Claude Code 共同维护的活动路线图。第一阶段路线图已归档到 [docs/PHASE_ONE_ROADMAP_ARCHIVE.md](PHASE_ONE_ROADMAP_ARCHIVE.md)，验收记录仍见 [docs/PHASE_ONE_ACCEPTANCE.md](PHASE_ONE_ACCEPTANCE.md)。
 
-- 把《千秋》拆成很多小步骤，每次只实现一小块，稳健推进。
-- 记录每次完成了哪些步骤、改了什么、如何验证、对应 Git 提交，让 Codex 和 Claude Code 都能同时看到。
+第二阶段从“可玩纵切”进入“可持续模拟”。目标不是推翻现有实现，而是在保持 `npm install && npm start`、Mock 默认可玩、服务器裁决状态边界的前提下，逐步增加世界深度、身份差异、真实 provider 验收和浏览器级质量门槛。
 
 ## 1. 使用规则
 
-每次开发开始时：
+开发规范不变。每次开发开始时：
 
 1. 读取 `AGENTS.md` 或 `CLAUDE.md`。
 2. 读取 `docs/SHARED_CONTEXT.md`。
@@ -20,7 +19,7 @@
 1. 把对应步骤状态改为 `DONE`，填写完成日期、工具、提交哈希。
 2. 在本文件的“进度记录”追加一条说明，写清完成了什么、验证了什么、留下了什么风险。
 3. 更新 `docs/SHARED_CONTEXT.md`，让另一个工具看到最新交接信息。
-4. 如果改动影响产品范围、架构、API、状态字段、提示词或验收标准，也同步更新 `docs/QIANQIU_DEVELOPMENT_BRIEF.md` 或 README。
+4. 如果改动影响产品范围、架构、API、状态字段、提示词或验收标准，也同步更新 `docs/QIANQIU_DEVELOPMENT_BRIEF.md`、README 或相关架构文档。
 5. 运行相关验证命令。
 6. 用 Git 提交本次 coherent change。
 
@@ -33,227 +32,104 @@
 
 ## 2. 依赖与开源库策略
 
-允许使用成熟的第三方库和依赖，但必须遵守以下规则：
+依赖策略不变：
 
 - 只有当依赖能明显降低复杂度、提升可靠性、改善安全性或带来标准能力时才加入。
 - 新增依赖必须记录在本文件的对应步骤和 README 中，说明用途。
 - 优先选择维护活跃、文档清楚、常用、许可证友好的库。
-- 前端第一阶段保持无构建流程，除非路线图中明确升级。
+- 前端继续保持无构建流程，除非本路线图后续明确升级。
 - 核心游戏规则、科举晋级、状态边界、作弊惩罚不能完全交给模型或黑箱库。
 - 加依赖后必须验证 `npm install` 和 `npm start`。
 
-推荐初始依赖：
-
-- `express`：HTTP 服务与静态资源。
-- `cors`：本地开发跨域控制。
-- `dotenv`：环境变量。
-- `nanoid`：session ID。
-- `ajv`：AI JSON schema 校验。
-- `openai`：OpenAI 与 DeepSeek OpenAI-compatible 接入。
-- `@anthropic-ai/sdk`：Claude 接入。
-
-后续可按需引入：
-
-- `vitest` 或 Node.js 内置 test runner：自动化测试。
-- `zod`：如果后续希望用更接近业务代码的 schema 声明。
-- `marked` 或轻量 markdown renderer：若叙事区需要安全地渲染有限 Markdown。
-- `dompurify`：若前端允许富文本渲染，必须配合消毒。
-
-## 3. 步骤总览
+## 3. 第二阶段步骤总览
 
 | ID | 状态 | 目标 | 完成日期 | 工具 | 提交 |
 | --- | --- | --- | --- | --- | --- |
-| S00.1 | DONE | 建立开发文稿、双工具入口、共享上下文与本路线图 | 2026-05-05 | Codex | 8e3cee3 |
-| S01.1 | TODO | 创建 `package.json`、`.env.example`、基础 npm scripts |  |  |  |
-| S01.2 | TODO | 创建 Express 服务和静态资源托管，打开首页 |  |  |  |
-| S01.3 | TODO | 创建前端最小壳：开局按钮、状态区、叙事区 |  |  |  |
-| S02.1 | TODO | 实现 session JSON 存储与安全路径处理 |  |  |  |
-| S02.2 | TODO | 实现初始世界状态工厂 |  |  |  |
-| S02.3 | DONE | 实现状态 patch 白名单、clamp 与历史事件裁剪 | 2026-05-05 | Claude Code | d119393 |
-| S03.1 | TODO | 定义 AI provider 接口与 Mock provider 骨架 |  |  |  |
-| S03.2 | TODO | 定义通用推演、出题、评卷 JSON schema |  |  |  |
-| S03.3 | TODO | 实现 prompt 模板文件并详细注释提示词意图 |  |  |  |
-| S03.4 | TODO | 实现 JSON 解析、schema 校验、失败降级 |  |  |  |
-| S04.1 | TODO | 实现 `POST /api/game/start` |  |  |  |
-| S04.2 | TODO | 实现 `GET /api/game/state/:sessionId` |  |  |  |
-| S04.3 | DONE | 实现 `POST /api/game/turn` 非流式基础版本 | 2026-05-05 | Claude Code | d119393 |
-| S04.4 | DONE | 将 `/api/game/turn` 升级为 SSE 流式反馈 | 2026-05-05 | Codex | 0fd8729 |
-| S05.1 | DONE | 实现开局页：朝代、年份、身份、姓名、家境 | 2026-05-05 | Codex | c6e0537 |
-| S05.2 | DONE | 实现主界面状态栏、叙事历史、自由输入 | 2026-05-05 | Claude Code | d119393 |
-| S05.3 | DONE | 实现 session 恢复与刷新不丢失当前局 | 2026-05-05 | Claude Code | d119393 |
-| S06.1 | DONE | Mock 识别书生日常行动：读书、拜师、游学、谋生 | 2026-05-05 | Codex | 9aa5263 |
-| S06.2 | DONE | 书生日常行动影响属性、金钱、人脉、事件历史 | 2026-05-05 | Codex | 9aa5263 |
-| S06.3 | DONE | 实现书生专属面板与属性变化展示 | 2026-05-05 | Codex | 9aa5263 |
-| S07.1 | DONE | 定义科举阶段、门槛、题型、晋级映射 | 2026-05-05 | Codex | 47dae05 |
-| S07.2 | DONE | 实现 `POST /api/exam/question` 和 activeExam 保存 | 2026-05-05 | Codex | 47dae05 |
-| S07.3 | DONE | 实现考试弹窗：题目、要求、大文本编辑区 | 2026-05-05 | Codex | 47dae05 |
-| S08.1 | DONE | 实现 Mock 考官评分算法 | 2026-05-05 | Codex | 9c8ca76 |
-| S08.2 | DONE | 实现本地防作弊检测：现代词、过短、疑似照抄 | 2026-05-05 | Codex | 9c8ca76 |
-| S08.3 | DONE | 生成 4-8 名虚拟同场考生与合理分数 | 2026-05-05 | Codex | 9c8ca76 |
-| S08.4 | DONE | 实现放榜排名、详细评语、文章保存 | 2026-05-05 | Codex | 9c8ca76 |
-| S09.1 | DONE | 童试通过后成为秀才 | 2026-05-05 | Codex | bed515a |
-| S09.2 | DONE | 乡试通过后成为举人 | 2026-05-05 | Codex | bed515a |
-| S09.3 | DONE | 会试通过后成为贡士 | 2026-05-05 | Codex | bed515a |
-| S09.4 | DONE | 殿试定甲第并转为 official | 2026-05-05 | Codex | bed515a |
-| S09.5 | DONE | 为严重作弊实现黜落或降档规则 | 2026-05-05 | Codex | bed515a |
-| S10.1 | DONE | 实现皇帝身份基础自由输入推演 | 2026-05-05 | Codex | 592b7a1 |
-| S10.2 | DONE | 实现大臣身份基础自由输入推演 | 2026-05-05 | Codex | 592b7a1 |
-| S10.3 | DONE | 入仕后显示官员视角与基础政务输入 | 2026-05-05 | Codex | 592b7a1 |
-| S11.1 | DONE | 接入 OpenAI provider | 2026-05-05 | Codex | 0d779a2 |
-| S11.2 | DONE | 接入 DeepSeek OpenAI-compatible provider | 2026-05-05 | Codex | 0d779a2 |
-| S11.3 | DONE | 接入 Claude provider | 2026-05-05 | Codex | 0d779a2 |
-| S11.4 | DONE | 真实 provider 失败时自动重试或降级 Mock | 2026-05-05 | Codex | 0d779a2 |
-| S12.1 | DONE | 前端古风视觉：宣纸、墨色、朱砂强调 | 2026-05-05 | Codex | 7b4f349 |
-| S12.2 | DONE | 移动端布局与输入体验优化 | 2026-05-05 | Codex | 7b4f349 |
-| S12.3 | DONE | 叙事区、考试区、放榜区交互打磨 | 2026-05-05 | Codex | 7b4f349 |
-| S13.1 | DONE | 增加自动化测试：状态规则、session 存储 | 2026-05-05 | Codex | 4a70f5a |
-| S13.2 | DONE | 增加自动化测试：科举晋级与作弊惩罚 | 2026-05-05 | Codex | 4a70f5a |
-| S13.3 | DONE | 增加端到端手动验收脚本说明 | 2026-05-05 | Codex | 4a70f5a |
-| S14.1 | DONE | README 完整化：安装、配置、启动、provider 切换 | 2026-05-05 | Codex | b67aadb |
-| S14.2 | DONE | 补齐开发者文档：架构、AI 合约、状态字段 | 2026-05-05 | Codex | b67aadb |
-| S14.3 | DONE | 第一阶段完整验收与稳定化 | 2026-05-05 | Codex | b67aadb |
+| S20.1 | DONE | 归档第一阶段路线图，开启第二阶段活动规划，保持开发规范不变 | 2026-05-05 | Codex | 本次文档提交 |
+| S21.1 | TODO | 定义第二阶段世界 tick 状态契约：时间推进、资源变动、事件队列、可见反馈 |
+| S21.2 | TODO | 实现服务器拥有的 `worldTick` 模块，按回合或月份推进财政、粮储、民心、边患、腐败 |
+| S21.3 | TODO | 将世界 tick 接入 `/api/game/turn`，确保玩家行动与自然世界变化共同进入事件历史 |
+| S21.4 | TODO | 为世界 tick 增加自动化测试，覆盖数值边界、事件裁剪和 Mock 稳定性 |
+| S22.1 | TODO | 扩展 NPC 与派系关系账本，记录人物立场、恩怨、人脉来源和近期意图 |
+| S22.2 | TODO | 更新状态 patch 白名单和提示词摘要，让 provider 只能建议关系变化，服务器负责裁决 |
+| S22.3 | TODO | 在 Mock 中加入人物/派系对玩家行动的可追踪反应 |
+| S23.1 | TODO | 深化地方官身份：县库、乡绅、盗匪、诉讼、赋役、水利和地方民心 |
+| S23.2 | TODO | 深化将领身份：兵员、军粮、士气、侦察、战役风险和边境态势 |
+| S23.3 | TODO | 深化入仕官员身份：上官、同年、考成、升迁、弹劾和清浊操守 |
+| S24.1 | TODO | 深化科举同场竞争：虚拟考生生成可查看文章、评语和风格差异 |
+| S24.2 | TODO | 增加考试档案 UI，允许回看历次文章、题目、排名、复核和晋级原因 |
+| S24.3 | TODO | 增加赶考成本、旅途事件、疲劳/心性影响和考前准备风险 |
+| S25.1 | TODO | 增加真实 provider smoke 脚本，在有 key 时验证 start/turn/question/submit 四类调用 |
+| S25.2 | TODO | 评估并实现真实 provider token streaming；无法流式的 provider 保持兼容降级 |
+| S25.3 | TODO | 建立 AI 输出 eval fixtures，固定校验 JSON 合约、违规 patch、科举评卷和历史语气 |
+| S26.1 | TODO | 引入浏览器自动化验收方案，优先覆盖本地页面加载、开局、localStorage 恢复 |
+| S26.2 | TODO | 增加截图或 DOM 级 UI 验收，覆盖桌面/移动布局、考试弹窗和放榜详情 |
+| S26.3 | TODO | 将浏览器验收结果写入文档，并保留手动验收清单作为 fallback |
+| S27.1 | TODO | 完成第二阶段验收文档，记录新增深度、已知限制、真实 provider 状态和下一阶段候选 |
 
 ## 4. 分阶段详细步骤
 
-### Phase 00: 项目上下文与协作纪律
+### Phase 20: 文档切换与归档
 
-目标：让 Codex 和 Claude Code 从一开始共享同一套开发上下文。
+目标：把第一阶段计划从活动台账中移出，明确第二阶段活动路线，同时不改变协作纪律。
 
-- S00.1：建立 `AGENTS.md`、`CLAUDE.md`、`docs/SHARED_CONTEXT.md`、`docs/QIANQIU_DEVELOPMENT_BRIEF.md`、本文件。
-- 验证：Node.js 能以 UTF-8 读取所有文档；所有入口都引用共享上下文和开发步骤。
-- 完成标准：文档已提交，`git status --short` 干净。
+- S20.1：新增第一阶段路线图归档文档；将本文件重置为第二阶段活动台账；在共享上下文、README 和开发文稿中记录阶段切换。
+- 验证：`npm test` 仍通过；`git status --short` 只显示本次文档改动；最终用 Git 提交。
 
-### Phase 01: 最小可启动项目
+### Phase 21: 世界模拟主循环
 
-目标：先让项目能安装、启动、打开网页。
+目标：让世界在玩家行动之外也会推进，形成财政、粮储、民心、边患、腐败之间的长期牵引。
 
-- S01.1：创建 `package.json`，加入 `start` 和 `dev` scripts，加入初始依赖。
-- S01.2：创建 `server.js`，启动 Express，监听 `PORT || 3000`，托管 `public/`。
-- S01.3：创建 `public/index.html`、`public/styles.css`、`public/app.js`，首页显示项目名、开局入口和基本布局。
-- 验证：运行 `npm install`、`npm start`，访问 `http://localhost:3000` 能看到页面。
+- S21.1：定义最小 tick 合约，明确何时推进时间、哪些字段会自然变化、哪些事件应进入玩家可见叙事。
+- S21.2：实现 `src/game/worldTick.js`，服务器根据当前状态、角色、最近事件和基础规则生成自然变动。
+- S21.3：接入 `/api/game/turn`，让 provider 叙事结果和服务器 tick 结果共同写入 session。
+- S21.4：增加测试，确保 tick 不越界、不绕过 patch 规则、不破坏书生完整主线。
 
-### Phase 02: 状态与存储
+### Phase 22: NPC 与派系记忆
 
-目标：建立可保存、可恢复、可约束的世界状态。
+目标：让行动留下社会关系后果，而不是只改几个数值。
 
-- S02.1：实现 `src/storage/sessionStore.js`，提供 create/read/write/list 基础方法，session 文件只允许写入 `data/sessions/`。
-- S02.2：实现 `src/game/initialState.js`，按朝代、年份、身份、姓名、家境创建 `worldState`。
-- S02.3：实现 `src/game/stateRules.js`，只允许白名单 patch，数值 clamp，事件历史保留 20 条。
-- 验证：用 Node.js 脚本创建一个 session、读取、应用 patch、再次读取，确认数据稳定。
+- S22.1：扩展人物和派系状态，记录立场、关系、近期意图和可见/隐藏信息。
+- S22.2：更新 patch 规则、prompt 摘要和文档，保持服务器拥有最终合并权。
+- S22.3：让 Mock 中的皇帝、大臣、官员、书生日常行动能引发 NPC 或派系反应。
 
-### Phase 03: AI 抽象与 JSON 合约
+### Phase 23: 身份深度扩展
 
-目标：模型可替换，输出可验证。
+目标：补齐第一阶段薄弱身份，并让入仕后的官场玩法更像独立生涯。
 
-- S03.1：实现 `src/ai/index.js` 和 `src/ai/providers/mock.js`，统一 provider 方法：`runTurn`、`generateExamQuestion`、`gradeExamEssay`。
-- S03.2：实现 `src/ai/schemas.js`，用 Ajv 定义通用推演、出题、评卷 schema。
-- S03.3：实现 `src/ai/prompts.js`，写入通用世界引擎、科举考官、出题官 prompt，并在关键处注释。
-- S03.4：实现 `src/utils/json.js`，处理模型 JSON 解析、schema 校验、失败重试入口、Mock 降级。
-- 验证：Mock provider 返回的三个 JSON 都能通过 schema。
+- S23.1：实现地方官基础闭环：审案、钱粮、乡绅、盗匪、灾荒、水利。
+- S23.2：实现将领基础闭环：募兵、粮饷、士气、侦察、守边、出战。
+- S23.3：深化 official：同年/上官/考成/升迁/弹劾与操守风险。
 
-### Phase 04: 游戏 API
+### Phase 24: 科举深度
 
-目标：前后端能创建游戏、读取状态、推进一回合。
+目标：保留已跑通的科举主线，同时让考试更有竞争、记忆和代价。
 
-- S04.1：实现 `/api/game/start`，创建 session 并返回初始叙事。
-- S04.2：实现 `/api/game/state/:sessionId`，支持刷新后恢复。
-- S04.3：实现 `/api/game/turn` 基础版本，接收自由输入，调用 Mock provider，应用 state patch。
-- S04.4：实现 SSE 工具 `src/utils/sse.js`，让 `/api/game/turn` 流式输出叙事片段和最终状态。
-- 验证：用 curl 或浏览器 fetch 创建 session、行动一次、读取更新后状态。
+- S24.1：虚拟考生不仅有分数，还能生成可查看文章和考官短评。
+- S24.2：前端提供考试档案，回看历次题目、文章、评分、监试复核和榜单。
+- S24.3：加入赶考成本、旅途事件和疲劳/心性影响，但不得破坏完整 scholar -> official 路径。
 
-### Phase 05: 前端基础体验
+### Phase 25: 真实 Provider 与流式能力
 
-目标：玩家可以从浏览器完成开局和自由行动。
+目标：确认真实模型路径可用于开发和验收，而不是只停留在无 key fallback。
 
-- S05.1：开局页支持选择朝代、年份、身份、姓名、家境、自定义背景。
-- S05.2：主界面显示顶部信息栏、中间叙事历史、底部多行输入框。
-- S05.3：保存 sessionId 到 localStorage，刷新页面后恢复当前局。
-- 验证：浏览器中创建书生局，输入“研读《孟子》三日”，看到叙事与状态变化。
+- S25.1：新增可选 smoke 脚本，有 key 时按 provider 验证 start、turn、question、submit。
+- S25.2：为支持的 provider 接入真正 token streaming；不支持时保留当前 SSE 兼容输出。
+- S25.3：建立 eval fixtures，持续检查 provider JSON 合约、历史语气和非法 patch。
 
-### Phase 06: 书生日常循环
+### Phase 26: 浏览器验收
 
-目标：考试前也好玩，行动能持续成长。
+目标：把“能打开”升级为“可重复验证的浏览器体验”。
 
-- S06.1：Mock provider 识别读书、拜师、游学、辩论、谋生、赶考等意图。
-- S06.2：这些行动更新 `academia`、`literaryTalent`、`adaptability`、`mentality`、`reputation`、`gold`、`connections`、`studiedBooks`。
-- S06.3：前端书生面板显示科举进度、属性、师承、已读书、人脉。
-- 验证：连续多次日常行动后，属性合理变化，事件历史保留最近 20 条。
+- S26.1：选择并接入浏览器自动化工具，覆盖本地页面加载和 session 恢复。
+- S26.2：增加桌面/移动布局、考试弹窗、放榜详情和输入区的 UI 验收。
+- S26.3：更新手动验收文档，记录自动化能覆盖和仍需人工检查的部分。
 
-### Phase 07: 考试入口与出题
+### Phase 27: 第二阶段验收
 
-目标：玩家能进入真实写文章的考试界面。
+目标：形成可交接的第二阶段版本。
 
-- S07.1：实现 `src/game/exams.js`，定义四级考试、题型、字数建议、通过线、晋级结果。
-- S07.2：实现 `/api/exam/question`，生成题目并保存 `activeExam`。
-- S07.3：前端考试弹窗展示题目、要求、大文本输入区和提交按钮。
-- 验证：书生点击或输入参加考试后能看到对应层级题目。
-
-### Phase 08: 评卷、作弊检测与放榜
-
-目标：玩家文章会被认真评分，并与虚拟考生同榜竞争。
-
-- S08.1：Mock 考官按文章长度、古文词汇、结构、玩家属性、考试难度给五维评分。
-- S08.2：本地防作弊检测现代词、明显时代错误、过短文本、疑似照抄经典片段。
-- S08.3：实现 `src/game/candidates.js`，生成 4-8 名虚拟考生、背景和分数。
-- S08.4：实现 `/api/exam/submit` 和前端放榜界面，展示总分、排名、评语和虚拟考生。
-- 验证：提交正常文章、过短文章、含现代词文章，分数和惩罚符合预期。
-
-### Phase 09: 完整科举晋级
-
-目标：完成书生到入仕的第一主线。
-
-- S09.1：童试通过后 `examRank = "秀才"`。
-- S09.2：乡试通过后 `examRank = "举人"`。
-- S09.3：会试通过后 `examRank = "贡士"`。
-- S09.4：殿试定一甲、二甲、三甲，`player.role = "official"`，分派初始官职。
-- S09.5：严重作弊时强制落第、降档或记录污点。
-- 验证：从新书生开始，按四级考试一路走到 official，`examHistory` 保存每篇文章。
-
-### Phase 10: 其他身份基础玩法
-
-目标：皇帝、大臣、入仕官员都能基本游玩。
-
-- S10.1：皇帝身份支持圣旨、用人、赈灾、征税、军事等基础自由输入。
-- S10.2：大臣身份支持上疏、结党、执行政务、谏言等基础自由输入。
-- S10.3：入仕后的官员视角显示官职、影响力、派系关系和可行动提示。
-- 验证：三种身份各行动三次，状态和叙事都有合理变化。
-
-### Phase 11: 真实 AI Provider
-
-目标：保持 Mock 可玩，同时支持真实模型增强叙事。
-
-- S11.1：实现 OpenAI provider，优先使用 Responses API。
-- S11.2：实现 DeepSeek provider，走 OpenAI-compatible base URL。
-- S11.3：实现 Claude provider，使用 Anthropic SDK Messages API。
-- S11.4：provider 失败、JSON 无效或超时时，重试一次并可降级 Mock。
-- 验证：无 API Key 时 Mock 正常；配置某个 provider 后能完成 start、turn、exam 三类调用。
-
-### Phase 12: UI 与体验打磨
-
-目标：让游戏像一个可长期玩的古风文本模拟器。
-
-- S12.1：完善宣纸、墨色、朱砂红、宋/楷风字体 fallback、按钮和面板层级。
-- S12.2：优化移动端输入框、考试编辑区、放榜弹窗。
-- S12.3：叙事历史支持回合分隔、属性变化高亮、考试结果展开查看。
-- 验证：桌面和移动宽度下无明显遮挡、溢出或不可操作区域。
-
-### Phase 13: 测试与质量门槛
-
-目标：每次改动都更稳。
-
-- S13.1：为 session 存储、状态规则、AI schema 增加自动化测试。
-- S13.2：为科举晋级、作弊惩罚、虚拟排名增加自动化测试。
-- S13.3：写入手动验收脚本，覆盖书生完整主线和皇帝/大臣基础玩法。
-- 验证：`npm test` 和手动验收清单都通过。
-
-### Phase 14: 文档与第一阶段验收
-
-目标：别人可以按文档启动、配置、扩展。
-
-- S14.1：README 完整说明安装、启动、`.env`、provider 切换、Mock 模式。
-- S14.2：补齐架构文档、AI 合约、状态字段、科举规则。
-- S14.3：完成第一阶段验收，记录已知限制和下一阶段计划。
-- 验证：新开发者只看 README 和文档即可启动项目并理解下一步。
+- S27.1：记录第二阶段验收、命令、限制、真实 provider 状态和第三阶段候选。
 
 ## 5. 进度记录
 
@@ -276,379 +152,23 @@
 
 工具：Codex
 
-步骤：S00.1
+步骤：S20.1
 
-提交：8e3cee3
-
-完成：新增本逐步开发路线图，明确允许使用成熟第三方库，规定 Codex 和 Claude Code 每次完成小步骤都要更新本文件和共享上下文。
-
-验证：用 Node.js 检查 `AGENTS.md`、`CLAUDE.md`、README、开发文稿、共享上下文和本文件的入口链接。
-
-风险/遗留：游戏实现尚未开始。
-
-下一步：从 S01.1 开始创建 `package.json`、`.env.example` 和基础 npm scripts。
-
----
-
-Codex progress note, 2026-05-05:
-
-Status updates:
-
-- S01.1 DONE: Added `package.json`, `package-lock.json`, `.env.example`, `start`, and `dev` scripts.
-- S01.2 DONE: Added `server.js`, Express setup, CORS, dotenv loading, static `public/` hosting, and `GET /api/health`.
-- S01.3 DONE: Added `public/index.html`, `public/styles.css`, and `public/app.js` with a usable opening form, status strip, and narrative area.
-- S02.1 DONE: Added `src/storage/sessionStore.js` with JSON read/write under `data/sessions/` and session id validation.
-- S02.2 DONE: Added `src/game/initialState.js` with the first structured `worldState`.
-- S03.1 DONE: Added `src/ai/index.js` and `src/ai/providers/mock.js`; non-Mock providers currently fall back to Mock.
-- S04.1 DONE: Added `POST /api/game/start`, including Mock opening narrative and session persistence.
-- S04.2 DONE: Added `GET /api/game/state/:sessionId` for reading saved sessions.
-
-Commit: c6e0537
-
-Verification: Ran `npm install` successfully with 0 vulnerabilities. Started the app through `npm start`, confirmed `http://localhost:3000/` returned 200, `GET /api/health` returned ok, `POST /api/game/start` created a session, and `GET /api/game/state/:sessionId` read it back.
-
-Risk/leftover: The turn loop, state patch whitelist/clamping, AI JSON schemas, exam endpoints, and complete scholar exam path are still TODO.
-
-Next step: Implement S02.3 and S04.3 together so free-text actions can change state only through server-side rules.
-
----
-
-### 2026-05-05
-
-工具：Claude Code
-
-步骤：S02.3, S04.3, S05.2, S05.3
-
-提交：d119393
+提交：本次文档提交
 
 完成：
-- S02.3：新增 `src/game/stateRules.js`，实现状态 patch 白名单（只允许预定义字段修改）、数值 clamp（如 health 0-100, gold 0-100000 等）、eventHistory 保留最近 20 条。
-- S04.3：新增 `POST /api/game/turn` 端点，接收 sessionId 和自由文本 input，通过 Mock provider 推演，经 stateRules 安全应用后写回 session。
-- S05.2：前端新增底部自由输入区（textarea + 行动按钮），叙事区改为追加历史模式，属性变化高亮显示（绿色增长/红色下降），科举提示内联显示。
-- S05.3：页面加载时自动从 localStorage 恢复 sessionId，读取并展示已有事件历史。
+- 新增 `docs/PHASE_ONE_ROADMAP_ARCHIVE.md`，把第一阶段路线图和验收状态归档为只读历史。
+- 将 `docs/DEVELOPMENT_STEPS.md` 切换为第二阶段活动路线图，保留原有开发规范、依赖策略和交接纪律。
+- 第二阶段规划聚焦世界 tick、NPC/派系记忆、地方官/将领/入仕官员深度、科举深度、真实 provider 验收和浏览器自动化验收。
+- 同步更新共享上下文、开发文稿和 README，让后续 Codex 与 Claude Code 从第二阶段台账接手。
 
 验证：
-- `npm install` 无漏洞。
-- `npm start` 启动成功。
-- `POST /api/game/start` 创建 session。
-- `POST /api/game/turn` 研读《论语》→ 学识增加，turnCount 递增。
-- `POST /api/game/turn` 请求考试 → activeExam 设为 child_exam。
-- `GET /api/game/state/:sessionId` 恢复完整状态。
-- 错误处理：空 input 返回 400，缺 sessionId 返回 400。
-
-风险/遗留：SSE 流式（S04.4）、考试出题与评卷（S07-S08）尚未实现。Mock provider 的其他身份行动识别仍可进一步丰富。
-
-下一步：S07.1（科举阶段定义），然后实现 S07.2-S07.3 的出题接口和考试写作界面。
-
----
-
-Codex progress note, 2026-05-05:
-
-Steps: S06.1, S06.2, S06.3
-
-Commit: 9aa5263
-
-Completed:
-
-- Expanded `src/ai/providers/mock.js` so scholar daily actions separately recognize study, teacher visits, travel/social, debate, money/work, exam request, and rest.
-- Daily actions now update numeric attributes plus `teacher`, `studiedBooks`, `connections`, `gold`, and event history through the existing server-side patch whitelist.
-- Added a scholar panel in the plain frontend showing exam progress, next exam, active exam, attribute meters, teacher, studied books, and connections.
-
-Verification:
-
-- `node --check src/ai/providers/mock.js`
-- `node --check public/app.js`
-- `node --check src/routes/game.js`
-- Local server returned 200 for `/`, `/app.js`, and `/styles.css`.
-- Six-turn API smoke test passed for study, teacher visit, travel, debate, money/work, and exam request; confirmed studied book recording, teacher recording, multiple connections, `child_exam` trigger, saved `activeExam`, event history cap, and `turnCount`.
-
-Risk/leftover: The exam question endpoint and real exam writing flow are still TODO; S07.1 is the next best step.
-
----
-
-Codex progress note, 2026-05-05:
-
-Steps: S07.1, S07.2, S07.3
-
-Commit: 47dae05
-
-Completed:
-
-- Added `src/game/exams.js` as the server-owned exam rules module, defining the four exam levels, requirements, thresholds, word-count ranges, pass scores, and promotion mappings.
-- Added `POST /api/exam/question`, wired under `/api/exam`, to generate a Mock question, save a full `activeExam`, append an exam-entry event, and reuse an unanswered exam instead of regenerating.
-- Added a frontend exam writing modal with exam metadata, question text, requirements, essay textarea, and visible submit button placeholder; scholar panel entry and free-text exam triggers both open the question flow.
-
-Verification:
-
-- `node --check server.js`
-- `node --check src/game/exams.js`
-- `node --check src/routes/exam.js`
-- `node --check src/ai/providers/mock.js`
-- `node --check public/app.js`
-- Temporary local server returned 200 for `/`, `/app.js`, and `/styles.css`.
-- Temporary-port API smoke tests confirmed direct `POST /api/exam/question`, free-text exam trigger into question generation, `activeExam.examQuestion` persistence, and unanswered exam reuse by stable `examId`.
-
-Risk/leftover: `/api/exam/submit`, Mock grading, anti-cheat checks, virtual candidate ranking, promotion application, and a working final submit action remain for S08-S09.
-
-Next step: Implement S08.1-S08.4 so essays can be graded, checked for cheating, ranked against virtual candidates, and saved.
-
----
-
-Codex progress note, 2026-05-05:
-
-Steps: S08.1, S08.2, S08.3, S08.4
-
-Commit: 9c8ca76
-
-Completed:
-
-- Added Mock `gradeExamEssay` with five score dimensions driven by essay length, classical vocabulary, structure markers, player attributes, readiness, and exam difficulty.
-- Added server-owned `src/game/essayChecks.js` for short essay, modern/anachronistic term, copied classic passage, and ghostwriting checks; penalties are applied after provider grading.
-- Added `src/game/candidates.js` to generate 4-8 virtual same-field candidates and rank them with the player.
-- Added `POST /api/exam/submit`, saving essays/results into `player.examHistory`, clearing `activeExam`, and returning `score`, `authenticityCheck`, `virtualCandidates`, `ranking`, `promotionResult`, and `worldState`.
-- Updated the frontend exam modal so the submit button calls `/api/exam/submit` and displays score, detailed comments, monitoring flags, and the ranking list.
-
-Verification:
-
-- `node --check src/game/essayChecks.js`
-- `node --check src/game/candidates.js`
-- `node --check src/ai/providers/mock.js`
-- `node --check src/routes/exam.js`
-- `node --check public/app.js`
-- Temporary server on port 3137 confirmed health, `POST /api/exam/question`, normal `POST /api/exam/submit`, 4-8 ranking entries, `examHistory` persistence, `activeExam` clearing, and too-short plus modern-term penalty flags.
-
-Risk/leftover: S08 records pass/fail in `promotionResult` but does not yet mutate `player.examRank` or `player.role`; S09 must apply promotion and severe-cheating consequences server-side.
-
-Next step: Implement S09.1-S09.5 so passed exams update ranks through 秀才 -> 举人 -> 贡士 -> 进士/official, with severe cheating causing 黜落 or downgrade.
-
----
-
-Codex progress note, 2026-05-05:
-
-Steps: S09.1, S09.2, S09.3, S09.4, S09.5
-
-Commit: bed515a
-
-Completed:
-
-- Added `src/game/promotions.js` as the server-owned promotion/consequence layer for exam results.
-- `POST /api/exam/submit` now applies promotion before saving `examHistory`: 童试 -> 秀才, 乡试 -> 举人, 会试 -> 贡士, 殿试 -> 进士 + `player.role = "official"`.
-- Palace exam outcomes now record `palaceRank` and `officeTitle` (`翰林院修撰`, `翰林院庶吉士`, or `六部观政进士`).
-- Severe exam fraud now forces 黜落, downgrades one rank where possible, clears palace/office fields, and reduces reputation and mentality.
-- The frontend放榜 panel now displays promotion, palace class, initial office, or cheating consequence text.
-
-Verification:
-
-- `git diff --check`
-- `node --check src/game/promotions.js`
-- `node --check src/routes/exam.js`
-- `node --check src/game/initialState.js`
-- `node --check public/app.js`
-- Temporary Mock server on port 3142 confirmed a four-exam path from scholar to official with four saved `examHistory` entries, and confirmed a copied provincial essay downgraded a `秀才` back to no rank.
-
-Risk/leftover: Official gameplay is still generic fallback text after入仕; S10 should add proper emperor/minister/official free-text loops and UI.
-
-Next step: Implement S10.1-S10.3 so non-scholar roles and newly promoted officials have basic playable actions.
-
----
-
-Codex progress note, 2026-05-05:
-
-Steps: S10.1, S10.2, S10.3
-
-Commit: 592b7a1
-
-Completed:
-
-- Added role defaults and whitelisted/clamped state fields for `personalPower`, `courtControl`, `mandate`, `position`, `faction`, `influence`, and `integrity`.
-- Expanded Mock `runTurn` so emperor actions cover赈灾、用人、征税筹饷、军事备边 and廷议 fallback; minister actions cover上疏、经营人脉、督办公务 and攻讦; official actions cover观政、断案、抚民、同年人脉 and贪墨风险.
-- Palace exam promotion now seeds official `position`, `faction`, `influence`, and `integrity`, so the newly promoted role is immediately playable.
-- The frontend now renders a role panel for emperor, minister, and official sessions with key metrics,府库粮储,朝局派系,人脉, and action hints, while preserving the scholar exam panel.
-- Updated README and the development brief to document the role fields and basic role gameplay loops.
-
-Verification:
-
-- `node --check src/ai/providers/mock.js`
-- `node --check src/game/initialState.js`
-- `node --check src/game/stateRules.js`
-- `node --check src/game/promotions.js`
-- `node --check public/app.js`
-- `git diff --check`
-- Temporary Mock server on port 3158 confirmed emperor relief spends treasury and raises民心/天命, minister上疏 raises操守 and lowers贪腐, and official观政 raises影响 and机辩.
-- Direct promotion-to-official smoke test confirmed殿试 promotion seeds official fields and the official turn loop updates influence afterward.
-
-Risk/leftover: General and magistrate still use the generic fallback; real AI providers, automated tests, and SSE streaming are still TODO.
-
-Next step: S11.1-S11.4 real provider integration, keeping Mock as no-key default and fallback.
-
----
-
-Codex progress note, 2026-05-05:
-
-Steps: S11.1, S11.2, S11.3, S11.4
-
-Commit: 0d779a2
-
-Completed:
-
-- Added `openai`, `@anthropic-ai/sdk`, and `ajv` dependencies for real provider calls and local JSON validation.
-- Added `src/ai/prompts.js`, `src/ai/schemas.js`, and `src/utils/json.js` so remote model output is parsed and schema-validated before route handlers apply state.
-- Added OpenAI, DeepSeek, and Claude provider modules. OpenAI uses Responses API; DeepSeek uses OpenAI-compatible chat completions with `DEEPSEEK_BASE_URL`; Claude uses Anthropic Messages API with JSON schema output config.
-- Updated `src/ai/index.js` so `AI_PROVIDER=mock` remains the no-key default, while real providers retry once on call, parse, or schema failure before falling back to Mock for that method.
-- Updated `.env.example` and README with provider names, model defaults, timeout setting, and dependency roles.
-
-Verification:
-
-- `npm install openai @anthropic-ai/sdk ajv`
-- `node --check src/utils/json.js`
-- `node --check src/ai/schemas.js`
-- `node --check src/ai/prompts.js`
-- `node --check src/ai/providers/remoteHelpers.js`
-- `node --check src/ai/providers/openai.js`
-- `node --check src/ai/providers/deepseek.js`
-- `node --check src/ai/providers/anthropic.js`
-- `node --check src/ai/index.js`
-- Ajv schema smoke accepted a valid `turn` payload.
-- No-key `AI_PROVIDER=openai`, `AI_PROVIDER=deepseek`, and `AI_PROVIDER=claude` each returned Mock.
-- Fake OpenAI endpoint `http://127.0.0.1:1/v1` retried twice and then returned Mock output from `startGame`.
-- Temporary Mock server on port 3171 returned `healthOk=true`, created a session, and advanced one turn.
-
-Risk/leftover: Real API calls were not made because no API keys are present in the local environment. General and magistrate still use generic Mock fallback; SSE streaming and automated tests remain TODO.
-
-Next step: S12.1-S12.3 UI and interaction polish, or S13 if test coverage is preferred first.
-
----
-
-Codex progress note, 2026-05-05:
-
-Steps: S12.1, S12.2, S12.3
-
-Commit: 7b4f349
-
-Completed:
-
-- Refined the buildless frontend visual language with layered paper texture, ink/cinnabar/jade/indigo accents, stronger button/panel hierarchy, and a subtle background seal watermark.
-- Improved mobile layout with full-height single-column game view, tighter status/scholar panels, sticky bottom action input, safe-area padding, and a taller mobile exam editor.
-- Added narrative turn dividers, archived-session history labeling, attribute-change reason tooltips, live exam character-count guidance, and collapsible exam result sections for 五维评卷, 监试复核, and 同场榜单.
-
-Verification:
-
-- `node --check public/app.js`
-- `node --check server.js`
-- `node --check src/routes/game.js`
-- `node --check src/routes/exam.js`
-- `git diff --check`
-- Temporary Mock server on port 3188 confirmed `/`, `/styles.css`, `/app.js`, `GET /api/health`, `POST /api/game/start`, one `POST /api/game/turn`, and `POST /api/exam/question` for `child_exam`.
-
-Risk/leftover: Visual QA was verified through static resource and API smoke checks, not an interactive browser screenshot pass. Automated tests and the manual acceptance script are still TODO.
-
-Next step: S13.1-S13.3 should add automated coverage for state/session/exam rules and document a full end-to-end acceptance script.
-
----
-
-Codex progress note, 2026-05-05:
-
-Steps: S13.1, S13.2, S13.3
-
-Commit: 4a70f5a
-
-Completed:
-
-- Added `npm test` using Node.js' built-in `node --test` runner, keeping the project dependency-free for automated tests.
-- Added tests for state patch whitelisting/clamping, event-history trimming, session JSON read/write, unsafe/missing session ids, AI JSON schema validation, exam gates/readiness, promotion to official, severe cheating downgrade, local essay penalties, and virtual candidate ranking.
-- Tightened `statePatch.factions` handling so only existing numeric faction keys can be updated; arbitrary faction names no longer replace the factions object.
-- Added `docs/MANUAL_ACCEPTANCE.md` with a Mock-mode browser/API acceptance script covering scholar-to-official progression, exam integrity checks, and emperor/minister/official role loop smoke checks.
-- Updated README with the `npm test` command and a pointer to the manual acceptance script.
-
-Verification:
-
-- `node --check src/game/stateRules.js`
-- `node --check test/stateRules.test.js`
-- `node --check test/sessionStore.test.js`
-- `node --check test/aiSchemas.test.js`
-- `node --check test/examRules.test.js`
-- `git diff --check`
-- `npm test` passed with 15 tests.
-
-Risk/leftover: The manual acceptance script is documented but was not fully executed in a live browser during this slice; S14.3 should run and record the full phase-one acceptance pass.
-
-Next step: S14.1-S14.3 should complete README/developer documentation and run the first phase acceptance checklist.
-
----
-
-Codex progress note, 2026-05-05:
-
-Steps: S14.1, S14.2, S14.3
-
-Commit: b67aadb
-
-Completed:
-
-- Expanded `README.md` into the phase-one quick-start and orientation entrypoint, covering install, scripts, `.env`, provider switching, current playable scope, API overview, project structure, and collaboration handoff documents.
-- Added `docs/ARCHITECTURE.md` with runtime shape, request flow, route ownership, API contracts, AI provider contracts, state fields, state patch rules, exam rules, persistence, and verification expectations.
-- Added `docs/PHASE_ONE_ACCEPTANCE.md` with the first automated Mock-mode phase-one acceptance record, result snapshot, limitations, and follow-up candidates.
-- Updated the development brief and shared context so the S14 documentation and acceptance state are durable across Codex and Claude Code sessions.
-
-Verification:
-
-- `npm install` completed successfully with 0 vulnerabilities.
-- `npm test` passed with 15 tests.
-- Automated temporary Mock server on port 3214 confirmed `/`, `/styles.css`, `/app.js`, `GET /api/health`, complete scholar -> official progression through all four exams with `player.examHistory.length === 4`, short/modern/copy exam integrity checks, severe-copy score forced to 0, and emperor/minister/official role loops.
-
-Risk/leftover: Playwright is not installed in this workspace, so browser screenshot/localStorage automation was not run. Static assets plus full API acceptance passed, and `docs/MANUAL_ACCEPTANCE.md` remains the human/browser click-through script. Real provider calls were not made because no API keys are present. General and magistrate still use generic Mock fallback behavior.
-
-Next step: Define a phase-two roadmap; likely candidates are SSE streaming for turns, browser automation, general/magistrate role loops, and real-provider smoke tests with keys.
-
----
-
-Codex progress note, 2026-05-05:
-
-Step: S04.4
-
-Commit: 0fd8729
-
-Completed:
-
-- Added `src/utils/sse.js` for SSE headers, event formatting, stream closing, and deterministic narrative chunking.
-- Refactored `POST /api/game/turn` so the same server-owned turn processing path can return either SSE or plain JSON.
-- SSE mode is selected by `Accept: text/event-stream` or `?stream=1` and emits `state_preview`, `narrative_chunk`, `final_state`, and `error` events.
-- The frontend now sends `Accept: text/event-stream`, parses the fetch response stream, appends narrative chunks into a live narrative entry, and applies the final state once `final_state` arrives.
-- Requests without SSE negotiation still return the previous JSON payload shape for compatibility with tests and existing scripts.
-- Added `test/sse.test.js` for SSE event formatting and chunking.
-
-Verification:
-
-- `node --check src/utils/sse.js`
-- `node --check src/routes/game.js`
-- `node --check public/app.js`
-- `node --check test/sse.test.js`
-- `git diff --check`
-- `npm test` passed with 18 tests.
-- Temporary Mock server on port 3226 confirmed `POST /api/game/turn` returns SSE events when requested and JSON when no SSE accept header is sent.
-
-Risk/leftover: The current stream chunks the completed provider narrative after `provider.runTurn` resolves; true provider-token streaming can be added later per provider. Browser screenshot/localStorage automation is still unavailable in this workspace.
-
-Next step: Define a phase-two roadmap, or pick the next concrete slice: browser automation, general/magistrate Mock loops, or real-provider smoke tests when keys are available.
-
----
-
-Codex progress note, 2026-05-05:
-
-Step: Tooling maintenance
-
-Commit: pending at note time
-
-Completed:
-
-- Diagnosed `rg` failures in the Codex PowerShell environment. `Get-Command rg` resolved first to the packaged Codex app path under `C:\Program Files\WindowsApps\OpenAI.Codex_26.429.3425.0_x64__2p2nqsd0c76g0\app\resources\rg.exe`, which failed with `Access is denied`.
-- Found a working ripgrep 15.1.0 binary in the Codex local cache and copied it to `C:\Users\ZZZ\AppData\Local\OpenAI\Codex\bin\rg.exe`, a PATH entry that already appears before the protected packaged app resources.
-- Left project runtime code unchanged; this is an environment/tooling repair so future Codex sessions can use `rg` normally.
-
-Verification:
-
-- `Get-Command rg -All` now resolves first to `C:\Users\ZZZ\AppData\Local\OpenAI\Codex\bin\rg.exe`.
-- `rg --version` reports ripgrep 15.1.0.
-- `rg --files` lists repository files.
-- `rg "SSE" docs src public test` returns expected matches.
-
-Risk/leftover: If the Codex app rewrites PATH in a future update and removes `C:\Users\ZZZ\AppData\Local\OpenAI\Codex\bin`, the same shadowing fix may need to be re-applied.
+- `npm test` 通过，18 项测试全部通过。
+- `git diff --check` 通过。
+
+风险/遗留：
+- 本次只做文档与路线图切换，不修改运行代码。
+- S20.1 的最终提交哈希以本次 Git 提交为准，最终回复会说明。
+
+下一步：
+- 从 S21.1 开始定义世界 tick 的最小状态契约和验收标准。
