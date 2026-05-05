@@ -5,12 +5,70 @@ const ROLE_LABELS = {
   emperor: "皇帝",
   minister: "大臣",
   general: "将领",
-  magistrate: "地方官"
+  magistrate: "地方官",
+  official: "入仕官员"
+};
+
+const BASE_ROLE_STATS = {
+  personalPower: 0,
+  courtControl: 0,
+  mandate: 0,
+  position: "未授",
+  faction: "未定",
+  influence: 0,
+  integrity: 60
+};
+
+const ROLE_STAT_DEFAULTS = {
+  scholar: {
+    position: "寒窗士子",
+    faction: "士林"
+  },
+  emperor: {
+    personalPower: 62,
+    courtControl: 55,
+    mandate: 58,
+    position: "九五之尊",
+    faction: "皇权",
+    influence: 90,
+    integrity: 50
+  },
+  minister: {
+    position: "六部侍郎",
+    faction: "清流",
+    influence: 44,
+    integrity: 68
+  },
+  general: {
+    position: "营中将领",
+    faction: "武臣",
+    influence: 42,
+    integrity: 56
+  },
+  magistrate: {
+    position: "知县",
+    faction: "地方官",
+    influence: 28,
+    integrity: 64
+  },
+  official: {
+    position: "候选观政",
+    faction: "新科进士",
+    influence: 24,
+    integrity: 72
+  }
 };
 
 function toNumber(value, fallback) {
   const parsed = Number(value);
   return Number.isFinite(parsed) ? parsed : fallback;
+}
+
+function getRoleStats(role) {
+  return {
+    ...BASE_ROLE_STATS,
+    ...(ROLE_STAT_DEFAULTS[role] || {})
+  };
 }
 
 function createInitialState(input = {}) {
@@ -73,7 +131,8 @@ function createInitialState(input = {}) {
       examHistory: [],
       teacher: null,
       studiedBooks: [],
-      connections: []
+      connections: [],
+      ...getRoleStats(role)
     }
   };
 }

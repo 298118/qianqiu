@@ -16,6 +16,26 @@ function describeOpening(worldState) {
     ].join("\n");
   }
 
+  if (player.role === "emperor") {
+    return [
+      `${dynasty}${year}年，${player.name}临朝听政，殿陛之下百官肃立。`,
+      background,
+      custom,
+      "内帑、漕粮、吏治、边防与民心一并压在御案之上。",
+      "你可以下诏赈灾、任免官员、加税筹饷、练兵备边，或召集廷议推行新政。"
+    ].join("\n");
+  }
+
+  if (player.role === "minister") {
+    return [
+      `${dynasty}${year}年，${player.name}以${player.position}入署视事，案头奏牍堆叠。`,
+      background,
+      custom,
+      "朝堂派系互相观望，政务成败既关民生，也关你的名节与权势。",
+      "你可以上疏谏言、督办公务、结交同僚、弹劾攻讦，或在派系之间谨慎周旋。"
+    ].join("\n");
+  }
+
   return [
     `${dynasty}${year}年，${player.name}以${player.roleLabel}之身立于局中。`,
     background,
@@ -58,8 +78,10 @@ function extractBook(input) {
   return found ? `《${found}》` : "经义典籍";
 }
 
-function buildAttributeChanges(beforePlayer, patch) {
+function buildAttributeChanges(before, patch, reason = "行动影响") {
   const attributeChanges = [];
+  const beforeWorld = before && before.player ? before : { player: before || {} };
+  const beforePlayer = beforeWorld.player || {};
   const labels = {
     health: "体力",
     gold: "银钱",
@@ -67,8 +89,54 @@ function buildAttributeChanges(beforePlayer, patch) {
     literaryTalent: "文采",
     adaptability: "机辩",
     mentality: "心性",
-    reputation: "声望"
+    reputation: "声望",
+    personalPower: "皇权",
+    courtControl: "朝控",
+    mandate: "天命",
+    influence: "影响",
+    integrity: "操守",
+    treasury: "府库",
+    grainReserve: "粮储",
+    population: "人口",
+    publicOrder: "民心",
+    taxRate: "税率",
+    corruption: "贪腐",
+    armySize: "兵额",
+    armyMorale: "军心",
+    borderThreat: "边患"
   };
+  const factionLabels = {
+    eunuchs: "宦官",
+    scholarOfficials: "士大夫",
+    militaryLords: "武臣"
+  };
+
+  for (const [key, after] of Object.entries(patch || {})) {
+    if (key === "player" || key === "factions") continue;
+    const beforeValue = beforeWorld[key];
+    if (typeof after === "number" && typeof beforeValue === "number" && after !== beforeValue) {
+      attributeChanges.push({
+        path: key,
+        label: labels[key] || key,
+        before: beforeValue,
+        after,
+        reason
+      });
+    }
+  }
+
+  for (const [key, after] of Object.entries(patch.factions || {})) {
+    const beforeValue = beforeWorld.factions?.[key];
+    if (typeof after === "number" && typeof beforeValue === "number" && after !== beforeValue) {
+      attributeChanges.push({
+        path: `factions.${key}`,
+        label: factionLabels[key] || key,
+        before: beforeValue,
+        after,
+        reason
+      });
+    }
+  }
 
   for (const [key, after] of Object.entries(patch.player || {})) {
     const before = beforePlayer[key];
@@ -78,7 +146,7 @@ function buildAttributeChanges(beforePlayer, patch) {
         label: labels[key] || key,
         before,
         after,
-        reason: "书生日常行动"
+        reason
       });
     }
   }
@@ -86,11 +154,11 @@ function buildAttributeChanges(beforePlayer, patch) {
   return attributeChanges;
 }
 
-function makeResult({ narrative, patch, events, player, examTrigger }) {
+function makeResult({ narrative, patch, events, player, worldState, examTrigger, reason }) {
   return {
     narrative,
     statePatch: patch,
-    attributeChanges: buildAttributeChanges(player, patch),
+    attributeChanges: buildAttributeChanges(worldState || player, patch, reason),
     events,
     examTrigger: examTrigger || { shouldStart: false, level: null, reason: "" }
   };
@@ -291,6 +359,372 @@ function buildScholarTurn(input, player) {
   return buildRestTurn(text, player);
 }
 
+function shiftStat(value, delta, min = 0, max = 100) {
+  return Math.max(min, Math.min(max, (value || 0) + delta));
+}
+
+function shiftResource(value, delta) {
+  return Math.max(0, (value || 0) + delta);
+}
+
+function buildFactionState(worldState, deltas) {
+  const current = worldState.factions || {};
+  return {
+    eunuchs: shiftStat(current.eunuchs ?? 50, deltas.eunuchs || 0),
+    scholarOfficials: shiftStat(current.scholarOfficials ?? 50, deltas.scholarOfficials || 0),
+    militaryLords: shiftStat(current.militaryLords ?? 50, deltas.militaryLords || 0)
+  };
+}
+
+function buildEmperorTurn(input, worldState) {
+  const text = input.trim();
+  const player = worldState.player;
+
+  if (/赈灾|赈济|赈粮|开仓|救灾|荒政|饥|灾/.test(text)) {
+    const patch = {
+      treasury: shiftResource(worldState.treasury, -80),
+      grainReserve: shiftResource(worldState.grainReserve, -140),
+      publicOrder: shiftStat(worldState.publicOrder, 6),
+      corruption: shiftStat(worldState.corruption, 1),
+      player: {
+        mandate: shiftStat(player.mandate, 5),
+        courtControl: shiftStat(player.courtControl, 1)
+      },
+      factions: buildFactionState(worldState, { scholarOfficials: 2, eunuchs: -1 })
+    };
+
+    return makeResult({
+      worldState,
+      player,
+      patch,
+      reason: "皇帝赈灾",
+      narrative: "你降旨开仓赈济，命户部拨银、漕仓出粟，并遣御史查核灾区册籍。灾民暂得喘息，士大夫称颂仁政，只是府库与粮储因此吃紧。",
+      events: [`${player.name}下诏开仓赈灾，民心稍安。`]
+    });
+  }
+
+  if (/征税|加税|税|加派|摊派|徭役|筹饷/.test(text)) {
+    const patch = {
+      treasury: shiftResource(worldState.treasury, 150),
+      taxRate: shiftStat(worldState.taxRate, 5),
+      publicOrder: shiftStat(worldState.publicOrder, -6),
+      corruption: shiftStat(worldState.corruption, 2),
+      player: {
+        mandate: shiftStat(player.mandate, -4),
+        personalPower: shiftStat(player.personalPower, 1)
+      },
+      factions: buildFactionState(worldState, { eunuchs: 2, scholarOfficials: -1 })
+    };
+
+    return makeResult({
+      worldState,
+      player,
+      patch,
+      reason: "皇帝筹饷",
+      narrative: "你准户部加派钱粮以补军国急用。库银账面顿时宽裕，然而州县催科加紧，民间怨声也随之浮起。",
+      events: [`${player.name}加派钱粮筹饷，府库稍丰而民心受损。`]
+    });
+  }
+
+  if (/用人|任命|提拔|罢免|整饬吏治|清查|吏治|考成|御史/.test(text)) {
+    const patch = {
+      corruption: shiftStat(worldState.corruption, -5),
+      publicOrder: shiftStat(worldState.publicOrder, 2),
+      player: {
+        personalPower: shiftStat(player.personalPower, 3),
+        courtControl: shiftStat(player.courtControl, 4),
+        mandate: shiftStat(player.mandate, 1)
+      },
+      factions: buildFactionState(worldState, { scholarOfficials: 3, eunuchs: -2, militaryLords: -1 })
+    };
+
+    return makeResult({
+      worldState,
+      player,
+      patch,
+      reason: "皇帝整饬吏治",
+      narrative: "你亲自圈点几名清望官员，命都察院清查积弊。朝中一时风声收紧，旧日倚势渔利者纷纷观望，皇权与朝局控制都有所上升。",
+      events: [`${player.name}整饬吏治，朝局为之一肃。`]
+    });
+  }
+
+  if (/军事|边防|征兵|练兵|出征|讨伐|边患|军/.test(text)) {
+    const patch = {
+      treasury: shiftResource(worldState.treasury, -110),
+      armySize: shiftResource(worldState.armySize, 35),
+      armyMorale: shiftStat(worldState.armyMorale, 6),
+      borderThreat: shiftStat(worldState.borderThreat, -5),
+      publicOrder: shiftStat(worldState.publicOrder, -1),
+      player: {
+        personalPower: shiftStat(player.personalPower, 2),
+        mandate: shiftStat(player.mandate, 1)
+      },
+      factions: buildFactionState(worldState, { militaryLords: 4, scholarOfficials: -1 })
+    };
+
+    return makeResult({
+      worldState,
+      player,
+      patch,
+      reason: "皇帝整军",
+      narrative: "你命兵部核实边镇军册，拨银修械，并选将操练。军心因此振作，边患略缓，但武臣声势也随军令增长。",
+      events: [`${player.name}整军备边，军心稍振。`]
+    });
+  }
+
+  const patch = {
+    publicOrder: shiftStat(worldState.publicOrder, 1),
+    player: {
+      courtControl: shiftStat(player.courtControl, 1),
+      mandate: shiftStat(player.mandate, 1),
+      mentality: shiftStat(player.mentality, 1)
+    }
+  };
+
+  return makeResult({
+    worldState,
+    player,
+    patch,
+    reason: "皇帝听政",
+    narrative: `你将“${text}”交付廷议，令内阁拟票、六部覆核。此事尚未大动国本，却让百官更明白圣意所在。`,
+    events: [`${player.name}召廷议处置：${text.slice(0, 30)}`]
+  });
+}
+
+function buildMinisterTurn(input, worldState) {
+  const text = input.trim();
+  const player = worldState.player;
+
+  if (/上疏|奏疏|谏|劝谏|直言|条陈/.test(text)) {
+    const patch = {
+      corruption: shiftStat(worldState.corruption, -2),
+      player: {
+        influence: shiftStat(player.influence, 2),
+        integrity: shiftStat(player.integrity, 4),
+        reputation: shiftStat(player.reputation, 2)
+      },
+      factions: buildFactionState(worldState, { scholarOfficials: 2, eunuchs: -1 })
+    };
+
+    return makeResult({
+      worldState,
+      player,
+      patch,
+      reason: "大臣上疏",
+      narrative: "你连夜具疏，措辞不激而锋芒内藏，直指弊政根由。御前虽未立刻施行，清议却已记下你的名节。",
+      events: [`${player.name}上疏谏言，清议声望稍起。`]
+    });
+  }
+
+  if (/结党|拉拢|门生|党羽|联络|拜会|同僚|清流|阉党/.test(text)) {
+    const ally = pickRandom(["陈少宰", "吴给事", "何侍御", "钱主事"]);
+    const patch = {
+      corruption: shiftStat(worldState.corruption, 1),
+      player: {
+        influence: shiftStat(player.influence, 5),
+        integrity: shiftStat(player.integrity, -2),
+        connections: uniqueAppend(player.connections, ally, 8)
+      },
+      factions: buildFactionState(worldState, { scholarOfficials: 3 })
+    };
+
+    return makeResult({
+      worldState,
+      player,
+      patch,
+      reason: "大臣经营人脉",
+      narrative: `你借朝退之机拜会${ally}，又托同年转递私札。人脉渐密，话语权也重了些，只是公私界限开始变得暧昧。`,
+      events: [`${player.name}联络${ally}，朝中影响上升。`]
+    });
+  }
+
+  if (/政务|清丈|赈灾|漕运|税粮|办案|执行|督办|核查|仓场/.test(text)) {
+    const patch = {
+      treasury: shiftResource(worldState.treasury, 55),
+      grainReserve: shiftResource(worldState.grainReserve, 35),
+      publicOrder: shiftStat(worldState.publicOrder, 3),
+      corruption: shiftStat(worldState.corruption, -2),
+      player: {
+        influence: shiftStat(player.influence, 3),
+        integrity: shiftStat(player.integrity, 1),
+        reputation: shiftStat(player.reputation, 1)
+      }
+    };
+
+    return makeResult({
+      worldState,
+      player,
+      patch,
+      reason: "大臣督办公务",
+      narrative: "你亲自核对仓册与钱粮流向，催促属官限期回报。政务推进得不算华丽，却使府库、粮储与民间秩序都有了实际起色。",
+      events: [`${player.name}督办公务，钱粮与民心稍稳。`]
+    });
+  }
+
+  if (/谣言|攻讦|弹劾|弹章|流言|排挤|倾轧/.test(text)) {
+    const patch = {
+      corruption: shiftStat(worldState.corruption, 2),
+      player: {
+        influence: shiftStat(player.influence, 4),
+        integrity: shiftStat(player.integrity, -5),
+        reputation: shiftStat(player.reputation, -1)
+      },
+      factions: buildFactionState(worldState, { scholarOfficials: -1, eunuchs: 1 })
+    };
+
+    return makeResult({
+      worldState,
+      player,
+      patch,
+      reason: "大臣攻讦",
+      narrative: "你授意言官递上弹章，语涉隐微，足以让对手数日不得安枕。此举立竿见影，却也让朝堂倾轧更深。",
+      events: [`${player.name}借弹章攻讦政敌，权势与名节一升一损。`]
+    });
+  }
+
+  const patch = {
+    publicOrder: shiftStat(worldState.publicOrder, 1),
+    player: {
+      influence: shiftStat(player.influence, 1),
+      mentality: shiftStat(player.mentality, 1)
+    }
+  };
+
+  return makeResult({
+    worldState,
+    player,
+    patch,
+    reason: "大臣视事",
+    narrative: `你将“${text}”写入今日公牍，交由属官分头查办。事情暂未惊动朝局，但你的署中声气更稳了一些。`,
+    events: [`${player.name}署中视事：${text.slice(0, 30)}`]
+  });
+}
+
+function buildOfficialTurn(input, worldState) {
+  const text = input.trim();
+  const player = worldState.player;
+
+  if (/观政|学习|请教|衙门|章程|上官|磨勘/.test(text)) {
+    const patch = {
+      player: {
+        influence: shiftStat(player.influence, 2),
+        academia: shiftStat(player.academia, 1),
+        adaptability: shiftStat(player.adaptability, 1),
+        reputation: shiftStat(player.reputation, 1)
+      }
+    };
+
+    return makeResult({
+      worldState,
+      player,
+      patch,
+      reason: "官员观政",
+      narrative: `你以${player.officeTitle || player.position}身份入署观政，随堂听断、翻检旧案。纸面制诰之外，真正的吏事脉络开始显出形状。`,
+      events: [`${player.name}入署观政，渐熟官场章程。`]
+    });
+  }
+
+  if (/断案|审案|平讼|治安|捕盗|盗|狱/.test(text)) {
+    const patch = {
+      publicOrder: shiftStat(worldState.publicOrder, 4),
+      corruption: shiftStat(worldState.corruption, -1),
+      player: {
+        influence: shiftStat(player.influence, 3),
+        integrity: shiftStat(player.integrity, 2),
+        reputation: shiftStat(player.reputation, 2)
+      }
+    };
+
+    return makeResult({
+      worldState,
+      player,
+      patch,
+      reason: "官员断案",
+      narrative: "你翻阅供词，重问两造，又命差役复核里甲证言。案情虽琐碎，却让百姓知道新官并非只会写文章。",
+      events: [`${player.name}审理争讼，地方秩序稍安。`]
+    });
+  }
+
+  if (/赈济|劝农|水利|粮|农|河堤|荒/.test(text)) {
+    const patch = {
+      grainReserve: shiftResource(worldState.grainReserve, -45),
+      population: shiftResource(worldState.population, 25),
+      publicOrder: shiftStat(worldState.publicOrder, 3),
+      player: {
+        influence: shiftStat(player.influence, 2),
+        reputation: shiftStat(player.reputation, 3),
+        integrity: shiftStat(player.integrity, 1)
+      }
+    };
+
+    return makeResult({
+      worldState,
+      player,
+      patch,
+      reason: "官员抚民",
+      narrative: "你请开常平仓一角，又亲往乡间劝农修渠。粮储有所消耗，但饥困人户得以暂稳，地方口碑随之转好。",
+      events: [`${player.name}劝农抚民，地方民心稍定。`]
+    });
+  }
+
+  if (/拜会|结交|同年|座师|请托|门生|馆阁/.test(text)) {
+    const ally = pickRandom(["同年陆季常", "座师门下顾司业", "翰林同僚许伯言"]);
+    const patch = {
+      player: {
+        influence: shiftStat(player.influence, 4),
+        integrity: shiftStat(player.integrity, text.includes("请托") ? -2 : -1),
+        connections: uniqueAppend(player.connections, ally, 8)
+      }
+    };
+
+    return makeResult({
+      worldState,
+      player,
+      patch,
+      reason: "官员经营同年",
+      narrative: `你备帖拜会${ally}，谈及馆阁旧题与部曹近事。同年关系渐可倚仗，只是人情往来总会牵动操守。`,
+      events: [`${player.name}拜会${ally}，官场人脉渐广。`]
+    });
+  }
+
+  if (/贪墨|受贿|索贿|敛财|收礼/.test(text)) {
+    const patch = {
+      corruption: shiftStat(worldState.corruption, 5),
+      player: {
+        gold: shiftResource(player.gold, 24),
+        integrity: shiftStat(player.integrity, -9),
+        reputation: shiftStat(player.reputation, -3),
+        influence: shiftStat(player.influence, 1)
+      }
+    };
+
+    return makeResult({
+      worldState,
+      player,
+      patch,
+      reason: "官员受贿",
+      narrative: "你收下案中人送来的厚礼，将几处关节轻轻放过。银钱来得容易，名节与吏治却都被暗暗蚀去。",
+      events: [`${player.name}收受请托，银钱增加而操守受损。`]
+    });
+  }
+
+  const patch = {
+    player: {
+      influence: shiftStat(player.influence, 1),
+      mentality: shiftStat(player.mentality, 1)
+    }
+  };
+
+  return makeResult({
+    worldState,
+    player,
+    patch,
+    reason: "官员署事",
+    narrative: `你在署中处置“${text}”，先问旧例，再看上官风向。虽未立刻扬名，也算把入仕后的第一层门槛摸清了。`,
+    events: [`${player.name}署中处事：${text.slice(0, 30)}`]
+  });
+}
+
 async function runTurn(worldState, input) {
   const player = worldState.player;
 
@@ -298,7 +732,18 @@ async function runTurn(worldState, input) {
     return buildScholarTurn(input, player);
   }
 
-  // Generic fallback for other roles until their dedicated loops are implemented.
+  if (player.role === "emperor") {
+    return buildEmperorTurn(input, worldState);
+  }
+
+  if (player.role === "minister") {
+    return buildMinisterTurn(input, worldState);
+  }
+
+  if (player.role === "official") {
+    return buildOfficialTurn(input, worldState);
+  }
+
   const patch = { player: {} };
   const mentGain = Math.random() > 0.5 ? 1 : 0;
   if (mentGain) patch.player.mentality = player.mentality + mentGain;

@@ -28,7 +28,34 @@ const ATTRIBUTE_LABELS = {
   literaryTalent: "文采",
   adaptability: "机辩",
   mentality: "心性",
-  reputation: "声望"
+  reputation: "声望",
+  personalPower: "皇权",
+  courtControl: "朝控",
+  mandate: "天命",
+  influence: "影响",
+  integrity: "操守",
+  treasury: "府库",
+  grainReserve: "粮储",
+  population: "人口",
+  publicOrder: "民心",
+  taxRate: "税率",
+  corruption: "贪腐",
+  armySize: "兵额",
+  armyMorale: "军心",
+  borderThreat: "边患"
+};
+
+const ACTION_PLACEHOLDERS = {
+  scholar: "输入你的行动，例如：研读《论语》三日",
+  emperor: "输入你的行动，例如：下诏开仓赈灾，或整饬吏治",
+  minister: "输入你的行动，例如：上疏整顿漕运，或拜会清流同僚",
+  official: "输入你的行动，例如：入署观政，或审理乡民争讼"
+};
+
+const ROLE_ACTION_HINTS = {
+  emperor: ["下诏赈灾", "任免官员", "加税筹饷", "练兵备边"],
+  minister: ["上疏谏言", "督办公务", "结交同僚", "弹劾攻讦"],
+  official: ["入署观政", "断案平讼", "劝农抚民", "拜会同年"]
 };
 
 const EXAM_LABELS = {
@@ -91,13 +118,21 @@ function createPanelValue(kicker, value, valueTag = "strong") {
 function setStatus(worldState) {
   const player = worldState.player;
   statusStrip.innerHTML = "";
-  [
+
+  const statusItems = [
     `${worldState.dynasty}${worldState.year}年`,
     player.roleLabel,
     player.name,
-    `银钱 ${player.gold}`,
     `回合 ${worldState.turnCount}`
-  ].forEach((text) => {
+  ];
+
+  if (player.role === "scholar") {
+    statusItems.splice(3, 0, `银钱 ${player.gold}`);
+  } else {
+    statusItems.splice(3, 0, `府库 ${worldState.treasury}`, `民心 ${worldState.publicOrder}`, `边患 ${worldState.borderThreat}`);
+  }
+
+  statusItems.forEach((text) => {
     statusStrip.appendChild(createTag(text));
   });
 }
@@ -120,9 +155,95 @@ function renderMeter(label, value) {
   return item;
 }
 
+function formatFactions(factions = {}) {
+  return [
+    `宦官 ${factions.eunuchs ?? "-"}`,
+    `士大夫 ${factions.scholarOfficials ?? "-"}`,
+    `武臣 ${factions.militaryLords ?? "-"}`
+  ].join("、");
+}
+
+function renderActionHints(role) {
+  const stepList = document.createElement("ol");
+  stepList.className = "exam-steps";
+  (ROLE_ACTION_HINTS[role] || ["自由行动"]).forEach((hint) => {
+    const li = document.createElement("li");
+    li.textContent = hint;
+    stepList.appendChild(li);
+  });
+  return stepList;
+}
+
+function renderRolePanel(worldState) {
+  const player = worldState.player;
+  scholarPanel.hidden = false;
+  scholarPanel.innerHTML = "";
+
+  const overview = document.createElement("section");
+  overview.className = "scholar-progress";
+  overview.append(
+    createPanelValue("身份视角", player.roleLabel),
+    createPanelValue("官职/位置", player.officeTitle || player.position || "未授"),
+    createPanelValue("派系/根基", player.faction || "未定")
+  );
+
+  if (player.role === "official") {
+    overview.appendChild(createPanelValue("科名", player.palaceRank ? `${player.palaceRank} ${player.examRank}` : player.examRank || "进士"));
+  }
+
+  const stats = document.createElement("section");
+  stats.className = "scholar-stats";
+  const metricSets = {
+    emperor: [
+      ["皇权", player.personalPower],
+      ["朝控", player.courtControl],
+      ["天命", player.mandate],
+      ["民心", worldState.publicOrder],
+      ["贪腐", worldState.corruption],
+      ["军心", worldState.armyMorale]
+    ],
+    minister: [
+      ["影响", player.influence],
+      ["操守", player.integrity],
+      ["声望", player.reputation],
+      ["民心", worldState.publicOrder],
+      ["贪腐", worldState.corruption],
+      ["士大夫", worldState.factions?.scholarOfficials ?? 0]
+    ],
+    official: [
+      ["影响", player.influence],
+      ["操守", player.integrity],
+      ["声望", player.reputation],
+      ["学识", player.academia],
+      ["民心", worldState.publicOrder],
+      ["贪腐", worldState.corruption]
+    ]
+  };
+
+  (metricSets[player.role] || []).forEach(([label, value]) => {
+    stats.appendChild(renderMeter(label, value || 0));
+  });
+
+  const lists = document.createElement("section");
+  lists.className = "scholar-lists";
+  lists.append(
+    createPanelValue("府库", `${worldState.treasury} 银`, "p"),
+    createPanelValue("粮储", `${worldState.grainReserve} 石`, "p"),
+    createPanelValue("朝局", formatFactions(worldState.factions), "p"),
+    createPanelValue("人脉", (player.connections || []).join("、") || "尚无记录", "p")
+  );
+
+  scholarPanel.append(overview, renderActionHints(player.role), stats, lists);
+}
+
 function renderScholarPanel(worldState) {
   const player = worldState.player;
-  if (player.role !== "scholar" && player.role !== "official") {
+  if (player.role === "emperor" || player.role === "minister" || player.role === "official") {
+    renderRolePanel(worldState);
+    return;
+  }
+
+  if (player.role !== "scholar") {
     scholarPanel.hidden = true;
     scholarPanel.innerHTML = "";
     return;
@@ -193,6 +314,7 @@ function renderWorldState(worldState) {
   currentWorldState = worldState;
   setStatus(worldState);
   renderScholarPanel(worldState);
+  actionInput.placeholder = ACTION_PLACEHOLDERS[worldState.player.role] || "输入你的行动";
 }
 
 function appendNarrative(text, className) {

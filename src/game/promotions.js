@@ -40,6 +40,10 @@ function snapshotPlayer(player) {
     examRank: player.examRank ?? null,
     palaceRank: player.palaceRank ?? null,
     officeTitle: player.officeTitle ?? null,
+    position: player.position ?? null,
+    faction: player.faction ?? null,
+    influence: player.influence ?? 0,
+    integrity: player.integrity ?? 0,
     reputation: player.reputation ?? 0,
     mentality: player.mentality ?? 0
   };
@@ -70,6 +74,9 @@ function applySevereCheatingConsequence(player, before) {
   player.examRank = rankAfter;
   player.palaceRank = null;
   player.officeTitle = null;
+  player.position = "寒窗士子";
+  player.faction = "士林";
+  player.influence = clamp((player.influence || 0) - 10, 0, 100);
   player.reputation = clamp((player.reputation || 0) - 12, 0, 100);
   player.mentality = clamp((player.mentality || 0) - 4, 0, 100);
 
@@ -135,6 +142,10 @@ function applyExamPromotion(worldState, exam, score, authenticityCheck) {
     player.role = "official";
     player.roleLabel = OFFICIAL_ROLE_LABEL;
     player.officeTitle = palaceOutcome.officeTitle;
+    player.position = palaceOutcome.officeTitle;
+    player.faction = "新科进士";
+    player.influence = clamp((player.influence || 0) + 24, 0, 100);
+    player.integrity = clamp(player.integrity ?? 72, 0, 100);
     player.reputation = clamp((player.reputation || 0) + palaceOutcome.reputationGain, 0, 100);
 
     return {

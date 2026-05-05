@@ -169,15 +169,23 @@ AI provider 约定：
     examHistory: [],
     teacher: null,
     studiedBooks: [],
-    connections: []
+    connections: [],
+    personalPower: 0,
+    courtControl: 0,
+    mandate: 0,
+    position: "寒窗士子",
+    faction: "士林",
+    influence: 0,
+    integrity: 60
   }
 }
 ```
 
 其他身份可扩展 `player` 字段：
 
-- 皇帝：`personalPower`、`courtControl`、`mandate`。
+- 皇帝：`personalPower`、`courtControl`、`mandate`、`position`、`faction`。
 - 大臣：`position`、`faction`、`influence`、`integrity`。
+- 入仕官员：`officeTitle`、`position`、`faction`、`influence`、`integrity`。
 - 将领：`command`、`troops`、`supply`、`battleReputation`。
 - 地方官：`countyName`、`localTreasury`、`localOrder`、`gentryRelations`。
 
@@ -376,6 +384,7 @@ SSE 事件：
 - 开局设定页：朝代、年份、身份、姓名、家境、自定义背景。
 - 主游戏页：顶部状态栏，中间叙事历史区，底部多行自由输入框。
 - 书生面板：科举进度、下一考试、学识、文采、机辩、心性、声望、师承、已读书。
+- 身份面板：皇帝、大臣、入仕官员展示关键权力/操守/影响指标、府库粮储、朝局派系与可行动提示。
 - 考试界面：题目、要求、大文本输入区、提交按钮。
 - 放榜界面：玩家与虚拟考生排名、分数、名次、详细考官评语。
 
@@ -400,7 +409,9 @@ Mock 需要支持：
 - 虚拟考生生成。
 - 榜单排名。
 - 晋级和入仕。
-- 皇帝、大臣基础自由行动反馈。
+- 皇帝基础行动：赈灾、用人、征税筹饷、军事备边、廷议听政。
+- 大臣基础行动：上疏谏言、经营人脉、督办公务、弹劾攻讦。
+- 入仕官员基础行动：观政学习、断案平讼、劝农抚民、拜会同年、贪墨风险。
 
 Mock 分数可结合：
 

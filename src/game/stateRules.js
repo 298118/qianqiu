@@ -8,6 +8,11 @@ const NUMERIC_RANGES = {
   "adaptability": [0, 100],
   "mentality": [0, 100],
   "reputation": [0, 100],
+  "personalPower": [0, 100],
+  "courtControl": [0, 100],
+  "mandate": [0, 100],
+  "influence": [0, 100],
+  "integrity": [0, 100],
   "treasury": [0, 10000000],
   "grainReserve": [0, 10000000],
   "population": [0, 100000000],
@@ -22,7 +27,9 @@ const NUMERIC_RANGES = {
 const ALLOWED_PLAYER_PATCH_KEYS = new Set([
   "health", "gold", "examRank", "academia", "literaryTalent",
   "adaptability", "mentality", "reputation", "teacher",
-  "studiedBooks", "connections", "examHistory"
+  "studiedBooks", "connections", "examHistory", "personalPower",
+  "courtControl", "mandate", "position", "faction", "influence",
+  "integrity"
 ]);
 
 const ALLOWED_TOP_LEVEL_PATCH_KEYS = new Set([
