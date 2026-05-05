@@ -54,7 +54,7 @@
 | S22.2 | DONE | 更新状态 patch 白名单和提示词摘要，让 provider 只能建议关系变化，服务器负责裁决 | 2026-05-05 | Codex | e5d2d51 |
 | S22.3 | DONE | 在 Mock 中加入人物/派系对玩家行动的可追踪反应 | 2026-05-05 | Codex | 本次 S22.3 提交 |
 | S23.1 | DONE | 深化地方官身份：县库、乡绅、盗匪、诉讼、赋役、水利和地方民心 | 2026-05-05 | Codex | 9adef5f |
-| S23.2 | TODO | 深化将领身份：兵员、军粮、士气、侦察、战役风险和边境态势 |
+| S23.2 | DONE | 深化将领身份：兵员、军粮、士气、侦察、战役风险和边境态势 | 2026-05-05 | Codex | 本次 S23.2 提交 |
 | S23.3 | TODO | 深化入仕官员身份：上官、同年、考成、升迁、弹劾和清浊操守 |
 | S24.1 | TODO | 深化科举同场竞争：虚拟考生生成可查看文章、评语和风格差异 |
 | S24.2 | TODO | 增加考试档案 UI，允许回看历次文章、题目、排名、复核和晋级原因 |
@@ -149,6 +149,41 @@
 ```
 
 ### 2026-05-05
+
+Tool: Codex
+
+Step: S23.2
+
+Commit: 本次 S23.2 提交
+
+Completed:
+- Added general-specific player state for `command`, `troops`, `supply`, `battleReputation`, `scouting`, and `campaignRisk`.
+- Added those fields to the turn schema, prompt compact player context, state patch whitelist, and numeric clamp ranges while preserving server-owned promotion, exam, and relationship-ledger boundaries.
+- Mock general turns now cover recruitment, supply/pay work, drill, scouting, fortification, campaign action, and routine camp business.
+- Mock general turns now produce relationship suggestions through the existing `relationshipChanges` path, with route-level persistence through `applyRelationshipChanges()`.
+- The browser role panel now renders general-specific status, action hints, military meters, troop/supply counts, and border pressure.
+- Added `test/generalRole.test.js` for initial state, schema/clamp coverage, direct Mock behavior, and route-level state plus relationship persistence.
+
+Verification:
+- `node --check src/game/initialState.js`
+- `node --check src/game/stateRules.js`
+- `node --check src/ai/schemas.js`
+- `node --check src/ai/prompts.js`
+- `node --check src/ai/providers/mock.js`
+- `node --check public/app.js`
+- `node --check test/generalRole.test.js`
+- `node --test test/generalRole.test.js` passed with 4 tests.
+- `node --test test/aiSchemas.test.js` passed with 7 tests.
+- `node --test test/magistrateRole.test.js` passed with 4 tests.
+- `git diff --check`
+- `npm test` passed with 49 tests.
+
+Risk/leftover:
+- General actions are first-pass deterministic Mock branches; later balancing can make campaign outcomes depend more deeply on long-term supply, world tick pressure, and enemy-side memory.
+- S23.2 does not yet deepen the post-exam official career loop.
+
+Next:
+- S23.3: deepen the official identity loop.
 
 Tool: Codex
 

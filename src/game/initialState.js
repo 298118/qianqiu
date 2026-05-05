@@ -41,10 +41,16 @@ const ROLE_STAT_DEFAULTS = {
     integrity: 68
   },
   general: {
-    position: "营中将领",
-    faction: "武臣",
+    position: "游击将军",
+    faction: "边镇武臣",
     influence: 42,
-    integrity: 56
+    integrity: 56,
+    command: 48,
+    troops: 420,
+    supply: 360,
+    battleReputation: 18,
+    scouting: 35,
+    campaignRisk: 32
   },
   magistrate: {
     position: "知县",
@@ -81,6 +87,20 @@ function getRoleStats(role) {
 }
 
 function getInitialCharacters(role) {
+  if (role === "general") {
+    return [
+      {
+        id: "C01",
+        name: "沈参将",
+        role: "中军参将",
+        loyalty: 62,
+        ambition: 48,
+        skill: 74,
+        alive: true
+      }
+    ];
+  }
+
   if (role === "magistrate") {
     return [
       {

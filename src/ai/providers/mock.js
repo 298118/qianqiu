@@ -37,6 +37,16 @@ function describeOpening(worldState) {
     ].join("\n");
   }
 
+  if (player.role === "general") {
+    return [
+      `${dynasty}${year}年，${player.name}以${player.position}驻营边镇，鼓角未歇，烽燧相望。`,
+      background,
+      custom,
+      "营中兵额、军粮、士气、斥候回报与战役风险都牵动边境态势；轻进可立战名，也可能折损部曲。",
+      "你可以募兵整补、清点粮饷、操练士卒、遣斥候侦察、修堡守边，或率营出战。"
+    ].join("\n");
+  }
+
   if (player.role === "magistrate") {
     return [
       `${dynasty}${year}年，${player.name}以${player.position}到任${player.countyName || "本县"}，县署鼓楼初鸣。`,
@@ -106,6 +116,12 @@ function buildAttributeChanges(before, patch, reason = "行动影响") {
     mandate: "天命",
     influence: "影响",
     integrity: "操守",
+    command: "统率",
+    troops: "部曲",
+    supply: "军粮",
+    battleReputation: "战名",
+    scouting: "侦察",
+    campaignRisk: "战险",
     localTreasury: "县库",
     localOrder: "地方民心",
     gentryRelations: "乡绅",
@@ -528,6 +544,122 @@ function buildMockRelationshipChanges(worldState, actionKey) {
         reason: "Bribery aligns the player with informal palace-style brokerage."
       });
       break;
+    case "general_recruit":
+      pushCharacterReaction(changes, targets, {
+        relationshipDelta: 2,
+        resentmentDelta: 1,
+        stance: "busy staff officer",
+        recentIntent: "Check whether new soldiers can be fed and drilled.",
+        note: "Recruitment gives the camp more hands but more mouths to feed.",
+        reason: "The general expanded the command with new troops."
+      });
+      pushFactionReaction(changes, targets, "militaryLords", {
+        relationshipDelta: 3,
+        resentmentDelta: -1,
+        stance: "growing command bloc",
+        recentIntent: "Seek more commissions if recruitment continues.",
+        note: "Military interests favor a stronger camp.",
+        reason: "Recruitment strengthens armed networks."
+      });
+      break;
+    case "general_supply":
+      pushCharacterReaction(changes, targets, {
+        relationshipDelta: 3,
+        resentmentDelta: -1,
+        stance: "relieved quartermaster staff",
+        recentIntent: "Use the fuller stores to stabilize the next campaign.",
+        note: "Orderly supply work makes the camp easier to manage.",
+        reason: "The general focused on grain and pay for the troops."
+      });
+      pushFactionReaction(changes, targets, "militaryLords", {
+        relationshipDelta: 2,
+        resentmentDelta: -1,
+        stance: "fed garrison network",
+        recentIntent: "Back the player while supplies remain reliable.",
+        note: "Supply discipline improves garrison confidence.",
+        reason: "Reliable military stores improve relations with armed interests."
+      });
+      break;
+    case "general_drill":
+      pushCharacterReaction(changes, targets, {
+        relationshipDelta: 2,
+        resentmentDelta: 0,
+        stance: "disciplined camp deputy",
+        recentIntent: "Press the soldiers through harsher drill if morale holds.",
+        note: "Regular drill gives officers clearer command habits.",
+        reason: "The general drilled troops and tightened camp order."
+      });
+      pushFactionReaction(changes, targets, "militaryLords", {
+        relationshipDelta: 3,
+        resentmentDelta: -1,
+        stance: "admiring command bloc",
+        recentIntent: "Watch for battlefield proof after drill results.",
+        note: "Visible drill wins respect among military networks.",
+        reason: "Improved morale and command reflect well on the general."
+      });
+      break;
+    case "general_scout":
+      pushCharacterReaction(changes, targets, {
+        relationshipDelta: 3,
+        resentmentDelta: -1,
+        stance: "trusted scoutmaster",
+        recentIntent: "Bring sharper reports before any major engagement.",
+        note: "Careful reconnaissance makes the staff trust the plan.",
+        reason: "The general sent scouts before committing the army."
+      });
+      pushFactionReaction(changes, targets, "militaryLords", {
+        relationshipDelta: 2,
+        resentmentDelta: -1,
+        stance: "patient frontier officers",
+        recentIntent: "Support a measured campaign if the intelligence holds.",
+        note: "Scout reports make border commanders less anxious.",
+        reason: "Reconnaissance lowers avoidable campaign risk."
+      });
+      break;
+    case "general_fortify":
+      pushCharacterReaction(changes, targets, {
+        relationshipDelta: 2,
+        resentmentDelta: -1,
+        stance: "steady garrison staff",
+        recentIntent: "Hold the line and ask for more stores if threat returns.",
+        note: "Fortification gives the camp a safer frontier posture.",
+        reason: "The general strengthened border defenses instead of gambling on battle."
+      });
+      pushFactionReaction(changes, targets, "scholarOfficials", {
+        relationshipDelta: 1,
+        resentmentDelta: -1,
+        stance: "cautiously approving civil officials",
+        recentIntent: "Accept defensive spending if it reduces border panic.",
+        note: "Civil officials prefer steady defense to reckless campaigns.",
+        reason: "Fortification lowers frontier risk with less political shock."
+      });
+      break;
+    case "general_campaign":
+      pushCharacterReaction(changes, targets, {
+        relationshipDelta: 2,
+        resentmentDelta: 2,
+        stance: "battle-tested staff officer",
+        recentIntent: "Count losses and argue for rest before another sortie.",
+        note: "Battle earns respect but leaves the camp counting casualties.",
+        reason: "The general led troops into a campaign."
+      });
+      pushFactionReaction(changes, targets, "militaryLords", {
+        relationshipDelta: 4,
+        resentmentDelta: -1,
+        stance: "victory-minded command bloc",
+        recentIntent: "Use the result to press for more authority.",
+        note: "Battlefield action raises the general's standing with armed interests.",
+        reason: "Campaign success gives the military faction a visible champion."
+      });
+      break;
+    case "general_default":
+      pushCharacterReaction(changes, targets, {
+        relationshipDelta: 1,
+        resentmentDelta: 0,
+        note: "Routine camp business leaves a small trace among officers.",
+        reason: "The general handled ordinary military business."
+      });
+      break;
     case "magistrate_case":
       pushCharacterReaction(changes, targets, {
         relationshipDelta: 4,
@@ -728,6 +860,25 @@ function classifyOfficialRelationshipAction(worldState, patch) {
   return "official_default";
 }
 
+function classifyGeneralRelationshipAction(worldState, patch) {
+  const player = worldState.player || {};
+  const playerPatch = patch.player || {};
+
+  if (numberDecreases(worldState.borderThreat, patch.borderThreat) && numberDecreases(player.troops, playerPatch.troops)) {
+    return "general_campaign";
+  }
+  if (numberIncreases(player.scouting, playerPatch.scouting)) return "general_scout";
+  if (numberDecreases(player.campaignRisk, playerPatch.campaignRisk) && numberDecreases(worldState.borderThreat, patch.borderThreat)) {
+    return "general_fortify";
+  }
+  if (numberIncreases(player.supply, playerPatch.supply)) return "general_supply";
+  if (numberIncreases(player.troops, playerPatch.troops)) return "general_recruit";
+  if (numberIncreases(player.command, playerPatch.command) || numberIncreases(worldState.armyMorale, patch.armyMorale)) {
+    return "general_drill";
+  }
+  return "general_default";
+}
+
 function classifyMagistrateRelationshipAction(worldState, patch) {
   const player = worldState.player || {};
   const playerPatch = patch.player || {};
@@ -753,6 +904,7 @@ function classifyRelationshipAction(worldState, result) {
   if (role === "emperor") return classifyEmperorRelationshipAction(worldState, patch);
   if (role === "minister") return classifyMinisterRelationshipAction(worldState, patch);
   if (role === "official") return classifyOfficialRelationshipAction(worldState, patch);
+  if (role === "general") return classifyGeneralRelationshipAction(worldState, patch);
   if (role === "magistrate") return classifyMagistrateRelationshipAction(worldState, patch);
   return "generic";
 }
@@ -1328,6 +1480,183 @@ function buildOfficialTurn(input, worldState) {
   });
 }
 
+function buildGeneralTurn(input, worldState) {
+  const text = input.trim();
+  const player = worldState.player;
+
+  if (/募兵|征兵|招募|补兵|点兵|扩军|整补/.test(text)) {
+    const recruitCount = 80;
+    const patch = {
+      treasury: shiftResource(worldState.treasury, -55),
+      armySize: shiftResource(worldState.armySize, recruitCount),
+      armyMorale: shiftStat(worldState.armyMorale, -1),
+      player: {
+        troops: shiftResource(player.troops, recruitCount),
+        supply: shiftResource(player.supply, -35),
+        command: shiftStat(player.command, 2),
+        campaignRisk: shiftStat(player.campaignRisk, 3),
+        influence: shiftStat(player.influence, 2)
+      },
+      factions: buildFactionState(worldState, { militaryLords: 3, scholarOfficials: -1 })
+    };
+
+    return makeResult({
+      worldState,
+      player,
+      patch,
+      reason: "将领募兵整补",
+      narrative: "你点检营籍，挑选壮丁补入缺额，令老卒分队带练。兵额渐厚，营中声势也盛，只是新兵尚需粮饷与操练，贸然用之仍有隐忧。",
+      events: [`${player.name}募兵整补，营中部曲增多。`]
+    });
+  }
+
+  if (/粮饷|军粮|粮草|补给|屯田|转运|饷银|清点粮/.test(text)) {
+    const patch = {
+      treasury: shiftResource(worldState.treasury, -30),
+      grainReserve: shiftResource(worldState.grainReserve, -35),
+      armyMorale: shiftStat(worldState.armyMorale, 3),
+      player: {
+        supply: shiftResource(player.supply, 95),
+        campaignRisk: shiftStat(player.campaignRisk, -2),
+        command: shiftStat(player.command, 1),
+        influence: shiftStat(player.influence, 1)
+      },
+      factions: buildFactionState(worldState, { militaryLords: 2 })
+    };
+
+    return makeResult({
+      worldState,
+      player,
+      patch,
+      reason: "将领整顿粮饷",
+      narrative: "你亲自核军粮仓册，催转运到营，又令军需官分清赏罚。营中灶烟连日不断，士卒知粮饷有着落，出战之忧也少了几分。",
+      events: [`${player.name}清点粮饷，军粮与士气略稳。`]
+    });
+  }
+
+  if (/操练|练兵|校阅|阵法|士气|军纪|演武|训兵/.test(text)) {
+    const patch = {
+      armyMorale: shiftStat(worldState.armyMorale, 6),
+      player: {
+        supply: shiftResource(player.supply, -25),
+        command: shiftStat(player.command, 5),
+        battleReputation: shiftStat(player.battleReputation, 2),
+        campaignRisk: shiftStat(player.campaignRisk, -1),
+        influence: shiftStat(player.influence, 1)
+      },
+      factions: buildFactionState(worldState, { militaryLords: 2 })
+    };
+
+    return makeResult({
+      worldState,
+      player,
+      patch,
+      reason: "将领操练士卒",
+      narrative: "你清晨擂鼓点卯，分队演阵，亲自校看弓马与火器。士卒汗透甲衣，却知军令有度，营中军心与统率都更紧了一层。",
+      events: [`${player.name}操练士卒，军心与统率提升。`]
+    });
+  }
+
+  if (/侦察|斥候|探马|哨骑|巡边|探报|敌情|烽燧/.test(text)) {
+    const patch = {
+      borderThreat: shiftStat(worldState.borderThreat, -2),
+      player: {
+        supply: shiftResource(player.supply, -12),
+        scouting: shiftStat(player.scouting, 8),
+        campaignRisk: shiftStat(player.campaignRisk, -5),
+        command: shiftStat(player.command, 1),
+        battleReputation: shiftStat(player.battleReputation, 1)
+      },
+      factions: buildFactionState(worldState, { militaryLords: 1 })
+    };
+
+    return makeResult({
+      worldState,
+      player,
+      patch,
+      reason: "将领遣斥候侦察",
+      narrative: "你挑熟边路的哨骑夜出，沿烽燧、河滩与旧堡查探敌踪。探报虽未尽明，已能分辨虚实，若再出兵，胜败不至全凭胆气。",
+      events: [`${player.name}遣斥候巡边，敌情稍明。`]
+    });
+  }
+
+  if (/守边|修堡|筑城|营垒|加固|边防|设防|烽火台/.test(text)) {
+    const patch = {
+      treasury: shiftResource(worldState.treasury, -35),
+      borderThreat: shiftStat(worldState.borderThreat, -4),
+      armyMorale: shiftStat(worldState.armyMorale, 2),
+      player: {
+        supply: shiftResource(player.supply, -30),
+        command: shiftStat(player.command, 2),
+        campaignRisk: shiftStat(player.campaignRisk, -6),
+        battleReputation: shiftStat(player.battleReputation, 1),
+        integrity: shiftStat(player.integrity, 1)
+      },
+      factions: buildFactionState(worldState, { militaryLords: 1, scholarOfficials: 1 })
+    };
+
+    return makeResult({
+      worldState,
+      player,
+      patch,
+      reason: "将领修堡守边",
+      narrative: "你按地势修补旧堡，增设望台，令各墩堡约定烽火号令。此举不如冲阵显赫，却让边墙多了几分可守之势。",
+      events: [`${player.name}修堡守边，边患压力下降。`]
+    });
+  }
+
+  if (/出战|会战|进剿|讨伐|追击|奇袭|迎敌|破敌|开战/.test(text)) {
+    const prepared = (player.scouting || 0) >= 42 && (player.supply || 0) >= 280 && (worldState.armyMorale || 0) >= 58;
+    const troopLoss = prepared ? 32 : 78;
+    const supplyLoss = prepared ? 70 : 105;
+    const borderDrop = prepared ? -9 : -4;
+    const moraleDelta = prepared ? 3 : -4;
+    const patch = {
+      armySize: shiftResource(worldState.armySize, -troopLoss),
+      armyMorale: shiftStat(worldState.armyMorale, moraleDelta),
+      borderThreat: shiftStat(worldState.borderThreat, borderDrop),
+      publicOrder: shiftStat(worldState.publicOrder, prepared ? 1 : -1),
+      player: {
+        troops: shiftResource(player.troops, -troopLoss),
+        supply: shiftResource(player.supply, -supplyLoss),
+        command: shiftStat(player.command, prepared ? 4 : 2),
+        battleReputation: shiftStat(player.battleReputation, prepared ? 7 : 3),
+        campaignRisk: shiftStat(player.campaignRisk, prepared ? 4 : 10),
+        influence: shiftStat(player.influence, prepared ? 4 : 2)
+      },
+      factions: buildFactionState(worldState, { militaryLords: prepared ? 4 : 2, scholarOfficials: prepared ? 0 : -1 })
+    };
+
+    return makeResult({
+      worldState,
+      player,
+      patch,
+      reason: prepared ? "将领稳妥出战" : "将领冒险出战",
+      narrative: prepared
+        ? "你据斥候所报择地设伏，先以小队诱敌，再令中军截其归路。战后虽有伤亡，边寇锋芒大挫，营中战名由此渐起。"
+        : "你乘士气未散强行出战，前锋一度得手，却因敌情未尽明而折损偏重。边患稍退，营中也记住了这场险胜的代价。",
+      events: [`${player.name}${prepared ? "率营破敌" : "冒险出战"}，边患稍缓而营中有损。`]
+    });
+  }
+
+  const patch = {
+    player: {
+      command: shiftStat(player.command, 1),
+      mentality: shiftStat(player.mentality, 1),
+      campaignRisk: shiftStat(player.campaignRisk, -1)
+    }
+  };
+
+  return makeResult({
+    worldState,
+    player,
+    patch,
+    reason: "将领营务视事",
+    narrative: `你将“${text}”记入营务簿，先问中军旧例，再召各把总回报。此事未必立刻惊动边墙，却让你更熟悉一营兵马的脾性。`,
+    events: [`${player.name}营中视事：${text.slice(0, 30)}`]
+  });
+}
+
 function buildMagistrateTurn(input, worldState) {
   const text = input.trim();
   const player = worldState.player;
@@ -1526,6 +1855,11 @@ async function runTurn(worldState, input) {
 
   if (player.role === "official") {
     result = buildOfficialTurn(input, worldState);
+    return withMockRelationshipReactions(result, worldState);
+  }
+
+  if (player.role === "general") {
+    result = buildGeneralTurn(input, worldState);
     return withMockRelationshipReactions(result, worldState);
   }
 

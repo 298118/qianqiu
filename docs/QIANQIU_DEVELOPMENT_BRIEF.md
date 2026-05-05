@@ -198,7 +198,7 @@ AI provider 约定：
 - 皇帝：`personalPower`、`courtControl`、`mandate`、`position`、`faction`。
 - 大臣：`position`、`faction`、`influence`、`integrity`。
 - 入仕官员：`officeTitle`、`position`、`faction`、`influence`、`integrity`。
-- 将领：`command`、`troops`、`supply`、`battleReputation`。
+- 将领：`command`、`troops`、`supply`、`battleReputation`、`scouting`、`campaignRisk`。
 - 地方官：`countyName`、`localTreasury`、`localOrder`、`gentryRelations`、`banditPressure`、`pendingLawsuits`、`corveeBurden`、`waterworks`。
 
 状态更新规则：
@@ -398,7 +398,7 @@ SSE 事件：
 - 开局设定页：朝代、年份、身份、姓名、家境、自定义背景。
 - 主游戏页：顶部状态栏，中间叙事历史区，底部多行自由输入框。
 - 书生面板：科举进度、下一考试、学识、文采、机辩、心性、声望、师承、已读书。
-- 身份面板：皇帝、大臣、入仕官员展示关键权力/操守/影响指标、府库粮储、朝局派系与可行动提示。
+- 身份面板：皇帝、大臣、将领、地方官、入仕官员展示关键权力/操守/影响指标、专属身份状态、府库粮储、朝局派系与可行动提示。
 - 考试界面：题目、要求、大文本输入区、提交按钮。
 - 放榜界面：玩家与虚拟考生排名、分数、名次、详细考官评语。
 
@@ -631,7 +631,7 @@ S22.2 adds the controlled provider suggestion path while keeping the relationshi
 - `relationshipChanges` entries must target an existing visible character or faction id and use bounded deltas: `relationshipDelta` in `-12..12`, `resentmentDelta` in `-10..10`.
 - `src/game/relationships.js` applies suggestions through `applyRelationshipChanges()`, drops hidden/invented targets, caps text fields, updates `lastUpdatedTurn`, and normalizes the ledger before persistence.
 - `/api/game/turn` returns the normalized applied changes as `relationshipChanges` in JSON and SSE payloads.
-- S22.3 makes Mock produce concrete relationship suggestions for scholar, emperor, minister, and official turns through the same path. S23.1 extends the same suggestion path to local magistrate turns. Mock classifies the resolved action from its own patch output, targets only visible ledger entries, and still relies on the route to call `applyRelationshipChanges()` before persistence.
+- S22.3 makes Mock produce concrete relationship suggestions for scholar, emperor, minister, and official turns through the same path. S23.1 extends the same suggestion path to local magistrate turns, and S23.2 extends it to general turns. Mock classifies the resolved action from its own patch output, targets only visible ledger entries, and still relies on the route to call `applyRelationshipChanges()` before persistence.
 - The browser narrative now appends concise `[人脉]` feedback for applied relationship changes.
 
 ## S23.1 Local Magistrate Note (2026-05-05)
@@ -643,3 +643,13 @@ S23.1 adds a dedicated local magistrate loop while keeping the server-owned stat
 - Mock magistrate turns recognize case hearings, money/grain work, gentry mediation, anti-bandit policing, corvee labor, and waterworks. They may update local county meters and modest global fields such as public order, treasury, grain reserve, population, corruption, and existing numeric factions.
 - Magistrate relationship reactions use the existing top-level `relationshipChanges` suggestion path and are persisted only by the route-owned `applyRelationshipChanges()` merge.
 - The browser role panel now renders magistrate-specific local meters and action hints.
+
+## S23.2 General Role Note (2026-05-05)
+
+S23.2 adds a dedicated military command loop while keeping the server-owned state boundary unchanged:
+
+- General sessions now seed `player.command`, `troops`, `supply`, `battleReputation`, `scouting`, and `campaignRisk`.
+- These military fields are included in turn prompts, AI turn schemas, and `applyStatePatch()` whitelist/clamp rules. Numeric military fields are server-clamped, and promotion/exam/relationship-ledger authority remains server-owned.
+- Mock general turns recognize recruitment, supply/pay work, drill, scouting, fortification, campaign action, and routine camp work. They may update local command meters and limited global fields such as treasury, grain reserve, army size, army morale, border threat, public order, and existing numeric factions.
+- General relationship reactions use the existing top-level `relationshipChanges` suggestion path and are persisted only by the route-owned `applyRelationshipChanges()` merge.
+- The browser role panel now renders general-specific status, action hints, military meters, troop/supply counts, and border pressure.

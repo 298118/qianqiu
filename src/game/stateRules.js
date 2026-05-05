@@ -15,6 +15,12 @@ const NUMERIC_RANGES = {
   "mandate": [0, 100],
   "influence": [0, 100],
   "integrity": [0, 100],
+  "command": [0, 100],
+  "troops": [0, 1000000],
+  "supply": [0, 1000000],
+  "battleReputation": [0, 100],
+  "scouting": [0, 100],
+  "campaignRisk": [0, 100],
   "localTreasury": [0, 100000],
   "localOrder": [0, 100],
   "gentryRelations": [0, 100],
@@ -38,9 +44,10 @@ const ALLOWED_PLAYER_PATCH_KEYS = new Set([
   "adaptability", "mentality", "reputation", "teacher",
   "studiedBooks", "connections", "examHistory", "personalPower",
   "courtControl", "mandate", "position", "faction", "influence",
-  "integrity", "countyName", "localTreasury", "localOrder",
-  "gentryRelations", "banditPressure", "pendingLawsuits",
-  "corveeBurden", "waterworks"
+  "integrity", "command", "troops", "supply", "battleReputation",
+  "scouting", "campaignRisk", "countyName", "localTreasury",
+  "localOrder", "gentryRelations", "banditPressure",
+  "pendingLawsuits", "corveeBurden", "waterworks"
 ]);
 
 const ALLOWED_TOP_LEVEL_PATCH_KEYS = new Set([
