@@ -121,7 +121,7 @@ Before finishing each coherent change:
 - 2026-05-05: Phase-one roadmap archived and phase-two roadmap opened in documentation. Verified `npm test` with 18 passing tests and `git diff --check`.
 - 2026-05-05: S21.1 world tick contract documented in `docs/WORLD_TICK_CONTRACT.md`, `docs/ARCHITECTURE.md`, `docs/QIANQIU_DEVELOPMENT_BRIEF.md`, and `docs/DEVELOPMENT_STEPS.md`. Verified `npm test` with 18 passing tests and `git diff --check`.
 - 2026-05-05: S21.2 world tick module implemented in `src/game/worldTick.js`, with `worldState.month` defaulting to `1`, `year/month` patch whitelist and clamps, provider calendar patch rejection, and a no-double-turn-count patch option for future route integration. Verified `node --check` for changed runtime/test files, `npm test` with 23 passing tests, and `git diff --check`.
-- 2026-05-05: S21.3 world tick route integration implemented in `src/routes/game.js`, `public/app.js`, and `public/styles.css`, with route-level JSON/SSE tests in `test/gameTurnTick.test.js`. Verified `node --check src/routes/game.js`, `node --check public/app.js`, `node --check test/gameTurnTick.test.js`, `git diff --check`, and `npm test` with 25 passing tests.
+- 2026-05-05: S21.3 world tick route integration committed as `70b14fd`, implemented in `src/routes/game.js`, `public/app.js`, and `public/styles.css`, with route-level JSON/SSE tests in `test/gameTurnTick.test.js`. Verified `node --check src/routes/game.js`, `node --check public/app.js`, `node --check test/gameTurnTick.test.js`, `git diff --check`, and `npm test` with 25 passing tests.
 
 ## Next Recommended Step
 
