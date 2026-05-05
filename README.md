@@ -88,7 +88,7 @@ POST /api/exam/question
 POST /api/exam/submit
 ```
 
-`POST /api/game/turn` 支持 SSE：客户端发送 `Accept: text/event-stream` 时会收到 `state_preview`、`narrative_chunk`、`final_state` 和 `error` 事件。未请求 SSE 的脚本仍会收到普通 JSON，便于测试和兼容旧调用。
+`POST /api/game/turn` 支持 SSE：客户端发送 `Accept: text/event-stream` 时会收到 `state_preview`、`narrative_chunk`、`final_state` 和 `error` 事件。未请求 SSE 的脚本仍会收到普通 JSON，便于测试和兼容旧调用。成功行动会运行服务器拥有的月度 `worldTick`，响应中包含 `summary`、`events` 和 `attributeChanges`，前端会显示当前年月与简短月度反馈。
 
 ## 项目结构
 

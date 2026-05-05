@@ -125,7 +125,7 @@ function setStatus(worldState) {
   statusStrip.innerHTML = "";
 
   const statusItems = [
-    `${worldState.dynasty}${worldState.year}年`,
+    `${worldState.dynasty}${worldState.year}年${worldState.month || 1}月`,
     player.roleLabel,
     player.name,
     `回合 ${worldState.turnCount}`
@@ -387,6 +387,17 @@ function appendAttributeChanges(changes) {
   });
   narrative.appendChild(div);
   narrative.scrollTop = narrative.scrollHeight;
+}
+
+function appendWorldTickFeedback(worldTick) {
+  if (!worldTick) return;
+  const events = Array.isArray(worldTick.events) ? worldTick.events : [];
+
+  if (events.length) {
+    events.forEach((event) => appendNarrative(`[月度] ${event}`, "world-tick"));
+  } else if (worldTick.summary) {
+    appendNarrative(`[月度] ${worldTick.summary}`, "world-tick");
+  }
 }
 
 function renderExamModal(payload) {
@@ -712,6 +723,7 @@ async function readSseResponse(response, handlers) {
 
 async function handleTurnPayload(payload) {
   appendAttributeChanges(payload.attributeChanges);
+  appendWorldTickFeedback(payload.worldTick);
   renderWorldState(payload.worldState);
   actionInput.value = "";
 

@@ -600,4 +600,14 @@ S21.2 should implement `src/game/worldTick.js` as a pure module that returns `{ 
 - `src/game/stateRules.js` now whitelists/clamps `year` and `month`, and `applyStatePatch()` accepts `{ incrementTurnCount: false }` for server-owned follow-up patches so S21.3 can integrate the tick without double-counting `turnCount`.
 - Provider turn schemas and prompts do not allow models to patch `year` or `month`; models may read the compact calendar context, but calendar movement is reserved for server-owned code.
 
-The tick is not yet connected to `/api/game/turn`; S21.3 should apply it after provider output, append provider events first and tick events second, and return concise tick feedback through both JSON and SSE responses.
+S21.3 connects the tick to `/api/game/turn`: provider output is applied first, exam-trigger state is prepared when requested, `runWorldTick()` runs against the updated state, and the tick patch is applied with `{ incrementTurnCount: false }`. Provider events are appended before tick events, and the route returns concise `worldTick` feedback through both JSON and SSE final payloads.
+
+## S21.3 World Tick Route Integration Note (2026-05-05)
+
+`POST /api/game/turn` now advances the server-owned world tick after every successful free-text turn:
+
+- One player action still increments `worldState.turnCount` exactly once.
+- `worldState.year/month` advance through the tick, not through provider output.
+- Tick resource changes and faction drift pass through `src/game/stateRules.js` with normal whitelist/clamp protection.
+- The response includes `worldTick: { summary, events, attributeChanges }`; the browser displays the current month in the status strip and appends short monthly feedback after the provider narrative.
+- The complete scholar -> exam -> official path remains unchanged; exam submission/question routes still do not run a tick in the minimal S21 slice.

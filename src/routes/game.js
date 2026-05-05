@@ -1,6 +1,7 @@
 const express = require("express");
 const { createInitialState } = require("../game/initialState");
 const { applyStatePatch, appendEvents } = require("../game/stateRules");
+const { runWorldTick } = require("../game/worldTick");
 const { getProvider } = require("../ai");
 const { readSession, writeSession } = require("../storage/sessionStore");
 const { chunkTextForSse, closeSse, sendSseEvent, writeSseHeaders } = require("../utils/sse");
@@ -32,27 +33,40 @@ async function processTurn(sessionId, input) {
   const worldState = await readSession(sessionId);
   const provider = getProvider();
   const result = await provider.runTurn(worldState, input);
+  const providerAttributeChanges = Array.isArray(result.attributeChanges) ? result.attributeChanges : [];
+  const examTrigger = result.examTrigger || { shouldStart: false, level: null, reason: "" };
 
   // All model-suggested state changes pass through server-side boundaries.
   applyStatePatch(worldState, result.statePatch);
 
-  appendEvents(worldState, result.events);
-
-  if (result.examTrigger && result.examTrigger.shouldStart) {
+  if (examTrigger.shouldStart) {
     worldState.activeExam = {
-      level: result.examTrigger.level,
-      reason: result.examTrigger.reason,
+      level: examTrigger.level,
+      reason: examTrigger.reason,
       requestedAt: new Date().toISOString()
     };
   }
 
+  const worldTick = runWorldTick(worldState);
+  applyStatePatch(worldState, worldTick.statePatch, { incrementTurnCount: false });
+
+  appendEvents(worldState, result.events);
+  appendEvents(worldState, worldTick.events);
+
   await writeSession(worldState);
+
+  const worldTickFeedback = {
+    summary: worldTick.summary,
+    events: Array.isArray(worldTick.events) ? worldTick.events : [],
+    attributeChanges: Array.isArray(worldTick.attributeChanges) ? worldTick.attributeChanges : []
+  };
 
   return {
     sessionId: worldState.sessionId,
     narrative: result.narrative,
-    attributeChanges: result.attributeChanges || [],
-    examTrigger: result.examTrigger || { shouldStart: false, level: null, reason: "" },
+    attributeChanges: [...providerAttributeChanges, ...worldTickFeedback.attributeChanges],
+    examTrigger,
+    worldTick: worldTickFeedback,
     worldState
   };
 }
@@ -71,7 +85,8 @@ async function streamTurn(res, sessionId, input) {
     sendSseEvent(res, "state_preview", {
       sessionId: payload.sessionId,
       attributeChanges: payload.attributeChanges,
-      examTrigger: payload.examTrigger
+      examTrigger: payload.examTrigger,
+      worldTick: payload.worldTick
     });
     sendSseEvent(res, "final_state", payload);
   } catch (error) {

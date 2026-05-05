@@ -95,10 +95,10 @@ event: narrative_chunk
 data: {"text":"..."}
 
 event: state_preview
-data: {"sessionId":"uuid","attributeChanges":[],"examTrigger":{}}
+data: {"sessionId":"uuid","attributeChanges":[],"examTrigger":{},"worldTick":{}}
 
 event: final_state
-data: {"sessionId":"uuid","narrative":"...","attributeChanges":[],"examTrigger":{},"worldState":{}}
+data: {"sessionId":"uuid","narrative":"...","attributeChanges":[],"examTrigger":{},"worldTick":{},"worldState":{}}
 ```
 
 If a provider/session error happens after the stream has opened, the route writes:
@@ -119,6 +119,11 @@ Requests without SSE negotiation still return plain JSON for tests and compatibi
     "shouldStart": false,
     "level": null,
     "reason": ""
+  },
+  "worldTick": {
+    "summary": "月度推演：粮储略降，民心暂稳，边患暂稳。",
+    "events": ["二月，户部核算钱粮，民间风声暂稳。"],
+    "attributeChanges": []
   },
   "worldState": {}
 }
@@ -199,7 +204,7 @@ Do not bypass this module when applying provider output.
 
 ## Phase-Two World Tick Contract
 
-S21.1 defines the server-owned simulation boundary in [docs/WORLD_TICK_CONTRACT.md](WORLD_TICK_CONTRACT.md). S21.2 implements the pure module in `src/game/worldTick.js`; it is not wired into routes yet.
+S21.1 defines the server-owned simulation boundary in [docs/WORLD_TICK_CONTRACT.md](WORLD_TICK_CONTRACT.md). S21.2 implements the pure module in `src/game/worldTick.js`; S21.3 wires that module into `POST /api/game/turn`.
 
 The contract for S21.2-S21.4 is:
 
@@ -209,10 +214,12 @@ The contract for S21.2-S21.4 is:
 - Let the server, not the provider, compute natural changes to treasury, grain reserve, population, public order, corruption, army morale, border threat, and existing numeric faction keys.
 - Keep `turnCount` to one increment per player turn even when provider output and tick output both change state.
 - Apply tick changes through the same whitelist/clamp boundary used for provider patches.
-- Return short visible tick feedback and append tick events after provider events.
+- Return short visible tick feedback as `worldTick` in JSON/SSE payloads and append tick events after provider events.
 - Do not touch exam rank, active exam, exam history, role promotion, session identity, or the complete scholar -> official path.
 
 `runWorldTick(worldState)` returns `{ statePatch, attributeChanges, events, summary }` without mutating `worldState`. Its first deterministic formulas cover treasury revenue/upkeep/leakage, grain consumption/harvest, population drift, public order, corruption, army morale, border threat, and small known-faction drift.
+
+Route integration order is provider patch first, exam trigger setup when requested, `runWorldTick()` against the updated state, tick patch with `{ incrementTurnCount: false }`, then provider events followed by tick events. The browser renders the current month in the status strip and appends concise monthly feedback below the provider narrative.
 
 Provider turn schemas and prompts do not expose `year` or `month` as allowed model patch keys; calendar changes are reserved for server-owned patches.
 

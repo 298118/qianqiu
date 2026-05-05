@@ -48,7 +48,7 @@
 | S20.1 | DONE | 归档第一阶段路线图，开启第二阶段活动规划，保持开发规范不变 | 2026-05-05 | Codex | 本次文档提交 |
 | S21.1 | DONE | 定义第二阶段世界 tick 状态契约：时间推进、资源变动、事件队列、可见反馈 | 2026-05-05 | Codex | 本次 S21.1 提交 |
 | S21.2 | DONE | 实现服务器拥有的 `worldTick` 模块，按回合或月份推进财政、粮储、民心、边患、腐败 | 2026-05-05 | Codex | 本次 S21.2 提交 |
-| S21.3 | TODO | 将世界 tick 接入 `/api/game/turn`，确保玩家行动与自然世界变化共同进入事件历史 |
+| S21.3 | DONE | 将世界 tick 接入 `/api/game/turn`，确保玩家行动与自然世界变化共同进入事件历史 | 2026-05-05 | Codex | 本次 S21.3 提交 |
 | S21.4 | TODO | 为世界 tick 增加自动化测试，覆盖数值边界、事件裁剪和 Mock 稳定性 |
 | S22.1 | TODO | 扩展 NPC 与派系关系账本，记录人物立场、恩怨、人脉来源和近期意图 |
 | S22.2 | TODO | 更新状态 patch 白名单和提示词摘要，让 provider 只能建议关系变化，服务器负责裁决 |
@@ -149,6 +149,33 @@
 ```
 
 ### 2026-05-05
+
+工具：Codex
+
+步骤：S21.3
+
+提交：本次 S21.3 提交
+
+完成：
+- `POST /api/game/turn` 现在会在 provider patch 和考试触发状态准备后运行 `runWorldTick()`。
+- tick patch 通过 `applyStatePatch(worldState, worldTick.statePatch, { incrementTurnCount: false })` 应用，保证一次玩家行动只增加一次 `turnCount`。
+- 事件历史按 provider events -> tick events 的顺序追加；JSON 响应和 SSE final payload 均包含 `worldTick: { summary, events, attributeChanges }`。
+- 前端状态条显示年月，回合结算后会追加简短 `[月度]` 反馈，并把 tick 数值变化合并进属性变化条。
+- 新增 `test/gameTurnTick.test.js` 覆盖 JSON 与 SSE 路由响应中的 tick 集成、跨年、事件顺序和单次回合计数。
+
+验证：
+- `node --check src/routes/game.js`
+- `node --check public/app.js`
+- `node --check test/gameTurnTick.test.js`
+- `git diff --check`
+- `npm test` 通过，25 项测试全部通过。
+
+风险/遗留：
+- S21.3 只完成路由与 UI 接入；更宽的重复回合稳定性、事件裁剪和完整 scholar -> official 回归仍留给 S21.4。
+- tick 仍只在 `/api/game/turn` 运行，考试取题/交卷暂不消耗月份，符合 S21 最小契约。
+
+下一步：
+- S21.4：扩展自动化测试，覆盖 tick 数值边界、provider+tick 事件裁剪、Mock 多回合稳定性和完整书生入仕路径。
 
 工具：Codex
 

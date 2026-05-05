@@ -405,6 +405,12 @@ button:disabled {
   display: inline-block;
 }
 
+.narrative .world-tick {
+  color: var(--indigo);
+  border-left-color: rgba(53, 75, 99, 0.42);
+  background: rgba(53, 75, 99, 0.06);
+}
+
 .narrative .placeholder {
   color: var(--muted);
 }
