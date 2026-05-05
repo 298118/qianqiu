@@ -59,8 +59,9 @@ function applyStatePatch(worldState, statePatch) {
     return worldState;
   }
 
-  // Apply top-level numeric patches
+  // Apply top-level patches. Factions are merged below so unknown faction keys cannot replace the object.
   for (const key of ALLOWED_TOP_LEVEL_PATCH_KEYS) {
+    if (key === "factions") continue;
     if (key in statePatch) {
       worldState[key] = statePatch[key];
     }

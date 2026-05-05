@@ -41,6 +41,16 @@ http://localhost:3000
 npm run dev
 ```
 
+## Testing
+
+Automated quality checks use Node.js' built-in test runner, so no extra test dependency is required:
+
+```bash
+npm test
+```
+
+Current coverage focuses on server-owned state boundaries, session JSON persistence, AI JSON schemas, exam gates, promotion rules, local anti-cheat penalties, and virtual candidate ranking. For a full browser/API walkthrough, use [docs/MANUAL_ACCEPTANCE.md](docs/MANUAL_ACCEPTANCE.md).
+
 ## 配置
 
 复制 `.env.example` 为 `.env` 后可覆盖本地配置：
