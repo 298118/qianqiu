@@ -99,10 +99,10 @@
 | S10.1 | DONE | 实现皇帝身份基础自由输入推演 | 2026-05-05 | Codex | 592b7a1 |
 | S10.2 | DONE | 实现大臣身份基础自由输入推演 | 2026-05-05 | Codex | 592b7a1 |
 | S10.3 | DONE | 入仕后显示官员视角与基础政务输入 | 2026-05-05 | Codex | 592b7a1 |
-| S11.1 | DONE | 接入 OpenAI provider | 2026-05-05 | Codex | pending |
-| S11.2 | DONE | 接入 DeepSeek OpenAI-compatible provider | 2026-05-05 | Codex | pending |
-| S11.3 | DONE | 接入 Claude provider | 2026-05-05 | Codex | pending |
-| S11.4 | DONE | 真实 provider 失败时自动重试或降级 Mock | 2026-05-05 | Codex | pending |
+| S11.1 | DONE | 接入 OpenAI provider | 2026-05-05 | Codex | 0d779a2 |
+| S11.2 | DONE | 接入 DeepSeek OpenAI-compatible provider | 2026-05-05 | Codex | 0d779a2 |
+| S11.3 | DONE | 接入 Claude provider | 2026-05-05 | Codex | 0d779a2 |
+| S11.4 | DONE | 真实 provider 失败时自动重试或降级 Mock | 2026-05-05 | Codex | 0d779a2 |
 | S12.1 | TODO | 前端古风视觉：宣纸、墨色、朱砂强调 |  |  |  |
 | S12.2 | TODO | 移动端布局与输入体验优化 |  |  |  |
 | S12.3 | TODO | 叙事区、考试区、放榜区交互打磨 |  |  |  |
@@ -487,7 +487,7 @@ Codex progress note, 2026-05-05:
 
 Steps: S11.1, S11.2, S11.3, S11.4
 
-Commit: pending; final response will report the created local commit hash.
+Commit: 0d779a2
 
 Completed:
 
