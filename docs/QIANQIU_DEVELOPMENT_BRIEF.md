@@ -533,3 +533,14 @@ npm test
 Manual end-to-end acceptance lives in `docs/MANUAL_ACCEPTANCE.md`. It should be used for the browser/API pass before phase-one acceptance, especially to verify the complete scholar -> official route and the emperor/minister/official role loops in Mock mode.
 
 State patch boundary note: `statePatch.factions` is now merged only into existing numeric faction keys. Providers may adjust known faction scores but cannot introduce arbitrary faction names by replacing the full factions object.
+
+## S14 Documentation And Phase-One Acceptance Note (2026-05-05)
+
+Phase-one documentation is now split by purpose:
+
+- `README.md` is the quick-start and project orientation entrypoint. It covers install, scripts, `.env` fields, provider switching, current playable scope, API overview, project structure, and handoff documents.
+- `docs/ARCHITECTURE.md` is the current implementation map for developers. It records runtime shape, request flow, API contracts, AI provider contracts, state fields, state patch rules, exam rules, persistence, and verification expectations.
+- `docs/MANUAL_ACCEPTANCE.md` remains the human/browser click-through checklist.
+- `docs/PHASE_ONE_ACCEPTANCE.md` records the first automated Mock-mode phase-one acceptance pass.
+
+The 2026-05-05 S14 acceptance pass verified `npm install`, `npm test`, static asset loading, health, the complete scholar -> official path, saved exam history, short/modern/copy exam integrity penalties, and emperor/minister/official role-loop smoke checks. It did not call real providers because no API keys are present, and it did not run screenshot/browser automation because Playwright is unavailable in this workspace.

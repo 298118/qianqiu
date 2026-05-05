@@ -6,9 +6,11 @@ Both tools must read this file at the start of every development session, after 
 
 ## Current Snapshot
 
-- Repository status: first playable vertical slice is implemented. The app installs with npm, starts an Express server, serves a polished plain HTML/CSS/JS frontend, can create/read/Mock-play a scholar session with richer daily scholar actions, complete the scholar exam path into official status, play basic Mock loops for emperor, minister, and newly promoted officials, and optionally use OpenAI, DeepSeek, or Claude providers with Mock fallback.
+- Repository status: phase-one playable vertical slice is implemented and accepted for the default Mock path. The app installs with npm, starts an Express server, serves a polished plain HTML/CSS/JS frontend, can create/read/Mock-play a scholar session with richer daily scholar actions, complete the scholar exam path into official status, play basic Mock loops for emperor, minister, and officials, and optionally use OpenAI, DeepSeek, or Claude providers with Mock fallback.
 - Canonical product brief: `docs/QIANQIU_DEVELOPMENT_BRIEF.md`.
 - Shared implementation roadmap and progress ledger: `docs/DEVELOPMENT_STEPS.md`.
+- Developer implementation map: `docs/ARCHITECTURE.md`.
+- Phase-one acceptance record: `docs/PHASE_ONE_ACCEPTANCE.md`.
 - Codex entrypoint: `AGENTS.md`.
 - Claude Code entrypoint: `CLAUDE.md`.
 - Default development target: runnable Node.js + Express + pure HTML/CSS/JS game at `http://localhost:3000`.
@@ -52,6 +54,8 @@ Both tools must read this file at the start of every development session, after 
 - The frontend now adds turn dividers in narrative history, exposes attribute-change reasons as hover titles, shows live exam character-count guidance without changing server scoring rules, and renders exam results as collapsible 五维评卷/监试复核/同场榜单 sections.
 - `npm test` now runs Node.js' built-in test runner. The `test/` suite covers state patch boundaries, session JSON persistence, AI JSON schemas, exam gates, promotion/consequence rules, local essay integrity penalties, and virtual candidate ranking.
 - `docs/MANUAL_ACCEPTANCE.md` is the end-to-end manual acceptance script for Mock mode, covering API smoke checks, the complete scholar-to-official path, exam integrity checks, and emperor/minister/official role loops.
+- `docs/ARCHITECTURE.md` now records the current runtime shape, route ownership, API contracts, AI provider contracts, state fields, state patch rules, exam rules, persistence, and verification expectations for new developers.
+- `docs/PHASE_ONE_ACCEPTANCE.md` records the first automated Mock-mode phase-one acceptance pass and known limitations.
 - Faction state patches now merge only existing numeric faction keys instead of replacing the full factions object, so provider output cannot introduce arbitrary faction names through `statePatch.factions`.
 - Any behavior/API/setup/architecture decision that affects future work must be recorded in this file or in the canonical development brief.
 - Any roadmap step that starts, completes, blocks, or changes scope must be recorded in `docs/DEVELOPMENT_STEPS.md`.
@@ -98,9 +102,13 @@ Before finishing each coherent change:
 - 2026-05-05: S11.1-S11.4 code committed as `0d779a2`. Verified `node --check` for the new provider/schema/prompt/json files plus `src/ai/index.js`; Ajv accepted a valid turn payload; no-key OpenAI/DeepSeek/Claude configurations returned Mock; an unreachable OpenAI endpoint retried twice then returned Mock output; and a temporary Mock server on port 3171 returned health ok, created a session, and advanced one turn.
 - 2026-05-05: S12.1-S12.3 UI polish committed as `7b4f349`. Verified `node --check public/app.js`, `node --check server.js`, `node --check src/routes/game.js`, `node --check src/routes/exam.js`, `git diff --check`, and a temporary Mock server on port 3188 confirming homepage/style/app assets, health, session creation, one turn, and `child_exam` question generation.
 - 2026-05-05: S13.1-S13.3 quality gate committed as `4a70f5a`. Verified `node --check src/game/stateRules.js`, `node --check` for all new `test/*.test.js` files, `git diff --check`, and `npm test` with 15 passing tests.
+- 2026-05-05: S14.1-S14.3 documentation and phase-one acceptance completed, pending commit hash. Verified `npm install` with 0 vulnerabilities, `npm test` with 15 passing tests, and an automated temporary Mock server acceptance on port 3214 covering static assets, health, complete scholar -> official progression with four saved exam essays, exam integrity penalties for short/modern/copy submissions, and emperor/minister/official role loops. Playwright/browser screenshot automation was unavailable, so static assets plus API acceptance were verified and the manual browser checklist remains in `docs/MANUAL_ACCEPTANCE.md`.
 
 ## Next Recommended Step
 
-Implement the documentation and phase-one acceptance slice:
+Phase one is accepted for Mock mode. Recommended next step is to define the phase-two roadmap, with likely candidates:
 
-- S14.1-S14.3: Complete README/developer documentation and run/record the first phase acceptance pass.
+- Implement SSE streaming for `POST /api/game/turn`.
+- Add browser automation or screenshot-based UI acceptance once a browser runner is available.
+- Expand general and magistrate Mock role loops.
+- Run real-provider smoke tests when API keys are available.

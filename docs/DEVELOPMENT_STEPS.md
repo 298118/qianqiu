@@ -109,9 +109,9 @@
 | S13.1 | DONE | 增加自动化测试：状态规则、session 存储 | 2026-05-05 | Codex | 4a70f5a |
 | S13.2 | DONE | 增加自动化测试：科举晋级与作弊惩罚 | 2026-05-05 | Codex | 4a70f5a |
 | S13.3 | DONE | 增加端到端手动验收脚本说明 | 2026-05-05 | Codex | 4a70f5a |
-| S14.1 | TODO | README 完整化：安装、配置、启动、provider 切换 |  |  |  |
-| S14.2 | TODO | 补齐开发者文档：架构、AI 合约、状态字段 |  |  |  |
-| S14.3 | TODO | 第一阶段完整验收与稳定化 |  |  |  |
+| S14.1 | DONE | README 完整化：安装、配置、启动、provider 切换 | 2026-05-05 | Codex | pending |
+| S14.2 | DONE | 补齐开发者文档：架构、AI 合约、状态字段 | 2026-05-05 | Codex | pending |
+| S14.3 | DONE | 第一阶段完整验收与稳定化 | 2026-05-05 | Codex | pending |
 
 ## 4. 分阶段详细步骤
 
@@ -573,3 +573,28 @@ Verification:
 Risk/leftover: The manual acceptance script is documented but was not fully executed in a live browser during this slice; S14.3 should run and record the full phase-one acceptance pass.
 
 Next step: S14.1-S14.3 should complete README/developer documentation and run the first phase acceptance checklist.
+
+---
+
+Codex progress note, 2026-05-05:
+
+Steps: S14.1, S14.2, S14.3
+
+Commit: pending
+
+Completed:
+
+- Expanded `README.md` into the phase-one quick-start and orientation entrypoint, covering install, scripts, `.env`, provider switching, current playable scope, API overview, project structure, and collaboration handoff documents.
+- Added `docs/ARCHITECTURE.md` with runtime shape, request flow, route ownership, API contracts, AI provider contracts, state fields, state patch rules, exam rules, persistence, and verification expectations.
+- Added `docs/PHASE_ONE_ACCEPTANCE.md` with the first automated Mock-mode phase-one acceptance record, result snapshot, limitations, and follow-up candidates.
+- Updated the development brief and shared context so the S14 documentation and acceptance state are durable across Codex and Claude Code sessions.
+
+Verification:
+
+- `npm install` completed successfully with 0 vulnerabilities.
+- `npm test` passed with 15 tests.
+- Automated temporary Mock server on port 3214 confirmed `/`, `/styles.css`, `/app.js`, `GET /api/health`, complete scholar -> official progression through all four exams with `player.examHistory.length === 4`, short/modern/copy exam integrity checks, severe-copy score forced to 0, and emperor/minister/official role loops.
+
+Risk/leftover: Playwright is not installed in this workspace, so browser screenshot/localStorage automation was not run. Static assets plus full API acceptance passed, and `docs/MANUAL_ACCEPTANCE.md` remains the human/browser click-through script. Real provider calls were not made because no API keys are present. General and magistrate still use generic Mock fallback behavior.
+
+Next step: Define a phase-two roadmap; likely candidates are SSE streaming for turns, browser automation, general/magistrate role loops, and real-provider smoke tests with keys.
