@@ -1,5 +1,6 @@
 const form = document.querySelector("#start-form");
 const statusStrip = document.querySelector("#status-strip");
+const scholarPanel = document.querySelector("#scholar-panel");
 const narrative = document.querySelector("#narrative");
 const startPanel = document.querySelector(".start-panel");
 const gamePanel = document.querySelector(".game-panel");
@@ -9,6 +10,58 @@ const actionBtn = document.querySelector("#action-btn");
 
 let currentSessionId = null;
 
+const ATTRIBUTE_LABELS = {
+  health: "体力",
+  gold: "银钱",
+  academia: "学识",
+  literaryTalent: "文采",
+  adaptability: "机辩",
+  mentality: "心性",
+  reputation: "声望"
+};
+
+const EXAM_LABELS = {
+  child_exam: "童试",
+  provincial_exam: "乡试",
+  metropolitan_exam: "会试",
+  palace_exam: "殿试"
+};
+
+const EXAM_PROGRESS = [
+  { rank: null, label: "寒窗", next: "child_exam" },
+  { rank: "秀才", label: "秀才", next: "provincial_exam" },
+  { rank: "举人", label: "举人", next: "metropolitan_exam" },
+  { rank: "贡士", label: "贡士", next: "palace_exam" },
+  { rank: "进士", label: "进士", next: null }
+];
+
+function getExamProgress(player) {
+  if (player.role === "official") {
+    return { index: EXAM_PROGRESS.length - 1, label: "入仕", next: null };
+  }
+
+  const index = Math.max(0, EXAM_PROGRESS.findIndex((step) => step.rank === player.examRank));
+  const step = EXAM_PROGRESS[index] || EXAM_PROGRESS[0];
+  return { index, label: step.label, next: step.next };
+}
+
+function createTag(text) {
+  const tag = document.createElement("span");
+  tag.textContent = text;
+  return tag;
+}
+
+function createPanelValue(kicker, value, valueTag = "strong") {
+  const item = document.createElement("div");
+  const label = document.createElement("span");
+  label.className = "panel-kicker";
+  label.textContent = kicker;
+  const content = document.createElement(valueTag);
+  content.textContent = value;
+  item.append(label, content);
+  return item;
+}
+
 function setStatus(worldState) {
   const player = worldState.player;
   statusStrip.innerHTML = "";
@@ -17,20 +70,92 @@ function setStatus(worldState) {
     player.roleLabel,
     player.name,
     `银钱 ${player.gold}`,
-    `学识 ${player.academia}`,
-    `文采 ${player.literaryTalent}`,
-    `机辩 ${player.adaptability}`,
-    `心性 ${player.mentality}`,
-    `声望 ${player.reputation}`
+    `回合 ${worldState.turnCount}`
   ].forEach((text) => {
-    const item = document.createElement("span");
-    item.textContent = text;
-    statusStrip.appendChild(item);
+    statusStrip.appendChild(createTag(text));
   });
 }
 
+function renderMeter(label, value) {
+  const item = document.createElement("div");
+  item.className = "stat-meter";
+
+  const header = document.createElement("div");
+  header.className = "stat-meter-header";
+  header.innerHTML = `<span>${label}</span><strong>${value}</strong>`;
+
+  const track = document.createElement("div");
+  track.className = "meter-track";
+  const bar = document.createElement("span");
+  bar.style.width = `${Math.max(0, Math.min(100, value))}%`;
+  track.appendChild(bar);
+
+  item.append(header, track);
+  return item;
+}
+
+function renderScholarPanel(worldState) {
+  const player = worldState.player;
+  if (player.role !== "scholar" && player.role !== "official") {
+    scholarPanel.hidden = true;
+    scholarPanel.innerHTML = "";
+    return;
+  }
+
+  const progress = getExamProgress(player);
+  const nextExam = progress.next ? EXAM_LABELS[progress.next] : "无";
+  scholarPanel.hidden = false;
+  scholarPanel.innerHTML = "";
+
+  const progressBlock = document.createElement("section");
+  progressBlock.className = "scholar-progress";
+  progressBlock.append(
+    createPanelValue("科举进度", progress.label),
+    createPanelValue("下一场", nextExam),
+    createPanelValue(
+      "当前考试",
+      worldState.activeExam ? EXAM_LABELS[worldState.activeExam.level] || worldState.activeExam.level : "未入场"
+    )
+  );
+
+  const stepList = document.createElement("ol");
+  stepList.className = "exam-steps";
+  EXAM_PROGRESS.forEach((step, index) => {
+    const li = document.createElement("li");
+    li.className = index <= progress.index ? "is-complete" : "";
+    li.textContent = step.label;
+    stepList.appendChild(li);
+  });
+
+  const stats = document.createElement("section");
+  stats.className = "scholar-stats";
+  [
+    ["学识", player.academia],
+    ["文采", player.literaryTalent],
+    ["机辩", player.adaptability],
+    ["心性", player.mentality],
+    ["声望", player.reputation]
+  ].forEach(([label, value]) => {
+    stats.appendChild(renderMeter(label, value));
+  });
+
+  const lists = document.createElement("section");
+  lists.className = "scholar-lists";
+  lists.append(
+    createPanelValue("师承", player.teacher || "未定"),
+    createPanelValue("已读书", (player.studiedBooks || []).join("、") || "尚无记录", "p"),
+    createPanelValue("人脉", (player.connections || []).join("、") || "尚无记录", "p")
+  );
+
+  scholarPanel.append(progressBlock, stepList, stats, lists);
+}
+
+function renderWorldState(worldState) {
+  setStatus(worldState);
+  renderScholarPanel(worldState);
+}
+
 function appendNarrative(text, className) {
-  // Remove placeholder if present
   const placeholder = narrative.querySelector(".placeholder");
   if (placeholder) placeholder.remove();
 
@@ -45,15 +170,17 @@ function appendAttributeChanges(changes) {
   if (!changes || !changes.length) return;
   const div = document.createElement("div");
   div.className = "attr-changes";
-  changes.forEach((c) => {
-    const diff = c.after - c.before;
+  changes.forEach((change) => {
+    const diff = change.after - change.before;
     const sign = diff > 0 ? "+" : "";
+    const label = change.label || ATTRIBUTE_LABELS[change.path.split(".").pop()] || change.path;
     const tag = document.createElement("span");
     tag.className = diff > 0 ? "attr-up" : diff < 0 ? "attr-down" : "";
-    tag.textContent = `${c.path.split(".").pop()} ${c.before}→${c.after} (${sign}${diff})`;
+    tag.textContent = `${label} ${change.before}→${change.after} (${sign}${diff})`;
     div.appendChild(tag);
   });
   narrative.appendChild(div);
+  narrative.scrollTop = narrative.scrollHeight;
 }
 
 function showGameView() {
@@ -91,11 +218,11 @@ async function submitAction() {
     const payload = await response.json();
     appendNarrative(payload.narrative);
     appendAttributeChanges(payload.attributeChanges);
-    setStatus(payload.worldState);
+    renderWorldState(payload.worldState);
     actionInput.value = "";
 
     if (payload.examTrigger && payload.examTrigger.shouldStart) {
-      appendNarrative(`[科举提示] 已可参加考试：${payload.examTrigger.level}`, "exam-hint");
+      appendNarrative(`[科举提示] 已可参加考试：${EXAM_LABELS[payload.examTrigger.level] || payload.examTrigger.level}`, "exam-hint");
     }
   } catch (error) {
     appendNarrative(error.message, "error");
@@ -107,9 +234,9 @@ async function submitAction() {
 }
 
 actionBtn.addEventListener("click", submitAction);
-actionInput.addEventListener("keydown", (e) => {
-  if (e.key === "Enter" && !e.shiftKey) {
-    e.preventDefault();
+actionInput.addEventListener("keydown", (event) => {
+  if (event.key === "Enter" && !event.shiftKey) {
+    event.preventDefault();
     submitAction();
   }
 });
@@ -134,7 +261,7 @@ form.addEventListener("submit", async (event) => {
     const payload = await response.json();
     currentSessionId = payload.sessionId;
     localStorage.setItem("qianqiu.sessionId", payload.sessionId);
-    setStatus(payload.worldState);
+    renderWorldState(payload.worldState);
     narrative.innerHTML = "";
     appendNarrative(payload.narrative);
     showGameView();
@@ -147,7 +274,6 @@ form.addEventListener("submit", async (event) => {
   }
 });
 
-// Restore session on page load
 async function restoreSession() {
   const savedId = localStorage.getItem("qianqiu.sessionId");
   if (!savedId) return;
@@ -160,11 +286,11 @@ async function restoreSession() {
     }
     const payload = await response.json();
     currentSessionId = payload.sessionId;
-    setStatus(payload.worldState);
+    renderWorldState(payload.worldState);
     narrative.innerHTML = "";
     const history = payload.worldState.eventHistory || [];
     if (history.length) {
-      history.forEach((ev) => appendNarrative(ev));
+      history.forEach((event) => appendNarrative(event));
     } else {
       appendNarrative("存档已恢复。继续你的旅程。");
     }
@@ -174,4 +300,5 @@ async function restoreSession() {
   }
 }
 
+showStartView();
 restoreSession();

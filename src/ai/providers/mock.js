@@ -9,7 +9,7 @@ function describeOpening(worldState) {
       background,
       custom,
       "案上有《论语》《孟子》与残旧策论数卷，童试之路尚远，却已能闻见考棚纸墨气。",
-      "你可以先研读经典、拜访塾师、游学结交，也可直接请求赴考。"
+      "你可以先研读经典、拜访塾师、游学结友、辩论经义、代写文章谋生，也可直接请求赶考。"
     ].join("\n");
   }
 
@@ -34,112 +34,266 @@ function pickRandom(arr) {
   return arr[Math.floor(Math.random() * arr.length)];
 }
 
-function buildScholarTurn(input, player) {
-  const text = input.trim();
-  const lower = text;
-  const patch = { player: {} };
-  const events = [];
-  let narrative = "";
-  let examTrigger = { shouldStart: false, level: null, reason: "" };
-
-  // --- Study / reading actions ---
-  if (/研读|读书|阅读|翻阅|诵读|学习|苦读|钻研|攻读/.test(lower)) {
-    const academiaGain = 1 + Math.floor(Math.random() * 3);
-    const litGain = Math.random() > 0.5 ? 1 : 0;
-    patch.player.academia = player.academia + academiaGain;
-    if (litGain) patch.player.literaryTalent = player.literaryTalent + litGain;
-    const book = lower.match(/《[^》]+》/) ? lower.match(/《[^》]+》/)[0] : "经义典籍";
-    narrative = pickRandom([
-      `你闭门${book ? "研读" + book : "苦读"}数日，灯下字句渐明，胸中经义愈发扎实。`,
-      `翻开${book}，反复揣摩圣人微言，不知不觉已过三更。学识增长了${academiaGain}点。`,
-      `县学老先生见你勤勉，特借你一本珍藏注疏。研读之后，颇有顿悟之感。`
-    ]);
-    events.push(`${player.name}研读${book}，学识有所精进。`);
+function uniqueAppend(list, value, limit = 8) {
+  const next = Array.isArray(list) ? [...list] : [];
+  if (value && !next.includes(value)) {
+    next.push(value);
   }
+  return next.slice(-limit);
+}
 
-  // --- Teacher / visit actions ---
-  else if (/拜师|拜访|请教|求教|访师|问学/.test(lower)) {
-    const repGain = 1 + Math.floor(Math.random() * 2);
-    patch.player.reputation = player.reputation + repGain;
-    if (!player.teacher) {
-      patch.player.teacher = pickRandom(["顾文衡", "李明远", "周子谦"]);
-      narrative = `你备了薄礼前往拜访，先生见你态度诚恳，收你为记名弟子。自此可在门下听讲经义。声望有所提升。`;
-    } else {
-      narrative = `你前往${player.teacher}处请教。先生点拨了几处关键，你对经义的理解更深了一层。声望增长了${repGain}点。`;
-    }
-    events.push(`${player.name}拜访师长，虚心请教。`);
-  }
+function capStat(value) {
+  return Math.max(0, Math.min(100, value));
+}
 
-  // --- Travel / social actions ---
-  else if (/游学|结交|交友|辩论|论辩|清谈|聚会/.test(lower)) {
-    const adaptGain = 1 + Math.floor(Math.random() * 2);
-    const repGain = 1;
-    patch.player.adaptability = player.adaptability + adaptGain;
-    patch.player.reputation = player.reputation + repGain;
-    narrative = pickRandom([
-      "你与几位同窗外出游学，沿途见闻增长了不少见识。辩论之间，临场机辩之能有所提升。",
-      "在书院茶会上与人论辩经义，虽然未能尽胜，却也结交了几位志同道合的朋友。",
-      "游学途中经过名山大川，胸襟为之一阔。回来后自觉文章气象与往日不同。"
-    ]);
-    events.push(`${player.name}外出游学，增长见闻。`);
-  }
+function extractBook(input) {
+  const bracketed = input.match(/《([^》]+)》/);
+  if (bracketed) return `《${bracketed[1]}》`;
 
-  // --- Money / work actions ---
-  else if (/谋生|赚钱|代写|抄书|书信|做工|挣钱|糊口/.test(lower)) {
-    const goldGain = 2 + Math.floor(Math.random() * 4);
-    patch.player.gold = player.gold + goldGain;
-    narrative = pickRandom([
-      `你为乡邻代写了几封书信，得了${goldGain}文钱，虽不多，却也能补贴些纸墨。`,
-      `在书铺帮人抄写经卷，日复一日虽枯燥，倒也温故知新。赚了${goldGain}文。`,
-      `替乡绅写了一篇寿序，主人家颇为满意，厚赠了${goldGain}文钱。`
-    ]);
-    events.push(`${player.name}代写文章谋生，赚得${goldGain}文。`);
-  }
+  const knownBooks = ["论语", "孟子", "大学", "中庸", "诗经", "尚书", "礼记", "春秋", "易经", "资治通鉴", "史记"];
+  const found = knownBooks.find((book) => input.includes(book));
+  return found ? `《${found}》` : "经义典籍";
+}
 
-  // --- Exam trigger ---
-  else if (/考试|赴考|童试|乡试|会试|殿试|参加考试|应试|赶考/.test(lower)) {
-    const currentRank = player.examRank;
-    let targetLevel = "child_exam";
-    if (currentRank === null) targetLevel = "child_exam";
-    else if (currentRank === "秀才") targetLevel = "provincial_exam";
-    else if (currentRank === "举人") targetLevel = "metropolitan_exam";
-    else if (currentRank === "贡士") targetLevel = "palace_exam";
-    else {
-      narrative = "你已是进士出身，不必再参加科举了。可以考虑入仕为官。";
-      return { narrative, statePatch: patch, attributeChanges: [], events, examTrigger: { shouldStart: false, level: null, reason: "" } };
-    }
+function getNextExamLevel(examRank) {
+  if (examRank === null) return "child_exam";
+  if (examRank === "秀才") return "provincial_exam";
+  if (examRank === "举人") return "metropolitan_exam";
+  if (examRank === "贡士") return "palace_exam";
+  return null;
+}
 
-    examTrigger = { shouldStart: true, level: targetLevel, reason: "玩家主动请求赴考" };
-    narrative = `你收拾行装，准备前往考场。考期将近，心中既紧张又期待。`;
-    events.push(`${player.name}决定赴考。`);
-  }
-
-  // --- Rest / default ---
-  else {
-    const mentGain = Math.random() > 0.5 ? 1 : 0;
-    if (mentGain) patch.player.mentality = player.mentality + mentGain;
-    narrative = pickRandom([
-      `你在县学中静坐半日，整理思绪。窗外鸟鸣声声，心绪渐宁。${mentGain ? "心性有所提升。" : ""}`,
-      `信步走到河边，看渔人撒网。回来后铺纸研墨，写了一篇短文自娱。`,
-      `今日无特别之事。你在书房中翻了翻旧日文章，觉得彼时文笔稚嫩，如今略有所进。`
-    ]);
-    events.push(`${player.name}日常度日。`);
-  }
-
-  // Build attributeChanges
+function buildAttributeChanges(beforePlayer, patch) {
   const attributeChanges = [];
-  for (const [key, value] of Object.entries(patch.player)) {
-    if (typeof value === "number" && typeof player[key] === "number" && value !== player[key]) {
+  const labels = {
+    health: "体力",
+    gold: "银钱",
+    academia: "学识",
+    literaryTalent: "文采",
+    adaptability: "机辩",
+    mentality: "心性",
+    reputation: "声望"
+  };
+
+  for (const [key, after] of Object.entries(patch.player || {})) {
+    const before = beforePlayer[key];
+    if (typeof after === "number" && typeof before === "number" && after !== before) {
       attributeChanges.push({
         path: `player.${key}`,
-        before: player[key],
-        after: value,
-        reason: "行动结果"
+        label: labels[key] || key,
+        before,
+        after,
+        reason: "书生日常行动"
       });
     }
   }
 
-  return { narrative, statePatch: patch, attributeChanges, events, examTrigger };
+  return attributeChanges;
+}
+
+function makeResult({ narrative, patch, events, player, examTrigger }) {
+  return {
+    narrative,
+    statePatch: patch,
+    attributeChanges: buildAttributeChanges(player, patch),
+    events,
+    examTrigger: examTrigger || { shouldStart: false, level: null, reason: "" }
+  };
+}
+
+function buildStudyTurn(input, player) {
+  const book = extractBook(input);
+  const academiaGain = 2 + Math.floor(Math.random() * 3);
+  const literaryGain = book === "经义典籍" ? 1 : 1 + Math.floor(Math.random() * 2);
+  const mentalityGain = Math.random() > 0.55 ? 1 : 0;
+  const patch = {
+    player: {
+      academia: capStat(player.academia + academiaGain),
+      literaryTalent: capStat(player.literaryTalent + literaryGain),
+      studiedBooks: uniqueAppend(player.studiedBooks, book, 10)
+    }
+  };
+
+  if (mentalityGain) patch.player.mentality = capStat(player.mentality + mentalityGain);
+
+  return makeResult({
+    player,
+    patch,
+    narrative: pickRandom([
+      `你闭门研读${book}数日，先逐章疏通字义，再摘出疑难另作札记。灯影摇动之间，经义渐渐入心。`,
+      `你翻开${book}，反复揣摩圣贤微言。县学旧案上纸屑满地，胸中章句却比昨日坚实许多。`,
+      `塾中老先生见你勤勉，借来一册旧注疏。你对照${book}细读，文章根基因此更稳。`
+    ]),
+    events: [`${player.name}研读${book}，学识与文采有所精进。`]
+  });
+}
+
+function buildTeacherTurn(player) {
+  const teacherName = player.teacher || pickRandom(["顾文衡", "李明远", "周子谦"]);
+  const alreadyHasTeacher = Boolean(player.teacher);
+  const goldCost = alreadyHasTeacher ? 1 : 2;
+  const patch = {
+    player: {
+      teacher: teacherName,
+      reputation: capStat(player.reputation + (alreadyHasTeacher ? 1 : 2)),
+      academia: capStat(player.academia + 1),
+      gold: Math.max(0, player.gold - goldCost),
+      connections: uniqueAppend(player.connections, `${teacherName}门生`, 8)
+    }
+  };
+
+  return makeResult({
+    player,
+    patch,
+    narrative: alreadyHasTeacher
+      ? `你携一束修脯前往${teacherName}处请教。先生点破几处经义关节，又嘱你少作浮词、多求本旨。`
+      : `你备了薄礼拜访${teacherName}。先生见你态度诚恳，收你为记名弟子，自此可在门下听讲经义。`,
+    events: [`${player.name}拜访${teacherName}，师承与名声更稳。`]
+  });
+}
+
+function buildTravelTurn(player) {
+  const friend = pickRandom(["沈砚舟", "陆季常", "许伯言", "林怀瑾"]);
+  const patch = {
+    player: {
+      adaptability: capStat(player.adaptability + 2),
+      reputation: capStat(player.reputation + 1),
+      mentality: capStat(player.mentality + 1),
+      gold: Math.max(0, player.gold - 1),
+      connections: uniqueAppend(player.connections, friend, 8)
+    }
+  };
+
+  return makeResult({
+    player,
+    patch,
+    narrative: pickRandom([
+      `你随同窗出城游学，访古寺、问义田、听舟人谈漕运。路费用去一些，眼界却开阔不少，并结识了${friend}。`,
+      `书院茶会里，你与${friend}谈经论文。言辞往复之间，临场机辩与乡里名声都有进益。`,
+      `你行至邻县讲会，见士子议论民生利病。归来再读策论，胸中不再只有章句。`
+    ]),
+    events: [`${player.name}外出游学，结识${friend}，见闻渐广。`]
+  });
+}
+
+function buildDebateTurn(player) {
+  const rival = pickRandom(["方季良", "赵修然", "韩听泉"]);
+  const patch = {
+    player: {
+      adaptability: capStat(player.adaptability + 2),
+      literaryTalent: capStat(player.literaryTalent + 1),
+      reputation: capStat(player.reputation + 1),
+      mentality: capStat(player.mentality + (Math.random() > 0.45 ? 1 : 0)),
+      connections: uniqueAppend(player.connections, rival, 8)
+    }
+  };
+
+  return makeResult({
+    player,
+    patch,
+    narrative: `你在县学廊下与${rival}辩论经义。几番往复，虽有一两处被人驳倒，却也学会如何临场立论、收束文势。`,
+    events: [`${player.name}与${rival}辩论经义，机辩与声望有所增长。`]
+  });
+}
+
+function buildWorkTurn(player) {
+  const goldGain = 3 + Math.floor(Math.random() * 5);
+  const patch = {
+    player: {
+      gold: player.gold + goldGain,
+      literaryTalent: capStat(player.literaryTalent + 1),
+      mentality: capStat(player.mentality - (Math.random() > 0.65 ? 1 : 0))
+    }
+  };
+
+  return makeResult({
+    player,
+    patch,
+    narrative: pickRandom([
+      `你替乡邻代写书信与寿序，得了${goldGain}文钱。笔墨虽为生计而动，遣词造句也因此更熟。`,
+      `你在书铺帮人抄写经卷，日复一日颇觉枯燥，却赚得${goldGain}文，可补纸墨束脩。`,
+      `你为乡绅家写了一篇序文，主人颇为满意，厚赠${goldGain}文钱。`
+    ]),
+    events: [`${player.name}代写文章谋生，赚得${goldGain}文。`]
+  });
+}
+
+function buildExamTurn(player) {
+  const targetLevel = getNextExamLevel(player.examRank);
+  const patch = { player: {} };
+
+  if (!targetLevel) {
+    return makeResult({
+      player,
+      patch,
+      narrative: "你已是进士出身，不必再参加科举。眼下更该思量入仕后的去处与政务。",
+      events: []
+    });
+  }
+
+  const readyScore = player.academia + player.literaryTalent + player.mentality + player.reputation;
+  const advice = readyScore < 58
+    ? "只是自觉火候尚浅，若再读几卷书、请教师友，或许更稳。"
+    : "胸中虽仍忐忑，所学已足以一试锋芒。";
+
+  return makeResult({
+    player,
+    patch,
+    narrative: `你收拾行装，准备前往考场。考期将近，纸墨、干粮、行囊一一备妥。${advice}`,
+    events: [`${player.name}决定赶考。`],
+    examTrigger: { shouldStart: true, level: targetLevel, reason: "玩家主动请求赶考" }
+  });
+}
+
+function buildRestTurn(input, player) {
+  const mentalityGain = 1;
+  const patch = {
+    player: {
+      mentality: capStat(player.mentality + mentalityGain),
+      health: Math.min(100, player.health + 1)
+    }
+  };
+
+  return makeResult({
+    player,
+    patch,
+    narrative: pickRandom([
+      `你暂放书卷，在县学中静坐半日，整理思绪。窗外鸟鸣声细，心绪渐宁。`,
+      `你信步走到河边，看渔人撒网。归来后铺纸研墨，只写数行随笔，倒也神清气定。`,
+      `今日无特别之事。你在书房中翻了翻旧日文章，觉出从前浮躁处，心性因此更沉。`
+    ]),
+    events: [`${player.name}休整一日，心性稍定。`]
+  });
+}
+
+function buildScholarTurn(input, player) {
+  const text = input.trim();
+
+  if (/研读|读书|阅读|翻阅|诵读|学习|苦读|钻研|攻读|温书|习经/.test(text)) {
+    return buildStudyTurn(text, player);
+  }
+
+  if (/拜师|拜访|请教|求教|访师|问学|投师|塾师/.test(text)) {
+    return buildTeacherTurn(player);
+  }
+
+  if (/游学|结交|交友|清谈|雅集|讲会|访友|同窗/.test(text)) {
+    return buildTravelTurn(player);
+  }
+
+  if (/辩论|论辩|辩经|驳论|策问|讲论/.test(text)) {
+    return buildDebateTurn(player);
+  }
+
+  if (/谋生|赚钱|代写|抄书|书信|做工|挣錢|挣钱|糊口|润笔|写序/.test(text)) {
+    return buildWorkTurn(player);
+  }
+
+  if (/考试|赶考|童试|乡试|会试|殿试|参加考试|应试|赴考|入场/.test(text)) {
+    return buildExamTurn(player);
+  }
+
+  return buildRestTurn(text, player);
 }
 
 async function runTurn(worldState, input) {
@@ -149,15 +303,15 @@ async function runTurn(worldState, input) {
     return buildScholarTurn(input, player);
   }
 
-  // Generic fallback for other roles
+  // Generic fallback for other roles until their dedicated loops are implemented.
   const patch = { player: {} };
   const mentGain = Math.random() > 0.5 ? 1 : 0;
   if (mentGain) patch.player.mentality = player.mentality + mentGain;
 
   return {
-    narrative: `你下达了指令："${input.trim()}"。幕僚们领命而去，数日后传来回音。事态在缓慢推进中。`,
+    narrative: `你下达了指令：“${input.trim()}”。幕僚们领命而去，数日后传来回音。事态正在缓慢推进。`,
     statePatch: patch,
-    attributeChanges: [],
+    attributeChanges: buildAttributeChanges(player, patch),
     events: [`${player.name}下达指令：${input.trim().slice(0, 30)}`],
     examTrigger: { shouldStart: false, level: null, reason: "" }
   };
