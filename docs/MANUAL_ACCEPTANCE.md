@@ -17,6 +17,14 @@ Open `http://localhost:3000` and confirm:
 - A new scholar game can be created.
 - Refreshing the page restores the active session from local storage.
 
+Optional automated browser smoke for the same opening/restoration surface:
+
+```powershell
+npm run smoke:browser -- --url http://localhost:3000
+```
+
+The smoke uses a local Chrome or Edge executable. Set `BROWSER_EXECUTABLE_PATH` or pass `--browser <path>` if the browser is installed outside the standard location.
+
 ## 2. API Smoke Check
 
 Run these commands in a second PowerShell window while the server is running:

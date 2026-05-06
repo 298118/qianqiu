@@ -70,7 +70,7 @@
 | S25.1 | DONE | 增加真实 provider smoke 脚本，在有 key 时验证 start/turn/question/submit 四类调用 | 2026-05-06 | Codex | 本次 S25.1 提交 |
 | S25.2 | DONE | 评估并实现真实 provider token streaming；无法流式的 provider 保持兼容降级 | 2026-05-06 | Codex + subagent investigation | current S25.2 commit |
 | S25.3 | DONE | 建立 AI 输出 eval fixtures，固定校验 JSON 合约、违规 patch、科举评卷和历史语气 | 2026-05-06 | Codex + subagent recommendation | current S25.3 commit |
-| S26.1 | TODO | 引入浏览器自动化验收方案，优先覆盖本地页面加载、开局、localStorage 恢复 |
+| S26.1 | DONE | 引入浏览器自动化验收方案，优先覆盖本地页面加载、开局、localStorage 恢复 | 2026-05-06 | Codex + subagent recommendation | current S26.1 commit |
 | S26.2 | TODO | 增加截图或 DOM 级 UI 验收，覆盖桌面/移动布局、考试弹窗和放榜详情 |
 | S26.3 | TODO | 将浏览器验收结果写入文档，并保留手动验收清单作为 fallback |
 | S27.1 | TODO | 完成第二阶段验收文档，记录新增深度、已知限制、真实 provider 状态和下一阶段候选 |
@@ -157,6 +157,34 @@
 ```
 
 ### 2026-05-06
+
+Tool: Codex
+
+Step: S26.1
+
+Commit: current S26.1 commit
+
+Completed:
+- Added `scripts/browserSmoke.js` and `npm run smoke:browser` as the focused local browser acceptance entrypoint.
+- Added `playwright-core` as a dev dependency without bundling a browser download; the script resolves `BROWSER_EXECUTABLE_PATH`, `--browser <path>`, or common Chrome/Edge install paths.
+- The smoke starts a temporary Mock-mode server by default, or targets an existing server with `--url`; it verifies page load, scholar opening flow, `qianqiu.sessionId` localStorage persistence, reload/fresh-page restoration into the game view, API readability for the restored session, and smoke session cleanup.
+- Added `test/browserSmokeScript.test.js` for no-browser argument/path helper coverage so `npm test` stays fast and GUI-independent.
+- Updated README, architecture notes, product brief, development ledger, and shared handoff context.
+
+Verification:
+- `node --check scripts/browserSmoke.js`
+- `node --check test/browserSmokeScript.test.js`
+- `node --test test/browserSmokeScript.test.js` passed with 5 tests.
+- `npm run smoke:browser` passed against a temporary Mock server and restored a browser-created session from localStorage.
+- `npm run smoke:browser -- --url http://127.0.0.1:<temp-port>` passed against an explicitly started local Mock server.
+- `npm test` passed with 84 tests.
+
+Risk/leftover:
+- Browser smoke needs a local Chrome or Edge executable, or `BROWSER_EXECUTABLE_PATH`/`--browser`; it is intentionally not part of `npm test`.
+- S26.1 verifies behavior through DOM visibility and localStorage, not screenshots or responsive layout.
+
+Next:
+- S26.2: add DOM or screenshot-level UI acceptance for desktop/mobile layout, the exam modal, result detail sections, and the action input surface.
 
 Tool: Codex
 

@@ -8,6 +8,7 @@
     "dev": "node --watch server.js",
     "test": "node --test",
     "eval:ai": "node --test test/aiEvalFixtures.test.js",
+    "smoke:browser": "node scripts/browserSmoke.js",
     "smoke:provider": "node scripts/providerSmoke.js"
   },
   "keywords": [
@@ -23,5 +24,8 @@
     "dotenv": "latest",
     "express": "latest",
     "openai": "^6.36.0"
+  },
+  "devDependencies": {
+    "playwright-core": "^1.59.1"
   }
 }

@@ -11,6 +11,7 @@ Qianqiu is intentionally buildless in phase one:
 - Storage: local JSON files under `data/sessions/`.
 - AI: adapter-based providers behind `src/ai/index.js`.
 - Tests: Node.js built-in `node --test`.
+- Browser smoke: `playwright-core` driving an installed Chrome/Edge browser through `scripts/browserSmoke.js`.
 
 The app should stay runnable with:
 
@@ -206,6 +207,17 @@ npm run eval:ai
 
 The focused test is `test/aiEvalFixtures.test.js`, with fixture data in `testdata/aiEvalFixtures.js` so Node's test runner does not treat fixture data as a test file. It parses raw model-like text through `src/utils/json.js`, validates final payloads through `src/ai/schemas.js`, checks restrained historical tone heuristics, verifies unsafe turn authority claims are rejected, records schema-valid but policy-risky ordinary turn claims such as direct `activeExam`, `characters`, `eventHistory`, or `player.examRank` patches, and confirms patch application clamps numeric fields plus known faction scores. This gate is offline and should remain separate from keyed provider smoke runs.
 
+### Browser Smoke
+
+S26.1 adds `scripts/browserSmoke.js` as the focused browser acceptance entrypoint:
+
+```bash
+npm run smoke:browser
+npm run smoke:browser -- --url http://localhost:3000
+```
+
+The script uses `playwright-core` with an installed Chrome or Edge executable. It resolves `BROWSER_EXECUTABLE_PATH`, `--browser <path>`, or common platform install paths. Without `--url`, it starts `server.js` in Mock mode on a free local port, verifies the page loads, creates a scholar game through the real form, checks that `localStorage["qianqiu.sessionId"]` is written, reloads the page, opens a fresh page to confirm the saved session restores into the game view, verifies the session is readable through `GET /api/game/state/:sessionId`, and then removes the smoke session JSON file. It stays separate from `npm test` so normal automated tests do not require a local GUI browser.
+
 ## State Model
 
 `createInitialState()` in `src/game/initialState.js` returns a `worldState` with:
@@ -357,6 +369,12 @@ For keyed provider smoke, use:
 ```bash
 npm run smoke:provider
 npm run smoke:provider -- --stream --provider openai
+```
+
+For local browser acceptance, use:
+
+```bash
+npm run smoke:browser
 ```
 
 For local acceptance, run the checklist in [docs/MANUAL_ACCEPTANCE.md](MANUAL_ACCEPTANCE.md). When a release slice is accepted, record the exact commands, result and known limitations in [docs/PHASE_ONE_ACCEPTANCE.md](PHASE_ONE_ACCEPTANCE.md), `docs/SHARED_CONTEXT.md`, and `docs/DEVELOPMENT_STEPS.md`.

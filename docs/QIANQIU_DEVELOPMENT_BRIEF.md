@@ -722,3 +722,13 @@ S25.3 adds a no-network AI output fixture gate without changing default Mock pla
 - The eval gate parses raw model-like text through `src/utils/json.js`, validates final payloads through `src/ai/schemas.js`, and applies focused checks for historical tone, unsafe JSON contracts, ordinary-turn authority risks, patch clamping, faction score safety, grade bounds, and local exam authenticity penalties.
 - S25.3 intentionally keeps live provider calls out of `npm test`; keyed network checks remain in `npm run smoke:provider`.
 - Provider faction patches now clamp existing faction scores to `0..100` while still dropping invented faction keys.
+
+## S26.1 Browser Smoke Note (2026-05-06)
+
+S26.1 introduces repeatable local browser acceptance without changing the default `npm start` flow:
+
+- `npm run smoke:browser` runs `scripts/browserSmoke.js`.
+- The script uses `playwright-core` with an installed Chrome or Edge executable. Developers can set `BROWSER_EXECUTABLE_PATH` or pass `--browser <path>` when the browser is installed outside standard platform paths.
+- By default the smoke starts a temporary Mock-mode server on a free local port. `npm run smoke:browser -- --url http://localhost:3000` targets an already running server.
+- The first S26.1 journey covers local page load, scholar opening flow through the real form, `qianqiu.sessionId` localStorage persistence, reload/fresh-page session restoration, API readability for the restored session, and cleanup of the smoke session file.
+- Browser smoke remains outside `npm test` so the normal test suite stays no-browser and fast. Future S26.2 work should add DOM or screenshot-level coverage for desktop/mobile layout, the exam modal, result details, and the action input surface.
