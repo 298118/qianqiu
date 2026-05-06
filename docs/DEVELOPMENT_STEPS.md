@@ -185,6 +185,27 @@
 
 Tool: Codex
 
+Step: GitHub publish README refresh
+
+Commit: current README publish commit
+
+Completed:
+- Rewrote `README.md` as a GitHub-facing project overview through third phase S39.1.
+- The README now summarizes what Qianqiu is, current phase status, main third-phase updates, major fixes/hardening, technology stack, quick start, environment config, common verification commands, API overview, important docs, and known limitations.
+- This is documentation-only publish preparation. The pre-commit subagent review gate is skipped as low risk and the skip is recorded in `docs/SHARED_CONTEXT.md`.
+
+Verification:
+- `git diff --check`
+- UTF-8 readability check for `README.md`, `docs/SHARED_CONTEXT.md`, and `docs/DEVELOPMENT_STEPS.md`
+
+Risk/leftover:
+- Runtime code is unchanged by this README refresh.
+
+Next:
+- Push `main` to GitHub.
+
+Tool: Codex
+
 Step: S39.1
 
 Commit: b344217

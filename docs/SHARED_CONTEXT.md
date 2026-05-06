@@ -145,6 +145,10 @@ Use focused checks first, then broaden when behavior crosses module boundaries:
 - Put stable API/architecture/product changes in README, `docs/QIANQIU_DEVELOPMENT_BRIEF.md`, or the relevant contract file.
 - Do not leave decisions only in chat.
 
+## Current Publish Note
+
+- 2026-05-06: README has been rewritten in the current README publish commit as a GitHub-facing project overview through third phase S39.1, covering main updates, fixes, hardening, technology stack, setup, APIs, verification commands, documents, and known limitations. This is documentation-only publish prep; pre-commit subagent review was skipped as low risk and recorded here.
+
 ## Next Recommended Step
 
-After the S39.1 commit hash is recorded in this handoff and `docs/DEVELOPMENT_STEPS.md`, continue with the storage adapter/SQLite boundary from `docs/SESSION_STORAGE_MIGRATION_PLAN.md` or the next long-term simulation depth slice.
+Push the current `main` branch to GitHub after the README refresh commit, then continue with the storage adapter/SQLite boundary from `docs/SESSION_STORAGE_MIGRATION_PLAN.md` or the next long-term simulation depth slice.
