@@ -6,13 +6,14 @@ Both tools must read this file at the start of every development session, after 
 
 ## Current Snapshot
 
-- Repository status: phase-one playable vertical slice is implemented, accepted, and archived. Phase two is now accepted as a local development milestone: S21 world tick, S22 relationship memory, S23 identity depth, S24 exam depth, S25 real-provider readiness/eval gates, and S26 browser acceptance are implemented and recorded. S27.1 phase-two acceptance documentation is complete. The next active planning target is to open a third-phase roadmap.
+- Repository status: phase-one playable vertical slice is implemented, accepted, and archived. Phase two is accepted as a local development milestone and its active roadmap is archived. The active roadmap is now the third-phase plan in `docs/DEVELOPMENT_STEPS.md`, starting at S30. Third-phase work targets layout/state-boundary hardening first, then relationship visibility, active NPCs, long-horizon events, official outcomes, exam calendarization, role/world coupling, keyed provider long-run acceptance, browser journey expansion, and storage migration planning.
 - Canonical product brief: `docs/QIANQIU_DEVELOPMENT_BRIEF.md`.
 - Shared implementation roadmap and progress ledger: `docs/DEVELOPMENT_STEPS.md`.
 - Developer implementation map: `docs/ARCHITECTURE.md`.
 - Phase-one acceptance record: `docs/PHASE_ONE_ACCEPTANCE.md`.
 - Phase-two acceptance record: `docs/PHASE_TWO_ACCEPTANCE.md`.
 - Phase-one roadmap archive: `docs/PHASE_ONE_ROADMAP_ARCHIVE.md`.
+- Phase-two roadmap archive: `docs/PHASE_TWO_ROADMAP_ARCHIVE.md`.
 - Codex entrypoint: `AGENTS.md`.
 - Claude Code entrypoint: `CLAUDE.md`.
 - Default development target: runnable Node.js + Express + pure HTML/CSS/JS game at `http://localhost:3000`.
@@ -24,8 +25,8 @@ Both tools must read this file at the start of every development session, after 
 
 - Use one shared context file for both Codex and Claude Code: `docs/SHARED_CONTEXT.md`.
 - Use one shared step ledger for both Codex and Claude Code: `docs/DEVELOPMENT_STEPS.md`.
-- `docs/DEVELOPMENT_STEPS.md` is now the phase-two active roadmap. The completed first-phase roadmap is archived in `docs/PHASE_ONE_ROADMAP_ARCHIVE.md`; first-phase acceptance details remain in `docs/PHASE_ONE_ACCEPTANCE.md`.
-- The phase-two planning transition does not change the mandatory development workflow, Git discipline, Mock-default requirement, provider-optional requirement, or server-owned state/rules boundary.
+- `docs/DEVELOPMENT_STEPS.md` is now the third-phase active roadmap. The completed first-phase roadmap is archived in `docs/PHASE_ONE_ROADMAP_ARCHIVE.md`; the completed second-phase roadmap is archived in `docs/PHASE_TWO_ROADMAP_ARCHIVE.md`; phase acceptance details remain in `docs/PHASE_ONE_ACCEPTANCE.md` and `docs/PHASE_TWO_ACCEPTANCE.md`.
+- The phase-three planning transition does not change the mandatory development workflow, Git discipline, Mock-default requirement, provider-optional requirement, or server-owned state/rules boundary.
 - Every coherent project change must be committed locally with Git.
 - The user has explicitly authorized Codex and Claude Code to use subagents for this repository. Treat that authorization as durable project context unless a newer user instruction narrows or revokes it.
 - Use subagents proactively for roadmap phases or step clusters when the work can be split into independent small steps. A phase such as S25 may have S25.1, S25.2, and S25.3 handled by separate subagents if their file ownership and verification responsibilities are clear.
@@ -190,7 +191,8 @@ Before finishing each coherent change:
 - 2026-05-06: S26.2 DOM/screenshot-level UI acceptance implemented in `scripts/browserSmoke.js`, with desktop/mobile layout assertions, exam modal coverage, result-detail/archive checks, and optional `--screenshots <dir>` artifact saving. The pass exposed and fixed `.exam-requirements[hidden]` not being hidden in result/archive views. Verified `node --check scripts/browserSmoke.js`, `node --check test/browserSmokeScript.test.js`, `node --test test/browserSmokeScript.test.js`, `npm run smoke:browser -- --screenshots artifacts/browser-smoke/s26-2`, `npm test` with 87 passing tests, `npm run smoke:browser`, and visual review of the generated desktop result and mobile archive screenshots.
 - 2026-05-06: S26.3 browser acceptance documentation committed as `a38cf34`, adding `docs/BROWSER_ACCEPTANCE.md` and linking it from README, architecture notes, manual acceptance, product brief, this handoff, and the development ledger. The record captures automated browser coverage, latest S26.2 results, screenshot policy, and the manual fallback gaps. Verification also added `test-helpers/fetchSafeServer.js` after an intermittent full-suite `bad port` failure from Node Fetch. Verified `node --check test-helpers/fetchSafeServer.js`, focused `node --test test/gameTurnTick.test.js test/streamingTurnRoute.test.js test/gameTurnRelationships.test.js`, `git diff --check`, and `npm test` with 87 passing tests.
 - 2026-05-06: S27.1 phase-two acceptance documentation committed as `fee91df`, adding `docs/PHASE_TWO_ACCEPTANCE.md` and linking it from README, architecture notes, product brief, this handoff, and the development ledger. Verified `npm run eval:ai` with 6 passing tests, `npm run smoke:provider` no-key skip, `npm test` with 87 passing tests, `npm run smoke:browser -- --screenshots artifacts/browser-smoke/s27-1` with desktop/mobile UI acceptance and 5 screenshots checked, and `git diff --check`.
+- 2026-05-06: S30.1 third-phase roadmap transition opened. `docs/PHASE_TWO_ROADMAP_ARCHIVE.md` now freezes the second-phase roadmap, `docs/DEVELOPMENT_STEPS.md` now starts the third-phase active roadmap at S30, and README plus the product brief point to the new roadmap while preserving all development workflow requirements. Verified `git diff --check`, Node.js UTF-8 readability for changed docs, and `npm test` with 87 passing tests.
 
 ## Next Recommended Step
 
-Recommended next step is to open a third-phase roadmap in `docs/DEVELOPMENT_STEPS.md`, using the candidates in `docs/PHASE_TWO_ACCEPTANCE.md` as the starting backlog.
+Recommended next step is S31.1: repair the desktop game-state layout so the game panel uses the available width after the start panel is hidden, then expand browser smoke with a width/cropping assertion.

@@ -20,9 +20,11 @@
 
 - 第一阶段验收记录：`docs/PHASE_ONE_ACCEPTANCE.md`。
 - 第一阶段路线图归档：`docs/PHASE_ONE_ROADMAP_ARCHIVE.md`。
-- 当前活动路线图：`docs/DEVELOPMENT_STEPS.md`，已记录第二阶段完成与下一阶段候选。
+- 当前活动路线图：`docs/DEVELOPMENT_STEPS.md`，已切换为第三阶段规划与进度台账。
 
-第二阶段已经完成本地验收，记录见 `docs/PHASE_TWO_ACCEPTANCE.md`。已接受的范围包括世界 tick、NPC/派系记忆、地方官与将领深度、入仕官员深度、科举竞争深度、真实 provider smoke/streaming 准备、AI eval fixtures 和浏览器自动化验收。下一阶段应新开路线图，而不是继续扩展 S27.1。
+第二阶段已经完成本地验收，记录见 `docs/PHASE_TWO_ACCEPTANCE.md`；第二阶段路线图已归档到 `docs/PHASE_TWO_ROADMAP_ARCHIVE.md`。已接受的范围包括世界 tick、NPC/派系记忆、地方官与将领深度、入仕官员深度、科举竞争深度、真实 provider smoke/streaming 准备、AI eval fixtures 和浏览器自动化验收。
+
+第三阶段已经在 `docs/DEVELOPMENT_STEPS.md` 开启。第三阶段目标是先修正桌面游戏态布局、普通回合服务器独占字段边界和开局 role 校验，再推进关系可视化、主动 NPC、长期事件调度、官场结果、科举日历、身份与世界联动、真实 provider 长回合验收、浏览器完整旅程和存档迁移规划。
 
 开发规范不变。第 12 节和第 13 节仍是每次开发必须遵守的流程；Mock 默认可玩、真实 provider 可选、服务器拥有状态边界和科举规则这些要求继续有效。
 
@@ -537,19 +539,21 @@ chore: update env example
 - AI JSON 有 schema 校验和失败降级。
 - README 说明安装、配置、启动和 provider 切换。
 
-## 15. 第二阶段规划摘要
+## 15. 第三阶段规划摘要
 
-第二阶段以“让世界更像会自行运转的历史模拟器”为中心。活动台账见 `docs/DEVELOPMENT_STEPS.md`。
+第二阶段以“让世界更像会自行运转的历史模拟器”为中心，已完成本地验收并归档。第三阶段活动台账见 `docs/DEVELOPMENT_STEPS.md`，第二阶段路线图归档见 `docs/PHASE_TWO_ROADMAP_ARCHIVE.md`。
 
-优先级顺序：
+第三阶段优先级顺序：
 
-1. 世界模拟主循环：定义并实现服务器拥有的 tick，让时间、财政、粮储、民心、边患、腐败和事件历史形成长期联动。
-2. NPC 与派系记忆：为人物和派系增加可追踪关系、近期意图和反应，让行动留下社会后果。
-3. 身份深度扩展：补齐地方官与将领专属循环，并深化入仕后的官场路径。
-4. 科举深度：为虚拟考生生成文章与短评，提供考试档案回看，并增加赶考成本与考前状态影响。
-5. 真实 provider 与质量门槛：在有 key 时做端到端 smoke，建立 AI eval fixtures，并加入浏览器自动化验收。
+1. 地基修复：修复桌面游戏态布局过窄问题，扩展浏览器 smoke；收紧普通 provider patch 中的服务器独占字段；校验开局 role。
+2. 关系可视化与主动 NPC：把 `relationshipLedger` 做成玩家可检查的联系人/派系面板，并让 NPC/派系能主动请托、施压、求援或索取回报。
+3. 长期事件调度器：让 world tick 从确定性资源漂移升级为季节、灾荒、边报、朝争和地方案件链组成的长期事件年表。
+4. 官场结果引擎：让入仕后的考成、升迁、弹劾、调任、外放、降调和罢黜由服务器拥有的结算规则触发。
+5. 科举日历与持久竞争者：加入考期窗口、备考月程、错过考期、师长推荐，并让虚拟同场考生跨考试延续为竞争者、同年或官场人脉。
+6. 身份与世界联动：让地方官、将领、皇帝和大臣行动对 world tick、长期事件与关系账本产生复合后果。
+7. 验收与存档：增加 keyed real-provider 长回合验收、完整浏览器旅程和存档迁移规划。
 
-所有第二阶段实现仍需满足第一阶段的基础验收：默认 Mock 可运行，完整 scholar -> official 路径不得被破坏，真实 provider 不得成为本地启动必要条件。
+所有第三阶段实现仍需满足基础验收：默认 Mock 可运行，完整 scholar -> official 路径不得被破坏，真实 provider 不得成为本地启动必要条件，服务器继续拥有状态边界、科举晋级、作弊惩罚、长期事件结果和持久化裁决。
 
 ## S11 Provider Integration Note (2026-05-05)
 
@@ -760,3 +764,12 @@ S27.1 records second-phase acceptance in `docs/PHASE_TWO_ACCEPTANCE.md`:
 - Verified commands for this acceptance pass: `npm run eval:ai`, `npm run smoke:provider`, `npm test`, `npm run smoke:browser -- --screenshots artifacts/browser-smoke/s27-1`, and `git diff --check`.
 - Live real-provider calls remain unverified in this environment because no provider keys are configured; the provider smoke skipped successfully and keyed checks remain optional.
 - The next phase should open a new roadmap instead of extending S27.1. Candidate directions are long-horizon simulation, relationship inspection UI, deeper official career outcomes, stronger role/world interactions, keyed provider acceptance, broader browser journeys, and storage migration planning.
+
+## S30.1 Third-Phase Roadmap Note (2026-05-06)
+
+S30.1 opens the third-phase active roadmap without changing development rules:
+
+- `docs/PHASE_TWO_ROADMAP_ARCHIVE.md` freezes the completed second-phase roadmap.
+- `docs/DEVELOPMENT_STEPS.md` now starts the third-phase active ledger at S30.
+- Third-phase priorities start with layout and state-boundary hardening, then proceed to relationship visibility, active NPCs, long-horizon events, official career outcomes, exam calendarization, role/world coupling, keyed provider long-run acceptance, broader browser acceptance, and storage migration planning.
+- The mandatory workflow, Git discipline, Mock-default requirement, provider-optional requirement, server-owned state/rules boundary, and complete scholar -> official path protection remain unchanged.
