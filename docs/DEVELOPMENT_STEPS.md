@@ -1,8 +1,8 @@
 # 《千秋》第二阶段开发路线图与进度台账
 
-本文件仍是 Codex 与 Claude Code 共同维护的活动路线图。第一阶段路线图已归档到 [docs/PHASE_ONE_ROADMAP_ARCHIVE.md](PHASE_ONE_ROADMAP_ARCHIVE.md)，验收记录仍见 [docs/PHASE_ONE_ACCEPTANCE.md](PHASE_ONE_ACCEPTANCE.md)。
+本文件仍是 Codex 与 Claude Code 共同维护的路线图与进度台账。第一阶段路线图已归档到 [docs/PHASE_ONE_ROADMAP_ARCHIVE.md](PHASE_ONE_ROADMAP_ARCHIVE.md)，验收记录仍见 [docs/PHASE_ONE_ACCEPTANCE.md](PHASE_ONE_ACCEPTANCE.md)。第二阶段已在 [docs/PHASE_TWO_ACCEPTANCE.md](PHASE_TWO_ACCEPTANCE.md) 完成本地验收记录。
 
-第二阶段从“可玩纵切”进入“可持续模拟”。目标不是推翻现有实现，而是在保持 `npm install && npm start`、Mock 默认可玩、服务器裁决状态边界的前提下，逐步增加世界深度、身份差异、真实 provider 验收和浏览器级质量门槛。
+第二阶段从“可玩纵切”进入“可持续模拟”。目标不是推翻现有实现，而是在保持 `npm install && npm start`、Mock 默认可玩、服务器裁决状态边界的前提下，逐步增加世界深度、身份差异、真实 provider 验收和浏览器级质量门槛。S27.1 后，本文件没有剩余第二阶段 TODO；下一次路线图工作应开启第三阶段小步骤。
 
 ## 1. 使用规则
 
@@ -73,7 +73,7 @@
 | S26.1 | DONE | 引入浏览器自动化验收方案，优先覆盖本地页面加载、开局、localStorage 恢复 | 2026-05-06 | Codex + subagent recommendation | current S26.1 commit |
 | S26.2 | DONE | 增加截图或 DOM 级 UI 验收，覆盖桌面/移动布局、考试弹窗、放榜详情、考试档案和输入区 | 2026-05-06 | Codex | 434b3ef |
 | S26.3 | DONE | 将浏览器验收结果写入文档，并保留手动验收清单作为 fallback | 2026-05-06 | Codex | a38cf34 |
-| S27.1 | TODO | 完成第二阶段验收文档，记录新增深度、已知限制、真实 provider 状态和下一阶段候选 |
+| S27.1 | DONE | 完成第二阶段验收文档，记录新增深度、已知限制、真实 provider 状态和下一阶段候选 | 2026-05-06 | Codex | current S27.1 commit |
 
 ## 4. 分阶段详细步骤
 
@@ -157,6 +157,33 @@
 ```
 
 ### 2026-05-06
+
+Tool: Codex
+
+Step: S27.1
+
+Commit: current S27.1 commit
+
+Completed:
+- Added `docs/PHASE_TWO_ACCEPTANCE.md` as the second-phase acceptance record.
+- Recorded accepted S21-S26 depth: world tick, relationship memory, magistrate/general/official identity depth, exam competition/archive/travel, real-provider smoke/streaming readiness, no-network AI eval fixtures, and browser UI acceptance.
+- Linked the phase-two acceptance record from README, architecture notes, product brief, shared context, and this ledger.
+- Marked phase two as accepted locally and moved the recommended next step to opening a third-phase roadmap.
+
+Verification:
+- `npm run eval:ai` passed with 6 tests.
+- `npm run smoke:provider` skipped successfully because no real-provider keys are configured.
+- `npm test` passed with 87 tests.
+- `npm run smoke:browser -- --screenshots artifacts/browser-smoke/s27-1` passed with desktop/mobile UI acceptance and 5 screenshots checked.
+- `git diff --check`
+
+Risk/leftover:
+- Live real-provider network calls were not run because this environment has no provider keys.
+- Browser smoke is representative, not a complete four-exam browser playthrough or every role loop.
+- Third-phase planning is not opened yet; S27.1 only records the accepted second-phase milestone and candidate next directions.
+
+Next:
+- Open a third-phase roadmap in this file, using the candidates in `docs/PHASE_TWO_ACCEPTANCE.md` as the starting backlog.
 
 Tool: Codex
 

@@ -384,4 +384,4 @@ For local browser acceptance, use:
 npm run smoke:browser
 ```
 
-For local acceptance, run the checklist in [docs/MANUAL_ACCEPTANCE.md](MANUAL_ACCEPTANCE.md). When a release slice is accepted, record the exact commands, result and known limitations in [docs/PHASE_ONE_ACCEPTANCE.md](PHASE_ONE_ACCEPTANCE.md), `docs/SHARED_CONTEXT.md`, and `docs/DEVELOPMENT_STEPS.md`.
+For local acceptance, run the checklist in [docs/MANUAL_ACCEPTANCE.md](MANUAL_ACCEPTANCE.md). Browser automation coverage lives in [docs/BROWSER_ACCEPTANCE.md](BROWSER_ACCEPTANCE.md). Phase milestones are recorded in [docs/PHASE_ONE_ACCEPTANCE.md](PHASE_ONE_ACCEPTANCE.md) and [docs/PHASE_TWO_ACCEPTANCE.md](PHASE_TWO_ACCEPTANCE.md); every accepted slice should also update `docs/SHARED_CONTEXT.md` and `docs/DEVELOPMENT_STEPS.md`.

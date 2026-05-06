@@ -178,7 +178,8 @@ data/sessions/
 - [docs/MANUAL_ACCEPTANCE.md](docs/MANUAL_ACCEPTANCE.md)：人工端到端验收脚本。
 - [docs/BROWSER_ACCEPTANCE.md](docs/BROWSER_ACCEPTANCE.md)：浏览器自动验收覆盖、最近结果和人工 fallback。
 - [docs/PHASE_ONE_ACCEPTANCE.md](docs/PHASE_ONE_ACCEPTANCE.md)：第一阶段验收记录。
+- [docs/PHASE_TWO_ACCEPTANCE.md](docs/PHASE_TWO_ACCEPTANCE.md)：第二阶段验收记录、已知限制和第三阶段候选。
 
 ## 当前状态
 
-项目已完成第一阶段可玩纵切，并进入第二阶段“可持续模拟”开发。当前已实现世界 tick、关系账本、地方官深度、将领深度、入仕官员深度、科举深度、真实 provider smoke、真实 provider turn token streaming、离线 AI 输出 eval fixtures、本地浏览器 smoke 验收、DOM/截图级 UI 验收和浏览器验收记录。下一步计划是完成第二阶段验收文档，记录新增深度、已知限制、真实 provider 状态和第三阶段候选。
+项目已完成第一阶段可玩纵切，并完成第二阶段“可持续模拟”本地验收。当前已实现世界 tick、关系账本、地方官深度、将领深度、入仕官员深度、科举深度、真实 provider smoke、真实 provider turn token streaming、离线 AI 输出 eval fixtures、本地浏览器 smoke 验收、DOM/截图级 UI 验收、浏览器验收记录和第二阶段验收记录。下一步应开启第三阶段路线图，围绕长期模拟、关系可视化、完整浏览器旅程和 keyed real-provider 验收继续推进。

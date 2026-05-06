@@ -6,11 +6,12 @@ Both tools must read this file at the start of every development session, after 
 
 ## Current Snapshot
 
-- Repository status: phase-one playable vertical slice is implemented, accepted, and now archived as historical planning. Phase two has started; S23.1 local magistrate identity depth, S23.2 general identity depth, S23.3 official identity depth, S24.1-S24.3 exam depth, S25.1 real-provider smoke scripts, S25.2 real-provider turn token streaming, S25.3 AI output eval fixtures, S26.1 browser smoke automation, S26.2 DOM/screenshot-level UI acceptance, and S26.3 browser acceptance documentation are implemented. The next active implementation target is S27.1 phase-two acceptance documentation.
+- Repository status: phase-one playable vertical slice is implemented, accepted, and archived. Phase two is now accepted as a local development milestone: S21 world tick, S22 relationship memory, S23 identity depth, S24 exam depth, S25 real-provider readiness/eval gates, and S26 browser acceptance are implemented and recorded. S27.1 phase-two acceptance documentation is complete. The next active planning target is to open a third-phase roadmap.
 - Canonical product brief: `docs/QIANQIU_DEVELOPMENT_BRIEF.md`.
 - Shared implementation roadmap and progress ledger: `docs/DEVELOPMENT_STEPS.md`.
 - Developer implementation map: `docs/ARCHITECTURE.md`.
 - Phase-one acceptance record: `docs/PHASE_ONE_ACCEPTANCE.md`.
+- Phase-two acceptance record: `docs/PHASE_TWO_ACCEPTANCE.md`.
 - Phase-one roadmap archive: `docs/PHASE_ONE_ROADMAP_ARCHIVE.md`.
 - Codex entrypoint: `AGENTS.md`.
 - Claude Code entrypoint: `CLAUDE.md`.
@@ -46,6 +47,7 @@ Both tools must read this file at the start of every development session, after 
 - S26.2 extends `npm run smoke:browser` with desktop/mobile DOM layout assertions, in-memory PNG screenshot validation, exam modal writing coverage, immediate result-detail coverage, and mobile exam-archive coverage. `--screenshots <dir>` saves the checked PNG artifacts for manual review; `artifacts/` is ignored by Git.
 - S26.2 also fixed the result-modal hidden-state bug where `.exam-requirements { display: grid; }` kept the old question requirements visible behind the 放榜/result view after `hidden` was set.
 - `docs/BROWSER_ACCEPTANCE.md` is the durable browser acceptance record. It lists automated coverage, latest S26.2 verification, screenshot artifact policy, and the manual fallback areas still covered by `docs/MANUAL_ACCEPTANCE.md`.
+- `docs/PHASE_TWO_ACCEPTANCE.md` closes S27.1 as a local acceptance milestone and records accepted second-phase depth, verification commands, known limitations, real-provider status, and phase-three candidates.
 - State patch whitelist: `src/game/stateRules.js` defines allowed patch keys for top-level state and player fields. Only whitelisted fields can be modified by AI output.
 - Numerical clamping: all numeric fields have defined min/max ranges in stateRules.js. Patches are clamped after merge.
 - Provider faction patches now clamp existing numeric faction scores to `0..100`; invented faction keys are still dropped.
@@ -187,7 +189,8 @@ Before finishing each coherent change:
 - 2026-05-06: S26.1 browser smoke automation implemented in `scripts/browserSmoke.js`, with `npm run smoke:browser` and `playwright-core` as a dev dependency. The smoke uses local Chrome/Edge, starts a temporary Mock server unless `--url` is provided, verifies page load, scholar opening flow, localStorage session persistence, reload/fresh-page restoration, API readability, and test session cleanup. Added `test/browserSmokeScript.test.js` for no-browser helper coverage. Verified `node --check scripts/browserSmoke.js`, `node --check test/browserSmokeScript.test.js`, `node --test test/browserSmokeScript.test.js`, `npm run smoke:browser`, `npm run smoke:browser -- --url http://127.0.0.1:<temp-port>`, and `npm test` with 84 passing tests.
 - 2026-05-06: S26.2 DOM/screenshot-level UI acceptance implemented in `scripts/browserSmoke.js`, with desktop/mobile layout assertions, exam modal coverage, result-detail/archive checks, and optional `--screenshots <dir>` artifact saving. The pass exposed and fixed `.exam-requirements[hidden]` not being hidden in result/archive views. Verified `node --check scripts/browserSmoke.js`, `node --check test/browserSmokeScript.test.js`, `node --test test/browserSmokeScript.test.js`, `npm run smoke:browser -- --screenshots artifacts/browser-smoke/s26-2`, `npm test` with 87 passing tests, `npm run smoke:browser`, and visual review of the generated desktop result and mobile archive screenshots.
 - 2026-05-06: S26.3 browser acceptance documentation committed as `a38cf34`, adding `docs/BROWSER_ACCEPTANCE.md` and linking it from README, architecture notes, manual acceptance, product brief, this handoff, and the development ledger. The record captures automated browser coverage, latest S26.2 results, screenshot policy, and the manual fallback gaps. Verification also added `test-helpers/fetchSafeServer.js` after an intermittent full-suite `bad port` failure from Node Fetch. Verified `node --check test-helpers/fetchSafeServer.js`, focused `node --test test/gameTurnTick.test.js test/streamingTurnRoute.test.js test/gameTurnRelationships.test.js`, `git diff --check`, and `npm test` with 87 passing tests.
+- 2026-05-06: S27.1 phase-two acceptance documentation added in `docs/PHASE_TWO_ACCEPTANCE.md`, linked from README, architecture notes, product brief, this handoff, and the development ledger. Verified `npm run eval:ai` with 6 passing tests, `npm run smoke:provider` no-key skip, `npm test` with 87 passing tests, `npm run smoke:browser -- --screenshots artifacts/browser-smoke/s27-1` with desktop/mobile UI acceptance and 5 screenshots checked, and `git diff --check`.
 
 ## Next Recommended Step
 
-Recommended next step is S27.1: complete the phase-two acceptance document, recording added simulation depth, known limitations, real-provider status, and phase-three candidates.
+Recommended next step is to open a third-phase roadmap in `docs/DEVELOPMENT_STEPS.md`, using the candidates in `docs/PHASE_TWO_ACCEPTANCE.md` as the starting backlog.

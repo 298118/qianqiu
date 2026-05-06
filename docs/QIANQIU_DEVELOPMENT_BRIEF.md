@@ -14,15 +14,15 @@
 
 第一阶段最重要的完整体验是 **书生 -> 科举 -> 入仕**。
 
-## 阶段状态（2026-05-05）
+## 阶段状态（2026-05-06）
 
 第一阶段已经完成并归档：
 
 - 第一阶段验收记录：`docs/PHASE_ONE_ACCEPTANCE.md`。
 - 第一阶段路线图归档：`docs/PHASE_ONE_ROADMAP_ARCHIVE.md`。
-- 当前活动路线图：`docs/DEVELOPMENT_STEPS.md`，从第二阶段开始维护。
+- 当前活动路线图：`docs/DEVELOPMENT_STEPS.md`，已记录第二阶段完成与下一阶段候选。
 
-第二阶段的目标是在不推翻现有可玩纵切的前提下提升游戏深度。优先方向是世界 tick、NPC/派系记忆、地方官与将领深度、科举竞争深度、真实 provider 验收和浏览器自动化验收。
+第二阶段已经完成本地验收，记录见 `docs/PHASE_TWO_ACCEPTANCE.md`。已接受的范围包括世界 tick、NPC/派系记忆、地方官与将领深度、入仕官员深度、科举竞争深度、真实 provider smoke/streaming 准备、AI eval fixtures 和浏览器自动化验收。下一阶段应新开路线图，而不是继续扩展 S27.1。
 
 开发规范不变。第 12 节和第 13 节仍是每次开发必须遵守的流程；Mock 默认可玩、真实 provider 可选、服务器拥有状态边界和科举规则这些要求继续有效。
 
@@ -751,3 +751,12 @@ S26.3 adds `docs/BROWSER_ACCEPTANCE.md` as the durable browser acceptance record
 - It records the latest S26.2 automated result from commit `434b3ef`, including the screenshot run, 87-test `npm test` pass, and the `.exam-requirements[hidden]` regression fixed during screenshot review.
 - It keeps `docs/MANUAL_ACCEPTANCE.md` as the fallback for the complete scholar-to-official browser path, exam integrity variants, role-loop breadth, subjective visual inspection, real-provider browser behavior, and cross-browser checks.
 - S26.3 verification also added `test-helpers/fetchSafeServer.js` after a full-suite run exposed an intermittent Node Fetch `bad port` failure when `app.listen(0)` selected a blocked port.
+
+## S27.1 Phase-Two Acceptance Note (2026-05-06)
+
+S27.1 records second-phase acceptance in `docs/PHASE_TWO_ACCEPTANCE.md`:
+
+- The accepted local milestone includes server-owned world tick, relationship memory, magistrate/general/official identity depth, deeper exam competition/archive/travel, no-network AI eval fixtures, real-provider smoke/streaming readiness, and browser smoke/UI acceptance.
+- Verified commands for this acceptance pass: `npm run eval:ai`, `npm run smoke:provider`, `npm test`, `npm run smoke:browser -- --screenshots artifacts/browser-smoke/s27-1`, and `git diff --check`.
+- Live real-provider calls remain unverified in this environment because no provider keys are configured; the provider smoke skipped successfully and keyed checks remain optional.
+- The next phase should open a new roadmap instead of extending S27.1. Candidate directions are long-horizon simulation, relationship inspection UI, deeper official career outcomes, stronger role/world interactions, keyed provider acceptance, broader browser journeys, and storage migration planning.
