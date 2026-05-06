@@ -42,7 +42,8 @@ Important route ownership:
 - `src/game/exams.js` owns exam levels, gates, thresholds and next-exam mapping.
 - `src/game/promotions.js` owns rank changes, official promotion and severe-cheating consequences.
 - `src/game/essayChecks.js` owns local anti-cheat checks and score penalties.
-- `src/game/candidates.js` owns virtual same-field candidates and ranking.
+- `src/game/candidates.js` owns virtual same-field candidates, inspectable candidate essay profiles, and ranking.
+- `src/game/examTravel.js` owns server-side exam entry preparation costs, travel events, and funded/shortfall effects.
 - `src/game/relationships.js` owns NPC/faction relationship ledger creation, normalization, legacy backfill, and compact summaries.
 
 ## API Contract
@@ -158,7 +159,7 @@ Request:
 }
 ```
 
-The server checks authenticity, asks the provider for grading, applies local penalties, builds virtual candidates, applies promotion or cheating consequences, appends the essay result to `player.examHistory`, clears `activeExam`, saves the session and returns the result plus `worldState`.
+The server checks authenticity, asks the provider for grading, applies local penalties, builds virtual candidates with inspectable essay profiles, applies promotion or cheating consequences, appends the essay result to `player.examHistory`, clears `activeExam`, saves the session and returns the result plus `worldState`. The response includes `examQuestion`, `essay`, and `entryPreparation` so the browser can render the just-submitted archive directly.
 
 ## AI Provider Contract
 
@@ -302,6 +303,10 @@ Exam levels:
 | `palace_exam` | 殿试 | 贡士 | 进士 / official | normally not failed unless severe cheating |
 
 Promotion is applied in `src/game/promotions.js`, not by the provider. Palace exam assigns `player.role = "official"`, a palace rank, an office title, `position`, `faction`, `influence`, `integrity`, and the initial S23.3 official career meters.
+
+Exam entry preparation is applied in `POST /api/exam/question` by `src/game/examTravel.js`, not by the provider. It charges level-specific travel/preparation cost, converts unfunded shortfall into small clamped `player.health`, `mentality`, `adaptability`, or `reputation` effects, stores `activeExam.entryPreparation`, and appends a concise travel event. It uses `applyStatePatch(..., { incrementTurnCount: false })`, so taking a question does not advance `turnCount` or `year/month`. Existing unanswered exams are reused without retroactive travel cost.
+
+Virtual candidates now include `essay`, `style`, `examinerComment`, `strengths`, and `weaknesses`. These fields are server-generated in Mock/default local play and saved into exam history with the ranking, allowing the browser to show 同场文卷 and later review them through 考试档案.
 
 ## Persistence
 

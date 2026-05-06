@@ -56,9 +56,9 @@
 | S23.1 | DONE | 深化地方官身份：县库、乡绅、盗匪、诉讼、赋役、水利和地方民心 | 2026-05-05 | Codex | 9adef5f |
 | S23.2 | DONE | 深化将领身份：兵员、军粮、士气、侦察、战役风险和边境态势 | 2026-05-05 | Codex | b027d98 |
 | S23.3 | DONE | 深化入仕官员身份：上官、同年、考成、升迁、弹劾和清浊操守 | 2026-05-06 | Codex | 4f9f6e7 |
-| S24.1 | TODO | 深化科举同场竞争：虚拟考生生成可查看文章、评语和风格差异 |
-| S24.2 | TODO | 增加考试档案 UI，允许回看历次文章、题目、排名、复核和晋级原因 |
-| S24.3 | TODO | 增加赶考成本、旅途事件、疲劳/心性影响和考前准备风险 |
+| S24.1 | DONE | 深化科举同场竞争：虚拟考生生成可查看文章、评语和风格差异 | 2026-05-06 | Codex + reviewed subagent patch | 80db3d2 / 本次 S24 整合提交 |
+| S24.2 | DONE | 增加考试档案 UI，允许回看历次文章、题目、排名、复核和晋级原因 | 2026-05-06 | Codex + subagent patch | 本次 S24 整合提交 |
+| S24.3 | DONE | 增加赶考成本、旅途事件、疲劳/心性影响和考前准备风险 | 2026-05-06 | Codex + subagent patch | 本次 S24 整合提交 |
 | S25.1 | TODO | 增加真实 provider smoke 脚本，在有 key 时验证 start/turn/question/submit 四类调用 |
 | S25.2 | TODO | 评估并实现真实 provider token streaming；无法流式的 provider 保持兼容降级 |
 | S25.3 | TODO | 建立 AI 输出 eval fixtures，固定校验 JSON 合约、违规 patch、科举评卷和历史语气 |
@@ -149,6 +149,40 @@
 ```
 
 ### 2026-05-06
+
+Tool: Codex
+
+Step: S24.1-S24.3
+
+Commit: 本次 S24 整合提交；S24.1 data slice was accidentally committed by a subagent as `80db3d2` and then reviewed by Codex during this integration.
+
+Completed:
+- S24.1 virtual same-field candidates now include inspectable profiles: generated essay title/body/excerpt/word count, style label, examiner comment, strengths, and weaknesses while preserving the existing `generateVirtualCandidates()` and `buildRanking()` APIs.
+- S24.2 browser results now show 本场案卷 and 同场文卷 sections, and the scholar/role panels expose an 考试档案 button for reviewing historical questions, essays, score dimensions, authenticity checks, rankings, candidate essays, and promotion/failure reasons.
+- S24.3 adds server-owned exam entry preparation in `src/game/examTravel.js`; `/api/exam/question` applies travel cost and funded/shortfall effects through `applyStatePatch(..., { incrementTurnCount: false })`, stores `entryPreparation` on `activeExam`, and preserves it in `player.examHistory`.
+- The `/api/exam/submit` response now includes `examQuestion`, `essay`, and `entryPreparation` so the frontend can render the just-submitted archive without relying only on fallback history lookup.
+- Delegation process was corrected before this integration: future subagents may only provide scoped patches and verification reports, never commits/pushes/PRs.
+
+Verification:
+- `node --check src/game/examTravel.js`
+- `node --check src/routes/exam.js`
+- `node --check public/app.js`
+- `node --check test/examTravel.test.js`
+- `node --test test/examTravel.test.js` passed with 4 tests.
+- `node --test test/examCompetition.test.js` passed with 3 tests.
+- `node --test test/examRules.test.js` passed with 6 tests.
+- `node --test test/gameTurnTick.test.js` passed with 6 tests.
+- `git diff --check`
+- `npm test` passed with 60 tests.
+- Temporary Mock server on port 3339 returned 200 for `/api/health`, `/`, `/app.js`, and `/styles.css`.
+
+Risk/leftover:
+- S24.3 travel costs and events are first-pass deterministic balance values.
+- Browser automation/screenshot acceptance remains future S26 work; this slice verifies JS syntax and API/test coverage but not visual screenshots.
+- The subagent-created `80db3d2` commit remains in history and is explicitly treated as reviewed S24.1 work, not as a precedent for future delegation.
+
+Next:
+- S25.1: add optional real-provider smoke scripts for keyed environments, or S26.1 if browser automation becomes the higher priority.
 
 Tool: Codex
 

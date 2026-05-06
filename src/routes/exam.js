@@ -10,9 +10,10 @@ const {
 } = require("../game/exams");
 const { applyAuthenticityPenalties, checkEssayAuthenticity } = require("../game/essayChecks");
 const { buildRanking, generateVirtualCandidates } = require("../game/candidates");
+const { createEntryPreparation } = require("../game/examTravel");
 const { applyExamPromotion } = require("../game/promotions");
 const { ensureRelationshipLedger } = require("../game/relationships");
-const { appendEvents } = require("../game/stateRules");
+const { appendEvents, applyStatePatch } = require("../game/stateRules");
 const { readSession, writeSession } = require("../storage/sessionStore");
 
 const router = express.Router();
@@ -32,6 +33,7 @@ function toExamPayload(worldState) {
     passScore: activeExam.passScore,
     promotionRank: activeExam.promotionRank,
     readiness: activeExam.readiness,
+    entryPreparation: activeExam.entryPreparation || null,
     worldState
   };
 }
@@ -89,9 +91,17 @@ router.post("/question", async (req, res, next) => {
       throw fail(409, "已有未完成考试，请先完成当前考试。");
     }
 
+    const previousExam = worldState.activeExam || {};
+    const preparationResult = previousExam.entryPreparation
+      ? null
+      : createEntryPreparation(worldState, exam);
+
+    if (preparationResult) {
+      applyStatePatch(worldState, preparationResult.statePatch, { incrementTurnCount: false });
+    }
+
     const provider = getProvider();
     const question = await provider.generateExamQuestion(worldState, exam);
-    const previousExam = worldState.activeExam || {};
 
     worldState.activeExam = {
       examId: createExamId(exam.level),
@@ -105,12 +115,14 @@ router.post("/question", async (req, res, next) => {
       passScore: question.passScore ?? exam.passScore,
       promotionRank: question.promotionRank || exam.promotionRank,
       readiness: summarizeReadiness(worldState.player, exam),
+      entryPreparation: previousExam.entryPreparation || preparationResult.entryPreparation,
       reason: previousExam.reason || "玩家入场取题",
       status: "writing",
       generatedAt: new Date().toISOString()
     };
 
     appendEvents(worldState, [
+      ...(preparationResult?.events || []),
       `${worldState.player.name}进入${exam.name}，领取${exam.questionType}题。`
     ]);
 
@@ -183,6 +195,7 @@ router.post("/submit", async (req, res, next) => {
       level: activeExam.level,
       examName: activeExam.examName,
       examQuestion: activeExam.examQuestion,
+      entryPreparation: activeExam.entryPreparation || null,
       essay: trimmedEssay,
       score,
       authenticityCheck,
@@ -204,6 +217,9 @@ router.post("/submit", async (req, res, next) => {
       examId,
       level: exam.level,
       examName: activeExam.examName,
+      examQuestion: activeExam.examQuestion,
+      essay: trimmedEssay,
+      entryPreparation: activeExam.entryPreparation || null,
       score,
       authenticityCheck,
       virtualCandidates,

@@ -69,6 +69,7 @@
       stateRules.js
       exams.js
       candidates.js
+      examTravel.js
       history.js
     routes/
       game.js
@@ -273,9 +274,11 @@ SSE 事件：
 - `wordCount`
 - `passScore`
 - `promotionRank`
+- `entryPreparation`
 - `worldState`
 
 第一版实现中，接口会复用尚未交卷的 `activeExam`，避免同一场考试反复刷题；若 `activeExam` 只是由自由行动触发的简略入场记录，则该接口负责补齐题目、要求、字数、通过线和保存后的状态。
+当前实现中，新生成题目前会先由服务器应用赶考准备：按考试等级扣除盘费，金钱不足时转化为小幅疲劳、心性或声望风险，并写入 `activeExam.entryPreparation`。该步骤不推进 `turnCount`、`year` 或 `month`，也不改变晋级规则；已存在的未交卷考试会被复用，不会 retroactively 再扣盘费。
 
 ### `POST /api/exam/submit`
 
@@ -297,6 +300,7 @@ SSE 事件：
 - `worldState`
 
 当前实现中，`/api/exam/submit` 使用普通 JSON 返回；服务器会先做本地反作弊检查，再调用 provider 评分，并在服务端应用作弊扣分。文章、评分、复核结果、虚拟考生、榜单与 `promotionResult` 会保存到 `player.examHistory`，同时清空 `activeExam`。随后 `src/game/promotions.js` 执行服务器自有晋级规则：童试/乡试/会试通过后分别写入 `player.examRank = "秀才" / "举人" / "贡士"`；殿试通过后写入 `player.examRank = "进士"`、`player.role = "official"`、`player.roleLabel = "入仕官员"`，记录 `palaceRank` 与 `officeTitle`，并种下入仕官员的上官、同年、考成、升迁、弹劾风险和清操初始仪表。严重作伪会强制黜落，按当前名位降一档并扣减声望与心性。
+S24 后，虚拟考生不仅有分数，还包含可回看的 `essay`、`style`、`examinerComment`、`strengths` 和 `weaknesses`；赶考准备信息会作为 `entryPreparation` 随考试记录保存。前端放榜页和考试档案会显示本人案卷、五维评卷、监试复核、同场榜单、同场文卷和晋级/黜落原因。
 
 ## 7. AI JSON 合约
 
@@ -673,3 +677,13 @@ S23.3 deepens the post-palace official loop while keeping ordinary turns inside 
 - Mock official turns now recognize assessment/promotion work, impeachment, observation under superiors, casework, relief/farming, peer networking, bribery, and routine office work. They may update official career meters and limited global fields such as corruption, public order, grain reserve, population, and existing numeric factions.
 - Palace promotion appends a visible official superior contact while preserving the complete scholar -> official path; relationship reactions still use the top-level `relationshipChanges` suggestion path and are persisted only by the route-owned `applyRelationshipChanges()` merge.
 - The browser role panel now renders official-specific status, action hints, and career meters for superiors, peers, merit, promotion, impeachment risk, and clean-name standing.
+
+## S24 Exam Depth Note (2026-05-06)
+
+S24 deepens the imperial examination loop while preserving the server-owned promotion and anti-cheat boundaries:
+
+- Virtual same-field candidates now include inspectable essay profiles with title/body/excerpt/word count, style label, examiner comment, strengths, and weaknesses. Ranking remains server-built and still favors the player on score ties.
+- Exam entry now has server-owned preparation cost and travel risk through `src/game/examTravel.js`. `/api/exam/question` applies level-specific cost and funded/shortfall effects through the normal state whitelist/clamp path with `{ incrementTurnCount: false }`, then stores `entryPreparation` on `activeExam`.
+- `/api/exam/submit` preserves `entryPreparation` in `player.examHistory` and returns `examQuestion`, `essay`, and `entryPreparation` for immediate frontend rendering.
+- The browser result modal now includes 本场案卷 and 同场文卷 sections, and panels show an 考试档案 button when historical exam records exist.
+- The S24.1 candidate data slice was accidentally committed by a subagent as `80db3d2`; Codex reviewed it during S24 integration. Future subagents are explicitly forbidden from committing, pushing, or creating PRs.

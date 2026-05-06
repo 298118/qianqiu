@@ -245,6 +245,8 @@ function renderRolePanel(worldState) {
   if (player.role === "official") {
     overview.appendChild(createPanelValue("科名", player.palaceRank ? `${player.palaceRank} ${player.examRank}` : player.examRank || "进士"));
   }
+  const roleArchiveButton = createExamArchiveButton(worldState);
+  if (roleArchiveButton) overview.appendChild(roleArchiveButton);
 
   const stats = document.createElement("section");
   stats.className = "scholar-stats";
@@ -371,6 +373,8 @@ function renderScholarPanel(worldState) {
     entryButton.addEventListener("click", () => openExamQuestion(entryLevel));
     progressBlock.appendChild(entryButton);
   }
+  const archiveButton = createExamArchiveButton(worldState);
+  if (archiveButton) progressBlock.appendChild(archiveButton);
 
   const stepList = document.createElement("ol");
   stepList.className = "exam-steps";
@@ -524,6 +528,11 @@ function renderExamModal(payload) {
     item.textContent = requirement;
     examRequirements.appendChild(item);
   });
+  if (payload.entryPreparation) {
+    const item = document.createElement("li");
+    item.textContent = `赶考准备：${formatEntryPreparation(payload.entryPreparation)}`;
+    examRequirements.appendChild(item);
+  }
   examEssay.value = "";
   examEssay.hidden = false;
   examWritingTools.hidden = false;
@@ -610,9 +619,285 @@ function createResultSection(title, content, open = true) {
   return details;
 }
 
+function getLatestExamHistory(payload) {
+  const history = payload?.worldState?.player?.examHistory;
+  if (!Array.isArray(history) || !history.length) return null;
+  if (typeof history.findLast === "function") {
+    return history.findLast((entry) => entry.examId === payload.examId) || history[history.length - 1];
+  }
+  return [...history].reverse().find((entry) => entry.examId === payload.examId) || history[history.length - 1];
+}
+
+function withExamHistoryFallback(payload) {
+  const latest = getLatestExamHistory(payload);
+  if (!latest) return payload;
+
+  return {
+    ...latest,
+    ...payload,
+    examQuestion: payload.examQuestion || latest.examQuestion,
+    essay: payload.essay || latest.essay,
+    score: payload.score || latest.score,
+    authenticityCheck: payload.authenticityCheck || latest.authenticityCheck,
+    virtualCandidates: payload.virtualCandidates || latest.virtualCandidates || [],
+    ranking: payload.ranking || latest.ranking || [],
+    promotionResult: payload.promotionResult || latest.promotionResult,
+    entryPreparation: payload.entryPreparation || latest.entryPreparation
+  };
+}
+
+function appendIfText(parent, tagName, text, className) {
+  if (text === undefined || text === null || text === "") return null;
+  const element = document.createElement(tagName);
+  if (className) element.className = className;
+  element.textContent = text;
+  parent.appendChild(element);
+  return element;
+}
+
+function createEssayDetails(title, body, open = false) {
+  if (!body) return null;
+  const details = document.createElement("details");
+  details.className = "candidate-fulltext";
+  details.open = open;
+  const summary = document.createElement("summary");
+  summary.textContent = title;
+  const paragraph = document.createElement("p");
+  paragraph.textContent = body;
+  details.append(summary, paragraph);
+  return details;
+}
+
+function formatEntryPreparation(entryPreparation) {
+  if (!entryPreparation) return "";
+  const funding = entryPreparation.fullyFunded
+    ? `盘费已足，支出${entryPreparation.paidGold}/${entryPreparation.requiredGold}两`
+    : `盘费不足，支出${entryPreparation.paidGold}/${entryPreparation.requiredGold}两，缺${entryPreparation.shortfall}两`;
+  const effects = Object.entries(entryPreparation.effects || {})
+    .map(([key, delta]) => `${ATTRIBUTE_LABELS[key] || key}${delta > 0 ? "+" : ""}${delta}`)
+    .join("、");
+  return [
+    entryPreparation.event,
+    funding,
+    effects ? `影响：${effects}` : ""
+  ].filter(Boolean).join("；");
+}
+
+function createEntryPreparationBlock(entryPreparation) {
+  const text = formatEntryPreparation(entryPreparation);
+  if (!text) return null;
+  const block = document.createElement("section");
+  block.className = "entry-preparation";
+  appendIfText(block, "strong", "赶考准备");
+  appendIfText(block, "p", text);
+  return block;
+}
+
+function createCandidateProfiles(payload) {
+  const candidates = Array.isArray(payload.virtualCandidates) ? payload.virtualCandidates : [];
+  const ranking = Array.isArray(payload.ranking) ? payload.ranking : [];
+  const byId = new Map(candidates.map((candidate) => [candidate.id, candidate]));
+  const profiles = document.createElement("section");
+  profiles.className = "candidate-profiles";
+
+  const rankedCandidates = ranking.filter((entry) => !entry.isPlayer);
+  const sourceEntries = rankedCandidates.length ? rankedCandidates : candidates;
+
+  sourceEntries.forEach((entry) => {
+    const candidate = byId.get(entry.id) || entry;
+    const essay = candidate.essay || {};
+    const profile = document.createElement("article");
+    profile.className = "candidate-profile";
+
+    const header = document.createElement("header");
+    const title = document.createElement("div");
+    title.className = "candidate-title";
+    appendIfText(title, "strong", candidate.name || entry.name || "同场考生");
+    appendIfText(title, "span", candidate.origin || entry.origin);
+
+    const marks = document.createElement("div");
+    marks.className = "candidate-marks";
+    if (entry.place) appendIfText(marks, "span", `第${entry.place}名`);
+    const score = entry.score ?? candidate.score?.overall_score;
+    if (score !== undefined && score !== null) appendIfText(marks, "span", `${score}分`);
+    appendIfText(marks, "span", entry.rank || candidate.score?.rank);
+    header.append(title, marks);
+    profile.appendChild(header);
+
+    appendIfText(profile, "p", candidate.style || entry.style, "candidate-style");
+    appendIfText(profile, "p", candidate.examinerComment || entry.examinerComment, "candidate-comment");
+
+    const strengths = candidate.strengths || entry.strengths || [];
+    const weaknesses = candidate.weaknesses || entry.weaknesses || [];
+    if (strengths.length || weaknesses.length) {
+      const meta = [];
+      if (strengths.length) meta.push(`长处：${strengths.join("、")}`);
+      if (weaknesses.length) meta.push(`短处：${weaknesses.join("、")}`);
+      appendIfText(profile, "p", meta.join("；"), "candidate-meta");
+    }
+
+    const essayWrap = document.createElement("section");
+    essayWrap.className = "candidate-essay";
+    appendIfText(essayWrap, "strong", essay.title || entry.essayTitle);
+    if (essay.wordCount) appendIfText(essayWrap, "p", `约${essay.wordCount}字`, "candidate-meta");
+    appendIfText(essayWrap, "p", essay.excerpt || entry.essayExcerpt, "candidate-excerpt");
+    const fullText = createEssayDetails("展开全文", essay.body, false);
+    if (fullText) essayWrap.appendChild(fullText);
+    if (essayWrap.childElementCount) profile.appendChild(essayWrap);
+
+    profiles.appendChild(profile);
+  });
+
+  if (!profiles.childElementCount) {
+    appendIfText(profiles, "p", "本场暂无可查阅的同场文卷。", "candidate-meta");
+  }
+
+  return profiles;
+}
+
+function createPlayerExamArchive(payload) {
+  const archive = document.createElement("section");
+  archive.className = "player-exam-archive";
+
+  if (payload.examQuestion) {
+    appendIfText(archive, "strong", "题目");
+    appendIfText(archive, "p", payload.examQuestion, "archive-question");
+  }
+
+  const essayDetails = createEssayDetails("展开本人文章", payload.essay, false);
+  if (essayDetails) archive.appendChild(essayDetails);
+
+  const preparationBlock = createEntryPreparationBlock(payload.entryPreparation);
+  if (preparationBlock) archive.appendChild(preparationBlock);
+
+  const reasonParts = [];
+  if (payload.score?.detailed_feedback) reasonParts.push(payload.score.detailed_feedback);
+  if (payload.promotionResult?.reason) reasonParts.push(payload.promotionResult.reason);
+  appendIfText(archive, "p", reasonParts.join("\n"), "archive-reason");
+
+  return archive;
+}
+
+function createRankingList(payload) {
+  const ranking = document.createElement("ol");
+  ranking.className = "ranking-list";
+  (payload.ranking || []).forEach((entry) => {
+    const item = document.createElement("li");
+    if (entry.isPlayer) item.className = "is-player";
+    const name = document.createElement("strong");
+    name.textContent = `${entry.place}. ${entry.name}`;
+    const detail = document.createElement("span");
+    detail.textContent = [entry.origin, entry.score !== undefined ? `${entry.score}分` : null, entry.rank, entry.style].filter(Boolean).join(" · ");
+    item.append(name, detail);
+    if (entry.essayTitle || entry.essayExcerpt || entry.examinerComment) {
+      const note = document.createElement("small");
+      note.textContent = [entry.essayTitle, entry.examinerComment, entry.essayExcerpt].filter(Boolean).join("；");
+      item.appendChild(note);
+    }
+    ranking.appendChild(item);
+  });
+  return ranking;
+}
+
+function createScoreDimensions(score) {
+  const dimensions = document.createElement("section");
+  dimensions.className = "score-grid";
+  Object.entries(SCORE_LABELS).forEach(([key, label]) => {
+    const scoreItem = score?.[key];
+    if (!scoreItem) return;
+    const item = document.createElement("div");
+    const heading = document.createElement("strong");
+    heading.textContent = `${label} ${scoreItem.score}`;
+    const comment = document.createElement("p");
+    comment.textContent = scoreItem.comment || "";
+    item.append(heading, comment);
+    dimensions.appendChild(item);
+  });
+  return dimensions;
+}
+
+function createAuthenticityChecks(authenticityCheck = {}) {
+  const checks = document.createElement("section");
+  checks.className = "auth-checks";
+  const flags = authenticityCheck.flags || [];
+  if (flags.length) {
+    flags.forEach((flag) => {
+      const item = document.createElement("p");
+      item.textContent = `${flag.label}：${flag.detail}`;
+      checks.appendChild(item);
+    });
+  } else {
+    const clean = document.createElement("p");
+    clean.textContent = `未见明显作伪，正文约${authenticityCheck.characterCount ?? "-"}字。`;
+    checks.appendChild(clean);
+  }
+  return checks;
+}
+
+function getExamHistory(worldState = currentWorldState) {
+  return worldState?.player?.examHistory || [];
+}
+
+function createExamArchiveButton(worldState) {
+  const history = getExamHistory(worldState);
+  if (!history.length) return null;
+
+  const button = document.createElement("button");
+  button.type = "button";
+  button.className = "panel-action archive-action";
+  button.textContent = `考试档案 (${history.length})`;
+  button.addEventListener("click", () => renderExamArchive(worldState));
+  return button;
+}
+
+function renderExamArchive(worldState = currentWorldState) {
+  const history = getExamHistory(worldState);
+  examModal.classList.add("exam-modal--result");
+  examMeta.textContent = "考试档案";
+  examTitle.textContent = "历次科场案卷";
+  examQuestion.hidden = true;
+  examRequirements.hidden = true;
+  examWritingTools.hidden = true;
+  examEssay.hidden = true;
+  examSubmit.hidden = true;
+  examResult.hidden = false;
+  examResult.innerHTML = "";
+
+  const list = document.createElement("section");
+  list.className = "exam-archive-list";
+
+  history.slice().reverse().forEach((entry, index) => {
+    const archivedPayload = {
+      ...entry,
+      worldState,
+      virtualCandidates: entry.virtualCandidates || [],
+      ranking: entry.ranking || []
+    };
+    const title = `${history.length - index}. ${entry.examName || EXAM_LABELS[entry.level] || "考试"} · ${entry.score?.overall_score ?? "-"}分 · ${entry.score?.rank || "未定等第"}`;
+    const content = document.createElement("section");
+    content.className = "exam-archive-entry";
+    content.append(
+      createPlayerExamArchive(archivedPayload),
+      createResultSection("五维评分", createScoreDimensions(entry.score), false),
+      createResultSection("监试复核", createAuthenticityChecks(entry.authenticityCheck), false),
+      createResultSection("同场榜单", createRankingList(archivedPayload), false),
+      createResultSection("同场文卷", createCandidateProfiles(archivedPayload), false)
+    );
+    list.appendChild(createResultSection(title, content, index === 0));
+  });
+
+  if (!history.length) {
+    appendIfText(list, "p", "尚无考试档案。");
+  }
+
+  examResult.appendChild(list);
+  examBackdrop.hidden = false;
+}
+
 function renderExamResult(payload) {
-  const playerEntry = payload.ranking.find((entry) => entry.isPlayer);
-  const flags = payload.authenticityCheck.flags || [];
+  payload = withExamHistoryFallback(payload);
+  const playerEntry = (payload.ranking || []).find((entry) => entry.isPlayer);
+  const flags = payload.authenticityCheck?.flags || [];
   const promotionText = describePromotionOutcome(payload.promotionResult);
 
   examModal.classList.add("exam-modal--result");
@@ -685,9 +970,11 @@ function renderExamResult(payload) {
   examResult.append(
     summary,
     feedback,
+    createResultSection("本场案卷", createPlayerExamArchive(payload), false),
     createResultSection("五维评卷", dimensions, true),
     createResultSection("监试复核", checks, Boolean(flags.length)),
-    createResultSection("同场榜单", ranking, true)
+    createResultSection("同场榜单", ranking, true),
+    createResultSection("同场文卷", createCandidateProfiles(payload), false)
   );
 }
 
