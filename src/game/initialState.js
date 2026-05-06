@@ -197,6 +197,12 @@ function createInitialState(input = {}) {
     eventHistory: [],
     activeExam: null,
     activeNpcRequest: null,
+    longTermEvents: {
+      schemaVersion: 1,
+      queue: [],
+      cooldowns: {},
+      recentResolved: []
+    },
     setup: {
       background: input.background || "",
       customSetting: input.customSetting || ""

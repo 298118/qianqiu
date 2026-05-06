@@ -65,9 +65,9 @@
 | S32.1 | DONE | 定义关系/联系人检查视图契约，让 `relationshipLedger` 从叙事反馈升级为玩家可查看的信息面板 | 2026-05-06 | Codex + subagents | ed83e9c |
 | S32.2 | DONE | 实现关系/联系人 UI 与基础浏览器验收，显示人物/派系关系、怨望、立场、近期意图和可见性 | 2026-05-06 | Codex + subagents | cefde6a |
 | S32.3 | DONE | 增加主动 NPC/派系请托、施压、求援、背书或索取回报的最小事件循环 | 2026-05-06 | Codex + subagents | 08042a2 |
-| S33.1 | TODO | 定义长期事件调度器契约：季节、灾荒、边报、朝争、地方案件链和跨月后果 |  |  |  |
-| S33.2 | TODO | 实现服务器拥有的长期事件队列，并把事件结果接入 world tick、eventHistory 和可见叙事 |  |  |  |
-| S33.3 | TODO | 为长期事件增加自动化测试，覆盖触发条件、裁剪、状态边界和完整书生路径不被破坏 |  |  |  |
+| S33.1 | DONE | 定义长期事件调度器契约：季节、灾荒、边报、朝争、地方案件链和跨月后果 | 2026-05-06 | Codex + subagents | pending S33 commit |
+| S33.2 | DONE | 实现服务器拥有的长期事件队列，并把事件结果接入 world tick、eventHistory 和可见叙事 | 2026-05-06 | Codex + subagents | pending S33 commit |
+| S33.3 | DONE | 为长期事件增加自动化测试，覆盖触发条件、裁剪、状态边界和完整书生路径不被破坏 | 2026-05-06 | Codex + subagents | pending S33 commit |
 | S34.1 | TODO | 定义官场结果引擎：实授、转任、升迁、外放、降调、弹劾成案和罢黜 |  |  |  |
 | S34.2 | TODO | 实现入仕官员年度/阶段性结算，让 `promotionProspect`、`impeachmentRisk` 等指标触发真实职业结果 |  |  |  |
 | S34.3 | TODO | 增加官场结果 UI 与测试，确认晋升/降调/弹劾不会绕过服务器裁决 |  |  |  |
@@ -171,6 +171,39 @@
 ```
 
 ### 2026-05-06
+
+Tool: Codex
+
+Step: S33.1-S33.3
+
+Commit: pending S33 commit
+
+Completed:
+- Added `docs/LONG_TERM_EVENTS_CONTRACT.md` as the durable S33 scheduler contract for persisted state, route order, output payloads, authority boundaries, implemented event families, and focused verification.
+- Added `src/game/longTermEvents.js` as the server-owned deterministic long-term scheduler. It normalizes `worldState.longTermEvents`, schedules/cools down active events, resolves cross-month effects, returns a player-facing `longTermEventView`, and summarizes active events for prompts without giving providers write authority.
+- Seeded `worldState.longTermEvents` in initial sessions and hardened the ordinary provider boundary so provider `statePatch` cannot forge `activeNpcRequest` or `longTermEvents`.
+- Wired `/api/game/turn` to run long-term events after active requests and after world tick has advanced the calendar, then append event history in provider -> active-request -> world-tick -> long-term-event order.
+- Added top-level `longTermEventView` to game and exam route payloads, plus `longTermEvents` feedback in JSON/SSE turn payloads. The browser now renders scheduler feedback as `[大势]` narrative lines.
+- Added focused scheduler and route coverage in `test/longTermEvents.test.js` and `test/gameTurnLongTermEvents.test.js`, plus a state-rule boundary assertion.
+- Used two read-only subagents for S33 integration/test-scope inspection. Neither edited files or ran Git commands.
+
+Verification:
+- `node --check` for changed runtime and test files.
+- `node --test test/longTermEvents.test.js`
+- `node --test test/gameTurnLongTermEvents.test.js`
+- `node --test test/stateRules.test.js`
+- `node --test test/gameTurnTick.test.js test/gameTurnRelationships.test.js test/activeNpcRequests.test.js test/worldTick.test.js`
+- `npm test` passed with 119 tests.
+- `npm run smoke:provider` skipped successfully because no real-provider keys are configured.
+- `npm run smoke:browser -- --screenshots artifacts/browser-smoke/s33` passed with 5 screenshots checked.
+- `git diff --check`
+
+Risk/leftover:
+- S33 intentionally exposes long-term events as narrative feedback, not a separate browser panel.
+- Event selection is deterministic and deliberately small; richer event chains, annual official outcomes, exam calendarization, and role/world coupling remain later roadmap phases.
+
+Next:
+- S34.1: define the official career outcome engine contract for appointment, transfer, promotion, demotion, impeachment, punishment, and retention.
 
 Tool: Codex
 

@@ -26,6 +26,7 @@ let currentSessionId = null;
 let currentWorldState = null;
 let currentRelationshipView = null;
 let currentActiveNpcRequestView = null;
+let currentLongTermEventView = null;
 let currentExamPayload = null;
 let activeNarrativeStream = null;
 
@@ -751,10 +752,11 @@ function renderScholarPanel(worldState) {
   appendOptionalPanel(renderActiveNpcRequestPanel());
 }
 
-function renderWorldState(worldState, relationshipView, activeNpcRequestView) {
+function renderWorldState(worldState, relationshipView, activeNpcRequestView, longTermEventView) {
   currentWorldState = worldState;
   currentRelationshipView = getRelationshipView(worldState, relationshipView);
   currentActiveNpcRequestView = getActiveNpcRequestView(activeNpcRequestView);
+  currentLongTermEventView = longTermEventView || null;
   setStatus(worldState);
   renderScholarPanel(worldState);
   actionInput.placeholder = ACTION_PLACEHOLDERS[worldState.player.role] || "输入你的行动";
@@ -862,6 +864,12 @@ function appendWorldTickFeedback(worldTick) {
   } else if (worldTick.summary) {
     appendNarrative(`[月度] ${worldTick.summary}`, "world-tick");
   }
+}
+
+function appendLongTermEventFeedback(longTermEvents) {
+  if (!longTermEvents) return;
+  const events = Array.isArray(longTermEvents.events) ? longTermEvents.events : [];
+  events.forEach((event) => appendNarrative(`[大势] ${event}`, "long-term-event"));
 }
 
 function renderExamModal(payload) {
@@ -1350,7 +1358,7 @@ async function openExamQuestion(level) {
     }
 
     const payload = await response.json();
-    renderWorldState(payload.worldState, payload.relationshipView, payload.activeNpcRequestView);
+    renderWorldState(payload.worldState, payload.relationshipView, payload.activeNpcRequestView, payload.longTermEventView);
     renderExamModal(payload);
   } catch (error) {
     appendNarrative(error.message, "error");
@@ -1388,7 +1396,7 @@ async function submitExamEssay() {
     }
 
     const payload = await response.json();
-    renderWorldState(payload.worldState, payload.relationshipView, payload.activeNpcRequestView);
+    renderWorldState(payload.worldState, payload.relationshipView, payload.activeNpcRequestView, payload.longTermEventView);
     renderExamResult(payload);
     appendNarrative(
       `[放榜] ${payload.examName}得${payload.score.overall_score}分，${describePromotionOutcome(payload.promotionResult)}。`,
@@ -1475,7 +1483,8 @@ async function handleTurnPayload(payload) {
   appendRelationshipChanges(payload.relationshipChanges);
   appendActiveNpcRequestEvents(payload.activeNpcRequestEvents);
   appendWorldTickFeedback(payload.worldTick);
-  renderWorldState(payload.worldState, payload.relationshipView, payload.activeNpcRequestView);
+  appendLongTermEventFeedback(payload.longTermEvents);
+  renderWorldState(payload.worldState, payload.relationshipView, payload.activeNpcRequestView, payload.longTermEventView);
   actionInput.value = "";
 
   if (payload.examTrigger && payload.examTrigger.shouldStart) {
@@ -1594,7 +1603,7 @@ form.addEventListener("submit", async (event) => {
     const payload = await response.json();
     currentSessionId = payload.sessionId;
     localStorage.setItem("qianqiu.sessionId", payload.sessionId);
-    renderWorldState(payload.worldState, payload.relationshipView, payload.activeNpcRequestView);
+    renderWorldState(payload.worldState, payload.relationshipView, payload.activeNpcRequestView, payload.longTermEventView);
     narrative.innerHTML = "";
     appendNarrative(payload.narrative);
     showGameView();
@@ -1619,7 +1628,7 @@ async function restoreSession() {
     }
     const payload = await response.json();
     currentSessionId = payload.sessionId;
-    renderWorldState(payload.worldState, payload.relationshipView, payload.activeNpcRequestView);
+    renderWorldState(payload.worldState, payload.relationshipView, payload.activeNpcRequestView, payload.longTermEventView);
     narrative.innerHTML = "";
     const history = payload.worldState.eventHistory || [];
     if (history.length) {

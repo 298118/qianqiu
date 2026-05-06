@@ -823,3 +823,15 @@ S32.3 adds the first server-owned active NPC/faction request loop without giving
 - `/api/game/turn` applies provider state patches and provider relationship suggestions first, then runs active request handling, then world tick. Event history order is provider events, active-request events, and then world-tick events.
 - Accept/refuse/expire outcomes use server-authored bounded `applyRelationshipChanges()` deltas, merged into the route `relationshipChanges` response. Provider output still cannot patch `activeNpcRequest` or `relationshipLedger`.
 - `public/app.js` renders the compact `来函` panel from `activeNpcRequestView`, with stable `data-request-*` selectors. `scripts/browserSmoke.js` now verifies active request fields, hidden target/text non-leakage, and active-request panel overflow on desktop, restored, fresh-page, and mobile journeys.
+
+## S33 Long-Term Event Scheduler Note (2026-05-06)
+
+S33 adds a server-owned long-term event scheduler while keeping provider authority limited to narrative and ordinary turn suggestions:
+
+- `worldState.longTermEvents` stores `{ schemaVersion, queue, cooldowns, recentResolved }`. It is normalized, scheduled, resolved, cooled down, and summarized by `src/game/longTermEvents.js`.
+- The first deterministic event families are seasonal harvest audits, grain-shortage disasters, border alarms, court faction conflict, magistrate local case chains, social repercussions from refused/expired requests, and a disaster relief-audit follow-up.
+- Game and exam route payloads include top-level `longTermEventView`; turn payloads also include `longTermEvents: { summary, events, attributeChanges, scheduled, resolved }`.
+- `/api/game/turn` now runs active requests first, then world tick, then long-term events against the post-tick calendar. Event history order is provider events, active-request events, world-tick events, and long-term-event events.
+- Scheduler state patches still pass through `applyStatePatch(..., { incrementTurnCount: false, allowServerOwnedPatchKeys: true })`, and scheduler social consequences pass through `applyRelationshipChanges()`. Providers cannot patch `longTermEvents` or `activeNpcRequest` in ordinary turns.
+- `public/app.js` renders long-term event feedback as `[大势]` narrative lines. S33 intentionally does not add a separate long-term event panel.
+- The durable contract is `docs/LONG_TERM_EVENTS_CONTRACT.md`; focused coverage lives in `test/longTermEvents.test.js` and `test/gameTurnLongTermEvents.test.js`.

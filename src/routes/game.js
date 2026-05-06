@@ -9,6 +9,11 @@ const {
   buildActiveNpcRequestView,
   runActiveNpcRequestStep
 } = require("../game/activeRequests");
+const {
+  buildLongTermEventView,
+  ensureLongTermEventState,
+  runLongTermEventStep
+} = require("../game/longTermEvents");
 const { applyStatePatch, appendEvents } = require("../game/stateRules");
 const { runWorldTick } = require("../game/worldTick");
 const { getProvider } = require("../ai");
@@ -42,6 +47,7 @@ function wantsSse(req) {
 async function processTurn(sessionId, input) {
   const worldState = await readSession(sessionId);
   ensureRelationshipLedger(worldState);
+  ensureLongTermEventState(worldState);
   const provider = getProvider();
   const result = await provider.runTurn(worldState, input);
   return finalizeTurn(worldState, result, input);
@@ -50,6 +56,7 @@ async function processTurn(sessionId, input) {
 async function processStreamingTurn(sessionId, input, streamHandlers = {}) {
   const worldState = await readSession(sessionId);
   ensureRelationshipLedger(worldState);
+  ensureLongTermEventState(worldState);
   const provider = getProvider();
   const canStream = provider.supportsStreaming && typeof provider.streamTurn === "function";
   const result = canStream
@@ -83,10 +90,19 @@ async function finalizeTurn(worldState, result, input) {
     allowServerOwnedPatchKeys: true
   });
 
+  const longTermEvents = runLongTermEventStep(worldState);
+  applyStatePatch(worldState, longTermEvents.statePatch, {
+    incrementTurnCount: false,
+    allowServerOwnedPatchKeys: true
+  });
+  const longTermRelationshipChanges = applyRelationshipChanges(worldState, longTermEvents.relationshipChanges);
+
   appendEvents(worldState, result.events);
   appendEvents(worldState, activeNpcRequest.events);
   appendEvents(worldState, worldTick.events);
+  appendEvents(worldState, longTermEvents.events);
   ensureRelationshipLedger(worldState);
+  ensureLongTermEventState(worldState);
 
   await writeSession(worldState);
 
@@ -99,11 +115,23 @@ async function finalizeTurn(worldState, result, input) {
   return {
     sessionId: worldState.sessionId,
     narrative: result.narrative,
-    attributeChanges: [...providerAttributeChanges, ...worldTickFeedback.attributeChanges],
-    relationshipChanges: [...relationshipChanges, ...activeNpcRequest.relationshipChanges],
+    attributeChanges: [
+      ...providerAttributeChanges,
+      ...worldTickFeedback.attributeChanges,
+      ...longTermEvents.attributeChanges
+    ],
+    relationshipChanges: [...relationshipChanges, ...activeNpcRequest.relationshipChanges, ...longTermRelationshipChanges],
     relationshipView: buildRelationshipInspectionView(worldState),
     activeNpcRequestView: buildActiveNpcRequestView(worldState),
     activeNpcRequestEvents: activeNpcRequest.events,
+    longTermEventView: buildLongTermEventView(worldState),
+    longTermEvents: {
+      summary: longTermEvents.summary,
+      events: Array.isArray(longTermEvents.events) ? longTermEvents.events : [],
+      attributeChanges: Array.isArray(longTermEvents.attributeChanges) ? longTermEvents.attributeChanges : [],
+      scheduled: Array.isArray(longTermEvents.scheduled) ? longTermEvents.scheduled : [],
+      resolved: Array.isArray(longTermEvents.resolved) ? longTermEvents.resolved : []
+    },
     examTrigger,
     worldTick: worldTickFeedback,
     worldState
@@ -146,6 +174,8 @@ async function streamTurn(res, sessionId, input) {
       relationshipChanges: payload.relationshipChanges,
       activeNpcRequestView: payload.activeNpcRequestView,
       activeNpcRequestEvents: payload.activeNpcRequestEvents,
+      longTermEventView: payload.longTermEventView,
+      longTermEvents: payload.longTermEvents,
       examTrigger: payload.examTrigger,
       worldTick: payload.worldTick
     });
@@ -174,6 +204,7 @@ router.post("/start", async (req, res, next) => {
       worldState,
       relationshipView: buildRelationshipInspectionView(worldState),
       activeNpcRequestView: buildActiveNpcRequestView(worldState),
+      longTermEventView: buildLongTermEventView(worldState),
       narrative: opening.narrative
     });
   } catch (error) {
@@ -185,11 +216,13 @@ router.get("/state/:sessionId", async (req, res, next) => {
   try {
     const worldState = await readSession(req.params.sessionId);
     ensureRelationshipLedger(worldState);
+    ensureLongTermEventState(worldState);
     res.json({
       sessionId: worldState.sessionId,
       worldState,
       relationshipView: buildRelationshipInspectionView(worldState),
-      activeNpcRequestView: buildActiveNpcRequestView(worldState)
+      activeNpcRequestView: buildActiveNpcRequestView(worldState),
+      longTermEventView: buildLongTermEventView(worldState)
     });
   } catch (error) {
     next(error);

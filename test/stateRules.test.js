@@ -15,6 +15,8 @@ test("applyStatePatch applies only whitelisted fields and clamps numeric ranges"
     year: 2000,
     month: 12,
     activeExam: { level: "child_exam" },
+    activeNpcRequest: { id: "provider-request" },
+    longTermEvents: { queue: [{ key: "provider-event" }] },
     characters: [{ id: "C99", name: "Invented", role: "patron" }],
     eventHistory: ["provider tries to replace history"],
     publicOrder: -10,
@@ -38,6 +40,8 @@ test("applyStatePatch applies only whitelisted fields and clamps numeric ranges"
   assert.equal(worldState.year, 1644);
   assert.equal(worldState.month, 1);
   assert.equal(worldState.activeExam, null);
+  assert.equal(worldState.activeNpcRequest, null);
+  assert.deepEqual(worldState.longTermEvents.queue, []);
   assert.deepEqual(worldState.characters, originalCharacters);
   assert.deepEqual(worldState.eventHistory, []);
   assert.equal(worldState.publicOrder, 0);
