@@ -10,6 +10,7 @@ Always read [docs/SHARED_CONTEXT.md](docs/SHARED_CONTEXT.md), [docs/QIANQIU_DEVE
 - Keep Codex and Claude Code synchronized: update [docs/SHARED_CONTEXT.md](docs/SHARED_CONTEXT.md) before finishing every coherent change, including the current state, important decisions, verification, and the next recommended step.
 - Update [docs/DEVELOPMENT_STEPS.md](docs/DEVELOPMENT_STEPS.md) whenever a roadmap step starts, completes, blocks, or changes scope. Record the step ID, what changed, verification, and commit hash.
 - Use Git for every coherent local change. Before editing, check `git status --short`; after editing and verification, commit with a clear message.
+- If using subagents for a larger step, subagents may only produce scoped patches and focused verification reports. They must not commit, push, or create pull requests; Codex reviews, integrates, verifies, updates shared docs, and makes the final coherent commit.
 - Do not leave useful work only in chat. If a decision matters for future Codex or Claude Code sessions, write it into the repo.
 - Keep the game runnable with `npm install && npm start` and available at `http://localhost:3000`.
 - Default to Mock AI mode for local playability. Real model providers must remain optional through `.env`.

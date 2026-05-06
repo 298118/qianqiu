@@ -26,6 +26,7 @@ Both tools must read this file at the start of every development session, after 
 - `docs/DEVELOPMENT_STEPS.md` is now the phase-two active roadmap. The completed first-phase roadmap is archived in `docs/PHASE_ONE_ROADMAP_ARCHIVE.md`; first-phase acceptance details remain in `docs/PHASE_ONE_ACCEPTANCE.md`.
 - The phase-two planning transition does not change the mandatory development workflow, Git discipline, Mock-default requirement, provider-optional requirement, or server-owned state/rules boundary.
 - Every coherent project change must be committed locally with Git.
+- When a large step is split across subagents, subagents may produce scoped patches and focused verification only; they must not commit, push, or create PRs. The main agent reviews and integrates their diffs, runs final verification, updates shared documentation, and makes the single coherent commit.
 - The first runtime slice uses Express, CORS, and dotenv only; session ids use Node.js `crypto.randomUUID()` to avoid adding a separate id dependency this early.
 - `AI_PROVIDER=mock` remains the default no-key mode. `AI_PROVIDER=openai`, `deepseek`, `claude`, or `anthropic` now creates a real provider when the matching API key is present.
 - Real providers use local prompt builders in `src/ai/prompts.js`, JSON schemas in `src/ai/schemas.js`, and `src/utils/json.js` parsing before route handlers apply any state changes.
