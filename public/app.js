@@ -21,6 +21,13 @@ const examModal = document.querySelector(".exam-modal");
 const examWritingTools = document.querySelector("#exam-writing-tools");
 const examWordCount = document.querySelector("#exam-word-count");
 const examWordGuide = document.querySelector("#exam-word-guide");
+const saveList = document.querySelector("#save-list");
+const saveRefresh = document.querySelector("#save-refresh");
+const saveStatus = document.querySelector("#save-status");
+const saveBackdrop = document.querySelector("#save-backdrop");
+const saveClose = document.querySelector("#save-close");
+const saveModalList = document.querySelector("#save-modal-list");
+const saveModalStatus = document.querySelector("#save-modal-status");
 
 let currentSessionId = null;
 let currentWorldState = null;
@@ -32,6 +39,7 @@ let currentExamCalendarView = null;
 let currentExamRivalView = null;
 let currentExamPayload = null;
 let activeNarrativeStream = null;
+let latestSavePayload = { saves: [], skipped: [] };
 
 const ATTRIBUTE_LABELS = {
   health: "体力",
@@ -219,6 +227,143 @@ function createTag(text) {
   const tag = document.createElement("span");
   tag.textContent = text;
   return tag;
+}
+
+function formatSaveTime(value) {
+  if (!value) return "未记时";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "未记时";
+  return date.toLocaleString("zh-CN", {
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit"
+  });
+}
+
+function describeSave(save) {
+  return [
+    `${save.dynasty || "未定朝"}${save.year || "-"}年${save.month || 1}月`,
+    save.roleLabel || save.role || "未定身份",
+    save.examRank ? `科名 ${save.examRank}` : null,
+    save.officeTitle ? `官职 ${save.officeTitle}` : null,
+    `回合 ${save.turnCount ?? 0}`
+  ].filter(Boolean).join(" · ");
+}
+
+function createSaveCard(save, options = {}) {
+  const card = document.createElement("article");
+  const isCurrent = save.sessionId && save.sessionId === currentSessionId;
+  card.className = ["save-card", isCurrent ? "is-current" : ""].filter(Boolean).join(" ");
+  card.dataset.saveId = save.sessionId || "";
+  card.dataset.saveRole = save.role || "";
+
+  const header = document.createElement("header");
+  const title = document.createElement("strong");
+  title.textContent = save.playerName || "未名旅人";
+  const time = document.createElement("small");
+  time.textContent = formatSaveTime(save.updatedAt || save.createdAt);
+  header.append(title, time);
+
+  const detail = document.createElement("p");
+  detail.textContent = describeSave(save);
+
+  const summary = document.createElement("p");
+  summary.textContent = save.summary || "未留案语";
+
+  const button = document.createElement("button");
+  button.type = "button";
+  button.textContent = isCurrent ? "当前" : "载入";
+  button.disabled = isCurrent && options.disableCurrent !== false;
+  button.addEventListener("click", () => {
+    if (!save.sessionId || button.disabled) return;
+    loadSaveSession(save.sessionId, { source: options.source || "save-list" });
+  });
+
+  card.append(header, detail, summary, button);
+  return card;
+}
+
+function renderSaveList(target, statusTarget, payload = latestSavePayload, options = {}) {
+  if (!target || !statusTarget) return;
+
+  const saves = Array.isArray(payload?.saves) ? payload.saves : [];
+  const skipped = Array.isArray(payload?.skipped) ? payload.skipped : [];
+  target.innerHTML = "";
+
+  if (!saves.length) {
+    statusTarget.textContent = skipped.length
+      ? `暂无可载入存档，另有${skipped.length}份存档未能读取。`
+      : "暂无存档。";
+    return;
+  }
+
+  statusTarget.textContent = skipped.length
+    ? `可载入 ${saves.length} 份，另有 ${skipped.length} 份未能读取。`
+    : `可载入 ${saves.length} 份。`;
+
+  saves.slice(0, options.limit || 8).forEach((save) => {
+    target.appendChild(createSaveCard(save, options));
+  });
+}
+
+async function refreshSaveList(options = {}) {
+  const statusTargets = [saveStatus, options.modal ? saveModalStatus : null].filter(Boolean);
+  statusTargets.forEach((target) => {
+    target.textContent = "正在查阅存档...";
+  });
+
+  try {
+    const response = await fetch("/api/game/saves");
+    if (!response.ok) {
+      throw new Error(`存档列表读取失败：${response.status}`);
+    }
+
+    latestSavePayload = await response.json();
+    renderSaveList(saveList, saveStatus, latestSavePayload, { source: "start-save-list", limit: 5 });
+    renderSaveList(saveModalList, saveModalStatus, latestSavePayload, { source: "modal-save-list" });
+    return latestSavePayload;
+  } catch (error) {
+    if (saveStatus) saveStatus.textContent = error.message;
+    if (saveModalStatus) saveModalStatus.textContent = error.message;
+    if (saveList) saveList.innerHTML = "";
+    if (saveModalList) saveModalList.innerHTML = "";
+    return { saves: [], skipped: [] };
+  }
+}
+
+async function loadSaveSession(sessionId, options = {}) {
+  if (!sessionId) return;
+
+  try {
+    const response = await fetch(`/api/game/state/${sessionId}`);
+    if (!response.ok) {
+      if (response.status === 404) localStorage.removeItem("qianqiu.sessionId");
+      throw new Error(`载入失败：${response.status}`);
+    }
+
+    const payload = await response.json();
+    currentSessionId = payload.sessionId;
+    localStorage.setItem("qianqiu.sessionId", payload.sessionId);
+    renderWorldState(payload.worldState, payload.relationshipView, payload.activeNpcRequestView, payload.longTermEventView, payload.officialCareerView, payload.examCalendarView, payload.examRivalView);
+    narrative.innerHTML = "";
+    const history = payload.worldState.eventHistory || [];
+    if (history.length) {
+      appendTurnDivider(options.restore ? "存档记事" : "载入存档");
+      history.forEach((event) => appendNarrative(event));
+    } else {
+      appendNarrative(options.restore ? "存档已恢复。继续你的旅程。" : "存档已载入。继续你的旅程。");
+    }
+    showGameView();
+    closeSaveModal();
+    renderSaveList(saveList, saveStatus, latestSavePayload, { source: "start-save-list", limit: 5 });
+    renderSaveList(saveModalList, saveModalStatus, latestSavePayload, { source: "modal-save-list" });
+  } catch (error) {
+    appendNarrative(error.message, "error");
+    if (options.restore) {
+      localStorage.removeItem("qianqiu.sessionId");
+    }
+  }
 }
 
 function createPanelValue(kicker, value, valueTag = "strong") {
@@ -458,6 +603,14 @@ function setStatus(worldState) {
   statusItems.forEach((text) => {
     statusStrip.appendChild(createTag(text));
   });
+
+  const saveButton = document.createElement("button");
+  saveButton.type = "button";
+  saveButton.className = "status-action";
+  saveButton.id = "save-list-open";
+  saveButton.textContent = "存档";
+  saveButton.addEventListener("click", openSaveModal);
+  statusStrip.appendChild(saveButton);
 }
 
 function renderMeter(label, value) {
@@ -1726,6 +1879,16 @@ function showStartView() {
   actionArea.style.display = "none";
 }
 
+async function openSaveModal() {
+  saveBackdrop.hidden = false;
+  renderSaveList(saveModalList, saveModalStatus, latestSavePayload, { source: "modal-save-list" });
+  await refreshSaveList({ modal: true });
+}
+
+function closeSaveModal() {
+  saveBackdrop.hidden = true;
+}
+
 function parseSseBlock(block) {
   let eventName = "message";
   const dataLines = [];
@@ -1882,9 +2045,19 @@ examBackdrop.addEventListener("click", (event) => {
     closeExamModal();
   }
 });
+saveRefresh.addEventListener("click", () => refreshSaveList());
+saveClose.addEventListener("click", closeSaveModal);
+saveBackdrop.addEventListener("click", (event) => {
+  if (event.target === saveBackdrop) {
+    closeSaveModal();
+  }
+});
 window.addEventListener("keydown", (event) => {
   if (event.key === "Escape" && !examBackdrop.hidden) {
     closeExamModal();
+  }
+  if (event.key === "Escape" && !saveBackdrop.hidden) {
+    closeSaveModal();
   }
 });
 
@@ -1912,6 +2085,7 @@ form.addEventListener("submit", async (event) => {
     narrative.innerHTML = "";
     appendNarrative(payload.narrative);
     showGameView();
+    await refreshSaveList();
     actionInput.focus();
   } catch (error) {
     appendNarrative(error.message, "error");
@@ -1925,28 +2099,9 @@ async function restoreSession() {
   const savedId = localStorage.getItem("qianqiu.sessionId");
   if (!savedId) return;
 
-  try {
-    const response = await fetch(`/api/game/state/${savedId}`);
-    if (!response.ok) {
-      localStorage.removeItem("qianqiu.sessionId");
-      return;
-    }
-    const payload = await response.json();
-    currentSessionId = payload.sessionId;
-    renderWorldState(payload.worldState, payload.relationshipView, payload.activeNpcRequestView, payload.longTermEventView, payload.officialCareerView, payload.examCalendarView, payload.examRivalView);
-    narrative.innerHTML = "";
-    const history = payload.worldState.eventHistory || [];
-    if (history.length) {
-      appendTurnDivider("存档记事");
-      history.forEach((event) => appendNarrative(event));
-    } else {
-      appendNarrative("存档已恢复。继续你的旅程。");
-    }
-    showGameView();
-  } catch {
-    localStorage.removeItem("qianqiu.sessionId");
-  }
+  await loadSaveSession(savedId, { restore: true, source: "local-storage" });
 }
 
 showStartView();
+refreshSaveList();
 restoreSession();

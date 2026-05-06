@@ -485,6 +485,18 @@ function getGameLayoutFailures(metrics, mode = "game") {
     );
   }
 
+  if (metrics.saveListPanelClientWidth > 0 && metrics.saveListPanelScrollWidth > metrics.saveListPanelClientWidth + horizontalClipTolerance) {
+    failures.push(
+      `${mode} save-list panel has horizontal scroll overflow (${roundMetric(metrics.saveListPanelScrollWidth)}px > ${roundMetric(metrics.saveListPanelClientWidth)}px).`
+    );
+  }
+
+  if (metrics.saveListModalClientWidth > 0 && metrics.saveListModalScrollWidth > metrics.saveListModalClientWidth + horizontalClipTolerance) {
+    failures.push(
+      `${mode} save-list modal has horizontal scroll overflow (${roundMetric(metrics.saveListModalScrollWidth)}px > ${roundMetric(metrics.saveListModalClientWidth)}px).`
+    );
+  }
+
   if (metrics.scholarLeft < metrics.gameLeft - horizontalClipTolerance) {
     failures.push(`${mode} role panel starts outside the game panel.`);
   }
@@ -518,6 +530,8 @@ async function readGameLayoutMetrics(page) {
     const officialCareer = box("#official-career-panel");
     const examCalendar = box("#exam-calendar-panel");
     const examRival = box("#exam-rival-panel");
+    const saveListPanel = box("#save-list-panel");
+    const saveListModal = box("#save-list-modal");
 
     return {
       appWidth: app?.width || 0,
@@ -547,6 +561,12 @@ async function readGameLayoutMetrics(page) {
       examRivalClientWidth: examRival?.clientWidth || 0,
       examRivalScrollWidth: examRival?.scrollWidth || 0,
       examRivalWidth: examRival?.width || 0,
+      saveListPanelClientWidth: saveListPanel?.clientWidth || 0,
+      saveListPanelScrollWidth: saveListPanel?.scrollWidth || 0,
+      saveListPanelWidth: saveListPanel?.width || 0,
+      saveListModalClientWidth: saveListModal?.clientWidth || 0,
+      saveListModalScrollWidth: saveListModal?.scrollWidth || 0,
+      saveListModalWidth: saveListModal?.width || 0,
       viewportWidth: window.innerWidth
     };
   });
@@ -568,6 +588,16 @@ function getMissingActiveRequestTargets(actualIds = [], expectedIds = []) {
 
 function getHiddenActiveRequestLeaks(actualIds = [], hiddenIds = []) {
   return getHiddenRelationshipLeaks(actualIds, hiddenIds);
+}
+
+function getMissingSaveIds(actualIds = [], expectedIds = []) {
+  const available = new Set(actualIds);
+  return expectedIds.filter((id) => !available.has(id));
+}
+
+function getHiddenSaveIdLeaks(actualIds = [], hiddenIds = []) {
+  const available = new Set(actualIds);
+  return hiddenIds.filter((id) => available.has(id));
 }
 
 function getMissingOfficialCareerOutcomeTypes(actualTypes = [], expectedTypes = []) {
@@ -854,6 +884,65 @@ async function runRelationshipTurnAcceptance(page) {
   if (Number(afterRelationship) <= Number(beforeRelationship)) {
     failUiAcceptance(`relationship panel did not update mentor relationship after a Mock turn (${beforeRelationship} -> ${afterRelationship}).`);
   }
+}
+
+async function assertSaveList(page, mode, { expectedIds = [], hiddenIds = [], modal = false } = {}) {
+  const scope = modal ? "#save-list-modal" : "#save-list-panel";
+  await page.locator(scope).waitFor({ state: "visible", timeout: 10000 });
+  await page.locator(`${scope} .save-card`).first().waitFor({ state: "visible", timeout: 10000 });
+
+  const actualIds = await page.locator(`${scope} .save-card`).evaluateAll((cards) =>
+    cards.map((card) => card.dataset.saveId).filter(Boolean)
+  );
+  const missingIds = getMissingSaveIds(actualIds, expectedIds);
+  if (missingIds.length) {
+    failUiAcceptance(`${mode} save list missing save ids: ${missingIds.join(", ")}.`);
+  }
+  const hiddenLeaks = getHiddenSaveIdLeaks(actualIds, hiddenIds);
+  if (hiddenLeaks.length) {
+    failUiAcceptance(`${mode} save list leaked hidden save ids: ${hiddenLeaks.join(", ")}.`);
+  }
+
+  const text = await page.locator(scope).innerText();
+  ["worldState", "relationshipLedger", "hiddenContacts", "provider", "prompt"].forEach((token) => {
+    if (text.includes(token)) {
+      failUiAcceptance(`${mode} save list leaked raw storage detail: ${token}.`);
+    }
+  });
+
+  const gameLayoutFailures = getGameLayoutFailures(await readGameLayoutMetrics(page), mode);
+  const saveFailures = gameLayoutFailures.filter((failure) => /save-list/.test(failure));
+  if (saveFailures.length) {
+    failUiAcceptance(saveFailures.join(" "));
+  }
+}
+
+async function assertStartPageSaveLoad(browser, { baseUrl, sessionId, pageErrors }) {
+  const context = await browser.newContext({ viewport: VIEWPORTS.desktop });
+  try {
+    const page = await context.newPage();
+    page.on("pageerror", (error) => pageErrors.push(error.message));
+    await openCleanStartPage(page, baseUrl);
+    await assertSaveList(page, "desktop start page", { expectedIds: [sessionId] });
+    await page.locator(`#save-list-panel .save-card[data-save-id="${sessionId}"] button`).click();
+    await page.locator("#action-area").waitFor({ state: "visible", timeout: 10000 });
+    await page.locator("#scholar-panel").waitFor({ state: "visible", timeout: 10000 });
+    const loadedId = await page.evaluate(() => window.localStorage.getItem("qianqiu.sessionId"));
+    if (loadedId !== sessionId) {
+      failUiAcceptance(`start-page save load wrote ${loadedId || "no"} localStorage id instead of ${sessionId}.`);
+    }
+    await assertGameLayout(page, "desktop start-page save load");
+  } finally {
+    await context.close();
+  }
+}
+
+async function assertGameSaveModal(page, sessionId) {
+  await page.locator("#save-list-open").click();
+  await page.locator("#save-backdrop").waitFor({ state: "visible", timeout: 10000 });
+  await assertSaveList(page, "desktop game save modal", { expectedIds: [sessionId], modal: true });
+  await page.locator("#save-close").click();
+  await page.locator("#save-backdrop").waitFor({ state: "hidden", timeout: 10000 });
 }
 
 async function assertGameLayout(page, mode) {
@@ -1552,6 +1641,8 @@ async function runBrowserJourney({
     onSessionId(sessionId);
 
     await assertGameLayout(page, "desktop");
+    await assertGameSaveModal(page, sessionId);
+    await assertStartPageSaveLoad(browser, { baseUrl, sessionId, pageErrors });
     await assertRelationshipPanel(page, "desktop scholar", {
       expectedIds: ["C01", "scholarOfficials"],
       expectedTypes: ["character", "faction"],
@@ -1797,12 +1888,14 @@ module.exports = {
   getDefaultBrowserCandidates,
   getGameLayoutFailures,
   getHiddenActiveRequestLeaks,
+  getHiddenSaveIdLeaks,
   getMissingExamLevels,
   getHiddenRelationshipLeaks,
   getMissingOfficialCareerOutcomeTypes,
   getMissingRoleWorldKinds,
   getMissingActiveRequestTargets,
   getMissingRelationshipEntries,
+  getMissingSaveIds,
   getMissingStartRoles,
   normalizeBaseUrl,
   parseBrowserSmokeArgs,

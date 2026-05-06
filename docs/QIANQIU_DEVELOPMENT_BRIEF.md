@@ -24,7 +24,7 @@
 
 第二阶段已经完成本地验收，记录见 `docs/PHASE_TWO_ACCEPTANCE.md`；第二阶段路线图已归档到 `docs/PHASE_TWO_ROADMAP_ARCHIVE.md`。已接受的范围包括世界 tick、NPC/派系记忆、地方官与将领深度、入仕官员深度、科举竞争深度、真实 provider smoke/streaming 准备、AI eval fixtures 和浏览器自动化验收。
 
-第三阶段已经在 `docs/DEVELOPMENT_STEPS.md` 开启。当前已完成桌面游戏态布局、普通回合服务器独占字段边界、开局 role 校验、关系可视化、主动 NPC、长期事件调度、官场结果、科举日历、身份与世界联动、真实 provider 长回合验收脚本、浏览器完整旅程验收和 S38.2 JSON 存档硬化；后续继续推进浏览器存档列表 UI、SQLite/数据库迁移或下一轮长期模拟深度。
+第三阶段已经在 `docs/DEVELOPMENT_STEPS.md` 开启。当前已完成桌面游戏态布局、普通回合服务器独占字段边界、开局 role 校验、关系可视化、主动 NPC、长期事件调度、官场结果、科举日历、身份与世界联动、真实 provider 长回合验收脚本、浏览器完整旅程验收、S38.2 JSON 存档硬化和 S38.3 浏览器存档簿；后续继续推进 SQLite/数据库迁移或下一轮长期模拟深度。
 
 开发规范不变。第 12 节和第 13 节仍是每次开发必须遵守的流程；Mock 默认可玩、真实 provider 可选、服务器拥有状态边界和科举规则这些要求继续有效。
 
@@ -241,7 +241,7 @@ AI provider 约定：
 
 ### `GET /api/game/saves`
 
-读取本地存档列表。返回脱敏 metadata，包括 `sessionId`、`storageSchemaVersion`、`revision`、创建/更新时间、玩家名、身份、朝代年月、回合数、科名、官职和摘要；不会返回完整 `worldState`、原始关系账本、隐藏联系人、provider 配置或本地文件路径。损坏或未来版本的 `.json` 文件会进入 `skipped` 列表，不会被自动删除。
+读取本地存档列表。返回脱敏 metadata，包括 `sessionId`、`storageSchemaVersion`、`revision`、创建/更新时间、玩家名、身份、朝代年月、回合数、科名、官职和摘要；不会返回完整 `worldState`、原始关系账本、隐藏联系人、provider 配置或本地文件路径。损坏或未来版本的 `.json` 文件会进入 `skipped` 列表，不会被自动删除。S38.3 后，浏览器开局页会显示最近存档，游戏内状态栏“存档”按钮会打开同一存档簿；载入时仍通过 `GET /api/game/state/:sessionId` 读取完整状态并更新 `localStorage["qianqiu.sessionId"]`。
 
 ### `POST /api/game/turn`
 
@@ -910,5 +910,14 @@ S38.2 has moved from planning into the JSON storage runtime while keeping the da
 - Legacy raw `worldState` saves are treated as schema `0`, read back into the old route-compatible `worldState` shape, and migrated to the envelope safely on read.
 - Writes use same-directory temp-file-and-rename replacement with best-effort fsync; successful writes leave no same-session `.tmp` files.
 - Game and exam mutation routes now use `mutateSession()` so overlapping turn/question/submit requests for the same session are serialized and revision-checked.
-- `GET /api/game/saves` exposes redacted save metadata through `listSessions()`, while `cleanupSessionTempFiles()` provides explicit temp-file cleanup support. Browser `localStorage["qianqiu.sessionId"]` restore remains the current UI behavior until a save-list UI is added.
+- `GET /api/game/saves` exposes redacted save metadata through `listSessions()`, while `cleanupSessionTempFiles()` provides explicit temp-file cleanup support.
 - SQLite/database migration remains future work after the JSON adapter boundary has proven stable.
+
+## S38.3 Browser Save List Note (2026-05-06)
+
+S38.3 turns the S38.2 save-list API into a browser surface without changing the JSON storage backend:
+
+- `public/index.html` now includes a start-page `#save-list-panel` and an in-game `#save-list-modal`.
+- `public/app.js` fetches `GET /api/game/saves`, renders only redacted metadata, loads selected saves through `GET /api/game/state/:sessionId`, and keeps `localStorage["qianqiu.sessionId"]` as the compatibility pointer for automatic restore.
+- The status strip adds a compact “存档” button after a game is active; selecting another save switches the rendered world state and closes the modal.
+- Browser smoke now verifies the in-game save modal, start-page save loading from a clean context, hidden/raw storage token non-leakage, and save-list panel/modal overflow.

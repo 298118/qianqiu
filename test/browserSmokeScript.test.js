@@ -8,12 +8,14 @@ const {
   getDefaultBrowserCandidates,
   getGameLayoutFailures,
   getHiddenActiveRequestLeaks,
+  getHiddenSaveIdLeaks,
   getMissingExamLevels,
   getHiddenRelationshipLeaks,
   getMissingActiveRequestTargets,
   getMissingOfficialCareerOutcomeTypes,
   getMissingRoleWorldKinds,
   getMissingRelationshipEntries,
+  getMissingSaveIds,
   getMissingStartRoles,
   normalizeBaseUrl,
   parseBrowserSmokeArgs,
@@ -51,6 +53,12 @@ function createLayoutMetrics(overrides = {}) {
     examRivalClientWidth: 1180,
     examRivalScrollWidth: 1180,
     examRivalWidth: 1180,
+    saveListPanelClientWidth: 0,
+    saveListPanelScrollWidth: 0,
+    saveListPanelWidth: 0,
+    saveListModalClientWidth: 0,
+    saveListModalScrollWidth: 0,
+    saveListModalWidth: 0,
     viewportWidth: 1280,
     ...overrides
   };
@@ -226,6 +234,13 @@ test("browser smoke active request helpers catch missing and hidden targets", ()
   assert.deepEqual(getHiddenActiveRequestLeaks(["C01"], ["eunuchs"]), []);
 });
 
+test("browser smoke save-list helpers catch missing and hidden save ids", () => {
+  assert.deepEqual(getMissingSaveIds(["save-a", "save-b"], ["save-a"]), []);
+  assert.deepEqual(getMissingSaveIds(["save-a"], ["save-a", "save-b", "save-c"]), ["save-b", "save-c"]);
+  assert.deepEqual(getHiddenSaveIdLeaks(["save-a", "deleted-save"], ["deleted-save"]), ["deleted-save"]);
+  assert.deepEqual(getHiddenSaveIdLeaks(["save-a"], ["deleted-save"]), []);
+});
+
 test("browser smoke official career helpers catch missing outcome types", () => {
   assert.deepEqual(getMissingOfficialCareerOutcomeTypes(["appointment"], ["appointment"]), []);
   assert.deepEqual(
@@ -283,6 +298,23 @@ test("browser smoke game layout helper catches exam calendar and rival panel ove
 
   assert.match(failures.join("\n"), /exam calendar panel has horizontal scroll overflow/);
   assert.match(failures.join("\n"), /exam rival panel has horizontal scroll overflow/);
+});
+
+test("browser smoke game layout helper catches future save-list panel and modal overflow", () => {
+  const failures = getGameLayoutFailures(
+    createLayoutMetrics({
+      saveListPanelClientWidth: 500,
+      saveListPanelScrollWidth: 620,
+      saveListPanelWidth: 500,
+      saveListModalClientWidth: 640,
+      saveListModalScrollWidth: 760,
+      saveListModalWidth: 640
+    }),
+    "desktop"
+  );
+
+  assert.match(failures.join("\n"), /save-list panel has horizontal scroll overflow/);
+  assert.match(failures.join("\n"), /save-list modal has horizontal scroll overflow/);
 });
 
 test("browser smoke game layout helper keeps mobile width behavior compatible", () => {

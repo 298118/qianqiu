@@ -83,6 +83,7 @@
 | S37.2 | DONE | 增加可选真实 provider 长回合 smoke/eval 脚本，保持 no-key 环境成功跳过 | 2026-05-06 | Codex + subagents | current S37 implementation commit |
 | S38.1 | DONE | 扩展浏览器验收到完整四级科举通关、作弊样例、各身份一回合、桌面/移动视觉回归 | 2026-05-06 | Codex + subagents | 76745b3 |
 | S38.2 | DONE | 完成 JSON 存档硬化：session schema envelope、legacy 迁移、原子写入、并发保护、存档列表和未来数据库迁移路径 | 2026-05-06 | Codex + subagents | current S38.2 implementation commit |
+| S38.3 | DONE | 实现浏览器存档簿：开局页存档列表、游戏内存档弹窗、切换载入和 browser smoke 覆盖 | 2026-05-06 | Codex + subagent | current S38.3 implementation commit |
 
 ## 4. 分阶段详细步骤
 
@@ -154,6 +155,7 @@
 
 - S38.1：扩展 browser smoke 至完整四级科举通关、作弊样例、皇帝/大臣/将领/地方官/官员各一回合、桌面/移动视觉回归。
 - S38.2：完成 JSON 存档硬化，包含 session schema envelope、legacy raw-save 迁移、原子写入、同 session 并发保护、revision、存档列表、清理函数和未来数据库迁移路径。规划与实现基线落点是 [docs/SESSION_STORAGE_MIGRATION_PLAN.md](SESSION_STORAGE_MIGRATION_PLAN.md)，SQLite/托管数据库迁移仍是后续工作。
+- S38.3：把 `GET /api/game/saves` 接入浏览器体验。开局页展示最近存档，游戏内状态栏打开存档簿弹窗，载入存档时继续通过 `GET /api/game/state/:sessionId` 读取完整状态并更新 `localStorage["qianqiu.sessionId"]`。扩展 browser smoke 覆盖存档簿载入、去敏和布局溢出。
 
 ## 5. 进度记录
 
@@ -173,6 +175,35 @@
 ```
 
 ### 2026-05-06
+
+Tool: Codex
+
+Step: S38.3
+
+Commit: current S38.3 implementation commit
+
+Completed:
+- Added a browser save-list UI on top of the S38.2 redacted `GET /api/game/saves` API.
+- `public/index.html` now exposes a start-page `#save-list-panel` and an in-game `#save-list-modal`.
+- `public/app.js` fetches and renders redacted save metadata, loads selected saves through `GET /api/game/state/:sessionId`, updates `localStorage["qianqiu.sessionId"]`, refreshes the list after new game creation, and keeps automatic last-session restore compatible.
+- `public/styles.css` adds responsive save-list and modal styling using the existing paper/ink/jade/cinnabar UI language.
+- `scripts/browserSmoke.js` now verifies the in-game save modal, clean-context start-page save loading, raw storage token non-leakage, and save-list panel/modal overflow. `test/browserSmokeScript.test.js` adds focused save-list helper and layout coverage.
+- Used one implementation subagent for focused browser-smoke helper coverage. The subagent only edited `scripts/browserSmoke.js` and `test/browserSmokeScript.test.js`, ran no Git commands, and reported focused verification.
+
+Verification:
+- `node --check public\app.js`
+- `node --check scripts\browserSmoke.js`
+- `node --check test\browserSmokeScript.test.js`
+- `node --test test\browserSmokeScript.test.js`
+- `npm run smoke:browser`
+- Final full-suite verification recorded in this S38.3 commit after documentation updates.
+
+Risk/leftover:
+- Save deletion, export/import, and database-backed storage are still future work.
+- The browser save list is local-file metadata only; there are still no accounts, cloud saves, or cross-device sync.
+
+Next:
+- Continue with a storage adapter/SQLite slice when persistence needs outgrow local JSON, or pivot to the next long-term simulation depth step.
 
 Tool: Codex
 
@@ -210,7 +241,7 @@ Risk/leftover:
 - SQLite/hosted database adapters are not implemented in this slice.
 
 Next:
-- Add a browser save-list UI or continue to the SQLite adapter/export-import slice when product priority calls for it.
+- This historical S38.2 next step was superseded by S38.3 for the browser UI path; storage adapter/SQLite remains future work.
 
 Tool: Codex
 

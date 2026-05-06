@@ -1,6 +1,6 @@
 # Session Storage Migration Plan
 
-S38.2 began as a planning step and now also records the implemented JSON storage hardening baseline. The current implementation remains local JSON under `data/sessions/`, but it now uses a versioned storage envelope, legacy migration, atomic writes, per-session mutation serialization, revision checks, and a save-list API. SQLite or hosted database storage remains a future adapter step.
+S38.2 began as a planning step and now also records the implemented JSON storage hardening baseline. The current implementation remains local JSON under `data/sessions/`, but it now uses a versioned storage envelope, legacy migration, atomic writes, per-session mutation serialization, revision checks, a save-list API, and an S38.3 browser save-list UI. SQLite or hosted database storage remains a future adapter step.
 
 ## Implemented JSON Baseline
 
@@ -13,11 +13,10 @@ S38.2 began as a planning step and now also records the implemented JSON storage
 - Routes normalize older feature slices after reads with helpers such as `ensureRelationshipLedger()`, `ensureExamCalendarState()`, `ensureLongTermEventState()`, `ensureOfficialCareerState()`, and `ensureRoleWorldCouplingState()`.
 - Game and exam mutation routes use `mutateSession()` so overlapping writes for the same session are serialized and revision-checked.
 - `GET /api/game/saves` returns redacted save-list metadata from `listSessions()`.
-- Browser restore currently stores only `qianqiu.sessionId` in `localStorage`; there is no browser save picker yet.
+- Browser restore still stores `qianqiu.sessionId` in `localStorage` for compatibility, and S38.3 adds a start-page plus in-game save picker backed by `GET /api/game/saves`.
 
 Known gaps:
 
-- No browser save-list UI yet.
 - No cross-process lock for multiple Node servers sharing one directory.
 - No backup/export shape or database adapter implementation yet.
 - No SQLite or hosted database migration yet.
@@ -151,7 +150,7 @@ Save-list rules:
 - Sort by `updatedAt` descending, then `createdAt`, then filename for stable output.
 - Use rebuilt envelope metadata; legacy raw saves may be listed through a safe in-memory metadata rebuild.
 - Do not expose hidden relationship ids, provider configuration, raw prompts, local file paths, or full `worldState` in the list payload.
-- Browser restore should eventually prefer this list over a single `localStorage` id, while still supporting direct restore of the last id for compatibility.
+- Browser restore still supports direct restore of the last `localStorage` id, while the S38.3 save picker lets players choose from the redacted list on the start page or through the in-game save modal.
 
 Cleanup policy:
 
@@ -180,10 +179,11 @@ Migration phases:
 1. DONE: JSON envelope and atomic writes, with route-compatible `readSession()` and `writeSession()`.
 2. DONE: Per-session mutation serialization plus revision tests.
 3. DONE: Save-list API and explicit temp-file cleanup helper.
-4. NEXT: Storage adapter interface, with the current JSON implementation as the default adapter.
-5. FUTURE: SQLite prototype for local development. Store one row per session with metadata columns, `revision`, timestamps, and a JSON `world_state` payload.
-6. FUTURE: Export/import tooling from JSON envelope files to database rows and back.
-7. FUTURE: Optional hosted database adapter only after local SQLite proves the contract.
+4. DONE: Browser save-list UI that consumes the redacted API while keeping last-session auto-restore compatibility.
+5. NEXT: Storage adapter interface, with the current JSON implementation as the default adapter.
+6. FUTURE: SQLite prototype for local development. Store one row per session with metadata columns, `revision`, timestamps, and a JSON `world_state` payload.
+7. FUTURE: Export/import tooling from JSON envelope files to database rows and back.
+8. FUTURE: Optional hosted database adapter only after local SQLite proves the contract.
 
 The first database candidate should be SQLite because it improves atomicity and concurrent local access without requiring a service, credentials, or a hosted dependency. PostgreSQL or another hosted database can follow only when accounts, multiplayer, or remote save sync become product requirements.
 

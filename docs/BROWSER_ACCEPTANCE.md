@@ -22,7 +22,8 @@ The smoke uses `playwright-core` with an installed Chrome or Edge executable. If
 | --- | --- |
 | Local boot | Starts a temporary Mock-mode server unless `--url` is supplied, waits for `/api/health`, and loads `/`. |
 | Opening flow | Confirms the start form exposes every supported role, creates a scholar session through the real form, and verifies `qianqiu.sessionId` in localStorage. |
-| Session restore | Reloads the page, opens a fresh page in the same browser context, confirms the game view restores, and checks `GET /api/game/state/:sessionId`. |
+| Session restore | Reloads the page, opens a fresh page in the same browser context, confirms the game view restores, checks `GET /api/game/state/:sessionId`, and verifies the start-page save list can load the same session from a clean browser context. |
+| Save list UI | Checks the in-game `#save-list-modal` and start-page `#save-list-panel` from `GET /api/game/saves`, expected save ids, raw storage token non-leakage, and save-list horizontal overflow. |
 | Desktop layout | Checks status strip, role panel, narrative area, and action input surface for visibility, overlap, horizontal overflow, game-panel width/share, and role-panel clipping. |
 | Relationship panel | Checks visible contact/faction rows from `relationshipView`, field completeness, hidden id/text non-leakage, relationship-panel overflow, and a Mock scholar turn updating the mentor relationship. |
 | Active request panel | Checks the server-scheduled `activeNpcRequestView` panel, target id/type/kind/status attributes, required ask/stakes/due/hint fields, hidden target/text non-leakage, and active-request overflow. |
@@ -43,26 +44,26 @@ The smoke uses `playwright-core` with an installed Chrome or Edge executable. If
 
 Date: 2026-05-06
 
-Relevant implementation commit: `76745b3` (`test: expand browser acceptance journey`)
+Relevant implementation commit: current S38.3 implementation commit
 
-Commands verified during S38.1:
+Commands verified during S38.3:
 
 ```powershell
 node --check scripts\browserSmoke.js
 node --check test\browserSmokeScript.test.js
 node --test test\browserSmokeScript.test.js
 npm test
-npm run smoke:browser -- --screenshots artifacts/browser-smoke/s38-1
+npm run smoke:browser
 git diff --check
 ```
 
 Observed result:
 
-- Focused browser-helper tests passed with 21 tests.
-- `npm run smoke:browser -- --screenshots artifacts/browser-smoke/s38-1`: passed with relationship-panel coverage, active-request-panel coverage, complete four-level Mock exam progression, final scholar-to-official browser promotion, severe copied-classic cheating coverage, exam-calendar/rival-panel coverage, direct official-start first-appointment coverage, representative magistrate/general/emperor/minister role-world coupling coverage, and 14 screenshots checked.
-- `npm test`: 155 tests passed.
+- Focused browser-helper tests passed with 23 tests.
+- `npm run smoke:browser`: passed with save-list modal/start-page load coverage, relationship-panel coverage, active-request-panel coverage, complete four-level Mock exam progression, final scholar-to-official browser promotion, severe copied-classic cheating coverage, exam-calendar/rival-panel coverage, direct official-start first-appointment coverage, representative magistrate/general/emperor/minister role-world coupling coverage, and 14 screenshots checked.
+- `npm test`: full suite passed in the current S38.3 verification run.
 - The browser start path still clears stale `qianqiu.sessionId` localStorage only when an old restored game hides the initial start form. Later reload/fresh-page restoration checks continue to validate the newly created session.
-- Desktop smoke still fails if the game panel regresses to the old narrow-column width, if the role panel, relationship panel, active-request panel, official-career panel, exam-calendar panel, or exam-rival panel is horizontally clipped, if S35 calendar/rival details disappear from the modal/archive/candidate profiles, if any supported start role is missing from the browser form, if hidden scholar-invisible factions leak into relationship/active-request panel text, if the four-exam path stops before official promotion, if copied-passage punishment disappears, or if S36 role-world feedback/API metric deltas disappear from representative role journeys.
+- Desktop smoke still fails if the game panel regresses to the old narrow-column width, if the role panel, relationship panel, active-request panel, official-career panel, exam-calendar panel, exam-rival panel, or save-list surfaces are horizontally clipped, if S35 calendar/rival details disappear from the modal/archive/candidate profiles, if any supported start role is missing from the browser form, if hidden scholar-invisible factions leak into relationship/active-request panel text, if save-list rows leak raw storage tokens, if the four-exam path stops before official promotion, if copied-passage punishment disappears, or if S36 role-world feedback/API metric deltas disappear from representative role journeys.
 
 Earlier S26.2 screenshot review caught and fixed a real result-modal bug: `.exam-requirements { display: grid; }` overrode the `hidden` attribute and left the old requirements visible behind the result view. The fix is `.exam-requirements[hidden] { display: none; }`.
 

@@ -49,6 +49,15 @@
           </label>
           <button type="submit">开局</button>
         </form>
+
+        <section class="save-panel" id="save-list-panel" aria-labelledby="save-panel-title">
+          <header>
+            <strong id="save-panel-title">存档簿</strong>
+            <button id="save-refresh" type="button">刷新</button>
+          </header>
+          <p class="save-status" id="save-status">正在查阅存档...</p>
+          <div class="save-list" id="save-list"></div>
+        </section>
       </section>
 
       <section class="game-panel" aria-live="polite">
@@ -83,6 +92,17 @@
           <div class="exam-actions">
             <button id="exam-submit" type="button" disabled>交卷</button>
           </div>
+        </section>
+      </div>
+
+      <div class="save-backdrop" id="save-backdrop" hidden>
+        <section class="save-modal" id="save-list-modal" role="dialog" aria-modal="true" aria-labelledby="save-modal-title">
+          <header>
+            <span id="save-modal-title">存档簿</span>
+            <button id="save-close" type="button" aria-label="关闭存档簿">×</button>
+          </header>
+          <p class="save-status" id="save-modal-status">正在查阅存档...</p>
+          <div class="save-list save-list--modal" id="save-modal-list"></div>
         </section>
       </div>
     </main>
