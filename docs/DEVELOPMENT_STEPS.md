@@ -64,7 +64,7 @@
 | S40.1 | DONE | 归档第三阶段规划，开启第四阶段活动台账，并保持开发规范不变 | 2026-05-06 | Codex | 7927c02 |
 | S40.2 | DONE | 增加游戏内 AI 连接测试入口、后端诊断路由、DeepSeek 任务模型配置文档和测试 | 2026-05-06 | Codex | 7927c02 |
 | S41.1 | DONE | 制定优秀提示词总纲：世界引擎、科举考官、出题官、官场、地方、军事、皇帝/大臣等角色的语气与 JSON 合约 | 2026-05-06 | Codex | 383881a |
-| S41.2 | DONE | 为 prompt pack 增加历史语气、越权、现代词、JSON 严格性和隐藏信息不泄露的离线 eval/red-team fixtures | 2026-05-06 | Codex | pending local S41.2 implementation commit |
+| S41.2 | DONE | 为 prompt pack 增加历史语气、越权、现代词、JSON 严格性和隐藏信息不泄露的离线 eval/red-team fixtures | 2026-05-06 | Codex | 2c45949 |
 | S42.1 | TODO | 定义深度官场契约：官职谱系、衙门/部院、差遣、座主门生、同年、上官、政敌、考成、廷推、外放、处分 |  |  |  |
 | S42.2 | TODO | 实现官场行动与履历系统：差事、奏疏、考成、弹劾、调任、升降、丁忧/起复、清望/贪墨风险 |  |  |  |
 | S42.3 | TODO | 增加官场 UI、档案、浏览器旅程和 Mock/真实 provider 验收，确保入仕后有长期可玩目标 |  |  |  |
@@ -219,7 +219,7 @@ S41.1 落地范围：
 
 步骤：S41.2
 
-提交：pending local S41.2 implementation commit
+提交：2c45949
 
 完成：
 - 扩展 `testdata/aiEvalFixtures.js`，为 `opening`、`world_turn`、`official_career`、`emperor_court`、`minister_faction`、`local_magistrate`、`general_frontier`、`exam_question` 和 `exam_grading` 增加 schema-valid、历史语气合格的 prompt-pack 输出样本。
