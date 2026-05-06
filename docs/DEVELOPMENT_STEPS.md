@@ -67,7 +67,7 @@
 | S24.2 | DONE | 增加考试档案 UI，允许回看历次文章、题目、排名、复核和晋级原因 | 2026-05-06 | Codex + subagent patch | fadb9ab |
 | S24.3 | DONE | 增加赶考成本、旅途事件、疲劳/心性影响和考前准备风险 | 2026-05-06 | Codex + subagent patch | fadb9ab |
 | S25.1 | DONE | 增加真实 provider smoke 脚本，在有 key 时验证 start/turn/question/submit 四类调用 | 2026-05-06 | Codex | 本次 S25.1 提交 |
-| S25.2 | TODO | 评估并实现真实 provider token streaming；无法流式的 provider 保持兼容降级 |
+| S25.2 | DONE | 评估并实现真实 provider token streaming；无法流式的 provider 保持兼容降级 | 2026-05-06 | Codex + subagent investigation | current S25.2 commit |
 | S25.3 | TODO | 建立 AI 输出 eval fixtures，固定校验 JSON 合约、违规 patch、科举评卷和历史语气 |
 | S26.1 | TODO | 引入浏览器自动化验收方案，优先覆盖本地页面加载、开局、localStorage 恢复 |
 | S26.2 | TODO | 增加截图或 DOM 级 UI 验收，覆盖桌面/移动布局、考试弹窗和放榜详情 |
@@ -156,6 +156,47 @@
 ```
 
 ### 2026-05-06
+
+Tool: Codex
+
+Step: S25.2
+
+Commit: current S25.2 commit
+
+Completed:
+- Added optional real-provider `streamTurn(worldState, input, { onTextDelta })` support while keeping `runTurn()` as the canonical non-stream JSON path.
+- OpenAI now streams Responses `response.output_text.delta`; DeepSeek streams OpenAI-compatible chat completion `choices[0].delta.content`; Anthropic streams Messages text/input JSON deltas and uses the final parsed message when available.
+- Added `src/utils/streamingJson.js` so the SSE route can extract only the top-level `narrative` JSON string into visible `narrative_chunk` events while buffering full provider JSON for schema validation.
+- Updated `/api/game/turn` SSE handling to prefer real-provider streaming when supported, preserve the current chunk-after-result fallback for Mock/unsupported providers, and leave sessions unchanged if visible streamed narrative is followed by a provider/schema failure.
+- Extended `npm run smoke:provider` with `--stream` for keyed provider environments.
+- Added streaming extractor tests and fake-provider SSE route tests for streaming success, fallback behavior, and failure-without-mutation.
+- Documented the streaming contract in README, architecture, product brief, shared context, and this ledger.
+
+Verification:
+- `node --check src/utils/streamingJson.js`
+- `node --check src/ai/providers/remoteHelpers.js`
+- `node --check src/ai/providers/openai.js`
+- `node --check src/ai/providers/deepseek.js`
+- `node --check src/ai/providers/anthropic.js`
+- `node --check src/ai/index.js`
+- `node --check src/routes/game.js`
+- `node --check scripts/providerSmoke.js`
+- `node --check test/streamingJson.test.js`
+- `node --check test/streamingTurnRoute.test.js`
+- `node --check test/providerSmokeScript.test.js`
+- `node --test test/streamingJson.test.js` passed with 3 tests.
+- `node --test test/streamingTurnRoute.test.js` passed with 3 tests.
+- `node --test test/providerSmokeScript.test.js` passed with 7 tests.
+- `npm run smoke:provider` skipped successfully because no real-provider keys are configured.
+- `npm test` passed with 73 tests.
+
+Risk/leftover:
+- Real provider network streaming was not executed in this environment because no keys are configured; no-key skip and fake-provider route behavior were verified.
+- Streaming is turn-only. Exam question and grading remain ordinary JSON calls.
+- The stream extractor intentionally exposes only `narrative`; state still waits for complete schema-valid JSON.
+
+Next:
+- S25.3: establish AI output eval fixtures for JSON contract, safe patch behavior, exam grading, and historical tone, or S26.1 if browser automation becomes the higher priority.
 
 Tool: Codex
 

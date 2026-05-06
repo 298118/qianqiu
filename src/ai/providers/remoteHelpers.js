@@ -22,14 +22,48 @@ async function runTask(task, requestJson) {
   return validatePayload(task.schemaName, payload);
 }
 
-function createRemoteProvider(requestJson) {
+async function runStreamingTask(task, requestJsonStream, streamHandlers = {}) {
+  const schema = getModelSchema(task.schemaName);
+  let raw = "";
+
+  const returnedRaw = await requestJsonStream({
+    ...task,
+    schema,
+    onTextDelta(delta) {
+      const text = String(delta || "");
+      if (!text) return;
+      raw += text;
+      if (typeof streamHandlers.onTextDelta === "function") {
+        streamHandlers.onTextDelta(text);
+      }
+    }
+  });
+
+  const parseSource = returnedRaw !== undefined && returnedRaw !== null && (
+    typeof returnedRaw !== "string" || returnedRaw.trim()
+  ) ? returnedRaw : raw;
+  const payload = parseJsonFromText(parseSource);
+  return validatePayload(task.schemaName, payload);
+}
+
+function createRemoteProvider(requestJson, requestJsonStream) {
   return {
+    supportsStreaming: Boolean(requestJsonStream),
+
     startGame(worldState) {
       return runTask(buildOpeningTask(worldState), requestJson);
     },
 
     runTurn(worldState, input) {
       return runTask(buildTurnTask(worldState, input), requestJson);
+    },
+
+    async streamTurn(worldState, input, streamHandlers = {}) {
+      if (!requestJsonStream) {
+        return runTask(buildTurnTask(worldState, input), requestJson);
+      }
+
+      return runStreamingTask(buildTurnTask(worldState, input), requestJsonStream, streamHandlers);
     },
 
     generateExamQuestion(worldState, exam) {

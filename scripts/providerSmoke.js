@@ -47,6 +47,10 @@ function readArg(argv, name) {
   return "";
 }
 
+function hasFlag(argv, name) {
+  return argv.includes(name);
+}
+
 function canonicalProviderName(value) {
   const name = String(value || "").trim().toLowerCase();
   if (!name || name === "mock") return "mock";
@@ -143,7 +147,7 @@ function logStep(providerName, stepName, detail) {
   console.log(`[${providerName}] ${stepName} ok: ${detail}`);
 }
 
-async function smokeProvider(providerName) {
+async function smokeProvider(providerName, options = {}) {
   const config = PROVIDER_CONFIGS[providerName];
   const provider = config.create();
   const worldState = makeSmokeWorldState();
@@ -160,6 +164,16 @@ async function smokeProvider(providerName) {
     "turn",
     `patchKeys=${Object.keys(turn.statePatch || {}).join(",") || "none"}, examTrigger=${turn.examTrigger?.shouldStart === true}`
   );
+
+  if (options.stream) {
+    let streamedChars = 0;
+    const streamedTurn = await provider.streamTurn(worldState, "Study quietly and report the result as structured JSON.", {
+      onTextDelta(delta) {
+        streamedChars += String(delta || "").length;
+      }
+    });
+    logStep(providerName, "turn-stream", `rawChars=${streamedChars}, narrative="${truncate(streamedTurn.narrative)}"`);
+  }
 
   worldState.activeExam = {
     level: exam.level,
@@ -184,6 +198,7 @@ async function smokeProvider(providerName) {
 
 async function runProviderSmoke(options = {}) {
   const providerNames = getProviderNamesToSmoke(options);
+  const stream = hasFlag(options.argv || process.argv, "--stream");
 
   if (!providerNames.length) {
     console.log("No real-provider keys found; skipping provider smoke. Set OPENAI_API_KEY, DEEPSEEK_API_KEY, or ANTHROPIC_API_KEY to run it.");
@@ -191,7 +206,7 @@ async function runProviderSmoke(options = {}) {
   }
 
   for (const providerName of providerNames) {
-    await smokeProvider(providerName);
+    await smokeProvider(providerName, { stream });
   }
 
   console.log(`Provider smoke completed for: ${providerNames.join(", ")}`);
@@ -201,12 +216,14 @@ async function runProviderSmoke(options = {}) {
 function printUsage() {
   console.log([
     "Usage: npm run smoke:provider -- [--provider openai|deepseek|anthropic|claude|all]",
+    "       npm run smoke:provider -- --stream --provider openai",
     "",
     "Default behavior:",
     "- AI_PROVIDER=mock: run every provider that has its required key in the environment.",
     "- AI_PROVIDER=<real provider>: run that provider and fail if its key is missing.",
     "- --provider overrides AI_PROVIDER for this smoke run.",
     "",
+    "--stream additionally checks the real provider turn streaming path.",
     "This script calls real provider adapters directly, without Mock fallback or session writes."
   ].join("\n"));
 }
@@ -225,6 +242,7 @@ if (require.main === module) {
 module.exports = {
   buildSmokeEssay,
   canonicalProviderName,
+  hasFlag,
   getProviderNamesToSmoke,
   providerHasKey,
   runProviderSmoke

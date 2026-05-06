@@ -11,8 +11,8 @@ function createDeepSeekProvider() {
   });
   const model = process.env.DEEPSEEK_MODEL || "deepseek-v4-flash";
 
-  return createRemoteProvider(async ({ instructions, input, schemaName, schema, maxOutputTokens }) => {
-    const response = await client.chat.completions.create({
+  function buildCompletionParams({ instructions, input, schemaName, schema, maxOutputTokens }) {
+    return {
       model,
       messages: [
         { role: "system", content: instructions },
@@ -30,9 +30,23 @@ function createDeepSeekProvider() {
       temperature: 0.7,
       response_format: { type: "json_object" },
       thinking: { type: "disabled" }
-    });
+    };
+  }
+
+  return createRemoteProvider(async (task) => {
+    const response = await client.chat.completions.create(buildCompletionParams(task));
 
     return response.choices?.[0]?.message?.content || "";
+  }, async (task) => {
+    const stream = await client.chat.completions.create({
+      ...buildCompletionParams(task),
+      stream: true
+    });
+
+    for await (const chunk of stream) {
+      const delta = chunk.choices?.[0]?.delta?.content || "";
+      if (delta) task.onTextDelta(delta);
+    }
   });
 }
 

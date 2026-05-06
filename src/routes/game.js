@@ -6,6 +6,7 @@ const { runWorldTick } = require("../game/worldTick");
 const { getProvider } = require("../ai");
 const { readSession, writeSession } = require("../storage/sessionStore");
 const { chunkTextForSse, closeSse, sendSseEvent, writeSseHeaders } = require("../utils/sse");
+const { createJsonStringFieldExtractor } = require("../utils/streamingJson");
 
 const router = express.Router();
 
@@ -35,6 +36,22 @@ async function processTurn(sessionId, input) {
   ensureRelationshipLedger(worldState);
   const provider = getProvider();
   const result = await provider.runTurn(worldState, input);
+  return finalizeTurn(worldState, result);
+}
+
+async function processStreamingTurn(sessionId, input, streamHandlers = {}) {
+  const worldState = await readSession(sessionId);
+  ensureRelationshipLedger(worldState);
+  const provider = getProvider();
+  const canStream = provider.supportsStreaming && typeof provider.streamTurn === "function";
+  const result = canStream
+    ? await provider.streamTurn(worldState, input, streamHandlers)
+    : await provider.runTurn(worldState, input);
+
+  return finalizeTurn(worldState, result);
+}
+
+async function finalizeTurn(worldState, result) {
   const providerAttributeChanges = Array.isArray(result.attributeChanges) ? result.attributeChanges : [];
   const examTrigger = result.examTrigger || { shouldStart: false, level: null, reason: "" };
 
@@ -79,12 +96,31 @@ async function processTurn(sessionId, input) {
 async function streamTurn(res, sessionId, input) {
   writeSseHeaders(res);
   sendSseEvent(res, "state_preview", { sessionId, status: "accepted" });
+  let streamedNarrative = false;
+  const narrativeExtractor = createJsonStringFieldExtractor("narrative", (text) => {
+    streamedNarrative = true;
+    sendSseEvent(res, "narrative_chunk", { text });
+  });
 
   try {
-    const payload = await processTurn(sessionId, input);
+    let payload;
+    try {
+      payload = await processStreamingTurn(sessionId, input, {
+        onTextDelta(delta) {
+          narrativeExtractor.push(delta);
+        }
+      });
+    } catch (error) {
+      if (streamedNarrative) {
+        throw error;
+      }
+      payload = await processTurn(sessionId, input);
+    }
 
-    for (const chunk of chunkTextForSse(payload.narrative)) {
-      sendSseEvent(res, "narrative_chunk", { text: chunk });
+    if (!streamedNarrative) {
+      for (const chunk of chunkTextForSse(payload.narrative)) {
+        sendSseEvent(res, "narrative_chunk", { text: chunk });
+      }
     }
 
     sendSseEvent(res, "state_preview", {

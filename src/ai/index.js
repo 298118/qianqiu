@@ -15,14 +15,24 @@ function describeError(error) {
 }
 
 function wrapWithMockFallback(providerName, provider) {
-  const wrapped = {};
+  const wrapped = {
+    supportsStreaming: Boolean(provider.supportsStreaming && typeof provider.streamTurn === "function")
+  };
 
-  for (const method of ["startGame", "runTurn", "generateExamQuestion", "gradeExamEssay"]) {
+  for (const method of ["startGame", "runTurn", "streamTurn", "generateExamQuestion", "gradeExamEssay"]) {
     wrapped[method] = async (...args) => {
+      if (method === "streamTurn") {
+        if (!wrapped.supportsStreaming) {
+          throw new Error(`AI provider ${providerName} does not support turn streaming.`);
+        }
+        return provider.streamTurn(...args);
+      }
+
       let lastError = null;
 
       for (let attempt = 1; attempt <= 2; attempt += 1) {
         try {
+          if (typeof provider[method] !== "function") break;
           return await provider[method](...args);
         } catch (error) {
           lastError = error;

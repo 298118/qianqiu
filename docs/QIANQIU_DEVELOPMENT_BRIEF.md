@@ -251,7 +251,7 @@ SSE 事件：
 - `final_state`
 - `error`
 
-当前实现中，客户端发送 `Accept: text/event-stream` 或 `?stream=1` 时启用 SSE；未请求 SSE 的调用仍返回普通 JSON，用于测试脚本和旧客户端兼容。无论哪种响应形态，状态 patch、事件追加、考试触发和 session 保存仍由服务器执行。
+当前实现中，客户端发送 `Accept: text/event-stream` 或 `?stream=1` 时启用 SSE；未请求 SSE 的调用仍返回普通 JSON，用于测试脚本和旧客户端兼容。S25.2 后，OpenAI Responses、DeepSeek chat completions、Anthropic Messages 适配器在 SSE turn 中可通过 `streamTurn()` 返回真实 token streaming；服务端只从结构化 JSON token 流中抽取顶层 `narrative` 字符串作为 `narrative_chunk`，完整 `turn` JSON 仍必须通过 Ajv schema 后才会应用状态。若不支持流式或没有提前抽取到叙事，则保留当前完成后分块的兼容输出。若已经向浏览器发送过真实 provider 叙事后流式调用失败，路由只发 `error` 并保持 session 不变。无论哪种响应形态，状态 patch、事件追加、考试触发和 session 保存仍由服务器执行。
 
 ### `POST /api/exam/question`
 
@@ -699,3 +699,16 @@ S25.1 adds an optional keyed smoke path without changing the default Mock experi
 - The smoke calls real provider factories directly instead of `getProvider()`, so Mock fallback cannot hide provider failures.
 - The smoke verifies the provider-method equivalents of start, turn, question, and submit/grade. It validates provider JSON through the existing schemas, prints concise summaries, and does not start Express or write session files.
 - `test/providerSmokeScript.test.js` covers provider aliasing, key-based selection, missing-key failure, and the no-key skip path without making network calls.
+
+## S25.2 Real-Provider Streaming Note (2026-05-06)
+
+S25.2 adds true turn token streaming for keyed real providers while preserving the server-owned state boundary:
+
+- OpenAI uses Responses API `stream: true` and consumes `response.output_text.delta`.
+- DeepSeek uses OpenAI-compatible chat completions with `stream: true` and consumes `choices[0].delta.content`.
+- Anthropic/Claude uses Messages `client.messages.stream()` and consumes text or JSON deltas, while using the final parsed message when available for validation.
+- `src/ai/providers/remoteHelpers.js` buffers the complete streamed JSON and validates it through the existing `turn` schema before returning.
+- `src/routes/game.js` only streams visible `narrative_chunk` text by extracting the top-level `narrative` JSON string with `src/utils/streamingJson.js`; state patching, relationship changes, world tick, persistence, and `final_state` still wait for complete schema-valid JSON.
+- Mock and unsupported providers keep the existing SSE compatibility path: generate the full turn first, then chunk the final narrative.
+- `npm run smoke:provider -- --stream --provider openai|deepseek|anthropic|claude` optionally exercises the real-provider streaming path in keyed environments.
+- If visible provider narrative has already been sent and the stream later fails validation, the route emits `error` and leaves the session unchanged rather than falling back to Mock with contradictory visible text.

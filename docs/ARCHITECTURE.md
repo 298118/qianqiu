@@ -167,6 +167,7 @@ Providers expose four methods:
 
 - `startGame(worldState)`
 - `runTurn(worldState, input)`
+- optional `streamTurn(worldState, input, { onTextDelta })` for real-provider turn token streaming
 - `generateExamQuestion(worldState, exam)`
 - `gradeExamEssay(worldState, exam, essay, authenticityCheck)`
 
@@ -177,7 +178,9 @@ Provider outputs must match the schemas in `src/ai/schemas.js`:
 - `examQuestion`: exam level, name, question, type, difficulty, requirements, word count, pass score and promotion rank
 - `grade`: five score dimensions, `overall_score`, rank, detailed feedback, authenticity echo, candidates and ranking placeholders
 
-Real provider adapters parse model text through `src/utils/json.js`, validate with Ajv, retry once on failure, then fall back to Mock for that method. The model never owns final game state. It can suggest `statePatch`; the server whitelists and clamps it.
+Real provider adapters parse model text through `src/utils/json.js`, validate with Ajv, retry once on ordinary non-streaming failure, then fall back to Mock for that method. The model never owns final game state. It can suggest `statePatch`; the server whitelists and clamps it.
+
+S25.2 adds optional turn token streaming for OpenAI Responses, DeepSeek chat completions, and Anthropic Messages. `streamTurn()` buffers the full model JSON and still returns the same validated `turn` payload as `runTurn()`. During SSE requests, `src/routes/game.js` uses `src/utils/streamingJson.js` to extract only the top-level `narrative` string from the streamed JSON text and send it as `narrative_chunk`. State patches, relationship changes, world tick, persistence, and `final_state` still happen only after the full JSON passes schema validation. If visible provider narrative has already been sent and the stream then fails, the route emits an `error` event and does not write the session; if no visible narrative was sent, it can fall back to the normal turn path.
 
 For turn responses, providers may also suggest top-level `relationshipChanges`. These are not state patches. They are bounded social-memory deltas for existing visible relationship ledger ids, and the server is free to clamp or ignore them before persistence. Mock now emits these suggestions for scholar, emperor, minister, general, magistrate, and official actions so local play can exercise social memory without real model keys.
 
@@ -188,9 +191,10 @@ For turn responses, providers may also suggest top-level `relationshipChanges`. 
 ```bash
 npm run smoke:provider
 npm run smoke:provider -- --provider deepseek
+npm run smoke:provider -- --stream --provider deepseek
 ```
 
-The script calls real provider factories directly instead of `getProvider()`, so failures are not hidden by Mock fallback. It exercises the four provider methods that correspond to start, turn, question, and submit/grade, then prints a short schema-validated summary. It does not start the Express server and does not write session JSON files. With `AI_PROVIDER=mock`, it auto-runs only providers whose required key is present; if no real-provider keys are configured, it skips with exit code 0.
+The script calls real provider factories directly instead of `getProvider()`, so failures are not hidden by Mock fallback. It exercises the four provider methods that correspond to start, turn, question, and submit/grade, then prints a short schema-validated summary. With `--stream`, it also exercises `streamTurn()` and reports streamed raw-character count plus validated narrative. It does not start the Express server and does not write session JSON files. With `AI_PROVIDER=mock`, it auto-runs only providers whose required key is present; if no real-provider keys are configured, it skips with exit code 0.
 
 ## State Model
 
@@ -335,6 +339,7 @@ For keyed provider smoke, use:
 
 ```bash
 npm run smoke:provider
+npm run smoke:provider -- --stream --provider openai
 ```
 
 For local acceptance, run the checklist in [docs/MANUAL_ACCEPTANCE.md](MANUAL_ACCEPTANCE.md). When a release slice is accepted, record the exact commands, result and known limitations in [docs/PHASE_ONE_ACCEPTANCE.md](PHASE_ONE_ACCEPTANCE.md), `docs/SHARED_CONTEXT.md`, and `docs/DEVELOPMENT_STEPS.md`.

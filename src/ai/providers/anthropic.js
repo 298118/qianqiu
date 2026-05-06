@@ -21,8 +21,8 @@ function createAnthropicProvider() {
   });
   const model = process.env.ANTHROPIC_MODEL || "claude-sonnet-4-5";
 
-  return createRemoteProvider(async ({ instructions, input, schema, maxOutputTokens }) => {
-    const message = await client.messages.create({
+  function buildMessageParams({ instructions, input, schema, maxOutputTokens }) {
+    return {
       model,
       max_tokens: maxOutputTokens,
       system: instructions,
@@ -33,9 +33,30 @@ function createAnthropicProvider() {
           schema
         }
       }
-    });
+    };
+  }
+
+  function getStreamingTextDelta(event) {
+    if (event.type !== "content_block_delta" || !event.delta) return "";
+    if (event.delta.type === "text_delta") return event.delta.text || "";
+    if (event.delta.type === "input_json_delta") return event.delta.partial_json || "";
+    return "";
+  }
+
+  return createRemoteProvider(async (task) => {
+    const message = await client.messages.create(buildMessageParams(task));
 
     return getTextFromMessage(message);
+  }, async (task) => {
+    const stream = client.messages.stream(buildMessageParams(task));
+
+    for await (const event of stream) {
+      const delta = getStreamingTextDelta(event);
+      if (!delta) continue;
+      task.onTextDelta(delta);
+    }
+
+    return getTextFromMessage(await stream.finalMessage());
   });
 }
 

@@ -11,8 +11,8 @@ function createOpenAiProvider() {
   });
   const model = process.env.OPENAI_MODEL || "gpt-5.4-mini";
 
-  return createRemoteProvider(async ({ instructions, input, schemaName, schema, maxOutputTokens }) => {
-    const response = await client.responses.create({
+  function buildResponseParams({ instructions, input, schemaName, schema, maxOutputTokens }) {
+    return {
       model,
       instructions,
       input,
@@ -25,9 +25,24 @@ function createOpenAiProvider() {
           strict: false
         }
       }
-    });
+    };
+  }
+
+  return createRemoteProvider(async (task) => {
+    const response = await client.responses.create(buildResponseParams(task));
 
     return response.output_text;
+  }, async (task) => {
+    const stream = await client.responses.create({
+      ...buildResponseParams(task),
+      stream: true
+    });
+
+    for await (const event of stream) {
+      if (event.type === "response.output_text.delta" && event.delta) {
+        task.onTextDelta(event.delta);
+      }
+    }
   });
 }
 

@@ -5,6 +5,7 @@ const {
   buildSmokeEssay,
   canonicalProviderName,
   getProviderNamesToSmoke,
+  hasFlag,
   providerHasKey
 } = require("../scripts/providerSmoke");
 
@@ -56,6 +57,11 @@ test("provider smoke supports explicit provider override", () => {
 
   assert.equal(providerHasKey("anthropic", env), true);
   assert.deepEqual(getProviderNamesToSmoke({ argv, env }), ["anthropic"]);
+});
+
+test("provider smoke detects optional streaming flag", () => {
+  assert.equal(hasFlag(["node", "scripts/providerSmoke.js", "--stream"], "--stream"), true);
+  assert.equal(hasFlag(["node", "scripts/providerSmoke.js"], "--stream"), false);
 });
 
 test("provider smoke essay is long enough for the child exam smoke grade", () => {
