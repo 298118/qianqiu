@@ -489,6 +489,8 @@ Virtual candidates now include `essay`, `style`, `examinerComment`, `strengths`,
 
 Session files are written to `data/sessions/{sessionId}.json`. Session ids must match a UUID-like safe pattern before the path is built. `data/sessions/*.json` is ignored by Git; only `data/sessions/.gitkeep` should be committed.
 
+S38.2 records the storage migration plan in [docs/SESSION_STORAGE_MIGRATION_PLAN.md](SESSION_STORAGE_MIGRATION_PLAN.md). The current runtime is still raw JSON `worldState` reads and direct `fs.writeFile()` overwrites through `src/storage/sessionStore.js`; the plan defines the next storage contract before implementation: a top-level session record envelope with `storageSchemaVersion`, metadata, timestamps, and revision; legacy raw-save migration; atomic temp-file-and-rename writes; per-session mutation serialization plus optimistic revision checks; a redacted save-list API; explicit cleanup policy; and a later JSON-to-SQLite/database adapter path.
+
 ## Verification
 
 Use:

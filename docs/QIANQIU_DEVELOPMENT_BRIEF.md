@@ -24,7 +24,7 @@
 
 第二阶段已经完成本地验收，记录见 `docs/PHASE_TWO_ACCEPTANCE.md`；第二阶段路线图已归档到 `docs/PHASE_TWO_ROADMAP_ARCHIVE.md`。已接受的范围包括世界 tick、NPC/派系记忆、地方官与将领深度、入仕官员深度、科举竞争深度、真实 provider smoke/streaming 准备、AI eval fixtures 和浏览器自动化验收。
 
-第三阶段已经在 `docs/DEVELOPMENT_STEPS.md` 开启。当前已完成桌面游戏态布局、普通回合服务器独占字段边界、开局 role 校验、关系可视化、主动 NPC、长期事件调度、官场结果、科举日历、身份与世界联动、真实 provider 长回合验收脚本和浏览器完整旅程验收；后续继续推进存档迁移规划。
+第三阶段已经在 `docs/DEVELOPMENT_STEPS.md` 开启。当前已完成桌面游戏态布局、普通回合服务器独占字段边界、开局 role 校验、关系可视化、主动 NPC、长期事件调度、官场结果、科举日历、身份与世界联动、真实 provider 长回合验收脚本、浏览器完整旅程验收和 S38.2 存档迁移规划；后续继续推进存档 schema envelope、原子写入、并发保护和存档列表等实现。
 
 开发规范不变。第 12 节和第 13 节仍是每次开发必须遵守的流程；Mock 默认可玩、真实 provider 可选、服务器拥有状态边界和科举规则这些要求继续有效。
 
@@ -896,3 +896,13 @@ S38.1 expands browser acceptance without changing Mock-default local play:
 - The final progression asserts every promotion rank, four exam-history records, `activeExam === null`, final `player.role === "official"`, and a seeded `officeTitle`.
 - An isolated cheating session submits a copied-classic essay through the same browser modal and must show `监试黜落` / `疑似照抄`, persist score `0`, keep the player a scholar, and record `promotionResult.severeCheat === true`.
 - The screenshot pass now covers early desktop/mobile states, all four exam results, post-palace official state, final mobile archive, direct official first appointment, cheating result, and representative role/world coupling.
+
+## S38.2 Session Storage Migration Plan Note (2026-05-06)
+
+S38.2 is a planning step for storage durability and later database migration; it does not change runtime behavior yet:
+
+- `docs/SESSION_STORAGE_MIGRATION_PLAN.md` is the durable plan for session storage evolution.
+- The current implementation remains raw `worldState` JSON under `data/sessions/{sessionId}.json`, with UUID-like id validation and direct `fs.writeFile()` writes through `src/storage/sessionStore.js`.
+- The planned next storage contract adds a top-level session record envelope with `storageSchemaVersion`, timestamps, `revision`, redacted metadata, and nested `worldState`; raw legacy saves are treated as schema `0`.
+- Future implementation should add atomic temp-file-and-rename writes, per-session mutation serialization, optimistic revision checks, a redacted save-list API, explicit cleanup/quarantine policy, and then a storage adapter path toward SQLite before any hosted database.
+- Browser `localStorage["qianqiu.sessionId"]` restore remains the current UI behavior until a save-list API and UI are implemented.

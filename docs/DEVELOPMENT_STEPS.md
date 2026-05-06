@@ -82,7 +82,7 @@
 | S37.1 | DONE | 制定 keyed real-provider 长回合验收方案，覆盖 OpenAI、DeepSeek、Anthropic/Claude 的历史语气、越权和状态一致性 | 2026-05-06 | Codex + subagents | current S37 implementation commit |
 | S37.2 | DONE | 增加可选真实 provider 长回合 smoke/eval 脚本，保持 no-key 环境成功跳过 | 2026-05-06 | Codex + subagents | current S37 implementation commit |
 | S38.1 | DONE | 扩展浏览器验收到完整四级科举通关、作弊样例、各身份一回合、桌面/移动视觉回归 | 2026-05-06 | Codex + subagents | 76745b3 |
-| S38.2 | TODO | 制定存档迁移规划：session schema 版本、原子写入、并发保护、存档列表和未来数据库迁移路径 |  |  |  |
+| S38.2 | DONE | 制定存档迁移规划：session schema 版本、原子写入、并发保护、存档列表和未来数据库迁移路径 | 2026-05-06 | Codex + subagent | current S38.2 documentation commit |
 
 ## 4. 分阶段详细步骤
 
@@ -153,7 +153,7 @@
 目标：让浏览器验收覆盖更完整的实际玩家旅程，并为存档长期演进做准备。
 
 - S38.1：扩展 browser smoke 至完整四级科举通关、作弊样例、皇帝/大臣/将领/地方官/官员各一回合、桌面/移动视觉回归。
-- S38.2：制定存档迁移规划，包含 session schema 版本、原子写入、并发保护、存档列表、清理策略和未来数据库迁移路径。
+- S38.2：制定存档迁移规划，包含 session schema 版本、原子写入、并发保护、存档列表、清理策略和未来数据库迁移路径。规划落点是 [docs/SESSION_STORAGE_MIGRATION_PLAN.md](SESSION_STORAGE_MIGRATION_PLAN.md)，当前步骤不改变运行时。
 
 ## 5. 进度记录
 
@@ -173,6 +173,31 @@
 ```
 
 ### 2026-05-06
+
+Tool: Codex
+
+Step: S38.2
+
+Commit: current S38.2 documentation commit
+
+Completed:
+- Added `docs/SESSION_STORAGE_MIGRATION_PLAN.md` as the durable S38.2 plan for storage evolution.
+- Recorded the current baseline: raw `worldState` JSON files under `data/sessions/{sessionId}.json`, UUID-like path safety, direct `fs.writeFile()` overwrites, route-level `ensure*` legacy backfills, browser `localStorage` restore, and no save-list/cleanup API yet.
+- Defined the future session record envelope with `storageSchemaVersion`, timestamps, `revision`, redacted metadata, and nested `worldState`, while treating current raw JSON files as legacy schema `0`.
+- Planned atomic temp-file-and-rename writes, malformed-save handling, per-session mutation serialization, optimistic revision checks, redacted save-list behavior, explicit cleanup/quarantine policy, and a JSON adapter -> SQLite -> optional hosted database migration path.
+- Linked the plan from README, architecture notes, product brief, shared context, and this ledger.
+- Used a read-only subagent to inspect current storage entrypoints, compatibility risks, documentation placement, and verification expectations; it edited no files and ran no Git commands.
+
+Verification:
+- `git diff --check`
+- Node.js UTF-8 readability check for `docs/SESSION_STORAGE_MIGRATION_PLAN.md`, README, architecture notes, product brief, this ledger, and shared context.
+
+Risk/leftover:
+- S38.2 is documentation-only and intentionally does not add the storage envelope, atomic writes, locks, revision checks, save-list API, or cleanup script yet.
+- The current runtime still uses direct JSON overwrites, so overlapping mutations can still lose updates until a later implementation step introduces `mutateSession()` or equivalent route-level serialization.
+
+Next:
+- Open/implement the first storage hardening slice from the plan: session record envelope, legacy raw-save migration tests, and atomic JSON writes.
 
 Tool: Codex
 
