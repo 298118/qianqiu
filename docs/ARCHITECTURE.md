@@ -84,6 +84,38 @@ Returns `201` with `sessionId`, `worldState`, `examCalendarView`, `examRivalView
 
 Reads the JSON session file and returns `sessionId`, `worldState`, the player-facing `examCalendarView`, `examRivalView`, `relationshipView`, `activeNpcRequestView`, `roleWorldCouplingView`, `longTermEventView`, and `officialCareerView`.
 
+### `GET /api/game/saves`
+
+Returns the local save list as redacted session metadata:
+
+```json
+{
+  "saves": [
+    {
+      "sessionId": "uuid",
+      "storageSchemaVersion": 1,
+      "revision": 2,
+      "createdAt": "2026-05-06T00:00:00.000Z",
+      "updatedAt": "2026-05-06T00:01:00.000Z",
+      "playerName": "未定",
+      "role": "scholar",
+      "roleLabel": "书生",
+      "dynasty": "明",
+      "year": 1644,
+      "month": 1,
+      "turnCount": 0,
+      "examRank": null,
+      "palaceRank": null,
+      "officeTitle": null,
+      "summary": "寒窗士子"
+    }
+  ],
+  "skipped": []
+}
+```
+
+The route does not return full `worldState`, raw relationship ledgers, hidden contacts, provider config, prompts, or local file paths. It sorts saves by `updatedAt` descending. Malformed or unsupported `.json` files are reported under `skipped` instead of being auto-deleted.
+
 ### `POST /api/game/turn`
 
 Request:
@@ -489,7 +521,7 @@ Virtual candidates now include `essay`, `style`, `examinerComment`, `strengths`,
 
 Session files are written to `data/sessions/{sessionId}.json`. Session ids must match a UUID-like safe pattern before the path is built. `data/sessions/*.json` is ignored by Git; only `data/sessions/.gitkeep` should be committed.
 
-S38.2 records the storage migration plan in [docs/SESSION_STORAGE_MIGRATION_PLAN.md](SESSION_STORAGE_MIGRATION_PLAN.md). The current runtime is still raw JSON `worldState` reads and direct `fs.writeFile()` overwrites through `src/storage/sessionStore.js`; the plan defines the next storage contract before implementation: a top-level session record envelope with `storageSchemaVersion`, metadata, timestamps, and revision; legacy raw-save migration; atomic temp-file-and-rename writes; per-session mutation serialization plus optimistic revision checks; a redacted save-list API; explicit cleanup policy; and a later JSON-to-SQLite/database adapter path.
+S38.2 implements the JSON storage hardening described in [docs/SESSION_STORAGE_MIGRATION_PLAN.md](SESSION_STORAGE_MIGRATION_PLAN.md). `src/storage/sessionStore.js` now writes a top-level envelope with `storageSchemaVersion`, `sessionId`, timestamps, `revision`, redacted metadata, and nested `worldState`. Legacy raw `worldState` files are treated as schema `0` and are migrated to the envelope on read. Writes use same-directory temp-file-and-rename replacement with best-effort fsync, and successful writes remove their temp file. Game and exam mutation routes use `mutateSession()` so read-modify-write work for the same session is serialized and revision-checked. The store also exposes `listSessions()`, `deleteSession()`, and `cleanupSessionTempFiles()` for save-list and cleanup behavior. SQLite/database migration remains a future adapter step.
 
 ## Verification
 

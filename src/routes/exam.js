@@ -28,7 +28,7 @@ const { buildLongTermEventView, ensureLongTermEventState } = require("../game/lo
 const { buildOfficialCareerView, ensureOfficialCareerState } = require("../game/officialCareer");
 const { buildRoleWorldCouplingView, ensureRoleWorldCouplingState } = require("../game/roleWorldCoupling");
 const { appendEvents, applyStatePatch } = require("../game/stateRules");
-const { readSession, writeSession } = require("../storage/sessionStore");
+const { mutateSession } = require("../storage/sessionStore");
 
 const router = express.Router();
 
@@ -82,98 +82,100 @@ router.post("/question", async (req, res, next) => {
       throw fail(400, "Missing sessionId");
     }
 
-    const worldState = await readSession(sessionId);
-    ensureRelationshipLedger(worldState);
-    ensureExamCalendarState(worldState);
-    ensureLongTermEventState(worldState);
-    ensureOfficialCareerState(worldState);
-    ensureRoleWorldCouplingState(worldState);
-    const requestedLevel = level || worldState.activeExam?.level || getNextExamLevel(worldState.player.examRank);
-    const exam = getExam(requestedLevel);
+    const result = await mutateSession(sessionId, async (worldState, context) => {
+      ensureRelationshipLedger(worldState);
+      ensureExamCalendarState(worldState);
+      ensureLongTermEventState(worldState);
+      ensureOfficialCareerState(worldState);
+      ensureRoleWorldCouplingState(worldState);
+      const requestedLevel = level || worldState.activeExam?.level || getNextExamLevel(worldState.player.examRank);
+      const exam = getExam(requestedLevel);
 
-    if (!exam) {
-      throw fail(400, "Unknown exam level");
-    }
-
-    const gate = canEnterExam(worldState.player, exam.level);
-    if (!gate.ok) {
-      throw fail(400, gate.reason);
-    }
-
-    if (
-      worldState.activeExam &&
-      worldState.activeExam.level === exam.level &&
-      worldState.activeExam.examQuestion
-    ) {
-      res.json(toExamPayload(worldState));
-      return;
-    }
-
-    const previousExam = worldState.activeExam || {};
-    const preservedCalendarSnapshot =
-      previousExam.level === exam.level && previousExam.examCalendar?.isOpen
-        ? previousExam.examCalendar
-        : null;
-    const calendarGate = preservedCalendarSnapshot
-      ? { ok: true, reason: "", snapshot: preservedCalendarSnapshot }
-      : canOpenExamInCalendar(worldState, exam);
-    if (!calendarGate.ok) {
-      const missed = recordMissedExamWindow(worldState, exam, calendarGate.snapshot, calendarGate.reason);
-      if (missed) {
-        appendEvents(worldState, [
-          `${worldState.player.name}错过${exam.name}考期，改候${calendarGate.snapshot.nextWindowLabel}。`
-        ]);
-        await writeSession(worldState);
+      if (!exam) {
+        throw fail(400, "Unknown exam level");
       }
-      throw fail(409, calendarGate.reason);
-    }
 
-    if (
-      worldState.activeExam &&
-      worldState.activeExam.examQuestion &&
-      worldState.activeExam.level !== exam.level
-    ) {
-      throw fail(409, "已有未完成考试，请先完成当前考试。");
-    }
+      const gate = canEnterExam(worldState.player, exam.level);
+      if (!gate.ok) {
+        throw fail(400, gate.reason);
+      }
 
-    const preparationResult = previousExam.entryPreparation
-      ? null
-      : createEntryPreparation(worldState, exam, calendarGate.snapshot);
+      if (
+        worldState.activeExam &&
+        worldState.activeExam.level === exam.level &&
+        worldState.activeExam.examQuestion
+      ) {
+        context.skipWrite = true;
+        return { statusCode: 200, payload: toExamPayload(worldState) };
+      }
 
-    if (preparationResult) {
-      applyStatePatch(worldState, preparationResult.statePatch, { incrementTurnCount: false });
-    }
+      const previousExam = worldState.activeExam || {};
+      const preservedCalendarSnapshot =
+        previousExam.level === exam.level && previousExam.examCalendar?.isOpen
+          ? previousExam.examCalendar
+          : null;
+      const calendarGate = preservedCalendarSnapshot
+        ? { ok: true, reason: "", snapshot: preservedCalendarSnapshot }
+        : canOpenExamInCalendar(worldState, exam);
+      if (!calendarGate.ok) {
+        const missed = recordMissedExamWindow(worldState, exam, calendarGate.snapshot, calendarGate.reason);
+        if (missed) {
+          appendEvents(worldState, [
+            `${worldState.player.name}错过${exam.name}考期，改候${calendarGate.snapshot.nextWindowLabel}。`
+          ]);
+          context.errorAfterWrite = fail(409, calendarGate.reason);
+          return null;
+        }
+        throw fail(409, calendarGate.reason);
+      }
 
-    const provider = getProvider();
-    const question = await provider.generateExamQuestion(worldState, exam);
+      if (
+        worldState.activeExam &&
+        worldState.activeExam.examQuestion &&
+        worldState.activeExam.level !== exam.level
+      ) {
+        throw fail(409, "已有未完成考试，请先完成当前考试。");
+      }
 
-    worldState.activeExam = {
-      examId: createExamId(exam.level),
-      level: exam.level,
-      examName: question.examName || exam.name,
-      examQuestion: question.examQuestion,
-      questionType: question.questionType || exam.questionType,
-      difficulty: question.difficulty || exam.difficulty,
-      requirements: question.requirements || getExamRequirements(exam),
-      wordCount: question.wordCount || exam.wordCount,
-      passScore: question.passScore ?? exam.passScore,
-      promotionRank: question.promotionRank || exam.promotionRank,
-      readiness: summarizeReadiness(worldState.player, exam),
-      entryPreparation: previousExam.entryPreparation || preparationResult.entryPreparation,
-      examCalendar: previousExam.examCalendar || calendarGate.snapshot,
-      reason: previousExam.reason || "玩家入场取题",
-      status: "writing",
-      generatedAt: new Date().toISOString()
-    };
+      const preparationResult = previousExam.entryPreparation
+        ? null
+        : createEntryPreparation(worldState, exam, calendarGate.snapshot);
 
-    appendEvents(worldState, [
-      ...(preparationResult?.events || []),
-      `${worldState.player.name}进入${exam.name}，领取${exam.questionType}题。`
-    ]);
+      if (preparationResult) {
+        applyStatePatch(worldState, preparationResult.statePatch, { incrementTurnCount: false });
+      }
 
-    await writeSession(worldState);
+      const provider = getProvider();
+      const question = await provider.generateExamQuestion(worldState, exam);
 
-    res.status(201).json(toExamPayload(worldState));
+      worldState.activeExam = {
+        examId: createExamId(exam.level),
+        level: exam.level,
+        examName: question.examName || exam.name,
+        examQuestion: question.examQuestion,
+        questionType: question.questionType || exam.questionType,
+        difficulty: question.difficulty || exam.difficulty,
+        requirements: question.requirements || getExamRequirements(exam),
+        wordCount: question.wordCount || exam.wordCount,
+        passScore: question.passScore ?? exam.passScore,
+        promotionRank: question.promotionRank || exam.promotionRank,
+        readiness: summarizeReadiness(worldState.player, exam),
+        entryPreparation: previousExam.entryPreparation || preparationResult.entryPreparation,
+        examCalendar: previousExam.examCalendar || calendarGate.snapshot,
+        reason: previousExam.reason || "玩家入场取题",
+        status: "writing",
+        generatedAt: new Date().toISOString()
+      };
+
+      appendEvents(worldState, [
+        ...(preparationResult?.events || []),
+        `${worldState.player.name}进入${exam.name}，领取${exam.questionType}题。`
+      ]);
+
+      return { statusCode: 201, payload: toExamPayload(worldState) };
+    });
+
+    res.status(result.statusCode).json(result.payload);
   } catch (error) {
     next(error);
   }
@@ -193,108 +195,109 @@ router.post("/submit", async (req, res, next) => {
       throw fail(400, "Missing or empty essay");
     }
 
-    const worldState = await readSession(sessionId);
-    ensureRelationshipLedger(worldState);
-    ensureExamCalendarState(worldState);
-    ensureLongTermEventState(worldState);
-    ensureOfficialCareerState(worldState);
-    ensureRoleWorldCouplingState(worldState);
-    const activeExam = worldState.activeExam;
+    const payload = await mutateSession(sessionId, async (worldState) => {
+      ensureRelationshipLedger(worldState);
+      ensureExamCalendarState(worldState);
+      ensureLongTermEventState(worldState);
+      ensureOfficialCareerState(worldState);
+      ensureRoleWorldCouplingState(worldState);
+      const activeExam = worldState.activeExam;
 
-    if (!activeExam || !activeExam.examQuestion) {
-      throw fail(400, "当前没有可交卷的考试。");
-    }
-    if (activeExam.examId !== examId) {
-      throw fail(409, "交卷编号与当前考试不符。");
-    }
-    if (activeExam.status && activeExam.status !== "writing") {
-      throw fail(409, "当前考试已经交卷。");
-    }
+      if (!activeExam || !activeExam.examQuestion) {
+        throw fail(400, "当前没有可交卷的考试。");
+      }
+      if (activeExam.examId !== examId) {
+        throw fail(409, "交卷编号与当前考试不符。");
+      }
+      if (activeExam.status && activeExam.status !== "writing") {
+        throw fail(409, "当前考试已经交卷。");
+      }
 
-    const exam = getExam(activeExam.level);
-    if (!exam) {
-      throw fail(400, "Unknown exam level");
-    }
+      const exam = getExam(activeExam.level);
+      if (!exam) {
+        throw fail(400, "Unknown exam level");
+      }
 
-    const provider = getProvider();
-    const trimmedEssay = essay.trim();
-    const authenticityCheck = checkEssayAuthenticity({
-      essay: trimmedEssay,
-      exam,
-      player: worldState.player
-    });
-    const grade = await provider.gradeExamEssay(worldState, exam, trimmedEssay, authenticityCheck);
-    const score = applyAuthenticityPenalties(grade.score, authenticityCheck, exam);
-    const persistentCandidateSeeds = selectPersistentCandidateSeeds(worldState, exam);
-    const virtualCandidates = preparePersistentExamCohort(
-      worldState,
-      exam,
-      generateVirtualCandidates(worldState, exam, score.overall_score, {
-        persistentCandidates: persistentCandidateSeeds
-      })
-    );
-    const ranking = buildRanking(
-      {
-        id: "player",
-        name: worldState.player.name,
-        origin: worldState.dynasty,
-        background: "本局玩家",
+      const provider = getProvider();
+      const trimmedEssay = essay.trim();
+      const authenticityCheck = checkEssayAuthenticity({
+        essay: trimmedEssay,
+        exam,
+        player: worldState.player
+      });
+      const grade = await provider.gradeExamEssay(worldState, exam, trimmedEssay, authenticityCheck);
+      const score = applyAuthenticityPenalties(grade.score, authenticityCheck, exam);
+      const persistentCandidateSeeds = selectPersistentCandidateSeeds(worldState, exam);
+      const virtualCandidates = preparePersistentExamCohort(
+        worldState,
+        exam,
+        generateVirtualCandidates(worldState, exam, score.overall_score, {
+          persistentCandidates: persistentCandidateSeeds
+        })
+      );
+      const ranking = buildRanking(
+        {
+          id: "player",
+          name: worldState.player.name,
+          origin: worldState.dynasty,
+          background: "本局玩家",
+          score,
+          isPlayer: true
+        },
+        virtualCandidates
+      );
+      const promotionResult = applyExamPromotion(worldState, exam, score, authenticityCheck);
+      const cohortResult = recordExamCohortResult(worldState, exam, virtualCandidates, ranking);
+      const submittedAt = new Date().toISOString();
+      const historyEntry = {
+        examId,
+        level: activeExam.level,
+        examName: activeExam.examName,
+        examQuestion: activeExam.examQuestion,
+        entryPreparation: activeExam.entryPreparation || null,
+        examCalendar: activeExam.examCalendar || activeExam.entryPreparation?.examCalendar || null,
+        essay: trimmedEssay,
         score,
-        isPlayer: true
-      },
-      virtualCandidates
-    );
-    const promotionResult = applyExamPromotion(worldState, exam, score, authenticityCheck);
-    const cohortResult = recordExamCohortResult(worldState, exam, virtualCandidates, ranking);
-    const submittedAt = new Date().toISOString();
-    const historyEntry = {
-      examId,
-      level: activeExam.level,
-      examName: activeExam.examName,
-      examQuestion: activeExam.examQuestion,
-      entryPreparation: activeExam.entryPreparation || null,
-      examCalendar: activeExam.examCalendar || activeExam.entryPreparation?.examCalendar || null,
-      essay: trimmedEssay,
-      score,
-      authenticityCheck,
-      virtualCandidates,
-      ranking,
-      promotionResult,
-      cohortResult,
-      submittedAt
-    };
+        authenticityCheck,
+        virtualCandidates,
+        ranking,
+        promotionResult,
+        cohortResult,
+        submittedAt
+      };
 
-    worldState.player.examHistory = [...(worldState.player.examHistory || []), historyEntry];
-    worldState.activeExam = null;
-    appendEvents(worldState, [summarizeResultEvent(worldState, activeExam, score, ranking, promotionResult)]);
-    ensureRelationshipLedger(worldState);
+      worldState.player.examHistory = [...(worldState.player.examHistory || []), historyEntry];
+      worldState.activeExam = null;
+      appendEvents(worldState, [summarizeResultEvent(worldState, activeExam, score, ranking, promotionResult)]);
+      ensureRelationshipLedger(worldState);
 
-    await writeSession(worldState);
-
-    res.json({
-      sessionId: worldState.sessionId,
-      examId,
-      level: exam.level,
-      examName: activeExam.examName,
-      examQuestion: activeExam.examQuestion,
-      essay: trimmedEssay,
-      entryPreparation: activeExam.entryPreparation || null,
-      examCalendar: activeExam.examCalendar || activeExam.entryPreparation?.examCalendar || null,
-      score,
-      authenticityCheck,
-      virtualCandidates,
-      ranking,
-      promotionResult,
-      cohortResult,
-      examCalendarView: buildExamCalendarView(worldState),
-      examRivalView: buildExamRivalView(worldState),
-      relationshipView: buildRelationshipInspectionView(worldState),
-      activeNpcRequestView: buildActiveNpcRequestView(worldState),
-      roleWorldCouplingView: buildRoleWorldCouplingView(worldState),
-      longTermEventView: buildLongTermEventView(worldState),
-      officialCareerView: buildOfficialCareerView(worldState),
-      worldState
+      return {
+        sessionId: worldState.sessionId,
+        examId,
+        level: exam.level,
+        examName: activeExam.examName,
+        examQuestion: activeExam.examQuestion,
+        essay: trimmedEssay,
+        entryPreparation: activeExam.entryPreparation || null,
+        examCalendar: activeExam.examCalendar || activeExam.entryPreparation?.examCalendar || null,
+        score,
+        authenticityCheck,
+        virtualCandidates,
+        ranking,
+        promotionResult,
+        cohortResult,
+        examCalendarView: buildExamCalendarView(worldState),
+        examRivalView: buildExamRivalView(worldState),
+        relationshipView: buildRelationshipInspectionView(worldState),
+        activeNpcRequestView: buildActiveNpcRequestView(worldState),
+        roleWorldCouplingView: buildRoleWorldCouplingView(worldState),
+        longTermEventView: buildLongTermEventView(worldState),
+        officialCareerView: buildOfficialCareerView(worldState),
+        worldState
+      };
     });
+
+    res.json(payload);
   } catch (error) {
     next(error);
   }

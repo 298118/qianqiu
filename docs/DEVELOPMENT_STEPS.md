@@ -82,7 +82,7 @@
 | S37.1 | DONE | 制定 keyed real-provider 长回合验收方案，覆盖 OpenAI、DeepSeek、Anthropic/Claude 的历史语气、越权和状态一致性 | 2026-05-06 | Codex + subagents | current S37 implementation commit |
 | S37.2 | DONE | 增加可选真实 provider 长回合 smoke/eval 脚本，保持 no-key 环境成功跳过 | 2026-05-06 | Codex + subagents | current S37 implementation commit |
 | S38.1 | DONE | 扩展浏览器验收到完整四级科举通关、作弊样例、各身份一回合、桌面/移动视觉回归 | 2026-05-06 | Codex + subagents | 76745b3 |
-| S38.2 | DONE | 制定存档迁移规划：session schema 版本、原子写入、并发保护、存档列表和未来数据库迁移路径 | 2026-05-06 | Codex + subagent | current S38.2 documentation commit |
+| S38.2 | DONE | 完成 JSON 存档硬化：session schema envelope、legacy 迁移、原子写入、并发保护、存档列表和未来数据库迁移路径 | 2026-05-06 | Codex + subagents | current S38.2 implementation commit |
 
 ## 4. 分阶段详细步骤
 
@@ -153,7 +153,7 @@
 目标：让浏览器验收覆盖更完整的实际玩家旅程，并为存档长期演进做准备。
 
 - S38.1：扩展 browser smoke 至完整四级科举通关、作弊样例、皇帝/大臣/将领/地方官/官员各一回合、桌面/移动视觉回归。
-- S38.2：制定存档迁移规划，包含 session schema 版本、原子写入、并发保护、存档列表、清理策略和未来数据库迁移路径。规划落点是 [docs/SESSION_STORAGE_MIGRATION_PLAN.md](SESSION_STORAGE_MIGRATION_PLAN.md)，当前步骤不改变运行时。
+- S38.2：完成 JSON 存档硬化，包含 session schema envelope、legacy raw-save 迁移、原子写入、同 session 并发保护、revision、存档列表、清理函数和未来数据库迁移路径。规划与实现基线落点是 [docs/SESSION_STORAGE_MIGRATION_PLAN.md](SESSION_STORAGE_MIGRATION_PLAN.md)，SQLite/托管数据库迁移仍是后续工作。
 
 ## 5. 进度记录
 
@@ -173,6 +173,44 @@
 ```
 
 ### 2026-05-06
+
+Tool: Codex
+
+Step: S38.2 implementation
+
+Commit: current S38.2 implementation commit
+
+Completed:
+- Implemented the first storage hardening slice from `docs/SESSION_STORAGE_MIGRATION_PLAN.md` in `src/storage/sessionStore.js`.
+- JSON session files now persist a top-level envelope with `storageSchemaVersion`, `sessionId`, `createdAt`, `updatedAt`, `revision`, redacted metadata, and nested `worldState`; `readSession()` remains route-compatible and returns only `worldState`.
+- Legacy raw `worldState` saves are treated as schema `0` and are migrated to the envelope on read; mismatched ids, corrupt JSON, and unsupported future versions now fail clearly.
+- `writeSession()` now uses same-directory temp-file-and-rename atomic replacement with best-effort fsync and no leftover same-session `.tmp` file after success.
+- Added `mutateSession()` with in-process per-session serialization and revision checks; game and exam mutation routes now use it for turns, exam questions, missed-window writes, and exam submissions.
+- Added `GET /api/game/saves` backed by `listSessions()`, returning redacted metadata without full `worldState`, relationship ledgers, hidden contacts, provider config, prompts, or file paths.
+- Added storage cleanup helpers (`deleteSession()`, `cleanupSessionTempFiles()`) while keeping browser smoke/test explicit session cleanup behavior intact.
+- Expanded `test/sessionStore.test.js` and added `test/gameSavesRoute.test.js` for envelope, legacy migration, mismatch/future-version errors, atomic temp cleanup, save-list redaction/sorting, mutation serialization, and route exposure.
+- Used one implementation subagent to write focused storage tests. The subagent only edited `test/sessionStore.test.js`, ran no Git commands, and reported verification.
+
+Verification:
+- `node --check src\storage\sessionStore.js`
+- `node --check src\routes\game.js`
+- `node --check src\routes\exam.js`
+- `node --check test\sessionStore.test.js`
+- `node --check test\gameSavesRoute.test.js`
+- `node --test test\sessionStore.test.js test\gameSavesRoute.test.js`
+- Focused route checks: `node --test test\gameStartRole.test.js test\gameTurnRelationships.test.js test\gameTurnTick.test.js`
+- Focused exam/SSE checks: `node --test test\examTravel.test.js test\examRules.test.js test\streamingTurnRoute.test.js`
+- `npm test` passed with 167 tests.
+- `npm run smoke:browser` passed with complete four-exam progression, cheating sample, representative role turns, and 14 screenshots checked.
+- `git diff --check`
+
+Risk/leftover:
+- The in-process queue is intended for one Node process. Cross-process locking and network filesystem semantics remain out of scope until SQLite/database migration.
+- `GET /api/game/saves` is API-only; the browser still restores the last `qianqiu.sessionId` from localStorage and does not yet render a save picker.
+- SQLite/hosted database adapters are not implemented in this slice.
+
+Next:
+- Add a browser save-list UI or continue to the SQLite adapter/export-import slice when product priority calls for it.
 
 Tool: Codex
 

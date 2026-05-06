@@ -34,7 +34,7 @@ const { getExam } = require("../game/exams");
 const { applyStatePatch, appendEvents } = require("../game/stateRules");
 const { runWorldTick } = require("../game/worldTick");
 const { getProvider } = require("../ai");
-const { readSession, writeSession } = require("../storage/sessionStore");
+const { listSessions, mutateSession, readSession, writeSession } = require("../storage/sessionStore");
 const { chunkTextForSse, closeSse, sendSseEvent, writeSseHeaders } = require("../utils/sse");
 const { createJsonStringFieldExtractor } = require("../utils/streamingJson");
 
@@ -62,31 +62,33 @@ function wantsSse(req) {
 }
 
 async function processTurn(sessionId, input) {
-  const worldState = await readSession(sessionId);
-  ensureRelationshipLedger(worldState);
-  ensureExamCalendarState(worldState);
-  ensureLongTermEventState(worldState);
-  ensureOfficialCareerState(worldState);
-  ensureRoleWorldCouplingState(worldState);
-  const provider = getProvider();
-  const result = await provider.runTurn(worldState, input);
-  return finalizeTurn(worldState, result, input);
+  return mutateSession(sessionId, async (worldState) => {
+    ensureRelationshipLedger(worldState);
+    ensureExamCalendarState(worldState);
+    ensureLongTermEventState(worldState);
+    ensureOfficialCareerState(worldState);
+    ensureRoleWorldCouplingState(worldState);
+    const provider = getProvider();
+    const result = await provider.runTurn(worldState, input);
+    return finalizeTurn(worldState, result, input);
+  });
 }
 
 async function processStreamingTurn(sessionId, input, streamHandlers = {}) {
-  const worldState = await readSession(sessionId);
-  ensureRelationshipLedger(worldState);
-  ensureExamCalendarState(worldState);
-  ensureLongTermEventState(worldState);
-  ensureOfficialCareerState(worldState);
-  ensureRoleWorldCouplingState(worldState);
-  const provider = getProvider();
-  const canStream = provider.supportsStreaming && typeof provider.streamTurn === "function";
-  const result = canStream
-    ? await provider.streamTurn(worldState, input, streamHandlers)
-    : await provider.runTurn(worldState, input);
+  return mutateSession(sessionId, async (worldState) => {
+    ensureRelationshipLedger(worldState);
+    ensureExamCalendarState(worldState);
+    ensureLongTermEventState(worldState);
+    ensureOfficialCareerState(worldState);
+    ensureRoleWorldCouplingState(worldState);
+    const provider = getProvider();
+    const canStream = provider.supportsStreaming && typeof provider.streamTurn === "function";
+    const result = canStream
+      ? await provider.streamTurn(worldState, input, streamHandlers)
+      : await provider.runTurn(worldState, input);
 
-  return finalizeTurn(worldState, result, input);
+    return finalizeTurn(worldState, result, input);
+  });
 }
 
 async function finalizeTurn(worldState, result, input) {
@@ -151,8 +153,6 @@ async function finalizeTurn(worldState, result, input) {
   ensureLongTermEventState(worldState);
   ensureOfficialCareerState(worldState);
   ensureRoleWorldCouplingState(worldState);
-
-  await writeSession(worldState);
 
   const worldTickFeedback = {
     summary: worldTick.summary,
@@ -313,6 +313,14 @@ router.get("/state/:sessionId", async (req, res, next) => {
       longTermEventView: buildLongTermEventView(worldState),
       officialCareerView: buildOfficialCareerView(worldState)
     });
+  } catch (error) {
+    next(error);
+  }
+});
+
+router.get("/saves", async (req, res, next) => {
+  try {
+    res.json(await listSessions());
   } catch (error) {
     next(error);
   }
