@@ -80,6 +80,70 @@ test("prompt pack stable prefix keeps dynamic state out of instructions", () => 
   );
 });
 
+test("turn prompt input filters hidden relationship context", () => {
+  const worldState = createInitialState({ role: "scholar", playerName: "Hidden Filter Tester" });
+  worldState.characters.push({
+    id: "C99",
+    name: "Secret Eunuch",
+    role: "hidden palace contact",
+    loyalty: 10,
+    ambition: 90,
+    skill: 80,
+    alive: true
+  });
+  worldState.relationshipLedger = {
+    characters: {
+      C99: {
+        name: "Secret Eunuch",
+        role: "hidden palace contact",
+        visible: false,
+        stance: "covert handler",
+        relationship: -20,
+        resentment: 80,
+        networkSource: "sealed dossier",
+        recentIntent: "engineer a secret impeachment",
+        lastUpdatedTurn: 4
+      }
+    },
+    factions: {
+      eunuchs: {
+        name: "Secret Palace Network",
+        visible: false,
+        recentIntent: "hide a treasury deficit",
+        networkSource: "sealed dossier"
+      }
+    },
+    recentNotes: [
+      "Secret Eunuch: hidden assassination rumor",
+      "Scholar-official faction: county school praise"
+    ]
+  };
+
+  const exam = getExam("child_exam");
+  const tasks = [
+    buildOpeningTask(worldState),
+    buildTurnTask(worldState, "向塾师请益"),
+    buildExamQuestionTask(worldState, exam),
+    buildGradeTask(worldState, exam, "夫民食为本，县学教化亦不可废。", {
+      copy_detection: { is_copy: false, similar_passage: "" },
+      anachronism_detection: { has_anachronism: false, details: [] },
+      style_consistency: { consistent: true, note: "" },
+      ghostwriting_probability: 0
+    })
+  ];
+
+  for (const task of tasks) {
+    assert.doesNotMatch(task.input, /Secret Eunuch/, task.promptPack);
+    assert.doesNotMatch(task.input, /hidden palace contact/, task.promptPack);
+    assert.doesNotMatch(task.input, /sealed dossier/, task.promptPack);
+    assert.doesNotMatch(task.input, /hidden assassination rumor/, task.promptPack);
+    assert.doesNotMatch(task.input, /secret impeachment/, task.promptPack);
+    assert.doesNotMatch(task.input, /Secret Palace Network/, task.promptPack);
+    assert.doesNotMatch(task.input, /hide a treasury deficit/, task.promptPack);
+    assert.match(task.input, /Scholar-official faction/, task.promptPack);
+  }
+});
+
 test("exam prompt packs keep question and grading authority separate", () => {
   const worldState = createInitialState({ playerName: "Exam Prompt Tester" });
   const exam = getExam("provincial_exam");

@@ -64,7 +64,7 @@
 | S40.1 | DONE | 归档第三阶段规划，开启第四阶段活动台账，并保持开发规范不变 | 2026-05-06 | Codex | 7927c02 |
 | S40.2 | DONE | 增加游戏内 AI 连接测试入口、后端诊断路由、DeepSeek 任务模型配置文档和测试 | 2026-05-06 | Codex | 7927c02 |
 | S41.1 | DONE | 制定优秀提示词总纲：世界引擎、科举考官、出题官、官场、地方、军事、皇帝/大臣等角色的语气与 JSON 合约 | 2026-05-06 | Codex | 383881a |
-| S41.2 | TODO | 为 prompt pack 增加历史语气、越权、现代词、JSON 严格性和隐藏信息不泄露的离线 eval/red-team fixtures |  |  |  |
+| S41.2 | DONE | 为 prompt pack 增加历史语气、越权、现代词、JSON 严格性和隐藏信息不泄露的离线 eval/red-team fixtures | 2026-05-06 | Codex | pending local S41.2 implementation commit |
 | S42.1 | TODO | 定义深度官场契约：官职谱系、衙门/部院、差遣、座主门生、同年、上官、政敌、考成、廷推、外放、处分 |  |  |  |
 | S42.2 | TODO | 实现官场行动与履历系统：差事、奏疏、考成、弹劾、调任、升降、丁忧/起复、清望/贪墨风险 |  |  |  |
 | S42.3 | TODO | 增加官场 UI、档案、浏览器旅程和 Mock/真实 provider 验收，确保入仕后有长期可玩目标 |  |  |  |
@@ -124,7 +124,7 @@ S41.1 落地范围：
 - 新增 `src/ai/promptPacks.js` 作为 prompt pack 总纲注册表，记录稳定前缀、语气契约、AI 权限契约和输出契约。
 - 既有 provider schema 名称保持不变：`opening`、`turn`、`examQuestion`、`grade` 仍是 OpenAI/DeepSeek/Anthropic 适配器看到的 schema 路由。
 - 普通回合按玩家身份选择 `world_turn`、`official_career`、`emperor_court`、`minister_faction`、`local_magistrate` 或 `general_frontier`；科举出题和评卷分别使用 `exam_question` 与 `exam_grading`。
-- `test/prompts.test.js` 覆盖 pack 注册表、身份路由、稳定前缀不掺入动态状态、科举出题/评卷权限边界。S41.2 继续扩展离线 eval fixtures、红队输出与真实 provider 语气验收。
+- `test/prompts.test.js` 覆盖 pack 注册表、身份路由、稳定前缀不掺入动态状态、科举出题/评卷权限边界。S41.2 继续扩展离线 eval fixtures 与红队输出；真实 provider 语气验收留到 S47。
 
 ### Phase 42: 官场深度优先扩展
 
@@ -214,6 +214,40 @@ S41.1 落地范围：
 ```
 
 ### 2026-05-06
+
+工具：Codex
+
+步骤：S41.2
+
+提交：pending local S41.2 implementation commit
+
+完成：
+- 扩展 `testdata/aiEvalFixtures.js`，为 `opening`、`world_turn`、`official_career`、`emperor_court`、`minister_faction`、`local_magistrate`、`general_frontier`、`exam_question` 和 `exam_grading` 增加 schema-valid、历史语气合格的 prompt-pack 输出样本。
+- 新增严格 JSON 红队 fixtures，离线 eval 会拒绝 Markdown fence、`model output:` 前缀、尾随说明和非 object 根节点；不改变运行时 `parseJsonFromText()` 的兼容解析。
+- 新增现代词/现代治理腔、隐藏信息泄漏和 AI 越权红队 fixtures，覆盖科举出题夹带 `statePatch`、评卷生成 server-owned ranking、普通回合写入 `officialCareer` / `activeNpcRequest` / `longTermEvents` / `examCalendar` / `player.palaceRank` 等情况。
+- 扩展 `test/prompts.test.js`，确认隐藏关系联系人、隐藏 faction 笔记和隐藏 recentIntent 不会进入 opening、turn、exam_question 或 exam_grading 的任务输入。
+
+验证：
+- `node --check testdata\aiEvalFixtures.js`
+- `node --check test\aiEvalFixtures.test.js`
+- `node --check test\prompts.test.js`
+- `node --test test\prompts.test.js`
+- `node --test test\aiEvalFixtures.test.js`
+- `npm run eval:ai`
+- `node --test test\remoteHelpers.test.js test\deepseekProvider.test.js`
+- `$env:AI_PROVIDER='mock'; npm test` passed 207 tests
+- `git diff --check`
+- Read-only pre-commit subagent review found no blockers. Three P3 notes were addressed before commit: S41.2 scope wording now keeps real-provider tone acceptance in S47, hidden faction-specific prompt filtering is asserted, and unknown authority fixture expectations now fail explicitly.
+
+风险/遗留：
+- 本步骤是离线 fixtures/test 覆盖，不调用真实 provider，也不修改 provider 解析容错。真实 provider 输出质量、streaming 失败和 route 级 keyed 验收仍归 S47。
+- 严格 JSON eval 比运行时 `parseJsonFromText()` 更严，目的是约束 prompt-pack 目标输出；不要把它误读为当前 provider 解析策略已经改成 hard strict。
+- 现代词表保持窄范围，后续 S41/S44 可继续补红队样本，避免过宽词表误伤历史合理表述。
+
+下一步：
+- S42.1 定义深度官场契约，或先做 S44.1 AI 调动/控制审查矩阵，把 S41 的 prompt 权限继续扩展成系统级权限表。
+
+---
 
 工具：Codex
 

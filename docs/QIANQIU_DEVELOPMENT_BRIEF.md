@@ -522,6 +522,8 @@ Mock 分数可结合：
 
 S41.1 已将 prompt pack 总纲落入运行时代码：`src/ai/promptPacks.js` 维护固定前缀、服务器边界、语气契约、AI 权限契约和输出契约；`src/ai/prompts.js` 继续使用既有 provider schema 名称（`opening`、`turn`、`examQuestion`、`grade`），但为任务附带 `promptPack` 元数据并按身份选择 `world_turn`、`official_career`、`emperor_court`、`minister_faction`、`local_magistrate` 或 `general_frontier` 指令。这样 DeepSeek/OpenAI/Anthropic 的当前模型路由和 JSON schema 不被放大改动，S41.2 再扩展离线 eval fixtures 与红队用例。
 
+S41.2 已补充离线 prompt-pack eval/red-team fixtures：每个 prompt pack 至少有一条 schema-valid、历史语气合格的输出样本；测试会拒绝 Markdown/prose 包裹的非严格 JSON，捕捉现代词和现代治理腔，捕捉隐藏联系人/隐藏案卷泄漏，捕捉科举出题夹带 `statePatch`、评卷生成 canonical ranking、普通回合写入 server-owned ledger 等越权样本。`src/ai/prompts.js` 的任务输入测试还会确认隐藏关系条目不会进入 opening、turn、exam_question 或 exam_grading 的动态上下文。S41.2 不改变运行时 provider 解析策略；真实 provider 质量验收仍在 S47 扩展。
+
 DeepSeek 上下文硬盘缓存优化必须纳入 prompt pack 设计，但不得影响游戏效果：
 
 - 稳定前缀优先：把系统身份、服务器边界、JSON 合约、固定术语表、固定示例和不随回合变化的时代/身份规则放在请求最前。

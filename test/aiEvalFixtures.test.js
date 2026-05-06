@@ -12,7 +12,12 @@ const {
   HISTORICAL_TONE,
   INVALID_GRADE_FIXTURES,
   PATCH_SAFETY_FIXTURE,
+  PROMPT_PACK_AUTHORITY_RED_TEAM_FIXTURES,
+  PROMPT_PACK_HIDDEN_LEAK_FIXTURES,
+  PROMPT_PACK_OUTPUT_FIXTURES,
+  PROMPT_PACK_TONE_RED_TEAM_FIXTURES,
   SERVER_OWNED_TURN_FIXTURES,
+  STRICT_JSON_FIXTURES,
   UNSAFE_TURN_FIXTURES,
   VALID_OUTPUT_FIXTURES
 } = require("../testdata/aiEvalFixtures");
@@ -50,6 +55,19 @@ function assertHistoricalTone(fixtureName, fieldName, text) {
   );
 }
 
+function parseStrictJsonObject(raw) {
+  const payload = JSON.parse(String(raw || "").trim());
+  if (!payload || typeof payload !== "object" || Array.isArray(payload)) {
+    throw new Error("strict JSON output must be a single object");
+  }
+  return payload;
+}
+
+function collectHiddenInfoIssues(payload, hiddenTerms = []) {
+  const serialized = JSON.stringify(payload);
+  return hiddenTerms.filter((term) => serialized.includes(term));
+}
+
 test("AI eval fixtures parse, validate, and preserve historical tone", () => {
   for (const fixture of VALID_OUTPUT_FIXTURES) {
     const payload = parseJsonFromText(fixture.raw);
@@ -59,6 +77,108 @@ test("AI eval fixtures parse, validate, and preserve historical tone", () => {
     for (const fieldName of fixture.toneFields) {
       assertHistoricalTone(fixture.name, fieldName, readPath(payload, fieldName));
     }
+  }
+});
+
+test("S41 prompt-pack output fixtures validate and preserve historical tone", () => {
+  const seenPromptPacks = new Set();
+
+  for (const fixture of PROMPT_PACK_OUTPUT_FIXTURES) {
+    const payload = parseStrictJsonObject(fixture.raw);
+
+    assert.equal(validatePayload(fixture.schemaName, payload), payload, fixture.name);
+    seenPromptPacks.add(fixture.promptPack);
+
+    for (const fieldName of fixture.toneFields) {
+      assertHistoricalTone(fixture.name, fieldName, readPath(payload, fieldName));
+    }
+
+    if (fixture.promptPack === "exam_grading") {
+      assert.deepEqual(payload.virtual_candidates, [], `${fixture.name} should not invent canonical candidates`);
+      assert.deepEqual(payload.ranking, [], `${fixture.name} should not invent canonical ranking`);
+    }
+  }
+
+  assert.deepEqual(
+    [...seenPromptPacks].sort(),
+    [
+      "emperor_court",
+      "exam_grading",
+      "exam_question",
+      "general_frontier",
+      "local_magistrate",
+      "minister_faction",
+      "official_career",
+      "opening",
+      "world_turn"
+    ].sort()
+  );
+});
+
+test("S41 prompt-pack strict JSON fixtures reject wrappers and non-object roots", () => {
+  for (const fixture of STRICT_JSON_FIXTURES.valid) {
+    const payload = parseStrictJsonObject(fixture.raw);
+    assert.equal(validatePayload(fixture.schemaName, payload), payload, fixture.name);
+  }
+
+  for (const fixture of STRICT_JSON_FIXTURES.invalid) {
+    assert.throws(
+      () => parseStrictJsonObject(fixture.raw),
+      /JSON|object/,
+      fixture.name
+    );
+  }
+});
+
+test("S41 prompt-pack red-team fixtures catch modern phrasing", () => {
+  for (const fixture of PROMPT_PACK_TONE_RED_TEAM_FIXTURES) {
+    const payload = validatePayload(fixture.schemaName, parseJsonFromText(fixture.raw));
+    const issues = fixture.toneFields.flatMap((fieldName) =>
+      collectToneIssues(readPath(payload, fieldName))
+    );
+
+    assert.ok(
+      issues.some((issue) => issue.startsWith("modern terms")),
+      `${fixture.name} should be flagged for modern terms`
+    );
+  }
+});
+
+test("S41 prompt-pack red-team fixtures catch hidden information leakage", () => {
+  for (const fixture of PROMPT_PACK_HIDDEN_LEAK_FIXTURES) {
+    const payload = validatePayload(fixture.schemaName, parseJsonFromText(fixture.raw));
+
+    assert.deepEqual(
+      collectHiddenInfoIssues(payload, fixture.hiddenTerms).sort(),
+      fixture.hiddenTerms.sort(),
+      fixture.name
+    );
+  }
+});
+
+test("S41 prompt-pack authority fixtures catch overreach beyond schema", () => {
+  for (const fixture of PROMPT_PACK_AUTHORITY_RED_TEAM_FIXTURES) {
+    const payload = parseJsonFromText(fixture.raw);
+
+    if (fixture.expected === "schemaReject") {
+      assert.throws(
+        () => validatePayload(fixture.schemaName, payload),
+        /schema validation/,
+        fixture.name
+      );
+      continue;
+    }
+
+    if (fixture.expected === "nonEmptyServerRanking") {
+      const validated = validatePayload(fixture.schemaName, payload);
+      assert.ok(
+        validated.virtual_candidates.length || validated.ranking.length,
+        `${fixture.name} should represent a server-owned ranking overreach`
+      );
+      continue;
+    }
+
+    assert.fail(`Unhandled prompt-pack authority fixture expectation: ${fixture.expected}`);
   }
 });
 
