@@ -128,3 +128,59 @@ test("POST /api/game/turn applies provider relationship suggestions through serv
   assert.equal(payload.worldState.relationshipLedger.factions.eunuchs.relationship, -4);
   assert.ok(payload.worldState.relationshipLedger.recentNotes.some((note) => note.includes("mentor")));
 });
+
+test("POST /api/game/turn ignores provider attempts to patch server-owned ordinary-turn fields", async (t) => {
+  const provider = {
+    async runTurn() {
+      return {
+        narrative: "The action was resolved.",
+        statePatch: {
+          activeExam: null,
+          characters: [{ id: "C99", name: "Invented patron", role: "patron" }],
+          eventHistory: ["provider replacement"],
+          player: {
+            academia: 22,
+            examRank: "model-rank",
+            examHistory: [{ level: "palace_exam", score: 100 }]
+          }
+        },
+        attributeChanges: [],
+        relationshipChanges: [],
+        events: ["provider event"],
+        examTrigger: { shouldStart: false, level: null, reason: "" }
+      };
+    }
+  };
+  const server = createTestServerWithProvider(provider);
+  t.after(server.close);
+
+  const worldState = createInitialState({ playerName: "Tester", role: "scholar" });
+  worldState.activeExam = { level: "child_exam", reason: "server-created" };
+  worldState.characters = [{ id: "C01", name: "Original mentor", role: "teacher" }];
+  worldState.eventHistory = ["existing history"];
+  worldState.player.examRank = "server-rank";
+  worldState.player.examHistory = [{ level: "child_exam", score: 80 }];
+  t.after(() => removeSessionFile(worldState.sessionId));
+  await writeSession(worldState);
+
+  const response = await fetch(`${server.baseUrl}/api/game/turn`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      sessionId: worldState.sessionId,
+      input: "study with an unsafe provider patch"
+    })
+  });
+  const payload = await response.json();
+
+  assert.equal(response.status, 200);
+  assert.equal(payload.worldState.turnCount, 1);
+  assert.deepEqual(payload.worldState.activeExam, { level: "child_exam", reason: "server-created" });
+  assert.deepEqual(payload.worldState.characters, [{ id: "C01", name: "Original mentor", role: "teacher" }]);
+  assert.equal(payload.worldState.eventHistory[0], "existing history");
+  assert.ok(payload.worldState.eventHistory.includes("provider event"));
+  assert.ok(!payload.worldState.eventHistory.includes("provider replacement"));
+  assert.equal(payload.worldState.player.examRank, "server-rank");
+  assert.deepEqual(payload.worldState.player.examHistory, [{ level: "child_exam", score: 80 }]);
+  assert.equal(payload.worldState.player.academia, 22);
+});

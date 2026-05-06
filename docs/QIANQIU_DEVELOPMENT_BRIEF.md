@@ -579,7 +579,7 @@ npm test
 
 Manual end-to-end acceptance lives in `docs/MANUAL_ACCEPTANCE.md`. It should be used for the browser/API pass before phase-one acceptance, especially to verify the complete scholar -> official route and the emperor/minister/official role loops in Mock mode.
 
-State patch boundary note: `statePatch.factions` is now merged only into existing numeric faction keys. Providers may adjust known faction scores but cannot introduce arbitrary faction names by replacing the full factions object.
+State patch boundary note: `statePatch.factions` is now merged only into existing numeric faction keys. Providers may adjust known faction scores but cannot introduce arbitrary faction names by replacing the full factions object. S31.2 further splits the patch boundary into provider-facing and server-owned keys: ordinary provider turn schemas reject `activeExam`, `characters`, `eventHistory`, `player.examRank`, and `player.examHistory`, and default `applyStatePatch()` ignores those fields if a non-schema provider returns them. Internal server code that needs calendar or exam-owned fields must opt in with `allowServerOwnedPatchKeys`.
 
 ## S14 Documentation And Phase-One Acceptance Note (2026-05-05)
 
@@ -616,7 +616,7 @@ S21.2 should implement `src/game/worldTick.js` as a pure module that returns `{ 
 - `runWorldTick(worldState)` returns `{ statePatch, attributeChanges, events, summary }` and does not mutate the input state.
 - The tick advances one month, rolls month 12 to month 1 with `year + 1`, and computes deterministic natural changes for treasury, grain reserve, population, public order, corruption, army morale, border threat, and known numeric faction keys.
 - Tick patches intentionally avoid player exam rank, active exams, exam history, promotion fields, session identity, role changes, scholar attributes, gold, and health.
-- `src/game/stateRules.js` now whitelists/clamps `year` and `month`, and `applyStatePatch()` accepts `{ incrementTurnCount: false }` for server-owned follow-up patches so S21.3 can integrate the tick without double-counting `turnCount`.
+- `src/game/stateRules.js` now whitelists/clamps `year` and `month`, and `applyStatePatch()` accepts `{ incrementTurnCount: false, allowServerOwnedPatchKeys: true }` for server-owned follow-up patches so S21.3 can integrate the tick without double-counting `turnCount`.
 - Provider turn schemas and prompts do not allow models to patch `year` or `month`; models may read the compact calendar context, but calendar movement is reserved for server-owned code.
 
 S21.3 connects the tick to `/api/game/turn`: provider output is applied first, exam-trigger state is prepared when requested, `runWorldTick()` runs against the updated state, and the tick patch is applied with `{ incrementTurnCount: false }`. Provider events are appended before tick events, and the route returns concise `worldTick` feedback through both JSON and SSE final payloads.
@@ -773,3 +773,12 @@ S30.1 opens the third-phase active roadmap without changing development rules:
 - `docs/DEVELOPMENT_STEPS.md` now starts the third-phase active ledger at S30.
 - Third-phase priorities start with layout and state-boundary hardening, then proceed to relationship visibility, active NPCs, long-horizon events, official career outcomes, exam calendarization, role/world coupling, keyed provider long-run acceptance, broader browser acceptance, and storage migration planning.
 - The mandatory workflow, Git discipline, Mock-default requirement, provider-optional requirement, server-owned state/rules boundary, and complete scholar -> official path protection remain unchanged.
+
+## S31.2 Ordinary Turn State Boundary Note (2026-05-06)
+
+S31.2 hardens ordinary turn provider authority without changing Mock playability:
+
+- Turn schemas and prompts no longer allow ordinary provider patches for `activeExam`, `characters`, `eventHistory`, `player.examRank`, or `player.examHistory`.
+- Default `applyStatePatch()` uses a provider-facing whitelist and ignores those server-owned fields even if a non-schema provider returns them.
+- Internal server follow-up patches can explicitly pass `allowServerOwnedPatchKeys: true`; the current route uses that for world tick calendar fields while still avoiding a second `turnCount` increment.
+- Provider-visible events still enter history through `appendEvents()`, exam requests still use `examTrigger`, promotions and exam history remain owned by exam routes and `src/game/promotions.js`, and relationship state still flows through top-level `relationshipChanges`.

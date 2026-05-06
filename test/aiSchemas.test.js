@@ -147,6 +147,32 @@ test("turn schema rejects model attempts to patch relationship ledger fields", (
   assert.throws(() => validatePayload("turn", payload), /schema validation/);
 });
 
+test("turn schema rejects model attempts to patch ordinary-turn server-owned fields", () => {
+  const serverOwnedPatches = [
+    { activeExam: { level: "child_exam", status: "writing" } },
+    { characters: [{ id: "C99", name: "Invented official" }] },
+    { eventHistory: ["provider tries to replace history"] },
+    { player: { examRank: "秀才" } },
+    { player: { examHistory: [{ level: "child_exam" }] } }
+  ];
+
+  for (const statePatch of serverOwnedPatches) {
+    const payload = {
+      narrative: "A turn happened.",
+      statePatch,
+      attributeChanges: [],
+      events: [],
+      examTrigger: {
+        shouldStart: false,
+        level: null,
+        reason: ""
+      }
+    };
+
+    assert.throws(() => validatePayload("turn", payload), /schema validation/);
+  }
+});
+
 test("exam question and grade schemas accept valid provider payloads", () => {
   const question = {
     level: "child_exam",

@@ -59,8 +59,8 @@
 | ID | 状态 | 目标 | 完成日期 | 工具 | 提交 |
 | --- | --- | --- | --- | --- | --- |
 | S30.1 | DONE | 归档第二阶段路线图，开启第三阶段活动台账，并保持开发规范不变 | 2026-05-06 | Codex | current documentation commit |
-| S31.1 | DONE | 修复桌面游戏态布局过窄问题，并扩展 browser smoke 覆盖游戏面板宽度/裁切断言 | 2026-05-06 | Codex + subagent | current S31.1 commit |
-| S31.2 | TODO | 收紧普通回合的服务器独占字段边界，阻止 provider patch `activeExam`、`characters`、`eventHistory`、`player.examRank`、`player.examHistory` 等字段 |  |  |  |
+| S31.1 | DONE | 修复桌面游戏态布局过窄问题，并扩展 browser smoke 覆盖游戏面板宽度/裁切断言 | 2026-05-06 | Codex + subagent | 0d52d46 |
+| S31.2 | DONE | 收紧普通回合的服务器独占字段边界，阻止 provider patch `activeExam`、`characters`、`eventHistory`、`player.examRank`、`player.examHistory` 等字段 | 2026-05-06 | Codex + subagent | current S31.2 commit |
 | S31.3 | TODO | 校验开局 role 输入并明确是否允许浏览器直接开局 `official` |  |  |  |
 | S32.1 | TODO | 定义关系/联系人检查视图契约，让 `relationshipLedger` 从叙事反馈升级为玩家可查看的信息面板 |  |  |  |
 | S32.2 | TODO | 实现关系/联系人 UI 与基础浏览器验收，显示人物/派系关系、怨望、立场、近期意图和可见性 |  |  |  |
@@ -174,9 +174,43 @@
 
 Tool: Codex
 
+Step: S31.2
+
+Commit: current S31.2 commit
+
+Completed:
+- Removed ordinary provider access to `activeExam`, `characters`, `eventHistory`, `player.examRank`, and `player.examHistory` from the turn schema and prompt allowed-key guidance.
+- Split `src/game/stateRules.js` into provider-facing and server-owned patch key sets; default `applyStatePatch()` now ignores server-owned fields unless `allowServerOwnedPatchKeys: true` is passed.
+- Updated game turn world tick integration to opt into server-owned `year/month` patching without adding a second turn count.
+- Converted AI eval ordinary-turn authority fixtures from schema-valid policy risks into schema rejection fixtures.
+- Added state-rule, schema, route-level, AI eval, and world tick tests for the new boundary.
+- Reviewed and integrated the scoped test-only subagent patch; the subagent did not run Git commands.
+
+Verification:
+- `node --check src/game/stateRules.js`
+- `node --check src/ai/schemas.js`
+- `node --check src/routes/game.js`
+- `node --check src/ai/prompts.js`
+- `node --check test/stateRules.test.js`
+- `node --check test/aiSchemas.test.js`
+- `node --check test/aiEvalFixtures.test.js`
+- `node --check test/gameTurnRelationships.test.js`
+- Focused `node --test` coverage for state rules, AI schemas, AI eval fixtures, game turn relationships, and world tick passed with 23 tests.
+- `npm run eval:ai` passed with 6 tests.
+- `npm test` passed with 92 tests.
+
+Risk/leftover:
+- No runtime blockers found in focused verification.
+- S31.2 intentionally does not decide direct start roles; S31.3 remains responsible for `/api/game/start` role validation and browser exposure of `official`.
+
+Next:
+- S31.3: validate `/api/game/start` role input and document whether direct `official` starts are allowed.
+
+Tool: Codex
+
 Step: S31.1
 
-Commit: current S31.1 commit
+Commit: 0d52d46
 
 Completed:
 - Added an `.app-shell--game-active` layout mode so the hidden start panel no longer leaves the desktop grid locked to the old 390px first column.

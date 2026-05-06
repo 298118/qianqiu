@@ -82,14 +82,6 @@ const statePatchSchema = {
     armySize: { type: "number" },
     armyMorale: { type: "number" },
     borderThreat: { type: "number" },
-    eventHistory: eventSchema,
-    characters: { type: "array", items: { type: "object", additionalProperties: true } },
-    activeExam: {
-      anyOf: [
-        { type: "object", additionalProperties: true },
-        { type: "null" }
-      ]
-    },
     factions: {
       type: "object",
       additionalProperties: { type: "number" },
@@ -105,12 +97,6 @@ const statePatchSchema = {
       properties: {
         health: { type: "number" },
         gold: { type: "number" },
-        examRank: {
-          anyOf: [
-            { type: "string" },
-            { type: "null" }
-          ]
-        },
         academia: { type: "number" },
         literaryTalent: { type: "number" },
         adaptability: { type: "number" },
@@ -124,7 +110,6 @@ const statePatchSchema = {
         },
         studiedBooks: stringArraySchema,
         connections: stringArraySchema,
-        examHistory: { type: "array", items: { type: "object", additionalProperties: true } },
         personalPower: { type: "number" },
         courtControl: { type: "number" },
         mandate: { type: "number" },

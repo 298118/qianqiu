@@ -176,20 +176,29 @@ const PATCH_SAFETY_FIXTURE = {
   }))
 };
 
-const POLICY_RISK_TURN_FIXTURES = [
+const SERVER_OWNED_TURN_FIXTURES = [
   {
-    name: "schema-valid exam rank claim",
+    name: "ordinary turn may not patch exam rank",
     raw: JSON.stringify(baseTurn({
       statePatch: {
         player: {
           examRank: "\u79c0\u624d"
         }
       }
-    })),
-    expectedIssue: "player.examRank"
+    }))
   },
   {
-    name: "schema-valid active exam claim",
+    name: "ordinary turn may not patch exam history",
+    raw: JSON.stringify(baseTurn({
+      statePatch: {
+        player: {
+          examHistory: [{ level: "child_exam" }]
+        }
+      }
+    }))
+  },
+  {
+    name: "ordinary turn may not patch active exam",
     raw: JSON.stringify(baseTurn({
       statePatch: {
         activeExam: {
@@ -197,11 +206,10 @@ const POLICY_RISK_TURN_FIXTURES = [
           status: "writing"
         }
       }
-    })),
-    expectedIssue: "activeExam"
+    }))
   },
   {
-    name: "schema-valid character replacement claim",
+    name: "ordinary turn may not patch characters",
     raw: JSON.stringify(baseTurn({
       statePatch: {
         characters: [
@@ -212,17 +220,15 @@ const POLICY_RISK_TURN_FIXTURES = [
           }
         ]
       }
-    })),
-    expectedIssue: "characters"
+    }))
   },
   {
-    name: "schema-valid direct event history claim",
+    name: "ordinary turn may not patch event history",
     raw: JSON.stringify(baseTurn({
       statePatch: {
         eventHistory: ["provider tries to replace history"]
       }
-    })),
-    expectedIssue: "eventHistory"
+    }))
   }
 ];
 
@@ -285,7 +291,7 @@ module.exports = {
   HISTORICAL_TONE,
   INVALID_GRADE_FIXTURES,
   PATCH_SAFETY_FIXTURE,
-  POLICY_RISK_TURN_FIXTURES,
+  SERVER_OWNED_TURN_FIXTURES,
   UNSAFE_TURN_FIXTURES,
   VALID_OUTPUT_FIXTURES
 };

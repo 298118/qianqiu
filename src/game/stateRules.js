@@ -46,10 +46,10 @@ const NUMERIC_RANGES = {
   "borderThreat": [0, 100]
 };
 
-const ALLOWED_PLAYER_PATCH_KEYS = new Set([
-  "health", "gold", "examRank", "academia", "literaryTalent",
+const PROVIDER_PLAYER_PATCH_KEYS = new Set([
+  "health", "gold", "academia", "literaryTalent",
   "adaptability", "mentality", "reputation", "teacher",
-  "studiedBooks", "connections", "examHistory", "personalPower",
+  "studiedBooks", "connections", "personalPower",
   "courtControl", "mandate", "position", "faction", "influence",
   "integrity", "superiorFavor", "peerNetwork", "performanceMerit",
   "promotionProspect", "impeachmentRisk", "cleanReputation",
@@ -59,10 +59,28 @@ const ALLOWED_PLAYER_PATCH_KEYS = new Set([
   "pendingLawsuits", "corveeBurden", "waterworks"
 ]);
 
-const ALLOWED_TOP_LEVEL_PATCH_KEYS = new Set([
+const SERVER_OWNED_PLAYER_PATCH_KEYS = new Set([
+  "examRank", "examHistory"
+]);
+
+const SERVER_PLAYER_PATCH_KEYS = new Set([
+  ...PROVIDER_PLAYER_PATCH_KEYS,
+  ...SERVER_OWNED_PLAYER_PATCH_KEYS
+]);
+
+const PROVIDER_TOP_LEVEL_PATCH_KEYS = new Set([
   "treasury", "grainReserve", "population", "publicOrder",
   "taxRate", "corruption", "armySize", "armyMorale", "borderThreat",
-  "factions", "characters", "eventHistory", "activeExam", "year", "month"
+  "factions"
+]);
+
+const SERVER_OWNED_TOP_LEVEL_PATCH_KEYS = new Set([
+  "characters", "eventHistory", "activeExam", "year", "month"
+]);
+
+const SERVER_TOP_LEVEL_PATCH_KEYS = new Set([
+  ...PROVIDER_TOP_LEVEL_PATCH_KEYS,
+  ...SERVER_OWNED_TOP_LEVEL_PATCH_KEYS
 ]);
 
 function clamp(value, min, max) {
@@ -86,10 +104,16 @@ function applyStatePatch(worldState, statePatch, options = {}) {
     return worldState;
   }
 
-  const { incrementTurnCount = true } = options;
+  const { incrementTurnCount = true, allowServerOwnedPatchKeys = false } = options;
+  const allowedTopLevelPatchKeys = allowServerOwnedPatchKeys
+    ? SERVER_TOP_LEVEL_PATCH_KEYS
+    : PROVIDER_TOP_LEVEL_PATCH_KEYS;
+  const allowedPlayerPatchKeys = allowServerOwnedPatchKeys
+    ? SERVER_PLAYER_PATCH_KEYS
+    : PROVIDER_PLAYER_PATCH_KEYS;
 
   // Apply top-level patches. Factions are merged below so unknown faction keys cannot replace the object.
-  for (const key of ALLOWED_TOP_LEVEL_PATCH_KEYS) {
+  for (const key of allowedTopLevelPatchKeys) {
     if (key === "factions") continue;
     if (key in statePatch) {
       worldState[key] = statePatch[key];
@@ -99,7 +123,7 @@ function applyStatePatch(worldState, statePatch, options = {}) {
   // Apply player patches
   if (isPlainObject(statePatch.player)) {
     if (!worldState.player) worldState.player = {};
-    for (const key of ALLOWED_PLAYER_PATCH_KEYS) {
+    for (const key of allowedPlayerPatchKeys) {
       if (key in statePatch.player) {
         worldState.player[key] = statePatch.player[key];
       }

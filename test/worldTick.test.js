@@ -33,7 +33,10 @@ test("runWorldTick advances the calendar and does not mutate protected state", (
   assert.ok(result.summary);
   assert.ok(result.attributeChanges.every((change) => !change.path.startsWith("player.")));
 
-  applyStatePatch(worldState, result.statePatch, { incrementTurnCount: false });
+  applyStatePatch(worldState, result.statePatch, {
+    incrementTurnCount: false,
+    allowServerOwnedPatchKeys: true
+  });
   assert.equal(worldState.year, 1645);
   assert.equal(worldState.month, 1);
   assert.equal(worldState.turnCount, 7);

@@ -68,7 +68,10 @@ async function finalizeTurn(worldState, result) {
   }
 
   const worldTick = runWorldTick(worldState);
-  applyStatePatch(worldState, worldTick.statePatch, { incrementTurnCount: false });
+  applyStatePatch(worldState, worldTick.statePatch, {
+    incrementTurnCount: false,
+    allowServerOwnedPatchKeys: true
+  });
 
   appendEvents(worldState, result.events);
   appendEvents(worldState, worldTick.events);

@@ -12,13 +12,10 @@ const {
   HISTORICAL_TONE,
   INVALID_GRADE_FIXTURES,
   PATCH_SAFETY_FIXTURE,
-  POLICY_RISK_TURN_FIXTURES,
+  SERVER_OWNED_TURN_FIXTURES,
   UNSAFE_TURN_FIXTURES,
   VALID_OUTPUT_FIXTURES
 } = require("../testdata/aiEvalFixtures");
-
-const ORDINARY_TURN_SERVER_OWNED_PATCH_KEYS = new Set(["activeExam", "characters", "eventHistory"]);
-const ORDINARY_TURN_SERVER_OWNED_PLAYER_KEYS = new Set(["examRank", "examHistory"]);
 
 function readPath(value, path) {
   return path.split(".").reduce((current, segment) => {
@@ -53,26 +50,6 @@ function assertHistoricalTone(fixtureName, fieldName, text) {
   );
 }
 
-function collectOrdinaryTurnPolicyIssues(payload) {
-  const issues = [];
-  const patch = payload?.statePatch || {};
-  const playerPatch = patch.player || {};
-
-  for (const key of ORDINARY_TURN_SERVER_OWNED_PATCH_KEYS) {
-    if (Object.prototype.hasOwnProperty.call(patch, key)) {
-      issues.push(key);
-    }
-  }
-
-  for (const key of ORDINARY_TURN_SERVER_OWNED_PLAYER_KEYS) {
-    if (Object.prototype.hasOwnProperty.call(playerPatch, key)) {
-      issues.push(`player.${key}`);
-    }
-  }
-
-  return issues;
-}
-
 test("AI eval fixtures parse, validate, and preserve historical tone", () => {
   for (const fixture of VALID_OUTPUT_FIXTURES) {
     const payload = parseJsonFromText(fixture.raw);
@@ -97,13 +74,13 @@ test("AI eval fixtures reject unsafe turn authority claims", () => {
   }
 });
 
-test("AI eval policy catches schema-valid ordinary turn authority risks", () => {
-  for (const fixture of POLICY_RISK_TURN_FIXTURES) {
+test("AI eval rejects ordinary turn server-owned field patches", () => {
+  for (const fixture of SERVER_OWNED_TURN_FIXTURES) {
     const payload = parseJsonFromText(fixture.raw);
 
-    assert.equal(validatePayload("turn", payload), payload, fixture.name);
-    assert.ok(
-      collectOrdinaryTurnPolicyIssues(payload).includes(fixture.expectedIssue),
+    assert.throws(
+      () => validatePayload("turn", payload),
+      /schema validation/,
       fixture.name
     );
   }

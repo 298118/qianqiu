@@ -179,7 +179,7 @@ Provider outputs must match the schemas in `src/ai/schemas.js`:
 - `examQuestion`: exam level, name, question, type, difficulty, requirements, word count, pass score and promotion rank
 - `grade`: five score dimensions, `overall_score`, rank, detailed feedback, authenticity echo, candidates and ranking placeholders
 
-Real provider adapters parse model text through `src/utils/json.js`, validate with Ajv, retry once on ordinary non-streaming failure, then fall back to Mock for that method. The model never owns final game state. It can suggest `statePatch`; the server whitelists and clamps it.
+Real provider adapters parse model text through `src/utils/json.js`, validate with Ajv, retry once on ordinary non-streaming failure, then fall back to Mock for that method. The model never owns final game state. It can suggest `statePatch`; the server whitelists and clamps it. Ordinary turn schemas now reject direct patches to server-owned fields such as `activeExam`, `characters`, `eventHistory`, `player.examRank`, and `player.examHistory`.
 
 S25.2 adds optional turn token streaming for OpenAI Responses, DeepSeek chat completions, and Anthropic Messages. `streamTurn()` buffers the full model JSON and still returns the same validated `turn` payload as `runTurn()`. During SSE requests, `src/routes/game.js` uses `src/utils/streamingJson.js` to extract only the top-level `narrative` string from the streamed JSON text and send it as `narrative_chunk`. State patches, relationship changes, world tick, persistence, and `final_state` still happen only after the full JSON passes schema validation. If visible provider narrative has already been sent and the stream then fails, the route emits an `error` event and does not write the session; if no visible narrative was sent, it can fall back to the normal turn path.
 
@@ -205,7 +205,7 @@ S25.3 adds a no-network fixture gate for provider-shaped output:
 npm run eval:ai
 ```
 
-The focused test is `test/aiEvalFixtures.test.js`, with fixture data in `testdata/aiEvalFixtures.js` so Node's test runner does not treat fixture data as a test file. It parses raw model-like text through `src/utils/json.js`, validates final payloads through `src/ai/schemas.js`, checks restrained historical tone heuristics, verifies unsafe turn authority claims are rejected, records schema-valid but policy-risky ordinary turn claims such as direct `activeExam`, `characters`, `eventHistory`, or `player.examRank` patches, and confirms patch application clamps numeric fields plus known faction scores. This gate is offline and should remain separate from keyed provider smoke runs.
+The focused test is `test/aiEvalFixtures.test.js`, with fixture data in `testdata/aiEvalFixtures.js` so Node's test runner does not treat fixture data as a test file. It parses raw model-like text through `src/utils/json.js`, validates final payloads through `src/ai/schemas.js`, checks restrained historical tone heuristics, verifies unsafe turn authority claims are rejected, rejects ordinary turn attempts to patch server-owned fields such as `activeExam`, `characters`, `eventHistory`, `player.examRank`, or `player.examHistory`, and confirms patch application clamps numeric fields plus known faction scores. This gate is offline and should remain separate from keyed provider smoke runs.
 
 ### Browser Smoke
 
@@ -243,7 +243,7 @@ Allowed roles currently include `scholar`, `emperor`, `minister`, `general`, `ma
 
 ## State Patch Rules
 
-`applyStatePatch(worldState, statePatch, options)` enforces:
+As of S31.2, `applyStatePatch(worldState, statePatch, options)` enforces:
 
 - Only whitelisted top-level and `player` keys can be changed.
 - Numeric fields are clamped to ranges in `NUMERIC_RANGES`.
@@ -251,7 +251,8 @@ Allowed roles currently include `scholar`, `emperor`, `minister`, `general`, `ma
 - `statePatch.factions` may only update existing numeric faction keys; providers cannot invent arbitrary faction names.
 - Existing faction scores patched by providers are clamped to `0..100`.
 - `turnCount` increments when a turn patch is applied.
-- Server-owned follow-up patches may pass `{ incrementTurnCount: false }` so S21.3 can apply a tick patch without double-counting one player turn.
+- Ordinary provider patches use the provider-facing whitelist and ignore server-owned fields such as `activeExam`, `characters`, `eventHistory`, `year`, `month`, `player.examRank`, and `player.examHistory` even if a non-schema provider includes them.
+- Server-owned follow-up patches may pass `{ incrementTurnCount: false, allowServerOwnedPatchKeys: true }` so internal code can apply fields such as the world tick calendar without double-counting one player turn.
 - `relationshipLedger` is not an allowed provider patch key. The AI schema rejects it, and `applyStatePatch()` ignores it if a non-schema provider tries to include it anyway.
 - Provider social-memory effects must go through top-level `relationshipChanges`, which `src/routes/game.js` applies through `applyRelationshipChanges()` after the ordinary turn patch increments `turnCount`.
 
@@ -324,7 +325,7 @@ The contract for S21.2-S21.4 is:
 
 `runWorldTick(worldState)` returns `{ statePatch, attributeChanges, events, summary }` without mutating `worldState`. Its first deterministic formulas cover treasury revenue/upkeep/leakage, grain consumption/harvest, population drift, public order, corruption, army morale, border threat, and small known-faction drift.
 
-Route integration order is provider patch first, exam trigger setup when requested, `runWorldTick()` against the updated state, tick patch with `{ incrementTurnCount: false }`, then provider events followed by tick events. The browser renders the current month in the status strip and appends concise monthly feedback below the provider narrative.
+Route integration order is provider patch first, exam trigger setup when requested, `runWorldTick()` against the updated state, tick patch with `{ incrementTurnCount: false, allowServerOwnedPatchKeys: true }`, then provider events followed by tick events. The browser renders the current month in the status strip and appends concise monthly feedback below the provider narrative.
 
 Provider turn schemas and prompts do not expose `year` or `month` as allowed model patch keys; calendar changes are reserved for server-owned patches.
 
