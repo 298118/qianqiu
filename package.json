@@ -9,7 +9,8 @@
     "test": "node --test",
     "eval:ai": "node --test test/aiEvalFixtures.test.js",
     "smoke:browser": "node scripts/browserSmoke.js",
-    "smoke:provider": "node scripts/providerSmoke.js"
+    "smoke:provider": "node scripts/providerSmoke.js",
+    "smoke:provider:long": "node scripts/providerLongRun.js"
   },
   "keywords": [
     "historical-simulation",

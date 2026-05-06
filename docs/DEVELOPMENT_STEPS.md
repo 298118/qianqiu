@@ -79,8 +79,8 @@
 | S36.1 | DONE | 定义角色与世界 tick 深耦合规则：水利影响粮储，战役影响边患/军费，朝廷任免影响地方执行力 | 2026-05-06 | Codex + subagents | current S36 implementation commit |
 | S36.2 | DONE | 深化地方官、将领、皇帝和大臣行动对长期世界状态和关系记忆的复合影响 | 2026-05-06 | Codex + subagents | current S36 implementation commit |
 | S36.3 | DONE | 为多身份长期联动增加 Mock 平衡测试和浏览器代表旅程 | 2026-05-06 | Codex + subagents | current S36 implementation commit |
-| S37.1 | TODO | 制定 keyed real-provider 长回合验收方案，覆盖 OpenAI、DeepSeek、Anthropic/Claude 的历史语气、越权和状态一致性 |  |  |  |
-| S37.2 | TODO | 增加可选真实 provider 长回合 smoke/eval 脚本，保持 no-key 环境成功跳过 |  |  |  |
+| S37.1 | DONE | 制定 keyed real-provider 长回合验收方案，覆盖 OpenAI、DeepSeek、Anthropic/Claude 的历史语气、越权和状态一致性 | 2026-05-06 | Codex + subagents | current S37 implementation commit |
+| S37.2 | DONE | 增加可选真实 provider 长回合 smoke/eval 脚本，保持 no-key 环境成功跳过 | 2026-05-06 | Codex + subagents | current S37 implementation commit |
 | S38.1 | TODO | 扩展浏览器验收到完整四级科举通关、作弊样例、各身份一回合、桌面/移动视觉回归 |  |  |  |
 | S38.2 | TODO | 制定存档迁移规划：session schema 版本、原子写入、并发保护、存档列表和未来数据库迁移路径 |  |  |  |
 
@@ -173,6 +173,37 @@
 ```
 
 ### 2026-05-06
+
+Tool: Codex
+
+Step: S37.1-S37.2
+
+Commit: current S37 implementation commit
+
+Completed:
+- Added `docs/REAL_PROVIDER_ACCEPTANCE.md` as the durable keyed real-provider long-run acceptance record for OpenAI, DeepSeek, and Anthropic/Claude.
+- Added `scripts/providerLongRun.js` and `npm run smoke:provider:long` for optional keyed long-run smoke/eval. The script reuses provider key selection/no-key skip behavior, calls real provider factories directly without Mock fallback, runs a repeated scholar scenario with an explicit promotion/office authority probe, checks historical tone, rejects server-owned ordinary-turn patch attempts and illegal/closed exam triggers, applies server boundary/tick/event/career follow-up logic in memory, and writes no session files.
+- Added `--turns` and `--stream` support so keyed environments can run longer JSON or adapter-stream checks while keeping no-key local environments successful.
+- Added `test/providerLongRunScript.test.js` for no-network helper coverage and exported shared provider-smoke helpers from `scripts/providerSmoke.js`.
+- Linked the S37 acceptance record from README and architecture notes, and recorded the S37 behavior in the product brief.
+- Used read-only subagents to inspect the provider smoke/streaming implementation and S37 acceptance-document placement; neither edited files or ran Git commands.
+
+Verification:
+- `node --check scripts/providerLongRun.js`
+- `node --check scripts/providerSmoke.js`
+- `node --check test/providerLongRunScript.test.js`
+- `node --test test/providerLongRunScript.test.js test/providerSmokeScript.test.js` passed with 15 tests.
+- `npm run smoke:provider:long` skipped successfully because no real-provider keys are configured.
+- `npm run eval:ai` passed with 6 tests.
+- `npm test` passed with 153 tests.
+- `git diff --check`
+
+Risk/leftover:
+- Keyed network calls were not executed in this no-key workspace.
+- The S37 script is adapter-level plus in-memory server-boundary verification; route-level SSE persistence with real providers remains a future keyed acceptance expansion if needed.
+
+Next:
+- S38.1: expand browser acceptance to complete four-level exam progression, cheating samples, representative identity turns, and desktop/mobile visual regression.
 
 Tool: Codex
 

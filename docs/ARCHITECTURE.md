@@ -258,6 +258,16 @@ npm run smoke:provider -- --stream --provider deepseek
 
 The script calls real provider factories directly instead of `getProvider()`, so failures are not hidden by Mock fallback. It exercises the four provider methods that correspond to start, turn, question, and submit/grade, then prints a short schema-validated summary. With `--stream`, it also exercises `streamTurn()` and reports streamed raw-character count plus validated narrative. It does not start the Express server and does not write session JSON files. With `AI_PROVIDER=mock`, it auto-runs only providers whose required key is present; if no real-provider keys are configured, it skips with exit code 0.
 
+`scripts/providerLongRun.js` is the optional S37 long-run acceptance entrypoint for keyed environments:
+
+```bash
+npm run smoke:provider:long
+npm run smoke:provider:long -- --provider openai --turns 12
+npm run smoke:provider:long -- --stream --provider anthropic
+```
+
+It reuses the same provider selection and no-key skip behavior, calls real provider factories directly, runs a repeated scholar action scenario with an authority probe, checks historical tone, rejects server-owned ordinary-turn patch attempts, applies server boundary/tick/event/career follow-up logic in memory, and writes no session files. The durable matrix and limitations live in [docs/REAL_PROVIDER_ACCEPTANCE.md](REAL_PROVIDER_ACCEPTANCE.md).
+
 ### AI Output Eval Fixtures
 
 S25.3 adds a no-network fixture gate for provider-shaped output:
@@ -500,6 +510,7 @@ For keyed provider smoke, use:
 ```bash
 npm run smoke:provider
 npm run smoke:provider -- --stream --provider openai
+npm run smoke:provider:long
 ```
 
 For local browser acceptance, use:
@@ -508,4 +519,4 @@ For local browser acceptance, use:
 npm run smoke:browser
 ```
 
-For local acceptance, run the checklist in [docs/MANUAL_ACCEPTANCE.md](MANUAL_ACCEPTANCE.md). Browser automation coverage lives in [docs/BROWSER_ACCEPTANCE.md](BROWSER_ACCEPTANCE.md). Phase milestones are recorded in [docs/PHASE_ONE_ACCEPTANCE.md](PHASE_ONE_ACCEPTANCE.md) and [docs/PHASE_TWO_ACCEPTANCE.md](PHASE_TWO_ACCEPTANCE.md); every accepted slice should also update `docs/SHARED_CONTEXT.md` and `docs/DEVELOPMENT_STEPS.md`.
+For local acceptance, run the checklist in [docs/MANUAL_ACCEPTANCE.md](MANUAL_ACCEPTANCE.md). Browser automation coverage lives in [docs/BROWSER_ACCEPTANCE.md](BROWSER_ACCEPTANCE.md), and keyed real-provider long-run coverage lives in [docs/REAL_PROVIDER_ACCEPTANCE.md](REAL_PROVIDER_ACCEPTANCE.md). Phase milestones are recorded in [docs/PHASE_ONE_ACCEPTANCE.md](PHASE_ONE_ACCEPTANCE.md) and [docs/PHASE_TWO_ACCEPTANCE.md](PHASE_TWO_ACCEPTANCE.md); every accepted slice should also update `docs/SHARED_CONTEXT.md` and `docs/DEVELOPMENT_STEPS.md`.

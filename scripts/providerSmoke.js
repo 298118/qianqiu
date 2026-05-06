@@ -240,10 +240,13 @@ if (require.main === module) {
 }
 
 module.exports = {
+  ALL_PROVIDER_NAMES,
   buildSmokeEssay,
   canonicalProviderName,
+  PROVIDER_CONFIGS,
   hasFlag,
   getProviderNamesToSmoke,
   providerHasKey,
+  truncate,
   runProviderSmoke
 };

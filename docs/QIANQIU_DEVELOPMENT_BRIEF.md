@@ -24,7 +24,7 @@
 
 第二阶段已经完成本地验收，记录见 `docs/PHASE_TWO_ACCEPTANCE.md`；第二阶段路线图已归档到 `docs/PHASE_TWO_ROADMAP_ARCHIVE.md`。已接受的范围包括世界 tick、NPC/派系记忆、地方官与将领深度、入仕官员深度、科举竞争深度、真实 provider smoke/streaming 准备、AI eval fixtures 和浏览器自动化验收。
 
-第三阶段已经在 `docs/DEVELOPMENT_STEPS.md` 开启。当前已完成桌面游戏态布局、普通回合服务器独占字段边界、开局 role 校验、关系可视化、主动 NPC、长期事件调度、官场结果、科举日历和身份与世界联动；后续继续推进真实 provider 长回合验收、浏览器完整旅程和存档迁移规划。
+第三阶段已经在 `docs/DEVELOPMENT_STEPS.md` 开启。当前已完成桌面游戏态布局、普通回合服务器独占字段边界、开局 role 校验、关系可视化、主动 NPC、长期事件调度、官场结果、科举日历、身份与世界联动和真实 provider 长回合验收脚本；后续继续推进浏览器完整旅程和存档迁移规划。
 
 开发规范不变。第 12 节和第 13 节仍是每次开发必须遵守的流程；Mock 默认可玩、真实 provider 可选、服务器拥有状态边界和科举规则这些要求继续有效。
 
@@ -876,3 +876,13 @@ S36 turns key identity actions into server-owned world consequences before the m
 - Providers can read compact role-world context in prompts, but the prompt and schema explicitly forbid ordinary provider patches to `roleWorldCoupling`.
 - The browser renders `[联动]` narrative feedback as `.role-world-event[data-role-world-kind]` instead of adding another persistent panel.
 - The durable contract is `docs/ROLE_WORLD_COUPLING_CONTRACT.md`; focused coverage lives in `test/roleWorldCoupling.test.js`, `test/gameTurnRoleWorldCoupling.test.js`, state/schema/eval tests, and browser smoke helper coverage.
+
+## S37 Real Provider Long-Run Acceptance Note (2026-05-06)
+
+S37 adds a keyed long-run provider acceptance gate without changing Mock-default local play:
+
+- `docs/REAL_PROVIDER_ACCEPTANCE.md` is the durable S37 acceptance matrix for OpenAI, DeepSeek, and Anthropic/Claude.
+- `npm run smoke:provider:long` runs `scripts/providerLongRun.js`, reusing the existing provider key selection and no-key skip behavior from `scripts/providerSmoke.js`.
+- The script calls real provider factories directly, so Mock fallback cannot hide provider failures. It runs a repeated scholar scenario with an explicit ordinary-turn authority probe, checks historical Chinese tone, rejects server-owned statePatch attempts, applies server boundary/tick/event/career follow-up logic in memory, and writes no session files.
+- `npm run smoke:provider:long -- --stream --provider openai|deepseek|anthropic|claude` routes each long-run turn through `streamTurn()` and still requires the final provider JSON to pass the normal turn schema.
+- The current S37 script is adapter-level plus in-memory server-boundary verification. It intentionally does not exercise route-level SSE persistence; if future keyed acceptance expands to route-SSE mode, it should record the visible-narrative-then-validation-failure branch separately.
