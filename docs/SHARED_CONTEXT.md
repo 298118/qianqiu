@@ -84,6 +84,7 @@ Durable contracts and acceptance records:
 - `docs/EXAM_CALENDAR_CONTRACT.md`
 - `docs/ROLE_WORLD_COUPLING_CONTRACT.md`
 - `docs/PRE_PHASE_CODEBASE_REVIEW_2026-05-06.md`
+- `docs/QIANQIU_DEVELOPMENT_HISTORY_ARCHIVE.md` 和 `docs/FOURTH_PHASE_PROGRESS_ARCHIVE.md` 是按需查阅归档；日常启动跳过，只有追溯旧实现笔记或旧验证细节时再读。
 
 ## Recent Completed Scope
 
@@ -132,6 +133,7 @@ Use focused checks first, then broaden when behavior crosses module boundaries:
 
 ## Current Work Note
 
+- 2026-05-06: 压缩必读上下文：`docs/QIANQIU_DEVELOPMENT_BRIEF.md` 的 S11-S38.3 历史实现笔记迁入 `docs/QIANQIU_DEVELOPMENT_HISTORY_ARCHIVE.md`；`docs/DEVELOPMENT_STEPS.md` 的第四阶段早期详细进度记录迁入 `docs/FOURTH_PHASE_PROGRESS_ARCHIVE.md`。日常启动仍只读四件套，归档文件只在追溯旧决策或旧验证时读取。低风险纯文档搬迁，跳过提交前只读子代理审查；验证：`git diff --check`。
 - 2026-05-06: 纯文档开发规范更新已把“项目输出优先中文”写入 `AGENTS.md`、`CLAUDE.md`、`docs/QIANQIU_DEVELOPMENT_BRIEF.md` 和 `docs/DEVELOPMENT_STEPS.md`。这是低风险纯文档改动，跳过提交前只读子代理审查；验证：`git diff --check`。
 - 2026-05-06: S40.1-S40.2 implementation/docs commit is `7927c02`. Verification passed: focused `node --check`, focused AI diagnostics/provider tests, `$env:AI_PROVIDER='mock'; npm test` with 197 tests, DeepSeek no-session diagnostic through ignored `.env` with `ok=true`, `$env:AI_PROVIDER='mock'; npm run smoke:browser`, and `git diff --check`. Read-only pre-commit subagent review found no blocking issues. Residuals: browser smoke does not yet click the `AI 连接` button, and error redaction covers exact configured secret values rather than transformed/partial variants.
 - 2026-05-06: Added a documentation-only S47.2 planning update for DeepSeek context caching. Based on the official docs, cache hits depend on fully reused persisted prefixes and usage reports hit/miss tokens. The project plan now says to stabilize prompt prefixes and collect cache telemetry without sacrificing game effect. Pre-commit subagent review skipped as low-risk documentation-only; `git diff --check` is sufficient.
