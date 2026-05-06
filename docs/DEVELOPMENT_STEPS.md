@@ -73,7 +73,7 @@
 | S26.1 | DONE | 引入浏览器自动化验收方案，优先覆盖本地页面加载、开局、localStorage 恢复 | 2026-05-06 | Codex + subagent recommendation | current S26.1 commit |
 | S26.2 | DONE | 增加截图或 DOM 级 UI 验收，覆盖桌面/移动布局、考试弹窗、放榜详情、考试档案和输入区 | 2026-05-06 | Codex | 434b3ef |
 | S26.3 | DONE | 将浏览器验收结果写入文档，并保留手动验收清单作为 fallback | 2026-05-06 | Codex | a38cf34 |
-| S27.1 | DONE | 完成第二阶段验收文档，记录新增深度、已知限制、真实 provider 状态和下一阶段候选 | 2026-05-06 | Codex | current S27.1 commit |
+| S27.1 | DONE | 完成第二阶段验收文档，记录新增深度、已知限制、真实 provider 状态和下一阶段候选 | 2026-05-06 | Codex | fee91df |
 
 ## 4. 分阶段详细步骤
 
@@ -162,7 +162,7 @@ Tool: Codex
 
 Step: S27.1
 
-Commit: current S27.1 commit
+Commit: fee91df
 
 Completed:
 - Added `docs/PHASE_TWO_ACCEPTANCE.md` as the second-phase acceptance record.
