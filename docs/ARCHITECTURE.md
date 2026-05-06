@@ -190,6 +190,7 @@ For turn responses, providers may also suggest top-level `relationshipChanges`. 
 - Player identity: `player.role`, `roleLabel`, `name`, `health`, `gold`.
 - Scholar fields: `examRank`, `palaceRank`, `officeTitle`, `academia`, `literaryTalent`, `adaptability`, `mentality`, `reputation`, `examHistory`, `teacher`, `studiedBooks`, `connections`.
 - Role fields: `personalPower`, `courtControl`, `mandate`, `position`, `faction`, `influence`, `integrity`.
+- Official fields: `superiorFavor`, `peerNetwork`, `performanceMerit`, `promotionProspect`, `impeachmentRisk`, `cleanReputation`.
 - General fields: `command`, `troops`, `supply`, `battleReputation`, `scouting`, `campaignRisk`.
 - Magistrate fields: `countyName`, `localTreasury`, `localOrder`, `gentryRelations`, `banditPressure`, `pendingLawsuits`, `corveeBurden`, `waterworks`.
 
@@ -222,7 +223,22 @@ The ledger is deliberately server-owned. It normalizes text fields, clamps relat
 
 S22.2 adds the controlled relationship-suggestion path and prompt summary. Turn prompts include a compact visible-only relationship summary. Provider `relationshipChanges` suggestions are processed at most five per turn; they must target existing visible entries, use `relationshipDelta` clamped to `-12..12`, use `resentmentDelta` clamped to `-10..10`, and may only update short `stance`, `recentIntent`, and note text. Applied changes are returned in JSON and SSE payloads as `relationshipChanges`.
 
-S22.3 makes Mock produce concrete relationship suggestions after it classifies the resolved action from its own `statePatch` and `examTrigger`. S23.1 extends that Mock reaction path to magistrate actions, and S23.2 extends it to general actions. The suggestions still target only visible ledger entries and still pass through `applyRelationshipChanges()` in the route before persistence. The browser appends concise `[人脉]` lines for applied changes.
+S22.3 makes Mock produce concrete relationship suggestions after it classifies the resolved action from its own `statePatch` and `examTrigger`. S23.1 extends that Mock reaction path to magistrate actions, S23.2 extends it to general actions, and S23.3 deepens the official reactions around superiors, peers, clean-name standing, impeachment and informal brokerage. The suggestions still target only visible ledger entries and still pass through `applyRelationshipChanges()` in the route before persistence. The browser appends concise `[人脉]` lines for applied changes.
+
+## Official Role Loop
+
+S23.3 deepens the post-palace official career loop without letting ordinary turns grant a new office title or role promotion. Official state lives under `player` and passes through the normal AI schema plus `applyStatePatch()` whitelist/clamp boundary.
+
+Official state fields:
+
+- `superiorFavor`: how favorably direct superiors view the player's usefulness and discipline, clamped to `0..100`.
+- `peerNetwork`: strength of同年/colleague support, clamped to `0..100`.
+- `performanceMerit`: current考成 merit record, clamped to `0..100`.
+- `promotionProspect`: chance-like career momentum toward future升迁, clamped to `0..100`; it does not itself change `officeTitle`.
+- `impeachmentRisk`: exposure to counterattack, audit, and弹劾 risk, clamped to `0..100`.
+- `cleanReputation`: public清操/clean-name standing, clamped to `0..100`.
+
+Palace-exam promotion now seeds these fields and appends a visible official superior contact (`C02`) while preserving the complete scholar -> official path. Mock official turns recognize assessment/promotion work, impeachment, observation under superiors, casework, relief/farming, peer networking, bribery, and routine office work. These actions may update official career fields and limited global fields such as `corruption`, `publicOrder`, `grainReserve`, `population`, and existing numeric factions. Relationship consequences remain suggestions only and are applied through the route-owned relationship ledger merge.
 
 ## General Role Loop
 
@@ -285,7 +301,7 @@ Exam levels:
 | `metropolitan_exam` | 会试 | 举人 | 贡士 | 74 |
 | `palace_exam` | 殿试 | 贡士 | 进士 / official | normally not failed unless severe cheating |
 
-Promotion is applied in `src/game/promotions.js`, not by the provider. Palace exam assigns `player.role = "official"`, a palace rank, an office title, `position`, `faction`, `influence`, and `integrity`.
+Promotion is applied in `src/game/promotions.js`, not by the provider. Palace exam assigns `player.role = "official"`, a palace rank, an office title, `position`, `faction`, `influence`, `integrity`, and the initial S23.3 official career meters.
 
 ## Persistence
 

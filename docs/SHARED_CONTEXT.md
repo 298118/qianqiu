@@ -6,7 +6,7 @@ Both tools must read this file at the start of every development session, after 
 
 ## Current Snapshot
 
-- Repository status: phase-one playable vertical slice is implemented, accepted, and now archived as historical planning. Phase two has started; S23.1 local magistrate identity depth and S23.2 general identity depth are implemented, and the next active implementation target is S23.3 official identity depth.
+- Repository status: phase-one playable vertical slice is implemented, accepted, and now archived as historical planning. Phase two has started; S23.1 local magistrate identity depth, S23.2 general identity depth, and S23.3 official identity depth are implemented, and the next active implementation target is S24.1 exam competition depth.
 - Canonical product brief: `docs/QIANQIU_DEVELOPMENT_BRIEF.md`.
 - Shared implementation roadmap and progress ledger: `docs/DEVELOPMENT_STEPS.md`.
 - Developer implementation map: `docs/ARCHITECTURE.md`.
@@ -50,9 +50,9 @@ Both tools must read this file at the start of every development session, after 
 - `POST /api/exam/submit` now applies promotion before saving the result: child/provincial/metropolitan passes set `player.examRank` to `秀才`/`举人`/`贡士`; palace pass sets `player.examRank = "进士"`, `player.role = "official"`, `player.roleLabel = "入仕官员"`, and records `palaceRank` plus `officeTitle`.
 - Severe exam fraud, currently copied classic passages or any authenticity flag with `severity: "severe"`, forces failure, downgrades one rank where possible, clears palace/office fields, and reduces reputation and mentality.
 - Role state fields now include `personalPower`, `courtControl`, `mandate`, `position`, `faction`, `influence`, and `integrity`; these are clamped/whitelisted through `src/game/stateRules.js`.
-- Palace exam promotion now seeds official `position`, `faction`, `influence`, and `integrity` so the official loop has immediate state to render and update.
-- Mock provider role loops now cover emperor relief/appointments/taxation/military/廷议, minister memorials/networking/政务/弹劾, and official 观政/断案/抚民/同年/贪墨 actions.
-- The frontend reuses the former scholar panel area as a role panel for emperor, minister, and official views, showing key metrics,府库粮储,朝局派系,人脉, and action hints.
+- Palace exam promotion now seeds official `position`, `faction`, `influence`, `integrity`, and S23.3 official career fields so the official loop has immediate state to render and update.
+- Mock provider role loops now cover emperor relief/appointments/taxation/military/廷议, minister memorials/networking/政务/弹劾, and official 观政/断案/抚民/同年/考成/升迁/弹劾/贪墨 actions.
+- The frontend reuses the former scholar panel area as a role panel for emperor, minister, official, general, and magistrate views, showing role-specific metrics,府库粮储,朝局派系,人脉, and action hints.
 - The S12 UI polish remains buildless and dependency-free: CSS now carries the paper/ink/cinnabar/jade/indigo visual language, mobile uses a full-height single-column layout with sticky action input, and the exam modal adapts to small screens.
 - The frontend now adds turn dividers in narrative history, exposes attribute-change reasons as hover titles, shows live exam character-count guidance without changing server scoring rules, and renders exam results as collapsible 五维评卷/监试复核/同场榜单 sections.
 - `npm test` now runs Node.js' built-in test runner. The `test/` suite covers state patch boundaries, session JSON persistence, AI JSON schemas, exam gates, promotion/consequence rules, local essay integrity penalties, and virtual candidate ranking.
@@ -90,6 +90,12 @@ Both tools must read this file at the start of every development session, after 
 - Mock general turns now cover recruitment, supply/pay work, drill, scouting, fortification, campaign action, and routine camp work.
 - Mock general turns generate concrete `relationshipChanges` through the same suggestion-only path as S22.3; the route still applies and persists them through `applyRelationshipChanges()`.
 - The browser role panel now renders general-specific status, action hints, military meters, troop/supply counts, and border pressure.
+- S23.3 adds official career state fields: `superiorFavor`, `peerNetwork`, `performanceMerit`, `promotionProspect`, `impeachmentRisk`, and `cleanReputation`.
+- Official career fields are included in the AI turn schema, prompt compact player context, and `applyStatePatch()` whitelist/clamp boundary. Numeric official fields are server-clamped, and ordinary turns still cannot grant office titles, palace rank, role promotion, active exams, or relationship ledger state directly.
+- Palace exam promotion now seeds official career meters and appends a visible official superior contact while preserving the complete scholar -> official path.
+- Mock official turns now cover assessment/promotion work, impeachment, observation under superiors, casework, relief/farming, peer networking, bribery, and routine office work.
+- Mock official turns generate concrete `relationshipChanges` through the same suggestion-only path as S22.3; the route still applies and persists them through `applyRelationshipChanges()`.
+- The browser role panel now renders official-specific status, action hints, and career meters for superiors, peers, merit, promotion, impeachment risk, and clean-name standing.
 - Tooling note: if `rg` resolves to the packaged Codex app path under `C:\Program Files\WindowsApps\OpenAI.Codex_...\app\resources`, Windows may deny execution. This workspace now shadows it with a working ripgrep 15.1.0 binary at `C:\Users\ZZZ\AppData\Local\OpenAI\Codex\bin\rg.exe`, which appears earlier on PATH.
 - Any behavior/API/setup/architecture decision that affects future work must be recorded in this file or in the canonical development brief.
 - Any roadmap step that starts, completes, blocks, or changes scope must be recorded in `docs/DEVELOPMENT_STEPS.md`.
@@ -150,7 +156,8 @@ Before finishing each coherent change:
 - 2026-05-05: S23.1 local magistrate identity loop committed as `9adef5f`, implemented in `src/game/initialState.js`, `src/game/stateRules.js`, `src/ai/schemas.js`, `src/ai/prompts.js`, `src/ai/providers/mock.js`, `public/app.js`, and `test/magistrateRole.test.js`. Verified `node --check` for changed runtime/test files, focused `node --test` runs for magistrate, AI schema, and Mock relationship coverage, `git diff --check`, and `npm test` with 45 passing tests.
 - 2026-05-05: S23.2 general identity loop implemented in `src/game/initialState.js`, `src/game/stateRules.js`, `src/ai/schemas.js`, `src/ai/prompts.js`, `src/ai/providers/mock.js`, `public/app.js`, and `test/generalRole.test.js`. Verified `node --check` for changed runtime/test files, focused `node --test` runs for general, AI schema, and magistrate coverage, `git diff --check`, and `npm test` with 49 passing tests.
 - 2026-05-05: README was rewritten for GitHub publishing with a clear project overview, main updates, fixes/quality notes, technology stack, setup, configuration, API overview, structure, and documentation links. Verification for this publishing slice: `git diff --check` and `npm test` with 49 passing tests.
+- 2026-05-06: S23.3 official identity loop implemented in `src/game/initialState.js`, `src/game/stateRules.js`, `src/game/promotions.js`, `src/ai/schemas.js`, `src/ai/prompts.js`, `src/ai/providers/mock.js`, `public/app.js`, and `test/officialRole.test.js`. Verified `node --check` for changed runtime/test files, focused `node --test` runs for official role, exam rules, and AI schemas, `git diff --check`, and `npm test` with 53 passing tests.
 
 ## Next Recommended Step
 
-Recommended next step is S23.3: deepen the official identity loop while preserving the complete scholar -> official path, Mock default playability, and existing relationship ledger boundaries.
+Recommended next step is S24.1: deepen exam competition by generating inspectable virtual candidate essays and comments while preserving the complete scholar -> official path, Mock default playability, and existing exam/promotion boundaries.

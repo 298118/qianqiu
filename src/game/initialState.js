@@ -70,7 +70,13 @@ const ROLE_STAT_DEFAULTS = {
     position: "候选观政",
     faction: "新科进士",
     influence: 24,
-    integrity: 72
+    integrity: 72,
+    superiorFavor: 42,
+    peerNetwork: 35,
+    performanceMerit: 30,
+    promotionProspect: 24,
+    impeachmentRisk: 18,
+    cleanReputation: 70
   }
 };
 
@@ -110,6 +116,20 @@ function getInitialCharacters(role) {
         loyalty: 58,
         ambition: 35,
         skill: 68,
+        alive: true
+      }
+    ];
+  }
+
+  if (role === "official") {
+    return [
+      {
+        id: "C01",
+        name: "赵给事",
+        role: "署中上官",
+        loyalty: 56,
+        ambition: 44,
+        skill: 78,
         alive: true
       }
     ];

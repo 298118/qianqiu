@@ -57,6 +57,16 @@ function describeOpening(worldState) {
     ].join("\n");
   }
 
+  if (player.role === "official") {
+    return [
+      `${dynasty}${year}年，${player.name}以${player.officeTitle || player.position}入署观政，朱批、公牍与上官眼色一同压到案头。`,
+      background,
+      custom,
+      "入仕后的生涯不只看文章清名，还看上官考成、同年网络、升迁声望、弹劾风险与清操口碑。",
+      "你可以奉上官差遣、经营同年、办理考成、谋求升迁、弹劾贪墨，或谨守清操以稳官声。"
+    ].join("\n");
+  }
+
   return [
     `${dynasty}${year}年，${player.name}以${player.roleLabel}之身立于局中。`,
     background,
@@ -116,6 +126,12 @@ function buildAttributeChanges(before, patch, reason = "行动影响") {
     mandate: "天命",
     influence: "影响",
     integrity: "操守",
+    superiorFavor: "上官",
+    peerNetwork: "同年",
+    performanceMerit: "考成",
+    promotionProspect: "升迁",
+    impeachmentRisk: "弹劾",
+    cleanReputation: "清操",
     command: "统率",
     troops: "部曲",
     supply: "军粮",
@@ -216,6 +232,10 @@ function firstVisibleCharacterId(targets) {
   return targets.characters.find((entry) => entry.id === "C01")?.id || targets.characters[0]?.id || null;
 }
 
+function firstVisibleOfficialContactId(targets) {
+  return targets.characters.find((entry) => entry.id === "C02")?.id || firstVisibleCharacterId(targets);
+}
+
 function pushRelationshipChange(changes, targets, targetType, targetId, config) {
   const bucket = targetType === "character" ? targets.characters : targets.factions;
   if (!targetId || !bucket.some((entry) => entry.id === targetId)) return;
@@ -237,6 +257,10 @@ function pushRelationshipChange(changes, targets, targetType, targetId, config) 
 
 function pushCharacterReaction(changes, targets, config) {
   pushRelationshipChange(changes, targets, "character", firstVisibleCharacterId(targets), config);
+}
+
+function pushOfficialContactReaction(changes, targets, config) {
+  pushRelationshipChange(changes, targets, "character", firstVisibleOfficialContactId(targets), config);
 }
 
 function pushFactionReaction(changes, targets, targetId, config) {
@@ -483,11 +507,53 @@ function buildMockRelationshipChanges(worldState, actionKey) {
         note: "Patient observation earns confidence from senior officials.",
         reason: "The player approached office work with humility."
       });
-      pushCharacterReaction(changes, targets, {
+      pushOfficialContactReaction(changes, targets, {
         relationshipDelta: 1,
         resentmentDelta: 0,
         note: "A senior contact hears that the player is learning the rules.",
         reason: "Observation improves the player's bureaucratic reputation."
+      });
+      break;
+    case "official_assessment":
+      pushOfficialContactReaction(changes, targets, {
+        relationshipDelta: 3,
+        resentmentDelta: -1,
+        stance: "watchful superior",
+        recentIntent: "Consider the player for a future recommendation if results hold.",
+        note: "Orderly performance records make the player easier to recommend.",
+        reason: "The player worked directly on performance review and promotion prospects."
+      });
+      pushFactionReaction(changes, targets, "scholarOfficials", {
+        relationshipDelta: 2,
+        resentmentDelta: -1,
+        stance: "rising clean official",
+        recentIntent: "Track whether the player's merit is durable or merely polished.",
+        note: "Good performance review strengthens orthodox promotion standing.",
+        reason: "Merit records improve the player's standing in the bureaucracy."
+      });
+      break;
+    case "official_impeach":
+      pushFactionReaction(changes, targets, "scholarOfficials", {
+        relationshipDelta: 3,
+        resentmentDelta: 0,
+        stance: "principled censorial ally",
+        recentIntent: "Use the player's evidence if it withstands counterattack.",
+        note: "Evidence-backed impeachment improves clean-name standing.",
+        reason: "The player challenged corrupt conduct through formal channels."
+      });
+      pushFactionReaction(changes, targets, "eunuchs", {
+        relationshipDelta: -4,
+        resentmentDelta: 5,
+        stance: "threatened brokerage channel",
+        recentIntent: "Look for a flaw in the player's paperwork.",
+        note: "Impeachment threatens protected interests.",
+        reason: "Anti-corruption action creates enemies among informal power channels."
+      });
+      pushOfficialContactReaction(changes, targets, {
+        relationshipDelta: 1,
+        resentmentDelta: 2,
+        note: "The superior sees courage but also danger in the player's memorial.",
+        reason: "Impeachment raises both admiration and caution from office contacts."
       });
       break;
     case "official_case":
@@ -519,7 +585,7 @@ function buildMockRelationshipChanges(worldState, actionKey) {
         note: "Meeting peers strengthens the player's official network.",
         reason: "The player cultivated examination and office relationships."
       });
-      pushCharacterReaction(changes, targets, {
+      pushOfficialContactReaction(changes, targets, {
         relationshipDelta: 2,
         resentmentDelta: -1,
         note: "A personal contact becomes more willing to help.",
@@ -847,6 +913,13 @@ function classifyOfficialRelationshipAction(worldState, patch) {
   if (numberIncreases(worldState.corruption, patch.corruption) && numberIncreases(player.gold, playerPatch.gold)) {
     return "official_bribe";
   }
+  if (
+    numberIncreases(player.impeachmentRisk, playerPatch.impeachmentRisk) &&
+    numberIncreases(player.cleanReputation, playerPatch.cleanReputation) &&
+    numberDecreases(worldState.corruption, patch.corruption)
+  ) {
+    return "official_impeach";
+  }
   if (arrayExpands(player.connections, playerPatch.connections)) return "official_network";
   if (numberIncreases(player.academia, playerPatch.academia) || numberIncreases(player.adaptability, playerPatch.adaptability)) {
     return "official_observe";
@@ -856,6 +929,13 @@ function classifyOfficialRelationshipAction(worldState, patch) {
   }
   if (numberDecreases(worldState.grainReserve, patch.grainReserve) || numberIncreases(worldState.population, patch.population)) {
     return "official_relief";
+  }
+  if (
+    numberIncreases(player.performanceMerit, playerPatch.performanceMerit) &&
+    (numberIncreases(player.promotionProspect, playerPatch.promotionProspect) ||
+      numberIncreases(player.superiorFavor, playerPatch.superiorFavor))
+  ) {
+    return "official_assessment";
   }
   return "official_default";
 }
@@ -1359,12 +1439,62 @@ function buildOfficialTurn(input, worldState) {
   const text = input.trim();
   const player = worldState.player;
 
-  if (/观政|学习|请教|衙门|章程|上官|磨勘/.test(text)) {
+  if (/考成|考绩|磨勘|铨选|荐举|升迁|迁转|功过|吏部/.test(text)) {
+    const patch = {
+      player: {
+        superiorFavor: shiftStat(player.superiorFavor, 4),
+        performanceMerit: shiftStat(player.performanceMerit, 7),
+        promotionProspect: shiftStat(player.promotionProspect, 5),
+        cleanReputation: shiftStat(player.cleanReputation, 2),
+        influence: shiftStat(player.influence, 3),
+        reputation: shiftStat(player.reputation, 2)
+      },
+      factions: buildFactionState(worldState, { scholarOfficials: 2 })
+    };
+
+    return makeResult({
+      worldState,
+      player,
+      patch,
+      reason: "官员考成升迁",
+      narrative: "你将岁内案牍、钱粮、狱讼与民情分门别类，呈给上官磨勘。纸面功过尚不能立刻换来新官职，却让考成簿上多了可被举荐的一笔。",
+      events: [`${player.name}整饬考成簿，升迁声望稍进。`]
+    });
+  }
+
+  if (/弹劾|参劾|纠举|御史|贪官|贪墨官|劾奏|奏劾/.test(text)) {
+    const patch = {
+      corruption: shiftStat(worldState.corruption, -3),
+      player: {
+        cleanReputation: shiftStat(player.cleanReputation, 5),
+        impeachmentRisk: shiftStat(player.impeachmentRisk, 6),
+        superiorFavor: shiftStat(player.superiorFavor, -1),
+        performanceMerit: shiftStat(player.performanceMerit, 2),
+        influence: shiftStat(player.influence, 2),
+        integrity: shiftStat(player.integrity, 2),
+        reputation: shiftStat(player.reputation, 2)
+      },
+      factions: buildFactionState(worldState, { scholarOfficials: 2, eunuchs: -2 })
+    };
+
+    return makeResult({
+      worldState,
+      player,
+      patch,
+      reason: "官员弹劾贪墨",
+      narrative: "你核实赃簿与往来书札，具疏参劾一名贪墨官员。清议因此看重你几分，可被牵连者也会记下这笔账，弹劾之路从来不是无风之桥。",
+      events: [`${player.name}具疏弹劾贪墨，清名与风险同涨。`]
+    });
+  }
+
+  if (/观政|学习|请教|衙门|章程|上官|公牍|署事/.test(text)) {
     const patch = {
       player: {
         influence: shiftStat(player.influence, 2),
         academia: shiftStat(player.academia, 1),
         adaptability: shiftStat(player.adaptability, 1),
+        superiorFavor: shiftStat(player.superiorFavor, 3),
+        performanceMerit: shiftStat(player.performanceMerit, 2),
         reputation: shiftStat(player.reputation, 1)
       }
     };
@@ -1386,8 +1516,12 @@ function buildOfficialTurn(input, worldState) {
       player: {
         influence: shiftStat(player.influence, 3),
         integrity: shiftStat(player.integrity, 2),
+        cleanReputation: shiftStat(player.cleanReputation, 4),
+        performanceMerit: shiftStat(player.performanceMerit, 4),
+        impeachmentRisk: shiftStat(player.impeachmentRisk, -2),
         reputation: shiftStat(player.reputation, 2)
-      }
+      },
+      factions: buildFactionState(worldState, { scholarOfficials: 1 })
     };
 
     return makeResult({
@@ -1408,8 +1542,12 @@ function buildOfficialTurn(input, worldState) {
       player: {
         influence: shiftStat(player.influence, 2),
         reputation: shiftStat(player.reputation, 3),
-        integrity: shiftStat(player.integrity, 1)
-      }
+        integrity: shiftStat(player.integrity, 1),
+        performanceMerit: shiftStat(player.performanceMerit, 3),
+        cleanReputation: shiftStat(player.cleanReputation, 2),
+        promotionProspect: shiftStat(player.promotionProspect, 1)
+      },
+      factions: buildFactionState(worldState, { scholarOfficials: 1 })
     };
 
     return makeResult({
@@ -1424,12 +1562,18 @@ function buildOfficialTurn(input, worldState) {
 
   if (/拜会|结交|同年|座师|请托|门生|馆阁/.test(text)) {
     const ally = pickRandom(["同年陆季常", "座师门下顾司业", "翰林同僚许伯言"]);
+    const riskyFavor = /请托|关说|私情/.test(text);
     const patch = {
       player: {
         influence: shiftStat(player.influence, 4),
-        integrity: shiftStat(player.integrity, text.includes("请托") ? -2 : -1),
+        peerNetwork: shiftStat(player.peerNetwork, 6),
+        promotionProspect: shiftStat(player.promotionProspect, riskyFavor ? 3 : 2),
+        impeachmentRisk: shiftStat(player.impeachmentRisk, riskyFavor ? 2 : 0),
+        integrity: shiftStat(player.integrity, riskyFavor ? -2 : -1),
+        cleanReputation: shiftStat(player.cleanReputation, riskyFavor ? -2 : -1),
         connections: uniqueAppend(player.connections, ally, 8)
-      }
+      },
+      factions: buildFactionState(worldState, { scholarOfficials: 2 })
     };
 
     return makeResult({
@@ -1448,9 +1592,14 @@ function buildOfficialTurn(input, worldState) {
       player: {
         gold: shiftResource(player.gold, 24),
         integrity: shiftStat(player.integrity, -9),
+        cleanReputation: shiftStat(player.cleanReputation, -10),
+        impeachmentRisk: shiftStat(player.impeachmentRisk, 9),
+        superiorFavor: shiftStat(player.superiorFavor, -2),
+        promotionProspect: shiftStat(player.promotionProspect, -3),
         reputation: shiftStat(player.reputation, -3),
         influence: shiftStat(player.influence, 1)
-      }
+      },
+      factions: buildFactionState(worldState, { scholarOfficials: -3, eunuchs: 2 })
     };
 
     return makeResult({
@@ -1466,6 +1615,7 @@ function buildOfficialTurn(input, worldState) {
   const patch = {
     player: {
       influence: shiftStat(player.influence, 1),
+      performanceMerit: shiftStat(player.performanceMerit, 1),
       mentality: shiftStat(player.mentality, 1)
     }
   };

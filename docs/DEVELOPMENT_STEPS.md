@@ -54,8 +54,8 @@
 | S22.2 | DONE | 更新状态 patch 白名单和提示词摘要，让 provider 只能建议关系变化，服务器负责裁决 | 2026-05-05 | Codex | e5d2d51 |
 | S22.3 | DONE | 在 Mock 中加入人物/派系对玩家行动的可追踪反应 | 2026-05-05 | Codex | 本次 S22.3 提交 |
 | S23.1 | DONE | 深化地方官身份：县库、乡绅、盗匪、诉讼、赋役、水利和地方民心 | 2026-05-05 | Codex | 9adef5f |
-| S23.2 | DONE | 深化将领身份：兵员、军粮、士气、侦察、战役风险和边境态势 | 2026-05-05 | Codex | 本次 S23.2 提交 |
-| S23.3 | TODO | 深化入仕官员身份：上官、同年、考成、升迁、弹劾和清浊操守 |
+| S23.2 | DONE | 深化将领身份：兵员、军粮、士气、侦察、战役风险和边境态势 | 2026-05-05 | Codex | b027d98 |
+| S23.3 | DONE | 深化入仕官员身份：上官、同年、考成、升迁、弹劾和清浊操守 | 2026-05-06 | Codex | 本次 S23.3 提交 |
 | S24.1 | TODO | 深化科举同场竞争：虚拟考生生成可查看文章、评语和风格差异 |
 | S24.2 | TODO | 增加考试档案 UI，允许回看历次文章、题目、排名、复核和晋级原因 |
 | S24.3 | TODO | 增加赶考成本、旅途事件、疲劳/心性影响和考前准备风险 |
@@ -147,6 +147,45 @@
 风险/遗留：
 下一步：
 ```
+
+### 2026-05-06
+
+Tool: Codex
+
+Step: S23.3
+
+Commit: 本次 S23.3 提交
+
+Completed:
+- Added official-specific player state for `superiorFavor`, `peerNetwork`, `performanceMerit`, `promotionProspect`, `impeachmentRisk`, and `cleanReputation`.
+- Added those fields to the turn schema, prompt compact player context, state patch whitelist, and numeric clamp ranges while preserving server-owned promotion, exam, and relationship-ledger boundaries.
+- Palace-exam promotion now seeds official career meters and appends a visible official superior contact while preserving the complete scholar -> official path.
+- Mock official turns now cover assessment/promotion work, impeachment, observation under superiors, casework, relief/farming, peer networking, bribery, and routine office work.
+- Mock official turns now produce relationship suggestions through the existing `relationshipChanges` path, with route-level persistence through `applyRelationshipChanges()`.
+- The browser role panel now renders official-specific status, action hints, and career meters for superiors, peers, merit, promotion, impeachment risk, and clean-name standing.
+- Added `test/officialRole.test.js` for initial state, schema/clamp coverage, direct Mock behavior, and route-level state plus relationship persistence.
+
+Verification:
+- `node --check src/game/initialState.js`
+- `node --check src/game/stateRules.js`
+- `node --check src/game/promotions.js`
+- `node --check src/ai/schemas.js`
+- `node --check src/ai/prompts.js`
+- `node --check src/ai/providers/mock.js`
+- `node --check public/app.js`
+- `node --check test/officialRole.test.js`
+- `node --test test/officialRole.test.js` passed with 4 tests.
+- `node --test test/examRules.test.js` passed with 6 tests.
+- `node --test test/aiSchemas.test.js` passed with 7 tests.
+- `git diff --check`
+- `npm test` passed with 53 tests.
+
+Risk/leftover:
+- S23.3 models升迁 as `promotionProspect` and考成 momentum only; ordinary turns still do not grant a new `officeTitle`.
+- Official career meters are first-pass deterministic Mock values; later balancing can make them interact more deeply with long-term world tick output and relationship ledger history.
+
+Next:
+- S24.1: deepen exam competition with inspectable virtual candidate essays and comments.
 
 ### 2026-05-05
 

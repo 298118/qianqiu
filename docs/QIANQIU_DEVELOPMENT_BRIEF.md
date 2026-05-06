@@ -197,7 +197,7 @@ AI provider 约定：
 
 - 皇帝：`personalPower`、`courtControl`、`mandate`、`position`、`faction`。
 - 大臣：`position`、`faction`、`influence`、`integrity`。
-- 入仕官员：`officeTitle`、`position`、`faction`、`influence`、`integrity`。
+- 入仕官员：`officeTitle`、`position`、`faction`、`influence`、`integrity`、`superiorFavor`、`peerNetwork`、`performanceMerit`、`promotionProspect`、`impeachmentRisk`、`cleanReputation`。
 - 将领：`command`、`troops`、`supply`、`battleReputation`、`scouting`、`campaignRisk`。
 - 地方官：`countyName`、`localTreasury`、`localOrder`、`gentryRelations`、`banditPressure`、`pendingLawsuits`、`corveeBurden`、`waterworks`。
 
@@ -296,7 +296,7 @@ SSE 事件：
 - `promotionResult`
 - `worldState`
 
-当前实现中，`/api/exam/submit` 使用普通 JSON 返回；服务器会先做本地反作弊检查，再调用 provider 评分，并在服务端应用作弊扣分。文章、评分、复核结果、虚拟考生、榜单与 `promotionResult` 会保存到 `player.examHistory`，同时清空 `activeExam`。随后 `src/game/promotions.js` 执行服务器自有晋级规则：童试/乡试/会试通过后分别写入 `player.examRank = "秀才" / "举人" / "贡士"`；殿试通过后写入 `player.examRank = "进士"`、`player.role = "official"`、`player.roleLabel = "入仕官员"`，并记录 `palaceRank` 与 `officeTitle`。严重作伪会强制黜落，按当前名位降一档并扣减声望与心性。
+当前实现中，`/api/exam/submit` 使用普通 JSON 返回；服务器会先做本地反作弊检查，再调用 provider 评分，并在服务端应用作弊扣分。文章、评分、复核结果、虚拟考生、榜单与 `promotionResult` 会保存到 `player.examHistory`，同时清空 `activeExam`。随后 `src/game/promotions.js` 执行服务器自有晋级规则：童试/乡试/会试通过后分别写入 `player.examRank = "秀才" / "举人" / "贡士"`；殿试通过后写入 `player.examRank = "进士"`、`player.role = "official"`、`player.roleLabel = "入仕官员"`，记录 `palaceRank` 与 `officeTitle`，并种下入仕官员的上官、同年、考成、升迁、弹劾风险和清操初始仪表。严重作伪会强制黜落，按当前名位降一档并扣减声望与心性。
 
 ## 7. AI JSON 合约
 
@@ -398,7 +398,7 @@ SSE 事件：
 - 开局设定页：朝代、年份、身份、姓名、家境、自定义背景。
 - 主游戏页：顶部状态栏，中间叙事历史区，底部多行自由输入框。
 - 书生面板：科举进度、下一考试、学识、文采、机辩、心性、声望、师承、已读书。
-- 身份面板：皇帝、大臣、将领、地方官、入仕官员展示关键权力/操守/影响指标、专属身份状态、府库粮储、朝局派系与可行动提示。
+- 身份面板：皇帝、大臣、将领、地方官、入仕官员展示关键权力/操守/影响指标、专属身份状态、府库粮储、朝局派系与可行动提示；入仕官员额外展示上官、同年、考成、升迁、弹劾和清操仪表。
 - 考试界面：题目、要求、大文本输入区、提交按钮。
 - 放榜界面：玩家与虚拟考生排名、分数、名次、详细考官评语。
 
@@ -425,7 +425,7 @@ Mock 需要支持：
 - 晋级和入仕。
 - 皇帝基础行动：赈灾、用人、征税筹饷、军事备边、廷议听政。
 - 大臣基础行动：上疏谏言、经营人脉、督办公务、弹劾攻讦。
-- 入仕官员基础行动：观政学习、断案平讼、劝农抚民、拜会同年、贪墨风险。
+- 入仕官员行动：奉上官差遣、经营同年、办理考成、谋求升迁、弹劾贪墨、观政学习、断案平讼、劝农抚民和贪墨风险。
 
 Mock 分数可结合：
 
@@ -653,3 +653,13 @@ S23.2 adds a dedicated military command loop while keeping the server-owned stat
 - Mock general turns recognize recruitment, supply/pay work, drill, scouting, fortification, campaign action, and routine camp work. They may update local command meters and limited global fields such as treasury, grain reserve, army size, army morale, border threat, public order, and existing numeric factions.
 - General relationship reactions use the existing top-level `relationshipChanges` suggestion path and are persisted only by the route-owned `applyRelationshipChanges()` merge.
 - The browser role panel now renders general-specific status, action hints, military meters, troop/supply counts, and border pressure.
+
+## S23.3 Official Role Note (2026-05-06)
+
+S23.3 deepens the post-palace official loop while keeping ordinary turns inside the server-owned state boundary:
+
+- Official sessions and palace-exam promotion now seed `player.superiorFavor`, `peerNetwork`, `performanceMerit`, `promotionProspect`, `impeachmentRisk`, and `cleanReputation`.
+- These official career fields are included in turn prompts, AI turn schemas, and `applyStatePatch()` whitelist/clamp rules. Numeric official fields are server-clamped, and ordinary turns still cannot grant `officeTitle`, palace rank, role promotion, or relationship ledger state directly.
+- Mock official turns now recognize assessment/promotion work, impeachment, observation under superiors, casework, relief/farming, peer networking, bribery, and routine office work. They may update official career meters and limited global fields such as corruption, public order, grain reserve, population, and existing numeric factions.
+- Palace promotion appends a visible official superior contact while preserving the complete scholar -> official path; relationship reactions still use the top-level `relationshipChanges` suggestion path and are persisted only by the route-owned `applyRelationshipChanges()` merge.
+- The browser role panel now renders official-specific status, action hints, and career meters for superiors, peers, merit, promotion, impeachment risk, and clean-name standing.

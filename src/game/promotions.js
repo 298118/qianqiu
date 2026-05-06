@@ -33,6 +33,33 @@ const PALACE_OUTCOMES = {
   }
 };
 
+const PALACE_OFFICIAL_SEEDS = {
+  "一甲": {
+    superiorFavor: 58,
+    peerNetwork: 48,
+    performanceMerit: 38,
+    promotionProspect: 52,
+    impeachmentRisk: 12,
+    cleanReputation: 78
+  },
+  "二甲": {
+    superiorFavor: 50,
+    peerNetwork: 42,
+    performanceMerit: 34,
+    promotionProspect: 42,
+    impeachmentRisk: 16,
+    cleanReputation: 74
+  },
+  "三甲": {
+    superiorFavor: 44,
+    peerNetwork: 36,
+    performanceMerit: 30,
+    promotionProspect: 34,
+    impeachmentRisk: 20,
+    cleanReputation: 70
+  }
+};
+
 function snapshotPlayer(player) {
   return {
     role: player.role,
@@ -44,6 +71,12 @@ function snapshotPlayer(player) {
     faction: player.faction ?? null,
     influence: player.influence ?? 0,
     integrity: player.integrity ?? 0,
+    superiorFavor: player.superiorFavor ?? 0,
+    peerNetwork: player.peerNetwork ?? 0,
+    performanceMerit: player.performanceMerit ?? 0,
+    promotionProspect: player.promotionProspect ?? 0,
+    impeachmentRisk: player.impeachmentRisk ?? 0,
+    cleanReputation: player.cleanReputation ?? 0,
     reputation: player.reputation ?? 0,
     mentality: player.mentality ?? 0
   };
@@ -67,6 +100,32 @@ function getPalaceOutcome(score) {
   return PALACE_OUTCOMES[score.rank] || PALACE_OUTCOMES["三甲"];
 }
 
+function seedOfficialCareerFields(player, palaceOutcome) {
+  const seed = PALACE_OFFICIAL_SEEDS[palaceOutcome.palaceRank] || PALACE_OFFICIAL_SEEDS["三甲"];
+  player.superiorFavor = clamp(player.superiorFavor ?? seed.superiorFavor, 0, 100);
+  player.peerNetwork = clamp(player.peerNetwork ?? seed.peerNetwork, 0, 100);
+  player.performanceMerit = clamp(player.performanceMerit ?? seed.performanceMerit, 0, 100);
+  player.promotionProspect = clamp(player.promotionProspect ?? seed.promotionProspect, 0, 100);
+  player.impeachmentRisk = clamp(player.impeachmentRisk ?? seed.impeachmentRisk, 0, 100);
+  player.cleanReputation = clamp(player.cleanReputation ?? seed.cleanReputation, 0, 100);
+}
+
+function ensureOfficialPostingCharacter(worldState) {
+  const characters = Array.isArray(worldState.characters) ? worldState.characters : [];
+  if (!characters.some((character) => character.id === "C02")) {
+    characters.push({
+      id: "C02",
+      name: "赵给事",
+      role: "署中上官",
+      loyalty: 56,
+      ambition: 44,
+      skill: 78,
+      alive: true
+    });
+  }
+  worldState.characters = characters;
+}
+
 function applySevereCheatingConsequence(player, before) {
   const rankAfter = getPreviousRank(before.examRank);
   const rankChanged = rankAfter !== before.examRank;
@@ -79,6 +138,15 @@ function applySevereCheatingConsequence(player, before) {
   player.influence = clamp((player.influence || 0) - 10, 0, 100);
   player.reputation = clamp((player.reputation || 0) - 12, 0, 100);
   player.mentality = clamp((player.mentality || 0) - 4, 0, 100);
+
+  if (before.role === "official" || before.officeTitle) {
+    player.superiorFavor = 0;
+    player.peerNetwork = 0;
+    player.performanceMerit = 0;
+    player.promotionProspect = 0;
+    player.impeachmentRisk = 0;
+    player.cleanReputation = 0;
+  }
 
   if (player.role === "official") {
     player.role = "scholar";
@@ -147,6 +215,8 @@ function applyExamPromotion(worldState, exam, score, authenticityCheck) {
     player.influence = clamp((player.influence || 0) + 24, 0, 100);
     player.integrity = clamp(player.integrity ?? 72, 0, 100);
     player.reputation = clamp((player.reputation || 0) + palaceOutcome.reputationGain, 0, 100);
+    seedOfficialCareerFields(player, palaceOutcome);
+    ensureOfficialPostingCharacter(worldState);
 
     return {
       passed: true,

@@ -86,6 +86,10 @@ test("server-owned promotion applies rank changes and official transition", () =
   assert.equal(worldState.player.role, "official");
   assert.ok(worldState.player.officeTitle);
   assert.ok(worldState.player.influence > 0);
+  assert.ok(worldState.player.performanceMerit >= 30);
+  assert.ok(worldState.player.promotionProspect >= 34);
+  assert.ok(worldState.player.cleanReputation >= 70);
+  assert.ok(worldState.characters.some((character) => character.id === "C02" && character.role === "署中上官"));
 });
 
 test("severe cheating forces failure and downgrades existing rank", () => {

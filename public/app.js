@@ -39,6 +39,12 @@ const ATTRIBUTE_LABELS = {
   mandate: "天命",
   influence: "影响",
   integrity: "操守",
+  superiorFavor: "上官",
+  peerNetwork: "同年",
+  performanceMerit: "考成",
+  promotionProspect: "升迁",
+  impeachmentRisk: "弹劾",
+  cleanReputation: "清操",
   command: "统率",
   troops: "部曲",
   supply: "军粮",
@@ -68,7 +74,7 @@ const ACTION_PLACEHOLDERS = {
   emperor: "输入你的行动，例如：下诏开仓赈灾，或整饬吏治",
   minister: "输入你的行动，例如：上疏整顿漕运，或拜会清流同僚",
   general: "输入你的行动，例如：遣斥候巡边、清点军粮，或率营出战",
-  official: "输入你的行动，例如：入署观政，或审理乡民争讼",
+  official: "输入你的行动，例如：奉上官考成、拜会同年，或弹劾贪墨官员",
   magistrate: "输入你的行动，例如：审理词讼、清查钱粮，或兴修水利"
 };
 
@@ -76,7 +82,7 @@ const ROLE_ACTION_HINTS = {
   emperor: ["下诏赈灾", "任免官员", "加税筹饷", "练兵备边"],
   minister: ["上疏谏言", "督办公务", "结交同僚", "弹劾攻讦"],
   general: ["募兵整补", "清点粮饷", "操练士卒", "遣斥候侦察", "修堡守边", "率营出战"],
-  official: ["入署观政", "断案平讼", "劝农抚民", "拜会同年"],
+  official: ["奉上官差遣", "经营同年", "办理考成", "谋求升迁", "弹劾贪墨", "谨守清操"],
   magistrate: ["审理词讼", "清查钱粮", "安抚乡绅", "缉捕盗匪", "兴修水利"]
 };
 
@@ -165,6 +171,14 @@ function setStatus(worldState) {
       `治所 ${player.countyName || "本县"}`,
       `县库 ${player.localTreasury ?? "-"}`,
       `盗匪 ${player.banditPressure ?? "-"}`
+    );
+  } else if (player.role === "official") {
+    statusItems.splice(
+      3,
+      0,
+      `考成 ${player.performanceMerit ?? "-"}`,
+      `升迁 ${player.promotionProspect ?? "-"}`,
+      `弹劾 ${player.impeachmentRisk ?? "-"}`
     );
   } else {
     statusItems.splice(3, 0, `府库 ${worldState.treasury}`, `民心 ${worldState.publicOrder}`, `边患 ${worldState.borderThreat}`);
@@ -260,12 +274,12 @@ function renderRolePanel(worldState) {
       ["战险", player.campaignRisk]
     ],
     official: [
-      ["影响", player.influence],
-      ["操守", player.integrity],
-      ["声望", player.reputation],
-      ["学识", player.academia],
-      ["民心", worldState.publicOrder],
-      ["贪腐", worldState.corruption]
+      ["上官", player.superiorFavor],
+      ["同年", player.peerNetwork],
+      ["考成", player.performanceMerit],
+      ["升迁", player.promotionProspect],
+      ["弹劾", player.impeachmentRisk],
+      ["清操", player.cleanReputation]
     ],
     magistrate: [
       ["地方民心", player.localOrder],
@@ -295,6 +309,13 @@ function renderRolePanel(worldState) {
       createPanelValue("县库", `${player.localTreasury ?? 0} 银`, "p"),
       createPanelValue("朝廷府库", `${worldState.treasury} 银`, "p"),
       createPanelValue("粮储", `${worldState.grainReserve} 石`, "p"),
+      createPanelValue("人脉", (player.connections || []).join("、") || "尚无记录", "p")
+    );
+  } else if (player.role === "official") {
+    lists.append(
+      createPanelValue("影响/声望", `${player.influence ?? 0} / ${player.reputation ?? 0}`, "p"),
+      createPanelValue("操守", `${player.integrity ?? 0}`, "p"),
+      createPanelValue("朝局", formatFactions(worldState.factions), "p"),
       createPanelValue("人脉", (player.connections || []).join("、") || "尚无记录", "p")
     );
   } else {
