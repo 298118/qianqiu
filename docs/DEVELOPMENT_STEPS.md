@@ -65,9 +65,9 @@
 | S32.1 | DONE | 定义关系/联系人检查视图契约，让 `relationshipLedger` 从叙事反馈升级为玩家可查看的信息面板 | 2026-05-06 | Codex + subagents | ed83e9c |
 | S32.2 | DONE | 实现关系/联系人 UI 与基础浏览器验收，显示人物/派系关系、怨望、立场、近期意图和可见性 | 2026-05-06 | Codex + subagents | cefde6a |
 | S32.3 | DONE | 增加主动 NPC/派系请托、施压、求援、背书或索取回报的最小事件循环 | 2026-05-06 | Codex + subagents | 08042a2 |
-| S33.1 | DONE | 定义长期事件调度器契约：季节、灾荒、边报、朝争、地方案件链和跨月后果 | 2026-05-06 | Codex + subagents | pending S33 commit |
-| S33.2 | DONE | 实现服务器拥有的长期事件队列，并把事件结果接入 world tick、eventHistory 和可见叙事 | 2026-05-06 | Codex + subagents | pending S33 commit |
-| S33.3 | DONE | 为长期事件增加自动化测试，覆盖触发条件、裁剪、状态边界和完整书生路径不被破坏 | 2026-05-06 | Codex + subagents | pending S33 commit |
+| S33.1 | DONE | 定义长期事件调度器契约：季节、灾荒、边报、朝争、地方案件链和跨月后果 | 2026-05-06 | Codex + subagents | eb3261b |
+| S33.2 | DONE | 实现服务器拥有的长期事件队列，并把事件结果接入 world tick、eventHistory 和可见叙事 | 2026-05-06 | Codex + subagents | eb3261b |
+| S33.3 | DONE | 为长期事件增加自动化测试，覆盖触发条件、裁剪、状态边界和完整书生路径不被破坏 | 2026-05-06 | Codex + subagents | eb3261b |
 | S34.1 | TODO | 定义官场结果引擎：实授、转任、升迁、外放、降调、弹劾成案和罢黜 |  |  |  |
 | S34.2 | TODO | 实现入仕官员年度/阶段性结算，让 `promotionProspect`、`impeachmentRisk` 等指标触发真实职业结果 |  |  |  |
 | S34.3 | TODO | 增加官场结果 UI 与测试，确认晋升/降调/弹劾不会绕过服务器裁决 |  |  |  |
@@ -176,7 +176,7 @@ Tool: Codex
 
 Step: S33.1-S33.3
 
-Commit: pending S33 commit
+Commit: eb3261b
 
 Completed:
 - Added `docs/LONG_TERM_EVENTS_CONTRACT.md` as the durable S33 scheduler contract for persisted state, route order, output payloads, authority boundaries, implemented event families, and focused verification.
