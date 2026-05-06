@@ -23,6 +23,13 @@
 5. 运行相关验证命令。
 6. 用 Git 提交本次 coherent change。
 
+子代理使用规则：
+
+- 对 S25、S26 这类阶段或多个相关 `Sxx.y` 小步骤组成的步骤簇，应积极考虑并行子代理，而不是只在单个超大实现任务中使用。
+- 推荐委派粒度是独立的小步骤。例如 S25 可以让一个子代理负责 S25.1 真实 provider smoke 脚本，另一个子代理负责 S25.2 streaming 兼容性调研或实现，前提是写入范围不重叠。
+- 主代理仍然负责选择拆分方式、审查所有 diff、补齐跨模块文档、运行最终验证、更新本台账与共享上下文，并做唯一的 coherent Git 提交。
+- 每个实现型子代理提示词都必须禁止 `git add`、`git commit`、`git push` 和创建 PR，并要求报告改动文件与 focused verification 命令。
+
 状态值：
 
 - `TODO`：未开始。
@@ -149,6 +156,27 @@
 ```
 
 ### 2026-05-06
+
+Tool: Codex
+
+Step: Delegation workflow clarification
+
+Commit: current documentation commit
+
+Completed:
+- Clarified that "larger step" means a roadmap phase or step cluster, not only one oversized implementation task.
+- Recorded that phases such as S25 should proactively split independent substeps like S25.1/S25.2/S25.3 across subagents when file ownership and verification are clear.
+- Preserved the existing rule that subagents must not stage, commit, push, or create PRs; the main agent keeps responsibility for review, documentation, final verification, and the single coherent commit.
+
+Verification:
+- Documentation-only change; verified with `git diff --check`.
+- `npm test` passed with 60 tests.
+
+Risk/leftover:
+- No runtime behavior changed.
+
+Next:
+- Resume S25.1, using the clarified delegation grain when implementation begins.
 
 Tool: Codex
 
