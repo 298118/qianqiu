@@ -196,6 +196,16 @@ npm run smoke:provider -- --stream --provider deepseek
 
 The script calls real provider factories directly instead of `getProvider()`, so failures are not hidden by Mock fallback. It exercises the four provider methods that correspond to start, turn, question, and submit/grade, then prints a short schema-validated summary. With `--stream`, it also exercises `streamTurn()` and reports streamed raw-character count plus validated narrative. It does not start the Express server and does not write session JSON files. With `AI_PROVIDER=mock`, it auto-runs only providers whose required key is present; if no real-provider keys are configured, it skips with exit code 0.
 
+### AI Output Eval Fixtures
+
+S25.3 adds a no-network fixture gate for provider-shaped output:
+
+```bash
+npm run eval:ai
+```
+
+The focused test is `test/aiEvalFixtures.test.js`, with fixture data in `testdata/aiEvalFixtures.js` so Node's test runner does not treat fixture data as a test file. It parses raw model-like text through `src/utils/json.js`, validates final payloads through `src/ai/schemas.js`, checks restrained historical tone heuristics, verifies unsafe turn authority claims are rejected, records schema-valid but policy-risky ordinary turn claims such as direct `activeExam`, `characters`, `eventHistory`, or `player.examRank` patches, and confirms patch application clamps numeric fields plus known faction scores. This gate is offline and should remain separate from keyed provider smoke runs.
+
 ## State Model
 
 `createInitialState()` in `src/game/initialState.js` returns a `worldState` with:
@@ -222,6 +232,7 @@ Allowed roles currently include `scholar`, `emperor`, `minister`, `general`, `ma
 - Numeric fields are clamped to ranges in `NUMERIC_RANGES`.
 - `eventHistory` is trimmed to the latest 20 entries.
 - `statePatch.factions` may only update existing numeric faction keys; providers cannot invent arbitrary faction names.
+- Existing faction scores patched by providers are clamped to `0..100`.
 - `turnCount` increments when a turn patch is applied.
 - Server-owned follow-up patches may pass `{ incrementTurnCount: false }` so S21.3 can apply a tick patch without double-counting one player turn.
 - `relationshipLedger` is not an allowed provider patch key. The AI schema rejects it, and `applyStatePatch()` ignores it if a non-schema provider tries to include it anyway.
@@ -333,6 +344,12 @@ Use:
 
 ```bash
 npm test
+```
+
+For the focused no-network AI output fixture gate, use:
+
+```bash
+npm run eval:ai
 ```
 
 For keyed provider smoke, use:

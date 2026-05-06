@@ -69,7 +69,7 @@
 | S24.3 | DONE | 增加赶考成本、旅途事件、疲劳/心性影响和考前准备风险 | 2026-05-06 | Codex + subagent patch | fadb9ab |
 | S25.1 | DONE | 增加真实 provider smoke 脚本，在有 key 时验证 start/turn/question/submit 四类调用 | 2026-05-06 | Codex | 本次 S25.1 提交 |
 | S25.2 | DONE | 评估并实现真实 provider token streaming；无法流式的 provider 保持兼容降级 | 2026-05-06 | Codex + subagent investigation | current S25.2 commit |
-| S25.3 | TODO | 建立 AI 输出 eval fixtures，固定校验 JSON 合约、违规 patch、科举评卷和历史语气 |
+| S25.3 | DONE | 建立 AI 输出 eval fixtures，固定校验 JSON 合约、违规 patch、科举评卷和历史语气 | 2026-05-06 | Codex + subagent recommendation | current S25.3 commit |
 | S26.1 | TODO | 引入浏览器自动化验收方案，优先覆盖本地页面加载、开局、localStorage 恢复 |
 | S26.2 | TODO | 增加截图或 DOM 级 UI 验收，覆盖桌面/移动布局、考试弹窗和放榜详情 |
 | S26.3 | TODO | 将浏览器验收结果写入文档，并保留手动验收清单作为 fallback |
@@ -157,6 +157,35 @@
 ```
 
 ### 2026-05-06
+
+Tool: Codex
+
+Step: S25.3
+
+Commit: current S25.3 commit
+
+Completed:
+- Added `testdata/aiEvalFixtures.js` with no-network provider-shaped output samples for opening, turn, exam question, grade, unsafe turn claims, schema-valid ordinary-turn policy risks, patch safety, grading bounds, and tone checks.
+- Added `test/aiEvalFixtures.test.js` and `npm run eval:ai` as the focused S25.3 fixture gate.
+- The eval gate parses raw model-like text, validates final JSON schemas, checks restrained historical tone, catches schema-valid but policy-risky ordinary turn patches such as `activeExam`, `characters`, `eventHistory`, and `player.examRank`, and verifies local exam authenticity penalties.
+- Tightened patch safety so existing numeric faction scores suggested by providers are clamped to `0..100` while invented faction keys are still ignored.
+- Updated README, architecture notes, product brief, development ledger, and shared handoff context.
+
+Verification:
+- `node --check testdata/aiEvalFixtures.js`
+- `node --check test/aiEvalFixtures.test.js`
+- `npm run eval:ai` passed with 6 tests.
+- `node --test test/aiSchemas.test.js test/stateRules.test.js test/examRules.test.js test/providerSmokeScript.test.js` passed.
+- `npm run smoke:provider` skipped successfully because no real-provider keys are configured.
+- `git diff --check`
+- `npm test` passed with 79 tests.
+
+Risk/leftover:
+- The eval policy currently records schema-valid but ordinary-turn-risky fields as fixture failures; it does not yet change the runtime schema because older Mock/server flow still relies on some historical schema allowances.
+- Live model quality still depends on keyed `npm run smoke:provider`; S25.3 deliberately stays offline.
+
+Next:
+- S26.1: introduce browser automation for local page load, opening flow, and localStorage restoration.
 
 Tool: Codex
 

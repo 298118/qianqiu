@@ -712,3 +712,13 @@ S25.2 adds true turn token streaming for keyed real providers while preserving t
 - Mock and unsupported providers keep the existing SSE compatibility path: generate the full turn first, then chunk the final narrative.
 - `npm run smoke:provider -- --stream --provider openai|deepseek|anthropic|claude` optionally exercises the real-provider streaming path in keyed environments.
 - If visible provider narrative has already been sent and the stream later fails validation, the route emits `error` and leaves the session unchanged rather than falling back to Mock with contradictory visible text.
+
+## S25.3 AI Output Eval Fixture Note (2026-05-06)
+
+S25.3 adds a no-network AI output fixture gate without changing default Mock playability:
+
+- `npm run eval:ai` runs `test/aiEvalFixtures.test.js`.
+- Fixtures live in `testdata/aiEvalFixtures.js` and cover valid provider-shaped opening, turn, exam-question, and grade payloads.
+- The eval gate parses raw model-like text through `src/utils/json.js`, validates final payloads through `src/ai/schemas.js`, and applies focused checks for historical tone, unsafe JSON contracts, ordinary-turn authority risks, patch clamping, faction score safety, grade bounds, and local exam authenticity penalties.
+- S25.3 intentionally keeps live provider calls out of `npm test`; keyed network checks remain in `npm run smoke:provider`.
+- Provider faction patches now clamp existing faction scores to `0..100` while still dropping invented faction keys.

@@ -1,4 +1,5 @@
 const MAX_EVENT_HISTORY = 20;
+const FACTION_SCORE_RANGE = [0, 100];
 
 const NUMERIC_RANGES = {
   "year": [1, 9999],
@@ -108,9 +109,10 @@ function applyStatePatch(worldState, statePatch, options = {}) {
   // Apply faction patches
   if (isPlainObject(statePatch.factions)) {
     if (!worldState.factions) worldState.factions = {};
+    const [minFactionScore, maxFactionScore] = FACTION_SCORE_RANGE;
     for (const key of Object.keys(statePatch.factions)) {
       if (typeof worldState.factions[key] === "number" && typeof statePatch.factions[key] === "number") {
-        worldState.factions[key] = statePatch.factions[key];
+        worldState.factions[key] = clamp(statePatch.factions[key], minFactionScore, maxFactionScore);
       }
     }
   }
@@ -155,6 +157,7 @@ module.exports = {
   applyStatePatch,
   appendEvents,
   clamp,
+  FACTION_SCORE_RANGE,
   NUMERIC_RANGES,
   MAX_EVENT_HISTORY
 };

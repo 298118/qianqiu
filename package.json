@@ -7,6 +7,7 @@
     "start": "node server.js",
     "dev": "node --watch server.js",
     "test": "node --test",
+    "eval:ai": "node --test test/aiEvalFixtures.test.js",
     "smoke:provider": "node scripts/providerSmoke.js"
   },
   "keywords": [
