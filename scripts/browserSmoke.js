@@ -605,6 +605,140 @@ function getMissingOfficialCareerOutcomeTypes(actualTypes = [], expectedTypes = 
   return expectedTypes.filter((type) => !available.has(type));
 }
 
+function getMissingOfficialCareerAssignmentKinds(actualKinds = [], expectedKinds = []) {
+  const available = new Set(actualKinds.filter(Boolean));
+  return expectedKinds.filter((kind) => !available.has(kind));
+}
+
+function getMissingOfficialCareerAssignmentStatuses(actualStatuses = [], expectedStatuses = []) {
+  const available = new Set(actualStatuses.filter(Boolean));
+  if (!expectedStatuses.length) return [];
+  return expectedStatuses.some((status) => available.has(status)) ? [] : expectedStatuses;
+}
+
+function getHiddenOfficialCareerTextLeaks(text = "", hiddenTextTokens = []) {
+  return hiddenTextTokens.filter((token) => token && String(text).includes(token));
+}
+
+function getOfficialCareerAssignmentRecords(snapshot = {}) {
+  if (Array.isArray(snapshot.assignmentRecords)) {
+    return snapshot.assignmentRecords;
+  }
+  return (snapshot.assignmentIds || []).map((id, index) => ({
+    id,
+    kind: snapshot.assignmentKinds?.[index] || "",
+    status: snapshot.assignmentStatuses?.[index] || "",
+    bureauId: snapshot.assignmentBureauIds?.[index] || ""
+  }));
+}
+
+function getOfficialCareerPanelFailures(snapshot = {}, expectations = {}, mode = "official") {
+  const failures = [];
+
+  if (expectations.expectOutcome && !snapshot.outcomeIds?.length) {
+    failures.push(`${mode} official career panel did not render any outcome rows.`);
+  }
+
+  const missingTypes = getMissingOfficialCareerOutcomeTypes(snapshot.outcomeTypes, expectations.expectedTypes || []);
+  if (missingTypes.length) {
+    failures.push(`${mode} official career panel is missing outcome types: ${missingTypes.join(", ")}.`);
+  }
+
+  if (expectations.expectedPosting && !String(snapshot.currentPosting || "").includes(expectations.expectedPosting)) {
+    failures.push(`${mode} official career panel current posting did not include ${expectations.expectedPosting}.`);
+  }
+
+  if (expectations.expectedBureauId && !snapshot.bureauIds?.includes(expectations.expectedBureauId)) {
+    failures.push(`${mode} official career panel is missing bureau id: ${expectations.expectedBureauId}.`);
+  }
+  if (snapshot.bureauIds?.length && snapshot.bureauDutyCount < snapshot.bureauIds.length) {
+    failures.push(`${mode} official career panel has incomplete bureau duty fields.`);
+  }
+
+  if (expectations.expectAssignment && !snapshot.assignmentIds?.length) {
+    failures.push(`${mode} official career panel did not render any assignment rows.`);
+  }
+  if (snapshot.assignmentIds?.length && !snapshot.assignmentSummaryCount) {
+    failures.push(`${mode} official career panel did not render an assignment summary.`);
+  }
+  if (snapshot.assignmentIds?.length && snapshot.assignmentProgressCount < snapshot.assignmentIds.length) {
+    failures.push(`${mode} official career panel has incomplete assignment progress fields.`);
+  }
+  if (snapshot.assignmentIds?.length && snapshot.assignmentRiskCount < snapshot.assignmentIds.length) {
+    failures.push(`${mode} official career panel has incomplete assignment risk fields.`);
+  }
+
+  const missingAssignmentKinds = getMissingOfficialCareerAssignmentKinds(
+    snapshot.assignmentKinds,
+    expectations.expectedAssignmentKinds || []
+  );
+  if (missingAssignmentKinds.length) {
+    failures.push(`${mode} official career panel is missing assignment kinds: ${missingAssignmentKinds.join(", ")}.`);
+  }
+
+  const expectedAssignmentStatuses = expectations.expectedAssignmentStatuses || [];
+  if (expectedAssignmentStatuses.length && (expectations.expectedAssignmentKinds || []).length) {
+    const records = getOfficialCareerAssignmentRecords(snapshot);
+    (expectations.expectedAssignmentKinds || []).forEach((kind) => {
+      const matchingRecords = records.filter((record) => record.kind === kind);
+      if (matchingRecords.length && !matchingRecords.some((record) => expectedAssignmentStatuses.includes(record.status))) {
+        failures.push(`${mode} official career panel has no ${kind} assignment with allowed statuses: ${expectedAssignmentStatuses.join(", ")}.`);
+      }
+    });
+  } else {
+    const missingAssignmentStatuses = getMissingOfficialCareerAssignmentStatuses(
+      snapshot.assignmentStatuses,
+      expectedAssignmentStatuses
+    );
+    if (missingAssignmentStatuses.length) {
+      failures.push(`${mode} official career panel is missing assignment statuses: ${missingAssignmentStatuses.join(", ")}.`);
+    }
+  }
+
+  if (expectations.expectAssessment && !snapshot.assessments?.length) {
+    failures.push(`${mode} official career panel did not render an assessment block.`);
+  }
+  if (expectations.expectAssessment && !snapshot.assessmentViewReady?.includes("true")) {
+    failures.push(`${mode} official career panel did not render server assessment view data.`);
+  }
+  if (snapshot.assessments?.length && snapshot.assessmentNoteCount < snapshot.assessments.length) {
+    failures.push(`${mode} official career panel has incomplete assessment notes.`);
+  }
+
+  if (expectations.expectNetwork && !snapshot.networkCount) {
+    failures.push(`${mode} official career panel did not render a network block.`);
+  }
+  if (expectations.expectNetwork && !snapshot.networkViewReady?.includes("true")) {
+    failures.push(`${mode} official career panel did not render server network view data.`);
+  }
+
+  if (expectations.expectedImpeachmentStage) {
+    if (snapshot.panelImpeachmentStage !== expectations.expectedImpeachmentStage) {
+      failures.push(`${mode} official career panel data stage is not ${expectations.expectedImpeachmentStage}.`);
+    }
+    if (!snapshot.procedureStages?.includes(expectations.expectedImpeachmentStage)) {
+      failures.push(`${mode} official career panel is missing impeachment stage: ${expectations.expectedImpeachmentStage}.`);
+    }
+    if (!snapshot.procedureViewReady?.includes("true")) {
+      failures.push(`${mode} official career panel did not render server procedure view data.`);
+    }
+  }
+
+  const hiddenLeaks = getHiddenOfficialCareerTextLeaks(snapshot.text, expectations.hiddenTextTokens || []);
+  if (hiddenLeaks.length) {
+    failures.push(`${mode} official career panel leaked hidden text tokens: ${hiddenLeaks.join(", ")}.`);
+  }
+
+  if (
+    snapshot.outcomeIds?.length &&
+    (snapshot.reasonCount < snapshot.outcomeIds.length || snapshot.postingCount < snapshot.outcomeIds.length)
+  ) {
+    failures.push(`${mode} official career panel has incomplete outcome fields.`);
+  }
+
+  return failures;
+}
+
 function getMissingRoleWorldKinds(actualKinds = [], expectedKinds = []) {
   const available = new Set(actualKinds);
   return expectedKinds.filter((kind) => !available.has(kind));
@@ -753,14 +887,53 @@ async function assertActiveNpcRequestPanel(page, mode, expectations = {}) {
 }
 
 async function assertOfficialCareerPanel(page, mode, expectations = {}) {
-  await visibleBox(page, "#official-career-panel", `${mode} official career panel`);
+  await visibleBox(
+    page,
+    "#official-career-panel[data-current-posting][data-pending-review][data-impeachment-stage]",
+    `${mode} official career panel`
+  );
 
   const snapshot = await page.evaluate(() => {
     const panel = document.querySelector("#official-career-panel");
     const outcomes = [...document.querySelectorAll("#official-career-panel .official-career-outcome")];
+    const bureaus = [...document.querySelectorAll("#official-career-panel .official-career-bureau[data-bureau-id]")];
+    const assignments = [
+      ...document.querySelectorAll(
+        "#official-career-panel .official-career-assignment[data-assignment-id][data-assignment-kind][data-assignment-status][data-bureau-id]"
+      )
+    ];
+    const assessments = [
+      ...document.querySelectorAll("#official-career-panel .official-career-assessment[data-pending-recommendation]")
+    ];
+    const procedures = [
+      ...document.querySelectorAll("#official-career-panel .official-career-procedure[data-impeachment-stage]")
+    ];
     return {
       currentPosting: panel?.dataset.currentPosting || "",
       pendingReview: panel?.dataset.pendingReview || "",
+      panelImpeachmentStage: panel?.dataset.impeachmentStage || "",
+      bureauIds: bureaus.map((bureau) => bureau.dataset.bureauId),
+      bureauDutyCount: document.querySelectorAll("#official-career-panel .official-career-bureau-duty").length,
+      assignmentSummaryCount: document.querySelectorAll("#official-career-panel .official-career-assignment-summary").length,
+      assignmentIds: assignments.map((assignment) => assignment.dataset.assignmentId),
+      assignmentKinds: assignments.map((assignment) => assignment.dataset.assignmentKind),
+      assignmentStatuses: assignments.map((assignment) => assignment.dataset.assignmentStatus),
+      assignmentBureauIds: assignments.map((assignment) => assignment.dataset.bureauId),
+      assignmentRecords: assignments.map((assignment) => ({
+        id: assignment.dataset.assignmentId,
+        kind: assignment.dataset.assignmentKind,
+        status: assignment.dataset.assignmentStatus,
+        bureauId: assignment.dataset.bureauId
+      })),
+      assignmentProgressCount: document.querySelectorAll("#official-career-panel .official-career-assignment-progress").length,
+      assignmentRiskCount: document.querySelectorAll("#official-career-panel .official-career-assignment-risk").length,
+      assessments: assessments.map((assessment) => assessment.dataset.pendingRecommendation),
+      assessmentViewReady: assessments.map((assessment) => assessment.dataset.viewReady),
+      assessmentNoteCount: document.querySelectorAll("#official-career-panel .official-career-assessment-note").length,
+      networkCount: document.querySelectorAll("#official-career-panel .official-career-network").length,
+      networkViewReady: [...document.querySelectorAll("#official-career-panel .official-career-network")].map((network) => network.dataset.viewReady),
+      procedureStages: procedures.map((procedure) => procedure.dataset.impeachmentStage),
+      procedureViewReady: procedures.map((procedure) => procedure.dataset.viewReady),
       outcomeIds: outcomes.map((outcome) => outcome.dataset.outcomeId),
       outcomeTypes: outcomes.map((outcome) => outcome.dataset.outcomeType),
       outcomeStatuses: outcomes.map((outcome) => outcome.dataset.outcomeStatus),
@@ -772,21 +945,9 @@ async function assertOfficialCareerPanel(page, mode, expectations = {}) {
     };
   });
 
-  if (expectations.expectOutcome && !snapshot.outcomeIds.length) {
-    failUiAcceptance(`${mode} official career panel did not render any outcome rows.`);
-  }
-
-  const missingTypes = getMissingOfficialCareerOutcomeTypes(snapshot.outcomeTypes, expectations.expectedTypes || []);
-  if (missingTypes.length) {
-    failUiAcceptance(`${mode} official career panel is missing outcome types: ${missingTypes.join(", ")}.`);
-  }
-
-  if (expectations.expectedPosting && !snapshot.currentPosting.includes(expectations.expectedPosting)) {
-    failUiAcceptance(`${mode} official career panel current posting did not include ${expectations.expectedPosting}.`);
-  }
-
-  if (snapshot.outcomeIds.length && (snapshot.reasonCount < snapshot.outcomeIds.length || snapshot.postingCount < snapshot.outcomeIds.length)) {
-    failUiAcceptance(`${mode} official career panel has incomplete outcome fields.`);
+  const failures = getOfficialCareerPanelFailures(snapshot, expectations, mode);
+  if (failures.length) {
+    failUiAcceptance(failures.join(" "));
   }
 
   const layoutFailures = getGameLayoutFailures(await readGameLayoutMetrics(page), `${mode} official career`);
@@ -1267,7 +1428,11 @@ async function runExamLevelAcceptance(page, sessionId, recorder, expectations) {
     });
   } else {
     await assertOfficialCareerPanel(page, "post-palace official", {
-      expectedPosting: worldState.player.officeTitle
+      expectedPosting: worldState.player.officeTitle,
+      expectedBureauId: worldState.officialCareer?.bureauId,
+      expectAssessment: true,
+      expectNetwork: true,
+      expectedImpeachmentStage: worldState.officialCareer?.impeachmentProcedure?.stage || "none"
     });
   }
   await assertExamRivalPanel(page, `desktop after ${expectations.level}`, {
@@ -1293,7 +1458,11 @@ async function runRemainingExamProgressionAcceptance(page, sessionId, recorder) 
     failUiAcceptance("complete exam progression did not finish as an official with four exam records.");
   }
   await assertOfficialCareerPanel(page, "complete exam progression official", {
-    expectedPosting: finalState.player.officeTitle
+    expectedPosting: finalState.player.officeTitle,
+    expectedBureauId: finalState.officialCareer?.bureauId,
+    expectAssessment: true,
+    expectNetwork: true,
+    expectedImpeachmentStage: finalState.officialCareer?.impeachmentProcedure?.stage || "none"
   });
   await assertRelationshipPanel(page, "complete exam progression official", {
     expectedIds: ["C01", "scholarOfficials"],
@@ -1305,7 +1474,9 @@ async function runRemainingExamProgressionAcceptance(page, sessionId, recorder) 
     finalRank: finalState.player.examRank,
     finalRole: finalState.player.role,
     levels: finalState.player.examHistory.map((entry) => entry.level),
-    officeTitle: finalState.player.officeTitle
+    officeTitle: finalState.player.officeTitle,
+    bureauId: finalState.officialCareer?.bureauId,
+    impeachmentStage: finalState.officialCareer?.impeachmentProcedure?.stage || "none"
   };
 }
 
@@ -1349,7 +1520,11 @@ async function runFinalMobileOfficialAcceptance(page, recorder, expectations = {
   await page.waitForTimeout(100);
   await assertGameLayout(page, "mobile post-palace official");
   await assertOfficialCareerPanel(page, "mobile post-palace official", {
-    expectedPosting: expectations.expectedPosting
+    expectedPosting: expectations.expectedPosting,
+    expectedBureauId: expectations.expectedBureauId,
+    expectAssessment: true,
+    expectNetwork: true,
+    expectedImpeachmentStage: expectations.expectedImpeachmentStage || "none"
   });
   await assertRelationshipPanel(page, "mobile post-palace official", {
     expectedIds: ["C01", "scholarOfficials"],
@@ -1412,7 +1587,11 @@ async function runOfficialStartAcceptance(browser, { baseUrl, onSessionId, pageE
       throw new Error("Official start did not render the official role panel.");
     }
     await assertOfficialCareerPanel(page, "official start", {
-      expectedPosting: "候选观政"
+      expectedPosting: "候选观政",
+      expectedBureauId: "ministry_personnel",
+      expectAssessment: true,
+      expectNetwork: true,
+      expectedImpeachmentStage: "none"
     });
     await assertRelationshipPanel(page, "official start", {
       expectedIds: ["C01", "eunuchs", "scholarOfficials", "militaryLords"],
@@ -1443,7 +1622,11 @@ async function runOfficialStartAcceptance(browser, { baseUrl, onSessionId, pageE
     const careerSnapshot = await assertOfficialCareerPanel(page, "official outcome", {
       expectOutcome: true,
       expectedTypes: ["appointment"],
-      expectedPosting: "六部观政进士"
+      expectedPosting: "六部观政进士",
+      expectedBureauId: "ministry_personnel",
+      expectAssessment: true,
+      expectNetwork: true,
+      expectedImpeachmentStage: "none"
     });
     if (!careerSnapshot.outcomeStatuses.includes("current")) {
       throw new Error("Official career panel did not mark the latest outcome as current.");
@@ -1451,6 +1634,28 @@ async function runOfficialStartAcceptance(browser, { baseUrl, onSessionId, pageE
     if (recorder) {
       await recorder.capture(page, "official-career-outcome");
     }
+
+    await page.locator("#action-input").fill("督办赈灾与赈银核销");
+    await page.locator("#action-btn").click();
+    await page.waitForFunction(() => {
+      const button = document.querySelector("#action-btn");
+      return button && !button.disabled;
+    }, null, { timeout: 15000 });
+    await page.waitForFunction(
+      () => document.body.innerText.includes("[官场差遣]"),
+      null,
+      { timeout: 10000 }
+    );
+    await assertOfficialCareerPanel(page, "official assignment", {
+      expectedBureauId: "ministry_personnel",
+      expectAssignment: true,
+      expectedAssignmentKinds: ["relief"],
+      expectedAssignmentStatuses: ["active", "submitted"],
+      expectAssessment: true,
+      expectNetwork: true,
+      expectedImpeachmentStage: "none",
+      hiddenTextTokens: ["hiddenNotes", "有人暗中遮掩亏空", "密札指向上官"]
+    });
 
     return {
       sessionId: officialSessionId,
@@ -1788,7 +1993,9 @@ async function runBrowserJourney({
 
     const examProgression = await runRemainingExamProgressionAcceptance(page, sessionId, recorder);
     await runFinalMobileOfficialAcceptance(page, recorder, {
-      expectedPosting: examProgression.officeTitle
+      expectedPosting: examProgression.officeTitle,
+      expectedBureauId: examProgression.bureauId,
+      expectedImpeachmentStage: examProgression.impeachmentStage
     });
 
     const stateResponse = await fetch(`${baseUrl}/api/game/state/${sessionId}`);
@@ -1943,10 +2150,14 @@ module.exports = {
   getDefaultBrowserCandidates,
   getGameLayoutFailures,
   getHiddenActiveRequestLeaks,
+  getHiddenOfficialCareerTextLeaks,
   getHiddenSaveIdLeaks,
   getMissingExamLevels,
   getHiddenRelationshipLeaks,
+  getMissingOfficialCareerAssignmentKinds,
+  getMissingOfficialCareerAssignmentStatuses,
   getMissingOfficialCareerOutcomeTypes,
+  getOfficialCareerPanelFailures,
   getMissingRoleWorldKinds,
   getMissingActiveRequestTargets,
   getMissingRelationshipEntries,

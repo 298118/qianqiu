@@ -209,6 +209,31 @@ const OFFICIAL_OUTCOME_LABELS = {
   retention: "留任"
 };
 
+const OFFICIAL_ASSIGNMENT_STATUS_LABELS = {
+  active: "办理",
+  submitted: "呈报",
+  resolved: "已结",
+  expired: "逾期",
+  failed: "失办"
+};
+
+const OFFICIAL_PROCEDURE_STAGE_LABELS = {
+  none: "未起",
+  risk_watch: "风闻",
+  memorial_filed: "弹章",
+  audit_open: "查核",
+  discipline_pending: "候议",
+  resolved: "已结"
+};
+
+const OFFICIAL_RECOMMENDATION_LABELS = {
+  court_nomination: "廷推候议",
+  transfer: "迁转呈议",
+  outpost: "外放呈议",
+  mourning_leave: "丁忧具报",
+  restoration: "起复候议"
+};
+
 function getExamProgress(player) {
   if (player.role === "official") {
     return { index: EXAM_PROGRESS.length - 1, label: "入仕", next: null };
@@ -576,6 +601,12 @@ function getOfficialCareerView(worldState, officialCareerView) {
     nextReviewInMonths: null,
     careerScore: 0,
     riskScore: 0,
+    bureau: null,
+    assignmentSummary: null,
+    assignments: [],
+    assessment: null,
+    networkSummary: null,
+    procedureSummary: null,
     pendingReview: false,
     lastOutcome: history.at(-1) || null,
     recentOutcomes: history
@@ -883,6 +914,216 @@ function createOfficialCareerOutcome(outcome, isCurrent = false) {
   return card;
 }
 
+function renderOfficialSection(className, titleText, summaryText) {
+  const section = document.createElement("section");
+  section.className = ["official-career-section", className].filter(Boolean).join(" ");
+  const header = document.createElement("header");
+  const title = document.createElement("strong");
+  title.textContent = titleText;
+  const summary = document.createElement("span");
+  summary.textContent = summaryText || "";
+  header.append(title, summary);
+  section.appendChild(header);
+  return section;
+}
+
+function renderOfficialBureauSection(officialCareerView) {
+  const bureau = officialCareerView.bureau || {};
+  const section = renderOfficialSection(
+    "official-career-bureau",
+    "官署",
+    bureau.name || "候选"
+  );
+  section.dataset.bureauId = bureau.id || "";
+  section.dataset.officeTitle = bureau.officeTitle || officialCareerView.currentPosting || "";
+
+  const body = document.createElement("div");
+  body.className = "official-career-section-grid";
+  body.append(
+    createPanelValue("职名", bureau.officeTitle || officialCareerView.currentPosting || "未授", "p"),
+    createPanelValue("衙门", bureau.name || "未明", "p"),
+    createPanelValue("职责", (bureau.duties || []).join("、") || "候部观政", "p")
+  );
+
+  const duties = document.createElement("div");
+  duties.className = "official-career-duty-list";
+  (bureau.duties || []).slice(0, 4).forEach((duty) => {
+    const tag = document.createElement("span");
+    tag.className = "official-career-bureau-duty";
+    tag.textContent = duty;
+    duties.appendChild(tag);
+  });
+
+  if (bureau.summary) {
+    const summary = document.createElement("p");
+    summary.className = "official-career-bureau-summary";
+    summary.textContent = bureau.summary;
+    section.append(body, duties, summary);
+  } else {
+    section.append(body, duties);
+  }
+  return section;
+}
+
+function renderOfficialAssignmentCard(assignment) {
+  const card = document.createElement("article");
+  card.className = "official-career-assignment";
+  card.dataset.assignmentId = assignment.id || "";
+  card.dataset.assignmentKind = assignment.kind || "";
+  card.dataset.assignmentStatus = assignment.status || "";
+  card.dataset.bureauId = assignment.bureauId || "";
+
+  const header = document.createElement("header");
+  const title = document.createElement("strong");
+  title.textContent = assignment.title || "署中差遣";
+  const status = document.createElement("span");
+  status.textContent = OFFICIAL_ASSIGNMENT_STATUS_LABELS[assignment.status] || assignment.status || "办理";
+  header.append(title, status);
+
+  const progress = createActiveRequestMeta("进度", `${assignment.progress ?? 0}`, "official-career-assignment-progress");
+  const risk = createActiveRequestMeta("风险", `${assignment.risk ?? 0}`, "official-career-assignment-risk");
+  const due = createActiveRequestMeta("期限", assignment.dueTurn ? `第${assignment.dueTurn}回` : "未定", "official-career-assignment-due");
+  const summary = createActiveRequestMeta("案语", assignment.visibleSummary || "尚在办理。", "official-career-assignment-summary-text");
+
+  card.append(header, progress, risk, due, summary);
+  return card;
+}
+
+function renderOfficialAssignmentsSection(officialCareerView) {
+  const assignments = Array.isArray(officialCareerView.assignments) ? officialCareerView.assignments : [];
+  const assignmentSummary = officialCareerView.assignmentSummary || {};
+  const section = renderOfficialSection(
+    "official-career-assignments",
+    "差事",
+    `${assignmentSummary.activeCount ?? assignments.length}件在办`
+  );
+
+  const summary = document.createElement("div");
+  summary.className = "official-career-assignment-summary";
+  summary.append(
+    createPanelValue("在办", assignmentSummary.activeCount ?? assignments.length, "p"),
+    createPanelValue("急件", assignmentSummary.urgentCount ?? 0, "p"),
+    createPanelValue("近案", assignmentSummary.latestTitle || "暂无", "p")
+  );
+  section.appendChild(summary);
+
+  if (!assignments.length) {
+    const empty = document.createElement("p");
+    empty.className = "official-career-empty";
+    empty.textContent = "暂无差遣入案，可从赈务、清丈、案牍、科场或奏疏等行动起手。";
+    section.appendChild(empty);
+    return section;
+  }
+
+  const grid = document.createElement("div");
+  grid.className = "official-career-assignment-grid";
+  assignments.slice(0, 3).forEach((assignment) => {
+    grid.appendChild(renderOfficialAssignmentCard(assignment));
+  });
+  section.appendChild(grid);
+  return section;
+}
+
+function renderOfficialAssessmentSection(officialCareerView) {
+  const hasAssessmentView = officialCareerView.assessment && typeof officialCareerView.assessment === "object";
+  const assessment = hasAssessmentView ? officialCareerView.assessment : {};
+  const section = renderOfficialSection(
+    "official-career-assessment",
+    "考成",
+    assessment.pendingRecommendation ? OFFICIAL_RECOMMENDATION_LABELS[assessment.pendingRecommendation] || assessment.pendingRecommendation : "卷宗在部"
+  );
+  section.dataset.viewReady = hasAssessmentView ? "true" : "false";
+  section.dataset.pendingRecommendation = assessment.pendingRecommendation || "";
+  section.dataset.meritScore = hasAssessmentView && assessment.meritScore !== undefined ? `${assessment.meritScore}` : "";
+  section.dataset.riskScore = hasAssessmentView && assessment.riskScore !== undefined ? `${assessment.riskScore}` : "";
+
+  const grid = document.createElement("div");
+  grid.className = "official-career-section-grid";
+  grid.append(
+    createPanelValue("功绩", assessment.meritScore ?? officialCareerView.careerScore ?? "-", "p"),
+    createPanelValue("瑕议", assessment.riskScore ?? officialCareerView.riskScore ?? "-", "p"),
+    createPanelValue("考期", assessment.nextReviewInMonths === null || assessment.nextReviewInMonths === undefined ? "未定" : `${assessment.nextReviewInMonths}月`, "p")
+  );
+  section.appendChild(grid);
+
+  const notes = Array.isArray(assessment.notes) ? assessment.notes.slice(0, 3) : [];
+  const list = document.createElement("div");
+  list.className = "official-career-assessment-notes";
+  (notes.length ? notes : ["尚无考成札记。"]).forEach((note) => {
+    const item = document.createElement("p");
+    item.className = "official-career-assessment-note";
+    item.textContent = note;
+    list.appendChild(item);
+  });
+  section.appendChild(list);
+  return section;
+}
+
+function renderOfficialNetworkRiskSection(officialCareerView) {
+  const hasNetworkView = officialCareerView.networkSummary && typeof officialCareerView.networkSummary === "object";
+  const hasProcedureView = officialCareerView.procedureSummary && typeof officialCareerView.procedureSummary === "object";
+  const network = hasNetworkView ? officialCareerView.networkSummary : {};
+  const procedure = hasProcedureView ? officialCareerView.procedureSummary : {};
+  const stage = procedure.impeachmentStage || "none";
+  const section = renderOfficialSection(
+    "official-career-risk",
+    "关系与风险",
+    OFFICIAL_PROCEDURE_STAGE_LABELS[stage] || stage
+  );
+
+  const grid = document.createElement("div");
+  grid.className = "official-career-risk-grid";
+
+  const networkCard = document.createElement("article");
+  networkCard.className = "official-career-network";
+  networkCard.dataset.viewReady = hasNetworkView ? "true" : "false";
+  networkCard.dataset.hiddenNotice = network.hiddenNotice ? "true" : "false";
+  networkCard.append(
+    createPanelValue("上官", network.superiors ?? 0, "p"),
+    createPanelValue("同年", network.sameYears ?? 0, "p"),
+    createPanelValue("政敌", network.rivals ?? 0, "p"),
+    createPanelValue("言官", network.censors ?? 0, "p")
+  );
+  if (network.hiddenNotice) {
+    const hidden = document.createElement("p");
+    hidden.className = "official-career-network-notice";
+    hidden.textContent = "另有未明风声";
+    networkCard.appendChild(hidden);
+  }
+
+  const procedureCard = document.createElement("article");
+  procedureCard.className = "official-career-procedure";
+  procedureCard.dataset.viewReady = hasProcedureView ? "true" : "false";
+  procedureCard.dataset.impeachmentStage = stage;
+  procedureCard.append(
+    createPanelValue("弹劾", OFFICIAL_PROCEDURE_STAGE_LABELS[stage] || stage, "p"),
+    createPanelValue("风险", procedure.risk ?? 0, "p"),
+    createPanelValue("期限", procedure.dueTurn ? `第${procedure.dueTurn}回` : "未定", "p")
+  );
+  const notice = document.createElement("p");
+  notice.className = "official-career-procedure-notice";
+  notice.textContent = procedure.visibleNotice || "尚无公开弹章。";
+  procedureCard.appendChild(notice);
+
+  grid.append(networkCard, procedureCard);
+  section.appendChild(grid);
+  return section;
+}
+
+function renderOfficialArchiveSection(officialCareerView, current) {
+  const section = renderOfficialSection("official-career-archive", "履历档案", "近五条");
+  section.appendChild(current);
+
+  const history = document.createElement("div");
+  history.className = "official-career-history";
+  (officialCareerView.recentOutcomes || [])
+    .slice(0, -1)
+    .reverse()
+    .forEach((outcome) => history.appendChild(createOfficialCareerOutcome(outcome)));
+  if (history.childElementCount) section.appendChild(history);
+  return section;
+}
+
 function renderOfficialCareerPanel(officialCareerView = currentOfficialCareerView) {
   if (!officialCareerView?.active) return null;
 
@@ -891,10 +1132,11 @@ function renderOfficialCareerPanel(officialCareerView = currentOfficialCareerVie
   panel.className = "official-career-panel";
   panel.dataset.currentPosting = officialCareerView.currentPosting || "";
   panel.dataset.pendingReview = officialCareerView.pendingReview ? "true" : "false";
+  panel.dataset.impeachmentStage = officialCareerView.procedureSummary?.impeachmentStage || "none";
 
   const header = document.createElement("header");
   const title = document.createElement("strong");
-  title.textContent = "官场履历";
+  title.textContent = "官场档案";
   const summary = document.createElement("span");
   summary.textContent = `${officialCareerView.currentPosting || "候选观政"} · 任内${officialCareerView.tenureMonths ?? 0}月`;
   header.append(title, summary);
@@ -917,15 +1159,15 @@ function renderOfficialCareerPanel(officialCareerView = currentOfficialCareerVie
       return empty;
     })();
 
-  const history = document.createElement("div");
-  history.className = "official-career-history";
-  (officialCareerView.recentOutcomes || [])
-    .slice(0, -1)
-    .reverse()
-    .forEach((outcome) => history.appendChild(createOfficialCareerOutcome(outcome)));
-
-  panel.append(header, meta, current);
-  if (history.childElementCount) panel.appendChild(history);
+  panel.append(
+    header,
+    meta,
+    renderOfficialBureauSection(officialCareerView),
+    renderOfficialAssignmentsSection(officialCareerView),
+    renderOfficialAssessmentSection(officialCareerView),
+    renderOfficialNetworkRiskSection(officialCareerView),
+    renderOfficialArchiveSection(officialCareerView, current)
+  );
   return panel;
 }
 

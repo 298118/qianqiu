@@ -376,7 +376,9 @@ The script uses `playwright-core` with an installed Chrome or Edge executable. I
 
 S26.2 extends the same journey with DOM and screenshot-level UI acceptance. It asserts desktop and mobile layout boundaries for the status strip, role panel, narrative, and action input surface; opens the exam modal through the scholar panel; submits Mock-mode essays; checks the result detail sections, ranking, candidate essay profiles, and historical exam archive; and captures PNG screenshots for each representative state. S32.2 additionally verifies the relationship panel: visible contact/faction rows, hidden-entry non-leakage, a Mock scholar relationship update, direct official-start faction visibility, and relationship-panel horizontal overflow. S32.3 verifies the active-request panel from `activeNpcRequestView`, including target ids/types, required fields, hidden target/text non-leakage, and active-request horizontal overflow on desktop, restored, fresh-page, and mobile journeys. S35 verifies the exam calendar and rival panels, calendar details inside the writing modal and archive, persistent rival notes on candidate profiles, and horizontal overflow for the new panels. S36 adds direct-start representative journeys for magistrate, general, emperor, and minister actions, checking `.role-world-event[data-role-world-kind]` feedback plus API state metric deltas. S38.1 expands the browser journey to complete 童试 -> 乡试 -> 会试 -> 殿试 -> 入仕 through the real modal/result UI, checks the final mobile archive, and runs an isolated copied-classic cheating sample that must show severe punishment without promotion. S38.3 verifies the browser save-list UI from `GET /api/game/saves`: the in-game save modal lists and redacts the current save, a clean start page can load that save, and save-list panel/modal overflow is checked. S39 adds failed-SSE rollback coverage by mocking a browser stream that emits `narrative_chunk` followed by `error` and asserting the uncommitted chunk is removed. Screenshots are validated in memory by default and can be saved with `--screenshots <dir>`. Browser smoke stays separate from `npm test` so normal automated tests do not require a local GUI browser.
 
-`docs/BROWSER_ACCEPTANCE.md` is the durable browser acceptance record. It lists the automated coverage, the latest verified S38.3 result, screenshot artifact policy, and the manual fallback areas that remain intentionally human-checked.
+S42.3 expands official-career browser acceptance to cover 官署/差事/考成/关系/风险 sections, a Mock `relief` assignment, hidden-note non-leakage tokens, and desktop/mobile official panel overflow.
+
+`docs/BROWSER_ACCEPTANCE.md` is the durable browser acceptance record. It lists the automated coverage, the latest verified browser result, screenshot artifact policy, and the manual fallback areas that remain intentionally human-checked.
 
 ## State Model
 
@@ -499,7 +501,7 @@ S34 official outcomes:
 - Result types: `appointment`, `transfer`, `promotion`, `outpost`, `demotion`, `impeachment`, `punishment`, and `retention`.
 - Authority: providers may affect the input meters but cannot patch `officialCareer`, `officeTitle`, `role`, `roleLabel`, `examRank`, `palaceRank`, or `examHistory` in ordinary turns. S42.2 also ignores ordinary official `player.position` patches that look like a real office appointment, while still allowing soft posture/location text.
 
-The browser renders this as `#official-career-panel` inside the role panel for official players, with stable `data-outcome-*` attributes for browser acceptance. Turn feedback appears as `[官场结算]` narrative lines.
+The browser renders this as `#official-career-panel` inside the role panel for official players. S42.3 expands the panel into 官署、差事、考成、关系与风险、履历档案 sections backed by `officialCareerView`, with stable `data-current-posting`, `data-impeachment-stage`, `data-bureau-id`, `data-assignment-*`, `data-pending-recommendation`, and `data-outcome-*` attributes for browser acceptance. Turn feedback appears as `[官场结算]` and `[官场差遣]` narrative lines.
 
 S42.1 fixed the future boundary for S42.2/S42.3, and S42.2 now enforces the first runtime part of that boundary:
 
@@ -507,7 +509,7 @@ S42.1 fixed the future boundary for S42.2/S42.3, and S42.2 now enforces the firs
 - `player.position` is only a soft player posture or narrative location and must not be treated as an appointment when `officeTitle` is absent or protected.
 - `worldState.officialCareer.currentPosting` is the normalized server-owned career location used by views.
 - Assignments, assessment dossiers, impeachment procedures, and hidden patronage notes belong under server-normalized official-career state or relationship-ledger summaries, with player-facing data exposed only through server-built views.
-- `officialCareerView` now includes server-built `bureau`, `assignmentSummary`, visible `assignments`, `assessment`, `networkSummary`, and `procedureSummary`; S42.3 will expand the browser UI to present 官署、差事、履历、关系、风险 from that view, never from raw hidden notes or provider prose.
+- `officialCareerView` now includes server-built `bureau`, `assignmentSummary`, visible `assignments`, `assessment`, `networkSummary`, and `procedureSummary`; S42.3 presents 官署、差事、履历、关系、风险 from that view, never from raw hidden notes or provider prose.
 
 ## General Role Loop
 

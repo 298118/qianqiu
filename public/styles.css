@@ -560,7 +560,9 @@ button:disabled {
 }
 
 .official-career-panel > header,
-.official-career-outcome header {
+.official-career-section > header,
+.official-career-outcome header,
+.official-career-assignment header {
   display: flex;
   align-items: baseline;
   justify-content: space-between;
@@ -568,20 +570,27 @@ button:disabled {
   min-width: 0;
 }
 
-.official-career-panel > header strong {
+.official-career-panel > header strong,
+.official-career-section > header strong {
   color: var(--cinnabar-deep);
   font-size: 0.98rem;
 }
 
 .official-career-panel > header span,
+.official-career-section > header span,
+.official-career-assignment header span,
 .official-career-outcome header span,
 .official-career-empty {
   color: var(--muted);
   font-size: 0.8rem;
+  overflow-wrap: anywhere;
 }
 
 .official-career-meta,
-.official-career-history {
+.official-career-history,
+.official-career-section-grid,
+.official-career-assignment-summary,
+.official-career-risk-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
   gap: 8px;
@@ -589,7 +598,11 @@ button:disabled {
 }
 
 .official-career-meta > div,
-.official-career-outcome {
+.official-career-section,
+.official-career-outcome,
+.official-career-assignment,
+.official-career-network,
+.official-career-procedure {
   min-width: 0;
   padding: 8px 9px;
   border: 1px solid rgba(54, 39, 27, 0.16);
@@ -597,9 +610,105 @@ button:disabled {
   background: rgba(255, 250, 239, 0.5);
 }
 
-.official-career-outcome {
+.official-career-section,
+.official-career-outcome,
+.official-career-assignment,
+.official-career-network,
+.official-career-procedure {
   display: grid;
   gap: 4px;
+}
+
+.official-career-section {
+  gap: 7px;
+  background: rgba(255, 250, 239, 0.38);
+}
+
+.official-career-section-grid > div,
+.official-career-assignment-summary > div,
+.official-career-network > div,
+.official-career-procedure > div {
+  min-width: 0;
+}
+
+.official-career-duty-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  min-width: 0;
+}
+
+.official-career-bureau-duty {
+  display: inline-flex;
+  min-width: 0;
+  padding: 2px 7px;
+  border: 1px solid rgba(47, 111, 94, 0.22);
+  border-radius: 999px;
+  color: var(--jade);
+  background: rgba(47, 111, 94, 0.08);
+  font-size: 0.74rem;
+  font-weight: 700;
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+}
+
+.official-career-bureau-summary,
+.official-career-procedure-notice,
+.official-career-network-notice,
+.official-career-assessment-note {
+  margin: 0;
+  color: var(--ink);
+  font-size: 0.78rem;
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+}
+
+.official-career-assignment-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  gap: 8px;
+  min-width: 0;
+}
+
+.official-career-assignment {
+  background: rgba(255, 247, 232, 0.72);
+}
+
+.official-career-assignment header strong {
+  overflow-wrap: anywhere;
+}
+
+.official-career-assignment p,
+.official-career-network p,
+.official-career-procedure p {
+  margin: 0;
+  color: var(--ink);
+  font-size: 0.76rem;
+  line-height: 1.36;
+  overflow-wrap: anywhere;
+}
+
+.official-career-assignment-risk,
+.official-career-procedure {
+  color: var(--cinnabar-deep);
+}
+
+.official-career-assessment-notes {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+
+.official-career-network,
+.official-career-procedure {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 4px 10px;
+}
+
+.official-career-network-notice,
+.official-career-procedure-notice {
+  grid-column: 1 / -1;
+  color: var(--muted);
 }
 
 .official-career-current {

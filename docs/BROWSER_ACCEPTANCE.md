@@ -28,7 +28,7 @@ The smoke uses `playwright-core` with an installed Chrome or Edge executable. If
 | Desktop layout | Checks status strip, role panel, narrative area, and action input surface for visibility, overlap, horizontal overflow, game-panel width/share, and role-panel clipping. |
 | Relationship panel | Checks visible contact/faction rows from `relationshipView`, field completeness, hidden id/text non-leakage, relationship-panel overflow, and a Mock scholar turn updating the mentor relationship. |
 | Active request panel | Checks the server-scheduled `activeNpcRequestView` panel, target id/type/kind/status attributes, required ask/stakes/due/hint fields, hidden target/text non-leakage, and active-request overflow. |
-| Official career panel | Checks direct official start, the server-owned `officialCareerView` panel, deterministic first appointment, current outcome fields, stable `data-outcome-*` attributes, and official-career overflow. |
+| Official career panel | Checks direct official start, the server-owned `officialCareerView` panel, 官署/差事/考成/关系/风险 sections, deterministic first appointment, a Mock `relief` assignment, hidden-note non-leakage tokens, current outcome fields, stable `data-*` attributes, and official-career overflow on desktop/mobile. |
 | Exam calendar panel | Checks the server-owned `examCalendarView` panel, next-level/status attributes, timing/funding/recommendation/quota details, and calendar-panel overflow. |
 | Exam rival panel | Checks persistent `examRivalView` cards after an exam, stable rival/status/level attributes, latest-result rows, and rival-panel overflow. |
 | Role/world coupling | Opens direct magistrate, general, emperor, and minister sessions; runs one representative role action; checks `.role-world-event[data-role-world-kind]` feedback; and verifies the expected API state metric moves in the intended direction. |
@@ -45,14 +45,14 @@ The smoke uses `playwright-core` with an installed Chrome or Edge executable. If
 
 Date: 2026-05-06
 
-Relevant implementation commit: b344217
+Relevant implementation commit: 本次 S42.3 提交
 
-Commands verified during S39.1:
+Commands verified during S42.3:
 
 ```powershell
 node --check scripts\browserSmoke.js
 node --check public\app.js
-node --test test\streamingTurnRoute.test.js
+node --test test\browserSmokeScript.test.js
 npm test
 npm run smoke:browser
 git diff --check
@@ -60,9 +60,9 @@ git diff --check
 
 Observed result:
 
-- Focused streaming route coverage passed, including the visible-stream-error/no-save route case.
-- `npm run smoke:browser`: passed with save-list modal/start-page load coverage, failed SSE rollback coverage, relationship-panel coverage, active-request-panel coverage, complete four-level Mock exam progression, final scholar-to-official browser promotion, severe copied-classic cheating coverage, exam-calendar/rival-panel coverage, direct official-start first-appointment coverage, representative magistrate/general/emperor/minister role-world coupling coverage, and 14 screenshots checked.
-- `npm test`: full suite passed with 185 tests in the S39.1 verification run.
+- Focused browser-smoke helper coverage passed with 26 tests, including expanded official-career section checks, record-level assignment kind/status checks, server-view-ready checks, and hidden official-panel text token detection.
+- `npm run smoke:browser`: passed with save-list modal/start-page load coverage, failed SSE rollback coverage, relationship-panel coverage, active-request-panel coverage, complete four-level Mock exam progression, final scholar-to-official browser promotion, severe copied-classic cheating coverage, exam-calendar/rival-panel coverage, expanded official-career panel coverage including direct official start, first appointment, a `relief` assignment, assessment/network/procedure checks, hidden-token non-leakage, representative magistrate/general/emperor/minister role-world coupling coverage, and 14 screenshots checked.
+- `npm test`: full suite passed in the S42.3 verification run with 222 tests. One earlier full-suite rerun hit a transient Windows `EPERM rename` while replacing a session JSON file; the focused failing file and the subsequent full rerun passed.
 - The browser start path still clears stale `qianqiu.sessionId` localStorage only when an old restored game hides the initial start form. Later reload/fresh-page restoration checks continue to validate the newly created session.
 - Desktop smoke still fails if the game panel regresses to the old narrow-column width, if the role panel, relationship panel, active-request panel, official-career panel, exam-calendar panel, exam-rival panel, or save-list surfaces are horizontally clipped, if S35 calendar/rival details disappear from the modal/archive/candidate profiles, if any supported start role is missing from the browser form, if hidden scholar-invisible factions leak into relationship/active-request panel text, if save-list rows leak raw storage tokens, if the four-exam path stops before official promotion, if copied-passage punishment disappears, or if S36 role-world feedback/API metric deltas disappear from representative role journeys.
 

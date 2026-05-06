@@ -8,11 +8,15 @@ const {
   getDefaultBrowserCandidates,
   getGameLayoutFailures,
   getHiddenActiveRequestLeaks,
+  getHiddenOfficialCareerTextLeaks,
   getHiddenSaveIdLeaks,
   getMissingExamLevels,
   getHiddenRelationshipLeaks,
   getMissingActiveRequestTargets,
+  getMissingOfficialCareerAssignmentKinds,
+  getMissingOfficialCareerAssignmentStatuses,
   getMissingOfficialCareerOutcomeTypes,
+  getOfficialCareerPanelFailures,
   getMissingRoleWorldKinds,
   getMissingRelationshipEntries,
   getMissingSaveIds,
@@ -247,6 +251,122 @@ test("browser smoke official career helpers catch missing outcome types", () => 
     getMissingOfficialCareerOutcomeTypes(["appointment"], ["appointment", "promotion"]),
     ["promotion"]
   );
+});
+
+test("browser smoke official career helpers catch missing assignment kind and allowed status", () => {
+  assert.deepEqual(getMissingOfficialCareerAssignmentKinds(["relief"], ["relief"]), []);
+  assert.deepEqual(getMissingOfficialCareerAssignmentKinds(["case_review"], ["relief"]), ["relief"]);
+  assert.deepEqual(getMissingOfficialCareerAssignmentStatuses(["active"], ["active", "submitted"]), []);
+  assert.deepEqual(getMissingOfficialCareerAssignmentStatuses(["closed"], ["active", "submitted"]), [
+    "active",
+    "submitted"
+  ]);
+
+  const failures = getOfficialCareerPanelFailures(
+    {
+      currentPosting: "六部观政进士",
+      panelImpeachmentStage: "none",
+      bureauIds: ["ministry_personnel"],
+      bureauDutyCount: 1,
+      assignmentIds: ["assignment-1", "assignment-2"],
+      assignmentKinds: ["relief", "case_review"],
+      assignmentStatuses: ["failed", "active"],
+      assignmentRecords: [
+        { id: "assignment-1", kind: "relief", status: "failed", bureauId: "ministry_revenue" },
+        { id: "assignment-2", kind: "case_review", status: "active", bureauId: "ministry_justice" }
+      ],
+      assignmentSummaryCount: 1,
+      assignmentProgressCount: 2,
+      assignmentRiskCount: 2,
+      assessments: ["考成待议"],
+      assessmentNoteCount: 1,
+      networkCount: 1,
+      procedureStages: ["none"],
+      outcomeIds: [],
+      outcomeTypes: [],
+      reasonCount: 0,
+      postingCount: 0,
+      text: "官场履历"
+    },
+    {
+      expectedAssignmentKinds: ["relief"],
+      expectedAssignmentStatuses: ["active", "submitted"]
+    },
+    "official fixture"
+  );
+
+  assert.doesNotMatch(failures.join("\n"), /missing assignment kinds: relief/);
+  assert.match(failures.join("\n"), /no relief assignment with allowed statuses: active, submitted/);
+});
+
+test("browser smoke official career helpers require server-built view sections", () => {
+  const failures = getOfficialCareerPanelFailures(
+    {
+      currentPosting: "六部观政进士",
+      panelImpeachmentStage: "none",
+      bureauIds: ["ministry_personnel"],
+      bureauDutyCount: 1,
+      assignmentIds: [],
+      assignmentKinds: [],
+      assignmentStatuses: [],
+      assessments: [""],
+      assessmentViewReady: ["false"],
+      assessmentNoteCount: 1,
+      networkCount: 1,
+      networkViewReady: ["false"],
+      procedureStages: ["none"],
+      procedureViewReady: ["false"],
+      outcomeIds: [],
+      outcomeTypes: [],
+      reasonCount: 0,
+      postingCount: 0,
+      text: "官场档案"
+    },
+    {
+      expectAssessment: true,
+      expectNetwork: true,
+      expectedImpeachmentStage: "none"
+    },
+    "official fixture"
+  );
+
+  assert.match(failures.join("\n"), /did not render server assessment view data/);
+  assert.match(failures.join("\n"), /did not render server network view data/);
+  assert.match(failures.join("\n"), /did not render server procedure view data/);
+});
+
+test("browser smoke official career helpers catch hidden official panel text leaks", () => {
+  assert.deepEqual(
+    getHiddenOfficialCareerTextLeaks("考成公开记录。有人暗中遮掩亏空。", ["hiddenNotes", "有人暗中遮掩亏空"]),
+    ["有人暗中遮掩亏空"]
+  );
+
+  const failures = getOfficialCareerPanelFailures(
+    {
+      currentPosting: "六部观政进士",
+      panelImpeachmentStage: "none",
+      bureauIds: ["ministry_personnel"],
+      bureauDutyCount: 1,
+      assignmentIds: [],
+      assignmentKinds: [],
+      assignmentStatuses: [],
+      assessments: ["无"],
+      assessmentNoteCount: 1,
+      networkCount: 1,
+      procedureStages: ["none"],
+      outcomeIds: [],
+      outcomeTypes: [],
+      reasonCount: 0,
+      postingCount: 0,
+      text: "hiddenNotes 密札指向上官"
+    },
+    {
+      hiddenTextTokens: ["hiddenNotes", "有人暗中遮掩亏空", "密札指向上官"]
+    },
+    "official fixture"
+  );
+
+  assert.match(failures.join("\n"), /leaked hidden text tokens: hiddenNotes, 密札指向上官/);
 });
 
 test("browser smoke role-world helpers catch missing coupling kinds", () => {
