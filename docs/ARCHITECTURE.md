@@ -214,9 +214,12 @@ S26.1 adds `scripts/browserSmoke.js` as the focused browser acceptance entrypoin
 ```bash
 npm run smoke:browser
 npm run smoke:browser -- --url http://localhost:3000
+npm run smoke:browser -- --screenshots artifacts/browser-smoke
 ```
 
-The script uses `playwright-core` with an installed Chrome or Edge executable. It resolves `BROWSER_EXECUTABLE_PATH`, `--browser <path>`, or common platform install paths. Without `--url`, it starts `server.js` in Mock mode on a free local port, verifies the page loads, creates a scholar game through the real form, checks that `localStorage["qianqiu.sessionId"]` is written, reloads the page, opens a fresh page to confirm the saved session restores into the game view, verifies the session is readable through `GET /api/game/state/:sessionId`, and then removes the smoke session JSON file. It stays separate from `npm test` so normal automated tests do not require a local GUI browser.
+The script uses `playwright-core` with an installed Chrome or Edge executable. It resolves `BROWSER_EXECUTABLE_PATH`, `--browser <path>`, or common platform install paths. Without `--url`, it starts `server.js` in Mock mode on a free local port, verifies the page loads, creates a scholar game through the real form, checks that `localStorage["qianqiu.sessionId"]` is written, reloads the page, opens a fresh page to confirm the saved session restores into the game view, verifies the session is readable through `GET /api/game/state/:sessionId`, and then removes the smoke session JSON file.
+
+S26.2 extends the same journey with DOM and screenshot-level UI acceptance. It asserts desktop and mobile layout boundaries for the status strip, role panel, narrative, and action input surface; opens the exam modal through the scholar panel; submits a Mock-mode essay; checks the result detail sections, ranking, candidate essay profiles, and historical exam archive; and captures PNG screenshots for each representative state. Screenshots are validated in memory by default and can be saved with `--screenshots <dir>`. Browser smoke stays separate from `npm test` so normal automated tests do not require a local GUI browser.
 
 ## State Model
 

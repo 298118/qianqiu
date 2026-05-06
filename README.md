@@ -74,9 +74,10 @@ Run the local browser smoke acceptance:
 ```bash
 npm run smoke:browser
 npm run smoke:browser -- --url http://localhost:3000
+npm run smoke:browser -- --screenshots artifacts/browser-smoke
 ```
 
-`smoke:browser` uses `playwright-core` with an installed Chrome or Edge browser. By default it starts a temporary Mock-mode server on a free local port, loads the page, creates a scholar session, verifies `qianqiu.sessionId` in `localStorage`, reloads and opens a fresh page to confirm session restoration, and removes the smoke session file. Use `BROWSER_EXECUTABLE_PATH` or `--browser <path>` if Chrome/Edge is installed somewhere non-standard; use `--url` when you want to test an already running server.
+`smoke:browser` uses `playwright-core` with an installed Chrome or Edge browser. By default it starts a temporary Mock-mode server on a free local port, loads the page, creates a scholar session, verifies `qianqiu.sessionId` in `localStorage`, runs desktop/mobile UI acceptance for the game layout, action input, exam modal, result sections, and exam archive, reloads and opens a fresh page to confirm session restoration, and removes the smoke session file. Use `BROWSER_EXECUTABLE_PATH` or `--browser <path>` if Chrome/Edge is installed somewhere non-standard; use `--url` when you want to test an already running server. Pass `--screenshots <dir>` to save the screenshots that the smoke already captures and validates.
 
 有真实模型 key 的环境可运行可选 smoke：
 

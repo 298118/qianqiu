@@ -71,7 +71,7 @@
 | S25.2 | DONE | 评估并实现真实 provider token streaming；无法流式的 provider 保持兼容降级 | 2026-05-06 | Codex + subagent investigation | current S25.2 commit |
 | S25.3 | DONE | 建立 AI 输出 eval fixtures，固定校验 JSON 合约、违规 patch、科举评卷和历史语气 | 2026-05-06 | Codex + subagent recommendation | current S25.3 commit |
 | S26.1 | DONE | 引入浏览器自动化验收方案，优先覆盖本地页面加载、开局、localStorage 恢复 | 2026-05-06 | Codex + subagent recommendation | current S26.1 commit |
-| S26.2 | TODO | 增加截图或 DOM 级 UI 验收，覆盖桌面/移动布局、考试弹窗和放榜详情 |
+| S26.2 | DONE | 增加截图或 DOM 级 UI 验收，覆盖桌面/移动布局、考试弹窗、放榜详情、考试档案和输入区 | 2026-05-06 | Codex | current S26.2 commit |
 | S26.3 | TODO | 将浏览器验收结果写入文档，并保留手动验收清单作为 fallback |
 | S27.1 | TODO | 完成第二阶段验收文档，记录新增深度、已知限制、真实 provider 状态和下一阶段候选 |
 
@@ -160,6 +160,34 @@
 
 Tool: Codex
 
+Step: S26.2
+
+Commit: current S26.2 commit
+
+Completed:
+- Extended `scripts/browserSmoke.js` from S26.1 opening/restoration smoke into DOM and screenshot-level UI acceptance.
+- Added fixed desktop and mobile viewport checks for status strip, role/scholar panel, narrative area, and action input surface, including horizontal overflow and overlap assertions.
+- Exercised the scholar exam modal through the real panel button, submitted a Mock-mode child-exam essay, and verified result details: player archive, score sections, highlighted ranking row, and inspectable same-field candidate essays.
+- Reused the restored session on mobile to open the historical exam archive and check responsive result-detail rendering.
+- Added optional `--screenshots <dir>` artifact saving while validating PNG screenshots in memory by default, and ignored `artifacts/` in Git.
+- Fixed the UI bug discovered by screenshot review: `.exam-requirements { display: grid; }` was overriding the `hidden` attribute and leaving old requirements visible behind the result view.
+
+Verification:
+- `node --check scripts/browserSmoke.js`
+- `node --check test/browserSmokeScript.test.js`
+- `node --test test/browserSmokeScript.test.js` passed with 8 tests.
+- `npm run smoke:browser -- --screenshots artifacts/browser-smoke/s26-2` passed with 5 screenshots checked.
+- Desktop result and mobile archive screenshots were visually reviewed after the hidden requirements fix.
+
+Risk/leftover:
+- Browser smoke still depends on an installed Chrome or Edge executable, or `BROWSER_EXECUTABLE_PATH`/`--browser`.
+- S26.2 covers first-order layout and modal/detail surfaces, not every manual role loop or complete four-exam scholar-to-official path through the browser.
+
+Next:
+- S26.3: document browser acceptance coverage and keep the manual checklist as the fallback for gaps that remain intentionally human-verified.
+
+Tool: Codex
+
 Step: S26.1
 
 Commit: current S26.1 commit
@@ -184,7 +212,7 @@ Risk/leftover:
 - S26.1 verifies behavior through DOM visibility and localStorage, not screenshots or responsive layout.
 
 Next:
-- S26.2: add DOM or screenshot-level UI acceptance for desktop/mobile layout, the exam modal, result detail sections, and the action input surface.
+- S26.3: document browser acceptance coverage and keep the manual checklist as the fallback for gaps that remain intentionally human-verified.
 
 Tool: Codex
 

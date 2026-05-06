@@ -2,10 +2,14 @@ const test = require("node:test");
 const assert = require("node:assert/strict");
 
 const {
+  assertPngScreenshot,
+  buildBrowserSmokeEssay,
   getDefaultBrowserCandidates,
   normalizeBaseUrl,
   parseBrowserSmokeArgs,
-  resolveBrowserExecutable
+  rectsOverlap,
+  resolveBrowserExecutable,
+  sanitizeScreenshotName
 } = require("../scripts/browserSmoke");
 
 test("browser smoke parses url, browser path, and headed mode", () => {
@@ -23,8 +27,23 @@ test("browser smoke parses url, browser path, and headed mode", () => {
     browserPath: "C:\\Chrome\\chrome.exe",
     headed: true,
     help: false,
+    screenshotsDir: null,
     url: "http://localhost:3000"
   });
+});
+
+test("browser smoke parses optional screenshot artifact directory", () => {
+  const args = parseBrowserSmokeArgs([
+    "node",
+    "scripts/browserSmoke.js",
+    "--screenshots",
+    "artifacts/browser-smoke",
+    "--url",
+    "http://127.0.0.1:3000"
+  ]);
+
+  assert.equal(args.screenshotsDir, "artifacts/browser-smoke");
+  assert.equal(args.url, "http://127.0.0.1:3000");
 });
 
 test("browser smoke rejects incomplete arguments", () => {
@@ -35,6 +54,10 @@ test("browser smoke rejects incomplete arguments", () => {
   assert.throws(
     () => parseBrowserSmokeArgs(["node", "scripts/browserSmoke.js", "--unknown"]),
     /Unknown browser smoke argument/
+  );
+  assert.throws(
+    () => parseBrowserSmokeArgs(["node", "scripts/browserSmoke.js", "--screenshots"]),
+    /--screenshots requires a value/
   );
 });
 
@@ -60,6 +83,26 @@ test("browser smoke resolves explicit browser executable before defaults", () =>
       }),
     /Browser executable not found/
   );
+});
+
+test("browser smoke screenshot helper accepts nonblank PNG buffers", () => {
+  const pngSignature = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
+  assert.doesNotThrow(() => assertPngScreenshot(Buffer.concat([pngSignature, Buffer.alloc(1600)]), "fixture"));
+  assert.throws(() => assertPngScreenshot(Buffer.from("not a png"), "fixture"), /unexpectedly small|not a PNG/);
+  assert.equal(sanitizeScreenshotName("Desktop Exam Modal!"), "desktop-exam-modal");
+});
+
+test("browser smoke layout helpers catch overlapping boxes", () => {
+  assert.equal(
+    rectsOverlap({ x: 0, y: 0, width: 10, height: 10 }, { x: 9, y: 4, width: 10, height: 10 }),
+    true
+  );
+  assert.equal(
+    rectsOverlap({ x: 0, y: 0, width: 10, height: 10 }, { x: 12, y: 0, width: 10, height: 10 }),
+    false
+  );
+  assert.ok(buildBrowserSmokeEssay().length >= 200);
+  assert.equal(buildBrowserSmokeEssay().toLowerCase().includes("ai"), false);
 });
 
 test("browser smoke falls back to platform browser candidates", () => {

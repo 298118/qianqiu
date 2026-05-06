@@ -21,9 +21,10 @@ Optional automated browser smoke for the same opening/restoration surface:
 
 ```powershell
 npm run smoke:browser -- --url http://localhost:3000
+npm run smoke:browser -- --url http://localhost:3000 --screenshots artifacts/browser-smoke
 ```
 
-The smoke uses a local Chrome or Edge executable. Set `BROWSER_EXECUTABLE_PATH` or pass `--browser <path>` if the browser is installed outside the standard location.
+The smoke uses a local Chrome or Edge executable. Set `BROWSER_EXECUTABLE_PATH` or pass `--browser <path>` if the browser is installed outside the standard location. It now also covers desktop/mobile layout, the action input surface, the exam modal, result sections, and the exam archive; `--screenshots <dir>` saves the checked PNG artifacts for manual review.
 
 ## 2. API Smoke Check
 

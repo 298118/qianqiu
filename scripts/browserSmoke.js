@@ -8,12 +8,20 @@ const { chromium } = require("playwright-core");
 
 const rootDir = path.join(__dirname, "..");
 const sessionIdPattern = /^[0-9a-fA-F-]{20,}$/;
+const pngSignature = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
+const minimumScreenshotBytes = 1200;
+
+const VIEWPORTS = {
+  desktop: { width: 1280, height: 900 },
+  mobile: { width: 390, height: 844 }
+};
 
 function parseBrowserSmokeArgs(argv = process.argv) {
   const args = {
     browserPath: null,
     headed: false,
     help: false,
+    screenshotsDir: null,
     url: null
   };
 
@@ -28,6 +36,9 @@ function parseBrowserSmokeArgs(argv = process.argv) {
       index += 1;
     } else if (arg === "--browser") {
       args.browserPath = readArgValue(argv, index, "--browser");
+      index += 1;
+    } else if (arg === "--screenshots") {
+      args.screenshotsDir = readArgValue(argv, index, "--screenshots");
       index += 1;
     } else {
       throw new Error(`Unknown browser smoke argument: ${arg}`);
@@ -181,17 +192,311 @@ function delay(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-async function runBrowserJourney({ baseUrl, browserPath, headed = false, onSessionId = () => {} } = {}) {
+function failUiAcceptance(message) {
+  throw new Error(`UI acceptance failed: ${message}`);
+}
+
+function sanitizeScreenshotName(name) {
+  return String(name || "screenshot")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "") || "screenshot";
+}
+
+function resolveScreenshotDir(screenshotsDir) {
+  if (!screenshotsDir) return null;
+  return path.isAbsolute(screenshotsDir) ? screenshotsDir : path.join(rootDir, screenshotsDir);
+}
+
+function assertPngScreenshot(buffer, name = "screenshot") {
+  if (!Buffer.isBuffer(buffer)) {
+    failUiAcceptance(`${name} did not produce a screenshot buffer.`);
+  }
+
+  if (buffer.length < minimumScreenshotBytes) {
+    failUiAcceptance(`${name} screenshot is unexpectedly small (${buffer.length} bytes).`);
+  }
+
+  for (let index = 0; index < pngSignature.length; index += 1) {
+    if (buffer[index] !== pngSignature[index]) {
+      failUiAcceptance(`${name} screenshot is not a PNG image.`);
+    }
+  }
+}
+
+function createScreenshotRecorder(screenshotsDir) {
+  const outputDir = resolveScreenshotDir(screenshotsDir);
+  const captures = [];
+
+  return {
+    async capture(page, name) {
+      const buffer = await page.screenshot({ animations: "disabled", fullPage: false });
+      assertPngScreenshot(buffer, name);
+
+      let filePath = null;
+      if (outputDir) {
+        await fsp.mkdir(outputDir, { recursive: true });
+        filePath = path.join(
+          outputDir,
+          `${String(captures.length + 1).padStart(2, "0")}-${sanitizeScreenshotName(name)}.png`
+        );
+        await fsp.writeFile(filePath, buffer);
+      }
+
+      captures.push({ name, bytes: buffer.length, filePath });
+    },
+    summary() {
+      return captures.slice();
+    }
+  };
+}
+
+function rectsOverlap(first, second, tolerance = 0) {
+  return !(
+    first.x + first.width <= second.x + tolerance ||
+    second.x + second.width <= first.x + tolerance ||
+    first.y + first.height <= second.y + tolerance ||
+    second.y + second.height <= first.y + tolerance
+  );
+}
+
+function rectWithinViewport(rect, viewport, tolerance = 2) {
+  return (
+    rect.x >= -tolerance &&
+    rect.y >= -tolerance &&
+    rect.x + rect.width <= viewport.width + tolerance &&
+    rect.y + rect.height <= viewport.height + tolerance
+  );
+}
+
+async function visibleBox(page, selector, label) {
+  const locator = page.locator(selector).first();
+  await locator.waitFor({ state: "visible", timeout: 10000 });
+  const box = await locator.boundingBox();
+  if (!box || box.width <= 0 || box.height <= 0) {
+    failUiAcceptance(`${label} is visible but has no measurable layout box.`);
+  }
+  return box;
+}
+
+async function assertNoHorizontalOverflow(page, label) {
+  const metrics = await page.evaluate(() => ({
+    bodyScrollWidth: document.body.scrollWidth,
+    clientWidth: document.documentElement.clientWidth,
+    documentScrollWidth: document.documentElement.scrollWidth,
+    innerWidth: window.innerWidth
+  }));
+  const scrollWidth = Math.max(metrics.bodyScrollWidth, metrics.documentScrollWidth);
+  if (scrollWidth > metrics.clientWidth + 4 || scrollWidth > metrics.innerWidth + 4) {
+    failUiAcceptance(`${label} has horizontal page overflow (${scrollWidth}px > ${metrics.clientWidth}px).`);
+  }
+}
+
+async function assertGameLayout(page, mode) {
+  await assertNoHorizontalOverflow(page, `${mode} game layout`);
+
+  const viewport = page.viewportSize();
+  const status = await visibleBox(page, "#status-strip", `${mode} status strip`);
+  const scholar = await visibleBox(page, "#scholar-panel", `${mode} role panel`);
+  const narrativeBox = await visibleBox(page, "#narrative", `${mode} narrative`);
+  const actionArea = await visibleBox(page, "#action-area", `${mode} action area`);
+  const actionInput = await visibleBox(page, "#action-input", `${mode} action input`);
+  const actionButton = await visibleBox(page, "#action-btn", `${mode} action button`);
+
+  if (!rectWithinViewport(actionArea, viewport, mode === "mobile" ? 3 : 12)) {
+    failUiAcceptance(`${mode} action area does not fit inside the viewport.`);
+  }
+  if (rectsOverlap(status, scholar)) {
+    failUiAcceptance(`${mode} status strip overlaps the role panel.`);
+  }
+  if (rectsOverlap(scholar, narrativeBox)) {
+    failUiAcceptance(`${mode} role panel overlaps the narrative area.`);
+  }
+  if (rectsOverlap(narrativeBox, actionArea)) {
+    failUiAcceptance(`${mode} narrative area overlaps the action surface.`);
+  }
+  if (rectsOverlap(actionInput, actionButton)) {
+    failUiAcceptance(`${mode} action textarea overlaps the action button.`);
+  }
+
+  const computed = await page.evaluate(() => {
+    const action = getComputedStyle(document.querySelector("#action-area"));
+    const start = getComputedStyle(document.querySelector(".start-panel"));
+    return {
+      actionDisplay: action.display,
+      actionFlexDirection: action.flexDirection,
+      actionPosition: action.position,
+      startDisplay: start.display
+    };
+  });
+
+  if (computed.startDisplay !== "none") {
+    failUiAcceptance(`${mode} start panel is still occupying the game view.`);
+  }
+  if (computed.actionDisplay !== "flex") {
+    failUiAcceptance(`${mode} action area is not using the expected flex layout.`);
+  }
+
+  if (mode === "mobile") {
+    if (computed.actionFlexDirection !== "column") {
+      failUiAcceptance("mobile action controls should stack vertically.");
+    }
+    if (computed.actionPosition !== "sticky") {
+      failUiAcceptance("mobile action area should remain sticky at the bottom.");
+    }
+    if (actionButton.y < actionInput.y + actionInput.height - 2) {
+      failUiAcceptance("mobile action button should sit below the textarea.");
+    }
+  } else if (actionButton.x < actionInput.x + actionInput.width - 2) {
+    failUiAcceptance("desktop action button should sit beside the textarea.");
+  }
+}
+
+async function assertExamWritingLayout(page, mode) {
+  await assertNoHorizontalOverflow(page, `${mode} exam writing modal`);
+
+  const viewport = page.viewportSize();
+  const modal = await visibleBox(page, ".exam-modal", `${mode} exam modal`);
+  const question = await visibleBox(page, "#exam-question", `${mode} exam question`);
+  const requirements = await visibleBox(page, "#exam-requirements", `${mode} exam requirements`);
+  const tools = await visibleBox(page, "#exam-writing-tools", `${mode} exam writing tools`);
+  const essay = await visibleBox(page, "#exam-essay", `${mode} exam essay textarea`);
+  const submit = await visibleBox(page, "#exam-submit", `${mode} exam submit button`);
+
+  if (!rectWithinViewport(modal, viewport, mode === "mobile" ? 8 : 30)) {
+    failUiAcceptance(`${mode} exam modal does not fit inside the viewport.`);
+  }
+  if (rectsOverlap(question, requirements)) {
+    failUiAcceptance(`${mode} exam question overlaps the requirements list.`);
+  }
+  if (rectsOverlap(requirements, tools)) {
+    failUiAcceptance(`${mode} exam requirements overlap the writing tools.`);
+  }
+  if (rectsOverlap(tools, essay)) {
+    failUiAcceptance(`${mode} exam writing tools overlap the essay textarea.`);
+  }
+  if (rectsOverlap(essay, submit)) {
+    failUiAcceptance(`${mode} exam essay textarea overlaps the submit button.`);
+  }
+}
+
+async function assertExamResultLayout(page, mode) {
+  await assertNoHorizontalOverflow(page, `${mode} exam result modal`);
+
+  const modal = await visibleBox(page, ".exam-modal", `${mode} result modal`);
+  const result = await visibleBox(page, "#exam-result", `${mode} exam result`);
+  const summary = await visibleBox(page, ".result-summary, .exam-archive-list", `${mode} result summary`);
+
+  if (rectsOverlap(summary, result, -4) && summary.y < result.y - 2) {
+    failUiAcceptance(`${mode} result summary has an unexpected layout position.`);
+  }
+
+  const counts = await page.evaluate(() => {
+    document.querySelectorAll(".result-section").forEach((details) => {
+      details.open = true;
+    });
+    const resultElement = document.querySelector("#exam-result");
+    const examQuestion = document.querySelector("#exam-question");
+    const examRequirements = document.querySelector("#exam-requirements");
+    const examEssay = document.querySelector("#exam-essay");
+    return {
+      candidateProfiles: document.querySelectorAll(".candidate-profile").length,
+      essayDisplay: examEssay ? getComputedStyle(examEssay).display : "",
+      questionDisplay: examQuestion ? getComputedStyle(examQuestion).display : "",
+      requirementsDisplay: examRequirements ? getComputedStyle(examRequirements).display : "",
+      playerArchive: document.querySelectorAll(".player-exam-archive").length,
+      playerRanking: document.querySelectorAll(".ranking-list .is-player").length,
+      resultSections: document.querySelectorAll(".result-section").length,
+      resultClientWidth: resultElement?.clientWidth || 0,
+      resultScrollWidth: resultElement?.scrollWidth || 0
+    };
+  });
+
+  if (counts.resultSections < 5) {
+    failUiAcceptance(`${mode} expected at least five result detail sections, found ${counts.resultSections}.`);
+  }
+  if (counts.playerArchive < 1) {
+    failUiAcceptance(`${mode} missing the player essay archive section.`);
+  }
+  if (counts.playerRanking < 1) {
+    failUiAcceptance(`${mode} missing the highlighted player ranking row.`);
+  }
+  if (counts.candidateProfiles < 1) {
+    failUiAcceptance(`${mode} missing inspectable same-field candidate essays.`);
+  }
+  if (counts.questionDisplay !== "none" || counts.requirementsDisplay !== "none" || counts.essayDisplay !== "none") {
+    failUiAcceptance(`${mode} still shows question or writing controls behind the result view.`);
+  }
+  if (counts.resultScrollWidth > counts.resultClientWidth + 4) {
+    failUiAcceptance(`${mode} exam result content overflows horizontally.`);
+  }
+  if (result.y + result.height > modal.y + modal.height + 4) {
+    failUiAcceptance(`${mode} exam result content escapes the modal.`);
+  }
+}
+
+function buildBrowserSmokeEssay() {
+  return [
+    "On rites and corn stores, the student urges soft tax, clear rolls, modest yamen work, and steady school books. ",
+    "The text says local officers should hear poor folk soon, store crops before hunger, use honest clerks, and punish with care. ",
+    "It ends by asking old laws to guide households, farms, teachers, and county order."
+  ].join("");
+}
+
+async function runExamUiAcceptance(page, recorder) {
+  await page.locator("#scholar-panel .panel-action").first().click();
+  await page.locator("#exam-backdrop").waitFor({ state: "visible", timeout: 10000 });
+  await assertExamWritingLayout(page, "desktop");
+  await recorder.capture(page, "desktop-exam-modal");
+
+  await page.locator("#exam-essay").fill(buildBrowserSmokeEssay());
+  await page.waitForFunction(() => {
+    const button = document.querySelector("#exam-submit");
+    return button && !button.disabled;
+  });
+  await page.locator("#exam-submit").click();
+  await page.locator("#exam-result").waitFor({ state: "visible", timeout: 15000 });
+  await assertExamResultLayout(page, "desktop");
+  await recorder.capture(page, "desktop-exam-result");
+
+  await page.locator("#exam-close").click();
+  await page.locator("#exam-backdrop").waitFor({ state: "hidden", timeout: 10000 });
+}
+
+async function runMobileUiAcceptance(page, recorder) {
+  await page.setViewportSize(VIEWPORTS.mobile);
+  await page.waitForTimeout(150);
+  await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
+  await page.waitForTimeout(100);
+  await assertGameLayout(page, "mobile");
+  await recorder.capture(page, "mobile-game-layout");
+
+  await page.locator("#scholar-panel .archive-action").first().click();
+  await page.locator("#exam-backdrop").waitFor({ state: "visible", timeout: 10000 });
+  await assertExamResultLayout(page, "mobile archive");
+  await recorder.capture(page, "mobile-exam-archive");
+  await page.locator("#exam-close").click();
+  await page.locator("#exam-backdrop").waitFor({ state: "hidden", timeout: 10000 });
+}
+
+async function runBrowserJourney({
+  baseUrl,
+  browserPath,
+  headed = false,
+  onSessionId = () => {},
+  screenshotsDir = null
+} = {}) {
   const browser = await chromium.launch({
     executablePath: browserPath,
     headless: !headed
   });
 
   const pageErrors = [];
+  const recorder = createScreenshotRecorder(screenshotsDir);
   let sessionId = null;
 
   try {
-    const context = await browser.newContext();
+    const context = await browser.newContext({ viewport: VIEWPORTS.desktop });
     const page = await context.newPage();
     page.on("pageerror", (error) => pageErrors.push(error.message));
 
@@ -213,9 +518,14 @@ async function runBrowserJourney({ baseUrl, browserPath, headed = false, onSessi
     if (!sessionId) throw new Error("Start flow did not write qianqiu.sessionId to localStorage.");
     onSessionId(sessionId);
 
+    await assertGameLayout(page, "desktop");
+    await recorder.capture(page, "desktop-game-layout");
+    await runExamUiAcceptance(page, recorder);
+
     await page.reload({ waitUntil: "domcontentloaded" });
     await page.locator("#action-area").waitFor({ state: "visible", timeout: 10000 });
     await page.locator("#scholar-panel").waitFor({ state: "visible", timeout: 10000 });
+    await assertGameLayout(page, "desktop restored");
 
     const restoredId = await page.evaluate(() => window.localStorage.getItem("qianqiu.sessionId"));
     if (restoredId !== sessionId) {
@@ -227,11 +537,14 @@ async function runBrowserJourney({ baseUrl, browserPath, headed = false, onSessi
     await freshPage.goto(baseUrl, { waitUntil: "domcontentloaded" });
     await freshPage.locator("#action-area").waitFor({ state: "visible", timeout: 10000 });
     await freshPage.locator("#scholar-panel").waitFor({ state: "visible", timeout: 10000 });
+    await assertGameLayout(freshPage, "fresh page desktop");
     const freshPageId = await freshPage.evaluate(() => window.localStorage.getItem("qianqiu.sessionId"));
     if (freshPageId !== sessionId) {
       throw new Error(`Fresh page localStorage session mismatch: expected ${sessionId}, got ${freshPageId}`);
     }
     await freshPage.close();
+
+    await runMobileUiAcceptance(page, recorder);
 
     const stateResponse = await fetch(`${baseUrl}/api/game/state/${sessionId}`);
     if (!stateResponse.ok) {
@@ -249,7 +562,11 @@ async function runBrowserJourney({ baseUrl, browserPath, headed = false, onSessi
       baseUrl,
       restored: true,
       sessionId,
-      statusText: statusText.replace(/\s+/g, " ").trim()
+      statusText: statusText.replace(/\s+/g, " ").trim(),
+      uiAcceptance: {
+        screenshots: recorder.summary(),
+        viewports: ["desktop", "mobile"]
+      }
     };
   } finally {
     await browser.close();
@@ -276,7 +593,8 @@ async function runBrowserSmoke(options = {}) {
       headed: options.headed,
       onSessionId: (createdSessionId) => {
         sessionId = createdSessionId;
-      }
+      },
+      screenshotsDir: options.screenshotsDir
     });
     return result;
   } finally {
@@ -295,6 +613,8 @@ function printHelp() {
 Options:
   --url <url>        Test an already running Qianqiu server instead of starting one.
   --browser <path>   Browser executable path. Defaults to BROWSER_EXECUTABLE_PATH or local Chrome/Edge.
+  --screenshots <dir>
+                    Save desktop/mobile UI acceptance screenshots to this directory.
   --headed           Show the browser window while running.
   --help             Show this message.
 `);
@@ -312,6 +632,11 @@ if (require.main === module) {
     console.log(`Browser smoke passed: ${result.baseUrl}`);
     console.log(`Restored session: ${result.sessionId}`);
     console.log(`Status strip: ${result.statusText}`);
+    console.log(`UI acceptance: ${result.uiAcceptance.viewports.join(", ")} (${result.uiAcceptance.screenshots.length} screenshots checked)`);
+    const saved = result.uiAcceptance.screenshots.filter((screenshot) => screenshot.filePath);
+    if (saved.length) {
+      console.log(`Screenshots: ${path.dirname(saved[0].filePath)}`);
+    }
   })().catch((error) => {
     console.error(`Browser smoke failed: ${error.message}`);
     process.exitCode = 1;
@@ -319,10 +644,15 @@ if (require.main === module) {
 }
 
 module.exports = {
+  assertPngScreenshot,
+  buildBrowserSmokeEssay,
+  createScreenshotRecorder,
   getDefaultBrowserCandidates,
   normalizeBaseUrl,
   parseBrowserSmokeArgs,
+  rectsOverlap,
   resolveBrowserExecutable,
+  sanitizeScreenshotName,
   runBrowserJourney,
   runBrowserSmoke
 };

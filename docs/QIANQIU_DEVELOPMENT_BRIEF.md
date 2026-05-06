@@ -731,4 +731,14 @@ S26.1 introduces repeatable local browser acceptance without changing the defaul
 - The script uses `playwright-core` with an installed Chrome or Edge executable. Developers can set `BROWSER_EXECUTABLE_PATH` or pass `--browser <path>` when the browser is installed outside standard platform paths.
 - By default the smoke starts a temporary Mock-mode server on a free local port. `npm run smoke:browser -- --url http://localhost:3000` targets an already running server.
 - The first S26.1 journey covers local page load, scholar opening flow through the real form, `qianqiu.sessionId` localStorage persistence, reload/fresh-page session restoration, API readability for the restored session, and cleanup of the smoke session file.
-- Browser smoke remains outside `npm test` so the normal test suite stays no-browser and fast. Future S26.2 work should add DOM or screenshot-level coverage for desktop/mobile layout, the exam modal, result details, and the action input surface.
+- Browser smoke remains outside `npm test` so the normal test suite stays no-browser and fast. S26.2 adds DOM and screenshot-level coverage for desktop/mobile layout, the exam modal, result details, and the action input surface.
+
+## S26.2 UI Acceptance Note (2026-05-06)
+
+S26.2 expands `npm run smoke:browser` from opening/restoration smoke into repeatable UI acceptance:
+
+- The browser journey now uses fixed desktop and mobile viewports and checks that the status strip, role panel, narrative area, and action input surface do not overlap or overflow horizontally.
+- The journey opens the scholar exam modal through the real panel button, fills and submits a Mock-mode child-exam essay, and verifies the result view contains the player archive, score sections, highlighted ranking row, and inspectable same-field candidate essays.
+- The same saved session is then restored and checked on mobile; the historical exam archive is opened there to exercise responsive result-detail rendering.
+- The smoke captures PNG screenshots for representative desktop/mobile states and validates them in memory. Passing `--screenshots <dir>` writes those artifacts for manual review; `artifacts/` is ignored by Git.
+- This pass exposed and fixed a result-modal regression where `.exam-requirements` overrode the `hidden` attribute with `display: grid`, leaving the old question requirements visible behind the放榜/result view.
