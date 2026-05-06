@@ -24,10 +24,11 @@ The smoke uses `playwright-core` with an installed Chrome or Edge executable. If
 | Opening flow | Confirms the start form exposes every supported role, creates a scholar session through the real form, and verifies `qianqiu.sessionId` in localStorage. |
 | Session restore | Reloads the page, opens a fresh page in the same browser context, confirms the game view restores, and checks `GET /api/game/state/:sessionId`. |
 | Desktop layout | Checks status strip, role panel, narrative area, and action input surface for visibility, overlap, horizontal overflow, game-panel width/share, and role-panel clipping. |
+| Relationship panel | Checks visible contact/faction rows from `relationshipView`, field completeness, hidden id/text non-leakage, relationship-panel overflow, and a Mock scholar turn updating the mentor relationship. |
 | Exam modal | Opens the next exam from the scholar panel, verifies question/requirements/writing controls, fills an essay, and submits it. |
 | Result details | Checks score summary, player archive, result sections, highlighted ranking row, and inspectable same-field candidate essays. |
 | Mobile layout | Switches to a mobile viewport, checks the game/action surface, opens the exam archive, and verifies responsive result details. |
-| Direct official start | Opens an isolated browser context, starts as `official`, checks the official role panel/action placeholder, and verifies the API-persisted role. |
+| Direct official start | Opens an isolated browser context, starts as `official`, checks the official role panel/action placeholder, verifies all expected visible relationship factions are present, and verifies the API-persisted role. |
 | Screenshots | Captures representative desktop and mobile states and validates each capture as a non-empty PNG. |
 | Cleanup | Deletes the smoke-created session file when the journey finishes. |
 
@@ -35,27 +36,27 @@ The smoke uses `playwright-core` with an installed Chrome or Edge executable. If
 
 Date: 2026-05-06
 
-Relevant implementation commit: current S31.3 commit (`Validate start roles`)
+Relevant implementation commit: current S32.2 commit (`Render relationship inspection panel`)
 
-Commands verified during S31.3:
+Commands verified during S32.2:
 
 ```powershell
-node --check src\game\initialState.js
+node --check public\app.js
 node --check scripts\browserSmoke.js
-node --check test\gameStartRole.test.js
 node --check test\browserSmokeScript.test.js
-node --test test\gameStartRole.test.js test\browserSmokeScript.test.js test\officialRole.test.js
-npm run smoke:browser -- --screenshots artifacts/browser-smoke/s31-3
+node --test test\browserSmokeScript.test.js
+node --test test\relationshipLedger.test.js test\gameTurnRelationships.test.js test\mockRelationshipReactions.test.js
+npm run smoke:browser -- --screenshots artifacts/browser-smoke/s32-2
 npm test
 git diff --check
 ```
 
 Observed result:
 
-- Focused start-role/browser-helper tests passed.
-- `npm run smoke:browser -- --screenshots artifacts/browser-smoke/s31-3`: passed with direct official-start coverage and 5 screenshots checked.
-- `npm test`: 97 tests passed.
-- Desktop smoke still fails if the game panel regresses to the old narrow-column width or if the role panel is horizontally clipped; it also fails if any supported start role is missing from the browser form.
+- Focused browser-helper and relationship route/ledger tests passed.
+- `npm run smoke:browser -- --screenshots artifacts/browser-smoke/s32-2`: passed with relationship-panel coverage, direct official-start relationship visibility, and 5 screenshots checked.
+- `npm test`: 102 tests passed.
+- Desktop smoke still fails if the game panel regresses to the old narrow-column width, if the role panel or relationship panel is horizontally clipped, if any supported start role is missing from the browser form, or if hidden scholar-invisible factions leak into relationship-panel text.
 
 Earlier S26.2 screenshot review caught and fixed a real result-modal bug: `.exam-requirements { display: grid; }` overrode the `hidden` attribute and left the old requirements visible behind the result view. The fix is `.exam-requirements[hidden] { display: none; }`.
 

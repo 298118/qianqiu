@@ -151,7 +151,7 @@ Inspection rules:
 - `recentNotes` is filtered to notes that begin with a currently visible entry name. Notes that could belong to hidden entries are omitted until the note store becomes target-keyed.
 - `hiddenNotice` is generic and contains no target-specific information. It is empty when every normalized ledger entry is visible.
 
-The browser implementation planned for S32.2 should render `relationshipView`, not raw `worldState.relationshipLedger`.
+The S32.2 browser implementation renders `relationshipView` in the scholar/role panel as the player-facing `人脉簿`; it should not read raw `worldState.relationshipLedger` for normal UI.
 The raw ledger remains in saved session state and in current local route `worldState` payloads for compatibility with existing tests and developer inspection, but player-facing UI code should treat `relationshipView` as the supported contract.
 
 ## Mock Reactions

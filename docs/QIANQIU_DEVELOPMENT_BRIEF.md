@@ -803,3 +803,12 @@ S32.1 defines the player-facing relationship/contact inspection contract without
 - `relationshipView` includes visible contacts and factions, numeric relationship/resentment values, readable relationship and resentment bands, stance, network source, recent intent, and `lastUpdatedTurn`.
 - Hidden ledger entries are omitted entirely: no hidden ids, names, exact counts, placeholder rows, faction labels, or hidden-entry notes are exposed through the view.
 - The persisted `relationshipLedger` remains server-owned. Providers still cannot patch it directly; they can only suggest bounded top-level `relationshipChanges`.
+
+## S32.2 Relationship UI Note (2026-05-06)
+
+S32.2 turns the inspection contract into a browser surface without changing relationship authority:
+
+- `public/app.js` renders a compact `人脉簿` panel from top-level `relationshipView` inside both scholar and non-scholar role panels.
+- The browser panel shows visible characters and factions with relationship, resentment, stance, source, recent intent, and last-updated turn. It uses display localization for known default faction names and relationship text while preserving stable `data-contact-*` selectors for acceptance.
+- Player-facing UI code should continue to consume `relationshipView`; the raw `worldState.relationshipLedger` remains available only as a compatibility/developer-inspection fallback.
+- `scripts/browserSmoke.js` verifies relationship-panel presence on desktop, restored, fresh-page, mobile, and direct-official-start journeys; checks hidden id/text non-leakage; asserts a Mock scholar turn updates the mentor relationship; and catches relationship-panel horizontal overflow.

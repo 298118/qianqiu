@@ -178,6 +178,7 @@ button:disabled {
   display: grid;
   grid-template-rows: auto auto minmax(0, 1fr) auto;
   min-width: 0;
+  height: calc(100vh - 64px);
   min-height: calc(100vh - 64px);
   overflow: hidden;
 }
@@ -246,6 +247,101 @@ button:disabled {
   color: var(--ink);
   line-height: 1.55;
   overflow-wrap: anywhere;
+}
+
+.relationship-panel {
+  grid-column: 1 / -1;
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+  padding-top: 10px;
+  border-top: 1px solid rgba(54, 39, 27, 0.16);
+}
+
+.relationship-panel > header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  color: var(--cinnabar-deep);
+}
+
+.relationship-panel > header strong {
+  font-size: 0.98rem;
+}
+
+.relationship-panel > header span,
+.relationship-hidden-notice,
+.relationship-empty {
+  color: var(--muted);
+  font-size: 0.82rem;
+}
+
+.relationship-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+  gap: 8px;
+  min-width: 0;
+}
+
+.relationship-contact {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+  padding: 8px 9px;
+  border: 1px solid rgba(54, 39, 27, 0.18);
+  border-radius: 4px;
+  background: rgba(255, 250, 239, 0.48);
+}
+
+.relationship-contact header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+  min-width: 0;
+}
+
+.relationship-contact header strong {
+  overflow-wrap: anywhere;
+}
+
+.relationship-contact header span {
+  flex: 0 0 auto;
+  color: var(--bronze);
+  font-size: 0.74rem;
+  font-weight: 700;
+}
+
+.relationship-contact p,
+.relationship-notes p,
+.relationship-hidden-notice,
+.relationship-empty {
+  margin: 0;
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+}
+
+.relationship-contact p {
+  color: var(--ink);
+  font-size: 0.8rem;
+}
+
+.relationship-kicker {
+  display: inline-block;
+  min-width: 2.35rem;
+  margin-right: 6px;
+  color: var(--bronze);
+  font-size: 0.74rem;
+  font-weight: 700;
+}
+
+.relationship-score {
+  color: var(--jade);
+}
+
+.relationship-resentment {
+  color: var(--cinnabar-deep);
 }
 
 .panel-action {
@@ -477,6 +573,7 @@ button:disabled {
 
 .action-area textarea {
   flex: 1;
+  height: 64px;
   min-height: 46px;
   max-height: 180px;
   resize: vertical;
@@ -916,6 +1013,7 @@ button:disabled {
   }
 
   .game-panel {
+    height: auto;
     min-height: 100dvh;
   }
 
@@ -954,6 +1052,7 @@ button:disabled {
   }
 
   .action-area textarea {
+    height: auto;
     min-height: 86px;
   }
 

@@ -62,8 +62,8 @@
 | S31.1 | DONE | 修复桌面游戏态布局过窄问题，并扩展 browser smoke 覆盖游戏面板宽度/裁切断言 | 2026-05-06 | Codex + subagent | 0d52d46 |
 | S31.2 | DONE | 收紧普通回合的服务器独占字段边界，阻止 provider patch `activeExam`、`characters`、`eventHistory`、`player.examRank`、`player.examHistory` 等字段 | 2026-05-06 | Codex + subagent | f470f78 |
 | S31.3 | DONE | 校验开局 role 输入并明确是否允许浏览器直接开局 `official` | 2026-05-06 | Codex + subagent | 9cdbf91 |
-| S32.1 | DONE | 定义关系/联系人检查视图契约，让 `relationshipLedger` 从叙事反馈升级为玩家可查看的信息面板 | 2026-05-06 | Codex + subagents | current S32.1 commit |
-| S32.2 | TODO | 实现关系/联系人 UI 与基础浏览器验收，显示人物/派系关系、怨望、立场、近期意图和可见性 |  |  |  |
+| S32.1 | DONE | 定义关系/联系人检查视图契约，让 `relationshipLedger` 从叙事反馈升级为玩家可查看的信息面板 | 2026-05-06 | Codex + subagents | ed83e9c |
+| S32.2 | DONE | 实现关系/联系人 UI 与基础浏览器验收，显示人物/派系关系、怨望、立场、近期意图和可见性 | 2026-05-06 | Codex + subagents | current S32.2 commit |
 | S32.3 | TODO | 增加主动 NPC/派系请托、施压、求援、背书或索取回报的最小事件循环 |  |  |  |
 | S33.1 | TODO | 定义长期事件调度器契约：季节、灾荒、边报、朝争、地方案件链和跨月后果 |  |  |  |
 | S33.2 | TODO | 实现服务器拥有的长期事件队列，并把事件结果接入 world tick、eventHistory 和可见叙事 |  |  |  |
@@ -174,9 +174,41 @@
 
 Tool: Codex
 
+Step: S32.2
+
+Commit: current S32.2 commit
+
+Completed:
+- Rendered the `relationshipView` contract in the scholar/role panel as a player-facing `#relationship-panel`, combining visible contacts and factions without reading the raw ledger as the normal UI path.
+- Added stable DOM selectors and data attributes for visible contact id/type plus numeric relationship and resentment values, while keeping hidden contacts/factions out of rendered text.
+- Localized the default contact names, stance, network source, and recent intent text into compact Chinese UI phrases so raw provider/mock enum strings do not dominate the panel.
+- Added responsive CSS for the relationship grid and tightened the game/action layout so the expanded panel stays visible on desktop and mobile.
+- Extended `scripts/browserSmoke.js` to assert relationship panel contents, hidden-entry leaks, relationship updates after a Mock scholar turn, direct official-start relationship visibility, and relationship-panel horizontal overflow.
+- Added browser-smoke helper tests for expected/missing/hidden relationship entries and relationship-panel overflow.
+- Used two read-only subagents for frontend placement and browser-smoke acceptance inspection. Neither edited files or ran Git commands.
+
+Verification:
+- `node --check public/app.js`
+- `node --check scripts/browserSmoke.js`
+- `node --check test/browserSmokeScript.test.js`
+- `node --test test/browserSmokeScript.test.js`
+- `node --test test/relationshipLedger.test.js test/gameTurnRelationships.test.js test/mockRelationshipReactions.test.js`
+- `npm run smoke:browser -- --screenshots artifacts/browser-smoke/s32-2`
+- `npm test` passed with 102 tests.
+- `git diff --check`
+
+Risk/leftover:
+- The browser panel now consumes `relationshipView`; the raw ledger is still present in `worldState` route payloads for compatibility and developer inspection.
+- Browser smoke covers representative scholar, restored, mobile, and direct-official starts, but a complete four-exam browser playthrough remains planned for S38.1.
+
+Next:
+- S32.3: add the first server-scheduled active NPC/faction request or pressure loop using the relationship ledger as input.
+
+Tool: Codex
+
 Step: S32.1
 
-Commit: current S32.1 commit
+Commit: ed83e9c
 
 Completed:
 - Added `buildRelationshipInspectionView(worldState)` in `src/game/relationships.js` as the player-facing relationship/contact inspection contract.

@@ -6,6 +6,8 @@ const {
   buildBrowserSmokeEssay,
   getDefaultBrowserCandidates,
   getGameLayoutFailures,
+  getHiddenRelationshipLeaks,
+  getMissingRelationshipEntries,
   getMissingStartRoles,
   normalizeBaseUrl,
   parseBrowserSmokeArgs,
@@ -28,6 +30,9 @@ function createLayoutMetrics(overrides = {}) {
     scholarRight: 1230,
     scholarScrollWidth: 1180,
     scholarWidth: 1180,
+    relationshipClientWidth: 1180,
+    relationshipScrollWidth: 1180,
+    relationshipWidth: 1180,
     viewportWidth: 1280,
     ...overrides
   };
@@ -154,6 +159,29 @@ test("browser smoke game layout helper catches narrow desktop panel and clipped 
 
   assert.match(failures.join("\n"), /game panel is too narrow/);
   assert.match(failures.join("\n"), /role panel has horizontal scroll overflow/);
+});
+
+test("browser smoke relationship helpers catch missing and hidden entries", () => {
+  assert.deepEqual(getMissingRelationshipEntries(["C01", "scholarOfficials"], ["C01"]), []);
+  assert.deepEqual(
+    getMissingRelationshipEntries(["C01"], ["C01", "scholarOfficials"]),
+    ["scholarOfficials"]
+  );
+  assert.deepEqual(getHiddenRelationshipLeaks(["C01", "eunuchs"], ["eunuchs", "militaryLords"]), ["eunuchs"]);
+  assert.deepEqual(getHiddenRelationshipLeaks(["C01", "scholarOfficials"], ["eunuchs"]), []);
+});
+
+test("browser smoke game layout helper catches relationship panel overflow", () => {
+  const failures = getGameLayoutFailures(
+    createLayoutMetrics({
+      relationshipClientWidth: 500,
+      relationshipScrollWidth: 620,
+      relationshipWidth: 500
+    }),
+    "desktop"
+  );
+
+  assert.match(failures.join("\n"), /relationship panel has horizontal scroll overflow/);
 });
 
 test("browser smoke game layout helper keeps mobile width behavior compatible", () => {

@@ -24,6 +24,7 @@ const examWordGuide = document.querySelector("#exam-word-guide");
 
 let currentSessionId = null;
 let currentWorldState = null;
+let currentRelationshipView = null;
 let currentExamPayload = null;
 let activeNarrativeStream = null;
 
@@ -110,6 +111,69 @@ const SCORE_LABELS = {
   historical_appropriateness: "时代语境"
 };
 
+const RELATIONSHIP_LABELS = {
+  trusted: "深信",
+  friendly: "亲近",
+  neutral: "平平",
+  strained: "龃龉",
+  hostile: "敌意"
+};
+
+const RESENTMENT_LABELS = {
+  dangerous: "危急",
+  watchful: "须防",
+  uneasy: "微怨",
+  quiet: "平静"
+};
+
+const CONTACT_NAME_LABELS = {
+  eunuchs: "内廷宦官",
+  scholarOfficials: "士大夫",
+  militaryLords: "边镇武臣",
+  "Eunuch faction": "内廷宦官",
+  "Scholar-official faction": "士大夫",
+  "Military faction": "边镇武臣"
+};
+
+const STANCE_LABELS = {
+  mentor: "塾师提携",
+  courtier: "朝臣观望",
+  colleague: "同僚试探",
+  superior_or_peer: "上官同年",
+  camp_contact: "营中袍泽",
+  local_contact: "县衙乡里",
+  palace_network: "内廷门路",
+  orthodox_bureaucracy: "清流正统",
+  armed_interest: "军镇利益",
+  unknown_interest: "利害未明"
+};
+
+const NETWORK_SOURCE_LABELS = {
+  county_school: "县学师承",
+  court_audience: "朝会传闻",
+  ministry_office: "部曹公事",
+  bureaucratic_posting: "官署差遣",
+  military_camp: "军营袍泽",
+  county_yamen: "县衙乡里",
+  inner_court_whispers: "内廷风声",
+  examination_and_memorial_network: "科举台谏",
+  border_and_garrison_reports: "边报营牍",
+  unclassified_reports: "未分类线索"
+};
+
+const INTENT_LABELS = {
+  "Test the player's diligence and recommend steady study.": "试其勤学，酌情引荐",
+  "Read imperial favor and avoid being blamed for disorder.": "观望圣眷，避责求稳",
+  "Watch whether the player can deliver policy results.": "考看政务成色",
+  "Estimate the player's usefulness in local administration.": "衡量地方任事实用",
+  "Judge the player's reliability with soldiers and supplies.": "审其军需可信",
+  "See whether the player can settle local pressure.": "看其能否平息地方压力",
+  "Protect palace channels and test whether the player threatens them.": "护持内廷门路，试探威胁",
+  "Reward classical legitimacy and watch for factional recklessness.": "奖重正统名义，防其躁进",
+  "Seek resources while resisting civilian overreach.": "索取军资，防文臣越界",
+  "No stable intent has been recorded yet.": "尚无定见"
+};
+
 function getExamProgress(player) {
   if (player.role === "official") {
     return { index: EXAM_PROGRESS.length - 1, label: "入仕", next: null };
@@ -142,6 +206,118 @@ function createPanelValue(kicker, value, valueTag = "strong") {
   content.textContent = value;
   item.append(label, content);
   return item;
+}
+
+function localizeRelationshipLabel(label) {
+  return RELATIONSHIP_LABELS[label] || label || "平平";
+}
+
+function localizeResentmentLabel(label) {
+  return RESENTMENT_LABELS[label] || label || "平静";
+}
+
+function hasChineseText(value) {
+  return /[\u3400-\u9fff]/.test(value);
+}
+
+function classifyRelationshipText(value, fallback) {
+  if (typeof value !== "string") return fallback;
+  const text = value.trim();
+  if (!text) return fallback;
+  if (hasChineseText(text)) return text;
+
+  const lower = text.toLowerCase();
+  if (/mentor|teacher/.test(lower)) return "师长考察学业";
+  if (/exam|classical|literati|bureaucracy|civil|clean|censor|remonstrance/.test(lower)) return "士林观望声名";
+  if (/recommend|patron|support|back|favor/.test(lower)) return "斟酌举荐扶持";
+  if (/study|learning|diligence|school/.test(lower)) return "师长考察学业";
+  if (/palace|inner|eunuch|brokerage|private|channel/.test(lower)) return "内廷试探门路";
+  if (/military|command|garrison|camp|frontier|armed|soldier|quartermaster|scout|campaign|border/.test(lower)) return "军中衡量功用";
+  if (/county|gentry|local|yamen|villager|lawsuit|labor|waterworks|case|relief|farming/.test(lower)) return "地方观察治理";
+  if (/office|assessment|promotion|superior|peer|merit|paperwork|scandal|impeachment|evidence/.test(lower)) return "官场衡量前程";
+  if (/tax|revenue|fiscal|fund|grain|policy|appointment|memorial/.test(lower)) return "朝政权责观望";
+  if (/threat|resist|critical|suspicious|uneasy|resentful/.test(lower)) return "戒备中";
+  return fallback;
+}
+
+function localizeContactName(entry) {
+  return CONTACT_NAME_LABELS[entry.id] || CONTACT_NAME_LABELS[entry.name] || entry.name || entry.id || "未名";
+}
+
+function localizeStance(value) {
+  return STANCE_LABELS[value] || classifyRelationshipText(value, "立场未明");
+}
+
+function localizeNetworkSource(value) {
+  return NETWORK_SOURCE_LABELS[value] || classifyRelationshipText(value, "来路未明");
+}
+
+function localizeRecentIntent(value) {
+  return INTENT_LABELS[value] || classifyRelationshipText(value, "尚在观望");
+}
+
+function describeRelationship(value) {
+  if (value >= 60) return "trusted";
+  if (value >= 20) return "friendly";
+  if (value > -20) return "neutral";
+  if (value > -60) return "strained";
+  return "hostile";
+}
+
+function describeResentment(value) {
+  if (value >= 70) return "dangerous";
+  if (value >= 40) return "watchful";
+  if (value >= 15) return "uneasy";
+  return "quiet";
+}
+
+function buildFallbackRelationshipView(worldState) {
+  const ledger = worldState?.relationshipLedger;
+  if (!ledger) {
+    return { schemaVersion: 1, generatedAtTurn: worldState?.turnCount || 0, contacts: [], factions: [], recentNotes: [], hiddenNotice: "" };
+  }
+
+  const toEntry = (entry, type) => {
+    const relationship = Number.isFinite(Number(entry.relationship)) ? Number(entry.relationship) : 0;
+    const resentment = Number.isFinite(Number(entry.resentment)) ? Number(entry.resentment) : 0;
+    return {
+      type,
+      id: entry.id,
+      name: entry.name,
+      role: entry.role,
+      stance: entry.stance,
+      relationship,
+      relationshipLabel: describeRelationship(relationship),
+      resentment,
+      resentmentLabel: describeResentment(resentment),
+      networkSource: entry.networkSource,
+      recentIntent: entry.recentIntent,
+      lastUpdatedTurn: entry.lastUpdatedTurn || 0
+    };
+  };
+  const visibleCharacters = Object.values(ledger.characters || {}).filter((entry) => entry.visible !== false);
+  const visibleFactions = Object.values(ledger.factions || {}).filter((entry) => entry.visible !== false);
+  const visibleNames = new Set([...visibleCharacters, ...visibleFactions].map((entry) => `${entry.name}:`));
+
+  return {
+    schemaVersion: 1,
+    generatedAtTurn: worldState?.turnCount || 0,
+    contacts: visibleCharacters.map((entry) => toEntry(entry, "character")),
+    factions: visibleFactions.map((entry) => toEntry(entry, "faction")),
+    recentNotes: (ledger.recentNotes || []).filter((note) =>
+      [...visibleNames].some((prefix) => typeof note === "string" && note.startsWith(prefix))
+    ),
+    hiddenNotice: [...Object.values(ledger.characters || {}), ...Object.values(ledger.factions || {})].some((entry) => entry.visible === false)
+      ? "Some relationships remain outside the player's current knowledge."
+      : ""
+  };
+}
+
+function getRelationshipView(worldState, relationshipView) {
+  if (relationshipView && Array.isArray(relationshipView.contacts) && Array.isArray(relationshipView.factions)) {
+    return relationshipView;
+  }
+  return buildFallbackRelationshipView(worldState);
 }
 
 function setStatus(worldState) {
@@ -225,6 +401,92 @@ function renderActionHints(role) {
     stepList.appendChild(li);
   });
   return stepList;
+}
+
+function createRelationshipMeta(label, value, className) {
+  const item = document.createElement("p");
+  if (className) item.className = className;
+  const kicker = document.createElement("span");
+  kicker.className = "relationship-kicker";
+  kicker.textContent = label;
+  const text = document.createElement("span");
+  text.textContent = value || "未明";
+  item.append(kicker, text);
+  return item;
+}
+
+function createRelationshipContact(entry) {
+  const card = document.createElement("article");
+  card.className = "relationship-contact";
+  card.dataset.contactType = entry.type;
+  card.dataset.contactId = entry.id;
+  card.dataset.relationship = String(entry.relationship ?? 0);
+  card.dataset.resentment = String(entry.resentment ?? 0);
+
+  const header = document.createElement("header");
+  const title = document.createElement("strong");
+  title.textContent = localizeContactName(entry);
+  const type = document.createElement("span");
+  type.textContent = entry.type === "character" ? "人物" : "派系";
+  header.append(title, type);
+
+  const role = entry.type === "character" && entry.role
+    ? createRelationshipMeta("身份", entry.role, "relationship-role")
+    : null;
+  const score = createRelationshipMeta(
+    "关系",
+    `${entry.relationship ?? 0} · ${localizeRelationshipLabel(entry.relationshipLabel)}`,
+    "relationship-score"
+  );
+  const resentment = createRelationshipMeta(
+    "怨望",
+    `${entry.resentment ?? 0} · ${localizeResentmentLabel(entry.resentmentLabel)}`,
+    "relationship-resentment"
+  );
+  const stance = createRelationshipMeta("立场", localizeStance(entry.stance), "relationship-stance");
+  const source = createRelationshipMeta("来源", localizeNetworkSource(entry.networkSource), "relationship-source");
+  const intent = createRelationshipMeta("意图", localizeRecentIntent(entry.recentIntent), "relationship-intent");
+  const updated = createRelationshipMeta("近更", `第${entry.lastUpdatedTurn ?? 0}回`, "relationship-updated");
+
+  card.append(header);
+  if (role) card.append(role);
+  card.append(score, resentment, stance, source, intent, updated);
+  return card;
+}
+
+function renderRelationshipPanel(relationshipView = currentRelationshipView) {
+  const entries = [
+    ...(relationshipView?.contacts || []),
+    ...(relationshipView?.factions || [])
+  ];
+  const panel = document.createElement("section");
+  panel.id = "relationship-panel";
+  panel.className = "relationship-panel";
+
+  const header = document.createElement("header");
+  const title = document.createElement("strong");
+  title.textContent = "人脉簿";
+  const summary = document.createElement("span");
+  summary.textContent = `${entries.length} 条可见关系${relationshipView?.hiddenNotice ? " · 另有未明" : ""}`;
+  header.append(title, summary);
+  panel.appendChild(header);
+
+  if (!entries.length) {
+    const empty = document.createElement("p");
+    empty.className = "relationship-empty";
+    empty.textContent = "尚无可查关系";
+    panel.appendChild(empty);
+    return panel;
+  }
+
+  const grid = document.createElement("div");
+  grid.className = "relationship-grid";
+  entries.forEach((entry) => {
+    grid.appendChild(createRelationshipContact(entry));
+  });
+  panel.appendChild(grid);
+
+  return panel;
 }
 
 function renderRolePanel(worldState) {
@@ -330,7 +592,7 @@ function renderRolePanel(worldState) {
     );
   }
 
-  scholarPanel.append(overview, renderActionHints(player.role), stats, lists);
+  scholarPanel.append(overview, renderActionHints(player.role), stats, lists, renderRelationshipPanel());
 }
 
 function renderScholarPanel(worldState) {
@@ -406,11 +668,12 @@ function renderScholarPanel(worldState) {
     createPanelValue("人脉", (player.connections || []).join("、") || "尚无记录", "p")
   );
 
-  scholarPanel.append(progressBlock, stepList, stats, lists);
+  scholarPanel.append(progressBlock, stepList, stats, lists, renderRelationshipPanel());
 }
 
-function renderWorldState(worldState) {
+function renderWorldState(worldState, relationshipView) {
   currentWorldState = worldState;
+  currentRelationshipView = getRelationshipView(worldState, relationshipView);
   setStatus(worldState);
   renderScholarPanel(worldState);
   actionInput.placeholder = ACTION_PLACEHOLDERS[worldState.player.role] || "输入你的行动";
@@ -1001,7 +1264,7 @@ async function openExamQuestion(level) {
     }
 
     const payload = await response.json();
-    renderWorldState(payload.worldState);
+    renderWorldState(payload.worldState, payload.relationshipView);
     renderExamModal(payload);
   } catch (error) {
     appendNarrative(error.message, "error");
@@ -1039,7 +1302,7 @@ async function submitExamEssay() {
     }
 
     const payload = await response.json();
-    renderWorldState(payload.worldState);
+    renderWorldState(payload.worldState, payload.relationshipView);
     renderExamResult(payload);
     appendNarrative(
       `[放榜] ${payload.examName}得${payload.score.overall_score}分，${describePromotionOutcome(payload.promotionResult)}。`,
@@ -1125,7 +1388,7 @@ async function handleTurnPayload(payload) {
   appendAttributeChanges(payload.attributeChanges);
   appendRelationshipChanges(payload.relationshipChanges);
   appendWorldTickFeedback(payload.worldTick);
-  renderWorldState(payload.worldState);
+  renderWorldState(payload.worldState, payload.relationshipView);
   actionInput.value = "";
 
   if (payload.examTrigger && payload.examTrigger.shouldStart) {
@@ -1244,7 +1507,7 @@ form.addEventListener("submit", async (event) => {
     const payload = await response.json();
     currentSessionId = payload.sessionId;
     localStorage.setItem("qianqiu.sessionId", payload.sessionId);
-    renderWorldState(payload.worldState);
+    renderWorldState(payload.worldState, payload.relationshipView);
     narrative.innerHTML = "";
     appendNarrative(payload.narrative);
     showGameView();
@@ -1269,7 +1532,7 @@ async function restoreSession() {
     }
     const payload = await response.json();
     currentSessionId = payload.sessionId;
-    renderWorldState(payload.worldState);
+    renderWorldState(payload.worldState, payload.relationshipView);
     narrative.innerHTML = "";
     const history = payload.worldState.eventHistory || [];
     if (history.length) {

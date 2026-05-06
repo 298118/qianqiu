@@ -357,6 +357,12 @@ function getGameLayoutFailures(metrics, mode = "game") {
     );
   }
 
+  if (metrics.relationshipClientWidth > 0 && metrics.relationshipScrollWidth > metrics.relationshipClientWidth + horizontalClipTolerance) {
+    failures.push(
+      `${mode} relationship panel has horizontal scroll overflow (${roundMetric(metrics.relationshipScrollWidth)}px > ${roundMetric(metrics.relationshipClientWidth)}px).`
+    );
+  }
+
   if (metrics.scholarLeft < metrics.gameLeft - horizontalClipTolerance) {
     failures.push(`${mode} role panel starts outside the game panel.`);
   }
@@ -385,6 +391,7 @@ async function readGameLayoutMetrics(page) {
     const app = box(".app-shell");
     const game = box(".game-panel");
     const scholar = box("#scholar-panel");
+    const relationship = box("#relationship-panel");
 
     return {
       appWidth: app?.width || 0,
@@ -399,9 +406,112 @@ async function readGameLayoutMetrics(page) {
       scholarRight: scholar?.right || 0,
       scholarScrollWidth: scholar?.scrollWidth || 0,
       scholarWidth: scholar?.width || 0,
+      relationshipClientWidth: relationship?.clientWidth || 0,
+      relationshipScrollWidth: relationship?.scrollWidth || 0,
+      relationshipWidth: relationship?.width || 0,
       viewportWidth: window.innerWidth
     };
   });
+}
+
+function getMissingRelationshipEntries(actualIds = [], expectedIds = []) {
+  const available = new Set(actualIds);
+  return expectedIds.filter((id) => !available.has(id));
+}
+
+function getHiddenRelationshipLeaks(actualIds = [], hiddenIds = []) {
+  const available = new Set(actualIds);
+  return hiddenIds.filter((id) => available.has(id));
+}
+
+async function assertRelationshipPanel(page, mode, expectations = {}) {
+  await visibleBox(page, "#relationship-panel", `${mode} relationship panel`);
+
+  const snapshot = await page.evaluate(() => {
+    const panel = document.querySelector("#relationship-panel");
+    const contacts = [...document.querySelectorAll("#relationship-panel .relationship-contact")];
+    return {
+      contactIds: contacts.map((contact) => contact.dataset.contactId),
+      contactTypes: contacts.map((contact) => contact.dataset.contactType),
+      relationshipScores: document.querySelectorAll("#relationship-panel .relationship-score").length,
+      resentmentScores: document.querySelectorAll("#relationship-panel .relationship-resentment").length,
+      stances: document.querySelectorAll("#relationship-panel .relationship-stance").length,
+      intents: document.querySelectorAll("#relationship-panel .relationship-intent").length,
+      sources: document.querySelectorAll("#relationship-panel .relationship-source").length,
+      updated: document.querySelectorAll("#relationship-panel .relationship-updated").length,
+      text: panel?.innerText || ""
+    };
+  });
+
+  if (!snapshot.contactIds.length) {
+    failUiAcceptance(`${mode} relationship panel did not render any visible contacts.`);
+  }
+
+  const missing = getMissingRelationshipEntries(snapshot.contactIds, expectations.expectedIds || []);
+  if (missing.length) {
+    failUiAcceptance(`${mode} relationship panel is missing expected entries: ${missing.join(", ")}.`);
+  }
+
+  const hiddenLeaks = getHiddenRelationshipLeaks(snapshot.contactIds, expectations.hiddenIds || []);
+  if (hiddenLeaks.length) {
+    failUiAcceptance(`${mode} relationship panel rendered hidden entries: ${hiddenLeaks.join(", ")}.`);
+  }
+
+  for (const token of expectations.hiddenTextTokens || []) {
+    if (snapshot.text.includes(token)) {
+      failUiAcceptance(`${mode} relationship panel leaked hidden text token: ${token}.`);
+    }
+  }
+
+  const fieldCounts = [
+    ["relationship scores", snapshot.relationshipScores],
+    ["resentment scores", snapshot.resentmentScores],
+    ["stances", snapshot.stances],
+    ["intents", snapshot.intents],
+    ["sources", snapshot.sources],
+    ["updated turns", snapshot.updated]
+  ];
+  for (const [label, count] of fieldCounts) {
+    if (count < snapshot.contactIds.length) {
+      failUiAcceptance(`${mode} relationship panel has ${count} ${label} for ${snapshot.contactIds.length} contacts.`);
+    }
+  }
+
+  if (expectations.expectedTypes) {
+    for (const type of expectations.expectedTypes) {
+      if (!snapshot.contactTypes.includes(type)) {
+        failUiAcceptance(`${mode} relationship panel is missing contact type: ${type}.`);
+      }
+    }
+  }
+
+  const layoutFailures = getGameLayoutFailures(await readGameLayoutMetrics(page), `${mode} relationship`);
+  if (layoutFailures.length) {
+    failUiAcceptance(layoutFailures.join(" "));
+  }
+
+  return snapshot;
+}
+
+async function runRelationshipTurnAcceptance(page) {
+  const beforeRelationship = await page.locator(
+    '#relationship-panel .relationship-contact[data-contact-type="character"][data-contact-id="C01"]'
+  ).getAttribute("data-relationship");
+
+  await page.locator("#action-input").fill("研读经书，向塾师请益");
+  await page.locator("#action-btn").click();
+  await page.waitForFunction(() => {
+    const button = document.querySelector("#action-btn");
+    return button && !button.disabled;
+  }, null, { timeout: 15000 });
+  await page.locator(".relationship-change").first().waitFor({ state: "visible", timeout: 10000 });
+
+  const afterRelationship = await page.locator(
+    '#relationship-panel .relationship-contact[data-contact-type="character"][data-contact-id="C01"]'
+  ).getAttribute("data-relationship");
+  if (Number(afterRelationship) <= Number(beforeRelationship)) {
+    failUiAcceptance(`relationship panel did not update mentor relationship after a Mock turn (${beforeRelationship} -> ${afterRelationship}).`);
+  }
 }
 
 async function assertGameLayout(page, mode) {
@@ -586,6 +696,12 @@ async function runMobileUiAcceptance(page, recorder) {
   await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
   await page.waitForTimeout(100);
   await assertGameLayout(page, "mobile");
+  await assertRelationshipPanel(page, "mobile scholar", {
+    expectedIds: ["C01", "scholarOfficials"],
+    expectedTypes: ["character", "faction"],
+    hiddenIds: ["eunuchs", "militaryLords"],
+    hiddenTextTokens: ["Eunuch faction", "Military faction"]
+  });
   await recorder.capture(page, "mobile-game-layout");
 
   await page.locator("#scholar-panel .archive-action").first().click();
@@ -625,6 +741,10 @@ async function runOfficialStartAcceptance(browser, { baseUrl, onSessionId, pageE
     if (!rolePanelText.includes("入仕官员") || !rolePanelText.includes("候选观政")) {
       throw new Error("Official start did not render the official role panel.");
     }
+    await assertRelationshipPanel(page, "official start", {
+      expectedIds: ["C01", "eunuchs", "scholarOfficials", "militaryLords"],
+      expectedTypes: ["character", "faction"]
+    });
 
     const actionPlaceholder = await page.locator("#action-input").getAttribute("placeholder");
     if (!actionPlaceholder || !actionPlaceholder.includes("奉上官")) {
@@ -692,6 +812,19 @@ async function runBrowserJourney({
     onSessionId(sessionId);
 
     await assertGameLayout(page, "desktop");
+    await assertRelationshipPanel(page, "desktop scholar", {
+      expectedIds: ["C01", "scholarOfficials"],
+      expectedTypes: ["character", "faction"],
+      hiddenIds: ["eunuchs", "militaryLords"],
+      hiddenTextTokens: ["Eunuch faction", "Military faction"]
+    });
+    await runRelationshipTurnAcceptance(page);
+    await assertRelationshipPanel(page, "desktop scholar after turn", {
+      expectedIds: ["C01", "scholarOfficials"],
+      expectedTypes: ["character", "faction"],
+      hiddenIds: ["eunuchs", "militaryLords"],
+      hiddenTextTokens: ["Eunuch faction", "Military faction"]
+    });
     await recorder.capture(page, "desktop-game-layout");
     await runExamUiAcceptance(page, recorder);
 
@@ -699,6 +832,12 @@ async function runBrowserJourney({
     await page.locator("#action-area").waitFor({ state: "visible", timeout: 10000 });
     await page.locator("#scholar-panel").waitFor({ state: "visible", timeout: 10000 });
     await assertGameLayout(page, "desktop restored");
+    await assertRelationshipPanel(page, "desktop restored scholar", {
+      expectedIds: ["C01", "scholarOfficials"],
+      expectedTypes: ["character", "faction"],
+      hiddenIds: ["eunuchs", "militaryLords"],
+      hiddenTextTokens: ["Eunuch faction", "Military faction"]
+    });
 
     const restoredId = await page.evaluate(() => window.localStorage.getItem("qianqiu.sessionId"));
     if (restoredId !== sessionId) {
@@ -711,6 +850,12 @@ async function runBrowserJourney({
     await freshPage.locator("#action-area").waitFor({ state: "visible", timeout: 10000 });
     await freshPage.locator("#scholar-panel").waitFor({ state: "visible", timeout: 10000 });
     await assertGameLayout(freshPage, "fresh page desktop");
+    await assertRelationshipPanel(freshPage, "fresh page desktop scholar", {
+      expectedIds: ["C01", "scholarOfficials"],
+      expectedTypes: ["character", "faction"],
+      hiddenIds: ["eunuchs", "militaryLords"],
+      hiddenTextTokens: ["Eunuch faction", "Military faction"]
+    });
     const freshPageId = await freshPage.evaluate(() => window.localStorage.getItem("qianqiu.sessionId"));
     if (freshPageId !== sessionId) {
       throw new Error(`Fresh page localStorage session mismatch: expected ${sessionId}, got ${freshPageId}`);
@@ -834,6 +979,8 @@ module.exports = {
   createScreenshotRecorder,
   getDefaultBrowserCandidates,
   getGameLayoutFailures,
+  getHiddenRelationshipLeaks,
+  getMissingRelationshipEntries,
   getMissingStartRoles,
   normalizeBaseUrl,
   parseBrowserSmokeArgs,

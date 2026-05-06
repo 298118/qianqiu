@@ -45,7 +45,7 @@ Important route ownership:
 - `src/game/essayChecks.js` owns local anti-cheat checks and score penalties.
 - `src/game/candidates.js` owns virtual same-field candidates, inspectable candidate essay profiles, and ranking.
 - `src/game/examTravel.js` owns server-side exam entry preparation costs, travel events, and funded/shortfall effects.
-- `src/game/relationships.js` owns NPC/faction relationship ledger creation, normalization, legacy backfill, compact prompt summaries, and the S32.1 player-facing relationship inspection view.
+- `src/game/relationships.js` owns NPC/faction relationship ledger creation, normalization, legacy backfill, compact prompt summaries, and the S32.1/S32.2 player-facing relationship inspection view.
 
 ## API Contract
 
@@ -228,9 +228,9 @@ npm run smoke:browser -- --screenshots artifacts/browser-smoke
 
 The script uses `playwright-core` with an installed Chrome or Edge executable. It resolves `BROWSER_EXECUTABLE_PATH`, `--browser <path>`, or common platform install paths. Without `--url`, it starts `server.js` in Mock mode on a free local port, verifies the page loads, creates a scholar game through the real form, checks that `localStorage["qianqiu.sessionId"]` is written, reloads the page, opens a fresh page to confirm the saved session restores into the game view, verifies the session is readable through `GET /api/game/state/:sessionId`, and then removes the smoke session JSON file.
 
-S26.2 extends the same journey with DOM and screenshot-level UI acceptance. It asserts desktop and mobile layout boundaries for the status strip, role panel, narrative, and action input surface; opens the exam modal through the scholar panel; submits a Mock-mode essay; checks the result detail sections, ranking, candidate essay profiles, and historical exam archive; and captures PNG screenshots for each representative state. Screenshots are validated in memory by default and can be saved with `--screenshots <dir>`. Browser smoke stays separate from `npm test` so normal automated tests do not require a local GUI browser.
+S26.2 extends the same journey with DOM and screenshot-level UI acceptance. It asserts desktop and mobile layout boundaries for the status strip, role panel, narrative, and action input surface; opens the exam modal through the scholar panel; submits a Mock-mode essay; checks the result detail sections, ranking, candidate essay profiles, and historical exam archive; and captures PNG screenshots for each representative state. S32.2 additionally verifies the relationship panel: visible contact/faction rows, hidden-entry non-leakage, a Mock scholar relationship update, direct official-start faction visibility, and relationship-panel horizontal overflow. Screenshots are validated in memory by default and can be saved with `--screenshots <dir>`. Browser smoke stays separate from `npm test` so normal automated tests do not require a local GUI browser.
 
-`docs/BROWSER_ACCEPTANCE.md` is the durable browser acceptance record. It lists the automated coverage, the latest verified S26.2 result, screenshot artifact policy, and the manual fallback areas that remain intentionally human-checked.
+`docs/BROWSER_ACCEPTANCE.md` is the durable browser acceptance record. It lists the automated coverage, the latest verified S32.2 result, screenshot artifact policy, and the manual fallback areas that remain intentionally human-checked.
 
 ## State Model
 
@@ -280,6 +280,8 @@ S22.2 adds the controlled relationship-suggestion path and prompt summary. Turn 
 S22.3 makes Mock produce concrete relationship suggestions after it classifies the resolved action from its own `statePatch` and `examTrigger`. S23.1 extends that Mock reaction path to magistrate actions, S23.2 extends it to general actions, and S23.3 deepens the official reactions around superiors, peers, clean-name standing, impeachment and informal brokerage. The suggestions still target only visible ledger entries and still pass through `applyRelationshipChanges()` in the route before persistence. The browser appends concise `[人脉]` lines for applied changes.
 
 S32.1 adds `buildRelationshipInspectionView(worldState)` and top-level `relationshipView` payloads for game start, game state reads, game turns, exam questions, and exam submissions. This view is the supported browser contract for contact and faction inspection: it includes visible contacts and factions, readable relationship and resentment bands, stance, source, recent intent, and last-updated turn, while omitting hidden ids, names, counts, placeholders, and hidden-entry notes.
+
+S32.2 renders that contract in `public/app.js` as the `#relationship-panel` inside the scholar/role panel. The browser UI should consume top-level `relationshipView` for player-facing contact inspection; the raw `worldState.relationshipLedger` is only a compatibility/developer-inspection fallback. Relationship contact cards expose stable `data-contact-type`, `data-contact-id`, `data-relationship`, and `data-resentment` attributes for browser acceptance while localizing default faction names, stance, source, and recent intent strings for display.
 
 ## Official Role Loop
 
