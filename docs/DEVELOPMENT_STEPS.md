@@ -27,7 +27,8 @@
 3. 更新 `docs/SHARED_CONTEXT.md`，让另一个工具能直接接手。
 4. 如果改动影响产品范围、架构、API、状态字段、提示词、设置或验收标准，同步更新 `docs/QIANQIU_DEVELOPMENT_BRIEF.md`、README 或相关架构文档。
 5. 运行相关验证命令。
-6. 用 Git 提交本次 coherent change。
+6. 对包含代码、测试、运行时行为、API/schema、提示词或验证工具变化的改动，在暂存和提交前至少委派一个只读子代理审查最终 diff 与验证结果；主代理必须在审查提示词中提供最终 diff 和验证摘要。纯文档低风险改动可以跳过，但要记录原因。
+7. 用 Git 提交本次 coherent change。
 
 子代理使用规则不变：
 
@@ -35,6 +36,7 @@
 - 推荐委派粒度是独立小步骤或文件职责清晰的子步骤，例如一个子代理评估关系 UI 合约，另一个子代理评估浏览器 smoke 覆盖。
 - 主代理仍负责拆分方式、审查所有 diff、补齐跨模块文档、运行最终验证、更新本台账与共享上下文，并做唯一 coherent Git 提交。
 - 每个实现型子代理提示词都必须禁止 `git add`、`git commit`、`git push` 和创建 PR，必须要求报告改动文件与 focused verification 命令。
+- 提交前审查子代理必须只读，只基于主代理提供的 diff 与验证摘要报告风险、遗漏、测试缺口和建议；不得编辑文件、暂存、提交、推送、创建 PR 或运行 Git 命令。
 
 状态值：
 
@@ -171,6 +173,27 @@
 ```
 
 ### 2026-05-06
+
+Tool: Codex
+
+Step: Workflow rule update
+
+Commit: current documentation commit
+
+Completed:
+- Added the user-requested pre-commit subagent review gate to `AGENTS.md`, `CLAUDE.md`, `docs/QIANQIU_DEVELOPMENT_BRIEF.md`, this active ledger, and `docs/SHARED_CONTEXT.md`.
+- The gate applies before staging or committing coherent changes that include code, tests, runtime behavior, API/schema changes, prompts, or verification tooling.
+- Review subagents must be read-only and work from the main agent's provided diff and verification summary; they must not edit files, stage, commit, push, create PRs, or run Git commands.
+- Pure documentation-only changes may skip the gate only when low risk, and the skip must be noted in the handoff or final response.
+
+Verification:
+- Documentation-only workflow update; verified with `git diff --check`.
+
+Risk/leftover:
+- Future agents must still use judgment on low-risk documentation-only skips, but code-affecting commits now have a default review gate.
+
+Next:
+- S35.1 remains the next roadmap implementation step.
 
 Tool: Codex
 
