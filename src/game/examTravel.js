@@ -56,7 +56,7 @@ function buildPlayerPatch(player, effects, paid) {
   return patch;
 }
 
-function createEntryPreparation(worldState, exam) {
+function createEntryPreparation(worldState, exam, examCalendar = null) {
   const player = worldState.player || {};
   const plan = getTravelPlan(exam.level);
   const availableGold = Math.max(0, player.gold || 0);
@@ -72,11 +72,13 @@ function createEntryPreparation(worldState, exam) {
     shortfall,
     fullyFunded,
     distance: plan.distance,
+    travelMonths: examCalendar?.travelMonths ?? 0,
     event: plan.event,
     effects,
     appliedAtTurn: worldState.turnCount || 0,
     appliedAtYear: worldState.year,
-    appliedAtMonth: worldState.month
+    appliedAtMonth: worldState.month,
+    examCalendar: examCalendar || null
   };
   const fundingText = fullyFunded
     ? `盘费已足，支出${paidGold}/${requiredGold}两`
@@ -93,5 +95,6 @@ function createEntryPreparation(worldState, exam) {
 
 module.exports = {
   createEntryPreparation,
+  getTravelPlan,
   TRAVEL_PLANS
 };

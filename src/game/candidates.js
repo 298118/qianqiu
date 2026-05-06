@@ -134,20 +134,30 @@ function createExaminerComment(score, style, exam) {
   return `此卷${style.label}，语意散弱，未合本场取中尺度。`;
 }
 
-function generateVirtualCandidates(worldState, exam, playerScore) {
-  const count = randomBetween(4, 8);
+function resolveStyle(seed, index, turnCount) {
+  if (seed?.style) {
+    const existing = STYLE_PROFILES.find((style) => style.label === seed.style || style.key === seed.style);
+    if (existing) return existing;
+  }
+  return STYLE_PROFILES[(index + turnCount) % STYLE_PROFILES.length];
+}
+
+function generateVirtualCandidates(worldState, exam, playerScore, options = {}) {
+  const persistentCandidates = Array.isArray(options.persistentCandidates) ? options.persistentCandidates : [];
+  const count = Math.max(randomBetween(4, 8), persistentCandidates.length);
   const center = getExamCenter(exam);
   const competitiveness = Math.max(center, Math.min(86, playerScore + randomBetween(-8, 8)));
   const turnCount = worldState.turnCount || 0;
 
   return Array.from({ length: count }, (_, index) => {
     const score = clampScore(competitiveness + randomBetween(-16, 15) + index - Math.floor(count / 2));
-    const style = STYLE_PROFILES[(index + turnCount) % STYLE_PROFILES.length];
+    const seed = persistentCandidates[index] || null;
+    const style = resolveStyle(seed, index, turnCount);
     const candidate = {
-      id: `candidate-${index + 1}`,
-      name: `${FAMILY_NAMES[index % FAMILY_NAMES.length]}${GIVEN_NAMES[index % GIVEN_NAMES.length]}`,
-      origin: ORIGINS[index % ORIGINS.length],
-      background: BACKGROUNDS[(index + turnCount) % BACKGROUNDS.length]
+      id: seed?.id || `candidate-${index + 1}`,
+      name: seed?.name || `${FAMILY_NAMES[index % FAMILY_NAMES.length]}${GIVEN_NAMES[index % GIVEN_NAMES.length]}`,
+      origin: seed?.origin || ORIGINS[index % ORIGINS.length],
+      background: seed?.background || BACKGROUNDS[(index + turnCount) % BACKGROUNDS.length]
     };
     const essay = createCandidateEssay({ candidate, exam, index, score, style });
 
@@ -159,6 +169,10 @@ function generateVirtualCandidates(worldState, exam, playerScore) {
       },
       essay,
       style: style.label,
+      persistent: Boolean(seed),
+      rivalStatus: seed?.relationship || null,
+      previousAttempts: seed?.previousAttempts || 0,
+      contactId: seed?.contactId || null,
       examinerComment: createExaminerComment(score, style, exam),
       strengths: [style.strength, score >= exam.passScore ? "切合本场题旨" : "尚有可观句法"],
       weaknesses: [style.weakness, score >= exam.passScore ? "细处仍可锤炼" : "论证未能展开"]
@@ -183,6 +197,10 @@ function buildRanking(playerEntry, candidates) {
       rank: entry.score.rank,
       isPlayer: Boolean(entry.isPlayer),
       style: entry.style || null,
+      persistent: Boolean(entry.persistent),
+      rivalStatus: entry.rivalStatus || null,
+      previousAttempts: entry.previousAttempts || 0,
+      contactId: entry.contactId || null,
       essayTitle: entry.essay?.title || null,
       essayExcerpt: entry.essay?.excerpt || null,
       examinerComment: entry.examinerComment || null,

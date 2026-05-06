@@ -15,6 +15,7 @@ test("applyStatePatch applies only whitelisted fields and clamps numeric ranges"
     year: 2000,
     month: 12,
     activeExam: { level: "child_exam" },
+    examCalendar: { rivals: [{ id: "provider-rival" }] },
     activeNpcRequest: { id: "provider-request" },
     longTermEvents: { queue: [{ key: "provider-event" }] },
     officialCareer: { careerHistory: [{ type: "promotion", label: "forged" }] },
@@ -41,6 +42,7 @@ test("applyStatePatch applies only whitelisted fields and clamps numeric ranges"
   assert.equal(worldState.year, 1644);
   assert.equal(worldState.month, 1);
   assert.equal(worldState.activeExam, null);
+  assert.deepEqual(worldState.examCalendar.rivals, []);
   assert.equal(worldState.activeNpcRequest, null);
   assert.deepEqual(worldState.longTermEvents.queue, []);
   assert.deepEqual(worldState.officialCareer.careerHistory, []);
@@ -63,6 +65,7 @@ test("applyStatePatch applies only whitelisted fields and clamps numeric ranges"
 test("ordinary state patches preserve server-owned exam and narrative fields", () => {
   const worldState = createInitialState({ playerName: "Tester" });
   worldState.activeExam = { level: "child_exam", reason: "server-created" };
+  worldState.examCalendar.rivals = [{ id: "server-rival" }];
   worldState.characters = [{ id: "C01", name: "Original mentor", role: "teacher" }];
   worldState.eventHistory = ["existing history"];
   worldState.player.examRank = "server-rank";
@@ -70,6 +73,7 @@ test("ordinary state patches preserve server-owned exam and narrative fields", (
 
   applyStatePatch(worldState, {
     activeExam: null,
+    examCalendar: { rivals: [{ id: "model-rival" }] },
     characters: [{ id: "C99", name: "Invented patron", role: "patron" }],
     eventHistory: ["provider replacement"],
     publicOrder: 65,
@@ -81,6 +85,7 @@ test("ordinary state patches preserve server-owned exam and narrative fields", (
   });
 
   assert.deepEqual(worldState.activeExam, { level: "child_exam", reason: "server-created" });
+  assert.deepEqual(worldState.examCalendar.rivals, [{ id: "server-rival" }]);
   assert.deepEqual(worldState.characters, [{ id: "C01", name: "Original mentor", role: "teacher" }]);
   assert.deepEqual(worldState.eventHistory, ["existing history"]);
   assert.equal(worldState.player.examRank, "server-rank");
@@ -97,6 +102,7 @@ test("applyStatePatch can apply server follow-up patches without incrementing tu
     year: -50,
     month: 99,
     activeExam: { level: "child_exam", status: "writing" },
+    examCalendar: { schemaVersion: 1, rivals: [{ id: "server-rival" }] },
     officialCareer: { schemaVersion: 1, careerHistory: [{ type: "retention", label: "留任" }] },
     eventHistory: Array.from({ length: MAX_EVENT_HISTORY + 1 }, (_, index) => `server-event-${index}`),
     publicOrder: 80
@@ -105,6 +111,7 @@ test("applyStatePatch can apply server follow-up patches without incrementing tu
   assert.equal(worldState.year, 1);
   assert.equal(worldState.month, 12);
   assert.equal(worldState.activeExam.level, "child_exam");
+  assert.equal(worldState.examCalendar.rivals[0].id, "server-rival");
   assert.equal(worldState.officialCareer.careerHistory[0].label, "留任");
   assert.equal(worldState.eventHistory.length, MAX_EVENT_HISTORY);
   assert.equal(worldState.eventHistory[0], "server-event-1");

@@ -27,8 +27,10 @@ The smoke uses `playwright-core` with an installed Chrome or Edge executable. If
 | Relationship panel | Checks visible contact/faction rows from `relationshipView`, field completeness, hidden id/text non-leakage, relationship-panel overflow, and a Mock scholar turn updating the mentor relationship. |
 | Active request panel | Checks the server-scheduled `activeNpcRequestView` panel, target id/type/kind/status attributes, required ask/stakes/due/hint fields, hidden target/text non-leakage, and active-request overflow. |
 | Official career panel | Checks direct official start, the server-owned `officialCareerView` panel, deterministic first appointment, current outcome fields, stable `data-outcome-*` attributes, and official-career overflow. |
-| Exam modal | Opens the next exam from the scholar panel, verifies question/requirements/writing controls, fills an essay, and submits it. |
-| Result details | Checks score summary, player archive, result sections, highlighted ranking row, and inspectable same-field candidate essays. |
+| Exam calendar panel | Checks the server-owned `examCalendarView` panel, next-level/status attributes, timing/funding/recommendation/quota details, and calendar-panel overflow. |
+| Exam rival panel | Checks persistent `examRivalView` cards after an exam, stable rival/status/level attributes, latest-result rows, and rival-panel overflow. |
+| Exam modal | Opens the next exam from the scholar panel, verifies question/requirements/writing controls, checks calendar timing details in the requirements, fills an essay, and submits it. |
+| Result details | Checks score summary, player archive, calendar archive details, result sections, highlighted ranking row, inspectable same-field candidate essays, and persistent rival notes. |
 | Mobile layout | Switches to a mobile viewport, checks the game/action surface, opens the exam archive, and verifies responsive result details. |
 | Direct official start | Opens an isolated browser context, starts as `official`, checks the official role panel/action placeholder, verifies all expected visible relationship factions are present, verifies the API-persisted role, then runs one official turn to verify first appointment. |
 | Screenshots | Captures representative desktop and mobile states and validates each capture as a non-empty PNG. |
@@ -38,32 +40,38 @@ The smoke uses `playwright-core` with an installed Chrome or Edge executable. If
 
 Date: 2026-05-06
 
-Relevant implementation commit: current S34 implementation commit (`Implement official career outcome engine`)
+Relevant implementation commit: current S35 implementation commit (`Implement S35 exam calendar and persistent rivals`)
 
-Commands verified during S34:
+Commands verified during S35:
 
 ```powershell
-node --check src\game\officialCareer.js
+node --check src\game\examCalendar.js
+node --check src\game\candidates.js
+node --check src\game\examTravel.js
 node --check src\routes\game.js
 node --check src\routes\exam.js
 node --check public\app.js
 node --check scripts\browserSmoke.js
-node --check test\officialCareer.test.js
-node --check test\gameTurnOfficialCareer.test.js
+node --check test\examCalendar.test.js
+node --check test\examTravel.test.js
+node --check test\gameTurnTick.test.js
+node --check test\stateRules.test.js
 node --check test\browserSmokeScript.test.js
-node --test test\officialCareer.test.js test\gameTurnOfficialCareer.test.js test\officialRole.test.js
+node --test test\examCalendar.test.js test\examTravel.test.js test\gameTurnTick.test.js test\stateRules.test.js test\browserSmokeScript.test.js
 npm run eval:ai
 npm test
-npm run smoke:browser -- --screenshots artifacts/browser-smoke/s34
+npm run smoke:provider
+npm run smoke:browser -- --screenshots artifacts/browser-smoke/s35
 git diff --check
 ```
 
 Observed result:
 
-- Focused official-career, route, official-role, and browser-helper tests passed.
-- `npm run smoke:browser -- --screenshots artifacts/browser-smoke/s34`: passed with relationship-panel coverage, active-request-panel coverage, direct official-start relationship visibility, deterministic official first-appointment coverage, and 6 screenshots checked.
-- `npm test`: 129 tests passed.
-- Desktop smoke still fails if the game panel regresses to the old narrow-column width, if the role panel, relationship panel, active-request panel, or official-career panel is horizontally clipped, if any supported start role is missing from the browser form, or if hidden scholar-invisible factions leak into relationship/active-request panel text.
+- Focused S35 calendar/rival, exam-travel, game-turn tick, state-boundary, and browser-helper tests passed with 38 tests.
+- `npm run smoke:browser -- --screenshots artifacts/browser-smoke/s35`: passed with relationship-panel coverage, active-request-panel coverage, exam-calendar/rival-panel coverage, direct official-start relationship visibility, deterministic official first-appointment coverage, and 6 screenshots checked.
+- `npm test`: 136 tests passed.
+- `npm run smoke:provider`: skipped successfully because no real-provider keys are configured.
+- Desktop smoke still fails if the game panel regresses to the old narrow-column width, if the role panel, relationship panel, active-request panel, official-career panel, exam-calendar panel, or exam-rival panel is horizontally clipped, if S35 calendar/rival details disappear from the modal/archive/candidate profiles, if any supported start role is missing from the browser form, or if hidden scholar-invisible factions leak into relationship/active-request panel text.
 
 Earlier S26.2 screenshot review caught and fixed a real result-modal bug: `.exam-requirements { display: grid; }` overrode the `hidden` attribute and left the old requirements visible behind the result view. The fix is `.exam-requirements[hidden] { display: none; }`.
 

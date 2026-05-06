@@ -14,6 +14,12 @@ const { createFetchSafeServer } = require("../test-helpers/fetchSafeServer");
 
 const sessionsDir = path.join(__dirname, "..", "data", "sessions");
 const PASSING_ESSAY = "govern with rites, study the classics, preserve order, and care for the people. ".repeat(80);
+const OPEN_MONTH_BY_LEVEL = {
+  child_exam: 1,
+  provincial_exam: 8,
+  metropolitan_exam: 2,
+  palace_exam: 4
+};
 
 async function removeSessionFile(sessionId) {
   await fs.rm(path.join(sessionsDir, `${sessionId}.json`), { force: true });
@@ -23,6 +29,9 @@ function createTestServer() {
   const app = express();
   app.use(express.json());
   app.use("/api/exam", examRoutes);
+  app.use((err, req, res, next) => {
+    res.status(err.statusCode || 500).json({ error: err.message });
+  });
 
   return createFetchSafeServer(app);
 }
@@ -52,6 +61,10 @@ function makeReadyScholar(overrides = {}) {
 }
 
 async function completeExam(baseUrl, sessionId, level) {
+  const current = await readSession(sessionId);
+  current.month = OPEN_MONTH_BY_LEVEL[level];
+  await writeSession(current);
+
   const question = await postJson(`${baseUrl}/api/exam/question`, { sessionId, level });
   assert.equal(question.response.status, 201);
   assert.ok(question.payload.entryPreparation);
@@ -73,7 +86,7 @@ test("exam question entry applies funded travel cost without advancing time", as
 
   const worldState = makeReadyScholar({ gold: 50 });
   worldState.year = 1644;
-  worldState.month = 6;
+  worldState.month = 7;
   worldState.turnCount = 7;
   t.after(() => removeSessionFile(worldState.sessionId));
   await writeSession(worldState);
@@ -86,7 +99,7 @@ test("exam question entry applies funded travel cost without advancing time", as
   assert.equal(response.status, 201);
   assert.equal(payload.worldState.turnCount, 7);
   assert.equal(payload.worldState.year, 1644);
-  assert.equal(payload.worldState.month, 6);
+  assert.equal(payload.worldState.month, 7);
   assert.equal(payload.entryPreparation.fullyFunded, true);
   assert.equal(payload.entryPreparation.requiredGold, 2);
   assert.equal(payload.entryPreparation.paidGold, 2);
@@ -129,6 +142,33 @@ test("exam question allows shortfall and converts it into preparation risk", asy
   assert.equal(payload.worldState.player.adaptability, 79);
   assert.equal(payload.worldState.turnCount, 3);
   assert.equal(payload.worldState.month, 9);
+});
+
+test("exam question outside a missed window records the calendar miss without charging travel", async (t) => {
+  const server = createTestServer();
+  t.after(server.close);
+
+  const worldState = makeReadyScholar({
+    examRank: EXAMS.child_exam.promotionRank,
+    gold: 30
+  });
+  worldState.month = 10;
+  t.after(() => removeSessionFile(worldState.sessionId));
+  await writeSession(worldState);
+
+  const { response, payload } = await postJson(`${server.baseUrl}/api/exam/question`, {
+    sessionId: worldState.sessionId,
+    level: "provincial_exam"
+  });
+
+  assert.equal(response.status, 409);
+  assert.match(payload.error, /乡试/);
+
+  const saved = await readSession(worldState.sessionId);
+  assert.equal(saved.player.gold, 30);
+  assert.equal(saved.activeExam, null);
+  assert.equal(saved.examCalendar.missedWindows.length, 1);
+  assert.equal(saved.examCalendar.missedWindows[0].level, "provincial_exam");
 });
 
 test("exam submit preserves entry preparation in exam history", async (t) => {
@@ -182,6 +222,6 @@ test("complete scholar to official path still works with entry preparation costs
   assert.equal(latest.player.examHistory.length, 4);
   assert.equal(latest.turnCount, 2);
   assert.equal(latest.year, 1644);
-  assert.equal(latest.month, 4);
+  assert.equal(latest.month, OPEN_MONTH_BY_LEVEL.palace_exam);
   assert.ok(latest.player.examHistory.every((entry) => entry.entryPreparation));
 });

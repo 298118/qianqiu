@@ -849,3 +849,17 @@ S34 adds a server-owned official career outcome engine while keeping ordinary pr
 - Providers may still affect `superiorFavor`, `peerNetwork`, `performanceMerit`, `promotionProspect`, `impeachmentRisk`, and `cleanReputation`, but they cannot patch `officialCareer`, `officeTitle`, `role`, `roleLabel`, `examRank`, `palaceRank`, or `examHistory` in ordinary turns.
 - The browser renders a compact `官场履历` panel from `officialCareerView` for official players and appends `[官场结算]` narrative feedback after turn settlement.
 - The durable contract is `docs/OFFICIAL_CAREER_CONTRACT.md`; focused coverage lives in `test/officialCareer.test.js`, `test/gameTurnOfficialCareer.test.js`, and browser smoke helper coverage.
+
+## S35 Exam Calendar And Rival Note (2026-05-06)
+
+S35 calendarizes the imperial examination path and turns same-field candidates into persistent social memory while preserving server-owned exam authority:
+
+- `worldState.examCalendar` stores `{ schemaVersion, missedWindows, recentSessions, rivals, nextRivalNumber }`. It is normalized and summarized by `src/game/examCalendar.js`.
+- Game and exam route payloads include top-level `examCalendarView` and `examRivalView`; exam question/submit payloads also include the current `examCalendar` snapshot.
+- `/api/exam/question` still uses `canEnterExam()` first, then checks the current `year/month` against the exam window before charging travel or asking a provider for a question. Existing unanswered exams are reused without rechecking the current month. Free-text `examTrigger` requests preserve an open same-level calendar snapshot before world tick advances the month, so an auto-opened question remains valid when the player asked to enter during the last open month.
+- Closed-window attempts return `409`; missed-window attempts are persisted in `examCalendar.missedWindows` without charging travel or creating `activeExam`.
+- `entryPreparation` now keeps the calendar snapshot with window labels, preparation months, travel months, funding state, teacher recommendation state, and quota notes.
+- Virtual candidates receive stable `rival-*` ids, persist across later exams, record attempt history, and can become visible `同年进士` contacts after palace-exam promotion to official.
+- Providers can read compact exam calendar/rival context in prompts, but ordinary turns cannot patch `examCalendar`, `activeExam`, exam ranks, or exam history.
+- The browser renders `#exam-calendar-panel` and `#exam-rival-panel`, includes calendar details in the writing modal and exam archive, and marks persistent rival notes inside candidate profiles.
+- The durable contract is `docs/EXAM_CALENDAR_CONTRACT.md`; focused coverage lives in `test/examCalendar.test.js`, `test/examTravel.test.js`, `test/gameTurnTick.test.js`, `test/stateRules.test.js`, and browser smoke helper coverage.

@@ -19,6 +19,13 @@ const {
   ensureOfficialCareerState,
   runOfficialCareerStep
 } = require("../game/officialCareer");
+const {
+  buildExamCalendarView,
+  buildExamRivalView,
+  canOpenExamInCalendar,
+  ensureExamCalendarState
+} = require("../game/examCalendar");
+const { getExam } = require("../game/exams");
 const { applyStatePatch, appendEvents } = require("../game/stateRules");
 const { runWorldTick } = require("../game/worldTick");
 const { getProvider } = require("../ai");
@@ -52,6 +59,7 @@ function wantsSse(req) {
 async function processTurn(sessionId, input) {
   const worldState = await readSession(sessionId);
   ensureRelationshipLedger(worldState);
+  ensureExamCalendarState(worldState);
   ensureLongTermEventState(worldState);
   ensureOfficialCareerState(worldState);
   const provider = getProvider();
@@ -62,6 +70,7 @@ async function processTurn(sessionId, input) {
 async function processStreamingTurn(sessionId, input, streamHandlers = {}) {
   const worldState = await readSession(sessionId);
   ensureRelationshipLedger(worldState);
+  ensureExamCalendarState(worldState);
   ensureLongTermEventState(worldState);
   ensureOfficialCareerState(worldState);
   const provider = getProvider();
@@ -82,9 +91,12 @@ async function finalizeTurn(worldState, result, input) {
   const relationshipChanges = applyRelationshipChanges(worldState, result.relationshipChanges);
 
   if (examTrigger.shouldStart) {
+    const triggeredExam = getExam(examTrigger.level);
+    const calendarGate = triggeredExam ? canOpenExamInCalendar(worldState, triggeredExam) : null;
     worldState.activeExam = {
       level: examTrigger.level,
       reason: examTrigger.reason,
+      examCalendar: calendarGate?.ok ? calendarGate.snapshot : null,
       requestedAt: new Date().toISOString()
     };
   }
@@ -117,6 +129,7 @@ async function finalizeTurn(worldState, result, input) {
   appendEvents(worldState, longTermEvents.events);
   appendEvents(worldState, officialCareer.events);
   ensureRelationshipLedger(worldState);
+  ensureExamCalendarState(worldState);
   ensureLongTermEventState(worldState);
   ensureOfficialCareerState(worldState);
 
@@ -143,6 +156,8 @@ async function finalizeTurn(worldState, result, input) {
       ...longTermRelationshipChanges,
       ...officialCareerRelationshipChanges
     ],
+    examCalendarView: buildExamCalendarView(worldState),
+    examRivalView: buildExamRivalView(worldState),
     relationshipView: buildRelationshipInspectionView(worldState),
     activeNpcRequestView: buildActiveNpcRequestView(worldState),
     activeNpcRequestEvents: activeNpcRequest.events,
@@ -201,6 +216,8 @@ async function streamTurn(res, sessionId, input) {
       sessionId: payload.sessionId,
       attributeChanges: payload.attributeChanges,
       relationshipChanges: payload.relationshipChanges,
+      examCalendarView: payload.examCalendarView,
+      examRivalView: payload.examRivalView,
       activeNpcRequestView: payload.activeNpcRequestView,
       activeNpcRequestEvents: payload.activeNpcRequestEvents,
       longTermEventView: payload.longTermEventView,
@@ -233,6 +250,8 @@ router.post("/start", async (req, res, next) => {
     res.status(201).json({
       sessionId: worldState.sessionId,
       worldState,
+      examCalendarView: buildExamCalendarView(worldState),
+      examRivalView: buildExamRivalView(worldState),
       relationshipView: buildRelationshipInspectionView(worldState),
       activeNpcRequestView: buildActiveNpcRequestView(worldState),
       longTermEventView: buildLongTermEventView(worldState),
@@ -248,11 +267,14 @@ router.get("/state/:sessionId", async (req, res, next) => {
   try {
     const worldState = await readSession(req.params.sessionId);
     ensureRelationshipLedger(worldState);
+    ensureExamCalendarState(worldState);
     ensureLongTermEventState(worldState);
     ensureOfficialCareerState(worldState);
     res.json({
       sessionId: worldState.sessionId,
       worldState,
+      examCalendarView: buildExamCalendarView(worldState),
+      examRivalView: buildExamRivalView(worldState),
       relationshipView: buildRelationshipInspectionView(worldState),
       activeNpcRequestView: buildActiveNpcRequestView(worldState),
       longTermEventView: buildLongTermEventView(worldState),

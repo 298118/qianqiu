@@ -28,6 +28,8 @@ let currentRelationshipView = null;
 let currentActiveNpcRequestView = null;
 let currentLongTermEventView = null;
 let currentOfficialCareerView = null;
+let currentExamCalendarView = null;
+let currentExamRivalView = null;
 let currentExamPayload = null;
 let activeNarrativeStream = null;
 
@@ -372,6 +374,46 @@ function getOfficialCareerView(worldState, officialCareerView) {
   };
 }
 
+function getExamCalendarView(worldState, examCalendarView) {
+  if (examCalendarView && typeof examCalendarView === "object") {
+    return examCalendarView;
+  }
+  const calendar = worldState?.examCalendar || {};
+  return {
+    schemaVersion: calendar.schemaVersion || 1,
+    currentYear: worldState?.year,
+    currentMonth: worldState?.month,
+    nextExam: null,
+    missedWindows: Array.isArray(calendar.missedWindows) ? calendar.missedWindows.slice(-3) : [],
+    recentSessions: Array.isArray(calendar.recentSessions) ? calendar.recentSessions.slice(-4) : []
+  };
+}
+
+function getExamRivalView(worldState, examRivalView) {
+  if (examRivalView && typeof examRivalView === "object") {
+    return examRivalView;
+  }
+  const rivals = Array.isArray(worldState?.examCalendar?.rivals) ? worldState.examCalendar.rivals : [];
+  return {
+    schemaVersion: worldState?.examCalendar?.schemaVersion || 1,
+    rivals: rivals.slice(-6).reverse().map((rival) => ({
+      id: rival.id,
+      name: rival.name,
+      origin: rival.origin,
+      relationship: rival.relationship,
+      contactId: rival.contactId || null,
+      lastSeenLevel: rival.lastSeenLevel,
+      lastSeenYear: rival.lastSeenYear,
+      lastSeenMonth: rival.lastSeenMonth,
+      attempts: Array.isArray(rival.attempts) ? rival.attempts.length : 0,
+      latest: Array.isArray(rival.attempts) ? rival.attempts.at(-1) : null
+    })),
+    recentSessions: Array.isArray(worldState?.examCalendar?.recentSessions)
+      ? worldState.examCalendar.recentSessions.slice(-4)
+      : []
+  };
+}
+
 function setStatus(worldState) {
   const player = worldState.player;
   statusStrip.innerHTML = "";
@@ -671,6 +713,88 @@ function renderOfficialCareerPanel(officialCareerView = currentOfficialCareerVie
   return panel;
 }
 
+function formatCalendarWindow(calendar) {
+  if (!calendar) return "暂无考期";
+  if (calendar.isOpen) return `${calendar.examName}开场 · ${calendar.windowLabel}`;
+  return `${calendar.examName}候${calendar.nextWindowLabel}`;
+}
+
+function renderExamCalendarPanel(examCalendarView = currentExamCalendarView) {
+  const nextExam = examCalendarView?.nextExam;
+  if (!nextExam) return null;
+
+  const panel = document.createElement("section");
+  panel.id = "exam-calendar-panel";
+  panel.className = "exam-calendar-panel";
+  panel.dataset.nextLevel = nextExam.level || "";
+  panel.dataset.windowStatus = nextExam.status || "";
+  panel.dataset.monthsUntil = String(nextExam.monthsUntil ?? "");
+
+  const header = document.createElement("header");
+  const title = document.createElement("strong");
+  title.textContent = "科期";
+  const summary = document.createElement("span");
+  summary.textContent = formatCalendarWindow(nextExam);
+  header.append(title, summary);
+
+  const grid = document.createElement("section");
+  grid.className = "exam-calendar-grid";
+  grid.append(
+    createPanelValue("窗口", nextExam.windowLabel || "-", "p"),
+    createPanelValue("距下期", nextExam.monthsUntil === 0 ? "本月" : `${nextExam.monthsUntil}月`, "p"),
+    createPanelValue("备考/路程", `${nextExam.preparationMonths ?? 0}月 / ${nextExam.travelMonths ?? 0}月`, "p"),
+    createPanelValue("盘费", nextExam.funding?.ready ? `${nextExam.funding.requiredGold}两已足` : `缺${nextExam.funding?.shortfall ?? 0}两`, "p")
+  );
+
+  const notes = document.createElement("section");
+  notes.className = "exam-calendar-notes";
+  appendIfText(notes, "p", nextExam.teacherRecommendation?.note, "exam-calendar-recommendation");
+  appendIfText(notes, "p", nextExam.localQuota, "exam-calendar-quota");
+
+  panel.append(header, grid, notes);
+  return panel;
+}
+
+function renderExamRivalPanel(examRivalView = currentExamRivalView) {
+  const rivals = Array.isArray(examRivalView?.rivals) ? examRivalView.rivals : [];
+  if (!rivals.length) return null;
+
+  const panel = document.createElement("section");
+  panel.id = "exam-rival-panel";
+  panel.className = "exam-rival-panel";
+
+  const header = document.createElement("header");
+  const title = document.createElement("strong");
+  title.textContent = "同场";
+  const summary = document.createElement("span");
+  summary.textContent = `${rivals.length}名旧识`;
+  header.append(title, summary);
+
+  const grid = document.createElement("section");
+  grid.className = "exam-rival-grid";
+  rivals.forEach((rival) => {
+    const card = document.createElement("article");
+    card.className = "exam-rival-card";
+    card.dataset.rivalId = rival.id || "";
+    card.dataset.rivalStatus = rival.relationship || "";
+    card.dataset.lastLevel = rival.lastSeenLevel || "";
+    if (rival.contactId) card.dataset.contactId = rival.contactId;
+
+    const cardHeader = document.createElement("header");
+    appendIfText(cardHeader, "strong", rival.name || "同场士子");
+    appendIfText(cardHeader, "span", rival.origin);
+    card.appendChild(cardHeader);
+
+    const latest = rival.latest || {};
+    appendIfText(card, "p", `${EXAM_LABELS[rival.lastSeenLevel] || rival.lastSeenLevel || "科场"} · ${latest.score ?? "-"}分 · 第${latest.place ?? "-"}名`, "exam-rival-latest");
+    appendIfText(card, "p", `${rival.relationship || "rival"} · ${rival.attempts ?? 0}场`, "exam-rival-status");
+    grid.appendChild(card);
+  });
+
+  panel.append(header, grid);
+  return panel;
+}
+
 function appendOptionalPanel(panel) {
   if (panel) {
     scholarPanel.appendChild(panel);
@@ -783,6 +907,7 @@ function renderRolePanel(worldState) {
   scholarPanel.append(overview, renderActionHints(player.role), stats, lists);
   appendOptionalPanel(renderOfficialCareerPanel());
   scholarPanel.appendChild(renderRelationshipPanel());
+  appendOptionalPanel(renderExamRivalPanel());
   appendOptionalPanel(renderActiveNpcRequestPanel());
 }
 
@@ -859,16 +984,21 @@ function renderScholarPanel(worldState) {
     createPanelValue("人脉", (player.connections || []).join("、") || "尚无记录", "p")
   );
 
-  scholarPanel.append(progressBlock, stepList, stats, lists, renderRelationshipPanel());
+  scholarPanel.append(progressBlock);
+  appendOptionalPanel(renderExamCalendarPanel());
+  scholarPanel.append(stepList, stats, lists, renderRelationshipPanel());
+  appendOptionalPanel(renderExamRivalPanel());
   appendOptionalPanel(renderActiveNpcRequestPanel());
 }
 
-function renderWorldState(worldState, relationshipView, activeNpcRequestView, longTermEventView, officialCareerView) {
+function renderWorldState(worldState, relationshipView, activeNpcRequestView, longTermEventView, officialCareerView, examCalendarView, examRivalView) {
   currentWorldState = worldState;
   currentRelationshipView = getRelationshipView(worldState, relationshipView);
   currentActiveNpcRequestView = getActiveNpcRequestView(activeNpcRequestView);
   currentLongTermEventView = longTermEventView || null;
   currentOfficialCareerView = getOfficialCareerView(worldState, officialCareerView);
+  currentExamCalendarView = getExamCalendarView(worldState, examCalendarView);
+  currentExamRivalView = getExamRivalView(worldState, examRivalView);
   setStatus(worldState);
   renderScholarPanel(worldState);
   actionInput.placeholder = ACTION_PLACEHOLDERS[worldState.player.role] || "输入你的行动";
@@ -1009,6 +1139,11 @@ function renderExamModal(payload) {
     item.textContent = `赶考准备：${formatEntryPreparation(payload.entryPreparation)}`;
     examRequirements.appendChild(item);
   }
+  if (payload.examCalendar || payload.entryPreparation?.examCalendar) {
+    const item = document.createElement("li");
+    item.textContent = `科期：${formatExamCalendarSnapshot(payload.examCalendar || payload.entryPreparation.examCalendar)}`;
+    examRequirements.appendChild(item);
+  }
   examEssay.value = "";
   examEssay.hidden = false;
   examWritingTools.hidden = false;
@@ -1118,7 +1253,8 @@ function withExamHistoryFallback(payload) {
     virtualCandidates: payload.virtualCandidates || latest.virtualCandidates || [],
     ranking: payload.ranking || latest.ranking || [],
     promotionResult: payload.promotionResult || latest.promotionResult,
-    entryPreparation: payload.entryPreparation || latest.entryPreparation
+    entryPreparation: payload.entryPreparation || latest.entryPreparation,
+    examCalendar: payload.examCalendar || latest.examCalendar || latest.entryPreparation?.examCalendar
   };
 }
 
@@ -1169,6 +1305,33 @@ function createEntryPreparationBlock(entryPreparation) {
   return block;
 }
 
+function formatExamCalendarSnapshot(examCalendar) {
+  if (!examCalendar) return "";
+  const timing = examCalendar.isOpen
+    ? `${examCalendar.currentYear}年${examCalendar.currentMonth}月本期开场`
+    : `候${examCalendar.nextWindowLabel}`;
+  const recommendation = examCalendar.teacherRecommendation?.ready
+    ? "荐书/声名可用"
+    : "荐书/声名未足";
+  return [
+    timing,
+    `常期：${examCalendar.windowLabel || "-"}`,
+    `备考${examCalendar.preparationMonths ?? 0}月，路程${examCalendar.travelMonths ?? 0}月`,
+    recommendation,
+    examCalendar.localQuota
+  ].filter(Boolean).join("；");
+}
+
+function createExamCalendarBlock(examCalendar) {
+  const text = formatExamCalendarSnapshot(examCalendar);
+  if (!text) return null;
+  const block = document.createElement("section");
+  block.className = "entry-preparation exam-calendar-archive";
+  appendIfText(block, "strong", "科期");
+  appendIfText(block, "p", text);
+  return block;
+}
+
 function createCandidateProfiles(payload) {
   const candidates = Array.isArray(payload.virtualCandidates) ? payload.virtualCandidates : [];
   const ranking = Array.isArray(payload.ranking) ? payload.ranking : [];
@@ -1202,6 +1365,14 @@ function createCandidateProfiles(payload) {
 
     appendIfText(profile, "p", candidate.style || entry.style, "candidate-style");
     appendIfText(profile, "p", candidate.examinerComment || entry.examinerComment, "candidate-comment");
+    if (candidate.persistent || entry.persistent) {
+      appendIfText(
+        profile,
+        "p",
+        `科场旧识：${candidate.rivalStatus || entry.rivalStatus || "rival"} · 已见${candidate.previousAttempts ?? entry.previousAttempts ?? 0}场`,
+        "candidate-meta"
+      );
+    }
 
     const strengths = candidate.strengths || entry.strengths || [];
     const weaknesses = candidate.weaknesses || entry.weaknesses || [];
@@ -1246,6 +1417,9 @@ function createPlayerExamArchive(payload) {
   const preparationBlock = createEntryPreparationBlock(payload.entryPreparation);
   if (preparationBlock) archive.appendChild(preparationBlock);
 
+  const calendarBlock = createExamCalendarBlock(payload.examCalendar || payload.entryPreparation?.examCalendar);
+  if (calendarBlock) archive.appendChild(calendarBlock);
+
   const reasonParts = [];
   if (payload.score?.detailed_feedback) reasonParts.push(payload.score.detailed_feedback);
   if (payload.promotionResult?.reason) reasonParts.push(payload.promotionResult.reason);
@@ -1263,7 +1437,7 @@ function createRankingList(payload) {
     const name = document.createElement("strong");
     name.textContent = `${entry.place}. ${entry.name}`;
     const detail = document.createElement("span");
-    detail.textContent = [entry.origin, entry.score !== undefined ? `${entry.score}分` : null, entry.rank, entry.style].filter(Boolean).join(" · ");
+    detail.textContent = [entry.origin, entry.score !== undefined ? `${entry.score}分` : null, entry.rank, entry.style, entry.rivalStatus].filter(Boolean).join(" · ");
     item.append(name, detail);
     if (entry.essayTitle || entry.essayExcerpt || entry.examinerComment) {
       const note = document.createElement("small");
@@ -1476,7 +1650,7 @@ async function openExamQuestion(level) {
     }
 
     const payload = await response.json();
-    renderWorldState(payload.worldState, payload.relationshipView, payload.activeNpcRequestView, payload.longTermEventView, payload.officialCareerView);
+    renderWorldState(payload.worldState, payload.relationshipView, payload.activeNpcRequestView, payload.longTermEventView, payload.officialCareerView, payload.examCalendarView, payload.examRivalView);
     renderExamModal(payload);
   } catch (error) {
     appendNarrative(error.message, "error");
@@ -1514,7 +1688,7 @@ async function submitExamEssay() {
     }
 
     const payload = await response.json();
-    renderWorldState(payload.worldState, payload.relationshipView, payload.activeNpcRequestView, payload.longTermEventView, payload.officialCareerView);
+    renderWorldState(payload.worldState, payload.relationshipView, payload.activeNpcRequestView, payload.longTermEventView, payload.officialCareerView, payload.examCalendarView, payload.examRivalView);
     renderExamResult(payload);
     appendNarrative(
       `[放榜] ${payload.examName}得${payload.score.overall_score}分，${describePromotionOutcome(payload.promotionResult)}。`,
@@ -1603,7 +1777,7 @@ async function handleTurnPayload(payload) {
   appendWorldTickFeedback(payload.worldTick);
   appendLongTermEventFeedback(payload.longTermEvents);
   appendOfficialCareerFeedback(payload.officialCareer);
-  renderWorldState(payload.worldState, payload.relationshipView, payload.activeNpcRequestView, payload.longTermEventView, payload.officialCareerView);
+  renderWorldState(payload.worldState, payload.relationshipView, payload.activeNpcRequestView, payload.longTermEventView, payload.officialCareerView, payload.examCalendarView, payload.examRivalView);
   actionInput.value = "";
 
   if (payload.examTrigger && payload.examTrigger.shouldStart) {
@@ -1722,7 +1896,7 @@ form.addEventListener("submit", async (event) => {
     const payload = await response.json();
     currentSessionId = payload.sessionId;
     localStorage.setItem("qianqiu.sessionId", payload.sessionId);
-    renderWorldState(payload.worldState, payload.relationshipView, payload.activeNpcRequestView, payload.longTermEventView, payload.officialCareerView);
+    renderWorldState(payload.worldState, payload.relationshipView, payload.activeNpcRequestView, payload.longTermEventView, payload.officialCareerView, payload.examCalendarView, payload.examRivalView);
     narrative.innerHTML = "";
     appendNarrative(payload.narrative);
     showGameView();
@@ -1747,7 +1921,7 @@ async function restoreSession() {
     }
     const payload = await response.json();
     currentSessionId = payload.sessionId;
-    renderWorldState(payload.worldState, payload.relationshipView, payload.activeNpcRequestView, payload.longTermEventView, payload.officialCareerView);
+    renderWorldState(payload.worldState, payload.relationshipView, payload.activeNpcRequestView, payload.longTermEventView, payload.officialCareerView, payload.examCalendarView, payload.examRivalView);
     narrative.innerHTML = "";
     const history = payload.worldState.eventHistory || [];
     if (history.length) {

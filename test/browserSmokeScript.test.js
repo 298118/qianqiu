@@ -42,6 +42,12 @@ function createLayoutMetrics(overrides = {}) {
     officialCareerClientWidth: 1180,
     officialCareerScrollWidth: 1180,
     officialCareerWidth: 1180,
+    examCalendarClientWidth: 1180,
+    examCalendarScrollWidth: 1180,
+    examCalendarWidth: 1180,
+    examRivalClientWidth: 1180,
+    examRivalScrollWidth: 1180,
+    examRivalWidth: 1180,
     viewportWidth: 1280,
     ...overrides
   };
@@ -232,6 +238,23 @@ test("browser smoke game layout helper catches official career panel overflow", 
   );
 
   assert.match(failures.join("\n"), /official career panel has horizontal scroll overflow/);
+});
+
+test("browser smoke game layout helper catches exam calendar and rival panel overflow", () => {
+  const failures = getGameLayoutFailures(
+    createLayoutMetrics({
+      examCalendarClientWidth: 500,
+      examCalendarScrollWidth: 620,
+      examCalendarWidth: 500,
+      examRivalClientWidth: 500,
+      examRivalScrollWidth: 630,
+      examRivalWidth: 500
+    }),
+    "desktop"
+  );
+
+  assert.match(failures.join("\n"), /exam calendar panel has horizontal scroll overflow/);
+  assert.match(failures.join("\n"), /exam rival panel has horizontal scroll overflow/);
 });
 
 test("browser smoke game layout helper keeps mobile width behavior compatible", () => {

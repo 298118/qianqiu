@@ -375,6 +375,18 @@ function getGameLayoutFailures(metrics, mode = "game") {
     );
   }
 
+  if (metrics.examCalendarClientWidth > 0 && metrics.examCalendarScrollWidth > metrics.examCalendarClientWidth + horizontalClipTolerance) {
+    failures.push(
+      `${mode} exam calendar panel has horizontal scroll overflow (${roundMetric(metrics.examCalendarScrollWidth)}px > ${roundMetric(metrics.examCalendarClientWidth)}px).`
+    );
+  }
+
+  if (metrics.examRivalClientWidth > 0 && metrics.examRivalScrollWidth > metrics.examRivalClientWidth + horizontalClipTolerance) {
+    failures.push(
+      `${mode} exam rival panel has horizontal scroll overflow (${roundMetric(metrics.examRivalScrollWidth)}px > ${roundMetric(metrics.examRivalClientWidth)}px).`
+    );
+  }
+
   if (metrics.scholarLeft < metrics.gameLeft - horizontalClipTolerance) {
     failures.push(`${mode} role panel starts outside the game panel.`);
   }
@@ -406,6 +418,8 @@ async function readGameLayoutMetrics(page) {
     const relationship = box("#relationship-panel");
     const activeRequest = box("#active-request-panel");
     const officialCareer = box("#official-career-panel");
+    const examCalendar = box("#exam-calendar-panel");
+    const examRival = box("#exam-rival-panel");
 
     return {
       appWidth: app?.width || 0,
@@ -429,6 +443,12 @@ async function readGameLayoutMetrics(page) {
       officialCareerClientWidth: officialCareer?.clientWidth || 0,
       officialCareerScrollWidth: officialCareer?.scrollWidth || 0,
       officialCareerWidth: officialCareer?.width || 0,
+      examCalendarClientWidth: examCalendar?.clientWidth || 0,
+      examCalendarScrollWidth: examCalendar?.scrollWidth || 0,
+      examCalendarWidth: examCalendar?.width || 0,
+      examRivalClientWidth: examRival?.clientWidth || 0,
+      examRivalScrollWidth: examRival?.scrollWidth || 0,
+      examRivalWidth: examRival?.width || 0,
       viewportWidth: window.innerWidth
     };
   });
@@ -639,6 +659,74 @@ async function assertOfficialCareerPanel(page, mode, expectations = {}) {
   return snapshot;
 }
 
+async function assertExamCalendarPanel(page, mode, expectations = {}) {
+  await visibleBox(page, "#exam-calendar-panel", `${mode} exam calendar panel`);
+
+  const snapshot = await page.evaluate(() => {
+    const panel = document.querySelector("#exam-calendar-panel");
+    return {
+      nextLevel: panel?.dataset.nextLevel || "",
+      windowStatus: panel?.dataset.windowStatus || "",
+      monthsUntil: panel?.dataset.monthsUntil || "",
+      values: document.querySelectorAll("#exam-calendar-panel .panel-kicker").length,
+      recommendation: document.querySelectorAll("#exam-calendar-panel .exam-calendar-recommendation").length,
+      quota: document.querySelectorAll("#exam-calendar-panel .exam-calendar-quota").length,
+      text: panel?.innerText || ""
+    };
+  });
+
+  if (expectations.expectedNextLevel && snapshot.nextLevel !== expectations.expectedNextLevel) {
+    failUiAcceptance(`${mode} exam calendar expected ${expectations.expectedNextLevel}, got ${snapshot.nextLevel}.`);
+  }
+  if (expectations.expectedStatus && snapshot.windowStatus !== expectations.expectedStatus) {
+    failUiAcceptance(`${mode} exam calendar expected status ${expectations.expectedStatus}, got ${snapshot.windowStatus}.`);
+  }
+  if (!snapshot.monthsUntil && snapshot.monthsUntil !== "0") {
+    failUiAcceptance(`${mode} exam calendar did not expose months-until data.`);
+  }
+  if (snapshot.values < 4 || snapshot.recommendation < 1 || snapshot.quota < 1) {
+    failUiAcceptance(`${mode} exam calendar is missing timing, funding, recommendation, or quota details.`);
+  }
+
+  const layoutFailures = getGameLayoutFailures(await readGameLayoutMetrics(page), `${mode} exam calendar`);
+  if (layoutFailures.length) {
+    failUiAcceptance(layoutFailures.join(" "));
+  }
+  return snapshot;
+}
+
+async function assertExamRivalPanel(page, mode, expectations = {}) {
+  await visibleBox(page, "#exam-rival-panel", `${mode} exam rival panel`);
+
+  const snapshot = await page.evaluate(() => {
+    const cards = [...document.querySelectorAll("#exam-rival-panel .exam-rival-card")];
+    return {
+      rivalIds: cards.map((card) => card.dataset.rivalId),
+      statuses: cards.map((card) => card.dataset.rivalStatus),
+      levels: cards.map((card) => card.dataset.lastLevel),
+      contactIds: cards.map((card) => card.dataset.contactId).filter(Boolean),
+      latestRows: document.querySelectorAll("#exam-rival-panel .exam-rival-latest").length,
+      statusRows: document.querySelectorAll("#exam-rival-panel .exam-rival-status").length
+    };
+  });
+
+  if (snapshot.rivalIds.length < (expectations.minRivals || 1)) {
+    failUiAcceptance(`${mode} exam rival panel rendered too few rivals.`);
+  }
+  if (expectations.expectedLevel && !snapshot.levels.includes(expectations.expectedLevel)) {
+    failUiAcceptance(`${mode} exam rival panel did not include level ${expectations.expectedLevel}.`);
+  }
+  if (snapshot.latestRows < snapshot.rivalIds.length || snapshot.statusRows < snapshot.rivalIds.length) {
+    failUiAcceptance(`${mode} exam rival panel is missing latest result or status rows.`);
+  }
+
+  const layoutFailures = getGameLayoutFailures(await readGameLayoutMetrics(page), `${mode} exam rival`);
+  if (layoutFailures.length) {
+    failUiAcceptance(layoutFailures.join(" "));
+  }
+  return snapshot;
+}
+
 async function runRelationshipTurnAcceptance(page) {
   const beforeRelationship = await page.locator(
     '#relationship-panel .relationship-contact[data-contact-type="character"][data-contact-id="C01"]'
@@ -751,6 +839,12 @@ async function assertExamWritingLayout(page, mode) {
   if (rectsOverlap(essay, submit)) {
     failUiAcceptance(`${mode} exam essay textarea overlaps the submit button.`);
   }
+  const hasCalendarRequirement = await page.evaluate(() =>
+    [...document.querySelectorAll("#exam-requirements li")].some((item) => item.textContent.includes("科期"))
+  );
+  if (!hasCalendarRequirement) {
+    failUiAcceptance(`${mode} exam modal is missing calendar timing details.`);
+  }
 }
 
 async function assertExamResultLayout(page, mode) {
@@ -774,6 +868,9 @@ async function assertExamResultLayout(page, mode) {
     const examEssay = document.querySelector("#exam-essay");
     return {
       candidateProfiles: document.querySelectorAll(".candidate-profile").length,
+      calendarArchive: document.querySelectorAll(".exam-calendar-archive").length,
+      persistentCandidateNotes: [...document.querySelectorAll(".candidate-profile .candidate-meta")]
+        .filter((item) => item.textContent.includes("科场旧识")).length,
       essayDisplay: examEssay ? getComputedStyle(examEssay).display : "",
       questionDisplay: examQuestion ? getComputedStyle(examQuestion).display : "",
       requirementsDisplay: examRequirements ? getComputedStyle(examRequirements).display : "",
@@ -796,6 +893,12 @@ async function assertExamResultLayout(page, mode) {
   }
   if (counts.candidateProfiles < 1) {
     failUiAcceptance(`${mode} missing inspectable same-field candidate essays.`);
+  }
+  if (counts.calendarArchive < 1) {
+    failUiAcceptance(`${mode} missing exam calendar archive details.`);
+  }
+  if (counts.persistentCandidateNotes < 1) {
+    failUiAcceptance(`${mode} missing persistent rival notes on candidate profiles.`);
   }
   if (counts.questionDisplay !== "none" || counts.requirementsDisplay !== "none" || counts.essayDisplay !== "none") {
     failUiAcceptance(`${mode} still shows question or writing controls behind the result view.`);
@@ -847,6 +950,11 @@ async function runMobileUiAcceptance(page, recorder) {
     expectedTypes: ["character", "faction"],
     hiddenIds: ["eunuchs", "militaryLords"],
     hiddenTextTokens: ["Eunuch faction", "Military faction"]
+  });
+  await assertExamCalendarPanel(page, "mobile scholar");
+  await assertExamRivalPanel(page, "mobile scholar", {
+    expectedLevel: "child_exam",
+    minRivals: 1
   });
   await assertActiveNpcRequestPanel(page, "mobile scholar", {
     expectedTargetIds: ["C01"],
@@ -992,6 +1100,10 @@ async function runBrowserJourney({
       hiddenIds: ["eunuchs", "militaryLords"],
       hiddenTextTokens: ["Eunuch faction", "Military faction"]
     });
+    await assertExamCalendarPanel(page, "desktop scholar", {
+      expectedNextLevel: "child_exam",
+      expectedStatus: "open"
+    });
     await runRelationshipTurnAcceptance(page);
     await assertRelationshipPanel(page, "desktop scholar after turn", {
       expectedIds: ["C01", "scholarOfficials"],
@@ -1007,6 +1119,10 @@ async function runBrowserJourney({
     });
     await recorder.capture(page, "desktop-game-layout");
     await runExamUiAcceptance(page, recorder);
+    await assertExamRivalPanel(page, "desktop scholar after exam", {
+      expectedLevel: "child_exam",
+      minRivals: 1
+    });
 
     await page.reload({ waitUntil: "domcontentloaded" });
     await page.locator("#action-area").waitFor({ state: "visible", timeout: 10000 });
@@ -1017,6 +1133,11 @@ async function runBrowserJourney({
       expectedTypes: ["character", "faction"],
       hiddenIds: ["eunuchs", "militaryLords"],
       hiddenTextTokens: ["Eunuch faction", "Military faction"]
+    });
+    await assertExamCalendarPanel(page, "desktop restored scholar");
+    await assertExamRivalPanel(page, "desktop restored scholar", {
+      expectedLevel: "child_exam",
+      minRivals: 1
     });
     await assertActiveNpcRequestPanel(page, "desktop restored scholar", {
       expectedTargetIds: ["C01"],
@@ -1041,6 +1162,11 @@ async function runBrowserJourney({
       expectedTypes: ["character", "faction"],
       hiddenIds: ["eunuchs", "militaryLords"],
       hiddenTextTokens: ["Eunuch faction", "Military faction"]
+    });
+    await assertExamCalendarPanel(freshPage, "fresh page desktop scholar");
+    await assertExamRivalPanel(freshPage, "fresh page desktop scholar", {
+      expectedLevel: "child_exam",
+      minRivals: 1
     });
     await assertActiveNpcRequestPanel(freshPage, "fresh page desktop scholar", {
       expectedTargetIds: ["C01"],

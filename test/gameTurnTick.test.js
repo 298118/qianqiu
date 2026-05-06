@@ -9,12 +9,20 @@ process.env.AI_PROVIDER = "mock";
 const gameRoutes = require("../src/routes/game");
 const examRoutes = require("../src/routes/exam");
 const { createInitialState } = require("../src/game/initialState");
+const { EXAMS } = require("../src/game/exams");
 const { MAX_EVENT_HISTORY, NUMERIC_RANGES } = require("../src/game/stateRules");
-const { writeSession } = require("../src/storage/sessionStore");
+const { readSession, writeSession } = require("../src/storage/sessionStore");
 const { createFetchSafeServer } = require("../test-helpers/fetchSafeServer");
 
 const sessionsDir = path.join(__dirname, "..", "data", "sessions");
 const PASSING_ESSAY = "治民以德，修身齐家，明经达变，慎刑薄赋，安民养士。".repeat(70);
+
+const OPEN_MONTH_BY_LEVEL = {
+  child_exam: 1,
+  provincial_exam: 8,
+  metropolitan_exam: 2,
+  palace_exam: 4
+};
 
 async function removeSessionFile(sessionId) {
   await fs.rm(path.join(sessionsDir, `${sessionId}.json`), { force: true });
@@ -66,6 +74,10 @@ function assertRange(value, key) {
 }
 
 async function completeExam(baseUrl, sessionId, level) {
+  const worldState = await readSession(sessionId);
+  worldState.month = OPEN_MONTH_BY_LEVEL[level];
+  await writeSession(worldState);
+
   const question = await postJson(`${baseUrl}/api/exam/question`, { sessionId, level });
   assert.equal(question.response.status, 201);
   assert.equal(question.payload.level, level);
@@ -223,6 +235,49 @@ test("POST /api/game/turn remains stable across repeated Mock turns", async (t) 
   assert.equal(latest.player.examRank, null);
 });
 
+test("exam trigger preserves a valid calendar window across the monthly tick", async (t) => {
+  const server = createTestServer();
+  t.after(server.close);
+
+  const worldState = createInitialState({ playerName: "Tester" });
+  worldState.year = 1644;
+  worldState.month = 9;
+  Object.assign(worldState.player, {
+    examRank: EXAMS.child_exam.promotionRank,
+    academia: 100,
+    literaryTalent: 100,
+    adaptability: 100,
+    mentality: 100,
+    reputation: 100,
+    gold: 100
+  });
+  t.after(() => removeSessionFile(worldState.sessionId));
+  await writeSession(worldState);
+
+  const turn = await postJson(`${server.baseUrl}/api/game/turn`, {
+    sessionId: worldState.sessionId,
+    input: "参加乡试考试"
+  });
+
+  assert.equal(turn.response.status, 200);
+  assert.equal(turn.payload.examTrigger.shouldStart, true);
+  assert.equal(turn.payload.worldState.month, 10);
+  assert.equal(turn.payload.worldState.activeExam.level, "provincial_exam");
+  assert.equal(turn.payload.worldState.activeExam.examCalendar.currentMonth, 9);
+  assert.equal(turn.payload.worldState.activeExam.examCalendar.status, "open");
+
+  const question = await postJson(`${server.baseUrl}/api/exam/question`, {
+    sessionId: worldState.sessionId
+  });
+
+  assert.equal(question.response.status, 201);
+  assert.equal(question.payload.level, "provincial_exam");
+  assert.equal(question.payload.examCalendar.currentMonth, 9);
+  assert.equal(question.payload.examCalendar.status, "open");
+  assert.equal(question.payload.worldState.month, 10);
+  assert.equal(question.payload.worldState.examCalendar.missedWindows.length, 0);
+});
+
 test("complete scholar exam path still works after world tick integration", async (t) => {
   const server = createTestServer();
   t.after(server.close);
@@ -261,7 +316,7 @@ test("complete scholar exam path still works after world tick integration", asyn
 
   assert.equal(latest.turnCount, 3);
   assert.equal(latest.year, 1645);
-  assert.equal(latest.month, 2);
+  assert.equal(latest.month, OPEN_MONTH_BY_LEVEL.palace_exam);
   assert.equal(latest.player.role, "official");
   assert.equal(latest.player.examHistory.length, 4);
   assert.equal(latest.activeExam, null);

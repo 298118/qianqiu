@@ -73,9 +73,9 @@
 | S34.1 | DONE | 定义官场结果引擎：实授、转任、升迁、外放、降调、弹劾成案和罢黜 | 2026-05-06 | Codex + subagents | current S34 implementation commit |
 | S34.2 | DONE | 实现入仕官员年度/阶段性结算，让 `promotionProspect`、`impeachmentRisk` 等指标触发真实职业结果 | 2026-05-06 | Codex + subagents | current S34 implementation commit |
 | S34.3 | DONE | 增加官场结果 UI 与测试，确认晋升/降调/弹劾不会绕过服务器裁决 | 2026-05-06 | Codex + subagents | current S34 implementation commit |
-| S35.1 | TODO | 定义科举日历化契约：考期窗口、备考月程、路程耗时、错过考期、盘费筹措和师长推荐 |  |  |  |
-| S35.2 | TODO | 让同场虚拟考生跨考试持久存在，成为同年、竞争者或后续官场人脉 |  |  |  |
-| S35.3 | TODO | 将科举日历与持久竞争者接入前端档案和完整 scholar -> official 回归测试 |  |  |  |
+| S35.1 | DONE | 定义科举日历化契约：考期窗口、备考月程、路程耗时、错过考期、盘费筹措和师长推荐 | 2026-05-06 | Codex + subagents | current S35 implementation commit |
+| S35.2 | DONE | 让同场虚拟考生跨考试持久存在，成为同年、竞争者或后续官场人脉 | 2026-05-06 | Codex + subagents | current S35 implementation commit |
+| S35.3 | DONE | 将科举日历与持久竞争者接入前端档案和完整 scholar -> official 回归测试 | 2026-05-06 | Codex + subagents | current S35 implementation commit |
 | S36.1 | TODO | 定义角色与世界 tick 深耦合规则：水利影响粮储，战役影响边患/军费，朝廷任免影响地方执行力 |  |  |  |
 | S36.2 | TODO | 深化地方官、将领、皇帝和大臣行动对长期世界状态和关系记忆的复合影响 |  |  |  |
 | S36.3 | TODO | 为多身份长期联动增加 Mock 平衡测试和浏览器代表旅程 |  |  |  |
@@ -173,6 +173,37 @@
 ```
 
 ### 2026-05-06
+
+Tool: Codex
+
+Step: S35.1-S35.3
+
+Commit: current S35 implementation commit
+
+Completed:
+- Added `docs/EXAM_CALENDAR_CONTRACT.md` and `src/game/examCalendar.js` as the durable/server-owned S35 contract and implementation for exam windows, preparation/travel month summaries, missed-window records, persistent rivals, and palace-exam peer contacts.
+- Seeded `worldState.examCalendar`, protected it from ordinary provider patches, and added compact prompt context plus top-level `examCalendarView` and `examRivalView` to game and exam route payloads.
+- Updated `/api/exam/question` so new questions check calendar windows before charging travel or calling the provider; missed attempts persist a no-charge missed-window record and return `409`.
+- Preserved open calendar snapshots on free-text `examTrigger` requests before world tick advances the month, preventing valid last-window requests from becoming false missed-window errors during browser auto-open.
+- Extended entry preparation/history with the calendar snapshot and updated virtual candidates so same-field rivals receive stable `rival-*` ids, carry attempt history, and can become visible official `同年进士` contacts after palace promotion.
+- Added browser `#exam-calendar-panel` and `#exam-rival-panel`, calendar details in the writing modal and archive, persistent rival notes on candidate profiles, and browser-smoke layout/assertion coverage.
+- Used read-only subagents to inspect backend exam-route/candidate integration and frontend/browser-smoke placement before implementation; neither edited files or ran Git commands.
+
+Verification:
+- `node --check` for changed runtime/test files.
+- `node --test test/examCalendar.test.js test/examTravel.test.js test/gameTurnTick.test.js test/stateRules.test.js test/browserSmokeScript.test.js` passed with 38 tests.
+- `npm run eval:ai` passed with 6 tests.
+- `npm test` passed with 136 tests.
+- `npm run smoke:provider` skipped successfully because no real-provider keys are configured.
+- `npm run smoke:browser -- --screenshots artifacts/browser-smoke/s35` passed with 6 screenshots checked.
+- `git diff --check`
+
+Risk/leftover:
+- Calendar windows are deterministic and compact; richer historical calendars, jurisdiction-specific quotas, and multi-year exam cycles can build on this contract later.
+- The complete Mock scholar -> official path remains supported by setting legal exam months in tests and by browser guidance through the new calendar panel.
+
+Next:
+- S36.1: define deeper role/world tick coupling rules.
 
 Tool: Codex
 

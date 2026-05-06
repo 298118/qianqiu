@@ -1,4 +1,5 @@
 const { randomUUID } = require("crypto");
+const { createInitialExamCalendar } = require("./examCalendar");
 const { createInitialRelationshipLedger } = require("./relationships");
 
 const ROLE_LABELS = {
@@ -196,6 +197,7 @@ function createInitialState(input = {}) {
     characters: getInitialCharacters(role),
     eventHistory: [],
     activeExam: null,
+    examCalendar: createInitialExamCalendar(),
     activeNpcRequest: null,
     longTermEvents: {
       schemaVersion: 1,

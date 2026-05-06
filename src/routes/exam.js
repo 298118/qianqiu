@@ -11,6 +11,16 @@ const {
 const { applyAuthenticityPenalties, checkEssayAuthenticity } = require("../game/essayChecks");
 const { buildRanking, generateVirtualCandidates } = require("../game/candidates");
 const { createEntryPreparation } = require("../game/examTravel");
+const {
+  buildExamCalendarView,
+  buildExamRivalView,
+  canOpenExamInCalendar,
+  ensureExamCalendarState,
+  preparePersistentExamCohort,
+  recordExamCohortResult,
+  recordMissedExamWindow,
+  selectPersistentCandidateSeeds
+} = require("../game/examCalendar");
 const { applyExamPromotion } = require("../game/promotions");
 const { buildRelationshipInspectionView, ensureRelationshipLedger } = require("../game/relationships");
 const { buildActiveNpcRequestView } = require("../game/activeRequests");
@@ -37,6 +47,9 @@ function toExamPayload(worldState) {
     promotionRank: activeExam.promotionRank,
     readiness: activeExam.readiness,
     entryPreparation: activeExam.entryPreparation || null,
+    examCalendar: activeExam.examCalendar || activeExam.entryPreparation?.examCalendar || null,
+    examCalendarView: buildExamCalendarView(worldState),
+    examRivalView: buildExamRivalView(worldState),
     relationshipView: buildRelationshipInspectionView(worldState),
     activeNpcRequestView: buildActiveNpcRequestView(worldState),
     longTermEventView: buildLongTermEventView(worldState),
@@ -69,6 +82,7 @@ router.post("/question", async (req, res, next) => {
 
     const worldState = await readSession(sessionId);
     ensureRelationshipLedger(worldState);
+    ensureExamCalendarState(worldState);
     ensureLongTermEventState(worldState);
     ensureOfficialCareerState(worldState);
     const requestedLevel = level || worldState.activeExam?.level || getNextExamLevel(worldState.player.examRank);
@@ -92,6 +106,25 @@ router.post("/question", async (req, res, next) => {
       return;
     }
 
+    const previousExam = worldState.activeExam || {};
+    const preservedCalendarSnapshot =
+      previousExam.level === exam.level && previousExam.examCalendar?.isOpen
+        ? previousExam.examCalendar
+        : null;
+    const calendarGate = preservedCalendarSnapshot
+      ? { ok: true, reason: "", snapshot: preservedCalendarSnapshot }
+      : canOpenExamInCalendar(worldState, exam);
+    if (!calendarGate.ok) {
+      const missed = recordMissedExamWindow(worldState, exam, calendarGate.snapshot, calendarGate.reason);
+      if (missed) {
+        appendEvents(worldState, [
+          `${worldState.player.name}错过${exam.name}考期，改候${calendarGate.snapshot.nextWindowLabel}。`
+        ]);
+        await writeSession(worldState);
+      }
+      throw fail(409, calendarGate.reason);
+    }
+
     if (
       worldState.activeExam &&
       worldState.activeExam.examQuestion &&
@@ -100,10 +133,9 @@ router.post("/question", async (req, res, next) => {
       throw fail(409, "已有未完成考试，请先完成当前考试。");
     }
 
-    const previousExam = worldState.activeExam || {};
     const preparationResult = previousExam.entryPreparation
       ? null
-      : createEntryPreparation(worldState, exam);
+      : createEntryPreparation(worldState, exam, calendarGate.snapshot);
 
     if (preparationResult) {
       applyStatePatch(worldState, preparationResult.statePatch, { incrementTurnCount: false });
@@ -125,6 +157,7 @@ router.post("/question", async (req, res, next) => {
       promotionRank: question.promotionRank || exam.promotionRank,
       readiness: summarizeReadiness(worldState.player, exam),
       entryPreparation: previousExam.entryPreparation || preparationResult.entryPreparation,
+      examCalendar: previousExam.examCalendar || calendarGate.snapshot,
       reason: previousExam.reason || "玩家入场取题",
       status: "writing",
       generatedAt: new Date().toISOString()
@@ -159,6 +192,7 @@ router.post("/submit", async (req, res, next) => {
 
     const worldState = await readSession(sessionId);
     ensureRelationshipLedger(worldState);
+    ensureExamCalendarState(worldState);
     ensureLongTermEventState(worldState);
     ensureOfficialCareerState(worldState);
     const activeExam = worldState.activeExam;
@@ -187,7 +221,14 @@ router.post("/submit", async (req, res, next) => {
     });
     const grade = await provider.gradeExamEssay(worldState, exam, trimmedEssay, authenticityCheck);
     const score = applyAuthenticityPenalties(grade.score, authenticityCheck, exam);
-    const virtualCandidates = generateVirtualCandidates(worldState, exam, score.overall_score);
+    const persistentCandidateSeeds = selectPersistentCandidateSeeds(worldState, exam);
+    const virtualCandidates = preparePersistentExamCohort(
+      worldState,
+      exam,
+      generateVirtualCandidates(worldState, exam, score.overall_score, {
+        persistentCandidates: persistentCandidateSeeds
+      })
+    );
     const ranking = buildRanking(
       {
         id: "player",
@@ -200,6 +241,7 @@ router.post("/submit", async (req, res, next) => {
       virtualCandidates
     );
     const promotionResult = applyExamPromotion(worldState, exam, score, authenticityCheck);
+    const cohortResult = recordExamCohortResult(worldState, exam, virtualCandidates, ranking);
     const submittedAt = new Date().toISOString();
     const historyEntry = {
       examId,
@@ -207,12 +249,14 @@ router.post("/submit", async (req, res, next) => {
       examName: activeExam.examName,
       examQuestion: activeExam.examQuestion,
       entryPreparation: activeExam.entryPreparation || null,
+      examCalendar: activeExam.examCalendar || activeExam.entryPreparation?.examCalendar || null,
       essay: trimmedEssay,
       score,
       authenticityCheck,
       virtualCandidates,
       ranking,
       promotionResult,
+      cohortResult,
       submittedAt
     };
 
@@ -231,11 +275,15 @@ router.post("/submit", async (req, res, next) => {
       examQuestion: activeExam.examQuestion,
       essay: trimmedEssay,
       entryPreparation: activeExam.entryPreparation || null,
+      examCalendar: activeExam.examCalendar || activeExam.entryPreparation?.examCalendar || null,
       score,
       authenticityCheck,
       virtualCandidates,
       ranking,
       promotionResult,
+      cohortResult,
+      examCalendarView: buildExamCalendarView(worldState),
+      examRivalView: buildExamRivalView(worldState),
       relationshipView: buildRelationshipInspectionView(worldState),
       activeNpcRequestView: buildActiveNpcRequestView(worldState),
       longTermEventView: buildLongTermEventView(worldState),
