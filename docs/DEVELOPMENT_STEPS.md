@@ -76,6 +76,7 @@
 | S45.2 | TODO | 让 AI 叙事、NPC 行为、世界 tick、关系账本和官场结果共同读写这些实体的受限视图 |  |  |  |
 | S46.1 | TODO | 建立依赖/插件引入模板：用途、许可证、替代方案、测试、回滚策略和文档落点 |  |  |  |
 | S47.1 | TODO | 扩展真实 provider 验收：浏览器路由级连接测试、带 key 的健康检查、无 key 自动跳过、模型费用/速度记录 |  |  |  |
+| S47.2 | TODO | 规划并实现 DeepSeek 上下文硬盘缓存命中率优化：稳定提示词前缀、记录命中/未命中 tokens、不得牺牲游戏效果 |  |  |  |
 
 ## 4. 分阶段详细步骤
 
@@ -109,6 +110,14 @@
 - `minister_faction`：上疏、党争、门生故吏、言官和权力交换。
 - `local_magistrate`：赋役、断案、绅权、灾荒、盗匪和县政。
 - `general_frontier`：军饷、士气、侦骑、边墙、战报和夸功风险。
+
+DeepSeek 上下文硬盘缓存规划约束：
+
+- 根据 DeepSeek 官方“上下文硬盘缓存”说明，缓存默认开启，命中依赖后续请求完整复用已经落盘的前缀；因此 prompt pack 应把稳定内容放在最前：系统身份、JSON 合约、服务器边界、固定术语表、少量示例和不随回合变化的时代/角色规则。
+- 动态内容应放在稳定前缀之后：当前世界摘要、可见关系、长期议题、玩家输入、考试文本和本回合 schema 附件，避免无意义重排字段或随机化标题破坏前缀。
+- 不能为了缓存命中删减必要上下文、隐藏关键局势、降低历史语气、削弱角色视野或让模型少看会影响推演质量的信息。缓存优化只能通过稳定结构、稳定顺序和可观测 telemetry 实现。
+- 真实 provider adapter 后续应读取 DeepSeek 返回的 `usage.prompt_cache_hit_tokens` 与 `usage.prompt_cache_miss_tokens`，在 smoke/diagnostics 中记录命中率，但不把命中率作为默认本地测试硬门槛。
+- 需要为 prompt 构建加测试：同一任务的固定前缀在相邻请求中保持字节级稳定；动态片段变化不会改动前缀；schema/少量示例更新必须显式更新快照。
 
 ### Phase 42: 官场深度优先扩展
 
@@ -178,6 +187,7 @@
 - 路由级连接测试覆盖当前 provider、指定 provider、缺 key、错误脱敏和模型摘要。
 - 浏览器 smoke 可选择点击开局页“AI 连接”按钮，Mock 必须通过；真实 provider 检查只在有 key 且显式启用时运行。
 - 真实 provider 验收记录应包含模型、耗时、是否 streaming、是否 schema-valid、是否写入 session、失败错误是否脱敏。
+- DeepSeek 上下文硬盘缓存优化应进入 S47.2：参考官方命中规则，把稳定 prompt 前缀固定下来，读取 `prompt_cache_hit_tokens` / `prompt_cache_miss_tokens` 形成命中率记录，比较不同 prompt pack 的命中情况。验收标准是降低重复前缀成本和延迟风险，同时不降低 `eval:ai`、长回合历史语气、官场深度和浏览器主线体验。
 
 ## 5. 进度记录
 
@@ -197,6 +207,29 @@
 ```
 
 ### 2026-05-06
+
+工具：Codex
+
+步骤：S47.2 planning scope update
+
+提交：current documentation commit
+
+完成：
+- 参考 DeepSeek 官方“上下文硬盘缓存”说明，将提高缓存命中率加入第四阶段规划。
+- 规划原则：稳定 prompt 前缀、动态上下文后置、记录 `prompt_cache_hit_tokens` / `prompt_cache_miss_tokens`，但不得为了缓存删减必要游戏上下文或影响叙事/推演效果。
+- 将 S47.2 加入步骤总览，并在 Phase 41 prompt pack 与 Phase 47 provider 验收中记录缓存命中率优化方向和测试要求。
+
+验证：
+- `git diff --check`
+
+风险/遗留：
+- 本次只做文档规划，不实现 telemetry 或 prompt builder 变更。
+- DeepSeek 缓存是官方标注的尽力而为机制，后续不应把 100% 命中率作为验收目标。
+
+下一步：
+- S41.1/S41.2 设计 prompt pack 时同步定义可缓存稳定前缀；S47.2 再实现命中率 telemetry 和 smoke 报告。
+
+---
 
 工具：Codex
 

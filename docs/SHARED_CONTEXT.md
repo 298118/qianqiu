@@ -98,6 +98,7 @@ Durable contracts and acceptance records:
 - S45: multi-entity world model for court offices, local gentry, academies, military fronts, fiscal channels, and disaster relief.
 - S46: dependency/plugin governance; allowed when useful, documented, licensed, tested, and reversible.
 - S47: provider/browser acceptance expansion around route-level connection tests and explicit keyed health checks.
+- S47.2: DeepSeek context-cache planning. Future prompt packs should maximize stable reusable prefixes and record `prompt_cache_hit_tokens` / `prompt_cache_miss_tokens`, while never reducing necessary game context or narrative quality just to raise cache hits.
 
 ## Current S40 Notes
 
@@ -128,6 +129,7 @@ Use focused checks first, then broaden when behavior crosses module boundaries:
 ## Current Work Note
 
 - 2026-05-06: S40.1-S40.2 implementation/docs commit is `7927c02`. Verification passed: focused `node --check`, focused AI diagnostics/provider tests, `$env:AI_PROVIDER='mock'; npm test` with 197 tests, DeepSeek no-session diagnostic through ignored `.env` with `ok=true`, `$env:AI_PROVIDER='mock'; npm run smoke:browser`, and `git diff --check`. Read-only pre-commit subagent review found no blocking issues. Residuals: browser smoke does not yet click the `AI 连接` button, and error redaction covers exact configured secret values rather than transformed/partial variants.
+- 2026-05-06: Added a documentation-only S47.2 planning update for DeepSeek context caching. Based on the official docs, cache hits depend on fully reused persisted prefixes and usage reports hit/miss tokens. The project plan now says to stabilize prompt prefixes and collect cache telemetry without sacrificing game effect. Pre-commit subagent review skipped as low-risk documentation-only; `git diff --check` is sufficient.
 
 ## Next Recommended Step
 
