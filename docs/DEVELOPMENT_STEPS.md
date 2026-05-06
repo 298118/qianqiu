@@ -61,8 +61,8 @@
 | S30.1 | DONE | 归档第二阶段路线图，开启第三阶段活动台账，并保持开发规范不变 | 2026-05-06 | Codex | current documentation commit |
 | S31.1 | DONE | 修复桌面游戏态布局过窄问题，并扩展 browser smoke 覆盖游戏面板宽度/裁切断言 | 2026-05-06 | Codex + subagent | 0d52d46 |
 | S31.2 | DONE | 收紧普通回合的服务器独占字段边界，阻止 provider patch `activeExam`、`characters`、`eventHistory`、`player.examRank`、`player.examHistory` 等字段 | 2026-05-06 | Codex + subagent | f470f78 |
-| S31.3 | DONE | 校验开局 role 输入并明确是否允许浏览器直接开局 `official` | 2026-05-06 | Codex + subagent | current S31.3 commit |
-| S32.1 | TODO | 定义关系/联系人检查视图契约，让 `relationshipLedger` 从叙事反馈升级为玩家可查看的信息面板 |  |  |  |
+| S31.3 | DONE | 校验开局 role 输入并明确是否允许浏览器直接开局 `official` | 2026-05-06 | Codex + subagent | 9cdbf91 |
+| S32.1 | DONE | 定义关系/联系人检查视图契约，让 `relationshipLedger` 从叙事反馈升级为玩家可查看的信息面板 | 2026-05-06 | Codex + subagents | current S32.1 commit |
 | S32.2 | TODO | 实现关系/联系人 UI 与基础浏览器验收，显示人物/派系关系、怨望、立场、近期意图和可见性 |  |  |  |
 | S32.3 | TODO | 增加主动 NPC/派系请托、施压、求援、背书或索取回报的最小事件循环 |  |  |  |
 | S33.1 | TODO | 定义长期事件调度器契约：季节、灾荒、边报、朝争、地方案件链和跨月后果 |  |  |  |
@@ -174,9 +174,39 @@
 
 Tool: Codex
 
+Step: S32.1
+
+Commit: current S32.1 commit
+
+Completed:
+- Added `buildRelationshipInspectionView(worldState)` in `src/game/relationships.js` as the player-facing relationship/contact inspection contract.
+- The view exposes only visible contacts and factions, adds relationship/resentment bands, keeps `role`, `networkSource`, `recentIntent`, and `lastUpdatedTurn`, and omits hidden ids, names, counts, placeholders, and hidden-entry notes.
+- Added top-level `relationshipView` payloads to game start, game state reads, game turns, exam question payloads, and exam submit payloads so S32.2 UI can render the view without reading the raw ledger directly.
+- Expanded relationship tests for visible-only views, role visibility, hidden-note filtering, and route-level turn payloads.
+- Used two read-only subagents: one inspected the S32.1 ledger/view contract and one inspected S32.2 UI/browser-smoke placement. Neither edited files or ran Git commands.
+
+Verification:
+- `node --check src/game/relationships.js`
+- `node --check src/routes/game.js`
+- `node --check src/routes/exam.js`
+- `node --check test/relationshipLedger.test.js`
+- `node --test test/relationshipLedger.test.js test/gameTurnRelationships.test.js`
+- Focused `node --test test/relationshipLedger.test.js test/gameTurnRelationships.test.js test/examTravel.test.js` passed with 16 tests.
+- `npm test` passed with 100 tests.
+- `git diff --check`
+
+Risk/leftover:
+- The raw `worldState.relationshipLedger` remains in current route payloads for compatibility with existing tests and developer inspection. Player-facing browser code should consume `relationshipView`; future response redaction can be considered after S32 UI stabilizes.
+- S32.1 does not render the relationship panel yet.
+
+Next:
+- S32.2: implement the relationship/contact UI inside the existing role panel and extend desktop/mobile browser smoke around `relationshipView`.
+
+Tool: Codex
+
 Step: S31.3
 
-Commit: current S31.3 commit
+Commit: 9cdbf91
 
 Completed:
 - Added an explicit start-role enum in `src/game/initialState.js` and normalized missing/blank roles to `scholar`.

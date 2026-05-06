@@ -793,3 +793,13 @@ S31.3 makes the start-role contract explicit:
 - `/api/game/start` now returns 400 for unknown roles instead of creating sessions with arbitrary `player.role` values.
 - Missing or blank role input still defaults to `scholar` for compatibility with older clients.
 - The browser start form now exposes `official` alongside `scholar`, `emperor`, `minister`, `general`, and `magistrate`; `scripts/browserSmoke.js` fails if any supported start role is missing from the form.
+
+## S32.1 Relationship Inspection View Note (2026-05-06)
+
+S32.1 defines the player-facing relationship/contact inspection contract without changing the server-owned ledger authority:
+
+- `src/game/relationships.js` now exports `buildRelationshipInspectionView(worldState)`, a presentation-only view derived from the normalized `relationshipLedger`.
+- Game and exam route payloads include top-level `relationshipView` beside `worldState` so S32.2 UI can render contacts and factions without reading the raw ledger directly.
+- `relationshipView` includes visible contacts and factions, numeric relationship/resentment values, readable relationship and resentment bands, stance, network source, recent intent, and `lastUpdatedTurn`.
+- Hidden ledger entries are omitted entirely: no hidden ids, names, exact counts, placeholder rows, faction labels, or hidden-entry notes are exposed through the view.
+- The persisted `relationshipLedger` remains server-owned. Providers still cannot patch it directly; they can only suggest bounded top-level `relationshipChanges`.

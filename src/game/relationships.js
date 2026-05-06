@@ -7,6 +7,7 @@ const RELATIONSHIP_MIN = -100;
 const RELATIONSHIP_MAX = 100;
 const RESENTMENT_MIN = 0;
 const RESENTMENT_MAX = 100;
+const RELATIONSHIP_VIEW_VERSION = 1;
 
 const FACTION_LABELS = {
   eunuchs: "Eunuch faction",
@@ -246,6 +247,62 @@ function appendRelationshipNote(ledger, entry, suggestion) {
   return storedNote;
 }
 
+function describeRelationship(value) {
+  if (value >= 60) return "trusted";
+  if (value >= 20) return "friendly";
+  if (value > -20) return "neutral";
+  if (value > -60) return "strained";
+  return "hostile";
+}
+
+function describeResentment(value) {
+  if (value >= 70) return "dangerous";
+  if (value >= 40) return "watchful";
+  if (value >= 15) return "uneasy";
+  return "quiet";
+}
+
+function compareInspectionEntries(first, second) {
+  if (second.lastUpdatedTurn !== first.lastUpdatedTurn) {
+    return second.lastUpdatedTurn - first.lastUpdatedTurn;
+  }
+  return first.name.localeCompare(second.name);
+}
+
+function toInspectionEntry(entry, targetType) {
+  const base = {
+    type: targetType,
+    id: entry.id,
+    name: entry.name,
+    stance: entry.stance,
+    relationship: entry.relationship,
+    relationshipLabel: describeRelationship(entry.relationship),
+    resentment: entry.resentment,
+    resentmentLabel: describeResentment(entry.resentment),
+    networkSource: entry.networkSource,
+    recentIntent: entry.recentIntent,
+    lastUpdatedTurn: entry.lastUpdatedTurn
+  };
+
+  if (targetType === "character") {
+    base.role = entry.role;
+  }
+
+  return base;
+}
+
+function filterVisibleNotes(notes, visibleEntries) {
+  const prefixes = visibleEntries
+    .map((entry) => `${entry.name}:`)
+    .filter((prefix) => prefix.length > 1);
+
+  if (!prefixes.length) return [];
+
+  return normalizeNotes(notes).filter((note) =>
+    prefixes.some((prefix) => note.startsWith(prefix))
+  );
+}
+
 function normalizeRelationshipLedger(ledger, worldState = {}) {
   const source = isPlainObject(ledger) ? ledger : {};
   const sourceCharacters = isPlainObject(source.characters) ? source.characters : {};
@@ -355,8 +412,35 @@ function summarizeRelationshipLedger(ledger, worldState = {}, options = {}) {
   };
 }
 
+function buildRelationshipInspectionView(worldState = {}) {
+  const normalized = normalizeRelationshipLedger(worldState.relationshipLedger, worldState);
+  const visibleCharacters = Object.values(normalized.characters).filter((entry) => entry.visible !== false);
+  const visibleFactions = Object.values(normalized.factions).filter((entry) => entry.visible !== false);
+  const visibleEntries = [...visibleCharacters, ...visibleFactions];
+  const hiddenEntries = [
+    ...Object.values(normalized.characters),
+    ...Object.values(normalized.factions)
+  ].some((entry) => entry.visible === false);
+
+  return {
+    schemaVersion: RELATIONSHIP_VIEW_VERSION,
+    generatedAtTurn: turnCount(worldState),
+    contacts: visibleCharacters
+      .map((entry) => toInspectionEntry(entry, "character"))
+      .sort(compareInspectionEntries),
+    factions: visibleFactions
+      .map((entry) => toInspectionEntry(entry, "faction"))
+      .sort(compareInspectionEntries),
+    recentNotes: filterVisibleNotes(normalized.recentNotes, visibleEntries),
+    hiddenNotice: hiddenEntries
+      ? "Some relationships remain outside the player's current knowledge."
+      : ""
+  };
+}
+
 module.exports = {
   applyRelationshipChanges,
+  buildRelationshipInspectionView,
   createInitialRelationshipLedger,
   ensureRelationshipLedger,
   normalizeRelationshipLedger,

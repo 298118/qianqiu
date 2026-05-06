@@ -4,6 +4,7 @@ const assert = require("node:assert/strict");
 const { createInitialState } = require("../src/game/initialState");
 const {
   applyRelationshipChanges,
+  buildRelationshipInspectionView,
   ensureRelationshipLedger,
   normalizeRelationshipLedger,
   summarizeRelationshipLedger
@@ -174,4 +175,48 @@ test("summarizeRelationshipLedger can hide non-visible relationship context for 
 
   assert.ok(summary.factions.some((entry) => entry.id === "scholarOfficials"));
   assert.ok(!summary.factions.some((entry) => entry.id === "eunuchs"));
+});
+
+test("buildRelationshipInspectionView exposes only player-visible contacts and factions", () => {
+  const worldState = createInitialState({ playerName: "Tester", role: "scholar" });
+  const view = buildRelationshipInspectionView(worldState);
+
+  assert.equal(view.schemaVersion, 1);
+  assert.equal(view.generatedAtTurn, 0);
+  assert.ok(view.contacts.some((entry) => entry.id === "C01" && entry.type === "character"));
+  assert.ok(view.contacts.every((entry) => Object.hasOwn(entry, "role")));
+  assert.ok(view.contacts.every((entry) => !Object.hasOwn(entry, "visible")));
+  assert.ok(view.factions.some((entry) => entry.id === "scholarOfficials" && entry.type === "faction"));
+  assert.ok(!view.factions.some((entry) => entry.id === "eunuchs"));
+  assert.ok(!view.factions.some((entry) => entry.id === "militaryLords"));
+  assert.ok(view.contacts.every((entry) => typeof entry.relationshipLabel === "string"));
+  assert.ok(view.factions.every((entry) => typeof entry.resentmentLabel === "string"));
+  assert.ok(view.hiddenNotice);
+  assert.equal(JSON.stringify(view).includes("Eunuch faction"), false);
+});
+
+test("buildRelationshipInspectionView follows role visibility rules without hidden placeholders", () => {
+  const worldState = createInitialState({ playerName: "Tester", role: "minister" });
+  const view = buildRelationshipInspectionView(worldState);
+
+  assert.ok(view.factions.some((entry) => entry.id === "eunuchs"));
+  assert.ok(view.factions.some((entry) => entry.id === "scholarOfficials"));
+  assert.ok(view.factions.some((entry) => entry.id === "militaryLords"));
+  assert.equal(view.hiddenNotice, "");
+});
+
+test("buildRelationshipInspectionView filters notes tied to hidden entries", () => {
+  const worldState = createInitialState({ playerName: "Tester", role: "scholar" });
+  worldState.relationshipLedger.characters.C01.name = "Visible Mentor";
+  worldState.relationshipLedger.factions.eunuchs.name = "Hidden Palace";
+  worldState.relationshipLedger.recentNotes = [
+    "Visible Mentor: offered a careful lesson",
+    "Hidden Palace: sent a sealed request"
+  ];
+
+  const view = buildRelationshipInspectionView(worldState);
+
+  assert.deepEqual(view.recentNotes, ["Visible Mentor: offered a careful lesson"]);
+  assert.equal(JSON.stringify(view).includes("sealed request"), false);
+  assert.equal(JSON.stringify(view).includes("Hidden Palace"), false);
 });

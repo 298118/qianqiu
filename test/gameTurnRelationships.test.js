@@ -123,6 +123,10 @@ test("POST /api/game/turn applies provider relationship suggestions through serv
   assert.equal(payload.relationshipChanges[0].targetId, "C01");
   assert.deepEqual(payload.relationshipChanges[0].relationship, { before: 12, after: 24, delta: 12 });
   assert.deepEqual(payload.relationshipChanges[0].resentment, { before: 0, after: 10, delta: 10 });
+  assert.ok(payload.relationshipView.contacts.some((entry) => entry.id === "C01" && entry.lastUpdatedTurn === 1));
+  assert.ok(payload.relationshipView.factions.some((entry) => entry.id === "scholarOfficials"));
+  assert.ok(!payload.relationshipView.factions.some((entry) => entry.id === "eunuchs"));
+  assert.equal(JSON.stringify(payload.relationshipView).includes("Eunuch faction"), false);
   assert.equal(payload.worldState.relationshipLedger.characters.C01.stance, "warmer mentor");
   assert.equal(payload.worldState.relationshipLedger.characters.C01.lastUpdatedTurn, 1);
   assert.equal(payload.worldState.relationshipLedger.factions.eunuchs.relationship, -4);

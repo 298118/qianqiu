@@ -92,6 +92,68 @@ Server merge rules:
 
 `src/ai/prompts.js` includes a compact visible-only relationship summary in turn prompt context so real providers can suggest consequences without seeing hidden ledger entries.
 
+## Relationship Inspection View
+
+S32.1 adds a player-facing inspection contract through `buildRelationshipInspectionView(worldState)`.
+This is a presentation view, not the persisted ledger. It normalizes the current ledger, filters out hidden entries, and returns only the fields the browser contact panel should consume.
+
+Game and exam route payloads now include top-level `relationshipView` beside `worldState`:
+
+```json
+{
+  "relationshipView": {
+    "schemaVersion": 1,
+    "generatedAtTurn": 3,
+    "contacts": [
+      {
+        "type": "character",
+        "id": "C01",
+        "name": "display name",
+        "role": "teacher",
+        "stance": "trusted mentor",
+        "relationship": 24,
+        "relationshipLabel": "friendly",
+        "resentment": 0,
+        "resentmentLabel": "quiet",
+        "networkSource": "county_school",
+        "recentIntent": "Recommend cautious study.",
+        "lastUpdatedTurn": 3
+      }
+    ],
+    "factions": [
+      {
+        "type": "faction",
+        "id": "scholarOfficials",
+        "name": "Scholar-official faction",
+        "stance": "orthodox_bureaucracy",
+        "relationship": 8,
+        "relationshipLabel": "neutral",
+        "resentment": 3,
+        "resentmentLabel": "quiet",
+        "networkSource": "examination_and_memorial_network",
+        "recentIntent": "Reward classical legitimacy.",
+        "lastUpdatedTurn": 0
+      }
+    ],
+    "recentNotes": [],
+    "hiddenNotice": "Some relationships remain outside the player's current knowledge."
+  }
+}
+```
+
+Inspection rules:
+
+- `contacts` contains only visible character ledger entries.
+- `factions` contains only visible faction ledger entries.
+- Hidden entries do not create placeholder rows, ids, names, exact counts, faction labels, or notes.
+- The raw `visible` boolean is not part of the inspection entry. Visibility is an input to filtering, not a field the panel should display.
+- `relationshipLabel` and `resentmentLabel` are derived from clamped numeric values so the UI can display readable bands without inventing its own thresholds.
+- `recentNotes` is filtered to notes that begin with a currently visible entry name. Notes that could belong to hidden entries are omitted until the note store becomes target-keyed.
+- `hiddenNotice` is generic and contains no target-specific information. It is empty when every normalized ledger entry is visible.
+
+The browser implementation planned for S32.2 should render `relationshipView`, not raw `worldState.relationshipLedger`.
+The raw ledger remains in saved session state and in current local route `worldState` payloads for compatibility with existing tests and developer inspection, but player-facing UI code should treat `relationshipView` as the supported contract.
+
 ## Mock Reactions
 
 S22.3 makes Mock turns produce visible NPC/faction reactions through the same suggestion path:

@@ -136,6 +136,8 @@ POST /api/exam/submit
 
 `POST /api/game/start` 会校验 `role`，目前允许 `scholar`、`emperor`、`minister`、`general`、`magistrate`、`official`；浏览器开局下拉也暴露这六种身份。缺省或空 role 会按 `scholar` 开局，未知 role 返回 400。
 
+当前 S32.1 开发载荷还会从游戏与考试路由返回顶层 `relationshipView`。这是从服务器自有 `relationshipLedger` 派生出的玩家联系人/派系检查视图，会过滤隐藏关系的 id、名称、数量、占位行和隐藏对象笔记。
+
 `POST /api/game/turn` 支持 SSE。客户端发送 `Accept: text/event-stream` 或 `?stream=1` 时，会收到：
 
 - `state_preview`

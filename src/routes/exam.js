@@ -12,7 +12,7 @@ const { applyAuthenticityPenalties, checkEssayAuthenticity } = require("../game/
 const { buildRanking, generateVirtualCandidates } = require("../game/candidates");
 const { createEntryPreparation } = require("../game/examTravel");
 const { applyExamPromotion } = require("../game/promotions");
-const { ensureRelationshipLedger } = require("../game/relationships");
+const { buildRelationshipInspectionView, ensureRelationshipLedger } = require("../game/relationships");
 const { appendEvents, applyStatePatch } = require("../game/stateRules");
 const { readSession, writeSession } = require("../storage/sessionStore");
 
@@ -34,6 +34,7 @@ function toExamPayload(worldState) {
     promotionRank: activeExam.promotionRank,
     readiness: activeExam.readiness,
     entryPreparation: activeExam.entryPreparation || null,
+    relationshipView: buildRelationshipInspectionView(worldState),
     worldState
   };
 }
@@ -225,6 +226,7 @@ router.post("/submit", async (req, res, next) => {
       virtualCandidates,
       ranking,
       promotionResult,
+      relationshipView: buildRelationshipInspectionView(worldState),
       worldState
     });
   } catch (error) {

@@ -1,6 +1,10 @@
 const express = require("express");
 const { createInitialState } = require("../game/initialState");
-const { applyRelationshipChanges, ensureRelationshipLedger } = require("../game/relationships");
+const {
+  applyRelationshipChanges,
+  buildRelationshipInspectionView,
+  ensureRelationshipLedger
+} = require("../game/relationships");
 const { applyStatePatch, appendEvents } = require("../game/stateRules");
 const { runWorldTick } = require("../game/worldTick");
 const { getProvider } = require("../ai");
@@ -90,6 +94,7 @@ async function finalizeTurn(worldState, result) {
     narrative: result.narrative,
     attributeChanges: [...providerAttributeChanges, ...worldTickFeedback.attributeChanges],
     relationshipChanges,
+    relationshipView: buildRelationshipInspectionView(worldState),
     examTrigger,
     worldTick: worldTickFeedback,
     worldState
@@ -156,6 +161,7 @@ router.post("/start", async (req, res, next) => {
     res.status(201).json({
       sessionId: worldState.sessionId,
       worldState,
+      relationshipView: buildRelationshipInspectionView(worldState),
       narrative: opening.narrative
     });
   } catch (error) {
@@ -167,7 +173,11 @@ router.get("/state/:sessionId", async (req, res, next) => {
   try {
     const worldState = await readSession(req.params.sessionId);
     ensureRelationshipLedger(worldState);
-    res.json({ sessionId: worldState.sessionId, worldState });
+    res.json({
+      sessionId: worldState.sessionId,
+      worldState,
+      relationshipView: buildRelationshipInspectionView(worldState)
+    });
   } catch (error) {
     next(error);
   }
