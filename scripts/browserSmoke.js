@@ -5,6 +5,7 @@ const path = require("node:path");
 const { spawn } = require("node:child_process");
 const { once } = require("node:events");
 const { chromium } = require("playwright-core");
+const { readSession, writeSession } = require("../src/storage/sessionStore");
 
 const rootDir = path.join(__dirname, "..");
 const sessionIdPattern = /^[0-9a-fA-F-]{20,}$/;
@@ -21,6 +22,47 @@ const desktopGameMinViewportShare = 0.74;
 const desktopViewportShareOnlyWhenAppShare = 0.88;
 const horizontalClipTolerance = 4;
 const requiredStartRoles = Object.freeze(["scholar", "emperor", "minister", "general", "magistrate", "official"]);
+const examOpenMonthByLevel = Object.freeze({
+  child_exam: 1,
+  provincial_exam: 8,
+  metropolitan_exam: 2,
+  palace_exam: 4
+});
+const examProgressionCases = Object.freeze([
+  {
+    level: "child_exam",
+    expectedCompletedLevels: ["child_exam"],
+    expectedRank: "秀才",
+    expectedRole: "scholar",
+    expectedNextLevel: "provincial_exam",
+    modalScreenshotName: "desktop-exam-modal",
+    resultScreenshotName: "desktop-child-exam-result"
+  },
+  {
+    level: "provincial_exam",
+    expectedCompletedLevels: ["child_exam", "provincial_exam"],
+    expectedRank: "举人",
+    expectedRole: "scholar",
+    expectedNextLevel: "metropolitan_exam",
+    resultScreenshotName: "desktop-provincial-exam-result"
+  },
+  {
+    level: "metropolitan_exam",
+    expectedCompletedLevels: ["child_exam", "provincial_exam", "metropolitan_exam"],
+    expectedRank: "贡士",
+    expectedRole: "scholar",
+    expectedNextLevel: "palace_exam",
+    resultScreenshotName: "desktop-metropolitan-exam-result"
+  },
+  {
+    level: "palace_exam",
+    expectedCompletedLevels: ["child_exam", "provincial_exam", "metropolitan_exam", "palace_exam"],
+    expectedRank: "进士",
+    expectedRole: "official",
+    expectedOffice: true,
+    resultScreenshotName: "desktop-palace-exam-result"
+  }
+]);
 const roleWorldAcceptanceCases = Object.freeze([
   {
     role: "magistrate",
@@ -538,6 +580,11 @@ function getMissingRoleWorldKinds(actualKinds = [], expectedKinds = []) {
   return expectedKinds.filter((kind) => !available.has(kind));
 }
 
+function getMissingExamLevels(actualLevels = [], expectedLevels = []) {
+  const available = new Set(actualLevels);
+  return expectedLevels.filter((level) => !available.has(level));
+}
+
 async function assertRelationshipPanel(page, mode, expectations = {}) {
   await visibleBox(page, "#relationship-panel", `${mode} relationship panel`);
 
@@ -812,6 +859,7 @@ async function runRelationshipTurnAcceptance(page) {
 async function assertGameLayout(page, mode) {
   await assertNoHorizontalOverflow(page, `${mode} game layout`);
 
+  const isMobileMode = String(mode).startsWith("mobile");
   const viewport = page.viewportSize();
   const status = await visibleBox(page, "#status-strip", `${mode} status strip`);
   const scholar = await visibleBox(page, "#scholar-panel", `${mode} role panel`);
@@ -820,7 +868,7 @@ async function assertGameLayout(page, mode) {
   const actionInput = await visibleBox(page, "#action-input", `${mode} action input`);
   const actionButton = await visibleBox(page, "#action-btn", `${mode} action button`);
 
-  if (!rectWithinViewport(actionArea, viewport, mode === "mobile" ? 3 : 12)) {
+  if (!rectWithinViewport(actionArea, viewport, isMobileMode ? 3 : 12)) {
     failUiAcceptance(`${mode} action area does not fit inside the viewport.`);
   }
   if (rectsOverlap(status, scholar)) {
@@ -859,7 +907,7 @@ async function assertGameLayout(page, mode) {
     failUiAcceptance(gameLayoutFailures.join(" "));
   }
 
-  if (mode === "mobile") {
+  if (isMobileMode) {
     if (computed.actionFlexDirection !== "column") {
       failUiAcceptance("mobile action controls should stack vertically.");
     }
@@ -972,32 +1020,150 @@ async function assertExamResultLayout(page, mode) {
   }
 }
 
-function buildBrowserSmokeEssay() {
-  return [
-    "On rites and corn stores, the student urges soft tax, clear rolls, modest yamen work, and steady school books. ",
-    "The text says local officers should hear poor folk soon, store crops before hunger, use honest clerks, and punish with care. ",
-    "It ends by asking old laws to guide households, farms, teachers, and county order."
+function buildBrowserSmokeEssay(level = "child_exam") {
+  const repeatCount = {
+    child_exam: 2,
+    provincial_exam: 5,
+    metropolitan_exam: 8,
+    palace_exam: 7
+  }[level] || 5;
+  const paragraph = [
+    "夫治民者，当以仁义为本，以礼法为纲。",
+    "臣闻民为邦本，本固则邦宁。",
+    "故一曰宽赋以养民力，二曰明经以正士风，三曰择吏以清县政。",
+    "盖仓廪足而礼义兴，学校修而风俗厚。",
+    "是以为学不徒章句，必施于乡里；为政不尚苛急，必本于爱民。",
+    "谨按古今治道，皆贵循序渐进，先修身而后齐家，先教化而后刑罚。",
+    "由是观之，士子临文，宜明道义，陈利弊，守中正，不为浮辞。"
   ].join("");
+  return Array.from({ length: repeatCount }, () => paragraph).join("");
 }
 
-async function runExamUiAcceptance(page, recorder) {
+function buildBrowserCheatingEssay() {
+  return "学而时习之不亦说乎。学而时习之不亦说乎。";
+}
+
+async function prepareSessionForExam(sessionId, level) {
+  const worldState = await readSession(sessionId);
+  if (worldState.activeExam) {
+    failUiAcceptance(`session ${sessionId} already has an active exam before opening ${level}.`);
+  }
+
+  worldState.month = examOpenMonthByLevel[level] || 1;
+  worldState.player.gold = Math.max(worldState.player.gold || 0, 1000);
+  worldState.player.health = 100;
+  worldState.player.teacher = worldState.player.teacher || "顾文衡";
+  worldState.player.academia = Math.max(worldState.player.academia || 0, 100);
+  worldState.player.literaryTalent = Math.max(worldState.player.literaryTalent || 0, 100);
+  worldState.player.adaptability = Math.max(worldState.player.adaptability || 0, 100);
+  worldState.player.mentality = Math.max(worldState.player.mentality || 0, 100);
+  worldState.player.reputation = Math.max(worldState.player.reputation || 0, 100);
+  await writeSession(worldState);
+  return worldState;
+}
+
+function assertLatestExamProgression(worldState, expectations, mode) {
+  const history = Array.isArray(worldState.player?.examHistory) ? worldState.player.examHistory : [];
+  const latest = history.at(-1);
+  if (!latest || latest.level !== expectations.level) {
+    failUiAcceptance(`${mode} latest exam history is not ${expectations.level}.`);
+  }
+  if (!latest.promotionResult?.passed) {
+    failUiAcceptance(`${mode} did not pass ${expectations.level}.`);
+  }
+
+  const completedLevels = history.map((entry) => entry.level);
+  const missingLevels = getMissingExamLevels(completedLevels, expectations.expectedCompletedLevels || []);
+  if (missingLevels.length) {
+    failUiAcceptance(`${mode} exam history is missing completed levels: ${missingLevels.join(", ")}.`);
+  }
+  if (worldState.player.examRank !== expectations.expectedRank) {
+    failUiAcceptance(`${mode} expected exam rank ${expectations.expectedRank}, got ${worldState.player.examRank}.`);
+  }
+  if (worldState.player.role !== expectations.expectedRole) {
+    failUiAcceptance(`${mode} expected role ${expectations.expectedRole}, got ${worldState.player.role}.`);
+  }
+  if (expectations.expectedOffice && !worldState.player.officeTitle) {
+    failUiAcceptance(`${mode} palace pass did not seed an office title.`);
+  }
+  if (worldState.activeExam !== null) {
+    failUiAcceptance(`${mode} left activeExam populated after submit.`);
+  }
+  return latest;
+}
+
+async function runExamLevelAcceptance(page, sessionId, recorder, expectations) {
+  await prepareSessionForExam(sessionId, expectations.level);
   await page.locator("#scholar-panel .panel-action").first().click();
   await page.locator("#exam-backdrop").waitFor({ state: "visible", timeout: 10000 });
-  await assertExamWritingLayout(page, "desktop");
-  await recorder.capture(page, "desktop-exam-modal");
+  await assertExamWritingLayout(page, `desktop ${expectations.level}`);
+  if (expectations.modalScreenshotName) {
+    await recorder.capture(page, expectations.modalScreenshotName);
+  }
 
-  await page.locator("#exam-essay").fill(buildBrowserSmokeEssay());
+  await page.locator("#exam-essay").fill(buildBrowserSmokeEssay(expectations.level));
   await page.waitForFunction(() => {
     const button = document.querySelector("#exam-submit");
     return button && !button.disabled;
   });
   await page.locator("#exam-submit").click();
   await page.locator("#exam-result").waitFor({ state: "visible", timeout: 15000 });
-  await assertExamResultLayout(page, "desktop");
-  await recorder.capture(page, "desktop-exam-result");
+  await assertExamResultLayout(page, `desktop ${expectations.level}`);
+  await recorder.capture(page, expectations.resultScreenshotName || `desktop-${expectations.level}-result`);
+
+  let worldState = await readSession(sessionId);
+  const latest = assertLatestExamProgression(worldState, expectations, `desktop ${expectations.level}`);
 
   await page.locator("#exam-close").click();
   await page.locator("#exam-backdrop").waitFor({ state: "hidden", timeout: 10000 });
+  await assertGameLayout(page, `desktop after ${expectations.level}`);
+
+  if (expectations.expectedNextLevel) {
+    await assertExamCalendarPanel(page, `desktop after ${expectations.level}`, {
+      expectedNextLevel: expectations.expectedNextLevel
+    });
+  } else {
+    await assertOfficialCareerPanel(page, "post-palace official", {
+      expectedPosting: worldState.player.officeTitle
+    });
+  }
+  await assertExamRivalPanel(page, `desktop after ${expectations.level}`, {
+    expectedLevel: expectations.level,
+    minRivals: 1
+  });
+
+  worldState = await readSession(sessionId);
+  return { latest, worldState };
+}
+
+async function runRemainingExamProgressionAcceptance(page, sessionId, recorder) {
+  await page.setViewportSize(VIEWPORTS.desktop);
+  await page.waitForTimeout(150);
+  const results = [];
+
+  for (const expectations of examProgressionCases.slice(1)) {
+    results.push(await runExamLevelAcceptance(page, sessionId, recorder, expectations));
+  }
+
+  const finalState = results.at(-1)?.worldState || await readSession(sessionId);
+  if (finalState.player.role !== "official" || finalState.player.examHistory.length < 4) {
+    failUiAcceptance("complete exam progression did not finish as an official with four exam records.");
+  }
+  await assertOfficialCareerPanel(page, "complete exam progression official", {
+    expectedPosting: finalState.player.officeTitle
+  });
+  await assertRelationshipPanel(page, "complete exam progression official", {
+    expectedIds: ["C01", "scholarOfficials"],
+    expectedTypes: ["character", "faction"]
+  });
+  await recorder.capture(page, "desktop-post-palace-official");
+
+  return {
+    finalRank: finalState.player.examRank,
+    finalRole: finalState.player.role,
+    levels: finalState.player.examHistory.map((entry) => entry.level),
+    officeTitle: finalState.player.officeTitle
+  };
 }
 
 async function runMobileUiAcceptance(page, recorder) {
@@ -1029,6 +1195,47 @@ async function runMobileUiAcceptance(page, recorder) {
   await page.locator("#exam-backdrop").waitFor({ state: "visible", timeout: 10000 });
   await assertExamResultLayout(page, "mobile archive");
   await recorder.capture(page, "mobile-exam-archive");
+  await page.locator("#exam-close").click();
+  await page.locator("#exam-backdrop").waitFor({ state: "hidden", timeout: 10000 });
+}
+
+async function runFinalMobileOfficialAcceptance(page, recorder, expectations = {}) {
+  await page.setViewportSize(VIEWPORTS.mobile);
+  await page.waitForTimeout(150);
+  await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
+  await page.waitForTimeout(100);
+  await assertGameLayout(page, "mobile post-palace official");
+  await assertOfficialCareerPanel(page, "mobile post-palace official", {
+    expectedPosting: expectations.expectedPosting
+  });
+  await assertRelationshipPanel(page, "mobile post-palace official", {
+    expectedIds: ["C01", "scholarOfficials"],
+    expectedTypes: ["character", "faction"]
+  });
+  await assertExamRivalPanel(page, "mobile post-palace official", {
+    expectedLevel: "palace_exam",
+    minRivals: 1
+  });
+  await recorder.capture(page, "mobile-post-palace-official");
+
+  await page.locator("#scholar-panel .archive-action").first().click();
+  await page.locator("#exam-backdrop").waitFor({ state: "visible", timeout: 10000 });
+  await assertExamResultLayout(page, "mobile final archive");
+  const archiveLevels = await page.evaluate(() => {
+    document.querySelectorAll(".exam-archive-list .result-section").forEach((details) => {
+      details.open = true;
+    });
+    return [...document.querySelectorAll(".exam-archive-entry .exam-calendar-archive")]
+      .map((entry) => entry.innerText)
+      .join("\n");
+  });
+  for (const label of ["童试", "乡试", "会试", "殿试"]) {
+    const archiveText = await page.locator("#exam-result").innerText();
+    if (!archiveText.includes(label) && !archiveLevels.includes(label)) {
+      failUiAcceptance(`mobile final archive is missing ${label}.`);
+    }
+  }
+  await recorder.capture(page, "mobile-final-exam-archive");
   await page.locator("#exam-close").click();
   await page.locator("#exam-backdrop").waitFor({ state: "hidden", timeout: 10000 });
 }
@@ -1105,6 +1312,74 @@ async function runOfficialStartAcceptance(browser, { baseUrl, onSessionId, pageE
     return {
       sessionId: officialSessionId,
       statusText: (await page.locator("#status-strip").innerText()).replace(/\s+/g, " ").trim()
+    };
+  } finally {
+    await context.close();
+  }
+}
+
+async function runCheatingExamAcceptance(browser, { baseUrl, onSessionId, pageErrors, recorder = null }) {
+  const context = await browser.newContext({ viewport: VIEWPORTS.desktop });
+  let cheatingSessionId = null;
+
+  try {
+    const page = await context.newPage();
+    page.on("pageerror", (error) => pageErrors.push(error.message));
+    await openCleanStartPage(page, baseUrl);
+    await assertStartRoleOptions(page);
+
+    await page.locator('input[name="dynasty"]').fill("Ming");
+    await page.locator('input[name="year"]').fill("1644");
+    await page.locator('select[name="role"]').selectOption("scholar");
+    await page.locator('input[name="playerName"]').fill("Browser Cheating");
+    await page.locator('input[name="background"]').fill("county school student");
+    await page.locator('textarea[name="customSetting"]').fill("S38 cheating acceptance run");
+    await page.locator('#start-form button[type="submit"]').click();
+
+    await page.locator("#action-area").waitFor({ state: "visible", timeout: 10000 });
+    await page.locator("#scholar-panel").waitFor({ state: "visible", timeout: 10000 });
+    cheatingSessionId = await page.evaluate(() => window.localStorage.getItem("qianqiu.sessionId"));
+    if (!cheatingSessionId) throw new Error("Cheating start did not write qianqiu.sessionId to localStorage.");
+    onSessionId(cheatingSessionId);
+
+    await prepareSessionForExam(cheatingSessionId, "child_exam");
+    await page.locator("#scholar-panel .panel-action").first().click();
+    await page.locator("#exam-backdrop").waitFor({ state: "visible", timeout: 10000 });
+    await assertExamWritingLayout(page, "desktop cheating sample");
+    await page.locator("#exam-essay").fill(buildBrowserCheatingEssay());
+    await page.waitForFunction(() => {
+      const button = document.querySelector("#exam-submit");
+      return button && !button.disabled;
+    });
+    await page.locator("#exam-submit").click();
+    await page.locator("#exam-result").waitFor({ state: "visible", timeout: 15000 });
+    await assertExamResultLayout(page, "desktop cheating result");
+
+    const resultText = `${await page.locator("#exam-title").innerText()}\n${await page.locator("#exam-result").innerText()}`;
+    if (!resultText.includes("监试黜落") || !resultText.includes("疑似照抄")) {
+      failUiAcceptance("cheating result did not show severe copy punishment in the browser.");
+    }
+
+    const worldState = await readSession(cheatingSessionId);
+    const latest = worldState.player.examHistory?.at(-1);
+    if (!latest || latest.level !== "child_exam") {
+      failUiAcceptance("cheating sample did not persist a child exam history entry.");
+    }
+    if (latest.score?.overall_score !== 0 || latest.promotionResult?.severeCheat !== true) {
+      failUiAcceptance("cheating sample did not force score 0 with severeCheat=true.");
+    }
+    if (worldState.player.examRank !== null || worldState.player.role !== "scholar") {
+      failUiAcceptance("cheating sample advanced the scholar despite severe copying.");
+    }
+    if (recorder) {
+      await recorder.capture(page, "desktop-cheating-result");
+    }
+
+    return {
+      sessionId: cheatingSessionId,
+      level: latest.level,
+      score: latest.score.overall_score,
+      severeCheat: true
     };
   } finally {
     await context.close();
@@ -1301,7 +1576,7 @@ async function runBrowserJourney({
       hiddenTextTokens: ["Eunuch faction", "Military faction"]
     });
     await recorder.capture(page, "desktop-game-layout");
-    await runExamUiAcceptance(page, recorder);
+    await runExamLevelAcceptance(page, sessionId, recorder, examProgressionCases[0]);
     await assertExamRivalPanel(page, "desktop scholar after exam", {
       expectedLevel: "child_exam",
       minRivals: 1
@@ -1365,12 +1640,27 @@ async function runBrowserJourney({
 
     await runMobileUiAcceptance(page, recorder);
 
+    const examProgression = await runRemainingExamProgressionAcceptance(page, sessionId, recorder);
+    await runFinalMobileOfficialAcceptance(page, recorder, {
+      expectedPosting: examProgression.officeTitle
+    });
+
     const stateResponse = await fetch(`${baseUrl}/api/game/state/${sessionId}`);
     if (!stateResponse.ok) {
       throw new Error(`Restored session is not readable through the API: ${stateResponse.status}`);
     }
 
     const officialStart = await runOfficialStartAcceptance(browser, {
+      baseUrl,
+      onSessionId: (createdSessionId) => {
+        sessionIds.push(createdSessionId);
+        onSessionId(createdSessionId);
+      },
+      pageErrors,
+      recorder
+    });
+
+    const cheatingExam = await runCheatingExamAcceptance(browser, {
       baseUrl,
       onSessionId: (createdSessionId) => {
         sessionIds.push(createdSessionId);
@@ -1403,11 +1693,23 @@ async function runBrowserJourney({
       sessionId,
       sessionIds,
       statusText: statusText.replace(/\s+/g, " ").trim(),
+      examProgression,
       officialStart,
+      cheatingExam,
       roleWorldCoupling,
+      identityTurns: ["scholar", "official", ...roleWorldAcceptanceCases.map((acceptanceCase) => acceptanceCase.role)],
       uiAcceptance: {
         screenshots: recorder.summary(),
-        viewports: ["desktop", "mobile", "official-start", "official-career", "role-world"]
+        viewports: [
+          "desktop",
+          "mobile",
+          "four-exam-progression",
+          "mobile-final-archive",
+          "cheating-result",
+          "official-start",
+          "official-career",
+          "role-world"
+        ]
       }
     };
   } finally {
@@ -1455,6 +1757,7 @@ function printHelp() {
 
 Options:
   --url <url>        Test an already running Qianqiu server instead of starting one.
+                    The S38 exam journey expects that server to share this repo's data/sessions directory.
   --browser <path>   Browser executable path. Defaults to BROWSER_EXECUTABLE_PATH or local Chrome/Edge.
   --screenshots <dir>
                     Save desktop/mobile UI acceptance screenshots to this directory.
@@ -1488,11 +1791,13 @@ if (require.main === module) {
 
 module.exports = {
   assertPngScreenshot,
+  buildBrowserCheatingEssay,
   buildBrowserSmokeEssay,
   createScreenshotRecorder,
   getDefaultBrowserCandidates,
   getGameLayoutFailures,
   getHiddenActiveRequestLeaks,
+  getMissingExamLevels,
   getHiddenRelationshipLeaks,
   getMissingOfficialCareerOutcomeTypes,
   getMissingRoleWorldKinds,

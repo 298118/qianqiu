@@ -12,7 +12,7 @@ npm run smoke:browser -- --url http://localhost:3000
 npm run smoke:browser -- --screenshots artifacts/browser-smoke
 ```
 
-The smoke uses `playwright-core` with an installed Chrome or Edge executable. If the browser is not in a standard location, set `BROWSER_EXECUTABLE_PATH` or pass `--browser <path>`. Screenshots are validated in memory by default; `--screenshots <dir>` also writes the checked PNG files. `artifacts/` is ignored by Git.
+The smoke uses `playwright-core` with an installed Chrome or Edge executable. If the browser is not in a standard location, set `BROWSER_EXECUTABLE_PATH` or pass `--browser <path>`. S38.1 deterministic exam setup expects `--url` targets to be local Qianqiu servers sharing this repository's `data/sessions/` directory. Screenshots are validated in memory by default; `--screenshots <dir>` also writes the checked PNG files. `artifacts/` is ignored by Git.
 
 ## Automated Coverage
 
@@ -30,9 +30,11 @@ The smoke uses `playwright-core` with an installed Chrome or Edge executable. If
 | Exam calendar panel | Checks the server-owned `examCalendarView` panel, next-level/status attributes, timing/funding/recommendation/quota details, and calendar-panel overflow. |
 | Exam rival panel | Checks persistent `examRivalView` cards after an exam, stable rival/status/level attributes, latest-result rows, and rival-panel overflow. |
 | Role/world coupling | Opens direct magistrate, general, emperor, and minister sessions; runs one representative role action; checks `.role-world-event[data-role-world-kind]` feedback; and verifies the expected API state metric moves in the intended direction. |
-| Exam modal | Opens the next exam from the scholar panel, verifies question/requirements/writing controls, checks calendar timing details in the requirements, fills an essay, and submits it. |
-| Result details | Checks score summary, player archive, calendar archive details, result sections, highlighted ranking row, inspectable same-field candidate essays, and persistent rival notes. |
-| Mobile layout | Switches to a mobile viewport, checks the game/action surface, opens the exam archive, and verifies responsive result details. |
+| Exam progression | Opens and submits 童试, 乡试, 会试, and 殿试 through the real browser modal path, setting local Mock smoke readiness/months only to keep the legal calendar windows deterministic. Confirms each promotion, final `official` role, four exam-history records, cleared `activeExam`, and seeded office title. |
+| Cheating sample | Starts an isolated scholar session, submits a copied-classic essay through the browser, and confirms the result shows `监试黜落` / `疑似照抄`, persists score `0`, keeps the player a scholar, and records `severeCheat=true`. |
+| Exam modal | Opens each exam from the scholar panel, verifies question/requirements/writing controls, checks calendar timing details in the requirements, fills deterministic essays, and submits them. |
+| Result details | Checks score summary, player archive, calendar archive details, result sections, highlighted ranking row, inspectable same-field candidate essays, persistent rival notes, and the final four-exam archive. |
+| Mobile layout | Switches to a mobile viewport after the first exam and after palace promotion, checks the game/action surface, opens the exam archive, and verifies responsive result details for both the early and full-path archive states. |
 | Direct official start | Opens an isolated browser context, starts as `official`, checks the official role panel/action placeholder, verifies all expected visible relationship factions are present, verifies the API-persisted role, then runs one official turn to verify first appointment. |
 | Screenshots | Captures representative desktop and mobile states and validates each capture as a non-empty PNG. |
 | Cleanup | Deletes the smoke-created session file when the journey finishes. |
@@ -41,38 +43,26 @@ The smoke uses `playwright-core` with an installed Chrome or Edge executable. If
 
 Date: 2026-05-06
 
-Relevant implementation commit: current S36 implementation commit (`Implement S36 role-world coupling`)
+Relevant implementation commit: current S38 implementation commit (`test: expand browser acceptance journey`)
 
-Commands verified during S36:
+Commands verified during S38.1:
 
 ```powershell
-node --check src\game\roleWorldCoupling.js
-node --check src\routes\game.js
-node --check src\routes\exam.js
-node --check public\app.js
 node --check scripts\browserSmoke.js
-node --check test\roleWorldCoupling.test.js
-node --check test\gameTurnRoleWorldCoupling.test.js
-node --check test\stateRules.test.js
-node --check test\aiSchemas.test.js
-node --check testdata\aiEvalFixtures.js
 node --check test\browserSmokeScript.test.js
-node --test test\roleWorldCoupling.test.js test\gameTurnRoleWorldCoupling.test.js test\stateRules.test.js test\aiSchemas.test.js test\aiEvalFixtures.test.js test\browserSmokeScript.test.js
-npm run eval:ai
+node --test test\browserSmokeScript.test.js
 npm test
-npm run smoke:provider
-npm run smoke:browser -- --screenshots artifacts/browser-smoke/s36
+npm run smoke:browser -- --screenshots artifacts/browser-smoke/s38-1
 git diff --check
 ```
 
 Observed result:
 
-- Focused S36 role-world, route-order, state-boundary, AI-schema/eval, and browser-helper tests passed with 45 tests.
-- `npm run smoke:browser -- --screenshots artifacts/browser-smoke/s36`: passed with relationship-panel coverage, active-request-panel coverage, exam-calendar/rival-panel coverage, direct official-start relationship visibility, deterministic official first-appointment coverage, representative magistrate/general/emperor/minister role-world coupling coverage, and 7 screenshots checked.
-- The S36 browser pass also hardens smoke start flows: if stale `qianqiu.sessionId` localStorage restores a prior game before the start form appears, the smoke clears that local key and reloads only for the initial start path. Later reload/fresh-page restoration checks still use the newly created session.
-- `npm test`: 145 tests passed.
-- `npm run smoke:provider`: skipped successfully because no real-provider keys are configured.
-- Desktop smoke still fails if the game panel regresses to the old narrow-column width, if the role panel, relationship panel, active-request panel, official-career panel, exam-calendar panel, or exam-rival panel is horizontally clipped, if S35 calendar/rival details disappear from the modal/archive/candidate profiles, if S36 role-world feedback or expected API metric deltas disappear from representative role journeys, if any supported start role is missing from the browser form, or if hidden scholar-invisible factions leak into relationship/active-request panel text.
+- Focused browser-helper tests passed with 21 tests.
+- `npm run smoke:browser -- --screenshots artifacts/browser-smoke/s38-1`: passed with relationship-panel coverage, active-request-panel coverage, complete four-level Mock exam progression, final scholar-to-official browser promotion, severe copied-classic cheating coverage, exam-calendar/rival-panel coverage, direct official-start first-appointment coverage, representative magistrate/general/emperor/minister role-world coupling coverage, and 14 screenshots checked.
+- `npm test`: 155 tests passed.
+- The browser start path still clears stale `qianqiu.sessionId` localStorage only when an old restored game hides the initial start form. Later reload/fresh-page restoration checks continue to validate the newly created session.
+- Desktop smoke still fails if the game panel regresses to the old narrow-column width, if the role panel, relationship panel, active-request panel, official-career panel, exam-calendar panel, or exam-rival panel is horizontally clipped, if S35 calendar/rival details disappear from the modal/archive/candidate profiles, if any supported start role is missing from the browser form, if hidden scholar-invisible factions leak into relationship/active-request panel text, if the four-exam path stops before official promotion, if copied-passage punishment disappears, or if S36 role-world feedback/API metric deltas disappear from representative role journeys.
 
 Earlier S26.2 screenshot review caught and fixed a real result-modal bug: `.exam-requirements { display: grid; }` overrode the `hidden` attribute and left the old requirements visible behind the result view. The fix is `.exam-requirements[hidden] { display: none; }`.
 
@@ -80,9 +70,9 @@ Earlier S26.2 screenshot review caught and fixed a real result-modal bug: `.exam
 
 Use [MANUAL_ACCEPTANCE.md](MANUAL_ACCEPTANCE.md) for:
 
-- Complete scholar -> child exam -> provincial exam -> metropolitan exam -> palace exam -> official browser playthrough.
-- Exam integrity variants in the browser: very short essays, modern/anachronistic terms, copied passages, and normal essays.
-- Role-loop browser checks for emperor, minister, general, magistrate, and post-palace official play.
+- Longer free-form scholar and official play beyond the automated four-exam happy path.
+- Exam integrity variants beyond the automated copied-classic severe case: very short essays, modern/anachronistic terms, and suspected ghostwriting.
+- Multi-turn role-loop checks for emperor, minister, general, magistrate, and post-palace official play.
 - Subjective visual inspection of typography, historical tone, readability, and overall atmosphere.
 - Real-provider browser behavior when API keys are configured.
 - Cross-browser behavior outside the installed Chrome/Edge executable used by `smoke:browser`.

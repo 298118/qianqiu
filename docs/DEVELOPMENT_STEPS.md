@@ -81,7 +81,7 @@
 | S36.3 | DONE | 为多身份长期联动增加 Mock 平衡测试和浏览器代表旅程 | 2026-05-06 | Codex + subagents | current S36 implementation commit |
 | S37.1 | DONE | 制定 keyed real-provider 长回合验收方案，覆盖 OpenAI、DeepSeek、Anthropic/Claude 的历史语气、越权和状态一致性 | 2026-05-06 | Codex + subagents | current S37 implementation commit |
 | S37.2 | DONE | 增加可选真实 provider 长回合 smoke/eval 脚本，保持 no-key 环境成功跳过 | 2026-05-06 | Codex + subagents | current S37 implementation commit |
-| S38.1 | TODO | 扩展浏览器验收到完整四级科举通关、作弊样例、各身份一回合、桌面/移动视觉回归 |  |  |  |
+| S38.1 | DONE | 扩展浏览器验收到完整四级科举通关、作弊样例、各身份一回合、桌面/移动视觉回归 | 2026-05-06 | Codex + subagents | current S38 implementation commit |
 | S38.2 | TODO | 制定存档迁移规划：session schema 版本、原子写入、并发保护、存档列表和未来数据库迁移路径 |  |  |  |
 
 ## 4. 分阶段详细步骤
@@ -173,6 +173,38 @@
 ```
 
 ### 2026-05-06
+
+Tool: Codex
+
+Step: S38.1
+
+Commit: current S38 implementation commit
+
+Completed:
+- Expanded `scripts/browserSmoke.js` so `npm run smoke:browser` completes the full browser-visible Mock exam path: 童试 -> 乡试 -> 会试 -> 殿试 -> 入仕官员.
+- The smoke prepares deterministic local session month/readiness before each exam to enter legal calendar windows, then uses the real browser exam button, modal, essay textarea, submit button, result view, archive view, restore path, and mobile layouts.
+- Added assertions for every promotion rank, final `official` role, four exam-history records, cleared `activeExam`, seeded office title, final official panel, final mobile archive, and persistent rivals through palace.
+- Added an isolated copied-classic cheating browser session that must show `监试黜落` / `疑似照抄`, persist score `0`, keep the player a scholar, and record `severeCheat=true`.
+- Kept representative identity coverage by combining the direct official-start/appointment turn with existing magistrate, general, emperor, and minister role-world turns.
+- Added browser-smoke helper tests for deterministic per-level essays and exam-level coverage helpers.
+- Updated README, architecture notes, browser acceptance, product brief, and shared context for the S38.1 coverage.
+- Used two read-only subagents to inspect browser-smoke extension points and deterministic exam/cheating setup; neither edited files or ran Git commands.
+
+Verification:
+- `node --check scripts\browserSmoke.js`
+- `node --check test\browserSmokeScript.test.js`
+- `node --test test\browserSmokeScript.test.js` passed with 21 tests.
+- `npm run smoke:browser -- --screenshots artifacts/browser-smoke/s38-1` passed with complete four-exam progression, cheating sample, representative role turns, and 14 screenshots checked.
+- `npm test` passed with 155 tests.
+- `git diff --check`
+
+Risk/leftover:
+- The browser smoke mutates local JSON session fields only as deterministic acceptance setup before exam entry; the actual player-visible exam/result/archive path still runs through the browser and server routes.
+- `npm run smoke:browser -- --url` still assumes a local Qianqiu server using this repository's JSON session directory when it needs deterministic exam setup; README, CLI help, and `docs/BROWSER_ACCEPTANCE.md` now state that caveat.
+- S38.2 storage migration planning remains open.
+
+Next:
+- S38.2: define session schema versioning, atomic writes, concurrent access protection, save-list/cleanup behavior, and the future database migration path.
 
 Tool: Codex
 

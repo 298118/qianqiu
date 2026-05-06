@@ -24,7 +24,7 @@
 
 第二阶段已经完成本地验收，记录见 `docs/PHASE_TWO_ACCEPTANCE.md`；第二阶段路线图已归档到 `docs/PHASE_TWO_ROADMAP_ARCHIVE.md`。已接受的范围包括世界 tick、NPC/派系记忆、地方官与将领深度、入仕官员深度、科举竞争深度、真实 provider smoke/streaming 准备、AI eval fixtures 和浏览器自动化验收。
 
-第三阶段已经在 `docs/DEVELOPMENT_STEPS.md` 开启。当前已完成桌面游戏态布局、普通回合服务器独占字段边界、开局 role 校验、关系可视化、主动 NPC、长期事件调度、官场结果、科举日历、身份与世界联动和真实 provider 长回合验收脚本；后续继续推进浏览器完整旅程和存档迁移规划。
+第三阶段已经在 `docs/DEVELOPMENT_STEPS.md` 开启。当前已完成桌面游戏态布局、普通回合服务器独占字段边界、开局 role 校验、关系可视化、主动 NPC、长期事件调度、官场结果、科举日历、身份与世界联动、真实 provider 长回合验收脚本和浏览器完整旅程验收；后续继续推进存档迁移规划。
 
 开发规范不变。第 12 节和第 13 节仍是每次开发必须遵守的流程；Mock 默认可玩、真实 provider 可选、服务器拥有状态边界和科举规则这些要求继续有效。
 
@@ -886,3 +886,13 @@ S37 adds a keyed long-run provider acceptance gate without changing Mock-default
 - The script calls real provider factories directly, so Mock fallback cannot hide provider failures. It runs a repeated scholar scenario with an explicit ordinary-turn authority probe, checks historical Chinese tone, rejects server-owned statePatch attempts, applies server boundary/tick/event/career follow-up logic in memory, and writes no session files.
 - `npm run smoke:provider:long -- --stream --provider openai|deepseek|anthropic|claude` routes each long-run turn through `streamTurn()` and still requires the final provider JSON to pass the normal turn schema.
 - The current S37 script is adapter-level plus in-memory server-boundary verification. It intentionally does not exercise route-level SSE persistence; if future keyed acceptance expands to route-SSE mode, it should record the visible-narrative-then-validation-failure branch separately.
+
+## S38.1 Browser Journey Expansion Note (2026-05-06)
+
+S38.1 expands browser acceptance without changing Mock-default local play:
+
+- `npm run smoke:browser` now drives the complete browser-visible scholar path through 童试、乡试、会试、殿试 and final `official` promotion.
+- The smoke still uses the real start form, exam entry button, modal, essay textarea, submit button, result detail view, archive view, and session restore path. It writes local session readiness/month fields only before each exam so the deterministic Mock journey enters legal calendar windows without requiring free-form setup turns.
+- The final progression asserts every promotion rank, four exam-history records, `activeExam === null`, final `player.role === "official"`, and a seeded `officeTitle`.
+- An isolated cheating session submits a copied-classic essay through the same browser modal and must show `监试黜落` / `疑似照抄`, persist score `0`, keep the player a scholar, and record `promotionResult.severeCheat === true`.
+- The screenshot pass now covers early desktop/mobile states, all four exam results, post-palace official state, final mobile archive, direct official first appointment, cheating result, and representative role/world coupling.

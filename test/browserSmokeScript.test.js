@@ -3,10 +3,12 @@ const assert = require("node:assert/strict");
 
 const {
   assertPngScreenshot,
+  buildBrowserCheatingEssay,
   buildBrowserSmokeEssay,
   getDefaultBrowserCandidates,
   getGameLayoutFailures,
   getHiddenActiveRequestLeaks,
+  getMissingExamLevels,
   getHiddenRelationshipLeaks,
   getMissingActiveRequestTargets,
   getMissingOfficialCareerOutcomeTypes,
@@ -158,6 +160,23 @@ test("browser smoke layout helpers catch overlapping boxes", () => {
   assert.equal(buildBrowserSmokeEssay().toLowerCase().includes("ai"), false);
 });
 
+test("browser smoke builds deterministic exam essays for every progression level", () => {
+  assert.ok(buildBrowserSmokeEssay("child_exam").length >= 200);
+  assert.ok(buildBrowserSmokeEssay("provincial_exam").length >= 500);
+  assert.ok(buildBrowserSmokeEssay("metropolitan_exam").length >= 800);
+  assert.ok(buildBrowserSmokeEssay("palace_exam").length >= 700);
+  assert.equal(buildBrowserSmokeEssay("palace_exam").toLowerCase().includes("ai"), false);
+  assert.match(buildBrowserCheatingEssay(), /学而时习之不亦说乎/);
+});
+
+test("browser smoke exam progression helper catches missing levels", () => {
+  assert.deepEqual(getMissingExamLevels(["child_exam", "provincial_exam"], ["child_exam"]), []);
+  assert.deepEqual(
+    getMissingExamLevels(["child_exam"], ["child_exam", "provincial_exam", "metropolitan_exam"]),
+    ["provincial_exam", "metropolitan_exam"]
+  );
+});
+
 test("browser smoke game layout helper catches narrow desktop panel and clipped role panel", () => {
   const failures = getGameLayoutFailures(
     createLayoutMetrics({
@@ -283,6 +302,25 @@ test("browser smoke game layout helper keeps mobile width behavior compatible", 
         viewportWidth: 390
       }),
       "mobile"
+    ),
+    []
+  );
+  assert.deepEqual(
+    getGameLayoutFailures(
+      createLayoutMetrics({
+        appWidth: 390,
+        clientWidth: 390,
+        gameClientWidth: 390,
+        gameRight: 390,
+        gameScrollWidth: 390,
+        gameWidth: 390,
+        scholarClientWidth: 390,
+        scholarRight: 390,
+        scholarScrollWidth: 390,
+        scholarWidth: 390,
+        viewportWidth: 390
+      }),
+      "mobile final archive"
     ),
     []
   );
