@@ -36,7 +36,7 @@ The smoke uses `playwright-core` with an installed Chrome or Edge executable. If
 
 Date: 2026-05-06
 
-Relevant implementation commit: current S32.2 commit (`Render relationship inspection panel`)
+Relevant implementation commit: `cefde6a` (`Render relationship inspection panel`)
 
 Commands verified during S32.2:
 

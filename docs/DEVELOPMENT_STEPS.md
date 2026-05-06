@@ -63,7 +63,7 @@
 | S31.2 | DONE | 收紧普通回合的服务器独占字段边界，阻止 provider patch `activeExam`、`characters`、`eventHistory`、`player.examRank`、`player.examHistory` 等字段 | 2026-05-06 | Codex + subagent | f470f78 |
 | S31.3 | DONE | 校验开局 role 输入并明确是否允许浏览器直接开局 `official` | 2026-05-06 | Codex + subagent | 9cdbf91 |
 | S32.1 | DONE | 定义关系/联系人检查视图契约，让 `relationshipLedger` 从叙事反馈升级为玩家可查看的信息面板 | 2026-05-06 | Codex + subagents | ed83e9c |
-| S32.2 | DONE | 实现关系/联系人 UI 与基础浏览器验收，显示人物/派系关系、怨望、立场、近期意图和可见性 | 2026-05-06 | Codex + subagents | current S32.2 commit |
+| S32.2 | DONE | 实现关系/联系人 UI 与基础浏览器验收，显示人物/派系关系、怨望、立场、近期意图和可见性 | 2026-05-06 | Codex + subagents | cefde6a |
 | S32.3 | TODO | 增加主动 NPC/派系请托、施压、求援、背书或索取回报的最小事件循环 |  |  |  |
 | S33.1 | TODO | 定义长期事件调度器契约：季节、灾荒、边报、朝争、地方案件链和跨月后果 |  |  |  |
 | S33.2 | TODO | 实现服务器拥有的长期事件队列，并把事件结果接入 world tick、eventHistory 和可见叙事 |  |  |  |
@@ -176,7 +176,7 @@ Tool: Codex
 
 Step: S32.2
 
-Commit: current S32.2 commit
+Commit: cefde6a
 
 Completed:
 - Rendered the `relationshipView` contract in the scholar/role panel as a player-facing `#relationship-panel`, combining visible contacts and factions without reading the raw ledger as the normal UI path.
