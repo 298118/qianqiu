@@ -112,6 +112,14 @@ Durable contracts and acceptance records:
 - S41.2 expands offline eval fixtures/red-team cases for prompt-pack outputs, hidden-info leakage, modern terms, strict JSON, and overreach. Runtime provider parsing remains permissive through `parseJsonFromText()`; strict JSON is an eval target for prompt output quality.
 - Hidden relationship entries are tested against prompt input for opening, ordinary turns, exam question, and grading tasks. Hidden faction ids may still appear as top-level world/faction state when already part of public world metrics; the hidden-info test is about ledger names, notes, hidden contacts, and hidden intents.
 
+## Current S42 Notes
+
+- S42.1 is a contract-only step in `docs/OFFICIAL_CAREER_CONTRACT.md`; no runtime schema, API, prompt, storage, or UI behavior changed.
+- The deep official-career contract preserves S34 as the current server-owned outcome engine and defines S42.2/S42.3 boundaries for offices, bureaus, assignments, assessment dossiers, patronage/same-year/rival tags, impeachment procedure, transfers, punishment, and browser archives.
+- Important field boundary: `player.officeTitle` is the server-owned concrete office; `player.position` is a soft posture/narrative location; `worldState.officialCareer.currentPosting` is the normalized server-owned career location used by views.
+- Future official-career UI must consume `officialCareerView` or another server-built view for 官署、差事、履历、关系、风险, never raw hidden notes or provider prose.
+- AI may generate narrative, memorial/letter tone, rumors, visible reactions, and bounded meter suggestions, but must not decide appointments, dismissals, assessment results, discipline, restoration, or hidden-information disclosure.
+
 ## Verification Defaults
 
 Use focused checks first, then broaden when behavior crosses module boundaries:
@@ -139,7 +147,8 @@ Use focused checks first, then broaden when behavior crosses module boundaries:
 - 2026-05-06: Added a documentation-only S47.2 planning update for DeepSeek context caching. Based on the official docs, cache hits depend on fully reused persisted prefixes and usage reports hit/miss tokens. The project plan now says to stabilize prompt prefixes and collect cache telemetry without sacrificing game effect. Pre-commit subagent review skipped as low-risk documentation-only; `git diff --check` is sufficient.
 - 2026-05-06: S41.1 implementation commit is `383881a`. Verification passed: focused `node --check`, `node --test test\prompts.test.js`, `node --test test\aiEvalFixtures.test.js`, `node --test test\remoteHelpers.test.js`, `node --test test\deepseekProvider.test.js`, `npm run eval:ai`, focused `node --test test\examTravel.test.js`, `$env:AI_PROVIDER='mock'; npm test` rerun with 201 tests, and `git diff --check`. First full-suite run had one transient `test\examTravel.test.js` 500/200 failure that did not reproduce in focused or full reruns. Read-only pre-commit subagent review found no blockers; its two P3 notes were addressed before commit.
 - 2026-05-06: S41.2 implementation commit is `2c45949`. Verification passed: `node --check testdata\aiEvalFixtures.js`, `node --check test\aiEvalFixtures.test.js`, `node --check test\prompts.test.js`, `node --test test\prompts.test.js`, `node --test test\aiEvalFixtures.test.js`, `npm run eval:ai`, `node --test test\remoteHelpers.test.js test\deepseekProvider.test.js`, `$env:AI_PROVIDER='mock'; npm test` with 207 tests, and `git diff --check`. Read-only pre-commit subagent review found no blockers; its three P3 notes were addressed before commit.
+- 2026-05-06: S42.1 contract/documentation update defines the deep official-career domain and syncs README, architecture, product brief, roadmap, and handoff. Verification passed: `node --test test\officialCareer.test.js test\officialRole.test.js test\gameTurnOfficialCareer.test.js test\examRules.test.js test\gameStartRole.test.js` with 23 tests, and `git diff --check`. A read-only exploratory subagent checked existing official-career code/UI/tests and scholar -> official constraints before edits; a separate read-only pre-commit review found no blockers.
 
 ## Next Recommended Step
 
-After committing S41.2, move to S42.1 official-career depth contract or S44.1 AI control audit matrix. The strongest sequence is probably S42.1 next, with S44.1 before larger AI-controlled world systems.
+Start S42.2 official-career implementation. Recommended first slice: add a static office/bureau catalog and v1-compatible `officialCareer` normalization for future assignment/assessment/procedure fields, then add focused tests that provider patches still cannot forge offices or official-career state.

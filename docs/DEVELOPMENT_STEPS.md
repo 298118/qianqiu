@@ -68,7 +68,7 @@
 | S40.2 | DONE | 增加游戏内 AI 连接测试入口、后端诊断路由、DeepSeek 任务模型配置文档和测试 | 2026-05-06 | Codex | 7927c02 |
 | S41.1 | DONE | 制定优秀提示词总纲：世界引擎、科举考官、出题官、官场、地方、军事、皇帝/大臣等角色的语气与 JSON 合约 | 2026-05-06 | Codex | 383881a |
 | S41.2 | DONE | 为 prompt pack 增加历史语气、越权、现代词、JSON 严格性和隐藏信息不泄露的离线 eval/red-team fixtures | 2026-05-06 | Codex | 2c45949 |
-| S42.1 | TODO | 定义深度官场契约：官职谱系、衙门/部院、差遣、座主门生、同年、上官、政敌、考成、廷推、外放、处分 |  |  |  |
+| S42.1 | DONE | 定义深度官场契约：官职谱系、衙门/部院、差遣、座主门生、同年、上官、政敌、考成、廷推、外放、处分 | 2026-05-06 | Codex | 本次提交 |
 | S42.2 | TODO | 实现官场行动与履历系统：差事、奏疏、考成、弹劾、调任、升降、丁忧/起复、清望/贪墨风险 |  |  |  |
 | S42.3 | TODO | 增加官场 UI、档案、浏览器旅程和 Mock/真实 provider 验收，确保入仕后有长期可玩目标 |  |  |  |
 | S43.1 | TODO | 统一世界议程/World Threads：NPC 请托、长期事件、官场结果、地方链条、边事和派系斗争可形成跨月议题 |  |  |  |
@@ -132,6 +132,8 @@ S41.1 落地范围：
 ### Phase 42: 官场深度优先扩展
 
 目标：让书生入仕后不只是“属性继续上涨”，而是进入一个有职位、差事、人脉、政敌、考成和风险的长期生涯。
+
+S42.1 已落入 `docs/OFFICIAL_CAREER_CONTRACT.md`。该契约保留 S34 结果引擎为当前运行时基础，并为 S42.2/S42.3 固定后续边界：`officeTitle` 是服务器拥有的实授官职，`position` 是软描述，`officialCareer.currentPosting` 是服务器归一化履历位置；官署目录、差遣、考成卷宗、座主/同年/上官/政敌标签、弹劾流程、廷推、调任、外放、丁忧/起复和浏览器官场档案都必须通过服务器归一化与 player-facing view 暴露。AI 可以写叙事、来函、奏疏口吻和受限仪表建议，但不能裁决任免、处分、考成或隐藏信息公开。
 
 官场深度方向：
 
@@ -217,6 +219,33 @@ S41.1 落地范围：
 ```
 
 ### 2026-05-06
+
+工具：Codex
+
+步骤：S42.1
+
+提交：本次提交
+
+完成：
+- 在 `docs/OFFICIAL_CAREER_CONTRACT.md` 增加 S42.1 深度官场契约，保留 S34 结果引擎为当前运行时基础。
+- 明确 `player.officeTitle` 是服务器拥有的实授官职，`player.position` 是软描述，`worldState.officialCareer.currentPosting` 是服务器归一化履历位置。
+- 定义后续 S42.2/S42.3 的官职目录、衙门/部院、差遣、考成卷宗、座主/同年/上官/政敌标签、弹劾流程、廷推、调任、外放、丁忧/起复、浏览器官场档案和 AI 权限边界。
+- 同步 README、架构文档和产品 brief，让后续工具不必从聊天记录恢复 S42.1 决策。
+- 委派只读子代理检查现有官场代码、测试、前端展示和 scholar -> official 主线约束；子代理未编辑文件、未运行 Git 写操作。
+
+验证：
+- `node --test test\officialCareer.test.js test\officialRole.test.js test\gameTurnOfficialCareer.test.js test\examRules.test.js test\gameStartRole.test.js`
+- `git diff --check`
+
+风险/遗留：
+- 本次是契约与协作文档更新，不改变运行时代码、API、存档 schema 或浏览器 UI。
+- `player.position` 当前仍在 provider patch 白名单中；S42.2 实现时需要按契约过滤明显官职伪造，避免 UI 或 prompt 把软描述当成服务器任免。
+- S42.2 仍需实现静态官职/衙门目录、差遣状态、考成卷宗、弹劾流程归一化和对应测试。
+
+下一步：
+- 开始 S42.2，实现官场行动与履历系统。建议先做官职/衙门目录与 v1 存档兼容归一化，再接差遣和考成规则。
+
+---
 
 工具：Codex
 
