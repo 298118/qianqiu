@@ -1170,7 +1170,7 @@ function appendNarrative(text, className) {
 }
 
 function beginNarrativeStream() {
-  activeNarrativeStream = null;
+  discardNarrativeStream();
 }
 
 function appendNarrativeChunk(text) {
@@ -1190,6 +1190,13 @@ function appendNarrativeChunk(text) {
 function finishNarrativeStream() {
   if (activeNarrativeStream) {
     activeNarrativeStream.classList.remove("is-streaming");
+    activeNarrativeStream = null;
+  }
+}
+
+function discardNarrativeStream() {
+  if (activeNarrativeStream) {
+    activeNarrativeStream.remove();
     activeNarrativeStream = null;
   }
 }
@@ -2001,16 +2008,21 @@ async function submitAction() {
         },
         final_state(data) {
           finalPayload = data;
-          finishNarrativeStream();
         },
         error(data) {
           streamError = new Error(data?.error || "Stream error");
         }
       });
 
+      if (streamError) {
+        discardNarrativeStream();
+        throw streamError;
+      }
+      if (!finalPayload) {
+        discardNarrativeStream();
+        throw new Error("Stream response missing final_state.");
+      }
       finishNarrativeStream();
-      if (streamError) throw streamError;
-      if (!finalPayload) throw new Error("Stream response missing final_state.");
       await handleTurnPayload(finalPayload);
     } else {
       const payload = await response.json();
@@ -2018,7 +2030,7 @@ async function submitAction() {
       await handleTurnPayload(payload);
     }
   } catch (error) {
-    finishNarrativeStream();
+    discardNarrativeStream();
     appendNarrative(error.message, "error");
   } finally {
     actionBtn.disabled = false;

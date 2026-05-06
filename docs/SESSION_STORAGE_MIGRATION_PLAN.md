@@ -1,6 +1,6 @@
 # Session Storage Migration Plan
 
-S38.2 began as a planning step and now also records the implemented JSON storage hardening baseline. The current implementation remains local JSON under `data/sessions/`, but it now uses a versioned storage envelope, legacy migration, atomic writes, per-session mutation serialization, revision checks, a save-list API, and an S38.3 browser save-list UI. SQLite or hosted database storage remains a future adapter step.
+S38.2 began as a planning step and now also records the implemented JSON storage hardening baseline. The current implementation remains local JSON under `data/sessions/`, but it now uses a versioned storage envelope, legacy migration, atomic writes, per-session mutation serialization, revision checks with a per-session file lock, a save-list API, and an S38.3 browser save-list UI. SQLite or hosted database storage remains a future adapter step.
 
 ## Implemented JSON Baseline
 
@@ -12,12 +12,13 @@ S38.2 began as a planning step and now also records the implemented JSON storage
 - Legacy raw `worldState` files are treated as schema `0` and migrated to the envelope on read.
 - Routes normalize older feature slices after reads with helpers such as `ensureRelationshipLedger()`, `ensureExamCalendarState()`, `ensureLongTermEventState()`, `ensureOfficialCareerState()`, and `ensureRoleWorldCouplingState()`.
 - Game and exam mutation routes use `mutateSession()` so overlapping writes for the same session are serialized and revision-checked.
+- Writes acquire a same-directory `{sessionId}.lock` file before rereading the latest revision and replacing the JSON record; stale lock files are removed before retry.
 - `GET /api/game/saves` returns redacted save-list metadata from `listSessions()`.
 - Browser restore still stores `qianqiu.sessionId` in `localStorage` for compatibility, and S38.3 adds a start-page plus in-game save picker backed by `GET /api/game/saves`.
 
 Known gaps:
 
-- No cross-process lock for multiple Node servers sharing one directory.
+- The JSON lock only coordinates writers that use this adapter on a normal local filesystem; network filesystem semantics and multi-host locking remain out of scope.
 - No backup/export shape or database adapter implementation yet.
 - No SQLite or hosted database migration yet.
 
@@ -97,16 +98,16 @@ Read behavior:
 The Express server can receive overlapping requests for the same `sessionId`. S38.2 adds:
 
 - In-process queue: `mutateSession(sessionId, mutator)` serializes read-modify-write work per session id.
+- Cross-process file lock: each write creates `{sessionId}.lock`, rereads the latest on-disk record while holding that lock, then writes only if the expected revision still matches. Stale lock files are cleaned up after the stale threshold.
 - Optimistic revision: every persisted record has `revision`. A mutation reads revision `N` and writes only if the latest record is still `N`, then persists `N + 1`.
 - Route ownership: `POST /api/game/turn`, `POST /api/exam/question`, and `POST /api/exam/submit` now use `mutateSession()` for state-changing work.
 
 Out of scope for the JSON hardening pass:
 
-- Cross-process locks for multiple Node servers sharing one directory.
 - Network filesystem semantics.
 - Multi-session transactions.
 
-If multi-process local serving becomes necessary before a database migration, use lock files with stale-lock detection or move directly to SQLite instead of relying on advisory in-memory queues.
+If multi-process local serving grows beyond this lightweight local-file adapter, move to SQLite instead of extending lock-file behavior into a distributed storage layer.
 
 ## Save List And Cleanup
 
@@ -180,10 +181,11 @@ Migration phases:
 2. DONE: Per-session mutation serialization plus revision tests.
 3. DONE: Save-list API and explicit temp-file cleanup helper.
 4. DONE: Browser save-list UI that consumes the redacted API while keeping last-session auto-restore compatibility.
-5. NEXT: Storage adapter interface, with the current JSON implementation as the default adapter.
-6. FUTURE: SQLite prototype for local development. Store one row per session with metadata columns, `revision`, timestamps, and a JSON `world_state` payload.
-7. FUTURE: Export/import tooling from JSON envelope files to database rows and back.
-8. FUTURE: Optional hosted database adapter only after local SQLite proves the contract.
+5. DONE: S39 JSON adapter revision hardening with latest-disk rereads and stale lock-file cleanup.
+6. NEXT: Storage adapter interface, with the current JSON implementation as the default adapter.
+7. FUTURE: SQLite prototype for local development. Store one row per session with metadata columns, `revision`, timestamps, and a JSON `world_state` payload.
+8. FUTURE: Export/import tooling from JSON envelope files to database rows and back.
+9. FUTURE: Optional hosted database adapter only after local SQLite proves the contract.
 
 The first database candidate should be SQLite because it improves atomicity and concurrent local access without requiring a service, credentials, or a hosted dependency. PostgreSQL or another hosted database can follow only when accounts, multiplayer, or remote save sync become product requirements.
 

@@ -140,6 +140,51 @@ test("POST /api/game/turn streams extracted provider narrative before final_stat
   assert.equal(saved.player.academia, 13);
 });
 
+test("POST /api/game/turn ignores nested streamed narrative fields", async (t) => {
+  const payload = makeTurnPayload("顶层叙事方可入史。");
+  const provider = {
+    supportsStreaming: true,
+    async streamTurn(worldState, input, handlers) {
+      const streamed = JSON.stringify({
+        statePatch: {
+          narrative: "嵌套叙事不可外显。",
+          player: {
+            academia: 13
+          }
+        },
+        attributeChanges: payload.attributeChanges,
+        relationshipChanges: [],
+        events: payload.events,
+        examTrigger: payload.examTrigger,
+        narrative: payload.narrative
+      });
+      for (let index = 0; index < streamed.length; index += 9) {
+        handlers.onTextDelta(streamed.slice(index, index + 9));
+      }
+      return payload;
+    },
+    async runTurn() {
+      throw new Error("runTurn should not be used when streaming succeeds");
+    }
+  };
+  const server = createTestServer(provider);
+  t.after(server.close);
+
+  const worldState = createInitialState({ playerName: "NestedStream" });
+  t.after(() => removeSessionFile(worldState.sessionId));
+  await writeSession(worldState);
+
+  const events = await postTurnSse(server.baseUrl, worldState.sessionId);
+  const narrative = events
+    .filter((event) => event.event === "narrative_chunk")
+    .map((event) => event.data.text)
+    .join("");
+
+  assert.equal(narrative, payload.narrative);
+  assert.equal(narrative.includes("嵌套叙事不可外显"), false);
+  assert.ok(events.find((event) => event.event === "final_state"));
+});
+
 test("POST /api/game/turn preserves SSE fallback when provider has no stream method", async (t) => {
   const payload = makeTurnPayload("案头灯火未歇，心志稍坚。");
   const provider = {

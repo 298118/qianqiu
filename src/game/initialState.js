@@ -2,6 +2,7 @@ const { randomUUID } = require("crypto");
 const { createInitialExamCalendar } = require("./examCalendar");
 const { createInitialRelationshipLedger } = require("./relationships");
 const { createInitialRoleWorldCouplingState } = require("./roleWorldCoupling");
+const { NUMERIC_RANGES, clamp } = require("./stateRules");
 
 const ROLE_LABELS = {
   scholar: "书生",
@@ -86,6 +87,14 @@ const ROLE_STAT_DEFAULTS = {
 function toNumber(value, fallback) {
   const parsed = Number(value);
   return Number.isFinite(parsed) ? parsed : fallback;
+}
+
+function clampInitialYear(value) {
+  if (value === null || value === undefined || (typeof value === "string" && value.trim() === "")) {
+    return 1644;
+  }
+  const [min, max] = NUMERIC_RANGES.year;
+  return clamp(Math.round(toNumber(value, 1644)), min, max);
 }
 
 function getRoleStats(role) {
@@ -173,7 +182,7 @@ function createInitialState(input = {}) {
   const role = normalizeInitialRole(input.role);
   const playerName = (input.playerName || "未定").trim() || "未定";
   const dynasty = (input.dynasty || "明").trim() || "明";
-  const year = toNumber(input.year, 1644);
+  const year = clampInitialYear(input.year);
 
   const worldState = {
     sessionId: randomUUID(),

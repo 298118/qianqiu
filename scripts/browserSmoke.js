@@ -886,6 +886,60 @@ async function runRelationshipTurnAcceptance(page) {
   }
 }
 
+async function assertFailedSseRollback(page) {
+  const leakedText = "未入史流文";
+  const errorText = "stream schema failed";
+
+  await page.evaluate(({ leakedText: pendingText, errorText: failureText }) => {
+    const originalFetch = window.fetch.bind(window);
+    window.__qianqiuRestoreFetch = () => {
+      window.fetch = originalFetch;
+      delete window.__qianqiuRestoreFetch;
+    };
+    window.fetch = (input, init) => {
+      const url = typeof input === "string" ? input : input?.url || "";
+      if (url.includes("/api/game/turn")) {
+        const encoder = new TextEncoder();
+        const stream = new ReadableStream({
+          start(controller) {
+            controller.enqueue(encoder.encode(`event: narrative_chunk\ndata: ${JSON.stringify({ text: pendingText })}\n\n`));
+            controller.enqueue(encoder.encode(`event: error\ndata: ${JSON.stringify({ error: failureText })}\n\n`));
+            controller.close();
+          }
+        });
+        return Promise.resolve(new Response(stream, {
+          status: 200,
+          headers: { "content-type": "text/event-stream" }
+        }));
+      }
+      return originalFetch(input, init);
+    };
+  }, { leakedText, errorText });
+
+  try {
+    await page.locator("#action-input").fill("触发失败流式回合");
+    await page.locator("#action-btn").click();
+    await page.waitForFunction(() => {
+      const button = document.querySelector("#action-btn");
+      return button && !button.disabled;
+    }, null, { timeout: 15000 });
+
+    const narrativeText = await page.locator("#narrative").innerText();
+    if (narrativeText.includes(leakedText)) {
+      failUiAcceptance("failed SSE narrative kept uncommitted streamed text in the browser history.");
+    }
+    if (!narrativeText.includes(errorText)) {
+      failUiAcceptance("failed SSE rollback did not render the stream error message.");
+    }
+  } finally {
+    await page.evaluate(() => {
+      if (typeof window.__qianqiuRestoreFetch === "function") {
+        window.__qianqiuRestoreFetch();
+      }
+    });
+  }
+}
+
 async function assertSaveList(page, mode, { expectedIds = [], hiddenIds = [], modal = false } = {}) {
   const scope = modal ? "#save-list-modal" : "#save-list-panel";
   await page.locator(scope).waitFor({ state: "visible", timeout: 10000 });
@@ -1643,6 +1697,7 @@ async function runBrowserJourney({
     await assertGameLayout(page, "desktop");
     await assertGameSaveModal(page, sessionId);
     await assertStartPageSaveLoad(browser, { baseUrl, sessionId, pageErrors });
+    await assertFailedSseRollback(page);
     await assertRelationshipPanel(page, "desktop scholar", {
       expectedIds: ["C01", "scholarOfficials"],
       expectedTypes: ["character", "faction"],

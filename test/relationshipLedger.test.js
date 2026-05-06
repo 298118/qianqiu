@@ -177,6 +177,26 @@ test("summarizeRelationshipLedger can hide non-visible relationship context for 
   assert.ok(!summary.factions.some((entry) => entry.id === "eunuchs"));
 });
 
+test("summarizeRelationshipLedger visibleOnly filters hidden recent notes", () => {
+  const worldState = createInitialState({ playerName: "Tester", role: "scholar" });
+  worldState.relationshipLedger.characters.C01.name = "Visible Mentor";
+  worldState.relationshipLedger.factions.eunuchs.name = "Hidden Palace";
+  worldState.relationshipLedger.recentNotes = [
+    "Visible Mentor: offered a careful lesson",
+    "Hidden Palace: sent a sealed request"
+  ];
+
+  const summary = summarizeRelationshipLedger(
+    worldState.relationshipLedger,
+    worldState,
+    { visibleOnly: true }
+  );
+
+  assert.deepEqual(summary.recentNotes, ["Visible Mentor: offered a careful lesson"]);
+  assert.equal(JSON.stringify(summary).includes("sealed request"), false);
+  assert.equal(JSON.stringify(summary).includes("Hidden Palace"), false);
+});
+
 test("buildRelationshipInspectionView exposes only player-visible contacts and factions", () => {
   const worldState = createInitialState({ playerName: "Tester", role: "scholar" });
   const view = buildRelationshipInspectionView(worldState);

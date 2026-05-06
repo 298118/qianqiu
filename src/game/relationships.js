@@ -404,11 +404,16 @@ function summarizeRelationshipLedger(ledger, worldState = {}, options = {}) {
     visible: entry.visible
   });
   const isVisible = (entry) => !visibleOnly || entry.visible;
+  const visibleCharacters = Object.values(normalized.characters).filter(isVisible);
+  const visibleFactions = Object.values(normalized.factions).filter(isVisible);
+  const visibleEntries = [...visibleCharacters, ...visibleFactions];
 
   return {
-    characters: Object.values(normalized.characters).filter(isVisible).map(summarizeEntry),
-    factions: Object.values(normalized.factions).filter(isVisible).map(summarizeEntry),
-    recentNotes: normalized.recentNotes
+    characters: visibleCharacters.map(summarizeEntry),
+    factions: visibleFactions.map(summarizeEntry),
+    recentNotes: visibleOnly
+      ? filterVisibleNotes(normalized.recentNotes, visibleEntries)
+      : normalized.recentNotes
   };
 }
 

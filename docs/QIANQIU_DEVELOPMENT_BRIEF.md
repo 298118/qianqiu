@@ -113,6 +113,7 @@
 
 ```text
 PORT=3000
+CORS_ALLOWED_ORIGINS=
 AI_PROVIDER=mock
 OPENAI_API_KEY=
 OPENAI_MODEL=
@@ -129,6 +130,8 @@ AI provider 约定：
 - `openai`：使用 OpenAI Responses API，支持流式输出和结构化 JSON。
 - `deepseek`：使用 OpenAI-compatible adapter，通过 base URL 和 API key 接入。
 - `anthropic`：使用 Claude Messages API，支持 SSE 流式输出。
+
+CORS 约定：默认只允许无 `Origin` 请求和当前 `PORT` 对应的本机应用 Origin；如需从其他开发前端或工具跨 Origin 调用本地 API，使用逗号分隔的 `CORS_ALLOWED_ORIGINS` 显式放行，不使用通配 `*`。
 
 ## 5. 世界状态模型
 
@@ -259,7 +262,9 @@ SSE 事件：
 - `final_state`
 - `error`
 
-当前实现中，客户端发送 `Accept: text/event-stream` 或 `?stream=1` 时启用 SSE；未请求 SSE 的调用仍返回普通 JSON，用于测试脚本和旧客户端兼容。S25.2 后，OpenAI Responses、DeepSeek chat completions、Anthropic Messages 适配器在 SSE turn 中可通过 `streamTurn()` 返回真实 token streaming；服务端只从结构化 JSON token 流中抽取顶层 `narrative` 字符串作为 `narrative_chunk`，完整 `turn` JSON 仍必须通过 Ajv schema 后才会应用状态。若不支持流式或没有提前抽取到叙事，则保留当前完成后分块的兼容输出。若已经向浏览器发送过真实 provider 叙事后流式调用失败，路由只发 `error` 并保持 session 不变。无论哪种响应形态，状态 patch、事件追加、考试触发和 session 保存仍由服务器执行。
+当前实现中，客户端发送 `Accept: text/event-stream` 或 `?stream=1` 时启用 SSE；未请求 SSE 的调用仍返回普通 JSON，用于测试脚本和旧客户端兼容。S25.2 后，OpenAI Responses、DeepSeek chat completions、Anthropic Messages 适配器在 SSE turn 中可通过 `streamTurn()` 返回真实 token streaming；服务端只从结构化 JSON token 流中抽取顶层 `narrative` 字符串作为 `narrative_chunk`，完整 `turn` JSON 仍必须通过 Ajv schema 后才会应用状态。若不支持流式或没有提前抽取到叙事，则保留当前完成后分块的兼容输出。若已经向浏览器发送过真实 provider 叙事后流式调用失败，路由只发 `error` 并保持 session 不变，浏览器会移除未提交的临时叙事文本。无论哪种响应形态，状态 patch、事件追加、考试触发和 session 保存仍由服务器执行。
+
+普通回合的 `examTrigger` 不能直接创建考试。服务端会先确认当前名位可进入该考试，再检查服务器拥有的科举日历窗口；若玩家已有未交卷的 `activeExam`，新的触发请求会被拒绝并保留原题、`examId` 和写卷状态。
 
 ### `POST /api/exam/question`
 

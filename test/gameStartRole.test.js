@@ -48,6 +48,15 @@ test("initial role normalization rejects unsupported roles before state creation
   assert.throws(() => createInitialState({ role: ["scholar"] }), /Unsupported role/);
 });
 
+test("createInitialState clamps initial years to state boundaries", () => {
+  assert.equal(createInitialState({ year: -500 }).year, 1);
+  assert.equal(createInitialState({ year: 20000 }).year, 9999);
+  assert.equal(createInitialState({ year: "1644.7" }).year, 1645);
+  assert.equal(createInitialState({ year: "" }).year, 1644);
+  assert.equal(createInitialState({ year: null }).year, 1644);
+  assert.equal(createInitialState({ year: "not-a-year" }).year, 1644);
+});
+
 test("POST /api/game/start rejects unsupported role input with a 400 response", async (t) => {
   const server = createTestServer();
   t.after(server.close);

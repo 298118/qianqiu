@@ -30,7 +30,7 @@ const {
   canOpenExamInCalendar,
   ensureExamCalendarState
 } = require("../game/examCalendar");
-const { getExam } = require("../game/exams");
+const { canEnterExam, getExam } = require("../game/exams");
 const { applyStatePatch, appendEvents } = require("../game/stateRules");
 const { runWorldTick } = require("../game/worldTick");
 const { getProvider } = require("../ai");
@@ -91,24 +91,75 @@ async function processStreamingTurn(sessionId, input, streamHandlers = {}) {
   });
 }
 
+function normalizeExamTrigger(trigger) {
+  if (!trigger || trigger.shouldStart !== true) {
+    return { shouldStart: false, level: null, reason: "" };
+  }
+
+  return {
+    shouldStart: true,
+    level: typeof trigger.level === "string" ? trigger.level : null,
+    reason: typeof trigger.reason === "string" ? trigger.reason : ""
+  };
+}
+
+function isWritingExam(activeExam) {
+  return Boolean(activeExam && (activeExam.examQuestion || activeExam.status === "writing"));
+}
+
+function rejectExamTrigger(trigger, reason) {
+  return {
+    shouldStart: false,
+    level: trigger.level || null,
+    reason
+  };
+}
+
+function applyExamTrigger(worldState, trigger) {
+  const examTrigger = normalizeExamTrigger(trigger);
+  if (!examTrigger.shouldStart) return examTrigger;
+
+  if (isWritingExam(worldState.activeExam)) {
+    return rejectExamTrigger(examTrigger, "已有未完成考试，请先完成当前考试。");
+  }
+
+  const exam = getExam(examTrigger.level);
+  if (!exam) {
+    return rejectExamTrigger(examTrigger, "未知考试等级。");
+  }
+
+  const entryGate = canEnterExam(worldState.player, exam.level);
+  if (!entryGate.ok) {
+    return rejectExamTrigger({ ...examTrigger, level: exam.level }, entryGate.reason);
+  }
+
+  const calendarGate = canOpenExamInCalendar(worldState, exam);
+  if (!calendarGate.ok) {
+    return rejectExamTrigger({ ...examTrigger, level: exam.level }, calendarGate.reason);
+  }
+
+  const reason = examTrigger.reason || "玩家主动请求赶考";
+  worldState.activeExam = {
+    level: exam.level,
+    reason,
+    examCalendar: calendarGate.snapshot,
+    requestedAt: new Date().toISOString()
+  };
+
+  return {
+    shouldStart: true,
+    level: exam.level,
+    reason
+  };
+}
+
 async function finalizeTurn(worldState, result, input) {
   const providerAttributeChanges = Array.isArray(result.attributeChanges) ? result.attributeChanges : [];
-  const examTrigger = result.examTrigger || { shouldStart: false, level: null, reason: "" };
 
   // All model-suggested state changes pass through server-side boundaries.
   applyStatePatch(worldState, result.statePatch);
   const relationshipChanges = applyRelationshipChanges(worldState, result.relationshipChanges);
-
-  if (examTrigger.shouldStart) {
-    const triggeredExam = getExam(examTrigger.level);
-    const calendarGate = triggeredExam ? canOpenExamInCalendar(worldState, triggeredExam) : null;
-    worldState.activeExam = {
-      level: examTrigger.level,
-      reason: examTrigger.reason,
-      examCalendar: calendarGate?.ok ? calendarGate.snapshot : null,
-      requestedAt: new Date().toISOString()
-    };
-  }
+  const examTrigger = applyExamTrigger(worldState, result.examTrigger);
 
   const activeNpcRequest = runActiveNpcRequestStep(worldState, input);
 

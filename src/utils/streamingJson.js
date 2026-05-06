@@ -1,28 +1,96 @@
 function findStringFieldValueStart(source, fieldName) {
-  const key = JSON.stringify(fieldName);
-  let searchFrom = 0;
+  let objectDepth = 0;
+  let arrayDepth = 0;
 
-  while (searchFrom < source.length) {
-    const keyIndex = source.indexOf(key, searchFrom);
-    if (keyIndex === -1) return -1;
+  for (let index = 0; index < source.length; index += 1) {
+    const char = source[index];
 
-    let index = keyIndex + key.length;
-    while (/\s/.test(source[index] || "")) index += 1;
-    if (source[index] !== ":") {
-      searchFrom = keyIndex + key.length;
+    if (char === "{") {
+      objectDepth += 1;
       continue;
     }
 
-    index += 1;
-    while (/\s/.test(source[index] || "")) index += 1;
-    if (source[index] === "\"") {
-      return index + 1;
+    if (char === "}") {
+      objectDepth = Math.max(0, objectDepth - 1);
+      continue;
     }
 
-    searchFrom = keyIndex + key.length;
+    if (char === "[") {
+      arrayDepth += 1;
+      continue;
+    }
+
+    if (char === "]") {
+      arrayDepth = Math.max(0, arrayDepth - 1);
+      continue;
+    }
+
+    if (char !== "\"") continue;
+
+    const literal = readJsonStringLiteral(source, index);
+    if (!literal.complete) return -1;
+
+    if (objectDepth === 1 && arrayDepth === 0 && literal.text === fieldName) {
+      let cursor = literal.endIndex + 1;
+      while (/\s/.test(source[cursor] || "")) cursor += 1;
+      if (source[cursor] === ":") {
+        cursor += 1;
+        while (/\s/.test(source[cursor] || "")) cursor += 1;
+        if (source[cursor] === "\"") {
+          return cursor + 1;
+        }
+      }
+    }
+
+    index = literal.endIndex;
   }
 
   return -1;
+}
+
+function readJsonStringLiteral(source, startIndex) {
+  let text = "";
+
+  for (let index = startIndex + 1; index < source.length; index += 1) {
+    const char = source[index];
+
+    if (char === "\"") {
+      return { complete: true, text, endIndex: index };
+    }
+
+    if (char !== "\\") {
+      text += char;
+      continue;
+    }
+
+    if (index + 1 >= source.length) {
+      return { complete: false, text, endIndex: index };
+    }
+
+    const escaped = source[index + 1];
+    index += 1;
+
+    if (escaped === "\"") text += "\"";
+    else if (escaped === "\\") text += "\\";
+    else if (escaped === "/") text += "/";
+    else if (escaped === "b") text += "\b";
+    else if (escaped === "f") text += "\f";
+    else if (escaped === "n") text += "\n";
+    else if (escaped === "r") text += "\r";
+    else if (escaped === "t") text += "\t";
+    else if (escaped === "u") {
+      const hex = source.slice(index + 1, index + 5);
+      if (hex.length < 4 || !/^[0-9a-fA-F]{4}$/.test(hex)) {
+        return { complete: false, text, endIndex: index };
+      }
+      text += String.fromCharCode(Number.parseInt(hex, 16));
+      index += 4;
+    } else {
+      text += escaped;
+    }
+  }
+
+  return { complete: false, text, endIndex: source.length - 1 };
 }
 
 function readJsonStringPrefix(source, startIndex) {

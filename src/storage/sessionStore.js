@@ -1,11 +1,15 @@
 const fs = require("fs/promises");
 const path = require("path");
 const { randomUUID } = require("crypto");
+const { setTimeout: delay } = require("timers/promises");
 
 const CURRENT_STORAGE_SCHEMA_VERSION = 1;
 const SESSIONS_DIR = path.join(__dirname, "..", "..", "data", "sessions");
 const SAFE_SESSION_ID_PATTERN = /^[a-f0-9-]{36}$/i;
 const JSON_SESSION_FILE_PATTERN = /^([a-f0-9-]{36})\.json$/i;
+const SESSION_FILE_LOCK_STALE_MS = 30000;
+const SESSION_FILE_LOCK_WAIT_MS = 5000;
+const SESSION_FILE_LOCK_RETRY_MS = 25;
 
 const sessionQueues = new Map();
 
@@ -24,6 +28,11 @@ function assertSafeSessionId(sessionId) {
 function sessionPath(sessionId) {
   assertSafeSessionId(sessionId);
   return path.join(SESSIONS_DIR, `${sessionId}.json`);
+}
+
+function sessionLockPath(sessionId) {
+  assertSafeSessionId(sessionId);
+  return path.join(SESSIONS_DIR, `${sessionId}.lock`);
 }
 
 async function ensureSessionDir() {
@@ -229,12 +238,67 @@ async function writeFileAtomic(filePath, content) {
   }
 }
 
-async function writeSessionUnlocked(worldState, options = {}) {
-  await ensureSessionDir();
-  validateWorldStateSessionId(worldState, worldState.sessionId);
+async function acquireSessionFileLock(sessionId) {
+  const filePath = sessionLockPath(sessionId);
+  const deadline = Date.now() + SESSION_FILE_LOCK_WAIT_MS;
 
+  while (true) {
+    let handle = null;
+    let createdLock = false;
+
+    try {
+      handle = await fs.open(filePath, "wx");
+      createdLock = true;
+      await handle.writeFile(
+        `${JSON.stringify({ pid: process.pid, createdAt: new Date().toISOString() })}\n`,
+        "utf8"
+      );
+      await handle.close();
+      handle = null;
+      return async () => {
+        await fs.rm(filePath, { force: true });
+      };
+    } catch (error) {
+      if (handle) await handle.close().catch(() => {});
+      if (createdLock) await fs.rm(filePath, { force: true }).catch(() => {});
+
+      if (error.code !== "EEXIST") throw error;
+
+      const stats = await fs.stat(filePath).catch(() => null);
+      if (!stats || Date.now() - stats.mtimeMs > SESSION_FILE_LOCK_STALE_MS) {
+        await fs.rm(filePath, { force: true }).catch(() => {});
+        continue;
+      }
+
+      if (Date.now() >= deadline) {
+        throw createStoreError(409, "Session file is locked");
+      }
+
+      await delay(SESSION_FILE_LOCK_RETRY_MS);
+    }
+  }
+}
+
+async function withSessionFileLock(sessionId, task) {
+  await ensureSessionDir();
+  const release = await acquireSessionFileLock(sessionId);
+  try {
+    return await task();
+  } finally {
+    await release();
+  }
+}
+
+async function writeSessionRecordUnlocked(worldState, options = {}) {
   let previousRecord = options.previousRecord || null;
-  if (!previousRecord) {
+  if (options.expectedRevision !== undefined) {
+    try {
+      previousRecord = (await readSessionRecordUnlocked(worldState.sessionId)).record;
+    } catch (error) {
+      if (error.statusCode !== 404) throw error;
+      previousRecord = null;
+    }
+  } else if (!previousRecord) {
     try {
       previousRecord = (await readSessionRecordUnlocked(worldState.sessionId)).record;
     } catch (error) {
@@ -244,8 +308,7 @@ async function writeSessionUnlocked(worldState, options = {}) {
 
   if (
     options.expectedRevision !== undefined &&
-    previousRecord &&
-    previousRecord.revision !== options.expectedRevision
+    (!previousRecord || previousRecord.revision !== options.expectedRevision)
   ) {
     throw createStoreError(409, "Session revision conflict");
   }
@@ -259,6 +322,11 @@ async function writeSessionUnlocked(worldState, options = {}) {
 
   await writeFileAtomic(sessionPath(worldState.sessionId), `${JSON.stringify(record, null, 2)}\n`);
   return worldState;
+}
+
+async function writeSessionUnlocked(worldState, options = {}) {
+  validateWorldStateSessionId(worldState, worldState.sessionId);
+  return withSessionFileLock(worldState.sessionId, () => writeSessionRecordUnlocked(worldState, options));
 }
 
 async function withSessionLock(sessionId, task) {
@@ -375,7 +443,7 @@ async function cleanupSessionTempFiles(options = {}) {
     if (!fileName.endsWith(".tmp")) continue;
     const filePath = path.join(SESSIONS_DIR, fileName);
     const stats = await fs.stat(filePath).catch(() => null);
-    if (!stats || now - stats.mtimeMs < olderThanMs) continue;
+    if (!stats || (olderThanMs > 0 && now - stats.mtimeMs < olderThanMs)) continue;
     await fs.rm(filePath, { force: true });
     removed.push(fileName);
   }

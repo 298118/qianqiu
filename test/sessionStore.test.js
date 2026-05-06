@@ -227,10 +227,28 @@ test("writeSession leaves no temp files behind after a successful atomic write",
 
   const entries = await fs.readdir(sessionsDir);
   assert.ok(entries.includes(`${worldState.sessionId}.json`));
+  assert.equal(entries.includes(`${worldState.sessionId}.lock`), false);
   assert.deepEqual(
     entries.filter((entry) => entry.startsWith(`${worldState.sessionId}.`) && entry.endsWith(".tmp")),
     []
   );
+  assertEnvelope(await readSessionFile(worldState.sessionId), worldState);
+});
+
+test("writeSession cleans up stale cross-process lock files", async (t) => {
+  const worldState = buildWorldState({ playerName: "Lock Tester" });
+  const lockPath = path.join(sessionsDir, `${worldState.sessionId}.lock`);
+  t.after(() => removeSessionFile(worldState.sessionId));
+  t.after(() => fs.rm(lockPath, { force: true }));
+
+  await fs.mkdir(sessionsDir, { recursive: true });
+  await fs.writeFile(lockPath, "stale lock", "utf8");
+  const staleTime = new Date(Date.now() - 120000);
+  await fs.utimes(lockPath, staleTime, staleTime);
+
+  await writeSession(worldState);
+
+  await assert.rejects(() => fs.access(lockPath));
   assertEnvelope(await readSessionFile(worldState.sessionId), worldState);
 });
 
@@ -409,4 +427,40 @@ test("mutateSession serializes overlapping mutations and advances revisions", { 
   assert.equal(loaded.player.gold, 16);
   assert.deepEqual(loaded.eventHistory.slice(-3), ["mutation +1", "mutation +2", "mutation +3"]);
   assert.ok(record.revision >= 4);
+});
+
+test("writeSession checks latest disk revision when expectedRevision is supplied", async (t) => {
+  const worldState = buildWorldState({
+    playerName: "Revision Tester",
+    player: { gold: 10 }
+  });
+  t.after(() => removeSessionFile(worldState.sessionId));
+
+  await writeSession(worldState);
+  const { record: staleRecord } = await sessionStore.readSessionRecord(worldState.sessionId);
+  const staleWorldState = JSON.parse(JSON.stringify(staleRecord.worldState));
+  staleWorldState.player.gold = 77;
+
+  const latestWorldState = JSON.parse(JSON.stringify(staleRecord.worldState));
+  latestWorldState.player.gold = 88;
+  await writeRawSessionFile(worldState.sessionId, {
+    ...staleRecord,
+    revision: staleRecord.revision + 1,
+    updatedAt: "2026-05-06T00:10:00.000Z",
+    metadata: sessionStore.buildSessionMetadata(latestWorldState),
+    worldState: latestWorldState
+  });
+
+  await assert.rejects(
+    () => writeSession(staleWorldState, {
+      previousRecord: staleRecord,
+      expectedRevision: staleRecord.revision
+    }),
+    (error) => error.statusCode === 409 && /revision conflict/i.test(error.message)
+  );
+
+  const loaded = await readSession(worldState.sessionId);
+  const record = await readSessionFile(worldState.sessionId);
+  assert.equal(loaded.player.gold, 88);
+  assert.equal(record.revision, staleRecord.revision + 1);
 });

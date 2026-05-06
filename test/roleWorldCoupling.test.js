@@ -96,6 +96,22 @@ test("magistrate waterworks produce server-owned world and relationship conseque
   assert.equal(worldState.turnCount, 0);
 });
 
+test("role-world coupling suppresses repeated effects while cooldown is active", () => {
+  const worldState = createInitialState({ role: "magistrate", playerName: "Tester" });
+  const first = runRoleWorldCouplingStep(worldState, "waterworks along the canal");
+  applyRoleWorldResult(worldState, first);
+
+  worldState.turnCount = 1;
+  const repeat = runRoleWorldCouplingStep(worldState, "repair waterworks along the canal again");
+
+  assert.equal(repeat.outcome, null);
+  assert.deepEqual(repeat.events, []);
+  assert.deepEqual(repeat.attributeChanges, []);
+  assert.deepEqual(repeat.relationshipChanges, []);
+  assert.equal(repeat.statePatch.grainReserve, undefined);
+  assert.equal(repeat.statePatch.roleWorldCoupling.cooldowns.magistrate_waterworks, 6);
+});
+
 test("general campaign consequences clamp resources and affect military factions", () => {
   const worldState = createInitialState({ role: "general", playerName: "Tester" });
   worldState.treasury = 20;

@@ -22,6 +22,8 @@ npm start
 
 Then visit `http://localhost:3000`. Mock mode is the default local path.
 
+`server.js` applies a restrictive CORS policy by default: no-`Origin` requests and the current `PORT`'s localhost/127.0.0.1/[::1] origins are allowed, while extra development origins must be listed in `CORS_ALLOWED_ORIGINS`.
+
 ## Request Flow
 
 ```mermaid
@@ -46,11 +48,11 @@ Important route ownership:
 - `src/game/candidates.js` owns virtual same-field candidates, inspectable candidate essay profiles, and ranking.
 - `src/game/examTravel.js` owns server-side exam entry preparation costs, travel events, and funded/shortfall effects.
 - `src/game/examCalendar.js` owns S35 exam windows, preparation/travel month summaries, missed-window records, persistent same-field rivals, and palace-exam peer contacts.
-- `src/game/relationships.js` owns NPC/faction relationship ledger creation, normalization, legacy backfill, compact prompt summaries, and the S32.1/S32.2 player-facing relationship inspection view.
+- `src/game/relationships.js` owns NPC/faction relationship ledger creation, normalization, legacy backfill, compact prompt summaries, and the S32.1/S32.2 player-facing relationship inspection view. Visible-only summaries filter hidden contacts, factions, and hidden-entry notes before prompt/UI exposure.
 - `src/game/activeRequests.js` owns the S32.3 server-scheduled active NPC/faction request loop. Providers may suggest narrative and relationship consequences, but they do not create, replace, resolve, or expire `worldState.activeNpcRequest`.
 - `src/game/longTermEvents.js` owns the S33 server-scheduled long-term event queue for seasonal, disaster, border, court, local case-chain, and cross-month consequence events. Providers may read a compact summary for narrative context, but they do not create, replace, resolve, or expire `worldState.longTermEvents`.
 - `src/game/officialCareer.js` owns the S34 official career outcome engine. Providers may move official career meters, but they do not appoint, transfer, promote, demote, impeach-to-case, punish, retain, or write `worldState.officialCareer`.
-- `src/game/roleWorldCoupling.js` owns the S36 role/world coupling step. Providers may move ordinary meters and suggest social changes, but they do not write `worldState.roleWorldCoupling` or decide the server-owned compound world consequences of key role actions.
+- `src/game/roleWorldCoupling.js` owns the S36 role/world coupling step. Providers may move ordinary meters and suggest social changes, but they do not write `worldState.roleWorldCoupling` or decide the server-owned compound world consequences or cooldowns of key role actions.
 
 ## API Contract
 
@@ -152,6 +154,8 @@ event: error
 data: {"error":"...","statusCode":500}
 ```
 
+The browser keeps streamed narrative pending until `final_state`; if the stream later emits `error` or ends without a final payload, that temporary text is removed and only the error is shown.
+
 Requests without SSE negotiation still return plain JSON for tests and compatibility:
 
 ```json
@@ -228,6 +232,8 @@ Requests without SSE negotiation still return plain JSON for tests and compatibi
 }
 ```
 
+`examTrigger` in an ordinary turn is normalized before the response is returned. A trigger must pass `canEnterExam()` and `canOpenExamInCalendar()` before `worldState.activeExam` is created, and it cannot overwrite an active writing exam.
+
 ### `POST /api/exam/question`
 
 Request:
@@ -276,7 +282,7 @@ Provider outputs must match the schemas in `src/ai/schemas.js`:
 
 Real provider adapters parse model text through `src/utils/json.js`, validate with Ajv, retry once on ordinary non-streaming failure, then fall back to Mock for that method. The model never owns final game state. It can suggest `statePatch`; the server whitelists and clamps it. Ordinary turn schemas now reject direct patches to server-owned fields such as `activeExam`, `activeNpcRequest`, `longTermEvents`, `roleWorldCoupling`, `officialCareer`, `characters`, `eventHistory`, `player.examRank`, `player.officeTitle`, and `player.examHistory`.
 
-S25.2 adds optional turn token streaming for OpenAI Responses, DeepSeek chat completions, and Anthropic Messages. `streamTurn()` buffers the full model JSON and still returns the same validated `turn` payload as `runTurn()`. During SSE requests, `src/routes/game.js` uses `src/utils/streamingJson.js` to extract only the top-level `narrative` string from the streamed JSON text and send it as `narrative_chunk`. State patches, relationship changes, world tick, persistence, and `final_state` still happen only after the full JSON passes schema validation. If visible provider narrative has already been sent and the stream then fails, the route emits an `error` event and does not write the session; if no visible narrative was sent, it can fall back to the normal turn path.
+S25.2 adds optional turn token streaming for OpenAI Responses, DeepSeek chat completions, and Anthropic Messages. `streamTurn()` buffers the full model JSON and still returns the same validated `turn` payload as `runTurn()`. During SSE requests, `src/routes/game.js` uses `src/utils/streamingJson.js` to extract only the top-level `narrative` string from the streamed JSON text and send it as `narrative_chunk`; nested `narrative` keys inside `statePatch` or other objects are ignored. State patches, relationship changes, world tick, persistence, and `final_state` still happen only after the full JSON passes schema validation. If visible provider narrative has already been sent and the stream then fails, the route emits an `error` event and does not write the session; the browser removes the uncommitted pending text. If no visible narrative was sent, the route can fall back to the normal turn path.
 
 For turn responses, providers may also suggest top-level `relationshipChanges`. These are not state patches. They are bounded social-memory deltas for existing visible relationship ledger ids, and the server is free to clamp or ignore them before persistence. Mock now emits these suggestions for scholar, emperor, minister, general, magistrate, and official actions so local play can exercise social memory without real model keys.
 
@@ -324,7 +330,7 @@ npm run smoke:browser -- --screenshots artifacts/browser-smoke
 
 The script uses `playwright-core` with an installed Chrome or Edge executable. It resolves `BROWSER_EXECUTABLE_PATH`, `--browser <path>`, or common platform install paths. Without `--url`, it starts `server.js` in Mock mode on a free local port, verifies the page loads, creates a scholar game through the real form, checks that `localStorage["qianqiu.sessionId"]` is written, reloads the page, opens a fresh page to confirm the saved session restores into the game view, verifies the session is readable through `GET /api/game/state/:sessionId`, and then removes the smoke session JSON file.
 
-S26.2 extends the same journey with DOM and screenshot-level UI acceptance. It asserts desktop and mobile layout boundaries for the status strip, role panel, narrative, and action input surface; opens the exam modal through the scholar panel; submits Mock-mode essays; checks the result detail sections, ranking, candidate essay profiles, and historical exam archive; and captures PNG screenshots for each representative state. S32.2 additionally verifies the relationship panel: visible contact/faction rows, hidden-entry non-leakage, a Mock scholar relationship update, direct official-start faction visibility, and relationship-panel horizontal overflow. S32.3 verifies the active-request panel from `activeNpcRequestView`, including target ids/types, required fields, hidden target/text non-leakage, and active-request horizontal overflow on desktop, restored, fresh-page, and mobile journeys. S35 verifies the exam calendar and rival panels, calendar details inside the writing modal and archive, persistent rival notes on candidate profiles, and horizontal overflow for the new panels. S36 adds direct-start representative journeys for magistrate, general, emperor, and minister actions, checking `.role-world-event[data-role-world-kind]` feedback plus API state metric deltas. S38.1 expands the browser journey to complete 童试 -> 乡试 -> 会试 -> 殿试 -> 入仕 through the real modal/result UI, checks the final mobile archive, and runs an isolated copied-classic cheating sample that must show severe punishment without promotion. S38.3 verifies the browser save-list UI from `GET /api/game/saves`: the in-game save modal lists and redacts the current save, a clean start page can load that save, and save-list panel/modal overflow is checked. Screenshots are validated in memory by default and can be saved with `--screenshots <dir>`. Browser smoke stays separate from `npm test` so normal automated tests do not require a local GUI browser.
+S26.2 extends the same journey with DOM and screenshot-level UI acceptance. It asserts desktop and mobile layout boundaries for the status strip, role panel, narrative, and action input surface; opens the exam modal through the scholar panel; submits Mock-mode essays; checks the result detail sections, ranking, candidate essay profiles, and historical exam archive; and captures PNG screenshots for each representative state. S32.2 additionally verifies the relationship panel: visible contact/faction rows, hidden-entry non-leakage, a Mock scholar relationship update, direct official-start faction visibility, and relationship-panel horizontal overflow. S32.3 verifies the active-request panel from `activeNpcRequestView`, including target ids/types, required fields, hidden target/text non-leakage, and active-request horizontal overflow on desktop, restored, fresh-page, and mobile journeys. S35 verifies the exam calendar and rival panels, calendar details inside the writing modal and archive, persistent rival notes on candidate profiles, and horizontal overflow for the new panels. S36 adds direct-start representative journeys for magistrate, general, emperor, and minister actions, checking `.role-world-event[data-role-world-kind]` feedback plus API state metric deltas. S38.1 expands the browser journey to complete 童试 -> 乡试 -> 会试 -> 殿试 -> 入仕 through the real modal/result UI, checks the final mobile archive, and runs an isolated copied-classic cheating sample that must show severe punishment without promotion. S38.3 verifies the browser save-list UI from `GET /api/game/saves`: the in-game save modal lists and redacts the current save, a clean start page can load that save, and save-list panel/modal overflow is checked. S39 adds failed-SSE rollback coverage by mocking a browser stream that emits `narrative_chunk` followed by `error` and asserting the uncommitted chunk is removed. Screenshots are validated in memory by default and can be saved with `--screenshots <dir>`. Browser smoke stays separate from `npm test` so normal automated tests do not require a local GUI browser.
 
 `docs/BROWSER_ACCEPTANCE.md` is the durable browser acceptance record. It lists the automated coverage, the latest verified S38.3 result, screenshot artifact policy, and the manual fallback areas that remain intentionally human-checked.
 
@@ -523,7 +529,7 @@ Virtual candidates now include `essay`, `style`, `examinerComment`, `strengths`,
 
 Session files are written to `data/sessions/{sessionId}.json`. Session ids must match a UUID-like safe pattern before the path is built. `data/sessions/*.json` is ignored by Git; only `data/sessions/.gitkeep` should be committed.
 
-S38.2 implements the JSON storage hardening described in [docs/SESSION_STORAGE_MIGRATION_PLAN.md](SESSION_STORAGE_MIGRATION_PLAN.md). `src/storage/sessionStore.js` now writes a top-level envelope with `storageSchemaVersion`, `sessionId`, timestamps, `revision`, redacted metadata, and nested `worldState`. Legacy raw `worldState` files are treated as schema `0` and are migrated to the envelope on read. Writes use same-directory temp-file-and-rename replacement with best-effort fsync, and successful writes remove their temp file. Game and exam mutation routes use `mutateSession()` so read-modify-write work for the same session is serialized and revision-checked. The store also exposes `listSessions()`, `deleteSession()`, and `cleanupSessionTempFiles()` for save-list and cleanup behavior. S38.3 adds the browser save-list UI on top of that API without changing the storage backend. SQLite/database migration remains a future adapter step.
+S38.2 implements the JSON storage hardening described in [docs/SESSION_STORAGE_MIGRATION_PLAN.md](SESSION_STORAGE_MIGRATION_PLAN.md). `src/storage/sessionStore.js` now writes a top-level envelope with `storageSchemaVersion`, `sessionId`, timestamps, `revision`, redacted metadata, and nested `worldState`. Legacy raw `worldState` files are treated as schema `0` and are migrated to the envelope on read. Writes use a same-directory per-session lock file, reread the latest disk revision while holding that lock, then use temp-file-and-rename replacement with best-effort fsync; successful writes remove their temp and lock files. Game and exam mutation routes use `mutateSession()` so read-modify-write work for the same session is serialized and revision-checked. The store also exposes `listSessions()`, `deleteSession()`, and `cleanupSessionTempFiles()` for save-list and cleanup behavior. S38.3 adds the browser save-list UI on top of that API without changing the storage backend. SQLite/database migration remains a future adapter step.
 
 ## Verification
 

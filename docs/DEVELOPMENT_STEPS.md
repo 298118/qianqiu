@@ -84,6 +84,7 @@
 | S38.1 | DONE | 扩展浏览器验收到完整四级科举通关、作弊样例、各身份一回合、桌面/移动视觉回归 | 2026-05-06 | Codex + subagents | 76745b3 |
 | S38.2 | DONE | 完成 JSON 存档硬化：session schema envelope、legacy 迁移、原子写入、并发保护、存档列表和未来数据库迁移路径 | 2026-05-06 | Codex + subagents | current S38.2 implementation commit |
 | S38.3 | DONE | 实现浏览器存档簿：开局页存档列表、游戏内存档弹窗、切换载入和 browser smoke 覆盖 | 2026-05-06 | Codex + subagent | current S38.3 implementation commit |
+| S39.1 | DONE | 修复预阶段审查发现的 CORS、examTrigger、SSE、隐藏关系、冷却、初始年份和 revision 硬化问题 | 2026-05-06 | Codex + subagents | pending final commit hash |
 
 ## 4. 分阶段详细步骤
 
@@ -157,6 +158,12 @@
 - S38.2：完成 JSON 存档硬化，包含 session schema envelope、legacy raw-save 迁移、原子写入、同 session 并发保护、revision、存档列表、清理函数和未来数据库迁移路径。规划与实现基线落点是 [docs/SESSION_STORAGE_MIGRATION_PLAN.md](SESSION_STORAGE_MIGRATION_PLAN.md)，SQLite/托管数据库迁移仍是后续工作。
 - S38.3：把 `GET /api/game/saves` 接入浏览器体验。开局页展示最近存档，游戏内状态栏打开存档簿弹窗，载入存档时继续通过 `GET /api/game/state/:sessionId` 读取完整状态并更新 `localStorage["qianqiu.sessionId"]`。扩展 browser smoke 覆盖存档簿载入、去敏和布局溢出。
 
+### Phase 39: 预阶段审查硬化
+
+目标：在进入下一轮功能扩展前，先修复 `docs/PRE_PHASE_CODEBASE_REVIEW_2026-05-06.md` 记录的安全、状态边界、流式显示和存储一致性问题。
+
+- S39.1：收紧默认 CORS，不让任意 Origin 读取本地 API；让普通回合 `examTrigger` 通过 `canEnterExam()` 和考期窗口校验，并保护未交卷的写作考试不被覆盖；修复顶层 SSE 叙事抽取、失败流式文本回滚、隐藏关系笔记泄漏、角色/世界联动冷却、开局年份边界和跨进程 revision 检测。
+
 ## 5. 进度记录
 
 按时间倒序追加。每条记录必须让另一个工具看得懂。
@@ -175,6 +182,40 @@
 ```
 
 ### 2026-05-06
+
+Tool: Codex
+
+Step: S39.1
+
+Commit: pending final commit hash
+
+Completed:
+- Compressed `docs/SHARED_CONTEXT.md` into a compact handoff index so future agents can read current architecture, invariants, and S39 scope without scanning the full historical ledger.
+- Restricted default CORS in `server.js`: arbitrary origins no longer get browser-readable CORS headers for save/state APIs, while no-`Origin` local calls and configured local app origins remain usable. Extra development origins are now configured with `CORS_ALLOWED_ORIGINS`.
+- Hardened ordinary-turn `examTrigger` in `src/routes/game.js`: triggers must pass `canEnterExam()` and `canOpenExamInCalendar()`, bad/null/closed requests return sanitized false triggers, and active writing exams cannot be overwritten.
+- Fixed streaming safety: `src/utils/streamingJson.js` extracts only top-level `narrative`, route tests cover nested narrative suppression, and the browser removes pending streamed text if an SSE error arrives before `final_state`.
+- Fixed P2 state/storage findings: visible-only relationship summaries filter hidden recent notes, role/world coupling cooldowns are enforced before applying effects, initial years clamp through `stateRules` bounds, and JSON writes reread latest disk revision under a per-session lock before replacing a session file.
+- Expanded focused tests for CORS, exam triggers, streaming JSON/SSE, relationship notes, role-world cooldown, initial year clamping, session revision/lock behavior, and browser smoke failed-SSE rollback.
+- Fixed the test helper Fetch bad-port table by adding port `4190`, which full-suite CORS coverage exposed.
+- Used two implementation subagents for scoped P1 and P2 patches. Neither staged, committed, pushed, or created PRs; main Codex integrated the final diff and documentation.
+
+Verification:
+- `node --check` for changed runtime/test scripts including `server.js`, `public/app.js`, `scripts/browserSmoke.js`, `src/routes/game.js`, `src/storage/sessionStore.js`, and focused tests.
+- Focused `node --test test\serverCors.test.js test\gameTurnExamTrigger.test.js test\streamingJson.test.js test\streamingTurnRoute.test.js test\relationshipLedger.test.js test\roleWorldCoupling.test.js test\gameStartRole.test.js test\sessionStore.test.js` passed with 55 tests.
+- `npm run eval:ai` passed with 6 tests.
+- `npm run smoke:provider` skipped successfully because no real-provider keys are configured.
+- `npm run smoke:provider:long` skipped successfully because no real-provider keys are configured.
+- `npm test` passed with 185 tests after adding the missing Fetch blocked port to the helper.
+- `npm run smoke:browser` passed with failed-SSE rollback coverage, complete four-exam scholar-to-official path, cheating sample, representative role-world journeys, and 14 screenshots checked.
+- `git diff --check` passed.
+- A read-only pre-commit subagent review found no blocking issues. Residual risks noted: the JSON `.lock` file is local-filesystem best effort, failed-SSE rollback is covered by browser smoke rather than a DOM unit test, and configured `CORS_ALLOWED_ORIGINS` entries are still trusted Origins rather than authentication.
+
+Risk/leftover:
+- Live real-provider network calls were not run because no provider keys are configured; optional smoke commands skipped as expected.
+- The JSON adapter now uses a lightweight local lock file, but SQLite/database storage remains the recommended future path for stronger persistence semantics.
+
+Next:
+- After the S39.1 commit hash is recorded, continue with the storage adapter/SQLite boundary or the next long-term simulation depth slice.
 
 Tool: Codex
 

@@ -422,6 +422,11 @@ function buildEffect(worldState, kind) {
   return null;
 }
 
+function isOnCooldown(state, kind, turn) {
+  const nextAvailableTurn = state.cooldowns[kind];
+  return typeof nextAvailableTurn === "number" && nextAvailableTurn > turn;
+}
+
 function readPath(state, path) {
   if (path.startsWith("player.")) return state?.player?.[path.slice("player.".length)];
   if (path.startsWith("factions.")) return state?.factions?.[path.slice("factions.".length)];
@@ -489,6 +494,10 @@ function runRoleWorldCouplingStep(worldState = {}, input = "") {
   if (!isPlainObject(worldState)) return result;
 
   const kind = classifyRoleWorldAction(worldState, input);
+  if (kind && isOnCooldown(state, kind, currentTurn(worldState))) {
+    return result;
+  }
+
   const effect = kind ? buildEffect(worldState, kind) : null;
   if (!effect) return result;
 
