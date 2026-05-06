@@ -56,6 +56,7 @@ API:
 Important modules:
 
 - AI adapters/prompts/schemas: `src/ai/`
+- Prompt-pack contracts: `src/ai/promptPacks.js`
 - AI diagnostics: `src/ai/diagnostics.js`, `src/routes/ai.js`
 - State boundary/clamping: `src/game/stateRules.js`
 - Initial state and allowed roles: `src/game/initialState.js`
@@ -100,12 +101,13 @@ Durable contracts and acceptance records:
 - S47: provider/browser acceptance expansion around route-level connection tests and explicit keyed health checks.
 - S47.2: DeepSeek context-cache planning. Future prompt packs should maximize stable reusable prefixes and record `prompt_cache_hit_tokens` / `prompt_cache_miss_tokens`, while never reducing necessary game context or narrative quality just to raise cache hits.
 
-## Current S40 Notes
+## Current S41 Notes
 
-- The start page AI connection panel calls `POST /api/ai/connection-test` and displays provider, model summary, latency, streaming support, and a short narrative preview or脱敏 error.
-- The diagnostics route builds the requested provider directly, does not write session files, and does not use Mock fallback to hide real-provider failures.
-- DeepSeek model routing is task-specific: `DEEPSEEK_OPENING_MODEL` and `DEEPSEEK_GRADE_MODEL` should use `deepseek-v4-pro`; ordinary turn/streaming and exam question generation should use `deepseek-v4-flash`.
-- The user asked not to continue AI debugging in this slice. Do not keep chasing DeepSeek long-run tone failures here; put model-quality work into S41/S47.
+- S41.1 adds `src/ai/promptPacks.js` as the prompt-pack contract registry for `world_turn`, `opening`, `exam_question`, `exam_grading`, `official_career`, `emperor_court`, `minister_faction`, `local_magistrate`, and `general_frontier`.
+- Provider schema names stay unchanged (`opening`, `turn`, `examQuestion`, `grade`) so DeepSeek task model routing and existing JSON schemas are not widened in this step.
+- `src/ai/prompts.js` now attaches `promptPack` metadata and uses pack-specific stable instruction prefixes; ordinary turns select role-specific packs by `worldState.player.role`.
+- The stable prefix keeps system identity, JSON strictness, server-owned boundaries, hidden-information limits, tone contract, and allowed patch keys ahead of dynamic world state, matching the S47.2 cache plan.
+- S41.2 should expand offline eval fixtures/red-team cases for prompt-pack outputs, hidden-info leakage, modern terms, strict JSON, and overreach.
 
 ## Verification Defaults
 
@@ -130,7 +132,8 @@ Use focused checks first, then broaden when behavior crosses module boundaries:
 
 - 2026-05-06: S40.1-S40.2 implementation/docs commit is `7927c02`. Verification passed: focused `node --check`, focused AI diagnostics/provider tests, `$env:AI_PROVIDER='mock'; npm test` with 197 tests, DeepSeek no-session diagnostic through ignored `.env` with `ok=true`, `$env:AI_PROVIDER='mock'; npm run smoke:browser`, and `git diff --check`. Read-only pre-commit subagent review found no blocking issues. Residuals: browser smoke does not yet click the `AI 连接` button, and error redaction covers exact configured secret values rather than transformed/partial variants.
 - 2026-05-06: Added a documentation-only S47.2 planning update for DeepSeek context caching. Based on the official docs, cache hits depend on fully reused persisted prefixes and usage reports hit/miss tokens. The project plan now says to stabilize prompt prefixes and collect cache telemetry without sacrificing game effect. Pre-commit subagent review skipped as low-risk documentation-only; `git diff --check` is sufficient.
+- 2026-05-06: S41.1 implementation is pending local commit. Verification passed: focused `node --check`, `node --test test\prompts.test.js`, `node --test test\aiEvalFixtures.test.js`, `node --test test\remoteHelpers.test.js`, `node --test test\deepseekProvider.test.js`, `npm run eval:ai`, focused `node --test test\examTravel.test.js`, `$env:AI_PROVIDER='mock'; npm test` rerun with 201 tests, and `git diff --check`. First full-suite run had one transient `test\examTravel.test.js` 500/200 failure that did not reproduce in focused or full reruns. Read-only pre-commit subagent review found no blockers; its two P3 notes were addressed before commit.
 
 ## Next Recommended Step
 
-After committing S40, start S41.1 prompt pack design or S42.1 official-career depth contract. The highest player-facing value is likely S42官场深度, but S41 should define the AI authority and tone scaffolding before large new AI-driven systems are added.
+After committing S41.1, continue S41.2 prompt-pack eval fixtures/red-team coverage before moving into S42官场深度. The prompt authority and tone scaffolding should stay ahead of larger AI-driven systems.

@@ -63,8 +63,8 @@
 | --- | --- | --- | --- | --- | --- |
 | S40.1 | DONE | 归档第三阶段规划，开启第四阶段活动台账，并保持开发规范不变 | 2026-05-06 | Codex | 7927c02 |
 | S40.2 | DONE | 增加游戏内 AI 连接测试入口、后端诊断路由、DeepSeek 任务模型配置文档和测试 | 2026-05-06 | Codex | 7927c02 |
-| S41.1 | TODO | 制定优秀提示词总纲：世界引擎、科举考官、出题官、官场、地方、军事、皇帝/大臣等角色的语气与 JSON 合约 |  |  |  |
-| S41.2 | TODO | 将提示词拆成可测试的 prompt pack，并为历史语气、越权、现代词、JSON 严格性加入离线 eval fixtures |  |  |  |
+| S41.1 | DONE | 制定优秀提示词总纲：世界引擎、科举考官、出题官、官场、地方、军事、皇帝/大臣等角色的语气与 JSON 合约 | 2026-05-06 | Codex | pending local S41.1 implementation commit |
+| S41.2 | TODO | 为 prompt pack 增加历史语气、越权、现代词、JSON 严格性和隐藏信息不泄露的离线 eval/red-team fixtures |  |  |  |
 | S42.1 | TODO | 定义深度官场契约：官职谱系、衙门/部院、差遣、座主门生、同年、上官、政敌、考成、廷推、外放、处分 |  |  |  |
 | S42.2 | TODO | 实现官场行动与履历系统：差事、奏疏、考成、弹劾、调任、升降、丁忧/起复、清望/贪墨风险 |  |  |  |
 | S42.3 | TODO | 增加官场 UI、档案、浏览器旅程和 Mock/真实 provider 验收，确保入仕后有长期可玩目标 |  |  |  |
@@ -118,6 +118,13 @@ DeepSeek 上下文硬盘缓存规划约束：
 - 不能为了缓存命中删减必要上下文、隐藏关键局势、降低历史语气、削弱角色视野或让模型少看会影响推演质量的信息。缓存优化只能通过稳定结构、稳定顺序和可观测 telemetry 实现。
 - 真实 provider adapter 后续应读取 DeepSeek 返回的 `usage.prompt_cache_hit_tokens` 与 `usage.prompt_cache_miss_tokens`，在 smoke/diagnostics 中记录命中率，但不把命中率作为默认本地测试硬门槛。
 - 需要为 prompt 构建加测试：同一任务的固定前缀在相邻请求中保持字节级稳定；动态片段变化不会改动前缀；schema/少量示例更新必须显式更新快照。
+
+S41.1 落地范围：
+
+- 新增 `src/ai/promptPacks.js` 作为 prompt pack 总纲注册表，记录稳定前缀、语气契约、AI 权限契约和输出契约。
+- 既有 provider schema 名称保持不变：`opening`、`turn`、`examQuestion`、`grade` 仍是 OpenAI/DeepSeek/Anthropic 适配器看到的 schema 路由。
+- 普通回合按玩家身份选择 `world_turn`、`official_career`、`emperor_court`、`minister_faction`、`local_magistrate` 或 `general_frontier`；科举出题和评卷分别使用 `exam_question` 与 `exam_grading`。
+- `test/prompts.test.js` 覆盖 pack 注册表、身份路由、稳定前缀不掺入动态状态、科举出题/评卷权限边界。S41.2 继续扩展离线 eval fixtures、红队输出与真实 provider 语气验收。
 
 ### Phase 42: 官场深度优先扩展
 
@@ -207,6 +214,43 @@ DeepSeek 上下文硬盘缓存规划约束：
 ```
 
 ### 2026-05-06
+
+工具：Codex
+
+步骤：S41.1
+
+提交：pending local S41.1 implementation commit
+
+完成：
+- 新增 `src/ai/promptPacks.js`，把 S41 的优秀提示词总纲整理为可维护 prompt pack 注册表：`world_turn`、`opening`、`exam_question`、`exam_grading`、`official_career`、`emperor_court`、`minister_faction`、`local_magistrate`、`general_frontier`。
+- `src/ai/prompts.js` 现在为每个任务附带 `promptPack` 元数据并使用 pack 指令；普通回合按身份选择角色专属 pack，provider schema 名称仍保持 `opening`、`turn`、`examQuestion`、`grade`。
+- 固定前缀把系统身份、JSON 严格性、服务器裁决边界、隐藏信息过滤、历史语气和 allowed patch keys 放在动态世界摘要之前，承接 S47.2 的 DeepSeek 缓存规划。
+- 扩展 `test/prompts.test.js`，覆盖 S41 pack 名单、身份路由、稳定前缀、科举出题/评卷权限边界。
+
+验证：
+- `node --check src\ai\promptPacks.js`
+- `node --check src\ai\prompts.js`
+- `node --check test\prompts.test.js`
+- `node --test test\prompts.test.js`
+- `node --test test\aiEvalFixtures.test.js`
+- `node --test test\remoteHelpers.test.js`
+- `node --test test\deepseekProvider.test.js`
+- `npm run eval:ai`
+- `node --test test\examTravel.test.js` after a transient first full-suite failure in that file
+- `$env:AI_PROVIDER='mock'; npm test` rerun passed 201 tests
+- `git diff --check`
+- Read-only pre-commit subagent review found no blockers. Two P3 notes were addressed before commit: non-turn prompt packs no longer inherit ordinary-turn patch-key guidance, and the S41.2 row now describes eval/red-team expansion.
+
+风险/遗留：
+- S41.1 不新增 schema 名称，不改 provider 模型路由，不扩大 Mock 行为；真实 provider 语气质量仍需 S41.2/S47 验收。
+- 离线 eval fixtures 仍是基础版，S41.2 需要补历史语气、越权、隐藏信息和现代词红队用例。
+- DeepSeek cache telemetry 尚未实现，后续 S47.2 读取 provider usage 中的命中/未命中 token。
+- 第一次全量 `npm test` 在 `test\examTravel.test.js` 的完整书生入仕路径上出现一次 500/200 断言差异；该文件单独复跑通过，随后全量 Mock 测试复跑通过，未复现。
+
+下一步：
+- S41.2：把 prompt pack 拆出的稳定前缀接入离线 eval fixtures、红队样本和必要的 snapshot/稳定性测试。
+
+---
 
 工具：Codex
 

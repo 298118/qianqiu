@@ -3,60 +3,10 @@ const { summarizeExamCalendarForPrompt } = require("../game/examCalendar");
 const { summarizeLongTermEventsForPrompt } = require("../game/longTermEvents");
 const { summarizeOfficialCareerForPrompt } = require("../game/officialCareer");
 const { summarizeRoleWorldCouplingForPrompt } = require("../game/roleWorldCoupling");
-
-const TURN_ALLOWED_PATCH_KEYS = [
-  "treasury",
-  "grainReserve",
-  "population",
-  "publicOrder",
-  "taxRate",
-  "corruption",
-  "armySize",
-  "armyMorale",
-  "borderThreat",
-  "factions",
-  "player"
-];
-
-const PLAYER_ALLOWED_PATCH_KEYS = [
-  "health",
-  "gold",
-  "academia",
-  "literaryTalent",
-  "adaptability",
-  "mentality",
-  "reputation",
-  "teacher",
-  "studiedBooks",
-  "connections",
-  "personalPower",
-  "courtControl",
-  "mandate",
-  "position",
-  "faction",
-  "influence",
-  "integrity",
-  "superiorFavor",
-  "peerNetwork",
-  "performanceMerit",
-  "promotionProspect",
-  "impeachmentRisk",
-  "cleanReputation",
-  "command",
-  "troops",
-  "supply",
-  "battleReputation",
-  "scouting",
-  "campaignRisk",
-  "countyName",
-  "localTreasury",
-  "localOrder",
-  "gentryRelations",
-  "banditPressure",
-  "pendingLawsuits",
-  "corveeBurden",
-  "waterworks"
-];
+const {
+  buildPromptInstructions,
+  getTurnPromptPackName
+} = require("./promptPacks");
 
 function compactPlayer(player = {}) {
   return {
@@ -146,25 +96,11 @@ function compactWorldState(worldState = {}) {
   };
 }
 
-function commonInstructions() {
-  return [
-    "You are the AI world engine for Qianqiu, a Chinese historical simulation text game.",
-    "Return only one JSON object that matches the provided schema. Do not wrap it in Markdown.",
-    "Write player-facing narrative in Simplified Chinese with a restrained classical historical tone.",
-    "The server owns state boundaries, promotion rules, exam gates, cheating penalties, persistence, and final application of patches.",
-    "Never grant palace rank, office title, or role promotion in ordinary turn statePatch. Use examTrigger for exam entry requests.",
-    "Never patch activeExam, examCalendar, activeNpcRequest, longTermEvents, officialCareer, roleWorldCoupling, characters, eventHistory, player.examRank, player.officeTitle, or player.examHistory in ordinary turns; those fields are server-owned.",
-    "Keep statePatch small and only use allowed keys. Prefer modest numeric changes in the range of 1-8 unless the action clearly spends resources.",
-    "Never put relationshipLedger in statePatch.",
-    `Allowed top-level patch keys: ${TURN_ALLOWED_PATCH_KEYS.join(", ")}.`,
-    `Allowed player patch keys: ${PLAYER_ALLOWED_PATCH_KEYS.join(", ")}.`
-  ].join("\n");
-}
-
 function buildOpeningTask(worldState) {
   return {
+    promptPack: "opening",
     schemaName: "opening",
-    instructions: commonInstructions(),
+    instructions: buildPromptInstructions("opening"),
     input: [
       "Create the opening narrative for this new game session.",
       "Return 1-3 concise event strings.",
@@ -177,9 +113,12 @@ function buildOpeningTask(worldState) {
 }
 
 function buildTurnTask(worldState, input) {
+  const promptPack = getTurnPromptPackName(worldState);
+
   return {
+    promptPack,
     schemaName: "turn",
-    instructions: commonInstructions(),
+    instructions: buildPromptInstructions(promptPack),
     input: [
       "Resolve one free-text player action.",
       "statePatch must contain only final absolute values for fields that changed, not deltas.",
@@ -198,8 +137,9 @@ function buildTurnTask(worldState, input) {
 
 function buildExamQuestionTask(worldState, exam) {
   return {
+    promptPack: "exam_question",
     schemaName: "examQuestion",
-    instructions: commonInstructions(),
+    instructions: buildPromptInstructions("exam_question"),
     input: [
       "Generate one historically appropriate imperial exam question.",
       "The returned level, examName, questionType, difficulty, wordCount, passScore, and promotionRank must match the supplied exam unless a display label needs richer wording.",
@@ -215,8 +155,9 @@ function buildExamQuestionTask(worldState, exam) {
 
 function buildGradeTask(worldState, exam, essay, authenticityCheck) {
   return {
+    promptPack: "exam_grading",
     schemaName: "grade",
-    instructions: commonInstructions(),
+    instructions: buildPromptInstructions("exam_grading"),
     input: [
       "Grade this imperial exam essay. Return five dimension scores, an overall score, a rank label, and concrete feedback.",
       "Use the supplied local authenticity check as context, but the server will apply penalties after your grading.",
