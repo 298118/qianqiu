@@ -9,6 +9,7 @@ const ROLE_LABELS = {
   magistrate: "地方官",
   official: "入仕官员"
 };
+const ALLOWED_ROLES = Object.freeze(Object.keys(ROLE_LABELS));
 
 const BASE_ROLE_STATS = {
   personalPower: 0,
@@ -92,6 +93,24 @@ function getRoleStats(role) {
   };
 }
 
+function createUnsupportedRoleError(role) {
+  const err = new Error(`Unsupported role. Allowed roles: ${ALLOWED_ROLES.join(", ")}`);
+  err.statusCode = 400;
+  err.role = role;
+  err.allowedRoles = [...ALLOWED_ROLES];
+  return err;
+}
+
+function normalizeInitialRole(value) {
+  if (value === undefined || value === null) return "scholar";
+  if (typeof value !== "string") throw createUnsupportedRoleError(value);
+
+  const role = value.trim();
+  if (!role) return "scholar";
+  if (!ALLOWED_ROLES.includes(role)) throw createUnsupportedRoleError(role);
+  return role;
+}
+
 function getInitialCharacters(role) {
   if (role === "general") {
     return [
@@ -149,7 +168,7 @@ function getInitialCharacters(role) {
 }
 
 function createInitialState(input = {}) {
-  const role = input.role || "scholar";
+  const role = normalizeInitialRole(input.role);
   const playerName = (input.playerName || "未定").trim() || "未定";
   const dynasty = (input.dynasty || "明").trim() || "明";
   const year = toNumber(input.year, 1644);
@@ -209,5 +228,7 @@ function createInitialState(input = {}) {
 }
 
 module.exports = {
+  ALLOWED_ROLES,
+  normalizeInitialRole,
   createInitialState
 };

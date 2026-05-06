@@ -227,6 +227,8 @@ AI provider 约定：
 - `background`
 - `customSetting`
 
+当前实现会显式校验 `role`：缺省或空值按 `scholar` 处理，其他值必须是 `scholar`、`emperor`、`minister`、`general`、`magistrate` 或 `official`。未知身份返回 400，不创建 session。S31.3 决定允许浏览器直接以 `official` 开局，因为后端初始状态、Mock 回合和前端身份面板都已经支持入仕官员循环；书生通过科举入仕仍是必须保护的核心路径。
+
 返回：
 
 - `sessionId`
@@ -782,3 +784,12 @@ S31.2 hardens ordinary turn provider authority without changing Mock playability
 - Default `applyStatePatch()` uses a provider-facing whitelist and ignores those server-owned fields even if a non-schema provider returns them.
 - Internal server follow-up patches can explicitly pass `allowServerOwnedPatchKeys: true`; the current route uses that for world tick calendar fields while still avoiding a second `turnCount` increment.
 - Provider-visible events still enter history through `appendEvents()`, exam requests still use `examTrigger`, promotions and exam history remain owned by exam routes and `src/game/promotions.js`, and relationship state still flows through top-level `relationshipChanges`.
+
+## S31.3 Start Role Boundary Note (2026-05-06)
+
+S31.3 makes the start-role contract explicit:
+
+- `src/game/initialState.js` exports the allowed role enum and rejects unsupported non-empty role values before state creation.
+- `/api/game/start` now returns 400 for unknown roles instead of creating sessions with arbitrary `player.role` values.
+- Missing or blank role input still defaults to `scholar` for compatibility with older clients.
+- The browser start form now exposes `official` alongside `scholar`, `emperor`, `minister`, `general`, and `magistrate`; `scripts/browserSmoke.js` fails if any supported start role is missing from the form.

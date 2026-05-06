@@ -20,6 +20,7 @@ const desktopGameMinAppShare = 0.86;
 const desktopGameMinViewportShare = 0.74;
 const desktopViewportShareOnlyWhenAppShare = 0.88;
 const horizontalClipTolerance = 4;
+const requiredStartRoles = Object.freeze(["scholar", "emperor", "minister", "general", "magistrate", "official"]);
 
 function parseBrowserSmokeArgs(argv = process.argv) {
   const args = {
@@ -66,6 +67,21 @@ function normalizeBaseUrl(value) {
   url.hash = "";
   url.search = "";
   return url.toString().replace(/\/$/, "");
+}
+
+function getMissingStartRoles(roleValues = []) {
+  const availableRoles = new Set(roleValues);
+  return requiredStartRoles.filter((role) => !availableRoles.has(role));
+}
+
+async function assertStartRoleOptions(page) {
+  const startRoleValues = await page.locator('select[name="role"] option').evaluateAll((options) =>
+    options.map((option) => option.value)
+  );
+  const missingStartRoles = getMissingStartRoles(startRoleValues);
+  if (missingStartRoles.length) {
+    throw new Error(`Start form missing role options: ${missingStartRoles.join(", ")}`);
+  }
 }
 
 function getDefaultBrowserCandidates(platform = process.platform, env = process.env) {
@@ -580,6 +596,59 @@ async function runMobileUiAcceptance(page, recorder) {
   await page.locator("#exam-backdrop").waitFor({ state: "hidden", timeout: 10000 });
 }
 
+async function runOfficialStartAcceptance(browser, { baseUrl, onSessionId, pageErrors }) {
+  const context = await browser.newContext({ viewport: VIEWPORTS.desktop });
+  let officialSessionId = null;
+
+  try {
+    const page = await context.newPage();
+    page.on("pageerror", (error) => pageErrors.push(error.message));
+    await page.goto(baseUrl, { waitUntil: "domcontentloaded" });
+    await page.locator("#start-form").waitFor({ state: "visible", timeout: 10000 });
+    await assertStartRoleOptions(page);
+
+    await page.locator('input[name="dynasty"]').fill("Ming");
+    await page.locator('input[name="year"]').fill("1644");
+    await page.locator('select[name="role"]').selectOption("official");
+    await page.locator('input[name="playerName"]').fill("Browser Official");
+    await page.locator('input[name="background"]').fill("newly ranked jinshi");
+    await page.locator('textarea[name="customSetting"]').fill("official direct start acceptance run");
+    await page.locator('#start-form button[type="submit"]').click();
+
+    await page.locator("#action-area").waitFor({ state: "visible", timeout: 10000 });
+    await page.locator("#scholar-panel").waitFor({ state: "visible", timeout: 10000 });
+    officialSessionId = await page.evaluate(() => window.localStorage.getItem("qianqiu.sessionId"));
+    if (!officialSessionId) throw new Error("Official start did not write qianqiu.sessionId to localStorage.");
+    onSessionId(officialSessionId);
+
+    const rolePanelText = await page.locator("#scholar-panel").innerText();
+    if (!rolePanelText.includes("入仕官员") || !rolePanelText.includes("候选观政")) {
+      throw new Error("Official start did not render the official role panel.");
+    }
+
+    const actionPlaceholder = await page.locator("#action-input").getAttribute("placeholder");
+    if (!actionPlaceholder || !actionPlaceholder.includes("奉上官")) {
+      throw new Error("Official start did not render the official action placeholder.");
+    }
+
+    const stateResponse = await fetch(`${baseUrl}/api/game/state/${officialSessionId}`);
+    if (!stateResponse.ok) {
+      throw new Error(`Official start session is not readable through the API: ${stateResponse.status}`);
+    }
+    const statePayload = await stateResponse.json();
+    if (statePayload.worldState?.player?.role !== "official") {
+      throw new Error("Official start API state did not persist player.role = official.");
+    }
+
+    return {
+      sessionId: officialSessionId,
+      statusText: (await page.locator("#status-strip").innerText()).replace(/\s+/g, " ").trim()
+    };
+  } finally {
+    await context.close();
+  }
+}
+
 async function runBrowserJourney({
   baseUrl,
   browserPath,
@@ -595,6 +664,7 @@ async function runBrowserJourney({
   const pageErrors = [];
   const recorder = createScreenshotRecorder(screenshotsDir);
   let sessionId = null;
+  const sessionIds = [];
 
   try {
     const context = await browser.newContext({ viewport: VIEWPORTS.desktop });
@@ -604,6 +674,7 @@ async function runBrowserJourney({
     await page.goto(baseUrl, { waitUntil: "domcontentloaded" });
     await page.locator("#start-form").waitFor({ state: "visible", timeout: 10000 });
     await page.locator("#action-area").waitFor({ state: "hidden", timeout: 10000 });
+    await assertStartRoleOptions(page);
 
     await page.locator('input[name="dynasty"]').fill("Ming");
     await page.locator('input[name="year"]').fill("1644");
@@ -617,6 +688,7 @@ async function runBrowserJourney({
     await page.locator("#scholar-panel").waitFor({ state: "visible", timeout: 10000 });
     sessionId = await page.evaluate(() => window.localStorage.getItem("qianqiu.sessionId"));
     if (!sessionId) throw new Error("Start flow did not write qianqiu.sessionId to localStorage.");
+    sessionIds.push(sessionId);
     onSessionId(sessionId);
 
     await assertGameLayout(page, "desktop");
@@ -652,6 +724,15 @@ async function runBrowserJourney({
       throw new Error(`Restored session is not readable through the API: ${stateResponse.status}`);
     }
 
+    const officialStart = await runOfficialStartAcceptance(browser, {
+      baseUrl,
+      onSessionId: (createdSessionId) => {
+        sessionIds.push(createdSessionId);
+        onSessionId(createdSessionId);
+      },
+      pageErrors
+    });
+
     if (pageErrors.length) {
       throw new Error(`Browser page errors detected: ${pageErrors.join("; ")}`);
     }
@@ -663,10 +744,12 @@ async function runBrowserJourney({
       baseUrl,
       restored: true,
       sessionId,
+      sessionIds,
       statusText: statusText.replace(/\s+/g, " ").trim(),
+      officialStart,
       uiAcceptance: {
         screenshots: recorder.summary(),
-        viewports: ["desktop", "mobile"]
+        viewports: ["desktop", "mobile", "official-start"]
       }
     };
   } finally {
@@ -683,7 +766,7 @@ async function runBrowserSmoke(options = {}) {
   const browserPath = resolveBrowserExecutable({ browserPath: options.browserPath });
   let server = null;
   let result = null;
-  let sessionId = null;
+  const sessionIds = [];
   const baseUrl = options.url || null;
 
   try {
@@ -693,14 +776,15 @@ async function runBrowserSmoke(options = {}) {
       browserPath,
       headed: options.headed,
       onSessionId: (createdSessionId) => {
-        sessionId = createdSessionId;
+        sessionIds.push(createdSessionId);
       },
       screenshotsDir: options.screenshotsDir
     });
     return result;
   } finally {
-    if (result?.sessionId || sessionId) {
-      await cleanupSession(result?.sessionId || sessionId);
+    const idsToClean = new Set([...(result?.sessionIds || []), result?.sessionId, ...sessionIds].filter(Boolean));
+    for (const id of idsToClean) {
+      await cleanupSession(id);
     }
     if (server) {
       await server.stop();
@@ -750,6 +834,7 @@ module.exports = {
   createScreenshotRecorder,
   getDefaultBrowserCandidates,
   getGameLayoutFailures,
+  getMissingStartRoles,
   normalizeBaseUrl,
   parseBrowserSmokeArgs,
   rectsOverlap,

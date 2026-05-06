@@ -71,6 +71,8 @@ Request fields:
 - `background`
 - `customSetting`
 
+As of S31.3, `role` is normalized and validated in `src/game/initialState.js`. Missing or blank role values default to `scholar`; unsupported roles return `400`. The accepted enum is `scholar`, `emperor`, `minister`, `general`, `magistrate`, and `official`, and the browser start form exposes all six values.
+
 Returns `201` with `sessionId`, `worldState`, and opening `narrative`.
 
 ### `GET /api/game/state/:sessionId`
@@ -239,7 +241,7 @@ S26.2 extends the same journey with DOM and screenshot-level UI acceptance. It a
 
 `relationshipLedger` is the S22.1 server-owned social memory layer. It records current character and faction entries with `stance`, `relationship`, `resentment`, `networkSource`, `recentIntent`, `visible`, and `lastUpdatedTurn`. Character entries are keyed by current `characters[].id`; faction entries are keyed by existing numeric `factions` keys.
 
-Allowed roles currently include `scholar`, `emperor`, `minister`, `general`, `magistrate`, and `official`. Mock gameplay has dedicated loops for all of those roles, with the scholar -> exam -> official path still treated as the critical route.
+Allowed roles currently include `scholar`, `emperor`, `minister`, `general`, `magistrate`, and `official`. S31.3 rejects unsupported start roles before session creation and keeps direct browser starts for `official` enabled because Mock gameplay, initial state, and role-panel rendering all support that loop. The scholar -> exam -> official path is still treated as the critical route.
 
 ## State Patch Rules
 

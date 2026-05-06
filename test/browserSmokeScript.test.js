@@ -6,6 +6,7 @@ const {
   buildBrowserSmokeEssay,
   getDefaultBrowserCandidates,
   getGameLayoutFailures,
+  getMissingStartRoles,
   normalizeBaseUrl,
   parseBrowserSmokeArgs,
   rectsOverlap,
@@ -84,6 +85,17 @@ test("browser smoke rejects incomplete arguments", () => {
 test("browser smoke normalizes base URLs for stable output", () => {
   assert.equal(normalizeBaseUrl("http://127.0.0.1:3000/"), "http://127.0.0.1:3000");
   assert.equal(normalizeBaseUrl("http://127.0.0.1:3000/?debug=1#top"), "http://127.0.0.1:3000");
+});
+
+test("browser smoke requires every supported start role option", () => {
+  assert.deepEqual(
+    getMissingStartRoles(["scholar", "emperor", "minister", "general", "magistrate", "official"]),
+    []
+  );
+  assert.deepEqual(
+    getMissingStartRoles(["scholar", "emperor", "minister", "general", "magistrate"]),
+    ["official"]
+  );
 });
 
 test("browser smoke resolves explicit browser executable before defaults", () => {

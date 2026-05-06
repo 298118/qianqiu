@@ -21,12 +21,13 @@ The smoke uses `playwright-core` with an installed Chrome or Edge executable. If
 | Area | Automated checks |
 | --- | --- |
 | Local boot | Starts a temporary Mock-mode server unless `--url` is supplied, waits for `/api/health`, and loads `/`. |
-| Opening flow | Creates a scholar session through the real start form and verifies `qianqiu.sessionId` in localStorage. |
+| Opening flow | Confirms the start form exposes every supported role, creates a scholar session through the real form, and verifies `qianqiu.sessionId` in localStorage. |
 | Session restore | Reloads the page, opens a fresh page in the same browser context, confirms the game view restores, and checks `GET /api/game/state/:sessionId`. |
 | Desktop layout | Checks status strip, role panel, narrative area, and action input surface for visibility, overlap, horizontal overflow, game-panel width/share, and role-panel clipping. |
 | Exam modal | Opens the next exam from the scholar panel, verifies question/requirements/writing controls, fills an essay, and submits it. |
 | Result details | Checks score summary, player archive, result sections, highlighted ranking row, and inspectable same-field candidate essays. |
 | Mobile layout | Switches to a mobile viewport, checks the game/action surface, opens the exam archive, and verifies responsive result details. |
+| Direct official start | Opens an isolated browser context, starts as `official`, checks the official role panel/action placeholder, and verifies the API-persisted role. |
 | Screenshots | Captures representative desktop and mobile states and validates each capture as a non-empty PNG. |
 | Cleanup | Deletes the smoke-created session file when the journey finishes. |
 
@@ -34,26 +35,27 @@ The smoke uses `playwright-core` with an installed Chrome or Edge executable. If
 
 Date: 2026-05-06
 
-Relevant implementation commit: current S31.1 commit (`Repair desktop game layout width`)
+Relevant implementation commit: current S31.3 commit (`Validate start roles`)
 
-Commands verified during S31.1:
+Commands verified during S31.3:
 
 ```powershell
-node --check public\app.js
+node --check src\game\initialState.js
 node --check scripts\browserSmoke.js
+node --check test\gameStartRole.test.js
 node --check test\browserSmokeScript.test.js
-node --test test\browserSmokeScript.test.js
-npm run smoke:browser -- --screenshots artifacts/browser-smoke/s31-1
+node --test test\gameStartRole.test.js test\browserSmokeScript.test.js test\officialRole.test.js
+npm run smoke:browser -- --screenshots artifacts/browser-smoke/s31-3
 npm test
 git diff --check
 ```
 
 Observed result:
 
-- `test/browserSmokeScript.test.js`: 10 tests passed.
-- `npm run smoke:browser -- --screenshots artifacts/browser-smoke/s31-1`: passed with 5 screenshots checked.
-- `npm test`: 89 tests passed.
-- Desktop smoke now fails if the game panel regresses to the old narrow-column width or if the role panel is horizontally clipped.
+- Focused start-role/browser-helper tests passed.
+- `npm run smoke:browser -- --screenshots artifacts/browser-smoke/s31-3`: passed with direct official-start coverage and 5 screenshots checked.
+- `npm test`: 97 tests passed.
+- Desktop smoke still fails if the game panel regresses to the old narrow-column width or if the role panel is horizontally clipped; it also fails if any supported start role is missing from the browser form.
 
 Earlier S26.2 screenshot review caught and fixed a real result-modal bug: `.exam-requirements { display: grid; }` overrode the `hidden` attribute and left the old requirements visible behind the result view. The fix is `.exam-requirements[hidden] { display: none; }`.
 
