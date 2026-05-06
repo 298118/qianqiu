@@ -1,4 +1,5 @@
 const form = document.querySelector("#start-form");
+const appShell = document.querySelector(".app-shell");
 const statusStrip = document.querySelector("#status-strip");
 const scholarPanel = document.querySelector("#scholar-panel");
 const narrative = document.querySelector("#narrative");
@@ -1052,12 +1053,14 @@ async function submitExamEssay() {
 }
 
 function showGameView() {
+  appShell.classList.add("app-shell--game-active");
   startPanel.style.display = "none";
   gamePanel.style.display = "";
   actionArea.style.display = "";
 }
 
 function showStartView() {
+  appShell.classList.remove("app-shell--game-active");
   startPanel.style.display = "";
   gamePanel.style.display = "none";
   actionArea.style.display = "none";

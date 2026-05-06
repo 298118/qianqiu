@@ -5,12 +5,32 @@ const {
   assertPngScreenshot,
   buildBrowserSmokeEssay,
   getDefaultBrowserCandidates,
+  getGameLayoutFailures,
   normalizeBaseUrl,
   parseBrowserSmokeArgs,
   rectsOverlap,
   resolveBrowserExecutable,
   sanitizeScreenshotName
 } = require("../scripts/browserSmoke");
+
+function createLayoutMetrics(overrides = {}) {
+  return {
+    appWidth: 1180,
+    clientWidth: 1280,
+    gameClientWidth: 1180,
+    gameLeft: 50,
+    gameRight: 1230,
+    gameScrollWidth: 1180,
+    gameWidth: 1180,
+    scholarClientWidth: 1180,
+    scholarLeft: 50,
+    scholarRight: 1230,
+    scholarScrollWidth: 1180,
+    scholarWidth: 1180,
+    viewportWidth: 1280,
+    ...overrides
+  };
+}
 
 test("browser smoke parses url, browser path, and headed mode", () => {
   const args = parseBrowserSmokeArgs([
@@ -103,6 +123,67 @@ test("browser smoke layout helpers catch overlapping boxes", () => {
   );
   assert.ok(buildBrowserSmokeEssay().length >= 200);
   assert.equal(buildBrowserSmokeEssay().toLowerCase().includes("ai"), false);
+});
+
+test("browser smoke game layout helper catches narrow desktop panel and clipped role panel", () => {
+  const failures = getGameLayoutFailures(
+    createLayoutMetrics({
+      gameClientWidth: 390,
+      gameRight: 440,
+      gameScrollWidth: 840,
+      gameWidth: 390,
+      scholarClientWidth: 390,
+      scholarRight: 440,
+      scholarScrollWidth: 840,
+      scholarWidth: 390
+    }),
+    "desktop"
+  );
+
+  assert.match(failures.join("\n"), /game panel is too narrow/);
+  assert.match(failures.join("\n"), /role panel has horizontal scroll overflow/);
+});
+
+test("browser smoke game layout helper keeps mobile width behavior compatible", () => {
+  assert.deepEqual(
+    getGameLayoutFailures(
+      createLayoutMetrics({
+        appWidth: 390,
+        clientWidth: 390,
+        gameClientWidth: 390,
+        gameRight: 390,
+        gameScrollWidth: 390,
+        gameWidth: 390,
+        scholarClientWidth: 390,
+        scholarRight: 390,
+        scholarScrollWidth: 390,
+        scholarWidth: 390,
+        viewportWidth: 390
+      }),
+      "mobile"
+    ),
+    []
+  );
+
+  assert.match(
+    getGameLayoutFailures(
+      createLayoutMetrics({
+        appWidth: 390,
+        clientWidth: 390,
+        gameClientWidth: 390,
+        gameRight: 390,
+        gameScrollWidth: 420,
+        gameWidth: 390,
+        scholarClientWidth: 390,
+        scholarRight: 390,
+        scholarScrollWidth: 420,
+        scholarWidth: 390,
+        viewportWidth: 390
+      }),
+      "mobile"
+    ).join("\n"),
+    /horizontal/
+  );
 });
 
 test("browser smoke falls back to platform browser candidates", () => {

@@ -15,6 +15,11 @@ const VIEWPORTS = {
   desktop: { width: 1280, height: 900 },
   mobile: { width: 390, height: 844 }
 };
+const desktopLayoutBreakpoint = 820;
+const desktopGameMinAppShare = 0.86;
+const desktopGameMinViewportShare = 0.74;
+const desktopViewportShareOnlyWhenAppShare = 0.88;
+const horizontalClipTolerance = 4;
 
 function parseBrowserSmokeArgs(argv = process.argv) {
   const args = {
@@ -292,6 +297,97 @@ async function assertNoHorizontalOverflow(page, label) {
   }
 }
 
+function roundMetric(value) {
+  return Math.round(Number(value) || 0);
+}
+
+function getGameLayoutFailures(metrics, mode = "game") {
+  const failures = [];
+  if (!metrics) return [`${mode} layout metrics were not collected.`];
+
+  const isDesktop =
+    metrics.viewportWidth > desktopLayoutBreakpoint &&
+    metrics.clientWidth > desktopLayoutBreakpoint;
+  const appWidth = Number(metrics.appWidth) || 0;
+  const gameWidth = Number(metrics.gameWidth) || 0;
+  const viewportWidth = Number(metrics.viewportWidth) || 0;
+
+  if (isDesktop) {
+    const appShare = appWidth > 0 ? gameWidth / appWidth : 0;
+    const viewportShare = viewportWidth > 0 ? gameWidth / viewportWidth : 0;
+    const appUsesViewport = viewportWidth > 0 && appWidth / viewportWidth >= desktopViewportShareOnlyWhenAppShare;
+
+    if (appShare < desktopGameMinAppShare) {
+      failures.push(
+        `${mode} game panel is too narrow (${roundMetric(gameWidth)}px, ${Math.round(appShare * 100)}% of app shell ${roundMetric(appWidth)}px).`
+      );
+    }
+    if (appUsesViewport && viewportShare < desktopGameMinViewportShare) {
+      failures.push(
+        `${mode} game panel is too narrow for the desktop viewport (${roundMetric(gameWidth)}px, ${Math.round(viewportShare * 100)}% of viewport ${roundMetric(viewportWidth)}px).`
+      );
+    }
+  }
+
+  if (metrics.gameScrollWidth > metrics.gameClientWidth + horizontalClipTolerance) {
+    failures.push(
+      `${mode} game panel clips horizontal content (${roundMetric(metrics.gameScrollWidth)}px scroll width > ${roundMetric(metrics.gameClientWidth)}px client width).`
+    );
+  }
+
+  if (metrics.scholarScrollWidth > metrics.scholarClientWidth + horizontalClipTolerance) {
+    failures.push(
+      `${mode} role panel has horizontal scroll overflow (${roundMetric(metrics.scholarScrollWidth)}px > ${roundMetric(metrics.scholarClientWidth)}px).`
+    );
+  }
+
+  if (metrics.scholarLeft < metrics.gameLeft - horizontalClipTolerance) {
+    failures.push(`${mode} role panel starts outside the game panel.`);
+  }
+  if (metrics.scholarRight > metrics.gameRight + horizontalClipTolerance) {
+    failures.push(`${mode} role panel extends outside the game panel.`);
+  }
+
+  return failures;
+}
+
+async function readGameLayoutMetrics(page) {
+  return page.evaluate(() => {
+    const box = (selector) => {
+      const element = document.querySelector(selector);
+      if (!element) return null;
+      const rect = element.getBoundingClientRect();
+      return {
+        clientWidth: element.clientWidth,
+        height: rect.height,
+        left: rect.left,
+        right: rect.right,
+        scrollWidth: element.scrollWidth,
+        width: rect.width
+      };
+    };
+    const app = box(".app-shell");
+    const game = box(".game-panel");
+    const scholar = box("#scholar-panel");
+
+    return {
+      appWidth: app?.width || 0,
+      clientWidth: document.documentElement.clientWidth,
+      gameClientWidth: game?.clientWidth || 0,
+      gameLeft: game?.left || 0,
+      gameRight: game?.right || 0,
+      gameScrollWidth: game?.scrollWidth || 0,
+      gameWidth: game?.width || 0,
+      scholarClientWidth: scholar?.clientWidth || 0,
+      scholarLeft: scholar?.left || 0,
+      scholarRight: scholar?.right || 0,
+      scholarScrollWidth: scholar?.scrollWidth || 0,
+      scholarWidth: scholar?.width || 0,
+      viewportWidth: window.innerWidth
+    };
+  });
+}
+
 async function assertGameLayout(page, mode) {
   await assertNoHorizontalOverflow(page, `${mode} game layout`);
 
@@ -335,6 +431,11 @@ async function assertGameLayout(page, mode) {
   }
   if (computed.actionDisplay !== "flex") {
     failUiAcceptance(`${mode} action area is not using the expected flex layout.`);
+  }
+
+  const gameLayoutFailures = getGameLayoutFailures(await readGameLayoutMetrics(page), mode);
+  if (gameLayoutFailures.length) {
+    failUiAcceptance(gameLayoutFailures.join(" "));
   }
 
   if (mode === "mobile") {
@@ -648,6 +749,7 @@ module.exports = {
   buildBrowserSmokeEssay,
   createScreenshotRecorder,
   getDefaultBrowserCandidates,
+  getGameLayoutFailures,
   normalizeBaseUrl,
   parseBrowserSmokeArgs,
   rectsOverlap,

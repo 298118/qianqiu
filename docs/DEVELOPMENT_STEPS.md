@@ -59,7 +59,7 @@
 | ID | 状态 | 目标 | 完成日期 | 工具 | 提交 |
 | --- | --- | --- | --- | --- | --- |
 | S30.1 | DONE | 归档第二阶段路线图，开启第三阶段活动台账，并保持开发规范不变 | 2026-05-06 | Codex | current documentation commit |
-| S31.1 | TODO | 修复桌面游戏态布局过窄问题，并扩展 browser smoke 覆盖游戏面板宽度/裁切断言 |  |  |  |
+| S31.1 | DONE | 修复桌面游戏态布局过窄问题，并扩展 browser smoke 覆盖游戏面板宽度/裁切断言 | 2026-05-06 | Codex + subagent | current S31.1 commit |
 | S31.2 | TODO | 收紧普通回合的服务器独占字段边界，阻止 provider patch `activeExam`、`characters`、`eventHistory`、`player.examRank`、`player.examHistory` 等字段 |  |  |  |
 | S31.3 | TODO | 校验开局 role 输入并明确是否允许浏览器直接开局 `official` |  |  |  |
 | S32.1 | TODO | 定义关系/联系人检查视图契约，让 `relationshipLedger` 从叙事反馈升级为玩家可查看的信息面板 |  |  |  |
@@ -171,6 +171,35 @@
 ```
 
 ### 2026-05-06
+
+Tool: Codex
+
+Step: S31.1
+
+Commit: current S31.1 commit
+
+Completed:
+- Added an `.app-shell--game-active` layout mode so the hidden start panel no longer leaves the desktop grid locked to the old 390px first column.
+- Kept `.game-panel` shrink-safe with `min-width: 0` while allowing it to occupy the available desktop app width after entering or restoring a game.
+- Extended `scripts/browserSmoke.js` with desktop game-panel width/share assertions and role-panel horizontal clipping checks.
+- Added focused browser smoke helper tests for the narrow desktop panel regression and mobile compatibility.
+- Reviewed the scoped subagent patch before integration; the subagent did not run Git commands.
+
+Verification:
+- `node --check public/app.js`
+- `node --check scripts/browserSmoke.js`
+- `node --check test/browserSmokeScript.test.js`
+- `node --test test/browserSmokeScript.test.js` passed with 10 tests.
+- `npm run smoke:browser -- --screenshots artifacts/browser-smoke/s31-1` passed with 5 screenshots checked.
+- `npm test` passed with 89 tests.
+- `git diff --check`
+
+Risk/leftover:
+- No runtime blockers remain for S31.1.
+- S31.1 covers the current desktop width/cropping regression; broader full-journey browser coverage remains planned for S38.1.
+
+Next:
+- S31.2: tighten ordinary turn provider patch boundaries for server-owned fields.
 
 Tool: Codex
 
