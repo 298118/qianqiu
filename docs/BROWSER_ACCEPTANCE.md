@@ -37,7 +37,7 @@ The smoke uses `playwright-core` with an installed Chrome or Edge executable. If
 
 Date: 2026-05-06
 
-Relevant implementation commit: pending S32.3 implementation commit (`Implement active NPC request loop`)
+Relevant implementation commit: `08042a2` (`Implement active NPC request loop`)
 
 Commands verified during S32.3:
 
