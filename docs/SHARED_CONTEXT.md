@@ -30,6 +30,7 @@ Every development session must read these files before planning or editing:
 - `GET /api/game/saves` must expose redacted metadata only. Full saves are read through `GET /api/game/state/:sessionId`.
 - Local playability cannot depend on real model keys. Keyed provider checks must skip or fail in controlled, documented ways when keys are absent.
 - Every coherent change must update this handoff and the step ledger, run relevant verification, and be committed.
+- 项目内面向协作和玩家的输出尽量使用中文，尤其是文档、交接记录、路线图台账、领域逻辑注释和前端可见文案；只有代码标识符、API/协议名、第三方术语、命令输出或外部工具理解需要时再使用英文。
 
 ## Subagent Discipline
 
@@ -131,6 +132,7 @@ Use focused checks first, then broaden when behavior crosses module boundaries:
 
 ## Current Work Note
 
+- 2026-05-06: 纯文档开发规范更新已把“项目输出优先中文”写入 `AGENTS.md`、`CLAUDE.md`、`docs/QIANQIU_DEVELOPMENT_BRIEF.md` 和 `docs/DEVELOPMENT_STEPS.md`。这是低风险纯文档改动，跳过提交前只读子代理审查；验证：`git diff --check`。
 - 2026-05-06: S40.1-S40.2 implementation/docs commit is `7927c02`. Verification passed: focused `node --check`, focused AI diagnostics/provider tests, `$env:AI_PROVIDER='mock'; npm test` with 197 tests, DeepSeek no-session diagnostic through ignored `.env` with `ok=true`, `$env:AI_PROVIDER='mock'; npm run smoke:browser`, and `git diff --check`. Read-only pre-commit subagent review found no blocking issues. Residuals: browser smoke does not yet click the `AI 连接` button, and error redaction covers exact configured secret values rather than transformed/partial variants.
 - 2026-05-06: Added a documentation-only S47.2 planning update for DeepSeek context caching. Based on the official docs, cache hits depend on fully reused persisted prefixes and usage reports hit/miss tokens. The project plan now says to stabilize prompt prefixes and collect cache telemetry without sacrificing game effect. Pre-commit subagent review skipped as low-risk documentation-only; `git diff --check` is sufficient.
 - 2026-05-06: S41.1 implementation commit is `383881a`. Verification passed: focused `node --check`, `node --test test\prompts.test.js`, `node --test test\aiEvalFixtures.test.js`, `node --test test\remoteHelpers.test.js`, `node --test test\deepseekProvider.test.js`, `npm run eval:ai`, focused `node --test test\examTravel.test.js`, `$env:AI_PROVIDER='mock'; npm test` rerun with 201 tests, and `git diff --check`. First full-suite run had one transient `test\examTravel.test.js` 500/200 failure that did not reproduce in focused or full reruns. Read-only pre-commit subagent review found no blockers; its two P3 notes were addressed before commit.
