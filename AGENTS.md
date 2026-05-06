@@ -11,6 +11,8 @@ Always read [docs/SHARED_CONTEXT.md](docs/SHARED_CONTEXT.md), [docs/QIANQIU_DEVE
 - Update [docs/DEVELOPMENT_STEPS.md](docs/DEVELOPMENT_STEPS.md) whenever a roadmap step starts, completes, blocks, or changes scope. Record the step ID, what changed, verification, and commit hash.
 - Use Git for every coherent local change. Before editing, check `git status --short`; after editing and verification, commit with a clear message.
 - If using subagents for a larger step, subagents may only produce scoped patches and focused verification reports. They must not commit, push, or create pull requests; Codex reviews, integrates, verifies, updates shared docs, and makes the final coherent commit.
+- Every subagent prompt for implementation work must explicitly say: do not run `git add`, `git commit`, `git push`, or create PRs; do not revert others' edits; list changed files and verification commands in the final report.
+- If a subagent accidentally creates a commit, Codex must treat it as unreviewed work: inspect the diff and tests, document the mistake in the handoff notes, and avoid further subagent commits. Do not let accidental commit authorship replace Codex's final review responsibility.
 - Do not leave useful work only in chat. If a decision matters for future Codex or Claude Code sessions, write it into the repo.
 - Keep the game runnable with `npm install && npm start` and available at `http://localhost:3000`.
 - Default to Mock AI mode for local playability. Real model providers must remain optional through `.env`.
