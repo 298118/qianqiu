@@ -25,6 +25,7 @@
 
 子代理使用规则：
 
+- 用户已明确授权 Codex 和 Claude Code 在本仓库使用子代理；除非后续用户指令收窄或撤销该授权，否则把它视为长期项目上下文。
 - 对 S25、S26 这类阶段或多个相关 `Sxx.y` 小步骤组成的步骤簇，应积极考虑并行子代理，而不是只在单个超大实现任务中使用。
 - 推荐委派粒度是独立的小步骤。例如 S25 可以让一个子代理负责 S25.1 真实 provider smoke 脚本，另一个子代理负责 S25.2 streaming 兼容性调研或实现，前提是写入范围不重叠。
 - 主代理仍然负责选择拆分方式、审查所有 diff、补齐跨模块文档、运行最终验证、更新本台账与共享上下文，并做唯一的 coherent Git 提交。
@@ -156,6 +157,26 @@
 ```
 
 ### 2026-05-06
+
+Tool: Codex
+
+Step: Delegation authorization documentation
+
+Commit: current documentation commit
+
+Completed:
+- Recorded the user's explicit authorization to use subagents as durable project context.
+- Updated Codex, Claude Code, product brief, development ledger, and shared handoff documents so future sessions do not need to infer this permission from chat history.
+- Preserved the existing guardrails: subagents may only produce scoped patches and focused verification reports, and the main agent remains responsible for review, documentation, final verification, and the single coherent commit.
+
+Verification:
+- Documentation-only change; verified with `git diff --check`.
+
+Risk/leftover:
+- No runtime behavior changed.
+
+Next:
+- Continue with S25.3 AI output eval fixtures or S26.1 browser automation, depending on priority.
 
 Tool: Codex
 

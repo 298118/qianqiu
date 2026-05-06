@@ -10,6 +10,7 @@ Before implementing anything, read [docs/SHARED_CONTEXT.md](docs/SHARED_CONTEXT.
 - Keep Claude Code and Codex synchronized. Before finishing every coherent change, update [docs/SHARED_CONTEXT.md](docs/SHARED_CONTEXT.md) with the current state, important decisions, verification, and next recommended step.
 - Update [docs/DEVELOPMENT_STEPS.md](docs/DEVELOPMENT_STEPS.md) whenever a roadmap step starts, completes, blocks, or changes scope. Record the step ID, what changed, verification, and commit hash.
 - Save each coherent change in local Git. Check status first, make the change, verify it, then commit it with a descriptive message.
+- The user has explicitly authorized Codex and Claude Code to use subagents for this repository. Treat that authorization as durable project context unless a newer user instruction narrows or revokes it.
 - Codex and Claude should use subagents proactively for roadmap phases or step clusters when the work can be split into independent small steps. For example, a phase such as S25 may have S25.1, S25.2, and S25.3 handled by separate subagents if their file ownership and verification responsibilities are clear.
 - Do not interpret "larger step" as only one oversized implementation task. The preferred delegation grain is often a roadmap substep inside a larger phase, such as one agent owning S25.1 smoke scripts while another investigates S25.2 streaming compatibility.
 - Subagents may only produce scoped patches and focused verification reports. They must not run `git add`, `git commit`, `git push`, or create pull requests.
