@@ -177,12 +177,18 @@ test("POST /api/game/turn trims provider plus tick events in order", async (t) =
 
   assert.equal(response.status, 200);
   assert.equal(payload.worldState.eventHistory.length, MAX_EVENT_HISTORY);
-  assert.equal(payload.worldState.eventHistory[0], "old-1");
+  assert.equal(payload.activeNpcRequestEvents.length, 1);
+  assert.equal(payload.worldState.eventHistory[0], "old-2");
   assert.deepEqual(
     payload.worldState.eventHistory.slice(-payload.worldTick.events.length),
     payload.worldTick.events
   );
-  const providerEvent = payload.worldState.eventHistory[MAX_EVENT_HISTORY - payload.worldTick.events.length - 1];
+  const activeRequestStart = MAX_EVENT_HISTORY - payload.worldTick.events.length - payload.activeNpcRequestEvents.length;
+  assert.deepEqual(
+    payload.worldState.eventHistory.slice(activeRequestStart, activeRequestStart + payload.activeNpcRequestEvents.length),
+    payload.activeNpcRequestEvents
+  );
+  const providerEvent = payload.worldState.eventHistory[activeRequestStart - 1];
   assert.ok(providerEvent);
   assert.ok(!providerEvent.startsWith("old-"));
 });

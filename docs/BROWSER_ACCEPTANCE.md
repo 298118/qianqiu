@@ -25,6 +25,7 @@ The smoke uses `playwright-core` with an installed Chrome or Edge executable. If
 | Session restore | Reloads the page, opens a fresh page in the same browser context, confirms the game view restores, and checks `GET /api/game/state/:sessionId`. |
 | Desktop layout | Checks status strip, role panel, narrative area, and action input surface for visibility, overlap, horizontal overflow, game-panel width/share, and role-panel clipping. |
 | Relationship panel | Checks visible contact/faction rows from `relationshipView`, field completeness, hidden id/text non-leakage, relationship-panel overflow, and a Mock scholar turn updating the mentor relationship. |
+| Active request panel | Checks the server-scheduled `activeNpcRequestView` panel, target id/type/kind/status attributes, required ask/stakes/due/hint fields, hidden target/text non-leakage, and active-request overflow. |
 | Exam modal | Opens the next exam from the scholar panel, verifies question/requirements/writing controls, fills an essay, and submits it. |
 | Result details | Checks score summary, player archive, result sections, highlighted ranking row, and inspectable same-field candidate essays. |
 | Mobile layout | Switches to a mobile viewport, checks the game/action surface, opens the exam archive, and verifies responsive result details. |
@@ -36,27 +37,33 @@ The smoke uses `playwright-core` with an installed Chrome or Edge executable. If
 
 Date: 2026-05-06
 
-Relevant implementation commit: `cefde6a` (`Render relationship inspection panel`)
+Relevant implementation commit: pending S32.3 implementation commit (`Implement active NPC request loop`)
 
-Commands verified during S32.2:
+Commands verified during S32.3:
 
 ```powershell
+node --check src\game\activeRequests.js
+node --check src\routes\game.js
+node --check src\routes\exam.js
 node --check public\app.js
 node --check scripts\browserSmoke.js
+node --check test\activeNpcRequests.test.js
+node --check test\gameTurnRelationships.test.js
 node --check test\browserSmokeScript.test.js
-node --test test\browserSmokeScript.test.js
-node --test test\relationshipLedger.test.js test\gameTurnRelationships.test.js test\mockRelationshipReactions.test.js
-npm run smoke:browser -- --screenshots artifacts/browser-smoke/s32-2
+node --check test\gameTurnTick.test.js
+node --test test\activeNpcRequests.test.js test\gameTurnRelationships.test.js test\browserSmokeScript.test.js
+node --test test\gameTurnTick.test.js
+npm run smoke:browser -- --screenshots artifacts/browser-smoke/s32-3
 npm test
 git diff --check
 ```
 
 Observed result:
 
-- Focused browser-helper and relationship route/ledger tests passed.
-- `npm run smoke:browser -- --screenshots artifacts/browser-smoke/s32-2`: passed with relationship-panel coverage, direct official-start relationship visibility, and 5 screenshots checked.
-- `npm test`: 102 tests passed.
-- Desktop smoke still fails if the game panel regresses to the old narrow-column width, if the role panel or relationship panel is horizontally clipped, if any supported start role is missing from the browser form, or if hidden scholar-invisible factions leak into relationship-panel text.
+- Focused active-request, relationship route, world-tick ordering, and browser-helper tests passed.
+- `npm run smoke:browser -- --screenshots artifacts/browser-smoke/s32-3`: passed with relationship-panel coverage, active-request-panel coverage, direct official-start relationship visibility, and 5 screenshots checked.
+- `npm test`: 111 tests passed.
+- Desktop smoke still fails if the game panel regresses to the old narrow-column width, if the role panel, relationship panel, or active-request panel is horizontally clipped, if any supported start role is missing from the browser form, or if hidden scholar-invisible factions leak into relationship/active-request panel text.
 
 Earlier S26.2 screenshot review caught and fixed a real result-modal bug: `.exam-requirements { display: grid; }` overrode the `hidden` attribute and left the old requirements visible behind the result view. The fix is `.exam-requirements[hidden] { display: none; }`.
 

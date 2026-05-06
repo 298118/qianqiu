@@ -67,6 +67,12 @@ textarea {
 
 .app-shell--game-active {
   grid-template-columns: minmax(0, 1fr);
+  padding: 16px 0;
+}
+
+.app-shell--game-active .game-panel {
+  height: calc(100vh - 32px);
+  min-height: calc(100vh - 32px);
 }
 
 .start-panel,
@@ -344,6 +350,67 @@ button:disabled {
   color: var(--cinnabar-deep);
 }
 
+.active-request-panel {
+  grid-column: 1 / -1;
+  display: grid;
+  gap: 5px;
+  min-width: 0;
+  padding-top: 7px;
+  border-top: 1px solid rgba(54, 39, 27, 0.16);
+}
+
+.active-request-panel > header,
+.active-request-card header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+  min-width: 0;
+}
+
+.active-request-panel > header strong {
+  color: var(--cinnabar-deep);
+  font-size: 0.98rem;
+}
+
+.active-request-panel > header span,
+.active-request-source {
+  color: var(--muted);
+  font-size: 0.78rem;
+}
+
+.active-request-card {
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr) minmax(96px, 0.62fr) minmax(0, 1fr);
+  gap: 3px 10px;
+  min-width: 0;
+  padding: 7px 9px;
+  border: 1px solid rgba(144, 44, 34, 0.28);
+  border-radius: 4px;
+  background: rgba(255, 247, 232, 0.72);
+}
+
+.active-request-card header {
+  grid-column: 1 / -1;
+}
+
+.active-request-title {
+  color: var(--ink);
+  overflow-wrap: anywhere;
+}
+
+.active-request-card p {
+  margin: 0;
+  color: var(--ink);
+  font-size: 0.76rem;
+  line-height: 1.32;
+  overflow-wrap: anywhere;
+}
+
+.active-request-due {
+  color: var(--cinnabar-deep);
+}
+
 .panel-action {
   width: 100%;
   min-height: 38px;
@@ -441,12 +508,14 @@ button:disabled {
 }
 
 .narrative {
-  padding: 28px 30px;
+  height: 100%;
+  min-height: 0;
+  padding: 18px 30px;
   font-size: 1.08rem;
   line-height: 1.9;
   white-space: pre-wrap;
   overflow-y: auto;
-  max-height: 60vh;
+  max-height: none;
   scroll-behavior: smooth;
 }
 
@@ -573,7 +642,7 @@ button:disabled {
 
 .action-area textarea {
   flex: 1;
-  height: 64px;
+  height: 56px;
   min-height: 46px;
   max-height: 180px;
   resize: vertical;
@@ -1017,6 +1086,11 @@ button:disabled {
     min-height: 100dvh;
   }
 
+  .app-shell--game-active .game-panel {
+    height: auto;
+    min-height: 100dvh;
+  }
+
   .status-strip {
     gap: 7px;
     padding: 12px;
@@ -1028,6 +1102,7 @@ button:disabled {
   }
 
   .narrative {
+    height: auto;
     max-height: none;
     padding: 18px 16px;
     font-size: 1rem;
@@ -1037,6 +1112,12 @@ button:disabled {
     grid-template-columns: 1fr;
     gap: 12px;
     padding: 14px 16px;
+  }
+
+  .active-request-card {
+    grid-template-columns: 1fr;
+    gap: 5px;
+    padding: 8px 9px;
   }
 
   .scholar-stats {

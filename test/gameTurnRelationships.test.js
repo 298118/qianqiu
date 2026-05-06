@@ -5,6 +5,7 @@ const fs = require("node:fs/promises");
 const path = require("node:path");
 
 const { createInitialState } = require("../src/game/initialState");
+const { runActiveNpcRequestStep } = require("../src/game/activeRequests");
 const { writeSession } = require("../src/storage/sessionStore");
 const { createFetchSafeServer } = require("../test-helpers/fetchSafeServer");
 
@@ -187,4 +188,92 @@ test("POST /api/game/turn ignores provider attempts to patch server-owned ordina
   assert.equal(payload.worldState.player.examRank, "server-rank");
   assert.deepEqual(payload.worldState.player.examHistory, [{ level: "child_exam", score: 80 }]);
   assert.equal(payload.worldState.player.academia, 22);
+});
+
+test("POST /api/game/turn schedules and returns a server-owned active NPC request", async (t) => {
+  const provider = {
+    async runTurn() {
+      return {
+        narrative: "The action was resolved.",
+        statePatch: {},
+        attributeChanges: [],
+        relationshipChanges: [],
+        events: ["provider event"],
+        examTrigger: { shouldStart: false, level: null, reason: "" }
+      };
+    }
+  };
+  const server = createTestServerWithProvider(provider);
+  t.after(server.close);
+
+  const worldState = createInitialState({ playerName: "Tester", role: "scholar" });
+  t.after(() => removeSessionFile(worldState.sessionId));
+  await writeSession(worldState);
+
+  const response = await fetch(`${server.baseUrl}/api/game/turn`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      sessionId: worldState.sessionId,
+      input: "study quietly"
+    })
+  });
+  const payload = await response.json();
+
+  assert.equal(response.status, 200);
+  assert.equal(payload.worldState.turnCount, 1);
+  assert.equal(payload.activeNpcRequestView.targetId, "C01");
+  assert.equal(payload.activeNpcRequestView.status, "active");
+  assert.equal(payload.worldState.activeNpcRequest.targetId, "C01");
+  assert.equal(JSON.stringify(payload.activeNpcRequestView).includes("Eunuch faction"), false);
+  assert.equal(payload.activeNpcRequestEvents.length, 1);
+  assert.equal(payload.worldState.eventHistory.at(-1), payload.worldTick.events.at(-1));
+});
+
+test("POST /api/game/turn resolves active NPC requests through server-owned relationship changes", async (t) => {
+  const provider = {
+    async runTurn() {
+      return {
+        narrative: "The action was resolved.",
+        statePatch: {
+          activeNpcRequest: {
+            id: "provider-forged",
+            targetId: "eunuchs"
+          }
+        },
+        attributeChanges: [],
+        relationshipChanges: [],
+        events: [],
+        examTrigger: { shouldStart: false, level: null, reason: "" }
+      };
+    }
+  };
+  const server = createTestServerWithProvider(provider);
+  t.after(server.close);
+
+  const worldState = createInitialState({ playerName: "Tester", role: "scholar" });
+  worldState.turnCount = 1;
+  runActiveNpcRequestStep(worldState, "研读经书");
+  const requestId = worldState.activeNpcRequest.id;
+  t.after(() => removeSessionFile(worldState.sessionId));
+  await writeSession(worldState);
+
+  const response = await fetch(`${server.baseUrl}/api/game/turn`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      sessionId: worldState.sessionId,
+      input: "答应拜访塾师并帮忙"
+    })
+  });
+  const payload = await response.json();
+
+  assert.equal(response.status, 200);
+  assert.equal(payload.worldState.turnCount, 2);
+  assert.equal(payload.worldState.activeNpcRequest, null);
+  assert.equal(payload.activeNpcRequestView, null);
+  assert.ok(payload.relationshipChanges.some((change) => change.targetId === "C01" && change.relationship.delta === 4));
+  assert.ok(!JSON.stringify(payload.worldState).includes("provider-forged"));
+  assert.ok(!JSON.stringify(payload.worldState).includes("eunuchs") || payload.worldState.relationshipLedger.factions.eunuchs.visible === false);
+  assert.match(requestId, /^REQ-/);
 });

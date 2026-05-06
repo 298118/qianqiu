@@ -5,6 +5,10 @@ const {
   buildRelationshipInspectionView,
   ensureRelationshipLedger
 } = require("../game/relationships");
+const {
+  buildActiveNpcRequestView,
+  runActiveNpcRequestStep
+} = require("../game/activeRequests");
 const { applyStatePatch, appendEvents } = require("../game/stateRules");
 const { runWorldTick } = require("../game/worldTick");
 const { getProvider } = require("../ai");
@@ -40,7 +44,7 @@ async function processTurn(sessionId, input) {
   ensureRelationshipLedger(worldState);
   const provider = getProvider();
   const result = await provider.runTurn(worldState, input);
-  return finalizeTurn(worldState, result);
+  return finalizeTurn(worldState, result, input);
 }
 
 async function processStreamingTurn(sessionId, input, streamHandlers = {}) {
@@ -52,10 +56,10 @@ async function processStreamingTurn(sessionId, input, streamHandlers = {}) {
     ? await provider.streamTurn(worldState, input, streamHandlers)
     : await provider.runTurn(worldState, input);
 
-  return finalizeTurn(worldState, result);
+  return finalizeTurn(worldState, result, input);
 }
 
-async function finalizeTurn(worldState, result) {
+async function finalizeTurn(worldState, result, input) {
   const providerAttributeChanges = Array.isArray(result.attributeChanges) ? result.attributeChanges : [];
   const examTrigger = result.examTrigger || { shouldStart: false, level: null, reason: "" };
 
@@ -71,6 +75,8 @@ async function finalizeTurn(worldState, result) {
     };
   }
 
+  const activeNpcRequest = runActiveNpcRequestStep(worldState, input);
+
   const worldTick = runWorldTick(worldState);
   applyStatePatch(worldState, worldTick.statePatch, {
     incrementTurnCount: false,
@@ -78,6 +84,7 @@ async function finalizeTurn(worldState, result) {
   });
 
   appendEvents(worldState, result.events);
+  appendEvents(worldState, activeNpcRequest.events);
   appendEvents(worldState, worldTick.events);
   ensureRelationshipLedger(worldState);
 
@@ -93,8 +100,10 @@ async function finalizeTurn(worldState, result) {
     sessionId: worldState.sessionId,
     narrative: result.narrative,
     attributeChanges: [...providerAttributeChanges, ...worldTickFeedback.attributeChanges],
-    relationshipChanges,
+    relationshipChanges: [...relationshipChanges, ...activeNpcRequest.relationshipChanges],
     relationshipView: buildRelationshipInspectionView(worldState),
+    activeNpcRequestView: buildActiveNpcRequestView(worldState),
+    activeNpcRequestEvents: activeNpcRequest.events,
     examTrigger,
     worldTick: worldTickFeedback,
     worldState
@@ -135,6 +144,8 @@ async function streamTurn(res, sessionId, input) {
       sessionId: payload.sessionId,
       attributeChanges: payload.attributeChanges,
       relationshipChanges: payload.relationshipChanges,
+      activeNpcRequestView: payload.activeNpcRequestView,
+      activeNpcRequestEvents: payload.activeNpcRequestEvents,
       examTrigger: payload.examTrigger,
       worldTick: payload.worldTick
     });
@@ -162,6 +173,7 @@ router.post("/start", async (req, res, next) => {
       sessionId: worldState.sessionId,
       worldState,
       relationshipView: buildRelationshipInspectionView(worldState),
+      activeNpcRequestView: buildActiveNpcRequestView(worldState),
       narrative: opening.narrative
     });
   } catch (error) {
@@ -176,7 +188,8 @@ router.get("/state/:sessionId", async (req, res, next) => {
     res.json({
       sessionId: worldState.sessionId,
       worldState,
-      relationshipView: buildRelationshipInspectionView(worldState)
+      relationshipView: buildRelationshipInspectionView(worldState),
+      activeNpcRequestView: buildActiveNpcRequestView(worldState)
     });
   } catch (error) {
     next(error);

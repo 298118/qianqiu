@@ -154,6 +154,44 @@ Inspection rules:
 The S32.2 browser implementation renders `relationshipView` in the scholar/role panel as the player-facing `人脉簿`; it should not read raw `worldState.relationshipLedger` for normal UI.
 The raw ledger remains in saved session state and in current local route `worldState` payloads for compatibility with existing tests and developer inspection, but player-facing UI code should treat `relationshipView` as the supported contract.
 
+## Active NPC Requests
+
+S32.3 uses the relationship ledger as the input surface for the first server-scheduled active NPC/faction request loop.
+
+`worldState.activeNpcRequest` is server-owned and stores at most one active request. It is not provider output, and it is not a relationship ledger replacement.
+
+Player-facing route payloads expose a derived `activeNpcRequestView`:
+
+```json
+{
+  "activeNpcRequestView": {
+    "schemaVersion": 1,
+    "id": "REQ-0001-character-C01",
+    "status": "active",
+    "kind": "request",
+    "targetType": "character",
+    "targetId": "C01",
+    "sourceName": "display name",
+    "title": "display title",
+    "ask": "short request text",
+    "stakes": "short consequence text",
+    "resolutionHint": "short response hint",
+    "createdTurn": 1,
+    "dueTurn": 3,
+    "turnsRemaining": 2,
+    "lastUpdatedTurn": 1
+  }
+}
+```
+
+Active request rules:
+
+- Requests can target only visible normalized ledger entries.
+- Hidden or invented request targets are not rendered. If old session state points to an invalid or hidden target, the request is cleared.
+- The browser consumes top-level `activeNpcRequestView` and renders `#active-request-panel`; it should not inspect hidden raw ledger entries to find requests.
+- Request outcomes are server-authored. Accepting, refusing, or letting a request expire applies bounded relationship/resentment deltas through `applyRelationshipChanges()`.
+- Turn payloads return `activeNpcRequestEvents`, and event history appends provider events first, active-request events next, and world-tick events last.
+
 ## Mock Reactions
 
 S22.3 makes Mock turns produce visible NPC/faction reactions through the same suggestion path:

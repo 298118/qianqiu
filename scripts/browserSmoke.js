@@ -363,6 +363,12 @@ function getGameLayoutFailures(metrics, mode = "game") {
     );
   }
 
+  if (metrics.activeRequestClientWidth > 0 && metrics.activeRequestScrollWidth > metrics.activeRequestClientWidth + horizontalClipTolerance) {
+    failures.push(
+      `${mode} active request panel has horizontal scroll overflow (${roundMetric(metrics.activeRequestScrollWidth)}px > ${roundMetric(metrics.activeRequestClientWidth)}px).`
+    );
+  }
+
   if (metrics.scholarLeft < metrics.gameLeft - horizontalClipTolerance) {
     failures.push(`${mode} role panel starts outside the game panel.`);
   }
@@ -392,6 +398,7 @@ async function readGameLayoutMetrics(page) {
     const game = box(".game-panel");
     const scholar = box("#scholar-panel");
     const relationship = box("#relationship-panel");
+    const activeRequest = box("#active-request-panel");
 
     return {
       appWidth: app?.width || 0,
@@ -409,6 +416,9 @@ async function readGameLayoutMetrics(page) {
       relationshipClientWidth: relationship?.clientWidth || 0,
       relationshipScrollWidth: relationship?.scrollWidth || 0,
       relationshipWidth: relationship?.width || 0,
+      activeRequestClientWidth: activeRequest?.clientWidth || 0,
+      activeRequestScrollWidth: activeRequest?.scrollWidth || 0,
+      activeRequestWidth: activeRequest?.width || 0,
       viewportWidth: window.innerWidth
     };
   });
@@ -422,6 +432,14 @@ function getMissingRelationshipEntries(actualIds = [], expectedIds = []) {
 function getHiddenRelationshipLeaks(actualIds = [], hiddenIds = []) {
   const available = new Set(actualIds);
   return hiddenIds.filter((id) => available.has(id));
+}
+
+function getMissingActiveRequestTargets(actualIds = [], expectedIds = []) {
+  return getMissingRelationshipEntries(actualIds, expectedIds);
+}
+
+function getHiddenActiveRequestLeaks(actualIds = [], hiddenIds = []) {
+  return getHiddenRelationshipLeaks(actualIds, hiddenIds);
 }
 
 async function assertRelationshipPanel(page, mode, expectations = {}) {
@@ -486,6 +504,74 @@ async function assertRelationshipPanel(page, mode, expectations = {}) {
   }
 
   const layoutFailures = getGameLayoutFailures(await readGameLayoutMetrics(page), `${mode} relationship`);
+  if (layoutFailures.length) {
+    failUiAcceptance(layoutFailures.join(" "));
+  }
+
+  return snapshot;
+}
+
+async function assertActiveNpcRequestPanel(page, mode, expectations = {}) {
+  await visibleBox(page, "#active-request-panel", `${mode} active request panel`);
+
+  const snapshot = await page.evaluate(() => {
+    const panel = document.querySelector("#active-request-panel");
+    const requests = [...document.querySelectorAll("#active-request-panel .active-request-card")];
+    return {
+      requestIds: requests.map((request) => request.dataset.requestId),
+      targetIds: requests.map((request) => request.dataset.targetId),
+      targetTypes: requests.map((request) => request.dataset.targetType),
+      requestKinds: requests.map((request) => request.dataset.requestKind),
+      statuses: requests.map((request) => request.dataset.requestStatus),
+      asks: document.querySelectorAll("#active-request-panel .active-request-ask").length,
+      stakes: document.querySelectorAll("#active-request-panel .active-request-stakes").length,
+      dues: document.querySelectorAll("#active-request-panel .active-request-due").length,
+      hints: document.querySelectorAll("#active-request-panel .active-request-hint").length,
+      text: panel?.innerText || ""
+    };
+  });
+
+  if (!snapshot.requestIds.length) {
+    failUiAcceptance(`${mode} active request panel did not render any visible requests.`);
+  }
+
+  const missing = getMissingActiveRequestTargets(snapshot.targetIds, expectations.expectedTargetIds || []);
+  if (missing.length) {
+    failUiAcceptance(`${mode} active request panel is missing expected targets: ${missing.join(", ")}.`);
+  }
+
+  const hiddenLeaks = getHiddenActiveRequestLeaks(snapshot.targetIds, expectations.hiddenTargetIds || []);
+  if (hiddenLeaks.length) {
+    failUiAcceptance(`${mode} active request panel rendered hidden targets: ${hiddenLeaks.join(", ")}.`);
+  }
+
+  for (const token of expectations.hiddenTextTokens || []) {
+    if (snapshot.text.includes(token)) {
+      failUiAcceptance(`${mode} active request panel leaked hidden text token: ${token}.`);
+    }
+  }
+
+  const fieldCounts = [
+    ["asks", snapshot.asks],
+    ["stakes", snapshot.stakes],
+    ["due turns", snapshot.dues],
+    ["hints", snapshot.hints]
+  ];
+  for (const [label, count] of fieldCounts) {
+    if (count < snapshot.requestIds.length) {
+      failUiAcceptance(`${mode} active request panel has ${count} ${label} for ${snapshot.requestIds.length} requests.`);
+    }
+  }
+
+  if (expectations.expectedTargetTypes) {
+    for (const type of expectations.expectedTargetTypes) {
+      if (!snapshot.targetTypes.includes(type)) {
+        failUiAcceptance(`${mode} active request panel is missing target type: ${type}.`);
+      }
+    }
+  }
+
+  const layoutFailures = getGameLayoutFailures(await readGameLayoutMetrics(page), `${mode} active request`);
   if (layoutFailures.length) {
     failUiAcceptance(layoutFailures.join(" "));
   }
@@ -702,6 +788,12 @@ async function runMobileUiAcceptance(page, recorder) {
     hiddenIds: ["eunuchs", "militaryLords"],
     hiddenTextTokens: ["Eunuch faction", "Military faction"]
   });
+  await assertActiveNpcRequestPanel(page, "mobile scholar", {
+    expectedTargetIds: ["C01"],
+    expectedTargetTypes: ["character"],
+    hiddenTargetIds: ["eunuchs", "militaryLords"],
+    hiddenTextTokens: ["Eunuch faction", "Military faction"]
+  });
   await recorder.capture(page, "mobile-game-layout");
 
   await page.locator("#scholar-panel .archive-action").first().click();
@@ -825,6 +917,12 @@ async function runBrowserJourney({
       hiddenIds: ["eunuchs", "militaryLords"],
       hiddenTextTokens: ["Eunuch faction", "Military faction"]
     });
+    await assertActiveNpcRequestPanel(page, "desktop scholar after turn", {
+      expectedTargetIds: ["C01"],
+      expectedTargetTypes: ["character"],
+      hiddenTargetIds: ["eunuchs", "militaryLords"],
+      hiddenTextTokens: ["Eunuch faction", "Military faction"]
+    });
     await recorder.capture(page, "desktop-game-layout");
     await runExamUiAcceptance(page, recorder);
 
@@ -836,6 +934,12 @@ async function runBrowserJourney({
       expectedIds: ["C01", "scholarOfficials"],
       expectedTypes: ["character", "faction"],
       hiddenIds: ["eunuchs", "militaryLords"],
+      hiddenTextTokens: ["Eunuch faction", "Military faction"]
+    });
+    await assertActiveNpcRequestPanel(page, "desktop restored scholar", {
+      expectedTargetIds: ["C01"],
+      expectedTargetTypes: ["character"],
+      hiddenTargetIds: ["eunuchs", "militaryLords"],
       hiddenTextTokens: ["Eunuch faction", "Military faction"]
     });
 
@@ -854,6 +958,12 @@ async function runBrowserJourney({
       expectedIds: ["C01", "scholarOfficials"],
       expectedTypes: ["character", "faction"],
       hiddenIds: ["eunuchs", "militaryLords"],
+      hiddenTextTokens: ["Eunuch faction", "Military faction"]
+    });
+    await assertActiveNpcRequestPanel(freshPage, "fresh page desktop scholar", {
+      expectedTargetIds: ["C01"],
+      expectedTargetTypes: ["character"],
+      hiddenTargetIds: ["eunuchs", "militaryLords"],
       hiddenTextTokens: ["Eunuch faction", "Military faction"]
     });
     const freshPageId = await freshPage.evaluate(() => window.localStorage.getItem("qianqiu.sessionId"));
@@ -979,7 +1089,9 @@ module.exports = {
   createScreenshotRecorder,
   getDefaultBrowserCandidates,
   getGameLayoutFailures,
+  getHiddenActiveRequestLeaks,
   getHiddenRelationshipLeaks,
+  getMissingActiveRequestTargets,
   getMissingRelationshipEntries,
   getMissingStartRoles,
   normalizeBaseUrl,

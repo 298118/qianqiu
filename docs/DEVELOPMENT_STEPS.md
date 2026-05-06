@@ -64,7 +64,7 @@
 | S31.3 | DONE | 校验开局 role 输入并明确是否允许浏览器直接开局 `official` | 2026-05-06 | Codex + subagent | 9cdbf91 |
 | S32.1 | DONE | 定义关系/联系人检查视图契约，让 `relationshipLedger` 从叙事反馈升级为玩家可查看的信息面板 | 2026-05-06 | Codex + subagents | ed83e9c |
 | S32.2 | DONE | 实现关系/联系人 UI 与基础浏览器验收，显示人物/派系关系、怨望、立场、近期意图和可见性 | 2026-05-06 | Codex + subagents | cefde6a |
-| S32.3 | TODO | 增加主动 NPC/派系请托、施压、求援、背书或索取回报的最小事件循环 |  |  |  |
+| S32.3 | DONE | 增加主动 NPC/派系请托、施压、求援、背书或索取回报的最小事件循环 | 2026-05-06 | Codex + subagents | pending S32.3 implementation commit |
 | S33.1 | TODO | 定义长期事件调度器契约：季节、灾荒、边报、朝争、地方案件链和跨月后果 |  |  |  |
 | S33.2 | TODO | 实现服务器拥有的长期事件队列，并把事件结果接入 world tick、eventHistory 和可见叙事 |  |  |  |
 | S33.3 | TODO | 为长期事件增加自动化测试，覆盖触发条件、裁剪、状态边界和完整书生路径不被破坏 |  |  |  |
@@ -171,6 +171,43 @@
 ```
 
 ### 2026-05-06
+
+Tool: Codex
+
+Step: S32.3
+
+Commit: pending S32.3 implementation commit
+
+Completed:
+- Added `src/game/activeRequests.js` as the server-owned active NPC/faction request loop, with scheduling, normalization, visible-target filtering, response classification, expiry, and player-facing `activeNpcRequestView` rendering.
+- Added `worldState.activeNpcRequest` to initial state and wired game/exam route payloads to return top-level `activeNpcRequestView`; turn payloads also return `activeNpcRequestEvents`.
+- Integrated active request handling in `/api/game/turn` after provider state patches and provider relationship suggestions, before world tick. Event history now appends provider events, active-request events, then world-tick events.
+- Rendered a compact browser `#active-request-panel` / `来函` card from `activeNpcRequestView`, with stable `data-request-*` attributes and no raw hidden-ledger scanning.
+- Extended browser smoke to assert active request target id/type/kind/status, required ask/stakes/due/hint fields, hidden target/text non-leakage, and horizontal overflow across desktop, restored, fresh-page, and mobile journeys.
+- Added focused active-request unit tests, route tests for scheduling/resolution/provider-forged request rejection, browser-smoke helper tests, and updated world-tick event trimming expectations for the new event order.
+- Used two read-only subagents for backend order/ownership and frontend/browser-smoke placement. Neither edited files or ran Git commands.
+
+Verification:
+- `node --check src/game/activeRequests.js`
+- `node --check src/routes/game.js`
+- `node --check src/routes/exam.js`
+- `node --check public/app.js`
+- `node --check scripts/browserSmoke.js`
+- `node --check test/activeNpcRequests.test.js`
+- `node --check test/gameTurnRelationships.test.js`
+- `node --check test/browserSmokeScript.test.js`
+- `node --check test/gameTurnTick.test.js`
+- Focused `node --test` runs for active requests, relationship turns, browser-smoke helpers, and world-tick ordering passed.
+- `npm run smoke:browser -- --screenshots artifacts/browser-smoke/s32-3` passed with 5 screenshots checked.
+- `npm test` passed with 111 tests.
+- `git diff --check`
+
+Risk/leftover:
+- S32.3 intentionally schedules only one minimal active request at a time. It is not yet a long-horizon event queue, faction campaign system, or multi-request inbox.
+- Active requests currently draw from visible relationship entries and use deterministic server-owned outcomes; richer scheduling criteria can build on this in S33.
+
+Next:
+- S33.1: define the long-term event scheduler contract for seasonal, disaster, border, court, and local case chains.
 
 Tool: Codex
 

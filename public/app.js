@@ -25,6 +25,7 @@ const examWordGuide = document.querySelector("#exam-word-guide");
 let currentSessionId = null;
 let currentWorldState = null;
 let currentRelationshipView = null;
+let currentActiveNpcRequestView = null;
 let currentExamPayload = null;
 let activeNarrativeStream = null;
 
@@ -174,6 +175,14 @@ const INTENT_LABELS = {
   "No stable intent has been recorded yet.": "尚无定见"
 };
 
+const ACTIVE_REQUEST_KIND_LABELS = {
+  request: "请托",
+  pressure: "施压",
+  favor: "人情",
+  backing: "背书",
+  repayment: "回报"
+};
+
 function getExamProgress(player) {
   if (player.role === "official") {
     return { index: EXAM_PROGRESS.length - 1, label: "入仕", next: null };
@@ -318,6 +327,13 @@ function getRelationshipView(worldState, relationshipView) {
     return relationshipView;
   }
   return buildFallbackRelationshipView(worldState);
+}
+
+function getActiveNpcRequestView(activeNpcRequestView) {
+  if (activeNpcRequestView && typeof activeNpcRequestView === "object" && activeNpcRequestView.status === "active") {
+    return activeNpcRequestView;
+  }
+  return null;
 }
 
 function setStatus(worldState) {
@@ -489,6 +505,68 @@ function renderRelationshipPanel(relationshipView = currentRelationshipView) {
   return panel;
 }
 
+function createActiveRequestMeta(label, value, className) {
+  const item = document.createElement("p");
+  if (className) item.className = className;
+  const kicker = document.createElement("span");
+  kicker.className = "relationship-kicker";
+  kicker.textContent = label;
+  const text = document.createElement("span");
+  text.textContent = value || "未明";
+  item.append(kicker, text);
+  return item;
+}
+
+function renderActiveNpcRequestPanel(activeNpcRequestView = currentActiveNpcRequestView) {
+  if (!activeNpcRequestView) return null;
+
+  const panel = document.createElement("section");
+  panel.id = "active-request-panel";
+  panel.className = "active-request-panel";
+
+  const header = document.createElement("header");
+  const title = document.createElement("strong");
+  title.textContent = "来函";
+  const summary = document.createElement("span");
+  summary.textContent = ACTIVE_REQUEST_KIND_LABELS[activeNpcRequestView.kind] || "请托";
+  header.append(title, summary);
+
+  const card = document.createElement("article");
+  card.className = "active-request-card";
+  card.dataset.requestId = activeNpcRequestView.id;
+  card.dataset.requestKind = activeNpcRequestView.kind;
+  card.dataset.targetType = activeNpcRequestView.targetType;
+  card.dataset.targetId = activeNpcRequestView.targetId;
+  card.dataset.requestStatus = activeNpcRequestView.status;
+  card.dataset.dueTurn = String(activeNpcRequestView.dueTurn ?? "");
+
+  const cardHeader = document.createElement("header");
+  const cardTitle = document.createElement("strong");
+  cardTitle.className = "active-request-title";
+  cardTitle.textContent = activeNpcRequestView.title || "有事相托";
+  const source = document.createElement("span");
+  source.className = "active-request-source";
+  source.textContent = activeNpcRequestView.sourceName || "未明";
+  cardHeader.append(cardTitle, source);
+
+  card.append(
+    cardHeader,
+    createActiveRequestMeta("请托", activeNpcRequestView.ask, "active-request-ask"),
+    createActiveRequestMeta("利害", activeNpcRequestView.stakes, "active-request-stakes"),
+    createActiveRequestMeta("期限", `第${activeNpcRequestView.dueTurn ?? 0}回 · 尚余${activeNpcRequestView.turnsRemaining ?? 0}回`, "active-request-due"),
+    createActiveRequestMeta("回应", activeNpcRequestView.resolutionHint, "active-request-hint")
+  );
+
+  panel.append(header, card);
+  return panel;
+}
+
+function appendOptionalPanel(panel) {
+  if (panel) {
+    scholarPanel.appendChild(panel);
+  }
+}
+
 function renderRolePanel(worldState) {
   const player = worldState.player;
   scholarPanel.hidden = false;
@@ -593,6 +671,7 @@ function renderRolePanel(worldState) {
   }
 
   scholarPanel.append(overview, renderActionHints(player.role), stats, lists, renderRelationshipPanel());
+  appendOptionalPanel(renderActiveNpcRequestPanel());
 }
 
 function renderScholarPanel(worldState) {
@@ -669,11 +748,13 @@ function renderScholarPanel(worldState) {
   );
 
   scholarPanel.append(progressBlock, stepList, stats, lists, renderRelationshipPanel());
+  appendOptionalPanel(renderActiveNpcRequestPanel());
 }
 
-function renderWorldState(worldState, relationshipView) {
+function renderWorldState(worldState, relationshipView, activeNpcRequestView) {
   currentWorldState = worldState;
   currentRelationshipView = getRelationshipView(worldState, relationshipView);
+  currentActiveNpcRequestView = getActiveNpcRequestView(activeNpcRequestView);
   setStatus(worldState);
   renderScholarPanel(worldState);
   actionInput.placeholder = ACTION_PLACEHOLDERS[worldState.player.role] || "输入你的行动";
@@ -765,6 +846,11 @@ function appendRelationshipChanges(changes) {
     const note = change.note ? `：${change.note}` : "";
     appendNarrative(`[人脉] ${target} ${detail}${note}`, "relationship-change");
   });
+}
+
+function appendActiveNpcRequestEvents(events) {
+  if (!Array.isArray(events) || !events.length) return;
+  events.forEach((event) => appendNarrative(event, "active-request-event"));
 }
 
 function appendWorldTickFeedback(worldTick) {
@@ -1264,7 +1350,7 @@ async function openExamQuestion(level) {
     }
 
     const payload = await response.json();
-    renderWorldState(payload.worldState, payload.relationshipView);
+    renderWorldState(payload.worldState, payload.relationshipView, payload.activeNpcRequestView);
     renderExamModal(payload);
   } catch (error) {
     appendNarrative(error.message, "error");
@@ -1302,7 +1388,7 @@ async function submitExamEssay() {
     }
 
     const payload = await response.json();
-    renderWorldState(payload.worldState, payload.relationshipView);
+    renderWorldState(payload.worldState, payload.relationshipView, payload.activeNpcRequestView);
     renderExamResult(payload);
     appendNarrative(
       `[放榜] ${payload.examName}得${payload.score.overall_score}分，${describePromotionOutcome(payload.promotionResult)}。`,
@@ -1387,8 +1473,9 @@ async function readSseResponse(response, handlers) {
 async function handleTurnPayload(payload) {
   appendAttributeChanges(payload.attributeChanges);
   appendRelationshipChanges(payload.relationshipChanges);
+  appendActiveNpcRequestEvents(payload.activeNpcRequestEvents);
   appendWorldTickFeedback(payload.worldTick);
-  renderWorldState(payload.worldState, payload.relationshipView);
+  renderWorldState(payload.worldState, payload.relationshipView, payload.activeNpcRequestView);
   actionInput.value = "";
 
   if (payload.examTrigger && payload.examTrigger.shouldStart) {
@@ -1507,7 +1594,7 @@ form.addEventListener("submit", async (event) => {
     const payload = await response.json();
     currentSessionId = payload.sessionId;
     localStorage.setItem("qianqiu.sessionId", payload.sessionId);
-    renderWorldState(payload.worldState, payload.relationshipView);
+    renderWorldState(payload.worldState, payload.relationshipView, payload.activeNpcRequestView);
     narrative.innerHTML = "";
     appendNarrative(payload.narrative);
     showGameView();
@@ -1532,7 +1619,7 @@ async function restoreSession() {
     }
     const payload = await response.json();
     currentSessionId = payload.sessionId;
-    renderWorldState(payload.worldState, payload.relationshipView);
+    renderWorldState(payload.worldState, payload.relationshipView, payload.activeNpcRequestView);
     narrative.innerHTML = "";
     const history = payload.worldState.eventHistory || [];
     if (history.length) {

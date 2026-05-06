@@ -196,6 +196,7 @@ function createInitialState(input = {}) {
     characters: getInitialCharacters(role),
     eventHistory: [],
     activeExam: null,
+    activeNpcRequest: null,
     setup: {
       background: input.background || "",
       customSetting: input.customSetting || ""

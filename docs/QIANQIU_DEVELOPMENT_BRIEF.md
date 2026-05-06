@@ -812,3 +812,14 @@ S32.2 turns the inspection contract into a browser surface without changing rela
 - The browser panel shows visible characters and factions with relationship, resentment, stance, source, recent intent, and last-updated turn. It uses display localization for known default faction names and relationship text while preserving stable `data-contact-*` selectors for acceptance.
 - Player-facing UI code should continue to consume `relationshipView`; the raw `worldState.relationshipLedger` remains available only as a compatibility/developer-inspection fallback.
 - `scripts/browserSmoke.js` verifies relationship-panel presence on desktop, restored, fresh-page, mobile, and direct-official-start journeys; checks hidden id/text non-leakage; asserts a Mock scholar turn updates the mentor relationship; and catches relationship-panel horizontal overflow.
+
+## S32.3 Active NPC Request Note (2026-05-06)
+
+S32.3 adds the first server-owned active NPC/faction request loop without giving providers request authority:
+
+- `worldState.activeNpcRequest` stores at most one active request. It is scheduled, normalized, resolved, expired, and cleared by `src/game/activeRequests.js`.
+- Game and exam route payloads include top-level `activeNpcRequestView`; turn payloads also include `activeNpcRequestEvents`.
+- Active requests target only visible relationship ledger entries. Hidden targets are omitted from the view, and invalid older request state is cleared rather than rendered.
+- `/api/game/turn` applies provider state patches and provider relationship suggestions first, then runs active request handling, then world tick. Event history order is provider events, active-request events, and then world-tick events.
+- Accept/refuse/expire outcomes use server-authored bounded `applyRelationshipChanges()` deltas, merged into the route `relationshipChanges` response. Provider output still cannot patch `activeNpcRequest` or `relationshipLedger`.
+- `public/app.js` renders the compact `来函` panel from `activeNpcRequestView`, with stable `data-request-*` selectors. `scripts/browserSmoke.js` now verifies active request fields, hidden target/text non-leakage, and active-request panel overflow on desktop, restored, fresh-page, and mobile journeys.

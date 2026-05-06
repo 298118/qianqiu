@@ -46,6 +46,7 @@ Important route ownership:
 - `src/game/candidates.js` owns virtual same-field candidates, inspectable candidate essay profiles, and ranking.
 - `src/game/examTravel.js` owns server-side exam entry preparation costs, travel events, and funded/shortfall effects.
 - `src/game/relationships.js` owns NPC/faction relationship ledger creation, normalization, legacy backfill, compact prompt summaries, and the S32.1/S32.2 player-facing relationship inspection view.
+- `src/game/activeRequests.js` owns the S32.3 server-scheduled active NPC/faction request loop. Providers may suggest narrative and relationship consequences, but they do not create, replace, resolve, or expire `worldState.activeNpcRequest`.
 
 ## API Contract
 
@@ -73,11 +74,11 @@ Request fields:
 
 As of S31.3, `role` is normalized and validated in `src/game/initialState.js`. Missing or blank role values default to `scholar`; unsupported roles return `400`. The accepted enum is `scholar`, `emperor`, `minister`, `general`, `magistrate`, and `official`, and the browser start form exposes all six values.
 
-Returns `201` with `sessionId`, `worldState`, `relationshipView`, and opening `narrative`.
+Returns `201` with `sessionId`, `worldState`, `relationshipView`, `activeNpcRequestView`, and opening `narrative`.
 
 ### `GET /api/game/state/:sessionId`
 
-Reads the JSON session file and returns `sessionId`, `worldState`, and the player-facing `relationshipView`.
+Reads the JSON session file and returns `sessionId`, `worldState`, the player-facing `relationshipView`, and `activeNpcRequestView`.
 
 ### `POST /api/game/turn`
 
@@ -138,6 +139,8 @@ Requests without SSE negotiation still return plain JSON for tests and compatibi
     "recentNotes": [],
     "hiddenNotice": ""
   },
+  "activeNpcRequestView": null,
+  "activeNpcRequestEvents": [],
   "worldState": {}
 }
 ```
@@ -155,7 +158,7 @@ Request:
 
 `level` may be omitted; the server derives the next eligible exam from `player.examRank`. The route saves a complete `worldState.activeExam`, reuses an existing unanswered exam for the same level, and rejects attempts to open a different exam while another question is active.
 
-Returns `examId`, exam metadata, requirements, readiness, `relationshipView`, and `worldState`.
+Returns `examId`, exam metadata, requirements, readiness, `relationshipView`, `activeNpcRequestView`, and `worldState`.
 
 ### `POST /api/exam/submit`
 
@@ -169,7 +172,7 @@ Request:
 }
 ```
 
-The server checks authenticity, asks the provider for grading, applies local penalties, builds virtual candidates with inspectable essay profiles, applies promotion or cheating consequences, appends the essay result to `player.examHistory`, clears `activeExam`, saves the session and returns the result plus `relationshipView` and `worldState`. The response includes `examQuestion`, `essay`, and `entryPreparation` so the browser can render the just-submitted archive directly.
+The server checks authenticity, asks the provider for grading, applies local penalties, builds virtual candidates with inspectable essay profiles, applies promotion or cheating consequences, appends the essay result to `player.examHistory`, clears `activeExam`, saves the session and returns the result plus `relationshipView`, `activeNpcRequestView`, and `worldState`. The response includes `examQuestion`, `essay`, and `entryPreparation` so the browser can render the just-submitted archive directly.
 
 ## AI Provider Contract
 
@@ -228,9 +231,9 @@ npm run smoke:browser -- --screenshots artifacts/browser-smoke
 
 The script uses `playwright-core` with an installed Chrome or Edge executable. It resolves `BROWSER_EXECUTABLE_PATH`, `--browser <path>`, or common platform install paths. Without `--url`, it starts `server.js` in Mock mode on a free local port, verifies the page loads, creates a scholar game through the real form, checks that `localStorage["qianqiu.sessionId"]` is written, reloads the page, opens a fresh page to confirm the saved session restores into the game view, verifies the session is readable through `GET /api/game/state/:sessionId`, and then removes the smoke session JSON file.
 
-S26.2 extends the same journey with DOM and screenshot-level UI acceptance. It asserts desktop and mobile layout boundaries for the status strip, role panel, narrative, and action input surface; opens the exam modal through the scholar panel; submits a Mock-mode essay; checks the result detail sections, ranking, candidate essay profiles, and historical exam archive; and captures PNG screenshots for each representative state. S32.2 additionally verifies the relationship panel: visible contact/faction rows, hidden-entry non-leakage, a Mock scholar relationship update, direct official-start faction visibility, and relationship-panel horizontal overflow. Screenshots are validated in memory by default and can be saved with `--screenshots <dir>`. Browser smoke stays separate from `npm test` so normal automated tests do not require a local GUI browser.
+S26.2 extends the same journey with DOM and screenshot-level UI acceptance. It asserts desktop and mobile layout boundaries for the status strip, role panel, narrative, and action input surface; opens the exam modal through the scholar panel; submits a Mock-mode essay; checks the result detail sections, ranking, candidate essay profiles, and historical exam archive; and captures PNG screenshots for each representative state. S32.2 additionally verifies the relationship panel: visible contact/faction rows, hidden-entry non-leakage, a Mock scholar relationship update, direct official-start faction visibility, and relationship-panel horizontal overflow. S32.3 verifies the active-request panel from `activeNpcRequestView`, including target ids/types, required fields, hidden target/text non-leakage, and active-request horizontal overflow on desktop, restored, fresh-page, and mobile journeys. Screenshots are validated in memory by default and can be saved with `--screenshots <dir>`. Browser smoke stays separate from `npm test` so normal automated tests do not require a local GUI browser.
 
-`docs/BROWSER_ACCEPTANCE.md` is the durable browser acceptance record. It lists the automated coverage, the latest verified S32.2 result, screenshot artifact policy, and the manual fallback areas that remain intentionally human-checked.
+`docs/BROWSER_ACCEPTANCE.md` is the durable browser acceptance record. It lists the automated coverage, the latest verified S32.3 result, screenshot artifact policy, and the manual fallback areas that remain intentionally human-checked.
 
 ## State Model
 
@@ -238,7 +241,7 @@ S26.2 extends the same journey with DOM and screenshot-level UI acceptance. It a
 
 - Global fields: `sessionId`, `year`, `month`, `dynasty`, `turnCount`, `treasury`, `grainReserve`, `population`, `publicOrder`, `taxRate`, `corruption`, `armySize`, `armyMorale`, `borderThreat`.
 - Factions: `factions.eunuchs`, `factions.scholarOfficials`, `factions.militaryLords`.
-- Narrative, relationship, and exam fields: `characters`, `relationshipLedger`, `eventHistory`, `activeExam`, `setup`.
+- Narrative, relationship, and exam fields: `characters`, `relationshipLedger`, `activeNpcRequest`, `eventHistory`, `activeExam`, `setup`.
 - Player identity: `player.role`, `roleLabel`, `name`, `health`, `gold`.
 - Scholar fields: `examRank`, `palaceRank`, `officeTitle`, `academia`, `literaryTalent`, `adaptability`, `mentality`, `reputation`, `examHistory`, `teacher`, `studiedBooks`, `connections`.
 - Role fields: `personalPower`, `courtControl`, `mandate`, `position`, `faction`, `influence`, `integrity`.
@@ -282,6 +285,20 @@ S22.3 makes Mock produce concrete relationship suggestions after it classifies t
 S32.1 adds `buildRelationshipInspectionView(worldState)` and top-level `relationshipView` payloads for game start, game state reads, game turns, exam questions, and exam submissions. This view is the supported browser contract for contact and faction inspection: it includes visible contacts and factions, readable relationship and resentment bands, stance, source, recent intent, and last-updated turn, while omitting hidden ids, names, counts, placeholders, and hidden-entry notes.
 
 S32.2 renders that contract in `public/app.js` as the `#relationship-panel` inside the scholar/role panel. The browser UI should consume top-level `relationshipView` for player-facing contact inspection; the raw `worldState.relationshipLedger` is only a compatibility/developer-inspection fallback. Relationship contact cards expose stable `data-contact-type`, `data-contact-id`, `data-relationship`, and `data-resentment` attributes for browser acceptance while localizing default faction names, stance, source, and recent intent strings for display.
+
+## Active NPC Request Contract
+
+S32.3 adds the first minimal active NPC/faction request loop. The persisted state is `worldState.activeNpcRequest`, and the player-facing route contract is top-level `activeNpcRequestView`.
+
+Server rules:
+
+- `src/game/activeRequests.js` schedules, normalizes, resolves, expires, and renders active request views.
+- Requests are scheduled only for currently visible relationship ledger entries. Hidden targets are omitted from `activeNpcRequestView` and are cleared if older session state points to them.
+- The route runs active request handling after provider state patches and provider relationship suggestions, then before `runWorldTick()`. Event history order is provider events, active-request events, then world-tick events.
+- Accept/refuse/expire outcomes are applied through `applyRelationshipChanges()` with bounded server-authored deltas. Provider output cannot patch `activeNpcRequest`.
+- JSON and SSE turn payloads return `activeNpcRequestView`, `activeNpcRequestEvents`, and merged `relationshipChanges`.
+
+The browser renders active requests as `#active-request-panel` from top-level `activeNpcRequestView` and does not scan the raw ledger or raw request state for normal display. Stable card attributes include `data-request-id`, `data-request-kind`, `data-target-type`, `data-target-id`, `data-request-status`, and `data-due-turn`.
 
 ## Official Role Loop
 
@@ -338,7 +355,7 @@ The contract for S21.2-S21.4 is:
 
 `runWorldTick(worldState)` returns `{ statePatch, attributeChanges, events, summary }` without mutating `worldState`. Its first deterministic formulas cover treasury revenue/upkeep/leakage, grain consumption/harvest, population drift, public order, corruption, army morale, border threat, and small known-faction drift.
 
-Route integration order is provider patch first, exam trigger setup when requested, `runWorldTick()` against the updated state, tick patch with `{ incrementTurnCount: false, allowServerOwnedPatchKeys: true }`, then provider events followed by tick events. The browser renders the current month in the status strip and appends concise monthly feedback below the provider narrative.
+Route integration order is provider patch first, provider relationship suggestions, exam trigger setup when requested, active NPC request handling, `runWorldTick()` against the updated state, tick patch with `{ incrementTurnCount: false, allowServerOwnedPatchKeys: true }`, then provider events followed by active-request events and tick events. The browser renders the current month in the status strip and appends concise monthly feedback below the provider narrative.
 
 Provider turn schemas and prompts do not expose `year` or `month` as allowed model patch keys; calendar changes are reserved for server-owned patches.
 
