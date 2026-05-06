@@ -61,8 +61,8 @@
 
 | ID | 状态 | 目标 | 完成日期 | 工具 | 提交 |
 | --- | --- | --- | --- | --- | --- |
-| S40.1 | DONE | 归档第三阶段规划，开启第四阶段活动台账，并保持开发规范不变 | 2026-05-06 | Codex | current documentation/diagnostics commit |
-| S40.2 | DONE | 增加游戏内 AI 连接测试入口、后端诊断路由、DeepSeek 任务模型配置文档和测试 | 2026-05-06 | Codex | current documentation/diagnostics commit |
+| S40.1 | DONE | 归档第三阶段规划，开启第四阶段活动台账，并保持开发规范不变 | 2026-05-06 | Codex | 7927c02 |
+| S40.2 | DONE | 增加游戏内 AI 连接测试入口、后端诊断路由、DeepSeek 任务模型配置文档和测试 | 2026-05-06 | Codex | 7927c02 |
 | S41.1 | TODO | 制定优秀提示词总纲：世界引擎、科举考官、出题官、官场、地方、军事、皇帝/大臣等角色的语气与 JSON 合约 |  |  |  |
 | S41.2 | TODO | 将提示词拆成可测试的 prompt pack，并为历史语气、越权、现代词、JSON 严格性加入离线 eval fixtures |  |  |  |
 | S42.1 | TODO | 定义深度官场契约：官职谱系、衙门/部院、差遣、座主门生、同年、上官、政敌、考成、廷推、外放、处分 |  |  |  |
@@ -202,7 +202,7 @@
 
 步骤：S40.1-S40.2
 
-提交：current documentation/diagnostics commit
+提交：7927c02
 
 完成：
 - 将第三阶段路线图复制并冻结到 `docs/PHASE_THREE_ROADMAP_ARCHIVE.md`，把当前活动台账改为第四阶段 S40-S47。
