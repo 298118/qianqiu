@@ -181,6 +181,17 @@ Real provider adapters parse model text through `src/utils/json.js`, validate wi
 
 For turn responses, providers may also suggest top-level `relationshipChanges`. These are not state patches. They are bounded social-memory deltas for existing visible relationship ledger ids, and the server is free to clamp or ignore them before persistence. Mock now emits these suggestions for scholar, emperor, minister, general, magistrate, and official actions so local play can exercise social memory without real model keys.
 
+### Real-Provider Smoke
+
+`scripts/providerSmoke.js` is the optional S25.1 smoke entrypoint for keyed environments:
+
+```bash
+npm run smoke:provider
+npm run smoke:provider -- --provider deepseek
+```
+
+The script calls real provider factories directly instead of `getProvider()`, so failures are not hidden by Mock fallback. It exercises the four provider methods that correspond to start, turn, question, and submit/grade, then prints a short schema-validated summary. It does not start the Express server and does not write session JSON files. With `AI_PROVIDER=mock`, it auto-runs only providers whose required key is present; if no real-provider keys are configured, it skips with exit code 0.
+
 ## State Model
 
 `createInitialState()` in `src/game/initialState.js` returns a `worldState` with:
@@ -318,6 +329,12 @@ Use:
 
 ```bash
 npm test
+```
+
+For keyed provider smoke, use:
+
+```bash
+npm run smoke:provider
 ```
 
 For local acceptance, run the checklist in [docs/MANUAL_ACCEPTANCE.md](MANUAL_ACCEPTANCE.md). When a release slice is accepted, record the exact commands, result and known limitations in [docs/PHASE_ONE_ACCEPTANCE.md](PHASE_ONE_ACCEPTANCE.md), `docs/SHARED_CONTEXT.md`, and `docs/DEVELOPMENT_STEPS.md`.

@@ -66,7 +66,7 @@
 | S24.1 | DONE | 深化科举同场竞争：虚拟考生生成可查看文章、评语和风格差异 | 2026-05-06 | Codex + reviewed subagent patch | 80db3d2 / fadb9ab |
 | S24.2 | DONE | 增加考试档案 UI，允许回看历次文章、题目、排名、复核和晋级原因 | 2026-05-06 | Codex + subagent patch | fadb9ab |
 | S24.3 | DONE | 增加赶考成本、旅途事件、疲劳/心性影响和考前准备风险 | 2026-05-06 | Codex + subagent patch | fadb9ab |
-| S25.1 | TODO | 增加真实 provider smoke 脚本，在有 key 时验证 start/turn/question/submit 四类调用 |
+| S25.1 | DONE | 增加真实 provider smoke 脚本，在有 key 时验证 start/turn/question/submit 四类调用 | 2026-05-06 | Codex | 本次 S25.1 提交 |
 | S25.2 | TODO | 评估并实现真实 provider token streaming；无法流式的 provider 保持兼容降级 |
 | S25.3 | TODO | 建立 AI 输出 eval fixtures，固定校验 JSON 合约、违规 patch、科举评卷和历史语气 |
 | S26.1 | TODO | 引入浏览器自动化验收方案，优先覆盖本地页面加载、开局、localStorage 恢复 |
@@ -156,6 +156,35 @@
 ```
 
 ### 2026-05-06
+
+Tool: Codex
+
+Step: S25.1
+
+Commit: current S25.1 commit
+
+Completed:
+- Added `scripts/providerSmoke.js` and `npm run smoke:provider` for optional keyed real-provider smoke checks.
+- The smoke runs real provider factories directly instead of `getProvider()`, so Mock fallback cannot mask real-provider failures.
+- The script exercises start, turn, question, and submit/grade provider methods, validates through the existing provider/schema path, prints concise summaries, and does not start Express or write session files.
+- Default `AI_PROVIDER=mock` auto-selects only providers whose key exists and skips successfully when no keys are configured; explicit `--provider` or real `AI_PROVIDER` fails fast when the matching key is missing.
+- Added `test/providerSmokeScript.test.js` to cover aliasing, key selection, no-key skip, explicit missing-key failure, and the smoke essay fixture without network calls.
+- Documented the new smoke path in README, architecture, product brief, shared context, and this ledger.
+
+Verification:
+- `node --check scripts/providerSmoke.js`
+- `node --check test/providerSmokeScript.test.js`
+- `node --test test/providerSmokeScript.test.js` passed with 6 tests.
+- `npm run smoke:provider` skipped successfully because no real-provider keys are configured.
+- `git diff --check`
+- `npm test` passed with 66 tests.
+
+Risk/leftover:
+- Real provider calls were not executed in this environment because no API keys are present; the smoke skip path was verified instead.
+- S25.1 verifies provider method contracts but does not yet add true token streaming or broader AI eval fixtures.
+
+Next:
+- S25.2: evaluate and implement real-provider token streaming where supported, while preserving current SSE compatibility fallback.
 
 Tool: Codex
 

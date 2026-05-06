@@ -688,3 +688,14 @@ S24 deepens the imperial examination loop while preserving the server-owned prom
 - `/api/exam/submit` preserves `entryPreparation` in `player.examHistory` and returns `examQuestion`, `essay`, and `entryPreparation` for immediate frontend rendering.
 - The browser result modal now includes 本场案卷 and 同场文卷 sections, and panels show an 考试档案 button when historical exam records exist.
 - The S24.1 candidate data slice was accidentally committed by a subagent as `80db3d2`; Codex reviewed it during S24 integration. Future subagents are explicitly forbidden from committing, pushing, or creating PRs.
+
+## S25.1 Real-Provider Smoke Note (2026-05-06)
+
+S25.1 adds an optional keyed smoke path without changing the default Mock experience:
+
+- `npm run smoke:provider` runs `scripts/providerSmoke.js`.
+- In default `AI_PROVIDER=mock` mode, the script auto-selects only real providers whose required key exists: `OPENAI_API_KEY`, `DEEPSEEK_API_KEY`, or `ANTHROPIC_API_KEY`. If no real-provider keys are present, it skips successfully.
+- `npm run smoke:provider -- --provider openai|deepseek|anthropic|claude|all` can target a specific provider; targeted real providers fail fast when their required key is missing.
+- The smoke calls real provider factories directly instead of `getProvider()`, so Mock fallback cannot hide provider failures.
+- The smoke verifies the provider-method equivalents of start, turn, question, and submit/grade. It validates provider JSON through the existing schemas, prints concise summaries, and does not start Express or write session files.
+- `test/providerSmokeScript.test.js` covers provider aliasing, key-based selection, missing-key failure, and the no-key skip path without making network calls.
