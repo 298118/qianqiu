@@ -41,6 +41,7 @@ Important route ownership:
 
 - `src/routes/game.js` creates sessions, reads sessions, and advances free-text turns.
 - `src/routes/exam.js` generates saved exam questions and submits essays.
+- `src/routes/ai.js` owns no-session AI diagnostics such as provider connection checks.
 - `src/game/stateRules.js` is the only way provider state patches should be merged.
 - `src/game/exams.js` owns exam levels, gates, thresholds and next-exam mapping.
 - `src/game/promotions.js` owns rank changes, official promotion and severe-cheating consequences.
@@ -119,6 +120,40 @@ Returns the local save list as redacted session metadata:
 The route does not return full `worldState`, raw relationship ledgers, hidden contacts, provider config, prompts, or local file paths. It sorts saves by `updatedAt` descending. Malformed or unsupported `.json` files are reported under `skipped` instead of being auto-deleted.
 
 The browser consumes this route in two places: the start panel renders `#save-list-panel` for recent local saves, and the in-game status strip exposes a `#save-list-open` button that opens `#save-list-modal`. Loading a save still reads `GET /api/game/state/:sessionId`, writes `localStorage["qianqiu.sessionId"]` for compatibility, and renders only the normal route payloads.
+
+### `POST /api/ai/connection-test`
+
+Runs a no-session provider diagnostic for the currently configured provider or a requested provider:
+
+```json
+{
+  "provider": "deepseek"
+}
+```
+
+Returns `200` when the provider can produce schema-valid opening JSON, or `503` when a key/config/network/model error prevents the check:
+
+```json
+{
+  "ok": true,
+  "provider": "deepseek",
+  "configuredProvider": "deepseek",
+  "checkedAt": "2026-05-06T00:00:00.000Z",
+  "latencyMs": 1200,
+  "supportsStreaming": true,
+  "models": {
+    "default": "deepseek-v4-flash",
+    "opening": "deepseek-v4-pro",
+    "turn": "deepseek-v4-flash",
+    "examQuestion": "deepseek-v4-flash",
+    "grade": "deepseek-v4-pro"
+  },
+  "openingEventCount": 2,
+  "narrativePreview": "..."
+}
+```
+
+The diagnostic calls provider factories directly, does not create or mutate a session file, does not use Mock fallback to hide a real-provider failure, and redacts configured API keys from error messages. The browser start panel uses this route for its `AI 连接` check.
 
 ### `POST /api/game/turn`
 
@@ -280,11 +315,19 @@ Provider outputs must match the schemas in `src/ai/schemas.js`:
 - `examQuestion`: exam level, name, question, type, difficulty, requirements, word count, pass score and promotion rank
 - `grade`: five score dimensions, `overall_score`, rank, detailed feedback, authenticity echo, candidates and ranking placeholders
 
-Real provider adapters parse model text through `src/utils/json.js`, validate with Ajv, retry once on ordinary non-streaming failure, then fall back to Mock for that method. The model never owns final game state. It can suggest `statePatch`; the server whitelists and clamps it. Ordinary turn schemas now reject direct patches to server-owned fields such as `activeExam`, `activeNpcRequest`, `longTermEvents`, `roleWorldCoupling`, `officialCareer`, `characters`, `eventHistory`, `player.examRank`, `player.officeTitle`, and `player.examHistory`.
+Real provider adapters parse model text through `src/utils/json.js`, normalize remote turn payloads, validate with Ajv, retry once on ordinary non-streaming failure, then fall back to Mock for that method. The model never owns final game state. It can suggest `statePatch`; the provider adapter first filters it to provider-allowed fields, then the route applies the same server whitelist and clamps. Ordinary turn schemas still reject direct patches to server-owned fields such as `activeExam`, `activeNpcRequest`, `longTermEvents`, `roleWorldCoupling`, `officialCareer`, `characters`, `eventHistory`, `player.examRank`, `player.officeTitle`, and `player.examHistory` when they appear outside this remote-provider normalization path. Remote turn payloads may also drop malformed display-only `attributeChanges` rows before validation.
+
+DeepSeek supports task-specific model routing. `DEEPSEEK_MODEL` remains the fallback, while `DEEPSEEK_OPENING_MODEL`, `DEEPSEEK_TURN_MODEL`, `DEEPSEEK_EXAM_QUESTION_MODEL`, and `DEEPSEEK_GRADE_MODEL` can override individual schema tasks. The current recommended split is V4 Pro for opening and essay grading, and V4 Flash for ordinary turn/streaming and exam-question generation.
 
 S25.2 adds optional turn token streaming for OpenAI Responses, DeepSeek chat completions, and Anthropic Messages. `streamTurn()` buffers the full model JSON and still returns the same validated `turn` payload as `runTurn()`. During SSE requests, `src/routes/game.js` uses `src/utils/streamingJson.js` to extract only the top-level `narrative` string from the streamed JSON text and send it as `narrative_chunk`; nested `narrative` keys inside `statePatch` or other objects are ignored. State patches, relationship changes, world tick, persistence, and `final_state` still happen only after the full JSON passes schema validation. If visible provider narrative has already been sent and the stream then fails, the route emits an `error` event and does not write the session; the browser removes the uncommitted pending text. If no visible narrative was sent, the route can fall back to the normal turn path.
 
 For turn responses, providers may also suggest top-level `relationshipChanges`. These are not state patches. They are bounded social-memory deltas for existing visible relationship ledger ids, and the server is free to clamp or ignore them before persistence. Mock now emits these suggestions for scholar, emperor, minister, general, magistrate, and official actions so local play can exercise social memory without real model keys.
+
+### AI Diagnostics
+
+`src/ai/diagnostics.js` provides the `POST /api/ai/connection-test` backend. It intentionally bypasses `getProvider()` and constructs the requested provider directly so real-provider failures are visible. The diagnostic world state is a throwaway scholar opening scene, and the result is never persisted. Missing keys return a controlled `503`; thrown errors are passed through `redactSecrets()` before being exposed to the browser.
+
+This route is a configuration and JSON-contract check, not a quality acceptance gate. Historical tone, long-run coherence, authority probes and streaming behavior still belong to `smoke:provider`, `smoke:provider:long`, `eval:ai`, and browser smoke.
 
 ### Real-Provider Smoke
 

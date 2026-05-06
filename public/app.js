@@ -28,6 +28,9 @@ const saveBackdrop = document.querySelector("#save-backdrop");
 const saveClose = document.querySelector("#save-close");
 const saveModalList = document.querySelector("#save-modal-list");
 const saveModalStatus = document.querySelector("#save-modal-status");
+const aiTestButton = document.querySelector("#ai-test-button");
+const aiTestStatus = document.querySelector("#ai-test-status");
+const aiTestResult = document.querySelector("#ai-test-result");
 
 let currentSessionId = null;
 let currentWorldState = null;
@@ -329,6 +332,66 @@ async function refreshSaveList(options = {}) {
     if (saveList) saveList.innerHTML = "";
     if (saveModalList) saveModalList.innerHTML = "";
     return { saves: [], skipped: [] };
+  }
+}
+
+function formatModelSummary(models = {}) {
+  return Object.entries(models)
+    .filter(([, value]) => value)
+    .map(([key, value]) => `${key}: ${value}`)
+    .join("；");
+}
+
+function renderAiConnectionResult(payload) {
+  if (!aiTestStatus || !aiTestResult) return;
+
+  aiTestResult.innerHTML = "";
+  aiTestResult.dataset.ok = payload.ok ? "true" : "false";
+  aiTestStatus.textContent = payload.ok
+    ? `${payload.provider} 可用，耗时 ${payload.latencyMs}ms。`
+    : `${payload.provider || "AI"} 不可用：${payload.error || "未知错误"}`;
+
+  const details = [
+    payload.configuredProvider ? `当前配置：${payload.configuredProvider}` : null,
+    payload.supportsStreaming ? "支持流式回合" : null,
+    payload.models ? formatModelSummary(payload.models) : null,
+    payload.narrativePreview ? `回声：${payload.narrativePreview}` : null
+  ].filter(Boolean);
+
+  details.forEach((text) => {
+    const item = document.createElement("p");
+    item.textContent = text;
+    aiTestResult.appendChild(item);
+  });
+}
+
+async function testAiConnection() {
+  if (!aiTestButton || !aiTestStatus) return;
+  aiTestButton.disabled = true;
+  aiTestButton.textContent = "校验中...";
+  aiTestStatus.textContent = "正在请后端执行一次不落盘的 AI JSON 校验...";
+  if (aiTestResult) {
+    aiTestResult.innerHTML = "";
+    aiTestResult.dataset.ok = "";
+  }
+
+  try {
+    const response = await fetch("/api/ai/connection-test", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: "{}"
+    });
+    const payload = await response.json();
+    renderAiConnectionResult(payload);
+  } catch (error) {
+    renderAiConnectionResult({
+      ok: false,
+      provider: "AI",
+      error: error.message
+    });
+  } finally {
+    aiTestButton.disabled = false;
+    aiTestButton.textContent = "校验";
   }
 }
 
@@ -2058,6 +2121,9 @@ examBackdrop.addEventListener("click", (event) => {
   }
 });
 saveRefresh.addEventListener("click", () => refreshSaveList());
+if (aiTestButton) {
+  aiTestButton.addEventListener("click", testAiConnection);
+}
 saveClose.addEventListener("click", closeSaveModal);
 saveBackdrop.addEventListener("click", (event) => {
   if (event.target === saveBackdrop) {

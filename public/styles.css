@@ -180,7 +180,8 @@ button:disabled {
   grid-column: 1 / -1;
 }
 
-.save-panel {
+.save-panel,
+.ai-panel {
   display: grid;
   gap: 10px;
   min-width: 0;
@@ -188,7 +189,12 @@ button:disabled {
   border-top: 1px solid rgba(54, 39, 27, 0.18);
 }
 
+.ai-panel {
+  padding-bottom: 4px;
+}
+
 .save-panel header,
+.ai-panel header,
 .save-modal header,
 .save-card header {
   display: flex;
@@ -199,12 +205,14 @@ button:disabled {
 }
 
 .save-panel header strong,
+.ai-panel header strong,
 .save-modal header span {
   color: var(--cinnabar-deep);
   font-size: 0.98rem;
 }
 
 .save-panel header button,
+.ai-panel header button,
 .status-action,
 .save-card button {
   min-height: 34px;
@@ -214,10 +222,41 @@ button:disabled {
   border-color: rgba(24, 72, 60, 0.42);
 }
 
-.save-status {
+.save-status,
+.ai-status {
   margin: 0;
   color: var(--muted);
   font-size: 0.84rem;
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+}
+
+.ai-result {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+  padding: 10px;
+  border: 1px solid rgba(54, 39, 27, 0.16);
+  border-radius: 4px;
+  background: rgba(255, 250, 238, 0.52);
+}
+
+.ai-result:empty {
+  display: none;
+}
+
+.ai-result[data-ok="true"] {
+  border-color: rgba(38, 101, 83, 0.28);
+}
+
+.ai-result[data-ok="false"] {
+  border-color: rgba(132, 35, 25, 0.26);
+}
+
+.ai-result p {
+  margin: 0;
+  color: var(--ink);
+  font-size: 0.82rem;
   line-height: 1.45;
   overflow-wrap: anywhere;
 }
@@ -1416,11 +1455,13 @@ button:disabled {
     grid-template-columns: 1fr;
   }
 
-  .save-panel {
+  .save-panel,
+  .ai-panel {
     padding-top: 14px;
   }
 
   .save-panel header,
+  .ai-panel header,
   .save-card header {
     align-items: stretch;
   }

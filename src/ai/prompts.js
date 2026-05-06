@@ -168,6 +168,7 @@ function buildOpeningTask(worldState) {
     input: [
       "Create the opening narrative for this new game session.",
       "Return 1-3 concise event strings.",
+      "Each event string must include at least one concrete historical anchor such as dynasty, county school, scholar, commoners, grain/tax, government office, border affairs, or imperial examination.",
       "World state:",
       JSON.stringify(compactWorldState(worldState), null, 2)
     ].join("\n"),

@@ -1,6 +1,6 @@
 # Shared AI Development Context
 
-This is the handoff board shared by Codex and Claude Code. It is intentionally compact; detailed history lives in `docs/DEVELOPMENT_STEPS.md`, phase archives, and focused contract documents.
+This is the compact handoff board shared by Codex and Claude Code. Detailed history lives in `docs/DEVELOPMENT_STEPS.md`, phase archives, and focused contract documents.
 
 ## Read First
 
@@ -17,19 +17,18 @@ Every development session must read these files before planning or editing:
 - Runtime target: `npm install && npm start`, then open `http://localhost:3000`.
 - Frontend: plain HTML/CSS/JS, no build step.
 - Backend: Node.js + Express, plain JavaScript.
-- AI providers: adapter-based Mock/OpenAI/DeepSeek/Anthropic. `AI_PROVIDER=mock` remains the default playable mode.
-- Storage: JSON session records under `data/sessions/*.json`, currently using a `storageSchemaVersion: 1` envelope with redacted metadata, nested `worldState`, atomic temp writes, revision checks, and a per-session local lock file.
-- Active roadmap: third phase in `docs/DEVELOPMENT_STEPS.md`; S39.1 audit hardening is implemented in `b344217`.
-- Latest review artifact: `docs/PRE_PHASE_CODEBASE_REVIEW_2026-05-06.md`.
-- Latest committed review baseline before S39: `9fa4b26 docs: record pre-phase codebase review`.
+- AI providers: adapter-based Mock/OpenAI/DeepSeek/Anthropic. `AI_PROVIDER=mock` remains the default playable mode. DeepSeek supports task-specific model overrides: V4 Pro is recommended for opening/grading, and V4 Flash for ordinary turn/streaming/question generation.
+- Storage: JSON session records under `data/sessions/*.json`, using a `storageSchemaVersion: 1` envelope with redacted metadata, nested `worldState`, atomic temp writes, revision checks, and a per-session local lock file.
+- Active roadmap: fourth phase in `docs/DEVELOPMENT_STEPS.md`; third phase is frozen in `docs/PHASE_THREE_ROADMAP_ARCHIVE.md`.
+- Current local `.env`: configured for DeepSeek with a real user-supplied key and task model split. `.env` is ignored by Git and must never be printed or committed.
 
 ## Core Invariants
 
 - Keep the complete scholar path working: `scholar -> child_exam -> provincial_exam -> metropolitan_exam -> palace_exam -> official`.
-- Providers may suggest narrative, bounded `statePatch`, relationship changes, scoring JSON, and exam triggers. The server owns promotion, exam entry rules, anti-cheat penalties, persistence, protected state fields, and long-term system effects.
+- Providers may suggest narrative, bounded `statePatch`, relationship changes, scoring JSON, and exam triggers. The server owns promotion, exam entry rules, anti-cheat penalties, persistence, protected state fields, official appointments, long-term system effects, and visibility filtering.
 - Validate AI JSON before applying it. State changes must go through whitelists, clamps, and server-owned follow-up modules.
 - `GET /api/game/saves` must expose redacted metadata only. Full saves are read through `GET /api/game/state/:sessionId`.
-- Local playability cannot depend on real model keys. Keyed provider checks must skip successfully when keys are absent.
+- Local playability cannot depend on real model keys. Keyed provider checks must skip or fail in controlled, documented ways when keys are absent.
 - Every coherent change must update this handoff and the step ledger, run relevant verification, and be committed.
 
 ## Subagent Discipline
@@ -50,17 +49,18 @@ API:
 - `GET /api/game/saves`
 - `GET /api/game/state/:sessionId`
 - `POST /api/game/turn`
+- `POST /api/ai/connection-test`
 - `POST /api/exam/question`
 - `POST /api/exam/submit`
 
 Important modules:
 
 - AI adapters/prompts/schemas: `src/ai/`
+- AI diagnostics: `src/ai/diagnostics.js`, `src/routes/ai.js`
 - State boundary/clamping: `src/game/stateRules.js`
 - Initial state and allowed roles: `src/game/initialState.js`
 - Exam rules: `src/game/exams.js`
 - Exam calendar/rivals: `src/game/examCalendar.js`
-- Exam travel/preparation: `src/game/examTravel.js`
 - Essay authenticity checks: `src/game/essayChecks.js`
 - Promotion rules: `src/game/promotions.js`
 - Relationship ledger/views: `src/game/relationships.js`
@@ -85,46 +85,26 @@ Durable contracts and acceptance records:
 
 ## Recent Completed Scope
 
-- S31: desktop game-state layout repair, ordinary-turn server-owned field boundary, explicit start-role validation.
-- S32: visible relationship inspection view, browser relationship panel, server-owned active NPC request loop.
-- S33: server-owned long-term event scheduler.
-- S34: official career outcome engine.
-- S35: exam calendar windows and persistent same-field rivals.
-- S36: role/world coupling feedback and server-owned effects.
-- S37: keyed real-provider long-run acceptance script.
-- S38.1: complete browser scholar-to-official journey plus cheating sample.
-- S38.2: JSON storage envelope, atomic writes, per-session mutation queue, save-list API.
-- S38.3: browser save-list UI and smoke coverage.
-- Pre-S39: read-only codebase review recorded nine security/state/streaming/storage findings.
-- S39.1: fixed the pre-phase audit findings around CORS, `examTrigger`, streaming narrative safety, failed-SSE rollback, hidden relationship notes, role/world cooldowns, initial year clamping, and JSON revision/lock behavior.
+- S31-S39.1: third-phase layout/state-boundary hardening, relationship UI, active NPCs, long-term events, official-career outcomes, exam calendar, role/world coupling, real-provider long-run script, browser full journey, storage hardening, save-list UI, and pre-phase audit fixes.
+- S40.1: third-phase planning archived to `docs/PHASE_THREE_ROADMAP_ARCHIVE.md`; active roadmap reset to fourth phase without changing development rules.
+- S40.2: `POST /api/ai/connection-test` added for no-session provider diagnostics; start page now has an `AI 连接` panel and tests cover Mock success, missing real-provider key, error redaction, route behavior, and DeepSeek task-model summaries.
 
-## Current S39 Hardening Result
+## Fourth-Phase Priorities
 
-S39.1 addresses `docs/PRE_PHASE_CODEBASE_REVIEW_2026-05-06.md` before new feature work.
+- S41: prompt packs and AI orchestration contracts for world turns, opening, exams, grading, official career, court, minister/faction, local magistrate, and frontier/military play.
+- S42: deeper official-career gameplay: offices, bureaus, assignments,考成, patronage, same-year networks, impeachment, transfer, promotion, outpost, punishment, and long-term UI/archives.
+- S43: World Threads that unify NPC requests, long-term events, official outcomes, role/world coupling, local cases, border affairs, and faction conflicts into trackable cross-month issues.
+- S44: AI invocation/control audit matrix defining which systems AI may generate, suggest, sort, or explain, and which remain server-decided.
+- S45: multi-entity world model for court offices, local gentry, academies, military fronts, fiscal channels, and disaster relief.
+- S46: dependency/plugin governance; allowed when useful, documented, licensed, tested, and reversible.
+- S47: provider/browser acceptance expansion around route-level connection tests and explicit keyed health checks.
 
-Runtime changes:
+## Current S40 Notes
 
-- `server.js` now uses a restrictive default CORS policy. Extra development origins use `CORS_ALLOWED_ORIGINS`.
-- `/api/game/turn` now validates ordinary-turn `examTrigger` through `canEnterExam()` and `canOpenExamInCalendar()`, and cannot overwrite an active writing exam.
-- `src/utils/streamingJson.js` extracts only the top-level `narrative`; nested fields are ignored.
-- `public/app.js` removes pending streamed text if SSE ends with `error` or without `final_state`.
-- Visible-only relationship summaries filter hidden-entry recent notes before prompt/UI exposure.
-- Role/world coupling cooldowns are checked before applying repeated same-kind effects.
-- Initial years are clamped through `stateRules` before persistence.
-- JSON writes acquire a per-session lock, reread the latest disk revision, and reject stale expected revisions before atomic replacement.
-- `scripts/browserSmoke.js` now covers failed-SSE rollback in the browser.
-- `test-helpers/fetchSafeServer.js` includes Fetch blocked port `4190`, found during full CORS test verification.
-
-Verification for S39.1 commit `b344217`:
-
-- Focused `node --check` for changed runtime/test files.
-- Focused `node --test` for CORS, exam triggers, streaming JSON/SSE, relationships, role-world coupling, start roles, and session storage passed with 55 tests.
-- `npm run eval:ai` passed with 6 tests.
-- `npm run smoke:provider` and `npm run smoke:provider:long` skipped successfully because no real-provider keys are configured.
-- `npm test` passed with 185 tests.
-- `npm run smoke:browser` passed with failed-SSE rollback coverage, complete scholar-to-official path, cheating sample, role-world journeys, and 14 screenshots checked.
-- `git diff --check` passed.
-- Read-only pre-commit review found no blocking issues. Residual risks: JSON lock files remain local-filesystem best effort, failed-SSE rollback is smoke-covered rather than unit-covered, and any configured CORS extra Origin is trusted to read local APIs.
+- The start page AI connection panel calls `POST /api/ai/connection-test` and displays provider, model summary, latency, streaming support, and a short narrative preview or脱敏 error.
+- The diagnostics route builds the requested provider directly, does not write session files, and does not use Mock fallback to hide real-provider failures.
+- DeepSeek model routing is task-specific: `DEEPSEEK_OPENING_MODEL` and `DEEPSEEK_GRADE_MODEL` should use `deepseek-v4-pro`; ordinary turn/streaming and exam question generation should use `deepseek-v4-flash`.
+- The user asked not to continue AI debugging in this slice. Do not keep chasing DeepSeek long-run tone failures here; put model-quality work into S41/S47.
 
 ## Verification Defaults
 
@@ -145,10 +125,10 @@ Use focused checks first, then broaden when behavior crosses module boundaries:
 - Put stable API/architecture/product changes in README, `docs/QIANQIU_DEVELOPMENT_BRIEF.md`, or the relevant contract file.
 - Do not leave decisions only in chat.
 
-## Current Publish Note
+## Current Work Note
 
-- 2026-05-06: README has been rewritten in the current README publish commit as a GitHub-facing project overview through third phase S39.1, covering main updates, fixes, hardening, technology stack, setup, APIs, verification commands, documents, and known limitations. This is documentation-only publish prep; pre-commit subagent review was skipped as low risk and recorded here.
+- 2026-05-06: S40.1-S40.2 are in the current documentation/diagnostics commit. Verification passed: focused `node --check`, focused AI diagnostics/provider tests, `$env:AI_PROVIDER='mock'; npm test` with 197 tests, DeepSeek no-session diagnostic through ignored `.env` with `ok=true`, `$env:AI_PROVIDER='mock'; npm run smoke:browser`, and `git diff --check`. Read-only pre-commit subagent review found no blocking issues. Residuals: browser smoke does not yet click the `AI 连接` button, and error redaction covers exact configured secret values rather than transformed/partial variants. Commit hash should be recorded after final commit.
 
 ## Next Recommended Step
 
-Push the current `main` branch to GitHub after the README refresh commit, then continue with the storage adapter/SQLite boundary from `docs/SESSION_STORAGE_MIGRATION_PLAN.md` or the next long-term simulation depth slice.
+After committing S40, start S41.1 prompt pack design or S42.1 official-career depth contract. The highest player-facing value is likely S42官场深度, but S41 should define the AI authority and tone scaffolding before large new AI-driven systems are added.

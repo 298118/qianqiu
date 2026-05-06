@@ -1,6 +1,24 @@
 const OpenAI = require("openai");
 const { createRemoteProvider, readTimeoutMs, requireEnv } = require("./remoteHelpers");
 
+const DEFAULT_DEEPSEEK_MODEL = "deepseek-v4-flash";
+
+const TASK_MODEL_ENV = {
+  opening: "DEEPSEEK_OPENING_MODEL",
+  turn: "DEEPSEEK_TURN_MODEL",
+  examQuestion: "DEEPSEEK_EXAM_QUESTION_MODEL",
+  grade: "DEEPSEEK_GRADE_MODEL"
+};
+
+function readTaskModel(schemaName) {
+  const taskEnvName = TASK_MODEL_ENV[schemaName];
+  return (
+    (taskEnvName && process.env[taskEnvName]) ||
+    process.env.DEEPSEEK_MODEL ||
+    DEFAULT_DEEPSEEK_MODEL
+  );
+}
+
 function createDeepSeekProvider() {
   const apiKey = requireEnv("DEEPSEEK_API_KEY", "DeepSeek");
   const client = new OpenAI({
@@ -9,11 +27,10 @@ function createDeepSeekProvider() {
     maxRetries: 0,
     timeout: readTimeoutMs()
   });
-  const model = process.env.DEEPSEEK_MODEL || "deepseek-v4-flash";
 
   function buildCompletionParams({ instructions, input, schemaName, schema, maxOutputTokens }) {
     return {
-      model,
+      model: readTaskModel(schemaName),
       messages: [
         { role: "system", content: instructions },
         {
@@ -51,5 +68,7 @@ function createDeepSeekProvider() {
 }
 
 module.exports = {
-  createDeepSeekProvider
+  createDeepSeekProvider,
+  readTaskModel,
+  TASK_MODEL_ENV
 };
