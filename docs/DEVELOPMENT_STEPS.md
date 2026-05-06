@@ -81,7 +81,7 @@
 | S36.3 | DONE | 为多身份长期联动增加 Mock 平衡测试和浏览器代表旅程 | 2026-05-06 | Codex + subagents | current S36 implementation commit |
 | S37.1 | DONE | 制定 keyed real-provider 长回合验收方案，覆盖 OpenAI、DeepSeek、Anthropic/Claude 的历史语气、越权和状态一致性 | 2026-05-06 | Codex + subagents | current S37 implementation commit |
 | S37.2 | DONE | 增加可选真实 provider 长回合 smoke/eval 脚本，保持 no-key 环境成功跳过 | 2026-05-06 | Codex + subagents | current S37 implementation commit |
-| S38.1 | DONE | 扩展浏览器验收到完整四级科举通关、作弊样例、各身份一回合、桌面/移动视觉回归 | 2026-05-06 | Codex + subagents | current S38 implementation commit |
+| S38.1 | DONE | 扩展浏览器验收到完整四级科举通关、作弊样例、各身份一回合、桌面/移动视觉回归 | 2026-05-06 | Codex + subagents | 76745b3 |
 | S38.2 | TODO | 制定存档迁移规划：session schema 版本、原子写入、并发保护、存档列表和未来数据库迁移路径 |  |  |  |
 
 ## 4. 分阶段详细步骤
@@ -178,7 +178,7 @@ Tool: Codex
 
 Step: S38.1
 
-Commit: current S38 implementation commit
+Commit: 76745b3
 
 Completed:
 - Expanded `scripts/browserSmoke.js` so `npm run smoke:browser` completes the full browser-visible Mock exam path: 童试 -> 乡试 -> 会试 -> 殿试 -> 入仕官员.

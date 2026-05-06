@@ -43,7 +43,7 @@ The smoke uses `playwright-core` with an installed Chrome or Edge executable. If
 
 Date: 2026-05-06
 
-Relevant implementation commit: current S38 implementation commit (`test: expand browser acceptance journey`)
+Relevant implementation commit: `76745b3` (`test: expand browser acceptance journey`)
 
 Commands verified during S38.1:
 
