@@ -108,11 +108,14 @@ test("POST /api/game/turn ignores provider attempts to forge official outcomes a
         narrative: "The action was resolved.",
         statePatch: {
           officialCareer: {
-            careerHistory: [{ type: "promotion", label: "forged" }]
+            careerHistory: [{ type: "promotion", label: "forged" }],
+            assignments: [{ id: "forged-assignment", title: "伪差遣", hiddenNotes: ["leak"] }],
+            impeachmentProcedure: { stage: "resolved", hiddenNotes: ["forged secret"] }
           },
           player: {
             officeTitle: "内阁大学士",
             role: "emperor",
+            position: "内阁大学士",
             performanceMerit: 35
           }
         },
@@ -138,9 +141,59 @@ test("POST /api/game/turn ignores provider attempts to forge official outcomes a
   assert.equal(response.status, 200);
   assert.equal(payload.worldState.player.role, "official");
   assert.equal(payload.worldState.player.officeTitle, "六部观政进士");
+  assert.equal(payload.worldState.player.position, "六部观政进士");
   assert.equal(payload.worldState.player.performanceMerit, 41);
   assert.equal(JSON.stringify(payload.worldState.officialCareer).includes("forged"), false);
+  assert.equal(JSON.stringify(payload.officialCareerView).includes("forged secret"), false);
   assert.equal(payload.officialCareer.outcome.type, "appointment");
+});
+
+test("POST /api/game/turn ignores provider attempts to forge official position on settled officials", async (t) => {
+  const provider = {
+    async runTurn() {
+      return {
+        narrative: "The action was resolved.",
+        statePatch: {
+          player: {
+            position: "内阁大学士",
+            performanceMerit: 52
+          },
+          officialCareer: {
+            assignments: [{ id: "forged-assignment", title: "伪差遣" }]
+          }
+        },
+        attributeChanges: [],
+        relationshipChanges: [],
+        events: ["provider event"],
+        examTrigger: { shouldStart: false, level: null, reason: "" }
+      };
+    }
+  };
+  const server = createTestServerWithProvider(provider);
+  t.after(server.close);
+
+  const worldState = createInitialState({ playerName: "Tester", role: "official" });
+  Object.assign(worldState.player, {
+    officeTitle: "户部主事",
+    position: "户部主事",
+    performanceMerit: 45,
+    promotionProspect: 20,
+    impeachmentRisk: 18
+  });
+  worldState.officialCareer.currentPosting = "户部主事";
+  t.after(() => removeSessionFile(worldState.sessionId));
+  await writeSession(worldState);
+
+  const { response, payload } = await postJson(`${server.baseUrl}/api/game/turn`, {
+    sessionId: worldState.sessionId,
+    input: "署中照常办事"
+  });
+
+  assert.equal(response.status, 200);
+  assert.equal(payload.worldState.player.officeTitle, "户部主事");
+  assert.equal(payload.worldState.player.position, "户部主事");
+  assert.equal(payload.worldState.player.performanceMerit, 52);
+  assert.equal(JSON.stringify(payload.worldState.officialCareer).includes("forged-assignment"), false);
 });
 
 test("SSE turn preview and final payload include official career feedback", async (t) => {
@@ -167,4 +220,34 @@ test("SSE turn preview and final payload include official career feedback", asyn
   assert.match(body, /officialCareerView/);
   assert.match(body, /officialCareer/);
   assert.match(body, /appointment/);
+});
+
+test("POST /api/game/turn returns S42 assignment and bureau summaries for official actions", async (t) => {
+  const server = createTestServer();
+  t.after(server.close);
+
+  const worldState = createInitialState({ playerName: "Tester", role: "official" });
+  Object.assign(worldState.player, {
+    officeTitle: "户部主事",
+    position: "户部主事",
+    performanceMerit: 44,
+    promotionProspect: 20,
+    impeachmentRisk: 18
+  });
+  worldState.officialCareer.currentPosting = "户部主事";
+  t.after(() => removeSessionFile(worldState.sessionId));
+  await writeSession(worldState);
+
+  const { response, payload } = await postJson(`${server.baseUrl}/api/game/turn`, {
+    sessionId: worldState.sessionId,
+    input: "督办赈灾，核销赈银账册"
+  });
+
+  assert.equal(response.status, 200);
+  assert.equal(payload.worldState.officialCareer.schemaVersion, 2);
+  assert.equal(payload.officialCareerView.bureau.name, "户部");
+  assert.equal(payload.officialCareerView.assignmentSummary.activeCount, 1);
+  assert.equal(payload.officialCareerView.assignments[0].kind, "relief");
+  assert.equal(payload.officialCareerView.assessment.meritScore, payload.worldState.officialCareer.assessmentDossier.meritScore);
+  assert.ok(payload.officialCareer.events.some((event) => event.includes("[官场差遣]")));
 });

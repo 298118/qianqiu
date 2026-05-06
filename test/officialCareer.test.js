@@ -23,15 +23,36 @@ test("initial state carries an empty server-owned official career ledger", () =>
   const worldState = createInitialState({ playerName: "Tester" });
 
   assert.deepEqual(worldState.officialCareer, {
-    schemaVersion: 1,
+    schemaVersion: 2,
     tenureMonths: 0,
     reviewCycleMonths: 12,
     lastReviewTurn: null,
     lastReviewYear: null,
     currentPosting: "未授",
+    bureauId: null,
     careerHistory: [],
     pendingOutcome: null,
-    cooldowns: {}
+    cooldowns: {},
+    assignments: [],
+    assessmentDossier: {
+      cycleId: "1644-career",
+      meritScore: 0,
+      riskScore: 0,
+      lastUpdatedTurn: null,
+      notes: [],
+      pendingRecommendation: null
+    },
+    impeachmentProcedure: {
+      stage: "none",
+      sourceType: null,
+      sourceId: null,
+      openedTurn: null,
+      dueTurn: null,
+      risk: 0,
+      visibleNotice: "",
+      hiddenNotes: [],
+      lastUpdatedTurn: null
+    }
   });
   assert.equal(buildOfficialCareerView(worldState).active, false);
 });
@@ -63,14 +84,35 @@ test("official career state normalizes invalid legacy data", () => {
 
   ensureOfficialCareerState(worldState);
 
-  assert.equal(worldState.officialCareer.schemaVersion, 1);
+  assert.equal(worldState.officialCareer.schemaVersion, 2);
   assert.equal(worldState.officialCareer.tenureMonths, 600);
   assert.equal(worldState.officialCareer.reviewCycleMonths, 6);
   assert.equal(worldState.officialCareer.currentPosting, "候选观政");
+  assert.equal(worldState.officialCareer.bureauId, "ministry_personnel");
   assert.equal(worldState.officialCareer.careerHistory.length, 1);
   assert.equal(worldState.officialCareer.careerHistory[0].month, 12);
   assert.equal(worldState.officialCareer.cooldowns.promotion <= worldState.turnCount + 120, true);
+  assert.deepEqual(worldState.officialCareer.assignments, []);
+  assert.equal(worldState.officialCareer.assessmentDossier.meritScore, 30);
+  assert.equal(worldState.officialCareer.impeachmentProcedure.stage, "none");
   assert.deepEqual(normalizeOfficialCareerState(worldState), worldState.officialCareer);
+});
+
+test("official career normalization mirrors server officeTitle over stale legacy posting", () => {
+  const worldState = createInitialState({ role: "official", playerName: "Tester" });
+  worldState.player.officeTitle = "户部主事";
+  worldState.player.position = "户部主事";
+  worldState.officialCareer = {
+    schemaVersion: 1,
+    currentPosting: "翰林院庶吉士",
+    careerHistory: []
+  };
+
+  ensureOfficialCareerState(worldState);
+
+  assert.equal(worldState.officialCareer.schemaVersion, 2);
+  assert.equal(worldState.officialCareer.currentPosting, "户部主事");
+  assert.equal(worldState.officialCareer.bureauId, "ministry_revenue");
 });
 
 test("official career step appoints direct official starts without provider authority", () => {
@@ -154,4 +196,56 @@ test("official career step can form impeachment cases and punish severe risk", (
   assert.equal(punishmentState.player.role, "scholar");
   assert.equal(punishmentState.player.officeTitle, null);
   assert.equal(punishmentState.officialCareer.careerHistory.at(-1).type, "punishment");
+});
+
+test("official career step tracks assignments, assessment dossier, and safe player-facing view", () => {
+  const worldState = createInitialState({ role: "official", playerName: "Tester" });
+  Object.assign(worldState.player, {
+    officeTitle: "户部主事",
+    position: "户部主事",
+    performanceMerit: 44,
+    impeachmentRisk: 22
+  });
+  worldState.officialCareer.currentPosting = "户部主事";
+
+  const result = runOfficialCareerStep(worldState, "督办赈灾与赈银核销");
+  applyOfficialCareerResult(worldState, result);
+
+  assert.equal(worldState.officialCareer.schemaVersion, 2);
+  assert.equal(worldState.officialCareer.bureauId, "ministry_revenue");
+  assert.equal(worldState.officialCareer.assignments.length, 1);
+  assert.equal(worldState.officialCareer.assignments[0].kind, "relief");
+  assert.equal(worldState.officialCareer.assignments[0].hiddenNotes.length, 0);
+  assert.ok(worldState.officialCareer.assessmentDossier.meritScore > 44);
+  assert.ok(result.events.some((event) => event.includes("[官场差遣]")));
+
+  worldState.officialCareer.assignments[0].hiddenNotes = ["有人暗中遮掩亏空"];
+  const view = buildOfficialCareerView(worldState);
+  assert.equal(view.bureau.name, "户部");
+  assert.equal(view.assignmentSummary.activeCount, 1);
+  assert.equal(view.assignments[0].title, "赈银核销");
+  assert.equal(JSON.stringify(view).includes("遮掩亏空"), false);
+  assert.equal(view.assessment.meritScore, worldState.officialCareer.assessmentDossier.meritScore);
+});
+
+test("official career step opens impeachment procedure without exposing hidden notes", () => {
+  const worldState = createInitialState({ role: "official", playerName: "Tester" });
+  Object.assign(worldState.player, {
+    officeTitle: "监察御史",
+    position: "监察御史",
+    impeachmentRisk: 72,
+    cleanReputation: 66
+  });
+
+  const result = runOfficialCareerStep(worldState, "具疏弹劾贪墨官员并查账");
+  applyOfficialCareerResult(worldState, result);
+
+  assert.equal(worldState.officialCareer.impeachmentProcedure.stage, "risk_watch");
+  assert.ok(worldState.officialCareer.impeachmentProcedure.risk >= 72);
+  assert.ok(worldState.officialCareer.impeachmentProcedure.hiddenNotes.length > 0);
+  worldState.officialCareer.impeachmentProcedure.hiddenNotes.push("密札指向上官");
+  const view = buildOfficialCareerView(worldState);
+  assert.equal(view.procedureSummary.impeachmentStage, "risk_watch");
+  assert.match(view.procedureSummary.visibleNotice, /弹劾|风闻|台谏/);
+  assert.equal(JSON.stringify(view).includes("密札指向上官"), false);
 });

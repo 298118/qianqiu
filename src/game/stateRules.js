@@ -1,5 +1,6 @@
 const MAX_EVENT_HISTORY = 20;
 const FACTION_SCORE_RANGE = [0, 100];
+const { inferOfficeByTitle } = require("./officialCatalog");
 
 const NUMERIC_RANGES = {
   "year": [1, 9999],
@@ -99,6 +100,26 @@ function isPlainObject(value) {
   return value !== null && typeof value === "object" && !Array.isArray(value);
 }
 
+function normalizeOfficeGuardText(value) {
+  return typeof value === "string" ? value.trim().replace(/\s+/g, "") : "";
+}
+
+function looksLikeOfficialAppointment(value) {
+  const text = normalizeOfficeGuardText(value);
+  return /大学士|首辅|阁臣|军机|尚书|侍郎|郎中|员外郎|主事|御史|给事中|知县|知州|知府|同知|推官|庶吉士|编修|修撰|检讨|佥事|参议|布政使?|按察使?|总督|巡抚|道员|翰林|内阁|六部|都察院|候勘/.test(text);
+}
+
+function shouldApplyProviderPlayerPatch(worldState, key, value, allowServerOwnedPatchKeys) {
+  if (allowServerOwnedPatchKeys) return true;
+  if (key !== "position") return true;
+  if (worldState.player?.role !== "official") return true;
+  if (typeof value !== "string") return true;
+  // `position` remains a soft narrative field for providers, but obvious office
+  // titles must not become a back door around the server-owned `officeTitle`.
+  const normalized = normalizeOfficeGuardText(value);
+  return inferOfficeByTitle(normalized) === null && !looksLikeOfficialAppointment(normalized);
+}
+
 function applyStatePatch(worldState, statePatch, options = {}) {
   if (!isPlainObject(statePatch)) {
     return worldState;
@@ -125,6 +146,9 @@ function applyStatePatch(worldState, statePatch, options = {}) {
     if (!worldState.player) worldState.player = {};
     for (const key of allowedPlayerPatchKeys) {
       if (key in statePatch.player) {
+        if (!shouldApplyProviderPlayerPatch(worldState, key, statePatch.player[key], allowServerOwnedPatchKeys)) {
+          continue;
+        }
         worldState.player[key] = statePatch.player[key];
       }
     }

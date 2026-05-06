@@ -1,9 +1,20 @@
 const { NUMERIC_RANGES, clamp } = require("./stateRules");
 const { normalizeRelationshipLedger } = require("./relationships");
+const {
+  getOfficeLadder,
+  inferOfficeByTitle,
+  listOutpostCandidates,
+  listPromotionCandidates,
+  listTransferCandidates,
+  summarizeOfficeForPlayer
+} = require("./officialCatalog");
 
-const OFFICIAL_CAREER_SCHEMA_VERSION = 1;
+const OFFICIAL_CAREER_SCHEMA_VERSION = 2;
 const DEFAULT_REVIEW_CYCLE_MONTHS = 12;
 const MAX_CAREER_HISTORY = 8;
+const MAX_ASSIGNMENTS = 6;
+const MAX_ASSESSMENT_NOTES = 5;
+const MAX_HIDDEN_NOTES = 5;
 const MAX_EVENT_TEXT_LENGTH = 160;
 
 const SCHOLAR_ROLE_LABEL = "书生";
@@ -20,34 +31,31 @@ const OUTCOME_TYPES = new Set([
   "retention"
 ]);
 
-const POSTING_LADDER = [
-  "六部观政进士",
-  "翰林院庶吉士",
-  "翰林院编修",
-  "翰林院修撰",
-  "六部主事",
-  "监察御史",
-  "按察司佥事",
-  "知府",
-  "布政司参议",
-  "六部郎中",
-  "都察院佥都御史",
-  "六部侍郎"
-];
+const ASSIGNMENT_KINDS = new Set([
+  "relief",
+  "land_survey",
+  "case_review",
+  "riverworks",
+  "military_supply",
+  "salt_transport",
+  "exam_supervision",
+  "memorial_drafting",
+  "audit",
+  "personnel_review",
+  "routine_office"
+]);
 
-const TRANSFER_POSTINGS = [
-  "户部主事",
-  "礼部主事",
-  "都察院经历",
-  "翰林院检讨"
-];
-
-const OUTPOST_POSTINGS = [
-  "清河县知县",
-  "苏州府推官",
-  "湖广按察司佥事",
-  "河南府同知"
-];
+const ASSIGNMENT_STATUSES = new Set(["active", "submitted", "resolved", "expired", "failed"]);
+const ASSIGNMENT_SOURCE_TYPES = new Set(["superior", "bureau", "same_year", "censor", "local_petition", "self"]);
+const RECOMMENDATION_TYPES = new Set(["court_nomination", "transfer", "outpost", "mourning_leave", "restoration"]);
+const IMPEACHMENT_STAGES = new Set([
+  "none",
+  "risk_watch",
+  "memorial_filed",
+  "audit_open",
+  "discipline_pending",
+  "resolved"
+]);
 
 const ATTRIBUTE_LABELS = {
   "player.influence": "影响",
@@ -76,6 +84,14 @@ function cleanText(value, fallback = "", maxLength = MAX_EVENT_TEXT_LENGTH) {
   const trimmed = value.trim();
   if (!trimmed) return fallback;
   return trimmed.slice(0, maxLength);
+}
+
+function normalizeTextArray(value, limit = MAX_HIDDEN_NOTES, maxLength = MAX_EVENT_TEXT_LENGTH) {
+  if (!Array.isArray(value)) return [];
+  return value
+    .map((entry) => cleanText(entry, "", maxLength))
+    .filter(Boolean)
+    .slice(0, limit);
 }
 
 function currentTurn(worldState) {
@@ -138,9 +154,138 @@ function normalizeCooldowns(cooldowns, turn) {
   return normalized;
 }
 
+function normalizeEnum(value, allowed, fallback) {
+  return allowed.has(value) ? value : fallback;
+}
+
+function normalizeResolution(raw) {
+  if (!isPlainObject(raw)) return null;
+  const outcome = cleanText(raw.outcome, "", 40);
+  const summary = cleanText(raw.summary, "", MAX_EVENT_TEXT_LENGTH);
+  if (!outcome && !summary) return null;
+  return {
+    outcome: outcome || "记录",
+    summary: summary || outcome,
+    meritDelta: clampNumber(raw.meritDelta, -20, 20, 0),
+    riskDelta: clampNumber(raw.riskDelta, -20, 20, 0),
+    worldThreadHint: cleanText(raw.worldThreadHint, "", 80)
+  };
+}
+
+function normalizeAssignment(raw, worldState) {
+  if (!isPlainObject(raw)) return null;
+  const turn = currentTurn(worldState);
+  const kind = normalizeEnum(raw.kind, ASSIGNMENT_KINDS, "routine_office");
+  const title = cleanText(raw.title, "", 80) || assignmentTitleForKind(kind);
+  const inferredOffice = inferOfficeByTitle(raw.officeTitle || worldState?.player?.officeTitle || worldState?.officialCareer?.currentPosting);
+  const bureauId = cleanText(raw.bureauId, "", 64) || inferredOffice?.bureauId || null;
+
+  return {
+    id: cleanText(raw.id, `ASG-${String(turn).padStart(4, "0")}-${kind}`, 96),
+    title,
+    kind,
+    bureauId,
+    sourceType: normalizeEnum(raw.sourceType, ASSIGNMENT_SOURCE_TYPES, "bureau"),
+    sourceId: cleanText(raw.sourceId, "", 64) || bureauId || "official_office",
+    status: normalizeEnum(raw.status, ASSIGNMENT_STATUSES, "active"),
+    year: clampNumber(raw.year, 1, 9999, readTopLevelNumber(worldState, "year", 1644)),
+    month: clampNumber(raw.month, 1, 12, readTopLevelNumber(worldState, "month", 1)),
+    dueTurn: clampNumber(raw.dueTurn, turn, turn + 24, turn + 4),
+    progress: clampNumber(raw.progress, 0, 100, 0),
+    risk: clampNumber(raw.risk, 0, 100, 20),
+    publicStake: clampNumber(raw.publicStake, 0, 100, 40),
+    privatePressure: clampNumber(raw.privatePressure, 0, 100, 20),
+    visibleSummary: cleanText(raw.visibleSummary, "", MAX_EVENT_TEXT_LENGTH) || `${title}尚在办理。`,
+    hiddenNotes: normalizeTextArray(raw.hiddenNotes),
+    relatedContacts: normalizeTextArray(raw.relatedContacts, 5, 64),
+    relatedFactions: normalizeTextArray(raw.relatedFactions, 5, 64),
+    resolution: normalizeResolution(raw.resolution)
+  };
+}
+
+function normalizeAssignments(assignments, worldState) {
+  if (!Array.isArray(assignments)) return [];
+  return assignments
+    .map((assignment) => normalizeAssignment(assignment, worldState))
+    .filter(Boolean)
+    .slice(-MAX_ASSIGNMENTS);
+}
+
+function normalizeAssessmentDossier(raw, worldState) {
+  const source = isPlainObject(raw) ? raw : {};
+  const turn = currentTurn(worldState);
+  const year = readTopLevelNumber(worldState, "year", 1644);
+  const playerMerit = readPlayerNumber(worldState, "performanceMerit", 0);
+  const playerRisk = readPlayerNumber(worldState, "impeachmentRisk", 0);
+  const pendingRecommendation = RECOMMENDATION_TYPES.has(source.pendingRecommendation)
+    ? source.pendingRecommendation
+    : null;
+
+  return {
+    cycleId: cleanText(source.cycleId, `${year}-career`, 64),
+    meritScore: clampNumber(source.meritScore, 0, 100, playerMerit),
+    riskScore: clampNumber(source.riskScore, 0, 100, playerRisk),
+    lastUpdatedTurn: source.lastUpdatedTurn === null || source.lastUpdatedTurn === undefined
+      ? null
+      : clampNumber(source.lastUpdatedTurn, 0, Number.MAX_SAFE_INTEGER, turn),
+    notes: normalizeTextArray(source.notes, MAX_ASSESSMENT_NOTES),
+    pendingRecommendation
+  };
+}
+
+function normalizeImpeachmentProcedure(raw, worldState) {
+  const source = isPlainObject(raw) ? raw : {};
+  const turn = currentTurn(worldState);
+  const stage = normalizeEnum(source.stage, IMPEACHMENT_STAGES, "none");
+  return {
+    stage,
+    sourceType: cleanText(source.sourceType, "", 40) || null,
+    sourceId: cleanText(source.sourceId, "", 64) || null,
+    openedTurn: source.openedTurn === null || source.openedTurn === undefined
+      ? null
+      : clampNumber(source.openedTurn, 0, Number.MAX_SAFE_INTEGER, turn),
+    dueTurn: source.dueTurn === null || source.dueTurn === undefined
+      ? null
+      : clampNumber(source.dueTurn, 0, turn + 24, turn + 4),
+    risk: clampNumber(source.risk, 0, 100, readPlayerNumber(worldState, "impeachmentRisk", 0)),
+    visibleNotice: cleanText(source.visibleNotice, "", MAX_EVENT_TEXT_LENGTH),
+    hiddenNotes: normalizeTextArray(source.hiddenNotes),
+    lastUpdatedTurn: source.lastUpdatedTurn === null || source.lastUpdatedTurn === undefined
+      ? null
+      : clampNumber(source.lastUpdatedTurn, 0, Number.MAX_SAFE_INTEGER, turn)
+  };
+}
+
+function assignmentTitleForKind(kind) {
+  const titles = {
+    relief: "赈务核销",
+    land_survey: "清丈田亩",
+    case_review: "案牍复核",
+    riverworks: "河工督修",
+    military_supply: "军需核算",
+    salt_transport: "盐漕核算",
+    exam_supervision: "科场监临",
+    memorial_drafting: "奏疏文案",
+    audit: "弹章查核",
+    personnel_review: "考成复核",
+    routine_office: "署中常务"
+  };
+  return titles[kind] || "署中差遣";
+}
+
+function inferBureauId(worldState, source = {}) {
+  const title = worldState?.player?.officeTitle || source.currentPosting || worldState?.player?.position;
+  const office = inferOfficeByTitle(title);
+  if (office?.bureauId) return office.bureauId;
+  return cleanText(source.bureauId, "", 64) || null;
+}
+
 function getCurrentPosting(worldState, source = {}) {
+  if (worldState?.player?.role === "official" && worldState?.player?.officeTitle) {
+    return worldState.player.officeTitle;
+  }
   const sourcePosting = cleanText(source.currentPosting, "", 80);
-  if (sourcePosting && !(sourcePosting === "未授" && worldState?.player?.role === "official" && worldState?.player?.officeTitle)) {
+  if (sourcePosting) {
     return sourcePosting;
   }
   return worldState?.player?.officeTitle || worldState?.player?.position || "未授";
@@ -164,9 +309,13 @@ function normalizeOfficialCareerState(worldState = {}) {
       ? null
       : clampNumber(source.lastReviewYear, 1, 9999, readTopLevelNumber(worldState, "year", 1644)),
     currentPosting: getCurrentPosting(worldState, source),
+    bureauId: inferBureauId(worldState, source),
     careerHistory: history,
     pendingOutcome: normalizeHistoryEntry(source.pendingOutcome) || null,
-    cooldowns: normalizeCooldowns(source.cooldowns, turn)
+    cooldowns: normalizeCooldowns(source.cooldowns, turn),
+    assignments: normalizeAssignments(source.assignments, worldState),
+    assessmentDossier: normalizeAssessmentDossier(source.assessmentDossier, worldState),
+    impeachmentProcedure: normalizeImpeachmentProcedure(source.impeachmentProcedure, worldState)
   };
 }
 
@@ -179,22 +328,29 @@ function ensureOfficialCareerState(worldState) {
 function getPostingIndex(title) {
   const normalized = cleanText(title, "", 80);
   if (!normalized) return -1;
-  const exact = POSTING_LADDER.indexOf(normalized);
+  const ladder = getOfficeLadder().map((office) => office.title);
+  const exact = ladder.indexOf(normalized);
   if (exact >= 0) return exact;
-  return POSTING_LADDER.findIndex((posting) => normalized.includes(posting) || posting.includes(normalized));
+  return ladder.findIndex((posting) => normalized.includes(posting) || posting.includes(normalized));
 }
 
 function nextPosting(title) {
+  const candidate = listPromotionCandidates(title, { limit: 1 })[0];
+  if (candidate?.title) return candidate.title;
+  const ladder = getOfficeLadder().map((office) => office.title);
   const index = getPostingIndex(title);
-  return POSTING_LADDER[Math.min(POSTING_LADDER.length - 1, Math.max(0, index) + 1)];
+  return ladder[Math.min(ladder.length - 1, Math.max(0, index) + 1)] || "六部观政进士";
 }
 
 function previousPosting(title) {
+  const ladder = getOfficeLadder().map((office) => office.title);
   const index = getPostingIndex(title);
-  return POSTING_LADDER[Math.max(0, index <= 0 ? 0 : index - 1)];
+  return ladder[Math.max(0, index <= 0 ? 0 : index - 1)] || "六部观政进士";
 }
 
-function pickIndexedPosting(list, worldState) {
+function pickIndexedPosting(candidates, worldState, fallback = "六部观政进士") {
+  const list = candidates.map((office) => office.title || office).filter(Boolean);
+  if (!list.length) return fallback;
   const index = Math.abs((readTopLevelNumber(worldState, "year", 1644) + currentTurn(worldState))) % list.length;
   return list[index];
 }
@@ -208,6 +364,7 @@ function readLedgerScore(worldState, targetType, targetId) {
 }
 
 function calculateCareerScores(worldState = {}) {
+  const career = normalizeOfficialCareerState(worldState);
   const superiorFavor = readPlayerNumber(worldState, "superiorFavor", 0);
   const peerNetwork = readPlayerNumber(worldState, "peerNetwork", 0);
   const performanceMerit = readPlayerNumber(worldState, "performanceMerit", 0);
@@ -220,6 +377,16 @@ function calculateCareerScores(worldState = {}) {
   const superiorRelationship = readLedgerScore(worldState, "character", "C01");
   const scholarOfficialRelationship = readLedgerScore(worldState, "faction", "scholarOfficials");
   const relationshipBoost = Math.round((superiorRelationship + scholarOfficialRelationship) / 10);
+  const activeAssignments = career.assignments.filter((assignment) => assignment.status === "active" || assignment.status === "submitted");
+  const assignmentMeritBoost = activeAssignments.length
+    ? Math.round(activeAssignments.reduce((sum, assignment) => sum + assignment.progress - assignment.risk * 0.35, 0) / activeAssignments.length / 10)
+    : 0;
+  const assignmentRiskBoost = activeAssignments.length
+    ? Math.round(activeAssignments.reduce((sum, assignment) => sum + assignment.risk + assignment.privatePressure * 0.35, 0) / activeAssignments.length / 12)
+    : 0;
+  const procedureRiskBoost = career.impeachmentProcedure.stage === "none"
+    ? 0
+    : Math.round(career.impeachmentProcedure.risk / 9);
 
   const careerScore = clampNumber(
     superiorFavor * 0.22 +
@@ -228,7 +395,8 @@ function calculateCareerScores(worldState = {}) {
     promotionProspect * 0.22 +
     cleanReputation * 0.08 +
     influence * 0.06 +
-    relationshipBoost,
+    relationshipBoost +
+    assignmentMeritBoost,
     0,
     100,
     0
@@ -238,7 +406,9 @@ function calculateCareerScores(worldState = {}) {
     impeachmentRisk * 0.55 +
     (100 - cleanReputation) * 0.2 +
     (100 - integrity) * 0.15 +
-    corruption * 0.1,
+    corruption * 0.1 +
+    assignmentRiskBoost +
+    procedureRiskBoost,
     0,
     100,
     0
@@ -334,7 +504,7 @@ function classifyOfficialCareerOutcome(worldState, reason, scores) {
     return {
       type: "outpost",
       label: "外放",
-      officeTitleAfter: pickIndexedPosting(OUTPOST_POSTINGS, worldState),
+      officeTitleAfter: pickIndexedPosting(listOutpostCandidates(player.officeTitle || player.position), worldState, "知县"),
       reason: "朝中认为清望尚可，宜外放地方以试实际抚治。"
     };
   }
@@ -343,7 +513,7 @@ function classifyOfficialCareerOutcome(worldState, reason, scores) {
     return {
       type: "transfer",
       label: "转任",
-      officeTitleAfter: pickIndexedPosting(TRANSFER_POSTINGS, worldState),
+      officeTitleAfter: pickIndexedPosting(listTransferCandidates(player.officeTitle || player.position), worldState, "户部主事"),
       reason: "同年与部曹互相递话，调任他署以拓公事资历。"
     };
   }
@@ -553,6 +723,367 @@ function createHistoryEntry(worldState, career, outcome) {
   };
 }
 
+function classifyOfficialAction(input = "") {
+  const text = cleanText(input, "", 240);
+  if (!text) return null;
+
+  if (/丁忧|守制|奔丧/.test(text)) {
+    return {
+      type: "mourning_leave",
+      kind: "personnel_review",
+      title: "丁忧去留具报",
+      bureauId: "ministry_personnel",
+      progressDelta: 20,
+      riskDelta: 4,
+      recommendation: "mourning_leave",
+      note: "丁忧奏报会暂停仕途节奏，保留清望也可能错失官缺。"
+    };
+  }
+
+  if (/起复|复官|召回|复任/.test(text)) {
+    return {
+      type: "restoration",
+      kind: "personnel_review",
+      title: "起复候议",
+      bureauId: "ministry_personnel",
+      progressDelta: 24,
+      riskDelta: -3,
+      recommendation: "restoration",
+      note: "起复须有上官保结与旧案清楚，不能由一封来函即定。"
+    };
+  }
+
+  if (/弹劾|参劾|纠举|御史|贪官|贪墨官|劾奏|奏劾|查参|查账/.test(text)) {
+    return {
+      type: "impeachment",
+      kind: "audit",
+      title: "弹章查核",
+      bureauId: "censorate",
+      progressDelta: 26,
+      riskDelta: 14,
+      procedureStage: "memorial_filed",
+      note: "弹章入台，清议与反噬会同时累积。"
+    };
+  }
+
+  if (/考成|考绩|磨勘|铨选|荐举|升迁|迁转|功过|吏部|廷推/.test(text)) {
+    return {
+      type: "assessment",
+      kind: "personnel_review",
+      title: "考成复核",
+      bureauId: "ministry_personnel",
+      progressDelta: 22,
+      riskDelta: -2,
+      recommendation: /廷推|荐举|升迁/.test(text) ? "court_nomination" : null,
+      note: "考成材料入卷，只能增加部议凭据，不能直接改官。"
+    };
+  }
+
+  if (/赈济|赈灾|赈银|荒政|灾/.test(text)) {
+    return {
+      type: "assignment",
+      kind: "relief",
+      title: "赈银核销",
+      bureauId: "ministry_revenue",
+      progressDelta: 24,
+      riskDelta: 8,
+      note: "赈务牵连钱粮、民心和亏空，功过都会进入考成。"
+    };
+  }
+
+  if (/清丈|田亩|地亩|鱼鳞册|赋役/.test(text)) {
+    return {
+      type: "assignment",
+      kind: "land_survey",
+      title: "清丈田亩",
+      bureauId: "ministry_revenue",
+      progressDelta: 22,
+      riskDelta: 10,
+      note: "清丈会触动士绅与税粮旧弊。"
+    };
+  }
+
+  if (/断案|审案|平讼|疑狱|刑名|狱/.test(text)) {
+    return {
+      type: "assignment",
+      kind: "case_review",
+      title: "案牍复核",
+      bureauId: "ministry_justice",
+      progressDelta: 25,
+      riskDelta: 6,
+      note: "刑名差事重在旧例、供词与民情兼顾。"
+    };
+  }
+
+  if (/河工|河堤|水利|修渠|工料/.test(text)) {
+    return {
+      type: "assignment",
+      kind: "riverworks",
+      title: "河工督修",
+      bureauId: "ministry_works",
+      progressDelta: 24,
+      riskDelta: 9,
+      note: "河工既耗钱粮，也最易暴露工料弊端。"
+    };
+  }
+
+  if (/军需|边饷|兵饷|军粮|战报|边报/.test(text)) {
+    return {
+      type: "assignment",
+      kind: "military_supply",
+      title: "军需核算",
+      bureauId: "ministry_war",
+      progressDelta: 22,
+      riskDelta: 9,
+      note: "军需差事牵连边镇、饷银和战报虚实。"
+    };
+  }
+
+  if (/盐漕|漕运|盐课|运河|仓场/.test(text)) {
+    return {
+      type: "assignment",
+      kind: "salt_transport",
+      title: "盐漕核算",
+      bureauId: "ministry_revenue",
+      progressDelta: 22,
+      riskDelta: 11,
+      note: "盐漕一线有大利，也有大弊。"
+    };
+  }
+
+  if (/科场|监临|礼部|乡试|会试/.test(text)) {
+    return {
+      type: "assignment",
+      kind: "exam_supervision",
+      title: "科场监临",
+      bureauId: "ministry_rites",
+      progressDelta: 20,
+      riskDelta: 5,
+      note: "科场差事关乎士林清议。"
+    };
+  }
+
+  if (/奏疏|上疏|条陈|封事|文书|制诰|修史|讲章/.test(text)) {
+    return {
+      type: "memorial",
+      kind: "memorial_drafting",
+      title: "奏疏文案",
+      bureauId: "hanlin_academy",
+      progressDelta: 18,
+      riskDelta: 3,
+      note: "奏疏文案能累积清望，也会暴露立场。"
+    };
+  }
+
+  if (/调任|转任|迁调/.test(text)) {
+    return {
+      type: "transfer_request",
+      kind: "personnel_review",
+      title: "迁转呈议",
+      bureauId: "ministry_personnel",
+      progressDelta: 18,
+      riskDelta: 2,
+      recommendation: "transfer",
+      note: "迁转呈议只入部议，不直接授官。"
+    };
+  }
+
+  if (/外放|出守|知县|知府|地方/.test(text)) {
+    return {
+      type: "outpost_request",
+      kind: "personnel_review",
+      title: "外放呈议",
+      bureauId: "ministry_personnel",
+      progressDelta: 18,
+      riskDelta: 2,
+      recommendation: "outpost",
+      note: "外放需看官缺、清望与地方风险。"
+    };
+  }
+
+  return null;
+}
+
+function findMatchingAssignment(assignments, action) {
+  return assignments.find((assignment) =>
+    assignment.kind === action.kind &&
+    (assignment.status === "active" || assignment.status === "submitted")
+  );
+}
+
+function createAssignment(worldState, action) {
+  const turn = currentTurn(worldState);
+  const progress = clampNumber(action.progressDelta, 0, 100, 18);
+  const risk = clampNumber(20 + action.riskDelta, 0, 100, 22);
+  return normalizeAssignment({
+    id: `ASG-${String(turn).padStart(4, "0")}-${action.kind}`,
+    title: action.title,
+    kind: action.kind,
+    bureauId: action.bureauId,
+    sourceType: action.type === "impeachment" ? "censor" : "bureau",
+    sourceId: action.bureauId,
+    status: progress >= 80 ? "submitted" : "active",
+    year: readTopLevelNumber(worldState, "year", 1644),
+    month: readTopLevelNumber(worldState, "month", 1),
+    dueTurn: turn + 4,
+    progress,
+    risk,
+    publicStake: action.type === "impeachment" ? 55 : 45,
+    privatePressure: action.type === "impeachment" ? 45 : 25,
+    visibleSummary: action.note
+  }, worldState);
+}
+
+function updateAssignments(worldState, assignments, action) {
+  if (!action?.kind) return { assignments, event: null, assignment: null };
+  const nextAssignments = assignments.map((assignment) => ({ ...assignment }));
+  let assignment = findMatchingAssignment(nextAssignments, action);
+  if (!assignment) {
+    assignment = createAssignment(worldState, action);
+    nextAssignments.push(assignment);
+  } else {
+    assignment.progress = clampNumber(assignment.progress + action.progressDelta, 0, 100, assignment.progress);
+    assignment.risk = clampNumber(assignment.risk + action.riskDelta, 0, 100, assignment.risk);
+    assignment.privatePressure = clampNumber(assignment.privatePressure + Math.max(0, action.riskDelta), 0, 100, assignment.privatePressure);
+    assignment.visibleSummary = action.note || assignment.visibleSummary;
+    if (assignment.progress >= 85) assignment.status = "submitted";
+  }
+
+  return {
+    assignments: nextAssignments.slice(-MAX_ASSIGNMENTS),
+    event: `[官场差遣] ${assignment.title}：${assignment.visibleSummary}`,
+    assignment
+  };
+}
+
+function updateAssessmentDossier(worldState, dossier, action, assignment) {
+  if (!action) return dossier;
+  const turn = currentTurn(worldState);
+  const meritDelta = action.type === "impeachment" ? 3 : Math.max(1, Math.round((action.progressDelta || 0) / 5));
+  const riskDelta = Math.max(-5, Math.min(10, action.riskDelta || 0));
+  const baseMerit = Math.max(dossier.meritScore, readPlayerNumber(worldState, "performanceMerit", 0));
+  const baseRisk = Math.max(dossier.riskScore, readPlayerNumber(worldState, "impeachmentRisk", 0));
+  const note = assignment
+    ? `${assignment.title}进度${assignment.progress}，风险${assignment.risk}。`
+    : action.note;
+  return normalizeAssessmentDossier({
+    ...dossier,
+    meritScore: baseMerit + meritDelta,
+    riskScore: baseRisk + riskDelta,
+    lastUpdatedTurn: turn,
+    notes: [note, ...(dossier.notes || [])].filter(Boolean).slice(0, MAX_ASSESSMENT_NOTES),
+    pendingRecommendation: action.recommendation || dossier.pendingRecommendation
+  }, worldState);
+}
+
+function nextImpeachmentStage(currentStage, action) {
+  if (action?.procedureStage) {
+    if (currentStage === "none") return "risk_watch";
+    if (currentStage === "risk_watch") return action.procedureStage;
+    if (currentStage === "memorial_filed") return "audit_open";
+    return currentStage;
+  }
+  return currentStage;
+}
+
+function updateImpeachmentProcedure(worldState, procedure, action) {
+  const risk = readPlayerNumber(worldState, "impeachmentRisk", 0);
+  if (!action && risk < 70 && procedure.stage === "none") return procedure;
+  const turn = currentTurn(worldState);
+  const stage = action?.type === "impeachment"
+    ? nextImpeachmentStage(procedure.stage, action)
+    : (risk >= 70 && procedure.stage === "none" ? "risk_watch" : procedure.stage);
+  if (stage === procedure.stage && !action) return procedure;
+
+  const visibleNotice = action?.type === "impeachment"
+    ? "台谏弹章已有风声，查核未定。"
+    : "清议间已有弹劾风闻。";
+  return normalizeImpeachmentProcedure({
+    ...procedure,
+    stage,
+    sourceType: action?.type === "impeachment" ? "censor" : procedure.sourceType,
+    sourceId: action?.type === "impeachment" ? "censorate" : procedure.sourceId,
+    openedTurn: procedure.openedTurn ?? turn,
+    dueTurn: procedure.dueTurn ?? turn + 4,
+    risk: risk + (action?.riskDelta || 0),
+    visibleNotice,
+    hiddenNotes: [
+      action?.note,
+      ...(procedure.hiddenNotes || [])
+    ].filter(Boolean).slice(0, MAX_HIDDEN_NOTES),
+    lastUpdatedTurn: turn
+  }, worldState);
+}
+
+function applyOutcomeToDomainState(worldState, career, outcome, historyEntry) {
+  const office = inferOfficeByTitle(historyEntry.officeTitleAfter || outcome.officeTitleAfter || historyEntry.officeTitleBefore);
+  const next = {
+    ...career,
+    bureauId: office?.bureauId || career.bureauId
+  };
+
+  if (outcome.type === "promotion" || outcome.type === "transfer" || outcome.type === "outpost" || outcome.type === "appointment") {
+    next.assessmentDossier = normalizeAssessmentDossier({
+      ...career.assessmentDossier,
+      meritScore: Math.max(40, career.assessmentDossier.meritScore - 16),
+      riskScore: Math.max(0, career.assessmentDossier.riskScore - 4),
+      pendingRecommendation: null,
+      notes: [`${outcome.label}已入履历：${historyEntry.officeTitleAfter || "无官"}`, ...career.assessmentDossier.notes].slice(0, MAX_ASSESSMENT_NOTES),
+      lastUpdatedTurn: currentTurn(worldState)
+    }, worldState);
+  }
+
+  if (outcome.type === "impeachment") {
+    next.impeachmentProcedure = normalizeImpeachmentProcedure({
+      ...career.impeachmentProcedure,
+      stage: "discipline_pending",
+      risk: Math.max(career.impeachmentProcedure.risk, 70),
+      visibleNotice: "弹劾成案，部议候勘。",
+      lastUpdatedTurn: currentTurn(worldState)
+    }, worldState);
+  } else if (outcome.type === "punishment" || outcome.type === "retention" || outcome.type === "demotion") {
+    next.impeachmentProcedure = normalizeImpeachmentProcedure({
+      ...career.impeachmentProcedure,
+      stage: outcome.type === "punishment" ? "resolved" : career.impeachmentProcedure.stage,
+      visibleNotice: outcome.type === "punishment" ? "处分已定。" : career.impeachmentProcedure.visibleNotice,
+      lastUpdatedTurn: currentTurn(worldState)
+    }, worldState);
+  }
+
+  return next;
+}
+
+function buildOfficialNetworkSummary(worldState) {
+  const ledger = normalizeRelationshipLedger(worldState.relationshipLedger, worldState);
+  const visibleCharacters = Object.values(ledger.characters || {}).filter((entry) => entry.visible !== false);
+  const visibleFactions = Object.values(ledger.factions || {}).filter((entry) => entry.visible !== false);
+  const playerConnections = Array.isArray(worldState?.player?.connections) ? worldState.player.connections : [];
+  const sameYears = visibleCharacters.filter((entry) =>
+    /同年|同榜|翰林|同僚/.test(`${entry.name || ""}${entry.role || ""}${entry.networkSource || ""}`)
+  ).length + playerConnections.filter((entry) => /同年|同榜|翰林/.test(entry)).length;
+  const superiors = visibleCharacters.filter((entry) =>
+    /上官|给事|侍郎|尚书|督抚|司官/.test(`${entry.name || ""}${entry.role || ""}${entry.networkSource || ""}`)
+  ).length;
+  const rivals = visibleCharacters.filter((entry) =>
+    entry.resentment >= 25 || /政敌|弹劾|台谏|攻讦/.test(`${entry.stance || ""}${entry.recentIntent || ""}${entry.note || ""}`)
+  ).length;
+  const censors = visibleCharacters.filter((entry) =>
+    /御史|台谏|风宪|察院/.test(`${entry.name || ""}${entry.role || ""}${entry.networkSource || ""}`)
+  ).length + visibleFactions.filter((entry) => /都察|台谏|士大夫/.test(`${entry.name || ""}${entry.id || ""}`)).length;
+  const hiddenNotice = [
+    ...Object.values(ledger.characters || {}),
+    ...Object.values(ledger.factions || {})
+  ].some((entry) => entry.visible === false);
+
+  return {
+    superiors,
+    sameYears,
+    rivals,
+    censors,
+    hiddenNotice
+  };
+}
+
 function buildOfficialCareerView(worldState = {}) {
   const career = normalizeOfficialCareerState(worldState);
   const player = worldState.player || {};
@@ -562,19 +1093,76 @@ function buildOfficialCareerView(worldState = {}) {
   const reviewCycleMonths = career.reviewCycleMonths || DEFAULT_REVIEW_CYCLE_MONTHS;
   const monthsIntoCycle = active ? career.tenureMonths % reviewCycleMonths : 0;
   const nextReviewInMonths = active ? Math.max(0, reviewCycleMonths - monthsIntoCycle) : null;
+  const posting = active
+    ? player.officeTitle || player.position || career.currentPosting || "候选观政"
+    : null;
+  const office = active ? inferOfficeByTitle(posting) : null;
+  const officeSummary = active ? summarizeOfficeForPlayer(posting) : null;
+  const activeAssignments = career.assignments.filter((assignment) => assignment.status === "active" || assignment.status === "submitted");
+  const urgentAssignments = activeAssignments.filter((assignment) => assignment.dueTurn <= currentTurn(worldState) + 1);
 
   return {
     schemaVersion: OFFICIAL_CAREER_SCHEMA_VERSION,
     generatedAtTurn: currentTurn(worldState),
     active,
-    currentPosting: active
-      ? player.officeTitle || player.position || career.currentPosting || "候选观政"
+    currentPosting: posting,
+    bureau: active && (office || officeSummary)
+      ? {
+        id: office?.bureauId || career.bureauId || null,
+        name: officeSummary?.bureau || office?.bureauName || "未明衙门",
+        officeTitle: officeSummary?.title || posting,
+        duties: officeSummary?.duties || office?.duties || [],
+        summary: officeSummary?.text || ""
+      }
       : null,
     tenureMonths: active ? career.tenureMonths : 0,
     reviewCycleMonths,
     nextReviewInMonths: active && nextReviewInMonths === reviewCycleMonths ? reviewCycleMonths : nextReviewInMonths,
     careerScore: scores.careerScore,
     riskScore: scores.riskScore,
+    assignmentSummary: active
+      ? {
+        activeCount: activeAssignments.length,
+        urgentCount: urgentAssignments.length,
+        latestTitle: activeAssignments.at(-1)?.title || null
+      }
+      : null,
+    assignments: active
+      ? activeAssignments.map((assignment) => ({
+        id: assignment.id,
+        title: assignment.title,
+        kind: assignment.kind,
+        bureauId: assignment.bureauId,
+        status: assignment.status,
+        dueTurn: assignment.dueTurn,
+        progress: assignment.progress,
+        risk: assignment.risk,
+        publicStake: assignment.publicStake,
+        privatePressure: assignment.privatePressure,
+        visibleSummary: assignment.visibleSummary
+      }))
+      : [],
+    assessment: active
+      ? {
+        cycleId: career.assessmentDossier.cycleId,
+        meritScore: career.assessmentDossier.meritScore,
+        riskScore: career.assessmentDossier.riskScore,
+        pendingRecommendation: career.assessmentDossier.pendingRecommendation,
+        nextReviewInMonths: active && nextReviewInMonths === reviewCycleMonths ? reviewCycleMonths : nextReviewInMonths,
+        notes: career.assessmentDossier.notes
+      }
+      : null,
+    networkSummary: active
+      ? buildOfficialNetworkSummary(worldState)
+      : null,
+    procedureSummary: active
+      ? {
+        impeachmentStage: career.impeachmentProcedure.stage,
+        visibleNotice: career.impeachmentProcedure.visibleNotice,
+        risk: career.impeachmentProcedure.risk,
+        dueTurn: career.impeachmentProcedure.dueTurn
+      }
+      : null,
     pendingReview: active && (
       !player.officeTitle ||
       scores.impeachmentRisk >= 80 ||
@@ -596,6 +1184,28 @@ function summarizeOfficialCareerForPrompt(worldState = {}) {
     nextReviewInMonths: view.nextReviewInMonths,
     careerScore: view.careerScore,
     riskScore: view.riskScore,
+    bureau: view.bureau
+      ? {
+        name: view.bureau.name,
+        duties: view.bureau.duties
+      }
+      : null,
+    assignments: (view.assignments || []).map((assignment) => ({
+      title: assignment.title,
+      status: assignment.status,
+      progress: assignment.progress,
+      risk: assignment.risk,
+      visibleSummary: assignment.visibleSummary
+    })).slice(0, 3),
+    assessment: view.assessment
+      ? {
+        meritScore: view.assessment.meritScore,
+        riskScore: view.assessment.riskScore,
+        pendingRecommendation: view.assessment.pendingRecommendation,
+        notes: view.assessment.notes.slice(0, 3)
+      }
+      : null,
+    procedureSummary: view.procedureSummary,
     lastOutcome: view.lastOutcome
       ? {
         type: view.lastOutcome.type,
@@ -606,7 +1216,7 @@ function summarizeOfficialCareerForPrompt(worldState = {}) {
   };
 }
 
-function runOfficialCareerStep(worldState = {}) {
+function runOfficialCareerStep(worldState = {}, input = "") {
   const result = {
     statePatch: {},
     attributeChanges: [],
@@ -629,14 +1239,30 @@ function runOfficialCareerStep(worldState = {}) {
   }
 
   const nextTenureMonths = career.tenureMonths + 1;
+  const action = classifyOfficialAction(input);
+  const assignmentUpdate = updateAssignments(worldState, career.assignments, action);
+  const nextAssessmentDossier = updateAssessmentDossier(
+    worldState,
+    career.assessmentDossier,
+    action,
+    assignmentUpdate.assignment
+  );
+  const nextImpeachmentProcedure = updateImpeachmentProcedure(worldState, career.impeachmentProcedure, action);
   const scores = calculateCareerScores(worldState);
   const reviewReason = getReviewReason(worldState, career, scores, nextTenureMonths);
   const nextCareer = {
     ...career,
     tenureMonths: nextTenureMonths,
     currentPosting: worldState.player.officeTitle || worldState.player.position || career.currentPosting,
+    bureauId: inferBureauId(worldState, career),
+    assignments: assignmentUpdate.assignments,
+    assessmentDossier: nextAssessmentDossier,
+    impeachmentProcedure: nextImpeachmentProcedure,
     pendingOutcome: null
   };
+  if (assignmentUpdate.event) {
+    result.events.push(assignmentUpdate.event);
+  }
 
   if (reviewReason) {
     const outcome = classifyOfficialCareerOutcome(worldState, reviewReason, scores);
@@ -653,12 +1279,12 @@ function runOfficialCareerStep(worldState = {}) {
       ...career.cooldowns,
       [outcome.type]: currentTurn(worldState) + 6
     };
+    Object.assign(nextCareer, applyOutcomeToDomainState(worldState, nextCareer, outcome, historyEntry));
 
     result.statePatch.player = playerPatch;
     result.relationshipChanges = buildRelationshipChanges(worldState, outcome);
     result.outcome = historyEntry;
-    result.events = [`[官场结算] ${worldState.player.name}${outcome.label}：${outcome.reason}`];
-    result.summary = result.events.join(" ");
+    result.events.push(`[官场结算] ${worldState.player.name}${outcome.label}：${outcome.reason}`);
   }
 
   result.statePatch.officialCareer = normalizeOfficialCareerState({
@@ -666,6 +1292,7 @@ function runOfficialCareerStep(worldState = {}) {
     officialCareer: nextCareer
   });
   result.attributeChanges = buildAttributeChanges(beforeState, result.statePatch);
+  result.summary = result.events.join(" ");
   return result;
 }
 

@@ -186,7 +186,7 @@ async function finalizeTurn(worldState, result, input) {
   });
   const longTermRelationshipChanges = applyRelationshipChanges(worldState, longTermEvents.relationshipChanges);
 
-  const officialCareer = runOfficialCareerStep(worldState);
+  const officialCareer = runOfficialCareerStep(worldState, input);
   applyStatePatch(worldState, officialCareer.statePatch, {
     incrementTurnCount: false,
     allowServerOwnedPatchKeys: true

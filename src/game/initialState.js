@@ -217,15 +217,36 @@ function createInitialState(input = {}) {
     },
     roleWorldCoupling: createInitialRoleWorldCouplingState(),
     officialCareer: {
-      schemaVersion: 1,
+      schemaVersion: 2,
       tenureMonths: 0,
       reviewCycleMonths: 12,
       lastReviewTurn: null,
       lastReviewYear: null,
       currentPosting: role === "official" ? ROLE_STAT_DEFAULTS.official.position : "未授",
+      bureauId: role === "official" ? "ministry_personnel" : null,
       careerHistory: [],
       pendingOutcome: null,
-      cooldowns: {}
+      cooldowns: {},
+      assignments: [],
+      assessmentDossier: {
+        cycleId: `${year}-career`,
+        meritScore: role === "official" ? ROLE_STAT_DEFAULTS.official.performanceMerit : 0,
+        riskScore: role === "official" ? ROLE_STAT_DEFAULTS.official.impeachmentRisk : 0,
+        lastUpdatedTurn: null,
+        notes: [],
+        pendingRecommendation: null
+      },
+      impeachmentProcedure: {
+        stage: "none",
+        sourceType: null,
+        sourceId: null,
+        openedTurn: null,
+        dueTurn: null,
+        risk: role === "official" ? ROLE_STAT_DEFAULTS.official.impeachmentRisk : 0,
+        visibleNotice: "",
+        hiddenNotes: [],
+        lastUpdatedTurn: null
+      }
     },
     setup: {
       background: input.background || "",

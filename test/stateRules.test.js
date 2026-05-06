@@ -100,6 +100,32 @@ test("ordinary state patches preserve server-owned exam and narrative fields", (
   assert.equal(worldState.turnCount, 1);
 });
 
+test("ordinary official patches cannot use position as a hidden office appointment", () => {
+  const worldState = createInitialState({ playerName: "Tester", role: "official" });
+  worldState.player.officeTitle = "户部主事";
+  worldState.player.position = "户部主事";
+
+  for (const forgedPosition of ["内阁大学士", "内 阁 大 学 士", "首辅", "军机大臣", "尚 书"]) {
+    applyStatePatch(worldState, {
+      player: {
+        position: forgedPosition,
+        performanceMerit: 44
+      }
+    });
+
+    assert.equal(worldState.player.position, "户部主事");
+    assert.equal(worldState.player.performanceMerit, 44);
+  }
+
+  applyStatePatch(worldState, {
+    player: {
+      position: "署中谨慎观政"
+    }
+  });
+
+  assert.equal(worldState.player.position, "署中谨慎观政");
+});
+
 test("applyStatePatch can apply server follow-up patches without incrementing turn count", () => {
   const worldState = createInitialState({ playerName: "Tester" });
 

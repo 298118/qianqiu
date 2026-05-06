@@ -52,7 +52,8 @@ Important route ownership:
 - `src/game/relationships.js` owns NPC/faction relationship ledger creation, normalization, legacy backfill, compact prompt summaries, and the S32.1/S32.2 player-facing relationship inspection view. Visible-only summaries filter hidden contacts, factions, and hidden-entry notes before prompt/UI exposure.
 - `src/game/activeRequests.js` owns the S32.3 server-scheduled active NPC/faction request loop. Providers may suggest narrative and relationship consequences, but they do not create, replace, resolve, or expire `worldState.activeNpcRequest`.
 - `src/game/longTermEvents.js` owns the S33 server-scheduled long-term event queue for seasonal, disaster, border, court, local case-chain, and cross-month consequence events. Providers may read a compact summary for narrative context, but they do not create, replace, resolve, or expire `worldState.longTermEvents`.
-- `src/game/officialCareer.js` owns the S34 official career outcome engine. Providers may move official career meters, but they do not appoint, transfer, promote, demote, impeach-to-case, punish, retain, or write `worldState.officialCareer`.
+- `src/game/officialCatalog.js` owns the S42.2 static office/bureau catalog used to normalize office titles, bureau duties, and promotion/transfer/outpost candidates.
+- `src/game/officialCareer.js` owns the S34/S42 official career outcome engine. Providers may move official career meters, but they do not appoint, transfer, promote, demote, impeach-to-case, punish, retain, create assignments, alter assessment dossiers, or write `worldState.officialCareer`.
 - `src/game/roleWorldCoupling.js` owns the S36 role/world coupling step. Providers may move ordinary meters and suggest social changes, but they do not write `worldState.roleWorldCoupling` or decide the server-owned compound world consequences or cooldowns of key role actions.
 
 ## API Contract
@@ -407,6 +408,7 @@ As of S31.2, `applyStatePatch(worldState, statePatch, options)` enforces:
 - Existing faction scores patched by providers are clamped to `0..100`.
 - `turnCount` increments when a turn patch is applied.
 - Ordinary provider patches use the provider-facing whitelist and ignore server-owned fields such as `activeExam`, `activeNpcRequest`, `longTermEvents`, `roleWorldCoupling`, `officialCareer`, `characters`, `eventHistory`, `year`, `month`, `player.role`, `player.officeTitle`, `player.examRank`, and `player.examHistory` even if a non-schema provider includes them.
+- For official players, ordinary provider patches to `player.position` are additionally screened against the S42.2 office catalog and obvious 官职 wording. Soft narrative positions may remain, but hidden appointment attempts such as “内阁大学士” are ignored.
 - `examCalendar` is also server-owned. Providers can read a compact prompt summary, but missed windows, rival persistence, and same-year contacts are written only by route-owned code.
 - Server-owned follow-up patches may pass `{ incrementTurnCount: false, allowServerOwnedPatchKeys: true }` so internal code can apply fields such as the world tick calendar without double-counting one player turn.
 - `relationshipLedger` is not an allowed provider patch key. The AI schema rejects it, and `applyStatePatch()` ignores it if a non-schema provider tries to include it anyway.
@@ -476,7 +478,7 @@ The browser currently renders long-term event feedback as `[大势]` narrative l
 
 ## Official Role Loop
 
-S23.3 deepens the post-palace official career loop without letting ordinary turns grant a new office title or role promotion. S34 adds the server-owned official career outcome engine in [docs/OFFICIAL_CAREER_CONTRACT.md](OFFICIAL_CAREER_CONTRACT.md). S42.1 extends the same document into the deep official-career domain contract for offices, bureaus, assignments, patronage networks, assessment dossiers, impeachment procedure, transfers, punishment, and browser archives. Official meters live under `player` and pass through the normal AI schema plus `applyStatePatch()` whitelist/clamp boundary; actual title/role/career-history outcomes live under `worldState.officialCareer` and are decided by the server.
+S23.3 deepens the post-palace official career loop without letting ordinary turns grant a new office title or role promotion. S34 adds the server-owned official career outcome engine in [docs/OFFICIAL_CAREER_CONTRACT.md](OFFICIAL_CAREER_CONTRACT.md). S42.1 extends the same document into the deep official-career domain contract for offices, bureaus, assignments, patronage networks, assessment dossiers, impeachment procedure, transfers, punishment, and browser archives. S42.2 implements the first runtime slice: `src/game/officialCatalog.js` provides the static 官职/衙门目录; `worldState.officialCareer.schemaVersion = 2` adds `bureauId`, `assignments`, `assessmentDossier`, and `impeachmentProcedure`; `runOfficialCareerStep()` classifies official actions and advances差遣/考成/弹劾 state before server settlement. Official meters live under `player` and pass through the normal AI schema plus `applyStatePatch()` whitelist/clamp boundary; actual title/role/career-history outcomes live under `worldState.officialCareer` and are decided by the server.
 
 Official state fields:
 
@@ -491,21 +493,21 @@ Palace-exam promotion now seeds these fields and appends a visible official supe
 
 S34 official outcomes:
 
-- Persisted state: `worldState.officialCareer` with `schemaVersion`, `tenureMonths`, `reviewCycleMonths`, `lastReviewTurn`, `lastReviewYear`, `currentPosting`, capped `careerHistory`, `pendingOutcome`, and `cooldowns`.
+- Persisted state: `worldState.officialCareer` with `schemaVersion`, `tenureMonths`, `reviewCycleMonths`, `lastReviewTurn`, `lastReviewYear`, `currentPosting`, `bureauId`, capped `careerHistory`, `pendingOutcome`, `cooldowns`, capped `assignments`, `assessmentDossier`, and `impeachmentProcedure`.
 - Route payloads: top-level `officialCareerView`; turn payloads also include `officialCareer: { summary, events, attributeChanges, outcome }`.
 - Settlement timing: first appointment when an official lacks `officeTitle`, severe impeachment risk, accelerated promotion review, 12-month review cycle, or annual review after the post-tick calendar reaches a new year.
 - Result types: `appointment`, `transfer`, `promotion`, `outpost`, `demotion`, `impeachment`, `punishment`, and `retention`.
-- Authority: providers may affect the input meters but cannot patch `officialCareer`, `officeTitle`, `role`, `roleLabel`, `examRank`, `palaceRank`, or `examHistory` in ordinary turns.
+- Authority: providers may affect the input meters but cannot patch `officialCareer`, `officeTitle`, `role`, `roleLabel`, `examRank`, `palaceRank`, or `examHistory` in ordinary turns. S42.2 also ignores ordinary official `player.position` patches that look like a real office appointment, while still allowing soft posture/location text.
 
 The browser renders this as `#official-career-panel` inside the role panel for official players, with stable `data-outcome-*` attributes for browser acceptance. Turn feedback appears as `[官场结算]` narrative lines.
 
-S42.1 does not change runtime schema. It fixes the future boundary for S42.2/S42.3:
+S42.1 fixed the future boundary for S42.2/S42.3, and S42.2 now enforces the first runtime part of that boundary:
 
 - `player.officeTitle` is the server-owned concrete office; ordinary providers must not write it.
 - `player.position` is only a soft player posture or narrative location and must not be treated as an appointment when `officeTitle` is absent or protected.
 - `worldState.officialCareer.currentPosting` is the normalized server-owned career location used by views.
-- Future assignments, assessment dossiers, impeachment procedures, and hidden patronage notes belong under server-normalized official-career state or relationship-ledger summaries, with player-facing data exposed only through server-built views.
-- Official UI should present 官署、差事、履历、关系、风险 from `officialCareerView` or a future server-built view, never from raw hidden notes or provider prose.
+- Assignments, assessment dossiers, impeachment procedures, and hidden patronage notes belong under server-normalized official-career state or relationship-ledger summaries, with player-facing data exposed only through server-built views.
+- `officialCareerView` now includes server-built `bureau`, `assignmentSummary`, visible `assignments`, `assessment`, `networkSummary`, and `procedureSummary`; S42.3 will expand the browser UI to present 官署、差事、履历、关系、风险 from that view, never from raw hidden notes or provider prose.
 
 ## General Role Loop
 
