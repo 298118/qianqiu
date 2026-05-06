@@ -56,9 +56,9 @@
 | S23.1 | DONE | 深化地方官身份：县库、乡绅、盗匪、诉讼、赋役、水利和地方民心 | 2026-05-05 | Codex | 9adef5f |
 | S23.2 | DONE | 深化将领身份：兵员、军粮、士气、侦察、战役风险和边境态势 | 2026-05-05 | Codex | b027d98 |
 | S23.3 | DONE | 深化入仕官员身份：上官、同年、考成、升迁、弹劾和清浊操守 | 2026-05-06 | Codex | 4f9f6e7 |
-| S24.1 | DONE | 深化科举同场竞争：虚拟考生生成可查看文章、评语和风格差异 | 2026-05-06 | Codex + reviewed subagent patch | 80db3d2 / 本次 S24 整合提交 |
-| S24.2 | DONE | 增加考试档案 UI，允许回看历次文章、题目、排名、复核和晋级原因 | 2026-05-06 | Codex + subagent patch | 本次 S24 整合提交 |
-| S24.3 | DONE | 增加赶考成本、旅途事件、疲劳/心性影响和考前准备风险 | 2026-05-06 | Codex + subagent patch | 本次 S24 整合提交 |
+| S24.1 | DONE | 深化科举同场竞争：虚拟考生生成可查看文章、评语和风格差异 | 2026-05-06 | Codex + reviewed subagent patch | 80db3d2 / fadb9ab |
+| S24.2 | DONE | 增加考试档案 UI，允许回看历次文章、题目、排名、复核和晋级原因 | 2026-05-06 | Codex + subagent patch | fadb9ab |
+| S24.3 | DONE | 增加赶考成本、旅途事件、疲劳/心性影响和考前准备风险 | 2026-05-06 | Codex + subagent patch | fadb9ab |
 | S25.1 | TODO | 增加真实 provider smoke 脚本，在有 key 时验证 start/turn/question/submit 四类调用 |
 | S25.2 | TODO | 评估并实现真实 provider token streaming；无法流式的 provider 保持兼容降级 |
 | S25.3 | TODO | 建立 AI 输出 eval fixtures，固定校验 JSON 合约、违规 patch、科举评卷和历史语气 |
@@ -154,7 +154,7 @@ Tool: Codex
 
 Step: S24.1-S24.3
 
-Commit: 本次 S24 整合提交；S24.1 data slice was accidentally committed by a subagent as `80db3d2` and then reviewed by Codex during this integration.
+Commit: fadb9ab; S24.1 data slice was accidentally committed by a subagent as `80db3d2` and then reviewed by Codex during this integration.
 
 Completed:
 - S24.1 virtual same-field candidates now include inspectable profiles: generated essay title/body/excerpt/word count, style label, examiner comment, strengths, and weaknesses while preserving the existing `generateVirtualCandidates()` and `buildRanking()` APIs.
