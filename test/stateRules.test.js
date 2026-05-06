@@ -17,6 +17,7 @@ test("applyStatePatch applies only whitelisted fields and clamps numeric ranges"
     activeExam: { level: "child_exam" },
     activeNpcRequest: { id: "provider-request" },
     longTermEvents: { queue: [{ key: "provider-event" }] },
+    officialCareer: { careerHistory: [{ type: "promotion", label: "forged" }] },
     characters: [{ id: "C99", name: "Invented", role: "patron" }],
     eventHistory: ["provider tries to replace history"],
     publicOrder: -10,
@@ -42,6 +43,7 @@ test("applyStatePatch applies only whitelisted fields and clamps numeric ranges"
   assert.equal(worldState.activeExam, null);
   assert.equal(worldState.activeNpcRequest, null);
   assert.deepEqual(worldState.longTermEvents.queue, []);
+  assert.deepEqual(worldState.officialCareer.careerHistory, []);
   assert.deepEqual(worldState.characters, originalCharacters);
   assert.deepEqual(worldState.eventHistory, []);
   assert.equal(worldState.publicOrder, 0);
@@ -95,6 +97,7 @@ test("applyStatePatch can apply server follow-up patches without incrementing tu
     year: -50,
     month: 99,
     activeExam: { level: "child_exam", status: "writing" },
+    officialCareer: { schemaVersion: 1, careerHistory: [{ type: "retention", label: "留任" }] },
     eventHistory: Array.from({ length: MAX_EVENT_HISTORY + 1 }, (_, index) => `server-event-${index}`),
     publicOrder: 80
   }, { incrementTurnCount: false, allowServerOwnedPatchKeys: true });
@@ -102,6 +105,7 @@ test("applyStatePatch can apply server follow-up patches without incrementing tu
   assert.equal(worldState.year, 1);
   assert.equal(worldState.month, 12);
   assert.equal(worldState.activeExam.level, "child_exam");
+  assert.equal(worldState.officialCareer.careerHistory[0].label, "留任");
   assert.equal(worldState.eventHistory.length, MAX_EVENT_HISTORY);
   assert.equal(worldState.eventHistory[0], "server-event-1");
   assert.equal(worldState.publicOrder, 80);

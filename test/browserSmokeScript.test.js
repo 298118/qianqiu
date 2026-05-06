@@ -9,6 +9,7 @@ const {
   getHiddenActiveRequestLeaks,
   getHiddenRelationshipLeaks,
   getMissingActiveRequestTargets,
+  getMissingOfficialCareerOutcomeTypes,
   getMissingRelationshipEntries,
   getMissingStartRoles,
   normalizeBaseUrl,
@@ -38,6 +39,9 @@ function createLayoutMetrics(overrides = {}) {
     activeRequestClientWidth: 1180,
     activeRequestScrollWidth: 1180,
     activeRequestWidth: 1180,
+    officialCareerClientWidth: 1180,
+    officialCareerScrollWidth: 1180,
+    officialCareerWidth: 1180,
     viewportWidth: 1280,
     ...overrides
   };
@@ -196,6 +200,14 @@ test("browser smoke active request helpers catch missing and hidden targets", ()
   assert.deepEqual(getHiddenActiveRequestLeaks(["C01"], ["eunuchs"]), []);
 });
 
+test("browser smoke official career helpers catch missing outcome types", () => {
+  assert.deepEqual(getMissingOfficialCareerOutcomeTypes(["appointment"], ["appointment"]), []);
+  assert.deepEqual(
+    getMissingOfficialCareerOutcomeTypes(["appointment"], ["appointment", "promotion"]),
+    ["promotion"]
+  );
+});
+
 test("browser smoke game layout helper catches active request panel overflow", () => {
   const failures = getGameLayoutFailures(
     createLayoutMetrics({
@@ -207,6 +219,19 @@ test("browser smoke game layout helper catches active request panel overflow", (
   );
 
   assert.match(failures.join("\n"), /active request panel has horizontal scroll overflow/);
+});
+
+test("browser smoke game layout helper catches official career panel overflow", () => {
+  const failures = getGameLayoutFailures(
+    createLayoutMetrics({
+      officialCareerClientWidth: 500,
+      officialCareerScrollWidth: 640,
+      officialCareerWidth: 500
+    }),
+    "desktop"
+  );
+
+  assert.match(failures.join("\n"), /official career panel has horizontal scroll overflow/);
 });
 
 test("browser smoke game layout helper keeps mobile width behavior compatible", () => {

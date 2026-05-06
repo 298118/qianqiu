@@ -411,6 +411,76 @@ button:disabled {
   color: var(--cinnabar-deep);
 }
 
+.official-career-panel {
+  grid-column: 1 / -1;
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+  padding-top: 9px;
+  border-top: 1px solid rgba(54, 39, 27, 0.16);
+}
+
+.official-career-panel > header,
+.official-career-outcome header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+  min-width: 0;
+}
+
+.official-career-panel > header strong {
+  color: var(--cinnabar-deep);
+  font-size: 0.98rem;
+}
+
+.official-career-panel > header span,
+.official-career-outcome header span,
+.official-career-empty {
+  color: var(--muted);
+  font-size: 0.8rem;
+}
+
+.official-career-meta,
+.official-career-history {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 8px;
+  min-width: 0;
+}
+
+.official-career-meta > div,
+.official-career-outcome {
+  min-width: 0;
+  padding: 8px 9px;
+  border: 1px solid rgba(54, 39, 27, 0.16);
+  border-radius: 4px;
+  background: rgba(255, 250, 239, 0.5);
+}
+
+.official-career-outcome {
+  display: grid;
+  gap: 4px;
+}
+
+.official-career-current {
+  border-color: rgba(155, 47, 34, 0.3);
+  background: rgba(155, 47, 34, 0.07);
+}
+
+.official-career-outcome strong,
+.official-career-outcome p,
+.official-career-empty {
+  margin: 0;
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+}
+
+.official-career-outcome p {
+  color: var(--ink);
+  font-size: 0.8rem;
+}
+
 .panel-action {
   width: 100%;
   min-height: 38px;
@@ -590,6 +660,12 @@ button:disabled {
   color: #6f3d23;
   border-left-color: rgba(111, 61, 35, 0.42);
   background: rgba(111, 61, 35, 0.07);
+}
+
+.narrative .official-career-event {
+  color: var(--cinnabar-deep);
+  border-left-color: rgba(155, 47, 34, 0.46);
+  background: rgba(155, 47, 34, 0.07);
 }
 
 .narrative .relationship-change {

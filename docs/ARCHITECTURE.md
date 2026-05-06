@@ -48,6 +48,7 @@ Important route ownership:
 - `src/game/relationships.js` owns NPC/faction relationship ledger creation, normalization, legacy backfill, compact prompt summaries, and the S32.1/S32.2 player-facing relationship inspection view.
 - `src/game/activeRequests.js` owns the S32.3 server-scheduled active NPC/faction request loop. Providers may suggest narrative and relationship consequences, but they do not create, replace, resolve, or expire `worldState.activeNpcRequest`.
 - `src/game/longTermEvents.js` owns the S33 server-scheduled long-term event queue for seasonal, disaster, border, court, local case-chain, and cross-month consequence events. Providers may read a compact summary for narrative context, but they do not create, replace, resolve, or expire `worldState.longTermEvents`.
+- `src/game/officialCareer.js` owns the S34 official career outcome engine. Providers may move official career meters, but they do not appoint, transfer, promote, demote, impeach-to-case, punish, retain, or write `worldState.officialCareer`.
 
 ## API Contract
 
@@ -75,11 +76,11 @@ Request fields:
 
 As of S31.3, `role` is normalized and validated in `src/game/initialState.js`. Missing or blank role values default to `scholar`; unsupported roles return `400`. The accepted enum is `scholar`, `emperor`, `minister`, `general`, `magistrate`, and `official`, and the browser start form exposes all six values.
 
-Returns `201` with `sessionId`, `worldState`, `relationshipView`, `activeNpcRequestView`, `longTermEventView`, and opening `narrative`.
+Returns `201` with `sessionId`, `worldState`, `relationshipView`, `activeNpcRequestView`, `longTermEventView`, `officialCareerView`, and opening `narrative`.
 
 ### `GET /api/game/state/:sessionId`
 
-Reads the JSON session file and returns `sessionId`, `worldState`, the player-facing `relationshipView`, `activeNpcRequestView`, and `longTermEventView`.
+Reads the JSON session file and returns `sessionId`, `worldState`, the player-facing `relationshipView`, `activeNpcRequestView`, `longTermEventView`, and `officialCareerView`.
 
 ### `POST /api/game/turn`
 
@@ -154,6 +155,18 @@ Requests without SSE negotiation still return plain JSON for tests and compatibi
     "scheduled": [],
     "resolved": []
   },
+  "officialCareerView": {
+    "schemaVersion": 1,
+    "active": false,
+    "currentPosting": null,
+    "recentOutcomes": []
+  },
+  "officialCareer": {
+    "summary": "",
+    "events": [],
+    "attributeChanges": [],
+    "outcome": null
+  },
   "worldState": {}
 }
 ```
@@ -171,7 +184,7 @@ Request:
 
 `level` may be omitted; the server derives the next eligible exam from `player.examRank`. The route saves a complete `worldState.activeExam`, reuses an existing unanswered exam for the same level, and rejects attempts to open a different exam while another question is active.
 
-Returns `examId`, exam metadata, requirements, readiness, `relationshipView`, `activeNpcRequestView`, `longTermEventView`, and `worldState`.
+Returns `examId`, exam metadata, requirements, readiness, `relationshipView`, `activeNpcRequestView`, `longTermEventView`, `officialCareerView`, and `worldState`.
 
 ### `POST /api/exam/submit`
 
@@ -185,7 +198,7 @@ Request:
 }
 ```
 
-The server checks authenticity, asks the provider for grading, applies local penalties, builds virtual candidates with inspectable essay profiles, applies promotion or cheating consequences, appends the essay result to `player.examHistory`, clears `activeExam`, saves the session and returns the result plus `relationshipView`, `activeNpcRequestView`, `longTermEventView`, and `worldState`. The response includes `examQuestion`, `essay`, and `entryPreparation` so the browser can render the just-submitted archive directly.
+The server checks authenticity, asks the provider for grading, applies local penalties, builds virtual candidates with inspectable essay profiles, applies promotion or cheating consequences, appends the essay result to `player.examHistory`, clears `activeExam`, saves the session and returns the result plus `relationshipView`, `activeNpcRequestView`, `longTermEventView`, `officialCareerView`, and `worldState`. The response includes `examQuestion`, `essay`, and `entryPreparation` so the browser can render the just-submitted archive directly.
 
 ## AI Provider Contract
 
@@ -204,7 +217,7 @@ Provider outputs must match the schemas in `src/ai/schemas.js`:
 - `examQuestion`: exam level, name, question, type, difficulty, requirements, word count, pass score and promotion rank
 - `grade`: five score dimensions, `overall_score`, rank, detailed feedback, authenticity echo, candidates and ranking placeholders
 
-Real provider adapters parse model text through `src/utils/json.js`, validate with Ajv, retry once on ordinary non-streaming failure, then fall back to Mock for that method. The model never owns final game state. It can suggest `statePatch`; the server whitelists and clamps it. Ordinary turn schemas now reject direct patches to server-owned fields such as `activeExam`, `characters`, `eventHistory`, `player.examRank`, and `player.examHistory`.
+Real provider adapters parse model text through `src/utils/json.js`, validate with Ajv, retry once on ordinary non-streaming failure, then fall back to Mock for that method. The model never owns final game state. It can suggest `statePatch`; the server whitelists and clamps it. Ordinary turn schemas now reject direct patches to server-owned fields such as `activeExam`, `activeNpcRequest`, `longTermEvents`, `officialCareer`, `characters`, `eventHistory`, `player.examRank`, `player.officeTitle`, and `player.examHistory`.
 
 S25.2 adds optional turn token streaming for OpenAI Responses, DeepSeek chat completions, and Anthropic Messages. `streamTurn()` buffers the full model JSON and still returns the same validated `turn` payload as `runTurn()`. During SSE requests, `src/routes/game.js` uses `src/utils/streamingJson.js` to extract only the top-level `narrative` string from the streamed JSON text and send it as `narrative_chunk`. State patches, relationship changes, world tick, persistence, and `final_state` still happen only after the full JSON passes schema validation. If visible provider narrative has already been sent and the stream then fails, the route emits an `error` event and does not write the session; if no visible narrative was sent, it can fall back to the normal turn path.
 
@@ -254,7 +267,7 @@ S26.2 extends the same journey with DOM and screenshot-level UI acceptance. It a
 
 - Global fields: `sessionId`, `year`, `month`, `dynasty`, `turnCount`, `treasury`, `grainReserve`, `population`, `publicOrder`, `taxRate`, `corruption`, `armySize`, `armyMorale`, `borderThreat`.
 - Factions: `factions.eunuchs`, `factions.scholarOfficials`, `factions.militaryLords`.
-- Narrative, relationship, event, and exam fields: `characters`, `relationshipLedger`, `activeNpcRequest`, `longTermEvents`, `eventHistory`, `activeExam`, `setup`.
+- Narrative, relationship, event, official outcome, and exam fields: `characters`, `relationshipLedger`, `activeNpcRequest`, `longTermEvents`, `officialCareer`, `eventHistory`, `activeExam`, `setup`.
 - Player identity: `player.role`, `roleLabel`, `name`, `health`, `gold`.
 - Scholar fields: `examRank`, `palaceRank`, `officeTitle`, `academia`, `literaryTalent`, `adaptability`, `mentality`, `reputation`, `examHistory`, `teacher`, `studiedBooks`, `connections`.
 - Role fields: `personalPower`, `courtControl`, `mandate`, `position`, `faction`, `influence`, `integrity`.
@@ -276,7 +289,7 @@ As of S31.2, `applyStatePatch(worldState, statePatch, options)` enforces:
 - `statePatch.factions` may only update existing numeric faction keys; providers cannot invent arbitrary faction names.
 - Existing faction scores patched by providers are clamped to `0..100`.
 - `turnCount` increments when a turn patch is applied.
-- Ordinary provider patches use the provider-facing whitelist and ignore server-owned fields such as `activeExam`, `activeNpcRequest`, `longTermEvents`, `characters`, `eventHistory`, `year`, `month`, `player.examRank`, and `player.examHistory` even if a non-schema provider includes them.
+- Ordinary provider patches use the provider-facing whitelist and ignore server-owned fields such as `activeExam`, `activeNpcRequest`, `longTermEvents`, `officialCareer`, `characters`, `eventHistory`, `year`, `month`, `player.role`, `player.officeTitle`, `player.examRank`, and `player.examHistory` even if a non-schema provider includes them.
 - Server-owned follow-up patches may pass `{ incrementTurnCount: false, allowServerOwnedPatchKeys: true }` so internal code can apply fields such as the world tick calendar without double-counting one player turn.
 - `relationshipLedger` is not an allowed provider patch key. The AI schema rejects it, and `applyStatePatch()` ignores it if a non-schema provider tries to include it anyway.
 - Provider social-memory effects must go through top-level `relationshipChanges`, which `src/routes/game.js` applies through `applyRelationshipChanges()` after the ordinary turn patch increments `turnCount`.
@@ -330,7 +343,7 @@ The browser currently renders long-term event feedback as `[大势]` narrative l
 
 ## Official Role Loop
 
-S23.3 deepens the post-palace official career loop without letting ordinary turns grant a new office title or role promotion. Official state lives under `player` and passes through the normal AI schema plus `applyStatePatch()` whitelist/clamp boundary.
+S23.3 deepens the post-palace official career loop without letting ordinary turns grant a new office title or role promotion. S34 adds the server-owned official career outcome engine in [docs/OFFICIAL_CAREER_CONTRACT.md](OFFICIAL_CAREER_CONTRACT.md). Official meters live under `player` and pass through the normal AI schema plus `applyStatePatch()` whitelist/clamp boundary; actual title/role/career-history outcomes live under `worldState.officialCareer` and are decided by the server.
 
 Official state fields:
 
@@ -342,6 +355,16 @@ Official state fields:
 - `cleanReputation`: public清操/clean-name standing, clamped to `0..100`.
 
 Palace-exam promotion now seeds these fields and appends a visible official superior contact (`C02`) while preserving the complete scholar -> official path. Mock official turns recognize assessment/promotion work, impeachment, observation under superiors, casework, relief/farming, peer networking, bribery, and routine office work. These actions may update official career fields and limited global fields such as `corruption`, `publicOrder`, `grainReserve`, `population`, and existing numeric factions. Relationship consequences remain suggestions only and are applied through the route-owned relationship ledger merge.
+
+S34 official outcomes:
+
+- Persisted state: `worldState.officialCareer` with `schemaVersion`, `tenureMonths`, `reviewCycleMonths`, `lastReviewTurn`, `lastReviewYear`, `currentPosting`, capped `careerHistory`, `pendingOutcome`, and `cooldowns`.
+- Route payloads: top-level `officialCareerView`; turn payloads also include `officialCareer: { summary, events, attributeChanges, outcome }`.
+- Settlement timing: first appointment when an official lacks `officeTitle`, severe impeachment risk, accelerated promotion review, 12-month review cycle, or annual review after the post-tick calendar reaches a new year.
+- Result types: `appointment`, `transfer`, `promotion`, `outpost`, `demotion`, `impeachment`, `punishment`, and `retention`.
+- Authority: providers may affect the input meters but cannot patch `officialCareer`, `officeTitle`, `role`, `roleLabel`, `examRank`, `palaceRank`, or `examHistory` in ordinary turns.
+
+The browser renders this as `#official-career-panel` inside the role panel for official players, with stable `data-outcome-*` attributes for browser acceptance. Turn feedback appears as `[官场结算]` narrative lines.
 
 ## General Role Loop
 
@@ -383,7 +406,7 @@ The contract for S21.2-S21.4 is:
 
 `runWorldTick(worldState)` returns `{ statePatch, attributeChanges, events, summary }` without mutating `worldState`. Its first deterministic formulas cover treasury revenue/upkeep/leakage, grain consumption/harvest, population drift, public order, corruption, army morale, border threat, and small known-faction drift.
 
-Route integration order is provider patch first, provider relationship suggestions, exam trigger setup when requested, active NPC request handling, `runWorldTick()` against the updated state, tick patch with `{ incrementTurnCount: false, allowServerOwnedPatchKeys: true }`, long-term event scheduling/resolution, then provider events followed by active-request events, tick events, and long-term event events. The browser renders the current month in the status strip and appends concise monthly and `[大势]` feedback below the provider narrative.
+Route integration order is provider patch first, provider relationship suggestions, exam trigger setup when requested, active NPC request handling, `runWorldTick()` against the updated state, tick patch with `{ incrementTurnCount: false, allowServerOwnedPatchKeys: true }`, long-term event scheduling/resolution, official career outcome settlement, then provider events followed by active-request events, tick events, long-term event events, and official career events. The browser renders the current month in the status strip and appends concise monthly, `[大势]`, and `[官场结算]` feedback below the provider narrative.
 
 Provider turn schemas and prompts do not expose `year` or `month` as allowed model patch keys; calendar changes are reserved for server-owned patches.
 

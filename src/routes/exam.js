@@ -15,6 +15,7 @@ const { applyExamPromotion } = require("../game/promotions");
 const { buildRelationshipInspectionView, ensureRelationshipLedger } = require("../game/relationships");
 const { buildActiveNpcRequestView } = require("../game/activeRequests");
 const { buildLongTermEventView, ensureLongTermEventState } = require("../game/longTermEvents");
+const { buildOfficialCareerView, ensureOfficialCareerState } = require("../game/officialCareer");
 const { appendEvents, applyStatePatch } = require("../game/stateRules");
 const { readSession, writeSession } = require("../storage/sessionStore");
 
@@ -39,6 +40,7 @@ function toExamPayload(worldState) {
     relationshipView: buildRelationshipInspectionView(worldState),
     activeNpcRequestView: buildActiveNpcRequestView(worldState),
     longTermEventView: buildLongTermEventView(worldState),
+    officialCareerView: buildOfficialCareerView(worldState),
     worldState
   };
 }
@@ -68,6 +70,7 @@ router.post("/question", async (req, res, next) => {
     const worldState = await readSession(sessionId);
     ensureRelationshipLedger(worldState);
     ensureLongTermEventState(worldState);
+    ensureOfficialCareerState(worldState);
     const requestedLevel = level || worldState.activeExam?.level || getNextExamLevel(worldState.player.examRank);
     const exam = getExam(requestedLevel);
 
@@ -157,6 +160,7 @@ router.post("/submit", async (req, res, next) => {
     const worldState = await readSession(sessionId);
     ensureRelationshipLedger(worldState);
     ensureLongTermEventState(worldState);
+    ensureOfficialCareerState(worldState);
     const activeExam = worldState.activeExam;
 
     if (!activeExam || !activeExam.examQuestion) {
@@ -235,6 +239,7 @@ router.post("/submit", async (req, res, next) => {
       relationshipView: buildRelationshipInspectionView(worldState),
       activeNpcRequestView: buildActiveNpcRequestView(worldState),
       longTermEventView: buildLongTermEventView(worldState),
+      officialCareerView: buildOfficialCareerView(worldState),
       worldState
     });
   } catch (error) {

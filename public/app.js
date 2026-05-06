@@ -27,6 +27,7 @@ let currentWorldState = null;
 let currentRelationshipView = null;
 let currentActiveNpcRequestView = null;
 let currentLongTermEventView = null;
+let currentOfficialCareerView = null;
 let currentExamPayload = null;
 let activeNarrativeStream = null;
 
@@ -184,6 +185,17 @@ const ACTIVE_REQUEST_KIND_LABELS = {
   repayment: "回报"
 };
 
+const OFFICIAL_OUTCOME_LABELS = {
+  appointment: "实授",
+  transfer: "转任",
+  promotion: "升迁",
+  outpost: "外放",
+  demotion: "降调",
+  impeachment: "弹劾",
+  punishment: "罚黜",
+  retention: "留任"
+};
+
 function getExamProgress(player) {
   if (player.role === "official") {
     return { index: EXAM_PROGRESS.length - 1, label: "入仕", next: null };
@@ -335,6 +347,29 @@ function getActiveNpcRequestView(activeNpcRequestView) {
     return activeNpcRequestView;
   }
   return null;
+}
+
+function getOfficialCareerView(worldState, officialCareerView) {
+  if (officialCareerView && typeof officialCareerView === "object") {
+    return officialCareerView;
+  }
+  const history = Array.isArray(worldState?.officialCareer?.careerHistory)
+    ? worldState.officialCareer.careerHistory.slice(-5)
+    : [];
+  return {
+    schemaVersion: 1,
+    generatedAtTurn: worldState?.turnCount || 0,
+    active: worldState?.player?.role === "official",
+    currentPosting: worldState?.player?.officeTitle || worldState?.player?.position || null,
+    tenureMonths: worldState?.officialCareer?.tenureMonths || 0,
+    reviewCycleMonths: worldState?.officialCareer?.reviewCycleMonths || 12,
+    nextReviewInMonths: null,
+    careerScore: 0,
+    riskScore: 0,
+    pendingReview: false,
+    lastOutcome: history.at(-1) || null,
+    recentOutcomes: history
+  };
 }
 
 function setStatus(worldState) {
@@ -562,6 +597,80 @@ function renderActiveNpcRequestPanel(activeNpcRequestView = currentActiveNpcRequ
   return panel;
 }
 
+function formatOutcomeDate(outcome) {
+  if (!outcome) return "未记";
+  return `${outcome.year ?? "-"}年${outcome.month ?? "-"}月 · 第${outcome.turn ?? 0}回`;
+}
+
+function createOfficialCareerOutcome(outcome, isCurrent = false) {
+  const card = document.createElement("article");
+  card.className = ["official-career-outcome", isCurrent ? "official-career-current" : ""].filter(Boolean).join(" ");
+  card.dataset.outcomeId = outcome.id || "";
+  card.dataset.outcomeType = outcome.type || "";
+  card.dataset.outcomeStatus = isCurrent ? "current" : outcome.status || "resolved";
+  card.dataset.officeTitle = outcome.officeTitleAfter || "";
+  card.dataset.outcomeTurn = String(outcome.turn ?? "");
+
+  const header = document.createElement("header");
+  const title = document.createElement("strong");
+  title.textContent = OFFICIAL_OUTCOME_LABELS[outcome.type] || outcome.label || "官场";
+  const date = document.createElement("span");
+  date.textContent = formatOutcomeDate(outcome);
+  header.append(title, date);
+
+  const posting = createActiveRequestMeta("职名", outcome.officeTitleAfter || "无官", "official-career-posting");
+  const reason = createActiveRequestMeta("缘由", outcome.reason || "未详", "official-career-reason");
+
+  card.append(header, posting, reason);
+  return card;
+}
+
+function renderOfficialCareerPanel(officialCareerView = currentOfficialCareerView) {
+  if (!officialCareerView?.active) return null;
+
+  const panel = document.createElement("section");
+  panel.id = "official-career-panel";
+  panel.className = "official-career-panel";
+  panel.dataset.currentPosting = officialCareerView.currentPosting || "";
+  panel.dataset.pendingReview = officialCareerView.pendingReview ? "true" : "false";
+
+  const header = document.createElement("header");
+  const title = document.createElement("strong");
+  title.textContent = "官场履历";
+  const summary = document.createElement("span");
+  summary.textContent = `${officialCareerView.currentPosting || "候选观政"} · 任内${officialCareerView.tenureMonths ?? 0}月`;
+  header.append(title, summary);
+
+  const meta = document.createElement("div");
+  meta.className = "official-career-meta";
+  meta.append(
+    createPanelValue("考绩", officialCareerView.careerScore ?? "-", "p"),
+    createPanelValue("风险", officialCareerView.riskScore ?? "-", "p"),
+    createPanelValue("下次考察", officialCareerView.nextReviewInMonths === null ? "未定" : `${officialCareerView.nextReviewInMonths}月`, "p")
+  );
+
+  const latest = officialCareerView.lastOutcome;
+  const current = latest
+    ? createOfficialCareerOutcome(latest, true)
+    : (() => {
+      const empty = document.createElement("p");
+      empty.className = "official-career-empty";
+      empty.textContent = officialCareerView.pendingReview ? "本任候考，尚待吏部定议" : "尚无升降记录";
+      return empty;
+    })();
+
+  const history = document.createElement("div");
+  history.className = "official-career-history";
+  (officialCareerView.recentOutcomes || [])
+    .slice(0, -1)
+    .reverse()
+    .forEach((outcome) => history.appendChild(createOfficialCareerOutcome(outcome)));
+
+  panel.append(header, meta, current);
+  if (history.childElementCount) panel.appendChild(history);
+  return panel;
+}
+
 function appendOptionalPanel(panel) {
   if (panel) {
     scholarPanel.appendChild(panel);
@@ -671,7 +780,9 @@ function renderRolePanel(worldState) {
     );
   }
 
-  scholarPanel.append(overview, renderActionHints(player.role), stats, lists, renderRelationshipPanel());
+  scholarPanel.append(overview, renderActionHints(player.role), stats, lists);
+  appendOptionalPanel(renderOfficialCareerPanel());
+  scholarPanel.appendChild(renderRelationshipPanel());
   appendOptionalPanel(renderActiveNpcRequestPanel());
 }
 
@@ -752,11 +863,12 @@ function renderScholarPanel(worldState) {
   appendOptionalPanel(renderActiveNpcRequestPanel());
 }
 
-function renderWorldState(worldState, relationshipView, activeNpcRequestView, longTermEventView) {
+function renderWorldState(worldState, relationshipView, activeNpcRequestView, longTermEventView, officialCareerView) {
   currentWorldState = worldState;
   currentRelationshipView = getRelationshipView(worldState, relationshipView);
   currentActiveNpcRequestView = getActiveNpcRequestView(activeNpcRequestView);
   currentLongTermEventView = longTermEventView || null;
+  currentOfficialCareerView = getOfficialCareerView(worldState, officialCareerView);
   setStatus(worldState);
   renderScholarPanel(worldState);
   actionInput.placeholder = ACTION_PLACEHOLDERS[worldState.player.role] || "输入你的行动";
@@ -870,6 +982,12 @@ function appendLongTermEventFeedback(longTermEvents) {
   if (!longTermEvents) return;
   const events = Array.isArray(longTermEvents.events) ? longTermEvents.events : [];
   events.forEach((event) => appendNarrative(`[大势] ${event}`, "long-term-event"));
+}
+
+function appendOfficialCareerFeedback(officialCareer) {
+  if (!officialCareer) return;
+  const events = Array.isArray(officialCareer.events) ? officialCareer.events : [];
+  events.forEach((event) => appendNarrative(event, "official-career-event"));
 }
 
 function renderExamModal(payload) {
@@ -1358,7 +1476,7 @@ async function openExamQuestion(level) {
     }
 
     const payload = await response.json();
-    renderWorldState(payload.worldState, payload.relationshipView, payload.activeNpcRequestView, payload.longTermEventView);
+    renderWorldState(payload.worldState, payload.relationshipView, payload.activeNpcRequestView, payload.longTermEventView, payload.officialCareerView);
     renderExamModal(payload);
   } catch (error) {
     appendNarrative(error.message, "error");
@@ -1396,7 +1514,7 @@ async function submitExamEssay() {
     }
 
     const payload = await response.json();
-    renderWorldState(payload.worldState, payload.relationshipView, payload.activeNpcRequestView, payload.longTermEventView);
+    renderWorldState(payload.worldState, payload.relationshipView, payload.activeNpcRequestView, payload.longTermEventView, payload.officialCareerView);
     renderExamResult(payload);
     appendNarrative(
       `[放榜] ${payload.examName}得${payload.score.overall_score}分，${describePromotionOutcome(payload.promotionResult)}。`,
@@ -1484,7 +1602,8 @@ async function handleTurnPayload(payload) {
   appendActiveNpcRequestEvents(payload.activeNpcRequestEvents);
   appendWorldTickFeedback(payload.worldTick);
   appendLongTermEventFeedback(payload.longTermEvents);
-  renderWorldState(payload.worldState, payload.relationshipView, payload.activeNpcRequestView, payload.longTermEventView);
+  appendOfficialCareerFeedback(payload.officialCareer);
+  renderWorldState(payload.worldState, payload.relationshipView, payload.activeNpcRequestView, payload.longTermEventView, payload.officialCareerView);
   actionInput.value = "";
 
   if (payload.examTrigger && payload.examTrigger.shouldStart) {
@@ -1603,7 +1722,7 @@ form.addEventListener("submit", async (event) => {
     const payload = await response.json();
     currentSessionId = payload.sessionId;
     localStorage.setItem("qianqiu.sessionId", payload.sessionId);
-    renderWorldState(payload.worldState, payload.relationshipView, payload.activeNpcRequestView, payload.longTermEventView);
+    renderWorldState(payload.worldState, payload.relationshipView, payload.activeNpcRequestView, payload.longTermEventView, payload.officialCareerView);
     narrative.innerHTML = "";
     appendNarrative(payload.narrative);
     showGameView();
@@ -1628,7 +1747,7 @@ async function restoreSession() {
     }
     const payload = await response.json();
     currentSessionId = payload.sessionId;
-    renderWorldState(payload.worldState, payload.relationshipView, payload.activeNpcRequestView, payload.longTermEventView);
+    renderWorldState(payload.worldState, payload.relationshipView, payload.activeNpcRequestView, payload.longTermEventView, payload.officialCareerView);
     narrative.innerHTML = "";
     const history = payload.worldState.eventHistory || [];
     if (history.length) {

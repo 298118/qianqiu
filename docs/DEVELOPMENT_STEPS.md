@@ -68,9 +68,9 @@
 | S33.1 | DONE | 定义长期事件调度器契约：季节、灾荒、边报、朝争、地方案件链和跨月后果 | 2026-05-06 | Codex + subagents | eb3261b |
 | S33.2 | DONE | 实现服务器拥有的长期事件队列，并把事件结果接入 world tick、eventHistory 和可见叙事 | 2026-05-06 | Codex + subagents | eb3261b |
 | S33.3 | DONE | 为长期事件增加自动化测试，覆盖触发条件、裁剪、状态边界和完整书生路径不被破坏 | 2026-05-06 | Codex + subagents | eb3261b |
-| S34.1 | TODO | 定义官场结果引擎：实授、转任、升迁、外放、降调、弹劾成案和罢黜 |  |  |  |
-| S34.2 | TODO | 实现入仕官员年度/阶段性结算，让 `promotionProspect`、`impeachmentRisk` 等指标触发真实职业结果 |  |  |  |
-| S34.3 | TODO | 增加官场结果 UI 与测试，确认晋升/降调/弹劾不会绕过服务器裁决 |  |  |  |
+| S34.1 | DONE | 定义官场结果引擎：实授、转任、升迁、外放、降调、弹劾成案和罢黜 | 2026-05-06 | Codex + subagents | current S34 implementation commit |
+| S34.2 | DONE | 实现入仕官员年度/阶段性结算，让 `promotionProspect`、`impeachmentRisk` 等指标触发真实职业结果 | 2026-05-06 | Codex + subagents | current S34 implementation commit |
+| S34.3 | DONE | 增加官场结果 UI 与测试，确认晋升/降调/弹劾不会绕过服务器裁决 | 2026-05-06 | Codex + subagents | current S34 implementation commit |
 | S35.1 | TODO | 定义科举日历化契约：考期窗口、备考月程、路程耗时、错过考期、盘费筹措和师长推荐 |  |  |  |
 | S35.2 | TODO | 让同场虚拟考生跨考试持久存在，成为同年、竞争者或后续官场人脉 |  |  |  |
 | S35.3 | TODO | 将科举日历与持久竞争者接入前端档案和完整 scholar -> official 回归测试 |  |  |  |
@@ -171,6 +171,39 @@
 ```
 
 ### 2026-05-06
+
+Tool: Codex
+
+Step: S34.1-S34.3
+
+Commit: current S34 implementation commit
+
+Completed:
+- Added `docs/OFFICIAL_CAREER_CONTRACT.md` as the durable S34 contract for persisted official-career state, settlement triggers, outcome types, route ordering, provider authority boundaries, browser selectors, and focused verification.
+- Added `src/game/officialCareer.js` as the server-owned official career outcome engine. It normalizes `worldState.officialCareer`, builds `officialCareerView`, summarizes career context for prompts, and settles appointment, transfer, promotion, outpost, demotion, impeachment, punishment, or retention from bounded player meters plus visible relationship context.
+- Seeded `worldState.officialCareer` in initial sessions and hardened state boundaries so ordinary provider patches cannot forge `officialCareer`, `officeTitle`, `role`, `roleLabel`, `palaceRank`, or other protected career fields.
+- Wired game and exam route payloads to return top-level `officialCareerView`; turn payloads and SSE previews/final states now include `officialCareer: { summary, events, attributeChanges, outcome }`.
+- Integrated official career settlement after active requests, world tick, and long-term events. Event history order is provider events, active-request events, world-tick events, long-term-event events, and official-career events.
+- Rendered a compact browser `官场履历` panel from `officialCareerView`, added `[官场结算]` narrative feedback, and extended browser smoke to verify direct official start plus deterministic first appointment and official-career panel overflow.
+- Added focused unit/route/browser-helper coverage in `test/officialCareer.test.js`, `test/gameTurnOfficialCareer.test.js`, `test/stateRules.test.js`, and `test/browserSmokeScript.test.js`.
+- Used two read-only subagents for backend contract/risk inspection and frontend/browser-smoke placement. Neither edited files or ran Git commands.
+
+Verification:
+- `node --check` for changed runtime and test files.
+- `node --test test/officialCareer.test.js test/gameTurnOfficialCareer.test.js test/officialRole.test.js`
+- `node --test test/gameTurnLongTermEvents.test.js test/gameTurnRelationships.test.js test/gameTurnTick.test.js`
+- `npm run eval:ai`
+- `npm test` passed with 129 tests.
+- `npm run smoke:browser -- --screenshots artifacts/browser-smoke/s34` passed with 6 screenshots checked.
+- `npm run smoke:provider` skipped successfully because no real-provider keys are configured.
+- `git diff --check`
+
+Risk/leftover:
+- The outcome rules are deterministic and intentionally compact; richer office ladders, emperor/minister interventions, and deeper role/world coupling remain S36 work.
+- `outpost` currently keeps the broad `official` role while changing posting/title instead of switching to the separate direct-start `magistrate` role.
+
+Next:
+- S35.1: define the exam calendarization contract for exam windows, preparation months, travel time, missed periods, funding, and teacher recommendations.
 
 Tool: Codex
 

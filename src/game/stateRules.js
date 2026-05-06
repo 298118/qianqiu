@@ -60,7 +60,7 @@ const PROVIDER_PLAYER_PATCH_KEYS = new Set([
 ]);
 
 const SERVER_OWNED_PLAYER_PATCH_KEYS = new Set([
-  "examRank", "examHistory"
+  "role", "roleLabel", "examRank", "palaceRank", "officeTitle", "examHistory"
 ]);
 
 const SERVER_PLAYER_PATCH_KEYS = new Set([
@@ -75,7 +75,7 @@ const PROVIDER_TOP_LEVEL_PATCH_KEYS = new Set([
 ]);
 
 const SERVER_OWNED_TOP_LEVEL_PATCH_KEYS = new Set([
-  "characters", "eventHistory", "activeExam", "activeNpcRequest", "longTermEvents", "year", "month"
+  "characters", "eventHistory", "activeExam", "activeNpcRequest", "longTermEvents", "officialCareer", "year", "month"
 ]);
 
 const SERVER_TOP_LEVEL_PATCH_KEYS = new Set([

@@ -369,6 +369,12 @@ function getGameLayoutFailures(metrics, mode = "game") {
     );
   }
 
+  if (metrics.officialCareerClientWidth > 0 && metrics.officialCareerScrollWidth > metrics.officialCareerClientWidth + horizontalClipTolerance) {
+    failures.push(
+      `${mode} official career panel has horizontal scroll overflow (${roundMetric(metrics.officialCareerScrollWidth)}px > ${roundMetric(metrics.officialCareerClientWidth)}px).`
+    );
+  }
+
   if (metrics.scholarLeft < metrics.gameLeft - horizontalClipTolerance) {
     failures.push(`${mode} role panel starts outside the game panel.`);
   }
@@ -399,6 +405,7 @@ async function readGameLayoutMetrics(page) {
     const scholar = box("#scholar-panel");
     const relationship = box("#relationship-panel");
     const activeRequest = box("#active-request-panel");
+    const officialCareer = box("#official-career-panel");
 
     return {
       appWidth: app?.width || 0,
@@ -419,6 +426,9 @@ async function readGameLayoutMetrics(page) {
       activeRequestClientWidth: activeRequest?.clientWidth || 0,
       activeRequestScrollWidth: activeRequest?.scrollWidth || 0,
       activeRequestWidth: activeRequest?.width || 0,
+      officialCareerClientWidth: officialCareer?.clientWidth || 0,
+      officialCareerScrollWidth: officialCareer?.scrollWidth || 0,
+      officialCareerWidth: officialCareer?.width || 0,
       viewportWidth: window.innerWidth
     };
   });
@@ -440,6 +450,11 @@ function getMissingActiveRequestTargets(actualIds = [], expectedIds = []) {
 
 function getHiddenActiveRequestLeaks(actualIds = [], hiddenIds = []) {
   return getHiddenRelationshipLeaks(actualIds, hiddenIds);
+}
+
+function getMissingOfficialCareerOutcomeTypes(actualTypes = [], expectedTypes = []) {
+  const available = new Set(actualTypes);
+  return expectedTypes.filter((type) => !available.has(type));
 }
 
 async function assertRelationshipPanel(page, mode, expectations = {}) {
@@ -572,6 +587,51 @@ async function assertActiveNpcRequestPanel(page, mode, expectations = {}) {
   }
 
   const layoutFailures = getGameLayoutFailures(await readGameLayoutMetrics(page), `${mode} active request`);
+  if (layoutFailures.length) {
+    failUiAcceptance(layoutFailures.join(" "));
+  }
+
+  return snapshot;
+}
+
+async function assertOfficialCareerPanel(page, mode, expectations = {}) {
+  await visibleBox(page, "#official-career-panel", `${mode} official career panel`);
+
+  const snapshot = await page.evaluate(() => {
+    const panel = document.querySelector("#official-career-panel");
+    const outcomes = [...document.querySelectorAll("#official-career-panel .official-career-outcome")];
+    return {
+      currentPosting: panel?.dataset.currentPosting || "",
+      pendingReview: panel?.dataset.pendingReview || "",
+      outcomeIds: outcomes.map((outcome) => outcome.dataset.outcomeId),
+      outcomeTypes: outcomes.map((outcome) => outcome.dataset.outcomeType),
+      outcomeStatuses: outcomes.map((outcome) => outcome.dataset.outcomeStatus),
+      officeTitles: outcomes.map((outcome) => outcome.dataset.officeTitle),
+      outcomeTurns: outcomes.map((outcome) => outcome.dataset.outcomeTurn),
+      reasonCount: document.querySelectorAll("#official-career-panel .official-career-reason").length,
+      postingCount: document.querySelectorAll("#official-career-panel .official-career-posting").length,
+      text: panel?.innerText || ""
+    };
+  });
+
+  if (expectations.expectOutcome && !snapshot.outcomeIds.length) {
+    failUiAcceptance(`${mode} official career panel did not render any outcome rows.`);
+  }
+
+  const missingTypes = getMissingOfficialCareerOutcomeTypes(snapshot.outcomeTypes, expectations.expectedTypes || []);
+  if (missingTypes.length) {
+    failUiAcceptance(`${mode} official career panel is missing outcome types: ${missingTypes.join(", ")}.`);
+  }
+
+  if (expectations.expectedPosting && !snapshot.currentPosting.includes(expectations.expectedPosting)) {
+    failUiAcceptance(`${mode} official career panel current posting did not include ${expectations.expectedPosting}.`);
+  }
+
+  if (snapshot.outcomeIds.length && (snapshot.reasonCount < snapshot.outcomeIds.length || snapshot.postingCount < snapshot.outcomeIds.length)) {
+    failUiAcceptance(`${mode} official career panel has incomplete outcome fields.`);
+  }
+
+  const layoutFailures = getGameLayoutFailures(await readGameLayoutMetrics(page), `${mode} official career`);
   if (layoutFailures.length) {
     failUiAcceptance(layoutFailures.join(" "));
   }
@@ -804,7 +864,7 @@ async function runMobileUiAcceptance(page, recorder) {
   await page.locator("#exam-backdrop").waitFor({ state: "hidden", timeout: 10000 });
 }
 
-async function runOfficialStartAcceptance(browser, { baseUrl, onSessionId, pageErrors }) {
+async function runOfficialStartAcceptance(browser, { baseUrl, onSessionId, pageErrors, recorder = null }) {
   const context = await browser.newContext({ viewport: VIEWPORTS.desktop });
   let officialSessionId = null;
 
@@ -833,6 +893,9 @@ async function runOfficialStartAcceptance(browser, { baseUrl, onSessionId, pageE
     if (!rolePanelText.includes("入仕官员") || !rolePanelText.includes("候选观政")) {
       throw new Error("Official start did not render the official role panel.");
     }
+    await assertOfficialCareerPanel(page, "official start", {
+      expectedPosting: "候选观政"
+    });
     await assertRelationshipPanel(page, "official start", {
       expectedIds: ["C01", "eunuchs", "scholarOfficials", "militaryLords"],
       expectedTypes: ["character", "faction"]
@@ -850,6 +913,25 @@ async function runOfficialStartAcceptance(browser, { baseUrl, onSessionId, pageE
     const statePayload = await stateResponse.json();
     if (statePayload.worldState?.player?.role !== "official") {
       throw new Error("Official start API state did not persist player.role = official.");
+    }
+
+    await page.locator("#action-input").fill("奉上官考成请求实授");
+    await page.locator("#action-btn").click();
+    await page.waitForFunction(() => {
+      const button = document.querySelector("#action-btn");
+      return button && !button.disabled;
+    }, null, { timeout: 15000 });
+    await page.locator(".official-career-event").first().waitFor({ state: "visible", timeout: 10000 });
+    const careerSnapshot = await assertOfficialCareerPanel(page, "official outcome", {
+      expectOutcome: true,
+      expectedTypes: ["appointment"],
+      expectedPosting: "六部观政进士"
+    });
+    if (!careerSnapshot.outcomeStatuses.includes("current")) {
+      throw new Error("Official career panel did not mark the latest outcome as current.");
+    }
+    if (recorder) {
+      await recorder.capture(page, "official-career-outcome");
     }
 
     return {
@@ -985,7 +1067,8 @@ async function runBrowserJourney({
         sessionIds.push(createdSessionId);
         onSessionId(createdSessionId);
       },
-      pageErrors
+      pageErrors,
+      recorder
     });
 
     if (pageErrors.length) {
@@ -1004,7 +1087,7 @@ async function runBrowserJourney({
       officialStart,
       uiAcceptance: {
         screenshots: recorder.summary(),
-        viewports: ["desktop", "mobile", "official-start"]
+        viewports: ["desktop", "mobile", "official-start", "official-career"]
       }
     };
   } finally {
@@ -1091,6 +1174,7 @@ module.exports = {
   getGameLayoutFailures,
   getHiddenActiveRequestLeaks,
   getHiddenRelationshipLeaks,
+  getMissingOfficialCareerOutcomeTypes,
   getMissingActiveRequestTargets,
   getMissingRelationshipEntries,
   getMissingStartRoles,

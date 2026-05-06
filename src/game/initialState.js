@@ -203,6 +203,17 @@ function createInitialState(input = {}) {
       cooldowns: {},
       recentResolved: []
     },
+    officialCareer: {
+      schemaVersion: 1,
+      tenureMonths: 0,
+      reviewCycleMonths: 12,
+      lastReviewTurn: null,
+      lastReviewYear: null,
+      currentPosting: role === "official" ? ROLE_STAT_DEFAULTS.official.position : "未授",
+      careerHistory: [],
+      pendingOutcome: null,
+      cooldowns: {}
+    },
     setup: {
       background: input.background || "",
       customSetting: input.customSetting || ""

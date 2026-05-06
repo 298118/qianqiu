@@ -14,6 +14,11 @@ const {
   ensureLongTermEventState,
   runLongTermEventStep
 } = require("../game/longTermEvents");
+const {
+  buildOfficialCareerView,
+  ensureOfficialCareerState,
+  runOfficialCareerStep
+} = require("../game/officialCareer");
 const { applyStatePatch, appendEvents } = require("../game/stateRules");
 const { runWorldTick } = require("../game/worldTick");
 const { getProvider } = require("../ai");
@@ -48,6 +53,7 @@ async function processTurn(sessionId, input) {
   const worldState = await readSession(sessionId);
   ensureRelationshipLedger(worldState);
   ensureLongTermEventState(worldState);
+  ensureOfficialCareerState(worldState);
   const provider = getProvider();
   const result = await provider.runTurn(worldState, input);
   return finalizeTurn(worldState, result, input);
@@ -57,6 +63,7 @@ async function processStreamingTurn(sessionId, input, streamHandlers = {}) {
   const worldState = await readSession(sessionId);
   ensureRelationshipLedger(worldState);
   ensureLongTermEventState(worldState);
+  ensureOfficialCareerState(worldState);
   const provider = getProvider();
   const canStream = provider.supportsStreaming && typeof provider.streamTurn === "function";
   const result = canStream
@@ -97,12 +104,21 @@ async function finalizeTurn(worldState, result, input) {
   });
   const longTermRelationshipChanges = applyRelationshipChanges(worldState, longTermEvents.relationshipChanges);
 
+  const officialCareer = runOfficialCareerStep(worldState);
+  applyStatePatch(worldState, officialCareer.statePatch, {
+    incrementTurnCount: false,
+    allowServerOwnedPatchKeys: true
+  });
+  const officialCareerRelationshipChanges = applyRelationshipChanges(worldState, officialCareer.relationshipChanges);
+
   appendEvents(worldState, result.events);
   appendEvents(worldState, activeNpcRequest.events);
   appendEvents(worldState, worldTick.events);
   appendEvents(worldState, longTermEvents.events);
+  appendEvents(worldState, officialCareer.events);
   ensureRelationshipLedger(worldState);
   ensureLongTermEventState(worldState);
+  ensureOfficialCareerState(worldState);
 
   await writeSession(worldState);
 
@@ -118,9 +134,15 @@ async function finalizeTurn(worldState, result, input) {
     attributeChanges: [
       ...providerAttributeChanges,
       ...worldTickFeedback.attributeChanges,
-      ...longTermEvents.attributeChanges
+      ...longTermEvents.attributeChanges,
+      ...officialCareer.attributeChanges
     ],
-    relationshipChanges: [...relationshipChanges, ...activeNpcRequest.relationshipChanges, ...longTermRelationshipChanges],
+    relationshipChanges: [
+      ...relationshipChanges,
+      ...activeNpcRequest.relationshipChanges,
+      ...longTermRelationshipChanges,
+      ...officialCareerRelationshipChanges
+    ],
     relationshipView: buildRelationshipInspectionView(worldState),
     activeNpcRequestView: buildActiveNpcRequestView(worldState),
     activeNpcRequestEvents: activeNpcRequest.events,
@@ -131,6 +153,13 @@ async function finalizeTurn(worldState, result, input) {
       attributeChanges: Array.isArray(longTermEvents.attributeChanges) ? longTermEvents.attributeChanges : [],
       scheduled: Array.isArray(longTermEvents.scheduled) ? longTermEvents.scheduled : [],
       resolved: Array.isArray(longTermEvents.resolved) ? longTermEvents.resolved : []
+    },
+    officialCareerView: buildOfficialCareerView(worldState),
+    officialCareer: {
+      summary: officialCareer.summary,
+      events: Array.isArray(officialCareer.events) ? officialCareer.events : [],
+      attributeChanges: Array.isArray(officialCareer.attributeChanges) ? officialCareer.attributeChanges : [],
+      outcome: officialCareer.outcome
     },
     examTrigger,
     worldTick: worldTickFeedback,
@@ -176,6 +205,8 @@ async function streamTurn(res, sessionId, input) {
       activeNpcRequestEvents: payload.activeNpcRequestEvents,
       longTermEventView: payload.longTermEventView,
       longTermEvents: payload.longTermEvents,
+      officialCareerView: payload.officialCareerView,
+      officialCareer: payload.officialCareer,
       examTrigger: payload.examTrigger,
       worldTick: payload.worldTick
     });
@@ -205,6 +236,7 @@ router.post("/start", async (req, res, next) => {
       relationshipView: buildRelationshipInspectionView(worldState),
       activeNpcRequestView: buildActiveNpcRequestView(worldState),
       longTermEventView: buildLongTermEventView(worldState),
+      officialCareerView: buildOfficialCareerView(worldState),
       narrative: opening.narrative
     });
   } catch (error) {
@@ -217,12 +249,14 @@ router.get("/state/:sessionId", async (req, res, next) => {
     const worldState = await readSession(req.params.sessionId);
     ensureRelationshipLedger(worldState);
     ensureLongTermEventState(worldState);
+    ensureOfficialCareerState(worldState);
     res.json({
       sessionId: worldState.sessionId,
       worldState,
       relationshipView: buildRelationshipInspectionView(worldState),
       activeNpcRequestView: buildActiveNpcRequestView(worldState),
-      longTermEventView: buildLongTermEventView(worldState)
+      longTermEventView: buildLongTermEventView(worldState),
+      officialCareerView: buildOfficialCareerView(worldState)
     });
   } catch (error) {
     next(error);
