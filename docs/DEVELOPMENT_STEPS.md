@@ -84,7 +84,7 @@
 | S38.1 | DONE | 扩展浏览器验收到完整四级科举通关、作弊样例、各身份一回合、桌面/移动视觉回归 | 2026-05-06 | Codex + subagents | 76745b3 |
 | S38.2 | DONE | 完成 JSON 存档硬化：session schema envelope、legacy 迁移、原子写入、并发保护、存档列表和未来数据库迁移路径 | 2026-05-06 | Codex + subagents | current S38.2 implementation commit |
 | S38.3 | DONE | 实现浏览器存档簿：开局页存档列表、游戏内存档弹窗、切换载入和 browser smoke 覆盖 | 2026-05-06 | Codex + subagent | current S38.3 implementation commit |
-| S39.1 | DONE | 修复预阶段审查发现的 CORS、examTrigger、SSE、隐藏关系、冷却、初始年份和 revision 硬化问题 | 2026-05-06 | Codex + subagents | pending final commit hash |
+| S39.1 | DONE | 修复预阶段审查发现的 CORS、examTrigger、SSE、隐藏关系、冷却、初始年份和 revision 硬化问题 | 2026-05-06 | Codex + subagents | b344217 |
 
 ## 4. 分阶段详细步骤
 
@@ -187,7 +187,7 @@ Tool: Codex
 
 Step: S39.1
 
-Commit: pending final commit hash
+Commit: b344217
 
 Completed:
 - Compressed `docs/SHARED_CONTEXT.md` into a compact handoff index so future agents can read current architecture, invariants, and S39 scope without scanning the full historical ledger.

@@ -19,7 +19,7 @@ Every development session must read these files before planning or editing:
 - Backend: Node.js + Express, plain JavaScript.
 - AI providers: adapter-based Mock/OpenAI/DeepSeek/Anthropic. `AI_PROVIDER=mock` remains the default playable mode.
 - Storage: JSON session records under `data/sessions/*.json`, currently using a `storageSchemaVersion: 1` envelope with redacted metadata, nested `worldState`, atomic temp writes, revision checks, and a per-session local lock file.
-- Active roadmap: third phase in `docs/DEVELOPMENT_STEPS.md`; S39.1 audit hardening is implemented in the pending final commit.
+- Active roadmap: third phase in `docs/DEVELOPMENT_STEPS.md`; S39.1 audit hardening is implemented in `b344217`.
 - Latest review artifact: `docs/PRE_PHASE_CODEBASE_REVIEW_2026-05-06.md`.
 - Latest committed review baseline before S39: `9fa4b26 docs: record pre-phase codebase review`.
 
@@ -115,7 +115,7 @@ Runtime changes:
 - `scripts/browserSmoke.js` now covers failed-SSE rollback in the browser.
 - `test-helpers/fetchSafeServer.js` includes Fetch blocked port `4190`, found during full CORS test verification.
 
-Verification for the pending S39.1 commit:
+Verification for S39.1 commit `b344217`:
 
 - Focused `node --check` for changed runtime/test files.
 - Focused `node --test` for CORS, exam triggers, streaming JSON/SSE, relationships, role-world coupling, start roles, and session storage passed with 55 tests.
