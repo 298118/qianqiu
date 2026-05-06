@@ -1,6 +1,7 @@
 const { randomUUID } = require("crypto");
 const { createInitialExamCalendar } = require("./examCalendar");
 const { createInitialRelationshipLedger } = require("./relationships");
+const { createInitialRoleWorldCouplingState } = require("./roleWorldCoupling");
 
 const ROLE_LABELS = {
   scholar: "书生",
@@ -205,6 +206,7 @@ function createInitialState(input = {}) {
       cooldowns: {},
       recentResolved: []
     },
+    roleWorldCoupling: createInitialRoleWorldCouplingState(),
     officialCareer: {
       schemaVersion: 1,
       tenureMonths: 0,

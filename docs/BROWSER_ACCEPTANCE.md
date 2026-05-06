@@ -29,6 +29,7 @@ The smoke uses `playwright-core` with an installed Chrome or Edge executable. If
 | Official career panel | Checks direct official start, the server-owned `officialCareerView` panel, deterministic first appointment, current outcome fields, stable `data-outcome-*` attributes, and official-career overflow. |
 | Exam calendar panel | Checks the server-owned `examCalendarView` panel, next-level/status attributes, timing/funding/recommendation/quota details, and calendar-panel overflow. |
 | Exam rival panel | Checks persistent `examRivalView` cards after an exam, stable rival/status/level attributes, latest-result rows, and rival-panel overflow. |
+| Role/world coupling | Opens direct magistrate, general, emperor, and minister sessions; runs one representative role action; checks `.role-world-event[data-role-world-kind]` feedback; and verifies the expected API state metric moves in the intended direction. |
 | Exam modal | Opens the next exam from the scholar panel, verifies question/requirements/writing controls, checks calendar timing details in the requirements, fills an essay, and submits it. |
 | Result details | Checks score summary, player archive, calendar archive details, result sections, highlighted ranking row, inspectable same-field candidate essays, and persistent rival notes. |
 | Mobile layout | Switches to a mobile viewport, checks the game/action surface, opens the exam archive, and verifies responsive result details. |
@@ -40,38 +41,38 @@ The smoke uses `playwright-core` with an installed Chrome or Edge executable. If
 
 Date: 2026-05-06
 
-Relevant implementation commit: current S35 implementation commit (`Implement S35 exam calendar and persistent rivals`)
+Relevant implementation commit: current S36 implementation commit (`Implement S36 role-world coupling`)
 
-Commands verified during S35:
+Commands verified during S36:
 
 ```powershell
-node --check src\game\examCalendar.js
-node --check src\game\candidates.js
-node --check src\game\examTravel.js
+node --check src\game\roleWorldCoupling.js
 node --check src\routes\game.js
 node --check src\routes\exam.js
 node --check public\app.js
 node --check scripts\browserSmoke.js
-node --check test\examCalendar.test.js
-node --check test\examTravel.test.js
-node --check test\gameTurnTick.test.js
+node --check test\roleWorldCoupling.test.js
+node --check test\gameTurnRoleWorldCoupling.test.js
 node --check test\stateRules.test.js
+node --check test\aiSchemas.test.js
+node --check testdata\aiEvalFixtures.js
 node --check test\browserSmokeScript.test.js
-node --test test\examCalendar.test.js test\examTravel.test.js test\gameTurnTick.test.js test\stateRules.test.js test\browserSmokeScript.test.js
+node --test test\roleWorldCoupling.test.js test\gameTurnRoleWorldCoupling.test.js test\stateRules.test.js test\aiSchemas.test.js test\aiEvalFixtures.test.js test\browserSmokeScript.test.js
 npm run eval:ai
 npm test
 npm run smoke:provider
-npm run smoke:browser -- --screenshots artifacts/browser-smoke/s35
+npm run smoke:browser -- --screenshots artifacts/browser-smoke/s36
 git diff --check
 ```
 
 Observed result:
 
-- Focused S35 calendar/rival, exam-travel, game-turn tick, state-boundary, and browser-helper tests passed with 38 tests.
-- `npm run smoke:browser -- --screenshots artifacts/browser-smoke/s35`: passed with relationship-panel coverage, active-request-panel coverage, exam-calendar/rival-panel coverage, direct official-start relationship visibility, deterministic official first-appointment coverage, and 6 screenshots checked.
-- `npm test`: 136 tests passed.
+- Focused S36 role-world, route-order, state-boundary, AI-schema/eval, and browser-helper tests passed with 45 tests.
+- `npm run smoke:browser -- --screenshots artifacts/browser-smoke/s36`: passed with relationship-panel coverage, active-request-panel coverage, exam-calendar/rival-panel coverage, direct official-start relationship visibility, deterministic official first-appointment coverage, representative magistrate/general/emperor/minister role-world coupling coverage, and 7 screenshots checked.
+- The S36 browser pass also hardens smoke start flows: if stale `qianqiu.sessionId` localStorage restores a prior game before the start form appears, the smoke clears that local key and reloads only for the initial start path. Later reload/fresh-page restoration checks still use the newly created session.
+- `npm test`: 145 tests passed.
 - `npm run smoke:provider`: skipped successfully because no real-provider keys are configured.
-- Desktop smoke still fails if the game panel regresses to the old narrow-column width, if the role panel, relationship panel, active-request panel, official-career panel, exam-calendar panel, or exam-rival panel is horizontally clipped, if S35 calendar/rival details disappear from the modal/archive/candidate profiles, if any supported start role is missing from the browser form, or if hidden scholar-invisible factions leak into relationship/active-request panel text.
+- Desktop smoke still fails if the game panel regresses to the old narrow-column width, if the role panel, relationship panel, active-request panel, official-career panel, exam-calendar panel, or exam-rival panel is horizontally clipped, if S35 calendar/rival details disappear from the modal/archive/candidate profiles, if S36 role-world feedback or expected API metric deltas disappear from representative role journeys, if any supported start role is missing from the browser form, or if hidden scholar-invisible factions leak into relationship/active-request panel text.
 
 Earlier S26.2 screenshot review caught and fixed a real result-modal bug: `.exam-requirements { display: grid; }` overrode the `hidden` attribute and left the old requirements visible behind the result view. The fix is `.exam-requirements[hidden] { display: none; }`.
 

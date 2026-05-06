@@ -770,6 +770,12 @@ button:disabled {
   background: rgba(155, 47, 34, 0.07);
 }
 
+.narrative .role-world-event {
+  color: #5f5421;
+  border-left-color: rgba(95, 84, 33, 0.46);
+  background: rgba(153, 133, 54, 0.08);
+}
+
 .narrative .relationship-change {
   color: var(--jade);
   border-left-color: rgba(47, 111, 94, 0.42);

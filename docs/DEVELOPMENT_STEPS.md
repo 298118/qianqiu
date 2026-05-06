@@ -76,9 +76,9 @@
 | S35.1 | DONE | 定义科举日历化契约：考期窗口、备考月程、路程耗时、错过考期、盘费筹措和师长推荐 | 2026-05-06 | Codex + subagents | current S35 implementation commit |
 | S35.2 | DONE | 让同场虚拟考生跨考试持久存在，成为同年、竞争者或后续官场人脉 | 2026-05-06 | Codex + subagents | current S35 implementation commit |
 | S35.3 | DONE | 将科举日历与持久竞争者接入前端档案和完整 scholar -> official 回归测试 | 2026-05-06 | Codex + subagents | current S35 implementation commit |
-| S36.1 | TODO | 定义角色与世界 tick 深耦合规则：水利影响粮储，战役影响边患/军费，朝廷任免影响地方执行力 |  |  |  |
-| S36.2 | TODO | 深化地方官、将领、皇帝和大臣行动对长期世界状态和关系记忆的复合影响 |  |  |  |
-| S36.3 | TODO | 为多身份长期联动增加 Mock 平衡测试和浏览器代表旅程 |  |  |  |
+| S36.1 | DONE | 定义角色与世界 tick 深耦合规则：水利影响粮储，战役影响边患/军费，朝廷任免影响地方执行力 | 2026-05-06 | Codex + subagents | current S36 implementation commit |
+| S36.2 | DONE | 深化地方官、将领、皇帝和大臣行动对长期世界状态和关系记忆的复合影响 | 2026-05-06 | Codex + subagents | current S36 implementation commit |
+| S36.3 | DONE | 为多身份长期联动增加 Mock 平衡测试和浏览器代表旅程 | 2026-05-06 | Codex + subagents | current S36 implementation commit |
 | S37.1 | TODO | 制定 keyed real-provider 长回合验收方案，覆盖 OpenAI、DeepSeek、Anthropic/Claude 的历史语气、越权和状态一致性 |  |  |  |
 | S37.2 | TODO | 增加可选真实 provider 长回合 smoke/eval 脚本，保持 no-key 环境成功跳过 |  |  |  |
 | S38.1 | TODO | 扩展浏览器验收到完整四级科举通关、作弊样例、各身份一回合、桌面/移动视觉回归 |  |  |  |
@@ -173,6 +173,38 @@
 ```
 
 ### 2026-05-06
+
+Tool: Codex
+
+Step: S36.1-S36.3
+
+Commit: current S36 implementation commit
+
+Completed:
+- Added `docs/ROLE_WORLD_COUPLING_CONTRACT.md` and `src/game/roleWorldCoupling.js` as the durable/server-owned S36 contract and implementation for magistrate waterworks, general campaigns, emperor appointments, and minister impeachments.
+- Seeded `worldState.roleWorldCoupling`, protected it from ordinary provider patches, added compact prompt context, and exposed top-level `roleWorldCouplingView` in game and exam route payloads.
+- Wired `/api/game/turn` to run role/world coupling after provider output and active-request handling, before world tick, long-term events, and official career settlement. Coupling state patches use the server-owned patch path without adding another turn count, and social consequences flow through `applyRelationshipChanges()`.
+- Added `[联动]` browser narrative feedback with `.role-world-event[data-role-world-kind]` instead of adding another persistent panel.
+- Extended `scripts/browserSmoke.js` with direct-start representative role journeys for magistrate, general, emperor, and minister actions, checking both feedback kind and API metric direction.
+- Hardened browser smoke start flows so stale `qianqiu.sessionId` localStorage from a prior run cannot hide the initial start form; the later reload/fresh-page restore checks still validate the newly created session.
+- Added focused role-world unit/route tests, state-boundary and AI schema/eval coverage, and browser-smoke helper coverage.
+- Used read-only subagents for backend order/ownership and browser-smoke placement before implementation; neither edited files or ran Git commands.
+
+Verification:
+- `node --check` for changed runtime and test files.
+- `node --test test\roleWorldCoupling.test.js test\gameTurnRoleWorldCoupling.test.js test\stateRules.test.js test\aiSchemas.test.js test\aiEvalFixtures.test.js test\browserSmokeScript.test.js` passed with 45 tests.
+- `npm run eval:ai` passed with 6 tests.
+- `npm test` passed with 145 tests.
+- `npm run smoke:provider` skipped successfully because no real-provider keys are configured.
+- `npm run smoke:browser -- --screenshots artifacts/browser-smoke/s36` passed with 7 screenshots checked.
+- `git diff --check`
+
+Risk/leftover:
+- The first S36 coupling rules are deterministic and compact; richer cooldown enforcement, multi-turn campaign chains, appointment policy memory, and deeper interaction with the official-career engine can build on the persisted `recentImpacts` contract later.
+- S36 intentionally renders feedback in the narrative stream rather than adding a new permanent panel, so player-facing state inspection still depends on the existing status strip, role panel, relationship panel, long-term feedback, and official-career feedback.
+
+Next:
+- S37.1: define keyed real-provider long-run acceptance for historical tone, JSON authority boundaries, state consistency, and streaming stability.
 
 Tool: Codex
 

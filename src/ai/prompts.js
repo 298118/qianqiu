@@ -2,6 +2,7 @@ const { summarizeRelationshipLedger } = require("../game/relationships");
 const { summarizeExamCalendarForPrompt } = require("../game/examCalendar");
 const { summarizeLongTermEventsForPrompt } = require("../game/longTermEvents");
 const { summarizeOfficialCareerForPrompt } = require("../game/officialCareer");
+const { summarizeRoleWorldCouplingForPrompt } = require("../game/roleWorldCoupling");
 
 const TURN_ALLOWED_PATCH_KEYS = [
   "treasury",
@@ -137,6 +138,7 @@ function compactWorldState(worldState = {}) {
     examCalendar: summarizeExamCalendarForPrompt(worldState),
     longTermEvents: summarizeLongTermEventsForPrompt(worldState),
     officialCareer: summarizeOfficialCareerForPrompt(worldState),
+    roleWorldCoupling: summarizeRoleWorldCouplingForPrompt(worldState),
     activeExam: compactExam(worldState.activeExam),
     recentEvents: (worldState.eventHistory || []).slice(-6),
     setup: worldState.setup || {},
@@ -151,7 +153,7 @@ function commonInstructions() {
     "Write player-facing narrative in Simplified Chinese with a restrained classical historical tone.",
     "The server owns state boundaries, promotion rules, exam gates, cheating penalties, persistence, and final application of patches.",
     "Never grant palace rank, office title, or role promotion in ordinary turn statePatch. Use examTrigger for exam entry requests.",
-    "Never patch activeExam, examCalendar, activeNpcRequest, longTermEvents, officialCareer, characters, eventHistory, player.examRank, player.officeTitle, or player.examHistory in ordinary turns; those fields are server-owned.",
+    "Never patch activeExam, examCalendar, activeNpcRequest, longTermEvents, officialCareer, roleWorldCoupling, characters, eventHistory, player.examRank, player.officeTitle, or player.examHistory in ordinary turns; those fields are server-owned.",
     "Keep statePatch small and only use allowed keys. Prefer modest numeric changes in the range of 1-8 unless the action clearly spends resources.",
     "Never put relationshipLedger in statePatch.",
     `Allowed top-level patch keys: ${TURN_ALLOWED_PATCH_KEYS.join(", ")}.`,

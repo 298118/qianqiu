@@ -50,6 +50,7 @@ Important route ownership:
 - `src/game/activeRequests.js` owns the S32.3 server-scheduled active NPC/faction request loop. Providers may suggest narrative and relationship consequences, but they do not create, replace, resolve, or expire `worldState.activeNpcRequest`.
 - `src/game/longTermEvents.js` owns the S33 server-scheduled long-term event queue for seasonal, disaster, border, court, local case-chain, and cross-month consequence events. Providers may read a compact summary for narrative context, but they do not create, replace, resolve, or expire `worldState.longTermEvents`.
 - `src/game/officialCareer.js` owns the S34 official career outcome engine. Providers may move official career meters, but they do not appoint, transfer, promote, demote, impeach-to-case, punish, retain, or write `worldState.officialCareer`.
+- `src/game/roleWorldCoupling.js` owns the S36 role/world coupling step. Providers may move ordinary meters and suggest social changes, but they do not write `worldState.roleWorldCoupling` or decide the server-owned compound world consequences of key role actions.
 
 ## API Contract
 
@@ -77,11 +78,11 @@ Request fields:
 
 As of S31.3, `role` is normalized and validated in `src/game/initialState.js`. Missing or blank role values default to `scholar`; unsupported roles return `400`. The accepted enum is `scholar`, `emperor`, `minister`, `general`, `magistrate`, and `official`, and the browser start form exposes all six values.
 
-Returns `201` with `sessionId`, `worldState`, `examCalendarView`, `examRivalView`, `relationshipView`, `activeNpcRequestView`, `longTermEventView`, `officialCareerView`, and opening `narrative`.
+Returns `201` with `sessionId`, `worldState`, `examCalendarView`, `examRivalView`, `relationshipView`, `activeNpcRequestView`, `roleWorldCouplingView`, `longTermEventView`, `officialCareerView`, and opening `narrative`.
 
 ### `GET /api/game/state/:sessionId`
 
-Reads the JSON session file and returns `sessionId`, `worldState`, the player-facing `examCalendarView`, `examRivalView`, `relationshipView`, `activeNpcRequestView`, `longTermEventView`, and `officialCareerView`.
+Reads the JSON session file and returns `sessionId`, `worldState`, the player-facing `examCalendarView`, `examRivalView`, `relationshipView`, `activeNpcRequestView`, `roleWorldCouplingView`, `longTermEventView`, and `officialCareerView`.
 
 ### `POST /api/game/turn`
 
@@ -155,6 +156,16 @@ Requests without SSE negotiation still return plain JSON for tests and compatibi
   },
   "activeNpcRequestView": null,
   "activeNpcRequestEvents": [],
+  "roleWorldCouplingView": {
+    "schemaVersion": 1,
+    "recentImpacts": []
+  },
+  "roleWorldCoupling": {
+    "summary": "",
+    "events": [],
+    "attributeChanges": [],
+    "outcome": null
+  },
   "longTermEventView": {
     "schemaVersion": 1,
     "activeEvents": [],
@@ -196,7 +207,7 @@ Request:
 
 `level` may be omitted; the server derives the next eligible exam from `player.examRank`. The route saves a complete `worldState.activeExam`, reuses an existing unanswered exam for the same level, and rejects attempts to open a different exam while another question is active.
 
-Returns `examId`, exam metadata, requirements, readiness, entry preparation, `examCalendar`, `examCalendarView`, `examRivalView`, `relationshipView`, `activeNpcRequestView`, `longTermEventView`, `officialCareerView`, and `worldState`.
+Returns `examId`, exam metadata, requirements, readiness, entry preparation, `examCalendar`, `examCalendarView`, `examRivalView`, `relationshipView`, `activeNpcRequestView`, `roleWorldCouplingView`, `longTermEventView`, `officialCareerView`, and `worldState`.
 
 ### `POST /api/exam/submit`
 
@@ -210,7 +221,7 @@ Request:
 }
 ```
 
-The server checks authenticity, asks the provider for grading, applies local penalties, builds virtual candidates with inspectable essay profiles, applies promotion or cheating consequences, updates persistent same-field rivals, appends the essay result to `player.examHistory`, clears `activeExam`, saves the session and returns the result plus `examCalendarView`, `examRivalView`, `relationshipView`, `activeNpcRequestView`, `longTermEventView`, `officialCareerView`, and `worldState`. The response includes `examQuestion`, `essay`, `entryPreparation`, and `examCalendar` so the browser can render the just-submitted archive directly.
+The server checks authenticity, asks the provider for grading, applies local penalties, builds virtual candidates with inspectable essay profiles, applies promotion or cheating consequences, updates persistent same-field rivals, appends the essay result to `player.examHistory`, clears `activeExam`, saves the session and returns the result plus `examCalendarView`, `examRivalView`, `relationshipView`, `activeNpcRequestView`, `roleWorldCouplingView`, `longTermEventView`, `officialCareerView`, and `worldState`. The response includes `examQuestion`, `essay`, `entryPreparation`, and `examCalendar` so the browser can render the just-submitted archive directly.
 
 ## AI Provider Contract
 
@@ -229,7 +240,7 @@ Provider outputs must match the schemas in `src/ai/schemas.js`:
 - `examQuestion`: exam level, name, question, type, difficulty, requirements, word count, pass score and promotion rank
 - `grade`: five score dimensions, `overall_score`, rank, detailed feedback, authenticity echo, candidates and ranking placeholders
 
-Real provider adapters parse model text through `src/utils/json.js`, validate with Ajv, retry once on ordinary non-streaming failure, then fall back to Mock for that method. The model never owns final game state. It can suggest `statePatch`; the server whitelists and clamps it. Ordinary turn schemas now reject direct patches to server-owned fields such as `activeExam`, `activeNpcRequest`, `longTermEvents`, `officialCareer`, `characters`, `eventHistory`, `player.examRank`, `player.officeTitle`, and `player.examHistory`.
+Real provider adapters parse model text through `src/utils/json.js`, validate with Ajv, retry once on ordinary non-streaming failure, then fall back to Mock for that method. The model never owns final game state. It can suggest `statePatch`; the server whitelists and clamps it. Ordinary turn schemas now reject direct patches to server-owned fields such as `activeExam`, `activeNpcRequest`, `longTermEvents`, `roleWorldCoupling`, `officialCareer`, `characters`, `eventHistory`, `player.examRank`, `player.officeTitle`, and `player.examHistory`.
 
 S25.2 adds optional turn token streaming for OpenAI Responses, DeepSeek chat completions, and Anthropic Messages. `streamTurn()` buffers the full model JSON and still returns the same validated `turn` payload as `runTurn()`. During SSE requests, `src/routes/game.js` uses `src/utils/streamingJson.js` to extract only the top-level `narrative` string from the streamed JSON text and send it as `narrative_chunk`. State patches, relationship changes, world tick, persistence, and `final_state` still happen only after the full JSON passes schema validation. If visible provider narrative has already been sent and the stream then fails, the route emits an `error` event and does not write the session; if no visible narrative was sent, it can fall back to the normal turn path.
 
@@ -269,7 +280,7 @@ npm run smoke:browser -- --screenshots artifacts/browser-smoke
 
 The script uses `playwright-core` with an installed Chrome or Edge executable. It resolves `BROWSER_EXECUTABLE_PATH`, `--browser <path>`, or common platform install paths. Without `--url`, it starts `server.js` in Mock mode on a free local port, verifies the page loads, creates a scholar game through the real form, checks that `localStorage["qianqiu.sessionId"]` is written, reloads the page, opens a fresh page to confirm the saved session restores into the game view, verifies the session is readable through `GET /api/game/state/:sessionId`, and then removes the smoke session JSON file.
 
-S26.2 extends the same journey with DOM and screenshot-level UI acceptance. It asserts desktop and mobile layout boundaries for the status strip, role panel, narrative, and action input surface; opens the exam modal through the scholar panel; submits a Mock-mode essay; checks the result detail sections, ranking, candidate essay profiles, and historical exam archive; and captures PNG screenshots for each representative state. S32.2 additionally verifies the relationship panel: visible contact/faction rows, hidden-entry non-leakage, a Mock scholar relationship update, direct official-start faction visibility, and relationship-panel horizontal overflow. S32.3 verifies the active-request panel from `activeNpcRequestView`, including target ids/types, required fields, hidden target/text non-leakage, and active-request horizontal overflow on desktop, restored, fresh-page, and mobile journeys. S35 verifies the exam calendar and rival panels, calendar details inside the writing modal and archive, persistent rival notes on candidate profiles, and horizontal overflow for the new panels. Screenshots are validated in memory by default and can be saved with `--screenshots <dir>`. Browser smoke stays separate from `npm test` so normal automated tests do not require a local GUI browser.
+S26.2 extends the same journey with DOM and screenshot-level UI acceptance. It asserts desktop and mobile layout boundaries for the status strip, role panel, narrative, and action input surface; opens the exam modal through the scholar panel; submits a Mock-mode essay; checks the result detail sections, ranking, candidate essay profiles, and historical exam archive; and captures PNG screenshots for each representative state. S32.2 additionally verifies the relationship panel: visible contact/faction rows, hidden-entry non-leakage, a Mock scholar relationship update, direct official-start faction visibility, and relationship-panel horizontal overflow. S32.3 verifies the active-request panel from `activeNpcRequestView`, including target ids/types, required fields, hidden target/text non-leakage, and active-request horizontal overflow on desktop, restored, fresh-page, and mobile journeys. S35 verifies the exam calendar and rival panels, calendar details inside the writing modal and archive, persistent rival notes on candidate profiles, and horizontal overflow for the new panels. S36 adds direct-start representative journeys for magistrate, general, emperor, and minister actions, checking `.role-world-event[data-role-world-kind]` feedback plus API state metric deltas. Screenshots are validated in memory by default and can be saved with `--screenshots <dir>`. Browser smoke stays separate from `npm test` so normal automated tests do not require a local GUI browser.
 
 `docs/BROWSER_ACCEPTANCE.md` is the durable browser acceptance record. It lists the automated coverage, the latest verified S32.3 result, screenshot artifact policy, and the manual fallback areas that remain intentionally human-checked.
 
@@ -279,7 +290,7 @@ S26.2 extends the same journey with DOM and screenshot-level UI acceptance. It a
 
 - Global fields: `sessionId`, `year`, `month`, `dynasty`, `turnCount`, `treasury`, `grainReserve`, `population`, `publicOrder`, `taxRate`, `corruption`, `armySize`, `armyMorale`, `borderThreat`.
 - Factions: `factions.eunuchs`, `factions.scholarOfficials`, `factions.militaryLords`.
-- Narrative, relationship, event, official outcome, and exam fields: `characters`, `relationshipLedger`, `activeNpcRequest`, `longTermEvents`, `officialCareer`, `eventHistory`, `activeExam`, `setup`.
+- Narrative, relationship, event, role coupling, official outcome, and exam fields: `characters`, `relationshipLedger`, `activeNpcRequest`, `longTermEvents`, `roleWorldCoupling`, `officialCareer`, `eventHistory`, `activeExam`, `setup`.
 - Exam calendar fields: `examCalendar.missedWindows`, `examCalendar.recentSessions`, `examCalendar.rivals`, and `examCalendar.nextRivalNumber`.
 - Player identity: `player.role`, `roleLabel`, `name`, `health`, `gold`.
 - Scholar fields: `examRank`, `palaceRank`, `officeTitle`, `academia`, `literaryTalent`, `adaptability`, `mentality`, `reputation`, `examHistory`, `teacher`, `studiedBooks`, `connections`.
@@ -302,7 +313,7 @@ As of S31.2, `applyStatePatch(worldState, statePatch, options)` enforces:
 - `statePatch.factions` may only update existing numeric faction keys; providers cannot invent arbitrary faction names.
 - Existing faction scores patched by providers are clamped to `0..100`.
 - `turnCount` increments when a turn patch is applied.
-- Ordinary provider patches use the provider-facing whitelist and ignore server-owned fields such as `activeExam`, `activeNpcRequest`, `longTermEvents`, `officialCareer`, `characters`, `eventHistory`, `year`, `month`, `player.role`, `player.officeTitle`, `player.examRank`, and `player.examHistory` even if a non-schema provider includes them.
+- Ordinary provider patches use the provider-facing whitelist and ignore server-owned fields such as `activeExam`, `activeNpcRequest`, `longTermEvents`, `roleWorldCoupling`, `officialCareer`, `characters`, `eventHistory`, `year`, `month`, `player.role`, `player.officeTitle`, `player.examRank`, and `player.examHistory` even if a non-schema provider includes them.
 - `examCalendar` is also server-owned. Providers can read a compact prompt summary, but missed windows, rival persistence, and same-year contacts are written only by route-owned code.
 - Server-owned follow-up patches may pass `{ incrementTurnCount: false, allowServerOwnedPatchKeys: true }` so internal code can apply fields such as the world tick calendar without double-counting one player turn.
 - `relationshipLedger` is not an allowed provider patch key. The AI schema rejects it, and `applyStatePatch()` ignores it if a non-schema provider tries to include it anyway.
@@ -339,6 +350,21 @@ Server rules:
 - JSON and SSE turn payloads return `activeNpcRequestView`, `activeNpcRequestEvents`, and merged `relationshipChanges`.
 
 The browser renders active requests as `#active-request-panel` from top-level `activeNpcRequestView` and does not scan the raw ledger or raw request state for normal display. Stable card attributes include `data-request-id`, `data-request-kind`, `data-target-type`, `data-target-id`, `data-request-status`, and `data-due-turn`.
+
+## Role / World Coupling Contract
+
+S36 adds `worldState.roleWorldCoupling`, documented in [docs/ROLE_WORLD_COUPLING_CONTRACT.md](ROLE_WORLD_COUPLING_CONTRACT.md). It is a server-owned recent-impact ledger with `schemaVersion`, capped `recentImpacts`, and turn-number `cooldowns`.
+
+Server rules:
+
+- `src/game/roleWorldCoupling.js` classifies a small set of important role actions from the resolved input and post-provider state.
+- The first implemented kinds are `magistrate_waterworks`, `general_campaign`, `emperor_appointments`, and `minister_impeachment`.
+- The route runs role/world coupling after active NPC request handling and before `runWorldTick()`, so local works, campaigns, appointments, and impeachment pressure can affect the same month's natural drift and long-term-event scheduling.
+- Coupling state patches go through `applyStatePatch(..., { incrementTurnCount: false, allowServerOwnedPatchKeys: true })`.
+- Coupling-authored social consequences go through `applyRelationshipChanges()` and do not mutate the raw relationship ledger directly.
+- JSON and SSE turn payloads return `roleWorldCouplingView` plus `roleWorldCoupling: { summary, events, attributeChanges, outcome }`.
+
+The browser renders S36 feedback as `[联动]` narrative lines with `.role-world-event[data-role-world-kind]`. It intentionally does not add a new persistent panel; resulting state remains visible through the status strip, role panel, relationship panel, long-term feedback, and official-career feedback.
 
 ## Long-Term Event Scheduler Contract
 
@@ -420,7 +446,7 @@ The contract for S21.2-S21.4 is:
 
 `runWorldTick(worldState)` returns `{ statePatch, attributeChanges, events, summary }` without mutating `worldState`. Its first deterministic formulas cover treasury revenue/upkeep/leakage, grain consumption/harvest, population drift, public order, corruption, army morale, border threat, and small known-faction drift.
 
-Route integration order is provider patch first, provider relationship suggestions, exam trigger setup when requested, active NPC request handling, `runWorldTick()` against the updated state, tick patch with `{ incrementTurnCount: false, allowServerOwnedPatchKeys: true }`, long-term event scheduling/resolution, official career outcome settlement, then provider events followed by active-request events, tick events, long-term event events, and official career events. The browser renders the current month in the status strip and appends concise monthly, `[大势]`, and `[官场结算]` feedback below the provider narrative.
+Route integration order is provider patch first, provider relationship suggestions, exam trigger setup when requested, active NPC request handling, role/world coupling, `runWorldTick()` against the updated state, tick patch with `{ incrementTurnCount: false, allowServerOwnedPatchKeys: true }`, long-term event scheduling/resolution, official career outcome settlement, then provider events followed by active-request events, role-world events, tick events, long-term event events, and official career events. The browser renders the current month in the status strip and appends concise `[联动]`, monthly, `[大势]`, and `[官场结算]` feedback below the provider narrative.
 
 Provider turn schemas and prompts do not expose `year` or `month` as allowed model patch keys; calendar changes are reserved for server-owned patches.
 

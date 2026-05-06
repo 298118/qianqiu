@@ -26,6 +26,7 @@ const { buildRelationshipInspectionView, ensureRelationshipLedger } = require(".
 const { buildActiveNpcRequestView } = require("../game/activeRequests");
 const { buildLongTermEventView, ensureLongTermEventState } = require("../game/longTermEvents");
 const { buildOfficialCareerView, ensureOfficialCareerState } = require("../game/officialCareer");
+const { buildRoleWorldCouplingView, ensureRoleWorldCouplingState } = require("../game/roleWorldCoupling");
 const { appendEvents, applyStatePatch } = require("../game/stateRules");
 const { readSession, writeSession } = require("../storage/sessionStore");
 
@@ -52,6 +53,7 @@ function toExamPayload(worldState) {
     examRivalView: buildExamRivalView(worldState),
     relationshipView: buildRelationshipInspectionView(worldState),
     activeNpcRequestView: buildActiveNpcRequestView(worldState),
+    roleWorldCouplingView: buildRoleWorldCouplingView(worldState),
     longTermEventView: buildLongTermEventView(worldState),
     officialCareerView: buildOfficialCareerView(worldState),
     worldState
@@ -85,6 +87,7 @@ router.post("/question", async (req, res, next) => {
     ensureExamCalendarState(worldState);
     ensureLongTermEventState(worldState);
     ensureOfficialCareerState(worldState);
+    ensureRoleWorldCouplingState(worldState);
     const requestedLevel = level || worldState.activeExam?.level || getNextExamLevel(worldState.player.examRank);
     const exam = getExam(requestedLevel);
 
@@ -195,6 +198,7 @@ router.post("/submit", async (req, res, next) => {
     ensureExamCalendarState(worldState);
     ensureLongTermEventState(worldState);
     ensureOfficialCareerState(worldState);
+    ensureRoleWorldCouplingState(worldState);
     const activeExam = worldState.activeExam;
 
     if (!activeExam || !activeExam.examQuestion) {
@@ -286,6 +290,7 @@ router.post("/submit", async (req, res, next) => {
       examRivalView: buildExamRivalView(worldState),
       relationshipView: buildRelationshipInspectionView(worldState),
       activeNpcRequestView: buildActiveNpcRequestView(worldState),
+      roleWorldCouplingView: buildRoleWorldCouplingView(worldState),
       longTermEventView: buildLongTermEventView(worldState),
       officialCareerView: buildOfficialCareerView(worldState),
       worldState

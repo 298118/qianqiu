@@ -21,6 +21,40 @@ const desktopGameMinViewportShare = 0.74;
 const desktopViewportShareOnlyWhenAppShare = 0.88;
 const horizontalClipTolerance = 4;
 const requiredStartRoles = Object.freeze(["scholar", "emperor", "minister", "general", "magistrate", "official"]);
+const roleWorldAcceptanceCases = Object.freeze([
+  {
+    role: "magistrate",
+    playerName: "Browser Magistrate",
+    action: "兴修水利",
+    expectedKind: "magistrate_waterworks",
+    metricPath: "publicOrder",
+    direction: "increase"
+  },
+  {
+    role: "general",
+    playerName: "Browser General",
+    action: "率营出战",
+    expectedKind: "general_campaign",
+    metricPath: "borderThreat",
+    direction: "decrease"
+  },
+  {
+    role: "emperor",
+    playerName: "Browser Emperor",
+    action: "任免官员整饬吏治",
+    expectedKind: "emperor_appointments",
+    metricPath: "corruption",
+    direction: "decrease"
+  },
+  {
+    role: "minister",
+    playerName: "Browser Minister",
+    action: "弹劾贪墨官员",
+    expectedKind: "minister_impeachment",
+    metricPath: "corruption",
+    direction: "decrease"
+  }
+]);
 
 function parseBrowserSmokeArgs(argv = process.argv) {
   const args = {
@@ -82,6 +116,28 @@ async function assertStartRoleOptions(page) {
   if (missingStartRoles.length) {
     throw new Error(`Start form missing role options: ${missingStartRoles.join(", ")}`);
   }
+}
+
+async function waitForInitialRestore(page) {
+  try {
+    await page.waitForLoadState("networkidle", { timeout: 5000 });
+  } catch {
+    // The start form visibility check below is the actual acceptance gate.
+  }
+}
+
+async function openCleanStartPage(page, baseUrl) {
+  await page.goto(baseUrl, { waitUntil: "domcontentloaded" });
+  await waitForInitialRestore(page);
+
+  if (!(await page.locator("#start-form").isVisible())) {
+    await page.evaluate(() => window.localStorage.removeItem("qianqiu.sessionId"));
+    await page.goto(baseUrl, { waitUntil: "domcontentloaded" });
+    await waitForInitialRestore(page);
+  }
+
+  await page.locator("#start-form").waitFor({ state: "visible", timeout: 10000 });
+  await page.locator("#action-area").waitFor({ state: "hidden", timeout: 10000 });
 }
 
 function getDefaultBrowserCandidates(platform = process.platform, env = process.env) {
@@ -475,6 +531,11 @@ function getHiddenActiveRequestLeaks(actualIds = [], hiddenIds = []) {
 function getMissingOfficialCareerOutcomeTypes(actualTypes = [], expectedTypes = []) {
   const available = new Set(actualTypes);
   return expectedTypes.filter((type) => !available.has(type));
+}
+
+function getMissingRoleWorldKinds(actualKinds = [], expectedKinds = []) {
+  const available = new Set(actualKinds);
+  return expectedKinds.filter((kind) => !available.has(kind));
 }
 
 async function assertRelationshipPanel(page, mode, expectations = {}) {
@@ -979,8 +1040,7 @@ async function runOfficialStartAcceptance(browser, { baseUrl, onSessionId, pageE
   try {
     const page = await context.newPage();
     page.on("pageerror", (error) => pageErrors.push(error.message));
-    await page.goto(baseUrl, { waitUntil: "domcontentloaded" });
-    await page.locator("#start-form").waitFor({ state: "visible", timeout: 10000 });
+    await openCleanStartPage(page, baseUrl);
     await assertStartRoleOptions(page);
 
     await page.locator('input[name="dynasty"]').fill("Ming");
@@ -1051,6 +1111,131 @@ async function runOfficialStartAcceptance(browser, { baseUrl, onSessionId, pageE
   }
 }
 
+async function fetchSessionState(baseUrl, sessionId) {
+  const response = await fetch(`${baseUrl}/api/game/state/${sessionId}`);
+  if (!response.ok) {
+    throw new Error(`Session ${sessionId} is not readable through the API: ${response.status}`);
+  }
+  return response.json();
+}
+
+function readStatePath(state, pathExpression) {
+  return pathExpression.split(".").reduce((value, segment) => value?.[segment], state);
+}
+
+function assertMetricDirection(beforeState, afterState, pathExpression, direction, label) {
+  const before = readStatePath(beforeState, pathExpression);
+  const after = readStatePath(afterState, pathExpression);
+  if (typeof before !== "number" || typeof after !== "number") {
+    failUiAcceptance(`${label} metric ${pathExpression} was not numeric before and after the role-world turn.`);
+  }
+
+  if (direction === "increase" && after <= before) {
+    failUiAcceptance(`${label} expected ${pathExpression} to increase after role-world coupling (${before} -> ${after}).`);
+  }
+  if (direction === "decrease" && after >= before) {
+    failUiAcceptance(`${label} expected ${pathExpression} to decrease after role-world coupling (${before} -> ${after}).`);
+  }
+  if (direction === "change" && after === before) {
+    failUiAcceptance(`${label} expected ${pathExpression} to change after role-world coupling (${before} -> ${after}).`);
+  }
+}
+
+async function startDirectRolePage(context, baseUrl, role, playerName, pageErrors) {
+  const page = await context.newPage();
+  page.on("pageerror", (error) => pageErrors.push(error.message));
+  await openCleanStartPage(page, baseUrl);
+  await assertStartRoleOptions(page);
+
+  await page.locator('input[name="dynasty"]').fill("Ming");
+  await page.locator('input[name="year"]').fill("1644");
+  await page.locator('select[name="role"]').selectOption(role);
+  await page.locator('input[name="playerName"]').fill(playerName);
+  await page.locator('input[name="background"]').fill(`${role} role-world acceptance`);
+  await page.locator('textarea[name="customSetting"]').fill("S36 browser role-world acceptance run");
+  await page.locator('#start-form button[type="submit"]').click();
+
+  await page.locator("#action-area").waitFor({ state: "visible", timeout: 10000 });
+  await page.locator("#scholar-panel").waitFor({ state: "visible", timeout: 10000 });
+  const sessionId = await page.evaluate(() => window.localStorage.getItem("qianqiu.sessionId"));
+  if (!sessionId) throw new Error(`${role} role-world start did not write qianqiu.sessionId to localStorage.`);
+  return { page, sessionId };
+}
+
+async function submitTurnAndWaitForIdle(page, action, feedbackSelector) {
+  await page.locator("#action-input").fill(action);
+  await page.locator("#action-btn").click();
+  await page.waitForFunction(() => {
+    const button = document.querySelector("#action-btn");
+    return button && !button.disabled;
+  }, null, { timeout: 15000 });
+  await page.locator(feedbackSelector).first().waitFor({ state: "visible", timeout: 10000 });
+}
+
+async function runRoleWorldCouplingAcceptance(browser, { baseUrl, onSessionId, pageErrors, recorder = null }) {
+  const context = await browser.newContext({ viewport: VIEWPORTS.desktop });
+  const sessionIds = [];
+  const observedKinds = [];
+
+  try {
+    for (const acceptanceCase of roleWorldAcceptanceCases) {
+      const { page, sessionId } = await startDirectRolePage(
+        context,
+        baseUrl,
+        acceptanceCase.role,
+        acceptanceCase.playerName,
+        pageErrors
+      );
+      sessionIds.push(sessionId);
+      onSessionId(sessionId);
+
+      const beforePayload = await fetchSessionState(baseUrl, sessionId);
+      const selector = `.role-world-event[data-role-world-kind="${acceptanceCase.expectedKind}"]`;
+      await submitTurnAndWaitForIdle(page, acceptanceCase.action, selector);
+      const afterPayload = await fetchSessionState(baseUrl, sessionId);
+
+      const roleWorldKinds = await page.locator(".role-world-event").evaluateAll((events) =>
+        events.map((event) => event.dataset.roleWorldKind).filter(Boolean)
+      );
+      const missingKinds = getMissingRoleWorldKinds(roleWorldKinds, [acceptanceCase.expectedKind]);
+      if (missingKinds.length) {
+        failUiAcceptance(`${acceptanceCase.role} role-world feedback missing kinds: ${missingKinds.join(", ")}.`);
+      }
+      observedKinds.push(...roleWorldKinds);
+
+      assertMetricDirection(
+        beforePayload.worldState,
+        afterPayload.worldState,
+        acceptanceCase.metricPath,
+        acceptanceCase.direction,
+        acceptanceCase.role
+      );
+      if (afterPayload.worldState?.roleWorldCoupling?.recentImpacts?.at(-1)?.kind !== acceptanceCase.expectedKind) {
+        failUiAcceptance(`${acceptanceCase.role} role-world state did not persist ${acceptanceCase.expectedKind}.`);
+      }
+      await assertGameLayout(page, `${acceptanceCase.role} role-world`);
+
+      if (recorder && acceptanceCase.role === "magistrate") {
+        await recorder.capture(page, "role-world-coupling");
+      }
+      await page.close();
+    }
+
+    const expectedKinds = roleWorldAcceptanceCases.map((acceptanceCase) => acceptanceCase.expectedKind);
+    const missingKinds = getMissingRoleWorldKinds(observedKinds, expectedKinds);
+    if (missingKinds.length) {
+      failUiAcceptance(`role-world acceptance missing expected kinds: ${missingKinds.join(", ")}.`);
+    }
+
+    return {
+      sessionIds,
+      kinds: [...new Set(observedKinds)]
+    };
+  } finally {
+    await context.close();
+  }
+}
+
 async function runBrowserJourney({
   baseUrl,
   browserPath,
@@ -1073,9 +1258,7 @@ async function runBrowserJourney({
     const page = await context.newPage();
     page.on("pageerror", (error) => pageErrors.push(error.message));
 
-    await page.goto(baseUrl, { waitUntil: "domcontentloaded" });
-    await page.locator("#start-form").waitFor({ state: "visible", timeout: 10000 });
-    await page.locator("#action-area").waitFor({ state: "hidden", timeout: 10000 });
+    await openCleanStartPage(page, baseUrl);
     await assertStartRoleOptions(page);
 
     await page.locator('input[name="dynasty"]').fill("Ming");
@@ -1197,6 +1380,16 @@ async function runBrowserJourney({
       recorder
     });
 
+    const roleWorldCoupling = await runRoleWorldCouplingAcceptance(browser, {
+      baseUrl,
+      onSessionId: (createdSessionId) => {
+        sessionIds.push(createdSessionId);
+        onSessionId(createdSessionId);
+      },
+      pageErrors,
+      recorder
+    });
+
     if (pageErrors.length) {
       throw new Error(`Browser page errors detected: ${pageErrors.join("; ")}`);
     }
@@ -1211,9 +1404,10 @@ async function runBrowserJourney({
       sessionIds,
       statusText: statusText.replace(/\s+/g, " ").trim(),
       officialStart,
+      roleWorldCoupling,
       uiAcceptance: {
         screenshots: recorder.summary(),
-        viewports: ["desktop", "mobile", "official-start", "official-career"]
+        viewports: ["desktop", "mobile", "official-start", "official-career", "role-world"]
       }
     };
   } finally {
@@ -1301,6 +1495,7 @@ module.exports = {
   getHiddenActiveRequestLeaks,
   getHiddenRelationshipLeaks,
   getMissingOfficialCareerOutcomeTypes,
+  getMissingRoleWorldKinds,
   getMissingActiveRequestTargets,
   getMissingRelationshipEntries,
   getMissingStartRoles,

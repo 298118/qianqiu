@@ -229,6 +229,16 @@ const SERVER_OWNED_TURN_FIXTURES = [
         eventHistory: ["provider tries to replace history"]
       }
     }))
+  },
+  {
+    name: "ordinary turn may not patch role-world coupling",
+    raw: JSON.stringify(baseTurn({
+      statePatch: {
+        roleWorldCoupling: {
+          recentImpacts: [{ kind: "provider-forged" }]
+        }
+      }
+    }))
   }
 ];
 

@@ -75,7 +75,7 @@ const PROVIDER_TOP_LEVEL_PATCH_KEYS = new Set([
 ]);
 
 const SERVER_OWNED_TOP_LEVEL_PATCH_KEYS = new Set([
-  "characters", "eventHistory", "activeExam", "examCalendar", "activeNpcRequest", "longTermEvents", "officialCareer", "year", "month"
+  "characters", "eventHistory", "activeExam", "examCalendar", "activeNpcRequest", "longTermEvents", "officialCareer", "roleWorldCoupling", "year", "month"
 ]);
 
 const SERVER_TOP_LEVEL_PATCH_KEYS = new Set([

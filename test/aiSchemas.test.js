@@ -150,6 +150,7 @@ test("turn schema rejects model attempts to patch relationship ledger fields", (
 test("turn schema rejects model attempts to patch ordinary-turn server-owned fields", () => {
   const serverOwnedPatches = [
     { activeExam: { level: "child_exam", status: "writing" } },
+    { roleWorldCoupling: { recentImpacts: [{ kind: "provider-forged" }] } },
     { characters: [{ id: "C99", name: "Invented official" }] },
     { eventHistory: ["provider tries to replace history"] },
     { player: { examRank: "秀才" } },

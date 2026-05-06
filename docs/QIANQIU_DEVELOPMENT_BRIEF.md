@@ -24,7 +24,7 @@
 
 第二阶段已经完成本地验收，记录见 `docs/PHASE_TWO_ACCEPTANCE.md`；第二阶段路线图已归档到 `docs/PHASE_TWO_ROADMAP_ARCHIVE.md`。已接受的范围包括世界 tick、NPC/派系记忆、地方官与将领深度、入仕官员深度、科举竞争深度、真实 provider smoke/streaming 准备、AI eval fixtures 和浏览器自动化验收。
 
-第三阶段已经在 `docs/DEVELOPMENT_STEPS.md` 开启。第三阶段目标是先修正桌面游戏态布局、普通回合服务器独占字段边界和开局 role 校验，再推进关系可视化、主动 NPC、长期事件调度、官场结果、科举日历、身份与世界联动、真实 provider 长回合验收、浏览器完整旅程和存档迁移规划。
+第三阶段已经在 `docs/DEVELOPMENT_STEPS.md` 开启。当前已完成桌面游戏态布局、普通回合服务器独占字段边界、开局 role 校验、关系可视化、主动 NPC、长期事件调度、官场结果、科举日历和身份与世界联动；后续继续推进真实 provider 长回合验收、浏览器完整旅程和存档迁移规划。
 
 开发规范不变。第 12 节和第 13 节仍是每次开发必须遵守的流程；Mock 默认可玩、真实 provider 可选、服务器拥有状态边界和科举规则这些要求继续有效。
 
@@ -557,7 +557,7 @@ chore: update env example
 6. 身份与世界联动：让地方官、将领、皇帝和大臣行动对 world tick、长期事件与关系账本产生复合后果。
 7. 验收与存档：增加 keyed real-provider 长回合验收、完整浏览器旅程和存档迁移规划。
 
-所有第三阶段实现仍需满足基础验收：默认 Mock 可运行，完整 scholar -> official 路径不得被破坏，真实 provider 不得成为本地启动必要条件，服务器继续拥有状态边界、科举晋级、作弊惩罚、长期事件结果、官场授官升降和持久化裁决。
+所有第三阶段实现仍需满足基础验收：默认 Mock 可运行，完整 scholar -> official 路径不得被破坏，真实 provider 不得成为本地启动必要条件，服务器继续拥有状态边界、科举晋级、作弊惩罚、长期事件结果、官场授官升降、角色-世界联动后果和持久化裁决。
 
 ## S11 Provider Integration Note (2026-05-05)
 
@@ -863,3 +863,16 @@ S35 calendarizes the imperial examination path and turns same-field candidates i
 - Providers can read compact exam calendar/rival context in prompts, but ordinary turns cannot patch `examCalendar`, `activeExam`, exam ranks, or exam history.
 - The browser renders `#exam-calendar-panel` and `#exam-rival-panel`, includes calendar details in the writing modal and exam archive, and marks persistent rival notes inside candidate profiles.
 - The durable contract is `docs/EXAM_CALENDAR_CONTRACT.md`; focused coverage lives in `test/examCalendar.test.js`, `test/examTravel.test.js`, `test/gameTurnTick.test.js`, `test/stateRules.test.js`, and browser smoke helper coverage.
+
+## S36 Role / World Coupling Note (2026-05-06)
+
+S36 turns key identity actions into server-owned world consequences before the monthly tick and long-term scheduler run:
+
+- `worldState.roleWorldCoupling` stores `{ schemaVersion, recentImpacts, cooldowns }`. It is normalized by `src/game/roleWorldCoupling.js` and protected from ordinary provider patches.
+- The first deterministic coupling families are magistrate waterworks, general campaigns, emperor appointments, and minister impeachments.
+- `/api/game/turn` applies provider output first, then active requests, then role/world coupling, then world tick, long-term events, and official career settlement. This order lets waterworks affect the same month's grain/public-order drift, campaigns affect border pressure before later event scheduling, and court actions feed faction or official consequences without giving providers direct authority.
+- Coupling output can include bounded `statePatch`, `attributeChanges`, relationship changes, event-history lines, and a compact `outcome`; server follow-up patches use `applyStatePatch(..., { incrementTurnCount: false, allowServerOwnedPatchKeys: true })`.
+- Game and exam route payloads include top-level `roleWorldCouplingView`; turn payloads also include `roleWorldCoupling: { summary, events, attributeChanges, outcome }`.
+- Providers can read compact role-world context in prompts, but the prompt and schema explicitly forbid ordinary provider patches to `roleWorldCoupling`.
+- The browser renders `[联动]` narrative feedback as `.role-world-event[data-role-world-kind]` instead of adding another persistent panel.
+- The durable contract is `docs/ROLE_WORLD_COUPLING_CONTRACT.md`; focused coverage lives in `test/roleWorldCoupling.test.js`, `test/gameTurnRoleWorldCoupling.test.js`, state/schema/eval tests, and browser smoke helper coverage.

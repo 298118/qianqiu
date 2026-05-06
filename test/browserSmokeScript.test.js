@@ -10,6 +10,7 @@ const {
   getHiddenRelationshipLeaks,
   getMissingActiveRequestTargets,
   getMissingOfficialCareerOutcomeTypes,
+  getMissingRoleWorldKinds,
   getMissingRelationshipEntries,
   getMissingStartRoles,
   normalizeBaseUrl,
@@ -211,6 +212,14 @@ test("browser smoke official career helpers catch missing outcome types", () => 
   assert.deepEqual(
     getMissingOfficialCareerOutcomeTypes(["appointment"], ["appointment", "promotion"]),
     ["promotion"]
+  );
+});
+
+test("browser smoke role-world helpers catch missing coupling kinds", () => {
+  assert.deepEqual(getMissingRoleWorldKinds(["magistrate_waterworks"], ["magistrate_waterworks"]), []);
+  assert.deepEqual(
+    getMissingRoleWorldKinds(["magistrate_waterworks"], ["magistrate_waterworks", "general_campaign"]),
+    ["general_campaign"]
   );
 });
 

@@ -1013,6 +1013,7 @@ function appendNarrative(text, className) {
   paragraph.textContent = text;
   narrative.appendChild(paragraph);
   narrative.scrollTop = narrative.scrollHeight;
+  return paragraph;
 }
 
 function beginNarrativeStream() {
@@ -1095,6 +1096,16 @@ function appendRelationshipChanges(changes) {
 function appendActiveNpcRequestEvents(events) {
   if (!Array.isArray(events) || !events.length) return;
   events.forEach((event) => appendNarrative(event, "active-request-event"));
+}
+
+function appendRoleWorldCouplingFeedback(roleWorldCoupling) {
+  if (!roleWorldCoupling) return;
+  const events = Array.isArray(roleWorldCoupling.events) ? roleWorldCoupling.events : [];
+  const kind = roleWorldCoupling.outcome?.kind || "";
+  events.forEach((event) => {
+    const entry = appendNarrative(`[联动] ${event}`, "role-world-event");
+    if (kind) entry.dataset.roleWorldKind = kind;
+  });
 }
 
 function appendWorldTickFeedback(worldTick) {
@@ -1774,6 +1785,7 @@ async function handleTurnPayload(payload) {
   appendAttributeChanges(payload.attributeChanges);
   appendRelationshipChanges(payload.relationshipChanges);
   appendActiveNpcRequestEvents(payload.activeNpcRequestEvents);
+  appendRoleWorldCouplingFeedback(payload.roleWorldCoupling);
   appendWorldTickFeedback(payload.worldTick);
   appendLongTermEventFeedback(payload.longTermEvents);
   appendOfficialCareerFeedback(payload.officialCareer);
