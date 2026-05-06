@@ -71,8 +71,8 @@
 | S25.2 | DONE | 评估并实现真实 provider token streaming；无法流式的 provider 保持兼容降级 | 2026-05-06 | Codex + subagent investigation | current S25.2 commit |
 | S25.3 | DONE | 建立 AI 输出 eval fixtures，固定校验 JSON 合约、违规 patch、科举评卷和历史语气 | 2026-05-06 | Codex + subagent recommendation | current S25.3 commit |
 | S26.1 | DONE | 引入浏览器自动化验收方案，优先覆盖本地页面加载、开局、localStorage 恢复 | 2026-05-06 | Codex + subagent recommendation | current S26.1 commit |
-| S26.2 | DONE | 增加截图或 DOM 级 UI 验收，覆盖桌面/移动布局、考试弹窗、放榜详情、考试档案和输入区 | 2026-05-06 | Codex | current S26.2 commit |
-| S26.3 | TODO | 将浏览器验收结果写入文档，并保留手动验收清单作为 fallback |
+| S26.2 | DONE | 增加截图或 DOM 级 UI 验收，覆盖桌面/移动布局、考试弹窗、放榜详情、考试档案和输入区 | 2026-05-06 | Codex | 434b3ef |
+| S26.3 | DONE | 将浏览器验收结果写入文档，并保留手动验收清单作为 fallback | 2026-05-06 | Codex | current S26.3 commit |
 | S27.1 | TODO | 完成第二阶段验收文档，记录新增深度、已知限制、真实 provider 状态和下一阶段候选 |
 
 ## 4. 分阶段详细步骤
@@ -160,9 +160,34 @@
 
 Tool: Codex
 
+Step: S26.3
+
+Commit: current S26.3 commit
+
+Completed:
+- Added `docs/BROWSER_ACCEPTANCE.md` as the durable browser acceptance record, covering automated smoke scope, screenshot artifact policy, latest S26.2 results, and manual fallback gaps.
+- Linked the browser acceptance record from README, architecture notes, manual acceptance, and the product brief.
+- Added `test-helpers/fetchSafeServer.js` and routed temporary Express test servers through it after verification exposed an intermittent Node Fetch `bad port` failure from `app.listen(0)`.
+- Updated shared context and this ledger so S26.3 is complete and S27.1 is the next recommended step.
+
+Verification:
+- `node --check test-helpers/fetchSafeServer.js`
+- `node --test test\gameTurnTick.test.js test\streamingTurnRoute.test.js test\gameTurnRelationships.test.js` passed with 10 tests.
+- `git diff --check`
+- `npm test` passed with 87 tests.
+
+Risk/leftover:
+- Browser smoke still depends on an installed Chrome or Edge executable, or `BROWSER_EXECUTABLE_PATH`/`--browser`.
+- Manual acceptance remains required for the complete scholar-to-official browser path, exam integrity variants, role-loop breadth, subjective visual inspection, real-provider browser behavior, and cross-browser checks outside the local Chrome/Edge executable.
+
+Next:
+- S27.1: complete the phase-two acceptance document, recording added simulation depth, known limitations, real-provider status, and phase-three candidates.
+
+Tool: Codex
+
 Step: S26.2
 
-Commit: current S26.2 commit
+Commit: 434b3ef
 
 Completed:
 - Extended `scripts/browserSmoke.js` from S26.1 opening/restoration smoke into DOM and screenshot-level UI acceptance.

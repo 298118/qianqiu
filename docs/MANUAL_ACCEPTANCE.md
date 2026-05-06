@@ -26,6 +26,8 @@ npm run smoke:browser -- --url http://localhost:3000 --screenshots artifacts/bro
 
 The smoke uses a local Chrome or Edge executable. Set `BROWSER_EXECUTABLE_PATH` or pass `--browser <path>` if the browser is installed outside the standard location. It now also covers desktop/mobile layout, the action input surface, the exam modal, result sections, and the exam archive; `--screenshots <dir>` saves the checked PNG artifacts for manual review.
 
+The repeatable automated coverage and latest result are recorded in [BROWSER_ACCEPTANCE.md](BROWSER_ACCEPTANCE.md). Keep this manual script for the full scholar-to-official playthrough, integrity variants, every role loop, subjective visual review, real-provider browser behavior, and cross-browser checks outside the installed Chrome/Edge executable used by `smoke:browser`.
+
 ## 2. API Smoke Check
 
 Run these commands in a second PowerShell window while the server is running:

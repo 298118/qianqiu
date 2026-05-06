@@ -11,6 +11,7 @@ const mockProvider = require("../src/ai/providers/mock");
 const { createInitialState } = require("../src/game/initialState");
 const { summarizeRelationshipLedger } = require("../src/game/relationships");
 const { writeSession } = require("../src/storage/sessionStore");
+const { createFetchSafeServer } = require("../test-helpers/fetchSafeServer");
 
 const sessionsDir = path.join(__dirname, "..", "data", "sessions");
 
@@ -23,15 +24,7 @@ function createTestServer() {
   app.use(express.json());
   app.use("/api/game", gameRoutes);
 
-  const server = app.listen(0);
-  const { port } = server.address();
-
-  return {
-    baseUrl: `http://127.0.0.1:${port}`,
-    close: () => new Promise((resolve, reject) => {
-      server.close((error) => error ? reject(error) : resolve());
-    })
-  };
+  return createFetchSafeServer(app);
 }
 
 test("Mock scholar study produces visible character and faction relationship suggestions", async () => {

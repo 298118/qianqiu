@@ -11,6 +11,7 @@ const examRoutes = require("../src/routes/exam");
 const { createInitialState } = require("../src/game/initialState");
 const { MAX_EVENT_HISTORY, NUMERIC_RANGES } = require("../src/game/stateRules");
 const { writeSession } = require("../src/storage/sessionStore");
+const { createFetchSafeServer } = require("../test-helpers/fetchSafeServer");
 
 const sessionsDir = path.join(__dirname, "..", "data", "sessions");
 const PASSING_ESSAY = "治民以德，修身齐家，明经达变，慎刑薄赋，安民养士。".repeat(70);
@@ -25,15 +26,7 @@ function createTestServer() {
   app.use("/api/game", gameRoutes);
   app.use("/api/exam", examRoutes);
 
-  const server = app.listen(0);
-  const { port } = server.address();
-
-  return {
-    baseUrl: `http://127.0.0.1:${port}`,
-    close: () => new Promise((resolve, reject) => {
-      server.close((error) => error ? reject(error) : resolve());
-    })
-  };
+  return createFetchSafeServer(app);
 }
 
 async function postJson(url, body) {

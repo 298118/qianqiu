@@ -571,7 +571,7 @@ The repository now has a dependency-free automated test entrypoint:
 npm test
 ```
 
-`npm test` uses Node.js' built-in `node --test` runner. The first suite covers server-owned state patch boundaries, numeric clamps, event-history trimming, JSON session persistence, AI JSON schemas, exam gates/readiness, promotion and severe-cheating consequences, local essay penalties, and virtual candidate ranking.
+`npm test` uses Node.js' built-in `node --test` runner. The first suite covers server-owned state patch boundaries, numeric clamps, event-history trimming, JSON session persistence, AI JSON schemas, exam gates/readiness, promotion and severe-cheating consequences, local essay penalties, and virtual candidate ranking. Route-level tests that start temporary Express servers use `test-helpers/fetchSafeServer.js` so random OS ports do not land on Fetch's blocked-port list.
 
 Manual end-to-end acceptance lives in `docs/MANUAL_ACCEPTANCE.md`. It should be used for the browser/API pass before phase-one acceptance, especially to verify the complete scholar -> official route and the emperor/minister/official role loops in Mock mode.
 
@@ -742,3 +742,12 @@ S26.2 expands `npm run smoke:browser` from opening/restoration smoke into repeat
 - The same saved session is then restored and checked on mobile; the historical exam archive is opened there to exercise responsive result-detail rendering.
 - The smoke captures PNG screenshots for representative desktop/mobile states and validates them in memory. Passing `--screenshots <dir>` writes those artifacts for manual review; `artifacts/` is ignored by Git.
 - This pass exposed and fixed a result-modal regression where `.exam-requirements` overrode the `hidden` attribute with `display: grid`, leaving the old question requirements visible behind the放榜/result view.
+
+## S26.3 Browser Acceptance Documentation Note (2026-05-06)
+
+S26.3 adds `docs/BROWSER_ACCEPTANCE.md` as the durable browser acceptance record:
+
+- The document lists the automated `npm run smoke:browser` coverage, including local boot, scholar opening flow, session restoration, desktop/mobile layout checks, the exam modal, result details, the exam archive, screenshot validation, and cleanup.
+- It records the latest S26.2 automated result from commit `434b3ef`, including the screenshot run, 87-test `npm test` pass, and the `.exam-requirements[hidden]` regression fixed during screenshot review.
+- It keeps `docs/MANUAL_ACCEPTANCE.md` as the fallback for the complete scholar-to-official browser path, exam integrity variants, role-loop breadth, subjective visual inspection, real-provider browser behavior, and cross-browser checks.
+- S26.3 verification also added `test-helpers/fetchSafeServer.js` after a full-suite run exposed an intermittent Node Fetch `bad port` failure when `app.listen(0)` selected a blocked port.

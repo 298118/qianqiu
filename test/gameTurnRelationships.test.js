@@ -6,6 +6,7 @@ const path = require("node:path");
 
 const { createInitialState } = require("../src/game/initialState");
 const { writeSession } = require("../src/storage/sessionStore");
+const { createFetchSafeServer } = require("../test-helpers/fetchSafeServer");
 
 const sessionsDir = path.join(__dirname, "..", "data", "sessions");
 
@@ -34,13 +35,10 @@ function createTestServerWithProvider(provider) {
   app.use(express.json());
   app.use("/api/game", gameRoutes);
 
-  const server = app.listen(0);
-  const { port } = server.address();
+  const testServer = createFetchSafeServer(app);
 
   async function close() {
-    await new Promise((resolve, reject) => {
-      server.close((error) => error ? reject(error) : resolve());
-    });
+    await testServer.close();
 
     delete require.cache[gameRoutePath];
     if (originalGameRouteModule) {
@@ -55,7 +53,7 @@ function createTestServerWithProvider(provider) {
   }
 
   return {
-    baseUrl: `http://127.0.0.1:${port}`,
+    baseUrl: testServer.baseUrl,
     close
   };
 }

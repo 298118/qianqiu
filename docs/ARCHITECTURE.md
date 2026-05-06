@@ -221,6 +221,8 @@ The script uses `playwright-core` with an installed Chrome or Edge executable. I
 
 S26.2 extends the same journey with DOM and screenshot-level UI acceptance. It asserts desktop and mobile layout boundaries for the status strip, role panel, narrative, and action input surface; opens the exam modal through the scholar panel; submits a Mock-mode essay; checks the result detail sections, ranking, candidate essay profiles, and historical exam archive; and captures PNG screenshots for each representative state. Screenshots are validated in memory by default and can be saved with `--screenshots <dir>`. Browser smoke stays separate from `npm test` so normal automated tests do not require a local GUI browser.
 
+`docs/BROWSER_ACCEPTANCE.md` is the durable browser acceptance record. It lists the automated coverage, the latest verified S26.2 result, screenshot artifact policy, and the manual fallback areas that remain intentionally human-checked.
+
 ## State Model
 
 `createInitialState()` in `src/game/initialState.js` returns a `worldState` with:
@@ -360,6 +362,8 @@ Use:
 ```bash
 npm test
 ```
+
+Route-level tests that start temporary Express servers use `test-helpers/fetchSafeServer.js`. The helper retries if `app.listen(0)` lands on a port that Node's Fetch implementation rejects as unsafe.
 
 For the focused no-network AI output fixture gate, use:
 
