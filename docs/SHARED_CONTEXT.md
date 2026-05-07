@@ -20,7 +20,7 @@ Stable governance is protected in `docs/DEVELOPMENT_GOVERNANCE.md`; do not weake
 - Frontend: plain HTML/CSS/JS, no build step.
 - Backend: Node.js + Express, plain JavaScript.
 - AI providers: adapter-based Mock/OpenAI/DeepSeek/MiMo/MiMo+DeepSeek/Anthropic. `AI_PROVIDER=mock` remains the default playable mode. DeepSeek supports task-specific model overrides; MiMo uses Xiaomi MiMo OpenAI-compatible chat completions with `MIMO_MODEL=mimo-v2.5-pro` for the MiMo-V2.5-Pro 1M long-context model; `AI_PROVIDER=mimo-deepseek` routes start/turn/stream/question to MiMo and essay grading to DeepSeek V4 Pro.
-- Storage: `src/storage/sessionStore.js` is the route-facing facade. Default adapter is `src/storage/jsonSessionAdapter.js`, storing JSON session records under `data/sessions/*.json` with schema envelope, redacted metadata, nested `worldState`, atomic temp writes, revision checks, and per-session lock. Optional `src/storage/sqliteSessionAdapter.js` is selected by `STORAGE_ADAPTER=sqlite`, using local `world_sessions` rows and JSON `world_state_json`; local audit records use JSON sidecars or SQLite `event_log` / `ai_change_proposals`. JSON remains default. No remote save, account, multiplayer, cloud sync, or hosted DB scope.
+- Storage: `src/storage/sessionStore.js` is the route-facing facade. Default adapter is `src/storage/jsonSessionAdapter.js`, storing JSON session records under `data/sessions/*.json` with schema envelope, redacted metadata, nested `worldState`, atomic temp writes, revision checks, and per-session lock. Optional `src/storage/sqliteSessionAdapter.js` is selected by `STORAGE_ADAPTER=sqlite`, using local `world_sessions` rows and JSON `world_state_json`; S54.2 also syncs normalized geography rows into local `geo_*` tables through `src/storage/sqliteGeographyTables.js`. Local audit records use JSON sidecars or SQLite `event_log` / `ai_change_proposals`. JSON remains default. No remote save, account, multiplayer, cloud sync, or hosted DB scope.
 - Active roadmap: local dynamic database specialty in `docs/DEVELOPMENT_STEPS.md`. S49-S53 foundation is complete and archived in `docs/LOCAL_DATABASE_FOUNDATION_ARCHIVE.md`; active work now starts at S54, splitting remaining geography, people, official posting, and safe event data into local SQLite business tables while preserving JSON/default route contracts.
 - Current local `.env`: configured with real user-supplied DeepSeek and MiMo Token Plan keys; `AI_PROVIDER=mimo-deepseek` is the intended local real-provider mode. `.env` is ignored by Git and must never be printed or committed.
 
@@ -83,7 +83,7 @@ Important modules:
 - Role/world coupling: `src/game/roleWorldCoupling.js`
 - World Entities / 多实体世界模型: `src/game/worldEntities.js`
 - World Threads / 世界议程索引: `src/game/worldThreads.js`
-- Session storage facade/adapters: `src/storage/sessionStore.js`, `src/storage/jsonSessionAdapter.js`, `src/storage/sqliteSessionAdapter.js`, `src/storage/sessionRecord.js`, `src/storage/sessionAudit.js`
+- Session storage facade/adapters: `src/storage/sessionStore.js`, `src/storage/jsonSessionAdapter.js`, `src/storage/sqliteSessionAdapter.js`, `src/storage/sqliteGeographyTables.js`, `src/storage/sessionRecord.js`, `src/storage/sessionAudit.js`
 - Local audit builders: `src/game/audit.js`
 - SSE helpers: `src/utils/sse.js`, `src/utils/streamingJson.js`
 - Browser app: `public/index.html`, `public/app.js`, `public/styles.css`
@@ -144,7 +144,8 @@ Current active roadmap: S54-S59 in `docs/DEVELOPMENT_STEPS.md`.
 Next planned slices:
 
 - S54.1: DONE. Geography SQLite business table contract is recorded in `docs/WORLD_GEOGRAPHY_SEED_CONTRACT.md`; no runtime tables or route fields were added.
-- S54.2/S54.3: persist geography business rows in SQLite mode and add import/repair/export plus JSON/SQLite `worldGeographyView` parity.
+- S54.2: DONE. SQLite mode persists normalized geography business rows in `geo_*` tables and repairs missing/stale rows from `world_state_json` on read; JSON adapter remains unchanged.
+- S54.3: add geography import/repair/export tooling plus broader JSON/SQLite route/prompt/browser parity.
 - S55: define and persist people/household/asset/estate/relationship tables while preserving hidden filtering and existing relationship lifecycle.
 - S56: define and persist official posting tables, preserving server-owned appointments and scholar -> official continuity.
 - S57: add a safe event index/projection for event archive and prompt retrieval without exposing raw audit.
@@ -153,10 +154,11 @@ Next planned slices:
 
 ## Current Work Note
 
+- 2026-05-07：S54.2 地理 SQLite 持久化 adapter 已完成于本次提交。新增 `src/storage/sqliteGeographyTables.js`，SQLite 模式会创建并同步 `geo_countries`、`geo_regions`、`geo_cities`、`geo_routes`、`geo_frontier_zones`、`geo_office_jurisdictions`；`sqliteSessionAdapter` 在同一 transaction 内写 `world_sessions.world_state_json`、审计记录和 `geo_*` 行，读取时在 transaction 内重读当前 session，并按 `world_state_json` 修复缺失/陈旧/同数量错 `row_id` 地理行，删除 session 时清理地理行。JSON adapter、route payload、prompt schema 和浏览器 view 均不变；prompt/UI 仍只读服务器 projection，不读 raw table。已通过 `node --check` storage/test 文件、`node --test test/sessionStoreAdapterContract.test.js`（30 tests）、地理/prompt/storage focused 86 tests、`npm run check:docs-governance`、`git diff --check` 和 `npm test`（393 tests）。Kepler 首轮只读复审发现 2 个 P2，均已修复并补测试；第二轮最终复审未发现 P0/P1/P2。S54.3 下一步补导入/修复/导出工具和更广双模式 parity。
 - 2026-05-07：S54.1 地理 SQLite 业务表契约已完成于本次提交。`docs/WORLD_GEOGRAPHY_SEED_CONTRACT.md` 新增 `geo_countries`、`geo_regions`、`geo_cities`、`geo_routes`、`geo_frontier_zones`、`geo_office_jurisdictions` 的公共列、字段分类、引用修复、hidden 边界和 S54.2/S54.3 parity 验收点；同步产品 brief、AI 控制矩阵和本交接板。本轮纯文档契约，不改运行时代码、不新增 route 字段、不创建 SQLite 表，JSON 默认、SQLite local-only、AI 不直写 SQL/table rows、prompt/UI 只读服务器 view 的边界不变。已通过 `node --test test/worldGeographySeeds.test.js test/worldGeography.test.js test/promptContextAssembler.test.js test/prompts.test.js test/stateRules.test.js test/aiSchemas.test.js test/remoteHelpers.test.js`、`npm run check:docs-governance`、`git diff --check`；Fermat 完成字段/风险核对，Laplace 基于最终 diff 与验证证据做提交前只读复审，未发现 P0/P1/P2。S54.2 实现时要保持现有 `role_visible` 粗规则和 `world_sessions.world_state_json` / `geo_*` 同事务同步。
 - 2026-05-07：MiMo provider 集成提交 `80a0c07`。本轮新增 `mimo` 与 `mimo-deepseek` provider、诊断和 smoke 脚本支持、MiMo/Hybrid 单元测试、remote turn relationship 建议归一化、README/brief/architecture/AI 控制矩阵/真实 provider 验收更新，并把完整多 AI 协作编排排到 S54-S59 之后。官方 MiMo 文档和真实 route health 确认 API 模型 ID 应为 `mimo-v2.5-pro`；直接用 `mimo-v2.5-pro[1m]` 发送普通问答也返回 `Not supported model`，1M 应作为长上下文能力说明而不是 request model 字段。官方文档还确认 OpenAI-compatible `/chat/completions`、Token Plan `tp-...` key、token-plan Base URL 与普通 `sk-...` key 不可混用；也记录 Token Plan 场景限制，公开部署或非 Coding 自定义后端应先确认授权或改用普通 API key。只读复审提出的 Token Plan 默认 URL 与 MiMo key 提示问题已修正，并补充 `MIMO_API_KEY` / `tp-...` 在事件档案与浏览器 smoke 隐藏 token 扫描中的覆盖。已通过聚焦测试、`npm test`、`npm run check:docs-governance`、`git diff --check`、keyed route health `npm run smoke:provider:route -- --provider mimo` / `--provider mimo-deepseek`，以及真实混合烟测 `npm run smoke:provider -- --provider mimo-deepseek --stream`；最终只读复审未发现阻塞问题。
 - 2026-05-07：数据库专项规划压缩提交 `5ab5350`。S49-S53 已完成基础归档到 `docs/LOCAL_DATABASE_FOUNDATION_ARCHIVE.md`，活动台账改为 S54-S59 剩余 SQLite 业务表拆分，并已同步 README、产品 brief、architecture、动态数据库规划、相关契约和本交接板。该变更为纯文档，但涉及路线图重写和内容保护，已运行 `npm run check:docs-governance`、`git diff --check` 并执行只读复审；复审 P2 已修正。后续从 S54.1 地理 SQLite 业务表契约开始。
 
 ## Next Recommended Step
 
-Start S54.2: implement SQLite-mode persistence for geography business rows while keeping JSON adapter behavior unchanged. The first implementation slice should create/sync `geo_*` rows in SQLite transactions, preserve route payload shape, and add focused JSON/SQLite `worldGeographyView` parity tests before adding S54.3 import/repair/export tooling. Keep JSON/default Mock playability, SQLite local-only scope, AI-no-SQL, and route-view-only browser/prompt surfaces as the baseline.
+Start S54.3: add geography import/repair/export tooling and broader JSON/SQLite route, prompt, and browser parity checks. Keep JSON/default Mock playability, SQLite local-only scope, AI-no-SQL, and route-view-only browser/prompt surfaces as the baseline.

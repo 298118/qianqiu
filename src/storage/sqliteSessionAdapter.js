@@ -18,6 +18,13 @@ const {
   createAuditEventRecord,
   normalizeAuditBatch
 } = require("./sessionAudit");
+const {
+  deleteGeographyRows,
+  ensureGeographyTablesForRecord,
+  initializeGeographyTables,
+  normalizeRecordWorldGeography,
+  syncGeographyTables
+} = require("./sqliteGeographyTables");
 
 const DEFAULT_SQLITE_DATABASE_PATH = path.join(__dirname, "..", "..", "data", "qianqiu.sqlite");
 const SQLITE_BUSY_TIMEOUT_MS = 5000;
@@ -187,6 +194,7 @@ function createSqliteSessionAdapter(options = {}) {
       CREATE INDEX IF NOT EXISTS idx_ai_change_proposals_session_created
         ON ai_change_proposals(session_id, created_at, proposal_id);
     `);
+    initializeGeographyTables(database);
 
     if (databasePath !== ":memory:") {
       database.exec("PRAGMA journal_mode = WAL");
@@ -204,10 +212,11 @@ function createSqliteSessionAdapter(options = {}) {
   }
 
   function persistSessionRecord(record) {
+    normalizeRecordWorldGeography(record);
     const metadata = record.metadata;
     getDatabase()
       .prepare(`
-        INSERT OR REPLACE INTO world_sessions (
+        INSERT INTO world_sessions (
           session_id,
           storage_schema_version,
           revision,
@@ -228,6 +237,25 @@ function createSqliteSessionAdapter(options = {}) {
           metadata_json,
           world_state_json
         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ON CONFLICT(session_id) DO UPDATE SET
+          storage_schema_version = excluded.storage_schema_version,
+          revision = excluded.revision,
+          created_at = excluded.created_at,
+          updated_at = excluded.updated_at,
+          player_name = excluded.player_name,
+          role = excluded.role,
+          role_label = excluded.role_label,
+          dynasty = excluded.dynasty,
+          year = excluded.year,
+          month = excluded.month,
+          ten_day_period = excluded.ten_day_period,
+          turn_count = excluded.turn_count,
+          exam_rank = excluded.exam_rank,
+          palace_rank = excluded.palace_rank,
+          office_title = excluded.office_title,
+          summary = excluded.summary,
+          metadata_json = excluded.metadata_json,
+          world_state_json = excluded.world_state_json
       `)
       .run(
         record.sessionId,
@@ -249,6 +277,22 @@ function createSqliteSessionAdapter(options = {}) {
         metadata.summary,
         JSON.stringify(metadata),
         JSON.stringify(record.worldState)
+      );
+    syncGeographyTables(getDatabase(), record);
+  }
+
+  function updateSessionRecordPayload(record) {
+    getDatabase()
+      .prepare(`
+        UPDATE world_sessions
+        SET metadata_json = ?,
+            world_state_json = ?
+        WHERE session_id = ?
+      `)
+      .run(
+        JSON.stringify(record.metadata),
+        JSON.stringify(record.worldState),
+        record.sessionId
       );
   }
 
@@ -435,11 +479,15 @@ function createSqliteSessionAdapter(options = {}) {
   async function readSessionRecordUnlocked(sessionId) {
     await ensureDatabase();
     assertSafeSessionId(sessionId);
-    const migrated = selectSessionRecord(sessionId);
-    if (!migrated) {
-      throw createStoreError(404, "Session not found");
-    }
-    return migrated;
+    return runInTransaction(getDatabase(), () => {
+      const migrated = selectSessionRecord(sessionId);
+      if (!migrated) {
+        throw createStoreError(404, "Session not found");
+      }
+      const repaired = ensureGeographyTablesForRecord(getDatabase(), migrated.record);
+      if (repaired) updateSessionRecordPayload(migrated.record);
+      return migrated;
+    });
   }
 
   async function readSessionRecord(sessionId) {
@@ -541,7 +589,10 @@ function createSqliteSessionAdapter(options = {}) {
   async function deleteSession(sessionId) {
     await ensureDatabase();
     assertSafeSessionId(sessionId);
-    getDatabase().prepare("DELETE FROM world_sessions WHERE session_id = ?").run(sessionId);
+    runInTransaction(getDatabase(), () => {
+      deleteGeographyRows(getDatabase(), sessionId);
+      getDatabase().prepare("DELETE FROM world_sessions WHERE session_id = ?").run(sessionId);
+    });
   }
 
   async function appendAuditEvent(sessionId, event, options = {}) {

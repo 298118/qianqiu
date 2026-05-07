@@ -27,7 +27,7 @@
 - S48 时间专项：普通自由行动从一月一回合改为一旬一回合；月末系统只在下旬进入下月上旬时完整结算；考试已有 scene-local time；浏览器日期统一为“年月旬”，见 [TIME_SPECIALTY_ROADMAP_ARCHIVE.md](TIME_SPECIALTY_ROADMAP_ARCHIVE.md)。
 - S49-S53 本地数据库基础：storage adapter、可选 SQLite session row、本地审计、天下地理/人物/官职任所安全 projection、检索式 prompt context 和浏览器局势簿，见 [LOCAL_DATABASE_FOUNDATION_ARCHIVE.md](LOCAL_DATABASE_FOUNDATION_ARCHIVE.md)。
 
-当前活动路线图见 [DEVELOPMENT_STEPS.md](DEVELOPMENT_STEPS.md)，数据库方向见 [DYNAMIC_WORLD_DATABASE_PLAN.md](DYNAMIC_WORLD_DATABASE_PLAN.md)。S54 起的重点是把剩余数据拆成本地 SQLite 业务表：地理、人物、官职任所、安全事件索引、SQLite 检索式 prompt 和 JSON/SQLite 双模式验收。当前不规划远程存档、账号体系、多人同步、云端冲突解决或托管数据库。
+当前活动路线图见 [DEVELOPMENT_STEPS.md](DEVELOPMENT_STEPS.md)，数据库方向见 [DYNAMIC_WORLD_DATABASE_PLAN.md](DYNAMIC_WORLD_DATABASE_PLAN.md)。S54 起的重点是把剩余数据拆成本地 SQLite 业务表：地理、人物、官职任所、安全事件索引、SQLite 检索式 prompt 和 JSON/SQLite 双模式验收。S54.1/S54.2 已先完成天下地理表契约与 SQLite 模式 `geo_*` 持久化；后续继续做地理导入/修复/导出和更广双模式 parity。当前不规划远程存档、账号体系、多人同步、云端冲突解决或托管数据库。
 
 开发规范不变：Mock 默认可玩，真实 provider 可选；服务器拥有状态边界、时间推进、科举晋级、作弊处罚、官职任免、长期事件、世界实体、世界议程、数据库写入和持久化裁决；AI 不能直接执行 SQL 或写业务表，只能提交结构化建议。
 
@@ -195,6 +195,7 @@ POST /api/exam/submit
 
 - 通过 `STORAGE_ADAPTER=sqlite` 显式启用，默认仍是 JSON。
 - 使用本地 `world_sessions` row 保存 metadata、revision、timestamps 和 JSON `world_state_json`。
+- S54.2 起，SQLite 模式会用 `src/storage/sqliteGeographyTables.js` 同步规范化后的 `worldState.worldGeography` 到 `geo_countries`、`geo_regions`、`geo_cities`、`geo_routes`、`geo_frontier_zones`、`geo_office_jurisdictions`，并在读取时从 `world_state_json` 修复缺失或陈旧业务行。
 - `SQLITE_DATABASE_PATH` 只影响本地数据库路径，不进入 prompt、浏览器或 save-list payload。
 - `npm run storage:import:sqlite` 可把 JSON 存档导入 SQLite，默认不删除 JSON 原档。
 
@@ -204,7 +205,7 @@ POST /api/exam/submit
 - SQLite 模式写 `event_log` 与 `ai_change_proposals`，可在本地 transaction 中和 session row 一起提交。
 - 审计记录只保存脱敏摘要、proposal 字段、服务器接受/拒绝原因和应用事件 id，不保存密钥、完整 prompt、本地路径、hidden notes 或未经脱敏 provider 错误。
 
-S54+ 数据库拆表必须继续保持 JSON 默认可玩，并保留 `worldState` snapshot 可读、可导入、可导出。SQLite 只增强本机索引、审计、长期存储、检索式 prompt context 和安全查阅 projection，不把核心裁决交给 AI、SQL 或黑箱库。
+S54+ 数据库拆表必须继续保持 JSON 默认可玩，并保留 `worldState` snapshot 可读、可导入、可导出。SQLite 只增强本机索引、审计、长期存储、检索式 prompt context 和安全查阅 projection，不把核心裁决交给 AI、SQL 或黑箱库。即使 SQLite 已保存 `geo_*` raw rows，浏览器和 prompt 仍必须读取 `worldGeographyView` / capped summary，不得绕过服务器 view 过滤。
 
 ## 8. 当前领域账本与安全 View
 
@@ -325,15 +326,15 @@ chore: update env example
 
 S49-S53 基础层结论：
 
-1. JSON 默认仍可玩；SQLite 通过 `STORAGE_ADAPTER=sqlite` 显式启用，当前主要是一行一 session 与审计表。
+1. JSON 默认仍可玩；SQLite 通过 `STORAGE_ADAPTER=sqlite` 显式启用，当前包含一行一 session、审计表和 S54.2 地理 `geo_*` 业务表。
 2. `event_log` / `ai_change_proposals` 是本地脱敏审计，不进入玩家 API，也不让 AI 直接写表。
 3. `worldGeographyView`、`worldPeopleView`、`officialPostingsView`、`eventArchiveView` 是当前 UI/prompt 合法入口。
 4. 浏览器“局势簿”只读 route player-facing view，不读 raw ledger、raw audit、provider-only `retrievalContext`、prompt、本地路径或 key。
-5. S54.1 已固定地理 SQLite 业务表契约；国家/城市地理行尚未在运行时写入 SQLite，NPC/家族/资产/关系、官职任所和安全事件索引也尚未拆成 SQLite 业务表，仍按 S54-S59 小步推进。
+5. S54.1/S54.2 已固定并实现地理 SQLite 业务表；NPC/家族/资产/关系、官职任所和安全事件索引尚未拆成 SQLite 业务表，仍按 S55-S59 小步推进。
 
 S54-S59 剩余方向：
 
-- S54：地理 SQLite 表契约已完成；后续实现 SQLite 持久化、导入/修复/导出和 view parity。
+- S54：地理 SQLite 表契约与 adapter 持久化已完成；后续实现导入/修复/导出和更广 view parity。
 - S55：人物、家族、资产、田产、关系 SQLite 表与 NPC 生命周期事件。
 - S56：官署、官职、任所、考成、迁转 SQLite 表与跨域引用完整性。
 - S57：安全事件索引和审计到公开事件 projection。

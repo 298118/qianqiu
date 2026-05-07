@@ -6,6 +6,7 @@ const path = require("node:path");
 const { isBuiltin } = require("node:module");
 
 const { createInitialState } = require("../src/game/initialState");
+const { buildWorldGeographyView } = require("../src/game/worldGeography");
 const { createJsonSessionAdapter } = require("../src/storage/jsonSessionAdapter");
 const { createSqliteSessionAdapter } = require("../src/storage/sqliteSessionAdapter");
 
@@ -103,6 +104,7 @@ function createSqliteHarness(t) {
   return {
     name: "SQLite",
     adapter,
+    dbPath,
     trackSession() {}
   };
 }
@@ -116,6 +118,31 @@ const harnesses = [
     hasNodeSqlite ? false : "node:sqlite is unavailable in this Node.js runtime"
   ]
 ];
+
+function withSqliteDatabase(dbPath, task) {
+  const { DatabaseSync } = require("node:sqlite");
+  const db = new DatabaseSync(dbPath);
+  try {
+    return task(db);
+  } finally {
+    db.close();
+  }
+}
+
+function readSqliteGeographyCounts(db, sessionId) {
+  return {
+    countries: db.prepare("SELECT COUNT(*) AS count FROM geo_countries WHERE session_id = ?").get(sessionId).count,
+    regions: db.prepare("SELECT COUNT(*) AS count FROM geo_regions WHERE session_id = ?").get(sessionId).count,
+    cities: db.prepare("SELECT COUNT(*) AS count FROM geo_cities WHERE session_id = ?").get(sessionId).count,
+    routes: db.prepare("SELECT COUNT(*) AS count FROM geo_routes WHERE session_id = ?").get(sessionId).count,
+    frontierZones: db.prepare("SELECT COUNT(*) AS count FROM geo_frontier_zones WHERE session_id = ?").get(sessionId).count,
+    officeJurisdictions: db.prepare("SELECT COUNT(*) AS count FROM geo_office_jurisdictions WHERE session_id = ?").get(sessionId).count
+  };
+}
+
+function sumSqliteGeographyCounts(counts) {
+  return Object.values(counts).reduce((total, count) => total + count, 0);
+}
 
 for (const [adapterName, createHarness, skip] of harnesses) {
   test(`${adapterName} storage adapter exposes the session-store contract surface`, { skip }, (t) => {
@@ -443,6 +470,288 @@ for (const [adapterName, createHarness, skip] of harnesses) {
     );
   });
 }
+
+test("SQLite storage adapter syncs geography business tables with the session row", {
+  skip: hasNodeSqlite ? false : "node:sqlite is unavailable in this Node.js runtime"
+}, async (t) => {
+  const { adapter, dbPath } = createSqliteHarness(t);
+  const worldState = buildWorldState({
+    playerName: "地理业务表",
+    year: 1644,
+    month: 2,
+    tenDayPeriod: 2,
+    turnCount: 5,
+    worldState: {
+      borderThreat: 88
+    }
+  });
+
+  await adapter.writeSession(worldState);
+
+  withSqliteDatabase(dbPath, (db) => {
+    const counts = readSqliteGeographyCounts(db, worldState.sessionId);
+    const ming = db
+      .prepare("SELECT source, seed_row_id, revision, row_revision, last_updated_turn FROM geo_countries WHERE session_id = ? AND row_id = ?")
+      .get(worldState.sessionId, "country-ming");
+    const hiddenRoute = db
+      .prepare("SELECT visibility, hidden_notes_json FROM geo_routes WHERE session_id = ? AND row_id = ?")
+      .get(worldState.sessionId, "route-hidden-liaodong-smuggling");
+
+    assert.equal(counts.countries, worldState.worldGeography.countries.length);
+    assert.equal(counts.regions, worldState.worldGeography.regions.length);
+    assert.equal(counts.cities, worldState.worldGeography.cities.length);
+    assert.equal(counts.routes, worldState.worldGeography.routes.length);
+    assert.equal(counts.frontierZones, worldState.worldGeography.frontierZones.length);
+    assert.equal(counts.officeJurisdictions, worldState.worldGeography.officeJurisdictions.length);
+    assert.equal(ming.source, "seed");
+    assert.equal(ming.seed_row_id, "country-ming");
+    assert.equal(ming.revision, 1);
+    assert.equal(ming.row_revision, 1);
+    assert.equal(ming.last_updated_turn, 5);
+    assert.equal(hiddenRoute.visibility, "hidden");
+    assert.match(hiddenRoute.hidden_notes_json, /SEALED_ROUTE_NOTE/);
+  });
+});
+
+test("SQLite storage adapter repairs missing geography business rows from world_state_json on read", {
+  skip: hasNodeSqlite ? false : "node:sqlite is unavailable in this Node.js runtime"
+}, async (t) => {
+  const { adapter, dbPath } = createSqliteHarness(t);
+  const worldState = buildWorldState({
+    playerName: "地理修复",
+    turnCount: 2
+  });
+  await adapter.writeSession(worldState);
+
+  withSqliteDatabase(dbPath, (db) => {
+    const sessionRow = db
+      .prepare("SELECT world_state_json FROM world_sessions WHERE session_id = ?")
+      .get(worldState.sessionId);
+    const storedWorldState = JSON.parse(sessionRow.world_state_json);
+    delete storedWorldState.worldGeography;
+    db
+      .prepare("UPDATE world_sessions SET world_state_json = ? WHERE session_id = ?")
+      .run(JSON.stringify(storedWorldState), worldState.sessionId);
+    db.prepare("DELETE FROM geo_cities WHERE session_id = ?").run(worldState.sessionId);
+    const afterDelete = db.prepare("SELECT COUNT(*) AS count FROM geo_cities WHERE session_id = ?").get(worldState.sessionId);
+    assert.equal(afterDelete.count, 0);
+  });
+
+  const { record } = await adapter.readSessionRecord(worldState.sessionId);
+
+  withSqliteDatabase(dbPath, (db) => {
+    const repaired = db.prepare("SELECT COUNT(*) AS count FROM geo_cities WHERE session_id = ?").get(worldState.sessionId);
+    const sessionRow = db
+      .prepare("SELECT world_state_json FROM world_sessions WHERE session_id = ?")
+      .get(worldState.sessionId);
+    const repairedWorldState = JSON.parse(sessionRow.world_state_json);
+
+    assert.equal(repaired.count, record.worldState.worldGeography.cities.length);
+    assert.equal(repairedWorldState.worldGeography.cities.length, record.worldState.worldGeography.cities.length);
+  });
+});
+
+test("SQLite storage adapter repairs mismatched geography row ids when counts still match", {
+  skip: hasNodeSqlite ? false : "node:sqlite is unavailable in this Node.js runtime"
+}, async (t) => {
+  const { adapter, dbPath } = createSqliteHarness(t);
+  const worldState = buildWorldState({
+    playerName: "地理错行修复",
+    turnCount: 3
+  });
+  await adapter.writeSession(worldState);
+
+  withSqliteDatabase(dbPath, (db) => {
+    db
+      .prepare("UPDATE geo_cities SET row_id = ? WHERE session_id = ? AND row_id = ?")
+      .run("city-corrupt-extra", worldState.sessionId, "city-beijing");
+    const counts = readSqliteGeographyCounts(db, worldState.sessionId);
+    const expectedCount = worldState.worldGeography.cities.length;
+    const oldRow = db
+      .prepare("SELECT COUNT(*) AS count FROM geo_cities WHERE session_id = ? AND row_id = ?")
+      .get(worldState.sessionId, "city-beijing");
+    const corruptRow = db
+      .prepare("SELECT COUNT(*) AS count FROM geo_cities WHERE session_id = ? AND row_id = ?")
+      .get(worldState.sessionId, "city-corrupt-extra");
+
+    assert.equal(counts.cities, expectedCount);
+    assert.equal(oldRow.count, 0);
+    assert.equal(corruptRow.count, 1);
+  });
+
+  await adapter.readSessionRecord(worldState.sessionId);
+
+  withSqliteDatabase(dbPath, (db) => {
+    const counts = readSqliteGeographyCounts(db, worldState.sessionId);
+    const repairedRow = db
+      .prepare("SELECT COUNT(*) AS count FROM geo_cities WHERE session_id = ? AND row_id = ?")
+      .get(worldState.sessionId, "city-beijing");
+    const corruptRow = db
+      .prepare("SELECT COUNT(*) AS count FROM geo_cities WHERE session_id = ? AND row_id = ?")
+      .get(worldState.sessionId, "city-corrupt-extra");
+
+    assert.equal(counts.cities, worldState.worldGeography.cities.length);
+    assert.equal(repairedRow.count, 1);
+    assert.equal(corruptRow.count, 0);
+  });
+});
+
+test("SQLite storage adapter advances geography row revisions during mutateSession", {
+  skip: hasNodeSqlite ? false : "node:sqlite is unavailable in this Node.js runtime"
+}, async (t) => {
+  const { adapter, dbPath } = createSqliteHarness(t);
+  const worldState = buildWorldState({
+    playerName: "地理变更",
+    turnCount: 1,
+    worldState: {
+      borderThreat: 58
+    }
+  });
+  await adapter.writeSession(worldState);
+  const { record: before } = await adapter.readSessionRecord(worldState.sessionId);
+
+  await adapter.mutateSession(worldState.sessionId, (draft) => {
+    draft.turnCount = 9;
+    draft.borderThreat = 96;
+    delete draft.worldGeography;
+  });
+
+  const { record: after } = await adapter.readSessionRecord(worldState.sessionId);
+  assert.equal(after.revision, before.revision + 1);
+
+  withSqliteDatabase(dbPath, (db) => {
+    const frontier = db
+      .prepare(`
+        SELECT revision, row_revision, last_updated_turn, pressure, status
+        FROM geo_frontier_zones
+        WHERE session_id = ? AND row_id = ?
+      `)
+      .get(worldState.sessionId, "frontier-shanhai-liaodong");
+
+    assert.equal(frontier.revision, after.revision);
+    assert.equal(frontier.row_revision, after.revision);
+    assert.equal(frontier.last_updated_turn, 9);
+    assert.equal(frontier.pressure, 96);
+    assert.equal(frontier.status, "contested");
+  });
+});
+
+test("SQLite storage adapter does not rewrite geography rows after stale expectedRevision rejection", {
+  skip: hasNodeSqlite ? false : "node:sqlite is unavailable in this Node.js runtime"
+}, async (t) => {
+  const { adapter, dbPath } = createSqliteHarness(t);
+  const worldState = buildWorldState({
+    playerName: "地理版本冲突",
+    turnCount: 2,
+    worldState: {
+      borderThreat: 60
+    }
+  });
+  await adapter.writeSession(worldState);
+  const { record: staleRecord } = await adapter.readSessionRecord(worldState.sessionId);
+
+  const latestWorldState = JSON.parse(JSON.stringify(staleRecord.worldState));
+  latestWorldState.turnCount = 7;
+  latestWorldState.borderThreat = 91;
+  delete latestWorldState.worldGeography;
+  await adapter.writeSession(latestWorldState);
+
+  const staleWorldState = JSON.parse(JSON.stringify(staleRecord.worldState));
+  staleWorldState.turnCount = 12;
+  staleWorldState.borderThreat = 20;
+  delete staleWorldState.worldGeography;
+
+  const beforeReject = withSqliteDatabase(dbPath, (db) =>
+    db
+      .prepare(`
+        SELECT revision, row_revision, last_updated_turn, pressure
+        FROM geo_frontier_zones
+        WHERE session_id = ? AND row_id = ?
+      `)
+      .get(worldState.sessionId, "frontier-shanhai-liaodong")
+  );
+
+  await assert.rejects(
+    () =>
+      adapter.writeSession(staleWorldState, {
+        previousRecord: staleRecord,
+        expectedRevision: staleRecord.revision
+      }),
+    (error) => error.statusCode === 409 && /revision conflict/i.test(error.message)
+  );
+
+  const afterReject = withSqliteDatabase(dbPath, (db) =>
+    db
+      .prepare(`
+        SELECT revision, row_revision, last_updated_turn, pressure
+        FROM geo_frontier_zones
+        WHERE session_id = ? AND row_id = ?
+      `)
+      .get(worldState.sessionId, "frontier-shanhai-liaodong")
+  );
+
+  assert.deepEqual(afterReject, beforeReject);
+});
+
+test("SQLite storage adapter syncs geography rows on import and delete", {
+  skip: hasNodeSqlite ? false : "node:sqlite is unavailable in this Node.js runtime"
+}, async (t) => {
+  const { adapter, dbPath } = createSqliteHarness(t);
+  const worldState = buildWorldState({
+    playerName: "地理导入",
+    turnCount: 4
+  });
+  const envelope = buildEnvelope(adapter, worldState, { revision: 6 });
+
+  const imported = await adapter.importSessionRecord(envelope, { overwrite: true });
+  assert.equal(imported.revision, 6);
+
+  withSqliteDatabase(dbPath, (db) => {
+    const counts = readSqliteGeographyCounts(db, worldState.sessionId);
+    const ming = db
+      .prepare("SELECT revision, row_revision FROM geo_countries WHERE session_id = ? AND row_id = ?")
+      .get(worldState.sessionId, "country-ming");
+
+    assert.equal(counts.countries, imported.worldState.worldGeography.countries.length);
+    assert.ok(sumSqliteGeographyCounts(counts) > 0);
+    assert.equal(ming.revision, 6);
+    assert.equal(ming.row_revision, 6);
+  });
+
+  await adapter.deleteSession(worldState.sessionId);
+
+  withSqliteDatabase(dbPath, (db) => {
+    const session = db.prepare("SELECT COUNT(*) AS count FROM world_sessions WHERE session_id = ?").get(worldState.sessionId);
+    const counts = readSqliteGeographyCounts(db, worldState.sessionId);
+
+    assert.equal(session.count, 0);
+    assert.equal(sumSqliteGeographyCounts(counts), 0);
+  });
+});
+
+test("SQLite storage adapter keeps worldGeographyView parity with the normalized world state", {
+  skip: hasNodeSqlite ? false : "node:sqlite is unavailable in this Node.js runtime"
+}, async (t) => {
+  const { adapter } = createSqliteHarness(t);
+  const worldState = buildWorldState({
+    playerName: "地理视图一致",
+    role: "official",
+    worldState: {
+      borderThreat: 95,
+      corruption: 80
+    }
+  });
+  await adapter.writeSession(worldState);
+
+  const loaded = await adapter.readSession(worldState.sessionId);
+  const expectedView = buildWorldGeographyView(worldState);
+  const sqliteView = buildWorldGeographyView(loaded);
+  const serializedView = JSON.stringify(sqliteView);
+
+  assert.deepEqual(sqliteView, expectedView);
+  assert.doesNotMatch(serializedView, /SEALED_ROUTE_NOTE/);
+  assert.doesNotMatch(serializedView, /frontier-hidden-palace-intel/);
+});
 
 test("JSON storage adapter contract: audit sidecar append failure does not fail committed session", async (t) => {
   const adapter = createJsonSessionAdapter();
