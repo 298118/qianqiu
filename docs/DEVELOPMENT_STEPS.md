@@ -1,11 +1,12 @@
-# 《千秋》时间专项开发路线图与进度台账
+# 《千秋》数据库专项开发路线图与进度台账
 
-本文件是 Codex 与 Claude Code 共同维护的当前活动路线图与进度台账。第四阶段已经完成并归档，S48 时间专项已完成主要实现；S49 起记录动态世界数据库的规划与后续迁移步骤。
+本文件是 Codex 与 Claude Code 共同维护的当前活动路线图与进度台账。第四阶段已经完成并归档；S48 时间专项也已归档到 [docs/TIME_SPECIALTY_ROADMAP_ARCHIVE.md](TIME_SPECIALTY_ROADMAP_ARCHIVE.md)。自 S49 起，当前重点切换为本地动态世界数据库专项：先规划和隔离持久化边界，再逐步承载国家/邻国、城市、NPC、官职、事件和 AI proposal 审计等大量动态数据。当前范围只考虑本地 SQLite / 本地文件持久化增强，不规划远程存档、账号体系、多人同步或云端数据库。
 
 - 第一阶段路线图已归档到 [docs/PHASE_ONE_ROADMAP_ARCHIVE.md](PHASE_ONE_ROADMAP_ARCHIVE.md)，验收记录见 [docs/PHASE_ONE_ACCEPTANCE.md](PHASE_ONE_ACCEPTANCE.md)。
 - 第二阶段路线图已归档到 [docs/PHASE_TWO_ROADMAP_ARCHIVE.md](PHASE_TWO_ROADMAP_ARCHIVE.md)，验收记录见 [docs/PHASE_TWO_ACCEPTANCE.md](PHASE_TWO_ACCEPTANCE.md)。
 - 第三阶段路线图已归档到 [docs/PHASE_THREE_ROADMAP_ARCHIVE.md](PHASE_THREE_ROADMAP_ARCHIVE.md)。
 - 第四阶段路线图已归档到 [docs/PHASE_FOUR_ROADMAP_ARCHIVE.md](PHASE_FOUR_ROADMAP_ARCHIVE.md)，早期详细进度仍可在 [docs/FOURTH_PHASE_PROGRESS_ARCHIVE.md](FOURTH_PHASE_PROGRESS_ARCHIVE.md) 追溯。
+- S48 时间专项已归档到 [docs/TIME_SPECIALTY_ROADMAP_ARCHIVE.md](TIME_SPECIALTY_ROADMAP_ARCHIVE.md)；当前活动步骤不再维护 S48 细节，只继承其年月旬和 scene-local time 契约。
 
 ## 1. 开发规范继承
 
@@ -17,7 +18,7 @@
 - `npm install && npm start` 可运行，默认打开 `http://localhost:3000`。
 - Mock AI 默认完整可玩，真实 provider 只作为可选配置。
 - 完整书生路径不得破坏：`scholar -> child_exam -> provincial_exam -> metropolitan_exam -> palace_exam -> official`。
-- AI 只能生成叙事、题目、评分建议、关系建议和受限 `statePatch`；服务器继续拥有时间推进、状态边界、科举晋级、作弊处罚、官场任免、长期事件、世界实体、世界议程和持久化裁决。
+- AI 只能生成叙事、题目、评分建议、关系建议和受限 `statePatch`；服务器继续拥有时间推进、状态边界、科举晋级、作弊处罚、官场任免、长期事件、世界实体、世界议程、数据库写入和持久化裁决。
 - 项目内协作文档、路线图、交接记录、领域注释和玩家可见文案优先使用中文。
 - 每个 coherent change 必须更新 `docs/SHARED_CONTEXT.md`，必要时同步 README、产品 brief、架构/契约文档，并用 Git 提交。
 - 关键决策不能只留在聊天记录里；会影响后续 Codex 或 Claude Code 接手的内容必须写入仓库文档。
@@ -61,7 +62,7 @@
 
 ## 2. 依赖、插件与开源参考策略
 
-时间专项继续继承 S46.1 的依赖、插件与开源参考治理。后续新增或升级 `package.json` 依赖、开发工具、外部服务 SDK、Codex/Claude 插件工作流或开源参考时，必须先按 [依赖、插件与开源参考治理](DEPENDENCY_PLUGIN_GOVERNANCE.md) 记录和验证。
+数据库专项继续继承 S46.1 的依赖、插件与开源参考治理。后续新增或升级 `package.json` 依赖、开发工具、外部服务 SDK、Codex/Claude 插件工作流或开源参考时，必须先按 [依赖、插件与开源参考治理](DEPENDENCY_PLUGIN_GOVERNANCE.md) 记录和验证。
 
 - 依赖或插件必须明显降低复杂度、提升可靠性、改善安全性、改善浏览器体验或提供成熟标准能力。
 - 记录必须说明用途、运行入口、测试覆盖、替代方案、许可证、维护状态、安全/隐私影响、Mock/no-key 影响、文档落点和回滚策略。
@@ -73,398 +74,190 @@
 
 <!-- GOVERNANCE_REQUIRED_END -->
 
-## 3. 时间专项目标
+## 3. 数据库专项总目标
 
-时间专项的目标是让《千秋》的长期模拟节奏更符合玩家体感：普通自由行动从“每回合推进一月”改为“每回合推进一旬”，一月三回合；同时避免把考试、廷议、审案、战斗等密集场景粗暴拉成“一输入十天”。
+数据库专项的目标不是立刻把本地 JSON 存档推倒重来，而是给《千秋》的长期世界模拟建立可扩展、可审计、可检索的动态数据底座。
 
 核心原则：
 
-- **全局时间**：日常读书、拜访、办差、施政、经营关系等普通自由行动，默认每个有效回合推进一旬：上旬 -> 中旬 -> 下旬 -> 下月上旬。
-- **月末结算**：世界自然漂移、长期事件月份递减、季节性事件、官场任内月份和考成周期等原“月度”系统，默认只在下旬进入下月上旬时完整结算；非月末旬只做轻量小结。
-- **场景内时间**：考试、廷议、堂审、战斗、旅途遭遇、重大差事收束等应使用场景局部阶段；玩家在场景内多次输入时，只推进该场景的时辰/阶段，不自动消耗一旬。
-- **玩家可见日期**：状态栏、存档、考试说明、事件反馈和相关 UI 使用“年月旬”，例如“崇祯十七年八月上旬”。
-- **服务器拥有时间**：`turnCount`、`year`、`month`、`tenDayPeriod` 和场景时间推进都属于服务器裁决；provider 不得通过普通 `statePatch` 写入。
+- **本地数据库范围**：数据库专项只规划本地 SQLite 与本机导入导出；远程存档、账号体系、多人世界、云同步和托管数据库不进入当前路线图。
+- **JSON 默认仍可玩**：在 adapter 与 SQLite 原型成熟前，`data/sessions/*.json` 仍是默认存储路径，`npm install && npm start` 与 Mock 模式不依赖数据库。
+- **先边界，后迁移**：先抽 storage adapter 和 contract tests，再做可选 SQLite session row + JSON `world_state`；最后才按需求拆国家、城市、NPC、官职、关系和事件表。
+- **混合模型**：保留整份 `worldState` snapshot 便于读档和调试，同时新增 append-only event log 与 AI proposal audit，支持回放、检索、复盘和调错。
+- **AI 不写库**：AI 不能执行 SQL、不能直接写业务表、不能绕过服务器事务。AI 只能提交 schema-valid proposal，由服务器校验、裁决、写库并记录接受/拒绝原因。
+- **可见性优先**：prompt 和浏览器只读取服务器 projection，不读 raw table；隐藏信息、未公开关系、暗线、内库数值和开发诊断不得直接暴露。
+- **继承时间契约**：数据库记录必须支持 S48 的年月旬、月末结算、`worldTick.cadence` 和 scene-local time，尤其是事件日志和官职任所履历。
+
+详见 [docs/DYNAMIC_WORLD_DATABASE_PLAN.md](DYNAMIC_WORLD_DATABASE_PLAN.md)。
 
 ## 4. 步骤总览
 
 | ID | 状态 | 目标 | 完成日期 | 工具 | 提交 |
 | --- | --- | --- | --- | --- | --- |
-| S48.1 | DONE | 归档第四阶段规划，开启时间专项路线图，并保持开发规范不变 | 2026-05-07 | Codex | `1e7bcd3` + follow-up docs fixes |
-| S48.2 | DONE | 建立全局旬制日历基础：`tenDayPeriod`、共享时间 helper、旧档默认上旬、provider 时间字段边界 | 2026-05-07 | Codex + subagents | `15e078f` + `8d93b8c` hash backfill |
-| S48.3 | DONE | 改造普通回合与世界 tick：每回合推进一旬，非月末轻量小结，月末完整结算 | 2026-05-07 | Codex + subagent | `ef767c6` |
-| S48.4 | DONE | 建立场景内时间框架，并优先把科举考试改成多阶段局部时间 | 2026-05-07 | Codex + subagent | `54afc38` |
-| S48.5 | DONE | 适配长期事件、官场任期/差事、世界议程、世界实体和脚本验收的月末/旬度语义 | 2026-05-07 | Codex + subagents | `50d228b` |
-| S48.6 | DONE | 完成前端日期展示、浏览器 smoke、provider long-run 和完整书生入仕验收 | 2026-05-07 | Codex + subagent | `6bcfb77` |
-| S49.1 | DONE | 形成动态世界数据库规划：国家/邻国、城市、NPC、官职、事件、AI proposal 审计与 SQLite 迁移边界 | 2026-05-07 | Codex + read-only subagent | `e3808df` |
-| S49.2 | TODO | 抽象存储 adapter 接口，保持 JSON 为默认实现并补 adapter contract tests |  |  |  |
-| S49.3 | TODO | SQLite 本地原型：一行一 session，保留 JSON `world_state`，默认路径仍为 JSON |  |  |  |
+| S49.1 | DONE | 形成动态世界数据库总体规划：架构边界、数据域、AI proposal、SQLite 迁移阶段 | 2026-05-07 | Codex + read-only subagent | `e3808df`、`990f7d3` |
+| S49.2 | TODO | 抽象 storage adapter 接口，保持 JSON 为默认实现，补 adapter contract tests |  |  |  |
+| S49.3 | TODO | 本地 SQLite 原型：一行一 session，保留 JSON `world_state`，以可选 env 开启，不做远程/账号/多人 |  |  |  |
 | S49.4 | TODO | 事件日志与 AI proposal 审计：记录模型建议、服务器接受/拒绝和最终应用事件 |  |  |  |
-| S50 | TODO | 国家/邻国、城市地理与天下格局种子，供后续数据库实例化与 prompt 检索 |  |  |  |
+| S50.1 | TODO | 静态天下与邻国种子契约：国家、城市、路线、边境、官署辖区和初始可见性 |  |  |  |
+| S50.2 | TODO | per-session 国家/城市实例化与 prompt projection，先不替代现有 worldState 指标 |  |  |  |
+| S51.1 | TODO | NPC、家族、资产、田产、关系和可见性 schema 契约 |  |  |  |
+| S51.2 | TODO | 桥接当前 `characters`、`relationshipLedger`、active requests 与 NPC/关系表 |  |  |  |
+| S52.1 | TODO | 官职、官署、任所、城市辖区、考成和调任记录的数据库契约 |  |  |  |
+| S52.2 | TODO | 地方官/入仕官员任所与城市数据联动，保持服务器任免裁决 |  |  |  |
+| S53.1 | TODO | 检索式 prompt context assembler：按角色视野读取国家、城市、NPC、官职、事件摘要 |  |  |  |
+| S53.2 | TODO | 浏览器信息面板规划：天下格局、任所地理、人物谱牒、官职簿、事件档案 |  |  |  |
 
 ## 5. 实施规划
 
-### S48.1：归档与规划切换
+### S49.1：动态世界数据库规划
+
+状态：DONE。
 
 范围：
 
-- 把第四阶段活动路线图归档到 `docs/PHASE_FOUR_ROADMAP_ARCHIVE.md`。
-- 将本文件重置为时间专项路线图与进度台账。
-- 同步 README、产品 brief 和 shared context 的当前重点指针。
-- 本步骤是低风险纯文档切换，不改变运行时代码、测试、API 或存档。
+- 新增 `docs/DYNAMIC_WORLD_DATABASE_PLAN.md`，综合本会话对“动态数据库”的需求：国家/邻国、财政、军事、国威、外交、NPC、玩家、官职、城市、事件和 AI 修改建议。
+- 明确可行性：中长期可行且值得做，但短期不应一次性替换 JSON。
+- 明确迁移路线：storage adapter -> SQLite session row -> event log / AI proposal audit -> 业务表拆分 -> prompt/UI projection。
+- README、架构、产品 brief、路线图和 shared context 已同步规划入口。
 
 验证：
 
-- `git diff --check`
-- 复审后补齐架构旧列表后，重跑 `node --test test\time.test.js test\sessionStore.test.js test\gameSavesRoute.test.js test\gameStartRole.test.js test\aiSchemas.test.js test\remoteHelpers.test.js test\providerLongRunScript.test.js test\prompts.test.js test\stateRules.test.js test\worldTick.test.js`（66 tests passed）
-- 复审后重跑 `npm run check:docs-governance`
-- 复审后重跑 `git diff --check`
-
-### S48.2：全局旬制日历基础
-
-范围：
-
-- 新增共享时间 helper，集中维护 `TURNS_PER_MONTH = 3`、旬标签、年月旬格式化、旬推进、月数/旬数/回合数换算、旧值归一化等能力。
-- `worldState` 新增服务器拥有字段 `tenDayPeriod: 1 | 2 | 3`，分别表示上旬、中旬、下旬；旧存档缺失时按上旬归一化，不提升 `storageSchemaVersion`。
-- `stateRules`、AI schema/eval、provider long-run 和 red-team 覆盖 `tenDayPeriod`：普通 provider 不能写 `turnCount`、`year`、`month` 或 `tenDayPeriod`。
-- 存档 metadata 增加 `tenDayPeriod`，但不暴露完整内部状态之外的新敏感信息。
-- 涉及 AI 可读摘要、server-owned ledger、浏览器面板或 provider 验收时，同步检查 `docs/AI_CONTROL_AUDIT_MATRIX.md` 是否需要补充时间字段边界。
-
-验收：
-
-- 初始状态为正月上旬。
-- 缺少 `tenDayPeriod` 的旧档读取后按上旬显示和推进。
-- provider 伪造时间字段被拒，安全字段仍可生效。
-
-### S48.3：普通回合与世界 tick 旬制
-
-范围：
-
-- `POST /api/game/turn` 普通自由行动默认推进一旬。
-- `runWorldTick()` 或其替代结构返回本回合时间推进结果：非月末旬只输出轻量旬度反馈和小幅/按比例资源漂移；下旬进入下月上旬时执行原月度完整结算。
-- 月末才滚动 `month/year`，腊月下旬后一回合进入次年正月上旬。
-- 保持 `turnCount` 仍表示玩家有效输入回合数，每次普通回合只加 1。
-- 事件反馈区分 `[旬度]` 与月末 `[月度]` 或 `[大势]`，不让小结淹没 provider 叙事。
-
-验收：
-
-- 上旬一回合到中旬，中旬一回合到下旬，下旬一回合到下月上旬。
-- 腊月下旬后一回合年份 +1、月份回到正月、旬回到上旬。
-- 非月末不触发长期月份递减或季节事件，月末触发。
-
-### S48.4：场景内时间与科举多阶段
-
-范围：
-
-- 建立场景内时间语义：全局普通行动消耗一旬，当前先以 `activeExam.sceneTime` 落地，后续 `activeScene` 可复用同一形态。
-- 优先改造科举：
-  - `/api/exam/question` 创建或复用考试时不推进全局旬。
-  - `activeExam` 增加局部阶段字段：`entry`、`question_review`、`outline`、`drafting`、`fair_copy`、`submitted`，并保留中文阶段标签、局部步数、约略小时数、入场/更新时间年月旬。
-  - 考试期间的场景动作推进考试阶段或时辰，不让每次输入消耗十天。
-  - `/api/exam/submit` 完成考试、评分、榜单、晋级和考试档案保存；是否记录本场发生在某年某月某旬由服务器统一写入。
-- 新增 `/api/exam/progress` 作为考试弹窗内的局部阶段推进入口；已有 `/api/game/turn` 在写卷考试存在时也会转入考试局部推进，不调用普通 provider、不运行世界 tick。
-- 先为廷议、审案、战斗、旅途遭遇预留同一套场景时间数据形态；本步骤不一次性重做所有场景。
-
-验收：
-
-- 开题、拟纲、作答等考试内动作不推进 `tenDayPeriod`。
-- 考试提交后仍保存考试记录、虚拟考生、榜单、晋级结果和完整 scholar -> official 路径。
-- 考试窗口仍按月份开放；开场月上/中/下旬都可入场。
-- 下旬合法触发考试后，即使全局随后进入下月上旬，自动开题仍复用保存的开放 snapshot，不误判错过。
-
-实现记录：
-
-- 新增 `src/game/examSceneTime.js`，集中维护考试场景阶段、全局年月旬快照、局部推进叙事和 `worldTick.cadence = "scene"` 反馈。
-- `/api/game/turn` 若发现已有写卷考试，会把输入当作科场局部动作处理，保持 `turnCount/year/month/tenDayPeriod` 不变。
-- `/api/exam/question` 写入或保留 `activeExam.sceneTime`；从下旬合法触发考试后再开题时，正式题目继承原入场时间和开放 snapshot。
-- `/api/exam/progress` 推进审题、拟纲、作答、誊清等局部阶段；浏览器考试弹窗新增阶段显示和四个局部推进按钮。
-- `/api/exam/submit` 将场景推进到 `submitted`，把 `sceneTime`、`examStartedAt`、`examSubmittedAt` 保存到 `player.examHistory`，完整科举晋级路径不变。
-
-验证：
-
-- `node --check src\game\examSceneTime.js`
-- `node --check src\routes\exam.js`
-- `node --check src\routes\game.js`
-- `node --check public\app.js`
-- `node --test test\examSceneTime.test.js test\examTravel.test.js test\gameTurnExamTrigger.test.js test\gameTurnTick.test.js`（21 tests passed）
-
-### S48.5：长期系统与月末语义适配
-
-范围：
-
-- 复核 S48.3 已完成的月末门控：`longTermEvents.remainingMonths`、调度/解决/季节事件和 `officialCareer.tenureMonths` 已只在月末推进；本步骤只补遗漏系统和更细语义。
-- 官场差事、弹劾、考成等原本语义上代表“数月”的期限按三回合一月换算；主动 NPC 请托这类明确按“回”计的短期响应保留回合语义。
-- World Threads 的 `deadlineLabel`、`remainingMonths`、`turnsRemaining` 文案要准确区分“旬回合”和“月份”。
-- World Entities、role/world coupling、provider long-run 的服务器效果模拟要读取新的 tick cadence，不让脚本、实体影响或议题摘要仍隐含一回合一月。
-- 评估 S48.3 的非月末小幅自然漂移与月末完整结算的累计强度，必要时补平衡测试或文档说明。
-
-验收：
-
-- 已有 S48.3 回归继续通过：长期事件非月末不递减，月末才递减并可调度/解决；官场任内月份三回合才增加一月，首次授官不延迟。
-- 世界议程中按回合计的请托仍显示剩余回合，按月计的大势仍显示剩余月份。
-- World Entities 和 provider long-run 对 `worldTick.cadence` 的处理有明确测试或验收记录。
-
-### S48.6：前端与验收收束
-
-范围：
-
-- 前端状态栏、存档卡、考试日历、考试弹窗、考试档案、回合反馈显示“年月旬”。
-- `worldTick`/旬度反馈在浏览器叙事区清晰显示，不遮挡、不溢出。
-- Browser smoke 设置考试合法窗口时同时设置旬；完整书生四级科举入仕路径继续通过。
-- Provider long-run 校验 `tenDayPeriod` 范围和时间推进节奏；无 key 跳过策略不变。
-- 更新 README、产品 brief、架构文档、World Tick、Exam Calendar、Long Term Events、Official Career、Browser Acceptance 等稳定契约。
-
-验收命令建议：
-
-- `node --check <changed runtime/test/script files>`
-- `node --test test/worldTick.test.js test/gameTurnTick.test.js test/longTermEvents.test.js test/officialCareer.test.js test/examCalendar.test.js test/examTravel.test.js`
-- `node --test test/browserSmokeScript.test.js test/providerLongRunScript.test.js`
-- `npm run eval:ai`
-- `$env:AI_PROVIDER='mock'; npm test`
-- `$env:AI_PROVIDER='mock'; npm run smoke:browser`
-- `git diff --check`
-
-实现记录：
-
-- 前端新增统一年月旬显示 helper，状态栏、存档卡、官场履历、考试日历、考试弹窗、考试结果/档案标题、科期 archive 和回合分隔线均显示 `上旬/中旬/下旬`。
-- `examCalendarView` 与考试 snapshot 增加 `currentTenDayPeriod` / `currentDateLabel`，保持考期窗口按月份判断，但让浏览器可显示准确入场旬位。
-- 浏览器 `worldTick` 反馈在事件文本缺少日期时用 `timeAdvance.to` 补齐年月旬；叙事、状态栏和考试/存档相关区域补充换行保护，避免长日期撑出容器。
-- Browser smoke 的状态栏、存档列表、考试日历、考试弹窗、考试结果/档案和 `.world-tick` 断言都会检查 `上旬|中旬|下旬`；合法考试窗口准备同时设置 `tenDayPeriod = 3`，完整四级科举入仕路径继续通过。
-- Provider long-run 增加 `assertTenDayCadence()`：每回合用 `worldTick.timeAdvance` 校验一月三旬节奏，并在报告中输出 `dateLabel`；无 key 跳过策略保持不变。
-- 官场 `careerHistory` 记录并归一化 `tenDayPeriod`，旧记录默认上旬，浏览器履历日期可显示年月旬。
-
-验证：
-
-- `node --check public\app.js`
-- `node --check src\game\examCalendar.js`
-- `node --check src\game\officialCareer.js`
-- `node --check scripts\browserSmoke.js`
-- `node --check scripts\providerLongRun.js`
-- `node --check test\browserSmokeScript.test.js`
-- `node --check test\providerLongRunScript.test.js`
-- `node --check test\examCalendar.test.js`
-- `node --check test\officialCareer.test.js`
-- `node --test test\browserSmokeScript.test.js test\providerLongRunScript.test.js`（43 tests passed）
-- `node --test test\examCalendar.test.js test\officialCareer.test.js`（12 tests passed）
-- `node --test test\worldTick.test.js test\gameTurnTick.test.js test\longTermEvents.test.js test\officialCareer.test.js test\examCalendar.test.js test\examTravel.test.js`（36 tests passed）
 - `npm run check:docs-governance`
-- `npm run eval:ai`（12 tests passed）
-- `$env:AI_PROVIDER='mock'; npm test -- --test-concurrency=1`（291 tests passed）
-- `$env:AI_PROVIDER='mock'; npm run smoke:browser`（14 screenshots checked；状态栏示例：`Ming1644年四月下旬 ...`）
 - `git diff --check`
 
-## 6. 风险与默认决策
+### S49.2：Storage Adapter
 
-- 不把所有输入硬解释为十天。只有普通全局行动默认消耗一旬；场景内动作由场景规则裁决。
-- 不让考试被“每输入十天”吞掉。科举是第一个必须细化的场景。
-- 不改变开题、交卷、读档、开局的全局时间推进：这些操作默认不额外推进旬，除非后续步骤明确设计为场景结算。
-- 不改变开发规范、AI/server 权限边界、Mock 默认可玩、真实 provider 可选、JSON 存档路线或无构建前端栈。
-- 旧存档无需迁移文件；读取时缺少 `tenDayPeriod` 即按上旬补齐。
-- 动态数据库不得一步到位替换当前 JSON 存档。先抽 adapter，再做 SQLite session row + JSON payload，再加事件/AI proposal 审计，最后按需要拆国家、城市、NPC、官职、关系和场景表。
-- AI 不得直接写数据库、生成 SQL 或拥有业务表写权限；AI 只能提交 schema-valid 建议，服务器在事务中校验、裁决、写库并记录审计。
+目标：
 
-## 6.1 S49 动态世界数据库方向
+- 定义 `sessionStore` 的 adapter 边界，让路由不直接依赖 JSON 文件细节。
+- JSON adapter 作为默认实现，行为与现有 `src/storage/sessionStore.js` 保持一致。
+- 增加 contract tests：创建、读取、保存、revision 冲突、legacy 归一化、metadata 脱敏、损坏文件跳过和并发写入保护。
+- 不引入 SQLite 依赖，不改变 route payload，不改变存档格式。
 
-详见 [docs/DYNAMIC_WORLD_DATABASE_PLAN.md](DYNAMIC_WORLD_DATABASE_PLAN.md)。
+验收：
 
-核心结论：
+- Mock 开局、读档、普通回合、考试和存档簿行为不变。
+- `GET /api/game/saves` 仍只返回脱敏 metadata。
+- 完整书生路径不受影响。
 
-- 当前 JSON session + `worldState` 对短期单机开发仍可用，尤其是 `worldEntities`、`worldThreads`、`relationshipLedger`、`longTermEvents`、`officialCareer` 等 ledger 都有服务器归一化和容量上限。
-- 当国家/邻国、城市、NPC、家族、官职任命、事件记录和 AI proposal 审计增长到需要检索、索引、回放或跨 session 管理时，应迁移到 SQLite。
-- 第一个数据库切片只应保存 `world_sessions` metadata、revision 和 JSON `world_state`，不改变 route payload 和完整书生入仕路径。
-- 第二层再增加 `event_log` 与 `ai_change_proposals`，记录发生过什么、模型建议过什么、服务器为何接受或拒绝。
-- 之后按需求拆 `countries`、`diplomatic_relations`、`cities`、`npcs`、`households`、`office_postings`、`relationships`、`active_scenes`、`world_entities`、`world_threads` 等表。
-- Prompt 只能读服务器 projection，不读 raw table；浏览器新增面板也只能读 route view。
+### S49.3：SQLite Session Row 原型
 
-## 7. 进度记录
+目标：
+
+- 选择维护活跃、许可证友好、适合 Node.js 本地开发的 SQLite 依赖，并按 `docs/DEPENDENCY_PLUGIN_GOVERNANCE.md` 记录。
+- 新增可选 adapter，例如 `STORAGE_ADAPTER=sqlite`；默认仍为 JSON。
+- 最小表先只保存 `world_sessions`：`session_id`、`revision`、metadata、JSON `world_state`、created/updated 时间。
+- 提供从 JSON 到 SQLite 的开发脚本或导入接口，但不自动删除 JSON。
+- 不新增远程存档、账号、多人同步、云备份或托管数据库配置。
+
+验收：
+
+- JSON 与 SQLite adapter 跑同一批 contract tests。
+- SQLite 关闭时项目仍可用 `npm start` 启动并默认使用 JSON。
+- 路由响应和前端行为保持兼容。
+
+### S49.4：事件日志与 AI Proposal 审计
+
+目标：
+
+- 增加 append-only `event_log`，记录关键状态变化、来源模块、时间戳、年月旬、scene cadence、可见性和 session revision。
+- 增加 `ai_change_proposals`，保存模型提出的结构化建议、schema 校验结果、服务器接受/拒绝原因和最终应用事件 id。
+- 普通 provider 仍只返回受限 JSON；所有 proposal 都由服务器模块转换成可写事务。
+- 日志服务于调试、回放、prompt 检索和未来“事件档案” UI，不替代当前 state snapshot。
+
+验收：
+
+- provider 越权 proposal 不写入业务状态，只进入审计记录并标记拒绝。
+- 日志不泄漏 API key、本地文件路径或隐藏信息到玩家视图。
+- 保存失败不能留下半写状态。
+
+## 6. 数据域规划
+
+数据库专项需要承载的数据域如下。每个域都先定义契约和 projection，再决定是否拆表；不要为了“有数据库”而提前建过度复杂的表。
+
+### 国家与邻国
+
+建议字段：
+
+- 基本：`countryId`、国号、政体、君主/摄政、首都、疆域层级、文化/宗教/制度标签。
+- 财政：国库、岁入、岁出、债务、税源结构、盐铁/商税/田赋、赈济能力、币制稳定。
+- 军事：总兵力、精锐兵、军心、补给、边防、将领池、海防/骑兵/火器等能力标签。
+- 国威：威望、正统性、朝贡影响、士林评价、民心、边疆控制、天灾舆情。
+- 外交：对玩家国家的友好、敌意、信任、威慑、贸易、边境摩擦、盟约、朝贡、通婚/质子、战争理由。
+- 情报：已知/传闻/隐藏分层，玩家未接触的邻国暗流不直接进 prompt。
+
+### 城市、地方与道路
+
+建议字段：
+
+- 行政：国家、省/道/府/州/县、上级辖区、治所、所属官署、任所可用官职。
+- 民政：人口、户籍质量、治安、民心、士绅影响、宗族压力、诉讼积压、疫病/灾荒。
+- 财政：田赋、商税、粮仓、水利、工役、市场、盐漕节点、债务或拖欠。
+- 军防：城防、卫所、驻军、边患、山贼/海盗压力、补给线。
+- 文教：书院、贡院、名师、科举风气、学派、人脉入口。
+- 地理：道路、河运、驿站、距离、季节通行风险、邻国边城关系。
+
+### NPC、家族与资产
+
+建议字段：
+
+- 基本：姓名、字/号、年龄、籍贯、身份、官职、派系、可见身份、当前地点。
+- 能力与性格：学识、政务、武略、财技、清誉、野心、胆量、忠诚、好恶、秘密倾向。
+- 财富：现银、债务、商号、田产、宅第、书院/宗祠资助、可动用资源。
+- 家庭：父母、配偶、子女、姻亲、门生、同年、主仆、家族声望、继承压力。
+- 关系：与玩家/派系/城市/官署的好感、信任、恩怨、欠情、把柄、隐秘关系。
+- 视野：玩家已知、公文可见、传闻可见、私密、隐藏五层。
+
+### 玩家主角
+
+建议字段：
+
+- 身份路径：当前 role、科名、官职、任所、衙门、品级、履历、调任/丁忧/处分记录。
+- 身体与心性：健康、疲劳、心态、压力、名节、清望、贪腐风险。
+- 学问与技能：经义、文章、策论、政务、律例、财政、兵事、外交、交涉。
+- 经济：现金、俸禄、债务、田产、宅院、书籍、礼物、家计压力。
+- 关系：师友、同年、上官、下属、门生、家族、敌对者、隐藏暗线。
+- 视野缓存：玩家当前可知的国家、城市、NPC、官署和事件摘要，供 prompt 和 UI 使用。
+
+### 官职、官署与任所
+
+建议字段：
+
+- 官职目录：`officeId`、官名、品级、衙门、职责、任职资格、典型任所、风险、考成指标。
+- 任命记录：任命来源、起任年月旬、预计考成月、任所城市、上官/同僚/下属。
+- 地方官：城市财政、治安、诉讼、水利、赋役、士绅、灾荒、文教与任所事件直接关联。
+- 中枢官：衙门积案、派系压力、奏疏、考成、荐举、弹劾、皇命与跨部门协作。
+- 武职：驻地、兵额、军饷、军心、战备、边患、补给线、军功与败绩。
+
+### 事件、记录与场景
+
+建议字段：
+
+- 事件：事件 id、来源模块、发生年月旬、scene cadence、地点、参与者、公开/隐藏级别、摘要、后果。
+- 世界议程：长期线程、目标、期限单位、风险、相关国家/城市/NPC/实体、已解决记录。
+- 场景：考试、廷议、堂审、战斗、旅途、差事收束等局部阶段和参与者。
+- 审计：AI proposal、服务器校验、接受/拒绝原因、应用事务、异常回滚。
+
+## 7. 风险与默认决策
+
+- 不立即强制新增数据库依赖；S49.2 只做 adapter，S49.3 才评估 SQLite 依赖。
+- 不规划远程存档、账号体系、多人同步、云端冲突解决或托管数据库；`session_id` 只表示本机不同存档。
+- 不让 AI 直接写 SQL、表名或业务字段；AI proposal 必须经过 schema 和服务器模块。
+- 不把 raw database 暴露给 prompt 或浏览器；只暴露 server-built projection。
+- 不把国家、城市、NPC、官职等业务表一次性拆完；先以 JSON snapshot 保持可玩，再按查询痛点拆表。
+- 不改变完整书生路径、Mock 默认可玩、真实 provider 可选、无构建前端和服务器拥有状态边界。
+- 数据库迁移涉及新增依赖、schema、prompt 摘要或浏览器面板时，必须同步检查 `docs/AI_CONTROL_AUDIT_MATRIX.md`、README、产品 brief、架构文档和 shared context。
+- 隐藏信息要在数据库层、projection 层和 prompt 层都标记；不能只靠前端隐藏。
+
+## 8. 进度记录
 
 ### 2026-05-07
 
-工具：Codex
-
-步骤：S48.1
-
-提交：`1e7bcd3 docs: start time specialty roadmap`；子代理规范修复为 current follow-up documentation commit
-
-完成：
-
-- 将第四阶段路线图归档为 `docs/PHASE_FOUR_ROADMAP_ARCHIVE.md`。
-- 将当前活动台账切换为“时间专项”路线图，综合本会话确定的旬制、月末结算、考试多阶段和场景内时间原则。
-- 明确开发规范不变，后续实现仍需更新 shared context、运行验证、使用 Git，并在非低风险纯文档改动前执行只读子代理复审。
-- 后续修正：恢复 S48.1 重写时被压缩掉的完整子代理使用规则；该规范继续作为时间专项开发的强制流程。
-- 后续审查修正：恢复依赖/插件/开源参考治理入口，子代理授权主体恢复为 Codex 和 Claude Code，并补回中文输出检查、复审报告口径和 AI 权限矩阵检查提醒。
-- 后续保护修正：新增 `docs/DEVELOPMENT_GOVERNANCE.md` 作为规范锚点，并用 `scripts/checkGovernanceDocs.js`、`test/documentationGovernance.test.js` 和 `npm run check:docs-governance` 保护活动路线图与必读文档中的关键规范。
-
-验证：
-
-- `git diff --check`
-
-风险/遗留：
-
-- 本步骤只做规划与文档切换，不改变运行时代码。
-- 后续 S48.2 开始才新增 `tenDayPeriod` 和时间 helper。
-
-下一步：
-
-- 开始 S48.2：建立全局旬制日历基础、旧档默认上旬和 provider 时间字段边界。
-
-### 2026-05-07
-
-工具：Codex；只读探索子代理 Hume、Carver；提交前只读复审待执行
-
-步骤：S48.2
-
-提交：`15e078f feat: add ten-day calendar foundation`；`8d93b8c docs: backfill s48.2 commit hash`
-
-完成：
-
-- 新增 `src/game/time.js`，集中维护 `TURNS_PER_MONTH = 3`、旬标签、年月旬格式、旬推进、月/旬/回合换算和旧值归一化。
-- `createInitialState()` 固定新局为正月上旬；`sessionStore` 在读写 envelope 时归一化年月旬，旧 raw/envelope 存档缺少 `tenDayPeriod` 时默认上旬，不提升 `storageSchemaVersion`；存档 metadata 与 `/api/game/saves` 暴露脱敏 `tenDayPeriod`。
-- 普通 provider 不能写 `turnCount/year/month/tenDayPeriod`：schema、remote normalization、`applyStatePatch()`、prompt pack 边界、provider long-run、red-team/eval fixtures 均已覆盖。
-- `compactWorldState()` 向 provider 提供只读 `tenDayPeriod` 和 `dateLabel`，用于后续年月旬叙事；S48.2 不改变现有 `runWorldTick()` 一回合一月节奏，旬推进和月末结算留给 S48.3。
-- README、架构、World Tick 契约、AI 权限矩阵、真实 provider 验收文档和产品 brief 已同步 `tenDayPeriod` 与 server-owned 时间边界；提交前只读复审建议补齐的架构旧列表也已更新。
-
-验证：
-
-- `node --check src\game\time.js`
-- `node --check src\game\initialState.js`
-- `node --check src\game\stateRules.js`
-- `node --check src\storage\sessionStore.js`
-- `node --check src\ai\prompts.js`
-- `node --check src\ai\promptPacks.js`
-- `node --check scripts\providerLongRun.js`
-- `node --check src\game\worldTick.js`
-- `node --test test\time.test.js test\worldTick.test.js test\stateRules.test.js test\aiSchemas.test.js test\remoteHelpers.test.js test\providerLongRunScript.test.js test\prompts.test.js test\sessionStore.test.js test\gameSavesRoute.test.js test\gameStartRole.test.js test\aiControlRedTeam.test.js test\aiEvalFixtures.test.js`（82 tests passed）
-- `npm run check:docs-governance`
-- `npm run eval:ai`（12 tests passed）
-- `$env:AI_PROVIDER='mock'; npm test`（274 tests passed）
-- `git diff --check`
-
-风险/遗留：
-
-- S48.2 只是日历基础层，普通回合仍由 `runWorldTick()` 每回合推进一个月；不要把本步骤误读为已经完成旬推进。
-- S48.3 需要用 `advanceTenDayPeriod()` 或等价结构改造普通回合 tick，并让长期事件、官场任期等月度系统只在下旬 rollover 时结算。
-- 提交前只读复审（Leibniz）无 blocker；残余风险同上，并建议 S48.3 加 route 级旬推进、腊月跨年、非月末长期事件不递减、考试场景不消耗全局旬测试。
-
-下一步：
-
-- 开始 S48.3：普通回合推进上旬 -> 中旬 -> 下旬 -> 下月上旬；非月末只做轻量旬度反馈，月末执行完整世界 tick 和月度系统结算。
-
-### 2026-05-07
-
-工具：Codex；只读探索子代理 Dirac；提交前只读复审 Newton
-
-步骤：S48.3
-
-提交：`ef767c6 feat: advance ordinary turns by ten-day period`
-
-完成：
-
-- `runWorldTick()` 改为使用 `advanceTenDayPeriod()`：普通回合推进 上旬 -> 中旬 -> 下旬 -> 下月上旬；腊月下旬 rollover 时年份 +1、月份回正月、旬回上旬。
-- `worldTick` payload 增加 `cadence`、`label`、`completedMonth` 和 `timeAdvance`。非月末返回 `[旬度]` 轻量小结和小幅自然漂移；月末保留原完整资源/派系月度结算。
-- `POST /api/game/turn` 与 `scripts/providerLongRun.js` 用 `worldTick.completedMonth` 门控长期事件：非月末不递减 `remainingMonths`、不调度季节事件、不解决长期事件。
-- 官场回合每旬仍可处理首次实授和差遣反馈，但 `officialCareer.tenureMonths`、年度/周期复核等月度语义只在月末推进。
-- 浏览器 `worldTick` 反馈根据 route payload 显示 `[旬度]` 或 `[月度]`。
-- 更新 World Tick、长期事件、角色世界联动、AI 权限矩阵、架构、真实 provider 验收、README 和产品 brief 文档，记录 S48.3 旬制回合与月末门控。
-
-验证：
-
-- `node --check src\game\worldTick.js`
-- `node --check src\routes\game.js`
-- `node --check src\game\officialCareer.js`
-- `node --check scripts\providerLongRun.js`
-- `node --check public\app.js`
-- `node --test test\worldTick.test.js test\gameTurnTick.test.js test\gameTurnLongTermEvents.test.js test\longTermEvents.test.js test\gameTurnWorldThreads.test.js test\gameTurnOfficialCareer.test.js test\officialCareer.test.js test\officialRole.test.js test\generalRole.test.js test\magistrateRole.test.js test\gameTurnRoleWorldCoupling.test.js test\aiControlRedTeam.test.js test\providerLongRunScript.test.js`（65 tests passed）
-- `npm run check:docs-governance`
-- `npm run eval:ai`（12 tests passed）
-- `$env:AI_PROVIDER='mock'; npm test`（278 tests passed）
-- `$env:AI_PROVIDER='mock'; npm run smoke:browser`（14 screenshots checked）
-- `git diff --check`
-- 复审后补齐旧“monthly tick”文案和 S48.5 范围口径后，重跑 `npm run check:docs-governance`、`node --test test\gameTurnTick.test.js test\gameTurnLongTermEvents.test.js`（12 tests passed）和 `git diff --check`
-
-风险/遗留：
-
-- S48.4 已补上考试局部时间；官场期限/World Threads 文案更细的“旬回合 vs 月份”整理仍属于 S48.5/S48.6。
-- 提交前只读复审（Newton）无 blocker；一个 P3 提醒 S48.5 仍把已完成的长期事件/官场月末门控写成未来范围，已改为“复核已完成门控并聚焦剩余期限/议题/实体/provider cadence 语义”。残余风险是非月末小幅漂移叠加月末完整结算的累计强度需在 S48.5/S48.6 结合 playtest 或测试再调。
-
-### S48.4 进度记录
-
-步骤：S48.4
-状态：DONE，提交 `54afc38`。
-
-完成：
-
-- `src/game/examSceneTime.js` 定义科场局部阶段、服务器年月旬快照、局部步数/小时数和 `scene` cadence 反馈。
-- `/api/exam/question` 创建或复用题目时保留全局时间不动，并写入 `activeExam.sceneTime`；合法下旬触发考试后，即使普通旬制已经把全局推进到下月上旬，取题仍继承原开放 snapshot 和入场年月旬。
-- `/api/exam/progress` 只推进考试局部阶段，不调用 provider、不推进 `turnCount/year/month/tenDayPeriod`。
-- `/api/game/turn` 在已有写卷考试时改走考试场景分支，避免普通 provider/world tick 覆盖或消耗一旬。
-- `/api/exam/submit` 把场景推进到 `submitted`，并把 `sceneTime`、`examStartedAt`、`examSubmittedAt` 写入考试档案。
-- 浏览器考试弹窗新增“场内阶段”状态和审题、拟纲、作答、誊清按钮；考试档案显示科场时间。
-- 复审后修复“继续写作”重开同一题面会清空未交卷草稿的问题，并让底部自由输入推进科场后同步更新已打开的考试弹窗阶段控件；browser smoke 已覆盖草稿保留。
-
-验证：
-
-- `node --check src\game\examSceneTime.js`
-- `node --check src\routes\exam.js`
-- `node --check src\routes\game.js`
-- `node --check public\app.js`
-- `node --check scripts\browserSmoke.js`
-- `node --check test\streamingTurnRoute.test.js`
-- `node --test test\examSceneTime.test.js test\examTravel.test.js test\gameTurnExamTrigger.test.js test\gameTurnTick.test.js test\streamingTurnRoute.test.js`（26 tests passed）
-- `node --test test\browserSmokeScript.test.js test\streamingTurnRoute.test.js`（36 tests passed）
-- `npm run check:docs-governance`
-- `npm run eval:ai`（12 tests passed）
-- `$env:AI_PROVIDER='mock'; npm test`（283 tests passed）
-- `$env:AI_PROVIDER='mock'; npm run smoke:browser`（14 screenshots checked，含考试阶段控件与继续写作草稿保留）
-- `git diff --check`
-- 提交前只读复审（Franklin）无 P0/P1/P2 blocker。首轮指出的 P2“继续写作清空草稿”和 P3“底部自由输入推进科场后弹窗阶段滞后”均已修复；终轮复审确认可提交。残余 P3 建议是后续若要更稳写卷体验，可按 `sessionId/examId` 做本地草稿持久化，并在 S48.6 顺手补移动端同路径检查。
-
-下一步：
-
-- 开始 S48.5：复核长期事件、官场期限、World Threads、World Entities 和 provider long-run 中仍隐含“一回合一月”的语义，并处理旬度/场景 cadence 的剩余文案与验收。
-
-### S48.5 进度记录
-
-步骤：S48.5
-状态：DONE，提交 `50d228b feat: align long-term cadence semantics`。
-
-完成：
-
-- 官场差事和弹劾流程的默认期限从短回合语义改为按月换算：默认四个月即十二旬，最长二十四个月；官场结果冷却改为按六个月派生。
-- 官场、长期事件和角色世界联动的期限/冷却补上 `deadlineUnit` 或 `cooldownUnit` 标记；缺少单位标记的旧档按 S48 前“一回合一月”语义一次性换算，避免旧差事或旧冷却突然缩短。
-- 长期事件内置冷却改为 `cooldownMonths` 源数据，并在运行态统一换算成 `cooldownTurns`；旧档冷却会按月语义换算，并按各自归一化上限 clamp。
-- World Threads 新增 `deadlineUnit`，主动 NPC 请托继续显示剩余回合，官场差事显示剩余旬并附约略月份，长期事件继续显示剩余月份；prompt summary 同步提供单位和剩余值。
-- World Entities 读取 `worldTick.cadence`：`scene` cadence 不产生实体影响，非月末旬可以记录轻量 world tick 实体变化，长期事件实体影响只在月末入账。
-- `scripts/providerLongRun.js` 在内存模拟里补齐 route 同款 server-owned 世界实体和世界议程效果，并在报告中记录 cadence、month-end、实体影响和长期事件调度/解决数量。
-- Role/world coupling 记录影响发生的 `tenDayPeriod`，冷却按两个月派生，避免后续读作“两个普通回合”。
-- Provider long-run 的 exam trigger 路径复用考试场景时间入场标记，并在已有写卷考试时拒绝覆盖，避免脚本验收绕过 S48.4 场景边界。
-- 浏览器官场面板优先使用服务器返回的 `deadlineLabel`，避免玩家看到旧的一回合一月期限文案。
-- README、产品 brief、架构、Long Term Events、Official Career、World Threads、World Entities、Role/World Coupling、World Tick 和真实 provider 验收文档已同步 S48.5 语义。
-
-验证：
-
-- `node --check public\app.js src\game\officialCareer.js src\game\longTermEvents.js src\game\worldThreads.js src\game\worldEntities.js src\game\roleWorldCoupling.js scripts\providerLongRun.js test\providerLongRunScript.test.js`
-- `node --test test\officialCareer.test.js test\gameTurnOfficialCareer.test.js test\longTermEvents.test.js test\gameTurnLongTermEvents.test.js test\worldThreads.test.js test\gameTurnWorldThreads.test.js test\worldEntities.test.js test\gameTurnWorldEntities.test.js test\providerLongRunScript.test.js test\roleWorldCoupling.test.js test\gameTurnRoleWorldCoupling.test.js test\worldTick.test.js test\gameTurnTick.test.js test\stateRules.test.js test\gameStartRole.test.js`（89 tests passed）
-- `npm run check:docs-governance`
-- `npm run eval:ai`（12 tests passed）
-- `$env:AI_PROVIDER='mock'; npm test` 并发全量触发已知 Windows atomic rename `EPERM`；首轮失败文件 `test\gameTurnTick.test.js` 聚焦复跑 8 tests passed，修复后复跑失败文件 `test\mockRelationshipReactions.test.js` 聚焦复跑 2 tests passed。
-- `$env:AI_PROVIDER='mock'; npm test -- --test-concurrency=1`（289 tests passed）
-- `$env:AI_PROVIDER='mock'; npm run smoke:browser`（14 screenshots checked）
-- `git diff --check`
-
-风险/遗留：
-
-- 并发全量测试仍可能在 Windows 上偶发 JSON 存档 atomic rename `EPERM`；S48.6 使用串行全量和完整 browser smoke 验证，未发现时间显示或科举路径回归。
-- S48.6 仍只把 scene-local time 落在考试；廷议、堂审、战斗、旅途遭遇和重大差事收束尚未改造为局部阶段。
-- 提交前只读复审（Dewey/Popper）指出旧考试档案标题可能回退到当前日期、交接文档下一步仍指向 S48.6。均已修复；旧考试记录缺少 `currentDateLabel` 或 `sceneTime` 时会从自身 `examCalendar.currentYear/currentMonth/currentTenDayPeriod` 或 `entryPreparation.appliedAtYear/appliedAtMonth` 回退，缺旬默认上旬。Popper 终轮 r3 只读复审未发现 P0/P1/P2 blocker。
-
-下一步：
-
-- 为 S49 或后续 S48 follow-up 明确范围，优先考虑把考试以外的高密度场景接入 scene-local time，同时保持 browser 年月旬显示契约。
-
-### S49.1 进度记录
+工具：Codex；只读探索子代理 Boyle
 
 步骤：S49.1
-状态：DONE，提交 `e3808df docs: plan dynamic world database`。
+
+提交：`e3808df docs: plan dynamic world database`；`990f7d3 docs: backfill dynamic database plan hash`
 
 完成：
 
@@ -472,7 +265,7 @@
 - 结论是中长期可行且值得做，但短期不应一次性替换当前 JSON 存档；推荐先做 storage adapter，再做 SQLite session row + JSON `world_state` 原型，再加事件日志和 AI proposal 审计，最后选择性拆国家/邻国、城市、NPC、家族、官职、关系、场景和世界实体表。
 - 明确 AI 不能直接写数据库、执行 SQL 或拥有业务表写权限；AI 只能提交结构化建议，服务器通过 schema、白名单、clamp、隐藏过滤、领域规则和事务写入裁决。
 - README、架构文档、产品 brief、路线图和 shared context 已同步该规划入口。
-- 只读子代理 Boyle 审查了当前 JSON/session/worldState 边界，确认短期 JSON 仍能支撑，数据库应从 adapter 与 SQLite 原型开始；子代理未编辑文件，未运行 Git 写命令。
+- Boyle 审查了当前 JSON/session/worldState 边界，确认短期 JSON 仍能支撑，数据库应从 adapter 与 SQLite 原型开始；子代理未编辑文件，未运行 Git 写命令。
 
 验证：
 
@@ -481,10 +274,36 @@
 
 风险/遗留：
 
-- 本步骤为低风险纯文档规划，不改运行时代码、不新增依赖、不改变存档格式；提交前只读复审按文档低风险规则跳过，并在此记录。
+- S49.1 为低风险纯文档规划，不改运行时代码、不新增依赖、不改变存档格式。
 - S49.2 才开始抽 storage adapter；S49.3 若引入 SQLite 依赖，必须按依赖治理记录版本、许可证、安装影响、Mock/no-key 影响和回滚策略。
 
 下一步：
 
-- 若优先做数据库：开始 S49.2 storage adapter 接口和 contract tests。
-- 若优先做玩法：继续把考试以外的廷议、堂审、旅途遭遇或重大差事收束接入 scene-local time。
+- 开始 S49.2：抽 storage adapter 接口和 contract tests，保持 JSON 为默认实现。
+
+### 2026-05-07
+
+工具：Codex；提交前只读复审 Carver
+
+步骤：S49.1 文档切换 follow-up
+
+提交：待当前文档切换提交后回填
+
+完成：
+
+- 新增 `docs/TIME_SPECIALTY_ROADMAP_ARCHIVE.md`，把 S48 时间专项主要成果、验收和遗留方向从活动台账归档。
+- 将 `docs/DEVELOPMENT_STEPS.md` 从时间专项活动台账改为本地数据库专项活动台账，并保留治理保护块、子代理规则、依赖治理入口、AI/server 权限边界和中文输出规则。
+- 综合本会话数据库需求，明确国家/邻国、城市、NPC、玩家、官职、事件、场景和 AI proposal 审计的数据域规划。
+- 根据用户最新范围，明确当前只考虑本地数据库，不做远程存档、账号体系、多人同步或云端数据库。
+- 当前变更为纯文档，但因涉及路线图重写和内容保护，提交前仍执行只读复审。
+
+验证：
+
+- `npm run check:docs-governance`
+- `git diff --check`
+- 只读复审 Carver：首轮发现 P2“验证记录仍写成待运行”，已修正；未发现 P0/P1，治理保护块、活动路线图一致性和本地-only 数据库边界均确认无 blocker。
+
+风险/遗留：
+
+- 本步骤不改运行时代码、不新增依赖、不改变存档格式。
+- 下一步仍是 S49.2 storage adapter；不要直接进入 SQLite 业务表拆分。

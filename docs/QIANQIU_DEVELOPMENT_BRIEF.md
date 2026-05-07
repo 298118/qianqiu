@@ -27,9 +27,9 @@
 
 第四阶段 S40-S47.2 已完成并归档到 `docs/PHASE_FOUR_ROADMAP_ARCHIVE.md`。已接受的范围包括 AI 连接可见化、prompt pack 与 eval/red-team、深度官场、World Threads 世界议程、AI 权限审查矩阵、多实体世界模型、依赖/插件治理、provider/browser 验收扩展和 DeepSeek 缓存友好提示词结构。
 
-当前活动路线图：`docs/DEVELOPMENT_STEPS.md`，已切换为 S48 时间专项规划与进度台账。S48.3 已建立 `worldState.tenDayPeriod`、共享时间 helper、旧档上旬默认、provider 时间字段边界，并把普通自由行动改为每回合推进一旬；月末完整结算只在下旬进入下月上旬时发生。S48.4 已先把科举落成局部场景时间：考试入场、审题、拟纲、作答、誊清、交卷推进 `activeExam.sceneTime`，不消耗全局旬。S48.5 已把官场差事/弹劾、长期事件冷却、World Threads 期限标签、World Entities cadence 和 provider long-run 脚本适配到“旬回合 vs 月末月份”的语义。S48.6 已把状态栏、存档卡、考试日历、考试弹窗、考试档案和回合反馈统一显示“年月旬”，并让 browser smoke 与 provider long-run 检查这一节奏。
+S48 时间专项已完成并归档到 `docs/TIME_SPECIALTY_ROADMAP_ARCHIVE.md`。S48.3 已建立 `worldState.tenDayPeriod`、共享时间 helper、旧档上旬默认、provider 时间字段边界，并把普通自由行动改为每回合推进一旬；月末完整结算只在下旬进入下月上旬时发生。S48.4 已先把科举落成局部场景时间：考试入场、审题、拟纲、作答、誊清、交卷推进 `activeExam.sceneTime`，不消耗全局旬。S48.5 已把官场差事/弹劾、长期事件冷却、World Threads 期限标签、World Entities cadence 和 provider long-run 脚本适配到“旬回合 vs 月末月份”的语义。S48.6 已把状态栏、存档卡、考试日历、考试弹窗、考试档案和回合反馈统一显示“年月旬”，并让 browser smoke 与 provider long-run 检查这一节奏。
 
-动态数据库方向见 `docs/DYNAMIC_WORLD_DATABASE_PLAN.md`。短期继续使用当前 JSON session 存档；后续若要承载大量国家/邻国、城市、NPC、家族、官职任命、地方任所、事件记录和 AI 建议审计，应先抽 storage adapter，再以 SQLite 本地原型保存 session metadata、revision、JSON `world_state`、事件日志和 AI proposal ledger，最后逐步拆业务表。AI 不能直接写数据库或执行 SQL，只能提交结构化建议；服务器继续负责 schema、白名单、clamp、隐藏过滤、科举晋级、官职任免、长期事件、世界实体、世界议程和持久化事务。
+当前活动路线图：`docs/DEVELOPMENT_STEPS.md`，已切换为本地动态世界数据库专项。数据库方向见 `docs/DYNAMIC_WORLD_DATABASE_PLAN.md`。短期继续使用当前 JSON session 存档；后续若要承载大量国家/邻国、城市、NPC、家族、官职任命、地方任所、事件记录和 AI 建议审计，应先抽 storage adapter，再以本地 SQLite 原型保存 session metadata、revision、JSON `world_state`、事件日志和 AI proposal ledger，最后逐步拆业务表。当前不规划远程存档、账号体系、多人同步、云端冲突解决或托管数据库。AI 不能直接写数据库或执行 SQL，只能提交结构化建议；服务器继续负责 schema、白名单、clamp、隐藏过滤、科举晋级、官职任免、长期事件、世界实体、世界议程和持久化事务。
 
 开发规范不变。第 12 节和第 13 节仍是每次开发必须遵守的流程；Mock 默认可玩、真实 provider 可选、服务器拥有状态边界和科举规则这些要求继续有效。
 
@@ -671,11 +671,11 @@ chore: update env example
 - AI JSON 有 schema 校验和失败降级。
 - README 说明安装、配置、启动和 provider 切换。
 
-## 15. 第四阶段归档与时间专项规划摘要
+## 15. 归档阶段与本地数据库专项摘要
 
-第三阶段以“长期模拟骨架、关系可视化、官场结果、科举日历、身份联动和验收硬化”为中心，已完成并归档到 `docs/PHASE_THREE_ROADMAP_ARCHIVE.md`。第四阶段以“AI 连接、提示词、官场深度、世界议程、AI 权限、多实体世界、依赖治理和 provider/browser 验收”为中心，已完成并归档到 `docs/PHASE_FOUR_ROADMAP_ARCHIVE.md`。当前活动台账见 `docs/DEVELOPMENT_STEPS.md`。
+第三阶段以“长期模拟骨架、关系可视化、官场结果、科举日历、身份联动和验收硬化”为中心，已完成并归档到 `docs/PHASE_THREE_ROADMAP_ARCHIVE.md`。第四阶段以“AI 连接、提示词、官场深度、世界议程、AI 权限、多实体世界、依赖治理和 provider/browser 验收”为中心，已完成并归档到 `docs/PHASE_FOUR_ROADMAP_ARCHIVE.md`。S48 时间专项已归档到 `docs/TIME_SPECIALTY_ROADMAP_ARCHIVE.md`。当前活动台账见 `docs/DEVELOPMENT_STEPS.md`。
 
-时间专项目标：
+S48 时间专项归档结论：
 
 1. 全局旬制：普通自由行动从“一回合一月”改为“一回合一旬”，按“上旬 -> 中旬 -> 下旬 -> 下月上旬”推进，三回合才进入下一个月。
 2. 月末大结算：世界自然漂移、长期事件月份递减、季节性事件、官场任内月份和考成周期等原月度系统，默认只在下旬进入下月上旬时完整结算；非月末旬只做轻量小结。
@@ -698,8 +698,8 @@ S46.1 已把依赖、插件与开源参考的引入流程落入 `docs/DEPENDENCY
 
 所有时间专项实现仍需满足基础验收：默认 Mock 可运行，完整 scholar -> official 路径不得被破坏，真实 provider 不得成为本地启动必要条件，服务器继续拥有状态边界、时间推进、科举晋级、作弊惩罚、长期事件结果、官场授官升降、角色-世界联动后果和持久化裁决。
 
-动态数据库后续也必须满足同一边界：默认 JSON/Mock 路径在 SQLite 成熟前不得被破坏；数据库只增强索引、审计、长期存储和检索式 prompt context，不把核心裁决交给 AI、SQL 或黑箱库。
+本地数据库专项也必须满足同一边界：默认 JSON/Mock 路径在 SQLite 成熟前不得被破坏；数据库只增强本机索引、审计、长期存储和检索式 prompt context，不把核心裁决交给 AI、SQL 或黑箱库。当前数据库专项不规划远程存档、账号体系、多人同步、云端冲突解决或托管数据库；`session_id` 只表示本机不同存档。
 
 ## 16. 历史实现笔记归档
 
-S11-S38.3 的逐步实现笔记已经迁入 `docs/QIANQIU_DEVELOPMENT_HISTORY_ARCHIVE.md`，第四阶段路线图已经迁入 `docs/PHASE_FOUR_ROADMAP_ARCHIVE.md`，避免每次开发启动都读取数百行历史记录。当前必读 brief 只保留产品定位、核心契约、运行规范、AI/服务器边界、时间专项摘要和验收标准；需要追溯旧阶段细节时再打开归档文件。
+S11-S38.3 的逐步实现笔记已经迁入 `docs/QIANQIU_DEVELOPMENT_HISTORY_ARCHIVE.md`，第四阶段路线图已经迁入 `docs/PHASE_FOUR_ROADMAP_ARCHIVE.md`，S48 时间专项路线图已经迁入 `docs/TIME_SPECIALTY_ROADMAP_ARCHIVE.md`，避免每次开发启动都读取数百行历史记录。当前必读 brief 只保留产品定位、核心契约、运行规范、AI/服务器边界、S48 归档摘要、本地数据库专项边界和验收标准；需要追溯旧阶段细节时再打开归档文件。
