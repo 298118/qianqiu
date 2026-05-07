@@ -2,6 +2,7 @@ const fs = require("fs/promises");
 const path = require("path");
 const { randomUUID } = require("crypto");
 const { setTimeout: delay } = require("timers/promises");
+const { ensureWorldCalendarState, normalizeTenDayPeriod } = require("../game/time");
 
 const CURRENT_STORAGE_SCHEMA_VERSION = 1;
 const SESSIONS_DIR = path.join(__dirname, "..", "..", "data", "sessions");
@@ -76,6 +77,7 @@ function buildSessionMetadata(worldState) {
     dynasty: worldState?.dynasty || "明",
     year: toNonNegativeInteger(worldState?.year, 1644),
     month: toNonNegativeInteger(worldState?.month, 1),
+    tenDayPeriod: normalizeTenDayPeriod(worldState?.tenDayPeriod),
     turnCount: toNonNegativeInteger(worldState?.turnCount, 0),
     examRank: player.examRank || null,
     palaceRank: player.palaceRank || null,
@@ -101,6 +103,7 @@ function createSessionRecord(worldState, options = {}) {
   const revision = toNonNegativeInteger(options.revision, 1);
 
   validateWorldStateSessionId(worldState, worldState.sessionId);
+  ensureWorldCalendarState(worldState);
 
   return {
     storageSchemaVersion: CURRENT_STORAGE_SCHEMA_VERSION,

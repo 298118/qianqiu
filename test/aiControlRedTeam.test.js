@@ -157,6 +157,8 @@ test("S44 ordinary turn drops mixed provider overreach while applying safe sugge
         statePatch: {
           year: 9999,
           month: 12,
+          tenDayPeriod: 3,
+          turnCount: 99,
           activeExam: { level: "palace_exam", status: "writing" },
           examCalendar: { rivals: [{ id: "provider-rival" }] },
           activeNpcRequest: { id: "provider-request", hiddenIntent: "provider-hidden-overreach" },
@@ -265,6 +267,7 @@ test("S44 ordinary turn drops mixed provider overreach while applying safe sugge
   assert.equal(payload.worldState.turnCount, 1);
   assert.equal(payload.worldState.year, 1644);
   assert.equal(payload.worldState.month, 2);
+  assert.equal(payload.worldState.tenDayPeriod, 1);
   assert.equal(payload.worldState.activeExam, null);
   assert.equal(payload.examTrigger.shouldStart, false);
   assert.match(payload.examTrigger.reason, /不必再循科举旧路|当前应参加童试/);

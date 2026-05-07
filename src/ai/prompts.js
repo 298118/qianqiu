@@ -9,6 +9,7 @@ const {
   buildPromptInstructions,
   getTurnPromptPackName
 } = require("./promptPacks");
+const { formatYearMonthPeriod } = require("../game/time");
 
 function compactPlayer(player = {}) {
   return {
@@ -74,6 +75,8 @@ function compactWorldState(worldState = {}) {
   return {
     year: worldState.year,
     month: worldState.month,
+    tenDayPeriod: worldState.tenDayPeriod,
+    dateLabel: formatYearMonthPeriod(worldState),
     dynasty: worldState.dynasty,
     turnCount: worldState.turnCount,
     treasury: worldState.treasury,

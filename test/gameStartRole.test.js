@@ -55,6 +55,7 @@ test("createInitialState clamps initial years to state boundaries", () => {
   assert.equal(createInitialState({ year: "" }).year, 1644);
   assert.equal(createInitialState({ year: null }).year, 1644);
   assert.equal(createInitialState({ year: "not-a-year" }).year, 1644);
+  assert.equal(createInitialState({ tenDayPeriod: 3 }).tenDayPeriod, 1);
 });
 
 test("POST /api/game/start rejects unsupported role input with a 400 response", async (t) => {
@@ -102,4 +103,28 @@ test("POST /api/game/start allows direct official starts", async (t) => {
   assert.equal(payload.worldState.player.cleanReputation, 70);
   assert.ok(payload.worldState.characters.some((character) => character.role === "署中上官"));
   assert.match(payload.narrative, /入仕官员|衙署|上官/);
+});
+
+test("POST /api/game/start always starts at the first ten-day period", async (t) => {
+  const server = createTestServer();
+  t.after(server.close);
+
+  const response = await fetch(`${server.baseUrl}/api/game/start`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      dynasty: "明",
+      year: 1644,
+      month: 8,
+      tenDayPeriod: 3,
+      role: "scholar",
+      playerName: "Time Tester"
+    })
+  });
+  const payload = await response.json();
+  t.after(() => removeSessionFile(payload.sessionId));
+
+  assert.equal(response.status, 201);
+  assert.equal(payload.worldState.month, 1);
+  assert.equal(payload.worldState.tenDayPeriod, 1);
 });

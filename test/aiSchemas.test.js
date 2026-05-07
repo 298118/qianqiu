@@ -106,23 +106,27 @@ test("turn schema rejects model attempts to patch non-whitelisted player fields"
   assert.throws(() => validatePayload("turn", payload), /schema validation/);
 });
 
-test("turn schema rejects model attempts to patch server-owned calendar fields", () => {
-  const payload = {
-    narrative: "A turn happened.",
-    statePatch: {
-      year: 1645,
-      month: 2
-    },
-    attributeChanges: [],
-    events: [],
-    examTrigger: {
-      shouldStart: false,
-      level: null,
-      reason: ""
-    }
-  };
+test("turn schema rejects model attempts to patch server-owned time fields", () => {
+  for (const statePatch of [
+    { turnCount: 99 },
+    { year: 1645 },
+    { month: 2 },
+    { tenDayPeriod: 2 }
+  ]) {
+    const payload = {
+      narrative: "A turn happened.",
+      statePatch,
+      attributeChanges: [],
+      events: [],
+      examTrigger: {
+        shouldStart: false,
+        level: null,
+        reason: ""
+      }
+    };
 
-  assert.throws(() => validatePayload("turn", payload), /schema validation/);
+    assert.throws(() => validatePayload("turn", payload), /schema validation/);
+  }
 });
 
 test("turn schema rejects model attempts to patch relationship ledger fields", () => {

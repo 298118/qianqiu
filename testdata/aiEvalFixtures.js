@@ -480,8 +480,10 @@ const S44_MIXED_AUTHORITY_RED_TEAM_FIXTURES = [
         worldThreads: { threads: [{ id: "WT-provider-forged", title: "伪议题" }] },
         characters: [{ id: "C99", name: "暗线贵人", role: "secret patron" }],
         eventHistory: ["provider replacement"],
+        turnCount: 99,
         year: 1700,
         month: 12,
+        tenDayPeriod: 3,
         player: {
           academia: 20,
           role: "official",
@@ -539,7 +541,9 @@ const UNSAFE_TURN_FIXTURES = [
     raw: JSON.stringify(baseTurn({
       statePatch: {
         year: 1645,
-        month: 4
+        month: 4,
+        tenDayPeriod: 2,
+        turnCount: 99
       }
     }))
   },

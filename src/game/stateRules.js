@@ -5,6 +5,7 @@ const { inferOfficeByTitle } = require("./officialCatalog");
 const NUMERIC_RANGES = {
   "year": [1, 9999],
   "month": [1, 12],
+  "tenDayPeriod": [1, 3],
   "health": [0, 100],
   "gold": [0, 100000],
   "academia": [0, 100],
@@ -76,7 +77,7 @@ const PROVIDER_TOP_LEVEL_PATCH_KEYS = new Set([
 ]);
 
 const SERVER_OWNED_TOP_LEVEL_PATCH_KEYS = new Set([
-  "characters", "eventHistory", "activeExam", "examCalendar", "activeNpcRequest", "longTermEvents", "officialCareer", "roleWorldCoupling", "worldEntities", "worldThreads", "year", "month"
+  "characters", "eventHistory", "activeExam", "examCalendar", "activeNpcRequest", "longTermEvents", "officialCareer", "roleWorldCoupling", "worldEntities", "worldThreads", "year", "month", "tenDayPeriod"
 ]);
 
 const SERVER_TOP_LEVEL_PATCH_KEYS = new Set([

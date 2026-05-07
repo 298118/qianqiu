@@ -12,8 +12,10 @@ test("applyStatePatch applies only whitelisted fields and clamps numeric ranges"
 
   applyStatePatch(worldState, {
     sessionId: "not-allowed",
+    turnCount: 999,
     year: 2000,
     month: 12,
+    tenDayPeriod: 3,
     activeExam: { level: "child_exam" },
     examCalendar: { rivals: [{ id: "provider-rival" }] },
     activeNpcRequest: { id: "provider-request" },
@@ -44,6 +46,7 @@ test("applyStatePatch applies only whitelisted fields and clamps numeric ranges"
   assert.equal(worldState.sessionId, originalSessionId);
   assert.equal(worldState.year, 1644);
   assert.equal(worldState.month, 1);
+  assert.equal(worldState.tenDayPeriod, 1);
   assert.equal(worldState.activeExam, null);
   assert.deepEqual(worldState.examCalendar.rivals, []);
   assert.equal(worldState.activeNpcRequest, null);
@@ -152,6 +155,7 @@ test("applyStatePatch can apply server follow-up patches without incrementing tu
   applyStatePatch(worldState, {
     year: -50,
     month: 99,
+    tenDayPeriod: 99,
     activeExam: { level: "child_exam", status: "writing" },
     examCalendar: { schemaVersion: 1, rivals: [{ id: "server-rival" }] },
     roleWorldCoupling: { schemaVersion: 1, recentImpacts: [{ kind: "server-impact" }], cooldowns: {} },
@@ -164,6 +168,7 @@ test("applyStatePatch can apply server follow-up patches without incrementing tu
 
   assert.equal(worldState.year, 1);
   assert.equal(worldState.month, 12);
+  assert.equal(worldState.tenDayPeriod, 3);
   assert.equal(worldState.activeExam.level, "child_exam");
   assert.equal(worldState.examCalendar.rivals[0].id, "server-rival");
   assert.equal(worldState.roleWorldCoupling.recentImpacts[0].kind, "server-impact");

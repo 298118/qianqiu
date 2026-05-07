@@ -47,6 +47,9 @@ test("provider long-run detects server-owned patch attempts", () => {
   assert.deepEqual(
     collectProviderPatchViolations({
       year: 1645,
+      month: 9,
+      tenDayPeriod: 3,
+      turnCount: 99,
       activeExam: { level: "child_exam" },
       worldEntities: { entities: [{ id: "provider-forged-entity", name: "伪实体" }] },
       worldThreads: { threads: [{ id: "provider-forged", title: "伪议题" }] },
@@ -55,7 +58,7 @@ test("provider long-run detects server-owned patch attempts", () => {
         officeTitle: "翰林"
       }
     }),
-    ["activeExam", "worldEntities", "worldThreads", "year", "player.examRank", "player.officeTitle"]
+    ["activeExam", "worldEntities", "worldThreads", "turnCount", "year", "month", "tenDayPeriod", "player.examRank", "player.officeTitle"]
   );
 
   assert.deepEqual(
@@ -74,6 +77,7 @@ test("provider long-run creates a scholar acceptance world without session write
 
   assert.equal(worldState.player.role, "scholar");
   assert.equal(worldState.turnCount, 0);
+  assert.equal(worldState.tenDayPeriod, 1);
   assert.equal(worldState.examCalendar.schemaVersion, 1);
   assert.equal(worldState.longTermEvents.schemaVersion, 1);
   assert.equal(worldState.roleWorldCoupling.schemaVersion, 1);

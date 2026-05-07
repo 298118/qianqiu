@@ -73,8 +73,10 @@ const PROTECTED_TOP_LEVEL_PATCH_KEYS = [
   "worldThreads",
   "characters",
   "eventHistory",
+  "turnCount",
   "year",
-  "month"
+  "month",
+  "tenDayPeriod"
 ];
 
 const PROTECTED_PLAYER_PATCH_KEYS = [
@@ -327,6 +329,9 @@ function assertNumericConsistency(worldState) {
   if (!Number.isInteger(worldState.month) || worldState.month < 1 || worldState.month > 12) {
     throw new Error(`invalid month: ${worldState.month}`);
   }
+  if (!Number.isInteger(worldState.tenDayPeriod) || worldState.tenDayPeriod < 1 || worldState.tenDayPeriod > 3) {
+    throw new Error(`invalid tenDayPeriod: ${worldState.tenDayPeriod}`);
+  }
   if (!Array.isArray(worldState.eventHistory) || worldState.eventHistory.length > 20) {
     throw new Error(`eventHistory length should stay within 20, got ${worldState.eventHistory?.length}`);
   }
@@ -396,7 +401,7 @@ async function runProviderLongRun(providerName, options = {}) {
   }
 
   console.log(
-    `[${providerName}] S37 long-run completed: turnCount=${worldState.turnCount}, date=${worldState.year}-${worldState.month}, events=${worldState.eventHistory.length}`
+    `[${providerName}] S37 long-run completed: turnCount=${worldState.turnCount}, date=${worldState.year}-${worldState.month}-${worldState.tenDayPeriod}, events=${worldState.eventHistory.length}`
   );
 
   return {
@@ -408,6 +413,7 @@ async function runProviderLongRun(providerName, options = {}) {
       turnCount: worldState.turnCount,
       year: worldState.year,
       month: worldState.month,
+      tenDayPeriod: worldState.tenDayPeriod,
       eventHistoryLength: worldState.eventHistory.length,
       playerRole: worldState.player.role,
       playerExamRank: worldState.player.examRank || null,

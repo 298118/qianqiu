@@ -190,6 +190,7 @@ function createInitialState(input = {}) {
     sessionId: randomUUID(),
     year,
     month: 1,
+    tenDayPeriod: 1,
     dynasty,
     turnCount: 0,
     treasury: 1000,

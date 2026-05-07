@@ -50,6 +50,9 @@ function buildWorldState(overrides = {}) {
   if (overrides.month) {
     worldState.month = overrides.month;
   }
+  if (overrides.tenDayPeriod !== undefined) {
+    worldState.tenDayPeriod = overrides.tenDayPeriod;
+  }
   if (overrides.turnCount !== undefined) {
     worldState.turnCount = overrides.turnCount;
   }
@@ -69,6 +72,7 @@ function assertEnvelope(record, worldState) {
   assert.equal(record.metadata.dynasty, worldState.dynasty);
   assert.equal(record.metadata.year, worldState.year);
   assert.equal(record.metadata.month, worldState.month);
+  assert.equal(record.metadata.tenDayPeriod, worldState.tenDayPeriod);
   assert.equal(record.metadata.turnCount, worldState.turnCount);
 }
 
@@ -112,6 +116,7 @@ test("readSession migrates legacy raw worldState saves to the envelope format", 
       officeTitle: null
     }
   });
+  delete worldState.tenDayPeriod;
   t.after(() => removeSessionFile(worldState.sessionId));
 
   await writeRawSessionFile(worldState.sessionId, worldState);
@@ -119,8 +124,9 @@ test("readSession migrates legacy raw worldState saves to the envelope format", 
   const loaded = await readSession(worldState.sessionId);
   const migrated = await readSessionFile(worldState.sessionId);
 
-  assert.deepEqual(loaded, worldState);
-  assertEnvelope(migrated, worldState);
+  assert.equal(loaded.tenDayPeriod, 1);
+  assert.equal(migrated.worldState.tenDayPeriod, 1);
+  assertEnvelope(migrated, loaded);
 });
 
 test("readSession reads envelope saves without exposing storage metadata to routes", async (t) => {
@@ -128,6 +134,7 @@ test("readSession reads envelope saves without exposing storage metadata to rout
     playerName: "Envelope Tester",
     year: 1603,
     month: 10,
+    tenDayPeriod: 3,
     turnCount: 9,
     player: {
       examRank: "举人",
@@ -157,6 +164,36 @@ test("readSession reads envelope saves without exposing storage metadata to rout
   assert.equal(loaded.metadata, undefined);
   assert.equal(loaded.revision, undefined);
 });
+
+test("readSession defaults envelope saves missing tenDayPeriod to first period", async (t) => {
+  const worldState = buildWorldState({
+    playerName: "Envelope Time Tester",
+    year: 1604,
+    month: 8,
+    turnCount: 5
+  });
+  delete worldState.tenDayPeriod;
+  const record = {
+    storageSchemaVersion: 1,
+    sessionId: worldState.sessionId,
+    createdAt: "2026-05-06T00:00:00.000Z",
+    updatedAt: "2026-05-06T00:01:00.000Z",
+    revision: 3,
+    metadata: {},
+    worldState
+  };
+  t.after(() => removeSessionFile(worldState.sessionId));
+
+  await writeRawSessionFile(worldState.sessionId, record);
+
+  const loaded = await readSession(worldState.sessionId);
+  const listed = await sessionStore.listSessions();
+  const save = listed.saves.find((entry) => entry.sessionId === worldState.sessionId);
+
+  assert.equal(loaded.tenDayPeriod, 1);
+  assert.equal(save.tenDayPeriod, 1);
+});
+
 
 test("readSession rejects raw saves whose worldState session id does not match the filename", async (t) => {
   const fileSessionId = randomUUID();
@@ -317,6 +354,7 @@ test("listSessions returns redacted metadata sorted by updated time", { skip: ty
     playerName: "Older Save",
     year: 1601,
     month: 2,
+    tenDayPeriod: 2,
     turnCount: 3,
     player: {
       examRank: "秀才",
@@ -327,6 +365,7 @@ test("listSessions returns redacted metadata sorted by updated time", { skip: ty
     playerName: "Newer Save",
     year: 1605,
     month: 9,
+    tenDayPeriod: 3,
     turnCount: 11,
     player: {
       role: "official",
@@ -361,6 +400,7 @@ test("listSessions returns redacted metadata sorted by updated time", { skip: ty
       dynasty: older.dynasty,
       year: older.year,
       month: older.month,
+      tenDayPeriod: older.tenDayPeriod,
       turnCount: older.turnCount,
       examRank: older.player.examRank,
       officeTitle: older.player.officeTitle,
@@ -381,6 +421,7 @@ test("listSessions returns redacted metadata sorted by updated time", { skip: ty
       dynasty: newer.dynasty,
       year: newer.year,
       month: newer.month,
+      tenDayPeriod: newer.tenDayPeriod,
       turnCount: newer.turnCount,
       examRank: newer.player.examRank,
       officeTitle: newer.player.officeTitle,
@@ -400,6 +441,8 @@ test("listSessions returns redacted metadata sorted by updated time", { skip: ty
   );
   assert.equal(listed[0].playerName, "Newer Save");
   assert.equal(listed[0].role, "official");
+  assert.equal(listed[0].tenDayPeriod, 3);
+  assert.equal(listed[1].tenDayPeriod, 2);
   assert.equal(listed[0].examRank, "进士");
   assert.equal(listed[0].officeTitle, "县令");
   assert.equal(listed[0].worldState, undefined);

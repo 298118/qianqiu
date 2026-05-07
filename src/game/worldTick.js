@@ -1,20 +1,5 @@
 const { NUMERIC_RANGES, clamp } = require("./stateRules");
-
-const MONTH_NAMES = [
-  "",
-  "正月",
-  "二月",
-  "三月",
-  "四月",
-  "五月",
-  "六月",
-  "七月",
-  "八月",
-  "九月",
-  "十月",
-  "冬月",
-  "腊月"
-];
+const { MONTH_NAMES, advanceMonth, normalizeMonth } = require("./time");
 
 const ATTRIBUTE_LABELS = {
   treasury: "府库",
@@ -48,28 +33,15 @@ function readNumber(source, key, fallback) {
 }
 
 function readMonth(worldState) {
-  const value = Number(worldState?.month);
-  if (!Number.isFinite(value)) return 1;
-  return clampForKey("month", value);
+  return normalizeMonth(worldState?.month);
 }
 
 function advanceCalendar(worldState) {
-  const month = readMonth(worldState);
-  const year = readNumber(worldState, "year", 1644);
-
-  if (month >= 12) {
-    return {
-      year: clampForKey("year", year + 1),
-      month: 1,
-      rolledYear: true
-    };
-  }
-
-  return {
-    year,
-    month: month + 1,
-    rolledYear: false
-  };
+  return advanceMonth({
+    year: readNumber(worldState, "year", 1644),
+    month: readMonth(worldState),
+    tenDayPeriod: worldState?.tenDayPeriod
+  });
 }
 
 function shiftStat(key, current, delta) {

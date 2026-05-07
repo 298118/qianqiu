@@ -9,6 +9,7 @@ test("initial state starts in the first month", () => {
   const worldState = createInitialState({ playerName: "Tester" });
 
   assert.equal(worldState.month, 1);
+  assert.equal(worldState.tenDayPeriod, 1);
 });
 
 test("runWorldTick advances the calendar and does not mutate protected state", () => {
@@ -25,6 +26,7 @@ test("runWorldTick advances the calendar and does not mutate protected state", (
   assert.deepEqual(worldState, before);
   assert.equal(result.statePatch.year, 1645);
   assert.equal(result.statePatch.month, 1);
+  assert.equal(result.statePatch.tenDayPeriod, undefined);
   assert.equal(result.statePatch.player, undefined);
   assert.equal(result.statePatch.activeExam, undefined);
   assert.equal(result.statePatch.sessionId, undefined);
@@ -39,6 +41,7 @@ test("runWorldTick advances the calendar and does not mutate protected state", (
   });
   assert.equal(worldState.year, 1645);
   assert.equal(worldState.month, 1);
+  assert.equal(worldState.tenDayPeriod, 1);
   assert.equal(worldState.turnCount, 7);
   assert.deepEqual(worldState.activeExam, before.activeExam);
   assert.equal(worldState.player.examRank, "秀才");

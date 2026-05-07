@@ -60,6 +60,7 @@ Important modules:
 - Prompt-pack contracts: `src/ai/promptPacks.js`
 - AI diagnostics: `src/ai/diagnostics.js`, `src/routes/ai.js`
 - State boundary/clamping: `src/game/stateRules.js`
+- Time helpers / 时间基础: `src/game/time.js`
 - Initial state and allowed roles: `src/game/initialState.js`
 - Exam rules: `src/game/exams.js`
 - Exam calendar/rivals: `src/game/examCalendar.js`
@@ -104,7 +105,8 @@ Durable contracts and acceptance records:
 ## Current S48 Time Project
 
 - S48 starts a time-specialty project. Its goal is to slow ordinary free-text play from one month per turn to one ten-day period per turn, while preserving monthly settlement and adding scene-local time for dense situations.
-- Global ordinary turns should progress `上旬 -> 中旬 -> 下旬 -> 下月上旬`; three ordinary turns equal one month. Future implementation should add server-owned `worldState.tenDayPeriod` with old saves defaulting to 上旬.
+- S48.2 has added server-owned `worldState.tenDayPeriod` (`1` 上旬, `2` 中旬, `3` 下旬), shared helpers in `src/game/time.js`, old-save defaulting to 上旬, save metadata, prompt `dateLabel`, and provider boundaries for `turnCount/year/month/tenDayPeriod`.
+- Global ordinary turns should progress `上旬 -> 中旬 -> 下旬 -> 下月上旬`; three ordinary turns equal one month. This actual turn/tick cadence change is still pending for S48.3.
 - Monthly systems such as world drift, long-term-event month decrement, seasonal scheduling, official tenure months, and assessment cycles should fully settle only when 下旬 rolls into the next month. Non-month-end turns should provide light ten-day feedback.
 - Dense scenes must not be forced into “one input = ten days.” Exams are the priority scene: opening a question, reviewing the prompt, drafting, writing, and fair-copying should advance exam-local phases, not global ten-day periods. Similar scene-local design should be left available for court debates, hearings, combat, travel incidents, and major assignment finales.
 - Player-facing dates should move toward “年月旬” labels, for example “崇祯十七年八月上旬,” in the status strip, save list, exam calendar/modal/archive, and turn feedback.
@@ -183,6 +185,7 @@ Use focused checks first, then broaden when behavior crosses module boundaries:
 
 ## Current Work Note
 
+- 2026-05-07：S48.2 implementation/docs completed pending commit hash backfill. Added `src/game/time.js` with ten-day period labels, `TURNS_PER_MONTH = 3`, calendar normalization, `advanceTenDayPeriod()`, year-month-period formatting, and turn/month conversion helpers. New sessions start at 正月上旬; old raw/envelope saves missing `tenDayPeriod` normalize to 上旬 without bumping `storageSchemaVersion`; save metadata and `/api/game/saves` expose redacted `tenDayPeriod`. Prompt compact state now includes `tenDayPeriod` and `dateLabel`; prompt pack, AI schema, remote normalization, `applyStatePatch()`, red-team/eval fixtures, and provider long-run all protect `turnCount/year/month/tenDayPeriod` from ordinary provider patches. S48.2 intentionally keeps `runWorldTick()` on the old one-month cadence; S48.3 owns actual旬推进/月末结算. Read-only explorers Hume and Carver mapped time/storage/provider boundaries without edits or Git writes. Read-only pre-commit reviewer Leibniz found no blockers; its architecture old-list doc suggestion was applied. Verification so far: focused `node --check` on changed runtime files; focused `node --test test\time.test.js test\worldTick.test.js test\stateRules.test.js test\aiSchemas.test.js test\remoteHelpers.test.js test\providerLongRunScript.test.js test\prompts.test.js test\sessionStore.test.js test\gameSavesRoute.test.js test\gameStartRole.test.js test\aiControlRedTeam.test.js test\aiEvalFixtures.test.js` with 82 tests; `npm run check:docs-governance`; `npm run eval:ai` with 12 tests; `$env:AI_PROVIDER='mock'; npm test` with 274 tests; `git diff --check`; post-review focused rerun `node --test test\time.test.js test\sessionStore.test.js test\gameSavesRoute.test.js test\gameStartRole.test.js test\aiSchemas.test.js test\remoteHelpers.test.js test\providerLongRunScript.test.js test\prompts.test.js test\stateRules.test.js test\worldTick.test.js` with 66 tests; post-review `npm run check:docs-governance`; post-review `git diff --check`.
 - 2026-05-07：S48.1 文档/规划切换已完成并提交 `1e7bcd3 docs: start time specialty roadmap`。第四阶段规划已归档到 `docs/PHASE_FOUR_ROADMAP_ARCHIVE.md`；`docs/DEVELOPMENT_STEPS.md` 现在跟踪 S48 时间专项项目。规划综合了本会话决策：普通全局回合使用旬制，月度系统只在月末结算，考试和其他高密度场景需要场景内时间，开发规范保持不变。本次为低风险纯文档工作，跳过提交前子代理复审并在此记录。验证：`git diff --check`。
 - 2026-05-07 follow-up：修复 S48.1 重写路线图时误将完整子代理操作规范压缩过度的问题，已在 `docs/DEVELOPMENT_STEPS.md` 恢复长期授权、步骤/子步骤委派粒度、实施提示词限制、主代理整合责任、只读提交前复审门禁、低风险纯文档例外和子代理误提交处理。该修正为低风险纯文档恢复，跳过子代理复审并在此记录。验证：`git diff --check`。
 - 2026-05-07 follow-up audit：应用户要求复查 S48 重写后是否还有必要规范被删弱。只读子代理 Volta 与主代理对照 AGENTS、CLAUDE、产品 brief、S48 前路线图和第四阶段归档后确认：需要恢复活动路线图中的依赖/插件/开源参考治理入口，并把子代理授权主体恢复为 Codex 和 Claude Code；同时补回中文输出检查、只读复审报告口径和 AI 权限矩阵检查提醒。该修正为低风险纯文档恢复；已有只读审查参与，提交前仍按纯文档低风险处理。验证：`git diff --check`。
@@ -209,4 +212,4 @@ Use focused checks first, then broaden when behavior crosses module boundaries:
 
 ## Next Recommended Step
 
-After S48.1, begin S48.2 from `docs/DEVELOPMENT_STEPS.md`: add the global ten-day calendar foundation, server-owned `tenDayPeriod`, old-save defaulting, and provider time-field boundaries. Keep development rules unchanged.
+After S48.2, begin S48.3 from `docs/DEVELOPMENT_STEPS.md`: make ordinary turns advance 上旬 -> 中旬 -> 下旬 -> 下月上旬, keep `turnCount` one per valid input, emit light ten-day feedback on non-month-end turns, and reserve full monthly settlement for 下旬 rollover. Keep development rules unchanged.

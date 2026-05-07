@@ -30,6 +30,10 @@ test("remote provider state patch normalization drops server-owned and unknown f
   assert.deepEqual(
     normalizeProviderStatePatch({
       treasury: 990,
+      turnCount: 99,
+      year: 1700,
+      month: 9,
+      tenDayPeriod: 3,
       activeExam: { level: "palace_exam" },
       worldEntities: { entities: [{ id: "provider-forged-entity", name: "伪实体" }] },
       worldThreads: { threads: [{ id: "provider-forged", title: "伪议题" }] },

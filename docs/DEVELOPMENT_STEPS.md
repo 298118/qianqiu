@@ -83,14 +83,14 @@
 - **月末结算**：世界自然漂移、长期事件月份递减、季节性事件、官场任内月份和考成周期等原“月度”系统，默认只在下旬进入下月上旬时完整结算；非月末旬只做轻量小结。
 - **场景内时间**：考试、廷议、堂审、战斗、旅途遭遇、重大差事收束等应使用场景局部阶段；玩家在场景内多次输入时，只推进该场景的时辰/阶段，不自动消耗一旬。
 - **玩家可见日期**：状态栏、存档、考试说明、事件反馈和相关 UI 使用“年月旬”，例如“崇祯十七年八月上旬”。
-- **服务器拥有时间**：`year`、`month`、`tenDayPeriod` 和场景时间推进都属于服务器裁决；provider 不得通过普通 `statePatch` 写入。
+- **服务器拥有时间**：`turnCount`、`year`、`month`、`tenDayPeriod` 和场景时间推进都属于服务器裁决；provider 不得通过普通 `statePatch` 写入。
 
 ## 4. 步骤总览
 
 | ID | 状态 | 目标 | 完成日期 | 工具 | 提交 |
 | --- | --- | --- | --- | --- | --- |
 | S48.1 | DONE | 归档第四阶段规划，开启时间专项路线图，并保持开发规范不变 | 2026-05-07 | Codex | `1e7bcd3` + follow-up docs fixes |
-| S48.2 | TODO | 建立全局旬制日历基础：`tenDayPeriod`、共享时间 helper、旧档默认上旬、provider 时间字段边界 |  |  |  |
+| S48.2 | DONE | 建立全局旬制日历基础：`tenDayPeriod`、共享时间 helper、旧档默认上旬、provider 时间字段边界 | 2026-05-07 | Codex + subagents | pending hash backfill |
 | S48.3 | TODO | 改造普通回合与世界 tick：每回合推进一旬，非月末轻量小结，月末完整结算 |  |  |  |
 | S48.4 | TODO | 建立场景内时间框架，并优先把科举考试改成多阶段局部时间 |  |  |  |
 | S48.5 | TODO | 适配长期事件、官场任期/差事、世界议程、世界实体和脚本验收的月末/旬度语义 |  |  |  |
@@ -110,6 +110,9 @@
 验证：
 
 - `git diff --check`
+- 复审后补齐架构旧列表后，重跑 `node --test test\time.test.js test\sessionStore.test.js test\gameSavesRoute.test.js test\gameStartRole.test.js test\aiSchemas.test.js test\remoteHelpers.test.js test\providerLongRunScript.test.js test\prompts.test.js test\stateRules.test.js test\worldTick.test.js`（66 tests passed）
+- 复审后重跑 `npm run check:docs-governance`
+- 复审后重跑 `git diff --check`
 
 ### S48.2：全局旬制日历基础
 
@@ -117,7 +120,7 @@
 
 - 新增共享时间 helper，集中维护 `TURNS_PER_MONTH = 3`、旬标签、年月旬格式化、旬推进、月数/旬数/回合数换算、旧值归一化等能力。
 - `worldState` 新增服务器拥有字段 `tenDayPeriod: 1 | 2 | 3`，分别表示上旬、中旬、下旬；旧存档缺失时按上旬归一化，不提升 `storageSchemaVersion`。
-- `stateRules`、AI schema/eval、provider long-run 和 red-team 覆盖 `tenDayPeriod`：普通 provider 不能写 `year`、`month` 或 `tenDayPeriod`。
+- `stateRules`、AI schema/eval、provider long-run 和 red-team 覆盖 `tenDayPeriod`：普通 provider 不能写 `turnCount`、`year`、`month` 或 `tenDayPeriod`。
 - 存档 metadata 增加 `tenDayPeriod`，但不暴露完整内部状态之外的新敏感信息。
 - 涉及 AI 可读摘要、server-owned ledger、浏览器面板或 provider 验收时，同步检查 `docs/AI_CONTROL_AUDIT_MATRIX.md` 是否需要补充时间字段边界。
 
@@ -237,3 +240,45 @@
 下一步：
 
 - 开始 S48.2：建立全局旬制日历基础、旧档默认上旬和 provider 时间字段边界。
+
+### 2026-05-07
+
+工具：Codex；只读探索子代理 Hume、Carver；提交前只读复审待执行
+
+步骤：S48.2
+
+提交：pending hash backfill
+
+完成：
+
+- 新增 `src/game/time.js`，集中维护 `TURNS_PER_MONTH = 3`、旬标签、年月旬格式、旬推进、月/旬/回合换算和旧值归一化。
+- `createInitialState()` 固定新局为正月上旬；`sessionStore` 在读写 envelope 时归一化年月旬，旧 raw/envelope 存档缺少 `tenDayPeriod` 时默认上旬，不提升 `storageSchemaVersion`；存档 metadata 与 `/api/game/saves` 暴露脱敏 `tenDayPeriod`。
+- 普通 provider 不能写 `turnCount/year/month/tenDayPeriod`：schema、remote normalization、`applyStatePatch()`、prompt pack 边界、provider long-run、red-team/eval fixtures 均已覆盖。
+- `compactWorldState()` 向 provider 提供只读 `tenDayPeriod` 和 `dateLabel`，用于后续年月旬叙事；S48.2 不改变现有 `runWorldTick()` 一回合一月节奏，旬推进和月末结算留给 S48.3。
+- README、架构、World Tick 契约、AI 权限矩阵、真实 provider 验收文档和产品 brief 已同步 `tenDayPeriod` 与 server-owned 时间边界；提交前只读复审建议补齐的架构旧列表也已更新。
+
+验证：
+
+- `node --check src\game\time.js`
+- `node --check src\game\initialState.js`
+- `node --check src\game\stateRules.js`
+- `node --check src\storage\sessionStore.js`
+- `node --check src\ai\prompts.js`
+- `node --check src\ai\promptPacks.js`
+- `node --check scripts\providerLongRun.js`
+- `node --check src\game\worldTick.js`
+- `node --test test\time.test.js test\worldTick.test.js test\stateRules.test.js test\aiSchemas.test.js test\remoteHelpers.test.js test\providerLongRunScript.test.js test\prompts.test.js test\sessionStore.test.js test\gameSavesRoute.test.js test\gameStartRole.test.js test\aiControlRedTeam.test.js test\aiEvalFixtures.test.js`（82 tests passed）
+- `npm run check:docs-governance`
+- `npm run eval:ai`（12 tests passed）
+- `$env:AI_PROVIDER='mock'; npm test`（274 tests passed）
+- `git diff --check`
+
+风险/遗留：
+
+- S48.2 只是日历基础层，普通回合仍由 `runWorldTick()` 每回合推进一个月；不要把本步骤误读为已经完成旬推进。
+- S48.3 需要用 `advanceTenDayPeriod()` 或等价结构改造普通回合 tick，并让长期事件、官场任期等月度系统只在下旬 rollover 时结算。
+- 提交前只读复审（Leibniz）无 blocker；残余风险同上，并建议 S48.3 加 route 级旬推进、腊月跨年、非月末长期事件不递减、考试场景不消耗全局旬测试。
+
+下一步：
+
+- 开始 S48.3：普通回合推进上旬 -> 中旬 -> 下旬 -> 下月上旬；非月末只做轻量旬度反馈，月末执行完整世界 tick 和月度系统结算。

@@ -18,11 +18,21 @@ S21 keeps the first implementation deliberately small:
 
 Later phase-two work may decide whether long exam submissions or role-specific projects should consume extra months, but that is outside the minimal S21 contract.
 
+## S48 Time Specialty Addendum
+
+S48 changes the long-term target from one ordinary turn per month to one ordinary turn per ten-day period, but the conversion is staged:
+
+- S48.2 adds `src/game/time.js` and `worldState.tenDayPeriod` as server-owned calendar foundations. `1` means 上旬, `2` means 中旬, and `3` means 下旬.
+- Initial sessions start at 正月上旬. Legacy saves that lack `tenDayPeriod` are normalized to 上旬 when read; the storage envelope version is not bumped.
+- Save-list metadata, prompt compact state, provider long-run consistency checks, schemas, remote normalization and `applyStatePatch()` all treat `tenDayPeriod` like `turnCount/year/month`: provider suggestions cannot write it.
+- S48.2 deliberately keeps `runWorldTick()` on the old monthly cadence. S48.3 will make ordinary turns advance 上旬 -> 中旬 -> 下旬 -> 下月上旬 and will restrict full monthly settlement to 下旬 rollover.
+
 ## State Additions
 
 S21.2 should add:
 
 - `worldState.month`: integer 1-12, default `1`.
+- S48.2 later adds `worldState.tenDayPeriod`: integer 1-3, default `1` for 上旬.
 
 The tick rolls `month` from 12 to 1 and increments `year` by 1 on rollover. `year` remains the coarse historical display field already used by prompts and UI.
 

@@ -105,6 +105,7 @@ test("S47 prompt cache prefix is byte-stable before pack-specific text", () => {
 test("S47 prompt instructions keep dynamic task payloads outside the stable prefix", () => {
   const worldState = createInitialState({ playerName: "S47 Cache Name", year: 1712 });
   worldState.month = 9;
+  worldState.tenDayPeriod = 3;
   worldState.eventHistory.push("S47_DYNAMIC_EVENT_县学米价忽涨。");
   worldState.setup = { note: "S47_DYNAMIC_SETUP_NOTE" };
   const exam = getExam("child_exam");
@@ -122,7 +123,7 @@ test("S47 prompt instructions keep dynamic task payloads outside the stable pref
     buildExamQuestionTask(worldState, exam),
     buildGradeTask(worldState, exam, essay, authenticityCheck)
   ];
-  const dynamicPattern = /S47 Cache Name|1712|S47_DYNAMIC_EVENT|S47_DYNAMIC_SETUP_NOTE|S47_DYNAMIC_ACTION|S47_DYNAMIC_ESSAY|S47_DYNAMIC_COPY_NOTE|S47_DYNAMIC_AUTH_NOTE|S47_DYNAMIC_STYLE_NOTE/;
+  const dynamicPattern = /S47 Cache Name|1712|S47_DYNAMIC_EVENT|S47_DYNAMIC_SETUP_NOTE|S47_DYNAMIC_ACTION|S47_DYNAMIC_ESSAY|S47_DYNAMIC_COPY_NOTE|S47_DYNAMIC_AUTH_NOTE|S47_DYNAMIC_STYLE_NOTE|下旬/;
 
   for (const task of tasks) {
     assert.doesNotMatch(task.instructions, dynamicPattern, task.promptPack);
@@ -134,6 +135,8 @@ test("S47 prompt instructions keep dynamic task payloads outside the stable pref
   }
 
   assert.match(buildOpeningTask(worldState).input, /S47 Cache Name/);
+  assert.match(buildOpeningTask(worldState).input, /"tenDayPeriod": 3/);
+  assert.match(buildOpeningTask(worldState).input, /1712年九月下旬/);
   assert.match(buildTurnTask(worldState, action).input, /S47_DYNAMIC_ACTION/);
   assert.match(buildGradeTask(worldState, exam, essay, authenticityCheck).input, /S47_DYNAMIC_ESSAY/);
 });

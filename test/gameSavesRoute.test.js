@@ -59,6 +59,7 @@ test("GET /api/game/saves returns redacted session metadata", async (t) => {
   assert.equal(save.role, "official");
   assert.equal(save.examRank, "进士");
   assert.equal(save.officeTitle, "县令");
+  assert.equal(save.tenDayPeriod, 1);
   assert.equal(save.worldState, undefined);
   assert.equal(save.relationshipLedger, undefined);
   assert.ok(!JSON.stringify(save).includes("hidden route test note"));
