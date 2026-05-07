@@ -95,7 +95,7 @@
 | S48.4 | DONE | 建立场景内时间框架，并优先把科举考试改成多阶段局部时间 | 2026-05-07 | Codex + subagent | `54afc38` |
 | S48.5 | DONE | 适配长期事件、官场任期/差事、世界议程、世界实体和脚本验收的月末/旬度语义 | 2026-05-07 | Codex + subagents | `50d228b` |
 | S48.6 | DONE | 完成前端日期展示、浏览器 smoke、provider long-run 和完整书生入仕验收 | 2026-05-07 | Codex + subagent | `6bcfb77` |
-| S49.1 | DONE | 形成动态世界数据库规划：国家/邻国、城市、NPC、官职、事件、AI proposal 审计与 SQLite 迁移边界 | 2026-05-07 | Codex + read-only subagent | current documentation commit |
+| S49.1 | DONE | 形成动态世界数据库规划：国家/邻国、城市、NPC、官职、事件、AI proposal 审计与 SQLite 迁移边界 | 2026-05-07 | Codex + read-only subagent | `e3808df` |
 | S49.2 | TODO | 抽象存储 adapter 接口，保持 JSON 为默认实现并补 adapter contract tests |  |  |  |
 | S49.3 | TODO | SQLite 本地原型：一行一 session，保留 JSON `world_state`，默认路径仍为 JSON |  |  |  |
 | S49.4 | TODO | 事件日志与 AI proposal 审计：记录模型建议、服务器接受/拒绝和最终应用事件 |  |  |  |
@@ -464,7 +464,7 @@
 ### S49.1 进度记录
 
 步骤：S49.1
-状态：DONE，提交待本次文档 commit。
+状态：DONE，提交 `e3808df docs: plan dynamic world database`。
 
 完成：
 
