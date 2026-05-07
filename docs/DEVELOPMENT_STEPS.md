@@ -93,7 +93,7 @@
 | S48.2 | DONE | 建立全局旬制日历基础：`tenDayPeriod`、共享时间 helper、旧档默认上旬、provider 时间字段边界 | 2026-05-07 | Codex + subagents | `15e078f` + `8d93b8c` hash backfill |
 | S48.3 | DONE | 改造普通回合与世界 tick：每回合推进一旬，非月末轻量小结，月末完整结算 | 2026-05-07 | Codex + subagent | `ef767c6` |
 | S48.4 | DONE | 建立场景内时间框架，并优先把科举考试改成多阶段局部时间 | 2026-05-07 | Codex + subagent | `54afc38` |
-| S48.5 | DONE | 适配长期事件、官场任期/差事、世界议程、世界实体和脚本验收的月末/旬度语义 | 2026-05-07 | Codex + subagents | 本次提交：`feat: align long-term cadence semantics` |
+| S48.5 | DONE | 适配长期事件、官场任期/差事、世界议程、世界实体和脚本验收的月末/旬度语义 | 2026-05-07 | Codex + subagents | `50d228b` |
 | S48.6 | TODO | 完成前端日期展示、浏览器 smoke、provider long-run 和完整书生入仕验收 |  |  |  |
 
 ## 5. 实施规划
@@ -376,7 +376,7 @@
 ### S48.5 进度记录
 
 步骤：S48.5
-状态：DONE，本次提交 `feat: align long-term cadence semantics`。
+状态：DONE，提交 `50d228b feat: align long-term cadence semantics`。
 
 完成：
 
