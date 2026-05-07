@@ -10,6 +10,7 @@ const JSON_SESSION_FILE_PATTERN = /^([a-f0-9-]{36})\.json$/i;
 const SESSION_FILE_LOCK_STALE_MS = 30000;
 const SESSION_FILE_LOCK_WAIT_MS = 5000;
 const SESSION_FILE_LOCK_RETRY_MS = 25;
+const ATOMIC_SESSION_TEMP_FILE_PATTERN = /^([a-f0-9-]{36})\.json\..+\.tmp$/i;
 
 const sessionQueues = new Map();
 
@@ -214,6 +215,23 @@ async function fsyncDirectory(dirPath) {
     // Directory fsync is best-effort and is not supported on every platform.
   } finally {
     if (handle) await handle.close().catch(() => {});
+  }
+}
+
+function sessionIdFromTempFileName(fileName) {
+  const match = fileName.match(ATOMIC_SESSION_TEMP_FILE_PATTERN);
+  return match ? match[1] : null;
+}
+
+async function hasFreshSessionFileLock(sessionId, now = Date.now()) {
+  try {
+    const stats = await fs.stat(sessionLockPath(sessionId));
+    return now - stats.mtimeMs <= SESSION_FILE_LOCK_STALE_MS;
+  } catch (error) {
+    if (error.code === "ENOENT") return false;
+    // If the lock cannot be inspected, keep cleanup conservative and avoid
+    // deleting a temp file that may belong to an in-flight atomic write.
+    return true;
   }
 }
 
@@ -441,6 +459,8 @@ async function cleanupSessionTempFiles(options = {}) {
 
   for (const fileName of files) {
     if (!fileName.endsWith(".tmp")) continue;
+    const tempSessionId = sessionIdFromTempFileName(fileName);
+    if (tempSessionId && (await hasFreshSessionFileLock(tempSessionId, now))) continue;
     const filePath = path.join(SESSIONS_DIR, fileName);
     const stats = await fs.stat(filePath).catch(() => null);
     if (!stats || (olderThanMs > 0 && now - stats.mtimeMs < olderThanMs)) continue;

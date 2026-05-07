@@ -12,6 +12,7 @@ const sessionsDir = path.join(__dirname, "..", "data", "sessions");
 
 async function removeSessionFile(sessionId) {
   await fs.rm(path.join(sessionsDir, `${sessionId}.json`), { force: true });
+  await fs.rm(path.join(sessionsDir, `${sessionId}.lock`), { force: true });
   const entries = await fs.readdir(sessionsDir).catch(() => []);
   await Promise.all(
     entries
@@ -266,6 +267,31 @@ test("cleanupSessionTempFiles removes stale temp files without touching saves", 
 
   assert.ok(removed.includes(tmpFile));
   assert.deepEqual(await readSession(worldState.sessionId), worldState);
+  await assert.rejects(() => fs.access(tmpPath));
+});
+
+test("cleanupSessionTempFiles skips temp files for actively locked sessions", { skip: typeof sessionStore.cleanupSessionTempFiles !== "function" }, async (t) => {
+  const worldState = buildWorldState({ playerName: "Active Cleanup Tester" });
+  const tmpFile = `${worldState.sessionId}.json.fake.tmp`;
+  const tmpPath = path.join(sessionsDir, tmpFile);
+  const lockPath = path.join(sessionsDir, `${worldState.sessionId}.lock`);
+  t.after(() => removeSessionFile(worldState.sessionId));
+
+  await fs.mkdir(sessionsDir, { recursive: true });
+  await fs.writeFile(tmpPath, "temporary", "utf8");
+  await fs.writeFile(lockPath, "active lock", "utf8");
+
+  const result = await sessionStore.cleanupSessionTempFiles({ olderThanMs: 0 });
+  const removed = Array.isArray(result) ? result : result.removed;
+
+  assert.equal(removed.includes(tmpFile), false);
+  await assert.doesNotReject(() => fs.access(tmpPath));
+
+  await fs.rm(lockPath, { force: true });
+  const afterUnlock = await sessionStore.cleanupSessionTempFiles({ olderThanMs: 0 });
+  const removedAfterUnlock = Array.isArray(afterUnlock) ? afterUnlock : afterUnlock.removed;
+
+  assert.ok(removedAfterUnlock.includes(tmpFile));
   await assert.rejects(() => fs.access(tmpPath));
 });
 

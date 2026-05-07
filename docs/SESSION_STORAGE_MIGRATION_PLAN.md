@@ -86,6 +86,7 @@ JSON storage now uses a temp-write-and-rename protocol:
 4. Rename the temp file over `{sessionId}.json`; same-directory rename is atomic on the target platforms used by this project.
 5. Best-effort fsync the directory after rename on platforms where Node supports it.
 6. If any step fails, remove only the temp file created for that write and leave the previous `.json` untouched.
+7. `cleanupSessionTempFiles()` treats a fresh same-session `.lock` file as evidence of an in-flight write and skips that temp file, so parallel test cleanup cannot delete another process's active rename source.
 
 Read behavior:
 
@@ -157,7 +158,7 @@ Cleanup policy:
 
 - Keep manual/player saves indefinitely by default.
 - Browser smoke and tests should continue deleting their known session ids explicitly.
-- `cleanupSessionTempFiles()` can remove stale `*.tmp` files older than a configurable age.
+- `cleanupSessionTempFiles()` can remove stale `*.tmp` files older than a configurable age, but it skips atomic session temp files while the matching `{sessionId}.lock` is still fresh.
 - Never delete malformed `.json` files automatically; move them to a quarantine folder only after a future explicit admin command or script.
 
 ## Future Database Migration Path

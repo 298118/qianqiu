@@ -231,6 +231,36 @@ S46.1 已新增 [依赖、插件与开源参考治理](DEPENDENCY_PLUGIN_GOVERNA
 
 工具：Codex
 
+步骤：存档维护 - Windows atomic rename 抖动
+
+提交：待回填
+
+完成：
+- 修复全量并行测试中 `cleanupSessionTempFiles({ olderThanMs: 0 })` 可能误删其他测试进程活跃 atomic temp 文件的问题。
+- `cleanupSessionTempFiles()` 现在会识别 `{sessionId}.json.*.tmp`，若同 session 的 `{sessionId}.lock` 仍新鲜则跳过该 temp，避免 Windows 下 `fs.rename(tmpPath, filePath)` 因源临时文件被清理而出现 `ENOENT`，或因并发锁/删除出现 `EPERM`。
+- 新增 `test/sessionStore.test.js` 回归用例，覆盖“活跃锁保护 temp；解锁后 cleanup 可删除孤儿 temp”。测试清理 helper 也会删除对应 `.lock`，避免残留影响后续用例。
+- 同步架构文档、存储迁移契约、共享上下文和本路线图。只读调查子代理 Darwin 定位竞态来自并行测试清理与活跃 atomic write 的全局 `data/sessions/*.tmp` 共享目录，未编辑文件、未运行 Git 写操作。
+
+验证：
+- `node --check src\storage\sessionStore.js`
+- `node --check test\sessionStore.test.js`
+- `node --test test\sessionStore.test.js`，17 项通过
+- `node --test test\examTravel.test.js`，5 项通过
+- `$env:AI_PROVIDER='mock'; npm test`，253 项通过
+- `git diff --check`
+- 提交前只读复审子代理 Ramanujan 未发现 blocker；确认修复方向对准并行 cleanup 误删 active temp 的根因。残余风险是未来若写入流程不再保持“先 lock、后 temp”，或单次本地 JSON 写入超过 30 秒 stale 阈值，cleanup 仍可能误判；当前实现顺序与测试规模下风险可接受。
+
+风险/遗留：
+- 该修复保护本地 JSON adapter 的 temp cleanup；网络文件系统、多主机写入仍不在当前 JSON 存储目标内，未来若需要更强并发语义应继续迁移 SQLite。
+- 若未来新增其他全局清理脚本，也必须尊重 session `.lock` 或使用测试专用存储目录。
+
+下一步：
+- 完成提交前只读复审并提交；随后继续 S47.1 provider/browser acceptance 扩展。
+
+---
+
+工具：Codex
+
 步骤：S46.1
 
 提交：20e3277
