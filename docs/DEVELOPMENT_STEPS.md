@@ -105,7 +105,7 @@
 | S52.1 | DONE | 官职、官署、任所、城市辖区、考成和调任记录的数据库契约 | 2026-05-07 | Codex + read-only subagents | `4ce6d0e` |
 | S52.2 | DONE | 地方官/入仕官员任所与城市数据联动，保持服务器任免裁决 | 2026-05-07 | Codex + read-only subagents | `4599869` |
 | S53.1 | DONE | 检索式 prompt context assembler：按角色视野读取国家、城市、NPC、官职、事件摘要 | 2026-05-07 | Codex + read-only subagents | `1268c04` |
-| S53.2 | DONE | 浏览器信息面板规划：天下格局、任所地理、人物谱牒、官职簿、事件档案 | 2026-05-07 | Codex + read-only subagents | 待提交后回填 |
+| S53.2 | DONE | 浏览器信息面板规划：天下格局、任所地理、人物谱牒、官职簿、事件档案 | 2026-05-07 | Codex + read-only subagents | `b89882a` |
 | S53.3 | TODO | 浏览器信息面板前端接线基础：缓存 S50-S52 view 并建立 tab/面板壳 |  |  |  |
 | S53.4 | TODO | 天下格局与任所地理面板：地理、任所、辖区、路线和压力摘要 |  |  |  |
 | S53.5 | TODO | 人物谱牒与官职簿面板：人物/家产关系、官署官职、任命考成迁转 |  |  |  |
@@ -575,7 +575,7 @@
 
 ### S53.2：浏览器信息面板规划
 
-状态：DONE。规划提交：待提交后回填。只读探索子代理 Parfit 梳理了当前 route view、前端面板入口、browser smoke helper 和后续 UI 风险；只读文档探索子代理 Mendel 梳理了文档落点、权限矩阵边界和后续拆步。该步骤为低风险纯文档规划，不改 runtime，跳过提交前只读复审；验证见下。
+状态：DONE。规划提交：`b89882a`。只读探索子代理 Parfit 梳理了当前 route view、前端面板入口、browser smoke helper 和后续 UI 风险；只读文档探索子代理 Mendel 梳理了文档落点、权限矩阵边界和后续拆步。该步骤为低风险纯文档规划，不改 runtime，跳过提交前只读复审；验证见下。
 
 目标：
 
