@@ -109,7 +109,7 @@
 | S53.3 | DONE | 浏览器信息面板前端接线基础：缓存 S50-S52 view 并建立 tab/面板壳 | 2026-05-07 | Codex + read-only subagents | `89e73c2` |
 | S53.4 | DONE | 天下格局与任所地理面板：地理、任所、辖区、路线和压力摘要 | 2026-05-07 | Codex + read-only subagents | `657c08e` |
 | S53.5 | DONE | 人物谱牒与官职簿面板：人物/家产关系、官署官职、任命考成迁转 | 2026-05-07 | Codex + read-only subagents | `e642ae3` |
-| S53.6 | DONE | 事件档案安全 projection 与浏览器面板 | 2026-05-07 | Codex + read-only subagents | 待提交 |
+| S53.6 | DONE | 事件档案安全 projection 与浏览器面板 | 2026-05-07 | Codex + read-only subagents | `bac7d2f` |
 
 ## 5. 实施规划
 
@@ -732,7 +732,7 @@
 
 ### S53.6：事件档案安全 projection 与浏览器面板
 
-状态：DONE。实现提交：待提交。只读探索子代理 Mill 梳理了后端 route/SSE/exam payload 接入点、raw audit/provider/prompt/path/key 禁止项和最小测试点；只读探索子代理 Huygens 梳理了前端 tab 禁用原因、启用后的 selector/data 属性、browser smoke 默认断言和布局/泄漏风险。提交前只读复审 Huygens 确认代码侧无 raw audit/proposal/prompt/path/key 泄漏或 payload 覆盖阻断问题，并要求回填最终验证记录；该文档状态已在提交前同步。
+状态：DONE。实现提交：`bac7d2f`。只读探索子代理 Mill 梳理了后端 route/SSE/exam payload 接入点、raw audit/provider/prompt/path/key 禁止项和最小测试点；只读探索子代理 Huygens 梳理了前端 tab 禁用原因、启用后的 selector/data 属性、browser smoke 默认断言和布局/泄漏风险。提交前只读复审 Huygens 确认代码侧无 raw audit/proposal/prompt/path/key 泄漏或 payload 覆盖阻断问题，并要求回填最终验证记录；该文档状态已在提交前同步。此 hash 回填是低风险纯文档后续，跳过额外子代理复审。
 
 目标：
 
