@@ -329,11 +329,11 @@ S49-S53 基础层结论：
 2. `event_log` / `ai_change_proposals` 是本地脱敏审计，不进入玩家 API，也不让 AI 直接写表。
 3. `worldGeographyView`、`worldPeopleView`、`officialPostingsView`、`eventArchiveView` 是当前 UI/prompt 合法入口。
 4. 浏览器“局势簿”只读 route player-facing view，不读 raw ledger、raw audit、provider-only `retrievalContext`、prompt、本地路径或 key。
-5. 国家/城市、NPC/家族/资产/关系、官职任所和安全事件索引尚未拆成 SQLite 业务表，已进入 S54-S59 规划。
+5. S54.1 已固定地理 SQLite 业务表契约；国家/城市地理行尚未在运行时写入 SQLite，NPC/家族/资产/关系、官职任所和安全事件索引也尚未拆成 SQLite 业务表，仍按 S54-S59 小步推进。
 
 S54-S59 剩余方向：
 
-- S54：地理 SQLite 表契约、持久化、导入/修复/导出和 view parity。
+- S54：地理 SQLite 表契约已完成；后续实现 SQLite 持久化、导入/修复/导出和 view parity。
 - S55：人物、家族、资产、田产、关系 SQLite 表与 NPC 生命周期事件。
 - S56：官署、官职、任所、考成、迁转 SQLite 表与跨域引用完整性。
 - S57：安全事件索引和审计到公开事件 projection。

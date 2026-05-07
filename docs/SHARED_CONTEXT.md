@@ -143,7 +143,7 @@ Current active roadmap: S54-S59 in `docs/DEVELOPMENT_STEPS.md`.
 
 Next planned slices:
 
-- S54.1: define geography SQLite business table contract for countries, regions, cities, routes, frontier zones, and office jurisdictions.
+- S54.1: DONE. Geography SQLite business table contract is recorded in `docs/WORLD_GEOGRAPHY_SEED_CONTRACT.md`; no runtime tables or route fields were added.
 - S54.2/S54.3: persist geography business rows in SQLite mode and add import/repair/export plus JSON/SQLite `worldGeographyView` parity.
 - S55: define and persist people/household/asset/estate/relationship tables while preserving hidden filtering and existing relationship lifecycle.
 - S56: define and persist official posting tables, preserving server-owned appointments and scholar -> official continuity.
@@ -153,9 +153,10 @@ Next planned slices:
 
 ## Current Work Note
 
+- 2026-05-07：S54.1 地理 SQLite 业务表契约已完成于本次提交。`docs/WORLD_GEOGRAPHY_SEED_CONTRACT.md` 新增 `geo_countries`、`geo_regions`、`geo_cities`、`geo_routes`、`geo_frontier_zones`、`geo_office_jurisdictions` 的公共列、字段分类、引用修复、hidden 边界和 S54.2/S54.3 parity 验收点；同步产品 brief、AI 控制矩阵和本交接板。本轮纯文档契约，不改运行时代码、不新增 route 字段、不创建 SQLite 表，JSON 默认、SQLite local-only、AI 不直写 SQL/table rows、prompt/UI 只读服务器 view 的边界不变。已通过 `node --test test/worldGeographySeeds.test.js test/worldGeography.test.js test/promptContextAssembler.test.js test/prompts.test.js test/stateRules.test.js test/aiSchemas.test.js test/remoteHelpers.test.js`、`npm run check:docs-governance`、`git diff --check`；Fermat 完成字段/风险核对，Laplace 基于最终 diff 与验证证据做提交前只读复审，未发现 P0/P1/P2。S54.2 实现时要保持现有 `role_visible` 粗规则和 `world_sessions.world_state_json` / `geo_*` 同事务同步。
 - 2026-05-07：MiMo provider 集成提交 `80a0c07`。本轮新增 `mimo` 与 `mimo-deepseek` provider、诊断和 smoke 脚本支持、MiMo/Hybrid 单元测试、remote turn relationship 建议归一化、README/brief/architecture/AI 控制矩阵/真实 provider 验收更新，并把完整多 AI 协作编排排到 S54-S59 之后。官方 MiMo 文档和真实 route health 确认 API 模型 ID 应为 `mimo-v2.5-pro`；直接用 `mimo-v2.5-pro[1m]` 发送普通问答也返回 `Not supported model`，1M 应作为长上下文能力说明而不是 request model 字段。官方文档还确认 OpenAI-compatible `/chat/completions`、Token Plan `tp-...` key、token-plan Base URL 与普通 `sk-...` key 不可混用；也记录 Token Plan 场景限制，公开部署或非 Coding 自定义后端应先确认授权或改用普通 API key。只读复审提出的 Token Plan 默认 URL 与 MiMo key 提示问题已修正，并补充 `MIMO_API_KEY` / `tp-...` 在事件档案与浏览器 smoke 隐藏 token 扫描中的覆盖。已通过聚焦测试、`npm test`、`npm run check:docs-governance`、`git diff --check`、keyed route health `npm run smoke:provider:route -- --provider mimo` / `--provider mimo-deepseek`，以及真实混合烟测 `npm run smoke:provider -- --provider mimo-deepseek --stream`；最终只读复审未发现阻塞问题。
 - 2026-05-07：数据库专项规划压缩提交 `5ab5350`。S49-S53 已完成基础归档到 `docs/LOCAL_DATABASE_FOUNDATION_ARCHIVE.md`，活动台账改为 S54-S59 剩余 SQLite 业务表拆分，并已同步 README、产品 brief、architecture、动态数据库规划、相关契约和本交接板。该变更为纯文档，但涉及路线图重写和内容保护，已运行 `npm run check:docs-governance`、`git diff --check` 并执行只读复审；复审 P2 已修正。后续从 S54.1 地理 SQLite 业务表契约开始。
 
 ## Next Recommended Step
 
-Finish the MiMo provider integration commit, then return to S54.1: geography SQLite business table contract. Keep JSON/default Mock playability, SQLite local-only scope, AI-no-SQL, and route-view-only browser/prompt surfaces as the baseline. After S54-S59, start the planned S60 multi-AI orchestration layer if multi-model collaboration is still desired.
+Start S54.2: implement SQLite-mode persistence for geography business rows while keeping JSON adapter behavior unchanged. The first implementation slice should create/sync `geo_*` rows in SQLite transactions, preserve route payload shape, and add focused JSON/SQLite `worldGeographyView` parity tests before adding S54.3 import/repair/export tooling. Keep JSON/default Mock playability, SQLite local-only scope, AI-no-SQL, and route-view-only browser/prompt surfaces as the baseline.
