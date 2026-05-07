@@ -94,7 +94,7 @@
 | S48.3 | DONE | 改造普通回合与世界 tick：每回合推进一旬，非月末轻量小结，月末完整结算 | 2026-05-07 | Codex + subagent | `ef767c6` |
 | S48.4 | DONE | 建立场景内时间框架，并优先把科举考试改成多阶段局部时间 | 2026-05-07 | Codex + subagent | `54afc38` |
 | S48.5 | DONE | 适配长期事件、官场任期/差事、世界议程、世界实体和脚本验收的月末/旬度语义 | 2026-05-07 | Codex + subagents | `50d228b` |
-| S48.6 | DONE | 完成前端日期展示、浏览器 smoke、provider long-run 和完整书生入仕验收 | 2026-05-07 | Codex + subagent | 待回填 |
+| S48.6 | DONE | 完成前端日期展示、浏览器 smoke、provider long-run 和完整书生入仕验收 | 2026-05-07 | Codex + subagent | `6bcfb77` |
 
 ## 5. 实施规划
 
@@ -439,4 +439,4 @@
 
 下一步：
 
-- 提交后回填 S48.6 commit hash；随后为 S49 或后续 S48 follow-up 明确范围，优先考虑把考试以外的高密度场景接入 scene-local time，同时保持 browser 年月旬显示契约。
+- 为 S49 或后续 S48 follow-up 明确范围，优先考虑把考试以外的高密度场景接入 scene-local time，同时保持 browser 年月旬显示契约。

@@ -47,7 +47,7 @@ The smoke uses `playwright-core` with an installed Chrome or Edge executable. If
 
 Date: 2026-05-07
 
-Relevant implementation commit: pending S48.6 hash backfill
+Relevant implementation commit: `6bcfb77`
 
 Commands verified during S48.6:
 
