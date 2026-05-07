@@ -65,7 +65,7 @@ The remaining future content panel is `#event-archive-panel` for 事件档案, o
 
 Date: 2026-05-07
 
-Relevant implementation commit: 待提交后回填
+Relevant implementation commit: `e642ae3`
 
 Commands verified during S53.5:
 
