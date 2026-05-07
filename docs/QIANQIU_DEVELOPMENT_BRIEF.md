@@ -640,7 +640,7 @@ chore: update env example
 4. 世界议程：把主动 NPC、长期事件、官场结果和角色联动整理为跨月议题，让玩家可追踪历史压力和介入点。
 5. AI 调动/控制审查：S44.1 已用 `docs/AI_CONTROL_AUDIT_MATRIX.md` 逐系统标明 AI 可生成/可建议/不可裁决的边界，以及服务器裁决点、玩家可见性和 S44.2 red-team 测试缺口。
 6. 多实体世界模型：扩展朝廷衙门、地方士绅、书院同门、军镇边墙、盐漕税赋和灾荒赈务等实体。
-7. 依赖/插件治理与验收：允许有价值的依赖和插件，但必须记录用途、许可证、替代方案、测试和回滚策略。
+7. 依赖/插件治理与验收：S46.1 已新增 `docs/DEPENDENCY_PLUGIN_GOVERNANCE.md`，允许有价值的依赖和插件，但必须记录用途、许可证、替代方案、测试、文档落点和回滚策略。
 8. DeepSeek 缓存命中率：参考官方上下文硬盘缓存机制，让 prompt pack 尽量复用稳定前缀并记录命中/未命中 tokens，但不得以降低游戏质量换取缓存命中。
 
 S42.1 已把深度官场契约写入 `docs/OFFICIAL_CAREER_CONTRACT.md`：S34 现有结果引擎继续作为运行时基础；后续 S42.2/S42.3 必须按契约区分服务器拥有的 `officeTitle`、软描述 `position`、归一化 `officialCareer.currentPosting`，并通过服务器 view 暴露官署、差事、考成、人脉、弹劾流程、调任外放、处分和履历档案。AI 只能生成叙事、公文口吻、来函、传闻和受限仪表建议，不能裁决任免、考成、处分、起复或隐藏信息公开。
@@ -652,6 +652,8 @@ S42.3 已落地浏览器体验：`#official-career-panel` 现在按服务器 vie
 S43.2 已在 `worldThreadView` 上补充 `goal`、`deadlineLabel`、`riskLabel`、`riskTone`、`relatedLabels`、`interventionHints` 和 `followUpHint`，并把它渲染为浏览器“世界议程”检查视图。它只做归一化、可见性过滤、prompt/API 摘要和前端检查，不替代原有结算器；后续若要让多个来源合并成同一案件、或让议题拥有更明确的多阶段结局，应继续由服务器来源模块提供可审查状态。
 
 S45.1 已新增 `docs/WORLD_ENTITIES_CONTRACT.md` 和 `src/game/worldEntities.js`。`worldState.worldEntities.schemaVersion = 1` 是 server-owned 多实体账本，初始覆盖吏部、户部、都察院、地方士绅、河工案牍、县学书院、同年文社、边镇军镇、边墙堡寨、盐漕通道、田赋商税和灾荒赈务；`worldEntityView` 暴露分组可见实体和高压 highlights，`compactWorldState()` 暴露 `worldEntities` prompt 摘要。隐藏实体与 `hiddenNotes` 不进入 view/prompt；普通 provider patch `worldEntities` 会被 schema/normalizer/state boundary 拒绝或忽略。S45.2 已接入服务器来源影响写入、`worldEntityImpacts` 和 World Threads 可见实体摘要。
+
+S46.1 已把依赖、插件与开源参考的引入流程落入 `docs/DEPENDENCY_PLUGIN_GOVERNANCE.md`。后续新增或升级 `package.json` 依赖、开发工具、外部服务 SDK、Codex/Claude 插件工作流或开源参考时，必须先说明问题、用途、许可证、维护状态、安全/隐私影响、Mock/no-key 影响、验证命令、文档落点和回滚策略；这一步不新增运行时依赖。
 
 所有第四阶段实现仍需满足基础验收：默认 Mock 可运行，完整 scholar -> official 路径不得被破坏，真实 provider 不得成为本地启动必要条件，服务器继续拥有状态边界、科举晋级、作弊惩罚、长期事件结果、官场授官升降、角色-世界联动后果和持久化裁决。
 

@@ -13,6 +13,8 @@ Qianqiu is intentionally buildless in phase one:
 - Tests: Node.js built-in `node --test`.
 - Browser smoke: `playwright-core` driving an installed Chrome/Edge browser through `scripts/browserSmoke.js`.
 
+Dependency and plugin changes are governed by [docs/DEPENDENCY_PLUGIN_GOVERNANCE.md](DEPENDENCY_PLUGIN_GOVERNANCE.md). New packages, plugins, external service SDKs, or open-source references must document purpose, license, maintenance status, alternatives, test coverage, docs landing points, and rollback before they are treated as accepted architecture.
+
 The app should stay runnable with:
 
 ```bash
