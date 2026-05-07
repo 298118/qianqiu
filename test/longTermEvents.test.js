@@ -4,6 +4,7 @@ const assert = require("node:assert/strict");
 const { createInitialState } = require("../src/game/initialState");
 const { applyRelationshipChanges } = require("../src/game/relationships");
 const { applyStatePatch } = require("../src/game/stateRules");
+const { monthsToTurns } = require("../src/game/time");
 const {
   buildLongTermEventView,
   ensureLongTermEventState,
@@ -18,6 +19,7 @@ test("initial state carries an empty server-owned long-term event queue", () => 
     schemaVersion: 1,
     queue: [],
     cooldowns: {},
+    cooldownUnit: "ten_day",
     recentResolved: []
   });
   assert.deepEqual(buildLongTermEventView(worldState).activeEvents, []);
@@ -34,6 +36,8 @@ test("long-term events schedule seasonal work and resolve through bounded patche
   assert.equal(scheduled.statePatch.grainReserve, undefined);
   assert.equal(scheduled.scheduled[0].key, "seasonal_harvest_audit");
   assert.equal(worldState.longTermEvents.queue.length, 1);
+  assert.equal(worldState.longTermEvents.queue[0].cooldownTurns, monthsToTurns(10));
+  assert.equal(worldState.longTermEvents.queue[0].cooldownUnit, "ten_day");
   assert.equal(buildLongTermEventView(worldState).activeEvents[0].title, "秋粮核验");
 
   worldState.turnCount = 2;
@@ -55,7 +59,8 @@ test("long-term events schedule seasonal work and resolve through bounded patche
   assert.equal(worldState.player.examRank, "秀才");
   assert.equal(worldState.turnCount, 2);
   assert.equal(worldState.longTermEvents.queue.length, 0);
-  assert.ok(worldState.longTermEvents.cooldowns.seasonal_harvest_audit > worldState.turnCount);
+  assert.equal(worldState.longTermEvents.cooldowns.seasonal_harvest_audit, worldState.turnCount + monthsToTurns(10));
+  assert.equal(worldState.longTermEvents.cooldownUnit, "ten_day");
 });
 
 test("long-term disaster events clamp state and never patch protected exam fields", () => {
@@ -105,6 +110,7 @@ test("border long-term events use relationship suggestions instead of raw ledger
 
 test("long-term scheduler normalizes invalid legacy data", () => {
   const worldState = createInitialState({ playerName: "Tester" });
+  worldState.turnCount = 2;
   worldState.longTermEvents = {
     schemaVersion: 999,
     queue: [
@@ -114,12 +120,13 @@ test("long-term scheduler normalizes invalid legacy data", () => {
         type: "seasonal",
         title: "Valid event",
         status: "active",
+        cooldownTurns: 10,
         durationMonths: 99,
         remainingMonths: 99
       }
     ],
     cooldowns: {
-      seasonal_harvest_audit: 999999,
+      seasonal_harvest_audit: 12,
       "": 10
     },
     recentResolved: [{ title: "Old resolved", type: "seasonal", resolvedTurn: 1 }]
@@ -131,6 +138,9 @@ test("long-term scheduler normalizes invalid legacy data", () => {
   assert.equal(normalized.schemaVersion, 1);
   assert.equal(normalized.queue.length, 1);
   assert.equal(normalized.queue[0].durationMonths, 12);
-  assert.equal(normalized.cooldowns.seasonal_harvest_audit <= worldState.turnCount + 120, true);
+  assert.equal(normalized.queue[0].cooldownTurns, monthsToTurns(10));
+  assert.equal(normalized.queue[0].cooldownUnit, "ten_day");
+  assert.equal(normalized.cooldowns.seasonal_harvest_audit, worldState.turnCount + monthsToTurns(10));
+  assert.equal(normalized.cooldownUnit, "ten_day");
   assert.equal(normalized.recentResolved.length, 1);
 });

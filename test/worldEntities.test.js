@@ -177,6 +177,7 @@ test("deriveWorldEntityInfluences maps applied state, relationship, role, NPC, a
       resentment: { before: 0, after: 1, delta: 1 }
     }],
     activeNpcRequest: { resolved: true },
+    worldTick: { cadence: "monthly", completedMonth: true, attributeChanges: [] },
     roleWorldCoupling: {
       outcome: { id: "RWC-test", kind: "general_campaign" },
       attributeChanges: [{ path: "borderThreat", before: 82, after: 79, reason: "角色世界联动" }]
@@ -204,4 +205,46 @@ test("deriveWorldEntityInfluences maps applied state, relationship, role, NPC, a
   assert.equal(entityIds.has("military-frontier-garrison"), true);
   assert.equal(entityIds.has("relief-granary-operation"), true);
   assert.equal(entityIds.has("court-ministry-personnel"), true);
+});
+
+test("deriveWorldEntityInfluences respects scene and month-end cadence", () => {
+  const worldState = createInitialState({ playerName: "Tester" });
+  const longTermContext = {
+    scheduled: [{ id: "LTE-cadence", type: "disaster" }],
+    resolved: [],
+    attributeChanges: [{ path: "grainReserve", before: 800, after: 650, reason: "长期事件" }]
+  };
+
+  const sceneInfluences = deriveWorldEntityInfluences(worldState, {
+    worldTick: {
+      cadence: "scene",
+      completedMonth: false,
+      attributeChanges: [{ path: "grainReserve", before: 800, after: 780, reason: "科场局部" }]
+    },
+    longTermEvents: longTermContext
+  });
+
+  const tenDayInfluences = deriveWorldEntityInfluences(worldState, {
+    worldTick: {
+      cadence: "ten_day",
+      completedMonth: false,
+      attributeChanges: [{ path: "grainReserve", before: 800, after: 790, reason: "旬度推演" }]
+    },
+    longTermEvents: longTermContext
+  });
+
+  const monthlyInfluences = deriveWorldEntityInfluences(worldState, {
+    worldTick: {
+      cadence: "monthly",
+      completedMonth: true,
+      attributeChanges: [{ path: "grainReserve", before: 800, after: 650, reason: "月度推演" }]
+    },
+    longTermEvents: longTermContext
+  });
+
+  assert.deepEqual(sceneInfluences, []);
+  assert.equal(tenDayInfluences.some((influence) => influence.sourceType === "world_tick"), true);
+  assert.equal(tenDayInfluences.some((influence) => influence.sourceType === "long_term_event"), false);
+  assert.equal(monthlyInfluences.some((influence) => influence.sourceType === "world_tick"), true);
+  assert.equal(monthlyInfluences.some((influence) => influence.sourceType === "long_term_event"), true);
 });

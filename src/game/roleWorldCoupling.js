@@ -1,7 +1,10 @@
 const { NUMERIC_RANGES, clamp } = require("./stateRules");
 const { normalizeRelationshipLedger } = require("./relationships");
+const { monthsToTurns, normalizeTenDayPeriod } = require("./time");
 
 const ROLE_WORLD_COUPLING_SCHEMA_VERSION = 1;
+const ROLE_IMPACT_COOLDOWN_MONTHS = 2;
+const COOLDOWN_UNIT_TEN_DAY = "ten_day";
 const MAX_RECENT_IMPACTS = 8;
 const MAX_VISIBLE_EVENTS_PER_TURN = 2;
 const MAX_TEXT_LENGTH = 160;
@@ -86,14 +89,27 @@ function shiftFaction(worldState, key, delta) {
   return clamp(Math.round(worldState.factions[key] + delta), 0, 100);
 }
 
-function normalizeCooldowns(cooldowns, turn) {
+function normalizeCooldowns(cooldowns, turn, unit) {
   const normalized = {};
   if (!isPlainObject(cooldowns)) return normalized;
 
   for (const [key, value] of Object.entries(cooldowns)) {
     const cleanKey = cleanText(key, "", 64);
     if (!cleanKey) continue;
-    normalized[cleanKey] = clampNumber(value, 0, turn + 120, turn);
+    if (unit === COOLDOWN_UNIT_TEN_DAY) {
+      normalized[cleanKey] = clampNumber(value, 0, turn + 120, turn);
+      continue;
+    }
+    const parsed = Number(value);
+    const legacyRemainingMonths = Number.isFinite(parsed)
+      ? Math.max(0, Math.round(parsed) - turn)
+      : 0;
+    normalized[cleanKey] = clampNumber(
+      turn + monthsToTurns(legacyRemainingMonths),
+      0,
+      turn + 120,
+      turn
+    );
   }
 
   return normalized;
@@ -114,6 +130,7 @@ function normalizeImpact(raw, worldState = {}) {
     summary: cleanText(raw.summary, title),
     year: clampNumber(raw.year, 1, 9999, readTopLevelNumber(worldState, "year", 1644)),
     month: clampNumber(raw.month, 1, 12, readTopLevelNumber(worldState, "month", 1)),
+    tenDayPeriod: normalizeTenDayPeriod(raw.tenDayPeriod, worldState?.tenDayPeriod || 1),
     turn: clampNumber(raw.turn, 0, Number.MAX_SAFE_INTEGER, currentTurn(worldState)),
     affectedPaths: Array.isArray(raw.affectedPaths)
       ? raw.affectedPaths.map((path) => cleanText(path, "", 80)).filter(Boolean).slice(0, 12)
@@ -129,7 +146,8 @@ function normalizeRoleWorldCouplingState(worldState = {}) {
     recentImpacts: Array.isArray(source.recentImpacts)
       ? source.recentImpacts.map((impact) => normalizeImpact(impact, worldState)).filter(Boolean).slice(-MAX_RECENT_IMPACTS)
       : [],
-    cooldowns: normalizeCooldowns(source.cooldowns, turn)
+    cooldowns: normalizeCooldowns(source.cooldowns, turn, source.cooldownUnit),
+    cooldownUnit: COOLDOWN_UNIT_TEN_DAY
   };
 }
 
@@ -137,7 +155,8 @@ function createInitialRoleWorldCouplingState() {
   return {
     schemaVersion: ROLE_WORLD_COUPLING_SCHEMA_VERSION,
     recentImpacts: [],
-    cooldowns: {}
+    cooldowns: {},
+    cooldownUnit: COOLDOWN_UNIT_TEN_DAY
   };
 }
 
@@ -160,6 +179,7 @@ function buildRoleWorldCouplingView(worldState = {}) {
       summary: impact.summary,
       year: impact.year,
       month: impact.month,
+      tenDayPeriod: impact.tenDayPeriod,
       turn: impact.turn,
       affectedPaths: impact.affectedPaths
     }))
@@ -473,6 +493,7 @@ function createImpact(worldState, effect, affectedPaths) {
     summary: effect.summary,
     year: readTopLevelNumber(worldState, "year", 1644),
     month: readTopLevelNumber(worldState, "month", 1),
+    tenDayPeriod: normalizeTenDayPeriod(worldState?.tenDayPeriod),
     turn: currentTurn(worldState),
     affectedPaths
   }, worldState);
@@ -511,8 +532,9 @@ function runRoleWorldCouplingStep(worldState = {}, input = "") {
       recentImpacts: [...state.recentImpacts, impact].slice(-MAX_RECENT_IMPACTS),
       cooldowns: {
         ...state.cooldowns,
-        [effect.kind]: currentTurn(worldState) + 6
-      }
+        [effect.kind]: currentTurn(worldState) + monthsToTurns(ROLE_IMPACT_COOLDOWN_MONTHS)
+      },
+      cooldownUnit: COOLDOWN_UNIT_TEN_DAY
     }
   });
 

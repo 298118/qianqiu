@@ -5,6 +5,7 @@ const {
   DEFAULT_TURN_LIMIT,
   MAX_TURNS,
   MIN_TURNS,
+  applyServerTurnEffects,
   collectProviderPatchViolations,
   collectToneIssues,
   countChineseCharacters,
@@ -14,6 +15,7 @@ const {
   runProviderLongRunSmoke,
   validateExamTriggerAuthority
 } = require("../scripts/providerLongRun");
+const { monthsToTurns } = require("../src/game/time");
 
 test("provider long-run parses bounded turn limits", () => {
   assert.equal(parseTurnLimit(["node", "scripts/providerLongRun.js"]), DEFAULT_TURN_LIMIT);
@@ -84,6 +86,92 @@ test("provider long-run creates a scholar acceptance world without session write
   assert.equal(worldState.worldEntities.schemaVersion, 1);
   assert.equal(worldState.worldThreads.schemaVersion, 1);
   assert.ok(worldState.sessionId);
+});
+
+test("provider long-run in-memory server effects follow ten-day cadence and entity impacts", () => {
+  const worldState = createLongRunWorldState("openai");
+  worldState.month = 8;
+  worldState.tenDayPeriod = 1;
+  worldState.longTermEvents.queue = [{
+    schemaVersion: 1,
+    id: "LTE-provider-cadence",
+    key: "seasonal_harvest_audit",
+    type: "seasonal",
+    status: "active",
+    targetType: "world",
+    targetId: "",
+    title: "秋粮核验",
+    summary: "秋粮入簿，地方与户部核报仓储盈亏。",
+    severity: 1,
+    createdTurn: 0,
+    startedYear: 1644,
+    startedMonth: 8,
+    durationMonths: 1,
+    remainingMonths: 1,
+    cooldownKey: "seasonal_harvest_audit",
+    cooldownTurns: monthsToTurns(10),
+    cooldownUnit: "ten_day",
+    visibility: "public"
+  }];
+
+  const result = {
+    narrative: "县学士子听粮价，归而记入札记。",
+    statePatch: { publicOrder: 42 },
+    relationshipChanges: [],
+    events: ["县中粮户议论渐多。"],
+    examTrigger: { shouldStart: false, level: null, reason: "" }
+  };
+
+  const first = applyServerTurnEffects(worldState, result, "查问秋粮簿册");
+  assert.equal(first.worldTick.cadence, "ten_day");
+  assert.equal(first.worldTick.completedMonth, false);
+  assert.equal(first.longTermEvents.resolved.length, 0);
+  assert.equal(first.worldEntityImpacts.some((impact) => impact.sourceType === "long_term_event"), false);
+  assert.equal(worldState.longTermEvents.queue[0].remainingMonths, 1);
+
+  const second = applyServerTurnEffects(worldState, { ...result, statePatch: {} }, "继续查问秋粮簿册");
+  assert.equal(second.worldTick.cadence, "ten_day");
+  assert.equal(second.worldTick.completedMonth, false);
+
+  const third = applyServerTurnEffects(worldState, { ...result, statePatch: {} }, "月末核验秋粮簿册");
+  assert.equal(third.worldTick.cadence, "monthly");
+  assert.equal(third.worldTick.completedMonth, true);
+  assert.equal(third.longTermEvents.resolved[0].key, "seasonal_harvest_audit");
+  assert.equal(third.worldEntityImpacts.some((impact) => impact.sourceType === "long_term_event"), true);
+  assert.equal(worldState.turnCount, 3);
+  assert.equal(worldState.month, 9);
+  assert.equal(worldState.tenDayPeriod, 1);
+});
+
+test("provider long-run exam triggers attach scene time and preserve active writing exams", () => {
+  const worldState = createLongRunWorldState("openai");
+  const result = {
+    narrative: "县学士子整衣赴试。",
+    statePatch: {},
+    relationshipChanges: [],
+    events: [],
+    examTrigger: { shouldStart: true, level: "child_exam", reason: "童试在期" }
+  };
+
+  const started = applyServerTurnEffects(worldState, result, "请求入场童试");
+
+  assert.equal(started.examTrigger.shouldStart, true);
+  assert.equal(started.examTrigger.level, "child_exam");
+  assert.equal(worldState.activeExam.level, "child_exam");
+  assert.equal(worldState.activeExam.sceneTime.phase, "entry");
+  assert.equal(worldState.activeExam.sceneTime.startedAt.tenDayPeriod, 1);
+
+  worldState.activeExam = {
+    level: "child_exam",
+    status: "writing",
+    examQuestion: "论为学之本",
+    sceneTime: worldState.activeExam.sceneTime
+  };
+  const rejected = applyServerTurnEffects(worldState, result, "未交卷又请求入场");
+
+  assert.equal(rejected.examTrigger.shouldStart, false);
+  assert.match(rejected.examTrigger.reason, /未完成考试/);
+  assert.equal(worldState.activeExam.examQuestion, "论为学之本");
 });
 
 test("provider long-run action list cycles to requested turn count", () => {

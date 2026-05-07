@@ -32,17 +32,19 @@ This preserves the rule that a player turn increments `turnCount` exactly once.
       summary: "地方水利把县政成效转成粮储、民心与士绅观感。",
       year: 1644,
       month: 2,
+      tenDayPeriod: 1,
       turn: 1,
       affectedPaths: ["grainReserve", "publicOrder"]
     }
   ],
   cooldowns: {
     magistrate_waterworks: 7
-  }
+  },
+  cooldownUnit: "ten_day"
 }
 ```
 
-`recentImpacts` is capped to the latest 8 records. `cooldowns` are normalized short turn numbers reserved for later richer scheduling; S36 records them but does not yet block repeated actions.
+`recentImpacts` is capped to the latest 8 records. S48.5 records the ten-day period so multiple impacts in the same month remain distinguishable. `cooldowns` are absolute turn numbers with `cooldownUnit: "ten_day"` and are derived from a short month-based guard (`monthsToTurns(2)` in the current implementation), so repeated large role/world effects are suppressed for about two months without treating one turn as one month. Missing legacy `cooldownUnit` is normalized as pre-S48 one-turn-one-month data and converted once into ten-day turns.
 
 ## Turn Order
 

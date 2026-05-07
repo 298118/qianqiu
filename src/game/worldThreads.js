@@ -4,6 +4,7 @@ const { buildOfficialCareerView } = require("./officialCareer");
 const { getBureau, getOffice } = require("./officialCatalog");
 const { buildRoleWorldCouplingView } = require("./roleWorldCoupling");
 const { buildWorldEntityView } = require("./worldEntities");
+const { TURNS_PER_MONTH } = require("./time");
 
 const WORLD_THREAD_SCHEMA_VERSION = 1;
 const MAX_THREADS = 12;
@@ -125,12 +126,12 @@ const THREAD_KIND_DETAILS = {
   },
   role_impact: {
     goal: "追踪本次身份行动转入世界状态后的余波。",
-    interventions: ["继续沿身份职责推进", "观察相关指标", "用下一回合补救偏差"],
+    interventions: ["继续沿身份职责推进", "观察相关指标", "用下一旬行动补救偏差"],
     followUp: "身份联动效果仍由 role/world coupling 模块结算。"
   },
   world_entity_pressure: {
     goal: "处置制度实体压力，先辨清牵连来源再用身份行动介入。",
-    interventions: ["查看相关衙门或群体", "顺着实体提示行动", "观察下一月指标变化"],
+    interventions: ["查看相关衙门或群体", "顺着实体提示行动", "观察后续旬末或月末指标变化"],
     followUp: "实体压力由世界实体 helper 与原来源系统共同结算。"
   }
 };
@@ -449,9 +450,33 @@ function buildRiskInfo(severity) {
   return { riskLabel: "可观察", riskTone: "low" };
 }
 
+function deadlineUnitForThread(thread) {
+  if (thread.dueTurn !== null && thread.dueTurn !== undefined) {
+    return thread.sourceType === "active_npc_request" ? "turn" : "ten_day";
+  }
+  if (thread.remainingMonths !== null && thread.remainingMonths !== undefined) return "month";
+  return null;
+}
+
+function formatTenDayTurnLabel(dueTurn, remainingTurns) {
+  if (remainingTurns === 0) return `第${dueTurn}回，本旬须办`;
+  const months = Math.floor(remainingTurns / TURNS_PER_MONTH);
+  const periods = remainingTurns % TURNS_PER_MONTH;
+  if (months > 0 && periods > 0) {
+    return `第${dueTurn}回，尚余${remainingTurns}旬（约${months}月又${periods}旬）`;
+  }
+  if (months > 0) {
+    return `第${dueTurn}回，尚余${remainingTurns}旬（约${months}月）`;
+  }
+  return `第${dueTurn}回，尚余${remainingTurns}旬`;
+}
+
 function buildDeadlineLabel(thread, worldState = {}) {
   if (thread.dueTurn !== null && thread.dueTurn !== undefined) {
     const remainingTurns = Math.max(0, thread.dueTurn - currentTurn(worldState));
+    if (thread.sourceType !== "active_npc_request") {
+      return formatTenDayTurnLabel(thread.dueTurn, remainingTurns);
+    }
     if (remainingTurns === 0) return `第${thread.dueTurn}回，当回须办`;
     return `第${thread.dueTurn}回，尚余${remainingTurns}回`;
   }
@@ -838,6 +863,7 @@ function viewThread(thread, worldState = {}) {
     lastUpdatedTurn: thread.lastUpdatedTurn,
     dueTurn: thread.dueTurn,
     turnsRemaining: thread.dueTurn === null ? null : Math.max(0, thread.dueTurn - currentTurn(worldState)),
+    deadlineUnit: deadlineUnitForThread(thread),
     deadlineLabel: buildDeadlineLabel(thread, worldState),
     startedYear: thread.startedYear,
     startedMonth: thread.startedMonth,
@@ -884,6 +910,8 @@ function summarizeWorldThreadsForPrompt(worldState = {}) {
       severity: thread.severity,
       riskLabel: thread.riskLabel,
       dueTurn: thread.dueTurn,
+      turnsRemaining: thread.turnsRemaining,
+      deadlineUnit: thread.deadlineUnit,
       deadlineLabel: thread.deadlineLabel,
       remainingMonths: thread.remainingMonths,
       goal: thread.goal,

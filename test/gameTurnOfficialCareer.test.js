@@ -9,6 +9,7 @@ process.env.AI_PROVIDER = "mock";
 const gameRoutes = require("../src/routes/game");
 const { createInitialState } = require("../src/game/initialState");
 const { writeSession } = require("../src/storage/sessionStore");
+const { monthsToTurns } = require("../src/game/time");
 const { createFetchSafeServer } = require("../test-helpers/fetchSafeServer");
 
 const sessionsDir = path.join(__dirname, "..", "data", "sessions");
@@ -241,6 +242,32 @@ test("POST /api/game/turn advances official tenure only at month end", async (t)
   assert.equal(monthPayload.payload.worldState.tenDayPeriod, 1);
   assert.equal(monthPayload.payload.worldTick.completedMonth, true);
   assert.equal(monthPayload.payload.worldState.officialCareer.tenureMonths, 6);
+});
+
+test("POST /api/game/turn keeps official assignment deadlines in month-derived ten-day turns", async (t) => {
+  const server = createTestServer();
+  t.after(server.close);
+
+  const worldState = createInitialState({ playerName: "Tester", role: "official" });
+  Object.assign(worldState.player, {
+    officeTitle: "户部主事",
+    position: "户部主事"
+  });
+  worldState.officialCareer.currentPosting = "户部主事";
+  t.after(() => removeSessionFile(worldState.sessionId));
+  await writeSession(worldState);
+
+  const { response, payload } = await postJson(`${server.baseUrl}/api/game/turn`, {
+    sessionId: worldState.sessionId,
+    input: "督办赈灾，核销赈银账册"
+  });
+  const assignment = payload.officialCareerView.assignments.find((entry) => entry.kind === "relief");
+
+  assert.equal(response.status, 200);
+  assert.ok(assignment);
+  assert.equal(assignment.turnsRemaining, monthsToTurns(4));
+  assert.match(assignment.deadlineLabel, /约4月/);
+  assert.equal(assignment.dueTurn, payload.worldState.turnCount + monthsToTurns(4));
 });
 
 test("SSE turn preview and final payload include official career feedback", async (t) => {

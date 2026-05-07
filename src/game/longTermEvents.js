@@ -1,11 +1,15 @@
 const { NUMERIC_RANGES, clamp } = require("./stateRules");
 const { normalizeRelationshipLedger } = require("./relationships");
+const { monthsToTurns } = require("./time");
 
 const LONG_TERM_EVENT_SCHEMA_VERSION = 1;
 const MAX_QUEUE_LENGTH = 5;
 const MAX_RECENT_RESOLVED = 8;
 const MAX_VISIBLE_EVENTS_PER_TURN = 2;
 const MAX_TEXT_LENGTH = 140;
+const DEFAULT_COOLDOWN_MONTHS = 6;
+const MAX_COOLDOWN_MONTHS = 48;
+const COOLDOWN_UNIT_TEN_DAY = "ten_day";
 
 const EVENT_TYPES = new Set([
   "seasonal",
@@ -159,14 +163,34 @@ function buildAttributeChanges(beforeState, finalPatch) {
   return changes;
 }
 
-function normalizeCooldowns(cooldowns, turn) {
+function normalizeCooldownTurns(rawTurns, unit, fallbackMonths = DEFAULT_COOLDOWN_MONTHS) {
+  if (unit === COOLDOWN_UNIT_TEN_DAY) {
+    return clampNumber(rawTurns, 1, monthsToTurns(MAX_COOLDOWN_MONTHS), monthsToTurns(fallbackMonths));
+  }
+  return monthsToTurns(clampNumber(rawTurns, 1, MAX_COOLDOWN_MONTHS, fallbackMonths));
+}
+
+function normalizeCooldowns(cooldowns, turn, unit) {
   const normalized = {};
   if (!isPlainObject(cooldowns)) return normalized;
 
   for (const [key, value] of Object.entries(cooldowns)) {
     const cleanKey = cleanText(key, "", 64);
     if (!cleanKey) continue;
-    normalized[cleanKey] = clampNumber(value, 0, turn + 120, turn);
+    if (unit === COOLDOWN_UNIT_TEN_DAY) {
+      normalized[cleanKey] = clampNumber(value, 0, turn + monthsToTurns(40), turn);
+      continue;
+    }
+    const parsed = Number(value);
+    const legacyRemainingMonths = Number.isFinite(parsed)
+      ? Math.max(0, Math.round(parsed) - turn)
+      : 0;
+    normalized[cleanKey] = clampNumber(
+      turn + monthsToTurns(legacyRemainingMonths),
+      0,
+      turn + monthsToTurns(40),
+      turn
+    );
   }
 
   return normalized;
@@ -205,7 +229,8 @@ function normalizeEvent(raw, worldState) {
     durationMonths,
     remainingMonths,
     cooldownKey: cleanText(raw.cooldownKey, key, 64),
-    cooldownTurns: clampNumber(raw.cooldownTurns, 1, 48, 6),
+    cooldownTurns: normalizeCooldownTurns(raw.cooldownTurns, raw.cooldownUnit),
+    cooldownUnit: COOLDOWN_UNIT_TEN_DAY,
     visibility: raw.visibility === "relationship_visible" || raw.visibility === "hidden"
       ? raw.visibility
       : "public"
@@ -243,7 +268,8 @@ function normalizeLongTermEventState(worldState = {}) {
   return {
     schemaVersion: LONG_TERM_EVENT_SCHEMA_VERSION,
     queue,
-    cooldowns: normalizeCooldowns(source.cooldowns, turn),
+    cooldowns: normalizeCooldowns(source.cooldowns, turn, source.cooldownUnit),
+    cooldownUnit: COOLDOWN_UNIT_TEN_DAY,
     recentResolved
   };
 }
@@ -327,7 +353,8 @@ function createEvent(worldState, definition, options = {}) {
       ? definition.durationMonths(worldState, options)
       : definition.durationMonths,
     cooldownKey: definition.cooldownKey || definition.key,
-    cooldownTurns: definition.cooldownTurns,
+    cooldownTurns: monthsToTurns(definition.cooldownMonths ?? definition.cooldownTurns ?? DEFAULT_COOLDOWN_MONTHS),
+    cooldownUnit: COOLDOWN_UNIT_TEN_DAY,
     visibility: definition.visibility || "public"
   }, worldState);
 }
@@ -353,7 +380,7 @@ const EVENT_DEFINITIONS = [
     title: "旱饥传闻",
     summary: "仓廪偏紧，州县需连续数月筹赈安民。",
     durationMonths: 2,
-    cooldownTurns: 8,
+    cooldownMonths: 8,
     severity(worldState) {
       const grainReserve = readNumeric(worldState, "grainReserve", 800);
       const population = Math.max(1, readNumeric(worldState, "population", 5000));
@@ -374,7 +401,7 @@ const EVENT_DEFINITIONS = [
     title: "边报连至",
     summary: "边镇军报催饷，兵部与军镇将在数月内持续施压。",
     durationMonths: 2,
-    cooldownTurns: 7,
+    cooldownMonths: 7,
     severity(worldState) {
       const threat = readNumeric(worldState, "borderThreat", 40);
       if (threat >= 90) return 3;
@@ -391,7 +418,7 @@ const EVENT_DEFINITIONS = [
     title: "廷争渐炽",
     summary: "朝中清流、内廷与武臣互相掣肘，政务成本上升。",
     durationMonths: 2,
-    cooldownTurns: 8,
+    cooldownMonths: 8,
     severity(worldState) {
       return readNumeric(worldState, "corruption", 60) >= 88 ? 3 : 2;
     },
@@ -411,7 +438,7 @@ const EVENT_DEFINITIONS = [
     },
     summary: "县中旧案牵出乡绅、盗匪与赋役旧账，需跨月料理。",
     durationMonths: 2,
-    cooldownTurns: 6,
+    cooldownMonths: 6,
     severity(worldState) {
       return readPlayerNumeric(worldState, "banditPressure", 0) >= 70 ? 3 : 2;
     },
@@ -427,7 +454,7 @@ const EVENT_DEFINITIONS = [
     title: "人情余波",
     summary: "近期请托进退在乡里官署间回荡，声望略受牵连。",
     durationMonths: 1,
-    cooldownTurns: 5,
+    cooldownMonths: 5,
     canSchedule(worldState) {
       return /请托逾期|婉拒/.test(recentHistoryText(worldState));
     }
@@ -438,7 +465,7 @@ const EVENT_DEFINITIONS = [
     title: "秋粮核验",
     summary: "秋粮入簿，地方与户部核报仓储盈亏。",
     durationMonths: 1,
-    cooldownTurns: 10,
+    cooldownMonths: 10,
     canSchedule(worldState) {
       return readNumeric(worldState, "month", 1) === 8;
     }
@@ -572,7 +599,7 @@ function buildFollowUpEvent(worldState, event) {
     title: "赈务复核",
     summary: "灾后赈务需复核钱粮去向，若吏治不清，民心仍难恢复。",
     durationMonths: 1,
-    cooldownTurns: 6,
+    cooldownMonths: 6,
     canSchedule: () => true
   });
 }
@@ -608,6 +635,7 @@ function resolveEvent(scheduler, event, worldState, result) {
   event.status = "resolved";
   event.resolvedTurn = currentTurn(worldState);
   scheduler.cooldowns[event.cooldownKey] = currentTurn(worldState) + event.cooldownTurns;
+  scheduler.cooldownUnit = COOLDOWN_UNIT_TEN_DAY;
   scheduler.recentResolved.push({
     id: event.id,
     key: event.key,

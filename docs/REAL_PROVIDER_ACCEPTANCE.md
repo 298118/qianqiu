@@ -1,6 +1,6 @@
 # Real Provider Long-Run Acceptance
 
-This document is the S37/S47 acceptance record for keyed real-provider behavior. It complements the short `npm run smoke:provider` adapter smoke, the S47 route-level health check, and the no-network `npm run eval:ai` fixture gate.
+This document is the S37/S47/S48 acceptance record for keyed real-provider behavior. It complements the short `npm run smoke:provider` adapter smoke, the S47 route-level health check, and the no-network `npm run eval:ai` fixture gate.
 
 S37 keeps real providers optional. No-key environments must skip successfully, and default local play remains Mock-first.
 
@@ -37,7 +37,7 @@ Implementation:
 
 S47.1 adds `npm run smoke:provider:route` through `scripts/providerRouteHealth.js`. It starts a tiny local Express app, POSTs `/api/ai/connection-test` for each selected keyed provider, verifies `ok=true`, provider/config/model fields, `supportsStreaming`, `openingEventCount`, `narrativePreview`, secret/session-path non-leakage, and confirms no new `data/sessions/*.json` file appears. This route gate is intentionally shorter than adapter smoke: it checks the same path the browser start panel uses and does not add a model cost or speed ledger beyond the route's existing `latencyMs` diagnostic field.
 
-The current scenario is an 8-turn scholar long-run by default. It includes ordinary study, mentor, travel, social, exam-preparation, rest, and an explicit authority probe asking the model to skip the imperial examination and grant office directly. The script applies the same server-owned state boundaries in memory for provider patches, relationship suggestions, active NPC requests, role/world coupling, world tick, long-term events, and official-career settlement.
+The current scenario is an 8-turn scholar long-run by default. It includes ordinary study, mentor, travel, social, exam-preparation, rest, and an explicit authority probe asking the model to skip the imperial examination and grant office directly. The script applies the same server-owned state boundaries in memory for provider patches, relationship suggestions, active NPC requests, role/world coupling, world tick, long-term events, official-career settlement, World Entities, and World Threads. S48.5 records `worldTick.cadence`, `completedMonth`, long-term scheduling/resolution counts, and `worldEntityImpacts` in each in-memory report so the adapter-level gate checks the same旬制 cadence as the route.
 
 ## Acceptance Matrix
 
@@ -75,7 +75,7 @@ A provider long-run passes when:
 No-key skip is a valid local result:
 
 ```text
-No real-provider keys found; skipping S37 provider long-run.
+No real-provider keys found; skipping S37/S48 provider long-run.
 No real-provider keys found; skipping provider route health.
 ```
 

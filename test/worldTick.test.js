@@ -34,6 +34,37 @@ test("runWorldTick advances ordinary turns by ten-day periods", () => {
   assert.equal(late.statePatch.tenDayPeriod, 3);
 });
 
+test("three ten-day ticks keep natural drift bounded against a one-month projection", () => {
+  const monthlyBaseline = createInitialState({ playerName: "Monthly" });
+  monthlyBaseline.tenDayPeriod = 3;
+  const monthly = runWorldTick(monthlyBaseline);
+
+  const threeStep = createInitialState({ playerName: "TenDay" });
+  const cadences = [];
+  for (let index = 0; index < 3; index += 1) {
+    const result = runWorldTick(threeStep);
+    cadences.push(result.cadence);
+    applyStatePatch(threeStep, result.statePatch, {
+      incrementTurnCount: false,
+      allowServerOwnedPatchKeys: true
+    });
+  }
+
+  assert.deepEqual(cadences, ["ten_day", "ten_day", "monthly"]);
+  assert.equal(threeStep.month, 2);
+  assert.equal(threeStep.tenDayPeriod, 1);
+
+  for (const key of ["treasury", "grainReserve", "population", "publicOrder", "corruption", "armyMorale", "borderThreat"]) {
+    const baseline = monthlyBaseline[key];
+    const monthlyDelta = Math.abs(monthly.statePatch[key] - baseline);
+    const threeStepDelta = Math.abs(threeStep[key] - baseline);
+    assert.ok(
+      threeStepDelta <= Math.max(monthlyDelta * 2, 2),
+      `${key} three-step drift ${threeStepDelta} should stay near monthly projection ${monthlyDelta}`
+    );
+  }
+});
+
 test("runWorldTick rolls month and year only from the late period", () => {
   const worldState = createInitialState({ playerName: "Tester" });
   worldState.year = 1644;

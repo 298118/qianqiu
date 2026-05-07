@@ -212,6 +212,85 @@ test("POST /api/game/turn derives server-owned entity impacts from allowed state
   assert.equal(entityThread.relatedEntitySummaries.some((entity) => entity.id === entityThread.sourceId), true);
 });
 
+test("POST /api/game/turn gates long-term entity impacts to month-end cadence", async (t) => {
+  const server = createTestServer();
+  t.after(server.close);
+
+  const nonMonthEnd = createInitialState({ playerName: "Tester A" });
+  nonMonthEnd.month = 8;
+  nonMonthEnd.tenDayPeriod = 1;
+  nonMonthEnd.longTermEvents.queue = [{
+    schemaVersion: 1,
+    id: "LTE-non-month",
+    key: "seasonal_harvest_audit",
+    type: "seasonal",
+    status: "active",
+    targetType: "world",
+    targetId: "",
+    title: "秋粮核验",
+    summary: "秋粮入簿，地方与户部核报仓储盈亏。",
+    severity: 1,
+    createdTurn: 0,
+    startedYear: 1644,
+    startedMonth: 8,
+    durationMonths: 1,
+    remainingMonths: 1,
+    cooldownKey: "seasonal_harvest_audit",
+    cooldownTurns: 30,
+    cooldownUnit: "ten_day",
+    visibility: "public"
+  }];
+  t.after(() => removeSessionFile(nonMonthEnd.sessionId));
+  await writeSession(nonMonthEnd);
+
+  const nonMonthPayload = await postJson(`${server.baseUrl}/api/game/turn`, {
+    sessionId: nonMonthEnd.sessionId,
+    input: "旬内只查问秋粮簿册"
+  });
+
+  assert.equal(nonMonthPayload.response.status, 200);
+  assert.equal(nonMonthPayload.payload.worldTick.completedMonth, false);
+  assert.equal(nonMonthPayload.payload.longTermEvents.resolved.length, 0);
+  assert.equal(nonMonthPayload.payload.worldEntityImpacts.some((impact) => impact.sourceType === "long_term_event"), false);
+
+  const monthEnd = createInitialState({ playerName: "Tester B" });
+  monthEnd.month = 8;
+  monthEnd.tenDayPeriod = 3;
+  monthEnd.longTermEvents.queue = [{
+    schemaVersion: 1,
+    id: "LTE-month-end",
+    key: "seasonal_harvest_audit",
+    type: "seasonal",
+    status: "active",
+    targetType: "world",
+    targetId: "",
+    title: "秋粮核验",
+    summary: "秋粮入簿，地方与户部核报仓储盈亏。",
+    severity: 1,
+    createdTurn: 0,
+    startedYear: 1644,
+    startedMonth: 8,
+    durationMonths: 1,
+    remainingMonths: 1,
+    cooldownKey: "seasonal_harvest_audit",
+    cooldownTurns: 30,
+    cooldownUnit: "ten_day",
+    visibility: "public"
+  }];
+  t.after(() => removeSessionFile(monthEnd.sessionId));
+  await writeSession(monthEnd);
+
+  const monthPayload = await postJson(`${server.baseUrl}/api/game/turn`, {
+    sessionId: monthEnd.sessionId,
+    input: "月末核验秋粮簿册"
+  });
+
+  assert.equal(monthPayload.response.status, 200);
+  assert.equal(monthPayload.payload.worldTick.completedMonth, true);
+  assert.equal(monthPayload.payload.longTermEvents.resolved[0].key, "seasonal_harvest_audit");
+  assert.equal(monthPayload.payload.worldEntityImpacts.some((impact) => impact.sourceType === "long_term_event"), true);
+});
+
 test("SSE turn preview and final payload include world entity view", async (t) => {
   const server = createTestServer();
   t.after(server.close);

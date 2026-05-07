@@ -27,7 +27,7 @@
 
 第四阶段 S40-S47.2 已完成并归档到 `docs/PHASE_FOUR_ROADMAP_ARCHIVE.md`。已接受的范围包括 AI 连接可见化、prompt pack 与 eval/red-team、深度官场、World Threads 世界议程、AI 权限审查矩阵、多实体世界模型、依赖/插件治理、provider/browser 验收扩展和 DeepSeek 缓存友好提示词结构。
 
-当前活动路线图：`docs/DEVELOPMENT_STEPS.md`，已切换为 S48 时间专项规划与进度台账。S48.3 已建立 `worldState.tenDayPeriod`、共享时间 helper、旧档上旬默认、provider 时间字段边界，并把普通自由行动改为每回合推进一旬；月末完整结算只在下旬进入下月上旬时发生。S48.4 已先把科举落成局部场景时间：考试入场、审题、拟纲、作答、誊清、交卷推进 `activeExam.sceneTime`，不消耗全局旬。后续继续处理多系统期限语义和玩家可见“年月旬”展示。
+当前活动路线图：`docs/DEVELOPMENT_STEPS.md`，已切换为 S48 时间专项规划与进度台账。S48.3 已建立 `worldState.tenDayPeriod`、共享时间 helper、旧档上旬默认、provider 时间字段边界，并把普通自由行动改为每回合推进一旬；月末完整结算只在下旬进入下月上旬时发生。S48.4 已先把科举落成局部场景时间：考试入场、审题、拟纲、作答、誊清、交卷推进 `activeExam.sceneTime`，不消耗全局旬。S48.5 已把官场差事/弹劾、长期事件冷却、World Threads 期限标签、World Entities cadence 和 provider long-run 脚本适配到“旬回合 vs 月末月份”的语义。后续继续处理更完整的玩家可见“年月旬”展示与浏览器验收。
 
 开发规范不变。第 12 节和第 13 节仍是每次开发必须遵守的流程；Mock 默认可玩、真实 provider 可选、服务器拥有状态边界和科举规则这些要求继续有效。
 
@@ -284,6 +284,8 @@ S45.2 后，游戏与考试路由会返回服务器归一化的 `worldEntityView
 S48.3 后，普通自由行动的全局时间每次只推进一旬：上旬 -> 中旬 -> 下旬 -> 下月上旬。`worldTick` 会在非月末返回轻量 `[旬度]` 反馈和小幅自然漂移；只有下旬进入下月上旬时才执行完整 `[月度]` 结算、长期事件月份递减/调度和官场任期月份推进。`turnCount` 仍表示玩家有效输入次数，每次普通回合只加 1。
 
 S48.4 后，已有写卷考试时的 `POST /api/game/turn` 会进入考试场景分支：服务器推进 `activeExam.sceneTime` 和 `worldTick.cadence = "scene"` 反馈，不调用普通回合 provider、不推进 `turnCount/year/month/tenDayPeriod`，也不运行世界 tick。考试局部阶段当前为 `entry`、`question_review`、`outline`、`drafting`、`fair_copy`、`submitted`。
+
+S48.5 后，仍以 turn 保存的短期字段必须标明语义：主动 NPC 请托继续显示剩余回合；官场差事与弹劾流程默认把四个月换算成十二个旬回合，并在 `officialCareerView` 与 `worldThreadView` 中显示“尚余 X 旬（约 Y 月）”；长期事件 `remainingMonths` 与冷却仍按月末结算，内置冷却用 `monthsToTurns()` 存成绝对 turn。`worldEntityImpacts` 会读取 `worldTick.cadence`：考试等 `scene` cadence 不产生实体影响，长期事件实体影响只在月末产生。
 
 ### `POST /api/ai/connection-test`
 

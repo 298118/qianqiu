@@ -8,9 +8,17 @@ const {
   listTransferCandidates,
   summarizeOfficeForPlayer
 } = require("./officialCatalog");
+const { TURNS_PER_MONTH, monthsToTurns } = require("./time");
 
 const OFFICIAL_CAREER_SCHEMA_VERSION = 2;
 const DEFAULT_REVIEW_CYCLE_MONTHS = 12;
+const DEFAULT_ASSIGNMENT_DEADLINE_MONTHS = 4;
+const MAX_ASSIGNMENT_DEADLINE_MONTHS = 24;
+const DEFAULT_IMPEACHMENT_DEADLINE_MONTHS = 4;
+const MAX_IMPEACHMENT_DEADLINE_MONTHS = 24;
+const OUTCOME_COOLDOWN_MONTHS = 6;
+const DEADLINE_UNIT_TEN_DAY = "ten_day";
+const COOLDOWN_UNIT_TEN_DAY = "ten_day";
 const MAX_CAREER_HISTORY = 8;
 const MAX_ASSIGNMENTS = 6;
 const MAX_ASSESSMENT_NOTES = 5;
@@ -98,6 +106,85 @@ function currentTurn(worldState) {
   return clampNumber(worldState?.turnCount, 0, Number.MAX_SAFE_INTEGER, 0);
 }
 
+function deadlineTurnFromMonths(worldState, months) {
+  return currentTurn(worldState) + monthsToTurns(months);
+}
+
+function convertLegacyMonthTurn(rawDueTurn, worldState, fallbackMonths, maxMonths) {
+  const turn = currentTurn(worldState);
+  const parsed = Number(rawDueTurn);
+  if (!Number.isFinite(parsed)) return deadlineTurnFromMonths(worldState, fallbackMonths);
+  const legacyRemainingMonths = Math.max(0, Math.round(parsed) - turn);
+  return clampNumber(
+    turn + monthsToTurns(legacyRemainingMonths),
+    turn,
+    turn + monthsToTurns(maxMonths),
+    deadlineTurnFromMonths(worldState, fallbackMonths)
+  );
+}
+
+function clampDueTurn(rawDueTurn, worldState, fallbackMonths, maxMonths) {
+  const turn = currentTurn(worldState);
+  return clampNumber(
+    rawDueTurn,
+    turn,
+    turn + monthsToTurns(maxMonths),
+    deadlineTurnFromMonths(worldState, fallbackMonths)
+  );
+}
+
+function normalizeDueTurn(rawDueTurn, worldState, fallbackMonths, maxMonths, unit) {
+  if (unit === DEADLINE_UNIT_TEN_DAY) {
+    return clampDueTurn(rawDueTurn, worldState, fallbackMonths, maxMonths);
+  }
+  return convertLegacyMonthTurn(rawDueTurn, worldState, fallbackMonths, maxMonths);
+}
+
+function normalizeAbsoluteTurnMap(turns, current, unit, maxMonths) {
+  const normalized = {};
+  if (!isPlainObject(turns)) return normalized;
+  for (const [key, value] of Object.entries(turns)) {
+    const cleanKey = cleanText(key, "", 64);
+    if (!cleanKey) continue;
+    if (unit === COOLDOWN_UNIT_TEN_DAY) {
+      normalized[cleanKey] = clampNumber(value, 0, current + monthsToTurns(maxMonths), current);
+      continue;
+    }
+    const parsed = Number(value);
+    const legacyRemainingMonths = Number.isFinite(parsed)
+      ? Math.max(0, Math.round(parsed) - current)
+      : 0;
+    normalized[cleanKey] = clampNumber(
+      current + monthsToTurns(legacyRemainingMonths),
+      0,
+      current + monthsToTurns(maxMonths),
+      current
+    );
+  }
+  return normalized;
+}
+
+function formatTenDayDeadline(dueTurn, worldState) {
+  if (dueTurn === null || dueTurn === undefined) return { turnsRemaining: null, deadlineLabel: "未定" };
+  const remaining = Math.max(0, dueTurn - currentTurn(worldState));
+  if (remaining === 0) {
+    return { turnsRemaining: 0, deadlineLabel: `第${dueTurn}回，本旬须办` };
+  }
+  const months = Math.floor(remaining / TURNS_PER_MONTH);
+  const periods = remaining % TURNS_PER_MONTH;
+  const monthLabel = months > 0 && periods > 0
+    ? `约${months}月又${periods}旬`
+    : months > 0
+      ? `约${months}月`
+      : null;
+  return {
+    turnsRemaining: remaining,
+    deadlineLabel: monthLabel
+      ? `第${dueTurn}回，尚余${remaining}旬（${monthLabel}）`
+      : `第${dueTurn}回，尚余${remaining}旬`
+  };
+}
+
 function readRange(key, fallbackMin = Number.NEGATIVE_INFINITY, fallbackMax = Number.POSITIVE_INFINITY) {
   return NUMERIC_RANGES[key] || [fallbackMin, fallbackMax];
 }
@@ -143,15 +230,8 @@ function normalizeHistoryEntry(raw) {
   };
 }
 
-function normalizeCooldowns(cooldowns, turn) {
-  const normalized = {};
-  if (!isPlainObject(cooldowns)) return normalized;
-  for (const [key, value] of Object.entries(cooldowns)) {
-    const cleanKey = cleanText(key, "", 64);
-    if (!cleanKey) continue;
-    normalized[cleanKey] = clampNumber(value, 0, turn + 120, turn);
-  }
-  return normalized;
+function normalizeCooldowns(cooldowns, turn, unit) {
+  return normalizeAbsoluteTurnMap(cooldowns, turn, unit, 40);
 }
 
 function normalizeEnum(value, allowed, fallback) {
@@ -190,7 +270,14 @@ function normalizeAssignment(raw, worldState) {
     status: normalizeEnum(raw.status, ASSIGNMENT_STATUSES, "active"),
     year: clampNumber(raw.year, 1, 9999, readTopLevelNumber(worldState, "year", 1644)),
     month: clampNumber(raw.month, 1, 12, readTopLevelNumber(worldState, "month", 1)),
-    dueTurn: clampNumber(raw.dueTurn, turn, turn + 24, turn + 4),
+    dueTurn: normalizeDueTurn(
+      raw.dueTurn,
+      worldState,
+      DEFAULT_ASSIGNMENT_DEADLINE_MONTHS,
+      MAX_ASSIGNMENT_DEADLINE_MONTHS,
+      raw.deadlineUnit
+    ),
+    deadlineUnit: DEADLINE_UNIT_TEN_DAY,
     progress: clampNumber(raw.progress, 0, 100, 0),
     risk: clampNumber(raw.risk, 0, 100, 20),
     publicStake: clampNumber(raw.publicStake, 0, 100, 40),
@@ -246,7 +333,14 @@ function normalizeImpeachmentProcedure(raw, worldState) {
       : clampNumber(source.openedTurn, 0, Number.MAX_SAFE_INTEGER, turn),
     dueTurn: source.dueTurn === null || source.dueTurn === undefined
       ? null
-      : clampNumber(source.dueTurn, 0, turn + 24, turn + 4),
+      : normalizeDueTurn(
+        source.dueTurn,
+        worldState,
+        DEFAULT_IMPEACHMENT_DEADLINE_MONTHS,
+        MAX_IMPEACHMENT_DEADLINE_MONTHS,
+        source.deadlineUnit
+      ),
+    deadlineUnit: DEADLINE_UNIT_TEN_DAY,
     risk: clampNumber(source.risk, 0, 100, readPlayerNumber(worldState, "impeachmentRisk", 0)),
     visibleNotice: cleanText(source.visibleNotice, "", MAX_EVENT_TEXT_LENGTH),
     hiddenNotes: normalizeTextArray(source.hiddenNotes),
@@ -297,6 +391,16 @@ function normalizeOfficialCareerState(worldState = {}) {
   const history = Array.isArray(source.careerHistory)
     ? source.careerHistory.map(normalizeHistoryEntry).filter(Boolean).slice(-MAX_CAREER_HISTORY)
     : [];
+  const currentPosting = getCurrentPosting(worldState, source);
+  const bureauId = inferBureauId(worldState, { ...source, currentPosting });
+  const normalizationContext = {
+    ...worldState,
+    officialCareer: {
+      ...source,
+      currentPosting,
+      bureauId
+    }
+  };
 
   return {
     schemaVersion: OFFICIAL_CAREER_SCHEMA_VERSION,
@@ -308,12 +412,13 @@ function normalizeOfficialCareerState(worldState = {}) {
     lastReviewYear: source.lastReviewYear === null || source.lastReviewYear === undefined
       ? null
       : clampNumber(source.lastReviewYear, 1, 9999, readTopLevelNumber(worldState, "year", 1644)),
-    currentPosting: getCurrentPosting(worldState, source),
-    bureauId: inferBureauId(worldState, source),
+    currentPosting,
+    bureauId,
     careerHistory: history,
     pendingOutcome: normalizeHistoryEntry(source.pendingOutcome) || null,
-    cooldowns: normalizeCooldowns(source.cooldowns, turn),
-    assignments: normalizeAssignments(source.assignments, worldState),
+    cooldowns: normalizeCooldowns(source.cooldowns, turn, source.cooldownUnit),
+    cooldownUnit: COOLDOWN_UNIT_TEN_DAY,
+    assignments: normalizeAssignments(source.assignments, normalizationContext),
     assessmentDossier: normalizeAssessmentDossier(source.assessmentDossier, worldState),
     impeachmentProcedure: normalizeImpeachmentProcedure(source.impeachmentProcedure, worldState)
   };
@@ -925,7 +1030,8 @@ function createAssignment(worldState, action) {
     status: progress >= 80 ? "submitted" : "active",
     year: readTopLevelNumber(worldState, "year", 1644),
     month: readTopLevelNumber(worldState, "month", 1),
-    dueTurn: turn + 4,
+    dueTurn: deadlineTurnFromMonths(worldState, DEFAULT_ASSIGNMENT_DEADLINE_MONTHS),
+    deadlineUnit: DEADLINE_UNIT_TEN_DAY,
     progress,
     risk,
     publicStake: action.type === "impeachment" ? 55 : 45,
@@ -1004,7 +1110,8 @@ function updateImpeachmentProcedure(worldState, procedure, action) {
     sourceType: action?.type === "impeachment" ? "censor" : procedure.sourceType,
     sourceId: action?.type === "impeachment" ? "censorate" : procedure.sourceId,
     openedTurn: procedure.openedTurn ?? turn,
-    dueTurn: procedure.dueTurn ?? turn + 4,
+    dueTurn: procedure.dueTurn ?? deadlineTurnFromMonths(worldState, DEFAULT_IMPEACHMENT_DEADLINE_MONTHS),
+    deadlineUnit: DEADLINE_UNIT_TEN_DAY,
     risk: risk + (action?.riskDelta || 0),
     visibleNotice,
     hiddenNotes: [
@@ -1128,19 +1235,25 @@ function buildOfficialCareerView(worldState = {}) {
       }
       : null,
     assignments: active
-      ? activeAssignments.map((assignment) => ({
-        id: assignment.id,
-        title: assignment.title,
-        kind: assignment.kind,
-        bureauId: assignment.bureauId,
-        status: assignment.status,
-        dueTurn: assignment.dueTurn,
-        progress: assignment.progress,
-        risk: assignment.risk,
-        publicStake: assignment.publicStake,
-        privatePressure: assignment.privatePressure,
-        visibleSummary: assignment.visibleSummary
-      }))
+      ? activeAssignments.map((assignment) => {
+        const deadline = formatTenDayDeadline(assignment.dueTurn, worldState);
+        return {
+          id: assignment.id,
+          title: assignment.title,
+          kind: assignment.kind,
+          bureauId: assignment.bureauId,
+          status: assignment.status,
+          dueTurn: assignment.dueTurn,
+          deadlineUnit: assignment.deadlineUnit,
+          turnsRemaining: deadline.turnsRemaining,
+          deadlineLabel: deadline.deadlineLabel,
+          progress: assignment.progress,
+          risk: assignment.risk,
+          publicStake: assignment.publicStake,
+          privatePressure: assignment.privatePressure,
+          visibleSummary: assignment.visibleSummary
+        };
+      })
       : [],
     assessment: active
       ? {
@@ -1160,7 +1273,10 @@ function buildOfficialCareerView(worldState = {}) {
         impeachmentStage: career.impeachmentProcedure.stage,
         visibleNotice: career.impeachmentProcedure.visibleNotice,
         risk: career.impeachmentProcedure.risk,
-        dueTurn: career.impeachmentProcedure.dueTurn
+        dueTurn: career.impeachmentProcedure.dueTurn,
+        deadlineUnit: career.impeachmentProcedure.deadlineUnit,
+        turnsRemaining: formatTenDayDeadline(career.impeachmentProcedure.dueTurn, worldState).turnsRemaining,
+        deadlineLabel: formatTenDayDeadline(career.impeachmentProcedure.dueTurn, worldState).deadlineLabel
       }
       : null,
     pendingReview: active && (
@@ -1193,6 +1309,7 @@ function summarizeOfficialCareerForPrompt(worldState = {}) {
     assignments: (view.assignments || []).map((assignment) => ({
       title: assignment.title,
       status: assignment.status,
+      deadlineLabel: assignment.deadlineLabel,
       progress: assignment.progress,
       risk: assignment.risk,
       visibleSummary: assignment.visibleSummary
@@ -1280,8 +1397,9 @@ function runOfficialCareerStep(worldState = {}, input = "", options = {}) {
     nextCareer.careerHistory = [...career.careerHistory, historyEntry].slice(-MAX_CAREER_HISTORY);
     nextCareer.cooldowns = {
       ...career.cooldowns,
-      [outcome.type]: currentTurn(worldState) + 6
+      [outcome.type]: deadlineTurnFromMonths(worldState, OUTCOME_COOLDOWN_MONTHS)
     };
+    nextCareer.cooldownUnit = COOLDOWN_UNIT_TEN_DAY;
     Object.assign(nextCareer, applyOutcomeToDomainState(worldState, nextCareer, outcome, historyEntry));
 
     result.statePatch.player = playerPatch;

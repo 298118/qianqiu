@@ -100,7 +100,7 @@ S45.1 的基础实体由 `src/game/worldEntities.js` 集中生成和归一化：
 当前来源：
 
 - AI 叙事落地后的允许字段变化：provider 仍不能写实体，但其合法 `statePatch` 若改变府库、民心、边患、声望等指标，会被服务器比较 before/after 后转成实体影响。
-- 世界 tick：每月自然漂移后更新财赋、粮储、边镇、赈务等实体压力。
+- 世界 tick：旬度自然漂移可以轻量更新财赋、粮储、边镇、赈务等实体压力；`worldTick.cadence = "scene"` 不产生世界实体影响。长期事件来源只在 `worldTick.completedMonth === true` 的月末结算中转成实体影响。
 - NPC/关系：只读取已经应用的可见关系变化；隐藏关系目标仍被关系模块挡下，不会变成实体公开变化。
 - 长期事件、身份联动和官场结果：赈务、盐漕、军需、河工、考成、弹劾等服务器结算会写入相关实体压力和摘要。
 - World Threads：高压力可见实体会派生少量 `world_entity` 来源议题；其他议题也可携带 `relatedEntitySummaries`，但议题仍不能替代来源系统结算。

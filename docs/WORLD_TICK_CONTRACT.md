@@ -112,7 +112,7 @@ S48.3 extends the result with `cadence`, `label`, `completedMonth`, and `timeAdv
 }
 ```
 
-`events` are the player-visible world feedback. They should be short, historically toned, and appended after provider events. A normal ten-day tick should emit one concise `[旬度]` event or summary; month-end may emit the older monthly event shape, with threshold months emitting up to two events. The S48.3 ten-day drift is deliberately a small supplemental signal, while month-end remains the authoritative full settlement; S48.5 may tune cumulative balance if later playtests show the three-turn total is too strong. `eventHistory` remains capped by `MAX_EVENT_HISTORY`.
+`events` are the player-visible world feedback. They should be short, historically toned, and appended after provider events. A normal ten-day tick should emit one concise `[旬度]` event or summary; month-end may emit the older monthly event shape, with threshold months emitting up to two events. The S48.3 ten-day drift is deliberately a small supplemental signal, while month-end remains the authoritative full settlement. S48.5 adds a regression guard that three consecutive旬 ticks stay bounded near a one-month projection, so the lightweight drift cannot silently become a second full monthly settlement. `eventHistory` remains capped by `MAX_EVENT_HISTORY`.
 
 ## Route Integration Contract
 

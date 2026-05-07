@@ -137,7 +137,7 @@ function createRequestForTarget(worldState, target) {
         : `${sourceName}有事相托`,
     ask: isPressure
       ? "对方催你尽快表态，若继续拖延，怨望会更深。"
-      : "对方盼你下一回合以帮忙、拜访、研读、报告或婉拒作出回应。",
+      : "对方盼你近两回合以帮忙、拜访、研读、报告或婉拒作出回应。",
     stakes: isPressure
       ? "妥善处理可缓和怨望，敷衍不理会损及情分。"
       : "答应并办妥可进情分，置之不理会添怨望。",

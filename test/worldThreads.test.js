@@ -124,6 +124,7 @@ test("world threads unify active requests, long events, official assignments, an
       remainingMonths: 2,
       cooldownKey: "border_alarm",
       cooldownTurns: 7,
+      cooldownUnit: "ten_day",
       visibility: "public"
     }
   ];
@@ -136,6 +137,7 @@ test("world threads unify active requests, long events, official assignments, an
       bureauId: "ministry_revenue",
       status: "active",
       dueTurn: 11,
+      deadlineUnit: "ten_day",
       progress: 45,
       risk: 60,
       publicStake: 70,
@@ -166,11 +168,16 @@ test("world threads unify active requests, long events, official assignments, an
   assert.equal(sourceTypes.has("long_term_event"), true);
   assert.equal(sourceTypes.has("official_assignment"), true);
   assert.equal(sourceTypes.has("role_world_coupling"), true);
+  const requestThread = view.activeThreads.find((thread) => thread.sourceType === "active_npc_request");
+  assert.ok(requestThread);
+  assert.equal(requestThread.deadlineUnit, "turn");
+  assert.equal(requestThread.deadlineLabel, "第10回，尚余2回");
   const reliefThread = view.activeThreads.find((thread) => thread.title === "赈银核销");
   assert.ok(reliefThread);
   assert.equal(reliefThread.severity, 2);
   assert.equal(reliefThread.riskLabel, "有牵连");
-  assert.equal(reliefThread.deadlineLabel, "第11回，尚余3回");
+  assert.equal(reliefThread.deadlineUnit, "ten_day");
+  assert.equal(reliefThread.deadlineLabel, "第11回，尚余3旬（约1月）");
   assert.match(reliefThread.goal, /办结差事/);
   assert.ok(reliefThread.relatedLabels.offices.includes("户部"));
   assert.ok(reliefThread.relatedLabels.entities.includes("灾荒赈务"));
@@ -184,6 +191,8 @@ test("world threads unify active requests, long events, official assignments, an
   const promptBorderThread = promptSummary.activeThreads.find((thread) => thread.title === "边报连至");
   assert.ok(promptBorderThread);
   assert.match(promptBorderThread.goal, /边报/);
+  assert.equal(promptBorderThread.deadlineUnit, "month");
+  assert.equal(promptBorderThread.deadlineLabel, "约余2月");
   assert.ok(promptBorderThread.interventionHints.length);
   assert.ok(promptBorderThread.relatedLabels.factions.includes("边镇武臣"));
   assert.ok(promptBorderThread.relatedEntitySummaries.some((entity) => entity.id === "military-frontier-garrison"));

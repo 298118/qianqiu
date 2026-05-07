@@ -4,6 +4,7 @@ const assert = require("node:assert/strict");
 const { createInitialState } = require("../src/game/initialState");
 const { applyRelationshipChanges } = require("../src/game/relationships");
 const { applyStatePatch } = require("../src/game/stateRules");
+const { monthsToTurns } = require("../src/game/time");
 const {
   buildRoleWorldCouplingView,
   classifyRoleWorldAction,
@@ -25,7 +26,8 @@ test("initial role-world coupling state is empty and normalizes legacy data", ()
   assert.deepEqual(worldState.roleWorldCoupling, {
     schemaVersion: 1,
     recentImpacts: [],
-    cooldowns: {}
+    cooldowns: {},
+    cooldownUnit: "ten_day"
   });
   assert.deepEqual(buildRoleWorldCouplingView(worldState).recentImpacts, []);
 
@@ -40,11 +42,12 @@ test("initial role-world coupling state is empty and normalizes legacy data", ()
         summary: "old impact",
         year: 1644,
         month: 13,
+        tenDayPeriod: "下旬",
         turn: 3,
         affectedPaths: ["grainReserve"]
       }
     ],
-    cooldowns: { magistrate_waterworks: 999999 }
+    cooldowns: { magistrate_waterworks: 6 }
   };
 
   const normalized = normalizeRoleWorldCouplingState(worldState);
@@ -52,7 +55,9 @@ test("initial role-world coupling state is empty and normalizes legacy data", ()
   assert.equal(normalized.schemaVersion, 1);
   assert.equal(normalized.recentImpacts.length, 1);
   assert.equal(normalized.recentImpacts[0].month, 12);
-  assert.equal(normalized.cooldowns.magistrate_waterworks <= worldState.turnCount + 120, true);
+  assert.equal(normalized.recentImpacts[0].tenDayPeriod, 3);
+  assert.equal(normalized.cooldowns.magistrate_waterworks, monthsToTurns(6));
+  assert.equal(normalized.cooldownUnit, "ten_day");
 });
 
 test("role-world classifier recognizes representative role actions", () => {
@@ -77,6 +82,7 @@ test("role-world classifier recognizes representative role actions", () => {
 
 test("magistrate waterworks produce server-owned world and relationship consequences without mutation", () => {
   const worldState = createInitialState({ role: "magistrate", playerName: "Tester" });
+  worldState.tenDayPeriod = 2;
   const before = JSON.parse(JSON.stringify(worldState));
 
   const result = runRoleWorldCouplingStep(worldState, "waterworks along the canal");
@@ -91,6 +97,7 @@ test("magistrate waterworks produce server-owned world and relationship conseque
   const appliedRelationships = applyRoleWorldResult(worldState, result);
 
   assert.equal(worldState.roleWorldCoupling.recentImpacts.at(-1).kind, "magistrate_waterworks");
+  assert.equal(worldState.roleWorldCoupling.recentImpacts.at(-1).tenDayPeriod, 2);
   assert.ok(worldState.relationshipLedger.characters.C01.relationship > before.relationshipLedger.characters.C01.relationship);
   assert.ok(appliedRelationships.some((change) => change.targetId === "C01"));
   assert.equal(worldState.turnCount, 0);
@@ -109,7 +116,7 @@ test("role-world coupling suppresses repeated effects while cooldown is active",
   assert.deepEqual(repeat.attributeChanges, []);
   assert.deepEqual(repeat.relationshipChanges, []);
   assert.equal(repeat.statePatch.grainReserve, undefined);
-  assert.equal(repeat.statePatch.roleWorldCoupling.cooldowns.magistrate_waterworks, 6);
+  assert.equal(repeat.statePatch.roleWorldCoupling.cooldowns.magistrate_waterworks, monthsToTurns(2));
 });
 
 test("general campaign consequences clamp resources and affect military factions", () => {

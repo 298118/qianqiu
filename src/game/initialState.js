@@ -216,6 +216,7 @@ function createInitialState(input = {}) {
       schemaVersion: 1,
       queue: [],
       cooldowns: {},
+      cooldownUnit: "ten_day",
       recentResolved: []
     },
     roleWorldCoupling: createInitialRoleWorldCouplingState(),
@@ -232,6 +233,7 @@ function createInitialState(input = {}) {
       careerHistory: [],
       pendingOutcome: null,
       cooldowns: {},
+      cooldownUnit: "ten_day",
       assignments: [],
       assessmentDossier: {
         cycleId: `${year}-career`,
@@ -247,6 +249,7 @@ function createInitialState(input = {}) {
         sourceId: null,
         openedTurn: null,
         dueTurn: null,
+        deadlineUnit: "ten_day",
         risk: role === "official" ? ROLE_STAT_DEFAULTS.official.impeachmentRisk : 0,
         visibleNotice: "",
         hiddenNotes: [],

@@ -93,7 +93,7 @@
 | S48.2 | DONE | 建立全局旬制日历基础：`tenDayPeriod`、共享时间 helper、旧档默认上旬、provider 时间字段边界 | 2026-05-07 | Codex + subagents | `15e078f` + `8d93b8c` hash backfill |
 | S48.3 | DONE | 改造普通回合与世界 tick：每回合推进一旬，非月末轻量小结，月末完整结算 | 2026-05-07 | Codex + subagent | `ef767c6` |
 | S48.4 | DONE | 建立场景内时间框架，并优先把科举考试改成多阶段局部时间 | 2026-05-07 | Codex + subagent | `54afc38` |
-| S48.5 | TODO | 适配长期事件、官场任期/差事、世界议程、世界实体和脚本验收的月末/旬度语义 |  |  |  |
+| S48.5 | DONE | 适配长期事件、官场任期/差事、世界议程、世界实体和脚本验收的月末/旬度语义 | 2026-05-07 | Codex + subagents | 本次提交：`feat: align long-term cadence semantics` |
 | S48.6 | TODO | 完成前端日期展示、浏览器 smoke、provider long-run 和完整书生入仕验收 |  |  |  |
 
 ## 5. 实施规划
@@ -372,3 +372,42 @@
 下一步：
 
 - 开始 S48.5：复核长期事件、官场期限、World Threads、World Entities 和 provider long-run 中仍隐含“一回合一月”的语义，并处理旬度/场景 cadence 的剩余文案与验收。
+
+### S48.5 进度记录
+
+步骤：S48.5
+状态：DONE，本次提交 `feat: align long-term cadence semantics`。
+
+完成：
+
+- 官场差事和弹劾流程的默认期限从短回合语义改为按月换算：默认四个月即十二旬，最长二十四个月；官场结果冷却改为按六个月派生。
+- 官场、长期事件和角色世界联动的期限/冷却补上 `deadlineUnit` 或 `cooldownUnit` 标记；缺少单位标记的旧档按 S48 前“一回合一月”语义一次性换算，避免旧差事或旧冷却突然缩短。
+- 长期事件内置冷却改为 `cooldownMonths` 源数据，并在运行态统一换算成 `cooldownTurns`；旧档冷却会按月语义换算，并按各自归一化上限 clamp。
+- World Threads 新增 `deadlineUnit`，主动 NPC 请托继续显示剩余回合，官场差事显示剩余旬并附约略月份，长期事件继续显示剩余月份；prompt summary 同步提供单位和剩余值。
+- World Entities 读取 `worldTick.cadence`：`scene` cadence 不产生实体影响，非月末旬可以记录轻量 world tick 实体变化，长期事件实体影响只在月末入账。
+- `scripts/providerLongRun.js` 在内存模拟里补齐 route 同款 server-owned 世界实体和世界议程效果，并在报告中记录 cadence、month-end、实体影响和长期事件调度/解决数量。
+- Role/world coupling 记录影响发生的 `tenDayPeriod`，冷却按两个月派生，避免后续读作“两个普通回合”。
+- Provider long-run 的 exam trigger 路径复用考试场景时间入场标记，并在已有写卷考试时拒绝覆盖，避免脚本验收绕过 S48.4 场景边界。
+- 浏览器官场面板优先使用服务器返回的 `deadlineLabel`，避免玩家看到旧的一回合一月期限文案。
+- README、产品 brief、架构、Long Term Events、Official Career、World Threads、World Entities、Role/World Coupling、World Tick 和真实 provider 验收文档已同步 S48.5 语义。
+
+验证：
+
+- `node --check public\app.js src\game\officialCareer.js src\game\longTermEvents.js src\game\worldThreads.js src\game\worldEntities.js src\game\roleWorldCoupling.js scripts\providerLongRun.js test\providerLongRunScript.test.js`
+- `node --test test\officialCareer.test.js test\gameTurnOfficialCareer.test.js test\longTermEvents.test.js test\gameTurnLongTermEvents.test.js test\worldThreads.test.js test\gameTurnWorldThreads.test.js test\worldEntities.test.js test\gameTurnWorldEntities.test.js test\providerLongRunScript.test.js test\roleWorldCoupling.test.js test\gameTurnRoleWorldCoupling.test.js test\worldTick.test.js test\gameTurnTick.test.js test\stateRules.test.js test\gameStartRole.test.js`（89 tests passed）
+- `npm run check:docs-governance`
+- `npm run eval:ai`（12 tests passed）
+- `$env:AI_PROVIDER='mock'; npm test` 并发全量触发已知 Windows atomic rename `EPERM`；首轮失败文件 `test\gameTurnTick.test.js` 聚焦复跑 8 tests passed，修复后复跑失败文件 `test\mockRelationshipReactions.test.js` 聚焦复跑 2 tests passed。
+- `$env:AI_PROVIDER='mock'; npm test -- --test-concurrency=1`（289 tests passed）
+- `$env:AI_PROVIDER='mock'; npm run smoke:browser`（14 screenshots checked）
+- `git diff --check`
+
+风险/遗留：
+
+- 本步骤只把长期系统、世界议程、实体影响和脚本模拟对齐到旬制/月末语义；更全面的玩家可见年月旬显示仍由 S48.6 收束。
+- 并发全量测试仍可能在 Windows 上偶发 JSON 存档 atomic rename `EPERM`；本次聚焦复跑和串行全量均通过，未发现 S48.5 逻辑回归。
+- 首轮提交前只读复审（Pasteur）指出三项 P2：旧官场期限压缩、旧长期/联动 cooldown 过早解禁、provider long-run 考试触发未复用场景时间。均已修复并补测试；终轮只读复审（Singer）确认无 P0/P1/P2 blocker，仅提示长期事件 active cooldown 与 scheduler map 上限措辞需更精确，已改为“按各自归一化上限 clamp”。
+
+下一步：
+
+- 开始 S48.6：收束前端日期展示、browser/provider long-run 验收和完整书生入仕路径验证。

@@ -4,6 +4,7 @@ const assert = require("node:assert/strict");
 const { createInitialState } = require("../src/game/initialState");
 const { applyRelationshipChanges } = require("../src/game/relationships");
 const { applyStatePatch } = require("../src/game/stateRules");
+const { monthsToTurns } = require("../src/game/time");
 const {
   buildOfficialCareerView,
   ensureOfficialCareerState,
@@ -33,6 +34,7 @@ test("initial state carries an empty server-owned official career ledger", () =>
     careerHistory: [],
     pendingOutcome: null,
     cooldowns: {},
+    cooldownUnit: "ten_day",
     assignments: [],
     assessmentDossier: {
       cycleId: "1644-career",
@@ -48,6 +50,7 @@ test("initial state carries an empty server-owned official career ledger", () =>
       sourceId: null,
       openedTurn: null,
       dueTurn: null,
+      deadlineUnit: "ten_day",
       risk: 0,
       visibleNotice: "",
       hiddenNotes: [],
@@ -59,6 +62,7 @@ test("initial state carries an empty server-owned official career ledger", () =>
 
 test("official career state normalizes invalid legacy data", () => {
   const worldState = createInitialState({ role: "official", playerName: "Tester" });
+  worldState.turnCount = 2;
   worldState.officialCareer = {
     schemaVersion: 99,
     tenureMonths: 9999,
@@ -79,7 +83,18 @@ test("official career state normalizes invalid legacy data", () => {
         reason: "old record"
       }
     ],
-    cooldowns: { promotion: 999999 }
+    cooldowns: { promotion: 6 },
+    assignments: [{
+      id: "ASG-legacy-relief",
+      title: "赈银核销",
+      kind: "relief",
+      dueTurn: 6
+    }],
+    impeachmentProcedure: {
+      stage: "risk_watch",
+      dueTurn: 5,
+      risk: 45
+    }
   };
 
   ensureOfficialCareerState(worldState);
@@ -91,10 +106,14 @@ test("official career state normalizes invalid legacy data", () => {
   assert.equal(worldState.officialCareer.bureauId, "ministry_personnel");
   assert.equal(worldState.officialCareer.careerHistory.length, 1);
   assert.equal(worldState.officialCareer.careerHistory[0].month, 12);
-  assert.equal(worldState.officialCareer.cooldowns.promotion <= worldState.turnCount + 120, true);
-  assert.deepEqual(worldState.officialCareer.assignments, []);
+  assert.equal(worldState.officialCareer.cooldowns.promotion, worldState.turnCount + monthsToTurns(4));
+  assert.equal(worldState.officialCareer.cooldownUnit, "ten_day");
+  assert.equal(worldState.officialCareer.assignments[0].dueTurn, worldState.turnCount + monthsToTurns(4));
+  assert.equal(worldState.officialCareer.assignments[0].deadlineUnit, "ten_day");
   assert.equal(worldState.officialCareer.assessmentDossier.meritScore, 30);
-  assert.equal(worldState.officialCareer.impeachmentProcedure.stage, "none");
+  assert.equal(worldState.officialCareer.impeachmentProcedure.stage, "risk_watch");
+  assert.equal(worldState.officialCareer.impeachmentProcedure.dueTurn, worldState.turnCount + monthsToTurns(3));
+  assert.equal(worldState.officialCareer.impeachmentProcedure.deadlineUnit, "ten_day");
   assert.deepEqual(normalizeOfficialCareerState(worldState), worldState.officialCareer);
 });
 
@@ -215,6 +234,7 @@ test("official career step tracks assignments, assessment dossier, and safe play
   assert.equal(worldState.officialCareer.bureauId, "ministry_revenue");
   assert.equal(worldState.officialCareer.assignments.length, 1);
   assert.equal(worldState.officialCareer.assignments[0].kind, "relief");
+  assert.equal(worldState.officialCareer.assignments[0].dueTurn, monthsToTurns(4));
   assert.equal(worldState.officialCareer.assignments[0].hiddenNotes.length, 0);
   assert.ok(worldState.officialCareer.assessmentDossier.meritScore > 44);
   assert.ok(result.events.some((event) => event.includes("[官场差遣]")));
@@ -224,6 +244,8 @@ test("official career step tracks assignments, assessment dossier, and safe play
   assert.equal(view.bureau.name, "户部");
   assert.equal(view.assignmentSummary.activeCount, 1);
   assert.equal(view.assignments[0].title, "赈银核销");
+  assert.equal(view.assignments[0].turnsRemaining, monthsToTurns(4));
+  assert.match(view.assignments[0].deadlineLabel, /尚余12旬（约4月）/);
   assert.equal(JSON.stringify(view).includes("遮掩亏空"), false);
   assert.equal(view.assessment.meritScore, worldState.officialCareer.assessmentDossier.meritScore);
 });
@@ -242,10 +264,12 @@ test("official career step opens impeachment procedure without exposing hidden n
 
   assert.equal(worldState.officialCareer.impeachmentProcedure.stage, "risk_watch");
   assert.ok(worldState.officialCareer.impeachmentProcedure.risk >= 72);
+  assert.equal(worldState.officialCareer.impeachmentProcedure.dueTurn, monthsToTurns(4));
   assert.ok(worldState.officialCareer.impeachmentProcedure.hiddenNotes.length > 0);
   worldState.officialCareer.impeachmentProcedure.hiddenNotes.push("密札指向上官");
   const view = buildOfficialCareerView(worldState);
   assert.equal(view.procedureSummary.impeachmentStage, "risk_watch");
   assert.match(view.procedureSummary.visibleNotice, /弹劾|风闻|台谏/);
+  assert.match(view.procedureSummary.deadlineLabel, /尚余12旬（约4月）/);
   assert.equal(JSON.stringify(view).includes("密札指向上官"), false);
 });

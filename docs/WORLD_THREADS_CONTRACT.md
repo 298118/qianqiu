@@ -76,10 +76,10 @@ worldState.worldThreads = {
 
 `worldThreadView.activeThreads[]` 暴露：
 
-- 来源与排序字段：`id/status/kind/sourceType/sourceId/sourceLabel/title/summary/severity/createdTurn/lastUpdatedTurn/dueTurn/turnsRemaining/startedYear/startedMonth/remainingMonths/related`。
+- 来源与排序字段：`id/status/kind/sourceType/sourceId/sourceLabel/title/summary/severity/createdTurn/lastUpdatedTurn/dueTurn/turnsRemaining/deadlineUnit/startedYear/startedMonth/remainingMonths/related`。
 - S43.2/S45.2 派生展示字段：`goal`、`deadlineLabel`、`riskLabel`、`riskTone`、`relatedLabels`、`relatedEntitySummaries`、`interventionHints`、`followUpHint`。
 
-这些字段全部由服务器按 `kind/sourceType/severity/dueTurn/remainingMonths/related`、公开世界状态和可见 `worldEntityView` 派生，不进入 provider patch 白名单，也不代表新的裁决权。`relatedEntitySummaries` 只读取可见实体摘要，隐藏实体、`hiddenNotes` 和 `recentNotes` 不进入议题 view/prompt。`interventionHints` 只提示玩家可用自由文本介入方向；`followUpHint` 只说明来源系统如何继续结算。
+这些字段全部由服务器按 `kind/sourceType/severity/dueTurn/remainingMonths/related`、公开世界状态和可见 `worldEntityView` 派生，不进入 provider patch 白名单，也不代表新的裁决权。S48.5 后，主动 NPC 请托的 `dueTurn` 继续显示剩余回合；官场差事、弹劾等月语义期限会先换算成旬回合，再以“尚余 X 旬（约 Y 月）”展示；长期事件继续用 `remainingMonths` 显示剩余月份。`relatedEntitySummaries` 只读取可见实体摘要，隐藏实体、`hiddenNotes` 和 `recentNotes` 不进入议题 view/prompt。`interventionHints` 只提示玩家可用自由文本介入方向；`followUpHint` 只说明来源系统如何继续结算。
 
 `src/ai/prompts.js` 的 `compactWorldState()` 会把 `summarizeWorldThreadsForPrompt(worldState)` 放入 `worldThreads`，供 prompt pack 读取当前议题。该摘要不包含隐藏 thread、隐藏关系、官场 `hiddenNotes` 或 provider 配置。
 

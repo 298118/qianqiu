@@ -31,13 +31,15 @@ The scheduler turns month-end world ticks into a small historical event almanac.
       durationMonths: 1,
       remainingMonths: 1,
       cooldownKey: "seasonal_harvest_audit",
-      cooldownTurns: 10,
+      cooldownTurns: 30,
+      cooldownUnit: "ten_day",
       visibility: "public"
     }
   ],
   cooldowns: {
     seasonal_harvest_audit: 18
   },
+  cooldownUnit: "ten_day",
   recentResolved: []
 }
 ```
@@ -48,7 +50,7 @@ Rules:
 - `recentResolved` is capped at 8 records.
 - Event text is normalized to short player-facing strings.
 - Invalid legacy events are dropped during normalization.
-- Cooldowns are turn numbers; an event cannot be scheduled again before its cooldown expires.
+- Cooldowns are stored as absolute turn numbers with `cooldownUnit: "ten_day"`, but built-in event definitions express cooldown length in months and convert through `monthsToTurns()`. Under S48, a 10-month seasonal cooldown is 30 ten-day turns; an event cannot be scheduled again before that absolute turn expires. Missing legacy `cooldownUnit` means the old value came from the pre-S48 one-turn-one-month era and is converted once into ten-day turns during normalization.
 - Hidden events may exist in state later, but S33.2 only exposes public active events through the view.
 
 ## Route Order
@@ -68,7 +70,7 @@ Rules:
 11. Append provider events, active-request events, world-tick events, then long-term event events.
 12. Save and return route payloads.
 
-This means the scheduler reads the month/year after a month-end tick advances them. For example, a turn from 七月下旬 to 八月上旬 can schedule `seasonal_harvest_audit` immediately after the tick. 七月上旬 to 七月中旬 does not decrement `remainingMonths` or schedule seasonal work.
+This means the scheduler reads the month/year after a month-end tick advances them. For example, a turn from 七月下旬 to 八月上旬 can schedule `seasonal_harvest_audit` immediately after the tick. 七月上旬 to 七月中旬 does not decrement `remainingMonths`, does not schedule seasonal work, and does not produce long-term-event world-entity influences.
 
 ## Output Contract
 

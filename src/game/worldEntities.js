@@ -1171,6 +1171,9 @@ function officialCareerInfluences(officialCareer) {
 
 function deriveWorldEntityInfluences(worldState = {}, context = {}) {
   const influences = [];
+  const worldTick = isPlainObject(context.worldTick) ? context.worldTick : {};
+  if (worldTick.cadence === "scene") return influences;
+  const completedMonth = worldTick.completedMonth === true || worldTick.cadence === "monthly";
   const stateDeltas = Array.isArray(context.stateDeltas)
     ? context.stateDeltas
     : context.stateDelta
@@ -1185,9 +1188,9 @@ function deriveWorldEntityInfluences(worldState = {}, context = {}) {
   }
 
   for (const change of [
-    ...(Array.isArray(context.worldTick?.attributeChanges) ? context.worldTick.attributeChanges : []),
+    ...(Array.isArray(worldTick.attributeChanges) ? worldTick.attributeChanges : []),
     ...(Array.isArray(context.roleWorldCoupling?.attributeChanges) ? context.roleWorldCoupling.attributeChanges : []),
-    ...(Array.isArray(context.longTermEvents?.attributeChanges) ? context.longTermEvents.attributeChanges : []),
+    ...(completedMonth && Array.isArray(context.longTermEvents?.attributeChanges) ? context.longTermEvents.attributeChanges : []),
     ...(Array.isArray(context.officialCareer?.attributeChanges) ? context.officialCareer.attributeChanges : [])
   ]) {
     const sourceType = change.reason === "角色世界联动"
@@ -1205,7 +1208,9 @@ function deriveWorldEntityInfluences(worldState = {}, context = {}) {
   }
 
   influences.push(...activeRequestInfluences(context.activeNpcRequest));
-  influences.push(...longTermEventInfluences(context.longTermEvents));
+  if (completedMonth) {
+    influences.push(...longTermEventInfluences(context.longTermEvents));
+  }
   influences.push(...roleWorldCouplingInfluences(context.roleWorldCoupling));
   influences.push(...officialCareerInfluences(context.officialCareer));
 

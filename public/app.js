@@ -1154,7 +1154,7 @@ function renderOfficialAssignmentCard(assignment) {
 
   const progress = createActiveRequestMeta("进度", `${assignment.progress ?? 0}`, "official-career-assignment-progress");
   const risk = createActiveRequestMeta("风险", `${assignment.risk ?? 0}`, "official-career-assignment-risk");
-  const due = createActiveRequestMeta("期限", assignment.dueTurn ? `第${assignment.dueTurn}回` : "未定", "official-career-assignment-due");
+  const due = createActiveRequestMeta("期限", assignment.deadlineLabel || (assignment.dueTurn ? `第${assignment.dueTurn}回` : "未定"), "official-career-assignment-due");
   const summary = createActiveRequestMeta("案语", assignment.visibleSummary || "尚在办理。", "official-career-assignment-summary-text");
 
   card.append(header, progress, risk, due, summary);
@@ -1270,7 +1270,7 @@ function renderOfficialNetworkRiskSection(officialCareerView) {
   procedureCard.append(
     createPanelValue("弹劾", OFFICIAL_PROCEDURE_STAGE_LABELS[stage] || stage, "p"),
     createPanelValue("风险", procedure.risk ?? 0, "p"),
-    createPanelValue("期限", procedure.dueTurn ? `第${procedure.dueTurn}回` : "未定", "p")
+    createPanelValue("期限", procedure.deadlineLabel || (procedure.dueTurn ? `第${procedure.dueTurn}回` : "未定"), "p")
   );
   const notice = document.createElement("p");
   notice.className = "official-career-procedure-notice";

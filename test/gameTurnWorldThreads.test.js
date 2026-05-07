@@ -9,6 +9,7 @@ process.env.AI_PROVIDER = "mock";
 const gameRoutes = require("../src/routes/game");
 const { createInitialState } = require("../src/game/initialState");
 const { writeSession } = require("../src/storage/sessionStore");
+const { monthsToTurns } = require("../src/game/time");
 const { createFetchSafeServer } = require("../test-helpers/fetchSafeServer");
 
 const sessionsDir = path.join(__dirname, "..", "data", "sessions");
@@ -127,11 +128,15 @@ test("POST /api/game/turn exposes official assignments as world threads without 
   assert.equal(response.status, 200);
   const assignment = payload.officialCareerView.assignments.find((entry) => entry.kind === "relief");
   assert.ok(assignment);
-  assert.ok(payload.worldThreadView.activeThreads.some((thread) =>
+  const assignmentThread = payload.worldThreadView.activeThreads.find((thread) =>
     thread.sourceType === "official_assignment" &&
     thread.sourceId === assignment.id &&
     thread.title === assignment.title
-  ));
+  );
+  assert.ok(assignmentThread);
+  assert.equal(assignmentThread.deadlineUnit, "ten_day");
+  assert.equal(assignmentThread.turnsRemaining, monthsToTurns(4));
+  assert.match(assignmentThread.deadlineLabel, /约4月/);
   assert.equal(JSON.stringify(payload.worldThreadView).includes("hiddenNotes"), false);
 });
 

@@ -22,6 +22,8 @@ const {
   runRoleWorldCouplingStep
 } = require("../src/game/roleWorldCoupling");
 const {
+  applyWorldEntityInfluences,
+  deriveWorldEntityInfluences,
   ensureWorldEntityState
 } = require("../src/game/worldEntities");
 const {
@@ -31,6 +33,7 @@ const {
   runActiveNpcRequestStep
 } = require("../src/game/activeRequests");
 const { canEnterExam, getExam } = require("../src/game/exams");
+const { attachExamSceneTime } = require("../src/game/examSceneTime");
 const { createInitialState } = require("../src/game/initialState");
 const { NUMERIC_RANGES, applyStatePatch, appendEvents } = require("../src/game/stateRules");
 const { runWorldTick } = require("../src/game/worldTick");
@@ -195,6 +198,41 @@ function validateExamTriggerAuthority(worldState, examTrigger = {}) {
   return { ok: true, exam: triggeredExam, calendarGate };
 }
 
+function isWritingExam(activeExam) {
+  return Boolean(activeExam && (activeExam.examQuestion || activeExam.status === "writing"));
+}
+
+function rejectExamTrigger(examTrigger, reason) {
+  return {
+    shouldStart: false,
+    level: examTrigger.level || null,
+    reason
+  };
+}
+
+function applyExamTriggerForLongRun(worldState, examTrigger = {}) {
+  const normalizedTrigger = examTrigger || { shouldStart: false, level: null, reason: "" };
+  if (!normalizedTrigger.shouldStart) return { shouldStart: false, level: null, reason: "" };
+  if (isWritingExam(worldState.activeExam)) {
+    return rejectExamTrigger(normalizedTrigger, "已有未完成考试，请先完成当前考试。");
+  }
+
+  const examTriggerGate = validateExamTriggerAuthority(worldState, normalizedTrigger);
+  const reason = normalizedTrigger.reason || "玩家主动请求赶考";
+  worldState.activeExam = {
+    level: examTriggerGate.exam.level,
+    reason,
+    examCalendar: examTriggerGate.calendarGate.snapshot,
+    requestedAt: new Date().toISOString()
+  };
+  attachExamSceneTime(worldState.activeExam, worldState, "entry");
+  return {
+    shouldStart: true,
+    level: examTriggerGate.exam.level,
+    reason
+  };
+}
+
 function createLongRunWorldState(providerName) {
   const worldState = createInitialState({
     dynasty: "明",
@@ -233,19 +271,12 @@ function applyServerTurnEffects(worldState, result, input) {
     throw new Error(`provider attempted server-owned statePatch keys: ${violations.join(", ")}`);
   }
 
+  const providerStateBefore = JSON.parse(JSON.stringify(worldState));
   applyStatePatch(worldState, result.statePatch);
+  const providerStateAfter = JSON.parse(JSON.stringify(worldState));
   const relationshipChanges = applyRelationshipChanges(worldState, result.relationshipChanges);
 
-  const examTrigger = result.examTrigger || { shouldStart: false, level: null, reason: "" };
-  const examTriggerGate = validateExamTriggerAuthority(worldState, examTrigger);
-  if (examTrigger.shouldStart) {
-    worldState.activeExam = {
-      level: examTriggerGate.exam.level,
-      reason: examTrigger.reason,
-      examCalendar: examTriggerGate.calendarGate.snapshot,
-      requestedAt: new Date().toISOString()
-    };
-  }
+  const examTrigger = applyExamTriggerForLongRun(worldState, result.examTrigger);
 
   const activeNpcRequest = runActiveNpcRequestStep(worldState, input);
 
@@ -291,6 +322,28 @@ function applyServerTurnEffects(worldState, result, input) {
   });
   const officialCareerRelationshipChanges = applyRelationshipChanges(worldState, officialCareer.relationshipChanges);
 
+  const allRelationshipChanges = [
+    ...relationshipChanges,
+    ...activeNpcRequest.relationshipChanges,
+    ...roleWorldCouplingRelationshipChanges,
+    ...longTermRelationshipChanges,
+    ...officialCareerRelationshipChanges
+  ];
+  const worldEntityInfluences = deriveWorldEntityInfluences(worldState, {
+    stateDeltas: [{
+      before: providerStateBefore,
+      after: providerStateAfter,
+      sourceType: "provider_state",
+      reason: "AI 叙事落到服务器允许的世界指标"
+    }],
+    relationshipChanges: allRelationshipChanges,
+    activeNpcRequest,
+    roleWorldCoupling,
+    worldTick,
+    longTermEvents,
+    officialCareer
+  });
+  const worldEntityImpacts = applyWorldEntityInfluences(worldState, worldEntityInfluences);
   ensureWorldEntityState(worldState);
   ensureWorldThreadState(worldState);
 
@@ -303,13 +356,7 @@ function applyServerTurnEffects(worldState, result, input) {
   ensureServerState(worldState);
 
   return {
-    relationshipChanges: [
-      ...relationshipChanges,
-      ...activeNpcRequest.relationshipChanges,
-      ...roleWorldCouplingRelationshipChanges,
-      ...longTermRelationshipChanges,
-      ...officialCareerRelationshipChanges
-    ],
+    relationshipChanges: allRelationshipChanges,
     events: [
       ...(Array.isArray(result.events) ? result.events : []),
       ...activeNpcRequest.events,
@@ -318,7 +365,11 @@ function applyServerTurnEffects(worldState, result, input) {
       ...longTermEvents.events,
       ...officialCareer.events
     ],
-    examTrigger
+    examTrigger,
+    worldTick,
+    longTermEvents,
+    officialCareer,
+    worldEntityImpacts
   };
 }
 
@@ -362,7 +413,7 @@ async function runProviderLongRun(providerName, options = {}) {
   const reports = [];
 
   console.log(
-    `[${providerName}] starting S37 long-run (${config.modelEnv}=${process.env[config.modelEnv] || "default"}, turns=${turnLimit}, stream=${options.stream ? "yes" : "no"})`
+    `[${providerName}] starting S37/S48 long-run (${config.modelEnv}=${process.env[config.modelEnv] || "default"}, turns=${turnLimit}, stream=${options.stream ? "yes" : "no"})`
   );
 
   const opening = await provider.startGame(worldState);
@@ -404,16 +455,21 @@ async function runProviderLongRun(providerName, options = {}) {
       patchKeys,
       relationshipChanges: serverEffects.relationshipChanges.length,
       events: serverEffects.events.length,
-      examTrigger: serverEffects.examTrigger.shouldStart === true
+      examTrigger: serverEffects.examTrigger.shouldStart === true,
+      cadence: serverEffects.worldTick.cadence,
+      completedMonth: serverEffects.worldTick.completedMonth,
+      worldEntityImpacts: serverEffects.worldEntityImpacts.length,
+      longTermScheduled: serverEffects.longTermEvents.scheduled.length,
+      longTermResolved: serverEffects.longTermEvents.resolved.length
     });
 
     console.log(
-      `[${providerName}] turn ${index + 1}/${turnLimit} ok: patch=${patchKeys.join(",") || "none"}, streamed=${streamedChars}, narrative="${truncate(result.narrative)}"`
+      `[${providerName}] turn ${index + 1}/${turnLimit} ok: cadence=${serverEffects.worldTick.cadence}, entityImpacts=${serverEffects.worldEntityImpacts.length}, patch=${patchKeys.join(",") || "none"}, streamed=${streamedChars}, narrative="${truncate(result.narrative)}"`
     );
   }
 
   console.log(
-    `[${providerName}] S37 long-run completed: turnCount=${worldState.turnCount}, date=${worldState.year}-${worldState.month}-${worldState.tenDayPeriod}, events=${worldState.eventHistory.length}`
+    `[${providerName}] S37/S48 long-run completed: turnCount=${worldState.turnCount}, date=${worldState.year}-${worldState.month}-${worldState.tenDayPeriod}, events=${worldState.eventHistory.length}`
   );
 
   return {
@@ -442,7 +498,7 @@ async function runProviderLongRunSmoke(options = {}) {
   const turnLimit = parseTurnLimit(argv);
 
   if (!providerNames.length) {
-    console.log("No real-provider keys found; skipping S37 provider long-run. Set OPENAI_API_KEY, DEEPSEEK_API_KEY, or ANTHROPIC_API_KEY to run it.");
+    console.log("No real-provider keys found; skipping S37/S48 provider long-run. Set OPENAI_API_KEY, DEEPSEEK_API_KEY, or ANTHROPIC_API_KEY to run it.");
     return { skipped: true, providerNames: [] };
   }
 
@@ -451,7 +507,7 @@ async function runProviderLongRunSmoke(options = {}) {
     reports.push(await runProviderLongRun(providerName, { stream, turnLimit }));
   }
 
-  console.log(`S37 provider long-run completed for: ${providerNames.join(", ")}`);
+  console.log(`S37/S48 provider long-run completed for: ${providerNames.join(", ")}`);
   return { skipped: false, providerNames, reports };
 }
 
@@ -475,7 +531,7 @@ if (require.main === module) {
     printUsage();
   } else {
     runProviderLongRunSmoke().catch((error) => {
-      console.error(`S37 provider long-run failed: ${error.message}`);
+      console.error(`S37/S48 provider long-run failed: ${error.message}`);
       process.exitCode = 1;
     });
   }
@@ -485,6 +541,7 @@ module.exports = {
   DEFAULT_TURN_LIMIT,
   MAX_TURNS,
   MIN_TURNS,
+  applyServerTurnEffects,
   collectProviderPatchViolations,
   collectToneIssues,
   countChineseCharacters,

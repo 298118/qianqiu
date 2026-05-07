@@ -80,7 +80,7 @@ S42.2 使用静态 JS 目录，不引入新依赖。AI prompt 读取的是玩家
 - `bureauId`
 - `sourceType` 与 `sourceId`：上官、衙门、同年、言官或地方来文
 - `status`：`active`、`submitted`、`resolved`、`expired`、`failed`
-- `year`、`month`、`dueTurn`
+- `year`、`month`、`dueTurn`、`deadlineUnit`：S48.5 后 `dueTurn` 仍存绝对 turn，归一化后的单位为 `deadlineUnit: "ten_day"`；默认差遣/弹劾期限按月份语义通过 `monthsToTurns()` 换算，玩家视图显示“尚余 X 旬（约 Y 月）”。缺少 `deadlineUnit` 的旧差遣/弹劾期限按 S48 前“一回合一月”语义一次性换算，避免旧档期限突然缩短。
 - `progress`、`risk`、`publicStake`、`privatePressure`
 - `visibleSummary`
 - `hiddenNotes`：仅服务器和开发诊断可见，不能进入普通 prompt/UI
@@ -150,7 +150,7 @@ S42.3 前端只消费服务器构造的 view，不扫描 raw `worldState.officia
   "assignmentSummary": { "activeCount": 1, "urgentCount": 1, "latestTitle": "赈银核销" },
   "assessment": { "meritScore": 62, "riskScore": 34, "nextReviewInMonths": 5 },
   "networkSummary": { "superiors": 1, "sameYears": 2, "rivals": 1, "hiddenNotice": true },
-  "procedureSummary": { "impeachmentStage": "risk_watch", "visibleNotice": "台谏风闻未定" },
+  "procedureSummary": { "impeachmentStage": "risk_watch", "visibleNotice": "台谏风闻未定", "deadlineLabel": "第13回，尚余12旬（约4月）" },
   "recentOutcomes": []
 }
 ```
@@ -231,6 +231,7 @@ S42.2 also filters ordinary provider `player.position` patches while the player 
   "careerHistory": [],
   "pendingOutcome": null,
   "cooldowns": {},
+  "cooldownUnit": "ten_day",
   "assignments": [],
   "assessmentDossier": {
     "cycleId": "1644-career",
@@ -246,6 +247,7 @@ S42.2 also filters ordinary provider `player.position` patches while the player 
     "sourceId": null,
     "openedTurn": null,
     "dueTurn": null,
+    "deadlineUnit": "ten_day",
     "risk": 0,
     "visibleNotice": "",
     "hiddenNotes": [],

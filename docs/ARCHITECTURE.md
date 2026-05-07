@@ -58,7 +58,7 @@ Important route ownership:
 - `src/game/longTermEvents.js` owns the S33 server-scheduled long-term event queue for seasonal, disaster, border, court, local case-chain, and cross-month consequence events. Providers may read a compact summary for narrative context, but they do not create, replace, resolve, or expire `worldState.longTermEvents`.
 - `src/game/officialCatalog.js` owns the S42.2 static office/bureau catalog used to normalize office titles, bureau duties, and promotion/transfer/outpost candidates.
 - `src/game/officialCareer.js` owns the S34/S42 official career outcome engine. Providers may move official career meters, but they do not appoint, transfer, promote, demote, impeach-to-case, punish, retain, create assignments, alter assessment dossiers, or write `worldState.officialCareer`.
-- `src/game/roleWorldCoupling.js` owns the S36 role/world coupling step. Providers may move ordinary meters and suggest social changes, but they do not write `worldState.roleWorldCoupling` or decide the server-owned compound world consequences or cooldowns of key role actions.
+- `src/game/roleWorldCoupling.js` owns the S36/S48.5 role/world coupling step. Providers may move ordinary meters and suggest social changes, but they do not write `worldState.roleWorldCoupling` or decide the server-owned compound world consequences or month-derived cooldowns of key role actions.
 - `src/game/worldThreads.js` owns the S43.1 World Threads / 世界议程索引. It derives player-facing cross-month issue summaries from active requests, long-term events, official assignments/outcomes, role-world impacts, frontier pressure, faction pressure, and local case pressure. Providers may read the compact summary for narrative context, but they do not write `worldState.worldThreads`.
 
 ## API Contract
@@ -391,7 +391,7 @@ npm run smoke:provider -- --stream --provider deepseek
 
 The script calls real provider factories directly instead of `getProvider()`, so failures are not hidden by Mock fallback. It exercises the four provider methods that correspond to start, turn, question, and submit/grade, then prints a short schema-validated summary. With `--stream`, it also exercises `streamTurn()` and reports streamed raw-character count plus validated narrative. It does not start the Express server and does not write session JSON files. With `AI_PROVIDER=mock`, it auto-runs only providers whose required key is present; if no real-provider keys are configured, it skips with exit code 0. Use `smoke:provider:route` when the acceptance target is specifically the browser-facing `/api/ai/connection-test` route rather than adapter method coverage.
 
-`scripts/providerLongRun.js` is the optional S37 long-run acceptance entrypoint for keyed environments:
+`scripts/providerLongRun.js` is the optional S37/S48 long-run acceptance entrypoint for keyed environments:
 
 ```bash
 npm run smoke:provider:long
@@ -399,7 +399,7 @@ npm run smoke:provider:long -- --provider openai --turns 12
 npm run smoke:provider:long -- --stream --provider anthropic
 ```
 
-It reuses the same provider selection and no-key skip behavior, calls real provider factories directly, runs a repeated scholar action scenario with an authority probe, checks historical tone, rejects server-owned ordinary-turn patch attempts, applies server boundary/tick/event/career follow-up logic in memory, and writes no session files. The durable matrix and limitations live in [docs/REAL_PROVIDER_ACCEPTANCE.md](REAL_PROVIDER_ACCEPTANCE.md).
+It reuses the same provider selection and no-key skip behavior, calls real provider factories directly, runs a repeated scholar action scenario with an authority probe, checks historical tone, rejects server-owned ordinary-turn patch attempts, applies server boundary/tick/event/career/entity/thread follow-up logic in memory, records `worldTick.cadence` and `worldEntityImpacts`, and writes no session files. The durable matrix and limitations live in [docs/REAL_PROVIDER_ACCEPTANCE.md](REAL_PROVIDER_ACCEPTANCE.md).
 
 ### AI Output Eval Fixtures
 
@@ -499,7 +499,7 @@ The browser renders active requests as `#active-request-panel` from top-level `a
 
 ## Role / World Coupling Contract
 
-S36 adds `worldState.roleWorldCoupling`, documented in [docs/ROLE_WORLD_COUPLING_CONTRACT.md](ROLE_WORLD_COUPLING_CONTRACT.md). It is a server-owned recent-impact ledger with `schemaVersion`, capped `recentImpacts`, and turn-number `cooldowns`.
+S36 adds `worldState.roleWorldCoupling`, documented in [docs/ROLE_WORLD_COUPLING_CONTRACT.md](ROLE_WORLD_COUPLING_CONTRACT.md). It is a server-owned recent-impact ledger with `schemaVersion`, capped `recentImpacts`, ten-day period stamps, and short month-derived absolute-turn `cooldowns`.
 
 Server rules:
 
@@ -540,13 +540,13 @@ Server rules:
 - Providers may read `worldThreads` in prompt context, but ordinary `statePatch.worldThreads` is rejected by schemas and ignored by provider patch application.
 - JSON and SSE turn payloads return `worldThreadView`. Exam question and submit routes also include the same view.
 
-S43.2/S45.2 keep `worldThreads` as an index rather than a settlement engine, but enrich the player-facing view. Each visible active thread now includes a derived `goal`, `deadlineLabel`, `riskLabel`, `riskTone`, `relatedLabels`, `relatedEntitySummaries`, `interventionHints`, and `followUpHint`. These are generated from server-owned source type, kind, severity, deadline, related ids, public state labels, and visible `worldEntityView` summaries; hidden rows, hidden entities, and hidden notes still do not enter the view or prompt summary.
+S43.2/S45.2/S48.5 keep `worldThreads` as an index rather than a settlement engine, but enrich the player-facing view. Each visible active thread now includes a derived `goal`, `deadlineLabel`, `deadlineUnit`, `riskLabel`, `riskTone`, `relatedLabels`, `relatedEntitySummaries`, `interventionHints`, and `followUpHint`. These are generated from server-owned source type, kind, severity, deadline, related ids, public state labels, and visible `worldEntityView` summaries; hidden rows, hidden entities, and hidden notes still do not enter the view or prompt summary. Active NPC requests keep turn-counted labels, official deadlines show旬/月 estimates, and long-term events keep month-counted labels.
 
 The browser renders this view as `#world-thread-panel`. Each `.world-thread-card` carries stable `data-thread-id`, `data-source-type`, `data-thread-kind`, `data-status`, `data-severity`, and `data-risk` attributes for smoke checks. The panel is an inspection surface only: it suggests free-text intervention directions and shows recent resolved rows, but it does not add one-click resolution or override `activeNpcRequest`, `longTermEvents`, `officialCareer`, or `roleWorldCoupling` settlement.
 
 ## Long-Term Event Scheduler Contract
 
-S33 adds `worldState.longTermEvents`, documented in [docs/LONG_TERM_EVENTS_CONTRACT.md](LONG_TERM_EVENTS_CONTRACT.md). It is a server-owned queue with `schemaVersion`, active `queue`, turn-number `cooldowns`, and capped `recentResolved` records.
+S33 adds `worldState.longTermEvents`, documented in [docs/LONG_TERM_EVENTS_CONTRACT.md](LONG_TERM_EVENTS_CONTRACT.md). It is a server-owned queue with `schemaVersion`, active `queue`, month-derived absolute-turn `cooldowns`, and capped `recentResolved` records.
 
 Server rules:
 
@@ -578,7 +578,7 @@ S34 official outcomes:
 
 - Persisted state: `worldState.officialCareer` with `schemaVersion`, `tenureMonths`, `reviewCycleMonths`, `lastReviewTurn`, `lastReviewYear`, `currentPosting`, `bureauId`, capped `careerHistory`, `pendingOutcome`, `cooldowns`, capped `assignments`, `assessmentDossier`, and `impeachmentProcedure`.
 - Route payloads: top-level `officialCareerView`; turn payloads also include `officialCareer: { summary, events, attributeChanges, outcome }`.
-- Settlement timing: first appointment when an official lacks `officeTitle`, severe impeachment risk, accelerated promotion review, 12-month review cycle, or annual review after the post-tick calendar reaches a new year.
+- Settlement timing: first appointment when an official lacks `officeTitle`, severe impeachment risk, accelerated promotion review, 12-month review cycle, or annual review after the post-tick calendar reaches a new year. S48.5 keeps差事 and弹劾 `dueTurn` as absolute turns, but creates default deadlines by converting four months into twelve ten-day turns and exposes player-facing deadline labels.
 - Result types: `appointment`, `transfer`, `promotion`, `outpost`, `demotion`, `impeachment`, `punishment`, and `retention`.
 - Authority: providers may affect the input meters but cannot patch `officialCareer`, `officeTitle`, `role`, `roleLabel`, `examRank`, `palaceRank`, or `examHistory` in ordinary turns. S42.2 also ignores ordinary official `player.position` patches that look like a real office appointment, while still allowing soft posture/location text.
 
@@ -632,7 +632,7 @@ The contract for S21.2-S21.4 is:
 
 `runWorldTick(worldState)` returns `{ cadence, label, completedMonth, timeAdvance, statePatch, attributeChanges, events, summary }` without mutating `worldState`. Non-month-end results use `cadence: "ten_day"` and patch `tenDayPeriod` plus light proportional drift; 下旬 rollover uses `cadence: "monthly"` and the original deterministic formulas for treasury revenue/upkeep/leakage, grain consumption/harvest, population drift, public order, corruption, army morale, border threat, and small known-faction drift.
 
-Route integration order is provider patch first, provider relationship suggestions, exam trigger setup when requested, active NPC request handling, role/world coupling, `runWorldTick()` against the updated state, tick patch with `{ incrementTurnCount: false, allowServerOwnedPatchKeys: true }`, long-term event scheduling/resolution only when `worldTick.completedMonth` is true, official career feedback with `isMonthEnd` passed from the tick, then provider events followed by active-request events, role-world events, tick events, long-term event events, and official career events. The browser appends concise `[联动]`, `[旬度]` or `[月度]`, `[大势]`, and `[官场结算]` feedback below the provider narrative.
+Route integration order is provider patch first, provider relationship suggestions, exam trigger setup when requested, active NPC request handling, role/world coupling, `runWorldTick()` against the updated state, tick patch with `{ incrementTurnCount: false, allowServerOwnedPatchKeys: true }`, long-term event scheduling/resolution only when `worldTick.completedMonth` is true, official career feedback with `isMonthEnd` passed from the tick, World Entity influence derivation/application with scene cadence excluded and long-term influences gated to month end, then provider events followed by active-request events, role-world events, tick events, long-term event events, and official career events. The browser appends concise `[联动]`, `[旬度]` or `[月度]`, `[大势]`, and `[官场结算]` feedback below the provider narrative.
 
 S48.2 adds the shared time helper in `src/game/time.js` and the server-owned `worldState.tenDayPeriod` field. Initial sessions start at 正月上旬, old saves missing the field are normalized to 上旬 on read, save-list metadata includes `tenDayPeriod`, and prompt compact state includes both the numeric period and a `dateLabel` such as `明1644年正月上旬`. S48.3 wires that field into ordinary turns: 上旬 -> 中旬 -> 下旬 -> 下月上旬, with 腊月下旬 rolling the year. S48.4 keeps dense exam scenes off that global cadence: `activeExam.sceneTime` advances local phases and `worldTick.cadence = "scene"` while global年月旬 remain unchanged.
 
