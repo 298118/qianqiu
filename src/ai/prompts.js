@@ -1,13 +1,4 @@
-const { summarizeRelationshipLedger } = require("../game/relationships");
-const { summarizeExamCalendarForPrompt } = require("../game/examCalendar");
-const { summarizeLongTermEventsForPrompt } = require("../game/longTermEvents");
-const { summarizeOfficialCareerForPrompt } = require("../game/officialCareer");
-const { summarizeOfficialPostingsForPrompt } = require("../game/officialPostings");
-const { summarizeRoleWorldCouplingForPrompt } = require("../game/roleWorldCoupling");
-const { summarizeWorldGeographyForPrompt } = require("../game/worldGeography");
-const { summarizeWorldEntitiesForPrompt } = require("../game/worldEntities");
-const { summarizeWorldPeopleForPrompt } = require("../game/worldPeople");
-const { summarizeWorldThreadsForPrompt } = require("../game/worldThreads");
+const { assemblePromptContext } = require("./promptContextAssembler");
 const {
   buildPromptInstructions,
   getTurnPromptPackName
@@ -74,7 +65,7 @@ function compactExam(activeExam) {
   };
 }
 
-function compactWorldState(worldState = {}) {
+function compactWorldState(worldState = {}, options = {}) {
   return {
     year: worldState.year,
     month: worldState.month,
@@ -92,16 +83,7 @@ function compactWorldState(worldState = {}) {
     armyMorale: worldState.armyMorale,
     borderThreat: worldState.borderThreat,
     factions: worldState.factions,
-    relationshipLedger: summarizeRelationshipLedger(worldState.relationshipLedger, worldState, { visibleOnly: true }),
-    examCalendar: summarizeExamCalendarForPrompt(worldState),
-    longTermEvents: summarizeLongTermEventsForPrompt(worldState),
-    worldGeography: summarizeWorldGeographyForPrompt(worldState),
-    worldEntities: summarizeWorldEntitiesForPrompt(worldState),
-    worldPeople: summarizeWorldPeopleForPrompt(worldState),
-    worldThreads: summarizeWorldThreadsForPrompt(worldState),
-    officialCareer: summarizeOfficialCareerForPrompt(worldState),
-    officialPostings: summarizeOfficialPostingsForPrompt(worldState),
-    roleWorldCoupling: summarizeRoleWorldCouplingForPrompt(worldState),
+    ...assemblePromptContext(worldState, options),
     activeExam: compactExam(worldState.activeExam),
     recentEvents: (worldState.eventHistory || []).slice(-6),
     setup: worldState.setup || {},
@@ -119,7 +101,7 @@ function buildOpeningTask(worldState) {
       "Return 1-3 concise event strings.",
       "Each event string must include at least one concrete historical anchor such as dynasty, county school, scholar, commoners, grain/tax, government office, border affairs, or imperial examination.",
       "World state:",
-      JSON.stringify(compactWorldState(worldState), null, 2)
+      JSON.stringify(compactWorldState(worldState, { task: "opening" }), null, 2)
     ].join("\n"),
     maxOutputTokens: 1200
   };
@@ -140,9 +122,10 @@ function buildTurnTask(worldState, input) {
       "relationshipChanges are suggestions: use relationshipDelta -12..12 and resentmentDelta -10..10; the server will clamp, ignore hidden or invented targets, and merge final ledger state.",
       "relationshipChanges should summarize important NPC/faction relationship consequences; use [] when there is no meaningful social consequence.",
       "If the player clearly asks to take the next imperial exam, set examTrigger.shouldStart=true and use the next legal level.",
+      "Use retrievalContext as the first index of role-visible countries, cities, NPCs, offices, postings, institutions, and event summaries. Do not infer hidden data beyond it.",
       `Player action: ${input}`,
       "World state:",
-      JSON.stringify(compactWorldState(worldState), null, 2)
+      JSON.stringify(compactWorldState(worldState, { task: promptPack, playerAction: input }), null, 2)
     ].join("\n"),
     maxOutputTokens: 1600
   };
@@ -160,7 +143,7 @@ function buildExamQuestionTask(worldState, exam) {
       "Exam:",
       JSON.stringify(exam, null, 2),
       "World state:",
-      JSON.stringify(compactWorldState(worldState), null, 2)
+      JSON.stringify(compactWorldState(worldState, { task: "exam_question" }), null, 2)
     ].join("\n"),
     maxOutputTokens: 1200
   };
@@ -178,7 +161,7 @@ function buildGradeTask(worldState, exam, essay, authenticityCheck) {
       "Exam:",
       JSON.stringify(exam, null, 2),
       "World state:",
-      JSON.stringify(compactWorldState(worldState), null, 2),
+      JSON.stringify(compactWorldState(worldState, { task: "exam_grading" }), null, 2),
       "Local authenticity check:",
       JSON.stringify(authenticityCheck, null, 2),
       "Essay:",

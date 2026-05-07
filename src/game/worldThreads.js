@@ -488,10 +488,15 @@ function buildDeadlineLabel(thread, worldState = {}) {
 }
 
 function labelCharacter(id, worldState = {}) {
+  const characterId = cleanText(id, "", 80);
+  if (!characterId) return "";
   const character = Array.isArray(worldState.characters)
-    ? worldState.characters.find((entry) => entry?.id === id)
+    ? worldState.characters.find((entry) => entry?.id === characterId)
     : null;
-  return character?.name || id;
+  const ledgerEntry = worldState.relationshipLedger?.characters?.[characterId];
+  if (character?.visible === false || ledgerEntry?.visible === false) return "";
+  if (!character && !ledgerEntry) return "";
+  return character?.name || ledgerEntry?.name || characterId;
 }
 
 function labelOffice(id) {

@@ -44,6 +44,7 @@ flowchart TD
 
 Important route ownership:
 
+- `src/ai/promptContextAssembler.js` owns the S53.1 prompt context assembler. It centralizes dynamic prompt summaries and builds ranked `retrievalContext` from server-visible projections only; it does not read raw hidden ledgers, raw audit sidecars, SQLite audit tables, provider configuration, or local paths.
 - `src/routes/game.js` creates sessions, reads sessions, and advances free-text turns.
 - `src/routes/exam.js` generates saved exam questions, advances exam-local scene phases, and submits essays.
 - `src/routes/ai.js` owns no-session AI diagnostics such as provider connection checks.
@@ -371,6 +372,8 @@ The server checks authenticity, asks the provider for grading, applies local pen
 
 S44.1 的系统级权限矩阵见 [docs/AI_CONTROL_AUDIT_MATRIX.md](AI_CONTROL_AUDIT_MATRIX.md)。该矩阵是新增 AI 可读摘要、可建议字段、服务器拥有 ledger、浏览器面板和 red-team/eval 覆盖时的入口清单；本节只保留运行时调用形态。
 
+S53.1 在 `src/ai/promptContextAssembler.js` 增加 prompt context assembler。`src/ai/prompts.js` 的 `compactWorldState()` 现在通过 `assemblePromptContext()` 取得原有 capped 摘要字段，并附带 `retrievalContext` 作为模型读取的检索式索引。该索引按任务、玩家行动和身份视野从 `worldGeographyView`、`worldPeopleView`、`officialPostingsView`、`worldThreadView`、`longTermEventView`、`worldEntityView` 和可见 `eventHistory` 排序国家、城市、路线、NPC、关系、官署、官职、任所、考成、迁转和事件摘要。所有内容仍位于动态 task input 中，不进入 `promptPacks.js` 的稳定前缀，也不改变 provider schema。
+
 Providers expose four methods:
 
 - `startGame(worldState)`
@@ -567,7 +570,7 @@ Server rules:
 
 - `src/game/worldGeography.js` creates and normalizes the per-session ledger, fills missing legacy rows, clamps/caps dynamic fields, and refreshes light pressure snapshots from existing top-level world metrics.
 - `worldGeographyView` exposes visible countries, regions, cities, routes, frontiers, jurisdictions, and highlights. It filters hidden rows, hidden notes, hidden nested refs, and scholar-only `role_visible` geography.
-- Prompt `compactWorldState()` reads only `summarizeWorldGeographyForPrompt()`, capped to visible high-pressure or relevant geography.
+- Prompt `compactWorldState()` reads geography through the S53.1 prompt context assembler: the legacy `worldGeography` field still comes from `summarizeWorldGeographyForPrompt()`, and `retrievalContext.geography` adds ranked visible countries, cities, routes, and frontier zones for the current task/action.
 - Providers may read visible geography summaries for narrative grounding, but ordinary `statePatch.worldGeography` is rejected by schemas, remote normalization, provider long-run checks, and ignored by provider patch application.
 - The ledger does not replace top-level `treasury`, `grainReserve`, `publicOrder`, `borderThreat`, does not decide diplomacy/war/city finance, and does not create SQLite business tables.
 
@@ -582,7 +585,7 @@ Server rules:
 - `src/game/worldEntities.js` creates and normalizes the base entity set, clamps entity metrics, fills missing legacy rows, and filters hidden entities from player-facing output.
 - Entity categories are `court`, `local`, `academy`, `military`, `fiscal`, and `relief`; entity kinds are `court_office`, `local_gentry`, `academy_circle`, `frontier_garrison`, `fiscal_channel`, and `relief_operation`.
 - `worldEntityView` exposes grouped visible entities and high-pressure highlights with `statusLabel`, `riskLabel`, capped metrics, related labels, and intervention hints.
-- Prompt `compactWorldState()` reads only `summarizeWorldEntitiesForPrompt()`, capped to visible high-pressure entities and category summaries.
+- Prompt `compactWorldState()` reads entities through the S53.1 prompt context assembler: the legacy `worldEntities` field still comes from `summarizeWorldEntitiesForPrompt()`, and `retrievalContext.entities` adds ranked visible entity highlights for the current task/action.
 - Providers may read visible entity summaries for narrative grounding, but ordinary `statePatch.worldEntities` is rejected by schemas and ignored by provider patch application.
 - `deriveWorldEntityInfluences()` and `applyWorldEntityInfluences()` convert already-applied server-owned sources into bounded entity metric deltas. Sources include allowed provider state changes, world tick attribute changes, visible relationship changes, active NPC request outcomes, long-term events, role/world coupling, and official-career events/outcomes.
 - Entities still do not settle outcomes or replace source systems. They record institutional pressure and feed player-facing views plus World Threads.
@@ -747,6 +750,8 @@ S51.1 adds `src/game/worldPeopleSchemas.js` as the next database-domain contract
 S52.1 adds [docs/OFFICIAL_POSTING_DATABASE_CONTRACT.md](OFFICIAL_POSTING_DATABASE_CONTRACT.md), `src/game/officialPostingSchemas.js`, and `test/officialPostingSchemas.test.js` as the官职任所 database-domain contract. The helper normalizes future `bureaus`, `offices`, `cityJurisdictions`, `postings`, `assessmentRecords`, and `transferRecords`, then builds hidden-filtered views and capped prompt summaries. It reuses `officialCatalog` ids for官署/官职 and S50 geography ids for任所辖区. `worldState.officialPostings` is server-owned: ordinary provider `statePatch.officialPostings` is rejected by schema or ignored by state patching, remote normalization drops it, audit proposals redact it, and provider long-run flags it as a protected key.
 
 S52.2 adds `src/game/officialPostings.js`, `worldState.officialPostings`, `officialPostingsView`, and capped `officialPostings` prompt context. The bridge instantiates catalog bureaus/offices, converts visible `worldGeographyView.officeJurisdictions` and cities into per-city任所辖区 rows, maps direct official and magistrate starts to the current visible posting, and derives transfer records from server-owned `officialCareer.careerHistory`. Because routes still return raw local `worldState`, the stored ledger is only the hidden-filtered visible projection. This slice does not alter `officialCareerView`, does not add browser官职簿/任所地理 panels, and does not create SQLite office business tables.
+
+S53.1 adds `src/ai/promptContextAssembler.js`. It keeps existing compact prompt summary fields for compatibility, then adds `retrievalContext` as a ranked, capped index across visible geography, people, official postings, World Entities, World Threads, long-term events, and visible recent event strings. It deliberately avoids raw audit logs and raw hidden ledgers; future UI panels in S53.2 should still read route views, not this provider-only prompt object.
 
 ## Verification
 

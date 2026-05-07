@@ -104,7 +104,7 @@
 | S51.2 | DONE | 桥接当前 `characters`、`relationshipLedger`、active requests 与 NPC/关系表 | 2026-05-07 | Codex + read-only subagents | `8ed984a` |
 | S52.1 | DONE | 官职、官署、任所、城市辖区、考成和调任记录的数据库契约 | 2026-05-07 | Codex + read-only subagents | `4ce6d0e` |
 | S52.2 | DONE | 地方官/入仕官员任所与城市数据联动，保持服务器任免裁决 | 2026-05-07 | Codex + read-only subagents | `4599869` |
-| S53.1 | TODO | 检索式 prompt context assembler：按角色视野读取国家、城市、NPC、官职、事件摘要 |  |  |  |
+| S53.1 | DONE | 检索式 prompt context assembler：按角色视野读取国家、城市、NPC、官职、事件摘要 | 2026-05-07 | Codex + read-only subagents | 待提交后回填 |
 | S53.2 | TODO | 浏览器信息面板规划：天下格局、任所地理、人物谱牒、官职簿、事件档案 |  |  |  |
 
 ## 5. 实施规划
@@ -522,6 +522,52 @@
 下一步：
 
 - S53.1：检索式 prompt context assembler，按角色视野读取国家、城市、NPC、官职、事件摘要。
+
+### S53.1：检索式 prompt context assembler
+
+状态：DONE。实现/文档提交：待提交后回填；只读探索子代理 Boole 已梳理 prompt/view 契约、raw ledger 避免清单、测试重点和文档落点。提交前只读复审 Poincare 发现 2 个 P2，均已在 staging 前修复并补回归测试；Poincare 复核确认无 P0/P1/P2 阻塞。
+
+目标：
+
+- 新增 prompt context assembler，把普通 prompt 动态上下文的可见摘要集中到单一入口。
+- 按任务、玩家行动和身份视野，从国家、城市、路线、边境、NPC、关系、官署、官职、任所、考成、迁转、世界实体、世界议程、长期事件和最近事件中选取 ranked/capped context。
+- 保持 provider schema、prompt pack 稳定前缀、JSON 默认存储、SQLite 本地-only 范围和服务器任免/事件/数据库写入裁决不变。
+- 不新增浏览器信息面板，不新增 SQLite 业务表，不读取 raw audit sidecar 或 SQLite 审计表。
+
+完成：
+
+- 新增 `src/ai/promptContextAssembler.js`，提供 `assemblePromptContext()` 和 `buildRankedRetrievalContext()`。前者保留现有 `relationshipLedger`、`examCalendar`、`worldGeography`、`worldPeople`、`officialPostings`、`worldEntities`、`worldThreads`、`longTermEvents`、`officialCareer`、`roleWorldCoupling` 等 capped prompt summary 字段；后者新增 `retrievalContext` ranked index。
+- `retrievalContext` 从服务器可见 projection 和 prompt summary helper 取材：`worldGeographyView`、`worldPeopleView`、`officialPostingsView`、`worldThreadView`、`longTermEventView`、`worldEntityView` 和可见 `eventHistory` 字符串。它按当前任务/玩家行动和角色信息加权，同时保留固定 caps。
+- `src/ai/prompts.js` 改为通过 `assemblePromptContext()` 构造动态 world state；opening、ordinary turn、exam question 和 grading 都传入 task，ordinary turn 额外传入玩家行动。`retrievalContext` 仍只进入 task input，不进入 `promptPacks.js` 稳定前缀。
+- 修复提交前复审发现的两个问题：`worldEntities` / `worldThreads` 的关联人物标签现在会过滤隐藏 relationship character，不再把隐藏人物名带入可见实体/议题摘要；中文行动检索会展开 CJK 片段，让“核查漕运账册”能命中“漕运”路线。
+- 新增 `test/promptContextAssembler.test.js`，覆盖 assembler 兼容字段、hidden row/ref/audit-like 字段过滤、书生角色不可见外交/官署辖区、动作匹配排序当前地理/任所，以及最近事件 cap。
+- 扩展 `test/prompts.test.js`，确认普通回合 prompt 包含 S53 `retrievalContext`，且动态玩家名/行动仍不进入 stable instructions。
+- 架构文档、产品 brief、AI 权限矩阵和 shared context 同步 S53.1 边界。
+
+验证：
+
+- `node --check src\ai\promptContextAssembler.js`
+- `node --check src\ai\prompts.js`
+- `node --check test\promptContextAssembler.test.js`
+- `node --check src\game\worldEntities.js`
+- `node --check src\game\worldThreads.js`
+- `node --test test\promptContextAssembler.test.js test\prompts.test.js`，19 项通过
+- `node --test test\worldEntities.test.js test\worldThreads.test.js`，13 项通过
+- Poincare 只读复核运行 `node --test test\promptContextAssembler.test.js test\prompts.test.js test\worldEntities.test.js test\worldThreads.test.js`，32 项通过，确认无 P0/P1/P2 阻塞
+- `node --test test\promptContextAssembler.test.js test\prompts.test.js test\worldGeography.test.js test\worldPeopleSchemas.test.js test\officialPostingSchemas.test.js test\worldEntities.test.js test\worldThreads.test.js`，51 项通过
+- `npm run check:docs-governance`
+- `$env:AI_PROVIDER='mock'; npm test`，370 项通过
+- `git diff --check`
+
+风险/遗留：
+
+- `retrievalContext` 是 provider-only prompt 对象，不是浏览器 UI contract；S53.2 的天下格局、任所地理、人物谱牒、官职簿和事件档案面板仍必须读取 route 返回的服务器 view。
+- 当前不读取 raw audit sidecar / SQLite 审计表；未来若做审计检索或事件档案 UI，必须先新增 sanitized projection、分页权限和 hidden-token corpus。
+- 现有 route 仍为本地开发兼容返回完整 `worldState`；未来若保存真正 hidden NPC/官员/地理私档，仍需先做玩家 API 脱敏或 raw-state redaction。
+
+下一步：
+
+- S53.2：浏览器信息面板规划，明确天下格局、任所地理、人物谱牒、官职簿和事件档案的 route view 来源、hidden 过滤和验收范围。
 
 ## 6. 数据域规划
 

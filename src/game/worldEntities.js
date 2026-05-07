@@ -1237,13 +1237,20 @@ function uniqueList(values, limit = 8) {
   return result.slice(0, limit);
 }
 
+function labelVisibleCharacter(id, worldState = {}) {
+  const characterId = cleanText(id, "", 80);
+  if (!characterId) return "";
+  const character = Array.isArray(worldState.characters)
+    ? worldState.characters.find((entry) => entry?.id === characterId)
+    : null;
+  const ledgerEntry = worldState.relationshipLedger?.characters?.[characterId];
+  if (character?.visible === false || ledgerEntry?.visible === false) return "";
+  if (!character && !ledgerEntry) return "";
+  return character?.name || ledgerEntry?.name || characterId;
+}
+
 function buildRelatedLabels(related = {}, worldState = {}) {
-  const characters = uniqueList((related.characters || []).map((id) => {
-    const character = Array.isArray(worldState.characters)
-      ? worldState.characters.find((entry) => entry?.id === id)
-      : null;
-    return character?.name || id;
-  }), 6);
+  const characters = uniqueList((related.characters || []).map((id) => labelVisibleCharacter(id, worldState)), 6);
   const factions = uniqueList((related.factions || []).map((id) => FACTION_LABELS[id] || id), 6);
   const offices = uniqueList((related.offices || []).map(labelOffice), 6);
   const metrics = uniqueList((related.metrics || []).map((id) => METRIC_LABELS[id] || id), 8);

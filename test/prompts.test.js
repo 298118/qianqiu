@@ -378,6 +378,25 @@ test("prompt input includes visible official postings without hidden geography r
   assert.doesNotMatch(task.input, /SEALED_PROMPT_POSTING_JURISDICTION/);
 });
 
+test("turn prompt input includes S53 retrieval context as dynamic world state", () => {
+  const worldState = createInitialState({ role: "official", playerName: "Retrieval Prompt Tester" });
+  Object.assign(worldState.player, {
+    officeTitle: "户部主事",
+    position: "户部主事"
+  });
+  worldState.officialCareer.currentPosting = "户部主事";
+  worldState.officialCareer.bureauId = "ministry_revenue";
+
+  const task = buildTurnTask(worldState, "核查户部与京杭漕运北段");
+
+  assert.match(task.input, /Use retrievalContext as the first index/);
+  assert.match(task.input, /"retrievalContext"/);
+  assert.match(task.input, /server_visible_ranked_projection/);
+  assert.match(task.input, /"playerAction": "核查户部与京杭漕运北段"/);
+  assert.match(task.input, /route-grand-canal-north|京杭漕运北段/);
+  assert.doesNotMatch(task.instructions, /Retrieval Prompt Tester|京杭漕运北段/);
+});
+
 test("scholar geography prompt does not expose role-visible diplomatic geography", () => {
   const worldState = createInitialState({ role: "scholar", playerName: "Scholar Geo Prompt Tester" });
   const task = buildTurnTask(worldState, "在县学听闻边报");
