@@ -104,7 +104,7 @@
 | S51.2 | DONE | 桥接当前 `characters`、`relationshipLedger`、active requests 与 NPC/关系表 | 2026-05-07 | Codex + read-only subagents | `8ed984a` |
 | S52.1 | DONE | 官职、官署、任所、城市辖区、考成和调任记录的数据库契约 | 2026-05-07 | Codex + read-only subagents | `4ce6d0e` |
 | S52.2 | DONE | 地方官/入仕官员任所与城市数据联动，保持服务器任免裁决 | 2026-05-07 | Codex + read-only subagents | `4599869` |
-| S53.1 | DONE | 检索式 prompt context assembler：按角色视野读取国家、城市、NPC、官职、事件摘要 | 2026-05-07 | Codex + read-only subagents | 待提交后回填 |
+| S53.1 | DONE | 检索式 prompt context assembler：按角色视野读取国家、城市、NPC、官职、事件摘要 | 2026-05-07 | Codex + read-only subagents | `1268c04` |
 | S53.2 | TODO | 浏览器信息面板规划：天下格局、任所地理、人物谱牒、官职簿、事件档案 |  |  |  |
 
 ## 5. 实施规划
@@ -525,7 +525,7 @@
 
 ### S53.1：检索式 prompt context assembler
 
-状态：DONE。实现/文档提交：待提交后回填；只读探索子代理 Boole 已梳理 prompt/view 契约、raw ledger 避免清单、测试重点和文档落点。提交前只读复审 Poincare 发现 2 个 P2，均已在 staging 前修复并补回归测试；Poincare 复核确认无 P0/P1/P2 阻塞。
+状态：DONE。实现/文档提交：`1268c04`；只读探索子代理 Boole 已梳理 prompt/view 契约、raw ledger 避免清单、测试重点和文档落点。提交前只读复审 Poincare 发现 2 个 P2，均已在 staging 前修复并补回归测试；Poincare 复核确认无 P0/P1/P2 阻塞。
 
 目标：
 
