@@ -501,6 +501,8 @@ S50.2 已新增 `src/game/worldGeography.js`，把静态 seed 实例化为每局
 - 玩家关系 view 继续过滤隐藏信息。
 - NPC 财富、田产、家族、官职、声望、人情债开始可追踪。
 
+S51.1 已先新增 [人物、家族、资产、田产与关系 Schema 契约](NPC_HOUSEHOLD_ASSET_RELATIONSHIP_CONTRACT.md) 与 `src/game/worldPeopleSchemas.js`。这一片只固定 `npcs`、`households`、`assets`、`estates`、`relationships` 的字段、数值范围、可见性枚举、hidden refs 过滤和 capped prompt summary；它不新增 `worldState.worldPeople`，不替换现有 `characters` / `relationshipLedger` / `activeNpcRequest`，不改 route payload，不新增 UI，也不建 SQLite 业务表。S51.2 才负责桥接旧人物和关系系统。
+
 验收：
 
 - 既有关系测试通过。

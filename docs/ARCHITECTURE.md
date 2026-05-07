@@ -58,6 +58,7 @@ Important route ownership:
 - `src/game/examSceneTime.js` owns S48.4 exam-local phases, date stamps, scene cadence feedback, and submitted-phase archival fields.
 - `src/game/relationships.js` owns NPC/faction relationship ledger creation, normalization, legacy backfill, compact prompt summaries, and the S32.1/S32.2 player-facing relationship inspection view. Visible-only summaries filter hidden contacts, factions, and hidden-entry notes before prompt/UI exposure.
 - `src/game/activeRequests.js` owns the S32.3 server-scheduled active NPC/faction request loop. Providers may suggest narrative and relationship consequences, but they do not create, replace, resolve, or expire `worldState.activeNpcRequest`.
+- `src/game/worldPeopleSchemas.js` owns the S51.1 standalone schema contract for future NPC, household, asset, estate, relationship, and visibility rows. It normalizes/clamps rows, builds hidden-filtered schema views, and provides capped prompt summaries, but it is not yet connected to `worldState` or route payloads.
 - `src/game/longTermEvents.js` owns the S33 server-scheduled long-term event queue for seasonal, disaster, border, court, local case-chain, and cross-month consequence events. Providers may read a compact summary for narrative context, but they do not create, replace, resolve, or expire `worldState.longTermEvents`.
 - `src/game/officialCatalog.js` owns the S42.2 static office/bureau catalog used to normalize office titles, bureau duties, and promotion/transfer/outpost candidates.
 - `src/game/worldGeographySeeds.js` owns the S50.1 static geography seed catalog for countries, neighboring polities, regions, cities, routes, frontier zones, office jurisdictions, and initial visibility.
@@ -511,6 +512,24 @@ Server rules:
 
 The browser renders active requests as `#active-request-panel` from top-level `activeNpcRequestView` and does not scan the raw ledger or raw request state for normal display. Stable card attributes include `data-request-id`, `data-request-kind`, `data-target-type`, `data-target-id`, `data-request-status`, and `data-due-turn`.
 
+## World People Schema Contract
+
+S51.1 adds [docs/NPC_HOUSEHOLD_ASSET_RELATIONSHIP_CONTRACT.md](NPC_HOUSEHOLD_ASSET_RELATIONSHIP_CONTRACT.md) and `src/game/worldPeopleSchemas.js` as the schema-contract layer for future NPC/household/asset/estate/relationship database rows.
+
+Current scope:
+
+- `normalizeWorldPeopleSchemaBundle()` accepts an independent bundle with `npcs`, `households`, `assets`, `estates`, `relationships`, and `recentNotes`; it clamps numeric fields, caps text/list fields, drops malformed ids, and preserves `hiddenIntent` / `hiddenNotes` only in the normalized raw bundle.
+- `buildWorldPeopleSchemaView()` filters hidden rows and hidden nested refs. A visible NPC cannot expose hidden family, asset, estate, parent, spouse, or child ids; visible households cannot expose hidden member/asset/estate ids; assets/estates owned by hidden NPCs or households are omitted; relationships pointing at hidden people or property rows are omitted.
+- `summarizeWorldPeopleSchemaForPrompt()` reads only the filtered view and caps output to NPC 8, household 6, asset 6, estate 6, and relationship 10 entries.
+- `visibility` uses `public`, `role_visible`, `relationship_visible`, `rumor`, and `hidden`. Scholar-mode cannot see `role_visible` rows unless `knownToPlayer` is true; `relationship_visible` rows require `knownToPlayer: true`.
+- This slice does not add `worldState.worldPeople`, does not change `relationshipView` / `activeNpcRequestView`, does not add browser UI, and does not create SQLite business tables.
+
+Provider boundary:
+
+- Ordinary providers still cannot write future people ledgers. `statePatch.worldPeople` is rejected by AI schemas and ignored by `applyStatePatch()` if a non-schema call includes it.
+- The only current provider social path remains top-level `relationshipChanges[]` targeting existing visible `character` / `faction` ledger entries.
+- S51.2 may bridge `characters`, `relationshipLedger`, and `activeNpcRequest` onto this schema, but it must preserve the existing delta/clamp/visibility rules and complete scholar path.
+
 ## Role / World Coupling Contract
 
 S36 adds `worldState.roleWorldCoupling`, documented in [docs/ROLE_WORLD_COUPLING_CONTRACT.md](ROLE_WORLD_COUPLING_CONTRACT.md). It is a server-owned recent-impact ledger with `schemaVersion`, capped `recentImpacts`, ten-day period stamps, and short month-derived absolute-turn `cooldowns`.
@@ -708,6 +727,8 @@ S49.4 extends the storage contract with `appendAuditEvent()`, `appendAiProposal(
 S50.1 adds [docs/WORLD_GEOGRAPHY_SEED_CONTRACT.md](WORLD_GEOGRAPHY_SEED_CONTRACT.md) and `src/game/worldGeographySeeds.js` as the static catalog layer for that future split. The module validates id uniqueness and cross-references among countries, regions, cities, routes, frontiers, and office jurisdictions, and its seed view filters hidden rows/notes.
 
 S50.2 adds `src/game/worldGeography.js` and `worldState.worldGeography`. New sessions instantiate the seed into per-session rows for countries, regions, cities, routes, frontier zones, and office jurisdictions. Game and exam routes now include `worldGeographyView`, which filters hidden rows, `hiddenNotes`, hidden nested refs, and scholar-only `role_visible` rows; `compactWorldState()` sends only a capped `worldGeography` prompt summary. This does not add a browser geography panel, does not replace top-level `treasury` / `publicOrder` / `borderThreat`, and does not create SQLite business tables. The existing route payload still carries full local `worldState` for development compatibility, so future UI must read `worldGeographyView` rather than raw `worldState.worldGeography`.
+
+S51.1 adds `src/game/worldPeopleSchemas.js` as the next database-domain contract after geography. It remains standalone in this slice; no `worldState.worldPeople` row is saved yet, and route payloads still expose only the existing `relationshipView` / `activeNpcRequestView` social surfaces. Future 人物谱牒 or 家产 panels must be built from a server view derived from this schema, not raw hidden rows.
 
 ## Verification
 

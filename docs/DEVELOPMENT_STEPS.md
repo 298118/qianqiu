@@ -100,7 +100,7 @@
 | S49.4 | DONE | 事件日志与 AI proposal 审计：记录模型建议、服务器接受/拒绝和最终应用事件 | 2026-05-07 | Codex + read-only subagents | `092de20` |
 | S50.1 | DONE | 静态天下与邻国种子契约：国家、城市、路线、边境、官署辖区和初始可见性 | 2026-05-07 | Codex + read-only subagents | `45f9b65` |
 | S50.2 | DONE | per-session 国家/城市实例化与 prompt projection，先不替代现有 worldState 指标 | 2026-05-07 | Codex + read-only subagents | `b0ced01` |
-| S51.1 | TODO | NPC、家族、资产、田产、关系和可见性 schema 契约 |  |  |  |
+| S51.1 | DONE | NPC、家族、资产、田产、关系和可见性 schema 契约 | 2026-05-07 | Codex + read-only subagents | 待提交后回填 |
 | S51.2 | TODO | 桥接当前 `characters`、`relationshipLedger`、active requests 与 NPC/关系表 |  |  |  |
 | S52.1 | TODO | 官职、官署、任所、城市辖区、考成和调任记录的数据库契约 |  |  |  |
 | S52.2 | TODO | 地方官/入仕官员任所与城市数据联动，保持服务器任免裁决 |  |  |  |
@@ -357,6 +357,43 @@
 - 路由为保持现有开发兼容仍返回完整本地 `worldState`；浏览器和模型不得读取 raw `worldState.worldGeography` 作为展示/上下文来源。
 - S50.2 不做浏览器地理面板、不拆 SQLite 业务表、不让 World Entities/Threads 直接读取地理账本；后续 S53/S52 可再联动。
 
+### S51.1：NPC、家族、资产、田产、关系和可见性 Schema 契约
+
+状态：DONE。实现/文档提交待回填；提交前只读复审 Erdos 与 Boyle 未发现阻塞问题。
+
+目标：
+
+- 新增人物域 schema 契约，覆盖未来 `npcs`、`households`、`assets`、`estates`、`relationships` 与可见性枚举。
+- 提供独立 normalization / view / prompt summary helper，先不写 `worldState.worldPeople`，不改变 route payload，不新增浏览器面板，不建 SQLite 业务表。
+- 保留现有 `characters`、`relationshipLedger`、`activeNpcRequest` 与 `relationshipChanges` 语义，S51.2 再桥接。
+- 确认普通 provider 不能通过 `statePatch` 新造 NPC、公开隐藏家产、直接写人物/田产/关系表。
+
+当前实现：
+
+- 新增 `src/game/worldPeopleSchemas.js`，提供 `normalizeWorldPeopleSchemaBundle()`、`buildWorldPeopleSchemaView()`、`summarizeWorldPeopleSchemaForPrompt()` 和 `canSeeWorldPeopleRow()`。
+- 新增 `docs/NPC_HOUSEHOLD_ASSET_RELATIONSHIP_CONTRACT.md`，定义 NPC、家族、资产、田产、关系字段、数值范围、`public/role_visible/relationship_visible/rumor/hidden` 可见性、hidden notes/intent 边界和 nested 引用裁剪。
+- 新增 `test/worldPeopleSchemas.test.js`，覆盖归一化 clamp、隐藏行过滤、可见行 nested hidden refs 裁剪、书生/官员/关系可见性、prompt cap、assets prompt cap 和 provider `statePatch.worldPeople` 越权拒绝。
+- README、架构文档、产品 brief、动态数据库规划和 AI 权限矩阵同步 S51.1 边界。
+
+验证：
+
+- `node --check src\game\worldPeopleSchemas.js`
+- `node --check test\worldPeopleSchemas.test.js`
+- `node --test test\worldPeopleSchemas.test.js test\relationshipLedger.test.js test\activeNpcRequests.test.js`，21 项通过
+- `node --test test\stateRules.test.js test\aiSchemas.test.js test\prompts.test.js test\aiControlRedTeam.test.js`，29 项通过
+- `node --test test\gameTurnRelationships.test.js test\examTravel.test.js test\sessionStore.test.js test\sessionStoreAdapterContract.test.js`，51 项通过
+- `npm run check:docs-governance`
+- `$env:AI_PROVIDER='mock'; npm test`，343 项通过
+- `git diff --check`
+- 提交前只读复审 Erdos 未发现 P0/P1/P2 blocker；其非阻塞建议是 prompt 摘要补 assets cap 和后续明确 view `generatedAtTurn` 语义。已补 assets cap 与 hidden asset prompt 测试。
+- 提交前只读复审 Boyle 复查 assets prompt cap，未发现 hidden owner/hidden asset 泄漏路径。
+
+风险/遗留：
+
+- S51.1 只定义 standalone schema/helper；还没有 `worldState.worldPeople`、route view、browser 人物/家产面板或 SQLite 业务表。
+- `relationshipChanges` 仍只支持既有可见 `character` / `faction` 目标；S51.2 若扩展到新人物/关系表，必须保留可见目标、delta、clamp 和服务器裁决。
+- 后续桥接时尤其要防可见 NPC/家族引用 hidden patron、hidden estate、hidden asset 导致 id 泄漏。
+
 ## 6. 数据域规划
 
 数据库专项需要承载的数据域如下。每个域都先定义契约和 projection，再决定是否拆表；不要为了“有数据库”而提前建过度复杂的表。
@@ -436,6 +473,44 @@
 - 隐藏信息要在数据库层、projection 层和 prompt 层都标记；不能只靠前端隐藏。
 
 ## 8. 进度记录
+
+### 2026-05-07
+
+工具：Codex；只读探索子代理 Halley；提交前只读复审待完成
+
+步骤：S51.1
+
+提交：待回填
+
+完成：
+
+- 新增 `docs/NPC_HOUSEHOLD_ASSET_RELATIONSHIP_CONTRACT.md`，固定人物、家族、资产、田产、关系和可见性 schema 契约，明确 S51.1 不写 `worldState.worldPeople`、不改 route payload、不新增 UI、不建 SQLite 业务表。
+- 新增 `src/game/worldPeopleSchemas.js`，提供 standalone `normalizeWorldPeopleSchemaBundle()`、`buildWorldPeopleSchemaView()`、`summarizeWorldPeopleSchemaForPrompt()` 和 `canSeeWorldPeopleRow()`，用于归一化、隐藏过滤、nested hidden refs 裁剪和 capped prompt 摘要。
+- 新增 `test/worldPeopleSchemas.test.js`，覆盖归一化 clamp、hidden notes/intent 不进 view/prompt、书生/官员/关系可见性、可见行引用隐藏人物/家产裁剪、provider `statePatch.worldPeople` 越权拒绝和 `applyStatePatch()` 忽略。
+- README、架构文档、产品 brief、动态数据库规划、AI 权限矩阵和 shared context 同步 S51.1 边界。
+- Halley 只读梳理了当前 `characters`、`relationshipLedger`、active requests、玩家资产字段、测试风险和 S51.1 推荐落点；子代理未编辑文件，未运行 Git 写命令。
+- 提交前只读复审 Erdos 未发现 P0/P1/P2 blocker；其非阻塞建议是 prompt 摘要补 assets cap 和后续明确 view `generatedAtTurn` 语义。已补 assets cap 与 hidden asset prompt 测试。
+- 提交前只读复审 Boyle 复查 assets prompt cap，未发现 hidden owner/hidden asset 泄漏路径。
+
+验证：
+
+- `node --check src\game\worldPeopleSchemas.js`
+- `node --check test\worldPeopleSchemas.test.js`
+- `node --test test\worldPeopleSchemas.test.js test\relationshipLedger.test.js test\activeNpcRequests.test.js`，21 项通过
+- `node --test test\stateRules.test.js test\aiSchemas.test.js test\prompts.test.js test\aiControlRedTeam.test.js`，29 项通过
+- `node --test test\gameTurnRelationships.test.js test\examTravel.test.js test\sessionStore.test.js test\sessionStoreAdapterContract.test.js`，51 项通过
+- `npm run check:docs-governance`
+- `$env:AI_PROVIDER='mock'; npm test`，343 项通过
+- `git diff --check`
+
+风险/遗留：
+
+- 本步骤仍不新增每局人物状态、浏览器人物谱牒/家产面板、SQLite NPC 业务表或 prompt 接入；S51.2 才桥接当前 `characters`、`relationshipLedger` 和 active requests。
+- 后续桥接时必须保留现有 `relationshipChanges` 的可见目标、delta、clamp、隐藏过滤和服务器裁决，不得让 AI 新造隐藏联系人或直接写 NPC 资产。
+
+下一步：
+
+- 完成提交前只读复审并提交；随后 S51.2：桥接当前 `characters`、`relationshipLedger`、active requests 与 NPC/关系表。
 
 ### 2026-05-07
 

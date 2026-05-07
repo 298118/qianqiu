@@ -29,7 +29,7 @@
 
 S48 时间专项已完成并归档到 `docs/TIME_SPECIALTY_ROADMAP_ARCHIVE.md`。S48.3 已建立 `worldState.tenDayPeriod`、共享时间 helper、旧档上旬默认、provider 时间字段边界，并把普通自由行动改为每回合推进一旬；月末完整结算只在下旬进入下月上旬时发生。S48.4 已先把科举落成局部场景时间：考试入场、审题、拟纲、作答、誊清、交卷推进 `activeExam.sceneTime`，不消耗全局旬。S48.5 已把官场差事/弹劾、长期事件冷却、World Threads 期限标签、World Entities cadence 和 provider long-run 脚本适配到“旬回合 vs 月末月份”的语义。S48.6 已把状态栏、存档卡、考试日历、考试弹窗、考试档案和回合反馈统一显示“年月旬”，并让 browser smoke 与 provider long-run 检查这一节奏。
 
-当前活动路线图：`docs/DEVELOPMENT_STEPS.md`，已切换为本地动态世界数据库专项。数据库方向见 `docs/DYNAMIC_WORLD_DATABASE_PLAN.md`。短期继续默认使用 JSON session 存档；S49.3 已把路由入口 `src/storage/sessionStore.js`、默认 JSON adapter、共享 `sessionRecord` helpers 与可选 SQLite adapter 分开，并让 JSON/SQLite 同跑 storage adapter contract tests。S49.4 已在 adapter contract 上加入本地 `event_log` 与 `ai_change_proposals` 审计：JSON 写 `data/audit/*.jsonl`，SQLite 写本地表，记录模型建议、服务器接受/拒绝和应用事件 id。S50.1 已新增 `docs/WORLD_GEOGRAPHY_SEED_CONTRACT.md` 与 `src/game/worldGeographySeeds.js`，固定国家、邻国、城市、路线、边境和官署辖区静态 catalog 与初始可见性；S50.2 已新增 `src/game/worldGeography.js` 和每局 `worldState.worldGeography`，用过滤后的 `worldGeographyView` 与 capped prompt 摘要提供可见地理上下文。后续若要承载大量国家/邻国、城市、NPC、家族、官职任命、地方任所和事件记录，应在该审计底座和地理账本之上逐步拆业务表。当前不规划远程存档、账号体系、多人同步、云端冲突解决或托管数据库。AI 不能直接写数据库或执行 SQL，只能提交结构化建议；服务器继续负责 schema、白名单、clamp、隐藏过滤、科举晋级、官职任免、长期事件、世界实体、世界议程和持久化事务。
+当前活动路线图：`docs/DEVELOPMENT_STEPS.md`，已切换为本地动态世界数据库专项。数据库方向见 `docs/DYNAMIC_WORLD_DATABASE_PLAN.md`。短期继续默认使用 JSON session 存档；S49.3 已把路由入口 `src/storage/sessionStore.js`、默认 JSON adapter、共享 `sessionRecord` helpers 与可选 SQLite adapter 分开，并让 JSON/SQLite 同跑 storage adapter contract tests。S49.4 已在 adapter contract 上加入本地 `event_log` 与 `ai_change_proposals` 审计：JSON 写 `data/audit/*.jsonl`，SQLite 写本地表，记录模型建议、服务器接受/拒绝和应用事件 id。S50.1 已新增 `docs/WORLD_GEOGRAPHY_SEED_CONTRACT.md` 与 `src/game/worldGeographySeeds.js`，固定国家、邻国、城市、路线、边境和官署辖区静态 catalog 与初始可见性；S50.2 已新增 `src/game/worldGeography.js` 和每局 `worldState.worldGeography`，用过滤后的 `worldGeographyView` 与 capped prompt 摘要提供可见地理上下文。S51.1 已新增 `docs/NPC_HOUSEHOLD_ASSET_RELATIONSHIP_CONTRACT.md` 与 `src/game/worldPeopleSchemas.js`，先固定 NPC、家族、资产、田产、关系和可见性 schema helper；该 helper 目前不写 `worldState.worldPeople`、不接 route payload、不新增 UI、不建 SQLite 业务表。后续若要承载大量国家/邻国、城市、NPC、家族、官职任命、地方任所和事件记录，应在该审计底座、地理账本和人物 schema 契约之上逐步拆业务表。当前不规划远程存档、账号体系、多人同步、云端冲突解决或托管数据库。AI 不能直接写数据库或执行 SQL，只能提交结构化建议；服务器继续负责 schema、白名单、clamp、隐藏过滤、科举晋级、官职任免、长期事件、世界实体、世界议程和持久化事务。
 
 开发规范不变。第 12 节和第 13 节仍是每次开发必须遵守的流程；Mock 默认可玩、真实 provider 可选、服务器拥有状态边界和科举规则这些要求继续有效。
 
@@ -287,6 +287,8 @@ S43.2/S45.2 后，游戏与考试路由会返回服务器归一化的 `worldThre
 S45.2 后，游戏与考试路由会返回服务器归一化的 `worldEntityView`。该视图来自 `worldState.worldEntities`，把朝廷衙门、地方士绅、书院同门、军镇边墙、盐漕税赋和灾荒赈务整理为玩家可见的制度实体摘要；AI prompt 只读取 capped 可见摘要，普通 provider 不得通过 `statePatch.worldEntities` 直接写入。普通回合中，AI 允许的状态变化、世界 tick、关系/主动 NPC、长期事件、身份联动和官场结果会通过服务器 helper 转成 bounded `worldEntityImpacts`，再由 World Threads 读取可见实体摘要；实体仍不替代来源系统结算。
 
 S50.2 后，游戏与考试路由会返回服务器归一化的 `worldGeographyView`。该视图来自 `worldState.worldGeography`，把国家、区域、城市、路线、边境压力面和官署辖区整理为玩家/后续 UI 可见的地理 projection；AI prompt 只读取 capped `worldGeography` 摘要，普通 provider 不得通过 `statePatch.worldGeography` 直接写入。该账本只从现有顶层世界指标派生轻量压力快照，不替代财政、战争、外交或城市治理裁决。
+
+S51.1 后，人物、家族、资产、田产和关系的未来数据库化入口是 `src/game/worldPeopleSchemas.js` 与 `docs/NPC_HOUSEHOLD_ASSET_RELATIONSHIP_CONTRACT.md`。该模块只处理独立 schema bundle 的归一化、可见性过滤、隐藏引用裁剪和 capped prompt 摘要；当前不新增 `worldState.worldPeople`，不改变既有 `relationshipView` / `activeNpcRequestView` route contract，也不把人物谱牒或家产面板接入浏览器。普通 provider 仍不得通过 `statePatch` 写人物库、家族、资产、田产或关系表。
 
 普通回合的 `examTrigger` 不能直接创建考试。服务端会先确认当前名位可进入该考试，再检查服务器拥有的科举日历窗口；若玩家已有未交卷的 `activeExam`，新的触发请求会被拒绝并保留原题、`examId` 和写卷状态。
 
@@ -707,9 +709,11 @@ S46.1 已把依赖、插件与开源参考的引入流程落入 `docs/DEPENDENCY
 
 S50.1 已新增 `docs/WORLD_GEOGRAPHY_SEED_CONTRACT.md` 和 `src/game/worldGeographySeeds.js`。默认静态种子 `late-ming-north-china` 覆盖本国、关外强邻、漠南诸部、朝鲜、琉球，以及北京、南京、苏州、杭州、济南、开封、太原、大同、山海关、盛京、汉城、广州等城市，配套漕运、河防、驿路、关隘、海道、边境压力面和官署辖区。S50.2 在其上新增 `src/game/worldGeography.js`：新局写入 server-owned `worldState.worldGeography`，旧档读路由会归一化补账本，游戏/考试 payload 返回 `worldGeographyView`，prompt 只读取 capped `worldGeography` summary。该账本会从当前 `publicOrder`、`borderThreat`、`grainReserve` 等顶层指标刷新轻量压力快照，但不替代这些顶层指标，不裁决战争/外交/财政，也不新增浏览器面板或 SQLite 业务表。
 
+S51.1 已新增 `docs/NPC_HOUSEHOLD_ASSET_RELATIONSHIP_CONTRACT.md` 和 `src/game/worldPeopleSchemas.js`。该契约固定未来 `npcs`、`households`、`assets`、`estates`、`relationships` 的字段、数值范围、可见性枚举、hidden notes/intent 边界、nested 引用裁剪和 prompt cap。S51.1 仍是 standalone schema helper，不写每局状态、不替换 `characters` / `relationshipLedger` / `activeNpcRequest`，不新增浏览器人物或家产面板，也不创建 SQLite 业务表；S51.2 才能在此基础上桥接当前人物与关系系统。
+
 所有时间专项实现仍需满足基础验收：默认 Mock 可运行，完整 scholar -> official 路径不得被破坏，真实 provider 不得成为本地启动必要条件，服务器继续拥有状态边界、时间推进、科举晋级、作弊惩罚、长期事件结果、官场授官升降、角色-世界联动后果和持久化裁决。
 
-本地数据库专项也必须满足同一边界：默认 JSON/Mock 路径不得被破坏；`sessionStore` facade 的 route payload、revision、legacy 迁移、脱敏存档簿和 `mutateSession` 语义是 SQLite 适配器也必须遵守的 contract。S49.3 的 SQLite 原型只是一行一 session、本地 `world_sessions` 表和 JSON `world_state`，通过 `STORAGE_ADAPTER=sqlite` 可选开启；S49.4 的 `event_log` / `ai_change_proposals` 只记录本地脱敏审计摘要，不进入玩家 API，也不让 AI 直接写表；S50.2 的天下地理账本仍存在 JSON `world_state` 内，浏览器和模型必须读取服务器过滤后的 `worldGeographyView` / prompt summary，而不是 raw ledger。数据库只增强本机索引、审计、长期存储和检索式 prompt context，不把核心裁决交给 AI、SQL 或黑箱库。当前数据库专项不规划远程存档、账号体系、多人同步、云端冲突解决或托管数据库；`session_id` 只表示本机不同存档。
+本地数据库专项也必须满足同一边界：默认 JSON/Mock 路径不得被破坏；`sessionStore` facade 的 route payload、revision、legacy 迁移、脱敏存档簿和 `mutateSession` 语义是 SQLite 适配器也必须遵守的 contract。S49.3 的 SQLite 原型只是一行一 session、本地 `world_sessions` 表和 JSON `world_state`，通过 `STORAGE_ADAPTER=sqlite` 可选开启；S49.4 的 `event_log` / `ai_change_proposals` 只记录本地脱敏审计摘要，不进入玩家 API，也不让 AI 直接写表；S50.2 的天下地理账本仍存在 JSON `world_state` 内，浏览器和模型必须读取服务器过滤后的 `worldGeographyView` / prompt summary，而不是 raw ledger；S51.1 的人物 schema helper 目前不进入 route payload，后续人物谱牒/家产 UI 也必须先走服务器 view。数据库只增强本机索引、审计、长期存储和检索式 prompt context，不把核心裁决交给 AI、SQL 或黑箱库。当前数据库专项不规划远程存档、账号体系、多人同步、云端冲突解决或托管数据库；`session_id` 只表示本机不同存档。
 
 ## 16. 历史实现笔记归档
 
