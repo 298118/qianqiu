@@ -70,7 +70,7 @@ Each future detailed panel needs stable `data-*` attributes, hidden-token scanni
 
 Date: 2026-05-07
 
-Relevant implementation commit: 待提交后回填
+Relevant implementation commit: `89e73c2`
 
 Commands verified during S53.3:
 

@@ -106,7 +106,7 @@
 | S52.2 | DONE | 地方官/入仕官员任所与城市数据联动，保持服务器任免裁决 | 2026-05-07 | Codex + read-only subagents | `4599869` |
 | S53.1 | DONE | 检索式 prompt context assembler：按角色视野读取国家、城市、NPC、官职、事件摘要 | 2026-05-07 | Codex + read-only subagents | `1268c04` |
 | S53.2 | DONE | 浏览器信息面板规划：天下格局、任所地理、人物谱牒、官职簿、事件档案 | 2026-05-07 | Codex + read-only subagents | `b89882a` |
-| S53.3 | DONE | 浏览器信息面板前端接线基础：缓存 S50-S52 view 并建立 tab/面板壳 | 2026-05-07 | Codex + read-only subagents | 待提交后回填 |
+| S53.3 | DONE | 浏览器信息面板前端接线基础：缓存 S50-S52 view 并建立 tab/面板壳 | 2026-05-07 | Codex + read-only subagents | `89e73c2` |
 | S53.4 | TODO | 天下格局与任所地理面板：地理、任所、辖区、路线和压力摘要 |  |  |  |
 | S53.5 | TODO | 人物谱牒与官职簿面板：人物/家产关系、官署官职、任命考成迁转 |  |  |  |
 | S53.6 | TODO | 事件档案安全 projection 与浏览器面板 |  |  |  |
@@ -609,7 +609,7 @@
 
 ### S53.3：浏览器信息面板前端接线基础
 
-状态：DONE。实现提交：待提交后回填。只读探索子代理 Leibniz 梳理了 `public/app.js`、`public/index.html` 和 `public/styles.css` 的挂载点、缓存变量和布局约束；只读探索子代理 Mencius 梳理了 `scripts/browserSmoke.js` / `test/browserSmokeScript.test.js` 的 metrics、hidden-token 和 helper 验收模式。提交前只读复审 Boyle 未发现 P0/P1/P2 blocker；其 P3 提醒“隐藏 tab 文本扫描不应只依赖 `innerText`”已收口为信息面板 smoke 快照读取 `textContent`。
+状态：DONE。实现提交：`89e73c2`。只读探索子代理 Leibniz 梳理了 `public/app.js`、`public/index.html` 和 `public/styles.css` 的挂载点、缓存变量和布局约束；只读探索子代理 Mencius 梳理了 `scripts/browserSmoke.js` / `test/browserSmokeScript.test.js` 的 metrics、hidden-token 和 helper 验收模式。提交前只读复审 Boyle 未发现 P0/P1/P2 blocker；其 P3 提醒“隐藏 tab 文本扫描不应只依赖 `innerText`”已收口为信息面板 smoke 快照读取 `textContent`。
 
 目标：
 
