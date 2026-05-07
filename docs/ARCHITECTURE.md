@@ -308,6 +308,8 @@ The server checks authenticity, asks the provider for grading, applies local pen
 
 ## AI Provider Contract
 
+S44.1 的系统级权限矩阵见 [docs/AI_CONTROL_AUDIT_MATRIX.md](AI_CONTROL_AUDIT_MATRIX.md)。该矩阵是新增 AI 可读摘要、可建议字段、服务器拥有 ledger、浏览器面板和 red-team/eval 覆盖时的入口清单；本节只保留运行时调用形态。
+
 Providers expose four methods:
 
 - `startGame(worldState)`
@@ -324,6 +326,8 @@ Provider outputs must match the schemas in `src/ai/schemas.js`:
 - `grade`: five score dimensions, `overall_score`, rank, detailed feedback, authenticity echo, candidates and ranking placeholders
 
 Real provider adapters parse model text through `src/utils/json.js`, normalize remote turn payloads, validate with Ajv, retry once on ordinary non-streaming failure, then fall back to Mock for that method. The model never owns final game state. It can suggest `statePatch`; the provider adapter first filters it to provider-allowed fields, then the route applies the same server whitelist and clamps. Ordinary turn schemas still reject direct patches to server-owned fields such as `activeExam`, `activeNpcRequest`, `longTermEvents`, `roleWorldCoupling`, `worldThreads`, `officialCareer`, `characters`, `eventHistory`, `player.examRank`, `player.officeTitle`, and `player.examHistory` when they appear outside this remote-provider normalization path. Remote turn payloads may also drop malformed display-only `attributeChanges` rows before validation.
+
+When a subsystem changes the AI/server split, update the S44 matrix together with schema, normalizer, state merge, route follow-up, prompt summary and player-facing view tests. The matrix intentionally separates “AI may generate or suggest” from “server persists or decides” so future model-quality work does not quietly become authority expansion.
 
 DeepSeek supports task-specific model routing. `DEEPSEEK_MODEL` remains the fallback, while `DEEPSEEK_OPENING_MODEL`, `DEEPSEEK_TURN_MODEL`, `DEEPSEEK_EXAM_QUESTION_MODEL`, and `DEEPSEEK_GRADE_MODEL` can override individual schema tasks. The current recommended split is V4 Pro for opening and essay grading, and V4 Flash for ordinary turn/streaming and exam-question generation.
 
@@ -640,3 +644,5 @@ npm run smoke:browser
 ```
 
 For local acceptance, run the checklist in [docs/MANUAL_ACCEPTANCE.md](MANUAL_ACCEPTANCE.md). Browser automation coverage lives in [docs/BROWSER_ACCEPTANCE.md](BROWSER_ACCEPTANCE.md), and keyed real-provider long-run coverage lives in [docs/REAL_PROVIDER_ACCEPTANCE.md](REAL_PROVIDER_ACCEPTANCE.md). Phase milestones are recorded in [docs/PHASE_ONE_ACCEPTANCE.md](PHASE_ONE_ACCEPTANCE.md) and [docs/PHASE_TWO_ACCEPTANCE.md](PHASE_TWO_ACCEPTANCE.md); every accepted slice should also update `docs/SHARED_CONTEXT.md` and `docs/DEVELOPMENT_STEPS.md`.
+
+The S44 AI authority matrix lives in [docs/AI_CONTROL_AUDIT_MATRIX.md](AI_CONTROL_AUDIT_MATRIX.md). It should be updated whenever a change affects model permissions, server-owned state, hidden-information filtering or browser display boundaries.

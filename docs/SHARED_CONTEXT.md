@@ -134,6 +134,15 @@ Durable contracts and acceptance records:
 - Providers may read visible thread summaries for narrative context, but ordinary `statePatch.worldThreads` is rejected/ignored like other server-owned ledgers. Hidden thread rows, hidden relationship data, and official hidden notes are excluded from views and prompt summaries.
 - The browser panel only suggests free-text intervention directions and recent resolved rows; it does not add one-click resolution or replace active request, long-term event, official-career, or role/world coupling settlement.
 
+## Current S44 Notes
+
+- S44.1 adds `docs/AI_CONTROL_AUDIT_MATRIX.md` as the system-level AI authority matrix.
+- The matrix defines AI permissions as 可生成、可建议、可排序、可评分、可解释、不可写、不可裁决, and keeps “model may influence” separate from “server persists/decides.”
+- Covered systems: AI diagnostics, opening, ordinary turns, SSE streaming, world tick, exam trigger, exam question, exam grading, virtual candidates/ranking, relationships, active NPC requests, long-term events, official career, role/world coupling, World Threads, saves, hidden information, and browser display.
+- Current threat model remains local development/same-machine browser. Game state routes still return full `worldState`; player-facing UI must use server-built views for hidden filtering. A future remote/untrusted-client deployment needs a redacted state API.
+- Ordinary real-provider calls may fallback to Mock for local playability. Route-level connection diagnostics and provider smoke scripts remain the authority for real-provider configuration health.
+- S44.2 should implement the matrix backlog: overreach patch bundles, hallucinated office titles, illegal promotion/exam gate probes, hidden-token leak tests, cheating-misjudgment boundaries, and streaming-failure rollback tests.
+
 ## Verification Defaults
 
 Use focused checks first, then broaden when behavior crosses module boundaries:
@@ -155,6 +164,7 @@ Use focused checks first, then broaden when behavior crosses module boundaries:
 
 ## Current Work Note
 
+- 2026-05-07: S44.1 documentation matrix is ready for commit. Added `docs/AI_CONTROL_AUDIT_MATRIX.md`, linked it from README/architecture/product brief, and updated the roadmap. Verification: `git diff --check`. This is documentation-only; no code tests were run. Read-only exploratory subagent Banach mapped the existing AI/server boundary evidence and S44.2 test gaps without editing files or running Git writes. Read-only pre-commit review by Gibbs found one P3 wording gap around browser raw `worldState` fallback; the matrix now states that fallback is only for old payload/development compatibility and adds it to S44.2 hidden-leak coverage.
 - 2026-05-07: S43.2 implementation/docs commit is `5c8310a`. `worldThreadView` now derives goal/deadline/risk/related/intervention/follow-up fields; the browser renders `#world-thread-panel` from the route view only; browser smoke helpers assert card selectors, field completeness, hidden text leaks, and world-thread overflow. Verification passed: focused `node --check`, focused world-thread/browser-smoke/route/prompt/schema/provider tests, `npm run eval:ai`, `$env:AI_PROVIDER='mock'; npm run smoke:browser` with `world-thread` UI acceptance and 14 screenshots, and final `$env:AI_PROVIDER='mock'; npm test` with 234 tests. One interim full rerun hit Windows `EPERM rename`; focused `test\gameTurnTick.test.js` and the following full rerun passed. Read-only explorer Carson mapped the front-end and smoke-test entry points without editing files or running Git writes. Read-only pre-commit review by Hooke found one P3 smoke selector gap for `data-risk`; it was fixed with stricter selector coverage and follow-up review approved. A follow-up documentation-only hash backfill commit was low risk and skipped subagent review; verification was `git diff --check`.
 - 2026-05-07: S43.1 implementation/docs commit is `301ff98`. Added `src/game/worldThreads.js`, `docs/WORLD_THREADS_CONTRACT.md`, `worldState.worldThreads`, `worldThreadView` route payloads, prompt `worldThreads` summaries, and provider/server boundary tests forbidding ordinary `statePatch.worldThreads`. Verification passed: focused `node --check`, `node --test test\worldThreads.test.js` with 5 tests, `node --test test\gameTurnWorldThreads.test.js`, focused state/schema/prompt/provider tests, `npm run eval:ai`, focused turn integration tests, `$env:AI_PROVIDER='mock'; npm test` with 232 tests, and `git diff --check`. Read-only exploratory subagent Wegener mapped S43.1 integration points and did not edit files or run Git writes. Read-only pre-commit review by Arendt found one P1 leak where legacy hidden `recentResolved` rows could surface; `normalizeResolvedThread()` now drops hidden rows, regression coverage was added, and follow-up review approved the fix. A follow-up documentation-only hash backfill commit was low risk and skipped subagent review; verification was `git diff --check`.
 - 2026-05-06: 压缩必读上下文：`docs/QIANQIU_DEVELOPMENT_BRIEF.md` 的 S11-S38.3 历史实现笔记迁入 `docs/QIANQIU_DEVELOPMENT_HISTORY_ARCHIVE.md`；`docs/DEVELOPMENT_STEPS.md` 的第四阶段早期详细进度记录迁入 `docs/FOURTH_PHASE_PROGRESS_ARCHIVE.md`。日常启动仍只读四件套，归档文件只在追溯旧决策或旧验证时读取。低风险纯文档搬迁，跳过提交前只读子代理审查；验证：`git diff --check`。
@@ -169,4 +179,4 @@ Use focused checks first, then broaden when behavior crosses module boundaries:
 
 ## Next Recommended Step
 
-Finish S43.2 with browser smoke, full tests, read-only pre-commit review, then commit. Afterward start S44.1 AI 调动/控制适配性审查矩阵.
+Commit S44.1 after read-only review, then start S44.2 red-team/eval tests from `docs/AI_CONTROL_AUDIT_MATRIX.md`.
