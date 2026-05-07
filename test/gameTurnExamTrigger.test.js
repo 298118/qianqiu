@@ -155,7 +155,7 @@ test("POST /api/game/turn ignores null examTrigger levels", async (t) => {
   assert.equal(payload.worldState.activeExam, null);
 });
 
-test("POST /api/game/turn cannot overwrite an active writing exam", async (t) => {
+test("POST /api/game/turn treats active writing exams as local scene actions", async (t) => {
   const server = createTestServerWithProvider(createProviderWithTrigger({
     shouldStart: true,
     level: "child_exam",
@@ -164,7 +164,9 @@ test("POST /api/game/turn cannot overwrite an active writing exam", async (t) =>
   t.after(server.close);
 
   const worldState = createInitialState({ playerName: "Tester", role: "scholar" });
+  worldState.year = 1644;
   worldState.month = 1;
+  worldState.tenDayPeriod = 3;
   worldState.activeExam = {
     examId: "child_exam-existing",
     level: "child_exam",
@@ -182,9 +184,21 @@ test("POST /api/game/turn cannot overwrite an active writing exam", async (t) =>
 
   assert.equal(response.status, 200);
   assert.equal(payload.examTrigger.shouldStart, false);
-  assert.match(payload.examTrigger.reason, /已有未完成考试/);
-  assert.deepEqual(payload.worldState.activeExam, originalActiveExam);
+  assert.match(payload.examTrigger.reason, /考试场景|局部阶段/);
+  assert.equal(payload.worldTick.cadence, "scene");
+  assert.equal(payload.worldTick.completedMonth, false);
+  assert.equal(payload.worldState.turnCount, 0);
+  assert.equal(payload.worldState.year, 1644);
+  assert.equal(payload.worldState.month, 1);
+  assert.equal(payload.worldState.tenDayPeriod, 3);
+  assert.equal(payload.worldState.activeExam.examId, originalActiveExam.examId);
+  assert.equal(payload.worldState.activeExam.examQuestion, originalActiveExam.examQuestion);
+  assert.equal(payload.worldState.activeExam.sceneTime.phase, "outline");
+  assert.equal(payload.worldState.activeExam.sceneTime.startedAt.tenDayPeriod, 3);
 
   const saved = await readSession(worldState.sessionId);
-  assert.deepEqual(saved.activeExam, originalActiveExam);
+  assert.equal(saved.activeExam.examId, originalActiveExam.examId);
+  assert.equal(saved.activeExam.examQuestion, originalActiveExam.examQuestion);
+  assert.equal(saved.activeExam.sceneTime.phase, "outline");
+  assert.equal(saved.tenDayPeriod, 3);
 });

@@ -38,6 +38,17 @@ function makeTurnPayload(narrative = "松风入砚，书声稍定。") {
   };
 }
 
+function makeWritingExam() {
+  return {
+    examId: "child_exam-streaming-scene",
+    level: "child_exam",
+    examName: "童试",
+    examQuestion: "试论修身读书与县学教化之要。",
+    questionType: "经义简答",
+    status: "writing"
+  };
+}
+
 async function removeSessionFile(sessionId) {
   await fs.rm(path.join(sessionsDir, `${sessionId}.json`), { force: true });
 }
@@ -208,6 +219,50 @@ test("POST /api/game/turn preserves SSE fallback when provider has no stream met
 
   assert.equal(narrative, payload.narrative);
   assert.ok(events.find((event) => event.event === "final_state"));
+});
+
+test("POST /api/game/turn streams local exam scene actions without global time tick", async (t) => {
+  const provider = {
+    supportsStreaming: true,
+    async streamTurn() {
+      throw new Error("provider should not run during active exam scene");
+    },
+    async runTurn() {
+      throw new Error("provider fallback should not run during active exam scene");
+    }
+  };
+  const server = createTestServer(provider);
+  t.after(server.close);
+
+  const worldState = createInitialState({ playerName: "ExamSceneStream" });
+  worldState.year = 1644;
+  worldState.month = 1;
+  worldState.tenDayPeriod = 3;
+  worldState.turnCount = 6;
+  worldState.activeExam = makeWritingExam();
+  t.after(() => removeSessionFile(worldState.sessionId));
+  await writeSession(worldState);
+
+  const events = await postTurnSse(server.baseUrl, worldState.sessionId, "拟纲定章法");
+  const finalState = events.find((event) => event.event === "final_state");
+  const preview = events.find((event) => event.event === "state_preview" && event.data?.worldTick);
+  const narrative = events
+    .filter((event) => event.event === "narrative_chunk")
+    .map((event) => event.data.text)
+    .join("");
+
+  assert.match(narrative, /童试/);
+  assert.ok(preview);
+  assert.equal(preview.data.worldTick.cadence, "scene");
+  assert.equal(finalState.data.worldState.turnCount, 6);
+  assert.equal(finalState.data.worldState.month, 1);
+  assert.equal(finalState.data.worldState.tenDayPeriod, 3);
+  assert.equal(finalState.data.worldState.activeExam.sceneTime.phase, "outline");
+
+  const saved = await readSession(worldState.sessionId);
+  assert.equal(saved.turnCount, 6);
+  assert.equal(saved.tenDayPeriod, 3);
+  assert.equal(saved.activeExam.sceneTime.phase, "outline");
 });
 
 test("POST /api/game/turn emits error and does not mutate state after visible stream failure", async (t) => {

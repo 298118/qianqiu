@@ -92,7 +92,7 @@
 | S48.1 | DONE | 归档第四阶段规划，开启时间专项路线图，并保持开发规范不变 | 2026-05-07 | Codex | `1e7bcd3` + follow-up docs fixes |
 | S48.2 | DONE | 建立全局旬制日历基础：`tenDayPeriod`、共享时间 helper、旧档默认上旬、provider 时间字段边界 | 2026-05-07 | Codex + subagents | `15e078f` + `8d93b8c` hash backfill |
 | S48.3 | DONE | 改造普通回合与世界 tick：每回合推进一旬，非月末轻量小结，月末完整结算 | 2026-05-07 | Codex + subagent | `ef767c6` |
-| S48.4 | TODO | 建立场景内时间框架，并优先把科举考试改成多阶段局部时间 |  |  |  |
+| S48.4 | DONE | 建立场景内时间框架，并优先把科举考试改成多阶段局部时间 | 2026-05-07 | Codex + subagent | 待回填 |
 | S48.5 | TODO | 适配长期事件、官场任期/差事、世界议程、世界实体和脚本验收的月末/旬度语义 |  |  |  |
 | S48.6 | TODO | 完成前端日期展示、浏览器 smoke、provider long-run 和完整书生入仕验收 |  |  |  |
 
@@ -150,13 +150,14 @@
 
 范围：
 
-- 建立场景内时间语义：全局普通行动消耗一旬，`activeScene` 或特定 `activeExam` 场景行动只推进局部阶段。
+- 建立场景内时间语义：全局普通行动消耗一旬，当前先以 `activeExam.sceneTime` 落地，后续 `activeScene` 可复用同一形态。
 - 优先改造科举：
   - `/api/exam/question` 创建或复用考试时不推进全局旬。
-  - `activeExam` 增加局部阶段字段，例如入场、发题、审题、拟纲、作答、誊清、交卷。
+  - `activeExam` 增加局部阶段字段：`entry`、`question_review`、`outline`、`drafting`、`fair_copy`、`submitted`，并保留中文阶段标签、局部步数、约略小时数、入场/更新时间年月旬。
   - 考试期间的场景动作推进考试阶段或时辰，不让每次输入消耗十天。
   - `/api/exam/submit` 完成考试、评分、榜单、晋级和考试档案保存；是否记录本场发生在某年某月某旬由服务器统一写入。
-- 先为廷议、审案、战斗、旅途遭遇预留同一套场景时间接口或数据形态；除非范围可控，不在本步骤一次性重做所有场景。
+- 新增 `/api/exam/progress` 作为考试弹窗内的局部阶段推进入口；已有 `/api/game/turn` 在写卷考试存在时也会转入考试局部推进，不调用普通 provider、不运行世界 tick。
+- 先为廷议、审案、战斗、旅途遭遇预留同一套场景时间数据形态；本步骤不一次性重做所有场景。
 
 验收：
 
@@ -164,6 +165,22 @@
 - 考试提交后仍保存考试记录、虚拟考生、榜单、晋级结果和完整 scholar -> official 路径。
 - 考试窗口仍按月份开放；开场月上/中/下旬都可入场。
 - 下旬合法触发考试后，即使全局随后进入下月上旬，自动开题仍复用保存的开放 snapshot，不误判错过。
+
+实现记录：
+
+- 新增 `src/game/examSceneTime.js`，集中维护考试场景阶段、全局年月旬快照、局部推进叙事和 `worldTick.cadence = "scene"` 反馈。
+- `/api/game/turn` 若发现已有写卷考试，会把输入当作科场局部动作处理，保持 `turnCount/year/month/tenDayPeriod` 不变。
+- `/api/exam/question` 写入或保留 `activeExam.sceneTime`；从下旬合法触发考试后再开题时，正式题目继承原入场时间和开放 snapshot。
+- `/api/exam/progress` 推进审题、拟纲、作答、誊清等局部阶段；浏览器考试弹窗新增阶段显示和四个局部推进按钮。
+- `/api/exam/submit` 将场景推进到 `submitted`，把 `sceneTime`、`examStartedAt`、`examSubmittedAt` 保存到 `player.examHistory`，完整科举晋级路径不变。
+
+验证：
+
+- `node --check src\game\examSceneTime.js`
+- `node --check src\routes\exam.js`
+- `node --check src\routes\game.js`
+- `node --check public\app.js`
+- `node --test test\examSceneTime.test.js test\examTravel.test.js test\gameTurnExamTrigger.test.js test\gameTurnTick.test.js`（21 tests passed）
 
 ### S48.5：长期系统与月末语义适配
 
@@ -317,10 +334,41 @@
 
 风险/遗留：
 
-- S48.3 不处理考试局部时间。`/api/exam/question` 与 `/api/exam/submit` 仍不推进全局旬；考试内多阶段留给 S48.4。
-- 官场期限/World Threads 文案更细的“旬回合 vs 月份”整理仍属于 S48.5/S48.6；本步只让任期月份和复核不在非月末过快推进。
+- S48.4 已补上考试局部时间；官场期限/World Threads 文案更细的“旬回合 vs 月份”整理仍属于 S48.5/S48.6。
 - 提交前只读复审（Newton）无 blocker；一个 P3 提醒 S48.5 仍把已完成的长期事件/官场月末门控写成未来范围，已改为“复核已完成门控并聚焦剩余期限/议题/实体/provider cadence 语义”。残余风险是非月末小幅漂移叠加月末完整结算的累计强度需在 S48.5/S48.6 结合 playtest 或测试再调。
+
+### S48.4 进度记录
+
+步骤：S48.4
+状态：DONE，待提交哈希回填。
+
+完成：
+
+- `src/game/examSceneTime.js` 定义科场局部阶段、服务器年月旬快照、局部步数/小时数和 `scene` cadence 反馈。
+- `/api/exam/question` 创建或复用题目时保留全局时间不动，并写入 `activeExam.sceneTime`；合法下旬触发考试后，即使普通旬制已经把全局推进到下月上旬，取题仍继承原开放 snapshot 和入场年月旬。
+- `/api/exam/progress` 只推进考试局部阶段，不调用 provider、不推进 `turnCount/year/month/tenDayPeriod`。
+- `/api/game/turn` 在已有写卷考试时改走考试场景分支，避免普通 provider/world tick 覆盖或消耗一旬。
+- `/api/exam/submit` 把场景推进到 `submitted`，并把 `sceneTime`、`examStartedAt`、`examSubmittedAt` 写入考试档案。
+- 浏览器考试弹窗新增“场内阶段”状态和审题、拟纲、作答、誊清按钮；考试档案显示科场时间。
+- 复审后修复“继续写作”重开同一题面会清空未交卷草稿的问题，并让底部自由输入推进科场后同步更新已打开的考试弹窗阶段控件；browser smoke 已覆盖草稿保留。
+
+验证：
+
+- `node --check src\game\examSceneTime.js`
+- `node --check src\routes\exam.js`
+- `node --check src\routes\game.js`
+- `node --check public\app.js`
+- `node --check scripts\browserSmoke.js`
+- `node --check test\streamingTurnRoute.test.js`
+- `node --test test\examSceneTime.test.js test\examTravel.test.js test\gameTurnExamTrigger.test.js test\gameTurnTick.test.js test\streamingTurnRoute.test.js`（26 tests passed）
+- `node --test test\browserSmokeScript.test.js test\streamingTurnRoute.test.js`（36 tests passed）
+- `npm run check:docs-governance`
+- `npm run eval:ai`（12 tests passed）
+- `$env:AI_PROVIDER='mock'; npm test`（283 tests passed）
+- `$env:AI_PROVIDER='mock'; npm run smoke:browser`（14 screenshots checked，含考试阶段控件与继续写作草稿保留）
+- `git diff --check`
+- 提交前只读复审（Franklin）无 P0/P1/P2 blocker。首轮指出的 P2“继续写作清空草稿”和 P3“底部自由输入推进科场后弹窗阶段滞后”均已修复；终轮复审确认可提交。残余 P3 建议是后续若要更稳写卷体验，可按 `sessionId/examId` 做本地草稿持久化，并在 S48.6 顺手补移动端同路径检查。
 
 下一步：
 
-- 开始 S48.4：建立场景内时间框架，优先把科举考试拆成局部阶段，让开题、审题、拟纲、作答等考试内动作不消耗全局旬。
+- 开始 S48.5：复核长期事件、官场期限、World Threads、World Entities 和 provider long-run 中仍隐含“一回合一月”的语义，并处理旬度/场景 cadence 的剩余文案与验收。

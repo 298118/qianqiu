@@ -41,6 +41,11 @@ const {
   ensureExamCalendarState
 } = require("../game/examCalendar");
 const { canEnterExam, getExam } = require("../game/exams");
+const {
+  advanceExamScenePhase,
+  attachExamSceneTime,
+  buildExamSceneFeedback
+} = require("../game/examSceneTime");
 const { applyStatePatch, appendEvents } = require("../game/stateRules");
 const { runWorldTick } = require("../game/worldTick");
 const { getProvider } = require("../ai");
@@ -81,6 +86,9 @@ async function processTurn(sessionId, input) {
     ensureRoleWorldCouplingState(worldState);
     ensureWorldEntityState(worldState);
     ensureWorldThreadState(worldState);
+    if (isWritingExam(worldState.activeExam)) {
+      return finalizeExamSceneTurn(worldState, input);
+    }
     const provider = getProvider();
     const result = await provider.runTurn(worldState, input);
     return finalizeTurn(worldState, result, input);
@@ -96,6 +104,9 @@ async function processStreamingTurn(sessionId, input, streamHandlers = {}) {
     ensureRoleWorldCouplingState(worldState);
     ensureWorldEntityState(worldState);
     ensureWorldThreadState(worldState);
+    if (isWritingExam(worldState.activeExam)) {
+      return finalizeExamSceneTurn(worldState, input);
+    }
     const provider = getProvider();
     const canStream = provider.supportsStreaming && typeof provider.streamTurn === "function";
     const result = canStream
@@ -160,11 +171,72 @@ function applyExamTrigger(worldState, trigger) {
     examCalendar: calendarGate.snapshot,
     requestedAt: new Date().toISOString()
   };
+  attachExamSceneTime(worldState.activeExam, worldState, "entry");
 
   return {
     shouldStart: true,
     level: exam.level,
     reason
+  };
+}
+
+function emptySystemFeedback() {
+  return {
+    summary: "",
+    events: [],
+    attributeChanges: [],
+    outcome: null
+  };
+}
+
+function buildCommonTurnViews(worldState) {
+  return {
+    examCalendarView: buildExamCalendarView(worldState),
+    examRivalView: buildExamRivalView(worldState),
+    relationshipView: buildRelationshipInspectionView(worldState),
+    activeNpcRequestView: buildActiveNpcRequestView(worldState),
+    roleWorldCouplingView: buildRoleWorldCouplingView(worldState),
+    worldEntityView: buildWorldEntityView(worldState),
+    worldThreadView: buildWorldThreadView(worldState),
+    longTermEventView: buildLongTermEventView(worldState),
+    officialCareerView: buildOfficialCareerView(worldState)
+  };
+}
+
+async function finalizeExamSceneTurn(worldState, input) {
+  const scene = advanceExamScenePhase(worldState.activeExam, worldState, input);
+  ensureRelationshipLedger(worldState);
+  ensureExamCalendarState(worldState);
+  ensureLongTermEventState(worldState);
+  ensureOfficialCareerState(worldState);
+  ensureRoleWorldCouplingState(worldState);
+  ensureWorldEntityState(worldState);
+  ensureWorldThreadState(worldState);
+  const worldTick = buildExamSceneFeedback(worldState, scene.sceneTime, scene.event);
+
+  return {
+    sessionId: worldState.sessionId,
+    narrative: scene.narrative,
+    attributeChanges: [],
+    relationshipChanges: [],
+    ...buildCommonTurnViews(worldState),
+    activeNpcRequestEvents: [],
+    worldEntityImpacts: [],
+    roleWorldCoupling: emptySystemFeedback(),
+    longTermEvents: {
+      ...emptySystemFeedback(),
+      scheduled: [],
+      resolved: []
+    },
+    officialCareer: emptySystemFeedback(),
+    examTrigger: {
+      shouldStart: false,
+      level: worldState.activeExam?.level || null,
+      reason: "当前正在考试场景中，本次行动只推进科场局部阶段。"
+    },
+    examScene: scene.sceneTime,
+    worldTick,
+    worldState
   };
 }
 
@@ -282,22 +354,15 @@ async function finalizeTurn(worldState, result, input) {
       ...officialCareer.attributeChanges
     ],
     relationshipChanges: allRelationshipChanges,
-    examCalendarView: buildExamCalendarView(worldState),
-    examRivalView: buildExamRivalView(worldState),
-    relationshipView: buildRelationshipInspectionView(worldState),
-    activeNpcRequestView: buildActiveNpcRequestView(worldState),
+    ...buildCommonTurnViews(worldState),
     activeNpcRequestEvents: activeNpcRequest.events,
-    roleWorldCouplingView: buildRoleWorldCouplingView(worldState),
-    worldEntityView: buildWorldEntityView(worldState),
     worldEntityImpacts,
-    worldThreadView: buildWorldThreadView(worldState),
     roleWorldCoupling: {
       summary: roleWorldCoupling.summary,
       events: Array.isArray(roleWorldCoupling.events) ? roleWorldCoupling.events : [],
       attributeChanges: Array.isArray(roleWorldCoupling.attributeChanges) ? roleWorldCoupling.attributeChanges : [],
       outcome: roleWorldCoupling.outcome
     },
-    longTermEventView: buildLongTermEventView(worldState),
     longTermEvents: {
       summary: longTermEvents.summary,
       events: Array.isArray(longTermEvents.events) ? longTermEvents.events : [],
@@ -305,7 +370,6 @@ async function finalizeTurn(worldState, result, input) {
       scheduled: Array.isArray(longTermEvents.scheduled) ? longTermEvents.scheduled : [],
       resolved: Array.isArray(longTermEvents.resolved) ? longTermEvents.resolved : []
     },
-    officialCareerView: buildOfficialCareerView(worldState),
     officialCareer: {
       summary: officialCareer.summary,
       events: Array.isArray(officialCareer.events) ? officialCareer.events : [],
@@ -366,6 +430,7 @@ async function streamTurn(res, sessionId, input) {
       officialCareerView: payload.officialCareerView,
       officialCareer: payload.officialCareer,
       examTrigger: payload.examTrigger,
+      examScene: payload.examScene || null,
       worldTick: payload.worldTick
     });
     sendSseEvent(res, "final_state", payload);

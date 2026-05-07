@@ -11,9 +11,10 @@ The world tick makes Qianqiu feel like a historical simulation that keeps moving
 S21 keeps the first implementation deliberately small:
 
 - A tick runs after one successful `POST /api/game/turn` action.
-- `POST /api/game/start`, `GET /api/game/state/:sessionId`, `POST /api/exam/question`, and `POST /api/exam/submit` do not run the minimal tick yet.
+- `POST /api/game/start`, `GET /api/game/state/:sessionId`, `POST /api/exam/question`, `POST /api/exam/progress`, and `POST /api/exam/submit` do not run the minimal tick.
 - The tick originally advanced one in-game month per valid free-text turn; S48.3 changes ordinary free-text turns to advance one ten-day period, with full monthly settlement only on 下旬 rollover.
 - One player turn increments `worldState.turnCount` exactly once, even when provider changes and tick changes both apply.
+- S48.4 adds a scene-local exception: if a writing `activeExam` exists, `POST /api/game/turn` is routed to exam scene progression and does not run this ordinary tick or increment `turnCount`.
 - The complete scholar path remains protected: scholar -> child exam -> provincial exam -> metropolitan exam -> palace exam -> official.
 
 Later phase-two work may decide whether long exam submissions or role-specific projects should consume extra months, but that is outside the minimal S21 contract.
@@ -27,6 +28,7 @@ S48 changes ordinary global turns from one month per turn to one ten-day period 
 - Save-list metadata, prompt compact state, provider long-run consistency checks, schemas, remote normalization and `applyStatePatch()` all treat `tenDayPeriod` like `turnCount/year/month`: provider suggestions cannot write it.
 - S48.3 makes `runWorldTick()` advance 上旬 -> 中旬 -> 下旬 -> 下月上旬. Non-month-end ticks return `cadence: "ten_day"` / `label: "旬度"` with light feedback and small natural drift; 下旬 rollover returns `cadence: "monthly"` / `label: "月度"` and performs the original full monthly settlement.
 - `worldTick.completedMonth` is the route gate for downstream monthly systems. Long-term event scheduling/resolution and official tenure-month advancement do not run before month end; direct official first appointment and per-action assignment feedback can still happen on an ordinary ten-day turn.
+- S48.4 introduces `worldTick.cadence = "scene"` for exam-local actions. This is a feedback payload, not a call to `runWorldTick()`: it reports that the exam phase advanced while the global 年/月/旬 stayed fixed.
 
 ## State Additions
 

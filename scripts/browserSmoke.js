@@ -1439,6 +1439,7 @@ async function assertExamWritingLayout(page, mode) {
   const modal = await visibleBox(page, ".exam-modal", `${mode} exam modal`);
   const question = await visibleBox(page, "#exam-question", `${mode} exam question`);
   const requirements = await visibleBox(page, "#exam-requirements", `${mode} exam requirements`);
+  const sceneTools = await visibleBox(page, "#exam-scene-tools", `${mode} exam scene tools`);
   const tools = await visibleBox(page, "#exam-writing-tools", `${mode} exam writing tools`);
   const essay = await visibleBox(page, "#exam-essay", `${mode} exam essay textarea`);
   const submit = await visibleBox(page, "#exam-submit", `${mode} exam submit button`);
@@ -1449,8 +1450,11 @@ async function assertExamWritingLayout(page, mode) {
   if (rectsOverlap(question, requirements)) {
     failUiAcceptance(`${mode} exam question overlaps the requirements list.`);
   }
-  if (rectsOverlap(requirements, tools)) {
-    failUiAcceptance(`${mode} exam requirements overlap the writing tools.`);
+  if (rectsOverlap(requirements, sceneTools)) {
+    failUiAcceptance(`${mode} exam requirements overlap the scene tools.`);
+  }
+  if (rectsOverlap(sceneTools, tools)) {
+    failUiAcceptance(`${mode} exam scene tools overlap the writing tools.`);
   }
   if (rectsOverlap(tools, essay)) {
     failUiAcceptance(`${mode} exam writing tools overlap the essay textarea.`);
@@ -1463,6 +1467,17 @@ async function assertExamWritingLayout(page, mode) {
   );
   if (!hasCalendarRequirement) {
     failUiAcceptance(`${mode} exam modal is missing calendar timing details.`);
+  }
+
+  const sceneState = await page.evaluate(() => {
+    const status = document.querySelector("#exam-scene-status")?.textContent || "";
+    return {
+      actionCount: document.querySelectorAll("[data-exam-action]").length,
+      hasStatus: status.includes("场内阶段")
+    };
+  });
+  if (!sceneState.hasStatus || sceneState.actionCount < 4) {
+    failUiAcceptance(`${mode} exam modal is missing scene phase controls.`);
   }
 }
 
@@ -1609,6 +1624,18 @@ async function runExamLevelAcceptance(page, sessionId, recorder, expectations) {
   await assertExamWritingLayout(page, `desktop ${expectations.level}`);
   if (expectations.modalScreenshotName) {
     await recorder.capture(page, expectations.modalScreenshotName);
+  }
+
+  const draftProbe = `草稿留存-${expectations.level}`;
+  await page.locator("#exam-essay").fill(draftProbe);
+  await page.locator("#exam-close").click();
+  await page.locator("#exam-backdrop").waitFor({ state: "hidden", timeout: 10000 });
+  await page.locator("#scholar-panel .panel-action").first().click();
+  await page.locator("#exam-backdrop").waitFor({ state: "visible", timeout: 10000 });
+  await assertExamWritingLayout(page, `desktop ${expectations.level} reopened`);
+  const reopenedDraft = await page.locator("#exam-essay").inputValue();
+  if (reopenedDraft !== draftProbe) {
+    failUiAcceptance(`desktop ${expectations.level} did not preserve the in-progress exam draft.`);
   }
 
   await page.locator("#exam-essay").fill(buildBrowserSmokeEssay(expectations.level));

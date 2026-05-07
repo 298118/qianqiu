@@ -100,6 +100,10 @@ test("exam question entry applies funded travel cost without advancing time", as
   assert.equal(payload.worldState.turnCount, 7);
   assert.equal(payload.worldState.year, 1644);
   assert.equal(payload.worldState.month, 7);
+  assert.equal(payload.sceneTime.phase, "question_review");
+  assert.equal(payload.sceneTime.startedAt.year, 1644);
+  assert.equal(payload.sceneTime.startedAt.month, 7);
+  assert.equal(payload.sceneTime.startedAt.tenDayPeriod, 1);
   assert.equal(payload.entryPreparation.fullyFunded, true);
   assert.equal(payload.entryPreparation.requiredGold, 2);
   assert.equal(payload.entryPreparation.paidGold, 2);
@@ -108,6 +112,7 @@ test("exam question entry applies funded travel cost without advancing time", as
 
   const saved = await readSession(worldState.sessionId);
   assert.deepEqual(saved.activeExam.entryPreparation, payload.entryPreparation);
+  assert.equal(saved.activeExam.sceneTime.phase, "question_review");
 });
 
 test("exam question allows shortfall and converts it into preparation risk", async (t) => {
@@ -171,6 +176,47 @@ test("exam question outside a missed window records the calendar miss without ch
   assert.equal(saved.examCalendar.missedWindows[0].level, "provincial_exam");
 });
 
+test("exam progress advances only the local exam scene phase", async (t) => {
+  const server = createTestServer();
+  t.after(server.close);
+
+  const worldState = makeReadyScholar({ gold: 20 });
+  worldState.year = 1644;
+  worldState.month = 1;
+  worldState.tenDayPeriod = 3;
+  worldState.turnCount = 5;
+  t.after(() => removeSessionFile(worldState.sessionId));
+  await writeSession(worldState);
+
+  const question = await postJson(`${server.baseUrl}/api/exam/question`, {
+    sessionId: worldState.sessionId,
+    level: "child_exam"
+  });
+  assert.equal(question.response.status, 201);
+
+  const progress = await postJson(`${server.baseUrl}/api/exam/progress`, {
+    sessionId: worldState.sessionId,
+    examId: question.payload.examId,
+    action: "拟纲定章法"
+  });
+
+  assert.equal(progress.response.status, 200);
+  assert.equal(progress.payload.sceneTime.phase, "outline");
+  assert.equal(progress.payload.examScene.phase, "outline");
+  assert.equal(progress.payload.worldTick.cadence, "scene");
+  assert.equal(progress.payload.worldTick.completedMonth, false);
+  assert.equal(progress.payload.worldState.year, 1644);
+  assert.equal(progress.payload.worldState.month, 1);
+  assert.equal(progress.payload.worldState.tenDayPeriod, 3);
+  assert.equal(progress.payload.worldState.turnCount, 5);
+  assert.equal(progress.payload.worldState.activeExam.sceneTime.turnCount, 1);
+
+  const saved = await readSession(worldState.sessionId);
+  assert.equal(saved.activeExam.sceneTime.phase, "outline");
+  assert.equal(saved.tenDayPeriod, 3);
+  assert.equal(saved.turnCount, 5);
+});
+
 test("exam submit preserves entry preparation in exam history", async (t) => {
   const server = createTestServer();
   t.after(server.close);
@@ -195,10 +241,16 @@ test("exam submit preserves entry preparation in exam history", async (t) => {
   assert.deepEqual(submit.payload.entryPreparation, question.payload.entryPreparation);
   assert.equal(submit.payload.examQuestion, question.payload.examQuestion);
   assert.equal(submit.payload.essay, PASSING_ESSAY.trim());
+  assert.equal(submit.payload.sceneTime.phase, "submitted");
+  assert.equal(submit.payload.examStartedAt.month, 1);
+  assert.equal(submit.payload.examSubmittedAt.month, 1);
   assert.equal(submit.payload.worldState.activeExam, null);
   const historyEntry = submit.payload.worldState.player.examHistory.at(-1);
   assert.deepEqual(historyEntry.entryPreparation, question.payload.entryPreparation);
   assert.equal(historyEntry.entryPreparation.requiredGold, 2);
+  assert.equal(historyEntry.sceneTime.phase, "submitted");
+  assert.equal(historyEntry.examStartedAt.tenDayPeriod, 1);
+  assert.equal(historyEntry.examSubmittedAt.tenDayPeriod, 1);
 });
 
 test("complete scholar to official path still works with entry preparation costs", async (t) => {
@@ -224,4 +276,5 @@ test("complete scholar to official path still works with entry preparation costs
   assert.equal(latest.year, 1644);
   assert.equal(latest.month, OPEN_MONTH_BY_LEVEL.palace_exam);
   assert.ok(latest.player.examHistory.every((entry) => entry.entryPreparation));
+  assert.ok(latest.player.examHistory.every((entry) => entry.sceneTime?.phase === "submitted"));
 });

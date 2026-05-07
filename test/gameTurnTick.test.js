@@ -311,6 +311,9 @@ test("exam trigger preserves a valid calendar window across the month-end tick",
   assert.equal(turn.payload.worldState.activeExam.level, "provincial_exam");
   assert.equal(turn.payload.worldState.activeExam.examCalendar.currentMonth, 9);
   assert.equal(turn.payload.worldState.activeExam.examCalendar.status, "open");
+  assert.equal(turn.payload.worldState.activeExam.sceneTime.phase, "entry");
+  assert.equal(turn.payload.worldState.activeExam.sceneTime.startedAt.month, 9);
+  assert.equal(turn.payload.worldState.activeExam.sceneTime.startedAt.tenDayPeriod, 3);
 
   const question = await postJson(`${server.baseUrl}/api/exam/question`, {
     sessionId: worldState.sessionId
@@ -322,6 +325,9 @@ test("exam trigger preserves a valid calendar window across the month-end tick",
   assert.equal(question.payload.examCalendar.status, "open");
   assert.equal(question.payload.worldState.month, 10);
   assert.equal(question.payload.worldState.examCalendar.missedWindows.length, 0);
+  assert.equal(question.payload.sceneTime.phase, "question_review");
+  assert.equal(question.payload.sceneTime.startedAt.month, 9);
+  assert.equal(question.payload.sceneTime.startedAt.tenDayPeriod, 3);
 });
 
 test("complete scholar exam path still works after world tick integration", async (t) => {
@@ -368,6 +374,7 @@ test("complete scholar exam path still works after world tick integration", asyn
   assert.equal(latest.player.examHistory.length, 4);
   assert.equal(latest.activeExam, null);
   assert.ok(latest.player.officeTitle);
+  assert.ok(latest.player.examHistory.every((entry) => entry.sceneTime?.phase === "submitted"));
 });
 
 test("POST /api/game/turn includes world tick feedback in SSE final payloads", async (t) => {

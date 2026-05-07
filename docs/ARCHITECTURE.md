@@ -42,7 +42,7 @@ flowchart TD
 Important route ownership:
 
 - `src/routes/game.js` creates sessions, reads sessions, and advances free-text turns.
-- `src/routes/exam.js` generates saved exam questions and submits essays.
+- `src/routes/exam.js` generates saved exam questions, advances exam-local scene phases, and submits essays.
 - `src/routes/ai.js` owns no-session AI diagnostics such as provider connection checks.
 - `src/game/stateRules.js` is the only way provider state patches should be merged.
 - `src/game/exams.js` owns exam levels, gates, thresholds and next-exam mapping.
@@ -52,6 +52,7 @@ Important route ownership:
 - `src/game/candidates.js` owns virtual same-field candidates, inspectable candidate essay profiles, and ranking.
 - `src/game/examTravel.js` owns server-side exam entry preparation costs, travel events, and funded/shortfall effects.
 - `src/game/examCalendar.js` owns S35 exam windows, preparation/travel month summaries, missed-window records, persistent same-field rivals, and palace-exam peer contacts.
+- `src/game/examSceneTime.js` owns S48.4 exam-local phases, date stamps, scene cadence feedback, and submitted-phase archival fields.
 - `src/game/relationships.js` owns NPC/faction relationship ledger creation, normalization, legacy backfill, compact prompt summaries, and the S32.1/S32.2 player-facing relationship inspection view. Visible-only summaries filter hidden contacts, factions, and hidden-entry notes before prompt/UI exposure.
 - `src/game/activeRequests.js` owns the S32.3 server-scheduled active NPC/faction request loop. Providers may suggest narrative and relationship consequences, but they do not create, replace, resolve, or expire `worldState.activeNpcRequest`.
 - `src/game/longTermEvents.js` owns the S33 server-scheduled long-term event queue for seasonal, disaster, border, court, local case-chain, and cross-month consequence events. Providers may read a compact summary for narrative context, but they do not create, replace, resolve, or expire `worldState.longTermEvents`.
@@ -294,7 +295,7 @@ Requests without SSE negotiation still return plain JSON for tests and compatibi
 }
 ```
 
-`examTrigger` in an ordinary turn is normalized before the response is returned. A trigger must pass `canEnterExam()` and `canOpenExamInCalendar()` before `worldState.activeExam` is created, and it cannot overwrite an active writing exam.
+`examTrigger` in an ordinary turn is normalized before the response is returned. A trigger must pass `canEnterExam()` and `canOpenExamInCalendar()` before `worldState.activeExam` is created, and it cannot overwrite an active writing exam. If an active writing exam already exists, `POST /api/game/turn` is treated as an exam scene action instead of an ordinary provider/world-tick turn; it returns `worldTick.cadence = "scene"` and does not advance `turnCount/year/month/tenDayPeriod`.
 
 ### `POST /api/exam/question`
 
@@ -307,9 +308,23 @@ Request:
 }
 ```
 
-`level` may be omitted; the server derives the next eligible exam from `player.examRank`. The route saves a complete `worldState.activeExam`, reuses an existing unanswered exam for the same level, and rejects attempts to open a different exam while another question is active.
+`level` may be omitted; the server derives the next eligible exam from `player.examRank`. The route saves a complete `worldState.activeExam`, reuses an existing unanswered exam for the same level, and rejects attempts to open a different exam while another question is active. S48.4 adds `activeExam.sceneTime` for `entry`, `question_review`, `outline`, `drafting`, `fair_copy`, and `submitted`; question creation/reuse preserves global date fields and does not advance `turnCount/year/month/tenDayPeriod`.
 
-Returns `examId`, exam metadata, requirements, readiness, entry preparation, `examCalendar`, `examCalendarView`, `examRivalView`, `relationshipView`, `activeNpcRequestView`, `roleWorldCouplingView`, `worldEntityView`, `worldThreadView`, `longTermEventView`, `officialCareerView`, and `worldState`.
+Returns `examId`, exam metadata, requirements, readiness, entry preparation, `examCalendar`, `sceneTime`, `examCalendarView`, `examRivalView`, `relationshipView`, `activeNpcRequestView`, `roleWorldCouplingView`, `worldEntityView`, `worldThreadView`, `longTermEventView`, `officialCareerView`, and `worldState`.
+
+### `POST /api/exam/progress`
+
+Request:
+
+```json
+{
+  "sessionId": "uuid",
+  "examId": "child_exam-uuid",
+  "action": "拟纲定章法"
+}
+```
+
+This route only accepts the current active writing exam. It advances `activeExam.sceneTime` locally, persists the updated session, and returns the same exam/view payload shape plus `narrative`, `examScene`, and `worldTick` with `cadence: "scene"`. It does not call the ordinary turn provider, does not grade or promote, and does not advance global time or `turnCount`.
 
 ### `POST /api/exam/submit`
 
@@ -323,7 +338,7 @@ Request:
 }
 ```
 
-The server checks authenticity, asks the provider for grading, applies local penalties, builds virtual candidates with inspectable essay profiles, applies promotion or cheating consequences, updates persistent same-field rivals, appends the essay result to `player.examHistory`, clears `activeExam`, saves the session and returns the result plus `examCalendarView`, `examRivalView`, `relationshipView`, `activeNpcRequestView`, `roleWorldCouplingView`, `worldEntityView`, `worldThreadView`, `longTermEventView`, `officialCareerView`, and `worldState`. The response includes `examQuestion`, `essay`, `entryPreparation`, and `examCalendar` so the browser can render the just-submitted archive directly.
+The server checks authenticity, asks the provider for grading, applies local penalties, builds virtual candidates with inspectable essay profiles, applies promotion or cheating consequences, updates persistent same-field rivals, appends the essay result to `player.examHistory`, clears `activeExam`, saves the session and returns the result plus `examCalendarView`, `examRivalView`, `relationshipView`, `activeNpcRequestView`, `roleWorldCouplingView`, `worldEntityView`, `worldThreadView`, `longTermEventView`, `officialCareerView`, and `worldState`. The response includes `examQuestion`, `essay`, `entryPreparation`, `examCalendar`, `sceneTime`, `examStartedAt`, and `examSubmittedAt` so the browser can render the just-submitted archive directly.
 
 ## AI Provider Contract
 
@@ -619,7 +634,7 @@ The contract for S21.2-S21.4 is:
 
 Route integration order is provider patch first, provider relationship suggestions, exam trigger setup when requested, active NPC request handling, role/world coupling, `runWorldTick()` against the updated state, tick patch with `{ incrementTurnCount: false, allowServerOwnedPatchKeys: true }`, long-term event scheduling/resolution only when `worldTick.completedMonth` is true, official career feedback with `isMonthEnd` passed from the tick, then provider events followed by active-request events, role-world events, tick events, long-term event events, and official career events. The browser appends concise `[联动]`, `[旬度]` or `[月度]`, `[大势]`, and `[官场结算]` feedback below the provider narrative.
 
-S48.2 adds the shared time helper in `src/game/time.js` and the server-owned `worldState.tenDayPeriod` field. Initial sessions start at 正月上旬, old saves missing the field are normalized to 上旬 on read, save-list metadata includes `tenDayPeriod`, and prompt compact state includes both the numeric period and a `dateLabel` such as `明1644年正月上旬`. S48.3 wires that field into ordinary turns: 上旬 -> 中旬 -> 下旬 -> 下月上旬, with 腊月下旬 rolling the year.
+S48.2 adds the shared time helper in `src/game/time.js` and the server-owned `worldState.tenDayPeriod` field. Initial sessions start at 正月上旬, old saves missing the field are normalized to 上旬 on read, save-list metadata includes `tenDayPeriod`, and prompt compact state includes both the numeric period and a `dateLabel` such as `明1644年正月上旬`. S48.3 wires that field into ordinary turns: 上旬 -> 中旬 -> 下旬 -> 下月上旬, with 腊月下旬 rolling the year. S48.4 keeps dense exam scenes off that global cadence: `activeExam.sceneTime` advances local phases and `worldTick.cadence = "scene"` while global年月旬 remain unchanged.
 
 Provider turn schemas and prompts do not expose `turnCount`, `year`, `month`, or `tenDayPeriod` as allowed model patch keys; turn counting and calendar changes are reserved for server-owned patches.
 
@@ -645,6 +660,8 @@ Promotion is applied in `src/game/promotions.js`, not by the provider. Palace ex
 Exam calendarization is owned by `src/game/examCalendar.js` and documented in [docs/EXAM_CALENDAR_CONTRACT.md](EXAM_CALENDAR_CONTRACT.md). `POST /api/exam/question` checks the player's current `year/month` against the next legal exam window before charging travel or generating a question. Closed-window attempts return `409`; missed-window attempts are recorded in `worldState.examCalendar.missedWindows` without charging travel or creating `activeExam`. Existing unanswered exams are reused without rechecking the current month. Free-text exam triggers from `POST /api/game/turn` preserve an open same-level calendar snapshot on the temporary request before world tick advances the month, so the browser auto-open path does not turn a valid last-month request into a false miss.
 
 Exam entry preparation is applied in `POST /api/exam/question` by `src/game/examTravel.js`, not by the provider. It charges level-specific travel/preparation cost, converts unfunded shortfall into small clamped `player.health`, `mentality`, `adaptability`, or `reputation` effects, stores `activeExam.entryPreparation`, and appends a concise travel event. S35 stores the calendar snapshot under `entryPreparation.examCalendar` and `activeExam.examCalendar`, including window labels, preparation months, travel months, funding state, teacher recommendation state, and quota notes. It uses `applyStatePatch(..., { incrementTurnCount: false })`, so taking a question does not advance `turnCount`, `year/month`, or `tenDayPeriod`.
+
+Exam-local scene time is applied by `src/game/examSceneTime.js`. `POST /api/exam/question` starts or preserves `question_review`; `POST /api/exam/progress` advances review, outline, drafting, and fair-copy phases; `POST /api/exam/submit` marks `submitted` and saves `sceneTime`, `examStartedAt`, and `examSubmittedAt` into exam history. A free-text turn submitted while `activeExam.status === "writing"` follows the same local scene path and avoids the ordinary world tick.
 
 Virtual candidates now include `essay`, `style`, `examinerComment`, `strengths`, and `weaknesses`. S35 also assigns persistent rival ids, stores same-field rivals in `worldState.examCalendar.rivals`, records each rival's later attempts, and can add palace-exam peers as visible `同年进士` contacts after the player becomes an official. These fields are saved into exam history with the ranking, allowing the browser to show 同场文卷, cross-exam rival memory, and later review them through 考试档案.
 

@@ -21,6 +21,9 @@ const examModal = document.querySelector(".exam-modal");
 const examWritingTools = document.querySelector("#exam-writing-tools");
 const examWordCount = document.querySelector("#exam-word-count");
 const examWordGuide = document.querySelector("#exam-word-guide");
+const examSceneTools = document.querySelector("#exam-scene-tools");
+const examSceneStatus = document.querySelector("#exam-scene-status");
+const examSceneActionButtons = document.querySelectorAll("[data-exam-action]");
 const saveList = document.querySelector("#save-list");
 const saveRefresh = document.querySelector("#save-refresh");
 const saveStatus = document.querySelector("#save-status");
@@ -119,6 +122,8 @@ const EXAM_PROGRESS = [
   { rank: "贡士", label: "贡士", next: "palace_exam" },
   { rank: "进士", label: "进士", next: null }
 ];
+
+const EXAM_SCENE_PHASE_ORDER = ["entry", "question_review", "outline", "drafting", "fair_copy"];
 
 const SCORE_LABELS = {
   content_quality: "义理内容",
@@ -1767,7 +1772,43 @@ function appendOfficialCareerFeedback(officialCareer) {
   events.forEach((event) => appendNarrative(event, "official-career-event"));
 }
 
+function getExamSceneTime(payload) {
+  return payload?.sceneTime || payload?.examScene || payload?.worldState?.activeExam?.sceneTime || null;
+}
+
+function getExamScenePhaseIndex(phase) {
+  const index = EXAM_SCENE_PHASE_ORDER.indexOf(phase);
+  return index >= 0 ? index : 0;
+}
+
+function updateExamSceneControls(payload) {
+  if (!examSceneTools || !examSceneStatus) return;
+  const sceneTime = getExamSceneTime(payload);
+
+  if (!sceneTime) {
+    examSceneTools.hidden = true;
+    return;
+  }
+
+  examSceneTools.hidden = false;
+  const phaseLabel = sceneTime.phaseLabel || "入场";
+  const localTurn = Number(sceneTime.turnCount) || 0;
+  const elapsed = Number.isFinite(Number(sceneTime.elapsedHours)) ? ` · 约${Number(sceneTime.elapsedHours)}小时` : "";
+  const startedAt = sceneTime.startedAt?.label ? ` · 入场：${sceneTime.startedAt.label}` : "";
+  examSceneStatus.textContent = `场内阶段：${phaseLabel} · 局部第${localTurn}步${elapsed}${startedAt}`;
+
+  const currentIndex = getExamScenePhaseIndex(sceneTime.phase);
+  const targets = ["question_review", "outline", "drafting", "fair_copy"];
+  examSceneActionButtons.forEach((button, index) => {
+    const targetIndex = getExamScenePhaseIndex(targets[index]);
+    button.disabled = targetIndex <= currentIndex;
+  });
+}
+
 function renderExamModal(payload) {
+  const previousExamId = currentExamPayload?.examId || null;
+  const existingDraft = examEssay.value;
+  const shouldPreserveDraft = previousExamId === payload.examId && Boolean(existingDraft);
   currentExamPayload = payload;
   examModal.classList.remove("exam-modal--result");
   examMeta.textContent = `${payload.examName} · ${payload.questionType} · ${payload.difficulty}`;
@@ -1791,7 +1832,8 @@ function renderExamModal(payload) {
     item.textContent = `科期：${formatExamCalendarSnapshot(payload.examCalendar || payload.entryPreparation.examCalendar)}`;
     examRequirements.appendChild(item);
   }
-  examEssay.value = "";
+  updateExamSceneControls(payload);
+  examEssay.value = shouldPreserveDraft ? existingDraft : "";
   examEssay.hidden = false;
   examWritingTools.hidden = false;
   examResult.hidden = true;
@@ -1901,7 +1943,8 @@ function withExamHistoryFallback(payload) {
     ranking: payload.ranking || latest.ranking || [],
     promotionResult: payload.promotionResult || latest.promotionResult,
     entryPreparation: payload.entryPreparation || latest.entryPreparation,
-    examCalendar: payload.examCalendar || latest.examCalendar || latest.entryPreparation?.examCalendar
+    examCalendar: payload.examCalendar || latest.examCalendar || latest.entryPreparation?.examCalendar,
+    sceneTime: payload.sceneTime || latest.sceneTime
   };
 }
 
@@ -1975,6 +2018,25 @@ function createExamCalendarBlock(examCalendar) {
   const block = document.createElement("section");
   block.className = "entry-preparation exam-calendar-archive";
   appendIfText(block, "strong", "科期");
+  appendIfText(block, "p", text);
+  return block;
+}
+
+function formatExamSceneArchive(sceneTime) {
+  if (!sceneTime) return "";
+  const started = sceneTime.startedAt?.label ? `入场：${sceneTime.startedAt.label}` : "";
+  const submitted = sceneTime.updatedAt?.label ? `交卷：${sceneTime.updatedAt.label}` : "";
+  const phase = sceneTime.phaseLabel ? `末段：${sceneTime.phaseLabel}` : "";
+  const turns = Number(sceneTime.turnCount) ? `局部${Number(sceneTime.turnCount)}步` : "";
+  return [started, submitted, phase, turns].filter(Boolean).join("；");
+}
+
+function createExamSceneBlock(sceneTime) {
+  const text = formatExamSceneArchive(sceneTime);
+  if (!text) return null;
+  const block = document.createElement("section");
+  block.className = "entry-preparation exam-scene-archive";
+  appendIfText(block, "strong", "科场时间");
   appendIfText(block, "p", text);
   return block;
 }
@@ -2067,6 +2129,9 @@ function createPlayerExamArchive(payload) {
   const calendarBlock = createExamCalendarBlock(payload.examCalendar || payload.entryPreparation?.examCalendar);
   if (calendarBlock) archive.appendChild(calendarBlock);
 
+  const sceneBlock = createExamSceneBlock(payload.sceneTime);
+  if (sceneBlock) archive.appendChild(sceneBlock);
+
   const reasonParts = [];
   if (payload.score?.detailed_feedback) reasonParts.push(payload.score.detailed_feedback);
   if (payload.promotionResult?.reason) reasonParts.push(payload.promotionResult.reason);
@@ -2154,6 +2219,7 @@ function renderExamArchive(worldState = currentWorldState) {
   examTitle.textContent = "历次科场案卷";
   examQuestion.hidden = true;
   examRequirements.hidden = true;
+  examSceneTools.hidden = true;
   examWritingTools.hidden = true;
   examEssay.hidden = true;
   examSubmit.hidden = true;
@@ -2202,6 +2268,7 @@ function renderExamResult(payload) {
   examTitle.textContent = payload.promotionResult.passed ? "金榜有名" : payload.promotionResult.severeCheat ? "监试黜落" : "榜上无名";
   examQuestion.hidden = true;
   examRequirements.hidden = true;
+  examSceneTools.hidden = true;
   examWritingTools.hidden = true;
   examEssay.hidden = true;
   examSubmit.hidden = true;
@@ -2301,6 +2368,55 @@ async function openExamQuestion(level) {
     renderExamModal(payload);
   } catch (error) {
     appendNarrative(error.message, "error");
+  }
+}
+
+async function progressExamScene(action) {
+  if (!currentSessionId || !currentExamPayload?.examId) return;
+  const draft = examEssay.value;
+
+  examSceneActionButtons.forEach((button) => {
+    button.disabled = true;
+  });
+
+  try {
+    const response = await fetch("/api/exam/progress", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        sessionId: currentSessionId,
+        examId: currentExamPayload.examId,
+        action
+      })
+    });
+
+    if (!response.ok) {
+      let message = `科场推进失败：${response.status}`;
+      try {
+        const errorPayload = await response.json();
+        if (errorPayload.error) message = errorPayload.error;
+      } catch {
+        // Keep the status-based message when the server did not send JSON.
+      }
+      throw new Error(message);
+    }
+
+    const payload = await response.json();
+    currentExamPayload = {
+      ...currentExamPayload,
+      ...payload,
+      sceneTime: payload.sceneTime || payload.examScene || payload.worldState?.activeExam?.sceneTime || null
+    };
+    renderWorldState(payload.worldState, payload.relationshipView, payload.activeNpcRequestView, payload.longTermEventView, payload.officialCareerView, payload.examCalendarView, payload.examRivalView, payload.worldThreadView);
+    examEssay.value = draft;
+    updateExamSceneControls(currentExamPayload);
+    updateExamSubmitState();
+    if (payload.narrative) {
+      appendNarrative(payload.narrative, "exam-hint");
+    }
+  } catch (error) {
+    appendNarrative(error.message, "error");
+    updateExamSceneControls(currentExamPayload);
   }
 }
 
@@ -2436,6 +2552,16 @@ async function handleTurnPayload(payload) {
   appendLongTermEventFeedback(payload.longTermEvents);
   appendOfficialCareerFeedback(payload.officialCareer);
   renderWorldState(payload.worldState, payload.relationshipView, payload.activeNpcRequestView, payload.longTermEventView, payload.officialCareerView, payload.examCalendarView, payload.examRivalView, payload.worldThreadView);
+  const activeExam = payload.worldState?.activeExam || null;
+  if (activeExam && currentExamPayload?.examId === activeExam.examId) {
+    currentExamPayload = {
+      ...currentExamPayload,
+      ...activeExam,
+      sceneTime: payload.examScene || activeExam.sceneTime || currentExamPayload.sceneTime,
+      worldState: payload.worldState
+    };
+    updateExamSceneControls(currentExamPayload);
+  }
   actionInput.value = "";
 
   if (payload.examTrigger && payload.examTrigger.shouldStart) {
@@ -2528,6 +2654,9 @@ actionInput.addEventListener("keydown", (event) => {
 examClose.addEventListener("click", closeExamModal);
 examEssay.addEventListener("input", updateExamSubmitState);
 examSubmit.addEventListener("click", submitExamEssay);
+examSceneActionButtons.forEach((button) => {
+  button.addEventListener("click", () => progressExamScene(button.dataset.examAction || button.textContent));
+});
 examBackdrop.addEventListener("click", (event) => {
   if (event.target === examBackdrop) {
     closeExamModal();

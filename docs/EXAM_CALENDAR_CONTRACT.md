@@ -38,6 +38,8 @@ Ordinary providers cannot patch `examCalendar`. Route code and `src/game/examCal
 
 Free-text exam requests are initiated through ordinary `POST /api/game/turn` via `examTrigger`. S48.3 ordinary turns advance one ten-day period, and only 下旬 rollover advances the world month before the browser auto-opens `/api/exam/question`. The turn route preserves an open calendar snapshot on the temporary `activeExam` request; the question route may use that same-level open snapshot once, so a valid request made in the last open month/late period is not converted into a missed-window error by month-end rollover.
 
+S48.4 adds exam-local scene time on top of this calendar snapshot. `activeExam.sceneTime.startedAt` records the server-owned 年/月/旬/turnCount when the exam scene began; if the player legally triggered a same-level exam in an open 下旬 and ordinary旬制 then rolled to the next month before the browser requested `/api/exam/question`, the formal question keeps the original open snapshot and started-at date.
+
 ## Entry Preparation
 
 `src/game/examTravel.js` still owns level-specific gold costs and funded/shortfall effects. S35 adds calendar details to `entryPreparation`:
@@ -51,6 +53,19 @@ Free-text exam requests are initiated through ordinary `POST /api/game/turn` via
 - local quota note
 
 The same `entryPreparation` object is stored on `activeExam`, copied to `player.examHistory`, and rendered in the browser result/archive.
+
+## Exam Scene Time
+
+`src/game/examSceneTime.js` owns S48.4 local exam phases:
+
+- `entry`
+- `question_review`
+- `outline`
+- `drafting`
+- `fair_copy`
+- `submitted`
+
+`POST /api/exam/question` writes or preserves `activeExam.sceneTime` without advancing global time. `POST /api/exam/progress` advances only that local phase, returns `worldTick.cadence = "scene"`, and leaves `turnCount/year/month/tenDayPeriod` unchanged. `POST /api/game/turn` follows the same scene-local route when an active writing exam exists. `POST /api/exam/submit` marks the scene `submitted` and stores `sceneTime`, `examStartedAt`, and `examSubmittedAt` in `player.examHistory`.
 
 ## Persistent Rivals
 
@@ -72,12 +87,25 @@ Game start, state, and turn payloads now include `examCalendarView` and `examRiv
 Exam question payloads include:
 
 - `examCalendar`
+- `sceneTime`
+- `examCalendarView`
+- `examRivalView`
+
+Exam progress payloads include:
+
+- `examCalendar`
+- `sceneTime`
+- `examScene`
+- `worldTick` with `cadence: "scene"`
 - `examCalendarView`
 - `examRivalView`
 
 Exam submit payloads include:
 
 - `examCalendar`
+- `sceneTime`
+- `examStartedAt`
+- `examSubmittedAt`
 - `cohortResult`
 - `examCalendarView`
 - `examRivalView`

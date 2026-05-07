@@ -30,6 +30,12 @@ const { buildRoleWorldCouplingView, ensureRoleWorldCouplingState } = require("..
 const { buildWorldEntityView, ensureWorldEntityState } = require("../game/worldEntities");
 const { buildWorldThreadView, ensureWorldThreadState } = require("../game/worldThreads");
 const { appendEvents, applyStatePatch } = require("../game/stateRules");
+const {
+  advanceExamScenePhase,
+  attachExamSceneTime,
+  buildExamSceneFeedback,
+  markExamSceneSubmitted
+} = require("../game/examSceneTime");
 const { mutateSession } = require("../storage/sessionStore");
 
 const router = express.Router();
@@ -51,6 +57,7 @@ function toExamPayload(worldState) {
     readiness: activeExam.readiness,
     entryPreparation: activeExam.entryPreparation || null,
     examCalendar: activeExam.examCalendar || activeExam.entryPreparation?.examCalendar || null,
+    sceneTime: activeExam.sceneTime || null,
     examCalendarView: buildExamCalendarView(worldState),
     examRivalView: buildExamRivalView(worldState),
     relationshipView: buildRelationshipInspectionView(worldState),
@@ -78,6 +85,20 @@ function summarizeResultEvent(worldState, activeExam, score, ranking, promotionR
   return `${worldState.player.name}交${activeExam.examName}卷，得${score.overall_score}分，榜列第${playerPlace}，${outcome}。`;
 }
 
+function ensureCommonState(worldState) {
+  ensureRelationshipLedger(worldState);
+  ensureExamCalendarState(worldState);
+  ensureLongTermEventState(worldState);
+  ensureOfficialCareerState(worldState);
+  ensureRoleWorldCouplingState(worldState);
+  ensureWorldEntityState(worldState);
+  ensureWorldThreadState(worldState);
+}
+
+function isWritingExam(activeExam) {
+  return Boolean(activeExam && activeExam.examQuestion && (!activeExam.status || activeExam.status === "writing"));
+}
+
 router.post("/question", async (req, res, next) => {
   try {
     const { sessionId, level } = req.body;
@@ -87,13 +108,7 @@ router.post("/question", async (req, res, next) => {
     }
 
     const result = await mutateSession(sessionId, async (worldState, context) => {
-      ensureRelationshipLedger(worldState);
-      ensureExamCalendarState(worldState);
-      ensureLongTermEventState(worldState);
-      ensureOfficialCareerState(worldState);
-      ensureRoleWorldCouplingState(worldState);
-      ensureWorldEntityState(worldState);
-      ensureWorldThreadState(worldState);
+      ensureCommonState(worldState);
       const requestedLevel = level || worldState.activeExam?.level || getNextExamLevel(worldState.player.examRank);
       const exam = getExam(requestedLevel);
 
@@ -111,9 +126,11 @@ router.post("/question", async (req, res, next) => {
         worldState.activeExam.level === exam.level &&
         worldState.activeExam.examQuestion
       ) {
-        ensureWorldEntityState(worldState);
-        ensureWorldThreadState(worldState);
-        context.skipWrite = true;
+        if (!worldState.activeExam.sceneTime) {
+          attachExamSceneTime(worldState.activeExam, worldState, "question_review");
+        } else {
+          context.skipWrite = true;
+        }
         return { statusCode: 200, payload: toExamPayload(worldState) };
       }
 
@@ -170,10 +187,17 @@ router.post("/question", async (req, res, next) => {
         readiness: summarizeReadiness(worldState.player, exam),
         entryPreparation: previousExam.entryPreparation || preparationResult.entryPreparation,
         examCalendar: previousExam.examCalendar || calendarGate.snapshot,
+        sceneTime: previousExam.sceneTime || null,
+        scenePhase: previousExam.scenePhase || null,
+        scenePhaseLabel: previousExam.scenePhaseLabel || null,
+        sceneTurnCount: previousExam.sceneTurnCount || 0,
+        sceneElapsedHours: previousExam.sceneElapsedHours || 0,
+        globalStartedAt: previousExam.globalStartedAt || null,
         reason: previousExam.reason || "玩家入场取题",
         status: "writing",
         generatedAt: new Date().toISOString()
       };
+      attachExamSceneTime(worldState.activeExam, worldState, "question_review");
 
       appendEvents(worldState, [
         ...(preparationResult?.events || []),
@@ -186,6 +210,48 @@ router.post("/question", async (req, res, next) => {
     });
 
     res.status(result.statusCode).json(result.payload);
+  } catch (error) {
+    next(error);
+  }
+});
+
+router.post("/progress", async (req, res, next) => {
+  try {
+    const { sessionId, examId, action } = req.body;
+
+    if (!sessionId || typeof sessionId !== "string") {
+      throw fail(400, "Missing sessionId");
+    }
+    if (!examId || typeof examId !== "string") {
+      throw fail(400, "Missing examId");
+    }
+    if (!action || typeof action !== "string" || !action.trim()) {
+      throw fail(400, "Missing or empty action");
+    }
+
+    const payload = await mutateSession(sessionId, async (worldState) => {
+      ensureCommonState(worldState);
+      const activeExam = worldState.activeExam;
+
+      if (!isWritingExam(activeExam)) {
+        throw fail(400, "当前没有可推进的考试场景。");
+      }
+      if (activeExam.examId !== examId) {
+        throw fail(409, "考试编号与当前考试不符。");
+      }
+
+      const scene = advanceExamScenePhase(activeExam, worldState, action);
+      ensureCommonState(worldState);
+
+      return {
+        ...toExamPayload(worldState),
+        narrative: scene.narrative,
+        examScene: scene.sceneTime,
+        worldTick: buildExamSceneFeedback(worldState, scene.sceneTime, scene.event)
+      };
+    });
+
+    res.json(payload);
   } catch (error) {
     next(error);
   }
@@ -206,13 +272,7 @@ router.post("/submit", async (req, res, next) => {
     }
 
     const payload = await mutateSession(sessionId, async (worldState) => {
-      ensureRelationshipLedger(worldState);
-      ensureExamCalendarState(worldState);
-      ensureLongTermEventState(worldState);
-      ensureOfficialCareerState(worldState);
-      ensureRoleWorldCouplingState(worldState);
-      ensureWorldEntityState(worldState);
-      ensureWorldThreadState(worldState);
+      ensureCommonState(worldState);
       const activeExam = worldState.activeExam;
 
       if (!activeExam || !activeExam.examQuestion) {
@@ -260,6 +320,7 @@ router.post("/submit", async (req, res, next) => {
       );
       const promotionResult = applyExamPromotion(worldState, exam, score, authenticityCheck);
       const cohortResult = recordExamCohortResult(worldState, exam, virtualCandidates, ranking);
+      const sceneTime = markExamSceneSubmitted(activeExam, worldState);
       const submittedAt = new Date().toISOString();
       const historyEntry = {
         examId,
@@ -268,6 +329,9 @@ router.post("/submit", async (req, res, next) => {
         examQuestion: activeExam.examQuestion,
         entryPreparation: activeExam.entryPreparation || null,
         examCalendar: activeExam.examCalendar || activeExam.entryPreparation?.examCalendar || null,
+        sceneTime,
+        examStartedAt: sceneTime.startedAt,
+        examSubmittedAt: sceneTime.updatedAt,
         essay: trimmedEssay,
         score,
         authenticityCheck,
@@ -294,6 +358,9 @@ router.post("/submit", async (req, res, next) => {
         essay: trimmedEssay,
         entryPreparation: activeExam.entryPreparation || null,
         examCalendar: activeExam.examCalendar || activeExam.entryPreparation?.examCalendar || null,
+        sceneTime,
+        examStartedAt: sceneTime.startedAt,
+        examSubmittedAt: sceneTime.updatedAt,
         score,
         authenticityCheck,
         virtualCandidates,
