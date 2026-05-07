@@ -156,6 +156,62 @@ test("POST /api/game/turn ignores provider attempts to forge world entities", as
   assert.equal(JSON.stringify(payload.worldEntityView).includes("provider-hidden-entity"), false);
 });
 
+test("POST /api/game/turn derives server-owned entity impacts from allowed state and system sources", async (t) => {
+  const provider = {
+    async runTurn() {
+      return {
+        narrative: "The court heard urgent frontier reports.",
+        statePatch: {
+          borderThreat: 88,
+          publicOrder: 42,
+          player: {
+            reputation: 24
+          }
+        },
+        attributeChanges: [],
+        relationshipChanges: [{
+          targetType: "faction",
+          targetId: "militaryLords",
+          relationshipDelta: 6,
+          resentmentDelta: 1,
+          stance: "pressing for border funds",
+          recentIntent: "Ask for money and honors.",
+          reason: "Visible frontier pressure."
+        }],
+        events: ["provider event"],
+        examTrigger: { shouldStart: false, level: null, reason: "" }
+      };
+    }
+  };
+  const server = createTestServerWithProvider(provider);
+  t.after(server.close);
+
+  const worldState = createInitialState({ playerName: "Tester", role: "general" });
+  const beforeGarrison = worldState.worldEntities.entities.find((entity) => entity.id === "military-frontier-garrison");
+  t.after(() => removeSessionFile(worldState.sessionId));
+  await writeSession(worldState);
+
+  const { response, payload } = await postJson(`${server.baseUrl}/api/game/turn`, {
+    sessionId: worldState.sessionId,
+    input: "查问边镇与军饷"
+  });
+  const afterGarrison = payload.worldState.worldEntities.entities.find((entity) => entity.id === "military-frontier-garrison");
+  const entityThread = payload.worldThreadView.activeThreads.find((thread) => thread.sourceType === "world_entity");
+
+  assert.equal(response.status, 200);
+  assert.ok(payload.worldEntityImpacts.some((impact) => impact.sourceType === "provider_state"));
+  assert.ok(payload.worldEntityImpacts.some((impact) => impact.sourceType === "relationship"));
+  assert.ok(afterGarrison.metrics.pressure > beforeGarrison.metrics.pressure);
+  assert.equal(
+    payload.worldEntityView.groups.some((group) =>
+      group.entities.some((entity) => entity.id === "military-frontier-garrison")
+    ),
+    true
+  );
+  assert.ok(entityThread);
+  assert.equal(entityThread.relatedEntitySummaries.some((entity) => entity.id === entityThread.sourceId), true);
+});
+
 test("SSE turn preview and final payload include world entity view", async (t) => {
   const server = createTestServer();
   t.after(server.close);
@@ -178,5 +234,6 @@ test("SSE turn preview and final payload include world entity view", async (t) =
   assert.match(body, /event: state_preview/);
   assert.match(body, /event: final_state/);
   assert.match(body, /worldEntityView/);
+  assert.match(body, /worldEntityImpacts/);
   assert.match(body, /户部/);
 });

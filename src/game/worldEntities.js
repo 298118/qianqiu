@@ -17,6 +17,18 @@ const ENTITY_KINDS = new Set([
 const ENTITY_STATUSES = new Set(["stable", "strained", "critical"]);
 const VISIBILITY_VALUES = new Set(["public", "role_visible", "hidden"]);
 const METRIC_KEYS = ["influence", "pressure", "capacity", "trust", "deficit"];
+const ENTITY_INFLUENCE_SOURCE_TYPES = new Set([
+  "provider_state",
+  "world_tick",
+  "relationship",
+  "active_npc_request",
+  "long_term_event",
+  "official_career",
+  "role_world_coupling"
+]);
+const MAX_ENTITY_INFLUENCES_PER_TURN = 40;
+const MAX_ENTITY_IMPACTS_PER_TURN = 32;
+const MAX_ENTITY_HIDDEN_NOTES = 5;
 
 const CATEGORY_LABELS = {
   court: "朝廷",
@@ -140,6 +152,15 @@ function normalizeMetrics(raw) {
   );
 }
 
+function normalizeMetricDeltas(raw) {
+  const source = isPlainObject(raw) ? raw : {};
+  return Object.fromEntries(
+    METRIC_KEYS
+      .map((key) => [key, clampNumber(source[key], -12, 12, 0)])
+      .filter(([, value]) => value !== 0)
+  );
+}
+
 function grainStress(worldState) {
   const grainReserve = Math.max(0, readWorldNumber(worldState, "grainReserve", 800));
   const population = Math.max(1, readWorldNumber(worldState, "population", 5000));
@@ -175,6 +196,15 @@ function pressureStatus(metrics) {
     return "strained";
   }
   return "stable";
+}
+
+function rebuildEntitySummary(entity, worldState = {}, publicNote = "") {
+  const definition = DEFINITION_BY_ID.get(entity.id);
+  const base = definition
+    ? definition.summary(worldState, entity.metrics)
+    : entity.publicSummary || entity.name;
+  const note = cleanText(publicNote, "", 64);
+  return cleanText(note ? `${base}近事：${note}` : base, base);
 }
 
 function riskTone(entity) {
@@ -570,6 +600,618 @@ function ensureWorldEntityState(worldState) {
   return worldState;
 }
 
+function normalizeEntityInfluence(raw) {
+  if (!isPlainObject(raw)) return null;
+  const entityId = cleanText(raw.entityId || raw.id, "", 96);
+  if (!entityId) return null;
+  const metricsDelta = normalizeMetricDeltas(raw.metricsDelta || raw.metrics);
+  if (!Object.keys(metricsDelta).length) return null;
+  const sourceType = ENTITY_INFLUENCE_SOURCE_TYPES.has(raw.sourceType)
+    ? raw.sourceType
+    : "long_term_event";
+
+  return {
+    entityId,
+    sourceType,
+    sourceId: cleanText(raw.sourceId, "", 96),
+    publicNote: cleanText(raw.publicNote || raw.note, "", 96),
+    hiddenNote: cleanText(raw.hiddenNote, "", 120),
+    metricsDelta
+  };
+}
+
+function applyMetricDelta(entity, metricsDelta) {
+  const changes = {};
+  const nextMetrics = { ...entity.metrics };
+  for (const [key, delta] of Object.entries(metricsDelta)) {
+    const before = metric(nextMetrics[key], key === "deficit" ? 0 : 50);
+    const after = metric(before + delta, before);
+    if (after === before) continue;
+    nextMetrics[key] = after;
+    changes[key] = {
+      before,
+      after,
+      delta: after - before
+    };
+  }
+  return {
+    metrics: nextMetrics,
+    changes
+  };
+}
+
+function applyWorldEntityInfluences(worldState, influences = []) {
+  if (!isPlainObject(worldState) || !Array.isArray(influences)) return [];
+  const state = normalizeWorldEntityState(worldState);
+  const byId = new Map(state.entities.map((entity) => [entity.id, entity]));
+  const applied = [];
+
+  for (const rawInfluence of influences.slice(0, MAX_ENTITY_INFLUENCES_PER_TURN)) {
+    if (applied.length >= MAX_ENTITY_IMPACTS_PER_TURN) break;
+    const influence = normalizeEntityInfluence(rawInfluence);
+    if (!influence) continue;
+
+    const entity = byId.get(influence.entityId);
+    if (!entity) continue;
+
+    const { metrics, changes } = applyMetricDelta(entity, influence.metricsDelta);
+    if (!Object.keys(changes).length) continue;
+
+    const nextEntity = {
+      ...entity,
+      metrics,
+      status: pressureStatus(metrics),
+      publicSummary: rebuildEntitySummary({ ...entity, metrics }, worldState, influence.publicNote),
+      lastUpdatedTurn: currentTurn(worldState),
+      hiddenNotes: influence.hiddenNote
+        ? [influence.hiddenNote, ...(entity.hiddenNotes || [])].slice(0, MAX_ENTITY_HIDDEN_NOTES)
+        : entity.hiddenNotes
+    };
+    byId.set(entity.id, nextEntity);
+    applied.push({
+      sourceType: influence.sourceType,
+      sourceId: influence.sourceId,
+      entityId: entity.id,
+      name: entity.name,
+      status: nextEntity.status,
+      metrics: changes,
+      publicNote: influence.publicNote
+    });
+  }
+
+  if (!applied.length) {
+    worldState.worldEntities = state;
+    return [];
+  }
+
+  worldState.worldEntities = normalizeWorldEntityState({
+    ...worldState,
+    worldEntities: {
+      ...state,
+      entities: state.entities.map((entity) => byId.get(entity.id) || entity),
+      recentNotes: [
+        ...(state.recentNotes || []),
+        ...applied
+          .map((impact) => impact.publicNote)
+          .filter(Boolean)
+      ].slice(-MAX_RECENT_NOTES)
+    }
+  });
+  return applied;
+}
+
+function readPathNumber(state, path) {
+  if (!isPlainObject(state) || typeof path !== "string") return null;
+  if (path.startsWith("player.")) {
+    const value = Number(state.player?.[path.slice("player.".length)]);
+    return Number.isFinite(value) ? Math.round(value) : null;
+  }
+  if (path.startsWith("factions.")) {
+    const value = Number(state.factions?.[path.slice("factions.".length)]);
+    return Number.isFinite(value) ? Math.round(value) : null;
+  }
+  const value = Number(state[path]);
+  return Number.isFinite(value) ? Math.round(value) : null;
+}
+
+function influenceMagnitude(delta, path) {
+  const scaleByPath = {
+    treasury: 140,
+    grainReserve: 90,
+    population: 120,
+    publicOrder: 3,
+    corruption: 3,
+    armyMorale: 3,
+    borderThreat: 3,
+    taxRate: 3
+  };
+  const scale = scaleByPath[path] || 4;
+  return clampNumber(Math.ceil(Math.abs(delta) / scale), 1, 6, 1);
+}
+
+function entityInfluence(entityId, sourceType, metricsDelta, publicNote, sourceId = "") {
+  return {
+    entityId,
+    sourceType,
+    sourceId,
+    metricsDelta,
+    publicNote
+  };
+}
+
+function metricInfluencesForChange(change, sourceType = "world_tick", sourceId = "") {
+  if (!isPlainObject(change)) return [];
+  const path = cleanText(change.path, "", 80);
+  const before = Number(change.before);
+  const after = Number(change.after);
+  if (!path || !Number.isFinite(before) || !Number.isFinite(after) || before === after) return [];
+  const delta = after - before;
+  const magnitude = influenceMagnitude(delta, path);
+  const improves = delta > 0;
+  const worsens = delta < 0;
+  const note = cleanText(change.reason, "服务器结算牵动实体账本", 64);
+
+  if (path === "treasury") {
+    return [
+      entityInfluence("court-ministry-revenue", sourceType, {
+        pressure: worsens ? magnitude : -magnitude,
+        capacity: worsens ? -magnitude : magnitude,
+        deficit: worsens ? magnitude : -magnitude
+      }, note, sourceId),
+      entityInfluence("fiscal-salt-canal", sourceType, {
+        pressure: worsens ? magnitude : -magnitude,
+        capacity: worsens ? -magnitude : magnitude,
+        deficit: worsens ? magnitude : -magnitude
+      }, note, sourceId)
+    ];
+  }
+
+  if (path === "grainReserve") {
+    return [
+      entityInfluence("relief-granary-operation", sourceType, {
+        pressure: worsens ? magnitude : -magnitude,
+        capacity: worsens ? -magnitude : magnitude,
+        deficit: worsens ? magnitude : -magnitude
+      }, note, sourceId),
+      entityInfluence("court-ministry-revenue", sourceType, {
+        pressure: worsens ? magnitude : -magnitude,
+        deficit: worsens ? magnitude : -magnitude
+      }, note, sourceId)
+    ];
+  }
+
+  if (path === "publicOrder" || path === "player.localOrder") {
+    return [
+      entityInfluence("local-gentry-county", sourceType, {
+        pressure: worsens ? magnitude : -magnitude,
+        trust: worsens ? -magnitude : magnitude
+      }, note, sourceId),
+      entityInfluence("relief-granary-operation", sourceType, {
+        pressure: worsens ? magnitude : -magnitude,
+        trust: worsens ? -magnitude : magnitude
+      }, note, sourceId)
+    ];
+  }
+
+  if (path === "corruption") {
+    return [
+      entityInfluence("court-censorate", sourceType, {
+        pressure: improves ? magnitude : -magnitude,
+        trust: improves ? -magnitude : magnitude,
+        deficit: improves ? magnitude : -magnitude
+      }, note, sourceId),
+      entityInfluence("court-ministry-personnel", sourceType, {
+        pressure: improves ? magnitude : -magnitude,
+        trust: improves ? -magnitude : magnitude
+      }, note, sourceId),
+      entityInfluence("fiscal-salt-canal", sourceType, {
+        pressure: improves ? magnitude : -magnitude,
+        deficit: improves ? magnitude : -magnitude
+      }, note, sourceId)
+    ];
+  }
+
+  if (path === "armyMorale") {
+    return [
+      entityInfluence("military-frontier-garrison", sourceType, {
+        pressure: worsens ? magnitude : -magnitude,
+        capacity: worsens ? -magnitude : magnitude,
+        trust: worsens ? -magnitude : magnitude
+      }, note, sourceId),
+      entityInfluence("military-wall-beacons", sourceType, {
+        capacity: worsens ? -magnitude : magnitude,
+        trust: worsens ? -magnitude : magnitude
+      }, note, sourceId)
+    ];
+  }
+
+  if (path === "borderThreat") {
+    return [
+      entityInfluence("military-frontier-garrison", sourceType, {
+        pressure: improves ? magnitude : -magnitude,
+        deficit: improves ? magnitude : -magnitude
+      }, note, sourceId),
+      entityInfluence("military-wall-beacons", sourceType, {
+        pressure: improves ? magnitude : -magnitude,
+        deficit: improves ? magnitude : -magnitude
+      }, note, sourceId)
+    ];
+  }
+
+  if (path === "taxRate") {
+    return [
+      entityInfluence("fiscal-land-merchant-tax", sourceType, {
+        pressure: improves ? magnitude : -magnitude,
+        trust: improves ? -magnitude : magnitude,
+        deficit: improves ? magnitude : -magnitude
+      }, note, sourceId)
+    ];
+  }
+
+  if (path === "player.gentryRelations") {
+    return [
+      entityInfluence("local-gentry-county", sourceType, {
+        pressure: worsens ? magnitude : -magnitude,
+        capacity: worsens ? -magnitude : magnitude,
+        trust: worsens ? -magnitude : magnitude
+      }, note, sourceId)
+    ];
+  }
+
+  if (path === "player.waterworks") {
+    return [
+      entityInfluence("local-riverworks-lawsuits", sourceType, {
+        pressure: worsens ? magnitude : -magnitude,
+        capacity: worsens ? -magnitude : magnitude,
+        trust: worsens ? -magnitude : magnitude
+      }, note, sourceId)
+    ];
+  }
+
+  if (path === "player.pendingLawsuits" || path === "player.banditPressure" || path === "player.corveeBurden") {
+    return [
+      entityInfluence("local-riverworks-lawsuits", sourceType, {
+        pressure: improves ? magnitude : -magnitude,
+        trust: improves ? -magnitude : magnitude,
+        deficit: improves ? magnitude : -magnitude
+      }, note, sourceId)
+    ];
+  }
+
+  if (path === "player.academia" || path === "player.reputation") {
+    return [
+      entityInfluence("academy-county-school", sourceType, {
+        pressure: worsens ? magnitude : -magnitude,
+        capacity: worsens ? -magnitude : magnitude,
+        trust: worsens ? -magnitude : magnitude
+      }, note, sourceId)
+    ];
+  }
+
+  if (path === "player.peerNetwork") {
+    return [
+      entityInfluence("academy-same-year-circle", sourceType, {
+        pressure: worsens ? magnitude : -magnitude,
+        capacity: worsens ? -magnitude : magnitude,
+        trust: worsens ? -magnitude : magnitude
+      }, note, sourceId)
+    ];
+  }
+
+  if (path === "player.performanceMerit") {
+    return [
+      entityInfluence("court-ministry-personnel", sourceType, {
+        pressure: worsens ? magnitude : -magnitude,
+        capacity: worsens ? -magnitude : magnitude,
+        trust: worsens ? -magnitude : magnitude
+      }, note, sourceId)
+    ];
+  }
+
+  if (path === "player.impeachmentRisk") {
+    return [
+      entityInfluence("court-censorate", sourceType, {
+        pressure: improves ? magnitude : -magnitude,
+        trust: improves ? -magnitude : magnitude
+      }, note, sourceId)
+    ];
+  }
+
+  if (path === "player.supply" || path === "player.scouting" || path === "player.battleReputation") {
+    return [
+      entityInfluence("military-frontier-garrison", sourceType, {
+        pressure: worsens ? magnitude : -magnitude,
+        capacity: worsens ? -magnitude : magnitude,
+        trust: worsens ? -magnitude : magnitude
+      }, note, sourceId)
+    ];
+  }
+
+  if (path === "factions.scholarOfficials") {
+    return [
+      entityInfluence("academy-same-year-circle", sourceType, {
+        trust: improves ? magnitude : -magnitude,
+        pressure: improves ? -magnitude : magnitude
+      }, note, sourceId),
+      entityInfluence("court-ministry-personnel", sourceType, {
+        trust: improves ? magnitude : -magnitude
+      }, note, sourceId)
+    ];
+  }
+
+  if (path === "factions.eunuchs") {
+    return [
+      entityInfluence("court-censorate", sourceType, {
+        pressure: improves ? magnitude : -magnitude,
+        trust: improves ? -magnitude : magnitude
+      }, note, sourceId),
+      entityInfluence("fiscal-salt-canal", sourceType, {
+        pressure: improves ? magnitude : -magnitude,
+        deficit: improves ? magnitude : -magnitude
+      }, note, sourceId)
+    ];
+  }
+
+  if (path === "factions.militaryLords") {
+    return [
+      entityInfluence("military-frontier-garrison", sourceType, {
+        trust: improves ? magnitude : -magnitude,
+        pressure: improves ? -magnitude : magnitude
+      }, note, sourceId)
+    ];
+  }
+
+  return [];
+}
+
+const STATE_DELTA_PATHS = [
+  "treasury",
+  "grainReserve",
+  "population",
+  "publicOrder",
+  "taxRate",
+  "corruption",
+  "armyMorale",
+  "borderThreat",
+  "player.academia",
+  "player.reputation",
+  "player.gentryRelations",
+  "player.localOrder",
+  "player.waterworks",
+  "player.pendingLawsuits",
+  "player.banditPressure",
+  "player.corveeBurden",
+  "player.peerNetwork",
+  "player.performanceMerit",
+  "player.impeachmentRisk",
+  "player.supply",
+  "player.scouting",
+  "player.battleReputation",
+  "factions.eunuchs",
+  "factions.scholarOfficials",
+  "factions.militaryLords"
+];
+
+function changesFromStateDelta(beforeState, afterState, reason = "AI 叙事落到服务器允许的世界指标") {
+  return STATE_DELTA_PATHS
+    .map((path) => {
+      const before = readPathNumber(beforeState, path);
+      const after = readPathNumber(afterState, path);
+      if (before === null || after === null || before === after) return null;
+      return { path, before, after, reason };
+    })
+    .filter(Boolean);
+}
+
+function relationshipInfluences(change) {
+  if (!isPlainObject(change)) return [];
+  const targetType = cleanText(change.targetType, "", 24);
+  const targetId = cleanText(change.targetId, "", 64);
+  const relationshipDelta = Number(change.relationship?.delta) || 0;
+  const resentmentDelta = Number(change.resentment?.delta) || 0;
+  if (!targetType || !targetId || (relationshipDelta === 0 && resentmentDelta === 0)) return [];
+  const magnitude = clampNumber(Math.ceil((Math.abs(relationshipDelta) + Math.max(0, resentmentDelta)) / 3), 1, 5, 1);
+  const positive = relationshipDelta >= 0 && resentmentDelta <= 1;
+  const note = `${change.name || "可见人脉"}关系入账`;
+
+  if (targetType === "faction" && targetId === "militaryLords") {
+    return [
+      entityInfluence("military-frontier-garrison", "relationship", {
+        trust: positive ? magnitude : -magnitude,
+        pressure: positive ? -magnitude : magnitude
+      }, note, targetId)
+    ];
+  }
+
+  if (targetType === "faction" && targetId === "scholarOfficials") {
+    return [
+      entityInfluence("academy-same-year-circle", "relationship", {
+        trust: positive ? magnitude : -magnitude,
+        pressure: positive ? -magnitude : magnitude
+      }, note, targetId),
+      entityInfluence("court-ministry-personnel", "relationship", {
+        trust: positive ? magnitude : -magnitude
+      }, note, targetId)
+    ];
+  }
+
+  if (targetType === "faction" && targetId === "eunuchs") {
+    return [
+      entityInfluence("court-censorate", "relationship", {
+        pressure: positive ? magnitude : -magnitude,
+        trust: positive ? -magnitude : magnitude
+      }, note, targetId),
+      entityInfluence("fiscal-salt-canal", "relationship", {
+        pressure: positive ? magnitude : -magnitude
+      }, note, targetId)
+    ];
+  }
+
+  if (targetType === "character") {
+    return [
+      entityInfluence("local-gentry-county", "relationship", {
+        trust: positive ? magnitude : -magnitude,
+        pressure: positive ? -magnitude : magnitude
+      }, note, targetId),
+      entityInfluence("academy-county-school", "relationship", {
+        trust: positive ? Math.max(1, magnitude - 1) : -Math.max(1, magnitude - 1)
+      }, note, targetId)
+    ];
+  }
+
+  return [];
+}
+
+function activeRequestInfluences(activeNpcRequest) {
+  if (!isPlainObject(activeNpcRequest)) return [];
+  if (activeNpcRequest.resolved) {
+    return [
+      entityInfluence("academy-same-year-circle", "active_npc_request", {
+        trust: 2,
+        pressure: -1
+      }, "请托有回应，人情暂入同年声气")
+    ];
+  }
+  if (activeNpcRequest.expired) {
+    return [
+      entityInfluence("academy-same-year-circle", "active_npc_request", {
+        trust: -2,
+        pressure: 2
+      }, "请托逾期，人情转紧")
+    ];
+  }
+  if (activeNpcRequest.scheduled) {
+    return [
+      entityInfluence("academy-same-year-circle", "active_npc_request", {
+        pressure: 1
+      }, "新请托牵出人脉压力")
+    ];
+  }
+  return [];
+}
+
+function longTermEventInfluences(longTermEvents) {
+  if (!isPlainObject(longTermEvents)) return [];
+  const events = [
+    ...(Array.isArray(longTermEvents.scheduled) ? longTermEvents.scheduled : []),
+    ...(Array.isArray(longTermEvents.resolved) ? longTermEvents.resolved : [])
+  ];
+  return events.flatMap((event) => {
+    const type = cleanText(event.type, "", 32);
+    const sourceId = cleanText(event.id || event.key, "", 80);
+    if (type === "disaster") {
+      return [entityInfluence("relief-granary-operation", "long_term_event", { pressure: 3, deficit: 2, capacity: -1 }, "灾荒事件牵动赈务", sourceId)];
+    }
+    if (type === "border") {
+      return [entityInfluence("military-frontier-garrison", "long_term_event", { pressure: 3, deficit: 1 }, "边事事件牵动军镇", sourceId)];
+    }
+    if (type === "court") {
+      return [entityInfluence("court-censorate", "long_term_event", { pressure: 2, trust: -1 }, "朝局事件牵动台谏", sourceId)];
+    }
+    if (type === "local_case") {
+      return [entityInfluence("local-riverworks-lawsuits", "long_term_event", { pressure: 2, trust: -1 }, "地方案链牵动案牍", sourceId)];
+    }
+    if (type === "seasonal") {
+      return [entityInfluence("fiscal-land-merchant-tax", "long_term_event", { pressure: 1, deficit: -1 }, "岁时核验牵动赋税", sourceId)];
+    }
+    return [];
+  });
+}
+
+function roleWorldCouplingInfluences(roleWorldCoupling) {
+  const outcome = roleWorldCoupling?.outcome;
+  if (!isPlainObject(outcome)) return [];
+  const kind = cleanText(outcome.kind, "", 48);
+  const sourceId = cleanText(outcome.id, "", 80);
+  if (kind === "magistrate_waterworks") {
+    return [entityInfluence("local-riverworks-lawsuits", "role_world_coupling", { pressure: -3, capacity: 3, trust: 2 }, "水利成效入河工案牍", sourceId)];
+  }
+  if (kind === "general_campaign") {
+    return [entityInfluence("military-frontier-garrison", "role_world_coupling", { pressure: -2, deficit: 1, trust: 2 }, "战事余波入军镇账", sourceId)];
+  }
+  if (kind === "emperor_appointments") {
+    return [entityInfluence("court-ministry-personnel", "role_world_coupling", { pressure: -2, capacity: 2, trust: 2 }, "任免整饬入吏部账", sourceId)];
+  }
+  if (kind === "minister_impeachment") {
+    return [entityInfluence("court-censorate", "role_world_coupling", { pressure: 3, trust: 1 }, "弹章成势入都察院账", sourceId)];
+  }
+  return [];
+}
+
+function officialCareerInfluences(officialCareer) {
+  if (!isPlainObject(officialCareer)) return [];
+  const text = [
+    officialCareer.summary,
+    ...(Array.isArray(officialCareer.events) ? officialCareer.events : [])
+  ].filter(Boolean).join(" ");
+  const outcome = officialCareer.outcome;
+  const influences = [];
+
+  if (/赈|灾|仓|粮/.test(text)) {
+    influences.push(entityInfluence("relief-granary-operation", "official_career", { pressure: -2, capacity: 2, trust: 1 }, "官场赈务差事入账", outcome?.id));
+  }
+  if (/盐|漕|税|钱粮|户部/.test(text)) {
+    influences.push(entityInfluence("fiscal-salt-canal", "official_career", { pressure: -1, capacity: 1, trust: 1 }, "官场钱粮差事入账", outcome?.id));
+  }
+  if (/河工|水利|案|讼|词讼/.test(text)) {
+    influences.push(entityInfluence("local-riverworks-lawsuits", "official_career", { pressure: -2, capacity: 2, trust: 1 }, "官场案牍或河工差事入账", outcome?.id));
+  }
+  if (/军需|兵|边|饷/.test(text)) {
+    influences.push(entityInfluence("military-frontier-garrison", "official_career", { pressure: -1, capacity: 1, trust: 1 }, "官场军需差事入账", outcome?.id));
+  }
+  if (/考成|任免|铨|升|迁|实授/.test(text) || (isPlainObject(outcome) && /appointment|promotion|transfer|outpost/.test(outcome.type))) {
+    influences.push(entityInfluence("court-ministry-personnel", "official_career", { pressure: -1, capacity: 2, trust: 1 }, "官场任免或考成入账", outcome?.id));
+  }
+  if (/弹劾|处分|都察|台谏/.test(text) || (isPlainObject(outcome) && /impeachment|punishment|demotion/.test(outcome.type))) {
+    influences.push(entityInfluence("court-censorate", "official_career", { pressure: 2, trust: -1 }, "官场弹章入账", outcome?.id));
+  }
+
+  return influences;
+}
+
+function deriveWorldEntityInfluences(worldState = {}, context = {}) {
+  const influences = [];
+  const stateDeltas = Array.isArray(context.stateDeltas)
+    ? context.stateDeltas
+    : context.stateDelta
+      ? [context.stateDelta]
+      : [];
+
+  for (const delta of stateDeltas) {
+    const changes = changesFromStateDelta(delta.before, delta.after, delta.reason);
+    influences.push(...changes.flatMap((change) =>
+      metricInfluencesForChange(change, delta.sourceType || "provider_state", delta.sourceId || "")
+    ));
+  }
+
+  for (const change of [
+    ...(Array.isArray(context.worldTick?.attributeChanges) ? context.worldTick.attributeChanges : []),
+    ...(Array.isArray(context.roleWorldCoupling?.attributeChanges) ? context.roleWorldCoupling.attributeChanges : []),
+    ...(Array.isArray(context.longTermEvents?.attributeChanges) ? context.longTermEvents.attributeChanges : []),
+    ...(Array.isArray(context.officialCareer?.attributeChanges) ? context.officialCareer.attributeChanges : [])
+  ]) {
+    const sourceType = change.reason === "角色世界联动"
+      ? "role_world_coupling"
+      : change.reason === "长期事件"
+        ? "long_term_event"
+        : change.reason === "官场结算"
+          ? "official_career"
+          : "world_tick";
+    influences.push(...metricInfluencesForChange(change, sourceType));
+  }
+
+  for (const change of Array.isArray(context.relationshipChanges) ? context.relationshipChanges : []) {
+    influences.push(...relationshipInfluences(change));
+  }
+
+  influences.push(...activeRequestInfluences(context.activeNpcRequest));
+  influences.push(...longTermEventInfluences(context.longTermEvents));
+  influences.push(...roleWorldCouplingInfluences(context.roleWorldCoupling));
+  influences.push(...officialCareerInfluences(context.officialCareer));
+
+  return influences.slice(0, MAX_ENTITY_INFLUENCES_PER_TURN);
+}
+
 function labelOffice(id) {
   const bureau = getBureau(id);
   if (bureau) return bureau.name;
@@ -688,8 +1330,10 @@ function summarizeWorldEntitiesForPrompt(worldState = {}) {
 
 module.exports = {
   WORLD_ENTITY_SCHEMA_VERSION,
+  applyWorldEntityInfluences,
   buildWorldEntityView,
   createInitialWorldEntityState,
+  deriveWorldEntityInfluences,
   ensureWorldEntityState,
   normalizeWorldEntityState,
   summarizeWorldEntitiesForPrompt

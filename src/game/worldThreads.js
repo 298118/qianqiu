@@ -3,6 +3,7 @@ const { buildLongTermEventView } = require("./longTermEvents");
 const { buildOfficialCareerView } = require("./officialCareer");
 const { getBureau, getOffice } = require("./officialCatalog");
 const { buildRoleWorldCouplingView } = require("./roleWorldCoupling");
+const { buildWorldEntityView } = require("./worldEntities");
 
 const WORLD_THREAD_SCHEMA_VERSION = 1;
 const MAX_THREADS = 12;
@@ -20,7 +21,8 @@ const THREAD_KINDS = new Set([
   "consequence",
   "official_assignment",
   "official_outcome",
-  "role_impact"
+  "role_impact",
+  "world_entity_pressure"
 ]);
 const SOURCE_TYPES = new Set([
   "active_npc_request",
@@ -28,6 +30,7 @@ const SOURCE_TYPES = new Set([
   "official_assignment",
   "official_outcome",
   "role_world_coupling",
+  "world_entity",
   "frontier_report",
   "faction_pressure",
   "local_case_pressure"
@@ -40,6 +43,7 @@ const SOURCE_LABELS = {
   official_assignment: "官场差遣",
   official_outcome: "官场结果",
   role_world_coupling: "身份联动",
+  world_entity: "世界实体",
   frontier_report: "边镇奏报",
   faction_pressure: "朝局派系",
   local_case_pressure: "地方案链"
@@ -123,6 +127,11 @@ const THREAD_KIND_DETAILS = {
     goal: "追踪本次身份行动转入世界状态后的余波。",
     interventions: ["继续沿身份职责推进", "观察相关指标", "用下一回合补救偏差"],
     followUp: "身份联动效果仍由 role/world coupling 模块结算。"
+  },
+  world_entity_pressure: {
+    goal: "处置制度实体压力，先辨清牵连来源再用身份行动介入。",
+    interventions: ["查看相关衙门或群体", "顺着实体提示行动", "观察下一月指标变化"],
+    followUp: "实体压力由世界实体 helper 与原来源系统共同结算。"
   }
 };
 const SOURCE_INTERVENTION_HINTS = {
@@ -131,6 +140,7 @@ const SOURCE_INTERVENTION_HINTS = {
   official_assignment: ["把行动写成差事办理"],
   official_outcome: ["关注官场余波"],
   role_world_coupling: ["顺着身份职责补一回合"],
+  world_entity: ["按实体提示介入"],
   frontier_report: ["查边报与军饷"],
   faction_pressure: ["谨慎处理章疏和人情"],
   local_case_pressure: ["先断案或安民"]
@@ -192,8 +202,22 @@ function normalizeRelated(raw) {
     characters: normalizeIdList(source.characters),
     factions: normalizeIdList(source.factions),
     offices: normalizeIdList(source.offices),
+    entities: normalizeIdList(source.entities),
     metrics: normalizeIdList(source.metrics, 10)
   };
+}
+
+function visibleWorldEntityIds(worldState = {}) {
+  return new Set(
+    buildWorldEntityView(worldState)
+      .groups
+      .flatMap((group) => group.entities.map((entity) => entity.id))
+  );
+}
+
+function canExposeSource(sourceType, sourceId, worldState = {}) {
+  if (sourceType !== "world_entity") return true;
+  return visibleWorldEntityIds(worldState).has(sourceId);
 }
 
 function normalizeThread(raw, worldState = {}) {
@@ -203,6 +227,8 @@ function normalizeThread(raw, worldState = {}) {
   if (!id || !title) return null;
 
   const sourceType = SOURCE_TYPES.has(raw.sourceType) ? raw.sourceType : "long_term_event";
+  const sourceId = cleanText(raw.sourceId, id, 96);
+  if (!canExposeSource(sourceType, sourceId, worldState)) return null;
   const kind = THREAD_KINDS.has(raw.kind) ? raw.kind : "consequence";
   const status = THREAD_STATUSES.has(raw.status) ? raw.status : "active";
   const turn = currentTurn(worldState);
@@ -219,7 +245,7 @@ function normalizeThread(raw, worldState = {}) {
     status,
     kind,
     sourceType,
-    sourceId: cleanText(raw.sourceId, id, 96),
+    sourceId,
     sourceLabel: cleanText(raw.sourceLabel, SOURCE_LABELS[sourceType] || "世界议题", 40),
     title,
     summary: cleanText(raw.summary, title),
@@ -247,12 +273,15 @@ function normalizeResolvedThread(raw, worldState = {}) {
   const id = cleanText(raw.id, "", 96);
   const title = cleanText(raw.title, "");
   if (!id || !title) return null;
+  const sourceType = SOURCE_TYPES.has(raw.sourceType) ? raw.sourceType : "long_term_event";
+  const sourceId = cleanText(raw.sourceId, id, 96);
+  if (!canExposeSource(sourceType, sourceId, worldState)) return null;
 
   return {
     id,
     kind: THREAD_KINDS.has(raw.kind) ? raw.kind : "consequence",
-    sourceType: SOURCE_TYPES.has(raw.sourceType) ? raw.sourceType : "long_term_event",
-    sourceId: cleanText(raw.sourceId, id, 96),
+    sourceType,
+    sourceId,
     title,
     resolvedTurn: clampNumber(raw.resolvedTurn, 0, Number.MAX_SAFE_INTEGER, currentTurn(worldState)),
     outcome: cleanText(raw.outcome, "暂归档", 80)
@@ -304,24 +333,36 @@ function eventKind(type) {
 
 function eventRelated(event) {
   if (event.type === "disaster") {
-    return { metrics: ["grainReserve", "publicOrder", "population"] };
+    return {
+      entities: ["relief-granary-operation", "court-ministry-revenue"],
+      metrics: ["grainReserve", "publicOrder", "population"]
+    };
   }
   if (event.type === "border") {
-    return { factions: ["militaryLords"], metrics: ["borderThreat", "armyMorale", "treasury"] };
+    return {
+      entities: ["military-frontier-garrison", "military-wall-beacons"],
+      factions: ["militaryLords"],
+      metrics: ["borderThreat", "armyMorale", "treasury"]
+    };
   }
   if (event.type === "court") {
     return {
+      entities: ["court-censorate", "court-ministry-personnel"],
       factions: ["eunuchs", "scholarOfficials", "militaryLords"],
       metrics: ["corruption", "publicOrder", "treasury"]
     };
   }
   if (event.type === "local_case") {
     return {
+      entities: ["local-gentry-county", "local-riverworks-lawsuits"],
       metrics: ["player.pendingLawsuits", "player.banditPressure", "player.gentryRelations", "publicOrder"]
     };
   }
   if (event.type === "seasonal") {
-    return { metrics: ["grainReserve", "publicOrder"] };
+    return {
+      entities: ["fiscal-land-merchant-tax", "relief-granary-operation"],
+      metrics: ["grainReserve", "publicOrder"]
+    };
   }
   return { metrics: ["publicOrder"] };
 }
@@ -329,18 +370,26 @@ function eventRelated(event) {
 function assignmentRelated(assignment) {
   const related = {
     offices: assignment.bureauId ? [assignment.bureauId] : [],
+    entities: [],
     metrics: ["player.performanceMerit", "player.impeachmentRisk"]
   };
   if (assignment.kind === "military_supply") {
+    related.entities.push("military-frontier-garrison", "court-ministry-revenue");
     related.factions = ["militaryLords"];
     related.metrics.push("borderThreat", "treasury");
   } else if (assignment.kind === "audit" || assignment.kind === "personnel_review") {
+    related.entities.push("court-censorate", "court-ministry-personnel");
     related.factions = ["scholarOfficials", "eunuchs"];
     related.metrics.push("corruption");
   } else if (assignment.kind === "relief" || assignment.kind === "land_survey" || assignment.kind === "salt_transport") {
+    related.entities.push(
+      assignment.kind === "salt_transport" ? "fiscal-salt-canal" : "relief-granary-operation",
+      "court-ministry-revenue"
+    );
     related.factions = ["scholarOfficials"];
     related.metrics.push("grainReserve", "publicOrder");
   } else if (assignment.kind === "case_review" || assignment.kind === "riverworks") {
+    related.entities.push("local-riverworks-lawsuits", "local-gentry-county");
     related.factions = ["scholarOfficials"];
     related.metrics.push("publicOrder");
   }
@@ -373,6 +422,15 @@ function impactRelated(impact) {
     factions.push("eunuchs");
   }
   return {
+    entities: affectedPaths.flatMap((path) => {
+      if (path === "borderThreat" || path === "armyMorale" || path.includes("militaryLords")) {
+        return ["military-frontier-garrison"];
+      }
+      if (path === "corruption" || path.includes("eunuchs")) return ["court-censorate"];
+      if (path === "grainReserve") return ["relief-granary-operation"];
+      if (path === "publicOrder") return ["local-gentry-county"];
+      return [];
+    }),
     factions,
     metrics: affectedPaths
   };
@@ -423,9 +481,41 @@ function buildRelatedLabels(related = {}, worldState = {}) {
   const characters = uniqueList((related.characters || []).map((id) => labelCharacter(id, worldState)), 6);
   const factions = uniqueList((related.factions || []).map((id) => FACTION_LABELS[id] || id), 6);
   const offices = uniqueList((related.offices || []).map((id) => labelOffice(id)), 6);
+  const visibleEntities = buildWorldEntityView(worldState).groups.flatMap((group) => group.entities);
+  const entities = uniqueList((related.entities || []).map((id) =>
+    visibleEntities.find((entity) => entity.id === id)?.name || id
+  ), 6);
   const metrics = uniqueList((related.metrics || []).map((id) => METRIC_LABELS[id] || id), 8);
-  const summary = uniqueList([...characters, ...factions, ...offices, ...metrics], 8);
-  return { characters, factions, offices, metrics, summary };
+  const summary = uniqueList([...characters, ...factions, ...offices, ...entities, ...metrics], 8);
+  return { characters, factions, offices, entities, metrics, summary };
+}
+
+function buildRelatedEntitySummaries(related = {}, worldState = {}) {
+  const visibleEntities = buildWorldEntityView(worldState).groups.flatMap((group) => group.entities);
+  const byId = new Map(visibleEntities.map((entity) => [entity.id, entity]));
+  return uniqueList(related.entities || [], 6)
+    .map((id) => byId.get(id))
+    .filter(Boolean)
+    .map((entity) => ({
+      id: entity.id,
+      name: entity.name,
+      statusLabel: entity.statusLabel,
+      riskLabel: entity.riskLabel,
+      metrics: entity.metrics,
+      publicSummary: entity.publicSummary
+    }));
+}
+
+function filterRelatedForView(related = {}, worldState = {}) {
+  const visibleEntityIds = new Set(
+    buildWorldEntityView(worldState)
+      .groups
+      .flatMap((group) => group.entities.map((entity) => entity.id))
+  );
+  return {
+    ...related,
+    entities: uniqueList(related.entities || [], 6).filter((id) => visibleEntityIds.has(id))
+  };
 }
 
 function buildInterventionHints(thread) {
@@ -461,7 +551,10 @@ function deriveActiveRequestThread(worldState) {
     lastUpdatedTurn: request.lastUpdatedTurn,
     related: {
       characters: request.targetType === "character" ? [request.targetId] : [],
-      factions: request.targetType === "faction" ? [request.targetId] : []
+      factions: request.targetType === "faction" ? [request.targetId] : [],
+      entities: request.targetType === "faction" && request.targetId === "militaryLords"
+        ? ["military-frontier-garrison"]
+        : ["academy-same-year-circle", "local-gentry-county"]
     },
     visibility: "relationship_visible"
   });
@@ -518,6 +611,7 @@ function deriveOfficialOutcomeThreads(worldState) {
     startedYear: outcome.year,
     startedMonth: outcome.month,
     related: {
+      entities: ["court-ministry-personnel", "court-censorate"],
       offices: [outcome.officeTitleBefore, outcome.officeTitleAfter].filter(Boolean),
       metrics: ["player.performanceMerit", "player.promotionProspect", "player.impeachmentRisk"]
     }
@@ -543,6 +637,28 @@ function deriveRoleImpactThreads(worldState) {
   })).filter(Boolean);
 }
 
+function deriveWorldEntityThreads(worldState) {
+  const view = buildWorldEntityView(worldState);
+  return (view.highlights || [])
+    .filter((entity) => entity.riskTone === "high" || entity.status === "critical")
+    .slice(0, 3)
+    .map((entity) => makeThread(worldState, {
+      id: `WT-entity-${entity.id}`,
+      sourceType: "world_entity",
+      sourceId: entity.id,
+      kind: "world_entity_pressure",
+      title: `${entity.name}压力转急`,
+      summary: entity.publicSummary,
+      severity: entity.riskTone === "high" ? 3 : 2,
+      lastUpdatedTurn: entity.lastUpdatedTurn,
+      related: {
+        ...entity.related,
+        entities: [entity.id]
+      }
+    }))
+    .filter(Boolean);
+}
+
 function factionSpread(factions = {}) {
   const values = Object.values(factions).filter((value) => typeof value === "number");
   if (values.length < 2) return 0;
@@ -562,6 +678,7 @@ function deriveFrontierPressureThread(worldState) {
     summary: `边患约${threat}，军心约${morale}，兵部与军镇消息需要连续观察。`,
     severity: threat >= 85 ? 3 : threat >= 72 ? 2 : 1,
     related: {
+      entities: ["military-frontier-garrison", "military-wall-beacons"],
       factions: ["militaryLords"],
       metrics: ["borderThreat", "armyMorale", "treasury"]
     }
@@ -581,6 +698,7 @@ function deriveFactionPressureThread(worldState) {
     summary: `贪腐约${corruption}，派系强弱差约${spread}，章疏与人事情面可能互相牵连。`,
     severity: corruption >= 88 || spread >= 58 ? 3 : 2,
     related: {
+      entities: ["court-censorate", "court-ministry-personnel"],
       factions: ["eunuchs", "scholarOfficials", "militaryLords"],
       metrics: ["corruption", "publicOrder", "treasury"]
     }
@@ -601,6 +719,7 @@ function deriveLocalCasePressureThread(worldState) {
     summary: `词讼约${pending}，盗匪约${bandits}，乡绅、差役与民情可能继续牵连。`,
     severity: bandits >= 75 || pending >= 45 ? 3 : 2,
     related: {
+      entities: ["local-gentry-county", "local-riverworks-lawsuits"],
       characters: ["C01"],
       metrics: ["player.pendingLawsuits", "player.banditPressure", "player.gentryRelations", "publicOrder"]
     }
@@ -624,7 +743,8 @@ function deriveWorldThreads(worldState = {}) {
     ...deriveLongTermEventThreads(worldState),
     ...deriveOfficialAssignmentThreads(worldState),
     ...deriveOfficialOutcomeThreads(worldState),
-    ...deriveRoleImpactThreads(worldState)
+    ...deriveRoleImpactThreads(worldState),
+    ...deriveWorldEntityThreads(worldState)
   ].filter(Boolean);
 
   threads.push(...deriveMetricPressureThreads(worldState, threads));
@@ -703,6 +823,7 @@ function ensureWorldThreadState(worldState) {
 function viewThread(thread, worldState = {}) {
   const kindDetails = THREAD_KIND_DETAILS[thread.kind] || THREAD_KIND_DETAILS.consequence;
   const risk = buildRiskInfo(thread.severity);
+  const related = filterRelatedForView(thread.related, worldState);
   return {
     id: thread.id,
     status: thread.status,
@@ -724,8 +845,9 @@ function viewThread(thread, worldState = {}) {
     goal: kindDetails.goal,
     riskLabel: risk.riskLabel,
     riskTone: risk.riskTone,
-    related: thread.related,
-    relatedLabels: buildRelatedLabels(thread.related, worldState),
+    related,
+    relatedLabels: buildRelatedLabels(related, worldState),
+    relatedEntitySummaries: buildRelatedEntitySummaries(related, worldState),
     interventionHints: buildInterventionHints(thread),
     followUpHint: buildFollowUpHint(thread)
   };
@@ -767,6 +889,7 @@ function summarizeWorldThreadsForPrompt(worldState = {}) {
       goal: thread.goal,
       related: thread.related,
       relatedLabels: thread.relatedLabels,
+      relatedEntitySummaries: thread.relatedEntitySummaries,
       interventionHints: thread.interventionHints,
       followUpHint: thread.followUpHint
     })),

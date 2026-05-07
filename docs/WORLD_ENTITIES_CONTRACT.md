@@ -1,13 +1,13 @@
 # 多实体世界模型契约
 
-S45.1 新增 `worldState.worldEntities`，用于把朝廷衙门、地方士绅、书院同门、军镇边墙、盐漕税赋和灾荒赈务整理成可审查的结构化实体。它不是新的结算器；第一步只提供服务器拥有的实体账本、玩家可见 view 和 AI 可读摘要。跨系统写入与实体派生议题留给 S45.2。
+S45 新增 `worldState.worldEntities`，用于把朝廷衙门、地方士绅、书院同门、军镇边墙、盐漕税赋和灾荒赈务整理成可审查的结构化实体。它不是新的结算器；S45.1 提供服务器拥有的实体账本、玩家可见 view 和 AI 可读摘要，S45.2 只允许服务器来源通过 bounded influence helper 写入实体压力。
 
 ## 目标
 
 - 让 AI 叙事可以引用具体制度实体，而不是只看全局数值。
 - 让玩家和后续 UI 能看到“哪些机构/群体/通道正在吃紧”。
 - 保持服务器裁决权：模型只能读取可见摘要，不能写入实体账本、隐藏札记或实体结局。
-- 为 S45.2 接入世界 tick、NPC 行为、关系账本、官场结果和 World Threads 留出统一落点。
+- 为世界 tick、NPC 行为、关系账本、官场结果和 World Threads 提供统一、可审查、可过滤的制度实体落点。
 
 ## 持久状态
 
@@ -90,17 +90,26 @@ S45.1 的基础实体由 `src/game/worldEntities.js` 集中生成和归一化：
 - AI 不可裁决实体状态、解决实体压力、公开 hidden notes、创建隐藏实体、或把实体直接转成官职任免/长期事件结局。
 - 服务器后续若要写入实体，必须通过 `allowServerOwnedPatchKeys` 或实体模块 helper，并同步测试。
 
-## S45.2 预留
+## S45.2 服务器来源影响
 
-后续小步应把以下来源接入实体：
+`src/game/worldEntities.js` 现在导出：
 
+- `deriveWorldEntityInfluences(worldState, context)`：从已经通过服务器边界的来源结果派生 influence。
+- `applyWorldEntityInfluences(worldState, influences)`：夹取 metric delta、刷新 `status/publicSummary/lastUpdatedTurn`、写入 `recentNotes` 或 `hiddenNotes`，并返回本回合 `worldEntityImpacts`。
+
+当前来源：
+
+- AI 叙事落地后的允许字段变化：provider 仍不能写实体，但其合法 `statePatch` 若改变府库、民心、边患、声望等指标，会被服务器比较 before/after 后转成实体影响。
 - 世界 tick：每月自然漂移后更新财赋、粮储、边镇、赈务等实体压力。
-- NPC/关系：可见士绅、同年、上官、军镇派系可调整相关实体信任或压力。
-- 官场结果：赈务、盐漕、军需、河工、考成差事可写入实体 notes 和可见摘要。
-- World Threads：高压力实体可派生可追踪议题，但议题仍不能替代来源系统结算。
+- NPC/关系：只读取已经应用的可见关系变化；隐藏关系目标仍被关系模块挡下，不会变成实体公开变化。
+- 长期事件、身份联动和官场结果：赈务、盐漕、军需、河工、考成、弹劾等服务器结算会写入相关实体压力和摘要。
+- World Threads：高压力可见实体会派生少量 `world_entity` 来源议题；其他议题也可携带 `relatedEntitySummaries`，但议题仍不能替代来源系统结算。
+
+普通 provider 仍不得直接 patch `worldEntities`，也不能伪造 `worldEntityImpacts`。
 
 ## 验证要求
 
-- `test/worldEntities.test.js` 覆盖初始账本、旧档归一化、clamp、隐藏过滤和 prompt 摘要。
-- `test/gameTurnWorldEntities.test.js` 覆盖 route payload、SSE payload 和 provider 伪造实体不落盘。
+- `test/worldEntities.test.js` 覆盖初始账本、旧档归一化、clamp、隐藏过滤、prompt 摘要、server-owned influence 写入和多来源 influence 派生。
+- `test/gameTurnWorldEntities.test.js` 覆盖 route payload、SSE payload、provider 伪造实体不落盘，以及允许状态/关系来源可产生 server-owned `worldEntityImpacts`。
+- `test/worldThreads.test.js` 覆盖高压力实体派生 `world_entity` 议题、议题读取可见 `relatedEntitySummaries`，以及隐藏实体不泄漏。
 - `test/stateRules.test.js`、`test/aiSchemas.test.js`、`test/remoteHelpers.test.js`、`test/aiControlRedTeam.test.js`、`npm run eval:ai` 覆盖普通回合不能写入 server-owned ledger。

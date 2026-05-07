@@ -269,9 +269,9 @@ SSE 事件：
 
 当前实现中，客户端发送 `Accept: text/event-stream` 或 `?stream=1` 时启用 SSE；未请求 SSE 的调用仍返回普通 JSON，用于测试脚本和旧客户端兼容。S25.2 后，OpenAI Responses、DeepSeek chat completions、Anthropic Messages 适配器在 SSE turn 中可通过 `streamTurn()` 返回真实 token streaming；服务端只从结构化 JSON token 流中抽取顶层 `narrative` 字符串作为 `narrative_chunk`，完整 `turn` JSON 仍必须通过 Ajv schema 后才会应用状态。若不支持流式或没有提前抽取到叙事，则保留当前完成后分块的兼容输出。若已经向浏览器发送过真实 provider 叙事后流式调用失败，路由只发 `error` 并保持 session 不变，浏览器会移除未提交的临时叙事文本。无论哪种响应形态，状态 patch、事件追加、考试触发和 session 保存仍由服务器执行。
 
-S43.2 后，游戏与考试路由会返回服务器归一化的 `worldThreadView`。该视图来自 `worldState.worldThreads`，把主动 NPC 请托、长期事件、官场差遣/结果、角色世界联动、边事、派系压力和地方案链整理为玩家可见的跨月议题摘要；浏览器“世界议程”面板会显示议题目标、期限、风险、相关人物/派系/衙门/指标、玩家可介入点和近归档余波。AI 可读 prompt 摘要，但普通 provider 不得通过 `statePatch.worldThreads` 直接写入；议程面板只提示自由行动方向，不替代来源系统结算。
+S43.2/S45.2 后，游戏与考试路由会返回服务器归一化的 `worldThreadView`。该视图来自 `worldState.worldThreads`，把主动 NPC 请托、长期事件、官场差遣/结果、角色世界联动、世界实体压力、边事、派系压力和地方案链整理为玩家可见的跨月议题摘要；浏览器“世界议程”面板会显示议题目标、期限、风险、相关人物/派系/衙门/指标/实体、玩家可介入点和近归档余波。AI 可读 prompt 摘要，但普通 provider 不得通过 `statePatch.worldThreads` 直接写入；议程面板只提示自由行动方向，不替代来源系统结算。
 
-S45.1 后，游戏与考试路由会返回服务器归一化的 `worldEntityView`。该视图来自 `worldState.worldEntities`，把朝廷衙门、地方士绅、书院同门、军镇边墙、盐漕税赋和灾荒赈务整理为玩家可见的制度实体摘要；AI prompt 只读取 capped 可见摘要，普通 provider 不得通过 `statePatch.worldEntities` 直接写入。S45.1 只落实体模型、view 和 prompt 摘要，不让实体替代世界 tick、官场、关系、长期事件或 World Threads 的来源结算。
+S45.2 后，游戏与考试路由会返回服务器归一化的 `worldEntityView`。该视图来自 `worldState.worldEntities`，把朝廷衙门、地方士绅、书院同门、军镇边墙、盐漕税赋和灾荒赈务整理为玩家可见的制度实体摘要；AI prompt 只读取 capped 可见摘要，普通 provider 不得通过 `statePatch.worldEntities` 直接写入。普通回合中，AI 允许的状态变化、世界 tick、关系/主动 NPC、长期事件、身份联动和官场结果会通过服务器 helper 转成 bounded `worldEntityImpacts`，再由 World Threads 读取可见实体摘要；实体仍不替代来源系统结算。
 
 普通回合的 `examTrigger` 不能直接创建考试。服务端会先确认当前名位可进入该考试，再检查服务器拥有的科举日历窗口；若玩家已有未交卷的 `activeExam`，新的触发请求会被拒绝并保留原题、`examId` 和写卷状态。
 
@@ -651,7 +651,7 @@ S42.3 已落地浏览器体验：`#official-career-panel` 现在按服务器 vie
 
 S43.2 已在 `worldThreadView` 上补充 `goal`、`deadlineLabel`、`riskLabel`、`riskTone`、`relatedLabels`、`interventionHints` 和 `followUpHint`，并把它渲染为浏览器“世界议程”检查视图。它只做归一化、可见性过滤、prompt/API 摘要和前端检查，不替代原有结算器；后续若要让多个来源合并成同一案件、或让议题拥有更明确的多阶段结局，应继续由服务器来源模块提供可审查状态。
 
-S45.1 已新增 `docs/WORLD_ENTITIES_CONTRACT.md` 和 `src/game/worldEntities.js`。`worldState.worldEntities.schemaVersion = 1` 是 server-owned 多实体账本，初始覆盖吏部、户部、都察院、地方士绅、河工案牍、县学书院、同年文社、边镇军镇、边墙堡寨、盐漕通道、田赋商税和灾荒赈务；`worldEntityView` 暴露分组可见实体和高压 highlights，`compactWorldState()` 暴露 `worldEntities` prompt 摘要。隐藏实体与 `hiddenNotes` 不进入 view/prompt；普通 provider patch `worldEntities` 会被 schema/normalizer/state boundary 拒绝或忽略。S45.2 再接世界 tick、NPC/关系、官场结果和 World Threads 的实体读写联动。
+S45.1 已新增 `docs/WORLD_ENTITIES_CONTRACT.md` 和 `src/game/worldEntities.js`。`worldState.worldEntities.schemaVersion = 1` 是 server-owned 多实体账本，初始覆盖吏部、户部、都察院、地方士绅、河工案牍、县学书院、同年文社、边镇军镇、边墙堡寨、盐漕通道、田赋商税和灾荒赈务；`worldEntityView` 暴露分组可见实体和高压 highlights，`compactWorldState()` 暴露 `worldEntities` prompt 摘要。隐藏实体与 `hiddenNotes` 不进入 view/prompt；普通 provider patch `worldEntities` 会被 schema/normalizer/state boundary 拒绝或忽略。S45.2 已接入服务器来源影响写入、`worldEntityImpacts` 和 World Threads 可见实体摘要。
 
 所有第四阶段实现仍需满足基础验收：默认 Mock 可运行，完整 scholar -> official 路径不得被破坏，真实 provider 不得成为本地启动必要条件，服务器继续拥有状态边界、科举晋级、作弊惩罚、长期事件结果、官场授官升降、角色-世界联动后果和持久化裁决。
 

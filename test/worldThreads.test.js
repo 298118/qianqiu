@@ -22,6 +22,17 @@ test("initial state carries an empty server-owned world thread ledger", () => {
 
 test("world thread view filters hidden thread notes and normalizes legacy rows", () => {
   const worldState = createInitialState({ playerName: "Tester" });
+  worldState.worldEntities.entities.push({
+    id: "hidden-thread-entity",
+    category: "fiscal",
+    kind: "fiscal_channel",
+    name: "Hidden Thread Entity",
+    status: "critical",
+    visibility: "hidden",
+    metrics: { pressure: 90, capacity: 10, trust: 5, deficit: 95 },
+    publicSummary: "SEALED_THREAD_ENTITY_SUMMARY",
+    hiddenNotes: ["SEALED_THREAD_ENTITY_NOTE"]
+  });
   worldState.worldThreads = {
     schemaVersion: 99,
     threads: [
@@ -47,7 +58,7 @@ test("world thread view filters hidden thread notes and normalizes legacy rows",
         title: "可见议题",
         summary: "县中钱粮与民情尚需观察。",
         severity: -5,
-        related: { characters: ["C01"], metrics: ["publicOrder"] }
+        related: { characters: ["C01"], entities: ["hidden-thread-entity"], metrics: ["publicOrder"] }
       }
     ],
     recentResolved: [{ id: "WT-old", title: "旧议题", sourceType: "long_term_event", resolvedTurn: 2 }]
@@ -62,7 +73,12 @@ test("world thread view filters hidden thread notes and normalizes legacy rows",
   const view = buildWorldThreadView(worldState);
   assert.equal(view.activeThreads.length, 1);
   assert.equal(view.activeThreads[0].id, "WT-visible");
+  assert.deepEqual(view.activeThreads[0].related.entities, []);
+  assert.deepEqual(view.activeThreads[0].relatedEntitySummaries, []);
   assert.equal(JSON.stringify(view).includes("sealed dossier"), false);
+  assert.equal(JSON.stringify(view).includes("Hidden Thread Entity"), false);
+  assert.equal(JSON.stringify(view).includes("SEALED_THREAD_ENTITY_SUMMARY"), false);
+  assert.equal(JSON.stringify(view).includes("SEALED_THREAD_ENTITY_NOTE"), false);
 });
 
 test("world threads unify active requests, long events, official assignments, and role impacts", () => {
@@ -157,7 +173,9 @@ test("world threads unify active requests, long events, official assignments, an
   assert.equal(reliefThread.deadlineLabel, "第11回，尚余3回");
   assert.match(reliefThread.goal, /办结差事/);
   assert.ok(reliefThread.relatedLabels.offices.includes("户部"));
+  assert.ok(reliefThread.relatedLabels.entities.includes("灾荒赈务"));
   assert.ok(reliefThread.relatedLabels.metrics.includes("考成"));
+  assert.ok(reliefThread.relatedEntitySummaries.some((entity) => entity.id === "relief-granary-operation"));
   assert.ok(reliefThread.interventionHints.some((hint) => hint.includes("差事")));
   assert.match(reliefThread.followUpHint, /官场模块/);
   assert.equal(JSON.stringify(view).includes("暗中有人遮掩亏空"), false);
@@ -168,7 +186,109 @@ test("world threads unify active requests, long events, official assignments, an
   assert.match(promptBorderThread.goal, /边报/);
   assert.ok(promptBorderThread.interventionHints.length);
   assert.ok(promptBorderThread.relatedLabels.factions.includes("边镇武臣"));
+  assert.ok(promptBorderThread.relatedEntitySummaries.some((entity) => entity.id === "military-frontier-garrison"));
   assert.equal(JSON.stringify(promptSummary).includes("暗中有人遮掩亏空"), false);
+});
+
+test("high-pressure visible world entities become threads with capped entity summaries", () => {
+  const worldState = createInitialState({ playerName: "Tester" });
+  worldState.turnCount = 4;
+  worldState.worldEntities.entities.push({
+    id: "hidden-relief-ledger",
+    category: "relief",
+    kind: "relief_operation",
+    name: "Hidden Relief Ledger",
+    status: "critical",
+    visibility: "hidden",
+    metrics: { influence: 90, pressure: 99, capacity: 10, trust: 5, deficit: 98 },
+    publicSummary: "SEALED_RELIEF_THREAD_SUMMARY",
+    related: { metrics: ["grainReserve"] },
+    hiddenNotes: ["SEALED_RELIEF_THREAD_NOTE"]
+  });
+
+  ensureWorldThreadState(worldState);
+  const view = buildWorldThreadView(worldState);
+  const promptSummary = summarizeWorldThreadsForPrompt(worldState);
+  const entityThread = view.activeThreads.find((thread) => thread.sourceType === "world_entity");
+  const serializedView = JSON.stringify(view);
+  const serializedPrompt = JSON.stringify(promptSummary);
+
+  assert.ok(entityThread);
+  assert.equal(entityThread.kind, "world_entity_pressure");
+  assert.ok(entityThread.relatedEntitySummaries.length >= 1);
+  assert.ok(entityThread.relatedEntitySummaries.every((entity) => entity.id !== "hidden-relief-ledger"));
+  assert.equal(serializedView.includes("SEALED_RELIEF_THREAD_SUMMARY"), false);
+  assert.equal(serializedView.includes("SEALED_RELIEF_THREAD_NOTE"), false);
+  assert.equal(serializedPrompt.includes("SEALED_RELIEF_THREAD_SUMMARY"), false);
+  assert.equal(serializedPrompt.includes("SEALED_RELIEF_THREAD_NOTE"), false);
+});
+
+test("hidden world entity source threads are dropped from views, prompt summaries, and archives", () => {
+  const worldState = createInitialState({ playerName: "Tester" });
+  worldState.turnCount = 5;
+  worldState.worldEntities.entities.push({
+    id: "hidden-source-entity",
+    category: "fiscal",
+    kind: "fiscal_channel",
+    name: "Hidden Source Entity",
+    status: "critical",
+    visibility: "hidden",
+    metrics: { influence: 88, pressure: 99, capacity: 10, trust: 5, deficit: 99 },
+    publicSummary: "SEALED_SOURCE_ENTITY_SUMMARY",
+    related: { metrics: ["treasury"] },
+    hiddenNotes: ["SEALED_SOURCE_ENTITY_NOTE"]
+  });
+  worldState.worldThreads = {
+    schemaVersion: 1,
+    threads: [
+      {
+        id: "WT-hidden-source-entity",
+        status: "active",
+        kind: "world_entity_pressure",
+        sourceType: "world_entity",
+        sourceId: "hidden-source-entity",
+        sourceLabel: "世界实体",
+        title: "SEALED_SOURCE_THREAD_TITLE",
+        summary: "SEALED_SOURCE_THREAD_SUMMARY",
+        severity: 3,
+        createdTurn: 4,
+        lastUpdatedTurn: 4,
+        visibility: "public",
+        related: { entities: ["hidden-source-entity"], metrics: ["treasury"] }
+      }
+    ],
+    recentResolved: [
+      {
+        id: "WT-hidden-source-resolved",
+        kind: "world_entity_pressure",
+        sourceType: "world_entity",
+        sourceId: "hidden-source-entity",
+        title: "SEALED_SOURCE_RESOLVED_TITLE",
+        resolvedTurn: 4,
+        outcome: "SEALED_SOURCE_RESOLVED_OUTCOME"
+      }
+    ]
+  };
+
+  const viewBeforeSync = buildWorldThreadView(worldState);
+  const promptBeforeSync = summarizeWorldThreadsForPrompt(worldState);
+  ensureWorldThreadState(worldState);
+  const viewAfterSync = buildWorldThreadView(worldState);
+  const serialized = JSON.stringify({
+    viewBeforeSync,
+    promptBeforeSync,
+    worldThreads: worldState.worldThreads,
+    viewAfterSync
+  });
+
+  assert.equal(serialized.includes("hidden-source-entity"), false);
+  assert.equal(serialized.includes("Hidden Source Entity"), false);
+  assert.equal(serialized.includes("SEALED_SOURCE_ENTITY_SUMMARY"), false);
+  assert.equal(serialized.includes("SEALED_SOURCE_ENTITY_NOTE"), false);
+  assert.equal(serialized.includes("SEALED_SOURCE_THREAD_TITLE"), false);
+  assert.equal(serialized.includes("SEALED_SOURCE_THREAD_SUMMARY"), false);
+  assert.equal(serialized.includes("SEALED_SOURCE_RESOLVED_TITLE"), false);
+  assert.equal(serialized.includes("SEALED_SOURCE_RESOLVED_OUTCOME"), false);
 });
 
 test("world threads archive disappeared active sources as recent resolved", () => {

@@ -25,7 +25,9 @@ const {
   runRoleWorldCouplingStep
 } = require("../game/roleWorldCoupling");
 const {
+  applyWorldEntityInfluences,
   buildWorldEntityView,
+  deriveWorldEntityInfluences,
   ensureWorldEntityState
 } = require("../game/worldEntities");
 const {
@@ -170,7 +172,9 @@ async function finalizeTurn(worldState, result, input) {
   const providerAttributeChanges = Array.isArray(result.attributeChanges) ? result.attributeChanges : [];
 
   // All model-suggested state changes pass through server-side boundaries.
+  const providerStateBefore = JSON.parse(JSON.stringify(worldState));
   applyStatePatch(worldState, result.statePatch);
+  const providerStateAfter = JSON.parse(JSON.stringify(worldState));
   const relationshipChanges = applyRelationshipChanges(worldState, result.relationshipChanges);
   const examTrigger = applyExamTrigger(worldState, result.examTrigger);
 
@@ -206,6 +210,28 @@ async function finalizeTurn(worldState, result, input) {
   });
   const officialCareerRelationshipChanges = applyRelationshipChanges(worldState, officialCareer.relationshipChanges);
 
+  const allRelationshipChanges = [
+    ...relationshipChanges,
+    ...activeNpcRequest.relationshipChanges,
+    ...roleWorldCouplingRelationshipChanges,
+    ...longTermRelationshipChanges,
+    ...officialCareerRelationshipChanges
+  ];
+  const worldEntityInfluences = deriveWorldEntityInfluences(worldState, {
+    stateDeltas: [{
+      before: providerStateBefore,
+      after: providerStateAfter,
+      sourceType: "provider_state",
+      reason: "AI 叙事落到服务器允许的世界指标"
+    }],
+    relationshipChanges: allRelationshipChanges,
+    activeNpcRequest,
+    roleWorldCoupling,
+    worldTick,
+    longTermEvents,
+    officialCareer
+  });
+  const worldEntityImpacts = applyWorldEntityInfluences(worldState, worldEntityInfluences);
   ensureWorldEntityState(worldState);
   ensureWorldThreadState(worldState);
 
@@ -239,13 +265,7 @@ async function finalizeTurn(worldState, result, input) {
       ...longTermEvents.attributeChanges,
       ...officialCareer.attributeChanges
     ],
-    relationshipChanges: [
-      ...relationshipChanges,
-      ...activeNpcRequest.relationshipChanges,
-      ...roleWorldCouplingRelationshipChanges,
-      ...longTermRelationshipChanges,
-      ...officialCareerRelationshipChanges
-    ],
+    relationshipChanges: allRelationshipChanges,
     examCalendarView: buildExamCalendarView(worldState),
     examRivalView: buildExamRivalView(worldState),
     relationshipView: buildRelationshipInspectionView(worldState),
@@ -253,6 +273,7 @@ async function finalizeTurn(worldState, result, input) {
     activeNpcRequestEvents: activeNpcRequest.events,
     roleWorldCouplingView: buildRoleWorldCouplingView(worldState),
     worldEntityView: buildWorldEntityView(worldState),
+    worldEntityImpacts,
     worldThreadView: buildWorldThreadView(worldState),
     roleWorldCoupling: {
       summary: roleWorldCoupling.summary,
@@ -321,6 +342,7 @@ async function streamTurn(res, sessionId, input) {
       activeNpcRequestEvents: payload.activeNpcRequestEvents,
       roleWorldCouplingView: payload.roleWorldCouplingView,
       worldEntityView: payload.worldEntityView,
+      worldEntityImpacts: payload.worldEntityImpacts,
       worldThreadView: payload.worldThreadView,
       roleWorldCoupling: payload.roleWorldCoupling,
       longTermEventView: payload.longTermEventView,

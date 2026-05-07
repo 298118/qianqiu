@@ -486,7 +486,7 @@ The browser renders S36 feedback as `[联动]` narrative lines with `.role-world
 
 ## World Entities Contract
 
-S45.1 adds `worldState.worldEntities`, documented in [docs/WORLD_ENTITIES_CONTRACT.md](WORLD_ENTITIES_CONTRACT.md). It is a server-owned multi-entity ledger for 朝廷衙门、地方士绅、书院同门、军镇边墙、商税盐漕 and 灾荒赈务.
+S45 adds `worldState.worldEntities`, documented in [docs/WORLD_ENTITIES_CONTRACT.md](WORLD_ENTITIES_CONTRACT.md). It is a server-owned multi-entity ledger for 朝廷衙门、地方士绅、书院同门、军镇边墙、商税盐漕 and 灾荒赈务.
 
 Server rules:
 
@@ -495,9 +495,10 @@ Server rules:
 - `worldEntityView` exposes grouped visible entities and high-pressure highlights with `statusLabel`, `riskLabel`, capped metrics, related labels, and intervention hints.
 - Prompt `compactWorldState()` reads only `summarizeWorldEntitiesForPrompt()`, capped to visible high-pressure entities and category summaries.
 - Providers may read visible entity summaries for narrative grounding, but ordinary `statePatch.worldEntities` is rejected by schemas and ignored by provider patch application.
-- S45.1 does not let entities settle outcomes or replace source systems. S45.2 should connect world tick, NPC/relationship behavior, official outcomes, and World Threads to this ledger through server-owned updates.
+- `deriveWorldEntityInfluences()` and `applyWorldEntityInfluences()` convert already-applied server-owned sources into bounded entity metric deltas. Sources include allowed provider state changes, world tick attribute changes, visible relationship changes, active NPC request outcomes, long-term events, role/world coupling, and official-career events/outcomes.
+- Entities still do not settle outcomes or replace source systems. They record institutional pressure and feed player-facing views plus World Threads.
 
-JSON and SSE turn payloads return `worldEntityView`. Exam question and submit routes also include the same view.
+JSON and SSE turn payloads return `worldEntityView`; turn payloads also include `worldEntityImpacts` for the current server-side influence pass. Exam question and submit routes include `worldEntityView`.
 
 ## World Threads Contract
 
@@ -506,12 +507,12 @@ S43.1 adds `worldState.worldThreads`, documented in [docs/WORLD_THREADS_CONTRACT
 Server rules:
 
 - `src/game/worldThreads.js` normalizes and synchronizes thread state from existing server-owned sources.
-- Current sources are active NPC/faction requests, long-term events, official assignments, official outcomes, role/world impacts, border pressure, faction pressure, and local case pressure.
-- The route synchronizes world threads after role/world coupling, monthly tick, long-term events, and official-career settlement, so the thread view reflects the final server state for that turn.
+- Current sources are active NPC/faction requests, long-term events, official assignments, official outcomes, role/world impacts, world entity pressure, border pressure, faction pressure, and local case pressure.
+- The route synchronizes world threads after role/world coupling, monthly tick, long-term events, official-career settlement, and the world-entity influence pass, so the thread view reflects the final server state for that turn.
 - Providers may read `worldThreads` in prompt context, but ordinary `statePatch.worldThreads` is rejected by schemas and ignored by provider patch application.
 - JSON and SSE turn payloads return `worldThreadView`. Exam question and submit routes also include the same view.
 
-S43.2 keeps `worldThreads` as an index rather than a settlement engine, but enriches the player-facing view. Each visible active thread now includes a derived `goal`, `deadlineLabel`, `riskLabel`, `riskTone`, `relatedLabels`, `interventionHints`, and `followUpHint`. These are generated from server-owned source type, kind, severity, deadline, related ids, and public state labels; hidden rows and hidden notes still do not enter the view or prompt summary.
+S43.2/S45.2 keep `worldThreads` as an index rather than a settlement engine, but enrich the player-facing view. Each visible active thread now includes a derived `goal`, `deadlineLabel`, `riskLabel`, `riskTone`, `relatedLabels`, `relatedEntitySummaries`, `interventionHints`, and `followUpHint`. These are generated from server-owned source type, kind, severity, deadline, related ids, public state labels, and visible `worldEntityView` summaries; hidden rows, hidden entities, and hidden notes still do not enter the view or prompt summary.
 
 The browser renders this view as `#world-thread-panel`. Each `.world-thread-card` carries stable `data-thread-id`, `data-source-type`, `data-thread-kind`, `data-status`, `data-severity`, and `data-risk` attributes for smoke checks. The panel is an inspection surface only: it suggests free-text intervention directions and shows recent resolved rows, but it does not add one-click resolution or override `activeNpcRequest`, `longTermEvents`, `officialCareer`, or `roleWorldCoupling` settlement.
 
