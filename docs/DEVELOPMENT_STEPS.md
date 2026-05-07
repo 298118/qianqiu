@@ -91,7 +91,7 @@
 | --- | --- | --- | --- | --- | --- |
 | S48.1 | DONE | 归档第四阶段规划，开启时间专项路线图，并保持开发规范不变 | 2026-05-07 | Codex | `1e7bcd3` + follow-up docs fixes |
 | S48.2 | DONE | 建立全局旬制日历基础：`tenDayPeriod`、共享时间 helper、旧档默认上旬、provider 时间字段边界 | 2026-05-07 | Codex + subagents | `15e078f` + `8d93b8c` hash backfill |
-| S48.3 | DONE | 改造普通回合与世界 tick：每回合推进一旬，非月末轻量小结，月末完整结算 | 2026-05-07 | Codex + subagent | commit pending |
+| S48.3 | DONE | 改造普通回合与世界 tick：每回合推进一旬，非月末轻量小结，月末完整结算 | 2026-05-07 | Codex + subagent | `ef767c6` |
 | S48.4 | TODO | 建立场景内时间框架，并优先把科举考试改成多阶段局部时间 |  |  |  |
 | S48.5 | TODO | 适配长期事件、官场任期/差事、世界议程、世界实体和脚本验收的月末/旬度语义 |  |  |  |
 | S48.6 | TODO | 完成前端日期展示、浏览器 smoke、provider long-run 和完整书生入仕验收 |  |  |  |
@@ -289,7 +289,7 @@
 
 步骤：S48.3
 
-提交：pending
+提交：`ef767c6 feat: advance ordinary turns by ten-day period`
 
 完成：
 
