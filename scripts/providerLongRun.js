@@ -265,14 +265,26 @@ function applyServerTurnEffects(worldState, result, input) {
     allowServerOwnedPatchKeys: true
   });
 
-  const longTermEvents = runLongTermEventStep(worldState);
+  const longTermEvents = worldTick.completedMonth
+    ? runLongTermEventStep(worldState)
+    : {
+      statePatch: {},
+      attributeChanges: [],
+      relationshipChanges: [],
+      events: [],
+      scheduled: [],
+      resolved: [],
+      summary: ""
+    };
   applyStatePatch(worldState, longTermEvents.statePatch, {
     incrementTurnCount: false,
     allowServerOwnedPatchKeys: true
   });
   const longTermRelationshipChanges = applyRelationshipChanges(worldState, longTermEvents.relationshipChanges);
 
-  const officialCareer = runOfficialCareerStep(worldState);
+  const officialCareer = runOfficialCareerStep(worldState, input, {
+    isMonthEnd: worldTick.completedMonth
+  });
   applyStatePatch(worldState, officialCareer.statePatch, {
     incrementTurnCount: false,
     allowServerOwnedPatchKeys: true

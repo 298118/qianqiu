@@ -52,7 +52,7 @@ Record each keyed run as one provider plus one mode:
 | `schemaResult` | All provider payloads parse and pass `src/ai/schemas.js`. |
 | `historicalToneResult` | Narratives and provider events contain historical anchors, enough Chinese text, and no obvious modern/product terms. |
 | `authorityBoundaryResult` | No provider `statePatch` attempts server-owned keys such as `turnCount`, `year`, `month`, `tenDayPeriod`, `activeExam`, `examCalendar`, `activeNpcRequest`, `longTermEvents`, `officialCareer`, `roleWorldCoupling`, `eventHistory`, `characters`, `player.examRank`, `player.officeTitle`, or `player.examHistory`. |
-| `stateConsistencyResult` | `turnCount` increments once per turn, `year/month/tenDayPeriod` stay server-owned and in range, numeric ranges clamp, event history stays capped, and scholar role/rank are not promoted by ordinary turns. |
+| `stateConsistencyResult` | `turnCount` increments once per turn, `year/month/tenDayPeriod` stay server-owned and in range, ordinary turns advance one ten-day period at a time, numeric ranges clamp, event history stays capped, and scholar role/rank are not promoted by ordinary turns. |
 | `streamingResult` | With `--stream`, `streamTurn()` returns a final schema-valid turn; streamed raw-character count is logged for diagnosis. |
 | `routeHealthResult` | `smoke:provider:route` returns route-level `ok=true`, model summary, streaming capability, opening event count, no session write, and no secret/path leakage. |
 | `result` | `pass`, `fail`, or `skipped`. |

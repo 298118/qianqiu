@@ -78,7 +78,7 @@ async function postJson(url, body, headers = { "Content-Type": "application/json
   return { response, payload: await response.json() };
 }
 
-test("POST /api/game/turn runs role-world coupling before the monthly tick", async (t) => {
+test("POST /api/game/turn runs role-world coupling before the world tick", async (t) => {
   const server = createTestServer();
   t.after(server.close);
 

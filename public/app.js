@@ -1746,11 +1746,12 @@ function appendRoleWorldCouplingFeedback(roleWorldCoupling) {
 function appendWorldTickFeedback(worldTick) {
   if (!worldTick) return;
   const events = Array.isArray(worldTick.events) ? worldTick.events : [];
+  const label = worldTick.label || (worldTick.cadence === "ten_day" ? "旬度" : "月度");
 
   if (events.length) {
-    events.forEach((event) => appendNarrative(`[月度] ${event}`, "world-tick"));
+    events.forEach((event) => appendNarrative(`[${label}] ${event}`, "world-tick"));
   } else if (worldTick.summary) {
-    appendNarrative(`[月度] ${worldTick.summary}`, "world-tick");
+    appendNarrative(`[${label}] ${worldTick.summary}`, "world-tick");
   }
 }
 

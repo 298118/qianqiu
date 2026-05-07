@@ -84,6 +84,7 @@ test("POST /api/game/turn exposes scheduled long-term events as world threads", 
 
   const worldState = createInitialState({ playerName: "Tester" });
   worldState.month = 7;
+  worldState.tenDayPeriod = 3;
   t.after(() => removeSessionFile(worldState.sessionId));
   await writeSession(worldState);
 
@@ -178,6 +179,7 @@ test("SSE turn preview and final payload include world thread view", async (t) =
 
   const worldState = createInitialState({ playerName: "Tester" });
   worldState.month = 7;
+  worldState.tenDayPeriod = 3;
   t.after(() => removeSessionFile(worldState.sessionId));
   await writeSession(worldState);
 

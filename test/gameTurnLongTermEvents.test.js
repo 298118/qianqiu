@@ -80,12 +80,13 @@ async function postJson(url, body) {
   return { response, payload };
 }
 
-test("POST /api/game/turn schedules long-term events after the monthly tick", async (t) => {
+test("POST /api/game/turn schedules long-term events after the month-end tick", async (t) => {
   const server = createTestServer();
   t.after(server.close);
 
   const worldState = createInitialState({ playerName: "Tester" });
   worldState.month = 7;
+  worldState.tenDayPeriod = 3;
   t.after(() => removeSessionFile(worldState.sessionId));
   await writeSession(worldState);
 
@@ -96,11 +97,66 @@ test("POST /api/game/turn schedules long-term events after the monthly tick", as
 
   assert.equal(response.status, 200);
   assert.equal(payload.worldState.month, 8);
+  assert.equal(payload.worldState.tenDayPeriod, 1);
+  assert.equal(payload.worldTick.completedMonth, true);
   assert.equal(payload.longTermEvents.scheduled[0].key, "seasonal_harvest_audit");
   assert.equal(payload.longTermEventView.activeEvents[0].title, "秋粮核验");
   assert.equal(payload.worldState.longTermEvents.queue[0].key, "seasonal_harvest_audit");
   assert.equal(payload.worldState.eventHistory.at(-1), payload.longTermEvents.events.at(-1));
   assert.ok(payload.worldTick.events.length >= 1);
+});
+
+test("POST /api/game/turn keeps long-term months unchanged before month end", async (t) => {
+  const server = createTestServer();
+  t.after(server.close);
+
+  const worldState = createInitialState({ playerName: "Tester" });
+  worldState.turnCount = 2;
+  worldState.month = 8;
+  worldState.tenDayPeriod = 1;
+  worldState.longTermEvents = {
+    schemaVersion: 1,
+    cooldowns: {},
+    recentResolved: [],
+    queue: [
+      {
+        schemaVersion: 1,
+        id: "LTE-test-harvest",
+        key: "seasonal_harvest_audit",
+        type: "seasonal",
+        status: "active",
+        targetType: "world",
+        targetId: "",
+        title: "秋粮核验",
+        summary: "秋粮入簿。",
+        severity: 1,
+        createdTurn: 2,
+        startedYear: 1644,
+        startedMonth: 8,
+        durationMonths: 1,
+        remainingMonths: 1,
+        cooldownKey: "seasonal_harvest_audit",
+        cooldownTurns: 10,
+        visibility: "public"
+      }
+    ]
+  };
+  t.after(() => removeSessionFile(worldState.sessionId));
+  await writeSession(worldState);
+
+  const { response, payload } = await postJson(`${server.baseUrl}/api/game/turn`, {
+    sessionId: worldState.sessionId,
+    input: "旬内继续休整"
+  });
+
+  assert.equal(response.status, 200);
+  assert.equal(payload.worldState.turnCount, 3);
+  assert.equal(payload.worldState.month, 8);
+  assert.equal(payload.worldState.tenDayPeriod, 2);
+  assert.equal(payload.worldTick.completedMonth, false);
+  assert.equal(payload.longTermEvents.events.length, 0);
+  assert.equal(payload.longTermEvents.resolved.length, 0);
+  assert.equal(payload.worldState.longTermEvents.queue[0].remainingMonths, 1);
 });
 
 test("POST /api/game/turn applies active long-term event results and trims history in order", async (t) => {
@@ -110,6 +166,7 @@ test("POST /api/game/turn applies active long-term event results and trims histo
   const worldState = createInitialState({ playerName: "Tester" });
   worldState.turnCount = 2;
   worldState.month = 8;
+  worldState.tenDayPeriod = 3;
   worldState.eventHistory = Array.from({ length: MAX_EVENT_HISTORY - 1 }, (_, index) => `old-${index}`);
   worldState.longTermEvents = {
     schemaVersion: 1,

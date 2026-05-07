@@ -36,7 +36,7 @@ Ordinary providers cannot patch `examCalendar`. Route code and `src/game/examCal
 
 `POST /api/exam/question` reuses an already-open unanswered exam without rechecking the current month. For a new question, the route checks `canEnterExam()` first, then `canOpenExamInCalendar()` before charging travel/preparation costs or asking the provider for a question. Closed-window attempts return `409`. Missed-window attempts are persisted without charging travel or creating `activeExam`.
 
-Free-text exam requests are initiated through ordinary `POST /api/game/turn` via `examTrigger`. Because game turns advance the world month before the browser auto-opens `/api/exam/question`, the turn route preserves an open calendar snapshot on the temporary `activeExam` request. The question route may use that same-level open snapshot once, so a valid request made in the last open month is not converted into a missed-window error by the monthly tick.
+Free-text exam requests are initiated through ordinary `POST /api/game/turn` via `examTrigger`. S48.3 ordinary turns advance one ten-day period, and only 下旬 rollover advances the world month before the browser auto-opens `/api/exam/question`. The turn route preserves an open calendar snapshot on the temporary `activeExam` request; the question route may use that same-level open snapshot once, so a valid request made in the last open month/late period is not converted into a missed-window error by month-end rollover.
 
 ## Entry Preparation
 

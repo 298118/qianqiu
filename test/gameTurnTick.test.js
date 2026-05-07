@@ -99,6 +99,7 @@ test("POST /api/game/turn applies world tick after provider output in JSON mode"
   const worldState = createInitialState({ playerName: "Tester" });
   worldState.year = 1644;
   worldState.month = 12;
+  worldState.tenDayPeriod = 3;
   t.after(() => removeSessionFile(worldState.sessionId));
   await writeSession(worldState);
 
@@ -117,6 +118,9 @@ test("POST /api/game/turn applies world tick after provider output in JSON mode"
   assert.equal(payload.worldState.turnCount, 1);
   assert.equal(payload.worldState.year, 1645);
   assert.equal(payload.worldState.month, 1);
+  assert.equal(payload.worldState.tenDayPeriod, 1);
+  assert.equal(payload.worldTick.cadence, "monthly");
+  assert.equal(payload.worldTick.completedMonth, true);
   assert.ok(payload.worldTick.summary);
   assert.ok(payload.worldTick.events.length >= 1);
   assert.deepEqual(
@@ -128,12 +132,49 @@ test("POST /api/game/turn applies world tick after provider output in JSON mode"
   assert.ok(payload.attributeChanges.some((change) => change.reason === "月度推演"));
 });
 
+test("POST /api/game/turn advances upper to middle to late to next month upper", async (t) => {
+  const server = createTestServer();
+  t.after(server.close);
+
+  const worldState = createInitialState({ playerName: "Tester" });
+  worldState.year = 1644;
+  worldState.month = 5;
+  worldState.tenDayPeriod = 1;
+  t.after(() => removeSessionFile(worldState.sessionId));
+  await writeSession(worldState);
+
+  const dates = [];
+  const cadences = [];
+  for (let index = 0; index < 3; index += 1) {
+    const { response, payload } = await postJson(`${server.baseUrl}/api/game/turn`, {
+      sessionId: worldState.sessionId,
+      input: `旬度推进 ${index}`
+    });
+    assert.equal(response.status, 200);
+    assert.equal(payload.worldState.turnCount, index + 1);
+    dates.push([
+      payload.worldState.year,
+      payload.worldState.month,
+      payload.worldState.tenDayPeriod
+    ]);
+    cadences.push(payload.worldTick.cadence);
+  }
+
+  assert.deepEqual(dates, [
+    [1644, 5, 2],
+    [1644, 5, 3],
+    [1644, 6, 1]
+  ]);
+  assert.deepEqual(cadences, ["ten_day", "ten_day", "monthly"]);
+});
+
 test("POST /api/game/turn clamps tick output through route patch boundaries", async (t) => {
   const server = createTestServer();
   t.after(server.close);
 
   const worldState = createInitialState({ playerName: "Tester" });
   worldState.month = 7;
+  worldState.tenDayPeriod = 3;
   worldState.treasury = 999999999;
   worldState.grainReserve = 999999999;
   worldState.population = 999999999;
@@ -169,6 +210,7 @@ test("POST /api/game/turn clamps tick output through route patch boundaries", as
     assert.ok(payload.worldState.factions[key] <= 100);
   }
   assert.equal(payload.worldState.month, 8);
+  assert.equal(payload.worldState.tenDayPeriod, 1);
   assert.ok(payload.worldTick.attributeChanges.length >= 1);
 });
 
@@ -212,6 +254,7 @@ test("POST /api/game/turn remains stable across repeated Mock turns", async (t) 
   const worldState = createInitialState({ playerName: "Tester" });
   worldState.year = 1644;
   worldState.month = 10;
+  worldState.tenDayPeriod = 1;
   t.after(() => removeSessionFile(worldState.sessionId));
   await writeSession(worldState);
 
@@ -229,19 +272,21 @@ test("POST /api/game/turn remains stable across repeated Mock turns", async (t) 
     latest = payload.worldState;
   }
 
-  assert.equal(latest.year, 1646);
-  assert.equal(latest.month, 1);
+  assert.equal(latest.year, 1645);
+  assert.equal(latest.month, 3);
+  assert.equal(latest.tenDayPeriod, 1);
   assert.equal(latest.player.role, "scholar");
   assert.equal(latest.player.examRank, null);
 });
 
-test("exam trigger preserves a valid calendar window across the monthly tick", async (t) => {
+test("exam trigger preserves a valid calendar window across the month-end tick", async (t) => {
   const server = createTestServer();
   t.after(server.close);
 
   const worldState = createInitialState({ playerName: "Tester" });
   worldState.year = 1644;
   worldState.month = 9;
+  worldState.tenDayPeriod = 3;
   Object.assign(worldState.player, {
     examRank: EXAMS.child_exam.promotionRank,
     academia: 100,
@@ -262,6 +307,7 @@ test("exam trigger preserves a valid calendar window across the monthly tick", a
   assert.equal(turn.response.status, 200);
   assert.equal(turn.payload.examTrigger.shouldStart, true);
   assert.equal(turn.payload.worldState.month, 10);
+  assert.equal(turn.payload.worldState.tenDayPeriod, 1);
   assert.equal(turn.payload.worldState.activeExam.level, "provincial_exam");
   assert.equal(turn.payload.worldState.activeExam.examCalendar.currentMonth, 9);
   assert.equal(turn.payload.worldState.activeExam.examCalendar.status, "open");
@@ -307,15 +353,16 @@ test("complete scholar exam path still works after world tick integration", asyn
   }
 
   assert.equal(latest.turnCount, 3);
-  assert.equal(latest.year, 1645);
-  assert.equal(latest.month, 2);
+  assert.equal(latest.year, 1644);
+  assert.equal(latest.month, 12);
+  assert.equal(latest.tenDayPeriod, 1);
 
   for (const level of ["child_exam", "provincial_exam", "metropolitan_exam", "palace_exam"]) {
     latest = await completeExam(server.baseUrl, worldState.sessionId, level);
   }
 
   assert.equal(latest.turnCount, 3);
-  assert.equal(latest.year, 1645);
+  assert.equal(latest.year, 1644);
   assert.equal(latest.month, OPEN_MONTH_BY_LEVEL.palace_exam);
   assert.equal(latest.player.role, "official");
   assert.equal(latest.player.examHistory.length, 4);
@@ -352,7 +399,9 @@ test("POST /api/game/turn includes world tick feedback in SSE final payloads", a
 
   assert.ok(finalState);
   assert.equal(finalState.data.worldState.turnCount, 1);
-  assert.equal(finalState.data.worldState.month, 2);
+  assert.equal(finalState.data.worldState.month, 1);
+  assert.equal(finalState.data.worldState.tenDayPeriod, 2);
+  assert.equal(finalState.data.worldTick.cadence, "ten_day");
   assert.ok(finalState.data.worldTick.summary);
   assert.ok(finalState.data.worldTick.events.length >= 1);
   assert.ok(previews.some((event) => event.data?.worldTick?.summary));

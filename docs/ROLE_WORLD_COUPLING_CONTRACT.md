@@ -1,6 +1,6 @@
 # Role / World Coupling Contract
 
-S36 adds a server-owned role/world coupling step. Its job is to turn important role actions into durable world pressure before the monthly tick and long-term scheduler run.
+S36 adds a server-owned role/world coupling step. Its job is to turn important role actions into durable world pressure before the world tick and any month-end long-term scheduler run.
 
 ## Ownership
 
@@ -53,12 +53,12 @@ This preserves the rule that a player turn increments `turnCount` exactly once.
 3. Exam trigger setup.
 4. Active NPC request handling.
 5. Role/world coupling.
-6. Monthly `worldTick`.
-7. Long-term event scheduler.
+6. `worldTick` ten-day advancement; full monthly settlement only on 下旬 rollover.
+7. Long-term event scheduler only on month end.
 8. Official career settlement.
 9. Event append, session save, and response rendering.
 
-S36 deliberately runs before `worldTick` so actions such as waterworks, campaigns, appointments, and impeachment can affect the same month's natural drift and later long-term-event scheduling.
+S36 deliberately runs before `worldTick` so actions such as waterworks, campaigns, appointments, and impeachment can affect the same ten-day feedback and, on 下旬 rollover, that month-end natural drift and long-term-event scheduling.
 
 ## Implemented Coupling Kinds
 

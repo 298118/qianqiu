@@ -12,7 +12,7 @@ S21 keeps the first implementation deliberately small:
 
 - A tick runs after one successful `POST /api/game/turn` action.
 - `POST /api/game/start`, `GET /api/game/state/:sessionId`, `POST /api/exam/question`, and `POST /api/exam/submit` do not run the minimal tick yet.
-- The tick advances calendar time by one in-game month per valid free-text turn.
+- The tick originally advanced one in-game month per valid free-text turn; S48.3 changes ordinary free-text turns to advance one ten-day period, with full monthly settlement only on 下旬 rollover.
 - One player turn increments `worldState.turnCount` exactly once, even when provider changes and tick changes both apply.
 - The complete scholar path remains protected: scholar -> child exam -> provincial exam -> metropolitan exam -> palace exam -> official.
 
@@ -20,12 +20,13 @@ Later phase-two work may decide whether long exam submissions or role-specific p
 
 ## S48 Time Specialty Addendum
 
-S48 changes the long-term target from one ordinary turn per month to one ordinary turn per ten-day period, but the conversion is staged:
+S48 changes ordinary global turns from one month per turn to one ten-day period per turn:
 
 - S48.2 adds `src/game/time.js` and `worldState.tenDayPeriod` as server-owned calendar foundations. `1` means 上旬, `2` means 中旬, and `3` means 下旬.
 - Initial sessions start at 正月上旬. Legacy saves that lack `tenDayPeriod` are normalized to 上旬 when read; the storage envelope version is not bumped.
 - Save-list metadata, prompt compact state, provider long-run consistency checks, schemas, remote normalization and `applyStatePatch()` all treat `tenDayPeriod` like `turnCount/year/month`: provider suggestions cannot write it.
-- S48.2 deliberately keeps `runWorldTick()` on the old monthly cadence. S48.3 will make ordinary turns advance 上旬 -> 中旬 -> 下旬 -> 下月上旬 and will restrict full monthly settlement to 下旬 rollover.
+- S48.3 makes `runWorldTick()` advance 上旬 -> 中旬 -> 下旬 -> 下月上旬. Non-month-end ticks return `cadence: "ten_day"` / `label: "旬度"` with light feedback and small natural drift; 下旬 rollover returns `cadence: "monthly"` / `label: "月度"` and performs the original full monthly settlement.
+- `worldTick.completedMonth` is the route gate for downstream monthly systems. Long-term event scheduling/resolution and official tenure-month advancement do not run before month end; direct official first appointment and per-action assignment feedback can still happen on an ordinary ten-day turn.
 
 ## State Additions
 
@@ -34,7 +35,7 @@ S21.2 should add:
 - `worldState.month`: integer 1-12, default `1`.
 - S48.2 later adds `worldState.tenDayPeriod`: integer 1-3, default `1` for 上旬.
 
-The tick rolls `month` from 12 to 1 and increments `year` by 1 on rollover. `year` remains the coarse historical display field already used by prompts and UI.
+The tick rolls `month` from 12 to 1 and increments `year` by 1 only when 腊月下旬 advances to the next 正月上旬. `year` remains the coarse historical display field already used by prompts and UI.
 
 ## Natural Changes
 
@@ -95,7 +96,21 @@ S21.2 should implement a pure module, likely `src/game/worldTick.js`, with a res
 }
 ```
 
-`events` are the player-visible world feedback. They should be short, historically toned, and appended after provider events. A normal month should emit at most one event; threshold months may emit two. `eventHistory` remains capped by `MAX_EVENT_HISTORY`.
+S48.3 extends the result with `cadence`, `label`, `completedMonth`, and `timeAdvance`:
+
+```js
+{
+  cadence: "ten_day", // or "monthly"
+  label: "旬度", // or "月度"
+  completedMonth: false,
+  timeAdvance: {
+    from: { year: 1644, month: 1, tenDayPeriod: 1 },
+    to: { year: 1644, month: 1, tenDayPeriod: 2 }
+  }
+}
+```
+
+`events` are the player-visible world feedback. They should be short, historically toned, and appended after provider events. A normal ten-day tick should emit one concise `[旬度]` event or summary; month-end may emit the older monthly event shape, with threshold months emitting up to two events. The S48.3 ten-day drift is deliberately a small supplemental signal, while month-end remains the authoritative full settlement; S48.5 may tune cumulative balance if later playtests show the three-turn total is too strong. `eventHistory` remains capped by `MAX_EVENT_HISTORY`.
 
 ## Route Integration Contract
 
@@ -106,9 +121,11 @@ S21.3 should preserve this route order:
 3. Apply provider output through server patch rules.
 4. Run the world tick against the updated state.
 5. Apply tick output through the same whitelist and clamp rules without incrementing `turnCount` a second time.
-6. Append provider events, then tick events.
-7. Save session.
-8. Return provider narrative plus tick feedback in JSON and SSE final payloads.
+6. Run long-term event settlement only when `worldTick.completedMonth === true`.
+7. Run official-career feedback every turn, but pass `isMonthEnd: worldTick.completedMonth` so tenure months and review cycles only advance on month end while first appointment can remain immediate.
+8. Append provider events, then tick/monthly-system events in route order.
+9. Save session.
+10. Return provider narrative plus tick feedback in JSON and SSE final payloads.
 
 If implementation chooses to merge provider and tick patches before applying them, it still must preserve the same effective ordering and a single `turnCount` increment.
 
@@ -117,6 +134,8 @@ If implementation chooses to merge provider and tick patches before applying the
 S21.4 should add automated coverage for:
 
 - month/year rollover from month 12 to month 1 with year +1;
+- ten-day sequence from 上旬 to 中旬 to 下旬 to next-month 上旬;
+- non-month-end turns not decrementing long-term-event `remainingMonths`;
 - numeric clamps at treasury, grain, public order, corruption, morale, and border-threat boundaries;
 - event history trimming when provider and tick events are both appended;
 - deterministic Mock-mode stability for repeated turns;

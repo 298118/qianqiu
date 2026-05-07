@@ -196,6 +196,53 @@ test("POST /api/game/turn ignores provider attempts to forge official position o
   assert.equal(JSON.stringify(payload.worldState.officialCareer).includes("forged-assignment"), false);
 });
 
+test("POST /api/game/turn advances official tenure only at month end", async (t) => {
+  const server = createTestServer();
+  t.after(server.close);
+
+  const nonMonthEnd = createInitialState({ playerName: "Tester A", role: "official" });
+  Object.assign(nonMonthEnd.player, {
+    officeTitle: "户部主事",
+    position: "户部主事"
+  });
+  nonMonthEnd.tenDayPeriod = 1;
+  nonMonthEnd.officialCareer.currentPosting = "户部主事";
+  nonMonthEnd.officialCareer.tenureMonths = 5;
+  t.after(() => removeSessionFile(nonMonthEnd.sessionId));
+  await writeSession(nonMonthEnd);
+
+  const nonMonthPayload = await postJson(`${server.baseUrl}/api/game/turn`, {
+    sessionId: nonMonthEnd.sessionId,
+    input: "署中照常办事"
+  });
+
+  assert.equal(nonMonthPayload.response.status, 200);
+  assert.equal(nonMonthPayload.payload.worldState.tenDayPeriod, 2);
+  assert.equal(nonMonthPayload.payload.worldTick.completedMonth, false);
+  assert.equal(nonMonthPayload.payload.worldState.officialCareer.tenureMonths, 5);
+
+  const monthEnd = createInitialState({ playerName: "Tester B", role: "official" });
+  Object.assign(monthEnd.player, {
+    officeTitle: "户部主事",
+    position: "户部主事"
+  });
+  monthEnd.tenDayPeriod = 3;
+  monthEnd.officialCareer.currentPosting = "户部主事";
+  monthEnd.officialCareer.tenureMonths = 5;
+  t.after(() => removeSessionFile(monthEnd.sessionId));
+  await writeSession(monthEnd);
+
+  const monthPayload = await postJson(`${server.baseUrl}/api/game/turn`, {
+    sessionId: monthEnd.sessionId,
+    input: "署中照常办事"
+  });
+
+  assert.equal(monthPayload.response.status, 200);
+  assert.equal(monthPayload.payload.worldState.tenDayPeriod, 1);
+  assert.equal(monthPayload.payload.worldTick.completedMonth, true);
+  assert.equal(monthPayload.payload.worldState.officialCareer.tenureMonths, 6);
+});
+
 test("SSE turn preview and final payload include official career feedback", async (t) => {
   const server = createTestServer();
   t.after(server.close);

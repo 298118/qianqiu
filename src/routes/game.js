@@ -196,14 +196,26 @@ async function finalizeTurn(worldState, result, input) {
     allowServerOwnedPatchKeys: true
   });
 
-  const longTermEvents = runLongTermEventStep(worldState);
+  const longTermEvents = worldTick.completedMonth
+    ? runLongTermEventStep(worldState)
+    : {
+      statePatch: {},
+      attributeChanges: [],
+      relationshipChanges: [],
+      events: [],
+      scheduled: [],
+      resolved: [],
+      summary: ""
+    };
   applyStatePatch(worldState, longTermEvents.statePatch, {
     incrementTurnCount: false,
     allowServerOwnedPatchKeys: true
   });
   const longTermRelationshipChanges = applyRelationshipChanges(worldState, longTermEvents.relationshipChanges);
 
-  const officialCareer = runOfficialCareerStep(worldState, input);
+  const officialCareer = runOfficialCareerStep(worldState, input, {
+    isMonthEnd: worldTick.completedMonth
+  });
   applyStatePatch(worldState, officialCareer.statePatch, {
     incrementTurnCount: false,
     allowServerOwnedPatchKeys: true
@@ -250,6 +262,10 @@ async function finalizeTurn(worldState, result, input) {
   ensureWorldThreadState(worldState);
 
   const worldTickFeedback = {
+    cadence: worldTick.cadence,
+    label: worldTick.label,
+    completedMonth: worldTick.completedMonth,
+    timeAdvance: worldTick.timeAdvance,
     summary: worldTick.summary,
     events: Array.isArray(worldTick.events) ? worldTick.events : [],
     attributeChanges: Array.isArray(worldTick.attributeChanges) ? worldTick.attributeChanges : []

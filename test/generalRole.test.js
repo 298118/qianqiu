@@ -115,7 +115,8 @@ test("POST /api/game/turn applies general campaign through state and relationshi
 
   assert.equal(response.status, 200);
   assert.equal(payload.worldState.turnCount, 1);
-  assert.equal(payload.worldState.month, 2);
+  assert.equal(payload.worldState.month, 1);
+  assert.equal(payload.worldState.tenDayPeriod, 2);
   assert.ok(payload.worldState.player.troops < worldState.player.troops);
   assert.ok(payload.worldState.player.supply < worldState.player.supply);
   assert.ok(payload.worldState.player.battleReputation > worldState.player.battleReputation);

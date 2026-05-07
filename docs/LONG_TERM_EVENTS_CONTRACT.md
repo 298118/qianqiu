@@ -4,7 +4,7 @@ This document records the S33 contract for Qianqiu's server-owned long-term even
 
 ## Goal
 
-The scheduler turns the monthly world tick into a small historical event almanac. It tracks cross-month pressures such as seasonal harvest audits, disasters, border alarms, court faction conflict, local case chains, and delayed consequences. Providers may see a compact summary for narrative context, but they do not create, replace, resolve, expire, or directly patch scheduler state.
+The scheduler turns month-end world ticks into a small historical event almanac. It tracks cross-month pressures such as seasonal harvest audits, disasters, border alarms, court faction conflict, local case chains, and delayed consequences. Providers may see a compact summary for narrative context, but they do not create, replace, resolve, expire, or directly patch scheduler state.
 
 ## Persisted State
 
@@ -61,14 +61,14 @@ Rules:
 4. Apply provider relationship suggestions through `applyRelationshipChanges()`.
 5. Apply exam trigger setup if the provider requested an exam.
 6. Run the active NPC request step.
-7. Run and apply the monthly world tick.
-8. Run the long-term event step against the post-tick calendar and state.
+7. Run and apply the world tick.
+8. Run the long-term event step against the post-tick calendar and state only when `worldTick.completedMonth === true`.
 9. Apply long-term event patches through server-owned patch boundaries without incrementing `turnCount`.
 10. Apply scheduler-authored relationship suggestions through `applyRelationshipChanges()`.
 11. Append provider events, active-request events, world-tick events, then long-term event events.
 12. Save and return route payloads.
 
-This means the scheduler reads the month/year after the tick advances them. For example, a turn from month 7 to month 8 can schedule `seasonal_harvest_audit` immediately after the tick.
+This means the scheduler reads the month/year after a month-end tick advances them. For example, a turn from 七月下旬 to 八月上旬 can schedule `seasonal_harvest_audit` immediately after the tick. 七月上旬 to 七月中旬 does not decrement `remainingMonths` or schedule seasonal work.
 
 ## Output Contract
 

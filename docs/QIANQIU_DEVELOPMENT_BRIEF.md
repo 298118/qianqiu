@@ -27,7 +27,7 @@
 
 第四阶段 S40-S47.2 已完成并归档到 `docs/PHASE_FOUR_ROADMAP_ARCHIVE.md`。已接受的范围包括 AI 连接可见化、prompt pack 与 eval/red-team、深度官场、World Threads 世界议程、AI 权限审查矩阵、多实体世界模型、依赖/插件治理、provider/browser 验收扩展和 DeepSeek 缓存友好提示词结构。
 
-当前活动路线图：`docs/DEVELOPMENT_STEPS.md`，已切换为 S48 时间专项规划与进度台账。S48.2 已建立 `worldState.tenDayPeriod`、共享时间 helper、旧档上旬默认和 provider 时间字段边界；后续继续处理全局旬制回合、月末大结算、考试等密集场景的局部时间、多系统期限语义和玩家可见“年月旬”展示。
+当前活动路线图：`docs/DEVELOPMENT_STEPS.md`，已切换为 S48 时间专项规划与进度台账。S48.3 已建立 `worldState.tenDayPeriod`、共享时间 helper、旧档上旬默认、provider 时间字段边界，并把普通自由行动改为每回合推进一旬；月末完整结算只在下旬进入下月上旬时发生。后续继续处理考试等密集场景的局部时间、多系统期限语义和玩家可见“年月旬”展示。
 
 开发规范不变。第 12 节和第 13 节仍是每次开发必须遵守的流程；Mock 默认可玩、真实 provider 可选、服务器拥有状态边界和科举规则这些要求继续有效。
 
@@ -280,6 +280,8 @@ S43.2/S45.2 后，游戏与考试路由会返回服务器归一化的 `worldThre
 S45.2 后，游戏与考试路由会返回服务器归一化的 `worldEntityView`。该视图来自 `worldState.worldEntities`，把朝廷衙门、地方士绅、书院同门、军镇边墙、盐漕税赋和灾荒赈务整理为玩家可见的制度实体摘要；AI prompt 只读取 capped 可见摘要，普通 provider 不得通过 `statePatch.worldEntities` 直接写入。普通回合中，AI 允许的状态变化、世界 tick、关系/主动 NPC、长期事件、身份联动和官场结果会通过服务器 helper 转成 bounded `worldEntityImpacts`，再由 World Threads 读取可见实体摘要；实体仍不替代来源系统结算。
 
 普通回合的 `examTrigger` 不能直接创建考试。服务端会先确认当前名位可进入该考试，再检查服务器拥有的科举日历窗口；若玩家已有未交卷的 `activeExam`，新的触发请求会被拒绝并保留原题、`examId` 和写卷状态。
+
+S48.3 后，普通自由行动的全局时间每次只推进一旬：上旬 -> 中旬 -> 下旬 -> 下月上旬。`worldTick` 会在非月末返回轻量 `[旬度]` 反馈和小幅自然漂移；只有下旬进入下月上旬时才执行完整 `[月度]` 结算、长期事件月份递减/调度和官场任期月份推进。`turnCount` 仍表示玩家有效输入次数，每次普通回合只加 1。
 
 ### `POST /api/ai/connection-test`
 
@@ -649,7 +651,7 @@ chore: update env example
 3. 场景内时间：考试、廷议、堂审、战斗、赶考途中遭遇和重大差事收束等密集场景应使用局部阶段，玩家在场景内多次输入时只推进该场景的时辰/阶段，不自动消耗一旬。
 4. 科举优先细化：考试将优先拆成入场、发题/审题、拟纲、作答、誊清、交卷等局部阶段；开题、拟纲、作答不推进全局旬，交卷后仍保存考试记录、虚拟考生、榜单、晋级结果和考试档案。
 5. 日期展示：玩家可见日期统一向“年月旬”靠拢，例如“崇祯十七年八月上旬”；状态栏、存档、考试日历、考试弹窗、考试档案和回合反馈都要同步。
-6. 服务器拥有时间：`turnCount`、`year`、`month`、`tenDayPeriod` 和场景时间推进都属于服务器裁决；provider 不得通过普通 `statePatch` 写入。S48.2 已完成 `tenDayPeriod` 基础、旧档默认上旬、存档 metadata 和 provider 边界；普通回合旬推进与月末大结算留给 S48.3。
+6. 服务器拥有时间：`turnCount`、`year`、`month`、`tenDayPeriod` 和场景时间推进都属于服务器裁决；provider 不得通过普通 `statePatch` 写入。S48.3 已完成 `tenDayPeriod` 基础、旧档默认上旬、存档 metadata、provider 边界、普通回合旬推进和月末结算门控。
 
 S42.1 已把深度官场契约写入 `docs/OFFICIAL_CAREER_CONTRACT.md`：S34 现有结果引擎继续作为运行时基础；后续 S42.2/S42.3 必须按契约区分服务器拥有的 `officeTitle`、软描述 `position`、归一化 `officialCareer.currentPosting`，并通过服务器 view 暴露官署、差事、考成、人脉、弹劾流程、调任外放、处分和履历档案。AI 只能生成叙事、公文口吻、来函、传闻和受限仪表建议，不能裁决任免、考成、处分、起复或隐藏信息公开。
 

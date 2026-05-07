@@ -213,8 +213,15 @@ Requests without SSE negotiation still return plain JSON for tests and compatibi
     "reason": ""
   },
   "worldTick": {
-    "summary": "月度推演：粮储略降，民心暂稳，边患暂稳。",
-    "events": ["二月，户部核算钱粮，民间风声暂稳。"],
+    "cadence": "ten_day",
+    "label": "旬度",
+    "completedMonth": false,
+    "timeAdvance": {
+      "from": { "year": 1644, "month": 1, "tenDayPeriod": 1 },
+      "to": { "year": 1644, "month": 1, "tenDayPeriod": 2 }
+    },
+    "summary": "旬度小结：明1644年正月中旬，粮储略降，民心暂稳，边患暂稳。",
+    "events": ["明1644年正月中旬，旬内仓粮照常支放，账上略有消耗。"],
     "attributeChanges": []
   },
   "examCalendarView": {
@@ -514,7 +521,7 @@ Server rules:
 
 - `src/game/worldThreads.js` normalizes and synchronizes thread state from existing server-owned sources.
 - Current sources are active NPC/faction requests, long-term events, official assignments, official outcomes, role/world impacts, world entity pressure, border pressure, faction pressure, and local case pressure.
-- The route synchronizes world threads after role/world coupling, monthly tick, long-term events, official-career settlement, and the world-entity influence pass, so the thread view reflects the final server state for that turn.
+- The route synchronizes world threads after role/world coupling, world tick, any month-end long-term events, official-career settlement, and the world-entity influence pass, so the thread view reflects the final server state for that turn.
 - Providers may read `worldThreads` in prompt context, but ordinary `statePatch.worldThreads` is rejected by schemas and ignored by provider patch application.
 - JSON and SSE turn payloads return `worldThreadView`. Exam question and submit routes also include the same view.
 
@@ -601,18 +608,18 @@ The contract for S21.2-S21.4 is:
 
 - Add `worldState.month` as a top-level calendar field, defaulting to `1`.
 - Run one minimal tick after each successful `POST /api/game/turn` action.
-- Advance one in-game month per valid free-text turn; roll month 12 to 1 and increment `year`.
+- Advance one ten-day period per valid free-text turn; only 下旬 -> next-month 上旬 rolls `month/year` and runs full monthly settlement.
 - Let the server, not the provider, compute natural changes to treasury, grain reserve, population, public order, corruption, army morale, border threat, and existing numeric faction keys.
 - Keep `turnCount` to one increment per player turn even when provider output and tick output both change state.
 - Apply tick changes through the same whitelist/clamp boundary used for provider patches.
 - Return short visible tick feedback as `worldTick` in JSON/SSE payloads and append tick events after provider events.
 - Do not touch exam rank, active exam, exam history, role promotion, session identity, or the complete scholar -> official path.
 
-`runWorldTick(worldState)` returns `{ statePatch, attributeChanges, events, summary }` without mutating `worldState`. Its first deterministic formulas cover treasury revenue/upkeep/leakage, grain consumption/harvest, population drift, public order, corruption, army morale, border threat, and small known-faction drift.
+`runWorldTick(worldState)` returns `{ cadence, label, completedMonth, timeAdvance, statePatch, attributeChanges, events, summary }` without mutating `worldState`. Non-month-end results use `cadence: "ten_day"` and patch `tenDayPeriod` plus light proportional drift; 下旬 rollover uses `cadence: "monthly"` and the original deterministic formulas for treasury revenue/upkeep/leakage, grain consumption/harvest, population drift, public order, corruption, army morale, border threat, and small known-faction drift.
 
-Route integration order is provider patch first, provider relationship suggestions, exam trigger setup when requested, active NPC request handling, role/world coupling, `runWorldTick()` against the updated state, tick patch with `{ incrementTurnCount: false, allowServerOwnedPatchKeys: true }`, long-term event scheduling/resolution, official career outcome settlement, then provider events followed by active-request events, role-world events, tick events, long-term event events, and official career events. The browser renders the current month in the status strip and appends concise `[联动]`, monthly, `[大势]`, and `[官场结算]` feedback below the provider narrative.
+Route integration order is provider patch first, provider relationship suggestions, exam trigger setup when requested, active NPC request handling, role/world coupling, `runWorldTick()` against the updated state, tick patch with `{ incrementTurnCount: false, allowServerOwnedPatchKeys: true }`, long-term event scheduling/resolution only when `worldTick.completedMonth` is true, official career feedback with `isMonthEnd` passed from the tick, then provider events followed by active-request events, role-world events, tick events, long-term event events, and official career events. The browser appends concise `[联动]`, `[旬度]` or `[月度]`, `[大势]`, and `[官场结算]` feedback below the provider narrative.
 
-S48.2 adds the shared time helper in `src/game/time.js` and the server-owned `worldState.tenDayPeriod` field. Initial sessions start at 正月上旬, old saves missing the field are normalized to 上旬 on read, save-list metadata includes `tenDayPeriod`, and prompt compact state includes both the numeric period and a `dateLabel` such as `明1644年正月上旬`. S48.2 does not yet change the existing monthly tick cadence; that belongs to S48.3.
+S48.2 adds the shared time helper in `src/game/time.js` and the server-owned `worldState.tenDayPeriod` field. Initial sessions start at 正月上旬, old saves missing the field are normalized to 上旬 on read, save-list metadata includes `tenDayPeriod`, and prompt compact state includes both the numeric period and a `dateLabel` such as `明1644年正月上旬`. S48.3 wires that field into ordinary turns: 上旬 -> 中旬 -> 下旬 -> 下月上旬, with 腊月下旬 rolling the year.
 
 Provider turn schemas and prompts do not expose `turnCount`, `year`, `month`, or `tenDayPeriod` as allowed model patch keys; turn counting and calendar changes are reserved for server-owned patches.
 

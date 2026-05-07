@@ -1216,7 +1216,7 @@ function summarizeOfficialCareerForPrompt(worldState = {}) {
   };
 }
 
-function runOfficialCareerStep(worldState = {}, input = "") {
+function runOfficialCareerStep(worldState = {}, input = "", options = {}) {
   const result = {
     statePatch: {},
     attributeChanges: [],
@@ -1238,7 +1238,8 @@ function runOfficialCareerStep(worldState = {}, input = "") {
     return result;
   }
 
-  const nextTenureMonths = career.tenureMonths + 1;
+  const isMonthEnd = options.isMonthEnd !== false;
+  const nextTenureMonths = career.tenureMonths + (isMonthEnd ? 1 : 0);
   const action = classifyOfficialAction(input);
   const assignmentUpdate = updateAssignments(worldState, career.assignments, action);
   const nextAssessmentDossier = updateAssessmentDossier(
@@ -1249,7 +1250,9 @@ function runOfficialCareerStep(worldState = {}, input = "") {
   );
   const nextImpeachmentProcedure = updateImpeachmentProcedure(worldState, career.impeachmentProcedure, action);
   const scores = calculateCareerScores(worldState);
-  const reviewReason = getReviewReason(worldState, career, scores, nextTenureMonths);
+  const reviewReason = (isMonthEnd || !worldState.player.officeTitle)
+    ? getReviewReason(worldState, career, scores, nextTenureMonths)
+    : null;
   const nextCareer = {
     ...career,
     tenureMonths: nextTenureMonths,

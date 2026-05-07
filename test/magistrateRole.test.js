@@ -120,7 +120,8 @@ test("POST /api/game/turn applies magistrate casework through state and relation
 
   assert.equal(response.status, 200);
   assert.equal(payload.worldState.turnCount, 1);
-  assert.equal(payload.worldState.month, 2);
+  assert.equal(payload.worldState.month, 1);
+  assert.equal(payload.worldState.tenDayPeriod, 2);
   assert.ok(payload.worldState.player.localOrder > worldState.player.localOrder);
   assert.ok(payload.worldState.player.pendingLawsuits < worldState.player.pendingLawsuits);
   assert.ok(payload.relationshipChanges.some((change) => change.targetId === "C01"));

@@ -1,5 +1,12 @@
 const { NUMERIC_RANGES, clamp } = require("./stateRules");
-const { MONTH_NAMES, advanceMonth, normalizeMonth } = require("./time");
+const {
+  MONTH_NAMES,
+  TURNS_PER_MONTH,
+  advanceTenDayPeriod,
+  formatYearMonthPeriod,
+  normalizeCalendar,
+  normalizeMonth
+} = require("./time");
 
 const ATTRIBUTE_LABELS = {
   treasury: "府库",
@@ -37,7 +44,7 @@ function readMonth(worldState) {
 }
 
 function advanceCalendar(worldState) {
-  return advanceMonth({
+  return advanceTenDayPeriod({
     year: readNumber(worldState, "year", 1644),
     month: readMonth(worldState),
     tenDayPeriod: worldState?.tenDayPeriod
@@ -178,9 +185,8 @@ function addChange(changes, path, before, after, reason) {
   });
 }
 
-function buildAttributeChanges(worldState, statePatch) {
+function buildAttributeChanges(worldState, statePatch, reason = "月度推演") {
   const changes = [];
-  const reason = "月度推演";
 
   for (const key of ["treasury", "grainReserve", "population", "publicOrder", "corruption", "armyMorale", "borderThreat"]) {
     addChange(changes, key, readNumber(worldState, key, 0), statePatch[key], reason);
@@ -233,12 +239,90 @@ function buildEvents(worldState, statePatch, calendar) {
   return events.slice(0, calendar.rolledYear ? 2 : 1);
 }
 
+function readPatchBaseline(worldState, key) {
+  return readNumber(worldState, key, 0);
+}
+
+function scaleTenDayValue(worldState, key, projectedValue) {
+  const before = readPatchBaseline(worldState, key);
+  const delta = projectedValue - before;
+  const scaledDelta = Math.round(delta / TURNS_PER_MONTH);
+  if (scaledDelta === 0) return before;
+  return clampForKey(key, before + scaledDelta);
+}
+
+function calculateTenDayResourcePatch(worldState, calendar) {
+  const projectedMonthlyPatch = calculateResourcePatch(worldState, calendar);
+  const patch = {};
+
+  for (const key of ["treasury", "grainReserve", "population", "publicOrder", "corruption", "armyMorale", "borderThreat"]) {
+    const next = scaleTenDayValue(worldState, key, projectedMonthlyPatch[key]);
+    if (next !== readPatchBaseline(worldState, key)) {
+      patch[key] = next;
+    }
+  }
+
+  return patch;
+}
+
+function buildTenDaySummary(worldState, statePatch, calendar) {
+  const pieces = [
+    Object.prototype.hasOwnProperty.call(statePatch, "grainReserve")
+      ? trend(readNumber(worldState, "grainReserve", 800), statePatch.grainReserve, "粮储")
+      : "粮储暂稳",
+    Object.prototype.hasOwnProperty.call(statePatch, "publicOrder")
+      ? trend(readNumber(worldState, "publicOrder", 70), statePatch.publicOrder, "民心")
+      : "民心暂稳",
+    Object.prototype.hasOwnProperty.call(statePatch, "borderThreat")
+      ? trend(readNumber(worldState, "borderThreat", 40), statePatch.borderThreat, "边患")
+      : "边患暂稳"
+  ];
+  return `旬度小结：${formatYearMonthPeriod({ ...worldState, ...calendar })}，${pieces.join("，")}。`;
+}
+
+function buildTenDayEvents(worldState, statePatch, calendar) {
+  const dateLabel = formatYearMonthPeriod({ ...worldState, ...calendar });
+  if (Object.prototype.hasOwnProperty.call(statePatch, "grainReserve") && statePatch.grainReserve < readNumber(worldState, "grainReserve", 800)) {
+    return [`${dateLabel}，旬内仓粮照常支放，账上略有消耗。`];
+  }
+  if (Object.prototype.hasOwnProperty.call(statePatch, "treasury") && statePatch.treasury > readNumber(worldState, "treasury", 1000)) {
+    return [`${dateLabel}，旬内钱粮入账，府库稍见周转。`];
+  }
+  return [`${dateLabel}，旬日流转，未至月末大结，地方风声暂稳。`];
+}
+
 function runWorldTick(worldState = {}) {
+  const beforeCalendar = normalizeCalendar(worldState);
   const calendar = advanceCalendar(worldState);
-  const naturalPatch = calculateResourcePatch(worldState, calendar);
   const statePatch = {
     year: calendar.year,
     month: calendar.month,
+    tenDayPeriod: calendar.tenDayPeriod
+  };
+
+  if (!calendar.completedMonth) {
+    Object.assign(statePatch, calculateTenDayResourcePatch(worldState, calendar));
+    return {
+      cadence: "ten_day",
+      label: "旬度",
+      completedMonth: false,
+      timeAdvance: {
+        from: beforeCalendar,
+        to: {
+          year: calendar.year,
+          month: calendar.month,
+          tenDayPeriod: calendar.tenDayPeriod
+        }
+      },
+      statePatch,
+      attributeChanges: buildAttributeChanges(worldState, statePatch, "旬度推演"),
+      events: buildTenDayEvents(worldState, statePatch, calendar),
+      summary: buildTenDaySummary(worldState, statePatch, calendar)
+    };
+  }
+
+  const naturalPatch = calculateResourcePatch(worldState, calendar);
+  Object.assign(statePatch, {
     treasury: naturalPatch.treasury,
     grainReserve: naturalPatch.grainReserve,
     population: naturalPatch.population,
@@ -246,13 +330,26 @@ function runWorldTick(worldState = {}) {
     corruption: naturalPatch.corruption,
     armyMorale: naturalPatch.armyMorale,
     borderThreat: naturalPatch.borderThreat
-  };
+  });
 
   if (Object.keys(naturalPatch.factions).length) {
     statePatch.factions = naturalPatch.factions;
   }
 
   return {
+    cadence: "monthly",
+    label: "月度",
+    completedMonth: true,
+    timeAdvance: {
+      from: beforeCalendar,
+      to: {
+        year: calendar.year,
+        month: calendar.month,
+        tenDayPeriod: calendar.tenDayPeriod
+      },
+      rolledMonth: calendar.rolledMonth,
+      rolledYear: calendar.rolledYear
+    },
     statePatch,
     attributeChanges: buildAttributeChanges(worldState, statePatch),
     events: buildEvents(worldState, statePatch, calendar),

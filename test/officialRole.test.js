@@ -115,7 +115,8 @@ test("POST /api/game/turn applies official impeachment through state and relatio
 
   assert.equal(response.status, 200);
   assert.equal(payload.worldState.turnCount, 1);
-  assert.equal(payload.worldState.month, 2);
+  assert.equal(payload.worldState.month, 1);
+  assert.equal(payload.worldState.tenDayPeriod, 2);
   assert.ok(payload.worldState.player.cleanReputation > worldState.player.cleanReputation);
   assert.ok(payload.worldState.player.impeachmentRisk > worldState.player.impeachmentRisk);
   assert.ok(payload.worldState.corruption < worldState.corruption);

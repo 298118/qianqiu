@@ -90,8 +90,8 @@
 | ID | 状态 | 目标 | 完成日期 | 工具 | 提交 |
 | --- | --- | --- | --- | --- | --- |
 | S48.1 | DONE | 归档第四阶段规划，开启时间专项路线图，并保持开发规范不变 | 2026-05-07 | Codex | `1e7bcd3` + follow-up docs fixes |
-| S48.2 | DONE | 建立全局旬制日历基础：`tenDayPeriod`、共享时间 helper、旧档默认上旬、provider 时间字段边界 | 2026-05-07 | Codex + subagents | `15e078f` + hash backfill |
-| S48.3 | TODO | 改造普通回合与世界 tick：每回合推进一旬，非月末轻量小结，月末完整结算 |  |  |  |
+| S48.2 | DONE | 建立全局旬制日历基础：`tenDayPeriod`、共享时间 helper、旧档默认上旬、provider 时间字段边界 | 2026-05-07 | Codex + subagents | `15e078f` + `8d93b8c` hash backfill |
+| S48.3 | DONE | 改造普通回合与世界 tick：每回合推进一旬，非月末轻量小结，月末完整结算 | 2026-05-07 | Codex + subagent | commit pending |
 | S48.4 | TODO | 建立场景内时间框架，并优先把科举考试改成多阶段局部时间 |  |  |  |
 | S48.5 | TODO | 适配长期事件、官场任期/差事、世界议程、世界实体和脚本验收的月末/旬度语义 |  |  |  |
 | S48.6 | TODO | 完成前端日期展示、浏览器 smoke、provider long-run 和完整书生入仕验收 |  |  |  |
@@ -169,17 +169,17 @@
 
 范围：
 
-- `longTermEvents.remainingMonths` 只在月末完整结算时递减；调度、解决和季节事件判断也只在月末运行。
-- 官场 `officialCareer.tenureMonths` 只在月末增加；首次授官仍可在入仕后的第一个官员回合立即结算。
+- 复核 S48.3 已完成的月末门控：`longTermEvents.remainingMonths`、调度/解决/季节事件和 `officialCareer.tenureMonths` 已只在月末推进；本步骤只补遗漏系统和更细语义。
 - 官场差事、弹劾、考成等原本语义上代表“数月”的期限按三回合一月换算；主动 NPC 请托这类明确按“回”计的短期响应保留回合语义。
 - World Threads 的 `deadlineLabel`、`remainingMonths`、`turnsRemaining` 文案要准确区分“旬回合”和“月份”。
-- World Entities、role/world coupling、provider long-run 的服务器效果模拟同步读取新的 tick 结果，不让脚本仍假设一回合一月。
+- World Entities、role/world coupling、provider long-run 的服务器效果模拟要读取新的 tick cadence，不让脚本、实体影响或议题摘要仍隐含一回合一月。
+- 评估 S48.3 的非月末小幅自然漂移与月末完整结算的累计强度，必要时补平衡测试或文档说明。
 
 验收：
 
-- 长期事件非月末不递减，月末才递减并可调度/解决。
-- 官场任内月份三回合才增加一月，首次授官不延迟。
+- 已有 S48.3 回归继续通过：长期事件非月末不递减，月末才递减并可调度/解决；官场任内月份三回合才增加一月，首次授官不延迟。
 - 世界议程中按回合计的请托仍显示剩余回合，按月计的大势仍显示剩余月份。
+- World Entities 和 provider long-run 对 `worldTick.cadence` 的处理有明确测试或验收记录。
 
 ### S48.6：前端与验收收束
 
@@ -247,7 +247,7 @@
 
 步骤：S48.2
 
-提交：`15e078f feat: add ten-day calendar foundation`；hash backfill pending
+提交：`15e078f feat: add ten-day calendar foundation`；`8d93b8c docs: backfill s48.2 commit hash`
 
 完成：
 
@@ -282,3 +282,45 @@
 下一步：
 
 - 开始 S48.3：普通回合推进上旬 -> 中旬 -> 下旬 -> 下月上旬；非月末只做轻量旬度反馈，月末执行完整世界 tick 和月度系统结算。
+
+### 2026-05-07
+
+工具：Codex；只读探索子代理 Dirac；提交前只读复审 Newton
+
+步骤：S48.3
+
+提交：pending
+
+完成：
+
+- `runWorldTick()` 改为使用 `advanceTenDayPeriod()`：普通回合推进 上旬 -> 中旬 -> 下旬 -> 下月上旬；腊月下旬 rollover 时年份 +1、月份回正月、旬回上旬。
+- `worldTick` payload 增加 `cadence`、`label`、`completedMonth` 和 `timeAdvance`。非月末返回 `[旬度]` 轻量小结和小幅自然漂移；月末保留原完整资源/派系月度结算。
+- `POST /api/game/turn` 与 `scripts/providerLongRun.js` 用 `worldTick.completedMonth` 门控长期事件：非月末不递减 `remainingMonths`、不调度季节事件、不解决长期事件。
+- 官场回合每旬仍可处理首次实授和差遣反馈，但 `officialCareer.tenureMonths`、年度/周期复核等月度语义只在月末推进。
+- 浏览器 `worldTick` 反馈根据 route payload 显示 `[旬度]` 或 `[月度]`。
+- 更新 World Tick、长期事件、角色世界联动、AI 权限矩阵、架构、真实 provider 验收、README 和产品 brief 文档，记录 S48.3 旬制回合与月末门控。
+
+验证：
+
+- `node --check src\game\worldTick.js`
+- `node --check src\routes\game.js`
+- `node --check src\game\officialCareer.js`
+- `node --check scripts\providerLongRun.js`
+- `node --check public\app.js`
+- `node --test test\worldTick.test.js test\gameTurnTick.test.js test\gameTurnLongTermEvents.test.js test\longTermEvents.test.js test\gameTurnWorldThreads.test.js test\gameTurnOfficialCareer.test.js test\officialCareer.test.js test\officialRole.test.js test\generalRole.test.js test\magistrateRole.test.js test\gameTurnRoleWorldCoupling.test.js test\aiControlRedTeam.test.js test\providerLongRunScript.test.js`（65 tests passed）
+- `npm run check:docs-governance`
+- `npm run eval:ai`（12 tests passed）
+- `$env:AI_PROVIDER='mock'; npm test`（278 tests passed）
+- `$env:AI_PROVIDER='mock'; npm run smoke:browser`（14 screenshots checked）
+- `git diff --check`
+- 复审后补齐旧“monthly tick”文案和 S48.5 范围口径后，重跑 `npm run check:docs-governance`、`node --test test\gameTurnTick.test.js test\gameTurnLongTermEvents.test.js`（12 tests passed）和 `git diff --check`
+
+风险/遗留：
+
+- S48.3 不处理考试局部时间。`/api/exam/question` 与 `/api/exam/submit` 仍不推进全局旬；考试内多阶段留给 S48.4。
+- 官场期限/World Threads 文案更细的“旬回合 vs 月份”整理仍属于 S48.5/S48.6；本步只让任期月份和复核不在非月末过快推进。
+- 提交前只读复审（Newton）无 blocker；一个 P3 提醒 S48.5 仍把已完成的长期事件/官场月末门控写成未来范围，已改为“复核已完成门控并聚焦剩余期限/议题/实体/provider cadence 语义”。残余风险是非月末小幅漂移叠加月末完整结算的累计强度需在 S48.5/S48.6 结合 playtest 或测试再调。
+
+下一步：
+
+- 开始 S48.4：建立场景内时间框架，优先把科举考试拆成局部阶段，让开题、审题、拟纲、作答等考试内动作不消耗全局旬。

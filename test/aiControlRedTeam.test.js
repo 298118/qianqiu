@@ -266,8 +266,8 @@ test("S44 ordinary turn drops mixed provider overreach while applying safe sugge
   assert.equal(response.status, 200);
   assert.equal(payload.worldState.turnCount, 1);
   assert.equal(payload.worldState.year, 1644);
-  assert.equal(payload.worldState.month, 2);
-  assert.equal(payload.worldState.tenDayPeriod, 1);
+  assert.equal(payload.worldState.month, 1);
+  assert.equal(payload.worldState.tenDayPeriod, 2);
   assert.equal(payload.worldState.activeExam, null);
   assert.equal(payload.examTrigger.shouldStart, false);
   assert.match(payload.examTrigger.reason, /不必再循科举旧路|当前应参加童试/);
