@@ -105,7 +105,11 @@
 | S52.1 | DONE | 官职、官署、任所、城市辖区、考成和调任记录的数据库契约 | 2026-05-07 | Codex + read-only subagents | `4ce6d0e` |
 | S52.2 | DONE | 地方官/入仕官员任所与城市数据联动，保持服务器任免裁决 | 2026-05-07 | Codex + read-only subagents | `4599869` |
 | S53.1 | DONE | 检索式 prompt context assembler：按角色视野读取国家、城市、NPC、官职、事件摘要 | 2026-05-07 | Codex + read-only subagents | `1268c04` |
-| S53.2 | TODO | 浏览器信息面板规划：天下格局、任所地理、人物谱牒、官职簿、事件档案 |  |  |  |
+| S53.2 | DONE | 浏览器信息面板规划：天下格局、任所地理、人物谱牒、官职簿、事件档案 | 2026-05-07 | Codex + read-only subagents | 待提交后回填 |
+| S53.3 | TODO | 浏览器信息面板前端接线基础：缓存 S50-S52 view 并建立 tab/面板壳 |  |  |  |
+| S53.4 | TODO | 天下格局与任所地理面板：地理、任所、辖区、路线和压力摘要 |  |  |  |
+| S53.5 | TODO | 人物谱牒与官职簿面板：人物/家产关系、官署官职、任命考成迁转 |  |  |  |
+| S53.6 | TODO | 事件档案安全 projection 与浏览器面板 |  |  |  |
 
 ## 5. 实施规划
 
@@ -568,6 +572,40 @@
 下一步：
 
 - S53.2：浏览器信息面板规划，明确天下格局、任所地理、人物谱牒、官职簿和事件档案的 route view 来源、hidden 过滤和验收范围。
+
+### S53.2：浏览器信息面板规划
+
+状态：DONE。规划提交：待提交后回填。只读探索子代理 Parfit 梳理了当前 route view、前端面板入口、browser smoke helper 和后续 UI 风险；只读文档探索子代理 Mendel 梳理了文档落点、权限矩阵边界和后续拆步。该步骤为低风险纯文档规划，不改 runtime，跳过提交前只读复审；验证见下。
+
+目标：
+
+- 固定“天下格局、任所地理、人物谱牒、官职簿、事件档案”五类信息面板的数据来源、非目标、隐藏过滤和验收方向。
+- 明确后续浏览器 UI 必须读取 route payload 中的 player-facing view，而不是 raw `worldState` ledger 或 S53.1 provider-only `retrievalContext`。
+- 把事件档案列为高风险面板：实现前必须先新增服务器 `eventArchiveView` 或等价 sanitized projection，不得直接读取 JSON/SQLite audit payload。
+- 将 S53.2 规划拆成后续实现步骤 S53.3-S53.6，保持每步可审查、可验证。
+
+完成：
+
+- 新增 `docs/BROWSER_INFORMATION_PANEL_PLAN.md`，记录当前 view/UI 现状、五类面板的数据源表、事件档案安全要求、UI 设计方向、建议 selector、后续拆步和验收清单。
+- `docs/ARCHITECTURE.md` 增补浏览器信息面板规划契约，说明后续面板只读 `worldGeographyView`、`worldPeopleView`、`officialPostingsView`、`worldEntityView`、`worldThreadView`、`longTermEventView`、`officialCareerView` 等 route view。
+- `docs/AI_CONTROL_AUDIT_MATRIX.md` 增补浏览器信息面板边界：AI 不直接控制 DOM，不复用 `retrievalContext` 给 UI，事件档案不得读 raw audit。
+- `docs/BROWSER_ACCEPTANCE.md` 增补 S53.2 planned browser surface，列出未来 smoke selector、hidden-token corpus、响应式溢出和事件档案 projection 验收。
+- README、产品 brief、shared context 同步 S53.2 规划入口和下一步 S53.3。
+
+验证：
+
+- `npm run check:docs-governance`
+- `git diff --check`
+
+风险/遗留：
+
+- `#scholar-panel` 已有面板较多，S53.3 起必须用 tab/segmented control 或折叠策略控制信息密度，避免叙事区和行动区被挤压。
+- 事件档案当前缺专门安全 view；S53.6 必须先做 `eventArchiveView` 或等价服务器 projection，再实现 UI。
+- `officialCareerView` 与 `officialPostingsView` 存在语义重叠；后续“官场档案”继续承载个人仕途结算，“官职簿/任所地理”只做簿册和地理查阅。
+
+下一步：
+
+- S53.3：浏览器信息面板前端接线基础，先缓存 S50-S52 相关 view 并建立 tab/面板壳，不急着铺满五类内容。
 
 ## 6. 数据域规划
 

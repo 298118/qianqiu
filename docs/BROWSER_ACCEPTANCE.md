@@ -43,6 +43,20 @@ The smoke uses `playwright-core` with an installed Chrome or Edge executable. If
 | Screenshots | Captures representative desktop and mobile states and validates each capture as a non-empty PNG. |
 | Cleanup | Deletes the smoke-created session file when the journey finishes. |
 
+## Planned S53 Information Panels
+
+S53.2 adds the planning contract in [BROWSER_INFORMATION_PANEL_PLAN.md](BROWSER_INFORMATION_PANEL_PLAN.md). No runtime browser UI changes are accepted in S53.2; the future smoke surface is recorded here so implementation slices do not widen data sources casually.
+
+Future browser smoke should add:
+
+- `#world-geography-panel` for 天下格局, backed by `worldGeographyView` and optional visible `worldEntityView` / `worldThreadView` context.
+- `#posting-geography-panel` for 任所地理, backed by `officialPostingsView` and `worldGeographyView`.
+- `#world-people-panel` for 人物谱牒, backed by `worldPeopleView` with optional `relationshipView` / `activeNpcRequestView` context.
+- `#official-postings-panel` for 官职簿, backed by `officialPostingsView` with personal-career context from `officialCareerView`.
+- `#event-archive-panel` for 事件档案 only after a server-built sanitized `eventArchiveView` or equivalent projection exists.
+
+Each future panel needs stable `data-*` attributes, hidden-token scanning, desktop/mobile horizontal overflow checks, reload/restore coverage, and focused helper tests in `test/browserSmokeScript.test.js`. Event archive acceptance must prove that the browser does not read raw `eventHistory`, JSON audit sidecars, SQLite audit tables, provider proposals, prompts, local paths, or keys.
+
 ## Latest Automated Result
 
 Date: 2026-05-07
