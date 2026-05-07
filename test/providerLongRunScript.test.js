@@ -48,12 +48,13 @@ test("provider long-run detects server-owned patch attempts", () => {
     collectProviderPatchViolations({
       year: 1645,
       activeExam: { level: "child_exam" },
+      worldThreads: { threads: [{ id: "provider-forged", title: "伪议题" }] },
       player: {
         examRank: "秀才",
         officeTitle: "翰林"
       }
     }),
-    ["activeExam", "year", "player.examRank", "player.officeTitle"]
+    ["activeExam", "worldThreads", "year", "player.examRank", "player.officeTitle"]
   );
 
   assert.deepEqual(
@@ -75,6 +76,7 @@ test("provider long-run creates a scholar acceptance world without session write
   assert.equal(worldState.examCalendar.schemaVersion, 1);
   assert.equal(worldState.longTermEvents.schemaVersion, 1);
   assert.equal(worldState.roleWorldCoupling.schemaVersion, 1);
+  assert.equal(worldState.worldThreads.schemaVersion, 1);
   assert.ok(worldState.sessionId);
 });
 

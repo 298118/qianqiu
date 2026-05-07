@@ -31,6 +31,7 @@ test("remote provider state patch normalization drops server-owned and unknown f
     normalizeProviderStatePatch({
       treasury: 990,
       activeExam: { level: "palace_exam" },
+      worldThreads: { threads: [{ id: "provider-forged", title: "伪议题" }] },
       relationshipLedger: { characters: {} },
       factions: {
         eunuchs: 48,

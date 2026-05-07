@@ -144,6 +144,55 @@ test("turn prompt input filters hidden relationship context", () => {
   }
 });
 
+test("turn prompt input includes only visible world thread summaries", () => {
+  const worldState = createInitialState({ role: "official", playerName: "Thread Prompt Tester" });
+  worldState.worldThreads = {
+    schemaVersion: 1,
+    threads: [
+      {
+        id: "WT-visible",
+        status: "active",
+        kind: "official_assignment",
+        sourceType: "official_assignment",
+        sourceId: "ASG-visible",
+        sourceLabel: "官场差遣",
+        title: "赈银核销",
+        summary: "赈务牵连钱粮与民心。",
+        severity: 2,
+        createdTurn: 1,
+        lastUpdatedTurn: 1,
+        dueTurn: 4,
+        visibility: "public",
+        related: { characters: [], factions: ["scholarOfficials"], offices: ["ministry_revenue"], metrics: ["grainReserve"] }
+      },
+      {
+        id: "WT-hidden",
+        status: "active",
+        kind: "faction_conflict",
+        sourceType: "faction_pressure",
+        sourceId: "hidden",
+        sourceLabel: "朝局派系",
+        title: "Hidden Palace Thread",
+        summary: "sealed impeachment dossier",
+        severity: 3,
+        createdTurn: 1,
+        lastUpdatedTurn: 1,
+        visibility: "hidden",
+        related: { characters: ["C99-hidden"], factions: ["eunuchs"], offices: [], metrics: [] }
+      }
+    ],
+    recentResolved: []
+  };
+
+  const task = buildTurnTask(worldState, "核查赈册");
+
+  assert.match(task.input, /赈银核销/);
+  assert.match(task.input, /worldThreads/);
+  assert.doesNotMatch(task.input, /Hidden Palace Thread/);
+  assert.doesNotMatch(task.input, /sealed impeachment dossier/);
+  assert.doesNotMatch(task.input, /C99-hidden/);
+});
+
 test("exam prompt packs keep question and grading authority separate", () => {
   const worldState = createInitialState({ playerName: "Exam Prompt Tester" });
   const exam = getExam("provincial_exam");

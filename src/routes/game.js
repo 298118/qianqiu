@@ -25,6 +25,10 @@ const {
   runRoleWorldCouplingStep
 } = require("../game/roleWorldCoupling");
 const {
+  buildWorldThreadView,
+  ensureWorldThreadState
+} = require("../game/worldThreads");
+const {
   buildExamCalendarView,
   buildExamRivalView,
   canOpenExamInCalendar,
@@ -68,6 +72,7 @@ async function processTurn(sessionId, input) {
     ensureLongTermEventState(worldState);
     ensureOfficialCareerState(worldState);
     ensureRoleWorldCouplingState(worldState);
+    ensureWorldThreadState(worldState);
     const provider = getProvider();
     const result = await provider.runTurn(worldState, input);
     return finalizeTurn(worldState, result, input);
@@ -81,6 +86,7 @@ async function processStreamingTurn(sessionId, input, streamHandlers = {}) {
     ensureLongTermEventState(worldState);
     ensureOfficialCareerState(worldState);
     ensureRoleWorldCouplingState(worldState);
+    ensureWorldThreadState(worldState);
     const provider = getProvider();
     const canStream = provider.supportsStreaming && typeof provider.streamTurn === "function";
     const result = canStream
@@ -193,6 +199,8 @@ async function finalizeTurn(worldState, result, input) {
   });
   const officialCareerRelationshipChanges = applyRelationshipChanges(worldState, officialCareer.relationshipChanges);
 
+  ensureWorldThreadState(worldState);
+
   appendEvents(worldState, result.events);
   appendEvents(worldState, activeNpcRequest.events);
   appendEvents(worldState, roleWorldCoupling.events);
@@ -204,6 +212,7 @@ async function finalizeTurn(worldState, result, input) {
   ensureLongTermEventState(worldState);
   ensureOfficialCareerState(worldState);
   ensureRoleWorldCouplingState(worldState);
+  ensureWorldThreadState(worldState);
 
   const worldTickFeedback = {
     summary: worldTick.summary,
@@ -234,6 +243,7 @@ async function finalizeTurn(worldState, result, input) {
     activeNpcRequestView: buildActiveNpcRequestView(worldState),
     activeNpcRequestEvents: activeNpcRequest.events,
     roleWorldCouplingView: buildRoleWorldCouplingView(worldState),
+    worldThreadView: buildWorldThreadView(worldState),
     roleWorldCoupling: {
       summary: roleWorldCoupling.summary,
       events: Array.isArray(roleWorldCoupling.events) ? roleWorldCoupling.events : [],
@@ -300,6 +310,7 @@ async function streamTurn(res, sessionId, input) {
       activeNpcRequestView: payload.activeNpcRequestView,
       activeNpcRequestEvents: payload.activeNpcRequestEvents,
       roleWorldCouplingView: payload.roleWorldCouplingView,
+      worldThreadView: payload.worldThreadView,
       roleWorldCoupling: payload.roleWorldCoupling,
       longTermEventView: payload.longTermEventView,
       longTermEvents: payload.longTermEvents,
@@ -336,6 +347,7 @@ router.post("/start", async (req, res, next) => {
       relationshipView: buildRelationshipInspectionView(worldState),
       activeNpcRequestView: buildActiveNpcRequestView(worldState),
       roleWorldCouplingView: buildRoleWorldCouplingView(worldState),
+      worldThreadView: buildWorldThreadView(worldState),
       longTermEventView: buildLongTermEventView(worldState),
       officialCareerView: buildOfficialCareerView(worldState),
       narrative: opening.narrative
@@ -353,6 +365,7 @@ router.get("/state/:sessionId", async (req, res, next) => {
     ensureLongTermEventState(worldState);
     ensureOfficialCareerState(worldState);
     ensureRoleWorldCouplingState(worldState);
+    ensureWorldThreadState(worldState);
     res.json({
       sessionId: worldState.sessionId,
       worldState,
@@ -361,6 +374,7 @@ router.get("/state/:sessionId", async (req, res, next) => {
       relationshipView: buildRelationshipInspectionView(worldState),
       activeNpcRequestView: buildActiveNpcRequestView(worldState),
       roleWorldCouplingView: buildRoleWorldCouplingView(worldState),
+      worldThreadView: buildWorldThreadView(worldState),
       longTermEventView: buildLongTermEventView(worldState),
       officialCareerView: buildOfficialCareerView(worldState)
     });

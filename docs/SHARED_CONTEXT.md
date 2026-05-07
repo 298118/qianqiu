@@ -70,6 +70,7 @@ Important modules:
 - Long-term events: `src/game/longTermEvents.js`
 - Official career outcomes: `src/game/officialCareer.js`
 - Role/world coupling: `src/game/roleWorldCoupling.js`
+- World Threads / 世界议程索引: `src/game/worldThreads.js`
 - JSON session store: `src/storage/sessionStore.js`
 - SSE helpers: `src/utils/sse.js`, `src/utils/streamingJson.js`
 - Browser app: `public/index.html`, `public/app.js`, `public/styles.css`
@@ -123,6 +124,15 @@ Durable contracts and acceptance records:
 - S42.3 expands the browser official-career panel from that view. `#official-career-panel` now has scan-friendly 官署、差事、考成、关系与风险、履历档案 sections and stable selectors/data attributes for browser smoke: `data-current-posting`, `data-impeachment-stage`, `data-bureau-id`, `data-assignment-*`, `data-pending-recommendation`, and `data-outcome-*`.
 - AI may generate narrative, memorial/letter tone, rumors, visible reactions, and bounded meter suggestions, but must not decide appointments, dismissals, assessment results, discipline, restoration, or hidden-information disclosure.
 
+## Current S43 Notes
+
+- S43.1 adds `docs/WORLD_THREADS_CONTRACT.md` and `src/game/worldThreads.js`.
+- `worldState.worldThreads.schemaVersion = 1` is a server-owned derived issue ledger with capped `threads` and `recentResolved`; legacy/missing state is normalized without bumping the storage envelope.
+- Current thread sources are active NPC requests, long-term events, official assignments, official outcomes, role/world impacts, frontier pressure, faction pressure, and local case pressure.
+- `worldThreadView` is returned by game start/state/turn and exam question/submit routes, and `summarizeWorldThreadsForPrompt()` is included in `compactWorldState()` as `worldThreads`.
+- Providers may read visible thread summaries for narrative context, but ordinary `statePatch.worldThreads` is rejected/ignored like other server-owned ledgers. Hidden thread rows, hidden relationship data, and official hidden notes are excluded from views and prompt summaries.
+- S43.1 intentionally does not add a browser panel or new settlement authority; S43.2 should build the front-end 世界议程 inspection view plus goals, deadlines, intervention hints, and follow-up resolution.
+
 ## Verification Defaults
 
 Use focused checks first, then broaden when behavior crosses module boundaries:
@@ -144,6 +154,7 @@ Use focused checks first, then broaden when behavior crosses module boundaries:
 
 ## Current Work Note
 
+- 2026-05-07: S43.1 implementation/docs are ready for commit. Added `src/game/worldThreads.js`, `docs/WORLD_THREADS_CONTRACT.md`, `worldState.worldThreads`, `worldThreadView` route payloads, prompt `worldThreads` summaries, and provider/server boundary tests forbidding ordinary `statePatch.worldThreads`. Verification passed: focused `node --check`, `node --test test\worldThreads.test.js` with 5 tests, `node --test test\gameTurnWorldThreads.test.js`, focused state/schema/prompt/provider tests, `npm run eval:ai`, focused turn integration tests, `$env:AI_PROVIDER='mock'; npm test` with 232 tests, and `git diff --check`. Read-only exploratory subagent Wegener mapped S43.1 integration points and did not edit files or run Git writes. Read-only pre-commit review by Arendt found one P1 leak where legacy hidden `recentResolved` rows could surface; `normalizeResolvedThread()` now drops hidden rows, regression coverage was added, and follow-up review approved the fix.
 - 2026-05-06: 压缩必读上下文：`docs/QIANQIU_DEVELOPMENT_BRIEF.md` 的 S11-S38.3 历史实现笔记迁入 `docs/QIANQIU_DEVELOPMENT_HISTORY_ARCHIVE.md`；`docs/DEVELOPMENT_STEPS.md` 的第四阶段早期详细进度记录迁入 `docs/FOURTH_PHASE_PROGRESS_ARCHIVE.md`。日常启动仍只读四件套，归档文件只在追溯旧决策或旧验证时读取。低风险纯文档搬迁，跳过提交前只读子代理审查；验证：`git diff --check`。
 - 2026-05-06: 纯文档开发规范更新已把“项目输出优先中文”写入 `AGENTS.md`、`CLAUDE.md`、`docs/QIANQIU_DEVELOPMENT_BRIEF.md` 和 `docs/DEVELOPMENT_STEPS.md`。这是低风险纯文档改动，跳过提交前只读子代理审查；验证：`git diff --check`。
 - 2026-05-06: S40.1-S40.2 implementation/docs commit is `7927c02`. Verification passed: focused `node --check`, focused AI diagnostics/provider tests, `$env:AI_PROVIDER='mock'; npm test` with 197 tests, DeepSeek no-session diagnostic through ignored `.env` with `ok=true`, `$env:AI_PROVIDER='mock'; npm run smoke:browser`, and `git diff --check`. Read-only pre-commit subagent review found no blocking issues. Residuals: browser smoke does not yet click the `AI 连接` button, and error redaction covers exact configured secret values rather than transformed/partial variants.
@@ -156,4 +167,4 @@ Use focused checks first, then broaden when behavior crosses module boundaries:
 
 ## Next Recommended Step
 
-After S42.3 is committed, start S43.1. Recommended first slice: define the server-owned World Threads shape for cross-month issues, then connect official assignments, NPC requests, local disasters, frontier reports, and faction pressure to visible thread summaries without exposing hidden notes.
+After S43.1 is committed, start S43.2. Recommended slice: render a browser 世界议程 panel from `worldThreadView`, then add goals, deadlines, risk labels, related actors, player intervention hints, hidden-info leak checks, and desktop/mobile smoke coverage.

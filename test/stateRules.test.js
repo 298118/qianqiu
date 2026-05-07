@@ -20,6 +20,7 @@ test("applyStatePatch applies only whitelisted fields and clamps numeric ranges"
     longTermEvents: { queue: [{ key: "provider-event" }] },
     officialCareer: { careerHistory: [{ type: "promotion", label: "forged" }] },
     roleWorldCoupling: { recentImpacts: [{ kind: "provider-forged" }] },
+    worldThreads: { threads: [{ id: "provider-forged", title: "伪议题" }] },
     characters: [{ id: "C99", name: "Invented", role: "patron" }],
     eventHistory: ["provider tries to replace history"],
     publicOrder: -10,
@@ -48,6 +49,7 @@ test("applyStatePatch applies only whitelisted fields and clamps numeric ranges"
   assert.deepEqual(worldState.longTermEvents.queue, []);
   assert.deepEqual(worldState.officialCareer.careerHistory, []);
   assert.deepEqual(worldState.roleWorldCoupling.recentImpacts, []);
+  assert.deepEqual(worldState.worldThreads.threads, []);
   assert.deepEqual(worldState.characters, originalCharacters);
   assert.deepEqual(worldState.eventHistory, []);
   assert.equal(worldState.publicOrder, 0);
@@ -69,6 +71,7 @@ test("ordinary state patches preserve server-owned exam and narrative fields", (
   worldState.activeExam = { level: "child_exam", reason: "server-created" };
   worldState.examCalendar.rivals = [{ id: "server-rival" }];
   worldState.roleWorldCoupling.recentImpacts = [{ kind: "server-impact" }];
+  worldState.worldThreads.threads = [{ id: "WT-server", title: "Server thread" }];
   worldState.characters = [{ id: "C01", name: "Original mentor", role: "teacher" }];
   worldState.eventHistory = ["existing history"];
   worldState.player.examRank = "server-rank";
@@ -78,6 +81,7 @@ test("ordinary state patches preserve server-owned exam and narrative fields", (
     activeExam: null,
     examCalendar: { rivals: [{ id: "model-rival" }] },
     roleWorldCoupling: { recentImpacts: [{ kind: "model-impact" }] },
+    worldThreads: { threads: [{ id: "WT-model", title: "Model thread" }] },
     characters: [{ id: "C99", name: "Invented patron", role: "patron" }],
     eventHistory: ["provider replacement"],
     publicOrder: 65,
@@ -91,6 +95,7 @@ test("ordinary state patches preserve server-owned exam and narrative fields", (
   assert.deepEqual(worldState.activeExam, { level: "child_exam", reason: "server-created" });
   assert.deepEqual(worldState.examCalendar.rivals, [{ id: "server-rival" }]);
   assert.deepEqual(worldState.roleWorldCoupling.recentImpacts, [{ kind: "server-impact" }]);
+  assert.deepEqual(worldState.worldThreads.threads, [{ id: "WT-server", title: "Server thread" }]);
   assert.deepEqual(worldState.characters, [{ id: "C01", name: "Original mentor", role: "teacher" }]);
   assert.deepEqual(worldState.eventHistory, ["existing history"]);
   assert.equal(worldState.player.examRank, "server-rank");
@@ -135,6 +140,7 @@ test("applyStatePatch can apply server follow-up patches without incrementing tu
     activeExam: { level: "child_exam", status: "writing" },
     examCalendar: { schemaVersion: 1, rivals: [{ id: "server-rival" }] },
     roleWorldCoupling: { schemaVersion: 1, recentImpacts: [{ kind: "server-impact" }], cooldowns: {} },
+    worldThreads: { schemaVersion: 1, threads: [{ id: "WT-server", title: "Server thread" }], recentResolved: [] },
     officialCareer: { schemaVersion: 1, careerHistory: [{ type: "retention", label: "留任" }] },
     eventHistory: Array.from({ length: MAX_EVENT_HISTORY + 1 }, (_, index) => `server-event-${index}`),
     publicOrder: 80
@@ -145,6 +151,7 @@ test("applyStatePatch can apply server follow-up patches without incrementing tu
   assert.equal(worldState.activeExam.level, "child_exam");
   assert.equal(worldState.examCalendar.rivals[0].id, "server-rival");
   assert.equal(worldState.roleWorldCoupling.recentImpacts[0].kind, "server-impact");
+  assert.equal(worldState.worldThreads.threads[0].id, "WT-server");
   assert.equal(worldState.officialCareer.careerHistory[0].label, "留任");
   assert.equal(worldState.eventHistory.length, MAX_EVENT_HISTORY);
   assert.equal(worldState.eventHistory[0], "server-event-1");

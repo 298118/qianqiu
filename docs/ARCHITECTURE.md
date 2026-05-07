@@ -55,6 +55,7 @@ Important route ownership:
 - `src/game/officialCatalog.js` owns the S42.2 static office/bureau catalog used to normalize office titles, bureau duties, and promotion/transfer/outpost candidates.
 - `src/game/officialCareer.js` owns the S34/S42 official career outcome engine. Providers may move official career meters, but they do not appoint, transfer, promote, demote, impeach-to-case, punish, retain, create assignments, alter assessment dossiers, or write `worldState.officialCareer`.
 - `src/game/roleWorldCoupling.js` owns the S36 role/world coupling step. Providers may move ordinary meters and suggest social changes, but they do not write `worldState.roleWorldCoupling` or decide the server-owned compound world consequences or cooldowns of key role actions.
+- `src/game/worldThreads.js` owns the S43.1 World Threads / 世界议程索引. It derives player-facing cross-month issue summaries from active requests, long-term events, official assignments/outcomes, role-world impacts, frontier pressure, faction pressure, and local case pressure. Providers may read the compact summary for narrative context, but they do not write `worldState.worldThreads`.
 
 ## API Contract
 
@@ -82,11 +83,11 @@ Request fields:
 
 As of S31.3, `role` is normalized and validated in `src/game/initialState.js`. Missing or blank role values default to `scholar`; unsupported roles return `400`. The accepted enum is `scholar`, `emperor`, `minister`, `general`, `magistrate`, and `official`, and the browser start form exposes all six values.
 
-Returns `201` with `sessionId`, `worldState`, `examCalendarView`, `examRivalView`, `relationshipView`, `activeNpcRequestView`, `roleWorldCouplingView`, `longTermEventView`, `officialCareerView`, and opening `narrative`.
+Returns `201` with `sessionId`, `worldState`, `examCalendarView`, `examRivalView`, `relationshipView`, `activeNpcRequestView`, `roleWorldCouplingView`, `worldThreadView`, `longTermEventView`, `officialCareerView`, and opening `narrative`.
 
 ### `GET /api/game/state/:sessionId`
 
-Reads the JSON session file and returns `sessionId`, `worldState`, the player-facing `examCalendarView`, `examRivalView`, `relationshipView`, `activeNpcRequestView`, `roleWorldCouplingView`, `longTermEventView`, and `officialCareerView`.
+Reads the JSON session file and returns `sessionId`, `worldState`, the player-facing `examCalendarView`, `examRivalView`, `relationshipView`, `activeNpcRequestView`, `roleWorldCouplingView`, `worldThreadView`, `longTermEventView`, and `officialCareerView`.
 
 ### `GET /api/game/saves`
 
@@ -234,6 +235,12 @@ Requests without SSE negotiation still return plain JSON for tests and compatibi
     "schemaVersion": 1,
     "recentImpacts": []
   },
+  "worldThreadView": {
+    "schemaVersion": 1,
+    "generatedAtTurn": 1,
+    "activeThreads": [],
+    "recentResolved": []
+  },
   "roleWorldCoupling": {
     "summary": "",
     "events": [],
@@ -283,7 +290,7 @@ Request:
 
 `level` may be omitted; the server derives the next eligible exam from `player.examRank`. The route saves a complete `worldState.activeExam`, reuses an existing unanswered exam for the same level, and rejects attempts to open a different exam while another question is active.
 
-Returns `examId`, exam metadata, requirements, readiness, entry preparation, `examCalendar`, `examCalendarView`, `examRivalView`, `relationshipView`, `activeNpcRequestView`, `roleWorldCouplingView`, `longTermEventView`, `officialCareerView`, and `worldState`.
+Returns `examId`, exam metadata, requirements, readiness, entry preparation, `examCalendar`, `examCalendarView`, `examRivalView`, `relationshipView`, `activeNpcRequestView`, `roleWorldCouplingView`, `worldThreadView`, `longTermEventView`, `officialCareerView`, and `worldState`.
 
 ### `POST /api/exam/submit`
 
@@ -297,7 +304,7 @@ Request:
 }
 ```
 
-The server checks authenticity, asks the provider for grading, applies local penalties, builds virtual candidates with inspectable essay profiles, applies promotion or cheating consequences, updates persistent same-field rivals, appends the essay result to `player.examHistory`, clears `activeExam`, saves the session and returns the result plus `examCalendarView`, `examRivalView`, `relationshipView`, `activeNpcRequestView`, `roleWorldCouplingView`, `longTermEventView`, `officialCareerView`, and `worldState`. The response includes `examQuestion`, `essay`, `entryPreparation`, and `examCalendar` so the browser can render the just-submitted archive directly.
+The server checks authenticity, asks the provider for grading, applies local penalties, builds virtual candidates with inspectable essay profiles, applies promotion or cheating consequences, updates persistent same-field rivals, appends the essay result to `player.examHistory`, clears `activeExam`, saves the session and returns the result plus `examCalendarView`, `examRivalView`, `relationshipView`, `activeNpcRequestView`, `roleWorldCouplingView`, `worldThreadView`, `longTermEventView`, `officialCareerView`, and `worldState`. The response includes `examQuestion`, `essay`, `entryPreparation`, and `examCalendar` so the browser can render the just-submitted archive directly.
 
 ## AI Provider Contract
 
@@ -316,7 +323,7 @@ Provider outputs must match the schemas in `src/ai/schemas.js`:
 - `examQuestion`: exam level, name, question, type, difficulty, requirements, word count, pass score and promotion rank
 - `grade`: five score dimensions, `overall_score`, rank, detailed feedback, authenticity echo, candidates and ranking placeholders
 
-Real provider adapters parse model text through `src/utils/json.js`, normalize remote turn payloads, validate with Ajv, retry once on ordinary non-streaming failure, then fall back to Mock for that method. The model never owns final game state. It can suggest `statePatch`; the provider adapter first filters it to provider-allowed fields, then the route applies the same server whitelist and clamps. Ordinary turn schemas still reject direct patches to server-owned fields such as `activeExam`, `activeNpcRequest`, `longTermEvents`, `roleWorldCoupling`, `officialCareer`, `characters`, `eventHistory`, `player.examRank`, `player.officeTitle`, and `player.examHistory` when they appear outside this remote-provider normalization path. Remote turn payloads may also drop malformed display-only `attributeChanges` rows before validation.
+Real provider adapters parse model text through `src/utils/json.js`, normalize remote turn payloads, validate with Ajv, retry once on ordinary non-streaming failure, then fall back to Mock for that method. The model never owns final game state. It can suggest `statePatch`; the provider adapter first filters it to provider-allowed fields, then the route applies the same server whitelist and clamps. Ordinary turn schemas still reject direct patches to server-owned fields such as `activeExam`, `activeNpcRequest`, `longTermEvents`, `roleWorldCoupling`, `worldThreads`, `officialCareer`, `characters`, `eventHistory`, `player.examRank`, `player.officeTitle`, and `player.examHistory` when they appear outside this remote-provider normalization path. Remote turn payloads may also drop malformed display-only `attributeChanges` rows before validation.
 
 DeepSeek supports task-specific model routing. `DEEPSEEK_MODEL` remains the fallback, while `DEEPSEEK_OPENING_MODEL`, `DEEPSEEK_TURN_MODEL`, `DEEPSEEK_EXAM_QUESTION_MODEL`, and `DEEPSEEK_GRADE_MODEL` can override individual schema tasks. The current recommended split is V4 Pro for opening and essay grading, and V4 Flash for ordinary turn/streaming and exam-question generation.
 
@@ -360,7 +367,7 @@ S25.3 adds a no-network fixture gate for provider-shaped output:
 npm run eval:ai
 ```
 
-The focused test is `test/aiEvalFixtures.test.js`, with fixture data in `testdata/aiEvalFixtures.js` so Node's test runner does not treat fixture data as a test file. It parses raw model-like text through `src/utils/json.js`, validates final payloads through `src/ai/schemas.js`, checks restrained historical tone heuristics, verifies unsafe turn authority claims are rejected, rejects ordinary turn attempts to patch server-owned fields such as `activeExam`, `characters`, `eventHistory`, `player.examRank`, or `player.examHistory`, and confirms patch application clamps numeric fields plus known faction scores. This gate is offline and should remain separate from keyed provider smoke runs.
+The focused test is `test/aiEvalFixtures.test.js`, with fixture data in `testdata/aiEvalFixtures.js` so Node's test runner does not treat fixture data as a test file. It parses raw model-like text through `src/utils/json.js`, validates final payloads through `src/ai/schemas.js`, checks restrained historical tone heuristics, verifies unsafe turn authority claims are rejected, rejects ordinary turn attempts to patch server-owned fields such as `activeExam`, `worldThreads`, `characters`, `eventHistory`, `player.examRank`, or `player.examHistory`, and confirms patch application clamps numeric fields plus known faction scores. This gate is offline and should remain separate from keyed provider smoke runs.
 
 ### Browser Smoke
 
@@ -409,7 +416,7 @@ As of S31.2, `applyStatePatch(worldState, statePatch, options)` enforces:
 - `statePatch.factions` may only update existing numeric faction keys; providers cannot invent arbitrary faction names.
 - Existing faction scores patched by providers are clamped to `0..100`.
 - `turnCount` increments when a turn patch is applied.
-- Ordinary provider patches use the provider-facing whitelist and ignore server-owned fields such as `activeExam`, `activeNpcRequest`, `longTermEvents`, `roleWorldCoupling`, `officialCareer`, `characters`, `eventHistory`, `year`, `month`, `player.role`, `player.officeTitle`, `player.examRank`, and `player.examHistory` even if a non-schema provider includes them.
+- Ordinary provider patches use the provider-facing whitelist and ignore server-owned fields such as `activeExam`, `activeNpcRequest`, `longTermEvents`, `roleWorldCoupling`, `worldThreads`, `officialCareer`, `characters`, `eventHistory`, `year`, `month`, `player.role`, `player.officeTitle`, `player.examRank`, and `player.examHistory` even if a non-schema provider includes them.
 - For official players, ordinary provider patches to `player.position` are additionally screened against the S42.2 office catalog and obvious 官职 wording. Soft narrative positions may remain, but hidden appointment attempts such as “内阁大学士” are ignored.
 - `examCalendar` is also server-owned. Providers can read a compact prompt summary, but missed windows, rival persistence, and same-year contacts are written only by route-owned code.
 - Server-owned follow-up patches may pass `{ incrementTurnCount: false, allowServerOwnedPatchKeys: true }` so internal code can apply fields such as the world tick calendar without double-counting one player turn.
@@ -462,6 +469,20 @@ Server rules:
 - JSON and SSE turn payloads return `roleWorldCouplingView` plus `roleWorldCoupling: { summary, events, attributeChanges, outcome }`.
 
 The browser renders S36 feedback as `[联动]` narrative lines with `.role-world-event[data-role-world-kind]`. It intentionally does not add a new persistent panel; resulting state remains visible through the status strip, role panel, relationship panel, long-term feedback, and official-career feedback.
+
+## World Threads Contract
+
+S43.1 adds `worldState.worldThreads`, documented in [docs/WORLD_THREADS_CONTRACT.md](WORLD_THREADS_CONTRACT.md). It is a server-owned, derived issue ledger with `schemaVersion`, capped `threads`, and capped `recentResolved` records.
+
+Server rules:
+
+- `src/game/worldThreads.js` normalizes and synchronizes thread state from existing server-owned sources.
+- Current sources are active NPC/faction requests, long-term events, official assignments, official outcomes, role/world impacts, border pressure, faction pressure, and local case pressure.
+- The route synchronizes world threads after role/world coupling, monthly tick, long-term events, and official-career settlement, so the thread view reflects the final server state for that turn.
+- Providers may read `worldThreads` in prompt context, but ordinary `statePatch.worldThreads` is rejected by schemas and ignored by provider patch application.
+- JSON and SSE turn payloads return `worldThreadView`. Exam question and submit routes also include the same view.
+
+S43.1 does not add a browser panel. Frontend inspection, intervention hints, and richer follow-up settlement belong to S43.2.
 
 ## Long-Term Event Scheduler Contract
 

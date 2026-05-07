@@ -22,6 +22,9 @@ const {
   runRoleWorldCouplingStep
 } = require("../src/game/roleWorldCoupling");
 const {
+  ensureWorldThreadState
+} = require("../src/game/worldThreads");
+const {
   runActiveNpcRequestStep
 } = require("../src/game/activeRequests");
 const { canEnterExam, getExam } = require("../src/game/exams");
@@ -63,6 +66,7 @@ const PROTECTED_TOP_LEVEL_PATCH_KEYS = [
   "longTermEvents",
   "officialCareer",
   "roleWorldCoupling",
+  "worldThreads",
   "characters",
   "eventHistory",
   "year",
@@ -212,6 +216,7 @@ function ensureServerState(worldState) {
   ensureLongTermEventState(worldState);
   ensureOfficialCareerState(worldState);
   ensureRoleWorldCouplingState(worldState);
+  ensureWorldThreadState(worldState);
   return worldState;
 }
 
@@ -266,6 +271,8 @@ function applyServerTurnEffects(worldState, result, input) {
     allowServerOwnedPatchKeys: true
   });
   const officialCareerRelationshipChanges = applyRelationshipChanges(worldState, officialCareer.relationshipChanges);
+
+  ensureWorldThreadState(worldState);
 
   appendEvents(worldState, result.events);
   appendEvents(worldState, activeNpcRequest.events);

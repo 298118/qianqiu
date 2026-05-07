@@ -3,6 +3,7 @@ const { summarizeExamCalendarForPrompt } = require("../game/examCalendar");
 const { summarizeLongTermEventsForPrompt } = require("../game/longTermEvents");
 const { summarizeOfficialCareerForPrompt } = require("../game/officialCareer");
 const { summarizeRoleWorldCouplingForPrompt } = require("../game/roleWorldCoupling");
+const { summarizeWorldThreadsForPrompt } = require("../game/worldThreads");
 const {
   buildPromptInstructions,
   getTurnPromptPackName
@@ -87,6 +88,7 @@ function compactWorldState(worldState = {}) {
     relationshipLedger: summarizeRelationshipLedger(worldState.relationshipLedger, worldState, { visibleOnly: true }),
     examCalendar: summarizeExamCalendarForPrompt(worldState),
     longTermEvents: summarizeLongTermEventsForPrompt(worldState),
+    worldThreads: summarizeWorldThreadsForPrompt(worldState),
     officialCareer: summarizeOfficialCareerForPrompt(worldState),
     roleWorldCoupling: summarizeRoleWorldCouplingForPrompt(worldState),
     activeExam: compactExam(worldState.activeExam),

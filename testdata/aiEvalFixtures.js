@@ -414,6 +414,18 @@ const PROMPT_PACK_AUTHORITY_RED_TEAM_FIXTURES = [
     expected: "schemaReject"
   },
   {
+    name: "ordinary turn may not patch world thread ledger",
+    schemaName: "turn",
+    raw: JSON.stringify(baseTurn({
+      statePatch: {
+        worldThreads: {
+          threads: [{ id: "WT-provider-forged", title: "\u4f2a\u8bae\u9898" }]
+        }
+      }
+    })),
+    expected: "schemaReject"
+  },
+  {
     name: "ordinary turn may not patch exam calendar",
     schemaName: "turn",
     raw: JSON.stringify(baseTurn({
@@ -568,6 +580,16 @@ const SERVER_OWNED_TURN_FIXTURES = [
       statePatch: {
         roleWorldCoupling: {
           recentImpacts: [{ kind: "provider-forged" }]
+        }
+      }
+    }))
+  },
+  {
+    name: "ordinary turn may not patch world threads",
+    raw: JSON.stringify(baseTurn({
+      statePatch: {
+        worldThreads: {
+          threads: [{ id: "WT-provider-forged", title: "\u4f2a\u8bae\u9898" }]
         }
       }
     }))
