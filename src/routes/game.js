@@ -25,6 +25,10 @@ const {
   runRoleWorldCouplingStep
 } = require("../game/roleWorldCoupling");
 const {
+  buildWorldGeographyView,
+  ensureWorldGeographyState
+} = require("../game/worldGeography");
+const {
   applyWorldEntityInfluences,
   buildWorldEntityView,
   deriveWorldEntityInfluences,
@@ -90,6 +94,7 @@ async function processTurn(sessionId, input) {
     ensureLongTermEventState(worldState);
     ensureOfficialCareerState(worldState);
     ensureRoleWorldCouplingState(worldState);
+    ensureWorldGeographyState(worldState);
     ensureWorldEntityState(worldState);
     ensureWorldThreadState(worldState);
     if (isWritingExam(worldState.activeExam)) {
@@ -108,6 +113,7 @@ async function processStreamingTurn(sessionId, input, streamHandlers = {}) {
     ensureLongTermEventState(worldState);
     ensureOfficialCareerState(worldState);
     ensureRoleWorldCouplingState(worldState);
+    ensureWorldGeographyState(worldState);
     ensureWorldEntityState(worldState);
     ensureWorldThreadState(worldState);
     if (isWritingExam(worldState.activeExam)) {
@@ -202,6 +208,7 @@ function buildCommonTurnViews(worldState) {
     relationshipView: buildRelationshipInspectionView(worldState),
     activeNpcRequestView: buildActiveNpcRequestView(worldState),
     roleWorldCouplingView: buildRoleWorldCouplingView(worldState),
+    worldGeographyView: buildWorldGeographyView(worldState),
     worldEntityView: buildWorldEntityView(worldState),
     worldThreadView: buildWorldThreadView(worldState),
     longTermEventView: buildLongTermEventView(worldState),
@@ -216,6 +223,7 @@ async function finalizeExamSceneTurn(worldState, input, context = null) {
   ensureLongTermEventState(worldState);
   ensureOfficialCareerState(worldState);
   ensureRoleWorldCouplingState(worldState);
+  ensureWorldGeographyState(worldState);
   ensureWorldEntityState(worldState);
   ensureWorldThreadState(worldState);
   const worldTick = buildExamSceneFeedback(worldState, scene.sceneTime, scene.event);
@@ -338,6 +346,7 @@ async function finalizeTurn(worldState, result, input, auditOptions = {}) {
   ensureLongTermEventState(worldState);
   ensureOfficialCareerState(worldState);
   ensureRoleWorldCouplingState(worldState);
+  ensureWorldGeographyState(worldState);
   ensureWorldEntityState(worldState);
   ensureWorldThreadState(worldState);
 
@@ -446,6 +455,7 @@ async function streamTurn(res, sessionId, input) {
       activeNpcRequestView: payload.activeNpcRequestView,
       activeNpcRequestEvents: payload.activeNpcRequestEvents,
       roleWorldCouplingView: payload.roleWorldCouplingView,
+      worldGeographyView: payload.worldGeographyView,
       worldEntityView: payload.worldEntityView,
       worldEntityImpacts: payload.worldEntityImpacts,
       worldThreadView: payload.worldThreadView,
@@ -486,6 +496,7 @@ router.post("/start", async (req, res, next) => {
       relationshipView: buildRelationshipInspectionView(worldState),
       activeNpcRequestView: buildActiveNpcRequestView(worldState),
       roleWorldCouplingView: buildRoleWorldCouplingView(worldState),
+      worldGeographyView: buildWorldGeographyView(worldState),
       worldEntityView: buildWorldEntityView(worldState),
       worldThreadView: buildWorldThreadView(worldState),
       longTermEventView: buildLongTermEventView(worldState),
@@ -505,6 +516,7 @@ router.get("/state/:sessionId", async (req, res, next) => {
     ensureLongTermEventState(worldState);
     ensureOfficialCareerState(worldState);
     ensureRoleWorldCouplingState(worldState);
+    ensureWorldGeographyState(worldState);
     ensureWorldEntityState(worldState);
     ensureWorldThreadState(worldState);
     res.json({
@@ -515,6 +527,7 @@ router.get("/state/:sessionId", async (req, res, next) => {
       relationshipView: buildRelationshipInspectionView(worldState),
       activeNpcRequestView: buildActiveNpcRequestView(worldState),
       roleWorldCouplingView: buildRoleWorldCouplingView(worldState),
+      worldGeographyView: buildWorldGeographyView(worldState),
       worldEntityView: buildWorldEntityView(worldState),
       worldThreadView: buildWorldThreadView(worldState),
       longTermEventView: buildLongTermEventView(worldState),

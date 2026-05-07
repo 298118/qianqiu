@@ -99,7 +99,7 @@
 | S49.3 | DONE | 本地 SQLite 原型：一行一 session，保留 JSON `world_state`，以可选 env 开启，不做远程/账号/多人 | 2026-05-07 | Codex + read-only subagents | `22217e0` |
 | S49.4 | DONE | 事件日志与 AI proposal 审计：记录模型建议、服务器接受/拒绝和最终应用事件 | 2026-05-07 | Codex + read-only subagents | `092de20` |
 | S50.1 | DONE | 静态天下与邻国种子契约：国家、城市、路线、边境、官署辖区和初始可见性 | 2026-05-07 | Codex + read-only subagents | `45f9b65` |
-| S50.2 | TODO | per-session 国家/城市实例化与 prompt projection，先不替代现有 worldState 指标 |  |  |  |
+| S50.2 | DONE | per-session 国家/城市实例化与 prompt projection，先不替代现有 worldState 指标 | 2026-05-07 | Codex + read-only subagents | `待提交` |
 | S51.1 | TODO | NPC、家族、资产、田产、关系和可见性 schema 契约 |  |  |  |
 | S51.2 | TODO | 桥接当前 `characters`、`relationshipLedger`、active requests 与 NPC/关系表 |  |  |  |
 | S52.1 | TODO | 官职、官署、任所、城市辖区、考成和调任记录的数据库契约 |  |  |  |
@@ -317,6 +317,46 @@
 - S50.1 不写 `worldState.worldGeography`；如果 S50.2 新增动态 ledger，必须补 schema/stateRules/prompt/route 测试来挡住 provider 伪造写入。
 - `buildWorldGeographySeedView()` 当前不是 route view，只是后续 projection 起点；浏览器“天下格局/任所地理”属于 S53。
 
+### S50.2：每局国家/城市实例化与 Prompt Projection
+
+状态：DONE。实现/文档提交：`待提交 feat: instantiate world geography ledger`；提交后回填哈希。
+
+目标：
+
+- 从 S50.1 静态 seed 实例化每局 `worldState.worldGeography`，覆盖国家、区域、城市、路线、边境压力面和官署辖区。
+- 构造服务器过滤后的 `worldGeographyView`，供游戏/考试路由返回；隐藏行、`hiddenNotes` 和 hidden nested refs 不进入 view。
+- 在 `compactWorldState()` 中加入 capped `worldGeography` prompt 摘要，避免把全量地理 seed 塞进模型。
+- 明确 `worldGeography` 为 server-owned ledger：provider 不能通过 `statePatch` 写入。
+- 先不新增浏览器地理面板，不拆 SQLite 国家/城市业务表，不替代既有顶层 `worldState` 指标。
+
+当前实现：
+
+- 新增 `src/game/worldGeography.js`，提供 `createInitialWorldGeographyState()`、`normalizeWorldGeographyState()`、`ensureWorldGeographyState()`、`buildWorldGeographyView()` 和 `summarizeWorldGeographyForPrompt()`。
+- 新局在 `src/game/initialState.js` 写入 `worldState.worldGeography`；旧档在游戏/考试路由 ensure 时自动补账本。
+- 地理账本从当前 `publicOrder`、`taxRate`、`grainReserve`、`borderThreat`、官场 `bureauId` 等顶层状态刷新轻量压力快照，但不成为新的财政、外交或战争裁决来源。
+- `src/routes/game.js` 与 `src/routes/exam.js` 返回 `worldGeographyView`；SSE `state_preview` 也包含该 view。现有 payload 仍为开发兼容返回完整本地 `worldState`，后续浏览器面板必须读取 view 而不是 raw ledger。
+- `src/ai/prompts.js` 把 capped `worldGeography` summary 放入所有 opening/turn/exam/grading prompt 输入；书生视角不暴露 `role_visible` 的朝贡/官署辖区行。
+- `src/ai/promptPacks.js`、`src/game/stateRules.js`、`src/ai/schemas.js`、`src/ai/providers/remoteHelpers.js` 和 `scripts/providerLongRun.js` 的边界测试都覆盖 provider 伪造 `statePatch.worldGeography`。
+- 新增 `test/worldGeography.test.js` 与 `test/gameTurnWorldGeography.test.js`，并扩展 prompt/schema/state/remote/provider/exam/red-team 测试。
+
+验证：
+
+- `node --check src\game\worldGeography.js`
+- `node --check src\routes\game.js`
+- `node --check src\routes\exam.js`
+- `node --check scripts\providerLongRun.js`
+- `node --test test\worldGeographySeeds.test.js test\worldGeography.test.js test\gameTurnWorldGeography.test.js test\prompts.test.js test\stateRules.test.js test\aiSchemas.test.js test\remoteHelpers.test.js test\providerLongRunScript.test.js test\examTravel.test.js test\aiControlRedTeam.test.js`，68 项通过
+- `npm run check:docs-governance`
+- `$env:AI_PROVIDER='mock'; npm test`，338 项通过
+- `git diff --check`
+- 提交前只读复审 Bacon 未发现阻塞问题；非阻塞建议是后续可补“多次 ensure 后自定义地理扩展行仍保留并可见”的回归测试。
+
+风险/遗留：
+
+- 当前 `role_visible` 只做粗身份过滤：书生不可见，入仕官员/皇帝/大臣/将领/地方官可见。S53 检索式 context assembler 可以再细分到官署、任所、路引和人脉来源。
+- 路由为保持现有开发兼容仍返回完整本地 `worldState`；浏览器和模型不得读取 raw `worldState.worldGeography` 作为展示/上下文来源。
+- S50.2 不做浏览器地理面板、不拆 SQLite 业务表、不让 World Entities/Threads 直接读取地理账本；后续 S53/S52 可再联动。
+
 ## 6. 数据域规划
 
 数据库专项需要承载的数据域如下。每个域都先定义契约和 projection，再决定是否拆表；不要为了“有数据库”而提前建过度复杂的表。
@@ -396,6 +436,42 @@
 - 隐藏信息要在数据库层、projection 层和 prompt 层都标记；不能只靠前端隐藏。
 
 ## 8. 进度记录
+
+### 2026-05-07
+
+工具：Codex；只读探索子代理 Schrodinger；提交前只读复审 Bacon
+
+步骤：S50.2
+
+提交：`待提交 feat: instantiate world geography ledger`
+
+完成：
+
+- 新增 `src/game/worldGeography.js`，把 S50.1 静态地理 seed 实例化为每局 server-owned `worldState.worldGeography`，并提供归一化、旧档补齐、轻量压力快照刷新、`worldGeographyView` 与 prompt summary。
+- 新局创建、游戏回合、SSE、读档、考试取题/推进/交卷都接入 `worldGeographyView`；prompt 输入新增 capped `worldGeography` 摘要。
+- `worldGeography` 加入普通回合 server-owned patch 边界；schema、remote normalization、stateRules、provider long-run 和 red-team 测试覆盖 provider 伪造写入。
+- README、架构文档、产品 brief、动态数据库规划、AI 权限矩阵、地理契约和 shared context 同步 S50.2 边界。
+
+验证：
+
+- `node --check src\game\worldGeography.js`
+- `node --check src\routes\game.js`
+- `node --check src\routes\exam.js`
+- `node --check scripts\providerLongRun.js`
+- `node --test test\worldGeographySeeds.test.js test\worldGeography.test.js test\gameTurnWorldGeography.test.js test\prompts.test.js test\stateRules.test.js test\aiSchemas.test.js test\remoteHelpers.test.js test\providerLongRunScript.test.js test\examTravel.test.js test\aiControlRedTeam.test.js`，68 项通过
+- `npm run check:docs-governance`
+- `$env:AI_PROVIDER='mock'; npm test`，338 项通过
+- `git diff --check`
+- 提交前只读复审 Bacon 未发现阻塞问题；确认 provider/remote/long-run 不能写 `worldGeography`、view/prompt hidden 过滤、旧档归一化和路由契约均符合 S50.2 目标。
+
+风险/遗留：
+
+- `worldGeographyView` 是当前 UI/prompt 契约；完整本地 `worldState` 仍随既有 route payload 返回，不应作为浏览器地理面板来源。
+- S50.2 不新增浏览器面板、SQLite 国家/城市业务表或 World Entities/Threads 地理联动；下一步进入 S51.1 NPC、家族、资产、田产、关系和可见性 schema 契约。
+
+下一步：
+
+- S51.1：NPC、家族、资产、田产、关系和可见性 schema 契约。
 
 ### 2026-05-07
 

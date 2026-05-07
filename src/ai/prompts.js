@@ -3,6 +3,7 @@ const { summarizeExamCalendarForPrompt } = require("../game/examCalendar");
 const { summarizeLongTermEventsForPrompt } = require("../game/longTermEvents");
 const { summarizeOfficialCareerForPrompt } = require("../game/officialCareer");
 const { summarizeRoleWorldCouplingForPrompt } = require("../game/roleWorldCoupling");
+const { summarizeWorldGeographyForPrompt } = require("../game/worldGeography");
 const { summarizeWorldEntitiesForPrompt } = require("../game/worldEntities");
 const { summarizeWorldThreadsForPrompt } = require("../game/worldThreads");
 const {
@@ -92,6 +93,7 @@ function compactWorldState(worldState = {}) {
     relationshipLedger: summarizeRelationshipLedger(worldState.relationshipLedger, worldState, { visibleOnly: true }),
     examCalendar: summarizeExamCalendarForPrompt(worldState),
     longTermEvents: summarizeLongTermEventsForPrompt(worldState),
+    worldGeography: summarizeWorldGeographyForPrompt(worldState),
     worldEntities: summarizeWorldEntitiesForPrompt(worldState),
     worldThreads: summarizeWorldThreadsForPrompt(worldState),
     officialCareer: summarizeOfficialCareerForPrompt(worldState),

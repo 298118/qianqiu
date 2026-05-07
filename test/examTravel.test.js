@@ -109,6 +109,8 @@ test("exam question entry applies funded travel cost without advancing time", as
   assert.equal(payload.entryPreparation.paidGold, 2);
   assert.equal(payload.worldState.player.gold, 48);
   assert.deepEqual(payload.worldState.activeExam.entryPreparation, payload.entryPreparation);
+  assert.equal(payload.worldGeographyView.schemaVersion, 1);
+  assert.equal(JSON.stringify(payload.worldGeographyView).includes("SEALED_ROUTE_NOTE"), false);
 
   const saved = await readSession(worldState.sessionId);
   assert.deepEqual(saved.activeExam.entryPreparation, payload.entryPreparation);
@@ -210,6 +212,7 @@ test("exam progress advances only the local exam scene phase", async (t) => {
   assert.equal(progress.payload.worldState.tenDayPeriod, 3);
   assert.equal(progress.payload.worldState.turnCount, 5);
   assert.equal(progress.payload.worldState.activeExam.sceneTime.turnCount, 1);
+  assert.equal(progress.payload.worldGeographyView.schemaVersion, 1);
 
   const saved = await readSession(worldState.sessionId);
   assert.equal(saved.activeExam.sceneTime.phase, "outline");
@@ -242,6 +245,8 @@ test("exam submit preserves entry preparation in exam history", async (t) => {
   assert.equal(submit.payload.examQuestion, question.payload.examQuestion);
   assert.equal(submit.payload.essay, PASSING_ESSAY.trim());
   assert.equal(submit.payload.sceneTime.phase, "submitted");
+  assert.equal(submit.payload.worldGeographyView.schemaVersion, 1);
+  assert.equal(JSON.stringify(submit.payload.worldGeographyView).includes("SEALED_ROUTE_NOTE"), false);
   assert.equal(submit.payload.examStartedAt.month, 1);
   assert.equal(submit.payload.examSubmittedAt.month, 1);
   assert.equal(submit.payload.worldState.activeExam, null);

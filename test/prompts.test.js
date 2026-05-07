@@ -293,6 +293,53 @@ test("turn prompt input includes only visible world entity summaries", () => {
   assert.doesNotMatch(task.input, /SEALED_ENTITY_NOTE/);
 });
 
+test("prompt input includes capped visible world geography without hidden rows", () => {
+  const worldState = createInitialState({ role: "official", playerName: "Geography Prompt Tester" });
+  worldState.worldGeography.frontierZones.push({
+    id: "frontier-hidden-prompt",
+    name: "Hidden Geography Frontier",
+    countryId: "country-ming",
+    neighborCountryId: "country-manchu-frontier",
+    cityIds: ["city-beijing"],
+    routeIds: [],
+    status: "contested",
+    pressureMetric: "borderThreat",
+    visibility: "hidden",
+    publicSummary: "SEALED_GEOGRAPHY_SUMMARY",
+    hiddenNotes: ["SEALED_GEOGRAPHY_NOTE"]
+  });
+  const exam = getExam("child_exam");
+  const tasks = [
+    buildOpeningTask(worldState),
+    buildTurnTask(worldState, "查问山海关与漕运消息"),
+    buildExamQuestionTask(worldState, exam),
+    buildGradeTask(worldState, exam, "夫民食为本，县学教化亦不可废。", {
+      copy_detection: { is_copy: false, similar_passage: "" },
+      anachronism_detection: { has_anachronism: false, details: [] },
+      style_consistency: { consistent: true, note: "" },
+      ghostwriting_probability: 0
+    })
+  ];
+
+  for (const task of tasks) {
+    assert.match(task.input, /worldGeography/, task.promptPack);
+    assert.match(task.input, /country-ming|北京|山海关/, task.promptPack);
+    assert.doesNotMatch(task.input, /Hidden Geography Frontier/, task.promptPack);
+    assert.doesNotMatch(task.input, /SEALED_GEOGRAPHY_SUMMARY/, task.promptPack);
+    assert.doesNotMatch(task.input, /SEALED_GEOGRAPHY_NOTE/, task.promptPack);
+  }
+});
+
+test("scholar geography prompt does not expose role-visible diplomatic geography", () => {
+  const worldState = createInitialState({ role: "scholar", playerName: "Scholar Geo Prompt Tester" });
+  const task = buildTurnTask(worldState, "在县学听闻边报");
+
+  assert.match(task.input, /worldGeography/);
+  assert.doesNotMatch(task.input, /city-hanseong/);
+  assert.doesNotMatch(task.input, /jurisdiction-ministry-personnel-capital/);
+  assert.doesNotMatch(task.input, /辽东朝鲜贡道/);
+});
+
 test("exam prompt packs keep question and grading authority separate", () => {
   const worldState = createInitialState({ playerName: "Exam Prompt Tester" });
   const exam = getExam("provincial_exam");

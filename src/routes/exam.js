@@ -27,6 +27,7 @@ const { buildActiveNpcRequestView } = require("../game/activeRequests");
 const { buildLongTermEventView, ensureLongTermEventState } = require("../game/longTermEvents");
 const { buildOfficialCareerView, ensureOfficialCareerState } = require("../game/officialCareer");
 const { buildRoleWorldCouplingView, ensureRoleWorldCouplingState } = require("../game/roleWorldCoupling");
+const { buildWorldGeographyView, ensureWorldGeographyState } = require("../game/worldGeography");
 const { buildWorldEntityView, ensureWorldEntityState } = require("../game/worldEntities");
 const { buildWorldThreadView, ensureWorldThreadState } = require("../game/worldThreads");
 const {
@@ -69,6 +70,7 @@ function toExamPayload(worldState) {
     relationshipView: buildRelationshipInspectionView(worldState),
     activeNpcRequestView: buildActiveNpcRequestView(worldState),
     roleWorldCouplingView: buildRoleWorldCouplingView(worldState),
+    worldGeographyView: buildWorldGeographyView(worldState),
     worldEntityView: buildWorldEntityView(worldState),
     worldThreadView: buildWorldThreadView(worldState),
     longTermEventView: buildLongTermEventView(worldState),
@@ -97,6 +99,7 @@ function ensureCommonState(worldState) {
   ensureLongTermEventState(worldState);
   ensureOfficialCareerState(worldState);
   ensureRoleWorldCouplingState(worldState);
+  ensureWorldGeographyState(worldState);
   ensureWorldEntityState(worldState);
   ensureWorldThreadState(worldState);
 }
@@ -209,6 +212,7 @@ router.post("/question", async (req, res, next) => {
         ...(preparationResult?.events || []),
         `${worldState.player.name}进入${exam.name}，领取${exam.questionType}题。`
       ]);
+      ensureWorldGeographyState(worldState);
       ensureWorldEntityState(worldState);
       ensureWorldThreadState(worldState);
       enqueueAuditRecords(context, createExamQuestionAuditRecords(worldState, question, exam, provider, preparationResult));
@@ -354,6 +358,7 @@ router.post("/submit", async (req, res, next) => {
       worldState.activeExam = null;
       appendEvents(worldState, [summarizeResultEvent(worldState, activeExam, score, ranking, promotionResult)]);
       ensureRelationshipLedger(worldState);
+      ensureWorldGeographyState(worldState);
       ensureWorldEntityState(worldState);
       ensureWorldThreadState(worldState);
       enqueueAuditRecords(context, createExamGradeAuditRecords({
@@ -391,6 +396,7 @@ router.post("/submit", async (req, res, next) => {
         relationshipView: buildRelationshipInspectionView(worldState),
         activeNpcRequestView: buildActiveNpcRequestView(worldState),
         roleWorldCouplingView: buildRoleWorldCouplingView(worldState),
+        worldGeographyView: buildWorldGeographyView(worldState),
         worldEntityView: buildWorldEntityView(worldState),
         worldThreadView: buildWorldThreadView(worldState),
         longTermEventView: buildLongTermEventView(worldState),

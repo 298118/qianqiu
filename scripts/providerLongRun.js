@@ -22,6 +22,9 @@ const {
   runRoleWorldCouplingStep
 } = require("../src/game/roleWorldCoupling");
 const {
+  ensureWorldGeographyState
+} = require("../src/game/worldGeography");
+const {
   applyWorldEntityInfluences,
   deriveWorldEntityInfluences,
   ensureWorldEntityState
@@ -73,6 +76,7 @@ const PROTECTED_TOP_LEVEL_PATCH_KEYS = [
   "longTermEvents",
   "officialCareer",
   "roleWorldCoupling",
+  "worldGeography",
   "worldEntities",
   "worldThreads",
   "characters",
@@ -261,6 +265,7 @@ function ensureServerState(worldState) {
   ensureLongTermEventState(worldState);
   ensureOfficialCareerState(worldState);
   ensureRoleWorldCouplingState(worldState);
+  ensureWorldGeographyState(worldState);
   ensureWorldEntityState(worldState);
   ensureWorldThreadState(worldState);
   return worldState;

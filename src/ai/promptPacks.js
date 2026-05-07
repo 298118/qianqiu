@@ -28,7 +28,7 @@ const UNIVERSAL_STABLE_PREFIX_LINES = [
 const TURN_STATE_BOUNDARY_LINES = [
   "AI may generate narrative, bounded relationship suggestions, event clues, examTrigger requests, and statePatch suggestions for ordinary turns.",
   "Never grant palace rank, office title, or role promotion in ordinary turn statePatch. Use examTrigger for exam entry requests.",
-  "Never patch turnCount, year, month, tenDayPeriod, activeExam, examCalendar, activeNpcRequest, longTermEvents, officialCareer, roleWorldCoupling, worldEntities, worldThreads, characters, eventHistory, player.examRank, player.officeTitle, or player.examHistory in ordinary turns; those fields are server-owned.",
+  "Never patch turnCount, year, month, tenDayPeriod, activeExam, examCalendar, activeNpcRequest, longTermEvents, officialCareer, roleWorldCoupling, worldGeography, worldEntities, worldThreads, characters, eventHistory, player.examRank, player.officeTitle, or player.examHistory in ordinary turns; those fields are server-owned.",
   "Keep statePatch small and only use allowed keys. Prefer modest numeric changes in the range of 1-8 unless the action clearly spends resources.",
   "Never put relationshipLedger in statePatch.",
   `Allowed top-level patch keys: ${TURN_ALLOWED_PATCH_KEYS.join(", ")}.`,
@@ -65,13 +65,13 @@ const PROMPT_PACKS = {
     purpose: "Resolve ordinary free-text actions and world response from visible state.",
     tone: [
       ...SHARED_WORLD_TONE,
-      "Read visible relationship, exam calendar, long-term issue, world-entity, official-career, and role-world summaries as context.",
+      "Read visible relationship, exam calendar, long-term issue, geography, world-entity, official-career, and role-world summaries as context.",
       "Make ordinary life, bureaucracy, money, grain, rumor, weather, and human obligation feel present."
     ],
     authority: [
       "May suggest bounded statePatch values, relationshipChanges, visible events, and examTrigger.",
       "RelationshipChanges must target existing visible ids only and remain within schema bounds.",
-      "Must not decide exam entry legality, promotion, appointment, active request creation, long-term issue settlement, or world calendar movement."
+      "Must not decide exam entry legality, promotion, appointment, active request creation, long-term issue settlement, geography ledger changes, or world calendar movement."
     ],
     output: [
       "statePatch uses final absolute values, not deltas.",

@@ -54,6 +54,7 @@ test("provider long-run detects server-owned patch attempts", () => {
       tenDayPeriod: 3,
       turnCount: 99,
       activeExam: { level: "child_exam" },
+      worldGeography: { countries: [{ id: "provider-forged-country", name: "伪地理" }] },
       worldEntities: { entities: [{ id: "provider-forged-entity", name: "伪实体" }] },
       worldThreads: { threads: [{ id: "provider-forged", title: "伪议题" }] },
       player: {
@@ -61,7 +62,7 @@ test("provider long-run detects server-owned patch attempts", () => {
         officeTitle: "翰林"
       }
     }),
-    ["activeExam", "worldEntities", "worldThreads", "turnCount", "year", "month", "tenDayPeriod", "player.examRank", "player.officeTitle"]
+    ["activeExam", "worldGeography", "worldEntities", "worldThreads", "turnCount", "year", "month", "tenDayPeriod", "player.examRank", "player.officeTitle"]
   );
 
   assert.deepEqual(
@@ -84,6 +85,7 @@ test("provider long-run creates a scholar acceptance world without session write
   assert.equal(worldState.examCalendar.schemaVersion, 1);
   assert.equal(worldState.longTermEvents.schemaVersion, 1);
   assert.equal(worldState.roleWorldCoupling.schemaVersion, 1);
+  assert.equal(worldState.worldGeography.schemaVersion, 1);
   assert.equal(worldState.worldEntities.schemaVersion, 1);
   assert.equal(worldState.worldThreads.schemaVersion, 1);
   assert.ok(worldState.sessionId);

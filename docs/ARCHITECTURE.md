@@ -60,7 +60,8 @@ Important route ownership:
 - `src/game/activeRequests.js` owns the S32.3 server-scheduled active NPC/faction request loop. Providers may suggest narrative and relationship consequences, but they do not create, replace, resolve, or expire `worldState.activeNpcRequest`.
 - `src/game/longTermEvents.js` owns the S33 server-scheduled long-term event queue for seasonal, disaster, border, court, local case-chain, and cross-month consequence events. Providers may read a compact summary for narrative context, but they do not create, replace, resolve, or expire `worldState.longTermEvents`.
 - `src/game/officialCatalog.js` owns the S42.2 static office/bureau catalog used to normalize office titles, bureau duties, and promotion/transfer/outpost candidates.
-- `src/game/worldGeographySeeds.js` owns the S50.1 static geography seed catalog for countries, neighboring polities, regions, cities, routes, frontier zones, office jurisdictions, and initial visibility. It is not yet a per-session ledger and is not sent to prompts or browser routes until a later S50.2/S53 projection step.
+- `src/game/worldGeographySeeds.js` owns the S50.1 static geography seed catalog for countries, neighboring polities, regions, cities, routes, frontier zones, office jurisdictions, and initial visibility.
+- `src/game/worldGeography.js` owns the S50.2 server-owned per-session geography ledger. It normalizes `worldState.worldGeography`, refreshes light country/city/route/frontier pressure snapshots from current world metrics, builds hidden-filtered `worldGeographyView`, and provides the capped `worldGeography` prompt summary. Providers may read the summary but may not patch the ledger.
 - `src/game/officialCareer.js` owns the S34/S42 official career outcome engine. Providers may move official career meters, but they do not appoint, transfer, promote, demote, impeach-to-case, punish, retain, create assignments, alter assessment dossiers, or write `worldState.officialCareer`.
 - `src/game/roleWorldCoupling.js` owns the S36/S48.5 role/world coupling step. Providers may move ordinary meters and suggest social changes, but they do not write `worldState.roleWorldCoupling` or decide the server-owned compound world consequences or month-derived cooldowns of key role actions.
 - `src/game/worldThreads.js` owns the S43.1 World Threads / 世界议程索引. It derives player-facing cross-month issue summaries from active requests, long-term events, official assignments/outcomes, role-world impacts, frontier pressure, faction pressure, and local case pressure. Providers may read the compact summary for narrative context, but they do not write `worldState.worldThreads`.
@@ -91,11 +92,11 @@ Request fields:
 
 As of S31.3, `role` is normalized and validated in `src/game/initialState.js`. Missing or blank role values default to `scholar`; unsupported roles return `400`. The accepted enum is `scholar`, `emperor`, `minister`, `general`, `magistrate`, and `official`, and the browser start form exposes all six values.
 
-Returns `201` with `sessionId`, `worldState`, `examCalendarView`, `examRivalView`, `relationshipView`, `activeNpcRequestView`, `roleWorldCouplingView`, `worldEntityView`, `worldThreadView`, `longTermEventView`, `officialCareerView`, and opening `narrative`.
+Returns `201` with `sessionId`, `worldState`, `examCalendarView`, `examRivalView`, `relationshipView`, `activeNpcRequestView`, `roleWorldCouplingView`, `worldGeographyView`, `worldEntityView`, `worldThreadView`, `longTermEventView`, `officialCareerView`, and opening `narrative`.
 
 ### `GET /api/game/state/:sessionId`
 
-Reads the JSON session file and returns `sessionId`, `worldState`, the player-facing `examCalendarView`, `examRivalView`, `relationshipView`, `activeNpcRequestView`, `roleWorldCouplingView`, `worldEntityView`, `worldThreadView`, `longTermEventView`, and `officialCareerView`.
+Reads the JSON session file and returns `sessionId`, `worldState`, the player-facing `examCalendarView`, `examRivalView`, `relationshipView`, `activeNpcRequestView`, `roleWorldCouplingView`, `worldGeographyView`, `worldEntityView`, `worldThreadView`, `longTermEventView`, and `officialCareerView`.
 
 ### `GET /api/game/saves`
 
@@ -253,6 +254,15 @@ Requests without SSE negotiation still return plain JSON for tests and compatibi
     "schemaVersion": 1,
     "recentImpacts": []
   },
+  "worldGeographyView": {
+    "schemaVersion": 1,
+    "seedId": "late-ming-north-china",
+    "countries": [],
+    "cities": [],
+    "routes": [],
+    "frontierZones": [],
+    "officeJurisdictions": []
+  },
   "worldEntityView": {
     "schemaVersion": 1,
     "generatedAtTurn": 1,
@@ -314,7 +324,7 @@ Request:
 
 `level` may be omitted; the server derives the next eligible exam from `player.examRank`. The route saves a complete `worldState.activeExam`, reuses an existing unanswered exam for the same level, and rejects attempts to open a different exam while another question is active. S48.4 adds `activeExam.sceneTime` for `entry`, `question_review`, `outline`, `drafting`, `fair_copy`, and `submitted`; question creation/reuse preserves global date fields and does not advance `turnCount/year/month/tenDayPeriod`.
 
-Returns `examId`, exam metadata, requirements, readiness, entry preparation, `examCalendar`, `sceneTime`, `examCalendarView`, `examRivalView`, `relationshipView`, `activeNpcRequestView`, `roleWorldCouplingView`, `worldEntityView`, `worldThreadView`, `longTermEventView`, `officialCareerView`, and `worldState`.
+Returns `examId`, exam metadata, requirements, readiness, entry preparation, `examCalendar`, `sceneTime`, `examCalendarView`, `examRivalView`, `relationshipView`, `activeNpcRequestView`, `roleWorldCouplingView`, `worldGeographyView`, `worldEntityView`, `worldThreadView`, `longTermEventView`, `officialCareerView`, and `worldState`.
 
 ### `POST /api/exam/progress`
 
@@ -342,7 +352,7 @@ Request:
 }
 ```
 
-The server checks authenticity, asks the provider for grading, applies local penalties, builds virtual candidates with inspectable essay profiles, applies promotion or cheating consequences, updates persistent same-field rivals, appends the essay result to `player.examHistory`, clears `activeExam`, saves the session and returns the result plus `examCalendarView`, `examRivalView`, `relationshipView`, `activeNpcRequestView`, `roleWorldCouplingView`, `worldEntityView`, `worldThreadView`, `longTermEventView`, `officialCareerView`, and `worldState`. The response includes `examQuestion`, `essay`, `entryPreparation`, `examCalendar`, `sceneTime`, `examStartedAt`, and `examSubmittedAt` so the browser can render the just-submitted archive directly.
+The server checks authenticity, asks the provider for grading, applies local penalties, builds virtual candidates with inspectable essay profiles, applies promotion or cheating consequences, updates persistent same-field rivals, appends the essay result to `player.examHistory`, clears `activeExam`, saves the session and returns the result plus `examCalendarView`, `examRivalView`, `relationshipView`, `activeNpcRequestView`, `roleWorldCouplingView`, `worldGeographyView`, `worldEntityView`, `worldThreadView`, `longTermEventView`, `officialCareerView`, and `worldState`. The response includes `examQuestion`, `essay`, `entryPreparation`, `examCalendar`, `sceneTime`, `examStartedAt`, and `examSubmittedAt` so the browser can render the just-submitted archive directly.
 
 ## AI Provider Contract
 
@@ -516,6 +526,20 @@ Server rules:
 
 The browser renders S36 feedback as `[联动]` narrative lines with `.role-world-event[data-role-world-kind]`. It intentionally does not add a new persistent panel; resulting state remains visible through the status strip, role panel, relationship panel, long-term feedback, and official-career feedback.
 
+## World Geography Contract
+
+S50.2 adds `worldState.worldGeography`, documented in [docs/WORLD_GEOGRAPHY_SEED_CONTRACT.md](WORLD_GEOGRAPHY_SEED_CONTRACT.md). It is a server-owned geography ledger instantiated from S50.1 static seeds for countries, regions, cities, routes, frontier zones, and office jurisdictions.
+
+Server rules:
+
+- `src/game/worldGeography.js` creates and normalizes the per-session ledger, fills missing legacy rows, clamps/caps dynamic fields, and refreshes light pressure snapshots from existing top-level world metrics.
+- `worldGeographyView` exposes visible countries, regions, cities, routes, frontiers, jurisdictions, and highlights. It filters hidden rows, hidden notes, hidden nested refs, and scholar-only `role_visible` geography.
+- Prompt `compactWorldState()` reads only `summarizeWorldGeographyForPrompt()`, capped to visible high-pressure or relevant geography.
+- Providers may read visible geography summaries for narrative grounding, but ordinary `statePatch.worldGeography` is rejected by schemas, remote normalization, provider long-run checks, and ignored by provider patch application.
+- The ledger does not replace top-level `treasury`, `grainReserve`, `publicOrder`, `borderThreat`, does not decide diplomacy/war/city finance, and does not create SQLite business tables.
+
+JSON and SSE turn payloads return `worldGeographyView`. Exam question, progress, and submit routes include the same view. The browser does not yet render a geography panel; S53 should build any such panel from this view rather than raw `worldState.worldGeography`.
+
 ## World Entities Contract
 
 S45 adds `worldState.worldEntities`, documented in [docs/WORLD_ENTITIES_CONTRACT.md](WORLD_ENTITIES_CONTRACT.md). It is a server-owned multi-entity ledger for 朝廷衙门、地方士绅、书院同门、军镇边墙、商税盐漕 and 灾荒赈务.
@@ -681,7 +705,9 @@ S49.4 extends the storage contract with `appendAuditEvent()`, `appendAiProposal(
 
 [docs/DYNAMIC_WORLD_DATABASE_PLAN.md](DYNAMIC_WORLD_DATABASE_PLAN.md) expands the future path after S49.4: selectively split countries, neighboring states, cities, NPCs, households, office postings, relationships, scenes, world entities, and world threads into indexed local tables. This is a local-only persistence plan, not a remote-save, account, multiplayer, or hosted-database plan. AI must never execute SQL or write raw tables; it can only produce schema-valid proposals that server modules validate and commit.
 
-S50.1 adds [docs/WORLD_GEOGRAPHY_SEED_CONTRACT.md](WORLD_GEOGRAPHY_SEED_CONTRACT.md) and `src/game/worldGeographySeeds.js` as the static catalog layer for that future split. The module validates id uniqueness and cross-references among countries, regions, cities, routes, frontiers, and office jurisdictions, and its seed view filters hidden rows/notes. It does not change the storage adapter, route payloads, prompt context, `worldState`, or the complete scholar path.
+S50.1 adds [docs/WORLD_GEOGRAPHY_SEED_CONTRACT.md](WORLD_GEOGRAPHY_SEED_CONTRACT.md) and `src/game/worldGeographySeeds.js` as the static catalog layer for that future split. The module validates id uniqueness and cross-references among countries, regions, cities, routes, frontiers, and office jurisdictions, and its seed view filters hidden rows/notes.
+
+S50.2 adds `src/game/worldGeography.js` and `worldState.worldGeography`. New sessions instantiate the seed into per-session rows for countries, regions, cities, routes, frontier zones, and office jurisdictions. Game and exam routes now include `worldGeographyView`, which filters hidden rows, `hiddenNotes`, hidden nested refs, and scholar-only `role_visible` rows; `compactWorldState()` sends only a capped `worldGeography` prompt summary. This does not add a browser geography panel, does not replace top-level `treasury` / `publicOrder` / `borderThreat`, and does not create SQLite business tables. The existing route payload still carries full local `worldState` for development compatibility, so future UI must read `worldGeographyView` rather than raw `worldState.worldGeography`.
 
 ## Verification
 

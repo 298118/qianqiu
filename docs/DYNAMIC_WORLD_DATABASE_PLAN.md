@@ -484,12 +484,14 @@ world_entities
 - 每局从 seed 实例化动态国家/城市行。
 - World Entities/Threads 可读取国家、城市、边境压力摘要。
 
-S50.1 已先落静态 catalog 契约，见 [天下地理静态种子契约](WORLD_GEOGRAPHY_SEED_CONTRACT.md) 与 `src/game/worldGeographySeeds.js`。该切片只负责国家、邻国、区域、城市、路线、边境、官署辖区和初始可见性；每局实例化、prompt projection、route view 和 UI 面板仍属于后续步骤。
+S50.1 已先落静态 catalog 契约，见 [天下地理静态种子与实例化契约](WORLD_GEOGRAPHY_SEED_CONTRACT.md) 与 `src/game/worldGeographySeeds.js`。该切片负责国家、邻国、区域、城市、路线、边境、官署辖区和初始可见性。
+
+S50.2 已新增 `src/game/worldGeography.js`，把静态 seed 实例化为每局 `worldState.worldGeography`：国家、区域、城市、路线、边境压力面和官署辖区都成为 server-owned ledger 行；路由返回 `worldGeographyView`，prompt 读取 capped `worldGeography` 摘要。该账本只做轻量压力快照和可见 projection，不替代现有 `treasury`、`grainReserve`、`publicOrder`、`borderThreat` 等顶层指标，不新增浏览器地理面板，也不拆 SQLite 业务表。
 
 验收：
 
-- 玩家可见“天下格局”或“任所地理”摘要。
-- prompt 只取相关国家/城市，不全量塞入模型。
+- 玩家可见 route projection `worldGeographyView` 已存在；浏览器“天下格局”或“任所地理”面板仍留给 S53。
+- prompt 只取 capped 国家/城市/路线/边境/辖区摘要，不全量塞入模型，也不暴露 hidden rows 或 `hiddenNotes`。
 
 ### S51：NPC、家族、资产与关系数据库化
 
