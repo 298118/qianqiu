@@ -102,7 +102,7 @@
 | S50.2 | DONE | per-session 国家/城市实例化与 prompt projection，先不替代现有 worldState 指标 | 2026-05-07 | Codex + read-only subagents | `b0ced01` |
 | S51.1 | DONE | NPC、家族、资产、田产、关系和可见性 schema 契约 | 2026-05-07 | Codex + read-only subagents | `418077b` |
 | S51.2 | DONE | 桥接当前 `characters`、`relationshipLedger`、active requests 与 NPC/关系表 | 2026-05-07 | Codex + read-only subagents | `8ed984a` |
-| S52.1 | DONE | 官职、官署、任所、城市辖区、考成和调任记录的数据库契约 | 2026-05-07 | Codex + read-only subagents | 待提交后回填 |
+| S52.1 | DONE | 官职、官署、任所、城市辖区、考成和调任记录的数据库契约 | 2026-05-07 | Codex + read-only subagents | `4ce6d0e` |
 | S52.2 | TODO | 地方官/入仕官员任所与城市数据联动，保持服务器任免裁决 |  |  |  |
 | S53.1 | TODO | 检索式 prompt context assembler：按角色视野读取国家、城市、NPC、官职、事件摘要 |  |  |  |
 | S53.2 | TODO | 浏览器信息面板规划：天下格局、任所地理、人物谱牒、官职簿、事件档案 |  |  |  |
@@ -436,7 +436,7 @@
 
 ### S52.1：官职、官署、任所、城市辖区、考成和迁转记录数据库契约
 
-状态：DONE。实现/文档提交待本次提交后回填；只读探索子代理 Pascal 已完成 S52.1 勘察，提交前只读复审 Averroes 未发现阻塞问题。
+状态：DONE。实现/文档提交：`4ce6d0e feat: add official posting schema contract`；只读探索子代理 Pascal 已完成 S52.1 勘察，提交前只读复审 Averroes 未发现阻塞问题。本哈希回填为低风险纯文档 follow-up。
 
 目标：
 
@@ -559,7 +559,7 @@
 
 步骤：S52.1
 
-提交：待本次提交后回填
+提交：`4ce6d0e feat: add official posting schema contract`
 
 完成：
 
@@ -589,6 +589,7 @@
 - S52.1 不写每局 `worldState.officialPostings`，不改变 `officialCareerView`，不新增浏览器官职簿/任所地理面板，不建 SQLite 业务表。
 - `officialPostings` 当前只是 future server-owned key；S52.2 若接入 per-session ledger，必须补 route/prompt/browser hidden-token 探针，并保证 `player.officeTitle`、`officialCareer.currentPosting`、`officeId/currentPostingId` 不错配。
 - 城市动态指标与地方官任所联动仍是 S52.2。
+- 本哈希回填为低风险纯文档 follow-up，跳过额外提交前子代理复审；验证 `npm run check:docs-governance` 与 `git diff --check`。
 
 下一步：
 
