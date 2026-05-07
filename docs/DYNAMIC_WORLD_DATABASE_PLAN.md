@@ -25,7 +25,7 @@
 - 需要本机多 session 比较、导入导出、长期世界演化和本地检索。
 - 需要让 prompt 按“玩家当前可知范围”取上下文，而不是把全部世界状态塞给模型。
 
-所以推荐节奏是：**先规划和适配器，再 SQLite session row；只做本地数据库，不做云端/账号/多人；先事件/索引表，后全量实体拆表。** S49.1-S49.4 已完成规划、adapter 边界、可选 SQLite session row、事件日志和 AI proposal 审计；下一步应进入静态天下/邻国/城市等 seed 契约，而不是直接把所有业务表一次性拆完。
+所以推荐节奏是：**先规划和适配器，再 SQLite session row；只做本地数据库，不做云端/账号/多人；先事件/索引表，后全量实体拆表。** S49-S53 已完成规划、adapter 边界、可选 SQLite session row、事件日志和 AI proposal 审计、天下地理/人物/官职任所可见 projection、检索式 prompt context 和浏览器“局势簿”。下一步从 S54 起，把已经稳定的 projection 逐步拆成本地 SQLite 业务表，而不是一次性替换全部 `worldState`。
 
 ## 1.1 当前不做的范围
 
@@ -486,11 +486,11 @@ world_entities
 
 S50.1 已先落静态 catalog 契约，见 [天下地理静态种子与实例化契约](WORLD_GEOGRAPHY_SEED_CONTRACT.md) 与 `src/game/worldGeographySeeds.js`。该切片负责国家、邻国、区域、城市、路线、边境、官署辖区和初始可见性。
 
-S50.2 已新增 `src/game/worldGeography.js`，把静态 seed 实例化为每局 `worldState.worldGeography`：国家、区域、城市、路线、边境压力面和官署辖区都成为 server-owned ledger 行；路由返回 `worldGeographyView`，prompt 读取 capped `worldGeography` 摘要。该账本只做轻量压力快照和可见 projection，不替代现有 `treasury`、`grainReserve`、`publicOrder`、`borderThreat` 等顶层指标，不新增浏览器地理面板，也不拆 SQLite 业务表。
+S50.2 已新增 `src/game/worldGeography.js`，把静态 seed 实例化为每局 `worldState.worldGeography`：国家、区域、城市、路线、边境压力面和官署辖区都成为 server-owned ledger 行；路由返回 `worldGeographyView`，prompt 读取 capped `worldGeography` 摘要。该账本只做轻量压力快照和可见 projection，不替代现有 `treasury`、`grainReserve`、`publicOrder`、`borderThreat` 等顶层指标。S53.4 已把可见地理接入浏览器“局势簿”；当前仍不拆 SQLite 地理业务表。
 
 验收：
 
-- 玩家可见 route projection `worldGeographyView` 已存在；浏览器“天下格局”或“任所地理”面板仍留给 S53。
+- 玩家可见 route projection `worldGeographyView` 已存在；浏览器“天下格局”和“任所地理”面板已在 S53.4 只读接入，后续 S54 关注 SQLite 地理业务表与 view parity。
 - prompt 只取 capped 国家/城市/路线/边境/辖区摘要，不全量塞入模型，也不暴露 hidden rows 或 `hiddenNotes`。
 
 ### S51：NPC、家族、资产与关系数据库化
@@ -501,7 +501,7 @@ S50.2 已新增 `src/game/worldGeography.js`，把静态 seed 实例化为每局
 - 玩家关系 view 继续过滤隐藏信息。
 - NPC 财富、田产、家族、官职、声望、人情债开始可追踪。
 
-S51.1 已先新增 [人物、家族、资产、田产与关系 Schema 契约](NPC_HOUSEHOLD_ASSET_RELATIONSHIP_CONTRACT.md) 与 `src/game/worldPeopleSchemas.js`，固定 `npcs`、`households`、`assets`、`estates`、`relationships` 的字段、数值范围、可见性枚举、hidden refs 过滤和 capped prompt summary。S51.2 已新增 `src/game/worldPeople.js` 和每局 `worldState.worldPeople` 的安全可见桥接层，从当前 `characters`、`relationshipLedger` 和可见 active request 近期札记生成 `worldPeopleView` 与 prompt projection；它不替换现有 `characters` / `relationshipLedger` / `activeNpcRequest`，不新增浏览器人物/家产面板，也不建 SQLite 业务表。
+S51.1 已先新增 [人物、家族、资产、田产与关系 Schema 契约](NPC_HOUSEHOLD_ASSET_RELATIONSHIP_CONTRACT.md) 与 `src/game/worldPeopleSchemas.js`，固定 `npcs`、`households`、`assets`、`estates`、`relationships` 的字段、数值范围、可见性枚举、hidden refs 过滤和 capped prompt summary。S51.2 已新增 `src/game/worldPeople.js` 和每局 `worldState.worldPeople` 的安全可见桥接层，从当前 `characters`、`relationshipLedger` 和可见 active request 近期札记生成 `worldPeopleView` 与 prompt projection；S53.5 已把人物谱牒接入浏览器“局势簿”。当前仍不替换现有 `characters` / `relationshipLedger` / `activeNpcRequest`，也不建 SQLite 人物业务表。
 
 验收：
 
@@ -516,7 +516,7 @@ S51.1 已先新增 [人物、家族、资产、田产与关系 Schema 契约](NP
 - 地方官任所读取 `cities` 动态指标。
 - 城市民情、钱粮、案牍、水利、士绅与官场差事联动。
 
-S52.1 已先新增 [官职、官署、任所与迁转数据库契约](OFFICIAL_POSTING_DATABASE_CONTRACT.md) 与 `src/game/officialPostingSchemas.js`，固定 future `bureaus`、`offices`、`cityJurisdictions`、`postings`、`assessmentRecords`、`transferRecords` 的字段、数值范围、`public/role_visible/office_visible/relationship_visible/rumor/hidden` 可见性、hidden nested refs 裁剪和 capped prompt summary。S52.2 已新增 `src/game/officialPostings.js`，从 `officialCatalog`、`officialCareer`、地方官 role state 和可见 `worldGeographyView` 派生 `worldState.officialPostings`、`officialPostingsView` 与 capped prompt 摘要。该桥接只保存安全可见 projection，不改变 `officialCareerView`，不新增浏览器官职簿/任所地理面板，也不建 SQLite 业务表。
+S52.1 已先新增 [官职、官署、任所与迁转数据库契约](OFFICIAL_POSTING_DATABASE_CONTRACT.md) 与 `src/game/officialPostingSchemas.js`，固定 future `bureaus`、`offices`、`cityJurisdictions`、`postings`、`assessmentRecords`、`transferRecords` 的字段、数值范围、`public/role_visible/office_visible/relationship_visible/rumor/hidden` 可见性、hidden nested refs 裁剪和 capped prompt summary。S52.2 已新增 `src/game/officialPostings.js`，从 `officialCatalog`、`officialCareer`、地方官 role state 和可见 `worldGeographyView` 派生 `worldState.officialPostings`、`officialPostingsView` 与 capped prompt 摘要；S53.4/S53.5 已把任所地理和官职簿接入浏览器“局势簿”。该桥接只保存安全可见 projection，不改变 `officialCareerView`，也不建 SQLite 官职任所业务表。
 
 验收：
 
@@ -536,6 +536,21 @@ S52.1 已先新增 [官职、官署、任所与迁转数据库契约](OFFICIAL_P
 
 - hidden token/browser smoke 覆盖新增面板。
 - prompt tests 确认隐藏字段不进入模型。
+
+S53.1-S53.6 已完成：`promptContextAssembler` 只读服务器可见 projection 并生成 `retrievalContext`；浏览器“局势簿”已经落地天下格局、任所地理、人物谱牒、官职簿和事件档案五类面板；事件档案通过 `eventArchiveView` 读取安全 projection，不读取 raw audit、provider proposal、prompt、本地路径或 key。
+
+### S54-S59：剩余 SQLite 业务表拆分
+
+S49-S53 结束后，数据库专项的下一段不再是“是否需要数据库”，而是如何小步拆表。活动台账见 [DEVELOPMENT_STEPS.md](DEVELOPMENT_STEPS.md)，当前拆分如下：
+
+- S54：地理业务表。先定义 `geo_countries`、`geo_regions`、`geo_cities`、`geo_routes`、`geo_frontier_zones`、`geo_office_jurisdictions` 契约，再做 SQLite 持久化、导入/修复/导出和 JSON/SQLite `worldGeographyView` parity。
+- S55：人物业务表。定义 `people_npcs`、`people_households`、`people_assets`、`people_estates`、`people_relationships`，再接入 `worldPeopleView` parity、NPC 生命周期、财富/家产/关系事件和审计关联。
+- S56：官职任所业务表。定义 `office_bureaus`、`office_catalog`、`office_city_jurisdictions`、`office_postings`、`office_assessments`、`office_transfers`，再接入 `officialPostingsView` parity 与城市/人物引用完整性。
+- S57：安全事件索引。保留 raw `event_log` / `ai_change_proposals` 的诊断属性，另建安全 projection 供事件档案和 prompt 检索，不暴露 raw audit。
+- S58：SQLite 索引驱动的 prompt context 与浏览器双模式 parity。JSON fallback 不变，prompt/UI 继续只读可见 projection。
+- S59：JSON/SQLite 双模式整体验收与再次归档。
+
+每个拆表切片都必须保留 `worldState` snapshot 可读和可导出，保持 JSON 默认可玩；SQLite 仍是 local-only 模式。AI 不能直接执行 SQL 或写业务表，浏览器和 prompt 不读 raw table、raw audit、hidden notes、provider proposal、prompt、本地路径或 key。
 
 ## 7. AI 可修改范围分级
 
@@ -585,14 +600,13 @@ S52.1 已先新增 [官职、官署、任所与迁转数据库契约](OFFICIAL_P
 
 ## 10. 推荐优先级
 
-如果下一阶段目标是“世界规模变大”，推荐优先级如下：
+S49-S53 已完成基础层，历史细节已归档到 [LOCAL_DATABASE_FOUNDATION_ARCHIVE.md](LOCAL_DATABASE_FOUNDATION_ARCHIVE.md)。如果下一阶段目标是“让世界规模真正变大并能长期检索”，推荐优先级如下：
 
-1. **S49.2 存储适配器**：这是所有数据库工作的地基。
-2. **S49.3 SQLite session 原型**：只换底层，不改变玩法。
-3. **S49.4 事件与 AI proposal 审计**：先把“发生过什么、AI 建议过什么、服务器为何拒绝”记录下来。
-4. **S50 国家/城市种子**：开始承载本国与邻国的世界地图。
-5. **S51 NPC/家族/关系**：让人物和家产真正长期存在。
-6. **S52 官职/任所/城市联动**：让地方官、将领、朝臣都落到具体空间和机构。
-7. **S53 检索式 prompt 与 UI**：让 AI 和玩家只看当前合理可见的世界切片。
+1. **S54 地理业务表**：先把国家、邻国、城市、路线、边面和辖区拆入 SQLite，因为地方任所、外交边患、路程和事件索引都会引用它。
+2. **S55 人物业务表**：再把 NPC、家族、资产、田产和关系拆入 SQLite，保证人物谱牒、关系变化、财富流动和长期事件有稳定落点。
+3. **S56 官职任所业务表**：把官署、官职、任命、考成、迁转、城市辖区和持有人关系落表，保护服务器任免裁决。
+4. **S57 安全事件索引**：为长期事件档案、人物/城市/官职追溯和 prompt 检索建立安全 projection，而不是暴露 raw audit。
+5. **S58 检索式 prompt 与浏览器双模式 parity**：让 AI 和玩家继续只看当前合理可见的世界切片，同时验证 JSON/SQLite 两种 adapter 的视图一致。
+6. **S59 双模式集成硬化与再归档**：跑完整 Mock 主线、导入导出/修复工具和文档压缩。
 
 这条路线不会阻止继续做考试外的 scene-local time；两者可以并行，但数据库实现应优先选择小切片，避免把 S48 已稳定的时间契约和完整书生入仕路径一起掀开。

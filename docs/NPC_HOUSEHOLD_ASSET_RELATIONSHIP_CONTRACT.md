@@ -2,7 +2,7 @@
 
 S51 是本地动态世界数据库专项的人物域切片。S51.1 先固定 NPC、家族、资产、田产、关系与可见性 schema；S51.2 在此基础上桥接当前 `characters`、`relationshipLedger` 和可见 `activeNpcRequest`。
 
-本切片仍不新增浏览器人物/家产面板，不新增 SQLite 业务表，不替换旧 `relationshipView` / `activeNpcRequestView`，也不让 AI 直接创建人物或改写家产。S51.2 新增的 `worldState.worldPeople` 是当前可见旧系统数据的安全 projection，不是隐藏人物私档总库。
+S51 切片本身不新增 SQLite 业务表，不替换旧 `relationshipView` / `activeNpcRequestView`，也不让 AI 直接创建人物或改写家产。S51.2 新增的 `worldState.worldPeople` 是当前可见旧系统数据的安全 projection，不是隐藏人物私档总库。S53.5 后浏览器“人物谱牒”已经读取 `worldPeopleView`，但仍只读 route player-facing view，不读取 raw ledger。
 
 ## 范围
 
