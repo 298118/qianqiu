@@ -1,84 +1,56 @@
 # 千秋 / Qianqiu
 
-千秋是一款浏览器 + Node.js 历史模拟文字游戏。玩家以书生、皇帝、大臣、将领、地方官、入仕官员等身份进入古代中国历史情境，用自由文本行动推动个人命运、科举功名、官场沉浮和王朝局势。
+《千秋》是一款浏览器 + Node.js 历史模拟文字游戏。玩家可以扮演书生、皇帝、大臣、将领、地方官或入仕官员，在古代中国历史情境中用自由文本行动推动个人命运、科举功名、官场沉浮和王朝局势。
 
-AI 负责叙事、出题、评卷和角色反馈；服务器负责状态边界、晋级规则、反作弊、长期事件、官场裁决、存档和最终裁定。默认使用 Mock AI，无需 API Key 即可本地游玩。
+项目默认使用 Mock AI，本地无需 API Key 即可启动和游玩；配置真实 provider 后，可切换 OpenAI、DeepSeek、Xiaomi MiMo、MiMo + DeepSeek 混合路由或 Anthropic/Claude。
 
-## 当前进度
+## 这次主要更新
 
-项目已经完成第一阶段可玩纵切、第二阶段本地验收、第三阶段 S31-S39.1 的主要硬化与体验扩展，以及第四阶段 S40-S47.2 的 AI 连接、提示词、官场、世界议程、AI 权限、多实体世界、依赖治理和 provider/browser 验收扩展。S48 时间专项已完成并归档：普通自由行动已按旬推进、考试进入局部时间，官场期限、长期事件冷却、世界议程、世界实体和 provider long-run 的月末/旬度语义已同步；S48.6 进一步把状态栏、存档簿、考试日历、考试弹窗、考试档案和回合反馈统一为“年月旬”展示，并把 browser smoke/provider long-run 验收收束到同一节奏契约。
+当前项目已经完成可玩纵切、浏览器验收、时间专项、AI provider 扩展和本地动态数据库基础。近期重点更新集中在“本地数据库专项”和“多 provider 能力”：
 
-当前活动路线图是本地动态世界数据库专项，见 [动态世界本地数据库规划](docs/DYNAMIC_WORLD_DATABASE_PLAN.md)。S49-S53 已完成并归档到 [本地数据库基础归档](docs/LOCAL_DATABASE_FOUNDATION_ARCHIVE.md)：默认 JSON adapter、可选本地 SQLite session row、本地事件日志与 AI proposal 审计、天下地理/人物/官职任所安全 projection、检索式 prompt context 和浏览器“局势簿”五类面板都已落地。S54.1/S54.2 已先把天下地理拆出契约并在 SQLite 模式同步为本地 `geo_*` 业务表；后续继续做地理导入/修复/导出、人物、官职任所、安全事件索引、SQLite 检索式 prompt 和 JSON/SQLite 双模式验收。当前不规划远程存档、账号体系、多人同步或云端数据库。AI 只能提交结构化建议，不能直接写数据库或执行 SQL。
+- 新增可选 SQLite 存储模式：默认仍是 JSON 存档；设置 `STORAGE_ADAPTER=sqlite` 后，本地使用 `world_sessions`、审计表和地理 `geo_*` 业务表。
+- 新增地理业务表同步：SQLite 模式会把 `worldState.worldGeography` 同步到 `geo_countries`、`geo_regions`、`geo_cities`、`geo_routes`、`geo_frontier_zones`、`geo_office_jurisdictions`，读档时可按 JSON snapshot 修复缺失或陈旧行。
+- 新增地理维护工具：`npm run storage:geography:sqlite -- import|status|repair|export` 支持导入、漂移检查、修复和脱敏 debug dump。
+- 新增浏览器 SQLite smoke 参数：`npm run smoke:browser -- --storage-adapter sqlite --sqlite-db <path>` 可验证 Mock 浏览器主线与 SQLite adapter 共用同一存储。
+- 新增 Xiaomi MiMo provider：支持 `mimo` 与 `mimo-deepseek`，后者让 MiMo 负责开局、普通回合、流式叙事和出题，让 DeepSeek V4 Pro 负责科举评卷。
+- 更新 README 与项目文档：把当前功能、修复、安全边界、启动方式和常用命令整理成更适合 GitHub 首页阅读的结构。
 
-当前重点成果：
+## 修复与加固
 
-- 完整书生主线：书生可以从日常读书、拜师、游学、辩经、谋生进入童试、乡试、会试、殿试，最终成为入仕官员。
-- 多身份玩法：支持书生、皇帝、大臣、将领、地方官、入仕官员开局与代表性行动循环。
-- 长期模拟骨架：世界 tick、关系账本、主动 NPC 请托、长期事件、官场结果、科举日历、角色世界联动、World Entities 多实体模型和 World Threads 世界议程索引已经接入；普通全局回合已改为旬制，长期事件与官场任期等月度系统在下旬进入下月上旬时结算，官场差事/弹劾期限按月换算为旬回合，玩家可见日期使用“明1644年八月上旬”这类年月旬标签。
-- 本地存档簿、审计、天下地理、人物与官职任所 schema：JSON session envelope、legacy 迁移、原子写入、revision、轻量 lock、存档列表 API 和浏览器存档簿已经落地；可选 SQLite adapter 可用 `STORAGE_ADAPTER=sqlite` 开启，仍返回同一套路由 payload；本地 `event_log` / `ai_change_proposals` 审计、`worldGeographyView`、`worldPeopleView`、`officialPostingsView`、`eventArchiveView` 和浏览器“局势簿”已经落地。S54.2 已让 SQLite 模式在 `world_sessions.world_state_json` 外同步 `geo_countries`、`geo_regions`、`geo_cities`、`geo_routes`、`geo_frontier_zones`、`geo_office_jurisdictions`，并在读取时按 snapshot 修复缺失/陈旧地理行；NPC/家族/资产/关系、官职任所和安全事件索引仍在后续 S55-S57。
-- 第三阶段审查硬化：S39.1 修复了 CORS、考试触发、SSE、隐藏关系、冷却、初始年份和存储 revision 等安全/一致性问题。
-- AI 连接校验：开局页新增“AI 连接”面板，`POST /api/ai/connection-test` 可不落盘检查当前 provider、模型配置、streaming 能力和脱敏错误。
+- 修复并加固 AI 越权边界：AI 只能提交叙事、题目、评分建议、关系建议和受限 `statePatch`；服务器拥有时间推进、晋级、作弊处罚、官职任免、数据库写入和持久化裁决。
+- 加固 SSE 流式安全：真实 provider 可先显示顶层叙事片段，但状态只在完整 JSON 通过 schema 后落盘；失败流式文本会回滚。
+- 加固错误脱敏：AI 连接诊断、provider smoke、事件档案和浏览器 smoke 会避免暴露 key、长 token、raw prompt、本地路径和 raw provider response。
+- 加固存储一致性：JSON adapter 使用 envelope、revision、atomic write 和本地 lock；SQLite adapter 使用 transaction、revision 检查和同 session 队列。
+- 加固玩家可见视图：浏览器和 prompt 只读取服务器整理后的 `worldGeographyView`、`worldPeopleView`、`officialPostingsView`、`eventArchiveView` 等安全 projection，不读取 raw audit 或 raw business table。
 
-完整路线图见 [docs/DEVELOPMENT_STEPS.md](docs/DEVELOPMENT_STEPS.md)。
+## 项目特点
 
-开发规范锚点见 [docs/DEVELOPMENT_GOVERNANCE.md](docs/DEVELOPMENT_GOVERNANCE.md)。`npm run check:docs-governance` 和 `npm test` 会保护路线图与必读文档中的关键规范，避免重写文档时误删子代理、依赖治理、AI/server 边界、中文输出和 Mock 可玩等规则。
+- 自由文本玩法：玩家不被固定选项限制，可以用自然语言下旨、读书、赶考、办案、治军、结交、上疏或处理地方事务。
+- 完整书生路径：保护 `scholar -> child_exam -> provincial_exam -> metropolitan_exam -> palace_exam -> official`，从寒窗到入仕是当前第一优先级体验。
+- 多身份循环：书生、皇帝、大臣、将领、地方官、入仕官员都有代表性开局与行动反馈。
+- 旬制时间系统：普通自由行动按“上旬 -> 中旬 -> 下旬 -> 下月上旬”推进；考试等密集场景使用 scene-local time，不强制消耗全局旬。
+- 长期世界模拟：关系账本、主动 NPC 请托、长期事件、官场考成、科举日历、角色世界联动、World Entities 和 World Threads 已接入。
+- View-first 安全架构：玩家界面和 prompt 使用服务器裁剪后的安全视图，隐藏关系、密札、raw audit、provider proposal 和本地路径不会进入玩家 payload。
+- 本地优先：默认 JSON 存档，SQLite 仅作为本机增强；当前不引入远程存档、账号体系、多人同步或托管数据库。
 
-## 第三阶段主要成果
+## 项目优势
 
-- S31 地基修复：修复桌面游戏态过窄布局；普通回合 provider 不能 patch `activeExam`、`eventHistory`、考试名位等服务器独占字段；开局 `role` 显式校验。
-- S32 关系与主动 NPC：新增玩家可见的 `relationshipView` 人脉簿；隐藏关系不泄露；服务器调度 `activeNpcRequest` 来函、请托、施压和回应后果。
-- S33 长期事件：新增服务器拥有的 `longTermEvents` 队列，把季节、灾荒、边报、廷争、地方案链和跨月后果接入月度推演。
-- S34 官场结果：新增 `officialCareer` 引擎，入仕官员会出现实授、转任、升迁、外放、降调、弹劾成案、罚黜或留任。
-- S35 科举日历：新增服务器拥有的 `examCalendar`，考试需要通过考期窗口、备考月程、路程、盘费和师长推荐等条件；同场考生以 `rival-*` 持久化。
-- S36 角色世界联动：地方官水利、将领战役、皇帝任免、大臣弹劾等身份行动会在世界 tick 前影响粮储、民心、边患、军费、派系和关系。
-- S37 真实 provider 长回合验收：新增 keyed provider long-run smoke，检查历史语气、越权边界、状态一致性和可选 streaming 稳定性；无 key 环境成功跳过。
-- S38 浏览器与存档验收：浏览器 smoke 覆盖完整四级科举通关、作弊样例、代表身份回合、桌面/移动 UI、存档簿载入和截图检查。
-- S39.1 审查硬化：默认 CORS 不再 wildcard；普通回合 `examTrigger` 必须通过服务器考试门禁；SSE 只抽顶层 `narrative`，失败流式文本会回滚；隐藏关系 notes、角色联动 cooldown、初始年份和 JSON revision 都完成加固。
-
-## 第四阶段已完成成果
-
-- AI 提示词：把世界引擎、科举考官、出题官、官场、地方、军事、皇帝/大臣等提示词整理为可测试 prompt pack，兼顾古意、可读性、JSON 严格性和服务器边界。
-- 官场深度：S42.1 已定义深度官场契约，S42.2 已接入静态官职/衙门目录、差事推进、考成卷宗、弹劾流程和官职伪造过滤，S42.3 已把官署、差事、考成、关系、风险和履历档案渲染进浏览器官场面板并纳入 smoke 验收。
-- 世界议程：S43.2 已把服务器拥有的 `worldThreads` 聚合层接入浏览器“世界议程”面板；主动 NPC、长期事件、官场差遣/结果、身份联动、地方压力、边事、派系斗争和高压世界实体会显示目标、期限、风险、牵连对象、介入提示和近归档余波。
-- AI 权限审查：S44.1 已新增 [AI 调动与控制审查矩阵](docs/AI_CONTROL_AUDIT_MATRIX.md)，逐项固定哪些系统适合 AI 生成、建议、解释或排序，哪些必须由服务器裁决；S44.2 已补混合越权、官职幻觉、科举评分冲突、隐藏 token、流式失败和错误脱敏的 red-team/eval 基线。
-- 多实体世界：S45.2 已在 [多实体世界模型契约](docs/WORLD_ENTITIES_CONTRACT.md) 和 `worldEntities` 账本上接入服务器来源影响；AI 允许的状态变化、世界 tick、主动 NPC/关系、长期事件、身份联动和官场结果会通过 server-owned helper 调整实体压力，并让 World Threads 读取可见实体摘要。
-- 依赖与插件：S46.1 已新增 [依赖、插件与开源参考治理](docs/DEPENDENCY_PLUGIN_GOVERNANCE.md)，后续新增依赖、插件或开源参考必须记录用途、许可证、替代方案、测试、文档落点和回滚策略。
-
-第四阶段完整路线图已归档到 [docs/PHASE_FOUR_ROADMAP_ARCHIVE.md](docs/PHASE_FOUR_ROADMAP_ARCHIVE.md)。
-
-## S48 时间专项归档重点
-
-- 全局旬制：普通自由行动默认每回合推进一旬，按“上旬 -> 中旬 -> 下旬 -> 下月上旬”推进，三回合才进入下一个月。
-- S48.2/S48.3 基础：`worldState.tenDayPeriod` 使用 `1 | 2 | 3` 表示上旬、中旬、下旬；旧档缺失时读取为上旬，存档 metadata 带同一字段，普通 provider 不能通过 `statePatch` 写入年月旬；`POST /api/game/turn` 每次有效输入只推进一旬。
-- 月末结算：世界自然漂移、长期事件月份递减、季节性事件、官场任内月份和考成周期等原月度系统，只在下旬进入下月上旬时完整结算；非月末旬只做轻量 `[旬度]` 小结和小幅自然漂移。
-- 场景内时间：考试、廷议、堂审、战斗、旅途遭遇和重大差事收束等密集场景应使用局部阶段，不能把每次输入都硬解释为十天。
-- 科举优先：考试将优先拆成入场、发题/审题、拟纲、作答、誊清、交卷等局部阶段；开题、拟纲、作答不推进全局旬，交卷后仍保持完整评分、榜单、晋级和考试档案。
-- 期限与实体语义：主动 NPC 短期请托保留按回合响应；官场差事和弹劾默认按四个月折成十二旬；长期事件冷却按月数派生；World Threads 的期限文案区分“回合”“旬”和“月份”；World Entities 与 provider long-run 读取 `worldTick.cadence`，场景内不产生实体影响，长期事件实体影响只在月末入账。
-- 日期展示：玩家可见日期使用“年月旬”，例如“崇祯十七年八月上旬”；存档、状态栏、考试日历、考试弹窗、考试档案和回合反馈都会显示旬位，browser smoke 会对关键区域缺少“上旬/中旬/下旬”的回归直接失败。
-
-## 修复与安全边界
-
-- 状态边界：所有 AI `statePatch` 都经过 Ajv schema、白名单和数值 clamp，不能直接覆盖完整世界状态。
-- 科举权责：考试资格、考期窗口、取题、晋级、殿试入仕和严重作弊惩罚都由服务器裁定。
-- 自由赶考：普通回合的 `examTrigger` 只是一项请求。服务器会检查 `canEnterExam()` 与考期窗口，并保护未交卷考试不被覆盖。
-- 流式安全：真实 provider SSE 会先显示顶层 `narrative`，但状态只在完整 JSON 通过校验后落盘；若 stream 后续失败，浏览器移除未提交的临时文本。
-- 错误脱敏：AI 连接诊断和 SSE provider 错误会遮蔽已配置密钥及长片段，避免把本地 key 带到玩家可见错误里。
-- 隐藏信息：玩家可见视图和 prompt summary 会过滤隐藏联系人、隐藏派系和隐藏关系笔记。
-- CORS：默认只允许无 `Origin` 请求和当前 `PORT` 对应的本机应用 Origin；额外调试 Origin 必须通过 `CORS_ALLOWED_ORIGINS` 显式配置。
-- 存储一致性：路由通过 `sessionStore` facade 读写；默认 JSON adapter 使用 envelope、atomic temp rename、revision 检查、同 session 队列和本地 `.lock` 文件；可选 SQLite adapter 使用本地 `world_sessions` 表、transaction、revision 检查和同 session 队列保存同一份 JSON `world_state`，并在同一事务里同步地理 `geo_*` 业务行。S49.4 的审计记录只保存脱敏摘要、接受/拒绝原因和应用事件 id，不进入玩家 API；JSON sidecar 审计是诊断性尽力追加，SQLite 模式提供 session、审计与地理业务行同事务写入。
-- 反作弊：本地检查短文、现代词、疑似照抄经典片段和代笔概率；严重作伪会强制落第、降档并扣减声望与心性。
+- 无 key 可玩：Mock AI 是默认模式，适合本地开发、演示和回归测试。
+- 真实 provider 可选：需要时可接入 OpenAI、DeepSeek、MiMo、MiMo + DeepSeek 或 Anthropic，不让真实 key 成为启动门槛。
+- 服务器裁决清晰：模型负责创造力，服务器负责规则、边界、晋级、处罚、任免和持久化。
+- 文档与验收完整：路线图、架构、AI 权限矩阵、数据库契约、浏览器验收和 provider 验收都有持续维护。
+- 渐进式数据库迁移：JSON snapshot 保持可读可回滚，SQLite 逐步拆表增强查询、审计和长期世界存储。
 
 ## 技术栈
 
 - 前端：原生 HTML、CSS、JavaScript，无构建步骤。
 - 后端：Node.js + Express。
-- AI 适配器：Mock、OpenAI、DeepSeek、Claude/Anthropic。
-- AI JSON 校验：Ajv schema + 本地 JSON 解析、重试和降级。
+- AI provider：Mock、OpenAI、DeepSeek、Xiaomi MiMo、MiMo + DeepSeek、Anthropic/Claude。
+- 校验：Ajv schema、本地 JSON 解析、重试和降级。
 - 流式响应：Server-Sent Events。
-- 存储：`sessionStore` facade + 默认本地 JSON adapter，文件位于 `data/sessions/`，带 schema envelope、metadata、revision、atomic write、lock 和 save-list API；可选本地 SQLite adapter 通过 Node.js `node:sqlite` 标准库写入 `data/qianqiu.sqlite`，并在 SQLite 模式维护本地地理 `geo_*` 业务表；审计日志在 JSON 模式写入 `data/audit/*.jsonl`，SQLite 模式写入 `event_log` 与 `ai_change_proposals` 表。
+- 存储：默认 JSON session files；可选 SQLite session row、审计表和地理业务表。
 - 测试：Node.js `node --test`。
 - 浏览器验收：`playwright-core` + 本机 Chrome/Edge。
-- 配置：`dotenv` + `.env`。
 
 ## 快速启动
 
@@ -89,7 +61,7 @@ npm install
 npm start
 ```
 
-打开：
+然后打开：
 
 ```text
 http://localhost:3000
@@ -103,32 +75,32 @@ npm run dev
 
 ## 配置
 
-复制 `.env.example` 为 `.env`，按需填写：
+复制 `.env.example` 为 `.env`，按需填写。最小本地游玩不需要任何 key：
 
 ```text
 PORT=3000
-CORS_ALLOWED_ORIGINS=
 STORAGE_ADAPTER=json
-SQLITE_DATABASE_PATH=data/qianqiu.sqlite
 AI_PROVIDER=mock
-AI_PROVIDER_TIMEOUT_MS=30000
+```
+
+常用 provider 配置：
+
+```text
+AI_PROVIDER=mock
+
 OPENAI_API_KEY=
 OPENAI_MODEL=gpt-5.4-mini
-OPENAI_BASE_URL=
+
 DEEPSEEK_API_KEY=
 DEEPSEEK_BASE_URL=https://api.deepseek.com
 DEEPSEEK_MODEL=deepseek-v4-flash
-DEEPSEEK_OPENING_MODEL=deepseek-v4-pro
-DEEPSEEK_TURN_MODEL=deepseek-v4-flash
-DEEPSEEK_EXAM_QUESTION_MODEL=deepseek-v4-flash
 DEEPSEEK_GRADE_MODEL=deepseek-v4-pro
+
 MIMO_API_KEY=
 MIMO_BASE_URL=https://token-plan-sgp.xiaomimimo.com/v1
 MIMO_MODEL=mimo-v2.5-pro
 MIMO_AUTH_HEADER=api-key
-MIMO_THINKING=disabled
-MIMO_TEMPERATURE=0.7
-MIMO_TOP_P=0.95
+
 ANTHROPIC_API_KEY=
 ANTHROPIC_MODEL=claude-sonnet-4-5
 ```
@@ -136,17 +108,43 @@ ANTHROPIC_MODEL=claude-sonnet-4-5
 `AI_PROVIDER` 可选：
 
 - `mock`：默认模式，无需 key，完整可玩。
-- `openai`：使用 OpenAI SDK Responses API。
-- `deepseek`：使用 OpenAI-compatible chat completions。默认 `DEEPSEEK_MODEL` 是兜底模型；可用 `DEEPSEEK_OPENING_MODEL`、`DEEPSEEK_TURN_MODEL`、`DEEPSEEK_EXAM_QUESTION_MODEL`、`DEEPSEEK_GRADE_MODEL` 按任务覆盖。推荐策略是开局和科举评卷走 `deepseek-v4-pro`，普通回合/流式叙事和出题走 `deepseek-v4-flash`。
-- `mimo`：使用 Xiaomi MiMo OpenAI-compatible chat completions。Token Plan 订阅 key 使用 `MIMO_API_KEY`，订阅专属 Base URL 使用 `MIMO_BASE_URL`，本项目默认模型固定为 API 模型 ID `mimo-v2.5-pro`（MiMo-V2.5-Pro 的 1M 长上下文模型口径），默认认证头为官方示例中的 `api-key`。
-- `mimo-deepseek`：混合 provider。开局、普通回合、流式回合和科举出题走 MiMo；科举评卷走 DeepSeek，默认依赖 `DEEPSEEK_GRADE_MODEL=deepseek-v4-pro`。这是当前“多模型一起工作”的最小落地形态，后续完整编排层已排在 S54-S59 之后。
+- `openai`：使用 OpenAI Responses API。
+- `deepseek`：使用 OpenAI-compatible chat completions，支持按任务覆盖模型。
+- `mimo`：使用 Xiaomi MiMo OpenAI-compatible chat completions，默认模型 ID 为 `mimo-v2.5-pro`。
+- `mimo-deepseek`：混合 provider，MiMo 负责叙事/出题，DeepSeek 负责科举评卷。
 - `claude` 或 `anthropic`：使用 Anthropic Messages API。
 
-MiMo Token Plan 与普通按量 API key 不是同一类凭据：`tp-...` 订阅 key 必须配套订阅页给出的 token-plan Base URL，不能与普通 `sk-...` key 或按量 Base URL 混用。小米官方文档同时说明 Token Plan 面向 AI 编程工具场景；若把它用于公开部署、自定义应用后端或明显非 Coding 场景，请先确认订阅条款或改用普通 API key。
+MiMo Token Plan 的 `tp-...` key 必须配套订阅页给出的 token-plan Base URL，不能与普通 `sk-...` key 或按量 Base URL 混用。公开部署或非 Coding 自定义后端使用前，请先确认订阅条款或改用普通 API key。
 
-`CORS_ALLOWED_ORIGINS` 是逗号分隔的额外允许 Origin，例如 `http://localhost:5173`。默认不要配置 `*`。
+## 存储模式
 
-`STORAGE_ADAPTER` 默认是 `json`。设置为 `sqlite` 时，服务器使用本地 SQLite session row adapter；该模式需要当前 Node.js 运行时提供 `node:sqlite`。SQLite 会保留完整 `world_sessions.world_state_json`，并同步规范化后的 `worldGeography` 到 `geo_*` 本地业务表，读取时可从 snapshot 修复缺失或陈旧地理行；这些 raw table 不进入路由 payload、浏览器或 prompt。`SQLITE_DATABASE_PATH` 可覆盖数据库文件位置；`data/*.sqlite` 与派生日志文件会被 Git 忽略。开发迁移可运行 `npm run storage:import:sqlite -- --dry-run` 预览从 `data/sessions/*.json` 导入 SQLite 的结果，再按需去掉 `--dry-run`。地理业务表专项可用 `npm run storage:geography:sqlite -- status|repair|export` 检查、修复和导出脱敏 debug dump；回滚优先关闭 `STORAGE_ADAPTER=sqlite` 回到 JSON adapter，或保留/恢复原 JSON 存档。
+默认 JSON：
+
+```text
+STORAGE_ADAPTER=json
+```
+
+存档位于 `data/sessions/`，带 schema envelope、metadata、revision、atomic write 和 save-list API。
+
+可选 SQLite：
+
+```text
+STORAGE_ADAPTER=sqlite
+SQLITE_DATABASE_PATH=data/qianqiu.sqlite
+```
+
+SQLite 模式需要当前 Node.js 运行时提供 `node:sqlite`。它会保留完整 `world_sessions.world_state_json`，并同步地理 `geo_*` 业务表。raw SQLite table 不进入浏览器、prompt 或 save-list payload。
+
+导入与地理维护：
+
+```bash
+npm run storage:import:sqlite -- --dry-run
+npm run storage:geography:sqlite -- status
+npm run storage:geography:sqlite -- repair --dry-run
+npm run storage:geography:sqlite -- export
+```
+
+回滚优先关闭 `STORAGE_ADAPTER=sqlite` 回到 JSON adapter，或保留/恢复原 JSON 存档。
 
 ## 常用命令
 
@@ -158,19 +156,15 @@ npm run smoke:browser
 npm run smoke:provider
 npm run smoke:provider:route
 npm run smoke:provider:long
-npm run storage:import:sqlite -- --dry-run
-npm run storage:geography:sqlite -- status
-npm run storage:geography:sqlite -- repair --dry-run
 ```
 
 说明：
 
-- `npm test` 使用 Node.js 内置测试，覆盖状态边界、AI schema、科举、关系、长期事件、官场结果、角色联动、存储、SSE 和脚本逻辑。
-- `npm run check:docs-governance` 检查 [开发治理规范](docs/DEVELOPMENT_GOVERNANCE.md)、活动路线图和必读文档中的受保护规范；同一检查也会随 `npm test` 自动运行。
-- `npm run eval:ai` 是离线 AI 输出质量门槛，覆盖 provider-shaped JSON、越权风险、历史语气、评分边界和本地作弊处罚。
-- `npm run smoke:browser` 默认启动临时 Mock 服务器，覆盖完整书生到入仕路径、作弊样例、代表身份回合、官场差事面板、失败 SSE 回滚、存档簿、年月旬显示和桌面/移动布局；`npm run smoke:browser -- --check-ai-connection` 还会点击开局页“AI 连接”按钮并断言 Mock 诊断不写 session；需要验收 SQLite 模式时可加 `--storage-adapter sqlite --sqlite-db data/browser-smoke.sqlite`，脚本会让浏览器 helper 和临时服务器共用同一 SQLite 存储并按 adapter 清理测试 session。
-- `npm run storage:geography:sqlite -- import --dry-run` 不打开或修改 SQLite，只预览 JSON 存档；正式 `import` 会写 `world_sessions` 并同步 `geo_*` 行但不删除 JSON 原档。`repair --dry-run` 只报告地理表漂移，正式 `repair` 以 `world_sessions.world_state_json` 为源修复 `geo_*`。`export` 输出脱敏地理 debug dump，包含 `worldGeographyView`、prompt geography summary、retrieval geography 和计数，不输出 hidden notes、数据库路径、prompt、key 或 raw provider response。
-- `npm run smoke:provider`、`npm run smoke:provider:route` 与 `npm run smoke:provider:long` 只在配置真实 provider key 时进行网络调用；无 key 时会成功跳过。`smoke:provider:long` 会校验普通长跑按一月三旬推进，`smoke:provider:route` 会启动最小 Express 路由并 POST `/api/ai/connection-test`，用于验收玩家开局页同一条 provider 健康检查路径。
+- `npm test` 使用 Node.js 内置测试，覆盖状态边界、AI schema、科举、关系、长期事件、官场、角色联动、存储、SSE 和脚本逻辑。
+- `npm run check:docs-governance` 检查开发治理规范、活动路线图和必读文档中的受保护规则。
+- `npm run eval:ai` 是离线 AI 输出质量门槛，覆盖 provider-shaped JSON、越权风险、历史语气、评分边界和作弊处罚。
+- `npm run smoke:browser` 启动临时 Mock 服务器，覆盖完整书生到入仕路径、作弊样例、代表身份回合、存档簿、年月旬显示和桌面/移动布局。
+- `npm run smoke:provider*` 只在配置真实 provider key 时进行网络调用；无 key 环境会成功跳过。
 
 ## API 概览
 
@@ -182,16 +176,17 @@ GET  /api/game/state/:sessionId
 POST /api/game/turn
 POST /api/ai/connection-test
 POST /api/exam/question
+POST /api/exam/progress
 POST /api/exam/submit
 ```
 
 核心约定：
 
-- `POST /api/game/start` 校验 `role`，允许 `scholar`、`emperor`、`minister`、`general`、`magistrate`、`official`。
-- `GET /api/game/saves` 返回脱敏 metadata，包括 `year`、`month`、`tenDayPeriod` 和回合数；不返回完整 `worldState`、关系账本、隐藏关系或 provider 配置。
+- `POST /api/game/start` 校验身份，只允许 `scholar`、`emperor`、`minister`、`general`、`magistrate`、`official`。
+- `GET /api/game/saves` 只返回脱敏 metadata，不返回完整 `worldState`、隐藏关系、provider 配置或本地路径。
 - `POST /api/game/turn` 支持普通 JSON 与 SSE。SSE 事件包括 `state_preview`、`narrative_chunk`、`final_state`、`error`。
-- `POST /api/ai/connection-test` 直接校验指定或当前 AI provider，不创建 session、不写存档、不用 Mock fallback 掩盖真实 provider 问题，返回模型摘要、即时 `latencyMs`、streaming 能力、开局叙事预览或脱敏错误；S47.1 不新增模型费用或速度台账。
-- 游戏与考试路由会返回 `examCalendarView`、`examRivalView`、`relationshipView`、`activeNpcRequestView`、`roleWorldCouplingView`、`worldGeographyView`、`worldEntityView`、`worldPeopleView`、`worldThreadView`、`longTermEventView`、`officialCareerView`、`officialPostingsView`、`eventArchiveView` 等视图；其中 `officialCareerView` 用于浏览器官场面板，`worldThreadView` 用于浏览器“世界议程”面板和 AI prompt 摘要，`worldEntityView` 用于暴露 S45 多实体世界模型的玩家可见摘要，`worldGeographyView` 是 S50.2 为“天下格局/任所地理”面板准备的可见地理 projection，`worldPeopleView` 是 S51.2 为人物谱牒/家产面板准备的可见人物 projection，`officialPostingsView` 是 S52.2 为官职簿/任所地理面板准备的可见官职任所 projection，`eventArchiveView` 是 S53.6 为事件档案准备的安全卷宗 projection。S53.4 已把 `worldGeographyView` 与 `officialPostingsView` 渲染进浏览器“局势簿”的天下/任所细卡；S53.5 已把 `worldPeopleView` 和 `officialPostingsView` 渲染为人物/官职簿细卡；S53.6 已把 `eventArchiveView` 渲染为事件档案细卡；这些面板不能读取 raw ledger、prompt-only `retrievalContext` 或 raw audit。
+- `POST /api/ai/connection-test` 不创建 session、不写存档、不用 Mock fallback 掩盖真实 provider 问题。
+- 游戏与考试路由会返回服务器整理后的可见视图，例如 `relationshipView`、`worldGeographyView`、`worldPeopleView`、`officialPostingsView`、`eventArchiveView`。
 
 ## 项目结构
 
@@ -215,36 +210,19 @@ data/sessions/
 
 ## 重要文档
 
-- [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)：当前架构、API、状态模型和验证要求。
 - [docs/SHARED_CONTEXT.md](docs/SHARED_CONTEXT.md)：Codex 与 Claude Code 共享交接板。
-- [docs/QIANQIU_DEVELOPMENT_BRIEF.md](docs/QIANQIU_DEVELOPMENT_BRIEF.md)：产品目标、数据契约和交付标准。
-- [docs/DEVELOPMENT_GOVERNANCE.md](docs/DEVELOPMENT_GOVERNANCE.md)：开发规范锚点，保护子代理、Git、文档同步、依赖治理、AI/server 边界、中文输出和验证门禁。
+- [docs/QIANQIU_DEVELOPMENT_BRIEF.md](docs/QIANQIU_DEVELOPMENT_BRIEF.md)：产品目标、架构、数据契约和交付标准。
 - [docs/DEVELOPMENT_STEPS.md](docs/DEVELOPMENT_STEPS.md)：当前本地数据库专项路线图与进度台账。
-- [docs/LOCAL_DATABASE_FOUNDATION_ARCHIVE.md](docs/LOCAL_DATABASE_FOUNDATION_ARCHIVE.md)：S49-S53 本地数据库基础归档，压缩 storage/audit、地理、人物、官职任所、prompt context 和浏览器局势簿已完成细节。
-- [docs/DEPENDENCY_PLUGIN_GOVERNANCE.md](docs/DEPENDENCY_PLUGIN_GOVERNANCE.md)：依赖、插件和开源参考的引入模板、验证门槛与回滚要求。
-- [docs/BROWSER_ACCEPTANCE.md](docs/BROWSER_ACCEPTANCE.md)：浏览器自动验收覆盖和最近结果。
-- [docs/BROWSER_INFORMATION_PANEL_PLAN.md](docs/BROWSER_INFORMATION_PANEL_PLAN.md)：S53.2 浏览器信息面板规划，固定天下格局、任所地理、人物谱牒、官职簿和事件档案的数据源、隐藏过滤和后续验收边界。
-- [docs/REAL_PROVIDER_ACCEPTANCE.md](docs/REAL_PROVIDER_ACCEPTANCE.md)：真实 provider keyed 长回合验收方案。
-- [docs/AI_CONTROL_AUDIT_MATRIX.md](docs/AI_CONTROL_AUDIT_MATRIX.md)：AI 可生成、可建议、不可写、不可裁决的系统级权限矩阵。
-- [docs/SESSION_STORAGE_MIGRATION_PLAN.md](docs/SESSION_STORAGE_MIGRATION_PLAN.md)：JSON 存档硬化和数据库迁移路径。
-- [docs/DYNAMIC_WORLD_DATABASE_PLAN.md](docs/DYNAMIC_WORLD_DATABASE_PLAN.md)：国家、城市、NPC、官职、事件、AI proposal 审计与本地 SQLite 迁移的动态数据库规划；当前不含远程存档、账号或多人范围。
-- [docs/WORLD_GEOGRAPHY_SEED_CONTRACT.md](docs/WORLD_GEOGRAPHY_SEED_CONTRACT.md)：S50.1/S50.2 天下地理静态种子与每局实例化契约，固定国家、邻国、城市、路线、边境、官署辖区和初始可见性，并说明 `worldGeographyView` / prompt projection 边界。
-- [docs/NPC_HOUSEHOLD_ASSET_RELATIONSHIP_CONTRACT.md](docs/NPC_HOUSEHOLD_ASSET_RELATIONSHIP_CONTRACT.md)：S51.1/S51.2 人物、家族、资产、田产与关系 schema/桥接契约，固定 `worldPeopleSchemas` 的归一化、可见性过滤、引用裁剪、prompt cap、`worldPeople` 可见桥接和 AI/server 边界。
-- [docs/OFFICIAL_POSTING_DATABASE_CONTRACT.md](docs/OFFICIAL_POSTING_DATABASE_CONTRACT.md)：S52.1/S52.2 官职、官署、任所、城市辖区、考成和迁转记录 schema/桥接契约，固定 `officialPostingSchemas` 的归一化、可见性过滤、引用裁剪、prompt cap 和 server-owned 边界，并说明 `officialPostingsView` 与 prompt projection 如何联动可见城市数据。
-- [docs/LONG_TERM_EVENTS_CONTRACT.md](docs/LONG_TERM_EVENTS_CONTRACT.md)：长期事件调度器契约。
-- [docs/OFFICIAL_CAREER_CONTRACT.md](docs/OFFICIAL_CAREER_CONTRACT.md)：官场结果引擎与 S42 深度官场契约。
-- [docs/EXAM_CALENDAR_CONTRACT.md](docs/EXAM_CALENDAR_CONTRACT.md)：科举日历与持久同场契约。
-- [docs/ROLE_WORLD_COUPLING_CONTRACT.md](docs/ROLE_WORLD_COUPLING_CONTRACT.md)：身份行动与世界联动契约。
-- [docs/WORLD_ENTITIES_CONTRACT.md](docs/WORLD_ENTITIES_CONTRACT.md)：多实体世界模型契约。
-- [docs/WORLD_THREADS_CONTRACT.md](docs/WORLD_THREADS_CONTRACT.md)：World Threads / 世界议程聚合契约。
-- [docs/PRE_PHASE_CODEBASE_REVIEW_2026-05-06.md](docs/PRE_PHASE_CODEBASE_REVIEW_2026-05-06.md)：第三阶段后续硬化前的代码审查记录。
-- [docs/PHASE_THREE_ROADMAP_ARCHIVE.md](docs/PHASE_THREE_ROADMAP_ARCHIVE.md)：第三阶段路线图归档。
-- [docs/PHASE_FOUR_ROADMAP_ARCHIVE.md](docs/PHASE_FOUR_ROADMAP_ARCHIVE.md)：第四阶段路线图归档。
-- [docs/TIME_SPECIALTY_ROADMAP_ARCHIVE.md](docs/TIME_SPECIALTY_ROADMAP_ARCHIVE.md)：S48 时间专项路线图归档。
+- [docs/DEVELOPMENT_GOVERNANCE.md](docs/DEVELOPMENT_GOVERNANCE.md)：稳定开发治理锚点。
+- [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)：当前架构、API、状态模型和验证要求。
+- [docs/AI_CONTROL_AUDIT_MATRIX.md](docs/AI_CONTROL_AUDIT_MATRIX.md)：AI/server 权限矩阵。
+- [docs/DYNAMIC_WORLD_DATABASE_PLAN.md](docs/DYNAMIC_WORLD_DATABASE_PLAN.md)：本地动态数据库规划。
+- [docs/LOCAL_DATABASE_FOUNDATION_ARCHIVE.md](docs/LOCAL_DATABASE_FOUNDATION_ARCHIVE.md)：S49-S53 本地数据库基础归档。
+- [docs/WORLD_GEOGRAPHY_SEED_CONTRACT.md](docs/WORLD_GEOGRAPHY_SEED_CONTRACT.md)：天下地理与 SQLite 地理业务表契约。
 
 ## 已知限制
 
-- 真实 provider 网络调用需要配置 API key；无 key 环境只验证 Mock、连接测试缺 key 分支和 no-key skip。
+- 真实 provider 网络调用需要配置 API key；无 key 环境只验证 Mock、缺 key 分支和 no-key skip。
 - 浏览器 smoke 覆盖完整主线和代表身份回合，但不等同于所有身份的长线游玩验收。
-- 长期事件、官场结果、科举日历、角色世界联动、World Entities 和 World Threads 仍是确定性规则集；S42.3 已让入仕后可在浏览器中查看官署、差事、考成、关系和风险，S43.2/S45.2 已把这些信号与高压实体汇入浏览器世界议程总览。S45 仍未新增浏览器实体面板，世界议程只提示介入方向，不提供一键结算。
-- 当前默认存储仍是本地 JSON。可选 SQLite 目前已有 session row、审计表、JSON `world_state` 和地理 `geo_*` 业务表；NPC/家族/资产/关系、官职任所和安全事件索引尚未拆成 SQLite 业务表，这些已排入 S55-S57。远程存档、账号体系、多人同步和云端数据库不属于当前范围。
+- SQLite 目前已经包含 session row、审计表和地理 `geo_*` 业务表；NPC/家族/资产/关系、官职任所和安全事件索引尚未拆成 SQLite 业务表，已排入 S55-S57。
+- 当前不包含远程存档、账号体系、多人同步或云端数据库。
