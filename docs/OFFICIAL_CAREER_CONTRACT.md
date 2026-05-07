@@ -11,7 +11,7 @@ overflow.
 
 S34 defines the server-owned official career outcome engine. It turns the post-palace official loop from meter movement into concrete career results: appointment, transfer, promotion, external posting, demotion, impeachment case, punishment, or retention.
 
-S52.1 adds [官职、官署、任所与迁转数据库契约](OFFICIAL_POSTING_DATABASE_CONTRACT.md) and `src/game/officialPostingSchemas.js` as a future database-domain schema for `bureaus`、`offices`、`cityJurisdictions`、`postings`、`assessmentRecords` and `transferRecords`. It does not replace this runtime contract, does not change `officialCareerView`, and does not let ordinary providers write `officialPostings`; actual appointments, transfers, assessments and punishments remain server-owned here.
+S52.1 adds [官职、官署、任所与迁转数据库契约](OFFICIAL_POSTING_DATABASE_CONTRACT.md) and `src/game/officialPostingSchemas.js` as the database-domain schema for `bureaus`、`offices`、`cityJurisdictions`、`postings`、`assessmentRecords` and `transferRecords`. S52.2 adds `src/game/officialPostings.js` as a visible projection bridge from the official catalog, current career state, magistrate role state, and visible city/jurisdiction data into `worldState.officialPostings`、`officialPostingsView` and prompt context. It does not replace this runtime contract, does not change `officialCareerView`, and does not let ordinary providers write `officialPostings`; actual appointments, transfers, assessments and punishments remain server-owned here.
 
 ## S42.1 深度官场契约
 
@@ -215,7 +215,7 @@ Providers must not directly write:
 
 The route applies ordinary provider patches through the provider-facing whitelist. The official outcome engine then runs as a server follow-up and applies title/role/career-history changes with `{ incrementTurnCount: false, allowServerOwnedPatchKeys: true }`.
 
-S42.2 also filters ordinary provider `player.position` patches while the player is an official: obvious office titles or catalog-recognized appointments are ignored, while soft posture/location descriptions can still pass through the existing clamp/whitelist path. This keeps `position` useful for narrative texture without letting it become a hidden appointment channel.
+S42.2 filters ordinary provider `player.position` patches while the player is an official: obvious office titles or catalog-recognized appointments are ignored, while soft posture/location descriptions can still pass through the existing clamp/whitelist path. S52.2 extends that same obvious-office-title guard to `magistrate` starts so local-official soft position text cannot become a hidden appointment channel or mislead the official-posting bridge.
 
 ## Persisted State
 

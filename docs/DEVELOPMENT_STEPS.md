@@ -103,7 +103,7 @@
 | S51.1 | DONE | NPC、家族、资产、田产、关系和可见性 schema 契约 | 2026-05-07 | Codex + read-only subagents | `418077b` |
 | S51.2 | DONE | 桥接当前 `characters`、`relationshipLedger`、active requests 与 NPC/关系表 | 2026-05-07 | Codex + read-only subagents | `8ed984a` |
 | S52.1 | DONE | 官职、官署、任所、城市辖区、考成和调任记录的数据库契约 | 2026-05-07 | Codex + read-only subagents | `4ce6d0e` |
-| S52.2 | TODO | 地方官/入仕官员任所与城市数据联动，保持服务器任免裁决 |  |  |  |
+| S52.2 | DONE | 地方官/入仕官员任所与城市数据联动，保持服务器任免裁决 | 2026-05-07 | Codex + read-only subagents | `pending` |
 | S53.1 | TODO | 检索式 prompt context assembler：按角色视野读取国家、城市、NPC、官职、事件摘要 |  |  |  |
 | S53.2 | TODO | 浏览器信息面板规划：天下格局、任所地理、人物谱牒、官职簿、事件档案 |  |  |  |
 
@@ -471,7 +471,57 @@
 - S52.1 只定义 standalone schema/helper；还没有 `worldState.officialPostings`、route view、browser 官职簿/任所地理面板、prompt 接入或 SQLite 业务表。
 - 未来 S52.2 写 per-session posting ledger 时，必须保持 `player.officeTitle`、`officialCareer.currentPosting`、新增 `officeId/currentPostingId` 一致，避免标题和 id 错配。
 - 当前 route 兼容层仍返回完整本地 `worldState`；未来若要保存 hidden 官员私档、密札考成或未公开调任风声，应先做 route raw-state redaction 或单独玩家 projection API。
-- 城市财政、治安、水利、案牍、士绅与官场差事联动留给 S52.2；S52.1 不替代 `officialCareer` 的服务器任免裁决。
+- 城市财政、治安、水利、案牍、士绅与官场差事联动由 S52.2 先接入可见 projection；S52.1 不替代 `officialCareer` 的服务器任免裁决。
+
+### S52.2：地方官/入仕官员任所与城市数据联动
+
+状态：DONE。实现/文档提交：`pending`；只读探索子代理 Sartre 已梳理 S52.2 桥接方案，提交前只读复审 Feynman 未发现 P0/P1/P2 blocker。
+
+目标：
+
+- 新增每局 `worldState.officialPostings` 可见 projection，把 S52.1 schema/helper 接入运行时。
+- 从 `officialCatalog`、`officialCareer`、地方官 role state 和 S50 `worldGeographyView` 派生官署、官职、城市辖区、当前任所、考成摘要和迁转记录。
+- 让 game/exam/SSE/read-state route 返回 `officialPostingsView`，让 prompt 读取 capped `officialPostings` 摘要。
+- 保持 `officialCareerView`、任命/调任/考成/处分裁决和完整科举入仕路径不变；不新增浏览器官职簿/任所地理面板，不新增 SQLite 官职业务表。
+
+完成：
+
+- 新增 `src/game/officialPostings.js`，提供 `createInitialOfficialPostingsState()`、`ensureOfficialPostingsState()`、`buildOfficialPostingsView()` 和 prompt summary wrapper。
+- `src/game/initialState.js` 初始化 `worldState.officialPostings`；game route、SSE preview/final、read-state、exam question/submit 和 provider long-run 都会在返回前 ensure 该 projection。
+- `officialPostingsView` 暴露可见 catalog bureaus/offices、由可见城市与官署辖区派生的 `cityJurisdictions`、玩家当前 posting、考成摘要，以及由服务器 `officialCareer.careerHistory` 派生的迁转记录。
+- `worldState.officialPostings` 当前只保存 hidden-filtered 可见 projection，因为开发兼容 route 仍返回完整本地 `worldState`；hidden geography refs、hidden notes、密札考成和未公开调任不会进入 raw projection、route view 或 prompt 摘要。
+- `stateRules` 的明显官职 `player.position` 伪造过滤扩展到地方官，避免 provider 把地方官软位置写成中央官名后被任所 bridge 误读为授官。
+- `compactWorldState()` 新增 capped `officialPostings`；prompt pack 边界和本地审计脱敏同步把 `officialPostings`、`postings`、`assessmentRecords`、`transferRecords` 视为 server-owned / sensitive。
+- 新增 `test/officialPostings.test.js` 和 `test/gameTurnOfficialPostings.test.js`，覆盖直接 official 任所、地方官任所与城市指标联动、hidden geography 裁剪、career-history 迁转派生、旧档补齐、provider 伪造拒绝，以及 SSE/route payload。
+- README、架构文档、产品 brief、动态数据库规划、官职任所契约、官场契约、AI 权限矩阵、真实 provider 验收和 shared context 同步 S52.2 边界。
+
+验证：
+
+- `node --check src\game\officialPostings.js`
+- `node --check src\routes\game.js`
+- `node --check src\routes\exam.js`
+- `node --check src\ai\prompts.js`
+- `node --check scripts\providerLongRun.js`
+- `node --check test\officialPostings.test.js`
+- `node --check test\gameTurnOfficialPostings.test.js`
+- `node --test test\officialPostings.test.js test\gameTurnOfficialPostings.test.js`，9 项通过
+- `node --test test\prompts.test.js test\providerLongRunScript.test.js test\stateRules.test.js test\auditRoute.test.js test\aiControlRedTeam.test.js`，37 项通过
+- `node --test test\officialPostingSchemas.test.js test\gameTurnOfficialCareer.test.js test\gameTurnWorldGeography.test.js test\aiSchemas.test.js test\remoteHelpers.test.js test\officialCatalog.test.js test\officialCareer.test.js`，42 项通过
+- `npm run check:docs-governance`
+- `node --test test\officialPostings.test.js test\gameTurnOfficialPostings.test.js test\stateRules.test.js`，15 项通过
+- `$env:AI_PROVIDER='mock'; npm test`，365 项通过
+- `git diff --check`
+- 提交前只读复审 Feynman 未发现 P0/P1/P2 blocker；其 P3 文档提醒已收尾：不再暗示 `officialPostingsView.currentPosting` 字段，并把复审状态写入 shared context。
+
+风险/遗留：
+
+- `officialPostingsView` 是当前 UI/prompt 契约；浏览器暂不显示官职簿/任所地理面板，后续 S53 信息面板或 context assembler 必须读取服务器 view。
+- S52.2 不保存 hidden 官员私档或未公开调任；如果后续要保存完整 hidden ledger，必须先拆玩家 API 或增加 raw `worldState` redaction。
+- 该 projection 不决定授官；`player.officeTitle`、`officialCareer.currentPosting` 和 `officialPostingsView.postings[]` 中的 `posting-player-current` 仍由服务器官场系统同步。
+
+下一步：
+
+- S53.1：检索式 prompt context assembler，按角色视野读取国家、城市、NPC、官职、事件摘要。
 
 ## 6. 数据域规划
 
@@ -555,6 +605,54 @@
 
 ### 2026-05-07
 
+工具：Codex；只读探索子代理 Sartre；提交前只读复审 Feynman
+
+步骤：S52.2
+
+提交：`pending`
+
+完成：
+
+- 新增 `src/game/officialPostings.js`，把 S52.1 官职任所 schema/helper 接入每局 `worldState.officialPostings` 可见 projection。
+- 新局、普通回合、SSE、读档、考试取题和交卷都会 ensure `officialPostings` 并返回 `officialPostingsView`；prompt compact state 新增 capped `officialPostings` 摘要。
+- 当前玩家是入仕官员时，projection 按 `officialCareer.currentPosting` / `player.officeTitle` 对齐官职目录；当前玩家是地方官时，projection 将本地衙门职责映射到可见城市辖区和城市动态指标。
+- 服务器 `officialCareer.careerHistory` 派生迁转记录，`officialCareerView` 仍是任免与考成权威；provider 不能通过 `statePatch.officialPostings` 写官职任所账本。
+- raw `worldState.officialPostings` 只保存 hidden-filtered 可见 projection，避免既有 route 返回完整 `worldState` 时泄漏 hidden geography refs、密札考成或未公开调任。
+- `stateRules` 的明显官职 `player.position` 伪造过滤扩展到地方官；`officialPostings` 对地方官任所使用知县/本地衙门口径，不把 provider 软位置误读成任命。
+- `scripts/providerLongRun.js`、prompt pack 边界、本地 audit redaction、red-team 和 state/provider 测试同步 S52.2 server-owned 边界。
+- README、架构文档、产品 brief、动态数据库规划、官职任所契约、官场契约、AI 权限矩阵、真实 provider 验收和 shared context 同步 S52.2 状态。
+- Sartre 只读梳理了 S52.2 方案：以 `officialPostings.js` 做桥接，不改 `officialCareerView`，不新增 UI/SQLite 表；重点验证旧档补齐、direct official、magistrate、route/SSE/prompt 和 hidden geography 裁剪。子代理未编辑文件，未运行 Git 命令。
+
+验证：
+
+- `node --check src\game\officialPostings.js`
+- `node --check src\routes\game.js`
+- `node --check src\routes\exam.js`
+- `node --check src\ai\prompts.js`
+- `node --check scripts\providerLongRun.js`
+- `node --check test\officialPostings.test.js`
+- `node --check test\gameTurnOfficialPostings.test.js`
+- `node --test test\officialPostings.test.js test\gameTurnOfficialPostings.test.js`，9 项通过
+- `node --test test\prompts.test.js test\providerLongRunScript.test.js test\stateRules.test.js test\auditRoute.test.js test\aiControlRedTeam.test.js`，37 项通过
+- `node --test test\officialPostingSchemas.test.js test\gameTurnOfficialCareer.test.js test\gameTurnWorldGeography.test.js test\aiSchemas.test.js test\remoteHelpers.test.js test\officialCatalog.test.js test\officialCareer.test.js`，42 项通过
+- `npm run check:docs-governance`
+- `node --test test\officialPostings.test.js test\gameTurnOfficialPostings.test.js test\stateRules.test.js`，15 项通过
+- `$env:AI_PROVIDER='mock'; npm test`，365 项通过
+- `git diff --check`
+- 提交前只读复审 Feynman 未发现 P0/P1/P2 blocker；其 P3 文档提醒已收尾：不再暗示 `officialPostingsView.currentPosting` 字段，并把复审状态写入 shared context。
+
+风险/遗留：
+
+- S52.2 不新增浏览器官职簿/任所地理面板，不新增 SQLite 官职业务表，也不把 hidden 官员私档保存到 raw route state。
+- 当前 `officialPostingsView` 只解释官职任所与可见城市指标的关系；城市财政、治安、水利、案牍、士绅与具体官场差事的深层结算仍由后续世界系统逐步接入。
+- 后续 S53.1 context assembler 应读取 `officialPostingsView` / prompt summary，而不是 raw `worldState.officialPostings`。
+
+下一步：
+
+- S53.1：检索式 prompt context assembler，按角色视野读取国家、城市、NPC、官职、事件摘要。
+
+### 2026-05-07
+
 工具：Codex；只读探索子代理 Pascal；提交前只读复审 Averroes
 
 步骤：S52.1
@@ -586,14 +684,14 @@
 
 风险/遗留：
 
-- S52.1 不写每局 `worldState.officialPostings`，不改变 `officialCareerView`，不新增浏览器官职簿/任所地理面板，不建 SQLite 业务表。
-- `officialPostings` 当前只是 future server-owned key；S52.2 若接入 per-session ledger，必须补 route/prompt/browser hidden-token 探针，并保证 `player.officeTitle`、`officialCareer.currentPosting`、`officeId/currentPostingId` 不错配。
-- 城市动态指标与地方官任所联动仍是 S52.2。
+- S52.1 不写每局 `worldState.officialPostings`，不改变 `officialCareerView`，不新增浏览器官职簿/任所地理面板，不建 SQLite 业务表；该运行时桥接已由 S52.2 接续。
+- S52.2 接入 per-session projection 时必须补 route/prompt hidden-token 探针，并保证 `player.officeTitle`、`officialCareer.currentPosting`、`officeId/currentPostingId` 不错配；该风险已在 S52.2 测试中覆盖 direct official、magistrate、route/SSE 和 hidden geography 裁剪。
+- 城市动态指标与地方官任所的第一层可见联动已由 S52.2 完成，深层差事结算仍留给后续世界系统。
 - 本哈希回填为低风险纯文档 follow-up，跳过额外提交前子代理复审；验证 `npm run check:docs-governance` 与 `git diff --check`。
 
 下一步：
 
-- 完成剩余验证、提交前只读复审并提交；随后 S52.2：地方官/入仕官员任所与城市数据联动，保持服务器任免裁决。
+- 已由 S52.2 接续：地方官/入仕官员任所与城市数据联动，保持服务器任免裁决。
 
 ### 2026-05-07
 

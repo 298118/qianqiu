@@ -127,7 +127,7 @@ function looksLikeOfficialAppointment(value) {
 function shouldApplyProviderPlayerPatch(worldState, key, value, allowServerOwnedPatchKeys) {
   if (allowServerOwnedPatchKeys) return true;
   if (key !== "position") return true;
-  if (worldState.player?.role !== "official") return true;
+  if (!["official", "magistrate"].includes(worldState.player?.role)) return true;
   if (typeof value !== "string") return true;
   // `position` remains a soft narrative field for providers, but obvious office
   // titles must not become a back door around the server-owned `officeTitle`.

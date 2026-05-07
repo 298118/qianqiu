@@ -18,6 +18,9 @@ const {
   runOfficialCareerStep
 } = require("../src/game/officialCareer");
 const {
+  ensureOfficialPostingsState
+} = require("../src/game/officialPostings");
+const {
   ensureRoleWorldCouplingState,
   runRoleWorldCouplingStep
 } = require("../src/game/roleWorldCoupling");
@@ -271,6 +274,7 @@ function ensureServerState(worldState) {
   ensureOfficialCareerState(worldState);
   ensureRoleWorldCouplingState(worldState);
   ensureWorldGeographyState(worldState);
+  ensureOfficialPostingsState(worldState);
   ensureWorldEntityState(worldState);
   ensureWorldPeopleState(worldState);
   ensureWorldThreadState(worldState);

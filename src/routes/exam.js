@@ -26,6 +26,7 @@ const { buildRelationshipInspectionView, ensureRelationshipLedger } = require(".
 const { buildActiveNpcRequestView } = require("../game/activeRequests");
 const { buildLongTermEventView, ensureLongTermEventState } = require("../game/longTermEvents");
 const { buildOfficialCareerView, ensureOfficialCareerState } = require("../game/officialCareer");
+const { buildOfficialPostingsView, ensureOfficialPostingsState } = require("../game/officialPostings");
 const { buildRoleWorldCouplingView, ensureRoleWorldCouplingState } = require("../game/roleWorldCoupling");
 const { buildWorldGeographyView, ensureWorldGeographyState } = require("../game/worldGeography");
 const { buildWorldEntityView, ensureWorldEntityState } = require("../game/worldEntities");
@@ -77,6 +78,7 @@ function toExamPayload(worldState) {
     worldThreadView: buildWorldThreadView(worldState),
     longTermEventView: buildLongTermEventView(worldState),
     officialCareerView: buildOfficialCareerView(worldState),
+    officialPostingsView: buildOfficialPostingsView(worldState),
     worldState
   };
 }
@@ -102,6 +104,7 @@ function ensureCommonState(worldState) {
   ensureOfficialCareerState(worldState);
   ensureRoleWorldCouplingState(worldState);
   ensureWorldGeographyState(worldState);
+  ensureOfficialPostingsState(worldState);
   ensureWorldEntityState(worldState);
   ensureWorldPeopleState(worldState);
   ensureWorldThreadState(worldState);
@@ -216,6 +219,7 @@ router.post("/question", async (req, res, next) => {
         `${worldState.player.name}进入${exam.name}，领取${exam.questionType}题。`
       ]);
       ensureWorldGeographyState(worldState);
+      ensureOfficialPostingsState(worldState);
       ensureWorldEntityState(worldState);
       ensureWorldPeopleState(worldState);
       ensureWorldThreadState(worldState);
@@ -363,6 +367,7 @@ router.post("/submit", async (req, res, next) => {
       appendEvents(worldState, [summarizeResultEvent(worldState, activeExam, score, ranking, promotionResult)]);
       ensureRelationshipLedger(worldState);
       ensureWorldGeographyState(worldState);
+      ensureOfficialPostingsState(worldState);
       ensureWorldEntityState(worldState);
       ensureWorldPeopleState(worldState);
       ensureWorldThreadState(worldState);
@@ -407,6 +412,7 @@ router.post("/submit", async (req, res, next) => {
         worldThreadView: buildWorldThreadView(worldState),
         longTermEventView: buildLongTermEventView(worldState),
         officialCareerView: buildOfficialCareerView(worldState),
+        officialPostingsView: buildOfficialPostingsView(worldState),
         worldState
       };
     });

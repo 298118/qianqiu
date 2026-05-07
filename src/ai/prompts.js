@@ -2,6 +2,7 @@ const { summarizeRelationshipLedger } = require("../game/relationships");
 const { summarizeExamCalendarForPrompt } = require("../game/examCalendar");
 const { summarizeLongTermEventsForPrompt } = require("../game/longTermEvents");
 const { summarizeOfficialCareerForPrompt } = require("../game/officialCareer");
+const { summarizeOfficialPostingsForPrompt } = require("../game/officialPostings");
 const { summarizeRoleWorldCouplingForPrompt } = require("../game/roleWorldCoupling");
 const { summarizeWorldGeographyForPrompt } = require("../game/worldGeography");
 const { summarizeWorldEntitiesForPrompt } = require("../game/worldEntities");
@@ -99,6 +100,7 @@ function compactWorldState(worldState = {}) {
     worldPeople: summarizeWorldPeopleForPrompt(worldState),
     worldThreads: summarizeWorldThreadsForPrompt(worldState),
     officialCareer: summarizeOfficialCareerForPrompt(worldState),
+    officialPostings: summarizeOfficialPostingsForPrompt(worldState),
     roleWorldCoupling: summarizeRoleWorldCouplingForPrompt(worldState),
     activeExam: compactExam(worldState.activeExam),
     recentEvents: (worldState.eventHistory || []).slice(-6),

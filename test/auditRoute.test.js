@@ -167,6 +167,13 @@ test("S49.4 turn audit records provider overreach without applying server-owned 
               publicSummary: "SEALED_WORLD_PEOPLE_ROUTE_TOKEN"
             }]
           },
+          officialPostings: {
+            postings: [{
+              id: "provider-forged-posting",
+              officeId: "ministry_revenue_principal",
+              publicSummary: "SEALED_OFFICIAL_POSTING_ROUTE_TOKEN"
+            }]
+          },
           worldState: {
             hiddenToken: "SEALED_ROUTE_AUDIT_TOKEN",
             localPath: `E:\\LSMNQ\\data\\sessions\\x.json`,
@@ -213,6 +220,7 @@ test("S49.4 turn audit records provider overreach without applying server-owned 
   assert.equal(proposals[0].status, "partially_accepted");
   assert.equal(proposals[0].proposal.statePatch.player.examRank, "进士");
   assert.equal(proposals[0].proposal.statePatch.worldPeople, "[redacted]");
+  assert.equal(proposals[0].proposal.statePatch.officialPostings, "[redacted]");
   assert.ok(proposals[0].rejectedReasons.some((reason) => reason.includes("player.examRank")));
   assert.ok(proposals[0].rejectedReasons.some((reason) => reason.includes("statePatch.turnCount")));
   assert.ok(proposals[0].rejectedReasons.some((reason) => reason.includes("考试触发请求被拒绝")));
@@ -221,6 +229,7 @@ test("S49.4 turn audit records provider overreach without applying server-owned 
   assert.ok(auditEvents.some((event) => event.eventType === "turn_completed" && event.visibility === "public"));
   assert.equal(serializedAudit.includes("SEALED_ROUTE_AUDIT_TOKEN"), false);
   assert.equal(serializedAudit.includes("SEALED_WORLD_PEOPLE_ROUTE_TOKEN"), false);
+  assert.equal(serializedAudit.includes("SEALED_OFFICIAL_POSTING_ROUTE_TOKEN"), false);
   assert.equal(serializedAudit.includes("SEALED_PLAYER_ROUTE_TOKEN"), false);
   assert.equal(serializedAudit.includes("sk-proj-route-audit-secret-123456"), false);
   assert.equal(serializedAudit.includes("route-audit-secret"), false);

@@ -345,6 +345,39 @@ test("prompt input includes capped visible world geography without hidden rows",
   }
 });
 
+test("prompt input includes visible official postings without hidden geography refs", () => {
+  const worldState = createInitialState({ role: "official", playerName: "Posting Prompt Tester" });
+  Object.assign(worldState.player, {
+    officeTitle: "户部主事",
+    position: "户部主事"
+  });
+  worldState.officialCareer.currentPosting = "户部主事";
+  worldState.officialCareer.bureauId = "ministry_revenue";
+  worldState.officialPostings.cityJurisdictions.push({
+    id: "jurisdiction-hidden-prompt-posting",
+    name: "Hidden Posting Prompt Jurisdiction",
+    bureauId: "ministry_revenue",
+    cityId: "city-hidden-prompt-posting",
+    regionId: "region-north-zhili",
+    countryId: "country-ming",
+    routeIds: ["route-hidden-liaodong-smuggling"],
+    frontierZoneIds: ["frontier-hidden-palace-intel"],
+    visibility: "public",
+    publicSummary: "SEALED_PROMPT_POSTING_JURISDICTION"
+  });
+
+  const task = buildTurnTask(worldState, "核查户部漕粮任所");
+
+  assert.match(task.input, /officialPostings/);
+  assert.match(task.input, /ministry_revenue_principal|户部/);
+  assert.match(task.input, /city-beijing|北京/);
+  assert.doesNotMatch(task.input, /jurisdiction-hidden-prompt-posting/);
+  assert.doesNotMatch(task.input, /city-hidden-prompt-posting/);
+  assert.doesNotMatch(task.input, /route-hidden-liaodong-smuggling/);
+  assert.doesNotMatch(task.input, /frontier-hidden-palace-intel/);
+  assert.doesNotMatch(task.input, /SEALED_PROMPT_POSTING_JURISDICTION/);
+});
+
 test("scholar geography prompt does not expose role-visible diplomatic geography", () => {
   const worldState = createInitialState({ role: "scholar", playerName: "Scholar Geo Prompt Tester" });
   const task = buildTurnTask(worldState, "在县学听闻边报");

@@ -268,6 +268,7 @@ test("S44 ordinary turn drops mixed provider overreach while applying safe sugge
     relationshipView: payload.relationshipView,
     activeNpcRequestView: payload.activeNpcRequestView,
     officialCareerView: payload.officialCareerView,
+    officialPostingsView: payload.officialPostingsView,
     worldGeographyView: payload.worldGeographyView,
     worldEntityView: payload.worldEntityView,
     worldPeopleView: payload.worldPeopleView,

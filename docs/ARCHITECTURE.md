@@ -62,6 +62,8 @@ Important route ownership:
 - `src/game/worldPeople.js` owns the S51.2 runtime bridge from legacy `characters`, `relationshipLedger`, and visible `activeNpcRequest` rows into safe `worldState.worldPeople`, `worldPeopleView`, and capped prompt summaries. It is a projection bridge, not the hidden NPC database.
 - `src/game/longTermEvents.js` owns the S33 server-scheduled long-term event queue for seasonal, disaster, border, court, local case-chain, and cross-month consequence events. Providers may read a compact summary for narrative context, but they do not create, replace, resolve, or expire `worldState.longTermEvents`.
 - `src/game/officialCatalog.js` owns the S42.2 static office/bureau catalog used to normalize office titles, bureau duties, and promotion/transfer/outpost candidates.
+- `src/game/officialPostingSchemas.js` owns the S52.1 schema contract for future官署、官职、任所、考成和迁转 rows. It normalizes/clamps rows, builds hidden-filtered schema views, and provides capped prompt summaries.
+- `src/game/officialPostings.js` owns the S52.2 runtime bridge from `officialCatalog`, `officialCareer`, magistrate role state, and visible `worldGeographyView` city/jurisdiction rows into safe `worldState.officialPostings`, `officialPostingsView`, and capped prompt summaries. It is a visible projection bridge, not the hidden office-posting database.
 - `src/game/worldGeographySeeds.js` owns the S50.1 static geography seed catalog for countries, neighboring polities, regions, cities, routes, frontier zones, office jurisdictions, and initial visibility.
 - `src/game/worldGeography.js` owns the S50.2 server-owned per-session geography ledger. It normalizes `worldState.worldGeography`, refreshes light country/city/route/frontier pressure snapshots from current world metrics, builds hidden-filtered `worldGeographyView`, and provides the capped `worldGeography` prompt summary. Providers may read the summary but may not patch the ledger.
 - `src/game/officialCareer.js` owns the S34/S42 official career outcome engine. Providers may move official career meters, but they do not appoint, transfer, promote, demote, impeach-to-case, punish, retain, create assignments, alter assessment dossiers, or write `worldState.officialCareer`.
@@ -94,11 +96,11 @@ Request fields:
 
 As of S31.3, `role` is normalized and validated in `src/game/initialState.js`. Missing or blank role values default to `scholar`; unsupported roles return `400`. The accepted enum is `scholar`, `emperor`, `minister`, `general`, `magistrate`, and `official`, and the browser start form exposes all six values.
 
-Returns `201` with `sessionId`, `worldState`, `examCalendarView`, `examRivalView`, `relationshipView`, `activeNpcRequestView`, `roleWorldCouplingView`, `worldGeographyView`, `worldEntityView`, `worldPeopleView`, `worldThreadView`, `longTermEventView`, `officialCareerView`, and opening `narrative`.
+Returns `201` with `sessionId`, `worldState`, `examCalendarView`, `examRivalView`, `relationshipView`, `activeNpcRequestView`, `roleWorldCouplingView`, `worldGeographyView`, `worldEntityView`, `worldPeopleView`, `worldThreadView`, `longTermEventView`, `officialCareerView`, `officialPostingsView`, and opening `narrative`.
 
 ### `GET /api/game/state/:sessionId`
 
-Reads the JSON session file and returns `sessionId`, `worldState`, the player-facing `examCalendarView`, `examRivalView`, `relationshipView`, `activeNpcRequestView`, `roleWorldCouplingView`, `worldGeographyView`, `worldEntityView`, `worldPeopleView`, `worldThreadView`, `longTermEventView`, and `officialCareerView`.
+Reads the JSON session file and returns `sessionId`, `worldState`, the player-facing `examCalendarView`, `examRivalView`, `relationshipView`, `activeNpcRequestView`, `roleWorldCouplingView`, `worldGeographyView`, `worldEntityView`, `worldPeopleView`, `worldThreadView`, `longTermEventView`, `officialCareerView`, and `officialPostingsView`.
 
 ### `GET /api/game/saves`
 
@@ -301,6 +303,15 @@ Requests without SSE negotiation still return plain JSON for tests and compatibi
     "currentPosting": null,
     "recentOutcomes": []
   },
+  "officialPostingsView": {
+    "schemaVersion": 1,
+    "bureaus": [],
+    "offices": [],
+    "cityJurisdictions": [],
+    "postings": [],
+    "assessmentRecords": [],
+    "transferRecords": []
+  },
   "officialCareer": {
     "summary": "",
     "events": [],
@@ -326,7 +337,7 @@ Request:
 
 `level` may be omitted; the server derives the next eligible exam from `player.examRank`. The route saves a complete `worldState.activeExam`, reuses an existing unanswered exam for the same level, and rejects attempts to open a different exam while another question is active. S48.4 adds `activeExam.sceneTime` for `entry`, `question_review`, `outline`, `drafting`, `fair_copy`, and `submitted`; question creation/reuse preserves global date fields and does not advance `turnCount/year/month/tenDayPeriod`.
 
-Returns `examId`, exam metadata, requirements, readiness, entry preparation, `examCalendar`, `sceneTime`, `examCalendarView`, `examRivalView`, `relationshipView`, `activeNpcRequestView`, `roleWorldCouplingView`, `worldGeographyView`, `worldEntityView`, `worldPeopleView`, `worldThreadView`, `longTermEventView`, `officialCareerView`, and `worldState`.
+Returns `examId`, exam metadata, requirements, readiness, entry preparation, `examCalendar`, `sceneTime`, `examCalendarView`, `examRivalView`, `relationshipView`, `activeNpcRequestView`, `roleWorldCouplingView`, `worldGeographyView`, `worldEntityView`, `worldPeopleView`, `worldThreadView`, `longTermEventView`, `officialCareerView`, `officialPostingsView`, and `worldState`.
 
 ### `POST /api/exam/progress`
 
@@ -354,7 +365,7 @@ Request:
 }
 ```
 
-The server checks authenticity, asks the provider for grading, applies local penalties, builds virtual candidates with inspectable essay profiles, applies promotion or cheating consequences, updates persistent same-field rivals, appends the essay result to `player.examHistory`, clears `activeExam`, saves the session and returns the result plus `examCalendarView`, `examRivalView`, `relationshipView`, `activeNpcRequestView`, `roleWorldCouplingView`, `worldGeographyView`, `worldEntityView`, `worldPeopleView`, `worldThreadView`, `longTermEventView`, `officialCareerView`, and `worldState`. The response includes `examQuestion`, `essay`, `entryPreparation`, `examCalendar`, `sceneTime`, `examStartedAt`, and `examSubmittedAt` so the browser can render the just-submitted archive directly.
+The server checks authenticity, asks the provider for grading, applies local penalties, builds virtual candidates with inspectable essay profiles, applies promotion or cheating consequences, updates persistent same-field rivals, appends the essay result to `player.examHistory`, clears `activeExam`, saves the session and returns the result plus `examCalendarView`, `examRivalView`, `relationshipView`, `activeNpcRequestView`, `roleWorldCouplingView`, `worldGeographyView`, `worldEntityView`, `worldPeopleView`, `worldThreadView`, `longTermEventView`, `officialCareerView`, `officialPostingsView`, and `worldState`. The response includes `examQuestion`, `essay`, `entryPreparation`, `examCalendar`, `sceneTime`, `examStartedAt`, and `examSubmittedAt` so the browser can render the just-submitted archive directly.
 
 ## AI Provider Contract
 
@@ -733,7 +744,9 @@ S50.2 adds `src/game/worldGeography.js` and `worldState.worldGeography`. New ses
 
 S51.1 adds `src/game/worldPeopleSchemas.js` as the next database-domain contract after geography. S51.2 adds `src/game/worldPeople.js`, `worldState.worldPeople`, `worldPeopleView`, and capped prompt context. The bridge preserves old `characters`, `relationshipLedger`, `relationshipView`, and `activeNpcRequestView` while giving future 人物谱牒 or 家产 panels a server-built view to consume. It intentionally stores only the visible bridge projection; future hidden NPC/家产 databases require route redaction or a non-raw player state API first.
 
-S52.1 adds [docs/OFFICIAL_POSTING_DATABASE_CONTRACT.md](OFFICIAL_POSTING_DATABASE_CONTRACT.md), `src/game/officialPostingSchemas.js`, and `test/officialPostingSchemas.test.js` as the官职任所 database-domain contract. The helper normalizes future `bureaus`, `offices`, `cityJurisdictions`, `postings`, `assessmentRecords`, and `transferRecords`, then builds hidden-filtered views and capped prompt summaries. It reuses `officialCatalog` ids for官署/官职 and S50 geography ids for任所辖区, but it does not write `worldState`, alter route payloads, add browser panels, or create SQLite business tables in this slice. Future `worldState.officialPostings` is treated as server-owned: ordinary provider `statePatch.officialPostings` is rejected by schema or ignored by state patching, remote normalization drops it, and provider long-run flags it as a protected key.
+S52.1 adds [docs/OFFICIAL_POSTING_DATABASE_CONTRACT.md](OFFICIAL_POSTING_DATABASE_CONTRACT.md), `src/game/officialPostingSchemas.js`, and `test/officialPostingSchemas.test.js` as the官职任所 database-domain contract. The helper normalizes future `bureaus`, `offices`, `cityJurisdictions`, `postings`, `assessmentRecords`, and `transferRecords`, then builds hidden-filtered views and capped prompt summaries. It reuses `officialCatalog` ids for官署/官职 and S50 geography ids for任所辖区. `worldState.officialPostings` is server-owned: ordinary provider `statePatch.officialPostings` is rejected by schema or ignored by state patching, remote normalization drops it, audit proposals redact it, and provider long-run flags it as a protected key.
+
+S52.2 adds `src/game/officialPostings.js`, `worldState.officialPostings`, `officialPostingsView`, and capped `officialPostings` prompt context. The bridge instantiates catalog bureaus/offices, converts visible `worldGeographyView.officeJurisdictions` and cities into per-city任所辖区 rows, maps direct official and magistrate starts to the current visible posting, and derives transfer records from server-owned `officialCareer.careerHistory`. Because routes still return raw local `worldState`, the stored ledger is only the hidden-filtered visible projection. This slice does not alter `officialCareerView`, does not add browser官职簿/任所地理 panels, and does not create SQLite office business tables.
 
 ## Verification
 

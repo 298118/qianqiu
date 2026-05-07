@@ -20,6 +20,10 @@ const {
   runOfficialCareerStep
 } = require("../game/officialCareer");
 const {
+  buildOfficialPostingsView,
+  ensureOfficialPostingsState
+} = require("../game/officialPostings");
+const {
   buildRoleWorldCouplingView,
   ensureRoleWorldCouplingState,
   runRoleWorldCouplingStep
@@ -99,6 +103,7 @@ async function processTurn(sessionId, input) {
     ensureOfficialCareerState(worldState);
     ensureRoleWorldCouplingState(worldState);
     ensureWorldGeographyState(worldState);
+    ensureOfficialPostingsState(worldState);
     ensureWorldEntityState(worldState);
     ensureWorldPeopleState(worldState);
     ensureWorldThreadState(worldState);
@@ -119,6 +124,7 @@ async function processStreamingTurn(sessionId, input, streamHandlers = {}) {
     ensureOfficialCareerState(worldState);
     ensureRoleWorldCouplingState(worldState);
     ensureWorldGeographyState(worldState);
+    ensureOfficialPostingsState(worldState);
     ensureWorldEntityState(worldState);
     ensureWorldPeopleState(worldState);
     ensureWorldThreadState(worldState);
@@ -219,7 +225,8 @@ function buildCommonTurnViews(worldState) {
     worldPeopleView: buildWorldPeopleView(worldState),
     worldThreadView: buildWorldThreadView(worldState),
     longTermEventView: buildLongTermEventView(worldState),
-    officialCareerView: buildOfficialCareerView(worldState)
+    officialCareerView: buildOfficialCareerView(worldState),
+    officialPostingsView: buildOfficialPostingsView(worldState)
   };
 }
 
@@ -231,6 +238,7 @@ async function finalizeExamSceneTurn(worldState, input, context = null) {
   ensureOfficialCareerState(worldState);
   ensureRoleWorldCouplingState(worldState);
   ensureWorldGeographyState(worldState);
+  ensureOfficialPostingsState(worldState);
   ensureWorldEntityState(worldState);
   ensureWorldPeopleState(worldState);
   ensureWorldThreadState(worldState);
@@ -356,6 +364,7 @@ async function finalizeTurn(worldState, result, input, auditOptions = {}) {
   ensureOfficialCareerState(worldState);
   ensureRoleWorldCouplingState(worldState);
   ensureWorldGeographyState(worldState);
+  ensureOfficialPostingsState(worldState);
   ensureWorldEntityState(worldState);
   ensureWorldPeopleState(worldState);
   ensureWorldThreadState(worldState);
@@ -474,6 +483,7 @@ async function streamTurn(res, sessionId, input) {
       longTermEventView: payload.longTermEventView,
       longTermEvents: payload.longTermEvents,
       officialCareerView: payload.officialCareerView,
+      officialPostingsView: payload.officialPostingsView,
       officialCareer: payload.officialCareer,
       examTrigger: payload.examTrigger,
       examScene: payload.examScene || null,
@@ -513,6 +523,7 @@ router.post("/start", async (req, res, next) => {
       worldThreadView: buildWorldThreadView(worldState),
       longTermEventView: buildLongTermEventView(worldState),
       officialCareerView: buildOfficialCareerView(worldState),
+      officialPostingsView: buildOfficialPostingsView(worldState),
       narrative: opening.narrative
     });
   } catch (error) {
@@ -529,6 +540,7 @@ router.get("/state/:sessionId", async (req, res, next) => {
     ensureOfficialCareerState(worldState);
     ensureRoleWorldCouplingState(worldState);
     ensureWorldGeographyState(worldState);
+    ensureOfficialPostingsState(worldState);
     ensureWorldEntityState(worldState);
     ensureWorldPeopleState(worldState);
     ensureWorldThreadState(worldState);
@@ -545,7 +557,8 @@ router.get("/state/:sessionId", async (req, res, next) => {
       worldPeopleView: buildWorldPeopleView(worldState),
       worldThreadView: buildWorldThreadView(worldState),
       longTermEventView: buildLongTermEventView(worldState),
-      officialCareerView: buildOfficialCareerView(worldState)
+      officialCareerView: buildOfficialCareerView(worldState),
+      officialPostingsView: buildOfficialPostingsView(worldState)
     });
   } catch (error) {
     next(error);

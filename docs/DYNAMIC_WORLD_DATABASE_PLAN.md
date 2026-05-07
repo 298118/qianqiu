@@ -516,12 +516,13 @@ S51.1 已先新增 [人物、家族、资产、田产与关系 Schema 契约](NP
 - 地方官任所读取 `cities` 动态指标。
 - 城市民情、钱粮、案牍、水利、士绅与官场差事联动。
 
-S52.1 已先新增 [官职、官署、任所与迁转数据库契约](OFFICIAL_POSTING_DATABASE_CONTRACT.md) 与 `src/game/officialPostingSchemas.js`，固定 future `bureaus`、`offices`、`cityJurisdictions`、`postings`、`assessmentRecords`、`transferRecords` 的字段、数值范围、`public/role_visible/office_visible/relationship_visible/rumor/hidden` 可见性、hidden nested refs 裁剪和 capped prompt summary。该步骤只定义 schema/helper 与 provider 越权边界，不写 `worldState.officialPostings`，不改变 `officialCareerView`，不新增浏览器官职簿/任所地理面板，也不建 SQLite 业务表。
+S52.1 已先新增 [官职、官署、任所与迁转数据库契约](OFFICIAL_POSTING_DATABASE_CONTRACT.md) 与 `src/game/officialPostingSchemas.js`，固定 future `bureaus`、`offices`、`cityJurisdictions`、`postings`、`assessmentRecords`、`transferRecords` 的字段、数值范围、`public/role_visible/office_visible/relationship_visible/rumor/hidden` 可见性、hidden nested refs 裁剪和 capped prompt summary。S52.2 已新增 `src/game/officialPostings.js`，从 `officialCatalog`、`officialCareer`、地方官 role state 和可见 `worldGeographyView` 派生 `worldState.officialPostings`、`officialPostingsView` 与 capped prompt 摘要。该桥接只保存安全可见 projection，不改变 `officialCareerView`，不新增浏览器官职簿/任所地理面板，也不建 SQLite 业务表。
 
 验收：
 
 - 完整入仕路径不破坏。
 - 玩家外放/任所变动由服务器写 posting，不由 AI 直接任命。
+- game/exam/SSE payload 返回 `officialPostingsView`；prompt 只读 capped `officialPostings`，不暴露 hidden 地理引用、密札考成或未公开调任。
 
 ### S53：检索式 prompt context 与浏览器检查面板
 

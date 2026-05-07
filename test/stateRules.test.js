@@ -9,6 +9,7 @@ test("applyStatePatch applies only whitelisted fields and clamps numeric ranges"
   const originalSessionId = worldState.sessionId;
   const originalRole = worldState.player.role;
   const originalCharacters = JSON.parse(JSON.stringify(worldState.characters));
+  const originalOfficialPostings = JSON.parse(JSON.stringify(worldState.officialPostings));
   const originalWorldPeople = JSON.parse(JSON.stringify(worldState.worldPeople));
 
   applyStatePatch(worldState, {
@@ -56,7 +57,7 @@ test("applyStatePatch applies only whitelisted fields and clamps numeric ranges"
   assert.equal(worldState.activeNpcRequest, null);
   assert.deepEqual(worldState.longTermEvents.queue, []);
   assert.deepEqual(worldState.officialCareer.careerHistory, []);
-  assert.equal(worldState.officialPostings, undefined);
+  assert.deepEqual(worldState.officialPostings, originalOfficialPostings);
   assert.deepEqual(worldState.roleWorldCoupling.recentImpacts, []);
   assert.equal(worldState.worldGeography.countries.some((country) => country.id === "provider-forged-country"), false);
   assert.equal(worldState.worldEntities.entities.some((entity) => entity.id === "provider-forged"), false);
@@ -163,6 +164,27 @@ test("ordinary official patches cannot use position as a hidden office appointme
   });
 
   assert.equal(worldState.player.position, "署中谨慎观政");
+});
+
+test("ordinary magistrate patches cannot use position as a hidden office appointment", () => {
+  const worldState = createInitialState({ playerName: "Tester", role: "magistrate" });
+  assert.equal(worldState.player.position, "知县");
+
+  applyStatePatch(worldState, {
+    player: {
+      position: "户部主事"
+    }
+  });
+
+  assert.equal(worldState.player.position, "知县");
+
+  applyStatePatch(worldState, {
+    player: {
+      position: "堂上问案"
+    }
+  });
+
+  assert.equal(worldState.player.position, "堂上问案");
 });
 
 test("applyStatePatch can apply server follow-up patches without incrementing turn count", () => {

@@ -6,6 +6,7 @@ const { createInitialWorldGeographyState } = require("./worldGeography");
 const { createInitialWorldEntityState } = require("./worldEntities");
 const { createInitialWorldPeopleState } = require("./worldPeople");
 const { createInitialWorldThreadState } = require("./worldThreads");
+const { createInitialOfficialPostingsState } = require("./officialPostings");
 const { NUMERIC_RANGES, clamp } = require("./stateRules");
 
 const ROLE_LABELS = {
@@ -226,6 +227,7 @@ function createInitialState(input = {}) {
     worldEntities: null,
     worldPeople: null,
     worldThreads: createInitialWorldThreadState(),
+    officialPostings: null,
     officialCareer: {
       schemaVersion: 2,
       tenureMonths: 0,
@@ -288,6 +290,7 @@ function createInitialState(input = {}) {
   };
 
   worldState.worldGeography = createInitialWorldGeographyState(worldState);
+  worldState.officialPostings = createInitialOfficialPostingsState(worldState);
   worldState.worldEntities = createInitialWorldEntityState(worldState);
   worldState.relationshipLedger = createInitialRelationshipLedger(worldState);
   worldState.worldPeople = createInitialWorldPeopleState(worldState);

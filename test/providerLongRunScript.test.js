@@ -87,6 +87,7 @@ test("provider long-run creates a scholar acceptance world without session write
   assert.equal(worldState.examCalendar.schemaVersion, 1);
   assert.equal(worldState.longTermEvents.schemaVersion, 1);
   assert.equal(worldState.roleWorldCoupling.schemaVersion, 1);
+  assert.equal(worldState.officialPostings.schemaVersion, 1);
   assert.equal(worldState.worldGeography.schemaVersion, 1);
   assert.equal(worldState.worldEntities.schemaVersion, 1);
   assert.equal(worldState.worldPeople.schemaVersion, 1);
