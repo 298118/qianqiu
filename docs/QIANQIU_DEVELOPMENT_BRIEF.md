@@ -29,6 +29,8 @@
 
 当前活动路线图：`docs/DEVELOPMENT_STEPS.md`，已切换为 S48 时间专项规划与进度台账。S48.3 已建立 `worldState.tenDayPeriod`、共享时间 helper、旧档上旬默认、provider 时间字段边界，并把普通自由行动改为每回合推进一旬；月末完整结算只在下旬进入下月上旬时发生。S48.4 已先把科举落成局部场景时间：考试入场、审题、拟纲、作答、誊清、交卷推进 `activeExam.sceneTime`，不消耗全局旬。S48.5 已把官场差事/弹劾、长期事件冷却、World Threads 期限标签、World Entities cadence 和 provider long-run 脚本适配到“旬回合 vs 月末月份”的语义。S48.6 已把状态栏、存档卡、考试日历、考试弹窗、考试档案和回合反馈统一显示“年月旬”，并让 browser smoke 与 provider long-run 检查这一节奏。
 
+动态数据库方向见 `docs/DYNAMIC_WORLD_DATABASE_PLAN.md`。短期继续使用当前 JSON session 存档；后续若要承载大量国家/邻国、城市、NPC、家族、官职任命、地方任所、事件记录和 AI 建议审计，应先抽 storage adapter，再以 SQLite 本地原型保存 session metadata、revision、JSON `world_state`、事件日志和 AI proposal ledger，最后逐步拆业务表。AI 不能直接写数据库或执行 SQL，只能提交结构化建议；服务器继续负责 schema、白名单、clamp、隐藏过滤、科举晋级、官职任免、长期事件、世界实体、世界议程和持久化事务。
+
 开发规范不变。第 12 节和第 13 节仍是每次开发必须遵守的流程；Mock 默认可玩、真实 provider 可选、服务器拥有状态边界和科举规则这些要求继续有效。
 
 稳定开发治理锚点见 `docs/DEVELOPMENT_GOVERNANCE.md`。重写路线图、交接文档或 brief 时不得删弱其中的必守规范；`npm run check:docs-governance` 和 `npm test` 会检查受保护内容。
@@ -695,6 +697,8 @@ S45.1 已新增 `docs/WORLD_ENTITIES_CONTRACT.md` 和 `src/game/worldEntities.js
 S46.1 已把依赖、插件与开源参考的引入流程落入 `docs/DEPENDENCY_PLUGIN_GOVERNANCE.md`。后续新增或升级 `package.json` 依赖、开发工具、外部服务 SDK、Codex/Claude 插件工作流或开源参考时，必须先说明问题、用途、许可证、维护状态、安全/隐私影响、Mock/no-key 影响、验证命令、文档落点和回滚策略；这一步不新增运行时依赖。
 
 所有时间专项实现仍需满足基础验收：默认 Mock 可运行，完整 scholar -> official 路径不得被破坏，真实 provider 不得成为本地启动必要条件，服务器继续拥有状态边界、时间推进、科举晋级、作弊惩罚、长期事件结果、官场授官升降、角色-世界联动后果和持久化裁决。
+
+动态数据库后续也必须满足同一边界：默认 JSON/Mock 路径在 SQLite 成熟前不得被破坏；数据库只增强索引、审计、长期存储和检索式 prompt context，不把核心裁决交给 AI、SQL 或黑箱库。
 
 ## 16. 历史实现笔记归档
 

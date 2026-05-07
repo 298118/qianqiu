@@ -1,6 +1,6 @@
 # 《千秋》时间专项开发路线图与进度台账
 
-本文件是 Codex 与 Claude Code 共同维护的当前活动路线图与进度台账。第四阶段已经完成并归档，当前从 S48 起进入“时间专项”规划与执行。
+本文件是 Codex 与 Claude Code 共同维护的当前活动路线图与进度台账。第四阶段已经完成并归档，S48 时间专项已完成主要实现；S49 起记录动态世界数据库的规划与后续迁移步骤。
 
 - 第一阶段路线图已归档到 [docs/PHASE_ONE_ROADMAP_ARCHIVE.md](PHASE_ONE_ROADMAP_ARCHIVE.md)，验收记录见 [docs/PHASE_ONE_ACCEPTANCE.md](PHASE_ONE_ACCEPTANCE.md)。
 - 第二阶段路线图已归档到 [docs/PHASE_TWO_ROADMAP_ARCHIVE.md](PHASE_TWO_ROADMAP_ARCHIVE.md)，验收记录见 [docs/PHASE_TWO_ACCEPTANCE.md](PHASE_TWO_ACCEPTANCE.md)。
@@ -95,6 +95,11 @@
 | S48.4 | DONE | 建立场景内时间框架，并优先把科举考试改成多阶段局部时间 | 2026-05-07 | Codex + subagent | `54afc38` |
 | S48.5 | DONE | 适配长期事件、官场任期/差事、世界议程、世界实体和脚本验收的月末/旬度语义 | 2026-05-07 | Codex + subagents | `50d228b` |
 | S48.6 | DONE | 完成前端日期展示、浏览器 smoke、provider long-run 和完整书生入仕验收 | 2026-05-07 | Codex + subagent | `6bcfb77` |
+| S49.1 | DONE | 形成动态世界数据库规划：国家/邻国、城市、NPC、官职、事件、AI proposal 审计与 SQLite 迁移边界 | 2026-05-07 | Codex + read-only subagent | current documentation commit |
+| S49.2 | TODO | 抽象存储 adapter 接口，保持 JSON 为默认实现并补 adapter contract tests |  |  |  |
+| S49.3 | TODO | SQLite 本地原型：一行一 session，保留 JSON `world_state`，默认路径仍为 JSON |  |  |  |
+| S49.4 | TODO | 事件日志与 AI proposal 审计：记录模型建议、服务器接受/拒绝和最终应用事件 |  |  |  |
+| S50 | TODO | 国家/邻国、城市地理与天下格局种子，供后续数据库实例化与 prompt 检索 |  |  |  |
 
 ## 5. 实施规划
 
@@ -254,6 +259,21 @@
 - 不改变开题、交卷、读档、开局的全局时间推进：这些操作默认不额外推进旬，除非后续步骤明确设计为场景结算。
 - 不改变开发规范、AI/server 权限边界、Mock 默认可玩、真实 provider 可选、JSON 存档路线或无构建前端栈。
 - 旧存档无需迁移文件；读取时缺少 `tenDayPeriod` 即按上旬补齐。
+- 动态数据库不得一步到位替换当前 JSON 存档。先抽 adapter，再做 SQLite session row + JSON payload，再加事件/AI proposal 审计，最后按需要拆国家、城市、NPC、官职、关系和场景表。
+- AI 不得直接写数据库、生成 SQL 或拥有业务表写权限；AI 只能提交 schema-valid 建议，服务器在事务中校验、裁决、写库并记录审计。
+
+## 6.1 S49 动态世界数据库方向
+
+详见 [docs/DYNAMIC_WORLD_DATABASE_PLAN.md](DYNAMIC_WORLD_DATABASE_PLAN.md)。
+
+核心结论：
+
+- 当前 JSON session + `worldState` 对短期单机开发仍可用，尤其是 `worldEntities`、`worldThreads`、`relationshipLedger`、`longTermEvents`、`officialCareer` 等 ledger 都有服务器归一化和容量上限。
+- 当国家/邻国、城市、NPC、家族、官职任命、事件记录和 AI proposal 审计增长到需要检索、索引、回放或跨 session 管理时，应迁移到 SQLite。
+- 第一个数据库切片只应保存 `world_sessions` metadata、revision 和 JSON `world_state`，不改变 route payload 和完整书生入仕路径。
+- 第二层再增加 `event_log` 与 `ai_change_proposals`，记录发生过什么、模型建议过什么、服务器为何接受或拒绝。
+- 之后按需求拆 `countries`、`diplomatic_relations`、`cities`、`npcs`、`households`、`office_postings`、`relationships`、`active_scenes`、`world_entities`、`world_threads` 等表。
+- Prompt 只能读服务器 projection，不读 raw table；浏览器新增面板也只能读 route view。
 
 ## 7. 进度记录
 
@@ -440,3 +460,31 @@
 下一步：
 
 - 为 S49 或后续 S48 follow-up 明确范围，优先考虑把考试以外的高密度场景接入 scene-local time，同时保持 browser 年月旬显示契约。
+
+### S49.1 进度记录
+
+步骤：S49.1
+状态：DONE，提交待本次文档 commit。
+
+完成：
+
+- 新增 `docs/DYNAMIC_WORLD_DATABASE_PLAN.md`，详细规划动态世界数据库的可行性、架构边界、数据域、最小表结构、迁移阶段和 AI/server 权限。
+- 结论是中长期可行且值得做，但短期不应一次性替换当前 JSON 存档；推荐先做 storage adapter，再做 SQLite session row + JSON `world_state` 原型，再加事件日志和 AI proposal 审计，最后选择性拆国家/邻国、城市、NPC、家族、官职、关系、场景和世界实体表。
+- 明确 AI 不能直接写数据库、执行 SQL 或拥有业务表写权限；AI 只能提交结构化建议，服务器通过 schema、白名单、clamp、隐藏过滤、领域规则和事务写入裁决。
+- README、架构文档、产品 brief、路线图和 shared context 已同步该规划入口。
+- 只读子代理 Boyle 审查了当前 JSON/session/worldState 边界，确认短期 JSON 仍能支撑，数据库应从 adapter 与 SQLite 原型开始；子代理未编辑文件，未运行 Git 写命令。
+
+验证：
+
+- `npm run check:docs-governance`
+- `git diff --check`
+
+风险/遗留：
+
+- 本步骤为低风险纯文档规划，不改运行时代码、不新增依赖、不改变存档格式；提交前只读复审按文档低风险规则跳过，并在此记录。
+- S49.2 才开始抽 storage adapter；S49.3 若引入 SQLite 依赖，必须按依赖治理记录版本、许可证、安装影响、Mock/no-key 影响和回滚策略。
+
+下一步：
+
+- 若优先做数据库：开始 S49.2 storage adapter 接口和 contract tests。
+- 若优先做玩法：继续把考试以外的廷议、堂审、旅途遭遇或重大差事收束接入 scene-local time。
