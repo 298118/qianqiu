@@ -99,7 +99,7 @@
 | S49.3 | DONE | 本地 SQLite 原型：一行一 session，保留 JSON `world_state`，以可选 env 开启，不做远程/账号/多人 | 2026-05-07 | Codex + read-only subagents | `22217e0` |
 | S49.4 | DONE | 事件日志与 AI proposal 审计：记录模型建议、服务器接受/拒绝和最终应用事件 | 2026-05-07 | Codex + read-only subagents | `092de20` |
 | S50.1 | DONE | 静态天下与邻国种子契约：国家、城市、路线、边境、官署辖区和初始可见性 | 2026-05-07 | Codex + read-only subagents | `45f9b65` |
-| S50.2 | DONE | per-session 国家/城市实例化与 prompt projection，先不替代现有 worldState 指标 | 2026-05-07 | Codex + read-only subagents | `待提交` |
+| S50.2 | DONE | per-session 国家/城市实例化与 prompt projection，先不替代现有 worldState 指标 | 2026-05-07 | Codex + read-only subagents | `b0ced01` |
 | S51.1 | TODO | NPC、家族、资产、田产、关系和可见性 schema 契约 |  |  |  |
 | S51.2 | TODO | 桥接当前 `characters`、`relationshipLedger`、active requests 与 NPC/关系表 |  |  |  |
 | S52.1 | TODO | 官职、官署、任所、城市辖区、考成和调任记录的数据库契约 |  |  |  |
@@ -319,7 +319,7 @@
 
 ### S50.2：每局国家/城市实例化与 Prompt Projection
 
-状态：DONE。实现/文档提交：`待提交 feat: instantiate world geography ledger`；提交后回填哈希。
+状态：DONE。实现/文档提交：`b0ced01 feat: instantiate world geography ledger`；本哈希回填为低风险纯文档 follow-up。
 
 目标：
 
@@ -443,7 +443,7 @@
 
 步骤：S50.2
 
-提交：`待提交 feat: instantiate world geography ledger`
+提交：`b0ced01 feat: instantiate world geography ledger`
 
 完成：
 
@@ -468,6 +468,7 @@
 
 - `worldGeographyView` 是当前 UI/prompt 契约；完整本地 `worldState` 仍随既有 route payload 返回，不应作为浏览器地理面板来源。
 - S50.2 不新增浏览器面板、SQLite 国家/城市业务表或 World Entities/Threads 地理联动；下一步进入 S51.1 NPC、家族、资产、田产、关系和可见性 schema 契约。
+- 本哈希回填为低风险纯文档 follow-up，跳过额外提交前子代理复审；验证 `npm run check:docs-governance` 与 `git diff --check`。
 
 下一步：
 
