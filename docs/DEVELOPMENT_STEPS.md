@@ -109,7 +109,7 @@
 | S53.3 | DONE | 浏览器信息面板前端接线基础：缓存 S50-S52 view 并建立 tab/面板壳 | 2026-05-07 | Codex + read-only subagents | `89e73c2` |
 | S53.4 | DONE | 天下格局与任所地理面板：地理、任所、辖区、路线和压力摘要 | 2026-05-07 | Codex + read-only subagents | `657c08e` |
 | S53.5 | DONE | 人物谱牒与官职簿面板：人物/家产关系、官署官职、任命考成迁转 | 2026-05-07 | Codex + read-only subagents | `e642ae3` |
-| S53.6 | TODO | 事件档案安全 projection 与浏览器面板 |  |  |  |
+| S53.6 | DONE | 事件档案安全 projection 与浏览器面板 | 2026-05-07 | Codex + read-only subagents | 待提交 |
 
 ## 5. 实施规划
 
@@ -729,6 +729,55 @@
 下一步：
 
 - S53.6：事件档案安全 projection 与浏览器面板，先补服务器 sanitized projection，再开放 `#event-archive-panel` 内容。
+
+### S53.6：事件档案安全 projection 与浏览器面板
+
+状态：DONE。实现提交：待提交。只读探索子代理 Mill 梳理了后端 route/SSE/exam payload 接入点、raw audit/provider/prompt/path/key 禁止项和最小测试点；只读探索子代理 Huygens 梳理了前端 tab 禁用原因、启用后的 selector/data 属性、browser smoke 默认断言和布局/泄漏风险。提交前只读复审 Huygens 确认代码侧无 raw audit/proposal/prompt/path/key 泄漏或 payload 覆盖阻断问题，并要求回填最终验证记录；该文档状态已在提交前同步。
+
+目标：
+
+- 新增服务器 `eventArchiveView`，从公开事件来源整理玩家可查卷宗。
+- `eventArchiveView` 只能读取 sanitized `eventHistory` 文本、`worldThreadView`、`longTermEventView`、`officialCareerView` 和公开考试档案摘要；不得读取 JSON/SQLite audit sidecar、`event_log`、`ai_change_proposals`、provider proposal、prompt、`retrievalContext`、本地路径或 key。
+- 将 `eventArchiveView` 接入 game start/state/turn/SSE 和 exam question/progress/submit payload。
+- 启用浏览器 `#event-archive-panel`，只读 `eventArchiveView` 渲染 `.event-archive-item[data-event-id][data-source-type][data-status]`。
+
+完成：
+
+- 新增 `src/game/eventArchive.js`，提供 `buildEventArchiveView(worldState)` 与安全文本清理；输出 `schemaVersion`、`generatedAtTurn`、`dateLabel`、`items[]`、`counts` 和 `hiddenNotice`，每条 item 带来源、标题、摘要、年月旬、回合、可见性、状态和可选牵连标签。
+- `src/routes/game.js` 的 `buildCommonTurnViews()`、SSE `state_preview` / `final_state`、`POST /api/game/start` 和 `GET /api/game/state/:sessionId` 均返回 `eventArchiveView`。
+- `src/routes/exam.js` 的 `toExamPayload()` 与 `/api/exam/submit` 返回 `eventArchiveView`，覆盖取题、局部推进和交卷结果。
+- `public/app.js` 启用事件 tab，并新增事件档案摘要与 `renderEventArchiveDetails()`；`public/styles.css` 复用信息卡样式到事件档案卡。
+- `scripts/browserSmoke.js` 默认要求 event archive ready、事件 tab 可切换、事件条目包含 source/status/日期 data 属性、事件档案指标足够、raw audit/proposal/path/key 文本不泄漏，并测事件档案 grid overflow。
+- 新增 `test/eventArchive.test.js` 和 `test/gameTurnEventArchive.test.js`，覆盖 projection 合并来源、cap、排序、脱敏、route/SSE/exam payload 接入；`test/browserSmokeScript.test.js` 更新 helper 失败用例。
+- README、产品 brief、架构文档、browser acceptance、信息面板规划、AI 权限矩阵和 shared context 同步 S53.6 边界。
+
+验证：
+
+- `node --check src\game\eventArchive.js`
+- `node --check src\routes\game.js`
+- `node --check src\routes\exam.js`
+- `node --check public\app.js`
+- `node --check scripts\browserSmoke.js`
+- `node --check test\eventArchive.test.js`
+- `node --check test\gameTurnEventArchive.test.js`
+- `node --check test\browserSmokeScript.test.js`
+- `node --test test\eventArchive.test.js test\gameTurnEventArchive.test.js`
+- `node --test test\browserSmokeScript.test.js`
+- `node --test test\eventArchive.test.js test\gameTurnEventArchive.test.js test\browserSmokeScript.test.js`
+- `npm run check:docs-governance`
+- `git diff --check`
+- `$env:AI_PROVIDER='mock'; npm run smoke:browser`（14 张 UI 截图验收通过）
+- `$env:AI_PROVIDER='mock'; npm test`（376 项通过）
+- 只读预提交复审 Huygens：代码侧无阻断；其指出的文档验证状态滞后已在提交前修正。
+
+风险/遗留：
+
+- S53.6 不新增 SQLite 事件业务表，不开放 raw audit API，不改变 provider schema/prompt contract，也不把事件档案做成结算入口。
+- `eventArchiveView` 当前是 capped 总览；若未来要接入真实 audit 检索或分页，需要先新增权限/分页 projection，并补 raw audit payload 泄漏测试。
+
+下一步：
+
+- S53.6 是当前 S53 信息面板拆步的收束项；下一步应先定义新的本地数据库路线图小步，再开始新 runtime 改动。
 
 ## 6. 数据域规划
 

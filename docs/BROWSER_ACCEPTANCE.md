@@ -31,7 +31,7 @@ The smoke uses `playwright-core` with an installed Chrome or Edge executable. If
 | Relationship panel | Checks visible contact/faction rows from `relationshipView`, field completeness, hidden id/text non-leakage, relationship-panel overflow, and a Mock scholar turn updating the mentor relationship. |
 | Active request panel | Checks the server-scheduled `activeNpcRequestView` panel, target id/type/kind/status attributes, required ask/stakes/due/hint fields, hidden target/text non-leakage, and active-request overflow. |
 | Official career panel | Checks direct official start, the server-owned `officialCareerView` panel, 官署/差事/考成/关系/风险 sections, deterministic first appointment, a Mock `relief` assignment, hidden-note non-leakage tokens, current outcome fields, stable `data-*` attributes, and official-career overflow on desktop/mobile. |
-| Information panels | Checks `#information-panel` tab shell, required child panels, route-view readiness, S53.4 天下/任所 detail cards, S53.5 人物/官职 detail cards, role-visible geography boundaries, event archive disabled-before-projection state, hidden-token non-leakage, tab switching, and information-panel/grid overflow. |
+| Information panels | Checks `#information-panel` tab shell, required child panels, route-view readiness, S53.4 天下/任所 detail cards, S53.5 人物/官职 detail cards, S53.6 事件档案 detail cards, role-visible geography boundaries, hidden-token non-leakage, tab switching, and information-panel/grid overflow. |
 | Exam calendar panel | Checks the server-owned `examCalendarView` panel, next-level/status attributes, timing/funding/recommendation/quota details, current 年月旬 label, and calendar-panel overflow. |
 | Exam rival panel | Checks persistent `examRivalView` cards after an exam, stable rival/status/level attributes, latest-result rows, and rival-panel overflow. |
 | Role/world coupling | Opens direct magistrate, general, emperor, and minister sessions; runs one representative role action; checks `.role-world-event[data-role-world-kind]` feedback; and verifies the expected API state metric moves in the intended direction. |
@@ -52,14 +52,14 @@ S53.3 adds the first runtime browser shell:
 
 - `#information-panel` is a compact tab shell inside `#scholar-panel`.
 - `public/app.js` caches `worldGeographyView`, `worldEntityView`, `worldPeopleView`, `officialPostingsView`, and the existing long-term/world-thread/official views from route payloads.
-- `#event-archive-panel` exists as a disabled future panel and must stay content-empty until a server-built sanitized `eventArchiveView` or equivalent projection exists.
+- `#event-archive-panel` is enabled after S53.6 and renders only server-built sanitized `eventArchiveView` rows as `.event-archive-item[data-event-id][data-source-type][data-status]`.
 - S53.4 fills `#world-geography-panel` with `.world-geography-card[data-kind][data-entity-id]` cards for visible countries, cities, routes, frontier zones, and office jurisdictions.
 - S53.4 fills `#posting-geography-panel` with `.posting-geography-card[data-kind][data-entity-id]` cards for current posting, visible city jurisdictions, local metrics, and related routes.
 - S53.5 fills `#world-people-panel` with `.world-people-card[data-kind][data-entity-id]` cards for visible people, households, assets, estates, and relationships from `worldPeopleView`.
 - S53.5 fills `#official-postings-panel` with `.official-posting-card[data-kind][data-entity-id]` cards for visible bureaus, offices, postings, assessments, and transfers from `officialPostingsView`.
-- `scripts/browserSmoke.js` now checks the shell, route-view readiness, required S53.4/S53.5 card kinds, role-visible geography boundaries, disabled event archive state, tab switching, hidden-token non-leakage across the full information-panel DOM, and horizontal overflow for the panel plus active detail grids; `test/browserSmokeScript.test.js` covers the helper failures.
+- `scripts/browserSmoke.js` now checks the shell, route-view readiness, required S53.4/S53.5/S53.6 card kinds, role-visible geography boundaries, event archive source/status/data attributes, tab switching, hidden-token non-leakage across the full information-panel DOM, and horizontal overflow for the panel plus active detail grids; `test/browserSmokeScript.test.js` covers the helper failures.
 
-The remaining future content panel is `#event-archive-panel` for 事件档案, only after a server-built sanitized `eventArchiveView` or equivalent projection exists. Event archive acceptance must prove that the browser does not read raw `eventHistory`, JSON audit sidecars, SQLite audit tables, provider proposals, prompts, local paths, or keys.
+S53.6 closes the former future-content guard for `#event-archive-panel`: event archive acceptance now proves that the browser reads `eventArchiveView`, not raw `eventHistory`, JSON audit sidecars, SQLite audit tables, provider proposals, prompts, local paths, or keys.
 
 ## Latest Automated Result
 
@@ -82,7 +82,7 @@ git diff --check
 
 Observed result:
 
-- Focused browser-smoke helper coverage now includes S53.4 geography/posting and S53.5 people/official-posting detail card requirements, event-archive guard, disabled event archive guard, role-visible geography checks, hidden-token leak checks, and information-panel/page/grid overflow.
+- Focused browser-smoke helper coverage now includes S53.4 geography/posting, S53.5 people/official-posting, and S53.6 event-archive detail card requirements, role-visible geography checks, hidden-token leak checks, and information-panel/page/grid overflow.
 - `$env:AI_PROVIDER='mock'; npm run smoke:browser`: passed with 14 screenshots checked. The smoke traversed desktop, restored, fresh-page, mobile, direct official, official assignment, post-palace official, and representative role-world paths while checking `#information-panel` tab switching, S53.4/S53.5 card kinds, hidden-token non-leakage, and no horizontal overflow.
 - `$env:AI_PROVIDER='mock'; npm test`: passed with 372 tests.
 - Real-provider browser behavior still requires an explicitly configured `--url` target and is not part of default Mock smoke.

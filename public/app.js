@@ -110,8 +110,7 @@ const INFORMATION_PANEL_TABS = Object.freeze([
     label: "事件",
     title: "事件档案",
     panelId: "event-archive-panel",
-    sourceView: "eventArchiveView",
-    disabled: true
+    sourceView: "eventArchiveView"
   }
 ]);
 
@@ -814,6 +813,7 @@ function buildInformationPanelSummary(tab) {
   const postings = currentOfficialPostingsView;
   const longTerm = currentLongTermEventView;
   const threads = currentWorldThreadView;
+  const archive = currentEventArchiveView;
 
   if (tab.id === "world-geography") {
     const counts = [
@@ -887,17 +887,22 @@ function buildInformationPanelSummary(tab) {
   }
 
   return {
-    ready: Boolean(currentEventArchiveView),
-    generatedAtTurn: currentEventArchiveView?.generatedAtTurn,
+    ready: Boolean(archive),
+    generatedAtTurn: archive?.generatedAtTurn,
     counts: [
-      ["档案", viewArray(currentEventArchiveView, "items").length],
-      ["辅助实体", countEntityRows(entities)],
-      ["长期事件", viewArray(longTerm, "activeEvents").length],
-      ["世界议程", viewArray(threads, "activeThreads").length]
+      ["档案", archive?.counts?.total ?? viewArray(archive, "items").length],
+      ["近事", archive?.counts?.event_history ?? 0],
+      ["议程", archive?.counts?.world_thread ?? 0],
+      ["长期", archive?.counts?.long_term_event ?? 0],
+      ["官科", (archive?.counts?.official_career ?? 0) + (archive?.counts?.exam_record ?? 0)]
     ],
-    total: viewArray(currentEventArchiveView, "items").length,
-    note: "事件档案尚待整理成可查阅卷宗。"
+    total: archive?.counts?.total ?? viewArray(archive, "items").length,
+    note: archive?.hiddenNotice || "事件档案由服务器整理为公开卷宗。"
   };
+}
+
+function isInformationTabDisabled(tab) {
+  return tab.id === "event-archive" && !currentEventArchiveView;
 }
 
 function buildRowMap(rows = []) {
@@ -1589,11 +1594,63 @@ function renderOfficialPostingsDetails(postings = currentOfficialPostingsView, g
   return renderInformationDetailSection("官职要目", `${cards.length}条官署、官职与考迁`, cards);
 }
 
+function createEventArchiveItem(item) {
+  const card = document.createElement("article");
+  card.className = "event-archive-item";
+  card.dataset.eventId = item.id || "";
+  card.dataset.sourceType = item.sourceType || "";
+  card.dataset.kind = item.kind || "";
+  card.dataset.status = item.status || "";
+  card.dataset.visibility = item.visibility || "";
+  card.dataset.turn = String(item.turn ?? "");
+  card.dataset.year = String(item.year ?? "");
+  card.dataset.month = String(item.month ?? "");
+  card.dataset.tenDayPeriod = String(item.tenDayPeriod ?? "");
+  if (item.riskLabel) card.dataset.risk = item.riskLabel;
+
+  const header = document.createElement("header");
+  appendIfText(header, "strong", item.title || "未名事件", "event-archive-title");
+  appendIfText(header, "span", item.dateLabel || formatRecordDate(item), "event-archive-date");
+
+  const summary = document.createElement("p");
+  summary.className = "event-archive-summary";
+  summary.textContent = item.summary || "暂无公开案语。";
+
+  const metrics = document.createElement("div");
+  metrics.className = "information-card-metrics";
+  metrics.append(
+    createInformationMetric("来源", item.sourceLabel || item.sourceType || "事件", "event-archive-source"),
+    createInformationMetric("状态", item.statusLabel || item.status || "已记", "event-archive-status"),
+    createInformationMetric("回数", `第${item.turn ?? 0}回`, "event-archive-turn")
+  );
+  if (item.riskLabel) {
+    metrics.appendChild(createInformationMetric("风险", item.riskLabel, "event-archive-risk"));
+  }
+
+  card.append(header, summary, metrics);
+  const related = compactList(item.relatedLabels || [], "", 5);
+  if (related) {
+    const extra = document.createElement("p");
+    extra.className = "information-card-extra event-archive-related";
+    extra.textContent = `牵连：${related}`;
+    card.appendChild(extra);
+  }
+  return card;
+}
+
+function renderEventArchiveDetails(archive = currentEventArchiveView) {
+  if (!archive) return null;
+  const items = viewArray(archive, "items");
+  const cards = items.map(createEventArchiveItem);
+  return renderInformationDetailSection("事件要目", `${cards.length}条公开卷宗`, cards);
+}
+
 function renderInformationPanelDetails(tabId) {
   if (tabId === "world-geography") return renderWorldGeographyDetails();
   if (tabId === "posting-geography") return renderPostingGeographyDetails();
   if (tabId === "world-people") return renderWorldPeopleDetails();
   if (tabId === "official-postings") return renderOfficialPostingsDetails();
+  if (tabId === "event-archive") return renderEventArchiveDetails();
   return null;
 }
 
@@ -2346,6 +2403,7 @@ function renderExamRivalPanel(examRivalView = currentExamRivalView) {
 
 function renderInformationPanelPage(tab, activeTabId) {
   const summary = buildInformationPanelSummary(tab);
+  const disabled = isInformationTabDisabled(tab);
   const page = document.createElement("section");
   page.id = tab.panelId;
   page.className = "information-panel-page";
@@ -2358,7 +2416,7 @@ function renderInformationPanelPage(tab, activeTabId) {
 
   const title = document.createElement("header");
   appendIfText(title, "strong", tab.title);
-  appendIfText(title, "span", summary.ready ? "卷宗已备" : tab.disabled ? "待归档" : "待入簿");
+  appendIfText(title, "span", summary.ready ? "卷宗已备" : disabled ? "待归档" : "待入簿");
 
   const stats = document.createElement("div");
   stats.className = "information-panel-stats";
@@ -2377,8 +2435,8 @@ function renderInformationPanelPage(tab, activeTabId) {
 }
 
 function renderInformationPanelShell() {
-  const activeTab = INFORMATION_PANEL_TABS.find((tab) => tab.id === currentInformationPanelTab && !tab.disabled)
-    || INFORMATION_PANEL_TABS.find((tab) => !tab.disabled);
+  const activeTab = INFORMATION_PANEL_TABS.find((tab) => tab.id === currentInformationPanelTab && !isInformationTabDisabled(tab))
+    || INFORMATION_PANEL_TABS.find((tab) => !isInformationTabDisabled(tab));
   const activeTabId = activeTab?.id || "world-geography";
 
   const panel = document.createElement("section");
@@ -2404,6 +2462,7 @@ function renderInformationPanelShell() {
   pages.className = "information-panel-pages";
 
   INFORMATION_PANEL_TABS.forEach((tab) => {
+    const disabled = isInformationTabDisabled(tab);
     const button = document.createElement("button");
     button.type = "button";
     button.className = "information-tab";
@@ -2411,7 +2470,7 @@ function renderInformationPanelShell() {
     button.setAttribute("role", "tab");
     button.setAttribute("aria-controls", tab.panelId);
     button.setAttribute("aria-selected", tab.id === activeTabId ? "true" : "false");
-    if (tab.disabled) {
+    if (disabled) {
       button.disabled = true;
       button.setAttribute("aria-disabled", "true");
     }

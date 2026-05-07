@@ -379,39 +379,40 @@ test("browser smoke world thread helpers catch missing fields and hidden text", 
   assert.match(failures.join("\n"), /leaked hidden text tokens: Hidden Palace Thread/);
 });
 
-test("browser smoke information panel shell helper catches missing views and future detail content", () => {
+test("browser smoke information panel shell helper catches missing views and event archive gaps", () => {
   const failures = getInformationPanelShellFailures(
     {
       activeTab: "world-geography",
       tabIds: ["world-geography", "world-people", "official-postings"],
-      disabledTabIds: [],
+      disabledTabIds: ["event-archive"],
       panelIds: ["world-geography-panel", "world-people-panel"],
-      readyPanelIds: ["world-geography-panel", "event-archive-panel"],
+      readyPanelIds: ["world-geography-panel"],
       worldGeographyKinds: ["country"],
       postingGeographyKinds: [],
       worldPeopleKinds: ["npc"],
       officialPostingKinds: ["bureau"],
+      eventArchiveSourceTypes: [],
       roleVisibleGeographyCount: 1,
       worldPeopleCardCount: 2,
       officialPostingCardCount: 2,
       worldPeopleMetricCount: 2,
       officialPostingMetricCount: 1,
       eventArchiveItemCount: 1,
+      eventArchiveMetricCount: 1,
+      eventArchiveStructuredCount: 0,
       text: "局势簿 hiddenNotes OPENAI_API_KEY"
     },
     {
       hiddenTextTokens: ["hiddenNotes", "OPENAI_API_KEY"],
-      expectNoRoleVisibleGeography: true,
-      expectEventArchiveReady: false
+      expectNoRoleVisibleGeography: true
     },
     "information fixture"
   );
 
   assert.match(failures.join("\n"), /missing tabs: posting-geography, event-archive/);
   assert.match(failures.join("\n"), /missing panels: posting-geography-panel, official-postings-panel, event-archive-panel/);
-  assert.match(failures.join("\n"), /route views missing for panels: posting-geography-panel, world-people-panel, official-postings-panel/);
-  assert.match(failures.join("\n"), /did not keep event archive disabled/);
-  assert.match(failures.join("\n"), /marked event archive ready before sanitized projection/);
+  assert.match(failures.join("\n"), /route views missing for panels: posting-geography-panel, world-people-panel, official-postings-panel, event-archive-panel/);
+  assert.match(failures.join("\n"), /kept event archive disabled after sanitized projection/);
   assert.match(failures.join("\n"), /missing world geography card kinds: city, route, frontier, office-jurisdiction/);
   assert.match(failures.join("\n"), /missing posting geography card kinds: jurisdiction, route/);
   assert.match(failures.join("\n"), /missing world people card kinds: relationship/);
@@ -419,7 +420,9 @@ test("browser smoke information panel shell helper catches missing views and fut
   assert.match(failures.join("\n"), /world people cards without enough visible metrics/);
   assert.match(failures.join("\n"), /official posting cards without enough visible metrics/);
   assert.match(failures.join("\n"), /leaked role-visible geography to a restricted role/);
-  assert.match(failures.join("\n"), /rendered event archive items before sanitized projection/);
+  assert.match(failures.join("\n"), /missing event archive source types: event_history/);
+  assert.match(failures.join("\n"), /event archive items without enough visible metrics/);
+  assert.match(failures.join("\n"), /event archive items without required data attributes/);
   assert.match(failures.join("\n"), /leaked hidden text tokens: hiddenNotes, OPENAI_API_KEY/);
 });
 

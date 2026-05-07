@@ -615,6 +615,12 @@ function getGameLayoutFailures(metrics, mode = "game") {
     );
   }
 
+  if (metrics.eventArchiveGridClientWidth > 0 && metrics.eventArchiveGridScrollWidth > metrics.eventArchiveGridClientWidth + horizontalClipTolerance) {
+    failures.push(
+      `${mode} event archive grid has horizontal scroll overflow (${roundMetric(metrics.eventArchiveGridScrollWidth)}px > ${roundMetric(metrics.eventArchiveGridClientWidth)}px).`
+    );
+  }
+
   if (metrics.examCalendarClientWidth > 0 && metrics.examCalendarScrollWidth > metrics.examCalendarClientWidth + horizontalClipTolerance) {
     failures.push(
       `${mode} exam calendar panel has horizontal scroll overflow (${roundMetric(metrics.examCalendarScrollWidth)}px > ${roundMetric(metrics.examCalendarClientWidth)}px).`
@@ -677,6 +683,7 @@ async function readGameLayoutMetrics(page) {
     const postingGeographyGrid = box("#posting-geography-panel .information-detail-grid");
     const worldPeopleGrid = box("#world-people-panel .information-detail-grid");
     const officialPostingsGrid = box("#official-postings-panel .information-detail-grid");
+    const eventArchiveGrid = box("#event-archive-panel .information-detail-grid");
     const examCalendar = box("#exam-calendar-panel");
     const examRival = box("#exam-rival-panel");
     const saveListPanel = box("#save-list-panel");
@@ -725,6 +732,9 @@ async function readGameLayoutMetrics(page) {
       officialPostingsGridClientWidth: officialPostingsGrid?.clientWidth || 0,
       officialPostingsGridScrollWidth: officialPostingsGrid?.scrollWidth || 0,
       officialPostingsGridWidth: officialPostingsGrid?.width || 0,
+      eventArchiveGridClientWidth: eventArchiveGrid?.clientWidth || 0,
+      eventArchiveGridScrollWidth: eventArchiveGrid?.scrollWidth || 0,
+      eventArchiveGridWidth: eventArchiveGrid?.width || 0,
       examCalendarClientWidth: examCalendar?.clientWidth || 0,
       examCalendarScrollWidth: examCalendar?.scrollWidth || 0,
       examCalendarWidth: examCalendar?.width || 0,
@@ -995,12 +1005,17 @@ function getInformationPanelShellFailures(snapshot = {}, expectations = {}, mode
   const failures = [];
   const expectedTabs = expectations.expectedTabs || informationPanelTabs;
   const expectedPanels = expectations.expectedPanels || informationPanelIds;
-  const expectedReadyPanels = expectations.expectedReadyPanels || [
+  const defaultReadyPanels = [
     "world-geography-panel",
     "posting-geography-panel",
     "world-people-panel",
     "official-postings-panel"
   ];
+  const expectedReadyPanels = expectations.expectedReadyPanels || (
+    expectations.expectEventArchiveReady === false
+      ? defaultReadyPanels
+      : [...defaultReadyPanels, "event-archive-panel"]
+  );
   const expectedWorldGeographyKinds = expectations.expectedWorldGeographyKinds || [
     "country",
     "city",
@@ -1011,6 +1026,7 @@ function getInformationPanelShellFailures(snapshot = {}, expectations = {}, mode
   const expectedPostingGeographyKinds = expectations.expectedPostingGeographyKinds || ["jurisdiction", "route"];
   const expectedWorldPeopleKinds = expectations.expectedWorldPeopleKinds || ["npc", "relationship"];
   const expectedOfficialPostingKinds = expectations.expectedOfficialPostingKinds || ["bureau", "office"];
+  const expectedEventArchiveSourceTypes = expectations.expectedEventArchiveSourceTypes || ["event_history"];
 
   const missingTabs = getMissingInformationPanelItems(snapshot.tabIds, expectedTabs);
   if (missingTabs.length) {
@@ -1031,8 +1047,12 @@ function getInformationPanelShellFailures(snapshot = {}, expectations = {}, mode
     failures.push(`${mode} information panel has route views missing for panels: ${missingReadyPanels.join(", ")}.`);
   }
 
-  if (expectations.expectEventArchiveDisabled !== false && !(snapshot.disabledTabIds || []).includes("event-archive")) {
+  if (expectations.expectEventArchiveDisabled === true && !(snapshot.disabledTabIds || []).includes("event-archive")) {
     failures.push(`${mode} information panel did not keep event archive disabled before sanitized projection.`);
+  }
+
+  if (expectations.expectEventArchiveDisabled !== true && (snapshot.disabledTabIds || []).includes("event-archive")) {
+    failures.push(`${mode} information panel kept event archive disabled after sanitized projection.`);
   }
 
   if (expectations.expectEventArchiveReady === false && (snapshot.readyPanelIds || []).includes("event-archive-panel")) {
@@ -1081,11 +1101,43 @@ function getInformationPanelShellFailures(snapshot = {}, expectations = {}, mode
     failures.push(`${mode} information panel did not render expected role-visible geography.`);
   }
 
-  if (Number(snapshot.eventArchiveItemCount ?? snapshot.futureContentCardCount) > 0) {
+  if (expectations.expectEventArchiveReady === false && Number(snapshot.eventArchiveItemCount ?? snapshot.futureContentCardCount) > 0) {
     failures.push(`${mode} information panel rendered event archive items before sanitized projection.`);
   }
 
-  const hiddenLeaks = (expectations.hiddenTextTokens || []).filter((token) => token && String(snapshot.text || "").includes(token));
+  if (expectations.expectEventArchiveReady !== false) {
+    const itemCount = Number(snapshot.eventArchiveItemCount ?? 0);
+    if (itemCount < 1) {
+      failures.push(`${mode} information panel did not render event archive items.`);
+    }
+    const missingEventSources = getMissingInformationPanelItems(snapshot.eventArchiveSourceTypes, expectedEventArchiveSourceTypes);
+    if (missingEventSources.length) {
+      failures.push(`${mode} information panel is missing event archive source types: ${missingEventSources.join(", ")}.`);
+    }
+    if (itemCount > 0 && Number(snapshot.eventArchiveMetricCount) < itemCount * 2) {
+      failures.push(`${mode} information panel has event archive items without enough visible metrics.`);
+    }
+    if (itemCount > 0 && Number(snapshot.eventArchiveStructuredCount) < itemCount) {
+      failures.push(`${mode} information panel has event archive items without required data attributes.`);
+    }
+  }
+
+  const defaultInformationHiddenTokens = [
+    "provider",
+    "proposal",
+    "prompt",
+    "statePatch",
+    "retrievalContext",
+    "event_log",
+    "ai_change_proposals",
+    "data/audit",
+    "data/sessions",
+    "OPENAI_API_KEY",
+    "DEEPSEEK_API_KEY",
+    "ANTHROPIC_API_KEY"
+  ];
+  const hiddenTokens = [...new Set([...(expectations.hiddenTextTokens || []), ...defaultInformationHiddenTokens])];
+  const hiddenLeaks = hiddenTokens.filter((token) => token && String(snapshot.text || "").includes(token));
   if (hiddenLeaks.length) {
     failures.push(`${mode} information panel leaked hidden text tokens: ${hiddenLeaks.join(", ")}.`);
   }
@@ -1381,6 +1433,8 @@ async function assertInformationPanelShell(page, mode, expectations = {}) {
       postingGeographyKinds: postingGeographyCards.map((card) => card.dataset.kind).filter(Boolean),
       worldPeopleKinds: worldPeopleCards.map((card) => card.dataset.kind).filter(Boolean),
       officialPostingKinds: officialPostingCards.map((card) => card.dataset.kind).filter(Boolean),
+      eventArchiveSourceTypes: eventArchiveItems.map((item) => item.dataset.sourceType).filter(Boolean),
+      eventArchiveStatuses: eventArchiveItems.map((item) => item.dataset.status).filter(Boolean),
       roleVisibleGeographyCount: document.querySelectorAll(
         '#world-geography-panel .world-geography-card[data-visibility="role_visible"], #posting-geography-panel .posting-geography-card[data-visibility="role_visible"], #posting-geography-panel .posting-geography-card[data-visibility="office_visible"]'
       ).length,
@@ -1388,6 +1442,8 @@ async function assertInformationPanelShell(page, mode, expectations = {}) {
       officialPostingCardCount: officialPostingCards.length,
       worldPeopleMetricCount: document.querySelectorAll("#world-people-panel .world-people-card .information-card-metric").length,
       officialPostingMetricCount: document.querySelectorAll("#official-postings-panel .official-posting-card .information-card-metric").length,
+      eventArchiveMetricCount: document.querySelectorAll("#event-archive-panel .event-archive-item .information-card-metric").length,
+      eventArchiveStructuredCount: document.querySelectorAll("#event-archive-panel .event-archive-item[data-event-id][data-source-type][data-status][data-turn][data-year][data-month][data-ten-day-period]").length,
       contentCardCount: document.querySelectorAll(
         "#information-panel .world-geography-card, #information-panel .posting-geography-card, #information-panel .world-people-card, #information-panel .official-posting-card, #information-panel .event-archive-item"
       ).length,
@@ -1402,7 +1458,7 @@ async function assertInformationPanelShell(page, mode, expectations = {}) {
     failUiAcceptance(failures.join(" "));
   }
 
-  const enabledTabs = (expectations.expectedSwitchTabs || ["world-geography", "posting-geography", "world-people", "official-postings"]);
+  const enabledTabs = (expectations.expectedSwitchTabs || ["world-geography", "posting-geography", "world-people", "official-postings", "event-archive"]);
   for (const tabId of enabledTabs) {
     await page.locator(`#information-panel .information-tab[data-tab-id="${tabId}"]`).click();
     const panelId = `${tabId}-panel`;
@@ -1418,6 +1474,10 @@ async function assertInformationPanelShell(page, mode, expectations = {}) {
     );
     if (visiblePanelIds.length !== 1 || visiblePanelIds[0] !== panelId) {
       failUiAcceptance(`${mode} information panel did not hide inactive panels while activating ${tabId}.`);
+    }
+    const tabLayoutFailures = getGameLayoutFailures(await readGameLayoutMetrics(page), `${mode} information ${tabId}`);
+    if (tabLayoutFailures.length) {
+      failUiAcceptance(tabLayoutFailures.join(" "));
     }
   }
   await page.locator('#information-panel .information-tab[data-tab-id="world-geography"]').click();
@@ -2029,8 +2089,7 @@ async function runMobileUiAcceptance(page, recorder) {
   });
   await assertInformationPanelShell(page, "mobile scholar", {
     hiddenTextTokens: ["Hidden Palace Thread", "sealed palace dossier", "C99-hidden", "hiddenNotes", "hiddenIntent", "OPENAI_API_KEY", "data/sessions"],
-    expectNoRoleVisibleGeography: true,
-    expectEventArchiveReady: false
+    expectNoRoleVisibleGeography: true
   });
   await recorder.capture(page, "mobile-game-layout");
 
@@ -2067,8 +2126,7 @@ async function runFinalMobileOfficialAcceptance(page, recorder, expectations = {
     expectedPostingGeographyKinds: ["posting", "jurisdiction", "route"],
     expectedOfficialPostingKinds: ["bureau", "office", "posting", "assessment"],
     expectRoleVisibleGeography: true,
-    hiddenTextTokens: ["hiddenNotes", "hiddenIntent", "OPENAI_API_KEY", "data/sessions"],
-    expectEventArchiveReady: false
+    hiddenTextTokens: ["hiddenNotes", "hiddenIntent", "OPENAI_API_KEY", "data/sessions"]
   });
   await recorder.capture(page, "mobile-post-palace-official");
 
@@ -2203,8 +2261,7 @@ async function runOfficialStartAcceptance(browser, { baseUrl, onSessionId, pageE
       hiddenTextTokens: ["hiddenNotes", "hiddenIntent", "有人暗中遮掩亏空", "密札指向上官", "OPENAI_API_KEY", "data/sessions"],
       expectedPostingGeographyKinds: ["posting", "jurisdiction", "route"],
       expectedOfficialPostingKinds: ["bureau", "office", "posting", "assessment"],
-      expectRoleVisibleGeography: true,
-      expectEventArchiveReady: false
+      expectRoleVisibleGeography: true
     });
 
     return {
@@ -2397,8 +2454,7 @@ async function runRoleWorldCouplingAcceptance(browser, { baseUrl, onSessionId, p
         expectedOfficialPostingKinds: acceptanceCase.role === "official" || acceptanceCase.role === "magistrate"
           ? ["bureau", "office", "posting", "assessment"]
           : ["bureau", "office"],
-        expectRoleVisibleGeography: true,
-        expectEventArchiveReady: false
+        expectRoleVisibleGeography: true
       });
 
       if (recorder && acceptanceCase.role === "magistrate") {
@@ -2506,8 +2562,7 @@ async function runBrowserJourney({
     });
     await assertInformationPanelShell(page, "desktop scholar after turn", {
       hiddenTextTokens: ["Hidden Palace Thread", "sealed palace dossier", "C99-hidden", "hiddenNotes", "hiddenIntent", "OPENAI_API_KEY", "data/sessions"],
-      expectNoRoleVisibleGeography: true,
-      expectEventArchiveReady: false
+      expectNoRoleVisibleGeography: true
     });
     await recorder.capture(page, "desktop-game-layout");
     await runExamLevelAcceptance(page, sessionId, recorder, examProgressionCases[0]);
@@ -2545,8 +2600,7 @@ async function runBrowserJourney({
     });
     await assertInformationPanelShell(page, "desktop restored scholar", {
       hiddenTextTokens: ["Hidden Palace Thread", "sealed palace dossier", "C99-hidden", "hiddenNotes", "hiddenIntent", "OPENAI_API_KEY", "data/sessions"],
-      expectNoRoleVisibleGeography: true,
-      expectEventArchiveReady: false
+      expectNoRoleVisibleGeography: true
     });
 
     const restoredId = await page.evaluate(() => window.localStorage.getItem("qianqiu.sessionId"));
@@ -2585,8 +2639,7 @@ async function runBrowserJourney({
     });
     await assertInformationPanelShell(freshPage, "fresh page desktop scholar", {
       hiddenTextTokens: ["Hidden Palace Thread", "sealed palace dossier", "C99-hidden", "hiddenNotes", "hiddenIntent", "OPENAI_API_KEY", "data/sessions"],
-      expectNoRoleVisibleGeography: true,
-      expectEventArchiveReady: false
+      expectNoRoleVisibleGeography: true
     });
     const freshPageId = await freshPage.evaluate(() => window.localStorage.getItem("qianqiu.sessionId"));
     if (freshPageId !== sessionId) {

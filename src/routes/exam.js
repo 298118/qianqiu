@@ -38,6 +38,7 @@ const {
   createExamQuestionAuditRecords,
   enqueueAuditRecords
 } = require("../game/audit");
+const { buildEventArchiveView } = require("../game/eventArchive");
 const { appendEvents, applyStatePatch } = require("../game/stateRules");
 const {
   advanceExamScenePhase,
@@ -79,6 +80,7 @@ function toExamPayload(worldState) {
     longTermEventView: buildLongTermEventView(worldState),
     officialCareerView: buildOfficialCareerView(worldState),
     officialPostingsView: buildOfficialPostingsView(worldState),
+    eventArchiveView: buildEventArchiveView(worldState),
     worldState
   };
 }
@@ -413,6 +415,7 @@ router.post("/submit", async (req, res, next) => {
         longTermEventView: buildLongTermEventView(worldState),
         officialCareerView: buildOfficialCareerView(worldState),
         officialPostingsView: buildOfficialPostingsView(worldState),
+        eventArchiveView: buildEventArchiveView(worldState),
         worldState
       };
     });

@@ -48,7 +48,7 @@ Important route ownership:
 - `src/routes/game.js` creates sessions, reads sessions, and advances free-text turns.
 - `src/routes/exam.js` generates saved exam questions, advances exam-local scene phases, and submits essays.
 - `src/routes/ai.js` owns no-session AI diagnostics such as provider connection checks.
-- `docs/BROWSER_INFORMATION_PANEL_PLAN.md` owns the S53 browser information panel plan. It maps 天下格局、任所地理、人物谱牒、官职簿 and 事件档案 panels to route views, with S53.4 covering geography/posting geography, S53.5 covering people/official-posting cards, and S53.6 still responsible for a sanitized event archive projection.
+- `docs/BROWSER_INFORMATION_PANEL_PLAN.md` owns the S53 browser information panel plan. It maps 天下格局、任所地理、人物谱牒、官职簿 and 事件档案 panels to route views, with S53.4 covering geography/posting geography, S53.5 covering people/official-posting cards, and S53.6 covering the sanitized event archive projection plus browser cards.
 - `src/game/stateRules.js` is the only way provider state patches should be merged.
 - `src/game/exams.js` owns exam levels, gates, thresholds and next-exam mapping.
 - `src/game/promotions.js` owns rank changes, official promotion and severe-cheating consequences.
@@ -468,7 +468,7 @@ S53.2 adds [docs/BROWSER_INFORMATION_PANEL_PLAN.md](BROWSER_INFORMATION_PANEL_PL
 - 任所地理 must read `officialPostingsView.cityJurisdictions/postings` plus `worldGeographyView` city/route/jurisdiction rows, with small context from `officialCareerView`.
 - 人物谱牒 must read `worldPeopleView`, with optional visible context from `relationshipView`, `activeNpcRequestView`, and `examRivalView`.
 - 官职簿 must read `officialPostingsView`, with `officialCareerView` only as personal-career context.
-- 事件档案 must not read raw `eventHistory`, JSON audit sidecars, SQLite audit tables, provider proposals, prompts, local paths, or keys. It needs a server-built sanitized `eventArchiveView` or equivalent projection before browser UI is implemented.
+- `eventArchiveView` is built by `src/game/eventArchive.js` from capped sanitized `eventHistory` text plus player-facing `worldThreadView`, `longTermEventView`, `officialCareerView`, and public exam-history summaries. It is returned by game start/state/turn/SSE and exam question/progress/submit payloads. The browser `#event-archive-panel` reads only this projection and must not read raw `eventHistory`, JSON audit sidecars, SQLite audit tables, provider proposals, prompts, local paths, or keys.
 
 S53.1 `retrievalContext` remains provider-only prompt input. Browser panels must not consume it, and `public/app.js` raw `worldState` fallbacks are old-payload/development compatibility only, not approved data sources for new panels.
 
@@ -476,7 +476,7 @@ S53.3 implements the browser wiring foundation for that plan. `public/app.js` no
 
 S53.4 fills the first two information-panel tabs. `#world-geography-panel` renders `.world-geography-card[data-kind][data-entity-id]` rows for visible countries, cities, routes, frontier zones, and office jurisdictions from `worldGeographyView`. `#posting-geography-panel` renders `.posting-geography-card[data-kind][data-entity-id]` rows for the current posting, visible city jurisdictions, local metrics, and related routes from `officialPostingsView` plus visible geography lookups. These cards are display-only and do not provide settlement actions, direct appointments, routing commands, or database writes.
 
-S53.5 fills the next two information-panel tabs. `#world-people-panel` renders `.world-people-card[data-kind][data-entity-id]` rows for visible NPCs, households, assets, estates, and relationships from `worldPeopleView`, with only visible label support from `relationshipView` and `worldGeographyView`. `#official-postings-panel` renders `.official-posting-card[data-kind][data-entity-id]` rows for bureaus, offices, player/current postings, assessment records, and transfer records from `officialPostingsView`, with visible geography labels for cities and jurisdictions. The cards remain read-only: no relationship actions, appointment buttons, direct transfer controls, settlement entry points, route writes, prompt/retrievalContext reads, raw ledger reads, or SQLite business tables. Browser smoke now permits people/official-posting cards, still blocks event archive items before a sanitized projection, checks required S53.5 card kinds, and measures all information detail grids for horizontal overflow.
+S53.5 fills the next two information-panel tabs. `#world-people-panel` renders `.world-people-card[data-kind][data-entity-id]` rows for visible NPCs, households, assets, estates, and relationships from `worldPeopleView`, with only visible label support from `relationshipView` and `worldGeographyView`. `#official-postings-panel` renders `.official-posting-card[data-kind][data-entity-id]` rows for bureaus, offices, player/current postings, assessment records, and transfer records from `officialPostingsView`, with visible geography labels for cities and jurisdictions. S53.6 fills `#event-archive-panel` with `.event-archive-item[data-event-id][data-source-type][data-status]` rows from `eventArchiveView`. These cards remain read-only: no relationship actions, appointment buttons, direct transfer controls, settlement entry points, route writes, prompt/retrievalContext reads, raw ledger reads, raw audit reads, or SQLite business tables. Browser smoke now requires people/official-posting/event-archive cards, checks required S53.5/S53.6 card kinds and event data attributes, and measures all information detail grids for horizontal overflow.
 
 ## State Model
 
@@ -772,11 +772,13 @@ S52.2 adds `src/game/officialPostings.js`, `worldState.officialPostings`, `offic
 
 S53.1 adds `src/ai/promptContextAssembler.js`. It keeps existing compact prompt summary fields for compatibility, then adds `retrievalContext` as a ranked, capped index across visible geography, people, official postings, World Entities, World Threads, long-term events, and visible recent event strings. It deliberately avoids raw audit logs and raw hidden ledgers; future UI panels in S53.2 should still read route views, not this provider-only prompt object.
 
-S53.2 adds `docs/BROWSER_INFORMATION_PANEL_PLAN.md`. The plan splits browser work into S53.3 front-end wiring, S53.4 geography/posting geography panels, S53.5 people/official-posting panels, and S53.6 event archive projection plus panel. It also records the key safety rule: event archive UI must wait for a sanitized server projection and must never inspect raw audit payloads or provider proposals directly.
+S53.2 adds `docs/BROWSER_INFORMATION_PANEL_PLAN.md`. The plan splits browser work into S53.3 front-end wiring, S53.4 geography/posting geography panels, S53.5 people/official-posting panels, and S53.6 event archive projection plus panel. It also records the key safety rule: event archive UI must use a sanitized server projection and must never inspect raw audit payloads or provider proposals directly.
 
 S53.3 adds the front-end wiring slice for that plan. It changes `public/app.js`, `public/styles.css`, `scripts/browserSmoke.js`, and `test/browserSmokeScript.test.js`; no route shape, provider schema, state schema, SQLite table, or event archive projection changes are introduced.
 
 S53.4 and S53.5 continue in the same front-end-only lane. They change `public/app.js`, `public/styles.css`, `scripts/browserSmoke.js`, and `test/browserSmokeScript.test.js`; they do not change route payload shape, provider schema, storage adapters, SQLite tables, prompt contracts, or event archive projection.
+
+S53.6 adds `src/game/eventArchive.js` and expands route payload shape with `eventArchiveView`. It does not add provider schema fields, prompt contracts, storage adapter behavior, SQLite tables, or raw audit access.
 
 ## Verification
 

@@ -752,7 +752,8 @@ button:disabled {
 .world-geography-card header,
 .posting-geography-card header,
 .world-people-card header,
-.official-posting-card header {
+.official-posting-card header,
+.event-archive-item header {
   display: flex;
   align-items: baseline;
   justify-content: space-between;
@@ -769,7 +770,8 @@ button:disabled {
 .world-geography-card header span,
 .posting-geography-card header span,
 .world-people-card header span,
-.official-posting-card header span {
+.official-posting-card header span,
+.event-archive-item header span {
   color: var(--muted);
   font-size: 0.76rem;
   overflow-wrap: anywhere;
@@ -785,7 +787,8 @@ button:disabled {
 .world-geography-card,
 .posting-geography-card,
 .world-people-card,
-.official-posting-card {
+.official-posting-card,
+.event-archive-item {
   display: grid;
   gap: 7px;
   min-width: 0;
@@ -805,7 +808,9 @@ button:disabled {
 .world-people-card[data-risk="100"],
 .official-posting-card[data-status="suspended"],
 .official-posting-card[data-status="dismissed"],
-.official-posting-card[data-status="impeachment"] {
+.official-posting-card[data-status="impeachment"],
+.event-archive-item[data-status="active"],
+.event-archive-item[data-status="watch"] {
   border-color: rgba(126, 43, 34, 0.28);
   background: rgba(255, 244, 232, 0.68);
 }
@@ -816,9 +821,16 @@ button:disabled {
   overflow-wrap: anywhere;
 }
 
+.event-archive-title {
+  color: var(--cinnabar-deep);
+  font-size: 0.88rem;
+  overflow-wrap: anywhere;
+}
+
 .information-card-summary,
 .information-card-extra,
-.posting-geography-empty {
+.posting-geography-empty,
+.event-archive-summary {
   margin: 0;
   color: var(--ink);
   font-size: 0.8rem;

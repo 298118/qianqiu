@@ -58,6 +58,7 @@ const {
   createTurnAuditRecords,
   enqueueAuditRecords
 } = require("../game/audit");
+const { buildEventArchiveView } = require("../game/eventArchive");
 const { canEnterExam, getExam } = require("../game/exams");
 const {
   advanceExamScenePhase,
@@ -226,7 +227,8 @@ function buildCommonTurnViews(worldState) {
     worldThreadView: buildWorldThreadView(worldState),
     longTermEventView: buildLongTermEventView(worldState),
     officialCareerView: buildOfficialCareerView(worldState),
-    officialPostingsView: buildOfficialPostingsView(worldState)
+    officialPostingsView: buildOfficialPostingsView(worldState),
+    eventArchiveView: buildEventArchiveView(worldState)
   };
 }
 
@@ -484,6 +486,7 @@ async function streamTurn(res, sessionId, input) {
       longTermEvents: payload.longTermEvents,
       officialCareerView: payload.officialCareerView,
       officialPostingsView: payload.officialPostingsView,
+      eventArchiveView: payload.eventArchiveView,
       officialCareer: payload.officialCareer,
       examTrigger: payload.examTrigger,
       examScene: payload.examScene || null,
@@ -524,6 +527,7 @@ router.post("/start", async (req, res, next) => {
       longTermEventView: buildLongTermEventView(worldState),
       officialCareerView: buildOfficialCareerView(worldState),
       officialPostingsView: buildOfficialPostingsView(worldState),
+      eventArchiveView: buildEventArchiveView(worldState),
       narrative: opening.narrative
     });
   } catch (error) {
@@ -558,7 +562,8 @@ router.get("/state/:sessionId", async (req, res, next) => {
       worldThreadView: buildWorldThreadView(worldState),
       longTermEventView: buildLongTermEventView(worldState),
       officialCareerView: buildOfficialCareerView(worldState),
-      officialPostingsView: buildOfficialPostingsView(worldState)
+      officialPostingsView: buildOfficialPostingsView(worldState),
+      eventArchiveView: buildEventArchiveView(worldState)
     });
   } catch (error) {
     next(error);
