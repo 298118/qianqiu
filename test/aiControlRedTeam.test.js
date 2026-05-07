@@ -167,6 +167,9 @@ test("S44 ordinary turn drops mixed provider overreach while applying safe sugge
             careerHistory: [{ type: "promotion", label: "provider-forged-career" }],
             assignments: [{ id: "provider-assignment", title: "伪差遣", hiddenNotes: ["provider-hidden-overreach"] }]
           },
+          officialPostings: {
+            postings: [{ id: "provider-forged-posting", officeId: "ministry_revenue_principal", hiddenNotes: ["provider-hidden-overreach"] }]
+          },
           roleWorldCoupling: { recentImpacts: [{ kind: "provider-forged-impact" }] },
           worldGeography: {
             countries: [{ id: "provider-forged-country", name: "伪地理", hiddenNotes: ["provider-hidden-overreach"] }]
@@ -293,6 +296,7 @@ test("S44 ordinary turn drops mixed provider overreach while applying safe sugge
   assert.equal(serializedState.includes("provider-forged-country"), false);
   assert.equal(serializedState.includes("provider-forged-entity"), false);
   assert.equal(serializedState.includes("provider-forged-npc"), false);
+  assert.equal(serializedState.includes("provider-forged-posting"), false);
   assert.equal(serializedState.includes("WT-provider-forged"), false);
   assert.equal(serializedState.includes("provider-hidden-overreach"), false);
   assert.equal(serializedViews.includes("provider-hidden-overreach"), false);

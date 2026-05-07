@@ -733,6 +733,8 @@ S50.2 adds `src/game/worldGeography.js` and `worldState.worldGeography`. New ses
 
 S51.1 adds `src/game/worldPeopleSchemas.js` as the next database-domain contract after geography. S51.2 adds `src/game/worldPeople.js`, `worldState.worldPeople`, `worldPeopleView`, and capped prompt context. The bridge preserves old `characters`, `relationshipLedger`, `relationshipView`, and `activeNpcRequestView` while giving future 人物谱牒 or 家产 panels a server-built view to consume. It intentionally stores only the visible bridge projection; future hidden NPC/家产 databases require route redaction or a non-raw player state API first.
 
+S52.1 adds [docs/OFFICIAL_POSTING_DATABASE_CONTRACT.md](OFFICIAL_POSTING_DATABASE_CONTRACT.md), `src/game/officialPostingSchemas.js`, and `test/officialPostingSchemas.test.js` as the官职任所 database-domain contract. The helper normalizes future `bureaus`, `offices`, `cityJurisdictions`, `postings`, `assessmentRecords`, and `transferRecords`, then builds hidden-filtered views and capped prompt summaries. It reuses `officialCatalog` ids for官署/官职 and S50 geography ids for任所辖区, but it does not write `worldState`, alter route payloads, add browser panels, or create SQLite business tables in this slice. Future `worldState.officialPostings` is treated as server-owned: ordinary provider `statePatch.officialPostings` is rejected by schema or ignored by state patching, remote normalization drops it, and provider long-run flags it as a protected key.
+
 ## Verification
 
 Use:

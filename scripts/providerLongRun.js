@@ -78,6 +78,7 @@ const PROTECTED_TOP_LEVEL_PATCH_KEYS = [
   "activeNpcRequest",
   "longTermEvents",
   "officialCareer",
+  "officialPostings",
   "roleWorldCoupling",
   "worldGeography",
   "worldEntities",

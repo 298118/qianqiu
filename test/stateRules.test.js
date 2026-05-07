@@ -22,6 +22,7 @@ test("applyStatePatch applies only whitelisted fields and clamps numeric ranges"
     activeNpcRequest: { id: "provider-request" },
     longTermEvents: { queue: [{ key: "provider-event" }] },
     officialCareer: { careerHistory: [{ type: "promotion", label: "forged" }] },
+    officialPostings: { postings: [{ id: "provider-forged-posting", officeId: "ministry_revenue_principal" }] },
     roleWorldCoupling: { recentImpacts: [{ kind: "provider-forged" }] },
     worldGeography: { countries: [{ id: "provider-forged-country", name: "伪地理" }] },
     worldEntities: { entities: [{ id: "provider-forged", name: "伪实体" }] },
@@ -55,6 +56,7 @@ test("applyStatePatch applies only whitelisted fields and clamps numeric ranges"
   assert.equal(worldState.activeNpcRequest, null);
   assert.deepEqual(worldState.longTermEvents.queue, []);
   assert.deepEqual(worldState.officialCareer.careerHistory, []);
+  assert.equal(worldState.officialPostings, undefined);
   assert.deepEqual(worldState.roleWorldCoupling.recentImpacts, []);
   assert.equal(worldState.worldGeography.countries.some((country) => country.id === "provider-forged-country"), false);
   assert.equal(worldState.worldEntities.entities.some((entity) => entity.id === "provider-forged"), false);
@@ -80,6 +82,7 @@ test("ordinary state patches preserve server-owned exam and narrative fields", (
   const worldState = createInitialState({ playerName: "Tester" });
   worldState.activeExam = { level: "child_exam", reason: "server-created" };
   worldState.examCalendar.rivals = [{ id: "server-rival" }];
+  worldState.officialPostings = { schemaVersion: 1, postings: [{ id: "server-posting" }] };
   worldState.roleWorldCoupling.recentImpacts = [{ kind: "server-impact" }];
   worldState.worldGeography.countries = [{ id: "server-country", name: "Server country" }];
   worldState.worldEntities.entities = [{ id: "server-entity", category: "court", kind: "court_office", name: "Server entity" }];
@@ -93,6 +96,7 @@ test("ordinary state patches preserve server-owned exam and narrative fields", (
   applyStatePatch(worldState, {
     activeExam: null,
     examCalendar: { rivals: [{ id: "model-rival" }] },
+    officialPostings: { schemaVersion: 1, postings: [{ id: "model-posting" }] },
     roleWorldCoupling: { recentImpacts: [{ kind: "model-impact" }] },
     worldGeography: { countries: [{ id: "model-country", name: "Model country" }] },
     worldEntities: { entities: [{ id: "model-entity", category: "court", kind: "court_office", name: "Model entity" }] },
@@ -110,6 +114,7 @@ test("ordinary state patches preserve server-owned exam and narrative fields", (
 
   assert.deepEqual(worldState.activeExam, { level: "child_exam", reason: "server-created" });
   assert.deepEqual(worldState.examCalendar.rivals, [{ id: "server-rival" }]);
+  assert.deepEqual(worldState.officialPostings, { schemaVersion: 1, postings: [{ id: "server-posting" }] });
   assert.deepEqual(worldState.roleWorldCoupling.recentImpacts, [{ kind: "server-impact" }]);
   assert.deepEqual(worldState.worldGeography.countries, [{ id: "server-country", name: "Server country" }]);
   assert.deepEqual(worldState.worldEntities.entities, [{ id: "server-entity", category: "court", kind: "court_office", name: "Server entity" }]);
@@ -169,6 +174,7 @@ test("applyStatePatch can apply server follow-up patches without incrementing tu
     tenDayPeriod: 99,
     activeExam: { level: "child_exam", status: "writing" },
     examCalendar: { schemaVersion: 1, rivals: [{ id: "server-rival" }] },
+    officialPostings: { schemaVersion: 1, postings: [{ id: "server-posting" }] },
     roleWorldCoupling: { schemaVersion: 1, recentImpacts: [{ kind: "server-impact" }], cooldowns: {} },
     worldGeography: { schemaVersion: 1, countries: [{ id: "server-country", name: "Server country" }], cities: [] },
     worldEntities: { schemaVersion: 1, entities: [{ id: "server-entity", category: "court", kind: "court_office", name: "Server entity" }], recentNotes: [] },
@@ -184,6 +190,7 @@ test("applyStatePatch can apply server follow-up patches without incrementing tu
   assert.equal(worldState.tenDayPeriod, 3);
   assert.equal(worldState.activeExam.level, "child_exam");
   assert.equal(worldState.examCalendar.rivals[0].id, "server-rival");
+  assert.equal(worldState.officialPostings.postings[0].id, "server-posting");
   assert.equal(worldState.roleWorldCoupling.recentImpacts[0].kind, "server-impact");
   assert.equal(worldState.worldGeography.countries[0].id, "server-country");
   assert.equal(worldState.worldEntities.entities[0].id, "server-entity");

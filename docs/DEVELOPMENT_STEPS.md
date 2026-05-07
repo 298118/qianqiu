@@ -102,7 +102,7 @@
 | S50.2 | DONE | per-session 国家/城市实例化与 prompt projection，先不替代现有 worldState 指标 | 2026-05-07 | Codex + read-only subagents | `b0ced01` |
 | S51.1 | DONE | NPC、家族、资产、田产、关系和可见性 schema 契约 | 2026-05-07 | Codex + read-only subagents | `418077b` |
 | S51.2 | DONE | 桥接当前 `characters`、`relationshipLedger`、active requests 与 NPC/关系表 | 2026-05-07 | Codex + read-only subagents | `8ed984a` |
-| S52.1 | TODO | 官职、官署、任所、城市辖区、考成和调任记录的数据库契约 |  |  |  |
+| S52.1 | DONE | 官职、官署、任所、城市辖区、考成和调任记录的数据库契约 | 2026-05-07 | Codex + read-only subagents | 待提交后回填 |
 | S52.2 | TODO | 地方官/入仕官员任所与城市数据联动，保持服务器任免裁决 |  |  |  |
 | S53.1 | TODO | 检索式 prompt context assembler：按角色视野读取国家、城市、NPC、官职、事件摘要 |  |  |  |
 | S53.2 | TODO | 浏览器信息面板规划：天下格局、任所地理、人物谱牒、官职簿、事件档案 |  |  |  |
@@ -434,6 +434,45 @@
 - 当前不新增 browser people panel；浏览器若将来展示人物谱牒，应读取 `worldPeopleView`，不能读 raw `worldState.worldPeople`。
 - `relationshipChanges` 仍只允许 provider 建议既有 `character` / `faction` 可见目标；新增 NPC/家族/资产/田产业务写入必须作为后续 server-owned proposal 裁决来设计。
 
+### S52.1：官职、官署、任所、城市辖区、考成和迁转记录数据库契约
+
+状态：DONE。实现/文档提交待本次提交后回填；只读探索子代理 Pascal 已完成 S52.1 勘察，提交前只读复审 Averroes 未发现阻塞问题。
+
+目标：
+
+- 新增官职任所 schema 契约，覆盖未来 `bureaus`、`offices`、`cityJurisdictions`、`postings`、`assessmentRecords`、`transferRecords`。
+- 沿用 `officialCatalog` 的 `bureauId` / `officeId` 和 S50 地理 `cityId` / `regionId` / `jurisdictionId` 引用，避免另造官职或地理体系。
+- 提供独立 normalization / view / prompt summary helper，先不写 `worldState.officialPostings`，不改变 route payload，不新增浏览器面板，不建 SQLite 业务表。
+- 确认普通 provider 不能通过 `statePatch` 直接写官职任所 ledger、任命记录、考成记录或迁转记录。
+
+当前实现：
+
+- 新增 `docs/OFFICIAL_POSTING_DATABASE_CONTRACT.md`，定义官署、官职、任所辖区、任命、考成和迁转记录字段、数值范围、`public/role_visible/office_visible/relationship_visible/rumor/hidden` 可见性、hidden notes 边界和 nested 引用裁剪。
+- 新增 `src/game/officialPostingSchemas.js`，提供 standalone `normalizeOfficialPostingSchemaBundle()`、`buildOfficialPostingSchemaView()`、`summarizeOfficialPostingSchemaForPrompt()` 和 `canSeeOfficialPostingRow()`。
+- 新增 `test/officialPostingSchemas.test.js`，覆盖归一化 clamp、隐藏行过滤、可见行 nested hidden refs 裁剪、书生/官员/同署可见性、prompt cap、现有 `officialCatalog` 行可作为静态 seed，以及 provider `statePatch.officialPostings` 越权拒绝。
+- `officialPostings` 加入未来 server-owned patch 边界；AI schema、stateRules、remote normalization、provider long-run 和 red-team 测试覆盖 provider 伪造写入。
+- README、架构文档、产品 brief、动态数据库规划、AI 权限矩阵和 shared context 同步 S52.1 边界。
+- 提交前只读复审 Averroes 未发现 P0/P1/P2 blocker；确认 `officialPostingSchemas` 不泄漏 hidden notes/recentNotes，nested hidden refs 裁剪覆盖内部官署/官职/辖区/任命/考成/迁转引用，`officialPostings` 未接入 route/UI/SQLite，provider 边界覆盖 schema、remote normalization、stateRules、provider long-run 和 red-team。其非阻塞提醒是 S52.2 真正接入 per-session ledger 时应补跨域地理引用过滤测试。
+
+验证：
+
+- `node --check src\game\officialPostingSchemas.js`
+- `node --check test\officialPostingSchemas.test.js`
+- `node --check src\game\stateRules.js`
+- `node --check scripts\providerLongRun.js`
+- `node --test test\officialPostingSchemas.test.js test\stateRules.test.js test\aiSchemas.test.js test\remoteHelpers.test.js test\providerLongRunScript.test.js test\aiControlRedTeam.test.js`，37 项通过
+- `node --test test\officialPostingSchemas.test.js test\officialCatalog.test.js test\officialCareer.test.js test\worldGeography.test.js test\worldPeopleSchemas.test.js`，33 项通过
+- `npm run check:docs-governance`
+- `$env:AI_PROVIDER='mock'; npm test`，354 项通过
+- `git diff --check`
+
+风险/遗留：
+
+- S52.1 只定义 standalone schema/helper；还没有 `worldState.officialPostings`、route view、browser 官职簿/任所地理面板、prompt 接入或 SQLite 业务表。
+- 未来 S52.2 写 per-session posting ledger 时，必须保持 `player.officeTitle`、`officialCareer.currentPosting`、新增 `officeId/currentPostingId` 一致，避免标题和 id 错配。
+- 当前 route 兼容层仍返回完整本地 `worldState`；未来若要保存 hidden 官员私档、密札考成或未公开调任风声，应先做 route raw-state redaction 或单独玩家 projection API。
+- 城市财政、治安、水利、案牍、士绅与官场差事联动留给 S52.2；S52.1 不替代 `officialCareer` 的服务器任免裁决。
+
 ## 6. 数据域规划
 
 数据库专项需要承载的数据域如下。每个域都先定义契约和 projection，再决定是否拆表；不要为了“有数据库”而提前建过度复杂的表。
@@ -513,6 +552,47 @@
 - 隐藏信息要在数据库层、projection 层和 prompt 层都标记；不能只靠前端隐藏。
 
 ## 8. 进度记录
+
+### 2026-05-07
+
+工具：Codex；只读探索子代理 Pascal；提交前只读复审 Averroes
+
+步骤：S52.1
+
+提交：待本次提交后回填
+
+完成：
+
+- 新增 `docs/OFFICIAL_POSTING_DATABASE_CONTRACT.md`，固定官署、官职、任所辖区、任命、考成和迁转记录的数据库契约。
+- 新增 `src/game/officialPostingSchemas.js`，提供归一化、可见 view、prompt summary 和 `office_visible` / role / relationship 可见性判定；引用 `officialCatalog` 官署/官职 id，并为 S50 地理 id 留出辖区落点。
+- 新增 `test/officialPostingSchemas.test.js`，覆盖 clamp、hidden rows/notes 过滤、nested hidden refs 裁剪、prompt cap、`officialCatalog` seed 兼容和 provider 直接写 `officialPostings` 的拒绝路径。
+- `officialPostings` 加入 future server-owned patch 边界；`stateRules`、AI schema、remote normalization、provider long-run 和 red-team 测试同步拒绝普通 provider 伪造官职任所账本。
+- README、架构文档、产品 brief、动态数据库规划、AI 权限矩阵和 shared context 同步 S52.1 边界。
+- Pascal 只读梳理了 S52.1 应参考的 `officialCatalog` / `officialCareer` / `worldGeography` / `worldPeopleSchemas` 模式、id/visibility/server-owned 边界、建议文件清单和 P0/P1/P2 风险；子代理未编辑文件，未运行 Git 命令。
+- Averroes 执行提交前只读复审，未发现 P0/P1/P2 blocker；确认 hidden notes/recentNotes 不进 view/prompt、内部 nested hidden refs 被裁剪、`officialPostings` 未接入 route/UI/SQLite、provider 边界完整。其非阻塞提醒是 S52.2 接入 per-session ledger 时补 `cityId` / `routeIds` / `frontierZoneIds` 对 `worldGeographyView` 可见集的跨域裁剪测试。
+
+验证：
+
+- `node --check src\game\officialPostingSchemas.js`
+- `node --check test\officialPostingSchemas.test.js`
+- `node --check src\game\stateRules.js`
+- `node --check scripts\providerLongRun.js`
+- `node --test test\officialPostingSchemas.test.js test\stateRules.test.js test\aiSchemas.test.js test\remoteHelpers.test.js test\providerLongRunScript.test.js test\aiControlRedTeam.test.js`，37 项通过
+- `node --test test\officialPostingSchemas.test.js test\officialCatalog.test.js test\officialCareer.test.js test\worldGeography.test.js test\worldPeopleSchemas.test.js`，33 项通过
+- `npm run check:docs-governance`
+- `$env:AI_PROVIDER='mock'; npm test`，354 项通过
+- `git diff --check`
+- 提交前只读复审 Averroes 额外复跑 `node --test test\officialPostingSchemas.test.js test\stateRules.test.js test\aiSchemas.test.js test\remoteHelpers.test.js test\providerLongRunScript.test.js test\aiControlRedTeam.test.js`，37 项通过；`git diff --check` 通过。
+
+风险/遗留：
+
+- S52.1 不写每局 `worldState.officialPostings`，不改变 `officialCareerView`，不新增浏览器官职簿/任所地理面板，不建 SQLite 业务表。
+- `officialPostings` 当前只是 future server-owned key；S52.2 若接入 per-session ledger，必须补 route/prompt/browser hidden-token 探针，并保证 `player.officeTitle`、`officialCareer.currentPosting`、`officeId/currentPostingId` 不错配。
+- 城市动态指标与地方官任所联动仍是 S52.2。
+
+下一步：
+
+- 完成剩余验证、提交前只读复审并提交；随后 S52.2：地方官/入仕官员任所与城市数据联动，保持服务器任免裁决。
 
 ### 2026-05-07
 

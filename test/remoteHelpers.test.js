@@ -35,6 +35,7 @@ test("remote provider state patch normalization drops server-owned and unknown f
       month: 9,
       tenDayPeriod: 3,
       activeExam: { level: "palace_exam" },
+      officialPostings: { postings: [{ id: "provider-forged-posting", officeId: "ministry_revenue_principal" }] },
       worldGeography: { countries: [{ id: "provider-forged-country", name: "伪地理" }] },
       worldEntities: { entities: [{ id: "provider-forged-entity", name: "伪实体" }] },
       worldPeople: { npcs: [{ id: "provider-forged-npc", name: "伪人物" }] },

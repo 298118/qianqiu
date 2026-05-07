@@ -11,6 +11,8 @@ overflow.
 
 S34 defines the server-owned official career outcome engine. It turns the post-palace official loop from meter movement into concrete career results: appointment, transfer, promotion, external posting, demotion, impeachment case, punishment, or retention.
 
+S52.1 adds [官职、官署、任所与迁转数据库契约](OFFICIAL_POSTING_DATABASE_CONTRACT.md) and `src/game/officialPostingSchemas.js` as a future database-domain schema for `bureaus`、`offices`、`cityJurisdictions`、`postings`、`assessmentRecords` and `transferRecords`. It does not replace this runtime contract, does not change `officialCareerView`, and does not let ordinary providers write `officialPostings`; actual appointments, transfers, assessments and punishments remain server-owned here.
+
 ## S42.1 深度官场契约
 
 目标：入仕后不再只是六项仪表变化和偶发升降，而是进入有官职、衙门、差遣、考成、人脉、政敌、弹劾、外放、处分和履历档案的长期生涯。S42.1 定义契约；S42.2 已实现字段、规则和 Mock 行动扩展；S42.3 已扩展浏览器 UI 与验收。

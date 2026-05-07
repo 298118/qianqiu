@@ -54,6 +54,7 @@ test("provider long-run detects server-owned patch attempts", () => {
       tenDayPeriod: 3,
       turnCount: 99,
       activeExam: { level: "child_exam" },
+      officialPostings: { postings: [{ id: "provider-forged-posting", officeId: "ministry_revenue_principal" }] },
       worldGeography: { countries: [{ id: "provider-forged-country", name: "伪地理" }] },
       worldEntities: { entities: [{ id: "provider-forged-entity", name: "伪实体" }] },
       worldPeople: { npcs: [{ id: "provider-forged-npc", name: "伪人物" }] },
@@ -63,7 +64,7 @@ test("provider long-run detects server-owned patch attempts", () => {
         officeTitle: "翰林"
       }
     }),
-    ["activeExam", "worldGeography", "worldEntities", "worldPeople", "worldThreads", "turnCount", "year", "month", "tenDayPeriod", "player.examRank", "player.officeTitle"]
+    ["activeExam", "officialPostings", "worldGeography", "worldEntities", "worldPeople", "worldThreads", "turnCount", "year", "month", "tenDayPeriod", "player.examRank", "player.officeTitle"]
   );
 
   assert.deepEqual(
