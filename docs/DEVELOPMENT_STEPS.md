@@ -100,7 +100,7 @@
 | S49.4 | DONE | 事件日志与 AI proposal 审计：记录模型建议、服务器接受/拒绝和最终应用事件 | 2026-05-07 | Codex + read-only subagents | `092de20` |
 | S50.1 | DONE | 静态天下与邻国种子契约：国家、城市、路线、边境、官署辖区和初始可见性 | 2026-05-07 | Codex + read-only subagents | `45f9b65` |
 | S50.2 | DONE | per-session 国家/城市实例化与 prompt projection，先不替代现有 worldState 指标 | 2026-05-07 | Codex + read-only subagents | `b0ced01` |
-| S51.1 | DONE | NPC、家族、资产、田产、关系和可见性 schema 契约 | 2026-05-07 | Codex + read-only subagents | 待提交后回填 |
+| S51.1 | DONE | NPC、家族、资产、田产、关系和可见性 schema 契约 | 2026-05-07 | Codex + read-only subagents | `418077b` |
 | S51.2 | TODO | 桥接当前 `characters`、`relationshipLedger`、active requests 与 NPC/关系表 |  |  |  |
 | S52.1 | TODO | 官职、官署、任所、城市辖区、考成和调任记录的数据库契约 |  |  |  |
 | S52.2 | TODO | 地方官/入仕官员任所与城市数据联动，保持服务器任免裁决 |  |  |  |
@@ -359,7 +359,7 @@
 
 ### S51.1：NPC、家族、资产、田产、关系和可见性 Schema 契约
 
-状态：DONE。实现/文档提交待回填；提交前只读复审 Erdos 与 Boyle 未发现阻塞问题。
+状态：DONE。实现/文档提交：`418077b feat: add world people schema contract`；提交前只读复审 Erdos 与 Boyle 未发现阻塞问题。
 
 目标：
 
@@ -476,11 +476,11 @@
 
 ### 2026-05-07
 
-工具：Codex；只读探索子代理 Halley；提交前只读复审待完成
+工具：Codex；只读探索子代理 Halley；提交前只读复审 Erdos、Boyle
 
 步骤：S51.1
 
-提交：待回填
+提交：`418077b feat: add world people schema contract`
 
 完成：
 
