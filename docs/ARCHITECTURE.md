@@ -472,6 +472,8 @@ S53.2 adds [docs/BROWSER_INFORMATION_PANEL_PLAN.md](BROWSER_INFORMATION_PANEL_PL
 
 S53.1 `retrievalContext` remains provider-only prompt input. Browser panels must not consume it, and `public/app.js` raw `worldState` fallbacks are old-payload/development compatibility only, not approved data sources for new panels.
 
+S53.3 implements the browser wiring foundation for that plan. `public/app.js` now caches `worldGeographyView`, `worldEntityView`, `worldPeopleView`, and `officialPostingsView` from route payloads alongside the older relationship, official-career, exam, long-term-event, and world-thread views. The game role panel renders a compact `#information-panel` tab shell with stable child selectors: `#world-geography-panel`, `#posting-geography-panel`, `#world-people-panel`, `#official-postings-panel`, and disabled `#event-archive-panel`. This shell only shows source readiness and small counts; it does not render detailed geography/people/office cards, does not read raw ledgers, and keeps event archive content disabled until a sanitized server projection exists.
+
 ## State Model
 
 `createInitialState()` in `src/game/initialState.js` returns a `worldState` with:
@@ -767,6 +769,8 @@ S52.2 adds `src/game/officialPostings.js`, `worldState.officialPostings`, `offic
 S53.1 adds `src/ai/promptContextAssembler.js`. It keeps existing compact prompt summary fields for compatibility, then adds `retrievalContext` as a ranked, capped index across visible geography, people, official postings, World Entities, World Threads, long-term events, and visible recent event strings. It deliberately avoids raw audit logs and raw hidden ledgers; future UI panels in S53.2 should still read route views, not this provider-only prompt object.
 
 S53.2 adds `docs/BROWSER_INFORMATION_PANEL_PLAN.md`. The plan splits later browser work into S53.3 front-end wiring, S53.4 geography/posting geography panels, S53.5 people/official-posting panels, and S53.6 event archive projection plus panel. It also records the key safety rule: event archive UI must wait for a sanitized server projection and must never inspect raw audit payloads or provider proposals directly.
+
+S53.3 adds the front-end wiring slice for that plan. It changes `public/app.js`, `public/styles.css`, `scripts/browserSmoke.js`, and `test/browserSmokeScript.test.js`; no route shape, provider schema, state schema, SQLite table, or event archive projection changes are introduced.
 
 ## Verification
 

@@ -642,6 +642,106 @@ button:disabled {
   color: var(--jade);
 }
 
+.information-panel {
+  grid-column: 1 / -1;
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+  padding-top: 9px;
+  border-top: 1px solid rgba(54, 39, 27, 0.16);
+}
+
+.information-panel > header,
+.information-panel-page > header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+  min-width: 0;
+}
+
+.information-panel > header strong,
+.information-panel-page > header strong {
+  color: var(--cinnabar-deep);
+  font-size: 0.98rem;
+}
+
+.information-panel > header span,
+.information-panel-page > header span,
+.information-panel-note {
+  color: var(--muted);
+  font-size: 0.8rem;
+  overflow-wrap: anywhere;
+}
+
+.information-tabs {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 6px;
+  min-width: 0;
+}
+
+.information-tab {
+  min-width: 0;
+  min-height: 30px;
+  padding: 5px 6px;
+  border-color: rgba(54, 39, 27, 0.16);
+  border-radius: 4px;
+  background: rgba(255, 250, 239, 0.72);
+  box-shadow: none;
+  color: var(--ink);
+  font-size: 0.78rem;
+  overflow-wrap: anywhere;
+}
+
+.information-tab[aria-selected="true"] {
+  border-color: rgba(24, 72, 60, 0.42);
+  background: linear-gradient(180deg, var(--jade), #245447);
+  color: #fff8ea;
+}
+
+.information-tab:disabled {
+  border-color: rgba(54, 39, 27, 0.12);
+  background: rgba(229, 218, 193, 0.38);
+  color: var(--muted);
+  cursor: not-allowed;
+}
+
+.information-panel-pages,
+.information-panel-page {
+  min-width: 0;
+}
+
+.information-panel-page {
+  display: grid;
+  gap: 8px;
+}
+
+.information-panel-page[hidden] {
+  display: none;
+}
+
+.information-panel-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(95px, 1fr));
+  gap: 8px;
+  min-width: 0;
+}
+
+.information-panel-stats > div {
+  min-width: 0;
+  padding: 7px 8px;
+  border: 1px solid rgba(54, 39, 27, 0.14);
+  border-radius: 4px;
+  background: rgba(255, 250, 239, 0.46);
+}
+
+.information-panel-stats p,
+.information-panel-note {
+  margin: 0;
+  line-height: 1.38;
+}
+
 .official-career-panel {
   grid-column: 1 / -1;
   display: grid;

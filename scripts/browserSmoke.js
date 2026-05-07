@@ -579,6 +579,12 @@ function getGameLayoutFailures(metrics, mode = "game") {
     );
   }
 
+  if (metrics.informationPanelClientWidth > 0 && metrics.informationPanelScrollWidth > metrics.informationPanelClientWidth + horizontalClipTolerance) {
+    failures.push(
+      `${mode} information panel has horizontal scroll overflow (${roundMetric(metrics.informationPanelScrollWidth)}px > ${roundMetric(metrics.informationPanelClientWidth)}px).`
+    );
+  }
+
   if (metrics.examCalendarClientWidth > 0 && metrics.examCalendarScrollWidth > metrics.examCalendarClientWidth + horizontalClipTolerance) {
     failures.push(
       `${mode} exam calendar panel has horizontal scroll overflow (${roundMetric(metrics.examCalendarScrollWidth)}px > ${roundMetric(metrics.examCalendarClientWidth)}px).`
@@ -635,6 +641,7 @@ async function readGameLayoutMetrics(page) {
     const activeRequest = box("#active-request-panel");
     const officialCareer = box("#official-career-panel");
     const worldThread = box("#world-thread-panel");
+    const informationPanel = box("#information-panel");
     const examCalendar = box("#exam-calendar-panel");
     const examRival = box("#exam-rival-panel");
     const saveListPanel = box("#save-list-panel");
@@ -665,6 +672,9 @@ async function readGameLayoutMetrics(page) {
       worldThreadClientWidth: worldThread?.clientWidth || 0,
       worldThreadScrollWidth: worldThread?.scrollWidth || 0,
       worldThreadWidth: worldThread?.width || 0,
+      informationPanelClientWidth: informationPanel?.clientWidth || 0,
+      informationPanelScrollWidth: informationPanel?.scrollWidth || 0,
+      informationPanelWidth: informationPanel?.width || 0,
       examCalendarClientWidth: examCalendar?.clientWidth || 0,
       examCalendarScrollWidth: examCalendar?.scrollWidth || 0,
       examCalendarWidth: examCalendar?.width || 0,
@@ -912,6 +922,70 @@ function getWorldThreadPanelFailures(snapshot = {}, expectations = {}, mode = "w
   const hiddenLeaks = getHiddenWorldThreadTextLeaks(snapshot.text, expectations.hiddenTextTokens || []);
   if (hiddenLeaks.length) {
     failures.push(`${mode} world thread panel leaked hidden text tokens: ${hiddenLeaks.join(", ")}.`);
+  }
+
+  return failures;
+}
+
+const informationPanelTabs = ["world-geography", "posting-geography", "world-people", "official-postings", "event-archive"];
+const informationPanelIds = [
+  "world-geography-panel",
+  "posting-geography-panel",
+  "world-people-panel",
+  "official-postings-panel",
+  "event-archive-panel"
+];
+
+function getMissingInformationPanelItems(actual = [], expected = []) {
+  const available = new Set(actual.filter(Boolean));
+  return expected.filter((item) => !available.has(item));
+}
+
+function getInformationPanelShellFailures(snapshot = {}, expectations = {}, mode = "information") {
+  const failures = [];
+  const expectedTabs = expectations.expectedTabs || informationPanelTabs;
+  const expectedPanels = expectations.expectedPanels || informationPanelIds;
+  const expectedReadyPanels = expectations.expectedReadyPanels || [
+    "world-geography-panel",
+    "posting-geography-panel",
+    "world-people-panel",
+    "official-postings-panel"
+  ];
+
+  const missingTabs = getMissingInformationPanelItems(snapshot.tabIds, expectedTabs);
+  if (missingTabs.length) {
+    failures.push(`${mode} information panel is missing tabs: ${missingTabs.join(", ")}.`);
+  }
+
+  const missingPanels = getMissingInformationPanelItems(snapshot.panelIds, expectedPanels);
+  if (missingPanels.length) {
+    failures.push(`${mode} information panel is missing panels: ${missingPanels.join(", ")}.`);
+  }
+
+  if (!snapshot.activeTab || !expectedTabs.includes(snapshot.activeTab)) {
+    failures.push(`${mode} information panel has invalid active tab: ${snapshot.activeTab || "none"}.`);
+  }
+
+  const missingReadyPanels = getMissingInformationPanelItems(snapshot.readyPanelIds, expectedReadyPanels);
+  if (missingReadyPanels.length) {
+    failures.push(`${mode} information panel has route views missing for panels: ${missingReadyPanels.join(", ")}.`);
+  }
+
+  if (expectations.expectEventArchiveDisabled !== false && !(snapshot.disabledTabIds || []).includes("event-archive")) {
+    failures.push(`${mode} information panel did not keep event archive disabled before sanitized projection.`);
+  }
+
+  if (expectations.expectEventArchiveReady === false && (snapshot.readyPanelIds || []).includes("event-archive-panel")) {
+    failures.push(`${mode} information panel marked event archive ready before sanitized projection.`);
+  }
+
+  if (Number(snapshot.contentCardCount) > 0) {
+    failures.push(`${mode} information panel rendered detailed content cards before S53.4-S53.6.`);
+  }
+
+  const hiddenLeaks = (expectations.hiddenTextTokens || []).filter((token) => token && String(snapshot.text || "").includes(token));
+  if (hiddenLeaks.length) {
+    failures.push(`${mode} information panel leaked hidden text tokens: ${hiddenLeaks.join(", ")}.`);
   }
 
   return failures;
@@ -1174,6 +1248,53 @@ async function assertWorldThreadPanel(page, mode, expectations = {}) {
   }
 
   const layoutFailures = getGameLayoutFailures(await readGameLayoutMetrics(page), `${mode} world thread`);
+  if (layoutFailures.length) {
+    failUiAcceptance(layoutFailures.join(" "));
+  }
+
+  return snapshot;
+}
+
+async function assertInformationPanelShell(page, mode, expectations = {}) {
+  await visibleBox(page, "#information-panel[data-active-tab]", `${mode} information panel`);
+
+  const snapshot = await page.evaluate(() => {
+    const panel = document.querySelector("#information-panel");
+    const pages = [...document.querySelectorAll("#information-panel .information-panel-page")];
+    const tabs = [...document.querySelectorAll("#information-panel .information-tab")];
+    return {
+      activeTab: panel?.dataset.activeTab || "",
+      tabIds: tabs.map((tab) => tab.dataset.tabId),
+      disabledTabIds: tabs.filter((tab) => tab.disabled || tab.getAttribute("aria-disabled") === "true").map((tab) => tab.dataset.tabId),
+      panelIds: pages.map((page) => page.id),
+      readyPanelIds: pages.filter((page) => page.dataset.viewReady === "true").map((page) => page.id),
+      sourceViews: pages.map((page) => page.dataset.sourceView || ""),
+      visiblePanelIds: pages.filter((page) => !page.hidden).map((page) => page.id),
+      contentCardCount: document.querySelectorAll(
+        "#information-panel .world-geography-card, #information-panel .posting-geography-card, #information-panel .world-people-card, #information-panel .official-posting-card, #information-panel .event-archive-item"
+      ).length,
+      text: panel?.textContent || ""
+    };
+  });
+
+  const failures = getInformationPanelShellFailures(snapshot, expectations, mode);
+  if (failures.length) {
+    failUiAcceptance(failures.join(" "));
+  }
+
+  const enabledTabs = (expectations.expectedSwitchTabs || ["world-geography", "posting-geography", "world-people", "official-postings"]);
+  for (const tabId of enabledTabs) {
+    await page.locator(`#information-panel .information-tab[data-tab-id="${tabId}"]`).click();
+    const panelId = `${tabId}-panel`;
+    await page.locator(`#${panelId}`).waitFor({ state: "visible", timeout: 5000 });
+    const activeTab = await page.locator("#information-panel").getAttribute("data-active-tab");
+    if (activeTab !== tabId) {
+      failUiAcceptance(`${mode} information panel did not activate tab ${tabId}.`);
+    }
+  }
+  await page.locator('#information-panel .information-tab[data-tab-id="world-geography"]').click();
+
+  const layoutFailures = getGameLayoutFailures(await readGameLayoutMetrics(page), `${mode} information`);
   if (layoutFailures.length) {
     failUiAcceptance(layoutFailures.join(" "));
   }
@@ -1778,6 +1899,10 @@ async function runMobileUiAcceptance(page, recorder) {
     expectedSourceTypes: ["active_npc_request"],
     hiddenTextTokens: ["Hidden Palace Thread", "sealed palace dossier", "C99-hidden", "hiddenNotes"]
   });
+  await assertInformationPanelShell(page, "mobile scholar", {
+    hiddenTextTokens: ["Hidden Palace Thread", "sealed palace dossier", "C99-hidden", "hiddenNotes", "OPENAI_API_KEY", "data/sessions"],
+    expectEventArchiveReady: false
+  });
   await recorder.capture(page, "mobile-game-layout");
 
   await page.locator("#scholar-panel .archive-action").first().click();
@@ -1937,6 +2062,10 @@ async function runOfficialStartAcceptance(browser, { baseUrl, onSessionId, pageE
       expectedSourceTypes: ["official_assignment"],
       expectedStatuses: ["active", "watch"],
       hiddenTextTokens: ["hiddenNotes", "有人暗中遮掩亏空", "密札指向上官"]
+    });
+    await assertInformationPanelShell(page, "official assignment", {
+      hiddenTextTokens: ["hiddenNotes", "有人暗中遮掩亏空", "密札指向上官", "OPENAI_API_KEY", "data/sessions"],
+      expectEventArchiveReady: false
     });
 
     return {
@@ -2124,6 +2253,10 @@ async function runRoleWorldCouplingAcceptance(browser, { baseUrl, onSessionId, p
         expectedKinds: [acceptanceCase.expectedThreadKind],
         expectedSourceTypes: ["role_world_coupling"]
       });
+      await assertInformationPanelShell(page, `${acceptanceCase.role} role-world`, {
+        hiddenTextTokens: ["hiddenNotes", "OPENAI_API_KEY", "data/sessions"],
+        expectEventArchiveReady: false
+      });
 
       if (recorder && acceptanceCase.role === "magistrate") {
         await recorder.capture(page, "role-world-coupling");
@@ -2228,6 +2361,10 @@ async function runBrowserJourney({
       expectedStatuses: ["active"],
       hiddenTextTokens: ["Hidden Palace Thread", "sealed palace dossier", "C99-hidden", "hiddenNotes"]
     });
+    await assertInformationPanelShell(page, "desktop scholar after turn", {
+      hiddenTextTokens: ["Hidden Palace Thread", "sealed palace dossier", "C99-hidden", "hiddenNotes", "OPENAI_API_KEY", "data/sessions"],
+      expectEventArchiveReady: false
+    });
     await recorder.capture(page, "desktop-game-layout");
     await runExamLevelAcceptance(page, sessionId, recorder, examProgressionCases[0]);
     await assertExamRivalPanel(page, "desktop scholar after exam", {
@@ -2261,6 +2398,10 @@ async function runBrowserJourney({
       expectedKinds: ["npc_request"],
       expectedSourceTypes: ["active_npc_request"],
       hiddenTextTokens: ["Hidden Palace Thread", "sealed palace dossier", "C99-hidden", "hiddenNotes"]
+    });
+    await assertInformationPanelShell(page, "desktop restored scholar", {
+      hiddenTextTokens: ["Hidden Palace Thread", "sealed palace dossier", "C99-hidden", "hiddenNotes", "OPENAI_API_KEY", "data/sessions"],
+      expectEventArchiveReady: false
     });
 
     const restoredId = await page.evaluate(() => window.localStorage.getItem("qianqiu.sessionId"));
@@ -2296,6 +2437,10 @@ async function runBrowserJourney({
       expectedKinds: ["npc_request"],
       expectedSourceTypes: ["active_npc_request"],
       hiddenTextTokens: ["Hidden Palace Thread", "sealed palace dossier", "C99-hidden", "hiddenNotes"]
+    });
+    await assertInformationPanelShell(freshPage, "fresh page desktop scholar", {
+      hiddenTextTokens: ["Hidden Palace Thread", "sealed palace dossier", "C99-hidden", "hiddenNotes", "OPENAI_API_KEY", "data/sessions"],
+      expectEventArchiveReady: false
     });
     const freshPageId = await freshPage.evaluate(() => window.localStorage.getItem("qianqiu.sessionId"));
     if (freshPageId !== sessionId) {
@@ -2478,6 +2623,7 @@ module.exports = {
   getHiddenOfficialCareerTextLeaks,
   getHiddenWorldThreadTextLeaks,
   getHiddenSaveIdLeaks,
+  getInformationPanelShellFailures,
   getTenDayDateFailures,
   getMissingExamLevels,
   getHiddenRelationshipLeaks,

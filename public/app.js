@@ -44,6 +44,12 @@ let currentOfficialCareerView = null;
 let currentWorldThreadView = null;
 let currentExamCalendarView = null;
 let currentExamRivalView = null;
+let currentWorldGeographyView = null;
+let currentWorldEntityView = null;
+let currentWorldPeopleView = null;
+let currentOfficialPostingsView = null;
+let currentEventArchiveView = null;
+let currentInformationPanelTab = "world-geography";
 let currentExamPayload = null;
 let activeNarrativeStream = null;
 let latestSavePayload = { saves: [], skipped: [] };
@@ -69,6 +75,45 @@ const TEN_DAY_PERIOD_LABELS = Object.freeze({
   2: "中旬",
   3: "下旬"
 });
+
+const INFORMATION_PANEL_TABS = Object.freeze([
+  {
+    id: "world-geography",
+    label: "天下",
+    title: "天下格局",
+    panelId: "world-geography-panel",
+    sourceView: "worldGeographyView"
+  },
+  {
+    id: "posting-geography",
+    label: "任所",
+    title: "任所地理",
+    panelId: "posting-geography-panel",
+    sourceView: "officialPostingsView+worldGeographyView"
+  },
+  {
+    id: "world-people",
+    label: "人物",
+    title: "人物谱牒",
+    panelId: "world-people-panel",
+    sourceView: "worldPeopleView"
+  },
+  {
+    id: "official-postings",
+    label: "官职",
+    title: "官职簿",
+    panelId: "official-postings-panel",
+    sourceView: "officialPostingsView"
+  },
+  {
+    id: "event-archive",
+    label: "事件",
+    title: "事件档案",
+    panelId: "event-archive-panel",
+    sourceView: "eventArchiveView",
+    disabled: true
+  }
+]);
 
 const ATTRIBUTE_LABELS = {
   health: "体力",
@@ -512,7 +557,7 @@ async function loadSaveSession(sessionId, options = {}) {
     const payload = await response.json();
     currentSessionId = payload.sessionId;
     localStorage.setItem("qianqiu.sessionId", payload.sessionId);
-    renderWorldState(payload.worldState, payload.relationshipView, payload.activeNpcRequestView, payload.longTermEventView, payload.officialCareerView, payload.examCalendarView, payload.examRivalView, payload.worldThreadView);
+    renderPayloadWorldState(payload);
     narrative.innerHTML = "";
     const history = payload.worldState.eventHistory || [];
     if (history.length) {
@@ -743,6 +788,115 @@ function getExamRivalView(worldState, examRivalView) {
     recentSessions: Array.isArray(worldState?.examCalendar?.recentSessions)
       ? worldState.examCalendar.recentSessions.slice(-4)
       : []
+  };
+}
+
+function getRouteView(view) {
+  return view && typeof view === "object" && !Array.isArray(view) ? view : null;
+}
+
+function viewArray(view, key) {
+  return Array.isArray(view?.[key]) ? view[key] : [];
+}
+
+function countViewRows(view, keys) {
+  return keys.reduce((total, key) => total + viewArray(view, key).length, 0);
+}
+
+function countEntityRows(view) {
+  return viewArray(view, "groups").reduce((total, group) => total + viewArray(group, "entities").length, 0);
+}
+
+function buildInformationPanelSummary(tab) {
+  const geography = currentWorldGeographyView;
+  const entities = currentWorldEntityView;
+  const people = currentWorldPeopleView;
+  const postings = currentOfficialPostingsView;
+  const longTerm = currentLongTermEventView;
+  const threads = currentWorldThreadView;
+
+  if (tab.id === "world-geography") {
+    const counts = [
+      ["国家", viewArray(geography, "countries").length],
+      ["城市", viewArray(geography, "cities").length],
+      ["路线", viewArray(geography, "routes").length],
+      ["边面", viewArray(geography, "frontierZones").length],
+      ["辖区", viewArray(geography, "officeJurisdictions").length]
+    ];
+    const supportCount =
+      viewArray(entities, "highlights").length +
+      viewArray(threads, "activeThreads").length +
+      viewArray(longTerm, "activeEvents").length;
+    return {
+      ready: Boolean(geography),
+      generatedAtTurn: geography?.generatedAtTurn,
+      counts,
+      total: countViewRows(geography, ["countries", "cities", "routes", "frontierZones", "officeJurisdictions"]),
+      note: supportCount ? `旁参 ${supportCount} 条实体、议程与长期事件摘要。` : "天下形势已入簿，细目待后续铺陈。"
+    };
+  }
+
+  if (tab.id === "posting-geography") {
+    const counts = [
+      ["任所", viewArray(postings, "postings").length],
+      ["城市辖区", viewArray(postings, "cityJurisdictions").length],
+      ["可见城市", viewArray(geography, "cities").length],
+      ["可见路线", viewArray(geography, "routes").length]
+    ];
+    return {
+      ready: Boolean(postings && geography),
+      generatedAtTurn: postings?.generatedAtTurn ?? geography?.generatedAtTurn,
+      counts,
+      total: viewArray(postings, "postings").length + viewArray(postings, "cityJurisdictions").length,
+      note: "任所与地理先成簿面，辖区、路线和压力细目待后续补入。"
+    };
+  }
+
+  if (tab.id === "world-people") {
+    const counts = [
+      ["人物", viewArray(people, "npcs").length],
+      ["家族", viewArray(people, "households").length],
+      ["资产", viewArray(people, "assets").length],
+      ["田产", viewArray(people, "estates").length],
+      ["关系", viewArray(people, "relationships").length]
+    ];
+    return {
+      ready: Boolean(people),
+      generatedAtTurn: people?.generatedAtTurn,
+      counts,
+      total: countViewRows(people, ["npcs", "households", "assets", "estates", "relationships"]),
+      note: "人物、家族与关系先成索引，谱牒细目待后续补入。"
+    };
+  }
+
+  if (tab.id === "official-postings") {
+    const counts = [
+      ["官署", viewArray(postings, "bureaus").length],
+      ["官职", viewArray(postings, "offices").length],
+      ["任命", viewArray(postings, "postings").length],
+      ["考成", viewArray(postings, "assessmentRecords").length],
+      ["迁转", viewArray(postings, "transferRecords").length]
+    ];
+    return {
+      ready: Boolean(postings),
+      generatedAtTurn: postings?.generatedAtTurn,
+      counts,
+      total: countViewRows(postings, ["bureaus", "offices", "postings", "assessmentRecords", "transferRecords"]),
+      note: "官署官职只作公开查阅，不作任免或调任入口。"
+    };
+  }
+
+  return {
+    ready: Boolean(currentEventArchiveView),
+    generatedAtTurn: currentEventArchiveView?.generatedAtTurn,
+    counts: [
+      ["档案", viewArray(currentEventArchiveView, "items").length],
+      ["辅助实体", countEntityRows(entities)],
+      ["长期事件", viewArray(longTerm, "activeEvents").length],
+      ["世界议程", viewArray(threads, "activeThreads").length]
+    ],
+    total: viewArray(currentEventArchiveView, "items").length,
+    note: "事件档案尚待整理成可查阅卷宗。"
   };
 }
 
@@ -1493,6 +1647,88 @@ function renderExamRivalPanel(examRivalView = currentExamRivalView) {
   return panel;
 }
 
+function renderInformationPanelPage(tab, activeTabId) {
+  const summary = buildInformationPanelSummary(tab);
+  const page = document.createElement("section");
+  page.id = tab.panelId;
+  page.className = "information-panel-page";
+  page.dataset.tabId = tab.id;
+  page.dataset.sourceView = tab.sourceView;
+  page.dataset.viewReady = summary.ready ? "true" : "false";
+  page.dataset.generatedTurn = String(summary.generatedAtTurn ?? currentWorldState?.turnCount ?? 0);
+  page.dataset.itemCount = String(summary.total ?? 0);
+  page.hidden = tab.id !== activeTabId;
+
+  const title = document.createElement("header");
+  appendIfText(title, "strong", tab.title);
+  appendIfText(title, "span", summary.ready ? "卷宗已备" : tab.disabled ? "待归档" : "待入簿");
+
+  const stats = document.createElement("div");
+  stats.className = "information-panel-stats";
+  summary.counts.forEach(([label, value]) => {
+    stats.appendChild(createPanelValue(label, value ?? 0, "p"));
+  });
+
+  const note = document.createElement("p");
+  note.className = "information-panel-note";
+  note.textContent = summary.note;
+
+  page.append(title, stats, note);
+  return page;
+}
+
+function renderInformationPanelShell() {
+  const activeTab = INFORMATION_PANEL_TABS.find((tab) => tab.id === currentInformationPanelTab && !tab.disabled)
+    || INFORMATION_PANEL_TABS.find((tab) => !tab.disabled);
+  const activeTabId = activeTab?.id || "world-geography";
+
+  const panel = document.createElement("section");
+  panel.id = "information-panel";
+  panel.className = "information-panel";
+  panel.dataset.activeTab = activeTabId;
+  panel.dataset.worldGeographyView = currentWorldGeographyView ? "ready" : "missing";
+  panel.dataset.worldEntityView = currentWorldEntityView ? "ready" : "missing";
+  panel.dataset.worldPeopleView = currentWorldPeopleView ? "ready" : "missing";
+  panel.dataset.officialPostingsView = currentOfficialPostingsView ? "ready" : "missing";
+  panel.dataset.eventArchiveView = currentEventArchiveView ? "ready" : "missing";
+
+  const header = document.createElement("header");
+  appendIfText(header, "strong", "局势簿");
+  appendIfText(header, "span", "可见局势摘要");
+
+  const tabs = document.createElement("div");
+  tabs.className = "information-tabs";
+  tabs.setAttribute("role", "tablist");
+  tabs.setAttribute("aria-label", "局势簿分类");
+
+  const pages = document.createElement("div");
+  pages.className = "information-panel-pages";
+
+  INFORMATION_PANEL_TABS.forEach((tab) => {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "information-tab";
+    button.dataset.tabId = tab.id;
+    button.setAttribute("role", "tab");
+    button.setAttribute("aria-controls", tab.panelId);
+    button.setAttribute("aria-selected", tab.id === activeTabId ? "true" : "false");
+    if (tab.disabled) {
+      button.disabled = true;
+      button.setAttribute("aria-disabled", "true");
+    }
+    button.textContent = tab.label;
+    button.addEventListener("click", () => {
+      currentInformationPanelTab = tab.id;
+      renderScholarPanel(currentWorldState);
+    });
+    tabs.appendChild(button);
+    pages.appendChild(renderInformationPanelPage(tab, activeTabId));
+  });
+
+  panel.append(header, tabs, pages);
+  return panel;
+}
+
 function appendOptionalPanel(panel) {
   if (panel) {
     scholarPanel.appendChild(panel);
@@ -1605,6 +1841,7 @@ function renderRolePanel(worldState) {
   scholarPanel.append(overview, renderActionHints(player.role), stats, lists);
   appendOptionalPanel(renderOfficialCareerPanel());
   appendOptionalPanel(renderWorldThreadPanel());
+  appendOptionalPanel(renderInformationPanelShell());
   scholarPanel.appendChild(renderRelationshipPanel());
   appendOptionalPanel(renderExamRivalPanel());
   appendOptionalPanel(renderActiveNpcRequestPanel());
@@ -1686,12 +1923,27 @@ function renderScholarPanel(worldState) {
   scholarPanel.append(progressBlock);
   appendOptionalPanel(renderExamCalendarPanel());
   appendOptionalPanel(renderWorldThreadPanel());
+  appendOptionalPanel(renderInformationPanelShell());
   scholarPanel.append(stepList, stats, lists, renderRelationshipPanel());
   appendOptionalPanel(renderExamRivalPanel());
   appendOptionalPanel(renderActiveNpcRequestPanel());
 }
 
-function renderWorldState(worldState, relationshipView, activeNpcRequestView, longTermEventView, officialCareerView, examCalendarView, examRivalView, worldThreadView) {
+function renderWorldState(
+  worldState,
+  relationshipView,
+  activeNpcRequestView,
+  longTermEventView,
+  officialCareerView,
+  examCalendarView,
+  examRivalView,
+  worldThreadView,
+  worldGeographyView,
+  worldEntityView,
+  worldPeopleView,
+  officialPostingsView,
+  eventArchiveView
+) {
   currentWorldState = worldState;
   currentRelationshipView = getRelationshipView(worldState, relationshipView);
   currentActiveNpcRequestView = getActiveNpcRequestView(activeNpcRequestView);
@@ -1700,9 +1952,32 @@ function renderWorldState(worldState, relationshipView, activeNpcRequestView, lo
   currentExamCalendarView = getExamCalendarView(worldState, examCalendarView);
   currentExamRivalView = getExamRivalView(worldState, examRivalView);
   currentWorldThreadView = getWorldThreadView(worldState, worldThreadView);
+  currentWorldGeographyView = getRouteView(worldGeographyView);
+  currentWorldEntityView = getRouteView(worldEntityView);
+  currentWorldPeopleView = getRouteView(worldPeopleView);
+  currentOfficialPostingsView = getRouteView(officialPostingsView);
+  currentEventArchiveView = getRouteView(eventArchiveView);
   setStatus(worldState);
   renderScholarPanel(worldState);
   actionInput.placeholder = ACTION_PLACEHOLDERS[worldState.player.role] || "输入你的行动";
+}
+
+function renderPayloadWorldState(payload) {
+  renderWorldState(
+    payload.worldState,
+    payload.relationshipView,
+    payload.activeNpcRequestView,
+    payload.longTermEventView,
+    payload.officialCareerView,
+    payload.examCalendarView,
+    payload.examRivalView,
+    payload.worldThreadView,
+    payload.worldGeographyView,
+    payload.worldEntityView,
+    payload.worldPeopleView,
+    payload.officialPostingsView,
+    payload.eventArchiveView
+  );
 }
 
 function appendNarrative(text, className) {
@@ -2493,7 +2768,7 @@ async function openExamQuestion(level) {
     }
 
     const payload = await response.json();
-    renderWorldState(payload.worldState, payload.relationshipView, payload.activeNpcRequestView, payload.longTermEventView, payload.officialCareerView, payload.examCalendarView, payload.examRivalView, payload.worldThreadView);
+    renderPayloadWorldState(payload);
     renderExamModal(payload);
   } catch (error) {
     appendNarrative(error.message, "error");
@@ -2536,7 +2811,7 @@ async function progressExamScene(action) {
       ...payload,
       sceneTime: payload.sceneTime || payload.examScene || payload.worldState?.activeExam?.sceneTime || null
     };
-    renderWorldState(payload.worldState, payload.relationshipView, payload.activeNpcRequestView, payload.longTermEventView, payload.officialCareerView, payload.examCalendarView, payload.examRivalView, payload.worldThreadView);
+    renderPayloadWorldState(payload);
     examEssay.value = draft;
     updateExamSceneControls(currentExamPayload);
     updateExamSubmitState();
@@ -2580,7 +2855,7 @@ async function submitExamEssay() {
     }
 
     const payload = await response.json();
-    renderWorldState(payload.worldState, payload.relationshipView, payload.activeNpcRequestView, payload.longTermEventView, payload.officialCareerView, payload.examCalendarView, payload.examRivalView, payload.worldThreadView);
+    renderPayloadWorldState(payload);
     renderExamResult(payload);
     appendNarrative(
       `[放榜] ${payload.examName}得${payload.score.overall_score}分，${describePromotionOutcome(payload.promotionResult)}。`,
@@ -2680,7 +2955,7 @@ async function handleTurnPayload(payload) {
   appendWorldTickFeedback(payload.worldTick);
   appendLongTermEventFeedback(payload.longTermEvents);
   appendOfficialCareerFeedback(payload.officialCareer);
-  renderWorldState(payload.worldState, payload.relationshipView, payload.activeNpcRequestView, payload.longTermEventView, payload.officialCareerView, payload.examCalendarView, payload.examRivalView, payload.worldThreadView);
+  renderPayloadWorldState(payload);
   const activeExam = payload.worldState?.activeExam || null;
   if (activeExam && currentExamPayload?.examId === activeExam.examId) {
     currentExamPayload = {
@@ -2830,7 +3105,7 @@ form.addEventListener("submit", async (event) => {
     const payload = await response.json();
     currentSessionId = payload.sessionId;
     localStorage.setItem("qianqiu.sessionId", payload.sessionId);
-    renderWorldState(payload.worldState, payload.relationshipView, payload.activeNpcRequestView, payload.longTermEventView, payload.officialCareerView, payload.examCalendarView, payload.examRivalView, payload.worldThreadView);
+    renderPayloadWorldState(payload);
     narrative.innerHTML = "";
     appendNarrative(payload.narrative);
     showGameView();

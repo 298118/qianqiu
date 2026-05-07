@@ -106,7 +106,7 @@
 | S52.2 | DONE | 地方官/入仕官员任所与城市数据联动，保持服务器任免裁决 | 2026-05-07 | Codex + read-only subagents | `4599869` |
 | S53.1 | DONE | 检索式 prompt context assembler：按角色视野读取国家、城市、NPC、官职、事件摘要 | 2026-05-07 | Codex + read-only subagents | `1268c04` |
 | S53.2 | DONE | 浏览器信息面板规划：天下格局、任所地理、人物谱牒、官职簿、事件档案 | 2026-05-07 | Codex + read-only subagents | `b89882a` |
-| S53.3 | TODO | 浏览器信息面板前端接线基础：缓存 S50-S52 view 并建立 tab/面板壳 |  |  |  |
+| S53.3 | DONE | 浏览器信息面板前端接线基础：缓存 S50-S52 view 并建立 tab/面板壳 | 2026-05-07 | Codex + read-only subagents | 待提交后回填 |
 | S53.4 | TODO | 天下格局与任所地理面板：地理、任所、辖区、路线和压力摘要 |  |  |  |
 | S53.5 | TODO | 人物谱牒与官职簿面板：人物/家产关系、官署官职、任命考成迁转 |  |  |  |
 | S53.6 | TODO | 事件档案安全 projection 与浏览器面板 |  |  |  |
@@ -606,6 +606,47 @@
 下一步：
 
 - S53.3：浏览器信息面板前端接线基础，先缓存 S50-S52 相关 view 并建立 tab/面板壳，不急着铺满五类内容。
+
+### S53.3：浏览器信息面板前端接线基础
+
+状态：DONE。实现提交：待提交后回填。只读探索子代理 Leibniz 梳理了 `public/app.js`、`public/index.html` 和 `public/styles.css` 的挂载点、缓存变量和布局约束；只读探索子代理 Mencius 梳理了 `scripts/browserSmoke.js` / `test/browserSmokeScript.test.js` 的 metrics、hidden-token 和 helper 验收模式。提交前只读复审 Boyle 未发现 P0/P1/P2 blocker；其 P3 提醒“隐藏 tab 文本扫描不应只依赖 `innerText`”已收口为信息面板 smoke 快照读取 `textContent`。
+
+目标：
+
+- 在浏览器端缓存 S50-S52 已由 route 返回的 `worldGeographyView`、`worldEntityView`、`worldPeopleView` 和 `officialPostingsView`，继续保留既有 `longTermEventView`、`worldThreadView`、`officialCareerView` 等缓存。
+- 建立一个紧凑的 `#information-panel` tab/segmented shell，预留 `#world-geography-panel`、`#posting-geography-panel`、`#world-people-panel`、`#official-postings-panel` 和 `#event-archive-panel`。
+- 只显示安全计数和卷宗状态，不渲染国家/城市/路线/人物/官职细卡，不读取 raw ledger 或 S53.1 provider-only `retrievalContext`。
+- 事件档案只保留禁用入口；没有 `eventArchiveView` 前不得读取 raw `eventHistory`、JSON/SQLite audit、provider proposal、prompt、本地路径或 key。
+
+完成：
+
+- `public/app.js` 新增 S50-S52 view 缓存，改用 `renderPayloadWorldState(payload)` 统一从开局、读档、普通回合、SSE final、考试取题/推进/交卷 payload 接入 view。
+- `public/app.js` 新增 `renderInformationPanelShell()` 和五个子面板 selector；四个非事件面板只读 route view 计数，事件档案 tab 禁用。
+- `public/styles.css` 新增 `.information-panel`、tab、页面和计数区样式，保持 `#scholar-panel` 全宽、紧凑、可换行且不需要横向滚动。
+- `scripts/browserSmoke.js` 新增信息面板 shell helper、tab 切换验收、event archive disabled-before-projection 检查和 `informationPanel*` 横向溢出 metrics。
+- `test/browserSmokeScript.test.js` 增加 helper 失败用例与信息面板溢出用例。
+- README、产品 brief、架构文档、browser acceptance、AI 权限矩阵和 shared context 同步 S53.3 边界。
+
+验证：
+
+- `node --check public\app.js`
+- `node --check scripts\browserSmoke.js`
+- `node --check test\browserSmokeScript.test.js`
+- `node --test test\browserSmokeScript.test.js`
+- `npm run check:docs-governance`
+- `$env:AI_PROVIDER='mock'; npm run smoke:browser`
+- `$env:AI_PROVIDER='mock'; npm test`
+- `git diff --check`
+
+风险/遗留：
+
+- S53.3 只完成壳和验收骨架；天下格局/任所地理内容仍在 S53.4，人物谱牒/官职簿内容仍在 S53.5。
+- 事件档案仍无安全 server projection；S53.6 必须先新增 `eventArchiveView` 或等价 sanitized projection。
+- 后续内容实现必须继续控制 `#scholar-panel` 信息密度，尤其移动端和直接 official 开局。
+
+下一步：
+
+- S53.4：实现“天下格局”和“任所地理”细面板，继续只读 `worldGeographyView` 与 `officialPostingsView`。
 
 ## 6. 数据域规划
 

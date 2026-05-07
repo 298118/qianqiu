@@ -12,6 +12,7 @@ const {
   getHiddenOfficialCareerTextLeaks,
   getHiddenWorldThreadTextLeaks,
   getHiddenSaveIdLeaks,
+  getInformationPanelShellFailures,
   getTenDayDateFailures,
   getMissingExamLevels,
   getHiddenRelationshipLeaks,
@@ -61,6 +62,9 @@ function createLayoutMetrics(overrides = {}) {
     worldThreadClientWidth: 1180,
     worldThreadScrollWidth: 1180,
     worldThreadWidth: 1180,
+    informationPanelClientWidth: 1180,
+    informationPanelScrollWidth: 1180,
+    informationPanelWidth: 1180,
     examCalendarClientWidth: 1180,
     examCalendarScrollWidth: 1180,
     examCalendarWidth: 1180,
@@ -360,6 +364,33 @@ test("browser smoke world thread helpers catch missing fields and hidden text", 
   assert.match(failures.join("\n"), /leaked hidden text tokens: Hidden Palace Thread/);
 });
 
+test("browser smoke information panel shell helper catches missing views and early detail content", () => {
+  const failures = getInformationPanelShellFailures(
+    {
+      activeTab: "world-geography",
+      tabIds: ["world-geography", "world-people", "official-postings"],
+      disabledTabIds: [],
+      panelIds: ["world-geography-panel", "world-people-panel"],
+      readyPanelIds: ["world-geography-panel", "event-archive-panel"],
+      contentCardCount: 1,
+      text: "局势簿 hiddenNotes OPENAI_API_KEY"
+    },
+    {
+      hiddenTextTokens: ["hiddenNotes", "OPENAI_API_KEY"],
+      expectEventArchiveReady: false
+    },
+    "information fixture"
+  );
+
+  assert.match(failures.join("\n"), /missing tabs: posting-geography, event-archive/);
+  assert.match(failures.join("\n"), /missing panels: posting-geography-panel, official-postings-panel, event-archive-panel/);
+  assert.match(failures.join("\n"), /route views missing for panels: posting-geography-panel, world-people-panel, official-postings-panel/);
+  assert.match(failures.join("\n"), /did not keep event archive disabled/);
+  assert.match(failures.join("\n"), /marked event archive ready before sanitized projection/);
+  assert.match(failures.join("\n"), /rendered detailed content cards before S53\.4-S53\.6/);
+  assert.match(failures.join("\n"), /leaked hidden text tokens: hiddenNotes, OPENAI_API_KEY/);
+});
+
 test("browser smoke save-list helpers catch missing and hidden save ids", () => {
   assert.deepEqual(getMissingSaveIds(["save-a", "save-b"], ["save-a"]), []);
   assert.deepEqual(getMissingSaveIds(["save-a"], ["save-a", "save-b", "save-c"]), ["save-b", "save-c"]);
@@ -536,6 +567,19 @@ test("browser smoke game layout helper catches world thread panel overflow", () 
   );
 
   assert.match(failures.join("\n"), /world thread panel has horizontal scroll overflow/);
+});
+
+test("browser smoke game layout helper catches information panel overflow", () => {
+  const failures = getGameLayoutFailures(
+    createLayoutMetrics({
+      informationPanelClientWidth: 500,
+      informationPanelScrollWidth: 640,
+      informationPanelWidth: 500
+    }),
+    "desktop"
+  );
+
+  assert.match(failures.join("\n"), /information panel has horizontal scroll overflow/);
 });
 
 test("browser smoke game layout helper catches exam calendar and rival panel overflow", () => {

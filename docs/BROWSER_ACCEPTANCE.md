@@ -31,6 +31,7 @@ The smoke uses `playwright-core` with an installed Chrome or Edge executable. If
 | Relationship panel | Checks visible contact/faction rows from `relationshipView`, field completeness, hidden id/text non-leakage, relationship-panel overflow, and a Mock scholar turn updating the mentor relationship. |
 | Active request panel | Checks the server-scheduled `activeNpcRequestView` panel, target id/type/kind/status attributes, required ask/stakes/due/hint fields, hidden target/text non-leakage, and active-request overflow. |
 | Official career panel | Checks direct official start, the server-owned `officialCareerView` panel, 官署/差事/考成/关系/风险 sections, deterministic first appointment, a Mock `relief` assignment, hidden-note non-leakage tokens, current outcome fields, stable `data-*` attributes, and official-career overflow on desktop/mobile. |
+| Information panel shell | Checks S53.3 `#information-panel` tab shell, required tabs and child panels, route-view readiness, event archive disabled-before-projection state, hidden-token non-leakage, tab switching, and information-panel overflow. |
 | Exam calendar panel | Checks the server-owned `examCalendarView` panel, next-level/status attributes, timing/funding/recommendation/quota details, current 年月旬 label, and calendar-panel overflow. |
 | Exam rival panel | Checks persistent `examRivalView` cards after an exam, stable rival/status/level attributes, latest-result rows, and rival-panel overflow. |
 | Role/world coupling | Opens direct magistrate, general, emperor, and minister sessions; runs one representative role action; checks `.role-world-event[data-role-world-kind]` feedback; and verifies the expected API state metric moves in the intended direction. |
@@ -43,11 +44,19 @@ The smoke uses `playwright-core` with an installed Chrome or Edge executable. If
 | Screenshots | Captures representative desktop and mobile states and validates each capture as a non-empty PNG. |
 | Cleanup | Deletes the smoke-created session file when the journey finishes. |
 
-## Planned S53 Information Panels
+## S53 Information Panels
 
 S53.2 adds the planning contract in [BROWSER_INFORMATION_PANEL_PLAN.md](BROWSER_INFORMATION_PANEL_PLAN.md). No runtime browser UI changes are accepted in S53.2; the future smoke surface is recorded here so implementation slices do not widen data sources casually.
 
-Future browser smoke should add:
+S53.3 adds the first runtime browser shell:
+
+- `#information-panel` is a compact tab shell inside `#scholar-panel`.
+- `public/app.js` caches `worldGeographyView`, `worldEntityView`, `worldPeopleView`, `officialPostingsView`, and the existing long-term/world-thread/official views from route payloads.
+- `#world-geography-panel`, `#posting-geography-panel`, `#world-people-panel`, and `#official-postings-panel` expose only readiness and counts in this slice.
+- `#event-archive-panel` exists as a disabled future panel and must stay content-empty until a server-built sanitized `eventArchiveView` or equivalent projection exists.
+- `scripts/browserSmoke.js` now checks the shell, route-view readiness, disabled event archive state, tab switching, hidden-token non-leakage across the full information-panel DOM, and horizontal overflow; `test/browserSmokeScript.test.js` covers the helper failures.
+
+Future content panels should fill:
 
 - `#world-geography-panel` for 天下格局, backed by `worldGeographyView` and optional visible `worldEntityView` / `worldThreadView` context.
 - `#posting-geography-panel` for 任所地理, backed by `officialPostingsView` and `worldGeographyView`.
@@ -55,33 +64,35 @@ Future browser smoke should add:
 - `#official-postings-panel` for 官职簿, backed by `officialPostingsView` with personal-career context from `officialCareerView`.
 - `#event-archive-panel` for 事件档案 only after a server-built sanitized `eventArchiveView` or equivalent projection exists.
 
-Each future panel needs stable `data-*` attributes, hidden-token scanning, desktop/mobile horizontal overflow checks, reload/restore coverage, and focused helper tests in `test/browserSmokeScript.test.js`. Event archive acceptance must prove that the browser does not read raw `eventHistory`, JSON audit sidecars, SQLite audit tables, provider proposals, prompts, local paths, or keys.
+Each future detailed panel needs stable `data-*` attributes, hidden-token scanning, desktop/mobile horizontal overflow checks, reload/restore coverage, and focused helper tests in `test/browserSmokeScript.test.js`. Event archive acceptance must prove that the browser does not read raw `eventHistory`, JSON audit sidecars, SQLite audit tables, provider proposals, prompts, local paths, or keys.
 
 ## Latest Automated Result
 
 Date: 2026-05-07
 
-Relevant implementation commit: `6bcfb77`
+Relevant implementation commit: 待提交后回填
 
-Commands verified during S48.6:
+Commands verified during S53.3:
 
 ```powershell
-node --check public\app.js src\game\examCalendar.js src\game\officialCareer.js scripts\browserSmoke.js scripts\providerLongRun.js test\browserSmokeScript.test.js test\providerLongRunScript.test.js test\examCalendar.test.js test\officialCareer.test.js
-node --test test\browserSmokeScript.test.js test\providerLongRunScript.test.js
-node --test test\examCalendar.test.js test\officialCareer.test.js
+node --check public\app.js
+node --check scripts\browserSmoke.js
+node --check test\browserSmokeScript.test.js
+node --test test\browserSmokeScript.test.js
+npm run check:docs-governance
 $env:AI_PROVIDER='mock'; npm run smoke:browser
-$env:AI_PROVIDER='mock'; npm test -- --test-concurrency=1
+$env:AI_PROVIDER='mock'; npm test
 git diff --check
 ```
 
 Observed result:
 
-- Focused browser-smoke helper coverage includes the optional AI connection panel checks plus 年月旬 helper failures for status/save/exam/tick surfaces.
-- `$env:AI_PROVIDER='mock'; npm run smoke:browser`: passed with 14 screenshots checked. The final status strip included `Ming1644年四月下旬`, confirming the visible post-palace official path now carries the旬位.
-- The smoke now fails if the status strip, save list, exam calendar, exam modal, exam result/archive, or `.world-tick` feedback lose visible `上旬`/`中旬`/`下旬` text.
+- Focused browser-smoke helper coverage now includes S53.3 information-panel shell failure checks, detailed-content guard, disabled event archive guard, hidden-token leak checks, and information-panel overflow.
+- `$env:AI_PROVIDER='mock'; npm run smoke:browser`: passed with 14 screenshots checked. The smoke traversed desktop, restored, fresh-page, mobile, direct official, official assignment, and representative role-world paths while checking `#information-panel` tab switching and no horizontal overflow.
+- `$env:AI_PROVIDER='mock'; npm test`: passed with 372 tests.
 - Real-provider browser behavior still requires an explicitly configured `--url` target and is not part of default Mock smoke.
 - The browser start path still clears stale `qianqiu.sessionId` localStorage only when an old restored game hides the initial start form. Later reload/fresh-page restoration checks continue to validate the newly created session.
-- Desktop smoke still fails if the game panel regresses to the old narrow-column width, if the role panel, relationship panel, active-request panel, official-career panel, exam-calendar panel, exam-rival panel, or save-list surfaces are horizontally clipped, if S35 calendar/rival details disappear from the modal/archive/candidate profiles, if any supported start role is missing from the browser form, if hidden scholar-invisible factions leak into relationship/active-request panel text, if save-list rows leak raw storage tokens, if 年月旬 labels disappear from date-bearing player surfaces, if the four-exam path stops before official promotion, if copied-passage punishment disappears, or if S36 role-world feedback/API metric deltas disappear from representative role journeys.
+- Desktop smoke still fails if the game panel regresses to the old narrow-column width, if the role panel, relationship panel, active-request panel, official-career panel, information panel, exam-calendar panel, exam-rival panel, or save-list surfaces are horizontally clipped, if S35 calendar/rival details disappear from the modal/archive/candidate profiles, if any supported start role is missing from the browser form, if hidden scholar-invisible factions leak into relationship/active-request/information-panel text, if save-list rows leak raw storage tokens, if 年月旬 labels disappear from date-bearing player surfaces, if the four-exam path stops before official promotion, if copied-passage punishment disappears, or if S36 role-world feedback/API metric deltas disappear from representative role journeys.
 
 Earlier S26.2 screenshot review caught and fixed a real result-modal bug: `.exam-requirements { display: grid; }` overrode the `hidden` attribute and left the old requirements visible behind the result view. The fix is `.exam-requirements[hidden] { display: none; }`.
 
