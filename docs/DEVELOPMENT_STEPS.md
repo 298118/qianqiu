@@ -98,7 +98,7 @@
 | S49.2 | DONE | 抽象 storage adapter 接口，保持 JSON 为默认实现，补 adapter contract tests | 2026-05-07 | Codex + read-only subagents | `2e15e13` |
 | S49.3 | DONE | 本地 SQLite 原型：一行一 session，保留 JSON `world_state`，以可选 env 开启，不做远程/账号/多人 | 2026-05-07 | Codex + read-only subagents | `22217e0` |
 | S49.4 | DONE | 事件日志与 AI proposal 审计：记录模型建议、服务器接受/拒绝和最终应用事件 | 2026-05-07 | Codex + read-only subagents | `092de20` |
-| S50.1 | DONE | 静态天下与邻国种子契约：国家、城市、路线、边境、官署辖区和初始可见性 | 2026-05-07 | Codex + read-only subagents | 待本次提交生成后回填 |
+| S50.1 | DONE | 静态天下与邻国种子契约：国家、城市、路线、边境、官署辖区和初始可见性 | 2026-05-07 | Codex + read-only subagents | `45f9b65` |
 | S50.2 | TODO | per-session 国家/城市实例化与 prompt projection，先不替代现有 worldState 指标 |  |  |  |
 | S51.1 | TODO | NPC、家族、资产、田产、关系和可见性 schema 契约 |  |  |  |
 | S51.2 | TODO | 桥接当前 `characters`、`relationshipLedger`、active requests 与 NPC/关系表 |  |  |  |
@@ -287,7 +287,7 @@
 
 ### S50.1：静态天下与邻国种子契约
 
-状态：DONE。实现/文档提交待本次提交生成后回填。
+状态：DONE。实现/文档提交：`45f9b65 feat: add world geography seed contract`；本哈希回填为低风险纯文档 follow-up。
 
 目标：
 
@@ -403,7 +403,7 @@
 
 步骤：S50.1
 
-提交：待本次提交生成后回填
+提交：`45f9b65 feat: add world geography seed contract`
 
 完成：
 
