@@ -160,6 +160,18 @@ function relationshipRowForLedgerEntry(entry, legacyTargetType, worldState, extr
   };
 }
 
+function canReuseExistingBridgeFields(row) {
+  if (!isPlainObject(row)) return false;
+  if (row.visibility === "hidden") return false;
+  if (
+    (row.visibility === "relationship_visible" || row.visibility === "role_visible") &&
+    row.knownToPlayer !== true
+  ) {
+    return false;
+  }
+  return true;
+}
+
 function mergeRows(existingRows, bridgeRows) {
   const byId = new Map();
 
@@ -173,10 +185,11 @@ function mergeRows(existingRows, bridgeRows) {
     const id = cleanId(row?.id, "");
     if (!id) continue;
     const existing = byId.get(id) || {};
-    const merged = { ...existing, ...row };
+    const existingForMerge = canReuseExistingBridgeFields(existing) ? existing : {};
+    const merged = { ...existingForMerge, ...row };
     if (Array.isArray(existing.recentNotes) || Array.isArray(row.recentNotes)) {
       merged.recentNotes = [
-        ...(Array.isArray(existing.recentNotes) ? existing.recentNotes : []),
+        ...(Array.isArray(existingForMerge.recentNotes) ? existingForMerge.recentNotes : []),
         ...(Array.isArray(row.recentNotes) ? row.recentNotes : [])
       ].map((note) => cleanText(note, "", MAX_TEXT_LENGTH)).filter(Boolean).slice(-MAX_RECENT_NOTES);
     }

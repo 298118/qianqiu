@@ -25,6 +25,13 @@ const {
   normalizeRecordWorldGeography,
   syncGeographyTables
 } = require("./sqliteGeographyTables");
+const {
+  deletePeopleRows,
+  ensurePeopleTablesForRecord,
+  initializePeopleTables,
+  normalizeRecordWorldPeople,
+  syncPeopleTables
+} = require("./sqlitePeopleTables");
 
 const DEFAULT_SQLITE_DATABASE_PATH = path.join(__dirname, "..", "..", "data", "qianqiu.sqlite");
 const SQLITE_BUSY_TIMEOUT_MS = 5000;
@@ -195,6 +202,7 @@ function createSqliteSessionAdapter(options = {}) {
         ON ai_change_proposals(session_id, created_at, proposal_id);
     `);
     initializeGeographyTables(database);
+    initializePeopleTables(database);
 
     if (databasePath !== ":memory:") {
       database.exec("PRAGMA journal_mode = WAL");
@@ -213,6 +221,7 @@ function createSqliteSessionAdapter(options = {}) {
 
   function persistSessionRecord(record) {
     normalizeRecordWorldGeography(record);
+    normalizeRecordWorldPeople(record);
     const metadata = record.metadata;
     getDatabase()
       .prepare(`
@@ -279,6 +288,7 @@ function createSqliteSessionAdapter(options = {}) {
         JSON.stringify(record.worldState)
       );
     syncGeographyTables(getDatabase(), record);
+    syncPeopleTables(getDatabase(), record);
   }
 
   function updateSessionRecordPayload(record) {
@@ -484,7 +494,9 @@ function createSqliteSessionAdapter(options = {}) {
       if (!migrated) {
         throw createStoreError(404, "Session not found");
       }
-      const repaired = ensureGeographyTablesForRecord(getDatabase(), migrated.record);
+      const repairedGeography = ensureGeographyTablesForRecord(getDatabase(), migrated.record);
+      const repairedPeople = ensurePeopleTablesForRecord(getDatabase(), migrated.record);
+      const repaired = repairedGeography || repairedPeople;
       if (repaired) updateSessionRecordPayload(migrated.record);
       return migrated;
     });
@@ -591,6 +603,7 @@ function createSqliteSessionAdapter(options = {}) {
     assertSafeSessionId(sessionId);
     runInTransaction(getDatabase(), () => {
       deleteGeographyRows(getDatabase(), sessionId);
+      deletePeopleRows(getDatabase(), sessionId);
       getDatabase().prepare("DELETE FROM world_sessions WHERE session_id = ?").run(sessionId);
     });
   }

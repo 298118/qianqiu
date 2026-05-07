@@ -5,8 +5,11 @@ const fs = require("node:fs/promises");
 const path = require("node:path");
 const { isBuiltin } = require("node:module");
 
+const { assemblePromptContext } = require("../src/ai/promptContextAssembler");
 const { createInitialState } = require("../src/game/initialState");
+const { applyRelationshipChanges } = require("../src/game/relationships");
 const { buildWorldGeographyView } = require("../src/game/worldGeography");
+const { buildWorldPeopleView } = require("../src/game/worldPeople");
 const { createJsonSessionAdapter } = require("../src/storage/jsonSessionAdapter");
 const { createSqliteSessionAdapter } = require("../src/storage/sqliteSessionAdapter");
 
@@ -28,6 +31,144 @@ function buildWorldState(overrides = {}) {
   if (overrides.tenDayPeriod !== undefined) worldState.tenDayPeriod = overrides.tenDayPeriod;
   if (overrides.turnCount !== undefined) worldState.turnCount = overrides.turnCount;
   return worldState;
+}
+
+function addVisiblePeopleRows(worldState) {
+  worldState.worldPeople ||= {};
+  worldState.worldPeople.npcs ||= [];
+  worldState.worldPeople.households ||= [];
+  worldState.worldPeople.assets ||= [];
+  worldState.worldPeople.estates ||= [];
+  worldState.worldPeople.relationships ||= [];
+
+  worldState.worldPeople.npcs.push({
+    id: "npc-visible-gu",
+    name: "顾衡",
+    courtesyName: "子平",
+    genderLabel: "男",
+    age: 41,
+    currentCityId: "city-beijing",
+    householdId: "hh-visible-gu",
+    rankLabel: "候补主簿",
+    influence: 36,
+    reputation: 48,
+    visibility: "public",
+    knownToPlayer: true,
+    publicSummary: "顾衡常在京师替乡党通递消息。",
+    lastUpdatedTurn: worldState.turnCount
+  });
+  worldState.worldPeople.households.push({
+    id: "hh-visible-gu",
+    familyName: "顾",
+    seatCityId: "city-beijing",
+    wealthScore: 46,
+    landMu: 230,
+    prestige: 42,
+    memberNpcIds: ["npc-visible-gu"],
+    estateIds: ["estate-visible-gu"],
+    assetIds: ["asset-visible-gu"],
+    visibility: "public",
+    knownToPlayer: true,
+    publicSummary: "顾氏在京师有几处分号和近郊薄田。",
+    lastUpdatedTurn: worldState.turnCount
+  });
+  worldState.worldPeople.assets.push({
+    id: "asset-visible-gu",
+    kind: "shop",
+    name: "顾氏纸铺",
+    ownerType: "household",
+    ownerId: "hh-visible-gu",
+    cityId: "city-beijing",
+    valueEstimate: 180,
+    annualIncomeEstimate: 24,
+    statusLabel: "照常营生",
+    visibility: "public",
+    knownToPlayer: true,
+    publicSummary: "顾氏纸铺供应考棚常用纸墨。",
+    lastUpdatedTurn: worldState.turnCount
+  });
+  worldState.worldPeople.estates.push({
+    id: "estate-visible-gu",
+    name: "顾氏京郊薄田",
+    ownerType: "household",
+    ownerId: "hh-visible-gu",
+    cityId: "city-beijing",
+    regionId: "region-north-zhili",
+    landMu: 230,
+    tenantHouseholds: 9,
+    rentGrainEstimate: 36,
+    status: "held",
+    statusLabel: "自有",
+    visibility: "public",
+    knownToPlayer: true,
+    publicSummary: "顾氏京郊薄田收成平稳。",
+    lastUpdatedTurn: worldState.turnCount
+  });
+  worldState.worldPeople.relationships.push({
+    id: "rel-npc-visible-gu-household-visible-gu",
+    sourceType: "npc",
+    sourceId: "npc-visible-gu",
+    targetType: "household",
+    targetId: "hh-visible-gu",
+    relationship: 72,
+    trust: 70,
+    resentment: 4,
+    stance: "家门支柱",
+    visibility: "public",
+    knownToPlayer: true,
+    publicSummary: "顾衡被顾氏族中倚为京师支点。",
+    lastUpdatedTurn: worldState.turnCount
+  });
+}
+
+function addHiddenPeopleRows(worldState) {
+  worldState.worldPeople ||= {};
+  worldState.worldPeople.npcs ||= [];
+  worldState.worldPeople.assets ||= [];
+  worldState.worldPeople.relationships ||= [];
+
+  worldState.worldPeople.npcs.push({
+    id: "npc-hidden-storage",
+    name: "SEALED_PEOPLE_NPC_TOKEN",
+    visibility: "hidden",
+    knownToPlayer: false,
+    hiddenIntent: "SEALED_PEOPLE_INTENT_TOKEN",
+    hiddenNotes: ["SEALED_PEOPLE_NOTE_TOKEN"]
+  });
+  worldState.worldPeople.assets.push({
+    id: "asset-hidden-storage",
+    kind: "cash",
+    name: "SEALED_PEOPLE_ASSET_TOKEN",
+    ownerType: "npc",
+    ownerId: "npc-hidden-storage",
+    visibility: "hidden",
+    knownToPlayer: false
+  });
+  worldState.worldPeople.relationships.push({
+    id: "rel-hidden-storage",
+    sourceType: "npc",
+    sourceId: "npc-hidden-storage",
+    targetType: "player",
+    targetId: "P1",
+    relationship: -80,
+    resentment: 95,
+    visibility: "hidden",
+    knownToPlayer: false,
+    recentNotes: ["SEALED_PEOPLE_RELATION_TOKEN"]
+  });
+  worldState.worldPeople.relationships.push({
+    id: "rel-player-npc-C01",
+    sourceType: "player",
+    sourceId: "P1",
+    targetType: "npc",
+    targetId: "C01",
+    relationship: -80,
+    resentment: 95,
+    visibility: "hidden",
+    knownToPlayer: false,
+    publicSummary: "SEALED_PEOPLE_SAME_ID_PUBLIC",
+    recentNotes: ["SEALED_PEOPLE_SAME_ID_RELATION_TOKEN"]
+  });
 }
 
 async function removeSessionArtifacts(sessionId) {
@@ -140,8 +281,33 @@ function readSqliteGeographyCounts(db, sessionId) {
   };
 }
 
+function readSqlitePeopleCounts(db, sessionId) {
+  return {
+    npcs: db.prepare("SELECT COUNT(*) AS count FROM people_npcs WHERE session_id = ?").get(sessionId).count,
+    households: db.prepare("SELECT COUNT(*) AS count FROM people_households WHERE session_id = ?").get(sessionId).count,
+    assets: db.prepare("SELECT COUNT(*) AS count FROM people_assets WHERE session_id = ?").get(sessionId).count,
+    estates: db.prepare("SELECT COUNT(*) AS count FROM people_estates WHERE session_id = ?").get(sessionId).count,
+    relationships: db.prepare("SELECT COUNT(*) AS count FROM people_relationships WHERE session_id = ?").get(sessionId).count
+  };
+}
+
 function sumSqliteGeographyCounts(counts) {
   return Object.values(counts).reduce((total, count) => total + count, 0);
+}
+
+function sumSqlitePeopleCounts(counts) {
+  return Object.values(counts).reduce((total, count) => total + count, 0);
+}
+
+function clonePeopleRow(db, tableName, sessionId, patch) {
+  const base = db.prepare(`SELECT * FROM ${tableName} WHERE session_id = ? LIMIT 1`).get(sessionId);
+  assert.ok(base, `${tableName} should have a source row to clone`);
+  const row = { ...base, ...patch };
+  const columns = Object.keys(row);
+  const placeholders = columns.map(() => "?").join(", ");
+  db
+    .prepare(`INSERT INTO ${tableName} (${columns.join(", ")}) VALUES (${placeholders})`)
+    .run(...columns.map((column) => row[column]));
 }
 
 for (const [adapterName, createHarness, skip] of harnesses) {
@@ -213,6 +379,38 @@ for (const [adapterName, createHarness, skip] of harnesses) {
 
     assert.equal(loaded.tenDayPeriod, 1);
     assert.equal(record.metadata.tenDayPeriod, 1);
+  });
+
+  test(`${adapterName} storage adapter contract: worldPeople view and prompt stay player-visible`, { skip }, async (t) => {
+    const { adapter, trackSession } = createHarness(t);
+    const worldState = buildWorldState({
+      playerName: "人物视图一致",
+      role: "official",
+      turnCount: 8
+    });
+    addVisiblePeopleRows(worldState);
+    addHiddenPeopleRows(worldState);
+    trackSession(worldState.sessionId);
+
+    const expectedView = buildWorldPeopleView(worldState);
+    const expectedPrompt = assemblePromptContext(worldState, {
+      playerAction: "拜访顾氏纸铺，探听京师人情",
+      task: "turn"
+    }).worldPeople;
+
+    await adapter.writeSession(worldState);
+    const loaded = await adapter.readSession(worldState.sessionId);
+    const loadedView = buildWorldPeopleView(loaded);
+    const loadedPrompt = assemblePromptContext(loaded, {
+      playerAction: "拜访顾氏纸铺，探听京师人情",
+      task: "turn"
+    }).worldPeople;
+    const serialized = JSON.stringify({ loadedView, loadedPrompt });
+
+    assert.deepEqual(loadedView, expectedView);
+    assert.deepEqual(loadedPrompt, expectedPrompt);
+    assert.match(serialized, /顾衡/);
+    assert.doesNotMatch(serialized, /SEALED_PEOPLE_/);
   });
 
   test(`${adapterName} storage adapter contract: listSessions redacts metadata`, { skip }, async (t) => {
@@ -751,6 +949,323 @@ test("SQLite storage adapter keeps worldGeographyView parity with the normalized
   assert.deepEqual(sqliteView, expectedView);
   assert.doesNotMatch(serializedView, /SEALED_ROUTE_NOTE/);
   assert.doesNotMatch(serializedView, /frontier-hidden-palace-intel/);
+});
+
+test("SQLite storage adapter syncs people business tables with the session row", {
+  skip: hasNodeSqlite ? false : "node:sqlite is unavailable in this Node.js runtime"
+}, async (t) => {
+  const { adapter, dbPath } = createSqliteHarness(t);
+  const worldState = buildWorldState({
+    playerName: "人物业务表",
+    role: "official",
+    turnCount: 5
+  });
+  addVisiblePeopleRows(worldState);
+  addHiddenPeopleRows(worldState);
+
+  await adapter.writeSession(worldState);
+
+  withSqliteDatabase(dbPath, (db) => {
+    const counts = readSqlitePeopleCounts(db, worldState.sessionId);
+    const customNpc = db
+      .prepare(`
+        SELECT source, revision, row_revision, last_updated_turn, visibility, hidden_intent, hidden_notes_json
+        FROM people_npcs
+        WHERE session_id = ? AND row_id = ?
+      `)
+      .get(worldState.sessionId, "npc-visible-gu");
+    const asset = db
+      .prepare(`
+        SELECT owner_type, owner_row_id, value_estimate, annual_income_estimate
+        FROM people_assets
+        WHERE session_id = ? AND row_id = ?
+      `)
+      .get(worldState.sessionId, "asset-visible-gu");
+    const legacyRelationship = db
+      .prepare("SELECT recent_notes_json FROM people_relationships WHERE session_id = ? AND row_id = ?")
+      .get(worldState.sessionId, "rel-player-npc-C01");
+    const hiddenRows = db
+      .prepare("SELECT COUNT(*) AS count FROM people_npcs WHERE session_id = ? AND name LIKE ?")
+      .get(worldState.sessionId, "SEALED_PEOPLE_%");
+
+    assert.equal(counts.npcs, worldState.worldPeople.npcs.length);
+    assert.equal(counts.households, worldState.worldPeople.households.length);
+    assert.equal(counts.assets, worldState.worldPeople.assets.length);
+    assert.equal(counts.estates, worldState.worldPeople.estates.length);
+    assert.equal(counts.relationships, worldState.worldPeople.relationships.length);
+    assert.equal(customNpc.source, "world_people_bridge");
+    assert.equal(customNpc.revision, 1);
+    assert.equal(customNpc.row_revision, 1);
+    assert.equal(customNpc.last_updated_turn, 5);
+    assert.equal(customNpc.visibility, "public");
+    assert.equal(customNpc.hidden_intent, "");
+    assert.equal(customNpc.hidden_notes_json, "[]");
+    assert.equal(asset.owner_type, "household");
+    assert.equal(asset.owner_row_id, "hh-visible-gu");
+    assert.equal(asset.value_estimate, 180);
+    assert.equal(asset.annual_income_estimate, 24);
+    assert.doesNotMatch(legacyRelationship.recent_notes_json, /SEALED_PEOPLE_/);
+    assert.equal(hiddenRows.count, 0);
+  });
+});
+
+test("SQLite storage adapter repairs hidden raw people rows and missing visible bridge rows from world_state_json on read", {
+  skip: hasNodeSqlite ? false : "node:sqlite is unavailable in this Node.js runtime"
+}, async (t) => {
+  const { adapter, dbPath } = createSqliteHarness(t);
+  const worldState = buildWorldState({
+    playerName: "人物修复",
+    turnCount: 2
+  });
+  await adapter.writeSession(worldState);
+
+  withSqliteDatabase(dbPath, (db) => {
+    clonePeopleRow(db, "people_npcs", worldState.sessionId, {
+      row_id: "npc-hidden-raw-sqlite",
+      legacy_row_id: "npc-hidden-raw-sqlite",
+      source: "raw_hidden_test",
+      visibility: "hidden",
+      known_to_player: 0,
+      name: "SEALED_SQLITE_PEOPLE_RAW",
+      public_summary: "SEALED_SQLITE_PEOPLE_PUBLIC",
+      hidden_intent: "SEALED_SQLITE_PEOPLE_INTENT",
+      hidden_notes_json: "[\"SEALED_SQLITE_PEOPLE_NOTE\"]"
+    });
+    db.prepare("DELETE FROM people_npcs WHERE session_id = ? AND row_id = ?").run(worldState.sessionId, "C01");
+    db.prepare("DELETE FROM people_relationships WHERE session_id = ? AND row_id = ?").run(worldState.sessionId, "rel-player-npc-C01");
+
+    const hidden = db
+      .prepare("SELECT COUNT(*) AS count FROM people_npcs WHERE session_id = ? AND row_id = ?")
+      .get(worldState.sessionId, "npc-hidden-raw-sqlite");
+    const missingNpc = db
+      .prepare("SELECT COUNT(*) AS count FROM people_npcs WHERE session_id = ? AND row_id = ?")
+      .get(worldState.sessionId, "C01");
+
+    assert.equal(hidden.count, 1);
+    assert.equal(missingNpc.count, 0);
+  });
+
+  const { record } = await adapter.readSessionRecord(worldState.sessionId);
+  const promptContext = assemblePromptContext(record.worldState, {
+    playerAction: "查访塾师近况",
+    task: "turn"
+  });
+  const serialized = JSON.stringify({
+    worldPeople: record.worldState.worldPeople,
+    worldPeopleView: buildWorldPeopleView(record.worldState),
+    promptPeople: promptContext.worldPeople,
+    retrievalPeople: promptContext.retrievalContext.people
+  });
+
+  assert.doesNotMatch(serialized, /SEALED_SQLITE_PEOPLE_/);
+
+  withSqliteDatabase(dbPath, (db) => {
+    const counts = readSqlitePeopleCounts(db, worldState.sessionId);
+    const hidden = db
+      .prepare("SELECT COUNT(*) AS count FROM people_npcs WHERE session_id = ? AND row_id = ?")
+      .get(worldState.sessionId, "npc-hidden-raw-sqlite");
+    const repairedNpc = db
+      .prepare("SELECT COUNT(*) AS count FROM people_npcs WHERE session_id = ? AND row_id = ?")
+      .get(worldState.sessionId, "C01");
+    const repairedRelationship = db
+      .prepare("SELECT COUNT(*) AS count FROM people_relationships WHERE session_id = ? AND row_id = ?")
+      .get(worldState.sessionId, "rel-player-npc-C01");
+
+    assert.equal(counts.npcs, record.worldState.worldPeople.npcs.length);
+    assert.equal(counts.relationships, record.worldState.worldPeople.relationships.length);
+    assert.equal(hidden.count, 0);
+    assert.equal(repairedNpc.count, 1);
+    assert.equal(repairedRelationship.count, 1);
+  });
+});
+
+test("SQLite storage adapter repairs mismatched people row ids when counts still match", {
+  skip: hasNodeSqlite ? false : "node:sqlite is unavailable in this Node.js runtime"
+}, async (t) => {
+  const { adapter, dbPath } = createSqliteHarness(t);
+  const worldState = buildWorldState({
+    playerName: "人物错行修复",
+    turnCount: 3
+  });
+  await adapter.writeSession(worldState);
+
+  withSqliteDatabase(dbPath, (db) => {
+    db
+      .prepare("UPDATE people_npcs SET row_id = ? WHERE session_id = ? AND row_id = ?")
+      .run("npc-corrupt-extra", worldState.sessionId, "C01");
+    const counts = readSqlitePeopleCounts(db, worldState.sessionId);
+    const oldRow = db
+      .prepare("SELECT COUNT(*) AS count FROM people_npcs WHERE session_id = ? AND row_id = ?")
+      .get(worldState.sessionId, "C01");
+    const corruptRow = db
+      .prepare("SELECT COUNT(*) AS count FROM people_npcs WHERE session_id = ? AND row_id = ?")
+      .get(worldState.sessionId, "npc-corrupt-extra");
+
+    assert.equal(counts.npcs, worldState.worldPeople.npcs.length);
+    assert.equal(oldRow.count, 0);
+    assert.equal(corruptRow.count, 1);
+  });
+
+  await adapter.readSessionRecord(worldState.sessionId);
+
+  withSqliteDatabase(dbPath, (db) => {
+    const counts = readSqlitePeopleCounts(db, worldState.sessionId);
+    const repairedRow = db
+      .prepare("SELECT COUNT(*) AS count FROM people_npcs WHERE session_id = ? AND row_id = ?")
+      .get(worldState.sessionId, "C01");
+    const corruptRow = db
+      .prepare("SELECT COUNT(*) AS count FROM people_npcs WHERE session_id = ? AND row_id = ?")
+      .get(worldState.sessionId, "npc-corrupt-extra");
+
+    assert.equal(counts.npcs, worldState.worldPeople.npcs.length);
+    assert.equal(repairedRow.count, 1);
+    assert.equal(corruptRow.count, 0);
+  });
+});
+
+test("SQLite storage adapter advances people row revisions during mutateSession", {
+  skip: hasNodeSqlite ? false : "node:sqlite is unavailable in this Node.js runtime"
+}, async (t) => {
+  const { adapter, dbPath } = createSqliteHarness(t);
+  const worldState = buildWorldState({
+    playerName: "人物变更",
+    turnCount: 1
+  });
+  await adapter.writeSession(worldState);
+  const { record: before } = await adapter.readSessionRecord(worldState.sessionId);
+
+  await adapter.mutateSession(worldState.sessionId, (draft) => {
+    draft.turnCount = 9;
+    applyRelationshipChanges(draft, [{
+      targetType: "character",
+      targetId: "C01",
+      relationshipDelta: 7,
+      resentmentDelta: 3,
+      reason: "同窗为其解围，情分略进。"
+    }]);
+  });
+
+  const { record: after } = await adapter.readSessionRecord(worldState.sessionId);
+  assert.equal(after.revision, before.revision + 1);
+
+  withSqliteDatabase(dbPath, (db) => {
+    const relationship = db
+      .prepare(`
+        SELECT revision, row_revision, last_updated_turn, relationship, resentment, recent_notes_json
+        FROM people_relationships
+        WHERE session_id = ? AND row_id = ?
+      `)
+      .get(worldState.sessionId, "rel-player-npc-C01");
+
+    assert.equal(relationship.revision, after.revision);
+    assert.equal(relationship.row_revision, after.revision);
+    assert.equal(relationship.last_updated_turn, 9);
+    assert.equal(relationship.relationship, 19);
+    assert.equal(relationship.resentment, 3);
+    assert.match(relationship.recent_notes_json, /同窗为其解围/);
+  });
+});
+
+test("SQLite storage adapter does not rewrite people rows after stale expectedRevision rejection", {
+  skip: hasNodeSqlite ? false : "node:sqlite is unavailable in this Node.js runtime"
+}, async (t) => {
+  const { adapter, dbPath } = createSqliteHarness(t);
+  const worldState = buildWorldState({
+    playerName: "人物版本冲突",
+    turnCount: 2
+  });
+  await adapter.writeSession(worldState);
+  const { record: staleRecord } = await adapter.readSessionRecord(worldState.sessionId);
+
+  const latestWorldState = JSON.parse(JSON.stringify(staleRecord.worldState));
+  latestWorldState.turnCount = 7;
+  applyRelationshipChanges(latestWorldState, [{
+    targetType: "character",
+    targetId: "C01",
+    relationshipDelta: 5,
+    resentmentDelta: 2,
+    reason: "新近投帖，往来稍密。"
+  }]);
+  await adapter.writeSession(latestWorldState);
+
+  const staleWorldState = JSON.parse(JSON.stringify(staleRecord.worldState));
+  staleWorldState.turnCount = 12;
+  applyRelationshipChanges(staleWorldState, [{
+    targetType: "character",
+    targetId: "C01",
+    relationshipDelta: -8,
+    resentmentDelta: 8,
+    reason: "旧案牵连。"
+  }]);
+
+  const beforeReject = withSqliteDatabase(dbPath, (db) =>
+    db
+      .prepare(`
+        SELECT revision, row_revision, last_updated_turn, relationship, resentment, recent_notes_json
+        FROM people_relationships
+        WHERE session_id = ? AND row_id = ?
+      `)
+      .get(worldState.sessionId, "rel-player-npc-C01")
+  );
+
+  await assert.rejects(
+    () =>
+      adapter.writeSession(staleWorldState, {
+        previousRecord: staleRecord,
+        expectedRevision: staleRecord.revision
+      }),
+    (error) => error.statusCode === 409 && /revision conflict/i.test(error.message)
+  );
+
+  const afterReject = withSqliteDatabase(dbPath, (db) =>
+    db
+      .prepare(`
+        SELECT revision, row_revision, last_updated_turn, relationship, resentment, recent_notes_json
+        FROM people_relationships
+        WHERE session_id = ? AND row_id = ?
+      `)
+      .get(worldState.sessionId, "rel-player-npc-C01")
+  );
+
+  assert.deepEqual(afterReject, beforeReject);
+});
+
+test("SQLite storage adapter syncs people rows on import and delete", {
+  skip: hasNodeSqlite ? false : "node:sqlite is unavailable in this Node.js runtime"
+}, async (t) => {
+  const { adapter, dbPath } = createSqliteHarness(t);
+  const worldState = buildWorldState({
+    playerName: "人物导入",
+    role: "official",
+    turnCount: 4
+  });
+  addVisiblePeopleRows(worldState);
+  const envelope = buildEnvelope(adapter, worldState, { revision: 6 });
+
+  const imported = await adapter.importSessionRecord(envelope, { overwrite: true });
+  assert.equal(imported.revision, 6);
+
+  withSqliteDatabase(dbPath, (db) => {
+    const counts = readSqlitePeopleCounts(db, worldState.sessionId);
+    const customNpc = db
+      .prepare("SELECT revision, row_revision FROM people_npcs WHERE session_id = ? AND row_id = ?")
+      .get(worldState.sessionId, "npc-visible-gu");
+
+    assert.equal(counts.npcs, imported.worldState.worldPeople.npcs.length);
+    assert.ok(sumSqlitePeopleCounts(counts) > 0);
+    assert.equal(customNpc.revision, 6);
+    assert.equal(customNpc.row_revision, 6);
+  });
+
+  await adapter.deleteSession(worldState.sessionId);
+
+  withSqliteDatabase(dbPath, (db) => {
+    const session = db.prepare("SELECT COUNT(*) AS count FROM world_sessions WHERE session_id = ?").get(worldState.sessionId);
+    const counts = readSqlitePeopleCounts(db, worldState.sessionId);
+
+    assert.equal(session.count, 0);
+    assert.equal(sumSqlitePeopleCounts(counts), 0);
+  });
 });
 
 test("JSON storage adapter contract: audit sidecar append failure does not fail committed session", async (t) => {
