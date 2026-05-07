@@ -38,6 +38,7 @@ const { canEnterExam, getExam } = require("../game/exams");
 const { applyStatePatch, appendEvents } = require("../game/stateRules");
 const { runWorldTick } = require("../game/worldTick");
 const { getProvider } = require("../ai");
+const { redactSecrets } = require("../ai/diagnostics");
 const { listSessions, mutateSession, readSession, writeSession } = require("../storage/sessionStore");
 const { chunkTextForSse, closeSse, sendSseEvent, writeSseHeaders } = require("../utils/sse");
 const { createJsonStringFieldExtractor } = require("../utils/streamingJson");
@@ -322,7 +323,7 @@ async function streamTurn(res, sessionId, input) {
     sendSseEvent(res, "final_state", payload);
   } catch (error) {
     sendSseEvent(res, "error", {
-      error: error.message || "Internal server error",
+      error: redactSecrets(error.message || "Internal server error"),
       statusCode: error.statusCode || 500
     });
   } finally {

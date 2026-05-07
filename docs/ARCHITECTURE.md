@@ -193,6 +193,8 @@ data: {"error":"...","statusCode":500}
 
 The browser keeps streamed narrative pending until `final_state`; if the stream later emits `error` or ends without a final payload, that temporary text is removed and only the error is shown.
 
+S44.2 routes SSE error text through `redactSecrets()` before sending it to the browser, including long configured key fragments. This protects provider failure messages; it does not change the streaming rule that already-sent narrative chunks may have reached the client before a later failure, so failed streams still must avoid persistence and browser UI must discard pending text.
+
 Requests without SSE negotiation still return plain JSON for tests and compatibility:
 
 ```json
@@ -334,6 +336,8 @@ DeepSeek supports task-specific model routing. `DEEPSEEK_MODEL` remains the fall
 S25.2 adds optional turn token streaming for OpenAI Responses, DeepSeek chat completions, and Anthropic Messages. `streamTurn()` buffers the full model JSON and still returns the same validated `turn` payload as `runTurn()`. During SSE requests, `src/routes/game.js` uses `src/utils/streamingJson.js` to extract only the top-level `narrative` string from the streamed JSON text and send it as `narrative_chunk`; nested `narrative` keys inside `statePatch` or other objects are ignored. State patches, relationship changes, world tick, persistence, and `final_state` still happen only after the full JSON passes schema validation. If visible provider narrative has already been sent and the stream then fails, the route emits an `error` event and does not write the session; the browser removes the uncommitted pending text. If no visible narrative was sent, the route can fall back to the normal turn path.
 
 For turn responses, providers may also suggest top-level `relationshipChanges`. These are not state patches. They are bounded social-memory deltas for existing visible relationship ledger ids, and the server is free to clamp or ignore them before persistence. Mock now emits these suggestions for scholar, emperor, minister, general, magistrate, and official actions so local play can exercise social memory without real model keys.
+
+S44.2 adds a focused red-team route gate in `test/aiControlRedTeam.test.js`: a malicious provider bundle that mixes server-owned patch attempts with a safe field must leave protected ledgers, hidden relationship targets, exam ranks, offices, characters, events, and world threads untouched while still allowing the safe suggestion through normal clamps.
 
 ### AI Diagnostics
 

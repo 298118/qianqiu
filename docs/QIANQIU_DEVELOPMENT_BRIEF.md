@@ -548,7 +548,7 @@ S44.1 已新增 `docs/AI_CONTROL_AUDIT_MATRIX.md` 作为当前权限矩阵入口
 - 每个系统都要标明玩家可见性：公文、奏报、传闻、私信、角色自知、隐藏暗流或开发者诊断。
 - 对越权 patch、幻觉官职、非法晋级、隐藏信息泄漏、作弊误判和流式失败增加 red-team/eval 测试。
 
-S44.2 应以该矩阵中的测试缺口为优先级清单：先补普通回合越权 patch 组合包、官职幻觉、非法晋级/考试门禁、隐藏 token 统一扫描、作弊误判边界和流式失败回滚。
+S44.2 已按该矩阵补上第一批 red-team/eval 基线：普通回合混合越权 patch、官职幻觉变体、非法考试触发与服务器门禁、隐藏 token view 过滤、AI 与本地反作弊冲突、provider-owned 科举候选/榜单无效、流式失败不落盘，以及 SSE provider 错误脱敏。浏览器 pending 文本截图验收和自定义 provider 绕过 adapter 的题面 sanity clamp 仍可作为后续硬化项。
 
 ## 12. 开发过程注意事项
 

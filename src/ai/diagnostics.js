@@ -55,7 +55,16 @@ function redactSecrets(text) {
   for (const envName of SECRET_ENV_NAMES) {
     const secret = process.env[envName];
     if (secret) {
-      message = message.split(secret).join("[redacted]");
+      const variants = new Set([secret]);
+      if (secret.length >= 8) {
+        variants.add(secret.slice(0, 8));
+        variants.add(secret.slice(0, 12));
+        variants.add(secret.slice(-8));
+        variants.add(secret.slice(-12));
+      }
+      for (const variant of [...variants].filter((value) => value && value.length >= 8)) {
+        message = message.split(variant).join("[redacted]");
+      }
     }
   }
   return message;

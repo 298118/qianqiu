@@ -16,6 +16,7 @@ const {
   PROMPT_PACK_HIDDEN_LEAK_FIXTURES,
   PROMPT_PACK_OUTPUT_FIXTURES,
   PROMPT_PACK_TONE_RED_TEAM_FIXTURES,
+  S44_MIXED_AUTHORITY_RED_TEAM_FIXTURES,
   SERVER_OWNED_TURN_FIXTURES,
   STRICT_JSON_FIXTURES,
   UNSAFE_TURN_FIXTURES,
@@ -179,6 +180,23 @@ test("S41 prompt-pack authority fixtures catch overreach beyond schema", () => {
     }
 
     assert.fail(`Unhandled prompt-pack authority fixture expectation: ${fixture.expected}`);
+  }
+});
+
+test("S44 mixed authority fixtures reject cross-system overreach", () => {
+  for (const fixture of S44_MIXED_AUTHORITY_RED_TEAM_FIXTURES) {
+    const payload = parseJsonFromText(fixture.raw);
+
+    if (fixture.expected === "schemaReject") {
+      assert.throws(
+        () => validatePayload(fixture.schemaName, payload),
+        /schema validation/,
+        fixture.name
+      );
+      continue;
+    }
+
+    assert.fail(`Unhandled S44 fixture expectation: ${fixture.expected}`);
   }
 });
 

@@ -49,6 +49,17 @@ test("AI diagnostics redacts configured secrets from errors", () => {
   });
 });
 
+test("AI diagnostics redacts long secret fragments from errors", () => {
+  return withEnv({ OPENAI_API_KEY: "sk-proj-abcdef1234567890" }, () => {
+    const redacted = redactSecrets("prefix sk-proj- suffix 34567890 full sk-proj-abcdef1234567890");
+
+    assert.equal(redacted.includes("sk-proj-"), false);
+    assert.equal(redacted.includes("34567890"), false);
+    assert.equal(redacted.includes("abcdef1234567890"), false);
+    assert.match(redacted, /\[redacted\]/);
+  });
+});
+
 test("AI connection test succeeds for mock without writing a session", async () => {
   await withEnv({ AI_PROVIDER: "mock" }, async () => {
     const result = await runAiConnectionTest();

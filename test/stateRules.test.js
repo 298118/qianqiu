@@ -110,7 +110,17 @@ test("ordinary official patches cannot use position as a hidden office appointme
   worldState.player.officeTitle = "户部主事";
   worldState.player.position = "户部主事";
 
-  for (const forgedPosition of ["内阁大学士", "内 阁 大 学 士", "首辅", "军机大臣", "尚 书"]) {
+  for (const forgedPosition of [
+    "内阁大学士",
+    "内 阁 大 学 士",
+    "內閣大學士",
+    "署理首辅",
+    "护理吏部尚书",
+    "兼管军机处",
+    "Grand Secretary",
+    "minister of revenue",
+    "prefect"
+  ]) {
     applyStatePatch(worldState, {
       player: {
         position: forgedPosition,

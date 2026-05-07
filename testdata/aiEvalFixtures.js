@@ -451,6 +451,64 @@ const PROMPT_PACK_AUTHORITY_RED_TEAM_FIXTURES = [
   }
 ];
 
+const S44_MIXED_AUTHORITY_RED_TEAM_FIXTURES = [
+  {
+    name: "ordinary turn mixed overreach bundle",
+    schemaName: "turn",
+    raw: JSON.stringify(baseTurn({
+      statePatch: {
+        publicOrder: 66,
+        activeExam: { level: "palace_exam", status: "writing" },
+        examCalendar: { rivals: [{ id: "provider-rival" }] },
+        activeNpcRequest: { id: "provider-request" },
+        longTermEvents: { queue: [{ id: "provider-event" }] },
+        officialCareer: { careerHistory: [{ type: "promotion", label: "伪升迁" }] },
+        roleWorldCoupling: { recentImpacts: [{ kind: "provider-forged" }] },
+        worldThreads: { threads: [{ id: "WT-provider-forged", title: "伪议题" }] },
+        characters: [{ id: "C99", name: "暗线贵人", role: "secret patron" }],
+        eventHistory: ["provider replacement"],
+        year: 1700,
+        month: 12,
+        player: {
+          academia: 20,
+          role: "official",
+          examRank: "进士",
+          officeTitle: "内阁大学士",
+          examHistory: [{ level: "palace_exam" }]
+        }
+      },
+      relationshipChanges: [
+        {
+          targetType: "character",
+          targetId: "C99-hidden",
+          relationshipDelta: 20,
+          resentmentDelta: -20,
+          reason: "Hidden target overreach."
+        }
+      ],
+      examTrigger: {
+        shouldStart: true,
+        level: "palace_exam",
+        reason: "Skip the ladder."
+      }
+    })),
+    expected: "schemaReject"
+  },
+  {
+    name: "opening may not include hidden state",
+    schemaName: "opening",
+    raw: JSON.stringify({
+      narrative: "县学开讲，诸生问经。",
+      events: ["县学记事。"],
+      statePatch: {
+        player: { role: "emperor" },
+        providerConfig: { apiKey: "sk-hidden" }
+      }
+    }),
+    expected: "schemaReject"
+  }
+];
+
 const UNSAFE_TURN_FIXTURES = [
   {
     name: "ordinary turn may not promote player role",
@@ -667,6 +725,7 @@ module.exports = {
   PROMPT_PACK_HIDDEN_LEAK_FIXTURES,
   PROMPT_PACK_OUTPUT_FIXTURES,
   PROMPT_PACK_TONE_RED_TEAM_FIXTURES,
+  S44_MIXED_AUTHORITY_RED_TEAM_FIXTURES,
   SERVER_OWNED_TURN_FIXTURES,
   STRICT_JSON_FIXTURES,
   UNSAFE_TURN_FIXTURES,
