@@ -105,6 +105,7 @@ const roleWorldAcceptanceCases = Object.freeze([
 function parseBrowserSmokeArgs(argv = process.argv) {
   const args = {
     browserPath: null,
+    checkAiConnection: false,
     headed: false,
     help: false,
     screenshotsDir: null,
@@ -115,6 +116,8 @@ function parseBrowserSmokeArgs(argv = process.argv) {
     const arg = argv[index];
     if (arg === "--help" || arg === "-h") {
       args.help = true;
+    } else if (arg === "--check-ai-connection") {
+      args.checkAiConnection = true;
     } else if (arg === "--headed") {
       args.headed = true;
     } else if (arg === "--url") {
@@ -162,6 +165,82 @@ async function assertStartRoleOptions(page) {
   if (missingStartRoles.length) {
     throw new Error(`Start form missing role options: ${missingStartRoles.join(", ")}`);
   }
+}
+
+function getAiConnectionPanelFailures(panel = {}, options = {}, label = "AI connection") {
+  const failures = [];
+  const expectedProvider = options.expectedProvider ? String(options.expectedProvider).toLowerCase() : "";
+  const hiddenTextTokens = options.hiddenTextTokens || [];
+  const statusText = String(panel.statusText || "");
+  const resultText = String(panel.resultText || "");
+  const combinedText = `${statusText}\n${resultText}`;
+
+  if (panel.resultOk !== "true") {
+    failures.push(`${label} did not report a passing result.`);
+  }
+  if (expectedProvider && !combinedText.toLowerCase().includes(expectedProvider)) {
+    failures.push(`${label} did not mention expected provider ${expectedProvider}.`);
+  }
+  if (!/当前配置/.test(resultText)) {
+    failures.push(`${label} did not render the configured provider line.`);
+  }
+  if (!/default\s*:/.test(resultText)) {
+    failures.push(`${label} did not render a default model summary.`);
+  }
+  if (panel.beforeSessionId !== panel.afterSessionId) {
+    failures.push(`${label} changed qianqiu.sessionId during a no-session diagnostic.`);
+  }
+  if (panel.actionAreaVisible) {
+    failures.push(`${label} unexpectedly entered the game action area.`);
+  }
+
+  const leakedTokens = hiddenTextTokens.filter((token) => token && combinedText.includes(token));
+  if (leakedTokens.length) {
+    failures.push(`${label} leaked hidden text tokens: ${leakedTokens.join(", ")}.`);
+  }
+
+  return failures;
+}
+
+async function assertAiConnectionPanel(page, label, options = {}) {
+  await page.locator("#ai-connection-panel").waitFor({ state: "visible", timeout: 10000 });
+  const beforeSessionId = await page.evaluate(() => window.localStorage.getItem("qianqiu.sessionId") || "");
+
+  await page.locator("#ai-test-button").click();
+  await page.waitForFunction(() => {
+    const result = document.querySelector("#ai-test-result");
+    const button = document.querySelector("#ai-test-button");
+    return result?.dataset.ok && button && !button.disabled;
+  }, null, { timeout: 15000 });
+
+  const summary = await page.evaluate((before) => {
+    const isVisible = (selector) => {
+      const element = document.querySelector(selector);
+      if (!element || element.hidden) return false;
+      const style = window.getComputedStyle(element);
+      return style.display !== "none" && style.visibility !== "hidden";
+    };
+
+    return {
+      beforeSessionId: before,
+      afterSessionId: window.localStorage.getItem("qianqiu.sessionId") || "",
+      actionAreaVisible: isVisible("#action-area"),
+      resultOk: document.querySelector("#ai-test-result")?.dataset.ok || "",
+      resultText: document.querySelector("#ai-test-result")?.innerText || "",
+      statusText: document.querySelector("#ai-test-status")?.innerText || ""
+    };
+  }, beforeSessionId);
+
+  const failures = getAiConnectionPanelFailures(summary, options, label);
+  if (failures.length) {
+    failUiAcceptance(failures.join("\n"));
+  }
+
+  return {
+    ok: summary.resultOk === "true",
+    statusText: summary.statusText.replace(/\s+/g, " ").trim(),
+    resultText: summary.resultText.replace(/\s+/g, " ").trim()
+  };
 }
 
 async function waitForInitialRestore(page) {
@@ -2007,6 +2086,8 @@ async function runRoleWorldCouplingAcceptance(browser, { baseUrl, onSessionId, p
 async function runBrowserJourney({
   baseUrl,
   browserPath,
+  checkAiConnection = false,
+  expectedAiConnectionProvider = null,
   headed = false,
   onSessionId = () => {},
   screenshotsDir = null
@@ -2028,6 +2109,12 @@ async function runBrowserJourney({
 
     await openCleanStartPage(page, baseUrl);
     await assertStartRoleOptions(page);
+    const aiConnection = checkAiConnection
+      ? await assertAiConnectionPanel(page, "start-page AI connection", {
+        expectedProvider: expectedAiConnectionProvider,
+        hiddenTextTokens: ["OPENAI_API_KEY", "DEEPSEEK_API_KEY", "ANTHROPIC_API_KEY", "data/sessions"]
+      })
+      : null;
 
     await page.locator('input[name="dynasty"]').fill("Ming");
     await page.locator('input[name="year"]').fill("1644");
@@ -2204,12 +2291,26 @@ async function runBrowserJourney({
     const statusText = await page.locator("#status-strip").innerText();
     await context.close();
 
+    const acceptanceAreas = [
+      "desktop",
+      "mobile",
+      "four-exam-progression",
+      "mobile-final-archive",
+      "cheating-result",
+      "official-start",
+      "official-career",
+      "world-thread",
+      "role-world"
+    ];
+    if (aiConnection) acceptanceAreas.unshift("ai-connection");
+
     return {
       baseUrl,
       restored: true,
       sessionId,
       sessionIds,
       statusText: statusText.replace(/\s+/g, " ").trim(),
+      aiConnection,
       examProgression,
       officialStart,
       cheatingExam,
@@ -2217,17 +2318,7 @@ async function runBrowserJourney({
       identityTurns: ["scholar", "official", ...roleWorldAcceptanceCases.map((acceptanceCase) => acceptanceCase.role)],
       uiAcceptance: {
         screenshots: recorder.summary(),
-        viewports: [
-          "desktop",
-          "mobile",
-          "four-exam-progression",
-          "mobile-final-archive",
-          "cheating-result",
-          "official-start",
-          "official-career",
-          "world-thread",
-          "role-world"
-        ]
+        viewports: acceptanceAreas
       }
     };
   } finally {
@@ -2252,6 +2343,8 @@ async function runBrowserSmoke(options = {}) {
     result = await runBrowserJourney({
       baseUrl: baseUrl || server.baseUrl,
       browserPath,
+      checkAiConnection: Boolean(options.checkAiConnection),
+      expectedAiConnectionProvider: baseUrl ? null : "mock",
       headed: options.headed,
       onSessionId: (createdSessionId) => {
         sessionIds.push(createdSessionId);
@@ -2279,6 +2372,9 @@ Options:
   --browser <path>   Browser executable path. Defaults to BROWSER_EXECUTABLE_PATH or local Chrome/Edge.
   --screenshots <dir>
                     Save desktop/mobile UI acceptance screenshots to this directory.
+  --check-ai-connection
+                    Click the start-page AI connection diagnostic. The auto-started server uses Mock;
+                    --url targets should enable this only when the target provider is intentionally checkable.
   --headed           Show the browser window while running.
   --help             Show this message.
 `);
@@ -2312,6 +2408,7 @@ module.exports = {
   buildBrowserCheatingEssay,
   buildBrowserSmokeEssay,
   createScreenshotRecorder,
+  getAiConnectionPanelFailures,
   getDefaultBrowserCandidates,
   getGameLayoutFailures,
   getHiddenActiveRequestLeaks,

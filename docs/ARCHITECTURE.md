@@ -351,7 +351,7 @@ S44.2 adds a focused red-team route gate in `test/aiControlRedTeam.test.js`: a m
 
 `src/ai/diagnostics.js` provides the `POST /api/ai/connection-test` backend. It intentionally bypasses `getProvider()` and constructs the requested provider directly so real-provider failures are visible. The diagnostic world state is a throwaway scholar opening scene, and the result is never persisted. Missing keys return a controlled `503`; thrown errors are passed through `redactSecrets()` before being exposed to the browser.
 
-This route is a configuration and JSON-contract check, not a quality acceptance gate. Historical tone, long-run coherence, authority probes and streaming behavior still belong to `smoke:provider`, `smoke:provider:long`, `eval:ai`, and browser smoke.
+This route is a configuration and JSON-contract check, not a quality acceptance gate. Historical tone, long-run coherence, authority probes and streaming behavior still belong to `smoke:provider`, `smoke:provider:long`, `eval:ai`, and browser smoke. S47.1 adds `scripts/providerRouteHealth.js` / `npm run smoke:provider:route`, which starts a tiny local Express app and POSTs this same route for keyed providers. It verifies route-level `ok=true`, model summary, streaming capability, opening event count, secret/path non-leakage, and no new session file; it does not add a model cost or speed ledger beyond the route's existing `latencyMs` field.
 
 ### Real-Provider Smoke
 
@@ -360,10 +360,12 @@ This route is a configuration and JSON-contract check, not a quality acceptance 
 ```bash
 npm run smoke:provider
 npm run smoke:provider -- --provider deepseek
+npm run smoke:provider:route
+npm run smoke:provider:route -- --provider deepseek
 npm run smoke:provider -- --stream --provider deepseek
 ```
 
-The script calls real provider factories directly instead of `getProvider()`, so failures are not hidden by Mock fallback. It exercises the four provider methods that correspond to start, turn, question, and submit/grade, then prints a short schema-validated summary. With `--stream`, it also exercises `streamTurn()` and reports streamed raw-character count plus validated narrative. It does not start the Express server and does not write session JSON files. With `AI_PROVIDER=mock`, it auto-runs only providers whose required key is present; if no real-provider keys are configured, it skips with exit code 0.
+The script calls real provider factories directly instead of `getProvider()`, so failures are not hidden by Mock fallback. It exercises the four provider methods that correspond to start, turn, question, and submit/grade, then prints a short schema-validated summary. With `--stream`, it also exercises `streamTurn()` and reports streamed raw-character count plus validated narrative. It does not start the Express server and does not write session JSON files. With `AI_PROVIDER=mock`, it auto-runs only providers whose required key is present; if no real-provider keys are configured, it skips with exit code 0. Use `smoke:provider:route` when the acceptance target is specifically the browser-facing `/api/ai/connection-test` route rather than adapter method coverage.
 
 `scripts/providerLongRun.js` is the optional S37 long-run acceptance entrypoint for keyed environments:
 

@@ -124,6 +124,7 @@ npm test
 npm run eval:ai
 npm run smoke:browser
 npm run smoke:provider
+npm run smoke:provider:route
 npm run smoke:provider:long
 ```
 
@@ -131,8 +132,8 @@ npm run smoke:provider:long
 
 - `npm test` 使用 Node.js 内置测试，覆盖状态边界、AI schema、科举、关系、长期事件、官场结果、角色联动、存储、SSE 和脚本逻辑。
 - `npm run eval:ai` 是离线 AI 输出质量门槛，覆盖 provider-shaped JSON、越权风险、历史语气、评分边界和本地作弊处罚。
-- `npm run smoke:browser` 默认启动临时 Mock 服务器，覆盖完整书生到入仕路径、作弊样例、代表身份回合、官场差事面板、失败 SSE 回滚、存档簿和桌面/移动布局。
-- `npm run smoke:provider` 与 `npm run smoke:provider:long` 只在配置真实 provider key 时进行网络调用；无 key 时会成功跳过。
+- `npm run smoke:browser` 默认启动临时 Mock 服务器，覆盖完整书生到入仕路径、作弊样例、代表身份回合、官场差事面板、失败 SSE 回滚、存档簿和桌面/移动布局；`npm run smoke:browser -- --check-ai-connection` 还会点击开局页“AI 连接”按钮并断言 Mock 诊断不写 session。
+- `npm run smoke:provider`、`npm run smoke:provider:route` 与 `npm run smoke:provider:long` 只在配置真实 provider key 时进行网络调用；无 key 时会成功跳过。`smoke:provider:route` 会启动最小 Express 路由并 POST `/api/ai/connection-test`，用于验收玩家开局页同一条 provider 健康检查路径。
 
 ## API 概览
 
@@ -152,7 +153,7 @@ POST /api/exam/submit
 - `POST /api/game/start` 校验 `role`，允许 `scholar`、`emperor`、`minister`、`general`、`magistrate`、`official`。
 - `GET /api/game/saves` 返回脱敏 metadata，不返回完整 `worldState`、关系账本、隐藏关系或 provider 配置。
 - `POST /api/game/turn` 支持普通 JSON 与 SSE。SSE 事件包括 `state_preview`、`narrative_chunk`、`final_state`、`error`。
-- `POST /api/ai/connection-test` 直接校验指定或当前 AI provider，不创建 session、不写存档、不用 Mock fallback 掩盖真实 provider 问题，返回模型摘要、耗时、streaming 能力、开局叙事预览或脱敏错误。
+- `POST /api/ai/connection-test` 直接校验指定或当前 AI provider，不创建 session、不写存档、不用 Mock fallback 掩盖真实 provider 问题，返回模型摘要、即时 `latencyMs`、streaming 能力、开局叙事预览或脱敏错误；S47.1 不新增模型费用或速度台账。
 - 游戏与考试路由会返回 `examCalendarView`、`examRivalView`、`relationshipView`、`activeNpcRequestView`、`roleWorldCouplingView`、`worldEntityView`、`worldThreadView`、`longTermEventView`、`officialCareerView` 等视图；其中 `officialCareerView` 用于浏览器官场面板，`worldThreadView` 用于浏览器“世界议程”面板和 AI prompt 摘要，`worldEntityView` 用于暴露 S45 多实体世界模型的玩家可见摘要。
 
 ## 项目结构

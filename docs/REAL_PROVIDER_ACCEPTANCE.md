@@ -1,6 +1,6 @@
 # Real Provider Long-Run Acceptance
 
-This document is the S37 acceptance record for keyed real-provider behavior. It complements the short `npm run smoke:provider` adapter smoke and the no-network `npm run eval:ai` fixture gate.
+This document is the S37/S47 acceptance record for keyed real-provider behavior. It complements the short `npm run smoke:provider` adapter smoke, the S47 route-level health check, and the no-network `npm run eval:ai` fixture gate.
 
 S37 keeps real providers optional. No-key environments must skip successfully, and default local play remains Mock-first.
 
@@ -19,7 +19,9 @@ Run:
 
 ```bash
 npm run smoke:provider:long
+npm run smoke:provider:route
 npm run smoke:provider:long -- --provider openai
+npm run smoke:provider:route -- --provider deepseek
 npm run smoke:provider:long -- --stream --provider anthropic
 npm run smoke:provider:long -- --provider all --turns 12
 ```
@@ -32,6 +34,8 @@ Implementation:
 - Provider selection is shared with `scripts/providerSmoke.js`: `AI_PROVIDER=mock` auto-runs only keyed providers; explicit real providers fail fast if their key is missing.
 - The script calls provider factories directly, so Mock fallback cannot hide provider failures.
 - It does not start Express and does not write `data/sessions/*.json`.
+
+S47.1 adds `npm run smoke:provider:route` through `scripts/providerRouteHealth.js`. It starts a tiny local Express app, POSTs `/api/ai/connection-test` for each selected keyed provider, verifies `ok=true`, provider/config/model fields, `supportsStreaming`, `openingEventCount`, `narrativePreview`, secret/session-path non-leakage, and confirms no new `data/sessions/*.json` file appears. This route gate is intentionally shorter than adapter smoke: it checks the same path the browser start panel uses and does not add a model cost or speed ledger beyond the route's existing `latencyMs` diagnostic field.
 
 The current scenario is an 8-turn scholar long-run by default. It includes ordinary study, mentor, travel, social, exam-preparation, rest, and an explicit authority probe asking the model to skip the imperial examination and grant office directly. The script applies the same server-owned state boundaries in memory for provider patches, relationship suggestions, active NPC requests, role/world coupling, world tick, long-term events, and official-career settlement.
 
@@ -50,6 +54,7 @@ Record each keyed run as one provider plus one mode:
 | `authorityBoundaryResult` | No provider `statePatch` attempts server-owned keys such as `activeExam`, `examCalendar`, `activeNpcRequest`, `longTermEvents`, `officialCareer`, `roleWorldCoupling`, `eventHistory`, `characters`, `player.examRank`, `player.officeTitle`, or `player.examHistory`. |
 | `stateConsistencyResult` | `turnCount` increments once per turn, `year/month` stay server-owned, numeric ranges clamp, event history stays capped, and scholar role/rank are not promoted by ordinary turns. |
 | `streamingResult` | With `--stream`, `streamTurn()` returns a final schema-valid turn; streamed raw-character count is logged for diagnosis. |
+| `routeHealthResult` | `smoke:provider:route` returns route-level `ok=true`, model summary, streaming capability, opening event count, no session write, and no secret/path leakage. |
 | `result` | `pass`, `fail`, or `skipped`. |
 | `failureClass` | Suggested values: `missing-key`, `network`, `timeout`, `schema`, `tone`, `authority`, `state`, `streaming`. |
 | `command` | Exact command used. |
@@ -71,11 +76,12 @@ No-key skip is a valid local result:
 
 ```text
 No real-provider keys found; skipping S37 provider long-run.
+No real-provider keys found; skipping provider route health.
 ```
 
 ## Limitations
 
-The S37.2 script is adapter-level plus in-memory server-boundary verification. It intentionally avoids session writes, so it does not yet cover the route-level SSE branch where a visible streamed narrative may be followed by validation failure and no persistence. That behavior remains covered by no-network route tests and should become a keyed route-SSE acceptance mode if real-provider browser/network acceptance is expanded later.
+The S37.2 script is adapter-level plus in-memory server-boundary verification. S47.1 covers the route-level connection diagnostic, but not the route-level SSE branch where a visible streamed narrative may be followed by validation failure and no persistence. That behavior remains covered by no-network route tests and should become a keyed route-SSE acceptance mode if real-provider browser/network acceptance is expanded later.
 
 The tone heuristic is intentionally conservative and local. A passing run is not a literary judgment; it is a regression guard for obvious modern leakage and non-Chinese responses.
 

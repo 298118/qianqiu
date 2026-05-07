@@ -298,6 +298,8 @@ S45.2 后，游戏与考试路由会返回服务器归一化的 `worldEntityView
 
 错误文本必须经过密钥脱敏。DeepSeek 诊断会返回默认模型和任务模型摘要；当前推荐为开局/科举评卷使用 `deepseek-v4-pro`，普通回合/流式叙事/考题生成使用 `deepseek-v4-flash`。
 
+S47.1 后，`npm run smoke:browser -- --check-ai-connection` 会在开局前点击同一“AI 连接”面板并确认 Mock 诊断成功、未写 `qianqiu.sessionId`、未进入游戏态；`npm run smoke:provider:route` 会在有真实 provider key 时通过最小 Express 路由 POST 本接口，检查模型摘要、streaming 能力、开局 JSON、错误脱敏和无 session 写入。按本轮范围，不新增模型费用或速度台账；既有 `latencyMs` 只作为即时连接诊断字段保留。
+
 ### `POST /api/exam/question`
 
 生成并保存当前考试题目。
@@ -641,7 +643,8 @@ chore: update env example
 5. AI 调动/控制审查：S44.1 已用 `docs/AI_CONTROL_AUDIT_MATRIX.md` 逐系统标明 AI 可生成/可建议/不可裁决的边界，以及服务器裁决点、玩家可见性和 S44.2 red-team 测试缺口。
 6. 多实体世界模型：扩展朝廷衙门、地方士绅、书院同门、军镇边墙、盐漕税赋和灾荒赈务等实体。
 7. 依赖/插件治理与验收：S46.1 已新增 `docs/DEPENDENCY_PLUGIN_GOVERNANCE.md`，允许有价值的依赖和插件，但必须记录用途、许可证、替代方案、测试、文档落点和回滚策略。
-8. DeepSeek 缓存命中率：参考官方上下文硬盘缓存机制，让 prompt pack 尽量复用稳定前缀并记录命中/未命中 tokens，但不得以降低游戏质量换取缓存命中。
+8. Provider/浏览器验收：S47.1 增加浏览器 AI 连接按钮 smoke 和 keyed route health，继续保持无 key 可跳过、Mock 默认可玩；本轮不做模型费用或速度台账。
+9. DeepSeek 缓存命中率：参考官方上下文硬盘缓存机制，让 prompt pack 尽量复用稳定前缀并记录命中/未命中 tokens，但不得以降低游戏质量换取缓存命中。
 
 S42.1 已把深度官场契约写入 `docs/OFFICIAL_CAREER_CONTRACT.md`：S34 现有结果引擎继续作为运行时基础；后续 S42.2/S42.3 必须按契约区分服务器拥有的 `officeTitle`、软描述 `position`、归一化 `officialCareer.currentPosting`，并通过服务器 view 暴露官署、差事、考成、人脉、弹劾流程、调任外放、处分和履历档案。AI 只能生成叙事、公文口吻、来函、传闻和受限仪表建议，不能裁决任免、考成、处分、起复或隐藏信息公开。
 

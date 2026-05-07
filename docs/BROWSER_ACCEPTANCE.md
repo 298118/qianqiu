@@ -8,11 +8,12 @@ Use Mock mode unless the task is specifically about a real provider:
 
 ```powershell
 npm run smoke:browser
+npm run smoke:browser -- --check-ai-connection
 npm run smoke:browser -- --url http://localhost:3000
 npm run smoke:browser -- --screenshots artifacts/browser-smoke
 ```
 
-The smoke uses `playwright-core` with an installed Chrome or Edge executable. If the browser is not in a standard location, set `BROWSER_EXECUTABLE_PATH` or pass `--browser <path>`. S38.1 deterministic exam setup expects `--url` targets to be local Qianqiu servers sharing this repository's `data/sessions/` directory. Screenshots are validated in memory by default; `--screenshots <dir>` also writes the checked PNG files. `artifacts/` is ignored by Git.
+The smoke uses `playwright-core` with an installed Chrome or Edge executable. If the browser is not in a standard location, set `BROWSER_EXECUTABLE_PATH` or pass `--browser <path>`. S38.1 deterministic exam setup expects `--url` targets to be local Qianqiu servers sharing this repository's `data/sessions/` directory. Screenshots are validated in memory by default; `--screenshots <dir>` also writes the checked PNG files. `artifacts/` is ignored by Git. `--check-ai-connection` clicks the start-page `AI 连接` button before creating a session; the auto-started smoke server uses Mock, while `--url` targets should enable this flag only when the target provider is intentionally configured for that route check.
 
 ## Automated Coverage
 
@@ -21,6 +22,7 @@ The smoke uses `playwright-core` with an installed Chrome or Edge executable. If
 | Area | Automated checks |
 | --- | --- |
 | Local boot | Starts a temporary Mock-mode server unless `--url` is supplied, waits for `/api/health`, and loads `/`. |
+| AI connection panel | Optional with `--check-ai-connection`: clicks `#ai-test-button`, requires `#ai-test-result[data-ok="true"]`, model/config details, no API-key/session-path text leaks, no `qianqiu.sessionId` write, and no transition into the game action area. |
 | Opening flow | Confirms the start form exposes every supported role, creates a scholar session through the real form, and verifies `qianqiu.sessionId` in localStorage. |
 | Session restore | Reloads the page, opens a fresh page in the same browser context, confirms the game view restores, checks `GET /api/game/state/:sessionId`, and verifies the start-page save list can load the same session from a clean browser context. |
 | Save list UI | Checks the in-game `#save-list-modal` and start-page `#save-list-panel` from `GET /api/game/saves`, expected save ids, raw storage token non-leakage, and save-list horizontal overflow. |
@@ -43,26 +45,26 @@ The smoke uses `playwright-core` with an installed Chrome or Edge executable. If
 
 ## Latest Automated Result
 
-Date: 2026-05-06
+Date: 2026-05-07
 
-Relevant implementation commit: 本次 S42.3 提交
+Relevant implementation commit: 本次 S47.1 提交
 
-Commands verified during S42.3:
+Commands verified during S47.1:
 
 ```powershell
 node --check scripts\browserSmoke.js
-node --check public\app.js
 node --test test\browserSmokeScript.test.js
-npm test
-npm run smoke:browser
+npm run smoke:browser -- --check-ai-connection
+$env:AI_PROVIDER='mock'; npm test
 git diff --check
 ```
 
 Observed result:
 
-- Focused browser-smoke helper coverage passed with 26 tests, including expanded official-career section checks, record-level assignment kind/status checks, server-view-ready checks, and hidden official-panel text token detection.
-- `npm run smoke:browser`: passed with save-list modal/start-page load coverage, failed SSE rollback coverage, relationship-panel coverage, active-request-panel coverage, complete four-level Mock exam progression, final scholar-to-official browser promotion, severe copied-classic cheating coverage, exam-calendar/rival-panel coverage, expanded official-career panel coverage including direct official start, first appointment, a `relief` assignment, assessment/network/procedure checks, hidden-token non-leakage, representative magistrate/general/emperor/minister role-world coupling coverage, and 14 screenshots checked.
-- `npm test`: full suite passed in the S42.3 verification run with 222 tests. One earlier full-suite rerun hit a transient Windows `EPERM rename` while replacing a session JSON file; the focused failing file and the subsequent full rerun passed.
+- Focused browser-smoke helper coverage includes the optional AI connection panel checks plus the existing layout/view helper coverage.
+- `npm run smoke:browser -- --check-ai-connection`: passed with `ai-connection` included in UI acceptance, then completed the existing save-list modal/start-page load coverage, failed SSE rollback coverage, relationship/active-request/world-thread panels, complete four-level Mock exam progression, final scholar-to-official browser promotion, copied-classic cheating coverage, exam-calendar/rival panels, official-career panel, representative magistrate/general/emperor/minister role-world coupling, and 14 screenshots checked.
+- `$env:AI_PROVIDER='mock'; npm test`: full suite passed in the S47.1 verification run with 265 tests.
+- S47.1 only adds a browser route-level button gate; real-provider browser behavior still requires an explicitly configured `--url` target and is not part of default Mock smoke.
 - The browser start path still clears stale `qianqiu.sessionId` localStorage only when an old restored game hides the initial start form. Later reload/fresh-page restoration checks continue to validate the newly created session.
 - Desktop smoke still fails if the game panel regresses to the old narrow-column width, if the role panel, relationship panel, active-request panel, official-career panel, exam-calendar panel, exam-rival panel, or save-list surfaces are horizontally clipped, if S35 calendar/rival details disappear from the modal/archive/candidate profiles, if any supported start role is missing from the browser form, if hidden scholar-invisible factions leak into relationship/active-request panel text, if save-list rows leak raw storage tokens, if the four-exam path stops before official promotion, if copied-passage punishment disappears, or if S36 role-world feedback/API metric deltas disappear from representative role journeys.
 

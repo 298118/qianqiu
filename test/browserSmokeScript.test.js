@@ -5,6 +5,7 @@ const {
   assertPngScreenshot,
   buildBrowserCheatingEssay,
   buildBrowserSmokeEssay,
+  getAiConnectionPanelFailures,
   getDefaultBrowserCandidates,
   getGameLayoutFailures,
   getHiddenActiveRequestLeaks,
@@ -88,11 +89,25 @@ test("browser smoke parses url, browser path, and headed mode", () => {
 
   assert.deepEqual(args, {
     browserPath: "C:\\Chrome\\chrome.exe",
+    checkAiConnection: false,
     headed: true,
     help: false,
     screenshotsDir: null,
     url: "http://localhost:3000"
   });
+});
+
+test("browser smoke parses optional AI connection check flag", () => {
+  const args = parseBrowserSmokeArgs([
+    "node",
+    "scripts/browserSmoke.js",
+    "--check-ai-connection",
+    "--url",
+    "http://127.0.0.1:3000"
+  ]);
+
+  assert.equal(args.checkAiConnection, true);
+  assert.equal(args.url, "http://127.0.0.1:3000");
 });
 
 test("browser smoke parses optional screenshot artifact directory", () => {
@@ -193,6 +208,47 @@ test("browser smoke exam progression helper catches missing levels", () => {
   assert.deepEqual(
     getMissingExamLevels(["child_exam"], ["child_exam", "provincial_exam", "metropolitan_exam"]),
     ["provincial_exam", "metropolitan_exam"]
+  );
+});
+
+test("browser smoke AI connection helper catches failed diagnostics and session writes", () => {
+  const failures = getAiConnectionPanelFailures(
+    {
+      beforeSessionId: "",
+      afterSessionId: "created-session",
+      actionAreaVisible: true,
+      resultOk: "false",
+      resultText: "当前配置：mock\nOPENAI_API_KEY",
+      statusText: "mock 不可用"
+    },
+    {
+      expectedProvider: "mock",
+      hiddenTextTokens: ["OPENAI_API_KEY"]
+    },
+    "fixture AI connection"
+  );
+
+  assert.match(failures.join("\n"), /did not report a passing result/);
+  assert.match(failures.join("\n"), /changed qianqiu.sessionId/);
+  assert.match(failures.join("\n"), /entered the game action area/);
+  assert.match(failures.join("\n"), /leaked hidden text tokens: OPENAI_API_KEY/);
+});
+
+test("browser smoke AI connection helper accepts the expected Mock panel summary", () => {
+  assert.deepEqual(
+    getAiConnectionPanelFailures(
+      {
+        beforeSessionId: "",
+        afterSessionId: "",
+        actionAreaVisible: false,
+        resultOk: "true",
+        resultText: "当前配置：mock\ndefault: mock\n回声：县学灯火未灭",
+        statusText: "mock 可用，耗时 0ms。"
+      },
+      { expectedProvider: "mock" },
+      "fixture AI connection"
+    ),
+    []
   );
 });
 

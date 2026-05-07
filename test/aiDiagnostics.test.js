@@ -67,8 +67,21 @@ test("AI connection test succeeds for mock without writing a session", async () 
     assert.equal(result.provider, "mock");
     assert.equal(result.configuredProvider, "mock");
     assert.equal(result.models.default, "mock");
+    assert.equal(typeof result.supportsStreaming, "boolean");
+    assert.ok(!Number.isNaN(Date.parse(result.checkedAt)));
     assert.ok(result.openingEventCount > 0);
     assert.ok(result.latencyMs >= 0);
+    assert.equal(JSON.stringify(result).includes("data/sessions"), false);
+  });
+});
+
+test("AI connection test reports unknown providers without throwing", async () => {
+  await withEnv({ AI_PROVIDER: "mock" }, async () => {
+    const result = await runAiConnectionTest({ provider: "unknown" });
+    assert.equal(result.ok, false);
+    assert.equal(result.provider, "unknown");
+    assert.equal(result.configuredProvider, "mock");
+    assert.match(result.error, /Unknown AI provider/);
   });
 });
 

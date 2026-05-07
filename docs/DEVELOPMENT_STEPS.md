@@ -78,7 +78,7 @@
 | S45.1 | DONE | 扩展多实体世界模型：朝廷衙门、地方士绅、书院同门、军镇边墙、商税盐漕、灾荒赈务 | 2026-05-07 | Codex | 7341990 |
 | S45.2 | DONE | 让 AI 叙事、NPC 行为、世界 tick、关系账本和官场结果共同读写这些实体的受限视图 | 2026-05-07 | Codex | 24aef7b |
 | S46.1 | DONE | 建立依赖/插件引入模板：用途、许可证、替代方案、测试、回滚策略和文档落点 | 2026-05-07 | Codex | 20e3277 |
-| S47.1 | TODO | 扩展真实 provider 验收：浏览器路由级连接测试、带 key 的健康检查、无 key 自动跳过、模型费用/速度记录 |  |  |  |
+| S47.1 | DONE | 扩展真实 provider 验收：浏览器路由级连接测试、带 key 的健康检查、无 key 自动跳过；本轮不做模型费用/速度台账 | 2026-05-07 | Codex | 本次 S47.1 提交 |
 | S47.2 | TODO | 规划并实现 DeepSeek 上下文硬盘缓存命中率优化：稳定提示词前缀、记录命中/未命中 tokens、不得牺牲游戏效果 |  |  |  |
 
 ## 4. 分阶段详细步骤
@@ -207,7 +207,7 @@ S46.1 已新增 [依赖、插件与开源参考治理](DEPENDENCY_PLUGIN_GOVERNA
 
 - 路由级连接测试覆盖当前 provider、指定 provider、缺 key、错误脱敏和模型摘要。
 - 浏览器 smoke 可选择点击开局页“AI 连接”按钮，Mock 必须通过；真实 provider 检查只在有 key 且显式启用时运行。
-- 真实 provider 验收记录应包含模型、耗时、是否 streaming、是否 schema-valid、是否写入 session、失败错误是否脱敏。
+- 真实 provider 验收记录应包含模型、是否 streaming、是否 schema-valid、是否写入 session、失败错误是否脱敏；S47.1 保留接口现有 `latencyMs` 作为即时诊断字段，但不新增模型费用或速度台账。
 - DeepSeek 上下文硬盘缓存优化应进入 S47.2：参考官方命中规则，把稳定 prompt 前缀固定下来，读取 `prompt_cache_hit_tokens` / `prompt_cache_miss_tokens` 形成命中率记录，比较不同 prompt pack 的命中情况。验收标准是降低重复前缀成本和延迟风险，同时不降低 `eval:ai`、长回合历史语气、官场深度和浏览器主线体验。
 
 ## 5. 进度记录
@@ -228,6 +228,42 @@ S46.1 已新增 [依赖、插件与开源参考治理](DEPENDENCY_PLUGIN_GOVERNA
 ```
 
 ### 2026-05-07
+
+工具：Codex
+
+步骤：S47.1
+
+提交：本次 S47.1 提交
+
+完成：
+- `scripts/browserSmoke.js` 新增显式 `--check-ai-connection` 参数。开启后，浏览器 smoke 会在开局前点击 `#ai-test-button`，断言 `#ai-test-result[data-ok="true"]`、模型/配置摘要、无 API key 或 session 路径泄漏、不写 `qianqiu.sessionId`、不进入游戏行动区；默认临时服务器仍强制 Mock，`--url` 目标只有在明确希望检查其 provider 时才开启。
+- 新增 `scripts/providerRouteHealth.js` 与 `npm run smoke:provider:route`。脚本复用 provider smoke 的 key 选择/无 key 跳过策略，启动最小 Express app，经 `/api/ai/connection-test` 逐个检查有 key provider，验证 route-level `ok=true`、provider/config/model、streaming 能力、opening event、叙事预览、密钥片段和 session 路径不泄漏，并确认不新增 `data/sessions/*.json`；失败文案只报泄漏数量并再次脱敏原始错误，不回显被检测到的密钥片段。
+- 扩展 `test/aiConnectionRoute.test.js`、`test/aiDiagnostics.test.js`、`test/browserSmokeScript.test.js` 和新增 `test/providerRouteHealthScript.test.js`，覆盖指定 provider 覆盖当前配置、unknown provider、`claude` alias 缺 key、诊断时间/streaming/no-session 字段、浏览器 AI 连接 helper 和 route-health payload 校验。
+- 同步 README、架构文档、浏览器验收、真实 provider 验收、产品 brief、共享上下文和本路线图。用户要求忽略“模型费用/速度记录”，因此 S47.1 只保留既有 `latencyMs` 即时诊断，不新增费用或速度台账。
+- 只读探索子代理 Newton 梳理了 S47.1 现有连接测试、provider smoke 与 browser smoke 缺口，未编辑文件、未运行 Git 写操作；其 focused 检查 `node --test test\aiDiagnostics.test.js test\aiConnectionRoute.test.js test\providerSmokeScript.test.js test\providerLongRunScript.test.js test\browserSmokeScript.test.js` 50 项通过。
+
+验证：
+- `node --check scripts\browserSmoke.js`
+- `node --check scripts\providerRouteHealth.js`
+- `node --check test\browserSmokeScript.test.js`
+- `node --check test\providerRouteHealthScript.test.js`
+- `node --check test\aiConnectionRoute.test.js`
+- `node --check test\aiDiagnostics.test.js`
+- `node --test test\aiDiagnostics.test.js test\aiConnectionRoute.test.js test\providerSmokeScript.test.js test\providerRouteHealthScript.test.js test\browserSmokeScript.test.js`，53 项通过
+- `npm run smoke:provider:route`，本机 `.env` 有 DeepSeek key，route-level 检查通过；输出仅含模型名、streaming 能力、事件数和叙事预览，未打印 key
+- `$env:AI_PROVIDER='mock'; npm run smoke:browser -- --check-ai-connection`，通过；UI acceptance 包含 `ai-connection` 和既有 14 张截图检查
+- 修复复审意见后，`node --test test\providerRouteHealthScript.test.js test\browserSmokeScript.test.js test\aiDiagnostics.test.js test\aiConnectionRoute.test.js`，47 项通过；`$env:AI_PROVIDER='mock'; npm test`，265 项通过；`npm run smoke:provider:route` 重新通过；`git diff --check` 通过
+- 提交前只读复审子代理 Chandrasekhar 初审发现一个 P1：route-health 在检测到 secret 泄漏时会把被检测到的片段拼回失败信息，且失败时可能跳过 session 文件对比。已修复为只报告泄漏数量、对 route 错误做二次脱敏，并在 provider 失败后仍执行 session 写入检查。Follow-up 又发现 Unix/相对 `data/sessions` 路径未被遮蔽，已扩展路径脱敏并补测试；最终 follow-up 复审批准提交。
+
+风险/遗留：
+- 本步骤只覆盖连接诊断路由，不覆盖 keyed route-level SSE 长流式失败路径；该方向仍可作为后续 provider/browser 验收扩展。
+- `--check-ai-connection` 对 `--url` 目标是显式 opt-in；若目标服务器配置真实 provider 且无 key，会按接口设计失败，不影响默认 Mock smoke。
+- S47.2 仍需处理 DeepSeek 上下文缓存 telemetry；S47.1 不读取 `prompt_cache_hit_tokens` / `prompt_cache_miss_tokens`。
+
+下一步：
+- 开始 S47.2：实现 DeepSeek 上下文缓存 telemetry 与稳定 prompt 前缀验证，但不得为了命中率牺牲游戏上下文或叙事质量。
+
+---
 
 工具：Codex
 
