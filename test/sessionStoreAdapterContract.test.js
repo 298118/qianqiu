@@ -10,6 +10,10 @@ const { createInitialState } = require("../src/game/initialState");
 const { applyRelationshipChanges } = require("../src/game/relationships");
 const { buildWorldGeographyView } = require("../src/game/worldGeography");
 const { buildWorldPeopleView } = require("../src/game/worldPeople");
+const {
+  buildWorldPeopleEventBatch,
+  snapshotWorldPeopleForEvents
+} = require("../src/game/worldPeopleEvents");
 const { createJsonSessionAdapter } = require("../src/storage/jsonSessionAdapter");
 const { createSqliteSessionAdapter } = require("../src/storage/sqliteSessionAdapter");
 
@@ -1164,6 +1168,103 @@ test("SQLite storage adapter advances people row revisions during mutateSession"
     assert.equal(relationship.resentment, 3);
     assert.match(relationship.recent_notes_json, /同窗为其解围/);
   });
+});
+
+test("SQLite storage adapter links visible people rows to server people audit events", {
+  skip: hasNodeSqlite ? false : "node:sqlite is unavailable in this Node.js runtime"
+}, async (t) => {
+  const { adapter, dbPath } = createSqliteHarness(t);
+  const worldState = buildWorldState({
+    playerName: "人物事件索引",
+    turnCount: 2
+  });
+  await adapter.writeSession(worldState);
+
+  await adapter.mutateSession(worldState.sessionId, (draft, context) => {
+    draft.turnCount = 6;
+    const previousPeople = snapshotWorldPeopleForEvents(draft);
+    applyRelationshipChanges(draft, [{
+      targetType: "character",
+      targetId: "C01",
+      relationshipDelta: 6,
+      resentmentDelta: -1,
+      stance: "愿意引荐",
+      reason: "服务器已应用的人情变化。"
+    }]);
+    const peopleEvents = buildWorldPeopleEventBatch(draft, { previousPeople });
+    for (const event of peopleEvents.auditEvents) context.appendAuditEvent(event);
+    for (const link of peopleEvents.rowEventLinks) context.appendPeopleEventLink(link);
+  });
+
+  const events = await adapter.listAuditEvents(worldState.sessionId);
+  const peopleEvent = events.find((event) =>
+    event.sourceSystem === "world_people" &&
+    event.eventType === "relationship_changed"
+  );
+  assert.ok(peopleEvent);
+
+  let rows = withSqliteDatabase(dbPath, (db) => ({
+    relationship: db
+      .prepare(`
+        SELECT last_event_id, last_updated_turn
+        FROM people_relationships
+        WHERE session_id = ? AND row_id = ?
+      `)
+      .get(worldState.sessionId, "rel-player-npc-C01"),
+    npc: db
+      .prepare(`
+        SELECT last_event_id, last_updated_turn
+        FROM people_npcs
+        WHERE session_id = ? AND row_id = ?
+      `)
+      .get(worldState.sessionId, "C01")
+  }));
+
+  assert.equal(rows.relationship.last_event_id, peopleEvent.eventId);
+  assert.equal(rows.relationship.last_updated_turn, 6);
+  assert.equal(rows.npc.last_event_id, peopleEvent.eventId);
+  assert.equal(rows.npc.last_updated_turn, 6);
+
+  const loaded = await adapter.readSession(worldState.sessionId);
+  const promptContext = assemblePromptContext(loaded);
+  const serializedVisible = JSON.stringify({
+    worldPeopleView: buildWorldPeopleView(loaded),
+    promptPeople: promptContext.worldPeople,
+    retrievalPeople: promptContext.retrievalContext?.people
+  });
+  assert.equal(serializedVisible.includes(peopleEvent.eventId), false);
+
+  await adapter.mutateSession(worldState.sessionId, (draft) => {
+    draft.player.gold = (draft.player.gold || 0) + 1;
+  });
+  rows = withSqliteDatabase(dbPath, (db) => ({
+    relationship: db
+      .prepare("SELECT last_event_id FROM people_relationships WHERE session_id = ? AND row_id = ?")
+      .get(worldState.sessionId, "rel-player-npc-C01"),
+    npc: db
+      .prepare("SELECT last_event_id FROM people_npcs WHERE session_id = ? AND row_id = ?")
+      .get(worldState.sessionId, "C01")
+  }));
+  assert.equal(rows.relationship.last_event_id, peopleEvent.eventId);
+  assert.equal(rows.npc.last_event_id, peopleEvent.eventId);
+
+  withSqliteDatabase(dbPath, (db) => {
+    db.prepare("DELETE FROM people_relationships WHERE session_id = ? AND row_id = ?")
+      .run(worldState.sessionId, "rel-player-npc-C01");
+    db.prepare("DELETE FROM people_npcs WHERE session_id = ? AND row_id = ?")
+      .run(worldState.sessionId, "C01");
+  });
+  await adapter.readSession(worldState.sessionId);
+  rows = withSqliteDatabase(dbPath, (db) => ({
+    relationship: db
+      .prepare("SELECT last_event_id FROM people_relationships WHERE session_id = ? AND row_id = ?")
+      .get(worldState.sessionId, "rel-player-npc-C01"),
+    npc: db
+      .prepare("SELECT last_event_id FROM people_npcs WHERE session_id = ? AND row_id = ?")
+      .get(worldState.sessionId, "C01")
+  }));
+  assert.equal(rows.relationship.last_event_id, peopleEvent.eventId);
+  assert.equal(rows.npc.last_event_id, peopleEvent.eventId);
 });
 
 test("SQLite storage adapter does not rewrite people rows after stale expectedRevision rejection", {

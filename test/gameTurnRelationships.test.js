@@ -6,13 +6,20 @@ const path = require("node:path");
 
 const { createInitialState } = require("../src/game/initialState");
 const { runActiveNpcRequestStep } = require("../src/game/activeRequests");
-const { writeSession } = require("../src/storage/sessionStore");
+const { listAuditEvents, writeSession } = require("../src/storage/sessionStore");
 const { createFetchSafeServer } = require("../test-helpers/fetchSafeServer");
 
 const sessionsDir = path.join(__dirname, "..", "data", "sessions");
+const auditDir = path.join(__dirname, "..", "data", "audit");
 
 async function removeSessionFile(sessionId) {
   await fs.rm(path.join(sessionsDir, `${sessionId}.json`), { force: true });
+}
+
+async function removeSessionArtifacts(sessionId) {
+  await removeSessionFile(sessionId);
+  await fs.rm(path.join(auditDir, `${sessionId}.event-log.jsonl`), { force: true });
+  await fs.rm(path.join(auditDir, `${sessionId}.ai-proposals.jsonl`), { force: true });
 }
 
 function createTestServerWithProvider(provider) {
@@ -104,7 +111,7 @@ test("POST /api/game/turn applies provider relationship suggestions through serv
   t.after(server.close);
 
   const worldState = createInitialState({ playerName: "Tester", role: "scholar" });
-  t.after(() => removeSessionFile(worldState.sessionId));
+  t.after(() => removeSessionArtifacts(worldState.sessionId));
   await writeSession(worldState);
 
   const response = await fetch(`${server.baseUrl}/api/game/turn`, {
@@ -116,6 +123,11 @@ test("POST /api/game/turn applies provider relationship suggestions through serv
     })
   });
   const payload = await response.json();
+  const auditEvents = await listAuditEvents(worldState.sessionId);
+  const peopleEvent = auditEvents.find((event) =>
+    event.sourceSystem === "world_people" &&
+    event.eventType === "relationship_changed"
+  );
 
   assert.equal(response.status, 200);
   assert.equal(payload.worldState.turnCount, 1);
@@ -139,6 +151,11 @@ test("POST /api/game/turn applies provider relationship suggestions through serv
   assert.equal(payload.worldState.relationshipLedger.characters.C01.lastUpdatedTurn, 1);
   assert.equal(payload.worldState.relationshipLedger.factions.eunuchs.relationship, -4);
   assert.ok(payload.worldState.relationshipLedger.recentNotes.some((note) => note.includes("mentor")));
+  assert.ok(peopleEvent);
+  assert.equal(peopleEvent.visibility, "public");
+  assert.match(peopleEvent.summary, /顾文衡/);
+  assert.equal(JSON.stringify(peopleEvent).includes("Hidden faction suggestions"), false);
+  assert.equal(JSON.stringify(payload.worldPeopleView).includes(peopleEvent.eventId), false);
 });
 
 test("POST /api/game/turn ignores provider attempts to patch server-owned ordinary-turn fields", async (t) => {
@@ -268,7 +285,7 @@ test("POST /api/game/turn resolves active NPC requests through server-owned rela
   worldState.turnCount = 1;
   runActiveNpcRequestStep(worldState, "研读经书");
   const requestId = worldState.activeNpcRequest.id;
-  t.after(() => removeSessionFile(worldState.sessionId));
+  t.after(() => removeSessionArtifacts(worldState.sessionId));
   await writeSession(worldState);
 
   const response = await fetch(`${server.baseUrl}/api/game/turn`, {
@@ -280,6 +297,7 @@ test("POST /api/game/turn resolves active NPC requests through server-owned rela
     })
   });
   const payload = await response.json();
+  const auditEvents = await listAuditEvents(worldState.sessionId);
 
   assert.equal(response.status, 200);
   assert.equal(payload.worldState.turnCount, 2);
@@ -289,4 +307,9 @@ test("POST /api/game/turn resolves active NPC requests through server-owned rela
   assert.ok(!JSON.stringify(payload.worldState).includes("provider-forged"));
   assert.ok(!JSON.stringify(payload.worldState).includes("eunuchs") || payload.worldState.relationshipLedger.factions.eunuchs.visible === false);
   assert.match(requestId, /^REQ-/);
+  assert.ok(auditEvents.some((event) =>
+    event.sourceSystem === "world_people" &&
+    event.eventType === "active_request_resolved" &&
+    /请托/.test(event.summary)
+  ));
 });

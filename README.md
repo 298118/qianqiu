@@ -49,7 +49,7 @@
 - AI provider：Mock、OpenAI、DeepSeek、Xiaomi MiMo、MiMo + DeepSeek、Anthropic/Claude。
 - 校验：Ajv schema、本地 JSON 解析、重试和降级。
 - 流式响应：Server-Sent Events。
-- 存储：默认 JSON session files；可选 SQLite session row、审计表、地理 `geo_*` 业务表和可见人物 `people_*` 业务表。
+- 存储：默认 JSON session files；可选 SQLite session row、审计表、地理 `geo_*` 业务表、可见人物 `people_*` 业务表和人物事件关联。
 - 测试：Node.js `node --test`。
 - 浏览器验收：`playwright-core` + 本机 Chrome/Edge。
 
@@ -134,7 +134,7 @@ STORAGE_ADAPTER=sqlite
 SQLITE_DATABASE_PATH=data/qianqiu.sqlite
 ```
 
-SQLite 模式需要当前 Node.js 运行时提供 `node:sqlite`。它会保留完整 `world_sessions.world_state_json`，并同步地理 `geo_*` 业务表和可见人物 `people_*` bridge rows。raw SQLite table 不进入浏览器、prompt 或 save-list payload；people 表读取修复也只从 `world_state_json` 单向重建，不把 raw row 回填为 route state。
+SQLite 模式需要当前 Node.js 运行时提供 `node:sqlite`。它会保留完整 `world_sessions.world_state_json`，同步地理 `geo_*` 业务表和可见人物 `people_*` bridge rows，并把服务器人物事件关联到本地 `people_*.last_event_id`。raw SQLite table 不进入浏览器、prompt 或 save-list payload；people 表读取修复也只从 `world_state_json` 单向重建，不把 raw row 或事件 id 回填为 route state。
 
 导入与地理维护：
 
@@ -226,5 +226,5 @@ data/sessions/
 
 - 真实 provider 网络调用需要配置 API key；无 key 环境只验证 Mock、缺 key 分支和 no-key skip。
 - 浏览器 smoke 覆盖完整主线和代表身份回合，但不等同于所有身份的长线游玩验收。
-- SQLite 目前已经包含 session row、审计表、地理 `geo_*` 业务表和可见人物 `people_*` bridge rows；NPC 生命周期事件、官职任所表和安全事件索引尚未创建，已排入 S55-S57。
+- SQLite 目前已经包含 session row、审计表、地理 `geo_*` 业务表、可见人物 `people_*` bridge rows，以及人物事件到 `people_*.last_event_id` 的本地关联；官职任所表和 raw audit 外安全事件索引尚未创建，已排入 S56-S57。
 - 当前不包含远程存档、账号体系、多人同步或云端数据库。

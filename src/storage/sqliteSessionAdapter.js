@@ -219,7 +219,7 @@ function createSqliteSessionAdapter(options = {}) {
     return rowToSessionRecord(row);
   }
 
-  function persistSessionRecord(record) {
+  function persistSessionRecord(record, options = {}) {
     normalizeRecordWorldGeography(record);
     normalizeRecordWorldPeople(record);
     const metadata = record.metadata;
@@ -288,7 +288,7 @@ function createSqliteSessionAdapter(options = {}) {
         JSON.stringify(record.worldState)
       );
     syncGeographyTables(getDatabase(), record);
-    syncPeopleTables(getDatabase(), record);
+    syncPeopleTables(getDatabase(), record, options.peopleEventLinks);
   }
 
   function updateSessionRecordPayload(record) {
@@ -536,7 +536,9 @@ function createSqliteSessionAdapter(options = {}) {
         revision: (previousRecord?.revision || 0) + 1
       });
 
-      persistSessionRecord(record);
+      persistSessionRecord(record, {
+        peopleEventLinks: writeOptions.peopleEventLinks
+      });
       insertAuditBatch(worldState.sessionId, {
         auditEvents: writeOptions.auditEvents,
         aiProposals: writeOptions.aiProposals
@@ -556,12 +558,13 @@ function createSqliteSessionAdapter(options = {}) {
       const context = createAuditContext(record);
       const result = await mutator(record.worldState, context);
       if (!context.skipWrite) {
-        await writeSessionUnlocked(record.worldState, {
-          previousRecord: record,
-          expectedRevision: record.revision,
-          auditEvents: context.auditEvents,
-          aiProposals: context.aiProposals
-        });
+      await writeSessionUnlocked(record.worldState, {
+        previousRecord: record,
+        expectedRevision: record.revision,
+        auditEvents: context.auditEvents,
+        aiProposals: context.aiProposals,
+        peopleEventLinks: context.peopleEventLinks
+      });
       }
       if (context.errorAfterWrite) throw context.errorAfterWrite;
       return result === undefined ? record.worldState : result;

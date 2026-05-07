@@ -2,7 +2,7 @@
 
 本文回应“是否需要把国家、邻国、NPC、玩家、官职、城市、事件记录等大量动态数据放入数据库，并允许 AI 随游戏进程影响数据库”的产品方向。
 
-结论：**可行，而且中长期值得做；但不建议一步到位替换当前 JSON 存档，也不能让 AI 直接写数据库。** 当前范围只考虑本地数据库，优先方向是本地 SQLite；不规划远程存档、账号体系、多人同步、云端冲突解决或托管数据库。S49.3 已通过 `STORAGE_ADAPTER=sqlite` 引入可选本地 SQLite session row 原型，仍保留 JSON 默认路径；S49.4 已加入本地 `event_log` 与 `ai_change_proposals` 审计记录；S54 已在 SQLite 模式把规范化天下地理同步为本地 `geo_*` 业务表并补维护工具；S55.2 已在 SQLite 模式把规范化可见 `worldPeople` bridge rows 同步为本地 `people_*` 业务表。AI 仍只生成叙事、建议和结构化 proposal；最终写库必须由服务器模块校验、夹断、归一化、事务提交。
+结论：**可行，而且中长期值得做；但不建议一步到位替换当前 JSON 存档，也不能让 AI 直接写数据库。** 当前范围只考虑本地数据库，优先方向是本地 SQLite；不规划远程存档、账号体系、多人同步、云端冲突解决或托管数据库。S49.3 已通过 `STORAGE_ADAPTER=sqlite` 引入可选本地 SQLite session row 原型，仍保留 JSON 默认路径；S49.4 已加入本地 `event_log` 与 `ai_change_proposals` 审计记录；S54 已在 SQLite 模式把规范化天下地理同步为本地 `geo_*` 业务表并补维护工具；S55 已在 SQLite 模式把规范化可见 `worldPeople` bridge rows 同步为本地 `people_*` 业务表，并把服务器人物事件关联到 `people_*.last_event_id`。AI 仍只生成叙事、建议和结构化 proposal；最终写库必须由服务器模块校验、夹断、归一化、事务提交。
 
 ## 1. 当前基础与是否急需数据库
 
@@ -501,7 +501,7 @@ S50.2 已新增 `src/game/worldGeography.js`，把静态 seed 实例化为每局
 - 玩家关系 view 继续过滤隐藏信息。
 - NPC 财富、田产、家族、官职、声望、人情债开始可追踪。
 
-S51.1 已先新增 [人物、家族、资产、田产与关系 Schema 契约](NPC_HOUSEHOLD_ASSET_RELATIONSHIP_CONTRACT.md) 与 `src/game/worldPeopleSchemas.js`，固定 `npcs`、`households`、`assets`、`estates`、`relationships` 的字段、数值范围、可见性枚举、hidden refs 过滤和 capped prompt summary。S51.2 已新增 `src/game/worldPeople.js` 和每局 `worldState.worldPeople` 的安全可见桥接层，从当前 `characters`、`relationshipLedger` 和可见 active request 近期札记生成 `worldPeopleView` 与 prompt projection；S53.5 已把人物谱牒接入浏览器“局势簿”。S55.2 已在 SQLite adapter 中创建并同步 `people_npcs`、`people_households`、`people_assets`、`people_estates`、`people_relationships`，来源只取规范化后的可见 `worldPeople` bridge rows。当前仍不替换现有 `characters` / `relationshipLedger` / `activeNpcRequest`，也不把 raw `people_*` 行作为 route state、prompt 或 UI 来源。
+S51.1 已先新增 [人物、家族、资产、田产与关系 Schema 契约](NPC_HOUSEHOLD_ASSET_RELATIONSHIP_CONTRACT.md) 与 `src/game/worldPeopleSchemas.js`，固定 `npcs`、`households`、`assets`、`estates`、`relationships` 的字段、数值范围、可见性枚举、hidden refs 过滤和 capped prompt summary。S51.2 已新增 `src/game/worldPeople.js` 和每局 `worldState.worldPeople` 的安全可见桥接层，从当前 `characters`、`relationshipLedger` 和可见 active request 近期札记生成 `worldPeopleView` 与 prompt projection；S53.5 已把人物谱牒接入浏览器“局势簿”。S55.2 已在 SQLite adapter 中创建并同步 `people_npcs`、`people_households`、`people_assets`、`people_estates`、`people_relationships`，来源只取规范化后的可见 `worldPeople` bridge rows；S55.3 已用 `src/game/worldPeopleEvents.js` 接入服务器人物事件和 `people_*.last_event_id` 本地关联。当前仍不替换现有 `characters` / `relationshipLedger` / `activeNpcRequest`，也不把 raw `people_*` 行或事件 id 作为 route state、prompt 或 UI 来源。
 
 验收：
 
@@ -544,7 +544,7 @@ S53.1-S53.6 已完成：`promptContextAssembler` 只读服务器可见 projectio
 S49-S53 结束后，数据库专项的下一段不再是“是否需要数据库”，而是如何小步拆表。活动台账见 [DEVELOPMENT_STEPS.md](DEVELOPMENT_STEPS.md)，当前拆分如下：
 
 - S54：地理业务表。S54.1/S54.2 已定义并实现 `geo_countries`、`geo_regions`、`geo_cities`、`geo_routes`、`geo_frontier_zones`、`geo_office_jurisdictions` 的 SQLite 模式持久化；S54.3 已补导入 dry-run、地理 status/repair/export 工具、browser smoke SQLite 参数和 JSON/SQLite route/prompt 可见摘要 parity。
-- S55：人物业务表。S55.2 已定义并实现可见 bridge `people_npcs`、`people_households`、`people_assets`、`people_estates`、`people_relationships` 持久化与 `worldPeopleView` parity；后续接入 NPC 生命周期、财富/家产/关系事件和审计关联。
+- S55：人物业务表。已定义并实现可见 bridge `people_npcs`、`people_households`、`people_assets`、`people_estates`、`people_relationships` 持久化、`worldPeopleView` parity、NPC/关系/家产可见 delta 的服务器事件 helper 和 `last_event_id` 审计关联。
 - S56：官职任所业务表。定义 `office_bureaus`、`office_catalog`、`office_city_jurisdictions`、`office_postings`、`office_assessments`、`office_transfers`，再接入 `officialPostingsView` parity 与城市/人物引用完整性。
 - S57：安全事件索引。保留 raw `event_log` / `ai_change_proposals` 的诊断属性，另建安全 projection 供事件档案和 prompt 检索，不暴露 raw audit。
 - S58：SQLite 索引驱动的 prompt context 与浏览器双模式 parity。JSON fallback 不变，prompt/UI 继续只读可见 projection。
@@ -603,7 +603,7 @@ S49-S53 结束后，数据库专项的下一段不再是“是否需要数据库
 S49-S53 已完成基础层，历史细节已归档到 [LOCAL_DATABASE_FOUNDATION_ARCHIVE.md](LOCAL_DATABASE_FOUNDATION_ARCHIVE.md)。如果下一阶段目标是“让世界规模真正变大并能长期检索”，推荐优先级如下：
 
 1. **S54 地理业务表**：先把国家、邻国、城市、路线、边面和辖区拆入 SQLite，因为地方任所、外交边患、路程和事件索引都会引用它。
-2. **S55 人物业务表**：已先把可见 NPC、家族、资产、田产和关系 bridge rows 拆入 SQLite；下一步补 NPC 生命周期、财富流动、关系事件和审计关联。
+2. **S55 人物业务表**：已先把可见 NPC、家族、资产、田产和关系 bridge rows 拆入 SQLite，并补上服务器人物事件 helper、关系/请托 live 事件和 `people_*.last_event_id` 审计关联。
 3. **S56 官职任所业务表**：把官署、官职、任命、考成、迁转、城市辖区和持有人关系落表，保护服务器任免裁决。
 4. **S57 安全事件索引**：为长期事件档案、人物/城市/官职追溯和 prompt 检索建立安全 projection，而不是暴露 raw audit。
 5. **S58 检索式 prompt 与浏览器双模式 parity**：让 AI 和玩家继续只看当前合理可见的世界切片，同时验证 JSON/SQLite 两种 adapter 的视图一致。

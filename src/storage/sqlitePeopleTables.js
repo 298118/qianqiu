@@ -46,6 +46,52 @@ function nullableText(value) {
   return typeof value === "string" && value ? value : null;
 }
 
+function cleanText(value, maxLength = 120) {
+  if (typeof value !== "string") return "";
+  const text = value.trim();
+  return text.length > maxLength ? text.slice(0, maxLength) : text;
+}
+
+function parseJsonObject(value) {
+  try {
+    const parsed = JSON.parse(value);
+    return parsed && typeof parsed === "object" && !Array.isArray(parsed) ? parsed : {};
+  } catch (error) {
+    return {};
+  }
+}
+
+function collectionFor(value) {
+  const collectionNames = new Set(PEOPLE_TABLE_COLLECTIONS.map(([, collectionName]) => collectionName));
+  if (collectionNames.has(value)) return value;
+  const tableMatch = PEOPLE_TABLE_COLLECTIONS.find(([tableName]) => tableName === value);
+  if (tableMatch) return tableMatch[1];
+  const singular = {
+    npc: "npcs",
+    household: "households",
+    asset: "assets",
+    estate: "estates",
+    relationship: "relationships"
+  };
+  return singular[value] || "";
+}
+
+function eventLinkKey(collectionName, rowId) {
+  const collection = collectionFor(collectionName);
+  const id = cleanText(rowId, 96);
+  if (!collection || !id) return "";
+  return `${collection}:${id}`;
+}
+
+function normalizePeopleEventLink(link) {
+  const source = link && typeof link === "object" ? link : {};
+  const collection = collectionFor(source.collection || source.rowKind || source.rowType || source.tableName);
+  const rowId = cleanText(source.rowId || source.row_id, 96);
+  const eventId = cleanText(source.eventId || source.event_id, 120);
+  if (!collection || !rowId || !eventId) return null;
+  return { collection, rowId, eventId };
+}
+
 function metadataValue(record, key, fallback = 0) {
   return toInteger(record.metadata?.[key] ?? record.worldState?.[key], fallback);
 }
@@ -314,12 +360,82 @@ function insertRow(database, tableName, row) {
     .run(...columns.map((column) => row[column]));
 }
 
-function buildCommonRow(record, people, row) {
+function readAuditEventLinkMap(database, sessionId) {
+  const links = new Map();
+  const rows = database
+    .prepare(`
+      SELECT event_id, related_json
+      FROM event_log
+      WHERE session_id = ?
+        AND source_system = 'world_people'
+      ORDER BY created_at, event_id
+    `)
+    .all(sessionId);
+
+  for (const row of rows) {
+    const related = parseJsonObject(row.related_json);
+    const primary = normalizePeopleEventLink({
+      collection: related.rowKind,
+      rowId: related.rowId,
+      eventId: row.event_id
+    });
+    if (primary) links.set(eventLinkKey(primary.collection, primary.rowId), primary.eventId);
+
+    const rowLinks = Array.isArray(related.rowLinks) ? related.rowLinks : [];
+    for (const link of rowLinks) {
+      const normalized = normalizePeopleEventLink({
+        collection: link.collection || link.rowKind,
+        rowId: link.rowId,
+        eventId: row.event_id
+      });
+      if (!normalized) continue;
+      links.set(eventLinkKey(normalized.collection, normalized.rowId), normalized.eventId);
+    }
+  }
+  return links;
+}
+
+function readExistingEventLinkMap(database, sessionId) {
+  const links = readAuditEventLinkMap(database, sessionId);
+  for (const [tableName, collectionName] of PEOPLE_TABLE_COLLECTIONS) {
+    const rows = database
+      .prepare(`
+        SELECT p.row_id, p.last_event_id
+        FROM ${tableName} p
+        JOIN event_log e
+          ON e.session_id = p.session_id
+         AND e.event_id = p.last_event_id
+        WHERE p.session_id = ?
+          AND p.last_event_id IS NOT NULL
+          AND e.source_system = 'world_people'
+      `)
+      .all(sessionId);
+    for (const row of rows) {
+      const key = eventLinkKey(collectionName, row.row_id);
+      if (key) links.set(key, row.last_event_id);
+    }
+  }
+  return links;
+}
+
+function buildEventLinkMap(database, sessionId, eventLinks = []) {
+  const links = readExistingEventLinkMap(database, sessionId);
+  for (const link of Array.isArray(eventLinks) ? eventLinks : []) {
+    const normalized = normalizePeopleEventLink(link);
+    if (!normalized) continue;
+    const key = eventLinkKey(normalized.collection, normalized.rowId);
+    if (key) links.set(key, normalized.eventId);
+  }
+  return links;
+}
+
+function buildCommonRow(record, people, row, collectionName, eventLinkMap) {
   const metadata = {
     bridgeSchemaVersion: people.schemaVersion,
     generatedAtTurn: people.generatedAtTurn
   };
   const lastUpdatedTurn = toInteger(row.lastUpdatedTurn, metadataValue(record, "turnCount", 0));
+  const lastEventId = eventLinkMap.get(eventLinkKey(collectionName, row.id)) || null;
 
   return {
     session_id: record.sessionId,
@@ -337,7 +453,7 @@ function buildCommonRow(record, people, row) {
     last_updated_year: metadataValue(record, "year", 0),
     last_updated_month: metadataValue(record, "month", 1),
     last_updated_ten_day_period: metadataValue(record, "tenDayPeriod", 1),
-    last_event_id: null,
+    last_event_id: lastEventId,
     public_summary: text(row.publicSummary),
     hidden_intent: text(row.hiddenIntent),
     hidden_notes_json: stringifyJson(row.hiddenNotes, []),
@@ -347,10 +463,10 @@ function buildCommonRow(record, people, row) {
   };
 }
 
-function insertNpcs(database, record, people) {
+function insertNpcs(database, record, people, eventLinkMap) {
   for (const row of people.npcs) {
     insertRow(database, "people_npcs", {
-      ...buildCommonRow(record, people, row),
+      ...buildCommonRow(record, people, row, "npcs", eventLinkMap),
       name: row.name,
       courtesy_name: text(row.courtesyName),
       gender_label: text(row.genderLabel),
@@ -400,10 +516,10 @@ function insertNpcs(database, record, people) {
   }
 }
 
-function insertHouseholds(database, record, people) {
+function insertHouseholds(database, record, people, eventLinkMap) {
   for (const row of people.households) {
     insertRow(database, "people_households", {
-      ...buildCommonRow(record, people, row),
+      ...buildCommonRow(record, people, row, "households", eventLinkMap),
       family_name: row.familyName,
       seat_city_row_id: nullableText(row.seatCityId),
       wealth_score: toInteger(row.wealthScore, 30),
@@ -421,10 +537,10 @@ function insertHouseholds(database, record, people) {
   }
 }
 
-function insertAssets(database, record, people) {
+function insertAssets(database, record, people, eventLinkMap) {
   for (const row of people.assets) {
     insertRow(database, "people_assets", {
-      ...buildCommonRow(record, people, row),
+      ...buildCommonRow(record, people, row, "assets", eventLinkMap),
       kind: text(row.kind) || "other",
       name: row.name,
       owner_type: text(row.ownerType) || "household",
@@ -438,10 +554,10 @@ function insertAssets(database, record, people) {
   }
 }
 
-function insertEstates(database, record, people) {
+function insertEstates(database, record, people, eventLinkMap) {
   for (const row of people.estates) {
     insertRow(database, "people_estates", {
-      ...buildCommonRow(record, people, row),
+      ...buildCommonRow(record, people, row, "estates", eventLinkMap),
       name: row.name,
       owner_type: text(row.ownerType) || "household",
       owner_row_id: nullableText(row.ownerId),
@@ -459,10 +575,10 @@ function insertEstates(database, record, people) {
   }
 }
 
-function insertRelationships(database, record, people) {
+function insertRelationships(database, record, people, eventLinkMap) {
   for (const row of people.relationships) {
     insertRow(database, "people_relationships", {
-      ...buildCommonRow(record, people, row),
+      ...buildCommonRow(record, people, row, "relationships", eventLinkMap),
       source_type: row.sourceType,
       source_row_id: row.sourceId,
       target_type: row.targetType,
@@ -481,15 +597,16 @@ function insertRelationships(database, record, people) {
   }
 }
 
-function syncPeopleTables(database, record) {
+function syncPeopleTables(database, record, eventLinks = []) {
   const people = normalizeRecordWorldPeople(record);
+  const eventLinkMap = buildEventLinkMap(database, record.sessionId, eventLinks);
 
   deletePeopleRows(database, record.sessionId);
-  insertNpcs(database, record, people);
-  insertHouseholds(database, record, people);
-  insertAssets(database, record, people);
-  insertEstates(database, record, people);
-  insertRelationships(database, record, people);
+  insertNpcs(database, record, people, eventLinkMap);
+  insertHouseholds(database, record, people, eventLinkMap);
+  insertAssets(database, record, people, eventLinkMap);
+  insertEstates(database, record, people, eventLinkMap);
+  insertRelationships(database, record, people, eventLinkMap);
 }
 
 function getPeopleTableCounts(database, sessionId) {

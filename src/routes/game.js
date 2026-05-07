@@ -43,6 +43,11 @@ const {
   ensureWorldPeopleState
 } = require("../game/worldPeople");
 const {
+  appendPeopleEventLinks,
+  buildWorldPeopleEventBatch,
+  snapshotWorldPeopleForEvents
+} = require("../game/worldPeopleEvents");
+const {
   buildWorldThreadView,
   ensureWorldThreadState
 } = require("../game/worldThreads");
@@ -281,6 +286,7 @@ async function finalizeTurn(worldState, result, input, auditOptions = {}) {
   const providerStateBefore = JSON.parse(JSON.stringify(worldState));
   applyStatePatch(worldState, result.statePatch);
   const providerStateAfter = JSON.parse(JSON.stringify(worldState));
+  const worldPeopleBefore = snapshotWorldPeopleForEvents(worldState);
   const relationshipChanges = applyRelationshipChanges(worldState, result.relationshipChanges);
   const examTrigger = applyExamTrigger(worldState, result.examTrigger);
 
@@ -353,6 +359,10 @@ async function finalizeTurn(worldState, result, input, auditOptions = {}) {
   ensureWorldEntityState(worldState);
   ensureWorldPeopleState(worldState);
   ensureWorldThreadState(worldState);
+  const worldPeopleEvents = buildWorldPeopleEventBatch(worldState, {
+    previousPeople: worldPeopleBefore,
+    activeNpcRequest
+  });
 
   appendEvents(worldState, result.events);
   appendEvents(worldState, activeNpcRequest.events);
@@ -395,8 +405,10 @@ async function finalizeTurn(worldState, result, input, auditOptions = {}) {
     worldTick,
     longTermEvents,
     officialCareer,
-    worldEntityImpacts
+    worldEntityImpacts,
+    worldPeopleAuditEvents: worldPeopleEvents.auditEvents
   }));
+  appendPeopleEventLinks(context, worldPeopleEvents.rowEventLinks);
 
   return {
     sessionId: worldState.sessionId,

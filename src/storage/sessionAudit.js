@@ -181,11 +181,15 @@ function createAuditContext(record) {
     errorAfterWrite: null,
     auditEvents: [],
     aiProposals: [],
+    peopleEventLinks: [],
     appendAuditEvent(event) {
       this.auditEvents.push(event);
     },
     appendAiProposal(proposal) {
       this.aiProposals.push(proposal);
+    },
+    appendPeopleEventLink(link) {
+      this.peopleEventLinks.push(link);
     }
   };
 }

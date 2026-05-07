@@ -250,7 +250,8 @@ function createTurnAuditRecords({
   worldTick,
   longTermEvents,
   officialCareer,
-  worldEntityImpacts
+  worldEntityImpacts,
+  worldPeopleAuditEvents = []
 }) {
   const providerEvent = createAuditEvent(worldState, {
     sourceSystem: "ai_provider",
@@ -287,7 +288,12 @@ function createTurnAuditRecords({
     buildFeedbackEvent(worldState, "long_term_events", "long_term_event_step", longTermEvents),
     buildFeedbackEvent(worldState, "official_career", "official_career_step", officialCareer)
   ].filter(Boolean);
-  const auditEvents = [providerEvent, visibleTurnEvent, ...feedbackEvents];
+  const auditEvents = [
+    providerEvent,
+    visibleTurnEvent,
+    ...feedbackEvents,
+    ...(Array.isArray(worldPeopleAuditEvents) ? worldPeopleAuditEvents : [])
+  ];
 
   return {
     auditEvents,
@@ -468,6 +474,7 @@ function createExamGradeAuditRecords({
 }
 
 module.exports = {
+  createAuditEvent,
   createExamGradeAuditRecords,
   createExamProgressAuditRecords,
   createExamQuestionAuditRecords,

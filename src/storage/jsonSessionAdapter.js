@@ -375,7 +375,8 @@ async function mutateSession(sessionId, mutator) {
         previousRecord: record,
         expectedRevision: record.revision,
         auditEvents: context.auditEvents,
-        aiProposals: context.aiProposals
+        aiProposals: context.aiProposals,
+        peopleEventLinks: context.peopleEventLinks
       });
     }
     if (context.errorAfterWrite) throw context.errorAfterWrite;
