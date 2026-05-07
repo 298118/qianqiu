@@ -9,6 +9,7 @@ test("applyStatePatch applies only whitelisted fields and clamps numeric ranges"
   const originalSessionId = worldState.sessionId;
   const originalRole = worldState.player.role;
   const originalCharacters = JSON.parse(JSON.stringify(worldState.characters));
+  const originalWorldPeople = JSON.parse(JSON.stringify(worldState.worldPeople));
 
   applyStatePatch(worldState, {
     sessionId: "not-allowed",
@@ -24,6 +25,7 @@ test("applyStatePatch applies only whitelisted fields and clamps numeric ranges"
     roleWorldCoupling: { recentImpacts: [{ kind: "provider-forged" }] },
     worldGeography: { countries: [{ id: "provider-forged-country", name: "伪地理" }] },
     worldEntities: { entities: [{ id: "provider-forged", name: "伪实体" }] },
+    worldPeople: { npcs: [{ id: "provider-forged-npc", name: "伪人物" }] },
     worldThreads: { threads: [{ id: "provider-forged", title: "伪议题" }] },
     characters: [{ id: "C99", name: "Invented", role: "patron" }],
     eventHistory: ["provider tries to replace history"],
@@ -56,6 +58,7 @@ test("applyStatePatch applies only whitelisted fields and clamps numeric ranges"
   assert.deepEqual(worldState.roleWorldCoupling.recentImpacts, []);
   assert.equal(worldState.worldGeography.countries.some((country) => country.id === "provider-forged-country"), false);
   assert.equal(worldState.worldEntities.entities.some((entity) => entity.id === "provider-forged"), false);
+  assert.deepEqual(worldState.worldPeople, originalWorldPeople);
   assert.deepEqual(worldState.worldThreads.threads, []);
   assert.deepEqual(worldState.characters, originalCharacters);
   assert.deepEqual(worldState.eventHistory, []);
@@ -80,6 +83,7 @@ test("ordinary state patches preserve server-owned exam and narrative fields", (
   worldState.roleWorldCoupling.recentImpacts = [{ kind: "server-impact" }];
   worldState.worldGeography.countries = [{ id: "server-country", name: "Server country" }];
   worldState.worldEntities.entities = [{ id: "server-entity", category: "court", kind: "court_office", name: "Server entity" }];
+  worldState.worldPeople.npcs = [{ id: "server-npc", name: "Server NPC" }];
   worldState.worldThreads.threads = [{ id: "WT-server", title: "Server thread" }];
   worldState.characters = [{ id: "C01", name: "Original mentor", role: "teacher" }];
   worldState.eventHistory = ["existing history"];
@@ -92,6 +96,7 @@ test("ordinary state patches preserve server-owned exam and narrative fields", (
     roleWorldCoupling: { recentImpacts: [{ kind: "model-impact" }] },
     worldGeography: { countries: [{ id: "model-country", name: "Model country" }] },
     worldEntities: { entities: [{ id: "model-entity", category: "court", kind: "court_office", name: "Model entity" }] },
+    worldPeople: { npcs: [{ id: "model-npc", name: "Model NPC" }] },
     worldThreads: { threads: [{ id: "WT-model", title: "Model thread" }] },
     characters: [{ id: "C99", name: "Invented patron", role: "patron" }],
     eventHistory: ["provider replacement"],
@@ -108,6 +113,7 @@ test("ordinary state patches preserve server-owned exam and narrative fields", (
   assert.deepEqual(worldState.roleWorldCoupling.recentImpacts, [{ kind: "server-impact" }]);
   assert.deepEqual(worldState.worldGeography.countries, [{ id: "server-country", name: "Server country" }]);
   assert.deepEqual(worldState.worldEntities.entities, [{ id: "server-entity", category: "court", kind: "court_office", name: "Server entity" }]);
+  assert.deepEqual(worldState.worldPeople.npcs, [{ id: "server-npc", name: "Server NPC" }]);
   assert.deepEqual(worldState.worldThreads.threads, [{ id: "WT-server", title: "Server thread" }]);
   assert.deepEqual(worldState.characters, [{ id: "C01", name: "Original mentor", role: "teacher" }]);
   assert.deepEqual(worldState.eventHistory, ["existing history"]);
@@ -166,6 +172,7 @@ test("applyStatePatch can apply server follow-up patches without incrementing tu
     roleWorldCoupling: { schemaVersion: 1, recentImpacts: [{ kind: "server-impact" }], cooldowns: {} },
     worldGeography: { schemaVersion: 1, countries: [{ id: "server-country", name: "Server country" }], cities: [] },
     worldEntities: { schemaVersion: 1, entities: [{ id: "server-entity", category: "court", kind: "court_office", name: "Server entity" }], recentNotes: [] },
+    worldPeople: { schemaVersion: 1, npcs: [{ id: "server-npc", name: "Server NPC" }], relationships: [] },
     worldThreads: { schemaVersion: 1, threads: [{ id: "WT-server", title: "Server thread" }], recentResolved: [] },
     officialCareer: { schemaVersion: 1, careerHistory: [{ type: "retention", label: "留任" }] },
     eventHistory: Array.from({ length: MAX_EVENT_HISTORY + 1 }, (_, index) => `server-event-${index}`),
@@ -180,6 +187,7 @@ test("applyStatePatch can apply server follow-up patches without incrementing tu
   assert.equal(worldState.roleWorldCoupling.recentImpacts[0].kind, "server-impact");
   assert.equal(worldState.worldGeography.countries[0].id, "server-country");
   assert.equal(worldState.worldEntities.entities[0].id, "server-entity");
+  assert.equal(worldState.worldPeople.npcs[0].id, "server-npc");
   assert.equal(worldState.worldThreads.threads[0].id, "WT-server");
   assert.equal(worldState.officialCareer.careerHistory[0].label, "留任");
   assert.equal(worldState.eventHistory.length, MAX_EVENT_HISTORY);

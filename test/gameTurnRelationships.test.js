@@ -127,6 +127,13 @@ test("POST /api/game/turn applies provider relationship suggestions through serv
   assert.ok(payload.relationshipView.contacts.some((entry) => entry.id === "C01" && entry.lastUpdatedTurn === 1));
   assert.ok(payload.relationshipView.factions.some((entry) => entry.id === "scholarOfficials"));
   assert.ok(!payload.relationshipView.factions.some((entry) => entry.id === "eunuchs"));
+  assert.equal(payload.worldPeopleView.schemaVersion, 1);
+  assert.ok(payload.worldPeopleView.relationships.some((entry) =>
+    entry.id === "rel-player-npc-C01" &&
+    entry.relationship === 24 &&
+    entry.resentment === 10
+  ));
+  assert.equal(JSON.stringify(payload.worldPeopleView).includes("Eunuch faction"), false);
   assert.equal(JSON.stringify(payload.relationshipView).includes("Eunuch faction"), false);
   assert.equal(payload.worldState.relationshipLedger.characters.C01.stance, "warmer mentor");
   assert.equal(payload.worldState.relationshipLedger.characters.C01.lastUpdatedTurn, 1);
@@ -143,6 +150,7 @@ test("POST /api/game/turn ignores provider attempts to patch server-owned ordina
           activeExam: null,
           characters: [{ id: "C99", name: "Invented patron", role: "patron" }],
           eventHistory: ["provider replacement"],
+          worldPeople: { npcs: [{ id: "provider-forged-npc", name: "伪人物" }] },
           player: {
             academia: 22,
             examRank: "model-rank",
@@ -182,6 +190,7 @@ test("POST /api/game/turn ignores provider attempts to patch server-owned ordina
   assert.equal(payload.worldState.turnCount, 1);
   assert.deepEqual(payload.worldState.activeExam, { level: "child_exam", reason: "server-created" });
   assert.deepEqual(payload.worldState.characters, [{ id: "C01", name: "Original mentor", role: "teacher" }]);
+  assert.equal(JSON.stringify(payload.worldState.worldPeople).includes("provider-forged-npc"), false);
   assert.equal(payload.worldState.eventHistory[0], "existing history");
   assert.ok(payload.worldState.eventHistory.includes("provider event"));
   assert.ok(!payload.worldState.eventHistory.includes("provider replacement"));
@@ -224,6 +233,10 @@ test("POST /api/game/turn schedules and returns a server-owned active NPC reques
   assert.equal(payload.worldState.turnCount, 1);
   assert.equal(payload.activeNpcRequestView.targetId, "C01");
   assert.equal(payload.activeNpcRequestView.status, "active");
+  assert.ok(payload.worldPeopleView.relationships.some((relationship) =>
+    relationship.id === "rel-player-npc-C01" &&
+    relationship.recentNotes.some((note) => note.includes("当前请托"))
+  ));
   assert.equal(payload.worldState.activeNpcRequest.targetId, "C01");
   assert.equal(JSON.stringify(payload.activeNpcRequestView).includes("Eunuch faction"), false);
   assert.equal(payload.activeNpcRequestEvents.length, 1);

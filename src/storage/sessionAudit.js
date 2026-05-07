@@ -15,7 +15,7 @@ const REDACTED_PATH = "[redacted-path]";
 
 const SECRET_ENV_NAME_PATTERN = /(KEY|TOKEN|SECRET|PASSWORD|CREDENTIAL)/i;
 const SENSITIVE_AUDIT_KEY_PATTERN =
-  /(apiKey|api_key|token|secret|password|credential|prompt|promptText|instructions|worldState|relationshipLedger|hidden|hiddenNotes|stack|filePath|path|databasePath|sessionsDir|sqliteDatabasePath)/i;
+  /(apiKey|api_key|token|secret|password|credential|prompt|promptText|instructions|worldState|relationshipLedger|worldPeople|npcs|households|assets|estates|relationships|hidden|hiddenNotes|stack|filePath|path|databasePath|sessionsDir|sqliteDatabasePath)/i;
 
 const AUDIT_VISIBILITIES = new Set(["public", "private", "developer"]);
 const AI_PROPOSAL_STATUSES = new Set(["accepted", "partially_accepted", "rejected", "recorded"]);

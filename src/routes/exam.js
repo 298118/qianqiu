@@ -29,6 +29,7 @@ const { buildOfficialCareerView, ensureOfficialCareerState } = require("../game/
 const { buildRoleWorldCouplingView, ensureRoleWorldCouplingState } = require("../game/roleWorldCoupling");
 const { buildWorldGeographyView, ensureWorldGeographyState } = require("../game/worldGeography");
 const { buildWorldEntityView, ensureWorldEntityState } = require("../game/worldEntities");
+const { buildWorldPeopleView, ensureWorldPeopleState } = require("../game/worldPeople");
 const { buildWorldThreadView, ensureWorldThreadState } = require("../game/worldThreads");
 const {
   createExamGradeAuditRecords,
@@ -72,6 +73,7 @@ function toExamPayload(worldState) {
     roleWorldCouplingView: buildRoleWorldCouplingView(worldState),
     worldGeographyView: buildWorldGeographyView(worldState),
     worldEntityView: buildWorldEntityView(worldState),
+    worldPeopleView: buildWorldPeopleView(worldState),
     worldThreadView: buildWorldThreadView(worldState),
     longTermEventView: buildLongTermEventView(worldState),
     officialCareerView: buildOfficialCareerView(worldState),
@@ -101,6 +103,7 @@ function ensureCommonState(worldState) {
   ensureRoleWorldCouplingState(worldState);
   ensureWorldGeographyState(worldState);
   ensureWorldEntityState(worldState);
+  ensureWorldPeopleState(worldState);
   ensureWorldThreadState(worldState);
 }
 
@@ -214,6 +217,7 @@ router.post("/question", async (req, res, next) => {
       ]);
       ensureWorldGeographyState(worldState);
       ensureWorldEntityState(worldState);
+      ensureWorldPeopleState(worldState);
       ensureWorldThreadState(worldState);
       enqueueAuditRecords(context, createExamQuestionAuditRecords(worldState, question, exam, provider, preparationResult));
 
@@ -360,6 +364,7 @@ router.post("/submit", async (req, res, next) => {
       ensureRelationshipLedger(worldState);
       ensureWorldGeographyState(worldState);
       ensureWorldEntityState(worldState);
+      ensureWorldPeopleState(worldState);
       ensureWorldThreadState(worldState);
       enqueueAuditRecords(context, createExamGradeAuditRecords({
         worldState,
@@ -398,6 +403,7 @@ router.post("/submit", async (req, res, next) => {
         roleWorldCouplingView: buildRoleWorldCouplingView(worldState),
         worldGeographyView: buildWorldGeographyView(worldState),
         worldEntityView: buildWorldEntityView(worldState),
+        worldPeopleView: buildWorldPeopleView(worldState),
         worldThreadView: buildWorldThreadView(worldState),
         longTermEventView: buildLongTermEventView(worldState),
         officialCareerView: buildOfficialCareerView(worldState),

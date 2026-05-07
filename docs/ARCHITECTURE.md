@@ -58,7 +58,8 @@ Important route ownership:
 - `src/game/examSceneTime.js` owns S48.4 exam-local phases, date stamps, scene cadence feedback, and submitted-phase archival fields.
 - `src/game/relationships.js` owns NPC/faction relationship ledger creation, normalization, legacy backfill, compact prompt summaries, and the S32.1/S32.2 player-facing relationship inspection view. Visible-only summaries filter hidden contacts, factions, and hidden-entry notes before prompt/UI exposure.
 - `src/game/activeRequests.js` owns the S32.3 server-scheduled active NPC/faction request loop. Providers may suggest narrative and relationship consequences, but they do not create, replace, resolve, or expire `worldState.activeNpcRequest`.
-- `src/game/worldPeopleSchemas.js` owns the S51.1 standalone schema contract for future NPC, household, asset, estate, relationship, and visibility rows. It normalizes/clamps rows, builds hidden-filtered schema views, and provides capped prompt summaries, but it is not yet connected to `worldState` or route payloads.
+- `src/game/worldPeopleSchemas.js` owns the S51.1 schema contract for future NPC, household, asset, estate, relationship, and visibility rows. It normalizes/clamps rows, builds hidden-filtered schema views, and provides capped prompt summaries.
+- `src/game/worldPeople.js` owns the S51.2 runtime bridge from legacy `characters`, `relationshipLedger`, and visible `activeNpcRequest` rows into safe `worldState.worldPeople`, `worldPeopleView`, and capped prompt summaries. It is a projection bridge, not the hidden NPC database.
 - `src/game/longTermEvents.js` owns the S33 server-scheduled long-term event queue for seasonal, disaster, border, court, local case-chain, and cross-month consequence events. Providers may read a compact summary for narrative context, but they do not create, replace, resolve, or expire `worldState.longTermEvents`.
 - `src/game/officialCatalog.js` owns the S42.2 static office/bureau catalog used to normalize office titles, bureau duties, and promotion/transfer/outpost candidates.
 - `src/game/worldGeographySeeds.js` owns the S50.1 static geography seed catalog for countries, neighboring polities, regions, cities, routes, frontier zones, office jurisdictions, and initial visibility.
@@ -93,11 +94,11 @@ Request fields:
 
 As of S31.3, `role` is normalized and validated in `src/game/initialState.js`. Missing or blank role values default to `scholar`; unsupported roles return `400`. The accepted enum is `scholar`, `emperor`, `minister`, `general`, `magistrate`, and `official`, and the browser start form exposes all six values.
 
-Returns `201` with `sessionId`, `worldState`, `examCalendarView`, `examRivalView`, `relationshipView`, `activeNpcRequestView`, `roleWorldCouplingView`, `worldGeographyView`, `worldEntityView`, `worldThreadView`, `longTermEventView`, `officialCareerView`, and opening `narrative`.
+Returns `201` with `sessionId`, `worldState`, `examCalendarView`, `examRivalView`, `relationshipView`, `activeNpcRequestView`, `roleWorldCouplingView`, `worldGeographyView`, `worldEntityView`, `worldPeopleView`, `worldThreadView`, `longTermEventView`, `officialCareerView`, and opening `narrative`.
 
 ### `GET /api/game/state/:sessionId`
 
-Reads the JSON session file and returns `sessionId`, `worldState`, the player-facing `examCalendarView`, `examRivalView`, `relationshipView`, `activeNpcRequestView`, `roleWorldCouplingView`, `worldGeographyView`, `worldEntityView`, `worldThreadView`, `longTermEventView`, and `officialCareerView`.
+Reads the JSON session file and returns `sessionId`, `worldState`, the player-facing `examCalendarView`, `examRivalView`, `relationshipView`, `activeNpcRequestView`, `roleWorldCouplingView`, `worldGeographyView`, `worldEntityView`, `worldPeopleView`, `worldThreadView`, `longTermEventView`, and `officialCareerView`.
 
 ### `GET /api/game/saves`
 
@@ -325,7 +326,7 @@ Request:
 
 `level` may be omitted; the server derives the next eligible exam from `player.examRank`. The route saves a complete `worldState.activeExam`, reuses an existing unanswered exam for the same level, and rejects attempts to open a different exam while another question is active. S48.4 adds `activeExam.sceneTime` for `entry`, `question_review`, `outline`, `drafting`, `fair_copy`, and `submitted`; question creation/reuse preserves global date fields and does not advance `turnCount/year/month/tenDayPeriod`.
 
-Returns `examId`, exam metadata, requirements, readiness, entry preparation, `examCalendar`, `sceneTime`, `examCalendarView`, `examRivalView`, `relationshipView`, `activeNpcRequestView`, `roleWorldCouplingView`, `worldGeographyView`, `worldEntityView`, `worldThreadView`, `longTermEventView`, `officialCareerView`, and `worldState`.
+Returns `examId`, exam metadata, requirements, readiness, entry preparation, `examCalendar`, `sceneTime`, `examCalendarView`, `examRivalView`, `relationshipView`, `activeNpcRequestView`, `roleWorldCouplingView`, `worldGeographyView`, `worldEntityView`, `worldPeopleView`, `worldThreadView`, `longTermEventView`, `officialCareerView`, and `worldState`.
 
 ### `POST /api/exam/progress`
 
@@ -353,7 +354,7 @@ Request:
 }
 ```
 
-The server checks authenticity, asks the provider for grading, applies local penalties, builds virtual candidates with inspectable essay profiles, applies promotion or cheating consequences, updates persistent same-field rivals, appends the essay result to `player.examHistory`, clears `activeExam`, saves the session and returns the result plus `examCalendarView`, `examRivalView`, `relationshipView`, `activeNpcRequestView`, `roleWorldCouplingView`, `worldGeographyView`, `worldEntityView`, `worldThreadView`, `longTermEventView`, `officialCareerView`, and `worldState`. The response includes `examQuestion`, `essay`, `entryPreparation`, `examCalendar`, `sceneTime`, `examStartedAt`, and `examSubmittedAt` so the browser can render the just-submitted archive directly.
+The server checks authenticity, asks the provider for grading, applies local penalties, builds virtual candidates with inspectable essay profiles, applies promotion or cheating consequences, updates persistent same-field rivals, appends the essay result to `player.examHistory`, clears `activeExam`, saves the session and returns the result plus `examCalendarView`, `examRivalView`, `relationshipView`, `activeNpcRequestView`, `roleWorldCouplingView`, `worldGeographyView`, `worldEntityView`, `worldPeopleView`, `worldThreadView`, `longTermEventView`, `officialCareerView`, and `worldState`. The response includes `examQuestion`, `essay`, `entryPreparation`, `examCalendar`, `sceneTime`, `examStartedAt`, and `examSubmittedAt` so the browser can render the just-submitted archive directly.
 
 ## AI Provider Contract
 
@@ -374,7 +375,7 @@ Provider outputs must match the schemas in `src/ai/schemas.js`:
 - `examQuestion`: exam level, name, question, type, difficulty, requirements, word count, pass score and promotion rank
 - `grade`: five score dimensions, `overall_score`, rank, detailed feedback, authenticity echo, candidates and ranking placeholders
 
-Real provider adapters parse model text through `src/utils/json.js`, normalize remote turn payloads, validate with Ajv, retry once on ordinary non-streaming failure, then fall back to Mock for that method. The model never owns final game state. It can suggest `statePatch`; the provider adapter first filters it to provider-allowed fields, then the route applies the same server whitelist and clamps. Ordinary turn schemas still reject direct patches to server-owned fields such as `activeExam`, `activeNpcRequest`, `longTermEvents`, `roleWorldCoupling`, `worldThreads`, `officialCareer`, `characters`, `eventHistory`, `player.examRank`, `player.officeTitle`, and `player.examHistory` when they appear outside this remote-provider normalization path. Remote turn payloads may also drop malformed display-only `attributeChanges` rows before validation.
+Real provider adapters parse model text through `src/utils/json.js`, normalize remote turn payloads, validate with Ajv, retry once on ordinary non-streaming failure, then fall back to Mock for that method. The model never owns final game state. It can suggest `statePatch`; the provider adapter first filters it to provider-allowed fields, then the route applies the same server whitelist and clamps. Ordinary turn schemas still reject direct patches to server-owned fields such as `activeExam`, `activeNpcRequest`, `longTermEvents`, `roleWorldCoupling`, `worldGeography`, `worldEntities`, `worldPeople`, `worldThreads`, `officialCareer`, `characters`, `eventHistory`, `player.examRank`, `player.officeTitle`, and `player.examHistory` when they appear outside this remote-provider normalization path. Remote turn payloads may also drop malformed display-only `attributeChanges` rows before validation.
 
 When a subsystem changes the AI/server split, update the S44 matrix together with schema, normalizer, state merge, route follow-up, prompt summary and player-facing view tests. The matrix intentionally separates “AI may generate or suggest” from “server persists or decides” so future model-quality work does not quietly become authority expansion.
 
@@ -424,7 +425,7 @@ S25.3 adds a no-network fixture gate for provider-shaped output:
 npm run eval:ai
 ```
 
-The focused test is `test/aiEvalFixtures.test.js`, with fixture data in `testdata/aiEvalFixtures.js` so Node's test runner does not treat fixture data as a test file. It parses raw model-like text through `src/utils/json.js`, validates final payloads through `src/ai/schemas.js`, checks restrained historical tone heuristics, verifies unsafe turn authority claims are rejected, rejects ordinary turn attempts to patch server-owned fields such as `activeExam`, `worldThreads`, `characters`, `eventHistory`, `player.examRank`, or `player.examHistory`, and confirms patch application clamps numeric fields plus known faction scores. This gate is offline and should remain separate from keyed provider smoke runs.
+The focused test is `test/aiEvalFixtures.test.js`, with fixture data in `testdata/aiEvalFixtures.js` so Node's test runner does not treat fixture data as a test file. It parses raw model-like text through `src/utils/json.js`, validates final payloads through `src/ai/schemas.js`, checks restrained historical tone heuristics, verifies unsafe turn authority claims are rejected, rejects ordinary turn attempts to patch server-owned fields such as `activeExam`, `worldPeople`, `worldThreads`, `characters`, `eventHistory`, `player.examRank`, or `player.examHistory`, and confirms patch application clamps numeric fields plus known faction scores. This gate is offline and should remain separate from keyed provider smoke runs.
 
 ### Browser Smoke
 
@@ -473,7 +474,7 @@ As of S31.2, `applyStatePatch(worldState, statePatch, options)` enforces:
 - `statePatch.factions` may only update existing numeric faction keys; providers cannot invent arbitrary faction names.
 - Existing faction scores patched by providers are clamped to `0..100`.
 - `turnCount` increments when a turn patch is applied.
-- Ordinary provider patches use the provider-facing whitelist and ignore server-owned fields such as `turnCount`, `year`, `month`, `tenDayPeriod`, `activeExam`, `activeNpcRequest`, `longTermEvents`, `roleWorldCoupling`, `worldThreads`, `officialCareer`, `characters`, `eventHistory`, `player.role`, `player.officeTitle`, `player.examRank`, and `player.examHistory` even if a non-schema provider includes them.
+- Ordinary provider patches use the provider-facing whitelist and ignore server-owned fields such as `turnCount`, `year`, `month`, `tenDayPeriod`, `activeExam`, `activeNpcRequest`, `longTermEvents`, `roleWorldCoupling`, `worldGeography`, `worldEntities`, `worldPeople`, `worldThreads`, `officialCareer`, `characters`, `eventHistory`, `player.role`, `player.officeTitle`, `player.examRank`, and `player.examHistory` even if a non-schema provider includes them.
 - For official players, ordinary provider patches to `player.position` are additionally screened against the S42.2 office catalog and obvious 官职 wording. Soft narrative positions may remain, but hidden appointment attempts such as “内阁大学士” are ignored.
 - `examCalendar` is also server-owned. Providers can read a compact prompt summary, but missed windows, rival persistence, and same-year contacts are written only by route-owned code.
 - Server-owned follow-up patches may pass `{ incrementTurnCount: false, allowServerOwnedPatchKeys: true }` so internal code can apply fields such as the world tick calendar without double-counting one player turn.
@@ -516,19 +517,21 @@ The browser renders active requests as `#active-request-panel` from top-level `a
 
 S51.1 adds [docs/NPC_HOUSEHOLD_ASSET_RELATIONSHIP_CONTRACT.md](NPC_HOUSEHOLD_ASSET_RELATIONSHIP_CONTRACT.md) and `src/game/worldPeopleSchemas.js` as the schema-contract layer for future NPC/household/asset/estate/relationship database rows.
 
-Current scope:
+Current scope after S51.2:
 
 - `normalizeWorldPeopleSchemaBundle()` accepts an independent bundle with `npcs`, `households`, `assets`, `estates`, `relationships`, and `recentNotes`; it clamps numeric fields, caps text/list fields, drops malformed ids, and preserves `hiddenIntent` / `hiddenNotes` only in the normalized raw bundle.
 - `buildWorldPeopleSchemaView()` filters hidden rows and hidden nested refs. A visible NPC cannot expose hidden family, asset, estate, parent, spouse, or child ids; visible households cannot expose hidden member/asset/estate ids; assets/estates owned by hidden NPCs or households are omitted; relationships pointing at hidden people or property rows are omitted.
-- `summarizeWorldPeopleSchemaForPrompt()` reads only the filtered view and caps output to NPC 8, household 6, asset 6, estate 6, and relationship 10 entries.
+- `summarizeWorldPeopleSchemaForPrompt()` reads only the filtered view and caps output to NPC 8, household 6, asset 6, estate 6, and relationship 10 entries. Relationship prompt rows may include capped visible `recentNotes`.
 - `visibility` uses `public`, `role_visible`, `relationship_visible`, `rumor`, and `hidden`. Scholar-mode cannot see `role_visible` rows unless `knownToPlayer` is true; `relationship_visible` rows require `knownToPlayer: true`.
-- This slice does not add `worldState.worldPeople`, does not change `relationshipView` / `activeNpcRequestView`, does not add browser UI, and does not create SQLite business tables.
+- `src/game/worldPeople.js` writes `worldState.worldPeople` as a safe visible bridge from current `characters`, `relationshipLedger`, and `activeNpcRequest` view data. It does not store newly introduced hidden NPC dossiers because route payloads still carry full local `worldState` for development compatibility.
+- Game, SSE, and exam payloads add `worldPeopleView`; `compactWorldState()` adds capped `worldPeople` prompt context. Existing `relationshipView`, `activeNpcRequestView`, and `relationshipChanges` contracts remain unchanged.
+- This slice does not add browser UI and does not create SQLite business tables.
 
 Provider boundary:
 
-- Ordinary providers still cannot write future people ledgers. `statePatch.worldPeople` is rejected by AI schemas and ignored by `applyStatePatch()` if a non-schema call includes it.
+- Ordinary providers still cannot write people ledgers. `statePatch.worldPeople` is rejected by AI schemas and ignored by `applyStatePatch()` if a non-schema call includes it; remote normalization, provider long-run checks, audit redaction, and red-team tests cover the same boundary.
 - The only current provider social path remains top-level `relationshipChanges[]` targeting existing visible `character` / `faction` ledger entries.
-- S51.2 may bridge `characters`, `relationshipLedger`, and `activeNpcRequest` onto this schema, but it must preserve the existing delta/clamp/visibility rules and complete scholar path.
+- `activeNpcRequest` lifecycle remains server-owned in `src/game/activeRequests.js`; world people only mirrors visible request notes into relationship projection.
 
 ## Role / World Coupling Contract
 
@@ -728,7 +731,7 @@ S50.1 adds [docs/WORLD_GEOGRAPHY_SEED_CONTRACT.md](WORLD_GEOGRAPHY_SEED_CONTRACT
 
 S50.2 adds `src/game/worldGeography.js` and `worldState.worldGeography`. New sessions instantiate the seed into per-session rows for countries, regions, cities, routes, frontier zones, and office jurisdictions. Game and exam routes now include `worldGeographyView`, which filters hidden rows, `hiddenNotes`, hidden nested refs, and scholar-only `role_visible` rows; `compactWorldState()` sends only a capped `worldGeography` prompt summary. This does not add a browser geography panel, does not replace top-level `treasury` / `publicOrder` / `borderThreat`, and does not create SQLite business tables. The existing route payload still carries full local `worldState` for development compatibility, so future UI must read `worldGeographyView` rather than raw `worldState.worldGeography`.
 
-S51.1 adds `src/game/worldPeopleSchemas.js` as the next database-domain contract after geography. It remains standalone in this slice; no `worldState.worldPeople` row is saved yet, and route payloads still expose only the existing `relationshipView` / `activeNpcRequestView` social surfaces. Future 人物谱牒 or 家产 panels must be built from a server view derived from this schema, not raw hidden rows.
+S51.1 adds `src/game/worldPeopleSchemas.js` as the next database-domain contract after geography. S51.2 adds `src/game/worldPeople.js`, `worldState.worldPeople`, `worldPeopleView`, and capped prompt context. The bridge preserves old `characters`, `relationshipLedger`, `relationshipView`, and `activeNpcRequestView` while giving future 人物谱牒 or 家产 panels a server-built view to consume. It intentionally stores only the visible bridge projection; future hidden NPC/家产 databases require route redaction or a non-raw player state API first.
 
 ## Verification
 

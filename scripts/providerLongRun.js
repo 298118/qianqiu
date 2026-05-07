@@ -30,6 +30,9 @@ const {
   ensureWorldEntityState
 } = require("../src/game/worldEntities");
 const {
+  ensureWorldPeopleState
+} = require("../src/game/worldPeople");
+const {
   ensureWorldThreadState
 } = require("../src/game/worldThreads");
 const {
@@ -78,6 +81,7 @@ const PROTECTED_TOP_LEVEL_PATCH_KEYS = [
   "roleWorldCoupling",
   "worldGeography",
   "worldEntities",
+  "worldPeople",
   "worldThreads",
   "characters",
   "eventHistory",
@@ -267,6 +271,7 @@ function ensureServerState(worldState) {
   ensureRoleWorldCouplingState(worldState);
   ensureWorldGeographyState(worldState);
   ensureWorldEntityState(worldState);
+  ensureWorldPeopleState(worldState);
   ensureWorldThreadState(worldState);
   return worldState;
 }

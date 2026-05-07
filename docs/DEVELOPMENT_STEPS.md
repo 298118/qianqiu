@@ -101,7 +101,7 @@
 | S50.1 | DONE | 静态天下与邻国种子契约：国家、城市、路线、边境、官署辖区和初始可见性 | 2026-05-07 | Codex + read-only subagents | `45f9b65` |
 | S50.2 | DONE | per-session 国家/城市实例化与 prompt projection，先不替代现有 worldState 指标 | 2026-05-07 | Codex + read-only subagents | `b0ced01` |
 | S51.1 | DONE | NPC、家族、资产、田产、关系和可见性 schema 契约 | 2026-05-07 | Codex + read-only subagents | `418077b` |
-| S51.2 | TODO | 桥接当前 `characters`、`relationshipLedger`、active requests 与 NPC/关系表 |  |  |  |
+| S51.2 | DONE | 桥接当前 `characters`、`relationshipLedger`、active requests 与 NPC/关系表 | 2026-05-07 | Codex + read-only subagents | 待回填 |
 | S52.1 | TODO | 官职、官署、任所、城市辖区、考成和调任记录的数据库契约 |  |  |  |
 | S52.2 | TODO | 地方官/入仕官员任所与城市数据联动，保持服务器任免裁决 |  |  |  |
 | S53.1 | TODO | 检索式 prompt context assembler：按角色视野读取国家、城市、NPC、官职、事件摘要 |  |  |  |
@@ -394,6 +394,46 @@
 - `relationshipChanges` 仍只支持既有可见 `character` / `faction` 目标；S51.2 若扩展到新人物/关系表，必须保留可见目标、delta、clamp 和服务器裁决。
 - 后续桥接时尤其要防可见 NPC/家族引用 hidden patron、hidden estate、hidden asset 导致 id 泄漏。
 
+### S51.2：当前人物与关系桥接
+
+状态：DONE。实现/文档提交哈希待回填；提交前只读复审 Singer 未发现阻塞问题。
+
+目标：
+
+- 新增 server-owned `worldState.worldPeople`，把当前 `characters`、`relationshipLedger` 和 active requests 桥接到 S51.1 的 NPC/关系 schema。
+- 路由与 prompt 只读取服务器生成的可见投影：`worldPeopleView` 和 capped `worldPeople` prompt summary。
+- 保持既有 `relationshipView`、`activeNpcRequestView`、provider `relationshipChanges` 和完整书生科举路径不变。
+- 不新增浏览器人物谱牒/家产面板，不拆 SQLite NPC/关系业务表，不让 provider 写 `worldPeople`。
+
+当前实现：
+
+- 新增 `src/game/worldPeople.js`，提供 `createInitialWorldPeopleState()`、`ensureWorldPeopleState()`、`normalizeWorldPeopleState()`、`buildWorldPeopleView()` 和 `summarizeWorldPeopleForPrompt()`。
+- 新局、普通回合、SSE 预览/最终 payload、读档、考试取题和交卷都接入 `worldPeopleView`；`src/ai/prompts.js` 的 `compactWorldState()` 追加可见 `worldPeople` 摘要。
+- 当前桥接只存安全可见投影：legacy 隐藏人物、自定义 hidden rows、`hiddenNotes`、`hiddenIntent` 不进入 raw `worldState.worldPeople`，以免既有 route 仍返回完整本地 `worldState` 时泄漏未来私密人物库。
+- 可见 NPC id 复用旧 `characters` id；玩家与 NPC / faction 的桥接关系使用 `rel-player-npc-*` 与 `rel-player-faction-*`；active request 只作为关系 `recentNotes` 中的可见请托提示，不接管其生命周期。
+- `worldPeople` 加入 server-owned patch 边界；AI schema、stateRules、remote normalization、provider long-run、audit redaction、red-team 和 eval fixtures 都覆盖 provider 伪造人物表写入。
+- README、架构文档、产品 brief、动态数据库规划、人物契约、AI 权限矩阵、真实 provider acceptance 和 shared context 同步 S51.2 边界。
+
+验证：
+
+- `node --check src\game\worldPeople.js`
+- `node --check src\routes\game.js`
+- `node --check src\routes\exam.js`
+- `node --check src\ai\prompts.js`
+- `node --check scripts\providerLongRun.js`
+- `node --check test\worldPeopleBridge.test.js`
+- `node --test test\worldPeopleBridge.test.js test\worldPeopleSchemas.test.js test\gameTurnRelationships.test.js test\prompts.test.js test\stateRules.test.js test\aiSchemas.test.js test\remoteHelpers.test.js test\providerLongRunScript.test.js test\auditRoute.test.js test\aiControlRedTeam.test.js test\aiEvalFixtures.test.js`，72 项通过
+- `npm run check:docs-governance`
+- `$env:AI_PROVIDER='mock'; npm test`，348 项通过
+- `git diff --check`
+- 提交前只读复审 Singer 未发现 P0/P1/P2 blocker；确认 `worldPeople` 只保存可见 projection，route/exam 不替换旧关系/请托视图，provider/remote/long-run 不能写 `worldPeople`，audit 会脱敏相关 proposal。
+
+风险/遗留：
+
+- 当前 route 兼容层仍返回完整本地 `worldState`，所以 S51.2 有意不在 `worldState.worldPeople` 中保存隐藏私密人物/家产档案；未来若要建完整 NPC 私密库，应先拆玩家 API 或增加 raw state redaction。
+- 当前不新增 browser people panel；浏览器若将来展示人物谱牒，应读取 `worldPeopleView`，不能读 raw `worldState.worldPeople`。
+- `relationshipChanges` 仍只允许 provider 建议既有 `character` / `faction` 可见目标；新增 NPC/家族/资产/田产业务写入必须作为后续 server-owned proposal 裁决来设计。
+
 ## 6. 数据域规划
 
 数据库专项需要承载的数据域如下。每个域都先定义契约和 projection，再决定是否拆表；不要为了“有数据库”而提前建过度复杂的表。
@@ -473,6 +513,48 @@
 - 隐藏信息要在数据库层、projection 层和 prompt 层都标记；不能只靠前端隐藏。
 
 ## 8. 进度记录
+
+### 2026-05-07
+
+工具：Codex；只读探索子代理 Hume；提交前只读复审 Singer
+
+步骤：S51.2
+
+提交：待回填
+
+完成：
+
+- 新增 `src/game/worldPeople.js`，把当前 `characters`、`relationshipLedger` 和 active request 可见请托桥接为 server-owned `worldState.worldPeople` 可见投影。
+- 游戏开局、普通回合、SSE、读档、考试取题和交卷返回 `worldPeopleView`；prompt 输入新增 capped `worldPeople` 摘要。
+- 桥接层保留旧 `relationshipView`、`activeNpcRequestView`、`relationshipChanges` 和书生科举路径，不新增浏览器人物/家产面板，不建 SQLite 业务表。
+- 为避免既有 raw `worldState` route 泄漏未来私密人物库，本步骤只存可见投影，并主动丢弃 hidden legacy/custom rows、`hiddenNotes` 和 `hiddenIntent`。
+- `worldPeople` 加入普通回合 server-owned patch 边界；schema、stateRules、remote normalization、provider long-run、audit redaction、red-team 和 eval fixtures 覆盖 provider 伪造写入。
+- README、架构文档、产品 brief、动态数据库规划、人物契约、AI 权限矩阵、真实 provider acceptance 和 shared context 同步 S51.2 边界。
+- Hume 只读梳理了 `worldPeople` 推荐落点、route/exam/prompt/provider-long-run 集成点、旧关系/请托契约和 raw route 泄漏风险；子代理未编辑文件，未运行 Git 命令。
+
+验证：
+
+- `node --check src\game\worldPeople.js`
+- `node --check src\routes\game.js`
+- `node --check src\routes\exam.js`
+- `node --check src\ai\prompts.js`
+- `node --check scripts\providerLongRun.js`
+- `node --check test\worldPeopleBridge.test.js`
+- `node --test test\worldPeopleBridge.test.js test\worldPeopleSchemas.test.js test\gameTurnRelationships.test.js test\prompts.test.js test\stateRules.test.js test\aiSchemas.test.js test\remoteHelpers.test.js test\providerLongRunScript.test.js test\auditRoute.test.js test\aiControlRedTeam.test.js test\aiEvalFixtures.test.js`，72 项通过
+- `npm run check:docs-governance`
+- `$env:AI_PROVIDER='mock'; npm test`，348 项通过
+- `git diff --check`
+- 提交前只读复审 Singer 未发现 P0/P1/P2 blocker，并额外运行同一组 focused `node --test`，72 项通过；Singer 未编辑文件，未运行 Git 命令。
+
+风险/遗留：
+
+- S51.2 的 `worldState.worldPeople` 是 bridge projection，不是完整私密 NPC 数据库；未来隐藏人物、家族、资产和田产若要入库，应先做 route raw-state redaction 或单独玩家 projection API。
+- `worldPeopleView` 当前不接浏览器面板；S53 信息面板或 context assembler 可再读取它。
+- 本步骤不扩大本地数据库范围，不引入远程/账号/多人，不让 AI 写 SQL 或人物业务表。
+
+下一步：
+
+- S52.1：官职、官署、任所、城市辖区、考成和调任记录的数据库契约。
 
 ### 2026-05-07
 

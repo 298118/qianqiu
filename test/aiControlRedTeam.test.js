@@ -174,6 +174,9 @@ test("S44 ordinary turn drops mixed provider overreach while applying safe sugge
           worldEntities: {
             entities: [{ id: "provider-forged-entity", name: "伪实体", hiddenNotes: ["provider-hidden-overreach"] }]
           },
+          worldPeople: {
+            npcs: [{ id: "provider-forged-npc", name: "伪人物", hiddenNotes: ["provider-hidden-overreach"] }]
+          },
           worldThreads: {
             threads: [{ id: "WT-provider-forged", title: "伪议题", hiddenNotes: ["provider-hidden-overreach"] }]
           },
@@ -264,6 +267,7 @@ test("S44 ordinary turn drops mixed provider overreach while applying safe sugge
     officialCareerView: payload.officialCareerView,
     worldGeographyView: payload.worldGeographyView,
     worldEntityView: payload.worldEntityView,
+    worldPeopleView: payload.worldPeopleView,
     worldThreadView: payload.worldThreadView
   });
 
@@ -288,6 +292,7 @@ test("S44 ordinary turn drops mixed provider overreach while applying safe sugge
   assert.equal(serializedState.includes("provider-request"), false);
   assert.equal(serializedState.includes("provider-forged-country"), false);
   assert.equal(serializedState.includes("provider-forged-entity"), false);
+  assert.equal(serializedState.includes("provider-forged-npc"), false);
   assert.equal(serializedState.includes("WT-provider-forged"), false);
   assert.equal(serializedState.includes("provider-hidden-overreach"), false);
   assert.equal(serializedViews.includes("provider-hidden-overreach"), false);

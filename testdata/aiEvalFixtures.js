@@ -438,6 +438,18 @@ const PROMPT_PACK_AUTHORITY_RED_TEAM_FIXTURES = [
     expected: "schemaReject"
   },
   {
+    name: "ordinary turn may not patch world people ledger",
+    schemaName: "turn",
+    raw: JSON.stringify(baseTurn({
+      statePatch: {
+        worldPeople: {
+          npcs: [{ id: "provider-forged-npc", name: "\u4f2a\u4eba\u7269" }]
+        }
+      }
+    })),
+    expected: "schemaReject"
+  },
+  {
     name: "ordinary turn may not patch exam calendar",
     schemaName: "turn",
     raw: JSON.stringify(baseTurn({
@@ -477,6 +489,7 @@ const S44_MIXED_AUTHORITY_RED_TEAM_FIXTURES = [
         officialCareer: { careerHistory: [{ type: "promotion", label: "伪升迁" }] },
         roleWorldCoupling: { recentImpacts: [{ kind: "provider-forged" }] },
         worldEntities: { entities: [{ id: "provider-forged-entity", name: "伪实体" }] },
+        worldPeople: { npcs: [{ id: "provider-forged-npc", name: "伪人物" }] },
         worldThreads: { threads: [{ id: "WT-provider-forged", title: "伪议题" }] },
         characters: [{ id: "C99", name: "暗线贵人", role: "secret patron" }],
         eventHistory: ["provider replacement"],
@@ -675,6 +688,16 @@ const SERVER_OWNED_TURN_FIXTURES = [
       statePatch: {
         worldEntities: {
           entities: [{ id: "provider-forged-entity", name: "\u4f2a\u5b9e\u4f53" }]
+        }
+      }
+    }))
+  },
+  {
+    name: "ordinary turn may not patch world people",
+    raw: JSON.stringify(baseTurn({
+      statePatch: {
+        worldPeople: {
+          npcs: [{ id: "provider-forged-npc", name: "\u4f2a\u4eba\u7269" }]
         }
       }
     }))

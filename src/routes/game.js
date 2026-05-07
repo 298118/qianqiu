@@ -35,6 +35,10 @@ const {
   ensureWorldEntityState
 } = require("../game/worldEntities");
 const {
+  buildWorldPeopleView,
+  ensureWorldPeopleState
+} = require("../game/worldPeople");
+const {
   buildWorldThreadView,
   ensureWorldThreadState
 } = require("../game/worldThreads");
@@ -96,6 +100,7 @@ async function processTurn(sessionId, input) {
     ensureRoleWorldCouplingState(worldState);
     ensureWorldGeographyState(worldState);
     ensureWorldEntityState(worldState);
+    ensureWorldPeopleState(worldState);
     ensureWorldThreadState(worldState);
     if (isWritingExam(worldState.activeExam)) {
       return finalizeExamSceneTurn(worldState, input, context);
@@ -115,6 +120,7 @@ async function processStreamingTurn(sessionId, input, streamHandlers = {}) {
     ensureRoleWorldCouplingState(worldState);
     ensureWorldGeographyState(worldState);
     ensureWorldEntityState(worldState);
+    ensureWorldPeopleState(worldState);
     ensureWorldThreadState(worldState);
     if (isWritingExam(worldState.activeExam)) {
       return finalizeExamSceneTurn(worldState, input, context);
@@ -210,6 +216,7 @@ function buildCommonTurnViews(worldState) {
     roleWorldCouplingView: buildRoleWorldCouplingView(worldState),
     worldGeographyView: buildWorldGeographyView(worldState),
     worldEntityView: buildWorldEntityView(worldState),
+    worldPeopleView: buildWorldPeopleView(worldState),
     worldThreadView: buildWorldThreadView(worldState),
     longTermEventView: buildLongTermEventView(worldState),
     officialCareerView: buildOfficialCareerView(worldState)
@@ -225,6 +232,7 @@ async function finalizeExamSceneTurn(worldState, input, context = null) {
   ensureRoleWorldCouplingState(worldState);
   ensureWorldGeographyState(worldState);
   ensureWorldEntityState(worldState);
+  ensureWorldPeopleState(worldState);
   ensureWorldThreadState(worldState);
   const worldTick = buildExamSceneFeedback(worldState, scene.sceneTime, scene.event);
   enqueueAuditRecords(context, createExamProgressAuditRecords(worldState, scene));
@@ -333,6 +341,7 @@ async function finalizeTurn(worldState, result, input, auditOptions = {}) {
   });
   const worldEntityImpacts = applyWorldEntityInfluences(worldState, worldEntityInfluences);
   ensureWorldEntityState(worldState);
+  ensureWorldPeopleState(worldState);
   ensureWorldThreadState(worldState);
 
   appendEvents(worldState, result.events);
@@ -348,6 +357,7 @@ async function finalizeTurn(worldState, result, input, auditOptions = {}) {
   ensureRoleWorldCouplingState(worldState);
   ensureWorldGeographyState(worldState);
   ensureWorldEntityState(worldState);
+  ensureWorldPeopleState(worldState);
   ensureWorldThreadState(worldState);
 
   const worldTickFeedback = {
@@ -458,6 +468,7 @@ async function streamTurn(res, sessionId, input) {
       worldGeographyView: payload.worldGeographyView,
       worldEntityView: payload.worldEntityView,
       worldEntityImpacts: payload.worldEntityImpacts,
+      worldPeopleView: payload.worldPeopleView,
       worldThreadView: payload.worldThreadView,
       roleWorldCoupling: payload.roleWorldCoupling,
       longTermEventView: payload.longTermEventView,
@@ -498,6 +509,7 @@ router.post("/start", async (req, res, next) => {
       roleWorldCouplingView: buildRoleWorldCouplingView(worldState),
       worldGeographyView: buildWorldGeographyView(worldState),
       worldEntityView: buildWorldEntityView(worldState),
+      worldPeopleView: buildWorldPeopleView(worldState),
       worldThreadView: buildWorldThreadView(worldState),
       longTermEventView: buildLongTermEventView(worldState),
       officialCareerView: buildOfficialCareerView(worldState),
@@ -518,6 +530,7 @@ router.get("/state/:sessionId", async (req, res, next) => {
     ensureRoleWorldCouplingState(worldState);
     ensureWorldGeographyState(worldState);
     ensureWorldEntityState(worldState);
+    ensureWorldPeopleState(worldState);
     ensureWorldThreadState(worldState);
     res.json({
       sessionId: worldState.sessionId,
@@ -529,6 +542,7 @@ router.get("/state/:sessionId", async (req, res, next) => {
       roleWorldCouplingView: buildRoleWorldCouplingView(worldState),
       worldGeographyView: buildWorldGeographyView(worldState),
       worldEntityView: buildWorldEntityView(worldState),
+      worldPeopleView: buildWorldPeopleView(worldState),
       worldThreadView: buildWorldThreadView(worldState),
       longTermEventView: buildLongTermEventView(worldState),
       officialCareerView: buildOfficialCareerView(worldState)

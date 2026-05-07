@@ -1,12 +1,12 @@
-# S51.1 人物、家族、资产、田产与关系 Schema 契约
+# S51 人物、家族、资产、田产与关系 Schema / 桥接契约
 
-S51.1 是本地动态世界数据库专项的人物域第一片。它先固定 NPC、家族、资产、田产、关系与可见性 schema，供后续 S51.2 桥接当前 `characters`、`relationshipLedger` 和 `activeNpcRequest` 使用。
+S51 是本地动态世界数据库专项的人物域切片。S51.1 先固定 NPC、家族、资产、田产、关系与可见性 schema；S51.2 在此基础上桥接当前 `characters`、`relationshipLedger` 和可见 `activeNpcRequest`。
 
-本步骤不迁移现有运行时账本，不新增浏览器面板，不新增 SQLite 业务表，不改变 `POST /api/game/turn` payload，也不让 AI 直接创建人物或改写家产。
+本切片仍不新增浏览器人物/家产面板，不新增 SQLite 业务表，不替换旧 `relationshipView` / `activeNpcRequestView`，也不让 AI 直接创建人物或改写家产。S51.2 新增的 `worldState.worldPeople` 是当前可见旧系统数据的安全 projection，不是隐藏人物私档总库。
 
 ## 范围
 
-新增运行时契约 helper：`src/game/worldPeopleSchemas.js`。
+S51.1 新增运行时契约 helper：`src/game/worldPeopleSchemas.js`。
 
 该模块只提供：
 
@@ -16,7 +16,15 @@ S51.1 是本地动态世界数据库专项的人物域第一片。它先固定 N
 - `summarizeWorldPeopleSchemaForPrompt(input, worldState)`
 - `canSeeWorldPeopleRow(row, worldState)`
 
-它当前处理一个独立 bundle，而不是写入 `worldState.worldPeople`。S51.2 才能决定是否把该 bundle 落入每局状态、如何从旧 `characters` / `relationshipLedger` 回填，以及 active NPC 请托如何读取新关系行。
+S51.2 新增 `src/game/worldPeople.js`，提供：
+
+- `createInitialWorldPeopleState(worldState)`
+- `normalizeWorldPeopleState(worldState)`
+- `ensureWorldPeopleState(worldState)`
+- `buildWorldPeopleView(worldState)`
+- `summarizeWorldPeopleForPrompt(worldState)`
+
+该模块从旧 `characters[]`、`relationshipLedger.characters`、`relationshipLedger.factions` 和 `buildActiveNpcRequestView()` 派生安全桥接行。它会写入每局 `worldState.worldPeople`，但只保存当前角色可见 projection：hidden legacy 目标、自定义 hidden worldPeople 行、`hiddenNotes` 和 `hiddenIntent` 不进入 raw `worldState.worldPeople`，因为现有本地 route 仍随 payload 返回完整 `worldState`。
 
 ## 顶层 Bundle
 
@@ -119,7 +127,7 @@ S51.1 统一人物域可见性枚举：
 - 资产/田产 owner 是隐藏 NPC 或隐藏家族时，该资产/田产不进入 view。
 - 关系两端若指向隐藏 NPC、隐藏家族、隐藏资产或隐藏田产，该关系不进入 view。
 
-`summarizeWorldPeopleSchemaForPrompt()` 只能读取 view，并进一步 cap 摘要数量：NPC 8 条、家族 6 条、资产 6 条、田产 6 条、关系 10 条。它不返回 `hiddenNotes`、`hiddenIntent`、隐藏 id 或 raw bundle。
+`summarizeWorldPeopleSchemaForPrompt()` 只能读取 view，并进一步 cap 摘要数量：NPC 8 条、家族 6 条、资产 6 条、田产 6 条、关系 10 条。关系摘要可以携带 capped 可见 `recentNotes`，用于把 active request 近期札记交给 prompt；它不返回 `hiddenNotes`、`hiddenIntent`、隐藏 id 或 raw bundle。
 
 ## AI 与服务器边界
 
@@ -136,7 +144,7 @@ AI 不可以：
 - 决定官职任免、科举晋级、家产归属裁判、田产诉讼结局或 SQL/table row 写入。
 - 读取或输出 `hiddenIntent`、`hiddenNotes`、本地路径、provider key 或完整 raw prompt。
 
-S51.1 的测试已锁定：普通 provider payload 中夹带 `statePatch.worldPeople` 会被 AI schema 拒绝；即使非 schema 路径调用 `applyStatePatch()`，也不会写入 `worldState.worldPeople`。
+S51.2 的测试已锁定：普通 provider payload 中夹带 `statePatch.worldPeople` 会被 AI schema 拒绝；即使非 schema 路径调用 `applyStatePatch()`，也不会覆盖服务器拥有的 `worldState.worldPeople`。Remote normalization、provider long-run、route red-team 和审计脱敏也覆盖 `worldPeople` 越权。
 
 ## 与旧系统的关系
 
@@ -147,21 +155,24 @@ S51.1 的测试已锁定：普通 provider payload 中夹带 `statePatch.worldPe
 - `worldState.activeNpcRequest`：服务器调度的单条主动请托。
 - `player.gold`、`player.localTreasury` 等分散资产字段。
 
-S51.1 不替换这些字段。S51.2 应在本契约之上做桥接：
+S51.2 不替换这些字段，只在本契约之上做桥接：
 
-- 从 `characters[]` 和 `relationshipLedger.characters` 派生初始 NPC 行。
-- 从 `relationshipLedger.factions` / 当前关系建议路径桥接到关系表。
-- 让 `activeNpcRequest` 从可见人物/关系 view 选择目标，但保持服务器调度与过期规则。
-- 仍保留旧字段，直到 route payload、prompt summary、browser UI 和存档迁移都有对应测试。
+- 从 `characters[]` 和 `relationshipLedger.characters` 派生可见 NPC 行，NPC id 沿用旧 `C01` 这类 id。
+- 从 `relationshipLedger.characters` / `relationshipLedger.factions` 派生 `player -> npc/faction` 关系行；hidden legacy 目标不写入 `worldPeople`。
+- 从 `buildActiveNpcRequestView()` 读取可见请求，把“当前请托”写入对应关系的 `recentNotes`；请求调度、回应和过期仍由 `src/game/activeRequests.js` 裁决。
+- 游戏、SSE 和考试 route 额外返回 `worldPeopleView`；`compactWorldState()` 额外放入 capped `worldPeople` prompt summary。
+- 仍保留旧字段，直到浏览器 UI、存档迁移和未来 SQLite 业务表都有对应测试。
 
 ## 验证
 
-S51.1 focused 验证：
+S51 focused 验证：
 
 ```powershell
 node --check src\game\worldPeopleSchemas.js
+node --check src\game\worldPeople.js
 node --check test\worldPeopleSchemas.test.js
-node --test test\worldPeopleSchemas.test.js
+node --check test\worldPeopleBridge.test.js
+node --test test\worldPeopleSchemas.test.js test\worldPeopleBridge.test.js
 ```
 
 提交前还应跑相关边界测试、治理检查、Mock 全量测试和 `git diff --check`。

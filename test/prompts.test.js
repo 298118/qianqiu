@@ -2,6 +2,7 @@ const assert = require("assert/strict");
 const test = require("node:test");
 
 const { getExam } = require("../src/game/exams");
+const { runActiveNpcRequestStep } = require("../src/game/activeRequests");
 const { createInitialState } = require("../src/game/initialState");
 const {
   buildExamQuestionTask,
@@ -203,6 +204,20 @@ test("turn prompt input filters hidden relationship context", () => {
     assert.doesNotMatch(task.input, /hide a treasury deficit/, task.promptPack);
     assert.match(task.input, /Scholar-official faction/, task.promptPack);
   }
+});
+
+test("turn prompt input includes visible world people bridge without hidden targets", () => {
+  const worldState = createInitialState({ role: "scholar", playerName: "People Prompt Tester" });
+  worldState.turnCount = 1;
+  runActiveNpcRequestStep(worldState, "研读经书");
+
+  const task = buildTurnTask(worldState, "答应塾师请托");
+
+  assert.match(task.input, /worldPeople/);
+  assert.match(task.input, /顾文衡/);
+  assert.match(task.input, /当前请托/);
+  assert.doesNotMatch(task.input, /Eunuch faction/);
+  assert.doesNotMatch(task.input, /Military faction/);
 });
 
 test("turn prompt input includes only visible world thread summaries", () => {

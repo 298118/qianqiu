@@ -157,6 +157,7 @@ test("turn schema rejects model attempts to patch ordinary-turn server-owned fie
     { roleWorldCoupling: { recentImpacts: [{ kind: "provider-forged" }] } },
     { worldGeography: { countries: [{ id: "provider-forged-country", name: "伪地理" }] } },
     { worldEntities: { entities: [{ id: "provider-forged", name: "伪实体" }] } },
+    { worldPeople: { npcs: [{ id: "provider-forged-npc", name: "伪人物" }] } },
     { worldThreads: { threads: [{ id: "provider-forged", title: "伪议题" }] } },
     { characters: [{ id: "C99", name: "Invented official" }] },
     { eventHistory: ["provider tries to replace history"] },

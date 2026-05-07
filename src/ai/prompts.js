@@ -5,6 +5,7 @@ const { summarizeOfficialCareerForPrompt } = require("../game/officialCareer");
 const { summarizeRoleWorldCouplingForPrompt } = require("../game/roleWorldCoupling");
 const { summarizeWorldGeographyForPrompt } = require("../game/worldGeography");
 const { summarizeWorldEntitiesForPrompt } = require("../game/worldEntities");
+const { summarizeWorldPeopleForPrompt } = require("../game/worldPeople");
 const { summarizeWorldThreadsForPrompt } = require("../game/worldThreads");
 const {
   buildPromptInstructions,
@@ -95,6 +96,7 @@ function compactWorldState(worldState = {}) {
     longTermEvents: summarizeLongTermEventsForPrompt(worldState),
     worldGeography: summarizeWorldGeographyForPrompt(worldState),
     worldEntities: summarizeWorldEntitiesForPrompt(worldState),
+    worldPeople: summarizeWorldPeopleForPrompt(worldState),
     worldThreads: summarizeWorldThreadsForPrompt(worldState),
     officialCareer: summarizeOfficialCareerForPrompt(worldState),
     roleWorldCoupling: summarizeRoleWorldCouplingForPrompt(worldState),

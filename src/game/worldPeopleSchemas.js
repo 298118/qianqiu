@@ -603,6 +603,7 @@ function summarizeWorldPeopleSchemaForPrompt(input = {}, worldState = {}) {
       resentment: relationship.resentment,
       obligation: relationship.obligation,
       stance: relationship.stance,
+      recentNotes: relationship.recentNotes,
       publicSummary: relationship.publicSummary
     }))
   };

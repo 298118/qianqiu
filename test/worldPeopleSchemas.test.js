@@ -308,6 +308,7 @@ test("ordinary provider payloads cannot write future world people ledgers direct
   }), /schema validation/);
 
   const worldState = createInitialState({ playerName: "Patch Tester" });
+  const before = JSON.parse(JSON.stringify(worldState.worldPeople));
   applyStatePatch(worldState, {
     worldPeople: {
       npcs: [{ id: "npc-provider", name: "模型新造人物" }]
@@ -317,6 +318,6 @@ test("ordinary provider payloads cannot write future world people ledgers direct
     }
   });
 
-  assert.equal(worldState.worldPeople, undefined);
+  assert.deepEqual(worldState.worldPeople, before);
   assert.equal(worldState.player.reputation, 20);
 });
