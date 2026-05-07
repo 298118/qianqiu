@@ -95,7 +95,7 @@
 | ID | 状态 | 目标 | 完成日期 | 工具 | 提交 |
 | --- | --- | --- | --- | --- | --- |
 | S49.1 | DONE | 形成动态世界数据库总体规划：架构边界、数据域、AI proposal、SQLite 迁移阶段 | 2026-05-07 | Codex + read-only subagent | `e3808df`、`990f7d3` |
-| S49.2 | TODO | 抽象 storage adapter 接口，保持 JSON 为默认实现，补 adapter contract tests |  |  |  |
+| S49.2 | DONE | 抽象 storage adapter 接口，保持 JSON 为默认实现，补 adapter contract tests | 2026-05-07 | Codex + read-only subagents | 待回填 |
 | S49.3 | TODO | 本地 SQLite 原型：一行一 session，保留 JSON `world_state`，以可选 env 开启，不做远程/账号/多人 |  |  |  |
 | S49.4 | TODO | 事件日志与 AI proposal 审计：记录模型建议、服务器接受/拒绝和最终应用事件 |  |  |  |
 | S50.1 | TODO | 静态天下与邻国种子契约：国家、城市、路线、边境、官署辖区和初始可见性 |  |  |  |
@@ -127,6 +127,8 @@
 
 ### S49.2：Storage Adapter
 
+状态：DONE。
+
 目标：
 
 - 定义 `sessionStore` 的 adapter 边界，让路由不直接依赖 JSON 文件细节。
@@ -134,11 +136,29 @@
 - 增加 contract tests：创建、读取、保存、revision 冲突、legacy 归一化、metadata 脱敏、损坏文件跳过和并发写入保护。
 - 不引入 SQLite 依赖，不改变 route payload，不改变存档格式。
 
+完成：
+
+- `src/storage/sessionStore.js` 现在是路由面对的 storage facade，继续导出 `readSession()`、`writeSession()`、`mutateSession()`、`listSessions()`、`readSessionRecord()`、`deleteSession()`、`cleanupSessionTempFiles()` 等既有 API。
+- 原 JSON 文件、envelope、legacy 迁移、atomic temp rename、lock、revision、save-list 和 temp cleanup 实现迁入 `src/storage/jsonSessionAdapter.js`，并由默认 adapter 继续提供。
+- 新增 `test/sessionStoreAdapterContract.test.js`，以 adapter contract 口径覆盖 route-compatible read/write、legacy raw save 迁移、存档簿脱敏与损坏文件跳过、expectedRevision 冲突、并发 `mutateSession`、`skipWrite` 和 `errorAfterWrite` 语义。
+- README、架构文档、产品 brief 和 session storage migration plan 已同步：S49.2 只完成 adapter 边界，SQLite 仍是 S49.3 的可选本地原型，不进入远程/账号/多人范围。
+
 验收：
 
 - Mock 开局、读档、普通回合、考试和存档簿行为不变。
 - `GET /api/game/saves` 仍只返回脱敏 metadata。
 - 完整书生路径不受影响。
+
+验证：
+
+- `node --check src\storage\jsonSessionAdapter.js`
+- `node --check src\storage\sessionStore.js`
+- `node --check test\sessionStoreAdapterContract.test.js`
+- `node --test test\sessionStoreAdapterContract.test.js test\sessionStore.test.js test\gameSavesRoute.test.js`
+- `node --test test\gameTurnTick.test.js test\streamingTurnRoute.test.js test\examSceneTime.test.js test\examProgressRoute.test.js test\gameSavesRoute.test.js test\sessionStoreAdapterContract.test.js test\sessionStore.test.js`
+- `npm run check:docs-governance`
+- `$env:AI_PROVIDER='mock'; npm test`
+- `git diff --check`
 
 ### S49.3：SQLite Session Row 原型
 
@@ -307,3 +327,41 @@
 
 - 本步骤不改运行时代码、不新增依赖、不改变存档格式。
 - 下一步仍是 S49.2 storage adapter；不要直接进入 SQLite 业务表拆分。
+
+### 2026-05-07
+
+工具：Codex；只读探索子代理 Godel；提交前只读复审 Dewey
+
+步骤：S49.2
+
+提交：待回填
+
+完成：
+
+- 抽出 storage adapter 边界：`src/storage/sessionStore.js` 保持为路由使用的 facade；默认 JSON 实现迁入 `src/storage/jsonSessionAdapter.js`。
+- 保持当前 JSON envelope、legacy raw save 迁移、上旬默认、metadata 脱敏、atomic temp rename、同 session 队列、本地 lock、revision 冲突、存档列表和 temp cleanup 行为不变。
+- 新增 `test/sessionStoreAdapterContract.test.js`，用未来 SQLite adapter 也应满足的 contract 覆盖创建/读取、迁移、脱敏、损坏文件跳过、revision 冲突、并发 mutation、`skipWrite` 与 `errorAfterWrite`。
+- 同步 README、架构文档、产品 brief 和 `docs/SESSION_STORAGE_MIGRATION_PLAN.md`，明确 S49.2 只完成 adapter，S49.3 才进入本地 SQLite 原型；不新增依赖，不涉及远程存档、账号、多人或云端数据库。
+- Godel 只读检查了 storage API/route/test 契约，提醒保留 `mutateSession` 的 `skipWrite` 与 `errorAfterWrite` 语义；子代理未编辑文件，未运行 Git 写命令。
+- Dewey 执行提交前只读复审，未发现 P0/P1/P2 blocker；其 P3 文档建议已补充 `docs/SESSION_STORAGE_MIGRATION_PLAN.md` 示例中的 `tenDayPeriod` 字段。复审子代理未编辑文件，未运行 Git 命令。
+
+验证：
+
+- `node --check src\storage\jsonSessionAdapter.js`
+- `node --check src\storage\sessionStore.js`
+- `node --check test\sessionStoreAdapterContract.test.js`
+- `node --test test\sessionStoreAdapterContract.test.js test\sessionStore.test.js test\gameSavesRoute.test.js`，27 项通过
+- `node --test test\gameTurnTick.test.js test\streamingTurnRoute.test.js test\examSceneTime.test.js test\examProgressRoute.test.js test\gameSavesRoute.test.js test\sessionStoreAdapterContract.test.js test\sessionStore.test.js`，43 项通过
+- `npm run check:docs-governance`
+- `$env:AI_PROVIDER='mock'; npm test`，299 项通过
+- `git diff --check`
+
+风险/遗留：
+
+- 本步骤没有新增 SQLite 依赖，也没有引入 `STORAGE_ADAPTER` 环境切换；默认仍是本地 JSON。
+- JSON adapter 的文件锁仍只保证正常本地文件系统上的本机写入协调；S49.3 需要用 SQLite transaction/`revision` 条件更新复用同一 contract。
+- S49.3 做 SQLite 时应把当前 JSON adapter contract tests 抽成可复用 suite，让 JSON 与 SQLite adapter 同跑同一组行为断言。
+
+下一步：
+
+- S49.3：评估并记录本地 SQLite 依赖治理，新增可选 SQLite session row adapter，默认 JSON 路径保持不变。

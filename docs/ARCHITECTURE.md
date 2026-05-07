@@ -8,7 +8,7 @@ Qianqiu is intentionally buildless in phase one:
 
 - Backend: Node.js + Express in `server.js`.
 - Frontend: plain HTML/CSS/JS in `public/`.
-- Storage: local JSON files under `data/sessions/`. The local dynamic database direction is documented in [docs/DYNAMIC_WORLD_DATABASE_PLAN.md](DYNAMIC_WORLD_DATABASE_PLAN.md); JSON remains the default until a storage adapter and local SQLite prototype are implemented. Remote saves, accounts, multiplayer sync, and hosted databases are outside the current scope.
+- Storage: `src/storage/sessionStore.js` is the route-facing storage facade. The default adapter is still local JSON files under `data/sessions/`, implemented by `src/storage/jsonSessionAdapter.js`. The local dynamic database direction is documented in [docs/DYNAMIC_WORLD_DATABASE_PLAN.md](DYNAMIC_WORLD_DATABASE_PLAN.md); SQLite remains a future optional adapter. Remote saves, accounts, multiplayer sync, and hosted databases are outside the current scope.
 - AI: adapter-based providers behind `src/ai/index.js`.
 - Tests: Node.js built-in `node --test`.
 - Browser smoke: `playwright-core` driving an installed Chrome/Edge browser through `scripts/browserSmoke.js`.
@@ -31,7 +31,8 @@ Then visit `http://localhost:3000`. Mock mode is the default local path.
 ```mermaid
 flowchart TD
   Browser["Browser UI: public/app.js"] --> Routes["Express routes"]
-  Routes --> Store["sessionStore JSON files"]
+  Routes --> Store["sessionStore facade"]
+  Store --> JsonAdapter["jsonSessionAdapter: data/sessions/*.json"]
   Routes --> Provider["AI provider adapter"]
   Provider --> Schemas["JSON parse + Ajv schema validation"]
   Routes --> Rules["stateRules / exams / promotions / essayChecks"]
@@ -669,7 +670,7 @@ Virtual candidates now include `essay`, `style`, `examinerComment`, `strengths`,
 
 Session files are written to `data/sessions/{sessionId}.json`. Session ids must match a UUID-like safe pattern before the path is built. `data/sessions/*.json` is ignored by Git; only `data/sessions/.gitkeep` should be committed.
 
-S38.2 implements the JSON storage hardening described in [docs/SESSION_STORAGE_MIGRATION_PLAN.md](SESSION_STORAGE_MIGRATION_PLAN.md). `src/storage/sessionStore.js` now writes a top-level envelope with `storageSchemaVersion`, `sessionId`, timestamps, `revision`, redacted metadata, and nested `worldState`. Legacy raw `worldState` files are treated as schema `0` and are migrated to the envelope on read. Writes use a same-directory per-session lock file, reread the latest disk revision while holding that lock, then use temp-file-and-rename replacement with best-effort fsync; successful writes remove their temp and lock files. Temp cleanup also respects fresh same-session locks, preventing parallel Windows test cleanup from deleting another process's active atomic rename source. Game and exam mutation routes use `mutateSession()` so read-modify-write work for the same session is serialized and revision-checked. The store also exposes `listSessions()`, `deleteSession()`, and `cleanupSessionTempFiles()` for save-list and cleanup behavior. S38.3 adds the browser save-list UI on top of that API without changing the storage backend. SQLite/database migration remains a future adapter step.
+S38.2 implements the JSON storage hardening described in [docs/SESSION_STORAGE_MIGRATION_PLAN.md](SESSION_STORAGE_MIGRATION_PLAN.md). The JSON adapter writes a top-level envelope with `storageSchemaVersion`, `sessionId`, timestamps, `revision`, redacted metadata, and nested `worldState`. Legacy raw `worldState` files are treated as schema `0` and are migrated to the envelope on read. Writes use a same-directory per-session lock file, reread the latest disk revision while holding that lock, then use temp-file-and-rename replacement with best-effort fsync; successful writes remove their temp and lock files. Temp cleanup also respects fresh same-session locks, preventing parallel Windows test cleanup from deleting another process's active atomic rename source. Game and exam mutation routes use the `sessionStore` facade and `mutateSession()` so read-modify-write work for the same session is serialized and revision-checked without route code depending on JSON paths. The default adapter also exposes `listSessions()`, `deleteSession()`, and `cleanupSessionTempFiles()` for save-list and cleanup behavior. S38.3 adds the browser save-list UI on top of that API without changing the storage backend. S49.2 formalizes the JSON implementation as `src/storage/jsonSessionAdapter.js` with adapter contract tests; SQLite/database migration remains a future adapter step.
 
 [docs/DYNAMIC_WORLD_DATABASE_PLAN.md](DYNAMIC_WORLD_DATABASE_PLAN.md) expands that future path: the first database slice should preserve route behavior by storing one local SQLite row per session with metadata, revision, and JSON `world_state`, then add append-only event logs and AI proposal audit rows before selectively splitting countries, neighboring states, cities, NPCs, households, office postings, relationships, scenes, world entities, and world threads into indexed tables. This is a local-only persistence plan, not a remote-save, account, multiplayer, or hosted-database plan. AI must never execute SQL or write raw tables; it can only produce schema-valid proposals that server modules validate and commit.
 
