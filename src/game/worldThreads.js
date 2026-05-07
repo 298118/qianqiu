@@ -1,6 +1,7 @@
 const { buildActiveNpcRequestView } = require("./activeRequests");
 const { buildLongTermEventView } = require("./longTermEvents");
 const { buildOfficialCareerView } = require("./officialCareer");
+const { getBureau, getOffice } = require("./officialCatalog");
 const { buildRoleWorldCouplingView } = require("./roleWorldCoupling");
 
 const WORLD_THREAD_SCHEMA_VERSION = 1;
@@ -43,6 +44,97 @@ const SOURCE_LABELS = {
   faction_pressure: "朝局派系",
   local_case_pressure: "地方案链"
 };
+const FACTION_LABELS = {
+  eunuchs: "内廷宦官",
+  scholarOfficials: "士大夫",
+  militaryLords: "边镇武臣",
+  "Eunuch faction": "内廷宦官",
+  "Scholar-official faction": "士大夫",
+  "Military faction": "边镇武臣"
+};
+const METRIC_LABELS = {
+  treasury: "府库",
+  grainReserve: "粮储",
+  population: "人口",
+  publicOrder: "民心",
+  taxRate: "税率",
+  corruption: "贪腐",
+  armySize: "兵额",
+  armyMorale: "军心",
+  borderThreat: "边患",
+  "player.performanceMerit": "考成",
+  "player.promotionProspect": "升迁",
+  "player.impeachmentRisk": "弹劾",
+  "player.pendingLawsuits": "词讼",
+  "player.banditPressure": "盗匪",
+  "player.gentryRelations": "乡绅",
+  "player.localOrder": "地方民心",
+  "factions.eunuchs": "内廷宦官",
+  "factions.scholarOfficials": "士大夫",
+  "factions.militaryLords": "边镇武臣"
+};
+const THREAD_KIND_DETAILS = {
+  npc_request: {
+    goal: "回应来函，权衡人情、名声与利害。",
+    interventions: ["回信表态", "拜会相关人物", "暂缓也会留下余波"],
+    followUp: "请托成败仍由主动 NPC 请托模块归档。"
+  },
+  seasonal: {
+    goal: "顺着岁时处置钱粮、民生与例行公事。",
+    interventions: ["查问地方报册", "筹粮安民", "观察岁时余波"],
+    followUp: "岁时余波仍由长期事件模块推进。"
+  },
+  disaster: {
+    goal: "压住灾伤，稳住粮储、民心与官场追责。",
+    interventions: ["开仓赈济", "清查赈册", "安抚灾民与士绅"],
+    followUp: "灾务结算仍由长期事件与相关身份规则处理。"
+  },
+  border: {
+    goal: "辨明边报虚实，兼顾军心、饷银与边患。",
+    interventions: ["遣人核边报", "筹饷稳军", "约束虚报军功"],
+    followUp: "边事走向仍由长期事件、世界 tick 或身份联动结算。"
+  },
+  faction_conflict: {
+    goal: "看清章疏、人情与派系牵连，降低朝局反噬。",
+    interventions: ["上疏定调", "拜会关键同僚", "避开未明暗流"],
+    followUp: "派系压力仍由关系、官场和世界状态模块裁决。"
+  },
+  local_case: {
+    goal: "清理案牍与地方压力，避免盗讼、乡绅和民情互相牵连。",
+    interventions: ["审理词讼", "缉捕盗匪", "安抚乡绅与里甲"],
+    followUp: "地方案链仍由地方身份规则与长期事件结算。"
+  },
+  consequence: {
+    goal: "追踪已发生行动的后续牵连。",
+    interventions: ["查问后续", "补救公开影响", "记录可见证据"],
+    followUp: "该议题只提示余波，实际变动仍回到来源系统。"
+  },
+  official_assignment: {
+    goal: "办结差事，留下可用于考成的公开札记。",
+    interventions: ["按差事名目行动", "向上官回禀进度", "先查账册或案卷"],
+    followUp: "差事完成、失败和考成仍由官场模块结算。"
+  },
+  official_outcome: {
+    goal: "观察任免升降后的官场余波与履历影响。",
+    interventions: ["经营同年上官", "谨守清操", "顺势整理履历"],
+    followUp: "官职、处分和履历仍由官场模块拥有。"
+  },
+  role_impact: {
+    goal: "追踪本次身份行动转入世界状态后的余波。",
+    interventions: ["继续沿身份职责推进", "观察相关指标", "用下一回合补救偏差"],
+    followUp: "身份联动效果仍由 role/world coupling 模块结算。"
+  }
+};
+const SOURCE_INTERVENTION_HINTS = {
+  active_npc_request: ["回应或拒绝请托"],
+  long_term_event: ["围绕大势连续行动"],
+  official_assignment: ["把行动写成差事办理"],
+  official_outcome: ["关注官场余波"],
+  role_world_coupling: ["顺着身份职责补一回合"],
+  frontier_report: ["查边报与军饷"],
+  faction_pressure: ["谨慎处理章疏和人情"],
+  local_case_pressure: ["先断案或安民"]
+};
 
 function isPlainObject(value) {
   return value !== null && typeof value === "object" && !Array.isArray(value);
@@ -80,6 +172,18 @@ function normalizeIdList(value, limit = 6) {
     .map((entry) => cleanText(entry, "", 80))
     .filter(Boolean)
     .slice(0, limit);
+}
+
+function uniqueList(values, limit = 8) {
+  const result = [];
+  const seen = new Set();
+  values.forEach((value) => {
+    const text = cleanText(value, "", 80);
+    if (!text || seen.has(text)) return;
+    seen.add(text);
+    result.push(text);
+  });
+  return result.slice(0, limit);
 }
 
 function normalizeRelated(raw) {
@@ -279,6 +383,66 @@ function severityFromRisk(risk, publicStake) {
   if (riskScore >= 75) return 3;
   if (riskScore >= 45) return 2;
   return 1;
+}
+
+function buildRiskInfo(severity) {
+  if (severity >= 3) return { riskLabel: "急重", riskTone: "high" };
+  if (severity >= 2) return { riskLabel: "有牵连", riskTone: "medium" };
+  return { riskLabel: "可观察", riskTone: "low" };
+}
+
+function buildDeadlineLabel(thread, worldState = {}) {
+  if (thread.dueTurn !== null && thread.dueTurn !== undefined) {
+    const remainingTurns = Math.max(0, thread.dueTurn - currentTurn(worldState));
+    if (remainingTurns === 0) return `第${thread.dueTurn}回，当回须办`;
+    return `第${thread.dueTurn}回，尚余${remainingTurns}回`;
+  }
+  if (thread.remainingMonths !== null && thread.remainingMonths !== undefined) {
+    if (thread.remainingMonths === 0) return "本月见分晓";
+    return `约余${thread.remainingMonths}月`;
+  }
+  return "无明期，随大势观察";
+}
+
+function labelCharacter(id, worldState = {}) {
+  const character = Array.isArray(worldState.characters)
+    ? worldState.characters.find((entry) => entry?.id === id)
+    : null;
+  return character?.name || id;
+}
+
+function labelOffice(id) {
+  const bureau = getBureau(id);
+  if (bureau) return bureau.name;
+  const office = getOffice(id);
+  if (office) return office.title;
+  return id;
+}
+
+function buildRelatedLabels(related = {}, worldState = {}) {
+  const characters = uniqueList((related.characters || []).map((id) => labelCharacter(id, worldState)), 6);
+  const factions = uniqueList((related.factions || []).map((id) => FACTION_LABELS[id] || id), 6);
+  const offices = uniqueList((related.offices || []).map((id) => labelOffice(id)), 6);
+  const metrics = uniqueList((related.metrics || []).map((id) => METRIC_LABELS[id] || id), 8);
+  const summary = uniqueList([...characters, ...factions, ...offices, ...metrics], 8);
+  return { characters, factions, offices, metrics, summary };
+}
+
+function buildInterventionHints(thread) {
+  const kindDetails = THREAD_KIND_DETAILS[thread.kind] || THREAD_KIND_DETAILS.consequence;
+  const sourceHints = SOURCE_INTERVENTION_HINTS[thread.sourceType] || [];
+  return uniqueList([...kindDetails.interventions, ...sourceHints], 4);
+}
+
+function buildFollowUpHint(thread) {
+  const kindDetails = THREAD_KIND_DETAILS[thread.kind] || THREAD_KIND_DETAILS.consequence;
+  if (thread.status === "watch") {
+    return `已转入观察：${kindDetails.followUp}`;
+  }
+  if (thread.dueTurn !== null && thread.dueTurn !== undefined) {
+    return `临近期限时，${kindDetails.followUp}`;
+  }
+  return kindDetails.followUp;
 }
 
 function deriveActiveRequestThread(worldState) {
@@ -537,6 +701,8 @@ function ensureWorldThreadState(worldState) {
 }
 
 function viewThread(thread, worldState = {}) {
+  const kindDetails = THREAD_KIND_DETAILS[thread.kind] || THREAD_KIND_DETAILS.consequence;
+  const risk = buildRiskInfo(thread.severity);
   return {
     id: thread.id,
     status: thread.status,
@@ -551,10 +717,17 @@ function viewThread(thread, worldState = {}) {
     lastUpdatedTurn: thread.lastUpdatedTurn,
     dueTurn: thread.dueTurn,
     turnsRemaining: thread.dueTurn === null ? null : Math.max(0, thread.dueTurn - currentTurn(worldState)),
+    deadlineLabel: buildDeadlineLabel(thread, worldState),
     startedYear: thread.startedYear,
     startedMonth: thread.startedMonth,
     remainingMonths: thread.remainingMonths,
-    related: thread.related
+    goal: kindDetails.goal,
+    riskLabel: risk.riskLabel,
+    riskTone: risk.riskTone,
+    related: thread.related,
+    relatedLabels: buildRelatedLabels(thread.related, worldState),
+    interventionHints: buildInterventionHints(thread),
+    followUpHint: buildFollowUpHint(thread)
   };
 }
 
@@ -587,9 +760,15 @@ function summarizeWorldThreadsForPrompt(worldState = {}) {
       title: thread.title,
       summary: thread.summary,
       severity: thread.severity,
+      riskLabel: thread.riskLabel,
       dueTurn: thread.dueTurn,
+      deadlineLabel: thread.deadlineLabel,
       remainingMonths: thread.remainingMonths,
-      related: thread.related
+      goal: thread.goal,
+      related: thread.related,
+      relatedLabels: thread.relatedLabels,
+      interventionHints: thread.interventionHints,
+      followUpHint: thread.followUpHint
     })),
     recentResolved: view.recentResolved.slice(-3)
   };

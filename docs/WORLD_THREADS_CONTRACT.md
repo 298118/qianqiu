@@ -73,10 +73,33 @@ worldState.worldThreads = {
 }
 ```
 
-`worldThreadView.activeThreads[]` 暴露 `id/status/kind/sourceType/sourceId/sourceLabel/title/summary/severity/createdTurn/lastUpdatedTurn/dueTurn/turnsRemaining/startedYear/startedMonth/remainingMonths/related`。
+`worldThreadView.activeThreads[]` 暴露：
+
+- 来源与排序字段：`id/status/kind/sourceType/sourceId/sourceLabel/title/summary/severity/createdTurn/lastUpdatedTurn/dueTurn/turnsRemaining/startedYear/startedMonth/remainingMonths/related`。
+- S43.2 派生展示字段：`goal`、`deadlineLabel`、`riskLabel`、`riskTone`、`relatedLabels`、`interventionHints`、`followUpHint`。
+
+这些 S43.2 字段全部由服务器按 `kind/sourceType/severity/dueTurn/remainingMonths/related` 和公开世界状态派生，不进入 provider patch 白名单，也不代表新的裁决权。`interventionHints` 只提示玩家可用自由文本介入方向；`followUpHint` 只说明来源系统如何继续结算。
 
 `src/ai/prompts.js` 的 `compactWorldState()` 会把 `summarizeWorldThreadsForPrompt(worldState)` 放入 `worldThreads`，供 prompt pack 读取当前议题。该摘要不包含隐藏 thread、隐藏关系、官场 `hiddenNotes` 或 provider 配置。
 
-## S43.1 范围与后续
+## 浏览器检查视图
 
-S43.1 只建立服务器拥有的议题聚合层和 API/prompt 可见摘要。S43.2 再在前端实现“世界议程”检查视图，并扩展目标、期限、玩家介入点和后续结算。
+S43.2 在浏览器角色面板内新增 `#world-thread-panel`。该面板只读取 `worldThreadView`，不读取 `worldState.worldThreads` 原始 ledger，避免 legacy hidden row 或隐藏札记绕过服务器 view 过滤。
+
+稳定选择器：
+
+- `#world-thread-panel[data-generated-turn][data-active-count][data-watch-count]`
+- `.world-thread-card[data-thread-id][data-source-type][data-thread-kind][data-status][data-severity][data-risk]`
+- `.world-thread-goal`
+- `.world-thread-deadline`
+- `.world-thread-risk`
+- `.world-thread-related`
+- `.world-thread-hint`
+- `.world-thread-followup`
+- `.world-thread-resolved-item`
+
+浏览器面板与 prompt 摘要共享同一可见字段；隐藏关系、隐藏 thread、官场 `hiddenNotes`、provider 配置和 `.env` 不得进入面板。
+
+## S43 范围与后续
+
+S43.1 建立服务器拥有的议题聚合层和 API/prompt 可见摘要。S43.2 已实现浏览器“世界议程”检查视图，并扩展目标、期限、玩家介入点和后续结算提示。后续仍可继续完善多来源合并、阶段化目标和更具体的归档 outcome，但必须保持来源系统拥有实际结算权。

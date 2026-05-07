@@ -9,6 +9,7 @@ const {
   getGameLayoutFailures,
   getHiddenActiveRequestLeaks,
   getHiddenOfficialCareerTextLeaks,
+  getHiddenWorldThreadTextLeaks,
   getHiddenSaveIdLeaks,
   getMissingExamLevels,
   getHiddenRelationshipLeaks,
@@ -21,6 +22,9 @@ const {
   getMissingRelationshipEntries,
   getMissingSaveIds,
   getMissingStartRoles,
+  getMissingWorldThreadKinds,
+  getMissingWorldThreadSourceTypes,
+  getWorldThreadPanelFailures,
   normalizeBaseUrl,
   parseBrowserSmokeArgs,
   rectsOverlap,
@@ -51,6 +55,9 @@ function createLayoutMetrics(overrides = {}) {
     officialCareerClientWidth: 1180,
     officialCareerScrollWidth: 1180,
     officialCareerWidth: 1180,
+    worldThreadClientWidth: 1180,
+    worldThreadScrollWidth: 1180,
+    worldThreadWidth: 1180,
     examCalendarClientWidth: 1180,
     examCalendarScrollWidth: 1180,
     examCalendarWidth: 1180,
@@ -238,6 +245,54 @@ test("browser smoke active request helpers catch missing and hidden targets", ()
   assert.deepEqual(getHiddenActiveRequestLeaks(["C01"], ["eunuchs"]), []);
 });
 
+test("browser smoke world thread helpers catch missing fields and hidden text", () => {
+  assert.deepEqual(getMissingWorldThreadKinds(["npc_request"], ["npc_request"]), []);
+  assert.deepEqual(getMissingWorldThreadKinds(["npc_request"], ["npc_request", "official_assignment"]), [
+    "official_assignment"
+  ]);
+  assert.deepEqual(getMissingWorldThreadSourceTypes(["active_npc_request"], ["active_npc_request"]), []);
+  assert.deepEqual(
+    getMissingWorldThreadSourceTypes(["active_npc_request"], ["active_npc_request", "official_assignment"]),
+    ["official_assignment"]
+  );
+  assert.deepEqual(
+    getHiddenWorldThreadTextLeaks("世界议程 Hidden Palace Thread", ["Hidden Palace Thread", "sealed palace dossier"]),
+    ["Hidden Palace Thread"]
+  );
+
+  const failures = getWorldThreadPanelFailures(
+    {
+      cardCount: 1,
+      kinds: ["npc_request"],
+      sourceTypes: ["active_npc_request"],
+      statuses: ["active"],
+      risks: [""],
+      goalCount: 1,
+      deadlineCount: 0,
+      riskCount: 1,
+      relatedCount: 1,
+      hintCount: 1,
+      followUpCount: 1,
+      text: "世界议程 Hidden Palace Thread"
+    },
+    {
+      expectActive: true,
+      expectedKinds: ["official_assignment"],
+      expectedSourceTypes: ["official_assignment"],
+      expectedStatuses: ["watch"],
+      hiddenTextTokens: ["Hidden Palace Thread"]
+    },
+    "world thread fixture"
+  );
+
+  assert.match(failures.join("\n"), /missing thread kinds: official_assignment/);
+  assert.match(failures.join("\n"), /missing source types: official_assignment/);
+  assert.match(failures.join("\n"), /missing allowed statuses: watch/);
+  assert.match(failures.join("\n"), /has 0 deadlines for 1 thread cards/);
+  assert.match(failures.join("\n"), /without data-risk/);
+  assert.match(failures.join("\n"), /leaked hidden text tokens: Hidden Palace Thread/);
+});
+
 test("browser smoke save-list helpers catch missing and hidden save ids", () => {
   assert.deepEqual(getMissingSaveIds(["save-a", "save-b"], ["save-a"]), []);
   assert.deepEqual(getMissingSaveIds(["save-a"], ["save-a", "save-b", "save-c"]), ["save-b", "save-c"]);
@@ -401,6 +456,19 @@ test("browser smoke game layout helper catches official career panel overflow", 
   );
 
   assert.match(failures.join("\n"), /official career panel has horizontal scroll overflow/);
+});
+
+test("browser smoke game layout helper catches world thread panel overflow", () => {
+  const failures = getGameLayoutFailures(
+    createLayoutMetrics({
+      worldThreadClientWidth: 500,
+      worldThreadScrollWidth: 640,
+      worldThreadWidth: 500
+    }),
+    "desktop"
+  );
+
+  assert.match(failures.join("\n"), /world thread panel has horizontal scroll overflow/);
 });
 
 test("browser smoke game layout helper catches exam calendar and rival panel overflow", () => {

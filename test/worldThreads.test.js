@@ -150,11 +150,24 @@ test("world threads unify active requests, long events, official assignments, an
   assert.equal(sourceTypes.has("long_term_event"), true);
   assert.equal(sourceTypes.has("official_assignment"), true);
   assert.equal(sourceTypes.has("role_world_coupling"), true);
-  assert.ok(view.activeThreads.some((thread) => thread.title === "赈银核销" && thread.severity === 2));
+  const reliefThread = view.activeThreads.find((thread) => thread.title === "赈银核销");
+  assert.ok(reliefThread);
+  assert.equal(reliefThread.severity, 2);
+  assert.equal(reliefThread.riskLabel, "有牵连");
+  assert.equal(reliefThread.deadlineLabel, "第11回，尚余3回");
+  assert.match(reliefThread.goal, /办结差事/);
+  assert.ok(reliefThread.relatedLabels.offices.includes("户部"));
+  assert.ok(reliefThread.relatedLabels.metrics.includes("考成"));
+  assert.ok(reliefThread.interventionHints.some((hint) => hint.includes("差事")));
+  assert.match(reliefThread.followUpHint, /官场模块/);
   assert.equal(JSON.stringify(view).includes("暗中有人遮掩亏空"), false);
 
   const promptSummary = summarizeWorldThreadsForPrompt(worldState);
-  assert.ok(promptSummary.activeThreads.some((thread) => thread.title === "边报连至"));
+  const promptBorderThread = promptSummary.activeThreads.find((thread) => thread.title === "边报连至");
+  assert.ok(promptBorderThread);
+  assert.match(promptBorderThread.goal, /边报/);
+  assert.ok(promptBorderThread.interventionHints.length);
+  assert.ok(promptBorderThread.relatedLabels.factions.includes("边镇武臣"));
   assert.equal(JSON.stringify(promptSummary).includes("暗中有人遮掩亏空"), false);
 });
 

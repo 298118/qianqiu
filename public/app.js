@@ -38,6 +38,7 @@ let currentRelationshipView = null;
 let currentActiveNpcRequestView = null;
 let currentLongTermEventView = null;
 let currentOfficialCareerView = null;
+let currentWorldThreadView = null;
 let currentExamCalendarView = null;
 let currentExamRivalView = null;
 let currentExamPayload = null;
@@ -196,6 +197,25 @@ const ACTIVE_REQUEST_KIND_LABELS = {
   favor: "人情",
   backing: "背书",
   repayment: "回报"
+};
+
+const WORLD_THREAD_STATUS_LABELS = {
+  active: "在办",
+  watch: "余波",
+  resolved: "归档"
+};
+
+const WORLD_THREAD_KIND_LABELS = {
+  npc_request: "请托",
+  seasonal: "岁时",
+  disaster: "灾务",
+  border: "边事",
+  faction_conflict: "党争",
+  local_case: "案链",
+  consequence: "余波",
+  official_assignment: "差事",
+  official_outcome: "官场",
+  role_impact: "联动"
 };
 
 const OFFICIAL_OUTCOME_LABELS = {
@@ -433,7 +453,7 @@ async function loadSaveSession(sessionId, options = {}) {
     const payload = await response.json();
     currentSessionId = payload.sessionId;
     localStorage.setItem("qianqiu.sessionId", payload.sessionId);
-    renderWorldState(payload.worldState, payload.relationshipView, payload.activeNpcRequestView, payload.longTermEventView, payload.officialCareerView, payload.examCalendarView, payload.examRivalView);
+    renderWorldState(payload.worldState, payload.relationshipView, payload.activeNpcRequestView, payload.longTermEventView, payload.officialCareerView, payload.examCalendarView, payload.examRivalView, payload.worldThreadView);
     narrative.innerHTML = "";
     const history = payload.worldState.eventHistory || [];
     if (history.length) {
@@ -582,6 +602,18 @@ function getActiveNpcRequestView(activeNpcRequestView) {
     return activeNpcRequestView;
   }
   return null;
+}
+
+function getWorldThreadView(worldState, worldThreadView) {
+  if (worldThreadView && typeof worldThreadView === "object" && Array.isArray(worldThreadView.activeThreads)) {
+    return worldThreadView;
+  }
+  return {
+    schemaVersion: 1,
+    generatedAtTurn: worldState?.turnCount || 0,
+    activeThreads: [],
+    recentResolved: []
+  };
 }
 
 function getOfficialCareerView(worldState, officialCareerView) {
@@ -883,6 +915,141 @@ function renderActiveNpcRequestPanel(activeNpcRequestView = currentActiveNpcRequ
   );
 
   panel.append(header, card);
+  return panel;
+}
+
+function formatWorldThreadDeadline(thread) {
+  if (thread.deadlineLabel) return thread.deadlineLabel;
+  if (thread.dueTurn !== null && thread.dueTurn !== undefined) {
+    return thread.turnsRemaining === null || thread.turnsRemaining === undefined
+      ? `第${thread.dueTurn}回`
+      : `第${thread.dueTurn}回 · 尚余${thread.turnsRemaining}回`;
+  }
+  if (thread.remainingMonths !== null && thread.remainingMonths !== undefined) {
+    return thread.remainingMonths === 0 ? "本月见分晓" : `约余${thread.remainingMonths}月`;
+  }
+  return "持续观察";
+}
+
+function formatWorldThreadRelated(thread) {
+  const labels = thread.relatedLabels?.summary || [
+    ...(thread.relatedLabels?.characters || []),
+    ...(thread.relatedLabels?.factions || []),
+    ...(thread.relatedLabels?.offices || []),
+    ...(thread.relatedLabels?.metrics || [])
+  ];
+  if (labels.length) return labels.join("、");
+  const related = thread.related || {};
+  return [
+    ...(related.characters || []),
+    ...(related.factions || []).map((id) => CONTACT_NAME_LABELS[id] || id),
+    ...(related.offices || []),
+    ...(related.metrics || []).map((id) => ATTRIBUTE_LABELS[id.split(".").pop()] || id)
+  ].filter(Boolean).slice(0, 8).join("、") || "暂无可见牵连";
+}
+
+function renderWorldThreadCard(thread) {
+  const card = document.createElement("article");
+  card.className = "world-thread-card";
+  card.dataset.threadId = thread.id || "";
+  card.dataset.sourceType = thread.sourceType || "";
+  card.dataset.threadKind = thread.kind || "";
+  card.dataset.status = thread.status || "";
+  card.dataset.severity = String(thread.severity ?? "");
+  card.dataset.risk = thread.riskTone || "";
+  card.dataset.dueTurn = String(thread.dueTurn ?? "");
+
+  const header = document.createElement("header");
+  const title = document.createElement("strong");
+  title.textContent = thread.title || "未名议题";
+  const meta = document.createElement("span");
+  meta.textContent = [
+    WORLD_THREAD_KIND_LABELS[thread.kind] || thread.kind,
+    WORLD_THREAD_STATUS_LABELS[thread.status] || thread.status,
+    thread.sourceLabel
+  ].filter(Boolean).join(" · ");
+  header.append(title, meta);
+
+  const summary = document.createElement("p");
+  summary.className = "world-thread-summary";
+  summary.textContent = thread.summary || "尚无摘要。";
+
+  const goal = createActiveRequestMeta("目标", thread.goal || thread.summary || "追踪后续牵连。", "world-thread-goal");
+  const deadline = createActiveRequestMeta("期限", formatWorldThreadDeadline(thread), "world-thread-deadline");
+  const risk = createActiveRequestMeta("风险", `${thread.riskLabel || "可观察"} · ${thread.severity ?? 1}`, "world-thread-risk");
+  const related = createActiveRequestMeta("牵连", formatWorldThreadRelated(thread), "world-thread-related");
+  const hints = createActiveRequestMeta("介入", (thread.interventionHints || []).join("、") || "以自由行动处置", "world-thread-hint");
+  const followUp = createActiveRequestMeta("后续", thread.followUpHint || "仍由来源系统结算", "world-thread-followup");
+
+  card.append(header, summary, goal, deadline, risk, related, hints, followUp);
+  return card;
+}
+
+function renderWorldThreadResolved(recentResolved = []) {
+  const section = document.createElement("section");
+  section.className = "world-thread-resolved";
+  const header = document.createElement("header");
+  const title = document.createElement("strong");
+  title.textContent = "近归档";
+  const summary = document.createElement("span");
+  summary.textContent = `${recentResolved.length}件`;
+  header.append(title, summary);
+  section.appendChild(header);
+
+  if (!recentResolved.length) {
+    const empty = document.createElement("p");
+    empty.className = "world-thread-empty";
+    empty.textContent = "暂无归档议题。";
+    section.appendChild(empty);
+    return section;
+  }
+
+  recentResolved.slice().reverse().forEach((thread) => {
+    const item = document.createElement("p");
+    item.className = "world-thread-resolved-item";
+    item.dataset.threadId = thread.id || "";
+    item.dataset.sourceType = thread.sourceType || "";
+    item.textContent = `${thread.title || "旧议题"}：${thread.outcome || "暂归档"}（第${thread.resolvedTurn ?? "-"}回）`;
+    section.appendChild(item);
+  });
+  return section;
+}
+
+function renderWorldThreadPanel(worldThreadView = currentWorldThreadView) {
+  const activeThreads = Array.isArray(worldThreadView?.activeThreads) ? worldThreadView.activeThreads : [];
+  const recentResolved = Array.isArray(worldThreadView?.recentResolved) ? worldThreadView.recentResolved : [];
+
+  const panel = document.createElement("section");
+  panel.id = "world-thread-panel";
+  panel.className = "world-thread-panel";
+  panel.dataset.generatedTurn = String(worldThreadView?.generatedAtTurn ?? currentWorldState?.turnCount ?? 0);
+  panel.dataset.activeCount = String(activeThreads.length);
+  panel.dataset.watchCount = String(activeThreads.filter((thread) => thread.status === "watch").length);
+
+  const header = document.createElement("header");
+  const title = document.createElement("strong");
+  title.textContent = "世界议程";
+  const summary = document.createElement("span");
+  summary.textContent = activeThreads.length
+    ? `${activeThreads.length}件可追踪议题`
+    : "暂无可查议程";
+  header.append(title, summary);
+  panel.appendChild(header);
+
+  if (!activeThreads.length) {
+    const empty = document.createElement("p");
+    empty.className = "world-thread-empty";
+    empty.textContent = "当前暂无需要盯住的跨月议题；后续请托、差事、大势或身份联动会汇入此处。";
+    panel.append(empty, renderWorldThreadResolved(recentResolved));
+    return panel;
+  }
+
+  const grid = document.createElement("div");
+  grid.className = "world-thread-grid";
+  activeThreads.slice(0, 5).forEach((thread) => {
+    grid.appendChild(renderWorldThreadCard(thread));
+  });
+  panel.append(grid, renderWorldThreadResolved(recentResolved));
   return panel;
 }
 
@@ -1364,6 +1531,7 @@ function renderRolePanel(worldState) {
 
   scholarPanel.append(overview, renderActionHints(player.role), stats, lists);
   appendOptionalPanel(renderOfficialCareerPanel());
+  appendOptionalPanel(renderWorldThreadPanel());
   scholarPanel.appendChild(renderRelationshipPanel());
   appendOptionalPanel(renderExamRivalPanel());
   appendOptionalPanel(renderActiveNpcRequestPanel());
@@ -1444,12 +1612,13 @@ function renderScholarPanel(worldState) {
 
   scholarPanel.append(progressBlock);
   appendOptionalPanel(renderExamCalendarPanel());
+  appendOptionalPanel(renderWorldThreadPanel());
   scholarPanel.append(stepList, stats, lists, renderRelationshipPanel());
   appendOptionalPanel(renderExamRivalPanel());
   appendOptionalPanel(renderActiveNpcRequestPanel());
 }
 
-function renderWorldState(worldState, relationshipView, activeNpcRequestView, longTermEventView, officialCareerView, examCalendarView, examRivalView) {
+function renderWorldState(worldState, relationshipView, activeNpcRequestView, longTermEventView, officialCareerView, examCalendarView, examRivalView, worldThreadView) {
   currentWorldState = worldState;
   currentRelationshipView = getRelationshipView(worldState, relationshipView);
   currentActiveNpcRequestView = getActiveNpcRequestView(activeNpcRequestView);
@@ -1457,6 +1626,7 @@ function renderWorldState(worldState, relationshipView, activeNpcRequestView, lo
   currentOfficialCareerView = getOfficialCareerView(worldState, officialCareerView);
   currentExamCalendarView = getExamCalendarView(worldState, examCalendarView);
   currentExamRivalView = getExamRivalView(worldState, examRivalView);
+  currentWorldThreadView = getWorldThreadView(worldState, worldThreadView);
   setStatus(worldState);
   renderScholarPanel(worldState);
   actionInput.placeholder = ACTION_PLACEHOLDERS[worldState.player.role] || "输入你的行动";
@@ -2126,7 +2296,7 @@ async function openExamQuestion(level) {
     }
 
     const payload = await response.json();
-    renderWorldState(payload.worldState, payload.relationshipView, payload.activeNpcRequestView, payload.longTermEventView, payload.officialCareerView, payload.examCalendarView, payload.examRivalView);
+    renderWorldState(payload.worldState, payload.relationshipView, payload.activeNpcRequestView, payload.longTermEventView, payload.officialCareerView, payload.examCalendarView, payload.examRivalView, payload.worldThreadView);
     renderExamModal(payload);
   } catch (error) {
     appendNarrative(error.message, "error");
@@ -2164,7 +2334,7 @@ async function submitExamEssay() {
     }
 
     const payload = await response.json();
-    renderWorldState(payload.worldState, payload.relationshipView, payload.activeNpcRequestView, payload.longTermEventView, payload.officialCareerView, payload.examCalendarView, payload.examRivalView);
+    renderWorldState(payload.worldState, payload.relationshipView, payload.activeNpcRequestView, payload.longTermEventView, payload.officialCareerView, payload.examCalendarView, payload.examRivalView, payload.worldThreadView);
     renderExamResult(payload);
     appendNarrative(
       `[放榜] ${payload.examName}得${payload.score.overall_score}分，${describePromotionOutcome(payload.promotionResult)}。`,
@@ -2264,7 +2434,7 @@ async function handleTurnPayload(payload) {
   appendWorldTickFeedback(payload.worldTick);
   appendLongTermEventFeedback(payload.longTermEvents);
   appendOfficialCareerFeedback(payload.officialCareer);
-  renderWorldState(payload.worldState, payload.relationshipView, payload.activeNpcRequestView, payload.longTermEventView, payload.officialCareerView, payload.examCalendarView, payload.examRivalView);
+  renderWorldState(payload.worldState, payload.relationshipView, payload.activeNpcRequestView, payload.longTermEventView, payload.officialCareerView, payload.examCalendarView, payload.examRivalView, payload.worldThreadView);
   actionInput.value = "";
 
   if (payload.examTrigger && payload.examTrigger.shouldStart) {
@@ -2401,7 +2571,7 @@ form.addEventListener("submit", async (event) => {
     const payload = await response.json();
     currentSessionId = payload.sessionId;
     localStorage.setItem("qianqiu.sessionId", payload.sessionId);
-    renderWorldState(payload.worldState, payload.relationshipView, payload.activeNpcRequestView, payload.longTermEventView, payload.officialCareerView, payload.examCalendarView, payload.examRivalView);
+    renderWorldState(payload.worldState, payload.relationshipView, payload.activeNpcRequestView, payload.longTermEventView, payload.officialCareerView, payload.examCalendarView, payload.examRivalView, payload.worldThreadView);
     narrative.innerHTML = "";
     appendNarrative(payload.narrative);
     showGameView();

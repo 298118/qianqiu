@@ -69,6 +69,7 @@ const roleWorldAcceptanceCases = Object.freeze([
     playerName: "Browser Magistrate",
     action: "兴修水利",
     expectedKind: "magistrate_waterworks",
+    expectedThreadKind: "local_case",
     metricPath: "publicOrder",
     direction: "increase"
   },
@@ -77,6 +78,7 @@ const roleWorldAcceptanceCases = Object.freeze([
     playerName: "Browser General",
     action: "率营出战",
     expectedKind: "general_campaign",
+    expectedThreadKind: "border",
     metricPath: "borderThreat",
     direction: "decrease"
   },
@@ -85,6 +87,7 @@ const roleWorldAcceptanceCases = Object.freeze([
     playerName: "Browser Emperor",
     action: "任免官员整饬吏治",
     expectedKind: "emperor_appointments",
+    expectedThreadKind: "faction_conflict",
     metricPath: "corruption",
     direction: "decrease"
   },
@@ -93,6 +96,7 @@ const roleWorldAcceptanceCases = Object.freeze([
     playerName: "Browser Minister",
     action: "弹劾贪墨官员",
     expectedKind: "minister_impeachment",
+    expectedThreadKind: "faction_conflict",
     metricPath: "corruption",
     direction: "decrease"
   }
@@ -473,6 +477,12 @@ function getGameLayoutFailures(metrics, mode = "game") {
     );
   }
 
+  if (metrics.worldThreadClientWidth > 0 && metrics.worldThreadScrollWidth > metrics.worldThreadClientWidth + horizontalClipTolerance) {
+    failures.push(
+      `${mode} world thread panel has horizontal scroll overflow (${roundMetric(metrics.worldThreadScrollWidth)}px > ${roundMetric(metrics.worldThreadClientWidth)}px).`
+    );
+  }
+
   if (metrics.examCalendarClientWidth > 0 && metrics.examCalendarScrollWidth > metrics.examCalendarClientWidth + horizontalClipTolerance) {
     failures.push(
       `${mode} exam calendar panel has horizontal scroll overflow (${roundMetric(metrics.examCalendarScrollWidth)}px > ${roundMetric(metrics.examCalendarClientWidth)}px).`
@@ -528,6 +538,7 @@ async function readGameLayoutMetrics(page) {
     const relationship = box("#relationship-panel");
     const activeRequest = box("#active-request-panel");
     const officialCareer = box("#official-career-panel");
+    const worldThread = box("#world-thread-panel");
     const examCalendar = box("#exam-calendar-panel");
     const examRival = box("#exam-rival-panel");
     const saveListPanel = box("#save-list-panel");
@@ -555,6 +566,9 @@ async function readGameLayoutMetrics(page) {
       officialCareerClientWidth: officialCareer?.clientWidth || 0,
       officialCareerScrollWidth: officialCareer?.scrollWidth || 0,
       officialCareerWidth: officialCareer?.width || 0,
+      worldThreadClientWidth: worldThread?.clientWidth || 0,
+      worldThreadScrollWidth: worldThread?.scrollWidth || 0,
+      worldThreadWidth: worldThread?.width || 0,
       examCalendarClientWidth: examCalendar?.clientWidth || 0,
       examCalendarScrollWidth: examCalendar?.scrollWidth || 0,
       examCalendarWidth: examCalendar?.width || 0,
@@ -734,6 +748,74 @@ function getOfficialCareerPanelFailures(snapshot = {}, expectations = {}, mode =
     (snapshot.reasonCount < snapshot.outcomeIds.length || snapshot.postingCount < snapshot.outcomeIds.length)
   ) {
     failures.push(`${mode} official career panel has incomplete outcome fields.`);
+  }
+
+  return failures;
+}
+
+function getMissingWorldThreadKinds(actualKinds = [], expectedKinds = []) {
+  const available = new Set(actualKinds.filter(Boolean));
+  return expectedKinds.filter((kind) => !available.has(kind));
+}
+
+function getMissingWorldThreadSourceTypes(actualSourceTypes = [], expectedSourceTypes = []) {
+  const available = new Set(actualSourceTypes.filter(Boolean));
+  return expectedSourceTypes.filter((sourceType) => !available.has(sourceType));
+}
+
+function getHiddenWorldThreadTextLeaks(text = "", hiddenTextTokens = []) {
+  return hiddenTextTokens.filter((token) => token && String(text).includes(token));
+}
+
+function getWorldThreadPanelFailures(snapshot = {}, expectations = {}, mode = "world thread") {
+  const failures = [];
+  const cards = Number(snapshot.cardCount) || 0;
+
+  if (expectations.expectActive && cards <= 0) {
+    failures.push(`${mode} world thread panel did not render any active thread cards.`);
+  }
+
+  const missingKinds = getMissingWorldThreadKinds(snapshot.kinds, expectations.expectedKinds || []);
+  if (missingKinds.length) {
+    failures.push(`${mode} world thread panel is missing thread kinds: ${missingKinds.join(", ")}.`);
+  }
+
+  const missingSourceTypes = getMissingWorldThreadSourceTypes(snapshot.sourceTypes, expectations.expectedSourceTypes || []);
+  if (missingSourceTypes.length) {
+    failures.push(`${mode} world thread panel is missing source types: ${missingSourceTypes.join(", ")}.`);
+  }
+
+  if (expectations.expectedStatuses?.length) {
+    const availableStatuses = new Set(snapshot.statuses || []);
+    const hasExpectedStatus = expectations.expectedStatuses.some((status) => availableStatuses.has(status));
+    if (!hasExpectedStatus) {
+      failures.push(`${mode} world thread panel is missing allowed statuses: ${expectations.expectedStatuses.join(", ")}.`);
+    }
+  }
+
+  if (cards > 0) {
+    const fieldChecks = [
+      ["goals", snapshot.goalCount],
+      ["deadlines", snapshot.deadlineCount],
+      ["risk labels", snapshot.riskCount],
+      ["related labels", snapshot.relatedCount],
+      ["intervention hints", snapshot.hintCount],
+      ["follow-up hints", snapshot.followUpCount]
+    ];
+    for (const [label, count] of fieldChecks) {
+      if (count < cards) {
+        failures.push(`${mode} world thread panel has ${count} ${label} for ${cards} thread cards.`);
+      }
+    }
+    const missingRiskData = (snapshot.risks || []).filter((risk) => !risk).length;
+    if (missingRiskData) {
+      failures.push(`${mode} world thread panel has ${missingRiskData} thread cards without data-risk.`);
+    }
+  }
+
+  const hiddenLeaks = getHiddenWorldThreadTextLeaks(snapshot.text, expectations.hiddenTextTokens || []);
+  if (hiddenLeaks.length) {
+    failures.push(`${mode} world thread panel leaked hidden text tokens: ${hiddenLeaks.join(", ")}.`);
   }
 
   return failures;
@@ -951,6 +1033,51 @@ async function assertOfficialCareerPanel(page, mode, expectations = {}) {
   }
 
   const layoutFailures = getGameLayoutFailures(await readGameLayoutMetrics(page), `${mode} official career`);
+  if (layoutFailures.length) {
+    failUiAcceptance(layoutFailures.join(" "));
+  }
+
+  return snapshot;
+}
+
+async function assertWorldThreadPanel(page, mode, expectations = {}) {
+  await visibleBox(page, "#world-thread-panel[data-generated-turn][data-active-count][data-watch-count]", `${mode} world thread panel`);
+
+  const snapshot = await page.evaluate(() => {
+    const panel = document.querySelector("#world-thread-panel");
+    const cards = [
+      ...document.querySelectorAll(
+        "#world-thread-panel .world-thread-card[data-thread-id][data-source-type][data-thread-kind][data-status][data-severity][data-risk]"
+      )
+    ];
+    return {
+      activeCount: panel?.dataset.activeCount || "",
+      generatedTurn: panel?.dataset.generatedTurn || "",
+      watchCount: panel?.dataset.watchCount || "",
+      cardCount: cards.length,
+      ids: cards.map((card) => card.dataset.threadId),
+      sourceTypes: cards.map((card) => card.dataset.sourceType),
+      kinds: cards.map((card) => card.dataset.threadKind),
+      statuses: cards.map((card) => card.dataset.status),
+      severities: cards.map((card) => card.dataset.severity),
+      risks: cards.map((card) => card.dataset.risk),
+      goalCount: document.querySelectorAll("#world-thread-panel .world-thread-goal").length,
+      deadlineCount: document.querySelectorAll("#world-thread-panel .world-thread-deadline").length,
+      riskCount: document.querySelectorAll("#world-thread-panel .world-thread-risk").length,
+      relatedCount: document.querySelectorAll("#world-thread-panel .world-thread-related").length,
+      hintCount: document.querySelectorAll("#world-thread-panel .world-thread-hint").length,
+      followUpCount: document.querySelectorAll("#world-thread-panel .world-thread-followup").length,
+      resolvedCount: document.querySelectorAll("#world-thread-panel .world-thread-resolved-item").length,
+      text: panel?.innerText || ""
+    };
+  });
+
+  const failures = getWorldThreadPanelFailures(snapshot, expectations, mode);
+  if (failures.length) {
+    failUiAcceptance(failures.join(" "));
+  }
+
+  const layoutFailures = getGameLayoutFailures(await readGameLayoutMetrics(page), `${mode} world thread`);
   if (layoutFailures.length) {
     failUiAcceptance(layoutFailures.join(" "));
   }
@@ -1503,6 +1630,12 @@ async function runMobileUiAcceptance(page, recorder) {
     hiddenTargetIds: ["eunuchs", "militaryLords"],
     hiddenTextTokens: ["Eunuch faction", "Military faction"]
   });
+  await assertWorldThreadPanel(page, "mobile scholar", {
+    expectActive: true,
+    expectedKinds: ["npc_request"],
+    expectedSourceTypes: ["active_npc_request"],
+    hiddenTextTokens: ["Hidden Palace Thread", "sealed palace dossier", "C99-hidden", "hiddenNotes"]
+  });
   await recorder.capture(page, "mobile-game-layout");
 
   await page.locator("#scholar-panel .archive-action").first().click();
@@ -1654,6 +1787,13 @@ async function runOfficialStartAcceptance(browser, { baseUrl, onSessionId, pageE
       expectAssessment: true,
       expectNetwork: true,
       expectedImpeachmentStage: "none",
+      hiddenTextTokens: ["hiddenNotes", "有人暗中遮掩亏空", "密札指向上官"]
+    });
+    await assertWorldThreadPanel(page, "official assignment", {
+      expectActive: true,
+      expectedKinds: ["official_assignment"],
+      expectedSourceTypes: ["official_assignment"],
+      expectedStatuses: ["active", "watch"],
       hiddenTextTokens: ["hiddenNotes", "有人暗中遮掩亏空", "密札指向上官"]
     });
 
@@ -1837,6 +1977,11 @@ async function runRoleWorldCouplingAcceptance(browser, { baseUrl, onSessionId, p
         failUiAcceptance(`${acceptanceCase.role} role-world state did not persist ${acceptanceCase.expectedKind}.`);
       }
       await assertGameLayout(page, `${acceptanceCase.role} role-world`);
+      await assertWorldThreadPanel(page, `${acceptanceCase.role} role-world`, {
+        expectActive: true,
+        expectedKinds: [acceptanceCase.expectedThreadKind],
+        expectedSourceTypes: ["role_world_coupling"]
+      });
 
       if (recorder && acceptanceCase.role === "magistrate") {
         await recorder.capture(page, "role-world-coupling");
@@ -1926,6 +2071,13 @@ async function runBrowserJourney({
       hiddenTargetIds: ["eunuchs", "militaryLords"],
       hiddenTextTokens: ["Eunuch faction", "Military faction"]
     });
+    await assertWorldThreadPanel(page, "desktop scholar after turn", {
+      expectActive: true,
+      expectedKinds: ["npc_request"],
+      expectedSourceTypes: ["active_npc_request"],
+      expectedStatuses: ["active"],
+      hiddenTextTokens: ["Hidden Palace Thread", "sealed palace dossier", "C99-hidden", "hiddenNotes"]
+    });
     await recorder.capture(page, "desktop-game-layout");
     await runExamLevelAcceptance(page, sessionId, recorder, examProgressionCases[0]);
     await assertExamRivalPanel(page, "desktop scholar after exam", {
@@ -1953,6 +2105,12 @@ async function runBrowserJourney({
       expectedTargetTypes: ["character"],
       hiddenTargetIds: ["eunuchs", "militaryLords"],
       hiddenTextTokens: ["Eunuch faction", "Military faction"]
+    });
+    await assertWorldThreadPanel(page, "desktop restored scholar", {
+      expectActive: true,
+      expectedKinds: ["npc_request"],
+      expectedSourceTypes: ["active_npc_request"],
+      hiddenTextTokens: ["Hidden Palace Thread", "sealed palace dossier", "C99-hidden", "hiddenNotes"]
     });
 
     const restoredId = await page.evaluate(() => window.localStorage.getItem("qianqiu.sessionId"));
@@ -1982,6 +2140,12 @@ async function runBrowserJourney({
       expectedTargetTypes: ["character"],
       hiddenTargetIds: ["eunuchs", "militaryLords"],
       hiddenTextTokens: ["Eunuch faction", "Military faction"]
+    });
+    await assertWorldThreadPanel(freshPage, "fresh page desktop scholar", {
+      expectActive: true,
+      expectedKinds: ["npc_request"],
+      expectedSourceTypes: ["active_npc_request"],
+      hiddenTextTokens: ["Hidden Palace Thread", "sealed palace dossier", "C99-hidden", "hiddenNotes"]
     });
     const freshPageId = await freshPage.evaluate(() => window.localStorage.getItem("qianqiu.sessionId"));
     if (freshPageId !== sessionId) {
@@ -2061,6 +2225,7 @@ async function runBrowserJourney({
           "cheating-result",
           "official-start",
           "official-career",
+          "world-thread",
           "role-world"
         ]
       }
@@ -2151,6 +2316,7 @@ module.exports = {
   getGameLayoutFailures,
   getHiddenActiveRequestLeaks,
   getHiddenOfficialCareerTextLeaks,
+  getHiddenWorldThreadTextLeaks,
   getHiddenSaveIdLeaks,
   getMissingExamLevels,
   getHiddenRelationshipLeaks,
@@ -2163,6 +2329,9 @@ module.exports = {
   getMissingRelationshipEntries,
   getMissingSaveIds,
   getMissingStartRoles,
+  getMissingWorldThreadKinds,
+  getMissingWorldThreadSourceTypes,
+  getWorldThreadPanelFailures,
   normalizeBaseUrl,
   parseBrowserSmokeArgs,
   rectsOverlap,

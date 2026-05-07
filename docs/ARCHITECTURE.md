@@ -482,7 +482,9 @@ Server rules:
 - Providers may read `worldThreads` in prompt context, but ordinary `statePatch.worldThreads` is rejected by schemas and ignored by provider patch application.
 - JSON and SSE turn payloads return `worldThreadView`. Exam question and submit routes also include the same view.
 
-S43.1 does not add a browser panel. Frontend inspection, intervention hints, and richer follow-up settlement belong to S43.2.
+S43.2 keeps `worldThreads` as an index rather than a settlement engine, but enriches the player-facing view. Each visible active thread now includes a derived `goal`, `deadlineLabel`, `riskLabel`, `riskTone`, `relatedLabels`, `interventionHints`, and `followUpHint`. These are generated from server-owned source type, kind, severity, deadline, related ids, and public state labels; hidden rows and hidden notes still do not enter the view or prompt summary.
+
+The browser renders this view as `#world-thread-panel`. Each `.world-thread-card` carries stable `data-thread-id`, `data-source-type`, `data-thread-kind`, `data-status`, `data-severity`, and `data-risk` attributes for smoke checks. The panel is an inspection surface only: it suggests free-text intervention directions and shows recent resolved rows, but it does not add one-click resolution or override `activeNpcRequest`, `longTermEvents`, `officialCareer`, or `roleWorldCoupling` settlement.
 
 ## Long-Term Event Scheduler Contract
 

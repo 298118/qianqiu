@@ -550,6 +550,96 @@ button:disabled {
   color: var(--cinnabar-deep);
 }
 
+.world-thread-panel {
+  grid-column: 1 / -1;
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+  padding-top: 9px;
+  border-top: 1px solid rgba(54, 39, 27, 0.16);
+}
+
+.world-thread-panel > header,
+.world-thread-card header,
+.world-thread-resolved header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+  min-width: 0;
+}
+
+.world-thread-panel > header strong,
+.world-thread-resolved header strong {
+  color: var(--cinnabar-deep);
+  font-size: 0.98rem;
+}
+
+.world-thread-panel > header span,
+.world-thread-card header span,
+.world-thread-resolved header span,
+.world-thread-empty {
+  color: var(--muted);
+  font-size: 0.8rem;
+  overflow-wrap: anywhere;
+}
+
+.world-thread-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+  gap: 8px;
+  min-width: 0;
+}
+
+.world-thread-card,
+.world-thread-resolved {
+  display: grid;
+  gap: 5px;
+  min-width: 0;
+  padding: 8px 9px;
+  border: 1px solid rgba(54, 39, 27, 0.16);
+  border-radius: 4px;
+  background: rgba(255, 250, 239, 0.5);
+}
+
+.world-thread-card[data-risk="medium"] {
+  border-color: rgba(122, 90, 45, 0.32);
+  background: rgba(122, 90, 45, 0.07);
+}
+
+.world-thread-card[data-risk="high"] {
+  border-color: rgba(155, 47, 34, 0.34);
+  background: rgba(155, 47, 34, 0.07);
+}
+
+.world-thread-card header strong,
+.world-thread-card p,
+.world-thread-empty,
+.world-thread-resolved-item {
+  margin: 0;
+  color: var(--ink);
+  font-size: 0.76rem;
+  line-height: 1.38;
+  overflow-wrap: anywhere;
+}
+
+.world-thread-summary {
+  color: var(--muted);
+}
+
+.world-thread-goal,
+.world-thread-followup {
+  grid-column: 1 / -1;
+}
+
+.world-thread-risk {
+  color: var(--cinnabar-deep);
+}
+
+.world-thread-hint {
+  color: var(--jade);
+}
+
 .official-career-panel {
   grid-column: 1 / -1;
   display: grid;
