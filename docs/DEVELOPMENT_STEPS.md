@@ -108,7 +108,7 @@
 | S53.2 | DONE | 浏览器信息面板规划：天下格局、任所地理、人物谱牒、官职簿、事件档案 | 2026-05-07 | Codex + read-only subagents | `b89882a` |
 | S53.3 | DONE | 浏览器信息面板前端接线基础：缓存 S50-S52 view 并建立 tab/面板壳 | 2026-05-07 | Codex + read-only subagents | `89e73c2` |
 | S53.4 | DONE | 天下格局与任所地理面板：地理、任所、辖区、路线和压力摘要 | 2026-05-07 | Codex + read-only subagents | `657c08e` |
-| S53.5 | TODO | 人物谱牒与官职簿面板：人物/家产关系、官署官职、任命考成迁转 |  |  |  |
+| S53.5 | DONE | 人物谱牒与官职簿面板：人物/家产关系、官署官职、任命考成迁转 | 2026-05-07 | Codex + read-only subagents | 待提交后回填 |
 | S53.6 | TODO | 事件档案安全 projection 与浏览器面板 |  |  |  |
 
 ## 5. 实施规划
@@ -657,14 +657,14 @@
 - 在 S53.3 `#information-panel` 壳内，把“天下格局”升级为可见国家、城市、路线、边面和官署辖区的紧凑卡片。
 - 把“任所地理”升级为当前任所、公开城市辖区、地方指标和相关通路卡片；书生尚未入仕时只显示公开辖区预览。
 - 继续只读 `worldGeographyView`、`officialPostingsView` 和可见地理查表，不读取 raw ledger、`retrievalContext`、audit、provider proposal、prompt、本地路径或 key。
-- 事件档案继续禁用；人物谱牒与官职簿仍只保留 S53.3 壳和计数，细节留给 S53.5。
+- 事件档案继续禁用；人物谱牒与官职簿细节已由 S53.5 接续。
 
 完成：
 
 - `public/app.js` 新增信息面板细卡 helper，`#world-geography-panel` 渲染 `.world-geography-card[data-kind][data-entity-id]`，覆盖 `country`、`city`、`route`、`frontier`、`office-jurisdiction`。
 - `public/app.js` 新增任所地理细卡，`#posting-geography-panel` 渲染 `.posting-geography-card[data-kind][data-entity-id]`，覆盖当前 `posting`、`jurisdiction` 和 `route`；没有当前 posting 时显示公开辖区预览。
 - `public/styles.css` 新增细节 section、grid、card 和 metric 样式，保持信息面板紧凑、可换行、不横向溢出。
-- `scripts/browserSmoke.js` 允许并要求 S53.4 geography/posting 卡片，同时继续阻止 `world-people-card`、`official-posting-card` 和 `event-archive-item` 提前出现；新增 role-visible geography、活动页/grid overflow 和 tab 隐藏状态检查。
+- `scripts/browserSmoke.js` 允许并要求 S53.4 geography/posting 卡片，并在 S53.4 时阻止 `world-people-card`、`official-posting-card` 和 `event-archive-item` 提前出现；新增 role-visible geography、活动页/grid overflow 和 tab 隐藏状态检查。S53.5 已把 future-content guard 收窄为只阻止事件档案条目。
 - `test/browserSmokeScript.test.js` 更新信息面板 helper 失败用例与信息面板 overflow 用例。
 - README、产品 brief、架构文档、browser acceptance、信息面板规划、AI 权限矩阵和 shared context 同步 S53.4 边界。
 
@@ -683,11 +683,52 @@
 
 - S53.4 只做浏览器查阅层，不新增 route、provider schema、prompt contract、SQLite 表或服务器事件 projection。
 - “任所地理”解释任所、辖区、地方指标和通路，不替代 `officialCareerView` 的官场结算，也不提供一键任免/调任/差事处理入口。
-- 人物谱牒和官职簿细节仍在 S53.5；事件档案仍必须等 S53.6 的 sanitized `eventArchiveView` 或等价 projection。
+- 人物谱牒和官职簿细节已由 S53.5 完成；事件档案仍必须等 S53.6 的 sanitized `eventArchiveView` 或等价 projection。
 
 下一步：
 
-- S53.5：实现“人物谱牒”和“官职簿”细面板，继续只读 `worldPeopleView`、`officialPostingsView` 和既有可见关系/官场 view。
+- S53.5 已完成；下一步 S53.6：新增事件档案安全 projection 与浏览器面板，继续禁止浏览器直接读取 raw audit/event payload。
+
+### S53.5：人物谱牒与官职簿面板
+
+状态：DONE。实现提交：待提交后回填。只读探索子代理 Ohm 梳理了 `worldPeopleView`、人物谱牒字段白名单、selector 和 smoke 风险；只读探索子代理 Einstein 梳理了 `officialPostingsView` 官职簿字段白名单、S53.4 任所地理 selector 避让和验收重点。提交前只读复审 Godel 未发现 P0/P1/P2 blocker；其 P3 提醒是 S53.6 前可继续统一 hidden-token corpus，并在未来 view 放宽枚举来源时补未知枚举前端/契约回归。
+
+目标：
+
+- 在 S53.3 `#information-panel` 壳内，把“人物谱牒”升级为可见人物、家族、资产、田产和关系的紧凑卡片。
+- 把“官职簿”升级为公开官署、官职、当前任命、考成和迁转的紧凑卡片。
+- 继续只读 `worldPeopleView`、`officialPostingsView`、`relationshipView` 和可见地理查表，不读取 raw ledger、旧 `characters`/`relationshipLedger`、raw `officialCareer`、`retrievalContext`、audit、provider proposal、prompt、本地路径或 key。
+- 事件档案继续禁用；S53.5 不新增 route、provider schema、prompt contract、SQLite 表或服务器事件 projection。
+
+完成：
+
+- `public/app.js` 新增 `renderWorldPeopleDetails()`，`#world-people-panel` 渲染 `.world-people-card[data-kind][data-entity-id]`，覆盖 `npc`、`relationship`，并在有可见数据时支持 `household`、`asset`、`estate`。
+- `public/app.js` 新增 `renderOfficialPostingsDetails()`，`#official-postings-panel` 渲染 `.official-posting-card[data-kind][data-entity-id]`，覆盖 `bureau`、`office`，并在入仕/地方官场景中覆盖 `posting`、`assessment`，有迁转记录时覆盖 `transfer`。
+- `public/styles.css` 复用 S53 信息卡样式到人物谱牒与官职簿，保持紧凑、可换行、不横向溢出。
+- `scripts/browserSmoke.js` 现在允许并要求 S53.5 people/official-posting 卡片，future-content guard 收窄为只阻止 `event-archive-item`；新增人物/官职卡 kind、metric、hidden-token、官方场景 posting/assessment 和 people/official grid overflow 检查。
+- `test/browserSmokeScript.test.js` 更新信息面板 helper 失败用例与信息面板 overflow 用例，覆盖 S53.5 卡片缺失、指标不足、事件档案 guard 和新增 grid overflow。
+- README、产品 brief、架构文档、browser acceptance、信息面板规划、AI 权限矩阵和 shared context 同步 S53.5 边界。
+
+验证：
+
+- `node --check public\app.js`
+- `node --check scripts\browserSmoke.js`
+- `node --check test\browserSmokeScript.test.js`
+- `node --test test\browserSmokeScript.test.js`
+- `$env:AI_PROVIDER='mock'; npm run smoke:browser`
+- `npm run check:docs-governance`
+- `$env:AI_PROVIDER='mock'; npm test`
+- `git diff --check`
+
+风险/遗留：
+
+- S53.5 是浏览器查阅层，不新增任何官职任免、人物关系操作、差事结算或数据库业务表。
+- 人物谱牒只展示 `worldPeopleView` 的安全可见 projection；官职簿只展示 `officialPostingsView` 的公开簿册 projection，仍不替代 `relationshipView` / `activeNpcRequestView` / `officialCareerView` 的运行时结算入口。
+- 事件档案仍必须等 S53.6 的 sanitized `eventArchiveView` 或等价 projection。
+
+下一步：
+
+- S53.6：事件档案安全 projection 与浏览器面板，先补服务器 sanitized projection，再开放 `#event-archive-panel` 内容。
 
 ## 6. 数据域规划
 

@@ -750,7 +750,9 @@ button:disabled {
 
 .information-detail-section > header,
 .world-geography-card header,
-.posting-geography-card header {
+.posting-geography-card header,
+.world-people-card header,
+.official-posting-card header {
   display: flex;
   align-items: baseline;
   justify-content: space-between;
@@ -765,7 +767,9 @@ button:disabled {
 
 .information-detail-section > header span,
 .world-geography-card header span,
-.posting-geography-card header span {
+.posting-geography-card header span,
+.world-people-card header span,
+.official-posting-card header span {
   color: var(--muted);
   font-size: 0.76rem;
   overflow-wrap: anywhere;
@@ -779,7 +783,9 @@ button:disabled {
 }
 
 .world-geography-card,
-.posting-geography-card {
+.posting-geography-card,
+.world-people-card,
+.official-posting-card {
   display: grid;
   gap: 7px;
   min-width: 0;
@@ -792,7 +798,14 @@ button:disabled {
 .world-geography-card[data-status="critical"],
 .world-geography-card[data-status="risky"],
 .world-geography-card[data-status="contested"],
-.posting-geography-card[data-status="suspended"] {
+.posting-geography-card[data-status="suspended"],
+.world-people-card[data-risk="70"],
+.world-people-card[data-risk="80"],
+.world-people-card[data-risk="90"],
+.world-people-card[data-risk="100"],
+.official-posting-card[data-status="suspended"],
+.official-posting-card[data-status="dismissed"],
+.official-posting-card[data-status="impeachment"] {
   border-color: rgba(126, 43, 34, 0.28);
   background: rgba(255, 244, 232, 0.68);
 }

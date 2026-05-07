@@ -907,7 +907,7 @@ function buildRowMap(rows = []) {
 function rowName(map, id, fallback = "未明") {
   if (!id) return fallback;
   const row = map.get(id);
-  return row?.name || row?.shortName || row?.title || fallback;
+  return row?.name || row?.familyName || row?.shortName || row?.title || row?.officeTitle || fallback;
 }
 
 function compactList(values = [], fallback = "未明", limit = 4) {
@@ -940,6 +940,26 @@ function topPressureRows(rows = [], limit = 2) {
       return delta || `${first.id || ""}`.localeCompare(`${second.id || ""}`);
     })
     .slice(0, limit);
+}
+
+function topRowsByScore(rows = [], scorer, limit = 2) {
+  return rows
+    .slice()
+    .sort((first, second) => {
+      const delta = (Number(scorer(second)) || 0) - (Number(scorer(first)) || 0);
+      return delta || `${first.id || ""}`.localeCompare(`${second.id || ""}`);
+    })
+    .slice(0, limit);
+}
+
+function statusLabel(value, labels = {}) {
+  if (!value) return "未详";
+  return labels[value] || `${value}`;
+}
+
+function formatRecordDate(date = {}) {
+  if (!date || typeof date !== "object") return "未记";
+  return formatVisibleDate({ dynasty: currentWorldState?.dynasty, ...date });
 }
 
 function createInformationMetric(label, value, className = "") {
@@ -1240,9 +1260,340 @@ function renderPostingGeographyDetails(postings = currentOfficialPostingsView, g
   return section;
 }
 
+function renderWorldPeopleDetails(people = currentWorldPeopleView, geography = currentWorldGeographyView) {
+  if (!people) return null;
+  const npcMap = buildRowMap(viewArray(people, "npcs"));
+  const householdMap = buildRowMap(viewArray(people, "households"));
+  const assetMap = buildRowMap(viewArray(people, "assets"));
+  const estateMap = buildRowMap(viewArray(people, "estates"));
+  const cityMap = buildRowMap(viewArray(geography, "cities"));
+  const regionMap = buildRowMap(viewArray(geography, "regions"));
+  const relationNames = new Map([
+    ...(currentRelationshipView?.contacts || []).map((entry) => [entry.id, entry.name]),
+    ...(currentRelationshipView?.factions || []).map((entry) => [entry.id, entry.name])
+  ]);
+  const cards = [];
+
+  const ownerName = (type, id) => {
+    if (type === "player") return currentWorldState?.player?.name || "玩家";
+    if (type === "npc") return rowName(npcMap, id, "未明人物");
+    if (type === "household") return rowName(householdMap, id, "未明家族");
+    return "未明归属";
+  };
+  const endpointName = (type, id) => {
+    if (type === "player") return currentWorldState?.player?.name || "玩家";
+    if (type === "npc") return rowName(npcMap, id, relationNames.get(id) || "未明人物");
+    if (type === "household") return rowName(householdMap, id, "未明家族");
+    if (type === "asset") return rowName(assetMap, id, "未明资产");
+    if (type === "estate") return rowName(estateMap, id, "未明田产");
+    return relationNames.get(id) || "可见关系";
+  };
+
+  topRowsByScore(viewArray(people, "npcs"), (npc) =>
+    Math.max(npc.influence || 0, npc.reputation || 0, npc.resentmentRisk || 0, npc.legalRisk || 0, npc.impeachmentRisk || 0), 3
+  ).forEach((npc) => {
+    const risk = Math.max(npc.resentmentRisk || 0, npc.legalRisk || 0, npc.impeachmentRisk || 0);
+    cards.push(createInformationDetailCard({
+      className: "world-people-card",
+      kind: "npc",
+      entityId: npc.id,
+      visibility: npc.visibility,
+      risk,
+      title: npc.courtesyName ? `${npc.name}（字${npc.courtesyName}）` : npc.name,
+      meta: `${npc.rankLabel || "可见人物"} · ${npc.alive === false ? "故" : "在世"}`,
+      summary: npc.publicSummary,
+      metrics: [
+        ["声望", metricText(npc.reputation)],
+        ["影响", metricText(npc.influence)],
+        ["怨险", metricText(risk)]
+      ],
+      extra: npc.currentGoal ? `近意：${npc.currentGoal}` : compactList(npc.ideologyTags, "暂无公开性情标签")
+    }));
+  });
+
+  topRowsByScore(viewArray(people, "households"), (household) =>
+    Math.max(household.wealthScore || 0, household.prestige || 0, household.familyRisk || 0, household.debtPressure || 0), 2
+  ).forEach((household) => {
+    cards.push(createInformationDetailCard({
+      className: "world-people-card",
+      kind: "household",
+      entityId: household.id,
+      visibility: household.visibility,
+      risk: Math.max(household.familyRisk || 0, household.debtPressure || 0),
+      title: `${household.familyName || "未名"}氏`,
+      meta: `${rowName(cityMap, household.seatCityId, "未明郡邑")} · ${household.gentryRank || "家声未详"}`,
+      summary: household.publicSummary,
+      metrics: [
+        ["家资", metricText(household.wealthScore)],
+        ["声望", metricText(household.prestige)],
+        ["债压", metricText(household.debtPressure)]
+      ],
+      extra: household.politicalAlignment || compactList((household.memberNpcIds || []).map((id) => rowName(npcMap, id, "")), "暂无公开成员")
+    }));
+  });
+
+  topRowsByScore(viewArray(people, "assets"), (asset) =>
+    Math.max(asset.valueEstimate || 0, asset.annualIncomeEstimate || 0, asset.debtValue || 0), 2
+  ).forEach((asset) => {
+    cards.push(createInformationDetailCard({
+      className: "world-people-card",
+      kind: "asset",
+      entityId: asset.id,
+      status: asset.statusLabel,
+      visibility: asset.visibility,
+      title: asset.name,
+      meta: `${asset.kind || "资产"} · ${rowName(cityMap, asset.cityId, "未明郡邑")}`,
+      summary: asset.publicSummary,
+      metrics: [
+        ["估值", metricText(asset.valueEstimate)],
+        ["岁入", metricText(asset.annualIncomeEstimate)],
+        ["负债", metricText(asset.debtValue)]
+      ],
+      extra: `归属：${ownerName(asset.ownerType, asset.ownerId)}；情状：${asset.statusLabel || "未详"}`
+    }));
+  });
+
+  topRowsByScore(viewArray(people, "estates"), (estate) =>
+    Math.max(estate.landMu || 0, estate.disputeRisk || 0, estate.taxBurden || 0), 2
+  ).forEach((estate) => {
+    cards.push(createInformationDetailCard({
+      className: "world-people-card",
+      kind: "estate",
+      entityId: estate.id,
+      status: estate.status,
+      visibility: estate.visibility,
+      risk: estate.disputeRisk,
+      title: estate.name,
+      meta: `${rowName(cityMap, estate.cityId, "未明郡邑")} · ${rowName(regionMap, estate.regionId, "未明区域")}`,
+      summary: estate.publicSummary,
+      metrics: [
+        ["田亩", metricText(estate.landMu, "亩")],
+        ["租谷", metricText(estate.rentGrainEstimate)],
+        ["讼险", metricText(estate.disputeRisk)]
+      ],
+      extra: `归属：${ownerName(estate.ownerType, estate.ownerId)}；水利：${metricText(estate.waterworks)}`
+    }));
+  });
+
+  topRowsByScore(viewArray(people, "relationships"), (relationship) =>
+    Math.max(relationship.resentment || 0, relationship.rivalry || 0, relationship.fear || 0, 100 - (relationship.trust || 50)), 4
+  ).forEach((relationship) => {
+    const source = endpointName(relationship.sourceType, relationship.sourceId);
+    const target = endpointName(relationship.targetType, relationship.targetId);
+    cards.push(createInformationDetailCard({
+      className: "world-people-card",
+      kind: "relationship",
+      entityId: relationship.id,
+      visibility: relationship.visibility,
+      risk: Math.max(relationship.resentment || 0, relationship.rivalry || 0, relationship.fear || 0),
+      title: `${source}与${target}`,
+      meta: relationship.stance || "关系可见",
+      summary: relationship.publicSummary,
+      metrics: [
+        ["情分", metricText(relationship.relationship)],
+        ["信任", metricText(relationship.trust)],
+        ["怨望", metricText(relationship.resentment)]
+      ],
+      extra: relationship.recentIntent || compactList(relationship.recentNotes, "暂无近闻", 2)
+    }));
+  });
+
+  return renderInformationDetailSection("谱牒要目", `${cards.length}条人物、家产与关系`, cards);
+}
+
+function renderOfficialPostingsDetails(postings = currentOfficialPostingsView, geography = currentWorldGeographyView) {
+  if (!postings) return null;
+  const bureauMap = buildRowMap(viewArray(postings, "bureaus"));
+  const officeMap = buildRowMap(viewArray(postings, "offices"));
+  const cityMap = buildRowMap(viewArray(geography, "cities"));
+  const jurisdictionMap = buildRowMap(viewArray(postings, "cityJurisdictions"));
+  const cards = [];
+
+  const holderTypeLabels = {
+    player: "本员",
+    npc: "他员",
+    vacant: "缺额",
+    unknown: "未详"
+  };
+  const postingStatusLabels = {
+    active: "现任",
+    acting: "署理",
+    suspended: "停俸",
+    vacant: "缺额",
+    transferred: "迁转",
+    dismissed: "罢黜",
+    mourning_leave: "丁忧",
+    restoration_pending: "待起复"
+  };
+  const assessmentStatusLabels = {
+    draft: "草拟",
+    pending: "待核",
+    resolved: "已定",
+    archived: "归档"
+  };
+  const recommendationLabels = {
+    none: "未定",
+    retention: "留任",
+    promotion: "升擢",
+    transfer: "调任",
+    outpost: "外放",
+    demotion: "降调",
+    impeachment: "参劾",
+    punishment: "处分"
+  };
+  const transferTypeLabels = {
+    appointment: "授官",
+    transfer: "调任",
+    promotion: "升迁",
+    outpost: "外放",
+    demotion: "降调",
+    punishment: "处分",
+    mourning_leave: "丁忧",
+    restoration: "起复",
+    retention: "留任"
+  };
+  const transferStatusLabels = {
+    proposed: "拟议",
+    approved: "准行",
+    applied: "已行",
+    rejected: "驳回",
+    cancelled: "撤销"
+  };
+
+  const activePostings = viewArray(postings, "postings")
+    .filter((posting) => posting.holderType === "player" || posting.status === "active")
+    .slice(0, 2);
+  activePostings.forEach((posting) => {
+    cards.push(createInformationDetailCard({
+      className: "official-posting-card",
+      kind: "posting",
+      entityId: posting.id,
+      status: posting.status,
+      visibility: posting.visibility,
+      cityId: posting.cityId,
+      title: posting.officeTitle || rowName(officeMap, posting.officeId, "任命"),
+      meta: `${rowName(bureauMap, posting.bureauId, "未明官署")} · ${statusLabel(posting.holderType, holderTypeLabels)}`,
+      summary: posting.publicSummary,
+      metrics: [
+        ["状态", statusLabel(posting.status, postingStatusLabels)],
+        ["考成", metricText(posting.performanceScore)],
+        ["弹劾", metricText(posting.impeachmentRisk)],
+        ["任期", `${posting.termMonths ?? 0}月`]
+      ],
+      extra: `${rowName(cityMap, posting.cityId, "未明城市")}；${rowName(jurisdictionMap, posting.jurisdictionId, "辖区未明")}`
+    }));
+  });
+
+  const activePostingIds = new Set(activePostings.map((posting) => posting.id));
+  viewArray(postings, "assessmentRecords")
+    .filter((record) => record.holderType === "player" || activePostingIds.has(record.postingId))
+    .slice(0, 2)
+    .forEach((record) => {
+      cards.push(createInformationDetailCard({
+        className: "official-posting-card",
+        kind: "assessment",
+        entityId: record.id,
+        status: record.status,
+        visibility: record.visibility,
+        title: `${rowName(officeMap, record.officeId, "官职")}考成`,
+        meta: `${rowName(bureauMap, record.bureauId, "未明官署")} · ${formatRecordDate(record.date)}`,
+        summary: record.publicFinding || record.publicSummary,
+        metrics: [
+          ["功绩", metricText(record.meritScore)],
+          ["风险", metricText(record.riskScore)],
+          ["建议", statusLabel(record.recommendation, recommendationLabels)],
+          ["状态", statusLabel(record.status, assessmentStatusLabels)]
+        ],
+        extra: `差遣据数：${metricText((record.assignmentIds || []).length)}`
+      }));
+    });
+
+  viewArray(postings, "transferRecords")
+    .slice()
+    .reverse()
+    .slice(0, 2)
+    .forEach((record) => {
+      const fromOffice = rowName(officeMap, record.fromOfficeId, "未授");
+      const toOffice = rowName(officeMap, record.toOfficeId, "未授");
+      cards.push(createInformationDetailCard({
+        className: "official-posting-card",
+        kind: "transfer",
+        entityId: record.id,
+        status: record.status,
+        visibility: record.visibility,
+        cityId: record.toCityId,
+        title: `${fromOffice}至${toOffice}`,
+        meta: `${statusLabel(record.type, transferTypeLabels)} · ${formatRecordDate(record.date)}`,
+        summary: record.publicReason || record.publicSummary,
+        metrics: [
+          ["状态", statusLabel(record.status, transferStatusLabels)],
+          ["起地", rowName(cityMap, record.fromCityId, "未详")],
+          ["赴地", rowName(cityMap, record.toCityId, "未详")]
+        ],
+        extra: record.publicSummary
+      }));
+    });
+
+  const selectedBureauIds = new Set([
+    ...activePostings.map((posting) => posting.bureauId),
+    ...viewArray(postings, "assessmentRecords").map((record) => record.bureauId)
+  ].filter(Boolean));
+  const bureauRows = [
+    ...viewArray(postings, "bureaus").filter((bureau) => selectedBureauIds.has(bureau.id)),
+    ...viewArray(postings, "bureaus").filter((bureau) => !selectedBureauIds.has(bureau.id))
+  ].slice(0, 2);
+  bureauRows.forEach((bureau) => {
+    cards.push(createInformationDetailCard({
+      className: "official-posting-card",
+      kind: "bureau",
+      entityId: bureau.id,
+      visibility: bureau.visibility,
+      title: bureau.name,
+      meta: `官署 · ${bureau.level || "未详"}`,
+      summary: bureau.publicSummary,
+      metrics: [
+        ["官职", metricText((bureau.officeIds || []).length)],
+        ["辖区", metricText((bureau.jurisdictionIds || []).length)],
+        ["信度", metricText(bureau.intelConfidence)]
+      ],
+      extra: compactList(bureau.duties, compactList(bureau.riskTags, "暂无公开职掌"))
+    }));
+  });
+
+  const selectedOfficeIds = new Set([
+    ...activePostings.map((posting) => posting.officeId),
+    ...viewArray(postings, "assessmentRecords").map((record) => record.officeId)
+  ].filter(Boolean));
+  const officeRows = [
+    ...viewArray(postings, "offices").filter((office) => selectedOfficeIds.has(office.id)),
+    ...viewArray(postings, "offices").filter((office) => !selectedOfficeIds.has(office.id))
+  ].slice(0, 3);
+  officeRows.forEach((office) => {
+    cards.push(createInformationDetailCard({
+      className: "official-posting-card",
+      kind: "office",
+      entityId: office.id,
+      visibility: office.visibility,
+      title: office.title,
+      meta: `${rowName(bureauMap, office.bureauId, "未明官署")} · ${office.rankLabel || office.rankBand || "品秩未详"}`,
+      summary: office.publicSummary,
+      metrics: [
+        ["任期", office.normalTermMonths ? `${office.normalTermMonths}月` : "未定"],
+        ["职掌", metricText((office.duties || []).length)],
+        ["路径", metricText((office.promotionPathIds || []).length)]
+      ],
+      extra: compactList(office.duties, office.requiredRankOrExam || "暂无公开铨选条件")
+    }));
+  });
+
+  return renderInformationDetailSection("官职要目", `${cards.length}条官署、官职与考迁`, cards);
+}
+
 function renderInformationPanelDetails(tabId) {
   if (tabId === "world-geography") return renderWorldGeographyDetails();
   if (tabId === "posting-geography") return renderPostingGeographyDetails();
+  if (tabId === "world-people") return renderWorldPeopleDetails();
+  if (tabId === "official-postings") return renderOfficialPostingsDetails();
   return null;
 }
 
