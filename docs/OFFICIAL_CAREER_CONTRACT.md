@@ -264,6 +264,7 @@ S42.2 also filters ordinary provider `player.position` patches while the player 
 - `status`
 - `year`
 - `month`
+- `tenDayPeriod`
 - `turn`
 - `officeTitleBefore`
 - `officeTitleAfter`
@@ -294,7 +295,7 @@ SSE `state_preview` and `final_state` include the same official career fields. B
 
 The engine runs only while `player.role === "official"`.
 
-It increments `officialCareer.tenureMonths` by one per successful official turn. S42.2 first classifies Mock/player text for official-domain actions such as relief, land survey, case review, riverworks, military supply, salt transport, exam supervision, memorial drafting, personnel review, transfer request, outpost request, mourning leave, restoration, or impeachment/audit. Matching actions update `assignments`, `assessmentDossier`, and `impeachmentProcedure`; canonical office changes still happen only through the settlement rules below. It may settle when:
+Under S48, `officialCareer.tenureMonths` advances only on `worldTick.completedMonth`, so three ordinary ten-day turns equal one official month. S42.2 first classifies Mock/player text for official-domain actions such as relief, land survey, case review, riverworks, military supply, salt transport, exam supervision, memorial drafting, personnel review, transfer request, outpost request, mourning leave, restoration, or impeachment/audit. Matching actions update `assignments`, `assessmentDossier`, and `impeachmentProcedure`; canonical office changes still happen only through the settlement rules below. First appointment and per-action差事 feedback may still happen on an ordinary turn, but review-cycle month accounting waits for month end. It may settle when:
 
 - the player has no `officeTitle`, causing first real appointment;
 - impeachment risk is severe enough for immediate review;
@@ -319,7 +320,7 @@ Relationship consequences are returned as bounded suggestions and merged through
 
 ## Browser Contract
 
-The browser consumes `officialCareerView`, not raw provider text. It renders `#official-career-panel` only when the player is an official. Stable selectors include:
+The browser consumes `officialCareerView`, not raw provider text. It renders `#official-career-panel` only when the player is an official. S48.6 displays career-history dates as 年月旬 by reading each outcome's `tenDayPeriod`; legacy records without that field normalize to 上旬. Stable selectors include:
 
 - `#official-career-panel[data-current-posting][data-pending-review][data-impeachment-stage]`
 - `.official-career-bureau[data-bureau-id]`

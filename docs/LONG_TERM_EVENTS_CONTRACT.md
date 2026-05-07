@@ -70,7 +70,7 @@ Rules:
 11. Append provider events, active-request events, world-tick events, then long-term event events.
 12. Save and return route payloads.
 
-This means the scheduler reads the month/year after a month-end tick advances them. For example, a turn from 七月下旬 to 八月上旬 can schedule `seasonal_harvest_audit` immediately after the tick. 七月上旬 to 七月中旬 does not decrement `remainingMonths`, does not schedule seasonal work, and does not produce long-term-event world-entity influences.
+This means the scheduler reads the month/year after a month-end tick advances them. For example, a turn from 七月下旬 to 八月上旬 can schedule `seasonal_harvest_audit` immediately after the tick. 七月上旬 to 七月中旬 does not decrement `remainingMonths`, does not schedule seasonal work, and does not produce long-term-event world-entity influences. S48.6 leaves this monthly gate unchanged; the browser may show `[大势]` after month-end feedback, while the adjacent `[旬度]`/`[月度]` tick line carries the visible 年月旬 date.
 
 ## Output Contract
 

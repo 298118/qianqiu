@@ -6,6 +6,7 @@ const {
   MAX_TURNS,
   MIN_TURNS,
   applyServerTurnEffects,
+  assertTenDayCadence,
   collectProviderPatchViolations,
   collectToneIssues,
   countChineseCharacters,
@@ -125,6 +126,7 @@ test("provider long-run in-memory server effects follow ten-day cadence and enti
   const first = applyServerTurnEffects(worldState, result, "查问秋粮簿册");
   assert.equal(first.worldTick.cadence, "ten_day");
   assert.equal(first.worldTick.completedMonth, false);
+  assert.equal(worldState.tenDayPeriod, 2);
   assert.equal(first.longTermEvents.resolved.length, 0);
   assert.equal(first.worldEntityImpacts.some((impact) => impact.sourceType === "long_term_event"), false);
   assert.equal(worldState.longTermEvents.queue[0].remainingMonths, 1);
@@ -132,6 +134,7 @@ test("provider long-run in-memory server effects follow ten-day cadence and enti
   const second = applyServerTurnEffects(worldState, { ...result, statePatch: {} }, "继续查问秋粮簿册");
   assert.equal(second.worldTick.cadence, "ten_day");
   assert.equal(second.worldTick.completedMonth, false);
+  assert.equal(worldState.tenDayPeriod, 3);
 
   const third = applyServerTurnEffects(worldState, { ...result, statePatch: {} }, "月末核验秋粮簿册");
   assert.equal(third.worldTick.cadence, "monthly");
@@ -141,6 +144,30 @@ test("provider long-run in-memory server effects follow ten-day cadence and enti
   assert.equal(worldState.turnCount, 3);
   assert.equal(worldState.month, 9);
   assert.equal(worldState.tenDayPeriod, 1);
+});
+
+test("provider long-run cadence helper validates one-month three-turn rhythm", () => {
+  const worldState = createLongRunWorldState("openai");
+  worldState.year = 1644;
+  worldState.month = 8;
+  worldState.tenDayPeriod = 2;
+  const worldTick = {
+    cadence: "ten_day",
+    completedMonth: false,
+    timeAdvance: {
+      from: { year: 1644, month: 8, tenDayPeriod: 1 },
+      to: { year: 1644, month: 8, tenDayPeriod: 2 }
+    }
+  };
+
+  assert.doesNotThrow(() =>
+    assertTenDayCadence({ year: 1644, month: 8, tenDayPeriod: 1 }, worldState, worldTick, 1)
+  );
+
+  assert.throws(
+    () => assertTenDayCadence({ year: 1644, month: 8, tenDayPeriod: 2 }, worldState, worldTick, 2),
+    /tenDayPeriod mismatch/
+  );
 });
 
 test("provider long-run exam triggers attach scene time and preserve active writing exams", () => {

@@ -25,19 +25,19 @@ The smoke uses `playwright-core` with an installed Chrome or Edge executable. If
 | AI connection panel | Optional with `--check-ai-connection`: clicks `#ai-test-button`, requires `#ai-test-result[data-ok="true"]`, model/config details, no API-key/session-path text leaks, no `qianqiu.sessionId` write, and no transition into the game action area. |
 | Opening flow | Confirms the start form exposes every supported role, creates a scholar session through the real form, and verifies `qianqiu.sessionId` in localStorage. |
 | Session restore | Reloads the page, opens a fresh page in the same browser context, confirms the game view restores, checks `GET /api/game/state/:sessionId`, and verifies the start-page save list can load the same session from a clean browser context. |
-| Save list UI | Checks the in-game `#save-list-modal` and start-page `#save-list-panel` from `GET /api/game/saves`, expected save ids, raw storage token non-leakage, and save-list horizontal overflow. |
+| Save list UI | Checks the in-game `#save-list-modal` and start-page `#save-list-panel` from `GET /api/game/saves`, expected save ids, raw storage token non-leakage, visible 年月旬 metadata, and save-list horizontal overflow. |
 | Failed SSE rollback | Mocks a browser `text/event-stream` response that emits a `narrative_chunk` followed by `error`, then confirms the uncommitted streamed text is removed while the error remains visible. |
-| Desktop layout | Checks status strip, role panel, narrative area, and action input surface for visibility, overlap, horizontal overflow, game-panel width/share, and role-panel clipping. |
+| Desktop layout | Checks status strip, role panel, narrative area, and action input surface for visibility, overlap, horizontal overflow, game-panel width/share, role-panel clipping, and status-strip 年月旬 labels. |
 | Relationship panel | Checks visible contact/faction rows from `relationshipView`, field completeness, hidden id/text non-leakage, relationship-panel overflow, and a Mock scholar turn updating the mentor relationship. |
 | Active request panel | Checks the server-scheduled `activeNpcRequestView` panel, target id/type/kind/status attributes, required ask/stakes/due/hint fields, hidden target/text non-leakage, and active-request overflow. |
 | Official career panel | Checks direct official start, the server-owned `officialCareerView` panel, 官署/差事/考成/关系/风险 sections, deterministic first appointment, a Mock `relief` assignment, hidden-note non-leakage tokens, current outcome fields, stable `data-*` attributes, and official-career overflow on desktop/mobile. |
-| Exam calendar panel | Checks the server-owned `examCalendarView` panel, next-level/status attributes, timing/funding/recommendation/quota details, and calendar-panel overflow. |
+| Exam calendar panel | Checks the server-owned `examCalendarView` panel, next-level/status attributes, timing/funding/recommendation/quota details, current 年月旬 label, and calendar-panel overflow. |
 | Exam rival panel | Checks persistent `examRivalView` cards after an exam, stable rival/status/level attributes, latest-result rows, and rival-panel overflow. |
 | Role/world coupling | Opens direct magistrate, general, emperor, and minister sessions; runs one representative role action; checks `.role-world-event[data-role-world-kind]` feedback; and verifies the expected API state metric moves in the intended direction. |
-| Exam progression | Opens and submits 童试, 乡试, 会试, and 殿试 through the real browser modal path, setting local Mock smoke readiness/months only to keep the legal calendar windows deterministic. Confirms each promotion, final `official` role, four exam-history records, cleared `activeExam`, and seeded office title. |
+| Exam progression | Opens and submits 童试, 乡试, 会试, and 殿试 through the real browser modal path, setting local Mock smoke readiness, legal calendar months, and `tenDayPeriod` only to keep the legal windows deterministic. Confirms each promotion, final `official` role, four exam-history records, cleared `activeExam`, and seeded office title. |
 | Cheating sample | Starts an isolated scholar session, submits a copied-classic essay through the browser, and confirms the result shows `监试黜落` / `疑似照抄`, persists score `0`, keeps the player a scholar, and records `severeCheat=true`. |
-| Exam modal | Opens each exam from the scholar panel, verifies question/requirements/writing controls, checks calendar timing details in the requirements, fills deterministic essays, and submits them. |
-| Result details | Checks score summary, player archive, calendar archive details, result sections, highlighted ranking row, inspectable same-field candidate essays, persistent rival notes, and the final four-exam archive. |
+| Exam modal | Opens each exam from the scholar panel, verifies question/requirements/writing controls, checks calendar timing details and 年月旬 labels in the requirements/scene status, fills deterministic essays, and submits them. |
+| Result details | Checks score summary, player archive, calendar archive details with 年月旬 labels, result sections, highlighted ranking row, inspectable same-field candidate essays, persistent rival notes, and the final four-exam archive. |
 | Mobile layout | Switches to a mobile viewport after the first exam and after palace promotion, checks the game/action surface, opens the exam archive, and verifies responsive result details for both the early and full-path archive states. |
 | Direct official start | Opens an isolated browser context, starts as `official`, checks the official role panel/action placeholder, verifies all expected visible relationship factions are present, verifies the API-persisted role, then runs one official turn to verify first appointment. |
 | Screenshots | Captures representative desktop and mobile states and validates each capture as a non-empty PNG. |
@@ -47,26 +47,27 @@ The smoke uses `playwright-core` with an installed Chrome or Edge executable. If
 
 Date: 2026-05-07
 
-Relevant implementation commit: `dc7bea8`
+Relevant implementation commit: pending S48.6 hash backfill
 
-Commands verified during S47.1:
+Commands verified during S48.6:
 
 ```powershell
-node --check scripts\browserSmoke.js
-node --test test\browserSmokeScript.test.js
-npm run smoke:browser -- --check-ai-connection
-$env:AI_PROVIDER='mock'; npm test
+node --check public\app.js src\game\examCalendar.js src\game\officialCareer.js scripts\browserSmoke.js scripts\providerLongRun.js test\browserSmokeScript.test.js test\providerLongRunScript.test.js test\examCalendar.test.js test\officialCareer.test.js
+node --test test\browserSmokeScript.test.js test\providerLongRunScript.test.js
+node --test test\examCalendar.test.js test\officialCareer.test.js
+$env:AI_PROVIDER='mock'; npm run smoke:browser
+$env:AI_PROVIDER='mock'; npm test -- --test-concurrency=1
 git diff --check
 ```
 
 Observed result:
 
-- Focused browser-smoke helper coverage includes the optional AI connection panel checks plus the existing layout/view helper coverage.
-- `npm run smoke:browser -- --check-ai-connection`: passed with `ai-connection` included in UI acceptance, then completed the existing save-list modal/start-page load coverage, failed SSE rollback coverage, relationship/active-request/world-thread panels, complete four-level Mock exam progression, final scholar-to-official browser promotion, copied-classic cheating coverage, exam-calendar/rival panels, official-career panel, representative magistrate/general/emperor/minister role-world coupling, and 14 screenshots checked.
-- `$env:AI_PROVIDER='mock'; npm test`: full suite passed in the S47.1 verification run with 265 tests.
-- S47.1 only adds a browser route-level button gate; real-provider browser behavior still requires an explicitly configured `--url` target and is not part of default Mock smoke.
+- Focused browser-smoke helper coverage includes the optional AI connection panel checks plus 年月旬 helper failures for status/save/exam/tick surfaces.
+- `$env:AI_PROVIDER='mock'; npm run smoke:browser`: passed with 14 screenshots checked. The final status strip included `Ming1644年四月下旬`, confirming the visible post-palace official path now carries the旬位.
+- The smoke now fails if the status strip, save list, exam calendar, exam modal, exam result/archive, or `.world-tick` feedback lose visible `上旬`/`中旬`/`下旬` text.
+- Real-provider browser behavior still requires an explicitly configured `--url` target and is not part of default Mock smoke.
 - The browser start path still clears stale `qianqiu.sessionId` localStorage only when an old restored game hides the initial start form. Later reload/fresh-page restoration checks continue to validate the newly created session.
-- Desktop smoke still fails if the game panel regresses to the old narrow-column width, if the role panel, relationship panel, active-request panel, official-career panel, exam-calendar panel, exam-rival panel, or save-list surfaces are horizontally clipped, if S35 calendar/rival details disappear from the modal/archive/candidate profiles, if any supported start role is missing from the browser form, if hidden scholar-invisible factions leak into relationship/active-request panel text, if save-list rows leak raw storage tokens, if the four-exam path stops before official promotion, if copied-passage punishment disappears, or if S36 role-world feedback/API metric deltas disappear from representative role journeys.
+- Desktop smoke still fails if the game panel regresses to the old narrow-column width, if the role panel, relationship panel, active-request panel, official-career panel, exam-calendar panel, exam-rival panel, or save-list surfaces are horizontally clipped, if S35 calendar/rival details disappear from the modal/archive/candidate profiles, if any supported start role is missing from the browser form, if hidden scholar-invisible factions leak into relationship/active-request panel text, if save-list rows leak raw storage tokens, if 年月旬 labels disappear from date-bearing player surfaces, if the four-exam path stops before official promotion, if copied-passage punishment disappears, or if S36 role-world feedback/API metric deltas disappear from representative role journeys.
 
 Earlier S26.2 screenshot review caught and fixed a real result-modal bug: `.exam-requirements { display: grid; }` overrode the `hidden` attribute and left the old requirements visible behind the result view. The fix is `.exam-requirements[hidden] { display: none; }`.
 

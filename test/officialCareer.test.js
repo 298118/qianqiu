@@ -106,6 +106,7 @@ test("official career state normalizes invalid legacy data", () => {
   assert.equal(worldState.officialCareer.bureauId, "ministry_personnel");
   assert.equal(worldState.officialCareer.careerHistory.length, 1);
   assert.equal(worldState.officialCareer.careerHistory[0].month, 12);
+  assert.equal(worldState.officialCareer.careerHistory[0].tenDayPeriod, 1);
   assert.equal(worldState.officialCareer.cooldowns.promotion, worldState.turnCount + monthsToTurns(4));
   assert.equal(worldState.officialCareer.cooldownUnit, "ten_day");
   assert.equal(worldState.officialCareer.assignments[0].dueTurn, worldState.turnCount + monthsToTurns(4));
@@ -138,6 +139,7 @@ test("official career step appoints direct official starts without provider auth
   const worldState = createInitialState({ role: "official", playerName: "Tester" });
   worldState.turnCount = 1;
   worldState.month = 2;
+  worldState.tenDayPeriod = 3;
 
   const result = runOfficialCareerStep(worldState);
   applyOfficialCareerResult(worldState, result);
@@ -146,6 +148,7 @@ test("official career step appoints direct official starts without provider auth
   assert.equal(worldState.player.officeTitle, "六部观政进士");
   assert.equal(worldState.player.position, "六部观政进士");
   assert.equal(worldState.officialCareer.careerHistory.at(-1).type, "appointment");
+  assert.equal(worldState.officialCareer.careerHistory.at(-1).tenDayPeriod, 3);
   assert.ok(result.events[0].includes("[官场结算]"));
   assert.ok(result.relationshipChanges.some((change) => change.targetId === "C01"));
   assert.equal(buildOfficialCareerView(worldState).lastOutcome.type, "appointment");

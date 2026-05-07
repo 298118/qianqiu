@@ -33,12 +33,17 @@ function makePlayerEntry(worldState, score = 76) {
 test("exam calendar view exposes next exam windows, funding, travel, and recommendation state", () => {
   const worldState = createInitialState({ playerName: "Calendar Tester" });
   worldState.month = 1;
+  worldState.tenDayPeriod = 2;
   worldState.player.gold = 1;
 
   const view = buildExamCalendarView(worldState);
 
+  assert.equal(view.currentTenDayPeriod, 2);
+  assert.equal(view.currentDateLabel, "明1644年正月中旬");
   assert.equal(view.nextExam.level, "child_exam");
   assert.equal(view.nextExam.isOpen, true);
+  assert.equal(view.nextExam.currentTenDayPeriod, 2);
+  assert.equal(view.nextExam.currentDateLabel, "明1644年正月中旬");
   assert.equal(view.nextExam.monthsUntil, 0);
   assert.equal(view.nextExam.preparationMonths, 1);
   assert.equal(view.nextExam.travelMonths, 0);

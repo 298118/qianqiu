@@ -1,5 +1,6 @@
 const { getExam, getNextExamLevel } = require("./exams");
 const { TRAVEL_PLANS } = require("./examTravel");
+const { formatYearMonthPeriod, normalizeTenDayPeriod } = require("./time");
 
 const EXAM_CALENDAR_VERSION = 1;
 const MAX_MISSED_WINDOWS = 8;
@@ -69,6 +70,10 @@ function currentYear(worldState) {
 
 function currentMonth(worldState) {
   return clampInt(worldState?.month, 1, 12, 1);
+}
+
+function currentTenDayPeriod(worldState) {
+  return normalizeTenDayPeriod(worldState?.tenDayPeriod, 1);
 }
 
 function getCalendarRule(level) {
@@ -231,6 +236,8 @@ function getExamWindowState(worldState, exam) {
     statusLabel: isOpen ? "本期正在开场" : status === "missed" ? "已误本期" : "尚未开场",
     currentYear: year,
     currentMonth: month,
+    currentTenDayPeriod: currentTenDayPeriod(worldState),
+    currentDateLabel: formatYearMonthPeriod(worldState),
     windowMonths: [...rule.windowMonths],
     windowLabel: windowLabel(rule.windowMonths),
     nextWindowYear: nextWindow.year,
@@ -536,6 +543,8 @@ function buildExamCalendarView(worldState = {}) {
     schemaVersion: EXAM_CALENDAR_VERSION,
     currentYear: currentYear(worldState),
     currentMonth: currentMonth(worldState),
+    currentTenDayPeriod: currentTenDayPeriod(worldState),
+    currentDateLabel: formatYearMonthPeriod(worldState),
     nextExam,
     missedWindows: worldState.examCalendar.missedWindows.slice(-3),
     recentSessions: worldState.examCalendar.recentSessions.slice(-4)
@@ -578,10 +587,16 @@ function summarizeExamCalendarForPrompt(worldState = {}) {
   return {
     currentYear: view.currentYear,
     currentMonth: view.currentMonth,
+    currentTenDayPeriod: view.currentTenDayPeriod,
+    currentDateLabel: view.currentDateLabel,
     nextExam: view.nextExam
       ? {
         level: view.nextExam.level,
         status: view.nextExam.status,
+        currentYear: view.nextExam.currentYear,
+        currentMonth: view.nextExam.currentMonth,
+        currentTenDayPeriod: view.nextExam.currentTenDayPeriod,
+        currentDateLabel: view.nextExam.currentDateLabel,
         windowLabel: view.nextExam.windowLabel,
         nextWindowLabel: view.nextExam.nextWindowLabel,
         monthsUntil: view.nextExam.monthsUntil,

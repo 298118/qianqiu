@@ -398,6 +398,23 @@ function failUiAcceptance(message) {
   throw new Error(`UI acceptance failed: ${message}`);
 }
 
+function hasTenDayPeriodLabel(text = "") {
+  return /(?:上旬|中旬|下旬)/.test(String(text || ""));
+}
+
+function getTenDayDateFailures(entries = {}, mode = "fixture") {
+  return Object.entries(entries)
+    .filter(([, text]) => !hasTenDayPeriodLabel(text))
+    .map(([label]) => `${mode} ${label} is missing a ten-day date label.`);
+}
+
+function assertTenDayDateText(text, label) {
+  const failures = getTenDayDateFailures({ [label]: text }, label);
+  if (failures.length) {
+    failUiAcceptance(failures.join(" "));
+  }
+}
+
 function sanitizeScreenshotName(name) {
   return String(name || "screenshot")
     .toLowerCase()
@@ -1192,6 +1209,7 @@ async function assertExamCalendarPanel(page, mode, expectations = {}) {
   if (snapshot.values < 4 || snapshot.recommendation < 1 || snapshot.quota < 1) {
     failUiAcceptance(`${mode} exam calendar is missing timing, funding, recommendation, or quota details.`);
   }
+  assertTenDayDateText(snapshot.text, `${mode} exam calendar`);
 
   const layoutFailures = getGameLayoutFailures(await readGameLayoutMetrics(page), `${mode} exam calendar`);
   if (layoutFailures.length) {
@@ -1244,6 +1262,9 @@ async function runRelationshipTurnAcceptance(page) {
     return button && !button.disabled;
   }, null, { timeout: 15000 });
   await page.locator(".relationship-change").first().waitFor({ state: "visible", timeout: 10000 });
+  await page.locator("#narrative .world-tick").last().waitFor({ state: "visible", timeout: 10000 });
+  const worldTickText = await page.locator("#narrative .world-tick").last().innerText();
+  assertTenDayDateText(worldTickText, "relationship turn world tick");
 
   const afterRelationship = await page.locator(
     '#relationship-panel .relationship-contact[data-contact-type="character"][data-contact-id="C01"]'
@@ -1330,6 +1351,7 @@ async function assertSaveList(page, mode, { expectedIds = [], hiddenIds = [], mo
       failUiAcceptance(`${mode} save list leaked raw storage detail: ${token}.`);
     }
   });
+  assertTenDayDateText(text, `${mode} save list`);
 
   const gameLayoutFailures = getGameLayoutFailures(await readGameLayoutMetrics(page), mode);
   const saveFailures = gameLayoutFailures.filter((failure) => /save-list/.test(failure));
@@ -1401,7 +1423,8 @@ async function assertGameLayout(page, mode) {
       actionDisplay: action.display,
       actionFlexDirection: action.flexDirection,
       actionPosition: action.position,
-      startDisplay: start.display
+      startDisplay: start.display,
+      statusText: document.querySelector("#status-strip")?.innerText || ""
     };
   });
 
@@ -1411,6 +1434,7 @@ async function assertGameLayout(page, mode) {
   if (computed.actionDisplay !== "flex") {
     failUiAcceptance(`${mode} action area is not using the expected flex layout.`);
   }
+  assertTenDayDateText(computed.statusText, `${mode} status strip`);
 
   const gameLayoutFailures = getGameLayoutFailures(await readGameLayoutMetrics(page), mode);
   if (gameLayoutFailures.length) {
@@ -1473,11 +1497,20 @@ async function assertExamWritingLayout(page, mode) {
     const status = document.querySelector("#exam-scene-status")?.textContent || "";
     return {
       actionCount: document.querySelectorAll("[data-exam-action]").length,
-      hasStatus: status.includes("场内阶段")
+      hasStatus: status.includes("场内阶段"),
+      modalText: document.querySelector(".exam-modal")?.innerText || "",
+      status
     };
   });
   if (!sceneState.hasStatus || sceneState.actionCount < 4) {
     failUiAcceptance(`${mode} exam modal is missing scene phase controls.`);
+  }
+  const dateFailures = getTenDayDateFailures({
+    "exam modal": sceneState.modalText,
+    "exam scene status": sceneState.status
+  }, mode);
+  if (dateFailures.length) {
+    failUiAcceptance(dateFailures.join(" "));
   }
 }
 
@@ -1510,6 +1543,7 @@ async function assertExamResultLayout(page, mode) {
       requirementsDisplay: examRequirements ? getComputedStyle(examRequirements).display : "",
       playerArchive: document.querySelectorAll(".player-exam-archive").length,
       playerRanking: document.querySelectorAll(".ranking-list .is-player").length,
+      resultText: resultElement?.innerText || "",
       resultSections: document.querySelectorAll(".result-section").length,
       resultClientWidth: resultElement?.clientWidth || 0,
       resultScrollWidth: resultElement?.scrollWidth || 0
@@ -1531,6 +1565,7 @@ async function assertExamResultLayout(page, mode) {
   if (counts.calendarArchive < 1) {
     failUiAcceptance(`${mode} missing exam calendar archive details.`);
   }
+  assertTenDayDateText(counts.resultText, `${mode} exam result`);
   if (counts.persistentCandidateNotes < 1) {
     failUiAcceptance(`${mode} missing persistent rival notes on candidate profiles.`);
   }
@@ -1575,6 +1610,7 @@ async function prepareSessionForExam(sessionId, level) {
   }
 
   worldState.month = examOpenMonthByLevel[level] || 1;
+  worldState.tenDayPeriod = 3;
   worldState.player.gold = Math.max(worldState.player.gold || 0, 1000);
   worldState.player.health = 100;
   worldState.player.teacher = worldState.player.teacher || "顾文衡";
@@ -2442,6 +2478,7 @@ module.exports = {
   getHiddenOfficialCareerTextLeaks,
   getHiddenWorldThreadTextLeaks,
   getHiddenSaveIdLeaks,
+  getTenDayDateFailures,
   getMissingExamLevels,
   getHiddenRelationshipLeaks,
   getMissingOfficialCareerAssignmentKinds,
@@ -2456,6 +2493,7 @@ module.exports = {
   getMissingWorldThreadKinds,
   getMissingWorldThreadSourceTypes,
   getWorldThreadPanelFailures,
+  hasTenDayPeriodLabel,
   normalizeBaseUrl,
   parseBrowserSmokeArgs,
   rectsOverlap,

@@ -27,7 +27,7 @@
 
 第四阶段 S40-S47.2 已完成并归档到 `docs/PHASE_FOUR_ROADMAP_ARCHIVE.md`。已接受的范围包括 AI 连接可见化、prompt pack 与 eval/red-team、深度官场、World Threads 世界议程、AI 权限审查矩阵、多实体世界模型、依赖/插件治理、provider/browser 验收扩展和 DeepSeek 缓存友好提示词结构。
 
-当前活动路线图：`docs/DEVELOPMENT_STEPS.md`，已切换为 S48 时间专项规划与进度台账。S48.3 已建立 `worldState.tenDayPeriod`、共享时间 helper、旧档上旬默认、provider 时间字段边界，并把普通自由行动改为每回合推进一旬；月末完整结算只在下旬进入下月上旬时发生。S48.4 已先把科举落成局部场景时间：考试入场、审题、拟纲、作答、誊清、交卷推进 `activeExam.sceneTime`，不消耗全局旬。S48.5 已把官场差事/弹劾、长期事件冷却、World Threads 期限标签、World Entities cadence 和 provider long-run 脚本适配到“旬回合 vs 月末月份”的语义。后续继续处理更完整的玩家可见“年月旬”展示与浏览器验收。
+当前活动路线图：`docs/DEVELOPMENT_STEPS.md`，已切换为 S48 时间专项规划与进度台账。S48.3 已建立 `worldState.tenDayPeriod`、共享时间 helper、旧档上旬默认、provider 时间字段边界，并把普通自由行动改为每回合推进一旬；月末完整结算只在下旬进入下月上旬时发生。S48.4 已先把科举落成局部场景时间：考试入场、审题、拟纲、作答、誊清、交卷推进 `activeExam.sceneTime`，不消耗全局旬。S48.5 已把官场差事/弹劾、长期事件冷却、World Threads 期限标签、World Entities cadence 和 provider long-run 脚本适配到“旬回合 vs 月末月份”的语义。S48.6 已把状态栏、存档卡、考试日历、考试弹窗、考试档案和回合反馈统一显示“年月旬”，并让 browser smoke 与 provider long-run 检查这一节奏。
 
 开发规范不变。第 12 节和第 13 节仍是每次开发必须遵守的流程；Mock 默认可玩、真实 provider 可选、服务器拥有状态边界和科举规则这些要求继续有效。
 
@@ -151,7 +151,7 @@ CORS 约定：默认只允许无 `Origin` 请求和当前 `PORT` 对应的本机
   sessionId: "string",
   year: 1644,
   month: 1,
-  tenDayPeriod: 1,
+  tenDayPeriod: 1, // 1=上旬，2=中旬，3=下旬；玩家可见为“明1644年正月上旬”
   dynasty: "明",
   turnCount: 0,
   treasury: 1000,

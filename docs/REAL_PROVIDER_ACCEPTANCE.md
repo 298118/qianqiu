@@ -37,7 +37,7 @@ Implementation:
 
 S47.1 adds `npm run smoke:provider:route` through `scripts/providerRouteHealth.js`. It starts a tiny local Express app, POSTs `/api/ai/connection-test` for each selected keyed provider, verifies `ok=true`, provider/config/model fields, `supportsStreaming`, `openingEventCount`, `narrativePreview`, secret/session-path non-leakage, and confirms no new `data/sessions/*.json` file appears. This route gate is intentionally shorter than adapter smoke: it checks the same path the browser start panel uses and does not add a model cost or speed ledger beyond the route's existing `latencyMs` diagnostic field.
 
-The current scenario is an 8-turn scholar long-run by default. It includes ordinary study, mentor, travel, social, exam-preparation, rest, and an explicit authority probe asking the model to skip the imperial examination and grant office directly. The script applies the same server-owned state boundaries in memory for provider patches, relationship suggestions, active NPC requests, role/world coupling, world tick, long-term events, official-career settlement, World Entities, and World Threads. S48.5 records `worldTick.cadence`, `completedMonth`, long-term scheduling/resolution counts, and `worldEntityImpacts` in each in-memory report so the adapter-level gate checks the same旬制 cadence as the route.
+The current scenario is an 8-turn scholar long-run by default. It includes ordinary study, mentor, travel, social, exam-preparation, rest, and an explicit authority probe asking the model to skip the imperial examination and grant office directly. The script applies the same server-owned state boundaries in memory for provider patches, relationship suggestions, active NPC requests, role/world coupling, world tick, long-term events, official-career settlement, World Entities, and World Threads. S48.5 records `worldTick.cadence`, `completedMonth`, long-term scheduling/resolution counts, and `worldEntityImpacts` in each in-memory report so the adapter-level gate checks the same旬制 cadence as the route. S48.6 tightens this by asserting every turn advances exactly one ten-day period via `worldTick.timeAdvance`, requiring the cadence pattern `ten_day, ten_day, monthly` across each three-turn month, and adding visible `dateLabel` output to final and per-turn reports.
 
 ## Acceptance Matrix
 
@@ -87,16 +87,12 @@ The tone heuristic is intentionally conservative and local. A passing run is not
 
 ## Latest Local Verification
 
-2026-05-06 local S37 implementation verification used a no-key environment:
+2026-05-07 S48.6 focused verification used the local no-key environment:
 
 ```bash
 node --check scripts/providerLongRun.js
 node --check test/providerLongRunScript.test.js
-node --test test/providerLongRunScript.test.js test/providerSmokeScript.test.js
-npm run smoke:provider:long
-npm run eval:ai
-npm test
-git diff --check
+node --test test/providerLongRunScript.test.js
 ```
 
-The keyed network paths were not executed because no real-provider keys are configured in this workspace.
+The keyed network paths were not executed in this focused verification because no real-provider keys are required for the helper tests; `npm run smoke:provider:long` should still skip successfully when no real-provider keys are configured.

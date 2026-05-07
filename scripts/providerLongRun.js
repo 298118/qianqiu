@@ -37,6 +37,7 @@ const { attachExamSceneTime } = require("../src/game/examSceneTime");
 const { createInitialState } = require("../src/game/initialState");
 const { NUMERIC_RANGES, applyStatePatch, appendEvents } = require("../src/game/stateRules");
 const { runWorldTick } = require("../src/game/worldTick");
+const { advanceTenDayPeriod, formatYearMonthPeriod } = require("../src/game/time");
 const {
   PROVIDER_CONFIGS,
   getProviderNamesToSmoke,
@@ -400,6 +401,43 @@ function assertNumericConsistency(worldState) {
   }
 }
 
+function assertTenDayCadence(previousCalendar, worldState, worldTick, turnNumber) {
+  const expected = advanceTenDayPeriod(previousCalendar);
+  const expectedCadence = expected.completedMonth ? "monthly" : "ten_day";
+  const actual = {
+    year: worldState.year,
+    month: worldState.month,
+    tenDayPeriod: worldState.tenDayPeriod
+  };
+  const expectedCalendar = {
+    year: expected.year,
+    month: expected.month,
+    tenDayPeriod: expected.tenDayPeriod
+  };
+
+  if (worldTick.cadence !== expectedCadence) {
+    throw new Error(`turn ${turnNumber} cadence mismatch: expected ${expectedCadence}, got ${worldTick.cadence}`);
+  }
+  if (worldTick.completedMonth !== expected.completedMonth) {
+    throw new Error(`turn ${turnNumber} completedMonth mismatch: expected ${expected.completedMonth}, got ${worldTick.completedMonth}`);
+  }
+  for (const key of ["year", "month", "tenDayPeriod"]) {
+    if (actual[key] !== expectedCalendar[key]) {
+      throw new Error(`turn ${turnNumber} ${key} mismatch: expected ${expectedCalendar[key]}, got ${actual[key]}`);
+    }
+    if (worldTick.timeAdvance?.to?.[key] !== expectedCalendar[key]) {
+      throw new Error(`turn ${turnNumber} worldTick.timeAdvance.to.${key} mismatch: expected ${expectedCalendar[key]}, got ${worldTick.timeAdvance?.to?.[key]}`);
+    }
+  }
+  if (worldTick.timeAdvance?.from) {
+    for (const key of ["year", "month", "tenDayPeriod"]) {
+      if (worldTick.timeAdvance.from[key] !== previousCalendar[key]) {
+        throw new Error(`turn ${turnNumber} worldTick.timeAdvance.from.${key} mismatch: expected ${previousCalendar[key]}, got ${worldTick.timeAdvance.from[key]}`);
+      }
+    }
+  }
+}
+
 function getLongRunActions(turnLimit) {
   return Array.from({ length: turnLimit }, (_, index) => SCHOLAR_ACTIONS[index % SCHOLAR_ACTIONS.length]);
 }
@@ -426,6 +464,11 @@ async function runProviderLongRun(providerName, options = {}) {
 
   for (let index = 0; index < actions.length; index += 1) {
     const input = actions[index];
+    const previousCalendar = {
+      year: worldState.year,
+      month: worldState.month,
+      tenDayPeriod: worldState.tenDayPeriod
+    };
     let streamedChars = 0;
     const result = options.stream
       ? await provider.streamTurn(worldState, input, {
@@ -442,6 +485,7 @@ async function runProviderLongRun(providerName, options = {}) {
 
     const serverEffects = applyServerTurnEffects(worldState, result, input);
     assertNumericConsistency(worldState);
+    assertTenDayCadence(previousCalendar, worldState, serverEffects.worldTick, index + 1);
 
     if (worldState.turnCount !== index + 1) {
       throw new Error(`turnCount mismatch after turn ${index + 1}: expected ${index + 1}, got ${worldState.turnCount}`);
@@ -458,18 +502,19 @@ async function runProviderLongRun(providerName, options = {}) {
       examTrigger: serverEffects.examTrigger.shouldStart === true,
       cadence: serverEffects.worldTick.cadence,
       completedMonth: serverEffects.worldTick.completedMonth,
+      dateLabel: formatYearMonthPeriod(worldState),
       worldEntityImpacts: serverEffects.worldEntityImpacts.length,
       longTermScheduled: serverEffects.longTermEvents.scheduled.length,
       longTermResolved: serverEffects.longTermEvents.resolved.length
     });
 
     console.log(
-      `[${providerName}] turn ${index + 1}/${turnLimit} ok: cadence=${serverEffects.worldTick.cadence}, entityImpacts=${serverEffects.worldEntityImpacts.length}, patch=${patchKeys.join(",") || "none"}, streamed=${streamedChars}, narrative="${truncate(result.narrative)}"`
+      `[${providerName}] turn ${index + 1}/${turnLimit} ok: date=${formatYearMonthPeriod(worldState)}, cadence=${serverEffects.worldTick.cadence}, entityImpacts=${serverEffects.worldEntityImpacts.length}, patch=${patchKeys.join(",") || "none"}, streamed=${streamedChars}, narrative="${truncate(result.narrative)}"`
     );
   }
 
   console.log(
-    `[${providerName}] S37/S48 long-run completed: turnCount=${worldState.turnCount}, date=${worldState.year}-${worldState.month}-${worldState.tenDayPeriod}, events=${worldState.eventHistory.length}`
+    `[${providerName}] S37/S48 long-run completed: turnCount=${worldState.turnCount}, date=${formatYearMonthPeriod(worldState)}, events=${worldState.eventHistory.length}`
   );
 
   return {
@@ -482,6 +527,7 @@ async function runProviderLongRun(providerName, options = {}) {
       year: worldState.year,
       month: worldState.month,
       tenDayPeriod: worldState.tenDayPeriod,
+      dateLabel: formatYearMonthPeriod(worldState),
       eventHistoryLength: worldState.eventHistory.length,
       playerRole: worldState.player.role,
       playerExamRank: worldState.player.examRank || null,
@@ -542,6 +588,7 @@ module.exports = {
   MAX_TURNS,
   MIN_TURNS,
   applyServerTurnEffects,
+  assertTenDayCadence,
   collectProviderPatchViolations,
   collectToneIssues,
   countChineseCharacters,

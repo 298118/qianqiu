@@ -40,13 +40,15 @@ Free-text exam requests are initiated through ordinary `POST /api/game/turn` via
 
 S48.4 adds exam-local scene time on top of this calendar snapshot. `activeExam.sceneTime.startedAt` records the server-owned 年/月/旬/turnCount when the exam scene began; if the player legally triggered a same-level exam in an open 下旬 and ordinary旬制 then rolled to the next month before the browser requested `/api/exam/question`, the formal question keeps the original open snapshot and started-at date.
 
+S48.6 adds visible date fields to calendar views and snapshots: `currentTenDayPeriod` and `currentDateLabel`. The calendar window is still month-based, so 正月上旬、正月中旬、正月下旬 are all legal for `child_exam`, but the browser can show the exact scene entry date in the 科期 panel, writing modal, result archive, and final exam-history modal.
+
 ## Entry Preparation
 
 `src/game/examTravel.js` still owns level-specific gold costs and funded/shortfall effects. S35 adds calendar details to `entryPreparation`:
 
 - `travelMonths`
 - nested `examCalendar`
-- current/open/next window labels
+- current/open/next window labels, including `currentTenDayPeriod` and `currentDateLabel`
 - preparation and travel month counts
 - funding readiness
 - teacher recommendation status
@@ -121,3 +123,4 @@ Focused coverage:
 - `test/browserSmokeScript.test.js`
 
 Browser smoke checks the new `#exam-calendar-panel`, `#exam-rival-panel`, calendar details inside the writing modal, calendar archive details, persistent rival notes, and horizontal overflow for the new panels.
+S48.6 extends that smoke to set `tenDayPeriod` together with the legal exam month and to fail if calendar/modal/archive text loses the visible 上旬/中旬/下旬 label.

@@ -94,7 +94,7 @@
 | S48.3 | DONE | 改造普通回合与世界 tick：每回合推进一旬，非月末轻量小结，月末完整结算 | 2026-05-07 | Codex + subagent | `ef767c6` |
 | S48.4 | DONE | 建立场景内时间框架，并优先把科举考试改成多阶段局部时间 | 2026-05-07 | Codex + subagent | `54afc38` |
 | S48.5 | DONE | 适配长期事件、官场任期/差事、世界议程、世界实体和脚本验收的月末/旬度语义 | 2026-05-07 | Codex + subagents | `50d228b` |
-| S48.6 | TODO | 完成前端日期展示、浏览器 smoke、provider long-run 和完整书生入仕验收 |  |  |  |
+| S48.6 | DONE | 完成前端日期展示、浏览器 smoke、provider long-run 和完整书生入仕验收 | 2026-05-07 | Codex + subagent | 待回填 |
 
 ## 5. 实施规划
 
@@ -216,6 +216,35 @@
 - `npm run eval:ai`
 - `$env:AI_PROVIDER='mock'; npm test`
 - `$env:AI_PROVIDER='mock'; npm run smoke:browser`
+- `git diff --check`
+
+实现记录：
+
+- 前端新增统一年月旬显示 helper，状态栏、存档卡、官场履历、考试日历、考试弹窗、考试结果/档案标题、科期 archive 和回合分隔线均显示 `上旬/中旬/下旬`。
+- `examCalendarView` 与考试 snapshot 增加 `currentTenDayPeriod` / `currentDateLabel`，保持考期窗口按月份判断，但让浏览器可显示准确入场旬位。
+- 浏览器 `worldTick` 反馈在事件文本缺少日期时用 `timeAdvance.to` 补齐年月旬；叙事、状态栏和考试/存档相关区域补充换行保护，避免长日期撑出容器。
+- Browser smoke 的状态栏、存档列表、考试日历、考试弹窗、考试结果/档案和 `.world-tick` 断言都会检查 `上旬|中旬|下旬`；合法考试窗口准备同时设置 `tenDayPeriod = 3`，完整四级科举入仕路径继续通过。
+- Provider long-run 增加 `assertTenDayCadence()`：每回合用 `worldTick.timeAdvance` 校验一月三旬节奏，并在报告中输出 `dateLabel`；无 key 跳过策略保持不变。
+- 官场 `careerHistory` 记录并归一化 `tenDayPeriod`，旧记录默认上旬，浏览器履历日期可显示年月旬。
+
+验证：
+
+- `node --check public\app.js`
+- `node --check src\game\examCalendar.js`
+- `node --check src\game\officialCareer.js`
+- `node --check scripts\browserSmoke.js`
+- `node --check scripts\providerLongRun.js`
+- `node --check test\browserSmokeScript.test.js`
+- `node --check test\providerLongRunScript.test.js`
+- `node --check test\examCalendar.test.js`
+- `node --check test\officialCareer.test.js`
+- `node --test test\browserSmokeScript.test.js test\providerLongRunScript.test.js`（43 tests passed）
+- `node --test test\examCalendar.test.js test\officialCareer.test.js`（12 tests passed）
+- `node --test test\worldTick.test.js test\gameTurnTick.test.js test\longTermEvents.test.js test\officialCareer.test.js test\examCalendar.test.js test\examTravel.test.js`（36 tests passed）
+- `npm run check:docs-governance`
+- `npm run eval:ai`（12 tests passed）
+- `$env:AI_PROVIDER='mock'; npm test -- --test-concurrency=1`（291 tests passed）
+- `$env:AI_PROVIDER='mock'; npm run smoke:browser`（14 screenshots checked；状态栏示例：`Ming1644年四月下旬 ...`）
 - `git diff --check`
 
 ## 6. 风险与默认决策
@@ -404,10 +433,10 @@
 
 风险/遗留：
 
-- 本步骤只把长期系统、世界议程、实体影响和脚本模拟对齐到旬制/月末语义；更全面的玩家可见年月旬显示仍由 S48.6 收束。
-- 并发全量测试仍可能在 Windows 上偶发 JSON 存档 atomic rename `EPERM`；本次聚焦复跑和串行全量均通过，未发现 S48.5 逻辑回归。
-- 首轮提交前只读复审（Pasteur）指出三项 P2：旧官场期限压缩、旧长期/联动 cooldown 过早解禁、provider long-run 考试触发未复用场景时间。均已修复并补测试；终轮只读复审（Singer）确认无 P0/P1/P2 blocker，仅提示长期事件 active cooldown 与 scheduler map 上限措辞需更精确，已改为“按各自归一化上限 clamp”。
+- 并发全量测试仍可能在 Windows 上偶发 JSON 存档 atomic rename `EPERM`；S48.6 使用串行全量和完整 browser smoke 验证，未发现时间显示或科举路径回归。
+- S48.6 仍只把 scene-local time 落在考试；廷议、堂审、战斗、旅途遭遇和重大差事收束尚未改造为局部阶段。
+- 提交前只读复审（Dewey/Popper）指出旧考试档案标题可能回退到当前日期、交接文档下一步仍指向 S48.6。均已修复；旧考试记录缺少 `currentDateLabel` 或 `sceneTime` 时会从自身 `examCalendar.currentYear/currentMonth/currentTenDayPeriod` 或 `entryPreparation.appliedAtYear/appliedAtMonth` 回退，缺旬默认上旬。Popper 终轮 r3 只读复审未发现 P0/P1/P2 blocker。
 
 下一步：
 
-- 开始 S48.6：收束前端日期展示、browser/provider long-run 验收和完整书生入仕路径验证。
+- 提交后回填 S48.6 commit hash；随后为 S49 或后续 S48 follow-up 明确范围，优先考虑把考试以外的高密度场景接入 scene-local time，同时保持 browser 年月旬显示契约。

@@ -339,6 +339,8 @@ button:disabled {
   padding: 6px 10px;
   background: rgba(255, 250, 239, 0.72);
   font-size: 0.9rem;
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 
 .status-action {
@@ -851,6 +853,8 @@ button:disabled {
 .exam-rival-card p {
   color: var(--muted);
   font-size: 0.8rem;
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 
 .exam-calendar-grid,
@@ -868,6 +872,7 @@ button:disabled {
   border: 1px solid rgba(54, 39, 27, 0.16);
   border-radius: 4px;
   background: rgba(255, 250, 239, 0.5);
+  overflow-wrap: anywhere;
 }
 
 .exam-calendar-notes,
@@ -1036,6 +1041,7 @@ button:disabled {
 .narrative-entry {
   padding-left: 14px;
   border-left: 2px solid rgba(122, 90, 45, 0.22);
+  overflow-wrap: anywhere;
 }
 
 .narrative-entry.is-streaming {
@@ -1270,7 +1276,13 @@ button:disabled {
   font-weight: 700;
 }
 
+.exam-header span {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
 .exam-header button {
+  flex: 0 0 auto;
   width: 36px;
   min-height: 36px;
   padding: 0;
@@ -1498,6 +1510,7 @@ button:disabled {
   color: var(--cinnabar-deep);
   cursor: pointer;
   font-weight: 700;
+  overflow-wrap: anywhere;
 }
 
 .result-section > :not(summary) {

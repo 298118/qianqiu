@@ -219,6 +219,7 @@ function normalizeHistoryEntry(raw) {
     status: raw.status === "pending" ? "pending" : "resolved",
     year: clampNumber(raw.year, 1, 9999, 1644),
     month: clampNumber(raw.month, 1, 12, 1),
+    tenDayPeriod: clampNumber(raw.tenDayPeriod, 1, TURNS_PER_MONTH, 1),
     turn: clampNumber(raw.turn, 0, Number.MAX_SAFE_INTEGER, 0),
     officeTitleBefore: raw.officeTitleBefore === null
       ? null
@@ -821,6 +822,7 @@ function createHistoryEntry(worldState, career, outcome) {
     status: "resolved",
     year: readTopLevelNumber(worldState, "year", 1644),
     month: readTopLevelNumber(worldState, "month", 1),
+    tenDayPeriod: readTopLevelNumber(worldState, "tenDayPeriod", 1),
     turn,
     officeTitleBefore,
     officeTitleAfter: outcome.officeTitleAfter ?? null,

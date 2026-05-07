@@ -48,6 +48,28 @@ let currentExamPayload = null;
 let activeNarrativeStream = null;
 let latestSavePayload = { saves: [], skipped: [] };
 
+const MONTH_LABELS = Object.freeze([
+  "",
+  "正月",
+  "二月",
+  "三月",
+  "四月",
+  "五月",
+  "六月",
+  "七月",
+  "八月",
+  "九月",
+  "十月",
+  "冬月",
+  "腊月"
+]);
+
+const TEN_DAY_PERIOD_LABELS = Object.freeze({
+  1: "上旬",
+  2: "中旬",
+  3: "下旬"
+});
+
 const ATTRIBUTE_LABELS = {
   health: "体力",
   gold: "银钱",
@@ -282,6 +304,38 @@ function createTag(text) {
   return tag;
 }
 
+function normalizeInteger(value, min, max, fallback) {
+  const parsed = Number(value);
+  const integer = Number.isFinite(parsed) ? Math.round(parsed) : fallback;
+  return Math.max(min, Math.min(max, integer));
+}
+
+function getVisibleMonthName(month) {
+  const normalized = normalizeInteger(month, 1, 12, 1);
+  return MONTH_LABELS[normalized] || `${normalized}月`;
+}
+
+function getVisibleTenDayPeriodLabel(period) {
+  return TEN_DAY_PERIOD_LABELS[normalizeInteger(period, 1, 3, 1)] || "上旬";
+}
+
+function readDateLabel(source = {}) {
+  return source.currentDateLabel || source.dateLabel || source.label || "";
+}
+
+function formatVisibleDate(source = {}) {
+  const existing = readDateLabel(source);
+  if (typeof existing === "string" && /年.+旬/.test(existing)) {
+    return existing.trim();
+  }
+  const dynasty = source.dynasty ? `${source.dynasty}` : "";
+  const yearValue = Number(source.year ?? source.currentYear);
+  const year = Number.isFinite(yearValue) ? Math.round(yearValue) : "-";
+  const month = source.month ?? source.currentMonth;
+  const tenDayPeriod = source.tenDayPeriod ?? source.currentTenDayPeriod;
+  return `${dynasty}${year}年${getVisibleMonthName(month)}${getVisibleTenDayPeriodLabel(tenDayPeriod)}`;
+}
+
 function formatSaveTime(value) {
   if (!value) return "未记时";
   const date = new Date(value);
@@ -296,7 +350,7 @@ function formatSaveTime(value) {
 
 function describeSave(save) {
   return [
-    `${save.dynasty || "未定朝"}${save.year || "-"}年${save.month || 1}月`,
+    formatVisibleDate({ dynasty: save.dynasty || "未定朝", year: save.year, month: save.month, tenDayPeriod: save.tenDayPeriod }),
     save.roleLabel || save.role || "未定身份",
     save.examRank ? `科名 ${save.examRank}` : null,
     save.officeTitle ? `官职 ${save.officeTitle}` : null,
@@ -659,6 +713,8 @@ function getExamCalendarView(worldState, examCalendarView) {
     schemaVersion: calendar.schemaVersion || 1,
     currentYear: worldState?.year,
     currentMonth: worldState?.month,
+    currentTenDayPeriod: worldState?.tenDayPeriod,
+    currentDateLabel: formatVisibleDate(worldState || {}),
     nextExam: null,
     missedWindows: Array.isArray(calendar.missedWindows) ? calendar.missedWindows.slice(-3) : [],
     recentSessions: Array.isArray(calendar.recentSessions) ? calendar.recentSessions.slice(-4) : []
@@ -695,7 +751,7 @@ function setStatus(worldState) {
   statusStrip.innerHTML = "";
 
   const statusItems = [
-    `${worldState.dynasty}${worldState.year}年${worldState.month || 1}月`,
+    formatVisibleDate(worldState),
     player.roleLabel,
     player.name,
     `回合 ${worldState.turnCount}`
@@ -1060,7 +1116,7 @@ function renderWorldThreadPanel(worldThreadView = currentWorldThreadView) {
 
 function formatOutcomeDate(outcome) {
   if (!outcome) return "未记";
-  return `${outcome.year ?? "-"}年${outcome.month ?? "-"}月 · 第${outcome.turn ?? 0}回`;
+  return `${formatVisibleDate(outcome)} · 第${outcome.turn ?? 0}回`;
 }
 
 function createOfficialCareerOutcome(outcome, isCurrent = false) {
@@ -1345,8 +1401,14 @@ function renderOfficialCareerPanel(officialCareerView = currentOfficialCareerVie
 
 function formatCalendarWindow(calendar) {
   if (!calendar) return "暂无考期";
-  if (calendar.isOpen) return `${calendar.examName}开场 · ${calendar.windowLabel}`;
-  return `${calendar.examName}候${calendar.nextWindowLabel}`;
+  const current = calendar.currentDateLabel || formatVisibleDate({
+    dynasty: currentWorldState?.dynasty,
+    year: calendar.currentYear,
+    month: calendar.currentMonth,
+    tenDayPeriod: calendar.currentTenDayPeriod
+  });
+  if (calendar.isOpen) return `${calendar.examName}开场 · ${current}`;
+  return `${calendar.examName}候${calendar.nextWindowLabel} · 当前${current}`;
 }
 
 function renderExamCalendarPanel(examCalendarView = currentExamCalendarView) {
@@ -1370,6 +1432,12 @@ function renderExamCalendarPanel(examCalendarView = currentExamCalendarView) {
   const grid = document.createElement("section");
   grid.className = "exam-calendar-grid";
   grid.append(
+    createPanelValue("当前", nextExam.currentDateLabel || formatVisibleDate({
+      dynasty: currentWorldState?.dynasty,
+      year: nextExam.currentYear,
+      month: nextExam.currentMonth,
+      tenDayPeriod: nextExam.currentTenDayPeriod
+    }), "p"),
     createPanelValue("窗口", nextExam.windowLabel || "-", "p"),
     createPanelValue("距下期", nextExam.monthsUntil === 0 ? "本月" : `${nextExam.monthsUntil}月`, "p"),
     createPanelValue("备考/路程", `${nextExam.preparationMonths ?? 0}月 / ${nextExam.travelMonths ?? 0}月`, "p"),
@@ -1752,11 +1820,20 @@ function appendWorldTickFeedback(worldTick) {
   if (!worldTick) return;
   const events = Array.isArray(worldTick.events) ? worldTick.events : [];
   const label = worldTick.label || (worldTick.cadence === "ten_day" ? "旬度" : "月度");
+  const to = worldTick.timeAdvance?.to;
+  const dateLabel = to ? formatVisibleDate({ dynasty: currentWorldState?.dynasty, ...to }) : "";
+  const withDate = (text) => {
+    const body = String(text || "");
+    if (!dateLabel || /年.+旬/.test(body)) return body;
+    return `${dateLabel}：${body}`;
+  };
 
   if (events.length) {
-    events.forEach((event) => appendNarrative(`[${label}] ${event}`, "world-tick"));
+    events.forEach((event) => appendNarrative(`[${label}] ${withDate(event)}`, "world-tick"));
   } else if (worldTick.summary) {
-    appendNarrative(`[${label}] ${worldTick.summary}`, "world-tick");
+    appendNarrative(`[${label}] ${withDate(worldTick.summary)}`, "world-tick");
+  } else if (dateLabel) {
+    appendNarrative(`[${label}] 时间推进至${dateLabel}。`, "world-tick");
   }
 }
 
@@ -1805,13 +1882,54 @@ function updateExamSceneControls(payload) {
   });
 }
 
+function hasVisibleDateSource(source = {}) {
+  const label = readDateLabel(source);
+  return Boolean(
+    source &&
+    typeof source === "object" &&
+    ((label && /年.+旬/.test(label)) || source.year !== undefined || source.currentYear !== undefined)
+  );
+}
+
+function formatVisibleDateSource(source) {
+  return hasVisibleDateSource(source) ? formatVisibleDate(source) : "";
+}
+
+function getEntryPreparationDateSource(entryPreparation = {}) {
+  if (!entryPreparation || typeof entryPreparation !== "object") return null;
+  if (entryPreparation.appliedAtYear === undefined && entryPreparation.appliedAtMonth === undefined) return null;
+  return {
+    year: entryPreparation.appliedAtYear,
+    month: entryPreparation.appliedAtMonth,
+    tenDayPeriod: entryPreparation.appliedAtTenDayPeriod || entryPreparation.tenDayPeriod || 1
+  };
+}
+
+function getExamPayloadDateLabel(payload = {}) {
+  const sceneTime = getExamSceneTime(payload);
+  const sources = [
+    sceneTime?.startedAt,
+    payload.examStartedAt,
+    payload.examCalendar,
+    payload.entryPreparation?.examCalendar,
+    getEntryPreparationDateSource(payload.entryPreparation),
+    payload.examSubmittedAt,
+    sceneTime?.updatedAt
+  ];
+  for (const source of sources) {
+    const label = formatVisibleDateSource(source);
+    if (label) return label;
+  }
+  return formatVisibleDate(payload.worldState || currentWorldState || {});
+}
+
 function renderExamModal(payload) {
   const previousExamId = currentExamPayload?.examId || null;
   const existingDraft = examEssay.value;
   const shouldPreserveDraft = previousExamId === payload.examId && Boolean(existingDraft);
   currentExamPayload = payload;
   examModal.classList.remove("exam-modal--result");
-  examMeta.textContent = `${payload.examName} · ${payload.questionType} · ${payload.difficulty}`;
+  examMeta.textContent = `${payload.examName} · ${payload.questionType} · ${payload.difficulty} · ${getExamPayloadDateLabel(payload)}`;
   examTitle.textContent = payload.examName;
   examQuestion.textContent = payload.examQuestion;
   examQuestion.hidden = false;
@@ -1829,7 +1947,7 @@ function renderExamModal(payload) {
   }
   if (payload.examCalendar || payload.entryPreparation?.examCalendar) {
     const item = document.createElement("li");
-    item.textContent = `科期：${formatExamCalendarSnapshot(payload.examCalendar || payload.entryPreparation.examCalendar)}`;
+    item.textContent = `科期：${formatExamCalendarSnapshot(payload.examCalendar || payload.entryPreparation.examCalendar, payload)}`;
     examRequirements.appendChild(item);
   }
   updateExamSceneControls(payload);
@@ -1995,10 +2113,21 @@ function createEntryPreparationBlock(entryPreparation) {
   return block;
 }
 
-function formatExamCalendarSnapshot(examCalendar) {
+function formatExamCalendarSnapshot(examCalendar, payload = {}) {
   if (!examCalendar) return "";
+  const dateLabel =
+    formatVisibleDateSource(payload.sceneTime?.startedAt) ||
+    formatVisibleDateSource(payload.examStartedAt) ||
+    formatVisibleDateSource(examCalendar) ||
+    formatVisibleDateSource(getEntryPreparationDateSource(payload.entryPreparation)) ||
+    formatVisibleDate({
+      dynasty: currentWorldState?.dynasty,
+      year: examCalendar.currentYear,
+      month: examCalendar.currentMonth,
+      tenDayPeriod: examCalendar.currentTenDayPeriod
+    });
   const timing = examCalendar.isOpen
-    ? `${examCalendar.currentYear}年${examCalendar.currentMonth}月本期开场`
+    ? `${dateLabel}本期开场`
     : `候${examCalendar.nextWindowLabel}`;
   const recommendation = examCalendar.teacherRecommendation?.ready
     ? "荐书/声名可用"
@@ -2012,8 +2141,8 @@ function formatExamCalendarSnapshot(examCalendar) {
   ].filter(Boolean).join("；");
 }
 
-function createExamCalendarBlock(examCalendar) {
-  const text = formatExamCalendarSnapshot(examCalendar);
+function createExamCalendarBlock(examCalendar, payload = {}) {
+  const text = formatExamCalendarSnapshot(examCalendar, payload);
   if (!text) return null;
   const block = document.createElement("section");
   block.className = "entry-preparation exam-calendar-archive";
@@ -2126,7 +2255,7 @@ function createPlayerExamArchive(payload) {
   const preparationBlock = createEntryPreparationBlock(payload.entryPreparation);
   if (preparationBlock) archive.appendChild(preparationBlock);
 
-  const calendarBlock = createExamCalendarBlock(payload.examCalendar || payload.entryPreparation?.examCalendar);
+  const calendarBlock = createExamCalendarBlock(payload.examCalendar || payload.entryPreparation?.examCalendar, payload);
   if (calendarBlock) archive.appendChild(calendarBlock);
 
   const sceneBlock = createExamSceneBlock(payload.sceneTime);
@@ -2236,7 +2365,7 @@ function renderExamArchive(worldState = currentWorldState) {
       virtualCandidates: entry.virtualCandidates || [],
       ranking: entry.ranking || []
     };
-    const title = `${history.length - index}. ${entry.examName || EXAM_LABELS[entry.level] || "考试"} · ${entry.score?.overall_score ?? "-"}分 · ${entry.score?.rank || "未定等第"}`;
+    const title = `${history.length - index}. ${entry.examName || EXAM_LABELS[entry.level] || "考试"} · ${getExamPayloadDateLabel(archivedPayload)} · ${entry.score?.overall_score ?? "-"}分 · ${entry.score?.rank || "未定等第"}`;
     const content = document.createElement("section");
     content.className = "exam-archive-entry";
     content.append(
@@ -2264,7 +2393,7 @@ function renderExamResult(payload) {
   const promotionText = describePromotionOutcome(payload.promotionResult);
 
   examModal.classList.add("exam-modal--result");
-  examMeta.textContent = `${payload.examName} · 放榜`;
+  examMeta.textContent = `${payload.examName} · 放榜 · ${getExamPayloadDateLabel(payload)}`;
   examTitle.textContent = payload.promotionResult.passed ? "金榜有名" : payload.promotionResult.severeCheat ? "监试黜落" : "榜上无名";
   examQuestion.hidden = true;
   examRequirements.hidden = true;
@@ -2578,7 +2707,7 @@ async function submitAction() {
   actionInput.disabled = true;
 
   try {
-    appendTurnDivider(`第${(currentWorldState?.turnCount || 0) + 1}回`);
+    appendTurnDivider(`第${(currentWorldState?.turnCount || 0) + 1}回 · 起 ${formatVisibleDate(currentWorldState || {})}`);
     appendNarrative(input, "player-input");
 
     const response = await fetch("/api/game/turn", {

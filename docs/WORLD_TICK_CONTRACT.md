@@ -29,6 +29,7 @@ S48 changes ordinary global turns from one month per turn to one ten-day period 
 - S48.3 makes `runWorldTick()` advance 上旬 -> 中旬 -> 下旬 -> 下月上旬. Non-month-end ticks return `cadence: "ten_day"` / `label: "旬度"` with light feedback and small natural drift; 下旬 rollover returns `cadence: "monthly"` / `label: "月度"` and performs the original full monthly settlement.
 - `worldTick.completedMonth` is the route gate for downstream monthly systems. Long-term event scheduling/resolution and official tenure-month advancement do not run before month end; direct official first appointment and per-action assignment feedback can still happen on an ordinary ten-day turn.
 - S48.4 introduces `worldTick.cadence = "scene"` for exam-local actions. This is a feedback payload, not a call to `runWorldTick()`: it reports that the exam phase advanced while the global 年/月/旬 stayed fixed.
+- S48.6 makes the browser render `worldTick.timeAdvance.to` as a visible 年月旬 label when tick events or summaries do not already include one. Browser smoke fails if `.world-tick` feedback drops `上旬`/`中旬`/`下旬` from the narrative stream.
 
 ## State Additions
 
@@ -112,7 +113,7 @@ S48.3 extends the result with `cadence`, `label`, `completedMonth`, and `timeAdv
 }
 ```
 
-`events` are the player-visible world feedback. They should be short, historically toned, and appended after provider events. A normal ten-day tick should emit one concise `[旬度]` event or summary; month-end may emit the older monthly event shape, with threshold months emitting up to two events. The S48.3 ten-day drift is deliberately a small supplemental signal, while month-end remains the authoritative full settlement. S48.5 adds a regression guard that three consecutive旬 ticks stay bounded near a one-month projection, so the lightweight drift cannot silently become a second full monthly settlement. `eventHistory` remains capped by `MAX_EVENT_HISTORY`.
+`events` are the player-visible world feedback. They should be short, historically toned, and appended after provider events. A normal ten-day tick should emit one concise `[旬度]` event or summary; month-end may emit the older monthly event shape, with threshold months emitting up to two events. Browser display must show the resulting date as 年月旬, either because the event text already contains `formatYearMonthPeriod()` or because the browser prefixes `worldTick.timeAdvance.to`. The S48.3 ten-day drift is deliberately a small supplemental signal, while month-end remains the authoritative full settlement. S48.5 adds a regression guard that three consecutive旬 ticks stay bounded near a one-month projection, so the lightweight drift cannot silently become a second full monthly settlement. `eventHistory` remains capped by `MAX_EVENT_HISTORY`.
 
 ## Route Integration Contract
 

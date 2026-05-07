@@ -12,6 +12,7 @@ const {
   getHiddenOfficialCareerTextLeaks,
   getHiddenWorldThreadTextLeaks,
   getHiddenSaveIdLeaks,
+  getTenDayDateFailures,
   getMissingExamLevels,
   getHiddenRelationshipLeaks,
   getMissingActiveRequestTargets,
@@ -26,6 +27,7 @@ const {
   getMissingWorldThreadKinds,
   getMissingWorldThreadSourceTypes,
   getWorldThreadPanelFailures,
+  hasTenDayPeriodLabel,
   normalizeBaseUrl,
   parseBrowserSmokeArgs,
   rectsOverlap,
@@ -179,6 +181,15 @@ test("browser smoke screenshot helper accepts nonblank PNG buffers", () => {
   assert.doesNotThrow(() => assertPngScreenshot(Buffer.concat([pngSignature, Buffer.alloc(1600)]), "fixture"));
   assert.throws(() => assertPngScreenshot(Buffer.from("not a png"), "fixture"), /unexpectedly small|not a PNG/);
   assert.equal(sanitizeScreenshotName("Desktop Exam Modal!"), "desktop-exam-modal");
+});
+
+test("browser smoke ten-day date helper requires visible period labels", () => {
+  assert.equal(hasTenDayPeriodLabel("明1644年八月下旬"), true);
+  assert.equal(hasTenDayPeriodLabel("明1644年八月"), false);
+  assert.deepEqual(
+    getTenDayDateFailures({ status: "明1644年八月上旬", archive: "明1644年八月" }, "fixture"),
+    ["fixture archive is missing a ten-day date label."]
+  );
 });
 
 test("browser smoke layout helpers catch overlapping boxes", () => {
