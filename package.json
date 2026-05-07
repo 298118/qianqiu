@@ -12,7 +12,8 @@
     "smoke:browser": "node scripts/browserSmoke.js",
     "smoke:provider": "node scripts/providerSmoke.js",
     "smoke:provider:route": "node scripts/providerRouteHealth.js",
-    "smoke:provider:long": "node scripts/providerLongRun.js"
+    "smoke:provider:long": "node scripts/providerLongRun.js",
+    "storage:import:sqlite": "node scripts/importJsonSessionsToSqlite.js"
   },
   "keywords": [
     "historical-simulation",

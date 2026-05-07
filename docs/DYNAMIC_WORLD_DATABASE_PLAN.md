@@ -2,7 +2,7 @@
 
 本文回应“是否需要把国家、邻国、NPC、玩家、官职、城市、事件记录等大量动态数据放入数据库，并允许 AI 随游戏进程影响数据库”的产品方向。
 
-结论：**可行，而且中长期值得做；但不建议一步到位替换当前 JSON 存档，也不能让 AI 直接写数据库。** 当前范围只考虑本地数据库，优先方向是本地 SQLite；不规划远程存档、账号体系、多人同步、云端冲突解决或托管数据库。推荐先保持现有 `worldState` 与服务器裁决边界稳定，再通过存储适配器把本地 SQLite 作为下一层持久化能力引入。AI 仍只生成叙事、建议和结构化 proposal；最终写库必须由服务器模块校验、夹断、归一化、事务提交。
+结论：**可行，而且中长期值得做；但不建议一步到位替换当前 JSON 存档，也不能让 AI 直接写数据库。** 当前范围只考虑本地数据库，优先方向是本地 SQLite；不规划远程存档、账号体系、多人同步、云端冲突解决或托管数据库。S49.3 已通过 `STORAGE_ADAPTER=sqlite` 引入可选本地 SQLite session row 原型，仍保留 JSON 默认路径。AI 仍只生成叙事、建议和结构化 proposal；最终写库必须由服务器模块校验、夹断、归一化、事务提交。
 
 ## 1. 当前基础与是否急需数据库
 
@@ -25,7 +25,7 @@
 - 需要本机多 session 比较、导入导出、长期世界演化和本地检索。
 - 需要让 prompt 按“玩家当前可知范围”取上下文，而不是把全部世界状态塞给模型。
 
-所以推荐节奏是：**先规划和适配器，后 SQLite；只做本地数据库，不做云端/账号/多人；先事件/索引表，后全量实体拆表。**
+所以推荐节奏是：**先规划和适配器，再 SQLite session row；只做本地数据库，不做云端/账号/多人；先事件/索引表，后全量实体拆表。** S49.1-S49.3 已完成规划、adapter 边界和可选 SQLite session row，下一步应进入事件日志与 AI proposal 审计。
 
 ## 1.1 当前不做的范围
 
@@ -348,12 +348,17 @@ world_sessions(
   updated_at,
   player_name,
   role,
+  role_label,
   dynasty,
   year,
   month,
   ten_day_period,
   turn_count,
+  exam_rank,
+  palace_rank,
+  office_title,
   summary,
+  metadata_json,
   world_state_json
 )
 
@@ -446,9 +451,10 @@ world_entities
 范围：
 
 - 按依赖治理选择实现方式：优先评估运行时可用的稳定 SQLite 能力；若需第三方包，必须固定版本、记录许可证、维护状态、安装影响和回滚策略。
-- 新增可选 `STORAGE_ADAPTER=sqlite`，默认仍为 JSON。
-- 首批只存 `world_sessions.world_state_json`，不拆业务表。
-- 提供 JSON -> SQLite 导入脚本和 SQLite -> JSON 导出或回滚脚本。
+- DONE：新增可选 `STORAGE_ADAPTER=sqlite`，默认仍为 JSON。
+- DONE：首批只写 `world_sessions`，一行一 session，保留 `world_state_json`，同时投影 metadata/revision/timestamps 方便存档列表。
+- DONE：提供 `npm run storage:import:sqlite` 从 JSON envelope 导入 SQLite；不会删除 JSON 原档。SQLite -> JSON 回滚暂以“保留 JSON 原档 + 禁用 env 回到 JSON adapter”为主，后续如需要再加显式导出脚本。
+- DONE：S49.3 评估后使用 Node.js 标准库 `node:sqlite`，没有新增 `package.json` 运行依赖；显式 SQLite 模式需要运行时提供 `node:sqlite`。
 
 验收：
 

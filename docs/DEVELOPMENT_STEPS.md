@@ -96,7 +96,7 @@
 | --- | --- | --- | --- | --- | --- |
 | S49.1 | DONE | 形成动态世界数据库总体规划：架构边界、数据域、AI proposal、SQLite 迁移阶段 | 2026-05-07 | Codex + read-only subagent | `e3808df`、`990f7d3` |
 | S49.2 | DONE | 抽象 storage adapter 接口，保持 JSON 为默认实现，补 adapter contract tests | 2026-05-07 | Codex + read-only subagents | `2e15e13` |
-| S49.3 | TODO | 本地 SQLite 原型：一行一 session，保留 JSON `world_state`，以可选 env 开启，不做远程/账号/多人 |  |  |  |
+| S49.3 | DONE | 本地 SQLite 原型：一行一 session，保留 JSON `world_state`，以可选 env 开启，不做远程/账号/多人 | 2026-05-07 | Codex + read-only subagents | 待本次提交生成 |
 | S49.4 | TODO | 事件日志与 AI proposal 审计：记录模型建议、服务器接受/拒绝和最终应用事件 |  |  |  |
 | S50.1 | TODO | 静态天下与邻国种子契约：国家、城市、路线、边境、官署辖区和初始可见性 |  |  |  |
 | S50.2 | TODO | per-session 国家/城市实例化与 prompt projection，先不替代现有 worldState 指标 |  |  |  |
@@ -162,19 +162,75 @@
 
 ### S49.3：SQLite Session Row 原型
 
+状态：DONE。
+
 目标：
 
-- 选择维护活跃、许可证友好、适合 Node.js 本地开发的 SQLite 依赖，并按 `docs/DEPENDENCY_PLUGIN_GOVERNANCE.md` 记录。
-- 新增可选 adapter，例如 `STORAGE_ADAPTER=sqlite`；默认仍为 JSON。
-- 最小表先只保存 `world_sessions`：`session_id`、`revision`、metadata、JSON `world_state`、created/updated 时间。
+- 评估 SQLite 实现方式，优先不新增 npm 原生依赖；若必须新增第三方依赖，再按 `docs/DEPENDENCY_PLUGIN_GOVERNANCE.md` 完整记录。
+- 新增可选 adapter：`STORAGE_ADAPTER=sqlite`；默认仍为 JSON。
+- 最小表只保存 `world_sessions`：`session_id`、`revision`、metadata、JSON `world_state`、created/updated 时间。
 - 提供从 JSON 到 SQLite 的开发脚本或导入接口，但不自动删除 JSON。
 - 不新增远程存档、账号、多人同步、云备份或托管数据库配置。
+
+完成：
+
+- 新增 `src/storage/sessionRecord.js`，把 storage schema version、安全 session id、metadata 重建、legacy/raw 归一化、save-list 脱敏和公开 skipped reason 抽成 JSON/SQLite 共用 helper。
+- 新增 `src/storage/sqliteSessionAdapter.js`，使用 Node.js 标准库 `node:sqlite` 创建本地 `world_sessions` 表，一行一 session，保留 JSON `world_state_json`，并用 SQLite transaction + revision 检查复用 adapter contract。
+- `src/storage/sessionStore.js` 支持 `STORAGE_ADAPTER=json|sqlite`；默认仍为 JSON，SQLite adapter 懒加载，旧 `.env` 和默认 `npm start` 不需要数据库。
+- `.env.example`、`.gitignore` 和 `src/config/env.js` 增加 `STORAGE_ADAPTER` / `SQLITE_DATABASE_PATH` 说明与本地 SQLite 文件忽略规则。
+- 新增 `scripts/importJsonSessionsToSqlite.js` 与 `npm run storage:import:sqlite`，可从默认 JSON 存档簿导入 SQLite；默认跳过已存在 row，不删除 JSON 原档。
+- `test/sessionStoreAdapterContract.test.js` 重构为 JSON/SQLite 同跑的 adapter contract；JSON 独有的 raw legacy 和坏 JSON 跳过仍保留专项断言。
+- JSON adapter 的 atomic rename 增加短暂 `EPERM`/`EBUSY` 重试，降低 Windows 并行测试或本机索引器短暂占用导致的误报，同时保留同目录 temp rename 协议。
+- README、架构文档、产品 brief、session storage migration plan 和动态数据库规划已同步 S49.3 的可选本地 SQLite 边界。
+
+依赖/插件记录：
+
+- 名称：Node.js `node:sqlite`
+- 类型：Node.js 标准库，不写入 `package.json`
+- 版本或范围：本地验证运行时为 Node `v24.13.1`；官方 Node 24 文档列出 `DatabaseSync`
+- 是否使用 `latest` 及理由：不适用
+- 引入步骤：S49.3
+- 负责人/工具：Codex
+- 用途：本地 SQLite session row adapter，一行一 session，保留 JSON `world_state`
+- 替代的手写逻辑或人工流程：避免新增第三方 SQLite 原生包、postinstall 或 Windows 编译链
+- 影响范围：server / tests / storage / docs / tooling
+- 许可证：随 Node.js 运行时提供；本仓库未复制第三方 SQLite npm 包
+- 维护状态：Node 官方文档提供 `node:sqlite`，当前仍需注意运行时版本差异；adapter 在缺失时只影响显式 SQLite 模式
+- 安全与隐私：无网络、密钥、遥测、postinstall 或 npm 二进制；数据库路径不进入 prompt、浏览器或 save-list payload
+- 备选方案：`better-sqlite3`、`sqlite3` 或继续 JSON adapter；本轮因标准库可用而不新增依赖
+- Mock/no-key 影响：无；默认 JSON + Mock 仍可玩
+- 安装与运行影响：`npm install` 不变；显式 `STORAGE_ADAPTER=sqlite` 需要运行时提供 `node:sqlite`
+- 验证命令：见本节验证列表
+- 回滚策略：删除 `sqliteSessionAdapter.js`、导入脚本、env 文档和 `STORAGE_ADAPTER=sqlite` 分支；默认 JSON adapter 可直接继续工作
+- 文档落点：README、架构文档、产品 brief、session storage migration plan、dynamic database plan、shared context、本台账
+- 决策：接受标准库 SQLite 原型，不新增第三方依赖
+- 后续复查：S49.4 若写事件日志/AI proposal 表，需要继续检查 AI 权限矩阵和 SQLite 事务边界
 
 验收：
 
 - JSON 与 SQLite adapter 跑同一批 contract tests。
 - SQLite 关闭时项目仍可用 `npm start` 启动并默认使用 JSON。
 - 路由响应和前端行为保持兼容。
+
+验证：
+
+- `node --check src\storage\sessionRecord.js`
+- `node --check src\storage\jsonSessionAdapter.js`
+- `node --check src\storage\sqliteSessionAdapter.js`
+- `node --check src\storage\sessionStore.js`
+- `node --check scripts\importJsonSessionsToSqlite.js`
+- `node --check test\sessionStoreAdapterContract.test.js`
+- `node --test test\sessionStoreAdapterContract.test.js`，20 项通过
+- `node --test test\sessionStore.test.js test\gameSavesRoute.test.js`，19 项通过
+- `$env:STORAGE_ADAPTER='sqlite'; $env:SQLITE_DATABASE_PATH='data/test-route-storage.sqlite'; node --test test\gameSavesRoute.test.js`，1 项通过
+- `node --test test\gameTurnRoleWorldCoupling.test.js test\gameTurnTick.test.js test\sessionStore.test.js test\sessionStoreAdapterContract.test.js`，49 项通过
+- `node --test test\gameTurnTick.test.js test\streamingTurnRoute.test.js test\examSceneTime.test.js test\examProgressRoute.test.js test\gameSavesRoute.test.js test\sessionStoreAdapterContract.test.js test\sessionStore.test.js`，55 项通过
+- `$env:STORAGE_ADAPTER='sqlite'; $env:SQLITE_DATABASE_PATH='data/test-route-turn-storage.sqlite'; node --test test\gameTurnTick.test.js`，8 项通过
+- `node scripts\importJsonSessionsToSqlite.js --db data\test-import.sqlite`，临时库导入 47 个当前本地 JSON 存档，0 skipped，随后删除临时库
+- `$env:AI_PROVIDER='mock'; $env:STORAGE_ADAPTER='json'; node -e ".../api/health..."`，返回 `{"ok":true,"aiProvider":"mock"}`
+- `npm run check:docs-governance`
+- `$env:AI_PROVIDER='mock'; npm test`，311 项通过
+- `git diff --check`
 
 ### S49.4：事件日志与 AI Proposal 审计
 
@@ -260,7 +316,7 @@
 
 ## 7. 风险与默认决策
 
-- 不立即强制新增数据库依赖；S49.2 只做 adapter，S49.3 才评估 SQLite 依赖。
+- 不立即强制新增第三方数据库依赖；S49.3 已优先使用 Node.js 标准库 `node:sqlite` 做可选本地原型，默认 JSON 仍可用。
 - 不规划远程存档、账号体系、多人同步、云端冲突解决或托管数据库；`session_id` 只表示本机不同存档。
 - 不让 AI 直接写 SQL、表名或业务字段；AI proposal 必须经过 schema 和服务器模块。
 - 不把 raw database 暴露给 prompt 或浏览器；只暴露 server-built projection。
@@ -364,4 +420,55 @@
 
 下一步：
 
-- S49.3：评估并记录本地 SQLite 依赖治理，新增可选 SQLite session row adapter，默认 JSON 路径保持不变。
+- 已由 S49.3 接续：评估并记录本地 SQLite 实现方式，新增可选 SQLite session row adapter，默认 JSON 路径保持不变。
+
+### 2026-05-07
+
+工具：Codex；只读探索子代理 Pasteur；提交前只读复审 Averroes
+
+步骤：S49.3
+
+提交：待本次提交生成
+
+完成：
+
+- 新增共享 `src/storage/sessionRecord.js`，让 JSON 与 SQLite 共用 session envelope、metadata、legacy normalization、save-list redaction 和公开 skipped reason。
+- 新增 `src/storage/sqliteSessionAdapter.js`，使用 Node.js `node:sqlite` 标准库创建本地 `world_sessions` 表，一行一 session，保存 metadata/revision/timestamps 与 JSON `world_state_json`。
+- `src/storage/sessionStore.js` 支持 `STORAGE_ADAPTER=json|sqlite`；默认 JSON 不变，SQLite 懒加载，显式 SQLite 模式可用 `SQLITE_DATABASE_PATH` 指定本地数据库。
+- 新增 JSON -> SQLite 开发导入脚本 `scripts/importJsonSessionsToSqlite.js` 和 `npm run storage:import:sqlite`；导入不会删除 JSON 原档。
+- `test/sessionStoreAdapterContract.test.js` 改为 JSON/SQLite 同跑 contract，覆盖 route-compatible read/write、tenDayPeriod normalization、save-list redaction、revision conflict、concurrent `mutateSession`、`skipWrite`、`errorAfterWrite` 和 delete；JSON 专项继续覆盖 raw legacy 和 corrupt JSON skip。
+- JSON adapter 的 atomic rename 增加短暂 `EPERM`/`EBUSY` 重试，降低 Windows 并行测试或本机索引器短暂占用导致的误报，同时保留同目录 temp rename 协议。
+- `.env.example`、`.gitignore`、README、架构文档、产品 brief、session storage migration plan 和 dynamic database plan 已同步可选本地 SQLite 边界。
+- Pasteur 只读检查了 storage facade、JSON adapter、contract tests、route 兼容、依赖治理与文档落点，确认核心风险在 env 懒加载、revision/transaction、同跑 contract 和路径污染；子代理未编辑文件，未运行 Git 写命令。
+- Averroes 执行提交前只读复审，未发现 P0/P1/P2 blocker；额外验证了默认 JSON 路径不会加载 SQLite、两个 SQLite adapter 实例指向同一临时库时 stale revision 会 409、route/list payload 未暴露 DB 路径/raw state/隐藏关系。复审子代理未编辑文件，未运行 Git 命令。
+
+验证：
+
+- `node --check src\storage\sessionRecord.js`
+- `node --check src\storage\jsonSessionAdapter.js`
+- `node --check src\storage\sqliteSessionAdapter.js`
+- `node --check src\storage\sessionStore.js`
+- `node --check scripts\importJsonSessionsToSqlite.js`
+- `node --check test\sessionStoreAdapterContract.test.js`
+- `node --test test\sessionStoreAdapterContract.test.js`，20 项通过
+- `node --test test\sessionStore.test.js test\gameSavesRoute.test.js`，19 项通过
+- `$env:STORAGE_ADAPTER='sqlite'; $env:SQLITE_DATABASE_PATH='data/test-route-storage.sqlite'; node --test test\gameSavesRoute.test.js`，1 项通过
+- `node --test test\gameTurnRoleWorldCoupling.test.js test\gameTurnTick.test.js test\sessionStore.test.js test\sessionStoreAdapterContract.test.js`，49 项通过
+- `node --test test\gameTurnTick.test.js test\streamingTurnRoute.test.js test\examSceneTime.test.js test\examProgressRoute.test.js test\gameSavesRoute.test.js test\sessionStoreAdapterContract.test.js test\sessionStore.test.js`，55 项通过
+- `$env:STORAGE_ADAPTER='sqlite'; $env:SQLITE_DATABASE_PATH='data/test-route-turn-storage.sqlite'; node --test test\gameTurnTick.test.js`，8 项通过
+- `node scripts\importJsonSessionsToSqlite.js --db data\test-import.sqlite`，临时库导入 47 个当前本地 JSON 存档，0 skipped，随后删除临时库
+- `$env:AI_PROVIDER='mock'; $env:STORAGE_ADAPTER='json'; node -e ".../api/health..."`，返回 `{"ok":true,"aiProvider":"mock"}`
+- `npm run check:docs-governance`
+- `$env:AI_PROVIDER='mock'; npm test`，311 项通过
+- `git diff --check`
+
+风险/遗留：
+
+- `node:sqlite` 在当前 Node 24 运行时可用，但显式 SQLite 模式要求运行时支持该标准库；旧 Node 可继续使用默认 JSON，SQLite contract 在缺失 `node:sqlite` 时会跳过。
+- 首次全量并行 `npm test` 在 JSON atomic rename 处复现过既有 Windows `EPERM` 抖动；本步骤补了短重试后，失败 focused 用例和后续全量并行 `npm test` 均通过。
+- S49.3 只做 session row，不做 event log、AI proposal audit、业务表拆分、远程存档、账号或多人。
+- 下一步 S49.4 应追加事件日志和 AI proposal 审计，并同步检查 AI 权限矩阵。
+
+下一步：
+
+- S49.4：事件日志与 AI proposal 审计，记录模型建议、服务器接受/拒绝和最终应用事件。

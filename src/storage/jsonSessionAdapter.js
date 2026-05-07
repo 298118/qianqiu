@@ -2,30 +2,29 @@ const fs = require("fs/promises");
 const path = require("path");
 const { randomUUID } = require("crypto");
 const { setTimeout: delay } = require("timers/promises");
-const { ensureWorldCalendarState, normalizeTenDayPeriod } = require("../game/time");
+const {
+  CURRENT_STORAGE_SCHEMA_VERSION,
+  SAFE_SESSION_ID_PATTERN,
+  assertSafeSessionId,
+  buildSessionMetadata,
+  compareSaveEntries,
+  createSessionRecord,
+  createStoreError,
+  normalizeSessionRecord,
+  toPublicSkippedReason,
+  toSaveListEntry,
+  validateWorldStateSessionId
+} = require("./sessionRecord");
 
-const CURRENT_STORAGE_SCHEMA_VERSION = 1;
 const SESSIONS_DIR = path.join(__dirname, "..", "..", "data", "sessions");
-const SAFE_SESSION_ID_PATTERN = /^[a-f0-9-]{36}$/i;
 const JSON_SESSION_FILE_PATTERN = /^([a-f0-9-]{36})\.json$/i;
 const SESSION_FILE_LOCK_STALE_MS = 30000;
 const SESSION_FILE_LOCK_WAIT_MS = 5000;
 const SESSION_FILE_LOCK_RETRY_MS = 25;
+const SESSION_FILE_RENAME_RETRY_MS = 250;
 const ATOMIC_SESSION_TEMP_FILE_PATTERN = /^([a-f0-9-]{36})\.json\..+\.tmp$/i;
 
 const sessionQueues = new Map();
-
-function createStoreError(statusCode, message) {
-  const error = new Error(message);
-  error.statusCode = statusCode;
-  return error;
-}
-
-function assertSafeSessionId(sessionId) {
-  if (!SAFE_SESSION_ID_PATTERN.test(sessionId)) {
-    throw createStoreError(400, "Invalid session id");
-  }
-}
 
 function sessionPath(sessionId) {
   assertSafeSessionId(sessionId);
@@ -39,126 +38,6 @@ function sessionLockPath(sessionId) {
 
 async function ensureSessionDir() {
   await fs.mkdir(SESSIONS_DIR, { recursive: true });
-}
-
-function isIsoString(value) {
-  return typeof value === "string" && !Number.isNaN(Date.parse(value));
-}
-
-function toIsoString(value, fallback) {
-  if (isIsoString(value)) return new Date(value).toISOString();
-  if (value instanceof Date && !Number.isNaN(value.getTime())) return value.toISOString();
-  return fallback;
-}
-
-function toNonNegativeInteger(value, fallback) {
-  const parsed = Number(value);
-  return Number.isInteger(parsed) && parsed >= 0 ? parsed : fallback;
-}
-
-function buildSessionSummary(worldState) {
-  const player = worldState?.player || {};
-  return (
-    player.officeTitle ||
-    player.position ||
-    player.examRank ||
-    player.roleLabel ||
-    player.role ||
-    "未定"
-  );
-}
-
-function buildSessionMetadata(worldState) {
-  const player = worldState?.player || {};
-  return {
-    playerName: player.name || "未定",
-    role: player.role || "scholar",
-    roleLabel: player.roleLabel || player.role || "书生",
-    dynasty: worldState?.dynasty || "明",
-    year: toNonNegativeInteger(worldState?.year, 1644),
-    month: toNonNegativeInteger(worldState?.month, 1),
-    tenDayPeriod: normalizeTenDayPeriod(worldState?.tenDayPeriod),
-    turnCount: toNonNegativeInteger(worldState?.turnCount, 0),
-    examRank: player.examRank || null,
-    palaceRank: player.palaceRank || null,
-    officeTitle: player.officeTitle || null,
-    summary: buildSessionSummary(worldState)
-  };
-}
-
-function validateWorldStateSessionId(worldState, expectedSessionId) {
-  if (!worldState || typeof worldState !== "object" || Array.isArray(worldState)) {
-    throw createStoreError(500, "Session file does not contain a valid world state");
-  }
-  assertSafeSessionId(worldState.sessionId);
-  if (expectedSessionId && worldState.sessionId !== expectedSessionId) {
-    throw createStoreError(409, "Session id mismatch");
-  }
-}
-
-function createSessionRecord(worldState, options = {}) {
-  const now = new Date().toISOString();
-  const createdAt = toIsoString(options.createdAt, now);
-  const updatedAt = toIsoString(options.updatedAt, now);
-  const revision = toNonNegativeInteger(options.revision, 1);
-
-  validateWorldStateSessionId(worldState, worldState.sessionId);
-  ensureWorldCalendarState(worldState);
-
-  return {
-    storageSchemaVersion: CURRENT_STORAGE_SCHEMA_VERSION,
-    sessionId: worldState.sessionId,
-    createdAt,
-    updatedAt,
-    revision,
-    metadata: buildSessionMetadata(worldState),
-    worldState
-  };
-}
-
-function normalizeSessionRecord(parsed, expectedSessionId, options = {}) {
-  const fileTime = toIsoString(options.fileTime, new Date().toISOString());
-
-  if (parsed?.storageSchemaVersion === undefined) {
-    validateWorldStateSessionId(parsed, expectedSessionId);
-    return {
-      record: createSessionRecord(parsed, {
-        createdAt: fileTime,
-        updatedAt: fileTime,
-        revision: 0
-      }),
-      appliedMigrations: ["legacy_raw_world_state"]
-    };
-  }
-
-  if (parsed.storageSchemaVersion > CURRENT_STORAGE_SCHEMA_VERSION) {
-    throw createStoreError(400, "Unsupported session storage schema version");
-  }
-
-  if (parsed.storageSchemaVersion !== CURRENT_STORAGE_SCHEMA_VERSION) {
-    throw createStoreError(400, "Unsupported session storage schema version");
-  }
-
-  assertSafeSessionId(parsed.sessionId);
-  if (expectedSessionId && parsed.sessionId !== expectedSessionId) {
-    throw createStoreError(409, "Session id mismatch");
-  }
-
-  const worldState = parsed.worldState;
-  validateWorldStateSessionId(worldState, parsed.sessionId);
-
-  const createdAt = toIsoString(parsed.createdAt, fileTime);
-  const updatedAt = toIsoString(parsed.updatedAt, createdAt);
-  const revision = Math.max(1, toNonNegativeInteger(parsed.revision, 1));
-
-  return {
-    record: createSessionRecord(worldState, {
-      createdAt,
-      updatedAt,
-      revision
-    }),
-    appliedMigrations: []
-  };
 }
 
 async function readSessionFile(sessionId) {
@@ -250,12 +129,32 @@ async function writeFileAtomic(filePath, content) {
     await handle.sync();
     await handle.close();
     handle = null;
-    await fs.rename(tmpPath, filePath);
+    await renameSessionFileWithRetry(tmpPath, filePath);
     await fsyncDirectory(dirPath);
   } catch (error) {
     if (handle) await handle.close().catch(() => {});
     await fs.rm(tmpPath, { force: true }).catch(() => {});
     throw error;
+  }
+}
+
+async function renameSessionFileWithRetry(sourcePath, targetPath) {
+  const deadline = Date.now() + SESSION_FILE_RENAME_RETRY_MS;
+  let delayMs = 10;
+
+  while (true) {
+    try {
+      await fs.rename(sourcePath, targetPath);
+      return;
+    } catch (error) {
+      if (!["EPERM", "EBUSY"].includes(error.code) || Date.now() >= deadline) {
+        throw error;
+      }
+      // Windows can briefly hold the target file after another local reader or
+      // indexer sees it; keep the same atomic protocol and retry only briefly.
+      await delay(delayMs);
+      delayMs = Math.min(delayMs * 2, 50);
+    }
   }
 }
 
@@ -394,32 +293,6 @@ async function mutateSession(sessionId, mutator) {
     if (context.errorAfterWrite) throw context.errorAfterWrite;
     return result === undefined ? record.worldState : result;
   });
-}
-
-function toSaveListEntry(record) {
-  return {
-    sessionId: record.sessionId,
-    storageSchemaVersion: record.storageSchemaVersion,
-    revision: record.revision,
-    createdAt: record.createdAt,
-    updatedAt: record.updatedAt,
-    ...record.metadata
-  };
-}
-
-function compareSaveEntries(a, b) {
-  const updatedDiff = Date.parse(b.updatedAt) - Date.parse(a.updatedAt);
-  if (updatedDiff !== 0) return updatedDiff;
-  const createdDiff = Date.parse(b.createdAt) - Date.parse(a.createdAt);
-  if (createdDiff !== 0) return createdDiff;
-  return a.sessionId.localeCompare(b.sessionId);
-}
-
-function toPublicSkippedReason(error) {
-  if (error.statusCode === 400) return "Invalid session file";
-  if (error.statusCode === 409) return "Unsupported or mismatched session file";
-  if (error.statusCode === 500) return "Session file is corrupt";
-  return "Unable to read session";
 }
 
 async function listSessions() {

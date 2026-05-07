@@ -1,6 +1,6 @@
 # Session Storage Migration Plan
 
-S38.2 began as a planning step and now also records the implemented JSON storage hardening baseline. S49.2 has split that baseline behind a storage adapter boundary: route code still imports `src/storage/sessionStore.js`, while the default implementation lives in `src/storage/jsonSessionAdapter.js` and stores local JSON under `data/sessions/`. The JSON adapter uses a versioned storage envelope, legacy migration, atomic writes, per-session mutation serialization, revision checks with a per-session file lock, a save-list API, and the S38.3 browser save-list UI. SQLite remains a future optional local adapter step; hosted database storage remains out of current scope.
+S38.2 began as a planning step and now also records the implemented JSON storage hardening baseline. S49.2 split that baseline behind a storage adapter boundary: route code still imports `src/storage/sessionStore.js`, while the default implementation lives in `src/storage/jsonSessionAdapter.js` and stores local JSON under `data/sessions/`. S49.3 adds `src/storage/sessionRecord.js` for shared envelope/metadata rules and `src/storage/sqliteSessionAdapter.js` as an optional local SQLite session-row adapter selected by `STORAGE_ADAPTER=sqlite`. JSON remains the default; hosted database storage, accounts, remote saves, and multiplayer remain out of current scope.
 
 ## Implemented JSON Baseline
 
@@ -20,7 +20,19 @@ Known gaps:
 
 - The JSON lock only coordinates writers that use this adapter on a normal local filesystem; network filesystem semantics and multi-host locking remain out of scope.
 - No backup/export shape yet.
-- No SQLite adapter, hosted database migration, account system, multiplayer sync, or remote save path yet.
+- No hosted database migration, account system, multiplayer sync, or remote save path yet. The SQLite adapter is local-only and currently stores one row per session with JSON `world_state`; event logs and AI proposal audit rows remain future S49 slices.
+
+## Optional SQLite Adapter
+
+S49.3 implements an optional local SQLite adapter with the same route-facing contract as JSON:
+
+- Enable with `STORAGE_ADAPTER=sqlite`; leave unset or set `STORAGE_ADAPTER=json` for the default JSON path.
+- `SQLITE_DATABASE_PATH` defaults to `data/qianqiu.sqlite`; SQLite database, WAL, SHM, journal, and `.db` variants under `data/` are ignored by Git.
+- The implementation uses Node.js `node:sqlite` when available, so no third-party npm dependency is added. Explicit SQLite mode fails with a clear storage error if the runtime lacks `node:sqlite`.
+- Table `world_sessions` stores `session_id`, schema version, `revision`, timestamps, redacted metadata columns, `metadata_json`, and the full route-compatible `world_state_json`.
+- `readSession()` still returns only `worldState`; `listSessions()` still returns redacted save metadata; `writeSession()` and `mutateSession()` still enforce revision conflicts and same-session serialization.
+- `cleanupSessionTempFiles()` is a safe no-op for SQLite because there are no adapter-owned JSON temp files.
+- `npm run storage:import:sqlite` reads the current JSON adapter save list and imports normalized records into SQLite without deleting JSON originals.
 
 ## Target Invariants
 
@@ -84,7 +96,7 @@ JSON storage now uses a temp-write-and-rename protocol:
 1. Serialize the full session record before touching the existing file.
 2. Write to a unique temp file in `data/sessions/`, for example `{sessionId}.json.{pid}.{timestamp}.{uuid}.tmp`.
 3. Open the temp file, write UTF-8 JSON with a trailing newline, and sync the file handle.
-4. Rename the temp file over `{sessionId}.json`; same-directory rename is atomic on the target platforms used by this project.
+4. Rename the temp file over `{sessionId}.json`; same-directory rename is atomic on the target platforms used by this project. On Windows, transient `EPERM`/`EBUSY` during rename is retried briefly while preserving the same temp-file-and-rename protocol.
 5. Best-effort fsync the directory after rename on platforms where Node supports it.
 6. If any step fails, remove only the temp file created for that write and leave the previous `.json` untouched.
 7. `cleanupSessionTempFiles()` treats a fresh same-session `.lock` file as evidence of an in-flight write and skips that temp file, so parallel test cleanup cannot delete another process's active rename source.
@@ -186,15 +198,16 @@ Migration phases:
 4. DONE: Browser save-list UI that consumes the redacted API while keeping last-session auto-restore compatibility.
 5. DONE: S39 JSON adapter revision hardening with latest-disk rereads and stale lock-file cleanup.
 6. DONE: Storage adapter interface, with the current JSON implementation as the default adapter and `test/sessionStoreAdapterContract.test.js` covering the shared contract.
-7. FUTURE: SQLite prototype for local development. Store one row per session with metadata columns, `revision`, timestamps, and a JSON `world_state` payload.
-8. FUTURE: Export/import tooling from JSON envelope files to database rows and back.
-9. FUTURE: Optional hosted database adapter only after local SQLite proves the contract.
+7. DONE: SQLite prototype for local development. Store one row per session with metadata columns, `revision`, timestamps, and a JSON `world_state` payload; keep JSON default.
+8. PARTIAL: JSON -> SQLite development import is available through `npm run storage:import:sqlite`; SQLite -> JSON explicit export remains future only if needed because JSON originals are not deleted.
+9. FUTURE: Event log and AI proposal audit rows after the SQLite session-row contract has settled.
+10. FUTURE: Optional hosted database adapter only after local SQLite proves the contract and product scope adds a real remote/account need.
 
 The first database candidate should be SQLite because it improves atomicity and concurrent local access without requiring a service, credentials, or a hosted dependency. PostgreSQL or another hosted database can follow only when accounts, multiplayer, or remote save sync become product requirements.
 
 ## Verification Expectations
 
-S38.2/S49.2 storage coverage includes:
+S38.2/S49.3 storage coverage includes:
 
 - `node --test test/sessionStore.test.js`
 - `node --test test/sessionStoreAdapterContract.test.js`
@@ -205,3 +218,11 @@ S38.2/S49.2 storage coverage includes:
 - save-list sorting/redaction tests
 - `npm test`
 - `npm run smoke:browser` after any browser restore or save-picker behavior changes
+
+SQLite-focused checks should set a temporary `SQLITE_DATABASE_PATH` when route tests import the facade, for example:
+
+```powershell
+$env:STORAGE_ADAPTER='sqlite'
+$env:SQLITE_DATABASE_PATH='data/test-route-storage.sqlite'
+node --test test\gameSavesRoute.test.js
+```
