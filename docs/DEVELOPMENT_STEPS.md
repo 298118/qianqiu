@@ -9,8 +9,11 @@
 
 ## 1. 开发规范继承
 
+<!-- GOVERNANCE_REQUIRED_START -->
+
 开发规范不变。继续保持：
 
+- 稳定开发治理锚点见 [docs/DEVELOPMENT_GOVERNANCE.md](DEVELOPMENT_GOVERNANCE.md)；重写路线图或交接文档时不得删弱其中的必守规则，并运行 `npm run check:docs-governance`。
 - `npm install && npm start` 可运行，默认打开 `http://localhost:3000`。
 - Mock AI 默认完整可玩，真实 provider 只作为可选配置。
 - 完整书生路径不得破坏：`scholar -> child_exam -> provincial_exam -> metropolitan_exam -> palace_exam -> official`。
@@ -66,6 +69,9 @@
 - 前端继续保持无构建流程，除非本路线图或后续明确步骤批准升级。
 - 核心游戏规则、时间推进、科举晋级、状态边界、作弊惩罚、官职任免和持久化不能完全交给模型或黑箱库。
 - 加依赖后必须验证 `npm install`、`npm start` 和对应测试。
+- 涉及 AI 可读摘要、server-owned ledger、浏览器面板或 provider 验收时，同步检查 [docs/AI_CONTROL_AUDIT_MATRIX.md](AI_CONTROL_AUDIT_MATRIX.md) 是否需要更新。
+
+<!-- GOVERNANCE_REQUIRED_END -->
 
 ## 3. 时间专项目标
 
@@ -217,6 +223,7 @@
 - 明确开发规范不变，后续实现仍需更新 shared context、运行验证、使用 Git，并在非低风险纯文档改动前执行只读子代理复审。
 - 后续修正：恢复 S48.1 重写时被压缩掉的完整子代理使用规则；该规范继续作为时间专项开发的强制流程。
 - 后续审查修正：恢复依赖/插件/开源参考治理入口，子代理授权主体恢复为 Codex 和 Claude Code，并补回中文输出检查、复审报告口径和 AI 权限矩阵检查提醒。
+- 后续保护修正：新增 `docs/DEVELOPMENT_GOVERNANCE.md` 作为规范锚点，并用 `scripts/checkGovernanceDocs.js`、`test/documentationGovernance.test.js` 和 `npm run check:docs-governance` 保护活动路线图与必读文档中的关键规范。
 
 验证：
 

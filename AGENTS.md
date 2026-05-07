@@ -4,6 +4,8 @@ This repository is the browser + Node.js historical simulation text game **Qianq
 
 Always read [docs/SHARED_CONTEXT.md](docs/SHARED_CONTEXT.md), [docs/QIANQIU_DEVELOPMENT_BRIEF.md](docs/QIANQIU_DEVELOPMENT_BRIEF.md), and [docs/DEVELOPMENT_STEPS.md](docs/DEVELOPMENT_STEPS.md) before planning or editing. The shared context is the handoff board between Codex and Claude Code; the development brief is the source of truth for product goals, architecture, data contracts, and delivery standards; the development steps file is the shared progress ledger.
 
+Stable development governance is protected in [docs/DEVELOPMENT_GOVERNANCE.md](docs/DEVELOPMENT_GOVERNANCE.md). Do not delete or weaken those rules when rewriting roadmap or handoff documents; `npm run check:docs-governance` and `npm test` guard the protected content.
+
 ## Mandatory Workflow
 
 - Preserve context on every meaningful change: update the development brief, README, inline comments, or a short note in the relevant file when behavior, API shape, setup, or assumptions change.

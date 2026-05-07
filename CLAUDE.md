@@ -4,6 +4,8 @@ This repository contains **Qianqiu / 千秋**, an AI-driven Chinese historical s
 
 Before implementing anything, read [docs/SHARED_CONTEXT.md](docs/SHARED_CONTEXT.md), [docs/QIANQIU_DEVELOPMENT_BRIEF.md](docs/QIANQIU_DEVELOPMENT_BRIEF.md), and [docs/DEVELOPMENT_STEPS.md](docs/DEVELOPMENT_STEPS.md). Treat the shared context as the handoff board between Codex and Claude Code, the development brief as the canonical project brief, and the development steps file as the shared progress ledger.
 
+Stable development governance is protected in [docs/DEVELOPMENT_GOVERNANCE.md](docs/DEVELOPMENT_GOVERNANCE.md). Do not delete or weaken those rules when rewriting roadmap or handoff documents; `npm run check:docs-governance` and `npm test` guard the protected content.
+
 ## Required Habits
 
 - Maintain project context continuously. Any important decision, changed assumption, new route, new state field, prompt change, or setup requirement must be written back into the repository.
