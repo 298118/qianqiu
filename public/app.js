@@ -900,6 +900,352 @@ function buildInformationPanelSummary(tab) {
   };
 }
 
+function buildRowMap(rows = []) {
+  return new Map(viewArray({ rows }, "rows").filter((row) => row?.id).map((row) => [row.id, row]));
+}
+
+function rowName(map, id, fallback = "未明") {
+  if (!id) return fallback;
+  const row = map.get(id);
+  return row?.name || row?.shortName || row?.title || fallback;
+}
+
+function compactList(values = [], fallback = "未明", limit = 4) {
+  const list = Array.isArray(values)
+    ? values.map((value) => `${value || ""}`.trim()).filter(Boolean)
+    : [];
+  return list.length ? list.slice(0, limit).join("、") : fallback;
+}
+
+function metricText(value, suffix = "") {
+  if (value === undefined || value === null || value === "") return "未明";
+  if (typeof value === "number" && Number.isFinite(value)) return `${Math.round(value)}${suffix}`;
+  return `${value}${suffix}`;
+}
+
+function geographyPressureScore(row = {}) {
+  return Math.max(
+    Number(row.pressure) || 0,
+    Number(row.risk) || 0,
+    100 - (Number(row.stability) || 100),
+    Number(row.priority) || 0
+  );
+}
+
+function topPressureRows(rows = [], limit = 2) {
+  return rows
+    .slice()
+    .sort((first, second) => {
+      const delta = geographyPressureScore(second) - geographyPressureScore(first);
+      return delta || `${first.id || ""}`.localeCompare(`${second.id || ""}`);
+    })
+    .slice(0, limit);
+}
+
+function createInformationMetric(label, value, className = "") {
+  const item = document.createElement("p");
+  item.className = ["information-card-metric", className].filter(Boolean).join(" ");
+  const kicker = document.createElement("span");
+  kicker.className = "relationship-kicker";
+  kicker.textContent = label;
+  const text = document.createElement("span");
+  text.textContent = value === undefined || value === null || value === "" ? "未明" : `${value}`;
+  item.append(kicker, text);
+  return item;
+}
+
+function createInformationDetailCard(options = {}) {
+  const card = document.createElement("article");
+  card.className = options.className || "information-detail-card";
+  card.dataset.kind = options.kind || "";
+  card.dataset.entityId = options.entityId || "";
+  if (options.status) card.dataset.status = options.status;
+  if (options.visibility) card.dataset.visibility = options.visibility;
+  if (options.cityId) card.dataset.cityId = options.cityId;
+  if (options.routeId) card.dataset.routeId = options.routeId;
+  if (options.pressure !== undefined && options.pressure !== null) card.dataset.pressure = String(options.pressure);
+  if (options.risk !== undefined && options.risk !== null) card.dataset.risk = String(options.risk);
+
+  const header = document.createElement("header");
+  appendIfText(header, "strong", options.title || "未名条目", "information-card-title");
+  appendIfText(header, "span", options.meta || "");
+
+  const summary = document.createElement("p");
+  summary.className = "information-card-summary";
+  summary.textContent = options.summary || "暂无公开案语。";
+
+  const metrics = document.createElement("div");
+  metrics.className = "information-card-metrics";
+  (options.metrics || []).forEach(([label, value, className]) => {
+    metrics.appendChild(createInformationMetric(label, value, className));
+  });
+
+  card.append(header, summary);
+  if (metrics.childNodes.length) card.appendChild(metrics);
+  if (options.extra) {
+    const extra = document.createElement("p");
+    extra.className = "information-card-extra";
+    extra.textContent = options.extra;
+    card.appendChild(extra);
+  }
+  return card;
+}
+
+function renderInformationDetailSection(titleText, summaryText, cards = []) {
+  const section = document.createElement("section");
+  section.className = "information-detail-section";
+  const header = document.createElement("header");
+  appendIfText(header, "strong", titleText);
+  appendIfText(header, "span", summaryText);
+  section.appendChild(header);
+
+  if (!cards.length) {
+    const empty = document.createElement("p");
+    empty.className = "information-panel-note";
+    empty.textContent = "暂无可见细目。";
+    section.appendChild(empty);
+    return section;
+  }
+
+  const grid = document.createElement("div");
+  grid.className = "information-detail-grid";
+  cards.forEach((card) => grid.appendChild(card));
+  section.appendChild(grid);
+  return section;
+}
+
+function renderWorldGeographyDetails(geography = currentWorldGeographyView) {
+  if (!geography) return null;
+  const cityMap = buildRowMap(viewArray(geography, "cities"));
+  const countryMap = buildRowMap(viewArray(geography, "countries"));
+  const routeMap = buildRowMap(viewArray(geography, "routes"));
+  const frontierMap = buildRowMap(viewArray(geography, "frontierZones"));
+  const highlights = geography.highlights || {};
+  const cards = [];
+
+  topPressureRows(viewArray(highlights, "countries").length ? highlights.countries : viewArray(geography, "countries"), 2)
+    .forEach((country) => {
+      cards.push(createInformationDetailCard({
+        className: "world-geography-card",
+        kind: "country",
+        entityId: country.id,
+        status: country.status,
+        visibility: country.visibility,
+        pressure: country.pressure,
+        title: country.name,
+        meta: `国家 · ${country.statusLabel || "未详"}`,
+        summary: country.publicSummary,
+        metrics: [
+          ["压力", metricText(country.pressure)],
+          ["安稳", metricText(country.stability)],
+          ["信度", metricText(country.intelConfidence)]
+        ],
+        extra: compactList(country.cultureTags || country.governmentTags, "暂无公开标签")
+      }));
+    });
+
+  topPressureRows(viewArray(highlights, "cities").length ? highlights.cities : viewArray(geography, "cities"), 2)
+    .forEach((city) => {
+      cards.push(createInformationDetailCard({
+        className: "world-geography-card",
+        kind: "city",
+        entityId: city.id,
+        status: city.status,
+        visibility: city.visibility,
+        cityId: city.id,
+        pressure: city.pressure,
+        title: city.name,
+        meta: `${rowName(countryMap, city.countryId, "未知邦国")} · ${city.statusLabel || "未详"}`,
+        summary: city.publicSummary,
+        metrics: [
+          ["压力", metricText(city.pressure)],
+          ["民心", metricText(city.localOrder)],
+          ["粮压", metricText(city.grainStress)]
+        ],
+        extra: compactList(city.strategicTags, city.terrain || "暂无公开标签")
+      }));
+    });
+
+  topPressureRows(viewArray(highlights, "routes").length ? highlights.routes : viewArray(geography, "routes"), 2)
+    .forEach((route) => {
+      const endpoint = `${rowName(cityMap, route.fromCityId)}至${rowName(cityMap, route.toCityId)}`;
+      cards.push(createInformationDetailCard({
+        className: "world-geography-card",
+        kind: "route",
+        entityId: route.id,
+        status: route.status,
+        visibility: route.visibility,
+        routeId: route.id,
+        risk: route.risk,
+        title: route.name,
+        meta: `路线 · ${route.statusLabel || "未详"}`,
+        summary: route.publicSummary,
+        metrics: [
+          ["风险", metricText(route.risk)],
+          ["里程", route.distanceLabel || "未详"],
+          ["端点", endpoint]
+        ],
+        extra: route.seasonalRisk || compactList(route.strategicTags, "暂无时令风险")
+      }));
+    });
+
+  topPressureRows(viewArray(highlights, "frontierZones").length ? highlights.frontierZones : viewArray(geography, "frontierZones"), 1)
+    .forEach((frontier) => {
+      cards.push(createInformationDetailCard({
+        className: "world-geography-card",
+        kind: "frontier",
+        entityId: frontier.id,
+        status: frontier.status,
+        visibility: frontier.visibility,
+        pressure: frontier.pressure,
+        title: frontier.name,
+        meta: `边面 · ${frontier.statusLabel || "未详"}`,
+        summary: frontier.publicSummary,
+        metrics: [
+          ["压力", metricText(frontier.pressure)],
+          ["邻境", rowName(countryMap, frontier.neighborCountryId)],
+          ["路线", compactList((frontier.routeIds || []).map((id) => rowName(routeMap, id, "")), "暂无")]
+        ],
+        extra: compactList((frontier.cityIds || []).map((id) => rowName(cityMap, id, "")), "未列可见城市")
+      }));
+    });
+
+  topPressureRows(viewArray(geography, "officeJurisdictions"), 1)
+    .forEach((jurisdiction) => {
+      cards.push(createInformationDetailCard({
+        className: "world-geography-card",
+        kind: "office-jurisdiction",
+        entityId: jurisdiction.id,
+        visibility: jurisdiction.visibility,
+        pressure: jurisdiction.priority,
+        title: jurisdiction.name,
+        meta: `辖区 · ${jurisdiction.scope || "未详"}`,
+        summary: jurisdiction.publicSummary,
+        metrics: [
+          ["优先", metricText(jurisdiction.priority)],
+          ["城市", metricText((jurisdiction.cityIds || []).length)],
+          ["路线", metricText((jurisdiction.routeIds || []).length)]
+        ],
+        extra: compactList((jurisdiction.cityIds || []).map((id) => rowName(cityMap, id, "")), "未列可见城市")
+      }));
+    });
+
+  return renderInformationDetailSection("地理要目", `${cards.length}条可见细目`, cards);
+}
+
+function formatLocalMetrics(metrics = {}) {
+  return [
+    ["民心", metricText(metrics.publicOrder)],
+    ["税力", metricText(metrics.taxCapacity)],
+    ["词讼", metricText(metrics.lawsuits)],
+    ["水利", metricText(metrics.waterworks)]
+  ];
+}
+
+function renderPostingGeographyDetails(postings = currentOfficialPostingsView, geography = currentWorldGeographyView) {
+  if (!postings || !geography) return null;
+  const cityMap = buildRowMap(viewArray(geography, "cities"));
+  const regionMap = buildRowMap(viewArray(geography, "regions"));
+  const routeMap = buildRowMap(viewArray(geography, "routes"));
+  const frontierMap = buildRowMap(viewArray(geography, "frontierZones"));
+  const bureauMap = buildRowMap(viewArray(postings, "bureaus"));
+  const jurisdictionMap = buildRowMap(viewArray(postings, "cityJurisdictions"));
+  const cards = [];
+
+  const activePostings = viewArray(postings, "postings")
+    .filter((posting) => posting.status === "active" || posting.holderType === "player")
+    .slice(0, 2);
+
+  activePostings.forEach((posting) => {
+    cards.push(createInformationDetailCard({
+      className: "posting-geography-card",
+      kind: "posting",
+      entityId: posting.id,
+      status: posting.status,
+      visibility: posting.visibility,
+      cityId: posting.cityId,
+      title: posting.officeTitle || "当前任所",
+      meta: `${rowName(bureauMap, posting.bureauId, "未明官署")} · ${rowName(cityMap, posting.cityId, "未明城市")}`,
+      summary: posting.publicSummary,
+      metrics: [
+        ["考成", metricText(posting.performanceScore)],
+        ["弹劾", metricText(posting.impeachmentRisk)],
+        ["清望", metricText(posting.publicReputation)],
+        ["任期", `${posting.termMonths ?? 0}月`]
+      ],
+      extra: rowName(jurisdictionMap, posting.jurisdictionId, "辖区未明")
+    }));
+  });
+
+  const selectedJurisdictionIds = new Set(activePostings.map((posting) => posting.jurisdictionId).filter(Boolean));
+  const selectedJurisdictions = [
+    ...viewArray(postings, "cityJurisdictions").filter((jurisdiction) => selectedJurisdictionIds.has(jurisdiction.id)),
+    ...viewArray(postings, "cityJurisdictions")
+      .filter((jurisdiction) => !selectedJurisdictionIds.has(jurisdiction.id))
+      .sort((first, second) =>
+        Math.max(second.localMetrics?.disasterRisk || 0, second.localMetrics?.militaryPressure || 0) -
+        Math.max(first.localMetrics?.disasterRisk || 0, first.localMetrics?.militaryPressure || 0)
+      )
+  ].slice(0, activePostings.length ? 3 : 4);
+
+  selectedJurisdictions.forEach((jurisdiction) => {
+    cards.push(createInformationDetailCard({
+      className: "posting-geography-card",
+      kind: "jurisdiction",
+      entityId: jurisdiction.id,
+      visibility: jurisdiction.visibility,
+      cityId: jurisdiction.cityId,
+      title: jurisdiction.name,
+      meta: `${rowName(bureauMap, jurisdiction.bureauId, "未明官署")} · ${rowName(cityMap, jurisdiction.cityId, "未明城市")}`,
+      summary: jurisdiction.publicSummary,
+      metrics: formatLocalMetrics(jurisdiction.localMetrics),
+      extra: [
+        `区域：${rowName(regionMap, jurisdiction.regionId, "未明区域")}`,
+        `路线：${compactList((jurisdiction.routeIds || []).map((id) => rowName(routeMap, id, "")), "暂无")}`,
+        `边面：${compactList((jurisdiction.frontierZoneIds || []).map((id) => rowName(frontierMap, id, "")), "暂无")}`
+      ].join("；")
+    }));
+  });
+
+  const routeIds = new Set(selectedJurisdictions.flatMap((jurisdiction) => jurisdiction.routeIds || []));
+  const routeRows = [...routeIds].map((id) => routeMap.get(id)).filter(Boolean);
+  (routeRows.length ? routeRows : topPressureRows(viewArray(geography, "routes"), 2)).slice(0, 2).forEach((route) => {
+    cards.push(createInformationDetailCard({
+      className: "posting-geography-card",
+      kind: "route",
+      entityId: route.id,
+      status: route.status,
+      visibility: route.visibility,
+      routeId: route.id,
+      risk: route.risk,
+      title: route.name,
+      meta: `任所通路 · ${route.statusLabel || "未详"}`,
+      summary: route.publicSummary,
+      metrics: [
+        ["风险", metricText(route.risk)],
+        ["端点", `${rowName(cityMap, route.fromCityId)}至${rowName(cityMap, route.toCityId)}`],
+        ["里程", route.distanceLabel || "未详"]
+      ],
+      extra: route.seasonalRisk
+    }));
+  });
+
+  const section = renderInformationDetailSection("任所要目", `${cards.length}条辖区与通路`, cards);
+  if (!activePostings.length) {
+    const note = document.createElement("p");
+    note.className = "information-panel-note posting-geography-empty";
+    note.textContent = "尚未入仕；此处先列公开官署辖区，入仕或外放后会优先显示当前任所。";
+    section.insertBefore(note, section.children[1] || null);
+  }
+  return section;
+}
+
+function renderInformationPanelDetails(tabId) {
+  if (tabId === "world-geography") return renderWorldGeographyDetails();
+  if (tabId === "posting-geography") return renderPostingGeographyDetails();
+  return null;
+}
+
 function setStatus(worldState) {
   const player = worldState.player;
   statusStrip.innerHTML = "";
@@ -1674,6 +2020,8 @@ function renderInformationPanelPage(tab, activeTabId) {
   note.textContent = summary.note;
 
   page.append(title, stats, note);
+  const details = renderInformationPanelDetails(tab.id);
+  if (details) page.appendChild(details);
   return page;
 }
 

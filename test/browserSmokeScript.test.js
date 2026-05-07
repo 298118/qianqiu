@@ -65,6 +65,15 @@ function createLayoutMetrics(overrides = {}) {
     informationPanelClientWidth: 1180,
     informationPanelScrollWidth: 1180,
     informationPanelWidth: 1180,
+    informationPageClientWidth: 1180,
+    informationPageScrollWidth: 1180,
+    informationPageWidth: 1180,
+    worldGeographyGridClientWidth: 1180,
+    worldGeographyGridScrollWidth: 1180,
+    worldGeographyGridWidth: 1180,
+    postingGeographyGridClientWidth: 1180,
+    postingGeographyGridScrollWidth: 1180,
+    postingGeographyGridWidth: 1180,
     examCalendarClientWidth: 1180,
     examCalendarScrollWidth: 1180,
     examCalendarWidth: 1180,
@@ -364,7 +373,7 @@ test("browser smoke world thread helpers catch missing fields and hidden text", 
   assert.match(failures.join("\n"), /leaked hidden text tokens: Hidden Palace Thread/);
 });
 
-test("browser smoke information panel shell helper catches missing views and early detail content", () => {
+test("browser smoke information panel shell helper catches missing views and future detail content", () => {
   const failures = getInformationPanelShellFailures(
     {
       activeTab: "world-geography",
@@ -372,11 +381,15 @@ test("browser smoke information panel shell helper catches missing views and ear
       disabledTabIds: [],
       panelIds: ["world-geography-panel", "world-people-panel"],
       readyPanelIds: ["world-geography-panel", "event-archive-panel"],
-      contentCardCount: 1,
+      worldGeographyKinds: ["country"],
+      postingGeographyKinds: [],
+      roleVisibleGeographyCount: 1,
+      futureContentCardCount: 1,
       text: "局势簿 hiddenNotes OPENAI_API_KEY"
     },
     {
       hiddenTextTokens: ["hiddenNotes", "OPENAI_API_KEY"],
+      expectNoRoleVisibleGeography: true,
       expectEventArchiveReady: false
     },
     "information fixture"
@@ -387,7 +400,10 @@ test("browser smoke information panel shell helper catches missing views and ear
   assert.match(failures.join("\n"), /route views missing for panels: posting-geography-panel, world-people-panel, official-postings-panel/);
   assert.match(failures.join("\n"), /did not keep event archive disabled/);
   assert.match(failures.join("\n"), /marked event archive ready before sanitized projection/);
-  assert.match(failures.join("\n"), /rendered detailed content cards before S53\.4-S53\.6/);
+  assert.match(failures.join("\n"), /missing world geography card kinds: city, route, frontier, office-jurisdiction/);
+  assert.match(failures.join("\n"), /missing posting geography card kinds: jurisdiction, route/);
+  assert.match(failures.join("\n"), /leaked role-visible geography to a restricted role/);
+  assert.match(failures.join("\n"), /rendered future content cards before S53\.5-S53\.6/);
   assert.match(failures.join("\n"), /leaked hidden text tokens: hiddenNotes, OPENAI_API_KEY/);
 });
 
@@ -574,12 +590,24 @@ test("browser smoke game layout helper catches information panel overflow", () =
     createLayoutMetrics({
       informationPanelClientWidth: 500,
       informationPanelScrollWidth: 640,
-      informationPanelWidth: 500
+      informationPanelWidth: 500,
+      informationPageClientWidth: 500,
+      informationPageScrollWidth: 630,
+      informationPageWidth: 500,
+      worldGeographyGridClientWidth: 500,
+      worldGeographyGridScrollWidth: 620,
+      worldGeographyGridWidth: 500,
+      postingGeographyGridClientWidth: 500,
+      postingGeographyGridScrollWidth: 610,
+      postingGeographyGridWidth: 500
     }),
     "desktop"
   );
 
   assert.match(failures.join("\n"), /information panel has horizontal scroll overflow/);
+  assert.match(failures.join("\n"), /information panel active page has horizontal scroll overflow/);
+  assert.match(failures.join("\n"), /world geography grid has horizontal scroll overflow/);
+  assert.match(failures.join("\n"), /posting geography grid has horizontal scroll overflow/);
 });
 
 test("browser smoke game layout helper catches exam calendar and rival panel overflow", () => {

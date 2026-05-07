@@ -31,7 +31,7 @@ The smoke uses `playwright-core` with an installed Chrome or Edge executable. If
 | Relationship panel | Checks visible contact/faction rows from `relationshipView`, field completeness, hidden id/text non-leakage, relationship-panel overflow, and a Mock scholar turn updating the mentor relationship. |
 | Active request panel | Checks the server-scheduled `activeNpcRequestView` panel, target id/type/kind/status attributes, required ask/stakes/due/hint fields, hidden target/text non-leakage, and active-request overflow. |
 | Official career panel | Checks direct official start, the server-owned `officialCareerView` panel, 官署/差事/考成/关系/风险 sections, deterministic first appointment, a Mock `relief` assignment, hidden-note non-leakage tokens, current outcome fields, stable `data-*` attributes, and official-career overflow on desktop/mobile. |
-| Information panel shell | Checks S53.3 `#information-panel` tab shell, required tabs and child panels, route-view readiness, event archive disabled-before-projection state, hidden-token non-leakage, tab switching, and information-panel overflow. |
+| Information panels | Checks `#information-panel` tab shell, required child panels, route-view readiness, S53.4 天下/任所 detail cards, role-visible geography boundaries, event archive disabled-before-projection state, hidden-token non-leakage, tab switching, and information-panel/grid overflow. |
 | Exam calendar panel | Checks the server-owned `examCalendarView` panel, next-level/status attributes, timing/funding/recommendation/quota details, current 年月旬 label, and calendar-panel overflow. |
 | Exam rival panel | Checks persistent `examRivalView` cards after an exam, stable rival/status/level attributes, latest-result rows, and rival-panel overflow. |
 | Role/world coupling | Opens direct magistrate, general, emperor, and minister sessions; runs one representative role action; checks `.role-world-event[data-role-world-kind]` feedback; and verifies the expected API state metric moves in the intended direction. |
@@ -52,14 +52,14 @@ S53.3 adds the first runtime browser shell:
 
 - `#information-panel` is a compact tab shell inside `#scholar-panel`.
 - `public/app.js` caches `worldGeographyView`, `worldEntityView`, `worldPeopleView`, `officialPostingsView`, and the existing long-term/world-thread/official views from route payloads.
-- `#world-geography-panel`, `#posting-geography-panel`, `#world-people-panel`, and `#official-postings-panel` expose only readiness and counts in this slice.
+- `#world-people-panel` and `#official-postings-panel` still expose only readiness and counts until S53.5.
 - `#event-archive-panel` exists as a disabled future panel and must stay content-empty until a server-built sanitized `eventArchiveView` or equivalent projection exists.
-- `scripts/browserSmoke.js` now checks the shell, route-view readiness, disabled event archive state, tab switching, hidden-token non-leakage across the full information-panel DOM, and horizontal overflow; `test/browserSmokeScript.test.js` covers the helper failures.
+- S53.4 fills `#world-geography-panel` with `.world-geography-card[data-kind][data-entity-id]` cards for visible countries, cities, routes, frontier zones, and office jurisdictions.
+- S53.4 fills `#posting-geography-panel` with `.posting-geography-card[data-kind][data-entity-id]` cards for current posting, visible city jurisdictions, local metrics, and related routes.
+- `scripts/browserSmoke.js` now checks the shell, route-view readiness, required S53.4 card kinds, role-visible geography boundaries, disabled event archive state, tab switching, hidden-token non-leakage across the full information-panel DOM, and horizontal overflow for the panel plus active detail grids; `test/browserSmokeScript.test.js` covers the helper failures.
 
 Future content panels should fill:
 
-- `#world-geography-panel` for 天下格局, backed by `worldGeographyView` and optional visible `worldEntityView` / `worldThreadView` context.
-- `#posting-geography-panel` for 任所地理, backed by `officialPostingsView` and `worldGeographyView`.
 - `#world-people-panel` for 人物谱牒, backed by `worldPeopleView` with optional `relationshipView` / `activeNpcRequestView` context.
 - `#official-postings-panel` for 官职簿, backed by `officialPostingsView` with personal-career context from `officialCareerView`.
 - `#event-archive-panel` for 事件档案 only after a server-built sanitized `eventArchiveView` or equivalent projection exists.
@@ -70,9 +70,9 @@ Each future detailed panel needs stable `data-*` attributes, hidden-token scanni
 
 Date: 2026-05-07
 
-Relevant implementation commit: `89e73c2`
+Relevant implementation commit: 待提交后回填
 
-Commands verified during S53.3:
+Commands verified during S53.4:
 
 ```powershell
 node --check public\app.js
@@ -87,8 +87,8 @@ git diff --check
 
 Observed result:
 
-- Focused browser-smoke helper coverage now includes S53.3 information-panel shell failure checks, detailed-content guard, disabled event archive guard, hidden-token leak checks, and information-panel overflow.
-- `$env:AI_PROVIDER='mock'; npm run smoke:browser`: passed with 14 screenshots checked. The smoke traversed desktop, restored, fresh-page, mobile, direct official, official assignment, and representative role-world paths while checking `#information-panel` tab switching and no horizontal overflow.
+- Focused browser-smoke helper coverage now includes S53.4 geography/posting detail card requirements, future-content guard, disabled event archive guard, role-visible geography checks, hidden-token leak checks, and information-panel/page/grid overflow.
+- `$env:AI_PROVIDER='mock'; npm run smoke:browser`: passed with 14 screenshots checked. The smoke traversed desktop, restored, fresh-page, mobile, direct official, official assignment, post-palace official, and representative role-world paths while checking `#information-panel` tab switching, S53.4 card kinds, hidden-token non-leakage, and no horizontal overflow.
 - `$env:AI_PROVIDER='mock'; npm test`: passed with 372 tests.
 - Real-provider browser behavior still requires an explicitly configured `--url` target and is not part of default Mock smoke.
 - The browser start path still clears stale `qianqiu.sessionId` localStorage only when an old restored game hides the initial start form. Later reload/fresh-page restoration checks continue to validate the newly created session.

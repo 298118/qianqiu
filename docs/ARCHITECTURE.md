@@ -48,7 +48,7 @@ Important route ownership:
 - `src/routes/game.js` creates sessions, reads sessions, and advances free-text turns.
 - `src/routes/exam.js` generates saved exam questions, advances exam-local scene phases, and submits essays.
 - `src/routes/ai.js` owns no-session AI diagnostics such as provider connection checks.
-- `docs/BROWSER_INFORMATION_PANEL_PLAN.md` owns the S53.2 browser information panel plan. It maps future 天下格局、任所地理、人物谱牒、官职簿 and 事件档案 panels to route views and keeps raw ledgers/audit payloads out of UI scope.
+- `docs/BROWSER_INFORMATION_PANEL_PLAN.md` owns the S53 browser information panel plan. It maps 天下格局、任所地理、人物谱牒、官职簿 and 事件档案 panels to route views, with S53.4 covering the first two browser panels and S53.5-S53.6 keeping raw ledgers/audit payloads out of the remaining UI scope.
 - `src/game/stateRules.js` is the only way provider state patches should be merged.
 - `src/game/exams.js` owns exam levels, gates, thresholds and next-exam mapping.
 - `src/game/promotions.js` owns rank changes, official promotion and severe-cheating consequences.
@@ -472,7 +472,9 @@ S53.2 adds [docs/BROWSER_INFORMATION_PANEL_PLAN.md](BROWSER_INFORMATION_PANEL_PL
 
 S53.1 `retrievalContext` remains provider-only prompt input. Browser panels must not consume it, and `public/app.js` raw `worldState` fallbacks are old-payload/development compatibility only, not approved data sources for new panels.
 
-S53.3 implements the browser wiring foundation for that plan. `public/app.js` now caches `worldGeographyView`, `worldEntityView`, `worldPeopleView`, and `officialPostingsView` from route payloads alongside the older relationship, official-career, exam, long-term-event, and world-thread views. The game role panel renders a compact `#information-panel` tab shell with stable child selectors: `#world-geography-panel`, `#posting-geography-panel`, `#world-people-panel`, `#official-postings-panel`, and disabled `#event-archive-panel`. This shell only shows source readiness and small counts; it does not render detailed geography/people/office cards, does not read raw ledgers, and keeps event archive content disabled until a sanitized server projection exists.
+S53.3 implements the browser wiring foundation for that plan. `public/app.js` now caches `worldGeographyView`, `worldEntityView`, `worldPeopleView`, and `officialPostingsView` from route payloads alongside the older relationship, official-career, exam, long-term-event, and world-thread views. The game role panel renders a compact `#information-panel` tab shell with stable child selectors: `#world-geography-panel`, `#posting-geography-panel`, `#world-people-panel`, `#official-postings-panel`, and disabled `#event-archive-panel`.
+
+S53.4 fills the first two information-panel tabs. `#world-geography-panel` renders `.world-geography-card[data-kind][data-entity-id]` rows for visible countries, cities, routes, frontier zones, and office jurisdictions from `worldGeographyView`. `#posting-geography-panel` renders `.posting-geography-card[data-kind][data-entity-id]` rows for the current posting, visible city jurisdictions, local metrics, and related routes from `officialPostingsView` plus visible geography lookups. These cards are display-only and do not provide settlement actions, direct appointments, routing commands, or database writes. The browser smoke helper now permits geography/posting cards while continuing to block future people/official/event detail cards before S53.5/S53.6, checks role-visible geography boundaries, and measures active information pages/grids for horizontal overflow.
 
 ## State Model
 
@@ -764,13 +766,15 @@ S51.1 adds `src/game/worldPeopleSchemas.js` as the next database-domain contract
 
 S52.1 adds [docs/OFFICIAL_POSTING_DATABASE_CONTRACT.md](OFFICIAL_POSTING_DATABASE_CONTRACT.md), `src/game/officialPostingSchemas.js`, and `test/officialPostingSchemas.test.js` as the官职任所 database-domain contract. The helper normalizes future `bureaus`, `offices`, `cityJurisdictions`, `postings`, `assessmentRecords`, and `transferRecords`, then builds hidden-filtered views and capped prompt summaries. It reuses `officialCatalog` ids for官署/官职 and S50 geography ids for任所辖区. `worldState.officialPostings` is server-owned: ordinary provider `statePatch.officialPostings` is rejected by schema or ignored by state patching, remote normalization drops it, audit proposals redact it, and provider long-run flags it as a protected key.
 
-S52.2 adds `src/game/officialPostings.js`, `worldState.officialPostings`, `officialPostingsView`, and capped `officialPostings` prompt context. The bridge instantiates catalog bureaus/offices, converts visible `worldGeographyView.officeJurisdictions` and cities into per-city任所辖区 rows, maps direct official and magistrate starts to the current visible posting, and derives transfer records from server-owned `officialCareer.careerHistory`. Because routes still return raw local `worldState`, the stored ledger is only the hidden-filtered visible projection. This slice does not alter `officialCareerView`, does not add browser官职簿/任所地理 panels, and does not create SQLite office business tables.
+S52.2 adds `src/game/officialPostings.js`, `worldState.officialPostings`, `officialPostingsView`, and capped `officialPostings` prompt context. The bridge instantiates catalog bureaus/offices, converts visible `worldGeographyView.officeJurisdictions` and cities into per-city任所辖区 rows, maps direct official and magistrate starts to the current visible posting, and derives transfer records from server-owned `officialCareer.careerHistory`. Because routes still return raw local `worldState`, the stored ledger is only the hidden-filtered visible projection. This slice does not alter `officialCareerView` and does not create SQLite office business tables. S53.4 now consumes this view for a read-only 任所地理 browser panel; 官职簿 details remain S53.5.
 
 S53.1 adds `src/ai/promptContextAssembler.js`. It keeps existing compact prompt summary fields for compatibility, then adds `retrievalContext` as a ranked, capped index across visible geography, people, official postings, World Entities, World Threads, long-term events, and visible recent event strings. It deliberately avoids raw audit logs and raw hidden ledgers; future UI panels in S53.2 should still read route views, not this provider-only prompt object.
 
 S53.2 adds `docs/BROWSER_INFORMATION_PANEL_PLAN.md`. The plan splits later browser work into S53.3 front-end wiring, S53.4 geography/posting geography panels, S53.5 people/official-posting panels, and S53.6 event archive projection plus panel. It also records the key safety rule: event archive UI must wait for a sanitized server projection and must never inspect raw audit payloads or provider proposals directly.
 
 S53.3 adds the front-end wiring slice for that plan. It changes `public/app.js`, `public/styles.css`, `scripts/browserSmoke.js`, and `test/browserSmokeScript.test.js`; no route shape, provider schema, state schema, SQLite table, or event archive projection changes are introduced.
+
+S53.4 continues in the same front-end-only lane. It changes `public/app.js`, `public/styles.css`, `scripts/browserSmoke.js`, and `test/browserSmokeScript.test.js`; it does not change route payload shape, provider schema, storage adapters, SQLite tables, prompt contracts, or event archive projection.
 
 ## Verification
 

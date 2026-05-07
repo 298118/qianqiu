@@ -742,6 +742,102 @@ button:disabled {
   line-height: 1.38;
 }
 
+.information-detail-section {
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+}
+
+.information-detail-section > header,
+.world-geography-card header,
+.posting-geography-card header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  min-width: 0;
+}
+
+.information-detail-section > header strong {
+  color: var(--ink);
+  font-size: 0.88rem;
+}
+
+.information-detail-section > header span,
+.world-geography-card header span,
+.posting-geography-card header span {
+  color: var(--muted);
+  font-size: 0.76rem;
+  overflow-wrap: anywhere;
+}
+
+.information-detail-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+  gap: 8px;
+  min-width: 0;
+}
+
+.world-geography-card,
+.posting-geography-card {
+  display: grid;
+  gap: 7px;
+  min-width: 0;
+  padding: 8px;
+  border: 1px solid rgba(54, 39, 27, 0.14);
+  border-radius: 4px;
+  background: rgba(255, 250, 239, 0.52);
+}
+
+.world-geography-card[data-status="critical"],
+.world-geography-card[data-status="risky"],
+.world-geography-card[data-status="contested"],
+.posting-geography-card[data-status="suspended"] {
+  border-color: rgba(126, 43, 34, 0.28);
+  background: rgba(255, 244, 232, 0.68);
+}
+
+.information-card-title {
+  color: var(--cinnabar-deep);
+  font-size: 0.88rem;
+  overflow-wrap: anywhere;
+}
+
+.information-card-summary,
+.information-card-extra,
+.posting-geography-empty {
+  margin: 0;
+  color: var(--ink);
+  font-size: 0.8rem;
+  line-height: 1.42;
+  overflow-wrap: anywhere;
+}
+
+.information-card-extra {
+  color: var(--muted);
+}
+
+.information-card-metrics {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(78px, 1fr));
+  gap: 6px;
+  min-width: 0;
+}
+
+.information-card-metric {
+  margin: 0;
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+  color: var(--ink);
+  font-size: 0.78rem;
+  line-height: 1.25;
+}
+
+.information-card-metric span:last-child {
+  overflow-wrap: anywhere;
+}
+
 .official-career-panel {
   grid-column: 1 / -1;
   display: grid;
