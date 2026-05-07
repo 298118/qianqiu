@@ -235,14 +235,22 @@ function formatBulletSection(title, lines) {
   ].join("\n");
 }
 
+function getStablePrefixLinesForPack(packName) {
+  const pack = getPromptPack(packName);
+  return pack.schemaName === "turn"
+    ? [...UNIVERSAL_STABLE_PREFIX_LINES, ...TURN_STATE_BOUNDARY_LINES]
+    : [...UNIVERSAL_STABLE_PREFIX_LINES];
+}
+
+function buildPromptCacheStablePrefix(packName) {
+  return getStablePrefixLinesForPack(packName).join("\n");
+}
+
 function buildPromptInstructions(packName) {
   const pack = getPromptPack(packName);
-  const stablePrefixLines = pack.schemaName === "turn"
-    ? [...UNIVERSAL_STABLE_PREFIX_LINES, ...TURN_STATE_BOUNDARY_LINES]
-    : UNIVERSAL_STABLE_PREFIX_LINES;
 
   return [
-    ...stablePrefixLines,
+    buildPromptCacheStablePrefix(packName),
     "",
     `Prompt pack: ${packName}`,
     `Purpose: ${pack.purpose}`,
@@ -260,6 +268,7 @@ module.exports = {
   PLAYER_ALLOWED_PATCH_KEYS,
   PROMPT_PACKS,
   TURN_ALLOWED_PATCH_KEYS,
+  buildPromptCacheStablePrefix,
   buildPromptInstructions,
   getPromptPack,
   getTurnPromptPackName,

@@ -79,7 +79,7 @@
 | S45.2 | DONE | 让 AI 叙事、NPC 行为、世界 tick、关系账本和官场结果共同读写这些实体的受限视图 | 2026-05-07 | Codex | 24aef7b |
 | S46.1 | DONE | 建立依赖/插件引入模板：用途、许可证、替代方案、测试、回滚策略和文档落点 | 2026-05-07 | Codex | 20e3277 |
 | S47.1 | DONE | 扩展真实 provider 验收：浏览器路由级连接测试、带 key 的健康检查、无 key 自动跳过；本轮不做模型费用/速度台账 | 2026-05-07 | Codex | dc7bea8 |
-| S47.2 | TODO | 规划并实现 DeepSeek 上下文硬盘缓存命中率优化：稳定提示词前缀、记录命中/未命中 tokens、不得牺牲游戏效果 |  |  |  |
+| S47.2 | DONE | 实现 DeepSeek 上下文硬盘缓存友好验证：稳定提示词前缀、动态内容后置、防无意漂移；不新增 provider usage 缓存计数记录且不得牺牲游戏效果 | 2026-05-07 | Codex | 待回填 |
 
 ## 4. 分阶段详细步骤
 
@@ -118,8 +118,8 @@ DeepSeek 上下文硬盘缓存规划约束：
 
 - 根据 DeepSeek 官方“上下文硬盘缓存”说明，缓存默认开启，命中依赖后续请求完整复用已经落盘的前缀；因此 prompt pack 应把稳定内容放在最前：系统身份、JSON 合约、服务器边界、固定术语表、少量示例和不随回合变化的时代/角色规则。
 - 动态内容应放在稳定前缀之后：当前世界摘要、可见关系、长期议题、玩家输入、考试文本和本回合 schema 附件，避免无意义重排字段或随机化标题破坏前缀。
-- 不能为了缓存命中删减必要上下文、隐藏关键局势、降低历史语气、削弱角色视野或让模型少看会影响推演质量的信息。缓存优化只能通过稳定结构、稳定顺序和可观测 telemetry 实现。
-- 真实 provider adapter 后续应读取 DeepSeek 返回的 `usage.prompt_cache_hit_tokens` 与 `usage.prompt_cache_miss_tokens`，在 smoke/diagnostics 中记录命中率，但不把命中率作为默认本地测试硬门槛。
+- 不能为了缓存命中删减必要上下文、隐藏关键局势、降低历史语气、削弱角色视野或让模型少看会影响推演质量的信息。缓存优化只能通过稳定结构、稳定顺序和离线/单测验证实现。
+- 根据 2026-05-07 最新范围，S47.2 不读取、不保存、不报告 provider usage 的缓存命中/未命中 token 计数；diagnostics/smoke 不新增命中率字段。若未来重启该方向，必须新开步骤并重新评估日志面与验收口径。
 - 需要为 prompt 构建加测试：同一任务的固定前缀在相邻请求中保持字节级稳定；动态片段变化不会改动前缀；schema/少量示例更新必须显式更新快照。
 
 S41.1 落地范围：
@@ -208,7 +208,7 @@ S46.1 已新增 [依赖、插件与开源参考治理](DEPENDENCY_PLUGIN_GOVERNA
 - 路由级连接测试覆盖当前 provider、指定 provider、缺 key、错误脱敏和模型摘要。
 - 浏览器 smoke 可选择点击开局页“AI 连接”按钮，Mock 必须通过；真实 provider 检查只在有 key 且显式启用时运行。
 - 真实 provider 验收记录应包含模型、是否 streaming、是否 schema-valid、是否写入 session、失败错误是否脱敏；S47.1 保留接口现有 `latencyMs` 作为即时诊断字段，但不新增模型费用或速度台账。
-- DeepSeek 上下文硬盘缓存优化应进入 S47.2：参考官方命中规则，把稳定 prompt 前缀固定下来，读取 `prompt_cache_hit_tokens` / `prompt_cache_miss_tokens` 形成命中率记录，比较不同 prompt pack 的命中情况。验收标准是降低重复前缀成本和延迟风险，同时不降低 `eval:ai`、长回合历史语气、官场深度和浏览器主线体验。
+- DeepSeek 上下文硬盘缓存优化进入 S47.2：把 prompt pack 的稳定前缀固定在 `instructions` 最前，动态世界、玩家行动、考试文章和本回合上下文保留在 `input`，并用测试验证字节稳定和动态内容隔离；本步骤不读取 provider usage 的缓存计数字段，不比较命中率。验收标准是降低重复前缀漂移风险，同时不降低 `eval:ai`、长回合历史语气、官场深度和浏览器主线体验。
 
 ## 5. 进度记录
 
@@ -228,6 +228,37 @@ S46.1 已新增 [依赖、插件与开源参考治理](DEPENDENCY_PLUGIN_GOVERNA
 ```
 
 ### 2026-05-07
+
+工具：Codex
+
+步骤：S47.2
+
+提交：待回填
+
+完成：
+- 根据最新用户范围，把 S47.2 从“记录缓存命中/未命中 token”收窄为“DeepSeek 上下文缓存友好的稳定 prompt 前缀验证”。活跃文档明确本阶段不读取、不保存、不报告 provider usage 的缓存计数字段，也不在 diagnostics/smoke 中新增命中率字段；历史归档中的旧描述只作为过去记录。
+- `src/ai/promptPacks.js` 新增 `buildPromptCacheStablePrefix(packName)`，把普通回合类 prompt pack 的通用稳定前缀与服务器状态边界显式导出；`buildPromptInstructions()` 继续把该前缀放在 `instructions` 最前，pack-specific purpose/tone/authority/output 位于其后。
+- `test/prompts.test.js` 新增 S47 稳定性用例，验证 turn 类 pack 复用同一稳定前缀、非 turn 类 pack 复用通用前缀、稳定前缀位于 pack-specific 文本之前，并确认玩家名、年份、事件、行动、考试文章和真实性检查等动态 payload 不进入 `instructions` 或稳定前缀。
+- 不修改 `src/ai/providers/deepseek.js`、AI diagnostics、provider smoke 或 route-health 输出，因此本步骤没有新增真实 provider usage 采集面。
+
+验证：
+- `node --check src\ai\promptPacks.js`
+- `node --check src\ai\prompts.js`
+- `node --check test\prompts.test.js`
+- `node --test test\prompts.test.js`，10 项通过
+- `npm run eval:ai`，12 项通过
+- 活跃文档、代码和测试中检索旧 provider usage 缓存字段名与旧采集目标描述，无匹配；当前只保留“不记录缓存计数”的范围说明
+- `node --test test\gameTurnRelationships.test.js`，4 项通过；用于复核全量并行测试里出现的 Windows `EPERM rename` 抖动不是本次 prompt 改动造成
+- `$env:AI_PROVIDER='mock'; npm test -- --test-concurrency=1`，267 项通过
+
+风险/遗留：
+- `$env:AI_PROVIDER='mock'; npm test` 默认并行模式连续两次命中既有 Windows session atomic rename `EPERM` 抖动，失败点均在 `test\gameTurnRelationships.test.js` 的临时 session 写入；该文件 focused rerun 通过，串行全量通过。本步骤不改 session store。
+- 本步骤只验证 prompt 结构，不声称真实 DeepSeek 缓存命中率；若未来要恢复 usage 采集，必须新开路线图步骤并重新评估日志与验收边界。
+
+下一步：
+- 第四阶段当前总览已无后续 TODO；下一轮先新增或确认下一个路线图小步骤，并保持不记录缓存命中/未命中 token 的最新范围。
+
+---
 
 工具：Codex
 
@@ -258,10 +289,10 @@ S46.1 已新增 [依赖、插件与开源参考治理](DEPENDENCY_PLUGIN_GOVERNA
 风险/遗留：
 - 本步骤只覆盖连接诊断路由，不覆盖 keyed route-level SSE 长流式失败路径；该方向仍可作为后续 provider/browser 验收扩展。
 - `--check-ai-connection` 对 `--url` 目标是显式 opt-in；若目标服务器配置真实 provider 且无 key，会按接口设计失败，不影响默认 Mock smoke。
-- S47.2 仍需处理 DeepSeek 上下文缓存 telemetry；S47.1 不读取 `prompt_cache_hit_tokens` / `prompt_cache_miss_tokens`。
+- S47.2 仍需处理 DeepSeek 上下文缓存友好结构验证；根据 2026-05-07 最新用户要求，不再把缓存命中/未命中 token 记录列入 S47.2。
 
 下一步：
-- 开始 S47.2：实现 DeepSeek 上下文缓存 telemetry 与稳定 prompt 前缀验证，但不得为了命中率牺牲游戏上下文或叙事质量。
+- 开始 S47.2：实现 DeepSeek 上下文缓存友好的稳定 prompt 前缀验证，但不得记录缓存命中率，也不得为了缓存牺牲游戏上下文或叙事质量。
 
 ---
 

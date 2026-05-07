@@ -10,6 +10,7 @@ const {
   buildTurnTask
 } = require("../src/ai/prompts");
 const {
+  buildPromptCacheStablePrefix,
   buildPromptInstructions,
   listPromptPackNames
 } = require("../src/ai/promptPacks");
@@ -78,6 +79,63 @@ test("prompt pack stable prefix keeps dynamic state out of instructions", () => 
     buildPromptInstructions("exam_question"),
     buildExamQuestionTask(second, getExam("child_exam")).instructions
   );
+});
+
+test("S47 prompt cache prefix is byte-stable before pack-specific text", () => {
+  const turnPrefix = buildPromptCacheStablePrefix("world_turn");
+  const officialPrefix = buildPromptCacheStablePrefix("official_career");
+  const openingPrefix = buildPromptCacheStablePrefix("opening");
+  const questionPrefix = buildPromptCacheStablePrefix("exam_question");
+
+  assert.equal(turnPrefix, officialPrefix);
+  assert.equal(openingPrefix, questionPrefix);
+  assert.notEqual(turnPrefix, openingPrefix);
+  assert.match(turnPrefix, /The server owns state boundaries/);
+  assert.match(turnPrefix, /Allowed top-level patch keys/);
+  assert.doesNotMatch(openingPrefix, /Allowed top-level patch keys/);
+
+  assert.ok(
+    buildPromptInstructions("world_turn").startsWith(`${turnPrefix}\n\nPrompt pack: world_turn`)
+  );
+  assert.ok(
+    buildPromptInstructions("opening").startsWith(`${openingPrefix}\n\nPrompt pack: opening`)
+  );
+});
+
+test("S47 prompt instructions keep dynamic task payloads outside the stable prefix", () => {
+  const worldState = createInitialState({ playerName: "S47 Cache Name", year: 1712 });
+  worldState.month = 9;
+  worldState.eventHistory.push("S47_DYNAMIC_EVENT_县学米价忽涨。");
+  worldState.setup = { note: "S47_DYNAMIC_SETUP_NOTE" };
+  const exam = getExam("child_exam");
+  const authenticityCheck = {
+    copy_detection: { is_copy: false, similar_passage: "S47_DYNAMIC_COPY_NOTE" },
+    anachronism_detection: { has_anachronism: false, details: ["S47_DYNAMIC_AUTH_NOTE"] },
+    style_consistency: { consistent: true, note: "S47_DYNAMIC_STYLE_NOTE" },
+    ghostwriting_probability: 0
+  };
+  const action = "S47_DYNAMIC_ACTION_拜访塾师";
+  const essay = "S47_DYNAMIC_ESSAY_夫民食为本，县学教化亦不可废。";
+  const tasks = [
+    buildOpeningTask(worldState),
+    buildTurnTask(worldState, action),
+    buildExamQuestionTask(worldState, exam),
+    buildGradeTask(worldState, exam, essay, authenticityCheck)
+  ];
+  const dynamicPattern = /S47 Cache Name|1712|S47_DYNAMIC_EVENT|S47_DYNAMIC_SETUP_NOTE|S47_DYNAMIC_ACTION|S47_DYNAMIC_ESSAY|S47_DYNAMIC_COPY_NOTE|S47_DYNAMIC_AUTH_NOTE|S47_DYNAMIC_STYLE_NOTE/;
+
+  for (const task of tasks) {
+    assert.doesNotMatch(task.instructions, dynamicPattern, task.promptPack);
+    assert.doesNotMatch(
+      buildPromptCacheStablePrefix(task.promptPack),
+      dynamicPattern,
+      task.promptPack
+    );
+  }
+
+  assert.match(buildOpeningTask(worldState).input, /S47 Cache Name/);
+  assert.match(buildTurnTask(worldState, action).input, /S47_DYNAMIC_ACTION/);
+  assert.match(buildGradeTask(worldState, exam, essay, authenticityCheck).input, /S47_DYNAMIC_ESSAY/);
 });
 
 test("turn prompt input filters hidden relationship context", () => {
