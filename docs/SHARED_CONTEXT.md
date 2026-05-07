@@ -153,7 +153,7 @@ Next planned slices:
 
 ## Current Work Note
 
-- 2026-05-07：数据库专项规划压缩已完成待提交。S49-S53 已完成基础归档到 `docs/LOCAL_DATABASE_FOUNDATION_ARCHIVE.md`，活动台账改为 S54-S59 剩余 SQLite 业务表拆分，并已同步 README、产品 brief、architecture、动态数据库规划、相关契约和本交接板。该变更为纯文档，但涉及路线图重写和内容保护，已运行 `npm run check:docs-governance`、`git diff --check` 并执行只读复审；复审 P2 已修正。提交后需在台账中回填提交哈希。
+- 2026-05-07：数据库专项规划压缩提交 `5ab5350`。S49-S53 已完成基础归档到 `docs/LOCAL_DATABASE_FOUNDATION_ARCHIVE.md`，活动台账改为 S54-S59 剩余 SQLite 业务表拆分，并已同步 README、产品 brief、architecture、动态数据库规划、相关契约和本交接板。该变更为纯文档，但涉及路线图重写和内容保护，已运行 `npm run check:docs-governance`、`git diff --check` 并执行只读复审；复审 P2 已修正。后续从 S54.1 地理 SQLite 业务表契约开始。
 
 ## Next Recommended Step
 
