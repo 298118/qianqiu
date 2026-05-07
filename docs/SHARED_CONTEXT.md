@@ -19,7 +19,7 @@ Every development session must read these files before planning or editing:
 - Backend: Node.js + Express, plain JavaScript.
 - AI providers: adapter-based Mock/OpenAI/DeepSeek/Anthropic. `AI_PROVIDER=mock` remains the default playable mode. DeepSeek supports task-specific model overrides: V4 Pro is recommended for opening/grading, and V4 Flash for ordinary turn/streaming/question generation.
 - Storage: `src/storage/sessionStore.js` is the route-facing facade. The default adapter is `src/storage/jsonSessionAdapter.js`, which stores JSON session records under `data/sessions/*.json` with a `storageSchemaVersion: 1` envelope, redacted metadata, nested `worldState`, atomic temp writes, revision checks, and a per-session local lock file; temp cleanup must respect fresh locks. S49.3 adds optional `src/storage/sqliteSessionAdapter.js` selected by `STORAGE_ADAPTER=sqlite`, using local `world_sessions` rows and JSON `world_state`; S49.4 adds local audit records (`event_log` / `ai_change_proposals`) as JSON sidecars under `data/audit/*.jsonl` or SQLite tables. JSON remains default and there is no remote save/account/multiplayer scope.
-- Active roadmap: S49 local dynamic database specialty in `docs/DEVELOPMENT_STEPS.md`; S48 time specialty is frozen in `docs/TIME_SPECIALTY_ROADMAP_ARCHIVE.md`, and fourth phase is frozen in `docs/PHASE_FOUR_ROADMAP_ARCHIVE.md`.
+- Active roadmap: local dynamic database specialty in `docs/DEVELOPMENT_STEPS.md`; S49 storage/audit foundation is complete and S50.1 static geography seed work is complete pending commit hash backfill. S48 time specialty is frozen in `docs/TIME_SPECIALTY_ROADMAP_ARCHIVE.md`, and fourth phase is frozen in `docs/PHASE_FOUR_ROADMAP_ARCHIVE.md`.
 - Current local `.env`: configured for DeepSeek with a real user-supplied key and task model split. `.env` is ignored by Git and must never be printed or committed.
 
 ## Core Invariants
@@ -72,6 +72,7 @@ Important modules:
 - Active NPC requests: `src/game/activeRequests.js`
 - Long-term events: `src/game/longTermEvents.js`
 - Official career outcomes: `src/game/officialCareer.js`
+- Static geography seed catalog: `src/game/worldGeographySeeds.js`
 - Role/world coupling: `src/game/roleWorldCoupling.js`
 - World Entities / 多实体世界模型: `src/game/worldEntities.js`
 - World Threads / 世界议程索引: `src/game/worldThreads.js`
@@ -88,6 +89,7 @@ Durable contracts and acceptance records:
 - `docs/REAL_PROVIDER_ACCEPTANCE.md`
 - `docs/SESSION_STORAGE_MIGRATION_PLAN.md`
 - `docs/DYNAMIC_WORLD_DATABASE_PLAN.md`
+- `docs/WORLD_GEOGRAPHY_SEED_CONTRACT.md`
 - `docs/OFFICIAL_CAREER_CONTRACT.md`
 - `docs/EXAM_CALENDAR_CONTRACT.md`
 - `docs/ROLE_WORLD_COUPLING_CONTRACT.md`
@@ -117,16 +119,17 @@ Durable contracts and acceptance records:
 - Dense scenes must not be forced into “one input = ten days.” Exams are the first concrete implementation; similar scene-local design should be left available for court debates, hearings, combat, travel incidents, and major assignment finales.
 - S48.6 makes “年月旬” the visible browser date contract: status strip, save cards, exam calendar, exam writing/result/archive surfaces, official-career履历 dates, turn dividers, and `[旬度]`/`[月度]` feedback now include 上旬/中旬/下旬 labels; browser smoke checks those labels and provider long-run verifies one-month-three-turn cadence through `worldTick.timeAdvance`.
 
-## Current S49 Local Database Project
+## Current Local Database Project
 
 - S49 starts a local dynamic database specialty. Current scope is local SQLite / local file persistence enhancement only; remote saves, accounts, multiplayer sync, cloud conflict resolution, and hosted databases are explicitly out of scope.
 - S49.1 created `docs/DYNAMIC_WORLD_DATABASE_PLAN.md`, which recommends storage adapter first, then optional local SQLite session rows with JSON `world_state`, then `event_log` and `ai_change_proposals`, and only later selective business tables.
 - S49.2 split the route-facing `sessionStore` facade from the default JSON adapter and added `test/sessionStoreAdapterContract.test.js`. Route payloads, JSON envelope format, legacy migration, save-list redaction, revision checks, `mutateSession` serialization, `skipWrite`, and `errorAfterWrite` semantics became the adapter contract.
 - S49.3 adds optional local SQLite session-row storage with Node.js `node:sqlite`: `STORAGE_ADAPTER=sqlite`, `SQLITE_DATABASE_PATH`, one `world_sessions` row per session, JSON `world_state_json`, metadata projection columns, transaction/revision checks, no third-party npm dependency, and `npm run storage:import:sqlite` for JSON -> SQLite development import without deleting JSON originals.
 - S49.4 adds local audit records to the same adapter contract: JSON mode appends `data/audit/{sessionId}.event-log.jsonl` and `data/audit/{sessionId}.ai-proposals.jsonl`; SQLite mode writes `event_log` and `ai_change_proposals`. Game start, ordinary turns, successful streaming turns, exam question/progress, and exam submit enqueue audit rows through `mutateSession()` context. Audit payloads are sanitized summaries with accepted/rejected reasons and applied event ids, not full `worldState`, prompt text, provider keys, hidden ledgers, or local paths. JSON sidecars are diagnostic best-effort after session commit; SQLite writes audit rows in the same local transaction as the session row; `skipWrite` discards queued audit records.
+- S50.1 adds `docs/WORLD_GEOGRAPHY_SEED_CONTRACT.md` and `src/game/worldGeographySeeds.js` as a static catalog for countries, neighboring polities, regions, cities, routes, frontier zones, office jurisdictions, and initial visibility. This slice does not write `worldState.worldGeography`, does not alter route payloads, does not add prompt projection, and does not create SQLite business tables. Read-only pre-commit review found one P2 hidden-id leak risk in visible row references; `buildWorldGeographySeedView()` now filters nested route/frontier refs through visible id sets, and 开封 now belongs to `region-henan`. Verification passed: `node --check src\game\worldGeographySeeds.js`, `node --check test\worldGeographySeeds.test.js`, `node --test test\worldGeographySeeds.test.js test\officialCatalog.test.js` with 13 tests, `npm run check:docs-governance`, `$env:AI_PROVIDER='mock'; npm test` with 324 tests, and `git diff --check`.
 - Dynamic data domains to plan include countries and neighbors, cities, NPCs, households, player profile, offices, postings, relationships, scenes, events, World Entities, World Threads, and AI proposal audit records.
 - AI must never execute SQL or write raw database tables. It may only return schema-valid proposals; server modules validate, clamp, filter hidden data, decide, write transactions, and log accepted/rejected proposals.
-- Next implementation slice is S50.1 static world and neighbor seed contract. Keep JSON as default, keep SQLite local-only, and do not introduce remote/account/multiplayer scope.
+- Next implementation slice after S50.1 is S50.2 per-session country/city instantiation and visible prompt projection. Keep JSON as default, keep SQLite local-only, and do not introduce remote/account/multiplayer scope.
 
 ## Current S41 Notes
 
@@ -239,4 +242,4 @@ Use focused checks first, then broaden when behavior crosses module boundaries:
 
 ## Next Recommended Step
 
-Choose the next roadmap slice from `docs/DEVELOPMENT_STEPS.md`. After S49.4 lands, the active database specialty should move to S50.1 static world and neighboring-state seed contracts; keep JSON as default, keep SQLite local-only, and do not add remote saves, accounts, multiplayer sync, or hosted database assumptions.
+Proceed to S50.2: per-session country/city instantiation and visible prompt projection, while keeping JSON as default, SQLite local-only, and existing top-level `worldState` indicators intact. Do not add remote saves, accounts, multiplayer sync, hosted database assumptions, or browser geography panels in S50.2 unless the roadmap is explicitly widened.

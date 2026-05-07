@@ -484,6 +484,8 @@ world_entities
 - 每局从 seed 实例化动态国家/城市行。
 - World Entities/Threads 可读取国家、城市、边境压力摘要。
 
+S50.1 已先落静态 catalog 契约，见 [天下地理静态种子契约](WORLD_GEOGRAPHY_SEED_CONTRACT.md) 与 `src/game/worldGeographySeeds.js`。该切片只负责国家、邻国、区域、城市、路线、边境、官署辖区和初始可见性；每局实例化、prompt projection、route view 和 UI 面板仍属于后续步骤。
+
 验收：
 
 - 玩家可见“天下格局”或“任所地理”摘要。

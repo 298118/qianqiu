@@ -98,7 +98,7 @@
 | S49.2 | DONE | 抽象 storage adapter 接口，保持 JSON 为默认实现，补 adapter contract tests | 2026-05-07 | Codex + read-only subagents | `2e15e13` |
 | S49.3 | DONE | 本地 SQLite 原型：一行一 session，保留 JSON `world_state`，以可选 env 开启，不做远程/账号/多人 | 2026-05-07 | Codex + read-only subagents | `22217e0` |
 | S49.4 | DONE | 事件日志与 AI proposal 审计：记录模型建议、服务器接受/拒绝和最终应用事件 | 2026-05-07 | Codex + read-only subagents | `092de20` |
-| S50.1 | TODO | 静态天下与邻国种子契约：国家、城市、路线、边境、官署辖区和初始可见性 |  |  |  |
+| S50.1 | DONE | 静态天下与邻国种子契约：国家、城市、路线、边境、官署辖区和初始可见性 | 2026-05-07 | Codex + read-only subagents | 待本次提交生成后回填 |
 | S50.2 | TODO | per-session 国家/城市实例化与 prompt projection，先不替代现有 worldState 指标 |  |  |  |
 | S51.1 | TODO | NPC、家族、资产、田产、关系和可见性 schema 契约 |  |  |  |
 | S51.2 | TODO | 桥接当前 `characters`、`relationshipLedger`、active requests 与 NPC/关系表 |  |  |  |
@@ -285,6 +285,38 @@
 - 审计记录当前为本地开发/调试 API，不暴露给玩家路由；未来“事件档案” UI 必须只读取服务器 projection。
 - S49.4 不拆国家、城市、NPC、官职、关系等业务表；下一步进入 S50 静态天下与邻国种子契约。
 
+### S50.1：静态天下与邻国种子契约
+
+状态：DONE。实现/文档提交待本次提交生成后回填。
+
+目标：
+
+- 新增静态地理 seed/catalog，先固定本国、邻国、区域、城市、路线、边境压力面和官署辖区，不直接改写每局动态状态。
+- 给每类 seed 标注初始可见性：`public`、`role_visible`、`rumor`、`hidden`。
+- 提供归一化、引用校验和隐藏过滤 view，供 S50.2 per-session 实例化和后续 prompt projection 复用。
+- 不新增 SQLite 业务表，不替代现有 `worldState` 顶层指标，不把全量地理塞进 prompt，不新增浏览器面板。
+
+当前实现：
+
+- 新增 `src/game/worldGeographySeeds.js`，默认 seed `late-ming-north-china` 覆盖大明、关外满洲政权、漠南蒙古诸部、朝鲜、琉球；北京、南京、苏州、杭州、济南、开封、太原、大同、山海关、盛京、汉城、广州等城市；京杭漕运、黄河河防、边报驿路、山海关辽东通道、东南海道；辽东、漠南、朝鲜贡道、南海朝贡边境；以及吏部、户部、兵部、礼部、都察院、布政司、按察司、府州县辖区。
+- 新增 `docs/WORLD_GEOGRAPHY_SEED_CONTRACT.md`，明确 S50.1 只做静态 catalog 和初始可见性，S50.2 再做 per-session 国家/城市实例化与 prompt projection。
+- 新增 `test/worldGeographySeeds.test.js`，覆盖默认 seed 范围、officialCatalog bureau 引用、hidden route/frontier 过滤、legacy normalization clamp、悬空引用校验和默认 seed 深拷贝。
+- README、架构文档、产品 brief、AI 权限矩阵同步该契约和边界。
+
+验证：
+
+- `node --check src\game\worldGeographySeeds.js`
+- `node --check test\worldGeographySeeds.test.js`
+- `node --test test\worldGeographySeeds.test.js test\officialCatalog.test.js`，13 项通过
+- `npm run check:docs-governance`
+- `$env:AI_PROVIDER='mock'; npm test`，324 项通过
+- `git diff --check`
+
+风险/遗留：
+
+- S50.1 不写 `worldState.worldGeography`；如果 S50.2 新增动态 ledger，必须补 schema/stateRules/prompt/route 测试来挡住 provider 伪造写入。
+- `buildWorldGeographySeedView()` 当前不是 route view，只是后续 projection 起点；浏览器“天下格局/任所地理”属于 S53。
+
 ## 6. 数据域规划
 
 数据库专项需要承载的数据域如下。每个域都先定义契约和 projection，再决定是否拆表；不要为了“有数据库”而提前建过度复杂的表。
@@ -364,6 +396,41 @@
 - 隐藏信息要在数据库层、projection 层和 prompt 层都标记；不能只靠前端隐藏。
 
 ## 8. 进度记录
+
+### 2026-05-07
+
+工具：Codex；只读探索子代理 Pascal；提交前只读复审 Maxwell
+
+步骤：S50.1
+
+提交：待本次提交生成后回填
+
+完成：
+
+- 新增 `src/game/worldGeographySeeds.js`，提供默认静态地理 seed `late-ming-north-china`、归一化、引用校验、隐藏过滤 view 和防御性副本。
+- 默认 seed 覆盖本国、邻国/藩属、区域、城市、路线、边境压力面和官署辖区，并给每行标注 `public`、`role_visible`、`rumor` 或 `hidden` 初始可见性。
+- 新增 `docs/WORLD_GEOGRAPHY_SEED_CONTRACT.md`，明确 S50.1 只做静态 catalog，不写 per-session 动态状态、不接 prompt、不新增 UI、不建 SQLite 业务表。
+- 新增 `test/worldGeographySeeds.test.js`，覆盖默认种子范围、officialCatalog bureau 引用、hidden route/frontier/引用过滤、legacy normalization、悬空引用校验和默认副本隔离。
+- README、架构文档、产品 brief、动态数据库规划、AI 权限矩阵和 shared context 同步 S50.1 边界。
+
+验证：
+
+- `node --check src\game\worldGeographySeeds.js`
+- `node --check test\worldGeographySeeds.test.js`
+- `node --test test\worldGeographySeeds.test.js test\officialCatalog.test.js`，13 项通过
+- `npm run check:docs-governance`
+- `$env:AI_PROVIDER='mock'; npm test`，324 项通过
+- `git diff --check`
+
+风险/遗留：
+
+- Maxwell 提交前复审发现 P2：可见地理行引用 hidden route/frontier 时，view helper 可能泄漏 hidden id。已修复为按可见 id 集合裁剪引用数组，并补回归测试。其 P3 开封区划建议也已处理：新增河南区域并把开封挂到 `region-henan`。
+- S50.1 不新增 `worldState.worldGeography`，因此本轮没有 provider patch 面；S50.2 接入 per-session ledger/prompt projection 时必须补 server-owned patch 拒绝、hidden geography 不进 prompt/route view 和 projection cap 测试。
+- `buildWorldGeographySeedView()` 只是后续 projection 起点，当前不由 route 或 browser 调用。
+
+下一步：
+
+- S50.2：per-session 国家/城市实例化与 prompt projection，先不替代现有顶层 `worldState` 指标。
 
 ### 2026-05-07
 

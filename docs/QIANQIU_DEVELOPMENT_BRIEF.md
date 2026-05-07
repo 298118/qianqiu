@@ -29,7 +29,7 @@
 
 S48 时间专项已完成并归档到 `docs/TIME_SPECIALTY_ROADMAP_ARCHIVE.md`。S48.3 已建立 `worldState.tenDayPeriod`、共享时间 helper、旧档上旬默认、provider 时间字段边界，并把普通自由行动改为每回合推进一旬；月末完整结算只在下旬进入下月上旬时发生。S48.4 已先把科举落成局部场景时间：考试入场、审题、拟纲、作答、誊清、交卷推进 `activeExam.sceneTime`，不消耗全局旬。S48.5 已把官场差事/弹劾、长期事件冷却、World Threads 期限标签、World Entities cadence 和 provider long-run 脚本适配到“旬回合 vs 月末月份”的语义。S48.6 已把状态栏、存档卡、考试日历、考试弹窗、考试档案和回合反馈统一显示“年月旬”，并让 browser smoke 与 provider long-run 检查这一节奏。
 
-当前活动路线图：`docs/DEVELOPMENT_STEPS.md`，已切换为本地动态世界数据库专项。数据库方向见 `docs/DYNAMIC_WORLD_DATABASE_PLAN.md`。短期继续默认使用 JSON session 存档；S49.3 已把路由入口 `src/storage/sessionStore.js`、默认 JSON adapter、共享 `sessionRecord` helpers 与可选 SQLite adapter 分开，并让 JSON/SQLite 同跑 storage adapter contract tests。S49.4 已在 adapter contract 上加入本地 `event_log` 与 `ai_change_proposals` 审计：JSON 写 `data/audit/*.jsonl`，SQLite 写本地表，记录模型建议、服务器接受/拒绝和应用事件 id。后续若要承载大量国家/邻国、城市、NPC、家族、官职任命、地方任所和事件记录，应在该审计底座上逐步拆业务表。当前不规划远程存档、账号体系、多人同步、云端冲突解决或托管数据库。AI 不能直接写数据库或执行 SQL，只能提交结构化建议；服务器继续负责 schema、白名单、clamp、隐藏过滤、科举晋级、官职任免、长期事件、世界实体、世界议程和持久化事务。
+当前活动路线图：`docs/DEVELOPMENT_STEPS.md`，已切换为本地动态世界数据库专项。数据库方向见 `docs/DYNAMIC_WORLD_DATABASE_PLAN.md`。短期继续默认使用 JSON session 存档；S49.3 已把路由入口 `src/storage/sessionStore.js`、默认 JSON adapter、共享 `sessionRecord` helpers 与可选 SQLite adapter 分开，并让 JSON/SQLite 同跑 storage adapter contract tests。S49.4 已在 adapter contract 上加入本地 `event_log` 与 `ai_change_proposals` 审计：JSON 写 `data/audit/*.jsonl`，SQLite 写本地表，记录模型建议、服务器接受/拒绝和应用事件 id。S50.1 已新增 `docs/WORLD_GEOGRAPHY_SEED_CONTRACT.md` 与 `src/game/worldGeographySeeds.js`，先固定国家、邻国、城市、路线、边境和官署辖区静态 catalog 与初始可见性；per-session 国家/城市实例化、prompt projection 和浏览器面板留给后续步骤。后续若要承载大量国家/邻国、城市、NPC、家族、官职任命、地方任所和事件记录，应在该审计底座和静态种子之上逐步拆业务表。当前不规划远程存档、账号体系、多人同步、云端冲突解决或托管数据库。AI 不能直接写数据库或执行 SQL，只能提交结构化建议；服务器继续负责 schema、白名单、clamp、隐藏过滤、科举晋级、官职任免、长期事件、世界实体、世界议程和持久化事务。
 
 开发规范不变。第 12 节和第 13 节仍是每次开发必须遵守的流程；Mock 默认可玩、真实 provider 可选、服务器拥有状态边界和科举规则这些要求继续有效。
 
@@ -703,9 +703,11 @@ S45.1 已新增 `docs/WORLD_ENTITIES_CONTRACT.md` 和 `src/game/worldEntities.js
 
 S46.1 已把依赖、插件与开源参考的引入流程落入 `docs/DEPENDENCY_PLUGIN_GOVERNANCE.md`。后续新增或升级 `package.json` 依赖、开发工具、外部服务 SDK、Codex/Claude 插件工作流或开源参考时，必须先说明问题、用途、许可证、维护状态、安全/隐私影响、Mock/no-key 影响、验证命令、文档落点和回滚策略；这一步不新增运行时依赖。
 
+S50.1 已新增 `docs/WORLD_GEOGRAPHY_SEED_CONTRACT.md` 和 `src/game/worldGeographySeeds.js`。默认静态种子 `late-ming-north-china` 覆盖本国、关外强邻、漠南诸部、朝鲜、琉球，以及北京、南京、苏州、杭州、济南、开封、太原、大同、山海关、盛京、汉城、广州等城市，配套漕运、河防、驿路、关隘、海道、边境压力面和官署辖区。该模块只做 catalog、归一化、引用校验和隐藏过滤测试，不写 `worldState`，不改变 route payload，不进入 prompt；S50.2 再做 per-session 国家/城市实例化和可见 projection。
+
 所有时间专项实现仍需满足基础验收：默认 Mock 可运行，完整 scholar -> official 路径不得被破坏，真实 provider 不得成为本地启动必要条件，服务器继续拥有状态边界、时间推进、科举晋级、作弊惩罚、长期事件结果、官场授官升降、角色-世界联动后果和持久化裁决。
 
-本地数据库专项也必须满足同一边界：默认 JSON/Mock 路径不得被破坏；`sessionStore` facade 的 route payload、revision、legacy 迁移、脱敏存档簿和 `mutateSession` 语义是 SQLite 适配器也必须遵守的 contract。S49.3 的 SQLite 原型只是一行一 session、本地 `world_sessions` 表和 JSON `world_state`，通过 `STORAGE_ADAPTER=sqlite` 可选开启；S49.4 的 `event_log` / `ai_change_proposals` 只记录本地脱敏审计摘要，不进入玩家 API，也不让 AI 直接写表。数据库只增强本机索引、审计、长期存储和检索式 prompt context，不把核心裁决交给 AI、SQL 或黑箱库。当前数据库专项不规划远程存档、账号体系、多人同步、云端冲突解决或托管数据库；`session_id` 只表示本机不同存档。
+本地数据库专项也必须满足同一边界：默认 JSON/Mock 路径不得被破坏；`sessionStore` facade 的 route payload、revision、legacy 迁移、脱敏存档簿和 `mutateSession` 语义是 SQLite 适配器也必须遵守的 contract。S49.3 的 SQLite 原型只是一行一 session、本地 `world_sessions` 表和 JSON `world_state`，通过 `STORAGE_ADAPTER=sqlite` 可选开启；S49.4 的 `event_log` / `ai_change_proposals` 只记录本地脱敏审计摘要，不进入玩家 API，也不让 AI 直接写表；S50.1 的天下地理种子只提供静态 catalog 和可见性契约，不直接变成动态数据库表或 prompt 全量上下文。数据库只增强本机索引、审计、长期存储和检索式 prompt context，不把核心裁决交给 AI、SQL 或黑箱库。当前数据库专项不规划远程存档、账号体系、多人同步、云端冲突解决或托管数据库；`session_id` 只表示本机不同存档。
 
 ## 16. 历史实现笔记归档
 
