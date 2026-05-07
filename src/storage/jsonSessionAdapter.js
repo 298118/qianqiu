@@ -15,8 +15,15 @@ const {
   toSaveListEntry,
   validateWorldStateSessionId
 } = require("./sessionRecord");
+const {
+  createAiProposalRecord,
+  createAuditContext,
+  createAuditEventRecord,
+  normalizeAuditBatch
+} = require("./sessionAudit");
 
 const SESSIONS_DIR = path.join(__dirname, "..", "..", "data", "sessions");
+const AUDIT_DIR = path.join(__dirname, "..", "..", "data", "audit");
 const JSON_SESSION_FILE_PATTERN = /^([a-f0-9-]{36})\.json$/i;
 const SESSION_FILE_LOCK_STALE_MS = 30000;
 const SESSION_FILE_LOCK_WAIT_MS = 5000;
@@ -36,8 +43,22 @@ function sessionLockPath(sessionId) {
   return path.join(SESSIONS_DIR, `${sessionId}.lock`);
 }
 
+function auditEventPath(sessionId) {
+  assertSafeSessionId(sessionId);
+  return path.join(AUDIT_DIR, `${sessionId}.event-log.jsonl`);
+}
+
+function aiProposalPath(sessionId) {
+  assertSafeSessionId(sessionId);
+  return path.join(AUDIT_DIR, `${sessionId}.ai-proposals.jsonl`);
+}
+
 async function ensureSessionDir() {
   await fs.mkdir(SESSIONS_DIR, { recursive: true });
+}
+
+async function ensureAuditDir() {
+  await fs.mkdir(AUDIT_DIR, { recursive: true });
 }
 
 async function readSessionFile(sessionId) {
@@ -136,6 +157,71 @@ async function writeFileAtomic(filePath, content) {
     await fs.rm(tmpPath, { force: true }).catch(() => {});
     throw error;
   }
+}
+
+function auditDefaultsFromRecord(record) {
+  return {
+    revision: record.revision,
+    turnCount: record.metadata.turnCount,
+    year: record.metadata.year,
+    month: record.metadata.month,
+    tenDayPeriod: record.metadata.tenDayPeriod
+  };
+}
+
+async function appendJsonLines(filePath, records) {
+  if (!records.length) return;
+  await ensureAuditDir();
+  await fs.appendFile(filePath, records.map((record) => JSON.stringify(record)).join("\n") + "\n", "utf8");
+}
+
+async function appendAuditBatch(sessionId, batch = {}, defaults = {}) {
+  const normalized = normalizeAuditBatch(sessionId, batch, defaults);
+  await Promise.all([
+    appendJsonLines(auditEventPath(sessionId), normalized.auditEvents),
+    appendJsonLines(aiProposalPath(sessionId), normalized.aiProposals)
+  ]);
+  return normalized;
+}
+
+async function appendAuditBatchBestEffort(sessionId, batch = {}, defaults = {}) {
+  try {
+    return await appendAuditBatch(sessionId, batch, defaults);
+  } catch (error) {
+    // JSON audit sidecars are diagnostic. Once the session JSON has been
+    // committed, do not surface a sidecar append failure as a route failure.
+    return null;
+  }
+}
+
+function parseAuditLine(line) {
+  try {
+    return JSON.parse(line);
+  } catch (error) {
+    throw createStoreError(500, "Audit log is corrupt");
+  }
+}
+
+function normalizeListLimit(value) {
+  if (value === undefined || value === null) return 1000;
+  const parsed = Number(value);
+  return Number.isInteger(parsed) && parsed >= 0 ? Math.min(parsed, 10000) : 1000;
+}
+
+async function readAuditJsonLines(filePath, options = {}) {
+  const limit = normalizeListLimit(options.limit);
+  let raw = "";
+  try {
+    raw = await fs.readFile(filePath, "utf8");
+  } catch (error) {
+    if (error.code === "ENOENT") return [];
+    throw error;
+  }
+  const records = raw
+    .split(/\r?\n/)
+    .filter((line) => line.trim())
+    .map(parseAuditLine);
+  return limit === 0 ? [] : records.slice(-limit);
 }
 
 async function renameSessionFileWithRetry(sourcePath, targetPath) {
@@ -241,6 +327,10 @@ async function writeSessionRecordUnlocked(worldState, options = {}) {
   });
 
   await writeFileAtomic(sessionPath(worldState.sessionId), `${JSON.stringify(record, null, 2)}\n`);
+  await appendAuditBatchBestEffort(worldState.sessionId, {
+    auditEvents: options.auditEvents,
+    aiProposals: options.aiProposals
+  }, auditDefaultsFromRecord(record));
   return worldState;
 }
 
@@ -278,16 +368,14 @@ async function writeSession(worldState, options = {}) {
 async function mutateSession(sessionId, mutator) {
   return withSessionLock(sessionId, async () => {
     const { record } = await readSessionRecordUnlocked(sessionId);
-    const context = {
-      record,
-      skipWrite: false,
-      errorAfterWrite: null
-    };
+    const context = createAuditContext(record);
     const result = await mutator(record.worldState, context);
     if (!context.skipWrite) {
       await writeSessionUnlocked(record.worldState, {
         previousRecord: record,
-        expectedRevision: record.revision
+        expectedRevision: record.revision,
+        auditEvents: context.auditEvents,
+        aiProposals: context.aiProposals
       });
     }
     if (context.errorAfterWrite) throw context.errorAfterWrite;
@@ -324,6 +412,26 @@ async function deleteSession(sessionId) {
   await fs.rm(sessionPath(sessionId), { force: true });
 }
 
+async function appendAuditEvent(sessionId, event, options = {}) {
+  const record = createAuditEventRecord(sessionId, event, options);
+  await appendJsonLines(auditEventPath(sessionId), [record]);
+  return record;
+}
+
+async function appendAiProposal(sessionId, proposal, options = {}) {
+  const record = createAiProposalRecord(sessionId, proposal, options);
+  await appendJsonLines(aiProposalPath(sessionId), [record]);
+  return record;
+}
+
+async function listAuditEvents(sessionId, options = {}) {
+  return readAuditJsonLines(auditEventPath(sessionId), options);
+}
+
+async function listAiProposals(sessionId, options = {}) {
+  return readAuditJsonLines(aiProposalPath(sessionId), options);
+}
+
 async function cleanupSessionTempFiles(options = {}) {
   await ensureSessionDir();
   const olderThanMs = Number.isFinite(Number(options.olderThanMs))
@@ -358,6 +466,10 @@ function createJsonSessionAdapter() {
     mutateSession,
     listSessions,
     deleteSession,
+    appendAuditEvent,
+    appendAiProposal,
+    listAuditEvents,
+    listAiProposals,
     cleanupSessionTempFiles,
     buildSessionMetadata,
     normalizeSessionRecord

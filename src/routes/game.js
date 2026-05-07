@@ -40,6 +40,12 @@ const {
   canOpenExamInCalendar,
   ensureExamCalendarState
 } = require("../game/examCalendar");
+const {
+  createExamProgressAuditRecords,
+  createOpeningAuditRecords,
+  createTurnAuditRecords,
+  enqueueAuditRecords
+} = require("../game/audit");
 const { canEnterExam, getExam } = require("../game/exams");
 const {
   advanceExamScenePhase,
@@ -78,7 +84,7 @@ function wantsSse(req) {
 }
 
 async function processTurn(sessionId, input) {
-  return mutateSession(sessionId, async (worldState) => {
+  return mutateSession(sessionId, async (worldState, context) => {
     ensureRelationshipLedger(worldState);
     ensureExamCalendarState(worldState);
     ensureLongTermEventState(worldState);
@@ -87,16 +93,16 @@ async function processTurn(sessionId, input) {
     ensureWorldEntityState(worldState);
     ensureWorldThreadState(worldState);
     if (isWritingExam(worldState.activeExam)) {
-      return finalizeExamSceneTurn(worldState, input);
+      return finalizeExamSceneTurn(worldState, input, context);
     }
     const provider = getProvider();
     const result = await provider.runTurn(worldState, input);
-    return finalizeTurn(worldState, result, input);
+    return finalizeTurn(worldState, result, input, { context, provider });
   });
 }
 
 async function processStreamingTurn(sessionId, input, streamHandlers = {}) {
-  return mutateSession(sessionId, async (worldState) => {
+  return mutateSession(sessionId, async (worldState, context) => {
     ensureRelationshipLedger(worldState);
     ensureExamCalendarState(worldState);
     ensureLongTermEventState(worldState);
@@ -105,7 +111,7 @@ async function processStreamingTurn(sessionId, input, streamHandlers = {}) {
     ensureWorldEntityState(worldState);
     ensureWorldThreadState(worldState);
     if (isWritingExam(worldState.activeExam)) {
-      return finalizeExamSceneTurn(worldState, input);
+      return finalizeExamSceneTurn(worldState, input, context);
     }
     const provider = getProvider();
     const canStream = provider.supportsStreaming && typeof provider.streamTurn === "function";
@@ -113,7 +119,7 @@ async function processStreamingTurn(sessionId, input, streamHandlers = {}) {
       ? await provider.streamTurn(worldState, input, streamHandlers)
       : await provider.runTurn(worldState, input);
 
-    return finalizeTurn(worldState, result, input);
+    return finalizeTurn(worldState, result, input, { context, provider });
   });
 }
 
@@ -203,7 +209,7 @@ function buildCommonTurnViews(worldState) {
   };
 }
 
-async function finalizeExamSceneTurn(worldState, input) {
+async function finalizeExamSceneTurn(worldState, input, context = null) {
   const scene = advanceExamScenePhase(worldState.activeExam, worldState, input);
   ensureRelationshipLedger(worldState);
   ensureExamCalendarState(worldState);
@@ -213,6 +219,7 @@ async function finalizeExamSceneTurn(worldState, input) {
   ensureWorldEntityState(worldState);
   ensureWorldThreadState(worldState);
   const worldTick = buildExamSceneFeedback(worldState, scene.sceneTime, scene.event);
+  enqueueAuditRecords(context, createExamProgressAuditRecords(worldState, scene));
 
   return {
     sessionId: worldState.sessionId,
@@ -240,7 +247,8 @@ async function finalizeExamSceneTurn(worldState, input) {
   };
 }
 
-async function finalizeTurn(worldState, result, input) {
+async function finalizeTurn(worldState, result, input, auditOptions = {}) {
+  const { context = null, provider = null } = auditOptions;
   const providerAttributeChanges = Array.isArray(result.attributeChanges) ? result.attributeChanges : [];
 
   // All model-suggested state changes pass through server-side boundaries.
@@ -342,6 +350,23 @@ async function finalizeTurn(worldState, result, input) {
     events: Array.isArray(worldTick.events) ? worldTick.events : [],
     attributeChanges: Array.isArray(worldTick.attributeChanges) ? worldTick.attributeChanges : []
   };
+
+  enqueueAuditRecords(context, createTurnAuditRecords({
+    worldState,
+    provider,
+    result,
+    input,
+    providerStateBefore,
+    providerStateAfter,
+    relationshipChanges,
+    examTrigger,
+    activeNpcRequest,
+    roleWorldCoupling,
+    worldTick,
+    longTermEvents,
+    officialCareer,
+    worldEntityImpacts
+  }));
 
   return {
     sessionId: worldState.sessionId,
@@ -451,7 +476,7 @@ router.post("/start", async (req, res, next) => {
     const opening = await provider.startGame(worldState);
 
     worldState.eventHistory.push(...opening.events);
-    await writeSession(worldState);
+    await writeSession(worldState, createOpeningAuditRecords(worldState, opening, provider));
 
     res.status(201).json({
       sessionId: worldState.sessionId,

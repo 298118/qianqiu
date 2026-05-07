@@ -29,6 +29,12 @@ const { buildOfficialCareerView, ensureOfficialCareerState } = require("../game/
 const { buildRoleWorldCouplingView, ensureRoleWorldCouplingState } = require("../game/roleWorldCoupling");
 const { buildWorldEntityView, ensureWorldEntityState } = require("../game/worldEntities");
 const { buildWorldThreadView, ensureWorldThreadState } = require("../game/worldThreads");
+const {
+  createExamGradeAuditRecords,
+  createExamProgressAuditRecords,
+  createExamQuestionAuditRecords,
+  enqueueAuditRecords
+} = require("../game/audit");
 const { appendEvents, applyStatePatch } = require("../game/stateRules");
 const {
   advanceExamScenePhase,
@@ -205,6 +211,7 @@ router.post("/question", async (req, res, next) => {
       ]);
       ensureWorldEntityState(worldState);
       ensureWorldThreadState(worldState);
+      enqueueAuditRecords(context, createExamQuestionAuditRecords(worldState, question, exam, provider, preparationResult));
 
       return { statusCode: 201, payload: toExamPayload(worldState) };
     });
@@ -229,7 +236,7 @@ router.post("/progress", async (req, res, next) => {
       throw fail(400, "Missing or empty action");
     }
 
-    const payload = await mutateSession(sessionId, async (worldState) => {
+    const payload = await mutateSession(sessionId, async (worldState, context) => {
       ensureCommonState(worldState);
       const activeExam = worldState.activeExam;
 
@@ -242,6 +249,7 @@ router.post("/progress", async (req, res, next) => {
 
       const scene = advanceExamScenePhase(activeExam, worldState, action);
       ensureCommonState(worldState);
+      enqueueAuditRecords(context, createExamProgressAuditRecords(worldState, scene));
 
       return {
         ...toExamPayload(worldState),
@@ -271,7 +279,7 @@ router.post("/submit", async (req, res, next) => {
       throw fail(400, "Missing or empty essay");
     }
 
-    const payload = await mutateSession(sessionId, async (worldState) => {
+    const payload = await mutateSession(sessionId, async (worldState, context) => {
       ensureCommonState(worldState);
       const activeExam = worldState.activeExam;
 
@@ -348,6 +356,17 @@ router.post("/submit", async (req, res, next) => {
       ensureRelationshipLedger(worldState);
       ensureWorldEntityState(worldState);
       ensureWorldThreadState(worldState);
+      enqueueAuditRecords(context, createExamGradeAuditRecords({
+        worldState,
+        activeExam,
+        grade,
+        score,
+        authenticityCheck,
+        promotionResult,
+        cohortResult,
+        ranking,
+        provider
+      }));
 
       return {
         sessionId: worldState.sessionId,

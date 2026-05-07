@@ -97,7 +97,7 @@
 | S49.1 | DONE | 形成动态世界数据库总体规划：架构边界、数据域、AI proposal、SQLite 迁移阶段 | 2026-05-07 | Codex + read-only subagent | `e3808df`、`990f7d3` |
 | S49.2 | DONE | 抽象 storage adapter 接口，保持 JSON 为默认实现，补 adapter contract tests | 2026-05-07 | Codex + read-only subagents | `2e15e13` |
 | S49.3 | DONE | 本地 SQLite 原型：一行一 session，保留 JSON `world_state`，以可选 env 开启，不做远程/账号/多人 | 2026-05-07 | Codex + read-only subagents | `22217e0` |
-| S49.4 | TODO | 事件日志与 AI proposal 审计：记录模型建议、服务器接受/拒绝和最终应用事件 |  |  |  |
+| S49.4 | DONE | 事件日志与 AI proposal 审计：记录模型建议、服务器接受/拒绝和最终应用事件 | 2026-05-07 | Codex + read-only subagents | 待提交后回填 |
 | S50.1 | TODO | 静态天下与邻国种子契约：国家、城市、路线、边境、官署辖区和初始可见性 |  |  |  |
 | S50.2 | TODO | per-session 国家/城市实例化与 prompt projection，先不替代现有 worldState 指标 |  |  |  |
 | S51.1 | TODO | NPC、家族、资产、田产、关系和可见性 schema 契约 |  |  |  |
@@ -157,7 +157,7 @@
 - `node --test test\sessionStoreAdapterContract.test.js test\sessionStore.test.js test\gameSavesRoute.test.js`
 - `node --test test\gameTurnTick.test.js test\streamingTurnRoute.test.js test\examSceneTime.test.js test\examProgressRoute.test.js test\gameSavesRoute.test.js test\sessionStoreAdapterContract.test.js test\sessionStore.test.js`
 - `npm run check:docs-governance`
-- `$env:AI_PROVIDER='mock'; npm test`
+- `$env:AI_PROVIDER='mock'; npm test`，299 项通过
 - `git diff --check`
 
 ### S49.3：SQLite Session Row 原型
@@ -234,18 +234,56 @@
 
 ### S49.4：事件日志与 AI Proposal 审计
 
+状态：DONE，随本次代码提交完成；提交 hash 在后续低风险文档回填中记录。
+
 目标：
 
 - 增加 append-only `event_log`，记录关键状态变化、来源模块、时间戳、年月旬、scene cadence、可见性和 session revision。
-- 增加 `ai_change_proposals`，保存模型提出的结构化建议、schema 校验结果、服务器接受/拒绝原因和最终应用事件 id。
+- 增加 `ai_change_proposals`，保存模型提出的结构化建议、服务器审查结果、服务器接受/拒绝原因和最终应用事件 id。
 - 普通 provider 仍只返回受限 JSON；所有 proposal 都由服务器模块转换成可写事务。
 - 日志服务于调试、回放、prompt 检索和未来“事件档案” UI，不替代当前 state snapshot。
+
+完成：
+
+- 新增 `src/storage/sessionAudit.js`，统一审计记录 schema、UUID、安全 session id、年月旬/revision 默认值、秘密和路径脱敏、隐藏/敏感 key 截断。
+- JSON adapter 新增本地 sidecar：`data/audit/{sessionId}.event-log.jsonl` 与 `data/audit/{sessionId}.ai-proposals.jsonl`，并通过 `.gitignore` 忽略。
+- SQLite adapter 新增本地 `event_log` 与 `ai_change_proposals` 表；`writeSession()` / `mutateSession()` 可在同一 adapter 语义下写 session snapshot 和审计记录。JSON sidecar 是诊断性尽力追加，追加失败不让已提交 session 变成 route failure；SQLite 模式保持 session row 与审计表同事务写入。
+- `sessionStore` adapter contract 新增 `appendAuditEvent()`、`appendAiProposal()`、`listAuditEvents()`、`listAiProposals()`，JSON/SQLite 同跑 contract tests。
+- 新增 `src/game/audit.js`，把开局、普通回合、考试取题、考试局部推进、交卷评分转成脱敏审计摘要；普通回合会记录 provider 提案、服务器接受的 state delta、关系/考试触发接受数、拒绝原因和应用事件 id。
+- `src/routes/game.js` 与 `src/routes/exam.js` 通过 `mutateSession()` context 排队审计记录，不直接打开 JSON 文件或执行 SQL。成功流式回合会记录审计；已发可见叙事后失败的流式调用仍不写状态也不写审计；`context.skipWrite` 会丢弃排队审计，保持“本次不持久化”的旧语义。
+- 新增 `test/auditRoute.test.js`，覆盖 provider 越权 proposal 被审计但不写业务状态、流式失败不落审计、考试评分 proposal 被服务器榜单/晋级裁决覆盖。
+- Hooke follow-up 只读复审确认 JSON sidecar 尽力追加与 `skipWrite` 审计丢弃修复已闭环，未发现新的 P0/P1/P2 blocker。
 
 验收：
 
 - provider 越权 proposal 不写入业务状态，只进入审计记录并标记拒绝。
 - 日志不泄漏 API key、本地文件路径或隐藏信息到玩家视图。
-- 保存失败不能留下半写状态。
+- SQLite 保存失败不能留下 session/audit 半写状态；JSON sidecar 追加失败不让已成功保存的 session 请求失败或重试。
+
+验证：
+
+- `node --check src\storage\sessionAudit.js`
+- `node --check src\storage\jsonSessionAdapter.js`
+- `node --check src\storage\sqliteSessionAdapter.js`
+- `node --check src\game\audit.js`
+- `node --check src\routes\game.js`
+- `node --check src\routes\exam.js`
+- `node --check test\auditRoute.test.js`
+- `node --check test\sessionStoreAdapterContract.test.js`
+- `node --test test\auditRoute.test.js`，3 项通过
+- `node --test test\sessionStoreAdapterContract.test.js`，23 项通过
+- `node --test test\streamingTurnRoute.test.js test\aiControlRedTeam.test.js`，9 项通过
+- `node --test test\gameTurnTick.test.js test\gameTurnRelationships.test.js test\gameTurnExamTrigger.test.js`，16 项通过
+- `node --test test\examTravel.test.js`，6 项通过
+- `npm run check:docs-governance`
+- `$env:AI_PROVIDER='mock'; npm test`，317 项通过
+- `git diff --check`
+
+风险/遗留：
+
+- JSON 模式的审计 sidecar 与 session JSON 不是同一个物理文件；adapter 会在 session 写入成功后尽力追加审计，追加失败不会让 route 报错或让 SSE fallback 二次结算。SQLite 模式在本地 transaction 中写入表。后续若要强审计原子性或跨进程分析，应优先使用 SQLite 模式。
+- 审计记录当前为本地开发/调试 API，不暴露给玩家路由；未来“事件档案” UI 必须只读取服务器 projection。
+- S49.4 不拆国家、城市、NPC、官职、关系等业务表；下一步进入 S50 静态天下与邻国种子契约。
 
 ## 6. 数据域规划
 
@@ -472,3 +510,47 @@
 下一步：
 
 - S49.4：事件日志与 AI proposal 审计，记录模型建议、服务器接受/拒绝和最终应用事件。
+
+### 2026-05-07
+
+工具：Codex；只读探索子代理 Bacon；提交前只读复审 Hooke
+
+步骤：S49.4
+
+提交：待本次提交后回填
+
+完成：
+
+- 新增 adapter 级审计契约：`appendAuditEvent()`、`appendAiProposal()`、`listAuditEvents()`、`listAiProposals()`。
+- JSON adapter 追加本地 `data/audit/*.jsonl` sidecar；SQLite adapter 追加 `event_log` 与 `ai_change_proposals` 表。两者共用 `src/storage/sessionAudit.js` 的 schema、脱敏、路径/key 隐藏和安全 session id 规则。
+- `mutateSession()` context 新增 `appendAuditEvent()` / `appendAiProposal()` 队列；路由通过 context 排队审计记录，保持 JSON/SQLite adapter 边界。Hooke 提交前复审发现 JSON sidecar 写后失败可能导致 SSE fallback 二次结算、`skipWrite` 仍写审计的语义风险；已改为 JSON sidecar 尽力追加且追加失败不抛给 route，`skipWrite` 丢弃审计队列，并补 contract tests。
+- 新增 `src/game/audit.js`，为开局、普通回合、考试取题、考试局部推进和交卷评分生成脱敏审计摘要。普通回合记录 provider proposal、服务器接受的 state delta、拒绝原因、最终应用事件 id；考试评分记录模型分数与服务器反作弊/榜单/晋级裁决。
+- 新增 `test/auditRoute.test.js`，覆盖 provider 越权 proposal 只入审计不写业务状态、流式失败不写状态/审计、考试评分 proposal 被服务器裁决覆盖。
+- README、架构文档、产品 brief、session storage migration plan、dynamic database plan、shared context 和本台账同步 S49.4 本地审计边界。
+- Bacon 只读探索了普通回合、考试、storage adapter、测试和泄漏风险 hook 点，建议把审计 API 放在 adapter contract 并通过 `mutateSession()` context 统一消费；子代理未编辑文件，未运行 Git 命令。
+- Hooke 提交前只读复审首轮发现 JSON sidecar 写后失败可能导致 SSE fallback 二次结算、`skipWrite` 仍写审计的语义风险；修复后 follow-up 复审确认无 P0/P1/P2 blocker。剩余风险是 JSON sidecar 非事务性，已记录为默认 JSON 的诊断性取舍。
+
+验证：
+
+- `node --check src\storage\sessionAudit.js`
+- `node --check src\storage\jsonSessionAdapter.js`
+- `node --check src\storage\sqliteSessionAdapter.js`
+- `node --check src\game\audit.js`
+- `node --check src\routes\game.js`
+- `node --check src\routes\exam.js`
+- `node --check test\auditRoute.test.js`
+- `node --check test\sessionStoreAdapterContract.test.js`
+- `node --test test\auditRoute.test.js`，3 项通过
+- `node --test test\sessionStoreAdapterContract.test.js`，23 项通过
+- `node --test test\streamingTurnRoute.test.js test\aiControlRedTeam.test.js`，9 项通过
+- `node --test test\gameTurnTick.test.js test\gameTurnRelationships.test.js test\gameTurnExamTrigger.test.js`，16 项通过
+- `node --test test\examTravel.test.js`，6 项通过
+- `npm run check:docs-governance`
+- `$env:AI_PROVIDER='mock'; npm test`，317 项通过
+- `git diff --check`
+
+风险/遗留：
+
+- JSON sidecar 审计记录和 session JSON 不是同一物理事务；JSON 模式在 session 成功后尽力追加审计，sidecar 追加失败不让已提交回合报错或重试。SQLite 模式可在本地 transaction 中保存 session row 与审计表。默认 JSON 仍优先保证本地可玩和旧存档兼容。
+- 审计记录是本地调试/未来检索底座，不是玩家 API；未来事件档案 UI 必须读取服务器 projection，不能直接暴露 raw audit payload。
+- 下一步 S50.1：静态天下与邻国种子契约。

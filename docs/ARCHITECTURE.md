@@ -8,7 +8,7 @@ Qianqiu is intentionally buildless in phase one:
 
 - Backend: Node.js + Express in `server.js`.
 - Frontend: plain HTML/CSS/JS in `public/`.
-- Storage: `src/storage/sessionStore.js` is the route-facing storage facade. The default adapter is still local JSON files under `data/sessions/`, implemented by `src/storage/jsonSessionAdapter.js`. S49.3 adds an optional local SQLite adapter in `src/storage/sqliteSessionAdapter.js`; it stores one row per session with metadata columns, `revision`, timestamps, and JSON `world_state`, selected by `STORAGE_ADAPTER=sqlite`. Remote saves, accounts, multiplayer sync, and hosted databases are outside the current scope.
+- Storage: `src/storage/sessionStore.js` is the route-facing storage facade. The default adapter is still local JSON files under `data/sessions/`, implemented by `src/storage/jsonSessionAdapter.js`. S49.3 adds an optional local SQLite adapter in `src/storage/sqliteSessionAdapter.js`; it stores one row per session with metadata columns, `revision`, timestamps, and JSON `world_state`, selected by `STORAGE_ADAPTER=sqlite`. S49.4 adds local audit records for `event_log` and `ai_change_proposals`: JSON mode writes sidecar JSONL files under `data/audit/`, while SQLite mode writes local tables. Remote saves, accounts, multiplayer sync, and hosted databases are outside the current scope.
 - AI: adapter-based providers behind `src/ai/index.js`.
 - Tests: Node.js built-in `node --test`.
 - Browser smoke: `playwright-core` driving an installed Chrome/Edge browser through `scripts/browserSmoke.js`.
@@ -34,6 +34,7 @@ flowchart TD
   Routes --> Store["sessionStore facade"]
   Store --> JsonAdapter["jsonSessionAdapter: data/sessions/*.json"]
   Store --> SqliteAdapter["sqliteSessionAdapter: local world_sessions rows"]
+  Store --> Audit["local audit: event_log / ai_change_proposals"]
   Routes --> Provider["AI provider adapter"]
   Provider --> Schemas["JSON parse + Ajv schema validation"]
   Routes --> Rules["stateRules / exams / promotions / essayChecks"]
@@ -675,7 +676,9 @@ S38.2 implements the JSON storage hardening described in [docs/SESSION_STORAGE_M
 
 The SQLite adapter uses Node.js `node:sqlite` when available. It creates a local `world_sessions` table with one row per session and keeps the authoritative route payload inside `world_state_json`; metadata columns are projections rebuilt from the same `worldState`. It preserves the shared adapter contract: `readSession()` returns only `worldState`, `listSessions()` stays redacted, `writeSession()` enforces expected revision conflicts, `mutateSession()` serializes same-session writes, `skipWrite` leaves storage untouched, and `errorAfterWrite` surfaces route errors after persistence. `npm run storage:import:sqlite` provides a development import path from JSON envelopes into SQLite without deleting JSON files.
 
-[docs/DYNAMIC_WORLD_DATABASE_PLAN.md](DYNAMIC_WORLD_DATABASE_PLAN.md) expands the future path after S49.3: add append-only event logs and AI proposal audit rows before selectively splitting countries, neighboring states, cities, NPCs, households, office postings, relationships, scenes, world entities, and world threads into indexed tables. This is a local-only persistence plan, not a remote-save, account, multiplayer, or hosted-database plan. AI must never execute SQL or write raw tables; it can only produce schema-valid proposals that server modules validate and commit.
+S49.4 extends the storage contract with `appendAuditEvent()`, `appendAiProposal()`, `listAuditEvents()`, and `listAiProposals()`. Game start, ordinary turns, successful streaming turns, exam questions, exam scene progress, and exam submit/grade paths enqueue audit records through the `mutateSession()` context so route code does not depend on JSON paths or SQLite SQL. Audit records contain source module, timestamp, revision, `turnCount/year/month/tenDayPeriod`, scene cadence, visibility, a short summary, sanitized proposal shape, accepted server deltas, rejected reasons, and applied event ids. They deliberately omit full `worldState`, prompt text, hidden ledgers, API keys, and local file paths. JSON sidecar audit is diagnostic and best-effort after a committed session write; SQLite keeps session and audit rows in one local transaction. `context.skipWrite` discards queued audit records in both adapters.
+
+[docs/DYNAMIC_WORLD_DATABASE_PLAN.md](DYNAMIC_WORLD_DATABASE_PLAN.md) expands the future path after S49.4: selectively split countries, neighboring states, cities, NPCs, households, office postings, relationships, scenes, world entities, and world threads into indexed local tables. This is a local-only persistence plan, not a remote-save, account, multiplayer, or hosted-database plan. AI must never execute SQL or write raw tables; it can only produce schema-valid proposals that server modules validate and commit.
 
 ## Verification
 

@@ -12,6 +12,12 @@ const {
   toSaveListEntry,
   validateWorldStateSessionId
 } = require("./sessionRecord");
+const {
+  createAiProposalRecord,
+  createAuditContext,
+  createAuditEventRecord,
+  normalizeAuditBatch
+} = require("./sessionAudit");
 
 const DEFAULT_SQLITE_DATABASE_PATH = path.join(__dirname, "..", "..", "data", "qianqiu.sqlite");
 const SQLITE_BUSY_TIMEOUT_MS = 5000;
@@ -47,6 +53,14 @@ function parseStoredJson(value) {
     return JSON.parse(value);
   } catch (error) {
     throw createStoreError(500, "Session file is corrupt");
+  }
+}
+
+function parseStoredAuditJson(value) {
+  try {
+    return JSON.parse(value);
+  } catch (error) {
+    throw createStoreError(500, "Audit log is corrupt");
   }
 }
 
@@ -128,6 +142,50 @@ function createSqliteSessionAdapter(options = {}) {
       ) STRICT;
       CREATE INDEX IF NOT EXISTS idx_world_sessions_updated
         ON world_sessions(updated_at DESC, created_at DESC, session_id ASC);
+
+      CREATE TABLE IF NOT EXISTS event_log (
+        event_id TEXT PRIMARY KEY,
+        session_id TEXT NOT NULL,
+        audit_schema_version INTEGER NOT NULL,
+        revision INTEGER,
+        turn_count INTEGER,
+        year INTEGER,
+        month INTEGER,
+        ten_day_period INTEGER,
+        scene_cadence TEXT,
+        source_system TEXT NOT NULL,
+        event_type TEXT NOT NULL,
+        visibility TEXT NOT NULL,
+        summary TEXT NOT NULL,
+        related_json TEXT NOT NULL,
+        applied_changes_json TEXT NOT NULL,
+        created_at TEXT NOT NULL
+      ) STRICT;
+      CREATE INDEX IF NOT EXISTS idx_event_log_session_created
+        ON event_log(session_id, created_at, event_id);
+
+      CREATE TABLE IF NOT EXISTS ai_change_proposals (
+        proposal_id TEXT PRIMARY KEY,
+        session_id TEXT NOT NULL,
+        audit_schema_version INTEGER NOT NULL,
+        revision INTEGER,
+        turn_count INTEGER,
+        year INTEGER,
+        month INTEGER,
+        ten_day_period INTEGER,
+        scene_cadence TEXT,
+        provider TEXT NOT NULL,
+        prompt_pack TEXT,
+        proposal_kind TEXT NOT NULL,
+        status TEXT NOT NULL,
+        proposal_json TEXT NOT NULL,
+        accepted_json TEXT NOT NULL,
+        rejected_reasons_json TEXT NOT NULL,
+        applied_event_ids_json TEXT NOT NULL,
+        created_at TEXT NOT NULL
+      ) STRICT;
+      CREATE INDEX IF NOT EXISTS idx_ai_change_proposals_session_created
+        ON ai_change_proposals(session_id, created_at, proposal_id);
     `);
 
     if (databasePath !== ":memory:") {
@@ -192,6 +250,165 @@ function createSqliteSessionAdapter(options = {}) {
         JSON.stringify(metadata),
         JSON.stringify(record.worldState)
       );
+  }
+
+  function auditDefaultsFromRecord(record) {
+    return {
+      revision: record.revision,
+      turnCount: record.metadata.turnCount,
+      year: record.metadata.year,
+      month: record.metadata.month,
+      tenDayPeriod: record.metadata.tenDayPeriod
+    };
+  }
+
+  function insertAuditEvents(records) {
+    if (!records.length) return;
+    const statement = getDatabase().prepare(`
+      INSERT INTO event_log (
+        event_id,
+        session_id,
+        audit_schema_version,
+        revision,
+        turn_count,
+        year,
+        month,
+        ten_day_period,
+        scene_cadence,
+        source_system,
+        event_type,
+        visibility,
+        summary,
+        related_json,
+        applied_changes_json,
+        created_at
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `);
+    for (const record of records) {
+      statement.run(
+        record.eventId,
+        record.sessionId,
+        record.auditSchemaVersion,
+        record.revision,
+        record.turnCount,
+        record.year,
+        record.month,
+        record.tenDayPeriod,
+        record.sceneCadence,
+        record.sourceSystem,
+        record.eventType,
+        record.visibility,
+        record.summary,
+        JSON.stringify(record.related),
+        JSON.stringify(record.appliedChanges),
+        record.createdAt
+      );
+    }
+  }
+
+  function insertAiProposals(records) {
+    if (!records.length) return;
+    const statement = getDatabase().prepare(`
+      INSERT INTO ai_change_proposals (
+        proposal_id,
+        session_id,
+        audit_schema_version,
+        revision,
+        turn_count,
+        year,
+        month,
+        ten_day_period,
+        scene_cadence,
+        provider,
+        prompt_pack,
+        proposal_kind,
+        status,
+        proposal_json,
+        accepted_json,
+        rejected_reasons_json,
+        applied_event_ids_json,
+        created_at
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `);
+    for (const record of records) {
+      statement.run(
+        record.proposalId,
+        record.sessionId,
+        record.auditSchemaVersion,
+        record.revision,
+        record.turnCount,
+        record.year,
+        record.month,
+        record.tenDayPeriod,
+        record.sceneCadence,
+        record.provider,
+        record.promptPack,
+        record.proposalKind,
+        record.status,
+        JSON.stringify(record.proposal),
+        JSON.stringify(record.accepted),
+        JSON.stringify(record.rejectedReasons),
+        JSON.stringify(record.appliedEventIds),
+        record.createdAt
+      );
+    }
+  }
+
+  function insertAuditBatch(sessionId, batch = {}, defaults = {}) {
+    const normalized = normalizeAuditBatch(sessionId, batch, defaults);
+    insertAuditEvents(normalized.auditEvents);
+    insertAiProposals(normalized.aiProposals);
+    return normalized;
+  }
+
+  function rowToAuditEvent(row) {
+    return {
+      auditSchemaVersion: row.audit_schema_version,
+      eventId: row.event_id,
+      sessionId: row.session_id,
+      revision: row.revision,
+      turnCount: row.turn_count,
+      year: row.year,
+      month: row.month,
+      tenDayPeriod: row.ten_day_period,
+      sceneCadence: row.scene_cadence,
+      sourceSystem: row.source_system,
+      eventType: row.event_type,
+      visibility: row.visibility,
+      summary: row.summary,
+      related: parseStoredAuditJson(row.related_json),
+      appliedChanges: parseStoredAuditJson(row.applied_changes_json),
+      createdAt: row.created_at
+    };
+  }
+
+  function rowToAiProposal(row) {
+    return {
+      auditSchemaVersion: row.audit_schema_version,
+      proposalId: row.proposal_id,
+      sessionId: row.session_id,
+      revision: row.revision,
+      turnCount: row.turn_count,
+      year: row.year,
+      month: row.month,
+      tenDayPeriod: row.ten_day_period,
+      sceneCadence: row.scene_cadence,
+      provider: row.provider,
+      promptPack: row.prompt_pack,
+      proposalKind: row.proposal_kind,
+      status: row.status,
+      proposal: parseStoredAuditJson(row.proposal_json),
+      accepted: parseStoredAuditJson(row.accepted_json),
+      rejectedReasons: parseStoredAuditJson(row.rejected_reasons_json),
+      appliedEventIds: parseStoredAuditJson(row.applied_event_ids_json),
+      createdAt: row.created_at
+    };
+  }
+
+  function normalizeListLimit(value) {
+    if (value === undefined || value === null) return 1000;
+    const parsed = Number(value);
+    return Number.isInteger(parsed) && parsed >= 0 ? Math.min(parsed, 10000) : 1000;
   }
 
   async function withSessionLock(sessionId, task) {
@@ -260,6 +477,10 @@ function createSqliteSessionAdapter(options = {}) {
       });
 
       persistSessionRecord(record);
+      insertAuditBatch(worldState.sessionId, {
+        auditEvents: writeOptions.auditEvents,
+        aiProposals: writeOptions.aiProposals
+      }, auditDefaultsFromRecord(record));
       return worldState;
     });
   }
@@ -272,16 +493,14 @@ function createSqliteSessionAdapter(options = {}) {
   async function mutateSession(sessionId, mutator) {
     return withSessionLock(sessionId, async () => {
       const { record } = await readSessionRecordUnlocked(sessionId);
-      const context = {
-        record,
-        skipWrite: false,
-        errorAfterWrite: null
-      };
+      const context = createAuditContext(record);
       const result = await mutator(record.worldState, context);
       if (!context.skipWrite) {
         await writeSessionUnlocked(record.worldState, {
           previousRecord: record,
-          expectedRevision: record.revision
+          expectedRevision: record.revision,
+          auditEvents: context.auditEvents,
+          aiProposals: context.aiProposals
         });
       }
       if (context.errorAfterWrite) throw context.errorAfterWrite;
@@ -325,6 +544,54 @@ function createSqliteSessionAdapter(options = {}) {
     getDatabase().prepare("DELETE FROM world_sessions WHERE session_id = ?").run(sessionId);
   }
 
+  async function appendAuditEvent(sessionId, event, options = {}) {
+    await ensureDatabase();
+    const record = createAuditEventRecord(sessionId, event, options);
+    runInTransaction(getDatabase(), () => insertAuditEvents([record]));
+    return record;
+  }
+
+  async function appendAiProposal(sessionId, proposal, options = {}) {
+    await ensureDatabase();
+    const record = createAiProposalRecord(sessionId, proposal, options);
+    runInTransaction(getDatabase(), () => insertAiProposals([record]));
+    return record;
+  }
+
+  async function listAuditEvents(sessionId, options = {}) {
+    await ensureDatabase();
+    assertSafeSessionId(sessionId);
+    const limit = normalizeListLimit(options.limit);
+    if (limit === 0) return [];
+    const rows = getDatabase()
+      .prepare(`
+        SELECT *
+        FROM event_log
+        WHERE session_id = ?
+        ORDER BY created_at DESC, event_id DESC
+        LIMIT ?
+      `)
+      .all(sessionId, limit);
+    return rows.reverse().map(rowToAuditEvent);
+  }
+
+  async function listAiProposals(sessionId, options = {}) {
+    await ensureDatabase();
+    assertSafeSessionId(sessionId);
+    const limit = normalizeListLimit(options.limit);
+    if (limit === 0) return [];
+    const rows = getDatabase()
+      .prepare(`
+        SELECT *
+        FROM ai_change_proposals
+        WHERE session_id = ?
+        ORDER BY created_at DESC, proposal_id DESC
+        LIMIT ?
+      `)
+      .all(sessionId, limit);
+    return rows.reverse().map(rowToAiProposal);
+  }
+
   async function importSessionRecord(inputRecord, importOptions = {}) {
     await ensureDatabase();
     const { record } = normalizeSessionRecord(inputRecord, inputRecord?.sessionId);
@@ -359,6 +626,10 @@ function createSqliteSessionAdapter(options = {}) {
     mutateSession,
     listSessions,
     deleteSession,
+    appendAuditEvent,
+    appendAiProposal,
+    listAuditEvents,
+    listAiProposals,
     importSessionRecord,
     cleanupSessionTempFiles,
     buildSessionMetadata,

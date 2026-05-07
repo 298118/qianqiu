@@ -10,6 +10,7 @@ const { createJsonSessionAdapter } = require("../src/storage/jsonSessionAdapter"
 const { createSqliteSessionAdapter } = require("../src/storage/sqliteSessionAdapter");
 
 const sessionsDir = path.join(__dirname, "..", "data", "sessions");
+const auditDir = path.join(__dirname, "..", "data", "audit");
 const dataDir = path.join(__dirname, "..", "data");
 
 function buildWorldState(overrides = {}) {
@@ -31,6 +32,8 @@ function buildWorldState(overrides = {}) {
 async function removeSessionArtifacts(sessionId) {
   await fs.rm(path.join(sessionsDir, `${sessionId}.json`), { force: true });
   await fs.rm(path.join(sessionsDir, `${sessionId}.lock`), { force: true });
+  await fs.rm(path.join(auditDir, `${sessionId}.event-log.jsonl`), { force: true, recursive: true });
+  await fs.rm(path.join(auditDir, `${sessionId}.ai-proposals.jsonl`), { force: true, recursive: true });
   const entries = await fs.readdir(sessionsDir).catch(() => []);
   await Promise.all(
     entries
@@ -125,6 +128,10 @@ for (const [adapterName, createHarness, skip] of harnesses) {
       "listSessions",
       "deleteSession",
       "cleanupSessionTempFiles",
+      "appendAuditEvent",
+      "appendAiProposal",
+      "listAuditEvents",
+      "listAiProposals",
       "buildSessionMetadata",
       "normalizeSessionRecord"
     ];
@@ -301,14 +308,29 @@ for (const [adapterName, createHarness, skip] of harnesses) {
 
     const result = await adapter.mutateSession(worldState.sessionId, async (draft, context) => {
       draft.player.gold = 99;
+      context.appendAuditEvent({
+        sourceSystem: "contract_test",
+        eventType: "skip_write",
+        summary: "skipWrite 不应写审计"
+      });
+      context.appendAiProposal({
+        provider: "mock",
+        proposalKind: "skip_write",
+        status: "accepted",
+        proposal: { note: "skipWrite 不应写 proposal" }
+      });
       context.skipWrite = true;
       return { goldSeenByRoute: draft.player.gold };
     });
     const { record: after } = await adapter.readSessionRecord(worldState.sessionId);
+    const events = await adapter.listAuditEvents(worldState.sessionId);
+    const proposals = await adapter.listAiProposals(worldState.sessionId);
 
     assert.deepEqual(result, { goldSeenByRoute: 99 });
     assert.equal(after.revision, before.revision);
     assert.equal(after.worldState.player.gold, 10);
+    assert.equal(events.length, 0);
+    assert.equal(proposals.length, 0);
   });
 
   test(`${adapterName} storage adapter contract: mutateSession can write before surfacing a route error`, { skip }, async (t) => {
@@ -335,6 +357,76 @@ for (const [adapterName, createHarness, skip] of harnesses) {
     assert.ok(loaded.eventHistory.includes("已记录错过考期"));
   });
 
+  test(`${adapterName} storage adapter contract: audit logs append redacted events and proposals`, { skip }, async (t) => {
+    const { adapter, trackSession } = createHarness(t);
+    const previousOpenAiKey = process.env.OPENAI_API_KEY;
+    process.env.OPENAI_API_KEY = "sk-proj-audit-secret-123456";
+    t.after(() => {
+      if (previousOpenAiKey === undefined) delete process.env.OPENAI_API_KEY;
+      else process.env.OPENAI_API_KEY = previousOpenAiKey;
+    });
+    const worldState = buildWorldState({
+      playerName: "审计契约",
+      turnCount: 3
+    });
+    trackSession(worldState.sessionId);
+
+    await adapter.writeSession(worldState, {
+      auditEvents: [{
+        sourceSystem: "contract_test",
+        eventType: "state_changed",
+        visibility: "developer",
+        summary: `写入 E:\\LSMNQ\\data\\sessions\\${worldState.sessionId}.json，密钥 sk-proj-audit-secret-123456`,
+        related: {
+          publicNote: "可见摘要",
+          hiddenNotes: "密线人物不应露出"
+        },
+        appliedChanges: {
+          player: { academia: { before: 10, after: 12 } },
+          worldState: { relationshipLedger: "不应落盘" }
+        }
+      }],
+      aiProposals: [{
+        provider: "mock",
+        promptPack: "world_turn",
+        proposalKind: "turn",
+        status: "rejected",
+        proposal: {
+          statePatch: {
+            player: {
+              examRank: "进士",
+              hiddenToken: "SEALED_PLAYER_AUDIT_TOKEN"
+            },
+            worldState: { hiddenToken: "SEALED_AUDIT_TOKEN" }
+          }
+        },
+        accepted: {},
+        rejectedReasons: ["statePatch.player.examRank 由服务器拒绝。"]
+      }]
+    });
+
+    const events = await adapter.listAuditEvents(worldState.sessionId);
+    const proposals = await adapter.listAiProposals(worldState.sessionId);
+    const serialized = JSON.stringify({ events, proposals });
+
+    assert.equal(events.length, 1);
+    assert.equal(proposals.length, 1);
+    assert.equal(events[0].revision, 1);
+    assert.equal(events[0].turnCount, 3);
+    assert.equal(events[0].tenDayPeriod, 1);
+    assert.equal(events[0].visibility, "developer");
+    assert.equal(proposals[0].status, "rejected");
+    assert.equal(proposals[0].proposal.statePatch.player.examRank, "进士");
+    assert.equal(serialized.includes("sk-proj-audit-secret-123456"), false);
+    assert.equal(serialized.includes("audit-secret"), false);
+    assert.equal(serialized.includes("E:\\LSMNQ"), false);
+    assert.equal(serialized.includes("SEALED_AUDIT_TOKEN"), false);
+    assert.equal(serialized.includes("SEALED_PLAYER_AUDIT_TOKEN"), false);
+    assert.equal(serialized.includes("密线人物"), false);
+    assert.equal(proposals[0].proposal.statePatch.player.hiddenToken, "[redacted]");
+    assert.equal(proposals[0].proposal.statePatch.worldState, "[redacted]");
+  });
+
   test(`${adapterName} storage adapter contract: deleteSession removes a saved session`, { skip }, async (t) => {
     const { adapter, trackSession } = createHarness(t);
     const worldState = buildWorldState({
@@ -351,6 +443,33 @@ for (const [adapterName, createHarness, skip] of harnesses) {
     );
   });
 }
+
+test("JSON storage adapter contract: audit sidecar append failure does not fail committed session", async (t) => {
+  const adapter = createJsonSessionAdapter();
+  const worldState = buildWorldState({
+    playerName: "审计失败仍保留存档",
+    player: { gold: 12 }
+  });
+  const eventLogPath = path.join(auditDir, `${worldState.sessionId}.event-log.jsonl`);
+  t.after(() => removeSessionArtifacts(worldState.sessionId));
+
+  await fs.rm(eventLogPath, { force: true, recursive: true });
+  await fs.mkdir(eventLogPath, { recursive: true });
+
+  await adapter.writeSession(worldState, {
+    auditEvents: [{
+      sourceSystem: "contract_test",
+      eventType: "sidecar_failure",
+      summary: "这个目录会让 JSONL append 失败"
+    }]
+  });
+
+  const { record } = await adapter.readSessionRecord(worldState.sessionId);
+
+  assert.equal(record.revision, 1);
+  assert.equal(record.worldState.player.name, "审计失败仍保留存档");
+  assert.equal(record.worldState.player.gold, 12);
+});
 
 test("JSON storage adapter contract: legacy raw saves migrate through the adapter", async (t) => {
   const adapter = createJsonSessionAdapter();

@@ -1,6 +1,6 @@
 # Session Storage Migration Plan
 
-S38.2 began as a planning step and now also records the implemented JSON storage hardening baseline. S49.2 split that baseline behind a storage adapter boundary: route code still imports `src/storage/sessionStore.js`, while the default implementation lives in `src/storage/jsonSessionAdapter.js` and stores local JSON under `data/sessions/`. S49.3 adds `src/storage/sessionRecord.js` for shared envelope/metadata rules and `src/storage/sqliteSessionAdapter.js` as an optional local SQLite session-row adapter selected by `STORAGE_ADAPTER=sqlite`. JSON remains the default; hosted database storage, accounts, remote saves, and multiplayer remain out of current scope.
+S38.2 began as a planning step and now also records the implemented JSON storage hardening baseline. S49.2 split that baseline behind a storage adapter boundary: route code still imports `src/storage/sessionStore.js`, while the default implementation lives in `src/storage/jsonSessionAdapter.js` and stores local JSON under `data/sessions/`. S49.3 adds `src/storage/sessionRecord.js` for shared envelope/metadata rules and `src/storage/sqliteSessionAdapter.js` as an optional local SQLite session-row adapter selected by `STORAGE_ADAPTER=sqlite`. S49.4 adds local audit records for event logs and AI proposal review while keeping JSON the default. Hosted database storage, accounts, remote saves, and multiplayer remain out of current scope.
 
 ## Implemented JSON Baseline
 
@@ -20,7 +20,7 @@ Known gaps:
 
 - The JSON lock only coordinates writers that use this adapter on a normal local filesystem; network filesystem semantics and multi-host locking remain out of scope.
 - No backup/export shape yet.
-- No hosted database migration, account system, multiplayer sync, or remote save path yet. The SQLite adapter is local-only and currently stores one row per session with JSON `world_state`; event logs and AI proposal audit rows remain future S49 slices.
+- No hosted database migration, account system, multiplayer sync, or remote save path yet. The SQLite adapter is local-only and currently stores one row per session with JSON `world_state`; S49.4 audit records are local-only support data and do not create player accounts or remote sync.
 
 ## Optional SQLite Adapter
 
@@ -30,9 +30,27 @@ S49.3 implements an optional local SQLite adapter with the same route-facing con
 - `SQLITE_DATABASE_PATH` defaults to `data/qianqiu.sqlite`; SQLite database, WAL, SHM, journal, and `.db` variants under `data/` are ignored by Git.
 - The implementation uses Node.js `node:sqlite` when available, so no third-party npm dependency is added. Explicit SQLite mode fails with a clear storage error if the runtime lacks `node:sqlite`.
 - Table `world_sessions` stores `session_id`, schema version, `revision`, timestamps, redacted metadata columns, `metadata_json`, and the full route-compatible `world_state_json`.
+- S49.4 also creates local `event_log` and `ai_change_proposals` tables for audit records. These rows are not returned by route payloads or save-list metadata.
 - `readSession()` still returns only `worldState`; `listSessions()` still returns redacted save metadata; `writeSession()` and `mutateSession()` still enforce revision conflicts and same-session serialization.
 - `cleanupSessionTempFiles()` is a safe no-op for SQLite because there are no adapter-owned JSON temp files.
 - `npm run storage:import:sqlite` reads the current JSON adapter save list and imports normalized records into SQLite without deleting JSON originals.
+
+## Local Audit Logs
+
+S49.4 adds an adapter-level audit contract:
+
+```javascript
+{
+  appendAuditEvent(sessionId, event, options),
+  appendAiProposal(sessionId, proposal, options),
+  listAuditEvents(sessionId, options),
+  listAiProposals(sessionId, options)
+}
+```
+
+JSON mode writes append-only sidecars under `data/audit/{sessionId}.event-log.jsonl` and `data/audit/{sessionId}.ai-proposals.jsonl`; these files are ignored by Git. Because those JSONL files are separate diagnostic sidecars, a sidecar append failure after a successful session JSON write is swallowed rather than turning a committed game turn into a route failure or SSE fallback retry. SQLite mode stores the same normalized shape in local `event_log` and `ai_change_proposals` tables inside the same local transaction as the session row. `mutateSession()` now exposes `context.appendAuditEvent()` and `context.appendAiProposal()`, and adapters consume those queues alongside the session write; if `context.skipWrite` is set, queued audit records are discarded so the old “no persistence” contract stays intact. Route code should enqueue audit records through that context instead of opening files or running SQL.
+
+Audit records are for local debugging, replay, future prompt retrieval, and future event-archive UI. They store source module, timestamp, session revision, `turnCount/year/month/tenDayPeriod`, scene cadence, visibility, summary, sanitized proposal shape, accepted server result, rejected reasons, and applied event ids. They must not store full `worldState`, prompt text, hidden relationship/entity ledgers, provider keys, stack traces, or local file/database paths.
 
 ## Target Invariants
 
@@ -186,7 +204,11 @@ Do not let route code depend on JSON-file details. S49.2 formalizes the first st
   mutateSession(sessionId, mutator, options),
   listSessions(options),
   deleteSession(sessionId, options),
-  cleanupSessionTempFiles(options)
+  cleanupSessionTempFiles(options),
+  appendAuditEvent(sessionId, event, options),
+  appendAiProposal(sessionId, proposal, options),
+  listAuditEvents(sessionId, options),
+  listAiProposals(sessionId, options)
 }
 ```
 
@@ -200,14 +222,14 @@ Migration phases:
 6. DONE: Storage adapter interface, with the current JSON implementation as the default adapter and `test/sessionStoreAdapterContract.test.js` covering the shared contract.
 7. DONE: SQLite prototype for local development. Store one row per session with metadata columns, `revision`, timestamps, and a JSON `world_state` payload; keep JSON default.
 8. PARTIAL: JSON -> SQLite development import is available through `npm run storage:import:sqlite`; SQLite -> JSON explicit export remains future only if needed because JSON originals are not deleted.
-9. FUTURE: Event log and AI proposal audit rows after the SQLite session-row contract has settled.
+9. DONE: Event log and AI proposal audit records. JSON uses local JSONL sidecars; SQLite uses `event_log` and `ai_change_proposals`; route hooks cover game start, ordinary turns, successful streaming turns, exam question/progress, and exam submit/grade.
 10. FUTURE: Optional hosted database adapter only after local SQLite proves the contract and product scope adds a real remote/account need.
 
 The first database candidate should be SQLite because it improves atomicity and concurrent local access without requiring a service, credentials, or a hosted dependency. PostgreSQL or another hosted database can follow only when accounts, multiplayer, or remote save sync become product requirements.
 
 ## Verification Expectations
 
-S38.2/S49.3 storage coverage includes:
+S38.2/S49.4 storage coverage includes:
 
 - `node --test test/sessionStore.test.js`
 - `node --test test/sessionStoreAdapterContract.test.js`
@@ -216,6 +238,8 @@ S38.2/S49.3 storage coverage includes:
 - legacy raw-save fixture migration tests
 - malformed JSON and unsupported future-version read tests
 - save-list sorting/redaction tests
+- audit sidecar/table append/list tests for JSON and SQLite
+- route-level audit tests for provider overreach rejection, streaming failure no-write, and exam grading server裁决
 - `npm test`
 - `npm run smoke:browser` after any browser restore or save-picker behavior changes
 
