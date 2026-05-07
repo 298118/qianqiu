@@ -97,7 +97,7 @@
 | S49.1 | DONE | 形成动态世界数据库总体规划：架构边界、数据域、AI proposal、SQLite 迁移阶段 | 2026-05-07 | Codex + read-only subagent | `e3808df`、`990f7d3` |
 | S49.2 | DONE | 抽象 storage adapter 接口，保持 JSON 为默认实现，补 adapter contract tests | 2026-05-07 | Codex + read-only subagents | `2e15e13` |
 | S49.3 | DONE | 本地 SQLite 原型：一行一 session，保留 JSON `world_state`，以可选 env 开启，不做远程/账号/多人 | 2026-05-07 | Codex + read-only subagents | `22217e0` |
-| S49.4 | DONE | 事件日志与 AI proposal 审计：记录模型建议、服务器接受/拒绝和最终应用事件 | 2026-05-07 | Codex + read-only subagents | 待提交后回填 |
+| S49.4 | DONE | 事件日志与 AI proposal 审计：记录模型建议、服务器接受/拒绝和最终应用事件 | 2026-05-07 | Codex + read-only subagents | `092de20` |
 | S50.1 | TODO | 静态天下与邻国种子契约：国家、城市、路线、边境、官署辖区和初始可见性 |  |  |  |
 | S50.2 | TODO | per-session 国家/城市实例化与 prompt projection，先不替代现有 worldState 指标 |  |  |  |
 | S51.1 | TODO | NPC、家族、资产、田产、关系和可见性 schema 契约 |  |  |  |
@@ -234,7 +234,7 @@
 
 ### S49.4：事件日志与 AI Proposal 审计
 
-状态：DONE，随本次代码提交完成；提交 hash 在后续低风险文档回填中记录。
+状态：DONE。实现/文档提交：`092de20 feat: add local audit logs for AI proposals`；本哈希回填为低风险纯文档 follow-up。
 
 目标：
 
@@ -517,7 +517,7 @@
 
 步骤：S49.4
 
-提交：待本次提交后回填
+提交：`092de20 feat: add local audit logs for AI proposals`
 
 完成：
 
