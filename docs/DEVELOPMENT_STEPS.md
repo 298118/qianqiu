@@ -233,7 +233,7 @@ S46.1 已新增 [依赖、插件与开源参考治理](DEPENDENCY_PLUGIN_GOVERNA
 
 步骤：存档维护 - Windows atomic rename 抖动
 
-提交：待回填
+提交：e13d94e
 
 完成：
 - 修复全量并行测试中 `cleanupSessionTempFiles({ olderThanMs: 0 })` 可能误删其他测试进程活跃 atomic temp 文件的问题。
