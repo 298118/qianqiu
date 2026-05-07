@@ -101,7 +101,7 @@
 | S50.1 | DONE | 静态天下与邻国种子契约：国家、城市、路线、边境、官署辖区和初始可见性 | 2026-05-07 | Codex + read-only subagents | `45f9b65` |
 | S50.2 | DONE | per-session 国家/城市实例化与 prompt projection，先不替代现有 worldState 指标 | 2026-05-07 | Codex + read-only subagents | `b0ced01` |
 | S51.1 | DONE | NPC、家族、资产、田产、关系和可见性 schema 契约 | 2026-05-07 | Codex + read-only subagents | `418077b` |
-| S51.2 | DONE | 桥接当前 `characters`、`relationshipLedger`、active requests 与 NPC/关系表 | 2026-05-07 | Codex + read-only subagents | 待回填 |
+| S51.2 | DONE | 桥接当前 `characters`、`relationshipLedger`、active requests 与 NPC/关系表 | 2026-05-07 | Codex + read-only subagents | `8ed984a` |
 | S52.1 | TODO | 官职、官署、任所、城市辖区、考成和调任记录的数据库契约 |  |  |  |
 | S52.2 | TODO | 地方官/入仕官员任所与城市数据联动，保持服务器任免裁决 |  |  |  |
 | S53.1 | TODO | 检索式 prompt context assembler：按角色视野读取国家、城市、NPC、官职、事件摘要 |  |  |  |
@@ -396,7 +396,7 @@
 
 ### S51.2：当前人物与关系桥接
 
-状态：DONE。实现/文档提交哈希待回填；提交前只读复审 Singer 未发现阻塞问题。
+状态：DONE。实现/文档提交：`8ed984a feat: bridge world people ledger`；提交前只读复审 Singer 未发现阻塞问题。本哈希回填为低风险纯文档 follow-up。
 
 目标：
 
@@ -520,7 +520,7 @@
 
 步骤：S51.2
 
-提交：待回填
+提交：`8ed984a feat: bridge world people ledger`
 
 完成：
 
@@ -551,6 +551,7 @@
 - S51.2 的 `worldState.worldPeople` 是 bridge projection，不是完整私密 NPC 数据库；未来隐藏人物、家族、资产和田产若要入库，应先做 route raw-state redaction 或单独玩家 projection API。
 - `worldPeopleView` 当前不接浏览器面板；S53 信息面板或 context assembler 可再读取它。
 - 本步骤不扩大本地数据库范围，不引入远程/账号/多人，不让 AI 写 SQL 或人物业务表。
+- 本哈希回填为低风险纯文档 follow-up，跳过额外提交前子代理复审；验证 `npm run check:docs-governance` 与 `git diff --check`。
 
 下一步：
 
