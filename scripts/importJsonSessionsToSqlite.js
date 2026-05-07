@@ -3,18 +3,24 @@ const {
   DEFAULT_SQLITE_DATABASE_PATH,
   createSqliteSessionAdapter
 } = require("../src/storage/sqliteSessionAdapter");
+const { assertSafeSessionId } = require("../src/storage/sessionRecord");
 
 function parseArgs(argv) {
   const options = {
     databasePath: process.env.SQLITE_DATABASE_PATH || process.env.SQLITE_DB_PATH || DEFAULT_SQLITE_DATABASE_PATH,
     overwrite: false,
-    dryRun: false
+    dryRun: false,
+    sessionId: null
   };
 
   for (let index = 0; index < argv.length; index += 1) {
     const arg = argv[index];
     if (arg === "--db" || arg === "--database") {
-      options.databasePath = argv[index + 1];
+      options.databasePath = readArgValue(argv, index, arg);
+      index += 1;
+    } else if (arg === "--session") {
+      options.sessionId = readArgValue(argv, index, arg);
+      assertSafeSessionId(options.sessionId);
       index += 1;
     } else if (arg === "--overwrite") {
       options.overwrite = true;
@@ -30,24 +36,29 @@ function parseArgs(argv) {
   return options;
 }
 
+function readArgValue(argv, index, flag) {
+  const value = argv[index + 1];
+  if (!value || value.startsWith("--")) {
+    throw new Error(`${flag} requires a value`);
+  }
+  return value;
+}
+
 function printHelp() {
   console.log(`
-Usage: node scripts/importJsonSessionsToSqlite.js [--db data/qianqiu.sqlite] [--overwrite] [--dry-run]
+Usage: node scripts/importJsonSessionsToSqlite.js [--db data/qianqiu.sqlite] [--session <sessionId>] [--overwrite] [--dry-run]
 
 从默认 data/sessions/*.json 读取 JSON 存档，写入本地 SQLite session 表。
 默认跳过已存在的 session；加 --overwrite 可覆盖 SQLite 中同 id 的行。
+写入 SQLite 时会同步 geo_* 地理业务表；--dry-run 只读取 JSON 存档，不打开或修改 SQLite 数据库。
 `.trim());
 }
 
-async function main() {
-  const options = parseArgs(process.argv.slice(2));
-  if (options.help) {
-    printHelp();
-    return;
-  }
-
-  const jsonStore = createJsonSessionAdapter();
-  const sqliteStore = createSqliteSessionAdapter({ databasePath: options.databasePath });
+async function runImportJsonSessionsToSqlite(options = {}) {
+  const jsonStore = options.jsonStore || createJsonSessionAdapter();
+  const sqliteStore = options.dryRun
+    ? null
+    : options.sqliteStore || createSqliteSessionAdapter({ databasePath: options.databasePath });
 
   try {
     const { saves, skipped: skippedJson } = await jsonStore.listSessions();
@@ -55,6 +66,8 @@ async function main() {
     const skipped = [...skippedJson];
 
     for (const save of saves) {
+      if (options.sessionId && save.sessionId !== options.sessionId) continue;
+
       try {
         const { record } = await jsonStore.readSessionRecord(save.sessionId);
         if (!options.dryRun) {
@@ -69,25 +82,40 @@ async function main() {
       }
     }
 
-    console.log(
-      JSON.stringify(
-        {
-          databasePath: options.databasePath,
-          dryRun: options.dryRun,
-          overwrite: options.overwrite,
-          imported: imported.length,
-          skipped
-        },
-        null,
-        2
-      )
-    );
+    return {
+      dryRun: options.dryRun,
+      imported: imported.length,
+      selectedSessionId: options.sessionId,
+      skipped,
+      syncedGeographyTables: !options.dryRun,
+      overwrite: options.overwrite
+    };
   } finally {
-    sqliteStore.close();
+    if (!options.dryRun && !options.sqliteStore) sqliteStore.close();
   }
 }
 
-main().catch((error) => {
-  console.error(error.message);
-  process.exitCode = 1;
-});
+async function main(argv = process.argv.slice(2), io = console) {
+  const options = parseArgs(argv);
+  if (options.help) {
+    printHelp();
+    return null;
+  }
+
+  const result = await runImportJsonSessionsToSqlite(options);
+  io.log(JSON.stringify(result, null, 2));
+  return result;
+}
+
+if (require.main === module) {
+  main().catch((error) => {
+    console.error(error.message);
+    process.exitCode = 1;
+  });
+}
+
+module.exports = {
+  main,
+  parseArgs,
+  runImportJsonSessionsToSqlite
+};

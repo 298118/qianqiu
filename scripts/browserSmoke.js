@@ -5,7 +5,8 @@ const path = require("node:path");
 const { spawn } = require("node:child_process");
 const { once } = require("node:events");
 const { chromium } = require("playwright-core");
-const { readSession, writeSession } = require("../src/storage/sessionStore");
+const { createJsonSessionAdapter } = require("../src/storage/jsonSessionAdapter");
+const { createSqliteSessionAdapter } = require("../src/storage/sqliteSessionAdapter");
 
 const rootDir = path.join(__dirname, "..");
 const sessionIdPattern = /^[0-9a-fA-F-]{20,}$/;
@@ -102,6 +103,24 @@ const roleWorldAcceptanceCases = Object.freeze([
   }
 ]);
 
+let activeSessionStore = createJsonSessionAdapter();
+
+function normalizeSmokeStorageAdapter(value) {
+  const adapter = String(value || "json").trim().toLowerCase();
+  if (adapter === "json" || adapter === "sqlite") return adapter;
+  throw new Error(`Unsupported browser smoke storage adapter: ${value}`);
+}
+
+function createBrowserSmokeSessionStore(options = {}) {
+  const storageAdapter = normalizeSmokeStorageAdapter(options.storageAdapter || process.env.STORAGE_ADAPTER || "json");
+  if (storageAdapter === "sqlite") {
+    return createSqliteSessionAdapter({
+      databasePath: options.sqliteDatabasePath || process.env.SQLITE_DATABASE_PATH || process.env.SQLITE_DB_PATH
+    });
+  }
+  return createJsonSessionAdapter();
+}
+
 function parseBrowserSmokeArgs(argv = process.argv) {
   const args = {
     browserPath: null,
@@ -109,6 +128,8 @@ function parseBrowserSmokeArgs(argv = process.argv) {
     headed: false,
     help: false,
     screenshotsDir: null,
+    sqliteDatabasePath: null,
+    storageAdapter: null,
     url: null
   };
 
@@ -128,6 +149,12 @@ function parseBrowserSmokeArgs(argv = process.argv) {
       index += 1;
     } else if (arg === "--screenshots") {
       args.screenshotsDir = readArgValue(argv, index, "--screenshots");
+      index += 1;
+    } else if (arg === "--storage-adapter") {
+      args.storageAdapter = normalizeSmokeStorageAdapter(readArgValue(argv, index, "--storage-adapter"));
+      index += 1;
+    } else if (arg === "--sqlite-db" || arg === "--sqlite-database") {
+      args.sqliteDatabasePath = readArgValue(argv, index, arg);
       index += 1;
     } else {
       throw new Error(`Unknown browser smoke argument: ${arg}`);
@@ -321,14 +348,19 @@ async function getOpenPort() {
   return port;
 }
 
-async function startLocalServer() {
+async function startLocalServer(options = {}) {
   const port = await getOpenPort();
   const baseUrl = `http://127.0.0.1:${port}`;
+  const storageAdapter = normalizeSmokeStorageAdapter(options.storageAdapter || process.env.STORAGE_ADAPTER || "json");
   const child = spawn(process.execPath, ["server.js"], {
     cwd: rootDir,
     env: {
       ...process.env,
       AI_PROVIDER: "mock",
+      STORAGE_ADAPTER: storageAdapter,
+      ...(storageAdapter === "sqlite" && options.sqliteDatabasePath
+        ? { SQLITE_DATABASE_PATH: options.sqliteDatabasePath }
+        : {}),
       PORT: String(port)
     },
     stdio: ["ignore", "pipe", "pipe"]
@@ -1914,7 +1946,7 @@ function buildBrowserCheatingEssay() {
 }
 
 async function prepareSessionForExam(sessionId, level) {
-  const worldState = await readSession(sessionId);
+  const worldState = await activeSessionStore.readSession(sessionId);
   if (worldState.activeExam) {
     failUiAcceptance(`session ${sessionId} already has an active exam before opening ${level}.`);
   }
@@ -1929,7 +1961,7 @@ async function prepareSessionForExam(sessionId, level) {
   worldState.player.adaptability = Math.max(worldState.player.adaptability || 0, 100);
   worldState.player.mentality = Math.max(worldState.player.mentality || 0, 100);
   worldState.player.reputation = Math.max(worldState.player.reputation || 0, 100);
-  await writeSession(worldState);
+  await activeSessionStore.writeSession(worldState);
   return worldState;
 }
 
@@ -1994,7 +2026,7 @@ async function runExamLevelAcceptance(page, sessionId, recorder, expectations) {
   await assertExamResultLayout(page, `desktop ${expectations.level}`);
   await recorder.capture(page, expectations.resultScreenshotName || `desktop-${expectations.level}-result`);
 
-  let worldState = await readSession(sessionId);
+  let worldState = await activeSessionStore.readSession(sessionId);
   const latest = assertLatestExamProgression(worldState, expectations, `desktop ${expectations.level}`);
 
   await page.locator("#exam-close").click();
@@ -2019,7 +2051,7 @@ async function runExamLevelAcceptance(page, sessionId, recorder, expectations) {
     minRivals: 1
   });
 
-  worldState = await readSession(sessionId);
+  worldState = await activeSessionStore.readSession(sessionId);
   return { latest, worldState };
 }
 
@@ -2032,7 +2064,7 @@ async function runRemainingExamProgressionAcceptance(page, sessionId, recorder) 
     results.push(await runExamLevelAcceptance(page, sessionId, recorder, expectations));
   }
 
-  const finalState = results.at(-1)?.worldState || await readSession(sessionId);
+  const finalState = results.at(-1)?.worldState || await activeSessionStore.readSession(sessionId);
   if (finalState.player.role !== "official" || finalState.player.examHistory.length < 4) {
     failUiAcceptance("complete exam progression did not finish as an official with four exam records.");
   }
@@ -2316,7 +2348,7 @@ async function runCheatingExamAcceptance(browser, { baseUrl, onSessionId, pageEr
       failUiAcceptance("cheating result did not show severe copy punishment in the browser.");
     }
 
-    const worldState = await readSession(cheatingSessionId);
+    const worldState = await activeSessionStore.readSession(cheatingSessionId);
     const latest = worldState.player.examHistory?.at(-1);
     if (!latest || latest.level !== "child_exam") {
       failUiAcceptance("cheating sample did not persist a child exam history entry.");
@@ -2734,8 +2766,13 @@ async function runBrowserJourney({
   }
 }
 
-async function cleanupSession(sessionId) {
+async function cleanupSession(sessionId, sessionStore = activeSessionStore) {
   if (!sessionId || !sessionIdPattern.test(sessionId)) return;
+  try {
+    await sessionStore.deleteSession(sessionId);
+  } catch (error) {
+    if (error.statusCode !== 404) throw error;
+  }
   await fsp.rm(path.join(rootDir, "data", "sessions", `${sessionId}.json`), { force: true });
 }
 
@@ -2745,9 +2782,12 @@ async function runBrowserSmoke(options = {}) {
   let result = null;
   const sessionIds = [];
   const baseUrl = options.url || null;
+  const previousSessionStore = activeSessionStore;
+  const sessionStore = createBrowserSmokeSessionStore(options);
+  activeSessionStore = sessionStore;
 
   try {
-    server = baseUrl ? null : await startLocalServer();
+    server = baseUrl ? null : await startLocalServer(options);
     result = await runBrowserJourney({
       baseUrl: baseUrl || server.baseUrl,
       browserPath,
@@ -2762,11 +2802,22 @@ async function runBrowserSmoke(options = {}) {
     return result;
   } finally {
     const idsToClean = new Set([...(result?.sessionIds || []), result?.sessionId, ...sessionIds].filter(Boolean));
-    for (const id of idsToClean) {
-      await cleanupSession(id);
+    let cleanupError = null;
+    try {
+      for (const id of idsToClean) {
+        await cleanupSession(id, sessionStore);
+      }
+    } catch (error) {
+      cleanupError = error;
+    } finally {
+      if (typeof sessionStore.close === "function") sessionStore.close();
+      activeSessionStore = previousSessionStore;
+      if (server) {
+        await server.stop();
+      }
     }
-    if (server) {
-      await server.stop();
+    if (cleanupError) {
+      throw cleanupError;
     }
   }
 }
@@ -2780,6 +2831,10 @@ Options:
   --browser <path>   Browser executable path. Defaults to BROWSER_EXECUTABLE_PATH or local Chrome/Edge.
   --screenshots <dir>
                     Save desktop/mobile UI acceptance screenshots to this directory.
+  --storage-adapter <json|sqlite>
+                    Select storage for the smoke helper and auto-started server. Defaults to json.
+  --sqlite-db <path>
+                    SQLite database path when --storage-adapter sqlite is used.
   --check-ai-connection
                     Click the start-page AI connection diagnostic. The auto-started server uses Mock;
                     --url targets should enable this only when the target provider is intentionally checkable.
@@ -2815,6 +2870,7 @@ module.exports = {
   assertPngScreenshot,
   buildBrowserCheatingEssay,
   buildBrowserSmokeEssay,
+  createBrowserSmokeSessionStore,
   createScreenshotRecorder,
   getAiConnectionPanelFailures,
   getDefaultBrowserCandidates,
@@ -2841,6 +2897,7 @@ module.exports = {
   getWorldThreadPanelFailures,
   hasTenDayPeriodLabel,
   normalizeBaseUrl,
+  normalizeSmokeStorageAdapter,
   parseBrowserSmokeArgs,
   rectsOverlap,
   resolveBrowserExecutable,

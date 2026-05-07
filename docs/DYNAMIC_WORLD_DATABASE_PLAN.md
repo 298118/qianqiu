@@ -543,7 +543,7 @@ S53.1-S53.6 已完成：`promptContextAssembler` 只读服务器可见 projectio
 
 S49-S53 结束后，数据库专项的下一段不再是“是否需要数据库”，而是如何小步拆表。活动台账见 [DEVELOPMENT_STEPS.md](DEVELOPMENT_STEPS.md)，当前拆分如下：
 
-- S54：地理业务表。S54.1/S54.2 已定义并实现 `geo_countries`、`geo_regions`、`geo_cities`、`geo_routes`、`geo_frontier_zones`、`geo_office_jurisdictions` 的 SQLite 模式持久化；后续继续做导入/修复/导出和 JSON/SQLite `worldGeographyView` parity。
+- S54：地理业务表。S54.1/S54.2 已定义并实现 `geo_countries`、`geo_regions`、`geo_cities`、`geo_routes`、`geo_frontier_zones`、`geo_office_jurisdictions` 的 SQLite 模式持久化；S54.3 已补导入 dry-run、地理 status/repair/export 工具、browser smoke SQLite 参数和 JSON/SQLite route/prompt 可见摘要 parity。
 - S55：人物业务表。定义 `people_npcs`、`people_households`、`people_assets`、`people_estates`、`people_relationships`，再接入 `worldPeopleView` parity、NPC 生命周期、财富/家产/关系事件和审计关联。
 - S56：官职任所业务表。定义 `office_bureaus`、`office_catalog`、`office_city_jurisdictions`、`office_postings`、`office_assessments`、`office_transfers`，再接入 `officialPostingsView` parity 与城市/人物引用完整性。
 - S57：安全事件索引。保留 raw `event_log` / `ai_change_proposals` 的诊断属性，另建安全 projection 供事件档案和 prompt 检索，不暴露 raw audit。

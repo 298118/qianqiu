@@ -480,6 +480,17 @@ function getGeographyTableCounts(database, sessionId) {
   };
 }
 
+function getExpectedGeographyTableCounts(geography) {
+  return {
+    countries: geography.countries.length,
+    regions: geography.regions.length,
+    cities: geography.cities.length,
+    routes: geography.routes.length,
+    frontierZones: geography.frontierZones.length,
+    officeJurisdictions: geography.officeJurisdictions.length
+  };
+}
+
 function hasStaleGeographyRows(database, sessionId, revision) {
   for (const tableName of GEOGRAPHY_TABLES) {
     const row = database
@@ -505,32 +516,47 @@ function hasMismatchedGeographyRowIds(database, sessionId, expected) {
   return false;
 }
 
-function ensureGeographyTablesForRecord(database, record) {
+function getGeographyRepairStatus(database, record) {
   const before = JSON.stringify(record.worldState?.worldGeography || null);
   const expected = normalizeWorldGeographyState(record.worldState);
-  record.worldState.worldGeography = expected;
   const worldStateChanged = JSON.stringify(expected) !== before;
   const counts = getGeographyTableCounts(database, record.sessionId);
+  const expectedCounts = getExpectedGeographyTableCounts(expected);
   const missingOrMismatched = (
-    counts.countries !== expected.countries.length ||
-    counts.regions !== expected.regions.length ||
-    counts.cities !== expected.cities.length ||
-    counts.routes !== expected.routes.length ||
-    counts.frontierZones !== expected.frontierZones.length ||
-    counts.officeJurisdictions !== expected.officeJurisdictions.length
+    counts.countries !== expectedCounts.countries ||
+    counts.regions !== expectedCounts.regions ||
+    counts.cities !== expectedCounts.cities ||
+    counts.routes !== expectedCounts.routes ||
+    counts.frontierZones !== expectedCounts.frontierZones ||
+    counts.officeJurisdictions !== expectedCounts.officeJurisdictions
   );
   const mismatchedRowIds = !missingOrMismatched &&
     hasMismatchedGeographyRowIds(database, record.sessionId, expected);
+  const staleRows = hasStaleGeographyRows(database, record.sessionId, record.revision);
+  const tableNeedsRepair = missingOrMismatched || mismatchedRowIds || staleRows;
 
-  if (
-    missingOrMismatched ||
-    mismatchedRowIds ||
-    hasStaleGeographyRows(database, record.sessionId, record.revision)
-  ) {
+  return {
+    counts,
+    expected,
+    expectedCounts,
+    missingOrMismatched,
+    mismatchedRowIds,
+    needsRepair: worldStateChanged || tableNeedsRepair,
+    staleRows,
+    tableNeedsRepair,
+    worldStateChanged
+  };
+}
+
+function ensureGeographyTablesForRecord(database, record) {
+  const status = getGeographyRepairStatus(database, record);
+  record.worldState.worldGeography = status.expected;
+
+  if (status.tableNeedsRepair || status.worldStateChanged) {
     syncGeographyTables(database, record);
     return true;
   }
-  return worldStateChanged;
+  return false;
 }
 
 function normalizeRecordWorldGeography(record) {
@@ -543,6 +569,7 @@ module.exports = {
   GEOGRAPHY_DOMAIN_SCHEMA_VERSION,
   deleteGeographyRows,
   ensureGeographyTablesForRecord,
+  getGeographyRepairStatus,
   getGeographyTableCounts,
   initializeGeographyTables,
   normalizeRecordWorldGeography,

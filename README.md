@@ -146,7 +146,7 @@ MiMo Token Plan 与普通按量 API key 不是同一类凭据：`tp-...` 订阅 
 
 `CORS_ALLOWED_ORIGINS` 是逗号分隔的额外允许 Origin，例如 `http://localhost:5173`。默认不要配置 `*`。
 
-`STORAGE_ADAPTER` 默认是 `json`。设置为 `sqlite` 时，服务器使用本地 SQLite session row adapter；该模式需要当前 Node.js 运行时提供 `node:sqlite`。SQLite 会保留完整 `world_sessions.world_state_json`，并同步规范化后的 `worldGeography` 到 `geo_*` 本地业务表，读取时可从 snapshot 修复缺失或陈旧地理行；这些 raw table 不进入路由 payload、浏览器或 prompt。`SQLITE_DATABASE_PATH` 可覆盖数据库文件位置；`data/*.sqlite` 与派生日志文件会被 Git 忽略。开发迁移可运行 `npm run storage:import:sqlite -- --dry-run` 预览从 `data/sessions/*.json` 导入 SQLite 的结果，再按需去掉 `--dry-run`。
+`STORAGE_ADAPTER` 默认是 `json`。设置为 `sqlite` 时，服务器使用本地 SQLite session row adapter；该模式需要当前 Node.js 运行时提供 `node:sqlite`。SQLite 会保留完整 `world_sessions.world_state_json`，并同步规范化后的 `worldGeography` 到 `geo_*` 本地业务表，读取时可从 snapshot 修复缺失或陈旧地理行；这些 raw table 不进入路由 payload、浏览器或 prompt。`SQLITE_DATABASE_PATH` 可覆盖数据库文件位置；`data/*.sqlite` 与派生日志文件会被 Git 忽略。开发迁移可运行 `npm run storage:import:sqlite -- --dry-run` 预览从 `data/sessions/*.json` 导入 SQLite 的结果，再按需去掉 `--dry-run`。地理业务表专项可用 `npm run storage:geography:sqlite -- status|repair|export` 检查、修复和导出脱敏 debug dump；回滚优先关闭 `STORAGE_ADAPTER=sqlite` 回到 JSON adapter，或保留/恢复原 JSON 存档。
 
 ## 常用命令
 
@@ -159,6 +159,8 @@ npm run smoke:provider
 npm run smoke:provider:route
 npm run smoke:provider:long
 npm run storage:import:sqlite -- --dry-run
+npm run storage:geography:sqlite -- status
+npm run storage:geography:sqlite -- repair --dry-run
 ```
 
 说明：
@@ -166,7 +168,8 @@ npm run storage:import:sqlite -- --dry-run
 - `npm test` 使用 Node.js 内置测试，覆盖状态边界、AI schema、科举、关系、长期事件、官场结果、角色联动、存储、SSE 和脚本逻辑。
 - `npm run check:docs-governance` 检查 [开发治理规范](docs/DEVELOPMENT_GOVERNANCE.md)、活动路线图和必读文档中的受保护规范；同一检查也会随 `npm test` 自动运行。
 - `npm run eval:ai` 是离线 AI 输出质量门槛，覆盖 provider-shaped JSON、越权风险、历史语气、评分边界和本地作弊处罚。
-- `npm run smoke:browser` 默认启动临时 Mock 服务器，覆盖完整书生到入仕路径、作弊样例、代表身份回合、官场差事面板、失败 SSE 回滚、存档簿、年月旬显示和桌面/移动布局；`npm run smoke:browser -- --check-ai-connection` 还会点击开局页“AI 连接”按钮并断言 Mock 诊断不写 session。
+- `npm run smoke:browser` 默认启动临时 Mock 服务器，覆盖完整书生到入仕路径、作弊样例、代表身份回合、官场差事面板、失败 SSE 回滚、存档簿、年月旬显示和桌面/移动布局；`npm run smoke:browser -- --check-ai-connection` 还会点击开局页“AI 连接”按钮并断言 Mock 诊断不写 session；需要验收 SQLite 模式时可加 `--storage-adapter sqlite --sqlite-db data/browser-smoke.sqlite`，脚本会让浏览器 helper 和临时服务器共用同一 SQLite 存储并按 adapter 清理测试 session。
+- `npm run storage:geography:sqlite -- import --dry-run` 不打开或修改 SQLite，只预览 JSON 存档；正式 `import` 会写 `world_sessions` 并同步 `geo_*` 行但不删除 JSON 原档。`repair --dry-run` 只报告地理表漂移，正式 `repair` 以 `world_sessions.world_state_json` 为源修复 `geo_*`。`export` 输出脱敏地理 debug dump，包含 `worldGeographyView`、prompt geography summary、retrieval geography 和计数，不输出 hidden notes、数据库路径、prompt、key 或 raw provider response。
 - `npm run smoke:provider`、`npm run smoke:provider:route` 与 `npm run smoke:provider:long` 只在配置真实 provider key 时进行网络调用；无 key 时会成功跳过。`smoke:provider:long` 会校验普通长跑按一月三旬推进，`smoke:provider:route` 会启动最小 Express 路由并 POST `/api/ai/connection-test`，用于验收玩家开局页同一条 provider 健康检查路径。
 
 ## API 概览

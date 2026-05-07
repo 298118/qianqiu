@@ -250,10 +250,10 @@ Prompt 中的 `worldGeography` summary 上限：
 
 ## 后续边界
 
-S50.2 已完成每局实例化、路由 projection 和 prompt projection；S53.1/S53.4 已完成检索式 context 与浏览器地理面板；S54.1 已完成 SQLite 地理业务表契约；S54.2 已完成 SQLite adapter 内部 `geo_*` 表初始化、写入、读取修复和 focused parity 测试。后续边界：
+S50.2 已完成每局实例化、路由 projection 和 prompt projection；S53.1/S53.4 已完成检索式 context 与浏览器地理面板；S54.1 已完成 SQLite 地理业务表契约；S54.2 已完成 SQLite adapter 内部 `geo_*` 表初始化、写入、读取修复和 focused parity 测试；S54.3 已补 `npm run storage:geography:sqlite -- status|repair|export` 地理维护工具、导入 dry-run 不建库语义、SQLite browser smoke 存储参数，以及 JSON/SQLite route/prompt 可见摘要 parity 测试。后续边界：
 
 - S51/S52 再把 NPC、家族、官职、任所与城市进一步联动。
-- S54.3 再实现地理导入/修复/导出工具和更完整的 route/prompt/browser JSON/SQLite parity 验收。
+- `storage:geography:sqlite export` 只作为脱敏 debug dump，不是默认完整回滚导出；回滚仍优先关闭 `STORAGE_ADAPTER=sqlite` 并回到保留的 JSON 原档。
 - 仍不替代现有 `treasury`、`grainReserve`、`publicOrder`、`borderThreat` 等顶层指标，直到后续迁移明确完成。
 
 ## 验证要求

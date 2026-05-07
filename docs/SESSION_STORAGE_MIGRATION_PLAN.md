@@ -33,7 +33,8 @@ S49.3 implements an optional local SQLite adapter with the same route-facing con
 - S49.4 also creates local `event_log` and `ai_change_proposals` tables for audit records. These rows are not returned by route payloads or save-list metadata.
 - `readSession()` still returns only `worldState`; `listSessions()` still returns redacted save metadata; `writeSession()` and `mutateSession()` still enforce revision conflicts and same-session serialization.
 - `cleanupSessionTempFiles()` is a safe no-op for SQLite because there are no adapter-owned JSON temp files.
-- `npm run storage:import:sqlite` reads the current JSON adapter save list and imports normalized records into SQLite without deleting JSON originals.
+- `npm run storage:import:sqlite` reads the current JSON adapter save list and imports normalized records into SQLite without deleting JSON originals. Its `--dry-run` only reads JSON saves and does not open or create the SQLite database.
+- `npm run storage:geography:sqlite -- status|repair|export` is the S54.3 geography maintenance entrypoint. `status` reports drift between `world_sessions.world_state_json` and `geo_*`; `repair --dry-run` reports the same without modifying SQLite; formal `repair` rewrites `geo_*` from the session snapshot. `export` writes a redacted geography debug dump for local rollback/debugging and does not include hidden notes, database paths, prompt text, keys, or raw provider responses.
 
 ## Local Audit Logs
 

@@ -30,6 +30,7 @@ const {
   getWorldThreadPanelFailures,
   hasTenDayPeriodLabel,
   normalizeBaseUrl,
+  normalizeSmokeStorageAdapter,
   parseBrowserSmokeArgs,
   rectsOverlap,
   resolveBrowserExecutable,
@@ -114,6 +115,8 @@ test("browser smoke parses url, browser path, and headed mode", () => {
     headed: true,
     help: false,
     screenshotsDir: null,
+    sqliteDatabasePath: null,
+    storageAdapter: null,
     url: "http://localhost:3000"
   });
 });
@@ -145,6 +148,22 @@ test("browser smoke parses optional screenshot artifact directory", () => {
   assert.equal(args.url, "http://127.0.0.1:3000");
 });
 
+test("browser smoke parses SQLite storage options", () => {
+  const args = parseBrowserSmokeArgs([
+    "node",
+    "scripts/browserSmoke.js",
+    "--storage-adapter",
+    "sqlite",
+    "--sqlite-db",
+    "data/test-browser-smoke.sqlite"
+  ]);
+
+  assert.equal(args.storageAdapter, "sqlite");
+  assert.equal(args.sqliteDatabasePath, "data/test-browser-smoke.sqlite");
+  assert.equal(normalizeSmokeStorageAdapter("json"), "json");
+  assert.throws(() => normalizeSmokeStorageAdapter("remote"), /Unsupported browser smoke storage adapter/);
+});
+
 test("browser smoke rejects incomplete arguments", () => {
   assert.throws(
     () => parseBrowserSmokeArgs(["node", "scripts/browserSmoke.js", "--url"]),
@@ -157,6 +176,10 @@ test("browser smoke rejects incomplete arguments", () => {
   assert.throws(
     () => parseBrowserSmokeArgs(["node", "scripts/browserSmoke.js", "--screenshots"]),
     /--screenshots requires a value/
+  );
+  assert.throws(
+    () => parseBrowserSmokeArgs(["node", "scripts/browserSmoke.js", "--storage-adapter", "remote"]),
+    /Unsupported browser smoke storage adapter/
   );
 });
 

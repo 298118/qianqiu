@@ -13,7 +13,8 @@
     "smoke:provider": "node scripts/providerSmoke.js",
     "smoke:provider:route": "node scripts/providerRouteHealth.js",
     "smoke:provider:long": "node scripts/providerLongRun.js",
-    "storage:import:sqlite": "node scripts/importJsonSessionsToSqlite.js"
+    "storage:import:sqlite": "node scripts/importJsonSessionsToSqlite.js",
+    "storage:geography:sqlite": "node scripts/sqliteGeographyTool.js"
   },
   "keywords": [
     "historical-simulation",
