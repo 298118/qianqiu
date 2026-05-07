@@ -22,6 +22,9 @@ const {
   runRoleWorldCouplingStep
 } = require("../src/game/roleWorldCoupling");
 const {
+  ensureWorldEntityState
+} = require("../src/game/worldEntities");
+const {
   ensureWorldThreadState
 } = require("../src/game/worldThreads");
 const {
@@ -66,6 +69,7 @@ const PROTECTED_TOP_LEVEL_PATCH_KEYS = [
   "longTermEvents",
   "officialCareer",
   "roleWorldCoupling",
+  "worldEntities",
   "worldThreads",
   "characters",
   "eventHistory",
@@ -216,6 +220,7 @@ function ensureServerState(worldState) {
   ensureLongTermEventState(worldState);
   ensureOfficialCareerState(worldState);
   ensureRoleWorldCouplingState(worldState);
+  ensureWorldEntityState(worldState);
   ensureWorldThreadState(worldState);
   return worldState;
 }
@@ -272,6 +277,7 @@ function applyServerTurnEffects(worldState, result, input) {
   });
   const officialCareerRelationshipChanges = applyRelationshipChanges(worldState, officialCareer.relationshipChanges);
 
+  ensureWorldEntityState(worldState);
   ensureWorldThreadState(worldState);
 
   appendEvents(worldState, result.events);

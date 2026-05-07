@@ -193,6 +193,45 @@ test("turn prompt input includes only visible world thread summaries", () => {
   assert.doesNotMatch(task.input, /C99-hidden/);
 });
 
+test("turn prompt input includes only visible world entity summaries", () => {
+  const worldState = createInitialState({ role: "official", playerName: "Entity Prompt Tester" });
+  worldState.worldEntities.entities.push(
+    {
+      id: "visible-relief",
+      category: "relief",
+      kind: "relief_operation",
+      name: "赈务公册",
+      status: "critical",
+      visibility: "public",
+      metrics: { influence: 70, pressure: 98, capacity: 18, trust: 32, deficit: 96 },
+      publicSummary: "赈务牵连粮储、民心与户部核销。",
+      related: { offices: ["ministry_revenue"], metrics: ["grainReserve", "publicOrder"] },
+      interventionHints: ["开仓赈济", "查赈册"]
+    },
+    {
+      id: "hidden-relief",
+      category: "relief",
+      kind: "relief_operation",
+      name: "Hidden Relief Ledger",
+      status: "critical",
+      visibility: "hidden",
+      metrics: { influence: 90, pressure: 99, capacity: 10, trust: 5, deficit: 99 },
+      publicSummary: "SEALED_RELIEF_SUMMARY",
+      hiddenNotes: ["SEALED_ENTITY_NOTE"],
+      interventionHints: ["do not reveal"]
+    }
+  );
+
+  const task = buildTurnTask(worldState, "核查赈册");
+
+  assert.match(task.input, /worldEntities/);
+  assert.match(task.input, /赈务公册/);
+  assert.match(task.input, /赈务牵连粮储/);
+  assert.doesNotMatch(task.input, /Hidden Relief Ledger/);
+  assert.doesNotMatch(task.input, /SEALED_RELIEF_SUMMARY/);
+  assert.doesNotMatch(task.input, /SEALED_ENTITY_NOTE/);
+});
+
 test("exam prompt packs keep question and grading authority separate", () => {
   const worldState = createInitialState({ playerName: "Exam Prompt Tester" });
   const exam = getExam("provincial_exam");

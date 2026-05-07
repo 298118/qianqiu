@@ -70,6 +70,7 @@ Important modules:
 - Long-term events: `src/game/longTermEvents.js`
 - Official career outcomes: `src/game/officialCareer.js`
 - Role/world coupling: `src/game/roleWorldCoupling.js`
+- World Entities / 多实体世界模型: `src/game/worldEntities.js`
 - World Threads / 世界议程索引: `src/game/worldThreads.js`
 - JSON session store: `src/storage/sessionStore.js`
 - SSE helpers: `src/utils/sse.js`, `src/utils/streamingJson.js`
@@ -145,6 +146,14 @@ Durable contracts and acceptance records:
 - `src/game/stateRules.js` now normalizes more hallucinated official appointment strings in provider `player.position` patches, including whitespace, traditional variants, and common English title phrases.
 - `src/ai/diagnostics.js` redacts long configured key fragments, and `src/routes/game.js` redacts SSE `error` messages before sending provider failures to the browser.
 
+## Current S45 Notes
+
+- S45.1 adds `docs/WORLD_ENTITIES_CONTRACT.md` and `src/game/worldEntities.js`.
+- `worldState.worldEntities.schemaVersion = 1` is a server-owned multi-entity ledger for 朝廷衙门、地方士绅、书院同门、军镇边墙、商税盐漕 and 灾荒赈务.
+- Initial entities cover 吏部、户部、都察院、地方士绅、河工案牍、县学书院、同年文社、边镇军镇、边墙堡寨、盐漕通道、田赋商税 and 灾荒赈务. Entity metrics are game-facing pressure/capacity/trust/deficit indicators clamped to `0..100`, not historical quantitative claims.
+- Game and exam routes return `worldEntityView`; prompt `compactWorldState()` includes capped visible `worldEntities` summaries. Hidden entities and `hiddenNotes` do not enter views or prompt summaries.
+- Ordinary provider `statePatch.worldEntities` is rejected or ignored by schema/eval/remote normalization/state boundary/route red-team tests. S45.1 does not add a browser entity panel or cross-system entity writes; S45.2 should connect world tick, NPC/relationships, official outcomes, and World Threads to server-owned entity updates.
+
 ## Verification Defaults
 
 Use focused checks first, then broaden when behavior crosses module boundaries:
@@ -166,6 +175,7 @@ Use focused checks first, then broaden when behavior crosses module boundaries:
 
 ## Current Work Note
 
+- 2026-05-07: S45.1 implementation/docs commit is pending. Added `worldEntities` server-owned ledger, `worldEntityView`, prompt summaries, S45 contract docs, and tests for hidden filtering plus provider forge rejection. Verification passed: focused `node --check`, focused world-entity/state/prompt/route/AI-boundary tests, `npm run eval:ai`, `node --test test\examTravel.test.js`, `node --test test\gameTurnLongTermEvents.test.js`, `$env:AI_PROVIDER='mock'; npm test` with 247 tests, and `git diff --check`. Full-suite runs hit two transient Windows atomic rename failures (`ENOENT` in `test\examTravel.test.js`, then `EPERM` in `test\gameTurnLongTermEvents.test.js` after a small view hardening patch); focused reruns and the final full rerun passed. Read-only explorer Socrates mapped integration points without editing files or running Git writes. Read-only pre-commit review by Ampere found no blockers; residual risk is that `role_visible` currently behaves like non-hidden visibility until S45.2 adds role-scoped filters.
 - 2026-05-07: S44.2 implementation/docs commit is `43c610c`. Added `test/aiControlRedTeam.test.js`, S44 mixed authority eval fixtures, stronger official-position forgery guards, key-fragment redaction, and SSE provider-error redaction. Verification passed: focused `node --check`, focused S44/state/diagnostics/eval/streaming/exam/official/relationship/world-thread tests, `npm run eval:ai`, `$env:AI_PROVIDER='mock'; npm test` with 240 tests, and `git diff --check`. Read-only explorer Leibniz mapped existing coverage and highlighted SSE error redaction plus exam-question sanity clamp as risks; SSE error redaction was fixed in this slice, while exam-question route-level clamp remains a future hardening item. Read-only pre-commit review by Ohm found no blockers, ran `node --test test\aiControlRedTeam.test.js test\stateRules.test.js test\aiDiagnostics.test.js test\aiEvalFixtures.test.js` with 26 tests passing, and approved the S44.2 diff for commit. Follow-up documentation-only hash backfill is low risk and skips subagent review; verification is `git diff --check`.
 - 2026-05-07: S44.1 documentation matrix commit is `91da506`. Added `docs/AI_CONTROL_AUDIT_MATRIX.md`, linked it from README/architecture/product brief, and updated the roadmap. Verification: `git diff --check`. This is documentation-only; no code tests were run. Read-only exploratory subagent Banach mapped the existing AI/server boundary evidence and S44.2 test gaps without editing files or running Git writes. Read-only pre-commit review by Gibbs found one P3 wording gap around browser raw `worldState` fallback; the matrix now states that fallback is only for old payload/development compatibility and adds it to S44.2 hidden-leak coverage. A follow-up documentation-only hash backfill commit was low risk and skipped subagent review; verification was `git diff --check`.
 - 2026-05-07: S43.2 implementation/docs commit is `5c8310a`. `worldThreadView` now derives goal/deadline/risk/related/intervention/follow-up fields; the browser renders `#world-thread-panel` from the route view only; browser smoke helpers assert card selectors, field completeness, hidden text leaks, and world-thread overflow. Verification passed: focused `node --check`, focused world-thread/browser-smoke/route/prompt/schema/provider tests, `npm run eval:ai`, `$env:AI_PROVIDER='mock'; npm run smoke:browser` with `world-thread` UI acceptance and 14 screenshots, and final `$env:AI_PROVIDER='mock'; npm test` with 234 tests. One interim full rerun hit Windows `EPERM rename`; focused `test\gameTurnTick.test.js` and the following full rerun passed. Read-only explorer Carson mapped the front-end and smoke-test entry points without editing files or running Git writes. Read-only pre-commit review by Hooke found one P3 smoke selector gap for `data-risk`; it was fixed with stricter selector coverage and follow-up review approved. A follow-up documentation-only hash backfill commit was low risk and skipped subagent review; verification was `git diff --check`.
@@ -182,4 +192,4 @@ Use focused checks first, then broaden when behavior crosses module boundaries:
 
 ## Next Recommended Step
 
-Start S45.1 multi-entity world model planning/implementation.
+Finish S45.1 verification/review/commit if pending; otherwise start S45.2 to connect world tick, NPC/relationships, official outcomes, and World Threads to the new multi-entity world model.

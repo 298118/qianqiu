@@ -27,6 +27,7 @@ const { buildActiveNpcRequestView } = require("../game/activeRequests");
 const { buildLongTermEventView, ensureLongTermEventState } = require("../game/longTermEvents");
 const { buildOfficialCareerView, ensureOfficialCareerState } = require("../game/officialCareer");
 const { buildRoleWorldCouplingView, ensureRoleWorldCouplingState } = require("../game/roleWorldCoupling");
+const { buildWorldEntityView, ensureWorldEntityState } = require("../game/worldEntities");
 const { buildWorldThreadView, ensureWorldThreadState } = require("../game/worldThreads");
 const { appendEvents, applyStatePatch } = require("../game/stateRules");
 const { mutateSession } = require("../storage/sessionStore");
@@ -55,6 +56,7 @@ function toExamPayload(worldState) {
     relationshipView: buildRelationshipInspectionView(worldState),
     activeNpcRequestView: buildActiveNpcRequestView(worldState),
     roleWorldCouplingView: buildRoleWorldCouplingView(worldState),
+    worldEntityView: buildWorldEntityView(worldState),
     worldThreadView: buildWorldThreadView(worldState),
     longTermEventView: buildLongTermEventView(worldState),
     officialCareerView: buildOfficialCareerView(worldState),
@@ -90,6 +92,7 @@ router.post("/question", async (req, res, next) => {
       ensureLongTermEventState(worldState);
       ensureOfficialCareerState(worldState);
       ensureRoleWorldCouplingState(worldState);
+      ensureWorldEntityState(worldState);
       ensureWorldThreadState(worldState);
       const requestedLevel = level || worldState.activeExam?.level || getNextExamLevel(worldState.player.examRank);
       const exam = getExam(requestedLevel);
@@ -108,6 +111,7 @@ router.post("/question", async (req, res, next) => {
         worldState.activeExam.level === exam.level &&
         worldState.activeExam.examQuestion
       ) {
+        ensureWorldEntityState(worldState);
         ensureWorldThreadState(worldState);
         context.skipWrite = true;
         return { statusCode: 200, payload: toExamPayload(worldState) };
@@ -175,6 +179,7 @@ router.post("/question", async (req, res, next) => {
         ...(preparationResult?.events || []),
         `${worldState.player.name}进入${exam.name}，领取${exam.questionType}题。`
       ]);
+      ensureWorldEntityState(worldState);
       ensureWorldThreadState(worldState);
 
       return { statusCode: 201, payload: toExamPayload(worldState) };
@@ -206,6 +211,7 @@ router.post("/submit", async (req, res, next) => {
       ensureLongTermEventState(worldState);
       ensureOfficialCareerState(worldState);
       ensureRoleWorldCouplingState(worldState);
+      ensureWorldEntityState(worldState);
       ensureWorldThreadState(worldState);
       const activeExam = worldState.activeExam;
 
@@ -276,6 +282,7 @@ router.post("/submit", async (req, res, next) => {
       worldState.activeExam = null;
       appendEvents(worldState, [summarizeResultEvent(worldState, activeExam, score, ranking, promotionResult)]);
       ensureRelationshipLedger(worldState);
+      ensureWorldEntityState(worldState);
       ensureWorldThreadState(worldState);
 
       return {
@@ -298,6 +305,7 @@ router.post("/submit", async (req, res, next) => {
         relationshipView: buildRelationshipInspectionView(worldState),
         activeNpcRequestView: buildActiveNpcRequestView(worldState),
         roleWorldCouplingView: buildRoleWorldCouplingView(worldState),
+        worldEntityView: buildWorldEntityView(worldState),
         worldThreadView: buildWorldThreadView(worldState),
         longTermEventView: buildLongTermEventView(worldState),
         officialCareerView: buildOfficialCareerView(worldState),

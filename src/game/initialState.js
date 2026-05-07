@@ -2,6 +2,7 @@ const { randomUUID } = require("crypto");
 const { createInitialExamCalendar } = require("./examCalendar");
 const { createInitialRelationshipLedger } = require("./relationships");
 const { createInitialRoleWorldCouplingState } = require("./roleWorldCoupling");
+const { createInitialWorldEntityState } = require("./worldEntities");
 const { createInitialWorldThreadState } = require("./worldThreads");
 const { NUMERIC_RANGES, clamp } = require("./stateRules");
 
@@ -217,6 +218,7 @@ function createInitialState(input = {}) {
       recentResolved: []
     },
     roleWorldCoupling: createInitialRoleWorldCouplingState(),
+    worldEntities: null,
     worldThreads: createInitialWorldThreadState(),
     officialCareer: {
       schemaVersion: 2,
@@ -277,6 +279,7 @@ function createInitialState(input = {}) {
     }
   };
 
+  worldState.worldEntities = createInitialWorldEntityState(worldState);
   worldState.relationshipLedger = createInitialRelationshipLedger(worldState);
   return worldState;
 }

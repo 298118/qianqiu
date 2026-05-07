@@ -83,11 +83,11 @@ Request fields:
 
 As of S31.3, `role` is normalized and validated in `src/game/initialState.js`. Missing or blank role values default to `scholar`; unsupported roles return `400`. The accepted enum is `scholar`, `emperor`, `minister`, `general`, `magistrate`, and `official`, and the browser start form exposes all six values.
 
-Returns `201` with `sessionId`, `worldState`, `examCalendarView`, `examRivalView`, `relationshipView`, `activeNpcRequestView`, `roleWorldCouplingView`, `worldThreadView`, `longTermEventView`, `officialCareerView`, and opening `narrative`.
+Returns `201` with `sessionId`, `worldState`, `examCalendarView`, `examRivalView`, `relationshipView`, `activeNpcRequestView`, `roleWorldCouplingView`, `worldEntityView`, `worldThreadView`, `longTermEventView`, `officialCareerView`, and opening `narrative`.
 
 ### `GET /api/game/state/:sessionId`
 
-Reads the JSON session file and returns `sessionId`, `worldState`, the player-facing `examCalendarView`, `examRivalView`, `relationshipView`, `activeNpcRequestView`, `roleWorldCouplingView`, `worldThreadView`, `longTermEventView`, and `officialCareerView`.
+Reads the JSON session file and returns `sessionId`, `worldState`, the player-facing `examCalendarView`, `examRivalView`, `relationshipView`, `activeNpcRequestView`, `roleWorldCouplingView`, `worldEntityView`, `worldThreadView`, `longTermEventView`, and `officialCareerView`.
 
 ### `GET /api/game/saves`
 
@@ -237,6 +237,12 @@ Requests without SSE negotiation still return plain JSON for tests and compatibi
     "schemaVersion": 1,
     "recentImpacts": []
   },
+  "worldEntityView": {
+    "schemaVersion": 1,
+    "generatedAtTurn": 1,
+    "groups": [],
+    "highlights": []
+  },
   "worldThreadView": {
     "schemaVersion": 1,
     "generatedAtTurn": 1,
@@ -292,7 +298,7 @@ Request:
 
 `level` may be omitted; the server derives the next eligible exam from `player.examRank`. The route saves a complete `worldState.activeExam`, reuses an existing unanswered exam for the same level, and rejects attempts to open a different exam while another question is active.
 
-Returns `examId`, exam metadata, requirements, readiness, entry preparation, `examCalendar`, `examCalendarView`, `examRivalView`, `relationshipView`, `activeNpcRequestView`, `roleWorldCouplingView`, `worldThreadView`, `longTermEventView`, `officialCareerView`, and `worldState`.
+Returns `examId`, exam metadata, requirements, readiness, entry preparation, `examCalendar`, `examCalendarView`, `examRivalView`, `relationshipView`, `activeNpcRequestView`, `roleWorldCouplingView`, `worldEntityView`, `worldThreadView`, `longTermEventView`, `officialCareerView`, and `worldState`.
 
 ### `POST /api/exam/submit`
 
@@ -306,7 +312,7 @@ Request:
 }
 ```
 
-The server checks authenticity, asks the provider for grading, applies local penalties, builds virtual candidates with inspectable essay profiles, applies promotion or cheating consequences, updates persistent same-field rivals, appends the essay result to `player.examHistory`, clears `activeExam`, saves the session and returns the result plus `examCalendarView`, `examRivalView`, `relationshipView`, `activeNpcRequestView`, `roleWorldCouplingView`, `worldThreadView`, `longTermEventView`, `officialCareerView`, and `worldState`. The response includes `examQuestion`, `essay`, `entryPreparation`, and `examCalendar` so the browser can render the just-submitted archive directly.
+The server checks authenticity, asks the provider for grading, applies local penalties, builds virtual candidates with inspectable essay profiles, applies promotion or cheating consequences, updates persistent same-field rivals, appends the essay result to `player.examHistory`, clears `activeExam`, saves the session and returns the result plus `examCalendarView`, `examRivalView`, `relationshipView`, `activeNpcRequestView`, `roleWorldCouplingView`, `worldEntityView`, `worldThreadView`, `longTermEventView`, `officialCareerView`, and `worldState`. The response includes `examQuestion`, `essay`, `entryPreparation`, and `examCalendar` so the browser can render the just-submitted archive directly.
 
 ## AI Provider Contract
 
@@ -477,6 +483,21 @@ Server rules:
 - JSON and SSE turn payloads return `roleWorldCouplingView` plus `roleWorldCoupling: { summary, events, attributeChanges, outcome }`.
 
 The browser renders S36 feedback as `[联动]` narrative lines with `.role-world-event[data-role-world-kind]`. It intentionally does not add a new persistent panel; resulting state remains visible through the status strip, role panel, relationship panel, long-term feedback, and official-career feedback.
+
+## World Entities Contract
+
+S45.1 adds `worldState.worldEntities`, documented in [docs/WORLD_ENTITIES_CONTRACT.md](WORLD_ENTITIES_CONTRACT.md). It is a server-owned multi-entity ledger for 朝廷衙门、地方士绅、书院同门、军镇边墙、商税盐漕 and 灾荒赈务.
+
+Server rules:
+
+- `src/game/worldEntities.js` creates and normalizes the base entity set, clamps entity metrics, fills missing legacy rows, and filters hidden entities from player-facing output.
+- Entity categories are `court`, `local`, `academy`, `military`, `fiscal`, and `relief`; entity kinds are `court_office`, `local_gentry`, `academy_circle`, `frontier_garrison`, `fiscal_channel`, and `relief_operation`.
+- `worldEntityView` exposes grouped visible entities and high-pressure highlights with `statusLabel`, `riskLabel`, capped metrics, related labels, and intervention hints.
+- Prompt `compactWorldState()` reads only `summarizeWorldEntitiesForPrompt()`, capped to visible high-pressure entities and category summaries.
+- Providers may read visible entity summaries for narrative grounding, but ordinary `statePatch.worldEntities` is rejected by schemas and ignored by provider patch application.
+- S45.1 does not let entities settle outcomes or replace source systems. S45.2 should connect world tick, NPC/relationship behavior, official outcomes, and World Threads to this ledger through server-owned updates.
+
+JSON and SSE turn payloads return `worldEntityView`. Exam question and submit routes also include the same view.
 
 ## World Threads Contract
 
