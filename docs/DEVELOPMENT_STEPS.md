@@ -103,7 +103,7 @@
 | S51.1 | DONE | NPC、家族、资产、田产、关系和可见性 schema 契约 | 2026-05-07 | Codex + read-only subagents | `418077b` |
 | S51.2 | DONE | 桥接当前 `characters`、`relationshipLedger`、active requests 与 NPC/关系表 | 2026-05-07 | Codex + read-only subagents | `8ed984a` |
 | S52.1 | DONE | 官职、官署、任所、城市辖区、考成和调任记录的数据库契约 | 2026-05-07 | Codex + read-only subagents | `4ce6d0e` |
-| S52.2 | DONE | 地方官/入仕官员任所与城市数据联动，保持服务器任免裁决 | 2026-05-07 | Codex + read-only subagents | `pending` |
+| S52.2 | DONE | 地方官/入仕官员任所与城市数据联动，保持服务器任免裁决 | 2026-05-07 | Codex + read-only subagents | `4599869` |
 | S53.1 | TODO | 检索式 prompt context assembler：按角色视野读取国家、城市、NPC、官职、事件摘要 |  |  |  |
 | S53.2 | TODO | 浏览器信息面板规划：天下格局、任所地理、人物谱牒、官职簿、事件档案 |  |  |  |
 
@@ -475,7 +475,7 @@
 
 ### S52.2：地方官/入仕官员任所与城市数据联动
 
-状态：DONE。实现/文档提交：`pending`；只读探索子代理 Sartre 已梳理 S52.2 桥接方案，提交前只读复审 Feynman 未发现 P0/P1/P2 blocker。
+状态：DONE。实现/文档提交：`4599869 feat: bridge official postings to city data`；只读探索子代理 Sartre 已梳理 S52.2 桥接方案，提交前只读复审 Feynman 未发现 P0/P1/P2 blocker。本哈希回填为低风险纯文档 follow-up。
 
 目标：
 
@@ -609,7 +609,7 @@
 
 步骤：S52.2
 
-提交：`pending`
+提交：`4599869 feat: bridge official postings to city data`
 
 完成：
 
@@ -646,6 +646,7 @@
 - S52.2 不新增浏览器官职簿/任所地理面板，不新增 SQLite 官职业务表，也不把 hidden 官员私档保存到 raw route state。
 - 当前 `officialPostingsView` 只解释官职任所与可见城市指标的关系；城市财政、治安、水利、案牍、士绅与具体官场差事的深层结算仍由后续世界系统逐步接入。
 - 后续 S53.1 context assembler 应读取 `officialPostingsView` / prompt summary，而不是 raw `worldState.officialPostings`。
+- 本哈希回填为低风险纯文档 follow-up，跳过额外提交前子代理复审；验证 `npm run check:docs-governance` 与 `git diff --check`。
 
 下一步：
 
