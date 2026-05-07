@@ -47,7 +47,7 @@ The smoke uses `playwright-core` with an installed Chrome or Edge executable. If
 
 Date: 2026-05-07
 
-Relevant implementation commit: 本次 S47.1 提交
+Relevant implementation commit: `dc7bea8`
 
 Commands verified during S47.1:
 

@@ -78,7 +78,7 @@
 | S45.1 | DONE | 扩展多实体世界模型：朝廷衙门、地方士绅、书院同门、军镇边墙、商税盐漕、灾荒赈务 | 2026-05-07 | Codex | 7341990 |
 | S45.2 | DONE | 让 AI 叙事、NPC 行为、世界 tick、关系账本和官场结果共同读写这些实体的受限视图 | 2026-05-07 | Codex | 24aef7b |
 | S46.1 | DONE | 建立依赖/插件引入模板：用途、许可证、替代方案、测试、回滚策略和文档落点 | 2026-05-07 | Codex | 20e3277 |
-| S47.1 | DONE | 扩展真实 provider 验收：浏览器路由级连接测试、带 key 的健康检查、无 key 自动跳过；本轮不做模型费用/速度台账 | 2026-05-07 | Codex | 本次 S47.1 提交 |
+| S47.1 | DONE | 扩展真实 provider 验收：浏览器路由级连接测试、带 key 的健康检查、无 key 自动跳过；本轮不做模型费用/速度台账 | 2026-05-07 | Codex | dc7bea8 |
 | S47.2 | TODO | 规划并实现 DeepSeek 上下文硬盘缓存命中率优化：稳定提示词前缀、记录命中/未命中 tokens、不得牺牲游戏效果 |  |  |  |
 
 ## 4. 分阶段详细步骤
@@ -233,7 +233,7 @@ S46.1 已新增 [依赖、插件与开源参考治理](DEPENDENCY_PLUGIN_GOVERNA
 
 步骤：S47.1
 
-提交：本次 S47.1 提交
+提交：dc7bea8
 
 完成：
 - `scripts/browserSmoke.js` 新增显式 `--check-ai-connection` 参数。开启后，浏览器 smoke 会在开局前点击 `#ai-test-button`，断言 `#ai-test-result[data-ok="true"]`、模型/配置摘要、无 API key 或 session 路径泄漏、不写 `qianqiu.sessionId`、不进入游戏行动区；默认临时服务器仍强制 Mock，`--url` 目标只有在明确希望检查其 provider 时才开启。
