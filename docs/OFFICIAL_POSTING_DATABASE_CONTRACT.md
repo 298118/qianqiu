@@ -1,8 +1,8 @@
 # S52 官职、官署、任所与迁转数据库契约
 
-S52 是本地动态世界数据库专项中的官职任所切片。S52.1 先固定官署、官职、任所、城市辖区、考成和迁转记录的 schema/helper；S52.2 已把地方官/入仕官员任所与可见城市动态指标联动。
+S52 是本地动态世界数据库专项中的官职任所切片。S52.1 先固定官署、官职、任所、城市辖区、考成和迁转记录的 schema/helper；S52.2 已把地方官/入仕官员任所与可见城市动态指标联动。S56.1 在本文固定本地 SQLite 官职任所业务表契约；后续 S56.2/S56.3 才会实现 SQLite 持久化、引用修复和双模式 parity。
 
-S52 切片本身不新增 SQLite 业务表，不改变既有 `officialCareerView` route contract，也不让 AI 直接任命、调任、处分或写官职数据库。S52.2 新增的 `worldState.officialPostings` 只是服务器构造的可见 projection；它不是隐藏官员私档。S53.4/S53.5 后浏览器“任所地理”和“官职簿”已经读取 `officialPostingsView`，但仍只读 route player-facing view，不读取 raw ledger。
+S52/S56.1 切片本身不新增运行时 SQLite 业务表，不改变既有 `officialCareerView` route contract，也不让 AI 直接任命、调任、处分或写官职数据库。S52.2 新增的 `worldState.officialPostings` 只是服务器构造的可见 projection；它不是隐藏官员私档。S53.4/S53.5 后浏览器“任所地理”和“官职簿”已经读取 `officialPostingsView`，但仍只读 route player-facing view，不读取 raw ledger 或 future raw `office_*` table。
 
 ## 范围
 
@@ -75,6 +75,125 @@ S52.1 新增运行时契约 helper：`src/game/officialPostingSchemas.js`。
 - 新局、普通回合、SSE `state_preview`/`final_state`、读档、考试取题/推进/交卷都返回 `officialPostingsView`。
 - `compactWorldState()` 追加 capped `officialPostings` 摘要。
 - 浏览器“任所地理”和“官职簿”已在 S53.4/S53.5 接入；面板必须读取 `officialPostingsView` / `worldGeographyView`，不能读 raw `worldState.officialPostings`。
+
+## S56.1 SQLite 官职任所业务表契约
+
+S56.1 只固定契约；不创建 SQLite 表、不修改 `sqliteSessionAdapter`、不新增 route 字段、不改变 JSON 默认存储。S56.2 才会在 `STORAGE_ADAPTER=sqlite` 模式下按本节建表，并从规范化后的安全 `worldState.officialPostings` / `officialCareer` / 可见地理与人物 projection 派生业务行。
+
+### 总体原则
+
+- 所有官职任所业务表都以 `session_id` 分区；同一个官署、官职、任所或任命在不同存档中是不同动态行。
+- `world_sessions.world_state_json` 仍保存兼容 snapshot。S56.2 的读档修复只能从该 snapshot 和服务器 helper 单向重建派生 `office_*` 行；不得从 raw `office_*` 行反向制造 route state、prompt 上下文或隐藏官员私档。
+- 业务表写入只允许服务器 helper / storage adapter transaction 执行。AI 不能执行 SQL、不能直接写 `office_*` 表，也不能通过 `statePatch.officialPostings`、`statePatch.officialCareer`、`player.officeTitle`、`player.position` 或叙事绕过任免、考成、迁转和可见性裁决。
+- 浏览器、prompt 和事件档案只能读取 `officialPostingsView`、`officialCareerView`、`worldGeographyView`、`worldPeopleView` 或后续服务器构造的 capped summary；不能读取 raw `office_*` table、raw ledger、raw audit、本地数据库路径、provider proposal、hidden notes 或未公开调任。
+- 官职任所表只承载官署、官职目录、任所辖区、任命、考成、迁转和轻量地方指标 projection；科举晋级、官职任免、处分、丁忧、起复、地方事务结局和长期事件仍由服务器模块裁决。
+
+### 公共列
+
+每个 `office_*` 表至少包含以下公共列：
+
+| 字段 | 类型建议 | 含义 |
+| --- | --- | --- |
+| `session_id` | `TEXT NOT NULL` | 本机存档分区，引用 `world_sessions.session_id`。 |
+| `row_id` | `TEXT NOT NULL` | 每局内稳定行 id；可沿用 `officialCatalog` / `officialPostings` id，或由服务器生成安全 id。 |
+| `catalog_row_id` | `TEXT` | 对应 `officialCatalog` 的 bureau/office id；动态任命、考成或导入修复行可为空。 |
+| `domain_schema_version` | `INTEGER NOT NULL` | 官职任所业务表 schema 版本，S56 初始为 `1`。 |
+| `revision` | `INTEGER NOT NULL` | 最后一次同步到该行的 session revision，用于 parity/repair 诊断，不替代 `world_sessions.revision`。 |
+| `row_revision` | `INTEGER NOT NULL` | 行级修订计数；S56.2 可在内容变化时递增。 |
+| `source` | `TEXT NOT NULL` | `official_catalog` / `official_posting_bridge` / `official_career` / `geography_bridge` / `role_state` / `server_event` / `import` / `repair` / `migration`。AI 不可成为 source。 |
+| `visibility` | `TEXT NOT NULL` | `public` / `role_visible` / `office_visible` / `relationship_visible` / `rumor` / `hidden`。 |
+| `known_to_player` | `INTEGER NOT NULL` | 0/1；`office_visible` 与 `relationship_visible` 需要结合当前身份、官署或关系视野才能进入 view。 |
+| `intel_confidence` | `INTEGER` | 0..100；传闻、未核实迁转和密参线索应低于正式公文。 |
+| `last_report_turn` | `INTEGER` | 最近一次进入玩家可见公文、官场档案、任所簿或传闻的回合。 |
+| `last_updated_turn` | `INTEGER NOT NULL` | 最近服务器刷新、官场结算或事件写入回合。 |
+| `last_updated_year` | `INTEGER NOT NULL` | 最近服务器刷新年份。 |
+| `last_updated_month` | `INTEGER NOT NULL` | 最近服务器刷新月份。 |
+| `last_updated_ten_day_period` | `INTEGER NOT NULL` | 最近服务器刷新旬。 |
+| `last_event_id` | `TEXT` | 最近关联的安全事件 id；S57 再统一接入安全事件索引。 |
+| `public_summary` | `TEXT NOT NULL` | 玩家/AI 可见摘要来源；输出前仍经 view 过滤和 cap。 |
+| `hidden_notes_json` | `TEXT NOT NULL` | JSON array；仅服务器本地诊断、密札考成或未公开调任逻辑可读，永不进入 route view/prompt/UI。 |
+| `metadata_json` | `TEXT NOT NULL` | 迁移、修复和调试元数据；不得含 key、路径、prompt 或 raw provider response。 |
+| `created_at` / `updated_at` | `TEXT NOT NULL` | 本地 ISO 时间。 |
+
+推荐唯一键：`PRIMARY KEY (session_id, row_id)`。S56.2 如采用 `STRICT` 表，数组字段继续以 JSON text 保存并由服务器 helper 校验；跨表数组引用不依赖数据库自动展开。推荐索引包括 `(session_id, visibility, row_id)`、`catalog_row_id`、`last_updated_turn`、`last_event_id`、`holder_type/holder_id`、`bureau_row_id`、`office_row_id`、`city_row_id`、`jurisdiction_row_id`、`status` 和 `expected_review_turn`。
+
+### 表形状
+
+`office_bureaus`
+
+- 目录字段：`name`、`aliases_json`、`level`、`parent_bureau_row_id`、`capital_city_row_id`。
+- 关系字段：`jurisdiction_row_ids_json`、`office_row_ids_json`。
+- 职责字段：`duties_json`、`authority_metrics_json`、`risk_tags_json`。
+- 可见/隐藏：`visibility`、`known_to_player`、`intel_confidence`、`public_summary`、`hidden_notes_json`。
+
+`office_catalog`
+
+- 目录字段：`title`、`aliases_json`、`rank_label`、`rank_band`、`bureau_row_id`、`track`、`jurisdiction_scope`、`outpost`。
+- 任所/晋升字段：`typical_city_row_ids_json`、`required_rank_or_exam_json`、`appointment_methods_json`、`normal_term_months`、`promotion_path_row_ids_json`。
+- 职责字段：`duties_json`、`authority_metrics_json`、`risk_tags_json`。
+- 可见/隐藏：`visibility`、`known_to_player`、`intel_confidence`、`public_summary`、`hidden_notes_json`。
+
+`office_city_jurisdictions`
+
+- 任所字段：`name`、`bureau_row_id`、`supervising_bureau_row_id`、`city_row_id`、`region_row_id`、`country_row_id`、`jurisdiction_scope`。
+- 可任官职与地理引用：`available_office_row_ids_json`、`route_row_ids_json`、`frontier_zone_row_ids_json`。
+- 地方动态快照：`public_order`、`tax_capacity`、`lawsuits`、`waterworks`、`gentry_influence`、`disaster_risk`、`military_pressure`、`academy_level`。
+- 可见/隐藏：`visibility`、`known_to_player`、`intel_confidence`、`public_summary`、`hidden_notes_json`。
+
+`office_postings`
+
+- 任命字段：`office_row_id`、`office_title`、`bureau_row_id`、`holder_type`、`holder_id`、`holder_people_row_id`、`status`。
+- 地理/层级引用：`city_row_id`、`region_row_id`、`jurisdiction_row_id`、`superior_posting_row_id`。
+- 任期字段：`started_year`、`started_month`、`started_ten_day_period`、`started_turn`、`ended_year`、`ended_month`、`ended_ten_day_period`、`ended_turn`、`expected_review_turn`、`term_months`。
+- 官场指标：`performance_score`、`impeachment_risk`、`public_reputation`、`assignment_ids_json`。
+- 可见/隐藏：`visibility`、`known_to_player`、`intel_confidence`、`public_summary`、`hidden_notes_json`。
+
+`office_assessments`
+
+- 关联字段：`posting_row_id`、`office_row_id`、`bureau_row_id`、`holder_type`、`holder_id`、`holder_people_row_id`、`cycle_id`。
+- 日期字段：`date_year`、`date_month`、`date_ten_day_period`、`date_turn`。
+- 考成字段：`status`、`merit_score`、`risk_score`、`recommendation`、`public_finding`。
+- 证据字段：`evidence_event_ids_json`、`assignment_ids_json`、`related_impeachment_stage`。
+- 可见/隐藏：`visibility`、`known_to_player`、`intel_confidence`、`public_summary`、`hidden_notes_json`。
+
+`office_transfers`
+
+- 持有人字段：`holder_type`、`holder_id`、`holder_people_row_id`。
+- 迁转引用：`from_posting_row_id`、`to_posting_row_id`、`from_office_row_id`、`to_office_row_id`、`from_city_row_id`、`to_city_row_id`、`related_assessment_row_id`。
+- 日期字段：`date_year`、`date_month`、`date_ten_day_period`、`date_turn`。
+- 裁决字段：`type`、`status`、`public_reason`、`related_event_ids_json`。
+- 可见/隐藏：`visibility`、`known_to_player`、`intel_confidence`、`public_summary`、`hidden_notes_json`。
+
+### 字段分类与 AI 权限
+
+| 分类 | 示例 | 写入者 | 可进入 view/prompt |
+| --- | --- | --- | --- |
+| 静态目录字段 | `name`、`title`、`rank_band`、`duties_json`、`promotion_path_row_ids_json` | `officialCatalog` 初始化、服务器迁移/修复 | 非 hidden 且引用可见时可以。 |
+| 每局动态 projection | `status`、`term_months`、`performance_score`、`impeachment_risk`、`localMetrics` | `officialPostings` bridge、`officialCareer`、地方官 role state、地理 helper | 仅可见摘要和公开/角色可见指标可以，且继续 cap。 |
+| 服务器裁决字段 | `holder_type`、`holder_id`、任命/调任/处分日期、`recommendation`、`type`、`last_event_id` | `promotions`、`officialCareer`、官场结算、后续安全事件索引 | 只有已公开或角色可见结果可以。 |
+| 服务器隐藏字段 | `hidden_notes_json`、隐藏 holder/ref、未公开密参、未公开迁转、`metadata_json` | 服务器本地诊断、密札考成、迁移、修复 | 永不进入 route view、prompt、浏览器或 save list。 |
+
+AI 可以解释可见官署职责、任所地理、公开考成、迁转传闻和官场人情；可以继续通过既有受限 `statePatch.player` 建议 `superiorFavor`、`peerNetwork`、`performanceMerit`、`promotionProspect`、`impeachmentRisk`、`cleanReputation` 等 meter；也可以继续建议合法 `relationshipChanges[]`。AI 不可以创建或改写 `office_*` 行、改 `visibility` / `known_to_player`、任命/调任/处分玩家或 NPC、改 `player.officeTitle`、改 `officialCareer`、直接裁决考成或弹劾阶段、公开 hidden notes，或把 SQL/table row 写入标记为模型来源。
+
+### 引用、可见性与修复策略
+
+- 可见性继续沿用 S52.1 枚举。`public` / `rumor` 默认可见；`role_visible` 沿用当前粗规则：书生不可见，非书生或 `known_to_player = 1` 才可见；`office_visible` 在玩家当前官署、官职或任所相关时可见；`relationship_visible` 必须 `known_to_player = 1`；`hidden` 永远不进入 view/prompt。
+- 官署、官职、辖区、任命、考成和迁转之间的引用必须在同一 `session_id` 内解析。引用目标不可见、缺失或 `hidden` 时，view 必须裁剪该引用，或把行降级为安全摘要；不得把 raw id 当作 fallback 展示。
+- `city_row_id`、`region_row_id`、`country_row_id`、`route_row_ids_json` 和 `frontier_zone_row_ids_json` 可引用 S54 `geo_*` 行；若地理表尚未存在、城市不可见或旧档缺失，view 降级为空 id 或“未明任所”摘要，不展示 raw id。
+- `holder_people_row_id` 可引用 S55 `people_npcs`；玩家使用 `holder_type = player` 与安全 `holder_id`，NPC 持有人只有在对应人物可见或 public/rumor 时才进入 view。隐藏 NPC、隐藏家族关系或未公开庇护不得通过任命行泄漏。
+- `player.officeTitle`、`officialCareer.currentPosting`、`officialPostingsView.postings[].officeId` / `posting-player-current` 必须在 S56.2 parity 中保持一致；殿试入仕、直接 `official` 开局、`magistrate` 开局和官场结算都不能被 SQLite raw row 反向改变。
+- S56.2 读取 session 时，应从 `world_sessions.world_state_json` / 规范化 `worldState.officialPostings` 单向修复缺失、陈旧、同数量错 `row_id` 或 raw hidden 行污染的可见桥接行；不得从 raw `office_*` 反向制造 route state 或 hidden 私档。
+- `last_report_turn` 表示最近向玩家公开或传闻披露的回合；`last_updated_turn` 表示服务器内部最后改动，两者不得混用。prompt/UI 只能用前者或 view 生成时的 `generatedAtTurn` 表达玩家可见时效。
+
+### S56.2/S56.3 验收点
+
+- JSON 默认路径：`STORAGE_ADAPTER=json` 不创建、不读取、不要求 `office_*` 表，`officialPostingsView`、`officialCareerView` 和 prompt summary 与现状一致。
+- SQLite start/turn/read：`STORAGE_ADAPTER=sqlite` 在同一 transaction 中保存 `world_sessions.world_state_json` 和可见 `office_*` 桥接行；read 能从 snapshot 修复缺失或陈旧可见行；route payload shape 不变。
+- JSON/SQLite parity：同一 `worldState.officialPostings` 在两种 adapter 下生成的 `officialPostingsView`、prompt `officialPostings` summary 和后续 `retrievalContext.officialPostings` 关键摘要一致，或只有记录过的安全降级。
+- 主线 continuity：完整 `scholar -> child_exam -> provincial_exam -> metropolitan_exam -> palace_exam -> official`、直接 `official` 开局、`magistrate` 开局、官场差事、考成、迁转和处分测试继续通过。
+- 可见性：hidden 官署、hidden 官职、hidden 任所、hidden assessment、hidden transfer、`hidden_notes_json`、hidden holder refs、hidden 地理 refs、hidden people refs、书生不可见 `role_visible` 行和未公开调任都不能进入 UI/prompt。
+- 引用修复：缺失 `office_catalog`、不可见城市、缺失 NPC、错 `superior_posting_row_id`、同数量错 `row_id`、stale revision、import/delete 清理都不会导致读档失败；玩家 API 返回安全降级 view。
+- 安全事件：`last_event_id` 只作为后续 S57 安全事件索引关联，不回写 route raw `worldState.officialPostings`，也不进入 `officialPostingsView`、prompt summary 或浏览器官职簿。
 
 ## 官署与官职目录
 

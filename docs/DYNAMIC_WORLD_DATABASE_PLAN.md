@@ -545,7 +545,7 @@ S49-S53 结束后，数据库专项的下一段不再是“是否需要数据库
 
 - S54：地理业务表。S54.1/S54.2 已定义并实现 `geo_countries`、`geo_regions`、`geo_cities`、`geo_routes`、`geo_frontier_zones`、`geo_office_jurisdictions` 的 SQLite 模式持久化；S54.3 已补导入 dry-run、地理 status/repair/export 工具、browser smoke SQLite 参数和 JSON/SQLite route/prompt 可见摘要 parity。
 - S55：人物业务表。已定义并实现可见 bridge `people_npcs`、`people_households`、`people_assets`、`people_estates`、`people_relationships` 持久化、`worldPeopleView` parity、NPC/关系/家产可见 delta 的服务器事件 helper 和 `last_event_id` 审计关联。
-- S56：官职任所业务表。定义 `office_bureaus`、`office_catalog`、`office_city_jurisdictions`、`office_postings`、`office_assessments`、`office_transfers`，再接入 `officialPostingsView` parity 与城市/人物引用完整性。
+- S56：官职任所业务表。S56.1 已定义 `office_bureaus`、`office_catalog`、`office_city_jurisdictions`、`office_postings`、`office_assessments`、`office_transfers` 契约；S56.2/S56.3 再接入 SQLite 持久化、`officialPostingsView` parity 与城市/人物引用完整性。
 - S57：安全事件索引。保留 raw `event_log` / `ai_change_proposals` 的诊断属性，另建安全 projection 供事件档案和 prompt 检索，不暴露 raw audit。
 - S58：SQLite 索引驱动的 prompt context 与浏览器双模式 parity。JSON fallback 不变，prompt/UI 继续只读可见 projection。
 - S59：JSON/SQLite 双模式整体验收与再次归档。
@@ -604,7 +604,7 @@ S49-S53 已完成基础层，历史细节已归档到 [LOCAL_DATABASE_FOUNDATION
 
 1. **S54 地理业务表**：先把国家、邻国、城市、路线、边面和辖区拆入 SQLite，因为地方任所、外交边患、路程和事件索引都会引用它。
 2. **S55 人物业务表**：已先把可见 NPC、家族、资产、田产和关系 bridge rows 拆入 SQLite，并补上服务器人物事件 helper、关系/请托 live 事件和 `people_*.last_event_id` 审计关联。
-3. **S56 官职任所业务表**：把官署、官职、任命、考成、迁转、城市辖区和持有人关系落表，保护服务器任免裁决。
+3. **S56 官职任所业务表**：S56.1 已先固定官署、官职、任命、考成、迁转、城市辖区和持有人引用的 SQLite 表契约；后续持久化必须继续保护服务器任免裁决。
 4. **S57 安全事件索引**：为长期事件档案、人物/城市/官职追溯和 prompt 检索建立安全 projection，而不是暴露 raw audit。
 5. **S58 检索式 prompt 与浏览器双模式 parity**：让 AI 和玩家继续只看当前合理可见的世界切片，同时验证 JSON/SQLite 两种 adapter 的视图一致。
 6. **S59 双模式集成硬化与再归档**：跑完整 Mock 主线、导入导出/修复工具和文档压缩。
