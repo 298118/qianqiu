@@ -1,6 +1,8 @@
 const mockProvider = require("./providers/mock");
 const { createAnthropicProvider } = require("./providers/anthropic");
 const { createDeepSeekProvider, readTaskModel } = require("./providers/deepseek");
+const { createMimoProvider, readMimoModel } = require("./providers/mimo");
+const { createMimoDeepSeekProvider } = require("./providers/mimoDeepseek");
 const { createOpenAiProvider } = require("./providers/openai");
 const { createInitialState } = require("../game/initialState");
 
@@ -26,6 +28,20 @@ const PROVIDER_DIAGNOSTICS = {
       grade: readTaskModel("grade")
     })
   },
+  mimo: {
+    keyEnv: "MIMO_API_KEY",
+    create: createMimoProvider,
+    models: () => ({ default: readMimoModel() })
+  },
+  "mimo-deepseek": {
+    keyEnvs: ["MIMO_API_KEY", "DEEPSEEK_API_KEY"],
+    create: createMimoDeepSeekProvider,
+    models: () => ({
+      default: "mimo-deepseek",
+      mimo: readMimoModel(),
+      deepseekGrade: readTaskModel("grade")
+    })
+  },
   anthropic: {
     keyEnv: "ANTHROPIC_API_KEY",
     create: createAnthropicProvider,
@@ -41,13 +57,27 @@ const PROVIDER_DIAGNOSTICS = {
 const SECRET_ENV_NAMES = [
   "OPENAI_API_KEY",
   "DEEPSEEK_API_KEY",
+  "MIMO_API_KEY",
   "ANTHROPIC_API_KEY"
 ];
+
+const PROVIDER_ALIASES = {
+  hybrid: "mimo-deepseek",
+  "mimo_deepseek": "mimo-deepseek",
+  "mimo+deepseek": "mimo-deepseek",
+  xiaomi: "mimo"
+};
 
 function normalizeProviderName(value = process.env.AI_PROVIDER || "mock") {
   const name = String(value || "mock").trim().toLowerCase();
   if (!name) return "mock";
+  if (PROVIDER_ALIASES[name]) return PROVIDER_ALIASES[name];
   return name === "claude" ? "claude" : name;
+}
+
+function getProviderKeyEnvs(config) {
+  if (Array.isArray(config.keyEnvs)) return config.keyEnvs;
+  return config.keyEnv ? [config.keyEnv] : [];
 }
 
 function redactSecrets(text) {
@@ -104,7 +134,8 @@ async function runAiConnectionTest(options = {}) {
     };
   }
 
-  if (config.keyEnv && !process.env[config.keyEnv]) {
+  const missingKeyEnvs = getProviderKeyEnvs(config).filter((envName) => !process.env[envName]);
+  if (missingKeyEnvs.length) {
     return {
       ok: false,
       provider: requestedProvider,
@@ -112,7 +143,7 @@ async function runAiConnectionTest(options = {}) {
       checkedAt,
       latencyMs: Date.now() - startedAt,
       models: config.models(),
-      error: `${requestedProvider} requires ${config.keyEnv}.`
+      error: `${requestedProvider} requires ${missingKeyEnvs.join(" and ")}.`
     };
   }
 

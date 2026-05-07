@@ -61,6 +61,48 @@ function isValidAttributeChange(change) {
   );
 }
 
+function clampNumber(value, min, max) {
+  return Math.max(min, Math.min(max, value));
+}
+
+function normalizeRelationshipChange(change) {
+  if (!change || typeof change !== "object" || Array.isArray(change)) {
+    return null;
+  }
+
+  if (change.targetType !== "character" && change.targetType !== "faction") {
+    return null;
+  }
+
+  if (
+    typeof change.targetId !== "string" ||
+    !change.targetId.trim() ||
+    typeof change.relationshipDelta !== "number" ||
+    !Number.isFinite(change.relationshipDelta) ||
+    typeof change.resentmentDelta !== "number" ||
+    !Number.isFinite(change.resentmentDelta) ||
+    typeof change.reason !== "string"
+  ) {
+    return null;
+  }
+
+  const normalized = {
+    targetType: change.targetType,
+    targetId: change.targetId.trim(),
+    relationshipDelta: clampNumber(change.relationshipDelta, -12, 12),
+    resentmentDelta: clampNumber(change.resentmentDelta, -10, 10),
+    reason: change.reason
+  };
+
+  for (const key of ["stance", "recentIntent", "note"]) {
+    if (typeof change[key] === "string") {
+      normalized[key] = change[key];
+    }
+  }
+
+  return normalized;
+}
+
 function normalizeModelPayload(schemaName, payload) {
   if (schemaName !== "turn" || !payload || typeof payload !== "object") {
     return payload;
@@ -74,6 +116,15 @@ function normalizeModelPayload(schemaName, payload) {
   // drop malformed rows instead of failing the whole turn after the authoritative statePatch validates.
   if (Array.isArray(payload.attributeChanges)) {
     payload.attributeChanges = payload.attributeChanges.filter(isValidAttributeChange);
+  }
+
+  // Relationship rows are also suggestions. Keep only schema-compatible rows here;
+  // visibility, target existence, final clamping, and persistence remain route-owned.
+  if (Array.isArray(payload.relationshipChanges)) {
+    payload.relationshipChanges = payload.relationshipChanges
+      .map(normalizeRelationshipChange)
+      .filter(Boolean)
+      .slice(0, 5);
   }
 
   return payload;

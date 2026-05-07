@@ -21,6 +21,46 @@ test("remote turn payload normalization drops malformed display-only attribute c
   ]);
 });
 
+test("remote turn payload normalization drops malformed relationship suggestions", () => {
+  const payload = {
+    narrative: "你拜见座师，言辞谨慎。",
+    statePatch: { player: { reputation: 11 } },
+    attributeChanges: [],
+    relationshipChanges: [
+      {
+        targetType: "character",
+        targetId: " C01 ",
+        relationshipDelta: 16,
+        resentmentDelta: -12,
+        stance: "赏识",
+        recentIntent: "观察后续文章",
+        note: "座师略有嘉许。",
+        reason: "拜见座师",
+        invented: true
+      },
+      { targetType: "npc", targetId: "C02", relationshipDelta: 2, resentmentDelta: 0, reason: "非法类型" },
+      { targetType: "faction", targetId: "", relationshipDelta: 2, resentmentDelta: 0, reason: "空目标" },
+      { targetType: "faction", targetId: "scholarOfficials", relationshipDelta: "2", resentmentDelta: 0, reason: "非数值" },
+      { targetType: "faction", targetId: "eunuchs", relationshipDelta: 1, resentmentDelta: 0 }
+    ],
+    events: ["拜见座师。"],
+    examTrigger: { shouldStart: false, level: null, reason: "" }
+  };
+
+  assert.deepEqual(normalizeModelPayload("turn", payload).relationshipChanges, [
+    {
+      targetType: "character",
+      targetId: "C01",
+      relationshipDelta: 12,
+      resentmentDelta: -10,
+      stance: "赏识",
+      recentIntent: "观察后续文章",
+      note: "座师略有嘉许。",
+      reason: "拜见座师"
+    }
+  ]);
+});
+
 test("remote payload normalization leaves non-turn payloads unchanged", () => {
   const payload = { narrative: "开局", events: [] };
   assert.equal(normalizeModelPayload("opening", payload), payload);

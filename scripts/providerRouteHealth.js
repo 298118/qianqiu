@@ -7,6 +7,7 @@ const path = require("node:path");
 const aiRoutes = require("../src/routes/ai");
 const {
   getProviderNamesToSmoke,
+  getProviderKeyEnvs,
   PROVIDER_CONFIGS,
   truncate
 } = require("./providerSmoke");
@@ -72,16 +73,18 @@ async function listSessionJsonFiles() {
 
 function collectSecretFragments(providerName, env = process.env) {
   const config = PROVIDER_CONFIGS[providerName];
-  const secret = config?.keyEnv ? env[config.keyEnv] : "";
-  if (!secret || secret.length < 8) return [];
+  const secrets = config ? getProviderKeyEnvs(config).map((envName) => env[envName]).filter(Boolean) : [];
 
-  return [...new Set([
-    secret,
-    secret.slice(0, 8),
-    secret.slice(0, 12),
-    secret.slice(-8),
-    secret.slice(-12)
-  ].filter((fragment) => fragment && fragment.length >= 8))];
+  return [...new Set(secrets.flatMap((secret) => {
+    if (!secret || secret.length < 8) return [];
+    return [
+      secret,
+      secret.slice(0, 8),
+      secret.slice(0, 12),
+      secret.slice(-8),
+      secret.slice(-12)
+    ].filter((fragment) => fragment && fragment.length >= 8);
+  }))];
 }
 
 function redactRouteHealthText(value, options = {}) {
@@ -171,7 +174,7 @@ async function runProviderRouteHealth(options = {}) {
   const providerNames = getProviderNamesToSmoke(options);
 
   if (!providerNames.length) {
-    console.log("No real-provider keys found; skipping provider route health. Set OPENAI_API_KEY, DEEPSEEK_API_KEY, or ANTHROPIC_API_KEY to run it.");
+    console.log("No real-provider keys found; skipping provider route health. Set OPENAI_API_KEY, DEEPSEEK_API_KEY, MIMO_API_KEY, or ANTHROPIC_API_KEY to run it.");
     return { skipped: true, providerNames: [] };
   }
 
@@ -229,7 +232,7 @@ async function runProviderRouteHealth(options = {}) {
 
 function printUsage() {
   console.log([
-    "Usage: npm run smoke:provider:route -- [--provider openai|deepseek|anthropic|claude|all]",
+    "Usage: npm run smoke:provider:route -- [--provider openai|deepseek|mimo|mimo-deepseek|anthropic|claude|all]",
     "",
     "Default behavior:",
     "- AI_PROVIDER=mock: run every provider that has its required key in the environment.",

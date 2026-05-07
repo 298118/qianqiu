@@ -1,13 +1,24 @@
 const mockProvider = require("./providers/mock");
 const { createAnthropicProvider } = require("./providers/anthropic");
 const { createDeepSeekProvider } = require("./providers/deepseek");
+const { createMimoProvider } = require("./providers/mimo");
+const { createMimoDeepSeekProvider } = require("./providers/mimoDeepseek");
 const { createOpenAiProvider } = require("./providers/openai");
 
 const PROVIDERS = {
   openai: createOpenAiProvider,
   deepseek: createDeepSeekProvider,
+  mimo: createMimoProvider,
+  "mimo-deepseek": createMimoDeepSeekProvider,
   anthropic: createAnthropicProvider,
   claude: createAnthropicProvider
+};
+
+const PROVIDER_ALIASES = {
+  hybrid: "mimo-deepseek",
+  "mimo_deepseek": "mimo-deepseek",
+  "mimo+deepseek": "mimo-deepseek",
+  xiaomi: "mimo"
 };
 
 function describeError(error) {
@@ -49,7 +60,8 @@ function wrapWithMockFallback(providerName, provider) {
 }
 
 function getProvider() {
-  const providerName = (process.env.AI_PROVIDER || "mock").toLowerCase();
+  const rawProviderName = (process.env.AI_PROVIDER || "mock").toLowerCase();
+  const providerName = PROVIDER_ALIASES[rawProviderName] || rawProviderName;
 
   if (providerName === "mock") {
     return mockProvider;

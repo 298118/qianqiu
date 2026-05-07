@@ -24,6 +24,18 @@ test("provider route health collects long secret fragments for leak checks", () 
   assert.deepEqual(collectSecretFragments("openai", { OPENAI_API_KEY: "short" }), []);
 });
 
+test("provider route health collects both hybrid provider secrets", () => {
+  const fragments = collectSecretFragments("mimo-deepseek", {
+    MIMO_API_KEY: "tp-mimo-abcdef123456",
+    DEEPSEEK_API_KEY: "sk-deepseek-abcdef123456"
+  });
+
+  assert.equal(fragments.includes("tp-mimo-abcdef123456"), true);
+  assert.equal(fragments.includes("sk-deepseek-abcdef123456"), true);
+  assert.equal(fragments.includes("tp-mimo-"), true);
+  assert.equal(fragments.includes("sk-deeps"), true);
+});
+
 test("provider route health accepts complete diagnostic payloads", () => {
   const failures = getRouteHealthPayloadFailures("deepseek", {
     ok: true,

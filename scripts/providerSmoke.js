@@ -3,6 +3,8 @@ require("dotenv").config({ quiet: true });
 
 const { createAnthropicProvider } = require("../src/ai/providers/anthropic");
 const { createDeepSeekProvider } = require("../src/ai/providers/deepseek");
+const { createMimoProvider } = require("../src/ai/providers/mimo");
+const { createMimoDeepSeekProvider } = require("../src/ai/providers/mimoDeepseek");
 const { createOpenAiProvider } = require("../src/ai/providers/openai");
 const { checkEssayAuthenticity } = require("../src/game/essayChecks");
 const { getExam, summarizeReadiness } = require("../src/game/exams");
@@ -21,6 +23,18 @@ const PROVIDER_CONFIGS = {
     modelEnv: "DEEPSEEK_MODEL",
     create: createDeepSeekProvider
   },
+  mimo: {
+    label: "Xiaomi MiMo",
+    keyEnv: "MIMO_API_KEY",
+    modelEnv: "MIMO_MODEL",
+    create: createMimoProvider
+  },
+  "mimo-deepseek": {
+    label: "MiMo + DeepSeek",
+    keyEnvs: ["MIMO_API_KEY", "DEEPSEEK_API_KEY"],
+    modelEnv: "MIMO_MODEL",
+    create: createMimoDeepSeekProvider
+  },
   anthropic: {
     label: "Anthropic",
     keyEnv: "ANTHROPIC_API_KEY",
@@ -30,7 +44,11 @@ const PROVIDER_CONFIGS = {
 };
 
 const PROVIDER_ALIASES = {
-  claude: "anthropic"
+  claude: "anthropic",
+  hybrid: "mimo-deepseek",
+  "mimo_deepseek": "mimo-deepseek",
+  "mimo+deepseek": "mimo-deepseek",
+  xiaomi: "mimo"
 };
 
 const ALL_PROVIDER_NAMES = Object.keys(PROVIDER_CONFIGS);
@@ -64,9 +82,14 @@ function canonicalProviderName(value) {
   return canonical;
 }
 
+function getProviderKeyEnvs(config) {
+  if (Array.isArray(config.keyEnvs)) return config.keyEnvs;
+  return config.keyEnv ? [config.keyEnv] : [];
+}
+
 function providerHasKey(providerName, env = process.env) {
   const config = PROVIDER_CONFIGS[providerName];
-  return Boolean(config && env[config.keyEnv]);
+  return Boolean(config && getProviderKeyEnvs(config).every((envName) => env[envName]));
 }
 
 function getRequestedProviderNames({ argv = process.argv, env = process.env } = {}) {
@@ -101,7 +124,10 @@ function getProviderNamesToSmoke(options = {}) {
   const missing = uniqueNames.filter((providerName) => !providerHasKey(providerName, env));
   if (missing.length) {
     const details = missing
-      .map((providerName) => `${PROVIDER_CONFIGS[providerName].label} requires ${PROVIDER_CONFIGS[providerName].keyEnv}`)
+      .map((providerName) => {
+        const config = PROVIDER_CONFIGS[providerName];
+        return `${config.label} requires ${getProviderKeyEnvs(config).join(" and ")}`;
+      })
       .join("; ");
     throw new Error(`${details}. Set the key or run with AI_PROVIDER=mock.`);
   }
@@ -201,7 +227,7 @@ async function runProviderSmoke(options = {}) {
   const stream = hasFlag(options.argv || process.argv, "--stream");
 
   if (!providerNames.length) {
-    console.log("No real-provider keys found; skipping provider smoke. Set OPENAI_API_KEY, DEEPSEEK_API_KEY, or ANTHROPIC_API_KEY to run it.");
+    console.log("No real-provider keys found; skipping provider smoke. Set OPENAI_API_KEY, DEEPSEEK_API_KEY, MIMO_API_KEY, or ANTHROPIC_API_KEY to run it.");
     return { skipped: true, providerNames: [] };
   }
 
@@ -215,7 +241,7 @@ async function runProviderSmoke(options = {}) {
 
 function printUsage() {
   console.log([
-    "Usage: npm run smoke:provider -- [--provider openai|deepseek|anthropic|claude|all]",
+    "Usage: npm run smoke:provider -- [--provider openai|deepseek|mimo|mimo-deepseek|anthropic|claude|all]",
     "       npm run smoke:provider -- --stream --provider openai",
     "",
     "Default behavior:",
@@ -244,6 +270,7 @@ module.exports = {
   buildSmokeEssay,
   canonicalProviderName,
   PROVIDER_CONFIGS,
+  getProviderKeyEnvs,
   hasFlag,
   getProviderNamesToSmoke,
   providerHasKey,

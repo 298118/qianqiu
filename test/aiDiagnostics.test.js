@@ -12,6 +12,8 @@ function withEnv(overrides, fn) {
     "AI_PROVIDER",
     "OPENAI_API_KEY",
     "DEEPSEEK_API_KEY",
+    "MIMO_API_KEY",
+    "MIMO_MODEL",
     "ANTHROPIC_API_KEY",
     "DEEPSEEK_MODEL",
     "DEEPSEEK_OPENING_MODEL",
@@ -41,6 +43,8 @@ test("AI diagnostics normalizes provider names", () => {
   assert.equal(normalizeProviderName(""), "mock");
   assert.equal(normalizeProviderName(" DeepSeek "), "deepseek");
   assert.equal(normalizeProviderName("Claude"), "claude");
+  assert.equal(normalizeProviderName("xiaomi"), "mimo");
+  assert.equal(normalizeProviderName("hybrid"), "mimo-deepseek");
 });
 
 test("AI diagnostics redacts configured secrets from errors", () => {
@@ -96,5 +100,33 @@ test("AI connection test reports missing DeepSeek key without leaking secrets", 
     assert.equal(result.provider, "deepseek");
     assert.match(result.error, /DEEPSEEK_API_KEY/);
     assert.equal(result.models.grade, "deepseek-v4-pro");
+  });
+});
+
+test("AI connection test reports missing MiMo Token Plan key", async () => {
+  await withEnv({
+    AI_PROVIDER: "mimo",
+    MIMO_MODEL: "mimo-v2.5-pro"
+  }, async () => {
+    const result = await runAiConnectionTest();
+    assert.equal(result.ok, false);
+    assert.equal(result.provider, "mimo");
+    assert.match(result.error, /MIMO_API_KEY/);
+    assert.equal(result.models.default, "mimo-v2.5-pro");
+  });
+});
+
+test("AI connection test reports all missing keys for MiMo+DeepSeek hybrid", async () => {
+  await withEnv({
+    AI_PROVIDER: "mimo-deepseek",
+    MIMO_MODEL: "mimo-v2.5-pro",
+    DEEPSEEK_GRADE_MODEL: "deepseek-v4-pro"
+  }, async () => {
+    const result = await runAiConnectionTest();
+    assert.equal(result.ok, false);
+    assert.equal(result.provider, "mimo-deepseek");
+    assert.match(result.error, /MIMO_API_KEY and DEEPSEEK_API_KEY/);
+    assert.equal(result.models.mimo, "mimo-v2.5-pro");
+    assert.equal(result.models.deepseekGrade, "deepseek-v4-pro");
   });
 });

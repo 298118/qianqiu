@@ -137,4 +137,5 @@ test("event archive sanitizer drops prompt, provider, path, key, and raw state t
   assert.equal(cleanArchiveText("provider proposal statePatch worldState"), "");
   assert.equal(cleanArchiveText("E:\\LSMNQ\\data\\sessions\\secret.json"), "");
   assert.equal(cleanArchiveText("OPENAI_API_KEY=sk-proj-archive-secret-123456"), "");
+  assert.equal(cleanArchiveText("MIMO_API_KEY=tp-archive-secret-123456"), "");
 });

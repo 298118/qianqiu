@@ -559,7 +559,7 @@ async function runProviderLongRunSmoke(options = {}) {
   const turnLimit = parseTurnLimit(argv);
 
   if (!providerNames.length) {
-    console.log("No real-provider keys found; skipping S37/S48 provider long-run. Set OPENAI_API_KEY, DEEPSEEK_API_KEY, or ANTHROPIC_API_KEY to run it.");
+    console.log("No real-provider keys found; skipping S37/S48 provider long-run. Set OPENAI_API_KEY, DEEPSEEK_API_KEY, MIMO_API_KEY, or ANTHROPIC_API_KEY to run it.");
     return { skipped: true, providerNames: [] };
   }
 
@@ -574,7 +574,7 @@ async function runProviderLongRunSmoke(options = {}) {
 
 function printUsage() {
   console.log([
-    "Usage: npm run smoke:provider:long -- [--provider openai|deepseek|anthropic|claude|all] [--turns 8] [--stream]",
+    "Usage: npm run smoke:provider:long -- [--provider openai|deepseek|mimo|mimo-deepseek|anthropic|claude|all] [--turns 8] [--stream]",
     "",
     "Default behavior:",
     "- AI_PROVIDER=mock: run every provider that has its required key in the environment.",

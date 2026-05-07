@@ -19,10 +19,10 @@ Stable governance is protected in `docs/DEVELOPMENT_GOVERNANCE.md`; do not weake
 - Runtime target: `npm install && npm start`, then open `http://localhost:3000`.
 - Frontend: plain HTML/CSS/JS, no build step.
 - Backend: Node.js + Express, plain JavaScript.
-- AI providers: adapter-based Mock/OpenAI/DeepSeek/Anthropic. `AI_PROVIDER=mock` remains the default playable mode. DeepSeek supports task-specific model overrides: V4 Pro is recommended for opening/grading, and V4 Flash for ordinary turn/streaming/question generation.
+- AI providers: adapter-based Mock/OpenAI/DeepSeek/MiMo/MiMo+DeepSeek/Anthropic. `AI_PROVIDER=mock` remains the default playable mode. DeepSeek supports task-specific model overrides; MiMo uses Xiaomi MiMo OpenAI-compatible chat completions with `MIMO_MODEL=mimo-v2.5-pro` for the MiMo-V2.5-Pro 1M long-context model; `AI_PROVIDER=mimo-deepseek` routes start/turn/stream/question to MiMo and essay grading to DeepSeek V4 Pro.
 - Storage: `src/storage/sessionStore.js` is the route-facing facade. Default adapter is `src/storage/jsonSessionAdapter.js`, storing JSON session records under `data/sessions/*.json` with schema envelope, redacted metadata, nested `worldState`, atomic temp writes, revision checks, and per-session lock. Optional `src/storage/sqliteSessionAdapter.js` is selected by `STORAGE_ADAPTER=sqlite`, using local `world_sessions` rows and JSON `world_state_json`; local audit records use JSON sidecars or SQLite `event_log` / `ai_change_proposals`. JSON remains default. No remote save, account, multiplayer, cloud sync, or hosted DB scope.
 - Active roadmap: local dynamic database specialty in `docs/DEVELOPMENT_STEPS.md`. S49-S53 foundation is complete and archived in `docs/LOCAL_DATABASE_FOUNDATION_ARCHIVE.md`; active work now starts at S54, splitting remaining geography, people, official posting, and safe event data into local SQLite business tables while preserving JSON/default route contracts.
-- Current local `.env`: configured for DeepSeek with a real user-supplied key and task model split. `.env` is ignored by Git and must never be printed or committed.
+- Current local `.env`: configured with real user-supplied DeepSeek and MiMo Token Plan keys; `AI_PROVIDER=mimo-deepseek` is the intended local real-provider mode. `.env` is ignored by Git and must never be printed or committed.
 
 ## Core Invariants
 
@@ -153,8 +153,9 @@ Next planned slices:
 
 ## Current Work Note
 
+- 2026-05-07：MiMo provider 集成待提交。本轮新增 `mimo` 与 `mimo-deepseek` provider、诊断和 smoke 脚本支持、MiMo/Hybrid 单元测试、remote turn relationship 建议归一化、README/brief/architecture/AI 控制矩阵/真实 provider 验收更新，并把完整多 AI 协作编排排到 S54-S59 之后。官方 MiMo 文档和真实 route health 确认 API 模型 ID 应为 `mimo-v2.5-pro`；直接用 `mimo-v2.5-pro[1m]` 发送普通问答也返回 `Not supported model`，1M 应作为长上下文能力说明而不是 request model 字段。官方文档还确认 OpenAI-compatible `/chat/completions`、Token Plan `tp-...` key、token-plan Base URL 与普通 `sk-...` key 不可混用；也记录 Token Plan 场景限制，公开部署或非 Coding 自定义后端应先确认授权或改用普通 API key。只读复审提出的 Token Plan 默认 URL 与 MiMo key 提示问题已修正，并补充 `MIMO_API_KEY` / `tp-...` 在事件档案与浏览器 smoke 隐藏 token 扫描中的覆盖。已通过聚焦测试、`npm test`、`npm run check:docs-governance`、`git diff --check`、keyed route health `npm run smoke:provider:route -- --provider mimo` / `--provider mimo-deepseek`，以及真实混合烟测 `npm run smoke:provider -- --provider mimo-deepseek --stream`；最终只读复审未发现阻塞问题，后续只需提交。
 - 2026-05-07：数据库专项规划压缩提交 `5ab5350`。S49-S53 已完成基础归档到 `docs/LOCAL_DATABASE_FOUNDATION_ARCHIVE.md`，活动台账改为 S54-S59 剩余 SQLite 业务表拆分，并已同步 README、产品 brief、architecture、动态数据库规划、相关契约和本交接板。该变更为纯文档，但涉及路线图重写和内容保护，已运行 `npm run check:docs-governance`、`git diff --check` 并执行只读复审；复审 P2 已修正。后续从 S54.1 地理 SQLite 业务表契约开始。
 
 ## Next Recommended Step
 
-Finish the current documentation compression commit, then start S54.1: geography SQLite business table contract. Keep JSON/default Mock playability, SQLite local-only scope, AI-no-SQL, and route-view-only browser/prompt surfaces as the baseline.
+Finish the MiMo provider integration commit, then return to S54.1: geography SQLite business table contract. Keep JSON/default Mock playability, SQLite local-only scope, AI-no-SQL, and route-view-only browser/prompt surfaces as the baseline. After S54-S59, start the planned S60 multi-AI orchestration layer if multi-model collaboration is still desired.

@@ -1134,6 +1134,7 @@ function getInformationPanelShellFailures(snapshot = {}, expectations = {}, mode
     "data/sessions",
     "OPENAI_API_KEY",
     "DEEPSEEK_API_KEY",
+    "MIMO_API_KEY",
     "ANTHROPIC_API_KEY"
   ];
   const hiddenTokens = [...new Set([...(expectations.hiddenTextTokens || []), ...defaultInformationHiddenTokens])];
@@ -2507,7 +2508,7 @@ async function runBrowserJourney({
     const aiConnection = checkAiConnection
       ? await assertAiConnectionPanel(page, "start-page AI connection", {
         expectedProvider: expectedAiConnectionProvider,
-        hiddenTextTokens: ["OPENAI_API_KEY", "DEEPSEEK_API_KEY", "ANTHROPIC_API_KEY", "data/sessions"]
+        hiddenTextTokens: ["OPENAI_API_KEY", "DEEPSEEK_API_KEY", "MIMO_API_KEY", "ANTHROPIC_API_KEY", "data/sessions"]
       })
       : null;
 

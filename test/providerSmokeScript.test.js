@@ -12,6 +12,8 @@ const {
 test("provider smoke canonicalizes aliases", () => {
   assert.equal(canonicalProviderName("openai"), "openai");
   assert.equal(canonicalProviderName("claude"), "anthropic");
+  assert.equal(canonicalProviderName("xiaomi"), "mimo");
+  assert.equal(canonicalProviderName("hybrid"), "mimo-deepseek");
   assert.equal(canonicalProviderName("mock"), "mock");
   assert.throws(() => canonicalProviderName("unknown"), /Unknown smoke provider/);
 });
@@ -46,6 +48,17 @@ test("provider smoke treats configured real provider as required", () => {
     getProviderNamesToSmoke({ argv, env: { AI_PROVIDER: "deepseek", DEEPSEEK_API_KEY: "deepseek-key" } }),
     ["deepseek"]
   );
+  assert.deepEqual(
+    getProviderNamesToSmoke({
+      argv,
+      env: {
+        AI_PROVIDER: "mimo-deepseek",
+        MIMO_API_KEY: "mimo-key",
+        DEEPSEEK_API_KEY: "deepseek-key"
+      }
+    }),
+    ["mimo-deepseek"]
+  );
 });
 
 test("provider smoke supports explicit provider override", () => {
@@ -57,6 +70,16 @@ test("provider smoke supports explicit provider override", () => {
 
   assert.equal(providerHasKey("anthropic", env), true);
   assert.deepEqual(getProviderNamesToSmoke({ argv, env }), ["anthropic"]);
+});
+
+test("provider smoke requires both MiMo and DeepSeek keys for hybrid provider", () => {
+  assert.equal(providerHasKey("mimo-deepseek", {
+    MIMO_API_KEY: "mimo-key"
+  }), false);
+  assert.equal(providerHasKey("mimo-deepseek", {
+    MIMO_API_KEY: "mimo-key",
+    DEEPSEEK_API_KEY: "deepseek-key"
+  }), true);
 });
 
 test("provider smoke detects optional streaming flag", () => {

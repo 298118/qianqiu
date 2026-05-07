@@ -122,6 +122,13 @@ DEEPSEEK_OPENING_MODEL=deepseek-v4-pro
 DEEPSEEK_TURN_MODEL=deepseek-v4-flash
 DEEPSEEK_EXAM_QUESTION_MODEL=deepseek-v4-flash
 DEEPSEEK_GRADE_MODEL=deepseek-v4-pro
+MIMO_API_KEY=
+MIMO_BASE_URL=https://token-plan-sgp.xiaomimimo.com/v1
+MIMO_MODEL=mimo-v2.5-pro
+MIMO_AUTH_HEADER=api-key
+MIMO_THINKING=disabled
+MIMO_TEMPERATURE=0.7
+MIMO_TOP_P=0.95
 ANTHROPIC_API_KEY=
 ANTHROPIC_MODEL=claude-sonnet-4-5
 ```
@@ -131,7 +138,11 @@ ANTHROPIC_MODEL=claude-sonnet-4-5
 - `mock`：默认模式，无需 key，完整可玩。
 - `openai`：使用 OpenAI SDK Responses API。
 - `deepseek`：使用 OpenAI-compatible chat completions。默认 `DEEPSEEK_MODEL` 是兜底模型；可用 `DEEPSEEK_OPENING_MODEL`、`DEEPSEEK_TURN_MODEL`、`DEEPSEEK_EXAM_QUESTION_MODEL`、`DEEPSEEK_GRADE_MODEL` 按任务覆盖。推荐策略是开局和科举评卷走 `deepseek-v4-pro`，普通回合/流式叙事和出题走 `deepseek-v4-flash`。
+- `mimo`：使用 Xiaomi MiMo OpenAI-compatible chat completions。Token Plan 订阅 key 使用 `MIMO_API_KEY`，订阅专属 Base URL 使用 `MIMO_BASE_URL`，本项目默认模型固定为 API 模型 ID `mimo-v2.5-pro`（MiMo-V2.5-Pro 的 1M 长上下文模型口径），默认认证头为官方示例中的 `api-key`。
+- `mimo-deepseek`：混合 provider。开局、普通回合、流式回合和科举出题走 MiMo；科举评卷走 DeepSeek，默认依赖 `DEEPSEEK_GRADE_MODEL=deepseek-v4-pro`。这是当前“多模型一起工作”的最小落地形态，后续完整编排层已排在 S54-S59 之后。
 - `claude` 或 `anthropic`：使用 Anthropic Messages API。
+
+MiMo Token Plan 与普通按量 API key 不是同一类凭据：`tp-...` 订阅 key 必须配套订阅页给出的 token-plan Base URL，不能与普通 `sk-...` key 或按量 Base URL 混用。小米官方文档同时说明 Token Plan 面向 AI 编程工具场景；若把它用于公开部署、自定义应用后端或明显非 Coding 场景，请先确认订阅条款或改用普通 API key。
 
 `CORS_ALLOWED_ORIGINS` 是逗号分隔的额外允许 Origin，例如 `http://localhost:5173`。默认不要配置 `*`。
 

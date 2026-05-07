@@ -132,3 +132,27 @@ test("POST /api/ai/connection-test maps claude alias to Anthropic key checks", a
   assert.equal(payload.provider, "claude");
   assert.match(payload.error, /ANTHROPIC_API_KEY/);
 });
+
+test("POST /api/ai/connection-test maps hybrid alias to MiMo+DeepSeek key checks", async (t) => {
+  const previous = {
+    AI_PROVIDER: process.env.AI_PROVIDER,
+    MIMO_API_KEY: process.env.MIMO_API_KEY,
+    DEEPSEEK_API_KEY: process.env.DEEPSEEK_API_KEY
+  };
+  process.env.AI_PROVIDER = "mock";
+  delete process.env.MIMO_API_KEY;
+  delete process.env.DEEPSEEK_API_KEY;
+  const server = createTestServer();
+  t.after(() => {
+    restoreEnv(previous);
+    return server.close();
+  });
+
+  const { response, payload } = await postJson(`${server.baseUrl}/api/ai/connection-test`, {
+    provider: "hybrid"
+  });
+  assert.equal(response.status, 503);
+  assert.equal(payload.ok, false);
+  assert.equal(payload.provider, "mimo-deepseek");
+  assert.match(payload.error, /MIMO_API_KEY and DEEPSEEK_API_KEY/);
+});
