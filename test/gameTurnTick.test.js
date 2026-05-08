@@ -123,10 +123,13 @@ test("POST /api/game/turn applies world tick after provider output in JSON mode"
   assert.equal(payload.worldTick.completedMonth, true);
   assert.ok(payload.worldTick.summary);
   assert.ok(payload.worldTick.events.length >= 1);
-  assert.deepEqual(
-    payload.worldState.eventHistory.slice(-payload.worldTick.events.length),
-    payload.worldTick.events
-  );
+  const latestWorldTickEvent = payload.worldTick.events.at(-1);
+  const latestWorldTickIndex = payload.worldState.eventHistory.lastIndexOf(latestWorldTickEvent);
+  const lifecycleIndex = payload.worldState.eventHistory.findIndex((event) => /人物演化/.test(event));
+  assert.notEqual(latestWorldTickIndex, -1);
+  if (lifecycleIndex !== -1) {
+    assert.equal(lifecycleIndex > latestWorldTickIndex, true);
+  }
   assert.ok(payload.worldState.eventHistory.length > payload.worldTick.events.length);
   assert.ok(payload.attributeChanges.some((change) => change.path === "player.academia"));
   assert.ok(payload.attributeChanges.some((change) => change.reason === "月度推演"));

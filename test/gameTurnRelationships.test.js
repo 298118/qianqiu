@@ -22,6 +22,115 @@ async function removeSessionArtifacts(sessionId) {
   await fs.rm(path.join(auditDir, `${sessionId}.ai-proposals.jsonl`), { force: true });
 }
 
+function addMonthEndLifecycleFixture(worldState) {
+  worldState.turnCount = 5;
+  worldState.month = 8;
+  worldState.tenDayPeriod = 3;
+  worldState.publicOrder = 30;
+  worldState.corruption = 82;
+  worldState.taxRate = 62;
+  worldState.grainReserve = 200;
+  worldState.population = 10000;
+  worldState.worldPeople = {
+    schemaVersion: 1,
+    generatedAtTurn: 5,
+    npcs: [{
+      id: "npc-route-gu",
+      name: "顾路",
+      age: 82,
+      alive: true,
+      homeCityId: "city-beijing",
+      currentCityId: "city-beijing",
+      householdId: "hh-route-gu",
+      rankLabel: "在任官员",
+      reputation: 72,
+      patronagePower: 60,
+      peerNetwork: 30,
+      wealthCash: 12,
+      landMu: 40,
+      debts: 130,
+      annualIncomeEstimate: 24,
+      estateIds: ["estate-route-gu"],
+      assetIds: ["asset-route-gu"],
+      family: {
+        fatherId: "",
+        motherId: "",
+        spouseIds: [],
+        childrenIds: [],
+        marriageAllianceTags: []
+      },
+      health: 5,
+      legalRisk: 20,
+      impeachmentRisk: 64,
+      resentmentRisk: 48,
+      visibility: "public",
+      knownToPlayer: true,
+      publicSummary: "顾路为可见人物。",
+      hiddenIntent: "SEALED_ROUTE_INTENT",
+      hiddenNotes: ["SEALED_ROUTE_NOTE"],
+      lastUpdatedTurn: 5
+    }],
+    households: [{
+      id: "hh-route-gu",
+      familyName: "顾氏",
+      seatCityId: "city-beijing",
+      wealthScore: 42,
+      landMu: 90,
+      prestige: 38,
+      gentryRank: "乡绅",
+      marriageNetworkScore: 34,
+      debtPressure: 50,
+      politicalAlignment: "观望",
+      familyRisk: 22,
+      memberNpcIds: ["npc-route-gu"],
+      estateIds: ["estate-route-gu"],
+      assetIds: ["asset-route-gu"],
+      visibility: "public",
+      knownToPlayer: true,
+      publicSummary: "顾氏有可见家产。",
+      lastUpdatedTurn: 5
+    }],
+    assets: [{
+      id: "asset-route-gu",
+      kind: "debt",
+      name: "顾氏路欠契",
+      ownerType: "household",
+      ownerId: "hh-route-gu",
+      cityId: "city-beijing",
+      valueEstimate: 100,
+      annualIncomeEstimate: 10,
+      debtValue: 80,
+      statusLabel: "旧欠",
+      visibility: "public",
+      knownToPlayer: true,
+      publicSummary: "顾氏欠契为公开估计。",
+      lastUpdatedTurn: 5
+    }],
+    estates: [{
+      id: "estate-route-gu",
+      name: "顾氏路南田",
+      ownerType: "household",
+      ownerId: "hh-route-gu",
+      cityId: "city-beijing",
+      regionId: "region-north",
+      landMu: 90,
+      tenantHouseholds: 6,
+      rentGrainEstimate: 30,
+      taxBurden: 68,
+      waterworks: 20,
+      disputeRisk: 54,
+      status: "held",
+      statusLabel: "自有",
+      visibility: "public",
+      knownToPlayer: true,
+      publicSummary: "顾氏南田为公开估计。",
+      lastUpdatedTurn: 5
+    }],
+    relationships: [],
+    recentNotes: []
+  };
+}
+
 function createTestServerWithProvider(provider) {
   const aiPath = require.resolve("../src/ai");
   const gameRoutePath = require.resolve("../src/routes/game");
@@ -312,4 +421,58 @@ test("POST /api/game/turn resolves active NPC requests through server-owned rela
     event.eventType === "active_request_resolved" &&
     /请托/.test(event.summary)
   ));
+});
+
+test("POST /api/game/turn runs S62.2 people lifecycle at month end", async (t) => {
+  const provider = {
+    async runTurn() {
+      return {
+        narrative: "The action was resolved.",
+        statePatch: {},
+        attributeChanges: [],
+        relationshipChanges: [],
+        events: [],
+        examTrigger: { shouldStart: false, level: null, reason: "" }
+      };
+    }
+  };
+  const server = createTestServerWithProvider(provider);
+  t.after(server.close);
+
+  const worldState = createInitialState({ playerName: "Tester", role: "official" });
+  addMonthEndLifecycleFixture(worldState);
+  t.after(() => removeSessionArtifacts(worldState.sessionId));
+  await writeSession(worldState);
+
+  const response = await fetch(`${server.baseUrl}/api/game/turn`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      sessionId: worldState.sessionId,
+      input: "核看族中旧账"
+    })
+  });
+  const payload = await response.json();
+  const auditEvents = await listAuditEvents(worldState.sessionId);
+  const npc = payload.worldState.worldPeople.npcs.find((row) => row.id === "npc-route-gu");
+  const asset = payload.worldState.worldPeople.assets.find((row) => row.id === "asset-route-gu");
+  const estate = payload.worldState.worldPeople.estates.find((row) => row.id === "estate-route-gu");
+
+  assert.equal(response.status, 200);
+  assert.equal(payload.worldTick.completedMonth, true);
+  assert.equal(npc.alive, false);
+  assert.equal(asset.debtValue > 80, true);
+  assert.equal(estate.status, "disputed");
+  assert.ok(payload.worldState.eventHistory.some((event) => /人物演化/.test(event)));
+  assert.ok(auditEvents.some((event) =>
+    event.sourceSystem === "world_people" &&
+    event.eventType === "npc_lifecycle_changed"
+  ));
+  assert.ok(auditEvents.some((event) =>
+    event.sourceSystem === "world_people" &&
+    event.eventType === "people_asset_changed"
+  ));
+  assert.equal(JSON.stringify(payload.worldPeopleView).includes("people-"), false);
+  assert.equal(JSON.stringify(payload.worldPeopleView).includes("hiddenIntent"), false);
+  assert.equal(JSON.stringify(payload.worldState.worldPeople).includes("SEALED_ROUTE"), false);
 });

@@ -194,6 +194,19 @@ function relationshipSummary(row, changes, labels, eventType) {
   return clampText(`人物关系更新：${source}与${target}的往来${relation}，${resentment}。`);
 }
 
+function relationshipCreatedSummary(row, labels) {
+  const source = labelForEndpoint(labels, row.sourceType, row.sourceId);
+  const target = labelForEndpoint(labels, row.targetType, row.targetId);
+  return clampText(`人物关系入谱：${source}与${target}新增公开往来记录。`);
+}
+
+function relationshipEndpointRowLinks(row) {
+  const rowEventLinks = [];
+  if (row.sourceType === "npc") rowEventLinks.push({ collection: "npcs", rowId: row.sourceId });
+  if (row.targetType === "npc") rowEventLinks.push({ collection: "npcs", rowId: row.targetId });
+  return rowEventLinks;
+}
+
 function makeEvent(worldState, fields) {
   const eventId = `people-${randomUUID()}`;
   const summary = clampText(fields.summary, "人物事件已由服务器记录。");
@@ -273,7 +286,38 @@ function collectRelationshipEvents(events, worldState, previous, current, option
 
   for (const row of current.relationships || []) {
     const before = beforeMap.get(row.id);
-    if (!before) continue;
+    const rowEventLinks = relationshipEndpointRowLinks(row);
+    const labelsForRow = [
+      labelForEndpoint(labels, row.sourceType, row.sourceId),
+      labelForEndpoint(labels, row.targetType, row.targetId)
+    ].filter(Boolean);
+
+    if (!before) {
+      addLinkedEvent(events, worldState, {
+        kind: "relationship_created",
+        rowKind: "relationships",
+        rowId: row.id,
+        eventType: "relationship_created",
+        summary: relationshipCreatedSummary(row, labels),
+        labels: labelsForRow,
+        appliedChanges: {
+          created: true,
+          metrics: {
+            relationship: { before: null, after: toNumber(row.relationship), delta: null },
+            trust: { before: null, after: toNumber(row.trust), delta: null },
+            resentment: { before: null, after: toNumber(row.resentment), delta: null },
+            obligation: { before: null, after: toNumber(row.obligation), delta: null },
+            patronage: { before: null, after: toNumber(row.patronage), delta: null }
+          },
+          textFields: {
+            stance: { before: "", after: clampText(row.stance, "", MAX_LABEL_LENGTH) }
+          }
+        },
+        rowEventLinks
+      });
+      continue;
+    }
+
     const metrics = metricDiff(before, row, [
       "relationship",
       "trust",
@@ -288,9 +332,6 @@ function collectRelationshipEvents(events, worldState, previous, current, option
 
     const eventType = relationshipEventType(row, activeTargets);
     const summary = relationshipSummary(row, { metrics, textChanges }, labels, eventType);
-    const rowEventLinks = [];
-    if (row.sourceType === "npc") rowEventLinks.push({ collection: "npcs", rowId: row.sourceId });
-    if (row.targetType === "npc") rowEventLinks.push({ collection: "npcs", rowId: row.targetId });
 
     addLinkedEvent(events, worldState, {
       kind: eventType,
@@ -298,10 +339,7 @@ function collectRelationshipEvents(events, worldState, previous, current, option
       rowId: row.id,
       eventType,
       summary,
-      labels: [
-        labelForEndpoint(labels, row.sourceType, row.sourceId),
-        labelForEndpoint(labels, row.targetType, row.targetId)
-      ].filter(Boolean),
+      labels: labelsForRow,
       appliedChanges: {
         metrics,
         textFields: textChanges
@@ -322,7 +360,10 @@ function collectNpcEvents(events, worldState, previous, current, labels) {
       "landMu",
       "debts",
       "annualIncomeEstimate",
+      "age",
       "health",
+      "reputation",
+      "patronagePower",
       "legalRisk",
       "impeachmentRisk"
     ]);

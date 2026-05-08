@@ -130,3 +130,66 @@ test("world people events classify visible lifecycle, asset, and estate changes"
   assert.ok(batch.rowEventLinks.some((link) => link.collection === "assets" && link.rowId === "asset-visible-li"));
   assert.ok(batch.rowEventLinks.some((link) => link.collection === "estates" && link.rowId === "estate-visible-li"));
 });
+
+test("world people events record newly created visible relationship rows", () => {
+  const worldState = createInitialState({ role: "official", playerName: "入谱官" });
+  const previousPeople = {
+    schemaVersion: 1,
+    generatedAtTurn: 9,
+    npcs: [{
+      id: "npc-visible-a",
+      name: "顾甲",
+      visibility: "public",
+      knownToPlayer: true,
+      publicSummary: "顾甲为可见人物。",
+      lastUpdatedTurn: 9
+    }, {
+      id: "npc-visible-b",
+      name: "陆乙",
+      visibility: "public",
+      knownToPlayer: true,
+      publicSummary: "陆乙为可见人物。",
+      lastUpdatedTurn: 9
+    }],
+    households: [],
+    assets: [],
+    estates: [],
+    relationships: []
+  };
+  const currentPeople = JSON.parse(JSON.stringify(previousPeople));
+  currentPeople.generatedAtTurn = 10;
+  currentPeople.relationships.push({
+    id: "rel-marriage-npc-visible-a-npc-visible-b",
+    sourceType: "npc",
+    sourceId: "npc-visible-a",
+    targetType: "npc",
+    targetId: "npc-visible-b",
+    relationship: 56,
+    trust: 58,
+    resentment: 0,
+    obligation: 18,
+    patronage: 0,
+    stance: "婚姻",
+    visibility: "public",
+    knownToPlayer: true,
+    publicSummary: "顾甲与陆乙有公开婚姻关系。",
+    lastUpdatedTurn: 10
+  });
+
+  const batch = buildWorldPeopleEventBatch(worldState, {
+    previousPeople,
+    currentPeople
+  });
+  const event = batch.auditEvents.find((entry) => entry.eventType === "relationship_created");
+
+  assert.ok(event);
+  assert.match(event.summary, /人物关系入谱/);
+  assert.equal(event.appliedChanges.created, true);
+  assert.equal(event.appliedChanges.metrics.obligation.after, 18);
+  assert.ok(batch.rowEventLinks.some((link) =>
+    link.collection === "relationships" &&
+    link.rowId === "rel-marriage-npc-visible-a-npc-visible-b"
+  ));
+  assert.ok(batch.rowEventLinks.some((link) => link.collection === "npcs" && link.rowId === "npc-visible-a"));
+  assert.ok(batch.rowEventLinks.some((link) => link.collection === "npcs" && link.rowId === "npc-visible-b"));
+});

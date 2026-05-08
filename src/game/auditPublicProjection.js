@@ -17,6 +17,7 @@ const PUBLIC_EVENT_TYPE_LABELS = Object.freeze({
   npc_lifecycle_changed: "人物履历",
   people_asset_changed: "资产变动",
   people_estate_changed: "田产变动",
+  relationship_created: "人情入谱",
   relationship_changed: "人情变动",
   session_started: "开局",
   turn_completed: "回合结算"

@@ -42,6 +42,7 @@ const {
   buildWorldPeopleView,
   ensureWorldPeopleState
 } = require("../game/worldPeople");
+const { runWorldPeopleLifecycleStep } = require("../game/worldPeopleLifecycle");
 const {
   appendPeopleEventLinks,
   buildWorldPeopleEventBatch,
@@ -340,6 +341,12 @@ async function finalizeTurn(worldState, result, input, auditOptions = {}) {
     allowServerOwnedPatchKeys: true
   });
   const officialCareerRelationshipChanges = applyRelationshipChanges(worldState, officialCareer.relationshipChanges);
+  const worldPeopleLifecycle = runWorldPeopleLifecycleStep(worldState, {
+    isMonthEnd: worldTick.completedMonth,
+    worldTick,
+    longTermEvents,
+    officialCareer
+  });
 
   const allRelationshipChanges = [
     ...relationshipChanges,
@@ -377,6 +384,7 @@ async function finalizeTurn(worldState, result, input, auditOptions = {}) {
   appendEvents(worldState, worldTick.events);
   appendEvents(worldState, longTermEvents.events);
   appendEvents(worldState, officialCareer.events);
+  appendEvents(worldState, worldPeopleLifecycle.events);
   ensureRelationshipLedger(worldState);
   ensureExamCalendarState(worldState);
   ensureLongTermEventState(worldState);
