@@ -50,7 +50,7 @@ Usage: node scripts/importJsonSessionsToSqlite.js [--db data/qianqiu.sqlite] [--
 
 从默认 data/sessions/*.json 读取 JSON 存档，写入本地 SQLite session 表。
 默认跳过已存在的 session；加 --overwrite 可覆盖 SQLite 中同 id 的行。
-写入 SQLite 时会同步 geo_* 地理业务表；--dry-run 只读取 JSON 存档，不打开或修改 SQLite 数据库。
+写入 SQLite 时会通过 SQLite adapter 同步 geo_*、people_*、office_*、event_archive_index 和 prompt_retrieval_index 等本地派生表；--dry-run 只读取 JSON 存档，不打开或修改 SQLite 数据库。
 `.trim());
 }
 
@@ -87,6 +87,7 @@ async function runImportJsonSessionsToSqlite(options = {}) {
       imported: imported.length,
       selectedSessionId: options.sessionId,
       skipped,
+      syncedDerivedTables: !options.dryRun,
       syncedGeographyTables: !options.dryRun,
       overwrite: options.overwrite
     };

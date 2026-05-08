@@ -149,7 +149,10 @@ npm run storage:geography:sqlite -- repair --dry-run
 npm run storage:geography:sqlite -- export
 npm run storage:audit-events -- status --adapter json
 npm run storage:audit-events -- export --adapter sqlite --db data/qianqiu.sqlite
+npm run smoke:dual-mode -- --storage-only
 ```
+
+`storage:import:sqlite` 会通过 SQLite adapter 同步 `geo_*`、`people_*`、`office_*`、`event_archive_index` 和 `prompt_retrieval_index` 等派生表；`smoke:dual-mode -- --storage-only` 是 S59.1 的快速整体验收，串联 JSON -> SQLite dry-run/正式导入、地理修复/导出、审计公开 projection、派生表计数和 hidden-token 防线。
 
 回滚优先关闭 `STORAGE_ADAPTER=sqlite` 回到 JSON adapter，或保留/恢复原 JSON 存档。
 
@@ -161,6 +164,7 @@ npm run check:docs-governance
 npm run eval:ai
 npm run smoke:browser
 npm run smoke:browser -- --information-parity
+npm run smoke:dual-mode -- --storage-only
 npm run smoke:provider
 npm run smoke:provider:route
 npm run smoke:provider:long
@@ -173,6 +177,7 @@ npm run storage:audit-events -- status
 - `npm run check:docs-governance` 检查开发治理规范、活动路线图和必读文档中的受保护规则。
 - `npm run eval:ai` 是离线 AI 输出质量门槛，覆盖 provider-shaped JSON、越权风险、历史语气、评分边界和作弊处罚。
 - `npm run smoke:browser` 启动临时 Mock 服务器，覆盖完整书生到入仕路径、作弊样例、代表身份回合、存档簿、年月旬显示和桌面/移动布局；`--information-parity` 专项比对 JSON/SQLite 双模式下“局势簿”五类面板和事件档案分页。
+- `npm run smoke:dual-mode` 串联 JSON/SQLite 完整 Mock browser smoke、局势簿 parity 和 S59.1 存储维护验收；无浏览器或只想核验导入/修复/导出时可加 `--storage-only`。
 - `npm run smoke:provider*` 只在配置真实 provider key 时进行网络调用；无 key 环境会成功跳过。
 - `npm run storage:audit-events -- status|export` 是本地审计公开 projection 工具，默认只输出脱敏统计和 public 事件摘要，不输出 raw audit、provider proposal、prompt、key、本地路径或 hidden notes。
 

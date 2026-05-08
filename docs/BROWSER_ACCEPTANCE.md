@@ -12,9 +12,10 @@ npm run smoke:browser -- --check-ai-connection
 npm run smoke:browser -- --url http://localhost:3000
 npm run smoke:browser -- --screenshots artifacts/browser-smoke
 npm run smoke:browser -- --information-parity
+npm run smoke:dual-mode -- --storage-only
 ```
 
-The smoke uses `playwright-core` with an installed Chrome or Edge executable. If the browser is not in a standard location, set `BROWSER_EXECUTABLE_PATH` or pass `--browser <path>`. S38.1 deterministic exam setup expects `--url` targets to be local Qianqiu servers sharing this repository's `data/sessions/` directory. Screenshots are validated in memory by default; `--screenshots <dir>` also writes the checked PNG files. `artifacts/` is ignored by Git. `--check-ai-connection` clicks the start-page `AI 连接` button before creating a session; the auto-started smoke server uses Mock, while `--url` targets should enable this flag only when the target provider is intentionally configured for that route check. `--information-parity` starts isolated Mock JSON and SQLite servers, runs a focused official-assignment 局势簿 journey in both, compares normalized DOM/route-view snapshots, and cannot be combined with `--url` or `--storage-adapter`.
+The smoke uses `playwright-core` with an installed Chrome or Edge executable. If the browser is not in a standard location, set `BROWSER_EXECUTABLE_PATH` or pass `--browser <path>`. S38.1 deterministic exam setup expects `--url` targets to be local Qianqiu servers sharing this repository's `data/sessions/` directory. Screenshots are validated in memory by default; `--screenshots <dir>` also writes the checked PNG files. `artifacts/` is ignored by Git. `--check-ai-connection` clicks the start-page `AI 连接` button before creating a session; the auto-started smoke server uses Mock, while `--url` targets should enable this flag only when the target provider is intentionally configured for that route check. `--information-parity` starts isolated Mock JSON and SQLite servers, runs a focused official-assignment 局势簿 journey in both, compares normalized DOM/route-view snapshots, and cannot be combined with `--url` or `--storage-adapter`. `smoke:dual-mode` is the S59.1 integration wrapper; default mode chains JSON and SQLite full browser journeys plus information parity, while `--storage-only` skips browser startup and runs the import/repair/export/audit/derived-table hidden-token checks.
 
 ## Automated Coverage
 
@@ -34,6 +35,7 @@ The smoke uses `playwright-core` with an installed Chrome or Edge executable. If
 | Official career panel | Checks direct official start, the server-owned `officialCareerView` panel, 官署/差事/考成/关系/风险 sections, deterministic first appointment, a Mock `relief` assignment, hidden-note non-leakage tokens, current outcome fields, stable `data-*` attributes, and official-career overflow on desktop/mobile. |
 | Information panels | Checks `#information-panel` tab shell, required child panels, route-view readiness, S53.4 天下/任所 detail cards, S53.5 人物/官职 detail cards, S53.6 事件档案 detail cards, role-visible geography boundaries, hidden-token non-leakage, tab switching, and information-panel/grid overflow. |
 | Information parity | With `--information-parity`, starts JSON and SQLite Mock servers, performs the same official-assignment journey, compares normalized 局势簿 DOM snapshots, route view counts, and paged `eventArchiveView` metadata, and checks raw table/index/audit/prompt/path/key non-leakage plus desktop/mobile overflow. |
+| Dual-mode integration | With `npm run smoke:dual-mode`, runs JSON full Mock browser smoke, SQLite full Mock browser smoke, information parity, and S59.1 storage/tooling acceptance. With `--storage-only`, verifies JSON -> SQLite dry-run/formal import, geography repair/export, audit projection, derived table counts, visible route/prompt parity, and hidden-token redaction without a browser. |
 | Exam calendar panel | Checks the server-owned `examCalendarView` panel, next-level/status attributes, timing/funding/recommendation/quota details, current 年月旬 label, and calendar-panel overflow. |
 | Exam rival panel | Checks persistent `examRivalView` cards after an exam, stable rival/status/level attributes, latest-result rows, and rival-panel overflow. |
 | Role/world coupling | Opens direct magistrate, general, emperor, and minister sessions; runs one representative role action; checks `.role-world-event[data-role-world-kind]` feedback; and verifies the expected API state metric moves in the intended direction. |
@@ -67,16 +69,14 @@ S53.6 closes the former future-content guard for `#event-archive-panel`: event a
 
 Date: 2026-05-08
 
-Relevant implementation commit: current S58.2 implementation commit
+Relevant implementation commit: current S59.1 implementation commit
 
-Commands verified during S58.2:
+Commands verified during S59.1:
 
 ```powershell
-node --check public\app.js
-node --check scripts\browserSmoke.js
-node --check test\browserSmokeScript.test.js
-node --test test\browserSmokeScript.test.js
-$env:AI_PROVIDER='mock'; npm run smoke:browser -- --information-parity
+node --check scripts\dualModeAcceptance.js test\dualModeAcceptanceScript.test.js scripts\importJsonSessionsToSqlite.js
+node --test test\dualModeAcceptanceScript.test.js test\browserSmokeScript.test.js test\sqliteGeographyTool.test.js test\auditEventArchiveTool.test.js test\sqlitePromptRetrieval.test.js
+$env:AI_PROVIDER='mock'; npm run smoke:dual-mode
 npm run check:docs-governance
 git diff --check
 npm test
@@ -84,9 +84,10 @@ npm test
 
 Observed result:
 
-- Focused browser-smoke helper coverage now includes event archive pagination metadata, raw table/index/audit/prompt hidden-token leak checks, normalized JSON/SQLite information-panel parity comparison, explicit SQLite DB ownership checks, and event archive grid overflow. `node --test test\browserSmokeScript.test.js` passed with 39 tests; `npm test` passed with 438 tests.
-- `$env:AI_PROVIDER='mock'; npm run smoke:browser -- --information-parity`: passed with 6 screenshots checked. It ran the same official-assignment 局势簿 flow against isolated JSON and SQLite Mock servers, compared normalized desktop/paged/mobile DOM snapshots, route view counts, and paged event archive metadata.
-- The full `$env:AI_PROVIDER='mock'; npm run smoke:browser` path remains the broader end-to-end browser journey for scholar -> official progression and representative identities.
+- S59.1 dual-mode acceptance passed: `smoke:dual-mode` ran JSON full Mock browser journey, SQLite full Mock browser journey, information-panel parity, and storage maintenance acceptance in one command.
+- Focused browser-smoke/helper/storage coverage now includes event archive pagination metadata, raw table/index/audit/prompt hidden-token leak checks, normalized JSON/SQLite information-panel parity comparison, explicit SQLite DB ownership checks, event archive grid overflow, JSON -> SQLite derived-table import reporting, geography repair/export, audit projection, and storage-only hidden-token checks. Focused S59.1 suite passed with 54 tests; `npm test` passed with 443 tests.
+- Within `smoke:dual-mode`, the information-parity phase ran the same official-assignment 局势簿 flow against isolated JSON and SQLite Mock servers, compared normalized desktop/paged/mobile DOM snapshots, route view counts, and paged event archive metadata.
+- The full browser journey remains the broader end-to-end path for scholar -> official progression and representative identities; S59.1 now runs it once in JSON mode and once in SQLite mode through the dual-mode wrapper.
 - Real-provider browser behavior still requires an explicitly configured `--url` target and is not part of default Mock smoke.
 - The browser start path still clears stale `qianqiu.sessionId` localStorage only when an old restored game hides the initial start form. Later reload/fresh-page restoration checks continue to validate the newly created session.
 - Desktop smoke still fails if the game panel regresses to the old narrow-column width, if the role panel, relationship panel, active-request panel, official-career panel, information panel, exam-calendar panel, exam-rival panel, or save-list surfaces are horizontally clipped, if S35 calendar/rival details disappear from the modal/archive/candidate profiles, if any supported start role is missing from the browser form, if hidden scholar-invisible factions leak into relationship/active-request/information-panel text, if save-list rows leak raw storage tokens, if 年月旬 labels disappear from date-bearing player surfaces, if the four-exam path stops before official promotion, if copied-passage punishment disappears, or if S36 role-world feedback/API metric deltas disappear from representative role journeys.

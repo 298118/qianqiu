@@ -10,6 +10,7 @@
     "check:docs-governance": "node scripts/checkGovernanceDocs.js",
     "eval:ai": "node --test test/aiEvalFixtures.test.js",
     "smoke:browser": "node scripts/browserSmoke.js",
+    "smoke:dual-mode": "node scripts/dualModeAcceptance.js",
     "smoke:provider": "node scripts/providerSmoke.js",
     "smoke:provider:route": "node scripts/providerRouteHealth.js",
     "smoke:provider:long": "node scripts/providerLongRun.js",
