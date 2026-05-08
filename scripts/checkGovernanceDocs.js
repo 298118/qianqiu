@@ -71,6 +71,8 @@ function runGovernanceChecks() {
       "AI 是《千秋》的核心世界引擎",
       "工具权限、proposal 边界、服务器裁决、审计记录和 Mock/no-key 降级",
       "服务器拥有状态边界、时间推进、科举晋级、作弊处罚",
+      "可调参数不得散落为魔法数字",
+      "src/config/GameConfig.js",
       "优先使用中文",
       "不得运行 `git add`、`git commit`、`git push` 或创建 PR",
       "只读子代理审查最终 diff 与验证证据",
@@ -102,6 +104,8 @@ function runGovernanceChecks() {
       "AI 是《千秋》的核心世界引擎",
       "工具权限、proposal 边界、服务器裁决、审计记录和 Mock/no-key 降级",
       "服务器继续拥有时间推进",
+      "可调参数不得散落为魔法数字",
+      "src/config/GameConfig.js",
       "优先使用中文",
       "不得运行 `git add`、`git commit`、`git push` 或创建 PR",
       "只读子代理审查最终 diff 与验证证据",
@@ -123,6 +127,16 @@ function runGovernanceChecks() {
   ]) {
     requireFileIncludes(relativePath, governanceReference, failures);
   }
+  requireFileIncludes(
+    "docs/SHARED_CONTEXT.md",
+    ["magic numbers", "src/config/GameConfig.js"],
+    failures
+  );
+  requireFileIncludes(
+    "docs/QIANQIU_DEVELOPMENT_BRIEF.md",
+    ["魔法数字", "src/config/GameConfig.js"],
+    failures
+  );
 
   const packageJson = JSON.parse(readText("package.json"));
   if (packageJson.scripts?.["check:docs-governance"] !== "node scripts/checkGovernanceDocs.js") {
