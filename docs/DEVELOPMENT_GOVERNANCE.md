@@ -14,6 +14,7 @@
 - 使用 Git 保存每个 coherent change。提交前确认工作树、验证结果和最终回复描述一致，不提交 `.env`、`data/sessions/*.json`、`node_modules/` 或密钥。
 - 保持 `npm install && npm start` 可运行，默认访问 `http://localhost:3000`；Mock AI 必须默认完整可玩，真实 provider 只作为可选配置。
 - 不破坏完整书生路径：`scholar -> child_exam -> provincial_exam -> metropolitan_exam -> palace_exam -> official`。
+- AI 是《千秋》的核心世界引擎，不是可替换装饰；新增玩法、数据域、角色、官署、事件、面板或 prompt 检索时，必须设计 AI 的读取范围、角色智能、工具权限、proposal 边界、服务器裁决、审计记录和 Mock/no-key 降级。
 - AI 只能生成叙事、题目、评分建议、关系建议、可解释内容和受限 `statePatch`；服务器拥有状态边界、时间推进、科举晋级、作弊处罚、官场任免、长期事件、世界实体、世界议程、隐藏信息过滤和持久化裁决。
 - 项目内面向协作和玩家的输出优先使用中文，尤其是文档、交接记录、路线图台账、领域逻辑注释和玩家可见文案；只有代码标识符、API、第三方术语、命令输出或外部工具清晰度需要时再使用英文。
 

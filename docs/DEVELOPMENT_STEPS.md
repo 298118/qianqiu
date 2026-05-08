@@ -22,6 +22,7 @@
 - `npm install && npm start` 可运行，默认打开 `http://localhost:3000`。
 - Mock AI 默认完整可玩，真实 provider 只作为可选配置。
 - 完整书生路径不得破坏：`scholar -> child_exam -> provincial_exam -> metropolitan_exam -> palace_exam -> official`。
+- AI 是《千秋》的核心世界引擎，不是可替换装饰；新增玩法、数据域、角色、官署、事件、面板或 prompt 检索时，必须设计 AI 的读取范围、角色智能、工具权限、proposal 边界、服务器裁决、审计记录和 Mock/no-key 降级。
 - AI 只能生成叙事、题目、评分建议、关系建议和受限 `statePatch`；服务器继续拥有时间推进、状态边界、科举晋级、作弊处罚、官场任免、长期事件、世界实体、世界议程、数据库写入和持久化裁决。
 - 项目内协作文档、路线图、交接记录、领域注释和玩家可见文案优先使用中文。
 - 每个 coherent change 必须更新 `docs/SHARED_CONTEXT.md`，必要时同步 README、产品 brief、架构/契约文档，并用 Git 提交。
@@ -124,8 +125,17 @@ S60+ 必须遵守：
 | S66.2 | TODO | 大数据量浏览器信息面板：城市、NPC、官职、事件的搜索、筛选、分页和 hidden-token smoke | - | - | - |
 | S67.1 | TODO | 规模/性能/回归验收：大 fixture 下的 dual-mode、读档修复、prompt 检索、UI 和内存/耗时门槛 | - | - | - |
 | S67.2 | TODO | 内容充实阶段归档与下一阶段交接 | - | - | - |
-| S70.1 | TODO | 多 AI 协作编排层规划：任务路由、仲裁、成本边界、失败降级和验收矩阵 | - | - | S67 后启动 |
-| S70.2 | TODO | 多 AI 协作实现：在现有 `mimo-deepseek` 最小路由基础上扩展 narrator/grader/critic/safety 分工 | - | - | S70.1 后 |
+| S70.0 | DONE | AI 编排提前规划：固定 AI 核心地位、现实权力原型、工具调用路线、actor 权限层和 S70 子步骤 | 2026-05-08 | Codex / Web / 子代理 | 本次文档提交 |
+| S70.1 | TODO | AI 工具协议契约：tool envelope、proposal/result schema、strict schema、失败降级和 provider 兼容策略 | - | - | S67 后启动 |
+| S70.2 | TODO | AI actor 与权限模型：按书生、士绅、地方官、大臣、将领、皇帝、系统引擎划分读取范围和工具组 | - | - | S70.1 后 |
+| S70.3 | TODO | 内部工具运行时：`game_ai_tools` registry、权限检查、read/proposal runner、审计 hook 和 Mock runner | - | - | S70.2 后 |
+| S70.4 | TODO | NPC mind 与记忆：高显著度 NPC LLM loop、背景 NPC heuristic、目标/恩怨/人情债记忆演化 | - | - | S70.3 后 |
+| S70.5 | TODO | 制度 AI 与朝议场景：官署、派系、大臣、谏官和皇帝围绕奏折/弹章/政令进行 scene-local 推演 | - | - | S70.4 后 |
+| S70.6 | TODO | 压力驱动事件生成器：由城市、财政、军政、关系、情报压力生成额外事件候选并由服务器成案 | - | - | S70.5 后 |
+| S70.7 | TODO | 刑名、财政、军事、外交工具：案牍、赈济、军令、战役、和议、宣战等 proposal 与 resolver | - | - | S70.6 后 |
+| S70.8 | TODO | 多模型路由与仲裁：narrator、actor_mind、planner、domain_specialist、critic、safety 分工与成本边界 | - | - | S70.7 后 |
+| S70.9 | TODO | AI 调动可观测性：工具调用摘要、拒绝原因、成本、审计面板和 hidden-safe 开发诊断 | - | - | S70.8 后 |
+| S70.10 | TODO | S70 大世界验收与归档：Mock/no-key、JSON/SQLite parity、hidden-token、越权工具、provider smoke 和归档 | - | - | S70.9 后 |
 
 ## 6. S60：内容契约与规模验收
 
@@ -313,9 +323,65 @@ S60+ 必须遵守：
 
 ## 14. S70：多 AI 协作编排
 
-S70 是 MiMo + DeepSeek 之后的多模型协作后续规划，已从原 S60 顺延，避免挤占当前数据库内容充实专项。当前 `mimo-deepseek` 仍只是 provider 方法级路由：普通叙事、开局、流式回合和科举出题走 MiMo，科举评卷走 DeepSeek V4 Pro。完整 narrator/grader/critic/safety 仲裁、成本边界、失败降级和可观测性排在 S67 之后再启动。
+S70 是 MiMo + DeepSeek 之后的 AI 编排专项，已从原 S60 顺延，避免挤占当前数据库内容充实专项。当前 `mimo-deepseek` 仍只是 provider 方法级路由：普通叙事、开局、流式回合和科举出题走 MiMo，科举评卷走 DeepSeek V4 Pro。完整 AI actor、工具调用、NPC 智力、事件生成、制度推演、narrator/planner/critic/safety 仲裁、成本边界、失败降级和可观测性排在 S67 之后再启动。
+
+详细提前规划见 [AI_ORCHESTRATION_ROADMAP.md](AI_ORCHESTRATION_ROADMAP.md)。S70 的核心目标不是让模型直接改库，而是让 AI 在服务器法度内变成“有身份、有记忆、有权限、有后果”的世界行动者网络。
+
+### S70 设计基线
+
+- AI 是《千秋》的核心世界引擎。后续新增玩法、角色、官署、城市、事件、经济、战争、外交、浏览器面板或 prompt 检索时，都必须设计 AI actor、可读摘要、可调用工具、proposal 边界、服务器裁决、审计和 Mock/no-key 降级。
+- 工具调用采用“模型请求、服务器执行”：OpenAI/Anthropic/DeepSeek 等 provider 的 function calling、structured output、MCP connector 或未来内部 MCP 只能产生 tool call / proposal；真正读写世界仍由服务器 helper、schema、权限检查、clamp、visibility filter 和 adapter transaction 完成。
+- 权力按现实原型分层：书生只影响自身学业、关系、文章、名声和局部微事件；地方官能审案、赈济、征粮和治理辖区；大臣、将领和总督能提出跨区域政策、弹章、军令和调粮；皇帝可下诏、任免、诛罚、宣战或和议，但必须承受礼法、证据、财政、军心、士论、派系和执行链反噬。
+- 大多数 NPC 不全量调用大模型。S70 先做高显著度 NPC、场景参与者、权力核心、玩家近关系和事件相关者的 AI mind；背景 NPC 走服务器启发式、批处理 proposal 和记忆摘要。
+- 多模型只改变建议、叙事质量和审查力度，不改变服务器最终裁决权。多数模型同意也不能绕过 schema、白名单、hidden 过滤、科举晋级、官职任免、战争结局、数据库写入或审计规则。
+
+### 推荐工具组
+
+- 只读工具：`world.read_visible_context`、`memory.read_actor_memory`、`law.read_ritual_legal_bounds`、`office.read_docket`、`intel.read_reports`、`market.read_prices`。
+- Proposal 工具：`actor.propose_personal_action`、`relationship.propose_delta`、`event.propose_incident`、`office.propose_memorial`、`city.propose_policy`、`judicial.propose_case_resolution`、`military.propose_order`、`diplomacy.propose_move`、`ruler.propose_edict`。
+- 服务器裁决工具：`server.adjudicate_policy`、`server.resolve_case`、`server.apply_appointment`、`server.resolve_battle`、`server.apply_diplomacy`、`server.schedule_event_chain`、`server.apply_relationship_memory`、`server.write_audit_and_revision`。这些工具不是模型可直接执行的动作，而是服务器 resolver。
+
+### 深层玩法方向
+
+- NPC 智力：NPC 记住恩怨、亲族、门生、派系、人情债、风险和目标；玩家的善恶、错判、救援、提拔或迫害会多年回响。
+- 官僚执行链：皇帝诏令、高官奏折、地方执行、军镇供给、士绅配合、财政承压和舆论反弹形成多段因果，强权不等于无成本成功。
+- 合法性与滥权：无证杀臣、越法征敛、擅自出兵、伪造祥瑞、乱开边衅都可以成为玩法，但必须留下合法性、士论、军心、财政、家族和派系后果。
+- 压力驱动事件：粮价、水利、边防、财政、派系、人物野心、书院清议和邻国继承风险共同生成额外事件候选，由服务器裁定是否成案。
+- 场景化 AI：朝议、堂审、会盟、战役、科场、地方差遣收束都应使用 scene-local time，让多个 AI actor 在同一场景里基于身份和证据互动。
 
 ## 15. 进度记录
+
+### 2026-05-08
+
+工具：Codex、Web、子代理 Averroes
+
+步骤：S70.0 AI 编排提前规划
+
+提交：本次文档提交。
+
+完成：
+
+- 新增 [AI_ORCHESTRATION_ROADMAP.md](AI_ORCHESTRATION_ROADMAP.md)，把 S70 扩展为 AI actor、职位分级工具、NPC mind、制度 AI、压力驱动事件、多模型 narrator/planner/critic/safety、Mock/no-key 降级和红队验收规划。
+- 将“AI 是《千秋》的核心世界引擎，不是可替换装饰”写入 [DEVELOPMENT_GOVERNANCE.md](DEVELOPMENT_GOVERNANCE.md) 的受保护治理段，并同步 [AGENTS.md](../AGENTS.md)、[CLAUDE.md](../CLAUDE.md)、[QIANQIU_DEVELOPMENT_BRIEF.md](QIANQIU_DEVELOPMENT_BRIEF.md)、[SHARED_CONTEXT.md](SHARED_CONTEXT.md) 和本台账。
+- 基于官方资料确认工具调用方向：OpenAI/Anthropic/DeepSeek 的 function calling / structured output / MCP connector 都应解释为“模型请求工具，服务器执行工具”，不允许模型直接执行 SQL、改表或绕过服务器裁决。
+- 更新 [AI_CONTROL_AUDIT_MATRIX.md](AI_CONTROL_AUDIT_MATRIX.md) 与 [DYNAMIC_WORLD_DATABASE_PLAN.md](DYNAMIC_WORLD_DATABASE_PLAN.md)，把 S70 AI 工具边界、数据库关系和后续红队重点写入可追溯文档。
+
+验证：
+
+- 已通过：`npm run check:docs-governance`
+- 已通过：`node --test test/documentationGovernance.test.js`
+- 已通过：`git diff --check`
+- 已通过：`npm test`（443 tests）
+
+风险/遗留：
+
+- 本轮是提前规划与治理规范更新，不改运行时代码、API、provider schema、存档格式、SQLite 表结构或玩家 UI。
+- S70 仍排在 S67 后实施；S60.1 仍是当前下一步。
+- 后续 S70.1 开工时必须把 tool envelope、actor 权限、resolver、审计和 Mock runner 写成可测试契约，并补越权工具/hidden-token/provider fallback 红队 fixture。
+
+下一步：
+
+- 继续当前活动路线图的 S60.1：超大动态世界数据库内容契约。
 
 ### 2026-05-08
 

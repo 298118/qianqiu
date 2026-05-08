@@ -30,6 +30,7 @@ npm start
 - Mock AI mode must remain fully playable without API keys.
 - OpenAI, DeepSeek, and Claude integrations must be optional provider adapters.
 - Preserve the full scholar-to-official gameplay path.
+- AI is the core world engine of **Qianqiu**, not a replaceable decoration. Whenever gameplay, data domains, roles, offices, events, panels, or prompt retrieval are added, define AI read scope, actor intelligence, tool permissions, proposal boundaries, server adjudication, audit records, and Mock/no-key fallback.
 - Never trust raw model output. Validate JSON and apply state updates through server-side rules.
 - 项目内面向协作和玩家的输出尽量使用中文，尤其是文档、交接记录、路线图台账、领域逻辑注释和玩家可见文案；只有代码标识符、API、第三方术语、命令输出或外部工具清晰度需要时再使用英文。
 - Keep future agents informed. Do not rely on conversation history for durable project knowledge.

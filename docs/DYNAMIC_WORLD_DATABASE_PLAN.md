@@ -569,6 +569,18 @@ S49-S53 结束后，数据库专项的下一段不再是“是否需要数据库
 
 内容保护原则不变：AI 不直写库，hidden 私档不回填当前 raw route `worldState`，浏览器/prompt 只读服务器 projection。若后续确需保存完整 hidden 私档，必须先完成 API redaction 与角色视野分层设计。
 
+### S70：AI 编排、actor 智力与工具权限
+
+S70 提前规划见 [AI_ORCHESTRATION_ROADMAP.md](AI_ORCHESTRATION_ROADMAP.md)。S60-S67 负责把世界数据库做厚，S70 才让 AI actor 使用这些内容：书生、士绅、商贾、吏员、地方官、大臣、将领、皇帝、邻国君主和系统世界引擎都应有不同可见信息、记忆、目标和工具权限。
+
+S70 的数据库关系：
+
+- 每个 AI actor 只读取服务器按身份、职位、辖区、关系、地理和情报可信度整理后的 projection。
+- 工具调用只生成 proposal，不直接写 `worldState`、SQLite 派生表、raw audit 或 revision。
+- NPC mind、朝议、堂审、外交会盟、战役和额外事件生成都应从城市、国家、人物、官职、事件、市场、军事和情报压力中取材。
+- 高权力工具必须写入审计：actor、tool name、arguments 摘要、权限判定、服务器接受/拒绝原因、applied event id、公开结果和隐藏后果引用。
+- JSON/Mock/no-key 仍必须可玩；SQLite 和真实 provider 只增强规模、检索和叙事质量。
+
 ## 7. AI 可修改范围分级
 
 推荐把数据库字段分成四类：

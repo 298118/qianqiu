@@ -23,6 +23,7 @@ Stable development governance is protected in [docs/DEVELOPMENT_GOVERNANCE.md](d
 - Keep the game runnable with `npm install && npm start` and available at `http://localhost:3000`.
 - Default to Mock AI mode for local playability. Real model providers must remain optional through `.env`.
 - Do not break the complete scholar path: scholar -> child exam -> provincial exam -> metropolitan exam -> palace exam -> official.
+- AI is the core world engine of **Qianqiu**, not a replaceable decoration. Whenever gameplay, data domains, roles, offices, events, panels, or prompt retrieval are added, define AI read scope, actor intelligence, tool permissions, proposal boundaries, server adjudication, audit records, and Mock/no-key fallback.
 - Validate AI JSON before applying it to game state. The server, not the model, is responsible for state boundaries, promotion rules, anti-cheat penalties, and persistence.
 - 项目内面向协作和玩家的输出尽量使用中文，尤其是文档、交接记录、路线图台账、解释领域行为的注释和玩家可见文案；只有代码标识符、API、第三方术语、命令输出或外部工具清晰度需要时再使用英文。
 - Keep changes small and reviewable. Avoid unrelated refactors while implementing a feature.

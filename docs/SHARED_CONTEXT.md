@@ -27,6 +27,7 @@ Stable governance is protected in `docs/DEVELOPMENT_GOVERNANCE.md`; do not weake
 ## Core Invariants
 
 - Keep the complete scholar path working: `scholar -> child_exam -> provincial_exam -> metropolitan_exam -> palace_exam -> official`.
+- AI is a core world engine for Qianqiu, not a replaceable garnish. New gameplay, data domains, roles, offices, events, panels, or prompt retrieval work must design AI read scope, actor intelligence, tool permissions, proposal boundaries, server adjudication, audit records, and Mock/no-key fallback.
 - Providers may suggest narrative, bounded `statePatch`, relationship changes, scoring JSON, and exam triggers. The server owns promotion, exam entry rules, anti-cheat penalties, persistence, protected state fields, official appointments, long-term system effects, time advancement, database writes, and visibility filtering.
 - Validate AI JSON before applying it. State changes must go through whitelists, clamps, and server-owned follow-up modules.
 - `GET /api/game/saves` must expose redacted metadata only. Full saves are read through `GET /api/game/state/:sessionId`.
@@ -43,6 +44,7 @@ Stable governance is protected in `docs/DEVELOPMENT_GOVERNANCE.md`; do not weake
 - 浏览器和 prompt 只读服务器生成的 view / capped retrieval summary，不读 raw SQLite table、raw audit、provider proposal、完整 prompt、本地路径、密钥、hidden notes 或 hidden intent。
 - hidden NPC 私档、资产真数、未公开关系、未公开任所、密札考成和邻国真实虚实不得回填到当前 raw route `worldState`；如后续要保存完整 hidden 私档，先设计 API redaction 与角色视野分层。
 - 大规模内容生成必须通过服务器 helper、seed、fixture、受限 proposal、schema、clamp、visibility filter 和 adapter transaction。
+- S70 的 AI 工具方向是“模型请求工具、服务器执行工具”。Function calling、Structured Outputs、MCP connector 或未来内部 MCP 只能产生 tool call / proposal；通用外部工具和第三方 MCP 不得接触 raw session、raw table、hidden ledger、完整 prompt、key 或本地路径。
 
 ## Subagent Discipline
 
@@ -91,6 +93,7 @@ Durable contracts and acceptance records:
 - `docs/OFFICIAL_POSTING_DATABASE_CONTRACT.md`
 - `docs/AI_CONTROL_AUDIT_MATRIX.md`
 - `docs/DEPENDENCY_PLUGIN_GOVERNANCE.md`
+- `docs/AI_ORCHESTRATION_ROADMAP.md`
 
 ## Archived Database Work
 
@@ -112,6 +115,7 @@ S54-S59 business-table work is archived in `docs/LOCAL_DATABASE_BUSINESS_TABLE_A
 ## Current Work Note
 
 - 2026-05-08：S59.2 归档与上下文压缩已完成于 `fd8cf72`。新增 `docs/LOCAL_DATABASE_BUSINESS_TABLE_ARCHIVE.md`，把 S54-S59 实现细节从活动台账迁出；`docs/DEVELOPMENT_STEPS.md` 已切换为 S60+ “超大动态世界数据库内容充实”路线图，并把原多 AI S60 顺延为 S70。当前内容保护边界写入本交接板：local-only、AI 不直写库、view-first、hidden 私档不回填 route、远程/账号/多人不进入规划。已通过 `npm run check:docs-governance`、`git diff --check`、focused 数据库套件 `node --test test/sessionStoreAdapterContract.test.js test/sqlitePromptRetrieval.test.js test/dualModeAcceptanceScript.test.js test/sqliteGeographyTool.test.js test/auditEventArchiveTool.test.js`（66 tests）；只读子代理 Aristotle 完成复审，无 P0/P1/P2，两个 P3 文档洁癖项已修正。
+- 2026-05-08：S70.0 AI 编排提前规划已加入活动路线图、开发 brief、AI 控制矩阵和治理锚点。新增 `docs/AI_ORCHESTRATION_ROADMAP.md`，固定“AI 是核心世界引擎”的长期规范，并规划 AI actor、职位分级工具、NPC mind、朝议/堂审/战役/会盟 scene、压力驱动事件生成、多模型 narrator/planner/critic/safety 编排、Mock/no-key 降级和红队验收。S70 仍排在 S67 后实施；当前只做文档规划，不改运行时代码、API、provider schema、存档格式或 SQLite 表结构。已通过 `npm run check:docs-governance`、`node --test test/documentationGovernance.test.js`、`git diff --check`、`npm test`（443 tests）。
 
 ## Next Recommended Step
 
