@@ -149,6 +149,44 @@ test("event archive sanitizer drops prompt, provider, path, key, and raw state t
   assert.equal(cleanArchiveText("MIMO_API_KEY=tp-archive-secret-123456"), "");
 });
 
+test("event archive drops polluted raw official assessment text after visible view sanitization", () => {
+  const worldState = createInitialState({ playerName: "考成污染", role: "official" });
+  worldState.turnCount = 12;
+  worldState.officialPostings.assessmentRecords.push({
+    id: "assessment-polluted-raw",
+    postingId: "posting-player-current",
+    officeId: "probationary_observer",
+    bureauId: "ministry_personnel",
+    holderType: "player",
+    holderId: "P1",
+    cycleId: "polluted",
+    date: {
+      year: 1644,
+      month: 1,
+      tenDayPeriod: 1,
+      turn: 12
+    },
+    status: "pending",
+    meritScore: 55,
+    riskScore: 45,
+    recommendation: "none",
+    publicFinding: "SEALED_OFFICIAL_ASSESSMENT prompt event_log sk-proj-archive-raw-123456",
+    publicSummary: "SEALED_OFFICIAL_ASSESSMENT provider proposal",
+    visibility: "office_visible",
+    knownToPlayer: true,
+    intelConfidence: 80,
+    lastUpdatedTurn: 12
+  });
+
+  const view = buildEventArchiveView(worldState, { pageSize: 50 });
+  const serialized = JSON.stringify(view);
+
+  assert.ok(view.items.some((item) => item.sourceType === "official_assessment"));
+  assert.doesNotMatch(serialized, /SEALED_OFFICIAL_ASSESSMENT/);
+  assert.doesNotMatch(serialized, /sk-proj-archive-raw/);
+  assert.doesNotMatch(serialized, /event_log|provider|proposal|prompt/);
+});
+
 test("event archive view paginates the safe projection without reviving filtered text", () => {
   const worldState = createInitialState({ playerName: "分页书生", role: "scholar" });
   worldState.turnCount = 40;

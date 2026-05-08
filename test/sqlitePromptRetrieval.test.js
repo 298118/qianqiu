@@ -337,6 +337,58 @@ test("SQLite prompt retrieval index upgrades self-consistent legacy geography pa
   assert.match(repairedPayload, /taxBase|waterworksIntegrity|garrisonStrength/);
 });
 
+test("SQLite prompt retrieval repairs polluted S61 official assessment rows before prompt assembly", {
+  skip: hasNodeSqlite ? false : "node:sqlite is unavailable in this Node.js runtime"
+}, async (t) => {
+  const { adapter, dbPath } = createHarness(t);
+  const worldState = createPromptWorldState();
+  await adapter.writeSession(clone(worldState));
+
+  withSqliteDatabase(dbPath, (db) => {
+    db
+      .prepare(`
+        UPDATE prompt_retrieval_index
+        SET payload_json = ?,
+            search_text = ?
+        WHERE session_id = ?
+          AND row_id = ?
+      `)
+      .run(
+        JSON.stringify({
+          id: "assessment-player-current",
+          publicFinding: "SEALED_SQLITE_ASSESSMENT_PROMPT prompt event_log provider sk-test-assessment"
+        }),
+        "SEALED_SQLITE_ASSESSMENT_PROMPT prompt event_log provider sk-test-assessment",
+        worldState.sessionId,
+        "offices.assessmentRecords:assessment-player-current"
+      );
+  });
+
+  const { record } = await adapter.readSessionRecord(worldState.sessionId);
+  const context = assemblePromptContext(record.worldState, {
+    task: "official_career",
+    playerAction: "核查任所考成与任所奏报"
+  });
+  const serialized = JSON.stringify(context.retrievalContext);
+
+  assert.doesNotMatch(serialized, /SEALED_SQLITE_ASSESSMENT_PROMPT/);
+  assert.doesNotMatch(serialized, /sk-test-assessment/);
+  assert.match(serialized, /任所奏报|考成/);
+
+  const repairedPayload = withSqliteDatabase(dbPath, (db) =>
+    db
+      .prepare(`
+        SELECT payload_json
+        FROM prompt_retrieval_index
+        WHERE session_id = ?
+          AND row_id = ?
+      `)
+      .get(worldState.sessionId, "offices.assessmentRecords:assessment-player-current").payload_json
+  );
+  assert.doesNotMatch(repairedPayload, /SEALED_SQLITE_ASSESSMENT_PROMPT/);
+  assert.match(repairedPayload, /任所奏报|考成/);
+});
+
 test("SQLite prompt retrieval ignores raw business tables and raw audit while repairing missing index rows", {
   skip: hasNodeSqlite ? false : "node:sqlite is unavailable in this Node.js runtime"
 }, async (t) => {

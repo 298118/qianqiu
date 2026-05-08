@@ -15,6 +15,7 @@ const COUNTRY_DEEP_METRIC_DEFAULTS = WORLD_GEOGRAPHY_DEEP_CONFIG.countryMetricDe
 const CITY_DEEP_METRIC_DEFAULTS = WORLD_GEOGRAPHY_DEEP_CONFIG.cityMetricDefaults;
 const COUNTRY_DEEP_METRIC_KEYS = WORLD_GEOGRAPHY_DEEP_CONFIG.countryMetricKeys;
 const CITY_DEEP_METRIC_KEYS = WORLD_GEOGRAPHY_DEEP_CONFIG.cityMetricKeys;
+const CITY_DEEP_DYNAMIC_WEIGHTS = WORLD_GEOGRAPHY_DEEP_CONFIG.cityDynamicWeights;
 
 const VISIBILITY_VALUES = new Set(["public", "role_visible", "rumor", "hidden"]);
 const STATUS_VALUES = new Set(["stable", "strained", "critical", "unknown"]);
@@ -101,6 +102,12 @@ function normalizeDeepMetrics(source, base, keys, defaults) {
   }, {});
 }
 
+function blendDynamicMetric(staticValue, dynamicValue, weight, fallback = 50) {
+  const staticMetric = clampMetric(staticValue, fallback);
+  const dynamicMetric = clampMetric(dynamicValue, fallback);
+  return clampMetric(Math.round(staticMetric * (1 - weight) + dynamicMetric * weight), staticMetric);
+}
+
 function countryDeepSnapshot(seedCountry = {}, worldState = {}, countryCore = {}) {
   const publicOrder = readWorldNumber(worldState, "publicOrder", 70);
   const corruption = readWorldNumber(worldState, "corruption", 60);
@@ -133,25 +140,58 @@ function countryDeepSnapshot(seedCountry = {}, worldState = {}, countryCore = {}
   };
 }
 
-function cityDeepSnapshot(seedCity = {}, worldState = {}, cityCore = {}) {
+function cityDeepSnapshot(seedCity = {}, worldState = {}, cityCore = {}, options = {}) {
   const taxRate = readWorldNumber(worldState, "taxRate", 30);
+  const publicOrder = readWorldNumber(worldState, "publicOrder", 70);
+  const corruption = readWorldNumber(worldState, "corruption", 60);
+  const borderThreat = readWorldNumber(worldState, "borderThreat", 40);
+  const armyMorale = readWorldNumber(worldState, "armyMorale", 65);
+  const grainReserve = readWorldNumber(worldState, "grainReserve", 800);
+  const population = Math.max(1, readWorldNumber(worldState, "population", 5000));
+  const grainRatio = grainReserve / population;
   const base = normalizeDeepMetrics(seedCity, {}, CITY_DEEP_METRIC_KEYS, CITY_DEEP_METRIC_DEFAULTS);
   const isCapital = /capital/.test(seedCity.jurisdictionLevel || "");
   const isFrontier = /frontier|pass|garrison/.test(seedCity.jurisdictionLevel || "") || hasStrategicTag(seedCity, /边|军|关|防/);
   const isScholarCity = hasStrategicTag(seedCity, /书院|贡院|科举|文社/);
   const isTradeCity = hasStrategicTag(seedCity, /商|漕|海道|海舶|互市|贡道/);
+  const dynamicWeight = Number.isFinite(Number(options.dynamicWeightOverride))
+    ? Number(options.dynamicWeightOverride)
+    : seedCity.countryId === "country-ming"
+    ? CITY_DEEP_DYNAMIC_WEIGHTS.playerRealm
+    : CITY_DEEP_DYNAMIC_WEIGHTS.foreignRealm;
+  const grainPressure = clampMetric(cityCore.grainStress ?? (grainRatio < 0.05 ? 88 : grainRatio < 0.1 ? 62 : 35), 35);
+  const taxPressure = clampMetric(taxRate * 1.35 + corruption * 0.2, 40);
+  const orderPressure = clampMetric(100 - publicOrder, 30);
+  const militaryReadiness = clampMetric(armyMorale * 0.7 + (100 - borderThreat) * 0.3, 55);
 
   return {
     ...base,
     populationScale: clampMetric(seedCity.populationScale, isCapital ? 86 : base.populationScale),
-    taxBase: clampMetric(seedCity.taxBase, isTradeCity ? Math.max(base.taxBase, 68) : base.taxBase),
-    grainStock: clampMetric(seedCity.grainStock, 100 - (cityCore.grainStress || 35)),
-    marketPriceStress: clampMetric(seedCity.marketPriceStress, Math.max(cityCore.grainStress || 35, taxRate)),
-    gentryInfluence: clampMetric(seedCity.gentryInfluence, isScholarCity ? Math.max(base.gentryInfluence, 72) : base.gentryInfluence),
-    waterworksIntegrity: clampMetric(seedCity.waterworksIntegrity, /河|运河|水|江|湖/.test(seedCity.riverOrCoast || "") ? Math.max(base.waterworksIntegrity, 58) : base.waterworksIntegrity),
-    disasterRisk: clampMetric(seedCity.disasterRisk, Math.max(base.disasterRisk, (cityCore.grainStress || 35) - 12)),
+    taxBase: blendDynamicMetric(
+      seedCity.taxBase,
+      100 - taxPressure,
+      dynamicWeight,
+      isTradeCity ? Math.max(base.taxBase, 68) : base.taxBase
+    ),
+    grainStock: blendDynamicMetric(seedCity.grainStock, 100 - grainPressure, dynamicWeight, 100 - grainPressure),
+    marketPriceStress: blendDynamicMetric(seedCity.marketPriceStress, Math.max(grainPressure, taxRate), dynamicWeight, Math.max(grainPressure, taxRate)),
+    gentryInfluence: blendDynamicMetric(seedCity.gentryInfluence, corruption * 0.55 + taxRate * 0.45, dynamicWeight, isScholarCity ? Math.max(base.gentryInfluence, 72) : base.gentryInfluence),
+    lawsuitPressure: blendDynamicMetric(seedCity.lawsuitPressure, Math.max(orderPressure, taxPressure), dynamicWeight, base.lawsuitPressure),
+    corveeBurden: blendDynamicMetric(seedCity.corveeBurden, Math.max(taxRate, corruption * 0.55), dynamicWeight, base.corveeBurden),
+    waterworksIntegrity: blendDynamicMetric(
+      seedCity.waterworksIntegrity,
+      100 - Math.max(grainPressure, corruption * 0.45),
+      dynamicWeight,
+      /河|运河|水|江|湖/.test(seedCity.riverOrCoast || "") ? Math.max(base.waterworksIntegrity, 58) : base.waterworksIntegrity
+    ),
+    disasterRisk: blendDynamicMetric(seedCity.disasterRisk, Math.max(grainPressure, orderPressure), dynamicWeight, Math.max(base.disasterRisk, grainPressure - 12)),
     trafficLoad: clampMetric(seedCity.trafficLoad, isTradeCity || isCapital ? Math.max(base.trafficLoad, 70) : base.trafficLoad),
-    garrisonStrength: clampMetric(seedCity.garrisonStrength, isFrontier ? Math.max(base.garrisonStrength, 75) : base.garrisonStrength),
+    garrisonStrength: blendDynamicMetric(
+      seedCity.garrisonStrength,
+      militaryReadiness,
+      isFrontier && dynamicWeight > 0 ? CITY_DEEP_DYNAMIC_WEIGHTS.garrisonStress : dynamicWeight,
+      isFrontier ? Math.max(base.garrisonStrength, 75) : base.garrisonStrength
+    ),
     academyLevel: clampMetric(seedCity.academyLevel, isScholarCity ? Math.max(base.academyLevel, 78) : base.academyLevel)
   };
 }
@@ -382,9 +422,10 @@ function normalizeCityInstance(raw, seedCity = null, worldState = {}) {
   const id = cleanId(source.id || base.id, "");
   const name = cleanText(source.name || base.name, "", 60);
   if (!id || !name) return null;
-  const snapshot = citySnapshot({ ...base, ...source, id, name }, worldState);
-  const deepSnapshot = cityDeepSnapshot({ ...base, ...source, id, name }, worldState, snapshot);
   const useSeedSnapshot = Boolean(seedCity);
+  const snapshot = citySnapshot({ ...base, ...source, id, name }, worldState);
+  const deepSnapshotSource = useSeedSnapshot ? { ...base, id, name } : { ...base, ...source, id, name };
+  const deepSnapshot = cityDeepSnapshot(deepSnapshotSource, worldState, snapshot);
   const status = useSeedSnapshot || !STATUS_VALUES.has(source.status) ? snapshot.status : source.status;
   const deepMetrics = useSeedSnapshot
     ? deepSnapshot

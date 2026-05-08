@@ -204,7 +204,8 @@ function hasMismatchedEventArchiveRowIds(database, sessionId, expectedRows) {
   return false;
 }
 
-function hasMismatchedEventArchiveContentHashes(database, sessionId) {
+function hasMismatchedEventArchiveContentHashes(database, sessionId, expectedRows = []) {
+  const expectedById = new Map(expectedRows.map((row) => [row.row_id, row]));
   const storedRows = database
     .prepare("SELECT * FROM event_archive_index WHERE session_id = ?")
     .all(sessionId);
@@ -213,6 +214,8 @@ function hasMismatchedEventArchiveContentHashes(database, sessionId) {
     const metadata = parseJsonObject(row.metadata_json);
     if (!metadata.contentHash) return true;
     if (metadata.contentHash !== hashEventArchiveRow(row)) return true;
+    const expectedRow = expectedById.get(row.row_id);
+    if (expectedRow && metadata.contentHash !== hashEventArchiveRow(expectedRow)) return true;
   }
   return false;
 }
@@ -226,7 +229,7 @@ function getEventArchiveRepairStatus(database, record) {
   const staleRows = hasStaleEventArchiveRows(database, record.sessionId, record.revision);
   const contentMismatches = !missingOrMismatched &&
     !mismatchedRowIds &&
-    hasMismatchedEventArchiveContentHashes(database, record.sessionId);
+    hasMismatchedEventArchiveContentHashes(database, record.sessionId, expectedRows);
   const tableNeedsRepair = missingOrMismatched || mismatchedRowIds || staleRows || contentMismatches;
 
   return {

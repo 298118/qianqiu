@@ -3,6 +3,7 @@ const assert = require("node:assert/strict");
 
 const { createInitialState } = require("../src/game/initialState");
 const { buildOfficialCareerView } = require("../src/game/officialCareer");
+const { buildWorldGeographyView } = require("../src/game/worldGeography");
 const {
   buildOfficialPostingsView,
   ensureOfficialPostingsState,
@@ -39,32 +40,32 @@ test("official assessment summaries read S61 city depth metrics", () => {
   worldState.officialCareer.currentPosting = "户部主事";
   worldState.officialCareer.bureauId = "ministry_revenue";
   worldState.officialCareer.assessmentDossier.notes.push("已有考成札记：钱粮文册待核。");
-  const beijing = worldState.worldGeography.cities.find((city) => city.id === "city-beijing");
-  Object.assign(beijing, {
-    taxBase: 35,
-    grainStock: 38,
-    marketPriceStress: 66,
-    gentryInfluence: 75,
-    lawsuitPressure: 70,
-    waterworksIntegrity: 30,
-    disasterRisk: 65,
-    trafficLoad: 72,
-    garrisonStrength: 78,
-    academyLevel: 68
+  Object.assign(worldState, {
+    turnCount: 5,
+    taxRate: 68,
+    grainReserve: 180,
+    population: 6200,
+    publicOrder: 24,
+    corruption: 88,
+    borderThreat: 80,
+    armyMorale: 30
   });
 
   ensureOfficialPostingsState(worldState);
+  const geoView = buildWorldGeographyView(worldState);
   const view = buildOfficialPostingsView(worldState);
   const posting = view.postings.find((row) => row.id === "posting-player-current");
+  const city = geoView.cities.find((row) => row.id === posting.cityId);
   const jurisdiction = view.cityJurisdictions.find((row) => row.id === posting.jurisdictionId);
   const assessment = view.assessmentRecords.find((row) => row.id === "assessment-player-current");
   const promptSummary = summarizeOfficialPostingsForPrompt(worldState);
 
-  assert.equal(jurisdiction.localMetrics.taxCapacity <= 45, true);
-  assert.equal(jurisdiction.localMetrics.lawsuits, 70);
-  assert.equal(jurisdiction.localMetrics.waterworks, 30);
-  assert.equal(jurisdiction.localMetrics.gentryInfluence, 75);
-  assert.equal(jurisdiction.localMetrics.disasterRisk, 65);
+  assert.ok(city);
+  assert.equal(jurisdiction.localMetrics.taxCapacity <= city.taxBase + 10, true);
+  assert.equal(jurisdiction.localMetrics.lawsuits, city.lawsuitPressure);
+  assert.equal(jurisdiction.localMetrics.waterworks, city.waterworksIntegrity);
+  assert.equal(jurisdiction.localMetrics.gentryInfluence, city.gentryInfluence);
+  assert.equal(jurisdiction.localMetrics.disasterRisk, city.disasterRisk);
   assert.match(assessment.publicFinding, /已有考成札记/);
   assert.match(assessment.publicFinding, /任所奏报/);
   assert.match(assessment.publicFinding, /税基偏薄|粮储吃紧|市价承压|士绅势重/);
@@ -79,8 +80,10 @@ test("magistrate postings map local yamen role to deterministic visible city met
     localOrder: 73,
     pendingLawsuits: 6,
     waterworks: 61,
-    gentryRelations: 55
+    gentryRelations: 55,
+    banditPressure: 90
   });
+  worldState.borderThreat = 10;
   ensureOfficialPostingsState(worldState);
   const view = buildOfficialPostingsView(worldState);
   const posting = view.postings.find((row) => row.id === "posting-player-current");
@@ -95,7 +98,36 @@ test("magistrate postings map local yamen role to deterministic visible city met
   assert.equal(jurisdiction.localMetrics.publicOrder, 73);
   assert.equal(jurisdiction.localMetrics.lawsuits, 6);
   assert.equal(jurisdiction.localMetrics.waterworks, 61);
+  assert.ok(jurisdiction.localMetrics.militaryPressure >= 50);
   assert.match(posting.publicSummary, /清河县映射至/);
+});
+
+test("magistrate postings keep player bandit pressure ahead of city projection for military pressure", () => {
+  const basePlayer = {
+    countyName: "清河县",
+    localOrder: 70,
+    pendingLawsuits: 8,
+    waterworks: 62,
+    gentryRelations: 52
+  };
+  const lowBanditState = createInitialState({ role: "magistrate", playerName: "低盗地方官" });
+  const highBanditState = createInitialState({ role: "magistrate", playerName: "高盗地方官" });
+  Object.assign(lowBanditState.player, basePlayer, { banditPressure: 5 });
+  Object.assign(highBanditState.player, basePlayer, { banditPressure: 95 });
+  lowBanditState.borderThreat = 15;
+  highBanditState.borderThreat = 15;
+
+  ensureOfficialPostingsState(lowBanditState);
+  ensureOfficialPostingsState(highBanditState);
+  const lowView = buildOfficialPostingsView(lowBanditState);
+  const highView = buildOfficialPostingsView(highBanditState);
+  const lowPosting = lowView.postings.find((row) => row.id === "posting-player-current");
+  const highPosting = highView.postings.find((row) => row.id === "posting-player-current");
+  const lowMetrics = lowView.cityJurisdictions.find((row) => row.id === lowPosting.jurisdictionId).localMetrics;
+  const highMetrics = highView.cityJurisdictions.find((row) => row.id === highPosting.jurisdictionId).localMetrics;
+
+  assert.equal(lowPosting.cityId, highPosting.cityId);
+  assert.ok(highMetrics.militaryPressure > lowMetrics.militaryPressure + 35);
 });
 
 test("official postings bridge clips hidden geography references from raw state, view, and prompt", () => {

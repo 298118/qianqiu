@@ -27,12 +27,19 @@ const CITY_DEEP_METRIC_DEFAULTS = Object.freeze({
 const COUNTRY_DEEP_METRIC_KEYS = Object.freeze(Object.keys(COUNTRY_DEEP_METRIC_DEFAULTS));
 const CITY_DEEP_METRIC_KEYS = Object.freeze(Object.keys(CITY_DEEP_METRIC_DEFAULTS));
 
+const CITY_DEEP_DYNAMIC_WEIGHTS = Object.freeze({
+  playerRealm: 0.35,
+  foreignRealm: 0.16,
+  garrisonStress: 0.28
+});
+
 const WORLD_GEOGRAPHY_DEEP_CONFIG = Object.freeze({
   maxDeepTags: 8,
   countryMetricDefaults: COUNTRY_DEEP_METRIC_DEFAULTS,
   cityMetricDefaults: CITY_DEEP_METRIC_DEFAULTS,
   countryMetricKeys: COUNTRY_DEEP_METRIC_KEYS,
   cityMetricKeys: CITY_DEEP_METRIC_KEYS,
+  cityDynamicWeights: CITY_DEEP_DYNAMIC_WEIGHTS,
   countryTextLimits: Object.freeze({
     diplomaticPosture: 96,
     intelligenceSummary: 120

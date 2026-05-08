@@ -372,14 +372,15 @@ test("prompt input includes visible official postings without hidden geography r
   });
   worldState.officialCareer.currentPosting = "户部主事";
   worldState.officialCareer.bureauId = "ministry_revenue";
-  Object.assign(worldState.worldGeography.cities.find((city) => city.id === "city-beijing"), {
-    taxBase: 35,
-    grainStock: 38,
-    marketPriceStress: 66,
-    gentryInfluence: 75,
-    lawsuitPressure: 70,
-    waterworksIntegrity: 30,
-    disasterRisk: 65
+  Object.assign(worldState, {
+    turnCount: 5,
+    taxRate: 68,
+    grainReserve: 180,
+    population: 6200,
+    publicOrder: 24,
+    corruption: 88,
+    borderThreat: 80,
+    armyMorale: 30
   });
   worldState.officialPostings.cityJurisdictions.push({
     id: "jurisdiction-hidden-prompt-posting",

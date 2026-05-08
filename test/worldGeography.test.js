@@ -263,7 +263,7 @@ test("world geography normalization backfills legacy saves and clamps dynamic fi
   assert.equal(customCity.grainStress, 100);
   assert.equal(customCity.taxBase, 100);
   assert.equal(customCity.lawsuitPressure, 0);
-  assert.equal(customCity.waterworksIntegrity, 50);
+  assert.equal(customCity.waterworksIntegrity, 52);
 });
 
 test("world geography ensure refreshes seed snapshots from current world metrics", () => {
@@ -278,6 +278,82 @@ test("world geography ensure refreshes seed snapshots from current world metrics
   assert.ok(after.pressure > before.pressure);
   assert.equal(after.status, "contested");
   assert.equal(after.lastUpdatedTurn, 4);
+});
+
+test("S61 city depth metrics refresh from economic, order, grain, and military pressure", () => {
+  const worldState = createInitialState({ role: "official", playerName: "Dynamic City Tester" });
+  const beforeBeijing = worldState.worldGeography.cities.find((city) => city.id === "city-beijing");
+  const beforePass = worldState.worldGeography.cities.find((city) => city.id === "city-shanhai-pass");
+
+  Object.assign(worldState, {
+    turnCount: 8,
+    taxRate: 68,
+    grainReserve: 180,
+    population: 6200,
+    publicOrder: 24,
+    corruption: 88,
+    armyMorale: 22,
+    borderThreat: 94
+  });
+
+  ensureWorldGeographyState(worldState);
+  const afterBeijing = worldState.worldGeography.cities.find((city) => city.id === "city-beijing");
+  const afterPass = worldState.worldGeography.cities.find((city) => city.id === "city-shanhai-pass");
+  const view = buildWorldGeographyView(worldState);
+  const prompt = summarizeWorldGeographyForPrompt(worldState);
+  const promptBeijing = prompt.cities.find((city) => city.id === "city-beijing");
+
+  assert.ok(afterBeijing.taxBase < beforeBeijing.taxBase);
+  assert.ok(afterBeijing.grainStock < beforeBeijing.grainStock);
+  assert.ok(afterBeijing.marketPriceStress > beforeBeijing.marketPriceStress);
+  assert.ok(afterBeijing.lawsuitPressure > beforeBeijing.lawsuitPressure);
+  assert.ok(afterBeijing.corveeBurden > beforeBeijing.corveeBurden);
+  assert.ok(afterBeijing.waterworksIntegrity < beforeBeijing.waterworksIntegrity);
+  assert.ok(afterBeijing.disasterRisk > beforeBeijing.disasterRisk);
+  assert.ok(afterPass.garrisonStrength < beforePass.garrisonStrength);
+  assert.equal(afterBeijing.lastUpdatedTurn, 8);
+  assert.equal(view.cities.find((city) => city.id === "city-beijing").marketPriceStress, afterBeijing.marketPriceStress);
+  assert.ok(promptBeijing);
+  assert.equal(promptBeijing.lawsuitPressure, afterBeijing.lawsuitPressure);
+});
+
+test("S61 city depth metrics use seed baseline instead of accumulating across turns", () => {
+  const worldState = createInitialState({ role: "official", playerName: "No Drift City Tester" });
+  Object.assign(worldState, {
+    turnCount: 8,
+    taxRate: 68,
+    grainReserve: 180,
+    population: 6200,
+    publicOrder: 24,
+    corruption: 88,
+    armyMorale: 22,
+    borderThreat: 94
+  });
+
+  ensureWorldGeographyState(worldState);
+  const first = worldState.worldGeography.cities.find((city) => city.id === "city-beijing");
+  const firstSnapshot = {
+    taxBase: first.taxBase,
+    grainStock: first.grainStock,
+    marketPriceStress: first.marketPriceStress,
+    lawsuitPressure: first.lawsuitPressure,
+    waterworksIntegrity: first.waterworksIntegrity,
+    disasterRisk: first.disasterRisk
+  };
+
+  worldState.turnCount = 9;
+  ensureWorldGeographyState(worldState);
+  const second = worldState.worldGeography.cities.find((city) => city.id === "city-beijing");
+
+  assert.deepEqual({
+    taxBase: second.taxBase,
+    grainStock: second.grainStock,
+    marketPriceStress: second.marketPriceStress,
+    lawsuitPressure: second.lawsuitPressure,
+    waterworksIntegrity: second.waterworksIntegrity,
+    disasterRisk: second.disasterRisk
+  }, firstSnapshot);
+  assert.equal(second.lastUpdatedTurn, 9);
 });
 
 test("ensureWorldGeographyState mutates missing ledgers and initial builder returns isolated copies", () => {

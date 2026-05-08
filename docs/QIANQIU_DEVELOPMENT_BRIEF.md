@@ -27,7 +27,7 @@
 - S48 时间专项：普通自由行动从一月一回合改为一旬一回合；月末系统只在下旬进入下月上旬时完整结算；考试已有 scene-local time；浏览器日期统一为“年月旬”，见 [TIME_SPECIALTY_ROADMAP_ARCHIVE.md](TIME_SPECIALTY_ROADMAP_ARCHIVE.md)。
 - S49-S53 本地数据库基础：storage adapter、可选 SQLite session row、本地审计、天下地理/人物/官职任所安全 projection、检索式 prompt context 和浏览器局势簿，见 [LOCAL_DATABASE_FOUNDATION_ARCHIVE.md](LOCAL_DATABASE_FOUNDATION_ARCHIVE.md)。
 
-当前活动路线图见 [DEVELOPMENT_STEPS.md](DEVELOPMENT_STEPS.md)，数据库方向见 [DYNAMIC_WORLD_DATABASE_PLAN.md](DYNAMIC_WORLD_DATABASE_PLAN.md)。S54-S59 本地 SQLite 业务表与双模式验收已完成并归档到 [LOCAL_DATABASE_BUSINESS_TABLE_ARCHIVE.md](LOCAL_DATABASE_BUSINESS_TABLE_ARCHIVE.md)：地理 `geo_*`、人物 `people_*`、官职任所 `office_*`、安全事件档案 `event_archive_index`、安全 prompt 检索 `prompt_retrieval_index`、维护工具、浏览器 parity 和 `smoke:dual-mode` 已具备可继续扩内容的底座。当前“超大动态世界数据库”的内容充实度约 55-65%；S60+ 的重点转为国家/邻国、城市/区域、NPC/家族、官职生态、地方事务、外交军事、经济市场、事件模板、情报可见性和大规模检索内容。S60.1 的 [超大动态世界数据库内容契约](HUGE_DYNAMIC_WORLD_CONTENT_CONTRACT.md) 已固定小/中/大规模档位、seed 分层、hidden/private 边界、prompt budget 和 S60.2 fixture 目标。S60.2 已开始落地 `src/game/worldContentFixtures.js` 的 `small` deterministic fixture，用于数量门槛、hidden canary、防泄漏、prompt budget 和 JSON/SQLite parity 验收。S61.1 已给国家/邻国补财政、军备、国威、正统性、继承风险、外交张力、贡贸和情报可靠度等安全字段；S61.2 已给城市补人口、税基、粮储、市价、士绅、词讼、徭役、水利、灾害、交通、驻军和书院指标基础层，并已让任所考成与事件档案读取这些安全城市指标；后续继续补浏览器分页、更大 fixture、dual-mode 污染探针和城市指标随经济/军事/灾害系统演化。当前不规划远程存档、账号体系、多人同步、云端冲突解决或托管数据库。
+当前活动路线图见 [DEVELOPMENT_STEPS.md](DEVELOPMENT_STEPS.md)，数据库方向见 [DYNAMIC_WORLD_DATABASE_PLAN.md](DYNAMIC_WORLD_DATABASE_PLAN.md)。S54-S59 本地 SQLite 业务表与双模式验收已完成并归档到 [LOCAL_DATABASE_BUSINESS_TABLE_ARCHIVE.md](LOCAL_DATABASE_BUSINESS_TABLE_ARCHIVE.md)：地理 `geo_*`、人物 `people_*`、官职任所 `office_*`、安全事件档案 `event_archive_index`、安全 prompt 检索 `prompt_retrieval_index`、维护工具、浏览器 parity 和 `smoke:dual-mode` 已具备可继续扩内容的底座。当前“超大动态世界数据库”的内容充实度约 55-65%；S60+ 的重点转为国家/邻国、城市/区域、NPC/家族、官职生态、地方事务、外交军事、经济市场、事件模板、情报可见性和大规模检索内容。S60.1 的 [超大动态世界数据库内容契约](HUGE_DYNAMIC_WORLD_CONTENT_CONTRACT.md) 已固定小/中/大规模档位、seed 分层、hidden/private 边界、prompt budget 和 S60.2 fixture 目标。S60.2 已开始落地 `src/game/worldContentFixtures.js` 的 `small` deterministic fixture，用于数量门槛、hidden canary、防泄漏、prompt budget 和 JSON/SQLite parity 验收。S61 国家/邻国与城市/区域深度内容已完成：S61.1 给国家/邻国补财政、军备、国威、正统性、继承风险、外交张力、贡贸和情报可靠度等安全字段；S61.2 给城市补人口、税基、粮储、市价、士绅、词讼、徭役、水利、灾害、交通、驻军和书院指标，并让这些城市指标随财政、粮储、治安、腐败和军情压力由服务器幂等刷新，进入任所考成、事件档案、prompt retrieval 和 SQLite 安全派生索引。更大 fixture、浏览器分页和大数据量面板归入 S60.2/S66/S67。当前不规划远程存档、账号体系、多人同步、云端冲突解决或托管数据库。
 
 开发规范不变：Mock 默认可玩，真实 provider 可选；服务器拥有状态边界、时间推进、科举晋级、作弊处罚、官职任免、长期事件、世界实体、世界议程、数据库写入和持久化裁决；AI 不能直接执行 SQL 或写业务表，只能提交结构化建议。
 
@@ -373,7 +373,7 @@ chore: update env example
 S60-S67 当前方向：
 
 - S60：内容契约与规模验收 fixture；内容契约见 [HUGE_DYNAMIC_WORLD_CONTENT_CONTRACT.md](HUGE_DYNAMIC_WORLD_CONTENT_CONTRACT.md)，S60.2 已先建立 `small` deterministic fixture / generator，后续继续扩 medium/large、分页与性能验收。
-- S61：国家/邻国、城市/区域深度内容。S61.1 国家深度字段已完成；S61.2 城市深度字段基础已接入任所考成与事件档案，但仍需继续补浏览器分页、更大 fixture、dual-mode 污染探针和城市指标随经济/军事/灾害系统演化。
+- S61：国家/邻国、城市/区域深度内容已完成。国家/邻国安全字段、城市深度字段、任所考成/事件档案/prompt retrieval/SQLite 安全派生索引已接通；城市指标会随财政、粮储、治安、腐败和军情压力由服务器幂等刷新。更大 fixture 与浏览器大分页归入 S60.2/S66/S67。
 - S62：NPC 人口、家族谱系、生命周期与资产流动。
 - S63：官职生态、任命池和地方事务模板。
 - S64：外交、边防、军事、经济、财政、粮储和市场演化。

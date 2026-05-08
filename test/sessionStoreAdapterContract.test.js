@@ -1,6 +1,6 @@
 const test = require("node:test");
 const assert = require("node:assert/strict");
-const { randomUUID } = require("node:crypto");
+const { createHash, randomUUID } = require("node:crypto");
 const fs = require("node:fs/promises");
 const path = require("node:path");
 const { isBuiltin } = require("node:module");
@@ -310,6 +310,26 @@ function readSqliteOfficialPostingCounts(db, sessionId) {
 
 function readSqliteEventArchiveCount(db, sessionId) {
   return db.prepare("SELECT COUNT(*) AS count FROM event_archive_index WHERE session_id = ?").get(sessionId).count;
+}
+
+function normalizeForStableJson(value) {
+  if (Array.isArray(value)) return value.map((entry) => normalizeForStableJson(entry));
+  if (!value || typeof value !== "object") return value;
+  return Object.keys(value)
+    .sort()
+    .reduce((normalized, key) => {
+      normalized[key] = normalizeForStableJson(value[key]);
+      return normalized;
+    }, {});
+}
+
+function hashSqliteEventArchiveRow(row) {
+  const comparable = {};
+  for (const column of Object.keys(row).sort()) {
+    if (column === "metadata_json" || column === "created_at" || column === "updated_at") continue;
+    comparable[column] = row[column];
+  }
+  return createHash("sha256").update(JSON.stringify(normalizeForStableJson(comparable))).digest("hex");
 }
 
 function sumSqliteGeographyCounts(counts) {
@@ -2078,6 +2098,86 @@ test("SQLite storage adapter syncs and repairs the safe event archive index", {
     assert.equal(serializedRows.includes("prompt"), false);
     assert.equal(serializedRows.includes("event_log"), false);
     assert.ok(rows.every((row) => JSON.parse(row.metadata_json).contentHash));
+  });
+});
+
+test("SQLite storage adapter repairs S61 official assessment event archive rows from visible views", {
+  skip: hasNodeSqlite ? false : "node:sqlite is unavailable in this Node.js runtime"
+}, async (t) => {
+  const { adapter, dbPath } = createSqliteHarness(t);
+  const worldState = buildWorldState({
+    role: "official",
+    playerName: "考成索引",
+    turnCount: 8,
+    player: {
+      officeTitle: "户部主事",
+      position: "户部主事"
+    }
+  });
+  Object.assign(worldState.officialCareer, {
+    currentPosting: "户部主事",
+    bureauId: "ministry_revenue"
+  });
+  const beijing = worldState.worldGeography.cities.find((city) => city.id === "city-beijing");
+  Object.assign(beijing, {
+    taxBase: 34,
+    grainStock: 36,
+    marketPriceStress: 70,
+    lawsuitPressure: 72,
+    waterworksIntegrity: 28,
+    disasterRisk: 66
+  });
+
+  await adapter.writeSession(worldState);
+  withSqliteDatabase(dbPath, (db) => {
+    const row = db
+      .prepare(`
+        SELECT *
+        FROM event_archive_index
+        WHERE session_id = ?
+          AND source_type = 'official_assessment'
+        LIMIT 1
+      `)
+      .get(worldState.sessionId);
+
+    assert.ok(row);
+    assert.equal(row.source_type, "official_assessment");
+    assert.match(row.summary, /任所奏报/);
+    assert.ok(JSON.parse(row.metadata_json).contentHash);
+
+    const pollutedRow = {
+      ...row,
+      summary: "SEALED_EVENT_ASSESSMENT_INDEX prompt event_log sk-test-assessment-index"
+    };
+    const metadata = JSON.parse(row.metadata_json);
+    metadata.contentHash = hashSqliteEventArchiveRow(pollutedRow);
+    db
+      .prepare("UPDATE event_archive_index SET summary = ?, metadata_json = ? WHERE session_id = ? AND row_id = ?")
+      .run(pollutedRow.summary, JSON.stringify(metadata), worldState.sessionId, row.row_id);
+  });
+
+  const { record } = await adapter.readSessionRecord(worldState.sessionId);
+  const eventArchive = buildEventArchiveView(record.worldState, { pageSize: 50 });
+  const serializedArchive = JSON.stringify(eventArchive);
+
+  assert.match(serializedArchive, /official_assessment/);
+  assert.match(serializedArchive, /任所奏报/);
+  assert.doesNotMatch(serializedArchive, /SEALED_EVENT_ASSESSMENT_INDEX/);
+
+  withSqliteDatabase(dbPath, (db) => {
+    const row = db
+      .prepare(`
+        SELECT summary, metadata_json
+        FROM event_archive_index
+        WHERE session_id = ?
+          AND source_type = 'official_assessment'
+        LIMIT 1
+      `)
+      .get(worldState.sessionId);
+
+    assert.match(row.summary, /任所奏报/);
+    assert.doesNotMatch(row.summary, /SEALED_EVENT_ASSESSMENT_INDEX/);
+    assert.ok(JSON.parse(row.metadata_json).contentHash);
   });
 });
 
