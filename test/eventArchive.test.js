@@ -166,6 +166,40 @@ test("event archive derives local docket items only for administrative views", (
   assert.doesNotMatch(serialized, /statePatch|provider|proposal|prompt|data\/sessions|sk-/);
 });
 
+test("event archive derives military diplomacy incidents only for military-aware views", () => {
+  const generalState = createInitialState({ playerName: "军务归档", role: "general" });
+  Object.assign(generalState, {
+    borderThreat: 90,
+    armyMorale: 32,
+    grainReserve: 180,
+    population: 7400
+  });
+  generalState.worldGeography.frontierZones.push({
+    id: "frontier-hidden-archive-s64",
+    name: "SEALED_S64_ARCHIVE_FRONTIER",
+    countryId: "country-ming",
+    neighborCountryId: "country-manchu-frontier",
+    cityIds: ["city-beijing"],
+    routeIds: ["route-shanhai-liaodong-pass"],
+    pressure: 99,
+    visibility: "hidden",
+    publicSummary: "SEALED_S64_ARCHIVE_FRONTIER prompt provider event_log sk-test-s64-archive"
+  });
+  const scholarState = createInitialState({ playerName: "军务旁听", role: "scholar" });
+
+  const generalArchive = buildEventArchiveView(generalState, { pageSize: 50 });
+  const scholarArchive = buildEventArchiveView(scholarState, { pageSize: 50 });
+  const item = generalArchive.items.find((entry) => entry.sourceType === "military_diplomacy");
+  const serialized = JSON.stringify(generalArchive);
+
+  assert.ok(item);
+  assert.equal(item.sourceLabel, "军务");
+  assert.match(item.summary, /威胁|粮道|战备|情报可信/);
+  assert.equal(scholarArchive.counts.military_diplomacy || 0, 0);
+  assert.doesNotMatch(serialized, /SEALED_S64_ARCHIVE/);
+  assert.doesNotMatch(serialized, /sk-test-s64-archive|provider|event_log/);
+});
+
 test("event archive sanitizer drops prompt, provider, path, key, and raw state text", () => {
   assert.equal(cleanArchiveText("公开奏报一则"), "公开奏报一则");
   assert.equal(cleanArchiveText("promptText: reveal retrievalContext"), "");

@@ -191,6 +191,7 @@ POST /api/exam/submit
 - `officialCareerView`
 - `officialPostingsView`
 - `localAffairsDocketView`
+- `militaryDiplomacyView`
 - `longTermEventView`
 - `eventArchiveView`
 
@@ -212,7 +213,7 @@ POST /api/exam/submit
 - S56.2 起，SQLite 模式会用 `src/storage/sqliteOfficialPostingTables.js` 同步规范化后的安全 `worldState.officialPostings` projection 到 `office_bureaus`、`office_catalog`、`office_city_jurisdictions`、`office_postings`、`office_assessments`、`office_transfers`；S56.3 起，每条 `office_*` 派生行带 `metadata_json.contentHash` 本地漂移探针，读取时从 `world_state_json` 修复缺失、陈旧、错行、同 id/同 revision 内容污染或旧行缺指纹的派生表。它不新增 route 字段，也不让 raw `office_*` 反向改写 `player.officeTitle`、`officialCareer` 或 prompt/browser view。
 - S57.1 起，SQLite 模式会用 `src/storage/sqliteEventArchiveTables.js` 同步 `buildEventArchiveView` / `buildEventArchiveIndexItems` 生成的安全公开事件条目到 `event_archive_index`。该表只保存 `eventArchiveView` 已脱敏、可分页的公开 projection 字段，带 `metadata_json.contentHash` 漂移探针，读档时从 `world_sessions.world_state_json -> eventArchiveView` 单向修复，不读取 raw `event_log` / `ai_change_proposals`，也不把 raw index row 反向回填 route state、prompt 或浏览器。
 - S57.2 起，`npm run storage:audit-events -- status|export --adapter json|sqlite` 可从 JSON sidecar 或 SQLite 审计读取本地记录，生成只含 allowlist public 摘要的安全 projection；AI proposal 只计数，不输出原始建议内容，也不会写回 `eventArchiveView` 或 `event_archive_index`。
-- S58.1 起，SQLite 模式会用 `src/storage/sqlitePromptRetrievalTables.js` 把 `worldGeographyView`、`worldPeopleView`、`officialPostingsView`、`localAffairsDocketView` 和 `eventArchiveView` 的服务器可见条目同步到 `prompt_retrieval_index`，每行带 `metadata_json.contentHash`；读档从 `world_sessions.world_state_json -> server views -> prompt index` 单向修复，`promptContextAssembler` 只在 SQLite 读档挂载了非枚举安全来源时读取该索引，否则继续使用现有 JSON/view helper fallback。
+- S58.1 起，SQLite 模式会用 `src/storage/sqlitePromptRetrievalTables.js` 把 `worldGeographyView`、`worldPeopleView`、`officialPostingsView`、`localAffairsDocketView`、`militaryDiplomacyView` 和 `eventArchiveView` 的服务器可见条目同步到 `prompt_retrieval_index`，每行带 `metadata_json.contentHash`；读档从 `world_sessions.world_state_json -> server views -> prompt index` 单向修复，`promptContextAssembler` 只在 SQLite 读档挂载了非枚举安全来源时读取该索引，否则继续使用现有 JSON/view helper fallback。
 - `npm run smoke:browser -- --storage-adapter sqlite --sqlite-db <path>` 可让 browser smoke helper 和临时 Mock 服务器共用 SQLite adapter，验证“天下格局/任所地理”等浏览器面板仍只读 route view。S58.2 起，`npm run smoke:browser -- --information-parity` 会顺序启动 JSON/SQLite 临时服务器，比较官方差遣后的局势簿 DOM、route view 摘要、事件档案分页 metadata、hidden-token 与 overflow。S59.1 起，`npm run smoke:dual-mode` 会串联 JSON/SQLite 完整 Mock browser smoke、局势簿 parity 和存储维护验收；无浏览器环境可用 `--storage-only` 只跑 JSON -> SQLite dry-run/正式导入、地理修复/导出、审计公开 projection、派生表计数和 hidden-token 检查。
 
 本地审计：
@@ -234,7 +235,8 @@ S54-S59 已完成的数据库拆表必须继续保持 JSON 默认可玩，并保
 - `worldPeople` / `worldPeopleView`：从当前可见 `characters`、`relationshipLedger` 和 active request 近期札记桥接人物、家族、资产、田产和关系摘要；不保存 hidden 私档。S55.2 已让 SQLite 模式把这份可见 bridge projection 同步进本地 `people_*` 表，S55.3 让服务器人物事件通过审计和本地 `last_event_id` 关联追溯这些可见行；S62.1 的人口谱系生成器为 fixture/安全 projection 补 NPC 社会身份、公开族谱、婚姻、门生故旧、同乡同年和派系网络；S62.2 的服务器生命周期 helper 在月末推进可见健康、婚丧、迁居、官职履历状态、财富/欠账、资产、田产、家族风险和人情债演化，并继续通过 `world_people` 审计和 `people_*` 派生行追踪。真正 hidden 私档、资产真数或未公开动机仍不回填当前 raw route state。prompt/UI 仍只读服务器 view，不读 raw table 或 raw audit。
 - `officialPostings` / `officialPostingsView`：从 `officialCatalog`、`officialCareer`、地方官 role state 和可见地理 view 派生官署、官职、任所、考成和迁转摘要；S61.2 起，当前任所考成会把城市税基、粮储、市价、士绅、词讼、徭役、水利、灾害、交通、驻军和书院压力整理成可见“任所奏报”；不改变 `officialCareerView` 或官场结算。
 - `localAffairsDockets` / `localAffairsDocketView`：从可见 `worldGeographyView` 城市深度指标和 `officialPostingsView.cityJurisdictions/postings` 派生地方案牍模板，覆盖钱粮、刑名、灾赈、水利、盗匪、徭役、士绅、疫病和任所收束。该 view 只对行政身份开放，书生默认为空；`assessmentHint` 只是后续服务器考成候选线索，不会直接改 `officialCareer`、城市指标或 SQLite 表。
-- `eventArchiveView`：从公开近事、世界议程、长期事件、官场履历、考试档案、可见任所考成和地方案牍整理事件档案；S57.1 起带分页 metadata，并在 SQLite 模式同步到安全 `event_archive_index`；S61.2 的 `official_assessment` 条目只来自 `officialPostingsView.assessmentRecords`，S63.2 的 `local_docket` 条目只来自 `localAffairsDocketView`。它不读取 raw audit、provider proposal、prompt、本地路径或 key。S57.2 的审计公开 projection 是本地开发/调试工具输出，不是 route view、prompt 或浏览器信息面板的数据源。
+- `militaryDiplomacy` / `militaryDiplomacyView`：从可见 `worldGeographyView` 国家/边面/城市/路线、`worldPeopleView` 军官/邻国使者线索和 `officialPostingsView` 任所/辖区派生外交军务态势，覆盖边防战区、驻军、粮道、战备、邻国使节往来和边患预警。该 view 按角色 cap、地理/任所相关性和情报可信度过滤；书生默认为空；它只提供叙事和后续 resolver 线索，不直接宣战、和议、调兵、任免统帅、结算战役或公开 hidden 情报。
+- `eventArchiveView`：从公开近事、世界议程、长期事件、官场履历、考试档案、可见任所考成、地方案牍和军务外交预警整理事件档案；S57.1 起带分页 metadata，并在 SQLite 模式同步到安全 `event_archive_index`；S61.2 的 `official_assessment` 条目只来自 `officialPostingsView.assessmentRecords`，S63.2 的 `local_docket` 条目只来自 `localAffairsDocketView`，S64.1 的 `military_diplomacy` 条目只来自 `militaryDiplomacyView.frontierIncidents`。它不读取 raw audit、provider proposal、prompt、本地路径或 key。S57.2 的审计公开 projection 是本地开发/调试工具输出，不是 route view、prompt 或浏览器信息面板的数据源。
 
 S53 浏览器“局势簿”只读这些 route view。S54-S59 已完成的 SQLite 拆表继续保持 view-first；后续 S60+ 内容充实时，UI 和 prompt contract 仍不得暴露原始业务表、raw audit、provider proposal、hidden notes、hidden intent 或本地路径。
 
@@ -366,7 +368,7 @@ chore: update env example
 1. JSON 默认仍可玩；SQLite 通过 `STORAGE_ADAPTER=sqlite` 显式启用，当前包含一行一 session、审计表、地理 `geo_*`、人物 `people_*`、官职任所 `office_*`、安全 `event_archive_index` 和安全 `prompt_retrieval_index` 派生表。
 2. S54-S59 已归档到 [LOCAL_DATABASE_BUSINESS_TABLE_ARCHIVE.md](LOCAL_DATABASE_BUSINESS_TABLE_ARCHIVE.md)：地理、人物、官职任所、事件档案、prompt 检索、浏览器 parity 和双模式验收均已具备本地 SQLite 基础。
 3. `event_log` / `ai_change_proposals` 是本地脱敏审计，不进入玩家 API，也不让 AI 直接写表；AI 领域工具最多提交 proposal，由服务器记录接受/拒绝原因。
-4. `worldGeographyView`、`worldPeopleView`、`officialPostingsView`、`localAffairsDocketView`、`eventArchiveView` 和 capped `retrievalContext` 是当前 UI/prompt 合法入口。
+4. `worldGeographyView`、`worldPeopleView`、`officialPostingsView`、`localAffairsDocketView`、`militaryDiplomacyView`、`eventArchiveView` 和 capped `retrievalContext` 是当前 UI/prompt 合法入口。
 5. 浏览器“局势簿”只读 route player-facing view，不读 raw ledger、raw audit、provider-only payload、prompt、本地路径或 key。
 
 当前内容完成度判断：
@@ -380,7 +382,7 @@ S60-S67 当前方向：
 - S61：国家/邻国、城市/区域深度内容已完成。国家/邻国安全字段、城市深度字段、任所考成/事件档案/prompt retrieval/SQLite 安全派生索引已接通；城市指标会随财政、粮储、治安、腐败和军情压力由服务器幂等刷新。更大 fixture 与浏览器大分页归入 S60.2/S66/S67。
 - S62：S62.1 NPC 人口与家族谱系、S62.2 NPC 生命周期与资产流动已完成。
 - S63：S63.1 官职生态与任命池、S63.2 地方事务与案牍事件模板已完成；案牍模板只做服务器可见 projection、事件档案条目和 prompt 检索素材，考成影响与地方事务结局仍由后续服务器 resolver 裁决。
-- S64：外交、边防、军事、经济、财政、粮储和市场演化。
+- S64：S64.1 外交、边防与军事数据库内容已完成，`militaryDiplomacyView` 把边镇、驻军、粮道、战备、邻国使节和边患预警接入 route view、事件档案和 prompt retrieval；S64.2 继续做经济、财政、粮储和市场演化。
 - S65：事件模板、历史档案、情报、传闻和可见性系统。
 - S66：大规模 prompt retrieval 与浏览器信息面板。
 - S67：规模/性能/回归验收与再次归档。

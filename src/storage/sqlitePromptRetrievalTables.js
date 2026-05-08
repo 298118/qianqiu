@@ -2,6 +2,7 @@ const { createHash } = require("node:crypto");
 
 const { buildEventArchiveIndexItems } = require("../game/eventArchive");
 const { buildLocalAffairsDocketView } = require("../game/localAffairsDockets");
+const { buildMilitaryDiplomacyRetrievalRows } = require("../game/militaryDiplomacy");
 const { buildOfficialPostingsView } = require("../game/officialPostings");
 const { buildWorldGeographyView } = require("../game/worldGeography");
 const { buildWorldPeopleView } = require("../game/worldPeople");
@@ -23,6 +24,7 @@ const COLLECTION_GROUPS = Object.freeze({
   "offices.assessmentRecords": ["offices", "assessmentRecords"],
   "offices.transferRecords": ["offices", "transferRecords"],
   "events.localDockets": ["events", "localDockets"],
+  "events.militaryReports": ["events", "militaryReports"],
   "events.recentEvents": ["events", "recentEvents"]
 });
 
@@ -379,6 +381,29 @@ function compactLocalDocket(docket = {}) {
   };
 }
 
+function compactMilitaryReport(report = {}) {
+  return {
+    id: report.id,
+    type: report.type,
+    title: report.title,
+    statusLabel: report.statusLabel,
+    threatScore: report.threatScore,
+    supplyRisk: report.supplyRisk,
+    readinessScore: report.readinessScore,
+    diplomaticTension: report.diplomaticTension,
+    intelConfidence: report.intelConfidence,
+    countryId: report.countryId,
+    neighborCountryId: report.neighborCountryId,
+    cityId: report.cityId,
+    cityIds: unique(report.cityIds, 6),
+    routeId: report.routeId,
+    routeIds: unique(report.routeIds, 6),
+    frontierZoneId: report.frontierZoneId,
+    publicSummary: report.publicSummary,
+    authorityBoundary: report.authorityBoundary
+  };
+}
+
 function buildSearchText(payload = {}) {
   return JSON.stringify(payload)
     .replace(/[{}[\]",:]/g, " ")
@@ -467,6 +492,7 @@ function buildPromptRetrievalRows(record) {
   const peopleView = buildWorldPeopleView(record.worldState);
   const officialView = buildOfficialPostingsView(record.worldState);
   const localDocketView = buildLocalAffairsDocketView(record.worldState);
+  const militaryReports = buildMilitaryDiplomacyRetrievalRows(record.worldState);
   const eventItems = buildEventArchiveIndexItems(record.worldState);
 
   addRows(rows, record, "geography.countries", "worldGeographyView", geographyView.countries, compactCountry);
@@ -482,6 +508,7 @@ function buildPromptRetrievalRows(record) {
   addRows(rows, record, "offices.assessmentRecords", "officialPostingsView", officialView.assessmentRecords, compactAssessment);
   addRows(rows, record, "offices.transferRecords", "officialPostingsView", officialView.transferRecords, compactTransfer);
   addRows(rows, record, "events.localDockets", "localAffairsDocketView", localDocketView.dockets, compactLocalDocket);
+  addRows(rows, record, "events.militaryReports", "militaryDiplomacyView", militaryReports, compactMilitaryReport);
   addRows(rows, record, "events.recentEvents", "eventArchiveView", eventItems, compactEvent);
 
   return rows;
@@ -592,6 +619,7 @@ function emptyPromptRetrievalSource() {
     },
     events: {
       localDockets: [],
+      militaryReports: [],
       recentEvents: []
     }
   };

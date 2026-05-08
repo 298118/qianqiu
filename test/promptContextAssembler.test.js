@@ -21,6 +21,7 @@ test("prompt context assembler centralizes visible summaries and ranked retrieva
   assert.match(JSON.stringify(context.worldGeography), /北京|山海关|country-ming/);
   assert.match(JSON.stringify(context.officialPostings), /户部|吏部|任免/);
   assert.match(JSON.stringify(context.retrievalContext), /京杭漕运|户部|worldGeographyView/);
+  assert.match(JSON.stringify(context.militaryDiplomacy), /server_visible_military_diplomacy_projection/);
 });
 
 test("prompt context assembler filters hidden rows, hidden refs, raw ledgers, and raw audit-like fields", () => {
@@ -195,6 +196,43 @@ test("ranked retrieval context caps recent event summaries and ignores audit-sha
   assert.doesNotMatch(serialized, /event_log/);
 });
 
+test("ranked retrieval context includes capped military diplomacy reports for military roles", () => {
+  const worldState = createInitialState({ role: "general", playerName: "Military Context Tester" });
+  Object.assign(worldState, {
+    borderThreat: 88,
+    armyMorale: 36,
+    grainReserve: 260,
+    population: 7200
+  });
+  worldState.worldGeography.frontierZones.push({
+    id: "frontier-hidden-context-s64",
+    name: "SEALED_S64_CONTEXT_FRONTIER",
+    countryId: "country-ming",
+    neighborCountryId: "country-manchu-frontier",
+    cityIds: ["city-beijing"],
+    routeIds: ["route-shanhai-liaodong-pass"],
+    pressure: 99,
+    visibility: "hidden",
+    publicSummary: "SEALED_S64_CONTEXT_SUMMARY prompt event_log sk-test-s64-context"
+  });
+
+  const context = buildRankedRetrievalContext(worldState, {
+    task: "general_frontier",
+    playerAction: "查问山海关、辽东粮道与邻国使节"
+  });
+  const serialized = JSON.stringify(context);
+
+  assert.equal(context.events.militaryReports.length > 0, true);
+  assert.ok(context.events.militaryReports.length <= 4);
+  assert.ok(context.events.militaryReports.every((report) =>
+    report.sourceView === "militaryDiplomacyView.report" &&
+    report.authorityBoundary.includes("服务器")
+  ));
+  assert.match(serialized, /militaryDiplomacyView|山海关|粮道|服务器裁决/);
+  assert.doesNotMatch(serialized, /SEALED_S64_CONTEXT/);
+  assert.doesNotMatch(serialized, /sk-test-s64-context|event_log/);
+});
+
 test("ranked retrieval context keeps local affairs dockets out of scholar view", () => {
   const worldState = createInitialState({ role: "scholar", playerName: "Scholar Docket Tester" });
   const context = buildRankedRetrievalContext(worldState, {
@@ -203,6 +241,7 @@ test("ranked retrieval context keeps local affairs dockets out of scholar view",
   });
 
   assert.deepEqual(context.events.localDockets, []);
+  assert.deepEqual(context.events.militaryReports, []);
   assert.match(JSON.stringify(context), /localAffairsDocketView/);
   assert.doesNotMatch(JSON.stringify(context), /钱粮奏销|刑名词讼|水利修防/);
 });

@@ -1,5 +1,6 @@
 const { buildLongTermEventView } = require("./longTermEvents");
 const { buildLocalAffairsDocketView } = require("./localAffairsDockets");
+const { buildMilitaryDiplomacyView } = require("./militaryDiplomacy");
 const { buildOfficialCareerView } = require("./officialCareer");
 const { buildOfficialPostingsView } = require("./officialPostings");
 const { formatYearMonthPeriod, normalizeMonth, normalizeTenDayPeriod, normalizeYear } = require("./time");
@@ -13,6 +14,7 @@ const MAX_LONG_TERM_EVENTS = 5;
 const MAX_OFFICIAL_OUTCOMES = 5;
 const MAX_OFFICIAL_ASSESSMENTS = 4;
 const MAX_LOCAL_DOCKETS = 6;
+const MAX_MILITARY_INCIDENTS = 5;
 const MAX_EXAM_RECORDS = 5;
 const MAX_TEXT_LENGTH = 180;
 const MIN_PAGE_SIZE = 1;
@@ -29,6 +31,7 @@ const SOURCE_LABELS = {
   official_career: "官场",
   official_assessment: "考成",
   local_docket: "案牍",
+  military_diplomacy: "军务",
   exam_record: "科场"
 };
 
@@ -282,6 +285,30 @@ function collectLocalDocketItems(worldState, items, localAffairsDocketView) {
   });
 }
 
+function collectMilitaryDiplomacyItems(worldState, items, militaryDiplomacyView) {
+  const incidents = Array.isArray(militaryDiplomacyView?.frontierIncidents)
+    ? militaryDiplomacyView.frontierIncidents
+    : [];
+  incidents.slice(0, MAX_MILITARY_INCIDENTS).forEach((incident) => {
+    addItem(items, worldState, {
+      sourceType: "military_diplomacy",
+      kind: incident.kind,
+      title: incident.title,
+      summary: incident.publicSummary,
+      date: incident.date,
+      turn: incident.lastUpdatedTurn,
+      status: incident.status === "routine" ? "recorded" : "watch",
+      riskLabel: incident.statusLabel,
+      relatedLabels: [
+        incident.kindLabel,
+        incident.frontierZoneId,
+        incident.neighborCountryId,
+        ...(Array.isArray(incident.relatedCityIds) ? incident.relatedCityIds : [])
+      ].filter(Boolean)
+    });
+  });
+}
+
 function examDateSource(entry = {}) {
   return entry.sceneTime?.updatedAt ||
     entry.examSubmittedAt ||
@@ -340,6 +367,7 @@ function buildEventArchiveIndexItems(worldState = {}) {
   const officialCareerView = buildOfficialCareerView(worldState);
   const officialPostingsView = buildOfficialPostingsView(worldState);
   const localAffairsDocketView = buildLocalAffairsDocketView(worldState);
+  const militaryDiplomacyView = buildMilitaryDiplomacyView(worldState);
   const items = [];
 
   collectHistoryItems(worldState, items);
@@ -348,6 +376,7 @@ function buildEventArchiveIndexItems(worldState = {}) {
   collectOfficialItems(worldState, items, officialCareerView);
   collectOfficialAssessmentItems(worldState, items, officialPostingsView);
   collectLocalDocketItems(worldState, items, localAffairsDocketView);
+  collectMilitaryDiplomacyItems(worldState, items, militaryDiplomacyView);
   collectExamItems(worldState, items);
 
   return items.sort(sortArchiveItems);

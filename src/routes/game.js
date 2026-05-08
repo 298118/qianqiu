@@ -66,6 +66,7 @@ const {
 } = require("../game/audit");
 const { buildEventArchiveView } = require("../game/eventArchive");
 const { buildLocalAffairsDocketView } = require("../game/localAffairsDockets");
+const { buildMilitaryDiplomacyView } = require("../game/militaryDiplomacy");
 const { canEnterExam, getExam } = require("../game/exams");
 const {
   advanceExamScenePhase,
@@ -243,6 +244,7 @@ function buildCommonTurnViews(worldState, options = {}) {
     officialCareerView: buildOfficialCareerView(worldState),
     officialPostingsView: buildOfficialPostingsView(worldState),
     localAffairsDocketView: buildLocalAffairsDocketView(worldState),
+    militaryDiplomacyView: buildMilitaryDiplomacyView(worldState),
     eventArchiveView: buildEventArchiveView(worldState, options.eventArchive)
   };
 }
@@ -516,6 +518,7 @@ async function streamTurn(res, sessionId, input) {
       officialCareerView: payload.officialCareerView,
       officialPostingsView: payload.officialPostingsView,
       localAffairsDocketView: payload.localAffairsDocketView,
+      militaryDiplomacyView: payload.militaryDiplomacyView,
       eventArchiveView: payload.eventArchiveView,
       officialCareer: payload.officialCareer,
       examTrigger: payload.examTrigger,
@@ -558,6 +561,7 @@ router.post("/start", async (req, res, next) => {
       officialCareerView: buildOfficialCareerView(worldState),
       officialPostingsView: buildOfficialPostingsView(worldState),
       localAffairsDocketView: buildLocalAffairsDocketView(worldState),
+      militaryDiplomacyView: buildMilitaryDiplomacyView(worldState),
       eventArchiveView: buildEventArchiveView(worldState),
       narrative: opening.narrative
     });
@@ -595,6 +599,7 @@ router.get("/state/:sessionId", async (req, res, next) => {
       officialCareerView: buildOfficialCareerView(worldState),
       officialPostingsView: buildOfficialPostingsView(worldState),
       localAffairsDocketView: buildLocalAffairsDocketView(worldState),
+      militaryDiplomacyView: buildMilitaryDiplomacyView(worldState),
       eventArchiveView: buildEventArchiveView(worldState, eventArchiveOptionsFromQuery(req.query))
     });
   } catch (error) {

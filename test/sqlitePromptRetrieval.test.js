@@ -271,6 +271,81 @@ test("SQLite prompt retrieval indexes and repairs S63 local docket rows", {
   assert.match(repairedPayload, /钱粮|水利|案牍|盗匪|刑名/);
 });
 
+test("SQLite prompt retrieval indexes and repairs S64 military diplomacy rows", {
+  skip: hasNodeSqlite ? false : "node:sqlite is unavailable in this Node.js runtime"
+}, async (t) => {
+  const { adapter, dbPath } = createHarness(t);
+  const worldState = createPromptWorldState();
+  Object.assign(worldState, {
+    borderThreat: 88,
+    armyMorale: 34,
+    grainReserve: 240,
+    population: 7200
+  });
+  await adapter.writeSession(clone(worldState));
+
+  const reportRowId = withSqliteDatabase(dbPath, (db) =>
+    db
+      .prepare(`
+        SELECT row_id
+        FROM prompt_retrieval_index
+        WHERE session_id = ?
+          AND domain = 'events'
+          AND collection = 'militaryReports'
+        ORDER BY row_id
+        LIMIT 1
+      `)
+      .get(worldState.sessionId).row_id
+  );
+
+  assert.match(reportRowId, /^events\.militaryReports:/);
+
+  withSqliteDatabase(dbPath, (db) => {
+    db
+      .prepare(`
+        UPDATE prompt_retrieval_index
+        SET payload_json = ?,
+            search_text = ?
+        WHERE session_id = ?
+          AND row_id = ?
+      `)
+      .run(
+        JSON.stringify({
+          id: "military-report-polluted",
+          title: "SEALED_SQLITE_MILITARY_REPORT prompt provider event_log sk-test-military"
+        }),
+        "SEALED_SQLITE_MILITARY_REPORT prompt provider event_log sk-test-military",
+        worldState.sessionId,
+        reportRowId
+      );
+  });
+
+  const { record } = await adapter.readSessionRecord(worldState.sessionId);
+  const context = assemblePromptContext(record.worldState, {
+    task: "official_career",
+    playerAction: "核查山海关、辽东粮道与边报"
+  });
+  const serialized = JSON.stringify(context.retrievalContext);
+
+  assert.match(serialized, /militaryDiplomacyView|粮道|军务|服务器裁决/);
+  assert.doesNotMatch(serialized, /SEALED_SQLITE_MILITARY_REPORT/);
+  assert.doesNotMatch(serialized, /sk-test-military/);
+  assert.doesNotMatch(serialized, /event_log/);
+
+  const repairedPayload = withSqliteDatabase(dbPath, (db) =>
+    db
+      .prepare(`
+        SELECT payload_json
+        FROM prompt_retrieval_index
+        WHERE session_id = ?
+          AND row_id = ?
+      `)
+      .get(worldState.sessionId, reportRowId).payload_json
+  );
+  assert.doesNotMatch(repairedPayload, /SEALED_SQLITE_MILITARY_REPORT/);
+  assert.match(repairedPayload, /粮道|军务|边|服务器/);
+});
+
 test("SQLite prompt retrieval index repairs same-row content pollution before prompt assembly", {
   skip: hasNodeSqlite ? false : "node:sqlite is unavailable in this Node.js runtime"
 }, async (t) => {

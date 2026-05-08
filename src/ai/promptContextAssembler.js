@@ -8,6 +8,10 @@ const {
   buildLocalAffairsDocketView,
   summarizeLocalAffairsDocketsForPrompt
 } = require("../game/localAffairsDockets");
+const {
+  buildMilitaryDiplomacyRetrievalRows,
+  summarizeMilitaryDiplomacyForPrompt
+} = require("../game/militaryDiplomacy");
 const { summarizeOfficialCareerForPrompt } = require("../game/officialCareer");
 const {
   buildOfficialPostingsView,
@@ -55,6 +59,7 @@ const LIMITS = Object.freeze({
   longTermEvents: 4,
   resolvedEvents: 3,
   localDockets: 3,
+  militaryReports: 4,
   recentEvents: 6,
   entities: 5
 });
@@ -76,6 +81,7 @@ const ORDINARY_TURN_LIMITS = Object.freeze({
   longTermEvents: 1,
   resolvedEvents: 1,
   localDockets: 1,
+  militaryReports: 1,
   recentEvents: 4,
   entities: 1
 });
@@ -108,6 +114,7 @@ const RETRIEVAL_ROW_PATHS = Object.freeze([
   ["events", "longTermEvents"],
   ["events", "resolvedEvents"],
   ["events", "localDockets"],
+  ["events", "militaryReports"],
   ["events", "recentEvents"],
   ["entities", "highlights"]
 ]);
@@ -747,6 +754,29 @@ function compactLocalDocket(docket) {
   };
 }
 
+function compactMilitaryReport(report) {
+  return {
+    id: report.id,
+    type: report.type,
+    title: report.title,
+    statusLabel: report.statusLabel,
+    threatScore: report.threatScore,
+    supplyRisk: report.supplyRisk,
+    readinessScore: report.readinessScore,
+    diplomaticTension: report.diplomaticTension,
+    intelConfidence: report.intelConfidence,
+    countryId: report.countryId,
+    neighborCountryId: report.neighborCountryId,
+    cityId: report.cityId,
+    cityIds: (report.cityIds || []).slice(0, 4),
+    routeId: report.routeId,
+    routeIds: (report.routeIds || []).slice(0, 4),
+    frontierZoneId: report.frontierZoneId,
+    publicSummary: report.publicSummary,
+    authorityBoundary: report.authorityBoundary
+  };
+}
+
 function compactEntity(entity) {
   return {
     id: entity.id,
@@ -768,7 +798,9 @@ function buildEventContext(worldState, query, retrievalSource = null) {
   const eventArchiveItems = safeRetrievalCollection(retrievalSource, "events", "recentEvents") ||
     buildEventArchiveIndexItems(worldState);
   const sourceLocalDockets = safeRetrievalCollection(retrievalSource, "events", "localDockets");
+  const sourceMilitaryReports = safeRetrievalCollection(retrievalSource, "events", "militaryReports");
   const localDockets = sourceLocalDockets || buildLocalAffairsDocketView(worldState).dockets;
+  const militaryReports = sourceMilitaryReports || buildMilitaryDiplomacyRetrievalRows(worldState);
   const recentEvents = eventArchiveItems
     .filter((event) => event.sourceType === "event_history")
     .slice(0, LIMITS.recentEvents)
@@ -816,6 +848,18 @@ function buildEventContext(worldState, query, retrievalSource = null) {
       textFields: ["domain", "domainLabel", "title", "cityId", "jurisdictionId", "bureauId", "statusLabel", "metricRefs", "assessmentHint", "publicSummary"],
       baseScore: (docket) => (docket.severity || 0) * 32 + clampNumber(docket.pressureScore, 0, 100, 0),
       mapRow: compactLocalDocket
+    }),
+    militaryReports: rankRows(militaryReports, {
+      query,
+      limit: LIMITS.militaryReports,
+      sourceType: "militaryDiplomacyView.report",
+      textFields: ["type", "title", "statusLabel", "countryId", "neighborCountryId", "cityIds", "routeIds", "frontierZoneId", "publicSummary", "authorityBoundary"],
+      baseScore: (report) => Math.max(
+        clampNumber(report.threatScore, 0, 100, 0),
+        clampNumber(report.supplyRisk, 0, 100, 0),
+        clampNumber(report.diplomaticTension, 0, 100, 0)
+      ),
+      mapRow: compactMilitaryReport
     }),
     recentEvents
   };
@@ -884,6 +928,7 @@ function applyPromptBudget(context, options = {}) {
   next.events.longTermEvents = next.events.longTermEvents.slice(0, limits.longTermEvents);
   next.events.resolvedEvents = next.events.resolvedEvents.slice(0, limits.resolvedEvents);
   next.events.localDockets = next.events.localDockets.slice(0, limits.localDockets);
+  next.events.militaryReports = next.events.militaryReports.slice(0, limits.militaryReports);
   next.events.recentEvents = next.events.recentEvents.slice(0, limits.recentEvents);
   next.entities.highlights = next.entities.highlights.slice(0, limits.entities);
 
@@ -922,6 +967,7 @@ function buildRankedRetrievalContext(worldState = {}, options = {}) {
       "worldThreadView",
       "longTermEventView",
       "localAffairsDocketView",
+      "militaryDiplomacyView",
       "worldEntityView",
       "eventArchiveView"
     ],
@@ -954,6 +1000,7 @@ function assemblePromptContext(worldState = {}, options = {}) {
     worldPeople: summarizeWorldPeopleForPrompt(worldState),
     worldThreads: summarizeWorldThreadsForPrompt(worldState),
     localAffairsDockets: summarizeLocalAffairsDocketsForPrompt(worldState),
+    militaryDiplomacy: summarizeMilitaryDiplomacyForPrompt(worldState),
     officialCareer: summarizeOfficialCareerForPrompt(worldState),
     officialPostings: summarizeOfficialPostingsForPrompt(worldState),
     roleWorldCoupling: summarizeRoleWorldCouplingForPrompt(worldState),

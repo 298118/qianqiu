@@ -429,6 +429,39 @@ test("turn prompt input includes visible local affairs dockets for magistrate on
   assert.doesNotMatch(scholarTask.input, /钱粮奏销|刑名词讼|水利修防|任所收束/);
 });
 
+test("turn prompt input includes visible S64 military diplomacy reports for general only", () => {
+  const generalState = createInitialState({ role: "general", playerName: "军务 Prompt Tester" });
+  Object.assign(generalState, {
+    borderThreat: 88,
+    armyMorale: 34,
+    grainReserve: 240,
+    population: 7000
+  });
+  generalState.worldGeography.frontierZones.push({
+    id: "frontier-hidden-prompt-s64",
+    name: "SEALED_S64_PROMPT_FRONTIER",
+    countryId: "country-ming",
+    neighborCountryId: "country-manchu-frontier",
+    cityIds: ["city-beijing"],
+    routeIds: ["route-shanhai-liaodong-pass"],
+    pressure: 99,
+    visibility: "hidden",
+    publicSummary: "SEALED_S64_PROMPT_FRONTIER prompt provider event_log sk-test-s64-prompt"
+  });
+  const scholarState = createInitialState({ role: "scholar", playerName: "无军务 Prompt Tester" });
+
+  const generalTask = buildTurnTask(generalState, "查问山海关粮道、驻军和邻国使节");
+  const scholarTask = buildTurnTask(scholarState, "在县学听闻边报");
+
+  assert.match(generalTask.input, /militaryDiplomacy/);
+  assert.match(generalTask.input, /militaryDiplomacyView/);
+  assert.match(generalTask.input, /军务|粮道|使节|服务器裁决/);
+  assert.doesNotMatch(generalTask.input, /SEALED_S64_PROMPT/);
+  assert.doesNotMatch(generalTask.input, /sk-test-s64-prompt|event_log/);
+  assert.match(scholarTask.input, /militaryDiplomacy/);
+  assert.doesNotMatch(scholarTask.input, /military-theater-|military-incident-|驻军|使节往来/);
+});
+
 test("turn prompt input includes S53 retrieval context as dynamic world state", () => {
   const worldState = createInitialState({ role: "official", playerName: "Retrieval Prompt Tester" });
   Object.assign(worldState.player, {
