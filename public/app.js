@@ -558,7 +558,7 @@ async function loadSaveSession(sessionId, options = {}) {
     localStorage.setItem("qianqiu.sessionId", payload.sessionId);
     renderPayloadWorldState(payload);
     narrative.innerHTML = "";
-    const history = payload.worldState.eventHistory || [];
+    const history = archiveNarrativeEntriesFromPayload(payload);
     if (history.length) {
       appendTurnDivider(options.restore ? "存档记事" : "载入存档");
       history.forEach((event) => appendNarrative(event));
@@ -796,6 +796,15 @@ function getRouteView(view) {
 
 function viewArray(view, key) {
   return Array.isArray(view?.[key]) ? view[key] : [];
+}
+
+function archiveNarrativeEntriesFromPayload(payload) {
+  return viewArray(getRouteView(payload?.eventArchiveView), "items")
+    .filter((item) => item?.sourceType === "event_history" && typeof item.summary === "string")
+    .slice()
+    .reverse()
+    .map((item) => item.summary.trim())
+    .filter(Boolean);
 }
 
 function countViewRows(view, keys) {
@@ -1642,7 +1651,12 @@ function renderEventArchiveDetails(archive = currentEventArchiveView) {
   if (!archive) return null;
   const items = viewArray(archive, "items");
   const cards = items.map(createEventArchiveItem);
-  return renderInformationDetailSection("事件要目", `${cards.length}条公开卷宗`, cards);
+  const pagination = archive.pagination || {};
+  const total = pagination.totalItems ?? archive.counts?.total ?? cards.length;
+  const page = pagination.page && pagination.totalPages
+    ? ` · 第${pagination.page}/${pagination.totalPages}页`
+    : "";
+  return renderInformationDetailSection("事件要目", `${cards.length}/${total}条公开卷宗${page}`, cards);
 }
 
 function renderInformationPanelDetails(tabId) {

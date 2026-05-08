@@ -1,4 +1,5 @@
 const { summarizeExamCalendarForPrompt } = require("../game/examCalendar");
+const { buildEventArchiveIndexItems } = require("../game/eventArchive");
 const {
   buildLongTermEventView,
   summarizeLongTermEventsForPrompt
@@ -562,10 +563,15 @@ function compactResolvedEvent(event) {
 
 function compactRecentEvent(event, index) {
   return {
-    sourceView: "eventHistory.visible",
+    sourceView: "eventArchiveView",
     priority: LIMITS.recentEvents - index,
-    title: `近事${index + 1}`,
-    summary: cleanText(event, "", MAX_TEXT_LENGTH)
+    id: event.id,
+    sourceType: event.sourceType,
+    title: event.title || `近事${index + 1}`,
+    summary: cleanText(event.summary, "", MAX_TEXT_LENGTH),
+    status: event.status,
+    dateLabel: event.dateLabel,
+    turn: event.turn
   };
 }
 
@@ -587,9 +593,9 @@ function compactEntity(entity) {
 function buildEventContext(worldState, query) {
   const threadView = buildWorldThreadView(worldState);
   const longTermView = buildLongTermEventView(worldState);
-  const recentEvents = (Array.isArray(worldState.eventHistory) ? worldState.eventHistory : [])
-    .slice(-LIMITS.recentEvents)
-    .filter((event) => typeof event === "string" && event.trim())
+  const recentEvents = buildEventArchiveIndexItems(worldState)
+    .filter((event) => event.sourceType === "event_history")
+    .slice(0, LIMITS.recentEvents)
     .map(compactRecentEvent);
 
   return {
@@ -666,7 +672,7 @@ function buildRankedRetrievalContext(worldState = {}, options = {}) {
       "worldThreadView",
       "longTermEventView",
       "worldEntityView",
-      "eventHistory.visible"
+      "eventArchiveView"
     ],
     query: {
       task: query.task,

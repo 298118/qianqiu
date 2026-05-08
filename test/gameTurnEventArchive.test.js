@@ -116,6 +116,14 @@ test("game routes expose sanitized event archive view without audit or provider 
   assert.equal(serialized.includes("data/sessions"), false);
   assert.equal(serialized.includes("data/audit"), false);
 
+  const pagedStateResponse = await fetch(`${server.baseUrl}/api/game/state/${start.payload.sessionId}?eventArchivePage=1&eventArchivePageSize=2`);
+  const pagedState = await pagedStateResponse.json();
+  assert.equal(pagedStateResponse.status, 200);
+  assert.equal(pagedState.eventArchiveView.pagination.pageSize, 2);
+  assert.ok(pagedState.eventArchiveView.items.length <= 2);
+  assert.equal(pagedState.eventArchiveView.counts.total, pagedState.eventArchiveView.pagination.totalItems);
+  assert.equal(pagedState.eventArchiveView.pageCounts.total, pagedState.eventArchiveView.items.length);
+
   const sseResponse = await fetch(`${server.baseUrl}/api/game/turn`, {
     method: "POST",
     headers: { "Content-Type": "application/json", Accept: "text/event-stream" },

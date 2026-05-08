@@ -3,7 +3,10 @@ const {
   buildPromptInstructions,
   getTurnPromptPackName
 } = require("./promptPacks");
+const { buildEventArchiveIndexItems } = require("../game/eventArchive");
 const { formatYearMonthPeriod } = require("../game/time");
+
+const MAX_PROMPT_RECENT_EVENTS = 6;
 
 function compactPlayer(player = {}) {
   return {
@@ -65,6 +68,21 @@ function compactExam(activeExam) {
   };
 }
 
+function compactRecentEvents(worldState = {}) {
+  return buildEventArchiveIndexItems(worldState)
+    .filter((item) => item.sourceType === "event_history")
+    .slice(0, MAX_PROMPT_RECENT_EVENTS)
+    .map((item) => ({
+      sourceView: "eventArchiveView",
+      id: item.id,
+      title: item.title,
+      summary: item.summary,
+      status: item.status,
+      dateLabel: item.dateLabel,
+      turn: item.turn
+    }));
+}
+
 function compactWorldState(worldState = {}, options = {}) {
   return {
     year: worldState.year,
@@ -85,7 +103,7 @@ function compactWorldState(worldState = {}, options = {}) {
     factions: worldState.factions,
     ...assemblePromptContext(worldState, options),
     activeExam: compactExam(worldState.activeExam),
-    recentEvents: (worldState.eventHistory || []).slice(-6),
+    recentEvents: compactRecentEvents(worldState),
     setup: worldState.setup || {},
     player: compactPlayer(worldState.player)
   };

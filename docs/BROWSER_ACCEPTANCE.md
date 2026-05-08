@@ -52,7 +52,7 @@ S53.3 adds the first runtime browser shell:
 
 - `#information-panel` is a compact tab shell inside `#scholar-panel`.
 - `public/app.js` caches `worldGeographyView`, `worldEntityView`, `worldPeopleView`, `officialPostingsView`, and the existing long-term/world-thread/official views from route payloads.
-- `#event-archive-panel` is enabled after S53.6 and renders only server-built sanitized `eventArchiveView` rows as `.event-archive-item[data-event-id][data-source-type][data-status]`.
+- `#event-archive-panel` is enabled after S53.6 and renders only server-built sanitized `eventArchiveView` rows as `.event-archive-item[data-event-id][data-source-type][data-status]`; S57.1 adds pagination metadata and SQLite safe-index backing without changing the browser data source.
 - S53.4 fills `#world-geography-panel` with `.world-geography-card[data-kind][data-entity-id]` cards for visible countries, cities, routes, frontier zones, and office jurisdictions.
 - S53.4 fills `#posting-geography-panel` with `.posting-geography-card[data-kind][data-entity-id]` cards for current posting, visible city jurisdictions, local metrics, and related routes.
 - S53.5 fills `#world-people-panel` with `.world-people-card[data-kind][data-entity-id]` cards for visible people, households, assets, estates, and relationships from `worldPeopleView`.

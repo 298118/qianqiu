@@ -219,7 +219,14 @@ function emptySystemFeedback() {
   };
 }
 
-function buildCommonTurnViews(worldState) {
+function eventArchiveOptionsFromQuery(query = {}) {
+  return {
+    page: query.eventArchivePage ?? query.archivePage,
+    pageSize: query.eventArchivePageSize ?? query.archivePageSize
+  };
+}
+
+function buildCommonTurnViews(worldState, options = {}) {
   return {
     examCalendarView: buildExamCalendarView(worldState),
     examRivalView: buildExamRivalView(worldState),
@@ -233,7 +240,7 @@ function buildCommonTurnViews(worldState) {
     longTermEventView: buildLongTermEventView(worldState),
     officialCareerView: buildOfficialCareerView(worldState),
     officialPostingsView: buildOfficialPostingsView(worldState),
-    eventArchiveView: buildEventArchiveView(worldState)
+    eventArchiveView: buildEventArchiveView(worldState, options.eventArchive)
   };
 }
 
@@ -575,7 +582,7 @@ router.get("/state/:sessionId", async (req, res, next) => {
       longTermEventView: buildLongTermEventView(worldState),
       officialCareerView: buildOfficialCareerView(worldState),
       officialPostingsView: buildOfficialPostingsView(worldState),
-      eventArchiveView: buildEventArchiveView(worldState)
+      eventArchiveView: buildEventArchiveView(worldState, eventArchiveOptionsFromQuery(req.query))
     });
   } catch (error) {
     next(error);

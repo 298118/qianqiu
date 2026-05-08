@@ -27,7 +27,7 @@
 - S48 时间专项：普通自由行动从一月一回合改为一旬一回合；月末系统只在下旬进入下月上旬时完整结算；考试已有 scene-local time；浏览器日期统一为“年月旬”，见 [TIME_SPECIALTY_ROADMAP_ARCHIVE.md](TIME_SPECIALTY_ROADMAP_ARCHIVE.md)。
 - S49-S53 本地数据库基础：storage adapter、可选 SQLite session row、本地审计、天下地理/人物/官职任所安全 projection、检索式 prompt context 和浏览器局势簿，见 [LOCAL_DATABASE_FOUNDATION_ARCHIVE.md](LOCAL_DATABASE_FOUNDATION_ARCHIVE.md)。
 
-当前活动路线图见 [DEVELOPMENT_STEPS.md](DEVELOPMENT_STEPS.md)，数据库方向见 [DYNAMIC_WORLD_DATABASE_PLAN.md](DYNAMIC_WORLD_DATABASE_PLAN.md)。S54 起的重点是把剩余数据拆成本地 SQLite 业务表：地理、人物、官职任所、安全事件索引、SQLite 检索式 prompt 和 JSON/SQLite 双模式验收。S54 已完成天下地理表契约、SQLite `geo_*` 持久化、导入/修复/导出工具和双模式 parity；S55 已完成人物、家族、资产、田产和关系 `people_*` 可见 bridge 行持久化、JSON/SQLite `worldPeopleView` parity、以及服务器人物事件与 `last_event_id` 审计关联；S56 已按契约创建并同步官署、官职、任所、考成和迁转 `office_*` SQLite 派生表，并在读取时从 `world_state_json` 单向修复缺失、陈旧、错行、同 `row_id` / 同 revision 内容污染或旧行缺指纹。当前不规划远程存档、账号体系、多人同步、云端冲突解决或托管数据库。
+当前活动路线图见 [DEVELOPMENT_STEPS.md](DEVELOPMENT_STEPS.md)，数据库方向见 [DYNAMIC_WORLD_DATABASE_PLAN.md](DYNAMIC_WORLD_DATABASE_PLAN.md)。S54 起的重点是把剩余数据拆成本地 SQLite 业务表：地理、人物、官职任所、安全事件索引、SQLite 检索式 prompt 和 JSON/SQLite 双模式验收。S54 已完成天下地理表契约、SQLite `geo_*` 持久化、导入/修复/导出工具和双模式 parity；S55 已完成人物、家族、资产、田产和关系 `people_*` 可见 bridge 行持久化、JSON/SQLite `worldPeopleView` parity、以及服务器人物事件与 `last_event_id` 审计关联；S56 已按契约创建并同步官署、官职、任所、考成和迁转 `office_*` SQLite 派生表，并在读取时从 `world_state_json` 单向修复缺失、陈旧、错行、同 `row_id` / 同 revision 内容污染或旧行缺指纹。S57.1 已新增安全事件档案分页 projection 和 SQLite `event_archive_index` 派生索引；prompt 近事检索与顶层 `recentEvents` 都改读安全事件档案条目，不读取 raw audit 或 raw `eventHistory`。当前不规划远程存档、账号体系、多人同步、云端冲突解决或托管数据库。
 
 开发规范不变：Mock 默认可玩，真实 provider 可选；服务器拥有状态边界、时间推进、科举晋级、作弊处罚、官职任免、长期事件、世界实体、世界议程、数据库写入和持久化裁决；AI 不能直接执行 SQL 或写业务表，只能提交结构化建议。
 
@@ -201,6 +201,7 @@ POST /api/exam/submit
 - S54.3 起，`npm run storage:geography:sqlite -- status|repair|export` 可检查地理业务表漂移、按 `world_sessions.world_state_json` 修复 `geo_*` 行，并导出脱敏 debug dump；`import` / `repair` 的 `--dry-run` 不修改 SQLite，`export` 不输出 hidden notes、数据库路径、prompt、key 或 raw provider response。
 - S55.2 起，SQLite 模式会用 `src/storage/sqlitePeopleTables.js` 同步规范化后的可见 `worldState.worldPeople` bridge rows 到 `people_npcs`、`people_households`、`people_assets`、`people_estates`、`people_relationships`，并在读取时从 `world_state_json` 修复缺失、陈旧或错行的派生表。S55.3 起，服务器已应用的人物关系、active request 结果和后续可见人物/家产 delta 会生成 `world_people` 审计事件，SQLite `people_*` 行可保存本地 `last_event_id` 关联。它不改变 `worldPeopleView`，也不把 hidden NPC 私档、raw `people_*` 行或事件 id 回填进 route raw `worldState.worldPeople`。
 - S56.2 起，SQLite 模式会用 `src/storage/sqliteOfficialPostingTables.js` 同步规范化后的安全 `worldState.officialPostings` projection 到 `office_bureaus`、`office_catalog`、`office_city_jurisdictions`、`office_postings`、`office_assessments`、`office_transfers`；S56.3 起，每条 `office_*` 派生行带 `metadata_json.contentHash` 本地漂移探针，读取时从 `world_state_json` 修复缺失、陈旧、错行、同 id/同 revision 内容污染或旧行缺指纹的派生表。它不新增 route 字段，也不让 raw `office_*` 反向改写 `player.officeTitle`、`officialCareer` 或 prompt/browser view。
+- S57.1 起，SQLite 模式会用 `src/storage/sqliteEventArchiveTables.js` 同步 `buildEventArchiveView` / `buildEventArchiveIndexItems` 生成的安全公开事件条目到 `event_archive_index`。该表只保存 `eventArchiveView` 已脱敏、可分页的公开 projection 字段，带 `metadata_json.contentHash` 漂移探针，读档时从 `world_sessions.world_state_json -> eventArchiveView` 单向修复，不读取 raw `event_log` / `ai_change_proposals`，也不把 raw index row 反向回填 route state、prompt 或浏览器。
 - `npm run smoke:browser -- --storage-adapter sqlite --sqlite-db <path>` 可让 browser smoke helper 和临时 Mock 服务器共用 SQLite adapter，验证“天下格局/任所地理”等浏览器面板仍只读 route view。
 
 本地审计：
@@ -220,7 +221,7 @@ S54+ 数据库拆表必须继续保持 JSON 默认可玩，并保留 `worldState
 - `worldGeography` / `worldGeographyView`：国家、邻国、区域、城市、路线、边境压力面和官署辖区；只做可见 projection 与轻量压力快照，不替代财政、战争、外交或城市治理裁决。
 - `worldPeople` / `worldPeopleView`：从当前可见 `characters`、`relationshipLedger` 和 active request 近期札记桥接人物、家族、资产、田产和关系摘要；不保存 hidden 私档。S55.2 已让 SQLite 模式把这份可见 bridge projection 同步进本地 `people_*` 表，S55.3 让服务器人物事件通过审计和本地 `last_event_id` 关联追溯这些可见行；prompt/UI 仍只读服务器 view，不读 raw table 或 raw audit。
 - `officialPostings` / `officialPostingsView`：从 `officialCatalog`、`officialCareer`、地方官 role state 和可见地理 view 派生官署、官职、任所、考成和迁转摘要；不改变 `officialCareerView`。
-- `eventArchiveView`：从公开近事、世界议程、长期事件、官场履历和考试档案整理事件档案；不读取 raw audit、provider proposal、prompt、本地路径或 key。
+- `eventArchiveView`：从公开近事、世界议程、长期事件、官场履历和考试档案整理事件档案；S57.1 起带分页 metadata，并在 SQLite 模式同步到安全 `event_archive_index`；不读取 raw audit、provider proposal、prompt、本地路径或 key。
 
 S53 浏览器“局势簿”只读这些 route view。后续 S54-S59 拆表时，UI 和 prompt contract 应保持 view-first，不暴露原始业务表。
 
@@ -334,14 +335,14 @@ S49-S53 基础层结论：
 2. `event_log` / `ai_change_proposals` 是本地脱敏审计，不进入玩家 API，也不让 AI 直接写表。
 3. `worldGeographyView`、`worldPeopleView`、`officialPostingsView`、`eventArchiveView` 是当前 UI/prompt 合法入口。
 4. 浏览器“局势簿”只读 route player-facing view，不读 raw ledger、raw audit、provider-only `retrievalContext`、prompt、本地路径或 key。
-5. S54 已固定并实现地理 SQLite 业务表与维护工具；S55 已固定并实现人物域可见 bridge SQLite 持久化与服务器人物事件审计关联；S56 已实现官职任所 `office_*` 派生表持久化、读档修复和同 id/同 revision 内容漂移探针；安全事件索引尚未拆成 SQLite 业务表，仍按 S57-S59 小步推进。
+5. S54 已固定并实现地理 SQLite 业务表与维护工具；S55 已固定并实现人物域可见 bridge SQLite 持久化与服务器人物事件审计关联；S56 已实现官职任所 `office_*` 派生表持久化、读档修复和同 id/同 revision 内容漂移探针；S57.1 已把安全 `eventArchiveView` projection 拆入 SQLite `event_archive_index` 并接入 prompt 近事检索、顶层 `recentEvents` 和读档叙事回放，后续 S57.2 仍负责 raw audit 到公开 projection 的本地工具。
 
 S54-S59 剩余方向：
 
 - S54：地理 SQLite 表契约、adapter 持久化、导入/修复/导出和更广 view parity 已完成。
-- S55：人物、家族、资产、田产、关系 SQLite 表契约、可见 bridge 持久化、NPC/关系/家产可见 delta 的服务器事件 helper 和审计关联已完成；真正 hidden 私档和 raw audit 外安全事件索引仍留给后续切片。
+- S55：人物、家族、资产、田产、关系 SQLite 表契约、可见 bridge 持久化、NPC/关系/家产可见 delta 的服务器事件 helper 和审计关联已完成；真正 hidden 私档仍留给后续切片，raw audit 到公开事件的工具归 S57.2。
 - S56：官署、官职、任所、考成、迁转 SQLite 表契约、`office_*` 派生表持久化、跨域引用安全修复和内容漂移探针已完成；后续 SQLite 检索仍只能读取安全 capped projection。
-- S57：安全事件索引和审计到公开事件 projection。
+- S57：S57.1 已完成安全事件索引和事件档案分页；S57.2 继续做审计到公开事件 projection 工具与脱敏测试。
 - S58：SQLite 索引驱动的 prompt context 与浏览器 JSON/SQLite parity。
 - S59：双模式集成硬化与再归档。
 

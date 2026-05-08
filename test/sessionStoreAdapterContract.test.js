@@ -6,6 +6,7 @@ const path = require("node:path");
 const { isBuiltin } = require("node:module");
 
 const { assemblePromptContext } = require("../src/ai/promptContextAssembler");
+const { buildEventArchiveView } = require("../src/game/eventArchive");
 const { createInitialState } = require("../src/game/initialState");
 const { buildOfficialPostingsView } = require("../src/game/officialPostings");
 const { applyRelationshipChanges } = require("../src/game/relationships");
@@ -305,6 +306,10 @@ function readSqliteOfficialPostingCounts(db, sessionId) {
     assessmentRecords: db.prepare("SELECT COUNT(*) AS count FROM office_assessments WHERE session_id = ?").get(sessionId).count,
     transferRecords: db.prepare("SELECT COUNT(*) AS count FROM office_transfers WHERE session_id = ?").get(sessionId).count
   };
+}
+
+function readSqliteEventArchiveCount(db, sessionId) {
+  return db.prepare("SELECT COUNT(*) AS count FROM event_archive_index WHERE session_id = ?").get(sessionId).count;
 }
 
 function sumSqliteGeographyCounts(counts) {
@@ -1999,6 +2004,127 @@ test("SQLite storage adapter syncs people rows on import and delete", {
 
     assert.equal(session.count, 0);
     assert.equal(sumSqlitePeopleCounts(counts), 0);
+  });
+});
+
+test("SQLite storage adapter syncs and repairs the safe event archive index", {
+  skip: hasNodeSqlite ? false : "node:sqlite is unavailable in this Node.js runtime"
+}, async (t) => {
+  const { adapter, dbPath } = createSqliteHarness(t);
+  const worldState = buildWorldState({
+    playerName: "事件索引",
+    turnCount: 5
+  });
+  worldState.eventHistory = [
+    "县学讲席入档。",
+    "prompt provider proposal event_log data/audit sk-proj-event-index-secret-123456",
+    "秋粮申报公开入档。"
+  ];
+  await adapter.writeSession(worldState);
+
+  const expectedArchive = buildEventArchiveView(worldState, { pageSize: 50 });
+  withSqliteDatabase(dbPath, (db) => {
+    const count = readSqliteEventArchiveCount(db, worldState.sessionId);
+    const rows = db
+      .prepare(`
+        SELECT row_id, source, visibility, source_type, summary, metadata_json
+        FROM event_archive_index
+        WHERE session_id = ?
+        ORDER BY sort_turn DESC, sort_sequence ASC
+      `)
+      .all(worldState.sessionId);
+    const serializedRows = JSON.stringify(rows);
+
+    assert.equal(count, expectedArchive.pagination.totalItems);
+    assert.equal(rows.length, 2);
+    assert.equal(rows[0].source, "event_archive_view");
+    assert.equal(rows[0].visibility, "public");
+    assert.equal(rows[0].source_type, "event_history");
+    assert.ok(JSON.parse(rows[0].metadata_json).contentHash);
+    assert.equal(serializedRows.includes("sk-proj-event-index-secret"), false);
+    assert.equal(serializedRows.includes("event_log"), false);
+    assert.equal(serializedRows.includes("provider"), false);
+
+    db
+      .prepare("UPDATE event_archive_index SET summary = ? WHERE session_id = ? AND row_id = ?")
+      .run("SEALED_EVENT_INDEX_RAW prompt event_log", worldState.sessionId, rows[0].row_id);
+  });
+
+  const { record } = await adapter.readSessionRecord(worldState.sessionId);
+  assert.equal(record.worldState.eventHistory.includes("秋粮申报公开入档。"), true);
+
+  withSqliteDatabase(dbPath, (db) => {
+    const rows = db
+      .prepare(`
+        SELECT row_id, summary, metadata_json
+        FROM event_archive_index
+        WHERE session_id = ?
+        ORDER BY sort_turn DESC, sort_sequence ASC
+      `)
+      .all(worldState.sessionId);
+    const serializedRows = JSON.stringify(rows);
+
+    assert.equal(rows.length, 2);
+    assert.equal(serializedRows.includes("SEALED_EVENT_INDEX_RAW"), false);
+    assert.equal(serializedRows.includes("prompt"), false);
+    assert.equal(serializedRows.includes("event_log"), false);
+    assert.ok(rows.every((row) => JSON.parse(row.metadata_json).contentHash));
+  });
+});
+
+test("SQLite storage adapter keeps event archive index in import, delete, and stale-write paths", {
+  skip: hasNodeSqlite ? false : "node:sqlite is unavailable in this Node.js runtime"
+}, async (t) => {
+  const { adapter, dbPath } = createSqliteHarness(t);
+  const worldState = buildWorldState({
+    playerName: "事件索引导入",
+    turnCount: 3
+  });
+  worldState.eventHistory = ["公开卷宗一。", "公开卷宗二。"];
+  const envelope = buildEnvelope(adapter, worldState, { revision: 4 });
+
+  await adapter.importSessionRecord(envelope, { overwrite: true });
+  withSqliteDatabase(dbPath, (db) => {
+    assert.equal(readSqliteEventArchiveCount(db, worldState.sessionId), 2);
+    const row = db
+      .prepare("SELECT revision, row_revision FROM event_archive_index WHERE session_id = ? LIMIT 1")
+      .get(worldState.sessionId);
+    assert.equal(row.revision, 4);
+    assert.equal(row.row_revision, 4);
+  });
+
+  const { record: staleRecord } = await adapter.readSessionRecord(worldState.sessionId);
+  const latestWorldState = JSON.parse(JSON.stringify(staleRecord.worldState));
+  latestWorldState.turnCount = 9;
+  latestWorldState.eventHistory.push("新近公开卷宗。");
+  await adapter.writeSession(latestWorldState);
+  const beforeReject = withSqliteDatabase(dbPath, (db) =>
+    db
+      .prepare("SELECT COUNT(*) AS count, MAX(revision) AS max_revision FROM event_archive_index WHERE session_id = ?")
+      .get(worldState.sessionId)
+  );
+
+  const staleWorldState = JSON.parse(JSON.stringify(staleRecord.worldState));
+  staleWorldState.eventHistory.push("过期写入不得落索引。");
+  await assert.rejects(
+    () =>
+      adapter.writeSession(staleWorldState, {
+        previousRecord: staleRecord,
+        expectedRevision: staleRecord.revision
+      }),
+    (error) => error.statusCode === 409 && /revision conflict/i.test(error.message)
+  );
+
+  const afterReject = withSqliteDatabase(dbPath, (db) =>
+    db
+      .prepare("SELECT COUNT(*) AS count, MAX(revision) AS max_revision FROM event_archive_index WHERE session_id = ?")
+      .get(worldState.sessionId)
+  );
+  assert.deepEqual(afterReject, beforeReject);
+
+  await adapter.deleteSession(worldState.sessionId);
+  withSqliteDatabase(dbPath, (db) => {
+    assert.equal(readSqliteEventArchiveCount(db, worldState.sessionId), 0);
   });
 });
 

@@ -109,6 +109,10 @@ test("event archive view merges visible sources into capped public items", () =>
   assert.equal(view.schemaVersion, 1);
   assert.equal(view.generatedAtTurn, 9);
   assert.match(view.dateLabel, /1644年八月中旬/);
+  assert.equal(view.pagination.page, 1);
+  assert.equal(view.pagination.pageSize, 24);
+  assert.equal(view.pagination.totalItems, view.counts.total);
+  assert.equal(view.pageCounts.total, view.items.length);
   assert.ok(view.items.length >= 6);
   assert.ok(view.items.length <= 24);
   assert.ok(view.items.every((item) =>
@@ -138,4 +142,37 @@ test("event archive sanitizer drops prompt, provider, path, key, and raw state t
   assert.equal(cleanArchiveText("E:\\LSMNQ\\data\\sessions\\secret.json"), "");
   assert.equal(cleanArchiveText("OPENAI_API_KEY=sk-proj-archive-secret-123456"), "");
   assert.equal(cleanArchiveText("MIMO_API_KEY=tp-archive-secret-123456"), "");
+});
+
+test("event archive view paginates the safe projection without reviving filtered text", () => {
+  const worldState = createInitialState({ playerName: "分页书生", role: "scholar" });
+  worldState.turnCount = 40;
+  worldState.eventHistory = Array.from({ length: 30 }, (_, index) =>
+    index === 25
+      ? "prompt provider proposal event_log sk-proj-archive-secret-777777"
+      : `公开近事第${index + 1}条`
+  );
+
+  const firstPage = buildEventArchiveView(worldState, { pageSize: 5 });
+  const secondPage = buildEventArchiveView(worldState, { page: 2, pageSize: 5 });
+  const overLargePage = buildEventArchiveView(worldState, { page: 999, pageSize: 5 });
+  const serialized = JSON.stringify([firstPage, secondPage, overLargePage]);
+
+  assert.equal(firstPage.items.length, 5);
+  assert.equal(firstPage.pagination.page, 1);
+  assert.equal(firstPage.pagination.pageSize, 5);
+  assert.equal(firstPage.pagination.hasNextPage, true);
+  assert.equal(secondPage.pagination.page, 2);
+  assert.equal(secondPage.pagination.hasPreviousPage, true);
+  assert.equal(overLargePage.pagination.page, overLargePage.pagination.totalPages);
+  assert.equal(firstPage.pagination.totalItems, 7);
+  assert.equal(firstPage.counts.total, 7);
+  assert.equal(firstPage.pageCounts.total, 5);
+  assert.deepEqual(
+    firstPage.items.map((item) => item.summary),
+    ["公开近事第30条", "公开近事第29条", "公开近事第28条", "公开近事第27条", "公开近事第25条"]
+  );
+  assert.doesNotMatch(serialized, /sk-proj-archive-secret/);
+  assert.doesNotMatch(serialized, /event_log/);
+  assert.doesNotMatch(serialized, /provider/);
 });

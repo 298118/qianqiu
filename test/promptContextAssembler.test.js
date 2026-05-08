@@ -172,6 +172,7 @@ test("ranked retrieval context prioritizes action-matched geography and current 
 test("ranked retrieval context caps recent event summaries and ignores audit-shaped world state fields", () => {
   const worldState = createInitialState({ role: "magistrate", playerName: "Event Context Tester" });
   worldState.eventHistory = Array.from({ length: 10 }, (_, index) => `可见近事${index}`);
+  worldState.eventHistory.push("prompt provider proposal event_log sk-proj-context-secret-123456");
   worldState.aiProposals = [{ summary: "SEALED_AI_PROPOSAL_PAYLOAD" }];
 
   const context = buildRankedRetrievalContext(worldState, {
@@ -183,7 +184,10 @@ test("ranked retrieval context caps recent event summaries and ignores audit-sha
   assert.equal(context.events.recentEvents.length, 6);
   assert.deepEqual(
     context.events.recentEvents.map((event) => event.summary),
-    ["可见近事4", "可见近事5", "可见近事6", "可见近事7", "可见近事8", "可见近事9"]
+    ["可见近事9", "可见近事8", "可见近事7", "可见近事6", "可见近事5", "可见近事4"]
   );
+  assert.ok(context.events.recentEvents.every((event) => event.sourceView === "eventArchiveView"));
   assert.doesNotMatch(serialized, /SEALED_AI_PROPOSAL_PAYLOAD/);
+  assert.doesNotMatch(serialized, /sk-proj-context-secret/);
+  assert.doesNotMatch(serialized, /event_log/);
 });

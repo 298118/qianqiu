@@ -11,6 +11,8 @@ const MAX_LONG_TERM_EVENTS = 5;
 const MAX_OFFICIAL_OUTCOMES = 5;
 const MAX_EXAM_RECORDS = 5;
 const MAX_TEXT_LENGTH = 180;
+const MIN_PAGE_SIZE = 1;
+const MAX_PAGE_SIZE = 50;
 
 const SECRET_ENV_NAME_PATTERN = /(KEY|TOKEN|SECRET|PASSWORD|CREDENTIAL)/i;
 const SENSITIVE_ARCHIVE_TEXT_PATTERN =
@@ -264,7 +266,15 @@ function countSources(items) {
   }, {});
 }
 
-function buildEventArchiveView(worldState = {}) {
+function normalizePage(value) {
+  return clampNumber(value, 1, Number.MAX_SAFE_INTEGER, 1);
+}
+
+function normalizePageSize(value) {
+  return clampNumber(value, MIN_PAGE_SIZE, MAX_PAGE_SIZE, MAX_ARCHIVE_ITEMS);
+}
+
+function buildEventArchiveIndexItems(worldState = {}) {
   const worldThreadView = buildWorldThreadView(worldState);
   const longTermEventView = buildLongTermEventView(worldState);
   const officialCareerView = buildOfficialCareerView(worldState);
@@ -276,15 +286,49 @@ function buildEventArchiveView(worldState = {}) {
   collectOfficialItems(worldState, items, officialCareerView);
   collectExamItems(worldState, items);
 
-  const sortedItems = items.sort(sortArchiveItems).slice(0, MAX_ARCHIVE_ITEMS);
+  return items.sort(sortArchiveItems);
+}
+
+function buildPagination(totalItems, options = {}) {
+  const pageSize = normalizePageSize(options.pageSize ?? options.limit ?? MAX_ARCHIVE_ITEMS);
+  const totalPages = Math.max(1, Math.ceil(totalItems / pageSize));
+  const page = Math.min(normalizePage(options.page), totalPages);
+  const offset = (page - 1) * pageSize;
+  return {
+    page,
+    pageSize,
+    totalItems,
+    totalPages,
+    hasPreviousPage: page > 1,
+    hasNextPage: page < totalPages,
+    offset
+  };
+}
+
+function buildEventArchiveView(worldState = {}, options = {}) {
+  const sortedItems = buildEventArchiveIndexItems(worldState);
+  const pagination = buildPagination(sortedItems.length, options);
+  const pageItems = sortedItems.slice(pagination.offset, pagination.offset + pagination.pageSize);
   return {
     schemaVersion: EVENT_ARCHIVE_SCHEMA_VERSION,
     generatedAtTurn: currentTurn(worldState),
     dateLabel: formatYearMonthPeriod(worldState),
-    items: sortedItems,
+    items: pageItems,
+    pagination: {
+      page: pagination.page,
+      pageSize: pagination.pageSize,
+      totalItems: pagination.totalItems,
+      totalPages: pagination.totalPages,
+      hasPreviousPage: pagination.hasPreviousPage,
+      hasNextPage: pagination.hasNextPage
+    },
     counts: {
       total: sortedItems.length,
       ...countSources(sortedItems)
+    },
+    pageCounts: {
+      total: pageItems.length,
+      ...countSources(pageItems)
     },
     hiddenNotice: "事件档案只收录服务器整理后的公开卷宗；本地诊断、提示词、密钥路径和模型提案均已过滤。"
   };
@@ -292,6 +336,7 @@ function buildEventArchiveView(worldState = {}) {
 
 module.exports = {
   EVENT_ARCHIVE_SCHEMA_VERSION,
+  buildEventArchiveIndexItems,
   buildEventArchiveView,
   cleanArchiveText
 };

@@ -142,6 +142,25 @@ test("S47 prompt instructions keep dynamic task payloads outside the stable pref
   assert.match(buildGradeTask(worldState, exam, essay, authenticityCheck).input, /S47_DYNAMIC_ESSAY/);
 });
 
+test("turn prompt recent events use sanitized event archive projection", () => {
+  const worldState = createInitialState({ role: "scholar", playerName: "Prompt Archive Tester" });
+  worldState.turnCount = 12;
+  worldState.eventHistory.push(
+    "AI_PROMPT_LEAK prompt provider proposal event_log data/audit/session sk-proj-prompt-secret-123456"
+  );
+  worldState.eventHistory.push("县学外闻米价回稳，士子相约修课。");
+
+  const task = buildTurnTask(worldState, "查问近事");
+
+  assert.match(task.input, /"recentEvents"/);
+  assert.match(task.input, /eventArchiveView/);
+  assert.match(task.input, /县学外闻米价回稳/);
+  assert.doesNotMatch(task.input, /AI_PROMPT_LEAK/);
+  assert.doesNotMatch(task.input, /sk-proj-prompt-secret/);
+  assert.doesNotMatch(task.input, /event_log/);
+  assert.doesNotMatch(task.input, /data\/audit/);
+});
+
 test("turn prompt input filters hidden relationship context", () => {
   const worldState = createInitialState({ role: "scholar", playerName: "Hidden Filter Tester" });
   worldState.characters.push({

@@ -39,6 +39,12 @@ const {
   normalizeRecordOfficialPostings,
   syncOfficialPostingTables
 } = require("./sqliteOfficialPostingTables");
+const {
+  deleteEventArchiveRows,
+  ensureEventArchiveTablesForRecord,
+  initializeEventArchiveTables,
+  syncEventArchiveTables
+} = require("./sqliteEventArchiveTables");
 
 const DEFAULT_SQLITE_DATABASE_PATH = path.join(__dirname, "..", "..", "data", "qianqiu.sqlite");
 const SQLITE_BUSY_TIMEOUT_MS = 5000;
@@ -211,6 +217,7 @@ function createSqliteSessionAdapter(options = {}) {
     initializeGeographyTables(database);
     initializePeopleTables(database);
     initializeOfficialPostingTables(database);
+    initializeEventArchiveTables(database);
 
     if (databasePath !== ":memory:") {
       database.exec("PRAGMA journal_mode = WAL");
@@ -299,6 +306,7 @@ function createSqliteSessionAdapter(options = {}) {
     syncGeographyTables(getDatabase(), record);
     syncPeopleTables(getDatabase(), record, options.peopleEventLinks);
     syncOfficialPostingTables(getDatabase(), record);
+    syncEventArchiveTables(getDatabase(), record);
   }
 
   function updateSessionRecordPayload(record) {
@@ -508,6 +516,7 @@ function createSqliteSessionAdapter(options = {}) {
       const repairedPeople = ensurePeopleTablesForRecord(getDatabase(), migrated.record);
       const repaired = repairedGeography || repairedPeople;
       const repairedOfficialPostings = ensureOfficialPostingTablesForRecord(getDatabase(), migrated.record);
+      ensureEventArchiveTablesForRecord(getDatabase(), migrated.record);
       if (repaired || repairedOfficialPostings) updateSessionRecordPayload(migrated.record);
       return migrated;
     });
@@ -619,6 +628,7 @@ function createSqliteSessionAdapter(options = {}) {
       deleteGeographyRows(getDatabase(), sessionId);
       deletePeopleRows(getDatabase(), sessionId);
       deleteOfficialPostingRows(getDatabase(), sessionId);
+      deleteEventArchiveRows(getDatabase(), sessionId);
       getDatabase().prepare("DELETE FROM world_sessions WHERE session_id = ?").run(sessionId);
     });
   }
