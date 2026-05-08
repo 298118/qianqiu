@@ -86,6 +86,7 @@ Durable contracts and acceptance records:
 - `docs/REAL_PROVIDER_ACCEPTANCE.md`
 - `docs/SESSION_STORAGE_MIGRATION_PLAN.md`
 - `docs/DYNAMIC_WORLD_DATABASE_PLAN.md`
+- `docs/HUGE_DYNAMIC_WORLD_CONTENT_CONTRACT.md`
 - `docs/LOCAL_DATABASE_FOUNDATION_ARCHIVE.md`
 - `docs/LOCAL_DATABASE_BUSINESS_TABLE_ARCHIVE.md`
 - `docs/WORLD_GEOGRAPHY_SEED_CONTRACT.md`
@@ -114,9 +115,10 @@ S54-S59 business-table work is archived in `docs/LOCAL_DATABASE_BUSINESS_TABLE_A
 
 ## Current Work Note
 
+- 2026-05-08：S60.1 超大动态世界数据库内容契约已完成于本次提交。新增 `docs/HUGE_DYNAMIC_WORLD_CONTENT_CONTRACT.md`，固定开发小样本、默认可玩中样本、压力测试大样本三档规模，明确 seed catalog / 场景 seed pack / 每局动态安全账本 / 服务器 hidden 私档 / 玩家 view / prompt retrieval / 浏览器 projection / 审计公开 projection 分层。契约写明 S60.2 `small`、`medium`、`large` fixture 数量目标、全局 prompt budget、hidden canary、防泄漏、JSON/SQLite parity、读档单向修复和浏览器分页验收。同步 `docs/DEVELOPMENT_STEPS.md`、`docs/DYNAMIC_WORLD_DATABASE_PLAN.md`、`docs/QIANQIU_DEVELOPMENT_BRIEF.md`、`docs/AI_CONTROL_AUDIT_MATRIX.md`、README 以及地理/人物/官职契约的 S60 cap 说明。本轮是文档契约改动，不改运行时代码、API、provider schema、存档格式或 SQLite 表结构；采用只读子代理范围审查，提交前再做只读最终 diff 复核。已通过 `npm run check:docs-governance`、`node --test test/documentationGovernance.test.js`、`git diff --check`；未运行完整 `npm test`，因为本轮只改文档。
 - 2026-05-08：S59.2 归档与上下文压缩已完成于 `fd8cf72`。新增 `docs/LOCAL_DATABASE_BUSINESS_TABLE_ARCHIVE.md`，把 S54-S59 实现细节从活动台账迁出；`docs/DEVELOPMENT_STEPS.md` 已切换为 S60+ “超大动态世界数据库内容充实”路线图，并把原多 AI S60 顺延为 S70。当前内容保护边界写入本交接板：local-only、AI 不直写库、view-first、hidden 私档不回填 route、远程/账号/多人不进入规划。已通过 `npm run check:docs-governance`、`git diff --check`、focused 数据库套件 `node --test test/sessionStoreAdapterContract.test.js test/sqlitePromptRetrieval.test.js test/dualModeAcceptanceScript.test.js test/sqliteGeographyTool.test.js test/auditEventArchiveTool.test.js`（66 tests）；只读子代理 Aristotle 完成复审，无 P0/P1/P2，两个 P3 文档洁癖项已修正。
 - 2026-05-08：S70.0 AI 编排提前规划已加入活动路线图、开发 brief、AI 控制矩阵和治理锚点。新增 `docs/AI_ORCHESTRATION_ROADMAP.md`，固定“AI 是核心世界引擎”的长期规范，并规划 AI actor、职位分级工具、NPC mind、朝议/堂审/战役/会盟 scene、压力驱动事件生成、多模型 narrator/planner/critic/safety 编排、Mock/no-key 降级和红队验收。S70 仍排在 S67 后实施；当前只做文档规划，不改运行时代码、API、provider schema、存档格式或 SQLite 表结构。已通过 `npm run check:docs-governance`、`node --test test/documentationGovernance.test.js`、`git diff --check`、`npm test`（443 tests）。
 
 ## Next Recommended Step
 
-Start S60.1: write the detailed content contract for the huge dynamic world database, including scale tiers, seed layers, hidden/private data boundaries, fixture targets, prompt budgets, and local-only server-owned generation rules.
+Start S60.2: implement the deterministic content baseline / scale fixture generator from `docs/HUGE_DYNAMIC_WORLD_CONTENT_CONTRACT.md`, beginning with `small` fixture quantity gates, hidden canaries, prompt budget checks, and JSON/SQLite view parity.

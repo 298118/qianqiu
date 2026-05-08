@@ -556,9 +556,11 @@ S49-S53 结束后，数据库专项的下一段不再是“是否需要数据库
 
 当前“超大动态世界数据库”的内容充实度约 55-65%。S54-S59 已经让本地 SQLite 底座可用，但内容仍偏 projection 和少量实例化账本；S60-S67 需要把世界补成可长期游玩的历史沙盘。
 
+S60.1 已新增 [S60 超大动态世界数据库内容契约](HUGE_DYNAMIC_WORLD_CONTENT_CONTRACT.md)，把下列方向进一步固定为小/中/大规模档位、seed 分层、字段密度、hidden/private 边界、prompt budget 和 S60.2 fixture 验收口径。
+
 规划方向：
 
-- S60：内容契约与规模验收 fixture。定义小/中/大世界规模、seed 分层、字段密度、hidden 私档边界、prompt budget 和 local-only 生成规则。
+- S60：内容契约与规模验收 fixture。定义小/中/大世界规模、seed 分层、字段密度、hidden 私档边界、prompt budget 和 local-only 生成规则；S60.2 按契约补 deterministic fixture / generator 与数量、防泄漏、prompt budget、JSON/SQLite parity 验收。
 - S61：国家/邻国与城市/区域内容。补财政、军事、国威、外交、情报可信度、税粮、市价、士绅、诉讼、水利、灾害、交通、驻军和书院。
 - S62：NPC 人口、家族谱系和生命周期。补数百 NPC、家族、婚姻、门生故旧、派系、资产流动、健康、迁居、升迁、死亡和关系记忆。
 - S63：官职生态与地方事务。补空缺、候补、任期、考成、上级下属、胥吏幕友，以及钱粮、刑名、灾赈、水利、盗匪、徭役、士绅等事件模板。
