@@ -17,6 +17,30 @@ const PLAYER_ASSESSMENT_ID = "assessment-player-current";
 const LOCAL_CITY_IDS = new Set(["city-suzhou", "city-hangzhou", "city-kaifeng", "city-guangzhou"]);
 const CENTRAL_CITY_ID = "city-beijing";
 const ADMIN_POSTING_ROLES = new Set(["official", "magistrate"]);
+const CITY_TAX_CAPACITY_WEIGHTS = Object.freeze({
+  taxBase: 0.65,
+  priceCalm: 0.2,
+  stability: 0.15
+});
+const CITY_MILITARY_PRESSURE_WEIGHTS = Object.freeze({
+  banditPressure: 0.5,
+  borderThreat: 0.3,
+  garrisonGap: 0.2
+});
+const CITY_ASSESSMENT_THRESHOLDS = Object.freeze({
+  lowTaxCapacity: 45,
+  highTaxCapacity: 70,
+  lowGrainStock: 45,
+  highMarketStress: 60,
+  highGentryInfluence: 65,
+  highLawsuitPressure: 55,
+  highCorveeBurden: 55,
+  lowWaterworksIntegrity: 45,
+  highDisasterRisk: 60,
+  highTrafficLoad: 65,
+  highGarrisonStrength: 65,
+  highAcademyLevel: 65
+});
 
 function isPlainObject(value) {
   return value !== null && typeof value === "object" && !Array.isArray(value);
@@ -142,14 +166,64 @@ function jurisdictionScopeForBureau(bureauId, fallback = "court") {
 }
 
 function taxCapacityForCity(city = {}) {
-  return clampMetric(Math.round((city.stability || 50) * 0.45 + (100 - (city.taxBurden || 45)) * 0.35 + 20), 55);
+  const legacyCapacity = Math.round((city.stability || 50) * 0.45 + (100 - (city.taxBurden || 45)) * 0.35 + 20);
+  const taxBase = clampMetric(city.taxBase, legacyCapacity);
+  const priceCalm = 100 - clampMetric(city.marketPriceStress, city.grainStress || 35);
+  const stability = clampMetric(city.stability, 50);
+  return clampMetric(Math.round(
+    taxBase * CITY_TAX_CAPACITY_WEIGHTS.taxBase +
+    priceCalm * CITY_TAX_CAPACITY_WEIGHTS.priceCalm +
+    stability * CITY_TAX_CAPACITY_WEIGHTS.stability
+  ), legacyCapacity);
 }
 
 function academyLevelForCity(city = {}) {
+  if (Number.isFinite(Number(city.academyLevel))) return clampMetric(city.academyLevel, 40);
   const tags = Array.isArray(city.strategicTags) ? city.strategicTags.join(" ") : "";
   if (/贡院|书院|士绅|文社|学校/.test(tags)) return 72;
   if (city.jurisdictionLevel === "capital" || city.jurisdictionLevel === "secondary_capital") return 68;
   return 44;
+}
+
+function summarizeCityAssessmentPressure(city = {}, metrics = {}) {
+  const thresholds = CITY_ASSESSMENT_THRESHOLDS;
+  const notes = [];
+  const taxCapacity = clampMetric(metrics.taxCapacity, 50);
+  const grainStock = clampMetric(city.grainStock, 55);
+  const marketStress = clampMetric(city.marketPriceStress, 40);
+  const gentryInfluence = clampMetric(metrics.gentryInfluence, 50);
+  const lawsuits = clampMetric(metrics.lawsuits, 20);
+  const corveeBurden = clampMetric(city.corveeBurden, 35);
+  const waterworks = clampMetric(metrics.waterworks, 50);
+  const disasterRisk = clampMetric(metrics.disasterRisk, 35);
+  const trafficLoad = clampMetric(city.trafficLoad, 45);
+  const garrisonStrength = clampMetric(city.garrisonStrength, 35);
+  const academyLevel = clampMetric(metrics.academyLevel, 40);
+
+  if (taxCapacity <= thresholds.lowTaxCapacity) notes.push("税基偏薄");
+  else if (taxCapacity >= thresholds.highTaxCapacity) notes.push("税基充实");
+  if (grainStock <= thresholds.lowGrainStock) notes.push("粮储吃紧");
+  if (marketStress >= thresholds.highMarketStress) notes.push("市价承压");
+  if (gentryInfluence >= thresholds.highGentryInfluence) notes.push("士绅势重");
+  if (lawsuits >= thresholds.highLawsuitPressure) notes.push("词讼繁多");
+  if (corveeBurden >= thresholds.highCorveeBurden) notes.push("徭役偏重");
+  if (waterworks <= thresholds.lowWaterworksIntegrity) notes.push("水利待修");
+  if (disasterRisk >= thresholds.highDisasterRisk) notes.push("灾患须防");
+  if (trafficLoad >= thresholds.highTrafficLoad) notes.push("驿路商旅繁忙");
+  if (garrisonStrength >= thresholds.highGarrisonStrength) notes.push("驻军可恃");
+  if (academyLevel >= thresholds.highAcademyLevel) notes.push("文教可用");
+
+  return notes.slice(0, 4).join("、") || "任所指标平稳";
+}
+
+function cityDepthForAssessment(city = {}) {
+  return {
+    grainStock: clampMetric(city.grainStock, 55),
+    marketPriceStress: clampMetric(city.marketPriceStress, city.grainStress || 35),
+    corveeBurden: clampMetric(city.corveeBurden, 35),
+    trafficLoad: clampMetric(city.trafficLoad, 45),
+    garrisonStrength: clampMetric(city.garrisonStrength, 35)
+  };
 }
 
 function metricsForCity(city = {}, worldState = {}, isPlayerLocalPosting = false) {
@@ -159,16 +233,17 @@ function metricsForCity(city = {}, worldState = {}, isPlayerLocalPosting = false
     : clampMetric(city.localOrder, 55);
   const pendingLawsuits = isPlayerLocalPosting
     ? clampMetric(player.pendingLawsuits, 18)
-    : clampMetric(Math.round((city.pressure || 35) * 0.45), 20);
+    : clampMetric(city.lawsuitPressure, Math.round((city.pressure || 35) * 0.45));
   const waterworks = isPlayerLocalPosting
     ? clampMetric(player.waterworks, Math.max(35, 100 - (city.grainStress || 35)))
-    : clampMetric(Math.max(30, 100 - (city.grainStress || 35)), 55);
+    : clampMetric(city.waterworksIntegrity, Math.max(30, 100 - (city.grainStress || 35)));
   const gentryInfluence = isPlayerLocalPosting
     ? clampMetric(player.gentryRelations, 50)
-    : clampMetric(city.strategicTags?.includes("士绅") ? 68 : 48, 50);
+    : clampMetric(city.gentryInfluence, city.strategicTags?.includes("士绅") ? 68 : 48);
   const banditPressure = isPlayerLocalPosting
     ? clampMetric(player.banditPressure, 25)
     : clampMetric(Math.max(20, 100 - (city.localOrder || 55)), 28);
+  const garrisonGap = 100 - clampMetric(city.garrisonStrength, 35);
 
   return {
     publicOrder: localOrder,
@@ -176,8 +251,12 @@ function metricsForCity(city = {}, worldState = {}, isPlayerLocalPosting = false
     lawsuits: pendingLawsuits,
     waterworks,
     gentryInfluence,
-    disasterRisk: clampMetric(Math.max(city.grainStress || 35, city.pressure || 35), 35),
-    militaryPressure: clampMetric(Math.max(banditPressure, worldState.borderThreat || 35), 35),
+    disasterRisk: clampMetric(city.disasterRisk, Math.max(city.grainStress || 35, city.pressure || 35)),
+    militaryPressure: clampMetric(Math.round(
+      banditPressure * CITY_MILITARY_PRESSURE_WEIGHTS.banditPressure +
+      (worldState.borderThreat || 35) * CITY_MILITARY_PRESSURE_WEIGHTS.borderThreat +
+      garrisonGap * CITY_MILITARY_PRESSURE_WEIGHTS.garrisonGap
+    ), 35),
     academyLevel: academyLevelForCity(city)
   };
 }
@@ -209,6 +288,7 @@ function buildGeoJurisdictionRows(worldState, geo, offices) {
         routeIds: filterVisibleIds(jurisdiction.routeIds, geo.routeIds),
         frontierZoneIds: filterVisibleIds(jurisdiction.frontierZoneIds, geo.frontierIds),
         localMetrics: metricsForCity(city, worldState, isPlayerLocalPosting),
+        cityDepth: cityDepthForAssessment(city),
         visibility: jurisdiction.visibility,
         knownToPlayer: jurisdiction.visibility !== "role_visible",
         intelConfidence: jurisdiction.visibility === "public" ? 80 : 55,
@@ -242,6 +322,7 @@ function buildFallbackJurisdictionRows(worldState, geo, bureaus, offices, existi
       routeIds: [],
       frontierZoneIds: [],
       localMetrics: metricsForCity(fallbackCity, worldState, false),
+      cityDepth: cityDepthForAssessment(fallbackCity),
       visibility: "role_visible",
       knownToPlayer: false,
       intelConfidence: 55,
@@ -445,12 +526,20 @@ function mapRecommendation(value) {
   return "none";
 }
 
-function buildPlayerAssessmentRecord(worldState, posting) {
+function buildPlayerAssessmentRecord(worldState, posting, jurisdictionRows = []) {
   if (!posting) return null;
   const career = worldState.officialCareer || {};
   const dossier = career.assessmentDossier || {};
   const scores = playerPostingScores(worldState);
   const latestNote = Array.isArray(dossier.notes) ? cleanText(dossier.notes.at(-1), "") : "";
+  const jurisdiction = jurisdictionRows.find((row) => row.id === posting.jurisdictionId) || null;
+  const cityDepthFinding = jurisdiction
+    ? summarizeCityAssessmentPressure(jurisdiction.cityDepth, jurisdiction.localMetrics)
+    : "";
+  const finding = [
+    latestNote || `${posting.officeTitle}当前功过已入服务器考成投影。`,
+    cityDepthFinding ? `任所奏报：${cityDepthFinding}。` : ""
+  ].filter(Boolean).join("");
 
   return {
     id: PLAYER_ASSESSMENT_ID,
@@ -465,13 +554,13 @@ function buildPlayerAssessmentRecord(worldState, posting) {
     meritScore: scores.merit,
     riskScore: scores.risk,
     recommendation: mapRecommendation(dossier.pendingRecommendation),
-    publicFinding: latestNote || `${posting.officeTitle}当前功过已入服务器考成投影。`,
+    publicFinding: finding,
     evidenceEventIds: [],
     assignmentIds: unique((career.assignments || []).map((assignment) => assignment.id)).slice(0, 12),
     visibility: "office_visible",
     knownToPlayer: true,
     intelConfidence: 85,
-    publicSummary: `${posting.officeTitle}当前考成：功绩${scores.merit}，风险${scores.risk}。`,
+    publicSummary: `${posting.officeTitle}当前考成：功绩${scores.merit}，风险${scores.risk}${cityDepthFinding ? `；${cityDepthFinding}` : ""}。`,
     lastUpdatedTurn: currentTurn(worldState)
   };
 }
@@ -549,7 +638,7 @@ function buildOfficialPostingBridge(worldState = {}, geo) {
   const officeRows = buildCatalogOfficeRows(worldState, geo, jurisdictionRows);
   const bureauRows = buildCatalogBureauRows(worldState, geo, jurisdictionRows, officeRows);
   const playerPosting = buildPlayerPosting(worldState, jurisdictionRows);
-  const playerAssessment = buildPlayerAssessmentRecord(worldState, playerPosting);
+  const playerAssessment = buildPlayerAssessmentRecord(worldState, playerPosting, jurisdictionRows);
 
   return {
     bureaus: bureauRows,

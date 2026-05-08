@@ -128,6 +128,11 @@ test("event archive view merges visible sources into capped public items", () =>
   assert.ok(view.items.some((item) => item.sourceType === "world_thread" && item.title === "秋粮核验"));
   assert.ok(view.items.some((item) => item.sourceType === "long_term_event" && item.title === "秋粮核验"));
   assert.ok(view.items.some((item) => item.sourceType === "official_career" && item.title === "实授"));
+  assert.ok(view.items.some((item) =>
+    item.sourceType === "official_assessment" &&
+    item.sourceLabel === "考成" &&
+    item.summary.includes("任所奏报")
+  ));
   assert.ok(view.items.some((item) => item.sourceType === "exam_record" && item.title === "童生试"));
   assert.deepEqual(view.items.map((item) => item.turn), view.items.map((item) => item.turn).sort((a, b) => b - a));
   assert.equal(serialized.includes("hiddenNotes"), false);

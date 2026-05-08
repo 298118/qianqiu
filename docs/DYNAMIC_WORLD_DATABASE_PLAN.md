@@ -561,7 +561,7 @@ S60.1 已新增 [S60 超大动态世界数据库内容契约](HUGE_DYNAMIC_WORLD
 规划方向：
 
 - S60：内容契约与规模验收 fixture。定义小/中/大世界规模、seed 分层、字段密度、hidden 私档边界、prompt budget 和 local-only 生成规则；S60.2 按契约补 deterministic fixture / generator 与数量、防泄漏、prompt budget、JSON/SQLite parity 验收。
-- S61：国家/邻国与城市/区域内容。补财政、军事、国威、外交、情报可信度、税粮、市价、士绅、诉讼、水利、灾害、交通、驻军和书院。S61.1 已把国家深度字段接入 `worldGeographyView`、prompt retrieval 和 SQLite `geo_countries.metadata_json.s61CountryDepth`；S61.2 已启动城市深度字段基础，后续继续接事件档案、任所考成和浏览器分页。
+- S61：国家/邻国与城市/区域内容。补财政、军事、国威、外交、情报可信度、税粮、市价、士绅、诉讼、水利、灾害、交通、驻军和书院。S61.1 已把国家深度字段接入 `worldGeographyView`、prompt retrieval 和 SQLite `geo_countries.metadata_json.s61CountryDepth`；S61.2 已启动城市深度字段基础，并已让 `officialPostings` 的任所 localMetrics、当前任所考成“任所奏报”和 `eventArchiveView` 的 `official_assessment` 安全条目读取这些城市 projection。后续继续补浏览器分页、更大 fixture、dual-mode 污染探针和城市指标随经济/军事/灾害系统演化。
 - S62：NPC 人口、家族谱系和生命周期。补数百 NPC、家族、婚姻、门生故旧、派系、资产流动、健康、迁居、升迁、死亡和关系记忆。
 - S63：官职生态与地方事务。补空缺、候补、任期、考成、上级下属、胥吏幕友，以及钱粮、刑名、灾赈、水利、盗匪、徭役、士绅等事件模板。
 - S64：外交、边防、军事、经济和市场演化。补边镇、驻军、粮道、邻国使节、边患、盐漕、商路、地方库银、粮价和财政压力。

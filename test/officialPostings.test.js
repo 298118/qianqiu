@@ -30,6 +30,48 @@ test("initial official postings bridge links current official office to visible 
   ));
 });
 
+test("official assessment summaries read S61 city depth metrics", () => {
+  const worldState = createInitialState({ role: "official", playerName: "任所考成" });
+  Object.assign(worldState.player, {
+    officeTitle: "户部主事",
+    position: "户部主事"
+  });
+  worldState.officialCareer.currentPosting = "户部主事";
+  worldState.officialCareer.bureauId = "ministry_revenue";
+  worldState.officialCareer.assessmentDossier.notes.push("已有考成札记：钱粮文册待核。");
+  const beijing = worldState.worldGeography.cities.find((city) => city.id === "city-beijing");
+  Object.assign(beijing, {
+    taxBase: 35,
+    grainStock: 38,
+    marketPriceStress: 66,
+    gentryInfluence: 75,
+    lawsuitPressure: 70,
+    waterworksIntegrity: 30,
+    disasterRisk: 65,
+    trafficLoad: 72,
+    garrisonStrength: 78,
+    academyLevel: 68
+  });
+
+  ensureOfficialPostingsState(worldState);
+  const view = buildOfficialPostingsView(worldState);
+  const posting = view.postings.find((row) => row.id === "posting-player-current");
+  const jurisdiction = view.cityJurisdictions.find((row) => row.id === posting.jurisdictionId);
+  const assessment = view.assessmentRecords.find((row) => row.id === "assessment-player-current");
+  const promptSummary = summarizeOfficialPostingsForPrompt(worldState);
+
+  assert.equal(jurisdiction.localMetrics.taxCapacity <= 45, true);
+  assert.equal(jurisdiction.localMetrics.lawsuits, 70);
+  assert.equal(jurisdiction.localMetrics.waterworks, 30);
+  assert.equal(jurisdiction.localMetrics.gentryInfluence, 75);
+  assert.equal(jurisdiction.localMetrics.disasterRisk, 65);
+  assert.match(assessment.publicFinding, /已有考成札记/);
+  assert.match(assessment.publicFinding, /任所奏报/);
+  assert.match(assessment.publicFinding, /税基偏薄|粮储吃紧|市价承压|士绅势重/);
+  assert.match(assessment.publicSummary, /税基偏薄|粮储吃紧|市价承压|士绅势重/);
+  assert.match(JSON.stringify(promptSummary.assessmentRecords), /税基偏薄|粮储吃紧|市价承压|士绅势重/);
+});
+
 test("magistrate postings map local yamen role to deterministic visible city metrics", () => {
   const worldState = createInitialState({ role: "magistrate", playerName: "地方官" });
   Object.assign(worldState.player, {

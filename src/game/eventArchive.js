@@ -1,5 +1,6 @@
 const { buildLongTermEventView } = require("./longTermEvents");
 const { buildOfficialCareerView } = require("./officialCareer");
+const { buildOfficialPostingsView } = require("./officialPostings");
 const { formatYearMonthPeriod, normalizeMonth, normalizeTenDayPeriod, normalizeYear } = require("./time");
 const { buildWorldThreadView } = require("./worldThreads");
 
@@ -9,6 +10,7 @@ const MAX_HISTORY_ITEMS = 8;
 const MAX_THREADS = 6;
 const MAX_LONG_TERM_EVENTS = 5;
 const MAX_OFFICIAL_OUTCOMES = 5;
+const MAX_OFFICIAL_ASSESSMENTS = 4;
 const MAX_EXAM_RECORDS = 5;
 const MAX_TEXT_LENGTH = 180;
 const MIN_PAGE_SIZE = 1;
@@ -23,6 +25,7 @@ const SOURCE_LABELS = {
   world_thread: "议程",
   long_term_event: "长期",
   official_career: "官场",
+  official_assessment: "考成",
   exam_record: "科场"
 };
 
@@ -222,6 +225,25 @@ function collectOfficialItems(worldState, items, officialCareerView) {
   });
 }
 
+function collectOfficialAssessmentItems(worldState, items, officialPostingsView) {
+  const assessments = Array.isArray(officialPostingsView?.assessmentRecords)
+    ? officialPostingsView.assessmentRecords
+    : [];
+  assessments.slice(-MAX_OFFICIAL_ASSESSMENTS).forEach((record) => {
+    addItem(items, worldState, {
+      sourceType: "official_assessment",
+      kind: "assessment",
+      title: "任所考成",
+      summary: record.publicFinding || record.publicSummary,
+      date: record.date,
+      turn: record.date?.turn ?? record.lastUpdatedTurn,
+      status: record.status === "resolved" || record.status === "archived" ? "resolved" : "watch",
+      riskLabel: record.riskScore >= 60 ? "考成风险" : record.meritScore >= 70 ? "考成向好" : "",
+      relatedLabels: [record.officeId, record.bureauId].filter(Boolean)
+    });
+  });
+}
+
 function examDateSource(entry = {}) {
   return entry.sceneTime?.updatedAt ||
     entry.examSubmittedAt ||
@@ -278,12 +300,14 @@ function buildEventArchiveIndexItems(worldState = {}) {
   const worldThreadView = buildWorldThreadView(worldState);
   const longTermEventView = buildLongTermEventView(worldState);
   const officialCareerView = buildOfficialCareerView(worldState);
+  const officialPostingsView = buildOfficialPostingsView(worldState);
   const items = [];
 
   collectHistoryItems(worldState, items);
   collectWorldThreadItems(worldState, items, worldThreadView);
   collectLongTermItems(worldState, items, longTermEventView);
   collectOfficialItems(worldState, items, officialCareerView);
+  collectOfficialAssessmentItems(worldState, items, officialPostingsView);
   collectExamItems(worldState, items);
 
   return items.sort(sortArchiveItems);

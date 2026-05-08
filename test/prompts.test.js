@@ -372,6 +372,15 @@ test("prompt input includes visible official postings without hidden geography r
   });
   worldState.officialCareer.currentPosting = "户部主事";
   worldState.officialCareer.bureauId = "ministry_revenue";
+  Object.assign(worldState.worldGeography.cities.find((city) => city.id === "city-beijing"), {
+    taxBase: 35,
+    grainStock: 38,
+    marketPriceStress: 66,
+    gentryInfluence: 75,
+    lawsuitPressure: 70,
+    waterworksIntegrity: 30,
+    disasterRisk: 65
+  });
   worldState.officialPostings.cityJurisdictions.push({
     id: "jurisdiction-hidden-prompt-posting",
     name: "Hidden Posting Prompt Jurisdiction",
@@ -390,6 +399,8 @@ test("prompt input includes visible official postings without hidden geography r
   assert.match(task.input, /officialPostings/);
   assert.match(task.input, /ministry_revenue_principal|户部/);
   assert.match(task.input, /city-beijing|北京/);
+  assert.match(task.input, /任所奏报/);
+  assert.match(task.input, /税基偏薄|粮储吃紧|市价承压|士绅势重/);
   assert.doesNotMatch(task.input, /jurisdiction-hidden-prompt-posting/);
   assert.doesNotMatch(task.input, /city-hidden-prompt-posting/);
   assert.doesNotMatch(task.input, /route-hidden-liaodong-smuggling/);
