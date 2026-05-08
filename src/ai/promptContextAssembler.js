@@ -54,6 +54,57 @@ const LIMITS = Object.freeze({
   entities: 5
 });
 
+const ORDINARY_TURN_LIMITS = Object.freeze({
+  countries: 3,
+  cities: 6,
+  routes: 2,
+  frontierZones: 1,
+  npcs: 6,
+  relationships: 6,
+  bureaus: 3,
+  offices: 4,
+  cityJurisdictions: 3,
+  postings: 2,
+  assessmentRecords: 1,
+  transferRecords: 1,
+  worldThreads: 3,
+  longTermEvents: 1,
+  resolvedEvents: 1,
+  recentEvents: 4,
+  entities: 1
+});
+
+const PROMPT_BUDGET_PROFILES = Object.freeze({
+  ordinary: Object.freeze({
+    maxRows: 48,
+    limits: ORDINARY_TURN_LIMITS
+  }),
+  high: Object.freeze({
+    maxRows: 72,
+    limits: LIMITS
+  })
+});
+
+const RETRIEVAL_ROW_PATHS = Object.freeze([
+  ["geography", "countries"],
+  ["geography", "cities"],
+  ["geography", "routes"],
+  ["geography", "frontierZones"],
+  ["people", "npcs"],
+  ["people", "relationships"],
+  ["offices", "bureaus"],
+  ["offices", "offices"],
+  ["offices", "cityJurisdictions"],
+  ["offices", "postings"],
+  ["offices", "assessmentRecords"],
+  ["offices", "transferRecords"],
+  ["events", "worldThreads"],
+  ["events", "longTermEvents"],
+  ["events", "resolvedEvents"],
+  ["events", "recentEvents"],
+  ["entities", "highlights"]
+]);
+
 function cleanText(value, fallback = "", maxLength = MAX_TEXT_LENGTH) {
   if (typeof value !== "string") return fallback;
   const trimmed = value.trim();
@@ -735,12 +786,76 @@ function buildEntityContext(worldState, query) {
   };
 }
 
+function cloneRetrievalContext(context) {
+  return {
+    ...context,
+    geography: { ...context.geography },
+    people: { ...context.people },
+    offices: { ...context.offices },
+    events: { ...context.events },
+    entities: { ...context.entities }
+  };
+}
+
+function countRetrievalRows(context = {}) {
+  return RETRIEVAL_ROW_PATHS.reduce((total, [domain, collection]) => {
+    const rows = context[domain]?.[collection];
+    return total + (Array.isArray(rows) ? rows.length : 0);
+  }, 0);
+}
+
+function trimRowsFromEnd(rows, amount) {
+  if (!Array.isArray(rows) || amount <= 0) return rows;
+  return rows.slice(0, Math.max(0, rows.length - amount));
+}
+
+function applyPromptBudget(context, options = {}) {
+  const requestedProfile = cleanText(
+    options.promptBudgetProfile || options.retrievalBudgetProfile || options.retrievalBudget,
+    "high",
+    24
+  );
+  const profile = PROMPT_BUDGET_PROFILES[requestedProfile] || PROMPT_BUDGET_PROFILES.high;
+  const next = cloneRetrievalContext(context);
+  const limits = profile.limits;
+
+  next.geography.countries = next.geography.countries.slice(0, limits.countries);
+  next.geography.cities = next.geography.cities.slice(0, limits.cities);
+  next.geography.routes = next.geography.routes.slice(0, limits.routes);
+  next.geography.frontierZones = next.geography.frontierZones.slice(0, limits.frontierZones);
+  next.people.npcs = next.people.npcs.slice(0, limits.npcs);
+  next.people.relationships = next.people.relationships.slice(0, limits.relationships);
+  next.offices.bureaus = next.offices.bureaus.slice(0, limits.bureaus);
+  next.offices.offices = next.offices.offices.slice(0, limits.offices);
+  next.offices.cityJurisdictions = next.offices.cityJurisdictions.slice(0, limits.cityJurisdictions);
+  next.offices.postings = next.offices.postings.slice(0, limits.postings);
+  next.offices.assessmentRecords = next.offices.assessmentRecords.slice(0, limits.assessmentRecords);
+  next.offices.transferRecords = next.offices.transferRecords.slice(0, limits.transferRecords);
+  next.events.worldThreads = next.events.worldThreads.slice(0, limits.worldThreads);
+  next.events.longTermEvents = next.events.longTermEvents.slice(0, limits.longTermEvents);
+  next.events.resolvedEvents = next.events.resolvedEvents.slice(0, limits.resolvedEvents);
+  next.events.recentEvents = next.events.recentEvents.slice(0, limits.recentEvents);
+  next.entities.highlights = next.entities.highlights.slice(0, limits.entities);
+
+  let overflow = countRetrievalRows(next) - profile.maxRows;
+  for (const [domain, collection] of [...RETRIEVAL_ROW_PATHS].reverse()) {
+    if (overflow <= 0) break;
+    const rows = next[domain]?.[collection];
+    if (!Array.isArray(rows) || rows.length === 0) continue;
+    const before = rows.length;
+    next[domain][collection] = trimRowsFromEnd(rows, overflow);
+    overflow -= before - next[domain][collection].length;
+  }
+
+  return next;
+}
+
 function buildRankedRetrievalContext(worldState = {}, options = {}) {
   const query = buildQuery(worldState, options);
   const player = worldState.player || {};
   const retrievalSource = resolveRetrievalSource(worldState, options);
 
-  return {
+  const context = {
     schemaVersion: RETRIEVAL_CONTEXT_SCHEMA_VERSION,
     generatedAtTurn: currentTurn(worldState),
     dateLabel: formatYearMonthPeriod(worldState),
@@ -774,6 +889,8 @@ function buildRankedRetrievalContext(worldState = {}, options = {}) {
       authority: "This context is read-only for providers; appointments, transfers, events, ledgers, and database writes remain server-owned."
     }
   };
+
+  return applyPromptBudget(context, options);
 }
 
 function assemblePromptContext(worldState = {}, options = {}) {

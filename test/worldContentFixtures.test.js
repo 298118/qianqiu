@@ -11,14 +11,19 @@ const { buildOfficialPostingsView } = require("../src/game/officialPostings");
 const { buildWorldGeographyView } = require("../src/game/worldGeography");
 const { buildWorldPeopleView } = require("../src/game/worldPeople");
 const {
+  WORLD_CONTENT_BROWSER_PAGE,
   WORLD_CONTENT_FIXTURE_TARGETS,
   WORLD_CONTENT_PROMPT_BUDGET,
+  buildWorldContentFixturePage,
+  buildWorldContentPerformanceBaseline,
   buildPromptBudgetReport,
+  countRetrievalSummaryRows,
   createCanaryPollutedWorldState,
   createFixtureSessionRecord,
   createWorldContentFixture,
   flattenCanaries
 } = require("../src/game/worldContentFixtures");
+const { buildTurnTask } = require("../src/ai/prompts");
 const { createJsonSessionAdapter } = require("../src/storage/jsonSessionAdapter");
 const { createSqliteSessionAdapter } = require("../src/storage/sqliteSessionAdapter");
 const {
@@ -32,6 +37,10 @@ const hasNodeSqlite = typeof isBuiltin === "function" && isBuiltin("node:sqlite"
 
 function clone(value) {
   return JSON.parse(JSON.stringify(value));
+}
+
+function padForTest(number, width = 3) {
+  return String(number).padStart(width, "0");
 }
 
 async function removeSessionArtifacts(sessionId) {
@@ -131,16 +140,158 @@ test("S60 fixture prompt retrieval is capped relative to fixture row count", () 
   const metrics = fixture.fixtureSummary.metrics;
   const budget = buildPromptBudgetReport(fixture.worldState, {
     task: "official_career",
-    playerAction: "核查户部、北京、漕运、边报、样本人物与任所"
+    playerAction: "核查户部、北京、漕运、边报、样本人物与任所",
+    promptBudgetProfile: "high"
+  });
+  const ordinaryBudget = buildPromptBudgetReport(fixture.worldState, {
+    task: "official_career",
+    playerAction: "核查户部、北京、漕运、边报、样本人物与任所",
+    promptBudgetProfile: "ordinary"
   });
   const serialized = JSON.stringify(budget.promptContext.retrievalContext);
 
   assert.equal(metrics.promptRetrievalRows >= WORLD_CONTENT_FIXTURE_TARGETS.small.promptRetrievalRows, true);
+  assert.equal(ordinaryBudget.summaryRows <= WORLD_CONTENT_PROMPT_BUDGET.ordinaryRows, true);
+  assert.equal(ordinaryBudget.serializedChars <= WORLD_CONTENT_PROMPT_BUDGET.ordinaryChars, true);
   assert.equal(budget.summaryRows <= WORLD_CONTENT_PROMPT_BUDGET.highRelevanceRows, true);
   assert.equal(budget.serializedChars <= WORLD_CONTENT_PROMPT_BUDGET.highRelevanceChars, true);
   assert.equal(budget.summaryRows < metrics.promptRetrievalRows / 4, true);
   assert.match(serialized, /户部|北京|漕运|任所/);
   assert.doesNotMatch(serialized, /S60_PRIVATE_|prompt_retrieval_index|event_log|ai_change_proposals/);
+
+  const turnTask = buildTurnTask(fixture.worldState, "核查户部、北京、漕运、边报、样本人物与任所");
+  const turnWorldState = JSON.parse(turnTask.input.split("World state:\n")[1]);
+  const turnRetrieval = JSON.stringify(turnWorldState.retrievalContext);
+  assert.equal(countRetrievalSummaryRows(turnWorldState.retrievalContext) <= WORLD_CONTENT_PROMPT_BUDGET.ordinaryRows, true);
+  assert.equal(turnRetrieval.length <= WORLD_CONTENT_PROMPT_BUDGET.ordinaryChars, true);
+});
+
+test("S60 medium and large fixtures reach storage-only quantity gates without bloating route state", () => {
+  for (const size of ["medium", "large"]) {
+    const fixture = createWorldContentFixture({ size });
+    const metrics = fixture.fixtureSummary.metrics;
+    const target = WORLD_CONTENT_FIXTURE_TARGETS[size];
+    const canaryCounts = Object.fromEntries(
+      Object.entries(fixture.hiddenCanaries).map(([domain, tokens]) => [domain, tokens.length])
+    );
+
+    assert.equal(metrics.countries >= target.countries, true, `${size} countries`);
+    assert.equal(metrics.cities >= target.cities, true, `${size} cities`);
+    assert.equal(metrics.npcs >= target.npcs, true, `${size} npcs`);
+    assert.equal(metrics.households >= target.households, true, `${size} households`);
+    assert.equal(metrics.relationships >= target.relationships, true, `${size} relationships`);
+    assert.equal(metrics.officialCatalogRows >= target.officialCatalogRows, true, `${size} catalog rows`);
+    assert.equal(metrics.postings >= target.postings, true, `${size} postings`);
+    assert.equal(metrics.eventIntelItems >= target.eventIntelItems, true, `${size} event intel`);
+    assert.equal(metrics.promptRetrievalRows >= target.promptRetrievalRows, true, `${size} prompt rows`);
+    assert.equal(metrics.hiddenCanaries >= target.hiddenCanaries, true, `${size} hidden canaries`);
+    assert.ok(Object.values(canaryCounts).every((count) => count >= 10), `${size} canary domains`);
+
+    assert.equal(metrics.storageRows.cities, target.cities);
+    assert.equal(metrics.storageRows.npcs, target.npcs);
+    assert.equal(metrics.storageRows.promptRetrievalRows, target.promptRetrievalRows);
+    assert.equal(metrics.routeViewRows.cities < metrics.cities, true, `${size} route cities are capped`);
+    assert.equal(metrics.routeViewRows.npcs < metrics.npcs, true, `${size} route npcs are capped`);
+    assert.equal(metrics.routeViewRows.promptRetrievalRows < metrics.promptRetrievalRows, true, `${size} route prompt rows are capped`);
+    assert.equal(metrics.ordinaryRetrievalSummaryRows <= WORLD_CONTENT_PROMPT_BUDGET.ordinaryRows, true);
+    assert.equal(metrics.ordinaryRetrievalSerializedChars <= WORLD_CONTENT_PROMPT_BUDGET.ordinaryChars, true);
+    assert.equal(metrics.retrievalSummaryRows <= WORLD_CONTENT_PROMPT_BUDGET.highRelevanceRows, true);
+    assert.equal(metrics.retrievalSerializedChars <= WORLD_CONTENT_PROMPT_BUDGET.highRelevanceChars, true);
+    assert.equal(JSON.stringify(fixture.worldState).includes(`${size}-city-${padForTest(target.cities)}`), false);
+    assert.equal(JSON.stringify(fixture.worldState).includes("S60_PRIVATE_"), false);
+  }
+});
+
+test("S60 storage-only fixture pages medium and large collections safely", () => {
+  const large = createWorldContentFixture({ size: "large" });
+  const target = WORLD_CONTENT_FIXTURE_TARGETS.large;
+  large.storageLedger.geography.cities[0].hiddenNotes = ["S60_PRIVATE_PAGE_HIDDEN_NOTE"];
+  large.storageLedger.geography.cities[0].contentHash = "S60_PRIVATE_PAGE_contentHash";
+  large.promptRetrievalRows[0].metadata_json = "S60_PRIVATE_PAGE_prompt_retrieval_index";
+  large.promptRetrievalRows[0].localPath = "data/sessions/secret-page.json";
+  const cityPage = buildWorldContentFixturePage(large, "geography.cities", { page: 2, pageSize: 24 });
+  const clampedPromptPage = buildWorldContentFixturePage(large, "promptRetrievalRows", { pageSize: 500 });
+  const pollutedPromptPage = buildWorldContentFixturePage(large, "promptRetrievalRows", { page: 1, pageSize: 1 });
+  const hiddenSearchPage = buildWorldContentFixturePage(large, "geography.cities", {
+    query: "S60_PRIVATE_PAGE_HIDDEN_NOTE"
+  });
+  const rawPathSearchPage = buildWorldContentFixturePage(large, "promptRetrievalRows", {
+    query: "secret-page"
+  });
+  const eventSearchPage = buildWorldContentFixturePage(large, "events.eventIntelItems", {
+    page: 1,
+    pageSize: 20,
+    query: "公开情报49"
+  });
+  const payload = JSON.stringify({
+    cityPage,
+    clampedPromptPage,
+    pollutedPromptPage,
+    hiddenSearchPage,
+    rawPathSearchPage,
+    eventSearchPage
+  });
+
+  assert.equal(cityPage.pagination.totalItems, target.cities);
+  assert.equal(cityPage.items.length, 24);
+  assert.equal(cityPage.pagination.hasNextPage, true);
+  assert.equal(clampedPromptPage.pagination.totalItems, target.promptRetrievalRows);
+  assert.equal(clampedPromptPage.pagination.pageSize, WORLD_CONTENT_BROWSER_PAGE.maxPageSize);
+  assert.equal(clampedPromptPage.items.length, WORLD_CONTENT_BROWSER_PAGE.maxPageSize);
+  assert.equal(eventSearchPage.pagination.totalItems > 0, true);
+  assert.ok(eventSearchPage.items.every((item) => JSON.stringify(item).includes("公开情报49")));
+  assert.equal(hiddenSearchPage.pagination.totalItems, 0);
+  assert.equal(rawPathSearchPage.pagination.totalItems, 0);
+  assert.deepEqual(Object.keys(pollutedPromptPage.items[0]).sort(), [
+    "collection",
+    "domain",
+    "relatedRefs",
+    "rowId",
+    "sortPriority",
+    "sourceView",
+    "summary",
+    "tags",
+    "title",
+    "visibility"
+  ]);
+  assert.doesNotMatch(payload, /S60_PRIVATE_|prompt_retrieval_index|event_log|ai_change_proposals|data_sessions_secret/);
+  assert.doesNotMatch(payload, /contentHash|metadata_json|localPath|data\/sessions/);
+  assert.doesNotMatch(payload, /sk-s60-private-canary-token/);
+});
+
+test("S60 fixture event intel references existing fixture cities", () => {
+  for (const size of ["small", "medium", "large"]) {
+    const fixture = createWorldContentFixture({ size });
+    const cityIds = new Set(
+      size === "small"
+        ? buildWorldGeographyView(fixture.worldState).cities.map((city) => city.id)
+        : fixture.storageLedger.geography.cities.map((city) => city.id)
+    );
+    const dangling = fixture.eventIntelItems
+      .flatMap((item) => item.relatedRefs)
+      .filter((ref) => !cityIds.has(ref));
+
+    assert.deepEqual(dangling, [], `${size} event/intel relatedRefs must resolve`);
+  }
+});
+
+test("S60 fixture records minimal performance baselines for later S67 thresholds", () => {
+  const large = createWorldContentFixture({ size: "large" });
+  const baseline = buildWorldContentPerformanceBaseline(large);
+
+  for (const value of [
+    large.fixtureSummary.performanceBaseline.fixtureGenerationMs,
+    baseline.eventArchivePaginationMs,
+    baseline.promptAssemblyMs,
+    baseline.promptRetrievalRowsMs,
+    baseline.fixturePageMs
+  ]) {
+    assert.equal(Number.isFinite(value), true);
+    assert.equal(value >= 0, true);
+  }
+  assert.equal(large.fixtureSummary.performanceBaseline.fixtureSize, "large");
+  assert.equal(baseline.fixturePageRows, WORLD_CONTENT_BROWSER_PAGE.maxPageSize);
+  assert.equal(baseline.promptSummaryRows <= WORLD_CONTENT_PROMPT_BUDGET.ordinaryRows, true);
 });
 
 test("S60 fixture keeps JSON and SQLite views plus prompt retrieval parity at small scale", {

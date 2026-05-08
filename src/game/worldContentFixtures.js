@@ -55,9 +55,36 @@ const WORLD_CONTENT_PROMPT_BUDGET = Object.freeze({
   highRelevanceChars: 30000
 });
 
+const WORLD_CONTENT_BROWSER_PAGE = Object.freeze({
+  defaultPageSize: 24,
+  maxPageSize: 50
+});
+
+const WORLD_CONTENT_STORAGE_SHAPE = Object.freeze({
+  small: Object.freeze({
+    regions: 12,
+    routes: 12,
+    frontierZones: 4
+  }),
+  medium: Object.freeze({
+    regions: 30,
+    routes: 70,
+    frontierZones: 20
+  }),
+  large: Object.freeze({
+    regions: 80,
+    routes: 220,
+    frontierZones: 64
+  })
+});
+
 const FIXTURE_CREATED_AT = "2026-05-08T00:00:00.000Z";
 const DEFAULT_SEED = "s60-small";
-const SUPPORTED_SIZES = new Set(["small"]);
+const SUPPORTED_SIZES = new Set(Object.keys(WORLD_CONTENT_FIXTURE_TARGETS));
+const PERFORMANCE_CLOCK =
+  globalThis.performance && typeof globalThis.performance.now === "function"
+    ? globalThis.performance
+    : { now: () => Date.now() };
 
 function clone(value) {
   return JSON.parse(JSON.stringify(value));
@@ -74,6 +101,233 @@ function fixtureSessionId(size, seed) {
 
 function numbered(count, mapper) {
   return Array.from({ length: count }, (_, index) => mapper(index + 1));
+}
+
+function fixturePrefix(size) {
+  return `s60-${size}`;
+}
+
+function createStorageGeography(size) {
+  const target = WORLD_CONTENT_FIXTURE_TARGETS[size];
+  const shape = WORLD_CONTENT_STORAGE_SHAPE[size];
+  const prefix = fixturePrefix(size);
+  const countries = numbered(target.countries, (index) => ({
+    id: `${prefix}-country-${pad(index)}`,
+    name: `S60${size}样本国${index}`,
+    kind: index === 1 ? "player_realm" : index % 3 === 0 ? "neighbor" : "tributary",
+    visibility: "public",
+    publicSummary: `S60 ${size} storage-only 国家样本${index}，仅用于总量、分页和安全检索验收。`
+  }));
+  const regions = numbered(shape.regions, (index) => ({
+    id: `${prefix}-region-${pad(index)}`,
+    countryId: countries[(index - 1) % countries.length].id,
+    name: `S60${size}样本区${index}`,
+    visibility: "public",
+    publicSummary: `S60 ${size} storage-only 区域样本${index}。`
+  }));
+  const cities = numbered(target.cities, (index) => ({
+    id: `${prefix}-city-${pad(index)}`,
+    countryId: countries[(index - 1) % countries.length].id,
+    regionId: regions[(index - 1) % regions.length].id,
+    name: `S60${size}样本城${index}`,
+    jurisdictionLevel: index % 9 === 0 ? "frontier_prefecture" : index % 4 === 0 ? "prefecture" : "county",
+    pressure: 30 + (index % 55),
+    localOrder: 45 + (index % 40),
+    taxBase: 38 + (index % 45),
+    grainStock: 35 + (index % 50),
+    waterworksIntegrity: 42 + (index % 42),
+    visibility: "public",
+    publicSummary: `S60 ${size} storage-only 城市样本${index}，不进入当前 raw route state 全量返回。`
+  }));
+  const routes = numbered(shape.routes, (index) => ({
+    id: `${prefix}-route-${pad(index)}`,
+    name: `S60${size}样本路${index}`,
+    type: index % 7 === 0 ? "sea" : index % 5 === 0 ? "pass" : "road",
+    fromCityId: cities[(index - 1) % cities.length].id,
+    toCityId: cities[index % cities.length].id,
+    risk: 20 + (index % 70),
+    visibility: "public",
+    publicSummary: `S60 ${size} storage-only 路线样本${index}。`
+  }));
+  const frontierZones = numbered(shape.frontierZones, (index) => ({
+    id: `${prefix}-frontier-${pad(index)}`,
+    name: `S60${size}样本边面${index}`,
+    countryId: countries[(index - 1) % countries.length].id,
+    neighborCountryId: countries[index % countries.length].id,
+    cityIds: [cities[(index * 2) % cities.length].id],
+    routeIds: [routes[(index * 3) % routes.length].id],
+    pressure: 35 + (index % 60),
+    visibility: "public",
+    publicSummary: `S60 ${size} storage-only 边面样本${index}。`
+  }));
+
+  return { countries, regions, cities, routes, frontierZones };
+}
+
+function createStoragePeople(size, geography) {
+  const target = WORLD_CONTENT_FIXTURE_TARGETS[size];
+  const prefix = fixturePrefix(size);
+  const cityIds = geography.cities.map((city) => city.id);
+  const households = numbered(target.households, (index) => ({
+    id: `${prefix}-household-${pad(index)}`,
+    familyName: `S60${size}第${index}族`,
+    seatCityId: cityIds[(index - 1) % cityIds.length],
+    wealthScore: 25 + (index % 65),
+    prestige: 20 + (index % 70),
+    visibility: "public",
+    publicSummary: `S60 ${size} storage-only 家族样本${index}，只含公开族谱摘要。`
+  }));
+  const npcs = numbered(target.npcs, (index) => ({
+    id: `${prefix}-npc-${pad(index, 4)}`,
+    name: `S60${size}样本人物${index}`,
+    householdId: households[(index - 1) % households.length].id,
+    currentCityId: cityIds[(index * 3) % cityIds.length],
+    rankLabel: index % 6 === 0 ? "候补官员" : index % 3 === 0 ? "士绅" : "民人",
+    reputation: 18 + (index % 75),
+    influence: 10 + (index % 65),
+    visibility: "public",
+    publicSummary: `S60 ${size} storage-only 人物样本${index}，可供后续分页检索和 NPC 内容扩充。`
+  }));
+  const relationships = numbered(target.relationships, (index) => ({
+    id: `${prefix}-relationship-${pad(index, 5)}`,
+    sourceType: "npc",
+    sourceId: npcs[(index - 1) % npcs.length].id,
+    targetType: index % 5 === 0 ? "household" : "npc",
+    targetId: index % 5 === 0
+      ? households[(index - 1) % households.length].id
+      : npcs[index % npcs.length].id,
+    relationship: -20 + (index % 75),
+    trust: 25 + (index % 60),
+    resentment: index % 40,
+    visibility: "public",
+    publicSummary: `S60 ${size} storage-only 关系样本${index}，不含未公开恩怨真值。`
+  }));
+
+  return { npcs, households, relationships };
+}
+
+function createStorageOffices(size, geography, people) {
+  const target = WORLD_CONTENT_FIXTURE_TARGETS[size];
+  const prefix = fixturePrefix(size);
+  const bureauCount = Math.max(24, Math.ceil(target.officialCatalogRows * 0.35));
+  const officeCount = target.officialCatalogRows - bureauCount;
+  const cityIds = geography.cities.map((city) => city.id);
+  const bureaus = numbered(bureauCount, (index) => ({
+    id: `${prefix}-bureau-${pad(index)}`,
+    name: `S60${size}样本官署${index}`,
+    level: index % 5 === 0 ? "provincial" : "court",
+    duties: ["钱粮", index % 3 === 0 ? "刑名" : "考成"],
+    visibility: "public",
+    publicSummary: `S60 ${size} storage-only 官署样本${index}。`
+  }));
+  const offices = numbered(officeCount, (index) => ({
+    id: `${prefix}-office-${pad(index)}`,
+    title: `S60${size}样本官职${index}`,
+    bureauId: bureaus[(index - 1) % bureaus.length].id,
+    rankBand: index % 8 === 0 ? "middle_provincial" : "low_central",
+    jurisdictionScope: index % 4 === 0 ? "province" : "court",
+    typicalCityIds: [cityIds[(index * 2) % cityIds.length]],
+    visibility: "public",
+    publicSummary: `S60 ${size} storage-only 官职样本${index}，任免仍由服务器裁决。`
+  }));
+  const cityJurisdictions = numbered(Math.min(target.postings, cityIds.length), (index) => ({
+    id: `${prefix}-jurisdiction-${pad(index, 4)}`,
+    name: `S60${size}样本任所辖区${index}`,
+    bureauId: bureaus[(index - 1) % bureaus.length].id,
+    cityId: cityIds[(index - 1) % cityIds.length],
+    jurisdictionScope: index % 4 === 0 ? "province" : "prefecture",
+    localMetrics: {
+      taxCapacity: 35 + (index % 60),
+      lawsuits: 15 + (index % 70),
+      disasterRisk: 10 + (index % 65)
+    },
+    visibility: "role_visible",
+    publicSummary: `S60 ${size} storage-only 任所辖区${index}。`
+  }));
+  const postings = numbered(target.postings, (index) => ({
+    id: `${prefix}-posting-${pad(index, 5)}`,
+    officeId: offices[(index - 1) % offices.length].id,
+    bureauId: bureaus[(index - 1) % bureaus.length].id,
+    holderType: "npc",
+    holderId: people.npcs[(index - 1) % people.npcs.length].id,
+    status: index % 11 === 0 ? "acting" : "active",
+    cityId: cityIds[(index * 5) % cityIds.length],
+    performanceScore: 35 + (index % 60),
+    impeachmentRisk: index % 9 === 0 ? 60 : 10 + (index % 35),
+    visibility: "role_visible",
+    publicSummary: `S60 ${size} storage-only 任命样本${index}，用于任所/考成/迁转总量验收。`
+  }));
+  const assessmentRecords = numbered(Math.min(target.postings, Math.ceil(target.postings * 0.35)), (index) => ({
+    id: `${prefix}-assessment-${pad(index, 5)}`,
+    postingId: postings[(index - 1) % postings.length].id,
+    officeId: postings[(index - 1) % postings.length].officeId,
+    bureauId: postings[(index - 1) % postings.length].bureauId,
+    status: index % 4 === 0 ? "watch" : "recorded",
+    meritScore: 35 + (index % 60),
+    riskScore: 10 + (index % 70),
+    publicSummary: `S60 ${size} storage-only 考成样本${index}。`
+  }));
+  const transferRecords = numbered(Math.min(target.postings, Math.ceil(target.postings * 0.2)), (index) => ({
+    id: `${prefix}-transfer-${pad(index, 5)}`,
+    holderType: "npc",
+    fromOfficeId: offices[(index - 1) % offices.length].id,
+    toOfficeId: offices[index % offices.length].id,
+    status: "recorded",
+    publicSummary: `S60 ${size} storage-only 迁转样本${index}。`
+  }));
+
+  return { bureaus, offices, cityJurisdictions, postings, assessmentRecords, transferRecords };
+}
+
+function createStoragePromptRetrievalRows(size, count) {
+  const prefix = fixturePrefix(size);
+  const domains = [
+    ["geography", "cities", "worldGeographyView"],
+    ["people", "npcs", "worldPeopleView"],
+    ["people", "relationships", "worldPeopleView"],
+    ["offices", "postings", "officialPostingsView"],
+    ["offices", "assessmentRecords", "officialPostingsView"],
+    ["events", "recentEvents", "eventArchiveView"],
+    ["intel", "rumors", "eventArchiveView"]
+  ];
+  return numbered(count, (index) => {
+    const [domain, collection, sourceView] = domains[(index - 1) % domains.length];
+    return {
+      rowId: `${prefix}-prompt-row-${pad(index, 5)}`,
+      domain,
+      collection,
+      sourceView,
+      visibility: "public",
+      title: `S60${size}安全检索行${index}`,
+      summary: `S60 ${size} storage-only 安全检索摘要${index}，用于证明总行数扩大时 prompt 仍走 capped summary。`,
+      tags: ["S60规模验收", domain, collection],
+      relatedRefs: [`${prefix}-${collection}-${pad(index)}`],
+      sortPriority: index
+    };
+  });
+}
+
+function createWorldContentStorageLedger(size, seed, eventIntelItems, promptRetrievalRows, geographyOverride = null) {
+  if (size === "small") return null;
+  const geography = geographyOverride || createStorageGeography(size);
+  const people = createStoragePeople(size, geography);
+  const offices = createStorageOffices(size, geography, people);
+
+  return {
+    schemaVersion: 1,
+    layer: "storage_only_fixture",
+    size,
+    seed,
+    visibility: "server_visible_projection",
+    note: "该侧车用于 S60.2 medium/large 总量、分页、prompt budget 与防泄漏验收；不接入当前 raw route worldState。",
+    geography,
+    people,
+    offices,
+    events: {
+      eventIntelItems
+    },
+    promptRetrievalRows
+  };
 }
 
 function attachOfficialPlayerContext(worldState) {
@@ -624,21 +878,30 @@ function addEventFixture(worldState) {
   };
 }
 
-function createEventIntelItems(count = WORLD_CONTENT_FIXTURE_TARGETS.small.eventIntelItems) {
+function createEventIntelItems(
+  count = WORLD_CONTENT_FIXTURE_TARGETS.small.eventIntelItems,
+  size = "small",
+  relatedCityIds = []
+) {
+  const prefix = fixturePrefix(size);
+  const fallbackCityIds = numbered(WORLD_CONTENT_FIXTURE_TARGETS[size]?.cities || 24, (index) =>
+    `${prefix}-city-${pad(index)}`
+  );
+  const cityIds = relatedCityIds.length ? relatedCityIds : fallbackCityIds;
   return numbered(count, (index) => ({
-    id: `event-intel-s60-${pad(index)}`,
-    title: `S60公开情报${index}`,
+    id: `${prefix}-event-intel-${pad(index, 5)}`,
+    title: `S60${size}公开情报${index}`,
     sourceType: index % 3 === 0 ? "rumor" : "event_template",
     scope: index % 4 === 0 ? "frontier" : index % 4 === 1 ? "fiscal" : "local",
     severity: (index % 3) + 1,
-    relatedRefs: [`city-s60-${pad(((index - 1) % 10) + 1)}`],
+    relatedRefs: [cityIds[(index - 1) % cityIds.length]],
     visibility: "public",
     intelConfidence: index % 3 === 0 ? 45 : 70,
-    publicText: `S60公开情报${index}只作为 fixture 总量侧车，不直接进入当前 route raw state。`
+    publicText: `S60 ${size} 公开情报${index}只作为 fixture 总量侧车，不直接进入当前 route raw state。`
   }));
 }
 
-function createHiddenCanaries() {
+function createHiddenCanaries(size = "small") {
   const domains = [
     "country_neighbor",
     "city_route",
@@ -649,8 +912,10 @@ function createHiddenCanaries() {
     "prompt_retrieval",
     "audit_export"
   ];
+  const target = WORLD_CONTENT_FIXTURE_TARGETS[size] || WORLD_CONTENT_FIXTURE_TARGETS.small;
+  const perDomain = Math.max(10, Math.ceil(target.hiddenCanaries / domains.length));
   return domains.reduce((result, domain) => {
-    result[domain] = numbered(10, (index) => {
+    result[domain] = numbered(perDomain, (index) => {
       const upper = domain.toUpperCase().replace(/[^A-Z0-9]+/g, "_");
       if (domain === "prompt_retrieval" && index === 3) return "S60_PRIVATE_PROMPT_prompt_retrieval_index_ROW";
       if (domain === "audit_export" && index === 4) return "S60_PRIVATE_AUDIT_event_log_TOKEN";
@@ -668,11 +933,13 @@ function flattenCanaries(hiddenCanaries) {
 }
 
 function createWorldContentFixture(options = {}) {
+  const generationStartedAt = PERFORMANCE_CLOCK.now();
   const size = options.size || "small";
   const seed = options.seed || DEFAULT_SEED;
   if (!SUPPORTED_SIZES.has(size)) {
     throw new Error(`Unsupported S60 world content fixture size: ${size}`);
   }
+  const target = WORLD_CONTENT_FIXTURE_TARGETS[size];
 
   const worldState = createInitialState({
     role: options.role || "official",
@@ -686,24 +953,45 @@ function createWorldContentFixture(options = {}) {
   addOfficialFixture(worldState);
   addEventFixture(worldState);
 
-  const eventIntelItems = createEventIntelItems();
-  const hiddenCanaries = createHiddenCanaries();
+  const storageGeographyForRefs = size === "small" ? null : createStorageGeography(size);
+  const relatedCityIds = size === "small"
+    ? buildWorldGeographyView(worldState).cities.map((city) => city.id)
+    : storageGeographyForRefs.cities.map((city) => city.id);
+  const eventIntelItems = createEventIntelItems(target.eventIntelItems, size, relatedCityIds);
+  const hiddenCanaries = createHiddenCanaries(size);
+  const promptRetrievalRows = createStoragePromptRetrievalRows(size, target.promptRetrievalRows);
+  const storageLedger = createWorldContentStorageLedger(
+    size,
+    seed,
+    eventIntelItems,
+    promptRetrievalRows,
+    storageGeographyForRefs
+  );
   const fixture = {
     size,
     seed,
     worldState,
     eventIntelItems,
     hiddenCanaries,
+    promptRetrievalRows,
+    storageLedger,
     fixtureSummary: {
       size,
       seed,
-      target: WORLD_CONTENT_FIXTURE_TARGETS[size],
+      target,
       supportedSizes: [...SUPPORTED_SIZES],
-      note: "S60.2 small 基线只把可随 route 返回的安全 projection 写入 worldState；事件/情报总量与真正私档 canary 保持侧车。"
+      note: size === "small"
+        ? "S60.2 small 基线只把可随 route 返回的安全 projection 写入 worldState；事件/情报总量与真正私档 canary 保持侧车。"
+        : "S60.2 medium/large 使用 storage-only 侧车记录世界总量；当前 raw route worldState 只保留安全 capped projection。"
     }
   };
 
+  const fixtureGenerationMs = Number((PERFORMANCE_CLOCK.now() - generationStartedAt).toFixed(3));
   fixture.fixtureSummary.metrics = measureWorldContentFixture(fixture);
+  fixture.fixtureSummary.performanceBaseline = {
+    fixtureGenerationMs,
+    ...buildWorldContentPerformanceBaseline(fixture)
+  };
   return fixture;
 }
 
@@ -729,52 +1017,321 @@ function countRetrievalSummaryRows(retrievalContext = {}) {
 }
 
 function buildPromptBudgetReport(worldState, options = {}) {
-  const promptContext = assemblePromptContext(worldState, options);
+  const promptContext = assemblePromptContext(worldState, {
+    ...options,
+    promptBudgetProfile: options.promptBudgetProfile || options.budgetProfile || options.profile
+  });
   const serializedRetrieval = JSON.stringify(promptContext.retrievalContext);
   return {
+    profile: promptContext.retrievalContext?.query?.profile || options.promptBudgetProfile || options.budgetProfile || options.profile || "high",
     summaryRows: countRetrievalSummaryRows(promptContext.retrievalContext),
     serializedChars: serializedRetrieval.length,
     promptContext
   };
 }
 
+function normalizeFixturePage(value) {
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? Math.max(1, Math.round(parsed)) : 1;
+}
+
+function normalizeFixturePageSize(value) {
+  const parsed = Number(value);
+  if (!Number.isFinite(parsed)) return WORLD_CONTENT_BROWSER_PAGE.defaultPageSize;
+  return Math.max(1, Math.min(WORLD_CONTENT_BROWSER_PAGE.maxPageSize, Math.round(parsed)));
+}
+
+function getFixtureCollectionRows(fixtureOrLedger, collectionKey) {
+  const fixture = fixtureOrLedger?.storageLedger || fixtureOrLedger;
+  const worldState = fixtureOrLedger?.worldState;
+  if (collectionKey === "geography.countries") {
+    return fixture?.geography?.countries || (worldState ? buildWorldGeographyView(worldState).countries : []);
+  }
+  if (collectionKey === "geography.cities") {
+    return fixture?.geography?.cities || (worldState ? buildWorldGeographyView(worldState).cities : []);
+  }
+  if (collectionKey === "geography.routes") {
+    return fixture?.geography?.routes || (worldState ? buildWorldGeographyView(worldState).routes : []);
+  }
+  if (collectionKey === "geography.frontierZones") {
+    return fixture?.geography?.frontierZones || (worldState ? buildWorldGeographyView(worldState).frontierZones : []);
+  }
+  if (collectionKey === "people.npcs") {
+    return fixture?.people?.npcs || (worldState ? buildWorldPeopleView(worldState).npcs : []);
+  }
+  if (collectionKey === "people.households") {
+    return fixture?.people?.households || (worldState ? buildWorldPeopleView(worldState).households : []);
+  }
+  if (collectionKey === "people.relationships") {
+    return fixture?.people?.relationships || (worldState ? buildWorldPeopleView(worldState).relationships : []);
+  }
+  if (collectionKey === "offices.bureaus") {
+    return fixture?.offices?.bureaus || (worldState ? buildOfficialPostingsView(worldState).bureaus : []);
+  }
+  if (collectionKey === "offices.offices") {
+    return fixture?.offices?.offices || (worldState ? buildOfficialPostingsView(worldState).offices : []);
+  }
+  if (collectionKey === "offices.cityJurisdictions") {
+    return fixture?.offices?.cityJurisdictions || (worldState ? buildOfficialPostingsView(worldState).cityJurisdictions : []);
+  }
+  if (collectionKey === "offices.postings") {
+    return fixture?.offices?.postings || (worldState ? buildOfficialPostingsView(worldState).postings : []);
+  }
+  if (collectionKey === "offices.assessmentRecords") {
+    return fixture?.offices?.assessmentRecords || (worldState ? buildOfficialPostingsView(worldState).assessmentRecords : []);
+  }
+  if (collectionKey === "offices.transferRecords") {
+    return fixture?.offices?.transferRecords || (worldState ? buildOfficialPostingsView(worldState).transferRecords : []);
+  }
+  if (collectionKey === "events.eventIntelItems") {
+    return fixtureOrLedger?.eventIntelItems || fixture?.events?.eventIntelItems || [];
+  }
+  if (collectionKey === "promptRetrievalRows") {
+    return fixtureOrLedger?.promptRetrievalRows || fixture?.promptRetrievalRows || [];
+  }
+  throw new Error(`Unsupported S60 fixture collection: ${collectionKey}`);
+}
+
+function pickFields(row = {}, fields = []) {
+  return fields.reduce((result, field) => {
+    if (row[field] !== undefined) result[field] = row[field];
+    return result;
+  }, {});
+}
+
+function projectFixturePageRow(collectionKey, row = {}) {
+  if (collectionKey.startsWith("geography.")) {
+    return pickFields(row, [
+      "id",
+      "name",
+      "kind",
+      "countryId",
+      "regionId",
+      "jurisdictionLevel",
+      "type",
+      "fromCityId",
+      "toCityId",
+      "pressure",
+      "risk",
+      "visibility",
+      "publicSummary"
+    ]);
+  }
+  if (collectionKey.startsWith("people.")) {
+    return pickFields(row, [
+      "id",
+      "name",
+      "familyName",
+      "householdId",
+      "seatCityId",
+      "currentCityId",
+      "rankLabel",
+      "sourceType",
+      "sourceId",
+      "targetType",
+      "targetId",
+      "relationship",
+      "trust",
+      "resentment",
+      "visibility",
+      "publicSummary"
+    ]);
+  }
+  if (collectionKey.startsWith("offices.")) {
+    return pickFields(row, [
+      "id",
+      "name",
+      "title",
+      "bureauId",
+      "officeId",
+      "postingId",
+      "holderType",
+      "holderId",
+      "status",
+      "cityId",
+      "rankBand",
+      "jurisdictionScope",
+      "visibility",
+      "publicSummary"
+    ]);
+  }
+  if (collectionKey === "events.eventIntelItems") {
+    return pickFields(row, [
+      "id",
+      "title",
+      "sourceType",
+      "scope",
+      "severity",
+      "relatedRefs",
+      "visibility",
+      "intelConfidence",
+      "publicText"
+    ]);
+  }
+  if (collectionKey === "promptRetrievalRows") {
+    return pickFields(row, [
+      "rowId",
+      "domain",
+      "collection",
+      "sourceView",
+      "visibility",
+      "title",
+      "summary",
+      "tags",
+      "relatedRefs",
+      "sortPriority"
+    ]);
+  }
+  return {};
+}
+
+function buildWorldContentFixturePage(fixtureOrLedger, collectionKey, options = {}) {
+  const pageSize = normalizeFixturePageSize(options.pageSize);
+  const query = typeof options.query === "string" ? options.query.trim().toLowerCase() : "";
+  const rows = getFixtureCollectionRows(fixtureOrLedger, collectionKey);
+  const projectedRows = rows.map((row) => projectFixturePageRow(collectionKey, row));
+  const filteredRows = query
+    ? projectedRows.filter((row) => JSON.stringify(row).toLowerCase().includes(query))
+    : projectedRows;
+  const totalItems = filteredRows.length;
+  const totalPages = Math.max(1, Math.ceil(totalItems / pageSize));
+  const page = Math.min(normalizeFixturePage(options.page), totalPages);
+  const offset = (page - 1) * pageSize;
+
+  return {
+    collectionKey,
+    query,
+    items: filteredRows.slice(offset, offset + pageSize),
+    pagination: {
+      page,
+      pageSize,
+      totalItems,
+      totalPages,
+      hasPreviousPage: page > 1,
+      hasNextPage: page < totalPages
+    },
+    hiddenNotice: "S60.2 fixture 分页只返回服务器可见 projection；raw ledger、hidden 私档、prompt、key 与本地路径均不得进入页面。"
+  };
+}
+
+function measureDurationMs(task) {
+  const startedAt = PERFORMANCE_CLOCK.now();
+  const value = task();
+  return {
+    value,
+    durationMs: Number((PERFORMANCE_CLOCK.now() - startedAt).toFixed(3))
+  };
+}
+
+function buildWorldContentPerformanceBaseline(fixtureOrWorldState) {
+  const fixture = fixtureOrWorldState.worldState
+    ? fixtureOrWorldState
+    : { worldState: fixtureOrWorldState };
+  const worldState = fixture.worldState;
+  const archiveTiming = measureDurationMs(() => buildEventArchiveView(worldState, { page: 1, pageSize: 50 }));
+  const promptTiming = measureDurationMs(() => buildPromptBudgetReport(worldState, {
+    task: "official_career",
+    playerAction: "核查户部、北京、漕运、边报、样本人物与任所",
+    promptBudgetProfile: "ordinary"
+  }));
+  const retrievalTiming = measureDurationMs(() => buildPromptRetrievalRows(
+    createFixtureSessionRecord(clone(worldState))
+  ));
+  const pageTiming = measureDurationMs(() => buildWorldContentFixturePage(
+    fixture,
+    fixture.size === "small" ? "geography.cities" : "promptRetrievalRows",
+    { page: 1, pageSize: WORLD_CONTENT_BROWSER_PAGE.maxPageSize }
+  ));
+
+  return {
+    fixtureSize: fixture.size || "worldState",
+    eventArchivePaginationMs: archiveTiming.durationMs,
+    promptAssemblyMs: promptTiming.durationMs,
+    promptRetrievalRowsMs: retrievalTiming.durationMs,
+    fixturePageMs: pageTiming.durationMs,
+    eventArchiveRows: archiveTiming.value.pagination.totalItems,
+    promptSummaryRows: promptTiming.value.summaryRows,
+    promptRetrievalRows: retrievalTiming.value.length,
+    fixturePageRows: pageTiming.value.items.length
+  };
+}
+
+function countStorageRows(storageLedger, domain, collection) {
+  const rows = storageLedger?.[domain]?.[collection];
+  return Array.isArray(rows) ? rows.length : 0;
+}
+
 function measureWorldContentFixture(fixtureOrWorldState) {
   const worldState = fixtureOrWorldState.worldState || fixtureOrWorldState;
   const eventIntelItems = fixtureOrWorldState.eventIntelItems || [];
   const hiddenCanaries = fixtureOrWorldState.hiddenCanaries || {};
+  const storageLedger = fixtureOrWorldState.storageLedger || null;
+  const storagePromptRows = fixtureOrWorldState.promptRetrievalRows || storageLedger?.promptRetrievalRows || [];
   const geography = buildWorldGeographyView(worldState);
   const people = buildWorldPeopleView(worldState);
   const official = buildOfficialPostingsView(worldState);
   const archive = buildEventArchiveView(worldState, { pageSize: 50 });
   const record = createFixtureSessionRecord(clone(worldState));
   const promptRetrievalRows = buildPromptRetrievalRows(record);
-  const budget = buildPromptBudgetReport(worldState, {
+  const highBudget = buildPromptBudgetReport(worldState, {
     task: "official_career",
-    playerAction: "核查户部、北京、漕运、边报、样本人物与任所"
+    playerAction: "核查户部、北京、漕运、边报、样本人物与任所",
+    promptBudgetProfile: "high"
   });
+  const ordinaryBudget = buildPromptBudgetReport(worldState, {
+    task: "official_career",
+    playerAction: "核查户部、北京、漕运、边报、样本人物与任所",
+    promptBudgetProfile: "ordinary"
+  });
+  const storageOfficialCatalogRows =
+    countStorageRows(storageLedger, "offices", "bureaus") +
+    countStorageRows(storageLedger, "offices", "offices");
 
   return {
-    countries: geography.countries.length,
-    regions: geography.regions.length,
-    cities: geography.cities.length,
-    routes: geography.routes.length,
-    frontierZones: geography.frontierZones.length,
-    npcs: people.npcs.length,
-    households: people.households.length,
-    relationships: people.relationships.length,
-    officialCatalogRows: official.bureaus.length + official.offices.length,
+    countries: Math.max(geography.countries.length, countStorageRows(storageLedger, "geography", "countries")),
+    regions: Math.max(geography.regions.length, countStorageRows(storageLedger, "geography", "regions")),
+    cities: Math.max(geography.cities.length, countStorageRows(storageLedger, "geography", "cities")),
+    routes: Math.max(geography.routes.length, countStorageRows(storageLedger, "geography", "routes")),
+    frontierZones: Math.max(geography.frontierZones.length, countStorageRows(storageLedger, "geography", "frontierZones")),
+    npcs: Math.max(people.npcs.length, countStorageRows(storageLedger, "people", "npcs")),
+    households: Math.max(people.households.length, countStorageRows(storageLedger, "people", "households")),
+    relationships: Math.max(people.relationships.length, countStorageRows(storageLedger, "people", "relationships")),
+    officialCatalogRows: Math.max(official.bureaus.length + official.offices.length, storageOfficialCatalogRows),
     bureaus: official.bureaus.length,
     offices: official.offices.length,
     cityJurisdictions: official.cityJurisdictions.length,
-    postings: official.postings.length,
+    postings: Math.max(official.postings.length, countStorageRows(storageLedger, "offices", "postings")),
     assessmentRecords: official.assessmentRecords.length,
     transferRecords: official.transferRecords.length,
     eventArchiveRows: archive.pagination.totalItems,
     eventIntelItems: eventIntelItems.length,
-    promptRetrievalRows: promptRetrievalRows.length,
+    promptRetrievalRows: Math.max(promptRetrievalRows.length, storagePromptRows.length),
     hiddenCanaries: flattenCanaries(hiddenCanaries).length,
-    retrievalSummaryRows: budget.summaryRows,
-    retrievalSerializedChars: budget.serializedChars
+    retrievalSummaryRows: highBudget.summaryRows,
+    retrievalSerializedChars: highBudget.serializedChars,
+    ordinaryRetrievalSummaryRows: ordinaryBudget.summaryRows,
+    ordinaryRetrievalSerializedChars: ordinaryBudget.serializedChars,
+    routeViewRows: {
+      countries: geography.countries.length,
+      cities: geography.cities.length,
+      npcs: people.npcs.length,
+      relationships: people.relationships.length,
+      officialCatalogRows: official.bureaus.length + official.offices.length,
+      postings: official.postings.length,
+      eventArchiveRows: archive.pagination.totalItems,
+      promptRetrievalRows: promptRetrievalRows.length
+    },
+    storageRows: storageLedger ? {
+      countries: countStorageRows(storageLedger, "geography", "countries"),
+      cities: countStorageRows(storageLedger, "geography", "cities"),
+      npcs: countStorageRows(storageLedger, "people", "npcs"),
+      households: countStorageRows(storageLedger, "people", "households"),
+      relationships: countStorageRows(storageLedger, "people", "relationships"),
+      officialCatalogRows: storageOfficialCatalogRows,
+      postings: countStorageRows(storageLedger, "offices", "postings"),
+      eventIntelItems: eventIntelItems.length,
+      promptRetrievalRows: storagePromptRows.length
+    } : null
   };
 }
 
@@ -877,8 +1434,11 @@ function createCanaryPollutedWorldState(fixtureOrWorldState) {
 }
 
 module.exports = {
+  WORLD_CONTENT_BROWSER_PAGE,
   WORLD_CONTENT_FIXTURE_TARGETS,
   WORLD_CONTENT_PROMPT_BUDGET,
+  buildWorldContentFixturePage,
+  buildWorldContentPerformanceBaseline,
   buildPromptBudgetReport,
   countRetrievalSummaryRows,
   createCanaryPollutedWorldState,

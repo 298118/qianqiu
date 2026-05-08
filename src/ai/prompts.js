@@ -143,7 +143,11 @@ function buildTurnTask(worldState, input) {
       "Use retrievalContext as the first index of role-visible countries, cities, NPCs, offices, postings, institutions, and event summaries. Do not infer hidden data beyond it.",
       `Player action: ${input}`,
       "World state:",
-      JSON.stringify(compactWorldState(worldState, { task: promptPack, playerAction: input }), null, 2)
+      JSON.stringify(compactWorldState(worldState, {
+        task: promptPack,
+        playerAction: input,
+        promptBudgetProfile: "ordinary"
+      }), null, 2)
     ].join("\n"),
     maxOutputTokens: 1600
   };
