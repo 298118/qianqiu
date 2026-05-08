@@ -31,6 +31,62 @@ test("initial official postings bridge links current official office to visible 
   ));
 });
 
+test("S63 official ecosystem exposes appointment pool without changing appointment authority", () => {
+  const worldState = createInitialState({ role: "official", playerName: "任命池官员" });
+  const beforeOfficeTitle = worldState.player.officeTitle;
+  const beforeCurrentPosting = worldState.officialCareer.currentPosting;
+  worldState.officialCareer.assignments = [{
+    id: "assignment-visible-docket",
+    title: "核查官缺",
+    status: "active"
+  }, {
+    id: "assignment-resolved-docket",
+    title: "已结差事",
+    status: "resolved"
+  }];
+
+  ensureOfficialPostingsState(worldState);
+  const first = JSON.stringify(worldState.officialPostings);
+  ensureOfficialPostingsState(worldState);
+  const view = buildOfficialPostingsView(worldState);
+  const promptSummary = summarizeOfficialPostingsForPrompt(worldState);
+  const playerPosting = view.postings.find((row) => row.id === "posting-player-current");
+  const superior = view.postings.find((row) => row.id === "posting-s63-superior-current");
+  const interfacePosting = view.postings.find((row) => row.id === "posting-s63-office-interface-current");
+  const vacancy = view.postings.find((row) => row.id === "posting-s63-vacancy-1");
+  const candidateTransfer = view.transferRecords.find((row) => row.id === "transfer-s63-candidate-1");
+  const mourningTransfer = view.transferRecords.find((row) => row.id === "transfer-s63-mourning-vacancy");
+  const restorationTransfer = view.transferRecords.find((row) => row.id === "transfer-s63-restoration-pending");
+  const vacancyAssessment = view.assessmentRecords.find((row) => row.id === "assessment-s63-vacancy-1");
+  const impeachmentAssessment = view.assessmentRecords.find((row) => row.id === "assessment-s63-impeachment-watch");
+  const serializedPrompt = JSON.stringify(promptSummary);
+
+  assert.equal(JSON.stringify(worldState.officialPostings), first);
+  assert.equal(playerPosting.superiorPostingId, "posting-s63-superior-current");
+  assert.deepEqual(playerPosting.assignmentIds, ["assignment-visible-docket"]);
+  assert.equal(superior.status, "active");
+  assert.match(superior.publicSummary, /上级堂官|服务器官场结算/);
+  assert.equal(interfacePosting.status, "acting");
+  assert.match(interfacePosting.publicSummary, /胥吏幕友|属官同僚|地方士绅接口/);
+  assert.equal(vacancy.status, "vacant");
+  assert.equal(vacancy.holderType, "vacant");
+  assert.equal(vacancy.holderId, "");
+  assert.match(vacancy.publicSummary, /候补|补授|试署|外放|服务器裁决/);
+  assert.equal(candidateTransfer.status, "proposed");
+  assert.match(candidateTransfer.publicReason, /候补池|AI 只能读取/);
+  assert.equal(mourningTransfer.type, "mourning_leave");
+  assert.match(mourningTransfer.publicReason, /丁忧/);
+  assert.equal(restorationTransfer.type, "restoration");
+  assert.match(restorationTransfer.publicReason, /起复候拟/);
+  assert.equal(vacancyAssessment.status, "pending");
+  assert.match(vacancyAssessment.publicFinding, /官缺压力|吏部铨选/);
+  assert.equal(impeachmentAssessment.recommendation, "impeachment");
+  assert.match(impeachmentAssessment.publicFinding, /弹劾|服务器裁决/);
+  assert.match(serializedPrompt, /候补|官缺|任命池/);
+  assert.equal(worldState.player.officeTitle, beforeOfficeTitle);
+  assert.equal(worldState.officialCareer.currentPosting, beforeCurrentPosting);
+});
+
 test("official assessment summaries read S61 city depth metrics", () => {
   const worldState = createInitialState({ role: "official", playerName: "任所考成" });
   Object.assign(worldState.player, {

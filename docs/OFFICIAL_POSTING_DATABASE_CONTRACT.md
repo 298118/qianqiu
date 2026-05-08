@@ -6,6 +6,8 @@ S52/S56.1 切片本身不新增运行时 SQLite 业务表，不改变既有 `off
 
 S60 内容充实阶段的官署、官职、任所、任命、考成和迁转总量目标见 [S60 超大动态世界数据库内容契约](HUGE_DYNAMIC_WORLD_CONTENT_CONTRACT.md)。这些目标表示数据库/fixture 总量，不自动放宽当前 `officialPostings` bundle cap；后续若要承载大规模任命池，应通过安全分页 view、prompt capped summary 或另行调整 schema cap 与测试，不能让 raw `office_*` 行反向决定任免或泄漏 hidden 任所/密札考成。
 
+S63.1 已在 `officialPostings` 桥接中加入官职生态与任命池 projection：上级堂官、属官/胥吏/幕友/同僚接口、空缺、候补、补授、试署、外放、丁忧、起复、弹劾候勘和差遣压力会以少量可见 `postings`、`assessmentRecords`、`transferRecords` 行进入 `officialPostingsView`、SQLite `office_*` 派生行和 prompt retrieval。该投影仍不是任免裁决源；`player.officeTitle`、`officialCareer`、升降、补缺、起复、处分和真实任命事实继续只由服务器官场模块裁决。
+
 ## 范围
 
 S52.1 新增运行时契约 helper：`src/game/officialPostingSchemas.js`。
@@ -70,6 +72,7 @@ S52.1 新增运行时契约 helper：`src/game/officialPostingSchemas.js`。
 - 地方官当前任所以 `player.officeTitle`、非空 `officialCareer.currentPosting` 或默认 `知县` 为准，`countyName` 只作为本地县名标签；当前默认把县级任所确定性映射到 S50 可见的府州县城市集合，后续若扩县级 seed 再改为真实县城 id。
 - `transferRecords` 从服务器拥有的 `officialCareer.careerHistory` 派生；重复 `ensure` 必须幂等，不会反复追加迁转。
 - `assessmentRecords` 从服务器拥有的 `officialCareer.assessmentDossier`、地方官可见地方指标和 S61 可见城市深度 projection 派生；S61.2 起当前任所考成可追加“任所奏报”，概括税基、粮储、市价、士绅、词讼、徭役、水利、灾害、交通、驻军和书院压力。它只作 prompt/view 背景，不替代官场结算，也不改写 merit/risk/recommendation。
+- S63.1 任命池行由 `officialEcosystemConfig` 配置。`role_visible` 官缺、候补、丁忧、起复和弹劾候勘只对行政身份开放；书生默认不读这些行。任命池考成是案牍压力 projection，不进入 `eventArchiveView` 的公开历史事件；只有真实任所考成仍可生成 `official_assessment` 事件档案条目。
 - 由于 game/exam route 仍为开发兼容返回完整本地 `worldState`，`worldState.officialPostings` 只保存 `buildOfficialPostingSchemaView()` 后的安全可见 projection，不保存 hidden 官员私档、密札考成或未公开调任。
 
 路由与 prompt：

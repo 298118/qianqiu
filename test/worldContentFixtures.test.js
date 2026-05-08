@@ -34,6 +34,7 @@ const {
 const sessionsDir = path.join(__dirname, "..", "data", "sessions");
 const dataDir = path.join(__dirname, "..", "data");
 const hasNodeSqlite = typeof isBuiltin === "function" && isBuiltin("node:sqlite");
+const SMALL_ROUTE_PROMPT_ROW_CEILING = 530;
 
 function clone(value) {
   return JSON.parse(JSON.stringify(value));
@@ -87,7 +88,7 @@ test("S60 small world content fixture reaches quantity gates without storing pri
   assert.equal(metrics.postings >= target.postings, true);
   assert.equal(metrics.eventIntelItems >= target.eventIntelItems, true);
   assert.equal(metrics.promptRetrievalRows >= target.promptRetrievalRows, true);
-  assert.equal(metrics.promptRetrievalRows <= 500, true);
+  assert.equal(metrics.promptRetrievalRows <= SMALL_ROUTE_PROMPT_ROW_CEILING, true);
   assert.equal(metrics.hiddenCanaries >= target.hiddenCanaries, true);
   assert.equal(metrics.peopleGenealogy.roleLabels.includes("邻国使者"), true);
   assert.equal(metrics.peopleGenealogy.parentLinkedNpcs > 0, true);

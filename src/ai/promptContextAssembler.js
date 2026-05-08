@@ -535,6 +535,7 @@ function compactPosting(posting) {
     performanceScore: posting.performanceScore,
     impeachmentRisk: posting.impeachmentRisk,
     publicReputation: posting.publicReputation,
+    assignmentIds: unique(posting.assignmentIds, 12),
     publicSummary: posting.publicSummary
   };
 }

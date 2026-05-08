@@ -301,6 +301,7 @@ function normalizePosting(raw, worldState = {}) {
     performanceScore: clampMetric(source.performanceScore, 50),
     impeachmentRisk: clampMetric(source.impeachmentRisk, 0),
     publicReputation: clampMetric(source.publicReputation, 50),
+    assignmentIds: normalizeIdList(source.assignmentIds, 12),
     ...shared,
     publicSummary: shared.publicSummary || `${source.officeTitle || inferred?.title || "此任"}为可追踪任命记录。`
   };
@@ -493,6 +494,7 @@ function viewPosting(posting, visibleIds) {
     performanceScore: posting.performanceScore,
     impeachmentRisk: posting.impeachmentRisk,
     publicReputation: posting.publicReputation,
+    assignmentIds: posting.assignmentIds,
     visibility: posting.visibility,
     knownToPlayer: posting.knownToPlayer,
     intelConfidence: posting.intelConfidence,
@@ -660,6 +662,7 @@ function summarizeOfficialPostingSchemaForPrompt(input = {}, worldState = {}) {
       performanceScore: posting.performanceScore,
       impeachmentRisk: posting.impeachmentRisk,
       publicReputation: posting.publicReputation,
+      assignmentIds: posting.assignmentIds,
       publicSummary: posting.publicSummary
     })),
     assessmentRecords: view.assessmentRecords.slice(0, 6).map((record) => ({

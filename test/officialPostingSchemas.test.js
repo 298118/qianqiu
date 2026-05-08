@@ -93,6 +93,7 @@ function samplePostingBundle() {
       startedTenDayPeriod: 2,
       performanceScore: 150,
       impeachmentRisk: -4,
+      assignmentIds: ["assignment-visible", "assignment-visible"],
       publicSummary: "玩家当前在户部办钱粮。"
     }, {
       id: "posting-hidden-superior",
@@ -169,6 +170,7 @@ test("official posting schema bundle normalizes offices, postings, assessments, 
   assert.equal(posting.startedAt.tenDayPeriod, 2);
   assert.equal(posting.performanceScore, 100);
   assert.equal(posting.impeachmentRisk, 0);
+  assert.deepEqual(posting.assignmentIds, ["assignment-visible"]);
 
   const assessment = bundle.assessmentRecords.find((entry) => entry.id === "assessment-player-revenue");
   assert.equal(assessment.meritScore, 100);
@@ -195,6 +197,7 @@ test("official posting view filters hidden rows, hidden notes, and hidden nested
 
   const posting = view.postings.find((entry) => entry.id === "posting-player-revenue");
   assert.equal(posting.superiorPostingId, null);
+  assert.deepEqual(posting.assignmentIds, ["assignment-visible"]);
   const jurisdiction = view.cityJurisdictions.find((entry) => entry.id === "jurisdiction-suzhou");
   assert.deepEqual(jurisdiction.availableOfficeIds, ["ministry_revenue_principal"]);
 

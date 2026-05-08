@@ -5,11 +5,14 @@ const {
   summarizeOfficialPostingSchemaForPrompt
 } = require("./officialPostingSchemas");
 const {
+  getOffice,
   inferOfficeByTitle,
   listBureaus,
   listOffices
 } = require("./officialCatalog");
+const { OFFICIAL_ECOSYSTEM_CONFIG } = require("./officialEcosystemConfig");
 const { buildWorldGeographyView } = require("./worldGeography");
+const { buildWorldPeopleView } = require("./worldPeople");
 
 const MAX_TEXT_LENGTH = 140;
 const PLAYER_POSTING_ID = "posting-player-current";
@@ -112,6 +115,48 @@ function groupBy(rows, key) {
     groups.get(value).push(row);
   }
   return groups;
+}
+
+function buildVisiblePeopleContext(worldState = {}) {
+  const view = buildWorldPeopleView(worldState);
+  const npcs = (view.npcs || []).filter((npc) =>
+    npc &&
+    npc.alive !== false &&
+    npc.visibility !== "hidden" &&
+    (npc.knownToPlayer === true || npc.visibility === "public" || npc.visibility === "role_visible")
+  );
+  return {
+    view,
+    npcs
+  };
+}
+
+function npcMatchesRank(npc, patterns = []) {
+  const rank = cleanText(npc?.rankLabel, "", 80);
+  const summary = cleanText(npc?.publicSummary, "", 120);
+  return patterns.some((pattern) => rank.includes(pattern) || summary.includes(pattern));
+}
+
+function chooseVisibleNpc(people, options = {}) {
+  const npcs = Array.isArray(people?.npcs) ? people.npcs : [];
+  const patterns = options.rankPatterns || [];
+  const bureauId = cleanId(options.bureauId, "");
+  const preferred = npcs.filter((npc) =>
+    (!bureauId || !npc.bureauId || npc.bureauId === bureauId) &&
+    (!patterns.length || npcMatchesRank(npc, patterns))
+  );
+  const candidates = preferred.length ? preferred : npcs.filter((npc) =>
+    !patterns.length || npcMatchesRank(npc, patterns)
+  );
+  const source = candidates.length ? candidates : npcs;
+  if (!source.length) return null;
+  return source[deterministicIndex(options.seed || bureauId || "npc", source.length)];
+}
+
+function holderFromNpc(npc) {
+  return npc?.id
+    ? { holderType: "npc", holderId: cleanId(npc.id, "") }
+    : { holderType: "unknown", holderId: "" };
 }
 
 function buildVisibleGeographyContext(worldState = {}) {
@@ -511,6 +556,7 @@ function buildPlayerPosting(worldState, jurisdictionRows) {
     performanceScore: scores.merit,
     impeachmentRisk: scores.risk,
     publicReputation: scores.reputation,
+    assignmentIds: activeAssignmentIds(career).slice(0, 12),
     visibility: "office_visible",
     knownToPlayer: true,
     intelConfidence: 90,
@@ -612,6 +658,411 @@ function buildTransferRecords(worldState, jurisdictionRows) {
   });
 }
 
+function activeAssignmentIds(career = {}) {
+  return unique((career.assignments || [])
+    .filter((assignment) => !["resolved", "cancelled", "failed"].includes(cleanText(assignment.status, "")))
+    .map((assignment) => assignment.id));
+}
+
+function resolveConfiguredOffice(officeId, fallbackOfficeId = "") {
+  return getOffice(cleanId(officeId, "")) || getOffice(cleanId(fallbackOfficeId, "")) || null;
+}
+
+function selectJurisdictionForOffice(worldState, office, jurisdictionRows, seed = "") {
+  if (!office) return null;
+  return selectPostingJurisdiction(worldState, office, jurisdictionRows) ||
+    chooseRow(jurisdictionRows.filter((row) => row.bureauId === office.bureauId), `${office.id}:${seed}`) ||
+    chooseRow(jurisdictionRows, `${office.id}:${seed}`);
+}
+
+function vacancyPressureForJurisdiction(jurisdiction = {}) {
+  const metrics = jurisdiction.localMetrics || {};
+  const weights = OFFICIAL_ECOSYSTEM_CONFIG.vacancyPressureWeights;
+  return clampMetric(Math.round(
+    clampMetric(metrics.lawsuits, 20) * weights.lawsuits +
+    clampMetric(metrics.disasterRisk, 20) * weights.disasterRisk +
+    clampMetric(metrics.militaryPressure, 20) * weights.militaryPressure +
+    (100 - clampMetric(metrics.taxCapacity, 50)) * weights.lowTaxCapacity +
+    clampMetric(metrics.gentryInfluence, 50) * weights.gentryInfluence
+  ), 50);
+}
+
+function describeAppointmentPressure(jurisdiction = {}) {
+  const metrics = jurisdiction.localMetrics || {};
+  const thresholds = OFFICIAL_ECOSYSTEM_CONFIG.pressureThresholds;
+  const notes = [];
+  if (clampMetric(metrics.taxCapacity, 50) <= thresholds.lowTaxCapacity) notes.push("钱粮偏薄");
+  if (clampMetric(metrics.lawsuits, 20) >= thresholds.highLawsuitPressure) notes.push("刑名壅积");
+  if (clampMetric(metrics.disasterRisk, 20) >= thresholds.highDisasterRisk) notes.push("灾赈催办");
+  if (clampMetric(metrics.militaryPressure, 20) >= thresholds.highMilitaryPressure) notes.push("盗防吃紧");
+  if (clampMetric(metrics.gentryInfluence, 50) >= thresholds.highGentryInfluence) notes.push("士绅牵制");
+  return notes.slice(0, 3).join("、") || "差遣压力平稳";
+}
+
+function buildSuperiorPosting(worldState, playerPosting, jurisdictionRows, people) {
+  if (!playerPosting) return null;
+  const config = OFFICIAL_ECOSYSTEM_CONFIG;
+  const office = resolveConfiguredOffice(
+    config.superiorOfficeByBureau[playerPosting.bureauId],
+    playerPosting.officeId
+  );
+  if (!office) return null;
+  const jurisdiction = selectJurisdictionForOffice(worldState, office, jurisdictionRows, "superior") ||
+    jurisdictionRows.find((row) => row.id === playerPosting.jurisdictionId);
+  const holder = holderFromNpc(chooseVisibleNpc(people, {
+    bureauId: playerPosting.bureauId,
+    rankPatterns: config.visibleNpcRankPatterns.superior,
+    seed: `${office.id}:superior`
+  }));
+
+  return {
+    id: config.rowIds.superiorPosting,
+    officeId: office.id,
+    officeTitle: office.title,
+    bureauId: office.bureauId,
+    ...holder,
+    status: "active",
+    cityId: jurisdiction?.cityId || playerPosting.cityId,
+    regionId: jurisdiction?.regionId || playerPosting.regionId,
+    jurisdictionId: jurisdiction?.id || playerPosting.jurisdictionId,
+    startedAt: currentDate(worldState),
+    expectedReviewTurn: currentTurn(worldState) + config.reviewTurns.superior,
+    termMonths: 0,
+    performanceScore: config.scoreDefaults.superiorPerformance,
+    impeachmentRisk: config.scoreDefaults.superiorRisk,
+    publicReputation: 65,
+    visibility: "office_visible",
+    knownToPlayer: true,
+    intelConfidence: 82,
+    publicSummary: `${office.title}为${playerPosting.officeTitle}上级堂官投影，负责考成复核、补缺议拟和差遣督责；实际任免仍由服务器官场结算裁决。`,
+    lastUpdatedTurn: currentTurn(worldState)
+  };
+}
+
+function buildOfficeInterfacePosting(worldState, playerPosting, superiorPosting, jurisdictionRows, people) {
+  if (!playerPosting) return null;
+  const config = OFFICIAL_ECOSYSTEM_CONFIG;
+  const office = resolveConfiguredOffice(
+    config.interfaceOfficeByBureau[playerPosting.bureauId],
+    playerPosting.officeId
+  );
+  if (!office) return null;
+  const jurisdiction = jurisdictionRows.find((row) => row.id === playerPosting.jurisdictionId) ||
+    selectJurisdictionForOffice(worldState, office, jurisdictionRows, "interface");
+  const isLocal = playerPosting.bureauId === "prefecture_county" || office.outpost;
+  const rankPatterns = isLocal
+    ? [...config.visibleNpcRankPatterns.clerk, ...config.visibleNpcRankPatterns.gentry]
+    : config.visibleNpcRankPatterns.clerk;
+  const holder = holderFromNpc(chooseVisibleNpc(people, {
+    bureauId: playerPosting.bureauId,
+    rankPatterns,
+    seed: `${office.id}:interface`
+  }));
+  const roleLabel = isLocal ? "胥吏幕友与地方士绅接口" : "属官同僚与署中文案接口";
+
+  return {
+    id: config.rowIds.officeInterfacePosting,
+    officeId: office.id,
+    officeTitle: office.title,
+    bureauId: office.bureauId,
+    ...holder,
+    status: "acting",
+    cityId: jurisdiction?.cityId || playerPosting.cityId,
+    regionId: jurisdiction?.regionId || playerPosting.regionId,
+    jurisdictionId: jurisdiction?.id || playerPosting.jurisdictionId,
+    superiorPostingId: superiorPosting?.id || playerPosting.id,
+    startedAt: currentDate(worldState),
+    expectedReviewTurn: currentTurn(worldState) + config.reviewTurns.officeInterface,
+    termMonths: 0,
+    performanceScore: config.scoreDefaults.interfacePerformance,
+    impeachmentRisk: config.scoreDefaults.interfaceRisk,
+    publicReputation: 52,
+    visibility: "office_visible",
+    knownToPlayer: true,
+    intelConfidence: 76,
+    publicSummary: `${roleLabel}正在署理案牍、钱粮、刑名或士绅沟通；这是 S63.1 可见官署生态投影，不构成服务器任命事实。`,
+    lastUpdatedTurn: currentTurn(worldState)
+  };
+}
+
+function buildVacancyRows(worldState, jurisdictionRows, people) {
+  const config = OFFICIAL_ECOSYSTEM_CONFIG;
+  const rows = [];
+  const assessments = [];
+  const transfers = [];
+  config.vacancyOfficeIds.forEach((officeId, index) => {
+    const office = getOffice(officeId);
+    if (!office) return;
+    const jurisdiction = selectJurisdictionForOffice(worldState, office, jurisdictionRows, `vacancy-${index}`) ||
+      jurisdictionRows[index % Math.max(1, jurisdictionRows.length)];
+    if (!jurisdiction) return;
+    const pressure = vacancyPressureForJurisdiction(jurisdiction);
+    const pressureText = describeAppointmentPressure(jurisdiction);
+    const vacancyId = `posting-s63-vacancy-${index + 1}`;
+    const transferId = `transfer-s63-candidate-${index + 1}`;
+    const assessmentId = `assessment-s63-vacancy-${index + 1}`;
+    const candidate = holderFromNpc(chooseVisibleNpc(people, {
+      bureauId: office.bureauId,
+      rankPatterns: config.visibleNpcRankPatterns.candidate,
+      seed: `${office.id}:candidate:${index}`
+    }));
+
+    rows.push({
+      id: vacancyId,
+      officeId: office.id,
+      officeTitle: office.title,
+      bureauId: office.bureauId,
+      holderType: "vacant",
+      holderId: "",
+      status: "vacant",
+      cityId: jurisdiction.cityId,
+      regionId: jurisdiction.regionId,
+      jurisdictionId: jurisdiction.id,
+      startedAt: currentDate(worldState),
+      expectedReviewTurn: currentTurn(worldState) + config.reviewTurns.vacancyBase + index * config.reviewTurns.vacancyStep,
+      termMonths: 0,
+      performanceScore: clampMetric(100 - pressure, 45),
+      impeachmentRisk: pressure,
+      publicReputation: config.scoreDefaults.vacancyReputation,
+      visibility: "role_visible",
+      knownToPlayer: false,
+      intelConfidence: 68,
+      publicSummary: `${office.title}一缺待补，${jurisdiction.name}呈报${pressureText}；候补、补授、试署和外放只进入任命池摘要，正式授官仍由服务器裁决。`,
+      lastUpdatedTurn: currentTurn(worldState)
+    });
+
+    assessments.push({
+      id: assessmentId,
+      postingId: vacancyId,
+      officeId: office.id,
+      bureauId: office.bureauId,
+      holderType: "vacant",
+      holderId: "",
+      cycleId: `${worldState.year || 1644}-s63-vacancy-${index + 1}`,
+      date: currentDate(worldState),
+      status: "pending",
+      meritScore: clampMetric(100 - pressure, 45),
+      riskScore: pressure,
+      recommendation: office.outpost ? "outpost" : "transfer",
+      publicFinding: `${office.title}官缺压力：${pressureText}；待吏部铨选、候补、补授或试署议拟。`,
+      evidenceEventIds: [],
+      assignmentIds: [],
+      visibility: "role_visible",
+      knownToPlayer: false,
+      intelConfidence: 68,
+      publicSummary: `${office.title}缺额考成压力 ${pressure}，仅作可见任命池线索。`,
+      lastUpdatedTurn: currentTurn(worldState)
+    });
+
+    transfers.push({
+      id: transferId,
+      ...candidate,
+      fromOfficeId: "",
+      toPostingId: vacancyId,
+      toOfficeId: office.id,
+      fromCityId: "",
+      toCityId: jurisdiction.cityId,
+      relatedAssessmentId: assessmentId,
+      date: currentDate(worldState),
+      type: office.outpost ? "outpost" : "appointment",
+      status: "proposed",
+      publicReason: `${office.title}候补池列入补授/试署议拟；城市压力为${pressureText}，AI 只能读取该摘要。`,
+      relatedEventIds: [],
+      visibility: "role_visible",
+      knownToPlayer: false,
+      intelConfidence: 66,
+      publicSummary: `${office.title}任命池候补记录，尚未成为任免事实。`,
+      lastUpdatedTurn: currentTurn(worldState)
+    });
+  });
+
+  return { postings: rows, assessmentRecords: assessments, transferRecords: transfers };
+}
+
+function buildRestorationAndImpeachmentRows(worldState, jurisdictionRows, people) {
+  const config = OFFICIAL_ECOSYSTEM_CONFIG;
+  const auditOffice = getOffice("pending_audit_official");
+  const censorOffice = getOffice("censorate_investigating_censor") || auditOffice;
+  const jurisdiction = selectJurisdictionForOffice(worldState, auditOffice || censorOffice, jurisdictionRows, "restoration") ||
+    jurisdictionRows.find((row) => row.cityId === CENTRAL_CITY_ID) ||
+    jurisdictionRows[0];
+  if (!auditOffice || !jurisdiction) {
+    return { postings: [], assessmentRecords: [], transferRecords: [] };
+  }
+  const restorationHolder = holderFromNpc(chooseVisibleNpc(people, {
+    bureauId: auditOffice.bureauId,
+    rankPatterns: config.visibleNpcRankPatterns.candidate,
+    seed: "restoration"
+  }));
+  const censorHolder = holderFromNpc(chooseVisibleNpc(people, {
+    bureauId: censorOffice?.bureauId || auditOffice.bureauId,
+    rankPatterns: config.visibleNpcRankPatterns.superior,
+    seed: "impeachment"
+  }));
+
+  return {
+    postings: [{
+      id: config.rowIds.restorationPosting,
+      officeId: auditOffice.id,
+      officeTitle: auditOffice.title,
+      bureauId: auditOffice.bureauId,
+      ...restorationHolder,
+      status: "restoration_pending",
+      cityId: jurisdiction.cityId,
+      regionId: jurisdiction.regionId,
+      jurisdictionId: jurisdiction.id,
+      startedAt: currentDate(worldState),
+      expectedReviewTurn: currentTurn(worldState) + config.reviewTurns.restoration,
+      termMonths: 0,
+      performanceScore: config.scoreDefaults.restorationPerformance,
+      impeachmentRisk: config.scoreDefaults.restorationRisk,
+      publicReputation: 48,
+      visibility: "role_visible",
+      knownToPlayer: false,
+      intelConfidence: 62,
+      publicSummary: "丁忧与起复候拟只作为 S63.1 任命池公开线索；是否起复、补授或改外放仍由服务器裁决。",
+      lastUpdatedTurn: currentTurn(worldState)
+    }, {
+      id: config.rowIds.impeachmentPosting,
+      officeId: auditOffice.id,
+      officeTitle: auditOffice.title,
+      bureauId: auditOffice.bureauId,
+      ...censorHolder,
+      status: "suspended",
+      cityId: jurisdiction.cityId,
+      regionId: jurisdiction.regionId,
+      jurisdictionId: jurisdiction.id,
+      startedAt: currentDate(worldState),
+      expectedReviewTurn: currentTurn(worldState) + config.reviewTurns.impeachment,
+      termMonths: 0,
+      performanceScore: config.scoreDefaults.impeachmentPerformance,
+      impeachmentRisk: config.scoreDefaults.impeachmentRisk,
+      publicReputation: 35,
+      visibility: "role_visible",
+      knownToPlayer: false,
+      intelConfidence: 60,
+      publicSummary: "弹劾候勘记录只说明风宪压力和缺额风险，不代表玩家或 NPC 已被服务器处分。",
+      lastUpdatedTurn: currentTurn(worldState)
+    }],
+    assessmentRecords: [{
+      id: config.rowIds.impeachmentAssessment,
+      postingId: config.rowIds.impeachmentPosting,
+      officeId: auditOffice.id,
+      bureauId: auditOffice.bureauId,
+      holderType: censorHolder.holderType,
+      holderId: censorHolder.holderId,
+      cycleId: `${worldState.year || 1644}-s63-impeachment`,
+      date: currentDate(worldState),
+      status: "pending",
+      meritScore: config.scoreDefaults.impeachmentPerformance,
+      riskScore: config.scoreDefaults.impeachmentRisk,
+      recommendation: "impeachment",
+      publicFinding: "弹劾、停缺与候勘只形成公开考成压力；成案、处分、复叙或起复仍由服务器裁决。",
+      evidenceEventIds: [],
+      assignmentIds: [],
+      visibility: "role_visible",
+      knownToPlayer: false,
+      intelConfidence: 60,
+      publicSummary: "风宪候勘考成压力已入官职生态投影。",
+      lastUpdatedTurn: currentTurn(worldState)
+    }],
+    transferRecords: [{
+      id: config.rowIds.mourningTransfer,
+      holderType: "unknown",
+      holderId: "",
+      fromOfficeId: auditOffice.id,
+      toOfficeId: "",
+      fromCityId: jurisdiction.cityId,
+      toCityId: "",
+      relatedAssessmentId: "",
+      date: currentDate(worldState),
+      type: "mourning_leave",
+      status: "proposed",
+      publicReason: "丁忧去任会形成缺额与署理压力；本记录只供任命池和 prompt 摘要读取。",
+      relatedEventIds: [],
+      visibility: "role_visible",
+      knownToPlayer: false,
+      intelConfidence: 58,
+      publicSummary: "丁忧缺额候补记录，未改变任何任命事实。",
+      lastUpdatedTurn: currentTurn(worldState)
+    }, {
+      id: config.rowIds.restorationTransfer,
+      ...restorationHolder,
+      fromPostingId: config.rowIds.restorationPosting,
+      fromOfficeId: auditOffice.id,
+      toOfficeId: auditOffice.id,
+      fromCityId: jurisdiction.cityId,
+      toCityId: jurisdiction.cityId,
+      relatedAssessmentId: config.rowIds.impeachmentAssessment,
+      date: currentDate(worldState),
+      type: "restoration",
+      status: "proposed",
+      publicReason: "起复候拟需经铨选、考成和风宪压力复核；AI 不得把该 proposal 当成已授事实。",
+      relatedEventIds: [],
+      visibility: "role_visible",
+      knownToPlayer: false,
+      intelConfidence: 58,
+      publicSummary: "起复候拟迁转记录，仍待服务器裁决。",
+      lastUpdatedTurn: currentTurn(worldState)
+    }]
+  };
+}
+
+function buildOfficeInterfaceAssessment(worldState, interfacePosting) {
+  if (!interfacePosting) return null;
+  const config = OFFICIAL_ECOSYSTEM_CONFIG;
+  return {
+    id: config.rowIds.interfaceAssessment,
+    postingId: interfacePosting.id,
+    officeId: interfacePosting.officeId,
+    bureauId: interfacePosting.bureauId,
+    holderType: interfacePosting.holderType,
+    holderId: interfacePosting.holderId,
+    cycleId: `${worldState.year || 1644}-s63-interface`,
+    date: currentDate(worldState),
+    status: "pending",
+    meritScore: interfacePosting.performanceScore,
+    riskScore: interfacePosting.impeachmentRisk,
+    recommendation: "none",
+    publicFinding: "署中属官、胥吏幕友、同僚和地方士绅接口只提供案牍压力与执行链背景，不拥有任免裁决权。",
+    evidenceEventIds: [],
+    assignmentIds: interfacePosting.assignmentIds || [],
+    visibility: "office_visible",
+    knownToPlayer: true,
+    intelConfidence: interfacePosting.intelConfidence,
+    publicSummary: "官署内部执行链考成压力已入可见 projection。",
+    lastUpdatedTurn: currentTurn(worldState)
+  };
+}
+
+function buildOfficialEcosystemRows(worldState, playerPosting, jurisdictionRows) {
+  const people = buildVisiblePeopleContext(worldState);
+  const superiorPosting = buildSuperiorPosting(worldState, playerPosting, jurisdictionRows, people);
+  const interfacePosting = buildOfficeInterfacePosting(worldState, playerPosting, superiorPosting, jurisdictionRows, people);
+  const vacancyRows = buildVacancyRows(worldState, jurisdictionRows, people);
+  const disciplineRows = buildRestorationAndImpeachmentRows(worldState, jurisdictionRows, people);
+  const interfaceAssessment = buildOfficeInterfaceAssessment(worldState, interfacePosting);
+
+  return {
+    playerSuperiorPostingId: superiorPosting?.id || "",
+    postings: [
+      superiorPosting,
+      interfacePosting,
+      ...vacancyRows.postings,
+      ...disciplineRows.postings
+    ].filter(Boolean),
+    assessmentRecords: [
+      interfaceAssessment,
+      ...vacancyRows.assessmentRecords,
+      ...disciplineRows.assessmentRecords
+    ].filter(Boolean),
+    transferRecords: [
+      ...vacancyRows.transferRecords,
+      ...disciplineRows.transferRecords
+    ].filter(Boolean)
+  };
+}
+
 function mergeRows(existingRows, bridgeRows) {
   const byId = new Map();
   for (const row of Array.isArray(existingRows) ? existingRows : []) {
@@ -637,16 +1088,26 @@ function buildOfficialPostingBridge(worldState = {}, geo) {
   ];
   const officeRows = buildCatalogOfficeRows(worldState, geo, jurisdictionRows);
   const bureauRows = buildCatalogBureauRows(worldState, geo, jurisdictionRows, officeRows);
-  const playerPosting = buildPlayerPosting(worldState, jurisdictionRows);
+  let playerPosting = buildPlayerPosting(worldState, jurisdictionRows);
+  const ecosystemRows = buildOfficialEcosystemRows(worldState, playerPosting, jurisdictionRows);
+  if (playerPosting && ecosystemRows.playerSuperiorPostingId) {
+    playerPosting = {
+      ...playerPosting,
+      superiorPostingId: ecosystemRows.playerSuperiorPostingId
+    };
+  }
   const playerAssessment = buildPlayerAssessmentRecord(worldState, playerPosting, jurisdictionRows);
 
   return {
     bureaus: bureauRows,
     offices: officeRows,
     cityJurisdictions: jurisdictionRows,
-    postings: [playerPosting].filter(Boolean),
-    assessmentRecords: [playerAssessment].filter(Boolean),
-    transferRecords: buildTransferRecords(worldState, jurisdictionRows),
+    postings: [playerPosting, ...ecosystemRows.postings].filter(Boolean),
+    assessmentRecords: [playerAssessment, ...ecosystemRows.assessmentRecords].filter(Boolean),
+    transferRecords: [
+      ...buildTransferRecords(worldState, jurisdictionRows),
+      ...ecosystemRows.transferRecords
+    ],
     recentNotes: []
   };
 }

@@ -229,19 +229,29 @@ function collectOfficialAssessmentItems(worldState, items, officialPostingsView)
   const assessments = Array.isArray(officialPostingsView?.assessmentRecords)
     ? officialPostingsView.assessmentRecords
     : [];
-  assessments.slice(-MAX_OFFICIAL_ASSESSMENTS).forEach((record) => {
-    addItem(items, worldState, {
-      sourceType: "official_assessment",
-      kind: "assessment",
-      title: "任所考成",
-      summary: record.publicFinding || record.publicSummary,
-      date: record.date,
-      turn: record.date?.turn ?? record.lastUpdatedTurn,
-      status: record.status === "resolved" || record.status === "archived" ? "resolved" : "watch",
-      riskLabel: record.riskScore >= 60 ? "考成风险" : record.meritScore >= 70 ? "考成向好" : "",
-      relatedLabels: [record.officeId, record.bureauId].filter(Boolean)
+  assessments
+    .filter((record) => !isAppointmentPoolAssessment(record))
+    .slice(-MAX_OFFICIAL_ASSESSMENTS)
+    .forEach((record) => {
+      addItem(items, worldState, {
+        sourceType: "official_assessment",
+        kind: "assessment",
+        title: "任所考成",
+        summary: record.publicFinding || record.publicSummary,
+        date: record.date,
+        turn: record.date?.turn ?? record.lastUpdatedTurn,
+        status: record.status === "resolved" || record.status === "archived" ? "resolved" : "watch",
+        riskLabel: record.riskScore >= 60 ? "考成风险" : record.meritScore >= 70 ? "考成向好" : "",
+        relatedLabels: [record.officeId, record.bureauId].filter(Boolean)
+      });
     });
-  });
+}
+
+function isAppointmentPoolAssessment(record = {}) {
+  const id = typeof record.id === "string" ? record.id : "";
+  const postingId = typeof record.postingId === "string" ? record.postingId : "";
+  // S63 任命池考成是可见案牍压力 projection，不是已经发生的公开历史事件。
+  return id.startsWith("assessment-s63-") || postingId.startsWith("posting-s63-");
 }
 
 function examDateSource(entry = {}) {
