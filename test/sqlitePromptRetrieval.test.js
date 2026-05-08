@@ -1,0 +1,315 @@
+const test = require("node:test");
+const assert = require("node:assert/strict");
+const { randomUUID } = require("node:crypto");
+const fs = require("node:fs/promises");
+const path = require("node:path");
+const { isBuiltin } = require("node:module");
+
+const {
+  assemblePromptContext,
+  buildRankedRetrievalContext
+} = require("../src/ai/promptContextAssembler");
+const { createInitialState } = require("../src/game/initialState");
+const { createSqliteSessionAdapter } = require("../src/storage/sqliteSessionAdapter");
+const {
+  getPromptRetrievalTableCount
+} = require("../src/storage/sqlitePromptRetrievalTables");
+
+const hasNodeSqlite = typeof isBuiltin === "function" && isBuiltin("node:sqlite");
+const dataDir = path.join(__dirname, "..", "data");
+
+function clone(value) {
+  return JSON.parse(JSON.stringify(value));
+}
+
+async function removeSqliteArtifacts(dbPath) {
+  await Promise.all(
+    [dbPath, `${dbPath}-wal`, `${dbPath}-shm`, `${dbPath}-journal`].map((filePath) =>
+      fs.rm(filePath, { force: true })
+    )
+  );
+}
+
+function createHarness(t) {
+  const dbPath = path.join(dataDir, `test-prompt-retrieval-${randomUUID()}.sqlite`);
+  const adapter = createSqliteSessionAdapter({ databasePath: dbPath });
+  t.after(async () => {
+    adapter.close();
+    await removeSqliteArtifacts(dbPath);
+  });
+  return { adapter, dbPath };
+}
+
+function withSqliteDatabase(dbPath, task) {
+  const { DatabaseSync } = require("node:sqlite");
+  const db = new DatabaseSync(dbPath);
+  try {
+    return task(db);
+  } finally {
+    db.close();
+  }
+}
+
+function createPromptWorldState() {
+  const worldState = createInitialState({
+    role: "official",
+    playerName: "检索索引"
+  });
+  Object.assign(worldState, {
+    year: 1644,
+    month: 8,
+    tenDayPeriod: 2,
+    turnCount: 9
+  });
+  Object.assign(worldState.player, {
+    officeTitle: "户部主事",
+    position: "户部主事"
+  });
+  worldState.officialCareer.currentPosting = "户部主事";
+  worldState.officialCareer.bureauId = "ministry_revenue";
+  worldState.eventHistory = [
+    "户部催核京杭漕运北段账册，命本任先查北京仓储。",
+    "山海关边报称辽东商路风声趋紧。"
+  ];
+
+  worldState.worldGeography.cities.push({
+    id: "city-hidden-prompt-retrieval",
+    countryId: "country-ming",
+    regionId: "region-north-zhili",
+    name: "SEALED_SQLITE_PROMPT_CITY",
+    jurisdictionLevel: "secret",
+    visibility: "hidden",
+    publicSummary: "SEALED_SQLITE_PROMPT_CITY_SUMMARY",
+    hiddenNotes: ["SEALED_SQLITE_PROMPT_CITY_NOTE"]
+  });
+  worldState.worldPeople.npcs.push({
+    id: "npc-visible-prompt-gu",
+    name: "顾衡",
+    currentCityId: "city-beijing",
+    rankLabel: "候补主簿",
+    reputation: 50,
+    influence: 44,
+    visibility: "public",
+    knownToPlayer: true,
+    publicSummary: "顾衡常在京师替乡党通递消息。",
+    lastUpdatedTurn: worldState.turnCount
+  });
+  worldState.worldPeople.npcs.push({
+    id: "npc-hidden-prompt-retrieval",
+    name: "SEALED_SQLITE_PROMPT_NPC",
+    visibility: "hidden",
+    knownToPlayer: false,
+    hiddenIntent: "SEALED_SQLITE_PROMPT_INTENT",
+    hiddenNotes: ["SEALED_SQLITE_PROMPT_NPC_NOTE"]
+  });
+  worldState.worldPeople.relationships.push({
+    id: "rel-player-npc-visible-prompt-gu",
+    sourceType: "player",
+    sourceId: "P1",
+    targetType: "npc",
+    targetId: "npc-visible-prompt-gu",
+    relationship: 54,
+    trust: 50,
+    resentment: 8,
+    stance: "可托乡谊",
+    visibility: "public",
+    knownToPlayer: true,
+    publicSummary: "顾衡愿意递送公开人情消息。",
+    recentNotes: ["顾衡: 愿帮忙打听京师书办。"],
+    lastUpdatedTurn: worldState.turnCount
+  });
+  worldState.officialPostings.postings.push({
+    id: "posting-hidden-prompt-retrieval",
+    officeId: "ministry_revenue_principal",
+    officeTitle: "SEALED_SQLITE_PROMPT_POSTING",
+    bureauId: "ministry_revenue",
+    holderType: "npc",
+    holderId: "npc-hidden-prompt-retrieval",
+    status: "active",
+    visibility: "hidden",
+    knownToPlayer: false,
+    publicSummary: "SEALED_SQLITE_PROMPT_POSTING_SUMMARY",
+    hiddenNotes: ["SEALED_SQLITE_PROMPT_POSTING_NOTE"]
+  });
+
+  return worldState;
+}
+
+test("SQLite prompt retrieval index matches server-visible fallback without changing JSON behavior", {
+  skip: hasNodeSqlite ? false : "node:sqlite is unavailable in this Node.js runtime"
+}, async (t) => {
+  const { adapter, dbPath } = createHarness(t);
+  const worldState = createPromptWorldState();
+  await adapter.writeSession(clone(worldState));
+
+  const { record } = await adapter.readSessionRecord(worldState.sessionId);
+  const options = {
+    task: "official_career",
+    playerAction: "核查户部、北京与京杭漕运北段"
+  };
+  const sqliteContext = assemblePromptContext(record.worldState, options).retrievalContext;
+  const fallbackContext = buildRankedRetrievalContext(record.worldState, {
+    ...options,
+    promptRetrievalSource: false
+  });
+  const serialized = JSON.stringify(sqliteContext);
+
+  assert.equal(sqliteContext.retrievalMode, "server_visible_ranked_projection");
+  assert.deepEqual(sqliteContext.geography, fallbackContext.geography);
+  assert.deepEqual(sqliteContext.people, fallbackContext.people);
+  assert.deepEqual(sqliteContext.offices, fallbackContext.offices);
+  assert.deepEqual(sqliteContext.events.recentEvents, fallbackContext.events.recentEvents);
+  assert.match(serialized, /户部|北京|京杭漕运|顾衡/);
+  assert.doesNotMatch(serialized, /SEALED_SQLITE_PROMPT_/);
+  assert.equal(JSON.stringify(record.worldState).includes("promptRetrieval"), false);
+
+  const rowCount = withSqliteDatabase(dbPath, (db) =>
+    getPromptRetrievalTableCount(db, worldState.sessionId)
+  );
+  assert.ok(rowCount > 0);
+});
+
+test("SQLite prompt retrieval index repairs same-row content pollution before prompt assembly", {
+  skip: hasNodeSqlite ? false : "node:sqlite is unavailable in this Node.js runtime"
+}, async (t) => {
+  const { adapter, dbPath } = createHarness(t);
+  const worldState = createPromptWorldState();
+  await adapter.writeSession(clone(worldState));
+
+  withSqliteDatabase(dbPath, (db) => {
+    db
+      .prepare(`
+        UPDATE prompt_retrieval_index
+        SET payload_json = ?,
+            search_text = ?
+        WHERE session_id = ?
+          AND row_id = ?
+      `)
+      .run(
+        JSON.stringify({
+          id: "city-beijing",
+          name: "SEALED_SQLITE_PROMPT_TAMPER",
+          publicSummary: "SEALED_SQLITE_PROMPT_TAMPER prompt event_log sk-test-hidden"
+        }),
+        "SEALED_SQLITE_PROMPT_TAMPER prompt event_log sk-test-hidden",
+        worldState.sessionId,
+        "geography.cities:city-beijing"
+      );
+  });
+
+  const { record } = await adapter.readSessionRecord(worldState.sessionId);
+  const context = assemblePromptContext(record.worldState, {
+    task: "official_career",
+    playerAction: "核查北京账册"
+  });
+  const serialized = JSON.stringify(context.retrievalContext);
+
+  assert.doesNotMatch(serialized, /SEALED_SQLITE_PROMPT_TAMPER/);
+  assert.doesNotMatch(serialized, /sk-test-hidden/);
+  assert.match(serialized, /北京/);
+
+  const repairedPayload = withSqliteDatabase(dbPath, (db) =>
+    db
+      .prepare(`
+        SELECT payload_json
+        FROM prompt_retrieval_index
+        WHERE session_id = ?
+          AND row_id = ?
+      `)
+      .get(worldState.sessionId, "geography.cities:city-beijing").payload_json
+  );
+  assert.doesNotMatch(repairedPayload, /SEALED_SQLITE_PROMPT_TAMPER/);
+});
+
+test("SQLite prompt retrieval ignores raw business tables and raw audit while repairing missing index rows", {
+  skip: hasNodeSqlite ? false : "node:sqlite is unavailable in this Node.js runtime"
+}, async (t) => {
+  const { adapter, dbPath } = createHarness(t);
+  const worldState = createPromptWorldState();
+  await adapter.writeSession(clone(worldState));
+
+  withSqliteDatabase(dbPath, (db) => {
+    db
+      .prepare("UPDATE geo_cities SET public_summary = ? WHERE session_id = ? AND row_id = ?")
+      .run("SEALED_SQLITE_RAW_GEO prompt event_log", worldState.sessionId, "city-beijing");
+    db
+      .prepare("UPDATE people_npcs SET public_summary = ? WHERE session_id = ? AND row_id = ?")
+      .run("SEALED_SQLITE_RAW_PEOPLE provider proposal", worldState.sessionId, "npc-visible-prompt-gu");
+    db
+      .prepare("DELETE FROM prompt_retrieval_index WHERE session_id = ? AND row_id = ?")
+      .run(worldState.sessionId, "people.npcs:npc-visible-prompt-gu");
+    db
+      .prepare(`
+        INSERT INTO event_log (
+          event_id, session_id, audit_schema_version, revision, turn_count, year, month,
+          ten_day_period, scene_cadence, source_system, event_type, visibility, summary,
+          related_json, applied_changes_json, created_at
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      `)
+      .run(
+        `audit-${randomUUID()}`,
+        worldState.sessionId,
+        1,
+        1,
+        worldState.turnCount,
+        worldState.year,
+        worldState.month,
+        worldState.tenDayPeriod,
+        "global_turn",
+        "manual_probe",
+        "probe",
+        "public",
+        "SEALED_AUDIT_PROMPT provider proposal prompt",
+        "{}",
+        "{}",
+        "2026-05-08T00:00:00.000Z"
+      );
+    db
+      .prepare(`
+        INSERT INTO ai_change_proposals (
+          proposal_id, session_id, audit_schema_version, revision, turn_count, year, month,
+          ten_day_period, scene_cadence, provider, prompt_pack, proposal_kind, status,
+          proposal_json, accepted_json, rejected_reasons_json, applied_event_ids_json, created_at
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      `)
+      .run(
+        `proposal-${randomUUID()}`,
+        worldState.sessionId,
+        1,
+        1,
+        worldState.turnCount,
+        worldState.year,
+        worldState.month,
+        worldState.tenDayPeriod,
+        "global_turn",
+        "test-provider",
+        "world_turn",
+        "state_patch",
+        "rejected",
+        "{\"raw\":\"SEALED_AI_PROPOSAL_PROMPT\"}",
+        "{}",
+        "[]",
+        "[]",
+        "2026-05-08T00:00:01.000Z"
+      );
+  });
+
+  const { record } = await adapter.readSessionRecord(worldState.sessionId);
+  const context = assemblePromptContext(record.worldState, {
+    task: "official_career",
+    playerAction: "查访顾衡并核查北京账册"
+  });
+  const serialized = JSON.stringify(context.retrievalContext);
+
+  assert.match(serialized, /顾衡|北京/);
+  assert.doesNotMatch(serialized, /SEALED_SQLITE_RAW_/);
+  assert.doesNotMatch(serialized, /SEALED_AUDIT_PROMPT/);
+  assert.doesNotMatch(serialized, /SEALED_AI_PROPOSAL_PROMPT/);
+
+  const repairedCount = withSqliteDatabase(dbPath, (db) =>
+    db
+      .prepare("SELECT COUNT(*) AS count FROM prompt_retrieval_index WHERE session_id = ? AND row_id = ?")
+      .get(worldState.sessionId, "people.npcs:npc-visible-prompt-gu").count
+  );
+  assert.equal(repairedCount, 1);
+});

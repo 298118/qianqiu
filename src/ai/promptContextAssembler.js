@@ -28,6 +28,7 @@ const {
   buildWorldThreadView,
   summarizeWorldThreadsForPrompt
 } = require("../game/worldThreads");
+const { getPromptRetrievalSource } = require("./promptContextSource");
 
 const RETRIEVAL_CONTEXT_SCHEMA_VERSION = 1;
 const MAX_TEXT_LENGTH = 180;
@@ -274,8 +275,42 @@ function compactFrontier(frontier) {
   };
 }
 
-function buildGeographyContext(worldState, query) {
-  const view = buildWorldGeographyView(worldState);
+function safeRetrievalCollection(source, domain, collection) {
+  const rows = source?.[domain]?.[collection];
+  return Array.isArray(rows) ? rows : null;
+}
+
+function callRetrievalSource(source, worldState, options) {
+  if (typeof source === "function") {
+    try {
+      const result = source({ worldState, options });
+      return result && typeof result === "object" ? result : null;
+    } catch (error) {
+      return null;
+    }
+  }
+  return source && typeof source === "object" ? source : null;
+}
+
+function resolveRetrievalSource(worldState, options = {}) {
+  if (options.promptRetrievalSource === false || options.retrievalSource === false) return null;
+  const explicitSource = options.promptRetrievalSource || options.retrievalSource;
+  return callRetrievalSource(explicitSource || getPromptRetrievalSource(worldState), worldState, options);
+}
+
+function buildGeographyContext(worldState, query, retrievalSource = null) {
+  const sourceCountries = safeRetrievalCollection(retrievalSource, "geography", "countries");
+  const sourceCities = safeRetrievalCollection(retrievalSource, "geography", "cities");
+  const sourceRoutes = safeRetrievalCollection(retrievalSource, "geography", "routes");
+  const sourceFrontierZones = safeRetrievalCollection(retrievalSource, "geography", "frontierZones");
+  const view = sourceCountries || sourceCities || sourceRoutes || sourceFrontierZones
+    ? {
+      countries: sourceCountries || [],
+      cities: sourceCities || [],
+      routes: sourceRoutes || [],
+      frontierZones: sourceFrontierZones || []
+    }
+    : buildWorldGeographyView(worldState);
   return {
     countries: rankRows(view.countries, {
       query,
@@ -345,8 +380,15 @@ function compactRelationship(relationship) {
   };
 }
 
-function buildPeopleContext(worldState, query) {
-  const view = buildWorldPeopleView(worldState);
+function buildPeopleContext(worldState, query, retrievalSource = null) {
+  const sourceNpcs = safeRetrievalCollection(retrievalSource, "people", "npcs");
+  const sourceRelationships = safeRetrievalCollection(retrievalSource, "people", "relationships");
+  const view = sourceNpcs || sourceRelationships
+    ? {
+      npcs: sourceNpcs || [],
+      relationships: sourceRelationships || []
+    }
+    : buildWorldPeopleView(worldState);
   return {
     npcs: rankRows(view.npcs, {
       query,
@@ -463,8 +505,23 @@ function currentOfficeBoost(row, worldState = {}) {
   return score;
 }
 
-function buildOfficeContext(worldState, query) {
-  const view = buildOfficialPostingsView(worldState);
+function buildOfficeContext(worldState, query, retrievalSource = null) {
+  const sourceBureaus = safeRetrievalCollection(retrievalSource, "offices", "bureaus");
+  const sourceOffices = safeRetrievalCollection(retrievalSource, "offices", "offices");
+  const sourceCityJurisdictions = safeRetrievalCollection(retrievalSource, "offices", "cityJurisdictions");
+  const sourcePostings = safeRetrievalCollection(retrievalSource, "offices", "postings");
+  const sourceAssessments = safeRetrievalCollection(retrievalSource, "offices", "assessmentRecords");
+  const sourceTransfers = safeRetrievalCollection(retrievalSource, "offices", "transferRecords");
+  const view = sourceBureaus || sourceOffices || sourceCityJurisdictions || sourcePostings || sourceAssessments || sourceTransfers
+    ? {
+      bureaus: sourceBureaus || [],
+      offices: sourceOffices || [],
+      cityJurisdictions: sourceCityJurisdictions || [],
+      postings: sourcePostings || [],
+      assessmentRecords: sourceAssessments || [],
+      transferRecords: sourceTransfers || []
+    }
+    : buildOfficialPostingsView(worldState);
   return {
     bureaus: rankRows(view.bureaus, {
       query,
@@ -590,10 +647,12 @@ function compactEntity(entity) {
   };
 }
 
-function buildEventContext(worldState, query) {
+function buildEventContext(worldState, query, retrievalSource = null) {
   const threadView = buildWorldThreadView(worldState);
   const longTermView = buildLongTermEventView(worldState);
-  const recentEvents = buildEventArchiveIndexItems(worldState)
+  const eventArchiveItems = safeRetrievalCollection(retrievalSource, "events", "recentEvents") ||
+    buildEventArchiveIndexItems(worldState);
+  const recentEvents = eventArchiveItems
     .filter((event) => event.sourceType === "event_history")
     .slice(0, LIMITS.recentEvents)
     .map(compactRecentEvent);
@@ -654,6 +713,7 @@ function buildEntityContext(worldState, query) {
 function buildRankedRetrievalContext(worldState = {}, options = {}) {
   const query = buildQuery(worldState, options);
   const player = worldState.player || {};
+  const retrievalSource = resolveRetrievalSource(worldState, options);
 
   return {
     schemaVersion: RETRIEVAL_CONTEXT_SCHEMA_VERSION,
@@ -679,10 +739,10 @@ function buildRankedRetrievalContext(worldState = {}, options = {}) {
       playerAction: query.playerAction,
       terms: query.terms
     },
-    geography: buildGeographyContext(worldState, query),
-    people: buildPeopleContext(worldState, query),
-    offices: buildOfficeContext(worldState, query),
-    events: buildEventContext(worldState, query),
+    geography: buildGeographyContext(worldState, query, retrievalSource),
+    people: buildPeopleContext(worldState, query, retrievalSource),
+    offices: buildOfficeContext(worldState, query, retrievalSource),
+    events: buildEventContext(worldState, query, retrievalSource),
     entities: buildEntityContext(worldState, query),
     safety: {
       visibility: "Only server-built player-visible projections are assembled here.",

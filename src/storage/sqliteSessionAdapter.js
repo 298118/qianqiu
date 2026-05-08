@@ -45,6 +45,14 @@ const {
   initializeEventArchiveTables,
   syncEventArchiveTables
 } = require("./sqliteEventArchiveTables");
+const { attachPromptRetrievalSource } = require("../ai/promptContextSource");
+const {
+  deletePromptRetrievalRows,
+  ensurePromptRetrievalTablesForRecord,
+  initializePromptRetrievalTables,
+  readPromptRetrievalSource,
+  syncPromptRetrievalTables
+} = require("./sqlitePromptRetrievalTables");
 
 const DEFAULT_SQLITE_DATABASE_PATH = path.join(__dirname, "..", "..", "data", "qianqiu.sqlite");
 const SQLITE_BUSY_TIMEOUT_MS = 5000;
@@ -218,6 +226,7 @@ function createSqliteSessionAdapter(options = {}) {
     initializePeopleTables(database);
     initializeOfficialPostingTables(database);
     initializeEventArchiveTables(database);
+    initializePromptRetrievalTables(database);
 
     if (databasePath !== ":memory:") {
       database.exec("PRAGMA journal_mode = WAL");
@@ -307,6 +316,14 @@ function createSqliteSessionAdapter(options = {}) {
     syncPeopleTables(getDatabase(), record, options.peopleEventLinks);
     syncOfficialPostingTables(getDatabase(), record);
     syncEventArchiveTables(getDatabase(), record);
+    syncPromptRetrievalTables(getDatabase(), record);
+  }
+
+  function attachSqlitePromptRetrieval(record) {
+    attachPromptRetrievalSource(record.worldState, () =>
+      readPromptRetrievalSource(getDatabase(), record.sessionId)
+    );
+    return record;
   }
 
   function updateSessionRecordPayload(record) {
@@ -517,7 +534,9 @@ function createSqliteSessionAdapter(options = {}) {
       const repaired = repairedGeography || repairedPeople;
       const repairedOfficialPostings = ensureOfficialPostingTablesForRecord(getDatabase(), migrated.record);
       ensureEventArchiveTablesForRecord(getDatabase(), migrated.record);
+      ensurePromptRetrievalTablesForRecord(getDatabase(), migrated.record);
       if (repaired || repairedOfficialPostings) updateSessionRecordPayload(migrated.record);
+      attachSqlitePromptRetrieval(migrated.record);
       return migrated;
     });
   }
@@ -629,6 +648,7 @@ function createSqliteSessionAdapter(options = {}) {
       deletePeopleRows(getDatabase(), sessionId);
       deleteOfficialPostingRows(getDatabase(), sessionId);
       deleteEventArchiveRows(getDatabase(), sessionId);
+      deletePromptRetrievalRows(getDatabase(), sessionId);
       getDatabase().prepare("DELETE FROM world_sessions WHERE session_id = ?").run(sessionId);
     });
   }
