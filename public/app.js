@@ -2426,6 +2426,15 @@ function renderInformationPanelPage(tab, activeTabId) {
   page.dataset.viewReady = summary.ready ? "true" : "false";
   page.dataset.generatedTurn = String(summary.generatedAtTurn ?? currentWorldState?.turnCount ?? 0);
   page.dataset.itemCount = String(summary.total ?? 0);
+  if (tab.id === "event-archive" && currentEventArchiveView?.pagination) {
+    const pagination = currentEventArchiveView.pagination;
+    page.dataset.archivePage = String(pagination.page ?? 1);
+    page.dataset.archivePageSize = String(pagination.pageSize ?? viewArray(currentEventArchiveView, "items").length);
+    page.dataset.archiveTotalItems = String(pagination.totalItems ?? summary.total ?? 0);
+    page.dataset.archiveTotalPages = String(pagination.totalPages ?? 1);
+    page.dataset.archiveHasNextPage = pagination.hasNextPage ? "true" : "false";
+    page.dataset.archivePageItemCount = String(viewArray(currentEventArchiveView, "items").length);
+  }
   page.hidden = tab.id !== activeTabId;
 
   const title = document.createElement("header");

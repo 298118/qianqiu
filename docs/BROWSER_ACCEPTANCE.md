@@ -11,9 +11,10 @@ npm run smoke:browser
 npm run smoke:browser -- --check-ai-connection
 npm run smoke:browser -- --url http://localhost:3000
 npm run smoke:browser -- --screenshots artifacts/browser-smoke
+npm run smoke:browser -- --information-parity
 ```
 
-The smoke uses `playwright-core` with an installed Chrome or Edge executable. If the browser is not in a standard location, set `BROWSER_EXECUTABLE_PATH` or pass `--browser <path>`. S38.1 deterministic exam setup expects `--url` targets to be local Qianqiu servers sharing this repository's `data/sessions/` directory. Screenshots are validated in memory by default; `--screenshots <dir>` also writes the checked PNG files. `artifacts/` is ignored by Git. `--check-ai-connection` clicks the start-page `AI 连接` button before creating a session; the auto-started smoke server uses Mock, while `--url` targets should enable this flag only when the target provider is intentionally configured for that route check.
+The smoke uses `playwright-core` with an installed Chrome or Edge executable. If the browser is not in a standard location, set `BROWSER_EXECUTABLE_PATH` or pass `--browser <path>`. S38.1 deterministic exam setup expects `--url` targets to be local Qianqiu servers sharing this repository's `data/sessions/` directory. Screenshots are validated in memory by default; `--screenshots <dir>` also writes the checked PNG files. `artifacts/` is ignored by Git. `--check-ai-connection` clicks the start-page `AI 连接` button before creating a session; the auto-started smoke server uses Mock, while `--url` targets should enable this flag only when the target provider is intentionally configured for that route check. `--information-parity` starts isolated Mock JSON and SQLite servers, runs a focused official-assignment 局势簿 journey in both, compares normalized DOM/route-view snapshots, and cannot be combined with `--url` or `--storage-adapter`.
 
 ## Automated Coverage
 
@@ -32,6 +33,7 @@ The smoke uses `playwright-core` with an installed Chrome or Edge executable. If
 | Active request panel | Checks the server-scheduled `activeNpcRequestView` panel, target id/type/kind/status attributes, required ask/stakes/due/hint fields, hidden target/text non-leakage, and active-request overflow. |
 | Official career panel | Checks direct official start, the server-owned `officialCareerView` panel, 官署/差事/考成/关系/风险 sections, deterministic first appointment, a Mock `relief` assignment, hidden-note non-leakage tokens, current outcome fields, stable `data-*` attributes, and official-career overflow on desktop/mobile. |
 | Information panels | Checks `#information-panel` tab shell, required child panels, route-view readiness, S53.4 天下/任所 detail cards, S53.5 人物/官职 detail cards, S53.6 事件档案 detail cards, role-visible geography boundaries, hidden-token non-leakage, tab switching, and information-panel/grid overflow. |
+| Information parity | With `--information-parity`, starts JSON and SQLite Mock servers, performs the same official-assignment journey, compares normalized 局势簿 DOM snapshots, route view counts, and paged `eventArchiveView` metadata, and checks raw table/index/audit/prompt/path/key non-leakage plus desktop/mobile overflow. |
 | Exam calendar panel | Checks the server-owned `examCalendarView` panel, next-level/status attributes, timing/funding/recommendation/quota details, current 年月旬 label, and calendar-panel overflow. |
 | Exam rival panel | Checks persistent `examRivalView` cards after an exam, stable rival/status/level attributes, latest-result rows, and rival-panel overflow. |
 | Role/world coupling | Opens direct magistrate, general, emperor, and minister sessions; runs one representative role action; checks `.role-world-event[data-role-world-kind]` feedback; and verifies the expected API state metric moves in the intended direction. |
@@ -52,39 +54,39 @@ S53.3 adds the first runtime browser shell:
 
 - `#information-panel` is a compact tab shell inside `#scholar-panel`.
 - `public/app.js` caches `worldGeographyView`, `worldEntityView`, `worldPeopleView`, `officialPostingsView`, and the existing long-term/world-thread/official views from route payloads.
-- `#event-archive-panel` is enabled after S53.6 and renders only server-built sanitized `eventArchiveView` rows as `.event-archive-item[data-event-id][data-source-type][data-status]`; S57.1 adds pagination metadata and SQLite safe-index backing without changing the browser data source.
+- `#event-archive-panel` is enabled after S53.6 and renders only server-built sanitized `eventArchiveView` rows as `.event-archive-item[data-event-id][data-source-type][data-status]`; S57.1 adds pagination metadata and SQLite safe-index backing without changing the browser data source. S58.2 adds stable pagination `data-*` on the panel and a JSON/SQLite parity smoke that proves the browser still reads route `eventArchiveView`, not raw SQLite indexes.
 - S53.4 fills `#world-geography-panel` with `.world-geography-card[data-kind][data-entity-id]` cards for visible countries, cities, routes, frontier zones, and office jurisdictions.
 - S53.4 fills `#posting-geography-panel` with `.posting-geography-card[data-kind][data-entity-id]` cards for current posting, visible city jurisdictions, local metrics, and related routes.
 - S53.5 fills `#world-people-panel` with `.world-people-card[data-kind][data-entity-id]` cards for visible people, households, assets, estates, and relationships from `worldPeopleView`.
 - S53.5 fills `#official-postings-panel` with `.official-posting-card[data-kind][data-entity-id]` cards for visible bureaus, offices, postings, assessments, and transfers from `officialPostingsView`.
-- `scripts/browserSmoke.js` now checks the shell, route-view readiness, required S53.4/S53.5/S53.6 card kinds, role-visible geography boundaries, event archive source/status/data attributes, tab switching, hidden-token non-leakage across the full information-panel DOM, and horizontal overflow for the panel plus active detail grids; `test/browserSmokeScript.test.js` covers the helper failures.
+- `scripts/browserSmoke.js` now checks the shell, route-view readiness, required S53.4/S53.5/S53.6 card kinds, role-visible geography boundaries, event archive source/status/pagination data attributes, tab switching, hidden-token non-leakage across the full information-panel DOM, and horizontal overflow for the panel plus active detail grids; `test/browserSmokeScript.test.js` covers the helper failures.
 
 S53.6 closes the former future-content guard for `#event-archive-panel`: event archive acceptance now proves that the browser reads `eventArchiveView`, not raw `eventHistory`, JSON audit sidecars, SQLite audit tables, provider proposals, prompts, local paths, or keys.
 
 ## Latest Automated Result
 
-Date: 2026-05-07
+Date: 2026-05-08
 
-Relevant implementation commit: `e642ae3`
+Relevant implementation commit: current S58.2 implementation commit
 
-Commands verified during S53.5:
+Commands verified during S58.2:
 
 ```powershell
 node --check public\app.js
 node --check scripts\browserSmoke.js
 node --check test\browserSmokeScript.test.js
 node --test test\browserSmokeScript.test.js
+$env:AI_PROVIDER='mock'; npm run smoke:browser -- --information-parity
 npm run check:docs-governance
-$env:AI_PROVIDER='mock'; npm run smoke:browser
-$env:AI_PROVIDER='mock'; npm test
 git diff --check
+npm test
 ```
 
 Observed result:
 
-- Focused browser-smoke helper coverage now includes S53.4 geography/posting, S53.5 people/official-posting, and S53.6 event-archive detail card requirements, role-visible geography checks, hidden-token leak checks, and information-panel/page/grid overflow.
-- `$env:AI_PROVIDER='mock'; npm run smoke:browser`: passed with 14 screenshots checked. The smoke traversed desktop, restored, fresh-page, mobile, direct official, official assignment, post-palace official, and representative role-world paths while checking `#information-panel` tab switching, S53.4/S53.5 card kinds, hidden-token non-leakage, and no horizontal overflow.
-- `$env:AI_PROVIDER='mock'; npm test`: passed with 372 tests.
+- Focused browser-smoke helper coverage now includes event archive pagination metadata, raw table/index/audit/prompt hidden-token leak checks, normalized JSON/SQLite information-panel parity comparison, explicit SQLite DB ownership checks, and event archive grid overflow. `node --test test\browserSmokeScript.test.js` passed with 39 tests; `npm test` passed with 438 tests.
+- `$env:AI_PROVIDER='mock'; npm run smoke:browser -- --information-parity`: passed with 6 screenshots checked. It ran the same official-assignment 局势簿 flow against isolated JSON and SQLite Mock servers, compared normalized desktop/paged/mobile DOM snapshots, route view counts, and paged event archive metadata.
+- The full `$env:AI_PROVIDER='mock'; npm run smoke:browser` path remains the broader end-to-end browser journey for scholar -> official progression and representative identities.
 - Real-provider browser behavior still requires an explicitly configured `--url` target and is not part of default Mock smoke.
 - The browser start path still clears stale `qianqiu.sessionId` localStorage only when an old restored game hides the initial start form. Later reload/fresh-page restoration checks continue to validate the newly created session.
 - Desktop smoke still fails if the game panel regresses to the old narrow-column width, if the role panel, relationship panel, active-request panel, official-career panel, information panel, exam-calendar panel, exam-rival panel, or save-list surfaces are horizontally clipped, if S35 calendar/rival details disappear from the modal/archive/candidate profiles, if any supported start role is missing from the browser form, if hidden scholar-invisible factions leak into relationship/active-request/information-panel text, if save-list rows leak raw storage tokens, if 年月旬 labels disappear from date-bearing player surfaces, if the four-exam path stops before official promotion, if copied-passage punishment disappears, or if S36 role-world feedback/API metric deltas disappear from representative role journeys.

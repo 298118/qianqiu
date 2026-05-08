@@ -16,7 +16,7 @@
 - 新增安全事件索引：SQLite 模式会把 `eventArchiveView` 的安全分页 projection 同步到 `event_archive_index`，读档按 `world_sessions.world_state_json` 单向修复；prompt 近事、顶层 `recentEvents` 和读档叙事回放都只读事件档案安全条目。
 - 新增 SQLite prompt 检索索引：SQLite 模式会把地理、人物、官职任所和事件档案的服务器可见 projection 同步为安全检索行，读档用内容指纹修复同 id/同 revision 污染；JSON 模式继续走原 view helper fallback。
 - 新增审计公开 projection 工具：`npm run storage:audit-events -- status|export --adapter json|sqlite` 会从 JSON sidecar 或 SQLite 审计读取 allowlist 后的公开摘要，输出本地调试安全的 public projection；AI proposal 只计数，不输出原始建议内容。
-- 新增浏览器 SQLite smoke 参数：`npm run smoke:browser -- --storage-adapter sqlite --sqlite-db <path>` 可验证 Mock 浏览器主线与 SQLite adapter 共用同一存储。
+- 新增浏览器 SQLite smoke 参数：`npm run smoke:browser -- --storage-adapter sqlite --sqlite-db <path>` 可验证 Mock 浏览器主线与 SQLite adapter 共用同一存储；`npm run smoke:browser -- --information-parity` 会顺序启动 JSON/SQLite 临时服务器，比对局势簿 DOM、route view 摘要和事件档案分页 metadata。
 - 新增 Xiaomi MiMo provider：支持 `mimo` 与 `mimo-deepseek`，后者让 MiMo 负责开局、普通回合、流式叙事和出题，让 DeepSeek V4 Pro 负责科举评卷。
 - 更新 README 与项目文档：把当前功能、修复、安全边界、启动方式和常用命令整理成更适合 GitHub 首页阅读的结构。
 
@@ -160,6 +160,7 @@ npm test
 npm run check:docs-governance
 npm run eval:ai
 npm run smoke:browser
+npm run smoke:browser -- --information-parity
 npm run smoke:provider
 npm run smoke:provider:route
 npm run smoke:provider:long
@@ -171,7 +172,7 @@ npm run storage:audit-events -- status
 - `npm test` 使用 Node.js 内置测试，覆盖状态边界、AI schema、科举、关系、长期事件、官场、角色联动、存储、SSE 和脚本逻辑。
 - `npm run check:docs-governance` 检查开发治理规范、活动路线图和必读文档中的受保护规则。
 - `npm run eval:ai` 是离线 AI 输出质量门槛，覆盖 provider-shaped JSON、越权风险、历史语气、评分边界和作弊处罚。
-- `npm run smoke:browser` 启动临时 Mock 服务器，覆盖完整书生到入仕路径、作弊样例、代表身份回合、存档簿、年月旬显示和桌面/移动布局。
+- `npm run smoke:browser` 启动临时 Mock 服务器，覆盖完整书生到入仕路径、作弊样例、代表身份回合、存档簿、年月旬显示和桌面/移动布局；`--information-parity` 专项比对 JSON/SQLite 双模式下“局势簿”五类面板和事件档案分页。
 - `npm run smoke:provider*` 只在配置真实 provider key 时进行网络调用；无 key 环境会成功跳过。
 - `npm run storage:audit-events -- status|export` 是本地审计公开 projection 工具，默认只输出脱敏统计和 public 事件摘要，不输出 raw audit、provider proposal、prompt、key、本地路径或 hidden notes。
 

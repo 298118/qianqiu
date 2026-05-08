@@ -1,5 +1,6 @@
 const test = require("node:test");
 const assert = require("node:assert/strict");
+const path = require("node:path");
 
 const {
   assertPngScreenshot,
@@ -13,6 +14,7 @@ const {
   getHiddenWorldThreadTextLeaks,
   getHiddenSaveIdLeaks,
   getInformationPanelShellFailures,
+  getInformationPanelParityFailures,
   getTenDayDateFailures,
   getMissingExamLevels,
   getHiddenRelationshipLeaks,
@@ -29,10 +31,12 @@ const {
   getMissingWorldThreadSourceTypes,
   getWorldThreadPanelFailures,
   hasTenDayPeriodLabel,
+  normalizeInformationPanelParitySnapshot,
   normalizeBaseUrl,
   normalizeSmokeStorageAdapter,
   parseBrowserSmokeArgs,
   rectsOverlap,
+  resolveInformationParitySqlitePlan,
   resolveBrowserExecutable,
   sanitizeScreenshotName
 } = require("../scripts/browserSmoke");
@@ -81,6 +85,9 @@ function createLayoutMetrics(overrides = {}) {
     officialPostingsGridClientWidth: 1180,
     officialPostingsGridScrollWidth: 1180,
     officialPostingsGridWidth: 1180,
+    eventArchiveGridClientWidth: 1180,
+    eventArchiveGridScrollWidth: 1180,
+    eventArchiveGridWidth: 1180,
     examCalendarClientWidth: 1180,
     examCalendarScrollWidth: 1180,
     examCalendarWidth: 1180,
@@ -114,6 +121,7 @@ test("browser smoke parses url, browser path, and headed mode", () => {
     checkAiConnection: false,
     headed: true,
     help: false,
+    informationParity: false,
     screenshotsDir: null,
     sqliteDatabasePath: null,
     storageAdapter: null,
@@ -162,6 +170,36 @@ test("browser smoke parses SQLite storage options", () => {
   assert.equal(args.sqliteDatabasePath, "data/test-browser-smoke.sqlite");
   assert.equal(normalizeSmokeStorageAdapter("json"), "json");
   assert.throws(() => normalizeSmokeStorageAdapter("remote"), /Unsupported browser smoke storage adapter/);
+});
+
+test("browser smoke parses information parity mode", () => {
+  const args = parseBrowserSmokeArgs([
+    "node",
+    "scripts/browserSmoke.js",
+    "--information-parity",
+    "--sqlite-db",
+    "data/test-browser-parity.sqlite"
+  ]);
+
+  assert.equal(args.informationParity, true);
+  assert.equal(args.sqliteDatabasePath, "data/test-browser-parity.sqlite");
+  assert.equal(args.storageAdapter, null);
+});
+
+test("browser smoke information parity SQLite plan preserves explicit databases", () => {
+  const explicit = resolveInformationParitySqlitePlan("sqlite", {
+    sqliteDatabasePath: "data/test-browser-parity.sqlite"
+  });
+  assert.equal(explicit.ownsSqliteDatabase, false);
+  assert.equal(explicit.sqliteDatabasePath, path.resolve("data/test-browser-parity.sqlite"));
+
+  const generated = resolveInformationParitySqlitePlan("sqlite", {});
+  assert.equal(generated.ownsSqliteDatabase, true);
+  assert.match(generated.sqliteDatabasePath, /browser-information-parity-[0-9a-f-]+\.sqlite$/);
+
+  const json = resolveInformationParitySqlitePlan("json", {});
+  assert.equal(json.ownsSqliteDatabase, false);
+  assert.equal(json.sqliteDatabasePath, null);
 });
 
 test("browser smoke rejects incomplete arguments", () => {
@@ -446,7 +484,189 @@ test("browser smoke information panel shell helper catches missing views and eve
   assert.match(failures.join("\n"), /missing event archive source types: event_history/);
   assert.match(failures.join("\n"), /event archive items without enough visible metrics/);
   assert.match(failures.join("\n"), /event archive items without required data attributes/);
+  assert.match(failures.join("\n"), /did not expose event archive pagination metadata/);
   assert.match(failures.join("\n"), /leaked hidden text tokens: hiddenNotes, OPENAI_API_KEY/);
+});
+
+test("browser smoke information panel helper accepts pagination metadata and catches raw index leaks", () => {
+  const healthy = getInformationPanelShellFailures(
+    {
+      activeTab: "world-geography",
+      tabIds: ["world-geography", "posting-geography", "world-people", "official-postings", "event-archive"],
+      disabledTabIds: [],
+      panelIds: [
+        "world-geography-panel",
+        "posting-geography-panel",
+        "world-people-panel",
+        "official-postings-panel",
+        "event-archive-panel"
+      ],
+      readyPanelIds: [
+        "world-geography-panel",
+        "posting-geography-panel",
+        "world-people-panel",
+        "official-postings-panel",
+        "event-archive-panel"
+      ],
+      worldGeographyKinds: ["country", "city", "route", "frontier", "office-jurisdiction"],
+      postingGeographyKinds: ["jurisdiction", "route"],
+      worldPeopleKinds: ["npc", "relationship"],
+      officialPostingKinds: ["bureau", "office"],
+      eventArchiveSourceTypes: ["event_history"],
+      roleVisibleGeographyCount: 0,
+      worldPeopleCardCount: 2,
+      officialPostingCardCount: 2,
+      worldPeopleMetricCount: 4,
+      officialPostingMetricCount: 4,
+      eventArchiveItemCount: 2,
+      eventArchiveMetricCount: 6,
+      eventArchiveStructuredCount: 2,
+      eventArchivePagination: {
+        page: "1",
+        pageSize: "2",
+        totalItems: "5",
+        totalPages: "3",
+        hasNextPage: "true",
+        pageItemCount: "2"
+      },
+      text: "局势簿 公开卷宗"
+    },
+    {
+      expectedEventArchivePageSize: 2,
+      expectedEventArchiveSourceTypes: ["event_history"]
+    },
+    "information fixture"
+  );
+  assert.deepEqual(healthy, []);
+
+  const leaked = getInformationPanelShellFailures(
+    {
+      activeTab: "world-geography",
+      tabIds: ["world-geography", "posting-geography", "world-people", "official-postings", "event-archive"],
+      disabledTabIds: [],
+      panelIds: [
+        "world-geography-panel",
+        "posting-geography-panel",
+        "world-people-panel",
+        "official-postings-panel",
+        "event-archive-panel"
+      ],
+      readyPanelIds: [
+        "world-geography-panel",
+        "posting-geography-panel",
+        "world-people-panel",
+        "official-postings-panel",
+        "event-archive-panel"
+      ],
+      worldGeographyKinds: ["country", "city", "route", "frontier", "office-jurisdiction"],
+      postingGeographyKinds: ["jurisdiction", "route"],
+      worldPeopleKinds: ["npc", "relationship"],
+      officialPostingKinds: ["bureau", "office"],
+      eventArchiveSourceTypes: ["event_history"],
+      roleVisibleGeographyCount: 0,
+      worldPeopleCardCount: 1,
+      officialPostingCardCount: 1,
+      worldPeopleMetricCount: 2,
+      officialPostingMetricCount: 2,
+      eventArchiveItemCount: 1,
+      eventArchiveMetricCount: 3,
+      eventArchiveStructuredCount: 1,
+      eventArchivePagination: {
+        page: "1",
+        pageSize: "24",
+        totalItems: "1",
+        totalPages: "1",
+        hasNextPage: "false",
+        pageItemCount: "1"
+      },
+      text: "局势簿 prompt_retrieval_index event_archive_index world_state_json"
+    },
+    {},
+    "information fixture"
+  );
+  assert.match(leaked.join("\n"), /prompt_retrieval_index/);
+  assert.match(leaked.join("\n"), /event_archive_index/);
+  assert.match(leaked.join("\n"), /world_state_json/);
+});
+
+test("browser smoke information parity helper compares normalized snapshots", () => {
+  const baseSnapshot = normalizeInformationPanelParitySnapshot({
+    activeTab: "world-geography",
+    tabIds: ["event-archive", "world-geography"],
+    disabledTabIds: [],
+    panelIds: ["event-archive-panel", "world-geography-panel"],
+    readyPanelIds: ["event-archive-panel", "world-geography-panel"],
+    sourceViews: ["eventArchiveView", "worldGeographyView"],
+    worldGeographyKinds: ["city", "country"],
+    postingGeographyKinds: ["route"],
+    worldPeopleKinds: ["npc"],
+    officialPostingKinds: ["bureau"],
+    eventArchiveSourceTypes: ["official_career", "event_history"],
+    eventArchiveStatuses: ["recorded"],
+    roleVisibleGeographyCount: "1",
+    worldPeopleCardCount: "1",
+    officialPostingCardCount: "1",
+    eventArchiveItemCount: "2",
+    eventArchivePagination: {
+      page: "1",
+      pageSize: "2",
+      totalItems: "5",
+      totalPages: "3",
+      hasNextPage: "true",
+      pageItemCount: "2"
+    }
+  });
+  const sameSnapshot = normalizeInformationPanelParitySnapshot({
+    ...baseSnapshot,
+    tabIds: ["world-geography", "event-archive"],
+    eventArchiveSourceTypes: ["event_history", "official_career"]
+  });
+  const changedSnapshot = {
+    ...baseSnapshot,
+    eventArchivePagination: {
+      ...baseSnapshot.eventArchivePagination,
+      totalItems: 6
+    }
+  };
+
+  assert.deepEqual(
+    getInformationPanelParityFailures(
+      {
+        informationPanel: baseSnapshot,
+        pagedInformationPanel: baseSnapshot,
+        mobileInformationPanel: baseSnapshot,
+        routeViews: { eventArchive: { counts: { total: 5 } } },
+        pagedEventArchive: { pagination: { pageSize: 2 } }
+      },
+      {
+        informationPanel: sameSnapshot,
+        pagedInformationPanel: sameSnapshot,
+        mobileInformationPanel: sameSnapshot,
+        routeViews: { eventArchive: { counts: { total: 5 } } },
+        pagedEventArchive: { pagination: { pageSize: 2 } }
+      }
+    ),
+    []
+  );
+  assert.match(
+    getInformationPanelParityFailures(
+      {
+        informationPanel: baseSnapshot,
+        pagedInformationPanel: baseSnapshot,
+        mobileInformationPanel: baseSnapshot,
+        routeViews: { eventArchive: { counts: { total: 5 } } },
+        pagedEventArchive: { pagination: { pageSize: 2 } }
+      },
+      {
+        informationPanel: changedSnapshot,
+        pagedInformationPanel: baseSnapshot,
+        mobileInformationPanel: baseSnapshot,
+        routeViews: { eventArchive: { counts: { total: 5 } } },
+        pagedEventArchive: { pagination: { pageSize: 2 } }
+      }
+    ).join("\n"),
+    /desktop information panel snapshot differs/
+  );
 });
 
 test("browser smoke save-list helpers catch missing and hidden save ids", () => {
@@ -647,7 +867,10 @@ test("browser smoke game layout helper catches information panel overflow", () =
       worldPeopleGridWidth: 500,
       officialPostingsGridClientWidth: 500,
       officialPostingsGridScrollWidth: 625,
-      officialPostingsGridWidth: 500
+      officialPostingsGridWidth: 500,
+      eventArchiveGridClientWidth: 500,
+      eventArchiveGridScrollWidth: 635,
+      eventArchiveGridWidth: 500
     }),
     "desktop"
   );
@@ -658,6 +881,7 @@ test("browser smoke game layout helper catches information panel overflow", () =
   assert.match(failures.join("\n"), /posting geography grid has horizontal scroll overflow/);
   assert.match(failures.join("\n"), /world people grid has horizontal scroll overflow/);
   assert.match(failures.join("\n"), /official postings grid has horizontal scroll overflow/);
+  assert.match(failures.join("\n"), /event archive grid has horizontal scroll overflow/);
 });
 
 test("browser smoke game layout helper catches exam calendar and rival panel overflow", () => {

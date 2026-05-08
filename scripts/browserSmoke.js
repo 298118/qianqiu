@@ -4,6 +4,7 @@ const net = require("node:net");
 const path = require("node:path");
 const { spawn } = require("node:child_process");
 const { once } = require("node:events");
+const { randomUUID } = require("node:crypto");
 const { chromium } = require("playwright-core");
 const { createJsonSessionAdapter } = require("../src/storage/jsonSessionAdapter");
 const { createSqliteSessionAdapter } = require("../src/storage/sqliteSessionAdapter");
@@ -127,6 +128,7 @@ function parseBrowserSmokeArgs(argv = process.argv) {
     checkAiConnection: false,
     headed: false,
     help: false,
+    informationParity: false,
     screenshotsDir: null,
     sqliteDatabasePath: null,
     storageAdapter: null,
@@ -141,6 +143,8 @@ function parseBrowserSmokeArgs(argv = process.argv) {
       args.checkAiConnection = true;
     } else if (arg === "--headed") {
       args.headed = true;
+    } else if (arg === "--information-parity") {
+      args.informationParity = true;
     } else if (arg === "--url") {
       args.url = normalizeBaseUrl(readArgValue(argv, index, "--url"));
       index += 1;
@@ -380,6 +384,23 @@ async function startLocalServer(options = {}) {
     baseUrl,
     stop: () => stopChild(child)
   };
+}
+
+async function removeSqliteDatabaseArtifacts(databasePath) {
+  if (!databasePath || databasePath === ":memory:") return;
+  await Promise.all(
+    [databasePath, `${databasePath}-wal`, `${databasePath}-shm`, `${databasePath}-journal`].map((filePath) =>
+      fsp.rm(filePath, { force: true })
+    )
+  );
+}
+
+function resolveInformationParitySqlitePlan(storageAdapter, options = {}) {
+  const ownsSqliteDatabase = storageAdapter === "sqlite" && !options.sqliteDatabasePath;
+  const sqliteDatabasePath = storageAdapter === "sqlite"
+    ? path.resolve(options.sqliteDatabasePath || path.join(rootDir, "data", `browser-information-parity-${randomUUID()}.sqlite`))
+    : null;
+  return { ownsSqliteDatabase, sqliteDatabasePath };
 }
 
 async function waitForHealth(baseUrl, child, getOutput, timeoutMs = 15000) {
@@ -1152,6 +1173,27 @@ function getInformationPanelShellFailures(snapshot = {}, expectations = {}, mode
     if (itemCount > 0 && Number(snapshot.eventArchiveStructuredCount) < itemCount) {
       failures.push(`${mode} information panel has event archive items without required data attributes.`);
     }
+    const pagination = snapshot.eventArchivePagination || {};
+    const page = Number(pagination.page || 0);
+    const pageSize = Number(pagination.pageSize || 0);
+    const totalItems = Number(pagination.totalItems || 0);
+    const totalPages = Number(pagination.totalPages || 0);
+    const pageItemCount = Number(pagination.pageItemCount ?? itemCount);
+    if (page < 1 || pageSize < 1 || totalPages < 1) {
+      failures.push(`${mode} information panel did not expose event archive pagination metadata.`);
+    }
+    if (itemCount > 0 && pageItemCount !== itemCount) {
+      failures.push(`${mode} information panel event archive pagination item count does not match rendered cards.`);
+    }
+    if (itemCount > 0 && totalItems < itemCount) {
+      failures.push(`${mode} information panel event archive pagination total is smaller than rendered cards.`);
+    }
+    if (itemCount > 0 && pageSize < itemCount) {
+      failures.push(`${mode} information panel event archive pagination page size is smaller than rendered cards.`);
+    }
+    if (expectations.expectedEventArchivePageSize && pageSize !== expectations.expectedEventArchivePageSize) {
+      failures.push(`${mode} information panel expected event archive page size ${expectations.expectedEventArchivePageSize}, got ${pageSize}.`);
+    }
   }
 
   const defaultInformationHiddenTokens = [
@@ -1160,8 +1202,17 @@ function getInformationPanelShellFailures(snapshot = {}, expectations = {}, mode
     "prompt",
     "statePatch",
     "retrievalContext",
+    "relationshipLedger",
+    "worldState",
+    "world_state_json",
     "event_log",
     "ai_change_proposals",
+    "event_archive_index",
+    "prompt_retrieval_index",
+    "geo_",
+    "people_",
+    "office_",
+    "SQLITE_DATABASE_PATH",
     "data/audit",
     "data/sessions",
     "OPENAI_API_KEY",
@@ -1454,6 +1505,7 @@ async function assertInformationPanelShell(page, mode, expectations = {}) {
     const worldPeopleCards = [...document.querySelectorAll("#world-people-panel .world-people-card")];
     const officialPostingCards = [...document.querySelectorAll("#official-postings-panel .official-posting-card")];
     const eventArchiveItems = [...document.querySelectorAll("#event-archive-panel .event-archive-item")];
+    const eventArchivePanel = document.querySelector("#event-archive-panel");
     return {
       activeTab: panel?.dataset.activeTab || "",
       tabIds: tabs.map((tab) => tab.dataset.tabId),
@@ -1477,6 +1529,14 @@ async function assertInformationPanelShell(page, mode, expectations = {}) {
       officialPostingMetricCount: document.querySelectorAll("#official-postings-panel .official-posting-card .information-card-metric").length,
       eventArchiveMetricCount: document.querySelectorAll("#event-archive-panel .event-archive-item .information-card-metric").length,
       eventArchiveStructuredCount: document.querySelectorAll("#event-archive-panel .event-archive-item[data-event-id][data-source-type][data-status][data-turn][data-year][data-month][data-ten-day-period]").length,
+      eventArchivePagination: {
+        page: eventArchivePanel?.dataset.archivePage || "",
+        pageSize: eventArchivePanel?.dataset.archivePageSize || "",
+        totalItems: eventArchivePanel?.dataset.archiveTotalItems || "",
+        totalPages: eventArchivePanel?.dataset.archiveTotalPages || "",
+        hasNextPage: eventArchivePanel?.dataset.archiveHasNextPage || "",
+        pageItemCount: eventArchivePanel?.dataset.archivePageItemCount || ""
+      },
       contentCardCount: document.querySelectorAll(
         "#information-panel .world-geography-card, #information-panel .posting-geography-card, #information-panel .world-people-card, #information-panel .official-posting-card, #information-panel .event-archive-item"
       ).length,
@@ -1521,6 +1581,114 @@ async function assertInformationPanelShell(page, mode, expectations = {}) {
   }
 
   return snapshot;
+}
+
+function uniqueSorted(values = []) {
+  return [...new Set(values.filter(Boolean))].sort();
+}
+
+function normalizeNumeric(value) {
+  const number = Number(value);
+  return Number.isFinite(number) ? number : 0;
+}
+
+function stableJson(value) {
+  if (Array.isArray(value)) return `[${value.map(stableJson).join(",")}]`;
+  if (!value || typeof value !== "object") return JSON.stringify(value);
+  return `{${Object.keys(value).sort().map((key) => `${JSON.stringify(key)}:${stableJson(value[key])}`).join(",")}}`;
+}
+
+function normalizeInformationPanelParitySnapshot(snapshot = {}) {
+  const pagination = snapshot.eventArchivePagination || {};
+  return {
+    activeTab: snapshot.activeTab,
+    tabIds: uniqueSorted(snapshot.tabIds || []),
+    disabledTabIds: uniqueSorted(snapshot.disabledTabIds || []),
+    panelIds: uniqueSorted(snapshot.panelIds || []),
+    readyPanelIds: uniqueSorted(snapshot.readyPanelIds || []),
+    sourceViews: uniqueSorted(snapshot.sourceViews || []),
+    worldGeographyKinds: uniqueSorted(snapshot.worldGeographyKinds || []),
+    postingGeographyKinds: uniqueSorted(snapshot.postingGeographyKinds || []),
+    worldPeopleKinds: uniqueSorted(snapshot.worldPeopleKinds || []),
+    officialPostingKinds: uniqueSorted(snapshot.officialPostingKinds || []),
+    eventArchiveSourceTypes: uniqueSorted(snapshot.eventArchiveSourceTypes || []),
+    eventArchiveStatuses: uniqueSorted(snapshot.eventArchiveStatuses || []),
+    roleVisibleGeographyCount: normalizeNumeric(snapshot.roleVisibleGeographyCount),
+    worldPeopleCardCount: normalizeNumeric(snapshot.worldPeopleCardCount),
+    officialPostingCardCount: normalizeNumeric(snapshot.officialPostingCardCount),
+    eventArchiveItemCount: normalizeNumeric(snapshot.eventArchiveItemCount),
+    eventArchivePagination: {
+      page: normalizeNumeric(pagination.page),
+      pageSize: normalizeNumeric(pagination.pageSize),
+      totalItems: normalizeNumeric(pagination.totalItems),
+      totalPages: normalizeNumeric(pagination.totalPages),
+      hasNextPage: String(pagination.hasNextPage || "false"),
+      pageItemCount: normalizeNumeric(pagination.pageItemCount)
+    }
+  };
+}
+
+function normalizeRouteArray(view, key) {
+  return Array.isArray(view?.[key]) ? view[key] : [];
+}
+
+function normalizeEventArchiveRouteView(archive = {}) {
+  const items = normalizeRouteArray(archive, "items");
+  return {
+    counts: archive.counts || {},
+    itemCount: items.length,
+    pageCounts: archive.pageCounts || {},
+    pagination: archive.pagination || {},
+    sourceTypes: uniqueSorted(items.map((item) => item.sourceType)),
+    statuses: uniqueSorted(items.map((item) => item.status))
+  };
+}
+
+function normalizeInformationRoutePayload(payload = {}) {
+  const geography = payload.worldGeographyView || {};
+  const people = payload.worldPeopleView || {};
+  const offices = payload.officialPostingsView || {};
+  return {
+    worldGeography: {
+      countries: normalizeRouteArray(geography, "countries").length,
+      cities: normalizeRouteArray(geography, "cities").length,
+      routes: normalizeRouteArray(geography, "routes").length,
+      frontierZones: normalizeRouteArray(geography, "frontierZones").length,
+      officeJurisdictions: normalizeRouteArray(geography, "officeJurisdictions").length
+    },
+    worldPeople: {
+      npcs: normalizeRouteArray(people, "npcs").length,
+      households: normalizeRouteArray(people, "households").length,
+      assets: normalizeRouteArray(people, "assets").length,
+      estates: normalizeRouteArray(people, "estates").length,
+      relationships: normalizeRouteArray(people, "relationships").length
+    },
+    officialPostings: {
+      bureaus: normalizeRouteArray(offices, "bureaus").length,
+      offices: normalizeRouteArray(offices, "offices").length,
+      cityJurisdictions: normalizeRouteArray(offices, "cityJurisdictions").length,
+      postings: normalizeRouteArray(offices, "postings").length,
+      assessmentRecords: normalizeRouteArray(offices, "assessmentRecords").length,
+      transferRecords: normalizeRouteArray(offices, "transferRecords").length
+    },
+    eventArchive: normalizeEventArchiveRouteView(payload.eventArchiveView)
+  };
+}
+
+function pushParityDiff(failures, label, jsonValue, sqliteValue) {
+  if (stableJson(jsonValue) !== stableJson(sqliteValue)) {
+    failures.push(`${label} differs between JSON and SQLite storage.`);
+  }
+}
+
+function getInformationPanelParityFailures(jsonResult = {}, sqliteResult = {}) {
+  const failures = [];
+  pushParityDiff(failures, "desktop information panel snapshot", jsonResult.informationPanel, sqliteResult.informationPanel);
+  pushParityDiff(failures, "paged information panel snapshot", jsonResult.pagedInformationPanel, sqliteResult.pagedInformationPanel);
+  pushParityDiff(failures, "mobile information panel snapshot", jsonResult.mobileInformationPanel, sqliteResult.mobileInformationPanel);
+  pushParityDiff(failures, "route information views", jsonResult.routeViews, sqliteResult.routeViews);
+  pushParityDiff(failures, "paged event archive route view", jsonResult.pagedEventArchive, sqliteResult.pagedEventArchive);
+  return failures;
 }
 
 async function assertExamCalendarPanel(page, mode, expectations = {}) {
@@ -2382,6 +2550,27 @@ async function fetchSessionState(baseUrl, sessionId) {
   return response.json();
 }
 
+async function fetchPagedEventArchiveState(baseUrl, sessionId, pageSize = 2) {
+  const response = await fetch(
+    `${baseUrl}/api/game/state/${sessionId}?eventArchivePage=1&eventArchivePageSize=${pageSize}`
+  );
+  if (!response.ok) {
+    throw new Error(`Paged event archive for ${sessionId} is not readable through the API: ${response.status}`);
+  }
+  const payload = await response.json();
+  const archive = payload.eventArchiveView || {};
+  if (archive.pagination?.pageSize !== pageSize) {
+    throw new Error(`Paged event archive expected page size ${pageSize}, got ${archive.pagination?.pageSize}.`);
+  }
+  if (normalizeRouteArray(archive, "items").length > pageSize) {
+    throw new Error(`Paged event archive rendered more than ${pageSize} items.`);
+  }
+  if ((archive.counts?.total || 0) !== archive.pagination?.totalItems) {
+    throw new Error("Paged event archive counts total did not match pagination totalItems.");
+  }
+  return payload;
+}
+
 function readStatePath(state, pathExpression) {
   return pathExpression.split(".").reduce((value, segment) => value?.[segment], state);
 }
@@ -2433,6 +2622,117 @@ async function submitTurnAndWaitForIdle(page, action, feedbackSelector) {
     return button && !button.disabled;
   }, null, { timeout: 15000 });
   await page.locator(feedbackSelector).first().waitFor({ state: "visible", timeout: 10000 });
+}
+
+function informationParityExpectations() {
+  return {
+    hiddenTextTokens: [
+      "hiddenNotes",
+      "hiddenIntent",
+      "有人暗中遮掩亏空",
+      "密札指向上官",
+      "SEALED_SQLITE_PROMPT",
+      "SEALED_SQLITE_RAW",
+      "OPENAI_API_KEY",
+      "DEEPSEEK_API_KEY",
+      "MIMO_API_KEY",
+      "ANTHROPIC_API_KEY",
+      "data/sessions"
+    ],
+    expectedEventArchiveSourceTypes: ["event_history", "world_thread", "official_career"],
+    expectedPostingGeographyKinds: ["posting", "jurisdiction", "route"],
+    expectedOfficialPostingKinds: ["bureau", "office", "posting", "assessment"],
+    expectRoleVisibleGeography: true
+  };
+}
+
+async function runInformationPanelParityJourney(browser, { baseUrl, label, onSessionId, pageErrors, recorder = null }) {
+  const context = await browser.newContext({ viewport: VIEWPORTS.desktop });
+  let sessionId = null;
+
+  try {
+    const started = await startDirectRolePage(context, baseUrl, "official", "Browser Parity", pageErrors);
+    sessionId = started.sessionId;
+    onSessionId(sessionId);
+
+    await submitTurnAndWaitForIdle(started.page, "奉上官考成请求实授", ".official-career-event");
+    await submitTurnAndWaitForIdle(started.page, "督办赈灾与赈银核销", ".official-career-event");
+    await started.page.waitForFunction(
+      () => document.body.innerText.includes("[官场差遣]"),
+      null,
+      { timeout: 10000 }
+    );
+    await assertOfficialCareerPanel(started.page, `${label} official assignment`, {
+      expectedBureauId: "ministry_personnel",
+      expectAssignment: true,
+      expectedAssignmentKinds: ["relief"],
+      expectedAssignmentStatuses: ["active", "submitted"],
+      expectAssessment: true,
+      expectNetwork: true,
+      expectedImpeachmentStage: "none",
+      hiddenTextTokens: informationParityExpectations().hiddenTextTokens
+    });
+    await assertWorldThreadPanel(started.page, `${label} official assignment`, {
+      expectActive: true,
+      expectedKinds: ["official_assignment"],
+      expectedSourceTypes: ["official_assignment"],
+      expectedStatuses: ["active", "watch"],
+      hiddenTextTokens: informationParityExpectations().hiddenTextTokens
+    });
+    const informationPanel = await assertInformationPanelShell(
+      started.page,
+      `${label} desktop information parity`,
+      informationParityExpectations()
+    );
+    if (recorder) await recorder.capture(started.page, `${label}-desktop-information-parity`);
+
+    const routePayload = await fetchSessionState(baseUrl, sessionId);
+    const pagedPayload = await fetchPagedEventArchiveState(baseUrl, sessionId, 2);
+    await started.page.evaluate((payload) => {
+      if (typeof window.renderPayloadWorldState !== "function") {
+        throw new Error("renderPayloadWorldState is unavailable for information parity paging.");
+      }
+      window.renderPayloadWorldState(payload);
+    }, pagedPayload);
+    const pagedInformationPanel = await assertInformationPanelShell(
+      started.page,
+      `${label} paged information parity`,
+      {
+        ...informationParityExpectations(),
+        expectedEventArchivePageSize: 2,
+        expectedEventArchiveSourceTypes: []
+      }
+    );
+    if (recorder) await recorder.capture(started.page, `${label}-paged-information-parity`);
+
+    await started.page.setViewportSize(VIEWPORTS.mobile);
+    await started.page.waitForTimeout(150);
+    await started.page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
+    await started.page.waitForTimeout(100);
+    const mobileInformationPanel = await assertInformationPanelShell(
+      started.page,
+      `${label} mobile information parity`,
+      {
+        ...informationParityExpectations(),
+        expectedEventArchivePageSize: 2,
+        expectedEventArchiveSourceTypes: []
+      }
+    );
+    if (recorder) await recorder.capture(started.page, `${label}-mobile-information-parity`);
+
+    return {
+      baseUrl,
+      sessionId,
+      statusText: (await started.page.locator("#status-strip").innerText()).replace(/\s+/g, " ").trim(),
+      informationPanel: normalizeInformationPanelParitySnapshot(informationPanel),
+      pagedInformationPanel: normalizeInformationPanelParitySnapshot(pagedInformationPanel),
+      mobileInformationPanel: normalizeInformationPanelParitySnapshot(mobileInformationPanel),
+      routeViews: normalizeInformationRoutePayload(routePayload),
+      pagedEventArchive: normalizeEventArchiveRouteView(pagedPayload.eventArchiveView)
+    };
+  } finally {
+    await context.close();
+  }
 }
 
 async function runRoleWorldCouplingAcceptance(browser, { baseUrl, onSessionId, pageErrors, recorder = null }) {
@@ -2776,6 +3076,98 @@ async function cleanupSession(sessionId, sessionStore = activeSessionStore) {
   await fsp.rm(path.join(rootDir, "data", "sessions", `${sessionId}.json`), { force: true });
 }
 
+async function runInformationPanelParityForAdapter(browser, storageAdapter, options = {}) {
+  const { ownsSqliteDatabase, sqliteDatabasePath } = resolveInformationParitySqlitePlan(storageAdapter, options);
+  const sessionStore = createBrowserSmokeSessionStore({ storageAdapter, sqliteDatabasePath });
+  const previousSessionStore = activeSessionStore;
+  const sessionIds = [];
+  let server = null;
+  let result = null;
+  activeSessionStore = sessionStore;
+
+  try {
+    server = await startLocalServer({ storageAdapter, sqliteDatabasePath });
+    result = await runInformationPanelParityJourney(browser, {
+      baseUrl: server.baseUrl,
+      label: storageAdapter,
+      onSessionId: (sessionId) => sessionIds.push(sessionId),
+      pageErrors: options.pageErrors,
+      recorder: options.recorder
+    });
+    return result;
+  } finally {
+    const idsToClean = new Set([result?.sessionId, ...sessionIds].filter(Boolean));
+    let cleanupError = null;
+    try {
+      for (const id of idsToClean) {
+        await cleanupSession(id, sessionStore);
+      }
+    } catch (error) {
+      cleanupError = error;
+    } finally {
+      if (typeof sessionStore.close === "function") sessionStore.close();
+      activeSessionStore = previousSessionStore;
+      if (server) await server.stop();
+      if (ownsSqliteDatabase) await removeSqliteDatabaseArtifacts(sqliteDatabasePath);
+    }
+    if (cleanupError) throw cleanupError;
+  }
+}
+
+async function runInformationPanelParitySmoke(options = {}) {
+  if (options.url) {
+    throw new Error("--information-parity starts isolated JSON and SQLite servers; do not combine it with --url.");
+  }
+  if (options.storageAdapter) {
+    throw new Error("--information-parity runs both storage adapters; do not combine it with --storage-adapter.");
+  }
+
+  const browserPath = resolveBrowserExecutable({ browserPath: options.browserPath });
+  const browser = await chromium.launch({
+    executablePath: browserPath,
+    headless: !options.headed
+  });
+  const pageErrors = [];
+  const recorder = createScreenshotRecorder(options.screenshotsDir);
+
+  try {
+    const json = await runInformationPanelParityForAdapter(browser, "json", {
+      pageErrors,
+      recorder
+    });
+    const sqlite = await runInformationPanelParityForAdapter(browser, "sqlite", {
+      pageErrors,
+      recorder,
+      sqliteDatabasePath: options.sqliteDatabasePath
+    });
+
+    if (pageErrors.length) {
+      throw new Error(`Browser page errors detected: ${pageErrors.join("; ")}`);
+    }
+
+    const parityFailures = getInformationPanelParityFailures(json, sqlite);
+    if (parityFailures.length) {
+      throw new Error(`Information panel JSON/SQLite parity failed: ${parityFailures.join(" ")}`);
+    }
+
+    return {
+      json,
+      sqlite,
+      uiAcceptance: {
+        screenshots: recorder.summary(),
+        viewports: [
+          "information-parity-json-desktop",
+          "information-parity-json-mobile",
+          "information-parity-sqlite-desktop",
+          "information-parity-sqlite-mobile"
+        ]
+      }
+    };
+  } finally {
+    await browser.close();
+  }
+}
+
 async function runBrowserSmoke(options = {}) {
   const browserPath = resolveBrowserExecutable({ browserPath: options.browserPath });
   let server = null;
@@ -2835,6 +3227,8 @@ Options:
                     Select storage for the smoke helper and auto-started server. Defaults to json.
   --sqlite-db <path>
                     SQLite database path when --storage-adapter sqlite is used.
+  --information-parity
+                    Run a focused JSON/SQLite browser smoke for the 局势簿 route-view parity surface.
   --check-ai-connection
                     Click the start-page AI connection diagnostic. The auto-started server uses Mock;
                     --url targets should enable this only when the target provider is intentionally checkable.
@@ -2851,10 +3245,18 @@ if (require.main === module) {
       return;
     }
 
-    const result = await runBrowserSmoke(args);
-    console.log(`Browser smoke passed: ${result.baseUrl}`);
-    console.log(`Restored session: ${result.sessionId}`);
-    console.log(`Status strip: ${result.statusText}`);
+    const result = args.informationParity
+      ? await runInformationPanelParitySmoke(args)
+      : await runBrowserSmoke(args);
+    if (args.informationParity) {
+      console.log(`Browser information parity smoke passed: JSON ${result.json.baseUrl}, SQLite ${result.sqlite.baseUrl}`);
+      console.log(`JSON session: ${result.json.sessionId}`);
+      console.log(`SQLite session: ${result.sqlite.sessionId}`);
+    } else {
+      console.log(`Browser smoke passed: ${result.baseUrl}`);
+      console.log(`Restored session: ${result.sessionId}`);
+      console.log(`Status strip: ${result.statusText}`);
+    }
     console.log(`UI acceptance: ${result.uiAcceptance.viewports.join(", ")} (${result.uiAcceptance.screenshots.length} screenshots checked)`);
     const saved = result.uiAcceptance.screenshots.filter((screenshot) => screenshot.filePath);
     if (saved.length) {
@@ -2880,6 +3282,7 @@ module.exports = {
   getHiddenWorldThreadTextLeaks,
   getHiddenSaveIdLeaks,
   getInformationPanelShellFailures,
+  getInformationPanelParityFailures,
   getTenDayDateFailures,
   getMissingExamLevels,
   getHiddenRelationshipLeaks,
@@ -2896,12 +3299,16 @@ module.exports = {
   getMissingWorldThreadSourceTypes,
   getWorldThreadPanelFailures,
   hasTenDayPeriodLabel,
+  normalizeInformationPanelParitySnapshot,
+  normalizeInformationRoutePayload,
   normalizeBaseUrl,
   normalizeSmokeStorageAdapter,
   parseBrowserSmokeArgs,
   rectsOverlap,
+  resolveInformationParitySqlitePlan,
   resolveBrowserExecutable,
   sanitizeScreenshotName,
+  runInformationPanelParitySmoke,
   runBrowserJourney,
   runBrowserSmoke
 };

@@ -2,7 +2,7 @@
 
 本文回应“是否需要把国家、邻国、NPC、玩家、官职、城市、事件记录等大量动态数据放入数据库，并允许 AI 随游戏进程影响数据库”的产品方向。
 
-结论：**可行，而且中长期值得做；但不建议一步到位替换当前 JSON 存档，也不能让 AI 直接写数据库。** 当前范围只考虑本地数据库，优先方向是本地 SQLite；不规划远程存档、账号体系、多人同步、云端冲突解决或托管数据库。S49.3 已通过 `STORAGE_ADAPTER=sqlite` 引入可选本地 SQLite session row 原型，仍保留 JSON 默认路径；S49.4 已加入本地 `event_log` 与 `ai_change_proposals` 审计记录；S54 已在 SQLite 模式把规范化天下地理同步为本地 `geo_*` 业务表并补维护工具；S55 已在 SQLite 模式把规范化可见 `worldPeople` bridge rows 同步为本地 `people_*` 业务表，并把服务器人物事件关联到 `people_*.last_event_id`；S56 已在 SQLite 模式把规范化安全 `officialPostings` projection 同步为 `office_*` 业务表，并补同 id/同 revision 内容漂移修复；S57.1 已把安全 `eventArchiveView` projection 同步为 `event_archive_index`，供事件档案分页、prompt 近事检索、顶层 `recentEvents` 和读档叙事回放使用；S57.2 已补本地 `storage:audit-events` 工具，把 JSON/SQLite 审计中 allowlist 后的 public 摘要投影为调试安全输出，AI proposal 只计数、不输出原文；S58.1 已把 SQLite prompt 检索接到 `prompt_retrieval_index` 安全派生索引，来源只取服务器可见 view 并带内容指纹，JSON fallback 不变。AI 仍只生成叙事、建议和结构化 proposal；最终写库必须由服务器模块校验、夹断、归一化、事务提交。
+结论：**可行，而且中长期值得做；但不建议一步到位替换当前 JSON 存档，也不能让 AI 直接写数据库。** 当前范围只考虑本地数据库，优先方向是本地 SQLite；不规划远程存档、账号体系、多人同步、云端冲突解决或托管数据库。S49.3 已通过 `STORAGE_ADAPTER=sqlite` 引入可选本地 SQLite session row 原型，仍保留 JSON 默认路径；S49.4 已加入本地 `event_log` 与 `ai_change_proposals` 审计记录；S54 已在 SQLite 模式把规范化天下地理同步为本地 `geo_*` 业务表并补维护工具；S55 已在 SQLite 模式把规范化可见 `worldPeople` bridge rows 同步为本地 `people_*` 业务表，并把服务器人物事件关联到 `people_*.last_event_id`；S56 已在 SQLite 模式把规范化安全 `officialPostings` projection 同步为 `office_*` 业务表，并补同 id/同 revision 内容漂移修复；S57.1 已把安全 `eventArchiveView` projection 同步为 `event_archive_index`，供事件档案分页、prompt 近事检索、顶层 `recentEvents` 和读档叙事回放使用；S57.2 已补本地 `storage:audit-events` 工具，把 JSON/SQLite 审计中 allowlist 后的 public 摘要投影为调试安全输出，AI proposal 只计数、不输出原文；S58.1 已把 SQLite prompt 检索接到 `prompt_retrieval_index` 安全派生索引，来源只取服务器可见 view 并带内容指纹，JSON fallback 不变；S58.2 已补 `smoke:browser -- --information-parity`，用浏览器局势簿验证 JSON/SQLite route view parity。AI 仍只生成叙事、建议和结构化 proposal；最终写库必须由服务器模块校验、夹断、归一化、事务提交。
 
 ## 1. 当前基础与是否急需数据库
 
@@ -547,7 +547,7 @@ S49-S53 结束后，数据库专项的下一段不再是“是否需要数据库
 - S55：人物业务表。已定义并实现可见 bridge `people_npcs`、`people_households`、`people_assets`、`people_estates`、`people_relationships` 持久化、`worldPeopleView` parity、NPC/关系/家产可见 delta 的服务器事件 helper 和 `last_event_id` 审计关联。
 - S56：官职任所业务表。S56.1 已定义 `office_bureaus`、`office_catalog`、`office_city_jurisdictions`、`office_postings`、`office_assessments`、`office_transfers` 契约；S56.2 已接入 SQLite 持久化、读档修复和 `officialPostingsView` / prompt parity；S56.3 已补内容 hash 漂移探针、旧行缺 hash 升级和 hidden 城市/人物引用污染修复。
 - S57：安全事件索引。S57.1 已保留 raw `event_log` / `ai_change_proposals` 的诊断属性，另建 `event_archive_index` 安全 projection 供事件档案分页、prompt 近事检索和读档叙事回放，不暴露 raw audit；S57.2 已补审计到公开事件 projection 工具与 JSON/SQLite 脱敏测试，工具输出不回填 route、prompt、浏览器或 `event_archive_index`。
-- S58：SQLite 索引驱动的 prompt context 与浏览器双模式 parity。S58.1 已新增 `prompt_retrieval_index`，由 `worldGeographyView`、`worldPeopleView`、`officialPostingsView` 和 `eventArchiveView` 的 compact 可见 projection 同步而来，并用内容 hash 防同 id/同 revision 污染；S58.2 继续做浏览器局势簿 JSON/SQLite parity smoke。JSON fallback 不变，prompt/UI 继续只读可见 projection。
+- S58：SQLite 索引驱动的 prompt context 与浏览器双模式 parity。S58.1 已新增 `prompt_retrieval_index`，由 `worldGeographyView`、`worldPeopleView`、`officialPostingsView` 和 `eventArchiveView` 的 compact 可见 projection 同步而来，并用内容 hash 防同 id/同 revision 污染；S58.2 已新增浏览器局势簿 JSON/SQLite parity smoke，比较 DOM、route view 摘要和事件档案分页 metadata。JSON fallback 不变，prompt/UI 继续只读可见 projection。
 - S59：JSON/SQLite 双模式整体验收与再次归档。
 
 每个拆表切片都必须保留 `worldState` snapshot 可读和可导出，保持 JSON 默认可玩；SQLite 仍是 local-only 模式。AI 不能直接执行 SQL 或写业务表，浏览器和 prompt 不读 raw table、raw audit、hidden notes、provider proposal、prompt、本地路径或 key。
@@ -606,7 +606,7 @@ S49-S53 已完成基础层，历史细节已归档到 [LOCAL_DATABASE_FOUNDATION
 2. **S55 人物业务表**：已先把可见 NPC、家族、资产、田产和关系 bridge rows 拆入 SQLite，并补上服务器人物事件 helper、关系/请托 live 事件和 `people_*.last_event_id` 审计关联。
 3. **S56 官职任所业务表**：S56.1 已先固定官署、官职、任命、考成、迁转、城市辖区和持有人引用的 SQLite 表契约；S56.2 已把安全 `officialPostings` projection 持久化到 `office_*` 派生表。后续跨域引用和检索扩展仍必须继续保护服务器任免裁决。
 4. **S57 安全事件索引**：S57.1 已为事件档案分页、prompt 近事检索和读档叙事回放建立 `event_archive_index` 安全 projection；S57.2 已补 raw audit 到公开事件的本地 projection 工具，仍只输出 allowlist 后的 public 摘要和统计，不暴露 raw audit、AI proposal 原文、prompt、路径、key 或 hidden notes。
-5. **S58 检索式 prompt 与浏览器双模式 parity**：S58.1 已让 SQLite 模式的 prompt `retrievalContext` 读取安全派生 `prompt_retrieval_index`，而不是 raw business/audit tables；S58.2 继续验证 JSON/SQLite 两种 adapter 的浏览器局势簿视图一致。
+5. **S58 检索式 prompt 与浏览器双模式 parity**：S58.1 已让 SQLite 模式的 prompt `retrievalContext` 读取安全派生 `prompt_retrieval_index`，而不是 raw business/audit tables；S58.2 已用 `smoke:browser -- --information-parity` 验证 JSON/SQLite 两种 adapter 的浏览器局势簿视图一致。
 6. **S59 双模式集成硬化与再归档**：跑完整 Mock 主线、导入导出/修复工具和文档压缩。
 
 这条路线不会阻止继续做考试外的 scene-local time；两者可以并行，但数据库实现应优先选择小切片，避免把 S48 已稳定的时间契约和完整书生入仕路径一起掀开。
