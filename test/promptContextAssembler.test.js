@@ -233,6 +233,43 @@ test("ranked retrieval context includes capped military diplomacy reports for mi
   assert.doesNotMatch(serialized, /sk-test-s64-context|event_log/);
 });
 
+test("ranked retrieval context includes capped economic fiscal reports for administrative roles", () => {
+  const worldState = createInitialState({ role: "official", playerName: "Economic Context Tester" });
+  Object.assign(worldState, {
+    treasury: 260,
+    grainReserve: 180,
+    population: 7200,
+    taxRate: 68,
+    corruption: 88
+  });
+  worldState.worldGeography.routes.push({
+    id: "route-hidden-context-s64-2",
+    type: "canal",
+    name: "SEALED_S64_2_CONTEXT_ROUTE",
+    fromCityId: "city-beijing",
+    toCityId: "city-nanjing",
+    risk: 99,
+    visibility: "hidden",
+    publicSummary: "SEALED_S64_2_CONTEXT_ROUTE prompt event_log sk-test-s64-2-context"
+  });
+
+  const context = buildRankedRetrievalContext(worldState, {
+    task: "official_career",
+    playerAction: "核查户部钱粮、北京粮价、盐漕与库银"
+  });
+  const serialized = JSON.stringify(context);
+
+  assert.equal(context.events.economicReports.length > 0, true);
+  assert.ok(context.events.economicReports.length <= 4);
+  assert.ok(context.events.economicReports.every((report) =>
+    report.sourceView === "economicFiscalView.report" &&
+    report.authorityBoundary.includes("服务器")
+  ));
+  assert.match(serialized, /economicFiscalView|户部|粮价|盐漕|库银|服务器裁决/);
+  assert.doesNotMatch(serialized, /SEALED_S64_2_CONTEXT/);
+  assert.doesNotMatch(serialized, /sk-test-s64-2-context|event_log/);
+});
+
 test("ranked retrieval context keeps local affairs dockets out of scholar view", () => {
   const worldState = createInitialState({ role: "scholar", playerName: "Scholar Docket Tester" });
   const context = buildRankedRetrievalContext(worldState, {
@@ -242,6 +279,7 @@ test("ranked retrieval context keeps local affairs dockets out of scholar view",
 
   assert.deepEqual(context.events.localDockets, []);
   assert.deepEqual(context.events.militaryReports, []);
+  assert.deepEqual(context.events.economicReports, []);
   assert.match(JSON.stringify(context), /localAffairsDocketView/);
   assert.doesNotMatch(JSON.stringify(context), /钱粮奏销|刑名词讼|水利修防/);
 });

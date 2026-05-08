@@ -1,6 +1,7 @@
 const { createHash } = require("node:crypto");
 
 const { buildEventArchiveIndexItems } = require("../game/eventArchive");
+const { buildEconomicFiscalRetrievalRows } = require("../game/economicFiscal");
 const { buildLocalAffairsDocketView } = require("../game/localAffairsDockets");
 const { buildMilitaryDiplomacyRetrievalRows } = require("../game/militaryDiplomacy");
 const { buildOfficialPostingsView } = require("../game/officialPostings");
@@ -25,6 +26,7 @@ const COLLECTION_GROUPS = Object.freeze({
   "offices.transferRecords": ["offices", "transferRecords"],
   "events.localDockets": ["events", "localDockets"],
   "events.militaryReports": ["events", "militaryReports"],
+  "events.economicReports": ["events", "economicReports"],
   "events.recentEvents": ["events", "recentEvents"]
 });
 
@@ -404,6 +406,40 @@ function compactMilitaryReport(report = {}) {
   };
 }
 
+function compactEconomicReport(report = {}) {
+  return {
+    id: report.id,
+    type: report.type,
+    title: report.title,
+    statusLabel: report.statusLabel,
+    pressureScore: report.pressureScore,
+    fiscalPressure: report.fiscalPressure,
+    deficitPressure: report.deficitPressure,
+    marketPressure: report.marketPressure,
+    tradeRisk: report.tradeRisk,
+    debtPressure: report.debtPressure,
+    corruptionRisk: report.corruptionRisk,
+    reliefPressure: report.reliefPressure,
+    treasuryCapacity: report.treasuryCapacity,
+    localTreasuryCapacity: report.localTreasuryCapacity,
+    grainStock: report.grainStock,
+    grainStress: report.grainStress,
+    marketPriceStress: report.marketPriceStress,
+    taxCapacity: report.taxCapacity,
+    taxRate: report.taxRate,
+    countryId: report.countryId,
+    cityId: report.cityId,
+    cityIds: unique(report.cityIds, 6),
+    routeId: report.routeId,
+    routeIds: unique(report.routeIds, 6),
+    jurisdictionId: report.jurisdictionId,
+    bureauId: report.bureauId,
+    sourceId: report.sourceId,
+    publicSummary: report.publicSummary,
+    authorityBoundary: report.authorityBoundary
+  };
+}
+
 function buildSearchText(payload = {}) {
   return JSON.stringify(payload)
     .replace(/[{}[\]",:]/g, " ")
@@ -493,6 +529,7 @@ function buildPromptRetrievalRows(record) {
   const officialView = buildOfficialPostingsView(record.worldState);
   const localDocketView = buildLocalAffairsDocketView(record.worldState);
   const militaryReports = buildMilitaryDiplomacyRetrievalRows(record.worldState);
+  const economicReports = buildEconomicFiscalRetrievalRows(record.worldState);
   const eventItems = buildEventArchiveIndexItems(record.worldState);
 
   addRows(rows, record, "geography.countries", "worldGeographyView", geographyView.countries, compactCountry);
@@ -509,6 +546,7 @@ function buildPromptRetrievalRows(record) {
   addRows(rows, record, "offices.transferRecords", "officialPostingsView", officialView.transferRecords, compactTransfer);
   addRows(rows, record, "events.localDockets", "localAffairsDocketView", localDocketView.dockets, compactLocalDocket);
   addRows(rows, record, "events.militaryReports", "militaryDiplomacyView", militaryReports, compactMilitaryReport);
+  addRows(rows, record, "events.economicReports", "economicFiscalView", economicReports, compactEconomicReport);
   addRows(rows, record, "events.recentEvents", "eventArchiveView", eventItems, compactEvent);
 
   return rows;
@@ -620,6 +658,7 @@ function emptyPromptRetrievalSource() {
     events: {
       localDockets: [],
       militaryReports: [],
+      economicReports: [],
       recentEvents: []
     }
   };

@@ -346,6 +346,82 @@ test("SQLite prompt retrieval indexes and repairs S64 military diplomacy rows", 
   assert.match(repairedPayload, /粮道|军务|边|服务器/);
 });
 
+test("SQLite prompt retrieval indexes and repairs S64.2 economic fiscal rows", {
+  skip: hasNodeSqlite ? false : "node:sqlite is unavailable in this Node.js runtime"
+}, async (t) => {
+  const { adapter, dbPath } = createHarness(t);
+  const worldState = createPromptWorldState();
+  Object.assign(worldState, {
+    treasury: 240,
+    grainReserve: 170,
+    population: 7200,
+    taxRate: 68,
+    corruption: 88
+  });
+  await adapter.writeSession(clone(worldState));
+
+  const reportRowId = withSqliteDatabase(dbPath, (db) =>
+    db
+      .prepare(`
+        SELECT row_id
+        FROM prompt_retrieval_index
+        WHERE session_id = ?
+          AND domain = 'events'
+          AND collection = 'economicReports'
+        ORDER BY row_id
+        LIMIT 1
+      `)
+      .get(worldState.sessionId).row_id
+  );
+
+  assert.match(reportRowId, /^events\.economicReports:/);
+
+  withSqliteDatabase(dbPath, (db) => {
+    db
+      .prepare(`
+        UPDATE prompt_retrieval_index
+        SET payload_json = ?,
+            search_text = ?
+        WHERE session_id = ?
+          AND row_id = ?
+      `)
+      .run(
+        JSON.stringify({
+          id: "economic-report-polluted",
+          title: "SEALED_SQLITE_ECONOMIC_REPORT prompt provider event_log sk-test-economic"
+        }),
+        "SEALED_SQLITE_ECONOMIC_REPORT prompt provider event_log sk-test-economic",
+        worldState.sessionId,
+        reportRowId
+      );
+  });
+
+  const { record } = await adapter.readSessionRecord(worldState.sessionId);
+  const context = assemblePromptContext(record.worldState, {
+    task: "official_career",
+    playerAction: "核查户部钱粮、北京粮价、盐漕与地方库银"
+  });
+  const serialized = JSON.stringify(context.retrievalContext);
+
+  assert.match(serialized, /economicFiscalView|粮储|盐漕|库银|财赋|服务器裁决/);
+  assert.doesNotMatch(serialized, /SEALED_SQLITE_ECONOMIC_REPORT/);
+  assert.doesNotMatch(serialized, /sk-test-economic/);
+  assert.doesNotMatch(serialized, /event_log/);
+
+  const repairedPayload = withSqliteDatabase(dbPath, (db) =>
+    db
+      .prepare(`
+        SELECT payload_json
+        FROM prompt_retrieval_index
+        WHERE session_id = ?
+          AND row_id = ?
+      `)
+      .get(worldState.sessionId, reportRowId).payload_json
+  );
+  assert.doesNotMatch(repairedPayload, /SEALED_SQLITE_ECONOMIC_REPORT/);
+  assert.match(repairedPayload, /粮储|盐漕|库银|财赋|服务器/);
+});
+
 test("SQLite prompt retrieval index repairs same-row content pollution before prompt assembly", {
   skip: hasNodeSqlite ? false : "node:sqlite is unavailable in this Node.js runtime"
 }, async (t) => {

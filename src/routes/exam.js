@@ -29,6 +29,7 @@ const { buildOfficialCareerView, ensureOfficialCareerState } = require("../game/
 const { buildOfficialPostingsView, ensureOfficialPostingsState } = require("../game/officialPostings");
 const { buildLocalAffairsDocketView } = require("../game/localAffairsDockets");
 const { buildMilitaryDiplomacyView } = require("../game/militaryDiplomacy");
+const { buildEconomicFiscalView } = require("../game/economicFiscal");
 const { buildRoleWorldCouplingView, ensureRoleWorldCouplingState } = require("../game/roleWorldCoupling");
 const { buildWorldGeographyView, ensureWorldGeographyState } = require("../game/worldGeography");
 const { buildWorldEntityView, ensureWorldEntityState } = require("../game/worldEntities");
@@ -84,6 +85,7 @@ function toExamPayload(worldState) {
     officialPostingsView: buildOfficialPostingsView(worldState),
     localAffairsDocketView: buildLocalAffairsDocketView(worldState),
     militaryDiplomacyView: buildMilitaryDiplomacyView(worldState),
+    economicFiscalView: buildEconomicFiscalView(worldState),
     eventArchiveView: buildEventArchiveView(worldState),
     worldState
   };
@@ -421,6 +423,7 @@ router.post("/submit", async (req, res, next) => {
         officialPostingsView: buildOfficialPostingsView(worldState),
         localAffairsDocketView: buildLocalAffairsDocketView(worldState),
         militaryDiplomacyView: buildMilitaryDiplomacyView(worldState),
+        economicFiscalView: buildEconomicFiscalView(worldState),
         eventArchiveView: buildEventArchiveView(worldState),
         worldState
       };

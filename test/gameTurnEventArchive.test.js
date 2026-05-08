@@ -222,6 +222,46 @@ test("game routes expose military diplomacy view for general sessions", async (t
   assert.equal(final.data.militaryDiplomacyView.schemaVersion, 1);
 });
 
+test("game routes expose economic fiscal view for administrative sessions", async (t) => {
+  const server = createTestServer();
+  t.after(server.close);
+
+  const start = await postJson(`${server.baseUrl}/api/game/start`, {
+    dynasty: "明",
+    year: 1644,
+    role: "official",
+    playerName: "财赋路由"
+  });
+  t.after(() => removeSessionArtifacts(start.payload.sessionId));
+
+  assert.equal(start.response.status, 201);
+  assert.equal(start.payload.economicFiscalView.schemaVersion, 1);
+  assert.ok(start.payload.economicFiscalView.fiscalLedgers.length > 0);
+  assert.ok(start.payload.eventArchiveView.items.some((item) => item.sourceType === "economic_fiscal"));
+
+  const stateResponse = await fetch(`${server.baseUrl}/api/game/state/${start.payload.sessionId}`);
+  const statePayload = await stateResponse.json();
+  assert.equal(stateResponse.status, 200);
+  assert.equal(statePayload.economicFiscalView.schemaVersion, 1);
+
+  const sseResponse = await fetch(`${server.baseUrl}/api/game/turn`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", Accept: "text/event-stream" },
+    body: JSON.stringify({
+      sessionId: start.payload.sessionId,
+      input: "核查户部钱粮、粮价和京杭漕运"
+    })
+  });
+  const events = parseSse(await sseResponse.text());
+  const preview = events.find((event) => event.event === "state_preview" && event.data?.economicFiscalView);
+  const final = events.find((event) => event.event === "final_state");
+
+  assert.equal(sseResponse.status, 200);
+  assert.ok(preview);
+  assert.equal(preview.data.economicFiscalView.schemaVersion, 1);
+  assert.equal(final.data.economicFiscalView.schemaVersion, 1);
+});
+
 test("exam routes expose event archive view through question, progress, and submit", async (t) => {
   const server = createTestServer();
   t.after(server.close);
@@ -239,6 +279,7 @@ test("exam routes expose event archive view through question, progress, and subm
   assert.equal(question.response.status, 200);
   assert.equal(question.payload.eventArchiveView.schemaVersion, 1);
   assert.equal(question.payload.militaryDiplomacyView.schemaVersion, 1);
+  assert.equal(question.payload.economicFiscalView.schemaVersion, 1);
 
   const progress = await postJson(`${server.baseUrl}/api/exam/progress`, {
     sessionId: worldState.sessionId,
@@ -248,6 +289,7 @@ test("exam routes expose event archive view through question, progress, and subm
   assert.equal(progress.response.status, 200);
   assert.equal(progress.payload.eventArchiveView.schemaVersion, 1);
   assert.equal(progress.payload.militaryDiplomacyView.schemaVersion, 1);
+  assert.equal(progress.payload.economicFiscalView.schemaVersion, 1);
 
   const essay = Array.from({ length: 8 }, () =>
     "县学之兴在敦本务实，士子读书当明礼义，亦当知仓储、水利、听讼与养民之要。"
@@ -262,6 +304,7 @@ test("exam routes expose event archive view through question, progress, and subm
   assert.equal(submit.response.status, 200);
   assert.equal(archive.schemaVersion, 1);
   assert.equal(submit.payload.militaryDiplomacyView.schemaVersion, 1);
+  assert.equal(submit.payload.economicFiscalView.schemaVersion, 1);
   assert.ok(archive.items.some((item) => item.sourceType === "exam_record" && item.status === "submitted"));
   assert.equal(JSON.stringify(archive).includes("prompt"), false);
   assert.equal(JSON.stringify(archive).includes("provider"), false);

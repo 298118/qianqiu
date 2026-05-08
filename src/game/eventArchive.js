@@ -1,6 +1,7 @@
 const { buildLongTermEventView } = require("./longTermEvents");
 const { buildLocalAffairsDocketView } = require("./localAffairsDockets");
 const { buildMilitaryDiplomacyView } = require("./militaryDiplomacy");
+const { buildEconomicFiscalView } = require("./economicFiscal");
 const { buildOfficialCareerView } = require("./officialCareer");
 const { buildOfficialPostingsView } = require("./officialPostings");
 const { formatYearMonthPeriod, normalizeMonth, normalizeTenDayPeriod, normalizeYear } = require("./time");
@@ -15,6 +16,7 @@ const MAX_OFFICIAL_OUTCOMES = 5;
 const MAX_OFFICIAL_ASSESSMENTS = 4;
 const MAX_LOCAL_DOCKETS = 6;
 const MAX_MILITARY_INCIDENTS = 5;
+const MAX_ECONOMIC_INCIDENTS = 5;
 const MAX_EXAM_RECORDS = 5;
 const MAX_TEXT_LENGTH = 180;
 const MIN_PAGE_SIZE = 1;
@@ -22,7 +24,7 @@ const MAX_PAGE_SIZE = 50;
 
 const SECRET_ENV_NAME_PATTERN = /(KEY|TOKEN|SECRET|PASSWORD|CREDENTIAL)/i;
 const SENSITIVE_ARCHIVE_TEXT_PATTERN =
-  /(hiddenNotes|hiddenIntent|relationshipLedger|retrievalContext|statePatch|worldState|provider|proposal|prompt|api[_ -]?key|OPENAI_API_KEY|DEEPSEEK_API_KEY|MIMO_API_KEY|ANTHROPIC_API_KEY|data[\\/](?:sessions|audit)|ai_change_proposals|event_log|sqlite|sk-[A-Za-z0-9_-]{8,}|tp-[A-Za-z0-9_-]{8,})/i;
+  /(hiddenNotes|hiddenIntent|relationshipLedger|retrievalContext|statePatch|worldState|provider|proposal|prompt|api[_ -]?key|OPENAI_API_KEY|DEEPSEEK_API_KEY|MIMO_API_KEY|ANTHROPIC_API_KEY|data[\\/](?:sessions|audit)|ai_change_proposals|event_log|sqlite|world_sessions|prompt_retrieval_index|event_archive_index|raw[_ -]?(?:table|ledger|audit)|(?:geo|people|office)_[A-Za-z0-9_]+|\b[A-Z0-9_]*(?:KEY|TOKEN|SECRET|PASSWORD|CREDENTIAL)[A-Z0-9_]*\b|[A-Za-z]:\\[^\s"'<>]+|\b(?:\/Users|\/home|\/tmp|\/var|\/mnt|\/opt)\/[^\s"'<>]+|sk-[A-Za-z0-9_-]{8,}|tp-[A-Za-z0-9_-]{8,})/i;
 
 const SOURCE_LABELS = {
   event_history: "近事",
@@ -32,6 +34,7 @@ const SOURCE_LABELS = {
   official_assessment: "考成",
   local_docket: "案牍",
   military_diplomacy: "军务",
+  economic_fiscal: "财赋",
   exam_record: "科场"
 };
 
@@ -309,6 +312,31 @@ function collectMilitaryDiplomacyItems(worldState, items, militaryDiplomacyView)
   });
 }
 
+function collectEconomicFiscalItems(worldState, items, economicFiscalView) {
+  const incidents = Array.isArray(economicFiscalView?.marketIncidents)
+    ? economicFiscalView.marketIncidents
+    : [];
+  incidents.slice(0, MAX_ECONOMIC_INCIDENTS).forEach((incident) => {
+    addItem(items, worldState, {
+      sourceType: "economic_fiscal",
+      kind: incident.kind,
+      title: incident.title,
+      summary: incident.publicSummary,
+      date: incident.date,
+      turn: incident.lastUpdatedTurn,
+      status: incident.status === "routine" ? "recorded" : "watch",
+      riskLabel: incident.statusLabel,
+      relatedLabels: [
+        incident.kindLabel,
+        incident.countryId,
+        incident.cityId,
+        incident.routeId,
+        incident.bureauId
+      ].filter(Boolean)
+    });
+  });
+}
+
 function examDateSource(entry = {}) {
   return entry.sceneTime?.updatedAt ||
     entry.examSubmittedAt ||
@@ -368,6 +396,7 @@ function buildEventArchiveIndexItems(worldState = {}) {
   const officialPostingsView = buildOfficialPostingsView(worldState);
   const localAffairsDocketView = buildLocalAffairsDocketView(worldState);
   const militaryDiplomacyView = buildMilitaryDiplomacyView(worldState);
+  const economicFiscalView = buildEconomicFiscalView(worldState);
   const items = [];
 
   collectHistoryItems(worldState, items);
@@ -377,6 +406,7 @@ function buildEventArchiveIndexItems(worldState = {}) {
   collectOfficialAssessmentItems(worldState, items, officialPostingsView);
   collectLocalDocketItems(worldState, items, localAffairsDocketView);
   collectMilitaryDiplomacyItems(worldState, items, militaryDiplomacyView);
+  collectEconomicFiscalItems(worldState, items, economicFiscalView);
   collectExamItems(worldState, items);
 
   return items.sort(sortArchiveItems);

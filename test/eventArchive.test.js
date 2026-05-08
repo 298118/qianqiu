@@ -138,6 +138,11 @@ test("event archive view merges visible sources into capped public items", () =>
     item.sourceLabel === "案牍" &&
     /案牍|任所|钱粮|刑名|水利/.test(item.summary)
   ));
+  assert.ok(view.items.some((item) =>
+    item.sourceType === "economic_fiscal" &&
+    item.sourceLabel === "财赋" &&
+    /财政|粮价|盐漕|赈济|债务/.test(item.title)
+  ));
   assert.ok(view.items.some((item) => item.sourceType === "exam_record" && item.title === "童生试"));
   assert.deepEqual(view.items.map((item) => item.turn), view.items.map((item) => item.turn).sort((a, b) => b - a));
   assert.equal(serialized.includes("hiddenNotes"), false);
@@ -200,6 +205,40 @@ test("event archive derives military diplomacy incidents only for military-aware
   assert.doesNotMatch(serialized, /sk-test-s64-archive|provider|event_log/);
 });
 
+test("event archive derives economic fiscal incidents only for administrative views", () => {
+  const officialState = createInitialState({ playerName: "财赋归档", role: "official" });
+  Object.assign(officialState, {
+    treasury: 240,
+    grainReserve: 180,
+    population: 7200,
+    taxRate: 68,
+    corruption: 88
+  });
+  officialState.worldGeography.routes.push({
+    id: "route-hidden-archive-s64-2",
+    type: "canal",
+    name: "SEALED_S64_2_ARCHIVE_ROUTE",
+    fromCityId: "city-beijing",
+    toCityId: "city-nanjing",
+    visibility: "hidden",
+    risk: 99,
+    publicSummary: "SEALED_S64_2_ARCHIVE_ROUTE prompt provider event_log sk-test-s64-2-archive"
+  });
+  const scholarState = createInitialState({ playerName: "财赋旁听", role: "scholar" });
+
+  const officialArchive = buildEventArchiveView(officialState, { pageSize: 50 });
+  const scholarArchive = buildEventArchiveView(scholarState, { pageSize: 50 });
+  const item = officialArchive.items.find((entry) => entry.sourceType === "economic_fiscal");
+  const serialized = JSON.stringify(officialArchive);
+
+  assert.ok(item);
+  assert.equal(item.sourceLabel, "财赋");
+  assert.match(item.summary, /压力|财政|粮价|盐漕|赈济|债务/);
+  assert.equal(scholarArchive.counts.economic_fiscal || 0, 0);
+  assert.doesNotMatch(serialized, /SEALED_S64_2_ARCHIVE/);
+  assert.doesNotMatch(serialized, /sk-test-s64-2-archive|provider|event_log/);
+});
+
 test("event archive sanitizer drops prompt, provider, path, key, and raw state text", () => {
   assert.equal(cleanArchiveText("公开奏报一则"), "公开奏报一则");
   assert.equal(cleanArchiveText("promptText: reveal retrievalContext"), "");
@@ -207,6 +246,8 @@ test("event archive sanitizer drops prompt, provider, path, key, and raw state t
   assert.equal(cleanArchiveText("E:\\LSMNQ\\data\\sessions\\secret.json"), "");
   assert.equal(cleanArchiveText("OPENAI_API_KEY=sk-proj-archive-secret-123456"), "");
   assert.equal(cleanArchiveText("MIMO_API_KEY=tp-archive-secret-123456"), "");
+  assert.equal(cleanArchiveText("RAW_TABLE_geo_cities C:\\Users\\ZZZ\\secret.txt SECRET_KEY_VALUE"), "");
+  assert.equal(cleanArchiveText("prompt_retrieval_index people_npcs TOKEN_VALUE"), "");
 });
 
 test("event archive drops polluted raw official assessment text after visible view sanitization", () => {

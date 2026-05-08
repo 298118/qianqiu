@@ -462,6 +462,39 @@ test("turn prompt input includes visible S64 military diplomacy reports for gene
   assert.doesNotMatch(scholarTask.input, /military-theater-|military-incident-|驻军|使节往来/);
 });
 
+test("turn prompt input includes visible S64.2 economic fiscal reports for officials only", () => {
+  const officialState = createInitialState({ role: "official", playerName: "财赋 Prompt Tester" });
+  Object.assign(officialState, {
+    treasury: 240,
+    grainReserve: 170,
+    population: 7200,
+    taxRate: 68,
+    corruption: 88
+  });
+  officialState.worldGeography.routes.push({
+    id: "route-hidden-prompt-s64-2",
+    type: "canal",
+    name: "SEALED_S64_2_PROMPT_ROUTE",
+    fromCityId: "city-beijing",
+    toCityId: "city-nanjing",
+    risk: 99,
+    visibility: "hidden",
+    publicSummary: "SEALED_S64_2_PROMPT_ROUTE prompt provider event_log sk-test-s64-2-prompt"
+  });
+  const scholarState = createInitialState({ role: "scholar", playerName: "无财赋 Prompt Tester" });
+
+  const officialTask = buildTurnTask(officialState, "核查户部钱粮、粮价、盐漕和地方库银");
+  const scholarTask = buildTurnTask(scholarState, "在县学听闻粮价与商路");
+
+  assert.match(officialTask.input, /economicFiscal/);
+  assert.match(officialTask.input, /economicFiscalView/);
+  assert.match(officialTask.input, /财赋|粮储|盐漕|库银|服务器裁决/);
+  assert.doesNotMatch(officialTask.input, /SEALED_S64_2_PROMPT/);
+  assert.doesNotMatch(officialTask.input, /sk-test-s64-2-prompt|event_log/);
+  assert.match(scholarTask.input, /economicFiscal/);
+  assert.doesNotMatch(scholarTask.input, /economic-ledger-|economic-incident-|盐漕商路预警|库银赈济/);
+});
+
 test("turn prompt input includes S53 retrieval context as dynamic world state", () => {
   const worldState = createInitialState({ role: "official", playerName: "Retrieval Prompt Tester" });
   Object.assign(worldState.player, {

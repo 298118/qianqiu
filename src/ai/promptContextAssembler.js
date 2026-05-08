@@ -12,6 +12,10 @@ const {
   buildMilitaryDiplomacyRetrievalRows,
   summarizeMilitaryDiplomacyForPrompt
 } = require("../game/militaryDiplomacy");
+const {
+  buildEconomicFiscalRetrievalRows,
+  summarizeEconomicFiscalForPrompt
+} = require("../game/economicFiscal");
 const { summarizeOfficialCareerForPrompt } = require("../game/officialCareer");
 const {
   buildOfficialPostingsView,
@@ -60,6 +64,7 @@ const LIMITS = Object.freeze({
   resolvedEvents: 3,
   localDockets: 3,
   militaryReports: 4,
+  economicReports: 4,
   recentEvents: 6,
   entities: 5
 });
@@ -82,6 +87,7 @@ const ORDINARY_TURN_LIMITS = Object.freeze({
   resolvedEvents: 1,
   localDockets: 1,
   militaryReports: 1,
+  economicReports: 1,
   recentEvents: 4,
   entities: 1
 });
@@ -115,6 +121,7 @@ const RETRIEVAL_ROW_PATHS = Object.freeze([
   ["events", "resolvedEvents"],
   ["events", "localDockets"],
   ["events", "militaryReports"],
+  ["events", "economicReports"],
   ["events", "recentEvents"],
   ["entities", "highlights"]
 ]);
@@ -777,6 +784,34 @@ function compactMilitaryReport(report) {
   };
 }
 
+function compactEconomicReport(report) {
+  return {
+    id: report.id,
+    type: report.type,
+    title: report.title,
+    statusLabel: report.statusLabel,
+    pressureScore: report.pressureScore,
+    fiscalPressure: report.fiscalPressure,
+    deficitPressure: report.deficitPressure,
+    marketPressure: report.marketPressure,
+    tradeRisk: report.tradeRisk,
+    debtPressure: report.debtPressure,
+    corruptionRisk: report.corruptionRisk,
+    grainStress: report.grainStress,
+    marketPriceStress: report.marketPriceStress,
+    countryId: report.countryId,
+    cityId: report.cityId,
+    cityIds: (report.cityIds || []).length ? report.cityIds.slice(0, 4) : undefined,
+    routeId: report.routeId,
+    routeIds: (report.routeIds || []).length ? report.routeIds.slice(0, 4) : undefined,
+    jurisdictionId: report.jurisdictionId,
+    bureauId: report.bureauId,
+    sourceId: report.sourceId,
+    publicSummary: cleanText(report.publicSummary, "", 80),
+    authorityBoundary: "服务器裁决。"
+  };
+}
+
 function compactEntity(entity) {
   return {
     id: entity.id,
@@ -799,8 +834,10 @@ function buildEventContext(worldState, query, retrievalSource = null) {
     buildEventArchiveIndexItems(worldState);
   const sourceLocalDockets = safeRetrievalCollection(retrievalSource, "events", "localDockets");
   const sourceMilitaryReports = safeRetrievalCollection(retrievalSource, "events", "militaryReports");
+  const sourceEconomicReports = safeRetrievalCollection(retrievalSource, "events", "economicReports");
   const localDockets = sourceLocalDockets || buildLocalAffairsDocketView(worldState).dockets;
   const militaryReports = sourceMilitaryReports || buildMilitaryDiplomacyRetrievalRows(worldState);
+  const economicReports = sourceEconomicReports || buildEconomicFiscalRetrievalRows(worldState);
   const recentEvents = eventArchiveItems
     .filter((event) => event.sourceType === "event_history")
     .slice(0, LIMITS.recentEvents)
@@ -860,6 +897,21 @@ function buildEventContext(worldState, query, retrievalSource = null) {
         clampNumber(report.diplomaticTension, 0, 100, 0)
       ),
       mapRow: compactMilitaryReport
+    }),
+    economicReports: rankRows(economicReports, {
+      query,
+      limit: LIMITS.economicReports,
+      sourceType: "economicFiscalView.report",
+      textFields: ["type", "title", "statusLabel", "countryId", "cityId", "cityIds", "routeId", "routeIds", "jurisdictionId", "bureauId", "publicSummary", "authorityBoundary"],
+      baseScore: (report) => Math.max(
+        clampNumber(report.pressureScore, 0, 100, 0),
+        clampNumber(report.fiscalPressure, 0, 100, 0),
+        clampNumber(report.marketPressure, 0, 100, 0),
+        clampNumber(report.tradeRisk, 0, 100, 0),
+        clampNumber(report.debtPressure, 0, 100, 0),
+        clampNumber(report.corruptionRisk, 0, 100, 0)
+      ),
+      mapRow: compactEconomicReport
     }),
     recentEvents
   };
@@ -929,6 +981,7 @@ function applyPromptBudget(context, options = {}) {
   next.events.resolvedEvents = next.events.resolvedEvents.slice(0, limits.resolvedEvents);
   next.events.localDockets = next.events.localDockets.slice(0, limits.localDockets);
   next.events.militaryReports = next.events.militaryReports.slice(0, limits.militaryReports);
+  next.events.economicReports = next.events.economicReports.slice(0, limits.economicReports);
   next.events.recentEvents = next.events.recentEvents.slice(0, limits.recentEvents);
   next.entities.highlights = next.entities.highlights.slice(0, limits.entities);
 
@@ -968,6 +1021,7 @@ function buildRankedRetrievalContext(worldState = {}, options = {}) {
       "longTermEventView",
       "localAffairsDocketView",
       "militaryDiplomacyView",
+      "economicFiscalView",
       "worldEntityView",
       "eventArchiveView"
     ],
@@ -1001,6 +1055,7 @@ function assemblePromptContext(worldState = {}, options = {}) {
     worldThreads: summarizeWorldThreadsForPrompt(worldState),
     localAffairsDockets: summarizeLocalAffairsDocketsForPrompt(worldState),
     militaryDiplomacy: summarizeMilitaryDiplomacyForPrompt(worldState),
+    economicFiscal: summarizeEconomicFiscalForPrompt(worldState),
     officialCareer: summarizeOfficialCareerForPrompt(worldState),
     officialPostings: summarizeOfficialPostingsForPrompt(worldState),
     roleWorldCoupling: summarizeRoleWorldCouplingForPrompt(worldState),
