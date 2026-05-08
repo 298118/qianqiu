@@ -32,6 +32,13 @@ const {
   normalizeRecordWorldPeople,
   syncPeopleTables
 } = require("./sqlitePeopleTables");
+const {
+  deleteOfficialPostingRows,
+  ensureOfficialPostingTablesForRecord,
+  initializeOfficialPostingTables,
+  normalizeRecordOfficialPostings,
+  syncOfficialPostingTables
+} = require("./sqliteOfficialPostingTables");
 
 const DEFAULT_SQLITE_DATABASE_PATH = path.join(__dirname, "..", "..", "data", "qianqiu.sqlite");
 const SQLITE_BUSY_TIMEOUT_MS = 5000;
@@ -203,6 +210,7 @@ function createSqliteSessionAdapter(options = {}) {
     `);
     initializeGeographyTables(database);
     initializePeopleTables(database);
+    initializeOfficialPostingTables(database);
 
     if (databasePath !== ":memory:") {
       database.exec("PRAGMA journal_mode = WAL");
@@ -222,6 +230,7 @@ function createSqliteSessionAdapter(options = {}) {
   function persistSessionRecord(record, options = {}) {
     normalizeRecordWorldGeography(record);
     normalizeRecordWorldPeople(record);
+    normalizeRecordOfficialPostings(record);
     const metadata = record.metadata;
     getDatabase()
       .prepare(`
@@ -289,6 +298,7 @@ function createSqliteSessionAdapter(options = {}) {
       );
     syncGeographyTables(getDatabase(), record);
     syncPeopleTables(getDatabase(), record, options.peopleEventLinks);
+    syncOfficialPostingTables(getDatabase(), record);
   }
 
   function updateSessionRecordPayload(record) {
@@ -497,7 +507,8 @@ function createSqliteSessionAdapter(options = {}) {
       const repairedGeography = ensureGeographyTablesForRecord(getDatabase(), migrated.record);
       const repairedPeople = ensurePeopleTablesForRecord(getDatabase(), migrated.record);
       const repaired = repairedGeography || repairedPeople;
-      if (repaired) updateSessionRecordPayload(migrated.record);
+      const repairedOfficialPostings = ensureOfficialPostingTablesForRecord(getDatabase(), migrated.record);
+      if (repaired || repairedOfficialPostings) updateSessionRecordPayload(migrated.record);
       return migrated;
     });
   }
@@ -607,6 +618,7 @@ function createSqliteSessionAdapter(options = {}) {
     runInTransaction(getDatabase(), () => {
       deleteGeographyRows(getDatabase(), sessionId);
       deletePeopleRows(getDatabase(), sessionId);
+      deleteOfficialPostingRows(getDatabase(), sessionId);
       getDatabase().prepare("DELETE FROM world_sessions WHERE session_id = ?").run(sessionId);
     });
   }

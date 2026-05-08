@@ -7,6 +7,7 @@ const { isBuiltin } = require("node:module");
 
 const { assemblePromptContext } = require("../src/ai/promptContextAssembler");
 const { createInitialState } = require("../src/game/initialState");
+const { buildOfficialPostingsView } = require("../src/game/officialPostings");
 const { applyRelationshipChanges } = require("../src/game/relationships");
 const { buildWorldGeographyView } = require("../src/game/worldGeography");
 const { buildWorldPeopleView } = require("../src/game/worldPeople");
@@ -295,6 +296,17 @@ function readSqlitePeopleCounts(db, sessionId) {
   };
 }
 
+function readSqliteOfficialPostingCounts(db, sessionId) {
+  return {
+    bureaus: db.prepare("SELECT COUNT(*) AS count FROM office_bureaus WHERE session_id = ?").get(sessionId).count,
+    offices: db.prepare("SELECT COUNT(*) AS count FROM office_catalog WHERE session_id = ?").get(sessionId).count,
+    cityJurisdictions: db.prepare("SELECT COUNT(*) AS count FROM office_city_jurisdictions WHERE session_id = ?").get(sessionId).count,
+    postings: db.prepare("SELECT COUNT(*) AS count FROM office_postings WHERE session_id = ?").get(sessionId).count,
+    assessmentRecords: db.prepare("SELECT COUNT(*) AS count FROM office_assessments WHERE session_id = ?").get(sessionId).count,
+    transferRecords: db.prepare("SELECT COUNT(*) AS count FROM office_transfers WHERE session_id = ?").get(sessionId).count
+  };
+}
+
 function sumSqliteGeographyCounts(counts) {
   return Object.values(counts).reduce((total, count) => total + count, 0);
 }
@@ -303,7 +315,11 @@ function sumSqlitePeopleCounts(counts) {
   return Object.values(counts).reduce((total, count) => total + count, 0);
 }
 
-function clonePeopleRow(db, tableName, sessionId, patch) {
+function sumSqliteOfficialPostingCounts(counts) {
+  return Object.values(counts).reduce((total, count) => total + count, 0);
+}
+
+function cloneSqliteRow(db, tableName, sessionId, patch) {
   const base = db.prepare(`SELECT * FROM ${tableName} WHERE session_id = ? LIMIT 1`).get(sessionId);
   assert.ok(base, `${tableName} should have a source row to clone`);
   const row = { ...base, ...patch };
@@ -312,6 +328,10 @@ function clonePeopleRow(db, tableName, sessionId, patch) {
   db
     .prepare(`INSERT INTO ${tableName} (${columns.join(", ")}) VALUES (${placeholders})`)
     .run(...columns.map((column) => row[column]));
+}
+
+function clonePeopleRow(db, tableName, sessionId, patch) {
+  cloneSqliteRow(db, tableName, sessionId, patch);
 }
 
 for (const [adapterName, createHarness, skip] of harnesses) {
@@ -415,6 +435,57 @@ for (const [adapterName, createHarness, skip] of harnesses) {
     assert.deepEqual(loadedPrompt, expectedPrompt);
     assert.match(serialized, /顾衡/);
     assert.doesNotMatch(serialized, /SEALED_PEOPLE_/);
+  });
+
+  test(`${adapterName} storage adapter contract: officialPostings view and prompt stay player-visible`, { skip }, async (t) => {
+    const { adapter, trackSession } = createHarness(t);
+    const worldState = buildWorldState({
+      playerName: "任所视图一致",
+      role: "official",
+      turnCount: 8
+    });
+    worldState.officialPostings.postings.push({
+      id: "posting-hidden-storage",
+      officeId: "ministry_revenue_principal",
+      officeTitle: "SEALED_OFFICE_POSTING_TITLE",
+      bureauId: "ministry_revenue",
+      holderType: "npc",
+      holderId: "npc-hidden-storage",
+      status: "active",
+      visibility: "hidden",
+      knownToPlayer: false,
+      publicSummary: "SEALED_OFFICE_POSTING_PUBLIC",
+      hiddenNotes: ["SEALED_OFFICE_POSTING_NOTE"]
+    });
+    trackSession(worldState.sessionId);
+
+    const expectedView = buildOfficialPostingsView(worldState);
+    const expectedPrompt = assemblePromptContext(worldState, {
+      playerAction: "查阅本任考成与官署职责",
+      task: "official_career"
+    }).officialPostings;
+
+    await adapter.writeSession(worldState);
+    const loaded = await adapter.readSession(worldState.sessionId);
+    const loadedView = buildOfficialPostingsView(loaded);
+    const loadedPrompt = assemblePromptContext(loaded, {
+      playerAction: "查阅本任考成与官署职责",
+      task: "official_career"
+    }).officialPostings;
+    const serialized = JSON.stringify({
+      loadedView,
+      loadedPrompt,
+      retrievalOffices: assemblePromptContext(loaded, {
+        playerAction: "查阅本任考成与官署职责",
+        task: "official_career"
+      }).retrievalContext.offices
+    });
+
+    assert.deepEqual(loadedView, expectedView);
+    assert.deepEqual(loadedPrompt, expectedPrompt);
+    assert.match(serialized, /吏部|六部观政进士|任免/);
+    assert.doesNotMatch(serialized, /SEALED_OFFICE_POSTING/);
+    assert.doesNotMatch(serialized, /npc-hidden-storage/);
   });
 
   test(`${adapterName} storage adapter contract: listSessions redacts metadata`, { skip }, async (t) => {
@@ -953,6 +1024,386 @@ test("SQLite storage adapter keeps worldGeographyView parity with the normalized
   assert.deepEqual(sqliteView, expectedView);
   assert.doesNotMatch(serializedView, /SEALED_ROUTE_NOTE/);
   assert.doesNotMatch(serializedView, /frontier-hidden-palace-intel/);
+});
+
+test("SQLite storage adapter syncs official posting business tables with the session row", {
+  skip: hasNodeSqlite ? false : "node:sqlite is unavailable in this Node.js runtime"
+}, async (t) => {
+  const { adapter, dbPath } = createSqliteHarness(t);
+  const worldState = buildWorldState({
+    playerName: "官职业务表",
+    role: "official",
+    turnCount: 5
+  });
+  addVisiblePeopleRows(worldState);
+  worldState.officialPostings.postings.push({
+    id: "posting-visible-npc-gu",
+    officeId: "ministry_revenue_principal",
+    officeTitle: "户部主事",
+    bureauId: "ministry_revenue",
+    holderType: "npc",
+    holderId: "npc-visible-gu",
+    status: "active",
+    cityId: "city-beijing",
+    regionId: "region-north-zhili",
+    visibility: "role_visible",
+    knownToPlayer: true,
+    publicSummary: "顾衡暂署户部文案。",
+    lastUpdatedTurn: 5
+  });
+  worldState.officialPostings.postings.push({
+    id: "posting-hidden-sqlite-source",
+    officeId: "ministry_revenue_principal",
+    officeTitle: "SEALED_OFFICE_SQLITE_TITLE",
+    bureauId: "ministry_revenue",
+    holderType: "npc",
+    holderId: "npc-hidden-storage",
+    status: "active",
+    visibility: "hidden",
+    knownToPlayer: false,
+    publicSummary: "SEALED_OFFICE_SQLITE_PUBLIC",
+    hiddenNotes: ["SEALED_OFFICE_SQLITE_NOTE"]
+  });
+
+  await adapter.writeSession(worldState);
+
+  withSqliteDatabase(dbPath, (db) => {
+    const counts = readSqliteOfficialPostingCounts(db, worldState.sessionId);
+    const bureau = db
+      .prepare(`
+        SELECT source, catalog_row_id, revision, row_revision, last_updated_turn, visibility
+        FROM office_bureaus
+        WHERE session_id = ? AND row_id = ?
+      `)
+      .get(worldState.sessionId, "ministry_personnel");
+    const office = db
+      .prepare(`
+        SELECT source, bureau_row_id, title, normal_term_months
+        FROM office_catalog
+        WHERE session_id = ? AND row_id = ?
+      `)
+      .get(worldState.sessionId, "probationary_observer");
+    const playerPosting = db
+      .prepare(`
+        SELECT source, holder_type, holder_id, holder_people_row_id, office_row_id, office_title, bureau_row_id, city_row_id
+        FROM office_postings
+        WHERE session_id = ? AND row_id = ?
+      `)
+      .get(worldState.sessionId, "posting-player-current");
+    const npcPosting = db
+      .prepare(`
+        SELECT holder_type, holder_id, holder_people_row_id, office_row_id
+        FROM office_postings
+        WHERE session_id = ? AND row_id = ?
+      `)
+      .get(worldState.sessionId, "posting-visible-npc-gu");
+    const hiddenRows = db
+      .prepare("SELECT COUNT(*) AS count FROM office_postings WHERE session_id = ? AND office_title LIKE ?")
+      .get(worldState.sessionId, "SEALED_OFFICE_SQLITE_%");
+
+    assert.equal(counts.bureaus, worldState.officialPostings.bureaus.length);
+    assert.equal(counts.offices, worldState.officialPostings.offices.length);
+    assert.equal(counts.cityJurisdictions, worldState.officialPostings.cityJurisdictions.length);
+    assert.equal(counts.postings, worldState.officialPostings.postings.length);
+    assert.equal(counts.assessmentRecords, worldState.officialPostings.assessmentRecords.length);
+    assert.equal(counts.transferRecords, worldState.officialPostings.transferRecords.length);
+    assert.equal(bureau.source, "official_catalog");
+    assert.equal(bureau.catalog_row_id, "ministry_personnel");
+    assert.equal(bureau.revision, 1);
+    assert.equal(bureau.row_revision, 1);
+    assert.equal(bureau.last_updated_turn, 5);
+    assert.equal(bureau.visibility, "public");
+    assert.equal(office.source, "official_catalog");
+    assert.equal(office.bureau_row_id, "ministry_personnel");
+    assert.equal(office.title, "六部观政进士");
+    assert.equal(office.normal_term_months, 0);
+    assert.equal(playerPosting.source, "official_career");
+    assert.equal(playerPosting.holder_type, "player");
+    assert.equal(playerPosting.holder_id, "P1");
+    assert.equal(playerPosting.holder_people_row_id, null);
+    assert.equal(playerPosting.office_row_id, "probationary_observer");
+    assert.equal(playerPosting.office_title, "六部观政进士");
+    assert.equal(playerPosting.bureau_row_id, "ministry_personnel");
+    assert.equal(playerPosting.city_row_id, "city-beijing");
+    assert.equal(npcPosting.holder_type, "npc");
+    assert.equal(npcPosting.holder_id, "npc-visible-gu");
+    assert.equal(npcPosting.holder_people_row_id, "npc-visible-gu");
+    assert.equal(npcPosting.office_row_id, "ministry_revenue_principal");
+    assert.equal(hiddenRows.count, 0);
+  });
+});
+
+test("SQLite storage adapter repairs hidden raw office rows and missing visible bridge rows from world_state_json on read", {
+  skip: hasNodeSqlite ? false : "node:sqlite is unavailable in this Node.js runtime"
+}, async (t) => {
+  const { adapter, dbPath } = createSqliteHarness(t);
+  const worldState = buildWorldState({
+    playerName: "官职修复",
+    role: "official",
+    turnCount: 2
+  });
+  await adapter.writeSession(worldState);
+
+  withSqliteDatabase(dbPath, (db) => {
+    cloneSqliteRow(db, "office_postings", worldState.sessionId, {
+      row_id: "posting-hidden-raw-sqlite",
+      catalog_row_id: "ministry_revenue_principal",
+      source: "raw_hidden_test",
+      visibility: "hidden",
+      known_to_player: 0,
+      office_title: "SEALED_SQLITE_OFFICE_RAW",
+      holder_type: "npc",
+      holder_id: "npc-hidden-storage",
+      holder_people_row_id: "npc-hidden-storage",
+      public_summary: "SEALED_SQLITE_OFFICE_PUBLIC",
+      hidden_notes_json: "[\"SEALED_SQLITE_OFFICE_NOTE\"]"
+    });
+    db.prepare("DELETE FROM office_postings WHERE session_id = ? AND row_id = ?")
+      .run(worldState.sessionId, "posting-player-current");
+
+    const hidden = db
+      .prepare("SELECT COUNT(*) AS count FROM office_postings WHERE session_id = ? AND row_id = ?")
+      .get(worldState.sessionId, "posting-hidden-raw-sqlite");
+    const missingPosting = db
+      .prepare("SELECT COUNT(*) AS count FROM office_postings WHERE session_id = ? AND row_id = ?")
+      .get(worldState.sessionId, "posting-player-current");
+
+    assert.equal(hidden.count, 1);
+    assert.equal(missingPosting.count, 0);
+  });
+
+  const { record } = await adapter.readSessionRecord(worldState.sessionId);
+  const promptContext = assemblePromptContext(record.worldState, {
+    playerAction: "查阅本任官职簿",
+    task: "official_career"
+  });
+  const serialized = JSON.stringify({
+    officialPostings: record.worldState.officialPostings,
+    officialPostingsView: buildOfficialPostingsView(record.worldState),
+    promptOfficialPostings: promptContext.officialPostings,
+    retrievalOffices: promptContext.retrievalContext.offices
+  });
+
+  assert.doesNotMatch(serialized, /SEALED_SQLITE_OFFICE_/);
+  assert.doesNotMatch(serialized, /npc-hidden-storage/);
+
+  withSqliteDatabase(dbPath, (db) => {
+    const counts = readSqliteOfficialPostingCounts(db, worldState.sessionId);
+    const hidden = db
+      .prepare("SELECT COUNT(*) AS count FROM office_postings WHERE session_id = ? AND row_id = ?")
+      .get(worldState.sessionId, "posting-hidden-raw-sqlite");
+    const repairedPosting = db
+      .prepare("SELECT holder_type, holder_id, office_row_id FROM office_postings WHERE session_id = ? AND row_id = ?")
+      .get(worldState.sessionId, "posting-player-current");
+
+    assert.equal(counts.postings, record.worldState.officialPostings.postings.length);
+    assert.equal(hidden.count, 0);
+    assert.equal(repairedPosting.holder_type, "player");
+    assert.equal(repairedPosting.holder_id, "P1");
+    assert.equal(repairedPosting.office_row_id, "probationary_observer");
+  });
+});
+
+test("SQLite storage adapter repairs mismatched office row ids when counts still match", {
+  skip: hasNodeSqlite ? false : "node:sqlite is unavailable in this Node.js runtime"
+}, async (t) => {
+  const { adapter, dbPath } = createSqliteHarness(t);
+  const worldState = buildWorldState({
+    playerName: "官职错行修复",
+    role: "official",
+    turnCount: 3
+  });
+  await adapter.writeSession(worldState);
+
+  withSqliteDatabase(dbPath, (db) => {
+    db
+      .prepare("UPDATE office_catalog SET row_id = ? WHERE session_id = ? AND row_id = ?")
+      .run("office-corrupt-extra", worldState.sessionId, "probationary_observer");
+    const counts = readSqliteOfficialPostingCounts(db, worldState.sessionId);
+    const oldRow = db
+      .prepare("SELECT COUNT(*) AS count FROM office_catalog WHERE session_id = ? AND row_id = ?")
+      .get(worldState.sessionId, "probationary_observer");
+    const corruptRow = db
+      .prepare("SELECT COUNT(*) AS count FROM office_catalog WHERE session_id = ? AND row_id = ?")
+      .get(worldState.sessionId, "office-corrupt-extra");
+
+    assert.equal(counts.offices, worldState.officialPostings.offices.length);
+    assert.equal(oldRow.count, 0);
+    assert.equal(corruptRow.count, 1);
+  });
+
+  await adapter.readSessionRecord(worldState.sessionId);
+
+  withSqliteDatabase(dbPath, (db) => {
+    const counts = readSqliteOfficialPostingCounts(db, worldState.sessionId);
+    const repairedRow = db
+      .prepare("SELECT COUNT(*) AS count FROM office_catalog WHERE session_id = ? AND row_id = ?")
+      .get(worldState.sessionId, "probationary_observer");
+    const corruptRow = db
+      .prepare("SELECT COUNT(*) AS count FROM office_catalog WHERE session_id = ? AND row_id = ?")
+      .get(worldState.sessionId, "office-corrupt-extra");
+
+    assert.equal(counts.offices, worldState.officialPostings.offices.length);
+    assert.equal(repairedRow.count, 1);
+    assert.equal(corruptRow.count, 0);
+  });
+});
+
+test("SQLite storage adapter advances official posting row revisions during mutateSession", {
+  skip: hasNodeSqlite ? false : "node:sqlite is unavailable in this Node.js runtime"
+}, async (t) => {
+  const { adapter, dbPath } = createSqliteHarness(t);
+  const worldState = buildWorldState({
+    playerName: "官职变更",
+    role: "official",
+    turnCount: 1
+  });
+  await adapter.writeSession(worldState);
+  const { record: before } = await adapter.readSessionRecord(worldState.sessionId);
+
+  await adapter.mutateSession(worldState.sessionId, (draft) => {
+    draft.turnCount = 9;
+    draft.player.officeTitle = "户部主事";
+    draft.player.position = "户部主事";
+    draft.officialCareer.currentPosting = "户部主事";
+    draft.officialCareer.bureauId = "ministry_revenue";
+    draft.officialCareer.tenureMonths = 3;
+    draft.officialCareer.assessmentDossier.meritScore = 72;
+    draft.officialCareer.assessmentDossier.riskScore = 21;
+  });
+
+  const { record: after } = await adapter.readSessionRecord(worldState.sessionId);
+  assert.equal(after.revision, before.revision + 1);
+
+  withSqliteDatabase(dbPath, (db) => {
+    const posting = db
+      .prepare(`
+        SELECT revision, row_revision, last_updated_turn, office_row_id, office_title, bureau_row_id, term_months
+        FROM office_postings
+        WHERE session_id = ? AND row_id = ?
+      `)
+      .get(worldState.sessionId, "posting-player-current");
+    const assessment = db
+      .prepare(`
+        SELECT revision, row_revision, last_updated_turn, office_row_id, bureau_row_id, merit_score, risk_score
+        FROM office_assessments
+        WHERE session_id = ? AND row_id = ?
+      `)
+      .get(worldState.sessionId, "assessment-player-current");
+
+    assert.equal(posting.revision, after.revision);
+    assert.equal(posting.row_revision, after.revision);
+    assert.equal(posting.last_updated_turn, 9);
+    assert.equal(posting.office_row_id, "ministry_revenue_principal");
+    assert.equal(posting.office_title, "户部主事");
+    assert.equal(posting.bureau_row_id, "ministry_revenue");
+    assert.equal(posting.term_months, 3);
+    assert.equal(assessment.revision, after.revision);
+    assert.equal(assessment.row_revision, after.revision);
+    assert.equal(assessment.last_updated_turn, 9);
+    assert.equal(assessment.office_row_id, "ministry_revenue_principal");
+    assert.equal(assessment.bureau_row_id, "ministry_revenue");
+    assert.equal(assessment.merit_score, 72);
+    assert.equal(assessment.risk_score, 21);
+  });
+});
+
+test("SQLite storage adapter does not rewrite official posting rows after stale expectedRevision rejection", {
+  skip: hasNodeSqlite ? false : "node:sqlite is unavailable in this Node.js runtime"
+}, async (t) => {
+  const { adapter, dbPath } = createSqliteHarness(t);
+  const worldState = buildWorldState({
+    playerName: "官职版本冲突",
+    role: "official",
+    turnCount: 2
+  });
+  await adapter.writeSession(worldState);
+  const { record: staleRecord } = await adapter.readSessionRecord(worldState.sessionId);
+
+  const latestWorldState = JSON.parse(JSON.stringify(staleRecord.worldState));
+  latestWorldState.turnCount = 7;
+  latestWorldState.player.officeTitle = "户部主事";
+  latestWorldState.player.position = "户部主事";
+  latestWorldState.officialCareer.currentPosting = "户部主事";
+  latestWorldState.officialCareer.bureauId = "ministry_revenue";
+  latestWorldState.officialCareer.tenureMonths = 2;
+  await adapter.writeSession(latestWorldState);
+
+  const staleWorldState = JSON.parse(JSON.stringify(staleRecord.worldState));
+  staleWorldState.turnCount = 12;
+  staleWorldState.player.officeTitle = "兵部主事";
+  staleWorldState.player.position = "兵部主事";
+  staleWorldState.officialCareer.currentPosting = "兵部主事";
+  staleWorldState.officialCareer.bureauId = "ministry_war";
+  staleWorldState.officialCareer.tenureMonths = 8;
+
+  const beforeReject = withSqliteDatabase(dbPath, (db) =>
+    db
+      .prepare(`
+        SELECT revision, row_revision, last_updated_turn, office_row_id, office_title, bureau_row_id, term_months
+        FROM office_postings
+        WHERE session_id = ? AND row_id = ?
+      `)
+      .get(worldState.sessionId, "posting-player-current")
+  );
+
+  await assert.rejects(
+    () =>
+      adapter.writeSession(staleWorldState, {
+        previousRecord: staleRecord,
+        expectedRevision: staleRecord.revision
+      }),
+    (error) => error.statusCode === 409 && /revision conflict/i.test(error.message)
+  );
+
+  const afterReject = withSqliteDatabase(dbPath, (db) =>
+    db
+      .prepare(`
+        SELECT revision, row_revision, last_updated_turn, office_row_id, office_title, bureau_row_id, term_months
+        FROM office_postings
+        WHERE session_id = ? AND row_id = ?
+      `)
+      .get(worldState.sessionId, "posting-player-current")
+  );
+
+  assert.deepEqual(afterReject, beforeReject);
+});
+
+test("SQLite storage adapter syncs official posting rows on import and delete", {
+  skip: hasNodeSqlite ? false : "node:sqlite is unavailable in this Node.js runtime"
+}, async (t) => {
+  const { adapter, dbPath } = createSqliteHarness(t);
+  const worldState = buildWorldState({
+    playerName: "官职导入",
+    role: "official",
+    turnCount: 4
+  });
+  const envelope = buildEnvelope(adapter, worldState, { revision: 6 });
+
+  const imported = await adapter.importSessionRecord(envelope, { overwrite: true });
+  assert.equal(imported.revision, 6);
+
+  withSqliteDatabase(dbPath, (db) => {
+    const counts = readSqliteOfficialPostingCounts(db, worldState.sessionId);
+    const posting = db
+      .prepare("SELECT revision, row_revision FROM office_postings WHERE session_id = ? AND row_id = ?")
+      .get(worldState.sessionId, "posting-player-current");
+
+    assert.equal(counts.postings, imported.worldState.officialPostings.postings.length);
+    assert.ok(sumSqliteOfficialPostingCounts(counts) > 0);
+    assert.equal(posting.revision, 6);
+    assert.equal(posting.row_revision, 6);
+  });
+
+  await adapter.deleteSession(worldState.sessionId);
+
+  withSqliteDatabase(dbPath, (db) => {
+    const session = db.prepare("SELECT COUNT(*) AS count FROM world_sessions WHERE session_id = ?").get(worldState.sessionId);
+    const counts = readSqliteOfficialPostingCounts(db, worldState.sessionId);
+
+    assert.equal(session.count, 0);
+    assert.equal(sumSqliteOfficialPostingCounts(counts), 0);
+  });
 });
 
 test("SQLite storage adapter syncs people business tables with the session row", {
