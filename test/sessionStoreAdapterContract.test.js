@@ -1249,6 +1249,188 @@ test("SQLite storage adapter repairs mismatched office row ids when counts still
   });
 });
 
+test("SQLite storage adapter repairs tampered official posting contents when ids and revisions still match", {
+  skip: hasNodeSqlite ? false : "node:sqlite is unavailable in this Node.js runtime"
+}, async (t) => {
+  const { adapter, dbPath } = createSqliteHarness(t);
+  const worldState = buildWorldState({
+    playerName: "官职内容修复",
+    role: "official",
+    turnCount: 4
+  });
+  addHiddenPeopleRows(worldState);
+  await adapter.writeSession(worldState);
+
+  withSqliteDatabase(dbPath, (db) => {
+    db
+      .prepare(`
+        UPDATE office_postings
+        SET office_title = ?,
+            holder_type = ?,
+            holder_id = ?,
+            holder_people_row_id = ?,
+            city_row_id = ?,
+            region_row_id = ?,
+            jurisdiction_row_id = ?,
+            public_summary = ?
+        WHERE session_id = ? AND row_id = ?
+      `)
+      .run(
+        "SEALED_SQLITE_OFFICE_TAMPER_TITLE",
+        "npc",
+        "npc-hidden-storage",
+        "npc-hidden-storage",
+        "city-hidden-posting",
+        "region-north-zhili",
+        "jurisdiction-hidden-posting-city",
+        "SEALED_SQLITE_OFFICE_TAMPER_PUBLIC",
+        worldState.sessionId,
+        "posting-player-current"
+      );
+    db
+      .prepare(`
+        UPDATE office_city_jurisdictions
+        SET city_row_id = ?,
+            route_row_ids_json = ?,
+            frontier_zone_row_ids_json = ?,
+            public_summary = ?
+        WHERE session_id = ? AND row_id = ?
+      `)
+      .run(
+        "city-hidden-posting",
+        "[\"route-hidden-liaodong-smuggling\"]",
+        "[\"frontier-hidden-palace-intel\"]",
+        "SEALED_SQLITE_JURISDICTION_TAMPER_PUBLIC",
+        worldState.sessionId,
+        "jurisdiction-ministry-personnel-capital-city-beijing"
+      );
+
+    const counts = readSqliteOfficialPostingCounts(db, worldState.sessionId);
+    const posting = db
+      .prepare(`
+        SELECT revision, row_revision, office_title, holder_id, holder_people_row_id
+        FROM office_postings
+        WHERE session_id = ? AND row_id = ?
+      `)
+      .get(worldState.sessionId, "posting-player-current");
+    const jurisdiction = db
+      .prepare(`
+        SELECT city_row_id, route_row_ids_json, frontier_zone_row_ids_json
+        FROM office_city_jurisdictions
+        WHERE session_id = ? AND row_id = ?
+      `)
+      .get(worldState.sessionId, "jurisdiction-ministry-personnel-capital-city-beijing");
+
+    assert.equal(counts.postings, worldState.officialPostings.postings.length);
+    assert.equal(counts.cityJurisdictions, worldState.officialPostings.cityJurisdictions.length);
+    assert.equal(posting.revision, 1);
+    assert.equal(posting.row_revision, 1);
+    assert.equal(posting.office_title, "SEALED_SQLITE_OFFICE_TAMPER_TITLE");
+    assert.equal(posting.holder_id, "npc-hidden-storage");
+    assert.equal(posting.holder_people_row_id, "npc-hidden-storage");
+    assert.equal(jurisdiction.city_row_id, "city-hidden-posting");
+    assert.match(jurisdiction.route_row_ids_json, /route-hidden-liaodong-smuggling/);
+    assert.match(jurisdiction.frontier_zone_row_ids_json, /frontier-hidden-palace-intel/);
+  });
+
+  const { record } = await adapter.readSessionRecord(worldState.sessionId);
+  const promptContext = assemblePromptContext(record.worldState, {
+    playerAction: "核对官职任所",
+    task: "official_career"
+  });
+  const serialized = JSON.stringify({
+    officialPostings: record.worldState.officialPostings,
+    officialPostingsView: buildOfficialPostingsView(record.worldState),
+    promptOfficialPostings: promptContext.officialPostings,
+    retrievalOffices: promptContext.retrievalContext.offices
+  });
+
+  assert.doesNotMatch(serialized, /SEALED_SQLITE_/);
+  assert.doesNotMatch(serialized, /npc-hidden-storage/);
+  assert.doesNotMatch(serialized, /city-hidden-posting/);
+  assert.doesNotMatch(serialized, /route-hidden-liaodong-smuggling/);
+  assert.doesNotMatch(serialized, /frontier-hidden-palace-intel/);
+
+  withSqliteDatabase(dbPath, (db) => {
+    const posting = db
+      .prepare(`
+        SELECT office_title, holder_type, holder_id, holder_people_row_id, city_row_id, jurisdiction_row_id, public_summary, metadata_json
+        FROM office_postings
+        WHERE session_id = ? AND row_id = ?
+      `)
+      .get(worldState.sessionId, "posting-player-current");
+    const jurisdiction = db
+      .prepare(`
+        SELECT city_row_id, route_row_ids_json, frontier_zone_row_ids_json, public_summary, metadata_json
+        FROM office_city_jurisdictions
+        WHERE session_id = ? AND row_id = ?
+      `)
+      .get(worldState.sessionId, "jurisdiction-ministry-personnel-capital-city-beijing");
+    const postingMetadata = JSON.parse(posting.metadata_json);
+    const jurisdictionMetadata = JSON.parse(jurisdiction.metadata_json);
+
+    assert.equal(posting.office_title, "六部观政进士");
+    assert.equal(posting.holder_type, "player");
+    assert.equal(posting.holder_id, "P1");
+    assert.equal(posting.holder_people_row_id, null);
+    assert.equal(posting.city_row_id, "city-beijing");
+    assert.equal(posting.jurisdiction_row_id, "jurisdiction-ministry-personnel-capital-city-beijing");
+    assert.doesNotMatch(posting.public_summary, /SEALED_SQLITE_/);
+    assert.equal(jurisdiction.city_row_id, "city-beijing");
+    assert.equal(jurisdiction.route_row_ids_json, "[]");
+    assert.equal(jurisdiction.frontier_zone_row_ids_json, "[]");
+    assert.doesNotMatch(jurisdiction.public_summary, /SEALED_SQLITE_/);
+    assert.match(postingMetadata.contentHash, /^[a-f0-9]{64}$/);
+    assert.match(jurisdictionMetadata.contentHash, /^[a-f0-9]{64}$/);
+  });
+});
+
+test("SQLite storage adapter upgrades old official posting rows without content hashes on read", {
+  skip: hasNodeSqlite ? false : "node:sqlite is unavailable in this Node.js runtime"
+}, async (t) => {
+  const { adapter, dbPath } = createSqliteHarness(t);
+  const worldState = buildWorldState({
+    playerName: "官职旧行升级",
+    role: "official",
+    turnCount: 4
+  });
+  await adapter.writeSession(worldState);
+
+  withSqliteDatabase(dbPath, (db) => {
+    const posting = db
+      .prepare("SELECT metadata_json FROM office_postings WHERE session_id = ? AND row_id = ?")
+      .get(worldState.sessionId, "posting-player-current");
+    const metadata = JSON.parse(posting.metadata_json);
+    delete metadata.contentHash;
+    db
+      .prepare("UPDATE office_postings SET metadata_json = ? WHERE session_id = ? AND row_id = ?")
+      .run(JSON.stringify(metadata), worldState.sessionId, "posting-player-current");
+
+    const oldRow = db
+      .prepare("SELECT metadata_json FROM office_postings WHERE session_id = ? AND row_id = ?")
+      .get(worldState.sessionId, "posting-player-current");
+    assert.equal(JSON.parse(oldRow.metadata_json).contentHash, undefined);
+  });
+
+  const { record } = await adapter.readSessionRecord(worldState.sessionId);
+  assert.deepEqual(
+    buildOfficialPostingsView(record.worldState),
+    buildOfficialPostingsView(worldState)
+  );
+
+  withSqliteDatabase(dbPath, (db) => {
+    const posting = db
+      .prepare("SELECT office_title, holder_type, holder_id, metadata_json FROM office_postings WHERE session_id = ? AND row_id = ?")
+      .get(worldState.sessionId, "posting-player-current");
+    const metadata = JSON.parse(posting.metadata_json);
+
+    assert.equal(posting.office_title, "六部观政进士");
+    assert.equal(posting.holder_type, "player");
+    assert.equal(posting.holder_id, "P1");
+    assert.match(metadata.contentHash, /^[a-f0-9]{64}$/);
+  });
+});
+
 test("SQLite storage adapter advances official posting row revisions during mutateSession", {
   skip: hasNodeSqlite ? false : "node:sqlite is unavailable in this Node.js runtime"
 }, async (t) => {

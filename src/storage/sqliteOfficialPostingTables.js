@@ -1,3 +1,5 @@
+const { createHash } = require("node:crypto");
+
 const { buildWorldPeopleView } = require("../game/worldPeople");
 const { normalizeOfficialPostingsState } = require("../game/officialPostings");
 
@@ -24,6 +26,50 @@ const OFFICIAL_POSTING_TABLE_COLLECTIONS = [
 function stringifyJson(value, fallback) {
   const source = value === undefined ? fallback : value;
   return JSON.stringify(source);
+}
+
+function parseJsonObject(value) {
+  try {
+    const parsed = JSON.parse(value || "{}");
+    return parsed && typeof parsed === "object" && !Array.isArray(parsed) ? parsed : {};
+  } catch (error) {
+    return {};
+  }
+}
+
+function normalizeForStableJson(value) {
+  if (Array.isArray(value)) return value.map((entry) => normalizeForStableJson(entry));
+  if (!value || typeof value !== "object") return value;
+  return Object.keys(value)
+    .sort()
+    .reduce((normalized, key) => {
+      normalized[key] = normalizeForStableJson(value[key]);
+      return normalized;
+    }, {});
+}
+
+function stableStringify(value) {
+  return JSON.stringify(normalizeForStableJson(value));
+}
+
+function hashOfficialPostingRow(row) {
+  const comparable = {};
+  for (const column of Object.keys(row).sort()) {
+    if (column === "metadata_json" || column === "created_at" || column === "updated_at") continue;
+    comparable[column] = row[column];
+  }
+  return createHash("sha256").update(stableStringify(comparable)).digest("hex");
+}
+
+function attachOfficialPostingRowHash(row) {
+  const metadata = parseJsonObject(row.metadata_json);
+  return {
+    ...row,
+    metadata_json: stringifyJson({
+      ...metadata,
+      contentHash: hashOfficialPostingRow(row)
+    }, {})
+  };
 }
 
 function toInteger(value, fallback = 0) {
@@ -348,11 +394,12 @@ function deleteOfficialPostingRows(database, sessionId) {
 }
 
 function insertRow(database, tableName, row) {
-  const columns = Object.keys(row);
+  const rowWithHash = attachOfficialPostingRowHash(row);
+  const columns = Object.keys(rowWithHash);
   const placeholders = columns.map(() => "?").join(", ");
   database
     .prepare(`INSERT INTO ${tableName} (${columns.join(", ")}) VALUES (${placeholders})`)
-    .run(...columns.map((column) => row[column]));
+    .run(...columns.map((column) => rowWithHash[column]));
 }
 
 function buildVisiblePeopleIds(record) {
@@ -663,6 +710,21 @@ function hasMismatchedOfficialPostingRowIds(database, sessionId, expected) {
   return false;
 }
 
+function hasMismatchedOfficialPostingContentHashes(database, sessionId) {
+  for (const tableName of OFFICIAL_POSTING_TABLES) {
+    const storedRows = database
+      .prepare(`SELECT * FROM ${tableName} WHERE session_id = ?`)
+      .all(sessionId);
+
+    for (const row of storedRows) {
+      const metadata = parseJsonObject(row.metadata_json);
+      if (!metadata.contentHash) return true;
+      if (metadata.contentHash !== hashOfficialPostingRow(row)) return true;
+    }
+  }
+  return false;
+}
+
 function getOfficialPostingRepairStatus(database, record) {
   const before = JSON.stringify(record.worldState?.officialPostings || null);
   const expected = normalizeOfficialPostingsState(record.worldState);
@@ -680,10 +742,14 @@ function getOfficialPostingRepairStatus(database, record) {
   const mismatchedRowIds = !missingOrMismatched &&
     hasMismatchedOfficialPostingRowIds(database, record.sessionId, expected);
   const staleRows = hasStaleOfficialPostingRows(database, record.sessionId, record.revision);
-  const tableNeedsRepair = missingOrMismatched || mismatchedRowIds || staleRows;
+  const contentMismatches = !missingOrMismatched &&
+    !mismatchedRowIds &&
+    hasMismatchedOfficialPostingContentHashes(database, record.sessionId);
+  const tableNeedsRepair = missingOrMismatched || mismatchedRowIds || staleRows || contentMismatches;
 
   return {
     counts,
+    contentMismatches,
     expected,
     expectedCounts,
     missingOrMismatched,

@@ -2,7 +2,7 @@
 
 本文回应“是否需要把国家、邻国、NPC、玩家、官职、城市、事件记录等大量动态数据放入数据库，并允许 AI 随游戏进程影响数据库”的产品方向。
 
-结论：**可行，而且中长期值得做；但不建议一步到位替换当前 JSON 存档，也不能让 AI 直接写数据库。** 当前范围只考虑本地数据库，优先方向是本地 SQLite；不规划远程存档、账号体系、多人同步、云端冲突解决或托管数据库。S49.3 已通过 `STORAGE_ADAPTER=sqlite` 引入可选本地 SQLite session row 原型，仍保留 JSON 默认路径；S49.4 已加入本地 `event_log` 与 `ai_change_proposals` 审计记录；S54 已在 SQLite 模式把规范化天下地理同步为本地 `geo_*` 业务表并补维护工具；S55 已在 SQLite 模式把规范化可见 `worldPeople` bridge rows 同步为本地 `people_*` 业务表，并把服务器人物事件关联到 `people_*.last_event_id`。AI 仍只生成叙事、建议和结构化 proposal；最终写库必须由服务器模块校验、夹断、归一化、事务提交。
+结论：**可行，而且中长期值得做；但不建议一步到位替换当前 JSON 存档，也不能让 AI 直接写数据库。** 当前范围只考虑本地数据库，优先方向是本地 SQLite；不规划远程存档、账号体系、多人同步、云端冲突解决或托管数据库。S49.3 已通过 `STORAGE_ADAPTER=sqlite` 引入可选本地 SQLite session row 原型，仍保留 JSON 默认路径；S49.4 已加入本地 `event_log` 与 `ai_change_proposals` 审计记录；S54 已在 SQLite 模式把规范化天下地理同步为本地 `geo_*` 业务表并补维护工具；S55 已在 SQLite 模式把规范化可见 `worldPeople` bridge rows 同步为本地 `people_*` 业务表，并把服务器人物事件关联到 `people_*.last_event_id`；S56 已在 SQLite 模式把规范化安全 `officialPostings` projection 同步为 `office_*` 业务表，并补同 id/同 revision 内容漂移修复。AI 仍只生成叙事、建议和结构化 proposal；最终写库必须由服务器模块校验、夹断、归一化、事务提交。
 
 ## 1. 当前基础与是否急需数据库
 
@@ -545,7 +545,7 @@ S49-S53 结束后，数据库专项的下一段不再是“是否需要数据库
 
 - S54：地理业务表。S54.1/S54.2 已定义并实现 `geo_countries`、`geo_regions`、`geo_cities`、`geo_routes`、`geo_frontier_zones`、`geo_office_jurisdictions` 的 SQLite 模式持久化；S54.3 已补导入 dry-run、地理 status/repair/export 工具、browser smoke SQLite 参数和 JSON/SQLite route/prompt 可见摘要 parity。
 - S55：人物业务表。已定义并实现可见 bridge `people_npcs`、`people_households`、`people_assets`、`people_estates`、`people_relationships` 持久化、`worldPeopleView` parity、NPC/关系/家产可见 delta 的服务器事件 helper 和 `last_event_id` 审计关联。
-- S56：官职任所业务表。S56.1 已定义 `office_bureaus`、`office_catalog`、`office_city_jurisdictions`、`office_postings`、`office_assessments`、`office_transfers` 契约；S56.2 已接入 SQLite 持久化、读档修复和 `officialPostingsView` / prompt parity；S56.3 继续处理更细的城市/人物引用完整性。
+- S56：官职任所业务表。S56.1 已定义 `office_bureaus`、`office_catalog`、`office_city_jurisdictions`、`office_postings`、`office_assessments`、`office_transfers` 契约；S56.2 已接入 SQLite 持久化、读档修复和 `officialPostingsView` / prompt parity；S56.3 已补内容 hash 漂移探针、旧行缺 hash 升级和 hidden 城市/人物引用污染修复。
 - S57：安全事件索引。保留 raw `event_log` / `ai_change_proposals` 的诊断属性，另建安全 projection 供事件档案和 prompt 检索，不暴露 raw audit。
 - S58：SQLite 索引驱动的 prompt context 与浏览器双模式 parity。JSON fallback 不变，prompt/UI 继续只读可见 projection。
 - S59：JSON/SQLite 双模式整体验收与再次归档。
