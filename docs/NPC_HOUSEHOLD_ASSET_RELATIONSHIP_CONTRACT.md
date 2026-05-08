@@ -4,7 +4,7 @@ S51 是本地动态世界数据库专项的人物域切片。S51.1 先固定 NPC
 
 S51 切片本身不替换旧 `relationshipView` / `activeNpcRequestView`，也不让 AI 直接创建人物或改写家产。S51.2 新增的 `worldState.worldPeople` 是当前可见旧系统数据的安全 projection，不是隐藏人物私档总库。S53.5 后浏览器“人物谱牒”已经读取 `worldPeopleView`，但仍只读 route player-facing view，不读取 raw ledger。S55.2 新增的 `people_*` SQLite 表也只是可见 bridge 派生存储；S55.3 的事件 id 只落本地 people row / audit 关联，不进入 view 或 prompt：默认 JSON 路径和 Mock 可玩性不变，route 字段不变，prompt/UI 不读取 raw `people_*`。
 
-S60 内容充实阶段的 NPC、家族、关系、资产和田产总量目标见 [S60 超大动态世界数据库内容契约](HUGE_DYNAMIC_WORLD_CONTENT_CONTRACT.md)。这些目标表示数据库/fixture 总量，不自动放宽当前 `worldPeople` bridge bundle 的行数上限；后续若要让数百 NPC 进入可查世界，必须通过安全分页 view、prompt capped summary 或另行调整 schema cap 与测试，而不能把 hidden 私档或全量人物行塞回当前 raw route `worldState`。
+S60 内容充实阶段的 NPC、家族、关系、资产和田产总量目标见 [S60 超大动态世界数据库内容契约](HUGE_DYNAMIC_WORLD_CONTENT_CONTRACT.md)。这些目标表示数据库/fixture 总量，不自动放宽当前 `worldPeople` bridge bundle 的行数上限；后续若要让数百 NPC 进入可查世界，必须通过安全分页 view、prompt capped summary 或另行调整 schema cap 与测试，而不能把 hidden 私档或全量人物行塞回当前 raw route `worldState`。S62.1 已新增 `src/game/worldPeoplePopulation.js` 作为服务器侧 deterministic 人口与家族谱系生成 helper：它只生成可见 projection，可覆盖官员、胥吏、士绅、商贾、军官、书院师友、同年、亲族、邻国使者，以及父母配偶子女、姻亲、门生故旧、同乡同年和派系关系；真正 hidden 私档、资产真数、婚丧迁居、死亡和生命周期裁决仍不进入当前 raw route state。
 
 ## 范围
 
@@ -256,14 +256,14 @@ S51.1 统一人物域可见性枚举：
 
 AI 可以：
 
-- 在叙事中解释可见人物、家族、人情、田产纠纷或资产压力。
+- 在叙事中解释可见人物、家族、人情、公开谱系、姻亲、门生故旧、同乡同年、派系、田产纠纷或资产压力。
 - 通过现有 `relationshipChanges[]` 建议既有可见关系的有限变化。
 - 在未来 proposal 机制中提交 schema-valid 建议，由服务器审查。
 
 AI 不可以：
 
 - 通过普通 `statePatch` 写 `worldPeople`、`npcs`、`households`、`assets`、`estates` 或 `relationships`。
-- 新造隐藏联系人、公开隐藏家产、直接改 NPC 财富/田亩/债务。
+- 新造隐藏联系人、公开隐藏家产、直接改 NPC 财富/田亩/债务，或直接裁决婚姻、族谱、死亡、迁居、任免和生命周期结果。
 - 决定官职任免、科举晋级、家产归属裁判、田产诉讼结局或 SQL/table row 写入。
 - 读取或输出 `hiddenIntent`、`hiddenNotes`、本地路径、provider key 或完整 raw prompt。
 

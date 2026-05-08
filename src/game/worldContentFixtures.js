@@ -6,6 +6,10 @@ const { createInitialState } = require("./initialState");
 const { buildOfficialPostingsView } = require("./officialPostings");
 const { buildWorldGeographyView } = require("./worldGeography");
 const { buildWorldPeopleView } = require("./worldPeople");
+const {
+  createWorldPeoplePopulation,
+  measureWorldPeoplePopulation
+} = require("./worldPeoplePopulation");
 const { createSessionRecord } = require("../storage/sessionRecord");
 const { buildPromptRetrievalRows } = require("../storage/sqlitePromptRetrievalTables");
 
@@ -168,42 +172,20 @@ function createStoragePeople(size, geography) {
   const target = WORLD_CONTENT_FIXTURE_TARGETS[size];
   const prefix = fixturePrefix(size);
   const cityIds = geography.cities.map((city) => city.id);
-  const households = numbered(target.households, (index) => ({
-    id: `${prefix}-household-${pad(index)}`,
-    familyName: `S60${size}第${index}族`,
-    seatCityId: cityIds[(index - 1) % cityIds.length],
-    wealthScore: 25 + (index % 65),
-    prestige: 20 + (index % 70),
-    visibility: "public",
-    publicSummary: `S60 ${size} storage-only 家族样本${index}，只含公开族谱摘要。`
-  }));
-  const npcs = numbered(target.npcs, (index) => ({
-    id: `${prefix}-npc-${pad(index, 4)}`,
-    name: `S60${size}样本人物${index}`,
-    householdId: households[(index - 1) % households.length].id,
-    currentCityId: cityIds[(index * 3) % cityIds.length],
-    rankLabel: index % 6 === 0 ? "候补官员" : index % 3 === 0 ? "士绅" : "民人",
-    reputation: 18 + (index % 75),
-    influence: 10 + (index % 65),
-    visibility: "public",
-    publicSummary: `S60 ${size} storage-only 人物样本${index}，可供后续分页检索和 NPC 内容扩充。`
-  }));
-  const relationships = numbered(target.relationships, (index) => ({
-    id: `${prefix}-relationship-${pad(index, 5)}`,
-    sourceType: "npc",
-    sourceId: npcs[(index - 1) % npcs.length].id,
-    targetType: index % 5 === 0 ? "household" : "npc",
-    targetId: index % 5 === 0
-      ? households[(index - 1) % households.length].id
-      : npcs[index % npcs.length].id,
-    relationship: -20 + (index % 75),
-    trust: 25 + (index % 60),
-    resentment: index % 40,
-    visibility: "public",
-    publicSummary: `S60 ${size} storage-only 关系样本${index}，不含未公开恩怨真值。`
-  }));
-
-  return { npcs, households, relationships };
+  return createWorldPeoplePopulation({
+    prefix,
+    cityIds,
+    npcCount: target.npcs,
+    householdCount: target.households,
+    relationshipCount: target.relationships,
+    turnCount: 0,
+    officeIds: numbered(Math.max(1, Math.ceil(target.officialCatalogRows * 0.25)), (index) =>
+      `${prefix}-office-${pad(index)}`
+    ),
+    bureauIds: numbered(Math.max(1, Math.ceil(target.officialCatalogRows * 0.15)), (index) =>
+      `${prefix}-bureau-${pad(index)}`
+    )
+  });
 }
 
 function createStorageOffices(size, geography, people) {
@@ -547,79 +529,26 @@ function addGeographyFixture(worldState) {
 
 function addPeopleFixture(worldState) {
   const visibleCities = buildWorldGeographyView(worldState).cities.map((city) => city.id);
-  const surnames = ["顾", "陆", "沈", "方", "赵", "钱", "孙", "李"];
-  const npcs = numbered(95, (index) => {
-    const householdIndex = ((index - 1) % 32) + 1;
-    const bureauId = index % 5 === 0 ? "ministry_revenue" : index % 7 === 0 ? "censorate" : "";
-    return {
-      id: `npc-s60-${pad(index)}`,
-      name: `${surnames[index % surnames.length]}承${index}`,
-      courtesyName: `衡${index}`,
-      genderLabel: index % 3 === 0 ? "女" : "男",
-      age: 22 + (index % 38),
-      homeCityId: visibleCities[index % visibleCities.length],
-      currentCityId: visibleCities[(index * 3) % visibleCities.length],
-      householdId: `household-s60-${pad(householdIndex)}`,
-      currentOfficeId: index % 4 === 0 ? `office-s60-${pad(((index - 1) % 22) + 1)}` : "",
-      rankLabel: index % 4 === 0 ? "候补官员" : index % 4 === 1 ? "士绅" : index % 4 === 2 ? "书办" : "商贾",
-      bureauId,
-      skills: {
-        literarySkill: 42 + (index % 30),
-        administration: 38 + (index % 35),
-        legalJudgment: 35 + (index % 25),
-        militaryCommand: 25 + (index % 20),
-        diplomacy: 36 + (index % 28),
-        learning: 44 + (index % 32)
-      },
-      temperament: {
-        ambition: 35 + (index % 45),
-        loyalty: 40 + (index % 35),
-        integrity: 42 + (index % 38),
-        caution: 35 + (index % 40),
-        temper: 30 + (index % 45)
-      },
-      ideologyTags: ["S60样本", index % 2 === 0 ? "清议" : "务实"],
-      currentGoal: index % 5 === 0 ? "借钱粮差事经营官声。" : "维系地方与京师消息往来。",
-      reputation: 30 + (index % 50),
-      influence: 18 + (index % 45),
-      patronagePower: 8 + (index % 35),
-      peerNetwork: 16 + (index % 50),
-      wealthCash: 80 + index * 6,
-      landMu: 20 + index * 3,
-      annualIncomeEstimate: 12 + index,
-      visibility: "public",
-      knownToPlayer: true,
-      intelConfidence: 70,
-      publicSummary: `S60样本人物${index}，可按城市、官署、关系和事件检索。`,
-      lastUpdatedTurn: worldState.turnCount
-    };
+  const target = WORLD_CONTENT_FIXTURE_TARGETS.small;
+  const existingPeopleView = buildWorldPeopleView(worldState);
+  const people = createWorldPeoplePopulation({
+    prefix: "s60",
+    cityIds: visibleCities,
+    npcCount: Math.max(0, target.npcs - existingPeopleView.npcs.length),
+    householdCount: Math.max(0, target.households - existingPeopleView.households.length),
+    relationshipCount: Math.max(0, target.relationships - existingPeopleView.relationships.length),
+    turnCount: worldState.turnCount,
+    officeIds: numbered(22, (index) => `office-s60-${pad(index)}`),
+    bureauIds: ["ministry_revenue", "censorate", "prefecture_county", "ministry_rites"],
+    assetIdForHousehold: (index) => `asset-s60-${pad(index)}`,
+    estateIdForHousehold: (index) => `estate-s60-${pad(index)}`
   });
-  const households = numbered(32, (index) => ({
-    id: `household-s60-${pad(index)}`,
-    familyName: `${surnames[index % surnames.length]}氏`,
-    seatCityId: visibleCities[(index * 2) % visibleCities.length],
-    wealthScore: 34 + (index % 45),
-    landMu: 120 + index * 18,
-    prestige: 22 + (index % 50),
-    gentryRank: index % 4 === 0 ? "乡绅" : "民户",
-    marriageNetworkScore: 20 + (index % 45),
-    debtPressure: index % 5 === 0 ? 42 : 16 + (index % 30),
-    politicalAlignment: index % 3 === 0 ? "靠近清流" : "观望地方官声",
-    familyRisk: 10 + (index % 28),
-    memberNpcIds: npcs.filter((npc) => npc.householdId === `household-s60-${pad(index)}`).map((npc) => npc.id),
-    estateIds: [`estate-s60-${pad(index)}`],
-    assetIds: [`asset-s60-${pad(index)}`],
-    visibility: "public",
-    knownToPlayer: true,
-    publicSummary: `S60样本家族${index}，提供家族、资产估计和人情网络。`,
-    lastUpdatedTurn: worldState.turnCount
-  }));
   const assets = numbered(32, (index) => ({
     id: `asset-s60-${pad(index)}`,
     kind: index % 4 === 0 ? "granary" : index % 4 === 1 ? "shop" : index % 4 === 2 ? "debt" : "cash",
     name: `S60样本资产${index}`,
     ownerType: "household",
-    ownerId: `household-s60-${pad(index)}`,
+    ownerId: `s60-household-${pad(index)}`,
     cityId: visibleCities[(index * 5) % visibleCities.length],
     valueEstimate: 100 + index * 20,
     annualIncomeEstimate: 12 + index,
@@ -634,7 +563,7 @@ function addPeopleFixture(worldState) {
     id: `estate-s60-${pad(index)}`,
     name: `S60样本田产${index}`,
     ownerType: "household",
-    ownerId: `household-s60-${pad(index)}`,
+    ownerId: `s60-household-${pad(index)}`,
     cityId: visibleCities[(index * 7) % visibleCities.length],
     regionId: buildWorldGeographyView(worldState).cities[(index * 7) % visibleCities.length]?.regionId || "",
     landMu: 80 + index * 12,
@@ -650,74 +579,30 @@ function addPeopleFixture(worldState) {
     publicSummary: `S60样本田产${index}用于家产 view 验收。`,
     lastUpdatedTurn: worldState.turnCount
   }));
-  const playerNpcs = numbered(95, (index) => ({
-    id: `rel-s60-player-npc-${pad(index)}`,
-    sourceType: "player",
-    sourceId: "P1",
-    targetType: "npc",
-    targetId: `npc-s60-${pad(index)}`,
-    relationship: -20 + (index % 70),
-    trust: 35 + (index % 45),
-    resentment: index % 9 === 0 ? 44 : index % 24,
-    obligation: index % 11,
-    stance: index % 5 === 0 ? "可托钱粮消息" : "普通往来",
-    recentIntent: index % 6 === 0 ? "求一封荐牍" : "互通公开消息",
-    recentNotes: [`S60关系札记${index}`],
-    visibility: "public",
-    knownToPlayer: true,
-    publicSummary: `玩家与样本人物${index}有公开可见关系。`,
-    lastUpdatedTurn: worldState.turnCount
-  }));
-  const householdRelations = numbered(32, (index) => ({
-    id: `rel-s60-npc-household-${pad(index)}`,
-    sourceType: "npc",
-    sourceId: `npc-s60-${pad(((index - 1) % 95) + 1)}`,
-    targetType: "household",
-    targetId: `household-s60-${pad(index)}`,
-    relationship: 68,
-    trust: 72,
-    resentment: 4,
-    stance: "家门支点",
-    visibility: "public",
-    knownToPlayer: true,
-    publicSummary: `样本人物与第${index}户家族关系公开。`,
-    lastUpdatedTurn: worldState.turnCount
-  }));
-  const peerRelations = numbered(29, (index) => ({
-    id: `rel-s60-npc-peer-${pad(index)}`,
-    sourceType: "npc",
-    sourceId: `npc-s60-${pad(index)}`,
-    targetType: "npc",
-    targetId: `npc-s60-${pad(index + 1)}`,
-    relationship: 18 + (index % 45),
-    trust: 42 + (index % 35),
-    resentment: index % 13,
-    stance: "同城往来",
-    recentNotes: [`S60同城关系${index}`],
-    visibility: "public",
-    knownToPlayer: true,
-    publicSummary: `样本人物${index}与样本人物${index + 1}有公开往来。`,
-    lastUpdatedTurn: worldState.turnCount
-  }));
 
   worldState.worldPeople = {
     ...worldState.worldPeople,
-    npcs: [...(worldState.worldPeople?.npcs || []), ...npcs],
-    households: [...(worldState.worldPeople?.households || []), ...households],
+    npcs: [...(worldState.worldPeople?.npcs || []), ...people.npcs],
+    households: [...(worldState.worldPeople?.households || []), ...people.households],
     assets: [...(worldState.worldPeople?.assets || []), ...assets],
     estates: [...(worldState.worldPeople?.estates || []), ...estates],
     relationships: [
       ...(worldState.worldPeople?.relationships || []),
-      ...playerNpcs,
-      ...householdRelations,
-      ...peerRelations
+      ...people.relationships
     ],
-    recentNotes: ["S60 small fixture：人物与家族只写入可见安全投影。"]
+    recentNotes: [
+      "S60 small fixture：人物与家族只写入可见安全投影。",
+      ...people.recentNotes
+    ]
   };
 }
 
 function addOfficialFixture(worldState) {
   const geography = buildWorldGeographyView(worldState);
+  const people = buildWorldPeopleView(worldState);
+  const fixtureNpcIds = people.npcs
+    .map((npc) => npc.id)
+    .filter((id) => id.startsWith("s60-npc-"));
   const cityById = new Map(geography.cities.map((city) => [city.id, city]));
   const cityIds = geography.cities.map((city) => city.id);
   const bureaus = numbered(24, (index) => ({
@@ -795,7 +680,7 @@ function addOfficialFixture(worldState) {
       officeTitle: office.title,
       bureauId: office.bureauId,
       holderType: "npc",
-      holderId: `npc-s60-${pad(((index - 1) % 95) + 1)}`,
+      holderId: fixtureNpcIds[(index - 1) % fixtureNpcIds.length] || "s60-npc-001",
       status: index % 8 === 0 ? "acting" : "active",
       cityId: jurisdiction.cityId,
       regionId: jurisdiction.regionId,
@@ -1269,6 +1154,10 @@ function measureWorldContentFixture(fixtureOrWorldState) {
   const storagePromptRows = fixtureOrWorldState.promptRetrievalRows || storageLedger?.promptRetrievalRows || [];
   const geography = buildWorldGeographyView(worldState);
   const people = buildWorldPeopleView(worldState);
+  const peopleGenealogy = measureWorldPeoplePopulation(people);
+  const storagePeopleGenealogy = storageLedger?.people
+    ? measureWorldPeoplePopulation(storageLedger.people)
+    : null;
   const official = buildOfficialPostingsView(worldState);
   const archive = buildEventArchiveView(worldState, { pageSize: 50 });
   const record = createFixtureSessionRecord(clone(worldState));
@@ -1321,6 +1210,8 @@ function measureWorldContentFixture(fixtureOrWorldState) {
       eventArchiveRows: archive.pagination.totalItems,
       promptRetrievalRows: promptRetrievalRows.length
     },
+    peopleGenealogy,
+    storagePeopleGenealogy,
     storageRows: storageLedger ? {
       countries: countStorageRows(storageLedger, "geography", "countries"),
       cities: countStorageRows(storageLedger, "geography", "cities"),

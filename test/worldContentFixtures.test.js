@@ -89,14 +89,27 @@ test("S60 small world content fixture reaches quantity gates without storing pri
   assert.equal(metrics.promptRetrievalRows >= target.promptRetrievalRows, true);
   assert.equal(metrics.promptRetrievalRows <= 500, true);
   assert.equal(metrics.hiddenCanaries >= target.hiddenCanaries, true);
+  assert.equal(metrics.peopleGenealogy.roleLabels.includes("邻国使者"), true);
+  assert.equal(metrics.peopleGenealogy.parentLinkedNpcs > 0, true);
+  assert.equal(metrics.peopleGenealogy.marriageLinkedNpcs > 0, true);
+  assert.equal(metrics.peopleGenealogy.hasMentorNetwork, true);
+  assert.equal(metrics.peopleGenealogy.hasNativePlaceNetwork, true);
+  assert.equal(metrics.peopleGenealogy.hasExamCohortNetwork, true);
+  assert.equal(metrics.peopleGenealogy.hasFactionNetwork, true);
 
   const geographyView = buildWorldGeographyView(fixture.worldState);
+  const peopleView = buildWorldPeopleView(fixture.worldState);
   const s61City = geographyView.cities.find((city) => city.id === "city-s60-001");
   const s61Country = geographyView.countries.find((country) => country.id === "country-s60-western-tribute");
+  const lineageNpc = peopleView.npcs.find((npc) => npc.family.fatherId || npc.family.motherId);
+  const spouseNpc = peopleView.npcs.find((npc) => npc.family.spouseIds.length);
   assert.equal(typeof s61City.taxBase, "number");
   assert.equal(typeof s61City.waterworksIntegrity, "number");
   assert.equal(typeof s61Country.fiscalPressure, "number");
   assert.equal(typeof s61Country.diplomaticTension, "number");
+  assert.ok(lineageNpc, "S62 fixture should expose visible parent/child genealogy");
+  assert.ok(spouseNpc, "S62 fixture should expose visible marriage genealogy");
+  assert.match(JSON.stringify(peopleView.relationships), /门生故旧|同乡|同年|派系/);
 
   assert.equal(JSON.stringify(fixture.worldState).includes("S60_PRIVATE_"), false);
   assert.equal(JSON.stringify(fixture.worldState).includes("sk-s60-private-canary-token"), false);
@@ -190,6 +203,13 @@ test("S60 medium and large fixtures reach storage-only quantity gates without bl
     assert.equal(metrics.storageRows.cities, target.cities);
     assert.equal(metrics.storageRows.npcs, target.npcs);
     assert.equal(metrics.storageRows.promptRetrievalRows, target.promptRetrievalRows);
+    assert.equal(metrics.storagePeopleGenealogy.roleLabels.includes("邻国使者"), true, `${size} envoy identity`);
+    assert.equal(metrics.storagePeopleGenealogy.parentLinkedNpcs > 0, true, `${size} lineage links`);
+    assert.equal(metrics.storagePeopleGenealogy.hasMarriageNetwork, true, `${size} marriage network`);
+    assert.equal(metrics.storagePeopleGenealogy.hasMentorNetwork, true, `${size} mentor network`);
+    assert.equal(metrics.storagePeopleGenealogy.hasNativePlaceNetwork, true, `${size} native-place network`);
+    assert.equal(metrics.storagePeopleGenealogy.hasExamCohortNetwork, true, `${size} exam cohort network`);
+    assert.equal(metrics.storagePeopleGenealogy.hasFactionNetwork, true, `${size} faction network`);
     assert.equal(metrics.routeViewRows.cities < metrics.cities, true, `${size} route cities are capped`);
     assert.equal(metrics.routeViewRows.npcs < metrics.npcs, true, `${size} route npcs are capped`);
     assert.equal(metrics.routeViewRows.promptRetrievalRows < metrics.promptRetrievalRows, true, `${size} route prompt rows are capped`);
@@ -317,7 +337,7 @@ test("S60 fixture keeps JSON and SQLite views plus prompt retrieval parity at sm
   withSqliteDatabase(dbPath, (db) => {
     const deletion = db
       .prepare("DELETE FROM prompt_retrieval_index WHERE session_id = ? AND row_id = ?")
-      .run(fixture.worldState.sessionId, "people.npcs:npc-s60-001");
+      .run(fixture.worldState.sessionId, "people.npcs:s60-npc-001");
     assert.equal(deletion.changes, 1);
   });
 
