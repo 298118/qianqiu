@@ -27,7 +27,7 @@
 - S48 时间专项：普通自由行动从一月一回合改为一旬一回合；月末系统只在下旬进入下月上旬时完整结算；考试已有 scene-local time；浏览器日期统一为“年月旬”，见 [TIME_SPECIALTY_ROADMAP_ARCHIVE.md](TIME_SPECIALTY_ROADMAP_ARCHIVE.md)。
 - S49-S53 本地数据库基础：storage adapter、可选 SQLite session row、本地审计、天下地理/人物/官职任所安全 projection、检索式 prompt context 和浏览器局势簿，见 [LOCAL_DATABASE_FOUNDATION_ARCHIVE.md](LOCAL_DATABASE_FOUNDATION_ARCHIVE.md)。
 
-当前活动路线图见 [DEVELOPMENT_STEPS.md](DEVELOPMENT_STEPS.md)，数据库方向见 [DYNAMIC_WORLD_DATABASE_PLAN.md](DYNAMIC_WORLD_DATABASE_PLAN.md)。S54 起的重点是把剩余数据拆成本地 SQLite 业务表：地理、人物、官职任所、安全事件索引、SQLite 检索式 prompt 和 JSON/SQLite 双模式验收。S54 已完成天下地理表契约、SQLite `geo_*` 持久化、导入/修复/导出工具和双模式 parity；S55 已完成人物、家族、资产、田产和关系 `people_*` 可见 bridge 行持久化、JSON/SQLite `worldPeopleView` parity、以及服务器人物事件与 `last_event_id` 审计关联；S56 已按契约创建并同步官署、官职、任所、考成和迁转 `office_*` SQLite 派生表，并在读取时从 `world_state_json` 单向修复缺失、陈旧、错行、同 `row_id` / 同 revision 内容污染或旧行缺指纹。S57.1 已新增安全事件档案分页 projection 和 SQLite `event_archive_index` 派生索引；prompt 近事检索与顶层 `recentEvents` 都改读安全事件档案条目，不读取 raw audit 或 raw `eventHistory`。S57.2 已新增本地审计公开 projection helper 与 `storage:audit-events` 工具，只输出 allowlist 后的 public 摘要和统计，不把 raw audit 或 AI proposal 原文带入玩家路径。S58.1 已新增 SQLite `prompt_retrieval_index` 安全派生索引，来源只取服务器可见 projection，JSON fallback 不变；S58.2 已新增浏览器局势簿 JSON/SQLite parity smoke，确认 UI 仍只读 route views。S59.1 已新增 `smoke:dual-mode` 双模式整体验收入口，串联完整 Mock browser journey、局势簿 parity、JSON -> SQLite 导入、地理修复/导出、审计公开 projection、派生表计数和 hidden-token 防线。当前不规划远程存档、账号体系、多人同步、云端冲突解决或托管数据库。
+当前活动路线图见 [DEVELOPMENT_STEPS.md](DEVELOPMENT_STEPS.md)，数据库方向见 [DYNAMIC_WORLD_DATABASE_PLAN.md](DYNAMIC_WORLD_DATABASE_PLAN.md)。S54-S59 本地 SQLite 业务表与双模式验收已完成并归档到 [LOCAL_DATABASE_BUSINESS_TABLE_ARCHIVE.md](LOCAL_DATABASE_BUSINESS_TABLE_ARCHIVE.md)：地理 `geo_*`、人物 `people_*`、官职任所 `office_*`、安全事件档案 `event_archive_index`、安全 prompt 检索 `prompt_retrieval_index`、维护工具、浏览器 parity 和 `smoke:dual-mode` 已具备可继续扩内容的底座。当前“超大动态世界数据库”的内容充实度约 55-65%；S60+ 的重点转为国家/邻国、城市/区域、NPC/家族、官职生态、地方事务、外交军事、经济市场、事件模板、情报可见性和大规模检索内容。当前不规划远程存档、账号体系、多人同步、云端冲突解决或托管数据库。
 
 开发规范不变：Mock 默认可玩，真实 provider 可选；服务器拥有状态边界、时间推进、科举晋级、作弊处罚、官职任免、长期事件、世界实体、世界议程、数据库写入和持久化裁决；AI 不能直接执行 SQL 或写业务表，只能提交结构化建议。
 
@@ -71,7 +71,7 @@ AI provider 约定：
 - `openai`：使用 OpenAI Responses API，支持流式输出和结构化 JSON。
 - `deepseek`：使用 OpenAI-compatible adapter，通过 base URL 和 API key 接入；可用 `DEEPSEEK_OPENING_MODEL`、`DEEPSEEK_TURN_MODEL`、`DEEPSEEK_EXAM_QUESTION_MODEL`、`DEEPSEEK_GRADE_MODEL` 按任务覆盖。
 - `mimo`：使用 Xiaomi MiMo OpenAI-compatible chat completions，通过 `MIMO_BASE_URL`、`MIMO_API_KEY` 和固定 `MIMO_MODEL=mimo-v2.5-pro` 接入；这是 MiMo-V2.5-Pro 的 1M 长上下文模型口径，Token Plan 订阅 key 为 `tp-...`，必须使用订阅页给出的 token-plan Base URL。
-- `mimo-deepseek`：当前最小多模型路由层。开局、普通回合、流式叙事和科举出题尽量走 MiMo，科举评卷走 DeepSeek V4 Pro；完整多 AI 协作/仲裁编排排在 S54-S59 后续规划中。
+- `mimo-deepseek`：当前最小多模型路由层。开局、普通回合、流式叙事和科举出题尽量走 MiMo，科举评卷走 DeepSeek V4 Pro；完整多 AI 协作/仲裁编排已顺延到 S70，排在 S60-S67 数据库内容充实专项之后。
 - `claude` / `anthropic`：使用 Anthropic Messages API，支持 SSE 流式输出。
 
 MiMo Token Plan 官方说明将订阅额度限定在 AI 编程工具相关场景；若后续把本项目公开部署或作为非 Coding 自定义应用后端使用，应改用普通 API key 或先确认授权范围。无论 provider 如何混合，服务器仍拥有 schema 校验、状态边界、考试晋级、官职任免、反作弊和持久化裁决。
@@ -213,7 +213,7 @@ POST /api/exam/submit
 - 审计记录只保存脱敏摘要、proposal 字段、服务器接受/拒绝原因和应用事件 id，不保存密钥、完整 prompt、本地路径、hidden notes 或未经脱敏 provider 错误。
 - `src/game/auditPublicProjection.js` 与 `scripts/auditEventArchiveTool.js` 只把 `visibility: "public"` 的审计摘要重新经过事件档案 sanitizer 和字段 allowlist；raw prompt、provider proposal 原文、路径、key、hidden notes、hidden intent 和数据库内部信息必须被丢弃或遮蔽。
 
-S54+ 数据库拆表必须继续保持 JSON 默认可玩，并保留 `worldState` snapshot 可读、可导入、可导出。SQLite 只增强本机索引、审计、长期存储、检索式 prompt context 和安全查阅 projection，不把核心裁决交给 AI、SQL 或黑箱库。即使 SQLite 已保存 `geo_*` raw rows，浏览器和 prompt 仍必须读取 `worldGeographyView` / capped summary，不得绕过服务器 view 过滤。
+S54-S59 已完成的数据库拆表必须继续保持 JSON 默认可玩，并保留 `worldState` snapshot 可读、可导入、可导出。SQLite 只增强本机索引、审计、长期存储、检索式 prompt context 和安全查阅 projection，不把核心裁决交给 AI、SQL 或黑箱库。即使 SQLite 已保存 `geo_*` raw rows，浏览器和 prompt 仍必须读取 `worldGeographyView` / capped summary，不得绕过服务器 view 过滤；后续 S60+ 内容充实也必须沿用这个边界。
 
 ## 8. 当前领域账本与安全 View
 
@@ -226,7 +226,7 @@ S54+ 数据库拆表必须继续保持 JSON 默认可玩，并保留 `worldState
 - `officialPostings` / `officialPostingsView`：从 `officialCatalog`、`officialCareer`、地方官 role state 和可见地理 view 派生官署、官职、任所、考成和迁转摘要；不改变 `officialCareerView`。
 - `eventArchiveView`：从公开近事、世界议程、长期事件、官场履历和考试档案整理事件档案；S57.1 起带分页 metadata，并在 SQLite 模式同步到安全 `event_archive_index`；不读取 raw audit、provider proposal、prompt、本地路径或 key。S57.2 的审计公开 projection 是本地开发/调试工具输出，不是 route view、prompt 或浏览器信息面板的数据源。
 
-S53 浏览器“局势簿”只读这些 route view。后续 S54-S59 拆表时，UI 和 prompt contract 应保持 view-first，不暴露原始业务表。
+S53 浏览器“局势簿”只读这些 route view。S54-S59 已完成的 SQLite 拆表继续保持 view-first；后续 S60+ 内容充实时，UI 和 prompt contract 仍不得暴露原始业务表、raw audit、provider proposal、hidden notes、hidden intent 或本地路径。
 
 ## 9. 时间与场景契约
 
@@ -332,24 +332,31 @@ chore: update env example
 
 ## 15. 当前数据库专项摘要
 
-S49-S53 基础层结论：
+已完成的本地数据库底座：
 
 1. JSON 默认仍可玩；SQLite 通过 `STORAGE_ADAPTER=sqlite` 显式启用，当前包含一行一 session、审计表、地理 `geo_*`、人物 `people_*`、官职任所 `office_*`、安全 `event_archive_index` 和安全 `prompt_retrieval_index` 派生表。
-2. `event_log` / `ai_change_proposals` 是本地脱敏审计，不进入玩家 API，也不让 AI 直接写表。
-3. `worldGeographyView`、`worldPeopleView`、`officialPostingsView`、`eventArchiveView` 是当前 UI/prompt 合法入口。
-4. 浏览器“局势簿”只读 route player-facing view，不读 raw ledger、raw audit、provider-only `retrievalContext`、prompt、本地路径或 key。
-5. S54 已固定并实现地理 SQLite 业务表与维护工具；S55 已固定并实现人物域可见 bridge SQLite 持久化与服务器人物事件审计关联；S56 已实现官职任所 `office_*` 派生表持久化、读档修复和同 id/同 revision 内容漂移探针；S57 已把安全 `eventArchiveView` projection 拆入 SQLite `event_archive_index`，接入 prompt 近事检索、顶层 `recentEvents` 和读档叙事回放，并补本地审计到公开事件 projection 工具与 JSON/SQLite 脱敏测试；S58.1 已把 prompt `retrievalContext` 的 SQLite 模式来源接到 `prompt_retrieval_index` 安全派生索引，同时保留 JSON fallback；S58.2 已把浏览器局势簿双模式 parity 做成显式 smoke。
+2. S54-S59 已归档到 [LOCAL_DATABASE_BUSINESS_TABLE_ARCHIVE.md](LOCAL_DATABASE_BUSINESS_TABLE_ARCHIVE.md)：地理、人物、官职任所、事件档案、prompt 检索、浏览器 parity 和双模式验收均已具备本地 SQLite 基础。
+3. `event_log` / `ai_change_proposals` 是本地脱敏审计，不进入玩家 API，也不让 AI 直接写表。
+4. `worldGeographyView`、`worldPeopleView`、`officialPostingsView`、`eventArchiveView` 和 capped `retrievalContext` 是当前 UI/prompt 合法入口。
+5. 浏览器“局势簿”只读 route player-facing view，不读 raw ledger、raw audit、provider-only payload、prompt、本地路径或 key。
 
-S54-S59 剩余方向：
+当前内容完成度判断：
 
-- S54：地理 SQLite 表契约、adapter 持久化、导入/修复/导出和更广 view parity 已完成。
-- S55：人物、家族、资产、田产、关系 SQLite 表契约、可见 bridge 持久化、NPC/关系/家产可见 delta 的服务器事件 helper 和审计关联已完成；真正 hidden 私档仍留给后续切片。
-- S56：官署、官职、任所、考成、迁转 SQLite 表契约、`office_*` 派生表持久化、跨域引用安全修复和内容漂移探针已完成；后续 SQLite 检索仍只能读取安全 capped projection。
-- S57：安全事件索引、事件档案分页、审计到公开事件 projection 工具与 JSON/SQLite 脱敏测试已完成。
-- S58：S58.1 SQLite 安全派生 prompt 检索索引已完成；S58.2 浏览器 JSON/SQLite 局势簿 parity smoke 已完成。
-- S59：S59.1 双模式集成硬化验收入口已完成；S59.2 待做 S54-S59 细节再归档。
+- “数据库底座/动态表拆分/修复与验收”完成度较高，已经可以作为后续内容扩展基础。
+- “超大动态世界数据库”的内容充实度约 55-65%。主要欠缺不是存储能力，而是大规模内容：多国财政军事外交、全国与邻国城市指标、数百 NPC 与家族谱系、官职生态、地方事务模板、外交军事经济演化、事件链、情报传闻、检索排序和浏览器大数据量查阅。
 
-本地数据库专项必须满足同一边界：默认 JSON/Mock 路径不得被破坏；SQLite local-only；AI 不执行 SQL、不直接写业务表；浏览器和 prompt 只读服务器 projection；服务器继续拥有 schema、白名单、clamp、隐藏过滤、科举晋级、官职任免、长期事件、世界实体、世界议程和持久化事务。
+S60-S67 当前方向：
+
+- S60：内容契约与规模验收 fixture。
+- S61：国家/邻国、城市/区域深度内容。
+- S62：NPC 人口、家族谱系、生命周期与资产流动。
+- S63：官职生态、任命池和地方事务模板。
+- S64：外交、边防、军事、经济、财政、粮储和市场演化。
+- S65：事件模板、历史档案、情报、传闻和可见性系统。
+- S66：大规模 prompt retrieval 与浏览器信息面板。
+- S67：规模/性能/回归验收与再次归档。
+
+本地数据库专项必须满足同一边界：默认 JSON/Mock 路径不得被破坏；SQLite local-only；AI 不执行 SQL、不直接写业务表；浏览器和 prompt 只读服务器 projection；hidden 私档不回填当前 raw route `worldState`；服务器继续拥有 schema、白名单、clamp、隐藏过滤、科举晋级、官职任免、长期事件、世界实体、世界议程和持久化事务。
 
 ## 16. 历史实现笔记归档
 
@@ -360,3 +367,4 @@ S54-S59 剩余方向：
 - [PHASE_FOUR_ROADMAP_ARCHIVE.md](PHASE_FOUR_ROADMAP_ARCHIVE.md)：第四阶段路线图归档。
 - [TIME_SPECIALTY_ROADMAP_ARCHIVE.md](TIME_SPECIALTY_ROADMAP_ARCHIVE.md)：S48 时间专项归档。
 - [LOCAL_DATABASE_FOUNDATION_ARCHIVE.md](LOCAL_DATABASE_FOUNDATION_ARCHIVE.md)：S49-S53 本地数据库基础归档。
+- [LOCAL_DATABASE_BUSINESS_TABLE_ARCHIVE.md](LOCAL_DATABASE_BUSINESS_TABLE_ARCHIVE.md)：S54-S59 本地 SQLite 业务表、索引、维护工具和双模式验收归档。

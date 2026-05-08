@@ -6,7 +6,7 @@
 
 ## 这次主要更新
 
-当前项目已经完成可玩纵切、浏览器验收、时间专项、AI provider 扩展和本地动态数据库基础。近期重点更新集中在“本地数据库专项”和“多 provider 能力”：
+当前项目已经完成可玩纵切、浏览器验收、时间专项、AI provider 扩展、本地动态数据库基础和 S54-S59 SQLite 业务表拆分。近期重点更新集中在“本地数据库专项”和“多 provider 能力”：
 
 - 新增可选 SQLite 存储模式：默认仍是 JSON 存档；设置 `STORAGE_ADAPTER=sqlite` 后，本地使用 `world_sessions`、审计表、地理 `geo_*`、人物 `people_*`、官职任所 `office_*` 派生业务表、安全事件档案 `event_archive_index` 和安全 prompt 检索派生索引。
 - 新增地理业务表同步：SQLite 模式会把 `worldState.worldGeography` 同步到 `geo_countries`、`geo_regions`、`geo_cities`、`geo_routes`、`geo_frontier_zones`、`geo_office_jurisdictions`，读档时可按 JSON snapshot 修复缺失或陈旧行。
@@ -17,6 +17,7 @@
 - 新增 SQLite prompt 检索索引：SQLite 模式会把地理、人物、官职任所和事件档案的服务器可见 projection 同步为安全检索行，读档用内容指纹修复同 id/同 revision 污染；JSON 模式继续走原 view helper fallback。
 - 新增审计公开 projection 工具：`npm run storage:audit-events -- status|export --adapter json|sqlite` 会从 JSON sidecar 或 SQLite 审计读取 allowlist 后的公开摘要，输出本地调试安全的 public projection；AI proposal 只计数，不输出原始建议内容。
 - 新增浏览器 SQLite smoke 参数：`npm run smoke:browser -- --storage-adapter sqlite --sqlite-db <path>` 可验证 Mock 浏览器主线与 SQLite adapter 共用同一存储；`npm run smoke:browser -- --information-parity` 会顺序启动 JSON/SQLite 临时服务器，比对局势簿 DOM、route view 摘要和事件档案分页 metadata。
+- 完成 S54-S59 归档与 S60+ 新规划：当前“超大动态世界数据库”的内容充实度约 55-65%，后续路线图转向国家/邻国、城市、NPC、官职生态、地方事务、外交军事、经济市场、事件模板、情报可见性和大规模检索内容；仍只考虑本地 JSON/SQLite。
 - 新增 Xiaomi MiMo provider：支持 `mimo` 与 `mimo-deepseek`，后者让 MiMo 负责开局、普通回合、流式叙事和出题，让 DeepSeek V4 Pro 负责科举评卷。
 - 更新 README 与项目文档：把当前功能、修复、安全边界、启动方式和常用命令整理成更适合 GitHub 首页阅读的结构。
 
@@ -45,6 +46,7 @@
 - 服务器裁决清晰：模型负责创造力，服务器负责规则、边界、晋级、处罚、任免和持久化。
 - 文档与验收完整：路线图、架构、AI 权限矩阵、数据库契约、浏览器验收和 provider 验收都有持续维护。
 - 渐进式数据库迁移：JSON snapshot 保持可读可回滚，SQLite 逐步拆表增强查询、审计和长期世界存储。
+- 内容保护优先：大规模数据库内容只能经服务器 helper、schema、clamp、可见性过滤和本地事务进入世界；AI 不直接写库，hidden 私档不回填玩家 route state。
 
 ## 技术栈
 
@@ -233,6 +235,7 @@ data/sessions/
 - [docs/AI_CONTROL_AUDIT_MATRIX.md](docs/AI_CONTROL_AUDIT_MATRIX.md)：AI/server 权限矩阵。
 - [docs/DYNAMIC_WORLD_DATABASE_PLAN.md](docs/DYNAMIC_WORLD_DATABASE_PLAN.md)：本地动态数据库规划。
 - [docs/LOCAL_DATABASE_FOUNDATION_ARCHIVE.md](docs/LOCAL_DATABASE_FOUNDATION_ARCHIVE.md)：S49-S53 本地数据库基础归档。
+- [docs/LOCAL_DATABASE_BUSINESS_TABLE_ARCHIVE.md](docs/LOCAL_DATABASE_BUSINESS_TABLE_ARCHIVE.md)：S54-S59 本地 SQLite 业务表、索引、维护工具和双模式验收归档。
 - [docs/WORLD_GEOGRAPHY_SEED_CONTRACT.md](docs/WORLD_GEOGRAPHY_SEED_CONTRACT.md)：天下地理与 SQLite 地理业务表契约。
 - [docs/NPC_HOUSEHOLD_ASSET_RELATIONSHIP_CONTRACT.md](docs/NPC_HOUSEHOLD_ASSET_RELATIONSHIP_CONTRACT.md)：人物、家族、资产、田产、关系 schema/桥接与 S55 SQLite 人物域表契约/实现边界。
 - [docs/OFFICIAL_POSTING_DATABASE_CONTRACT.md](docs/OFFICIAL_POSTING_DATABASE_CONTRACT.md)：官署、官职、任所、考成、迁转 schema/桥接与 S56 SQLite 官职任所表契约。
@@ -242,4 +245,5 @@ data/sessions/
 - 真实 provider 网络调用需要配置 API key；无 key 环境只验证 Mock、缺 key 分支和 no-key skip。
 - 浏览器 smoke 覆盖完整主线和代表身份回合，但不等同于所有身份的长线游玩验收。
 - SQLite 目前已经包含 session row、审计表、地理 `geo_*` 业务表、可见人物 `people_*` bridge rows、人物事件到 `people_*.last_event_id` 的本地关联、带内容漂移探针的官职任所 `office_*` 派生业务表、安全事件档案 `event_archive_index`、安全 prompt 检索索引，以及只输出 allowlist public 摘要的本地审计公开 projection 工具；它们都不是浏览器、prompt 或服务器裁决的 raw 来源。
+- “超大动态世界数据库”的内容密度仍在继续建设中：S60+ 会补国家/邻国、城市、NPC、官职生态、事件模板、情报可见性和大规模检索，而不是引入远程或多人功能。
 - 当前不包含远程存档、账号体系、多人同步或云端数据库。

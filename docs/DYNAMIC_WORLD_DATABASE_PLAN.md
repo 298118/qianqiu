@@ -2,7 +2,7 @@
 
 本文回应“是否需要把国家、邻国、NPC、玩家、官职、城市、事件记录等大量动态数据放入数据库，并允许 AI 随游戏进程影响数据库”的产品方向。
 
-结论：**可行，而且中长期值得做；但不建议一步到位替换当前 JSON 存档，也不能让 AI 直接写数据库。** 当前范围只考虑本地数据库，优先方向是本地 SQLite；不规划远程存档、账号体系、多人同步、云端冲突解决或托管数据库。S49.3 已通过 `STORAGE_ADAPTER=sqlite` 引入可选本地 SQLite session row 原型，仍保留 JSON 默认路径；S49.4 已加入本地 `event_log` 与 `ai_change_proposals` 审计记录；S54 已在 SQLite 模式把规范化天下地理同步为本地 `geo_*` 业务表并补维护工具；S55 已在 SQLite 模式把规范化可见 `worldPeople` bridge rows 同步为本地 `people_*` 业务表，并把服务器人物事件关联到 `people_*.last_event_id`；S56 已在 SQLite 模式把规范化安全 `officialPostings` projection 同步为 `office_*` 业务表，并补同 id/同 revision 内容漂移修复；S57.1 已把安全 `eventArchiveView` projection 同步为 `event_archive_index`，供事件档案分页、prompt 近事检索、顶层 `recentEvents` 和读档叙事回放使用；S57.2 已补本地 `storage:audit-events` 工具，把 JSON/SQLite 审计中 allowlist 后的 public 摘要投影为调试安全输出，AI proposal 只计数、不输出原文；S58.1 已把 SQLite prompt 检索接到 `prompt_retrieval_index` 安全派生索引，来源只取服务器可见 view 并带内容指纹，JSON fallback 不变；S58.2 已补 `smoke:browser -- --information-parity`，用浏览器局势簿验证 JSON/SQLite route view parity；S59.1 已补 `smoke:dual-mode`，把完整 Mock browser journey、局势簿 parity、JSON -> SQLite 导入、地理修复/导出、审计 projection、派生表计数和 hidden-token 检查串成整体验收。AI 仍只生成叙事、建议和结构化 proposal；最终写库必须由服务器模块校验、夹断、归一化、事务提交。
+结论：**可行，而且中长期值得做；但不建议一步到位替换当前 JSON 存档，也不能让 AI 直接写数据库。** 当前范围只考虑本地数据库，优先方向是本地 SQLite；不规划远程存档、账号体系、多人同步、云端冲突解决或托管数据库。S49-S53 本地数据库基础已归档到 [LOCAL_DATABASE_FOUNDATION_ARCHIVE.md](LOCAL_DATABASE_FOUNDATION_ARCHIVE.md)；S54-S59 已完成 SQLite 业务表、索引、维护工具、浏览器 parity 和双模式验收，并归档到 [LOCAL_DATABASE_BUSINESS_TABLE_ARCHIVE.md](LOCAL_DATABASE_BUSINESS_TABLE_ARCHIVE.md)。当前“超大动态世界数据库”的内容充实度约 55-65%，S60+ 将转向内容密度：国家/邻国、城市/区域、NPC/家族、官职生态、地方事务、外交军事、经济市场、事件模板、情报可见性和大规模检索。AI 仍只生成叙事、建议和结构化 proposal；最终写库必须由服务器模块校验、夹断、归一化、可见性过滤和事务提交。
 
 ## 1. 当前基础与是否急需数据库
 
@@ -25,7 +25,7 @@
 - 需要本机多 session 比较、导入导出、长期世界演化和本地检索。
 - 需要让 prompt 按“玩家当前可知范围”取上下文，而不是把全部世界状态塞给模型。
 
-所以推荐节奏是：**先规划和适配器，再 SQLite session row；只做本地数据库，不做云端/账号/多人；先事件/索引表，后全量实体拆表。** S49-S53 已完成规划、adapter 边界、可选 SQLite session row、事件日志和 AI proposal 审计、天下地理/人物/官职任所可见 projection、检索式 prompt context 和浏览器“局势簿”。下一步从 S54 起，把已经稳定的 projection 逐步拆成本地 SQLite 业务表，而不是一次性替换全部 `worldState`。
+所以推荐节奏是：**先规划和适配器，再 SQLite session row；只做本地数据库，不做云端/账号/多人；先事件/索引表，后全量实体拆表；底座稳定后再补内容密度。** S49-S59 已完成前半段：adapter 边界、可选 SQLite session row、事件日志和 AI proposal 审计、天下地理/人物/官职任所可见 projection、检索式 prompt context、浏览器“局势簿”、本地业务派生表和双模式验收。S60+ 的重点不再是证明“能不能拆表”，而是补足可持续演化的大世界内容。
 
 ## 1.1 当前不做的范围
 
@@ -539,18 +539,35 @@ S52.1 已先新增 [官职、官署、任所与迁转数据库契约](OFFICIAL_P
 
 S53.1-S53.6 已完成：`promptContextAssembler` 只读服务器可见 projection 并生成 `retrievalContext`；浏览器“局势簿”已经落地天下格局、任所地理、人物谱牒、官职簿和事件档案五类面板；事件档案通过 `eventArchiveView` 读取安全 projection，不读取 raw audit、provider proposal、prompt、本地路径或 key。
 
-### S54-S59：剩余 SQLite 业务表拆分
+### S54-S59：SQLite 业务表拆分归档
 
-S49-S53 结束后，数据库专项的下一段不再是“是否需要数据库”，而是如何小步拆表。活动台账见 [DEVELOPMENT_STEPS.md](DEVELOPMENT_STEPS.md)，当前拆分如下：
+S49-S53 结束后，数据库专项的下一段不再是“是否需要数据库”，而是如何小步拆表。S54-S59 已完成并归档到 [LOCAL_DATABASE_BUSINESS_TABLE_ARCHIVE.md](LOCAL_DATABASE_BUSINESS_TABLE_ARCHIVE.md)：
 
 - S54：地理业务表。S54.1/S54.2 已定义并实现 `geo_countries`、`geo_regions`、`geo_cities`、`geo_routes`、`geo_frontier_zones`、`geo_office_jurisdictions` 的 SQLite 模式持久化；S54.3 已补导入 dry-run、地理 status/repair/export 工具、browser smoke SQLite 参数和 JSON/SQLite route/prompt 可见摘要 parity。
 - S55：人物业务表。已定义并实现可见 bridge `people_npcs`、`people_households`、`people_assets`、`people_estates`、`people_relationships` 持久化、`worldPeopleView` parity、NPC/关系/家产可见 delta 的服务器事件 helper 和 `last_event_id` 审计关联。
 - S56：官职任所业务表。S56.1 已定义 `office_bureaus`、`office_catalog`、`office_city_jurisdictions`、`office_postings`、`office_assessments`、`office_transfers` 契约；S56.2 已接入 SQLite 持久化、读档修复和 `officialPostingsView` / prompt parity；S56.3 已补内容 hash 漂移探针、旧行缺 hash 升级和 hidden 城市/人物引用污染修复。
 - S57：安全事件索引。S57.1 已保留 raw `event_log` / `ai_change_proposals` 的诊断属性，另建 `event_archive_index` 安全 projection 供事件档案分页、prompt 近事检索和读档叙事回放，不暴露 raw audit；S57.2 已补审计到公开事件 projection 工具与 JSON/SQLite 脱敏测试，工具输出不回填 route、prompt、浏览器或 `event_archive_index`。
 - S58：SQLite 索引驱动的 prompt context 与浏览器双模式 parity。S58.1 已新增 `prompt_retrieval_index`，由 `worldGeographyView`、`worldPeopleView`、`officialPostingsView` 和 `eventArchiveView` 的 compact 可见 projection 同步而来，并用内容 hash 防同 id/同 revision 污染；S58.2 已新增浏览器局势簿 JSON/SQLite parity smoke，比较 DOM、route view 摘要和事件档案分页 metadata。JSON fallback 不变，prompt/UI 继续只读可见 projection。
-- S59：S59.1 JSON/SQLite 双模式整体验收入口已完成；S59.2 待做再次归档。
+- S59：S59.1 JSON/SQLite 双模式整体验收入口已完成；S59.2 已完成 S54-S59 细节归档和活动台账压缩。
 
 每个拆表切片都必须保留 `worldState` snapshot 可读和可导出，保持 JSON 默认可玩；SQLite 仍是 local-only 模式。AI 不能直接执行 SQL 或写业务表，浏览器和 prompt 不读 raw table、raw audit、hidden notes、provider proposal、prompt、本地路径或 key。
+
+### S60-S67：超大动态世界数据库内容充实
+
+当前“超大动态世界数据库”的内容充实度约 55-65%。S54-S59 已经让本地 SQLite 底座可用，但内容仍偏 projection 和少量实例化账本；S60-S67 需要把世界补成可长期游玩的历史沙盘。
+
+规划方向：
+
+- S60：内容契约与规模验收 fixture。定义小/中/大世界规模、seed 分层、字段密度、hidden 私档边界、prompt budget 和 local-only 生成规则。
+- S61：国家/邻国与城市/区域内容。补财政、军事、国威、外交、情报可信度、税粮、市价、士绅、诉讼、水利、灾害、交通、驻军和书院。
+- S62：NPC 人口、家族谱系和生命周期。补数百 NPC、家族、婚姻、门生故旧、派系、资产流动、健康、迁居、升迁、死亡和关系记忆。
+- S63：官职生态与地方事务。补空缺、候补、任期、考成、上级下属、胥吏幕友，以及钱粮、刑名、灾赈、水利、盗匪、徭役、士绅等事件模板。
+- S64：外交、边防、军事、经济和市场演化。补边镇、驻军、粮道、邻国使节、边患、盐漕、商路、地方库银、粮价和财政压力。
+- S65：事件模板、历史档案、情报传闻和可见性系统。每个事件都要有公开 projection、密档边界、related refs、applied changes 和审计链接。
+- S66：大规模 prompt retrieval 与浏览器面板。补排序、预算、分页、角色视野、搜索、筛选、移动端布局和 hidden-token smoke。
+- S67：规模/性能/回归验收与再次归档。
+
+内容保护原则不变：AI 不直写库，hidden 私档不回填当前 raw route `worldState`，浏览器/prompt 只读服务器 projection。若后续确需保存完整 hidden 私档，必须先完成 API redaction 与角色视野分层设计。
 
 ## 7. AI 可修改范围分级
 
@@ -600,13 +617,14 @@ S49-S53 结束后，数据库专项的下一段不再是“是否需要数据库
 
 ## 10. 推荐优先级
 
-S49-S53 已完成基础层，历史细节已归档到 [LOCAL_DATABASE_FOUNDATION_ARCHIVE.md](LOCAL_DATABASE_FOUNDATION_ARCHIVE.md)。如果下一阶段目标是“让世界规模真正变大并能长期检索”，推荐优先级如下：
+S49-S53 基础层已归档到 [LOCAL_DATABASE_FOUNDATION_ARCHIVE.md](LOCAL_DATABASE_FOUNDATION_ARCHIVE.md)，S54-S59 业务表拆分已归档到 [LOCAL_DATABASE_BUSINESS_TABLE_ARCHIVE.md](LOCAL_DATABASE_BUSINESS_TABLE_ARCHIVE.md)。如果下一阶段目标是“让世界规模真正变大并能长期检索”，推荐优先级如下：
 
-1. **S54 地理业务表**：先把国家、邻国、城市、路线、边面和辖区拆入 SQLite，因为地方任所、外交边患、路程和事件索引都会引用它。
-2. **S55 人物业务表**：已先把可见 NPC、家族、资产、田产和关系 bridge rows 拆入 SQLite，并补上服务器人物事件 helper、关系/请托 live 事件和 `people_*.last_event_id` 审计关联。
-3. **S56 官职任所业务表**：S56.1 已先固定官署、官职、任命、考成、迁转、城市辖区和持有人引用的 SQLite 表契约；S56.2 已把安全 `officialPostings` projection 持久化到 `office_*` 派生表。后续跨域引用和检索扩展仍必须继续保护服务器任免裁决。
-4. **S57 安全事件索引**：S57.1 已为事件档案分页、prompt 近事检索和读档叙事回放建立 `event_archive_index` 安全 projection；S57.2 已补 raw audit 到公开事件的本地 projection 工具，仍只输出 allowlist 后的 public 摘要和统计，不暴露 raw audit、AI proposal 原文、prompt、路径、key 或 hidden notes。
-5. **S58 检索式 prompt 与浏览器双模式 parity**：S58.1 已让 SQLite 模式的 prompt `retrievalContext` 读取安全派生 `prompt_retrieval_index`，而不是 raw business/audit tables；S58.2 已用 `smoke:browser -- --information-parity` 验证 JSON/SQLite 两种 adapter 的浏览器局势簿视图一致。
-6. **S59 双模式集成硬化与再归档**：S59.1 已用 `smoke:dual-mode` 串联完整 Mock 主线、双模式 browser parity、导入导出/修复工具和脱敏防线；S59.2 继续做文档压缩与归档。
+1. **已完成 S54 地理业务表**：国家、邻国、城市、路线、边面和辖区已拆入 SQLite，并补导入、修复、导出和 parity 工具。
+2. **已完成 S55 人物业务表**：可见 NPC、家族、资产、田产和关系 bridge rows 已拆入 SQLite，并补服务器人物事件 helper、关系/请托 live 事件和 `people_*.last_event_id` 审计关联。
+3. **已完成 S56 官职任所业务表**：官署、官职、任命、考成、迁转、城市辖区和持有人引用已形成 SQLite 契约与 `office_*` 派生表；跨域引用和检索扩展仍必须继续保护服务器任免裁决。
+4. **已完成 S57 安全事件索引**：事件档案分页、prompt 近事检索和读档叙事回放已使用 `event_archive_index` 安全 projection；审计公开 projection 工具仍只输出 allowlist 后的 public 摘要和统计。
+5. **已完成 S58 检索式 prompt 与浏览器双模式 parity**：SQLite 模式的 prompt `retrievalContext` 已读取安全派生 `prompt_retrieval_index`，浏览器局势簿已通过 JSON/SQLite parity smoke。
+6. **已完成 S59 双模式集成硬化与再归档**：`smoke:dual-mode` 已串联完整 Mock 主线、双模式 browser parity、导入导出/修复工具和脱敏防线；S59.2 已完成文档压缩与归档。
+7. **当前 S60-S67 内容充实专项**：先写内容契约和规模 fixture，再分批补国家/城市/NPC/官职/事件/情报/prompt/UI 内容密度，最后做大世界性能与防泄漏验收。
 
 这条路线不会阻止继续做考试外的 scene-local time；两者可以并行，但数据库实现应优先选择小切片，避免把 S48 已稳定的时间契约和完整书生入仕路径一起掀开。

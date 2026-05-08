@@ -1,15 +1,16 @@
 # 《千秋》数据库专项开发路线图与进度台账
 
-本文件是 Codex 与 Claude Code 共同维护的当前活动路线图与进度台账。第四阶段已归档到 [PHASE_FOUR_ROADMAP_ARCHIVE.md](PHASE_FOUR_ROADMAP_ARCHIVE.md)，S48 时间专项已归档到 [TIME_SPECIALTY_ROADMAP_ARCHIVE.md](TIME_SPECIALTY_ROADMAP_ARCHIVE.md)，S49-S53 本地数据库基础已压缩归档到 [LOCAL_DATABASE_FOUNDATION_ARCHIVE.md](LOCAL_DATABASE_FOUNDATION_ARCHIVE.md)。
+本文件是 Codex 与 Claude Code 共同维护的当前活动路线图与进度台账。旧阶段细节已经归档：
 
-当前路线图从 S54 开始，目标是在不破坏默认 JSON/Mock 可玩路径的前提下，把已经成形的国家/城市、人物、官职任所和事件 projection 逐步拆入本地 SQLite 业务表。当前范围仍只考虑本机 SQLite / 本地文件持久化增强；远程存档、账号体系、多人同步、云端冲突解决和托管数据库不进入本专项。
+- 第一阶段：[PHASE_ONE_ROADMAP_ARCHIVE.md](PHASE_ONE_ROADMAP_ARCHIVE.md)，验收见 [PHASE_ONE_ACCEPTANCE.md](PHASE_ONE_ACCEPTANCE.md)。
+- 第二阶段：[PHASE_TWO_ROADMAP_ARCHIVE.md](PHASE_TWO_ROADMAP_ARCHIVE.md)，验收见 [PHASE_TWO_ACCEPTANCE.md](PHASE_TWO_ACCEPTANCE.md)。
+- 第三阶段：[PHASE_THREE_ROADMAP_ARCHIVE.md](PHASE_THREE_ROADMAP_ARCHIVE.md)。
+- 第四阶段：[PHASE_FOUR_ROADMAP_ARCHIVE.md](PHASE_FOUR_ROADMAP_ARCHIVE.md)，早期详细进度见 [FOURTH_PHASE_PROGRESS_ARCHIVE.md](FOURTH_PHASE_PROGRESS_ARCHIVE.md)。
+- S48 时间专项：[TIME_SPECIALTY_ROADMAP_ARCHIVE.md](TIME_SPECIALTY_ROADMAP_ARCHIVE.md)。
+- S49-S53 本地数据库基础：[LOCAL_DATABASE_FOUNDATION_ARCHIVE.md](LOCAL_DATABASE_FOUNDATION_ARCHIVE.md)。
+- S54-S59 本地 SQLite 业务表与双模式验收：[LOCAL_DATABASE_BUSINESS_TABLE_ARCHIVE.md](LOCAL_DATABASE_BUSINESS_TABLE_ARCHIVE.md)。
 
-- 第一阶段路线图已归档到 [PHASE_ONE_ROADMAP_ARCHIVE.md](PHASE_ONE_ROADMAP_ARCHIVE.md)，验收记录见 [PHASE_ONE_ACCEPTANCE.md](PHASE_ONE_ACCEPTANCE.md)。
-- 第二阶段路线图已归档到 [PHASE_TWO_ROADMAP_ARCHIVE.md](PHASE_TWO_ROADMAP_ARCHIVE.md)，验收记录见 [PHASE_TWO_ACCEPTANCE.md](PHASE_TWO_ACCEPTANCE.md)。
-- 第三阶段路线图已归档到 [PHASE_THREE_ROADMAP_ARCHIVE.md](PHASE_THREE_ROADMAP_ARCHIVE.md)。
-- 第四阶段路线图已归档到 [PHASE_FOUR_ROADMAP_ARCHIVE.md](PHASE_FOUR_ROADMAP_ARCHIVE.md)，早期详细进度可在 [FOURTH_PHASE_PROGRESS_ARCHIVE.md](FOURTH_PHASE_PROGRESS_ARCHIVE.md) 追溯。
-- S48 时间专项已归档到 [TIME_SPECIALTY_ROADMAP_ARCHIVE.md](TIME_SPECIALTY_ROADMAP_ARCHIVE.md)。
-- S49-S53 数据库基础已归档到 [LOCAL_DATABASE_FOUNDATION_ARCHIVE.md](LOCAL_DATABASE_FOUNDATION_ARCHIVE.md)。
+当前路线图从 S60 开始，目标是把“超大动态世界数据库”的内容充实度从约 55-65% 推进到可支撑长期历史沙盘的规模。范围仍只考虑本机 JSON/SQLite 持久化增强；远程存档、账号体系、多人同步、云端冲突解决和托管数据库不进入本专项。
 
 ## 1. 开发规范继承
 
@@ -77,983 +78,272 @@
 
 <!-- GOVERNANCE_REQUIRED_END -->
 
-## 3. 当前数据库专项边界
+## 3. 当前专项边界
 
-S49-S53 已完成“基础层”：
+当前数据库完成度判断：底层本地存储、派生业务表、索引、修复、审计和 JSON/SQLite 双模式验收已经达到可继续扩内容的状态；“超大动态世界数据库”的内容充实度约 55-65%。下一阶段不急于引入远程或多人能力，而是把国家、城市、NPC、官职、事件、情报和 prompt 检索的内容密度补上。
 
-- `sessionStore` facade、默认 JSON adapter、可选 SQLite session row adapter、JSON -> SQLite 导入脚本和 adapter contract tests。
-- 本地 `event_log` / `ai_change_proposals` 审计底座，记录脱敏 proposal、服务器接受/拒绝和应用事件 id。
-- 天下地理 `worldGeographyView`、人物 `worldPeopleView`、官职任所 `officialPostingsView`、事件档案 `eventArchiveView` 和检索式 `retrievalContext`。
-- 浏览器“局势簿”五类面板：天下格局、任所地理、人物谱牒、官职簿、事件档案。
-
-S54 起不推翻这些成果，而是把仍在 JSON `worldState` / projection 中的领域数据逐步拆成本地 SQLite 业务表。每个拆表切片必须遵守：
+S60+ 必须遵守：
 
 - JSON adapter 继续是默认路径，Mock 模式继续完整可玩。
-- SQLite 模式只表示本机不同存档；不引入远程、账号、多人或云端语义。
-- `worldState` snapshot 继续可读、可导入、可导出，直到后续明确迁移完成。
-- 业务表写入只通过服务器领域 helper 和 adapter 事务，AI 不能执行 SQL、不能直接写表、不能绕过 schema/clamp/可见性过滤。
-- API、prompt 和浏览器只读服务器整理后的 projection；不得暴露 raw audit、provider proposal、prompt、本地路径、密钥、隐藏 notes、hidden intent 或未公开任所/关系。
-- 完整 scholar -> official 路径、S48 年月旬与 scene-local time 契约、官职任免和考试晋级仍由服务器裁决。
+- SQLite 模式只表示本机不同存档，不引入远程、账号、多人或云端语义。
+- `worldState` snapshot 继续可读、可导入、可导出；SQLite 派生表继续可从 `world_sessions.world_state_json` 单向修复。
+- 新内容生成只能通过服务器 helper、seed、fixture、受限 proposal 和 adapter transaction；AI 不能执行 SQL、不能直接写表、不能绕过 schema/clamp/可见性过滤。
+- API、prompt 和浏览器只读服务器整理后的 projection；不得暴露 raw audit、provider proposal、prompt、本地路径、密钥、隐藏 notes、hidden intent、未公开任所、未公开关系或 hidden raw rows。
+- 如果后续要保存真正 hidden 私档或高密度 NPC 内幕，必须先设计玩家 API redaction 和 prompt role-visibility 分层，不能把 hidden 私档塞回当前 raw route `worldState`。
 
-## 4. 已完成基础归档
+## 4. 已完成归档摘要
 
 | ID | 状态 | 摘要 | 归档 |
 | --- | --- | --- | --- |
-| S49 | DONE | 本地数据库规划、storage adapter、可选 SQLite session row、事件日志与 AI proposal 审计 | [LOCAL_DATABASE_FOUNDATION_ARCHIVE.md](LOCAL_DATABASE_FOUNDATION_ARCHIVE.md) |
-| S50 | DONE | 天下地理静态 seed、每局 `worldGeography` ledger、`worldGeographyView` 与 prompt summary | [LOCAL_DATABASE_FOUNDATION_ARCHIVE.md](LOCAL_DATABASE_FOUNDATION_ARCHIVE.md) |
-| S51 | DONE | NPC/家族/资产/田产/关系 schema 与 `worldPeopleView` 可见桥接 | [LOCAL_DATABASE_FOUNDATION_ARCHIVE.md](LOCAL_DATABASE_FOUNDATION_ARCHIVE.md) |
-| S52 | DONE | 官职/官署/任所/城市辖区/考成/迁转契约与 `officialPostingsView` 可见桥接 | [LOCAL_DATABASE_FOUNDATION_ARCHIVE.md](LOCAL_DATABASE_FOUNDATION_ARCHIVE.md) |
-| S53 | DONE | `promptContextAssembler`、浏览器信息面板规划与五类安全 UI projection | [LOCAL_DATABASE_FOUNDATION_ARCHIVE.md](LOCAL_DATABASE_FOUNDATION_ARCHIVE.md) |
+| S49-S53 | DONE | storage adapter、SQLite session row、本地审计、地理/人物/官职任所 projection、prompt context、浏览器局势簿 | [LOCAL_DATABASE_FOUNDATION_ARCHIVE.md](LOCAL_DATABASE_FOUNDATION_ARCHIVE.md) |
+| S54 | DONE | 地理 `geo_*` 业务表、维护工具和 parity | [LOCAL_DATABASE_BUSINESS_TABLE_ARCHIVE.md](LOCAL_DATABASE_BUSINESS_TABLE_ARCHIVE.md) |
+| S55 | DONE | 人物 `people_*` 可见 bridge、人物事件审计关联 | [LOCAL_DATABASE_BUSINESS_TABLE_ARCHIVE.md](LOCAL_DATABASE_BUSINESS_TABLE_ARCHIVE.md) |
+| S56 | DONE | 官职任所 `office_*` 派生表、内容 hash 与引用修复 | [LOCAL_DATABASE_BUSINESS_TABLE_ARCHIVE.md](LOCAL_DATABASE_BUSINESS_TABLE_ARCHIVE.md) |
+| S57 | DONE | 安全事件档案索引、分页和审计公开 projection 工具 | [LOCAL_DATABASE_BUSINESS_TABLE_ARCHIVE.md](LOCAL_DATABASE_BUSINESS_TABLE_ARCHIVE.md) |
+| S58 | DONE | SQLite prompt 检索索引和浏览器双模式 parity smoke | [LOCAL_DATABASE_BUSINESS_TABLE_ARCHIVE.md](LOCAL_DATABASE_BUSINESS_TABLE_ARCHIVE.md) |
+| S59.1 | DONE | JSON/SQLite 双模式整体验收入口 | [LOCAL_DATABASE_BUSINESS_TABLE_ARCHIVE.md](LOCAL_DATABASE_BUSINESS_TABLE_ARCHIVE.md) |
+| S59.2 | DONE | S54-S59 归档、活动台账压缩、S60+ 内容充实专项规划 | 2026-05-08 / Codex / 本次提交 |
 
-## 5. 剩余路线图总览
+## 5. 活动路线图总览
 
 | ID | 状态 | 目标 | 完成日期 | 工具 | 提交 |
 | --- | --- | --- | --- | --- | --- |
-| S54.1 | DONE | 地理 SQLite 业务表契约：国家、区域、城市、路线、边面、官署辖区 | 2026-05-07 | Codex | 本次提交 |
-| S54.2 | DONE | 地理 SQLite 持久化 adapter：SQLite 模式读写地理业务行，JSON 模式不变 | 2026-05-07 | Codex | `5acf894` |
-| S54.3 | DONE | 地理导入/修复/导出工具与 JSON/SQLite route-view parity 验收 | 2026-05-07 | Codex | `54505b3` |
-| S55.1 | DONE | 人物、家族、资产、田产、关系 SQLite 表契约 | 2026-05-07 | Codex | 本次提交 |
-| S55.2 | DONE | `worldPeople` SQLite 持久化与可见桥接 parity | 2026-05-07 | Codex | 本次提交 |
-| S55.3 | DONE | NPC 生命周期、财富/家产/关系事件写入与审计关联 | 2026-05-07 | Codex | 本次提交 |
-| S56.1 | DONE | 官署、官职、任所、考成、迁转 SQLite 表契约 | 2026-05-07 | Codex | 本次提交 |
-| S56.2 | DONE | `officialPostings` SQLite 持久化与官场/地方任所桥接 parity | 2026-05-08 | Codex | 本次提交 |
-| S56.3 | DONE | 官职、城市、人物之间的本地外键/引用完整性与安全 view | 2026-05-08 | Codex | 本次提交 |
-| S57.1 | DONE | 安全事件索引与事件档案分页，不暴露 raw audit | 2026-05-08 | Codex | 本次提交 |
-| S57.2 | DONE | 审计到公开事件 projection 的本地工具与脱敏测试 | 2026-05-08 | Codex | 本次提交 |
-| S58.1 | DONE | SQLite 索引驱动的检索式 prompt context，JSON fallback 不变 | 2026-05-08 | Codex | 本次提交 |
-| S58.2 | DONE | 浏览器局势簿在 JSON/SQLite 双模式下的视图 parity smoke | 2026-05-08 | Codex | 本次提交 |
-| S59.1 | DONE | JSON/SQLite 双模式整体验收：Mock 主线、导入导出、修复脚本和文档 | 2026-05-08 | Codex | 本次提交 |
-| S59.2 | TODO | S54-S59 完成后再次压缩活动台账并归档实现细节 | - | - | - |
-| S60.1 | TODO | 多 AI 协作编排层规划：任务路由、仲裁、成本边界、失败降级和验收矩阵 | - | - | S54-S59 后启动 |
-| S60.2 | TODO | 多 AI 协作实现：在现有 `mimo-deepseek` 最小路由基础上扩展 narrator/grader/critic/safety 分工 | - | - | S60.1 后 |
-
-## 6. S54：天下地理业务表拆分
-
-### S54.1：地理 SQLite 业务表契约
-
-状态：DONE。
-
-目标：
-
-- 在新契约文档或既有 `WORLD_GEOGRAPHY_SEED_CONTRACT.md` 扩展本地 SQLite 表形状。
-- 建议表：`geo_countries`、`geo_regions`、`geo_cities`、`geo_routes`、`geo_frontier_zones`、`geo_office_jurisdictions`。
-- 固定 `session_id` 分区、`row_id` / seed id 映射、`revision`、`visibility`、`intel_confidence`、`source`、`last_updated_turn`、年月旬字段、动态指标字段和隐藏字段边界。
-- 区分静态 seed 字段、每局动态字段、玩家可见摘要字段和服务器 hidden 字段。
-- 不改运行时代码，不新增 route 字段，不写 SQLite 表。
-
-验收：
-
-- 文档明确 JSON 默认、SQLite local-only、AI 不直写 SQL/表、prompt/UI 只读 view。
-- 表设计能覆盖当前 `worldGeography` 的国家、邻国、城市、路线、边面和官署辖区。
-- 记录后续 S54.2/S54.3 所需的 parity 与迁移测试点。
-
-完成：
-
-- 已在 [WORLD_GEOGRAPHY_SEED_CONTRACT.md](WORLD_GEOGRAPHY_SEED_CONTRACT.md) 增补 S54.1 契约，固定 `geo_countries`、`geo_regions`、`geo_cities`、`geo_routes`、`geo_frontier_zones`、`geo_office_jurisdictions` 的公共列、表字段、seed/动态/可见/hidden 分类、引用修复策略和后续 parity 验收点。
-- 明确本切片不改运行时代码、不新增 route 字段、不创建 SQLite 表；JSON 默认可玩、SQLite local-only、AI 不直写 SQL/table rows、prompt/UI 只读服务器 view 的边界不变。
-- 已同步产品 brief、AI 控制矩阵和共享交接板；后续从 S54.2 地理 SQLite 持久化 adapter 开始。
-
-### S54.2：地理 SQLite 持久化 Adapter
-
-状态：DONE。
-
-目标：
-
-- 在 `STORAGE_ADAPTER=sqlite` 模式下，把 `worldState.worldGeography` 的领域行同步写入地理业务表；JSON adapter 继续只保存 JSON worldState。
-- 读取时能从业务表重建或校验 `worldGeographyView`，必要时从 `worldState.worldGeography` fallback 修复。
-- 路由 payload、prompt summary 和浏览器面板形状保持不变。
-- 所有写入仍通过服务器 helper，不能让 provider `statePatch.worldGeography` 或 prompt proposal 直写表。
-
-验收：
-
-- JSON/SQLite 双模式 focused tests 证明 `worldGeographyView` parity。
-- SQLite 模式不暴露数据库路径、raw row、hidden rows 或 raw audit。
-- `npm run check:docs-governance` 与相关 storage/geography tests 通过。
-
-完成：
-
-- 新增 `src/storage/sqliteGeographyTables.js`，在 SQLite 模式下创建 `geo_countries`、`geo_regions`、`geo_cities`、`geo_routes`、`geo_frontier_zones`、`geo_office_jurisdictions`，并把规范化后的 `worldState.worldGeography` 同步为业务行。
-- `src/storage/sqliteSessionAdapter.js` 在同一 SQLite transaction 中写入 `world_sessions.world_state_json`、审计记录和 `geo_*` 行；读取 session record 时会用 `world_state_json` 修复缺失或陈旧的地理业务行；删除 session 时同步删除地理业务行。
-- JSON adapter 不创建、不读取 `geo_*` 表；route payload、prompt summary、浏览器 view 形状不变。
-- `test/sessionStoreAdapterContract.test.js` 增加 SQLite 地理表行数/hidden row 原始表保存、缺失行与同数量错 `row_id` 读取修复、mutate revision 推进、stale revision 拒写、导入/删除同步和 `worldGeographyView` parity 覆盖。
-
-### S54.3：地理导入、修复与导出工具
-
-状态：DONE。
-
-目标：
-
-- 提供 JSON -> SQLite 地理业务表导入/修复工具，保留 JSON 原档。
-- 如需要，提供 SQLite -> JSON 导出或 debug dump，且默认脱敏、不输出 hidden notes。
-- 增加 route/prompt/browser parity 测试，确认天下格局和任所地理在两种 adapter 下可见内容一致。
-
-验收：
-
-- 工具 dry-run 不修改数据库；正式导入不删除 JSON 原档。
-- 隐藏城市、路线、边面和辖区引用不会进入 UI/prompt。
-- 文档说明回滚方式：禁用 SQLite env 回到 JSON adapter，或导出 JSON snapshot。
-
-完成记录：
-
-- 新增 `scripts/sqliteGeographyTool.js` 与 `npm run storage:geography:sqlite`，支持 `import`、`status`、`repair`、`export`：`import` 复用 JSON -> SQLite adapter 导入并同步 `geo_*`；`status` 只读报告 drift；`repair --dry-run` 只报告不写库，正式 `repair` 按 `world_sessions.world_state_json` 修复地理业务行；`export` 输出脱敏 debug dump。
-- 扩展 `scripts/importJsonSessionsToSqlite.js`：导出可测试入口，支持 `--session`，并明确 `--dry-run` 不打开或创建 SQLite 数据库。
-- 扩展 `src/storage/sqliteGeographyTables.js` 的只读 repair status helper，供工具 dry-run 判断缺失/陈旧/同数量错 `row_id` 地理行。
-- 扩展 browser smoke 参数 `--storage-adapter sqlite --sqlite-db <path>`，让临时 Mock 服务器和脚本内 exam helper 使用同一 SQLite adapter，并按 adapter 清理 smoke session。
-- 新增 `test/sqliteGeographyTool.test.js`、`test/geographyStorageParity.test.js`，覆盖导入 dry-run、正式导入不删 JSON 原档、repair dry-run/正式修复、脱敏 export、JSON/SQLite `worldGeographyView`、prompt `worldGeography` 与 `retrievalContext.geography` 可见摘要一致；扩展 `test/browserSmokeScript.test.js` 覆盖 SQLite smoke 参数。
-
-## 7. S55：人物、家族、资产与关系业务表
-
-### S55.1：人物域 SQLite 表契约
-
-状态：DONE。
-
-目标：
-
-- 为 `people_npcs`、`people_households`、`people_assets`、`people_estates`、`people_relationships` 设计本地 SQLite 表。
-- 明确玩家已知、角色可见、关系可见、传闻、隐藏等可见性字段，以及 `intel_confidence`、`last_report_turn`、`hidden_intent`、`hidden_notes` 的禁止曝光规则。
-- 区分当前可见桥接数据和未来完整 NPC 私档；在 route 仍返回完整 `worldState` 的前提下，不把 hidden 私档塞回 raw route state。
-
-验收：
-
-- 表设计覆盖财富、田产、官职、家族、婚姻、人情债、怨怼、庇护、声望和近期札记。
-- AI 权限分级写清：关系 delta 可建议，隐藏意图、资产真数、官职任命不可写。
-
-完成：
-
-- 已在 [NPC_HOUSEHOLD_ASSET_RELATIONSHIP_CONTRACT.md](NPC_HOUSEHOLD_ASSET_RELATIONSHIP_CONTRACT.md) 增补 S55.1 SQLite 人物域业务表契约，固定 `people_npcs`、`people_households`、`people_assets`、`people_estates`、`people_relationships` 的公共列、字段分类、可见性、引用修复、AI 权限和 S55.2/S55.3 parity 验收点。
-- 明确本切片不改运行时代码、不创建 SQLite 人物表、不新增 route 字段；当前 `worldState.worldPeople` 仍只保存可见桥接 projection，hidden NPC 私档、资产真数、隐藏意图和密札备注不得回填到 route raw `worldState`。
-- 同步 README、产品 brief、architecture、动态数据库规划、AI 控制矩阵和共享交接板；后续从 S55.2 人物 SQLite 持久化与可见桥接 parity 开始。
-
-### S55.2：`worldPeople` SQLite 持久化与桥接
-
-状态：DONE。
-
-目标：
-
-- SQLite 模式下持久化当前可见 `worldPeople` 桥接行，并保持 `worldPeopleView` 与 JSON 模式一致。
-- 保留 `relationshipLedger`、`activeNpcRequest` 和 `relationshipChanges` 的既有服务器裁决；AI 仍只能提交关系建议。
-- 不让浏览器或 prompt 读取 raw 人物表；只读 `worldPeopleView` / capped prompt summary。
-
-验收：
-
-- JSON/SQLite 双模式 `worldPeopleView` parity。
-- hidden NPC、hidden asset、hidden relationship refs 不进入 prompt/UI。
-- active request 生命周期和关系 clamp 测试继续通过。
-
-完成：
-
-- 新增 `src/storage/sqlitePeopleTables.js`，SQLite 模式创建 `people_npcs`、`people_households`、`people_assets`、`people_estates`、`people_relationships`，并把规范化后的可见 `worldState.worldPeople` bridge projection 同步为本地业务行。
-- `src/storage/sqliteSessionAdapter.js` 在写入 `world_sessions.world_state_json` 前规范化 `worldPeople`，写入 session row 后同步 `people_*`；读取 session record 时从 `world_state_json` 修复缺失、陈旧、同数量错 `row_id` 或被 raw hidden 行污染的 people rows；删除和导入 session 也同步 people rows。
-- JSON adapter 不创建、不读取 `people_*` 表；route payload、prompt summary、浏览器 `worldPeopleView` 形状不变。raw `people_*` 行不会成为 route state、prompt 或 UI 的来源。
-- `test/sessionStoreAdapterContract.test.js` 增加 JSON/SQLite `worldPeopleView` 与 prompt parity、hidden worldPeople token 过滤、SQLite people 表同步、hidden raw row + 缺失可见 bridge row 读取修复、同数量错行修复、mutate revision 推进、stale revision 拒写和 import/delete 同步覆盖。
-
-### S55.3：NPC 生命周期与事件集成
-
-状态：DONE。
-
-目标：
-
-- 把 NPC 财富变化、田产变动、官职变动、家庭事件、死亡/迁居、关系升降和 active request 结果写成服务器事件。
-- 关联 `event_log` / 安全事件索引，但不直接暴露 raw audit。
-- 给重要 NPC 建立 `last_event_id`、`last_updated_turn` 或等价索引，方便后续检索式 prompt context。
-
-验收：
-
-- 普通 provider 不能伪造 NPC 私档或资产真数。
-- 事件档案只展示可见 projection。
-- 现有人物谱牒 UI 不显示 hidden intent、hidden notes 或 raw row ids。
-
-完成：
-
-- 新增 `src/game/worldPeopleEvents.js`，以服务器已经应用后的可见 `worldPeople` 前后快照生成安全人物事件；当前普通回合实际接入关系升降和 active request 结果，helper 同时支持后续服务器模块产生的 NPC 生死/迁居/官职履历、家族、资产和田产可见 delta。
-- `src/routes/game.js` 在普通回合结算中记录 `worldPeople` 变动前快照，结算后把人物事件写入结构化 `event_log` / JSON audit sidecar；既有公开 `eventHistory` 顺序仍由叙事、active request、tick、长期事件和官场系统控制，避免人物审计事件改变近事裁剪顺序。
-- `src/storage/sessionAudit.js`、JSON/SQLite adapter 增加只在写库上下文中流转的 `peopleEventLinks`；SQLite `people_*` 同步时把关联 `last_event_id` 写入本地业务表并在后续无事件写入、读档修复中保留已存在的安全 `world_people` 事件关联，不回写 route `worldState.worldPeople`。
-- `test/worldPeopleEvents.test.js` 覆盖关系事件、请托调度不误记、生命周期/资产/田产可见 delta 分类；`test/gameTurnRelationships.test.js` 覆盖 route 的关系与请托审计；`test/sessionStoreAdapterContract.test.js` 覆盖 SQLite `people_relationships` / `people_npcs.last_event_id`、后续写入与读档修复保留、view/prompt/retrieval 不显示事件 id。
-
-限制：
-
-- S55.3 仍不创建 hidden NPC 私档或真实资产账本；当前运行时财富/田产/迁居等事件等待后续服务器模块产生可见 `worldPeople` delta 后自动进入同一 helper。S57 仍负责 raw audit 外的安全事件索引/分页 projection。
-
-## 8. S56：官职、任所与地方事务业务表
-
-### S56.1：官职域 SQLite 表契约
-
-状态：DONE。
-
-目标：
-
-- 设计 `office_bureaus`、`office_catalog`、`office_city_jurisdictions`、`office_postings`、`office_assessments`、`office_transfers` 等表。
-- 明确静态 catalog 与每局动态 posting 的边界；`officialCatalog` 可继续作为代码种子或导入来源。
-- 记录 `holder_type` / `holder_id`、城市/区域/辖区引用、任期年月旬、状态、考成、弹劾、迁转和可见性。
-
-验收：
-
-- 表契约能覆盖当前 `officialPostingsView`、`officialCareerView` 与地方官任所数据。
-- 明确 AI 不可任命、调任、处分或改考成；服务器继续拥有官职任免。
-
-完成：
-
-- 已在 [OFFICIAL_POSTING_DATABASE_CONTRACT.md](OFFICIAL_POSTING_DATABASE_CONTRACT.md) 增补 S56.1 SQLite 官职任所业务表契约，固定 `office_bureaus`、`office_catalog`、`office_city_jurisdictions`、`office_postings`、`office_assessments`、`office_transfers` 的公共列、字段分类、可见性、holder/地理/人物引用、修复策略和后续 parity 验收点。
-- 明确本切片不改运行时代码、不新增 route 字段、不创建 SQLite 官职任所表；当前 `worldState.officialPostings` 仍只保存安全可见 projection，hidden 官员私档、密札考成、未公开迁转和 raw `office_*` 行不得回填到 route raw `worldState`。
-- 同步 README、产品 brief、architecture、动态数据库规划、AI 控制矩阵和共享交接板；后续从 S56.2 官职任所 SQLite 持久化与桥接 parity 开始。
-
-### S56.2：`officialPostings` SQLite 持久化与桥接
-
-状态：DONE。
-
-目标：
-
-- SQLite 模式下持久化官署、官职、任所、考成和迁转 projection。
-- 由 `officialCareer`、地方官 role state、地理城市/辖区表和服务器 career history 派生写入。
-- 维持 `officialPostingsView` 与 prompt summary 兼容。
-
-验收：
-
-- JSON/SQLite 双模式 `officialPostingsView` parity。
-- 完整 scholar -> official 路径、地方官开局、入仕官员开局和官场差事测试继续通过。
-- 未公开调任、hidden 考成札记、密参不进入 UI/prompt。
-
-完成：
-
-- 新增 `src/storage/sqliteOfficialPostingTables.js`，SQLite 模式创建并同步 `office_bureaus`、`office_catalog`、`office_city_jurisdictions`、`office_postings`、`office_assessments`、`office_transfers`；同步来源只取服务器规范化后的安全 `worldState.officialPostings` projection。
-- 扩展 `src/storage/sqliteSessionAdapter.js`：初始化 `office_*` 表；写入 session row 前按地理、人物、官职任所顺序规范化，写入后同 transaction 同步派生表；读档时按 `world_sessions.world_state_json` 修复缺失、陈旧、同数量错 `row_id` 或 raw hidden 行污染；导入和删除 session 同步维护 `office_*` rows。
-- 扩展 `test/sessionStoreAdapterContract.test.js`，覆盖 JSON/SQLite `officialPostingsView` 与 prompt parity、hidden token 不进 view/prompt/retrieval、SQLite `office_*` 行数与字段同步、hidden raw row + 缺失可见 bridge row 修复、错行修复、mutate revision 推进、stale revision 拒写和 import/delete 清理。
-- 同步 README、产品 brief、architecture、动态数据库规划、官职任所契约、AI 控制矩阵和共享交接板；S56.2 不新增 route 字段，不改变 JSON 默认路径，不让 prompt/UI 读取 raw `office_*`，也不让 raw row 反向改 `player.officeTitle` 或 `officialCareer`。
-
-### S56.3：跨域引用完整性与安全 View
-
-状态：DONE。
-
-目标：
-
-- 建立官职、城市、NPC/player 之间的本地引用完整性策略。
-- 城市被隐藏、NPC 未公开、官职未可见时，任所 view 必须裁剪相关引用。
-- 处理旧档或导入不完整时的修复策略：降级为摘要、标记 `unknown`、或从 `worldState` fallback。
-
-验收：
-
-- 跨域 hidden 引用不泄漏 raw id。
-- 导入不完整不会让读档失败；玩家 API 返回安全降级 view。
-
-完成：
-
-- `src/storage/sqliteOfficialPostingTables.js` 为每条 `office_*` 派生行在 `metadata_json.contentHash` 写入稳定内容指纹；指纹排除 `metadata_json`、`created_at`、`updated_at`，只作为本机漂移探针，不作为加密防护或任免裁决来源。
-- 读档 repair status 新增 `contentMismatches`：当 `office_*` 行缺少内容指纹，或同 `row_id` / 同 `revision` 下业务列被污染时，继续按既有单向路径从 `world_sessions.world_state_json` / 服务器 normalized `officialPostings` projection 重建表行。
-- `test/sessionStoreAdapterContract.test.js` 新增同数量、同 `row_id`、同 revision 内容篡改探针，覆盖 hidden NPC、hidden city、hidden route/frontier refs 污染不会进入 `officialPostingsView`、prompt 或 `retrievalContext`，并确认 raw 表被修回服务器可见 projection。
-- 同一测试文件新增旧 S56.2 行缺少 `contentHash` 的升级探针，读档后重建 `office_*` 并重新写入内容指纹；JSON 默认路径、route payload、Mock 可玩性和完整书生入仕路径不变。
-
-## 9. S57：安全事件索引
-
-### S57.1：安全事件索引与分页
-
-状态：DONE。
-
-目标：
-
-- 在 raw `event_log` / `ai_change_proposals` 外新增安全事件索引或 projection 表，供事件档案 UI 和 prompt 检索。
-- 支持按人物、城市、官职、世界议程、考试、长期事件、年份月份旬筛选。
-- 事件档案分页，避免长期世界一次性把大量事件塞给浏览器或 prompt。
-
-验收：
-
-- `eventArchiveView` 不读取 raw audit，不展示 provider proposal、prompt、key、路径、hidden notes。
-- UI 与 prompt 只读 sanitized event projection。
-
-完成：
-
-- `src/game/eventArchive.js` 将事件档案拆为可复用的安全条目索引与分页 view；`eventArchiveView` 现在带 `pagination`、`pageCounts`，`GET /api/game/state/:sessionId` 支持 `eventArchivePage` / `eventArchivePageSize` 查询参数，默认 payload shape 仍保留 `items[]`。
-- 新增 `src/storage/sqliteEventArchiveTables.js`，SQLite 模式创建并同步 `event_archive_index`，来源只取 `buildEventArchiveIndexItems(worldState)` 的 sanitized public projection；派生行写入 `metadata_json.contentHash`，读档时从 `world_sessions.world_state_json -> eventArchiveView` 单向修复缺失、错 id、陈旧 revision、同 id/同 revision 内容污染或旧行缺 hash。
-- `src/storage/sqliteSessionAdapter.js` 在写入、导入、读档修复和删除 session 时维护 `event_archive_index`；raw `event_log` / `ai_change_proposals` 仍只是本地诊断表，不作为浏览器、prompt 或 route state 来源。
-- `src/ai/promptContextAssembler.js` 的 `retrievalContext.events.recentEvents` 和 `src/ai/prompts.js` 的顶层 `recentEvents` 都改读安全 `eventArchiveView` 条目，不再直接读取 raw `eventHistory` 文本；`public/app.js` 的事件档案与读档叙事回放也只读 route view。
-- 测试覆盖分页、hidden token 丢弃、route state 分页参数、prompt 近事防泄漏、SQLite event index 同步、内容污染修复、import/delete 和 stale expectedRevision 拒写。
-
-### S57.2：审计到公开事件 Projection 工具
-
-状态：DONE。
-
-目标：
-
-- 提供本地 dev 工具，把审计摘要、世界事件、官场履历、考试记录整理为可见事件 projection。
-- 增加脱敏测试：密钥片段、本地路径、raw prompt、provider 错误、hidden notes、hidden intent 必须被丢弃或遮蔽。
-
-验收：
-
-- 工具输出默认面向玩家/调试安全，不输出 raw audit 全量。
-- redaction 覆盖 JSON sidecar 与 SQLite 审计两种来源。
-
-完成：
-
-- 新增 `src/game/auditPublicProjection.js`，只把 `visibility: "public"` 的审计摘要重新经过事件档案 sanitizer 和 related/applied allowlist，生成本地 public projection；developer/private 审计、敏感或空摘要、hidden notes、prompt、path、key 和 raw state-like 文本会被丢弃或遮蔽。
-- 新增 `scripts/auditEventArchiveTool.js` 与 `npm run storage:audit-events`，支持 `status` / `export`、`--adapter json|sqlite`、`--session`、`--limit`、`--out` 和 `--db`；JSON sidecar 与 SQLite 审计共用 adapter API，缺失 SQLite 文件不会被 status 创建。
-- 工具只读取 `event_log` public 审计摘要；`ai_change_proposals` 只输出计数，不输出原始 proposal 内容，也不写回 `eventArchiveView`、`event_archive_index`、route state、prompt 或浏览器。
-- 新增 `test/auditPublicProjection.test.js` 与 `test/auditEventArchiveTool.test.js`，覆盖 JSON sidecar、SQLite audit、缺失 SQLite DB、hidden/path/key/prompt/raw audit token 和 AI proposal 原文防泄漏。
-
-## 10. S58：检索式 Prompt 与浏览器 Parity
-
-### S58.1：SQLite 索引驱动的 Prompt Context
-
-状态：DONE。
-
-目标：
-
-- `promptContextAssembler` 在 SQLite 模式下可从地理、人物、官职和安全事件索引读取相关摘要；JSON 模式继续从现有 view/prompt helper fallback。
-- 按当前身份、地点、active scene、玩家输入、世界议程和可见关系排序，而不是全量灌入模型。
-- 不改变 provider schema、稳定 prompt 前缀或 AI/server 权限矩阵。
-
-验收：
-
-- prompt tests 证明 hidden rows 不进入 `retrievalContext`。
-- 同一场景 JSON/SQLite 生成的关键摘要一致或有记录的安全降级。
-
-完成：
-
-- 新增 `src/storage/sqlitePromptRetrievalTables.js`，SQLite 模式把 `worldGeographyView`、`worldPeopleView`、`officialPostingsView` 和 `eventArchiveView` 的 compact 可见 projection 同步到 `prompt_retrieval_index`，每行带 `metadata_json.contentHash`，读档可修复缺失、陈旧、错 id 和同 id/同 revision 内容污染。
-- `src/storage/sqliteSessionAdapter.js` 初始化、写入、导入、删除和读档修复都接入 prompt 检索索引；读档后的 `worldState` 仅挂载非枚举安全来源，不把 SQLite 路径、raw table、事件 id 或 prompt index row 暴露进 route payload。
-- `src/ai/promptContextAssembler.js` 在存在安全来源时从 SQLite prompt index 读取地理、人物、官职任所和事件检索行；JSON/default 路径继续调用原 view helper fallback，`retrievalContext` schema、provider schema 和稳定 prompt 前缀不变。
-- 新增 `test/sqlitePromptRetrieval.test.js`，覆盖 JSON fallback parity、SQLite 检索输出一致、hidden token 防泄漏、prompt index 同 id 内容污染修复、缺失行修复，以及 raw `geo_*` / `people_*` / `event_log` / `ai_change_proposals` 不被 prompt 读取。
-
-### S58.2：浏览器局势簿双模式验收
-
-状态：DONE。
-
-目标：
-
-- 在 JSON 和 SQLite 模式下分别 smoke 局势簿：天下格局、任所地理、人物谱牒、官职簿、事件档案。
-- 验证 selector、隐藏词、横向溢出、空状态、长列表分页或截断。
-
-验收：
-
-- Browser smoke 或 focused UI test 覆盖两种 adapter。
-- 不暴露 raw `worldState` ledger、raw audit、`retrievalContext`、provider proposal、本地路径或 key。
-
-完成：
-
-- `public/app.js` 为 `#event-archive-panel` 增加稳定分页 `data-*`：页码、page size、total items、total pages、has-next 和当前页 item count，浏览器仍只读 route `eventArchiveView`。
-- `scripts/browserSmoke.js` 新增 `--information-parity` 专项入口：顺序启动 JSON 与 SQLite Mock 临时服务器，跑同一套 official-assignment 局势簿流程，比对桌面、分页态和移动态 normalized DOM snapshot、route view 计数与分页 `eventArchiveView` metadata。
-- 扩展局势簿 smoke helper：事件档案分页 metadata、raw `world_state_json` / `event_archive_index` / `prompt_retrieval_index` / raw business table token、防 path/key/prompt/audit 泄漏，以及 event archive grid overflow 进入 focused helper 测试。
-- `--information-parity` 不与 `--url` 或单一 `--storage-adapter` 混用；默认完整 browser smoke 仍保持单模式完整主线验收。
-
-## 11. S59：整体验收与再压缩
-
-### S59.1：JSON/SQLite 双模式集成硬化
-
-状态：DONE。
-
-目标：
-
-- 跑完整 Mock 主线、代表身份回合、读档/存档簿、导入/修复/导出工具和 SQLite 业务表 parity。
-- 更新 README、architecture、brief、shared context 与相关契约文档。
-- 记录 SQLite 显式模式的 Node 版本/`node:sqlite` 要求和回滚方式。
-
-验收：
-
-- JSON 默认路径无需数据库即可启动和完整游玩。
-- SQLite local-only 模式能 start/turn/save/list/read state，并保持 route/view shape。
-- 完整 scholar -> official 路径未破坏。
-
-完成：
-
-- 新增 `scripts/dualModeAcceptance.js` 与 `npm run smoke:dual-mode`，默认串联 JSON 完整 Mock browser smoke、SQLite 完整 Mock browser smoke、`--information-parity` 局势簿 parity，以及 S59.1 存储维护验收；`--storage-only` 可在无浏览器环境只跑导入/修复/导出/审计/派生表验收。
-- 存储维护验收会构造一份已走完 `scholar -> official` 的安全 fixture，执行 JSON -> SQLite dry-run 与正式导入，比较 JSON/SQLite route view 与 prompt 可见 payload，检查 `geo_*`、`people_*`、`office_*`、`event_archive_index`、`prompt_retrieval_index`、`event_log`、`ai_change_proposals` 计数，并演练地理 drift dry-run/repair/export 与 JSON/SQLite audit public projection。
-- `scripts/importJsonSessionsToSqlite.js` 增加 `syncedDerivedTables` 返回字段并更新帮助文案，明确导入通过 SQLite adapter 同步全部本地派生表，不再只表述为 `geo_*`。
-- 新增 `test/dualModeAcceptanceScript.test.js`，覆盖参数解析、临时/显式 SQLite DB 归属、hidden-token guard、fixture 主线形状，以及 storage-only acceptance 的导入、修复、导出、审计 projection、派生表计数和路径/hidden token 防泄漏。
-- 同步 README、产品 brief、architecture、动态数据库规划、浏览器验收记录和共享交接板；S59.1 不新增 route 字段、不扩 AI 权限、不让浏览器或 prompt 读取 raw SQLite 表、raw audit、provider proposal、prompt、本地路径或 key。
-
-### S59.2：完成后归档与上下文压缩
+| S60.1 | TODO | 超大动态世界数据库内容契约：规模目标、seed 分层、数据密度、可见性、隐私和服务器生成边界 | - | - | - |
+| S60.2 | TODO | 内容基线与规模验收 fixture：用固定大世界样本定义国家、城市、NPC、官职和事件数量/性能/防泄漏门槛 | - | - | - |
+| S61.1 | TODO | 国家与邻国深度内容包：财政、军事、国威、继承风险、外交、情报可信度和国策压力 | - | - | - |
+| S61.2 | TODO | 城市与区域深度内容包：全国与邻国城市的税粮、市价、士绅、诉讼、水利、灾害、交通、驻军和书院 | - | - | - |
+| S62.1 | TODO | NPC 人口生成与家族谱系：数百 NPC、家族、婚姻、门生故旧、派系、同乡同年和社会身份 | - | - | - |
+| S62.2 | TODO | NPC 生命周期与资产流动：财富、田产、官职、婚丧、迁居、健康、人情债和关系记忆演化 | - | - | - |
+| S63.1 | TODO | 官职生态与任命池：空缺、候补、上级下属、吏员幕友、考成、任期轮转和差遣压力 | - | - | - |
+| S63.2 | TODO | 地方事务与案牍事件模板：钱粮、刑名、灾赈、水利、盗匪、徭役、士绅、疫病和任所收束 | - | - | - |
+| S64.1 | TODO | 外交、边防与军事数据库内容：边镇、驻军、粮道、战备、邻国使节、边患事件和可见情报 | - | - | - |
+| S64.2 | TODO | 经济、财政、粮储与市场演化：税赋、粮价、盐漕、商路、地方库银、赈济、腐败和财政压力 | - | - | - |
+| S65.1 | TODO | 事件模板与历史档案生成系统：可组合事件链、跨域因果、公开/密档 projection 和审计关联 | - | - | - |
+| S65.2 | TODO | 情报、传闻与可见性系统：角色视野、传闻可信度、线索来源、秘密过滤和 prompt 可读边界 | - | - | - |
+| S66.1 | TODO | 大规模 prompt retrieval 策略：排序、预算、分页、角色视野、性能和 token 防线 | - | - | - |
+| S66.2 | TODO | 大数据量浏览器信息面板：城市、NPC、官职、事件的搜索、筛选、分页和 hidden-token smoke | - | - | - |
+| S67.1 | TODO | 规模/性能/回归验收：大 fixture 下的 dual-mode、读档修复、prompt 检索、UI 和内存/耗时门槛 | - | - | - |
+| S67.2 | TODO | 内容充实阶段归档与下一阶段交接 | - | - | - |
+| S70.1 | TODO | 多 AI 协作编排层规划：任务路由、仲裁、成本边界、失败降级和验收矩阵 | - | - | S67 后启动 |
+| S70.2 | TODO | 多 AI 协作实现：在现有 `mimo-deepseek` 最小路由基础上扩展 narrator/grader/critic/safety 分工 | - | - | S70.1 后 |
+
+## 6. S60：内容契约与规模验收
+
+### S60.1：超大动态世界数据库内容契约
 
 状态：TODO。
 
 目标：
 
-- S54-S59 完成后，把详细实现记录移入新的归档文档。
-- `docs/DEVELOPMENT_STEPS.md` 只保留下一阶段活动路线图、治理保护块和必要摘要。
-- 清理 README/brief/shared context 中过长的历史段落，保留内容安全边界。
+- 固定“超大动态世界数据库”的内容目标、规模档位和阶段性定义。
+- 建议规模档位：开发小样本、默认可玩中样本、压力测试大样本。
+- 明确国家、邻国、城市、NPC、家族、官职、事件、情报和 prompt 索引的字段密度。
+- 标注静态 seed、每局动态、服务器 hidden、玩家可见、prompt 可读、浏览器可查和审计可追溯的分层。
+- 明确内容生成入口：seed catalog、服务器 generator、fixture、受限 AI proposal 和迁移/修复工具。
 
 验收：
 
-- `npm run check:docs-governance` 通过。
-- 压缩后仍能看清：当前状态、下一步、JSON 默认、SQLite local-only、AI 不直写、view-first 安全边界。
+- 文档明确 local-only、AI 不直写库、view-first、hidden 不回填 raw route state。
+- 给出 S60.2 大世界 fixture 的数量目标和防泄漏验收口径。
+- 同步 brief、动态数据库规划、共享上下文和必要 README 摘要。
 
-## 12. S60：多 AI 协作编排（S54-S59 之后）
-
-本节是应 MiMo + DeepSeek 混合使用需求追加的后续规划，不插队当前数据库专项。当前已落地的 `mimo-deepseek` 只是 provider 方法级路由：普通叙事、开局、流式回合和科举出题走 MiMo，科举评卷走 DeepSeek V4 Pro。S60 目标是在不扩大 AI 权限的前提下，把它升级为可观测、可测试、可降级的多模型协作层。
-
-### S60.1：多 AI 协作编排层规划
+### S60.2：内容基线与规模验收 fixture
 
 状态：TODO。
 
 目标：
 
-- 设计 task router：按任务类型、风险、成本、上下文长度和可用 key 选择 `mimo`、`deepseek` 或未来 provider。
-- 固定角色分工建议：MiMo 作为主要 narrator/world interpreter/question writer；DeepSeek V4 Pro 只用于高风险 grading、关键合法性复核、越权输出复审或失败重试仲裁。
-- 明确失败降级：缺 key、超时、schema 失败、streaming 中断、provider 限额或 Token Plan 不适用时如何回到 Mock、单 provider 或安全拒绝。
-- 记录可观测性边界：只保存脱敏 provider 名、任务名、模型摘要、latency、schema 结果和失败类别；不保存 key、raw prompt、raw provider response 或隐藏 ledger。
-- 明确官方服务条款边界：Token Plan `tp-...` key 仅在授权场景使用，公开部署或非 Coding 自定义后端应改用普通 API key 或先确认授权。
+- 新增固定测试 fixture 或 generator，覆盖多个国家、数十城市、数百 NPC、若干官署/官职、事件链和情报可见性。
+- 让 fixture 能在 JSON 与 SQLite 双模式下生成同等安全 view。
+- 建立“内容密度”可测指标：国家/城市/NPC/事件数量、prompt retrieval 条目、事件档案分页、隐藏词防线和运行耗时。
 
 验收：
 
-- 不改变现有 route payload、provider schema、Mock 默认路径或服务器裁决边界。
-- 输出设计文档，列出单元测试、route health、provider long-run、secret redaction 和成本/限额风险。
+- focused tests 覆盖 fixture 数量、view parity、hidden-token、prompt budget 和读档修复。
+- 不要求一次性做完整玩法内容，但必须让后续 S61-S66 有稳定验收样本。
 
-### S60.2：多 AI 协作实现
+## 7. S61：国家、邻国、城市与区域
+
+### S61.1：国家与邻国深度内容包
 
 状态：TODO。
 
 目标：
 
-- 在当前 `mimo-deepseek` provider 之上抽出 task router / policy helper，避免把每个任务的模型选择散落在 adapter 方法里。
-- 支持按任务配置 primary、critical、fallback 和 optional review provider，但默认仍以 MiMo 为主、DeepSeek V4 Pro 只用于关键环节。
-- 为高风险任务增加可选只读 critic/review pass；critic 只能产生诊断或重试建议，不能直接写 statePatch、评分、晋级、任免或持久化结果。
-- 为 connection-test 和 provider smoke 输出更清晰的混合模型摘要。
+- 扩充本国与邻国字段：财政、军力、国威、正统性、朝局稳定、继承风险、外交关系、互市/贡使、边患、情报可信度。
+- 让 World Entities / Threads 可以读取国家级压力，但最终外交、战争、割地、议和仍由服务器裁决。
+- 为玩家身份提供不同可见摘要：书生只见传闻，官员/皇帝可见更高置信度奏报。
 
-验收：
+### S61.2：城市与区域深度内容包
 
-- Mock 默认可玩，`AI_PROVIDER=mimo-deepseek` 可跑 route health 和 provider smoke。
-- schema、remote normalization、AI 控制矩阵、secret redaction、server-owned patch tests 继续通过。
-- 完整 scholar -> official 路径不被多模型编排打断。
+状态：TODO。
 
-## 13. 进度记录
+目标：
 
-### 2026-05-08
+- 扩充全国及邻国城市：人口、税基、粮储、市价、商路、士绅、书院、诉讼、徭役、水利、灾害、治安、驻军、驿路。
+- 明确地方官、将领、入仕官员在不同任所应读取哪些城市/区域指标。
+- 城市变化应能落入事件档案、官职考成和 prompt retrieval。
 
-工具：Codex
+## 8. S62：NPC、家族与人生演化
 
-步骤：S59.1 JSON/SQLite 双模式集成硬化
+### S62.1：NPC 人口生成与家族谱系
 
-提交：本次提交。
+状态：TODO。
 
-完成：
+目标：
 
-- 新增 `scripts/dualModeAcceptance.js` 与 `npm run smoke:dual-mode`：默认串联 JSON/SQLite 完整 Mock browser smoke、`--information-parity` 局势簿 parity 和 S59.1 storage acceptance；`--storage-only` 可跳过浏览器，只验证 JSON -> SQLite 导入、派生表同步、地理 repair/export、审计公开 projection 和 hidden-token 防线。
-- storage acceptance 使用一份已完成四级科举并入仕的 fixture，先跑 `storage:import:sqlite` dry-run，再通过 `storage:geography:sqlite import` 正式导入，随后比较 JSON/SQLite route view 与 prompt 可见 payload，确认 `geo_*`、`people_*`、`office_*`、`event_archive_index`、`prompt_retrieval_index`、`event_log` 和 `ai_change_proposals` 均已同步。
-- 演练 SQLite 地理派生表漂移：删除 `geo_routes` 后，`repair --dry-run` 必须只报告 drift，正式 `repair` 从 `world_sessions.world_state_json` 修复，`status` 回到 clean，`export` 与 `storage:audit-events --adapter json|sqlite export` 均不得输出 hidden notes、raw audit/prompt、provider proposal、key 或本地路径。
-- `scripts/importJsonSessionsToSqlite.js` 帮助文案与返回值新增 `syncedDerivedTables`，准确说明 JSON -> SQLite 导入会通过 adapter 同步地理、人物、官职任所、事件档案和 prompt 检索派生表；保留旧 `syncedGeographyTables` 字段以兼容既有测试/脚本。
-- 同步 README、产品 brief、architecture、动态数据库规划、浏览器验收记录和共享交接板；S59.1 只新增验收编排与测试，不新增 route 字段、不改变 JSON 默认路径、不扩大 AI 或 SQLite raw table 权限。
+- 生成或 seed 数百 NPC，覆盖官员、胥吏、士绅、商贾、军官、书院师友、同年、亲族、邻国使者等身份。
+- 补家族、婚姻、门生故旧、同乡同年、派系和社会声望网络。
+- NPC 不全量进入 prompt，只由服务器按地点、事件、关系、官署和玩家输入检索。
 
-验证：
+### S62.2：NPC 生命周期与资产流动
 
-- 已通过：`node --check scripts\dualModeAcceptance.js test\dualModeAcceptanceScript.test.js scripts\importJsonSessionsToSqlite.js`
-- 已通过：`node --test test\dualModeAcceptanceScript.test.js test\browserSmokeScript.test.js test\sqliteGeographyTool.test.js test\auditEventArchiveTool.test.js test\sqlitePromptRetrieval.test.js`（54 tests）
-- 已通过：`npm run smoke:dual-mode -- --storage-only`
-- 已通过：`$env:AI_PROVIDER='mock'; npm run smoke:dual-mode`（JSON/SQLite 完整 Mock browser journey + 局势簿 parity + storage acceptance）
-- 已通过：`npm run check:docs-governance`
-- 已通过：`git diff --check`
-- 已通过：`npm test`（443 tests）
-- 提交前只读复审：Hubble 未发现 P0/P1/P2/P3；确认临时 SQLite/session/audit/export 清理、显式 DB 不整库删除、`syncedDerivedTables` 兼容口径、storage-only 覆盖面、验收编排不改 runtime 行为，以及文档边界均无阻塞。该子代理未编辑文件、未运行 Git 命令。
+状态：TODO。
 
-风险/遗留：
+目标：
 
-- 默认 `npm run smoke:dual-mode` 需要本机 Chrome/Edge 与 `node:sqlite`；无浏览器环境可先用 `--storage-only` 加 focused tests，完整浏览器双模式仍由 `smoke:browser` JSON/SQLite 和 `--information-parity` 补跑。
-- `storage:geography:sqlite repair/export` 仍是地理专用维护工具；people/office/event/prompt 派生行的自动修复继续由 SQLite adapter 读档路径和 contract tests 覆盖，S59.1 不新增跨域 raw table repair CLI。
+- 建立服务器生命周期 helper：财富/田产变化、婚丧、迁居、健康、官职履历、声誉、人情债、怨怼和庇护关系。
+- AI 只能建议可见关系或事件语气；资产真数、隐藏动机、死亡/任免等仍由服务器裁决。
+- 人物变化应关联安全事件档案和 `people_*` 派生行。
 
-下一步：
+## 9. S63：官职生态与地方事务
 
-- S59.2：把 S54-S59 完成细节压缩入归档文档，精简活动台账。
+### S63.1：官职生态与任命池
 
-### 2026-05-08
+状态：TODO。
 
-工具：Codex
+目标：
 
-步骤：S58.2 浏览器局势簿双模式验收
+- 扩充空缺、候补、补授、试署、外放、升迁、丁忧、起复、弹劾、考成和上级下属网络。
+- 建立官署内部角色：堂官、属官、胥吏、幕友、同僚和地方士绅接口。
+- 保护完整书生入仕路径，`player.officeTitle` 和任免仍由服务器写入。
 
-提交：本次提交。
+### S63.2：地方事务与案牍事件模板
 
-完成：
+状态：TODO。
 
-- `public/app.js` 在 `#event-archive-panel` 输出事件档案分页 `data-*`，包括 page、pageSize、totalItems、totalPages、hasNextPage 和 pageItemCount，供 smoke 稳定读取；浏览器数据源仍是 route `eventArchiveView`。
-- `scripts/browserSmoke.js` 新增 `--information-parity`：自动启动 JSON 与 SQLite 两个 Mock 临时服务器，执行同一套 official-assignment 局势簿流程，比对桌面、分页态、移动端 DOM snapshot、route view counts 和 `eventArchivePageSize=2` 的分页 route metadata。
-- 局势簿 smoke helper 增加 raw `world_state_json`、`event_archive_index`、`prompt_retrieval_index`、`geo_` / `people_` / `office_`、raw audit、provider proposal、prompt、本地路径和 key 的隐藏词防线，并补 event archive grid overflow 与 parity helper 单测。
-- SQLite parity 数据库归属逻辑抽为可测 helper，覆盖显式 `--sqlite-db` 不归 smoke 删除、自动临时库才归 smoke 清理的边界。
-- 同步 README、产品 brief、architecture、动态数据库规划、浏览器验收记录和共享交接板；S58.2 不让浏览器读取 `retrievalContext`、prompt index、event index、raw business tables 或 raw audit。
+目标：
 
-验证：
+- 为地方官与入仕官员补事件模板：钱粮、刑名、灾赈、水利、盗匪、徭役、士绅、疫病、学政、驿递。
+- 事件模板需要可组合、可审计、可落地城市指标，并能生成官场考成影响。
+- 不把事件模板交给 AI 随意改库；AI 只写叙事和受限 proposal。
 
-- 已通过：`node --check public\app.js scripts\browserSmoke.js test\browserSmokeScript.test.js`
-- 已通过：`node --test test\browserSmokeScript.test.js`（39 tests）
-- 已通过：`$env:AI_PROVIDER='mock'; npm run smoke:browser -- --information-parity`（JSON/SQLite 双服务器；6 screenshots checked）
-- 已通过：`npm run check:docs-governance`
-- 已通过：`git diff --check`
-- 已通过：`npm test`（438 tests）
-- 前置只读梳理：Bernoulli 确认现有 `--storage-adapter sqlite --sqlite-db`、`assertInformationPanelShell()`、事件分页 route 参数和 event archive grid metrics 可复用；建议补分页 `data-*`、专门 parity 入口、hidden-token 和 overflow 单测。该子代理未编辑文件、未运行 Git 写入命令。
-- 提交前只读复审：Carson 未发现 P0/P1/P2；其两个 P3（architecture 摘要未提 S58.2、显式 SQLite DB 清理边界缺 focused regression）已在提交前修正。该子代理未编辑文件、未运行 Git 命令。
+## 10. S64：外交、军事、经济与市场
 
-风险/遗留：
+### S64.1：外交、边防与军事数据库内容
 
-- `--information-parity` 是局势簿专项，不替代默认完整 `npm run smoke:browser` 的书生通关、作弊样例和代表身份长路径；后者仍可按需单独跑 JSON 或 SQLite。
-- SQLite 侧仍依赖当前 Node 运行时支持 `node:sqlite`；缺失时应按浏览器验收文档记录跳过并跑 focused API/test gates。
+状态：TODO。
 
-下一步：
+目标：
 
-- S59.1：JSON/SQLite 双模式整体验收，覆盖 Mock 主线、导入导出、修复脚本和文档。
+- 补边镇、驻军、粮道、战备、军心、统帅、边境事件、邻国使节、谈判和战争预警。
+- 信息必须按角色视野、地理距离和情报可信度过滤。
 
-### 2026-05-08
+### S64.2：经济、财政、粮储与市场演化
 
-工具：Codex
+状态：TODO。
 
-步骤：S58.1 SQLite 索引驱动的 Prompt Context
+目标：
 
-提交：本次提交。
+- 补税赋、粮价、商路、盐漕、矿冶、地方库银、赈济、腐败、债务和财政压力。
+- 经济变化与城市、国家、官职考成、事件档案和 prompt retrieval 联动。
 
-完成：
+## 11. S65：事件档案、情报与可见性
 
-- 新增 `src/storage/sqlitePromptRetrievalTables.js`，建立 SQLite-only `prompt_retrieval_index`，由服务器可见 `worldGeographyView`、`worldPeopleView`、`officialPostingsView` 和 `eventArchiveView` compact rows 派生；每行写入 `metadata_json.contentHash`，读档按 `world_sessions.world_state_json -> server views -> prompt index` 单向修复缺失、陈旧、错 id 和同 id/同 revision 内容污染。
-- `sqliteSessionAdapter` 在初始化、写入、导入、删除和读档修复路径同步维护 prompt index；SQLite 读档后的 `worldState` 只挂载非枚举安全来源，JSON.stringify/route payload/save-list 不暴露该来源、数据库路径、raw row 或事件 id。
-- `promptContextAssembler` 保留原 `retrievalContext` schema 与 JSON/view helper fallback；仅当 SQLite 读档提供安全来源时，地理、人物、官职任所和近事检索从 `prompt_retrieval_index` 读取 compact rows，世界议程、长期事件和实体仍走既有服务器 view。
-- 同步 README、产品 brief、architecture、动态数据库规划、AI 控制矩阵和共享交接板，明确 prompt 不读取 raw `geo_*`、`people_*`、`office_*`、`event_log`、`ai_change_proposals` 或 raw hidden ledger。
+### S65.1：事件模板与历史档案生成系统
 
-验证：
+状态：TODO。
 
-- 已通过：`node --check src\ai\promptContextSource.js src\ai\promptContextAssembler.js src\storage\sqlitePromptRetrievalTables.js src\storage\sqliteSessionAdapter.js test\sqlitePromptRetrieval.test.js`
-- 已通过：`node --test test\sqlitePromptRetrieval.test.js`（3 tests）
-- 已通过：`node --test test\promptContextAssembler.test.js test\geographyStorageParity.test.js`（5 tests）
-- 已通过：`node --test test\sessionStoreAdapterContract.test.js`（51 tests）
-- 已通过：`node --test test\prompts.test.js test\eventArchive.test.js test\auditEventArchiveTool.test.js`（23 tests）
-- 前置只读梳理：Huygens 建议新增专用 `prompt_retrieval_index` 安全派生层，不直接扫 `geo_*` / `people_*` / `office_*` / raw audit，并补 contentHash、raw-table 防线和 JSON fallback parity；Locke 梳理 S58.2，确认浏览器双模式 parity 可在后续复用现有 SQLite browser smoke 参数。二者均未编辑文件、未运行 Git 写入命令。
+目标：
 
-风险/遗留：
+- 建立可组合事件模板和事件链，覆盖自然灾害、官场争斗、边事、商税、人物关系、科举、地方差遣。
+- 每个事件明确公开摘要、密档摘要、related refs、applied changes、审计链接和后续触发条件。
 
-- S58.1 只把 provider-only `retrievalContext` 的 SQLite 模式来源接到安全派生索引；浏览器仍只读 route views，不读取 `retrievalContext` 或 prompt index。
-- S58.2 已在上方完成记录中接续实现，补齐浏览器局势簿 JSON/SQLite 双模式 parity smoke、事件分页 DOM 数据属性和更广 hidden-token/overflow 验收。
+### S65.2：情报、传闻与可见性系统
 
-下一步：
+状态：TODO。
 
-- S58.2 已在上方完成记录中接续实现。
+目标：
 
-### 2026-05-08
+- 建立情报来源、可信度、角色视野、传闻流转和隐藏信息过滤规则。
+- 同一事实可根据身份显示为奏报、坊间传闻、同僚私信或完全不可见。
+- prompt/UI 不读 hidden raw rows。
 
-工具：Codex
+## 12. S66：大规模检索与浏览器面板
 
-步骤：S57.2 审计到公开事件 Projection 工具
+### S66.1：大规模 prompt retrieval 策略
 
-提交：本次提交。
+状态：TODO。
 
-完成：
+目标：
 
-- 新增 `src/game/auditPublicProjection.js`，将本地审计中 `visibility: "public"` 的安全摘要投影为公开事件条目；条目只保留 synthetic id、日期、公开摘要、事件类型、状态标签和少量 allowlist related/applied 标签，不保留 raw audit id、raw related/applied 对象、prompt、path、key、hidden notes 或 raw state-like 文本。
-- 新增 `scripts/auditEventArchiveTool.js` 与 `npm run storage:audit-events`，支持 `status` 和 `export`，可通过 `--adapter json|sqlite` 读取 JSON sidecar 或 SQLite `event_log` / `ai_change_proposals`；SQLite 缺库时 status/export 会返回安全 skipped/counts，不创建数据库文件。
-- `ai_change_proposals` 在该工具中只作为计数，不输出 provider proposal 原文；工具输出也不会回填 `eventArchiveView`、`event_archive_index`、route state、prompt context 或浏览器信息面板。
-- 新增 `test/auditPublicProjection.test.js` 与 `test/auditEventArchiveTool.test.js`，覆盖 JSON/SQLite 双来源、public/developer visibility、敏感摘要丢弃、缺失 SQLite DB、隐藏备注、prompt、路径、key、raw audit table token 和 AI proposal 原文防泄漏。
-- 同步 README、产品 brief、architecture、动态数据库规划、AI 控制矩阵和共享交接板，明确 S57.2 是本地调试 projection 工具，不扩大玩家 API 或 prompt 权限。
+- 在 `prompt_retrieval_index` 基础上补排序策略、token 预算、分域上限、角色视野、事件新鲜度和玩家输入匹配。
+- 建立大 fixture 下的 prompt budget 与 hidden-token tests。
 
-验证：
+### S66.2：大数据量浏览器信息面板
 
-- 已通过：`node --check src\game\auditPublicProjection.js scripts\auditEventArchiveTool.js test\auditPublicProjection.test.js test\auditEventArchiveTool.test.js`
-- 已通过：`node --test test\auditPublicProjection.test.js test\auditEventArchiveTool.test.js test\auditRoute.test.js test\eventArchive.test.js test\sessionStoreAdapterContract.test.js`（63 tests）
-- 已通过：`npm run check:docs-governance`
-- 已通过：`git diff --check`
-- 已通过：`npm test`（431 tests）
-- 前置只读梳理：Mendel 建议将 projection helper 与 CLI 分离，只处理 public `event_log`，`ai_change_proposals` 仅计数，并覆盖 JSON sidecar / SQLite 双来源脱敏；Mendel 未编辑文件、未运行 Git 写入命令。
-- 提交前只读复审：Popper 首轮发现 2 个 P2（export metadata 未脱敏、audit `createdAt` 原样输出），均已修复为 metadata allowlist 清洗、metadata dynasty 严格清洗、`createdAt` 仅接受 ISO timestamp，并补 metadata / createdAt 泄漏回归。Popper 第二轮基于修复后最终 diff 与验证证据复审，未发现 P0/P1/P2；其余残余风险仅为 sanitizer 仍是模式识别式，本地 public audit summary allowlist 边界可接受。
+状态：TODO。
 
-风险/遗留：
+目标：
 
-- `storage:audit-events export` 是本地调试安全 projection，不是完整审计导出，也不是玩家事件档案的新来源；后续若要把输出接入 UI/prompt，必须另开步骤补权限、分页、hidden-token corpus 和 route/view contract。
-- S58 仍需做 SQLite 索引驱动的 prompt context 与浏览器 JSON/SQLite parity；读取 SQLite 索引时必须继续走安全 capped projection 和 JSON fallback。
+- 为城市、NPC、官职、事件提供搜索、筛选、分页、排序和移动端可读布局。
+- 浏览器仍只读 route views，不读取 raw SQLite table。
+- 加 smoke 覆盖 overflow、hidden token、分页 metadata 和 JSON/SQLite parity。
 
-下一步：
+## 13. S67：规模验收与归档
 
-- S58.1：SQLite 索引驱动的检索式 prompt context，JSON fallback 不变。
+### S67.1：规模/性能/回归验收
+
+状态：TODO。
+
+目标：
+
+- 在大 fixture 下验证 JSON/SQLite dual-mode、读档修复、prompt retrieval、局势簿分页、事件档案和 hidden-token 防线。
+- 记录内存、耗时、条目数量和失败降级。
+
+### S67.2：内容充实阶段归档与下一阶段交接
+
+状态：TODO。
+
+目标：
+
+- 把 S60-S67 实现细节压缩入归档。
+- 更新 brief、README、共享上下文和路线图下一阶段。
+- 若用户重新开启多 AI 编排，转入 S70；否则继续做玩法内容或 UI 深化。
+
+## 14. S70：多 AI 协作编排
+
+S70 是 MiMo + DeepSeek 之后的多模型协作后续规划，已从原 S60 顺延，避免挤占当前数据库内容充实专项。当前 `mimo-deepseek` 仍只是 provider 方法级路由：普通叙事、开局、流式回合和科举出题走 MiMo，科举评卷走 DeepSeek V4 Pro。完整 narrator/grader/critic/safety 仲裁、成本边界、失败降级和可观测性排在 S67 之后再启动。
+
+## 15. 进度记录
 
 ### 2026-05-08
 
 工具：Codex
 
-步骤：S57.1 安全事件索引与分页
+步骤：S59.2 归档与 S60+ 内容充实专项规划
 
 提交：本次提交。
 
 完成：
 
-- `src/game/eventArchive.js` 新增 `buildEventArchiveIndexItems()` 与分页 metadata，`eventArchiveView` 默认仍返回第一页 `items[]`，并额外给出 `pagination`、`pageCounts`；`GET /api/game/state/:sessionId` 支持 `eventArchivePage` / `eventArchivePageSize` 查询参数。
-- 新增 `src/storage/sqliteEventArchiveTables.js`，SQLite 模式创建并同步 `event_archive_index`，只保存 `eventArchiveView` 的 sanitized public projection；派生行带 `metadata_json.contentHash`，读档从 `world_sessions.world_state_json -> eventArchiveView` 单向修复缺失、错 id、陈旧 revision、同 id/同 revision 内容污染或旧行缺 hash。
-- `src/storage/sqliteSessionAdapter.js` 在 write/import/read/delete 路径维护 `event_archive_index`；raw `event_log` / `ai_change_proposals` 仍是本地诊断，不成为 UI、prompt、route state 或索引反向来源。
-- `src/ai/promptContextAssembler.js` 的近事检索和 `src/ai/prompts.js` 顶层 `recentEvents` 都改读安全事件档案条目，不再直接读取 raw `eventHistory` 文本；`public/app.js` 只展示事件档案页码和当前页/总量，读档叙事回放也只读 `eventArchiveView`，仍不读取 raw table。
-- 同步 README、产品 brief、architecture、动态数据库规划、浏览器信息面板计划、浏览器验收、AI 控制矩阵和共享交接板。
-
-验证：
-
-- 已通过：`node --check src\game\eventArchive.js src\storage\sqliteEventArchiveTables.js src\storage\sqliteSessionAdapter.js src\ai\promptContextAssembler.js src\ai\prompts.js src\routes\game.js public\app.js`
-- 已通过：`node --test test\eventArchive.test.js test\promptContextAssembler.test.js test\gameTurnEventArchive.test.js test\sessionStoreAdapterContract.test.js test\prompts.test.js test\publicAppSource.test.js`（77 tests）
-- 提交前只读复审：Planck 基于首轮最终 diff 发现 3 个问题（prompt 顶层 `recentEvents` raw 泄漏、前端读档叙事 raw `eventHistory` 回放、README 已知限制过期），均已修复并补 prompt / public app regression；Archimedes 基于最终 diff 与验证证据复审，代码侧未发现 P0/P1/P2，另发现 1 个 P2 文档口径问题，已修正 brief 中 S57.1/S57.2 剩余方向。
-
-风险/遗留：
-
-- S57.1 不把 raw audit 转公开事件，也不提供 JSON sidecar / SQLite audit 的导出工具；S57.2 已在上方完成记录中接续实现审计到公开事件 projection 工具与 allowlist 脱敏测试。
-- `event_archive_index` 目前是 `eventArchiveView` 的安全派生索引，不是 AI 或 SQL 的裁决源；S58 若进一步让 prompt 从 SQLite 事件索引检索，仍要保持 JSON fallback 和 hidden-token parity。
-
-下一步：
-
-- S57.2 已在上方完成记录中接续实现；下一步转入 S58.1 SQLite 索引驱动的检索式 prompt context。
-
-### 2026-05-08
-
-工具：Codex
-
-步骤：S56.3 跨域引用完整性与安全 view
-
-提交：本次提交。
-
-完成：
-
-- `src/storage/sqliteOfficialPostingTables.js` 为 `office_*` 派生行追加 `metadata_json.contentHash` 内容指纹，并在读档 repair status 中加入 `contentMismatches`。当同 `row_id` / 同 revision 的 `office_postings`、`office_city_jurisdictions` 等业务列被污染，或旧行缺失指纹时，SQLite 继续按 `world_sessions.world_state_json -> office_*` 单向重建。
-- 内容指纹只覆盖业务列，排除 `metadata_json`、`created_at`、`updated_at`；它用于发现本地漂移和旧库升级，不是加密防篡改，也不让 raw `office_*` 成为任免、考成、迁转、prompt 或浏览器数据源。
-- `test/sessionStoreAdapterContract.test.js` 新增同数量/同 id/同 revision 内容篡改测试：直接把当前任命污染为 hidden NPC、hidden city、hidden route/frontier refs 后，读档会修回 `六部观政进士` 与京师辖区，且 `officialPostingsView`、prompt、retrieval 不泄漏 hidden token。
-- 同步旧 S56.2 行缺少 `contentHash` 的升级测试，确认读档安全重建并重新写入 64 字符十六进制 hash；JSON 默认、Mock 可玩性、route payload shape 和完整 scholar -> official 路径保持不变。
-
-验证：
-
-- 已通过：`node --check src\storage\sqliteOfficialPostingTables.js test\sessionStoreAdapterContract.test.js`
-- 已通过：`node --test test\sessionStoreAdapterContract.test.js`（49 tests）
-- 已通过：官职/storage/prompt/red-team focused suite（110 tests）
-- 已通过：`npm run check:docs-governance`
-- 已通过：`git diff --check`
-- 已通过：`npm test`（420 tests）
-- 前置只读梳理：Franklin 未编辑文件、未运行 Git 写入命令；建议采用集中 `metadata_json.contentHash` 漂移探针、补内容污染和旧行缺 hash 测试，并保持 raw `office_*` 不反向改写 route/prompt/browser/`officialCareer`。
-- 提交前只读复审：Feynman 未编辑文件、未运行 Git 命令；代码层未发现 P0/P1/P2，确认内容 hash 不应导致正常读档反复修复、旧行缺 hash 仍单向重建、hidden refs 污染探针覆盖 view/prompt/retrieval 与 raw 表修回。其发现 1 个 P2 文档口径问题，已修正 `docs/DYNAMIC_WORLD_DATABASE_PLAN.md` 的 S56 摘要。
-
-风险/遗留：
-
-- S56.3 仍只处理当前可见 `officialPostings` projection 的本地派生表漂移；真正 hidden 官员私档、密札考成、未公开调任和 raw audit 外事件索引仍不可进入 route raw `worldState`、prompt 或浏览器。
-- 后续 S58 若直接用 SQLite `office_*` 做检索来源，仍要从安全 capped query/view 取数，并继续补 browser hidden-token corpus 与 raw-table fallback 探针。
-
-下一步：
-
-- S57.1：安全事件索引与事件档案分页，不暴露 raw audit。
-
-### 2026-05-08
-
-工具：Codex
-
-步骤：S56.2 `officialPostings` SQLite 持久化与桥接
-
-提交：本次提交。
-
-完成：
-
-- 新增 `src/storage/sqliteOfficialPostingTables.js`，在 SQLite 模式创建并同步 `office_bureaus`、`office_catalog`、`office_city_jurisdictions`、`office_postings`、`office_assessments`、`office_transfers`；字段覆盖官署/官职目录、任所辖区、当前任命、考成和迁转 projection。
-- 扩展 `src/storage/sqliteSessionAdapter.js`，保持 `world_sessions.world_state_json` 为权威 route snapshot，并按 `world_state_json -> office_*` 单向修复缺失、陈旧、同数量错 `row_id` 或 raw hidden 行污染；delete/import/mutate 同步维护 `office_*` rows。
-- 新增/扩展 adapter contract tests：JSON/SQLite `officialPostingsView` 与 prompt/retrieval parity、hidden source row 不落表、raw hidden `office_postings` row 修复、错行修复、mutate revision 推进、stale revision 拒写和 import/delete 清理。
-- 同步 README、产品 brief、architecture、动态数据库规划、官职任所契约、AI 控制矩阵和共享交接板；本轮不新增 route 字段，不改变 JSON 默认路径，不让 raw `office_*` rows 成为任免、考成、迁转或 prompt/UI 数据源。
-
-验证：
-
-- 已通过：`node --check src\storage\sqliteOfficialPostingTables.js src\storage\sqliteSessionAdapter.js test\sessionStoreAdapterContract.test.js`
-- 已通过：`node --test test\sessionStoreAdapterContract.test.js`（47 tests）
-- 已通过：`node --test test\sessionStoreAdapterContract.test.js test\officialPostingSchemas.test.js test\officialPostings.test.js test\gameTurnOfficialPostings.test.js test\officialCareer.test.js test\officialCatalog.test.js test\prompts.test.js test\promptContextAssembler.test.js test\stateRules.test.js test\auditRoute.test.js test\aiControlRedTeam.test.js`（108 tests）
-- 已通过：`npm run check:docs-governance`
-- 已通过：`git diff --check`
-- 已通过：`npm test`（418 tests）
-- 前置只读梳理：Ampere 未编辑文件、未运行 Git 写入命令；建议沿用 `geo_*` / `people_*` 的 one-way repair、保持 geo -> people -> official 接入顺序，并覆盖 raw hidden row、可见 bridge 缺失、同数量错行、stale revision、import/delete、direct official 与 magistrate/入仕连续性风险。
-- 提交前只读复审：Huygens 未发现 P0/P1/P2；确认 `office_*` 不反向驱动 route/prompt/browser/`player.officeTitle`/`officialCareer`，验证覆盖 hidden raw row、缺失可见 bridge、错 `row_id`、stale revision、import/delete 和 JSON/SQLite parity。
-
-风险/遗留：
-
-- S56.2 只持久化当前安全 `officialPostings` projection；真正 hidden 官员私档、未公开调任、密札考成和 raw audit 外事件索引仍不可进入 route raw `worldState`、prompt 或浏览器。
-- S56.3 仍需继续细化跨域引用完整性，尤其是更复杂的城市/NPC 缺失或隐藏引用安全降级。
-- S56.3 已补同 `row_id` / 同 revision 内容漂移探针；若后续 S58 开始直接用 SQLite `office_*` 做检索索引，仍必须只读安全 capped projection 并补 raw-table fallback / hidden-token 探针。
-
-下一步：
-
-- S56.3：跨域引用完整性与安全 view。
-
-### 2026-05-07
-
-工具：Codex
-
-步骤：S56.1 官职域 SQLite 表契约
-
-提交：本次提交。
-
-完成：
-
-- 在 [OFFICIAL_POSTING_DATABASE_CONTRACT.md](OFFICIAL_POSTING_DATABASE_CONTRACT.md) 中新增 S56.1 SQLite 官职任所业务表契约，固定 `office_bureaus`、`office_catalog`、`office_city_jurisdictions`、`office_postings`、`office_assessments`、`office_transfers` 的公共列、字段分类、可见性、AI 权限和 S56.2/S56.3 parity 验收点。
-- 明确 `world_sessions.world_state_json` 仍是兼容 snapshot；后续 SQLite 官职任所行只能由服务器 helper / storage adapter transaction 从 `worldState.officialPostings`、`officialCareer`、可见地理与人物 projection 单向派生，不得从 raw `office_*` 行反向改写 route state、prompt、浏览器或 hidden 官员私档。
-- 同步 README、产品 brief、architecture、动态数据库规划、AI 控制矩阵和共享交接板；本轮不改运行时代码、不创建 SQLite 官职任所表、不新增 route 字段。
-
-验证：
-
-- 已通过：`node --test test/officialPostingSchemas.test.js test/officialPostings.test.js test/gameTurnOfficialPostings.test.js test/officialCareer.test.js test/officialCatalog.test.js test/prompts.test.js test/promptContextAssembler.test.js test/stateRules.test.js test/auditRoute.test.js test/aiControlRedTeam.test.js`
-- 已通过：`npm run check:docs-governance`
-- 已通过：`git diff --check`
-- 前置只读梳理：Locke 未编辑文件、未运行 Git 写入命令；建议 S56.1 覆盖 `officialPostings` 全部现有字段、holder/地理/人物引用、AI 无 SQL/table-write 边界，并强调 SQLite raw row 不得成为官职任免或 `scholar -> official` 路径的裁决源。
-
-风险/遗留：
-
-- S56.1 是契约切片，不提供运行时持久化；SQLite adapter 仍只同步地理 `geo_*` 和可见人物 `people_*` 表。
-- S56.2 实现时必须保持 JSON/SQLite `officialPostingsView`、prompt `officialPostings` 与 `retrievalContext` parity，并覆盖 direct official start、magistrate start、palace exam 入仕、hidden raw `office_*` row、缺失/错行修复、hidden geo/people refs 和 stale revision 探针。
-
-下一步：
-
-- S56.2：`officialPostings` SQLite 持久化与官场/地方任所桥接 parity。
-
-### 2026-05-07
-
-工具：Codex
-
-步骤：S55.3 NPC 生命周期、财富/家产/关系事件写入与审计关联
-
-提交：本次提交。
-
-完成：
-
-- 新增 `src/game/worldPeopleEvents.js`，用可见 `worldPeople` 前后快照生成服务器人物事件；普通回合已把关系升降和 active request 接受/拒绝/逾期结果写入结构化审计和 SQLite people row 关联，公开近事顺序仍由原有系统事件控制。
-- 人物事件审计使用 `sourceSystem: "world_people"` 与预生成安全 `eventId`；审计 `related` / `appliedChanges` 只记录行类型、可见标签和数值/text delta，不保存 provider 原始 reason、hidden notes、raw `worldPeople`、路径或 key。
-- 扩展 `sessionAudit` context 和 JSON/SQLite adapter 的 `peopleEventLinks` 写入通道；SQLite `people_*` 同步时把 `last_event_id` 写入目标人物/关系/资产/田产/家族行，并在后续无人物事件写入时从既有安全 `event_log` 关联保留该 id。
-- `worldPeopleView`、prompt `worldPeople` summary、`retrievalContext.people` 和浏览器人物谱牒不显示 `last_event_id`；route raw `worldState.worldPeople` 仍只保存可见 bridge projection，不回填审计索引或 hidden 私档。
-
-验证：
-
-- 已通过：`node --check src\game\worldPeopleEvents.js src\routes\game.js src\storage\sqlitePeopleTables.js src\game\audit.js src\storage\sessionAudit.js test\worldPeopleEvents.test.js test\gameTurnRelationships.test.js test\sessionStoreAdapterContract.test.js`
-- 已通过：`node --test test\worldPeopleEvents.test.js`
-- 已通过：`node --test test\gameTurnRelationships.test.js`
-- 已通过：`node --test test\sessionStoreAdapterContract.test.js`（39 tests）
-- 前置只读梳理：Sagan 建议写入点放在 `finalizeTurn()`，以已应用的关系/请托结果生成安全事件和审计记录，不把 `eventArchive` 当写入源；Helmholtz 建议 `last_event_id` 只落 SQLite 派生表/审计关联，不回写 route `worldPeople`。两位均未编辑文件、未运行 Git 写入命令。
-
-风险/遗留：
-
-- 当前 live route 事件来源是关系变化和 active request 结果；NPC 财富、家产、死亡/迁居、家庭和官职履历的 helper 已覆盖可见 delta，但需要后续服务器模块实际产生这些 `worldPeople` 变动。
-- S57 仍需在 raw `event_log` 外建立安全事件索引/分页 projection；S55.3 只建立人物行到安全审计事件的本地关联。
-
-下一步：
-
-- S56.1：官署、官职、任所、考成、迁转 SQLite 表契约。
-
-### 2026-05-07
-
-工具：Codex
-
-步骤：S55.2 `worldPeople` SQLite 持久化与桥接
-
-提交：本次提交。
-
-完成：
-
-- 新增 `src/storage/sqlitePeopleTables.js`，在 SQLite 模式创建并同步 `people_npcs`、`people_households`、`people_assets`、`people_estates`、`people_relationships`；同步来源只取服务器规范化后的可见 `worldPeople` bridge projection。
-- 扩展 `src/storage/sqliteSessionAdapter.js`：写 session row 前规范化 `worldPeople`，写入后同步 `people_*`；读档时从 `world_sessions.world_state_json` 修复缺失、陈旧、同数量错 `row_id` 或 raw hidden 行污染；导入和删除 session 同步维护 people rows。
-- 扩展 `test/sessionStoreAdapterContract.test.js`，覆盖 JSON/SQLite `worldPeopleView` 与 prompt parity、hidden token 不进 view/prompt/retrieval、SQLite people 行数与字段同步、hidden raw row + 缺失可见 bridge row 修复、错行修复、relationship mutate revision 推进、stale revision 拒写和 import/delete 清理。
-- 同步 README、产品 brief、architecture、动态数据库规划、人物契约、AI 控制矩阵和共享交接板；S55.2 不新增 route 字段，不改变 JSON 默认路径，不让 prompt/UI 读取 raw `people_*`。
-
-验证：
-
-- 已通过：`node --check src\storage\sqlitePeopleTables.js src\storage\sqliteSessionAdapter.js test\sessionStoreAdapterContract.test.js`
-- 已通过：`node --test test\sessionStoreAdapterContract.test.js`（38 tests）
-- 已通过：`node --test test\sessionStoreAdapterContract.test.js test\worldPeopleSchemas.test.js test\worldPeopleBridge.test.js test\relationshipLedger.test.js test\activeNpcRequests.test.js test\prompts.test.js test\promptContextAssembler.test.js test\aiControlRedTeam.test.js test\auditRoute.test.js`（89 tests）
-- 已通过：`npm run check:docs-governance`
-- 已通过：`git diff --check`
-- 已通过：`npm test`（406 tests）
-- 前置只读梳理：Wegener 未编辑文件、未运行 Git 命令；建议 S55.2 沿用 geography adapter 模式、坚持 `world_state_json -> people_*` 单向修复，并覆盖 hidden raw row、可见 bridge 缺失、错行、relationship lifecycle、stale revision、import/delete 等探针。
-- 提交前只读复审：Boole 发现 1 个 P2：同 id hidden relationship `recentNotes` 可能被旧 bridge 合并进可见关系；已修复 `src/game/worldPeople.js` 的 bridge 合并规则，并补同 id hidden `rel-player-npc-C01` 的 view/prompt/SQLite 防泄漏探针。
-
-风险/遗留：
-
-- S55.2 是可见 bridge 持久化层，不保存真正 hidden NPC 私档或资产真数；如果后续 S55.3/S57 需要长期 hidden 私档或事件索引，必须先保持 route redaction/view-first 边界。
-- `relationshipLedger`、`activeNpcRequest` 和 `relationshipChanges` 仍是服务器裁决路径；people 表只是派生存储，不是 AI 或浏览器写入入口。
-
-下一步：
-
-- S55.3 已在上方完成记录中接续实现。
-
-### 2026-05-07
-
-工具：Codex
-
-步骤：S55.1 人物域 SQLite 表契约
-
-提交：本次提交。
-
-完成：
-
-- 在 [NPC_HOUSEHOLD_ASSET_RELATIONSHIP_CONTRACT.md](NPC_HOUSEHOLD_ASSET_RELATIONSHIP_CONTRACT.md) 中新增 S55.1 SQLite 人物域业务表契约，固定 `people_npcs`、`people_households`、`people_assets`、`people_estates`、`people_relationships` 的公共列、字段分类、可见性、引用裁剪、修复策略和后续 parity 验收点。
-- 明确当前 `worldState.worldPeople` 仍只是可见桥接 projection；因为 state route 仍返回 raw `worldState`，hidden NPC 私档、资产真数、隐藏意图、密札备注和 raw `people_*` 行不得回填进 route state、prompt 或浏览器。
-- 同步 README、产品 brief、architecture、动态数据库规划、AI 控制矩阵和共享交接板；不改运行时代码、不创建 SQLite 人物表、不新增 route 字段、不改变 JSON 默认存储。
-
-验证：
-
-- 已通过：`node --test test/worldPeopleSchemas.test.js test/worldPeopleBridge.test.js test/relationshipLedger.test.js test/activeNpcRequests.test.js test/prompts.test.js test/promptContextAssembler.test.js test/aiControlRedTeam.test.js test/auditRoute.test.js`（51 tests）
-- 已通过：`npm run check:docs-governance`
-- 已通过：`git diff --check`
-- 只读梳理：Curie 检查现有 `worldPeople` / `relationshipLedger` / `activeRequests` / prompt / hidden 测试边界，确认 S55.1 最大风险是不得把 SQLite hidden 私档回填进当前 route raw `worldState`。
-- 提交前只读复审：Cicero 未发现 P0/P1/P2；确认契约覆盖路线图字段、同步文档未误导为已创建运行时人物表、AI/hidden 边界一致，并建议 S55.2 第一批测试覆盖 hidden raw `people_*` row、损坏引用和可见 bridge 缺失三种 raw-table fallback 探针。
-
-风险/遗留：
-
-- S55.1 是契约切片，不提供运行时持久化；SQLite adapter 仍只同步地理 `geo_*` 表。
-- S55.2 实现时必须保持 JSON/SQLite `worldPeopleView` parity，并继续让 `relationshipLedger`、`activeNpcRequest` 和 `relationshipChanges` 由服务器裁决、夹断和过滤。
-
-下一步：
-
-- S55.2：`worldPeople` SQLite 持久化与可见桥接 parity；优先补 hidden raw `people_*` row、损坏引用和可见 bridge 缺失探针。
-
-### 2026-05-07
-
-工具：Codex
-
-步骤：S54.3 地理导入、修复与导出工具
-
-提交：`54505b3`。
-
-完成：
-
-- 新增 `scripts/sqliteGeographyTool.js` 与 `npm run storage:geography:sqlite`，提供 `import`、`status`、`repair`、`export` 四类地理维护命令；导出为脱敏 debug dump，不输出 hidden notes、数据库路径、prompt、key 或 raw provider response。
-- 扩展 JSON -> SQLite 导入脚本，支持 `--session`、可测试入口和不建库 dry-run 语义；正式导入继续保留 JSON 原档并同步 `geo_*`。
-- 在 `sqliteGeographyTables` 中导出只读 repair status helper，让工具 dry-run 能报告缺失/陈旧/错 `row_id` 地理行而不触发 adapter 读档修复。
-- browser smoke 新增 SQLite 存储参数，脚本 helper、临时 Mock 服务器和清理逻辑可共用 SQLite adapter；UI 仍只验收 route view，不读取 raw `geo_*`。
-- 新增工具与 JSON/SQLite parity 测试，覆盖 route/prompt 可见地理摘要一致和 hidden 地理 token 不进入 view/prompt/retrieval。
-
-验证：
-
-- 已通过：`node --check scripts/sqliteGeographyTool.js scripts/importJsonSessionsToSqlite.js scripts/browserSmoke.js test/sqliteGeographyTool.test.js test/geographyStorageParity.test.js`
-- 已通过：`node --test test/sqliteGeographyTool.test.js`
-- 已通过：`node --test test/geographyStorageParity.test.js`
-- 已通过：`node --test test/browserSmokeScript.test.js`
-- 已通过：`node --test test/sqliteGeographyTool.test.js test/geographyStorageParity.test.js test/browserSmokeScript.test.js test/sessionStoreAdapterContract.test.js`（69 tests）
-- 已通过：`node --test test/worldGeography.test.js test/gameTurnWorldGeography.test.js test/examTravel.test.js test/promptContextAssembler.test.js test/prompts.test.js`（37 tests）
-- 已通过：`npm run check:docs-governance`
-- 已通过：`git diff --check`
-- 已通过：`npm test`（398 tests）
-- 提交前只读复审：Dirac 未发现 P0/P1/P2；复核确认 import/repair dry-run 不写库、export 不泄漏 hidden notes/db path/prompt/key/raw provider response、browser smoke SQLite 参数与 helper/server adapter 一致、S54.2 读档修复语义未被破坏。
-
-风险/遗留：
-
-- `storage:geography:sqlite export` 是脱敏 debug dump，不是默认完整 JSON 回滚导出；回滚仍优先保留 JSON 原档并禁用 `STORAGE_ADAPTER=sqlite`。
-- S54.3 不改变 route payload、AI schema、provider 权限或 `role_visible` 粗规则；后续 S58/S59 再做 SQLite index-driven prompt 和完整双模式 browser smoke。
-
-下一步：
-
-- 开始 S55.1：人物、家族、资产、田产、关系 SQLite 表契约。
-
-### 2026-05-07
-
-工具：Codex
-
-步骤：S54.2 地理 SQLite 持久化 adapter
-
-提交：`5acf894`。
-
-完成：
-
-- 新增 `src/storage/sqliteGeographyTables.js`，集中维护 SQLite 地理业务表 schema、公共列映射、行同步、行计数和读取修复逻辑。
-- 扩展 `src/storage/sqliteSessionAdapter.js`：初始化 `geo_*` 表；写入、导入和 mutate 保存时与 `world_sessions` 同 transaction 同步地理业务行；读取时按 `world_state_json` 修复缺失/陈旧业务行；删除 session 时清理地理业务行。
-- 保持 JSON adapter、route payload、prompt schema 和浏览器 view 不变；业务表 raw rows 不进入玩家 API，hidden 行仍只能通过服务器 view 被过滤。
-- 增加 SQLite-focused tests，验证表行数、hidden route raw row、缺失行与同数量错 `row_id` 读取修复写回、mutate revision 推进、stale revision 拒写、导入/删除同步和 `worldGeographyView` parity。
-- 同步 `docs/WORLD_GEOGRAPHY_SEED_CONTRACT.md`、`docs/QIANQIU_DEVELOPMENT_BRIEF.md`、`docs/ARCHITECTURE.md`、`docs/DYNAMIC_WORLD_DATABASE_PLAN.md`、`docs/AI_CONTROL_AUDIT_MATRIX.md`、README 和本交接台账。
-
-验证：
-
-- 已通过：`node --check src/storage/sqliteGeographyTables.js`
-- 已通过：`node --check src/storage/sqliteSessionAdapter.js`
-- 已通过：`node --check test/sessionStoreAdapterContract.test.js`
-- 已通过：`node --test test/sessionStoreAdapterContract.test.js`（30 tests）
-- 已通过：`node --test test/worldGeographySeeds.test.js test/worldGeography.test.js test/gameTurnWorldGeography.test.js test/promptContextAssembler.test.js test/prompts.test.js test/stateRules.test.js test/aiSchemas.test.js test/remoteHelpers.test.js test/sessionStoreAdapterContract.test.js`（86 tests）
-- 已通过：`npm run check:docs-governance`
-- 已通过：`git diff --check`
-- 已通过：`npm test`（393 tests）
-- 提交前只读复审：Kepler 首轮发现 2 个 P2；已修复为 transaction 内重读当前 session，以及按预期 `row_id` 集合识别同数量错行并补测试。Kepler 基于修复后最终 diff 与上述验证证据完成第二轮只读复审，未发现 P0/P1/P2；残余风险仅为 S54.3 导入/修复/导出工具和更广 route/prompt/browser parity 尚未实现。
-
-风险/遗留：
-
-- S54.2 只让 SQLite adapter 内部同步地理业务行；prompt context 仍从服务器 view/summary 读取，尚未从 `geo_*` 表检索。
-- S54.3 仍需补 JSON -> SQLite 地理导入/修复/导出工具和更完整 route/prompt/browser 双模式 parity smoke。
-- `role_visible` 仍保持既有粗规则，S54.2 没有细化官署/任所视野。
-
-下一步：
-
-- S54.3：实现地理导入、修复、导出/调试工具，并扩展 route/prompt/browser JSON/SQLite parity 验收。
-
-### 2026-05-07
-
-工具：Codex
-
-步骤：S54.1 地理 SQLite 业务表契约
-
-提交：本次提交。
-
-完成：
-
-- 在 `docs/WORLD_GEOGRAPHY_SEED_CONTRACT.md` 中新增 S54.1 SQLite 地理业务表契约，固定 `session_id` 分区、`row_id` / seed 映射、`revision` / `row_revision`、`source`、可见性、情报可信度、更新时间和 hidden 字段边界。
-- 为 `geo_countries`、`geo_regions`、`geo_cities`、`geo_routes`、`geo_frontier_zones`、`geo_office_jurisdictions` 记录字段分类：静态 seed 字段、每局动态快照、玩家可见摘要和服务器 hidden 字段。
-- 明确 S54.2/S54.3 的 JSON/SQLite `worldGeographyView` parity、hidden nested refs 裁剪、导入 dry-run、修复、导出/回滚和 prompt/browser 安全验收点。
-- 同步 `docs/QIANQIU_DEVELOPMENT_BRIEF.md`、`docs/AI_CONTROL_AUDIT_MATRIX.md` 和 `docs/SHARED_CONTEXT.md`，保留 JSON 默认、SQLite local-only、AI 不直写 SQL/table rows 和 route-view-first 安全边界。
-
-验证：
-
-- 已通过：`node --test test/worldGeographySeeds.test.js test/worldGeography.test.js test/promptContextAssembler.test.js test/prompts.test.js test/stateRules.test.js test/aiSchemas.test.js test/remoteHelpers.test.js`
-- 已通过：`npm run check:docs-governance`
-- 已通过：`git diff --check`
-- 已执行只读子代理核对：Fermat 检查现有地理字段、表契约覆盖点、hidden/visibility/ref/revision 风险，并报告聚焦测试通过。
-- 已执行提交前只读复审：Laplace 基于最终 diff 与验证证据复审，未发现 P0/P1/P2 风险、遗漏或测试缺口。
-
-风险/遗留：
-
-- 本轮是契约与台账同步，不改运行时代码、不新增依赖、不改变存档格式和 route payload。
-- `role_visible` 当前仍沿用“非书生可见”的粗规则；S54.2 实现 SQLite 持久化时必须保持现有 parity，不提前收窄或扩大玩家视野。
-- `revision` / `row_revision` 只作为业务表同步诊断；S54.2 仍必须在同一 transaction 内推进 `world_sessions.world_state_json` 和 `geo_*` 行，避免漂移。
-
-下一步：
-
-- S54.2：在 `STORAGE_ADAPTER=sqlite` 模式下同步写入地理业务表，并补 JSON/SQLite `worldGeographyView` parity tests；JSON adapter 保持不变。
-
-步骤：MiMo provider 与 MiMo+DeepSeek 最小混合路由
-
-提交：`80a0c07`。
-
-完成：
-
-- 新增 `mimo` provider，使用 Xiaomi MiMo OpenAI-compatible `/chat/completions`，默认 `api-key` 认证头、`MIMO_BASE_URL=https://token-plan-sgp.xiaomimimo.com/v1`、`MIMO_MODEL=mimo-v2.5-pro`、`thinking=disabled` 和 JSON object 输出；`mimo-v2.5-pro[1m]` 是本轮真实 route health 已证实不可作为 API request model 的标签，1M 作为长上下文能力记录。
-- 新增 `mimo-deepseek` provider：MiMo 负责开局、普通回合、SSE 流式回合和科举出题；DeepSeek 只负责科举评卷，默认用 `DEEPSEEK_GRADE_MODEL=deepseek-v4-pro`。
-- 远端 provider turn payload 现在会在 schema 校验前丢弃不兼容的 `relationshipChanges` 建议行，保留 `character/faction`、非空目标、数值 delta 和字符串原因；目标是否可见/存在、最终夹断和持久化仍由 route 关系系统裁决。
-- 扩展 `/api/ai/connection-test`、provider smoke、provider route health 和 provider long-run 的 provider 枚举、别名、混合 key 检查和多 key 脱敏。
-- 按只读复审反馈，将 MiMo 运行时默认 Base URL 与 Token Plan 示例保持一致，并把 `MIMO_API_KEY` / `tp-...` 纳入事件档案与浏览器 smoke 的隐藏 token 扫描。
-- 同步 README、产品 brief、architecture、真实 provider 验收和 AI 控制矩阵；将完整多 AI 协作编排排到 S60，位于 S54-S59 当前数据库专项之后。
-
-验证：
-
-- 已通过：`node --test test/remoteHelpers.test.js test/mimoProvider.test.js test/mimoDeepseekProvider.test.js test/aiDiagnostics.test.js test/aiConnectionRoute.test.js test/providerSmokeScript.test.js test/providerRouteHealthScript.test.js`
-- 已通过：`npm run smoke:provider:route -- --provider mimo`
-- 已通过：`npm run smoke:provider:route -- --provider mimo-deepseek`
-- 已通过：`npm run smoke:provider -- --provider mimo-deepseek --stream`
-- 已通过：`npm test`
-- 已通过：`npm run check:docs-governance`
-- 已通过：`git diff --check`
-- 已验证：同一 Token Plan key 与 Base URL 下，普通问答请求 `model=mimo-v2.5-pro[1m]` 返回 `Not supported model`，`model=mimo-v2.5-pro` 返回正常中文内容。
-- 已执行两轮只读子代理复审；P2/P3 反馈已修正，最终确认未发现阻塞问题。
-
-风险/遗留：
-
-- 本轮不改变 route payload、provider schema、Mock 默认路径、科举晋级、官职任免或服务器状态边界。
-- 官方 Token Plan 文档说明 `tp-...` key 与普通 `sk-...` key 不可混用，且订阅额度面向 AI 编程工具场景；公开部署或明显非 Coding 自定义后端使用前需确认授权或改用普通 API key。
-- `mimo-deepseek` 是最小路由，不是完整多代理仲裁系统；完整编排、critic pass、成本/限额策略和可观测性排入 S60。
-
-下一步：
-
-- 完成全量验证、只读子代理复审和本次提交；随后回到 S54.1 地理 SQLite 业务表契约。
-
-### 2026-05-07
-
-工具：Codex
-
-步骤：数据库专项规划压缩与 S54+ 拆分
-
-提交：`5ab5350 docs: plan remaining database table split`。
-
-完成：
-
-- 将 S49-S53 已完成的 storage/audit、地理、人物、官职任所、prompt context 和浏览器局势簿细节从活动台账压缩出去，新增归档入口 [LOCAL_DATABASE_FOUNDATION_ARCHIVE.md](LOCAL_DATABASE_FOUNDATION_ARCHIVE.md)。
-- 将剩余数据库工作拆为 S54-S59：地理业务表、人物业务表、官职任所业务表、安全事件索引、SQLite 检索式 prompt/browser parity、双模式集成硬化与再次归档。
-- 明确所有后续拆表步骤仍只考虑本地 SQLite；不规划远程存档、账号体系、多人同步、云端冲突解决或托管数据库。
-- 重申 AI 不得执行 SQL 或直接写业务表；服务器继续拥有 schema、白名单、clamp、隐藏过滤、科举晋级、官职任免、事件写入和持久化事务。
+- 新增 [LOCAL_DATABASE_BUSINESS_TABLE_ARCHIVE.md](LOCAL_DATABASE_BUSINESS_TABLE_ARCHIVE.md)，归档 S54-S59 已完成的地理、人物、官职任所、事件档案、prompt 检索、浏览器 parity 和双模式验收。
+- 将活动台账压缩为 S60+ “超大动态世界数据库内容充实”路线图，把原多 AI S60 顺延为 S70。
+- 明确当前内容充实度约 55-65%，后续重点从“数据库底座”转向国家/邻国、城市、NPC、官职生态、地方事务、外交军事、经济市场、事件模板、情报可见性和大规模检索。
+- 重申本专项只考虑本地 JSON/SQLite；不规划远程存档、账号体系、多人同步、云端冲突解决或托管数据库。
 
 验证：
 
 - 已通过：`npm run check:docs-governance`
+- 已通过：`node --test test/sessionStoreAdapterContract.test.js test/sqlitePromptRetrieval.test.js test/dualModeAcceptanceScript.test.js test/sqliteGeographyTool.test.js test/auditEventArchiveTool.test.js`（66 tests）
 - 已通过：`git diff --check`
-- 已完成只读复审：Wegener 未发现 P0/P1 blocker；其 P2 旧未来式表述和验证状态问题已在提交前修正。
+- 提交前只读复审：本轮涉及路线图重写和内容保护，已委派只读子代理检查最终 diff 与验证证据。
 
 风险/遗留：
 
-- 本轮是文档规划与上下文压缩，不改运行时代码、不新增依赖、不改变存档格式。
-- 因涉及活动路线图重写和内容保护，本轮虽为纯文档变更，仍已执行只读子代理复审。
+- 本轮是文档规划与上下文压缩，不改运行时代码、测试、API、provider schema、存档格式或 SQLite 表结构。
+- S60.1 仍需把内容规模、seed 分层、hidden 私档/API redaction、fixture 数量和 prompt budget 写成更严格契约。
 
 下一步：
 
-- 开始 S54.1：地理 SQLite 业务表契约。
+- 开始 S60.1：超大动态世界数据库内容契约。
