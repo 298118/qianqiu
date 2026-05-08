@@ -34,6 +34,10 @@ test("default geography seed defines static countries, cities, routes, frontiers
   assert.equal(jurisdictionBureaus.has("ministry_war"), true);
   assert.equal(seed.cities.find((city) => city.id === "city-kaifeng").regionId, "region-henan");
   assert.ok(seed.regions.some((region) => region.id === "region-henan"));
+  assert.equal(typeof seed.countries.find((country) => country.id === "country-ming").fiscalPressure, "number");
+  assert.equal(typeof seed.countries.find((country) => country.id === "country-manchu-frontier").diplomaticTension, "number");
+  assert.equal(typeof seed.cities.find((city) => city.id === "city-beijing").taxBase, "number");
+  assert.equal(typeof seed.cities.find((city) => city.id === "city-kaifeng").disasterRisk, "number");
   assert.deepEqual(validateWorldGeographySeed(seed), []);
 });
 
@@ -128,6 +132,12 @@ test("geography seed normalization clamps legacy visibility, confidence, ids, an
         intelConfidence: 999,
         cultureTags: ["甲", "甲", "乙"],
         governmentTags: ["制"],
+        fiscalPressure: 999,
+        militaryReadiness: -10,
+        successionRisk: "bad",
+        policyPressureTags: ["压", "压", "贡"],
+        diplomaticPosture: "  观望  ",
+        intelligenceSummary: "  据报未详  ",
         publicSummary: "  可见摘要  ",
         hiddenNotes: ["密记"]
       }
@@ -141,7 +151,12 @@ test("geography seed normalization clamps legacy visibility, confidence, ids, an
         name: "测试城",
         supervisingBureauIds: ["ministry_revenue", "ministry_revenue", "bad id!"],
         visibility: "rumor",
-        intelConfidence: -20
+        intelConfidence: -20,
+        populationScale: 999,
+        taxBase: -10,
+        waterworksIntegrity: "bad",
+        localIssueTags: ["案", "案", "水"],
+        cityIntelligenceSummary: "  城市札记  "
       }
     ],
     routes: [
@@ -166,9 +181,20 @@ test("geography seed normalization clamps legacy visibility, confidence, ids, an
   assert.equal(normalized.countries[0].visibility, "public");
   assert.equal(normalized.countries[0].intelConfidence, 100);
   assert.deepEqual(normalized.countries[0].cultureTags, ["甲", "乙"]);
+  assert.equal(normalized.countries[0].fiscalPressure, 100);
+  assert.equal(normalized.countries[0].militaryReadiness, 0);
+  assert.equal(normalized.countries[0].successionRisk, 44);
+  assert.deepEqual(normalized.countries[0].policyPressureTags, ["压", "贡"]);
+  assert.equal(normalized.countries[0].diplomaticPosture, "观望");
+  assert.equal(normalized.countries[0].intelligenceSummary, "据报未详");
   assert.equal(normalized.cities[0].visibility, "rumor");
   assert.equal(normalized.cities[0].intelConfidence, 0);
   assert.deepEqual(normalized.cities[0].supervisingBureauIds, ["ministry_revenue"]);
+  assert.equal(normalized.cities[0].populationScale, 100);
+  assert.equal(normalized.cities[0].taxBase, 0);
+  assert.equal(normalized.cities[0].waterworksIntegrity, 50);
+  assert.deepEqual(normalized.cities[0].localIssueTags, ["案", "水"]);
+  assert.equal(normalized.cities[0].cityIntelligenceSummary, "城市札记");
   assert.equal(normalized.routes[0].type, "road");
   assert.deepEqual(normalized.routes[0].viaCityIds, ["city-test"]);
 });

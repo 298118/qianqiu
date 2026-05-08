@@ -1,5 +1,12 @@
+const { WORLD_GEOGRAPHY_DEEP_CONFIG } = require("./worldGeographyConfig");
+
 const WORLD_GEOGRAPHY_SEED_SCHEMA_VERSION = 1;
 const MAX_TEXT_LENGTH = 180;
+const MAX_DEEP_TAGS = WORLD_GEOGRAPHY_DEEP_CONFIG.maxDeepTags;
+const COUNTRY_DEEP_METRIC_DEFAULTS = WORLD_GEOGRAPHY_DEEP_CONFIG.countryMetricDefaults;
+const CITY_DEEP_METRIC_DEFAULTS = WORLD_GEOGRAPHY_DEEP_CONFIG.cityMetricDefaults;
+const COUNTRY_DEEP_METRIC_KEYS = WORLD_GEOGRAPHY_DEEP_CONFIG.countryMetricKeys;
+const CITY_DEEP_METRIC_KEYS = WORLD_GEOGRAPHY_DEEP_CONFIG.cityMetricKeys;
 
 const VISIBILITY_VALUES = new Set(["public", "role_visible", "rumor", "hidden"]);
 const COUNTRY_KINDS = new Set(["player_realm", "neighbor", "tributary", "frontier_polity"]);
@@ -632,6 +639,94 @@ function clampNumber(value, min, max, fallback) {
   return Math.max(min, Math.min(max, Math.round(parsed)));
 }
 
+function clampMetric(value, fallback = 50) {
+  return clampNumber(value, 0, 100, fallback);
+}
+
+function normalizeDeepMetrics(raw, keys, defaults) {
+  return keys.reduce((result, key) => {
+    result[key] = clampMetric(raw?.[key], defaults[key]);
+    return result;
+  }, {});
+}
+
+function hasTag(raw, pattern) {
+  return (Array.isArray(raw?.strategicTags) ? raw.strategicTags : [])
+    .some((tag) => pattern.test(String(tag)));
+}
+
+function defaultCountryDeepMetrics(raw = {}) {
+  if (raw.kind === "player_realm") {
+    return {
+      fiscalPressure: 52,
+      militaryReadiness: 58,
+      nationalPrestige: 72,
+      legitimacy: 66,
+      successionRisk: 28,
+      diplomaticTension: 48,
+      tributeTradeActivity: 60,
+      intelligenceReliability: 92
+    };
+  }
+  if (raw.kind === "tributary") {
+    return {
+      fiscalPressure: 36,
+      militaryReadiness: 38,
+      nationalPrestige: 50,
+      legitimacy: 58,
+      successionRisk: 32,
+      diplomaticTension: 30,
+      tributeTradeActivity: 70,
+      intelligenceReliability: clampNumber(raw.intelConfidence, 0, 100, 55)
+    };
+  }
+  if (raw.kind === "frontier_polity") {
+    return {
+      fiscalPressure: 44,
+      militaryReadiness: 68,
+      nationalPrestige: 45,
+      legitimacy: 48,
+      successionRisk: 48,
+      diplomaticTension: 62,
+      tributeTradeActivity: 58,
+      intelligenceReliability: clampNumber(raw.intelConfidence, 0, 100, 40)
+    };
+  }
+  return {
+    fiscalPressure: 46,
+    militaryReadiness: 72,
+    nationalPrestige: 60,
+    legitimacy: 54,
+    successionRisk: 44,
+    diplomaticTension: 70,
+    tributeTradeActivity: 36,
+    intelligenceReliability: clampNumber(raw.intelConfidence, 0, 100, 45)
+  };
+}
+
+function defaultCityDeepMetrics(raw = {}) {
+  const isCapital = /capital/.test(raw.jurisdictionLevel || "");
+  const isFrontier = /frontier|pass|garrison/.test(raw.jurisdictionLevel || "") || hasTag(raw, /边|军|关|防/);
+  const isScholarCity = hasTag(raw, /书院|贡院|科举|文社/);
+  const isTradeCity = hasTag(raw, /商|漕|海道|海舶|互市|贡道|赋税/);
+  const isRiverCity = /河|运河|水|江|湖|海/.test(raw.riverOrCoast || "");
+
+  return {
+    populationScale: isCapital ? 86 : isTradeCity ? 68 : CITY_DEEP_METRIC_DEFAULTS.populationScale,
+    taxBase: isTradeCity ? 72 : CITY_DEEP_METRIC_DEFAULTS.taxBase,
+    grainStock: hasTag(raw, /粮|漕|仓/) ? 64 : CITY_DEEP_METRIC_DEFAULTS.grainStock,
+    marketPriceStress: isTradeCity ? 46 : CITY_DEEP_METRIC_DEFAULTS.marketPriceStress,
+    gentryInfluence: isScholarCity || hasTag(raw, /士绅|文社/) ? 74 : CITY_DEEP_METRIC_DEFAULTS.gentryInfluence,
+    lawsuitPressure: CITY_DEEP_METRIC_DEFAULTS.lawsuitPressure,
+    corveeBurden: isRiverCity ? 46 : CITY_DEEP_METRIC_DEFAULTS.corveeBurden,
+    waterworksIntegrity: isRiverCity ? 62 : CITY_DEEP_METRIC_DEFAULTS.waterworksIntegrity,
+    disasterRisk: hasTag(raw, /河患|海防|边/) ? 55 : CITY_DEEP_METRIC_DEFAULTS.disasterRisk,
+    trafficLoad: isCapital || isTradeCity ? 72 : CITY_DEEP_METRIC_DEFAULTS.trafficLoad,
+    garrisonStrength: isFrontier ? 78 : CITY_DEEP_METRIC_DEFAULTS.garrisonStrength,
+    academyLevel: isScholarCity ? 80 : CITY_DEEP_METRIC_DEFAULTS.academyLevel
+  };
+}
+
 function normalizeStringList(value, limit = 8, maxLength = 80) {
   if (!Array.isArray(value)) return [];
   const result = [];
@@ -669,6 +764,14 @@ function normalizeCountry(raw) {
   const id = cleanId(raw.id, "");
   const name = cleanText(raw.name, "", 60);
   if (!id || !name) return null;
+  const defaultDeepMetrics = defaultCountryDeepMetrics(raw);
+  const defaultPressureTags = raw.kind === "player_realm"
+    ? ["钱粮", "边备", "朝局"]
+    : raw.kind === "tributary"
+      ? ["贡道", "礼部", "互市"]
+      : raw.kind === "frontier_polity"
+        ? ["边面", "互市", "骑兵"]
+        : ["边报", "军力", "情报"];
   return {
     id,
     kind: COUNTRY_KINDS.has(raw.kind) ? raw.kind : "neighbor",
@@ -682,6 +785,12 @@ function normalizeCountry(raw) {
     visibility: normalizeVisibility(raw.visibility),
     intelConfidence: clampNumber(raw.intelConfidence, 0, 100, raw.visibility === "public" ? 80 : 35),
     publicSummary: cleanText(raw.publicSummary, `${name}暂为静态种子国家。`),
+    policyPressureTags: normalizeStringList(raw.policyPressureTags, MAX_DEEP_TAGS).length
+      ? normalizeStringList(raw.policyPressureTags, MAX_DEEP_TAGS)
+      : defaultPressureTags,
+    diplomaticPosture: cleanText(raw.diplomaticPosture, "外交态势未详。", WORLD_GEOGRAPHY_DEEP_CONFIG.countryTextLimits.diplomaticPosture),
+    intelligenceSummary: cleanText(raw.intelligenceSummary, "只见公开奏报与传闻摘要。", WORLD_GEOGRAPHY_DEEP_CONFIG.countryTextLimits.intelligenceSummary),
+    ...normalizeDeepMetrics(raw, COUNTRY_DEEP_METRIC_KEYS, defaultDeepMetrics),
     hiddenNotes: normalizeStringList(raw.hiddenNotes, 6)
   };
 }
@@ -708,6 +817,8 @@ function normalizeCity(raw) {
   const id = cleanId(raw.id, "");
   const name = cleanText(raw.name, "", 60);
   if (!id || !name) return null;
+  const defaultDeepMetrics = defaultCityDeepMetrics(raw);
+  const defaultIssueTags = normalizeStringList(raw.strategicTags, MAX_DEEP_TAGS);
   return {
     id,
     countryId: cleanId(raw.countryId, ""),
@@ -721,6 +832,11 @@ function normalizeCity(raw) {
     visibility: normalizeVisibility(raw.visibility),
     intelConfidence: clampNumber(raw.intelConfidence, 0, 100, raw.visibility === "public" ? 70 : 35),
     publicSummary: cleanText(raw.publicSummary, `${name}为静态种子城市。`),
+    localIssueTags: normalizeStringList(raw.localIssueTags, MAX_DEEP_TAGS).length
+      ? normalizeStringList(raw.localIssueTags, MAX_DEEP_TAGS)
+      : defaultIssueTags,
+    cityIntelligenceSummary: cleanText(raw.cityIntelligenceSummary, "城市奏报只含可见指标。", WORLD_GEOGRAPHY_DEEP_CONFIG.cityTextLimits.cityIntelligenceSummary),
+    ...normalizeDeepMetrics(raw, CITY_DEEP_METRIC_KEYS, defaultDeepMetrics),
     hiddenNotes: normalizeStringList(raw.hiddenNotes, 6)
   };
 }
@@ -843,7 +959,18 @@ function displayCountry(country, visibleCityIds) {
     governmentTags: country.governmentTags,
     visibility: country.visibility,
     intelConfidence: country.intelConfidence,
-    publicSummary: country.publicSummary
+    publicSummary: country.publicSummary,
+    policyPressureTags: country.policyPressureTags,
+    diplomaticPosture: country.diplomaticPosture,
+    intelligenceSummary: country.intelligenceSummary,
+    fiscalPressure: country.fiscalPressure,
+    militaryReadiness: country.militaryReadiness,
+    nationalPrestige: country.nationalPrestige,
+    legitimacy: country.legitimacy,
+    successionRisk: country.successionRisk,
+    diplomaticTension: country.diplomaticTension,
+    tributeTradeActivity: country.tributeTradeActivity,
+    intelligenceReliability: country.intelligenceReliability
   };
 }
 
@@ -874,7 +1001,21 @@ function displayCity(city, visibleBureauIds = null) {
       : city.supervisingBureauIds,
     visibility: city.visibility,
     intelConfidence: city.intelConfidence,
-    publicSummary: city.publicSummary
+    publicSummary: city.publicSummary,
+    localIssueTags: city.localIssueTags,
+    cityIntelligenceSummary: city.cityIntelligenceSummary,
+    populationScale: city.populationScale,
+    taxBase: city.taxBase,
+    grainStock: city.grainStock,
+    marketPriceStress: city.marketPriceStress,
+    gentryInfluence: city.gentryInfluence,
+    lawsuitPressure: city.lawsuitPressure,
+    corveeBurden: city.corveeBurden,
+    waterworksIntegrity: city.waterworksIntegrity,
+    disasterRisk: city.disasterRisk,
+    trafficLoad: city.trafficLoad,
+    garrisonStrength: city.garrisonStrength,
+    academyLevel: city.academyLevel
   };
 }
 

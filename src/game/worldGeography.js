@@ -1,4 +1,5 @@
 const { getDefaultWorldGeographySeed } = require("./worldGeographySeeds");
+const { WORLD_GEOGRAPHY_DEEP_CONFIG } = require("./worldGeographyConfig");
 
 const WORLD_GEOGRAPHY_SCHEMA_VERSION = 1;
 const MAX_COUNTRIES = 24;
@@ -9,6 +10,11 @@ const MAX_FRONTIER_ZONES = 24;
 const MAX_OFFICE_JURISDICTIONS = 32;
 const MAX_RECENT_NOTES = 8;
 const MAX_TEXT_LENGTH = 180;
+const MAX_DEEP_TAGS = WORLD_GEOGRAPHY_DEEP_CONFIG.maxDeepTags;
+const COUNTRY_DEEP_METRIC_DEFAULTS = WORLD_GEOGRAPHY_DEEP_CONFIG.countryMetricDefaults;
+const CITY_DEEP_METRIC_DEFAULTS = WORLD_GEOGRAPHY_DEEP_CONFIG.cityMetricDefaults;
+const COUNTRY_DEEP_METRIC_KEYS = WORLD_GEOGRAPHY_DEEP_CONFIG.countryMetricKeys;
+const CITY_DEEP_METRIC_KEYS = WORLD_GEOGRAPHY_DEEP_CONFIG.cityMetricKeys;
 
 const VISIBILITY_VALUES = new Set(["public", "role_visible", "rumor", "hidden"]);
 const STATUS_VALUES = new Set(["stable", "strained", "critical", "unknown"]);
@@ -81,6 +87,73 @@ function readPlayerNumber(worldState, key, fallback) {
 
 function clampMetric(value, fallback = 50) {
   return clampNumber(value, 0, 100, fallback);
+}
+
+function hasStrategicTag(row, pattern) {
+  return (Array.isArray(row?.strategicTags) ? row.strategicTags : [])
+    .some((tag) => pattern.test(String(tag)));
+}
+
+function normalizeDeepMetrics(source, base, keys, defaults) {
+  return keys.reduce((result, key) => {
+    result[key] = clampMetric(source?.[key] ?? base?.[key], defaults[key]);
+    return result;
+  }, {});
+}
+
+function countryDeepSnapshot(seedCountry = {}, worldState = {}, countryCore = {}) {
+  const publicOrder = readWorldNumber(worldState, "publicOrder", 70);
+  const corruption = readWorldNumber(worldState, "corruption", 60);
+  const borderThreat = readWorldNumber(worldState, "borderThreat", 40);
+  const treasury = readWorldNumber(worldState, "treasury", 1000);
+  const armyMorale = readWorldNumber(worldState, "armyMorale", 65);
+  const taxRate = readWorldNumber(worldState, "taxRate", 30);
+  const base = normalizeDeepMetrics(seedCountry, {}, COUNTRY_DEEP_METRIC_KEYS, COUNTRY_DEEP_METRIC_DEFAULTS);
+
+  if (seedCountry.kind === "player_realm") {
+    return {
+      fiscalPressure: clampMetric(Math.max(corruption * 0.65, taxRate * 1.4, treasury < 600 ? 72 : 34), 45),
+      militaryReadiness: clampMetric(armyMorale * 0.65 + (100 - borderThreat) * 0.35, 55),
+      nationalPrestige: clampMetric((countryCore.stability || 55) * 0.55 + publicOrder * 0.25 + (100 - borderThreat) * 0.2, 55),
+      legitimacy: clampMetric(publicOrder * 0.6 + (100 - corruption) * 0.4, 55),
+      successionRisk: clampMetric(Math.max(24, (countryCore.pressure || 40) * 0.4 + corruption * 0.25), 35),
+      diplomaticTension: clampMetric(borderThreat, 40),
+      tributeTradeActivity: clampMetric(55 - Math.max(0, borderThreat - 55) * 0.35, 48),
+      intelligenceReliability: 92
+    };
+  }
+
+  return {
+    ...base,
+    diplomaticTension: clampMetric(seedCountry.diplomaticTension, Math.max(base.diplomaticTension, borderThreat)),
+    intelligenceReliability: clampMetric(
+      seedCountry.intelligenceReliability,
+      clampNumber(seedCountry.intelConfidence, 0, 100, base.intelligenceReliability)
+    )
+  };
+}
+
+function cityDeepSnapshot(seedCity = {}, worldState = {}, cityCore = {}) {
+  const taxRate = readWorldNumber(worldState, "taxRate", 30);
+  const base = normalizeDeepMetrics(seedCity, {}, CITY_DEEP_METRIC_KEYS, CITY_DEEP_METRIC_DEFAULTS);
+  const isCapital = /capital/.test(seedCity.jurisdictionLevel || "");
+  const isFrontier = /frontier|pass|garrison/.test(seedCity.jurisdictionLevel || "") || hasStrategicTag(seedCity, /边|军|关|防/);
+  const isScholarCity = hasStrategicTag(seedCity, /书院|贡院|科举|文社/);
+  const isTradeCity = hasStrategicTag(seedCity, /商|漕|海道|海舶|互市|贡道/);
+
+  return {
+    ...base,
+    populationScale: clampMetric(seedCity.populationScale, isCapital ? 86 : base.populationScale),
+    taxBase: clampMetric(seedCity.taxBase, isTradeCity ? Math.max(base.taxBase, 68) : base.taxBase),
+    grainStock: clampMetric(seedCity.grainStock, 100 - (cityCore.grainStress || 35)),
+    marketPriceStress: clampMetric(seedCity.marketPriceStress, Math.max(cityCore.grainStress || 35, taxRate)),
+    gentryInfluence: clampMetric(seedCity.gentryInfluence, isScholarCity ? Math.max(base.gentryInfluence, 72) : base.gentryInfluence),
+    waterworksIntegrity: clampMetric(seedCity.waterworksIntegrity, /河|运河|水|江|湖/.test(seedCity.riverOrCoast || "") ? Math.max(base.waterworksIntegrity, 58) : base.waterworksIntegrity),
+    disasterRisk: clampMetric(seedCity.disasterRisk, Math.max(base.disasterRisk, (cityCore.grainStress || 35) - 12)),
+    trafficLoad: clampMetric(seedCity.trafficLoad, isTradeCity || isCapital ? Math.max(base.trafficLoad, 70) : base.trafficLoad),
+    garrisonStrength: clampMetric(seedCity.garrisonStrength, isFrontier ? Math.max(base.garrisonStrength, 75) : base.garrisonStrength),
+    academyLevel: clampMetric(seedCity.academyLevel, isScholarCity ? Math.max(base.academyLevel, 78) : base.academyLevel)
+  };
 }
 
 function normalizeVisibility(value, fallback = "public") {
@@ -245,8 +318,12 @@ function normalizeCountryInstance(raw, seedCountry = null, worldState = {}) {
   const name = cleanText(source.name || base.name, "", 60);
   if (!id || !name) return null;
   const snapshot = countrySnapshot({ ...base, ...source, id, name }, worldState);
+  const deepSnapshot = countryDeepSnapshot({ ...base, ...source, id, name }, worldState, snapshot);
   const useSeedSnapshot = Boolean(seedCountry);
   const status = useSeedSnapshot || !STATUS_VALUES.has(source.status) ? snapshot.status : source.status;
+  const deepMetrics = useSeedSnapshot
+    ? deepSnapshot
+    : normalizeDeepMetrics(source, base, COUNTRY_DEEP_METRIC_KEYS, deepSnapshot);
 
   return {
     id,
@@ -261,6 +338,10 @@ function normalizeCountryInstance(raw, seedCountry = null, worldState = {}) {
     visibility: normalizeVisibility(source.visibility, normalizeVisibility(base.visibility, "public")),
     intelConfidence: clampNumber(source.intelConfidence, 0, 100, clampNumber(base.intelConfidence, 0, 100, 50)),
     publicSummary: cleanText(source.publicSummary || base.publicSummary, `${name}为天下地理实例国家。`),
+    policyPressureTags: normalizeStringList(source.policyPressureTags || base.policyPressureTags, MAX_DEEP_TAGS),
+    diplomaticPosture: cleanText(source.diplomaticPosture || base.diplomaticPosture, "外交态势未详。", WORLD_GEOGRAPHY_DEEP_CONFIG.countryTextLimits.diplomaticPosture),
+    intelligenceSummary: cleanText(source.intelligenceSummary || base.intelligenceSummary, "只见公开奏报与传闻摘要。", WORLD_GEOGRAPHY_DEEP_CONFIG.countryTextLimits.intelligenceSummary),
+    ...deepMetrics,
     status,
     statusLabel: STATUS_LABELS[status],
     pressure: useSeedSnapshot ? snapshot.pressure : clampMetric(source.pressure, snapshot.pressure),
@@ -302,8 +383,12 @@ function normalizeCityInstance(raw, seedCity = null, worldState = {}) {
   const name = cleanText(source.name || base.name, "", 60);
   if (!id || !name) return null;
   const snapshot = citySnapshot({ ...base, ...source, id, name }, worldState);
+  const deepSnapshot = cityDeepSnapshot({ ...base, ...source, id, name }, worldState, snapshot);
   const useSeedSnapshot = Boolean(seedCity);
   const status = useSeedSnapshot || !STATUS_VALUES.has(source.status) ? snapshot.status : source.status;
+  const deepMetrics = useSeedSnapshot
+    ? deepSnapshot
+    : normalizeDeepMetrics(source, base, CITY_DEEP_METRIC_KEYS, deepSnapshot);
 
   return {
     id,
@@ -318,6 +403,9 @@ function normalizeCityInstance(raw, seedCity = null, worldState = {}) {
     visibility: normalizeVisibility(source.visibility, normalizeVisibility(base.visibility, "public")),
     intelConfidence: clampNumber(source.intelConfidence, 0, 100, clampNumber(base.intelConfidence, 0, 100, 55)),
     publicSummary: cleanText(source.publicSummary || base.publicSummary, `${name}为天下地理实例城市。`),
+    localIssueTags: normalizeStringList(source.localIssueTags || base.localIssueTags, MAX_DEEP_TAGS),
+    cityIntelligenceSummary: cleanText(source.cityIntelligenceSummary || base.cityIntelligenceSummary, "城市奏报只含可见指标。", WORLD_GEOGRAPHY_DEEP_CONFIG.cityTextLimits.cityIntelligenceSummary),
+    ...deepMetrics,
     status,
     statusLabel: STATUS_LABELS[status],
     pressure: useSeedSnapshot ? snapshot.pressure : clampMetric(source.pressure, snapshot.pressure),
@@ -492,6 +580,17 @@ function viewCountry(country, visibleCityIds) {
     visibility: country.visibility,
     intelConfidence: country.intelConfidence,
     publicSummary: country.publicSummary,
+    policyPressureTags: country.policyPressureTags,
+    diplomaticPosture: country.diplomaticPosture,
+    intelligenceSummary: country.intelligenceSummary,
+    fiscalPressure: country.fiscalPressure,
+    militaryReadiness: country.militaryReadiness,
+    nationalPrestige: country.nationalPrestige,
+    legitimacy: country.legitimacy,
+    successionRisk: country.successionRisk,
+    diplomaticTension: country.diplomaticTension,
+    tributeTradeActivity: country.tributeTradeActivity,
+    intelligenceReliability: country.intelligenceReliability,
     status: country.status,
     statusLabel: country.statusLabel,
     pressure: country.pressure,
@@ -527,6 +626,20 @@ function viewCity(city) {
     visibility: city.visibility,
     intelConfidence: city.intelConfidence,
     publicSummary: city.publicSummary,
+    localIssueTags: city.localIssueTags,
+    cityIntelligenceSummary: city.cityIntelligenceSummary,
+    populationScale: city.populationScale,
+    taxBase: city.taxBase,
+    grainStock: city.grainStock,
+    marketPriceStress: city.marketPriceStress,
+    gentryInfluence: city.gentryInfluence,
+    lawsuitPressure: city.lawsuitPressure,
+    corveeBurden: city.corveeBurden,
+    waterworksIntegrity: city.waterworksIntegrity,
+    disasterRisk: city.disasterRisk,
+    trafficLoad: city.trafficLoad,
+    garrisonStrength: city.garrisonStrength,
+    academyLevel: city.academyLevel,
     status: city.status,
     statusLabel: city.statusLabel,
     pressure: city.pressure,
@@ -688,6 +801,17 @@ function summarizeWorldGeographyForPrompt(worldState = {}) {
       pressure: country.pressure,
       stability: country.stability,
       intelConfidence: country.intelConfidence,
+      fiscalPressure: country.fiscalPressure,
+      militaryReadiness: country.militaryReadiness,
+      nationalPrestige: country.nationalPrestige,
+      legitimacy: country.legitimacy,
+      successionRisk: country.successionRisk,
+      diplomaticTension: country.diplomaticTension,
+      tributeTradeActivity: country.tributeTradeActivity,
+      intelligenceReliability: country.intelligenceReliability,
+      policyPressureTags: country.policyPressureTags,
+      diplomaticPosture: country.diplomaticPosture,
+      intelligenceSummary: country.intelligenceSummary,
       publicSummary: country.publicSummary
     })),
     cities: view.highlights.cities.map((city) => ({
@@ -699,6 +823,20 @@ function summarizeWorldGeographyForPrompt(worldState = {}) {
       pressure: city.pressure,
       localOrder: city.localOrder,
       grainStress: city.grainStress,
+      populationScale: city.populationScale,
+      taxBase: city.taxBase,
+      grainStock: city.grainStock,
+      marketPriceStress: city.marketPriceStress,
+      gentryInfluence: city.gentryInfluence,
+      lawsuitPressure: city.lawsuitPressure,
+      corveeBurden: city.corveeBurden,
+      waterworksIntegrity: city.waterworksIntegrity,
+      disasterRisk: city.disasterRisk,
+      trafficLoad: city.trafficLoad,
+      garrisonStrength: city.garrisonStrength,
+      academyLevel: city.academyLevel,
+      localIssueTags: city.localIssueTags,
+      cityIntelligenceSummary: city.cityIntelligenceSummary,
       publicSummary: city.publicSummary
     })),
     routes: view.highlights.routes.map((route) => ({

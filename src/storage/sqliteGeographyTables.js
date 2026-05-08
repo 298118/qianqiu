@@ -26,6 +26,62 @@ function stringifyJson(value, fallback) {
   return JSON.stringify(source);
 }
 
+function unique(values, limit = 8) {
+  const result = [];
+  const seen = new Set();
+  for (const value of values || []) {
+    const text = typeof value === "string" ? value.trim() : "";
+    if (!text || seen.has(text)) continue;
+    seen.add(text);
+    result.push(text);
+    if (result.length >= limit) break;
+  }
+  return result;
+}
+
+function buildDepthMetadata(collectionName, row = {}) {
+  if (collectionName === "countries") {
+    return {
+      s61CountryDepth: {
+        fiscalPressure: row.fiscalPressure,
+        militaryReadiness: row.militaryReadiness,
+        nationalPrestige: row.nationalPrestige,
+        legitimacy: row.legitimacy,
+        successionRisk: row.successionRisk,
+        diplomaticTension: row.diplomaticTension,
+        tributeTradeActivity: row.tributeTradeActivity,
+        intelligenceReliability: row.intelligenceReliability,
+        policyPressureTags: unique(row.policyPressureTags, 8),
+        diplomaticPosture: row.diplomaticPosture || "",
+        intelligenceSummary: row.intelligenceSummary || ""
+      }
+    };
+  }
+
+  if (collectionName === "cities") {
+    return {
+      s61CityDepth: {
+        populationScale: row.populationScale,
+        taxBase: row.taxBase,
+        grainStock: row.grainStock,
+        marketPriceStress: row.marketPriceStress,
+        gentryInfluence: row.gentryInfluence,
+        lawsuitPressure: row.lawsuitPressure,
+        corveeBurden: row.corveeBurden,
+        waterworksIntegrity: row.waterworksIntegrity,
+        disasterRisk: row.disasterRisk,
+        trafficLoad: row.trafficLoad,
+        garrisonStrength: row.garrisonStrength,
+        academyLevel: row.academyLevel,
+        localIssueTags: unique(row.localIssueTags, 8),
+        cityIntelligenceSummary: row.cityIntelligenceSummary || ""
+      }
+    };
+  }
+
+  return {};
+}
+
 function toNullableInteger(value) {
   return Number.isFinite(Number(value)) ? Math.round(Number(value)) : null;
 }
@@ -283,7 +339,7 @@ function buildCommonValues(record, geography, seedRowIds, collectionName, row) {
     metadata.tenDayPeriod,
     row.publicSummary || "",
     stringifyJson(row.hiddenNotes, []),
-    stringifyJson({}, {}),
+    stringifyJson(buildDepthMetadata(collectionName, row), {}),
     record.createdAt,
     record.updatedAt
   ];

@@ -182,6 +182,17 @@ function addGeographyFixture(worldState) {
       visibility: "role_visible",
       knownToPlayer: true,
       intelConfidence: 58,
+      fiscalPressure: 48,
+      militaryReadiness: 46,
+      nationalPrestige: 52,
+      legitimacy: 55,
+      successionRisk: 42,
+      diplomaticTension: 36,
+      tributeTradeActivity: 74,
+      intelligenceReliability: 58,
+      policyPressureTags: ["贡道", "商路", "边报"],
+      diplomaticPosture: "贡使往来仍按礼部文书办理，互市利害待服务器后续裁决。",
+      intelligenceSummary: "目前只见贡使、商旅和边吏的公开片段，不含邻国真实虚实。",
       publicSummary: "西域贡部只以公开贡道札记入档，真实虚实不进入当前 raw state。"
     }
   ];
@@ -229,6 +240,20 @@ function addGeographyFixture(worldState) {
       stability: 72 - (index % 4) * 6,
       localOrder: 58 + (index % 6) * 4,
       grainStress: 34 + (index % 5) * 8,
+      populationScale: 48 + (index % 6) * 7,
+      taxBase: 44 + (index % 7) * 6,
+      grainStock: 62 - (index % 5) * 5,
+      marketPriceStress: 35 + (index % 6) * 7,
+      gentryInfluence: 38 + (index % 7) * 6,
+      lawsuitPressure: 24 + (index % 6) * 8,
+      corveeBurden: 26 + (index % 5) * 9,
+      waterworksIntegrity: 46 + (index % 6) * 6,
+      disasterRisk: 20 + (index % 6) * 8,
+      trafficLoad: 44 + (index % 7) * 7,
+      garrisonStrength: jurisdictionLevel.includes("frontier") ? 78 : 28 + (index % 6) * 7,
+      academyLevel: index % 3 === 0 ? 72 : 36 + (index % 6) * 6,
+      localIssueTags: ["S60样本", index % 2 === 0 ? "税粮" : "交通", index % 3 === 0 ? "水利" : "诉讼"],
+      cityIntelligenceSummary: `${name}只公开 S61 安全城市指标，不含密报或未公开案牍。`,
       publicSummary: `${name}为 S60 小样本城市，带有钱粮、交通、治安和情报摘要。`
     };
   });
@@ -770,6 +795,9 @@ function createCanaryPollutedWorldState(fixtureOrWorldState) {
     name: token("country_neighbor", 0),
     visibility: "hidden",
     publicSummary: token("country_neighbor", 1),
+    policyPressureTags: [token("country_neighbor", 3)],
+    diplomaticPosture: token("country_neighbor", 4),
+    intelligenceSummary: token("country_neighbor", 5),
     hiddenNotes: [token("country_neighbor", 2)]
   });
   worldState.worldGeography.cities.push({
@@ -779,6 +807,8 @@ function createCanaryPollutedWorldState(fixtureOrWorldState) {
     name: token("city_route", 0),
     visibility: "hidden",
     publicSummary: token("city_route", 1),
+    localIssueTags: [token("city_route", 3)],
+    cityIntelligenceSummary: token("city_route", 4),
     hiddenNotes: [token("city_route", 2)]
   });
   worldState.worldPeople.npcs.push({

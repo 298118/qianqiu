@@ -1,6 +1,6 @@
 const test = require("node:test");
 const assert = require("node:assert/strict");
-const { randomUUID } = require("node:crypto");
+const { createHash, randomUUID } = require("node:crypto");
 const fs = require("node:fs/promises");
 const path = require("node:path");
 const { isBuiltin } = require("node:module");
@@ -20,6 +20,38 @@ const dataDir = path.join(__dirname, "..", "data");
 
 function clone(value) {
   return JSON.parse(JSON.stringify(value));
+}
+
+function normalizeForStableJson(value) {
+  if (Array.isArray(value)) return value.map((entry) => normalizeForStableJson(entry));
+  if (!value || typeof value !== "object") return value;
+  return Object.keys(value)
+    .sort()
+    .reduce((normalized, key) => {
+      normalized[key] = normalizeForStableJson(value[key]);
+      return normalized;
+    }, {});
+}
+
+function stableStringify(value) {
+  return JSON.stringify(normalizeForStableJson(value));
+}
+
+function hashPromptRetrievalRow(row) {
+  const comparable = {};
+  for (const column of Object.keys(row).sort()) {
+    if (column === "metadata_json" || column === "created_at" || column === "updated_at") continue;
+    comparable[column] = row[column];
+  }
+  return createHash("sha256").update(stableStringify(comparable)).digest("hex");
+}
+
+function buildPromptSearchText(payload = {}) {
+  return JSON.stringify(payload)
+    .replace(/[{}[\]",:]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim()
+    .slice(0, 1000);
 }
 
 async function removeSqliteArtifacts(dbPath) {
@@ -160,6 +192,7 @@ test("SQLite prompt retrieval index matches server-visible fallback without chan
   assert.deepEqual(sqliteContext.offices, fallbackContext.offices);
   assert.deepEqual(sqliteContext.events.recentEvents, fallbackContext.events.recentEvents);
   assert.match(serialized, /户部|北京|京杭漕运|顾衡/);
+  assert.match(serialized, /fiscalPressure|taxBase|waterworksIntegrity/);
   assert.doesNotMatch(serialized, /SEALED_SQLITE_PROMPT_/);
   assert.equal(JSON.stringify(record.worldState).includes("promptRetrieval"), false);
 
@@ -221,6 +254,89 @@ test("SQLite prompt retrieval index repairs same-row content pollution before pr
   assert.doesNotMatch(repairedPayload, /SEALED_SQLITE_PROMPT_TAMPER/);
 });
 
+test("SQLite prompt retrieval index upgrades self-consistent legacy geography payloads", {
+  skip: hasNodeSqlite ? false : "node:sqlite is unavailable in this Node.js runtime"
+}, async (t) => {
+  const { adapter, dbPath } = createHarness(t);
+  const worldState = createPromptWorldState();
+  await adapter.writeSession(clone(worldState));
+
+  withSqliteDatabase(dbPath, (db) => {
+    const row = db
+      .prepare(`
+        SELECT *
+        FROM prompt_retrieval_index
+        WHERE session_id = ?
+          AND row_id = ?
+      `)
+      .get(worldState.sessionId, "geography.cities:city-beijing");
+    const legacyPayload = JSON.parse(row.payload_json);
+    for (const key of [
+      "populationScale",
+      "taxBase",
+      "grainStock",
+      "marketPriceStress",
+      "gentryInfluence",
+      "lawsuitPressure",
+      "corveeBurden",
+      "waterworksIntegrity",
+      "disasterRisk",
+      "trafficLoad",
+      "garrisonStrength",
+      "academyLevel",
+      "localIssueTags",
+      "cityIntelligenceSummary"
+    ]) {
+      delete legacyPayload[key];
+    }
+
+    const legacyRow = {
+      ...row,
+      payload_json: JSON.stringify(legacyPayload),
+      search_text: buildPromptSearchText(legacyPayload)
+    };
+    const metadata = JSON.parse(row.metadata_json);
+    metadata.contentHash = hashPromptRetrievalRow(legacyRow);
+    db
+      .prepare(`
+        UPDATE prompt_retrieval_index
+        SET payload_json = ?,
+            search_text = ?,
+            metadata_json = ?
+        WHERE session_id = ?
+          AND row_id = ?
+      `)
+      .run(
+        legacyRow.payload_json,
+        legacyRow.search_text,
+        JSON.stringify(metadata),
+        worldState.sessionId,
+        "geography.cities:city-beijing"
+      );
+  });
+
+  const { record } = await adapter.readSessionRecord(worldState.sessionId);
+  const context = assemblePromptContext(record.worldState, {
+    task: "official_career",
+    playerAction: "核查北京税粮、水利与驻军"
+  });
+  const serialized = JSON.stringify(context.retrievalContext);
+
+  assert.match(serialized, /taxBase|waterworksIntegrity|garrisonStrength/);
+
+  const repairedPayload = withSqliteDatabase(dbPath, (db) =>
+    db
+      .prepare(`
+        SELECT payload_json
+        FROM prompt_retrieval_index
+        WHERE session_id = ?
+          AND row_id = ?
+      `)
+      .get(worldState.sessionId, "geography.cities:city-beijing").payload_json
+  );
+  assert.match(repairedPayload, /taxBase|waterworksIntegrity|garrisonStrength/);
+});
+
 test("SQLite prompt retrieval ignores raw business tables and raw audit while repairing missing index rows", {
   skip: hasNodeSqlite ? false : "node:sqlite is unavailable in this Node.js runtime"
 }, async (t) => {
@@ -233,8 +349,18 @@ test("SQLite prompt retrieval ignores raw business tables and raw audit while re
       .prepare("UPDATE geo_cities SET public_summary = ? WHERE session_id = ? AND row_id = ?")
       .run("SEALED_SQLITE_RAW_GEO prompt event_log", worldState.sessionId, "city-beijing");
     db
+      .prepare("UPDATE geo_cities SET metadata_json = ? WHERE session_id = ? AND row_id = ?")
+      .run(
+        JSON.stringify({ s61CityDepth: { cityIntelligenceSummary: "SEALED_SQLITE_RAW_S61_CITY" } }),
+        worldState.sessionId,
+        "city-beijing"
+      );
+    db
       .prepare("UPDATE people_npcs SET public_summary = ? WHERE session_id = ? AND row_id = ?")
       .run("SEALED_SQLITE_RAW_PEOPLE provider proposal", worldState.sessionId, "npc-visible-prompt-gu");
+    db
+      .prepare("DELETE FROM prompt_retrieval_index WHERE session_id = ? AND row_id = ?")
+      .run(worldState.sessionId, "geography.cities:city-beijing");
     db
       .prepare("DELETE FROM prompt_retrieval_index WHERE session_id = ? AND row_id = ?")
       .run(worldState.sessionId, "people.npcs:npc-visible-prompt-gu");
@@ -303,6 +429,7 @@ test("SQLite prompt retrieval ignores raw business tables and raw audit while re
 
   assert.match(serialized, /顾衡|北京/);
   assert.doesNotMatch(serialized, /SEALED_SQLITE_RAW_/);
+  assert.doesNotMatch(serialized, /SEALED_SQLITE_RAW_S61_CITY/);
   assert.doesNotMatch(serialized, /SEALED_AUDIT_PROMPT/);
   assert.doesNotMatch(serialized, /SEALED_AI_PROPOSAL_PROMPT/);
 

@@ -769,11 +769,16 @@ test("SQLite storage adapter syncs geography business tables with the session ro
   withSqliteDatabase(dbPath, (db) => {
     const counts = readSqliteGeographyCounts(db, worldState.sessionId);
     const ming = db
-      .prepare("SELECT source, seed_row_id, revision, row_revision, last_updated_turn FROM geo_countries WHERE session_id = ? AND row_id = ?")
+      .prepare("SELECT source, seed_row_id, revision, row_revision, last_updated_turn, metadata_json FROM geo_countries WHERE session_id = ? AND row_id = ?")
       .get(worldState.sessionId, "country-ming");
+    const beijing = db
+      .prepare("SELECT metadata_json FROM geo_cities WHERE session_id = ? AND row_id = ?")
+      .get(worldState.sessionId, "city-beijing");
     const hiddenRoute = db
       .prepare("SELECT visibility, hidden_notes_json FROM geo_routes WHERE session_id = ? AND row_id = ?")
       .get(worldState.sessionId, "route-hidden-liaodong-smuggling");
+    const mingMetadata = JSON.parse(ming.metadata_json);
+    const beijingMetadata = JSON.parse(beijing.metadata_json);
 
     assert.equal(counts.countries, worldState.worldGeography.countries.length);
     assert.equal(counts.regions, worldState.worldGeography.regions.length);
@@ -786,6 +791,10 @@ test("SQLite storage adapter syncs geography business tables with the session ro
     assert.equal(ming.revision, 1);
     assert.equal(ming.row_revision, 1);
     assert.equal(ming.last_updated_turn, 5);
+    assert.equal(typeof mingMetadata.s61CountryDepth.fiscalPressure, "number");
+    assert.equal(typeof mingMetadata.s61CountryDepth.militaryReadiness, "number");
+    assert.equal(typeof beijingMetadata.s61CityDepth.taxBase, "number");
+    assert.equal(typeof beijingMetadata.s61CityDepth.waterworksIntegrity, "number");
     assert.equal(hiddenRoute.visibility, "hidden");
     assert.match(hiddenRoute.hidden_notes_json, /SEALED_ROUTE_NOTE/);
   });

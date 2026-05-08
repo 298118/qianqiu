@@ -29,7 +29,38 @@ test("initial world geography instantiates seed rows into a per-session ledger",
   assert.ok(beijing);
   assert.equal(typeof ming.pressure, "number");
   assert.equal(typeof ming.stability, "number");
+  assert.equal(typeof ming.fiscalPressure, "number");
+  assert.equal(typeof ming.militaryReadiness, "number");
+  assert.equal(typeof ming.legitimacy, "number");
   assert.equal(typeof beijing.localOrder, "number");
+  assert.equal(typeof beijing.taxBase, "number");
+  assert.equal(typeof beijing.waterworksIntegrity, "number");
+  assert.equal(typeof beijing.academyLevel, "number");
+});
+
+test("world geography view and prompt expose S61 safe country and city depth metrics", () => {
+  const worldState = createInitialState({ role: "official", playerName: "S61 Geo Tester" });
+  const view = buildWorldGeographyView(worldState);
+  const summary = summarizeWorldGeographyForPrompt(worldState);
+  const ming = view.countries.find((country) => country.id === "country-ming");
+  const beijing = view.cities.find((city) => city.id === "city-beijing");
+  const promptMing = summary.countries.find((country) => country.id === "country-ming");
+  const promptBeijing = summary.cities.find((city) => city.id === "city-beijing");
+
+  assert.ok(ming);
+  assert.ok(beijing);
+  assert.equal(typeof ming.fiscalPressure, "number");
+  assert.equal(typeof ming.diplomaticTension, "number");
+  assert.ok(Array.isArray(ming.policyPressureTags));
+  assert.match(ming.intelligenceSummary, /奏报|传闻|摘要/);
+  assert.equal(typeof beijing.populationScale, "number");
+  assert.equal(typeof beijing.gentryInfluence, "number");
+  assert.equal(typeof beijing.garrisonStrength, "number");
+  assert.ok(Array.isArray(beijing.localIssueTags));
+  assert.ok(promptMing);
+  assert.ok(promptBeijing);
+  assert.equal(typeof promptMing.militaryReadiness, "number");
+  assert.equal(typeof promptBeijing.waterworksIntegrity, "number");
 });
 
 test("world geography view filters hidden rows, hidden notes, and scholar-only role_visible rows", () => {
@@ -116,7 +147,20 @@ test("world geography prompt summary is capped and excludes hidden geography", (
     jurisdictionLevel: "secret",
     visibility: "hidden",
     publicSummary: "SEALED_CITY_SUMMARY",
+    localIssueTags: ["SEALED_CITY_TAG"],
+    cityIntelligenceSummary: "SEALED_CITY_INTEL",
     hiddenNotes: ["SEALED_CITY_NOTE"]
+  });
+  worldState.worldGeography.countries.push({
+    id: "country-hidden-prompt",
+    kind: "neighbor",
+    name: "Hidden Prompt Country",
+    visibility: "hidden",
+    publicSummary: "SEALED_COUNTRY_SUMMARY",
+    policyPressureTags: ["SEALED_COUNTRY_TAG"],
+    diplomaticPosture: "SEALED_COUNTRY_POSTURE",
+    intelligenceSummary: "SEALED_COUNTRY_INTEL",
+    hiddenNotes: ["SEALED_COUNTRY_NOTE"]
   });
   worldState.worldGeography.routes.push({
     id: "route-hidden-prompt",
@@ -140,6 +184,8 @@ test("world geography prompt summary is capped and excludes hidden geography", (
   assert.match(serialized, /country-ming/);
   assert.doesNotMatch(serialized, /Hidden Prompt City/);
   assert.doesNotMatch(serialized, /SEALED_CITY_SUMMARY/);
+  assert.doesNotMatch(serialized, /SEALED_CITY_INTEL/);
+  assert.doesNotMatch(serialized, /SEALED_COUNTRY_POSTURE/);
   assert.doesNotMatch(serialized, /SEALED_ROUTE_PROMPT_NOTE/);
 });
 
@@ -162,7 +208,10 @@ test("world geography normalization backfills legacy saves and clamps dynamic fi
       visibility: "bad",
       pressure: 999,
       stability: -50,
-      intelConfidence: 999
+      intelConfidence: 999,
+      fiscalPressure: 999,
+      militaryReadiness: -10,
+      legitimacy: "bad"
     }],
     cities: [{
       id: "city-beijing",
@@ -177,7 +226,10 @@ test("world geography normalization backfills legacy saves and clamps dynamic fi
       regionId: "region-north-zhili",
       pressure: 999,
       localOrder: -10,
-      grainStress: 999
+      grainStress: 999,
+      taxBase: 999,
+      lawsuitPressure: -4,
+      waterworksIntegrity: "bad"
     }],
     recentNotes: ["旧档札记"]
   };
@@ -202,10 +254,16 @@ test("world geography normalization backfills legacy saves and clamps dynamic fi
   assert.equal(customCountry.pressure, 100);
   assert.equal(customCountry.stability, 0);
   assert.equal(customCountry.intelConfidence, 100);
+  assert.equal(customCountry.fiscalPressure, 100);
+  assert.equal(customCountry.militaryReadiness, 0);
+  assert.equal(customCountry.legitimacy, 55);
   assert.equal(customCountry.visibility, "public");
   assert.equal(customCity.pressure, 100);
   assert.equal(customCity.localOrder, 0);
   assert.equal(customCity.grainStress, 100);
+  assert.equal(customCity.taxBase, 100);
+  assert.equal(customCity.lawsuitPressure, 0);
+  assert.equal(customCity.waterworksIntegrity, 50);
 });
 
 test("world geography ensure refreshes seed snapshots from current world metrics", () => {

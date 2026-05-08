@@ -231,6 +231,17 @@ function compactCountry(country) {
     pressure: country.pressure,
     stability: country.stability,
     intelConfidence: country.intelConfidence,
+    fiscalPressure: country.fiscalPressure,
+    militaryReadiness: country.militaryReadiness,
+    nationalPrestige: country.nationalPrestige,
+    legitimacy: country.legitimacy,
+    successionRisk: country.successionRisk,
+    diplomaticTension: country.diplomaticTension,
+    tributeTradeActivity: country.tributeTradeActivity,
+    intelligenceReliability: country.intelligenceReliability,
+    policyPressureTags: country.policyPressureTags,
+    diplomaticPosture: country.diplomaticPosture,
+    intelligenceSummary: country.intelligenceSummary,
     publicSummary: country.publicSummary
   };
 }
@@ -246,6 +257,20 @@ function compactCity(city) {
     pressure: city.pressure,
     localOrder: city.localOrder,
     grainStress: city.grainStress,
+    populationScale: city.populationScale,
+    taxBase: city.taxBase,
+    grainStock: city.grainStock,
+    marketPriceStress: city.marketPriceStress,
+    gentryInfluence: city.gentryInfluence,
+    lawsuitPressure: city.lawsuitPressure,
+    corveeBurden: city.corveeBurden,
+    waterworksIntegrity: city.waterworksIntegrity,
+    disasterRisk: city.disasterRisk,
+    trafficLoad: city.trafficLoad,
+    garrisonStrength: city.garrisonStrength,
+    academyLevel: city.academyLevel,
+    localIssueTags: city.localIssueTags,
+    cityIntelligenceSummary: city.cityIntelligenceSummary,
     publicSummary: city.publicSummary
   };
 }
@@ -316,7 +341,7 @@ function buildGeographyContext(worldState, query, retrievalSource = null) {
       query,
       limit: LIMITS.countries,
       sourceType: "worldGeography.country",
-      textFields: ["name", "shortName", "kind", "polityType", "publicSummary", "statusLabel"],
+      textFields: ["name", "shortName", "kind", "polityType", "publicSummary", "statusLabel", "policyPressureTags", "diplomaticPosture", "intelligenceSummary"],
       baseScore: (country) => pressureScore(country) + (country.kind === "player_realm" ? 10 : 0),
       mapRow: compactCountry
     }),
@@ -324,7 +349,7 @@ function buildGeographyContext(worldState, query, retrievalSource = null) {
       query,
       limit: LIMITS.cities,
       sourceType: "worldGeography.city",
-      textFields: ["name", "jurisdictionLevel", "terrain", "riverOrCoast", "strategicTags", "publicSummary", "statusLabel"],
+      textFields: ["name", "jurisdictionLevel", "terrain", "riverOrCoast", "strategicTags", "localIssueTags", "cityIntelligenceSummary", "publicSummary", "statusLabel"],
       baseScore: (city) => pressureScore(city),
       mapRow: compactCity
     }),

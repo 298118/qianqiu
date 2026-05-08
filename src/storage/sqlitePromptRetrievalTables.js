@@ -123,6 +123,17 @@ function compactCountry(country = {}) {
     pressure: country.pressure,
     stability: country.stability,
     intelConfidence: country.intelConfidence,
+    fiscalPressure: country.fiscalPressure,
+    militaryReadiness: country.militaryReadiness,
+    nationalPrestige: country.nationalPrestige,
+    legitimacy: country.legitimacy,
+    successionRisk: country.successionRisk,
+    diplomaticTension: country.diplomaticTension,
+    tributeTradeActivity: country.tributeTradeActivity,
+    intelligenceReliability: country.intelligenceReliability,
+    policyPressureTags: unique(country.policyPressureTags, 8),
+    diplomaticPosture: country.diplomaticPosture,
+    intelligenceSummary: country.intelligenceSummary,
     publicSummary: country.publicSummary
   };
 }
@@ -142,6 +153,20 @@ function compactCity(city = {}) {
     stability: city.stability,
     localOrder: city.localOrder,
     grainStress: city.grainStress,
+    populationScale: city.populationScale,
+    taxBase: city.taxBase,
+    grainStock: city.grainStock,
+    marketPriceStress: city.marketPriceStress,
+    gentryInfluence: city.gentryInfluence,
+    lawsuitPressure: city.lawsuitPressure,
+    corveeBurden: city.corveeBurden,
+    waterworksIntegrity: city.waterworksIntegrity,
+    disasterRisk: city.disasterRisk,
+    trafficLoad: city.trafficLoad,
+    garrisonStrength: city.garrisonStrength,
+    academyLevel: city.academyLevel,
+    localIssueTags: unique(city.localIssueTags, 8),
+    cityIntelligenceSummary: city.cityIntelligenceSummary,
     publicSummary: city.publicSummary
   };
 }
@@ -459,15 +484,19 @@ function hasMismatchedPromptRetrievalRowIds(database, sessionId, expectedRows) {
   return false;
 }
 
-function hasMismatchedPromptRetrievalContentHashes(database, sessionId) {
+function hasMismatchedPromptRetrievalContentHashes(database, sessionId, expectedRows) {
+  const expectedRowsById = new Map(expectedRows.map((row) => [row.row_id, row]));
   const storedRows = database
     .prepare("SELECT * FROM prompt_retrieval_index WHERE session_id = ?")
     .all(sessionId);
 
   for (const row of storedRows) {
+    const expected = expectedRowsById.get(row.row_id);
     const metadata = parseJsonObject(row.metadata_json);
+    if (!expected) return true;
     if (!metadata.contentHash) return true;
     if (metadata.contentHash !== hashPromptRetrievalRow(row)) return true;
+    if (metadata.contentHash !== hashPromptRetrievalRow(expected)) return true;
   }
   return false;
 }
@@ -481,7 +510,7 @@ function getPromptRetrievalRepairStatus(database, record) {
   const staleRows = hasStalePromptRetrievalRows(database, record.sessionId, record.revision);
   const contentMismatches = !missingOrMismatched &&
     !mismatchedRowIds &&
-    hasMismatchedPromptRetrievalContentHashes(database, record.sessionId);
+    hasMismatchedPromptRetrievalContentHashes(database, record.sessionId, expectedRows);
   const tableNeedsRepair = missingOrMismatched || mismatchedRowIds || staleRows || contentMismatches;
 
   return {

@@ -81,6 +81,14 @@ test("S60 small world content fixture reaches quantity gates without storing pri
   assert.equal(metrics.promptRetrievalRows <= 500, true);
   assert.equal(metrics.hiddenCanaries >= target.hiddenCanaries, true);
 
+  const geographyView = buildWorldGeographyView(fixture.worldState);
+  const s61City = geographyView.cities.find((city) => city.id === "city-s60-001");
+  const s61Country = geographyView.countries.find((country) => country.id === "country-s60-western-tribute");
+  assert.equal(typeof s61City.taxBase, "number");
+  assert.equal(typeof s61City.waterworksIntegrity, "number");
+  assert.equal(typeof s61Country.fiscalPressure, "number");
+  assert.equal(typeof s61Country.diplomaticTension, "number");
+
   assert.equal(JSON.stringify(fixture.worldState).includes("S60_PRIVATE_"), false);
   assert.equal(JSON.stringify(fixture.worldState).includes("sk-s60-private-canary-token"), false);
 });
