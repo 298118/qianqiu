@@ -133,11 +133,37 @@ test("event archive view merges visible sources into capped public items", () =>
     item.sourceLabel === "考成" &&
     item.summary.includes("任所奏报")
   ));
+  assert.ok(view.items.some((item) =>
+    item.sourceType === "local_docket" &&
+    item.sourceLabel === "案牍" &&
+    /案牍|任所|钱粮|刑名|水利/.test(item.summary)
+  ));
   assert.ok(view.items.some((item) => item.sourceType === "exam_record" && item.title === "童生试"));
   assert.deepEqual(view.items.map((item) => item.turn), view.items.map((item) => item.turn).sort((a, b) => b - a));
   assert.equal(serialized.includes("hiddenNotes"), false);
   assert.equal(serialized.includes("sk-proj-secret-archive"), false);
   assert.equal(serialized.includes("data/audit"), false);
+});
+
+test("event archive derives local docket items only for administrative views", () => {
+  const magistrateState = createInitialState({ playerName: "案牍归档", role: "magistrate" });
+  Object.assign(magistrateState.player, {
+    pendingLawsuits: 80,
+    waterworks: 20,
+    banditPressure: 84
+  });
+  const scholarState = createInitialState({ playerName: "案牍旁听", role: "scholar" });
+
+  const magistrateArchive = buildEventArchiveView(magistrateState, { pageSize: 50 });
+  const scholarArchive = buildEventArchiveView(scholarState, { pageSize: 50 });
+  const docketItem = magistrateArchive.items.find((item) => item.sourceType === "local_docket");
+  const serialized = JSON.stringify(magistrateArchive);
+
+  assert.ok(docketItem);
+  assert.equal(docketItem.sourceLabel, "案牍");
+  assert.match(docketItem.summary, /服务器|AI/);
+  assert.equal(scholarArchive.counts.local_docket || 0, 0);
+  assert.doesNotMatch(serialized, /statePatch|provider|proposal|prompt|data\/sessions|sk-/);
 });
 
 test("event archive sanitizer drops prompt, provider, path, key, and raw state text", () => {

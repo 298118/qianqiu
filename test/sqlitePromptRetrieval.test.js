@@ -202,6 +202,75 @@ test("SQLite prompt retrieval index matches server-visible fallback without chan
   assert.ok(rowCount > 0);
 });
 
+test("SQLite prompt retrieval indexes and repairs S63 local docket rows", {
+  skip: hasNodeSqlite ? false : "node:sqlite is unavailable in this Node.js runtime"
+}, async (t) => {
+  const { adapter, dbPath } = createHarness(t);
+  const worldState = createPromptWorldState();
+  await adapter.writeSession(clone(worldState));
+
+  const docketRowId = withSqliteDatabase(dbPath, (db) =>
+    db
+      .prepare(`
+        SELECT row_id
+        FROM prompt_retrieval_index
+        WHERE session_id = ?
+          AND domain = 'events'
+          AND collection = 'localDockets'
+        ORDER BY row_id
+        LIMIT 1
+      `)
+      .get(worldState.sessionId).row_id
+  );
+
+  assert.match(docketRowId, /^events\.localDockets:/);
+
+  withSqliteDatabase(dbPath, (db) => {
+    db
+      .prepare(`
+        UPDATE prompt_retrieval_index
+        SET payload_json = ?,
+            search_text = ?
+        WHERE session_id = ?
+          AND row_id = ?
+      `)
+      .run(
+        JSON.stringify({
+          id: "local-docket-polluted",
+          title: "SEALED_SQLITE_LOCAL_DOCKET prompt provider event_log sk-test-local-docket"
+        }),
+        "SEALED_SQLITE_LOCAL_DOCKET prompt provider event_log sk-test-local-docket",
+        worldState.sessionId,
+        docketRowId
+      );
+  });
+
+  const { record } = await adapter.readSessionRecord(worldState.sessionId);
+  const context = assemblePromptContext(record.worldState, {
+    task: "official_career",
+    playerAction: "核查户部钱粮案牍与北京水利"
+  });
+  const serialized = JSON.stringify(context.retrievalContext);
+
+  assert.match(serialized, /localAffairsDocketView|钱粮|水利|案牍/);
+  assert.doesNotMatch(serialized, /SEALED_SQLITE_LOCAL_DOCKET/);
+  assert.doesNotMatch(serialized, /sk-test-local-docket/);
+  assert.doesNotMatch(serialized, /event_log/);
+
+  const repairedPayload = withSqliteDatabase(dbPath, (db) =>
+    db
+      .prepare(`
+        SELECT payload_json
+        FROM prompt_retrieval_index
+        WHERE session_id = ?
+          AND row_id = ?
+      `)
+      .get(worldState.sessionId, docketRowId).payload_json
+  );
+  assert.doesNotMatch(repairedPayload, /SEALED_SQLITE_LOCAL_DOCKET/);
+  assert.match(repairedPayload, /钱粮|水利|案牍|盗匪|刑名/);
+});
+
 test("SQLite prompt retrieval index repairs same-row content pollution before prompt assembly", {
   skip: hasNodeSqlite ? false : "node:sqlite is unavailable in this Node.js runtime"
 }, async (t) => {

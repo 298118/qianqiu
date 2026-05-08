@@ -1,6 +1,7 @@
 const { createHash } = require("node:crypto");
 
 const { buildEventArchiveIndexItems } = require("../game/eventArchive");
+const { buildLocalAffairsDocketView } = require("../game/localAffairsDockets");
 const { buildOfficialPostingsView } = require("../game/officialPostings");
 const { buildWorldGeographyView } = require("../game/worldGeography");
 const { buildWorldPeopleView } = require("../game/worldPeople");
@@ -21,6 +22,7 @@ const COLLECTION_GROUPS = Object.freeze({
   "offices.postings": ["offices", "postings"],
   "offices.assessmentRecords": ["offices", "assessmentRecords"],
   "offices.transferRecords": ["offices", "transferRecords"],
+  "events.localDockets": ["events", "localDockets"],
   "events.recentEvents": ["events", "recentEvents"]
 });
 
@@ -346,6 +348,37 @@ function compactEvent(item = {}) {
   };
 }
 
+function compactLocalDocket(docket = {}) {
+  const hint = docket.assessmentHint || {};
+  return {
+    id: docket.id,
+    domain: docket.domain,
+    domainLabel: docket.domainLabel,
+    title: docket.title,
+    cityId: docket.cityId,
+    jurisdictionId: docket.jurisdictionId,
+    bureauId: docket.bureauId,
+    postingId: docket.postingId,
+    severity: docket.severity,
+    statusLabel: docket.statusLabel,
+    pressureScore: docket.pressureScore,
+    metricRefs: clonePayload(docket.metricRefs || []).slice(0, 2).map((ref) => ({
+      key: ref.key,
+      label: ref.label,
+      value: ref.value,
+      pressure: ref.pressure
+    })),
+    assessmentHint: {
+      meritDirection: hint.meritDirection,
+      riskDirection: hint.riskDirection,
+      maxMeritDelta: hint.maxMeritDelta,
+      maxRiskDelta: hint.maxRiskDelta,
+      tags: unique(hint.tags, 4)
+    },
+    publicSummary: docket.publicSummary
+  };
+}
+
 function buildSearchText(payload = {}) {
   return JSON.stringify(payload)
     .replace(/[{}[\]",:]/g, " ")
@@ -433,6 +466,7 @@ function buildPromptRetrievalRows(record) {
   const geographyView = buildWorldGeographyView(record.worldState);
   const peopleView = buildWorldPeopleView(record.worldState);
   const officialView = buildOfficialPostingsView(record.worldState);
+  const localDocketView = buildLocalAffairsDocketView(record.worldState);
   const eventItems = buildEventArchiveIndexItems(record.worldState);
 
   addRows(rows, record, "geography.countries", "worldGeographyView", geographyView.countries, compactCountry);
@@ -447,6 +481,7 @@ function buildPromptRetrievalRows(record) {
   addRows(rows, record, "offices.postings", "officialPostingsView", officialView.postings, compactPosting);
   addRows(rows, record, "offices.assessmentRecords", "officialPostingsView", officialView.assessmentRecords, compactAssessment);
   addRows(rows, record, "offices.transferRecords", "officialPostingsView", officialView.transferRecords, compactTransfer);
+  addRows(rows, record, "events.localDockets", "localAffairsDocketView", localDocketView.dockets, compactLocalDocket);
   addRows(rows, record, "events.recentEvents", "eventArchiveView", eventItems, compactEvent);
 
   return rows;
@@ -556,6 +591,7 @@ function emptyPromptRetrievalSource() {
       transferRecords: []
     },
     events: {
+      localDockets: [],
       recentEvents: []
     }
   };

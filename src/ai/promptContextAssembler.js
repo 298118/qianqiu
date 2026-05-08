@@ -4,6 +4,10 @@ const {
   buildLongTermEventView,
   summarizeLongTermEventsForPrompt
 } = require("../game/longTermEvents");
+const {
+  buildLocalAffairsDocketView,
+  summarizeLocalAffairsDocketsForPrompt
+} = require("../game/localAffairsDockets");
 const { summarizeOfficialCareerForPrompt } = require("../game/officialCareer");
 const {
   buildOfficialPostingsView,
@@ -50,6 +54,7 @@ const LIMITS = Object.freeze({
   worldThreads: 6,
   longTermEvents: 4,
   resolvedEvents: 3,
+  localDockets: 3,
   recentEvents: 6,
   entities: 5
 });
@@ -70,6 +75,7 @@ const ORDINARY_TURN_LIMITS = Object.freeze({
   worldThreads: 3,
   longTermEvents: 1,
   resolvedEvents: 1,
+  localDockets: 1,
   recentEvents: 4,
   entities: 1
 });
@@ -101,6 +107,7 @@ const RETRIEVAL_ROW_PATHS = Object.freeze([
   ["events", "worldThreads"],
   ["events", "longTermEvents"],
   ["events", "resolvedEvents"],
+  ["events", "localDockets"],
   ["events", "recentEvents"],
   ["entities", "highlights"]
 ]);
@@ -709,6 +716,37 @@ function compactRecentEvent(event, index) {
   };
 }
 
+function compactLocalDocket(docket) {
+  const hint = docket.assessmentHint || {};
+  return {
+    id: docket.id,
+    domain: docket.domain,
+    domainLabel: docket.domainLabel,
+    title: docket.title,
+    cityId: docket.cityId,
+    jurisdictionId: docket.jurisdictionId,
+    bureauId: docket.bureauId,
+    postingId: docket.postingId,
+    severity: docket.severity,
+    statusLabel: docket.statusLabel,
+    pressureScore: docket.pressureScore,
+    metricRefs: (docket.metricRefs || []).slice(0, 2).map((ref) => ({
+      key: ref.key,
+      label: ref.label,
+      value: ref.value,
+      pressure: ref.pressure
+    })),
+    assessmentHint: {
+      meritDirection: hint.meritDirection,
+      riskDirection: hint.riskDirection,
+      maxMeritDelta: hint.maxMeritDelta,
+      maxRiskDelta: hint.maxRiskDelta,
+      tags: Array.isArray(hint.tags) ? hint.tags.slice(0, 4) : []
+    },
+    publicSummary: docket.publicSummary
+  };
+}
+
 function compactEntity(entity) {
   return {
     id: entity.id,
@@ -729,6 +767,8 @@ function buildEventContext(worldState, query, retrievalSource = null) {
   const longTermView = buildLongTermEventView(worldState);
   const eventArchiveItems = safeRetrievalCollection(retrievalSource, "events", "recentEvents") ||
     buildEventArchiveIndexItems(worldState);
+  const sourceLocalDockets = safeRetrievalCollection(retrievalSource, "events", "localDockets");
+  const localDockets = sourceLocalDockets || buildLocalAffairsDocketView(worldState).dockets;
   const recentEvents = eventArchiveItems
     .filter((event) => event.sourceType === "event_history")
     .slice(0, LIMITS.recentEvents)
@@ -769,6 +809,14 @@ function buildEventContext(worldState, query, retrievalSource = null) {
         mapRow: compactResolvedEvent
       })
     ].slice(0, LIMITS.resolvedEvents),
+    localDockets: rankRows(localDockets, {
+      query,
+      limit: LIMITS.localDockets,
+      sourceType: "localAffairsDocketView.docket",
+      textFields: ["domain", "domainLabel", "title", "cityId", "jurisdictionId", "bureauId", "statusLabel", "metricRefs", "assessmentHint", "publicSummary"],
+      baseScore: (docket) => (docket.severity || 0) * 32 + clampNumber(docket.pressureScore, 0, 100, 0),
+      mapRow: compactLocalDocket
+    }),
     recentEvents
   };
 }
@@ -835,6 +883,7 @@ function applyPromptBudget(context, options = {}) {
   next.events.worldThreads = next.events.worldThreads.slice(0, limits.worldThreads);
   next.events.longTermEvents = next.events.longTermEvents.slice(0, limits.longTermEvents);
   next.events.resolvedEvents = next.events.resolvedEvents.slice(0, limits.resolvedEvents);
+  next.events.localDockets = next.events.localDockets.slice(0, limits.localDockets);
   next.events.recentEvents = next.events.recentEvents.slice(0, limits.recentEvents);
   next.entities.highlights = next.entities.highlights.slice(0, limits.entities);
 
@@ -872,6 +921,7 @@ function buildRankedRetrievalContext(worldState = {}, options = {}) {
       "officialPostingsView",
       "worldThreadView",
       "longTermEventView",
+      "localAffairsDocketView",
       "worldEntityView",
       "eventArchiveView"
     ],
@@ -903,6 +953,7 @@ function assemblePromptContext(worldState = {}, options = {}) {
     worldEntities: summarizeWorldEntitiesForPrompt(worldState),
     worldPeople: summarizeWorldPeopleForPrompt(worldState),
     worldThreads: summarizeWorldThreadsForPrompt(worldState),
+    localAffairsDockets: summarizeLocalAffairsDocketsForPrompt(worldState),
     officialCareer: summarizeOfficialCareerForPrompt(worldState),
     officialPostings: summarizeOfficialPostingsForPrompt(worldState),
     roleWorldCoupling: summarizeRoleWorldCouplingForPrompt(worldState),

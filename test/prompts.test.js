@@ -409,6 +409,26 @@ test("prompt input includes visible official postings without hidden geography r
   assert.doesNotMatch(task.input, /SEALED_PROMPT_POSTING_JURISDICTION/);
 });
 
+test("turn prompt input includes visible local affairs dockets for magistrate only", () => {
+  const magistrateState = createInitialState({ role: "magistrate", playerName: "案牍 Prompt Tester" });
+  Object.assign(magistrateState.player, {
+    pendingLawsuits: 82,
+    waterworks: 24,
+    banditPressure: 86
+  });
+  const scholarState = createInitialState({ role: "scholar", playerName: "无案牍 Prompt Tester" });
+
+  const magistrateTask = buildTurnTask(magistrateState, "审理积案并查修水利");
+  const scholarTask = buildTurnTask(scholarState, "在县学听闻积案与水利");
+
+  assert.match(magistrateTask.input, /localAffairsDockets/);
+  assert.match(magistrateTask.input, /localAffairsDocketView/);
+  assert.match(magistrateTask.input, /刑名|水利|盗匪|任所收束/);
+  assert.match(magistrateTask.input, /服务器裁决/);
+  assert.match(scholarTask.input, /localAffairsDockets/);
+  assert.doesNotMatch(scholarTask.input, /钱粮奏销|刑名词讼|水利修防|任所收束/);
+});
+
 test("turn prompt input includes S53 retrieval context as dynamic world state", () => {
   const worldState = createInitialState({ role: "official", playerName: "Retrieval Prompt Tester" });
   Object.assign(worldState.player, {

@@ -142,6 +142,46 @@ test("game routes expose sanitized event archive view without audit or provider 
   assert.equal(final.data.eventArchiveView.schemaVersion, 1);
 });
 
+test("game routes expose local affairs docket view for magistrate sessions", async (t) => {
+  const server = createTestServer();
+  t.after(server.close);
+
+  const start = await postJson(`${server.baseUrl}/api/game/start`, {
+    dynasty: "明",
+    year: 1644,
+    role: "magistrate",
+    playerName: "案牍路由"
+  });
+  t.after(() => removeSessionArtifacts(start.payload.sessionId));
+
+  assert.equal(start.response.status, 201);
+  assert.equal(start.payload.localAffairsDocketView.schemaVersion, 1);
+  assert.ok(start.payload.localAffairsDocketView.dockets.length > 0);
+  assert.ok(start.payload.eventArchiveView.items.some((item) => item.sourceType === "local_docket"));
+
+  const stateResponse = await fetch(`${server.baseUrl}/api/game/state/${start.payload.sessionId}`);
+  const statePayload = await stateResponse.json();
+  assert.equal(stateResponse.status, 200);
+  assert.equal(statePayload.localAffairsDocketView.schemaVersion, 1);
+
+  const sseResponse = await fetch(`${server.baseUrl}/api/game/turn`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", Accept: "text/event-stream" },
+    body: JSON.stringify({
+      sessionId: start.payload.sessionId,
+      input: "审理积案，查水利工册"
+    })
+  });
+  const events = parseSse(await sseResponse.text());
+  const preview = events.find((event) => event.event === "state_preview" && event.data?.localAffairsDocketView);
+  const final = events.find((event) => event.event === "final_state");
+
+  assert.equal(sseResponse.status, 200);
+  assert.ok(preview);
+  assert.equal(preview.data.localAffairsDocketView.schemaVersion, 1);
+  assert.equal(final.data.localAffairsDocketView.schemaVersion, 1);
+});
+
 test("exam routes expose event archive view through question, progress, and submit", async (t) => {
   const server = createTestServer();
   t.after(server.close);

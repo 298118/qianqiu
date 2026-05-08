@@ -182,6 +182,9 @@ test("ranked retrieval context caps recent event summaries and ignores audit-sha
   const serialized = JSON.stringify(context);
 
   assert.equal(context.events.recentEvents.length, 6);
+  assert.ok(context.events.localDockets.length > 0);
+  assert.ok(context.events.localDockets.every((docket) => docket.sourceView === "localAffairsDocketView.docket"));
+  assert.match(JSON.stringify(context.events.localDockets), /刑名|水利|案牍|任所/);
   assert.deepEqual(
     context.events.recentEvents.map((event) => event.summary),
     ["可见近事9", "可见近事8", "可见近事7", "可见近事6", "可见近事5", "可见近事4"]
@@ -190,4 +193,16 @@ test("ranked retrieval context caps recent event summaries and ignores audit-sha
   assert.doesNotMatch(serialized, /SEALED_AI_PROPOSAL_PAYLOAD/);
   assert.doesNotMatch(serialized, /sk-proj-context-secret/);
   assert.doesNotMatch(serialized, /event_log/);
+});
+
+test("ranked retrieval context keeps local affairs dockets out of scholar view", () => {
+  const worldState = createInitialState({ role: "scholar", playerName: "Scholar Docket Tester" });
+  const context = buildRankedRetrievalContext(worldState, {
+    task: "world_turn",
+    playerAction: "在县学听闻刑名与水利旧事"
+  });
+
+  assert.deepEqual(context.events.localDockets, []);
+  assert.match(JSON.stringify(context), /localAffairsDocketView/);
+  assert.doesNotMatch(JSON.stringify(context), /钱粮奏销|刑名词讼|水利修防/);
 });

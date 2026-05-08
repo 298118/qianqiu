@@ -65,6 +65,7 @@ const {
   enqueueAuditRecords
 } = require("../game/audit");
 const { buildEventArchiveView } = require("../game/eventArchive");
+const { buildLocalAffairsDocketView } = require("../game/localAffairsDockets");
 const { canEnterExam, getExam } = require("../game/exams");
 const {
   advanceExamScenePhase,
@@ -241,6 +242,7 @@ function buildCommonTurnViews(worldState, options = {}) {
     longTermEventView: buildLongTermEventView(worldState),
     officialCareerView: buildOfficialCareerView(worldState),
     officialPostingsView: buildOfficialPostingsView(worldState),
+    localAffairsDocketView: buildLocalAffairsDocketView(worldState),
     eventArchiveView: buildEventArchiveView(worldState, options.eventArchive)
   };
 }
@@ -513,6 +515,7 @@ async function streamTurn(res, sessionId, input) {
       longTermEvents: payload.longTermEvents,
       officialCareerView: payload.officialCareerView,
       officialPostingsView: payload.officialPostingsView,
+      localAffairsDocketView: payload.localAffairsDocketView,
       eventArchiveView: payload.eventArchiveView,
       officialCareer: payload.officialCareer,
       examTrigger: payload.examTrigger,
@@ -554,6 +557,7 @@ router.post("/start", async (req, res, next) => {
       longTermEventView: buildLongTermEventView(worldState),
       officialCareerView: buildOfficialCareerView(worldState),
       officialPostingsView: buildOfficialPostingsView(worldState),
+      localAffairsDocketView: buildLocalAffairsDocketView(worldState),
       eventArchiveView: buildEventArchiveView(worldState),
       narrative: opening.narrative
     });
@@ -590,6 +594,7 @@ router.get("/state/:sessionId", async (req, res, next) => {
       longTermEventView: buildLongTermEventView(worldState),
       officialCareerView: buildOfficialCareerView(worldState),
       officialPostingsView: buildOfficialPostingsView(worldState),
+      localAffairsDocketView: buildLocalAffairsDocketView(worldState),
       eventArchiveView: buildEventArchiveView(worldState, eventArchiveOptionsFromQuery(req.query))
     });
   } catch (error) {

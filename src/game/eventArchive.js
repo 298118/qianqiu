@@ -1,4 +1,5 @@
 const { buildLongTermEventView } = require("./longTermEvents");
+const { buildLocalAffairsDocketView } = require("./localAffairsDockets");
 const { buildOfficialCareerView } = require("./officialCareer");
 const { buildOfficialPostingsView } = require("./officialPostings");
 const { formatYearMonthPeriod, normalizeMonth, normalizeTenDayPeriod, normalizeYear } = require("./time");
@@ -11,6 +12,7 @@ const MAX_THREADS = 6;
 const MAX_LONG_TERM_EVENTS = 5;
 const MAX_OFFICIAL_OUTCOMES = 5;
 const MAX_OFFICIAL_ASSESSMENTS = 4;
+const MAX_LOCAL_DOCKETS = 6;
 const MAX_EXAM_RECORDS = 5;
 const MAX_TEXT_LENGTH = 180;
 const MIN_PAGE_SIZE = 1;
@@ -26,6 +28,7 @@ const SOURCE_LABELS = {
   long_term_event: "长期",
   official_career: "官场",
   official_assessment: "考成",
+  local_docket: "案牍",
   exam_record: "科场"
 };
 
@@ -254,6 +257,31 @@ function isAppointmentPoolAssessment(record = {}) {
   return id.startsWith("assessment-s63-") || postingId.startsWith("posting-s63-");
 }
 
+function collectLocalDocketItems(worldState, items, localAffairsDocketView) {
+  const dockets = Array.isArray(localAffairsDocketView?.dockets)
+    ? localAffairsDocketView.dockets
+    : [];
+  dockets.slice(0, MAX_LOCAL_DOCKETS).forEach((docket) => {
+    const relatedLabels = [
+      docket.domainLabel,
+      docket.cityName,
+      docket.bureauId,
+      ...(Array.isArray(docket.assessmentHint?.tags) ? docket.assessmentHint.tags : [])
+    ].filter(Boolean);
+    addItem(items, worldState, {
+      sourceType: "local_docket",
+      kind: docket.domain,
+      title: docket.title,
+      summary: docket.publicDocket || docket.publicSummary,
+      date: docket.date,
+      turn: docket.lastUpdatedTurn,
+      status: docket.status === "routine" ? "recorded" : "watch",
+      riskLabel: docket.statusLabel,
+      relatedLabels
+    });
+  });
+}
+
 function examDateSource(entry = {}) {
   return entry.sceneTime?.updatedAt ||
     entry.examSubmittedAt ||
@@ -311,6 +339,7 @@ function buildEventArchiveIndexItems(worldState = {}) {
   const longTermEventView = buildLongTermEventView(worldState);
   const officialCareerView = buildOfficialCareerView(worldState);
   const officialPostingsView = buildOfficialPostingsView(worldState);
+  const localAffairsDocketView = buildLocalAffairsDocketView(worldState);
   const items = [];
 
   collectHistoryItems(worldState, items);
@@ -318,6 +347,7 @@ function buildEventArchiveIndexItems(worldState = {}) {
   collectLongTermItems(worldState, items, longTermEventView);
   collectOfficialItems(worldState, items, officialCareerView);
   collectOfficialAssessmentItems(worldState, items, officialPostingsView);
+  collectLocalDocketItems(worldState, items, localAffairsDocketView);
   collectExamItems(worldState, items);
 
   return items.sort(sortArchiveItems);

@@ -27,7 +27,7 @@
 - S48 时间专项：普通自由行动从一月一回合改为一旬一回合；月末系统只在下旬进入下月上旬时完整结算；考试已有 scene-local time；浏览器日期统一为“年月旬”，见 [TIME_SPECIALTY_ROADMAP_ARCHIVE.md](TIME_SPECIALTY_ROADMAP_ARCHIVE.md)。
 - S49-S53 本地数据库基础：storage adapter、可选 SQLite session row、本地审计、天下地理/人物/官职任所安全 projection、检索式 prompt context 和浏览器局势簿，见 [LOCAL_DATABASE_FOUNDATION_ARCHIVE.md](LOCAL_DATABASE_FOUNDATION_ARCHIVE.md)。
 
-当前活动路线图见 [DEVELOPMENT_STEPS.md](DEVELOPMENT_STEPS.md)，数据库方向见 [DYNAMIC_WORLD_DATABASE_PLAN.md](DYNAMIC_WORLD_DATABASE_PLAN.md)。S54-S59 本地 SQLite 业务表与双模式验收已完成并归档到 [LOCAL_DATABASE_BUSINESS_TABLE_ARCHIVE.md](LOCAL_DATABASE_BUSINESS_TABLE_ARCHIVE.md)：地理 `geo_*`、人物 `people_*`、官职任所 `office_*`、安全事件档案 `event_archive_index`、安全 prompt 检索 `prompt_retrieval_index`、维护工具、浏览器 parity 和 `smoke:dual-mode` 已具备可继续扩内容的底座。当前“超大动态世界数据库”的内容充实度约 55-65%；S60+ 的重点转为国家/邻国、城市/区域、NPC/家族、官职生态、地方事务、外交军事、经济市场、事件模板、情报可见性和大规模检索内容。S60.1 的 [超大动态世界数据库内容契约](HUGE_DYNAMIC_WORLD_CONTENT_CONTRACT.md) 已固定小/中/大规模档位、seed 分层、hidden/private 边界、prompt budget 和 S60.2 fixture 目标。S60.2 已完成 `src/game/worldContentFixtures.js` 的 `small` / `medium` / `large` deterministic fixture：small 继续验证 JSON/SQLite view parity 与读档修复，medium/large 通过 storage-only 侧车验证总量、hidden canary、防泄漏、分页和 prompt budget，普通自由回合 prompt 动态检索摘要保持 48 行预算。S61 国家/邻国与城市/区域深度内容已完成：S61.1 给国家/邻国补财政、军备、国威、正统性、继承风险、外交张力、贡贸和情报可靠度等安全字段；S61.2 给城市补人口、税基、粮储、市价、士绅、词讼、徭役、水利、灾害、交通、驻军和书院指标，并让这些城市指标随财政、粮储、治安、腐败和军情压力由服务器幂等刷新，进入任所考成、事件档案、prompt retrieval 和 SQLite 安全派生索引。S62.1 已新增 `src/game/worldPeoplePopulation.js`，让 small route-safe fixture 与 medium/large storage-only 侧车共享 NPC 人口和家族谱系生成器，覆盖官员、胥吏、士绅、商贾、军官、书院师友、同年、亲族、邻国使者、父母配偶子女、姻亲、门生故旧、同乡同年和派系网络；S62.2 已新增 `src/game/worldPeopleLifecycle.js`，由服务器在月末推进可见 NPC 健康、婚丧、迁居、官职履历状态、财富/欠账、家族风险、资产、田产和人情关系演化，并复用 `world_people` 审计与 `people_*` 派生行链路。S63.1 已在 `officialPostings` 桥接中加入可见官职生态与任命池：上级堂官、属官/胥吏/幕友接口、空缺、候补、补授、试署、外放、丁忧、起复、弹劾候勘和差遣压力可进入 `officialPostingsView`、SQLite `office_*` 派生行和 capped prompt retrieval，但不成为任免事实或事件档案公开历史。真正 hidden 私档、资产真数、隐藏动机和未公开任免仍不回填当前 raw route state；玩家浏览器的大数据量搜索/筛选面板仍归入 S66.2，性能压力门槛归入 S67.1。当前不规划远程存档、账号体系、多人同步、云端冲突解决或托管数据库。
+当前活动路线图见 [DEVELOPMENT_STEPS.md](DEVELOPMENT_STEPS.md)，数据库方向见 [DYNAMIC_WORLD_DATABASE_PLAN.md](DYNAMIC_WORLD_DATABASE_PLAN.md)。S54-S59 本地 SQLite 业务表与双模式验收已完成并归档到 [LOCAL_DATABASE_BUSINESS_TABLE_ARCHIVE.md](LOCAL_DATABASE_BUSINESS_TABLE_ARCHIVE.md)：地理 `geo_*`、人物 `people_*`、官职任所 `office_*`、安全事件档案 `event_archive_index`、安全 prompt 检索 `prompt_retrieval_index`、维护工具、浏览器 parity 和 `smoke:dual-mode` 已具备可继续扩内容的底座。当前“超大动态世界数据库”的内容充实度约 55-65%；S60+ 的重点转为国家/邻国、城市/区域、NPC/家族、官职生态、地方事务、外交军事、经济市场、事件模板、情报可见性和大规模检索内容。S60.1 的 [超大动态世界数据库内容契约](HUGE_DYNAMIC_WORLD_CONTENT_CONTRACT.md) 已固定小/中/大规模档位、seed 分层、hidden/private 边界、prompt budget 和 S60.2 fixture 目标。S60.2 已完成 `src/game/worldContentFixtures.js` 的 `small` / `medium` / `large` deterministic fixture：small 继续验证 JSON/SQLite view parity 与读档修复，medium/large 通过 storage-only 侧车验证总量、hidden canary、防泄漏、分页和 prompt budget，普通自由回合 prompt 动态检索摘要保持 48 行预算。S61 国家/邻国与城市/区域深度内容已完成：S61.1 给国家/邻国补财政、军备、国威、正统性、继承风险、外交张力、贡贸和情报可靠度等安全字段；S61.2 给城市补人口、税基、粮储、市价、士绅、词讼、徭役、水利、灾害、交通、驻军和书院指标，并让这些城市指标随财政、粮储、治安、腐败和军情压力由服务器幂等刷新，进入任所考成、事件档案、prompt retrieval 和 SQLite 安全派生索引。S62.1 已新增 `src/game/worldPeoplePopulation.js`，让 small route-safe fixture 与 medium/large storage-only 侧车共享 NPC 人口和家族谱系生成器，覆盖官员、胥吏、士绅、商贾、军官、书院师友、同年、亲族、邻国使者、父母配偶子女、姻亲、门生故旧、同乡同年和派系网络；S62.2 已新增 `src/game/worldPeopleLifecycle.js`，由服务器在月末推进可见 NPC 健康、婚丧、迁居、官职履历状态、财富/欠账、家族风险、资产、田产和人情关系演化，并复用 `world_people` 审计与 `people_*` 派生行链路。S63.1 已在 `officialPostings` 桥接中加入可见官职生态与任命池：上级堂官、属官/胥吏/幕友接口、空缺、候补、补授、试署、外放、丁忧、起复、弹劾候勘和差遣压力可进入 `officialPostingsView`、SQLite `office_*` 派生行和 capped prompt retrieval，但不成为任免事实或事件档案公开历史。S63.2 新增 `localAffairsDocketView`：钱粮、刑名、灾赈、水利、盗匪、徭役、士绅、疫病和任所收束案牍由服务器从可见城市/任所指标派生，进入 route view、`eventArchiveView` 的 `local_docket` 条目和 `prompt_retrieval_index`，只给 AI 叙事与受限建议材料，不直接改城市指标、官场考成、任免或数据库。真正 hidden 私档、资产真数、隐藏动机和未公开任免仍不回填当前 raw route state；玩家浏览器的大数据量搜索/筛选面板仍归入 S66.2，性能压力门槛归入 S67.1。当前不规划远程存档、账号体系、多人同步、云端冲突解决或托管数据库。
 
 开发规范不变：Mock 默认可玩，真实 provider 可选；服务器拥有状态边界、时间推进、科举晋级、作弊处罚、官职任免、长期事件、世界实体、世界议程、数据库写入和持久化裁决；AI 不能直接执行 SQL 或写业务表，只能提交结构化建议。
 
@@ -188,6 +188,7 @@ POST /api/exam/submit
 - `worldPeopleView`
 - `officialCareerView`
 - `officialPostingsView`
+- `localAffairsDocketView`
 - `longTermEventView`
 - `eventArchiveView`
 
@@ -209,7 +210,7 @@ POST /api/exam/submit
 - S56.2 起，SQLite 模式会用 `src/storage/sqliteOfficialPostingTables.js` 同步规范化后的安全 `worldState.officialPostings` projection 到 `office_bureaus`、`office_catalog`、`office_city_jurisdictions`、`office_postings`、`office_assessments`、`office_transfers`；S56.3 起，每条 `office_*` 派生行带 `metadata_json.contentHash` 本地漂移探针，读取时从 `world_state_json` 修复缺失、陈旧、错行、同 id/同 revision 内容污染或旧行缺指纹的派生表。它不新增 route 字段，也不让 raw `office_*` 反向改写 `player.officeTitle`、`officialCareer` 或 prompt/browser view。
 - S57.1 起，SQLite 模式会用 `src/storage/sqliteEventArchiveTables.js` 同步 `buildEventArchiveView` / `buildEventArchiveIndexItems` 生成的安全公开事件条目到 `event_archive_index`。该表只保存 `eventArchiveView` 已脱敏、可分页的公开 projection 字段，带 `metadata_json.contentHash` 漂移探针，读档时从 `world_sessions.world_state_json -> eventArchiveView` 单向修复，不读取 raw `event_log` / `ai_change_proposals`，也不把 raw index row 反向回填 route state、prompt 或浏览器。
 - S57.2 起，`npm run storage:audit-events -- status|export --adapter json|sqlite` 可从 JSON sidecar 或 SQLite 审计读取本地记录，生成只含 allowlist public 摘要的安全 projection；AI proposal 只计数，不输出原始建议内容，也不会写回 `eventArchiveView` 或 `event_archive_index`。
-- S58.1 起，SQLite 模式会用 `src/storage/sqlitePromptRetrievalTables.js` 把 `worldGeographyView`、`worldPeopleView`、`officialPostingsView` 和 `eventArchiveView` 的服务器可见条目同步到 `prompt_retrieval_index`，每行带 `metadata_json.contentHash`；读档从 `world_sessions.world_state_json -> server views -> prompt index` 单向修复，`promptContextAssembler` 只在 SQLite 读档挂载了非枚举安全来源时读取该索引，否则继续使用现有 JSON/view helper fallback。
+- S58.1 起，SQLite 模式会用 `src/storage/sqlitePromptRetrievalTables.js` 把 `worldGeographyView`、`worldPeopleView`、`officialPostingsView`、`localAffairsDocketView` 和 `eventArchiveView` 的服务器可见条目同步到 `prompt_retrieval_index`，每行带 `metadata_json.contentHash`；读档从 `world_sessions.world_state_json -> server views -> prompt index` 单向修复，`promptContextAssembler` 只在 SQLite 读档挂载了非枚举安全来源时读取该索引，否则继续使用现有 JSON/view helper fallback。
 - `npm run smoke:browser -- --storage-adapter sqlite --sqlite-db <path>` 可让 browser smoke helper 和临时 Mock 服务器共用 SQLite adapter，验证“天下格局/任所地理”等浏览器面板仍只读 route view。S58.2 起，`npm run smoke:browser -- --information-parity` 会顺序启动 JSON/SQLite 临时服务器，比较官方差遣后的局势簿 DOM、route view 摘要、事件档案分页 metadata、hidden-token 与 overflow。S59.1 起，`npm run smoke:dual-mode` 会串联 JSON/SQLite 完整 Mock browser smoke、局势簿 parity 和存储维护验收；无浏览器环境可用 `--storage-only` 只跑 JSON -> SQLite dry-run/正式导入、地理修复/导出、审计公开 projection、派生表计数和 hidden-token 检查。
 
 本地审计：
@@ -230,7 +231,8 @@ S54-S59 已完成的数据库拆表必须继续保持 JSON 默认可玩，并保
 - `worldGeography` / `worldGeographyView`：国家、邻国、区域、城市、路线、边境压力面和官署辖区；S61 起还包含国家财政/军备/国威/继承/外交/情报可靠度与城市人口/税粮/市价/士绅/诉讼/徭役/水利/灾害/交通/驻军/书院等安全深度指标。这些字段只做可见 projection、prompt 检索和局势解释，不替代财政、战争、外交或城市治理裁决。
 - `worldPeople` / `worldPeopleView`：从当前可见 `characters`、`relationshipLedger` 和 active request 近期札记桥接人物、家族、资产、田产和关系摘要；不保存 hidden 私档。S55.2 已让 SQLite 模式把这份可见 bridge projection 同步进本地 `people_*` 表，S55.3 让服务器人物事件通过审计和本地 `last_event_id` 关联追溯这些可见行；S62.1 的人口谱系生成器为 fixture/安全 projection 补 NPC 社会身份、公开族谱、婚姻、门生故旧、同乡同年和派系网络；S62.2 的服务器生命周期 helper 在月末推进可见健康、婚丧、迁居、官职履历状态、财富/欠账、资产、田产、家族风险和人情债演化，并继续通过 `world_people` 审计和 `people_*` 派生行追踪。真正 hidden 私档、资产真数或未公开动机仍不回填当前 raw route state。prompt/UI 仍只读服务器 view，不读 raw table 或 raw audit。
 - `officialPostings` / `officialPostingsView`：从 `officialCatalog`、`officialCareer`、地方官 role state 和可见地理 view 派生官署、官职、任所、考成和迁转摘要；S61.2 起，当前任所考成会把城市税基、粮储、市价、士绅、词讼、徭役、水利、灾害、交通、驻军和书院压力整理成可见“任所奏报”；不改变 `officialCareerView` 或官场结算。
-- `eventArchiveView`：从公开近事、世界议程、长期事件、官场履历、考试档案和可见任所考成整理事件档案；S57.1 起带分页 metadata，并在 SQLite 模式同步到安全 `event_archive_index`；S61.2 的 `official_assessment` 条目只来自 `officialPostingsView.assessmentRecords`。它不读取 raw audit、provider proposal、prompt、本地路径或 key。S57.2 的审计公开 projection 是本地开发/调试工具输出，不是 route view、prompt 或浏览器信息面板的数据源。
+- `localAffairsDockets` / `localAffairsDocketView`：从可见 `worldGeographyView` 城市深度指标和 `officialPostingsView.cityJurisdictions/postings` 派生地方案牍模板，覆盖钱粮、刑名、灾赈、水利、盗匪、徭役、士绅、疫病和任所收束。该 view 只对行政身份开放，书生默认为空；`assessmentHint` 只是后续服务器考成候选线索，不会直接改 `officialCareer`、城市指标或 SQLite 表。
+- `eventArchiveView`：从公开近事、世界议程、长期事件、官场履历、考试档案、可见任所考成和地方案牍整理事件档案；S57.1 起带分页 metadata，并在 SQLite 模式同步到安全 `event_archive_index`；S61.2 的 `official_assessment` 条目只来自 `officialPostingsView.assessmentRecords`，S63.2 的 `local_docket` 条目只来自 `localAffairsDocketView`。它不读取 raw audit、provider proposal、prompt、本地路径或 key。S57.2 的审计公开 projection 是本地开发/调试工具输出，不是 route view、prompt 或浏览器信息面板的数据源。
 
 S53 浏览器“局势簿”只读这些 route view。S54-S59 已完成的 SQLite 拆表继续保持 view-first；后续 S60+ 内容充实时，UI 和 prompt contract 仍不得暴露原始业务表、raw audit、provider proposal、hidden notes、hidden intent 或本地路径。
 
@@ -362,7 +364,7 @@ chore: update env example
 1. JSON 默认仍可玩；SQLite 通过 `STORAGE_ADAPTER=sqlite` 显式启用，当前包含一行一 session、审计表、地理 `geo_*`、人物 `people_*`、官职任所 `office_*`、安全 `event_archive_index` 和安全 `prompt_retrieval_index` 派生表。
 2. S54-S59 已归档到 [LOCAL_DATABASE_BUSINESS_TABLE_ARCHIVE.md](LOCAL_DATABASE_BUSINESS_TABLE_ARCHIVE.md)：地理、人物、官职任所、事件档案、prompt 检索、浏览器 parity 和双模式验收均已具备本地 SQLite 基础。
 3. `event_log` / `ai_change_proposals` 是本地脱敏审计，不进入玩家 API，也不让 AI 直接写表。
-4. `worldGeographyView`、`worldPeopleView`、`officialPostingsView`、`eventArchiveView` 和 capped `retrievalContext` 是当前 UI/prompt 合法入口。
+4. `worldGeographyView`、`worldPeopleView`、`officialPostingsView`、`localAffairsDocketView`、`eventArchiveView` 和 capped `retrievalContext` 是当前 UI/prompt 合法入口。
 5. 浏览器“局势簿”只读 route player-facing view，不读 raw ledger、raw audit、provider-only payload、prompt、本地路径或 key。
 
 当前内容完成度判断：
@@ -375,7 +377,7 @@ S60-S67 当前方向：
 - S60：内容契约与规模验收 fixture；内容契约见 [HUGE_DYNAMIC_WORLD_CONTENT_CONTRACT.md](HUGE_DYNAMIC_WORLD_CONTENT_CONTRACT.md)，S60.2 已完成 `small` route-safe fixture 与 `medium` / `large` storage-only 总量 fixture、分页 helper、hidden canary、防泄漏和普通/高相关 prompt budget 验收。
 - S61：国家/邻国、城市/区域深度内容已完成。国家/邻国安全字段、城市深度字段、任所考成/事件档案/prompt retrieval/SQLite 安全派生索引已接通；城市指标会随财政、粮储、治安、腐败和军情压力由服务器幂等刷新。更大 fixture 与浏览器大分页归入 S60.2/S66/S67。
 - S62：S62.1 NPC 人口与家族谱系、S62.2 NPC 生命周期与资产流动已完成。
-- S63：官职生态、任命池和地方事务模板。
+- S63：S63.1 官职生态与任命池、S63.2 地方事务与案牍事件模板已完成；案牍模板只做服务器可见 projection、事件档案条目和 prompt 检索素材，考成影响与地方事务结局仍由后续服务器 resolver 裁决。
 - S64：外交、边防、军事、经济、财政、粮储和市场演化。
 - S65：事件模板、历史档案、情报、传闻和可见性系统。
 - S66：大规模 prompt retrieval 与浏览器信息面板。
