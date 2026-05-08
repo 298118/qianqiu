@@ -20,10 +20,12 @@
 - MCP 官方架构把工具、资源和提示词作为 server primitives；工具经 `tools/list` 发现，经 `tools/call` 执行，底层是 JSON-RPC，可走 stdio 或 Streamable HTTP。见 [MCP Architecture](https://modelcontextprotocol.io/docs/learn/architecture)。
 - Anthropic 工具定义同样使用 `input_schema`，强调详细工具描述、少而强的工具、命名空间和高信号返回；Claude Messages API 当前 MCP connector 通过 beta header 接远程 HTTP MCP，且只支持 MCP 工具调用。见 [Anthropic Define tools](https://platform.claude.com/docs/en/agents-and-tools/tool-use/define-tools) 与 [Anthropic MCP connector](https://platform.claude.com/docs/en/agents-and-tools/mcp-connector)。
 - DeepSeek API 支持 OpenAI-compatible function calling；官方文档也明确模型本身不执行具体函数。其 strict mode 是 beta，需要 beta base URL，要求工具 schema 更严格。见 [DeepSeek Function Calling](https://api-docs.deepseek.com/guides/function_calling/)。
+- Xiaomi MiMo-V2.5-Pro 官方发布页强调该模型面向 agentic、长程任务和大规模工具调用，具备 1M token context window，并在官方案例中展示数百到上千次 tool calls 的长程执行能力；页面也说明可在 API Platform 中用 `mimo-v2.5-pro` model tag 接入。见 [Xiaomi MiMo-V2.5-Pro](https://mimo.xiaomi.com/mimo-v2-5-pro/)。
 
 对《千秋》的取舍：
 
 - 第一优先级是现有 adapter 内的自定义 function calling / structured proposal，不急于把游戏运行时暴露成外部 MCP。
+- MiMo-V2.5-Pro 是《千秋》S70 的主力大面积 provider 候选；S70.1 必须把它列为一等兼容对象，单独验证 `tools` schema、`tool_calls` 返回形状、`tool_choice`、多工具调用、工具结果回填、streaming 下工具调用行为、structured proposal 稳定性、超长上下文成本和失败降级。不能把 “OpenAI-compatible” 直接等同于 OpenAI 工具协议全量兼容。
 - MCP 更适合 S70 后期把大量游戏工具统一成一个可发现、可裁剪的内部协议层；只连接自家工具服务器或明确可信服务，不让第三方 MCP 直接接触存档。
 - Web search、外部文件检索、代码执行、浏览器控制等通用工具不进入普通玩家回合。游戏运行时只使用本地世界、服务器 view、受控历史资料和本地工具，避免出戏、泄漏和不可复现。
 - 若未来新增 SDK、MCP server、外部 connector 或 tracing 工具，必须先走 [DEPENDENCY_PLUGIN_GOVERNANCE.md](DEPENDENCY_PLUGIN_GOVERNANCE.md)。
@@ -206,14 +208,14 @@ S70 不应只有一个万能模型。建议角色：
 
 | ID | 目标 | 主要产物 | 验收重点 |
 | --- | --- | --- | --- |
-| S70.1 | AI 工具协议契约 | `docs/AI_TOOL_PROTOCOL_CONTRACT.md`、tool envelope schema、proposal/result schema、request-adjudication schema | 模型只能请求工具；服务器执行；禁止 direct-write/SQL/table patch；schema/strict/fallback 明确 |
+| S70.1 | AI 工具协议契约 | `docs/AI_TOOL_PROTOCOL_CONTRACT.md`、tool envelope schema、proposal/result schema、request-adjudication schema、MiMo-V2.5-Pro 工具调用兼容矩阵 | 模型只能请求工具；服务器执行；禁止 direct-write/SQL/table patch；schema/strict/fallback 明确；MiMo 工具 smoke 固定真实返回形状 |
 | S70.2 | AI actor 与权限模型 | actor profile schema、authority tier、allowed tool groups | 书生/县令/大臣/将领/皇帝工具隔离，hidden 视野隔离 |
 | S70.3 | 内部工具运行时 | `game_ai_tools` registry、read/proposal/request-adjudication runner、resolver bridge、audit hook | 无 AI 直写 SQL/table；所有工具有权限、冷却、审计和服务器事务 |
 | S70.4 | NPC mind 与记忆 | 高显著度 NPC LLM loop、背景 NPC heuristic、记忆摘要 | NPC 有目标和恩怨，成本可控，Mock 可玩 |
 | S70.5 | 制度 AI 与朝议场景 | 官署/派系/朝议 actor、奏折/弹章/廷议 scene | 皇帝强工具有执行链和反噬 |
 | S70.6 | 事件生成器 | 压力驱动事件候选、因果链、事件冷却 | 额外事件来自数据库压力，不泄漏 hidden |
 | S70.7 | 刑名、财政、军事、外交工具 | case/policy/battle/diplomacy proposal 与 resolver | 县令不越权，战役有军需约束，外交有情报可信度 |
-| S70.8 | 多模型路由与仲裁 | narrator/planner/critic/safety/model policy | MiMo/DeepSeek/Anthropic/OpenAI 适配一致，失败降级清楚 |
+| S70.8 | 多模型路由与仲裁 | narrator/planner/critic/safety/model policy | MiMo-V2.5-Pro/DeepSeek/Anthropic/OpenAI 适配一致，失败降级清楚 |
 | S70.9 | 可观测与浏览器调试 | AI 调动审计面板、tool call 摘要、成本/拒绝原因 | 玩家不见 hidden，开发者可追溯工具链 |
 | S70.10 | 大世界验收与归档 | route tests、provider smoke、browser smoke、red-team fixture、归档文档 | JSON/SQLite parity、Mock/no-key、hidden-token、越权工具全过 |
 
@@ -225,6 +227,7 @@ S70 不应只有一个万能模型。建议角色：
 - 皇帝 actor 无罪处死清流大臣，工具可成案，但必须产生合法性、士林、派系、家族和执行链后果。
 - AI proposal 或 tool arguments 夹带 `worldState` raw patch、SQL、raw table payload、hidden notes、provider key、本地路径或 prompt，必须脱敏并拒绝。
 - 工具被伪装成 SQL 代理、raw session patch 或 raw audit insert，必须在 registry 层拒绝，不能进入 resolver。
+- MiMo-V2.5-Pro 必须通过 provider smoke：无工具、单工具、强制工具、多工具、工具结果回填、streaming、schema 失败和 Mock/no-key fallback 都要可复现；若返回形状与 OpenAI 不一致，adapter 负责归一化或禁用对应能力。
 - 多 NPC 批量生成不能超过预算；超过时退回 heuristic。
 - MCP 或外部工具如果进入 S70 后期，必须默认 approval / allowlist / logging，不可把 raw session 或 hidden ledger 发给第三方。
 - 所有 S70 工具都必须在 JSON 与 SQLite 模式下得到同等 player-facing view。
