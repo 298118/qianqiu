@@ -102,7 +102,7 @@ S60+ 必须遵守：
 | S57 | DONE | 安全事件档案索引、分页和审计公开 projection 工具 | [LOCAL_DATABASE_BUSINESS_TABLE_ARCHIVE.md](LOCAL_DATABASE_BUSINESS_TABLE_ARCHIVE.md) |
 | S58 | DONE | SQLite prompt 检索索引和浏览器双模式 parity smoke | [LOCAL_DATABASE_BUSINESS_TABLE_ARCHIVE.md](LOCAL_DATABASE_BUSINESS_TABLE_ARCHIVE.md) |
 | S59.1 | DONE | JSON/SQLite 双模式整体验收入口 | [LOCAL_DATABASE_BUSINESS_TABLE_ARCHIVE.md](LOCAL_DATABASE_BUSINESS_TABLE_ARCHIVE.md) |
-| S59.2 | DONE | S54-S59 归档、活动台账压缩、S60+ 内容充实专项规划 | 2026-05-08 / Codex / 本次提交 |
+| S59.2 | DONE | S54-S59 归档、活动台账压缩、S60+ 内容充实专项规划 | 2026-05-08 / Codex / `fd8cf72` |
 
 ## 5. 活动路线图总览
 
@@ -323,7 +323,7 @@ S70 是 MiMo + DeepSeek 之后的多模型协作后续规划，已从原 S60 顺
 
 步骤：S59.2 归档与 S60+ 内容充实专项规划
 
-提交：本次提交。
+提交：`fd8cf72`。
 
 完成：
 
