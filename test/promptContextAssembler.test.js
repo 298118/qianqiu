@@ -438,3 +438,49 @@ test("ranked retrieval context keeps local affairs dockets out of scholar view",
   assert.match(JSON.stringify(context), /localAffairsDocketView/);
   assert.doesNotMatch(JSON.stringify(context), /钱粮奏销|刑名词讼|水利修防/);
 });
+
+test("ranked retrieval context records S66 strategy and rejects unsafe explicit retrieval source rows", () => {
+  const worldState = createInitialState({ role: "official", playerName: "S66 Strategy Tester" });
+  const context = buildRankedRetrievalContext(worldState, {
+    task: "official_career",
+    playerAction: "核查北京官署与钱粮",
+    promptBudgetProfile: "ordinary",
+    promptRetrievalSource: {
+      geography: {
+        cities: [
+          {
+            id: "city-safe-s66",
+            name: "北京",
+            pressure: 88,
+            publicSummary: "公开京师钱粮与官署线索。"
+          },
+          {
+            id: "city-unsafe-s66",
+            name: "SEALED_S66_SOURCE",
+            pressure: 100,
+            publicSummary: "prompt_retrieval_index event_log sk-s66-source-secret"
+          }
+        ]
+      },
+      people: {
+        npcs: [
+          {
+            id: "npc-unsafe-s66",
+            name: "SEALED_S66_NPC",
+            publicSummary: "hiddenNotes"
+          }
+        ]
+      }
+    }
+  });
+  const serialized = JSON.stringify(context);
+
+  assert.equal(context.strategy.schemaVersion, 1);
+  assert.equal(context.strategy.profile, "ordinary");
+  assert.equal(context.strategy.selectedRows <= context.strategy.maxRows, true);
+  assert.equal(context.strategy.serializedChars <= context.strategy.maxChars, true);
+  assert.equal(context.roleVisibility.roleId, "official");
+  assert.equal(context.geography.cities.some((city) => city.id === "city-safe-s66"), true);
+  assert.equal(context.geography.cities.some((city) => city.id === "city-unsafe-s66"), false);
+  assert.doesNotMatch(serialized, /SEALED_S66|prompt_retrieval_index|event_log|sk-s66-source-secret|hiddenNotes/);
+});

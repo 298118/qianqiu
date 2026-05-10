@@ -897,7 +897,7 @@ function countObjectRows(value) {
 }
 
 function countRetrievalSummaryRows(retrievalContext = {}) {
-  return ["geography", "people", "offices", "events", "entities"]
+  return ["geography", "people", "offices", "events", "intel", "entities"]
     .reduce((total, key) => total + countObjectRows(retrievalContext[key]), 0);
 }
 

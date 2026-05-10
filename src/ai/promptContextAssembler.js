@@ -48,6 +48,7 @@ const {
 const { getPromptRetrievalSource } = require("./promptContextSource");
 
 const RETRIEVAL_CONTEXT_SCHEMA_VERSION = 1;
+const RETRIEVAL_STRATEGY_SCHEMA_VERSION = 1;
 const MAX_TEXT_LENGTH = 180;
 const MAX_QUERY_TEXT_LENGTH = 240;
 
@@ -103,10 +104,12 @@ const ORDINARY_TURN_LIMITS = Object.freeze({
 
 const PROMPT_BUDGET_PROFILES = Object.freeze({
   ordinary: Object.freeze({
+    maxChars: 20000,
     maxRows: 48,
     limits: ORDINARY_TURN_LIMITS
   }),
   high: Object.freeze({
+    maxChars: 30000,
     maxRows: 72,
     limits: LIMITS
   })
@@ -126,6 +129,7 @@ const RETRIEVAL_ROW_PATHS = Object.freeze([
   ["offices", "assessmentRecords"],
   ["offices", "transferRecords"],
   ["intel", "rumors"],
+  ["events", "recentEvents"],
   ["events", "worldThreads"],
   ["events", "longTermEvents"],
   ["events", "resolvedEvents"],
@@ -133,9 +137,44 @@ const RETRIEVAL_ROW_PATHS = Object.freeze([
   ["events", "militaryReports"],
   ["events", "economicReports"],
   ["events", "eventChains"],
-  ["events", "recentEvents"],
   ["entities", "highlights"]
 ]);
+
+const UNSAFE_RETRIEVAL_TEXT_PATTERNS = Object.freeze([
+  /S60_PRIVATE_/i,
+  /SEALED_[A-Z0-9_]+/i,
+  /hiddenNotes|hidden_notes|hiddenIntent|hidden_intent/i,
+  /event_log|ai_change_proposals|prompt_retrieval_index|event_archive_index|world_state_json/i,
+  /OPENAI_API_KEY|DEEPSEEK_API_KEY|MIMO_API_KEY|ANTHROPIC_API_KEY/i,
+  /sk-[a-z0-9_-]{6,}/i,
+  /data\/sessions|data_sessions|\/mnt\/|[A-Z]:\\/i
+]);
+
+const SOURCE_TYPE_COLLECTION_PATHS = Object.freeze({
+  "worldGeography.country": ["geography", "countries"],
+  "worldGeography.city": ["geography", "cities"],
+  "worldGeography.route": ["geography", "routes"],
+  "worldGeography.frontierZone": ["geography", "frontierZones"],
+  "worldPeople.npc": ["people", "npcs"],
+  "worldPeople.relationship": ["people", "relationships"],
+  "officialPostings.bureau": ["offices", "bureaus"],
+  "officialPostings.office": ["offices", "offices"],
+  "officialPostings.cityJurisdiction": ["offices", "cityJurisdictions"],
+  "officialPostings.posting": ["offices", "postings"],
+  "officialPostings.assessmentRecord": ["offices", "assessmentRecords"],
+  "officialPostings.transferRecord": ["offices", "transferRecords"],
+  "worldThreads.activeThread": ["events", "worldThreads"],
+  "longTermEvents.activeEvent": ["events", "longTermEvents"],
+  "worldThreads.recentResolved": ["events", "resolvedEvents"],
+  "longTermEvents.recentResolved": ["events", "resolvedEvents"],
+  "localAffairsDocketView.docket": ["events", "localDockets"],
+  "militaryDiplomacyView.report": ["events", "militaryReports"],
+  "economicFiscalView.report": ["events", "economicReports"],
+  "historicalEventArchiveView.chain": ["events", "eventChains"],
+  eventArchiveView: ["events", "recentEvents"],
+  "intelligenceRumorView.rumor": ["intel", "rumors"],
+  "worldEntities.highlight": ["entities", "highlights"]
+});
 
 function cleanText(value, fallback = "", maxLength = MAX_TEXT_LENGTH) {
   if (typeof value !== "string") return fallback;
@@ -277,6 +316,40 @@ function compareRanked(first, second) {
   return first.stableId.localeCompare(second.stableId);
 }
 
+function candidateMeta(sourceType, candidateCount, limit) {
+  const path = SOURCE_TYPE_COLLECTION_PATHS[sourceType] || [];
+  return {
+    domain: path[0] || "",
+    collection: path[1] || sourceType,
+    sourceView: sourceType,
+    candidateCount: clampNumber(candidateCount, 0, Number.MAX_SAFE_INTEGER, 0),
+    selectedCount: 0,
+    droppedCount: 0,
+    limit: clampNumber(limit, 0, Number.MAX_SAFE_INTEGER, 0),
+    maxPriority: 0,
+    minPriority: 0
+  };
+}
+
+function attachRetrievalMeta(rows, meta) {
+  if (!Array.isArray(rows)) return rows;
+  Object.defineProperty(rows, "__retrievalMeta", {
+    value: meta,
+    enumerable: false
+  });
+  return rows;
+}
+
+function sliceRankedRows(rows, limit) {
+  if (!Array.isArray(rows)) return [];
+  return attachRetrievalMeta(rows.slice(0, limit), rows.__retrievalMeta);
+}
+
+function mapRankedRows(rows, mapper) {
+  if (!Array.isArray(rows)) return [];
+  return attachRetrievalMeta(rows.map(mapper), rows.__retrievalMeta);
+}
+
 function rankRows(rows, options) {
   const {
     query,
@@ -287,7 +360,8 @@ function rankRows(rows, options) {
     mapRow
   } = options;
 
-  return (Array.isArray(rows) ? rows : [])
+  const sourceRows = Array.isArray(rows) ? rows : [];
+  const ranked = sourceRows
     .map((row) => {
       const score = baseScore(row) + textRelevance(row, query, textFields);
       return {
@@ -303,6 +377,12 @@ function rankRows(rows, options) {
       priority: score,
       ...mapRow(row)
     }));
+  const meta = candidateMeta(sourceType, sourceRows.length, limit);
+  meta.selectedCount = ranked.length;
+  meta.droppedCount = Math.max(0, sourceRows.length - ranked.length);
+  meta.maxPriority = ranked.length ? ranked[0].priority : 0;
+  meta.minPriority = ranked.length ? ranked[ranked.length - 1].priority : 0;
+  return attachRetrievalMeta(ranked, meta);
 }
 
 function compactCountry(country) {
@@ -385,7 +465,13 @@ function compactFrontier(frontier) {
 
 function safeRetrievalCollection(source, domain, collection) {
   const rows = source?.[domain]?.[collection];
-  return Array.isArray(rows) ? rows : null;
+  if (!Array.isArray(rows)) return null;
+  return rows.filter((row) => !hasUnsafeRetrievalText(row));
+}
+
+function hasUnsafeRetrievalText(value) {
+  const text = JSON.stringify(value || {});
+  return UNSAFE_RETRIEVAL_TEXT_PATTERNS.some((pattern) => pattern.test(text));
 }
 
 function callRetrievalSource(source, worldState, options) {
@@ -1058,12 +1144,84 @@ function countRetrievalRows(context = {}) {
   }, 0);
 }
 
+function getRetrievalCollectionRows(context = {}, domain, collection) {
+  const rows = context[domain]?.[collection];
+  return Array.isArray(rows) ? rows : [];
+}
+
+function collectRetrievalStats(context = {}) {
+  const collections = {};
+  const candidates = {};
+  const domains = {};
+
+  for (const [domain, collection] of RETRIEVAL_ROW_PATHS) {
+    const rows = getRetrievalCollectionRows(context, domain, collection);
+    const key = `${domain}.${collection}`;
+    const meta = rows.__retrievalMeta || {};
+    const selectedCount = rows.length;
+    const candidateCount = Math.max(
+      clampNumber(meta.candidateCount, 0, Number.MAX_SAFE_INTEGER, selectedCount),
+      selectedCount
+    );
+    const droppedCount = Math.max(0, candidateCount - selectedCount);
+    collections[key] = selectedCount;
+    candidates[key] = {
+      candidateCount,
+      droppedCount,
+      selectedCount
+    };
+    domains[domain] = {
+      candidateCount: (domains[domain]?.candidateCount || 0) + candidateCount,
+      droppedCount: (domains[domain]?.droppedCount || 0) + droppedCount,
+      selectedCount: (domains[domain]?.selectedCount || 0) + selectedCount
+    };
+  }
+
+  return {
+    candidates,
+    collections,
+    domains,
+    totalRows: countRetrievalRows(context)
+  };
+}
+
 function trimRowsFromEnd(rows, amount) {
   if (!Array.isArray(rows) || amount <= 0) return rows;
-  return rows.slice(0, Math.max(0, rows.length - amount));
+  return sliceRankedRows(rows, Math.max(0, rows.length - amount));
+}
+
+function serializedRetrievalChars(context = {}) {
+  return JSON.stringify(context).length;
+}
+
+function trimRowsForCharacterBudget(context, maxChars) {
+  const result = {
+    trimmedRows: 0,
+    serializedChars: serializedRetrievalChars(context)
+  };
+  if (!Number.isFinite(maxChars) || maxChars <= 0) return result;
+
+  while (result.serializedChars > maxChars) {
+    let trimmed = false;
+    for (const [domain, collection] of [...RETRIEVAL_ROW_PATHS].reverse()) {
+      const rows = context[domain]?.[collection];
+      if (!Array.isArray(rows) || rows.length === 0) continue;
+      context[domain][collection] = trimRowsFromEnd(rows, 1);
+      result.trimmedRows += 1;
+      trimmed = true;
+      break;
+    }
+    if (!trimmed) break;
+    result.serializedChars = serializedRetrievalChars(context);
+  }
+
+  return result;
 }
 
 function applyPromptBudget(context, options = {}) {
+  const hasExplicitBudgetProfile = Boolean(
+    options.promptBudgetProfile || options.retrievalBudgetProfile || options.retrievalBudget
+  );
   const requestedProfile = cleanText(
     options.promptBudgetProfile || options.retrievalBudgetProfile || options.retrievalBudget,
     "high",
@@ -1073,43 +1231,101 @@ function applyPromptBudget(context, options = {}) {
   const next = cloneRetrievalContext(context);
   const limits = profile.limits;
 
-  next.geography.countries = next.geography.countries.slice(0, limits.countries);
-  next.geography.cities = next.geography.cities.slice(0, limits.cities);
-  next.geography.routes = next.geography.routes.slice(0, limits.routes);
-  next.geography.frontierZones = next.geography.frontierZones.slice(0, limits.frontierZones);
-  next.people.npcs = next.people.npcs.slice(0, limits.npcs);
-  next.people.relationships = next.people.relationships.slice(0, limits.relationships);
-  next.offices.bureaus = next.offices.bureaus.slice(0, limits.bureaus);
-  next.offices.offices = next.offices.offices.slice(0, limits.offices);
-  next.offices.cityJurisdictions = next.offices.cityJurisdictions.slice(0, limits.cityJurisdictions);
-  next.offices.postings = next.offices.postings.slice(0, limits.postings);
-  next.offices.assessmentRecords = next.offices.assessmentRecords.slice(0, limits.assessmentRecords);
-  next.offices.transferRecords = next.offices.transferRecords.slice(0, limits.transferRecords);
-  next.events.worldThreads = next.events.worldThreads.slice(0, limits.worldThreads);
-  next.events.longTermEvents = next.events.longTermEvents.slice(0, limits.longTermEvents);
-  next.events.resolvedEvents = next.events.resolvedEvents.slice(0, limits.resolvedEvents);
-  next.events.localDockets = next.events.localDockets.slice(0, limits.localDockets);
-  next.events.militaryReports = next.events.militaryReports.slice(0, limits.militaryReports);
-  next.events.economicReports = next.events.economicReports.slice(0, limits.economicReports);
-  next.events.eventChains = next.events.eventChains.slice(0, limits.eventChains);
+  next.geography.countries = sliceRankedRows(next.geography.countries, limits.countries);
+  next.geography.cities = sliceRankedRows(next.geography.cities, limits.cities);
+  next.geography.routes = sliceRankedRows(next.geography.routes, limits.routes);
+  next.geography.frontierZones = sliceRankedRows(next.geography.frontierZones, limits.frontierZones);
+  next.people.npcs = sliceRankedRows(next.people.npcs, limits.npcs);
+  next.people.relationships = sliceRankedRows(next.people.relationships, limits.relationships);
+  next.offices.bureaus = sliceRankedRows(next.offices.bureaus, limits.bureaus);
+  next.offices.offices = sliceRankedRows(next.offices.offices, limits.offices);
+  next.offices.cityJurisdictions = sliceRankedRows(next.offices.cityJurisdictions, limits.cityJurisdictions);
+  next.offices.postings = sliceRankedRows(next.offices.postings, limits.postings);
+  next.offices.assessmentRecords = sliceRankedRows(next.offices.assessmentRecords, limits.assessmentRecords);
+  next.offices.transferRecords = sliceRankedRows(next.offices.transferRecords, limits.transferRecords);
+  next.events.worldThreads = sliceRankedRows(next.events.worldThreads, limits.worldThreads);
+  next.events.longTermEvents = sliceRankedRows(next.events.longTermEvents, limits.longTermEvents);
+  next.events.resolvedEvents = sliceRankedRows(next.events.resolvedEvents, limits.resolvedEvents);
+  next.events.localDockets = sliceRankedRows(next.events.localDockets, limits.localDockets);
+  next.events.militaryReports = sliceRankedRows(next.events.militaryReports, limits.militaryReports);
+  next.events.economicReports = sliceRankedRows(next.events.economicReports, limits.economicReports);
+  next.events.eventChains = sliceRankedRows(next.events.eventChains, limits.eventChains);
   if (profile === PROMPT_BUDGET_PROFILES.ordinary) {
-    next.events.eventChains = next.events.eventChains.map(compactOrdinaryEventChain);
+    next.events.eventChains = mapRankedRows(next.events.eventChains, compactOrdinaryEventChain);
   }
-  next.events.recentEvents = next.events.recentEvents.slice(0, limits.recentEvents);
-  next.intel.rumors = next.intel.rumors.slice(0, limits.rumors);
+  next.events.recentEvents = sliceRankedRows(next.events.recentEvents, limits.recentEvents);
+  next.intel.rumors = sliceRankedRows(next.intel.rumors, limits.rumors);
   if (profile === PROMPT_BUDGET_PROFILES.ordinary) {
-    next.intel.rumors = next.intel.rumors.map(compactOrdinaryRumor);
+    next.intel.rumors = mapRankedRows(next.intel.rumors, compactOrdinaryRumor);
   }
-  next.entities.highlights = next.entities.highlights.slice(0, limits.entities);
+  next.entities.highlights = sliceRankedRows(next.entities.highlights, limits.entities);
 
+  const beforeOverflowRows = countRetrievalRows(next);
   let overflow = countRetrievalRows(next) - profile.maxRows;
+  let globalTrimmedRows = 0;
   for (const [domain, collection] of [...RETRIEVAL_ROW_PATHS].reverse()) {
     if (overflow <= 0) break;
     const rows = next[domain]?.[collection];
     if (!Array.isArray(rows) || rows.length === 0) continue;
     const before = rows.length;
     next[domain][collection] = trimRowsFromEnd(rows, overflow);
-    overflow -= before - next[domain][collection].length;
+    const trimmed = before - next[domain][collection].length;
+    globalTrimmedRows += trimmed;
+    overflow -= trimmed;
+  }
+
+  let stats = collectRetrievalStats(next);
+  let charsBeforeCharBudget = serializedRetrievalChars(next);
+  let charBudget = { serializedChars: charsBeforeCharBudget, trimmedRows: 0 };
+  if (hasExplicitBudgetProfile || requestedProfile === "ordinary") {
+    charBudget = trimRowsForCharacterBudget(next, Math.max(1000, profile.maxChars - 1200));
+    charsBeforeCharBudget = charBudget.serializedChars;
+  }
+  stats = collectRetrievalStats(next);
+  next.strategy = {
+    schemaVersion: RETRIEVAL_STRATEGY_SCHEMA_VERSION,
+    profile: PROMPT_BUDGET_PROFILES[requestedProfile] ? requestedProfile : "high",
+    maxRows: profile.maxRows,
+    maxChars: profile.maxChars,
+    selectedRows: stats.totalRows,
+    preGlobalTrimRows: beforeOverflowRows,
+    globalTrimmedRows,
+    preCharBudgetChars: charsBeforeCharBudget,
+    serializedChars: charBudget.serializedChars,
+    charBudgetTrimmedRows: charBudget.trimmedRows,
+    domainSelectedRows: Object.fromEntries(
+      Object.entries(stats.domains).map(([domain, meta]) => [domain, meta.selectedCount])
+    ),
+    candidateRows: Object.fromEntries(
+      Object.entries(stats.domains).map(([domain, meta]) => [domain, meta.candidateCount])
+    ),
+    droppedRows: Object.fromEntries(
+      Object.entries(stats.domains).map(([domain, meta]) => [domain, meta.droppedCount])
+    ),
+    ordering: [
+      "玩家输入/任务文本命中",
+      "压力、风险、可信度与事件新鲜度",
+      "当前身份、任所、官署和地理相关性",
+      "稳定 id 兜底排序"
+    ],
+    visibility: "只读服务器可见 projection；不读取原始 SQLite、原始审计、模型建议原文、完整提示词、隐藏札记或本地路径。",
+    pagination: {
+      source: "按 collection 截断并记录候选、入选、丢弃；浏览器分页另走 route view 或 fixture page。",
+      totalCandidateRows: Object.values(stats.candidates).reduce((total, meta) => total + meta.candidateCount, 0),
+      droppedRows: Object.values(stats.candidates).reduce((total, meta) => total + meta.droppedCount, 0)
+    }
+  };
+  if (hasExplicitBudgetProfile || requestedProfile === "ordinary") {
+    charBudget = trimRowsForCharacterBudget(next, profile.maxChars);
+    next.strategy.charBudgetTrimmedRows += charBudget.trimmedRows;
+    const finalStats = collectRetrievalStats(next);
+    next.strategy.selectedRows = finalStats.totalRows;
+    next.strategy.domainSelectedRows = Object.fromEntries(
+      Object.entries(finalStats.domains).map(([domain, meta]) => [domain, meta.selectedCount])
+    );
+    next.strategy.serializedChars = charBudget.serializedChars;
+  } else {
+    next.strategy.serializedChars = serializedRetrievalChars(next);
   }
 
   return next;
@@ -1148,6 +1364,11 @@ function buildRankedRetrievalContext(worldState = {}, options = {}) {
       task: query.task,
       playerAction: query.playerAction,
       terms: query.terms
+    },
+    roleVisibility: {
+      roleId: cleanText(player.role, "scholar", 32),
+      profile: player.role === "scholar" ? "public_rumor" : "role_visible_official",
+      boundary: "检索只使用各 view builder 对当前身份返回的可见行；隐藏私档、封存事件链和 raw table 不进入候选集。"
     },
     geography: buildGeographyContext(worldState, query, retrievalSource),
     people: buildPeopleContext(worldState, query, retrievalSource),
