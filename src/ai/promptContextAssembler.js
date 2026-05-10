@@ -17,6 +17,10 @@ const {
   summarizeEconomicFiscalForPrompt
 } = require("../game/economicFiscal");
 const { buildHistoricalEventRetrievalRows } = require("../game/historicalEventArchive");
+const {
+  buildIntelligenceRumorRetrievalRows,
+  summarizeIntelligenceRumorsForPrompt
+} = require("../game/intelligenceRumors");
 const { summarizeOfficialCareerForPrompt } = require("../game/officialCareer");
 const {
   buildOfficialPostingsView,
@@ -68,6 +72,7 @@ const LIMITS = Object.freeze({
   economicReports: 4,
   eventChains: 4,
   recentEvents: 6,
+  rumors: 4,
   entities: 5
 });
 
@@ -92,6 +97,7 @@ const ORDINARY_TURN_LIMITS = Object.freeze({
   economicReports: 1,
   eventChains: 1,
   recentEvents: 4,
+  rumors: 1,
   entities: 1
 });
 
@@ -119,6 +125,7 @@ const RETRIEVAL_ROW_PATHS = Object.freeze([
   ["offices", "postings"],
   ["offices", "assessmentRecords"],
   ["offices", "transferRecords"],
+  ["intel", "rumors"],
   ["events", "worldThreads"],
   ["events", "longTermEvents"],
   ["events", "resolvedEvents"],
@@ -847,6 +854,31 @@ function compactOrdinaryEventChain(chain) {
   };
 }
 
+function compactRumor(rumor) {
+  return {
+    id: rumor.id,
+    kind: rumor.kind,
+    channel: rumor.channel,
+    title: rumor.title,
+    credibilityLabel: rumor.credibilityLabel,
+    sourceTypes: unique((rumor.sourceAttributions || []).map((source) => source.sourceType), 2),
+    relatedLabels: unique((rumor.relatedRefs || []).map((ref) => ref.label || ref.id || ref.type), 2),
+    publicSummary: cleanText(rumor.publicSummary, "", 60),
+    authorityBoundary: "传闻线索；真伪与裁决归服务器。"
+  };
+}
+
+function compactOrdinaryRumor(rumor) {
+  return {
+    sourceView: rumor.sourceView,
+    channel: rumor.channel,
+    title: rumor.title,
+    credibilityLabel: rumor.credibilityLabel,
+    publicSummary: cleanText(rumor.publicSummary, "", 24),
+    authorityBoundary: "服务器裁决。"
+  };
+}
+
 function compactEntity(entity) {
   return {
     id: entity.id,
@@ -965,6 +997,34 @@ function buildEventContext(worldState, query, retrievalSource = null) {
   };
 }
 
+function buildIntelContext(worldState, query, retrievalSource = null) {
+  const sourceRumors = safeRetrievalCollection(retrievalSource, "intel", "rumors");
+  const rumors = sourceRumors || buildIntelligenceRumorRetrievalRows(worldState);
+
+  return {
+    rumors: rankRows(rumors, {
+      query,
+      limit: LIMITS.rumors,
+      sourceType: "intelligenceRumorView.rumor",
+      textFields: [
+        "kind",
+        "kindLabel",
+        "channel",
+        "title",
+        "publicSummary",
+        "credibilityLabel",
+        "sourceAttributions",
+        "relatedRefs",
+        "authorityBoundary"
+      ],
+      baseScore: (rumor) =>
+        clampNumber(rumor.priorityScore, 0, 300, 0) +
+        clampNumber(rumor.credibilityScore, 0, 100, 0),
+      mapRow: compactRumor
+    })
+  };
+}
+
 function buildEntityContext(worldState, query) {
   const view = buildWorldEntityView(worldState);
   return {
@@ -986,6 +1046,7 @@ function cloneRetrievalContext(context) {
     people: { ...context.people },
     offices: { ...context.offices },
     events: { ...context.events },
+    intel: { ...context.intel },
     entities: { ...context.entities }
   };
 }
@@ -1035,6 +1096,10 @@ function applyPromptBudget(context, options = {}) {
     next.events.eventChains = next.events.eventChains.map(compactOrdinaryEventChain);
   }
   next.events.recentEvents = next.events.recentEvents.slice(0, limits.recentEvents);
+  next.intel.rumors = next.intel.rumors.slice(0, limits.rumors);
+  if (profile === PROMPT_BUDGET_PROFILES.ordinary) {
+    next.intel.rumors = next.intel.rumors.map(compactOrdinaryRumor);
+  }
   next.entities.highlights = next.entities.highlights.slice(0, limits.entities);
 
   let overflow = countRetrievalRows(next) - profile.maxRows;
@@ -1075,6 +1140,7 @@ function buildRankedRetrievalContext(worldState = {}, options = {}) {
       "militaryDiplomacyView",
       "economicFiscalView",
       "historicalEventArchiveView",
+      "intelligenceRumorView",
       "worldEntityView",
       "eventArchiveView"
     ],
@@ -1087,6 +1153,7 @@ function buildRankedRetrievalContext(worldState = {}, options = {}) {
     people: buildPeopleContext(worldState, query, retrievalSource),
     offices: buildOfficeContext(worldState, query, retrievalSource),
     events: buildEventContext(worldState, query, retrievalSource),
+    intel: buildIntelContext(worldState, query, retrievalSource),
     entities: buildEntityContext(worldState, query),
     safety: {
       visibility: "Only server-built player-visible projections are assembled here.",
@@ -1109,6 +1176,7 @@ function assemblePromptContext(worldState = {}, options = {}) {
     localAffairsDockets: summarizeLocalAffairsDocketsForPrompt(worldState),
     militaryDiplomacy: summarizeMilitaryDiplomacyForPrompt(worldState),
     economicFiscal: summarizeEconomicFiscalForPrompt(worldState),
+    intelligenceRumors: summarizeIntelligenceRumorsForPrompt(worldState, options),
     officialCareer: summarizeOfficialCareerForPrompt(worldState),
     officialPostings: summarizeOfficialPostingsForPrompt(worldState),
     roleWorldCoupling: summarizeRoleWorldCouplingForPrompt(worldState),

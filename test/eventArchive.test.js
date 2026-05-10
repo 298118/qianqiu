@@ -103,18 +103,18 @@ test("event archive view merges visible sources into capped public items", () =>
     authenticityCheck: { severeCheat: false }
   }];
 
-  const view = buildEventArchiveView(worldState);
+  const view = buildEventArchiveView(worldState, { pageSize: 50 });
   const serialized = JSON.stringify(view);
 
   assert.equal(view.schemaVersion, 1);
   assert.equal(view.generatedAtTurn, 9);
   assert.match(view.dateLabel, /1644年八月中旬/);
   assert.equal(view.pagination.page, 1);
-  assert.equal(view.pagination.pageSize, 24);
+  assert.equal(view.pagination.pageSize, 50);
   assert.equal(view.pagination.totalItems, view.counts.total);
   assert.equal(view.pageCounts.total, view.items.length);
   assert.ok(view.items.length >= 6);
-  assert.ok(view.items.length <= 24);
+  assert.ok(view.items.length <= 50);
   assert.ok(view.items.every((item) =>
     item.id &&
     item.sourceType &&
@@ -128,6 +128,7 @@ test("event archive view merges visible sources into capped public items", () =>
   assert.ok(view.items.some((item) => item.sourceType === "world_thread" && item.title === "秋粮核验"));
   assert.ok(view.items.some((item) => item.sourceType === "long_term_event" && item.title === "秋粮核验"));
   assert.ok(view.items.some((item) => item.sourceType === "official_career" && item.title === "实授"));
+  assert.ok(view.items.some((item) => item.sourceType === "intelligence_rumor" && item.sourceLabel === "情报"));
   assert.ok(view.items.some((item) =>
     item.sourceType === "official_assessment" &&
     item.sourceLabel === "考成" &&
@@ -310,6 +311,44 @@ test("event archive sanitizer drops prompt, provider, path, key, and raw state t
   assert.equal(cleanArchiveText("prompt_retrieval_index people_npcs TOKEN_VALUE"), "");
 });
 
+test("event archive includes S65.2 intelligence rumors without hidden source leakage", () => {
+  const worldState = createInitialState({ role: "official", playerName: "情报归档" });
+  Object.assign(worldState, {
+    treasury: 240,
+    grainReserve: 170,
+    population: 7200,
+    taxRate: 68,
+    corruption: 88,
+    publicOrder: 26,
+    borderThreat: 88,
+    armyMorale: 34
+  });
+  Object.assign(worldState.player, {
+    officeTitle: "户部主事",
+    position: "户部主事"
+  });
+  worldState.officialCareer.currentPosting = "户部主事";
+  worldState.officialCareer.bureauId = "ministry_revenue";
+  worldState.worldGeography.routes.push({
+    id: "route-hidden-s65-2-archive",
+    type: "canal",
+    name: "SEALED_S65_2_ARCHIVE_ROUTE",
+    fromCityId: "city-beijing",
+    toCityId: "city-nanjing",
+    visibility: "hidden",
+    risk: 99,
+    publicSummary: "SEALED_S65_2_ARCHIVE_ROUTE prompt provider event_log sk-test-s65-2-archive"
+  });
+
+  const archive = buildEventArchiveView(worldState);
+  const serialized = JSON.stringify(archive);
+
+  assert.ok(archive.items.some((item) => item.sourceType === "intelligence_rumor"));
+  assert.match(serialized, /情报|坊间传闻|官署奏报|部院奏报|御前摘报|军中侦报/);
+  assert.doesNotMatch(serialized, /SEALED_S65_2_ARCHIVE/);
+  assert.doesNotMatch(serialized, /sk-test-s65-2-archive|event_log|provider|prompt/);
+});
+
 test("event archive drops polluted raw official assessment text after visible view sanitization", () => {
   const worldState = createInitialState({ playerName: "考成污染", role: "official" });
   worldState.turnCount = 12;
@@ -369,12 +408,18 @@ test("event archive view paginates the safe projection without reviving filtered
   assert.equal(secondPage.pagination.page, 2);
   assert.equal(secondPage.pagination.hasPreviousPage, true);
   assert.equal(overLargePage.pagination.page, overLargePage.pagination.totalPages);
-  assert.equal(firstPage.pagination.totalItems, 7);
-  assert.equal(firstPage.counts.total, 7);
+  assert.equal(firstPage.pagination.totalItems, 12);
+  assert.equal(firstPage.counts.total, 12);
+  assert.equal(firstPage.counts.event_history, 7);
+  assert.equal(firstPage.counts.intelligence_rumor, 5);
   assert.equal(firstPage.pageCounts.total, 5);
+  assert.ok(firstPage.items.some((item) => item.sourceType === "event_history" && item.summary === "公开近事第30条"));
+  assert.ok(firstPage.items.some((item) => item.sourceType === "intelligence_rumor"));
   assert.deepEqual(
-    firstPage.items.map((item) => item.summary),
-    ["公开近事第30条", "公开近事第29条", "公开近事第28条", "公开近事第27条", "公开近事第25条"]
+    buildEventArchiveView(worldState, { pageSize: 50 }).items
+      .filter((item) => item.sourceType === "event_history")
+      .map((item) => item.summary),
+    ["公开近事第30条", "公开近事第29条", "公开近事第28条", "公开近事第27条", "公开近事第25条", "公开近事第24条", "公开近事第23条"]
   );
   assert.doesNotMatch(serialized, /sk-proj-archive-secret/);
   assert.doesNotMatch(serialized, /event_log/);

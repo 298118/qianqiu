@@ -517,6 +517,95 @@ test("SQLite prompt retrieval indexes and repairs S65 historical event chain row
   assert.match(repairedPayload, /事件链|公共卷宗|服务器/);
 });
 
+test("SQLite prompt retrieval indexes and repairs S65.2 intelligence rumor rows", {
+  skip: hasNodeSqlite ? false : "node:sqlite is unavailable in this Node.js runtime"
+}, async (t) => {
+  const { adapter, dbPath } = createHarness(t);
+  const worldState = createPromptWorldState();
+  Object.assign(worldState, {
+    treasury: 240,
+    grainReserve: 170,
+    population: 7200,
+    taxRate: 68,
+    corruption: 88,
+    publicOrder: 26,
+    borderThreat: 88,
+    armyMorale: 34
+  });
+  worldState.worldGeography.routes.push({
+    id: "route-hidden-sqlite-s65-2",
+    type: "canal",
+    name: "SEALED_SQLITE_S65_2_ROUTE",
+    fromCityId: "city-beijing",
+    toCityId: "city-nanjing",
+    visibility: "hidden",
+    risk: 99,
+    publicSummary: "SEALED_SQLITE_S65_2_ROUTE prompt provider event_log sk-test-s65-2-sqlite"
+  });
+  await adapter.writeSession(clone(worldState));
+
+  const rumorRowId = withSqliteDatabase(dbPath, (db) =>
+    db
+      .prepare(`
+        SELECT row_id
+        FROM prompt_retrieval_index
+        WHERE session_id = ?
+          AND domain = 'intel'
+          AND collection = 'rumors'
+        ORDER BY row_id
+        LIMIT 1
+      `)
+      .get(worldState.sessionId).row_id
+  );
+
+  assert.match(rumorRowId, /^intel\.rumors:/);
+
+  withSqliteDatabase(dbPath, (db) => {
+    db
+      .prepare(`
+        UPDATE prompt_retrieval_index
+        SET payload_json = ?,
+            search_text = ?
+        WHERE session_id = ?
+          AND row_id = ?
+      `)
+      .run(
+        JSON.stringify({
+          id: "intel-rumor-polluted",
+          title: "SEALED_SQLITE_INTEL_RUMOR prompt provider event_log sk-test-intel-rumor"
+        }),
+        "SEALED_SQLITE_INTEL_RUMOR prompt provider event_log sk-test-intel-rumor",
+        worldState.sessionId,
+        rumorRowId
+      );
+  });
+
+  const { record } = await adapter.readSessionRecord(worldState.sessionId);
+  const context = assemblePromptContext(record.worldState, {
+    task: "official_career",
+    playerAction: "核查户部钱粮、同僚私信、情报传闻"
+  });
+  const serialized = JSON.stringify(context.retrievalContext);
+
+  assert.match(serialized, /intelligenceRumorView|官署奏报|同僚私信|情报|服务器/);
+  assert.doesNotMatch(serialized, /SEALED_SQLITE_INTEL_RUMOR/);
+  assert.doesNotMatch(serialized, /SEALED_SQLITE_S65_2_ROUTE/);
+  assert.doesNotMatch(serialized, /sk-test-intel-rumor|event_log|provider|prompt provider/);
+
+  const repairedPayload = withSqliteDatabase(dbPath, (db) =>
+    db
+      .prepare(`
+        SELECT payload_json
+        FROM prompt_retrieval_index
+        WHERE session_id = ?
+          AND row_id = ?
+      `)
+      .get(worldState.sessionId, rumorRowId).payload_json
+  );
+  assert.doesNotMatch(repairedPayload, /SEALED_SQLITE_INTEL_RUMOR/);
+  assert.match(repairedPayload, /情报|奏报|传闻|服务器/);
+});
+
 test("SQLite prompt retrieval index repairs same-row content pollution before prompt assembly", {
   skip: hasNodeSqlite ? false : "node:sqlite is unavailable in this Node.js runtime"
 }, async (t) => {

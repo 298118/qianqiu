@@ -108,6 +108,7 @@ test("game routes expose sanitized event archive view without audit or provider 
   const serialized = JSON.stringify(turn.payload.eventArchiveView);
   assert.equal(turn.response.status, 200);
   assert.equal(turn.payload.eventArchiveView.schemaVersion, 1);
+  assert.equal(turn.payload.intelligenceRumorView.schemaVersion, 1);
   assert.ok(turn.payload.eventArchiveView.items.length >= start.payload.eventArchiveView.items.length);
   assert.equal(serialized.includes("provider"), false);
   assert.equal(serialized.includes("proposal"), false);
@@ -139,7 +140,9 @@ test("game routes expose sanitized event archive view without audit or provider 
   assert.equal(sseResponse.status, 200);
   assert.ok(preview);
   assert.equal(preview.data.eventArchiveView.schemaVersion, 1);
+  assert.equal(preview.data.intelligenceRumorView.schemaVersion, 1);
   assert.equal(final.data.eventArchiveView.schemaVersion, 1);
+  assert.equal(final.data.intelligenceRumorView.schemaVersion, 1);
 });
 
 test("game routes expose local affairs docket view for magistrate sessions", async (t) => {
@@ -237,17 +240,21 @@ test("game routes expose economic fiscal view for administrative sessions", asyn
   assert.equal(start.response.status, 201);
   assert.equal(start.payload.economicFiscalView.schemaVersion, 1);
   assert.equal(start.payload.historicalEventArchiveView.schemaVersion, 1);
+  assert.equal(start.payload.intelligenceRumorView.schemaVersion, 1);
   assert.equal("sealedChains" in start.payload.historicalEventArchiveView, false);
   assert.ok(start.payload.historicalEventArchiveView.publicChains.length > 0);
   assert.ok(start.payload.economicFiscalView.fiscalLedgers.length > 0);
+  assert.ok(start.payload.intelligenceRumorView.publicRumors.length > 0);
   assert.ok(start.payload.eventArchiveView.items.some((item) => item.sourceType === "economic_fiscal"));
   assert.ok(start.payload.eventArchiveView.items.some((item) => item.sourceType === "historical_event_chain"));
+  assert.ok(start.payload.eventArchiveView.items.some((item) => item.sourceType === "intelligence_rumor"));
 
   const stateResponse = await fetch(`${server.baseUrl}/api/game/state/${start.payload.sessionId}`);
   const statePayload = await stateResponse.json();
   assert.equal(stateResponse.status, 200);
   assert.equal(statePayload.economicFiscalView.schemaVersion, 1);
   assert.equal(statePayload.historicalEventArchiveView.schemaVersion, 1);
+  assert.equal(statePayload.intelligenceRumorView.schemaVersion, 1);
   assert.equal(JSON.stringify(statePayload.historicalEventArchiveView).includes("sealedProjection"), false);
 
   const sseResponse = await fetch(`${server.baseUrl}/api/game/turn`, {
@@ -262,7 +269,8 @@ test("game routes expose economic fiscal view for administrative sessions", asyn
   const preview = events.find((event) =>
     event.event === "state_preview" &&
     event.data?.economicFiscalView &&
-    event.data?.historicalEventArchiveView
+    event.data?.historicalEventArchiveView &&
+    event.data?.intelligenceRumorView
   );
   const final = events.find((event) => event.event === "final_state");
 
@@ -270,11 +278,14 @@ test("game routes expose economic fiscal view for administrative sessions", asyn
   assert.ok(preview);
   assert.equal(preview.data.economicFiscalView.schemaVersion, 1);
   assert.equal(preview.data.historicalEventArchiveView.schemaVersion, 1);
+  assert.equal(preview.data.intelligenceRumorView.schemaVersion, 1);
   assert.equal("sealedChains" in preview.data.historicalEventArchiveView, false);
   assert.equal(final.data.economicFiscalView.schemaVersion, 1);
   assert.equal(final.data.historicalEventArchiveView.schemaVersion, 1);
+  assert.equal(final.data.intelligenceRumorView.schemaVersion, 1);
   assert.equal(JSON.stringify(final.data.eventArchiveView).includes("sealedProjection"), false);
   assert.equal(JSON.stringify(final.data.historicalEventArchiveView).includes("sealedProjection"), false);
+  assert.doesNotMatch(JSON.stringify(final.data.intelligenceRumorView), /sealedProjection|server_only|hiddenNotes|hiddenIntent|provider|prompt|event_log|sk-/);
 });
 
 test("exam routes expose event archive view through question, progress, and submit", async (t) => {
@@ -296,6 +307,7 @@ test("exam routes expose event archive view through question, progress, and subm
   assert.equal(question.payload.militaryDiplomacyView.schemaVersion, 1);
   assert.equal(question.payload.economicFiscalView.schemaVersion, 1);
   assert.equal(question.payload.historicalEventArchiveView.schemaVersion, 1);
+  assert.equal(question.payload.intelligenceRumorView.schemaVersion, 1);
   assert.equal("sealedChains" in question.payload.historicalEventArchiveView, false);
 
   const progress = await postJson(`${server.baseUrl}/api/exam/progress`, {
@@ -308,6 +320,7 @@ test("exam routes expose event archive view through question, progress, and subm
   assert.equal(progress.payload.militaryDiplomacyView.schemaVersion, 1);
   assert.equal(progress.payload.economicFiscalView.schemaVersion, 1);
   assert.equal(progress.payload.historicalEventArchiveView.schemaVersion, 1);
+  assert.equal(progress.payload.intelligenceRumorView.schemaVersion, 1);
 
   const essay = Array.from({ length: 8 }, () =>
     "县学之兴在敦本务实，士子读书当明礼义，亦当知仓储、水利、听讼与养民之要。"
@@ -324,6 +337,7 @@ test("exam routes expose event archive view through question, progress, and subm
   assert.equal(submit.payload.militaryDiplomacyView.schemaVersion, 1);
   assert.equal(submit.payload.economicFiscalView.schemaVersion, 1);
   assert.equal(submit.payload.historicalEventArchiveView.schemaVersion, 1);
+  assert.equal(submit.payload.intelligenceRumorView.schemaVersion, 1);
   assert.equal(JSON.stringify(submit.payload.historicalEventArchiveView).includes("sealedProjection"), false);
   assert.ok(archive.items.some((item) => item.sourceType === "exam_record" && item.status === "submitted"));
   assert.equal(JSON.stringify(archive).includes("prompt"), false);

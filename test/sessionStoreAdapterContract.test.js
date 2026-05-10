@@ -2064,12 +2064,14 @@ test("SQLite storage adapter syncs and repairs the safe event archive index", {
       .all(worldState.sessionId);
     const serializedRows = JSON.stringify(rows);
 
+    const eventHistoryRows = rows.filter((row) => row.source_type === "event_history");
+
     assert.equal(count, expectedArchive.pagination.totalItems);
-    assert.equal(rows.length, 2);
-    assert.equal(rows[0].source, "event_archive_view");
-    assert.equal(rows[0].visibility, "public");
-    assert.equal(rows[0].source_type, "event_history");
-    assert.ok(JSON.parse(rows[0].metadata_json).contentHash);
+    assert.equal(rows.length, expectedArchive.pagination.totalItems);
+    assert.equal(eventHistoryRows.length, 2);
+    assert.ok(rows.every((row) => row.source === "event_archive_view"));
+    assert.ok(rows.every((row) => row.visibility === "public"));
+    assert.ok(rows.every((row) => JSON.parse(row.metadata_json).contentHash));
     assert.equal(serializedRows.includes("sk-proj-event-index-secret"), false);
     assert.equal(serializedRows.includes("event_log"), false);
     assert.equal(serializedRows.includes("provider"), false);
@@ -2093,7 +2095,7 @@ test("SQLite storage adapter syncs and repairs the safe event archive index", {
       .all(worldState.sessionId);
     const serializedRows = JSON.stringify(rows);
 
-    assert.equal(rows.length, 2);
+    assert.equal(rows.length, expectedArchive.pagination.totalItems);
     assert.equal(serializedRows.includes("SEALED_EVENT_INDEX_RAW"), false);
     assert.equal(serializedRows.includes("prompt"), false);
     assert.equal(serializedRows.includes("event_log"), false);
@@ -2286,10 +2288,11 @@ test("SQLite storage adapter keeps event archive index in import, delete, and st
   });
   worldState.eventHistory = ["公开卷宗一。", "公开卷宗二。"];
   const envelope = buildEnvelope(adapter, worldState, { revision: 4 });
+  const expectedArchive = buildEventArchiveView(worldState, { pageSize: 50 });
 
   await adapter.importSessionRecord(envelope, { overwrite: true });
   withSqliteDatabase(dbPath, (db) => {
-    assert.equal(readSqliteEventArchiveCount(db, worldState.sessionId), 2);
+    assert.equal(readSqliteEventArchiveCount(db, worldState.sessionId), expectedArchive.pagination.totalItems);
     const row = db
       .prepare("SELECT revision, row_revision FROM event_archive_index WHERE session_id = ? LIMIT 1")
       .get(worldState.sessionId);

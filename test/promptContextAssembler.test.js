@@ -182,13 +182,14 @@ test("ranked retrieval context caps recent event summaries and ignores audit-sha
   });
   const serialized = JSON.stringify(context);
 
-  assert.equal(context.events.recentEvents.length, 6);
+  assert.equal(context.events.recentEvents.length <= 6, true);
+  assert.equal(context.intel.rumors.length > 0, true);
   assert.ok(context.events.localDockets.length > 0);
   assert.ok(context.events.localDockets.every((docket) => docket.sourceView === "localAffairsDocketView.docket"));
   assert.match(JSON.stringify(context.events.localDockets), /刑名|水利|案牍|任所/);
   assert.deepEqual(
-    context.events.recentEvents.map((event) => event.summary),
-    ["可见近事9", "可见近事8", "可见近事7", "可见近事6", "可见近事5", "可见近事4"]
+    context.events.recentEvents.slice(0, 5).map((event) => event.summary),
+    ["可见近事9", "可见近事8", "可见近事7", "可见近事6", "可见近事5"]
   );
   assert.ok(context.events.recentEvents.every((event) => event.sourceView === "eventArchiveView"));
   assert.doesNotMatch(serialized, /SEALED_AI_PROPOSAL_PAYLOAD/);
@@ -334,6 +335,93 @@ test("ranked retrieval context includes capped S65 historical event chains from 
   assert.doesNotMatch(serialized, /sk-test-s65-context|event_log|provider|prompt/);
 });
 
+test("ranked retrieval context includes S65.2 role-visible intelligence rumors", () => {
+  const worldState = createInitialState({ role: "official", playerName: "Rumor Context Tester" });
+  Object.assign(worldState, {
+    treasury: 240,
+    grainReserve: 170,
+    population: 7200,
+    taxRate: 68,
+    corruption: 88,
+    publicOrder: 26,
+    borderThreat: 88,
+    armyMorale: 34
+  });
+  Object.assign(worldState.player, {
+    officeTitle: "户部主事",
+    position: "户部主事"
+  });
+  Object.assign(worldState.officialCareer, {
+    currentPosting: "户部主事",
+    bureauId: "ministry_revenue"
+  });
+  worldState.worldPeople.relationships.push({
+    id: "rel-s65-2-context-visible",
+    sourceType: "player",
+    sourceId: "P1",
+    targetType: "npc",
+    targetId: "C01",
+    relationship: -58,
+    trust: 24,
+    resentment: 84,
+    stance: "疑忌钱粮稽核",
+    visibility: "public",
+    knownToPlayer: true,
+    publicSummary: "赵给事对玩家核查钱粮颇有疑忌，人情怨望升高。",
+    recentNotes: ["赵给事: 对漕册复核有疑。"],
+    lastUpdatedTurn: 9
+  });
+  worldState.worldGeography.routes.push({
+    id: "route-hidden-context-s65-2",
+    type: "canal",
+    name: "SEALED_S65_2_CONTEXT_ROUTE",
+    fromCityId: "city-beijing",
+    toCityId: "city-nanjing",
+    risk: 99,
+    visibility: "hidden",
+    publicSummary: "SEALED_S65_2_CONTEXT_ROUTE prompt provider event_log sk-test-s65-2-context"
+  });
+
+  const context = buildRankedRetrievalContext(worldState, {
+    task: "official_career",
+    playerAction: "核查户部钱粮、同僚私信、奏报和情报传闻"
+  });
+  const ordinary = buildRankedRetrievalContext(worldState, {
+    task: "official_career",
+    playerAction: "核查户部钱粮传闻",
+    promptBudgetProfile: "ordinary"
+  });
+  const ordinaryPromptContext = assemblePromptContext(worldState, {
+    task: "official_career",
+    playerAction: "核查户部钱粮传闻",
+    promptBudgetProfile: "ordinary"
+  });
+  const highPromptContext = assemblePromptContext(worldState, {
+    task: "official_career",
+    playerAction: "核查户部钱粮传闻",
+    promptBudgetProfile: "high"
+  });
+  const serialized = JSON.stringify(context);
+
+  assert.equal(context.intel.rumors.length > 0, true);
+  assert.ok(context.intel.rumors.length <= 4);
+  assert.ok(context.intel.rumors.every((rumor) =>
+    rumor.sourceView === "intelligenceRumorView.rumor" &&
+    rumor.authorityBoundary.includes("服务器")
+  ));
+  assert.equal(ordinary.intel.rumors.length <= 1, true);
+  assert.equal(ordinaryPromptContext.intelligenceRumors.rumors.length <= 1, true);
+  assert.ok(ordinaryPromptContext.intelligenceRumors.rumors.every((rumor) =>
+    rumor.sourceAttributions === undefined &&
+    rumor.publicSummary.length <= 39
+  ));
+  assert.ok(highPromptContext.intelligenceRumors.rumors.length <= 4);
+  assert.match(serialized, /intelligenceRumorView|官署奏报|同僚私信|可信|服务器/);
+  assert.doesNotMatch(serialized, /SEALED_S65_2_CONTEXT/);
+  assert.doesNotMatch(serialized, /sk-test-s65-2-context|event_log|provider|prompt/);
+  assert.doesNotMatch(serialized, /sealedProjection|server_only|hiddenNotes|hiddenIntent/);
+});
+
 test("ranked retrieval context keeps local affairs dockets out of scholar view", () => {
   const worldState = createInitialState({ role: "scholar", playerName: "Scholar Docket Tester" });
   const context = buildRankedRetrievalContext(worldState, {
@@ -345,6 +433,8 @@ test("ranked retrieval context keeps local affairs dockets out of scholar view",
   assert.deepEqual(context.events.militaryReports, []);
   assert.deepEqual(context.events.economicReports, []);
   assert.deepEqual(context.events.eventChains, []);
+  assert.ok(context.intel.rumors.length > 0);
+  assert.ok(context.intel.rumors.every((rumor) => rumor.channel === "坊间传闻"));
   assert.match(JSON.stringify(context), /localAffairsDocketView/);
   assert.doesNotMatch(JSON.stringify(context), /钱粮奏销|刑名词讼|水利修防/);
 });

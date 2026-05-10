@@ -3,6 +3,7 @@ const { createHash } = require("node:crypto");
 const { buildEventArchiveIndexItems } = require("../game/eventArchive");
 const { buildEconomicFiscalRetrievalRows } = require("../game/economicFiscal");
 const { buildHistoricalEventRetrievalRows } = require("../game/historicalEventArchive");
+const { buildIntelligenceRumorRetrievalRows } = require("../game/intelligenceRumors");
 const { buildLocalAffairsDocketView } = require("../game/localAffairsDockets");
 const { buildMilitaryDiplomacyRetrievalRows } = require("../game/militaryDiplomacy");
 const { buildOfficialPostingsView } = require("../game/officialPostings");
@@ -29,7 +30,8 @@ const COLLECTION_GROUPS = Object.freeze({
   "events.militaryReports": ["events", "militaryReports"],
   "events.economicReports": ["events", "economicReports"],
   "events.eventChains": ["events", "eventChains"],
-  "events.recentEvents": ["events", "recentEvents"]
+  "events.recentEvents": ["events", "recentEvents"],
+  "intel.rumors": ["intel", "rumors"]
 });
 
 function stringifyJson(value, fallback) {
@@ -466,6 +468,43 @@ function compactEventChain(chain = {}) {
   };
 }
 
+function compactRumor(rumor = {}) {
+  return {
+    id: rumor.id,
+    kind: rumor.kind,
+    kindLabel: rumor.kindLabel,
+    channel: rumor.channel,
+    title: rumor.title,
+    visibility: rumor.visibility,
+    credibilityScore: rumor.credibilityScore,
+    credibilityTier: rumor.credibilityTier,
+    credibilityLabel: rumor.credibilityLabel,
+    priorityScore: rumor.priorityScore,
+    sourceAttributions: clonePayload(rumor.sourceAttributions || [])
+      .slice(0, 3)
+      .map((source) => ({
+        sourceView: source.sourceView,
+        sourceType: source.sourceType,
+        sourceId: source.sourceId,
+        sourceLabel: source.sourceLabel,
+        credibilityScore: source.credibilityScore
+      })),
+    relatedRefs: clonePayload(rumor.relatedRefs || [])
+      .slice(0, 4)
+      .map((ref) => ({
+        type: ref.type,
+        id: ref.id,
+        label: ref.label
+      })),
+    relatedLabels: clonePayload(rumor.relatedRefs || [])
+      .slice(0, 4)
+      .map((ref) => ref.label || ref.id || ref.type)
+      .filter(Boolean),
+    publicSummary: rumor.publicSummary,
+    authorityBoundary: "情报传闻只作玩家视野内线索；服务器裁决真伪、公开和后果。"
+  };
+}
+
 function buildSearchText(payload = {}) {
   return JSON.stringify(payload)
     .replace(/[{}[\]",:]/g, " ")
@@ -557,6 +596,7 @@ function buildPromptRetrievalRows(record) {
   const militaryReports = buildMilitaryDiplomacyRetrievalRows(record.worldState);
   const economicReports = buildEconomicFiscalRetrievalRows(record.worldState);
   const eventChains = buildHistoricalEventRetrievalRows(record.worldState);
+  const rumors = buildIntelligenceRumorRetrievalRows(record.worldState);
   const eventItems = buildEventArchiveIndexItems(record.worldState);
 
   addRows(rows, record, "geography.countries", "worldGeographyView", geographyView.countries, compactCountry);
@@ -576,6 +616,7 @@ function buildPromptRetrievalRows(record) {
   addRows(rows, record, "events.economicReports", "economicFiscalView", economicReports, compactEconomicReport);
   addRows(rows, record, "events.eventChains", "historicalEventArchiveView", eventChains, compactEventChain);
   addRows(rows, record, "events.recentEvents", "eventArchiveView", eventItems, compactEvent);
+  addRows(rows, record, "intel.rumors", "intelligenceRumorView", rumors, compactRumor);
 
   return rows;
 }
@@ -689,6 +730,9 @@ function emptyPromptRetrievalSource() {
       economicReports: [],
       eventChains: [],
       recentEvents: []
+    },
+    intel: {
+      rumors: []
     }
   };
 }

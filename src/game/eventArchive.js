@@ -5,6 +5,7 @@ const { buildEconomicFiscalView } = require("./economicFiscal");
 const {
   buildHistoricalEventArchiveView
 } = require("./historicalEventArchive");
+const { buildIntelligenceRumorView } = require("./intelligenceRumors");
 const { buildOfficialCareerView } = require("./officialCareer");
 const { buildOfficialPostingsView } = require("./officialPostings");
 const { formatYearMonthPeriod, normalizeMonth, normalizeTenDayPeriod, normalizeYear } = require("./time");
@@ -21,6 +22,7 @@ const MAX_LOCAL_DOCKETS = 6;
 const MAX_MILITARY_INCIDENTS = 5;
 const MAX_ECONOMIC_INCIDENTS = 5;
 const MAX_HISTORICAL_EVENT_CHAINS = 6;
+const MAX_INTELLIGENCE_RUMORS = 6;
 const MAX_EXAM_RECORDS = 5;
 const MAX_TEXT_LENGTH = 180;
 const MIN_PAGE_SIZE = 1;
@@ -40,6 +42,7 @@ const SOURCE_LABELS = {
   military_diplomacy: "军务",
   economic_fiscal: "财赋",
   historical_event_chain: "事件链",
+  intelligence_rumor: "情报",
   exam_record: "科场"
 };
 
@@ -364,6 +367,29 @@ function collectHistoricalEventItems(worldState, items, historicalEventArchiveVi
   });
 }
 
+function collectIntelligenceRumorItems(worldState, items, intelligenceRumorView) {
+  const rumors = Array.isArray(intelligenceRumorView?.publicRumors)
+    ? intelligenceRumorView.publicRumors
+    : [];
+  rumors.slice(0, MAX_INTELLIGENCE_RUMORS).forEach((rumor) => {
+    addItem(items, worldState, {
+      sourceType: "intelligence_rumor",
+      kind: rumor.kind,
+      title: rumor.title || rumor.kindLabel,
+      summary: rumor.publicSummary,
+      date: rumor.date,
+      turn: rumor.lastUpdatedTurn,
+      status: rumor.credibilityTier === "unverified" ? "watch" : "recorded",
+      riskLabel: rumor.credibilityLabel,
+      relatedLabels: [
+        rumor.channel,
+        rumor.kindLabel,
+        ...(Array.isArray(rumor.relatedRefs) ? rumor.relatedRefs.map((ref) => ref.label || ref.id) : [])
+      ].filter(Boolean)
+    });
+  });
+}
+
 function examDateSource(entry = {}) {
   return entry.sceneTime?.updatedAt ||
     entry.examSubmittedAt ||
@@ -425,6 +451,7 @@ function buildEventArchiveIndexItems(worldState = {}) {
   const militaryDiplomacyView = buildMilitaryDiplomacyView(worldState);
   const economicFiscalView = buildEconomicFiscalView(worldState);
   const historicalEventArchiveView = buildHistoricalEventArchiveView(worldState);
+  const intelligenceRumorView = buildIntelligenceRumorView(worldState);
   const items = [];
 
   collectHistoryItems(worldState, items);
@@ -436,6 +463,7 @@ function buildEventArchiveIndexItems(worldState = {}) {
   collectMilitaryDiplomacyItems(worldState, items, militaryDiplomacyView);
   collectEconomicFiscalItems(worldState, items, economicFiscalView);
   collectHistoricalEventItems(worldState, items, historicalEventArchiveView);
+  collectIntelligenceRumorItems(worldState, items, intelligenceRumorView);
   collectExamItems(worldState, items);
 
   return items.sort(sortArchiveItems);
