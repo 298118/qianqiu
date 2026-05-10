@@ -270,6 +270,70 @@ test("ranked retrieval context includes capped economic fiscal reports for admin
   assert.doesNotMatch(serialized, /sk-test-s64-2-context|event_log/);
 });
 
+test("ranked retrieval context includes capped S65 historical event chains from server projections", () => {
+  const worldState = createInitialState({ role: "official", playerName: "Event Chain Context Tester" });
+  Object.assign(worldState, {
+    treasury: 240,
+    grainReserve: 170,
+    population: 7200,
+    taxRate: 68,
+    corruption: 88,
+    publicOrder: 26
+  });
+  Object.assign(worldState.player, {
+    officeTitle: "户部主事",
+    position: "户部主事"
+  });
+  Object.assign(worldState.officialCareer, {
+    currentPosting: "户部主事",
+    bureauId: "ministry_revenue"
+  });
+  worldState.officialPostings.assessmentRecords.push({
+    id: "assessment-s65-context-visible",
+    postingId: "posting-player-current",
+    officeId: "ministry_revenue_principal",
+    bureauId: "ministry_revenue",
+    holderType: "player",
+    status: "pending",
+    meritScore: 42,
+    riskScore: 82,
+    recommendation: "watch",
+    publicFinding: "任所奏报牵连户部钱粮与弹劾风险。",
+    publicSummary: "户部钱粮考成吃紧，需复核漕册。",
+    visibility: "office_visible",
+    knownToPlayer: true,
+    date: { year: 1644, month: 1, tenDayPeriod: 1, turn: 9 },
+    lastUpdatedTurn: 9
+  });
+  worldState.worldGeography.routes.push({
+    id: "route-hidden-context-s65",
+    type: "canal",
+    name: "SEALED_S65_CONTEXT_ROUTE",
+    fromCityId: "city-beijing",
+    toCityId: "city-nanjing",
+    risk: 99,
+    visibility: "hidden",
+    publicSummary: "SEALED_S65_CONTEXT_ROUTE prompt provider event_log sk-test-s65-context"
+  });
+
+  const context = buildRankedRetrievalContext(worldState, {
+    task: "official_career",
+    playerAction: "核查户部钱粮、事件链和漕册因果"
+  });
+  const serialized = JSON.stringify(context);
+
+  assert.equal(context.events.eventChains.length > 0, true);
+  assert.ok(context.events.eventChains.length <= 4);
+  assert.ok(context.events.eventChains.every((chain) =>
+    chain.sourceView === "historicalEventArchiveView.chain" &&
+    chain.authorityBoundary.includes("事件模板")
+  ));
+  assert.match(serialized, /historicalEventArchiveView|事件链|公共卷宗|服务器/);
+  assert.doesNotMatch(serialized, /sealedProjection|server_only|密档/);
+  assert.doesNotMatch(serialized, /SEALED_S65_CONTEXT/);
+  assert.doesNotMatch(serialized, /sk-test-s65-context|event_log|provider|prompt/);
+});
+
 test("ranked retrieval context keeps local affairs dockets out of scholar view", () => {
   const worldState = createInitialState({ role: "scholar", playerName: "Scholar Docket Tester" });
   const context = buildRankedRetrievalContext(worldState, {
@@ -280,6 +344,7 @@ test("ranked retrieval context keeps local affairs dockets out of scholar view",
   assert.deepEqual(context.events.localDockets, []);
   assert.deepEqual(context.events.militaryReports, []);
   assert.deepEqual(context.events.economicReports, []);
+  assert.deepEqual(context.events.eventChains, []);
   assert.match(JSON.stringify(context), /localAffairsDocketView/);
   assert.doesNotMatch(JSON.stringify(context), /钱粮奏销|刑名词讼|水利修防/);
 });

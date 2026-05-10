@@ -236,13 +236,19 @@ test("game routes expose economic fiscal view for administrative sessions", asyn
 
   assert.equal(start.response.status, 201);
   assert.equal(start.payload.economicFiscalView.schemaVersion, 1);
+  assert.equal(start.payload.historicalEventArchiveView.schemaVersion, 1);
+  assert.equal("sealedChains" in start.payload.historicalEventArchiveView, false);
+  assert.ok(start.payload.historicalEventArchiveView.publicChains.length > 0);
   assert.ok(start.payload.economicFiscalView.fiscalLedgers.length > 0);
   assert.ok(start.payload.eventArchiveView.items.some((item) => item.sourceType === "economic_fiscal"));
+  assert.ok(start.payload.eventArchiveView.items.some((item) => item.sourceType === "historical_event_chain"));
 
   const stateResponse = await fetch(`${server.baseUrl}/api/game/state/${start.payload.sessionId}`);
   const statePayload = await stateResponse.json();
   assert.equal(stateResponse.status, 200);
   assert.equal(statePayload.economicFiscalView.schemaVersion, 1);
+  assert.equal(statePayload.historicalEventArchiveView.schemaVersion, 1);
+  assert.equal(JSON.stringify(statePayload.historicalEventArchiveView).includes("sealedProjection"), false);
 
   const sseResponse = await fetch(`${server.baseUrl}/api/game/turn`, {
     method: "POST",
@@ -253,13 +259,22 @@ test("game routes expose economic fiscal view for administrative sessions", asyn
     })
   });
   const events = parseSse(await sseResponse.text());
-  const preview = events.find((event) => event.event === "state_preview" && event.data?.economicFiscalView);
+  const preview = events.find((event) =>
+    event.event === "state_preview" &&
+    event.data?.economicFiscalView &&
+    event.data?.historicalEventArchiveView
+  );
   const final = events.find((event) => event.event === "final_state");
 
   assert.equal(sseResponse.status, 200);
   assert.ok(preview);
   assert.equal(preview.data.economicFiscalView.schemaVersion, 1);
+  assert.equal(preview.data.historicalEventArchiveView.schemaVersion, 1);
+  assert.equal("sealedChains" in preview.data.historicalEventArchiveView, false);
   assert.equal(final.data.economicFiscalView.schemaVersion, 1);
+  assert.equal(final.data.historicalEventArchiveView.schemaVersion, 1);
+  assert.equal(JSON.stringify(final.data.eventArchiveView).includes("sealedProjection"), false);
+  assert.equal(JSON.stringify(final.data.historicalEventArchiveView).includes("sealedProjection"), false);
 });
 
 test("exam routes expose event archive view through question, progress, and submit", async (t) => {
@@ -280,6 +295,8 @@ test("exam routes expose event archive view through question, progress, and subm
   assert.equal(question.payload.eventArchiveView.schemaVersion, 1);
   assert.equal(question.payload.militaryDiplomacyView.schemaVersion, 1);
   assert.equal(question.payload.economicFiscalView.schemaVersion, 1);
+  assert.equal(question.payload.historicalEventArchiveView.schemaVersion, 1);
+  assert.equal("sealedChains" in question.payload.historicalEventArchiveView, false);
 
   const progress = await postJson(`${server.baseUrl}/api/exam/progress`, {
     sessionId: worldState.sessionId,
@@ -290,6 +307,7 @@ test("exam routes expose event archive view through question, progress, and subm
   assert.equal(progress.payload.eventArchiveView.schemaVersion, 1);
   assert.equal(progress.payload.militaryDiplomacyView.schemaVersion, 1);
   assert.equal(progress.payload.economicFiscalView.schemaVersion, 1);
+  assert.equal(progress.payload.historicalEventArchiveView.schemaVersion, 1);
 
   const essay = Array.from({ length: 8 }, () =>
     "县学之兴在敦本务实，士子读书当明礼义，亦当知仓储、水利、听讼与养民之要。"
@@ -305,6 +323,8 @@ test("exam routes expose event archive view through question, progress, and subm
   assert.equal(archive.schemaVersion, 1);
   assert.equal(submit.payload.militaryDiplomacyView.schemaVersion, 1);
   assert.equal(submit.payload.economicFiscalView.schemaVersion, 1);
+  assert.equal(submit.payload.historicalEventArchiveView.schemaVersion, 1);
+  assert.equal(JSON.stringify(submit.payload.historicalEventArchiveView).includes("sealedProjection"), false);
   assert.ok(archive.items.some((item) => item.sourceType === "exam_record" && item.status === "submitted"));
   assert.equal(JSON.stringify(archive).includes("prompt"), false);
   assert.equal(JSON.stringify(archive).includes("provider"), false);

@@ -16,6 +16,7 @@ const {
   buildEconomicFiscalRetrievalRows,
   summarizeEconomicFiscalForPrompt
 } = require("../game/economicFiscal");
+const { buildHistoricalEventRetrievalRows } = require("../game/historicalEventArchive");
 const { summarizeOfficialCareerForPrompt } = require("../game/officialCareer");
 const {
   buildOfficialPostingsView,
@@ -65,6 +66,7 @@ const LIMITS = Object.freeze({
   localDockets: 3,
   militaryReports: 4,
   economicReports: 4,
+  eventChains: 4,
   recentEvents: 6,
   entities: 5
 });
@@ -88,6 +90,7 @@ const ORDINARY_TURN_LIMITS = Object.freeze({
   localDockets: 1,
   militaryReports: 1,
   economicReports: 1,
+  eventChains: 1,
   recentEvents: 4,
   entities: 1
 });
@@ -122,6 +125,7 @@ const RETRIEVAL_ROW_PATHS = Object.freeze([
   ["events", "localDockets"],
   ["events", "militaryReports"],
   ["events", "economicReports"],
+  ["events", "eventChains"],
   ["events", "recentEvents"],
   ["entities", "highlights"]
 ]);
@@ -812,6 +816,37 @@ function compactEconomicReport(report) {
   };
 }
 
+function compactEventChain(chain) {
+  const relatedLabels = chain.relatedLabels ||
+    (chain.relatedRefs || []).map((ref) => ref.label || ref.id || ref.type);
+  const followUpHints = chain.followUpHints ||
+    (chain.followUpTriggers || []).map((trigger) => trigger.label);
+  return {
+    id: cleanText(chain.id, "", 80),
+    templateId: chain.templateId,
+    domain: chain.domain,
+    domainLabel: chain.domainLabel,
+    title: chain.title,
+    statusLabel: chain.statusLabel,
+    pressureScore: chain.pressureScore,
+    severity: chain.severity,
+    relatedLabels: unique(relatedLabels, 3),
+    followUpHints: unique(followUpHints, 2),
+    publicSummary: cleanText(chain.publicSummary, "", 80),
+    authorityBoundary: "事件模板只读公共卷宗；服务器裁决状态与落库。"
+  };
+}
+
+function compactOrdinaryEventChain(chain) {
+  return {
+    sourceView: chain.sourceView,
+    priority: chain.priority,
+    title: chain.title,
+    publicSummary: cleanText(chain.publicSummary, "", 36),
+    authorityBoundary: "事件模板公共卷宗；服务器裁决。"
+  };
+}
+
 function compactEntity(entity) {
   return {
     id: entity.id,
@@ -835,9 +870,11 @@ function buildEventContext(worldState, query, retrievalSource = null) {
   const sourceLocalDockets = safeRetrievalCollection(retrievalSource, "events", "localDockets");
   const sourceMilitaryReports = safeRetrievalCollection(retrievalSource, "events", "militaryReports");
   const sourceEconomicReports = safeRetrievalCollection(retrievalSource, "events", "economicReports");
+  const sourceEventChains = safeRetrievalCollection(retrievalSource, "events", "eventChains");
   const localDockets = sourceLocalDockets || buildLocalAffairsDocketView(worldState).dockets;
   const militaryReports = sourceMilitaryReports || buildMilitaryDiplomacyRetrievalRows(worldState);
   const economicReports = sourceEconomicReports || buildEconomicFiscalRetrievalRows(worldState);
+  const eventChains = sourceEventChains || buildHistoricalEventRetrievalRows(worldState);
   const recentEvents = eventArchiveItems
     .filter((event) => event.sourceType === "event_history")
     .slice(0, LIMITS.recentEvents)
@@ -913,6 +950,17 @@ function buildEventContext(worldState, query, retrievalSource = null) {
       ),
       mapRow: compactEconomicReport
     }),
+    eventChains: rankRows(eventChains, {
+      query,
+      limit: LIMITS.eventChains,
+      sourceType: "historicalEventArchiveView.chain",
+      textFields: ["domain", "domainLabel", "title", "publicSummary", "relatedRefs", "followUpTriggers", "authorityBoundary"],
+      baseScore: (chain) => Math.max(
+        clampNumber(chain.pressureScore, 0, 100, 0),
+        (chain.severity || 0) * 22
+      ),
+      mapRow: compactEventChain
+    }),
     recentEvents
   };
 }
@@ -982,6 +1030,10 @@ function applyPromptBudget(context, options = {}) {
   next.events.localDockets = next.events.localDockets.slice(0, limits.localDockets);
   next.events.militaryReports = next.events.militaryReports.slice(0, limits.militaryReports);
   next.events.economicReports = next.events.economicReports.slice(0, limits.economicReports);
+  next.events.eventChains = next.events.eventChains.slice(0, limits.eventChains);
+  if (profile === PROMPT_BUDGET_PROFILES.ordinary) {
+    next.events.eventChains = next.events.eventChains.map(compactOrdinaryEventChain);
+  }
   next.events.recentEvents = next.events.recentEvents.slice(0, limits.recentEvents);
   next.entities.highlights = next.entities.highlights.slice(0, limits.entities);
 
@@ -1022,6 +1074,7 @@ function buildRankedRetrievalContext(worldState = {}, options = {}) {
       "localAffairsDocketView",
       "militaryDiplomacyView",
       "economicFiscalView",
+      "historicalEventArchiveView",
       "worldEntityView",
       "eventArchiveView"
     ],
@@ -1037,7 +1090,7 @@ function buildRankedRetrievalContext(worldState = {}, options = {}) {
     entities: buildEntityContext(worldState, query),
     safety: {
       visibility: "Only server-built player-visible projections are assembled here.",
-      authority: "This context is read-only for providers; appointments, transfers, events, ledgers, and database writes remain server-owned."
+      authority: "This context is read-only for model adapters; appointments, transfers, events, ledgers, and database writes remain server-owned."
     }
   };
 

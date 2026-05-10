@@ -2181,6 +2181,101 @@ test("SQLite storage adapter repairs S61 official assessment event archive rows 
   });
 });
 
+test("SQLite storage adapter repairs S65 historical event chain archive rows from visible views", {
+  skip: hasNodeSqlite ? false : "node:sqlite is unavailable in this Node.js runtime"
+}, async (t) => {
+  const { adapter, dbPath } = createSqliteHarness(t);
+  const worldState = buildWorldState({
+    role: "official",
+    playerName: "事件链索引",
+    turnCount: 11,
+    player: {
+      officeTitle: "户部主事",
+      position: "户部主事"
+    }
+  });
+  Object.assign(worldState, {
+    treasury: 240,
+    grainReserve: 170,
+    population: 7200,
+    taxRate: 68,
+    corruption: 88,
+    publicOrder: 26
+  });
+  Object.assign(worldState.officialCareer, {
+    currentPosting: "户部主事",
+    bureauId: "ministry_revenue"
+  });
+  worldState.officialPostings.assessmentRecords.push({
+    id: "assessment-s65-index-visible",
+    postingId: "posting-player-current",
+    officeId: "ministry_revenue_principal",
+    bureauId: "ministry_revenue",
+    holderType: "player",
+    status: "pending",
+    meritScore: 42,
+    riskScore: 82,
+    recommendation: "watch",
+    publicFinding: "任所奏报牵连户部钱粮与弹劾风险。",
+    publicSummary: "户部钱粮考成吃紧，需复核漕册。",
+    visibility: "office_visible",
+    knownToPlayer: true,
+    date: { year: 1644, month: 1, tenDayPeriod: 1, turn: 11 },
+    lastUpdatedTurn: 11
+  });
+
+  await adapter.writeSession(worldState);
+  withSqliteDatabase(dbPath, (db) => {
+    const row = db
+      .prepare(`
+        SELECT *
+        FROM event_archive_index
+        WHERE session_id = ?
+          AND source_type = 'historical_event_chain'
+        LIMIT 1
+      `)
+      .get(worldState.sessionId);
+
+    assert.ok(row);
+    assert.equal(row.source_type, "historical_event_chain");
+    assert.match(row.summary, /事件链|公共卷宗|服务器/);
+
+    const pollutedRow = {
+      ...row,
+      summary: "SEALED_EVENT_CHAIN_INDEX prompt provider event_log sk-test-event-chain-index"
+    };
+    const metadata = JSON.parse(row.metadata_json);
+    metadata.contentHash = hashSqliteEventArchiveRow(pollutedRow);
+    db
+      .prepare("UPDATE event_archive_index SET summary = ?, metadata_json = ? WHERE session_id = ? AND row_id = ?")
+      .run(pollutedRow.summary, JSON.stringify(metadata), worldState.sessionId, row.row_id);
+  });
+
+  const { record } = await adapter.readSessionRecord(worldState.sessionId);
+  const eventArchive = buildEventArchiveView(record.worldState, { pageSize: 50 });
+  const serializedArchive = JSON.stringify(eventArchive);
+
+  assert.match(serializedArchive, /historical_event_chain/);
+  assert.match(serializedArchive, /事件链|公共卷宗|服务器/);
+  assert.doesNotMatch(serializedArchive, /SEALED_EVENT_CHAIN_INDEX/);
+
+  withSqliteDatabase(dbPath, (db) => {
+    const row = db
+      .prepare(`
+        SELECT summary, metadata_json
+        FROM event_archive_index
+        WHERE session_id = ?
+          AND source_type = 'historical_event_chain'
+        LIMIT 1
+      `)
+      .get(worldState.sessionId);
+
+    assert.match(row.summary, /事件链|公共卷宗|服务器/);
+    assert.doesNotMatch(row.summary, /SEALED_EVENT_CHAIN_INDEX/);
+    assert.ok(JSON.parse(row.metadata_json).contentHash);
+  });
+});
+
 test("SQLite storage adapter keeps event archive index in import, delete, and stale-write paths", {
   skip: hasNodeSqlite ? false : "node:sqlite is unavailable in this Node.js runtime"
 }, async (t) => {

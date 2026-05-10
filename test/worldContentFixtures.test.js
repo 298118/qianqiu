@@ -36,7 +36,7 @@ const dataDir = path.join(__dirname, "..", "data");
 const hasNodeSqlite = typeof isBuiltin === "function" && isBuiltin("node:sqlite");
 // Route-safe prompt index rows may grow as new sanitized domains join the
 // fixture; ordinary prompt assembly remains capped by WORLD_CONTENT_PROMPT_BUDGET.
-const SMALL_ROUTE_PROMPT_ROW_CEILING = 580;
+const SMALL_ROUTE_PROMPT_ROW_CEILING = 610;
 
 function clone(value) {
   return JSON.parse(JSON.stringify(value));

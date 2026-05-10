@@ -298,10 +298,17 @@ async function openCleanStartPage(page, baseUrl) {
 
 function getDefaultBrowserCandidates(platform = process.platform, env = process.env) {
   if (platform === "win32") {
+    const joinWinPath = (...parts) => path.win32.join(...parts);
     return [
-      path.join(env.ProgramFiles || "C:\\Program Files", "Google", "Chrome", "Application", "chrome.exe"),
-      path.join(env["ProgramFiles(x86)"] || "C:\\Program Files (x86)", "Microsoft", "Edge", "Application", "msedge.exe"),
-      path.join(env.ProgramFiles || "C:\\Program Files", "Microsoft", "Edge", "Application", "msedge.exe")
+      joinWinPath(env.ProgramFiles || "C:\\Program Files", "Google", "Chrome", "Application", "chrome.exe"),
+      joinWinPath(
+        env["ProgramFiles(x86)"] || "C:\\Program Files (x86)",
+        "Microsoft",
+        "Edge",
+        "Application",
+        "msedge.exe"
+      ),
+      joinWinPath(env.ProgramFiles || "C:\\Program Files", "Microsoft", "Edge", "Application", "msedge.exe")
     ];
   }
 

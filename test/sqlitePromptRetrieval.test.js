@@ -422,6 +422,101 @@ test("SQLite prompt retrieval indexes and repairs S64.2 economic fiscal rows", {
   assert.match(repairedPayload, /粮储|盐漕|库银|财赋|服务器/);
 });
 
+test("SQLite prompt retrieval indexes and repairs S65 historical event chain rows", {
+  skip: hasNodeSqlite ? false : "node:sqlite is unavailable in this Node.js runtime"
+}, async (t) => {
+  const { adapter, dbPath } = createHarness(t);
+  const worldState = createPromptWorldState();
+  Object.assign(worldState, {
+    treasury: 240,
+    grainReserve: 170,
+    population: 7200,
+    taxRate: 68,
+    corruption: 88,
+    publicOrder: 26
+  });
+  worldState.officialPostings.assessmentRecords.push({
+    id: "assessment-s65-sqlite-visible",
+    postingId: "posting-player-current",
+    officeId: "ministry_revenue_principal",
+    bureauId: "ministry_revenue",
+    holderType: "player",
+    status: "pending",
+    meritScore: 42,
+    riskScore: 82,
+    recommendation: "watch",
+    publicFinding: "任所奏报牵连户部钱粮与弹劾风险。",
+    publicSummary: "户部钱粮考成吃紧，需复核漕册。",
+    visibility: "office_visible",
+    knownToPlayer: true,
+    date: { year: 1644, month: 1, tenDayPeriod: 1, turn: 9 },
+    lastUpdatedTurn: 9
+  });
+  await adapter.writeSession(clone(worldState));
+
+  const chainRowId = withSqliteDatabase(dbPath, (db) =>
+    db
+      .prepare(`
+        SELECT row_id
+        FROM prompt_retrieval_index
+        WHERE session_id = ?
+          AND domain = 'events'
+          AND collection = 'eventChains'
+        ORDER BY row_id
+        LIMIT 1
+      `)
+      .get(worldState.sessionId).row_id
+  );
+
+  assert.match(chainRowId, /^events\.eventChains:/);
+
+  withSqliteDatabase(dbPath, (db) => {
+    db
+      .prepare(`
+        UPDATE prompt_retrieval_index
+        SET payload_json = ?,
+            search_text = ?
+        WHERE session_id = ?
+          AND row_id = ?
+      `)
+      .run(
+        JSON.stringify({
+          id: "event-chain-polluted",
+          title: "SEALED_SQLITE_EVENT_CHAIN prompt provider event_log sk-test-event-chain"
+        }),
+        "SEALED_SQLITE_EVENT_CHAIN prompt provider event_log sk-test-event-chain",
+        worldState.sessionId,
+        chainRowId
+      );
+  });
+
+  const { record } = await adapter.readSessionRecord(worldState.sessionId);
+  const context = assemblePromptContext(record.worldState, {
+    task: "official_career",
+    playerAction: "核查户部钱粮、事件链与漕册因果"
+  });
+  const serialized = JSON.stringify(context.retrievalContext);
+
+  assert.match(serialized, /historicalEventArchiveView|事件链|公共卷宗|服务器/);
+  assert.doesNotMatch(serialized, /SEALED_SQLITE_EVENT_CHAIN/);
+  assert.doesNotMatch(serialized, /sk-test-event-chain/);
+  assert.doesNotMatch(serialized, /event_log|provider/);
+  assert.doesNotMatch(serialized, /sealedProjection|server_only/);
+
+  const repairedPayload = withSqliteDatabase(dbPath, (db) =>
+    db
+      .prepare(`
+        SELECT payload_json
+        FROM prompt_retrieval_index
+        WHERE session_id = ?
+          AND row_id = ?
+      `)
+      .get(worldState.sessionId, chainRowId).payload_json
+  );
+  assert.doesNotMatch(repairedPayload, /SEALED_SQLITE_EVENT_CHAIN/);
+  assert.match(repairedPayload, /事件链|公共卷宗|服务器/);
+});
+
 test("SQLite prompt retrieval index repairs same-row content pollution before prompt assembly", {
   skip: hasNodeSqlite ? false : "node:sqlite is unavailable in this Node.js runtime"
 }, async (t) => {

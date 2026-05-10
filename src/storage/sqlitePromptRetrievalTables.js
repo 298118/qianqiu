@@ -2,6 +2,7 @@ const { createHash } = require("node:crypto");
 
 const { buildEventArchiveIndexItems } = require("../game/eventArchive");
 const { buildEconomicFiscalRetrievalRows } = require("../game/economicFiscal");
+const { buildHistoricalEventRetrievalRows } = require("../game/historicalEventArchive");
 const { buildLocalAffairsDocketView } = require("../game/localAffairsDockets");
 const { buildMilitaryDiplomacyRetrievalRows } = require("../game/militaryDiplomacy");
 const { buildOfficialPostingsView } = require("../game/officialPostings");
@@ -27,6 +28,7 @@ const COLLECTION_GROUPS = Object.freeze({
   "events.localDockets": ["events", "localDockets"],
   "events.militaryReports": ["events", "militaryReports"],
   "events.economicReports": ["events", "economicReports"],
+  "events.eventChains": ["events", "eventChains"],
   "events.recentEvents": ["events", "recentEvents"]
 });
 
@@ -440,6 +442,30 @@ function compactEconomicReport(report = {}) {
   };
 }
 
+function compactEventChain(chain = {}) {
+  return {
+    id: chain.id,
+    templateId: chain.templateId,
+    domain: chain.domain,
+    domainLabel: chain.domainLabel,
+    title: chain.title,
+    status: chain.status,
+    statusLabel: chain.statusLabel,
+    pressureScore: chain.pressureScore,
+    severity: chain.severity,
+    relatedLabels: clonePayload(chain.relatedRefs || [])
+      .slice(0, 3)
+      .map((ref) => ref.label || ref.id || ref.type)
+      .filter(Boolean),
+    followUpHints: clonePayload(chain.followUpTriggers || [])
+      .slice(0, 2)
+      .map((trigger) => trigger.label)
+      .filter(Boolean),
+    publicSummary: chain.publicSummary,
+    authorityBoundary: "事件模板只读公共卷宗；服务器裁决状态与落库。"
+  };
+}
+
 function buildSearchText(payload = {}) {
   return JSON.stringify(payload)
     .replace(/[{}[\]",:]/g, " ")
@@ -530,6 +556,7 @@ function buildPromptRetrievalRows(record) {
   const localDocketView = buildLocalAffairsDocketView(record.worldState);
   const militaryReports = buildMilitaryDiplomacyRetrievalRows(record.worldState);
   const economicReports = buildEconomicFiscalRetrievalRows(record.worldState);
+  const eventChains = buildHistoricalEventRetrievalRows(record.worldState);
   const eventItems = buildEventArchiveIndexItems(record.worldState);
 
   addRows(rows, record, "geography.countries", "worldGeographyView", geographyView.countries, compactCountry);
@@ -547,6 +574,7 @@ function buildPromptRetrievalRows(record) {
   addRows(rows, record, "events.localDockets", "localAffairsDocketView", localDocketView.dockets, compactLocalDocket);
   addRows(rows, record, "events.militaryReports", "militaryDiplomacyView", militaryReports, compactMilitaryReport);
   addRows(rows, record, "events.economicReports", "economicFiscalView", economicReports, compactEconomicReport);
+  addRows(rows, record, "events.eventChains", "historicalEventArchiveView", eventChains, compactEventChain);
   addRows(rows, record, "events.recentEvents", "eventArchiveView", eventItems, compactEvent);
 
   return rows;
@@ -659,6 +687,7 @@ function emptyPromptRetrievalSource() {
       localDockets: [],
       militaryReports: [],
       economicReports: [],
+      eventChains: [],
       recentEvents: []
     }
   };

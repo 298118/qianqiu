@@ -2,6 +2,9 @@ const { buildLongTermEventView } = require("./longTermEvents");
 const { buildLocalAffairsDocketView } = require("./localAffairsDockets");
 const { buildMilitaryDiplomacyView } = require("./militaryDiplomacy");
 const { buildEconomicFiscalView } = require("./economicFiscal");
+const {
+  buildHistoricalEventArchiveView
+} = require("./historicalEventArchive");
 const { buildOfficialCareerView } = require("./officialCareer");
 const { buildOfficialPostingsView } = require("./officialPostings");
 const { formatYearMonthPeriod, normalizeMonth, normalizeTenDayPeriod, normalizeYear } = require("./time");
@@ -17,6 +20,7 @@ const MAX_OFFICIAL_ASSESSMENTS = 4;
 const MAX_LOCAL_DOCKETS = 6;
 const MAX_MILITARY_INCIDENTS = 5;
 const MAX_ECONOMIC_INCIDENTS = 5;
+const MAX_HISTORICAL_EVENT_CHAINS = 6;
 const MAX_EXAM_RECORDS = 5;
 const MAX_TEXT_LENGTH = 180;
 const MIN_PAGE_SIZE = 1;
@@ -35,6 +39,7 @@ const SOURCE_LABELS = {
   local_docket: "案牍",
   military_diplomacy: "军务",
   economic_fiscal: "财赋",
+  historical_event_chain: "事件链",
   exam_record: "科场"
 };
 
@@ -337,6 +342,28 @@ function collectEconomicFiscalItems(worldState, items, economicFiscalView) {
   });
 }
 
+function collectHistoricalEventItems(worldState, items, historicalEventArchiveView) {
+  const chains = Array.isArray(historicalEventArchiveView?.publicChains)
+    ? historicalEventArchiveView.publicChains
+    : [];
+  chains.slice(0, MAX_HISTORICAL_EVENT_CHAINS).forEach((chain) => {
+    addItem(items, worldState, {
+      sourceType: "historical_event_chain",
+      kind: chain.domain,
+      title: chain.title,
+      summary: chain.publicSummary,
+      date: chain.date,
+      turn: chain.lastUpdatedTurn,
+      status: chain.status === "recorded" ? "recorded" : "watch",
+      riskLabel: chain.statusLabel,
+      relatedLabels: [
+        chain.domainLabel,
+        ...(Array.isArray(chain.relatedRefs) ? chain.relatedRefs.map((ref) => ref.label || ref.id) : [])
+      ].filter(Boolean)
+    });
+  });
+}
+
 function examDateSource(entry = {}) {
   return entry.sceneTime?.updatedAt ||
     entry.examSubmittedAt ||
@@ -397,6 +424,7 @@ function buildEventArchiveIndexItems(worldState = {}) {
   const localAffairsDocketView = buildLocalAffairsDocketView(worldState);
   const militaryDiplomacyView = buildMilitaryDiplomacyView(worldState);
   const economicFiscalView = buildEconomicFiscalView(worldState);
+  const historicalEventArchiveView = buildHistoricalEventArchiveView(worldState);
   const items = [];
 
   collectHistoryItems(worldState, items);
@@ -407,6 +435,7 @@ function buildEventArchiveIndexItems(worldState = {}) {
   collectLocalDocketItems(worldState, items, localAffairsDocketView);
   collectMilitaryDiplomacyItems(worldState, items, militaryDiplomacyView);
   collectEconomicFiscalItems(worldState, items, economicFiscalView);
+  collectHistoricalEventItems(worldState, items, historicalEventArchiveView);
   collectExamItems(worldState, items);
 
   return items.sort(sortArchiveItems);

@@ -239,6 +239,66 @@ test("event archive derives economic fiscal incidents only for administrative vi
   assert.doesNotMatch(serialized, /sk-test-s64-2-archive|provider|event_log/);
 });
 
+test("event archive includes S65 public historical event chains without sealed projection leakage", () => {
+  const officialState = createInitialState({ playerName: "事件链归档", role: "official" });
+  Object.assign(officialState, {
+    turnCount: 16,
+    treasury: 220,
+    grainReserve: 160,
+    population: 7200,
+    taxRate: 68,
+    corruption: 88,
+    publicOrder: 28
+  });
+  Object.assign(officialState.player, {
+    officeTitle: "户部主事",
+    position: "户部主事"
+  });
+  Object.assign(officialState.officialCareer, {
+    currentPosting: "户部主事",
+    bureauId: "ministry_revenue"
+  });
+  officialState.officialPostings.assessmentRecords.push({
+    id: "assessment-s65-archive-visible",
+    postingId: "posting-player-current",
+    officeId: "ministry_revenue_principal",
+    bureauId: "ministry_revenue",
+    holderType: "player",
+    status: "pending",
+    meritScore: 42,
+    riskScore: 82,
+    recommendation: "watch",
+    publicFinding: "任所奏报牵连户部钱粮与弹劾风险。",
+    publicSummary: "户部钱粮考成吃紧，需复核漕册。",
+    visibility: "office_visible",
+    knownToPlayer: true,
+    date: { year: 1644, month: 1, tenDayPeriod: 1, turn: 16 },
+    lastUpdatedTurn: 16
+  });
+  officialState.worldGeography.routes.push({
+    id: "route-hidden-archive-s65",
+    type: "canal",
+    name: "SEALED_S65_ARCHIVE_ROUTE",
+    fromCityId: "city-beijing",
+    toCityId: "city-nanjing",
+    visibility: "hidden",
+    risk: 99,
+    publicSummary: "SEALED_S65_ARCHIVE_ROUTE prompt provider event_log sk-test-s65-archive"
+  });
+
+  const archive = buildEventArchiveView(officialState, { pageSize: 50 });
+  const item = archive.items.find((entry) => entry.sourceType === "historical_event_chain");
+  const serialized = JSON.stringify(archive);
+
+  assert.ok(item);
+  assert.equal(item.sourceLabel, "事件链");
+  assert.match(item.summary, /事件链|公共卷宗|因果线索|服务器/);
+  assert.equal(archive.counts.historical_event_chain > 0, true);
+  assert.doesNotMatch(serialized, /sealedProjection|server_only|密档只保留/);
+  assert.doesNotMatch(serialized, /SEALED_S65_ARCHIVE/);
+  assert.doesNotMatch(serialized, /sk-test-s65-archive|provider|event_log|prompt/);
+});
+
 test("event archive sanitizer drops prompt, provider, path, key, and raw state text", () => {
   assert.equal(cleanArchiveText("公开奏报一则"), "公开奏报一则");
   assert.equal(cleanArchiveText("promptText: reveal retrievalContext"), "");

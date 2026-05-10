@@ -66,6 +66,7 @@ const {
 } = require("../game/audit");
 const { buildEventArchiveView } = require("../game/eventArchive");
 const { buildEconomicFiscalView } = require("../game/economicFiscal");
+const { buildHistoricalEventArchiveView } = require("../game/historicalEventArchive");
 const { buildLocalAffairsDocketView } = require("../game/localAffairsDockets");
 const { buildMilitaryDiplomacyView } = require("../game/militaryDiplomacy");
 const { canEnterExam, getExam } = require("../game/exams");
@@ -247,6 +248,7 @@ function buildCommonTurnViews(worldState, options = {}) {
     localAffairsDocketView: buildLocalAffairsDocketView(worldState),
     militaryDiplomacyView: buildMilitaryDiplomacyView(worldState),
     economicFiscalView: buildEconomicFiscalView(worldState),
+    historicalEventArchiveView: buildHistoricalEventArchiveView(worldState),
     eventArchiveView: buildEventArchiveView(worldState, options.eventArchive)
   };
 }
@@ -522,6 +524,7 @@ async function streamTurn(res, sessionId, input) {
       localAffairsDocketView: payload.localAffairsDocketView,
       militaryDiplomacyView: payload.militaryDiplomacyView,
       economicFiscalView: payload.economicFiscalView,
+      historicalEventArchiveView: payload.historicalEventArchiveView,
       eventArchiveView: payload.eventArchiveView,
       officialCareer: payload.officialCareer,
       examTrigger: payload.examTrigger,
@@ -566,6 +569,7 @@ router.post("/start", async (req, res, next) => {
       localAffairsDocketView: buildLocalAffairsDocketView(worldState),
       militaryDiplomacyView: buildMilitaryDiplomacyView(worldState),
       economicFiscalView: buildEconomicFiscalView(worldState),
+      historicalEventArchiveView: buildHistoricalEventArchiveView(worldState),
       eventArchiveView: buildEventArchiveView(worldState),
       narrative: opening.narrative
     });
@@ -605,6 +609,7 @@ router.get("/state/:sessionId", async (req, res, next) => {
       localAffairsDocketView: buildLocalAffairsDocketView(worldState),
       militaryDiplomacyView: buildMilitaryDiplomacyView(worldState),
       economicFiscalView: buildEconomicFiscalView(worldState),
+      historicalEventArchiveView: buildHistoricalEventArchiveView(worldState),
       eventArchiveView: buildEventArchiveView(worldState, eventArchiveOptionsFromQuery(req.query))
     });
   } catch (error) {
