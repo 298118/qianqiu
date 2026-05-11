@@ -6,7 +6,7 @@
 
 ## 这次主要更新
 
-当前项目已经完成可玩纵切、浏览器验收、时间专项、AI provider 扩展、本地动态数据库基础、S54-S59 SQLite 业务表拆分，以及 S60-S67 超大动态世界数据库内容充实。近期重点更新集中在“本地数据库专项归档”和“多 provider 能力”：
+当前项目已经完成可玩纵切、浏览器验收、时间专项、AI provider 扩展、本地动态数据库基础、S54-S59 SQLite 业务表拆分、S60-S67 超大动态世界数据库内容充实与 S68.1 科举制度契约。近期重点更新集中在“本地数据库专项归档”“S68.1 科举制度契约”和“多 provider 能力”：
 
 - 新增可选 SQLite 存储模式：默认仍是 JSON 存档；设置 `STORAGE_ADAPTER=sqlite` 后，本地使用 `world_sessions`、审计表、地理 `geo_*`、人物 `people_*`、官职任所 `office_*` 派生业务表、安全事件档案 `event_archive_index` 和安全 prompt 检索派生索引。
 - 新增地理业务表同步：SQLite 模式会把 `worldState.worldGeography` 同步到 `geo_countries`、`geo_regions`、`geo_cities`、`geo_routes`、`geo_frontier_zones`、`geo_office_jurisdictions`，读档时可按 JSON snapshot 修复缺失或陈旧行。
@@ -29,7 +29,7 @@
 - 完成 S66.1 prompt retrieval 策略：`retrievalContext.strategy` 会记录 ordinary/high profile、行/字符预算、候选/选中/丢弃域统计、裁剪数量、排序信号、角色视野和分页边界；普通自由回合保持 48 行 / 约 20,000 字符，高相关检索保持 72 行 / 约 30,000 字符。
 - 完成 S66.2 局势簿分页面板：新增 `informationPanelPageView`，为天下格局、任所地理、人物谱牒、官职簿和事件档案提供服务器分页、检索、筛选、排序和分页 metadata；浏览器只读 route view，不读 raw SQLite table、raw audit、provider proposal、prompt、本地路径或 key。
 - 完成 S67.1 规模/性能/回归验收：`npm run smoke:dual-mode -- --storage-only` 现在除 S59 存储维护外，还输出 `scale` 段，验证 large fixture 的 14 国、300 城、2000 NPC、700 家族、5000 关系、450 官职/官署行、1000 任所/任命行、5000 事件/情报条目和 10000 prompt 行，检查 route cap、S66.1 prompt 策略、S66.2 局势簿分页、事件档案分页、SQLite `prompt_retrieval_index` 删除后读档修复、hidden-token、防泄漏、内存和耗时门槛。
-- 当前活动路线图已交接到 S68-S69 科举、读书、评卷与授官深化；S68.1 的下一步是固定县试/府试/院试、乡试/会试三场、多卷流转、保结/搜检/号舍/弥封/誊录/磨勘/复核和 AI/server 权限边界。
+- 完成 S68.1 科举制度契约：新增 [docs/IMPERIAL_EXAM_SYSTEM_CONTRACT.md](docs/IMPERIAL_EXAM_SYSTEM_CONTRACT.md)，固定明清原型与游戏压缩边界，要求外层四级科举 API 保持兼容，内部再扩县试/府试/院试、乡试/会试三场、多卷流转、保结/搜检/号舍/弥封/誊录/对读/磨勘/复核、多考官 proposal 和服务器定榜/授官裁决。
 - 新增 Xiaomi MiMo provider：支持 `mimo` 与 `mimo-deepseek`，后者让 MiMo 负责开局、普通回合、流式叙事和出题，让 DeepSeek V4 Pro 负责科举评卷。
 - 更新 README 与项目文档：把当前功能、修复、安全边界、启动方式和常用命令整理成更适合 GitHub 首页阅读的结构。
 
@@ -246,6 +246,7 @@ data/sessions/
 - [docs/DEVELOPMENT_GOVERNANCE.md](docs/DEVELOPMENT_GOVERNANCE.md)：稳定开发治理锚点。
 - [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)：当前架构、API、状态模型和验证要求。
 - [docs/AI_CONTROL_AUDIT_MATRIX.md](docs/AI_CONTROL_AUDIT_MATRIX.md)：AI/server 权限矩阵。
+- [docs/IMPERIAL_EXAM_SYSTEM_CONTRACT.md](docs/IMPERIAL_EXAM_SYSTEM_CONTRACT.md)：S68.1 科举制度契约，固定科场流程、卷件生命周期、AI 老师/考官/吏部/皇帝权限和服务器裁决边界。
 - [docs/DYNAMIC_WORLD_DATABASE_PLAN.md](docs/DYNAMIC_WORLD_DATABASE_PLAN.md)：本地动态数据库规划。
 - [docs/HUGE_DYNAMIC_WORLD_CONTENT_CONTRACT.md](docs/HUGE_DYNAMIC_WORLD_CONTENT_CONTRACT.md)：S60 超大动态世界数据库内容规模、seed 分层、可见性和 fixture 验收契约。
 - [docs/LOCAL_DATABASE_FOUNDATION_ARCHIVE.md](docs/LOCAL_DATABASE_FOUNDATION_ARCHIVE.md)：S49-S53 本地数据库基础归档。
@@ -260,5 +261,5 @@ data/sessions/
 - 真实 provider 网络调用需要配置 API key；无 key 环境只验证 Mock、缺 key 分支和 no-key skip。
 - 浏览器 smoke 覆盖完整主线和代表身份回合，但不等同于所有身份的长线游玩验收。
 - SQLite 目前已经包含 session row、审计表、地理 `geo_*` 业务表、可见人物 `people_*` bridge rows、人物事件到 `people_*.last_event_id` 的本地关联、带内容漂移探针的官职任所 `office_*` 派生业务表、安全事件档案 `event_archive_index`、安全 prompt 检索索引，以及只输出 allowlist public 摘要的本地审计公开 projection 工具；它们都不是浏览器、prompt 或服务器裁决的 raw 来源。
-- “超大动态世界数据库”的 S60-S67 内容充实阶段已归档；后续活动重点是 S68-S69 科举、读书、评卷与授官深化，再进入 S70 AI 提示词、工具协议和多 AI 编排。
+- “超大动态世界数据库”的 S60-S67 内容充实阶段已归档；S68.1 科举制度契约已固定，后续活动重点是按契约推进 S68.2-S69.6 科举、读书、评卷与授官实现，再进入 S70 AI 提示词、工具协议和多 AI 编排。
 - 当前不包含远程存档、账号体系、多人同步或云端数据库。

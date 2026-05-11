@@ -21,7 +21,7 @@
 - Backend: Node.js + Express，plain JavaScript。
 - AI providers: adapter-based Mock/OpenAI/DeepSeek/MiMo/MiMo+DeepSeek/Anthropic。`AI_PROVIDER=mock` 仍是默认可玩模式；`mimo-deepseek` 只是方法级最小路由，MiMo 负责 start/turn/stream/question，DeepSeek 负责 exam grading。
 - Storage: 默认 JSON session files under `data/sessions/`；可选 `STORAGE_ADAPTER=sqlite` 使用本地 `world_sessions`、audit tables、`geo_*`、`people_*`、`office_*`、`event_archive_index` 和 `prompt_retrieval_index`。SQLite 派生行只从 `world_sessions.world_state_json` 单向修复；raw business/audit rows 不是 route、prompt、browser 或服务器裁决 truth source。
-- Active roadmap: S49-S53、S54-S59、S60-S67 已完成并归档。当前活动步骤是 S68.1 科举制度契约，随后推进 S68-S69 科举、读书、评卷与授官深化，再进入 S70 AI prompt pack、工具协议、actor 权限和多 AI 编排。
+- Active roadmap: S49-S53、S54-S59、S60-S67 已完成并归档。S68.1 科举制度契约已完成；下一步是 S68.2 读书账本与学业计划，随后推进 S68-S69 科举、读书、评卷与授官深化，再进入 S70 AI prompt pack、工具协议、actor 权限和多 AI 编排。
 - Current local `.env`: 可能含用户提供的 provider keys。`.env` 被 Git 忽略，不能打印或提交。
 
 ## Core Invariants
@@ -44,7 +44,7 @@
 - hidden NPC 私档、资产真数、未公开关系、未公开任所、密档事件链和隐藏情报真值不得回填当前 raw route `worldState`。如果后续要保存完整 hidden 私档，先设计 API redaction 与角色视野分层。
 - S66.1 的 `retrievalContext.strategy` 是只读上下文编排元数据，不是权限层。普通/high profile 仍约束在 48/72 行与约 20,000/30,000 字符；AI 仍不得写数据库、裁决事件、任免、战和、财政结算或公开 hidden。
 - S66.2 的 `informationPanelPageView` 是浏览器局势簿分页 projection，只从服务器 route views 与安全事件档案条目生成；它不读 raw SQLite table、raw audit、provider proposal、完整 prompt、本地路径、key、hidden notes 或 hidden intent。
-- S68-S69 科举深化中，AI 老师、同年、考官、吏部和皇帝只能提交题目、点评、事件、批语或授官 proposal；服务器仍拥有资格、舞弊、榜单、名次、授官、任免和持久化裁决。
+- S68.1 的科举制度契约见 `docs/IMPERIAL_EXAM_SYSTEM_CONTRACT.md`。S68-S69 科举深化中，外层四级科举 API 继续保持 `child_exam -> provincial_exam -> metropolitan_exam -> palace_exam`，内部再扩县试/府试/院试、乡试/会试三场、多卷生命周期、保结、搜检、号舍、弥封、誊录、对读、磨勘、复核、多考官 proposal、榜单荣誉和授官 resolver。AI 老师、保人、同年、考官、吏部和皇帝只能提交题目、点评、事件、批语、复核疑点或授官 proposal；服务器仍拥有资格、舞弊、榜单、名次、授官、任免和持久化裁决。
 - S70 工具方向是“模型请求工具、服务器执行工具”。Function calling、Structured Outputs、MCP connector 或未来内部 MCP 只能产生 tool call / proposal / request-adjudication；真正落库由服务器 resolver 和 adapter transaction 完成。
 - S70.1-S70.3 先实现内部 `game_ai_tools` registry；工具定义保持 MCP-friendly，至少包含 `name`、`description`、`inputSchema`、`permission`、`resolver`、`audit`、`cooldown` 和 `mockFallback`。
 
@@ -98,12 +98,13 @@ Important modules:
 - `docs/AI_CONTROL_AUDIT_MATRIX.md`
 - `docs/DEPENDENCY_PLUGIN_GOVERNANCE.md`
 - `docs/IMPERIAL_EXAM_DEEPENING_ROADMAP.md`
+- `docs/IMPERIAL_EXAM_SYSTEM_CONTRACT.md`
 - `docs/AI_ORCHESTRATION_ROADMAP.md`
 
 ## Current Work Note
 
-- 2026-05-11：S67.2 内容充实阶段归档与下一阶段交接已完成于本次文档变更。新增 `docs/HUGE_DYNAMIC_WORLD_CONTENT_ARCHIVE.md`，归档 S60-S67 的内容契约、small/medium/large fixture、国家/城市/NPC/官职/地方案牍/军务外交/经济财政/历史事件链/情报传闻、S66.1 prompt retrieval strategy、S66.2 `informationPanelPageView` 和 S67.1 large fixture scale acceptance。`docs/DEVELOPMENT_STEPS.md` 已压缩为当前活动路线图：S68-S69 科举深化与 S70 AI 编排；旧 S49-S67 细节只保留归档索引。同步更新 brief、README、架构和动态数据库规划的当前状态。本轮不改运行时代码、API、provider schema、存档格式或 SQLite 表结构；安全边界保持 local-only、view-first、AI 不执行 SQL/不直接写 canonical 状态或业务/审计表、hidden 不回填 raw route state。已通过 docs governance、documentationGovernance、`git diff --check` 和旧口径搜索；只读子代理提交前复审未发现 P0/P1/P2。完整 `npm test` 未运行，因为本轮是文档归档变更。下一步是 S68.1。
+- 2026-05-11：S68.1 科举制度契约已完成于本次文档变更。新增 `docs/IMPERIAL_EXAM_SYSTEM_CONTRACT.md`，固定明清原型与游戏压缩、外层四级科举 API 兼容、童试县试/府试/院试、乡试/会试三场、多日多卷、保结、搜检、号舍、弥封、誊录、对读、磨勘、复核、多考官阅卷、榜单荣誉、授官 resolver、建议 view、AI actor 权限、服务器裁决边界、Mock/provider 降级、审计和红队清单。同步 README、brief、架构、AI 控制矩阵、科举深化路线图和步骤台账。本轮不改运行时代码、API、provider schema、Mock 行为、存档格式或 SQLite 表结构；当前完整书生路径仍按既有实现运行。已通过 `npm run check:docs-governance`、`node --test test/documentationGovernance.test.js` 和 `git diff --check`；完整 `npm test` 未运行，因为本轮是制度契约文档变更。提交前只读子代理复审未发现 P0/P1，已按 P2 建议修正 README 导语和路线图旧时态。下一步是 S68.2。
 
 ## Next Recommended Step
 
-Start S68.1：科举制度契约。先固定明清原型与游戏压缩边界，覆盖县试/府试/院试、乡试/会试三场多日多卷、保结、搜检、号舍、弥封、誊录、对读、磨勘、复核、多考官阅卷，以及 AI 老师/考官/吏部/皇帝 proposal 与服务器裁决边界。
+Start S68.2：读书账本与学业计划。优先实现 `studyProfileView`、文卷弱点画像、经史书目/日课、老师建议与 Mock/no-key fallback，并保持 AI 点评 proposal-only、属性和关系变化由服务器裁决。
