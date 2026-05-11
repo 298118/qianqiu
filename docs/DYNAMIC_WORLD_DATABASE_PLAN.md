@@ -2,7 +2,7 @@
 
 本文回应“是否需要把国家、邻国、NPC、玩家、官职、城市、事件记录等大量动态数据放入数据库，并允许 AI 随游戏进程影响数据库”的产品方向。
 
-结论：**可行，而且中长期值得做；但不建议一步到位替换当前 JSON 存档，也不能让 AI 直接写数据库。** 当前范围只考虑本地数据库，优先方向是本地 SQLite；不规划远程存档、账号体系、多人同步、云端冲突解决或托管数据库。S49-S53 本地数据库基础已归档到 [LOCAL_DATABASE_FOUNDATION_ARCHIVE.md](LOCAL_DATABASE_FOUNDATION_ARCHIVE.md)；S54-S59 已完成 SQLite 业务表、索引、维护工具、浏览器 parity 和双模式验收，并归档到 [LOCAL_DATABASE_BUSINESS_TABLE_ARCHIVE.md](LOCAL_DATABASE_BUSINESS_TABLE_ARCHIVE.md)。当前“超大动态世界数据库”的内容充实度约 55-65%，S60+ 将转向内容密度：国家/邻国、城市/区域、NPC/家族、官职生态、地方事务、外交军事、经济市场、事件模板、情报可见性和大规模检索。AI 可以通过身份受限的领域工具提交结构化 proposal 或 request-adjudication；最终写库必须由服务器模块校验、夹断、归一化、可见性过滤和事务提交。
+结论：**可行，而且中长期值得做；但不建议一步到位替换当前 JSON 存档，也不能让 AI 直接写数据库。** 当前范围只考虑本地数据库，优先方向是本地 SQLite；不规划远程存档、账号体系、多人同步、云端冲突解决或托管数据库。S49-S53 本地数据库基础已归档到 [LOCAL_DATABASE_FOUNDATION_ARCHIVE.md](LOCAL_DATABASE_FOUNDATION_ARCHIVE.md)；S54-S59 已完成 SQLite 业务表、索引、维护工具、浏览器 parity 和双模式验收，并归档到 [LOCAL_DATABASE_BUSINESS_TABLE_ARCHIVE.md](LOCAL_DATABASE_BUSINESS_TABLE_ARCHIVE.md)；S60-S67 已完成超大动态世界数据库内容充实、prompt 策略、局势簿分页和规模验收，并归档到 [HUGE_DYNAMIC_WORLD_CONTENT_ARCHIVE.md](HUGE_DYNAMIC_WORLD_CONTENT_ARCHIVE.md)。AI 可以通过身份受限的领域工具提交结构化 proposal 或 request-adjudication；最终写库必须由服务器模块校验、夹断、归一化、可见性过滤和事务提交。
 
 ## 1. 当前基础与是否急需数据库
 
@@ -25,7 +25,7 @@
 - 需要本机多 session 比较、导入导出、长期世界演化和本地检索。
 - 需要让 prompt 按“玩家当前可知范围”取上下文，而不是把全部世界状态塞给模型。
 
-所以推荐节奏是：**先规划和适配器，再 SQLite session row；只做本地数据库，不做云端/账号/多人；先事件/索引表，后全量实体拆表；底座稳定后再补内容密度。** S49-S59 已完成前半段：adapter 边界、可选 SQLite session row、事件日志和 AI proposal 审计、天下地理/人物/官职任所可见 projection、检索式 prompt context、浏览器“局势簿”、本地业务派生表和双模式验收。S60+ 的重点不再是证明“能不能拆表”，而是补足可持续演化的大世界内容。
+所以推荐节奏是：**先规划和适配器，再 SQLite session row；只做本地数据库，不做云端/账号/多人；先事件/索引表，后全量实体拆表；底座稳定后再补内容密度。** S49-S59 已完成前半段：adapter 边界、可选 SQLite session row、事件日志和 AI proposal 审计、天下地理/人物/官职任所可见 projection、检索式 prompt context、浏览器“局势簿”、本地业务派生表和双模式验收。S60-S67 已完成内容密度阶段：国家/城市/NPC/官职/案牍/军务/财赋/事件链/情报、prompt retrieval 策略、浏览器分页和 large fixture scale acceptance。后续活动重点转入 S68-S69 科举深化，再进入 S70 AI 工具协议与多 AI 编排。
 
 ## 1.1 当前不做的范围
 
@@ -554,22 +554,20 @@ S49-S53 结束后，数据库专项的下一段不再是“是否需要数据库
 
 每个拆表切片都必须保留 `worldState` snapshot 可读和可导出，保持 JSON 默认可玩；SQLite 仍是 local-only 模式。AI 不能直接执行 SQL 或写业务表，浏览器和 prompt 不读 raw table、raw audit、hidden notes、provider proposal、prompt、本地路径或 key。
 
-### S60-S67：超大动态世界数据库内容充实
+### S60-S67：超大动态世界数据库内容充实归档
 
-当前“超大动态世界数据库”的内容充实度约 55-65%。S54-S59 已经让本地 SQLite 底座可用，但内容仍偏 projection 和少量实例化账本；S60-S67 需要把世界补成可长期游玩的历史沙盘。
+S60-S67 已完成并归档到 [HUGE_DYNAMIC_WORLD_CONTENT_ARCHIVE.md](HUGE_DYNAMIC_WORLD_CONTENT_ARCHIVE.md)。S60.1 的 [S60 超大动态世界数据库内容契约](HUGE_DYNAMIC_WORLD_CONTENT_CONTRACT.md) 仍是内容规模、seed 分层、字段密度、hidden/private 边界、prompt budget 和 fixture 验收口径的源头。
 
-S60.1 已新增 [S60 超大动态世界数据库内容契约](HUGE_DYNAMIC_WORLD_CONTENT_CONTRACT.md)，把下列方向进一步固定为小/中/大规模档位、seed 分层、字段密度、hidden/private 边界、prompt budget 和 S60.2 fixture 验收口径。
+归档后的稳定能力包括：
 
-规划方向：
-
-- S60：内容契约与规模验收 fixture。定义小/中/大世界规模、seed 分层、字段密度、hidden 私档边界、prompt budget 和 local-only 生成规则；S60.2 按契约补 deterministic fixture / generator 与数量、防泄漏、prompt budget、JSON/SQLite parity 验收。
-- S61：国家/邻国与城市/区域内容。补财政、军事、国威、外交、情报可信度、税粮、市价、士绅、诉讼、水利、灾害、交通、驻军和书院。S61.1 已把国家深度字段接入 `worldGeographyView`、prompt retrieval 和 SQLite `geo_countries.metadata_json.s61CountryDepth`；S61.2 已把城市深度字段接入 `worldGeographyView`、prompt retrieval、SQLite `geo_cities.metadata_json.s61CityDepth`、`officialPostings` 任所 localMetrics、当前任所考成“任所奏报”、`eventArchiveView` 的 `official_assessment` 安全条目，以及 `event_archive_index` / `prompt_retrieval_index` 污染修复回归。城市指标会随财政、粮储、治安、腐败和军情压力由服务器幂等刷新；更大 fixture 与浏览器分页归入 S60.2/S66/S67。
-- S62：NPC 人口、家族谱系和生命周期。S62.1 已用服务器 helper/fixture 生成数百 NPC、家族、婚姻、门生故旧、同乡同年、派系和社会身份的可见 projection；S62.2 继续补资产流动、健康、迁居、升迁、死亡和关系记忆。
-- S63：官职生态与地方事务。S63.1 已补 `officialPostings` 可见任命池 projection：空缺、候补、补授、试署、外放、任期/考成压力、上级下属、胥吏幕友、丁忧、起复和弹劾候勘进入 view/prompt/SQLite 派生行，但不成为任免事实。S63.2 已补 `localAffairsDocketView` 地方案牍 projection：钱粮、刑名、灾赈、水利、盗匪、徭役、士绅、疫病和任所收束从可见城市/任所指标派生，进入 route view、`eventArchiveView.local_docket` 和 `prompt_retrieval_index`，但不直接改城市指标、官场考成、任免或 SQLite 原始表。
-- S64：外交、边防、军事、经济和市场演化。S64.1 已补 `militaryDiplomacyView` 外交军务 projection：边防战区、驻军、粮道、战备、邻国使节往来和边患预警由可见地理/人物/任所 projection 派生，进入 route view、`eventArchiveView.military_diplomacy` 和 `prompt_retrieval_index.events.militaryReports`，但不直接宣战、和议、调兵、任免统帅、结算战役或公开 hidden 情报。S64.2 已补 `economicFiscalView` 经济财政 projection：税粮、府库、粮价、盐漕商路、地方库银、赈济、债务腐败和市场预警由可见地理/任所/案牍/实体/人物 projection 派生，进入 route view、`eventArchiveView.economic_fiscal` 和 `prompt_retrieval_index.events.economicReports`，但不直接征税、拨银、开仓、平粜、赈济、裁决盐漕、清偿债务、改市场价格、考成或持久化。
-- S65：事件模板、历史档案、情报传闻和可见性系统。每个事件都要有公开 projection、密档边界、related refs、applied changes 和审计链接。
-- S66：大规模 prompt retrieval 与浏览器面板。补排序、预算、分页、角色视野、搜索、筛选、移动端布局和 hidden-token smoke。
-- S67：规模/性能/回归验收与再次归档。
+- S60：内容契约与 small/medium/large 规模 fixture，覆盖数量、防泄漏、prompt budget、JSON/SQLite parity 和 storage-only 分页。
+- S61：国家/邻国与城市/区域深度内容，接入 `worldGeographyView`、任所考成、事件档案、prompt retrieval 和 SQLite 安全 metadata。
+- S62：NPC 人口、家族谱系、生命周期、资产流动和可见人物事件链路。
+- S63：官职生态、任命池、地方案牍 projection 和相关 prompt / event archive 行。
+- S64：外交军务态势、经济财政态势和相关安全检索行。
+- S65：公开历史事件链、密档链边界、情报传闻和角色可见性。
+- S66：大规模 prompt retrieval 策略与浏览器局势簿分页、检索、筛选、排序。
+- S67：large fixture 规模/性能/回归验收与本阶段归档交接。
 
 内容保护原则不变：AI 可以通过领域工具提交 proposal / request-adjudication，但不直写库；hidden 私档不回填当前 raw route `worldState`，浏览器/prompt 只读服务器 projection。若后续确需保存完整 hidden 私档，必须先完成 API redaction 与角色视野分层设计。
 
