@@ -816,7 +816,11 @@ function getStudyProfileView(worldState, studyProfileView) {
     strengths: [],
     weaknesses: [],
     teacherAdvice: [],
+    teacherFeedback: [],
     recentExercises: [],
+    smallExercises: [],
+    recommendedBooks: [],
+    academyNetwork: null,
     nextPlan: null,
     authorityBoundary: "读书簿由服务器整理。"
   };
@@ -2643,6 +2647,49 @@ function renderStudyProfilePanel(studyProfileView = currentStudyProfileView) {
     appendIfText(advice, "p", "暂无新批语。");
   }
 
+  const feedback = document.createElement("section");
+  feedback.className = "study-profile-feedback";
+  appendIfText(feedback, "strong", "老师点评");
+  const latestFeedback = Array.isArray(studyProfileView.teacherFeedback)
+    ? studyProfileView.teacherFeedback.slice(-2)
+    : [];
+  latestFeedback.forEach((item) => {
+    const note = document.createElement("p");
+    note.textContent = [item.teacherName, item.focus, item.advice].filter(Boolean).join(" · ");
+    feedback.appendChild(note);
+  });
+  if (!latestFeedback.length) {
+    appendIfText(feedback, "p", "待交文章后再请先生圈点。");
+  }
+
+  const academyNetwork = studyProfileView.academyNetwork || {};
+  const network = document.createElement("section");
+  network.className = "study-profile-network";
+  appendIfText(network, "strong", "书院师友");
+  const sponsorship = academyNetwork.sponsorship || {};
+  appendIfText(network, "p", sponsorship.publicSummary || "保结未定，先经营师友口碑。", "study-profile-sponsorship");
+  const classmates = Array.isArray(academyNetwork.classmates) ? academyNetwork.classmates : [];
+  appendIfText(
+    network,
+    "p",
+    classmates.map((item) => `${item.name}：${item.relationshipStatus || "往来"}`).join("、") ||
+      academyNetwork.academy?.publicSummary ||
+      "书院同窗尚待结识。",
+    "study-profile-classmates"
+  );
+
+  const practice = document.createElement("section");
+  practice.className = "study-profile-practice";
+  appendIfText(practice, "strong", "小题荐书");
+  const smallExercise = Array.isArray(studyProfileView.smallExercises)
+    ? studyProfileView.smallExercises.at(-1)
+    : null;
+  appendIfText(practice, "p", smallExercise?.summary || "暂无小题。", "study-profile-small-exercise");
+  const books = Array.isArray(studyProfileView.recommendedBooks)
+    ? studyProfileView.recommendedBooks.slice(-3).map((item) => item.title).filter(Boolean)
+    : [];
+  appendIfText(practice, "p", books.join("、") || (studyProfileView.nextPlan?.bookList || []).join("、"), "study-profile-books");
+
   const profileLists = document.createElement("section");
   profileLists.className = "study-profile-lists";
   const weaknessText = (studyProfileView.weaknesses || []).slice(-2).map((item) => item.label).join("、") || "待观察";
@@ -2654,7 +2701,7 @@ function renderStudyProfilePanel(studyProfileView = currentStudyProfileView) {
 
   panel.append(header);
   if (meters.childElementCount) panel.appendChild(meters);
-  panel.append(plan, advice, profileLists);
+  panel.append(plan, advice, feedback, network, practice, profileLists);
   return panel;
 }
 
@@ -3095,8 +3142,9 @@ function renderScholarPanel(worldState) {
 
   const lists = document.createElement("section");
   lists.className = "scholar-lists";
+  const visibleTeacherName = currentStudyProfileView?.academyNetwork?.teacher?.name || "未定";
   lists.append(
-    createPanelValue("师承", player.teacher || "未定"),
+    createPanelValue("师承", visibleTeacherName),
     createPanelValue("已读书", (player.studiedBooks || []).join("、") || "尚无记录", "p"),
     createPanelValue("人脉", (player.connections || []).join("、") || "尚无记录", "p")
   );

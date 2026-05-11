@@ -77,10 +77,27 @@ const STUDY_PROFILE_LIMITS = Object.freeze({
   maxStrengths: 4,
   maxWeaknesses: 5,
   maxTeacherAdvice: 5,
+  maxTeacherFeedback: 5,
   maxRecentExercises: 5,
+  maxSmallExercises: 6,
+  maxRecommendedBooks: 6,
+  maxClassmates: 4,
   maxPlanItems: 4,
   maxBooks: 6,
   maxVisibleText: 120
+});
+
+const STUDY_INTERACTION_PATTERNS = Object.freeze({
+  sponsorship: /保结|作保|具结|互结|廪保|荐书|推荐|保人/,
+  teacherFeedback: /拜师|拜访|请教|求教|访师|问学|投师|塾师|先生|老师|批改|改文|点评|评点/,
+  academySeminar: /书院|县学|府学|讲会|会讲|山长|讲席|藏书/,
+  classmate: /同窗|同年|同学|友朋|结交|交友|访友|雅集|清谈/,
+  smallExercise: /小题|拟题|破题|承题|策问|限时|模拟|练题|习作|改题|驳论|论辩|辩经|讲论/
+});
+
+const STUDY_SPONSORSHIP_THRESHOLDS = Object.freeze({
+  ready: 70,
+  conditional: 45
 });
 
 const STUDY_ACTION_PATTERNS = Object.freeze({
@@ -96,6 +113,8 @@ const STUDY_ACTION_PATTERNS = Object.freeze({
 module.exports = {
   STUDY_ACTION_PATTERNS,
   STUDY_DIMENSIONS,
+  STUDY_INTERACTION_PATTERNS,
   STUDY_PROFILE_LIMITS,
+  STUDY_SPONSORSHIP_THRESHOLDS,
   STUDY_PROFILE_SCHEMA_VERSION
 };

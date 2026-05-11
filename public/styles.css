@@ -1154,6 +1154,9 @@ button:disabled {
 .exam-rival-card,
 .study-profile-plan,
 .study-profile-advice,
+.study-profile-feedback,
+.study-profile-network,
+.study-profile-practice,
 .study-profile-lists > div {
   min-width: 0;
   padding: 8px 9px;
@@ -1166,7 +1169,10 @@ button:disabled {
 .exam-calendar-notes,
 .exam-rival-card,
 .study-profile-plan,
-.study-profile-advice {
+.study-profile-advice,
+.study-profile-feedback,
+.study-profile-network,
+.study-profile-practice {
   display: grid;
   gap: 5px;
 }
@@ -1176,10 +1182,20 @@ button:disabled {
 .exam-rival-card p,
 .study-profile-plan p,
 .study-profile-plan li,
-.study-profile-advice p {
+.study-profile-advice p,
+.study-profile-feedback p,
+.study-profile-network p,
+.study-profile-practice p {
   margin: 0;
   line-height: 1.45;
   overflow-wrap: anywhere;
+}
+
+.study-profile-feedback strong,
+.study-profile-network strong,
+.study-profile-practice strong {
+  color: var(--cinnabar-deep);
+  font-size: 0.84rem;
 }
 
 .study-profile-plan ul {

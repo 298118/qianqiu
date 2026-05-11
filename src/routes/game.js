@@ -59,9 +59,11 @@ const {
   ensureExamCalendarState
 } = require("../game/examCalendar");
 const {
+  applyTeacherFeedbackProposal,
   applyStudyAction,
   buildStudyProfileView,
-  ensureStudyProfileState
+  ensureStudyProfileState,
+  runStudyInteractionStep
 } = require("../game/studyProfile");
 const {
   createExamProgressAuditRecords,
@@ -331,6 +333,10 @@ async function finalizeTurn(worldState, result, input, auditOptions = {}) {
   const studyProfile = applyStudyAction(worldState, input, result, {
     playerBefore: providerStateBefore.player
   });
+  const teacherFeedbackProposal = applyTeacherFeedbackProposal(worldState, result.teacherFeedbackProposal);
+  const studyInteraction = runStudyInteractionStep(worldState, input, {
+    previousSponsorshipScore: providerStateBefore.studyProfile?.academyNetwork?.sponsorship?.score ?? null
+  });
 
   const activeNpcRequest = runActiveNpcRequestStep(worldState, input);
 
@@ -384,6 +390,7 @@ async function finalizeTurn(worldState, result, input, auditOptions = {}) {
 
   const allRelationshipChanges = [
     ...relationshipChanges,
+    ...studyInteraction.relationshipChanges,
     ...activeNpcRequest.relationshipChanges,
     ...roleWorldCouplingRelationshipChanges,
     ...longTermRelationshipChanges,
@@ -414,6 +421,7 @@ async function finalizeTurn(worldState, result, input, auditOptions = {}) {
 
   appendEvents(worldState, result.events);
   appendEvents(worldState, studyProfile.events);
+  appendEvents(worldState, studyInteraction.events);
   appendEvents(worldState, activeNpcRequest.events);
   appendEvents(worldState, roleWorldCoupling.events);
   appendEvents(worldState, worldTick.events);
@@ -452,6 +460,8 @@ async function finalizeTurn(worldState, result, input, auditOptions = {}) {
     relationshipChanges,
     examTrigger,
     activeNpcRequest,
+    teacherFeedbackProposal,
+    studyInteraction,
     roleWorldCoupling,
     worldTick,
     longTermEvents,
@@ -467,6 +477,14 @@ async function finalizeTurn(worldState, result, input, auditOptions = {}) {
     attributeChanges: [
       ...providerAttributeChanges,
       ...studyProfile.attributeChanges,
+      ...(teacherFeedbackProposal.accepted ? [{
+        path: "studyProfile.teacherFeedback",
+        label: "老师点评",
+        before: null,
+        after: teacherFeedbackProposal.feedback?.focus || "老师点评",
+        reason: "AI 老师 proposal 经服务器采纳为文本点评"
+      }] : []),
+      ...studyInteraction.attributeChanges,
       ...roleWorldCoupling.attributeChanges,
       ...worldTickFeedback.attributeChanges,
       ...longTermEvents.attributeChanges,

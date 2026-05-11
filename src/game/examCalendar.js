@@ -58,6 +58,15 @@ function cleanText(value, fallback = "", maxLength = 120) {
   return trimmed ? trimmed.slice(0, maxLength) : fallback;
 }
 
+const SENSITIVE_PUBLIC_TEXT_PATTERN = /(hidden|sealed|provider proposal|rawProvider|prompt|api[_ -]?key|sk-[A-Za-z0-9_-]{4,}|tp-[A-Za-z0-9_-]{4,}|data[\\/](?:sessions|audit)|sqlite|event_log|ai_change_proposals)/i;
+
+function cleanPublicText(value, fallback = "", maxLength = 120) {
+  const text = cleanText(value, "", maxLength);
+  if (text && !SENSITIVE_PUBLIC_TEXT_PATTERN.test(text)) return text;
+  const fallbackText = cleanText(fallback, "", maxLength);
+  return fallbackText && !SENSITIVE_PUBLIC_TEXT_PATTERN.test(fallbackText) ? fallbackText : "";
+}
+
 function clampInt(value, min, max, fallback) {
   const parsed = Number(value);
   if (!Number.isFinite(parsed)) return fallback;
@@ -251,17 +260,25 @@ function getExamWindowState(worldState, exam) {
 
 function buildTeacherRecommendation(player = {}, rule) {
   const reputation = clampInt(player.reputation, 0, 100, 0);
-  const hasTeacher = Boolean(player.teacher);
-  const ready = hasTeacher || reputation >= rule.teacherReputation;
+  const teacherName = cleanPublicText(player.teacher, "", 48);
+  const hasTeacher = Boolean(teacherName);
+  const sponsorship = player._studySponsorship || null;
+  const sponsorshipReady = sponsorship?.status === "ready" || sponsorship?.status === "conditional";
+  const ready = hasTeacher || reputation >= rule.teacherReputation || sponsorshipReady;
   return {
     ready,
     hasTeacher,
+    sponsorshipStatus: sponsorship?.status || "not_recorded",
+    sponsorshipScore: clampInt(sponsorship?.score, 0, 100, 0),
+    guarantorName: cleanPublicText(sponsorship?.guarantorName, teacherName, 48),
     requiredReputation: rule.teacherReputation,
     currentReputation: reputation,
     label: rule.recommendationLabel,
     note: ready
-      ? hasTeacher
-        ? `${player.teacher}可为本场举业作保。`
+      ? sponsorshipReady
+        ? cleanPublicText(sponsorship.publicSummary, "保结摘要已隐藏，须由服务器报名裁决。", 140)
+        : hasTeacher
+        ? `${teacherName}可为本场举业作保。`
         : "乡里声名足以弥补师长荐书。"
       : `声名未足，最好先拜师、游学或经营乡里口碑至${rule.teacherReputation}。`
   };
@@ -286,7 +303,11 @@ function createExamCalendarSnapshot(worldState, exam) {
   const rule = getCalendarRule(exam.level);
   const windowState = getExamWindowState(worldState, exam);
   const arrival = addMonths(windowState.currentYear, windowState.currentMonth, rule.travelMonths);
-  const recommendation = buildTeacherRecommendation(worldState.player, rule);
+  const playerWithSponsorship = {
+    ...(worldState.player || {}),
+    _studySponsorship: worldState.studyProfile?.academyNetwork?.sponsorship || null
+  };
+  const recommendation = buildTeacherRecommendation(playerWithSponsorship, rule);
 
   return {
     schemaVersion: EXAM_CALENDAR_VERSION,

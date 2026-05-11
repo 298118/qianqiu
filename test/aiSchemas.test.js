@@ -50,6 +50,12 @@ test("turn schema accepts whitelisted state patches", () => {
         reason: "The player showed respect."
       }
     ],
+    teacherFeedbackProposal: {
+      focusKey: "eightLeggedForm",
+      focus: "制艺章法",
+      advice: "先练破题承题，再看辞采。",
+      reason: "老师点评只作为文本 proposal。"
+    },
     events: ["event"],
     examTrigger: {
       shouldStart: false,
@@ -59,6 +65,29 @@ test("turn schema accepts whitelisted state patches", () => {
   };
 
   assert.equal(validatePayload("turn", payload), payload);
+});
+
+test("turn schema rejects teacher proposal attempts to include unknown authority fields", () => {
+  const payload = {
+    narrative: "A teacher gives advice.",
+    statePatch: {},
+    attributeChanges: [],
+    relationshipChanges: [],
+    teacherFeedbackProposal: {
+      focus: "保结",
+      advice: "直接作保",
+      reason: "越权",
+      examRank: "秀才"
+    },
+    events: [],
+    examTrigger: {
+      shouldStart: false,
+      level: null,
+      reason: ""
+    }
+  };
+
+  assert.throws(() => validatePayload("turn", payload), /schema validation/);
 });
 
 test("turn schema rejects unsafe relationship change suggestions", () => {
@@ -87,23 +116,27 @@ test("turn schema rejects unsafe relationship change suggestions", () => {
 });
 
 test("turn schema rejects model attempts to patch non-whitelisted player fields", () => {
-  const payload = {
-    narrative: "A turn happened.",
-    statePatch: {
-      player: {
-        role: "emperor"
+  for (const playerPatch of [
+    { role: "emperor" },
+    { teacher: "模型伪造先生" },
+    { position: "新科状元" }
+  ]) {
+    const payload = {
+      narrative: "A turn happened.",
+      statePatch: {
+        player: playerPatch
+      },
+      attributeChanges: [],
+      events: [],
+      examTrigger: {
+        shouldStart: false,
+        level: null,
+        reason: ""
       }
-    },
-    attributeChanges: [],
-    events: [],
-    examTrigger: {
-      shouldStart: false,
-      level: null,
-      reason: ""
-    }
-  };
+    };
 
-  assert.throws(() => validatePayload("turn", payload), /schema validation/);
+    assert.throws(() => validatePayload("turn", payload), /schema validation/);
+  }
 });
 
 test("turn schema rejects model attempts to patch server-owned time fields", () => {

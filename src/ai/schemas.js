@@ -69,6 +69,31 @@ const relationshipChangesSchema = {
   default: []
 };
 
+const teacherFeedbackProposalSchema = {
+  type: "object",
+  required: ["focus", "advice", "reason"],
+  additionalProperties: false,
+  properties: {
+    id: { type: "string" },
+    focusKey: {
+      type: "string",
+      enum: [
+        "classicsFoundation",
+        "eightLeggedForm",
+        "policyInsight",
+        "historicalAllusion",
+        "legalJudgment",
+        "calligraphyCopying",
+        "examEndurance"
+      ]
+    },
+    focus: { type: "string" },
+    advice: { type: "string" },
+    reason: { type: "string" },
+    teacherName: { type: "string" }
+  }
+};
+
 const statePatchSchema = {
   type: "object",
   additionalProperties: false,
@@ -102,18 +127,11 @@ const statePatchSchema = {
         adaptability: { type: "number" },
         mentality: { type: "number" },
         reputation: { type: "number" },
-        teacher: {
-          anyOf: [
-            { type: "string" },
-            { type: "null" }
-          ]
-        },
         studiedBooks: stringArraySchema,
         connections: stringArraySchema,
         personalPower: { type: "number" },
         courtControl: { type: "number" },
         mandate: { type: "number" },
-        position: { type: "string" },
         faction: { type: "string" },
         influence: { type: "number" },
         integrity: { type: "number" },
@@ -177,6 +195,7 @@ const turnSchema = {
       items: attributeChangeSchema
     },
     relationshipChanges: relationshipChangesSchema,
+    teacherFeedbackProposal: teacherFeedbackProposalSchema,
     events: eventSchema,
     examTrigger: examTriggerSchema
   }
@@ -348,6 +367,20 @@ const modelRelationshipChangeSchema = {
   }
 };
 
+const modelTeacherFeedbackProposalSchema = {
+  type: "object",
+  required: ["focus", "advice", "reason"],
+  additionalProperties: false,
+  properties: {
+    id: { type: "string" },
+    focusKey: { type: "string" },
+    focus: { type: "string" },
+    advice: { type: "string" },
+    reason: { type: "string" },
+    teacherName: { type: "string" }
+  }
+};
+
 const modelExamQuestionSchema = {
   type: "object",
   required: [
@@ -432,6 +465,7 @@ const MODEL_SCHEMAS = {
         type: "array",
         items: modelRelationshipChangeSchema
       },
+      teacherFeedbackProposal: modelTeacherFeedbackProposalSchema,
       events: modelEventSchema,
       examTrigger: modelExamTriggerSchema
     }

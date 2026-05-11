@@ -22,7 +22,13 @@ test("scholar study profile panel reads route studyProfileView", () => {
   assert.match(source, /let currentStudyProfileView = null;/);
   assert.match(source, /function renderStudyProfilePanel\(studyProfileView = currentStudyProfileView\)/);
   assert.match(source, /payload\.studyProfileView/);
+  assert.match(source, /studyProfileView\.teacherFeedback/);
+  assert.match(source, /studyProfileView\.academyNetwork/);
+  assert.match(source, /studyProfileView\.smallExercises/);
+  assert.match(source, /currentStudyProfileView\?\.academyNetwork\?\.teacher\?\.name/);
   assert.match(source, /appendOptionalPanel\(renderStudyProfilePanel\(\)\);/);
   assert.doesNotMatch(source, /worldState\?\.studyProfile/);
   assert.doesNotMatch(source, /worldState\.studyProfile\.teacherAdvice\.forEach/);
+  assert.doesNotMatch(source, /worldState\.studyProfile\.teacherFeedback/);
+  assert.doesNotMatch(source, /createPanelValue\("师承", player\.teacher/);
 });

@@ -256,7 +256,7 @@ Proposal 工具：
 | S68.0 | 提前规划 | 本文档、台账、brief、共享上下文、AI 控制矩阵 | 不改运行时；固定边界和步骤 |
 | S68.1 | 科举制度契约 | `docs/IMPERIAL_EXAM_SYSTEM_CONTRACT.md` | 明清原型、游戏压缩、外层 API 兼容、卷件生命周期、AI/server 权限清楚 |
 | S68.2 | 读书账本与学业计划 | 已落地 `studyProfile` / `studyProfileView`、文卷弱点、日课、服务器生成读书计划 | AI 点评不直接授名位；Mock 可玩；provider 不能 patch 账本 |
-| S68.3 | 老师点评与书院/同窗互动 | 老师点评、荐书、小题训练、保结前置、书院/同年关系 | 关系由服务器账本裁决，hidden 不泄漏 |
+| S68.3 | 老师点评与书院/同窗互动 | 已落地 `teacherFeedbackProposal` 文本 proposal、老师点评、荐书、小题训练、保结前置、书院/同窗关系 | 关系由服务器账本裁决，hidden 不泄漏，provider 不能创造真实关系或准考事实 |
 | S68.4 | 科场制度流程 | `examProcedureView`、县试/府试/院试、乡会试三场、多日、多卷、保结/搜检/号舍/弥封/誊录/对读/磨勘/复核 scene phases | scene-local time，不推进全局旬 |
 | S68.5 | 科场事件与多考官阅卷 | 科场事件模板、同年互动、房官/同考官/主考官/critic AI proposal、服务器 ranking resolver | AI 不拥有榜单；本地反作弊优先 |
 | S69.1 | 名次与荣誉体系 | 解元/会元/状元/榜眼/探花/传胪/三元 ledger | 名次保存、事件档案、同年关系联动 |

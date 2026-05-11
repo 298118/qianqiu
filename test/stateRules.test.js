@@ -39,6 +39,8 @@ test("applyStatePatch applies only whitelisted fields and clamps numeric ranges"
       health: 150,
       gold: -5,
       academia: 250,
+      teacher: "模型伪造先生",
+      position: "新科状元",
       examRank: "秀才",
       examHistory: [{ level: "child_exam" }],
       role: "emperor",
@@ -73,6 +75,8 @@ test("applyStatePatch applies only whitelisted fields and clamps numeric ranges"
   assert.equal(worldState.player.health, 100);
   assert.equal(worldState.player.gold, 0);
   assert.equal(worldState.player.academia, 100);
+  assert.equal(worldState.player.teacher, null);
+  assert.equal(worldState.player.position, "寒窗士子");
   assert.equal(worldState.player.examRank, null);
   assert.deepEqual(worldState.player.examHistory, []);
   assert.equal(worldState.player.role, originalRole);
@@ -113,6 +117,8 @@ test("ordinary state patches preserve server-owned exam and narrative fields", (
     publicOrder: 65,
     player: {
       academia: 22,
+      teacher: "模型伪造先生",
+      position: "新科状元",
       examRank: "model-rank",
       examHistory: [{ level: "palace_exam", score: 100 }]
     }
@@ -131,27 +137,19 @@ test("ordinary state patches preserve server-owned exam and narrative fields", (
   assert.deepEqual(worldState.eventHistory, ["existing history"]);
   assert.equal(worldState.player.examRank, "server-rank");
   assert.deepEqual(worldState.player.examHistory, [{ level: "child_exam", score: 80 }]);
+  assert.equal(worldState.player.teacher, null);
+  assert.equal(worldState.player.position, "寒窗士子");
   assert.equal(worldState.publicOrder, 65);
   assert.equal(worldState.player.academia, 22);
   assert.equal(worldState.turnCount, 1);
 });
 
-test("ordinary official patches cannot use position as a hidden office appointment", () => {
+test("ordinary provider patches cannot write player position", () => {
   const worldState = createInitialState({ playerName: "Tester", role: "official" });
   worldState.player.officeTitle = "户部主事";
   worldState.player.position = "户部主事";
 
-  for (const forgedPosition of [
-    "内阁大学士",
-    "内 阁 大 学 士",
-    "內閣大學士",
-    "署理首辅",
-    "护理吏部尚书",
-    "兼管军机处",
-    "Grand Secretary",
-    "minister of revenue",
-    "prefect"
-  ]) {
+  for (const forgedPosition of ["署中谨慎观政", "新科状元", "内阁大学士", "Grand Secretary"]) {
     applyStatePatch(worldState, {
       player: {
         position: forgedPosition,
@@ -162,17 +160,23 @@ test("ordinary official patches cannot use position as a hidden office appointme
     assert.equal(worldState.player.position, "户部主事");
     assert.equal(worldState.player.performanceMerit, 44);
   }
+});
+
+test("server-owned patches can write player position", () => {
+  const worldState = createInitialState({ playerName: "Tester", role: "official" });
+  worldState.player.position = "户部主事";
 
   applyStatePatch(worldState, {
     player: {
       position: "署中谨慎观政"
     }
-  });
+  }, { incrementTurnCount: false, allowServerOwnedPatchKeys: true });
 
   assert.equal(worldState.player.position, "署中谨慎观政");
+  assert.equal(worldState.turnCount, 0);
 });
 
-test("ordinary magistrate patches cannot use position as a hidden office appointment", () => {
+test("ordinary magistrate patches cannot write position", () => {
   const worldState = createInitialState({ playerName: "Tester", role: "magistrate" });
   assert.equal(worldState.player.position, "知县");
 
@@ -183,14 +187,6 @@ test("ordinary magistrate patches cannot use position as a hidden office appoint
   });
 
   assert.equal(worldState.player.position, "知县");
-
-  applyStatePatch(worldState, {
-    player: {
-      position: "堂上问案"
-    }
-  });
-
-  assert.equal(worldState.player.position, "堂上问案");
 });
 
 test("applyStatePatch can apply server follow-up patches without incrementing turn count", () => {

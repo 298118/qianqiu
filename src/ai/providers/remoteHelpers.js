@@ -103,6 +103,34 @@ function normalizeRelationshipChange(change) {
   return normalized;
 }
 
+function cleanText(value, maxLength = 120) {
+  if (typeof value !== "string") return "";
+  return value.trim().replace(/\s+/g, " ").slice(0, maxLength);
+}
+
+function normalizeTeacherFeedbackProposal(proposal) {
+  if (!proposal || typeof proposal !== "object" || Array.isArray(proposal)) {
+    return undefined;
+  }
+
+  const focus = cleanText(proposal.focus, 48);
+  const advice = cleanText(proposal.advice, 160);
+  const reason = cleanText(proposal.reason, 120);
+  if (!focus || !advice || !reason) return undefined;
+
+  const normalized = { focus, advice, reason };
+  if (typeof proposal.id === "string" && proposal.id.trim()) {
+    normalized.id = proposal.id.trim().slice(0, 80);
+  }
+  if (typeof proposal.focusKey === "string" && proposal.focusKey.trim()) {
+    normalized.focusKey = proposal.focusKey.trim().slice(0, 48);
+  }
+  if (typeof proposal.teacherName === "string" && proposal.teacherName.trim()) {
+    normalized.teacherName = proposal.teacherName.trim().slice(0, 48);
+  }
+  return normalized;
+}
+
 function normalizeModelPayload(schemaName, payload) {
   if (schemaName !== "turn" || !payload || typeof payload !== "object") {
     return payload;
@@ -125,6 +153,13 @@ function normalizeModelPayload(schemaName, payload) {
       .map(normalizeRelationshipChange)
       .filter(Boolean)
       .slice(0, 5);
+  }
+
+  const teacherFeedbackProposal = normalizeTeacherFeedbackProposal(payload.teacherFeedbackProposal);
+  if (teacherFeedbackProposal) {
+    payload.teacherFeedbackProposal = teacherFeedbackProposal;
+  } else {
+    delete payload.teacherFeedbackProposal;
   }
 
   return payload;

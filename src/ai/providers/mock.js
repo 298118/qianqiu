@@ -204,12 +204,13 @@ function buildAttributeChanges(before, patch, reason = "行动影响") {
   return attributeChanges;
 }
 
-function makeResult({ narrative, patch, events, player, worldState, examTrigger, reason, relationshipChanges }) {
+function makeResult({ narrative, patch, events, player, worldState, examTrigger, reason, relationshipChanges, teacherFeedbackProposal }) {
   return {
     narrative,
     statePatch: patch,
     attributeChanges: buildAttributeChanges(worldState || player, patch, reason),
     relationshipChanges: relationshipChanges || [],
+    ...(teacherFeedbackProposal ? { teacherFeedbackProposal } : {}),
     events,
     examTrigger: examTrigger || { shouldStart: false, level: null, reason: "" }
   };
@@ -867,12 +868,12 @@ function arrayExpands(before, after) {
   return Array.isArray(after) && after.length > (Array.isArray(before) ? before.length : 0);
 }
 
-function classifyScholarRelationshipAction(worldState, patch, examTrigger) {
+function classifyScholarRelationshipAction(worldState, result, patch, examTrigger) {
   const player = worldState.player || {};
   const playerPatch = patch.player || {};
 
   if (examTrigger?.shouldStart) return "scholar_exam";
-  if (Object.prototype.hasOwnProperty.call(playerPatch, "teacher")) return "scholar_teacher";
+  if (result?.teacherFeedbackProposal) return "scholar_teacher";
   if (Object.prototype.hasOwnProperty.call(playerPatch, "studiedBooks")) return "scholar_study";
   if (numberIncreases(player.gold, playerPatch.gold)) return "scholar_work";
   if (arrayExpands(player.connections, playerPatch.connections)) {
@@ -980,7 +981,7 @@ function classifyRelationshipAction(worldState, result) {
   const examTrigger = result?.examTrigger || {};
   const role = worldState?.player?.role;
 
-  if (role === "scholar") return classifyScholarRelationshipAction(worldState, patch, examTrigger);
+  if (role === "scholar") return classifyScholarRelationshipAction(worldState, result, patch, examTrigger);
   if (role === "emperor") return classifyEmperorRelationshipAction(worldState, patch);
   if (role === "minister") return classifyMinisterRelationshipAction(worldState, patch);
   if (role === "official") return classifyOfficialRelationshipAction(worldState, patch);
@@ -1032,7 +1033,6 @@ function buildTeacherTurn(player) {
   const goldCost = alreadyHasTeacher ? 1 : 2;
   const patch = {
     player: {
-      teacher: teacherName,
       reputation: capStat(player.reputation + (alreadyHasTeacher ? 1 : 2)),
       academia: capStat(player.academia + 1),
       gold: Math.max(0, player.gold - goldCost),
@@ -1043,6 +1043,15 @@ function buildTeacherTurn(player) {
   return makeResult({
     player,
     patch,
+    teacherFeedbackProposal: {
+      focusKey: "eightLeggedForm",
+      focus: "制艺章法",
+      teacherName,
+      advice: alreadyHasTeacher
+        ? "旧文破题已有筋骨，下旬须把承题、起讲各练一段，少用浮词。"
+        : "初入门墙，先把四书章句读熟，再以小题练破题，不可急求捷径。",
+      reason: "Mock AI 老师按拜师请益行动给出文本点评，等待服务器采纳。"
+    },
     narrative: alreadyHasTeacher
       ? `你携一束修脯前往${teacherName}处请教。先生点破几处经义关节，又嘱你少作浮词、多求本旨。`
       : `你备了薄礼拜访${teacherName}。先生见你态度诚恳，收你为记名弟子，自此可在门下听讲经义。`,
@@ -1065,6 +1074,13 @@ function buildTravelTurn(player) {
   return makeResult({
     player,
     patch,
+    teacherFeedbackProposal: {
+      focusKey: "policyInsight",
+      focus: "策论时务",
+      teacherName: player.teacher || "书院山长",
+      advice: "讲会所得不可只作谈资，回斋后须择一件钱粮或灾赈旧案，写成三策提纲。",
+      reason: "Mock AI 书院讲会给出后续策论训练建议，等待服务器采纳。"
+    },
     narrative: pickRandom([
       `你随同窗出城游学，访古寺、问义田、听舟人谈漕运。路费用去一些，眼界却开阔不少，并结识了${friend}。`,
       `书院茶会里，你与${friend}谈经论文。言辞往复之间，临场机辩与乡里名声都有进益。`,

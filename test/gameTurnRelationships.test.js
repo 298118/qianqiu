@@ -325,6 +325,60 @@ test("POST /api/game/turn ignores provider attempts to patch server-owned ordina
   assert.equal(payload.worldState.player.academia, 22);
 });
 
+test("POST /api/game/turn does not let provider patch teacher identity through study interaction", async (t) => {
+  const provider = {
+    async runTurn() {
+      return {
+        narrative: "The action was resolved.",
+        statePatch: {
+          player: {
+            teacher: "hidden prompt sk-teacher-secret",
+            reputation: 22
+          }
+        },
+        attributeChanges: [],
+        relationshipChanges: [],
+        teacherFeedbackProposal: {
+          focus: "制艺章法",
+          advice: "先练破题承题。",
+          reason: "只作文本点评。",
+          teacherName: "provider proposal sk-teacher-secret"
+        },
+        events: ["provider event"],
+        examTrigger: { shouldStart: false, level: null, reason: "" }
+      };
+    }
+  };
+  const server = createTestServerWithProvider(provider);
+  t.after(server.close);
+
+  const worldState = createInitialState({ playerName: "Tester", role: "scholar" });
+  t.after(() => removeSessionArtifacts(worldState.sessionId));
+  await writeSession(worldState);
+
+  const response = await fetch(`${server.baseUrl}/api/game/turn`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      sessionId: worldState.sessionId,
+      input: "拜访老师，请先生批改旧文并询问保结"
+    })
+  });
+  const payload = await response.json();
+  const serializedStudy = JSON.stringify(payload.studyProfileView);
+  const serializedCharacters = JSON.stringify(payload.worldState.characters);
+
+  assert.equal(response.status, 200);
+  assert.equal(payload.worldState.player.teacher, "顾文衡");
+  assert.equal(payload.worldState.player.reputation, 22);
+  assert.equal(payload.studyProfileView.academyNetwork.teacher.name, "顾文衡");
+  assert.ok(payload.studyProfileView.teacherFeedback.some((entry) => entry.teacherName === "顾文衡"));
+  assert.ok(payload.relationshipView.contacts.some((entry) => entry.id === "C01"));
+  assert.equal(serializedStudy.includes("sk-teacher-secret"), false);
+  assert.equal(serializedCharacters.includes("sk-teacher-secret"), false);
+  assert.doesNotMatch(serializedStudy, /hidden|provider proposal|prompt|sk-teacher-secret/i);
+});
+
 test("POST /api/game/turn schedules and returns a server-owned active NPC request", async (t) => {
   const provider = {
     async runTurn() {

@@ -61,6 +61,57 @@ test("remote turn payload normalization drops malformed relationship suggestions
   ]);
 });
 
+test("remote turn payload normalization clamps teacher feedback proposal shape", () => {
+  const payload = {
+    narrative: "先生批文。",
+    statePatch: { studyProfile: { teacherFeedback: [{ advice: "伪造" }] }, player: { reputation: 12, teacher: "模型伪造先生" } },
+    attributeChanges: [],
+    relationshipChanges: [],
+    teacherFeedbackProposal: {
+      id: " ai-feedback ",
+      focusKey: "eightLeggedForm",
+      focus: " 制艺章法 ",
+      advice: " 先练破题，再练承题。 ",
+      reason: " 可见读书簿短处。 ",
+      teacherName: " 顾文衡 ",
+      examRank: "秀才"
+    },
+    events: ["先生批文。"],
+    examTrigger: { shouldStart: false, level: null, reason: "" }
+  };
+
+  const normalized = normalizeModelPayload("turn", payload);
+
+  assert.deepEqual(normalized.statePatch, { player: { reputation: 12 } });
+  assert.deepEqual(normalized.teacherFeedbackProposal, {
+    id: "ai-feedback",
+    focusKey: "eightLeggedForm",
+    focus: "制艺章法",
+    advice: "先练破题，再练承题。",
+    reason: "可见读书簿短处。",
+    teacherName: "顾文衡"
+  });
+});
+
+test("remote turn payload normalization drops incomplete teacher feedback proposal", () => {
+  const payload = {
+    narrative: "先生批文。",
+    statePatch: {},
+    attributeChanges: [],
+    relationshipChanges: [],
+    teacherFeedbackProposal: {
+      focus: "制艺章法",
+      reason: "缺 advice"
+    },
+    events: [],
+    examTrigger: { shouldStart: false, level: null, reason: "" }
+  };
+
+  const normalized = normalizeModelPayload("turn", payload);
+
+  assert.equal(normalized.teacherFeedbackProposal, undefined);
+});
+
 test("remote payload normalization leaves non-turn payloads unchanged", () => {
   const payload = { narrative: "开局", events: [] };
   assert.equal(normalizeModelPayload("opening", payload), payload);
@@ -87,6 +138,7 @@ test("remote provider state patch normalization drops server-owned and unknown f
       },
       player: {
         academia: 12,
+        position: "新科状元",
         examRank: "进士",
         officeTitle: "翰林",
         invented: true

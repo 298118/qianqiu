@@ -5,6 +5,14 @@ function previewText(value, maxLength = 160) {
   return text.length > maxLength ? `${text.slice(0, maxLength)}...` : text;
 }
 
+function safePreviewText(value, maxLength = 160) {
+  const text = previewText(value, maxLength);
+  if (/(hidden|sealed|provider proposal|rawProvider|prompt|api[_ -]?key|sk-[A-Za-z0-9_-]{4,}|tp-[A-Za-z0-9_-]{4,}|data[\\/](?:sessions|audit)|sqlite|event_log|ai_change_proposals)/i.test(text)) {
+    return "[redacted]";
+  }
+  return text;
+}
+
 function cloneJson(value) {
   return value === undefined ? undefined : JSON.parse(JSON.stringify(value));
 }
@@ -125,7 +133,7 @@ function hasAcceptedStateDelta(delta) {
   });
 }
 
-function buildRejectedReasons(result = {}, acceptedPaths = new Set(), relationshipChanges = [], examTrigger = {}) {
+function buildRejectedReasons(result = {}, acceptedPaths = new Set(), relationshipChanges = [], examTrigger = {}, teacherFeedbackProposal = {}) {
   const reasons = [];
   for (const path of listProposedPatchPaths(result.statePatch).slice(0, 20)) {
     if (!acceptedPaths.has(path)) {
@@ -142,6 +150,10 @@ function buildRejectedReasons(result = {}, acceptedPaths = new Set(), relationsh
 
   if (result.examTrigger?.shouldStart === true && !examTrigger.shouldStart) {
     reasons.push(`考试触发请求被拒绝：${examTrigger.reason || "服务器门槛未通过"}。`);
+  }
+
+  if (result.teacherFeedbackProposal && teacherFeedbackProposal?.accepted !== true) {
+    reasons.push(`老师点评 proposal 被拒绝：${safePreviewText(teacherFeedbackProposal?.reason || "未通过服务器清洗。", 80)}。`);
   }
 
   return reasons;
@@ -164,6 +176,7 @@ function buildTurnProposalRecord({
   providerStateAfter,
   relationshipChanges,
   examTrigger,
+  teacherFeedbackProposal,
   appliedEventIds
 }) {
   const { delta, acceptedPaths } = diffProviderAcceptedState(
@@ -171,7 +184,13 @@ function buildTurnProposalRecord({
     providerStateAfter,
     result.statePatch
   );
-  const rejectedReasons = buildRejectedReasons(result, acceptedPaths, relationshipChanges, examTrigger);
+  const rejectedReasons = buildRejectedReasons(
+    result,
+    acceptedPaths,
+    relationshipChanges,
+    examTrigger,
+    teacherFeedbackProposal
+  );
   const eventCount = Array.isArray(result.events) ? result.events.length : 0;
   const accepted = {
     stateDelta: delta,
@@ -182,12 +201,14 @@ function buildTurnProposalRecord({
   const acceptedSomething = hasAcceptedStateDelta(delta) ||
     accepted.relationshipChangeCount > 0 ||
     eventCount > 0 ||
+    teacherFeedbackProposal?.accepted === true ||
     Boolean(examTrigger?.shouldStart);
   const hasProposal = Boolean(
     result.narrative ||
     result.statePatch ||
     eventCount ||
     (Array.isArray(result.relationshipChanges) && result.relationshipChanges.length) ||
+    result.teacherFeedbackProposal ||
     result.examTrigger?.shouldStart
   );
 
@@ -207,6 +228,18 @@ function buildTurnProposalRecord({
       relationshipChangeCount: Array.isArray(result.relationshipChanges)
         ? result.relationshipChanges.length
         : 0,
+      teacherFeedbackProposal: teacherFeedbackProposal?.accepted
+        ? {
+          focus: safePreviewText(teacherFeedbackProposal.feedback?.focus, 60),
+          advicePreview: safePreviewText(teacherFeedbackProposal.feedback?.advice, 80),
+          status: "accepted"
+        }
+        : result.teacherFeedbackProposal
+          ? {
+            status: "rejected",
+            reason: safePreviewText(teacherFeedbackProposal?.reason || "老师点评 proposal 未采纳。", 80)
+          }
+        : null,
       examTrigger: cloneJson(result.examTrigger || { shouldStart: false })
     },
     accepted,
@@ -246,6 +279,8 @@ function createTurnAuditRecords({
   relationshipChanges,
   examTrigger,
   activeNpcRequest,
+  teacherFeedbackProposal,
+  studyInteraction,
   roleWorldCoupling,
   worldTick,
   longTermEvents,
@@ -265,6 +300,12 @@ function createTurnAuditRecords({
     appliedChanges: {
       providerEventCount: Array.isArray(result.events) ? result.events.length : 0,
       relationshipChangeCount: Array.isArray(relationshipChanges) ? relationshipChanges.length : 0,
+      teacherFeedbackProposalStatus: teacherFeedbackProposal?.accepted
+        ? "accepted"
+        : result.teacherFeedbackProposal
+          ? "rejected"
+          : "none",
+      studyInteractionType: studyInteraction?.interactionType || null,
       examTrigger
     }
   });
@@ -283,6 +324,7 @@ function createTurnAuditRecords({
   });
   const feedbackEvents = [
     buildFeedbackEvent(worldState, "active_npc_request", "active_request_step", activeNpcRequest),
+    buildFeedbackEvent(worldState, "study_interaction", "study_interaction_step", studyInteraction),
     buildFeedbackEvent(worldState, "role_world_coupling", "role_world_coupling_step", roleWorldCoupling),
     buildFeedbackEvent(worldState, "world_tick", "world_tick_step", worldTick),
     buildFeedbackEvent(worldState, "long_term_events", "long_term_event_step", longTermEvents),
@@ -307,6 +349,7 @@ function createTurnAuditRecords({
         providerStateAfter,
         relationshipChanges,
         examTrigger,
+        teacherFeedbackProposal,
         appliedEventIds: auditEvents.map((event) => event.eventId)
       })
     ]

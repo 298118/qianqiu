@@ -26,9 +26,10 @@ const UNIVERSAL_STABLE_PREFIX_LINES = [
 ];
 
 const TURN_STATE_BOUNDARY_LINES = [
-  "AI may generate narrative, bounded relationship suggestions, event clues, examTrigger requests, and statePatch suggestions for ordinary turns.",
+  "AI may generate narrative, bounded relationship suggestions, teacherFeedbackProposal text, event clues, examTrigger requests, and statePatch suggestions for ordinary turns.",
   "Never grant palace rank, office title, or role promotion in ordinary turn statePatch. Use examTrigger for exam entry requests.",
   "Never patch turnCount, year, month, tenDayPeriod, activeExam, examCalendar, activeNpcRequest, longTermEvents, officialCareer, officialPostings, roleWorldCoupling, worldGeography, worldEntities, worldPeople, worldThreads, characters, eventHistory, player.examRank, player.officeTitle, or player.examHistory in ordinary turns; those fields are server-owned.",
+  "Never patch studyProfile or invent durable teacher, academy, classmate, or sponsorship facts. teacherFeedbackProposal is text-only advice; the server decides whether it enters the study ledger.",
   "Keep statePatch small and only use allowed keys. Prefer modest numeric changes in the range of 1-8 unless the action clearly spends resources.",
   "Never put relationshipLedger in statePatch.",
   `Allowed top-level patch keys: ${TURN_ALLOWED_PATCH_KEYS.join(", ")}.`,
@@ -69,8 +70,9 @@ const PROMPT_PACKS = {
       "Make ordinary life, bureaucracy, money, grain, rumor, weather, and human obligation feel present."
     ],
     authority: [
-      "May suggest bounded statePatch values, relationshipChanges, visible events, and examTrigger.",
+      "May suggest bounded statePatch values, relationshipChanges, teacherFeedbackProposal, visible events, and examTrigger.",
       "RelationshipChanges must target existing visible ids only and remain within schema bounds.",
+      "Teacher feedback can advise reading plans, small exercises, books, and style corrections, but cannot create real relationships, sponsorship, exam success, rank, or office.",
       "Must not decide exam entry legality, promotion, appointment, active request creation, long-term issue settlement, geography ledger changes, or world calendar movement."
     ],
     output: [

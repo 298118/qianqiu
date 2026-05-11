@@ -154,6 +154,65 @@ test("exam question allows shortfall and converts it into preparation risk", asy
   assert.equal(payload.worldState.month, 9);
 });
 
+test("exam entry preparation carries server-owned study sponsorship snapshot", async (t) => {
+  const server = createTestServer();
+  t.after(server.close);
+
+  const worldState = makeReadyScholar({ examRank: EXAMS.child_exam.promotionRank, gold: 20 });
+  worldState.month = 8;
+  worldState.player.teacher = "顾文衡";
+  worldState.studyProfile = {
+    schemaVersion: 1,
+    dimensions: {},
+    academyNetwork: {
+      sponsorship: {
+        status: "ready",
+        score: 82,
+        guarantorName: "顾文衡",
+        publicSummary: "顾文衡已可为本场举业作保。",
+        nextStep: "待考期开场后报名。"
+      }
+    }
+  };
+  t.after(() => removeSessionFile(worldState.sessionId));
+  await writeSession(worldState);
+
+  const { response, payload } = await postJson(`${server.baseUrl}/api/exam/question`, {
+    sessionId: worldState.sessionId,
+    level: "provincial_exam"
+  });
+
+  assert.equal(response.status, 201);
+  assert.equal(payload.examCalendar.teacherRecommendation.sponsorshipStatus, "ready");
+  assert.equal(payload.entryPreparation.sponsorship.status, "ready");
+  assert.equal(payload.entryPreparation.sponsorship.score, 82);
+  assert.match(payload.entryPreparation.sponsorship.publicSummary, /作保/);
+  assert.equal(payload.entryPreparation.sponsorship.ready, true);
+  assert.equal(payload.worldState.player.examRank, EXAMS.child_exam.promotionRank);
+});
+
+test("exam entry sponsorship readiness is based on sponsorship status only", async (t) => {
+  const server = createTestServer();
+  t.after(server.close);
+
+  const worldState = makeReadyScholar({ examRank: EXAMS.child_exam.promotionRank, gold: 20 });
+  worldState.month = 8;
+  worldState.player.teacher = "顾文衡";
+  t.after(() => removeSessionFile(worldState.sessionId));
+  await writeSession(worldState);
+
+  const { response, payload } = await postJson(`${server.baseUrl}/api/exam/question`, {
+    sessionId: worldState.sessionId,
+    level: "provincial_exam"
+  });
+
+  assert.equal(response.status, 201);
+  assert.equal(payload.examCalendar.teacherRecommendation.ready, true);
+  assert.equal(payload.entryPreparation.sponsorship.status, "not_ready");
+  assert.equal(payload.entryPreparation.sponsorship.ready, false);
+  assert.equal(payload.worldState.player.examRank, EXAMS.child_exam.promotionRank);
+});
+
 test("exam question outside a missed window records the calendar miss without charging travel", async (t) => {
   const server = createTestServer();
   t.after(server.close);

@@ -24,6 +24,42 @@ test("prompt context assembler centralizes visible summaries and ranked retrieva
   assert.match(JSON.stringify(context.militaryDiplomacy), /server_visible_military_diplomacy_projection/);
 });
 
+test("prompt context includes capped study teacher and academy summaries", () => {
+  const worldState = createInitialState({ role: "scholar", playerName: "Study Prompt Tester" });
+  worldState.studyProfile = {
+    schemaVersion: 1,
+    summary: "可见读书摘要",
+    dimensions: { eightLeggedForm: 42 },
+    teacherFeedback: [{
+      focus: "制艺章法",
+      advice: "先练破题承题。",
+      source: "ai_teacher_proposal",
+      proposedByAi: true,
+      hiddenNotes: "SEALED_STUDY_PROMPT_NOTE"
+    }],
+    academyNetwork: {
+      teacher: {
+        name: "顾文衡",
+        publicSummary: "顾文衡可点评文章。",
+        hiddenNotes: "SEALED_TEACHER_PROMPT_NOTE"
+      },
+      sponsorship: {
+        status: "conditional",
+        score: 55,
+        publicSummary: "保结尚须再看日课。",
+        hiddenNotes: "SEALED_SPONSOR_PROMPT_NOTE"
+      }
+    }
+  };
+
+  const context = assemblePromptContext(worldState, { task: "world_turn", playerAction: "请老师批改旧文" });
+  const serialized = JSON.stringify(context.studyProfile);
+
+  assert.match(serialized, /制艺章法/);
+  assert.match(serialized, /保结尚须再看日课/);
+  assert.doesNotMatch(serialized, /SEALED_STUDY_PROMPT_NOTE|SEALED_TEACHER_PROMPT_NOTE|SEALED_SPONSOR_PROMPT_NOTE|hiddenNotes/i);
+});
+
 test("prompt context assembler filters hidden rows, hidden refs, raw ledgers, and raw audit-like fields", () => {
   const worldState = createInitialState({ role: "scholar", playerName: "Hidden Context Tester" });
   worldState.audit = { ai_change_proposals: "SEALED_AUDIT_PAYLOAD" };

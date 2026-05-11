@@ -59,6 +59,8 @@ function buildPlayerPatch(player, effects, paid) {
 function createEntryPreparation(worldState, exam, examCalendar = null) {
   const player = worldState.player || {};
   const plan = getTravelPlan(exam.level);
+  const recommendation = examCalendar?.teacherRecommendation || null;
+  const sponsorshipStatus = recommendation?.sponsorshipStatus || "not_recorded";
   const availableGold = Math.max(0, player.gold || 0);
   const requiredGold = plan.baseCost;
   const paidGold = Math.min(availableGold, requiredGold);
@@ -75,6 +77,15 @@ function createEntryPreparation(worldState, exam, examCalendar = null) {
     travelMonths: examCalendar?.travelMonths ?? 0,
     event: plan.event,
     effects,
+    sponsorship: recommendation
+      ? {
+        status: sponsorshipStatus,
+        score: recommendation.sponsorshipScore || 0,
+        guarantorName: recommendation.guarantorName || "",
+        ready: sponsorshipStatus === "ready" || sponsorshipStatus === "conditional",
+        publicSummary: recommendation.note || ""
+      }
+      : null,
     appliedAtTurn: worldState.turnCount || 0,
     appliedAtYear: worldState.year,
     appliedAtMonth: worldState.month,

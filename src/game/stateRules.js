@@ -1,6 +1,5 @@
 const MAX_EVENT_HISTORY = 20;
 const FACTION_SCORE_RANGE = [0, 100];
-const { inferOfficeByTitle } = require("./officialCatalog");
 
 const NUMERIC_RANGES = {
   "year": [1, 9999],
@@ -50,9 +49,9 @@ const NUMERIC_RANGES = {
 
 const PROVIDER_PLAYER_PATCH_KEYS = new Set([
   "health", "gold", "academia", "literaryTalent",
-  "adaptability", "mentality", "reputation", "teacher",
+  "adaptability", "mentality", "reputation",
   "studiedBooks", "connections", "personalPower",
-  "courtControl", "mandate", "position", "faction", "influence",
+  "courtControl", "mandate", "faction", "influence",
   "integrity", "superiorFavor", "peerNetwork", "performanceMerit",
   "promotionProspect", "impeachmentRisk", "cleanReputation",
   "command", "troops", "supply", "battleReputation",
@@ -62,7 +61,7 @@ const PROVIDER_PLAYER_PATCH_KEYS = new Set([
 ]);
 
 const SERVER_OWNED_PLAYER_PATCH_KEYS = new Set([
-  "role", "roleLabel", "examRank", "palaceRank", "officeTitle", "examHistory"
+  "role", "roleLabel", "examRank", "palaceRank", "officeTitle", "position", "examHistory"
 ]);
 
 const SERVER_PLAYER_PATCH_KEYS = new Set([
@@ -101,40 +100,6 @@ function isPlainObject(value) {
   return value !== null && typeof value === "object" && !Array.isArray(value);
 }
 
-function normalizeOfficeGuardText(value) {
-  if (typeof value !== "string") return "";
-  return value
-    .trim()
-    .replace(/\s+/g, "")
-    .replace(/[內]/g, "内")
-    .replace(/[閣]/g, "阁")
-    .replace(/[學]/g, "学")
-    .replace(/[書]/g, "书")
-    .replace(/[軍]/g, "军")
-    .replace(/[機]/g, "机")
-    .replace(/[處]/g, "处")
-    .replace(/[縣]/g, "县")
-    .replace(/[總]/g, "总")
-    .replace(/[撫]/g, "抚")
-    .toLowerCase();
-}
-
-function looksLikeOfficialAppointment(value) {
-  const text = normalizeOfficeGuardText(value);
-  return /大学士|首辅|阁臣|军机|尚书|侍郎|郎中|员外郎|主事|御史|给事中|知县|知州|知府|同知|推官|庶吉士|编修|修撰|检讨|佥事|参议|布政使?|按察使?|总督|巡抚|道员|翰林|内阁|六部|都察院|候勘|grandsecretary|chiefcouncillor|chiefminister|primeminister|ministerof[a-z]+|censor|magistrate|prefect|governor/.test(text);
-}
-
-function shouldApplyProviderPlayerPatch(worldState, key, value, allowServerOwnedPatchKeys) {
-  if (allowServerOwnedPatchKeys) return true;
-  if (key !== "position") return true;
-  if (!["official", "magistrate"].includes(worldState.player?.role)) return true;
-  if (typeof value !== "string") return true;
-  // `position` remains a soft narrative field for providers, but obvious office
-  // titles must not become a back door around the server-owned `officeTitle`.
-  const normalized = normalizeOfficeGuardText(value);
-  return inferOfficeByTitle(normalized) === null && !looksLikeOfficialAppointment(normalized);
-}
-
 function applyStatePatch(worldState, statePatch, options = {}) {
   if (!isPlainObject(statePatch)) {
     return worldState;
@@ -161,9 +126,6 @@ function applyStatePatch(worldState, statePatch, options = {}) {
     if (!worldState.player) worldState.player = {};
     for (const key of allowedPlayerPatchKeys) {
       if (key in statePatch.player) {
-        if (!shouldApplyProviderPlayerPatch(worldState, key, statePatch.player[key], allowServerOwnedPatchKeys)) {
-          continue;
-        }
         worldState.player[key] = statePatch.player[key];
       }
     }

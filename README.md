@@ -6,7 +6,7 @@
 
 ## 这次主要更新
 
-当前项目已经完成可玩纵切、浏览器验收、时间专项、AI provider 扩展、本地动态数据库基础、S54-S59 SQLite 业务表拆分、S60-S67 超大动态世界数据库内容充实、S68.1 科举制度契约与 S68.2 读书账本基础。近期重点更新集中在“本地数据库专项归档”“S68 科举读书深化”和“多 provider 能力”：
+当前项目已经完成可玩纵切、浏览器验收、时间专项、AI provider 扩展、本地动态数据库基础、S54-S59 SQLite 业务表拆分、S60-S67 超大动态世界数据库内容充实、S68.1 科举制度契约、S68.2 读书账本基础与 S68.3 老师/书院/同窗互动。近期重点更新集中在“本地数据库专项归档”“S68 科举读书深化”和“多 provider 能力”：
 
 - 新增可选 SQLite 存储模式：默认仍是 JSON 存档；设置 `STORAGE_ADAPTER=sqlite` 后，本地使用 `world_sessions`、审计表、地理 `geo_*`、人物 `people_*`、官职任所 `office_*` 派生业务表、安全事件档案 `event_archive_index` 和安全 prompt 检索派生索引。
 - 新增地理业务表同步：SQLite 模式会把 `worldState.worldGeography` 同步到 `geo_countries`、`geo_regions`、`geo_cities`、`geo_routes`、`geo_frontier_zones`、`geo_office_jurisdictions`，读档时可按 JSON snapshot 修复缺失或陈旧行。
@@ -31,6 +31,7 @@
 - 完成 S67.1 规模/性能/回归验收：`npm run smoke:dual-mode -- --storage-only` 现在除 S59 存储维护外，还输出 `scale` 段，验证 large fixture 的 14 国、300 城、2000 NPC、700 家族、5000 关系、450 官职/官署行、1000 任所/任命行、5000 事件/情报条目和 10000 prompt 行，检查 route cap、S66.1 prompt 策略、S66.2 局势簿分页、事件档案分页、SQLite `prompt_retrieval_index` 删除后读档修复、hidden-token、防泄漏、内存和耗时门槛。
 - 完成 S68.1 科举制度契约：新增 [docs/IMPERIAL_EXAM_SYSTEM_CONTRACT.md](docs/IMPERIAL_EXAM_SYSTEM_CONTRACT.md)，固定明清原型与游戏压缩边界，要求外层四级科举 API 保持兼容，内部再扩县试/府试/院试、乡试/会试三场、多卷流转、保结/搜检/号舍/弥封/誊录/对读/磨勘/复核、多考官 proposal 和服务器定榜/授官裁决。
 - 完成 S68.2 读书账本与学业计划基础：新增 server-owned `studyProfile` 与 route `studyProfileView`，把经义根柢、制艺章法、策论时务、史事典故、律例判断、誊写卷面和科场耐力整理成可见学业画像；普通读书行动会记入日课，交卷后按评分/复核刷新文卷弱点、老师建议、书目和下旬计划，浏览器书生面板与 prompt 只读该 view，provider 不能直接 patch 账本、名位或官职。
+- 完成 S68.3 老师点评与书院/同窗互动：`studyProfileView` 新增老师点评、书院师友、小题训练、荐书和保结前置摘要；普通拜师、讲会、同窗互评和求保结会由服务器写入可见师友关系与保结稳度。真实 provider 可返回 `teacherFeedbackProposal`，但只作为文本点评 proposal，服务器清洗后才进入读书簿，不能 patch `player.teacher` / `player.position`、创造真实关系、准考资格、名位、榜单或官职。
 - 新增 Xiaomi MiMo provider：支持 `mimo` 与 `mimo-deepseek`，后者让 MiMo 负责开局、普通回合、流式叙事和出题，让 DeepSeek V4 Pro 负责科举评卷。
 - 更新 README 与项目文档：把当前功能、修复、安全边界、启动方式和常用命令整理成更适合 GitHub 首页阅读的结构。
 
@@ -262,5 +263,5 @@ data/sessions/
 - 真实 provider 网络调用需要配置 API key；无 key 环境只验证 Mock、缺 key 分支和 no-key skip。
 - 浏览器 smoke 覆盖完整主线和代表身份回合，但不等同于所有身份的长线游玩验收。
 - SQLite 目前已经包含 session row、审计表、地理 `geo_*` 业务表、可见人物 `people_*` bridge rows、人物事件到 `people_*.last_event_id` 的本地关联、带内容漂移探针的官职任所 `office_*` 派生业务表、安全事件档案 `event_archive_index`、安全 prompt 检索索引，以及只输出 allowlist public 摘要的本地审计公开 projection 工具；它们都不是浏览器、prompt 或服务器裁决的 raw 来源。
-- “超大动态世界数据库”的 S60-S67 内容充实阶段已归档；S68.1 科举制度契约与 S68.2 读书账本基础已完成，后续活动重点是按契约继续推进 S68.3-S69.6 科举、读书、评卷与授官实现，再进入 S70 AI 提示词、工具协议和多 AI 编排。
+- “超大动态世界数据库”的 S60-S67 内容充实阶段已归档；S68.1-S68.3 已完成，后续活动重点是按契约继续推进 S68.4-S69.6 科举、读书、评卷与授官实现，再进入 S70 AI 提示词、工具协议和多 AI 编排。
 - 当前不包含远程存档、账号体系、多人同步或云端数据库。

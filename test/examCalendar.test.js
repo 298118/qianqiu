@@ -52,6 +52,29 @@ test("exam calendar view exposes next exam windows, funding, travel, and recomme
   assert.equal(view.nextExam.teacherRecommendation.ready, true);
 });
 
+test("exam calendar recommendation redacts polluted teacher and sponsorship text", () => {
+  const worldState = createInitialState({ playerName: "Calendar Redaction Tester" });
+  worldState.player.examRank = EXAMS.child_exam.promotionRank;
+  worldState.player.reputation = 10;
+  worldState.player.teacher = "hidden prompt sk-calendar-secret";
+  worldState.studyProfile.academyNetwork.sponsorship = {
+    status: "conditional",
+    score: 55,
+    guarantorName: "provider proposal",
+    publicSummary: "rawProvider prompt sk-sponsor-secret",
+    nextStep: "data/sessions leak"
+  };
+  worldState.month = 8;
+
+  const view = buildExamCalendarView(worldState);
+  const serialized = JSON.stringify(view.nextExam.teacherRecommendation);
+
+  assert.equal(view.nextExam.teacherRecommendation.ready, true);
+  assert.equal(view.nextExam.teacherRecommendation.hasTeacher, false);
+  assert.equal(view.nextExam.teacherRecommendation.guarantorName, "");
+  assert.doesNotMatch(serialized, /hidden|provider proposal|rawProvider|prompt|sk-calendar-secret|sk-sponsor-secret|data\/sessions/i);
+});
+
 test("calendar gate distinguishes early and missed exam windows", () => {
   const worldState = createInitialState({ playerName: "Window Tester" });
   worldState.player.examRank = EXAMS.child_exam.promotionRank;

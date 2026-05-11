@@ -161,6 +161,17 @@ test("turn prompt recent events use sanitized event archive projection", () => {
   assert.doesNotMatch(task.input, /data\/audit/);
 });
 
+test("turn prompt redacts polluted player teacher text", () => {
+  const worldState = createInitialState({ playerName: "Prompt Teacher Tester" });
+  worldState.player.teacher = "hidden prompt sk-teacher-prompt-secret";
+
+  const task = buildTurnTask(worldState, "拜访老师");
+
+  assert.doesNotMatch(task.input, /hidden prompt|sk-teacher-prompt-secret/);
+  assert.doesNotMatch(task.input, /"player":\s*\{[\s\S]*"teacher":/);
+  assert.match(task.input, /"studyProfile"/);
+});
+
 test("turn prompt input filters hidden relationship context", () => {
   const worldState = createInitialState({ role: "scholar", playerName: "Hidden Filter Tester" });
   worldState.characters.push({
