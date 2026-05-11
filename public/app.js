@@ -44,6 +44,7 @@ let currentOfficialCareerView = null;
 let currentWorldThreadView = null;
 let currentExamCalendarView = null;
 let currentExamRivalView = null;
+let currentStudyProfileView = null;
 let currentWorldGeographyView = null;
 let currentWorldEntityView = null;
 let currentWorldPeopleView = null;
@@ -799,6 +800,25 @@ function getExamRivalView(worldState, examRivalView) {
     recentSessions: Array.isArray(worldState?.examCalendar?.recentSessions)
       ? worldState.examCalendar.recentSessions.slice(-4)
       : []
+  };
+}
+
+function getStudyProfileView(worldState, studyProfileView) {
+  if (studyProfileView && typeof studyProfileView === "object") {
+    return studyProfileView;
+  }
+  return {
+    schemaVersion: 1,
+    generatedAtTurn: worldState?.turnCount || 0,
+    summary: "读书画像待立。",
+    dimensions: {},
+    dimensionLabels: {},
+    strengths: [],
+    weaknesses: [],
+    teacherAdvice: [],
+    recentExercises: [],
+    nextPlan: null,
+    authorityBoundary: "读书簿由服务器整理。"
   };
 }
 
@@ -2563,6 +2583,81 @@ function renderExamRivalPanel(examRivalView = currentExamRivalView) {
   return panel;
 }
 
+function renderStudyProfilePanel(studyProfileView = currentStudyProfileView) {
+  if (!studyProfileView) return null;
+
+  const dimensions = studyProfileView.dimensions || {};
+  const labels = studyProfileView.dimensionLabels || {};
+  const dimensionEntries = Object.entries(dimensions)
+    .filter(([, value]) => Number.isFinite(Number(value)))
+    .sort((first, second) => Number(second[1]) - Number(first[1]));
+
+  const panel = document.createElement("section");
+  panel.id = "study-profile-panel";
+  panel.className = "study-profile-panel";
+  panel.dataset.schemaVersion = String(studyProfileView.schemaVersion || 1);
+  panel.dataset.generatedAtTurn = String(studyProfileView.generatedAtTurn ?? "");
+
+  const header = document.createElement("header");
+  const title = document.createElement("strong");
+  title.textContent = "读书簿";
+  const summary = document.createElement("span");
+  summary.textContent = studyProfileView.summary || "学业画像待补";
+  header.append(title, summary);
+
+  const meters = document.createElement("section");
+  meters.className = "study-profile-meters";
+  dimensionEntries.slice(0, 4).forEach(([key, value]) => {
+    meters.appendChild(renderMeter(labels[key] || key, Number(value) || 0));
+  });
+
+  const plan = document.createElement("section");
+  plan.className = "study-profile-plan";
+  appendIfText(plan, "strong", studyProfileView.nextPlan?.title || "下旬日课");
+  const planList = document.createElement("ul");
+  const planItems = Array.isArray(studyProfileView.nextPlan?.items) ? studyProfileView.nextPlan.items : [];
+  planItems.slice(0, 4).forEach((item) => {
+    const li = document.createElement("li");
+    li.textContent = item;
+    planList.appendChild(li);
+  });
+  if (!planList.childElementCount) {
+    const li = document.createElement("li");
+    li.textContent = "先读四书章句，再拟一段破题。";
+    planList.appendChild(li);
+  }
+  plan.appendChild(planList);
+  appendIfText(plan, "p", (studyProfileView.nextPlan?.bookList || []).join("、"), "study-profile-books");
+
+  const advice = document.createElement("section");
+  advice.className = "study-profile-advice";
+  const latestAdvice = Array.isArray(studyProfileView.teacherAdvice)
+    ? studyProfileView.teacherAdvice.slice(-2)
+    : [];
+  latestAdvice.forEach((item) => {
+    const note = document.createElement("p");
+    note.textContent = [item.focus, item.advice].filter(Boolean).join("：");
+    advice.appendChild(note);
+  });
+  if (!advice.childElementCount) {
+    appendIfText(advice, "p", "暂无新批语。");
+  }
+
+  const profileLists = document.createElement("section");
+  profileLists.className = "study-profile-lists";
+  const weaknessText = (studyProfileView.weaknesses || []).slice(-2).map((item) => item.label).join("、") || "待观察";
+  const strengthText = (studyProfileView.strengths || []).slice(-2).map((item) => item.label).join("、") || "待观察";
+  profileLists.append(
+    createPanelValue("短处", weaknessText, "p"),
+    createPanelValue("长处", strengthText, "p")
+  );
+
+  panel.append(header);
+  if (meters.childElementCount) panel.appendChild(meters);
+  panel.append(plan, advice, profileLists);
+  return panel;
+}
+
 function createInformationSelect(options = [], value, ariaLabel) {
   const select = document.createElement("select");
   select.className = "information-filter";
@@ -3008,6 +3103,7 @@ function renderScholarPanel(worldState) {
 
   scholarPanel.append(progressBlock);
   appendOptionalPanel(renderExamCalendarPanel());
+  appendOptionalPanel(renderStudyProfilePanel());
   appendOptionalPanel(renderWorldThreadPanel());
   appendOptionalPanel(renderInformationPanelShell());
   scholarPanel.append(stepList, stats, lists, renderRelationshipPanel());
@@ -3023,6 +3119,7 @@ function renderWorldState(
   officialCareerView,
   examCalendarView,
   examRivalView,
+  studyProfileView,
   worldThreadView,
   worldGeographyView,
   worldEntityView,
@@ -3038,6 +3135,7 @@ function renderWorldState(
   currentOfficialCareerView = getOfficialCareerView(worldState, officialCareerView);
   currentExamCalendarView = getExamCalendarView(worldState, examCalendarView);
   currentExamRivalView = getExamRivalView(worldState, examRivalView);
+  currentStudyProfileView = getStudyProfileView(worldState, studyProfileView);
   currentWorldThreadView = getWorldThreadView(worldState, worldThreadView);
   currentWorldGeographyView = getRouteView(worldGeographyView);
   currentWorldEntityView = getRouteView(worldEntityView);
@@ -3060,6 +3158,7 @@ function renderPayloadWorldState(payload) {
     payload.officialCareerView,
     payload.examCalendarView,
     payload.examRivalView,
+    payload.studyProfileView,
     payload.worldThreadView,
     payload.worldGeographyView,
     payload.worldEntityView,

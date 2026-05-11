@@ -21,6 +21,7 @@ const {
   buildIntelligenceRumorRetrievalRows,
   summarizeIntelligenceRumorsForPrompt
 } = require("../game/intelligenceRumors");
+const { summarizeStudyProfileForPrompt } = require("../game/studyProfile");
 const { summarizeOfficialCareerForPrompt } = require("../game/officialCareer");
 const {
   buildOfficialPostingsView,
@@ -1388,6 +1389,7 @@ function buildRankedRetrievalContext(worldState = {}, options = {}) {
 function assemblePromptContext(worldState = {}, options = {}) {
   return {
     relationshipLedger: summarizeRelationshipLedger(worldState.relationshipLedger, worldState, { visibleOnly: true }),
+    studyProfile: summarizeStudyProfileForPrompt(worldState),
     examCalendar: summarizeExamCalendarForPrompt(worldState),
     longTermEvents: summarizeLongTermEventsForPrompt(worldState),
     worldGeography: summarizeWorldGeographyForPrompt(worldState),

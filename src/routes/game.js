@@ -59,6 +59,11 @@ const {
   ensureExamCalendarState
 } = require("../game/examCalendar");
 const {
+  applyStudyAction,
+  buildStudyProfileView,
+  ensureStudyProfileState
+} = require("../game/studyProfile");
+const {
   createExamProgressAuditRecords,
   createOpeningAuditRecords,
   createTurnAuditRecords,
@@ -115,6 +120,7 @@ async function processTurn(sessionId, input) {
   return mutateSession(sessionId, async (worldState, context) => {
     ensureRelationshipLedger(worldState);
     ensureExamCalendarState(worldState);
+    ensureStudyProfileState(worldState);
     ensureLongTermEventState(worldState);
     ensureOfficialCareerState(worldState);
     ensureRoleWorldCouplingState(worldState);
@@ -136,6 +142,7 @@ async function processStreamingTurn(sessionId, input, streamHandlers = {}) {
   return mutateSession(sessionId, async (worldState, context) => {
     ensureRelationshipLedger(worldState);
     ensureExamCalendarState(worldState);
+    ensureStudyProfileState(worldState);
     ensureLongTermEventState(worldState);
     ensureOfficialCareerState(worldState);
     ensureRoleWorldCouplingState(worldState);
@@ -243,6 +250,7 @@ function buildCommonTurnViews(worldState, options = {}) {
   return {
     examCalendarView: buildExamCalendarView(worldState),
     examRivalView: buildExamRivalView(worldState),
+    studyProfileView: buildStudyProfileView(worldState),
     relationshipView: buildRelationshipInspectionView(worldState),
     activeNpcRequestView: buildActiveNpcRequestView(worldState),
     roleWorldCouplingView: buildRoleWorldCouplingView(worldState),
@@ -271,6 +279,7 @@ async function finalizeExamSceneTurn(worldState, input, context = null) {
   const scene = advanceExamScenePhase(worldState.activeExam, worldState, input);
   ensureRelationshipLedger(worldState);
   ensureExamCalendarState(worldState);
+  ensureStudyProfileState(worldState);
   ensureLongTermEventState(worldState);
   ensureOfficialCareerState(worldState);
   ensureRoleWorldCouplingState(worldState);
@@ -319,6 +328,9 @@ async function finalizeTurn(worldState, result, input, auditOptions = {}) {
   const worldPeopleBefore = snapshotWorldPeopleForEvents(worldState);
   const relationshipChanges = applyRelationshipChanges(worldState, result.relationshipChanges);
   const examTrigger = applyExamTrigger(worldState, result.examTrigger);
+  const studyProfile = applyStudyAction(worldState, input, result, {
+    playerBefore: providerStateBefore.player
+  });
 
   const activeNpcRequest = runActiveNpcRequestStep(worldState, input);
 
@@ -401,6 +413,7 @@ async function finalizeTurn(worldState, result, input, auditOptions = {}) {
   });
 
   appendEvents(worldState, result.events);
+  appendEvents(worldState, studyProfile.events);
   appendEvents(worldState, activeNpcRequest.events);
   appendEvents(worldState, roleWorldCoupling.events);
   appendEvents(worldState, worldTick.events);
@@ -409,6 +422,7 @@ async function finalizeTurn(worldState, result, input, auditOptions = {}) {
   appendEvents(worldState, worldPeopleLifecycle.events);
   ensureRelationshipLedger(worldState);
   ensureExamCalendarState(worldState);
+  ensureStudyProfileState(worldState);
   ensureLongTermEventState(worldState);
   ensureOfficialCareerState(worldState);
   ensureRoleWorldCouplingState(worldState);
@@ -452,6 +466,7 @@ async function finalizeTurn(worldState, result, input, auditOptions = {}) {
     narrative: result.narrative,
     attributeChanges: [
       ...providerAttributeChanges,
+      ...studyProfile.attributeChanges,
       ...roleWorldCoupling.attributeChanges,
       ...worldTickFeedback.attributeChanges,
       ...longTermEvents.attributeChanges,
@@ -522,6 +537,7 @@ async function streamTurn(res, sessionId, input) {
       relationshipChanges: payload.relationshipChanges,
       examCalendarView: payload.examCalendarView,
       examRivalView: payload.examRivalView,
+      studyProfileView: payload.studyProfileView,
       activeNpcRequestView: payload.activeNpcRequestView,
       activeNpcRequestEvents: payload.activeNpcRequestEvents,
       roleWorldCouplingView: payload.roleWorldCouplingView,
@@ -572,6 +588,7 @@ router.post("/start", async (req, res, next) => {
       worldState,
       examCalendarView: buildExamCalendarView(worldState),
       examRivalView: buildExamRivalView(worldState),
+      studyProfileView: buildStudyProfileView(worldState),
       relationshipView: buildRelationshipInspectionView(worldState),
       activeNpcRequestView: buildActiveNpcRequestView(worldState),
       roleWorldCouplingView: buildRoleWorldCouplingView(worldState),
@@ -601,6 +618,7 @@ router.get("/state/:sessionId", async (req, res, next) => {
     const worldState = await readSession(req.params.sessionId);
     ensureRelationshipLedger(worldState);
     ensureExamCalendarState(worldState);
+    ensureStudyProfileState(worldState);
     ensureLongTermEventState(worldState);
     ensureOfficialCareerState(worldState);
     ensureRoleWorldCouplingState(worldState);

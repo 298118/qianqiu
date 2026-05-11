@@ -185,6 +185,7 @@ POST /api/exam/submit
 游戏与考试路由可返回这些 view：
 
 - `examCalendarView`、`examRivalView`
+- `studyProfileView`
 - `relationshipView`、`activeNpcRequestView`
 - `roleWorldCouplingView`
 - `worldEntityView`、`worldThreadView`
@@ -245,6 +246,7 @@ S54-S59 已完成的数据库拆表必须继续保持 JSON 默认可玩，并保
 - `economicFiscal` / `economicFiscalView`：从可见 `worldGeographyView` 城市/国家/路线、`officialPostingsView` 任所/辖区、`localAffairsDocketView` 案牍、`worldEntityView` 财赋/赈务实体和 `worldPeopleView` 可见债务资产派生经济财政态势，覆盖户部钱粮总账、城市粮储市价、盐漕商路、地方库银赈济、债务亏空/腐败风险和财赋市场预警。该 view 按角色 cap 和任所/商路相关性过滤；书生默认为空；它只提供叙事、预警和后续 resolver 线索，不直接裁决征税、拨银、开仓、平粜、赈济、盐漕、矿冶、债务清偿、追赃、市场价格、考成或持久化。
 - `historicalEventArchive` / `historicalEventArchiveView`：从可见案牍、军务、财赋、任所考成、人物关系和科举履历组合 S65.1 历史事件链，覆盖自然灾害/赈务、官场争斗、边事、商税、人物关系、科举和地方差遣。普通 route 只返回公开链；密档链必须由服务器显式 `includeSealed`，且不进入普通玩家路由、浏览器、prompt retrieval 或 SQLite prompt 索引。
 - `intelligenceRumor` / `intelligenceRumorView`：从服务器可见地理、案牍、军务、财赋、人物关系和公开历史事件链派生 S65.2 情报传闻，按身份显示为坊间传闻、地方风声、衙门案牍、官署奏报、同僚私信、军中侦报、粮道风声、部院奏报、御史风闻或御前摘报，并附可信度、来源归因、相关 refs 和服务器裁决边界。它只提供角色可见线索，不直接公开隐藏情报真值、写状态、写审计、写 `prompt_retrieval_index`、成案或结算后果。
+- `studyProfile` / `studyProfileView`：S68.2 新增读书账本与学业计划。服务器从玩家属性、读书行动和 `player.examHistory` 的评分/反作弊复核派生经义根柢、制艺章法、策论时务、史事典故、律例判断、誊写卷面、科场耐力等可见画像，并生成最近日课、文卷强弱、老师建议、书目和下旬计划。AI 老师、出题和评卷 prompt 只能读取 capped `studyProfile` 摘要并给点评/建议；普通 provider `statePatch` 不能写 `studyProfile`，也不能借读书建议直接授名位、改榜、改官职或写持久化事实。
 - `eventArchiveView`：从公开近事、世界议程、长期事件、官场履历、考试档案、可见任所考成、地方案牍、军务外交预警、财赋市场预警、S65.1 公开历史事件链和 S65.2 情报传闻整理事件档案；S57.1 起带分页 metadata，并在 SQLite 模式同步到安全 `event_archive_index`；S61.2 的 `official_assessment` 条目只来自 `officialPostingsView.assessmentRecords`，S63.2 的 `local_docket` 条目只来自 `localAffairsDocketView`，S64.1 的 `military_diplomacy` 条目只来自 `militaryDiplomacyView.frontierIncidents`，S64.2 的 `economic_fiscal` 条目只来自 `economicFiscalView.marketIncidents`，S65.1 的 `historical_event_chain` 条目只来自公开 `historicalEventArchiveView.publicChains`，S65.2 的 `intelligence_rumor` 条目只来自 `intelligenceRumorView.publicRumors`。它不读取 raw audit、provider proposal、prompt、本地路径、key、历史事件密档或隐藏情报真值。S57.2 的审计公开 projection 是本地开发/调试工具输出，不是 route view、prompt 或浏览器信息面板的数据源。
 
 S53/S66 浏览器“局势簿”只读这些 route view；S66.2 的 `informationPanelPageView` 也是从 route view 和安全事件档案条目派生的分页 projection，不读取 raw SQLite table。S54-S59 已完成的 SQLite 拆表和 S60-S67 内容充实阶段继续保持 view-first；后续 UI 和 prompt contract 仍不得暴露原始业务表、raw audit、provider proposal、hidden notes、hidden intent 或本地路径。
@@ -388,12 +390,12 @@ chore: update env example
 2. S54-S59 已归档到 [LOCAL_DATABASE_BUSINESS_TABLE_ARCHIVE.md](LOCAL_DATABASE_BUSINESS_TABLE_ARCHIVE.md)：地理、人物、官职任所、事件档案、prompt 检索、浏览器 parity 和双模式验收均已具备本地 SQLite 基础。
 3. S60-S67 已归档到 [HUGE_DYNAMIC_WORLD_CONTENT_ARCHIVE.md](HUGE_DYNAMIC_WORLD_CONTENT_ARCHIVE.md)：内容契约、规模 fixture、国家/城市/NPC/官职/案牍/军务/财赋/事件链/情报、prompt 策略、局势簿分页和 large fixture scale acceptance 已完成；数量、seed 分层和 hidden/private 边界仍以 [HUGE_DYNAMIC_WORLD_CONTENT_CONTRACT.md](HUGE_DYNAMIC_WORLD_CONTENT_CONTRACT.md) 为契约。
 4. `event_log` / `ai_change_proposals` 是本地脱敏审计，不进入玩家 API，也不让 AI 直接写表；AI 领域工具最多提交 proposal，由服务器记录接受/拒绝原因。
-5. `worldGeographyView`、`worldPeopleView`、`officialPostingsView`、`localAffairsDocketView`、`militaryDiplomacyView`、`economicFiscalView`、`historicalEventArchiveView`、`intelligenceRumorView`、`eventArchiveView`、`informationPanelPageView` 和 capped `retrievalContext` 是当前 UI/prompt 合法入口。
+5. `studyProfileView`、`worldGeographyView`、`worldPeopleView`、`officialPostingsView`、`localAffairsDocketView`、`militaryDiplomacyView`、`economicFiscalView`、`historicalEventArchiveView`、`intelligenceRumorView`、`eventArchiveView`、`informationPanelPageView` 和 capped `retrievalContext` 是当前 UI/prompt 合法入口。
 6. 浏览器“局势簿”只读 route player-facing view 和 `informationPanelPageView`，不读 raw ledger、raw audit、provider-only payload、prompt、本地路径或 key。
 
 当前活动方向：
 
-- S68-S69：科举、读书、评卷与授官深化；S68.1 科举制度契约已完成，下一步从 S68.2 读书账本与学业计划开始。
+- S68-S69：科举、读书、评卷与授官深化；S68.1 科举制度契约和 S68.2 读书账本基础已完成，后续从 S68.3 老师点评与书院/同窗互动继续。
 - S70：AI 提示词、工具协议、actor 权限和多 AI 编排，排在 S68-S69 后启动。
 
 本地数据库专项必须满足同一边界：默认 JSON/Mock 路径不得被破坏；SQLite local-only；AI 可以通过领域工具提交 proposal，但不执行 SQL、不直接写 canonical 状态、业务表或审计表；浏览器和 prompt 只读服务器 projection；hidden 私档不回填当前 raw route `worldState`；服务器继续拥有 schema、白名单、clamp、隐藏过滤、科举晋级、官职任免、长期事件、世界实体、世界议程、数据库写入和持久化事务。

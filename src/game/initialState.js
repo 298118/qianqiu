@@ -7,6 +7,7 @@ const { createInitialWorldEntityState } = require("./worldEntities");
 const { createInitialWorldPeopleState } = require("./worldPeople");
 const { createInitialWorldThreadState } = require("./worldThreads");
 const { createInitialOfficialPostingsState } = require("./officialPostings");
+const { createInitialStudyProfile } = require("./studyProfile");
 const { NUMERIC_RANGES, clamp } = require("./stateRules");
 
 const ROLE_LABELS = {
@@ -213,6 +214,7 @@ function createInitialState(input = {}) {
     characters: getInitialCharacters(role),
     eventHistory: [],
     activeExam: null,
+    studyProfile: null,
     examCalendar: createInitialExamCalendar(),
     activeNpcRequest: null,
     longTermEvents: {
@@ -294,6 +296,7 @@ function createInitialState(input = {}) {
   worldState.worldEntities = createInitialWorldEntityState(worldState);
   worldState.relationshipLedger = createInitialRelationshipLedger(worldState);
   worldState.worldPeople = createInitialWorldPeopleState(worldState);
+  worldState.studyProfile = createInitialStudyProfile(worldState);
   return worldState;
 }
 

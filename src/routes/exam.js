@@ -21,6 +21,11 @@ const {
   recordMissedExamWindow,
   selectPersistentCandidateSeeds
 } = require("../game/examCalendar");
+const {
+  buildStudyProfileView,
+  ensureStudyProfileState,
+  updateStudyProfileAfterExam
+} = require("../game/studyProfile");
 const { applyExamPromotion } = require("../game/promotions");
 const { buildRelationshipInspectionView, ensureRelationshipLedger } = require("../game/relationships");
 const { buildActiveNpcRequestView } = require("../game/activeRequests");
@@ -79,6 +84,7 @@ function toExamPayload(worldState) {
     sceneTime: activeExam.sceneTime || null,
     examCalendarView: buildExamCalendarView(worldState),
     examRivalView: buildExamRivalView(worldState),
+    studyProfileView: buildStudyProfileView(worldState),
     relationshipView: buildRelationshipInspectionView(worldState),
     activeNpcRequestView: buildActiveNpcRequestView(worldState),
     roleWorldCouplingView: buildRoleWorldCouplingView(worldState),
@@ -121,6 +127,7 @@ function summarizeResultEvent(worldState, activeExam, score, ranking, promotionR
 function ensureCommonState(worldState) {
   ensureRelationshipLedger(worldState);
   ensureExamCalendarState(worldState);
+  ensureStudyProfileState(worldState);
   ensureLongTermEventState(worldState);
   ensureOfficialCareerState(worldState);
   ensureRoleWorldCouplingState(worldState);
@@ -384,6 +391,13 @@ router.post("/submit", async (req, res, next) => {
       };
 
       worldState.player.examHistory = [...(worldState.player.examHistory || []), historyEntry];
+      updateStudyProfileAfterExam(worldState, {
+        examId,
+        examName: activeExam.examName,
+        score,
+        authenticityCheck,
+        promotionResult
+      });
       worldState.activeExam = null;
       appendEvents(worldState, [summarizeResultEvent(worldState, activeExam, score, ranking, promotionResult)]);
       ensureRelationshipLedger(worldState);
@@ -425,6 +439,7 @@ router.post("/submit", async (req, res, next) => {
         ranking,
         promotionResult,
         cohortResult,
+        studyProfileView: buildStudyProfileView(worldState),
         examCalendarView: buildExamCalendarView(worldState),
         examRivalView: buildExamRivalView(worldState),
         relationshipView: buildRelationshipInspectionView(worldState),

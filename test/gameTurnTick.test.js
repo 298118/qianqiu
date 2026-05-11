@@ -132,6 +132,9 @@ test("POST /api/game/turn applies world tick after provider output in JSON mode"
   }
   assert.ok(payload.worldState.eventHistory.length > payload.worldTick.events.length);
   assert.ok(payload.attributeChanges.some((change) => change.path === "player.academia"));
+  assert.ok(payload.attributeChanges.some((change) => change.path === "studyProfile.dimensions.classicsFoundation"));
+  assert.equal(payload.studyProfileView.schemaVersion, 1);
+  assert.ok(payload.studyProfileView.recentExercises.some((entry) => entry.source === "player_action"));
   assert.ok(payload.attributeChanges.some((change) => change.reason === "月度推演"));
 });
 
@@ -408,6 +411,7 @@ test("POST /api/game/turn includes world tick feedback in SSE final payloads", a
   const previews = events.filter((event) => event.event === "state_preview");
 
   assert.ok(finalState);
+  assert.equal(finalState.data.studyProfileView.schemaVersion, 1);
   assert.equal(finalState.data.worldState.turnCount, 1);
   assert.equal(finalState.data.worldState.month, 1);
   assert.equal(finalState.data.worldState.tenDayPeriod, 2);
@@ -415,4 +419,5 @@ test("POST /api/game/turn includes world tick feedback in SSE final payloads", a
   assert.ok(finalState.data.worldTick.summary);
   assert.ok(finalState.data.worldTick.events.length >= 1);
   assert.ok(previews.some((event) => event.data?.worldTick?.summary));
+  assert.ok(previews.some((event) => event.data?.studyProfileView?.schemaVersion === 1));
 });

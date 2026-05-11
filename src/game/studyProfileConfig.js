@@ -1,0 +1,101 @@
+const STUDY_PROFILE_SCHEMA_VERSION = 1;
+
+const STUDY_DIMENSIONS = Object.freeze({
+  classicsFoundation: {
+    label: "经义根柢",
+    sourceAttributes: Object.freeze(["academia"]),
+    examScoreKey: "content_quality",
+    lowThreshold: 62,
+    highThreshold: 82,
+    weakLabel: "经义根柢未稳",
+    strongLabel: "经义根柢扎实",
+    bookRecommendations: Object.freeze(["《论语》", "《孟子》", "《大学》", "《中庸》"])
+  },
+  eightLeggedForm: {
+    label: "制艺章法",
+    sourceAttributes: Object.freeze(["literaryTalent"]),
+    examScoreKey: "classical_format",
+    lowThreshold: 62,
+    highThreshold: 82,
+    weakLabel: "破题承转散乱",
+    strongLabel: "制艺章法谨严",
+    bookRecommendations: Object.freeze(["八股程文选", "破题讲义"])
+  },
+  policyInsight: {
+    label: "策论时务",
+    sourceAttributes: Object.freeze(["adaptability"]),
+    examScoreKey: "argument_strength",
+    lowThreshold: 64,
+    highThreshold: 84,
+    weakLabel: "策论时务空泛",
+    strongLabel: "策论时务切实",
+    bookRecommendations: Object.freeze(["《资治通鉴》", "地方志", "奏议选"])
+  },
+  historicalAllusion: {
+    label: "史事典故",
+    sourceAttributes: Object.freeze(["academia", "literaryTalent"]),
+    examScoreKey: "literary_style",
+    lowThreshold: 60,
+    highThreshold: 82,
+    weakLabel: "史例辞采不足",
+    strongLabel: "史例辞采可观",
+    bookRecommendations: Object.freeze(["《史记》", "《资治通鉴》"])
+  },
+  legalJudgment: {
+    label: "律例判断",
+    sourceAttributes: Object.freeze(["adaptability"]),
+    examScoreKey: "historical_appropriateness",
+    lowThreshold: 64,
+    highThreshold: 84,
+    weakLabel: "律例与时代语境须谨慎",
+    strongLabel: "时代语境稳妥",
+    bookRecommendations: Object.freeze(["《大明律》", "刑名案牍选"])
+  },
+  calligraphyCopying: {
+    label: "誊写卷面",
+    sourceAttributes: Object.freeze(["literaryTalent", "mentality"]),
+    examScoreKey: "classical_format",
+    lowThreshold: 66,
+    highThreshold: 85,
+    weakLabel: "卷面格式不稳",
+    strongLabel: "卷面较稳",
+    bookRecommendations: Object.freeze(["馆阁小楷帖", "朱卷格式例"])
+  },
+  examEndurance: {
+    label: "科场耐力",
+    sourceAttributes: Object.freeze(["mentality", "health"]),
+    examScoreKey: "overall_score",
+    lowThreshold: 60,
+    highThreshold: 82,
+    weakLabel: "科场耐力不足",
+    strongLabel: "临场心性坚稳",
+    bookRecommendations: Object.freeze(["号舍日课", "静坐札记"])
+  }
+});
+
+const STUDY_PROFILE_LIMITS = Object.freeze({
+  maxStrengths: 4,
+  maxWeaknesses: 5,
+  maxTeacherAdvice: 5,
+  maxRecentExercises: 5,
+  maxPlanItems: 4,
+  maxBooks: 6,
+  maxVisibleText: 120
+});
+
+const STUDY_ACTION_PATTERNS = Object.freeze({
+  classicsFoundation: /经义|四书|五经|论语|孟子|大学|中庸|诗经|尚书|礼记|春秋|易经|章句|训诂/,
+  eightLeggedForm: /八股|制艺|破题|承题|起讲|起股|中股|后股|束股|程文|章法/,
+  policyInsight: /策论|时务|民生|财赋|军政|吏治|灾赈|边防|漕运|钱粮/,
+  historicalAllusion: /史记|通鉴|史|典故|本朝|前代|汉唐|宋元|兴亡/,
+  legalJudgment: /律例|刑名|案牍|断案|律|法度|条例/,
+  calligraphyCopying: /小楷|誊写|抄书|卷面|格式|书法|临帖/,
+  examEndurance: /静坐|养气|心性|耐力|号舍|作息|病|疲|休整/
+});
+
+module.exports = {
+  STUDY_ACTION_PATTERNS,
+  STUDY_DIMENSIONS,
+  STUDY_PROFILE_LIMITS,
+  STUDY_PROFILE_SCHEMA_VERSION
+};

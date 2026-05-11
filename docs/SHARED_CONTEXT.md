@@ -21,7 +21,7 @@
 - Backend: Node.js + Express，plain JavaScript。
 - AI providers: adapter-based Mock/OpenAI/DeepSeek/MiMo/MiMo+DeepSeek/Anthropic。`AI_PROVIDER=mock` 仍是默认可玩模式；`mimo-deepseek` 只是方法级最小路由，MiMo 负责 start/turn/stream/question，DeepSeek 负责 exam grading。
 - Storage: 默认 JSON session files under `data/sessions/`；可选 `STORAGE_ADAPTER=sqlite` 使用本地 `world_sessions`、audit tables、`geo_*`、`people_*`、`office_*`、`event_archive_index` 和 `prompt_retrieval_index`。SQLite 派生行只从 `world_sessions.world_state_json` 单向修复；raw business/audit rows 不是 route、prompt、browser 或服务器裁决 truth source。
-- Active roadmap: S49-S53、S54-S59、S60-S67 已完成并归档。S68.1 科举制度契约已完成；下一步是 S68.2 读书账本与学业计划，随后推进 S68-S69 科举、读书、评卷与授官深化，再进入 S70 AI prompt pack、工具协议、actor 权限和多 AI 编排。
+- Active roadmap: S49-S53、S54-S59、S60-S67 已完成并归档。S68.1 科举制度契约与 S68.2 读书账本基础已完成；按用户指令本轮完成 S68.2 即停下，不启动 S68.3。后续若继续，应从 S68.3 老师点评与书院/同窗互动开始，再推进 S68-S69 科举、读书、评卷与授官深化，最后进入 S70 AI prompt pack、工具协议、actor 权限和多 AI 编排。
 - Current local `.env`: 可能含用户提供的 provider keys。`.env` 被 Git 忽略，不能打印或提交。
 
 ## Core Invariants
@@ -45,6 +45,7 @@
 - S66.1 的 `retrievalContext.strategy` 是只读上下文编排元数据，不是权限层。普通/high profile 仍约束在 48/72 行与约 20,000/30,000 字符；AI 仍不得写数据库、裁决事件、任免、战和、财政结算或公开 hidden。
 - S66.2 的 `informationPanelPageView` 是浏览器局势簿分页 projection，只从服务器 route views 与安全事件档案条目生成；它不读 raw SQLite table、raw audit、provider proposal、完整 prompt、本地路径、key、hidden notes 或 hidden intent。
 - S68.1 的科举制度契约见 `docs/IMPERIAL_EXAM_SYSTEM_CONTRACT.md`。S68-S69 科举深化中，外层四级科举 API 继续保持 `child_exam -> provincial_exam -> metropolitan_exam -> palace_exam`，内部再扩县试/府试/院试、乡试/会试三场、多卷生命周期、保结、搜检、号舍、弥封、誊录、对读、磨勘、复核、多考官 proposal、榜单荣誉和授官 resolver。AI 老师、保人、同年、考官、吏部和皇帝只能提交题目、点评、事件、批语、复核疑点或授官 proposal；服务器仍拥有资格、舞弊、榜单、名次、授官、任免和持久化裁决。
+- S68.2 的 `studyProfile` / `studyProfileView` 是服务器拥有的读书账本与学业计划 projection。普通读书行动可由服务器记入日课，考试提交后按 `player.examHistory`、评分维度和本地复核刷新文卷强弱、老师建议、书目与下旬计划；prompt 只读取 capped `studyProfile` 摘要，浏览器只读 route `studyProfileView`。普通 provider patch 不能写 `studyProfile`，也不能借读书建议直接授名位、改榜、改官职或写隐藏事实。
 - S70 工具方向是“模型请求工具、服务器执行工具”。Function calling、Structured Outputs、MCP connector 或未来内部 MCP 只能产生 tool call / proposal / request-adjudication；真正落库由服务器 resolver 和 adapter transaction 完成。
 - S70.1-S70.3 先实现内部 `game_ai_tools` registry；工具定义保持 MCP-friendly，至少包含 `name`、`description`、`inputSchema`、`permission`、`resolver`、`audit`、`cooldown` 和 `mockFallback`。
 
@@ -73,7 +74,7 @@ API:
 Important modules:
 
 - AI adapters/prompts/schemas: `src/ai/`
-- State rules, time, exams, promotions, official career, relationships, long-term events, world entities/threads: `src/game/`
+- State rules, time, exams, promotions, study profile, official career, relationships, long-term events, world entities/threads: `src/game/`
 - Geography, people, official postings, local affairs dockets, military diplomacy, economic fiscal projection, historical event archive, intelligence rumors, event archive, information panel paging, audit public projection: `src/game/worldGeography.js`, `src/game/worldPeople.js`, `src/game/officialPostings.js`, `src/game/localAffairsDockets.js`, `src/game/militaryDiplomacy.js`, `src/game/economicFiscal.js`, `src/game/historicalEventArchive.js`, `src/game/intelligenceRumors.js`, `src/game/eventArchive.js`, `src/game/informationPanelPage.js`, `src/game/auditPublicProjection.js`
 - S60/S62 scale fixture and population helpers: `src/game/worldContentFixtures.js`, `src/game/worldPeoplePopulation.js`
 - Storage facade/adapters and SQLite derived tables: `src/storage/sessionStore.js`, `src/storage/jsonSessionAdapter.js`, `src/storage/sqliteSessionAdapter.js`, `src/storage/sqliteGeographyTables.js`, `src/storage/sqlitePeopleTables.js`, `src/storage/sqliteOfficialPostingTables.js`, `src/storage/sqliteEventArchiveTables.js`, `src/storage/sqlitePromptRetrievalTables.js`
@@ -103,8 +104,8 @@ Important modules:
 
 ## Current Work Note
 
-- 2026-05-11：S68.1 科举制度契约已完成于本次文档变更。新增 `docs/IMPERIAL_EXAM_SYSTEM_CONTRACT.md`，固定明清原型与游戏压缩、外层四级科举 API 兼容、童试县试/府试/院试、乡试/会试三场、多日多卷、保结、搜检、号舍、弥封、誊录、对读、磨勘、复核、多考官阅卷、榜单荣誉、授官 resolver、建议 view、AI actor 权限、服务器裁决边界、Mock/provider 降级、审计和红队清单。同步 README、brief、架构、AI 控制矩阵、科举深化路线图和步骤台账。本轮不改运行时代码、API、provider schema、Mock 行为、存档格式或 SQLite 表结构；当前完整书生路径仍按既有实现运行。已通过 `npm run check:docs-governance`、`node --test test/documentationGovernance.test.js` 和 `git diff --check`；完整 `npm test` 未运行，因为本轮是制度契约文档变更。提交前只读子代理复审未发现 P0/P1，已按 P2 建议修正 README 导语和路线图旧时态。下一步是 S68.2。
+- 2026-05-11：S68.2 读书账本与学业计划基础已完成。新增 `src/game/studyProfileConfig.js` 和 `src/game/studyProfile.js`，在 `worldState.studyProfile` 下保存服务器拥有的学业画像，并通过 `studyProfileView` 暴露经义根柢、制艺章法、策论时务、史事典故、律例判断、誊写卷面、科场耐力、最近日课、文卷强弱、老师建议、书目和下旬计划。`src/routes/game.js` 在 start/state/turn/SSE 中返回 view，并在普通读书行动后记账；`src/routes/exam.js` 在 question/submit 中返回 view，并在交卷后按评分和复核刷新弱点；`src/ai/promptContextAssembler.js` 只给 provider capped `studyProfile` 摘要；`public/app.js` 新增书生读书面板；`src/game/stateRules.js` 拒绝普通 provider patch 写 `studyProfile`。已同步 README、brief、architecture、AI 控制矩阵、科举深化路线图和步骤台账。已通过聚焦检查、治理检查、`git diff --check` 和 S67 scale 单用例；`npm test` 两次均为 520 项中 519 项通过，唯一失败为既有 S67.1 `sqliteReadRepairMs` 全量并发性能阈值波动（单用例通过）。提交前已执行只读子代理复审。本轮按用户指令完成 S68.2 后停止，不启动 S68.3。
 
 ## Next Recommended Step
 
-Start S68.2：读书账本与学业计划。优先实现 `studyProfileView`、文卷弱点画像、经史书目/日课、老师建议与 Mock/no-key fallback，并保持 AI 点评 proposal-only、属性和关系变化由服务器裁决。
+Stop after S68.2 per user instruction. 后续若用户明确继续，再启动 S68.3：老师点评与书院/同窗互动，重点补 AI 老师 proposal schema、荐书/小题训练、保结前置、书院与同窗关系，并继续让关系、名位和持久化事实由服务器裁决。

@@ -76,6 +76,8 @@ async function completeExam(baseUrl, sessionId, level) {
   });
   assert.equal(submit.response.status, 200);
   assert.equal(submit.payload.promotionResult.passed, true);
+  assert.equal(submit.payload.studyProfileView.schemaVersion, 1);
+  assert.ok(submit.payload.studyProfileView.recentExercises.some((entry) => entry.source === "exam_history"));
   assert.ok(submit.payload.worldState.player.examHistory.at(-1).entryPreparation);
   return submit.payload.worldState;
 }
@@ -109,6 +111,7 @@ test("exam question entry applies funded travel cost without advancing time", as
   assert.equal(payload.entryPreparation.paidGold, 2);
   assert.equal(payload.worldState.player.gold, 48);
   assert.deepEqual(payload.worldState.activeExam.entryPreparation, payload.entryPreparation);
+  assert.equal(payload.studyProfileView.schemaVersion, 1);
   assert.equal(payload.worldGeographyView.schemaVersion, 1);
   assert.equal(JSON.stringify(payload.worldGeographyView).includes("SEALED_ROUTE_NOTE"), false);
 

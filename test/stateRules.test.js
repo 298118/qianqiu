@@ -11,6 +11,7 @@ test("applyStatePatch applies only whitelisted fields and clamps numeric ranges"
   const originalCharacters = JSON.parse(JSON.stringify(worldState.characters));
   const originalOfficialPostings = JSON.parse(JSON.stringify(worldState.officialPostings));
   const originalWorldPeople = JSON.parse(JSON.stringify(worldState.worldPeople));
+  const originalStudyProfile = JSON.parse(JSON.stringify(worldState.studyProfile));
 
   applyStatePatch(worldState, {
     sessionId: "not-allowed",
@@ -19,6 +20,7 @@ test("applyStatePatch applies only whitelisted fields and clamps numeric ranges"
     month: 12,
     tenDayPeriod: 3,
     activeExam: { level: "child_exam" },
+    studyProfile: { schemaVersion: 1, dimensions: { classicsFoundation: 100 } },
     examCalendar: { rivals: [{ id: "provider-rival" }] },
     activeNpcRequest: { id: "provider-request" },
     longTermEvents: { queue: [{ key: "provider-event" }] },
@@ -53,6 +55,7 @@ test("applyStatePatch applies only whitelisted fields and clamps numeric ranges"
   assert.equal(worldState.month, 1);
   assert.equal(worldState.tenDayPeriod, 1);
   assert.equal(worldState.activeExam, null);
+  assert.deepEqual(worldState.studyProfile, originalStudyProfile);
   assert.deepEqual(worldState.examCalendar.rivals, []);
   assert.equal(worldState.activeNpcRequest, null);
   assert.deepEqual(worldState.longTermEvents.queue, []);
@@ -82,6 +85,7 @@ test("applyStatePatch applies only whitelisted fields and clamps numeric ranges"
 test("ordinary state patches preserve server-owned exam and narrative fields", () => {
   const worldState = createInitialState({ playerName: "Tester" });
   worldState.activeExam = { level: "child_exam", reason: "server-created" };
+  worldState.studyProfile.dimensions.classicsFoundation = 11;
   worldState.examCalendar.rivals = [{ id: "server-rival" }];
   worldState.officialPostings = { schemaVersion: 1, postings: [{ id: "server-posting" }] };
   worldState.roleWorldCoupling.recentImpacts = [{ kind: "server-impact" }];
@@ -96,6 +100,7 @@ test("ordinary state patches preserve server-owned exam and narrative fields", (
 
   applyStatePatch(worldState, {
     activeExam: null,
+    studyProfile: { schemaVersion: 1, dimensions: { classicsFoundation: 100 } },
     examCalendar: { rivals: [{ id: "model-rival" }] },
     officialPostings: { schemaVersion: 1, postings: [{ id: "model-posting" }] },
     roleWorldCoupling: { recentImpacts: [{ kind: "model-impact" }] },
@@ -114,6 +119,7 @@ test("ordinary state patches preserve server-owned exam and narrative fields", (
   });
 
   assert.deepEqual(worldState.activeExam, { level: "child_exam", reason: "server-created" });
+  assert.equal(worldState.studyProfile.dimensions.classicsFoundation, 11);
   assert.deepEqual(worldState.examCalendar.rivals, [{ id: "server-rival" }]);
   assert.deepEqual(worldState.officialPostings, { schemaVersion: 1, postings: [{ id: "server-posting" }] });
   assert.deepEqual(worldState.roleWorldCoupling.recentImpacts, [{ kind: "server-impact" }]);
@@ -195,6 +201,7 @@ test("applyStatePatch can apply server follow-up patches without incrementing tu
     month: 99,
     tenDayPeriod: 99,
     activeExam: { level: "child_exam", status: "writing" },
+    studyProfile: { schemaVersion: 1, dimensions: { classicsFoundation: 99 } },
     examCalendar: { schemaVersion: 1, rivals: [{ id: "server-rival" }] },
     officialPostings: { schemaVersion: 1, postings: [{ id: "server-posting" }] },
     roleWorldCoupling: { schemaVersion: 1, recentImpacts: [{ kind: "server-impact" }], cooldowns: {} },
@@ -211,6 +218,7 @@ test("applyStatePatch can apply server follow-up patches without incrementing tu
   assert.equal(worldState.month, 12);
   assert.equal(worldState.tenDayPeriod, 3);
   assert.equal(worldState.activeExam.level, "child_exam");
+  assert.equal(worldState.studyProfile.dimensions.classicsFoundation, 99);
   assert.equal(worldState.examCalendar.rivals[0].id, "server-rival");
   assert.equal(worldState.officialPostings.postings[0].id, "server-posting");
   assert.equal(worldState.roleWorldCoupling.recentImpacts[0].kind, "server-impact");
