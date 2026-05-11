@@ -5,14 +5,26 @@ const { isBuiltin } = require("node:module");
 
 const { assemblePromptContext } = require("../src/ai/promptContextAssembler");
 const { buildEventArchiveView } = require("../src/game/eventArchive");
+const { buildInformationPanelPageViews } = require("../src/game/informationPanelPage");
 const { createInitialState } = require("../src/game/initialState");
 const { buildOfficialPostingsView } = require("../src/game/officialPostings");
 const { buildWorldGeographyView } = require("../src/game/worldGeography");
+const {
+  WORLD_CONTENT_BROWSER_PAGE,
+  WORLD_CONTENT_FIXTURE_TARGETS,
+  WORLD_CONTENT_PROMPT_BUDGET,
+  buildWorldContentFixturePage,
+  buildWorldContentPerformanceBaseline,
+  buildPromptBudgetReport,
+  createFixtureSessionRecord,
+  createWorldContentFixture,
+  flattenCanaries
+} = require("../src/game/worldContentFixtures");
 const { buildWorldPeopleView } = require("../src/game/worldPeople");
 const { createJsonSessionAdapter } = require("../src/storage/jsonSessionAdapter");
 const { createSqliteSessionAdapter } = require("../src/storage/sqliteSessionAdapter");
+const { buildPromptRetrievalRows } = require("../src/storage/sqlitePromptRetrievalTables");
 const { runAuditEventArchiveTool } = require("./auditEventArchiveTool");
-const { runBrowserSmoke, runInformationPanelParitySmoke } = require("./browserSmoke");
 const { runImportJsonSessionsToSqlite } = require("./importJsonSessionsToSqlite");
 const { runSqliteGeographyTool } = require("./sqliteGeographyTool");
 
@@ -32,14 +44,28 @@ const BLOCKED_TOKENS = Object.freeze([
   "ai_change_proposals",
   "prompt_retrieval_index",
   "event_archive_index",
+  "S60_PRIVATE_",
   "SQLITE_DATABASE_PATH",
   "OPENAI_API_KEY",
   "DEEPSEEK_API_KEY",
   "MIMO_API_KEY",
   "ANTHROPIC_API_KEY",
   "sk-proj-s59",
+  "sk-s60-private-canary-token",
+  "data_sessions_secret",
   "E:\\LSMNQ"
 ]);
+
+const S67_SCALE_ACCEPTANCE_THRESHOLDS = Object.freeze({
+  fixtureGenerationMs: 5000,
+  eventArchivePaginationMs: 1500,
+  promptAssemblyMs: 2500,
+  promptRetrievalRowsMs: 2500,
+  fixturePageMs: 1000,
+  informationPanelMs: 1500,
+  sqliteReadRepairMs: 3000,
+  heapDeltaBytes: 256 * 1024 * 1024
+});
 
 function parseArgs(argv = process.argv.slice(2)) {
   const options = {
@@ -88,16 +114,18 @@ function printHelp(io = console) {
   io.log(`
 Usage: node scripts/dualModeAcceptance.js [options]
 
-Runs the S59.1 JSON/SQLite dual-mode acceptance:
+Runs the S67 JSON/SQLite dual-mode acceptance:
   1. Full Mock browser journey in JSON mode.
   2. Full Mock browser journey in SQLite mode.
   3. Focused JSON/SQLite information-panel parity smoke.
   4. Storage maintenance acceptance for JSON -> SQLite import, geography repair/export,
      audit public projection, derived table counts, and hidden-token checks.
+  5. S67.1 scale regression for large fixture counts, prompt strategy, information panel
+     paging, event archive pagination, SQLite prompt-index read repair, memory, and timing.
 
 Options:
-  --storage-only       Skip browser journeys and run only storage/tooling acceptance.
-  --sqlite-db <path>   SQLite database path. Defaults to a temporary data/s59-*.sqlite file.
+  --storage-only       Skip browser journeys and run only storage/tooling/scale acceptance.
+  --sqlite-db <path>   SQLite database path. Defaults to a temporary data/s67-*.sqlite file.
   --browser <path>     Browser executable path for browser smoke.
   --screenshots <dir>  Save browser acceptance screenshots.
   --headed             Show browser windows while running.
@@ -111,7 +139,7 @@ function clone(value) {
 
 function resolveSqlitePlan(sqliteDatabasePath) {
   const ownsDatabase = !sqliteDatabasePath;
-  const selected = sqliteDatabasePath || path.join(dataDir, `s59-dual-mode-${randomUUID()}.sqlite`);
+  const selected = sqliteDatabasePath || path.join(dataDir, `s67-dual-mode-${randomUUID()}.sqlite`);
   return {
     ownsDatabase,
     sqliteDatabasePath: selected === ":memory:" ? selected : path.resolve(selected)
@@ -206,6 +234,126 @@ function assertNoBlockedTokens(label, value, blockedTokens = BLOCKED_TOKENS) {
   if (leaked.length) {
     throw new Error(`${label} leaked hidden tokens: ${leaked.join(", ")}`);
   }
+}
+
+function nowMs() {
+  return globalThis.performance && typeof globalThis.performance.now === "function"
+    ? globalThis.performance.now()
+    : Date.now();
+}
+
+function measureSync(task) {
+  const startedAt = nowMs();
+  const value = task();
+  return {
+    value,
+    durationMs: Number((nowMs() - startedAt).toFixed(3))
+  };
+}
+
+async function measureAsync(task) {
+  const startedAt = nowMs();
+  const value = await task();
+  return {
+    value,
+    durationMs: Number((nowMs() - startedAt).toFixed(3))
+  };
+}
+
+function assertFiniteMetric(label, value, maxValue) {
+  if (!Number.isFinite(value) || value < 0) {
+    throw new Error(`${label} was not a finite non-negative metric.`);
+  }
+  if (Number.isFinite(maxValue) && value > maxValue) {
+    throw new Error(`${label} exceeded S67.1 threshold: ${value} > ${maxValue}`);
+  }
+}
+
+function assertS67PerformanceThresholds(metrics = {}, thresholds = S67_SCALE_ACCEPTANCE_THRESHOLDS) {
+  for (const [key, threshold] of Object.entries(thresholds)) {
+    if (metrics[key] === undefined) continue;
+    assertFiniteMetric(`S67.1 ${key}`, metrics[key], threshold);
+  }
+}
+
+function assertLargeFixtureMetrics(metrics = {}) {
+  const target = WORLD_CONTENT_FIXTURE_TARGETS.large;
+  const checks = [
+    ["countries", target.countries],
+    ["cities", target.cities],
+    ["npcs", target.npcs],
+    ["households", target.households],
+    ["relationships", target.relationships],
+    ["officialCatalogRows", target.officialCatalogRows],
+    ["postings", target.postings],
+    ["eventIntelItems", target.eventIntelItems],
+    ["promptRetrievalRows", target.promptRetrievalRows],
+    ["hiddenCanaries", target.hiddenCanaries]
+  ];
+  const failures = checks
+    .filter(([key, expected]) => Number(metrics[key] || 0) < expected)
+    .map(([key, expected]) => `${key}=${metrics[key] || 0} < ${expected}`);
+  if (failures.length) throw new Error(`S67.1 large fixture gates failed: ${failures.join("; ")}`);
+}
+
+function summarizePromptStrategy(report = {}) {
+  const strategy = report.promptContext?.retrievalContext?.strategy || {};
+  return {
+    profile: strategy.profile,
+    maxRows: strategy.maxRows,
+    maxChars: strategy.maxChars,
+    selectedRows: strategy.selectedRows,
+    serializedChars: strategy.serializedChars,
+    globalTrimmedRows: strategy.globalTrimmedRows,
+    charBudgetTrimmedRows: strategy.charBudgetTrimmedRows,
+    domainSelectedRows: strategy.domainSelectedRows,
+    candidateRows: strategy.candidateRows,
+    droppedRows: strategy.droppedRows,
+    totalCandidateRows: strategy.pagination?.totalCandidateRows,
+    totalDroppedRows: strategy.pagination?.droppedRows
+  };
+}
+
+function assertPromptStrategy(label, report = {}, expectedProfile, maxRows, maxChars) {
+  const strategy = report.promptContext?.retrievalContext?.strategy;
+  if (!strategy) throw new Error(`${label} did not include retrievalContext.strategy.`);
+  if (strategy.profile !== expectedProfile) {
+    throw new Error(`${label} used profile ${strategy.profile}, expected ${expectedProfile}.`);
+  }
+  if (strategy.selectedRows > maxRows || report.summaryRows > maxRows) {
+    throw new Error(`${label} selected too many prompt retrieval rows.`);
+  }
+  if (strategy.serializedChars > maxChars || report.serializedChars > maxChars) {
+    throw new Error(`${label} exceeded prompt retrieval character budget.`);
+  }
+  if (Number(strategy.pagination?.totalCandidateRows || 0) < Number(strategy.selectedRows || 0)) {
+    throw new Error(`${label} candidate row accounting is inconsistent.`);
+  }
+  if (!strategy.domainSelectedRows || typeof strategy.domainSelectedRows !== "object") {
+    throw new Error(`${label} did not report domain selected row counts.`);
+  }
+}
+
+function assertInformationPanelScale(panel = {}) {
+  const active = panel.activePage || {};
+  if (panel.schemaVersion !== 1 || panel.pages?.length !== 5) {
+    throw new Error("S67.1 information panel did not return the expected page collection.");
+  }
+  if (active.source !== "route_view_projection") {
+    throw new Error("S67.1 information panel did not use route view projection.");
+  }
+  if (active.pagination?.pageSize > 24 || active.items?.length > active.pagination?.pageSize) {
+    throw new Error("S67.1 information panel pagination exceeded the route page cap.");
+  }
+  assertNoBlockedTokens("S67.1 information panel", panel);
+}
+
+function assertFixturePageSafety(label, page = {}) {
+  if (!Array.isArray(page.items)) throw new Error(`${label} did not return paged items.`);
+  if (page.pagination?.pageSize > WORLD_CONTENT_BROWSER_PAGE.maxPageSize) {
+    throw new Error(`${label} exceeded the fixture page-size cap.`);
+  }
+  assertNoBlockedTokens(label, page);
 }
 
 function buildS59WorldState() {
@@ -376,6 +524,17 @@ function tamperGeographyRows(dbPath, sessionId) {
   });
 }
 
+function deleteSqliteAuditRows(dbPath, sessionId) {
+  if (!dbPath || dbPath === ":memory:" || !sessionId) return;
+  withSqliteDatabase(dbPath, (db) => {
+    for (const tableName of ["event_log", "ai_change_proposals"]) {
+      const table = db.prepare("SELECT name FROM sqlite_master WHERE type = 'table' AND name = ?").get(tableName);
+      if (!table) continue;
+      db.prepare(`DELETE FROM ${tableName} WHERE session_id = ?`).run(sessionId);
+    }
+  });
+}
+
 async function runStorageMaintenanceAcceptance(options = {}) {
   if (!(typeof isBuiltin === "function" && isBuiltin("node:sqlite"))) {
     throw new Error("S59 dual-mode storage acceptance requires a Node.js runtime with node:sqlite support");
@@ -508,13 +667,233 @@ async function runStorageMaintenanceAcceptance(options = {}) {
         sqliteAdapter.close();
       }
     }
+    if (!ownsDatabase) deleteSqliteAuditRows(sqliteDatabasePath, worldState.sessionId);
     await removeSessionArtifacts(worldState.sessionId);
     await fs.rm(geographyOutPath, { force: true });
     if (ownsDatabase) await removeSqliteArtifacts(sqliteDatabasePath);
   }
 }
 
+function tamperPromptRetrievalRows(dbPath, sessionId) {
+  withSqliteDatabase(dbPath, (db) => {
+    db.prepare("DELETE FROM prompt_retrieval_index WHERE session_id = ?").run(sessionId);
+  });
+}
+
+async function runS67SqliteReadRepairAcceptance(worldState, options = {}) {
+  if (!(typeof isBuiltin === "function" && isBuiltin("node:sqlite"))) {
+    return { skipped: true, reason: "node:sqlite unavailable" };
+  }
+
+  const { ownsDatabase, sqliteDatabasePath } = resolveSqlitePlan(options.sqliteDatabasePath);
+  const sqliteAdapter = createSqliteSessionAdapter({ databasePath: sqliteDatabasePath });
+  try {
+    await sqliteAdapter.writeSession(clone(worldState));
+    const expectedPromptRows = buildPromptRetrievalRows(createFixtureSessionRecord(clone(worldState))).length;
+    tamperPromptRetrievalRows(sqliteDatabasePath, worldState.sessionId);
+    const beforeRepair = readDerivedTableCounts(sqliteDatabasePath, worldState.sessionId);
+    const repairedRead = await measureAsync(() => sqliteAdapter.readSessionRecord(worldState.sessionId));
+    const afterRepair = readDerivedTableCounts(sqliteDatabasePath, worldState.sessionId);
+    const sqliteWorldState = repairedRead.value.record.worldState;
+    const jsonContext = assemblePromptContext(worldState, {
+      task: "official_career",
+      playerAction: "核查户部、北京、漕运、样本人物与任所",
+      promptBudgetProfile: "ordinary",
+      promptRetrievalSource: false
+    }).retrievalContext;
+    const sqliteContext = assemblePromptContext(sqliteWorldState, {
+      task: "official_career",
+      playerAction: "核查户部、北京、漕运、样本人物与任所",
+      promptBudgetProfile: "ordinary"
+    }).retrievalContext;
+    assertNoBlockedTokens("S67.1 SQLite repaired prompt context", sqliteContext);
+    if (afterRepair.promptRetrievalIndex !== expectedPromptRows) {
+      throw new Error("S67.1 SQLite prompt_retrieval_index read repair did not restore expected row count.");
+    }
+    if (JSON.stringify(sqliteContext.geography) !== JSON.stringify(jsonContext.geography)) {
+      throw new Error("S67.1 SQLite read repair changed geography prompt retrieval parity.");
+    }
+    if (JSON.stringify(sqliteContext.people) !== JSON.stringify(jsonContext.people)) {
+      throw new Error("S67.1 SQLite read repair changed people prompt retrieval parity.");
+    }
+    if (JSON.stringify(sqliteContext.offices) !== JSON.stringify(jsonContext.offices)) {
+      throw new Error("S67.1 SQLite read repair changed office prompt retrieval parity.");
+    }
+
+    assertFiniteMetric(
+      "S67.1 sqliteReadRepairMs",
+      repairedRead.durationMs,
+      S67_SCALE_ACCEPTANCE_THRESHOLDS.sqliteReadRepairMs
+    );
+
+    return {
+      skipped: false,
+      expectedPromptRows,
+      beforeRepairPromptRows: beforeRepair.promptRetrievalIndex,
+      afterRepairPromptRows: afterRepair.promptRetrievalIndex,
+      sqliteReadRepairMs: repairedRead.durationMs,
+      worldSessions: afterRepair.worldSessions,
+      eventArchiveIndex: afterRepair.eventArchiveIndex
+    };
+  } finally {
+    try {
+      await sqliteAdapter.deleteSession(worldState.sessionId);
+    } catch (error) {
+      if (error.statusCode !== 404) throw error;
+    } finally {
+      sqliteAdapter.close();
+    }
+    if (ownsDatabase) await removeSqliteArtifacts(sqliteDatabasePath);
+  }
+}
+
+async function runScaleRegressionAcceptance(options = {}) {
+  const heapBefore = process.memoryUsage().heapUsed;
+  const fixtureTiming = measureSync(() => createWorldContentFixture({ size: "large" }));
+  const fixture = fixtureTiming.value;
+  const metrics = fixture.fixtureSummary.metrics;
+  assertLargeFixtureMetrics(metrics);
+
+  const baseline = buildWorldContentPerformanceBaseline(fixture);
+  const ordinaryPrompt = buildPromptBudgetReport(fixture.worldState, {
+    task: "official_career",
+    playerAction: "核查户部、北京、漕运、边报、样本人物与任所",
+    promptBudgetProfile: "ordinary"
+  });
+  const highPrompt = buildPromptBudgetReport(fixture.worldState, {
+    task: "official_career",
+    playerAction: "核查户部、北京、漕运、边报、样本人物与任所",
+    promptBudgetProfile: "high"
+  });
+  assertPromptStrategy(
+    "S67.1 ordinary prompt strategy",
+    ordinaryPrompt,
+    "ordinary",
+    WORLD_CONTENT_PROMPT_BUDGET.ordinaryRows,
+    WORLD_CONTENT_PROMPT_BUDGET.ordinaryChars
+  );
+  assertPromptStrategy(
+    "S67.1 high prompt strategy",
+    highPrompt,
+    "high",
+    WORLD_CONTENT_PROMPT_BUDGET.highRelevanceRows,
+    WORLD_CONTENT_PROMPT_BUDGET.highRelevanceChars
+  );
+
+  const promptPayload = {
+    ordinary: ordinaryPrompt.promptContext.retrievalContext,
+    high: highPrompt.promptContext.retrievalContext
+  };
+  assertNoBlockedTokens("S67.1 prompt strategy payload", promptPayload);
+
+  const fixturePromptPage = buildWorldContentFixturePage(fixture, "promptRetrievalRows", {
+    page: 3,
+    pageSize: 50,
+    query: "安全检索"
+  });
+  const fixtureCityPage = buildWorldContentFixturePage(fixture, "geography.cities", {
+    page: 2,
+    pageSize: 24,
+    query: "样本城"
+  });
+  const hiddenQueryPage = buildWorldContentFixturePage(fixture, "promptRetrievalRows", {
+    query: flattenCanaries(fixture.hiddenCanaries)[0]
+  });
+  assertFixturePageSafety("S67.1 large prompt fixture page", fixturePromptPage);
+  assertFixturePageSafety("S67.1 large city fixture page", fixtureCityPage);
+  if (hiddenQueryPage.pagination.totalItems !== 0) {
+    throw new Error("S67.1 large fixture hidden query matched visible rows.");
+  }
+
+  const informationTiming = measureSync(() =>
+    buildInformationPanelPageViews(fixture.worldState, {
+      tabId: "world-people",
+      filter: "npc",
+      sort: "risk",
+      query: "人物",
+      page: 2,
+      pageSize: 12
+    })
+  );
+  assertInformationPanelScale(informationTiming.value);
+
+  const eventArchive = buildEventArchiveView(fixture.worldState, { page: 1, pageSize: 50 });
+  assertNoBlockedTokens("S67.1 event archive page", eventArchive);
+  if (eventArchive.pagination.pageSize > 50) {
+    throw new Error("S67.1 event archive pagination exceeded expected cap.");
+  }
+
+  const sqliteRepair = await runS67SqliteReadRepairAcceptance(fixture.worldState, {
+    sqliteDatabasePath: options.sqliteDatabasePath
+  });
+  const heapDeltaBytes = Math.max(0, process.memoryUsage().heapUsed - heapBefore);
+  const performance = {
+    fixtureGenerationMs: fixtureTiming.durationMs,
+    eventArchivePaginationMs: baseline.eventArchivePaginationMs,
+    promptAssemblyMs: baseline.promptAssemblyMs,
+    promptRetrievalRowsMs: baseline.promptRetrievalRowsMs,
+    fixturePageMs: baseline.fixturePageMs,
+    informationPanelMs: informationTiming.durationMs,
+    sqliteReadRepairMs: sqliteRepair.skipped ? 0 : sqliteRepair.sqliteReadRepairMs,
+    heapDeltaBytes
+  };
+  assertS67PerformanceThresholds(performance);
+
+  return {
+    fixture: {
+      size: fixture.size,
+      metrics: {
+        countries: metrics.countries,
+        cities: metrics.cities,
+        npcs: metrics.npcs,
+        households: metrics.households,
+        relationships: metrics.relationships,
+        officialCatalogRows: metrics.officialCatalogRows,
+        postings: metrics.postings,
+        eventIntelItems: metrics.eventIntelItems,
+        promptRetrievalRows: metrics.promptRetrievalRows,
+        hiddenCanaries: metrics.hiddenCanaries,
+        routeViewRows: metrics.routeViewRows,
+        storageRows: metrics.storageRows
+      }
+    },
+    promptStrategy: {
+      ordinary: summarizePromptStrategy(ordinaryPrompt),
+      high: summarizePromptStrategy(highPrompt)
+    },
+    informationPanel: {
+      activeTabId: informationTiming.value.activeTabId,
+      pageCount: informationTiming.value.pages.length,
+      activePageItems: informationTiming.value.activePage.items.length,
+      activeTotalItems: informationTiming.value.activePage.pagination.totalItems,
+      pageSize: informationTiming.value.activePage.pagination.pageSize,
+      source: informationTiming.value.activePage.source
+    },
+    fixturePages: {
+      promptRows: fixturePromptPage.pagination,
+      cities: fixtureCityPage.pagination,
+      hiddenQueryMatches: hiddenQueryPage.pagination.totalItems
+    },
+    eventArchive: {
+      pageSize: eventArchive.pagination.pageSize,
+      totalItems: eventArchive.pagination.totalItems,
+      pageItems: eventArchive.items.length
+    },
+    sqliteRepair,
+    performance,
+    thresholds: S67_SCALE_ACCEPTANCE_THRESHOLDS,
+    hiddenTokenGuard: {
+      blockedTokenCount: BLOCKED_TOKENS.length,
+      fixtureCanaryCount: flattenCanaries(fixture.hiddenCanaries).length
+    }
+  };
+}
+
 async function runBrowserDualModeAcceptance(options = {}) {
+  const {
+    runBrowserSmoke,
+    runInformationPanelParitySmoke
+  } = require("./browserSmoke");
   const common = {
     browserPath: options.browserPath,
     headed: options.headed,
@@ -555,10 +934,12 @@ async function runBrowserDualModeAcceptance(options = {}) {
 
 async function runDualModeAcceptance(options = {}) {
   const storage = await runStorageMaintenanceAcceptance(options);
+  const scale = await runScaleRegressionAcceptance(options);
   const browser = options.skipBrowser ? { skipped: true } : await runBrowserDualModeAcceptance(options);
   return {
     ok: true,
     storage,
+    scale,
     browser
   };
 }
@@ -576,17 +957,21 @@ async function main(argv = process.argv.slice(2), io = console) {
 
 if (require.main === module) {
   main().catch((error) => {
-    console.error(`S59 dual-mode acceptance failed: ${error.message}`);
+    console.error(`S67 dual-mode acceptance failed: ${error.message}`);
     process.exitCode = 1;
   });
 }
 
 module.exports = {
+  S67_SCALE_ACCEPTANCE_THRESHOLDS,
   assertNoBlockedTokens,
   buildS59WorldState,
+  deleteSqliteAuditRows,
   parseArgs,
   resolveSqlitePlan,
   runBrowserDualModeAcceptance,
   runDualModeAcceptance,
+  runScaleRegressionAcceptance,
+  runS67SqliteReadRepairAcceptance,
   runStorageMaintenanceAcceptance
 };

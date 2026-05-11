@@ -26,7 +26,9 @@
 - 完成 S64.2 经济财政态势：新增 `economicFiscalView`，把可见国家/城市/路线、任所案牍、财赋赈务实体和债务资产线索整理为税粮、府库、粮价、盐漕商路、地方库银、赈济、债务腐败与市场预警；这些进入事件档案 `economic_fiscal` 条目和 `events.economicReports` prompt 检索行，但不会直接征税、拨银、开仓、平粜、赈济、裁决盐漕、清偿债务、改市场价格或写入持久化表。
 - 完成 S65.1 历史事件链：新增 `historicalEventArchiveView`，把可见案牍、军务、财赋、任所考成、人物关系和科举履历组合为自然灾害/赈务、官场争斗、边事、商税、人物关系、科举和地方差遣公共卷宗；公开链进入路由 view、事件档案 `historical_event_chain` 条目和 `events.eventChains` prompt 检索行，密档链只在服务器显式请求时生成，不进入普通玩家路由、浏览器或 SQLite prompt 索引。
 - 完成 S65.2 情报传闻视图：新增 `intelligenceRumorView`，从服务器可见地理、案牍、军务、财赋、人物关系和公开历史事件链派生角色可见传闻/奏报/私信/侦报；这些进入事件档案 `intelligence_rumor` 条目和 `intel.rumors` prompt 检索行，传闻真伪、密情公开、任免、战和、刑赏、财政结算和落库仍由服务器裁决。
+- 完成 S66.1 prompt retrieval 策略：`retrievalContext.strategy` 会记录 ordinary/high profile、行/字符预算、候选/选中/丢弃域统计、裁剪数量、排序信号、角色视野和分页边界；普通自由回合保持 48 行 / 约 20,000 字符，高相关检索保持 72 行 / 约 30,000 字符。
 - 完成 S66.2 局势簿分页面板：新增 `informationPanelPageView`，为天下格局、任所地理、人物谱牒、官职簿和事件档案提供服务器分页、检索、筛选、排序和分页 metadata；浏览器只读 route view，不读 raw SQLite table、raw audit、provider proposal、prompt、本地路径或 key。
+- 完成 S67.1 规模/性能/回归验收：`npm run smoke:dual-mode -- --storage-only` 现在除 S59 存储维护外，还输出 `scale` 段，验证 large fixture 的 14 国、300 城、2000 NPC、700 家族、5000 关系、450 官职/官署行、1000 任所/任命行、5000 事件/情报条目和 10000 prompt 行，检查 route cap、S66.1 prompt 策略、S66.2 局势簿分页、事件档案分页、SQLite `prompt_retrieval_index` 删除后读档修复、hidden-token、防泄漏、内存和耗时门槛。
 - 新增 Xiaomi MiMo provider：支持 `mimo` 与 `mimo-deepseek`，后者让 MiMo 负责开局、普通回合、流式叙事和出题，让 DeepSeek V4 Pro 负责科举评卷。
 - 更新 README 与项目文档：把当前功能、修复、安全边界、启动方式和常用命令整理成更适合 GitHub 首页阅读的结构。
 
@@ -163,7 +165,7 @@ npm run storage:audit-events -- export --adapter sqlite --db data/qianqiu.sqlite
 npm run smoke:dual-mode -- --storage-only
 ```
 
-`storage:import:sqlite` 会通过 SQLite adapter 同步 `geo_*`、`people_*`、`office_*`、`event_archive_index` 和 `prompt_retrieval_index` 等派生表；`smoke:dual-mode -- --storage-only` 是 S59.1 的快速整体验收，串联 JSON -> SQLite dry-run/正式导入、地理修复/导出、审计公开 projection、派生表计数和 hidden-token 防线。
+`storage:import:sqlite` 会通过 SQLite adapter 同步 `geo_*`、`people_*`、`office_*`、`event_archive_index` 和 `prompt_retrieval_index` 等派生表；`smoke:dual-mode -- --storage-only` 是 S67.1 的快速整体验收，串联 JSON -> SQLite dry-run/正式导入、地理修复/导出、审计公开 projection、派生表计数、large fixture scale regression、prompt 策略、局势簿分页、SQLite 读档修复、性能门槛和 hidden-token 防线。
 
 回滚优先关闭 `STORAGE_ADAPTER=sqlite` 回到 JSON adapter，或保留/恢复原 JSON 存档。
 
@@ -188,7 +190,7 @@ npm run storage:audit-events -- status
 - `npm run check:docs-governance` 检查开发治理规范、活动路线图和必读文档中的受保护规则。
 - `npm run eval:ai` 是离线 AI 输出质量门槛，覆盖 provider-shaped JSON、越权风险、历史语气、评分边界和作弊处罚。
 - `npm run smoke:browser` 启动临时 Mock 服务器，覆盖完整书生到入仕路径、作弊样例、代表身份回合、存档簿、年月旬显示和桌面/移动布局；`--information-parity` 专项比对 JSON/SQLite 双模式下“局势簿”五类面板、搜索/筛选/排序/分页控件、分页 metadata 和 hidden-token 防线。
-- `npm run smoke:dual-mode` 串联 JSON/SQLite 完整 Mock browser smoke、局势簿 parity 和 S59.1 存储维护验收；无浏览器或只想核验导入/修复/导出时可加 `--storage-only`。
+- `npm run smoke:dual-mode` 串联 JSON/SQLite 完整 Mock browser smoke、局势簿 parity、S59 存储维护和 S67.1 large fixture 规模回归；无浏览器或只想核验导入/修复/导出、读档修复、prompt/局势簿/性能门槛时可加 `--storage-only`。
 - `npm run smoke:provider*` 只在配置真实 provider key 时进行网络调用；无 key 环境会成功跳过。
 - `npm run storage:audit-events -- status|export` 是本地审计公开 projection 工具，默认只输出脱敏统计和 public 事件摘要，不输出 raw audit、provider proposal、prompt、key、本地路径或 hidden notes。
 

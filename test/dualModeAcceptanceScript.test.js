@@ -6,10 +6,12 @@ const { randomUUID } = require("node:crypto");
 const { isBuiltin } = require("node:module");
 
 const {
+  S67_SCALE_ACCEPTANCE_THRESHOLDS,
   assertNoBlockedTokens,
   buildS59WorldState,
   parseArgs,
   resolveSqlitePlan,
+  runScaleRegressionAcceptance,
   runStorageMaintenanceAcceptance
 } = require("../scripts/dualModeAcceptance");
 
@@ -22,6 +24,22 @@ async function removeSqliteArtifacts(dbPath) {
       fs.rm(filePath, { force: true })
     )
   );
+}
+
+function withSqliteDatabase(dbPath, task) {
+  const { DatabaseSync } = require("node:sqlite");
+  const db = new DatabaseSync(dbPath);
+  try {
+    return task(db);
+  } finally {
+    db.close();
+  }
+}
+
+function auditRowCount(db, tableName, sessionId) {
+  const table = db.prepare("SELECT name FROM sqlite_master WHERE type = 'table' AND name = ?").get(tableName);
+  if (!table) return 0;
+  return db.prepare(`SELECT COUNT(*) AS count FROM ${tableName} WHERE session_id = ?`).get(sessionId).count;
 }
 
 test("dual-mode acceptance parses storage and browser options", () => {
@@ -42,7 +60,7 @@ test("dual-mode acceptance parses storage and browser options", () => {
 test("dual-mode acceptance resolves temporary and provided SQLite plans", () => {
   const temporary = resolveSqlitePlan(null);
   assert.equal(temporary.ownsDatabase, true);
-  assert.match(temporary.sqliteDatabasePath, /s59-dual-mode-/);
+  assert.match(temporary.sqliteDatabasePath, /s67-dual-mode-/);
 
   const provided = resolveSqlitePlan("data/provided-s59.sqlite");
   assert.equal(provided.ownsDatabase, false);
@@ -54,6 +72,10 @@ test("dual-mode acceptance hidden-token guard blocks raw storage and prompt text
   assert.throws(
     () => assertNoBlockedTokens("unsafe payload", { summary: "SEALED_S59_PROMPT world_state_json" }),
     /SEALED_S59_|world_state_json/
+  );
+  assert.throws(
+    () => assertNoBlockedTokens("unsafe S67 payload", { summary: "S60_PRIVATE_PROMPT sk-s60-private-canary-token" }),
+    /S60_PRIVATE_|sk-s60-private-canary-token/
   );
 });
 
@@ -90,4 +112,54 @@ test("dual-mode storage maintenance acceptance imports, repairs, exports, and re
   assert.ok(result.derivedCounts.aiProposals > 0);
   assert.equal(serialized.includes(dbPath), false);
   assert.equal(serialized.includes("SEALED_S59_"), false);
+
+  const leftoverAuditRows = withSqliteDatabase(dbPath, (db) => ({
+    eventLog: auditRowCount(db, "event_log", result.sessionId),
+    aiProposals: auditRowCount(db, "ai_change_proposals", result.sessionId)
+  }));
+  assert.deepEqual(leftoverAuditRows, { eventLog: 0, aiProposals: 0 });
+});
+
+test("dual-mode S67 scale regression records large fixture, prompt strategy, paging, repair and timing", {
+  skip: hasNodeSqlite ? false : "node:sqlite is unavailable in this Node.js runtime"
+}, async (t) => {
+  const dbPath = path.join(dataDir, `test-s67-scale-${randomUUID()}.sqlite`);
+  t.after(() => removeSqliteArtifacts(dbPath));
+
+  const result = await runScaleRegressionAcceptance({ sqliteDatabasePath: dbPath });
+  const serialized = JSON.stringify(result);
+
+  assert.equal(result.fixture.size, "large");
+  assert.equal(result.fixture.metrics.cities >= 300, true);
+  assert.equal(result.fixture.metrics.npcs >= 2000, true);
+  assert.equal(result.fixture.metrics.promptRetrievalRows >= 10000, true);
+  assert.equal(result.fixture.metrics.hiddenCanaries >= 250, true);
+  assert.equal(result.fixture.metrics.routeViewRows.cities < result.fixture.metrics.cities, true);
+  assert.equal(result.promptStrategy.ordinary.profile, "ordinary");
+  assert.equal(result.promptStrategy.ordinary.selectedRows <= result.promptStrategy.ordinary.maxRows, true);
+  assert.equal(result.promptStrategy.ordinary.serializedChars <= result.promptStrategy.ordinary.maxChars, true);
+  assert.equal(result.promptStrategy.high.profile, "high");
+  assert.equal(result.promptStrategy.high.selectedRows <= result.promptStrategy.high.maxRows, true);
+  assert.equal(result.promptStrategy.high.serializedChars <= result.promptStrategy.high.maxChars, true);
+  assert.equal(result.informationPanel.source, "route_view_projection");
+  assert.equal(result.informationPanel.pageCount, 5);
+  assert.equal(result.informationPanel.activePageItems <= result.informationPanel.pageSize, true);
+  assert.equal(result.fixturePages.promptRows.pageSize <= 50, true);
+  assert.equal(result.fixturePages.hiddenQueryMatches, 0);
+  assert.equal(result.sqliteRepair.skipped, false);
+  assert.equal(result.sqliteRepair.beforeRepairPromptRows, 0);
+  assert.equal(result.sqliteRepair.afterRepairPromptRows, result.sqliteRepair.expectedPromptRows);
+  assert.equal(result.eventArchive.pageItems <= result.eventArchive.pageSize, true);
+
+  for (const [key, threshold] of Object.entries(S67_SCALE_ACCEPTANCE_THRESHOLDS)) {
+    assert.equal(Number.isFinite(result.performance[key]), true, key);
+    assert.equal(result.performance[key] >= 0, true, key);
+    assert.equal(result.performance[key] <= threshold, true, key);
+  }
+
+  assert.equal(serialized.includes("S60_PRIVATE_"), false);
+  assert.equal(serialized.includes("SEALED_S59_"), false);
+  assert.equal(serialized.includes("prompt_retrieval_index"), false);
+  assert.equal(serialized.includes("event_log"), false);
+  assert.equal(serialized.includes("sk-s60-private-canary-token"), false);
 });
