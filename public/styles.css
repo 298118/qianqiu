@@ -742,6 +742,64 @@ button:disabled {
   line-height: 1.38;
 }
 
+.information-controls {
+  display: grid;
+  grid-template-columns: minmax(120px, 1.4fr) minmax(90px, 0.85fr) minmax(90px, 0.85fr) auto minmax(160px, auto);
+  gap: 6px;
+  align-items: center;
+  min-width: 0;
+}
+
+.information-search,
+.information-filter,
+.information-page-button,
+.information-page-indicator {
+  min-width: 0;
+  min-height: 30px;
+  border-radius: 4px;
+  font-size: 0.78rem;
+}
+
+.information-search,
+.information-filter {
+  width: 100%;
+  max-width: 100%;
+  padding: 5px 7px;
+  border: 1px solid rgba(54, 39, 27, 0.16);
+  background: rgba(255, 250, 239, 0.72);
+  color: var(--ink);
+}
+
+.information-page-button {
+  padding: 5px 8px;
+  border: 1px solid rgba(54, 39, 27, 0.16);
+  background: rgba(255, 250, 239, 0.72);
+  box-shadow: none;
+  color: var(--ink);
+  white-space: nowrap;
+}
+
+.information-page-button:disabled {
+  color: var(--muted);
+  cursor: not-allowed;
+  opacity: 0.58;
+}
+
+.information-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 6px;
+  min-width: 0;
+}
+
+.information-page-indicator {
+  display: inline-flex;
+  align-items: center;
+  color: var(--muted);
+  white-space: nowrap;
+}
+
 .information-detail-section {
   display: grid;
   gap: 8px;
@@ -2029,6 +2087,24 @@ button:disabled {
 
   .exam-scene-tools {
     grid-template-columns: 1fr;
+  }
+
+  .information-controls {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .information-search,
+  .information-pagination {
+    grid-column: 1 / -1;
+  }
+
+  .information-page-button {
+    flex: 1 1 0;
+  }
+
+  .information-page-indicator {
+    justify-content: center;
+    min-width: 64px;
   }
 
   .exam-scene-actions {

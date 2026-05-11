@@ -26,6 +26,7 @@
 - 完成 S64.2 经济财政态势：新增 `economicFiscalView`，把可见国家/城市/路线、任所案牍、财赋赈务实体和债务资产线索整理为税粮、府库、粮价、盐漕商路、地方库银、赈济、债务腐败与市场预警；这些进入事件档案 `economic_fiscal` 条目和 `events.economicReports` prompt 检索行，但不会直接征税、拨银、开仓、平粜、赈济、裁决盐漕、清偿债务、改市场价格或写入持久化表。
 - 完成 S65.1 历史事件链：新增 `historicalEventArchiveView`，把可见案牍、军务、财赋、任所考成、人物关系和科举履历组合为自然灾害/赈务、官场争斗、边事、商税、人物关系、科举和地方差遣公共卷宗；公开链进入路由 view、事件档案 `historical_event_chain` 条目和 `events.eventChains` prompt 检索行，密档链只在服务器显式请求时生成，不进入普通玩家路由、浏览器或 SQLite prompt 索引。
 - 完成 S65.2 情报传闻视图：新增 `intelligenceRumorView`，从服务器可见地理、案牍、军务、财赋、人物关系和公开历史事件链派生角色可见传闻/奏报/私信/侦报；这些进入事件档案 `intelligence_rumor` 条目和 `intel.rumors` prompt 检索行，传闻真伪、密情公开、任免、战和、刑赏、财政结算和落库仍由服务器裁决。
+- 完成 S66.2 局势簿分页面板：新增 `informationPanelPageView`，为天下格局、任所地理、人物谱牒、官职簿和事件档案提供服务器分页、检索、筛选、排序和分页 metadata；浏览器只读 route view，不读 raw SQLite table、raw audit、provider proposal、prompt、本地路径或 key。
 - 新增 Xiaomi MiMo provider：支持 `mimo` 与 `mimo-deepseek`，后者让 MiMo 负责开局、普通回合、流式叙事和出题，让 DeepSeek V4 Pro 负责科举评卷。
 - 更新 README 与项目文档：把当前功能、修复、安全边界、启动方式和常用命令整理成更适合 GitHub 首页阅读的结构。
 
@@ -186,7 +187,7 @@ npm run storage:audit-events -- status
 - `npm test` 使用 Node.js 内置测试，覆盖状态边界、AI schema、科举、关系、长期事件、官场、角色联动、存储、SSE 和脚本逻辑。
 - `npm run check:docs-governance` 检查开发治理规范、活动路线图和必读文档中的受保护规则。
 - `npm run eval:ai` 是离线 AI 输出质量门槛，覆盖 provider-shaped JSON、越权风险、历史语气、评分边界和作弊处罚。
-- `npm run smoke:browser` 启动临时 Mock 服务器，覆盖完整书生到入仕路径、作弊样例、代表身份回合、存档簿、年月旬显示和桌面/移动布局；`--information-parity` 专项比对 JSON/SQLite 双模式下“局势簿”五类面板和事件档案分页。
+- `npm run smoke:browser` 启动临时 Mock 服务器，覆盖完整书生到入仕路径、作弊样例、代表身份回合、存档簿、年月旬显示和桌面/移动布局；`--information-parity` 专项比对 JSON/SQLite 双模式下“局势簿”五类面板、搜索/筛选/排序/分页控件、分页 metadata 和 hidden-token 防线。
 - `npm run smoke:dual-mode` 串联 JSON/SQLite 完整 Mock browser smoke、局势簿 parity 和 S59.1 存储维护验收；无浏览器或只想核验导入/修复/导出时可加 `--storage-only`。
 - `npm run smoke:provider*` 只在配置真实 provider key 时进行网络调用；无 key 环境会成功跳过。
 - `npm run storage:audit-events -- status|export` 是本地审计公开 projection 工具，默认只输出脱敏统计和 public 事件摘要，不输出 raw audit、provider proposal、prompt、key、本地路径或 hidden notes。
@@ -211,7 +212,8 @@ POST /api/exam/submit
 - `GET /api/game/saves` 只返回脱敏 metadata，不返回完整 `worldState`、隐藏关系、provider 配置或本地路径。
 - `POST /api/game/turn` 支持普通 JSON 与 SSE。SSE 事件包括 `state_preview`、`narrative_chunk`、`final_state`、`error`。
 - `POST /api/ai/connection-test` 不创建 session、不写存档、不用 Mock fallback 掩盖真实 provider 问题。
-- 游戏与考试路由会返回服务器整理后的可见视图，例如 `relationshipView`、`worldGeographyView`、`worldPeopleView`、`officialPostingsView`、`localAffairsDocketView`、`militaryDiplomacyView`、`economicFiscalView`、`historicalEventArchiveView`、`eventArchiveView`。
+- `GET /api/game/state/:sessionId` 可用 `informationTab`、`informationQuery`、`informationFilter`、`informationSort`、`informationPage`、`informationPageSize` 查询局势簿分页；兼容别名 `informationPanelTab` / `informationCollection` 和 `informationSearch`。
+- 游戏与考试路由会返回服务器整理后的可见视图，例如 `relationshipView`、`worldGeographyView`、`worldPeopleView`、`officialPostingsView`、`localAffairsDocketView`、`militaryDiplomacyView`、`economicFiscalView`、`historicalEventArchiveView`、`eventArchiveView`、`informationPanelPageView`。
 
 ## 项目结构
 
@@ -254,5 +256,5 @@ data/sessions/
 - 真实 provider 网络调用需要配置 API key；无 key 环境只验证 Mock、缺 key 分支和 no-key skip。
 - 浏览器 smoke 覆盖完整主线和代表身份回合，但不等同于所有身份的长线游玩验收。
 - SQLite 目前已经包含 session row、审计表、地理 `geo_*` 业务表、可见人物 `people_*` bridge rows、人物事件到 `people_*.last_event_id` 的本地关联、带内容漂移探针的官职任所 `office_*` 派生业务表、安全事件档案 `event_archive_index`、安全 prompt 检索索引，以及只输出 allowlist public 摘要的本地审计公开 projection 工具；它们都不是浏览器、prompt 或服务器裁决的 raw 来源。
-- “超大动态世界数据库”的内容密度仍在继续建设中：S60+ 会按 S60 内容契约补国家/邻国、城市、NPC、官职生态、事件模板、情报可见性和大规模检索，而不是引入远程或多人功能。S61 已把国家/城市深度指标接入安全 view、prompt retrieval 和 SQLite 派生 metadata；S62.1/S62.2 已补 NPC 人口、家族谱系和月末生命周期/资产流动 helper；S63.1/S63.2 已补官职生态、任命池和地方案牍 projection；S64.1/S64.2 已补外交军务态势和经济财政态势 projection；S65.1 已补公开历史事件链；S65.2 已补 `intelligenceRumorView`、`intel.rumors` 和事件档案情报条目，让同一事实按书生传闻、官署奏报、同僚私信、军中侦报或御前摘报进入安全视野。后续继续做大规模检索排序和分页。
+- “超大动态世界数据库”的内容密度仍在继续建设中：S60+ 会按 S60 内容契约补国家/邻国、城市、NPC、官职生态、事件模板、情报可见性和大规模检索，而不是引入远程或多人功能。S61 已把国家/城市深度指标接入安全 view、prompt retrieval 和 SQLite 派生 metadata；S62.1/S62.2 已补 NPC 人口、家族谱系和月末生命周期/资产流动 helper；S63.1/S63.2 已补官职生态、任命池和地方案牍 projection；S64.1/S64.2 已补外交军务态势和经济财政态势 projection；S65.1 已补公开历史事件链；S65.2 已补 `intelligenceRumorView`、`intel.rumors` 和事件档案情报条目；S66.1/S66.2 已补 prompt retrieval 策略与浏览器局势簿搜索、筛选、排序和分页。后续继续做规模、性能和回归验收。
 - 当前不包含远程存档、账号体系、多人同步或云端数据库。

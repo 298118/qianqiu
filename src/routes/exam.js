@@ -44,6 +44,7 @@ const {
   enqueueAuditRecords
 } = require("../game/audit");
 const { buildEventArchiveView } = require("../game/eventArchive");
+const { buildInformationPanelPageViews } = require("../game/informationPanelPage");
 const { appendEvents, applyStatePatch } = require("../game/stateRules");
 const {
   advanceExamScenePhase,
@@ -57,6 +58,9 @@ const router = express.Router();
 
 function toExamPayload(worldState) {
   const activeExam = worldState.activeExam;
+  const worldGeographyView = buildWorldGeographyView(worldState);
+  const worldPeopleView = buildWorldPeopleView(worldState);
+  const officialPostingsView = buildOfficialPostingsView(worldState);
   return {
     sessionId: worldState.sessionId,
     examId: activeExam.examId,
@@ -78,19 +82,24 @@ function toExamPayload(worldState) {
     relationshipView: buildRelationshipInspectionView(worldState),
     activeNpcRequestView: buildActiveNpcRequestView(worldState),
     roleWorldCouplingView: buildRoleWorldCouplingView(worldState),
-    worldGeographyView: buildWorldGeographyView(worldState),
+    worldGeographyView,
     worldEntityView: buildWorldEntityView(worldState),
-    worldPeopleView: buildWorldPeopleView(worldState),
+    worldPeopleView,
     worldThreadView: buildWorldThreadView(worldState),
     longTermEventView: buildLongTermEventView(worldState),
     officialCareerView: buildOfficialCareerView(worldState),
-    officialPostingsView: buildOfficialPostingsView(worldState),
+    officialPostingsView,
     localAffairsDocketView: buildLocalAffairsDocketView(worldState),
     militaryDiplomacyView: buildMilitaryDiplomacyView(worldState),
     economicFiscalView: buildEconomicFiscalView(worldState),
     historicalEventArchiveView: buildHistoricalEventArchiveView(worldState),
     intelligenceRumorView: buildIntelligenceRumorView(worldState),
     eventArchiveView: buildEventArchiveView(worldState),
+    informationPanelPageView: buildInformationPanelPageViews(worldState, {}, {
+      worldGeographyView,
+      worldPeopleView,
+      officialPostingsView
+    }),
     worldState
   };
 }
@@ -395,6 +404,9 @@ router.post("/submit", async (req, res, next) => {
         provider
       }));
 
+      const worldGeographyView = buildWorldGeographyView(worldState);
+      const worldPeopleView = buildWorldPeopleView(worldState);
+      const officialPostingsView = buildOfficialPostingsView(worldState);
       return {
         sessionId: worldState.sessionId,
         examId,
@@ -418,19 +430,24 @@ router.post("/submit", async (req, res, next) => {
         relationshipView: buildRelationshipInspectionView(worldState),
         activeNpcRequestView: buildActiveNpcRequestView(worldState),
         roleWorldCouplingView: buildRoleWorldCouplingView(worldState),
-        worldGeographyView: buildWorldGeographyView(worldState),
+        worldGeographyView,
         worldEntityView: buildWorldEntityView(worldState),
-        worldPeopleView: buildWorldPeopleView(worldState),
+        worldPeopleView,
         worldThreadView: buildWorldThreadView(worldState),
         longTermEventView: buildLongTermEventView(worldState),
         officialCareerView: buildOfficialCareerView(worldState),
-        officialPostingsView: buildOfficialPostingsView(worldState),
+        officialPostingsView,
         localAffairsDocketView: buildLocalAffairsDocketView(worldState),
         militaryDiplomacyView: buildMilitaryDiplomacyView(worldState),
         economicFiscalView: buildEconomicFiscalView(worldState),
         historicalEventArchiveView: buildHistoricalEventArchiveView(worldState),
         intelligenceRumorView: buildIntelligenceRumorView(worldState),
         eventArchiveView: buildEventArchiveView(worldState),
+        informationPanelPageView: buildInformationPanelPageViews(worldState, {}, {
+          worldGeographyView,
+          worldPeopleView,
+          officialPostingsView
+        }),
         worldState
       };
     });

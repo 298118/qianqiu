@@ -461,6 +461,28 @@ test("browser smoke information panel shell helper catches missing views and eve
       eventArchiveItemCount: 1,
       eventArchiveMetricCount: 1,
       eventArchiveStructuredCount: 0,
+      informationControls: {
+        controlCount: 0,
+        searchCount: 0,
+        filterCount: 0,
+        sortCount: 0,
+        pagerCount: 0
+      },
+      panelPageMetadata: [
+        {
+          id: "world-geography-panel",
+          tabId: "world-geography",
+          filter: "",
+          sort: "",
+          page: "",
+          pageSize: "",
+          totalItems: "",
+          totalPages: "",
+          pageItemCount: "",
+          visibleCards: 1,
+          filterOptions: ["country"]
+        }
+      ],
       text: "局势簿 hiddenNotes OPENAI_API_KEY"
     },
     {
@@ -485,6 +507,9 @@ test("browser smoke information panel shell helper catches missing views and eve
   assert.match(failures.join("\n"), /event archive items without enough visible metrics/);
   assert.match(failures.join("\n"), /event archive items without required data attributes/);
   assert.match(failures.join("\n"), /did not expose event archive pagination metadata/);
+  assert.match(failures.join("\n"), /did not expose search\/filter\/sort\/pagination controls/);
+  assert.match(failures.join("\n"), /did not expose page metadata/);
+  assert.match(failures.join("\n"), /page item counts do not match rendered cards/);
   assert.match(failures.join("\n"), /leaked hidden text tokens: hiddenNotes, OPENAI_API_KEY/);
 });
 
@@ -529,6 +554,80 @@ test("browser smoke information panel helper accepts pagination metadata and cat
         hasNextPage: "true",
         pageItemCount: "2"
       },
+      informationControls: {
+        controlCount: 5,
+        searchCount: 5,
+        filterCount: 5,
+        sortCount: 5,
+        pagerCount: 5
+      },
+      panelPageMetadata: [
+        {
+          id: "world-geography-panel",
+          tabId: "world-geography",
+          filter: "all",
+          sort: "pressure",
+          page: "1",
+          pageSize: "8",
+          totalItems: "12",
+          totalPages: "2",
+          pageItemCount: "5",
+          visibleCards: 5,
+          filterOptions: ["all", "country", "city", "route", "frontier", "office-jurisdiction"]
+        },
+        {
+          id: "posting-geography-panel",
+          tabId: "posting-geography",
+          filter: "all",
+          sort: "risk",
+          page: "1",
+          pageSize: "8",
+          totalItems: "8",
+          totalPages: "1",
+          pageItemCount: "2",
+          visibleCards: 2,
+          filterOptions: ["all", "posting", "jurisdiction", "route"]
+        },
+        {
+          id: "world-people-panel",
+          tabId: "world-people",
+          filter: "npc",
+          sort: "risk",
+          page: "1",
+          pageSize: "8",
+          totalItems: "9",
+          totalPages: "2",
+          pageItemCount: "2",
+          visibleCards: 2,
+          filterOptions: ["all", "npc", "household", "asset", "estate", "relationship"]
+        },
+        {
+          id: "official-postings-panel",
+          tabId: "official-postings",
+          filter: "all",
+          sort: "risk",
+          page: "1",
+          pageSize: "8",
+          totalItems: "9",
+          totalPages: "2",
+          pageItemCount: "2",
+          visibleCards: 2,
+          filterOptions: ["all", "bureau", "office", "posting", "assessment", "transfer"]
+        },
+        {
+          id: "event-archive-panel",
+          tabId: "event-archive",
+          filter: "all",
+          sort: "turn",
+          page: "1",
+          pageSize: "2",
+          totalItems: "5",
+          totalPages: "3",
+          pageItemCount: "2",
+          visibleCards: 2,
+          filterOptions: ["all", "event_history", "world_thread", "official_career"]
+        }
+      ],
       text: "局势簿 公开卷宗"
     },
     {
@@ -579,6 +678,28 @@ test("browser smoke information panel helper accepts pagination metadata and cat
         hasNextPage: "false",
         pageItemCount: "1"
       },
+      informationControls: {
+        controlCount: 5,
+        searchCount: 5,
+        filterCount: 5,
+        sortCount: 5,
+        pagerCount: 5
+      },
+      panelPageMetadata: [
+        {
+          id: "world-geography-panel",
+          tabId: "world-geography",
+          filter: "all",
+          sort: "pressure",
+          page: "1",
+          pageSize: "8",
+          totalItems: "1",
+          totalPages: "1",
+          pageItemCount: "1",
+          visibleCards: 1,
+          filterOptions: ["all", "country"]
+        }
+      ],
       text: "局势簿 prompt_retrieval_index event_archive_index world_state_json"
     },
     {},
@@ -587,6 +708,81 @@ test("browser smoke information panel helper accepts pagination metadata and cat
   assert.match(leaked.join("\n"), /prompt_retrieval_index/);
   assert.match(leaked.join("\n"), /event_archive_index/);
   assert.match(leaked.join("\n"), /world_state_json/);
+});
+
+test("browser smoke information panel helper validates S66.2 page controls and active page size", () => {
+  const failures = getInformationPanelShellFailures(
+    {
+      activeTab: "event-archive",
+      tabIds: ["world-geography", "posting-geography", "world-people", "official-postings", "event-archive"],
+      disabledTabIds: [],
+      panelIds: [
+        "world-geography-panel",
+        "posting-geography-panel",
+        "world-people-panel",
+        "official-postings-panel",
+        "event-archive-panel"
+      ],
+      readyPanelIds: [
+        "world-geography-panel",
+        "posting-geography-panel",
+        "world-people-panel",
+        "official-postings-panel",
+        "event-archive-panel"
+      ],
+      worldGeographyKinds: ["country", "city", "route", "frontier", "office-jurisdiction"],
+      postingGeographyKinds: ["jurisdiction", "route"],
+      worldPeopleKinds: ["npc", "relationship"],
+      officialPostingKinds: ["bureau", "office"],
+      eventArchiveSourceTypes: ["event_history"],
+      roleVisibleGeographyCount: 0,
+      worldPeopleCardCount: 1,
+      officialPostingCardCount: 1,
+      worldPeopleMetricCount: 2,
+      officialPostingMetricCount: 2,
+      eventArchiveItemCount: 1,
+      eventArchiveMetricCount: 3,
+      eventArchiveStructuredCount: 1,
+      eventArchivePagination: {
+        page: "1",
+        pageSize: "2",
+        totalItems: "4",
+        totalPages: "2",
+        hasNextPage: "true",
+        pageItemCount: "1"
+      },
+      informationControls: {
+        controlCount: 5,
+        searchCount: 5,
+        filterCount: 5,
+        sortCount: 5,
+        pagerCount: 5
+      },
+      panelPageMetadata: [
+        {
+          id: "event-archive-panel",
+          tabId: "event-archive",
+          filter: "event_history",
+          sort: "turn",
+          page: "1",
+          pageSize: "4",
+          totalItems: "4",
+          totalPages: "1",
+          pageItemCount: "1",
+          visibleCards: 1,
+          filterOptions: ["all", "event_history"]
+        }
+      ],
+      text: "局势簿 公开卷宗"
+    },
+    {
+      expectedPageSize: 2,
+      expectedEventArchiveSourceTypes: ["event_history"]
+    },
+    "information fixture"
+  );
+
+  assert.match(failures.join("\n"), /expected active page size 2, got 4/);
 });
 
 test("browser smoke information parity helper compares normalized snapshots", () => {
@@ -614,12 +810,40 @@ test("browser smoke information parity helper compares normalized snapshots", ()
       totalPages: "3",
       hasNextPage: "true",
       pageItemCount: "2"
-    }
+    },
+    panelPageMetadata: [
+      {
+        tabId: "world-geography",
+        filter: "all",
+        sort: "pressure",
+        page: "1",
+        pageSize: "8",
+        totalItems: "10",
+        totalPages: "2",
+        pageItemCount: "3",
+        visibleCards: "3",
+        filterOptions: ["city", "all", "country"]
+      }
+    ]
   });
   const sameSnapshot = normalizeInformationPanelParitySnapshot({
     ...baseSnapshot,
     tabIds: ["world-geography", "event-archive"],
-    eventArchiveSourceTypes: ["event_history", "official_career"]
+    eventArchiveSourceTypes: ["event_history", "official_career"],
+    panelPageMetadata: [
+      {
+        tabId: "world-geography",
+        filter: "all",
+        sort: "pressure",
+        page: "1",
+        pageSize: "8",
+        totalItems: "10",
+        totalPages: "2",
+        pageItemCount: "3",
+        visibleCards: "3",
+        filterOptions: ["all", "country", "city"]
+      }
+    ]
   });
   const changedSnapshot = {
     ...baseSnapshot,

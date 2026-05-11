@@ -410,7 +410,7 @@ function resolveInformationParitySqlitePlan(storageAdapter, options = {}) {
   return { ownsSqliteDatabase, sqliteDatabasePath };
 }
 
-async function waitForHealth(baseUrl, child, getOutput, timeoutMs = 15000) {
+async function waitForHealth(baseUrl, child, getOutput, timeoutMs = 45000) {
   const deadline = Date.now() + timeoutMs;
   let lastError = null;
 
@@ -1061,6 +1061,15 @@ function getMissingInformationPanelItems(actual = [], expected = []) {
   return expected.filter((item) => !available.has(item));
 }
 
+function getInformationPanelAvailableFilters(snapshot = {}, tabId, visibleValues = []) {
+  const panelPages = Array.isArray(snapshot.panelPageMetadata) ? snapshot.panelPageMetadata : [];
+  const page = panelPages.find((entry) => entry?.tabId === tabId) || {};
+  return uniqueSorted([
+    ...(visibleValues || []),
+    ...(Array.isArray(page.filterOptions) ? page.filterOptions : [])
+  ]);
+}
+
 function getInformationPanelShellFailures(snapshot = {}, expectations = {}, mode = "information") {
   const failures = [];
   const expectedTabs = expectations.expectedTabs || informationPanelTabs;
@@ -1120,21 +1129,30 @@ function getInformationPanelShellFailures(snapshot = {}, expectations = {}, mode
   }
 
   if (expectations.expectWorldGeographyDetails !== false) {
-    const missingWorldKinds = getMissingInformationPanelItems(snapshot.worldGeographyKinds, expectedWorldGeographyKinds);
+    const missingWorldKinds = getMissingInformationPanelItems(
+      getInformationPanelAvailableFilters(snapshot, "world-geography", snapshot.worldGeographyKinds),
+      expectedWorldGeographyKinds
+    );
     if (missingWorldKinds.length) {
       failures.push(`${mode} information panel is missing world geography card kinds: ${missingWorldKinds.join(", ")}.`);
     }
   }
 
   if (expectations.expectPostingGeographyDetails !== false) {
-    const missingPostingKinds = getMissingInformationPanelItems(snapshot.postingGeographyKinds, expectedPostingGeographyKinds);
+    const missingPostingKinds = getMissingInformationPanelItems(
+      getInformationPanelAvailableFilters(snapshot, "posting-geography", snapshot.postingGeographyKinds),
+      expectedPostingGeographyKinds
+    );
     if (missingPostingKinds.length) {
       failures.push(`${mode} information panel is missing posting geography card kinds: ${missingPostingKinds.join(", ")}.`);
     }
   }
 
   if (expectations.expectWorldPeopleDetails !== false) {
-    const missingPeopleKinds = getMissingInformationPanelItems(snapshot.worldPeopleKinds, expectedWorldPeopleKinds);
+    const missingPeopleKinds = getMissingInformationPanelItems(
+      getInformationPanelAvailableFilters(snapshot, "world-people", snapshot.worldPeopleKinds),
+      expectedWorldPeopleKinds
+    );
     if (missingPeopleKinds.length) {
       failures.push(`${mode} information panel is missing world people card kinds: ${missingPeopleKinds.join(", ")}.`);
     }
@@ -1144,7 +1162,10 @@ function getInformationPanelShellFailures(snapshot = {}, expectations = {}, mode
   }
 
   if (expectations.expectOfficialPostingDetails !== false) {
-    const missingOfficialKinds = getMissingInformationPanelItems(snapshot.officialPostingKinds, expectedOfficialPostingKinds);
+    const missingOfficialKinds = getMissingInformationPanelItems(
+      getInformationPanelAvailableFilters(snapshot, "official-postings", snapshot.officialPostingKinds),
+      expectedOfficialPostingKinds
+    );
     if (missingOfficialKinds.length) {
       failures.push(`${mode} information panel is missing official posting card kinds: ${missingOfficialKinds.join(", ")}.`);
     }
@@ -1170,7 +1191,10 @@ function getInformationPanelShellFailures(snapshot = {}, expectations = {}, mode
     if (itemCount < 1) {
       failures.push(`${mode} information panel did not render event archive items.`);
     }
-    const missingEventSources = getMissingInformationPanelItems(snapshot.eventArchiveSourceTypes, expectedEventArchiveSourceTypes);
+    const missingEventSources = getMissingInformationPanelItems(
+      getInformationPanelAvailableFilters(snapshot, "event-archive", snapshot.eventArchiveSourceTypes),
+      expectedEventArchiveSourceTypes
+    );
     if (missingEventSources.length) {
       failures.push(`${mode} information panel is missing event archive source types: ${missingEventSources.join(", ")}.`);
     }
@@ -1200,6 +1224,49 @@ function getInformationPanelShellFailures(snapshot = {}, expectations = {}, mode
     }
     if (expectations.expectedEventArchivePageSize && pageSize !== expectations.expectedEventArchivePageSize) {
       failures.push(`${mode} information panel expected event archive page size ${expectations.expectedEventArchivePageSize}, got ${pageSize}.`);
+    }
+  }
+
+  if (expectations.expectInformationControls !== false) {
+    const controls = snapshot.informationControls || {};
+    const controlCount = Number(controls.controlCount || 0);
+    const searchCount = Number(controls.searchCount || 0);
+    const filterCount = Number(controls.filterCount || 0);
+    const sortCount = Number(controls.sortCount || 0);
+    const pagerCount = Number(controls.pagerCount || 0);
+    const expectedControlCount = expectations.expectedInformationControlCount || expectedPanels.length;
+    if (controlCount < expectedControlCount || searchCount < expectedControlCount || filterCount < expectedControlCount || sortCount < expectedControlCount || pagerCount < expectedControlCount) {
+      failures.push(`${mode} information panel did not expose search/filter/sort/pagination controls for every panel.`);
+    }
+  }
+
+  const panelPages = Array.isArray(snapshot.panelPageMetadata) ? snapshot.panelPageMetadata : [];
+  if (expectations.expectInformationPageMetadata !== false) {
+    const missingMetadata = panelPages.filter((page) =>
+      !page.tabId ||
+      Number(page.page) < 1 ||
+      Number(page.pageSize) < 1 ||
+      Number(page.totalItems) < 0 ||
+      Number(page.totalPages) < 1 ||
+      Number(page.pageItemCount) < 0 ||
+      !page.filter ||
+      !page.sort
+    );
+    if (missingMetadata.length) {
+      failures.push(`${mode} information panel did not expose page metadata for panels: ${missingMetadata.map((page) => page.id || page.tabId || "unknown").join(", ")}.`);
+    }
+    const mismatchedCards = panelPages.filter((page) => Number(page.visibleCards || 0) !== Number(page.pageItemCount || 0));
+    if (mismatchedCards.length) {
+      failures.push(`${mode} information panel page item counts do not match rendered cards for panels: ${mismatchedCards.map((page) => page.tabId).join(", ")}.`);
+    }
+  }
+
+  if (expectations.expectedPageSize) {
+    const wrongPageSize = panelPages.filter((page) =>
+      page.tabId === snapshot.activeTab && Number(page.pageSize) !== expectations.expectedPageSize
+    );
+    if (wrongPageSize.length) {
+      failures.push(`${mode} information panel expected active page size ${expectations.expectedPageSize}, got ${wrongPageSize[0].pageSize}.`);
     }
   }
 
@@ -1513,6 +1580,17 @@ async function assertInformationPanelShell(page, mode, expectations = {}) {
     const officialPostingCards = [...document.querySelectorAll("#official-postings-panel .official-posting-card")];
     const eventArchiveItems = [...document.querySelectorAll("#event-archive-panel .event-archive-item")];
     const eventArchivePanel = document.querySelector("#event-archive-panel");
+    const controls = [...document.querySelectorAll("#information-panel .information-controls")];
+    const visibleCardsForPage = (page) => page.querySelectorAll(
+      ".world-geography-card, .posting-geography-card, .world-people-card, .official-posting-card, .event-archive-item"
+    ).length;
+    const filterOptionsForPage = (page) => {
+      const control = controls.find((entry) => entry.dataset.tabId === page.dataset.tabId);
+      if (!control) return [];
+      const filterSelect = control.querySelector("select[aria-label$='筛选']");
+      if (!filterSelect) return [];
+      return [...filterSelect.options].map((option) => option.value).filter(Boolean);
+    };
     return {
       activeTab: panel?.dataset.activeTab || "",
       tabIds: tabs.map((tab) => tab.dataset.tabId),
@@ -1544,6 +1622,28 @@ async function assertInformationPanelShell(page, mode, expectations = {}) {
         hasNextPage: eventArchivePanel?.dataset.archiveHasNextPage || "",
         pageItemCount: eventArchivePanel?.dataset.archivePageItemCount || ""
       },
+      informationControls: {
+        controlCount: controls.length,
+        searchCount: document.querySelectorAll("#information-panel .information-search").length,
+        filterCount: document.querySelectorAll("#information-panel .information-controls .information-filter").length,
+        sortCount: document.querySelectorAll("#information-panel .information-controls select[aria-label$='排序']").length,
+        pagerCount: document.querySelectorAll("#information-panel .information-pagination").length
+      },
+      panelPageMetadata: pages.map((page) => ({
+        id: page.id,
+        tabId: page.dataset.tabId || "",
+        query: page.dataset.query || "",
+        filter: page.dataset.filter || "",
+        sort: page.dataset.sort || "",
+        page: page.dataset.page || "",
+        pageSize: page.dataset.pageSize || "",
+        totalItems: page.dataset.totalItems || "",
+        totalPages: page.dataset.totalPages || "",
+        pageItemCount: page.dataset.pageItemCount || "",
+        queryRejected: page.dataset.queryRejected || "",
+        visibleCards: visibleCardsForPage(page),
+        filterOptions: filterOptionsForPage(page)
+      })),
       contentCardCount: document.querySelectorAll(
         "#information-panel .world-geography-card, #information-panel .posting-geography-card, #information-panel .world-people-card, #information-panel .official-posting-card, #information-panel .event-archive-item"
       ).length,
@@ -1607,6 +1707,7 @@ function stableJson(value) {
 
 function normalizeInformationPanelParitySnapshot(snapshot = {}) {
   const pagination = snapshot.eventArchivePagination || {};
+  const metadata = Array.isArray(snapshot.panelPageMetadata) ? snapshot.panelPageMetadata : [];
   return {
     activeTab: snapshot.activeTab,
     tabIds: uniqueSorted(snapshot.tabIds || []),
@@ -1624,6 +1725,25 @@ function normalizeInformationPanelParitySnapshot(snapshot = {}) {
     worldPeopleCardCount: normalizeNumeric(snapshot.worldPeopleCardCount),
     officialPostingCardCount: normalizeNumeric(snapshot.officialPostingCardCount),
     eventArchiveItemCount: normalizeNumeric(snapshot.eventArchiveItemCount),
+    informationControls: {
+      controlCount: normalizeNumeric(snapshot.informationControls?.controlCount),
+      searchCount: normalizeNumeric(snapshot.informationControls?.searchCount),
+      filterCount: normalizeNumeric(snapshot.informationControls?.filterCount),
+      sortCount: normalizeNumeric(snapshot.informationControls?.sortCount),
+      pagerCount: normalizeNumeric(snapshot.informationControls?.pagerCount)
+    },
+    panelPageMetadata: metadata.map((page) => ({
+      tabId: page.tabId || "",
+      filter: page.filter || "",
+      sort: page.sort || "",
+      page: normalizeNumeric(page.page),
+      pageSize: normalizeNumeric(page.pageSize),
+      totalItems: normalizeNumeric(page.totalItems),
+      totalPages: normalizeNumeric(page.totalPages),
+      pageItemCount: normalizeNumeric(page.pageItemCount),
+      visibleCards: normalizeNumeric(page.visibleCards),
+      filterOptions: uniqueSorted(page.filterOptions || [])
+    })).sort((first, second) => first.tabId.localeCompare(second.tabId)),
     eventArchivePagination: {
       page: normalizeNumeric(pagination.page),
       pageSize: normalizeNumeric(pagination.pageSize),
@@ -2559,7 +2679,7 @@ async function fetchSessionState(baseUrl, sessionId) {
 
 async function fetchPagedEventArchiveState(baseUrl, sessionId, pageSize = 2) {
   const response = await fetch(
-    `${baseUrl}/api/game/state/${sessionId}?eventArchivePage=1&eventArchivePageSize=${pageSize}`
+    `${baseUrl}/api/game/state/${sessionId}?eventArchivePage=1&eventArchivePageSize=${pageSize}&informationTab=event-archive&informationPage=1&informationPageSize=${pageSize}`
   );
   if (!response.ok) {
     throw new Error(`Paged event archive for ${sessionId} is not readable through the API: ${response.status}`);
@@ -2574,6 +2694,16 @@ async function fetchPagedEventArchiveState(baseUrl, sessionId, pageSize = 2) {
   }
   if ((archive.counts?.total || 0) !== archive.pagination?.totalItems) {
     throw new Error("Paged event archive counts total did not match pagination totalItems.");
+  }
+  const informationPage = payload.informationPanelPageView?.activePage || {};
+  if (informationPage.tabId !== "event-archive") {
+    throw new Error(`Paged information panel expected event-archive tab, got ${informationPage.tabId || "none"}.`);
+  }
+  if (informationPage.pagination?.pageSize !== pageSize) {
+    throw new Error(`Paged information panel expected page size ${pageSize}, got ${informationPage.pagination?.pageSize}.`);
+  }
+  if (normalizeRouteArray(informationPage, "items").length > pageSize) {
+    throw new Error(`Paged information panel rendered more than ${pageSize} items.`);
   }
   return payload;
 }

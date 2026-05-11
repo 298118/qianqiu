@@ -65,6 +65,10 @@ const {
   enqueueAuditRecords
 } = require("../game/audit");
 const { buildEventArchiveView } = require("../game/eventArchive");
+const {
+  buildInformationPanelPageViews,
+  informationPanelOptionsFromQuery
+} = require("../game/informationPanelPage");
 const { buildEconomicFiscalView } = require("../game/economicFiscal");
 const { buildHistoricalEventArchiveView } = require("../game/historicalEventArchive");
 const { buildIntelligenceRumorView } = require("../game/intelligenceRumors");
@@ -233,25 +237,33 @@ function eventArchiveOptionsFromQuery(query = {}) {
 }
 
 function buildCommonTurnViews(worldState, options = {}) {
+  const worldGeographyView = buildWorldGeographyView(worldState);
+  const worldPeopleView = buildWorldPeopleView(worldState);
+  const officialPostingsView = buildOfficialPostingsView(worldState);
   return {
     examCalendarView: buildExamCalendarView(worldState),
     examRivalView: buildExamRivalView(worldState),
     relationshipView: buildRelationshipInspectionView(worldState),
     activeNpcRequestView: buildActiveNpcRequestView(worldState),
     roleWorldCouplingView: buildRoleWorldCouplingView(worldState),
-    worldGeographyView: buildWorldGeographyView(worldState),
+    worldGeographyView,
     worldEntityView: buildWorldEntityView(worldState),
-    worldPeopleView: buildWorldPeopleView(worldState),
+    worldPeopleView,
     worldThreadView: buildWorldThreadView(worldState),
     longTermEventView: buildLongTermEventView(worldState),
     officialCareerView: buildOfficialCareerView(worldState),
-    officialPostingsView: buildOfficialPostingsView(worldState),
+    officialPostingsView,
     localAffairsDocketView: buildLocalAffairsDocketView(worldState),
     militaryDiplomacyView: buildMilitaryDiplomacyView(worldState),
     economicFiscalView: buildEconomicFiscalView(worldState),
     historicalEventArchiveView: buildHistoricalEventArchiveView(worldState),
     intelligenceRumorView: buildIntelligenceRumorView(worldState),
-    eventArchiveView: buildEventArchiveView(worldState, options.eventArchive)
+    eventArchiveView: buildEventArchiveView(worldState, options.eventArchive),
+    informationPanelPageView: buildInformationPanelPageViews(worldState, options.informationPanel || {}, {
+      worldGeographyView,
+      worldPeopleView,
+      officialPostingsView
+    })
   };
 }
 
@@ -529,6 +541,7 @@ async function streamTurn(res, sessionId, input) {
       historicalEventArchiveView: payload.historicalEventArchiveView,
       intelligenceRumorView: payload.intelligenceRumorView,
       eventArchiveView: payload.eventArchiveView,
+      informationPanelPageView: payload.informationPanelPageView,
       officialCareer: payload.officialCareer,
       examTrigger: payload.examTrigger,
       examScene: payload.examScene || null,
@@ -575,6 +588,7 @@ router.post("/start", async (req, res, next) => {
       historicalEventArchiveView: buildHistoricalEventArchiveView(worldState),
       intelligenceRumorView: buildIntelligenceRumorView(worldState),
       eventArchiveView: buildEventArchiveView(worldState),
+      informationPanelPageView: buildInformationPanelPageViews(worldState),
       narrative: opening.narrative
     });
   } catch (error) {
@@ -598,24 +612,10 @@ router.get("/state/:sessionId", async (req, res, next) => {
     res.json({
       sessionId: worldState.sessionId,
       worldState,
-      examCalendarView: buildExamCalendarView(worldState),
-      examRivalView: buildExamRivalView(worldState),
-      relationshipView: buildRelationshipInspectionView(worldState),
-      activeNpcRequestView: buildActiveNpcRequestView(worldState),
-      roleWorldCouplingView: buildRoleWorldCouplingView(worldState),
-      worldGeographyView: buildWorldGeographyView(worldState),
-      worldEntityView: buildWorldEntityView(worldState),
-      worldPeopleView: buildWorldPeopleView(worldState),
-      worldThreadView: buildWorldThreadView(worldState),
-      longTermEventView: buildLongTermEventView(worldState),
-      officialCareerView: buildOfficialCareerView(worldState),
-      officialPostingsView: buildOfficialPostingsView(worldState),
-      localAffairsDocketView: buildLocalAffairsDocketView(worldState),
-      militaryDiplomacyView: buildMilitaryDiplomacyView(worldState),
-      economicFiscalView: buildEconomicFiscalView(worldState),
-      historicalEventArchiveView: buildHistoricalEventArchiveView(worldState),
-      intelligenceRumorView: buildIntelligenceRumorView(worldState),
-      eventArchiveView: buildEventArchiveView(worldState, eventArchiveOptionsFromQuery(req.query))
+      ...buildCommonTurnViews(worldState, {
+        eventArchive: eventArchiveOptionsFromQuery(req.query),
+        informationPanel: informationPanelOptionsFromQuery(req.query)
+      })
     });
   } catch (error) {
     next(error);

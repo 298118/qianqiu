@@ -49,7 +49,9 @@ let currentWorldEntityView = null;
 let currentWorldPeopleView = null;
 let currentOfficialPostingsView = null;
 let currentEventArchiveView = null;
+let currentInformationPanelPageView = null;
 let currentInformationPanelTab = "world-geography";
+let currentInformationPanelControls = {};
 let currentExamPayload = null;
 let activeNarrativeStream = null;
 let latestSavePayload = { saves: [], skipped: [] };
@@ -82,35 +84,45 @@ const INFORMATION_PANEL_TABS = Object.freeze([
     label: "天下",
     title: "天下格局",
     panelId: "world-geography-panel",
-    sourceView: "worldGeographyView"
+    sourceView: "worldGeographyView",
+    defaultFilter: "all",
+    defaultSort: "pressure"
   },
   {
     id: "posting-geography",
     label: "任所",
     title: "任所地理",
     panelId: "posting-geography-panel",
-    sourceView: "officialPostingsView+worldGeographyView"
+    sourceView: "officialPostingsView+worldGeographyView",
+    defaultFilter: "all",
+    defaultSort: "risk"
   },
   {
     id: "world-people",
     label: "人物",
     title: "人物谱牒",
     panelId: "world-people-panel",
-    sourceView: "worldPeopleView"
+    sourceView: "worldPeopleView",
+    defaultFilter: "npc",
+    defaultSort: "risk"
   },
   {
     id: "official-postings",
     label: "官职",
     title: "官职簿",
     panelId: "official-postings-panel",
-    sourceView: "officialPostingsView"
+    sourceView: "officialPostingsView",
+    defaultFilter: "all",
+    defaultSort: "risk"
   },
   {
     id: "event-archive",
     label: "事件",
     title: "事件档案",
     panelId: "event-archive-panel",
-    sourceView: "eventArchiveView"
+    sourceView: "eventArchiveView",
+    defaultFilter: "all",
+    defaultSort: "turn"
   }
 ]);
 
@@ -914,6 +926,65 @@ function isInformationTabDisabled(tab) {
   return tab.id === "event-archive" && !currentEventArchiveView;
 }
 
+function getInformationTab(tabId) {
+  return INFORMATION_PANEL_TABS.find((tab) => tab.id === tabId) || INFORMATION_PANEL_TABS[0];
+}
+
+function normalizeInformationControl(tabId, controls = {}) {
+  const tab = getInformationTab(tabId);
+  return {
+    query: typeof controls.query === "string" ? controls.query : "",
+    filter: controls.filter || tab.defaultFilter || "all",
+    sort: controls.sort || tab.defaultSort || "default",
+    page: Number(controls.page) > 0 ? Number(controls.page) : 1,
+    pageSize: Number(controls.pageSize) > 0 ? Number(controls.pageSize) : 8
+  };
+}
+
+function getInformationControl(tabId) {
+  const tab = getInformationTab(tabId);
+  const serverPage = getInformationPanelPage(tabId);
+  const existing = currentInformationPanelControls[tabId] || {};
+  return normalizeInformationControl(tabId, {
+    query: existing.query ?? serverPage?.query ?? "",
+    filter: existing.filter ?? serverPage?.filter ?? tab.defaultFilter,
+    sort: existing.sort ?? serverPage?.sort ?? tab.defaultSort,
+    page: existing.page ?? serverPage?.pagination?.page ?? 1,
+    pageSize: existing.pageSize ?? serverPage?.pagination?.pageSize ?? 8
+  });
+}
+
+function setInformationControl(tabId, patch = {}) {
+  currentInformationPanelControls = {
+    ...currentInformationPanelControls,
+    [tabId]: normalizeInformationControl(tabId, {
+      ...getInformationControl(tabId),
+      ...patch
+    })
+  };
+}
+
+function syncInformationControlsFromPageView(view = currentInformationPanelPageView) {
+  const pages = Array.isArray(view?.pages) ? view.pages : [];
+  pages.forEach((page) => {
+    currentInformationPanelControls[page.tabId] = normalizeInformationControl(page.tabId, {
+      query: page.query || "",
+      filter: page.filter || "all",
+      sort: page.sort || getInformationTab(page.tabId).defaultSort,
+      page: page.pagination?.page || 1,
+      pageSize: page.pagination?.pageSize || 8
+    });
+  });
+  if (view?.activeTabId) currentInformationPanelTab = view.activeTabId;
+}
+
+function getInformationPanelPage(tabId) {
+  const pages = Array.isArray(currentInformationPanelPageView?.pages)
+    ? currentInformationPanelPageView.pages
+    : [];
+  return pages.find((page) => page?.tabId === tabId) || null;
+}
+
 function buildRowMap(rows = []) {
   return new Map(viewArray({ rows }, "rows").filter((row) => row?.id).map((row) => [row.id, row]));
 }
@@ -1022,6 +1093,56 @@ function createInformationDetailCard(options = {}) {
     extra.textContent = options.extra;
     card.appendChild(extra);
   }
+  return card;
+}
+
+function createInformationPageCard(row = {}) {
+  const className = {
+    "world-geography": "world-geography-card",
+    "posting-geography": "posting-geography-card",
+    "world-people": "world-people-card",
+    "official-postings": "official-posting-card",
+    "event-archive": "event-archive-item"
+  }[row.tabId] || "information-detail-card";
+  const card = row.tabId === "event-archive"
+    ? createEventArchiveItem({
+      id: row.id,
+      sourceType: row.sourceType || row.filterValue,
+      sourceLabel: row.kindLabel,
+      kind: row.kind,
+      status: row.status,
+      statusLabel: row.statusLabel,
+      visibility: row.visibility,
+      turn: row.turn,
+      year: row.year,
+      month: row.month,
+      tenDayPeriod: row.tenDayPeriod,
+      dateLabel: row.dateLabel || row.meta,
+      title: row.title,
+      summary: row.summary,
+      riskLabel: row.risk ? row.statusLabel : "",
+      relatedLabels: row.extra ? [row.extra] : []
+    })
+    : createInformationDetailCard({
+      className,
+      kind: row.kind,
+      entityId: row.id,
+      status: row.status,
+      visibility: row.visibility,
+      cityId: row.cityId,
+      routeId: row.routeId,
+      pressure: row.pressure,
+      risk: row.risk,
+      title: row.title,
+      meta: row.meta || row.kindLabel,
+      summary: row.summary,
+      metrics: (row.metrics || []).map((entry) => [entry.label, entry.value]),
+      extra: row.extra || compactList(row.tags, "")
+    });
+
+  card.dataset.sourceView = row.sourceView || "";
+  card.dataset.filterValue = row.filterValue || "";
+  if (row.dateLabel) card.dataset.dateLabel = row.dateLabel;
   return card;
 }
 
@@ -1659,7 +1780,34 @@ function renderEventArchiveDetails(archive = currentEventArchiveView) {
   return renderInformationDetailSection("事件要目", `${cards.length}/${total}条公开卷宗${page}`, cards);
 }
 
+function shouldUseInformationPageItems(tabId) {
+  if (!getInformationPanelPage(tabId)) return false;
+  return true;
+}
+
+function renderInformationPageDetails(tabId) {
+  const page = getInformationPanelPage(tabId);
+  if (!page || !shouldUseInformationPageItems(tabId)) return null;
+  const items = Array.isArray(page.items) ? page.items : [];
+  const cards = items.map(createInformationPageCard);
+  const pagination = page.pagination || {};
+  const total = pagination.totalItems ?? page.counts?.filtered ?? cards.length;
+  const pageLabel = pagination.page && pagination.totalPages
+    ? ` · 第${pagination.page}/${pagination.totalPages}页`
+    : "";
+  const title = {
+    "world-geography": "地理索引",
+    "posting-geography": "任所索引",
+    "world-people": "谱牒索引",
+    "official-postings": "官职索引",
+    "event-archive": "事件索引"
+  }[tabId] || "可见索引";
+  return renderInformationDetailSection(title, `${cards.length}/${total}条可见细目${pageLabel}`, cards);
+}
+
 function renderInformationPanelDetails(tabId) {
+  const paged = renderInformationPageDetails(tabId);
+  if (paged) return paged;
   if (tabId === "world-geography") return renderWorldGeographyDetails();
   if (tabId === "posting-geography") return renderPostingGeographyDetails();
   if (tabId === "world-people") return renderWorldPeopleDetails();
@@ -2415,9 +2563,155 @@ function renderExamRivalPanel(examRivalView = currentExamRivalView) {
   return panel;
 }
 
+function createInformationSelect(options = [], value, ariaLabel) {
+  const select = document.createElement("select");
+  select.className = "information-filter";
+  select.setAttribute("aria-label", ariaLabel);
+  options.forEach((option) => {
+    const item = document.createElement("option");
+    item.value = option.value;
+    item.textContent = option.count === undefined ? option.label : `${option.label} ${option.count}`;
+    item.selected = option.value === value;
+    select.appendChild(item);
+  });
+  return select;
+}
+
+async function fetchInformationPanelPage(tabId, patch = {}) {
+  if (!currentSessionId) return;
+  currentInformationPanelTab = tabId;
+  const control = {
+    ...getInformationControl(tabId),
+    ...patch
+  };
+  setInformationControl(tabId, control);
+  const params = new URLSearchParams({
+    informationTab: tabId,
+    informationPage: String(control.page || 1),
+    informationPageSize: String(control.pageSize || 8),
+    informationFilter: control.filter || "all",
+    informationSort: control.sort || "default"
+  });
+  if (control.query) params.set("informationQuery", control.query);
+
+  const response = await fetch(`/api/game/state/${currentSessionId}?${params.toString()}`);
+  if (!response.ok) {
+    throw new Error(`局势簿读取失败：${response.status}`);
+  }
+  renderPayloadWorldState(await response.json());
+}
+
+function renderInformationControls(tab, pageData) {
+  const control = getInformationControl(tab.id);
+  const pagination = pageData?.pagination || {};
+  const controls = document.createElement("form");
+  controls.className = "information-controls";
+  controls.dataset.tabId = tab.id;
+  controls.dataset.query = pageData?.query || "";
+  controls.dataset.filter = pageData?.filter || control.filter || "all";
+  controls.dataset.sort = pageData?.sort || control.sort || "default";
+  controls.dataset.page = String(pagination.page || control.page || 1);
+  controls.dataset.pageSize = String(pagination.pageSize || control.pageSize || 8);
+  controls.dataset.totalItems = String(pagination.totalItems ?? 0);
+  controls.dataset.totalPages = String(pagination.totalPages ?? 1);
+  controls.dataset.resultCount = String(pageData?.counts?.pageItems ?? viewArray(pageData, "items").length);
+
+  const query = document.createElement("input");
+  query.className = "information-search";
+  query.type = "search";
+  query.name = "informationQuery";
+  query.autocomplete = "off";
+  query.placeholder = "检索";
+  query.value = pageData?.query || control.query || "";
+  query.setAttribute("aria-label", `${tab.title}检索`);
+
+  const filters = Array.isArray(pageData?.filters) && pageData.filters.length
+    ? pageData.filters
+    : [{ value: "all", label: "全部", count: pageData?.counts?.totalAvailable ?? 0 }];
+  const filter = createInformationSelect(filters, pageData?.filter || control.filter || "all", `${tab.title}筛选`);
+
+  const sortOptions = Array.isArray(pageData?.sorts) && pageData.sorts.length
+    ? pageData.sorts
+    : [
+      { value: "default", label: "默认" },
+      { value: "pressure", label: "压力" },
+      { value: "risk", label: "风险" },
+      { value: "turn", label: "回合" },
+      { value: "name", label: "名称" }
+    ];
+  const sort = createInformationSelect(sortOptions, pageData?.sort || control.sort || "default", `${tab.title}排序`);
+
+  const submit = document.createElement("button");
+  submit.type = "submit";
+  submit.className = "information-page-button";
+  submit.textContent = "检索";
+
+  const pager = document.createElement("div");
+  pager.className = "information-pagination";
+  const previous = document.createElement("button");
+  previous.type = "button";
+  previous.className = "information-page-button";
+  previous.textContent = "上一页";
+  previous.disabled = !pagination.hasPreviousPage;
+  const indicator = document.createElement("span");
+  indicator.className = "information-page-indicator";
+  indicator.textContent = `第${pagination.page || 1}/${pagination.totalPages || 1}页`;
+  const next = document.createElement("button");
+  next.type = "button";
+  next.className = "information-page-button";
+  next.textContent = "下一页";
+  next.disabled = !pagination.hasNextPage;
+  pager.append(previous, indicator, next);
+
+  controls.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    try {
+      await fetchInformationPanelPage(tab.id, {
+        query: query.value.trim(),
+        filter: filter.value,
+        sort: sort.value,
+        page: 1
+      });
+    } catch (error) {
+      appendNarrative(error.message, "error");
+    }
+  });
+  filter.addEventListener("change", () => controls.requestSubmit());
+  sort.addEventListener("change", () => controls.requestSubmit());
+  previous.addEventListener("click", async () => {
+    try {
+      await fetchInformationPanelPage(tab.id, {
+        query: query.value.trim(),
+        filter: filter.value,
+        sort: sort.value,
+        page: Math.max(1, Number(pagination.page || 1) - 1)
+      });
+    } catch (error) {
+      appendNarrative(error.message, "error");
+    }
+  });
+  next.addEventListener("click", async () => {
+    try {
+      await fetchInformationPanelPage(tab.id, {
+        query: query.value.trim(),
+        filter: filter.value,
+        sort: sort.value,
+        page: Number(pagination.page || 1) + 1
+      });
+    } catch (error) {
+      appendNarrative(error.message, "error");
+    }
+  });
+
+  controls.append(query, filter, sort, submit, pager);
+  return controls;
+}
+
 function renderInformationPanelPage(tab, activeTabId) {
   const summary = buildInformationPanelSummary(tab);
   const disabled = isInformationTabDisabled(tab);
+  const pageData = getInformationPanelPage(tab.id);
+  const control = getInformationControl(tab.id);
   const page = document.createElement("section");
   page.id = tab.panelId;
   page.className = "information-panel-page";
@@ -2426,14 +2720,23 @@ function renderInformationPanelPage(tab, activeTabId) {
   page.dataset.viewReady = summary.ready ? "true" : "false";
   page.dataset.generatedTurn = String(summary.generatedAtTurn ?? currentWorldState?.turnCount ?? 0);
   page.dataset.itemCount = String(summary.total ?? 0);
-  if (tab.id === "event-archive" && currentEventArchiveView?.pagination) {
-    const pagination = currentEventArchiveView.pagination;
+  page.dataset.query = pageData?.query || "";
+  page.dataset.filter = pageData?.filter || control.filter || "all";
+  page.dataset.sort = pageData?.sort || control.sort || "default";
+  page.dataset.page = String(pageData?.pagination?.page || control.page || 1);
+  page.dataset.pageSize = String(pageData?.pagination?.pageSize || control.pageSize || 8);
+  page.dataset.totalItems = String(pageData?.pagination?.totalItems ?? pageData?.counts?.filtered ?? summary.total ?? 0);
+  page.dataset.totalPages = String(pageData?.pagination?.totalPages || 1);
+  page.dataset.pageItemCount = String(pageData?.counts?.pageItems ?? viewArray(pageData, "items").length);
+  page.dataset.queryRejected = pageData?.queryRejected ? "true" : "false";
+  if (tab.id === "event-archive" && (pageData?.pagination || currentEventArchiveView?.pagination)) {
+    const pagination = pageData?.pagination || currentEventArchiveView.pagination;
     page.dataset.archivePage = String(pagination.page ?? 1);
-    page.dataset.archivePageSize = String(pagination.pageSize ?? viewArray(currentEventArchiveView, "items").length);
-    page.dataset.archiveTotalItems = String(pagination.totalItems ?? summary.total ?? 0);
+    page.dataset.archivePageSize = String(pagination.pageSize ?? viewArray(pageData || currentEventArchiveView, "items").length);
+    page.dataset.archiveTotalItems = String(pagination.totalItems ?? pageData?.counts?.filtered ?? summary.total ?? 0);
     page.dataset.archiveTotalPages = String(pagination.totalPages ?? 1);
     page.dataset.archiveHasNextPage = pagination.hasNextPage ? "true" : "false";
-    page.dataset.archivePageItemCount = String(viewArray(currentEventArchiveView, "items").length);
+    page.dataset.archivePageItemCount = String(pageData?.counts?.pageItems ?? viewArray(currentEventArchiveView, "items").length);
   }
   page.hidden = tab.id !== activeTabId;
 
@@ -2452,6 +2755,7 @@ function renderInformationPanelPage(tab, activeTabId) {
   note.textContent = summary.note;
 
   page.append(title, stats, note);
+  if (pageData && summary.ready) page.appendChild(renderInformationControls(tab, pageData));
   const details = renderInformationPanelDetails(tab.id);
   if (details) page.appendChild(details);
   return page;
@@ -2500,6 +2804,7 @@ function renderInformationPanelShell() {
     button.textContent = tab.label;
     button.addEventListener("click", () => {
       currentInformationPanelTab = tab.id;
+      setInformationControl(tab.id, { page: 1 });
       renderScholarPanel(currentWorldState);
     });
     tabs.appendChild(button);
@@ -2723,7 +3028,8 @@ function renderWorldState(
   worldEntityView,
   worldPeopleView,
   officialPostingsView,
-  eventArchiveView
+  eventArchiveView,
+  informationPanelPageView
 ) {
   currentWorldState = worldState;
   currentRelationshipView = getRelationshipView(worldState, relationshipView);
@@ -2738,6 +3044,8 @@ function renderWorldState(
   currentWorldPeopleView = getRouteView(worldPeopleView);
   currentOfficialPostingsView = getRouteView(officialPostingsView);
   currentEventArchiveView = getRouteView(eventArchiveView);
+  currentInformationPanelPageView = getRouteView(informationPanelPageView);
+  syncInformationControlsFromPageView(currentInformationPanelPageView);
   setStatus(worldState);
   renderScholarPanel(worldState);
   actionInput.placeholder = ACTION_PLACEHOLDERS[worldState.player.role] || "输入你的行动";
@@ -2757,7 +3065,8 @@ function renderPayloadWorldState(payload) {
     payload.worldEntityView,
     payload.worldPeopleView,
     payload.officialPostingsView,
-    payload.eventArchiveView
+    payload.eventArchiveView,
+    payload.informationPanelPageView
   );
 }
 

@@ -49,7 +49,8 @@ Important route ownership:
 - `src/routes/game.js` creates sessions, reads sessions, and advances free-text turns.
 - `src/routes/exam.js` generates saved exam questions, advances exam-local scene phases, and submits essays.
 - `src/routes/ai.js` owns no-session AI diagnostics such as provider connection checks.
-- `docs/BROWSER_INFORMATION_PANEL_PLAN.md` owns the S53 browser information panel plan. It maps 天下格局、任所地理、人物谱牒、官职簿 and 事件档案 panels to route views, with S53.4 covering geography/posting geography, S53.5 covering people/official-posting cards, and S53.6 covering the sanitized event archive projection plus browser cards.
+- `src/game/informationPanelPage.js` owns the S66.2 browser information paging projection. It builds `informationPanelPageView` for 天下格局、任所地理、人物谱牒、官职簿 and 事件档案 from server route views plus sanitized event archive index items, supports query/filter/sort/page/pageSize, and filters hidden/raw/path/key-shaped text. It does not read raw SQLite tables, raw audit rows, provider proposals, full prompts, local paths, or keys.
+- `docs/BROWSER_INFORMATION_PANEL_PLAN.md` owns the S53/S66 browser information panel plan. It maps 天下格局、任所地理、人物谱牒、官职簿 and 事件档案 panels to route views, with S53.4 covering geography/posting geography, S53.5 covering people/official-posting cards, S53.6 covering the sanitized event archive projection plus browser cards, and S66.2 covering server-side search/filter/sort/pagination metadata.
 - `src/game/stateRules.js` is the only way provider state patches should be merged.
 - `src/game/exams.js` owns exam levels, gates, thresholds and next-exam mapping.
 - `src/game/promotions.js` owns rank changes, official promotion and severe-cheating consequences.
@@ -111,11 +112,22 @@ Request fields:
 
 As of S31.3, `role` is normalized and validated in `src/game/initialState.js`. Missing or blank role values default to `scholar`; unsupported roles return `400`. The accepted enum is `scholar`, `emperor`, `minister`, `general`, `magistrate`, and `official`, and the browser start form exposes all six values.
 
-Returns `201` with `sessionId`, `worldState`, `examCalendarView`, `examRivalView`, `relationshipView`, `activeNpcRequestView`, `roleWorldCouplingView`, `worldGeographyView`, `worldEntityView`, `worldPeopleView`, `worldThreadView`, `longTermEventView`, `officialCareerView`, `officialPostingsView`, `localAffairsDocketView`, `militaryDiplomacyView`, `economicFiscalView`, `historicalEventArchiveView`, `intelligenceRumorView`, `eventArchiveView`, and opening `narrative`.
+Returns `201` with `sessionId`, `worldState`, `examCalendarView`, `examRivalView`, `relationshipView`, `activeNpcRequestView`, `roleWorldCouplingView`, `worldGeographyView`, `worldEntityView`, `worldPeopleView`, `worldThreadView`, `longTermEventView`, `officialCareerView`, `officialPostingsView`, `localAffairsDocketView`, `militaryDiplomacyView`, `economicFiscalView`, `historicalEventArchiveView`, `intelligenceRumorView`, `eventArchiveView`, `informationPanelPageView`, and opening `narrative`.
 
 ### `GET /api/game/state/:sessionId`
 
-Reads the JSON session file and returns `sessionId`, `worldState`, the player-facing `examCalendarView`, `examRivalView`, `relationshipView`, `activeNpcRequestView`, `roleWorldCouplingView`, `worldGeographyView`, `worldEntityView`, `worldPeopleView`, `worldThreadView`, `longTermEventView`, `officialCareerView`, `officialPostingsView`, `localAffairsDocketView`, `militaryDiplomacyView`, `economicFiscalView`, `historicalEventArchiveView`, `intelligenceRumorView`, and `eventArchiveView`.
+Reads the session through the storage facade and returns `sessionId`, `worldState`, the player-facing `examCalendarView`, `examRivalView`, `relationshipView`, `activeNpcRequestView`, `roleWorldCouplingView`, `worldGeographyView`, `worldEntityView`, `worldPeopleView`, `worldThreadView`, `longTermEventView`, `officialCareerView`, `officialPostingsView`, `localAffairsDocketView`, `militaryDiplomacyView`, `economicFiscalView`, `historicalEventArchiveView`, `intelligenceRumorView`, `eventArchiveView`, and `informationPanelPageView`.
+
+S66.2 adds optional information panel query parameters:
+
+- `informationTab` / `informationPanelTab` / `informationCollection`
+- `informationQuery` / `informationSearch`
+- `informationFilter`
+- `informationSort`
+- `informationPage`
+- `informationPageSize`
+
+The route uses those parameters only to shape `informationPanelPageView.activePage`; every page is still derived from server route views or sanitized event archive items. Unsafe query text is rejected and the payload must not expose raw SQLite table names, audit rows, provider proposals, prompt text, local paths, keys, or hidden notes.
 
 ### `GET /api/game/saves`
 
@@ -352,7 +364,7 @@ Request:
 
 `level` may be omitted; the server derives the next eligible exam from `player.examRank`. The route saves a complete `worldState.activeExam`, reuses an existing unanswered exam for the same level, and rejects attempts to open a different exam while another question is active. S48.4 adds `activeExam.sceneTime` for `entry`, `question_review`, `outline`, `drafting`, `fair_copy`, and `submitted`; question creation/reuse preserves global date fields and does not advance `turnCount/year/month/tenDayPeriod`.
 
-Returns `examId`, exam metadata, requirements, readiness, entry preparation, `examCalendar`, `sceneTime`, `examCalendarView`, `examRivalView`, `relationshipView`, `activeNpcRequestView`, `roleWorldCouplingView`, `worldGeographyView`, `worldEntityView`, `worldPeopleView`, `worldThreadView`, `longTermEventView`, `officialCareerView`, `officialPostingsView`, `localAffairsDocketView`, `militaryDiplomacyView`, `economicFiscalView`, `historicalEventArchiveView`, `intelligenceRumorView`, `eventArchiveView`, and `worldState`.
+Returns `examId`, exam metadata, requirements, readiness, entry preparation, `examCalendar`, `sceneTime`, `examCalendarView`, `examRivalView`, `relationshipView`, `activeNpcRequestView`, `roleWorldCouplingView`, `worldGeographyView`, `worldEntityView`, `worldPeopleView`, `worldThreadView`, `longTermEventView`, `officialCareerView`, `officialPostingsView`, `localAffairsDocketView`, `militaryDiplomacyView`, `economicFiscalView`, `historicalEventArchiveView`, `intelligenceRumorView`, `eventArchiveView`, `informationPanelPageView`, and `worldState`.
 
 ### `POST /api/exam/progress`
 
@@ -380,7 +392,7 @@ Request:
 }
 ```
 
-The server checks authenticity, asks the provider for grading, applies local penalties, builds virtual candidates with inspectable essay profiles, applies promotion or cheating consequences, updates persistent same-field rivals, appends the essay result to `player.examHistory`, clears `activeExam`, saves the session and returns the result plus `examCalendarView`, `examRivalView`, `relationshipView`, `activeNpcRequestView`, `roleWorldCouplingView`, `worldGeographyView`, `worldEntityView`, `worldPeopleView`, `worldThreadView`, `longTermEventView`, `officialCareerView`, `officialPostingsView`, `localAffairsDocketView`, `militaryDiplomacyView`, `economicFiscalView`, `historicalEventArchiveView`, `intelligenceRumorView`, `eventArchiveView`, and `worldState`. The response includes `examQuestion`, `essay`, `entryPreparation`, `examCalendar`, `sceneTime`, `examStartedAt`, and `examSubmittedAt` so the browser can render the just-submitted archive directly.
+The server checks authenticity, asks the provider for grading, applies local penalties, builds virtual candidates with inspectable essay profiles, applies promotion or cheating consequences, updates persistent same-field rivals, appends the essay result to `player.examHistory`, clears `activeExam`, saves the session and returns the result plus `examCalendarView`, `examRivalView`, `relationshipView`, `activeNpcRequestView`, `roleWorldCouplingView`, `worldGeographyView`, `worldEntityView`, `worldPeopleView`, `worldThreadView`, `longTermEventView`, `officialCareerView`, `officialPostingsView`, `localAffairsDocketView`, `militaryDiplomacyView`, `economicFiscalView`, `historicalEventArchiveView`, `intelligenceRumorView`, `eventArchiveView`, `informationPanelPageView`, and `worldState`. The response includes `examQuestion`, `essay`, `entryPreparation`, `examCalendar`, `sceneTime`, `examStartedAt`, and `examSubmittedAt` so the browser can render the just-submitted archive directly.
 
 ## AI Provider Contract
 
@@ -800,7 +812,7 @@ S53.3 adds the front-end wiring slice for that plan. It changes `public/app.js`,
 
 S53.4 and S53.5 continue in the same front-end-only lane. They change `public/app.js`, `public/styles.css`, `scripts/browserSmoke.js`, and `test/browserSmokeScript.test.js`; they do not change route payload shape, provider schema, storage adapters, SQLite tables, prompt contracts, or event archive projection.
 
-S53.6 adds `src/game/eventArchive.js` and expands route payload shape with `eventArchiveView`. S63.2 extends the same archive with `local_docket` items from `localAffairsDocketView`; S64.1 extends it with `military_diplomacy` items from `militaryDiplomacyView.frontierIncidents`; S64.2 extends it with `economic_fiscal` items from `economicFiscalView.marketIncidents`; S65.1 extends it with `historical_event_chain` items from public event chains; S65.2 extends it with `intelligence_rumor` items from `intelligenceRumorView.publicRumors`. It does not add provider schema fields, storage adapter behavior, SQLite raw table reads, raw audit access, sealed event-chain exposure, or hidden intelligence truth exposure.
+S53.6 adds `src/game/eventArchive.js` and expands route payload shape with `eventArchiveView`. S63.2 extends the same archive with `local_docket` items from `localAffairsDocketView`; S64.1 extends it with `military_diplomacy` items from `militaryDiplomacyView.frontierIncidents`; S64.2 extends it with `economic_fiscal` items from `economicFiscalView.marketIncidents`; S65.1 extends it with `historical_event_chain` items from public event chains; S65.2 extends it with `intelligence_rumor` items from `intelligenceRumorView.publicRumors`. S66.2 adds `informationPanelPageView` as a browser paging layer over `eventArchiveView`-equivalent safe items and other route views. It does not add provider schema fields, storage adapter behavior, SQLite raw table reads, raw audit access, sealed event-chain exposure, or hidden intelligence truth exposure.
 
 ## Verification
 
