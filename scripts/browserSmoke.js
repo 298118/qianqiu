@@ -693,6 +693,18 @@ function getGameLayoutFailures(metrics, mode = "game") {
     );
   }
 
+  if (metrics.imperialExamArchiveClientWidth > 0 && metrics.imperialExamArchiveScrollWidth > metrics.imperialExamArchiveClientWidth + horizontalClipTolerance) {
+    failures.push(
+      `${mode} imperial exam archive panel has horizontal scroll overflow (${roundMetric(metrics.imperialExamArchiveScrollWidth)}px > ${roundMetric(metrics.imperialExamArchiveClientWidth)}px).`
+    );
+  }
+
+  if (metrics.imperialExamArchiveGridClientWidth > 0 && metrics.imperialExamArchiveGridScrollWidth > metrics.imperialExamArchiveGridClientWidth + horizontalClipTolerance) {
+    failures.push(
+      `${mode} imperial exam archive grid has horizontal scroll overflow (${roundMetric(metrics.imperialExamArchiveGridScrollWidth)}px > ${roundMetric(metrics.imperialExamArchiveGridClientWidth)}px).`
+    );
+  }
+
   if (metrics.saveListPanelClientWidth > 0 && metrics.saveListPanelScrollWidth > metrics.saveListPanelClientWidth + horizontalClipTolerance) {
     failures.push(
       `${mode} save-list panel has horizontal scroll overflow (${roundMetric(metrics.saveListPanelScrollWidth)}px > ${roundMetric(metrics.saveListPanelClientWidth)}px).`
@@ -746,6 +758,8 @@ async function readGameLayoutMetrics(page) {
     const eventArchiveGrid = box("#event-archive-panel .information-detail-grid");
     const examCalendar = box("#exam-calendar-panel");
     const examRival = box("#exam-rival-panel");
+    const imperialExamArchive = box("#imperial-exam-archive-panel");
+    const imperialExamArchiveGrid = box("#imperial-exam-archive-panel .imperial-exam-archive-grid");
     const saveListPanel = box("#save-list-panel");
     const saveListModal = box("#save-list-modal");
 
@@ -801,6 +815,12 @@ async function readGameLayoutMetrics(page) {
       examRivalClientWidth: examRival?.clientWidth || 0,
       examRivalScrollWidth: examRival?.scrollWidth || 0,
       examRivalWidth: examRival?.width || 0,
+      imperialExamArchiveClientWidth: imperialExamArchive?.clientWidth || 0,
+      imperialExamArchiveScrollWidth: imperialExamArchive?.scrollWidth || 0,
+      imperialExamArchiveWidth: imperialExamArchive?.width || 0,
+      imperialExamArchiveGridClientWidth: imperialExamArchiveGrid?.clientWidth || 0,
+      imperialExamArchiveGridScrollWidth: imperialExamArchiveGrid?.scrollWidth || 0,
+      imperialExamArchiveGridWidth: imperialExamArchiveGrid?.width || 0,
       saveListPanelClientWidth: saveListPanel?.clientWidth || 0,
       saveListPanelScrollWidth: saveListPanel?.scrollWidth || 0,
       saveListPanelWidth: saveListPanel?.width || 0,
@@ -1298,6 +1318,84 @@ function getInformationPanelShellFailures(snapshot = {}, expectations = {}, mode
   const hiddenLeaks = hiddenTokens.filter((token) => token && String(snapshot.text || "").includes(token));
   if (hiddenLeaks.length) {
     failures.push(`${mode} information panel leaked hidden text tokens: ${hiddenLeaks.join(", ")}.`);
+  }
+
+  return failures;
+}
+
+const imperialExamArchiveSections = ["study", "procedure", "ranking", "network", "appointment"];
+
+function getImperialExamArchivePanelFailures(snapshot = {}, expectations = {}, mode = "imperial exam archive") {
+  const failures = [];
+  const expectedSections = expectations.expectedSections || imperialExamArchiveSections;
+  const availableSections = new Set(snapshot.sections || []);
+  const missingSections = expectedSections.filter((section) => !availableSections.has(section));
+  if (missingSections.length) {
+    failures.push(`${mode} panel is missing sections: ${missingSections.join(", ")}.`);
+  }
+
+  const sourceViews = new Set(snapshot.sourceViews || []);
+  const expectedSourceViews = expectations.expectedSourceViews || [
+    "studyProfileView",
+    "examProcedureView+examinerPanelView",
+    "examHonorView+examHistory",
+    "relationshipView+worldPeopleView",
+    "appointmentTrackView"
+  ];
+  const missingSourceViews = expectedSourceViews.filter((sourceView) => !sourceViews.has(sourceView));
+  if (missingSourceViews.length) {
+    failures.push(`${mode} panel is missing source views: ${missingSourceViews.join(", ")}.`);
+  }
+
+  if (Number(snapshot.cardCount || 0) < expectedSections.length) {
+    failures.push(`${mode} panel rendered ${snapshot.cardCount || 0} archive cards for ${expectedSections.length} expected sections.`);
+  }
+  if (Number(snapshot.metricCount || 0) < (expectations.minMetricCount || expectedSections.length * 2)) {
+    failures.push(`${mode} panel did not render enough visible metrics.`);
+  }
+  if (expectations.expectAppointment !== false && snapshot.appointmentTrackView !== "ready") {
+    failures.push(`${mode} panel did not mark appointmentTrackView ready.`);
+  }
+  if (expectations.expectHistory && Number(snapshot.historyCount || 0) < expectations.expectHistory) {
+    failures.push(`${mode} panel expected at least ${expectations.expectHistory} exam history rows, got ${snapshot.historyCount || 0}.`);
+  }
+  if (expectations.minRankingRows && Number(snapshot.rankingRows || 0) < expectations.minRankingRows) {
+    failures.push(`${mode} panel rendered too few ranking rows.`);
+  }
+  if (expectations.minNetworkContacts && Number(snapshot.networkContactCount || 0) < expectations.minNetworkContacts) {
+    failures.push(`${mode} panel rendered too few network contact rows.`);
+  }
+
+  const defaultHiddenTokens = [
+    "provider",
+    "proposal",
+    "prompt",
+    "statePatch",
+    "retrievalContext",
+    "relationshipLedger",
+    "worldState",
+    "world_state_json",
+    "event_log",
+    "ai_change_proposals",
+    "event_archive_index",
+    "prompt_retrieval_index",
+    "examiner_reviews",
+    "hiddenNotes",
+    "hiddenIntent",
+    "raw audit",
+    "raw proposal",
+    "SQLITE_DATABASE_PATH",
+    "data/audit",
+    "data/sessions",
+    "OPENAI_API_KEY",
+    "DEEPSEEK_API_KEY",
+    "MIMO_API_KEY",
+    "ANTHROPIC_API_KEY"
+  ];
+  const hiddenTokens = [...new Set([...(expectations.hiddenTextTokens || []), ...defaultHiddenTokens])];
+  const hiddenLeaks = hiddenTokens.filter((token) => token && String(snapshot.text || "").includes(token));
+  if (hiddenLeaks.length) {
+    failures.push(`${mode} panel leaked hidden text tokens: ${hiddenLeaks.join(", ")}.`);
   }
 
   return failures;
@@ -1887,6 +1985,43 @@ async function assertExamRivalPanel(page, mode, expectations = {}) {
   return snapshot;
 }
 
+async function assertImperialExamArchivePanel(page, mode, expectations = {}) {
+  await visibleBox(page, "#imperial-exam-archive-panel", `${mode} imperial exam archive panel`);
+
+  const snapshot = await page.evaluate(() => {
+    const panel = document.querySelector("#imperial-exam-archive-panel");
+    const cards = [...document.querySelectorAll("#imperial-exam-archive-panel .imperial-exam-archive-card")];
+    return {
+      studyProfileView: panel?.dataset.studyProfileView || "",
+      examProcedureView: panel?.dataset.examProcedureView || "",
+      examinerPanelView: panel?.dataset.examinerPanelView || "",
+      examHonorView: panel?.dataset.examHonorView || "",
+      relationshipView: panel?.dataset.relationshipView || "",
+      worldPeopleView: panel?.dataset.worldPeopleView || "",
+      appointmentTrackView: panel?.dataset.appointmentTrackView || "",
+      historyCount: panel?.dataset.historyCount || "0",
+      cardCount: cards.length,
+      sections: cards.map((card) => card.dataset.section).filter(Boolean),
+      sourceViews: cards.map((card) => card.dataset.sourceView).filter(Boolean),
+      metricCount: document.querySelectorAll("#imperial-exam-archive-panel .information-card-metric").length,
+      rankingRows: document.querySelectorAll("#imperial-exam-archive-panel .imperial-exam-ranking li").length,
+      networkContactCount: document.querySelectorAll("#imperial-exam-archive-panel .imperial-exam-network p").length,
+      text: panel?.textContent || ""
+    };
+  });
+
+  const failures = getImperialExamArchivePanelFailures(snapshot, expectations, mode);
+  if (failures.length) {
+    failUiAcceptance(failures.join(" "));
+  }
+
+  const layoutFailures = getGameLayoutFailures(await readGameLayoutMetrics(page), `${mode} imperial exam archive`);
+  if (layoutFailures.length) {
+    failUiAcceptance(layoutFailures.join(" "));
+  }
+  return snapshot;
+}
+
 async function runRelationshipTurnAcceptance(page) {
   const beforeRelationship = await page.locator(
     '#relationship-panel .relationship-contact[data-contact-type="character"][data-contact-id="C01"]'
@@ -2374,6 +2509,13 @@ async function runRemainingExamProgressionAcceptance(page, sessionId, recorder) 
     expectedIds: ["C01", "scholarOfficials"],
     expectedTypes: ["character", "faction"]
   });
+  await assertImperialExamArchivePanel(page, "complete exam progression official", {
+    expectAppointment: true,
+    expectHistory: 4,
+    minRankingRows: 1,
+    minNetworkContacts: 1,
+    hiddenTextTokens: ["hiddenNotes", "hiddenIntent", "OPENAI_API_KEY", "data/sessions"]
+  });
   await recorder.capture(page, "desktop-post-palace-official");
 
   return {
@@ -2419,6 +2561,12 @@ async function runMobileUiAcceptance(page, recorder) {
     hiddenTextTokens: ["Hidden Palace Thread", "sealed palace dossier", "C99-hidden", "hiddenNotes", "hiddenIntent", "OPENAI_API_KEY", "data/sessions"],
     expectNoRoleVisibleGeography: true
   });
+  await assertImperialExamArchivePanel(page, "mobile scholar", {
+    expectAppointment: false,
+    expectHistory: 1,
+    minRankingRows: 1,
+    hiddenTextTokens: ["Hidden Palace Thread", "sealed palace dossier", "C99-hidden", "hiddenNotes", "hiddenIntent", "OPENAI_API_KEY", "data/sessions"]
+  });
   await recorder.capture(page, "mobile-game-layout");
 
   await page.locator("#scholar-panel .archive-action").first().click();
@@ -2454,6 +2602,13 @@ async function runFinalMobileOfficialAcceptance(page, recorder, expectations = {
     expectedPostingGeographyKinds: ["posting", "jurisdiction", "route"],
     expectedOfficialPostingKinds: ["bureau", "office", "posting", "assessment"],
     expectRoleVisibleGeography: true,
+    hiddenTextTokens: ["hiddenNotes", "hiddenIntent", "OPENAI_API_KEY", "data/sessions"]
+  });
+  await assertImperialExamArchivePanel(page, "mobile post-palace official", {
+    expectAppointment: true,
+    expectHistory: 4,
+    minRankingRows: 1,
+    minNetworkContacts: 1,
     hiddenTextTokens: ["hiddenNotes", "hiddenIntent", "OPENAI_API_KEY", "data/sessions"]
   });
   await recorder.capture(page, "mobile-post-palace-official");
@@ -3010,6 +3165,10 @@ async function runBrowserJourney({
       expectedNextLevel: "child_exam",
       expectedStatus: "open"
     });
+    await assertImperialExamArchivePanel(page, "desktop scholar", {
+      expectAppointment: false,
+      hiddenTextTokens: ["hiddenNotes", "hiddenIntent", "OPENAI_API_KEY", "data/sessions"]
+    });
     await runRelationshipTurnAcceptance(page);
     await assertRelationshipPanel(page, "desktop scholar after turn", {
       expectedIds: ["C01", "scholarOfficials"],
@@ -3034,11 +3193,21 @@ async function runBrowserJourney({
       hiddenTextTokens: ["Hidden Palace Thread", "sealed palace dossier", "C99-hidden", "hiddenNotes", "hiddenIntent", "OPENAI_API_KEY", "data/sessions"],
       expectNoRoleVisibleGeography: true
     });
+    await assertImperialExamArchivePanel(page, "desktop scholar after turn", {
+      expectAppointment: false,
+      hiddenTextTokens: ["Hidden Palace Thread", "sealed palace dossier", "C99-hidden", "hiddenNotes", "hiddenIntent", "OPENAI_API_KEY", "data/sessions"]
+    });
     await recorder.capture(page, "desktop-game-layout");
     await runExamLevelAcceptance(page, sessionId, recorder, examProgressionCases[0]);
     await assertExamRivalPanel(page, "desktop scholar after exam", {
       expectedLevel: "child_exam",
       minRivals: 1
+    });
+    await assertImperialExamArchivePanel(page, "desktop scholar after exam", {
+      expectAppointment: false,
+      expectHistory: 1,
+      minRankingRows: 1,
+      hiddenTextTokens: ["hiddenNotes", "hiddenIntent", "OPENAI_API_KEY", "data/sessions"]
     });
 
     await page.reload({ waitUntil: "domcontentloaded" });
@@ -3071,6 +3240,12 @@ async function runBrowserJourney({
     await assertInformationPanelShell(page, "desktop restored scholar", {
       hiddenTextTokens: ["Hidden Palace Thread", "sealed palace dossier", "C99-hidden", "hiddenNotes", "hiddenIntent", "OPENAI_API_KEY", "data/sessions"],
       expectNoRoleVisibleGeography: true
+    });
+    await assertImperialExamArchivePanel(page, "desktop restored scholar", {
+      expectAppointment: false,
+      expectHistory: 1,
+      minRankingRows: 1,
+      hiddenTextTokens: ["Hidden Palace Thread", "sealed palace dossier", "C99-hidden", "hiddenNotes", "hiddenIntent", "OPENAI_API_KEY", "data/sessions"]
     });
 
     const restoredId = await page.evaluate(() => window.localStorage.getItem("qianqiu.sessionId"));
@@ -3110,6 +3285,12 @@ async function runBrowserJourney({
     await assertInformationPanelShell(freshPage, "fresh page desktop scholar", {
       hiddenTextTokens: ["Hidden Palace Thread", "sealed palace dossier", "C99-hidden", "hiddenNotes", "hiddenIntent", "OPENAI_API_KEY", "data/sessions"],
       expectNoRoleVisibleGeography: true
+    });
+    await assertImperialExamArchivePanel(freshPage, "fresh page desktop scholar", {
+      expectAppointment: false,
+      expectHistory: 1,
+      minRankingRows: 1,
+      hiddenTextTokens: ["Hidden Palace Thread", "sealed palace dossier", "C99-hidden", "hiddenNotes", "hiddenIntent", "OPENAI_API_KEY", "data/sessions"]
     });
     const freshPageId = await freshPage.evaluate(() => window.localStorage.getItem("qianqiu.sessionId"));
     if (freshPageId !== sessionId) {
@@ -3418,6 +3599,7 @@ module.exports = {
   getHiddenOfficialCareerTextLeaks,
   getHiddenWorldThreadTextLeaks,
   getHiddenSaveIdLeaks,
+  getImperialExamArchivePanelFailures,
   getInformationPanelShellFailures,
   getInformationPanelParityFailures,
   getTenDayDateFailures,

@@ -1105,6 +1105,8 @@ button:disabled {
 .exam-procedure-panel,
 .examiner-panel-block,
 .exam-honor-block,
+.appointment-track-block,
+.imperial-exam-archive-panel,
 .study-profile-panel {
   grid-column: 1 / -1;
   display: grid;
@@ -1119,6 +1121,8 @@ button:disabled {
 .exam-procedure-panel > header,
 .examiner-panel-block > header,
 .exam-honor-block > header,
+.appointment-track-block > header,
+.imperial-exam-archive-panel > header,
 .study-profile-panel > header,
 .exam-rival-card header {
   display: flex;
@@ -1133,6 +1137,8 @@ button:disabled {
 .exam-procedure-panel > header strong,
 .examiner-panel-block > header strong,
 .exam-honor-block > header strong,
+.appointment-track-block > header strong,
+.imperial-exam-archive-panel > header strong,
 .study-profile-panel > header strong {
   color: var(--cinnabar-deep);
   font-size: 0.98rem;
@@ -1143,6 +1149,8 @@ button:disabled {
 .exam-procedure-panel > header span,
 .examiner-panel-block > header span,
 .exam-honor-block > header span,
+.appointment-track-block > header span,
+.imperial-exam-archive-panel > header span,
 .study-profile-panel > header span,
 .exam-calendar-notes p,
 .exam-procedure-roll p,
@@ -1162,6 +1170,9 @@ button:disabled {
 .examiner-review-list,
 .examiner-score-inputs,
 .exam-honor-list,
+.appointment-track-checks,
+.imperial-exam-archive-stats,
+.imperial-exam-archive-grid,
 .study-profile-meters,
 .study-profile-lists {
   display: grid;
@@ -1178,6 +1189,10 @@ button:disabled {
 .examiner-review,
 .exam-honor-current,
 .exam-honor-list li,
+.appointment-track-current,
+.appointment-track-checks,
+.imperial-exam-archive-stats > div,
+.imperial-exam-archive-card,
 .study-profile-plan,
 .study-profile-advice,
 .study-profile-feedback,
@@ -1200,6 +1215,11 @@ button:disabled {
 .examiner-review,
 .exam-honor-block,
 .exam-honor-current,
+.appointment-track-block,
+.appointment-track-current,
+.appointment-track-checks,
+.imperial-exam-archive-panel,
+.imperial-exam-archive-card,
 .study-profile-plan,
 .study-profile-advice,
 .study-profile-feedback,
@@ -1218,6 +1238,12 @@ button:disabled {
 .examiner-review p,
 .exam-honor-current p,
 .exam-honor-list li,
+.appointment-track-current p,
+.appointment-track-checks p,
+.appointment-track-empty,
+.appointment-track-reason,
+.imperial-exam-archive-card p,
+.imperial-exam-ranking li,
 .study-profile-plan p,
 .study-profile-plan li,
 .study-profile-advice p,
@@ -1234,6 +1260,8 @@ button:disabled {
 .exam-procedure-notes strong,
 .examiner-review strong,
 .exam-honor-current strong,
+.appointment-track-current strong,
+.appointment-track-checks strong,
 .study-profile-network strong,
 .study-profile-practice strong {
   color: var(--cinnabar-deep);
@@ -1308,6 +1336,56 @@ button:disabled {
   overflow-wrap: anywhere;
 }
 
+.appointment-track-block[data-ready="true"],
+.imperial-exam-archive-card[data-section="appointment"][data-ready="true"] {
+  border-color: rgba(47, 111, 94, 0.28);
+  background: rgba(47, 111, 94, 0.07);
+}
+
+.appointment-track-empty,
+.appointment-track-reason {
+  color: var(--muted);
+}
+
+.imperial-exam-archive-grid {
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+}
+
+.imperial-exam-archive-card {
+  align-content: start;
+}
+
+.imperial-exam-archive-card[data-ready="false"] {
+  background: rgba(229, 218, 193, 0.22);
+}
+
+.imperial-exam-ranking {
+  display: grid;
+  gap: 4px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.imperial-exam-ranking .is-player {
+  color: var(--cinnabar-deep);
+  font-weight: 700;
+}
+
+.imperial-exam-network {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+
+.imperial-exam-network p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.78rem;
+  line-height: 1.38;
+  overflow-wrap: anywhere;
+}
+
 .examiner-panel-compact {
   padding-top: 8px;
   border-top: 1px solid rgba(54, 39, 27, 0.12);
@@ -1360,6 +1438,8 @@ button:disabled {
   .scholar-panel .exam-procedure-panel,
   .scholar-panel .examiner-panel-block,
   .scholar-panel .exam-honor-block,
+  .scholar-panel .appointment-track-block,
+  .scholar-panel .imperial-exam-archive-panel,
   .scholar-panel .active-request-panel,
   .scholar-panel .official-career-panel {
     grid-column: span 2;
@@ -1368,6 +1448,8 @@ button:disabled {
   .scholar-panel .exam-calendar-grid,
   .scholar-panel .exam-rival-grid,
   .scholar-panel .exam-procedure-grid,
+  .scholar-panel .imperial-exam-archive-grid,
+  .scholar-panel .imperial-exam-archive-stats,
   .scholar-panel .study-profile-meters,
   .scholar-panel .study-profile-lists {
     grid-template-columns: repeat(auto-fit, minmax(104px, 1fr));

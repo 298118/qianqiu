@@ -13,6 +13,7 @@ const {
   getHiddenOfficialCareerTextLeaks,
   getHiddenWorldThreadTextLeaks,
   getHiddenSaveIdLeaks,
+  getImperialExamArchivePanelFailures,
   getInformationPanelShellFailures,
   getInformationPanelParityFailures,
   getTenDayDateFailures,
@@ -94,6 +95,12 @@ function createLayoutMetrics(overrides = {}) {
     examRivalClientWidth: 1180,
     examRivalScrollWidth: 1180,
     examRivalWidth: 1180,
+    imperialExamArchiveClientWidth: 1180,
+    imperialExamArchiveScrollWidth: 1180,
+    imperialExamArchiveWidth: 1180,
+    imperialExamArchiveGridClientWidth: 1180,
+    imperialExamArchiveGridScrollWidth: 1180,
+    imperialExamArchiveGridWidth: 1180,
     saveListPanelClientWidth: 0,
     saveListPanelScrollWidth: 0,
     saveListPanelWidth: 0,
@@ -785,6 +792,62 @@ test("browser smoke information panel helper validates S66.2 page controls and a
   assert.match(failures.join("\n"), /expected active page size 2, got 4/);
 });
 
+test("browser smoke imperial exam archive helper checks sections and hidden tokens", () => {
+  const healthy = getImperialExamArchivePanelFailures(
+    {
+      appointmentTrackView: "ready",
+      cardCount: 5,
+      historyCount: "4",
+      metricCount: 15,
+      networkContactCount: 2,
+      rankingRows: 4,
+      sections: ["study", "procedure", "ranking", "network", "appointment"],
+      sourceViews: [
+        "studyProfileView",
+        "examProcedureView+examinerPanelView",
+        "examHonorView+examHistory",
+        "relationshipView+worldPeopleView",
+        "appointmentTrackView"
+      ],
+      text: "科举档案 读书簿 科场档案 榜单荣誉 同年考官 授官轨迹"
+    },
+    {
+      expectAppointment: true,
+      expectHistory: 4,
+      minNetworkContacts: 1,
+      minRankingRows: 1
+    },
+    "imperial archive fixture"
+  );
+  assert.deepEqual(healthy, []);
+
+  const failures = getImperialExamArchivePanelFailures(
+    {
+      appointmentTrackView: "empty",
+      cardCount: 2,
+      historyCount: "1",
+      metricCount: 2,
+      networkContactCount: 0,
+      rankingRows: 0,
+      sections: ["study", "ranking"],
+      sourceViews: ["studyProfileView", "examHonorView+examHistory"],
+      text: "科举档案 provider proposal hiddenNotes data/sessions"
+    },
+    {
+      expectAppointment: true,
+      expectHistory: 4,
+      minNetworkContacts: 1,
+      minRankingRows: 1
+    },
+    "imperial archive fixture"
+  );
+
+  assert.match(failures.join("\n"), /missing sections: procedure, network, appointment/);
+  assert.match(failures.join("\n"), /missing source views/);
+  assert.match(failures.join("\n"), /did not mark appointmentTrackView ready/);
+  assert.match(failures.join("\n"), /leaked hidden text tokens: provider, proposal, hiddenNotes, data\/sessions/);
+});
+
 test("browser smoke information parity helper compares normalized snapshots", () => {
   const baseSnapshot = normalizeInformationPanelParitySnapshot({
     activeTab: "world-geography",
@@ -1123,6 +1186,23 @@ test("browser smoke game layout helper catches exam calendar and rival panel ove
 
   assert.match(failures.join("\n"), /exam calendar panel has horizontal scroll overflow/);
   assert.match(failures.join("\n"), /exam rival panel has horizontal scroll overflow/);
+});
+
+test("browser smoke game layout helper catches imperial exam archive overflow", () => {
+  const failures = getGameLayoutFailures(
+    createLayoutMetrics({
+      imperialExamArchiveClientWidth: 500,
+      imperialExamArchiveScrollWidth: 640,
+      imperialExamArchiveWidth: 500,
+      imperialExamArchiveGridClientWidth: 500,
+      imperialExamArchiveGridScrollWidth: 630,
+      imperialExamArchiveGridWidth: 500
+    }),
+    "desktop"
+  );
+
+  assert.match(failures.join("\n"), /imperial exam archive panel has horizontal scroll overflow/);
+  assert.match(failures.join("\n"), /imperial exam archive grid has horizontal scroll overflow/);
 });
 
 test("browser smoke game layout helper catches future save-list panel and modal overflow", () => {

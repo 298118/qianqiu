@@ -1,6 +1,6 @@
 # 《千秋》S68.1 科举制度契约
 
-本文是 S68-S69 科举、读书、评卷与授官深化的制度契约。它把明清科举原型压缩为可实现、可测试、可审计的游戏规则，作为 S68.2 之后新增 `studyProfileView`、`examProcedureView`、`examinerPanelView`、`examHonorView` 和 `appointmentTrackView` 的准绳。
+本文是 S68-S69 科举、读书、评卷与授官深化的制度契约。它把明清科举原型压缩为可实现、可测试、可审计的游戏规则，作为 S68.2 之后新增 `studyProfileView`、`examProcedureView`、`examinerPanelView`、`examHonorView`、`appointmentTrackView` 和浏览器“科举档案”整合面板的准绳。
 
 核心边界不变：AI 可以出题、点评、扮演老师、保人、同年、考官、吏部和皇帝，提交结构化建议；服务器拥有资格、保结、搜检、号舍事件、弥封、誊录、对读、磨勘、复核、评分扣罚、榜单、名次、甲第、授官、任免、审计和持久化的最终裁决。
 
@@ -366,7 +366,7 @@ Mock/no-key 路径必须覆盖完整制度链：
 5. S69.1：榜单、名次荣誉和三元成就（已实现 `examHonors` / `examHonorView`）。
 6. S69.2：同年、座师和考官网络进入可见关系与事件档案（已实现 `examNetworks` / `examHistory[].examNetwork`）。
 7. S69.3：馆选、庶吉士、观政、铨选、外放、候缺和籍贯回避（已实现 `appointmentTracks` / `appointmentTrackView` / `examHistory[].appointmentTrack`）。
-8. S69.4：浏览器科举档案面板，只读 route view。
+8. S69.4：浏览器科举档案面板，只读 route view 与安全考试历史快照（已实现 `#imperial-exam-archive-panel`）。
 9. S69.5：Mock/provider smoke、越权红队和 hidden-token 验收。
 
 ## 13. 红队验收清单

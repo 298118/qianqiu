@@ -7,6 +7,14 @@ function publicAppSource() {
   return readFileSync(path.join(__dirname, "..", "public", "app.js"), "utf8");
 }
 
+function sourceBetween(source, startToken, endToken) {
+  const start = source.indexOf(startToken);
+  assert.notEqual(start, -1, `${startToken} not found`);
+  const end = source.indexOf(endToken, start + startToken.length);
+  assert.notEqual(end, -1, `${endToken} not found after ${startToken}`);
+  return source.slice(start, end);
+}
+
 test("save-load narrative replay uses safe event archive projection", () => {
   const source = publicAppSource();
 
@@ -57,4 +65,52 @@ test("exam procedure panel reads route examProcedureView", () => {
   assert.doesNotMatch(source, /worldState\?\.examProcedure/);
   assert.doesNotMatch(source, /worldState\?\.examHonorLedger/);
   assert.doesNotMatch(source, /worldState\.activeExam\.procedure\./);
+});
+
+test("imperial exam archive panel reads route views and safe exam snapshots", () => {
+  const source = publicAppSource();
+  const archiveSource = sourceBetween(
+    source,
+    "function getLatestExamArchiveEntry()",
+    "function createInformationSelect("
+  );
+  const appointmentBlockSource = sourceBetween(
+    source,
+    "function getAppointmentTrackDisplay(",
+    "function renderStudyProfilePanel("
+  );
+
+  assert.match(source, /let currentAppointmentTrackView = null;/);
+  assert.match(source, /const PUBLIC_APPOINTMENT_AUTHORITY =/);
+  assert.match(source, /function getAppointmentTrackView\(appointmentTrackView\)/);
+  assert.match(source, /function pickAppointmentTrackView\(primaryView, fallbackView\)/);
+  assert.match(source, /function createAppointmentTrackBlock\(appointmentTrackView/);
+  assert.match(source, /function renderImperialExamArchivePanel\(\)/);
+  assert.match(source, /payload\.appointmentTrackView/);
+  assert.match(source, /currentAppointmentTrackView = getAppointmentTrackView\(appointmentTrackView\);/);
+  assert.match(source, /appendOptionalPanel\(renderImperialExamArchivePanel\(\)\);/);
+  assert.match(appointmentBlockSource, /PUBLIC_APPOINTMENT_AUTHORITY/);
+  assert.doesNotMatch(appointmentBlockSource, /appendIfText\(block, "p", display\.authorityBoundary/);
+
+  assert.match(archiveSource, /currentStudyProfileView/);
+  assert.match(archiveSource, /currentExamProcedureView/);
+  assert.match(archiveSource, /currentExaminerPanelView/);
+  assert.match(archiveSource, /currentExamHonorView/);
+  assert.match(archiveSource, /currentRelationshipView/);
+  assert.match(archiveSource, /currentWorldPeopleView/);
+  assert.match(archiveSource, /currentAppointmentTrackView/);
+  assert.match(archiveSource, /latestExam\?\.examNetwork/);
+  assert.match(archiveSource, /latestExam\?\.appointmentTrack/);
+  assert.match(archiveSource, /pickAppointmentTrackView\(currentAppointmentTrackView, latestExam\?\.appointmentTrack\)/);
+  assert.match(archiveSource, /appointmentTrackView/);
+
+  assert.doesNotMatch(archiveSource, /worldState\?\.studyProfile/);
+  assert.doesNotMatch(archiveSource, /worldState\.activeExam\.procedure/);
+  assert.doesNotMatch(archiveSource, /worldState\.examHonorLedger/);
+  assert.doesNotMatch(archiveSource, /worldState\.appointmentTrack/);
+  assert.doesNotMatch(archiveSource, /worldState\.relationshipLedger/);
+  assert.doesNotMatch(archiveSource, /worldState\.eventHistory/);
+  assert.doesNotMatch(archiveSource, /retrievalContext/);
+  assert.doesNotMatch(archiveSource, /providerProposal|provider proposal|raw proposal|raw audit/i);
+  assert.doesNotMatch(archiveSource, /prompt_retrieval_index|event_archive_index|world_state_json/);
 });

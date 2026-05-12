@@ -114,7 +114,7 @@
 | S69.1 | DONE | 榜单与名次细化：解元、会元、状元、榜眼、探花、传胪、二甲/三甲次序和服务器 canonical ranking | 2026-05-12 | Codex / 子代理只读复审 | 本次提交 |
 | S69.2 | DONE | 同年、座师与考官网络：房官、主考、座师、门生、同年关系进入可见关系和事件档案 | 2026-05-12 | Codex / 子代理调研与复审尝试超时 | 本次提交 |
 | S69.3 | DONE | 授官路径深化：一甲翰林、二甲馆选/庶吉士/观政、三甲铨选/部属/外放/候缺和籍贯回避 resolver | 2026-05-12 | Codex / 子代理调研与只读复审 | 本次提交 |
-| S69.4 | TODO | 浏览器科举档案面板：读书簿、科场档案、榜单、同年考官、授官轨迹和 hidden-token smoke | - | - | S69.3 后 |
+| S69.4 | DONE | 浏览器科举档案面板：读书簿、科场档案、榜单、同年考官、授官轨迹和 hidden-token smoke | 2026-05-12 | Codex / 子代理调研与只读复审 | 本次提交 |
 | S69.5 | TODO | Provider/Mock 验收：真实 provider 出题/评卷/点评 smoke、Mock deterministic 路径和越权红队 | - | - | S69.4 后 |
 | S69.6 | TODO | S68-S69 归档与交接：科举深化实现归档、brief/context/验收更新和 S70 衔接建议 | - | - | S69.5 后 |
 | S70.0 | DONE | AI 编排提前规划：固定 AI 核心地位、现实权力原型、工具调用路线、actor 权限层和 S70 子步骤 | 2026-05-08 | Codex / Web / 子代理 | 见 git history |
@@ -220,6 +220,42 @@ S71 详细规划见 [DATABASE_GAMEPLAY_RESOLVER_ROADMAP.md](DATABASE_GAMEPLAY_RE
 4. S71.9-S71.12：接入多 actor 场景、NPC 记忆和 AI 调动审计面板，最后做 dual-mode、Mock/no-key、browser 和 provider smoke 归档。
 
 ## 8. 进度记录
+
+### 2026-05-12
+
+工具：Codex、子代理只读调研与复审。
+
+步骤：S69.4 浏览器科举档案面板。
+
+提交：本次提交。
+
+完成：
+
+- `public/app.js` 新增 `currentAppointmentTrackView` 接线与 `#imperial-exam-archive-panel`，把读书簿、科场档案、多考官阅卷、榜单荣誉、同年/座师/考官和授官轨迹整合为侧栏玩家面板。
+- 面板只读 `studyProfileView`、`examProcedureView`、`examinerPanelView`、`examHonorView`、`relationshipView` / `worldPeopleView`、`appointmentTrackView` 和 `examHistory[]` 安全快照；不从 `worldState.studyProfile`、`worldState.activeExam.procedure`、`worldState.examHonorLedger`、`worldState.appointmentTrack`、raw audit、SQLite raw table、prompt 或 provider proposal 拼 UI。
+- 考试结果弹窗与历次科场案卷补充 `appointmentTrackView` / `examHistory[].appointmentTrack` 的授官轨迹块，便于殿试后复看初授依据；`pickAppointmentTrackView()` 会在当前 route view 为空时回退历史安全快照，授官轨迹块也改用中文玩家公开边界文案，不原样展示后端 `authorityBoundary` 中的 provider/proposal/projection 等开发侧词。
+- `public/styles.css` 补齐科举档案与授官轨迹响应式网格，`scripts/browserSmoke.js` 增加 `assertImperialExamArchivePanel()`、hidden-token/source-token 检查和横向溢出指标；`test/publicAppSource.test.js` 与 `test/browserSmokeScript.test.js` 增加源码和 helper 回归。
+- 同步 README、architecture、brief、AI 控制矩阵、科举制度契约、科举深化路线图和共享上下文，把下一步切到 S69.5 Provider/Mock 验收。
+
+验证：
+
+- 已通过：`node --check public/app.js`、`node --check scripts/browserSmoke.js`、`node --check test/publicAppSource.test.js`、`node --check test/browserSmokeScript.test.js`。
+- 已通过：`node --test test/publicAppSource.test.js`，4/4。
+- 已通过：`node --test test/browserSmokeScript.test.js`，42/42。
+- 已通过：`node --test test/publicAppSource.test.js test/browserSmokeScript.test.js`，46/46。
+- 已通过：`node --test test/appointmentTracks.test.js test/appointmentTracksRoute.test.js test/examHonorsRoute.test.js test/examNetworks.test.js test/eventArchive.test.js test/promptContextAssembler.test.js test/aiControlRedTeam.test.js`，35/35。
+- 已通过：`npm run check:docs-governance`、`git diff --check`。
+- 已通过：`npm run smoke:browser -- --screenshots artifacts/browser-smoke-s69-4`，browser smoke 覆盖桌面、移动、四级科举进度、殿试后入仕、移动最终档案、作弊结果、官员开局、官场履历、世界线和身份世界面板，14 张截图检查通过。
+- 提交前只读子代理复审最终 diff，未发现 P0/P1/P2 阻断问题；后续建议可给考试结果/历史档案 modal 增加通用 hidden-token 文本扫描。
+
+风险/遗留：
+
+- 本步是浏览器整合与验收守卫，不新增服务器 route 字段、SQLite 科举派生表或真实 provider 题面/评卷验收。
+- 若后续保存 hidden 科场私档，仍必须先做 redacted API / role visibility 分层；当前面板只组合已公开 route view 与安全历史快照。
+
+下一步：
+
+- 启动 S69.5：Provider/Mock 验收，覆盖真实 provider 出题/评卷/点评 smoke、Mock deterministic path、越权红队和无 key 可玩边界。
 
 ### 2026-05-12
 

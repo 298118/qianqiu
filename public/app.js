@@ -47,6 +47,7 @@ let currentExamRivalView = null;
 let currentExamProcedureView = null;
 let currentExaminerPanelView = null;
 let currentExamHonorView = null;
+let currentAppointmentTrackView = null;
 let currentStudyProfileView = null;
 let currentWorldGeographyView = null;
 let currentWorldEntityView = null;
@@ -233,6 +234,8 @@ const SCORE_LABELS = {
   classical_format: "文体格式",
   historical_appropriateness: "时代语境"
 };
+
+const PUBLIC_APPOINTMENT_AUTHORITY = "官职事实由服务器按甲第、官缺与籍贯回避复核写定。";
 
 const RELATIONSHIP_LABELS = {
   trusted: "深信",
@@ -844,6 +847,20 @@ function getExamHonorView(examHonorView) {
     latestHonor: null,
     publicSummary: "科名荣誉簿尚无新记。",
     authorityBoundary: "科名荣誉由服务器榜单生成。"
+  };
+}
+
+function getAppointmentTrackView(appointmentTrackView) {
+  if (appointmentTrackView && typeof appointmentTrackView === "object") {
+    return appointmentTrackView;
+  }
+  return {
+    schemaVersion: 1,
+    records: [],
+    latestDecision: null,
+    latestTrack: null,
+    publicSummary: "授官轨迹尚无记录。",
+    authorityBoundary: "授官轨迹由服务器整理。"
   };
 }
 
@@ -2842,6 +2859,111 @@ function createExamHonorBlock(examHonorView, options = {}) {
   return block.childElementCount > 1 ? block : null;
 }
 
+function getAppointmentTrackDisplay(appointmentTrackView = currentAppointmentTrackView) {
+  if (!appointmentTrackView || typeof appointmentTrackView !== "object") {
+    return { records: [], latestRecord: null, decision: null, latestTrack: null };
+  }
+  const records = Array.isArray(appointmentTrackView.records)
+    ? appointmentTrackView.records
+    : appointmentTrackView.serverDecision
+      ? [appointmentTrackView]
+      : [];
+  const latestRecord = records.at(-1) || null;
+  const decision = appointmentTrackView.latestDecision || appointmentTrackView.serverDecision || latestRecord?.serverDecision || null;
+  const latestTrack = appointmentTrackView.latestTrack || (latestRecord
+    ? {
+      level: latestRecord.level,
+      examName: latestRecord.examName,
+      palaceRank: latestRecord.palaceRank,
+      palacePlace: latestRecord.palacePlace,
+      classPlace: latestRecord.classPlace,
+      honorTitle: latestRecord.honorTitle,
+      trackLabel: latestRecord.serverDecision?.trackLabel || null,
+      officeTitle: latestRecord.serverDecision?.officeTitle || null
+    }
+    : null);
+  return {
+    records,
+    latestRecord,
+    decision,
+    latestTrack,
+    publicSummary: appointmentTrackView.publicSummary || latestRecord?.publicSummary || "授官轨迹尚无记录。",
+    authorityBoundary: appointmentTrackView.authorityBoundary || latestRecord?.authorityBoundary || "授官轨迹由服务器整理。"
+  };
+}
+
+function hasAppointmentTrackFacts(appointmentTrackView) {
+  if (!appointmentTrackView || typeof appointmentTrackView !== "object") return false;
+  const display = getAppointmentTrackDisplay(appointmentTrackView);
+  return Boolean(display.decision || display.latestTrack || display.records.length);
+}
+
+function pickAppointmentTrackView(primaryView, fallbackView) {
+  if (hasAppointmentTrackFacts(primaryView)) return primaryView;
+  if (hasAppointmentTrackFacts(fallbackView)) return fallbackView;
+  return primaryView || fallbackView || null;
+}
+
+function createAppointmentTrackBlock(appointmentTrackView, options = {}) {
+  const display = getAppointmentTrackDisplay(appointmentTrackView);
+  if (!appointmentTrackView || typeof appointmentTrackView !== "object") return null;
+
+  const block = document.createElement("section");
+  block.className = ["appointment-track-block", options.className].filter(Boolean).join(" ");
+  block.dataset.schemaVersion = String(appointmentTrackView.schemaVersion || display.latestRecord?.schemaVersion || 1);
+  block.dataset.ready = display.decision ? "true" : "false";
+  block.dataset.recordCount = String(display.records.length);
+  if (display.latestTrack?.level) block.dataset.level = display.latestTrack.level;
+
+  const header = document.createElement("header");
+  appendIfText(header, "strong", "授官轨迹");
+  appendIfText(header, "span", display.publicSummary);
+  block.appendChild(header);
+
+  if (display.decision || display.latestTrack) {
+    const current = document.createElement("section");
+    current.className = "appointment-track-current";
+    appendIfText(
+      current,
+      "strong",
+      [
+        display.decision?.trackLabel || display.latestTrack?.trackLabel,
+        display.decision?.officeTitle || display.latestTrack?.officeTitle
+      ].filter(Boolean).join(" · ") || "候缺观政"
+    );
+    appendIfText(
+      current,
+      "p",
+      [
+        display.latestTrack?.examName,
+        display.latestTrack?.palaceRank,
+        display.latestTrack?.palacePlace ? `第${display.latestTrack.palacePlace}名` : "",
+        display.latestTrack?.honorTitle
+      ].filter(Boolean).join(" · ")
+    );
+    appendIfText(current, "p", display.decision?.publicReason || display.latestRecord?.publicSummary, "appointment-track-reason");
+    block.appendChild(current);
+  } else {
+    appendIfText(block, "p", "殿试取中后，服务器会把初授路径写入此簿。", "appointment-track-empty");
+  }
+
+  const avoidanceChecks = Array.isArray(display.latestRecord?.avoidanceChecks)
+    ? display.latestRecord.avoidanceChecks
+    : [];
+  if (avoidanceChecks.length) {
+    const checks = document.createElement("section");
+    checks.className = "appointment-track-checks";
+    appendIfText(checks, "strong", "回避复核");
+    avoidanceChecks.slice(0, 3).forEach((check) => {
+      appendIfText(checks, "p", [check.officeTitle, check.status, check.publicSummary].filter(Boolean).join("："));
+    });
+    block.appendChild(checks);
+  }
+
+  appendIfText(block, "p", PUBLIC_APPOINTMENT_AUTHORITY, "examiner-boundary");
+  return block.childElementCount > 1 ? block : null;
+}
+
 function renderStudyProfilePanel(studyProfileView = currentStudyProfileView) {
   if (!studyProfileView) return null;
 
@@ -2957,6 +3079,226 @@ function renderStudyProfilePanel(studyProfileView = currentStudyProfileView) {
   panel.append(header);
   if (meters.childElementCount) panel.appendChild(meters);
   panel.append(plan, advice, feedback, network, practice, profileLists);
+  return panel;
+}
+
+function getLatestExamArchiveEntry() {
+  const history = getExamHistory();
+  return Array.isArray(history) && history.length ? history.at(-1) : null;
+}
+
+function countWorldPeopleExamRelations(worldPeopleView = currentWorldPeopleView) {
+  return viewArray(worldPeopleView, "relationships").filter((relationship) =>
+    /科场|同年|座师|考官|房官|读卷/.test([
+      relationship.stance,
+      relationship.publicSummary,
+      relationship.recentIntent,
+      ...(relationship.recentNotes || [])
+    ].filter(Boolean).join(" "))
+  ).length;
+}
+
+function collectImperialExamNetworkContacts(examNetwork = null) {
+  const directContacts = [
+    ...(examNetwork?.sameYearContacts || []),
+    ...(examNetwork?.examinerContacts || [])
+  ].map((contact) => ({
+    id: contact.id,
+    name: contact.name,
+    role: contact.role || contact.relationKind || "科场关系",
+    publicSummary: contact.publicSummary || contact.stance || contact.networkSource || ""
+  }));
+
+  const routeContacts = (currentRelationshipView?.contacts || [])
+    .filter((contact) => /科场|同年|座师|考官|房官|读卷/.test([
+      contact.role,
+      contact.stance,
+      contact.networkSource,
+      contact.recentIntent
+    ].filter(Boolean).join(" ")))
+    .map((contact) => ({
+      id: contact.id,
+      name: contact.name,
+      role: contact.role || contact.stance || "可见人脉",
+      publicSummary: contact.recentIntent || contact.relationshipLabel || contact.networkSource || ""
+    }));
+
+  const seen = new Set();
+  return [...directContacts, ...routeContacts]
+    .filter((contact) => {
+      const key = contact.id || contact.name;
+      if (!key || seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    })
+    .slice(0, 6);
+}
+
+function createImperialExamArchiveCard(section, title, meta, summary, metrics = [], options = {}) {
+  const card = document.createElement("article");
+  card.className = "imperial-exam-archive-card";
+  card.dataset.section = section;
+  if (options.ready !== undefined) card.dataset.ready = options.ready ? "true" : "false";
+  if (options.sourceView) card.dataset.sourceView = options.sourceView;
+
+  const header = document.createElement("header");
+  appendIfText(header, "strong", title, "information-card-title");
+  appendIfText(header, "span", meta || "");
+
+  const body = document.createElement("p");
+  body.className = "information-card-summary";
+  body.textContent = summary || "暂无公开案语。";
+
+  const metricGrid = document.createElement("div");
+  metricGrid.className = "information-card-metrics";
+  metrics.forEach(([label, value]) => {
+    metricGrid.appendChild(createInformationMetric(label, value));
+  });
+
+  card.append(header, body);
+  if (metricGrid.childNodes.length) card.appendChild(metricGrid);
+  if (options.extra) card.appendChild(options.extra);
+  return card;
+}
+
+function renderImperialExamArchivePanel() {
+  const latestExam = getLatestExamArchiveEntry();
+  const history = getExamHistory();
+  const procedureView = currentExamProcedureView || latestExam?.examProcedure || null;
+  const examinerView = currentExaminerPanelView || latestExam?.examinerPanel || procedureView?.examinerPanelView || null;
+  const honorView = currentExamHonorView || latestExam?.examHonor || null;
+  const examNetwork = latestExam?.examNetwork || null;
+  const appointmentView = pickAppointmentTrackView(currentAppointmentTrackView, latestExam?.appointmentTrack);
+  const appointmentDisplay = getAppointmentTrackDisplay(appointmentView);
+  const networkContacts = collectImperialExamNetworkContacts(examNetwork);
+  const worldPeopleExamRelationCount = countWorldPeopleExamRelations(currentWorldPeopleView);
+
+  const panel = document.createElement("section");
+  panel.id = "imperial-exam-archive-panel";
+  panel.className = "imperial-exam-archive-panel";
+  panel.dataset.studyProfileView = currentStudyProfileView ? "ready" : "missing";
+  panel.dataset.examProcedureView = procedureView ? "ready" : "missing";
+  panel.dataset.examinerPanelView = examinerView ? "ready" : "missing";
+  panel.dataset.examHonorView = honorView ? "ready" : "missing";
+  panel.dataset.relationshipView = currentRelationshipView ? "ready" : "missing";
+  panel.dataset.worldPeopleView = currentWorldPeopleView ? "ready" : "missing";
+  panel.dataset.appointmentTrackView = appointmentDisplay.decision ? "ready" : appointmentView ? "empty" : "missing";
+  panel.dataset.historyCount = String(history.length);
+
+  const header = document.createElement("header");
+  appendIfText(header, "strong", "科举档案");
+  appendIfText(header, "span", history.length ? `${history.length}场入案` : "寒窗初记");
+
+  const stats = document.createElement("section");
+  stats.className = "imperial-exam-archive-stats";
+  const latestHonor = honorView?.latestHonor || honorView?.currentHonor || latestExam?.examHonor?.latestHonor || null;
+  stats.append(
+    createPanelValue("读书画像", currentStudyProfileView ? "已立" : "待立", "p"),
+    createPanelValue("科场案卷", `${history.length}场`, "p"),
+    createPanelValue("最新科名", latestHonor?.title || latestExam?.score?.rank || "未题名", "p"),
+    createPanelValue("初授", appointmentDisplay.decision?.officeTitle || appointmentDisplay.latestTrack?.officeTitle || "未入仕", "p")
+  );
+
+  const grid = document.createElement("section");
+  grid.className = "imperial-exam-archive-grid";
+
+  const study = currentStudyProfileView || {};
+  const teacher = study.academyNetwork?.teacher?.name || "未定";
+  const latestPlan = study.nextPlan?.title || "下旬日课待定";
+  grid.appendChild(createImperialExamArchiveCard(
+    "study",
+    "读书簿",
+    teacher === "未定" ? latestPlan : `师承：${teacher}`,
+    study.summary || "读书画像待立，先从日课、荐书和小题积累起步。",
+    [
+      ["长处", (study.strengths || []).slice(-2).map((item) => item.label).join("、") || "待察"],
+      ["短处", (study.weaknesses || []).slice(-2).map((item) => item.label).join("、") || "待察"],
+      ["荐书", (study.recommendedBooks || []).slice(-2).map((item) => item.title).filter(Boolean).join("、") || compactList(study.nextPlan?.bookList || [], "未定", 2)]
+    ],
+    { ready: Boolean(currentStudyProfileView), sourceView: "studyProfileView" }
+  ));
+
+  const roll = procedureView?.rollLifecycle || {};
+  const rollText = [
+    roll.sealed ? "弥封" : "",
+    roll.transcribed ? "誊录" : "",
+    roll.collated ? "对读" : "",
+    roll.audited ? "磨勘" : ""
+  ].filter(Boolean).join("、") || roll.publicSummary || "待成卷";
+  grid.appendChild(createImperialExamArchiveCard(
+    "procedure",
+    "科场档案",
+    [procedureView?.phaseLabel, procedureView?.subStageLabel, procedureView?.paperType].filter(Boolean).join(" · ") || latestExam?.examName || "未入场",
+    procedureView?.resultSummary || procedureView?.cell?.publicSummary || latestExam?.promotionResult?.reason || "尚无当前科场流程。",
+    [
+      ["场次", procedureView ? `${procedureView.sessionIndex || 1}/${procedureView.sessionCount || 1}` : "未定"],
+      ["卷件", rollText],
+      ["阅卷", examinerView ? "已入案" : "待评"]
+    ],
+    { ready: Boolean(procedureView), sourceView: "examProcedureView+examinerPanelView" }
+  ));
+
+  const ranking = Array.isArray(latestExam?.ranking) ? latestExam.ranking : [];
+  const playerEntry = ranking.find((entry) => entry.isPlayer) || null;
+  const rankingList = document.createElement("ol");
+  rankingList.className = "imperial-exam-ranking";
+  ranking.slice(0, 4).forEach((entry) => {
+    const item = document.createElement("li");
+    if (entry.isPlayer) item.className = "is-player";
+    item.textContent = [
+      entry.place ? `第${entry.place}` : "",
+      entry.name,
+      entry.honorTitle || entry.rankLabel || entry.rank
+    ].filter(Boolean).join(" · ");
+    rankingList.appendChild(item);
+  });
+  grid.appendChild(createImperialExamArchiveCard(
+    "ranking",
+    "榜单荣誉",
+    latestHonor?.title || honorView?.publicSummary || "榜单待揭",
+    honorView?.publicSummary || latestExam?.score?.detailed_feedback || "科名荣誉由放榜后公开案卷归纳。",
+    [
+      ["本人名次", playerEntry?.place ? `第${playerEntry.place}` : "未列"],
+      ["等第", playerEntry?.rankLabel || playerEntry?.rank || latestExam?.score?.rank || "未定"],
+      ["成就", honorView?.currentAchievement?.title || "未成"]
+    ],
+    { ready: Boolean(honorView || ranking.length), sourceView: "examHonorView+examHistory", extra: rankingList.childElementCount ? rankingList : null }
+  ));
+
+  const networkList = document.createElement("section");
+  networkList.className = "imperial-exam-network";
+  networkContacts.slice(0, 4).forEach((contact) => {
+    appendIfText(networkList, "p", [contact.name, contact.role, contact.publicSummary].filter(Boolean).join("："));
+  });
+  grid.appendChild(createImperialExamArchiveCard(
+    "network",
+    "同年考官",
+    examNetwork?.publicSummary || `${networkContacts.length}条可见科场人脉`,
+    examNetwork?.publicSummary || "同年、座师与考官关系只从公开放榜和可见人脉归档。",
+    [
+      ["同年", examNetwork?.sameYearContacts?.length ?? networkContacts.filter((contact) => /同年/.test(contact.role || "")).length],
+      ["考官", examNetwork?.examinerContacts?.length ?? networkContacts.filter((contact) => /考官|座师|房官|读卷/.test(contact.role || "")).length],
+      ["谱牒", worldPeopleExamRelationCount]
+    ],
+    { ready: Boolean(examNetwork || networkContacts.length || worldPeopleExamRelationCount), sourceView: "relationshipView+worldPeopleView", extra: networkList.childElementCount ? networkList : null }
+  ));
+
+  grid.appendChild(createImperialExamArchiveCard(
+    "appointment",
+    "授官轨迹",
+    appointmentDisplay.decision?.trackLabel || appointmentDisplay.latestTrack?.trackLabel || "尚未初授",
+    appointmentDisplay.publicSummary || "殿试取中后，初授路径会在此归档。",
+    [
+      ["官职", appointmentDisplay.decision?.officeTitle || appointmentDisplay.latestTrack?.officeTitle || "未授"],
+      ["甲第", appointmentDisplay.latestTrack?.palaceRank || "未定"],
+      ["回避", appointmentDisplay.latestRecord?.avoidanceChecks?.some((check) => check.status === "blocked") ? "已避" : appointmentDisplay.latestRecord ? "已核" : "待核"]
+    ],
+    { ready: Boolean(appointmentDisplay.decision), sourceView: "appointmentTrackView" }
+  ));
+
+  panel.append(header, stats, grid);
+  const archiveButton = createExamArchiveButton(currentWorldState);
+  if (archiveButton) panel.appendChild(archiveButton);
   return panel;
 }
 
@@ -3323,6 +3665,7 @@ function renderRolePanel(worldState) {
 
   scholarPanel.append(overview, renderActionHints(player.role), stats, lists);
   appendOptionalPanel(renderOfficialCareerPanel());
+  appendOptionalPanel(renderImperialExamArchivePanel());
   appendOptionalPanel(renderExamProcedurePanel());
   appendOptionalPanel(createExaminerPanelBlock(currentExaminerPanelView, { className: "examiner-panel-panel" }));
   appendOptionalPanel(createExamHonorBlock(currentExamHonorView, { className: "exam-honor-panel" }));
@@ -3409,6 +3752,7 @@ function renderScholarPanel(worldState) {
 
   scholarPanel.append(progressBlock);
   appendOptionalPanel(renderExamCalendarPanel());
+  appendOptionalPanel(renderImperialExamArchivePanel());
   appendOptionalPanel(renderExamProcedurePanel());
   appendOptionalPanel(createExaminerPanelBlock(currentExaminerPanelView, { className: "examiner-panel-panel" }));
   appendOptionalPanel(createExamHonorBlock(currentExamHonorView, { className: "exam-honor-panel" }));
@@ -3431,6 +3775,7 @@ function renderWorldState(
   examProcedureView,
   examinerPanelView,
   examHonorView,
+  appointmentTrackView,
   studyProfileView,
   worldThreadView,
   worldGeographyView,
@@ -3450,6 +3795,7 @@ function renderWorldState(
   currentExamProcedureView = getExamProcedureView(worldState, examProcedureView);
   currentExaminerPanelView = getRouteView(examinerPanelView) || currentExamProcedureView?.examinerPanelView || null;
   currentExamHonorView = getExamHonorView(examHonorView);
+  currentAppointmentTrackView = getAppointmentTrackView(appointmentTrackView);
   currentStudyProfileView = getStudyProfileView(worldState, studyProfileView);
   currentWorldThreadView = getWorldThreadView(worldState, worldThreadView);
   currentWorldGeographyView = getRouteView(worldGeographyView);
@@ -3476,6 +3822,7 @@ function renderPayloadWorldState(payload) {
     payload.examProcedureView,
     payload.examinerPanelView,
     payload.examHonorView,
+    payload.appointmentTrackView,
     payload.studyProfileView,
     payload.worldThreadView,
     payload.worldGeographyView,
@@ -3860,7 +4207,8 @@ function withExamHistoryFallback(payload) {
     sceneTime: payload.sceneTime || latest.sceneTime,
     examProcedureView: payload.examProcedureView || latest.examProcedure,
     examinerPanelView: payload.examinerPanelView || latest.examinerPanel || latest.examProcedure?.examinerPanelView,
-    examHonorView: payload.examHonorView || latest.examHonor
+    examHonorView: payload.examHonorView || latest.examHonor,
+    appointmentTrackView: pickAppointmentTrackView(payload.appointmentTrackView, latest.appointmentTrack)
   };
 }
 
@@ -4099,6 +4447,12 @@ function createPlayerExamArchive(payload) {
   });
   if (honorBlock) archive.appendChild(honorBlock);
 
+  const appointmentBlock = createAppointmentTrackBlock(
+    pickAppointmentTrackView(payload.appointmentTrackView, payload.appointmentTrack),
+    { className: "appointment-track-archive" }
+  );
+  if (appointmentBlock) archive.appendChild(appointmentBlock);
+
   const reasonParts = [];
   if (payload.score?.detailed_feedback) reasonParts.push(payload.score.detailed_feedback);
   if (payload.promotionResult?.reason) reasonParts.push(payload.promotionResult.reason);
@@ -4203,6 +4557,7 @@ function renderExamArchive(worldState = currentWorldState) {
       examProcedureView: entry.examProcedure,
       examinerPanelView: entry.examinerPanel || entry.examProcedure?.examinerPanelView,
       examHonorView: entry.examHonor,
+      appointmentTrackView: entry.appointmentTrack,
       virtualCandidates: entry.virtualCandidates || [],
       ranking: entry.ranking || []
     };
@@ -4317,6 +4672,9 @@ function renderExamResult(payload) {
 
   const examinerPanel = createExaminerPanelBlock(payload.examinerPanelView);
   const honorPanel = createExamHonorBlock(payload.examHonorView || payload.examHonor);
+  const appointmentPanel = createAppointmentTrackBlock(
+    pickAppointmentTrackView(payload.appointmentTrackView, payload.appointmentTrack)
+  );
   examResult.append(
     summary,
     feedback,
@@ -4329,6 +4687,9 @@ function renderExamResult(payload) {
   }
   if (honorPanel) {
     examResult.appendChild(createResultSection("科名荣誉", honorPanel, true));
+  }
+  if (appointmentPanel) {
+    examResult.appendChild(createResultSection("授官轨迹", appointmentPanel, true));
   }
   examResult.append(
     createResultSection("同场榜单", ranking, true),
