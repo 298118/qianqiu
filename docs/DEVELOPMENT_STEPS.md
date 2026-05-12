@@ -110,7 +110,7 @@
 | S70.4 | DONE | NPC mind 与记忆：高显著度 NPC LLM loop、背景 NPC heuristic、目标/恩怨/人情债记忆演化 | 2026-05-12 | Codex / 子代理 | `e030dc5` |
 | S70.5 | DONE | 制度 AI 与朝议/科场场景：官署、派系、大臣、谏官、老师、考官围绕奏折/弹章/政令/考卷推演 | 2026-05-12 | Codex / 子代理 | `029d65a` |
 | S70.6 | DONE | 压力事件工具协议与 actor proposal：由城市、财政、军政、关系、情报压力提出事件候选，固定工具 envelope、权限、Mock/provider 基础和服务器成案语义 | 2026-05-12 | Codex / 子代理 | `3847c5a` |
-| S70.7 | DONE | 刑名、财政、军事、外交与科举工具：案牍、赈济、军令、战役、和议、宣战、评卷、授官 proposal 与 resolver | 2026-05-12 | Codex / 子代理 | 待本次提交 |
+| S70.7 | DONE | 刑名、财政、军事、外交与科举工具：案牍、赈济、军令、战役、和议、宣战、评卷、授官 proposal 与 resolver | 2026-05-12 | Codex / 子代理 | `a01fbaa` |
 | S70.8 | TODO | 多模型路由与仲裁：narrator、actor_mind、planner、domain_specialist、critic、safety 分工与成本边界 | - | - | S70.7 后 |
 | S70.9 | TODO | AI 设置与可观测性：按叙事、NPC、科举、政务、战争、记忆、critic/safety 配置模型路由、输出长度、并发、工具预算、审计面板和 hidden-safe 诊断 | - | - | S70.8 后 |
 | S70.10 | TODO | 玩家官职月报与 AI 推动世界：每三旬生成职位化月报、上级态度、同僚风向、NPC 主动请求、下月风险和待裁决差事 | - | - | S70.9 后 |
@@ -213,7 +213,7 @@ S71 详细规划见 [DATABASE_GAMEPLAY_RESOLVER_ROADMAP.md](DATABASE_GAMEPLAY_RE
 
 步骤：S70.7 刑名、财政、军事、外交与科举领域工具。
 
-提交：待本次提交后回填。
+提交：`a01fbaa`。
 
 完成：
 
