@@ -99,23 +99,12 @@
 
 ## 4. 活动路线图总览
 
+已归档的 S49-S69 不再逐行列入活动总览；需要追溯时阅读上方归档摘要、对应归档文件和下方进度记录。当前活动总览只保留 S70 及后续待推进步骤。
+
 | ID | 状态 | 目标 | 完成日期 | 工具 | 提交 |
 | --- | --- | --- | --- | --- | --- |
-| S67.2 | DONE | 内容充实阶段归档与下一阶段交接 | 2026-05-11 | Codex / 子代理复审 | 本次提交 |
-| S68.0 | DONE | 科举、读书、评卷与授官深化提前规划：制度细节、AI 老师/考官、名次荣誉、馆选铨选和验收矩阵 | 2026-05-08 | Codex / 子代理 | 见 git history |
-| S68.1 | DONE | 科举制度契约：明清原型、游戏压缩、保结/搜检/弥封/誊录/磨勘/复核/号舍流程与 AI/server 权限 | 2026-05-11 | Codex / 子代理调研 / 子代理复审 | 本次提交 |
-| S68.2 | DONE | 读书账本与学业计划：经史书目、日课、文卷弱点、心态、师承、服务器 `studyProfileView` | 2026-05-11 | Codex / 子代理调研 / 子代理复审 | 本次提交 |
-| S68.3 | DONE | 老师点评与书院/同窗互动：个性化读书计划、小题训练、荐书、保结前置和关系账本 | 2026-05-11 | Codex / 子代理调研 / 子代理复审 | 本次提交 |
-| S68.4 | DONE | 科场制度流程：童试县试/府试/院试；乡试/会试三场、多日、多卷；保结、搜检、贡院号舍、弥封、誊录、对读、磨勘、复核 scene phases | 2026-05-11 | Codex / 子代理调研 / 子代理复审 | 9a53791 |
-| S68.5 | DONE | 科场事件与多考官阅卷：夹带、病倒、誊录误差、考官偏好、房官/同考官/主考官 proposal 和服务器 ranking/处罚 | 2026-05-12 | Codex / 子代理只读审阅 / 子代理复审 | 9002bc2 |
-| S69.1 | DONE | 榜单与名次细化：解元、会元、状元、榜眼、探花、传胪、二甲/三甲次序和服务器 canonical ranking | 2026-05-12 | Codex / 子代理只读复审 | 本次提交 |
-| S69.2 | DONE | 同年、座师与考官网络：房官、主考、座师、门生、同年关系进入可见关系和事件档案 | 2026-05-12 | Codex / 子代理调研与复审尝试超时 | 本次提交 |
-| S69.3 | DONE | 授官路径深化：一甲翰林、二甲馆选/庶吉士/观政、三甲铨选/部属/外放/候缺和籍贯回避 resolver | 2026-05-12 | Codex / 子代理调研与只读复审 | 本次提交 |
-| S69.4 | DONE | 浏览器科举档案面板：读书簿、科场档案、榜单、同年考官、授官轨迹和 hidden-token smoke | 2026-05-12 | Codex / 子代理调研与只读复审 | 本次提交 |
-| S69.5 | DONE | Provider/Mock 验收：真实 provider 出题/评卷/点评 smoke、Mock deterministic 路径和越权红队 | 2026-05-12 | Codex / 子代理只读调研与复审 | 本次提交 |
-| S69.6 | DONE | S68-S69 归档与交接：科举深化实现归档、brief/context/验收更新和 S70 衔接建议；同时整合 S49-S67 数据库/内容旧分卷到统一归档 | 2026-05-12 | Codex / 子代理只读调研与复审 | 本次提交 |
 | S70.0 | DONE | AI 编排提前规划：固定 AI 核心地位、现实权力原型、工具调用路线、actor 权限层和 S70 子步骤 | 2026-05-08 | Codex / Web / 子代理 | 见 git history |
-| S70.1 | TODO | AI 提示词与工具协议契约：prompt pack 分层、actor/scene contract、MCP-friendly tool envelope、proposal/result schema、request-adjudication、direct-write 禁止、strict schema、MiMo-V2.5-Pro 工具调用 smoke、失败降级和 provider 兼容策略 | - | - | S69 后启动 |
+| S70.1 | TODO | AI 提示词与工具协议契约：prompt pack 分层、actor/scene contract、MCP-friendly tool envelope、proposal/result schema、request-adjudication、direct-write 禁止、strict schema、MiMo-V2.5-Pro 工具调用 smoke、失败降级和 provider 兼容策略 | - | - | 当前启动 |
 | S70.2 | TODO | AI actor 与权限模型：按书生、士绅、地方官、大臣、将领、皇帝、系统引擎划分读取范围和工具组 | - | - | S70.1 后 |
 | S70.3 | TODO | 内部工具运行时：`game_ai_tools` registry、权限检查、read/proposal/request-adjudication runner、服务器 resolver、审计 hook 和 Mock runner | - | - | S70.2 后 |
 | S70.4 | TODO | NPC mind 与记忆：高显著度 NPC LLM loop、背景 NPC heuristic、目标/恩怨/人情债记忆演化 | - | - | S70.3 后 |
