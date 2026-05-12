@@ -29,7 +29,7 @@
 - S54-S59 本地 SQLite 业务表：地理 `geo_*`、人物 `people_*`、官职任所 `office_*`、安全事件档案 `event_archive_index`、安全 prompt 检索 `prompt_retrieval_index`、维护工具、浏览器 parity 和 `smoke:dual-mode`，见 [LOCAL_DATABASE_BUSINESS_TABLE_ARCHIVE.md](LOCAL_DATABASE_BUSINESS_TABLE_ARCHIVE.md)。
 - S60-S67 超大动态世界数据库内容充实：规模内容契约、small/medium/large fixture、国家/城市/NPC/官职/案牍/军务/财赋/事件链/情报、prompt 策略、浏览器分页和 large fixture 规模验收，见 [HUGE_DYNAMIC_WORLD_CONTENT_ARCHIVE.md](HUGE_DYNAMIC_WORLD_CONTENT_ARCHIVE.md)，内容契约见 [HUGE_DYNAMIC_WORLD_CONTENT_CONTRACT.md](HUGE_DYNAMIC_WORLD_CONTENT_CONTRACT.md)。
 
-当前活动路线图见 [DEVELOPMENT_STEPS.md](DEVELOPMENT_STEPS.md)，数据库方向见 [DYNAMIC_WORLD_DATABASE_PLAN.md](DYNAMIC_WORLD_DATABASE_PLAN.md)。S60-S67 已把“超大动态世界数据库”的内容密度、可见性、prompt 检索、浏览器分页和规模验收收束为可追溯归档；真正 hidden 私档、资产真数、隐藏动机、未公开任免、密档事件链和隐藏情报真值仍不回填当前 raw route state。当前不规划远程存档、账号体系、多人同步、云端冲突解决或托管数据库。
+当前活动路线图见 [DEVELOPMENT_STEPS.md](DEVELOPMENT_STEPS.md)，数据库方向见 [DYNAMIC_WORLD_DATABASE_PLAN.md](DYNAMIC_WORLD_DATABASE_PLAN.md)。S60-S67 已把“超大动态世界数据库”的内容密度、可见性、prompt 检索、浏览器分页和规模验收收束为可追溯归档；S71 的数据库玩法化、维护、安全检索和 redacted API 规划见 [DATABASE_GAMEPLAY_RESOLVER_ROADMAP.md](DATABASE_GAMEPLAY_RESOLVER_ROADMAP.md)，排在 S70 工具协议与 actor 编排之后，不抢占当前 S69 科举深化。该 S71 文档已扩展为后续 Codex 开发任务书，明确每步依赖、资料、建议模块/函数、route/tool 接口、测试和验收。真正 hidden 私档、资产真数、隐藏动机、未公开任免、密档事件链和隐藏情报真值仍不回填当前 raw route state。当前不规划远程存档、账号体系、多人同步、云端冲突解决或托管数据库。
 
 S68-S69 科举、读书、评卷与授官深化规划见 [IMPERIAL_EXAM_DEEPENING_ROADMAP.md](IMPERIAL_EXAM_DEEPENING_ROADMAP.md)，S68.1 制度契约见 [IMPERIAL_EXAM_SYSTEM_CONTRACT.md](IMPERIAL_EXAM_SYSTEM_CONTRACT.md)。该专项排在 S67 后、S70 前，要求外层 `child_exam -> provincial_exam -> metropolitan_exam -> palace_exam` API 保持兼容，内部把童试拆为县试/府试/院试，把乡试/会试扩为三场、多日、多卷、号舍、弥封、誊录、对读、磨勘、复核、房官/同考官/主考官阅卷、canonical 榜单荣誉和授官轨迹，并把 AI 老师、同年、考官、吏部、皇帝和授官 proposal 全部限制在服务器裁决之下。弥封身份映射、考官 hidden intent、保结 hidden notes 和 raw provider proposal 不得回填普通 route `worldState` 或浏览器/prompt view。
 
@@ -410,6 +410,7 @@ chore: update env example
 
 - S68-S69：科举、读书、评卷与授官深化；S68.1 科举制度契约、S68.2 读书账本基础、S68.3 老师/书院/同窗互动、S68.4 科场制度流程、S68.5 科场事件/多考官阅卷、S69.1 榜单名次荣誉和 S69.2 同年座师网络已完成，后续从 S69.3 授官路径深化继续。
 - S70：AI 提示词、工具协议、actor 权限和多 AI 编排，排在 S68-S69 后启动。
+- S71：数据库玩法化、维护、安全检索和 redacted API，排在 S70 后启动；重点是让安全 projection 成为财政、地方政策、案件、军务、外交和事件链 resolver 的输入，补 `schema_migrations`、本地维护、FTS/安全搜索、AI actor 场景、NPC 记忆和 AI 调动审计面板。
 
 本地数据库专项必须满足同一边界：默认 JSON/Mock 路径不得被破坏；SQLite local-only；AI 可以通过领域工具提交 proposal，但不执行 SQL、不直接写 canonical 状态、业务表或审计表；浏览器和 prompt 只读服务器 projection；hidden 私档不回填当前 raw route `worldState`；服务器继续拥有 schema、白名单、clamp、隐藏过滤、科举晋级、官职任免、长期事件、世界实体、世界议程、数据库写入和持久化事务。
 

@@ -21,7 +21,7 @@
 - Backend: Node.js + Express，plain JavaScript。
 - AI providers: adapter-based Mock/OpenAI/DeepSeek/MiMo/MiMo+DeepSeek/Anthropic。`AI_PROVIDER=mock` 仍是默认可玩模式；`mimo-deepseek` 只是方法级最小路由，MiMo 负责 start/turn/stream/question，DeepSeek 负责 exam grading。
 - Storage: 默认 JSON session files under `data/sessions/`；可选 `STORAGE_ADAPTER=sqlite` 使用本地 `world_sessions`、audit tables、`geo_*`、`people_*`、`office_*`、`event_archive_index` 和 `prompt_retrieval_index`。SQLite 派生行只从 `world_sessions.world_state_json` 单向修复；raw business/audit rows 不是 route、prompt、browser 或服务器裁决 truth source。
-- Active roadmap: S49-S53、S54-S59、S60-S67 已完成并归档。S68.1 科举制度契约、S68.2 读书账本基础、S68.3 老师/书院/同窗互动、S68.4 科场制度流程、S68.5 科场事件/多考官阅卷、S69.1 榜单名次荣誉与 S69.2 同年座师网络已完成；后续应从 S69.3 授官路径深化开始，再推进科举档案面板和 provider/Mock 验收，最后进入 S70 AI prompt pack、工具协议、actor 权限和多 AI 编排。
+- Active roadmap: S49-S53、S54-S59、S60-S67 已完成并归档。S68.1 科举制度契约、S68.2 读书账本基础、S68.3 老师/书院/同窗互动、S68.4 科场制度流程、S68.5 科场事件/多考官阅卷、S69.1 榜单名次荣誉与 S69.2 同年座师网络已完成；后续应从 S69.3 授官路径深化开始，再推进科举档案面板和 provider/Mock 验收，最后进入 S70 AI prompt pack、工具协议、actor 权限和多 AI 编排。S71 已作为 S70 后的数据库玩法化、维护、安全检索和 redacted API 专项挂入台账，不抢占 S69。
 - Current local `.env`: 可能含用户提供的 provider keys。`.env` 被 Git 忽略，不能打印或提交。
 
 ## Core Invariants
@@ -106,11 +106,14 @@ Important modules:
 - `docs/IMPERIAL_EXAM_DEEPENING_ROADMAP.md`
 - `docs/IMPERIAL_EXAM_SYSTEM_CONTRACT.md`
 - `docs/AI_ORCHESTRATION_ROADMAP.md`
+- `docs/DATABASE_GAMEPLAY_RESOLVER_ROADMAP.md`
 
 ## Current Work Note
 
+- 2026-05-12：用户指出 S71 数据库玩法化规划仍偏骨架，已把 `docs/DATABASE_GAMEPLAY_RESOLVER_ROADMAP.md` 扩展为后续 Codex 开发任务书。新增第 11-13 节：后续开发执行规则、依赖与资料准备、S71.0-S71.12 逐步任务书；逐步写清前置依赖、需要资料、建议模块/函数、route/tool 接口、测试文件和验收重点。只读子代理复审提出 4 个 P2，已补入文档：`server.*` 只能是内部 resolver bridge 不能进模型工具列表；S70.6/S71.8 压力事件职责分层；dev diagnostics 默认关闭且受 production/localhost/Origin 门禁；migration 事务、checksum、失败不 applied、forward-only、备份和幂等策略。关键口径继续保持：优先不新增 npm 依赖，FTS5 不可用先 fallback；S70 做工具/actor 基础，S71 做数据库 projection 驱动玩法落地；redacted player API 先于 hidden 私档；AI 不执行 SQL、不直写 canonical 状态/业务表/审计表；当前仍不改 S69 实现节奏。
 - 2026-05-12：按用户要求补充 S70 AI-first 体验规划，不改当前 S69 实现节奏。`docs/AI_ORCHESTRATION_ROADMAP.md` 已扩展正式 AI 必选方向、权限增强工具、玩家官职月报、自然语言跳时、AI 设置面板、大模型记忆分层和后续地图接口；`docs/DEVELOPMENT_STEPS.md` 将 S70 扩到 S70.14，并把真实 MiMo 验收、月报、跳时、记忆和地图接口列为后续 TODO。关键边界：增强 AI 权限是增强领域工具和服务器 resolver，不是让模型执行 SQL、直写 canonical 状态或读取 hidden/raw。验证已跑 docs governance、documentation governance test 和目标文档 `git diff --check`；本轮纯规划文档变更，跳过子代理复审，但路线图边界已在本交接板明确。
-- 2026-05-12：S69.2 同年、座师与考官网络已实现，提交待本次收束。新增 `src/game/examNetworksConfig.js` 与 `src/game/examNetworks.js`，`/api/exam/submit` 在 canonical ranking、`examHonors` 和 cohort 记录完成后调用 `resolveExamNetwork()`，从服务器定榜顺序派生同年、房官、主考/座师和殿试读卷官可见联系人，写入 `characters -> relationshipLedger`，从而进入 `relationshipView` 和 `worldPeopleView`；考试历史保存安全 `examNetwork` 快照，事件档案新增 `exam_network` 条目，prompt context 新增 capped `examNetwork` 摘要。已通过语法检查和聚焦测试：`node --test test/examNetworks.test.js test/examHonors.test.js test/examHonorsRoute.test.js test/worldPeopleBridge.test.js test/relationshipLedger.test.js test/eventArchive.test.js test/promptContextAssembler.test.js test/prompts.test.js test/stateRules.test.js test/aiSchemas.test.js test/publicAppSource.test.js`（84/84）。本步仍不保存 hidden 榜单、弥封身份映射、考官 hidden intent、保结密注、模型原始建议或内部审计；授官路径深化仍留给 S69.3。子代理只读调研因账号配额 403 未返回；提交前只读复审已完成，未发现阻塞问题，确认关系事实只从服务器定榜和配置派生。残余缺口为未跑完整浏览器端到端、SQLite parity 和旧存档污染 `examNetwork` 快照清洗。
+- 2026-05-12：按用户要求补充 S71 数据库玩法化专项规划，不改 S69 当前实现节奏。新增 `docs/DATABASE_GAMEPLAY_RESOLVER_ROADMAP.md`，并在 `docs/DEVELOPMENT_STEPS.md` 的 S70 之后追加 S71.0-S71.12 TODO：数据库作为玩法 resolver 输入、本地 schema migration/维护层、安全全文检索、redacted player API、财政/城市政策、地方案件、军务/外交 resolver、压力事件生成器、多 actor 场景、NPC 记忆账本、AI 调动审计面板和 S71 验收归档。只读子代理复审指出台账编号需与路线图对齐，已补齐到 S71.12。核心边界：本地 JSON/SQLite only；AI 只能通过 S70 工具协议提交 read/proposal/request-adjudication；服务器 resolver 负责裁决和落库；hidden 私档必须等 redacted API 后再保存。
+- 2026-05-12：S69.2 同年、座师与考官网络已实现，提交待本次收束。新增 `src/game/examNetworksConfig.js` 与 `src/game/examNetworks.js`，`/api/exam/submit` 在 canonical ranking、`examHonors` 和 cohort 记录完成后调用 `resolveExamNetwork()`，从服务器定榜顺序派生同年、房官、主考/座师和殿试读卷官可见联系人，写入 `characters -> relationshipLedger`，从而进入 `relationshipView` 和 `worldPeopleView`；考试历史保存安全 `examNetwork` 快照，事件档案新增 `exam_network` 条目，prompt context 新增 capped `examNetwork` 摘要。已通过语法检查和聚焦测试：`node --test test/examNetworks.test.js test/examHonors.test.js test/examHonorsRoute.test.js test/worldPeopleBridge.test.js test/relationshipLedger.test.js test/eventArchive.test.js test/promptContextAssembler.test.js test/prompts.test.js test/stateRules.test.js test/aiSchemas.test.js test/publicAppSource.test.js`（84/84）。本步仍不保存 hidden 榜单、弥封身份映射、考官 hidden intent、保结密注、模型原始建议或内部审计；授官路径深化仍留给 S69.3。子代理只读调研因账号配额 403 未返回；提交前只读复审已完成，未发现 P0/P1 阻断问题，确认 staged diff 不依赖未提交的 `.gitignore`、`docs/SCALE_OS_INTEGRATION_GUIDE.md` 或 `skills/`，残余风险为未跑完整浏览器端到端、SQLite parity 和旧存档污染快照兼容清洗。
 
 ## Next Recommended Step
 

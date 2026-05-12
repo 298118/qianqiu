@@ -583,6 +583,18 @@ S70 的数据库关系：
 - 高权力工具必须写入审计：actor、tool name、arguments 摘要、权限判定、服务器接受/拒绝原因、applied event id、公开结果和隐藏后果引用。
 - JSON/Mock/no-key 仍必须可玩；SQLite 和真实 provider 只增强规模、检索和叙事质量。
 
+### S71：数据库玩法化、维护、安全检索与 redacted API
+
+S71 规划见 [DATABASE_GAMEPLAY_RESOLVER_ROADMAP.md](DATABASE_GAMEPLAY_RESOLVER_ROADMAP.md)。它排在 S70 工具协议和 actor 权限之后，目标是把现有安全 projection 从“可展示、可检索”推进为“可驱动服务器玩法 resolver 的输入”。该文档后半部分已细化为后续 Codex 开发任务书，覆盖依赖、资料、fixture、建议模块/函数、route/tool 接口、测试文件和验收命令。
+
+S71 的数据库关系：
+
+- 新增 `resolverInputContext` 或等价上下文层，把国家、城市、NPC、官职、案牍、军务、财赋、事件链和情报 projection 作为财政结算、地方政策、案件、战役、外交和事件成案的只读输入。
+- 补正式本地维护层：`schema_migrations`、备份、VACUUM、索引健康、数据库体积提示、脱敏导出和 dry-run。
+- 增强本地安全检索：优先评估 SQLite FTS5；不可用时保留安全 fallback。只索引 player-facing projection，不索引 raw audit、provider proposal、hidden 私档、完整 prompt、本地路径或 key。
+- 保存真正 hidden 私档之前，先拆 redacted player API 与 hidden-safe 开发诊断 API，避免当前完整 `worldState` route 泄漏未来私档。
+- AI actor 角色卡、压力驱动事件生成器、朝议/堂审/会盟/战役场景、NPC 记忆和 AI 调动审计面板都必须继承 S70 的“模型请求、服务器执行”工具边界。
+
 ## 7. AI 可修改范围分级
 
 推荐把数据库字段分成四类：
@@ -631,7 +643,7 @@ S70 的数据库关系：
 
 ## 10. 推荐优先级
 
-S49-S53 基础层已归档到 [LOCAL_DATABASE_FOUNDATION_ARCHIVE.md](LOCAL_DATABASE_FOUNDATION_ARCHIVE.md)，S54-S59 业务表拆分已归档到 [LOCAL_DATABASE_BUSINESS_TABLE_ARCHIVE.md](LOCAL_DATABASE_BUSINESS_TABLE_ARCHIVE.md)。如果下一阶段目标是“让世界规模真正变大并能长期检索”，推荐优先级如下：
+S49-S53 基础层已归档到 [LOCAL_DATABASE_FOUNDATION_ARCHIVE.md](LOCAL_DATABASE_FOUNDATION_ARCHIVE.md)，S54-S59 业务表拆分已归档到 [LOCAL_DATABASE_BUSINESS_TABLE_ARCHIVE.md](LOCAL_DATABASE_BUSINESS_TABLE_ARCHIVE.md)，S60-S67 内容充实已归档到 [HUGE_DYNAMIC_WORLD_CONTENT_ARCHIVE.md](HUGE_DYNAMIC_WORLD_CONTENT_ARCHIVE.md)。后续优先级如下：
 
 1. **已完成 S54 地理业务表**：国家、邻国、城市、路线、边面和辖区已拆入 SQLite，并补导入、修复、导出和 parity 工具。
 2. **已完成 S55 人物业务表**：可见 NPC、家族、资产、田产和关系 bridge rows 已拆入 SQLite，并补服务器人物事件 helper、关系/请托 live 事件和 `people_*.last_event_id` 审计关联。
@@ -639,6 +651,8 @@ S49-S53 基础层已归档到 [LOCAL_DATABASE_FOUNDATION_ARCHIVE.md](LOCAL_DATAB
 4. **已完成 S57 安全事件索引**：事件档案分页、prompt 近事检索和读档叙事回放已使用 `event_archive_index` 安全 projection；审计公开 projection 工具仍只输出 allowlist 后的 public 摘要和统计。
 5. **已完成 S58 检索式 prompt 与浏览器双模式 parity**：SQLite 模式的 prompt `retrievalContext` 已读取安全派生 `prompt_retrieval_index`，浏览器局势簿已通过 JSON/SQLite parity smoke。
 6. **已完成 S59 双模式集成硬化与再归档**：`smoke:dual-mode` 已串联完整 Mock 主线、双模式 browser parity、导入导出/修复工具和脱敏防线；S59.2 已完成文档压缩与归档。
-7. **当前 S60-S67 内容充实专项**：先写内容契约和规模 fixture，再分批补国家/城市/NPC/官职/事件/情报/prompt/UI 内容密度，最后做大世界性能与防泄漏验收。
+7. **已完成 S60-S67 内容充实专项**：内容契约、规模 fixture、国家/城市/NPC/官职/事件/情报/prompt/UI 内容密度和大世界性能/防泄漏验收已归档。
+8. **S70 AI 工具协议与 actor 编排**：先让 AI actor、工具 envelope、权限、proposal/result schema、Mock runner 和审计 hook 成为稳定底座。
+9. **S71 数据库玩法化专项**：再让安全 projection 驱动财政、地方政策、案件、军务、外交和事件链 resolver，并补本地 migration/maintenance、安全全文检索、redacted API、NPC 记忆和 AI 调动审计面板。
 
 这条路线不会阻止继续做考试外的 scene-local time；两者可以并行，但数据库实现应优先选择小切片，避免把 S48 已稳定的时间契约和完整书生入仕路径一起掀开。
