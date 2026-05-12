@@ -132,6 +132,10 @@ test("exam submit returns server-owned examHonorView and ignores provider rankin
   worldState.player.literaryTalent = 60;
   worldState.player.mentality = 60;
   worldState.player.reputation = 30;
+  worldState.studyProfile.dimensions.examEndurance = 100;
+  worldState.studyProfile.dimensions.calligraphyCopying = 100;
+  worldState.studyProfile.dimensions.eightLeggedForm = 100;
+  worldState.studyProfile.dimensions.policyInsight = 100;
   worldState.activeExam = createWritingExam("provincial_exam");
   t.after(() => removeSessionFile(worldState.sessionId));
   await writeSession(worldState);
@@ -156,6 +160,16 @@ test("exam submit returns server-owned examHonorView and ignores provider rankin
   assert.equal(payload.examHonorView.honors.at(-1).rankLabel, "乡试第一名");
   assert.equal(payload.worldState.examHonorLedger.honors.at(-1).title, "解元");
   assert.equal(saved.player.examHistory.at(-1).examHonor.currentHonor.title, "解元");
+  assert.equal(saved.player.examHistory.at(-1).examNetwork.sameYearContacts.length > 0, true);
+  assert.ok(saved.player.examHistory.at(-1).examNetwork.examinerContacts.some((contact) =>
+    contact.relationKind === "seat_teacher"
+  ));
+  assert.ok(payload.relationshipView.contacts.some((contact) =>
+    contact.id === "exam-seat-provincial" &&
+    contact.networkSource === "乡试主考取中"
+  ));
+  assert.ok(payload.worldPeopleView.npcs.some((npc) => npc.id === "exam-seat-provincial"));
+  assert.ok(payload.eventArchiveView.items.some((item) => item.sourceType === "exam_network"));
   assert.equal(payload.ranking.find((entry) => entry.isPlayer).honorTitle, "解元");
   assert.doesNotMatch(serialized, /provider-crowned/);
   assert.doesNotMatch(JSON.stringify(payload.examHonorView), /状元/);

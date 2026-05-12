@@ -32,6 +32,7 @@ const TURN_STATE_BOUNDARY_LINES = [
   "Never patch studyProfile or invent durable teacher, academy, classmate, or sponsorship facts. teacherFeedbackProposal is text-only advice; the server decides whether it enters the study ledger.",
   "Keep statePatch small and only use allowed keys. Prefer modest numeric changes in the range of 1-8 unless the action clearly spends resources.",
   "Never put relationshipLedger in statePatch.",
+  "Same-year, seat-teacher, room-officer, chief-examiner, and examiner network facts are server-owned; models may only narrate or propose comments, not create durable exam relationships.",
   `Allowed top-level patch keys: ${TURN_ALLOWED_PATCH_KEYS.join(", ")}.`,
   `Allowed player patch keys: ${PLAYER_ALLOWED_PATCH_KEYS.join(", ")}.`
 ];

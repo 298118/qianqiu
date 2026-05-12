@@ -207,6 +207,7 @@ AI 可生成候选，服务器裁定是否发生：
 - `examProcedure` / `examProcedureView`：保结、搜检、号舍、弥封、誊录、磨勘、复核的 scene state。
 - `examinerPanel` / `examinerPanelView`：房官、主考、读卷官的可见批语和争议摘要。
 - `examHonorLedger` / `examHonorView`：解元、会元、状元、榜眼、探花、传胪、三元等荣誉。
+- `examNetwork`：同年、房官、主考/座师和读卷官的公开关系快照，落入可见关系与事件档案。
 - `appointmentTrack` / `appointmentTrackView`：馆选、庶吉士、观政、铨选、外放、候缺、回避和缺额。
 
 这些结构初期可保存在 `worldState` 的安全 projection 中；若后续拆 SQLite 表，仍必须从 `world_sessions.world_state_json -> server views -> prompt/browser index` 单向修复，不让 AI 或 raw table 反向改写事实。
@@ -260,7 +261,7 @@ Proposal 工具：
 | S68.4 | 科场制度流程 | `examProcedureView`、县试/府试/院试、乡会试三场、多日、多卷、保结/搜检/号舍/弥封/誊录/对读/磨勘/复核 scene phases | scene-local time，不推进全局旬 |
 | S68.5 | 科场事件与多考官阅卷 | 科场事件模板、同年互动、房官/同考官/主考官/critic AI proposal、服务器 ranking resolver | AI 不拥有榜单；本地反作弊优先 |
 | S69.1 | 名次与荣誉体系 | 解元/会元/状元/榜眼/探花/传胪/三元 ledger | 名次保存、事件档案、同年关系联动 |
-| S69.2 | 同年、座师与考官网络 | 房官/主考/座师/同年关系进入可见关系与事件档案 | 不泄漏考官 hidden 意图 |
+| S69.2 | 同年、座师与考官网络 | 已落地 `examNetworks`：房官/主考/座师/同年关系进入可见关系、人物桥接与事件档案 | 不泄漏考官 hidden 意图 |
 | S69.3 | 授官与馆选铨选 | `appointmentTrackView`、馆选/庶吉士/观政/铨选/外放 resolver | 官职事实服务器写入，读取官缺/朝局 |
 | S69.4 | 浏览器科举面板深化 | 读书计划、科场流程、榜单荣誉、授官轨迹 | 只读 route view，移动端不溢出 |
 | S69.5 | Provider 与 Mock 验收 | 真实 provider smoke、Mock deterministic path、red-team fixture | 无 key 可玩，越权题面/评分/任官被拒 |

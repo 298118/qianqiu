@@ -6,7 +6,7 @@
 
 ## 这次主要更新
 
-当前项目已经完成可玩纵切、浏览器验收、时间专项、AI provider 扩展、本地动态数据库基础、S54-S59 SQLite 业务表拆分、S60-S67 超大动态世界数据库内容充实、S68.1 科举制度契约、S68.2 读书账本基础、S68.3 老师/书院/同窗互动、S68.4 科场制度流程、S68.5 科场事件/多考官阅卷与 S69.1 榜单名次荣誉。近期重点更新集中在“本地数据库专项归档”“S68-S69 科举读书深化”和“多 provider 能力”：
+当前项目已经完成可玩纵切、浏览器验收、时间专项、AI provider 扩展、本地动态数据库基础、S54-S59 SQLite 业务表拆分、S60-S67 超大动态世界数据库内容充实、S68.1 科举制度契约、S68.2 读书账本基础、S68.3 老师/书院/同窗互动、S68.4 科场制度流程、S68.5 科场事件/多考官阅卷、S69.1 榜单名次荣誉与 S69.2 同年座师网络。近期重点更新集中在“本地数据库专项归档”“S68-S69 科举读书深化”和“多 provider 能力”：
 
 - 新增可选 SQLite 存储模式：默认仍是 JSON 存档；设置 `STORAGE_ADAPTER=sqlite` 后，本地使用 `world_sessions`、审计表、地理 `geo_*`、人物 `people_*`、官职任所 `office_*` 派生业务表、安全事件档案 `event_archive_index` 和安全 prompt 检索派生索引。
 - 新增地理业务表同步：SQLite 模式会把 `worldState.worldGeography` 同步到 `geo_countries`、`geo_regions`、`geo_cities`、`geo_routes`、`geo_frontier_zones`、`geo_office_jurisdictions`，读档时可按 JSON snapshot 修复缺失或陈旧行。
@@ -35,6 +35,7 @@
 - 完成 S68.4 科场制度流程：新增 server-owned `activeExam.procedure` 与 route `examProcedureView`，在不改变外层四级考试 API 的前提下展示童试县试/府试/院试摘要、乡试/会试三场多卷、保结、搜检、号舍、发题、草稿、誊清、交卷、弥封、誊录、对读、磨勘、放榜和归档流程；交卷后把安全流程快照写入 `player.examHistory[].examProcedure`。浏览器和 prompt 只读脱敏 view，不暴露弥封身份映射、保结密注、考官私意、模型原始建议或内部审计。
 - 完成 S68.5 科场事件与多考官阅卷：新增 server-owned `examinerPanelView` 与 `examReview` resolver，把夹带疑云、号舍病困、誊录误差、房官/同考官/主考/磨勘 critic 建议接入交卷后、榜单前的服务器限幅定分流程。真实 provider 可返回 `examiner_reviews`，但只保留脱敏未采纳摘要；服务器仍先应用本地反作弊、再生成 canonical ranking、晋级和处罚。浏览器考试结果、考试档案和书生面板只读 `examinerPanelView` / `examProcedureView.examinerPanelView`。
 - 完成 S69.1 榜单与名次荣誉：新增 server-owned `examHonorLedger`、`examHonorView` 与 `examHonors` resolver，从服务器 canonical ranking 写入解元、会元、状元、榜眼、探花、传胪、二甲/三甲次序和三元及第。游戏 start/state/turn 与考试 question/progress/submit 路由返回 `examHonorView`，考试历史保存安全 `examHonor` 快照；浏览器和 prompt 只读该 view，provider ranking、考官建议和皇帝/吏部 proposal 不能直接定荣誉、甲第或官职。
+- 完成 S69.2 同年、座师与考官网络：新增 server-owned `examNetworks` resolver，从服务器定榜顺序、公开荣誉和脱敏阅卷摘要派生同年、房官、主考/座师、读卷官等可见关系，写入 `relationshipView` / `worldPeopleView`，并在考试历史保存安全 `examNetwork` 快照、事件档案新增 `exam_network` 公开条目。prompt 只读 capped `examNetwork` 摘要，模型原始建议、弥封映射、考官私意和保结密注不能成为关系事实。
 - 新增 Xiaomi MiMo provider：支持 `mimo` 与 `mimo-deepseek`，后者让 MiMo 负责开局、普通回合、流式叙事和出题，让 DeepSeek V4 Pro 负责科举评卷。
 - 更新 README 与项目文档：把当前功能、修复、安全边界、启动方式和常用命令整理成更适合 GitHub 首页阅读的结构。
 
@@ -221,7 +222,7 @@ POST /api/exam/submit
 - `POST /api/game/turn` 支持普通 JSON 与 SSE。SSE 事件包括 `state_preview`、`narrative_chunk`、`final_state`、`error`。
 - `POST /api/ai/connection-test` 不创建 session、不写存档、不用 Mock fallback 掩盖真实 provider 问题。
 - `GET /api/game/state/:sessionId` 可用 `informationTab`、`informationQuery`、`informationFilter`、`informationSort`、`informationPage`、`informationPageSize` 查询局势簿分页；兼容别名 `informationPanelTab` / `informationCollection` 和 `informationSearch`。
-- 游戏与考试路由会返回服务器整理后的可见视图，例如 `examProcedureView`、`examinerPanelView`、`examHonorView`、`studyProfileView`、`relationshipView`、`worldGeographyView`、`worldPeopleView`、`officialPostingsView`、`localAffairsDocketView`、`militaryDiplomacyView`、`economicFiscalView`、`historicalEventArchiveView`、`eventArchiveView`、`informationPanelPageView`。
+- 游戏与考试路由会返回服务器整理后的可见视图，例如 `examProcedureView`、`examinerPanelView`、`examHonorView`、`studyProfileView`、`relationshipView`、`worldGeographyView`、`worldPeopleView`、`officialPostingsView`、`localAffairsDocketView`、`militaryDiplomacyView`、`economicFiscalView`、`historicalEventArchiveView`、`eventArchiveView`、`informationPanelPageView`。S69.2 的同年/座师/考官事实通过 `relationshipView`、`worldPeopleView`、`eventArchiveView` 和考试历史 `examNetwork` 快照暴露，不新增 raw route 入口。
 
 ## 项目结构
 
@@ -266,5 +267,5 @@ data/sessions/
 - 真实 provider 网络调用需要配置 API key；无 key 环境只验证 Mock、缺 key 分支和 no-key skip。
 - 浏览器 smoke 覆盖完整主线和代表身份回合，但不等同于所有身份的长线游玩验收。
 - SQLite 目前已经包含 session row、审计表、地理 `geo_*` 业务表、可见人物 `people_*` bridge rows、人物事件到 `people_*.last_event_id` 的本地关联、带内容漂移探针的官职任所 `office_*` 派生业务表、安全事件档案 `event_archive_index`、安全 prompt 检索索引，以及只输出 allowlist public 摘要的本地审计公开 projection 工具；它们都不是浏览器、prompt 或服务器裁决的 raw 来源。
-- “超大动态世界数据库”的 S60-S67 内容充实阶段已归档；S68.1-S69.1 已完成，后续活动重点是按契约继续推进 S69.2-S69.6 同年座师、授官轨迹和科举档案，再进入 S70 AI 提示词、工具协议和多 AI 编排。
+- “超大动态世界数据库”的 S60-S67 内容充实阶段已归档；S68.1-S69.2 已完成，后续活动重点是按契约继续推进 S69.3-S69.6 授官轨迹、科举档案和 provider 验收，再进入 S70 AI 提示词、工具协议和多 AI 编排。
 - 当前不包含远程存档、账号体系、多人同步或云端数据库。

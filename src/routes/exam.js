@@ -36,6 +36,7 @@ const {
   ensureExamHonorLedgerState,
   resolveExamHonors
 } = require("../game/examHonors");
+const { resolveExamNetwork } = require("../game/examNetworks");
 const { buildRelationshipInspectionView, ensureRelationshipLedger } = require("../game/relationships");
 const { buildActiveNpcRequestView } = require("../game/activeRequests");
 const { buildLongTermEventView, ensureLongTermEventState } = require("../game/longTermEvents");
@@ -417,6 +418,14 @@ router.post("/submit", async (req, res, next) => {
       });
       const examHonor = buildExamHonorSnapshot(honorResult);
       const cohortResult = recordExamCohortResult(worldState, exam, virtualCandidates, ranking);
+      const examNetwork = resolveExamNetwork({
+        worldState,
+        activeExam,
+        exam,
+        ranking,
+        promotionResult,
+        examHonor
+      });
       const sceneTime = markExamSceneSubmitted(activeExam, worldState);
       const examProcedure = completeExamProcedure(activeExam, {
         score,
@@ -443,6 +452,7 @@ router.post("/submit", async (req, res, next) => {
         authenticityCheck,
         examinerPanel: reviewResult.examinerPanel,
         examHonor,
+        examNetwork,
         virtualCandidates,
         ranking,
         promotionResult,
@@ -477,6 +487,7 @@ router.post("/submit", async (req, res, next) => {
         cohortResult,
         ranking,
         honorResult,
+        examNetwork,
         provider
       }));
 

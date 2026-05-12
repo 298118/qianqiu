@@ -463,6 +463,7 @@ function createExamGradeAuditRecords({
   cohortResult,
   ranking,
   honorResult,
+  examNetwork,
   provider
 }) {
   const event = createAuditEvent(worldState, {
@@ -520,6 +521,26 @@ function createExamGradeAuditRecords({
       }
     })] : [])
   ];
+  const networkEvents = examNetwork ? [createAuditEvent(worldState, {
+    sceneCadence: "exam_submit",
+    sourceSystem: "exam_network_resolver",
+    eventType: "exam_network_recorded",
+    visibility: "public",
+    summary: safePreviewText(examNetwork.publicSummary || "科场同年与座师关系由服务器公开归档。"),
+    related: {
+      examLevel: examNetwork.level || activeExam.level,
+      sameYearCount: Array.isArray(examNetwork.sameYearContacts) ? examNetwork.sameYearContacts.length : 0,
+      examinerCount: Array.isArray(examNetwork.examinerContacts) ? examNetwork.examinerContacts.length : 0
+    },
+    appliedChanges: {
+      sameYearContacts: Array.isArray(examNetwork.sameYearContacts)
+        ? examNetwork.sameYearContacts.map((contact) => contact.name).slice(0, 4)
+        : [],
+      examinerContacts: Array.isArray(examNetwork.examinerContacts)
+        ? examNetwork.examinerContacts.map((contact) => contact.name).slice(0, 4)
+        : []
+    }
+  })] : [];
   const modelScore = grade?.score?.overall_score ?? null;
   const rejectedReasons = [];
   if (modelScore !== null && modelScore !== score?.overall_score) {
@@ -536,7 +557,7 @@ function createExamGradeAuditRecords({
   }
 
   return {
-    auditEvents: [event, ...honorEvents],
+    auditEvents: [event, ...honorEvents, ...networkEvents],
     aiProposals: [{
       ...baseAuditFields(worldState, "exam_submit"),
       provider: providerAuditName(provider),
@@ -558,10 +579,15 @@ function createExamGradeAuditRecords({
         passed: Boolean(promotionResult?.passed),
         promotionRank: promotionResult?.rank || null,
         honorTitle: honorResult?.currentHonor?.title || null,
-        achievementTitle: honorResult?.currentAchievement?.title || null
+        achievementTitle: honorResult?.currentAchievement?.title || null,
+        examNetworkSummary: previewText(examNetwork?.publicSummary)
       },
       rejectedReasons,
-      appliedEventIds: [event.eventId, ...honorEvents.map((honorEvent) => honorEvent.eventId)]
+      appliedEventIds: [
+        event.eventId,
+        ...honorEvents.map((honorEvent) => honorEvent.eventId),
+        ...networkEvents.map((networkEvent) => networkEvent.eventId)
+      ]
     }]
   };
 }

@@ -24,6 +24,7 @@ const MAX_ECONOMIC_INCIDENTS = 5;
 const MAX_HISTORICAL_EVENT_CHAINS = 6;
 const MAX_INTELLIGENCE_RUMORS = 6;
 const MAX_EXAM_RECORDS = 5;
+const MAX_EXAM_NETWORK_RECORDS = 5;
 const MAX_TEXT_LENGTH = 180;
 const MIN_PAGE_SIZE = 1;
 const MAX_PAGE_SIZE = 50;
@@ -43,7 +44,8 @@ const SOURCE_LABELS = {
   economic_fiscal: "财赋",
   historical_event_chain: "事件链",
   intelligence_rumor: "情报",
-  exam_record: "科场"
+  exam_record: "科场",
+  exam_network: "科场人脉"
 };
 
 const STATUS_LABELS = {
@@ -422,6 +424,36 @@ function collectExamItems(worldState, items) {
   });
 }
 
+function collectExamNetworkItems(worldState, items) {
+  const history = Array.isArray(worldState.player?.examHistory) ? worldState.player.examHistory : [];
+  history
+    .filter((entry) => entry.examNetwork)
+    .slice(-MAX_EXAM_NETWORK_RECORDS)
+    .forEach((entry) => {
+      const network = entry.examNetwork || {};
+      const sameYearCount = Array.isArray(network.sameYearContacts) ? network.sameYearContacts.length : 0;
+      const examinerCount = Array.isArray(network.examinerContacts) ? network.examinerContacts.length : 0;
+      addItem(items, worldState, {
+        sourceType: "exam_network",
+        kind: entry.level || network.level || "exam_network",
+        title: `${entry.examName || network.examName || "科场"}人脉`,
+        summary: network.publicSummary ||
+          `${entry.examName || "科场"}归档同年${sameYearCount}人、座师考官${examinerCount}人。`,
+        date: network.date || examDateSource(entry) || worldState,
+        turn: network.date?.turnCount ??
+          entry.sceneTime?.updatedAt?.turnCount ??
+          entry.sceneTime?.startedAt?.turnCount ??
+          currentTurn(worldState),
+        status: "recorded",
+        relatedLabels: [
+          `同年${sameYearCount}人`,
+          `座师考官${examinerCount}人`,
+          ...(Array.isArray(network.examinerContacts) ? network.examinerContacts.map((contact) => contact.role) : [])
+        ].filter(Boolean)
+      });
+    });
+}
+
 function sortArchiveItems(first, second) {
   if (second.turn !== first.turn) return second.turn - first.turn;
   if (second.year !== first.year) return second.year - first.year;
@@ -468,6 +500,7 @@ function buildEventArchiveIndexItems(worldState = {}) {
   collectHistoricalEventItems(worldState, items, historicalEventArchiveView);
   collectIntelligenceRumorItems(worldState, items, intelligenceRumorView);
   collectExamItems(worldState, items);
+  collectExamNetworkItems(worldState, items);
 
   return items.sort(sortArchiveItems);
 }

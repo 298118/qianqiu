@@ -204,6 +204,23 @@ AI 老师只能提交 `study.propose_plan` 或 `teacher.propose_feedback` 这类
 
 S69.1 已落地 `worldState.examHonorLedger`、`examHonorView` 和安全 `examHistory[].examHonor` 快照。解元、会元、状元、榜眼、探花、传胪、二甲/三甲次序和三元记录必须由服务器从 canonical ranking 生成；provider `ranking`、`virtual_candidates`、`examiner_reviews`、皇帝/吏部 proposal 或普通 `statePatch` 都不能授予荣誉、改甲第或写官职。
 
+### `examNetwork`
+
+用于同年、座师、房官、主考和读卷官公开关系快照：
+
+```javascript
+{
+  schemaVersion: 1,
+  level: "provincial_exam",
+  examName: "乡试",
+  sameYearContacts: [],
+  examinerContacts: [],
+  publicSummary: ""
+}
+```
+
+S69.2 已落地 `examNetworks` resolver 和安全 `examHistory[].examNetwork` 快照。服务器只从 canonical ranking、公开荣誉、脱敏 `examinerPanelView` 和考试历史安全字段派生可见同年/座师/考官关系，并写入 `relationshipView` / `worldPeopleView` / `eventArchiveView`；模型原始建议、弥封身份映射、考官 hidden intent、保结密注、raw audit 或 provider-only payload 不能成为关系事实。
+
 ### `appointmentTrackView`
 
 用于殿试后馆选、庶吉士、观政、铨选、外放和候缺：
@@ -342,7 +359,7 @@ Mock/no-key 路径必须覆盖完整制度链：
 3. S68.4：`examProcedureView`，把童试三关、乡试/会试三场和科场行政阶段接入 scene-local time。
 4. S68.5：科场事件、多考官阅卷、房官/主考/critic proposal 与服务器 ranking resolver。
 5. S69.1：榜单、名次荣誉和三元成就（已实现 `examHonors` / `examHonorView`）。
-6. S69.2：同年、座师和考官网络进入可见关系与事件档案。
+6. S69.2：同年、座师和考官网络进入可见关系与事件档案（已实现 `examNetworks` / `examHistory[].examNetwork`）。
 7. S69.3：馆选、庶吉士、观政、铨选、外放、候缺和籍贯回避。
 8. S69.4：浏览器科举档案面板，只读 route view。
 9. S69.5：Mock/provider smoke、越权红队和 hidden-token 验收。

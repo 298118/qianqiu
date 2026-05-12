@@ -18,6 +18,7 @@ const {
 } = require("../game/economicFiscal");
 const { summarizeExamProcedureForPrompt } = require("../game/examProcedure");
 const { summarizeExamHonorsForPrompt } = require("../game/examHonors");
+const { summarizeExamNetworkForPrompt } = require("../game/examNetworks");
 const { buildHistoricalEventRetrievalRows } = require("../game/historicalEventArchive");
 const {
   buildIntelligenceRumorRetrievalRows,
@@ -1394,6 +1395,7 @@ function assemblePromptContext(worldState = {}, options = {}) {
     studyProfile: summarizeStudyProfileForPrompt(worldState),
     examProcedure: summarizeExamProcedureForPrompt(worldState),
     examHonors: summarizeExamHonorsForPrompt(worldState),
+    examNetwork: summarizeExamNetworkForPrompt(worldState),
     examCalendar: summarizeExamCalendarForPrompt(worldState),
     longTermEvents: summarizeLongTermEventsForPrompt(worldState),
     worldGeography: summarizeWorldGeographyForPrompt(worldState),

@@ -88,6 +88,51 @@ test("prompt context includes capped exam honor summary without raw hidden text"
   assert.match(serialized, /不得要求模型自定解元/);
 });
 
+test("prompt context includes capped exam network summary without hidden relationship facts", () => {
+  const worldState = createInitialState({ role: "scholar", playerName: "Network Prompt Tester" });
+  worldState.player.examHistory.push({
+    level: "provincial_exam",
+    examName: "乡试",
+    examNetwork: {
+      schemaVersion: 1,
+      level: "provincial_exam",
+      examName: "乡试",
+      date: { year: 1644, month: 8, tenDayPeriod: 2, turnCount: 4 },
+      sameYearContacts: [{
+        id: "exam-peer-provincial-rival-001",
+        name: "同年甲",
+        role: "乡试同年",
+        relationKind: "same_year",
+        place: 2,
+        rankLabel: "乡试第二名",
+        stance: "同年声援",
+        relationship: 18,
+        networkSource: "乡试同年",
+        publicSummary: "同年甲为乡试同年。"
+      }],
+      examinerContacts: [{
+        id: "exam-seat-provincial",
+        name: "冯主考",
+        role: "乡试主考座师",
+        actor: "chief_examiner",
+        relationKind: "seat_teacher",
+        stance: "座师门生",
+        relationship: 22,
+        networkSource: "乡试主考取中",
+        publicSummary: "SEALED_NETWORK_PROMPT provider proposal sk-test E:\\secret\\network.txt"
+      }],
+      publicSummary: "乡试同年与座师公开归档。"
+    }
+  });
+
+  const context = assemblePromptContext(worldState, { task: "world_turn", playerAction: "拜谢座师" });
+  const serialized = JSON.stringify(context.examNetwork);
+
+  assert.match(serialized, /同年甲|冯主考|座师门生/);
+  assert.doesNotMatch(serialized, /SEALED_NETWORK_PROMPT|provider proposal|sk-test|E:\\secret/);
+  assert.match(serialized, /不得要求模型创造隐藏考官关系/);
+});
+
 test("prompt context assembler filters hidden rows, hidden refs, raw ledgers, and raw audit-like fields", () => {
   const worldState = createInitialState({ role: "scholar", playerName: "Hidden Context Tester" });
   worldState.audit = { ai_change_proposals: "SEALED_AUDIT_PAYLOAD" };
