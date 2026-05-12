@@ -565,6 +565,8 @@ S70 要准备这些 fixture：
 
 前置依赖：S70.1-S70.2。
 
+当前状态（2026-05-12）：S70.3 已落地内部 registry/runner 基础。已新增 `src/ai/gameAiTools.js`、`src/ai/gameAiToolRunner.js` 和 `src/game/aiToolResolvers.js`，提供工具注册、actor 可见工具列表、provider tool call 归一、read/proposal/request-adjudication runner、`world.read_visible_context` read resolver、pending resolver bridge、基础 cooldown、tool result 回填和 hidden-safe tool audit record。本步不接入普通 turn、不写 session/SQLite、不创建真实领域后果；领域工具定义集中化与场景接入留给 S70.4-S70.7。
+
 需要资料：工具协议契约、AI 权限矩阵、当前 audit、stateRules、sessionStore、Mock provider。
 
 具体实现：

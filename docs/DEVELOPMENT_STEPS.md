@@ -105,8 +105,8 @@
 | --- | --- | --- | --- | --- | --- |
 | S70.0 | DONE | AI 编排提前规划：固定 AI 核心地位、现实权力原型、工具调用路线、actor 权限层和 S70 子步骤 | 2026-05-08 | Codex / Web / 子代理 | 见 git history |
 | S70.1 | DONE | AI 提示词与工具协议契约：prompt pack 分层、actor/scene contract、MCP-friendly tool envelope、proposal/result schema、request-adjudication、direct-write 禁止、strict schema、MiMo-V2.5-Pro 工具调用 smoke、失败降级和 provider 兼容策略 | 2026-05-12 | Codex / Web / 子代理 | 本次提交 |
-| S70.2 | DONE | AI actor 与权限模型：按书生、士绅、地方官、大臣、将领、皇帝、系统引擎划分读取范围和工具组 | 2026-05-12 | Codex / 子代理 | 本次提交 |
-| S70.3 | TODO | 内部工具运行时：`game_ai_tools` registry、权限检查、read/proposal/request-adjudication runner、服务器 resolver、审计 hook 和 Mock runner | - | - | S70.2 后 |
+| S70.2 | DONE | AI actor 与权限模型：按书生、士绅、地方官、大臣、将领、皇帝、系统引擎划分读取范围和工具组 | 2026-05-12 | Codex / 子代理 | `636f30a` |
+| S70.3 | DONE | 内部工具运行时：`game_ai_tools` registry、权限检查、read/proposal/request-adjudication runner、服务器 resolver、审计 hook 和 Mock runner | 2026-05-12 | Codex / 子代理 | 本次提交 |
 | S70.4 | TODO | NPC mind 与记忆：高显著度 NPC LLM loop、背景 NPC heuristic、目标/恩怨/人情债记忆演化 | - | - | S70.3 后 |
 | S70.5 | TODO | 制度 AI 与朝议/科场场景：官署、派系、大臣、谏官、老师、考官围绕奏折/弹章/政令/考卷推演 | - | - | S70.4 后 |
 | S70.6 | TODO | 压力事件工具协议与 actor proposal：由城市、财政、军政、关系、情报压力提出事件候选，固定工具 envelope、权限、Mock/provider 基础和服务器成案语义 | - | - | S70.5 后 |
@@ -206,6 +206,40 @@ S71 详细规划见 [DATABASE_GAMEPLAY_RESOLVER_ROADMAP.md](DATABASE_GAMEPLAY_RE
 4. S71.9-S71.12：接入多 actor 场景、NPC 记忆和 AI 调动审计面板，最后做 dual-mode、Mock/no-key、browser 和 provider smoke 归档。
 
 ## 8. 进度记录
+
+### 2026-05-12
+
+工具：Codex、子代理复审。
+
+步骤：S70.3 内部工具运行时。
+
+提交：本次提交。
+
+完成：
+
+- 新增 `src/ai/gameAiTools.js`，提供 `createGameAiToolRegistry()`、`registerGameAiTool()`、`listToolsForActor()` 和基础工具定义入口。registry 复用 S70.1 `validateToolDefinition()` 与 S70.2 `filterActorTools()`，拒绝重复注册、非 strict schema、`server.*` 模型可见工具和 provider-visible name 碰撞。
+- 新增 `src/ai/gameAiToolRunner.js`，提供 `normalizeProviderToolCall()`、`runReadTool()`、`runProposalTool()`、`runRequestAdjudicationTool()`、`runGameAiTool()`、`buildToolResultForModel()` 和 hidden-safe tool audit record。runner 按 actor profile、tool type、权限、辖区、strict arguments schema 与本地 cooldown 执行；失败返回 `toolResult` 拒绝对象，不写世界状态。
+- 新增 `src/game/aiToolResolvers.js`，先实现 `world.read_visible_context` 的服务器 read resolver，并为 proposal / request-adjudication 提供 pending resolver bridge。读取只组合服务器 view：地理、人物、官署、事件、情报、读书、科举、财赋与案牍摘要；不读 raw SQLite、raw audit、provider proposal、hidden 私档、本地路径或 key。
+- 新增 `test/gameAiTools.test.js`、`test/gameAiToolRunner.test.js` 和 `test/gameAiToolAudit.test.js`，覆盖 registry 校验与 actor 可见工具列表、provider tool call 归一、read tool 安全摘要、越权/类型不匹配拒绝、pending proposal、cooldown、系统引擎事件 proposal、tool result 回填模型 payload 和审计脱敏。
+- 更新 brief、AI 控制矩阵、S70 路线图和共享上下文，记录 S70.3 是内部工具运行时基础，不接普通 turn、不直接写状态或落库；领域工具和场景接入留给 S70.4-S70.7。
+- 提交前只读复审提出 P1/P2/P3：工具结果回填必须保留原始 tool call id、`world.read_visible_context` schema 与 resolver domain 不一致、读取域未按 actor visibility 交叉过滤、未知/内部工具探测未写审计。已补 `modelFollowUpHint` / `buildToolResultForModel(result, toolCall)`、开放 `market` / `local_docket` schema enum、read runner 按 `actorProfile.visibilityProfile.readDomains` 过滤 domains，并为未知或 `server.*` 直接调用记录 hidden-safe 拒绝审计。
+
+验证：
+
+- 已通过：`node --check src/ai/gameAiTools.js`。
+- 已通过：`node --check src/ai/gameAiToolRunner.js`。
+- 已通过：`node --check src/game/aiToolResolvers.js`。
+- 已通过：`node --check test/gameAiTools.test.js && node --check test/gameAiToolRunner.test.js && node --check test/gameAiToolAudit.test.js`。
+- 已通过：`node --test test/gameAiTools.test.js test/gameAiToolRunner.test.js test/gameAiToolAudit.test.js test/aiActorProfiles.test.js test/aiActorToolPermissions.test.js test/aiToolProtocolContract.test.js`（修复复审问题后 29/29）。
+
+风险/遗留：
+
+- S70.3 暂不接入 `/api/game/turn` 或 provider adapters，不写 session、不写 SQLite、不创建真实领域后果；S70.4 起再让高显著 NPC / 制度场景 / 压力事件调用 runner。
+- `event.propose_incident` 等领域工具目前只在测试中作为 registry fixture；正式领域定义集中化留给 S70.6-S70.7。
+
+下一步：
+
+- 启动 S70.4：NPC mind 与记忆基础。用 S70.2 actor profile 和 S70.3 runner 选择高显著 NPC，背景 NPC 走 heuristic，高显著 NPC 可生成安全 proposal / memory 候选。
 
 ### 2026-05-12
 

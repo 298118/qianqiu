@@ -530,7 +530,7 @@ function createVisibleContextReadToolDefinition() {
       properties: {
         domains: {
           type: "array",
-          items: { type: "string", enum: ["geography", "people", "office", "events", "intel", "study", "exam"] }
+          items: { type: "string", enum: ["geography", "people", "office", "events", "intel", "study", "exam", "market", "local_docket"] }
         },
         query: { type: "string", description: "玩家行动或 actor 目标的短查询。" },
         maxItems: { type: "integer", minimum: 1, maximum: 12 }
