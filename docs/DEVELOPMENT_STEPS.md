@@ -9,7 +9,7 @@
 - S48 时间专项：[TIME_SPECIALTY_ROADMAP_ARCHIVE.md](TIME_SPECIALTY_ROADMAP_ARCHIVE.md)。
 - S49-S67 本地数据库基础、SQLite 业务表、双模式验收、超大动态世界内容与 S60 内容契约：[LOCAL_DATABASE_AND_WORLD_CONTENT_ARCHIVE.md](LOCAL_DATABASE_AND_WORLD_CONTENT_ARCHIVE.md)。旧分卷归档和 S60 契约文件保留为跳转页。
 
-当前活动路线图已交接到 S70：S68-S69 的书生主线科举、读书、评卷与授官制度已归档，下一步进入 AI prompt pack、工具协议、actor 权限和多 AI 编排。S71 作为 S70 之后的数据库玩法化、维护、安全检索和 redacted API 专项，规划见 [DATABASE_GAMEPLAY_RESOLVER_ROADMAP.md](DATABASE_GAMEPLAY_RESOLVER_ROADMAP.md)。数据库方向继续只考虑本机 JSON/SQLite 持久化增强；远程存档、账号体系、多人同步、云端冲突解决和托管数据库不进入当前规划。
+当前活动路线图已交接到 S70：S68-S69 的书生主线科举、读书、评卷与授官制度已归档，S70.1 已启动并落地 AI prompt pack 与工具协议契约，下一步进入 AI actor 权限模型和后续 `game_ai_tools` 运行时。S71 作为 S70 之后的数据库玩法化、维护、安全检索和 redacted API 专项，规划见 [DATABASE_GAMEPLAY_RESOLVER_ROADMAP.md](DATABASE_GAMEPLAY_RESOLVER_ROADMAP.md)。数据库方向继续只考虑本机 JSON/SQLite 持久化增强；远程存档、账号体系、多人同步、云端冲突解决和托管数据库不进入当前规划。
 
 ## 1. 开发规范继承
 
@@ -104,8 +104,8 @@
 | ID | 状态 | 目标 | 完成日期 | 工具 | 提交 |
 | --- | --- | --- | --- | --- | --- |
 | S70.0 | DONE | AI 编排提前规划：固定 AI 核心地位、现实权力原型、工具调用路线、actor 权限层和 S70 子步骤 | 2026-05-08 | Codex / Web / 子代理 | 见 git history |
-| S70.1 | TODO | AI 提示词与工具协议契约：prompt pack 分层、actor/scene contract、MCP-friendly tool envelope、proposal/result schema、request-adjudication、direct-write 禁止、strict schema、MiMo-V2.5-Pro 工具调用 smoke、失败降级和 provider 兼容策略 | - | - | 当前启动 |
-| S70.2 | TODO | AI actor 与权限模型：按书生、士绅、地方官、大臣、将领、皇帝、系统引擎划分读取范围和工具组 | - | - | S70.1 后 |
+| S70.1 | DONE | AI 提示词与工具协议契约：prompt pack 分层、actor/scene contract、MCP-friendly tool envelope、proposal/result schema、request-adjudication、direct-write 禁止、strict schema、MiMo-V2.5-Pro 工具调用 smoke、失败降级和 provider 兼容策略 | 2026-05-12 | Codex / Web / 子代理 | 本次提交 |
+| S70.2 | TODO | AI actor 与权限模型：按书生、士绅、地方官、大臣、将领、皇帝、系统引擎划分读取范围和工具组 | - | - | 当前启动 |
 | S70.3 | TODO | 内部工具运行时：`game_ai_tools` registry、权限检查、read/proposal/request-adjudication runner、服务器 resolver、审计 hook 和 Mock runner | - | - | S70.2 后 |
 | S70.4 | TODO | NPC mind 与记忆：高显著度 NPC LLM loop、背景 NPC heuristic、目标/恩怨/人情债记忆演化 | - | - | S70.3 后 |
 | S70.5 | TODO | 制度 AI 与朝议/科场场景：官署、派系、大臣、谏官、老师、考官围绕奏折/弹章/政令/考卷推演 | - | - | S70.4 后 |
@@ -206,6 +206,46 @@ S71 详细规划见 [DATABASE_GAMEPLAY_RESOLVER_ROADMAP.md](DATABASE_GAMEPLAY_RE
 4. S71.9-S71.12：接入多 actor 场景、NPC 记忆和 AI 调动审计面板，最后做 dual-mode、Mock/no-key、browser 和 provider smoke 归档。
 
 ## 8. 进度记录
+
+### 2026-05-12
+
+工具：Codex、Web 官方资料核验、子代理只读调研、子代理复审。
+
+步骤：S70.1 AI 提示词与工具协议契约。
+
+提交：本次提交。
+
+完成：
+
+- 新增 [AI_PROMPT_ENGINEERING_CONTRACT.md](AI_PROMPT_ENGINEERING_CONTRACT.md)，把 S70 prompt pack 固定为 `systemContract`、`actorCard`、`sceneContract`、`visibleContextCapsule`、`toolPolicy`、`outputContract`、`selfCheck` 七层，并要求每类 prompt 登记 `promptId`、`promptVersion`、scene/actor、输入预算、输出 schema、Mock/no-key fallback、provider smoke 和红队 fixture。
+- 新增 [AI_TOOL_PROTOCOL_CONTRACT.md](AI_TOOL_PROTOCOL_CONTRACT.md)，固定 `read`、`proposal`、`request_adjudication` 三类工具，定义模型可见 tool envelope、proposal/result/request-adjudication schema、`server.*` 只作内部 resolver bridge、strict `inputSchema`、provider-visible name 转换、审计、冷却、Mock fallback 和 MiMo 工具调用 smoke 策略。
+- 新增 `src/ai/toolSchemas.js`，集中导出 tool envelope、proposal、request-adjudication、tool result 与 provider tool call shape schema；提供 `validateToolDefinition()`、strict input schema 检查、`toOpenAiChatFunctionTool()`、`toAnthropicToolDefinition()` 和 `world.read_visible_context` 样例定义，确保模型可见工具不暴露 SQL、raw table、raw state patch、hidden notes、本地路径或 key。
+- 新增 `scripts/providerToolSmoke.js` 与 `npm run smoke:provider:tools`，直接用 MiMo chat completions/fetch 探测 `tools`、强制 `tool_choice`、`tool_calls` 参数形状和工具结果回填；无 `MIMO_API_KEY` 时明确 skip，`MIMO_REQUIRED=1` 或 `--required` 时缺 key fail，不写 session，也不把实验性工具 smoke 混进既有 S69 provider smoke。
+- 新增 `test/aiToolProtocolContract.test.js` 和 `test/providerToolSmokeScript.test.js`，覆盖工具 envelope、provider name 转换、strict schema 拒绝、proposal/result 越权字段拒绝、MiMo 工具 smoke matrix、缺 key skip/required、fake fetch 强制工具与 roundtrip。
+- 提交前只读复审提出两个 P2 和一个 P3：proposal/request arguments 只校验 envelope、顶层 `inputSchema` 未强制 object、provider-visible 工具名可能碰撞。已补 `validateToolProposal()` / `validateRequestAdjudication()` 按具体 tool definition 校验 arguments，强制顶层 object schema，禁止工具参数 schema 暴露 `rawSql`、`statePatch`、`worldState` 等字段，并新增 `buildProviderToolNameMap()` 碰撞检查；同时把 MiMo 错误体摘要改为更短并遮蔽 key/path 形状。第二轮复审指出 `patternProperties` 可绕过 forbidden argument property scan，已把 `patternProperties`、`propertyNames`、`dependencies`、`dependentSchemas`、`dependentRequired`、`unevaluatedProperties` 排除在首版 strict schema 子集之外，并补 `worldState` arguments 与 forward-slash/file URL 路径脱敏测试。
+- 同步 README、brief、架构和 AI 控制矩阵，把 S70.1 记录为已落契约和最小工具 smoke；下一步切到 S70.2 actor 权限模型。
+
+验证：
+
+- 已通过：`node --check src/ai/toolSchemas.js`。
+- 已通过：`node --check scripts/providerToolSmoke.js`。
+- 已通过：`node --test test/aiToolProtocolContract.test.js`（修复后 8/8）。
+- 已通过：`node --test test/providerToolSmokeScript.test.js`（修复后 7/7）。
+- 已通过：`node --test test/aiToolProtocolContract.test.js test/providerToolSmokeScript.test.js test/aiSchemas.test.js test/prompts.test.js`（最终 45/45）。
+- 已通过：`node --test test/providerSmokeScript.test.js test/mimoProvider.test.js test/providerToolSmokeScript.test.js`（最终 20/20）。
+- 已通过：`npm run check:docs-governance`。
+- 已通过：`npm run smoke:provider:tools`；本机 `.env` 有 MiMo key，因此实际跑通 MiMo forced tool call 与 tool-result roundtrip，未打印密钥。一次默认 30s 超时复跑出现 provider 响应抖动，随后用 `$env:AI_PROVIDER_TIMEOUT_MS='90000'; npm run smoke:provider:tools` 通过；无 key skip 分支已由 `test/providerToolSmokeScript.test.js` 覆盖。
+- 已通过：`git diff --check`。
+
+风险/遗留：
+
+- S70.1 只落契约、schema 和 MiMo 工具形状 smoke，不接入普通玩家回合、不新增真正 `game_ai_tools` registry 或 resolver runner；这些留给 S70.2-S70.3。
+- `npm run smoke:provider:tools` 在无 key 环境只验证 skip 分支；有 MiMo key 时可用 `MIMO_REQUIRED=1 npm run smoke:provider:tools` 固定真实返回形状。当前默认只跑 forced tool 与 tool-result roundtrip，`multi_tool`、`streaming` 和 schema failure 的真实 provider 兼容记录留给后续扩展。
+- 外部官方资料已用于确认工具调用方向，但 provider 兼容性仍以本项目真实 smoke 为准，不把 OpenAI-compatible 视为 MiMo/DeepSeek 的全量工具保证。
+
+下一步：
+
+- 启动 S70.2：AI actor 与权限模型。优先新增 actor tier/role/tool group/visibility preset 配置，确保书生、老师、考官、县令、大臣、将领、皇帝和系统引擎只能列出各自可见工具。
 
 ### 2026-05-12
 

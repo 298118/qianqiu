@@ -509,6 +509,8 @@ S70 要准备这些 fixture：
 
 前置依赖：S69.6 已完成归档，S70.1 可正式启动；可先做文档调研和 provider 工具调用形状确认。
 
+当前状态（2026-05-12）：S70.1 已落地首版契约与最小验证入口。已新增 `docs/AI_PROMPT_ENGINEERING_CONTRACT.md`、`docs/AI_TOOL_PROTOCOL_CONTRACT.md`、`src/ai/toolSchemas.js`、`scripts/providerToolSmoke.js`、`test/aiToolProtocolContract.test.js` 和 `test/providerToolSmokeScript.test.js`；`npm run smoke:provider:tools` 先覆盖 MiMo forced tool call 与 tool-result roundtrip，缺 key 明确 skip，`MIMO_REQUIRED=1` 时缺 key fail。`multi_tool`、`streaming` 和真实 provider schema failure 的完整兼容记录留给后续 smoke 扩展。
+
 需要资料：本文第 1 节技术参考、现有 `src/ai/*`、provider smoke 脚本、AI 控制矩阵、S68-S69 科举工具边界、MiMo 官方接入说明。
 
 具体实现：

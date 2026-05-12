@@ -6,8 +6,9 @@
 
 ## 这次主要更新
 
-当前项目已经完成可玩纵切、浏览器验收、时间专项、AI provider 扩展、本地动态数据库基础、S54-S59 SQLite 业务表拆分、S60-S67 超大动态世界数据库内容充实、S68.1 科举制度契约、S68.2 读书账本基础、S68.3 老师/书院/同窗互动、S68.4 科场制度流程、S68.5 科场事件/多考官阅卷、S69.1 榜单名次荣誉、S69.2 同年座师网络、S69.3 授官路径深化、S69.4 浏览器科举档案面板、S69.5 Provider/Mock 验收与 S69.6 归档交接。近期重点更新集中在“本地数据库专项归档”“S68-S69 科举读书深化”和“多 provider 能力”：
+当前项目已经完成可玩纵切、浏览器验收、时间专项、AI provider 扩展、本地动态数据库基础、S54-S59 SQLite 业务表拆分、S60-S67 超大动态世界数据库内容充实、S68.1 科举制度契约、S68.2 读书账本基础、S68.3 老师/书院/同窗互动、S68.4 科场制度流程、S68.5 科场事件/多考官阅卷、S69.1 榜单名次荣誉、S69.2 同年座师网络、S69.3 授官路径深化、S69.4 浏览器科举档案面板、S69.5 Provider/Mock 验收、S69.6 归档交接与 S70.1 AI prompt/tool 契约。近期重点更新集中在“本地数据库专项归档”“S68-S69 科举读书深化”“多 provider 能力”和“S70 AI 工具协议”：
 
+- 完成 S70.1 AI 提示词与工具协议契约：新增 [docs/AI_PROMPT_ENGINEERING_CONTRACT.md](docs/AI_PROMPT_ENGINEERING_CONTRACT.md) 和 [docs/AI_TOOL_PROTOCOL_CONTRACT.md](docs/AI_TOOL_PROTOCOL_CONTRACT.md)，固定 prompt pack 七层、actor/scene/output/tool policy 边界、MCP-friendly tool envelope、proposal/result/request-adjudication schema、`server.*` 内部化、strict `inputSchema`、Mock/no-key fallback 和 provider smoke 口径。新增 `src/ai/toolSchemas.js`、`scripts/providerToolSmoke.js` 与 `npm run smoke:provider:tools`，可在有 MiMo key 时探测 `tools` / `tool_choice` / `tool_calls` 与工具结果回填形状；无 key 时明确 skip。
 - 新增可选 SQLite 存储模式：默认仍是 JSON 存档；设置 `STORAGE_ADAPTER=sqlite` 后，本地使用 `world_sessions`、审计表、地理 `geo_*`、人物 `people_*`、官职任所 `office_*` 派生业务表、安全事件档案 `event_archive_index` 和安全 prompt 检索派生索引。
 - 新增地理业务表同步：SQLite 模式会把 `worldState.worldGeography` 同步到 `geo_countries`、`geo_regions`、`geo_cities`、`geo_routes`、`geo_frontier_zones`、`geo_office_jurisdictions`，读档时可按 JSON snapshot 修复缺失或陈旧行。
 - 新增地理维护工具：`npm run storage:geography:sqlite -- import|status|repair|export` 支持导入、漂移检查、修复和脱敏 debug dump。
@@ -190,6 +191,7 @@ npm run smoke:browser -- --information-parity
 npm run smoke:dual-mode -- --storage-only
 npm run smoke:exam-s69
 npm run smoke:provider
+npm run smoke:provider:tools
 npm run smoke:provider:route
 npm run smoke:provider:long
 npm run storage:audit-events -- status
@@ -203,6 +205,7 @@ npm run storage:audit-events -- status
 - `npm run smoke:browser` 启动临时 Mock 服务器，覆盖完整书生到入仕路径、作弊样例、代表身份回合、存档簿、年月旬显示和桌面/移动布局；`--information-parity` 专项比对 JSON/SQLite 双模式下“局势簿”五类面板、搜索/筛选/排序/分页控件、分页 metadata 和 hidden-token 防线。
 - `npm run smoke:dual-mode` 串联 JSON/SQLite 完整 Mock browser smoke、局势簿 parity、S59 存储维护和 S67.1 large fixture 规模回归；无浏览器或只想核验导入/修复/导出、读档修复、prompt/局势簿/性能门槛时可加 `--storage-only`。
 - `npm run smoke:exam-s69` 使用 Mock deterministic provider 完整跑通四级科举到初授入仕，验证 S68-S69 的读书、科场、评卷、荣誉、同年座师网络、授官轨迹和 hidden-token 防线。
+- `npm run smoke:provider:tools` 是 S70.1 MiMo 工具调用形状探针；缺 `MIMO_API_KEY` 时明确跳过，`MIMO_REQUIRED=1` 或 `--required` 时缺 key 失败。
 - `npm run smoke:provider*` 只在配置真实 provider key 时进行网络调用；无 key 环境会成功跳过。
 - `npm run storage:audit-events -- status|export` 是本地审计公开 projection 工具，默认只输出脱敏统计和 public 事件摘要，不输出 raw audit、provider proposal、prompt、key、本地路径或 hidden notes。
 
@@ -253,10 +256,12 @@ data/sessions/
 
 - [docs/SHARED_CONTEXT.md](docs/SHARED_CONTEXT.md)：Codex 与 Claude Code 共享交接板。
 - [docs/QIANQIU_DEVELOPMENT_BRIEF.md](docs/QIANQIU_DEVELOPMENT_BRIEF.md)：产品目标、架构、数据契约和交付标准。
-- [docs/DEVELOPMENT_STEPS.md](docs/DEVELOPMENT_STEPS.md)：当前活动路线图与进度台账，已交接到 S68-S69 科举深化和 S70 AI 编排准备。
+- [docs/DEVELOPMENT_STEPS.md](docs/DEVELOPMENT_STEPS.md)：当前活动路线图与进度台账，已交接到 S70 AI 编排；S70.1 已完成，后续从 S70.2 actor 权限模型继续。
 - [docs/DEVELOPMENT_GOVERNANCE.md](docs/DEVELOPMENT_GOVERNANCE.md)：稳定开发治理锚点。
 - [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)：当前架构、API、状态模型和验证要求。
 - [docs/AI_CONTROL_AUDIT_MATRIX.md](docs/AI_CONTROL_AUDIT_MATRIX.md)：AI/server 权限矩阵。
+- [docs/AI_PROMPT_ENGINEERING_CONTRACT.md](docs/AI_PROMPT_ENGINEERING_CONTRACT.md)：S70.1 prompt pack 分层、actor/scene/output/tool policy、输入预算、provider smoke 和红队 fixture 契约。
+- [docs/AI_TOOL_PROTOCOL_CONTRACT.md](docs/AI_TOOL_PROTOCOL_CONTRACT.md)：S70.1 工具协议契约，固定 tool envelope、permission、resolver、audit、cooldown、mockFallback、proposal/result/request-adjudication schema 和 provider 兼容策略。
 - [docs/IMPERIAL_EXAM_SYSTEM_CONTRACT.md](docs/IMPERIAL_EXAM_SYSTEM_CONTRACT.md)：S68.1 科举制度契约，固定科场流程、卷件生命周期、AI 老师/考官/吏部/皇帝权限和服务器裁决边界。
 - [docs/DYNAMIC_WORLD_DATABASE_PLAN.md](docs/DYNAMIC_WORLD_DATABASE_PLAN.md)：本地动态数据库规划。
 - [docs/LOCAL_DATABASE_AND_WORLD_CONTENT_ARCHIVE.md](docs/LOCAL_DATABASE_AND_WORLD_CONTENT_ARCHIVE.md)：S49-S67 本地数据库基础、SQLite 业务表、双模式验收、超大动态世界内容归档与 S60 内容契约。
