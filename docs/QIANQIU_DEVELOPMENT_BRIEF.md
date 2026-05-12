@@ -84,6 +84,10 @@ AI provider 约定：
 
 S68-S69 的科举深化是 S70 工具协议的前置样板：老师、保人、房官、同考官、主考官、吏部和皇帝都可以成为 AI actor，但只能读取各自可见摘要并提交题目、点评、批语、事件、复核疑点或授官 proposal。S68.1 已固定科举工具语义必须是 proposal-only：房官不能定榜，皇帝不能直接写官职，吏部不能绕过官缺和籍贯回避，老师不能凭空创造真实关系或名位。S70 提前规划见 [AI_ORCHESTRATION_ROADMAP.md](AI_ORCHESTRATION_ROADMAP.md)。该规划采用“模型请求工具、服务器执行工具”的方向：MiMo-V2.5-Pro、OpenAI、Anthropic、DeepSeek 等 provider 的 function calling、structured output、MCP connector 或未来内部 MCP 只用于生成 tool call / proposal / request-adjudication；真正执行工具、裁决后果、写入状态、写入数据库和审计仍由服务器 resolver 完成。S70.1-S70.3 先实现内部 `game_ai_tools` registry，工具定义保持 MCP-friendly：`name`、`description`、`inputSchema`、`permission`、`resolver`、`audit`、`cooldown`、`mockFallback`；后期如果工具数量和按身份裁剪需求膨胀，再在 `game_ai_tools` 外层包装内部 MCP server。MiMo-V2.5-Pro 需要在 S70.1 单独验证 `tools` schema、`tool_calls` 返回形状、`tool_choice`、工具结果回填、streaming 与 structured proposal 稳定性。通用外部工具如 web search、代码执行、浏览器控制或第三方 MCP 不进入普通玩家回合；若后续确需引入 SDK、MCP server、外部 connector 或 tracing 工具，必须先走依赖治理和 AI 权限矩阵。
 
+S70 之后的正式游玩体验按 AI-first 建设：真实 AI 是产品核心，MiMo-V2.5-Pro 是大面积使用候选，Mock/no-key 只保留为本地开发、CI、断网降级和 deterministic 回归样板，不再作为玩法深度上限。AI 输出可以按玩家设置变长，真实 provider 验收应覆盖长叙事、多 actor、工具调用、月报、跳时、记忆提炼和 critic/safety；但服务器仍必须保留场景级并发、工具次数、超时、重试和失败降级上限。S70 还应规划浏览器 “AI 设置” 面板，让玩家按叙事、NPC、科举、政务、战争、记忆、critic/safety 等任务配置 provider/model、输出长度、并发、工具预算和安全严格度；设置只能影响路由和质量，不得启用 hidden/raw/直写库能力。
+
+S70 新增 AI-first 体验工具应覆盖玩家官职月报、自然语言跳时、大模型记忆和地图接口预留。玩家当官后，每三旬进入下月上旬时触发 `playerMonthlyBriefing`，只为玩家按职位生成月报，汇总政务、案牍、财政、军务、上级态度、同僚风向、NPC 主动请求和下月风险。玩家说“学习一月”或类似自然语言时，AI 只解析 `timeSkipPlan`，服务器再拆成三个旬 tick，逐旬结算读书、政务、NPC、长期事件和危机中断。大模型记忆应分为 hot context、session summary、actor memory ledger、fact memory、impression memory 和安全检索索引；AI 只能提交 memory proposal，服务器写入来源、可见性、置信度和衰减。地图系统后续先留 `mapContextView`、`mapEntityRef`、`mapVisibility`、移动/行军/赴任/赶考/外交 proposal 和 `mapEventHooks`，AI 只读可见地图 projection，不读取 raw coordinate table 或 hidden enemy truth。
+
 MiMo Token Plan 官方说明将订阅额度限定在 AI 编程工具相关场景；若后续把本项目公开部署或作为非 Coding 自定义应用后端使用，应改用普通 API key 或先确认授权范围。无论 provider 如何混合，服务器仍拥有 schema 校验、状态边界、考试晋级、官职任免、反作弊和持久化裁决。
 
 CORS 约定：默认只允许无 `Origin` 请求和当前 `PORT` 对应的本机应用 Origin；如需从其他开发前端或工具跨 Origin 调用本地 API，使用逗号分隔的 `CORS_ALLOWED_ORIGINS` 显式放行，不使用通配 `*`。

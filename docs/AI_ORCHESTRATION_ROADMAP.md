@@ -9,6 +9,7 @@
 - 工具能提出什么 proposal，不能碰什么字段。
 - 服务器如何验证、裁决、落库、审计和降级。
 - 玩家因身份、职位、地理、关系和情报来源能看到什么。
+- 正式游玩体验默认以真实 AI 为核心；Mock/no-key 只作为开发安全网、CI 稳定器和降级样板，不能再作为玩法设计的上限。
 
 ## 1. 外部技术参考
 
@@ -54,7 +55,8 @@ S70 的基本玩法张力：
 6. **AI actor 按身份加载工具。** 不把皇帝工具给书生，不把刑名工具给商贾，不把军事调度工具给县令。大工具库后期可用 tool search / MCP allowlist 延迟加载。
 7. **大多数 NPC 不每旬全量调用大模型。** 高显著度 NPC、场景参与者、权力核心、玩家近关系和事件相关者使用 LLM mind；背景 NPC 用服务器启发式、记忆摘要和批处理 proposal。
 8. **每次高影响工具调用都可追溯。** 记录 actor、可见输入摘要、tool name、arguments 摘要、服务器接受/拒绝原因、applied event id、后果和成本。
-9. **Mock/no-key 仍完整可玩。** Mock actor mind、规则式 NPC 和 deterministic tool runner 必须覆盖 S70 主流程，真实 provider 只增强质量。
+9. **正式体验 AI-first，开发仍需安全网。** S70 之后的正式玩法、验收和内容设计优先按真实 AI 编排建设，尤其以 MiMo-V2.5-Pro 作为大面积 provider 候选；Mock/no-key 只保留为本地开发、CI、断网降级和回归样板，不再以“无 AI 也能完整体验”为产品目标。
+10. **质量优先，可配置预算。** 用户明确选择高质量模式时，可以接受更长输出、更高并发和更大 token 消耗；服务器仍要有 per-scene 并发、工具次数、超时、重试和失败降级上限，防止单个回合卡死或无限调用。
 
 ## 4. AI Actor 与权力分级
 
@@ -164,6 +166,18 @@ followUpHooks
 
 任何工具协议、MCP server 或 adapter 都不得暴露通用 SQL、raw table update、raw session patch、raw audit insert 或 “write-anything” 能力。即使未来内部 MCP 用 `tools/call` 形式承载游戏工具，它也只能调用受控领域入口，例如 `event.propose_incident` 或 `server.resolve_case`，不能让模型自由构造 `INSERT/UPDATE`、`statePatch.worldState` 或 raw table payload。
 
+### 5.6 权限增强方向
+
+增强 AI 权限不等于放开数据库，而是让高位 actor 能请求更强、更贴近职位的领域工具，并让服务器把请求变成有成本、有反噬、有执行链的世界后果。S70 后续应补强这些工具组：
+
+- `career.propose_reward_or_promotion`：上级、吏部、皇帝可提出赏赐、升迁、加衔、记功或斥退；服务器按官缺、考成、资历、派系、证据、皇帝偏好和制度限制裁决。玩家当官后，如果上级或皇帝高兴，可以因此收到赏赐或升官，但不能绕过官制和反噬。
+- `career.request_discipline_adjudication`：弹劾、降调、革职、下狱、赦免、诛罚等高影响请求。越高权力越能提出强动作，但无罪滥罚必须进入合法性、士论、派系、家族、军心和执行链后果。
+- `report.generate_player_monthly_briefing`：只针对玩家生成职位相关月报，按三旬为一月汇总政务、案牍、财政、军务、上级态度、同僚风向、NPC 来信和下月风险。
+- `time.request_skip_period`：把“学习一月”“闭门读书三旬”“养病半月”等自然语言意图交给服务器拆为多个旬 tick，AI 负责计划和总结，服务器负责逐旬结算、事件中断和月报触发。
+- `ai_settings.read_route_policy` / `ai_settings.propose_route_policy`：玩家可配置叙事、NPC、科举、政务、战争、记忆、critic 等任务的模型路由、输出长度、并发、工具预算和安全严格度；真正生效仍由服务器校验。
+- `memory.propose_actor_memory`：AI 可提出记忆摘要、恩怨、人情债、印象和长期目标变化；服务器按可见性、来源、置信度、衰减和 hidden 边界写入 memory ledger。
+- `map.read_visible_map_context` / `map.propose_route_or_geopolitical_move`：为后续地图系统预留地理、辖区、行军、赶考、商路、边防和外交接口；AI 只读可见地图 projection 并提交移动/事件 proposal。
+
 ## 6. 提示词工程与上下文编排
 
 S70 的提示词工程目标是让 AI 更懂《千秋》的制度、身份、权限、语气和世界因果，同时更少越权、更少泄漏、更少胡乱改库。每个重要 prompt 都应有版本、适用场景、输入预算、输出契约和回归样例。
@@ -266,7 +280,80 @@ S70 不应只有一个万能模型。建议角色：
 - 高影响政令：`planner -> domain_specialist -> critic/safety -> server resolver -> public/private aftermath`。
 - 战争/外交：`intel -> planner -> opposing_actor_mind -> domain_specialist -> server resolver`。
 
-## 9. S70 子步骤建议
+## 9. AI-first 体验：月报、跳时、设置、记忆与地图接口
+
+本节回答 S70 之后“AI 到底还可以更深地做什么”。方向是：玩家几乎时时刻刻都在和 AI 推动的世界互动，AI 不只是回复文本，而是生成报告、推动 NPC、解释制度、提出工具调用、形成长期记忆，并为地图系统提供上下文。
+
+### 9.1 AI 必选游玩与真实 MiMo 验收
+
+- 正式游玩体验以真实 AI 为前提；无真实 AI 的 Mock 体验只保留为开发和 CI 的稳定通道。
+- S70 后的 provider acceptance 要新增 MiMo-V2.5-Pro 真实 smoke：普通回合、长叙事、NPC mind、工具调用、月报、跳时总结、记忆提炼、critic/safety 和多工具回填。
+- 单元测试仍可用 Mock 保证 deterministic；但玩法验收、长程回归、提示词评测和工具协议兼容要有 `MIMO_REQUIRED=1` 或等价开关，明确跑真实 MiMo。
+- 不怕长输出和 token 消耗时，应提供“高质量/长文/高并发”配置，而不是把所有玩家锁进短回复模式。
+
+### 9.2 玩家官职月报与 AI 推动世界
+
+玩家当官后，每过三旬进入下月上旬时，服务器触发 `playerMonthlyBriefing`。月报只针对玩家，不要求给所有 NPC 生成完整月报；NPC 可用摘要记忆和批处理事件更新。
+
+月报内容建议按职位裁剪：
+
+- 书生/候缺：读书进度、师友来信、同年消息、科场风向、家计压力。
+- 县令/知府：钱粮、案件、水利、治安、士绅、上级批示、胥吏风险。
+- 部院官：部务、奏折、同僚派系、皇帝态度、御史弹章、升迁/降调机会。
+- 将领/总督：军需、士气、边报、粮道、敌情可信度、请战/固守风险。
+- 皇帝：朝局、财政、边患、民心、宗室、后宫/外戚、继承与大礼压力。
+
+AI 在月报中不只总结，还要推动世界：提出下月风险、NPC 主动请求、可追问线索、待裁决差事和隐藏后果的公开端倪。服务器根据压力、冷却和角色可见性决定哪些进入真实事件。
+
+### 9.3 自然语言跳时
+
+如果玩家说“学习 1 个月”“闭门备考三旬”“养病到下月”“在任上先按旧例处理一月”，不应只推进一个普通回合。建议新增 `timeSkipPlan`：
+
+- AI 解析玩家意图、目标、持续时间和是否允许中断。
+- 服务器把一月拆为三次旬 tick，逐旬运行读书、政务、NPC、事件压力和长期事件结算。
+- 若出现科考、弹劾、灾情、上级召见、亲友急信、战事等高优先级事件，服务器可中断跳时并让 AI 生成“中途被打断”的叙事。
+- 跳时结束后生成合并总结：做了什么、属性/关系/政务变化、错过了什么、下月风险和可行动事项。
+
+### 9.4 AI 设置面板
+
+浏览器后续应有“AI 设置”，让玩家按需求配置不同 AI，而不是只选一个全局 provider。建议配置域：
+
+- `narrativeModel`：普通叙事和长文反馈。
+- `npcMindModel`：重要 NPC 思考、来信、争论。
+- `examModel`：出题、老师点评、考官批语。
+- `policyModel`：政务、财政、刑名、官场。
+- `warDiplomacyModel`：战争、外交、边报。
+- `memoryModel`：记忆压缩、长程总结、人物印象。
+- `criticModel` / `safetyModel`：越权、hidden、工具参数和因果检查。
+
+玩家可选预设：`balanced`、`quality_first`、`fast`、`long_context`、`mimo_full`。每个预设控制输出长短、并发数、工具调用上限、streaming、重试、temperature、max tokens 和是否启用 critic/safety 双检。服务器必须校验配置，不允许玩家通过设置启用隐藏工具、直写库或未授权 provider。
+
+### 9.5 大模型记忆方案
+
+记忆不能只靠把全部聊天塞进长上下文。建议分层：
+
+- `hotContext`：当前场景、最近数回合、正在处理的差事和玩家刚说的话。
+- `sessionSummary`：每月/每场景压缩一次的玩家经历摘要。
+- `actorMemoryLedger`：重要 NPC 的公开记忆、私密印象、人情债、恩怨、目标、恐惧和派系压力。
+- `factMemory`：服务器确认的事实，如官职、科名、赏罚、案件结果、婚姻、师承、战役。
+- `impressionMemory`：AI/NPC 的主观印象，如“此人轻躁”“有恩于我家”“疑似结党”，必须带来源、置信度和可见性。
+- `semanticRetrievalIndex`：从安全 projection、事件档案、月报和 actor memory 中建本地检索索引，prompt 只拿 capped 摘要。
+
+记忆写入流程：AI 提出 memory proposal，服务器去重、压缩、标注来源/可见性/置信度/衰减，再写入 ledger。高权力 actor 可以读更多官方档案，但不能读玩家不可见 hidden truth；NPC 私密记忆也要按角色视野裁剪。
+
+### 9.6 地图系统接口预留
+
+地图系统后续可以晚做 UI，但 S70/S71 要先留数据和 AI 接口：
+
+- `mapContextView`：玩家可见国家、地区、城市、道路、河流、边防、辖区、任所、考场、商路和军镇摘要。
+- `mapEntityRef`：城市、军镇、书院、贡院、驿路、关隘、河段、边境点都用稳定 id 引用，避免 AI 只说散文地名。
+- `mapVisibility`：按身份、职位、地理距离、情报来源和战争迷雾裁剪可见信息。
+- `mapMovementProposal`：赶考、赴任、巡查、行军、押解、使节出行和商路活动都先提交 proposal，再由服务器按距离、天气、治安、军情和资源裁决。
+- `mapEventHooks`：灾害、民变、边患、市场、案件、书院清议和官职任所都能落到地图 ref 上，方便后续 UI 展示和 AI 检索。
+
+AI prompt 只读取 `mapContextView` 和 capped 地图检索，不读取 raw coordinate table 或 hidden enemy truth。地图先服务玩法因果，再服务可视化。
+
+## 10. S70 子步骤建议
 
 | ID | 目标 | 主要产物 | 验收重点 |
 | --- | --- | --- | --- |
@@ -278,10 +365,14 @@ S70 不应只有一个万能模型。建议角色：
 | S70.6 | 事件生成器 | 压力驱动事件候选、因果链、事件冷却 | 额外事件来自数据库压力，不泄漏 hidden |
 | S70.7 | 刑名、财政、军事、外交工具 | case/policy/battle/diplomacy proposal 与 resolver | 县令不越权，战役有军需约束，外交有情报可信度 |
 | S70.8 | 多模型路由、提示词评测与仲裁 | narrator/planner/critic/safety/model policy、prompt fixture matrix、provider prompt smoke | MiMo-V2.5-Pro/DeepSeek/Anthropic/OpenAI 适配一致，提示词成本/质量/安全可比较，失败降级清楚 |
-| S70.9 | 可观测与浏览器调试 | AI 调动审计面板、tool call 摘要、成本/拒绝原因 | 玩家不见 hidden，开发者可追溯工具链 |
-| S70.10 | 大世界验收与归档 | route tests、provider smoke、browser smoke、red-team fixture、归档文档 | JSON/SQLite parity、Mock/no-key、hidden-token、越权工具全过 |
+| S70.9 | AI 设置与可观测 | AI 设置面板、model route policy、tool call 摘要、成本/拒绝原因 | 玩家可按任务配置 AI；配置不能越权；开发者可追溯工具链 |
+| S70.10 | 玩家官职月报与 AI 推动世界 | `playerMonthlyBriefingView`、月末 report tool、职位化月报 prompt | 每三旬触发一次；只针对玩家；月报能带出下月风险和 NPC 主动事件 |
+| S70.11 | 自然语言跳时 | `timeSkipPlan`、多旬 batch tick、跳时中断、跳时总结 | “学习一月”等输入推进三旬；高优先级事件能中断；服务器逐旬结算 |
+| S70.12 | 大模型记忆系统 | actor memory ledger、fact/impression memory、monthly summary、retrieval index | 记忆有来源/置信度/可见性/衰减；AI 只能 proposal；prompt 只读 capped 摘要 |
+| S70.13 | 地图系统 AI 接口预留 | `mapContextView`、`mapEntityRef`、map visibility、movement/event proposal schema | 后续地图 UI 可接；AI 只读可见地图 projection；移动和地图事件由服务器裁决 |
+| S70.14 | 真实 MiMo 验收与 S70 归档 | MiMo-required provider smoke、route tests、browser smoke、red-team fixture、归档文档 | 真实 MiMo 覆盖主要玩法；JSON/SQLite parity、Mock 开发安全网、hidden-token、越权工具全过 |
 
-## 10. 红队与验收清单
+## 11. 红队与验收清单
 
 - 书生 actor 试图调用 `ruler.propose_edict`，必须拒绝且记录越权。
 - 县令 actor 试图宣战、任免尚书或调边军，必须拒绝。
@@ -290,12 +381,15 @@ S70 不应只有一个万能模型。建议角色：
 - AI proposal 或 tool arguments 夹带 `worldState` raw patch、SQL、raw table payload、hidden notes、provider key、本地路径或 prompt，必须脱敏并拒绝。
 - 工具被伪装成 SQL 代理、raw session patch 或 raw audit insert，必须在 registry 层拒绝，不能进入 resolver。
 - MiMo-V2.5-Pro 必须通过 provider smoke：无工具、单工具、强制工具、多工具、工具结果回填、streaming、schema 失败和 Mock/no-key fallback 都要可复现；若返回形状与 OpenAI 不一致，adapter 负责归一化或禁用对应能力。
+- 真实 MiMo 验收必须覆盖月报、跳时、多 actor 场景、记忆提炼、长输出和并发工具调用；失败时要返回可读错误，不得静默改状态。
 - Prompt 红队必须覆盖 prompt injection、玩家要求忽略系统约束、hidden-token 泄漏、完整 prompt 泄漏、低可信传闻当事实、critic/safety 直接裁决、actor 角色卡被玩家覆盖、长上下文塞入 raw table 和模型凭空创建证据。
+- 玩家通过 AI 设置尝试开启隐藏工具、关闭服务器裁决、直接写库或读取 hidden/raw 数据，必须被拒绝并记录。
+- 跳时必须逐旬运行服务器结算；不能由模型一句“一个月后”直接跳过长期事件、考期、上级命令或危机中断。
 - 多 NPC 批量生成不能超过预算；超过时退回 heuristic。
 - MCP 或外部工具如果进入 S70 后期，必须默认 approval / allowlist / logging，不可把 raw session 或 hidden ledger 发给第三方。
 - 所有 S70 工具都必须在 JSON 与 SQLite 模式下得到同等 player-facing view。
 
-## 11. 和当前路线图的关系
+## 12. 和当前路线图的关系
 
 S60-S67 先把世界数据库内容做厚，S70 再让 AI actor 使用这些内容。顺序很重要：没有足够的国家、城市、NPC、官职、事件、情报和检索索引，AI 编排只会变成漂亮但空心的多模型路由。
 

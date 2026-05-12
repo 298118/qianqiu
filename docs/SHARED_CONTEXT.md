@@ -51,6 +51,7 @@
 - S69.1 的 `examHonorLedger` / `examHonorView` 是服务器拥有的榜单名次荣誉 projection。交卷时服务器先生成 canonical ranking，再由 `examHonors` 写定解元、会元、状元、榜眼、探花、传胪、二甲/三甲次序和三元及第；殿试 promotion 读取 canonical palace class，考试历史保存安全 `examHonor` 快照。`/api/game/start`、`GET /api/game/state/:sessionId`、普通/流式 `/api/game/turn`、`/api/exam/question` 和 `/api/exam/submit` 都返回 `examHonorView`；prompt 只读 capped `examHonors` 摘要，浏览器只读 route view 或历史快照。provider `ranking`、`virtual_candidates`、`examiner_reviews`、普通 `statePatch`、皇帝/吏部叙事都不能授予荣誉、改甲第、定官职或写 hidden 榜单。
 - S70 工具方向是“模型请求工具、服务器执行工具”。Function calling、Structured Outputs、MCP connector 或未来内部 MCP 只能产生 tool call / proposal / request-adjudication；真正落库由服务器 resolver 和 adapter transaction 完成。
 - S70.1-S70.3 先实现内部 `game_ai_tools` registry；工具定义保持 MCP-friendly，至少包含 `name`、`description`、`inputSchema`、`permission`、`resolver`、`audit`、`cooldown` 和 `mockFallback`。
+- S70 之后的正式体验按 AI-first 规划：真实 AI 是产品核心，MiMo-V2.5-Pro 是大面积 provider 候选，Mock/no-key 只作为开发、CI、断网降级和 deterministic 回归样板。新增的上级赏罚/升迁、玩家月报、自然语言跳时、AI 设置、actor 记忆和地图接口都只能通过 proposal / request-adjudication / server resolver 落地，不得放开 SQL、raw table、hidden truth 或直写库。
 
 ## Subagent Discipline
 
@@ -107,6 +108,7 @@ Important modules:
 
 ## Current Work Note
 
+- 2026-05-12：按用户要求补充 S70 AI-first 体验规划，不改当前 S69 实现节奏。`docs/AI_ORCHESTRATION_ROADMAP.md` 已扩展正式 AI 必选方向、权限增强工具、玩家官职月报、自然语言跳时、AI 设置面板、大模型记忆分层和后续地图接口；`docs/DEVELOPMENT_STEPS.md` 将 S70 扩到 S70.14，并把真实 MiMo 验收、月报、跳时、记忆和地图接口列为后续 TODO。关键边界：增强 AI 权限是增强领域工具和服务器 resolver，不是让模型执行 SQL、直写 canonical 状态或读取 hidden/raw。验证已跑 docs governance、documentation governance test 和目标文档 `git diff --check`；本轮纯规划文档变更，跳过子代理复审，但路线图边界已在本交接板明确。
 - 2026-05-12：S69.1 榜单与名次荣誉已完成，提交待本次收束。新增 `src/game/examHonorsConfig.js` 与 `src/game/examHonors.js`，在服务器 canonical ranking 后写入 `examHonorLedger`、decorate ranking rows、生成 `examHonorView` 和安全 `examHistory[].examHonor` 快照。当前覆盖乡试解元、会试会元、殿试状元/榜眼/探花/传胪、二甲/三甲次序和三元及第；殿试 promotion 读取 canonical palace class。`src/game/stateRules.js`、`src/ai/promptPacks.js`、`src/ai/promptContextAssembler.js`、审计和事件档案已同步，普通 provider patch/schema 不得写 `examHonorLedger`；prompt 只读取 capped `examHonors` 摘要。`/api/game/start`、`GET /api/game/state/:sessionId`、普通/流式 `/api/game/turn`、`/api/exam/question` 和 `/api/exam/submit` 返回 `examHonorView`；浏览器考试结果、考试档案和书生面板新增“科名荣誉”展示，只读 route view 或历史快照。已通过 S69.1 聚焦语法检查，以及 `node --test test/aiSchemas.test.js test/examHonors.test.js test/examHonorsRoute.test.js test/stateRules.test.js test/promptContextAssembler.test.js test/prompts.test.js test/publicAppSource.test.js`（57/57）。本步仍不保存 hidden 榜单、弥封身份映射、考官 hidden intent、保结密注、模型原始建议或内部审计；同年/座师/考官网络关系仍留给 S69.2。
 
 ## Next Recommended Step
