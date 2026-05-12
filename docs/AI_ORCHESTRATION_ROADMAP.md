@@ -603,6 +603,8 @@ S70 要准备这些 fixture：
 
 前置依赖：S70.3。
 
+当前状态（2026-05-12）：S70.4 已落地 NPC mind 基础。已新增 `src/game/npcMindConfig.js` 和 `src/game/npcMind.js`，覆盖高显著 NPC 排序、NPC mind prompt context、安全 heuristic proposal、Mock/no-key deterministic fallback、proposal 清洗、服务器应用可见关系变化/公开事件材料/`player_visible` 记忆候选和 hidden-safe 审计摘要。当前实现不接普通 turn 自动调度、不调用真实 provider、不保存深层 private memory ledger、不写 SQLite；真正 actor memory ledger、private impression、月度 summary、检索和 provider mind loop 留给 S70.12 / S70.8 后继续深化。
+
 需要资料：`worldPeopleView`、relationship ledger、eventArchive、examNetwork、actor profile、NPC 记忆玩法资料。
 
 具体实现：

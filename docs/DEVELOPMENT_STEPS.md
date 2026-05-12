@@ -9,7 +9,7 @@
 - S48 时间专项：[TIME_SPECIALTY_ROADMAP_ARCHIVE.md](TIME_SPECIALTY_ROADMAP_ARCHIVE.md)。
 - S49-S67 本地数据库基础、SQLite 业务表、双模式验收、超大动态世界内容与 S60 内容契约：[LOCAL_DATABASE_AND_WORLD_CONTENT_ARCHIVE.md](LOCAL_DATABASE_AND_WORLD_CONTENT_ARCHIVE.md)。旧分卷归档和 S60 契约文件保留为跳转页。
 
-当前活动路线图已交接到 S70：S68-S69 的书生主线科举、读书、评卷与授官制度已归档，S70.1 已启动并落地 AI prompt pack 与工具协议契约，下一步进入 AI actor 权限模型和后续 `game_ai_tools` 运行时。S71 作为 S70 之后的数据库玩法化、维护、安全检索和 redacted API 专项，规划见 [DATABASE_GAMEPLAY_RESOLVER_ROADMAP.md](DATABASE_GAMEPLAY_RESOLVER_ROADMAP.md)。数据库方向继续只考虑本机 JSON/SQLite 持久化增强；远程存档、账号体系、多人同步、云端冲突解决和托管数据库不进入当前规划。
+当前活动路线图已交接到 S70：S68-S69 的书生主线科举、读书、评卷与授官制度已归档，S70.1 prompt pack 与工具协议、S70.2 actor 权限模型、S70.3 `game_ai_tools` 运行时和 S70.4 NPC mind 基础已落地，下一步进入 S70.5 制度 AI 与朝议/科场场景。S71 作为 S70 之后的数据库玩法化、维护、安全检索和 redacted API 专项，规划见 [DATABASE_GAMEPLAY_RESOLVER_ROADMAP.md](DATABASE_GAMEPLAY_RESOLVER_ROADMAP.md)。数据库方向继续只考虑本机 JSON/SQLite 持久化增强；远程存档、账号体系、多人同步、云端冲突解决和托管数据库不进入当前规划。
 
 ## 1. 开发规范继承
 
@@ -104,10 +104,10 @@
 | ID | 状态 | 目标 | 完成日期 | 工具 | 提交 |
 | --- | --- | --- | --- | --- | --- |
 | S70.0 | DONE | AI 编排提前规划：固定 AI 核心地位、现实权力原型、工具调用路线、actor 权限层和 S70 子步骤 | 2026-05-08 | Codex / Web / 子代理 | 见 git history |
-| S70.1 | DONE | AI 提示词与工具协议契约：prompt pack 分层、actor/scene contract、MCP-friendly tool envelope、proposal/result schema、request-adjudication、direct-write 禁止、strict schema、MiMo-V2.5-Pro 工具调用 smoke、失败降级和 provider 兼容策略 | 2026-05-12 | Codex / Web / 子代理 | 本次提交 |
+| S70.1 | DONE | AI 提示词与工具协议契约：prompt pack 分层、actor/scene contract、MCP-friendly tool envelope、proposal/result schema、request-adjudication、direct-write 禁止、strict schema、MiMo-V2.5-Pro 工具调用 smoke、失败降级和 provider 兼容策略 | 2026-05-12 | Codex / Web / 子代理 | `ba576a1` |
 | S70.2 | DONE | AI actor 与权限模型：按书生、士绅、地方官、大臣、将领、皇帝、系统引擎划分读取范围和工具组 | 2026-05-12 | Codex / 子代理 | `636f30a` |
-| S70.3 | DONE | 内部工具运行时：`game_ai_tools` registry、权限检查、read/proposal/request-adjudication runner、服务器 resolver、审计 hook 和 Mock runner | 2026-05-12 | Codex / 子代理 | 本次提交 |
-| S70.4 | TODO | NPC mind 与记忆：高显著度 NPC LLM loop、背景 NPC heuristic、目标/恩怨/人情债记忆演化 | - | - | S70.3 后 |
+| S70.3 | DONE | 内部工具运行时：`game_ai_tools` registry、权限检查、read/proposal/request-adjudication runner、服务器 resolver、审计 hook 和 Mock runner | 2026-05-12 | Codex / 子代理 | `4f94de9` |
+| S70.4 | DONE | NPC mind 与记忆：高显著度 NPC LLM loop、背景 NPC heuristic、目标/恩怨/人情债记忆演化 | 2026-05-12 | Codex / 子代理 | 本次提交 |
 | S70.5 | TODO | 制度 AI 与朝议/科场场景：官署、派系、大臣、谏官、老师、考官围绕奏折/弹章/政令/考卷推演 | - | - | S70.4 后 |
 | S70.6 | TODO | 压力事件工具协议与 actor proposal：由城市、财政、军政、关系、情报压力提出事件候选，固定工具 envelope、权限、Mock/provider 基础和服务器成案语义 | - | - | S70.5 后 |
 | S70.7 | TODO | 刑名、财政、军事、外交与科举工具：案牍、赈济、军令、战役、和议、宣战、评卷、授官 proposal 与 resolver | - | - | S70.6 后 |
@@ -211,9 +211,42 @@ S71 详细规划见 [DATABASE_GAMEPLAY_RESOLVER_ROADMAP.md](DATABASE_GAMEPLAY_RE
 
 工具：Codex、子代理复审。
 
-步骤：S70.3 内部工具运行时。
+步骤：S70.4 NPC mind 与记忆基础。
 
 提交：本次提交。
+
+完成：
+
+- 新增 `src/game/npcMindConfig.js`，集中定义 NPC mind schema version、显著度权重、LLM/背景 NPC 数量上限、proposal event / memory candidate 上限与文本长度边界。
+- 新增 `src/game/npcMind.js`，提供 `rankNpcSalience()`、`buildNpcMindPromptContext()`、`generateNpcMindProposal()`、`buildHeuristicProposal()`、`applyNpcMindProposal()`、`runBackgroundNpcHeuristic()` 和 `sanitizeNpcMindProposal()`。高显著 NPC 只从 `worldPeopleView`、`relationshipLedger` 的可见项、`activeNpcRequestView` 和 `eventArchiveView` 安全摘要构造上下文；hidden / 无效 NPC 不获得 actor profile / prompt context。
+- Mock/no-key 默认走 deterministic heuristic：根据当前请托、怨望、情分、影响力和近期互动生成 `request` / `obstruct` / `assist` / `warn` / `memory` proposal。服务器应用 proposal 时只写可见关系变化、公开事件材料和 `player_visible` 记忆候选，不保存深层 private memory ledger，不写 SQLite，不执行工具。
+- 新增 `test/npcMind.test.js`、`test/npcMindSalience.test.js` 和 `test/npcMindHiddenRedaction.test.js`，覆盖高显著 NPC 排序、背景 NPC heuristic、NPC mind prompt context、安全 proposal、服务器应用、active request pressure、hidden NPC 排除、unsafe 文本清洗、toolCalls 丢弃和记忆候选脱敏。
+- 更新 brief、AI 控制矩阵、S70 路线图和共享上下文，记录 S70.4 是 NPC mind 基础与安全 proposal 样板；真正 actor memory ledger / private impression / 月度 summary 留给 S70.12。
+- 提交前只读复审提出 P2：provider/aiClient 返回值可能跨 NPC retarget、`intentType` 未按契约枚举收口、独立本地路径/source token 清洗缺口。已强制 provider proposal 锚定当前 actor/context，用 `NPC_MIND_PROPOSAL_TYPES` 对非法 intent 回落到 `memory`，并对 NPC mind context 的 actor summary 再套 S70.4 清洗，补独立 `/home` / `/mnt` / `file://` 路径与单独 `provider` / `prompt` / `proposal` token 回归测试。复审另提出 P3：`salienceCooldownTurns` 当前为自动调度预留，S70.4 不接普通 turn 调度，留到 scheduler/LLM loop 接入时使用。
+
+验证：
+
+- 已通过：`node --check src/game/npcMindConfig.js`。
+- 已通过：`node --check src/game/npcMind.js`。
+- 已通过：`node --check test/npcMind.test.js && node --check test/npcMindSalience.test.js && node --check test/npcMindHiddenRedaction.test.js`。
+- 已通过：`node --test test/npcMind.test.js test/npcMindSalience.test.js test/npcMindHiddenRedaction.test.js test/aiActorProfiles.test.js test/gameAiToolRunner.test.js`（23/23）。
+
+风险/遗留：
+
+- S70.4 不调用真实 provider，不接入普通 turn 自动调度，不保存深层 private memory；高显著 NPC 的真实 LLM loop 与多 actor 场景调度会在 S70.5/S70.8 后继续增强。
+- 当前 memoryCandidates 是安全候选输出，尚未进入持久 `actorMemoryLedger`；S70.12 负责来源、置信度、可见性、衰减和 prompt 检索。
+
+下一步：
+
+- 启动 S70.5：制度 AI 与朝议/科场场景，用 S70.2 actor profile、S70.3 runner 和 S70.4 NPC proposal 形状组织朝议/科场多 actor scene-local round。
+
+### 2026-05-12
+
+工具：Codex、子代理复审。
+
+步骤：S70.3 内部工具运行时。
+
+提交：`4f94de9`。
 
 完成：
 
@@ -247,7 +280,7 @@ S71 详细规划见 [DATABASE_GAMEPLAY_RESOLVER_ROADMAP.md](DATABASE_GAMEPLAY_RE
 
 步骤：S70.2 AI actor 与权限模型。
 
-提交：本次提交。
+提交：`636f30a`。
 
 完成：
 
@@ -281,7 +314,7 @@ S71 详细规划见 [DATABASE_GAMEPLAY_RESOLVER_ROADMAP.md](DATABASE_GAMEPLAY_RE
 
 步骤：S70.1 AI 提示词与工具协议契约。
 
-提交：本次提交。
+提交：`ba576a1`。
 
 完成：
 
