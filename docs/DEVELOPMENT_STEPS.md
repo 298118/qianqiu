@@ -7,11 +7,9 @@
 - 第三阶段：[PHASE_THREE_ROADMAP_ARCHIVE.md](PHASE_THREE_ROADMAP_ARCHIVE.md)。
 - 第四阶段：[PHASE_FOUR_ROADMAP_ARCHIVE.md](PHASE_FOUR_ROADMAP_ARCHIVE.md)，早期详细进度见 [FOURTH_PHASE_PROGRESS_ARCHIVE.md](FOURTH_PHASE_PROGRESS_ARCHIVE.md)。
 - S48 时间专项：[TIME_SPECIALTY_ROADMAP_ARCHIVE.md](TIME_SPECIALTY_ROADMAP_ARCHIVE.md)。
-- S49-S53 本地数据库基础：[LOCAL_DATABASE_FOUNDATION_ARCHIVE.md](LOCAL_DATABASE_FOUNDATION_ARCHIVE.md)。
-- S54-S59 本地 SQLite 业务表与双模式验收：[LOCAL_DATABASE_BUSINESS_TABLE_ARCHIVE.md](LOCAL_DATABASE_BUSINESS_TABLE_ARCHIVE.md)。
-- S60-S67 超大动态世界数据库内容充实：[HUGE_DYNAMIC_WORLD_CONTENT_ARCHIVE.md](HUGE_DYNAMIC_WORLD_CONTENT_ARCHIVE.md)，内容契约见 [HUGE_DYNAMIC_WORLD_CONTENT_CONTRACT.md](HUGE_DYNAMIC_WORLD_CONTENT_CONTRACT.md)。
+- S49-S67 本地数据库基础、SQLite 业务表、双模式验收、超大动态世界内容与 S60 内容契约：[LOCAL_DATABASE_AND_WORLD_CONTENT_ARCHIVE.md](LOCAL_DATABASE_AND_WORLD_CONTENT_ARCHIVE.md)。旧分卷归档和 S60 契约文件保留为跳转页。
 
-当前活动路线图从 S68 开始：先深化书生主线的科举、读书、评卷与授官制度，再进入 S70 的 AI prompt pack、工具协议、actor 权限和多 AI 编排。S71 作为 S70 之后的数据库玩法化、维护、安全检索和 redacted API 专项，规划见 [DATABASE_GAMEPLAY_RESOLVER_ROADMAP.md](DATABASE_GAMEPLAY_RESOLVER_ROADMAP.md)。数据库方向继续只考虑本机 JSON/SQLite 持久化增强；远程存档、账号体系、多人同步、云端冲突解决和托管数据库不进入当前规划。
+当前活动路线图已交接到 S70：S68-S69 的书生主线科举、读书、评卷与授官制度已归档，下一步进入 AI prompt pack、工具协议、actor 权限和多 AI 编排。S71 作为 S70 之后的数据库玩法化、维护、安全检索和 redacted API 专项，规划见 [DATABASE_GAMEPLAY_RESOLVER_ROADMAP.md](DATABASE_GAMEPLAY_RESOLVER_ROADMAP.md)。数据库方向继续只考虑本机 JSON/SQLite 持久化增强；远程存档、账号体系、多人同步、云端冲突解决和托管数据库不进入当前规划。
 
 ## 1. 开发规范继承
 
@@ -83,13 +81,12 @@
 
 ## 3. 当前边界与已归档摘要
 
-当前活动工作从 S68.1 开始。S49-S67 的本地数据库与大世界内容实现细节已经迁入归档文档，活动台账只保留索引和后续边界：
+当前活动工作从 S70.1 开始。S49-S67 的本地数据库与大世界内容实现细节已经迁入统一归档，S68-S69 科举深化已迁入科举归档，活动台账只保留索引和后续边界：
 
 | 范围 | 状态 | 摘要 | 归档 |
 | --- | --- | --- | --- |
-| S49-S53 | DONE | storage adapter、SQLite session row、本地审计、地理/人物/官职任所 projection、prompt context、浏览器局势簿 | [LOCAL_DATABASE_FOUNDATION_ARCHIVE.md](LOCAL_DATABASE_FOUNDATION_ARCHIVE.md) |
-| S54-S59 | DONE | 地理/人物/官职任所业务派生表、安全事件档案索引、prompt 检索索引、维护工具、浏览器 parity 和 dual-mode 验收 | [LOCAL_DATABASE_BUSINESS_TABLE_ARCHIVE.md](LOCAL_DATABASE_BUSINESS_TABLE_ARCHIVE.md) |
-| S60-S67 | DONE | 大世界内容契约、规模 fixture、国家/城市/NPC/官职/案牍/军务/财赋/事件链/情报/prompt/UI 分页和规模验收 | [HUGE_DYNAMIC_WORLD_CONTENT_ARCHIVE.md](HUGE_DYNAMIC_WORLD_CONTENT_ARCHIVE.md) |
+| S49-S67 | DONE | 本地数据库基础、SQLite 业务表、双模式验收、大世界内容契约、规模 fixture、国家/城市/NPC/官职/案牍/军务/财赋/事件链/情报/prompt/UI 分页和规模验收 | [LOCAL_DATABASE_AND_WORLD_CONTENT_ARCHIVE.md](LOCAL_DATABASE_AND_WORLD_CONTENT_ARCHIVE.md) |
+| S68-S69 | DONE | 科举制度、读书账本、老师点评、科场流程、多考官阅卷、榜单荣誉、同年座师网络、授官轨迹、浏览器面板和 Provider/Mock 验收 | [IMPERIAL_EXAM_DEEPENING_ARCHIVE.md](IMPERIAL_EXAM_DEEPENING_ARCHIVE.md) |
 
 必须继续保护的边界：
 
@@ -116,7 +113,7 @@
 | S69.3 | DONE | 授官路径深化：一甲翰林、二甲馆选/庶吉士/观政、三甲铨选/部属/外放/候缺和籍贯回避 resolver | 2026-05-12 | Codex / 子代理调研与只读复审 | 本次提交 |
 | S69.4 | DONE | 浏览器科举档案面板：读书簿、科场档案、榜单、同年考官、授官轨迹和 hidden-token smoke | 2026-05-12 | Codex / 子代理调研与只读复审 | 本次提交 |
 | S69.5 | DONE | Provider/Mock 验收：真实 provider 出题/评卷/点评 smoke、Mock deterministic 路径和越权红队 | 2026-05-12 | Codex / 子代理只读调研与复审 | 本次提交 |
-| S69.6 | TODO | S68-S69 归档与交接：科举深化实现归档、brief/context/验收更新和 S70 衔接建议 | - | - | S69.5 后 |
+| S69.6 | DONE | S68-S69 归档与交接：科举深化实现归档、brief/context/验收更新和 S70 衔接建议；同时整合 S49-S67 数据库/内容旧分卷到统一归档 | 2026-05-12 | Codex / 子代理只读调研与复审 | 本次提交 |
 | S70.0 | DONE | AI 编排提前规划：固定 AI 核心地位、现实权力原型、工具调用路线、actor 权限层和 S70 子步骤 | 2026-05-08 | Codex / Web / 子代理 | 见 git history |
 | S70.1 | TODO | AI 提示词与工具协议契约：prompt pack 分层、actor/scene contract、MCP-friendly tool envelope、proposal/result schema、request-adjudication、direct-write 禁止、strict schema、MiMo-V2.5-Pro 工具调用 smoke、失败降级和 provider 兼容策略 | - | - | S69 后启动 |
 | S70.2 | TODO | AI actor 与权限模型：按书生、士绅、地方官、大臣、将领、皇帝、系统引擎划分读取范围和工具组 | - | - | S70.1 后 |
@@ -220,6 +217,38 @@ S71 详细规划见 [DATABASE_GAMEPLAY_RESOLVER_ROADMAP.md](DATABASE_GAMEPLAY_RE
 4. S71.9-S71.12：接入多 actor 场景、NPC 记忆和 AI 调动审计面板，最后做 dual-mode、Mock/no-key、browser 和 provider smoke 归档。
 
 ## 8. 进度记录
+
+### 2026-05-12
+
+工具：Codex、子代理只读调研与复审。
+
+步骤：S69.6 归档与交接。
+
+提交：本次提交。
+
+完成：
+
+- 新增 [LOCAL_DATABASE_AND_WORLD_CONTENT_ARCHIVE.md](LOCAL_DATABASE_AND_WORLD_CONTENT_ARCHIVE.md)，把 S49-S53 本地数据库基础、S54-S59 本地 SQLite 业务表与双模式验收、S60-S67 超大动态世界内容充实和 S60 内容规模/可见性契约合并为一个追溯入口。
+- 将 `LOCAL_DATABASE_FOUNDATION_ARCHIVE.md`、`LOCAL_DATABASE_BUSINESS_TABLE_ARCHIVE.md`、`HUGE_DYNAMIC_WORLD_CONTENT_ARCHIVE.md` 和 `HUGE_DYNAMIC_WORLD_CONTENT_CONTRACT.md` 改为短跳转页，保留旧链接但避免继续维护四份分卷。
+- 新增 [IMPERIAL_EXAM_DEEPENING_ARCHIVE.md](IMPERIAL_EXAM_DEEPENING_ARCHIVE.md)，归档 S68.1-S69.5 的科举制度、读书账本、老师点评、科场流程、多考官阅卷、榜单荣誉、同年座师网络、授官轨迹、浏览器科举档案面板和 Provider/Mock 验收。
+- 同步 README、brief、共享上下文、架构、动态数据库规划、AI 控制矩阵、数据库玩法化路线图和 S60 相关领域契约，把主入口改为统一归档，并把下一步切到 S70.1。
+- 本轮只改文档归档与交接，不改运行时代码、API、provider schema、Mock 行为、存档格式或 SQLite 表结构。
+
+验证：
+
+- 已通过：`npm run check:docs-governance`。
+- 已通过：`node --test test/documentationGovernance.test.js`。
+- 已通过：`git diff --check`。
+- 已完成只读子代理调研和提交前复审；复审未发现阻断问题。
+
+风险/遗留：
+
+- 统一归档内部保留了旧分卷原文，因此少量历史链接仍指向跳转页；这是为了保留原始归档语境，不影响后续主入口。
+- SQLite 科举派生 parity、更长 provider long-run 和 hidden 私档 redaction 仍留给 S70/S71 后续步骤追踪。
+
+下一步：
+
+- 启动 S70.1：AI 提示词与工具协议契约，优先固定 prompt pack 分层、actor/scene contract、tool envelope、proposal/result schema、request-adjudication、strict schema 和 MiMo-V2.5-Pro 工具调用 smoke。
 
 ### 2026-05-12
 
@@ -649,7 +678,7 @@ S71 详细规划见 [DATABASE_GAMEPLAY_RESOLVER_ROADMAP.md](DATABASE_GAMEPLAY_RE
 
 完成：
 
-- 新增 [HUGE_DYNAMIC_WORLD_CONTENT_ARCHIVE.md](HUGE_DYNAMIC_WORLD_CONTENT_ARCHIVE.md)，把 S60-S67 的内容契约、规模 fixture、国家/城市/NPC/官职/案牍/军务/财赋/事件链/情报、prompt 策略、浏览器分页和 S67.1 scale 验收集中归档。
+- 新增当时的 S60-S67 内容归档，现已在 S69.6 并入 [LOCAL_DATABASE_AND_WORLD_CONTENT_ARCHIVE.md](LOCAL_DATABASE_AND_WORLD_CONTENT_ARCHIVE.md)，把 S60-S67 的内容契约、规模 fixture、国家/城市/NPC/官职/案牍/军务/财赋/事件链/情报、prompt 策略、浏览器分页和 S67.1 scale 验收集中归档。
 - 本文件已从 S60-S67 长实现台账压缩为当前活动路线图：归档索引、稳定边界、S68-S69 科举深化、S70 AI 编排和后续 TODO。
 - S67.2 标记为 `DONE`，下一步切换为 S68.1 科举制度契约。
 - S49-S53、S54-S59 和 S60-S67 的详细实现不再在活动台账重复展开；需要追溯时打开对应归档。

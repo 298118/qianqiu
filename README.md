@@ -6,7 +6,7 @@
 
 ## 这次主要更新
 
-当前项目已经完成可玩纵切、浏览器验收、时间专项、AI provider 扩展、本地动态数据库基础、S54-S59 SQLite 业务表拆分、S60-S67 超大动态世界数据库内容充实、S68.1 科举制度契约、S68.2 读书账本基础、S68.3 老师/书院/同窗互动、S68.4 科场制度流程、S68.5 科场事件/多考官阅卷、S69.1 榜单名次荣誉、S69.2 同年座师网络、S69.3 授官路径深化、S69.4 浏览器科举档案面板与 S69.5 Provider/Mock 验收。近期重点更新集中在“本地数据库专项归档”“S68-S69 科举读书深化”和“多 provider 能力”：
+当前项目已经完成可玩纵切、浏览器验收、时间专项、AI provider 扩展、本地动态数据库基础、S54-S59 SQLite 业务表拆分、S60-S67 超大动态世界数据库内容充实、S68.1 科举制度契约、S68.2 读书账本基础、S68.3 老师/书院/同窗互动、S68.4 科场制度流程、S68.5 科场事件/多考官阅卷、S69.1 榜单名次荣誉、S69.2 同年座师网络、S69.3 授官路径深化、S69.4 浏览器科举档案面板、S69.5 Provider/Mock 验收与 S69.6 归档交接。近期重点更新集中在“本地数据库专项归档”“S68-S69 科举读书深化”和“多 provider 能力”：
 
 - 新增可选 SQLite 存储模式：默认仍是 JSON 存档；设置 `STORAGE_ADAPTER=sqlite` 后，本地使用 `world_sessions`、审计表、地理 `geo_*`、人物 `people_*`、官职任所 `office_*` 派生业务表、安全事件档案 `event_archive_index` 和安全 prompt 检索派生索引。
 - 新增地理业务表同步：SQLite 模式会把 `worldState.worldGeography` 同步到 `geo_countries`、`geo_regions`、`geo_cities`、`geo_routes`、`geo_frontier_zones`、`geo_office_jurisdictions`，读档时可按 JSON snapshot 修复缺失或陈旧行。
@@ -17,7 +17,7 @@
 - 新增 SQLite prompt 检索索引：SQLite 模式会把地理、人物、官职任所、地方案牍、军务外交态势、经济财政态势、公开历史事件链、情报传闻和事件档案的服务器可见 projection 同步为安全检索行，读档用内容指纹修复同 id/同 revision 污染；JSON 模式继续走原 view helper fallback。
 - 新增审计公开 projection 工具：`npm run storage:audit-events -- status|export --adapter json|sqlite` 会从 JSON sidecar 或 SQLite 审计读取 allowlist 后的公开摘要，输出本地调试安全的 public projection；AI proposal 只计数，不输出原始建议内容。
 - 新增浏览器 SQLite smoke 参数：`npm run smoke:browser -- --storage-adapter sqlite --sqlite-db <path>` 可验证 Mock 浏览器主线与 SQLite adapter 共用同一存储；`npm run smoke:browser -- --information-parity` 会顺序启动 JSON/SQLite 临时服务器，比对局势簿 DOM、route view 摘要和事件档案分页 metadata。
-- 完成 S60-S67 内容充实阶段归档：S60-S67 已把小/中/大规模档位、seed 分层、国家/邻国、城市、NPC、官职生态、地方事务、外交军事、经济市场、事件模板、情报可见性、大规模 prompt 检索、局势簿分页和 scale regression 收束到 [docs/HUGE_DYNAMIC_WORLD_CONTENT_ARCHIVE.md](docs/HUGE_DYNAMIC_WORLD_CONTENT_ARCHIVE.md)，仍只考虑本地 JSON/SQLite。
+- 完成 S49-S67 数据库与内容统一归档：S49-S67 已把本地数据库基础、SQLite 业务表、双模式验收、小/中/大规模档位、seed 分层、国家/邻国、城市、NPC、官职生态、地方事务、外交军事、经济市场、事件模板、情报可见性、大规模 prompt 检索、局势簿分页和 scale regression 收束到 [docs/LOCAL_DATABASE_AND_WORLD_CONTENT_ARCHIVE.md](docs/LOCAL_DATABASE_AND_WORLD_CONTENT_ARCHIVE.md)，旧分卷仅保留为跳转页。
 - 完成 S61 国家/城市深度内容：`worldGeographyView` 与 prompt 检索现在携带国家财政、军备、国威、继承、外交、情报可靠度，以及城市税粮、市价、士绅、词讼、徭役、水利、灾害、交通、驻军和书院等安全指标；AI 只读这些 projection，不能写地理账本或裁决外交/战争/城市治理。
 - 完成 S62.1/S62.2 NPC 人口、家族谱系与生命周期：新增 deterministic 人口谱系生成 helper 和服务器月末生命周期 helper，规模 fixture 可生成官员、胥吏、士绅、商贾、军官、书院师友、同年、亲族、邻国使者，以及父母配偶子女、姻亲、门生故旧、同乡同年和派系网络；普通回合月末可推进可见 NPC 健康、婚丧、迁居、官职履历状态、财富/欠账、资产、田产、家族风险和人情债演化，并复用 `world_people` 审计与 `people_*` 派生行链路。hidden 私档、资产真数和隐藏动机仍不进入当前 raw route state。
 - 完成 S63.1 官职生态与任命池：`officialPostingsView` 现在能看到上级堂官、属官/胥吏/幕友接口、空缺、候补、补授、试署、外放、丁忧、起复、弹劾候勘和差遣压力；这些只作为服务器可见 projection、SQLite 派生行和 prompt 检索素材，真实任免仍由 `officialCareer` 服务器结算裁决。
@@ -259,10 +259,8 @@ data/sessions/
 - [docs/AI_CONTROL_AUDIT_MATRIX.md](docs/AI_CONTROL_AUDIT_MATRIX.md)：AI/server 权限矩阵。
 - [docs/IMPERIAL_EXAM_SYSTEM_CONTRACT.md](docs/IMPERIAL_EXAM_SYSTEM_CONTRACT.md)：S68.1 科举制度契约，固定科场流程、卷件生命周期、AI 老师/考官/吏部/皇帝权限和服务器裁决边界。
 - [docs/DYNAMIC_WORLD_DATABASE_PLAN.md](docs/DYNAMIC_WORLD_DATABASE_PLAN.md)：本地动态数据库规划。
-- [docs/HUGE_DYNAMIC_WORLD_CONTENT_CONTRACT.md](docs/HUGE_DYNAMIC_WORLD_CONTENT_CONTRACT.md)：S60 超大动态世界数据库内容规模、seed 分层、可见性和 fixture 验收契约。
-- [docs/LOCAL_DATABASE_FOUNDATION_ARCHIVE.md](docs/LOCAL_DATABASE_FOUNDATION_ARCHIVE.md)：S49-S53 本地数据库基础归档。
-- [docs/LOCAL_DATABASE_BUSINESS_TABLE_ARCHIVE.md](docs/LOCAL_DATABASE_BUSINESS_TABLE_ARCHIVE.md)：S54-S59 本地 SQLite 业务表、索引、维护工具和双模式验收归档。
-- [docs/HUGE_DYNAMIC_WORLD_CONTENT_ARCHIVE.md](docs/HUGE_DYNAMIC_WORLD_CONTENT_ARCHIVE.md)：S60-S67 超大动态世界数据库内容充实归档。
+- [docs/LOCAL_DATABASE_AND_WORLD_CONTENT_ARCHIVE.md](docs/LOCAL_DATABASE_AND_WORLD_CONTENT_ARCHIVE.md)：S49-S67 本地数据库基础、SQLite 业务表、双模式验收、超大动态世界内容归档与 S60 内容契约。
+- [docs/IMPERIAL_EXAM_DEEPENING_ARCHIVE.md](docs/IMPERIAL_EXAM_DEEPENING_ARCHIVE.md)：S68-S69 科举、读书、评卷、榜单、同年座师、授官和 Provider/Mock 验收归档。
 - [docs/WORLD_GEOGRAPHY_SEED_CONTRACT.md](docs/WORLD_GEOGRAPHY_SEED_CONTRACT.md)：天下地理与 SQLite 地理业务表契约。
 - [docs/NPC_HOUSEHOLD_ASSET_RELATIONSHIP_CONTRACT.md](docs/NPC_HOUSEHOLD_ASSET_RELATIONSHIP_CONTRACT.md)：人物、家族、资产、田产、关系 schema/桥接与 S55 SQLite 人物域表契约/实现边界。
 - [docs/OFFICIAL_POSTING_DATABASE_CONTRACT.md](docs/OFFICIAL_POSTING_DATABASE_CONTRACT.md)：官署、官职、任所、考成、迁转 schema/桥接与 S56 SQLite 官职任所表契约。
@@ -272,5 +270,5 @@ data/sessions/
 - 真实 provider 网络调用需要配置 API key；无 key 环境只验证 Mock、缺 key 分支和 no-key skip。
 - 浏览器 smoke 覆盖完整主线和代表身份回合，但不等同于所有身份的长线游玩验收。
 - SQLite 目前已经包含 session row、审计表、地理 `geo_*` 业务表、可见人物 `people_*` bridge rows、人物事件到 `people_*.last_event_id` 的本地关联、带内容漂移探针的官职任所 `office_*` 派生业务表、安全事件档案 `event_archive_index`、安全 prompt 检索索引，以及只输出 allowlist public 摘要的本地审计公开 projection 工具；它们都不是浏览器、prompt 或服务器裁决的 raw 来源。
-- “超大动态世界数据库”的 S60-S67 内容充实阶段已归档；S68.1-S69.5 已完成，后续活动重点是按契约推进 S69.6 归档与交接，再进入 S70 AI 提示词、工具协议和多 AI 编排。
+- “超大动态世界数据库”的 S60-S67 内容充实阶段已并入统一归档；S68-S69 科举深化也已归档，后续活动重点进入 S70 AI 提示词、工具协议和多 AI 编排。
 - 当前不包含远程存档、账号体系、多人同步或云端数据库。

@@ -21,7 +21,7 @@
 - Backend: Node.js + Express，plain JavaScript。
 - AI providers: adapter-based Mock/OpenAI/DeepSeek/MiMo/MiMo+DeepSeek/Anthropic。`AI_PROVIDER=mock` 仍是默认可玩模式；`mimo-deepseek` 只是方法级最小路由，MiMo 负责 start/turn/stream/question，DeepSeek 负责 exam grading。
 - Storage: 默认 JSON session files under `data/sessions/`；可选 `STORAGE_ADAPTER=sqlite` 使用本地 `world_sessions`、audit tables、`geo_*`、`people_*`、`office_*`、`event_archive_index` 和 `prompt_retrieval_index`。SQLite 派生行只从 `world_sessions.world_state_json` 单向修复；raw business/audit rows 不是 route、prompt、browser 或服务器裁决 truth source。
-- Active roadmap: S49-S53、S54-S59、S60-S67 已完成并归档。S68.1 科举制度契约、S68.2 读书账本基础、S68.3 老师/书院/同窗互动、S68.4 科场制度流程、S68.5 科场事件/多考官阅卷、S69.1 榜单名次荣誉、S69.2 同年座师网络、S69.3 授官路径深化、S69.4 浏览器科举档案面板与 S69.5 Provider/Mock 验收已完成；后续应从 S69.6 S68-S69 归档与交接开始，再进入 S70 AI prompt pack、工具协议、actor 权限和多 AI 编排。S71 已作为 S70 后的数据库玩法化、维护、安全检索和 redacted API 专项挂入台账，不抢占 S69。
+- Active roadmap: S49-S67 本地数据库与大世界内容已统一归档，S68-S69 科举、读书、评卷、榜单、同年座师、授官和 Provider/Mock 验收已归档。后续应从 S70.1 AI prompt pack、工具协议契约、actor 权限和多 AI 编排开始。S71 已作为 S70 后的数据库玩法化、维护、安全检索和 redacted API 专项挂入台账，不抢占 S70。
 - Current local `.env`: 可能含用户提供的 provider keys。`.env` 被 Git 忽略，不能打印或提交。
 
 ## Core Invariants
@@ -96,10 +96,7 @@ Important modules:
 - `docs/REAL_PROVIDER_ACCEPTANCE.md`
 - `docs/SESSION_STORAGE_MIGRATION_PLAN.md`
 - `docs/DYNAMIC_WORLD_DATABASE_PLAN.md`
-- `docs/LOCAL_DATABASE_FOUNDATION_ARCHIVE.md`：S49-S53 本地数据库基础。
-- `docs/LOCAL_DATABASE_BUSINESS_TABLE_ARCHIVE.md`：S54-S59 本地 SQLite 业务表、索引、维护工具和 dual-mode acceptance。
-- `docs/HUGE_DYNAMIC_WORLD_CONTENT_CONTRACT.md`：S60 内容规模、seed 分层、可见性与 fixture 验收契约。
-- `docs/HUGE_DYNAMIC_WORLD_CONTENT_ARCHIVE.md`：S60-S67 内容充实、prompt 策略、局势簿分页和 scale acceptance 归档。
+- `docs/LOCAL_DATABASE_AND_WORLD_CONTENT_ARCHIVE.md`：S49-S67 本地数据库基础、SQLite 业务表、dual-mode acceptance、超大动态世界内容与 S60 内容契约统一归档。旧分卷和 S60 契约文件仅保留为跳转页。
 - `docs/WORLD_GEOGRAPHY_SEED_CONTRACT.md`
 - `docs/NPC_HOUSEHOLD_ASSET_RELATIONSHIP_CONTRACT.md`
 - `docs/OFFICIAL_POSTING_DATABASE_CONTRACT.md`
@@ -107,10 +104,13 @@ Important modules:
 - `docs/DEPENDENCY_PLUGIN_GOVERNANCE.md`
 - `docs/IMPERIAL_EXAM_DEEPENING_ROADMAP.md`
 - `docs/IMPERIAL_EXAM_SYSTEM_CONTRACT.md`
+- `docs/IMPERIAL_EXAM_DEEPENING_ARCHIVE.md`
 - `docs/AI_ORCHESTRATION_ROADMAP.md`
 - `docs/DATABASE_GAMEPLAY_RESOLVER_ROADMAP.md`
 
 ## Current Work Note
+
+- 2026-05-12：S69.6 归档与交接已完成，提交待本次收束。新增 `docs/LOCAL_DATABASE_AND_WORLD_CONTENT_ARCHIVE.md`，把 S49-S53 本地数据库基础、S54-S59 SQLite 业务表与双模式验收、S60-S67 超大动态世界内容充实和 S60 内容规模/可见性契约合并为一个追溯入口；旧四个分卷/契约文件保留为跳转页，避免历史链接失效。新增 `docs/IMPERIAL_EXAM_DEEPENING_ARCHIVE.md`，归档 S68.1-S69.5 的科举制度、读书账本、老师点评、科场流程、多考官阅卷、榜单荣誉、同年座师网络、授官轨迹、浏览器科举档案面板和 Provider/Mock 验收。README、brief、活动台账、架构、动态数据库规划、AI 控制矩阵和领域契约均已改指统一归档；本轮不改运行时代码、API、provider schema、存档格式或 SQLite 表结构。验证已跑 `npm run check:docs-governance`、`node --test test/documentationGovernance.test.js` 和 `git diff --check`；归档重写仍执行了只读子代理调研与提交前复审。
 
 - 2026-05-12：S69.5 Provider/Mock 验收已实现，提交待本次收束。新增 `src/game/examProviderSanitizer.js` 并接入 `/api/exam/question` / `/api/exam/submit`，真实 provider 题面、要求、名位、五维评语、rank、detailed feedback 与 `examiner_reviews` 展示字段落盘前会遮蔽 hidden token、raw provider/proposal、prompt/index/table 名、本地路径、`sk-` 与 `tp-` 凭据形状。`scripts/providerSmoke.js` 新增老师点评 turn，要求真实 provider 返回 `teacherFeedbackProposal.focus/advice/reason`，并检查 provider 不得 patch S69 server-owned 科举账本或玩家功名/官职/历史。新增 `scripts/mockImperialExamAcceptance.js` 与 `npm run smoke:exam-s69`，用 Mock deterministic path 跑通童试、乡试、会试、殿试到入仕，验证读书簿、科场流程、多考官阅卷、榜单荣誉、同年座师网络、授官轨迹和考试历史安全快照。提交前只读复审发现 provider `examiner_reviews` 旧清洗缺口和 Mock 文本扫描口径偏窄，已修复并补红队；真实 `mimo-deepseek` 复跑中还暴露非字符串 `concern` schema 抖动，已在 remote helper 做松散文本归一；第二轮只读复审未发现 P0/P1/P2 阻断，并按 P3 建议把玩家可见 `provider ranking` 文案中文化。已通过语法检查、聚焦测试 22/22、科举 resolver 相关测试 15/15、remote/schema 测试 17/17、`npm run smoke:exam-s69`、本机 keyed `mimo-deepseek` 的 `npm run smoke:provider` 与 `npm run smoke:provider:route`、`npm run check:docs-governance`、`git diff --check`。后续进入 S69.6 归档与交接；更长 provider long-run 与 SQLite 科举派生 parity 可在 S69.6 或后续数据库专项明确落点。
 - 2026-05-12：用户指出 S70 AI 编排规划仍偏简略，已把 `docs/AI_ORCHESTRATION_ROADMAP.md` 扩展为后续 Codex 开发任务书。新增第 13-16 节：后续开发执行规则、依赖与资料准备、S70.1-S70.14 逐步任务书和 S70 验收清单；逐步写清前置依赖、需要资料、建议模块/函数、工具/route 接口、测试文件和验收重点。关键口径：S70 优先不新增 npm 依赖，先用现有 Node/Express/AJV/provider adapters/node:test/Playwright smoke；MCP SDK、队列、schema 类型库等只有确需时才走依赖治理；任务书列出的模块/脚本/测试是后续实施目标，不代表当前已存在。验证已跑 docs governance、documentation governance test 和目标文档 `git diff --check`；只读子代理复审未发现 P0/P1/P2 阻断问题。
@@ -123,4 +123,4 @@ Important modules:
 
 ## Next Recommended Step
 
-启动 S69.6：S68-S69 归档与交接。重点把科举深化实现、Provider/Mock 验收、Mock/no-key 与真实 provider 边界整理进归档和 brief/context，并明确进入 S70 prompt pack、工具协议、actor 权限与多 AI 编排前仍需保留的 SQLite parity、provider long-run 和 hidden 私档 redaction 风险。
+启动 S70.1：AI 提示词与工具协议契约。重点固定 prompt pack 分层、actor/scene contract、MCP-friendly tool envelope、proposal/result schema、request-adjudication、direct-write 禁止、strict schema、MiMo-V2.5-Pro 工具调用 smoke、失败降级和 provider 兼容策略；SQLite 科举派生 parity、更长 provider long-run 与 hidden 私档 redaction 继续作为 S70/S71 风险项追踪。

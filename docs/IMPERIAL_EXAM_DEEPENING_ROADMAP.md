@@ -265,7 +265,7 @@ Proposal 工具：
 | S69.3 | 授官与馆选铨选 | 已落地 `appointmentTracks` / `appointmentTrackView`：一甲翰林、二甲庶吉士/观政/部属、三甲外放/部属/候缺与籍贯回避 | 官职事实服务器写入，读取官缺/朝局 |
 | S69.4 | 浏览器科举面板深化 | 已落地 `#imperial-exam-archive-panel`：读书计划、科场流程、多考官阅卷、榜单荣誉、同年考官和授官轨迹；考试结果/档案可复看授官轨迹 | 只读 route view 与安全考试历史快照，hidden-token/source smoke 和移动端溢出 helper 已补 |
 | S69.5 | Provider 与 Mock 验收 | 真实 provider smoke、Mock deterministic path、red-team fixture | 无 key 可玩，越权题面/评分/任官被拒 |
-| S69.6 | 归档与交接 | S68-S69 归档文档、brief/context 更新 | 完整 scholar path 更深但不破坏 |
+| S69.6 | 已完成归档与交接 | S68-S69 归档文档、brief/context 更新，归档见 [IMPERIAL_EXAM_DEEPENING_ARCHIVE.md](IMPERIAL_EXAM_DEEPENING_ARCHIVE.md) | 完整 scholar path 更深但不破坏 |
 
 ## 11. 红队清单
 

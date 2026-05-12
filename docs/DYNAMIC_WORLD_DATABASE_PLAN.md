@@ -2,7 +2,7 @@
 
 本文回应“是否需要把国家、邻国、NPC、玩家、官职、城市、事件记录等大量动态数据放入数据库，并允许 AI 随游戏进程影响数据库”的产品方向。
 
-结论：**可行，而且中长期值得做；但不建议一步到位替换当前 JSON 存档，也不能让 AI 直接写数据库。** 当前范围只考虑本地数据库，优先方向是本地 SQLite；不规划远程存档、账号体系、多人同步、云端冲突解决或托管数据库。S49-S53 本地数据库基础已归档到 [LOCAL_DATABASE_FOUNDATION_ARCHIVE.md](LOCAL_DATABASE_FOUNDATION_ARCHIVE.md)；S54-S59 已完成 SQLite 业务表、索引、维护工具、浏览器 parity 和双模式验收，并归档到 [LOCAL_DATABASE_BUSINESS_TABLE_ARCHIVE.md](LOCAL_DATABASE_BUSINESS_TABLE_ARCHIVE.md)；S60-S67 已完成超大动态世界数据库内容充实、prompt 策略、局势簿分页和规模验收，并归档到 [HUGE_DYNAMIC_WORLD_CONTENT_ARCHIVE.md](HUGE_DYNAMIC_WORLD_CONTENT_ARCHIVE.md)。AI 可以通过身份受限的领域工具提交结构化 proposal 或 request-adjudication；最终写库必须由服务器模块校验、夹断、归一化、可见性过滤和事务提交。
+结论：**可行，而且中长期值得做；但不建议一步到位替换当前 JSON 存档，也不能让 AI 直接写数据库。** 当前范围只考虑本地数据库，优先方向是本地 SQLite；不规划远程存档、账号体系、多人同步、云端冲突解决或托管数据库。S49-S67 本地数据库基础、SQLite 业务表、双模式验收、超大动态世界数据库内容充实、prompt 策略、局势簿分页、规模验收和 S60 内容契约已统一归档到 [LOCAL_DATABASE_AND_WORLD_CONTENT_ARCHIVE.md](LOCAL_DATABASE_AND_WORLD_CONTENT_ARCHIVE.md)。AI 可以通过身份受限的领域工具提交结构化 proposal 或 request-adjudication；最终写库必须由服务器模块校验、夹断、归一化、可见性过滤和事务提交。
 
 ## 1. 当前基础与是否急需数据库
 
@@ -543,7 +543,7 @@ S53.1-S53.6 已完成：`promptContextAssembler` 只读服务器可见 projectio
 
 ### S54-S59：SQLite 业务表拆分归档
 
-S49-S53 结束后，数据库专项的下一段不再是“是否需要数据库”，而是如何小步拆表。S54-S59 已完成并归档到 [LOCAL_DATABASE_BUSINESS_TABLE_ARCHIVE.md](LOCAL_DATABASE_BUSINESS_TABLE_ARCHIVE.md)：
+S49-S53 结束后，数据库专项的下一段不再是“是否需要数据库”，而是如何小步拆表。S54-S59 已完成并并入 [LOCAL_DATABASE_AND_WORLD_CONTENT_ARCHIVE.md](LOCAL_DATABASE_AND_WORLD_CONTENT_ARCHIVE.md)：
 
 - S54：地理业务表。S54.1/S54.2 已定义并实现 `geo_countries`、`geo_regions`、`geo_cities`、`geo_routes`、`geo_frontier_zones`、`geo_office_jurisdictions` 的 SQLite 模式持久化；S54.3 已补导入 dry-run、地理 status/repair/export 工具、browser smoke SQLite 参数和 JSON/SQLite route/prompt 可见摘要 parity。
 - S55：人物业务表。已定义并实现可见 bridge `people_npcs`、`people_households`、`people_assets`、`people_estates`、`people_relationships` 持久化、`worldPeopleView` parity、NPC/关系/家产可见 delta 的服务器事件 helper 和 `last_event_id` 审计关联。
@@ -556,7 +556,7 @@ S49-S53 结束后，数据库专项的下一段不再是“是否需要数据库
 
 ### S60-S67：超大动态世界数据库内容充实归档
 
-S60-S67 已完成并归档到 [HUGE_DYNAMIC_WORLD_CONTENT_ARCHIVE.md](HUGE_DYNAMIC_WORLD_CONTENT_ARCHIVE.md)。S60.1 的 [S60 超大动态世界数据库内容契约](HUGE_DYNAMIC_WORLD_CONTENT_CONTRACT.md) 仍是内容规模、seed 分层、字段密度、hidden/private 边界、prompt budget 和 fixture 验收口径的源头。
+S60-S67 已完成并并入 [LOCAL_DATABASE_AND_WORLD_CONTENT_ARCHIVE.md](LOCAL_DATABASE_AND_WORLD_CONTENT_ARCHIVE.md)。该统一归档中的“S60 内容规模与可见性契约”章节仍是内容规模、seed 分层、字段密度、hidden/private 边界、prompt budget 和 fixture 验收口径的源头。
 
 归档后的稳定能力包括：
 
@@ -643,7 +643,7 @@ S71 的数据库关系：
 
 ## 10. 推荐优先级
 
-S49-S53 基础层已归档到 [LOCAL_DATABASE_FOUNDATION_ARCHIVE.md](LOCAL_DATABASE_FOUNDATION_ARCHIVE.md)，S54-S59 业务表拆分已归档到 [LOCAL_DATABASE_BUSINESS_TABLE_ARCHIVE.md](LOCAL_DATABASE_BUSINESS_TABLE_ARCHIVE.md)，S60-S67 内容充实已归档到 [HUGE_DYNAMIC_WORLD_CONTENT_ARCHIVE.md](HUGE_DYNAMIC_WORLD_CONTENT_ARCHIVE.md)。后续优先级如下：
+S49-S67 基础层、业务表拆分、双模式验收、内容充实和 S60 内容契约已统一归档到 [LOCAL_DATABASE_AND_WORLD_CONTENT_ARCHIVE.md](LOCAL_DATABASE_AND_WORLD_CONTENT_ARCHIVE.md)。后续优先级如下：
 
 1. **已完成 S54 地理业务表**：国家、邻国、城市、路线、边面和辖区已拆入 SQLite，并补导入、修复、导出和 parity 工具。
 2. **已完成 S55 人物业务表**：可见 NPC、家族、资产、田产和关系 bridge rows 已拆入 SQLite，并补服务器人物事件 helper、关系/请托 live 事件和 `people_*.last_event_id` 审计关联。

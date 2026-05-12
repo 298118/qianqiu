@@ -8,7 +8,7 @@
 
 推荐放置顺序：
 
-1. **S69.3-S69.6 继续完成科举授官与归档**：不改变当前 S69 节奏。
+1. **S69.3-S69.6 已完成科举授官与归档**：后续不再抢占 S70 节奏。
 2. **S70.1-S70.3 优先完成 AI prompt / tool / actor 基础**：先有 prompt 分层、工具协议、`game_ai_tools` registry、权限检查、审计 hook 和 Mock runner。
 3. **S70.4-S70.14 完成 AI actor、NPC mind、制度场景、多模型与验收**：让 AI 能以受控方式提出 read/proposal/request-adjudication，并完成真实 MiMo、月报、跳时、记忆和地图接口验收。
 4. **S71 作为 S70 之后的数据库玩法化专项**：把数据库 projection 输入正式接入财政、地方政策、战役、外交、案件、事件链、全文检索、维护工具和安全 API。
@@ -234,7 +234,7 @@ S71 各步默认依赖现有能力：
 
 S71 开发主要使用已有项目资料，不需要先做大规模外部资料收集：
 
-- 数据库与内容归档：`docs/LOCAL_DATABASE_FOUNDATION_ARCHIVE.md`、`docs/LOCAL_DATABASE_BUSINESS_TABLE_ARCHIVE.md`、`docs/HUGE_DYNAMIC_WORLD_CONTENT_ARCHIVE.md`、`docs/HUGE_DYNAMIC_WORLD_CONTENT_CONTRACT.md`。
+- 数据库与内容归档：`docs/LOCAL_DATABASE_AND_WORLD_CONTENT_ARCHIVE.md`。旧分卷归档和 S60 内容契约文件只作为历史跳转页保留。
 - AI 权限：`docs/AI_ORCHESTRATION_ROADMAP.md`、`docs/AI_CONTROL_AUDIT_MATRIX.md`、后续 S70 产出的 prompt/tool/actor 契约。
 - 当前安全 projection：`worldGeographyView`、`worldPeopleView`、`officialPostingsView`、`localAffairsDocketView`、`militaryDiplomacyView`、`economicFiscalView`、`historicalEventArchiveView`、`intelligenceRumorView`、`eventArchiveView`、`informationPanelPageView`。
 - 当前 SQLite 派生层：`src/storage/sqliteSessionAdapter.js`、`sqliteGeographyTables.js`、`sqlitePeopleTables.js`、`sqliteOfficialPostingTables.js`、`sqliteEventArchiveTables.js`、`sqlitePromptRetrievalTables.js`。
