@@ -533,6 +533,8 @@ S70 要准备这些 fixture：
 
 前置依赖：S70.1。
 
+当前状态（2026-05-12）：S70.2 已落地首版 actor profile 与权限 allowlist。已新增 `src/game/aiActorProfileConfig.js` 和 `src/game/aiActorProfiles.js`，覆盖 T0-T6 authority tier、actor type template、tool group、visibility preset、budget preset、玩家/NPC/官署/系统 profile 构造、安全 view/prompt summary 和 `filterActorTools()`。本步只负责 profile 与工具可见性过滤，不执行工具、不写状态、不写审计或 session；runner 与 resolver bridge 留给 S70.3。
+
 需要资料：当前角色系统、`worldPeopleView`、`officialPostingsView`、`relationshipView`、S68-S69 老师/考官/同年关系、官制资料笔记。
 
 具体实现：

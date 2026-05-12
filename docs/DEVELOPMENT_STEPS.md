@@ -105,7 +105,7 @@
 | --- | --- | --- | --- | --- | --- |
 | S70.0 | DONE | AI 编排提前规划：固定 AI 核心地位、现实权力原型、工具调用路线、actor 权限层和 S70 子步骤 | 2026-05-08 | Codex / Web / 子代理 | 见 git history |
 | S70.1 | DONE | AI 提示词与工具协议契约：prompt pack 分层、actor/scene contract、MCP-friendly tool envelope、proposal/result schema、request-adjudication、direct-write 禁止、strict schema、MiMo-V2.5-Pro 工具调用 smoke、失败降级和 provider 兼容策略 | 2026-05-12 | Codex / Web / 子代理 | 本次提交 |
-| S70.2 | TODO | AI actor 与权限模型：按书生、士绅、地方官、大臣、将领、皇帝、系统引擎划分读取范围和工具组 | - | - | 当前启动 |
+| S70.2 | DONE | AI actor 与权限模型：按书生、士绅、地方官、大臣、将领、皇帝、系统引擎划分读取范围和工具组 | 2026-05-12 | Codex / 子代理 | 本次提交 |
 | S70.3 | TODO | 内部工具运行时：`game_ai_tools` registry、权限检查、read/proposal/request-adjudication runner、服务器 resolver、审计 hook 和 Mock runner | - | - | S70.2 后 |
 | S70.4 | TODO | NPC mind 与记忆：高显著度 NPC LLM loop、背景 NPC heuristic、目标/恩怨/人情债记忆演化 | - | - | S70.3 后 |
 | S70.5 | TODO | 制度 AI 与朝议/科场场景：官署、派系、大臣、谏官、老师、考官围绕奏折/弹章/政令/考卷推演 | - | - | S70.4 后 |
@@ -206,6 +206,40 @@ S71 详细规划见 [DATABASE_GAMEPLAY_RESOLVER_ROADMAP.md](DATABASE_GAMEPLAY_RE
 4. S71.9-S71.12：接入多 actor 场景、NPC 记忆和 AI 调动审计面板，最后做 dual-mode、Mock/no-key、browser 和 provider smoke 归档。
 
 ## 8. 进度记录
+
+### 2026-05-12
+
+工具：Codex、子代理只读调研。
+
+步骤：S70.2 AI actor 与权限模型。
+
+提交：本次提交。
+
+完成：
+
+- 新增 `src/game/aiActorProfileConfig.js`，集中定义 S70 actor profile schema version、T0-T6 authority tier、actor type template、tool group、visibility preset 和 budget preset；书生、老师、考官、士绅/商贾、胥吏、地方官、大臣/御史、将领、皇帝/外邦君主与系统世界引擎都获得稳定默认权限口径。
+- 新增 `src/game/aiActorProfiles.js`，提供 `buildPlayerAiActorProfile()`、`buildNpcAiActorProfile()`、`buildOfficeAiActorProfile()`、`buildSystemEngineActorProfile()`、`filterActorTools()`、`buildAiActorProfileView()` 和 `summarizeAiActorProfileForPrompt()`。profile 构造只复用玩家状态、`worldPeopleView`、`officialPostingsView`、`officialCareerView` 和官制 catalog 的可见 projection；hidden NPC、raw provider、raw audit、raw table、本地路径和 key 形状文本会被过滤，公开 view/prompt summary 不包含私档字段。
+- `filterActorTools()` 复用 S70.1 `validateToolDefinition()`，按 actor type、authority tier、tool group、forbidden group 与辖区 ref 过滤模型可见工具；`server.*` 仍只作内部 resolver/audit label，不会进入 actor 可见工具列表。
+- 新增 `test/aiActorProfiles.test.js` 与 `test/aiActorToolPermissions.test.js`，覆盖书生、入仕官员、地方官、皇帝、可见 NPC、hidden NPC、官署和系统引擎 profile，以及书生不能拿司法/军务/诏令工具、地方官必须辖区匹配、皇帝可请求强工具但不能看到 `server.*`、系统引擎只保留事件/读取工具。
+- 更新 brief、AI 控制矩阵和共享上下文，记录 S70.2 只是权限模型与 allowlist，不执行工具、不写状态、不落库；真正 registry/runner 留给 S70.3。
+- 提交前只读复审提出两个非阻断问题：系统引擎 T6 默认 allowlist 对 `memory` / `time` / `map` 过宽，NPC 公开边界文案含英文 hidden 红队词。已收紧 T6 只保留 `world_read` / `event` / `market` / `intel` / `report`，并改写公开边界文案与补充扫描测试。
+
+验证：
+
+- 已通过：`node --check src/game/aiActorProfileConfig.js`。
+- 已通过：`node --check src/game/aiActorProfiles.js`。
+- 已通过：`node --check test/aiActorProfiles.test.js`。
+- 已通过：`node --check test/aiActorToolPermissions.test.js`。
+- 已通过：`node --test test/aiActorProfiles.test.js test/aiActorToolPermissions.test.js test/aiToolProtocolContract.test.js`（16/16）。
+
+风险/遗留：
+
+- S70.2 不接入普通玩家回合、不执行工具、不写审计或 session；工具 registry、runner、resolver bridge、冷却与审计 hook 留给 S70.3。
+- 当前 actor profile view 是后续 prompt/诊断安全入口样板，普通 route 尚未新增 `aiActorProfileView` 字段，以免在 runner 稳定前扩大 API surface。
+
+下一步：
+
+- 启动 S70.3：内部 `game_ai_tools` registry、read/proposal/request-adjudication runner、权限检查、Mock runner 和 hidden-safe 审计摘要。
 
 ### 2026-05-12
 
