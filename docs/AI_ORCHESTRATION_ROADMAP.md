@@ -164,7 +164,7 @@ followUpHooks
 
 ### 5.5 禁止把工具包装成直写库
 
-任何工具协议、MCP server 或 adapter 都不得暴露通用 SQL、raw table update、raw session patch、raw audit insert 或 “write-anything” 能力。即使未来内部 MCP 用 `tools/call` 形式承载游戏工具，它也只能调用受控领域入口，例如 `event.propose_incident` 或 `server.resolve_case`，不能让模型自由构造 `INSERT/UPDATE`、`statePatch.worldState` 或 raw table payload。
+任何工具协议、MCP server 或 adapter 都不得暴露通用 SQL、raw table update、raw session patch、raw audit insert 或 “write-anything” 能力。即使未来内部 MCP 用 `tools/call` 形式承载游戏工具，它也只能调用模型可见的受控领域入口，例如 `event.propose_incident` 或 `judicial.request_case_adjudication`，再由服务器内部 resolver 处理；不能让模型直接调用 `server.*`，也不能自由构造 `INSERT/UPDATE`、`statePatch.worldState` 或 raw table payload。
 
 ### 5.6 权限增强方向
 
@@ -664,6 +664,8 @@ S70 要准备这些 fixture：
 - 皇帝强工具有执行链和反噬，不是按钮。
 
 ### S70.6：压力事件工具协议与 Actor Proposal
+
+当前状态（2026-05-12）：S70.6 已落地首版压力事件工具协议。已新增 `src/ai/eventToolDefinitions.js`、`src/game/aiEventProposalConfig.js` 与 `src/game/aiEventProposal.js`，默认 `game_ai_tools` registry 包含 `event.propose_incident` / `event.request_incident_adjudication`。事件 proposal 只可引用 actor 可见的地理、案牍、财赋、军务、情报、人物怨望、世界实体或事件档案压力摘要；服务器 resolver 锚定 actor、校验权限和可见来源、清空 private refs，并返回 `pending` / `rejected`。本步不接普通 turn、不运行真实 provider、不写状态/session/SQLite/事件档案；数据库 projection 压力采集、概率、冷却成案和归档仍留给 S71.8。
 
 前置依赖：S70.3-S70.5。
 

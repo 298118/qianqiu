@@ -9,7 +9,7 @@ const { isToolAllowedForActor } = require("../game/aiActorProfiles");
 const { DEFAULT_AI_TOOL_RESOLVERS } = require("../game/aiToolResolvers");
 
 const TOOL_AUDIT_SCHEMA_VERSION = 1;
-const SENSITIVE_TOOL_AUDIT_PATTERN = /(hiddenNotes|hiddenIntent|raw[_ -]?(?:provider|audit|table|ledger|prompt)|provider proposal|retrievalContext|statePatch|worldState|prompt_retrieval_index|event_archive_index|world_sessions|api[_ -]?key|OPENAI_API_KEY|DEEPSEEK_API_KEY|MIMO_API_KEY|ANTHROPIC_API_KEY|data[\\/](?:sessions|audit)|ai_change_proposals|event_log|sqlite|sk-[A-Za-z0-9_-]{6,}|tp-[A-Za-z0-9_-]{6,}|[A-Za-z]:\\[^\s"'<>]+|\b(?:\/Users|\/home|\/tmp|\/var|\/mnt|\/opt)\/[^\s"'<>]+)/i;
+const SENSITIVE_TOOL_AUDIT_PATTERN = /(hiddenNotes|hiddenIntent|raw[_ -]?(?:provider|audit|table|ledger|prompt)|\b(?:provider|prompt|source|path|key|hidden|raw|SQL)\b|server\.[A-Za-z0-9_.:-]+|rawSql|retrievalContext|statePatch|worldState|prompt_retrieval_index|event_archive_index|world_sessions|api[_ -]?key|OPENAI_API_KEY|DEEPSEEK_API_KEY|MIMO_API_KEY|ANTHROPIC_API_KEY|data[\\/](?:sessions|audit)|ai_change_proposals|event_log|sqlite|sk-[A-Za-z0-9_-]{6,}|tp-[A-Za-z0-9_-]{6,}|[A-Za-z]:\\[^\s"'<>]+|(?:file:\/\/)?(?:\/Users|\/home|\/tmp|\/var|\/mnt|\/opt)\/[^\s"'<>]+)/i;
 
 function cloneJson(value) {
   return value === undefined ? undefined : JSON.parse(JSON.stringify(value));
@@ -20,6 +20,13 @@ function cleanText(value, fallback = "", maxLength = 160) {
   const trimmed = value.trim().replace(/\s+/g, " ");
   if (!trimmed || SENSITIVE_TOOL_AUDIT_PATTERN.test(trimmed)) return fallback;
   return trimmed.slice(0, maxLength);
+}
+
+function cleanToolName(value, fallback = "", maxLength = 96) {
+  if (typeof value !== "string") return fallback;
+  const trimmed = value.trim().replace(/\s+/g, "");
+  if (!trimmed || /[\\/:"'<>]/.test(trimmed)) return fallback;
+  return trimmed.replace(/[^A-Za-z0-9_.-]+/g, "").slice(0, maxLength) || fallback;
 }
 
 function actorRef(actorProfile = {}) {
@@ -117,7 +124,7 @@ function normalizeProviderToolCall(providerPayload = {}, options = {}) {
     providerPayload.function?.name ||
     providerPayload.toolName ||
     providerPayload.input?.name;
-  const providerName = cleanText(rawName, "", 96);
+  const providerName = cleanToolName(rawName, "", 96);
   const name = providerNameMap[providerName] || providerName;
   const rawArguments = providerPayload.arguments ??
     providerPayload.function?.arguments ??
@@ -242,7 +249,7 @@ function recordToolAudit(context = {}, auditRecord) {
 }
 
 function auditDefinitionForRejectedTool(toolName, eventType = "ai_game_tool_call_rejected") {
-  const safeName = cleanText(toolName, "unknown.tool", 96);
+  const safeName = cleanToolName(toolName, "unknown.tool", 96);
   return {
     name: safeName,
     audit: {
@@ -254,7 +261,7 @@ function auditDefinitionForRejectedTool(toolName, eventType = "ai_game_tool_call
 async function runGameAiTool(toolCall, context = {}, expectedToolType = null) {
   const startedAt = Date.now();
   const actorProfile = context.actorProfile || {};
-  const toolName = cleanText(toolCall?.name || toolCall?.toolName, "", 96);
+  const toolName = cleanToolName(toolCall?.name || toolCall?.toolName, "", 96);
   const toolDefinition = getToolDefinition(context.toolRegistry, toolName);
   const toolCallId = cleanText(toolCall?.id || toolCall?.toolCallId || toolCall?.tool_call_id, "", 96);
   let args = {};

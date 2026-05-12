@@ -9,7 +9,7 @@
 - S48 时间专项：[TIME_SPECIALTY_ROADMAP_ARCHIVE.md](TIME_SPECIALTY_ROADMAP_ARCHIVE.md)。
 - S49-S67 本地数据库基础、SQLite 业务表、双模式验收、超大动态世界内容与 S60 内容契约：[LOCAL_DATABASE_AND_WORLD_CONTENT_ARCHIVE.md](LOCAL_DATABASE_AND_WORLD_CONTENT_ARCHIVE.md)。旧分卷归档和 S60 契约文件保留为跳转页。
 
-当前活动路线图已交接到 S70：S68-S69 的书生主线科举、读书、评卷与授官制度已归档，S70.1 prompt pack 与工具协议、S70.2 actor 权限模型、S70.3 `game_ai_tools` 运行时、S70.4 NPC mind 基础和 S70.5 制度场景 helper 已落地，下一步进入 S70.6 压力事件工具协议与 actor proposal。S71 作为 S70 之后的数据库玩法化、维护、安全检索和 redacted API 专项，规划见 [DATABASE_GAMEPLAY_RESOLVER_ROADMAP.md](DATABASE_GAMEPLAY_RESOLVER_ROADMAP.md)。数据库方向继续只考虑本机 JSON/SQLite 持久化增强；远程存档、账号体系、多人同步、云端冲突解决和托管数据库不进入当前规划。
+当前活动路线图已交接到 S70：S68-S69 的书生主线科举、读书、评卷与授官制度已归档，S70.1 prompt pack 与工具协议、S70.2 actor 权限模型、S70.3 `game_ai_tools` 运行时、S70.4 NPC mind 基础、S70.5 制度场景 helper 和 S70.6 压力事件工具协议已落地，下一步进入 S70.7 刑名、财政、军事、外交与科举领域工具。S71 作为 S70 之后的数据库玩法化、维护、安全检索和 redacted API 专项，规划见 [DATABASE_GAMEPLAY_RESOLVER_ROADMAP.md](DATABASE_GAMEPLAY_RESOLVER_ROADMAP.md)。数据库方向继续只考虑本机 JSON/SQLite 持久化增强；远程存档、账号体系、多人同步、云端冲突解决和托管数据库不进入当前规划。
 
 ## 1. 开发规范继承
 
@@ -108,8 +108,8 @@
 | S70.2 | DONE | AI actor 与权限模型：按书生、士绅、地方官、大臣、将领、皇帝、系统引擎划分读取范围和工具组 | 2026-05-12 | Codex / 子代理 | `636f30a` |
 | S70.3 | DONE | 内部工具运行时：`game_ai_tools` registry、权限检查、read/proposal/request-adjudication runner、服务器 resolver、审计 hook 和 Mock runner | 2026-05-12 | Codex / 子代理 | `4f94de9` |
 | S70.4 | DONE | NPC mind 与记忆：高显著度 NPC LLM loop、背景 NPC heuristic、目标/恩怨/人情债记忆演化 | 2026-05-12 | Codex / 子代理 | `e030dc5` |
-| S70.5 | DONE | 制度 AI 与朝议/科场场景：官署、派系、大臣、谏官、老师、考官围绕奏折/弹章/政令/考卷推演 | 2026-05-12 | Codex / 子代理 | 本次提交 |
-| S70.6 | TODO | 压力事件工具协议与 actor proposal：由城市、财政、军政、关系、情报压力提出事件候选，固定工具 envelope、权限、Mock/provider 基础和服务器成案语义 | - | - | S70.5 后 |
+| S70.5 | DONE | 制度 AI 与朝议/科场场景：官署、派系、大臣、谏官、老师、考官围绕奏折/弹章/政令/考卷推演 | 2026-05-12 | Codex / 子代理 | `029d65a` |
+| S70.6 | DONE | 压力事件工具协议与 actor proposal：由城市、财政、军政、关系、情报压力提出事件候选，固定工具 envelope、权限、Mock/provider 基础和服务器成案语义 | 2026-05-12 | Codex / 子代理 | `a8423c8` |
 | S70.7 | TODO | 刑名、财政、军事、外交与科举工具：案牍、赈济、军令、战役、和议、宣战、评卷、授官 proposal 与 resolver | - | - | S70.6 后 |
 | S70.8 | TODO | 多模型路由与仲裁：narrator、actor_mind、planner、domain_specialist、critic、safety 分工与成本边界 | - | - | S70.7 后 |
 | S70.9 | TODO | AI 设置与可观测性：按叙事、NPC、科举、政务、战争、记忆、critic/safety 配置模型路由、输出长度、并发、工具预算、审计面板和 hidden-safe 诊断 | - | - | S70.8 后 |
@@ -211,9 +211,41 @@ S71 详细规划见 [DATABASE_GAMEPLAY_RESOLVER_ROADMAP.md](DATABASE_GAMEPLAY_RE
 
 工具：Codex、子代理。
 
+步骤：S70.6 压力事件工具协议与 actor proposal。
+
+提交：`a8423c8`。
+
+完成：
+
+- 新增 `src/ai/eventToolDefinitions.js`，集中定义 `event.propose_incident` 和 `event.request_incident_adjudication` 的 strict input schema、actor 权限、resolver label、审计字段、actor cooldown、Mock fallback 和 provider compatibility 备注；默认 `createGameAiToolRegistry()` 已包含事件工具，书生看不到事件工具，地方官/高权 actor/系统引擎按权限可见。
+- 新增 `src/game/aiEventProposalConfig.js` 与 `src/game/aiEventProposal.js`，提供可见压力源收集、事件 proposal normalize、actor 权限与 source 校验、pending/rejected resolver、hidden-safe 审计和 Mock/no-key deterministic 候选。压力源只来自服务器安全 view：地理城市/边面、地方案牍、经济财政、军务外交、公开情报、可见人物怨望、世界实体和事件档案。
+- `src/game/aiToolResolvers.js` 接入事件 resolver；`src/ai/gameAiToolRunner.js` 收紧参数摘要脱敏，并把工具名清洗和参数清洗分离，避免 `server.*` 直接调用误判为未知工具。
+- 新增 `test/aiEventProposal.test.js` 与 `test/aiEventProposalRedTeam.test.js`，覆盖 strict schema、默认 registry 权限过滤、pending 不改状态、runner cooldown、request-adjudication、Mock 候选域、hidden/raw/server/path 文本拒绝、private refs 清空、不可见压力源拒绝和书生越权拒绝。
+- 同步 brief、AI 控制矩阵、工具协议契约、S70 编排路线图和共享上下文，记录 S70.6 只做事件候选协议，不提前实现 S71.8 压力成案生成器。
+
+验证：
+
+- 已通过：`node --check src/ai/eventToolDefinitions.js`、`node --check src/ai/gameAiTools.js`、`node --check src/ai/gameAiToolRunner.js`、`node --check src/game/aiToolResolvers.js`、`node --check src/game/aiEventProposal.js`、`node --check test/aiEventProposal.test.js`、`node --check test/aiEventProposalRedTeam.test.js`。
+- 已通过：`node --test test/aiEventProposal.test.js test/aiEventProposalRedTeam.test.js`，7/7。
+- 已通过：`node --test test/aiToolProtocolContract.test.js test/aiActorToolPermissions.test.js test/gameAiTools.test.js test/gameAiToolRunner.test.js test/aiEventProposal.test.js test/aiEventProposalRedTeam.test.js`，29/29。
+- 已运行：`npm test`，全量 630 个子测试中 629 个通过，1 个既有 S67 性能阈值抖动失败：`dual-mode S67 scale regression records large fixture, prompt strategy, paging, repair and timing` 的 `sqliteReadRepairMs 4931.773 > 3000`。随后单独重跑 `node --test test/dualModeAcceptanceScript.test.js` 通过 6/6。
+
+风险/遗留：
+
+- S70.6 只固定 `event.propose_incident` / `event.request_incident_adjudication` 的协议、权限、可见来源、pending/rejected 语义和 Mock 候选；不接普通 turn 自动调度、不调用真实 provider、不写 session/SQLite、不写事件档案成案条目。
+- 数据库 projection 压力采集、事件概率、冷却成案、服务器事件档案写入和 JSON/SQLite resolver parity 仍留给 S71.8。
+
+下一步：
+
+- 启动 S70.7：刑名、财政、军事、外交与科举领域工具，继续集中化领域 proposal/request-adjudication tool definitions，并保持 resolver pending 边界、actor 权限和 hidden-safe 红队。
+
+### 2026-05-12
+
+工具：Codex、子代理。
+
 步骤：S70.5 制度 AI 与朝议/科场场景。
 
-提交：本次提交。
+提交：`029d65a`。
 
 完成：
 

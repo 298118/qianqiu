@@ -217,5 +217,6 @@ $env:MIMO_REQUIRED='1'; npm run smoke:provider:tools
 
 - S70.2：把 `permission` 映射到 `aiActorProfile`、authority tier、actor tool allowlist 和角色视野。
 - S70.3：实现 `game_ai_tools` registry、runner、resolver bridge、audit hook 和 Mock runner。
-- S70.6/S70.7：补事件、刑名、财政、军事、外交、科举、赏罚和任免工具。
+- S70.6：已落地 `event.propose_incident` 与 `event.request_incident_adjudication` 首批事件工具。事件工具使用 strict input schema，要求 `incidentKind`、`publicSummary`、`sourcePressureRefs`、`visibility`、`confidence`、`severity`、`cooldownKey`、`affectedRefs`、空 `privateResultRefs` 和 `riskTags`；默认 registry 会按 actor 权限过滤，resolver 只返回 `pending` / `rejected`，不写状态、SQLite、事件档案或成案审计。
+- S70.7：继续补刑名、财政、军事、外交、科举、赏罚和任免工具；这些工具仍只能提交 proposal / request-adjudication，真正结算由服务器 resolver。
 - S70.8/S70.14：补完整 provider prompt/tool eval、真实 MiMo required smoke、browser/JSON/SQLite parity 和归档。

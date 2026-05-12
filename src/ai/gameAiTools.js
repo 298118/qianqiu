@@ -3,6 +3,7 @@ const {
   createVisibleContextReadToolDefinition,
   validateToolDefinition
 } = require("./toolSchemas");
+const { createEventToolDefinitions } = require("./eventToolDefinitions");
 const { filterActorTools } = require("../game/aiActorProfiles");
 
 function cloneJson(value) {
@@ -15,7 +16,8 @@ function normalizeToolName(name) {
 
 function createBaseGameAiToolDefinitions() {
   return [
-    createVisibleContextReadToolDefinition()
+    createVisibleContextReadToolDefinition(),
+    ...createEventToolDefinitions()
   ];
 }
 

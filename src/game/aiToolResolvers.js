@@ -12,9 +12,10 @@ const { buildOfficialPostingsView } = require("./officialPostings");
 const { buildStudyProfileView } = require("./studyProfile");
 const { buildWorldGeographyView } = require("./worldGeography");
 const { buildWorldPeopleView } = require("./worldPeople");
+const { resolveEventProposal } = require("./aiEventProposal");
 
 const MAX_ITEM_TEXT_LENGTH = 140;
-const SENSITIVE_TOOL_TEXT_PATTERN = /(hiddenNotes|hiddenIntent|raw[_ -]?(?:provider|audit|table|ledger|prompt)|provider proposal|retrievalContext|statePatch|worldState|prompt_retrieval_index|event_archive_index|world_sessions|api[_ -]?key|OPENAI_API_KEY|DEEPSEEK_API_KEY|MIMO_API_KEY|ANTHROPIC_API_KEY|data[\\/](?:sessions|audit)|ai_change_proposals|event_log|sqlite|sk-[A-Za-z0-9_-]{6,}|tp-[A-Za-z0-9_-]{6,}|[A-Za-z]:\\[^\s"'<>]+|\b(?:\/Users|\/home|\/tmp|\/var|\/mnt|\/opt)\/[^\s"'<>]+)/i;
+const SENSITIVE_TOOL_TEXT_PATTERN = /(hiddenNotes|hiddenIntent|raw[_ -]?(?:provider|audit|table|ledger|prompt)|\b(?:provider|prompt|source|path|key|hidden|raw|SQL)\b|server\.[A-Za-z0-9_.:-]+|rawSql|retrievalContext|statePatch|worldState|prompt_retrieval_index|event_archive_index|world_sessions|api[_ -]?key|OPENAI_API_KEY|DEEPSEEK_API_KEY|MIMO_API_KEY|ANTHROPIC_API_KEY|data[\\/](?:sessions|audit)|ai_change_proposals|event_log|sqlite|sk-[A-Za-z0-9_-]{6,}|tp-[A-Za-z0-9_-]{6,}|[A-Za-z]:\\[^\s"'<>]+|(?:file:\/\/)?(?:\/Users|\/home|\/tmp|\/var|\/mnt|\/opt)\/[^\s"'<>]+)/i;
 
 function cleanText(value, fallback = "", maxLength = MAX_ITEM_TEXT_LENGTH) {
   if (typeof value !== "string") return fallback;
@@ -167,14 +168,27 @@ function resolvePendingProposalTool({ toolDefinition }) {
   };
 }
 
+function resolveEventProposalTool({ worldState = {}, arguments: args = {}, actorProfile = {}, toolDefinition = {}, context = {} }) {
+  return resolveEventProposal(worldState, args, {
+    actorProfile,
+    toolDefinition,
+    toolName: toolDefinition.name,
+    requestedAdjudication: toolDefinition.name === "event.request_incident_adjudication",
+    context
+  });
+}
+
 const DEFAULT_AI_TOOL_RESOLVERS = Object.freeze({
   "server.read_visible_context": resolveVisibleContextTool,
+  "server.resolve_event_proposal": resolveEventProposalTool,
+  "server.request_event_incident_adjudication": resolveEventProposalTool,
   "server.pending_proposal": resolvePendingProposalTool,
   "server.pending_adjudication": resolvePendingProposalTool
 });
 
 module.exports = {
   DEFAULT_AI_TOOL_RESOLVERS,
+  resolveEventProposalTool,
   resolvePendingProposalTool,
   resolveVisibleContextTool
 };
