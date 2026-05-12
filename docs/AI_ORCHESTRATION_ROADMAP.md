@@ -401,3 +401,549 @@ S70 实施前仍必须保持：
 - 浏览器和 prompt 只读服务器 projection。
 - hidden 私档、邻国虚实、密札和未公开关系不回填 raw route state。
 - 所有新增工具、依赖、provider 能力和审计入口同步更新 [AI_CONTROL_AUDIT_MATRIX.md](AI_CONTROL_AUDIT_MATRIX.md)。
+
+## 13. 后续 Codex 开发执行规则
+
+S70 后续开发应按“一个子步骤一个 coherent change”推进。每一步开始前继续读 `AGENTS.md`、`docs/SHARED_CONTEXT.md`、`docs/QIANQIU_DEVELOPMENT_BRIEF.md` 和 `docs/DEVELOPMENT_STEPS.md`，再检查 `git status --short`。S69 未完成时，不要穿插实现会改变运行时的 S70 功能；如果只补契约、测试 fixture 或调研资料，也要在共享上下文写明“不改变 S69 节奏”。
+
+开发节奏建议：
+
+1. S70.1-S70.3 先落 prompt/tool/actor 基础设施，不急着做复杂剧情。
+2. S70.4-S70.7 再把 NPC、制度场景、压力事件和领域工具接上。
+3. S70.8-S70.9 做多模型路由、AI 设置、可观测和成本边界。
+4. S70.10-S70.13 做玩家月报、跳时、记忆和地图接口这些 AI-first 体验。
+5. S70.14 做真实 MiMo 验收、回归、归档和交接。
+
+每个实现步骤必须同步：
+
+- `docs/DEVELOPMENT_STEPS.md`：开始可标 `IN_PROGRESS`，完成后标 `DONE` 并写验证命令和提交哈希。
+- `docs/SHARED_CONTEXT.md`：写当前状态、关键边界、验证结果、下一步建议。
+- `docs/QIANQIU_DEVELOPMENT_BRIEF.md`：若 API、状态字段、工具协议、provider、AI 设置、记忆、地图或验收标准变化，必须同步。
+- `docs/AI_CONTROL_AUDIT_MATRIX.md`：凡新增 AI 可读摘要、工具、proposal、resolver、审计或浏览器面板，都要检查并更新。
+- README：若新增环境变量、脚本、provider smoke、AI 设置或启动/测试方式，必须同步。
+
+代码改动提交前必须请只读子代理复审最终 diff 与验证证据。纯文档低风险改动可以跳过；但 S70 这类工具权限、AI-first、hidden 边界和 provider 验收规划属于核心路线图，建议即使纯文档也做只读复审。
+
+## 14. 依赖与资料准备
+
+### 14.1 运行依赖
+
+优先不新增 npm 依赖。S70 绝大部分功能应基于现有能力：
+
+- Node.js + Express plain JavaScript。
+- `ajv`：校验工具输入、proposal、request-adjudication、prompt 输出和 provider JSON。
+- `openai`：OpenAI-compatible adapter 基础，MiMo / DeepSeek 当前也走兼容路径或自有 adapter 归一化。
+- `@anthropic-ai/sdk`：Anthropic provider。
+- `dotenv` / `cors`：现有本地配置和 CORS 控制。
+- `playwright-core`：浏览器 smoke，不进入运行时。
+- `node:test`：S70 fixture、红队、provider smoke 和工具协议测试。
+
+默认不要引入：
+
+- 前端框架或构建工具。AI 设置、月报、审计面板继续用 plain HTML/CSS/JS。
+- 通用 SQL 执行器、外部数据库服务、远程存档 SDK。
+- 第三方 MCP server。S70 前中期只做内部 `game_ai_tools` registry；后期如果包装内部 MCP，也只连接自家工具层。
+- 搜索、向量库、队列、任务调度、可观测 SaaS。先用本地 JSON/SQLite、事件档案、审计表和 Node 脚本。
+
+可能需要评估但不得默认加入的依赖：
+
+- MCP SDK：只有当 `game_ai_tools` registry 稳定、工具数量膨胀且确实需要 `tools/list` / `tools/call` 统一发现时，才核验官方 SDK 包名、版本、许可证和安全边界，并按 [DEPENDENCY_PLUGIN_GOVERNANCE.md](DEPENDENCY_PLUGIN_GOVERNANCE.md) 走依赖治理。
+- 本地任务队列或限流库：只有当 provider 并发和批量 NPC mind 真正需要跨进程队列时再评估。单进程阶段优先用内存预算、Promise 并发 cap 和超时控制。
+- JSON schema 生成/类型库：plain JS + AJV 够用时不引入；若未来 schema 数量爆炸，再评估收益。
+
+新增依赖的硬门槛：
+
+- 明显降低复杂度或提高安全性，而不是只为了“看起来专业”。
+- 不破坏 `npm install && npm start`。
+- 不让真实 API key、远程服务或联网成为本地启动必要条件。
+- 写入依赖治理文档：用途、替代方案、许可证、维护状态、安全/隐私影响、Mock/no-key 影响、测试和回滚策略。
+
+### 14.2 技术资料
+
+S70.1 启动前，Codex 需要把这些资料整理成短契约或脚注，不要只留聊天里：
+
+- 本文第 1 节列出的 OpenAI Function Calling、Structured Outputs、MCP/Connectors、Anthropic Tools/MCP、DeepSeek Function Calling、MiMo-V2.5-Pro 官方资料。
+- 当前 provider adapter：`src/ai/providers/openai.js`、`mimo.js`、`deepseek.js`、`anthropic.js`、`mock.js`、`remoteHelpers.js`。
+- 当前 prompt 和 schema：`src/ai/promptPacks.js`、`src/ai/prompts.js`、`src/ai/schemas.js`、`src/ai/promptContextAssembler.js`。
+- 当前 provider smoke：`scripts/providerSmoke.js`、`scripts/providerRouteHealth.js`、`scripts/providerLongRun.js`、`test/providerSmokeScript.test.js`、`test/mimoProvider.test.js`。
+- 当前 AI 红队：`test/aiControlRedTeam.test.js`、`test/aiSchemas.test.js`、`test/aiEvalFixtures.test.js`。
+
+技术资料的使用原则：
+
+- 只把稳定结论写入契约，例如工具 schema、返回形状、失败模式、provider 差异。
+- 不把完整外部文档复制进仓库。
+- MiMo 的工具调用行为必须靠真实 smoke 固定，不能只根据 OpenAI-compatible 做推断。
+
+### 14.3 玩法资料
+
+S70 每个领域工具都需要一页以内的“玩法资料笔记”，优先写进对应契约或 config 注释，不直接塞进 prompt：
+
+- 官制与权力链：皇帝、内阁/中书、六部、都察院、地方督抚、州县、军镇、吏部铨选、考成、回避、奏折/题本/批红等。
+- 官场赏罚：升迁、加衔、记功、赏银、赐物、降调、革职、弹劾、下狱、赦免、诛罚及其合法性成本。
+- 财政与城市：钱粮、仓储、平粜、赈济、水利、清丈、盐漕、徭役、士绅阻力、民心。
+- 刑名与案件：受理、传唤、证据、口供、胥吏、士绅压力、调解、申详、移交、判决后果。
+- 军务与外交：兵粮、士气、地形、侦察、守御、练兵、会战、朝贡、互市、和议、宣战授权。
+- NPC 心智：恩怨、人情债、师门、同年、家族风险、派系、目标、恐惧、野心、记忆衰减。
+- 地图接口：国家、地区、城市、道路、河流、关隘、军镇、贡院、书院、任所、考场、商路、边境点。
+
+外部历史资料可以作为设计参考，但只写游戏化转译，不复制长篇版权文本。优先使用公版史料、博物馆/百科/学术可核验资料；S70 验收不依赖联网。
+
+### 14.4 测试资料
+
+S70 要准备这些 fixture：
+
+- `ai-tool-basic`：书生、县令、大臣、将领、皇帝各调用一个合法工具。
+- `ai-tool-authority-redteam`：书生宣战、县令调边军、商贾任免官员、皇帝无证杀臣、AI 夹带 SQL/raw state patch。
+- `prompt-injection`：玩家要求忽略系统、泄漏 prompt、读取 `.env`、把传闻当事实、伪造工具结果。
+- `provider-tool-shapes`：MiMo/OpenAI/DeepSeek/Anthropic/Mock 的无工具、单工具、强制工具、多工具、工具结果回填、streaming、schema 失败样例。
+- `npc-memory`：恩怨、人情债、同年、师门、赏罚、旧案回响。
+- `monthly-briefing`：书生/候缺、县令、部院官、将领、皇帝月报。
+- `time-skip`：学习一月、养病半月、照旧处理一月、中途被科考/灾情/上级召见打断。
+- `map-context`：赶考、赴任、巡查、行军、会盟、商路事件。
+- `large-concurrency`：多 actor 场景、多 NPC mind、长输出、高 token、高并发预算。
+- `hidden-canary`：raw table 名、raw prompt 形状、hidden notes、hidden intent、本地路径、key 形状、provider proposal 原文。
+
+## 15. S70 逐步开发任务书
+
+### S70.1：AI 提示词与工具协议契约
+
+前置依赖：S69.6 归档后正式启动；可提前只做文档调研。
+
+需要资料：本文第 1 节技术参考、现有 `src/ai/*`、provider smoke 脚本、AI 控制矩阵、S68-S69 科举工具边界、MiMo 官方接入说明。
+
+具体实现：
+
+- 新增 `docs/AI_PROMPT_ENGINEERING_CONTRACT.md`，定义 `systemContract`、`actorCard`、`sceneContract`、`visibleContextCapsule`、`toolPolicy`、`outputContract`、`selfCheck`。
+- 新增 `docs/AI_TOOL_PROTOCOL_CONTRACT.md`，定义 tool envelope、permission、resolver、audit、cooldown、mockFallback、proposal/result/request-adjudication schema。
+- 新增或扩展 `src/ai/toolSchemas.js`，集中导出工具 envelope schema、proposal schema、tool result schema、provider normalization schema。
+- 新增 `test/aiToolProtocolContract.test.js` 和 prompt contract fixture。
+- 扩展 provider smoke：增加 MiMo 工具调用兼容矩阵，覆盖 `tools`、`tool_calls`、`tool_choice`、多工具、工具结果回填、streaming、schema 失败。
+- 明确 `server.*` 只能是内部 resolver bridge / audit label，不能进入模型可见 tool list。
+
+验收：
+
+- `npm run check:docs-governance`
+- `node --test test/aiToolProtocolContract.test.js test/prompts.test.js test/aiSchemas.test.js`
+- 有 key 时可运行 MiMo tool smoke；缺 key 时明确 skip，不伪装通过。
+- 契约明确 AI 不执行 SQL、不直写 canonical 状态、不读取 hidden/raw。
+
+### S70.2：AI Actor 与权限模型
+
+前置依赖：S70.1。
+
+需要资料：当前角色系统、`worldPeopleView`、`officialPostingsView`、`relationshipView`、S68-S69 老师/考官/同年关系、官制资料笔记。
+
+具体实现：
+
+- 新增 `src/game/aiActorProfileConfig.js`：authority tier、role templates、tool groups、visibility presets、budget presets。
+- 新增 `src/game/aiActorProfiles.js`：
+  - `buildPlayerAiActorProfile(worldState)`
+  - `buildNpcAiActorProfile(worldState, npcRef, options)`
+  - `buildOfficeAiActorProfile(worldState, officeRef, options)`
+  - `buildSystemEngineActorProfile(worldState, engineType)`
+  - `filterActorTools(actorProfile, toolRegistry)`
+- 在 route view 或 prompt context 中只暴露 actor 可见摘要，不暴露完整 profile hidden 字段。
+- 建立 actor types：`scholar`、`teacher`、`examiner`、`gentry`、`clerk`、`magistrate`、`minister`、`censor`、`general`、`emperor`、`foreign_ruler`、`system_engine`。
+- 补 `AI_CONTROL_AUDIT_MATRIX.md`：每个 actor tier 的 read scope、tool scope、proposal scope、禁止项。
+
+测试：
+
+- `test/aiActorProfiles.test.js`
+- `test/aiActorToolPermissions.test.js`
+- 书生不能拿皇帝/军事/刑名高权工具，县令不能跨辖区，皇帝能请求强工具但仍需 resolver。
+
+验收：
+
+- actor profile 可从玩家、NPC、官署和系统引擎稳定生成。
+- hidden/private 字段不进入普通 route、prompt 或浏览器。
+
+### S70.3：内部工具运行时
+
+前置依赖：S70.1-S70.2。
+
+需要资料：工具协议契约、AI 权限矩阵、当前 audit、stateRules、sessionStore、Mock provider。
+
+具体实现：
+
+- 新增 `src/ai/gameAiTools.js`：
+  - `createGameAiToolRegistry()`
+  - `registerGameAiTool(toolDefinition)`
+  - `listToolsForActor(actorProfile, options)`
+  - `validateToolDefinition(toolDefinition)`
+- 新增 `src/ai/gameAiToolRunner.js`：
+  - `runReadTool(toolCall, context)`
+  - `runProposalTool(toolCall, context)`
+  - `runRequestAdjudicationTool(toolCall, context)`
+  - `normalizeProviderToolCall(providerPayload)`
+  - `buildToolResultForModel(result)`
+- 新增 `src/game/aiToolResolvers.js` 或按领域拆分 resolver bridge。
+- 工具类型分三类：read、proposal、request-adjudication。所有写入只能进入服务器 resolver。
+- 接入审计：记录 actor、tool、参数摘要、权限检查、接受/拒绝原因、applied event ids、成本摘要，不记录 raw prompt/key/path。
+- Mock runner 必须能 deterministic 返回合法 tool result。
+
+测试：
+
+- `test/gameAiTools.test.js`
+- `test/gameAiToolRunner.test.js`
+- `test/gameAiToolAudit.test.js`
+- `test/aiControlRedTeam.test.js` 扩展工具越权。
+
+验收：
+
+- 模型可请求工具，但不能绕过 permission、cooldown、schema 和 resolver。
+- JSON/SQLite 下 player-facing result 一致。
+
+### S70.4：NPC Mind 与记忆基础
+
+前置依赖：S70.3。
+
+需要资料：`worldPeopleView`、relationship ledger、eventArchive、examNetwork、actor profile、NPC 记忆玩法资料。
+
+具体实现：
+
+- 新增 `src/game/npcMindConfig.js`：显著度规则、每旬最大 LLM NPC 数、背景 NPC heuristic、token budget、cooldown。
+- 新增 `src/game/npcMind.js`：
+  - `rankNpcSalience(worldState, options)`
+  - `buildNpcMindPromptContext(worldState, actorProfile, options)`
+  - `generateNpcMindProposal(worldState, actorProfile, aiClient, options)`
+  - `applyNpcMindProposal(worldState, proposal, auditContext)`
+- 背景 NPC 只走 heuristic：关系微调、传闻候选、低影响事件材料。
+- 高显著 NPC 才走 LLM：玩家近关系、权力核心、当前场景参与者、事件相关者。
+- 记忆先做安全摘要，不保存深 hidden 私档；真正 private memory 等 redacted API / S70.12。
+
+测试：
+
+- `test/npcMind.test.js`
+- `test/npcMindSalience.test.js`
+- `test/npcMindHiddenRedaction.test.js`
+- Mock provider deterministic。
+
+验收：
+
+- NPC 会主动提出请求、援助、阻挠、告发或记忆更新。
+- 大量背景 NPC 不造成无限调用或成本失控。
+
+### S70.5：制度 AI 与朝议/科场场景
+
+前置依赖：S70.3-S70.4；S68-S69 科举深化完成。
+
+需要资料：科举制度契约、examProcedure/examReview/examHonors/examNetwork、官制资料、朝议资料。
+
+具体实现：
+
+- 新增 `src/game/institutionSceneConfig.js`：场景类型、参与 actor、最大轮次、工具预算、结束条件。
+- 新增 `src/game/institutionScenes.js`：
+  - `createCourtDebateScene(worldState, topic, options)`
+  - `createExamReviewScene(worldState, examContext, options)`
+  - `runInstitutionSceneRound(scene, aiRuntime, options)`
+  - `collectInstitutionProposals(sceneRound)`
+  - `resolveInstitutionSceneOutcome(worldState, scene, proposals)`
+- 朝议场景：皇帝、内阁/大臣、御史、相关官署围绕奏折/弹章/财政/边事提出 proposal。
+- 科场场景：房官、同考官、主考、磨勘 critic 进一步接入 S68-S69 的 proposal-only 机制。
+- 场景使用 scene-local time，不乱推进全局旬。
+
+测试：
+
+- `test/institutionScenes.test.js`
+- `test/institutionSceneVisibility.test.js`
+- `test/examInstitutionScene.test.js`
+
+验收：
+
+- 多 actor 发言和 proposal 能被服务器收束。
+- 皇帝强工具有执行链和反噬，不是按钮。
+
+### S70.6：压力事件工具协议与 Actor Proposal
+
+前置依赖：S70.3-S70.5。
+
+需要资料：S60-S67 内容归档、eventArchive、intelligenceRumors、localAffairsDockets、militaryDiplomacy、economicFiscal、S71 压力事件规划。
+
+具体实现：
+
+- 明确职责：S70.6 做事件 proposal 工具和 actor 参与方式；S71.8 再把数据库 projection 压力采集、冷却、概率和成案 resolver 做厚。
+- 新增 `event.propose_incident`、`event.request_incident_adjudication` 工具定义。
+- 新增 `src/game/aiEventProposal.js`：
+  - `normalizeEventProposal(proposal)`
+  - `validateEventProposalAuthority(actorProfile, proposal, context)`
+  - `resolveEventProposal(worldState, proposal, options)`
+  - `buildEventProposalAudit(proposal, result)`
+- 事件 proposal 必须带 `sourcePressureRefs`、`visibility`、`confidence`、`cooldownKey`、`publicSummary`、`privateResultRefs`。
+- Mock 事件 proposal 覆盖城市、边防、书院、官场、NPC 怨怼。
+
+测试：
+
+- `test/aiEventProposal.test.js`
+- `test/aiEventProposalRedTeam.test.js`
+
+验收：
+
+- 事件可以由 AI actor 提出，但服务器决定是否成案。
+- proposal 夹带 hidden/raw/SQL 被拒绝。
+
+### S70.7：刑名、财政、军事、外交与科举工具
+
+前置依赖：S70.3、S70.6；领域玩法 resolver 可先用轻量 stub，S71 再做数据库驱动深裁决。
+
+需要资料：财政、刑名、军务外交、科举授官、官制赏罚资料笔记。
+
+具体实现：
+
+- 工具定义：
+  - `judicial.propose_case_resolution`
+  - `city.propose_policy`
+  - `military.propose_order`
+  - `diplomacy.propose_move`
+  - `exam.request_ranking_adjudication`
+  - `office.request_appointment_adjudication`
+  - `career.propose_reward_or_promotion`
+  - `career.request_discipline_adjudication`
+- 新增 `src/ai/domainToolDefinitions.js`，集中导出领域工具。
+- 新增 `src/game/domainToolResolvers.js` 或按领域拆分 thin resolver bridge。
+- 对没有完整 resolver 的领域，先返回 `pending` 或有限 `rejected/accepted` 样例，不伪装已经完整实现。
+- 所有工具的 `inputSchema` 默认 `additionalProperties: false`，并有 authority/cooldown/riskTags。
+
+测试：
+
+- `test/domainToolDefinitions.test.js`
+- `test/domainToolPermissions.test.js`
+- `test/careerToolRedTeam.test.js`
+
+验收：
+
+- 上级或皇帝可以提出赏赐/升迁 proposal，服务器按官制裁决或 pending。
+- 领域工具不暴露 raw SQL、raw table、raw state patch。
+
+### S70.8：多模型路由、提示词评测与仲裁
+
+前置依赖：S70.1-S70.7。
+
+需要资料：现有 provider adapters、provider smoke scripts、AI eval fixtures、MiMo/DeepSeek/OpenAI/Anthropic 能力差异。
+
+具体实现：
+
+- 新增 `src/ai/modelRoutePolicy.js`：
+  - `buildDefaultModelRoutePolicy(env, options)`
+  - `resolveModelForTask(taskType, routePolicy)`
+  - `validateModelRoutePolicy(policy)`
+- 新增 task types：`narrator`、`actor_mind`、`planner`、`domain_specialist`、`critic`、`safety_gate`、`memory_summarizer`、`monthly_briefing`、`time_skip_planner`。
+- 扩展 `src/ai/index.js` 或 provider facade，让调用方按 taskType 请求模型。
+- 新增 `src/ai/aiEvaluationRunner.js` 或脚本，跑 prompt fixtures，比较 schema 合规、越权拒绝、历史语气、工具选择、成本摘要。
+- critic/safety 只输出风险和建议，不能直接写状态或替 resolver 裁决。
+
+测试：
+
+- `test/modelRoutePolicy.test.js`
+- `test/aiEvaluationRunner.test.js`
+- `npm run eval:ai`
+- provider smoke 有 key 时覆盖真实 MiMo；缺 key skip。
+
+验收：
+
+- 不同任务能路由不同模型。
+- 多模型共识不能绕过服务器裁决。
+
+### S70.9：AI 设置与可观测性
+
+前置依赖：S70.8。
+
+需要资料：model route policy、provider env、现有 browser app、AI diagnostics。
+
+具体实现：
+
+- 新增 `src/game/aiSettingsConfig.js`：预设 `balanced`、`quality_first`、`fast`、`long_context`、`mimo_full`。
+- 新增 `src/game/aiSettings.js`：
+  - `buildDefaultAiSettings()`
+  - `validateAiSettingsPatch(patch)`
+  - `resolveAiSettingsForSession(worldState, env)`
+  - `redactAiSettingsForClient(settings)`
+- 新增 route 或扩展 game state：返回玩家可见 AI 设置，不返回 key/base URL。
+- 浏览器新增 AI 设置面板：模型路由、输出长度、并发、工具预算、安全严格度、critic/safety 开关。
+- 新增 AI 调动摘要 view：tool call 数、拒绝原因、任务类型、公开成本摘要。hidden-safe，不能显示 raw prompt/proposal。
+
+测试：
+
+- `test/aiSettings.test.js`
+- `test/aiSettingsRoute.test.js`
+- `test/publicAppSource.test.js`
+- 设置越权红队：尝试开启 hidden/raw/直写库必须拒绝。
+
+验收：
+
+- 玩家能配置不同任务的 AI 策略。
+- 设置只影响质量/预算/路由，不改变权限。
+
+### S70.10：玩家官职月报与 AI 推动世界
+
+前置依赖：S70.8-S70.9；最好 S69.3 授官路径完成。
+
+需要资料：time/month tick、officialCareer、officialPostings、localAffairsDockets、militaryDiplomacy、economicFiscal、relationshipView、eventArchive。
+
+具体实现：
+
+- 新增 `src/game/playerMonthlyBriefingConfig.js`：职位模板、月报 sections、最大条数、触发时机、AI/Mock 策略。
+- 新增 `src/game/playerMonthlyBriefing.js`：
+  - `shouldGeneratePlayerMonthlyBriefing(previousState, nextState)`
+  - `buildMonthlyBriefingContext(worldState, options)`
+  - `generateMonthlyBriefingProposal(context, aiRuntime, options)`
+  - `resolveMonthlyBriefing(worldState, proposal, options)`
+  - `buildPlayerMonthlyBriefingView(worldState, options)`
+- 月报触发：下旬进入下月上旬时，且只针对玩家。
+- 月报内容：政务/财政/案牍/军务/上级态度/同僚风向/NPC 来信/下月风险/可行动事项。
+- AI 可提出主动事件线索，服务器决定是否写入事件档案或 pending request。
+- 浏览器新增月报展示。
+
+测试：
+
+- `test/playerMonthlyBriefing.test.js`
+- `test/playerMonthlyBriefingRoute.test.js`
+- `test/gameTurnTick.test.js` 扩展月末触发。
+
+验收：
+
+- 三旬一月触发一次，不给所有 NPC 全量生成月报。
+- 月报不会泄漏 hidden/private，也不会直接改官职/财政。
+
+### S70.11：自然语言跳时
+
+前置依赖：S70.8-S70.10。
+
+需要资料：`src/game/time.js`、worldTick、exam calendar、active requests、studyProfile、monthly briefing。
+
+具体实现：
+
+- 新增 `src/game/timeSkipConfig.js`：最大跳时长度、可中断事件类型、每步预算、默认策略。
+- 新增 `src/game/timeSkip.js`：
+  - `detectTimeSkipIntent(playerInput, context)`
+  - `buildTimeSkipPlan(playerInput, aiRuntime, options)`
+  - `validateTimeSkipPlan(plan, worldState)`
+  - `runTimeSkipTicks(worldState, plan, options)`
+  - `buildTimeSkipSummary(results, aiRuntime, options)`
+- `POST /api/game/turn` 检测“学习一月/养病半月/照旧处理一月”等意图，进入 time skip flow。
+- 服务器把一月拆为三旬，逐旬运行读书、政务、NPC、事件压力、长期事件、月报触发。
+- 高优先级事件中断：科考、灾害、弹劾、上级召见、亲友急信、战事、死亡/重病。
+
+测试：
+
+- `test/timeSkip.test.js`
+- `test/gameTurnTimeSkip.test.js`
+- `test/timeSkipInterruptions.test.js`
+
+验收：
+
+- “学习 1 个月”确实推进三旬，不是一回合叙事糊过去。
+- 中断时状态停在中断旬，并有清楚叙事和待办。
+
+### S70.12：大模型记忆系统
+
+前置依赖：S70.4、S70.8、S70.11；private memory 深化依赖 redacted API。
+
+需要资料：eventArchive、relationshipLedger、examNetwork、monthlyBriefing、promptContextAssembler、NPC 记忆玩法资料。
+
+具体实现：
+
+- 新增 `src/game/actorMemoryConfig.js`：记忆类型、显著度、衰减、最大条数、可见性、prompt cap。
+- 新增 `src/game/actorMemoryLedger.js`：
+  - `buildActorMemoryView(worldState, actorId, options)`
+  - `proposeActorMemoryUpdate(actorId, proposal, options)`
+  - `applyActorMemoryUpdate(worldState, memoryUpdate, auditContext)`
+  - `decayActorMemoryLedger(worldState, options)`
+  - `summarizeActorMemoryForPrompt(worldState, actorId, options)`
+- 新增 `src/game/sessionSummary.js`：
+  - `updateMonthlySessionSummary(worldState, monthResult, aiRuntime, options)`
+  - `summarizeRecentPlayerHistory(worldState, options)`
+- 记忆分层：hot context、session summary、fact memory、impression memory、actor memory ledger、safe retrieval index。
+- AI 只能提交 memory proposal；服务器去重、标来源、置信度、可见性和衰减。
+
+测试：
+
+- `test/actorMemoryLedger.test.js`
+- `test/actorMemoryVisibility.test.js`
+- `test/sessionSummary.test.js`
+- `test/promptContextAssembler.test.js` 扩展 memory cap。
+
+验收：
+
+- 重要 NPC 能长期记住恩怨、人情债、师门同年、赏罚。
+- private/impression memory 不进入普通玩家 view 或 prompt，除非 actor 视野允许。
+
+### S70.13：地图系统 AI 接口预留
+
+前置依赖：S70.1-S70.3；可在地图 UI 前完成。
+
+需要资料：worldGeography、officialPostings、militaryDiplomacy、examTravel、local affairs、地图玩法资料。
+
+具体实现：
+
+- 新增 `src/game/mapContextConfig.js`：实体类型、可见性、距离/辖区预算、移动类型。
+- 新增 `src/game/mapContext.js`：
+  - `buildMapContextView(worldState, actorProfile, options)`
+  - `buildMapEntityRef(entity, domain)`
+  - `filterMapContextByVisibility(mapContext, actorProfile)`
+  - `summarizeMapContextForPrompt(mapContext, options)`
+- 新增 movement proposal schema：
+  - `map.propose_route_or_geopolitical_move`
+  - types：赶考、赴任、巡查、行军、押解、使节出行、商路活动。
+- 地图事件 hook：事件、案牍、灾害、边患、市场、官职任所能关联 `mapEntityRef`。
+- 不做完整地图 UI，只保证后续 UI 可接。
+
+测试：
+
+- `test/mapContext.test.js`
+- `test/mapVisibility.test.js`
+- `test/mapMovementProposal.test.js`
+
+验收：
+
+- AI 只读 `mapContextView` 和 capped 摘要，不读 raw coordinate table 或 hidden enemy truth。
+- 地点引用稳定，后续 UI 能跳转/高亮。
+
+### S70.14：真实 MiMo 验收与 S70 归档
+
+前置依赖：S70.1-S70.13。
+
+需要资料：所有 S70 测试结果、真实 provider key 配置、browser smoke、dual-mode smoke、AI 控制红队、子代理复审报告。
+
+具体实现：
+
+- 新增或扩展 provider smoke：
+  - `scripts/providerToolSmoke.js`
+  - `scripts/providerAiFirstSmoke.js`
+  - npm scripts：`smoke:provider:tools`、`smoke:provider:ai-first`
+- `MIMO_REQUIRED=1` 或等价开关：用于明确要求真实 MiMo 的验收，不允许缺 key 时假通过。
+- 覆盖场景：普通回合、长叙事、NPC mind、工具调用、月报、跳时、记忆提炼、地图 context、critic/safety、多工具回填、schema 失败。
+- 新增 `docs/AI_ORCHESTRATION_ARCHIVE.md`，归档 S70 完成范围、接口、工具、设置、验收、风险和 S71 交接。
+- 压缩 `docs/DEVELOPMENT_STEPS.md` 中 S70 长记录，保留归档入口。
+
+验收命令建议：
+
+- `npm run check:docs-governance`
+- `node --test test/aiToolProtocolContract.test.js test/aiActorProfiles.test.js test/gameAiTools.test.js`
+- `node --test test/npcMind.test.js test/institutionScenes.test.js test/aiEventProposal.test.js`
+- `node --test test/domainToolDefinitions.test.js test/modelRoutePolicy.test.js test/aiSettings.test.js`
+- `node --test test/playerMonthlyBriefing.test.js test/timeSkip.test.js test/actorMemoryLedger.test.js test/mapContext.test.js`
+- `npm run smoke:dual-mode`
+- `npm run smoke:browser`
+- 有 key 时：`MIMO_REQUIRED=1 npm run smoke:provider:tools` 与 `MIMO_REQUIRED=1 npm run smoke:provider:ai-first`
+
+最终验收：
+
+- 真实 MiMo 覆盖主要 AI-first 玩法。
+- Mock 仍能作为开发安全网跑通 deterministic 路径。
+- JSON/SQLite player-facing parity 不回退。
+- hidden-token、越权工具、prompt injection、raw SQL/raw table/raw state patch 全部被拒绝。
+- 完整书生路径不破坏。
+
+## 16. S70 验收清单
+
+- 契约：`AI_PROMPT_ENGINEERING_CONTRACT`、`AI_TOOL_PROTOCOL_CONTRACT`、AI 控制矩阵、brief、shared context 同步。
+- 工具：所有模型可见工具都有 `name`、`description`、`inputSchema`、`permission`、`resolver`、`audit`、`cooldown`、`mockFallback`。
+- 权限：书生/县令/大臣/将领/皇帝/系统引擎工具隔离，越权有拒绝原因和审计。
+- Provider：MiMo 工具调用形状、streaming、多工具、工具回填、schema 失败均有 smoke。
+- AI 设置：玩家可配质量、长度、并发、模型路由和安全严格度，但不能开启 hidden/raw/直写库。
+- 月报：三旬一月，只针对玩家，按职位裁剪，能带出 NPC 主动请求和下月风险。
+- 跳时：自然语言跳时逐旬结算，可中断，有合并总结。
+- 记忆：fact/impression/private/public 分层，有来源、置信度、可见性和衰减。
+- 地图接口：`mapContextView`、`mapEntityRef`、visibility、movement proposal 可供后续 UI 使用。
+- 安全：raw prompt、raw provider proposal、key、本地路径、hidden notes、hidden intent、raw table、SQL 不进 UI/prompt/search/export。
+- 回归：`scholar -> child_exam -> provincial_exam -> metropolitan_exam -> palace_exam -> official` 不破坏。

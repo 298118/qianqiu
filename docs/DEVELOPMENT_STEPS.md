@@ -172,7 +172,7 @@ S68-S69 是书生主线的深度专项，详细提前规划见 [IMPERIAL_EXAM_DE
 
 S70 是 MiMo + DeepSeek 之后的 AI 编排专项。当前 `mimo-deepseek` 仍只是 provider 方法级路由：普通叙事、开局、流式回合和科举出题走 MiMo，科举评卷走 DeepSeek V4 Pro。完整 AI actor、工具调用、NPC 智力、事件生成、制度推演、narrator/planner/critic/safety 仲裁、成本边界、失败降级和可观测性排在 S68-S69 之后启动。
 
-详细提前规划见 [AI_ORCHESTRATION_ROADMAP.md](AI_ORCHESTRATION_ROADMAP.md)。S70 的核心目标不是让模型直接改库，而是让 AI 在服务器法度内变成“有身份、有记忆、有权限、有后果”的世界行动者网络；S68-S69 提供科场、老师、考官和授官 resolver 的先行用例。
+详细提前规划见 [AI_ORCHESTRATION_ROADMAP.md](AI_ORCHESTRATION_ROADMAP.md)。S70 的核心目标不是让模型直接改库，而是让 AI 在服务器法度内变成“有身份、有记忆、有权限、有后果”的世界行动者网络；S68-S69 提供科场、老师、考官和授官 resolver 的先行用例。该文档第 13-16 节已扩展为后续 Codex 开发任务书，逐项写明执行规则、运行依赖、项目资料、玩法资料、测试资料、建议模块/函数、工具/route 接口、测试文件和验收重点。
 
 ### S70 设计基线
 
@@ -220,6 +220,38 @@ S71 详细规划见 [DATABASE_GAMEPLAY_RESOLVER_ROADMAP.md](DATABASE_GAMEPLAY_RE
 4. S71.9-S71.12：接入多 actor 场景、NPC 记忆和 AI 调动审计面板，最后做 dual-mode、Mock/no-key、browser 和 provider smoke 归档。
 
 ## 8. 进度记录
+
+### 2026-05-12
+
+工具：Codex、子代理只读复审。
+
+步骤：S70.0 补充：AI 编排后续 Codex 开发任务书。
+
+提交：本次提交。
+
+完成：
+
+- 扩展 [AI_ORCHESTRATION_ROADMAP.md](AI_ORCHESTRATION_ROADMAP.md) 第 13-16 节，把 S70 从方向性规划补成后续 Codex 可执行任务书。
+- 明确 S70 优先不新增 npm 依赖，先使用现有 Node/Express/AJV/provider adapters/node:test/Playwright smoke；内部 MCP SDK、队列、schema 类型库等只有在确需时才走依赖治理。
+- 按 S70.1-S70.14 逐步写清前置依赖、需要资料、具体模块/函数、工具/route 接口、测试文件和验收功能，覆盖 prompt/tool 契约、actor 权限、工具运行时、NPC mind、制度场景、事件 proposal、领域工具、多模型路由、AI 设置、月报、跳时、记忆、地图接口和真实 MiMo 验收。
+- 同步 brief 与共享上下文，固定“详细任务书是开发入口，不改变 S69 当前实现节奏”的交接口径。
+
+验证：
+
+- 已通过：`npm run check:docs-governance`
+- 已通过：`node --test test/documentationGovernance.test.js`
+- 已通过：`git diff --check -- docs/AI_ORCHESTRATION_ROADMAP.md docs/DEVELOPMENT_STEPS.md docs/QIANQIU_DEVELOPMENT_BRIEF.md docs/SHARED_CONTEXT.md`
+- 已完成只读子代理复审；复审未发现 P0/P1/P2 阻断问题。
+
+风险/遗留：
+
+- 本轮是规划与任务书补充，不改运行时代码、API、provider schema、存档格式或 SQLite 表结构。
+- S70 任务书列出的模块、脚本和测试是后续实施目标，不代表当前已存在。
+- 真正执行 S70 仍应等 S69.3-S69.6 完成后启动；若提前做，只限契约或 fixture，不改运行时节奏。
+
+下一步：
+
+- 继续当前路线图的 S69.3 授官路径深化。进入 S70 后先做 S70.1 prompt/tool 契约和 MiMo 工具 smoke。
 
 ### 2026-05-12
 
