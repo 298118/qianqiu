@@ -16,6 +16,7 @@ const {
   buildEconomicFiscalRetrievalRows,
   summarizeEconomicFiscalForPrompt
 } = require("../game/economicFiscal");
+const { summarizeExamProcedureForPrompt } = require("../game/examProcedure");
 const { buildHistoricalEventRetrievalRows } = require("../game/historicalEventArchive");
 const {
   buildIntelligenceRumorRetrievalRows,
@@ -1390,6 +1391,7 @@ function assemblePromptContext(worldState = {}, options = {}) {
   return {
     relationshipLedger: summarizeRelationshipLedger(worldState.relationshipLedger, worldState, { visibleOnly: true }),
     studyProfile: summarizeStudyProfileForPrompt(worldState),
+    examProcedure: summarizeExamProcedureForPrompt(worldState),
     examCalendar: summarizeExamCalendarForPrompt(worldState),
     longTermEvents: summarizeLongTermEventsForPrompt(worldState),
     worldGeography: summarizeWorldGeographyForPrompt(worldState),

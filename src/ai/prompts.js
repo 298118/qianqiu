@@ -4,6 +4,7 @@ const {
   getTurnPromptPackName
 } = require("./promptPacks");
 const { buildEventArchiveIndexItems } = require("../game/eventArchive");
+const { summarizeExamProcedureForPrompt } = require("../game/examProcedure");
 const { formatYearMonthPeriod } = require("../game/time");
 
 const MAX_PROMPT_RECENT_EVENTS = 6;
@@ -63,6 +64,7 @@ function compactExam(activeExam) {
     questionType: activeExam.questionType,
     status: activeExam.status,
     reason: activeExam.reason,
+    procedure: summarizeExamProcedureForPrompt({ activeExam }),
     readiness: activeExam.readiness || null
   };
 }

@@ -57,6 +57,12 @@ const {
   buildExamSceneFeedback,
   markExamSceneSubmitted
 } = require("../game/examSceneTime");
+const {
+  advanceExamProcedurePhase,
+  buildExamProcedureView,
+  completeExamProcedure,
+  initializeExamProcedure
+} = require("../game/examProcedure");
 const { mutateSession } = require("../storage/sessionStore");
 
 const router = express.Router();
@@ -84,6 +90,7 @@ function toExamPayload(worldState) {
     sceneTime: activeExam.sceneTime || null,
     examCalendarView: buildExamCalendarView(worldState),
     examRivalView: buildExamRivalView(worldState),
+    examProcedureView: buildExamProcedureView(worldState),
     studyProfileView: buildStudyProfileView(worldState),
     relationshipView: buildRelationshipInspectionView(worldState),
     activeNpcRequestView: buildActiveNpcRequestView(worldState),
@@ -171,6 +178,9 @@ router.post("/question", async (req, res, next) => {
       ) {
         if (!worldState.activeExam.sceneTime) {
           attachExamSceneTime(worldState.activeExam, worldState, "question_review");
+          initializeExamProcedure(worldState.activeExam);
+        } else if (!worldState.activeExam.procedure) {
+          initializeExamProcedure(worldState.activeExam);
         } else {
           context.skipWrite = true;
         }
@@ -241,6 +251,7 @@ router.post("/question", async (req, res, next) => {
         generatedAt: new Date().toISOString()
       };
       attachExamSceneTime(worldState.activeExam, worldState, "question_review");
+      initializeExamProcedure(worldState.activeExam);
 
       appendEvents(worldState, [
         ...(preparationResult?.events || []),
@@ -288,6 +299,7 @@ router.post("/progress", async (req, res, next) => {
       }
 
       const scene = advanceExamScenePhase(activeExam, worldState, action);
+      advanceExamProcedurePhase(activeExam);
       ensureCommonState(worldState);
       enqueueAuditRecords(context, createExamProgressAuditRecords(worldState, scene));
 
@@ -369,6 +381,12 @@ router.post("/submit", async (req, res, next) => {
       const promotionResult = applyExamPromotion(worldState, exam, score, authenticityCheck);
       const cohortResult = recordExamCohortResult(worldState, exam, virtualCandidates, ranking);
       const sceneTime = markExamSceneSubmitted(activeExam, worldState);
+      const examProcedure = completeExamProcedure(activeExam, {
+        score,
+        authenticityCheck,
+        promotionResult,
+        ranking
+      });
       const submittedAt = new Date().toISOString();
       const historyEntry = {
         examId,
@@ -378,6 +396,7 @@ router.post("/submit", async (req, res, next) => {
         entryPreparation: activeExam.entryPreparation || null,
         examCalendar: activeExam.examCalendar || activeExam.entryPreparation?.examCalendar || null,
         sceneTime,
+        examProcedure: buildExamProcedureView(worldState, { procedure: examProcedure }),
         examStartedAt: sceneTime.startedAt,
         examSubmittedAt: sceneTime.updatedAt,
         essay: trimmedEssay,
@@ -439,6 +458,7 @@ router.post("/submit", async (req, res, next) => {
         ranking,
         promotionResult,
         cohortResult,
+        examProcedureView: buildExamProcedureView(worldState, { procedure: examProcedure }),
         studyProfileView: buildStudyProfileView(worldState),
         examCalendarView: buildExamCalendarView(worldState),
         examRivalView: buildExamRivalView(worldState),

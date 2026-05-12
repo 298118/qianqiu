@@ -103,6 +103,9 @@ test("exam question entry applies funded travel cost without advancing time", as
   assert.equal(payload.worldState.year, 1644);
   assert.equal(payload.worldState.month, 7);
   assert.equal(payload.sceneTime.phase, "question_review");
+  assert.equal(payload.examProcedureView.phase, "question_release");
+  assert.equal(payload.examProcedureView.rollLifecycle.sealed, false);
+  assert.equal(payload.examProcedureView.sponsorship.status, "not_ready");
   assert.equal(payload.sceneTime.startedAt.year, 1644);
   assert.equal(payload.sceneTime.startedAt.month, 7);
   assert.equal(payload.sceneTime.startedAt.tenDayPeriod, 1);
@@ -267,6 +270,8 @@ test("exam progress advances only the local exam scene phase", async (t) => {
   assert.equal(progress.response.status, 200);
   assert.equal(progress.payload.sceneTime.phase, "outline");
   assert.equal(progress.payload.examScene.phase, "outline");
+  assert.equal(progress.payload.examProcedureView.phase, "drafting");
+  assert.equal(progress.payload.examProcedureView.rollLifecycle.draftRoll, true);
   assert.equal(progress.payload.worldTick.cadence, "scene");
   assert.equal(progress.payload.worldTick.completedMonth, false);
   assert.equal(progress.payload.worldState.year, 1644);
@@ -307,6 +312,9 @@ test("exam submit preserves entry preparation in exam history", async (t) => {
   assert.equal(submit.payload.examQuestion, question.payload.examQuestion);
   assert.equal(submit.payload.essay, PASSING_ESSAY.trim());
   assert.equal(submit.payload.sceneTime.phase, "submitted");
+  assert.equal(submit.payload.examProcedureView.phase, "closed");
+  assert.equal(submit.payload.examProcedureView.rollLifecycle.sealed, true);
+  assert.equal(submit.payload.worldState.player.examHistory.at(-1).examProcedure.phase, "closed");
   assert.equal(submit.payload.worldGeographyView.schemaVersion, 1);
   assert.equal(JSON.stringify(submit.payload.worldGeographyView).includes("SEALED_ROUTE_NOTE"), false);
   assert.equal(submit.payload.examStartedAt.month, 1);
@@ -343,5 +351,6 @@ test("complete scholar to official path still works with entry preparation costs
   assert.equal(latest.year, 1644);
   assert.equal(latest.month, OPEN_MONTH_BY_LEVEL.palace_exam);
   assert.ok(latest.player.examHistory.every((entry) => entry.entryPreparation));
+  assert.ok(latest.player.examHistory.every((entry) => entry.examProcedure?.rollLifecycle?.sealed));
   assert.ok(latest.player.examHistory.every((entry) => entry.sceneTime?.phase === "submitted"));
 });

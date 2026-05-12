@@ -32,3 +32,16 @@ test("scholar study profile panel reads route studyProfileView", () => {
   assert.doesNotMatch(source, /worldState\.studyProfile\.teacherFeedback/);
   assert.doesNotMatch(source, /createPanelValue\("师承", player\.teacher/);
 });
+
+test("exam procedure panel reads route examProcedureView", () => {
+  const source = publicAppSource();
+
+  assert.match(source, /let currentExamProcedureView = null;/);
+  assert.match(source, /function renderExamProcedurePanel\(examProcedureView = currentExamProcedureView\)/);
+  assert.match(source, /payload\.examProcedureView/);
+  assert.match(source, /examProcedureView\.rollLifecycle/);
+  assert.match(source, /createExamProcedureBlock\(payload\.examProcedureView \|\| payload\.examProcedure\)/);
+  assert.match(source, /appendOptionalPanel\(renderExamProcedurePanel\(\)\);/);
+  assert.doesNotMatch(source, /worldState\?\.examProcedure/);
+  assert.doesNotMatch(source, /worldState\.activeExam\.procedure\./);
+});

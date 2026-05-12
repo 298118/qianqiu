@@ -32,6 +32,7 @@
 - 完成 S68.1 科举制度契约：新增 [docs/IMPERIAL_EXAM_SYSTEM_CONTRACT.md](docs/IMPERIAL_EXAM_SYSTEM_CONTRACT.md)，固定明清原型与游戏压缩边界，要求外层四级科举 API 保持兼容，内部再扩县试/府试/院试、乡试/会试三场、多卷流转、保结/搜检/号舍/弥封/誊录/对读/磨勘/复核、多考官 proposal 和服务器定榜/授官裁决。
 - 完成 S68.2 读书账本与学业计划基础：新增 server-owned `studyProfile` 与 route `studyProfileView`，把经义根柢、制艺章法、策论时务、史事典故、律例判断、誊写卷面和科场耐力整理成可见学业画像；普通读书行动会记入日课，交卷后按评分/复核刷新文卷弱点、老师建议、书目和下旬计划，浏览器书生面板与 prompt 只读该 view，provider 不能直接 patch 账本、名位或官职。
 - 完成 S68.3 老师点评与书院/同窗互动：`studyProfileView` 新增老师点评、书院师友、小题训练、荐书和保结前置摘要；普通拜师、讲会、同窗互评和求保结会由服务器写入可见师友关系与保结稳度。真实 provider 可返回 `teacherFeedbackProposal`，但只作为文本点评 proposal，服务器清洗后才进入读书簿，不能 patch `player.teacher` / `player.position`、创造真实关系、准考资格、名位、榜单或官职。
+- 完成 S68.4 科场制度流程：新增 server-owned `activeExam.procedure` 与 route `examProcedureView`，在不改变外层四级考试 API 的前提下展示童试县试/府试/院试摘要、乡试/会试三场多卷、保结、搜检、号舍、发题、草稿、誊清、交卷、弥封、誊录、对读、磨勘、放榜和归档流程；交卷后把安全流程快照写入 `player.examHistory[].examProcedure`。浏览器和 prompt 只读脱敏 view，不暴露弥封身份映射、保结密注、考官私意、模型原始建议或内部审计。
 - 新增 Xiaomi MiMo provider：支持 `mimo` 与 `mimo-deepseek`，后者让 MiMo 负责开局、普通回合、流式叙事和出题，让 DeepSeek V4 Pro 负责科举评卷。
 - 更新 README 与项目文档：把当前功能、修复、安全边界、启动方式和常用命令整理成更适合 GitHub 首页阅读的结构。
 
@@ -218,7 +219,7 @@ POST /api/exam/submit
 - `POST /api/game/turn` 支持普通 JSON 与 SSE。SSE 事件包括 `state_preview`、`narrative_chunk`、`final_state`、`error`。
 - `POST /api/ai/connection-test` 不创建 session、不写存档、不用 Mock fallback 掩盖真实 provider 问题。
 - `GET /api/game/state/:sessionId` 可用 `informationTab`、`informationQuery`、`informationFilter`、`informationSort`、`informationPage`、`informationPageSize` 查询局势簿分页；兼容别名 `informationPanelTab` / `informationCollection` 和 `informationSearch`。
-- 游戏与考试路由会返回服务器整理后的可见视图，例如 `studyProfileView`、`relationshipView`、`worldGeographyView`、`worldPeopleView`、`officialPostingsView`、`localAffairsDocketView`、`militaryDiplomacyView`、`economicFiscalView`、`historicalEventArchiveView`、`eventArchiveView`、`informationPanelPageView`。
+- 游戏与考试路由会返回服务器整理后的可见视图，例如 `examProcedureView`、`studyProfileView`、`relationshipView`、`worldGeographyView`、`worldPeopleView`、`officialPostingsView`、`localAffairsDocketView`、`militaryDiplomacyView`、`economicFiscalView`、`historicalEventArchiveView`、`eventArchiveView`、`informationPanelPageView`。
 
 ## 项目结构
 

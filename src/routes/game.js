@@ -87,6 +87,11 @@ const {
   attachExamSceneTime,
   buildExamSceneFeedback
 } = require("../game/examSceneTime");
+const {
+  advanceExamProcedurePhase,
+  buildExamProcedureView,
+  initializeExamProcedure
+} = require("../game/examProcedure");
 const { applyStatePatch, appendEvents } = require("../game/stateRules");
 const { runWorldTick } = require("../game/worldTick");
 const { getProvider } = require("../ai");
@@ -221,6 +226,7 @@ function applyExamTrigger(worldState, trigger) {
     requestedAt: new Date().toISOString()
   };
   attachExamSceneTime(worldState.activeExam, worldState, "entry");
+  initializeExamProcedure(worldState.activeExam);
 
   return {
     shouldStart: true,
@@ -252,6 +258,7 @@ function buildCommonTurnViews(worldState, options = {}) {
   return {
     examCalendarView: buildExamCalendarView(worldState),
     examRivalView: buildExamRivalView(worldState),
+    examProcedureView: buildExamProcedureView(worldState),
     studyProfileView: buildStudyProfileView(worldState),
     relationshipView: buildRelationshipInspectionView(worldState),
     activeNpcRequestView: buildActiveNpcRequestView(worldState),
@@ -279,6 +286,7 @@ function buildCommonTurnViews(worldState, options = {}) {
 
 async function finalizeExamSceneTurn(worldState, input, context = null) {
   const scene = advanceExamScenePhase(worldState.activeExam, worldState, input);
+  advanceExamProcedurePhase(worldState.activeExam);
   ensureRelationshipLedger(worldState);
   ensureExamCalendarState(worldState);
   ensureStudyProfileState(worldState);
@@ -555,6 +563,7 @@ async function streamTurn(res, sessionId, input) {
       relationshipChanges: payload.relationshipChanges,
       examCalendarView: payload.examCalendarView,
       examRivalView: payload.examRivalView,
+      examProcedureView: payload.examProcedureView,
       studyProfileView: payload.studyProfileView,
       activeNpcRequestView: payload.activeNpcRequestView,
       activeNpcRequestEvents: payload.activeNpcRequestEvents,
@@ -606,6 +615,7 @@ router.post("/start", async (req, res, next) => {
       worldState,
       examCalendarView: buildExamCalendarView(worldState),
       examRivalView: buildExamRivalView(worldState),
+      examProcedureView: buildExamProcedureView(worldState),
       studyProfileView: buildStudyProfileView(worldState),
       relationshipView: buildRelationshipInspectionView(worldState),
       activeNpcRequestView: buildActiveNpcRequestView(worldState),

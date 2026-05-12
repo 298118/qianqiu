@@ -44,6 +44,7 @@ let currentOfficialCareerView = null;
 let currentWorldThreadView = null;
 let currentExamCalendarView = null;
 let currentExamRivalView = null;
+let currentExamProcedureView = null;
 let currentStudyProfileView = null;
 let currentWorldGeographyView = null;
 let currentWorldEntityView = null;
@@ -203,6 +204,25 @@ const EXAM_PROGRESS = [
 ];
 
 const EXAM_SCENE_PHASE_ORDER = ["entry", "question_review", "outline", "drafting", "fair_copy"];
+
+const EXAM_PROCEDURE_PHASE_ORDER = [
+  "eligibility_check",
+  "sponsorship",
+  "registration",
+  "entry_search",
+  "cell_entry",
+  "question_release",
+  "drafting",
+  "fair_copy",
+  "submission",
+  "sealing",
+  "transcription",
+  "collation",
+  "audit_review",
+  "ranking",
+  "announcement",
+  "closed"
+];
 
 const SCORE_LABELS = {
   content_quality: "义理内容",
@@ -801,6 +821,13 @@ function getExamRivalView(worldState, examRivalView) {
       ? worldState.examCalendar.recentSessions.slice(-4)
       : []
   };
+}
+
+function getExamProcedureView(worldState, examProcedureView) {
+  if (examProcedureView && typeof examProcedureView === "object") {
+    return examProcedureView;
+  }
+  return null;
 }
 
 function getStudyProfileView(worldState, studyProfileView) {
@@ -2587,6 +2614,106 @@ function renderExamRivalPanel(examRivalView = currentExamRivalView) {
   return panel;
 }
 
+function getExamProcedurePhaseIndex(phase) {
+  const index = EXAM_PROCEDURE_PHASE_ORDER.indexOf(phase);
+  return index >= 0 ? index : 0;
+}
+
+function formatProcedureStatus(block = {}) {
+  return [block.status, block.publicSummary].filter(Boolean).join("：");
+}
+
+function renderExamProcedurePanel(examProcedureView = currentExamProcedureView) {
+  if (!examProcedureView) return null;
+
+  const panel = document.createElement("section");
+  panel.id = "exam-procedure-panel";
+  panel.className = "exam-procedure-panel";
+  panel.dataset.level = examProcedureView.level || "";
+  panel.dataset.phase = examProcedureView.phase || "";
+  panel.dataset.schemaVersion = String(examProcedureView.schemaVersion || 1);
+
+  const header = document.createElement("header");
+  const title = document.createElement("strong");
+  title.textContent = "科场程式";
+  const summary = document.createElement("span");
+  summary.textContent = [
+    examProcedureView.phaseLabel,
+    examProcedureView.subStageLabel,
+    examProcedureView.paperType
+  ].filter(Boolean).join(" · ") || "待入场";
+  header.append(title, summary);
+
+  const phaseList = document.createElement("section");
+  phaseList.className = "exam-procedure-phases";
+  const currentIndex = getExamProcedurePhaseIndex(examProcedureView.phase);
+  EXAM_PROCEDURE_PHASE_ORDER.forEach((phase, index) => {
+    const step = document.createElement("span");
+    step.dataset.phase = phase;
+    step.dataset.state = index < currentIndex ? "done" : index === currentIndex ? "current" : "pending";
+    step.textContent = index === currentIndex
+      ? examProcedureView.phaseLabel || phase
+      : {
+        eligibility_check: "资格",
+        sponsorship: "保结",
+        registration: "点册",
+        entry_search: "搜检",
+        cell_entry: "号舍",
+        question_release: "发题",
+        drafting: "草稿",
+        fair_copy: "誊清",
+        submission: "交卷",
+        sealing: "弥封",
+        transcription: "誊录",
+        collation: "对读",
+        audit_review: "磨勘",
+        ranking: "定序",
+        announcement: "放榜",
+        closed: "归档"
+      }[phase] || phase;
+    phaseList.appendChild(step);
+  });
+
+  const grid = document.createElement("section");
+  grid.className = "exam-procedure-grid";
+  grid.append(
+    createPanelValue("场次", `${examProcedureView.sessionIndex || 1}/${examProcedureView.sessionCount || 1}`, "p"),
+    createPanelValue("卷类", examProcedureView.paperType || "科题", "p"),
+    createPanelValue("保结", examProcedureView.sponsorship?.publicSummary || examProcedureView.sponsorship?.status || "未定", "p"),
+    createPanelValue("搜检", formatProcedureStatus(examProcedureView.entrySearch) || "待入场", "p")
+  );
+
+  const roll = examProcedureView.rollLifecycle || {};
+  const rollFlags = [
+    roll.draftRoll ? "草稿" : "",
+    roll.inkRoll ? "墨卷" : "",
+    roll.sealed ? "弥封" : "",
+    roll.transcribed ? "朱卷" : "",
+    roll.collated ? "对读" : "",
+    roll.audited ? "磨勘" : ""
+  ].filter(Boolean);
+  const rollBlock = document.createElement("section");
+  rollBlock.className = "exam-procedure-roll";
+  appendIfText(rollBlock, "strong", "卷件");
+  appendIfText(rollBlock, "p", rollFlags.join("、") || roll.publicSummary || "待成卷");
+  appendIfText(rollBlock, "p", roll.publicSummary, "exam-procedure-boundary");
+
+  const notes = document.createElement("section");
+  notes.className = "exam-procedure-notes";
+  appendIfText(notes, "strong", "公开记录");
+  const incidents = Array.isArray(examProcedureView.incidents) ? examProcedureView.incidents : [];
+  const auditFlags = Array.isArray(examProcedureView.auditFlags) ? examProcedureView.auditFlags : [];
+  [...incidents.slice(-2), ...auditFlags.slice(-2)].forEach((item) => {
+    appendIfText(notes, "p", [item.label, item.publicSummary].filter(Boolean).join("："));
+  });
+  if (!notes.querySelector("p")) {
+    appendIfText(notes, "p", examProcedureView.cell?.publicSummary || "暂无额外科场记录。");
+  }
+
+  panel.append(header, phaseList, grid, rollBlock, notes);
+  return panel;
+}
+
 function renderStudyProfilePanel(studyProfileView = currentStudyProfileView) {
   if (!studyProfileView) return null;
 
@@ -3068,6 +3195,7 @@ function renderRolePanel(worldState) {
 
   scholarPanel.append(overview, renderActionHints(player.role), stats, lists);
   appendOptionalPanel(renderOfficialCareerPanel());
+  appendOptionalPanel(renderExamProcedurePanel());
   appendOptionalPanel(renderWorldThreadPanel());
   appendOptionalPanel(renderInformationPanelShell());
   scholarPanel.appendChild(renderRelationshipPanel());
@@ -3151,6 +3279,7 @@ function renderScholarPanel(worldState) {
 
   scholarPanel.append(progressBlock);
   appendOptionalPanel(renderExamCalendarPanel());
+  appendOptionalPanel(renderExamProcedurePanel());
   appendOptionalPanel(renderStudyProfilePanel());
   appendOptionalPanel(renderWorldThreadPanel());
   appendOptionalPanel(renderInformationPanelShell());
@@ -3167,6 +3296,7 @@ function renderWorldState(
   officialCareerView,
   examCalendarView,
   examRivalView,
+  examProcedureView,
   studyProfileView,
   worldThreadView,
   worldGeographyView,
@@ -3183,6 +3313,7 @@ function renderWorldState(
   currentOfficialCareerView = getOfficialCareerView(worldState, officialCareerView);
   currentExamCalendarView = getExamCalendarView(worldState, examCalendarView);
   currentExamRivalView = getExamRivalView(worldState, examRivalView);
+  currentExamProcedureView = getExamProcedureView(worldState, examProcedureView);
   currentStudyProfileView = getStudyProfileView(worldState, studyProfileView);
   currentWorldThreadView = getWorldThreadView(worldState, worldThreadView);
   currentWorldGeographyView = getRouteView(worldGeographyView);
@@ -3206,6 +3337,7 @@ function renderPayloadWorldState(payload) {
     payload.officialCareerView,
     payload.examCalendarView,
     payload.examRivalView,
+    payload.examProcedureView,
     payload.studyProfileView,
     payload.worldThreadView,
     payload.worldGeographyView,
@@ -3373,6 +3505,7 @@ function getExamScenePhaseIndex(phase) {
 function updateExamSceneControls(payload) {
   if (!examSceneTools || !examSceneStatus) return;
   const sceneTime = getExamSceneTime(payload);
+  const procedure = payload?.examProcedureView || currentExamProcedureView;
 
   if (!sceneTime) {
     examSceneTools.hidden = true;
@@ -3384,7 +3517,10 @@ function updateExamSceneControls(payload) {
   const localTurn = Number(sceneTime.turnCount) || 0;
   const elapsed = Number.isFinite(Number(sceneTime.elapsedHours)) ? ` · 约${Number(sceneTime.elapsedHours)}小时` : "";
   const startedAt = sceneTime.startedAt?.label ? ` · 入场：${sceneTime.startedAt.label}` : "";
-  examSceneStatus.textContent = `场内阶段：${phaseLabel} · 局部第${localTurn}步${elapsed}${startedAt}`;
+  const procedureText = procedure?.phaseLabel
+    ? ` · 程式：${procedure.phaseLabel}${procedure.paperType ? `/${procedure.paperType}` : ""}`
+    : "";
+  examSceneStatus.textContent = `场内阶段：${phaseLabel}${procedureText} · 局部第${localTurn}步${elapsed}${startedAt}`;
 
   const currentIndex = getExamScenePhaseIndex(sceneTime.phase);
   const targets = ["question_review", "outline", "drafting", "fair_copy"];
@@ -3460,6 +3596,15 @@ function renderExamModal(payload) {
   if (payload.examCalendar || payload.entryPreparation?.examCalendar) {
     const item = document.createElement("li");
     item.textContent = `科期：${formatExamCalendarSnapshot(payload.examCalendar || payload.entryPreparation.examCalendar, payload)}`;
+    examRequirements.appendChild(item);
+  }
+  if (payload.examProcedureView) {
+    const item = document.createElement("li");
+    item.textContent = `程式：${[
+      payload.examProcedureView.phaseLabel,
+      payload.examProcedureView.subStageLabel,
+      payload.examProcedureView.paperType
+    ].filter(Boolean).join(" · ")}`;
     examRequirements.appendChild(item);
   }
   updateExamSceneControls(payload);
@@ -3574,7 +3719,8 @@ function withExamHistoryFallback(payload) {
     promotionResult: payload.promotionResult || latest.promotionResult,
     entryPreparation: payload.entryPreparation || latest.entryPreparation,
     examCalendar: payload.examCalendar || latest.examCalendar || latest.entryPreparation?.examCalendar,
-    sceneTime: payload.sceneTime || latest.sceneTime
+    sceneTime: payload.sceneTime || latest.sceneTime,
+    examProcedureView: payload.examProcedureView || latest.examProcedure
   };
 }
 
@@ -3682,6 +3828,37 @@ function createExamSceneBlock(sceneTime) {
   return block;
 }
 
+function createExamProcedureBlock(examProcedureView) {
+  if (!examProcedureView) return null;
+  const block = document.createElement("section");
+  block.className = "entry-preparation exam-procedure-archive";
+  appendIfText(block, "strong", "科场程式");
+  appendIfText(
+    block,
+    "p",
+    [
+      examProcedureView.phaseLabel,
+      examProcedureView.subStageLabel,
+      examProcedureView.paperType,
+      examProcedureView.resultSummary
+    ].filter(Boolean).join("；")
+  );
+  const roll = examProcedureView.rollLifecycle || {};
+  const rollText = [
+    roll.sealed ? "已弥封" : "",
+    roll.transcribed ? "已誊录" : "",
+    roll.collated ? "已对读" : "",
+    roll.audited ? "已磨勘" : ""
+  ].filter(Boolean).join("、");
+  appendIfText(block, "p", rollText || roll.publicSummary, "exam-procedure-boundary");
+  const auditText = (examProcedureView.auditFlags || [])
+    .slice(-2)
+    .map((flag) => [flag.label, flag.publicSummary].filter(Boolean).join("："))
+    .join("；");
+  appendIfText(block, "p", auditText, "exam-procedure-boundary");
+  return block.childElementCount > 1 ? block : null;
+}
+
 function createCandidateProfiles(payload) {
   const candidates = Array.isArray(payload.virtualCandidates) ? payload.virtualCandidates : [];
   const ranking = Array.isArray(payload.ranking) ? payload.ranking : [];
@@ -3772,6 +3949,9 @@ function createPlayerExamArchive(payload) {
 
   const sceneBlock = createExamSceneBlock(payload.sceneTime);
   if (sceneBlock) archive.appendChild(sceneBlock);
+
+  const procedureBlock = createExamProcedureBlock(payload.examProcedureView || payload.examProcedure);
+  if (procedureBlock) archive.appendChild(procedureBlock);
 
   const reasonParts = [];
   if (payload.score?.detailed_feedback) reasonParts.push(payload.score.detailed_feedback);
@@ -3874,6 +4054,7 @@ function renderExamArchive(worldState = currentWorldState) {
     const archivedPayload = {
       ...entry,
       worldState,
+      examProcedureView: entry.examProcedure,
       virtualCandidates: entry.virtualCandidates || [],
       ranking: entry.ranking || []
     };
@@ -4199,6 +4380,7 @@ async function handleTurnPayload(payload) {
       ...currentExamPayload,
       ...activeExam,
       sceneTime: payload.examScene || activeExam.sceneTime || currentExamPayload.sceneTime,
+      examProcedureView: payload.examProcedureView || currentExamPayload.examProcedureView,
       worldState: payload.worldState
     };
     updateExamSceneControls(currentExamPayload);
