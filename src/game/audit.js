@@ -458,6 +458,7 @@ function createExamGradeAuditRecords({
   grade,
   score,
   authenticityCheck,
+  reviewResult,
   promotionResult,
   cohortResult,
   ranking,
@@ -486,8 +487,14 @@ function createExamGradeAuditRecords({
   if (modelScore !== null && modelScore !== score?.overall_score) {
     rejectedReasons.push("本地反作弊与考试规则覆盖了模型原始总分。");
   }
+  if (reviewResult?.scoreDelta) {
+    rejectedReasons.push("科场事件与多考官阅卷由服务器限幅复核后调整最终分。");
+  }
   if (grade?.promotionResult || grade?.ranking || grade?.virtualCandidates) {
     rejectedReasons.push("模型不得决定榜单、虚拟考生或最终晋级；服务器已重新裁决。");
+  }
+  if (reviewResult?.rejectedProviderReviewCount) {
+    rejectedReasons.push("模型考官建议只保留脱敏摘要，不直接定榜或处罚。");
   }
 
   return {
@@ -502,10 +509,13 @@ function createExamGradeAuditRecords({
         modelOverallScore: modelScore,
         modelRank: grade?.score?.rank || null,
         feedbackPreview: previewText(grade?.score?.detailed_feedback),
-        authenticityObservation: grade?.authenticityObservation || null
+        authenticityObservation: grade?.authenticityObservation || null,
+        examinerReviewCount: Array.isArray(grade?.examiner_reviews) ? grade.examiner_reviews.length : 0
       },
       accepted: {
         finalScore: score?.overall_score ?? null,
+        scoreDeltaFromExaminerReview: reviewResult?.scoreDelta ?? 0,
+        examinerPanelSummary: previewText(reviewResult?.examinerPanel?.serverDecision),
         authenticityCheck,
         passed: Boolean(promotionResult?.passed),
         promotionRank: promotionResult?.rank || null

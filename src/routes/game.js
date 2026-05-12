@@ -92,6 +92,7 @@ const {
   buildExamProcedureView,
   initializeExamProcedure
 } = require("../game/examProcedure");
+const { buildExaminerPanelView } = require("../game/examReview");
 const { applyStatePatch, appendEvents } = require("../game/stateRules");
 const { runWorldTick } = require("../game/worldTick");
 const { getProvider } = require("../ai");
@@ -259,6 +260,7 @@ function buildCommonTurnViews(worldState, options = {}) {
     examCalendarView: buildExamCalendarView(worldState),
     examRivalView: buildExamRivalView(worldState),
     examProcedureView: buildExamProcedureView(worldState),
+    examinerPanelView: buildExaminerPanelView(worldState.player?.examHistory?.at?.(-1)?.examinerPanel),
     studyProfileView: buildStudyProfileView(worldState),
     relationshipView: buildRelationshipInspectionView(worldState),
     activeNpcRequestView: buildActiveNpcRequestView(worldState),
@@ -564,6 +566,7 @@ async function streamTurn(res, sessionId, input) {
       examCalendarView: payload.examCalendarView,
       examRivalView: payload.examRivalView,
       examProcedureView: payload.examProcedureView,
+      examinerPanelView: payload.examinerPanelView,
       studyProfileView: payload.studyProfileView,
       activeNpcRequestView: payload.activeNpcRequestView,
       activeNpcRequestEvents: payload.activeNpcRequestEvents,
@@ -616,6 +619,7 @@ router.post("/start", async (req, res, next) => {
       examCalendarView: buildExamCalendarView(worldState),
       examRivalView: buildExamRivalView(worldState),
       examProcedureView: buildExamProcedureView(worldState),
+      examinerPanelView: null,
       studyProfileView: buildStudyProfileView(worldState),
       relationshipView: buildRelationshipInspectionView(worldState),
       activeNpcRequestView: buildActiveNpcRequestView(worldState),

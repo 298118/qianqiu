@@ -235,6 +235,33 @@ test("exam question and grade schemas accept valid provider payloads", () => {
   assert.equal(validatePayload("grade", grade), grade);
 });
 
+test("grade schema accepts bounded examiner review proposals only", () => {
+  const grade = {
+    ...gradePayload(82),
+    examiner_reviews: [{
+      actor: "room_officer",
+      label: "房官初评",
+      recommendation: "荐卷",
+      suggestedScoreDelta: 2,
+      comment: "只作建议。",
+      concern: "无"
+    }]
+  };
+
+  assert.equal(validatePayload("grade", grade), grade);
+
+  assert.throws(() => validatePayload("grade", {
+    ...grade,
+    examiner_reviews: [{
+      actor: "chief_examiner",
+      recommendation: "直接钦定状元",
+      suggestedScoreDelta: 9,
+      comment: "越权",
+      officeTitle: "翰林院修撰"
+    }]
+  }), /schema validation/);
+});
+
 test("grade schema rejects scores outside server bounds", () => {
   const grade = gradePayload(101);
 

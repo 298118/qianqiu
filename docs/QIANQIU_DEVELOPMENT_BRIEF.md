@@ -181,12 +181,13 @@ POST /api/exam/submit
 - `GET /api/game/state/:sessionId` 读取完整本地状态和服务器整理后的 route views；可用 `informationTab`、`informationQuery`、`informationFilter`、`informationSort`、`informationPage`、`informationPageSize` 读取局势簿服务器分页。后续如保存 hidden 私档，必须先拆玩家 API 或增加 raw state redaction。
 - `POST /api/game/turn` 支持普通 JSON 与 SSE。SSE 可先发送顶层 `narrative_chunk`，但状态只在完整 JSON 通过 schema 后落盘；真实 provider 流式失败时不保存状态，并移除未提交临时叙事。
 - `POST /api/ai/connection-test` 不创建 session、不写存档、不用 Mock fallback 掩盖真实 provider 问题，返回脱敏健康检查。
-- S68.4 起，考试和游戏路由在有当前或刚归档考试时返回 `examProcedureView`。该 view 由服务器从 `activeExam.procedure`、`sceneTime`、入场准备和交卷复核派生，展示童试三关、乡试/会试三场、保结、搜检、号舍、发题、草稿、誊清、交卷、弥封、誊录、对读、磨勘、放榜和归档摘要；交卷后安全快照写入 `player.examHistory[].examProcedure`。外层四级 API 不变，流程阶段不推进全局旬。
+- S68.4 起，考试和游戏路由在有当前或刚归档考试时返回 `examProcedureView`。该 view 由服务器从 `activeExam.procedure`、`sceneTime`、入场准备和交卷复核派生，展示童试三关、乡试/会试三场、保结、搜检、号舍、发题、草稿、誊清、交卷、弥封、誊录、对读、磨勘、放榜和归档摘要；交卷后安全快照写入 `player.examHistory[].examProcedure`。S68.5 起，交卷后还返回 `examinerPanelView`，公开展示夹带疑云、号舍病困、誊录误差、多考官建议、服务器定分输入和 provider 建议拒绝摘要。外层四级 API 不变，流程阶段不推进全局旬。
 
 游戏与考试路由可返回这些 view：
 
 - `examCalendarView`、`examRivalView`
 - `examProcedureView`
+- `examinerPanelView`
 - `studyProfileView`
 - `relationshipView`、`activeNpcRequestView`
 - `roleWorldCouplingView`
@@ -250,6 +251,7 @@ S54-S59 已完成的数据库拆表必须继续保持 JSON 默认可玩，并保
 - `intelligenceRumor` / `intelligenceRumorView`：从服务器可见地理、案牍、军务、财赋、人物关系和公开历史事件链派生 S65.2 情报传闻，按身份显示为坊间传闻、地方风声、衙门案牍、官署奏报、同僚私信、军中侦报、粮道风声、部院奏报、御史风闻或御前摘报，并附可信度、来源归因、相关 refs 和服务器裁决边界。它只提供角色可见线索，不直接公开隐藏情报真值、写状态、写审计、写 `prompt_retrieval_index`、成案或结算后果。
 - `studyProfile` / `studyProfileView`：S68.2 新增读书账本与学业计划，S68.3 扩展老师点评、书院师友、同窗互评、小题训练、荐书和保结前置。服务器从玩家属性、读书行动、师友互动和 `player.examHistory` 的评分/反作弊复核派生经义根柢、制艺章法、策论时务、史事典故、律例判断、誊写卷面、科场耐力等可见画像，并生成最近日课、文卷强弱、老师建议、AI 老师文本点评、书目、小题和下旬计划。普通拜师、讲会、同窗互评或求保结会由服务器创建/更新可见 `characters -> relationshipLedger -> relationshipView/worldPeopleView` 师友关系，并刷新 `academyNetwork.sponsorship` 保结稳度；考试入场准备只携带脱敏保结 snapshot，不把保结当作准考事实。AI 老师、出题和评卷 prompt 只能读取 capped `studyProfile` 摘要并给点评/建议；普通 provider `statePatch` 不能写 `studyProfile`、`player.teacher` 或 `player.position`，师承身份、名位文本与关系事实只由服务器读书互动或官职 resolver 建立，`teacherFeedbackProposal` 也只能提交文本点评 proposal，不能借读书建议直接授名位、改榜、改官职、创造真实关系或写持久化事实。
 - `activeExam.procedure` / `examProcedureView`：S68.4 新增科场制度流程 projection。服务器在入场取题、场内推进和交卷归档时同步安全流程摘要，覆盖童试县试/府试/院试摘要，乡试/会试三场多卷，保结、搜检、号舍、发题、草稿、誊清、交卷、弥封、誊录、对读、磨勘、放榜和归档；浏览器科举面板、考试弹窗和考试档案都只读 `examProcedureView` / `examHistory[].examProcedure`。prompt 只能读取 capped `examProcedure` 摘要，普通 provider `statePatch` 不能写 `examProcedure`、`activeExam`、卷件生命周期、榜单、名次或官职。当前实现不保存弥封身份映射、保结密注、考官私意、模型原始建议或内部审计；若未来需要 hidden 卷件真值，必须先设计玩家 API redaction 与角色视野分层。
+- `examinerPanelView`：S68.5 新增科场事件与多考官阅卷 projection。服务器在本地反作弊后、生成榜单和晋级前运行 `resolveExamReview()`，用具名配置限幅处理夹带疑云、号舍病困、誊录误差、房官/同考官/主考官/磨勘 critic 建议和 provider `examiner_reviews`。provider 考官建议只能作为脱敏 proposal 留痕，不直接加分、扣分、定榜、授功名或处罚；服务器采纳的 reviewer delta 与事件 delta 先形成最终 score，再进入既有 virtual candidates、canonical ranking 和 promotion resolver。浏览器考试结果、考试档案和书生面板只读 `examinerPanelView` 或 `examProcedureView.examinerPanelView`；prompt 只读取 capped `examinerPanel` 摘要，不暴露弥封映射、考官 hidden intent、保结 hidden notes、raw proposal、raw audit、本地路径或 key。
 - `eventArchiveView`：从公开近事、世界议程、长期事件、官场履历、考试档案、可见任所考成、地方案牍、军务外交预警、财赋市场预警、S65.1 公开历史事件链和 S65.2 情报传闻整理事件档案；S57.1 起带分页 metadata，并在 SQLite 模式同步到安全 `event_archive_index`；S61.2 的 `official_assessment` 条目只来自 `officialPostingsView.assessmentRecords`，S63.2 的 `local_docket` 条目只来自 `localAffairsDocketView`，S64.1 的 `military_diplomacy` 条目只来自 `militaryDiplomacyView.frontierIncidents`，S64.2 的 `economic_fiscal` 条目只来自 `economicFiscalView.marketIncidents`，S65.1 的 `historical_event_chain` 条目只来自公开 `historicalEventArchiveView.publicChains`，S65.2 的 `intelligence_rumor` 条目只来自 `intelligenceRumorView.publicRumors`。它不读取 raw audit、provider proposal、prompt、本地路径、key、历史事件密档或隐藏情报真值。S57.2 的审计公开 projection 是本地开发/调试工具输出，不是 route view、prompt 或浏览器信息面板的数据源。
 
 S53/S66 浏览器“局势簿”只读这些 route view；S66.2 的 `informationPanelPageView` 也是从 route view 和安全事件档案条目派生的分页 projection，不读取 raw SQLite table。S54-S59 已完成的 SQLite 拆表和 S60-S67 内容充实阶段继续保持 view-first；后续 UI 和 prompt contract 仍不得暴露原始业务表、raw audit、provider proposal、hidden notes、hidden intent 或本地路径。
@@ -393,12 +395,12 @@ chore: update env example
 2. S54-S59 已归档到 [LOCAL_DATABASE_BUSINESS_TABLE_ARCHIVE.md](LOCAL_DATABASE_BUSINESS_TABLE_ARCHIVE.md)：地理、人物、官职任所、事件档案、prompt 检索、浏览器 parity 和双模式验收均已具备本地 SQLite 基础。
 3. S60-S67 已归档到 [HUGE_DYNAMIC_WORLD_CONTENT_ARCHIVE.md](HUGE_DYNAMIC_WORLD_CONTENT_ARCHIVE.md)：内容契约、规模 fixture、国家/城市/NPC/官职/案牍/军务/财赋/事件链/情报、prompt 策略、局势簿分页和 large fixture scale acceptance 已完成；数量、seed 分层和 hidden/private 边界仍以 [HUGE_DYNAMIC_WORLD_CONTENT_CONTRACT.md](HUGE_DYNAMIC_WORLD_CONTENT_CONTRACT.md) 为契约。
 4. `event_log` / `ai_change_proposals` 是本地脱敏审计，不进入玩家 API，也不让 AI 直接写表；AI 领域工具最多提交 proposal，由服务器记录接受/拒绝原因。
-5. `examProcedureView`、`studyProfileView`、`worldGeographyView`、`worldPeopleView`、`officialPostingsView`、`localAffairsDocketView`、`militaryDiplomacyView`、`economicFiscalView`、`historicalEventArchiveView`、`intelligenceRumorView`、`eventArchiveView`、`informationPanelPageView` 和 capped `retrievalContext` 是当前 UI/prompt 合法入口。
+5. `examProcedureView`、`examinerPanelView`、`studyProfileView`、`worldGeographyView`、`worldPeopleView`、`officialPostingsView`、`localAffairsDocketView`、`militaryDiplomacyView`、`economicFiscalView`、`historicalEventArchiveView`、`intelligenceRumorView`、`eventArchiveView`、`informationPanelPageView` 和 capped `retrievalContext` 是当前 UI/prompt 合法入口。
 6. 浏览器“局势簿”只读 route player-facing view 和 `informationPanelPageView`，不读 raw ledger、raw audit、provider-only payload、prompt、本地路径或 key。
 
 当前活动方向：
 
-- S68-S69：科举、读书、评卷与授官深化；S68.1 科举制度契约、S68.2 读书账本基础、S68.3 老师/书院/同窗互动和 S68.4 科场制度流程已完成，后续从 S68.5 科场事件与多考官阅卷继续。
+- S68-S69：科举、读书、评卷与授官深化；S68.1 科举制度契约、S68.2 读书账本基础、S68.3 老师/书院/同窗互动、S68.4 科场制度流程和 S68.5 科场事件/多考官阅卷已完成，后续从 S69.1 榜单与名次细化继续。
 - S70：AI 提示词、工具协议、actor 权限和多 AI 编排，排在 S68-S69 后启动。
 
 本地数据库专项必须满足同一边界：默认 JSON/Mock 路径不得被破坏；SQLite local-only；AI 可以通过领域工具提交 proposal，但不执行 SQL、不直接写 canonical 状态、业务表或审计表；浏览器和 prompt 只读服务器 projection；hidden 私档不回填当前 raw route `worldState`；服务器继续拥有 schema、白名单、clamp、隐藏过滤、科举晋级、官职任免、长期事件、世界实体、世界议程、数据库写入和持久化事务。

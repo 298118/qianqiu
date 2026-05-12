@@ -27,6 +27,7 @@ const {
   updateStudyProfileAfterExam
 } = require("../game/studyProfile");
 const { applyExamPromotion } = require("../game/promotions");
+const { resolveExamReview } = require("../game/examReview");
 const { buildRelationshipInspectionView, ensureRelationshipLedger } = require("../game/relationships");
 const { buildActiveNpcRequestView } = require("../game/activeRequests");
 const { buildLongTermEventView, ensureLongTermEventState } = require("../game/longTermEvents");
@@ -63,6 +64,7 @@ const {
   completeExamProcedure,
   initializeExamProcedure
 } = require("../game/examProcedure");
+const { buildExaminerPanelView } = require("../game/examReview");
 const { mutateSession } = require("../storage/sessionStore");
 
 const router = express.Router();
@@ -91,6 +93,7 @@ function toExamPayload(worldState) {
     examCalendarView: buildExamCalendarView(worldState),
     examRivalView: buildExamRivalView(worldState),
     examProcedureView: buildExamProcedureView(worldState),
+    examinerPanelView: buildExaminerPanelView(activeExam.procedure?.examinerPanel),
     studyProfileView: buildStudyProfileView(worldState),
     relationshipView: buildRelationshipInspectionView(worldState),
     activeNpcRequestView: buildActiveNpcRequestView(worldState),
@@ -358,7 +361,17 @@ router.post("/submit", async (req, res, next) => {
         player: worldState.player
       });
       const grade = await provider.gradeExamEssay(worldState, exam, trimmedEssay, authenticityCheck);
-      const score = applyAuthenticityPenalties(grade.score, authenticityCheck, exam);
+      const scoreBeforeExaminerReview = applyAuthenticityPenalties(grade.score, authenticityCheck, exam);
+      const reviewResult = resolveExamReview({
+        worldState,
+        activeExam,
+        exam,
+        essay: trimmedEssay,
+        grade,
+        score: scoreBeforeExaminerReview,
+        authenticityCheck
+      });
+      const score = reviewResult.score;
       const persistentCandidateSeeds = selectPersistentCandidateSeeds(worldState, exam);
       const virtualCandidates = preparePersistentExamCohort(
         worldState,
@@ -385,7 +398,8 @@ router.post("/submit", async (req, res, next) => {
         score,
         authenticityCheck,
         promotionResult,
-        ranking
+        ranking,
+        reviewResult
       });
       const submittedAt = new Date().toISOString();
       const historyEntry = {
@@ -401,7 +415,9 @@ router.post("/submit", async (req, res, next) => {
         examSubmittedAt: sceneTime.updatedAt,
         essay: trimmedEssay,
         score,
+        scoreBeforeExaminerReview,
         authenticityCheck,
+        examinerPanel: reviewResult.examinerPanel,
         virtualCandidates,
         ranking,
         promotionResult,
@@ -431,6 +447,7 @@ router.post("/submit", async (req, res, next) => {
         grade,
         score,
         authenticityCheck,
+        reviewResult,
         promotionResult,
         cohortResult,
         ranking,
@@ -453,12 +470,14 @@ router.post("/submit", async (req, res, next) => {
         examStartedAt: sceneTime.startedAt,
         examSubmittedAt: sceneTime.updatedAt,
         score,
+        scoreBeforeExaminerReview,
         authenticityCheck,
         virtualCandidates,
         ranking,
         promotionResult,
         cohortResult,
         examProcedureView: buildExamProcedureView(worldState, { procedure: examProcedure }),
+        examinerPanelView: reviewResult.examinerPanel,
         studyProfileView: buildStudyProfileView(worldState),
         examCalendarView: buildExamCalendarView(worldState),
         examRivalView: buildExamRivalView(worldState),

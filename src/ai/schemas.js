@@ -299,7 +299,22 @@ const gradeSchema = {
     },
     authenticity_check: authenticitySchema,
     virtual_candidates: { type: "array", items: { type: "object", additionalProperties: true } },
-    ranking: { type: "array", items: { type: "object", additionalProperties: true } }
+    ranking: { type: "array", items: { type: "object", additionalProperties: true } },
+    examiner_reviews: {
+      type: "array",
+      items: {
+        type: "object",
+        additionalProperties: false,
+        properties: {
+          actor: { type: "string" },
+          label: { type: "string" },
+          recommendation: { type: "string" },
+          suggestedScoreDelta: { type: "number", minimum: -2, maximum: 2 },
+          comment: { type: "string" },
+          concern: { type: "string" }
+        }
+      }
+    }
   }
 };
 
@@ -447,7 +462,22 @@ const modelGradeSchema = {
     },
     authenticity_check: { type: "object", additionalProperties: true },
     virtual_candidates: { type: "array", items: { type: "object", additionalProperties: true } },
-    ranking: { type: "array", items: { type: "object", additionalProperties: true } }
+    ranking: { type: "array", items: { type: "object", additionalProperties: true } },
+    examiner_reviews: {
+      type: "array",
+      items: {
+        type: "object",
+        additionalProperties: false,
+        properties: {
+          actor: { type: "string" },
+          label: { type: "string" },
+          recommendation: { type: "string" },
+          suggestedScoreDelta: { type: "number" },
+          comment: { type: "string" },
+          concern: { type: "string" }
+        }
+      }
+    }
   }
 };
 

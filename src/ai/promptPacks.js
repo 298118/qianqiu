@@ -110,8 +110,10 @@ const PROMPT_PACKS = {
     ],
     authority: [
       "May provide five dimension scores, overall score, rank label, detailed feedback, and authenticity observations.",
+      "May provide optional examiner_reviews as room-officer / co-examiner / chief-examiner / audit-critic proposals with small suggested deltas.",
       "Must treat the local authenticity check as context while the server applies final penalties.",
-      "Must not generate canonical virtual candidates or final ranking; return empty arrays for those fields."
+      "Must not generate canonical virtual candidates or final ranking; return empty arrays for those fields.",
+      "Examiner reviews are proposals only: they must not decide cheating, promotion, honor titles, ranking, palace rank, officeTitle, or hidden sealed identity."
     ],
     output: [
       "Return strict grade JSON.",

@@ -45,6 +45,7 @@ let currentWorldThreadView = null;
 let currentExamCalendarView = null;
 let currentExamRivalView = null;
 let currentExamProcedureView = null;
+let currentExaminerPanelView = null;
 let currentStudyProfileView = null;
 let currentWorldGeographyView = null;
 let currentWorldEntityView = null;
@@ -2710,8 +2711,69 @@ function renderExamProcedurePanel(examProcedureView = currentExamProcedureView) 
     appendIfText(notes, "p", examProcedureView.cell?.publicSummary || "暂无额外科场记录。");
   }
 
+  const examinerPanel = createExaminerPanelBlock(examProcedureView.examinerPanelView, {
+    className: "examiner-panel-compact"
+  });
+
   panel.append(header, phaseList, grid, rollBlock, notes);
+  if (examinerPanel) panel.appendChild(examinerPanel);
   return panel;
+}
+
+function createExaminerPanelBlock(examinerPanelView, options = {}) {
+  if (!examinerPanelView || typeof examinerPanelView !== "object") return null;
+  const block = document.createElement("section");
+  block.className = ["examiner-panel-block", options.className].filter(Boolean).join(" ");
+  block.dataset.schemaVersion = String(examinerPanelView.schemaVersion || 1);
+  block.dataset.level = examinerPanelView.level || "";
+
+  const header = document.createElement("header");
+  appendIfText(header, "strong", "多考官阅卷");
+  appendIfText(
+    header,
+    "span",
+    [examinerPanelView.examName, examinerPanelView.disputeSummary].filter(Boolean).join(" · ")
+  );
+  block.appendChild(header);
+
+  const inputs = document.createElement("section");
+  inputs.className = "examiner-score-inputs";
+  (examinerPanelView.scoreInputs || []).slice(0, 4).forEach((input) => {
+    const item = document.createElement("p");
+    const delta = input.scoreDelta
+      ? `${input.scoreDelta > 0 ? "+" : ""}${input.scoreDelta}`
+      : "";
+    item.textContent = [
+      input.label,
+      input.score !== null && input.score !== undefined ? `${input.score}分` : delta,
+      input.publicSummary
+    ].filter(Boolean).join("：");
+    inputs.appendChild(item);
+  });
+  if (inputs.childElementCount) block.appendChild(inputs);
+
+  const reviewList = document.createElement("section");
+  reviewList.className = "examiner-review-list";
+  (examinerPanelView.roomReviews || []).slice(0, 4).forEach((review) => {
+    const item = document.createElement("article");
+    item.className = "examiner-review";
+    item.dataset.accepted = review.accepted ? "true" : "false";
+    appendIfText(
+      item,
+      "strong",
+      [review.label, review.recommendation, review.suggestedScoreDelta ? `${review.suggestedScoreDelta > 0 ? "+" : ""}${review.suggestedScoreDelta}` : ""]
+        .filter(Boolean)
+        .join(" · ")
+    );
+    appendIfText(item, "p", review.comment);
+    appendIfText(item, "p", review.concern || review.rejectionReason || review.authorityBoundary, "examiner-boundary");
+    reviewList.appendChild(item);
+  });
+  if (reviewList.childElementCount) block.appendChild(reviewList);
+
+  appendIfText(block, "p", examinerPanelView.serverDecision, "examiner-boundary");
+  appendIfText(block, "p", examinerPanelView.authorityBoundary, "examiner-boundary");
+  return block.childElementCount > 1 ? block : null;
 }
 
 function renderStudyProfilePanel(studyProfileView = currentStudyProfileView) {
@@ -3196,6 +3258,7 @@ function renderRolePanel(worldState) {
   scholarPanel.append(overview, renderActionHints(player.role), stats, lists);
   appendOptionalPanel(renderOfficialCareerPanel());
   appendOptionalPanel(renderExamProcedurePanel());
+  appendOptionalPanel(createExaminerPanelBlock(currentExaminerPanelView, { className: "examiner-panel-panel" }));
   appendOptionalPanel(renderWorldThreadPanel());
   appendOptionalPanel(renderInformationPanelShell());
   scholarPanel.appendChild(renderRelationshipPanel());
@@ -3280,6 +3343,7 @@ function renderScholarPanel(worldState) {
   scholarPanel.append(progressBlock);
   appendOptionalPanel(renderExamCalendarPanel());
   appendOptionalPanel(renderExamProcedurePanel());
+  appendOptionalPanel(createExaminerPanelBlock(currentExaminerPanelView, { className: "examiner-panel-panel" }));
   appendOptionalPanel(renderStudyProfilePanel());
   appendOptionalPanel(renderWorldThreadPanel());
   appendOptionalPanel(renderInformationPanelShell());
@@ -3297,6 +3361,7 @@ function renderWorldState(
   examCalendarView,
   examRivalView,
   examProcedureView,
+  examinerPanelView,
   studyProfileView,
   worldThreadView,
   worldGeographyView,
@@ -3314,6 +3379,7 @@ function renderWorldState(
   currentExamCalendarView = getExamCalendarView(worldState, examCalendarView);
   currentExamRivalView = getExamRivalView(worldState, examRivalView);
   currentExamProcedureView = getExamProcedureView(worldState, examProcedureView);
+  currentExaminerPanelView = getRouteView(examinerPanelView) || currentExamProcedureView?.examinerPanelView || null;
   currentStudyProfileView = getStudyProfileView(worldState, studyProfileView);
   currentWorldThreadView = getWorldThreadView(worldState, worldThreadView);
   currentWorldGeographyView = getRouteView(worldGeographyView);
@@ -3338,6 +3404,7 @@ function renderPayloadWorldState(payload) {
     payload.examCalendarView,
     payload.examRivalView,
     payload.examProcedureView,
+    payload.examinerPanelView,
     payload.studyProfileView,
     payload.worldThreadView,
     payload.worldGeographyView,
@@ -3720,7 +3787,8 @@ function withExamHistoryFallback(payload) {
     entryPreparation: payload.entryPreparation || latest.entryPreparation,
     examCalendar: payload.examCalendar || latest.examCalendar || latest.entryPreparation?.examCalendar,
     sceneTime: payload.sceneTime || latest.sceneTime,
-    examProcedureView: payload.examProcedureView || latest.examProcedure
+    examProcedureView: payload.examProcedureView || latest.examProcedure,
+    examinerPanelView: payload.examinerPanelView || latest.examinerPanel || latest.examProcedure?.examinerPanelView
   };
 }
 
@@ -4055,16 +4123,23 @@ function renderExamArchive(worldState = currentWorldState) {
       ...entry,
       worldState,
       examProcedureView: entry.examProcedure,
+      examinerPanelView: entry.examinerPanel || entry.examProcedure?.examinerPanelView,
       virtualCandidates: entry.virtualCandidates || [],
       ranking: entry.ranking || []
     };
     const title = `${history.length - index}. ${entry.examName || EXAM_LABELS[entry.level] || "考试"} · ${getExamPayloadDateLabel(archivedPayload)} · ${entry.score?.overall_score ?? "-"}分 · ${entry.score?.rank || "未定等第"}`;
     const content = document.createElement("section");
     content.className = "exam-archive-entry";
+    const archivedExaminerPanel = createExaminerPanelBlock(archivedPayload.examinerPanelView);
     content.append(
       createPlayerExamArchive(archivedPayload),
       createResultSection("五维评分", createScoreDimensions(entry.score), false),
-      createResultSection("监试复核", createAuthenticityChecks(entry.authenticityCheck), false),
+      createResultSection("监试复核", createAuthenticityChecks(entry.authenticityCheck), false)
+    );
+    if (archivedExaminerPanel) {
+      content.appendChild(createResultSection("多考官阅卷", archivedExaminerPanel, false));
+    }
+    content.append(
       createResultSection("同场榜单", createRankingList(archivedPayload), false),
       createResultSection("同场文卷", createCandidateProfiles(archivedPayload), false)
     );
@@ -4153,12 +4228,18 @@ function renderExamResult(payload) {
     ranking.appendChild(item);
   });
 
+  const examinerPanel = createExaminerPanelBlock(payload.examinerPanelView);
   examResult.append(
     summary,
     feedback,
     createResultSection("本场案卷", createPlayerExamArchive(payload), false),
     createResultSection("五维评卷", dimensions, true),
-    createResultSection("监试复核", checks, Boolean(flags.length)),
+    createResultSection("监试复核", checks, Boolean(flags.length))
+  );
+  if (examinerPanel) {
+    examResult.appendChild(createResultSection("多考官阅卷", examinerPanel, true));
+  }
+  examResult.append(
     createResultSection("同场榜单", ranking, true),
     createResultSection("同场文卷", createCandidateProfiles(payload), false)
   );

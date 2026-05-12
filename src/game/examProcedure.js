@@ -6,6 +6,10 @@ const {
   EXAM_PROCEDURE_SCHEMA_VERSION,
   EXAM_SCENE_TO_PROCEDURE_PHASE
 } = require("./examProcedureConfig");
+const {
+  buildExaminerPanelView,
+  summarizeExaminerPanelForPrompt
+} = require("./examReview");
 
 const PHASE_BY_KEY = new Map(EXAM_PROCEDURE_PHASES.map((phase) => [phase.key, phase]));
 const PHASE_INDEX = new Map(EXAM_PROCEDURE_PHASES.map((phase, index) => [phase.key, index]));
@@ -184,6 +188,7 @@ function normalizeProcedure(procedure = {}, activeExam = {}) {
     papers,
     incidents: Array.isArray(procedure.incidents) ? procedure.incidents : buildInitialIncidents(activeExam),
     auditFlags: Array.isArray(procedure.auditFlags) ? procedure.auditFlags : [],
+    examinerPanel: isPlainObject(procedure.examinerPanel) ? procedure.examinerPanel : null,
     resultSummary: cleanText(procedure.resultSummary, "", 160),
     visibleNextActions: Array.isArray(procedure.visibleNextActions) ? procedure.visibleNextActions : [],
     authorityBoundary: "examProcedureView 由服务器从 activeExam、sceneTime、入场准备和交卷复核派生；AI 不得写准考、弥封映射、榜单、名次或官职。"
@@ -285,13 +290,19 @@ function completeExamProcedure(activeExam = {}, options = {}) {
   procedure.rollLifecycle = buildRollLifecycle("closed", {
     publicSummary: "墨卷已交，弥封、誊录、对读、磨勘和放榜均以服务器公开摘要归档。"
   });
-  procedure.auditFlags = buildAuditFlags(options.authenticityCheck, score);
+  procedure.auditFlags = [
+    ...buildAuditFlags(options.authenticityCheck, score),
+    ...(Array.isArray(options.reviewResult?.auditFlags) ? options.reviewResult.auditFlags : [])
+  ].slice(-EXAM_PROCEDURE_LIMITS.maxVisibleAuditFlags);
+  const reviewIncidents = Array.isArray(options.reviewResult?.incidents) ? options.reviewResult.incidents : [];
   procedure.incidents = [
     ...(Array.isArray(procedure.incidents) ? procedure.incidents : []),
+    ...reviewIncidents,
     createIncident("sealing", "弥封完成", "卷面已弥封，玩家视图不显示姓名映射。"),
     createIncident("transcription", "誊录对读", "朱卷誊录与对读只保留公开结论，不暴露誊录人或内部差错定位。"),
     createIncident("ranking", "榜前磨勘", "服务器结合评分、反作弊和同场排名生成 canonical 榜次。")
   ].slice(-EXAM_PROCEDURE_LIMITS.maxVisibleIncidents);
+  procedure.examinerPanel = buildExaminerPanelView(options.reviewResult?.examinerPanel);
   procedure.papers = (procedure.papers || buildPapers(activeExam.level)).map((paper) => ({
     ...paper,
     status: "completed"
@@ -302,6 +313,7 @@ function completeExamProcedure(activeExam = {}, options = {}) {
   procedure.resultSummary = [
     score.overall_score !== undefined ? `总评${score.overall_score}分` : "",
     playerPlace ? `榜列第${playerPlace}` : "",
+    options.reviewResult?.scoreDelta ? `阅卷复核${options.reviewResult.scoreDelta > 0 ? "加" : "扣"}${Math.abs(options.reviewResult.scoreDelta)}分` : "",
     options.promotionResult?.passed ? `取中${options.promotionResult.rank}` : options.promotionResult?.consequence?.label
   ].filter(Boolean).join("，") || "本场结果已归档。";
   procedure.visibleNextActions = ["查阅榜单", "听取老师复盘", "整理下场准备"];
@@ -340,6 +352,8 @@ function sanitizeProcedureForView(procedure = {}) {
     incidents: incidents.slice(-EXAM_PROCEDURE_LIMITS.maxVisibleIncidents).map((incident) => ({
       type: cleanText(incident.type, "incident", 40),
       label: cleanText(incident.label, "科场记录", 48),
+      severity: cleanText(incident.severity, "info", 24),
+      scoreDelta: incident.scoreDelta === undefined ? 0 : clampNumber(incident.scoreDelta, -20, 20, 0),
       publicSummary: cleanText(incident.publicSummary || incident.detail, "科场记录已脱敏。")
     })),
     auditFlags: auditFlags.slice(-EXAM_PROCEDURE_LIMITS.maxVisibleAuditFlags).map((flag) => ({
@@ -350,6 +364,7 @@ function sanitizeProcedureForView(procedure = {}) {
       penalty: clampNumber(flag.penalty, 0, 100, 0),
       scoreAfterReview: flag.scoreAfterReview === undefined ? null : clampNumber(flag.scoreAfterReview, 0, 100, 0)
     })),
+    examinerPanelView: buildExaminerPanelView(procedure.examinerPanel),
     resultSummary: cleanText(procedure.resultSummary, "", 160),
     visibleNextActions: (Array.isArray(procedure.visibleNextActions) ? procedure.visibleNextActions : [])
       .map((action) => cleanText(action, "", 48))
@@ -419,6 +434,7 @@ function summarizeExamProcedureForPrompt(worldState = {}) {
     rollLifecycle: view.rollLifecycle,
     incidents: view.incidents.slice(-EXAM_PROCEDURE_LIMITS.maxPromptIncidents),
     auditFlags: view.auditFlags.slice(-EXAM_PROCEDURE_LIMITS.maxPromptAuditFlags),
+    examinerPanel: summarizeExaminerPanelForPrompt(view.examinerPanelView),
     authorityBoundary: "prompt 只能读取公开科场流程摘要；不得要求或推断弥封身份映射、考官私心、保结密注、内部审计、模型原始建议、路径或密钥。"
   };
 }

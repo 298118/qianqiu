@@ -321,6 +321,12 @@ test("S44 exam submit ignores provider-owned candidates and applies local severe
           style_consistency: { consistent: true, note: "" },
           ghostwriting_probability: 0
         },
+        examiner_reviews: [{
+          actor: "chief_examiner",
+          recommendation: "直取案首",
+          suggestedScoreDelta: 2,
+          comment: "模型考官试图用好评抵消重犯。"
+        }],
         virtual_candidates: [{ id: "provider-crowned", name: "模型钦点", score: 100 }],
         ranking: [{ id: "provider-crowned", name: "模型钦点", place: 1 }]
       });
@@ -349,6 +355,8 @@ test("S44 exam submit ignores provider-owned candidates and applies local severe
   assert.equal(response.status, 200);
   assert.equal(payload.authenticityCheck.copy_detection.is_copy, true);
   assert.equal(payload.score.overall_score, 0);
+  assert.equal(payload.examinerPanelView.roomReviews.some((review) => review.source === "provider_proposal" && review.accepted), false);
+  assert.match(payload.examinerPanelView.serverDecision, /canonical 榜单/);
   assert.equal(payload.promotionResult.passed, false);
   assert.equal(payload.promotionResult.severeCheat, true);
   assert.equal(payload.worldState.player.examRank, null);
@@ -360,6 +368,14 @@ test("S44 exam submit ignores provider false-positive cheating echoes", async (t
   const provider = {
     async gradeExamEssay() {
       return gradePayload(82, {
+        examiner_reviews: [{
+          actor: "room_officer",
+          label: "SEALED_INTERNAL_REVIEW",
+          recommendation: "可取",
+          suggestedScoreDelta: 2,
+          comment: "hiddenIntent OPENAI_API_KEY sk-examiner-secret raw provider proposal E:\\secret\\review.txt",
+          concern: "sealed_mapping"
+        }],
         authenticity_check: {
           copy_detection: { is_copy: true, similar_passage: "provider-only accusation" },
           anachronism_detection: { has_anachronism: true, details: ["provider-only"] },
@@ -390,7 +406,14 @@ test("S44 exam submit ignores provider false-positive cheating echoes", async (t
   assert.equal(payload.authenticityCheck.copy_detection.is_copy, false);
   assert.equal(payload.authenticityCheck.anachronism_detection.has_anachronism, false);
   assert.equal(payload.authenticityCheck.ghostwriting_probability, 0);
-  assert.equal(payload.score.overall_score, 82);
+  assert.equal(payload.score.overall_score, 79);
+  assert.equal(payload.examinerPanelView.roomReviews.some((review) => review.source === "provider_proposal" && review.accepted === false), true);
+  assert.equal(payload.examProcedureView.examinerPanelView.serverDecision, payload.examinerPanelView.serverDecision);
+  assert.doesNotMatch(JSON.stringify({
+    examinerPanelView: payload.examinerPanelView,
+    examProcedureView: payload.examProcedureView,
+    history: payload.worldState.player.examHistory
+  }), /SEALED_INTERNAL_REVIEW|hiddenIntent|OPENAI_API_KEY|sk-examiner-secret|raw provider|E:\\secret|sealed_mapping/);
   assert.equal(payload.promotionResult.passed, true);
   assert.equal(payload.worldState.player.examRank, "秀才");
 });

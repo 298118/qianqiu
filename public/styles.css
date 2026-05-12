@@ -1103,6 +1103,7 @@ button:disabled {
 .exam-calendar-panel,
 .exam-rival-panel,
 .exam-procedure-panel,
+.examiner-panel-block,
 .study-profile-panel {
   grid-column: 1 / -1;
   display: grid;
@@ -1115,6 +1116,7 @@ button:disabled {
 .exam-calendar-panel > header,
 .exam-rival-panel > header,
 .exam-procedure-panel > header,
+.examiner-panel-block > header,
 .study-profile-panel > header,
 .exam-rival-card header {
   display: flex;
@@ -1127,6 +1129,7 @@ button:disabled {
 .exam-calendar-panel > header strong,
 .exam-rival-panel > header strong,
 .exam-procedure-panel > header strong,
+.examiner-panel-block > header strong,
 .study-profile-panel > header strong {
   color: var(--cinnabar-deep);
   font-size: 0.98rem;
@@ -1135,10 +1138,13 @@ button:disabled {
 .exam-calendar-panel > header span,
 .exam-rival-panel > header span,
 .exam-procedure-panel > header span,
+.examiner-panel-block > header span,
 .study-profile-panel > header span,
 .exam-calendar-notes p,
 .exam-procedure-roll p,
 .exam-procedure-notes p,
+.examiner-score-inputs p,
+.examiner-review p,
 .exam-rival-card p {
   color: var(--muted);
   font-size: 0.8rem;
@@ -1149,6 +1155,8 @@ button:disabled {
 .exam-calendar-grid,
 .exam-rival-grid,
 .exam-procedure-grid,
+.examiner-review-list,
+.examiner-score-inputs,
 .study-profile-meters,
 .study-profile-lists {
   display: grid;
@@ -1162,6 +1170,7 @@ button:disabled {
 .exam-procedure-grid > div,
 .exam-procedure-roll,
 .exam-procedure-notes,
+.examiner-review,
 .study-profile-plan,
 .study-profile-advice,
 .study-profile-feedback,
@@ -1180,6 +1189,8 @@ button:disabled {
 .exam-rival-card,
 .exam-procedure-roll,
 .exam-procedure-notes,
+.examiner-panel-block,
+.examiner-review,
 .study-profile-plan,
 .study-profile-advice,
 .study-profile-feedback,
@@ -1194,6 +1205,8 @@ button:disabled {
 .exam-rival-card p,
 .exam-procedure-roll p,
 .exam-procedure-notes p,
+.examiner-score-inputs p,
+.examiner-review p,
 .study-profile-plan p,
 .study-profile-plan li,
 .study-profile-advice p,
@@ -1208,6 +1221,7 @@ button:disabled {
 .study-profile-feedback strong,
 .exam-procedure-roll strong,
 .exam-procedure-notes strong,
+.examiner-review strong,
 .study-profile-network strong,
 .study-profile-practice strong {
   color: var(--cinnabar-deep);
@@ -1260,6 +1274,32 @@ button:disabled {
   color: var(--bronze);
 }
 
+.examiner-panel-block {
+  align-content: start;
+}
+
+.examiner-panel-compact {
+  padding-top: 8px;
+  border-top: 1px solid rgba(54, 39, 27, 0.12);
+}
+
+.examiner-score-inputs {
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+}
+
+.examiner-review[data-accepted="false"] {
+  border-color: rgba(155, 47, 34, 0.22);
+  background: rgba(155, 47, 34, 0.06);
+}
+
+.examiner-boundary {
+  margin: 0;
+  color: var(--bronze);
+  font-size: 0.76rem;
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+}
+
 .exam-rival-card header span {
   flex: 0 0 auto;
   color: var(--bronze);
@@ -1288,6 +1328,7 @@ button:disabled {
   .scholar-panel .study-profile-panel,
   .scholar-panel .exam-rival-panel,
   .scholar-panel .exam-procedure-panel,
+  .scholar-panel .examiner-panel-block,
   .scholar-panel .active-request-panel,
   .scholar-panel .official-career-panel {
     grid-column: span 2;

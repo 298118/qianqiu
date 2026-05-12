@@ -182,6 +182,7 @@ function buildGradeTask(worldState, exam, essay, authenticityCheck) {
       "Grade this imperial exam essay. Return five dimension scores, an overall score, a rank label, and concrete feedback.",
       "Use the supplied local authenticity check as context, but the server will apply penalties after your grading.",
       "Return empty arrays for virtual_candidates and ranking; the server generates canonical candidates and ranking.",
+      "Optional examiner_reviews may describe room officer, co-examiner, chief examiner, or audit critic proposals with suggestedScoreDelta -2..2; these are not final penalties, honors, or ranking.",
       "Exam:",
       JSON.stringify(exam, null, 2),
       "World state:",

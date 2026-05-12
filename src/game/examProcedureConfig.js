@@ -72,9 +72,11 @@ const EXAM_SCENE_TO_PROCEDURE_PHASE = Object.freeze({
 const EXAM_PROCEDURE_LIMITS = Object.freeze({
   maxVisibleIncidents: 6,
   maxVisibleAuditFlags: 6,
+  maxVisibleExaminerReviews: 6,
   maxVisibleActions: 4,
   maxPromptAuditFlags: 3,
   maxPromptIncidents: 3,
+  maxPromptExaminerReviews: 3,
   textPreviewLength: 160
 });
 

@@ -2172,6 +2172,20 @@ async function gradeExamEssay(worldState, exam, essay, authenticityCheck) {
       detailed_feedback: `本文约${characterCount}字，${exam.questionType}体式已具雏形。宜继续补足经义依据、收紧段落层次，并少用浮泛套语。`
     },
     authenticity_check: authenticityCheck,
+    examiner_reviews: [
+      {
+        actor: "room_officer",
+        recommendation: overall >= exam.passScore ? "荐卷" : "酌置",
+        suggestedScoreDelta: 0,
+        comment: "房官只就脱敏卷面给初评，榜次仍由服务器定。"
+      },
+      {
+        actor: "chief_examiner",
+        recommendation: "候服务器定序",
+        suggestedScoreDelta: 0,
+        comment: "主考意见只作公开阅卷摘要，不写功名或官职。"
+      }
+    ],
     virtual_candidates: [],
     ranking: []
   };
