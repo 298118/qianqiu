@@ -9,6 +9,7 @@ const { createInitialWorldThreadState } = require("./worldThreads");
 const { createInitialOfficialPostingsState } = require("./officialPostings");
 const { createInitialStudyProfile } = require("./studyProfile");
 const { createInitialExamHonorLedger } = require("./examHonors");
+const { createInitialAppointmentTrackLedger } = require("./appointmentTracks");
 const { NUMERIC_RANGES, clamp } = require("./stateRules");
 
 const ROLE_LABELS = {
@@ -111,6 +112,11 @@ function getRoleStats(role) {
   };
 }
 
+function cleanInitialPublicText(value, maxLength = 80) {
+  if (typeof value !== "string") return "";
+  return value.trim().replace(/\s+/g, " ").slice(0, maxLength);
+}
+
 function createUnsupportedRoleError(role) {
   const err = new Error(`Unsupported role. Allowed roles: ${ALLOWED_ROLES.join(", ")}`);
   err.statusCode = 400;
@@ -190,6 +196,7 @@ function createInitialState(input = {}) {
   const playerName = (input.playerName || "未定").trim() || "未定";
   const dynasty = (input.dynasty || "明").trim() || "明";
   const year = clampInitialYear(input.year);
+  const nativePlace = cleanInitialPublicText(input.nativePlace || input.hometown || input.origin);
 
   const worldState = {
     sessionId: randomUUID(),
@@ -216,6 +223,7 @@ function createInitialState(input = {}) {
     eventHistory: [],
     activeExam: null,
     studyProfile: null,
+    appointmentTrack: null,
     examCalendar: createInitialExamCalendar(),
     activeNpcRequest: null,
     longTermEvents: {
@@ -267,13 +275,15 @@ function createInitialState(input = {}) {
     },
     setup: {
       background: input.background || "",
-      customSetting: input.customSetting || ""
+      customSetting: input.customSetting || "",
+      nativePlace
     },
     player: {
       id: "P1",
       role,
       roleLabel: ROLE_LABELS[role] || role,
       name: playerName,
+      nativePlace,
       health: 100,
       gold: 10,
       examRank: null,
@@ -299,6 +309,7 @@ function createInitialState(input = {}) {
   worldState.worldPeople = createInitialWorldPeopleState(worldState);
   worldState.studyProfile = createInitialStudyProfile(worldState);
   worldState.examHonorLedger = createInitialExamHonorLedger(worldState);
+  worldState.appointmentTrack = createInitialAppointmentTrackLedger(worldState);
   return worldState;
 }
 

@@ -37,6 +37,11 @@ const {
   resolveExamHonors
 } = require("../game/examHonors");
 const { resolveExamNetwork } = require("../game/examNetworks");
+const {
+  buildAppointmentTrackView,
+  ensureAppointmentTrackState,
+  resolveInitialAppointmentTrack
+} = require("../game/appointmentTracks");
 const { buildRelationshipInspectionView, ensureRelationshipLedger } = require("../game/relationships");
 const { buildActiveNpcRequestView } = require("../game/activeRequests");
 const { buildLongTermEventView, ensureLongTermEventState } = require("../game/longTermEvents");
@@ -104,6 +109,7 @@ function toExamPayload(worldState) {
     examProcedureView: buildExamProcedureView(worldState),
     examinerPanelView: buildExaminerPanelView(activeExam.procedure?.examinerPanel),
     examHonorView: buildExamHonorView(worldState),
+    appointmentTrackView: buildAppointmentTrackView(worldState),
     studyProfileView: buildStudyProfileView(worldState),
     relationshipView: buildRelationshipInspectionView(worldState),
     activeNpcRequestView: buildActiveNpcRequestView(worldState),
@@ -151,6 +157,7 @@ function ensureCommonState(worldState) {
   ensureExamCalendarState(worldState);
   ensureStudyProfileState(worldState);
   ensureExamHonorLedgerState(worldState);
+  ensureAppointmentTrackState(worldState);
   ensureLongTermEventState(worldState);
   ensureOfficialCareerState(worldState);
   ensureRoleWorldCouplingState(worldState);
@@ -426,6 +433,16 @@ router.post("/submit", async (req, res, next) => {
         promotionResult,
         examHonor
       });
+      const appointmentTrack = resolveInitialAppointmentTrack({
+        worldState,
+        activeExam,
+        exam,
+        ranking,
+        promotionResult,
+        examHonor,
+        examNetwork,
+        officialPostingsView: buildOfficialPostingsView(worldState)
+      });
       const sceneTime = markExamSceneSubmitted(activeExam, worldState);
       const examProcedure = completeExamProcedure(activeExam, {
         score,
@@ -453,6 +470,7 @@ router.post("/submit", async (req, res, next) => {
         examinerPanel: reviewResult.examinerPanel,
         examHonor,
         examNetwork,
+        appointmentTrack,
         virtualCandidates,
         ranking,
         promotionResult,
@@ -488,6 +506,7 @@ router.post("/submit", async (req, res, next) => {
         ranking,
         honorResult,
         examNetwork,
+        appointmentTrack,
         provider
       }));
 
@@ -516,6 +535,7 @@ router.post("/submit", async (req, res, next) => {
         examProcedureView: buildExamProcedureView(worldState, { procedure: examProcedure }),
         examinerPanelView: reviewResult.examinerPanel,
         examHonorView: honorResult.examHonorView,
+        appointmentTrackView: buildAppointmentTrackView(worldState),
         studyProfileView: buildStudyProfileView(worldState),
         examCalendarView: buildExamCalendarView(worldState),
         examRivalView: buildExamRivalView(worldState),

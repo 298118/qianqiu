@@ -58,6 +58,17 @@ test("createInitialState clamps initial years to state boundaries", () => {
   assert.equal(createInitialState({ tenDayPeriod: 3 }).tenDayPeriod, 1);
 });
 
+test("createInitialState stores public native place for appointment avoidance", () => {
+  const worldState = createInitialState({
+    playerName: "籍贯测试",
+    role: "scholar",
+    nativePlace: " 苏州府 "
+  });
+
+  assert.equal(worldState.player.nativePlace, "苏州府");
+  assert.equal(worldState.setup.nativePlace, "苏州府");
+});
+
 test("POST /api/game/start rejects unsupported role input with a 400 response", async (t) => {
   const server = createTestServer();
   t.after(server.close);

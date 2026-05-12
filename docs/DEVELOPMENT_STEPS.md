@@ -113,7 +113,7 @@
 | S68.5 | DONE | 科场事件与多考官阅卷：夹带、病倒、誊录误差、考官偏好、房官/同考官/主考官 proposal 和服务器 ranking/处罚 | 2026-05-12 | Codex / 子代理只读审阅 / 子代理复审 | 9002bc2 |
 | S69.1 | DONE | 榜单与名次细化：解元、会元、状元、榜眼、探花、传胪、二甲/三甲次序和服务器 canonical ranking | 2026-05-12 | Codex / 子代理只读复审 | 本次提交 |
 | S69.2 | DONE | 同年、座师与考官网络：房官、主考、座师、门生、同年关系进入可见关系和事件档案 | 2026-05-12 | Codex / 子代理调研与复审尝试超时 | 本次提交 |
-| S69.3 | TODO | 授官路径深化：一甲翰林、二甲馆选/庶吉士/观政、三甲铨选/部属/外放/候缺和籍贯回避 resolver | - | - | S69.2 后 |
+| S69.3 | DONE | 授官路径深化：一甲翰林、二甲馆选/庶吉士/观政、三甲铨选/部属/外放/候缺和籍贯回避 resolver | 2026-05-12 | Codex / 子代理调研与只读复审 | 本次提交 |
 | S69.4 | TODO | 浏览器科举档案面板：读书簿、科场档案、榜单、同年考官、授官轨迹和 hidden-token smoke | - | - | S69.3 后 |
 | S69.5 | TODO | Provider/Mock 验收：真实 provider 出题/评卷/点评 smoke、Mock deterministic 路径和越权红队 | - | - | S69.4 后 |
 | S69.6 | TODO | S68-S69 归档与交接：科举深化实现归档、brief/context/验收更新和 S70 衔接建议 | - | - | S69.5 后 |
@@ -220,6 +220,49 @@ S71 详细规划见 [DATABASE_GAMEPLAY_RESOLVER_ROADMAP.md](DATABASE_GAMEPLAY_RE
 4. S71.9-S71.12：接入多 actor 场景、NPC 记忆和 AI 调动审计面板，最后做 dual-mode、Mock/no-key、browser 和 provider smoke 归档。
 
 ## 8. 进度记录
+
+### 2026-05-12
+
+工具：Codex、子代理只读调研与复审。
+
+步骤：S69.3 授官路径深化。
+
+提交：本次提交。
+
+完成：
+
+- 新增 `src/game/appointmentTracksConfig.js` 与 `src/game/appointmentTracks.js`，建立 server-owned `worldState.appointmentTrack`、`appointmentTrackView`、安全 `examHistory[].appointmentTrack` 快照和 capped prompt `appointmentTrack` 摘要。
+- `/api/exam/submit` 在 canonical ranking、`examHonors`、`examNetworks` 和 `officialPostingsView` 完成后运行 `resolveInitialAppointmentTrack()`：一甲第一名初授翰林院修撰，一甲二三名初授翰林院编修，二甲优先馆选庶吉士并保留观政/部属候选，三甲按铨选外放、部属候补或候缺观政处理。
+- 授官 resolver 读取公开籍贯与外任辖区做籍贯回避，选中结果写入 `player.role` / `player.officeTitle` / `officialCareer.currentPosting`，并向官场履历追加“初授”记录；旧三档 promotion 映射会被服务器最终授官结果覆盖。
+- 事件档案新增 `appointment_result` 公开条目，审计公开摘要记录 `appointment_resolver` 结果，`stateRules` 把 `appointmentTrack` 列为 server-owned，prompt pack 明确吏部/皇帝/provider 只能提授官倾向，不能绕过官缺、回避、甲第或服务器任免。
+- 根据只读复审 P2 处理补丁：开局 `nativePlace` / `hometown` / `origin` 会写入公开 `player.nativePlace` 和 `setup.nativePlace`，授官清洗遇到 hidden/raw/provider/prompt/key/path 标签时整段降级并覆盖 `data/sessions` 与 `data\\sessions` 相对路径，制度契约明确当前 `ministryProposal` / `emperorSignal` 是服务器合成摘要，未来 AI actor 仍 proposal-only。
+- 同步 README、architecture、brief、AI 控制矩阵、科举制度契约、科举深化路线图和共享上下文，把下一步切到 S69.4 浏览器科举档案面板。
+
+验证：
+
+- 已通过：`node --check src/game/appointmentTracksConfig.js`、`node --check src/game/appointmentTracks.js`、`node --check src/routes/exam.js`、`node --check src/routes/game.js`、`node --check src/ai/promptContextAssembler.js`、`node --check src/game/eventArchive.js`、`node --check src/game/audit.js`、`node --check test/appointmentTracks.test.js`、`node --check test/appointmentTracksRoute.test.js`
+- 已通过：`node --test test/appointmentTracks.test.js test/appointmentTracksRoute.test.js`，5/5。
+- 已通过：`node --test test/stateRules.test.js test/promptContextAssembler.test.js test/eventArchive.test.js test/aiControlRedTeam.test.js`，34/34。
+- 已通过：`node --test test/officialCareer.test.js test/officialPostings.test.js test/examHonors.test.js test/examHonorsRoute.test.js test/examNetworks.test.js`，22/22。
+- 已通过：`node --test test/prompts.test.js test/aiSchemas.test.js test/publicAppSource.test.js test/gameTurnOfficialCareer.test.js`，40/40。
+- 已通过：`node --test test/appointmentTracks.test.js test/appointmentTracksRoute.test.js test/examHonorsRoute.test.js test/examNetworks.test.js test/officialCareer.test.js test/officialPostings.test.js test/stateRules.test.js test/promptContextAssembler.test.js test/eventArchive.test.js test/aiControlRedTeam.test.js test/prompts.test.js test/aiSchemas.test.js test/publicAppSource.test.js test/gameTurnOfficialCareer.test.js`，97/97。
+- 已通过：`node --check src/game/appointmentTracks.js`、`node --check src/game/initialState.js`、`node --check test/appointmentTracks.test.js`、`node --check test/gameStartRole.test.js`。
+- 已通过：`node --test test/appointmentTracks.test.js test/gameStartRole.test.js test/appointmentTracksRoute.test.js`，12/12。
+- 已通过：`node --test test/appointmentTracks.test.js test/appointmentTracksRoute.test.js test/gameStartRole.test.js test/examHonorsRoute.test.js test/examNetworks.test.js test/officialCareer.test.js test/officialPostings.test.js test/stateRules.test.js test/promptContextAssembler.test.js test/eventArchive.test.js test/aiControlRedTeam.test.js test/prompts.test.js test/aiSchemas.test.js test/publicAppSource.test.js test/gameTurnOfficialCareer.test.js`，104/104。
+- 已通过：`npm run check:docs-governance`。
+- 已通过：`git diff --check`。
+- 全量 `npm test` 在本机并发运行两次未全绿：第一次 556/557，通过后只剩 S67 `fixtureGenerationMs` 性能阈值 6917ms > 5000ms；第二次 555/557，剩同一性能阈值 8202ms > 5000ms，另有 `gameTurnTick` 完整书生路径 `fetch failed: bad port`。随后单独重跑失败点已通过：`node --test test/dualModeAcceptanceScript.test.js --test-name-pattern "dual-mode S67 scale regression records large fixture"` 实际执行该文件 6/6；`node --test test/gameTurnTick.test.js --test-name-pattern "complete scholar exam path still works after world tick integration"` 实际执行该文件 8/8。
+
+风险/遗留：
+
+- S69.3 只落服务器初授轨迹和 route/prompt/event 安全投影；浏览器尚未把读书簿、科场档案、榜单、同年考官和授官轨迹整合为完整科举档案面板，留给 S69.4。
+- 当前不保存 raw 授官 proposal、hidden 卷件映射、考官 hidden intent、保结密注、内部审计、完整 prompt、本地路径或 key；若后续保存 hidden 科场私档，仍必须先设计 API redaction 与角色视野分层。
+- SQLite 科举派生表 parity 和更大真实 provider smoke 仍留给 S69.5/S69.6 或后续数据库专项。
+- 全量 `npm test` 在并发全套下仍有既有性能/端口抖动风险；本轮相关功能、权限、prompt、route 和两个失败点的单独回归均已通过。
+
+下一步：
+
+- 启动 S69.4：浏览器科举档案面板。前端只读 route view 和历史安全快照，不扫描 raw `worldState`、raw audit、SQLite raw table、prompt 或 provider proposal。
 
 ### 2026-05-12
 

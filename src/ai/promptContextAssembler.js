@@ -19,6 +19,7 @@ const {
 const { summarizeExamProcedureForPrompt } = require("../game/examProcedure");
 const { summarizeExamHonorsForPrompt } = require("../game/examHonors");
 const { summarizeExamNetworkForPrompt } = require("../game/examNetworks");
+const { summarizeAppointmentTrackForPrompt } = require("../game/appointmentTracks");
 const { buildHistoricalEventRetrievalRows } = require("../game/historicalEventArchive");
 const {
   buildIntelligenceRumorRetrievalRows,
@@ -1396,6 +1397,7 @@ function assemblePromptContext(worldState = {}, options = {}) {
     examProcedure: summarizeExamProcedureForPrompt(worldState),
     examHonors: summarizeExamHonorsForPrompt(worldState),
     examNetwork: summarizeExamNetworkForPrompt(worldState),
+    appointmentTrack: summarizeAppointmentTrackForPrompt(worldState),
     examCalendar: summarizeExamCalendarForPrompt(worldState),
     longTermEvents: summarizeLongTermEventsForPrompt(worldState),
     worldGeography: summarizeWorldGeographyForPrompt(worldState),

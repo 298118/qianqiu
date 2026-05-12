@@ -102,6 +102,21 @@ test("event archive view merges visible sources into capped public items", () =>
     promotionResult: { passed: true, rank: "童生" },
     authenticityCheck: { severeCheat: false }
   }];
+  worldState.appointmentTrack.records = [{
+    id: "appointment-archive",
+    level: "palace_exam",
+    examName: "殿试",
+    date: { year: 1644, month: 8, tenDayPeriod: 2, turnCount: 9 },
+    palaceRank: "一甲",
+    honorTitle: "状元",
+    publicSummary: "殿试后，服务器定一甲翰林修撰，初授翰林院修撰。",
+    serverDecision: {
+      trackKey: "top_hanlin_compiler",
+      trackLabel: "一甲翰林修撰",
+      officeTitle: "翰林院修撰",
+      bureauId: "hanlin_academy"
+    }
+  }];
 
   const view = buildEventArchiveView(worldState, { pageSize: 50 });
   const serialized = JSON.stringify(view);
@@ -145,6 +160,11 @@ test("event archive view merges visible sources into capped public items", () =>
     /财政|粮价|盐漕|赈济|债务/.test(item.title)
   ));
   assert.ok(view.items.some((item) => item.sourceType === "exam_record" && item.title === "童生试"));
+  assert.ok(view.items.some((item) =>
+    item.sourceType === "appointment_result" &&
+    item.sourceLabel === "授官" &&
+    item.title.includes("翰林院修撰")
+  ));
   assert.deepEqual(view.items.map((item) => item.turn), view.items.map((item) => item.turn).sort((a, b) => b - a));
   assert.equal(serialized.includes("hiddenNotes"), false);
   assert.equal(serialized.includes("sk-proj-secret-archive"), false);

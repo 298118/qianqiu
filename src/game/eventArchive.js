@@ -45,7 +45,8 @@ const SOURCE_LABELS = {
   historical_event_chain: "事件链",
   intelligence_rumor: "情报",
   exam_record: "科场",
-  exam_network: "科场人脉"
+  exam_network: "科场人脉",
+  appointment_result: "授官"
 };
 
 const STATUS_LABELS = {
@@ -454,6 +455,39 @@ function collectExamNetworkItems(worldState, items) {
     });
 }
 
+function collectAppointmentTrackItems(worldState, items) {
+  const records = Array.isArray(worldState.appointmentTrack?.records)
+    ? worldState.appointmentTrack.records
+    : [];
+  records
+    .slice(-MAX_EXAM_RECORDS)
+    .forEach((record) => {
+      const decision = record.serverDecision || {};
+      addItem(items, worldState, {
+        sourceType: "appointment_result",
+        kind: decision.trackKey || record.palaceRank || "appointment_track",
+        title: decision.officeTitle ? `初授${decision.officeTitle}` : "殿试授官",
+        summary: record.publicSummary ||
+          `${record.examName || "殿试"}后，服务器归档授官路径。`,
+        date: record.date || worldState,
+        turn: record.date?.turnCount ?? currentTurn(worldState),
+        status: "recorded",
+        riskLabel: record.avoidanceChecks?.some?.((check) => check.status === "blocked")
+          ? "回避改拟"
+          : "",
+        relatedLabels: [
+          record.palaceRank,
+          record.honorTitle,
+          decision.trackLabel,
+          decision.bureauId,
+          ...(Array.isArray(record.avoidanceChecks)
+            ? record.avoidanceChecks.map((check) => check.status === "blocked" ? "籍贯回避" : "")
+            : [])
+        ].filter(Boolean)
+      });
+    });
+}
+
 function sortArchiveItems(first, second) {
   if (second.turn !== first.turn) return second.turn - first.turn;
   if (second.year !== first.year) return second.year - first.year;
@@ -493,6 +527,7 @@ function buildEventArchiveIndexItems(worldState = {}) {
   collectWorldThreadItems(worldState, items, worldThreadView);
   collectLongTermItems(worldState, items, longTermEventView);
   collectOfficialItems(worldState, items, officialCareerView);
+  collectAppointmentTrackItems(worldState, items);
   collectOfficialAssessmentItems(worldState, items, officialPostingsView);
   collectLocalDocketItems(worldState, items, localAffairsDocketView);
   collectMilitaryDiplomacyItems(worldState, items, militaryDiplomacyView);

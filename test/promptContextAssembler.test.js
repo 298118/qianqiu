@@ -133,6 +133,42 @@ test("prompt context includes capped exam network summary without hidden relatio
   assert.match(serialized, /不得要求模型创造隐藏考官关系/);
 });
 
+test("prompt context includes capped appointment track summary without appointment authority leak", () => {
+  const worldState = createInitialState({ role: "official", playerName: "Appointment Prompt Tester" });
+  worldState.appointmentTrack = {
+    schemaVersion: 1,
+    records: [{
+      id: "appointment-safe",
+      level: "palace_exam",
+      examName: "殿试",
+      palaceRank: "一甲",
+      palacePlace: 1,
+      honorTitle: "状元",
+      candidateTracks: [],
+      avoidanceChecks: [{
+        trackKey: "top_hanlin_compiler",
+        officeTitle: "翰林院修撰",
+        status: "not_applicable",
+        publicSummary: "馆阁路径不触发外任回避。"
+      }],
+      serverDecision: {
+        trackKey: "top_hanlin_compiler",
+        trackLabel: "一甲翰林修撰",
+        officeTitle: "翰林院修撰",
+        bureauId: "hanlin_academy"
+      },
+      publicSummary: "SEALED_APPOINTMENT_PROMPT raw provider sk-test-secret E:\\secret\\appointment.txt"
+    }]
+  };
+
+  const context = assemblePromptContext(worldState, { task: "world_turn", playerAction: "整理初授谢恩表" });
+  const serialized = JSON.stringify(context.appointmentTrack);
+
+  assert.match(serialized, /一甲翰林修撰|翰林院修撰|状元/);
+  assert.doesNotMatch(serialized, /SEALED_APPOINTMENT_PROMPT|raw provider|sk-test-secret|E:\\secret/);
+  assert.match(serialized, /不得要求模型绕过官缺/);
+});
+
 test("prompt context assembler filters hidden rows, hidden refs, raw ledgers, and raw audit-like fields", () => {
   const worldState = createInitialState({ role: "scholar", playerName: "Hidden Context Tester" });
   worldState.audit = { ai_change_proposals: "SEALED_AUDIT_PAYLOAD" };

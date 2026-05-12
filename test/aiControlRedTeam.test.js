@@ -161,6 +161,7 @@ test("S44 ordinary turn drops mixed provider overreach while applying safe sugge
           turnCount: 99,
           activeExam: { level: "palace_exam", status: "writing" },
           examCalendar: { rivals: [{ id: "provider-rival" }] },
+          appointmentTrack: { records: [{ id: "provider-appointment", serverDecision: { officeTitle: "内阁大学士" } }] },
           activeNpcRequest: { id: "provider-request", hiddenIntent: "provider-hidden-overreach" },
           longTermEvents: { queue: [{ id: "provider-event", hiddenNotes: ["provider-hidden-overreach"] }] },
           officialCareer: {
@@ -293,6 +294,7 @@ test("S44 ordinary turn drops mixed provider overreach while applying safe sugge
   assert.equal(payload.worldState.eventHistory.includes("provider replacement"), false);
   assert.ok(payload.worldState.eventHistory.includes("provider safe event"));
   assert.equal(serializedState.includes("provider-forged"), false);
+  assert.equal(serializedState.includes("provider-appointment"), false);
   assert.equal(serializedState.includes("provider-request"), false);
   assert.equal(serializedState.includes("provider-forged-country"), false);
   assert.equal(serializedState.includes("provider-forged-entity"), false);

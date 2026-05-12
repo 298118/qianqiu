@@ -464,6 +464,7 @@ function createExamGradeAuditRecords({
   ranking,
   honorResult,
   examNetwork,
+  appointmentTrack,
   provider
 }) {
   const event = createAuditEvent(worldState, {
@@ -483,6 +484,7 @@ function createExamGradeAuditRecords({
       promotionRank: promotionResult?.rank || null,
       honorTitle: honorResult?.currentHonor?.title || null,
       achievementTitle: honorResult?.currentAchievement?.title || null,
+      appointmentOfficeTitle: appointmentTrack?.serverDecision?.officeTitle || null,
       cohortRecorded: Boolean(cohortResult)
     }
   });
@@ -541,6 +543,26 @@ function createExamGradeAuditRecords({
         : []
     }
   })] : [];
+  const appointmentEvents = appointmentTrack ? [createAuditEvent(worldState, {
+    sceneCadence: "exam_submit",
+    sourceSystem: "appointment_resolver",
+    eventType: "appointment_result",
+    visibility: "public",
+    summary: safePreviewText(appointmentTrack.publicSummary || "殿试后授官路径由服务器归档。"),
+    related: {
+      examLevel: appointmentTrack.level || activeExam.level,
+      palaceRank: appointmentTrack.palaceRank || null,
+      trackLabel: appointmentTrack.serverDecision?.trackLabel || null,
+      officeTitle: appointmentTrack.serverDecision?.officeTitle || null
+    },
+    appliedChanges: {
+      officeTitle: appointmentTrack.serverDecision?.officeTitle || null,
+      bureauId: appointmentTrack.serverDecision?.bureauId || null,
+      avoidanceCheckCount: Array.isArray(appointmentTrack.avoidanceChecks)
+        ? appointmentTrack.avoidanceChecks.length
+        : 0
+    }
+  })] : [];
   const modelScore = grade?.score?.overall_score ?? null;
   const rejectedReasons = [];
   if (modelScore !== null && modelScore !== score?.overall_score) {
@@ -557,7 +579,7 @@ function createExamGradeAuditRecords({
   }
 
   return {
-    auditEvents: [event, ...honorEvents, ...networkEvents],
+    auditEvents: [event, ...honorEvents, ...networkEvents, ...appointmentEvents],
     aiProposals: [{
       ...baseAuditFields(worldState, "exam_submit"),
       provider: providerAuditName(provider),
@@ -580,13 +602,16 @@ function createExamGradeAuditRecords({
         promotionRank: promotionResult?.rank || null,
         honorTitle: honorResult?.currentHonor?.title || null,
         achievementTitle: honorResult?.currentAchievement?.title || null,
-        examNetworkSummary: previewText(examNetwork?.publicSummary)
+        examNetworkSummary: previewText(examNetwork?.publicSummary),
+        appointmentTrackSummary: previewText(appointmentTrack?.publicSummary),
+        appointmentOfficeTitle: appointmentTrack?.serverDecision?.officeTitle || null
       },
       rejectedReasons,
       appliedEventIds: [
         event.eventId,
         ...honorEvents.map((honorEvent) => honorEvent.eventId),
-        ...networkEvents.map((networkEvent) => networkEvent.eventId)
+        ...networkEvents.map((networkEvent) => networkEvent.eventId),
+        ...appointmentEvents.map((appointmentEvent) => appointmentEvent.eventId)
       ]
     }]
   };
