@@ -28,6 +28,14 @@ const {
 } = require("../game/studyProfile");
 const { applyExamPromotion } = require("../game/promotions");
 const { resolveExamReview } = require("../game/examReview");
+const {
+  applyCanonicalScoreRank,
+  buildExamHonorSnapshot,
+  buildExamHonorView,
+  decorateExamRanking,
+  ensureExamHonorLedgerState,
+  resolveExamHonors
+} = require("../game/examHonors");
 const { buildRelationshipInspectionView, ensureRelationshipLedger } = require("../game/relationships");
 const { buildActiveNpcRequestView } = require("../game/activeRequests");
 const { buildLongTermEventView, ensureLongTermEventState } = require("../game/longTermEvents");
@@ -94,6 +102,7 @@ function toExamPayload(worldState) {
     examRivalView: buildExamRivalView(worldState),
     examProcedureView: buildExamProcedureView(worldState),
     examinerPanelView: buildExaminerPanelView(activeExam.procedure?.examinerPanel),
+    examHonorView: buildExamHonorView(worldState),
     studyProfileView: buildStudyProfileView(worldState),
     relationshipView: buildRelationshipInspectionView(worldState),
     activeNpcRequestView: buildActiveNpcRequestView(worldState),
@@ -128,16 +137,19 @@ function fail(statusCode, message) {
 
 function summarizeResultEvent(worldState, activeExam, score, ranking, promotionResult) {
   const playerPlace = ranking.find((entry) => entry.isPlayer)?.place || ranking.length;
+  const latestHonor = worldState.examHonorLedger?.honors?.at?.(-1);
+  const honorText = latestHonor?.level === activeExam.level ? `，${latestHonor.title}` : "";
   const outcome = promotionResult.passed
     ? `取中${promotionResult.rank}`
     : promotionResult.consequence?.label || "未能取中";
-  return `${worldState.player.name}交${activeExam.examName}卷，得${score.overall_score}分，榜列第${playerPlace}，${outcome}。`;
+  return `${worldState.player.name}交${activeExam.examName}卷，得${score.overall_score}分，榜列第${playerPlace}${honorText}，${outcome}。`;
 }
 
 function ensureCommonState(worldState) {
   ensureRelationshipLedger(worldState);
   ensureExamCalendarState(worldState);
   ensureStudyProfileState(worldState);
+  ensureExamHonorLedgerState(worldState);
   ensureLongTermEventState(worldState);
   ensureOfficialCareerState(worldState);
   ensureRoleWorldCouplingState(worldState);
@@ -371,27 +383,39 @@ router.post("/submit", async (req, res, next) => {
         score: scoreBeforeExaminerReview,
         authenticityCheck
       });
-      const score = reviewResult.score;
+      const scoreForRanking = reviewResult.score;
       const persistentCandidateSeeds = selectPersistentCandidateSeeds(worldState, exam);
       const virtualCandidates = preparePersistentExamCohort(
         worldState,
         exam,
-        generateVirtualCandidates(worldState, exam, score.overall_score, {
+        generateVirtualCandidates(worldState, exam, scoreForRanking.overall_score, {
           persistentCandidates: persistentCandidateSeeds
         })
       );
-      const ranking = buildRanking(
-        {
-          id: "player",
-          name: worldState.player.name,
-          origin: worldState.dynasty,
-          background: "本局玩家",
-          score,
-          isPlayer: true
-        },
-        virtualCandidates
-      );
-      const promotionResult = applyExamPromotion(worldState, exam, score, authenticityCheck);
+      const ranking = decorateExamRanking({
+        exam,
+        ranking: buildRanking(
+          {
+            id: "player",
+            name: worldState.player.name,
+            origin: worldState.dynasty,
+            background: "本局玩家",
+            score: scoreForRanking,
+            isPlayer: true
+          },
+          virtualCandidates
+        )
+      });
+      const score = applyCanonicalScoreRank(scoreForRanking, exam, ranking);
+      const promotionResult = applyExamPromotion(worldState, exam, score, authenticityCheck, { ranking });
+      const honorResult = resolveExamHonors({
+        worldState,
+        activeExam,
+        exam,
+        ranking,
+        promotionResult
+      });
+      const examHonor = buildExamHonorSnapshot(honorResult);
       const cohortResult = recordExamCohortResult(worldState, exam, virtualCandidates, ranking);
       const sceneTime = markExamSceneSubmitted(activeExam, worldState);
       const examProcedure = completeExamProcedure(activeExam, {
@@ -418,6 +442,7 @@ router.post("/submit", async (req, res, next) => {
         scoreBeforeExaminerReview,
         authenticityCheck,
         examinerPanel: reviewResult.examinerPanel,
+        examHonor,
         virtualCandidates,
         ranking,
         promotionResult,
@@ -451,6 +476,7 @@ router.post("/submit", async (req, res, next) => {
         promotionResult,
         cohortResult,
         ranking,
+        honorResult,
         provider
       }));
 
@@ -478,6 +504,7 @@ router.post("/submit", async (req, res, next) => {
         cohortResult,
         examProcedureView: buildExamProcedureView(worldState, { procedure: examProcedure }),
         examinerPanelView: reviewResult.examinerPanel,
+        examHonorView: honorResult.examHonorView,
         studyProfileView: buildStudyProfileView(worldState),
         examCalendarView: buildExamCalendarView(worldState),
         examRivalView: buildExamRivalView(worldState),

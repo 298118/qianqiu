@@ -188,6 +188,7 @@ test("turn schema rejects model attempts to patch ordinary-turn server-owned fie
   const serverOwnedPatches = [
     { activeExam: { level: "child_exam", status: "writing" } },
     { examProcedure: { phase: "closed", hiddenNotes: "provider-forged" } },
+    { examHonorLedger: { honors: [{ title: "模型状元" }] } },
     { officialPostings: { postings: [{ id: "provider-forged-posting", officeId: "ministry_revenue_principal" }] } },
     { roleWorldCoupling: { recentImpacts: [{ kind: "provider-forged" }] } },
     { worldGeography: { countries: [{ id: "provider-forged-country", name: "伪地理" }] } },

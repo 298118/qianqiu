@@ -8,6 +8,7 @@ const { createInitialWorldPeopleState } = require("./worldPeople");
 const { createInitialWorldThreadState } = require("./worldThreads");
 const { createInitialOfficialPostingsState } = require("./officialPostings");
 const { createInitialStudyProfile } = require("./studyProfile");
+const { createInitialExamHonorLedger } = require("./examHonors");
 const { NUMERIC_RANGES, clamp } = require("./stateRules");
 
 const ROLE_LABELS = {
@@ -297,6 +298,7 @@ function createInitialState(input = {}) {
   worldState.relationshipLedger = createInitialRelationshipLedger(worldState);
   worldState.worldPeople = createInitialWorldPeopleState(worldState);
   worldState.studyProfile = createInitialStudyProfile(worldState);
+  worldState.examHonorLedger = createInitialExamHonorLedger(worldState);
   return worldState;
 }
 

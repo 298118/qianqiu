@@ -21,7 +21,7 @@
 - Backend: Node.js + Express，plain JavaScript。
 - AI providers: adapter-based Mock/OpenAI/DeepSeek/MiMo/MiMo+DeepSeek/Anthropic。`AI_PROVIDER=mock` 仍是默认可玩模式；`mimo-deepseek` 只是方法级最小路由，MiMo 负责 start/turn/stream/question，DeepSeek 负责 exam grading。
 - Storage: 默认 JSON session files under `data/sessions/`；可选 `STORAGE_ADAPTER=sqlite` 使用本地 `world_sessions`、audit tables、`geo_*`、`people_*`、`office_*`、`event_archive_index` 和 `prompt_retrieval_index`。SQLite 派生行只从 `world_sessions.world_state_json` 单向修复；raw business/audit rows 不是 route、prompt、browser 或服务器裁决 truth source。
-- Active roadmap: S49-S53、S54-S59、S60-S67 已完成并归档。S68.1 科举制度契约、S68.2 读书账本基础、S68.3 老师/书院/同窗互动、S68.4 科场制度流程与 S68.5 科场事件/多考官阅卷已完成；后续应从 S69.1 榜单与名次细化开始，再推进同年/座师、授官深化和科举档案面板，最后进入 S70 AI prompt pack、工具协议、actor 权限和多 AI 编排。
+- Active roadmap: S49-S53、S54-S59、S60-S67 已完成并归档。S68.1 科举制度契约、S68.2 读书账本基础、S68.3 老师/书院/同窗互动、S68.4 科场制度流程、S68.5 科场事件/多考官阅卷与 S69.1 榜单名次荣誉已完成；后续应从 S69.2 同年、座师与考官网络开始，再推进授官深化和科举档案面板，最后进入 S70 AI prompt pack、工具协议、actor 权限和多 AI 编排。
 - Current local `.env`: 可能含用户提供的 provider keys。`.env` 被 Git 忽略，不能打印或提交。
 
 ## Core Invariants
@@ -48,6 +48,7 @@
 - S68.2-S68.3 的 `studyProfile` / `studyProfileView` 是服务器拥有的读书账本、学业计划、老师点评与书院/同窗互动 projection。普通读书行动可由服务器记入日课；拜师、讲会、同窗互评、小题训练和求保结由服务器更新可见师友关系、老师点评、小题、荐书和 `academyNetwork.sponsorship` 保结稳度；考试提交后按 `player.examHistory`、评分维度和本地复核刷新文卷强弱、老师建议、老师复盘、书目与下旬计划。prompt 只读取 capped `studyProfile` 摘要，浏览器只读 route `studyProfileView`。普通 provider patch 不能写 `studyProfile`、`player.teacher` 或 `player.position`，师承身份、名位文本与关系事实只能由服务器读书/官职 resolver 解析；`teacherFeedbackProposal` 也只能提交文本点评 proposal，不能借读书建议直接授名位、改榜、改官职、创造真实关系或写隐藏事实。
 - S68.4 的 `activeExam.procedure` / `examProcedureView` 是服务器拥有的科场制度流程 projection。入场取题、场内推进和交卷归档会同步童试县试/府试/院试摘要、乡试/会试三场多卷、保结、搜检、号舍、发题、草稿、誊清、交卷、弥封、誊录、对读、磨勘、放榜和归档公开状态；交卷后安全快照进入 `player.examHistory[].examProcedure`。prompt 只读取 capped `examProcedure` 摘要，浏览器只读 route `examProcedureView` 或历史安全快照。普通 provider patch 不能写 `examProcedure`、`activeExam`、卷件生命周期、榜单、名次或官职；当前实现不保存弥封身份映射、保结密注、考官私意、模型原始建议或内部审计，若未来需要 hidden 卷件真值必须先设计 API redaction 与角色视野分层。
 - S68.5 的 `examinerPanelView` 是服务器拥有的科场事件与多考官阅卷 projection。交卷时服务器在本地反作弊后、虚拟考生/榜单/晋级前运行 `resolveExamReview()`，把夹带疑云、号舍病困、誊录误差、房官/同考官/主考官/磨勘 critic 建议和 provider `examiner_reviews` 整理为脱敏公开摘要；只有服务器自身 reviewer delta 和事件 delta 会按配置限幅进入最终 score，provider 考官建议一律未采纳留痕。浏览器考试结果、考试档案和书生面板只读 `examinerPanelView` 或 `examProcedureView.examinerPanelView`，prompt 只读 capped `examinerPanel` 摘要；仍不保存弥封映射、考官 hidden intent、保结 hidden notes、raw proposal、raw audit、本地路径或 key。
+- S69.1 的 `examHonorLedger` / `examHonorView` 是服务器拥有的榜单名次荣誉 projection。交卷时服务器先生成 canonical ranking，再由 `examHonors` 写定解元、会元、状元、榜眼、探花、传胪、二甲/三甲次序和三元及第；殿试 promotion 读取 canonical palace class，考试历史保存安全 `examHonor` 快照。`/api/game/start`、`GET /api/game/state/:sessionId`、普通/流式 `/api/game/turn`、`/api/exam/question` 和 `/api/exam/submit` 都返回 `examHonorView`；prompt 只读 capped `examHonors` 摘要，浏览器只读 route view 或历史快照。provider `ranking`、`virtual_candidates`、`examiner_reviews`、普通 `statePatch`、皇帝/吏部叙事都不能授予荣誉、改甲第、定官职或写 hidden 榜单。
 - S70 工具方向是“模型请求工具、服务器执行工具”。Function calling、Structured Outputs、MCP connector 或未来内部 MCP 只能产生 tool call / proposal / request-adjudication；真正落库由服务器 resolver 和 adapter transaction 完成。
 - S70.1-S70.3 先实现内部 `game_ai_tools` registry；工具定义保持 MCP-friendly，至少包含 `name`、`description`、`inputSchema`、`permission`、`resolver`、`audit`、`cooldown` 和 `mockFallback`。
 
@@ -76,7 +77,7 @@ API:
 Important modules:
 
 - AI adapters/prompts/schemas: `src/ai/`
-- State rules, time, exams, promotions, study profile, official career, relationships, long-term events, world entities/threads: `src/game/`
+- State rules, time, exams, promotions, exam procedure/review/honors, study profile, official career, relationships, long-term events, world entities/threads: `src/game/`
 - Geography, people, official postings, local affairs dockets, military diplomacy, economic fiscal projection, historical event archive, intelligence rumors, event archive, information panel paging, audit public projection: `src/game/worldGeography.js`, `src/game/worldPeople.js`, `src/game/officialPostings.js`, `src/game/localAffairsDockets.js`, `src/game/militaryDiplomacy.js`, `src/game/economicFiscal.js`, `src/game/historicalEventArchive.js`, `src/game/intelligenceRumors.js`, `src/game/eventArchive.js`, `src/game/informationPanelPage.js`, `src/game/auditPublicProjection.js`
 - S60/S62 scale fixture and population helpers: `src/game/worldContentFixtures.js`, `src/game/worldPeoplePopulation.js`
 - Storage facade/adapters and SQLite derived tables: `src/storage/sessionStore.js`, `src/storage/jsonSessionAdapter.js`, `src/storage/sqliteSessionAdapter.js`, `src/storage/sqliteGeographyTables.js`, `src/storage/sqlitePeopleTables.js`, `src/storage/sqliteOfficialPostingTables.js`, `src/storage/sqliteEventArchiveTables.js`, `src/storage/sqlitePromptRetrievalTables.js`
@@ -106,8 +107,8 @@ Important modules:
 
 ## Current Work Note
 
-- 2026-05-12：S68.5 科场事件与多考官阅卷已完成，提交待本次收束。新增 `src/game/examReviewConfig.js` 与 `src/game/examReview.js`，在交卷时由服务器生成夹带疑云、号舍病困、誊录误差、房官/同考官/主考官/磨勘 critic 建议，并把 provider `examiner_reviews` 作为脱敏未采纳 proposal 留痕。`/api/exam/submit` 现在先应用本地反作弊，再运行 `resolveExamReview()` 得到最终 score，随后才生成虚拟考生、canonical ranking、晋级/处罚和 `player.examHistory`；`scoreBeforeExaminerReview` 与 `examinerPanel` 进入历史档案。`examProcedureView` 归档时带入公开 incident/audit/examinerPanel 摘要，`summarizeExamProcedureForPrompt()` 只给 provider capped `examinerPanel` 摘要；`/api/game/start`、`/api/game/state/:sessionId`、普通/流式 `/api/game/turn`、`/api/exam/question` 和 `/api/exam/submit` 返回 `examinerPanelView`。浏览器考试结果、考试档案与书生面板新增“多考官阅卷”展示，只读 route view。已补 `test/examReview.test.js`、AI schema、红队和前端源码测试，覆盖 provider 考官越权、严重作弊不被好评抵消、hidden/key/path/raw proposal 脱敏和浏览器不读 raw `worldState`。聚焦测试、治理检查和 `git diff --check` 已通过；`npm test` 全量 542 项中 541 项通过，唯一失败为既有 S67.1 全量并发性能门槛 `fixtureGenerationMs` 超时，同一用例单独重跑通过。本步仍不保存弥封身份映射、考官 hidden intent、保结密注、模型原始建议或内部审计；当前 ranking 仍复用既有服务器 `buildRanking()`，只是榜前输入分数更细，S69.1 再深化名次荣誉和 canonical ranking 细节。
+- 2026-05-12：S69.1 榜单与名次荣誉已完成，提交待本次收束。新增 `src/game/examHonorsConfig.js` 与 `src/game/examHonors.js`，在服务器 canonical ranking 后写入 `examHonorLedger`、decorate ranking rows、生成 `examHonorView` 和安全 `examHistory[].examHonor` 快照。当前覆盖乡试解元、会试会元、殿试状元/榜眼/探花/传胪、二甲/三甲次序和三元及第；殿试 promotion 读取 canonical palace class。`src/game/stateRules.js`、`src/ai/promptPacks.js`、`src/ai/promptContextAssembler.js`、审计和事件档案已同步，普通 provider patch/schema 不得写 `examHonorLedger`；prompt 只读取 capped `examHonors` 摘要。`/api/game/start`、`GET /api/game/state/:sessionId`、普通/流式 `/api/game/turn`、`/api/exam/question` 和 `/api/exam/submit` 返回 `examHonorView`；浏览器考试结果、考试档案和书生面板新增“科名荣誉”展示，只读 route view 或历史快照。已通过 S69.1 聚焦语法检查，以及 `node --test test/aiSchemas.test.js test/examHonors.test.js test/examHonorsRoute.test.js test/stateRules.test.js test/promptContextAssembler.test.js test/prompts.test.js test/publicAppSource.test.js`（57/57）。本步仍不保存 hidden 榜单、弥封身份映射、考官 hidden intent、保结密注、模型原始建议或内部审计；同年/座师/考官网络关系仍留给 S69.2。
 
 ## Next Recommended Step
 
-启动 S69.1：榜单与名次细化。优先把解元、会元、状元、榜眼、探花、传胪、二甲/三甲次序和三元成就做成 server-owned canonical honor ledger，并继续保持 AI 考官/皇帝只能给 proposal，不能直接定榜或授官。
+启动 S69.2：同年、座师与考官网络。优先从 canonical ranking、`examHonorView`、脱敏 `examinerPanelView` 和考试历史安全快照派生可见同年/座师/考官关系，写入 `relationshipView` / `worldPeopleView` / `eventArchiveView`，继续保持 provider/raw proposal/hidden intent 不能成为关系事实。

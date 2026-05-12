@@ -462,6 +462,7 @@ function createExamGradeAuditRecords({
   promotionResult,
   cohortResult,
   ranking,
+  honorResult,
   provider
 }) {
   const event = createAuditEvent(worldState, {
@@ -479,9 +480,46 @@ function createExamGradeAuditRecords({
       finalScore: score?.overall_score ?? null,
       passed: Boolean(promotionResult?.passed),
       promotionRank: promotionResult?.rank || null,
+      honorTitle: honorResult?.currentHonor?.title || null,
+      achievementTitle: honorResult?.currentAchievement?.title || null,
       cohortRecorded: Boolean(cohortResult)
     }
   });
+  const honorEvents = [
+    ...(Array.isArray(honorResult?.awardedHonors) ? honorResult.awardedHonors : []).map((honor) => createAuditEvent(worldState, {
+      sceneCadence: "exam_submit",
+      sourceSystem: "exam_honor_resolver",
+      eventType: "exam_honor_awarded",
+      visibility: "public",
+      summary: safePreviewText(honor.publicSummary || `${honor.title}由服务器榜单授予。`),
+      related: {
+        examLevel: honor.level,
+        title: honor.title,
+        place: honor.place,
+        palaceRank: honor.palaceRank || null
+      },
+      appliedChanges: {
+        honorTitle: honor.title,
+        rankLabel: honor.rankLabel,
+        score: honor.score
+      }
+    })),
+    ...(honorResult?.currentAchievement ? [createAuditEvent(worldState, {
+      sceneCadence: "exam_submit",
+      sourceSystem: "exam_honor_resolver",
+      eventType: "exam_honor_awarded",
+      visibility: "public",
+      summary: safePreviewText(honorResult.currentAchievement.publicSummary || "科名成就由服务器记入。"),
+      related: {
+        achievement: honorResult.currentAchievement.title,
+        type: honorResult.currentAchievement.type
+      },
+      appliedChanges: {
+        achievementTitle: honorResult.currentAchievement.title,
+        relatedTitles: honorResult.currentAchievement.relatedTitles
+      }
+    })] : [])
+  ];
   const modelScore = grade?.score?.overall_score ?? null;
   const rejectedReasons = [];
   if (modelScore !== null && modelScore !== score?.overall_score) {
@@ -498,7 +536,7 @@ function createExamGradeAuditRecords({
   }
 
   return {
-    auditEvents: [event],
+    auditEvents: [event, ...honorEvents],
     aiProposals: [{
       ...baseAuditFields(worldState, "exam_submit"),
       provider: providerAuditName(provider),
@@ -518,10 +556,12 @@ function createExamGradeAuditRecords({
         examinerPanelSummary: previewText(reviewResult?.examinerPanel?.serverDecision),
         authenticityCheck,
         passed: Boolean(promotionResult?.passed),
-        promotionRank: promotionResult?.rank || null
+        promotionRank: promotionResult?.rank || null,
+        honorTitle: honorResult?.currentHonor?.title || null,
+        achievementTitle: honorResult?.currentAchievement?.title || null
       },
       rejectedReasons,
-      appliedEventIds: [event.eventId]
+      appliedEventIds: [event.eventId, ...honorEvents.map((honorEvent) => honorEvent.eventId)]
     }]
   };
 }

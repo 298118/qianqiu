@@ -93,6 +93,10 @@ const {
   initializeExamProcedure
 } = require("../game/examProcedure");
 const { buildExaminerPanelView } = require("../game/examReview");
+const {
+  buildExamHonorView,
+  ensureExamHonorLedgerState
+} = require("../game/examHonors");
 const { applyStatePatch, appendEvents } = require("../game/stateRules");
 const { runWorldTick } = require("../game/worldTick");
 const { getProvider } = require("../ai");
@@ -129,6 +133,7 @@ async function processTurn(sessionId, input) {
     ensureRelationshipLedger(worldState);
     ensureExamCalendarState(worldState);
     ensureStudyProfileState(worldState);
+    ensureExamHonorLedgerState(worldState);
     ensureLongTermEventState(worldState);
     ensureOfficialCareerState(worldState);
     ensureRoleWorldCouplingState(worldState);
@@ -151,6 +156,7 @@ async function processStreamingTurn(sessionId, input, streamHandlers = {}) {
     ensureRelationshipLedger(worldState);
     ensureExamCalendarState(worldState);
     ensureStudyProfileState(worldState);
+    ensureExamHonorLedgerState(worldState);
     ensureLongTermEventState(worldState);
     ensureOfficialCareerState(worldState);
     ensureRoleWorldCouplingState(worldState);
@@ -261,6 +267,7 @@ function buildCommonTurnViews(worldState, options = {}) {
     examRivalView: buildExamRivalView(worldState),
     examProcedureView: buildExamProcedureView(worldState),
     examinerPanelView: buildExaminerPanelView(worldState.player?.examHistory?.at?.(-1)?.examinerPanel),
+    examHonorView: buildExamHonorView(worldState),
     studyProfileView: buildStudyProfileView(worldState),
     relationshipView: buildRelationshipInspectionView(worldState),
     activeNpcRequestView: buildActiveNpcRequestView(worldState),
@@ -292,6 +299,7 @@ async function finalizeExamSceneTurn(worldState, input, context = null) {
   ensureRelationshipLedger(worldState);
   ensureExamCalendarState(worldState);
   ensureStudyProfileState(worldState);
+  ensureExamHonorLedgerState(worldState);
   ensureLongTermEventState(worldState);
   ensureOfficialCareerState(worldState);
   ensureRoleWorldCouplingState(worldState);
@@ -441,6 +449,7 @@ async function finalizeTurn(worldState, result, input, auditOptions = {}) {
   ensureRelationshipLedger(worldState);
   ensureExamCalendarState(worldState);
   ensureStudyProfileState(worldState);
+  ensureExamHonorLedgerState(worldState);
   ensureLongTermEventState(worldState);
   ensureOfficialCareerState(worldState);
   ensureRoleWorldCouplingState(worldState);
@@ -567,6 +576,7 @@ async function streamTurn(res, sessionId, input) {
       examRivalView: payload.examRivalView,
       examProcedureView: payload.examProcedureView,
       examinerPanelView: payload.examinerPanelView,
+      examHonorView: payload.examHonorView,
       studyProfileView: payload.studyProfileView,
       activeNpcRequestView: payload.activeNpcRequestView,
       activeNpcRequestEvents: payload.activeNpcRequestEvents,
@@ -620,6 +630,7 @@ router.post("/start", async (req, res, next) => {
       examRivalView: buildExamRivalView(worldState),
       examProcedureView: buildExamProcedureView(worldState),
       examinerPanelView: null,
+      examHonorView: buildExamHonorView(worldState),
       studyProfileView: buildStudyProfileView(worldState),
       relationshipView: buildRelationshipInspectionView(worldState),
       activeNpcRequestView: buildActiveNpcRequestView(worldState),
@@ -651,6 +662,7 @@ router.get("/state/:sessionId", async (req, res, next) => {
     ensureRelationshipLedger(worldState);
     ensureExamCalendarState(worldState);
     ensureStudyProfileState(worldState);
+    ensureExamHonorLedgerState(worldState);
     ensureLongTermEventState(worldState);
     ensureOfficialCareerState(worldState);
     ensureRoleWorldCouplingState(worldState);

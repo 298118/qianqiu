@@ -194,14 +194,15 @@ AI 老师只能提交 `study.propose_plan` 或 `teacher.propose_feedback` 这类
 {
   schemaVersion: 1,
   honors: [
-    { level: "provincial_exam", title: "解元", year: 1644, place: 1 }
+    { level: "provincial_exam", title: "解元", rankLabel: "乡试第一名", year: 1644, place: 1 }
   ],
+  latestHonor: null,
   currentAchievement: null,
   publicSummary: ""
 }
 ```
 
-解元、会元、状元、榜眼、探花、传胪、二甲/三甲次序和三元记录必须由服务器从 canonical ranking 生成。
+S69.1 已落地 `worldState.examHonorLedger`、`examHonorView` 和安全 `examHistory[].examHonor` 快照。解元、会元、状元、榜眼、探花、传胪、二甲/三甲次序和三元记录必须由服务器从 canonical ranking 生成；provider `ranking`、`virtual_candidates`、`examiner_reviews`、皇帝/吏部 proposal 或普通 `statePatch` 都不能授予荣誉、改甲第或写官职。
 
 ### `appointmentTrackView`
 
@@ -340,7 +341,7 @@ Mock/no-key 路径必须覆盖完整制度链：
 2. S68.3：老师、书院、同窗和保结前置，关系变化走服务器账本。
 3. S68.4：`examProcedureView`，把童试三关、乡试/会试三场和科场行政阶段接入 scene-local time。
 4. S68.5：科场事件、多考官阅卷、房官/主考/critic proposal 与服务器 ranking resolver。
-5. S69.1：榜单、名次荣誉和三元成就。
+5. S69.1：榜单、名次荣誉和三元成就（已实现 `examHonors` / `examHonorView`）。
 6. S69.2：同年、座师和考官网络进入可见关系与事件档案。
 7. S69.3：馆选、庶吉士、观政、铨选、外放、候缺和籍贯回避。
 8. S69.4：浏览器科举档案面板，只读 route view。

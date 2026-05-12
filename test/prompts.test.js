@@ -170,6 +170,7 @@ test("turn prompt redacts polluted player teacher text", () => {
   assert.doesNotMatch(task.input, /hidden prompt|sk-teacher-prompt-secret/);
   assert.doesNotMatch(task.input, /"player":\s*\{[\s\S]*"teacher":/);
   assert.match(task.input, /"studyProfile"/);
+  assert.match(task.input, /"examHonors"/);
 });
 
 test("turn prompt input filters hidden relationship context", () => {

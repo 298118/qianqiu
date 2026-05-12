@@ -96,8 +96,14 @@ function getPreviousRank(rank) {
   return RANK_ORDER[index - 1];
 }
 
-function getPalaceOutcome(score) {
-  return PALACE_OUTCOMES[score.rank] || PALACE_OUTCOMES["三甲"];
+function getPlayerRankingEntry(ranking = []) {
+  return Array.isArray(ranking) ? ranking.find((entry) => entry.isPlayer) || null : null;
+}
+
+function getPalaceOutcome(score, options = {}) {
+  const playerEntry = getPlayerRankingEntry(options.ranking);
+  const palaceRank = playerEntry?.palaceRank || score.rank;
+  return PALACE_OUTCOMES[palaceRank] || PALACE_OUTCOMES["三甲"];
 }
 
 function seedOfficialCareerFields(player, palaceOutcome) {
@@ -163,7 +169,7 @@ function applySevereCheatingConsequence(player, before) {
   };
 }
 
-function applyExamPromotion(worldState, exam, score, authenticityCheck) {
+function applyExamPromotion(worldState, exam, score, authenticityCheck, options = {}) {
   // Promotion and fraud consequences are server-owned; provider output can only influence score/check inputs.
   const player = worldState.player;
   const before = snapshotPlayer(player);
@@ -204,7 +210,7 @@ function applyExamPromotion(worldState, exam, score, authenticityCheck) {
   }
 
   if (exam.level === "palace_exam") {
-    const palaceOutcome = getPalaceOutcome(score);
+    const palaceOutcome = getPalaceOutcome(score, options);
     player.examRank = "进士";
     player.palaceRank = palaceOutcome.palaceRank;
     player.role = "official";

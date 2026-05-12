@@ -46,6 +46,7 @@ let currentExamCalendarView = null;
 let currentExamRivalView = null;
 let currentExamProcedureView = null;
 let currentExaminerPanelView = null;
+let currentExamHonorView = null;
 let currentStudyProfileView = null;
 let currentWorldGeographyView = null;
 let currentWorldEntityView = null;
@@ -829,6 +830,21 @@ function getExamProcedureView(worldState, examProcedureView) {
     return examProcedureView;
   }
   return null;
+}
+
+function getExamHonorView(examHonorView) {
+  if (examHonorView && typeof examHonorView === "object") {
+    return examHonorView;
+  }
+  return {
+    schemaVersion: 1,
+    honors: [],
+    achievements: [],
+    currentAchievement: null,
+    latestHonor: null,
+    publicSummary: "科名荣誉簿尚无新记。",
+    authorityBoundary: "科名荣誉由服务器榜单生成。"
+  };
 }
 
 function getStudyProfileView(worldState, studyProfileView) {
@@ -2776,6 +2792,56 @@ function createExaminerPanelBlock(examinerPanelView, options = {}) {
   return block.childElementCount > 1 ? block : null;
 }
 
+function createExamHonorBlock(examHonorView, options = {}) {
+  if (!examHonorView || typeof examHonorView !== "object") return null;
+  const honors = Array.isArray(examHonorView.honors) ? examHonorView.honors : [];
+  const achievements = Array.isArray(examHonorView.achievements) ? examHonorView.achievements : [];
+  const latestHonor = examHonorView.latestHonor || honors.at(-1) || null;
+  const block = document.createElement("section");
+  block.className = ["exam-honor-block", options.className].filter(Boolean).join(" ");
+  block.dataset.schemaVersion = String(examHonorView.schemaVersion || 1);
+
+  const header = document.createElement("header");
+  appendIfText(header, "strong", "科名荣誉");
+  appendIfText(header, "span", examHonorView.publicSummary);
+  block.appendChild(header);
+
+  if (latestHonor) {
+    const current = document.createElement("section");
+    current.className = "exam-honor-current";
+    appendIfText(
+      current,
+      "strong",
+      [latestHonor.title, latestHonor.rankLabel, latestHonor.score !== null && latestHonor.score !== undefined ? `${latestHonor.score}分` : ""]
+        .filter(Boolean)
+        .join(" · ")
+    );
+    appendIfText(current, "p", latestHonor.publicSummary);
+    block.appendChild(current);
+  }
+
+  const list = document.createElement("ol");
+  list.className = "exam-honor-list";
+  honors.slice(-4).forEach((honor) => {
+    const item = document.createElement("li");
+    item.textContent = [
+      honor.examName,
+      honor.title,
+      honor.rankLabel,
+      honor.year ? `${honor.year}年` : ""
+    ].filter(Boolean).join(" · ");
+    list.appendChild(item);
+  });
+  if (list.childElementCount) block.appendChild(list);
+
+  const achievement = examHonorView.currentAchievement || achievements.at(-1);
+  if (achievement) {
+    appendIfText(block, "p", [achievement.title, achievement.publicSummary].filter(Boolean).join("："), "exam-honor-achievement");
+  }
+  appendIfText(block, "p", examHonorView.authorityBoundary, "examiner-boundary");
+  return block.childElementCount > 1 ? block : null;
+}
+
 function renderStudyProfilePanel(studyProfileView = currentStudyProfileView) {
   if (!studyProfileView) return null;
 
@@ -3259,6 +3325,7 @@ function renderRolePanel(worldState) {
   appendOptionalPanel(renderOfficialCareerPanel());
   appendOptionalPanel(renderExamProcedurePanel());
   appendOptionalPanel(createExaminerPanelBlock(currentExaminerPanelView, { className: "examiner-panel-panel" }));
+  appendOptionalPanel(createExamHonorBlock(currentExamHonorView, { className: "exam-honor-panel" }));
   appendOptionalPanel(renderWorldThreadPanel());
   appendOptionalPanel(renderInformationPanelShell());
   scholarPanel.appendChild(renderRelationshipPanel());
@@ -3344,6 +3411,7 @@ function renderScholarPanel(worldState) {
   appendOptionalPanel(renderExamCalendarPanel());
   appendOptionalPanel(renderExamProcedurePanel());
   appendOptionalPanel(createExaminerPanelBlock(currentExaminerPanelView, { className: "examiner-panel-panel" }));
+  appendOptionalPanel(createExamHonorBlock(currentExamHonorView, { className: "exam-honor-panel" }));
   appendOptionalPanel(renderStudyProfilePanel());
   appendOptionalPanel(renderWorldThreadPanel());
   appendOptionalPanel(renderInformationPanelShell());
@@ -3362,6 +3430,7 @@ function renderWorldState(
   examRivalView,
   examProcedureView,
   examinerPanelView,
+  examHonorView,
   studyProfileView,
   worldThreadView,
   worldGeographyView,
@@ -3380,6 +3449,7 @@ function renderWorldState(
   currentExamRivalView = getExamRivalView(worldState, examRivalView);
   currentExamProcedureView = getExamProcedureView(worldState, examProcedureView);
   currentExaminerPanelView = getRouteView(examinerPanelView) || currentExamProcedureView?.examinerPanelView || null;
+  currentExamHonorView = getExamHonorView(examHonorView);
   currentStudyProfileView = getStudyProfileView(worldState, studyProfileView);
   currentWorldThreadView = getWorldThreadView(worldState, worldThreadView);
   currentWorldGeographyView = getRouteView(worldGeographyView);
@@ -3405,6 +3475,7 @@ function renderPayloadWorldState(payload) {
     payload.examRivalView,
     payload.examProcedureView,
     payload.examinerPanelView,
+    payload.examHonorView,
     payload.studyProfileView,
     payload.worldThreadView,
     payload.worldGeographyView,
@@ -3788,7 +3859,8 @@ function withExamHistoryFallback(payload) {
     examCalendar: payload.examCalendar || latest.examCalendar || latest.entryPreparation?.examCalendar,
     sceneTime: payload.sceneTime || latest.sceneTime,
     examProcedureView: payload.examProcedureView || latest.examProcedure,
-    examinerPanelView: payload.examinerPanelView || latest.examinerPanel || latest.examProcedure?.examinerPanelView
+    examinerPanelView: payload.examinerPanelView || latest.examinerPanel || latest.examProcedure?.examinerPanelView,
+    examHonorView: payload.examHonorView || latest.examHonor
   };
 }
 
@@ -3952,9 +4024,10 @@ function createCandidateProfiles(payload) {
     const marks = document.createElement("div");
     marks.className = "candidate-marks";
     if (entry.place) appendIfText(marks, "span", `第${entry.place}名`);
+    appendIfText(marks, "span", entry.honorTitle);
     const score = entry.score ?? candidate.score?.overall_score;
     if (score !== undefined && score !== null) appendIfText(marks, "span", `${score}分`);
-    appendIfText(marks, "span", entry.rank || candidate.score?.rank);
+    appendIfText(marks, "span", entry.rankLabel || entry.rank || candidate.score?.rank);
     header.append(title, marks);
     profile.appendChild(header);
 
@@ -4021,6 +4094,11 @@ function createPlayerExamArchive(payload) {
   const procedureBlock = createExamProcedureBlock(payload.examProcedureView || payload.examProcedure);
   if (procedureBlock) archive.appendChild(procedureBlock);
 
+  const honorBlock = createExamHonorBlock(payload.examHonorView || payload.examHonor, {
+    className: "exam-honor-archive"
+  });
+  if (honorBlock) archive.appendChild(honorBlock);
+
   const reasonParts = [];
   if (payload.score?.detailed_feedback) reasonParts.push(payload.score.detailed_feedback);
   if (payload.promotionResult?.reason) reasonParts.push(payload.promotionResult.reason);
@@ -4036,9 +4114,9 @@ function createRankingList(payload) {
     const item = document.createElement("li");
     if (entry.isPlayer) item.className = "is-player";
     const name = document.createElement("strong");
-    name.textContent = `${entry.place}. ${entry.name}`;
+    name.textContent = `${entry.place}. ${entry.name}${entry.honorTitle ? ` · ${entry.honorTitle}` : ""}`;
     const detail = document.createElement("span");
-    detail.textContent = [entry.origin, entry.score !== undefined ? `${entry.score}分` : null, entry.rank, entry.style, entry.rivalStatus].filter(Boolean).join(" · ");
+    detail.textContent = [entry.origin, entry.score !== undefined ? `${entry.score}分` : null, entry.rankLabel || entry.rank, entry.style, entry.rivalStatus].filter(Boolean).join(" · ");
     item.append(name, detail);
     if (entry.essayTitle || entry.essayExcerpt || entry.examinerComment) {
       const note = document.createElement("small");
@@ -4124,6 +4202,7 @@ function renderExamArchive(worldState = currentWorldState) {
       worldState,
       examProcedureView: entry.examProcedure,
       examinerPanelView: entry.examinerPanel || entry.examProcedure?.examinerPanelView,
+      examHonorView: entry.examHonor,
       virtualCandidates: entry.virtualCandidates || [],
       ranking: entry.ranking || []
     };
@@ -4183,6 +4262,14 @@ function renderExamResult(payload) {
   if (payload.promotionResult.palaceRank) {
     summary.appendChild(createScoreItem("甲第", payload.promotionResult.palaceRank));
   }
+  const currentHonor = payload.examHonorView?.latestHonor || payload.examHonorView?.currentHonor || null;
+  const currentAchievement = payload.examHonorView?.currentAchievement || null;
+  if (currentHonor) {
+    summary.appendChild(createScoreItem("科名", currentHonor.title));
+  }
+  if (currentAchievement) {
+    summary.appendChild(createScoreItem("成就", currentAchievement.title));
+  }
 
   const feedback = document.createElement("p");
   feedback.className = "result-feedback";
@@ -4221,14 +4308,15 @@ function renderExamResult(payload) {
     const item = document.createElement("li");
     if (entry.isPlayer) item.className = "is-player";
     const name = document.createElement("strong");
-    name.textContent = `${entry.place}. ${entry.name}`;
+    name.textContent = `${entry.place}. ${entry.name}${entry.honorTitle ? ` · ${entry.honorTitle}` : ""}`;
     const detail = document.createElement("span");
-    detail.textContent = `${entry.origin} · ${entry.score}分 · ${entry.rank}`;
+    detail.textContent = [entry.origin, `${entry.score}分`, entry.rankLabel || entry.rank].filter(Boolean).join(" · ");
     item.append(name, detail);
     ranking.appendChild(item);
   });
 
   const examinerPanel = createExaminerPanelBlock(payload.examinerPanelView);
+  const honorPanel = createExamHonorBlock(payload.examHonorView || payload.examHonor);
   examResult.append(
     summary,
     feedback,
@@ -4238,6 +4326,9 @@ function renderExamResult(payload) {
   );
   if (examinerPanel) {
     examResult.appendChild(createResultSection("多考官阅卷", examinerPanel, true));
+  }
+  if (honorPanel) {
+    examResult.appendChild(createResultSection("科名荣誉", honorPanel, true));
   }
   examResult.append(
     createResultSection("同场榜单", ranking, true),

@@ -38,16 +38,23 @@ test("exam procedure panel reads route examProcedureView", () => {
 
   assert.match(source, /let currentExamProcedureView = null;/);
   assert.match(source, /let currentExaminerPanelView = null;/);
+  assert.match(source, /let currentExamHonorView = null;/);
   assert.match(source, /function renderExamProcedurePanel\(examProcedureView = currentExamProcedureView\)/);
   assert.match(source, /function createExaminerPanelBlock\(examinerPanelView/);
+  assert.match(source, /function createExamHonorBlock\(examHonorView/);
   assert.match(source, /payload\.examProcedureView/);
   assert.match(source, /payload\.examinerPanelView/);
+  assert.match(source, /payload\.examHonorView/);
   assert.match(source, /examProcedureView\.rollLifecycle/);
   assert.match(source, /examProcedureView\.examinerPanelView/);
   assert.match(source, /currentExaminerPanelView/);
+  assert.match(source, /currentExamHonorView/);
   assert.match(source, /createExamProcedureBlock\(payload\.examProcedureView \|\| payload\.examProcedure\)/);
   assert.match(source, /createExaminerPanelBlock\(payload\.examinerPanelView/);
+  assert.match(source, /createExamHonorBlock\(payload\.examHonorView \|\| payload\.examHonor/);
   assert.match(source, /appendOptionalPanel\(renderExamProcedurePanel\(\)\);/);
+  assert.match(source, /appendOptionalPanel\(createExamHonorBlock\(currentExamHonorView/);
   assert.doesNotMatch(source, /worldState\?\.examProcedure/);
+  assert.doesNotMatch(source, /worldState\?\.examHonorLedger/);
   assert.doesNotMatch(source, /worldState\.activeExam\.procedure\./);
 });

@@ -406,11 +406,14 @@ function collectExamItems(worldState, items) {
     const score = entry.score?.overall_score ?? null;
     const rank = cleanArchiveText(entry.score?.rank || entry.promotionResult?.rank, "", 60);
     const passed = entry.promotionResult?.passed ? "取中" : "未中";
+    const honor = entry.examHonor?.currentHonor || (Array.isArray(entry.examHonor?.awards) ? entry.examHonor.awards.at(-1) : null);
+    const achievement = entry.examHonor?.currentAchievement || null;
+    const honorText = achievement?.title || honor?.title || "";
     addItem(items, worldState, {
       sourceType: "exam_record",
       kind: entry.level || "exam",
       title: entry.examName || "科场",
-      summary: `${entry.examName || "科场"}交卷，得${score ?? "-"}分，${rank || passed}。`,
+      summary: `${entry.examName || "科场"}交卷，得${score ?? "-"}分，${rank || passed}${honorText ? `，${cleanArchiveText(honorText, "", 60)}` : ""}。`,
       date: examDateSource(entry) || worldState,
       turn: entry.sceneTime?.updatedAt?.turnCount ?? entry.sceneTime?.startedAt?.turnCount ?? currentTurn(worldState),
       status: "submitted",

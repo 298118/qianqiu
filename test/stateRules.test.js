@@ -12,6 +12,7 @@ test("applyStatePatch applies only whitelisted fields and clamps numeric ranges"
   const originalOfficialPostings = JSON.parse(JSON.stringify(worldState.officialPostings));
   const originalWorldPeople = JSON.parse(JSON.stringify(worldState.worldPeople));
   const originalStudyProfile = JSON.parse(JSON.stringify(worldState.studyProfile));
+  const originalExamHonorLedger = JSON.parse(JSON.stringify(worldState.examHonorLedger));
   const originalExamProcedure = worldState.examProcedure;
 
   applyStatePatch(worldState, {
@@ -22,6 +23,7 @@ test("applyStatePatch applies only whitelisted fields and clamps numeric ranges"
     tenDayPeriod: 3,
     activeExam: { level: "child_exam" },
     examProcedure: { phase: "closed", hiddenNotes: "provider-forged" },
+    examHonorLedger: { honors: [{ title: "模型状元" }] },
     studyProfile: { schemaVersion: 1, dimensions: { classicsFoundation: 100 } },
     examCalendar: { rivals: [{ id: "provider-rival" }] },
     activeNpcRequest: { id: "provider-request" },
@@ -60,6 +62,7 @@ test("applyStatePatch applies only whitelisted fields and clamps numeric ranges"
   assert.equal(worldState.tenDayPeriod, 1);
   assert.equal(worldState.activeExam, null);
   assert.equal(worldState.examProcedure, originalExamProcedure);
+  assert.deepEqual(worldState.examHonorLedger, originalExamHonorLedger);
   assert.deepEqual(worldState.studyProfile, originalStudyProfile);
   assert.deepEqual(worldState.examCalendar.rivals, []);
   assert.equal(worldState.activeNpcRequest, null);
@@ -93,6 +96,7 @@ test("ordinary state patches preserve server-owned exam and narrative fields", (
   const worldState = createInitialState({ playerName: "Tester" });
   worldState.activeExam = { level: "child_exam", reason: "server-created" };
   worldState.examProcedure = { phase: "question_release", source: "server-created" };
+  worldState.examHonorLedger.honors = [{ title: "解元", level: "provincial_exam", place: 1 }];
   worldState.studyProfile.dimensions.classicsFoundation = 11;
   worldState.examCalendar.rivals = [{ id: "server-rival" }];
   worldState.officialPostings = { schemaVersion: 1, postings: [{ id: "server-posting" }] };
@@ -109,6 +113,7 @@ test("ordinary state patches preserve server-owned exam and narrative fields", (
   applyStatePatch(worldState, {
     activeExam: null,
     examProcedure: { phase: "closed", hiddenNotes: "provider-forged" },
+    examHonorLedger: { honors: [{ title: "模型状元" }] },
     studyProfile: { schemaVersion: 1, dimensions: { classicsFoundation: 100 } },
     examCalendar: { rivals: [{ id: "model-rival" }] },
     officialPostings: { schemaVersion: 1, postings: [{ id: "model-posting" }] },
@@ -131,6 +136,7 @@ test("ordinary state patches preserve server-owned exam and narrative fields", (
 
   assert.deepEqual(worldState.activeExam, { level: "child_exam", reason: "server-created" });
   assert.deepEqual(worldState.examProcedure, { phase: "question_release", source: "server-created" });
+  assert.deepEqual(worldState.examHonorLedger.honors, [{ title: "解元", level: "provincial_exam", place: 1 }]);
   assert.equal(worldState.studyProfile.dimensions.classicsFoundation, 11);
   assert.deepEqual(worldState.examCalendar.rivals, [{ id: "server-rival" }]);
   assert.deepEqual(worldState.officialPostings, { schemaVersion: 1, postings: [{ id: "server-posting" }] });

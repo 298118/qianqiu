@@ -60,6 +60,34 @@ test("prompt context includes capped study teacher and academy summaries", () =>
   assert.doesNotMatch(serialized, /SEALED_STUDY_PROMPT_NOTE|SEALED_TEACHER_PROMPT_NOTE|SEALED_SPONSOR_PROMPT_NOTE|hiddenNotes/i);
 });
 
+test("prompt context includes capped exam honor summary without raw hidden text", () => {
+  const worldState = createInitialState({ role: "scholar", playerName: "Honor Prompt Tester" });
+  worldState.examHonorLedger = {
+    schemaVersion: 1,
+    honors: [
+      {
+        id: "honor-safe",
+        level: "provincial_exam",
+        examName: "乡试",
+        title: "解元",
+        place: 1,
+        rankLabel: "乡试第一名",
+        score: 96,
+        year: 1644,
+        publicSummary: "SEALED_HONOR_PROMPT raw provider sk-test-secret E:\\secret\\honor.txt"
+      }
+    ],
+    achievements: []
+  };
+
+  const context = assemblePromptContext(worldState, { task: "world_turn", playerAction: "整理科名履历" });
+  const serialized = JSON.stringify(context.examHonors);
+
+  assert.match(serialized, /解元|乡试第一名/);
+  assert.doesNotMatch(serialized, /SEALED_HONOR_PROMPT|raw provider|sk-test-secret|E:\\secret/);
+  assert.match(serialized, /不得要求模型自定解元/);
+});
+
 test("prompt context assembler filters hidden rows, hidden refs, raw ledgers, and raw audit-like fields", () => {
   const worldState = createInitialState({ role: "scholar", playerName: "Hidden Context Tester" });
   worldState.audit = { ai_change_proposals: "SEALED_AUDIT_PAYLOAD" };
