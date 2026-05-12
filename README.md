@@ -6,7 +6,7 @@
 
 ## 这次主要更新
 
-当前项目已经完成可玩纵切、浏览器验收、时间专项、AI provider 扩展、本地动态数据库基础、S54-S59 SQLite 业务表拆分、S60-S67 超大动态世界数据库内容充实、S68.1 科举制度契约、S68.2 读书账本基础、S68.3 老师/书院/同窗互动、S68.4 科场制度流程、S68.5 科场事件/多考官阅卷、S69.1 榜单名次荣誉、S69.2 同年座师网络、S69.3 授官路径深化与 S69.4 浏览器科举档案面板。近期重点更新集中在“本地数据库专项归档”“S68-S69 科举读书深化”和“多 provider 能力”：
+当前项目已经完成可玩纵切、浏览器验收、时间专项、AI provider 扩展、本地动态数据库基础、S54-S59 SQLite 业务表拆分、S60-S67 超大动态世界数据库内容充实、S68.1 科举制度契约、S68.2 读书账本基础、S68.3 老师/书院/同窗互动、S68.4 科场制度流程、S68.5 科场事件/多考官阅卷、S69.1 榜单名次荣誉、S69.2 同年座师网络、S69.3 授官路径深化、S69.4 浏览器科举档案面板与 S69.5 Provider/Mock 验收。近期重点更新集中在“本地数据库专项归档”“S68-S69 科举读书深化”和“多 provider 能力”：
 
 - 新增可选 SQLite 存储模式：默认仍是 JSON 存档；设置 `STORAGE_ADAPTER=sqlite` 后，本地使用 `world_sessions`、审计表、地理 `geo_*`、人物 `people_*`、官职任所 `office_*` 派生业务表、安全事件档案 `event_archive_index` 和安全 prompt 检索派生索引。
 - 新增地理业务表同步：SQLite 模式会把 `worldState.worldGeography` 同步到 `geo_countries`、`geo_regions`、`geo_cities`、`geo_routes`、`geo_frontier_zones`、`geo_office_jurisdictions`，读档时可按 JSON snapshot 修复缺失或陈旧行。
@@ -38,6 +38,7 @@
 - 完成 S69.2 同年、座师与考官网络：新增 server-owned `examNetworks` resolver，从服务器定榜顺序、公开荣誉和脱敏阅卷摘要派生同年、房官、主考/座师、读卷官等可见关系，写入 `relationshipView` / `worldPeopleView`，并在考试历史保存安全 `examNetwork` 快照、事件档案新增 `exam_network` 公开条目。prompt 只读 capped `examNetwork` 摘要，模型原始建议、弥封映射、考官私意和保结密注不能成为关系事实。
 - 完成 S69.3 授官路径深化：新增 server-owned `appointmentTrack` / `appointmentTrackView` 与 `appointmentTracks` resolver，殿试后按服务器 canonical 甲第、榜次、科名荣誉、同年座师摘要、官缺 projection 和籍贯回避裁决初授。一甲区分状元修撰与榜眼/探花编修，二甲优先馆选庶吉士并保留观政/部属备选，三甲按铨选外放、部属候补或候缺观政处理；真实官职、`officialCareer` 履历和事件档案只由服务器写入，吏部/皇帝/provider proposal 只能作为脱敏建议。
 - 完成 S69.4 浏览器科举档案面板：`public/app.js` 新增 `#imperial-exam-archive-panel`，把读书簿、科场流程、多考官阅卷、榜单荣誉、同年/座师/考官和授官轨迹整合到玩家侧栏。面板只读 `studyProfileView`、`examProcedureView`、`examinerPanelView`、`examHonorView`、`relationshipView` / `worldPeopleView`、`appointmentTrackView` 和考试历史安全快照；`publicAppSource` 与 browser smoke helper 增加 hidden-token/source-token 守卫。
+- 完成 S69.5 Provider/Mock 验收：新增 `npm run smoke:exam-s69`，用 Mock deterministic 路径完整跑通童试、乡试、会试、殿试到入仕，检查读书簿、科场流程、多考官阅卷、榜单荣誉、同年/座师/考官和授官轨迹安全快照；`smoke:provider` 现在要求真实 provider 通过老师点评 `teacherFeedbackProposal`、出题和评卷 smoke，并检查 provider 不得 patch 科举/server-owned 子账本。考试出题与评卷落盘前会清洗 hidden token、raw provider/proposal、prompt/index/table 名、本地路径和 key 形状文本。
 - 新增 Xiaomi MiMo provider：支持 `mimo` 与 `mimo-deepseek`，后者让 MiMo 负责开局、普通回合、流式叙事和出题，让 DeepSeek V4 Pro 负责科举评卷。
 - 更新 README 与项目文档：把当前功能、修复、安全边界、启动方式和常用命令整理成更适合 GitHub 首页阅读的结构。
 
@@ -187,6 +188,7 @@ npm run eval:ai
 npm run smoke:browser
 npm run smoke:browser -- --information-parity
 npm run smoke:dual-mode -- --storage-only
+npm run smoke:exam-s69
 npm run smoke:provider
 npm run smoke:provider:route
 npm run smoke:provider:long
@@ -200,6 +202,7 @@ npm run storage:audit-events -- status
 - `npm run eval:ai` 是离线 AI 输出质量门槛，覆盖 provider-shaped JSON、越权风险、历史语气、评分边界和作弊处罚。
 - `npm run smoke:browser` 启动临时 Mock 服务器，覆盖完整书生到入仕路径、作弊样例、代表身份回合、存档簿、年月旬显示和桌面/移动布局；`--information-parity` 专项比对 JSON/SQLite 双模式下“局势簿”五类面板、搜索/筛选/排序/分页控件、分页 metadata 和 hidden-token 防线。
 - `npm run smoke:dual-mode` 串联 JSON/SQLite 完整 Mock browser smoke、局势簿 parity、S59 存储维护和 S67.1 large fixture 规模回归；无浏览器或只想核验导入/修复/导出、读档修复、prompt/局势簿/性能门槛时可加 `--storage-only`。
+- `npm run smoke:exam-s69` 使用 Mock deterministic provider 完整跑通四级科举到初授入仕，验证 S68-S69 的读书、科场、评卷、荣誉、同年座师网络、授官轨迹和 hidden-token 防线。
 - `npm run smoke:provider*` 只在配置真实 provider key 时进行网络调用；无 key 环境会成功跳过。
 - `npm run storage:audit-events -- status|export` 是本地审计公开 projection 工具，默认只输出脱敏统计和 public 事件摘要，不输出 raw audit、provider proposal、prompt、key、本地路径或 hidden notes。
 
@@ -269,5 +272,5 @@ data/sessions/
 - 真实 provider 网络调用需要配置 API key；无 key 环境只验证 Mock、缺 key 分支和 no-key skip。
 - 浏览器 smoke 覆盖完整主线和代表身份回合，但不等同于所有身份的长线游玩验收。
 - SQLite 目前已经包含 session row、审计表、地理 `geo_*` 业务表、可见人物 `people_*` bridge rows、人物事件到 `people_*.last_event_id` 的本地关联、带内容漂移探针的官职任所 `office_*` 派生业务表、安全事件档案 `event_archive_index`、安全 prompt 检索索引，以及只输出 allowlist public 摘要的本地审计公开 projection 工具；它们都不是浏览器、prompt 或服务器裁决的 raw 来源。
-- “超大动态世界数据库”的 S60-S67 内容充实阶段已归档；S68.1-S69.4 已完成，后续活动重点是按契约继续推进 S69.5-S69.6 provider 验收和归档，再进入 S70 AI 提示词、工具协议和多 AI 编排。
+- “超大动态世界数据库”的 S60-S67 内容充实阶段已归档；S68.1-S69.5 已完成，后续活动重点是按契约推进 S69.6 归档与交接，再进入 S70 AI 提示词、工具协议和多 AI 编排。
 - 当前不包含远程存档、账号体系、多人同步或云端数据库。

@@ -52,6 +52,37 @@ const PROVIDER_ALIASES = {
 };
 
 const ALL_PROVIDER_NAMES = Object.keys(PROVIDER_CONFIGS);
+const S69_PROVIDER_PROTECTED_TOP_LEVEL_KEYS = Object.freeze([
+  "activeExam",
+  "examCalendar",
+  "examProcedure",
+  "examHonorLedger",
+  "appointmentTrack",
+  "studyProfile",
+  "officialCareer",
+  "officialPostings",
+  "roleWorldCoupling",
+  "worldGeography",
+  "worldEntities",
+  "worldPeople",
+  "worldThreads",
+  "characters",
+  "eventHistory",
+  "turnCount",
+  "year",
+  "month",
+  "tenDayPeriod"
+]);
+const S69_PROVIDER_PROTECTED_PLAYER_KEYS = Object.freeze([
+  "role",
+  "roleLabel",
+  "teacher",
+  "position",
+  "examRank",
+  "palaceRank",
+  "officeTitle",
+  "examHistory"
+]);
 
 function readArg(argv, name) {
   const exact = argv.find((arg) => arg.startsWith(`${name}=`));
@@ -140,6 +171,49 @@ function truncate(text, limit = 96) {
   return compact.length <= limit ? compact : `${compact.slice(0, limit - 3)}...`;
 }
 
+function collectS69ProviderPatchViolations(statePatch = {}) {
+  const patch = statePatch && typeof statePatch === "object" && !Array.isArray(statePatch)
+    ? statePatch
+    : {};
+  const violations = [];
+
+  for (const key of S69_PROVIDER_PROTECTED_TOP_LEVEL_KEYS) {
+    if (Object.prototype.hasOwnProperty.call(patch, key)) {
+      violations.push(key);
+    }
+  }
+
+  const playerPatch = patch.player && typeof patch.player === "object" && !Array.isArray(patch.player)
+    ? patch.player
+    : {};
+  for (const key of S69_PROVIDER_PROTECTED_PLAYER_KEYS) {
+    if (Object.prototype.hasOwnProperty.call(playerPatch, key)) {
+      violations.push(`player.${key}`);
+    }
+  }
+
+  return violations;
+}
+
+function assertNoS69ProviderPatchViolations(providerName, stepName, statePatch = {}) {
+  const violations = collectS69ProviderPatchViolations(statePatch);
+  if (violations.length) {
+    throw new Error(`${providerName} ${stepName} attempted S69 server-owned patches: ${violations.join(", ")}`);
+  }
+}
+
+function assertTeacherFeedbackProposal(providerName, payload = {}) {
+  const proposal = payload.teacherFeedbackProposal;
+  if (!proposal || typeof proposal !== "object" || Array.isArray(proposal)) {
+    throw new Error(`${providerName} teacher feedback smoke did not return teacherFeedbackProposal.`);
+  }
+  for (const key of ["focus", "advice", "reason"]) {
+    if (typeof proposal[key] !== "string" || !proposal[key].trim()) {
+      throw new Error(`${providerName} teacherFeedbackProposal.${key} is missing.`);
+    }
+  }
+}
+
 function buildSmokeEssay() {
   return [
     "Learning should begin with disciplined reading and end with service to the people.",
@@ -185,10 +259,23 @@ async function smokeProvider(providerName, options = {}) {
   logStep(providerName, "start", `events=${opening.events.length}, narrative="${truncate(opening.narrative)}"`);
 
   const turn = await provider.runTurn(worldState, "Study the classics and ask the mentor how to prepare for the next exam.");
+  assertNoS69ProviderPatchViolations(providerName, "turn", turn.statePatch);
   logStep(
     providerName,
     "turn",
     `patchKeys=${Object.keys(turn.statePatch || {}).join(",") || "none"}, examTrigger=${turn.examTrigger?.shouldStart === true}`
+  );
+
+  const teacherTurn = await provider.runTurn(
+    worldState,
+    "拜访塾师，请他逐条点评我近日经义文章，并只用 teacherFeedbackProposal 给读书建议。"
+  );
+  assertNoS69ProviderPatchViolations(providerName, "teacher-feedback", teacherTurn.statePatch);
+  assertTeacherFeedbackProposal(providerName, teacherTurn);
+  logStep(
+    providerName,
+    "teacher-feedback",
+    `focus="${truncate(teacherTurn.teacherFeedbackProposal.focus, 32)}", advice="${truncate(teacherTurn.teacherFeedbackProposal.advice, 48)}"`
   );
 
   if (options.stream) {
@@ -198,6 +285,7 @@ async function smokeProvider(providerName, options = {}) {
         streamedChars += String(delta || "").length;
       }
     });
+    assertNoS69ProviderPatchViolations(providerName, "turn-stream", streamedTurn.statePatch);
     logStep(providerName, "turn-stream", `rawChars=${streamedChars}, narrative="${truncate(streamedTurn.narrative)}"`);
   }
 
@@ -269,7 +357,9 @@ module.exports = {
   ALL_PROVIDER_NAMES,
   buildSmokeEssay,
   canonicalProviderName,
+  collectS69ProviderPatchViolations,
   PROVIDER_CONFIGS,
+  assertTeacherFeedbackProposal,
   getProviderKeyEnvs,
   hasFlag,
   getProviderNamesToSmoke,

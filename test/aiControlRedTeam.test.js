@@ -358,7 +358,7 @@ test("S44 exam submit ignores provider-owned candidates and applies local severe
   assert.equal(payload.authenticityCheck.copy_detection.is_copy, true);
   assert.equal(payload.score.overall_score, 0);
   assert.equal(payload.examinerPanelView.roomReviews.some((review) => review.source === "provider_proposal" && review.accepted), false);
-  assert.match(payload.examinerPanelView.serverDecision, /canonical 榜单/);
+  assert.match(payload.examinerPanelView.serverDecision, /最终榜单/);
   assert.equal(payload.promotionResult.passed, false);
   assert.equal(payload.promotionResult.severeCheat, true);
   assert.equal(payload.worldState.player.examRank, null);
@@ -418,6 +418,126 @@ test("S44 exam submit ignores provider false-positive cheating echoes", async (t
   }), /SEALED_INTERNAL_REVIEW|hiddenIntent|OPENAI_API_KEY|sk-examiner-secret|raw provider|E:\\secret|sealed_mapping/);
   assert.equal(payload.promotionResult.passed, true);
   assert.equal(payload.worldState.player.examRank, "秀才");
+});
+
+test("S69.5 exam question route sanitizes provider hidden text before persistence", async (t) => {
+  const provider = {
+    async generateExamQuestion(worldState, exam) {
+      return {
+        level: exam.level,
+        examName: "童试 hiddenNotes",
+        examQuestion: "试题含 SEALED_QUESTION_TOKEN、OPENAI_API_KEY、tp-question-secret 与 data/sessions/raw.json。",
+        questionType: exam.questionType,
+        difficulty: exam.difficulty,
+        requirements: [
+          "不得公开 prompt_retrieval_index",
+          "仍须论县学修身"
+        ],
+        wordCount: exam.wordCount,
+        passScore: exam.passScore,
+        promotionRank: "秀才 sk-question-rank-secret"
+      };
+    }
+  };
+  const server = createTestServerWithProvider(provider, { mountGame: false, mountExam: true });
+  t.after(server.close);
+
+  const worldState = createInitialState({ playerName: "Question Cleaner", role: "scholar" });
+  t.after(() => removeSessionFile(worldState.sessionId));
+  await writeSession(worldState);
+
+  const { response, payload } = await postJson(`${server.baseUrl}/api/exam/question`, {
+    sessionId: worldState.sessionId,
+    level: "child_exam"
+  });
+  const saved = await readSession(worldState.sessionId);
+  const serialized = JSON.stringify({
+    payload: {
+      examName: payload.examName,
+      examQuestion: payload.examQuestion,
+      requirements: payload.requirements,
+      promotionRank: payload.promotionRank
+    },
+    activeExam: {
+      examName: saved.activeExam.examName,
+      examQuestion: saved.activeExam.examQuestion,
+      requirements: saved.activeExam.requirements,
+      promotionRank: saved.activeExam.promotionRank
+    }
+  });
+
+  assert.equal(response.status, 201);
+  assert.match(payload.examQuestion, /已遮蔽/);
+  assert.doesNotMatch(
+    serialized,
+    /hiddenNotes|SEALED_QUESTION_TOKEN|OPENAI_API_KEY|tp-question-secret|data\/sessions|prompt_retrieval_index|sk-question-rank-secret/
+  );
+});
+
+test("S69.5 exam submit sanitizes provider score feedback before history and views", async (t) => {
+  const provider = {
+    async gradeExamEssay() {
+      return gradePayload(84, {
+        score: {
+          content_quality: scoreDimension(84, "hiddenNotes tp-grade-secret"),
+          argument_strength: scoreDimension(84, "raw provider proposal"),
+          literary_style: scoreDimension(84, "E:\\LSMNQ\\data\\sessions\\unsafe.json"),
+          classical_format: scoreDimension(84, "OPENAI_API_KEY"),
+          historical_appropriateness: scoreDimension(84, "prompt_retrieval_index"),
+          overall_score: 84,
+          rank: "取中 sk-rank-secret",
+          detailed_feedback: "SEALED_SCORE_TOKEN statePatch appointmentTrack provider proposal"
+        },
+        examiner_reviews: [{
+          actor: "room_officer",
+          label: "prompt_retrieval_index",
+          recommendation: "world_sessions",
+          suggestedScoreDelta: 0,
+          comment: "tp-review-secret hiddenIntent statePatch appointmentTrack event_log ai_change_proposals raw table",
+          concern: "retrievalContext worldState event_archive_index E:\\LSMNQ\\data\\audit\\review.jsonl"
+        }]
+      });
+    }
+  };
+  const server = createTestServerWithProvider(provider, { mountGame: false, mountExam: true });
+  t.after(server.close);
+
+  const worldState = createInitialState({ playerName: "Score Cleaner", role: "scholar" });
+  worldState.activeExam = createWritingExam("child_exam");
+  t.after(() => removeSessionFile(worldState.sessionId));
+  await writeSession(worldState);
+
+  const cleanEssay = Array.from({ length: 8 }, () =>
+    "县学士子当以经义立身，以教化移俗，以清慎守地方钱粮。"
+  ).join("");
+  const { response, payload } = await postJson(`${server.baseUrl}/api/exam/submit`, {
+    sessionId: worldState.sessionId,
+    examId: worldState.activeExam.examId,
+    essay: cleanEssay
+  });
+  const saved = await readSession(worldState.sessionId);
+  const latestExam = saved.player.examHistory.at(-1);
+  const serialized = JSON.stringify({
+    score: payload.score,
+    scoreBeforeExaminerReview: payload.scoreBeforeExaminerReview,
+    examinerPanelView: {
+      roomReviews: payload.examinerPanelView.roomReviews,
+      chiefReview: payload.examinerPanelView.chiefReview,
+      serverDecision: payload.examinerPanelView.serverDecision
+    },
+    procedureExaminerPanelView: payload.examProcedureView.examinerPanelView,
+    historyScore: latestExam?.score,
+    historyScoreBeforeExaminerReview: latestExam?.scoreBeforeExaminerReview,
+    historyExaminerPanel: latestExam?.examinerPanel
+  });
+
+  assert.equal(response.status, 200);
+  assert.equal(payload.promotionResult.passed, true);
+  assert.doesNotMatch(
+    serialized,
+    /hiddenNotes|tp-grade-secret|raw provider|raw[_ -]?table|E:\\LSMNQ|OPENAI_API_KEY|prompt_retrieval_index|event_archive_index|world_sessions|event_log|ai_change_proposals|sk-rank-secret|SEALED_SCORE_TOKEN|statePatch|appointmentTrack|retrievalContext|worldState|provider proposal|tp-review-secret|hiddenIntent/
+  );
+  assert.match(payload.score.detailed_feedback, /已遮蔽/);
 });
 
 test("S44 streaming failure after hidden narrative does not persist provider state", async (t) => {

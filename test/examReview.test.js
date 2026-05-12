@@ -83,7 +83,7 @@ test("exam review resolves public incidents and bounded examiner deltas before r
   assert.equal(result.examinerPanel.roomReviews.some((review) => review.source === "provider_proposal" && review.accepted === false), true);
   assert.ok(result.incidents.some((incident) => incident.type === "sudden_illness"));
   assert.ok(result.incidents.some((incident) => incident.type === "transcription_error"));
-  assert.match(result.examinerPanel.serverDecision, /canonical 榜单/);
+  assert.match(result.examinerPanel.serverDecision, /最终榜单/);
   assert.doesNotMatch(serialized, /hiddenIntent|OPENAI_API_KEY|sk-review-secret|raw provider|E:\\secret|sealed_mapping/);
 });
 

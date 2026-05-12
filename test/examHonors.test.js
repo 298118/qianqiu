@@ -59,7 +59,7 @@ test("provincial and metropolitan first places award server-owned first honors",
 
   assert.equal(secondResult.currentHonor.title, "会元");
   assert.deepEqual(view.honors.map((honor) => honor.title), ["解元", "会元"]);
-  assert.match(view.authorityBoundary, /canonical ranking/);
+  assert.match(view.authorityBoundary, /服务器定榜顺序/);
 });
 
 test("failed or cheating results do not award honors even if ranking is first", () => {

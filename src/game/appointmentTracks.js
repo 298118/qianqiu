@@ -11,13 +11,13 @@ const { clamp } = require("./stateRules");
 
 const OFFICIAL_ROLE_LABEL = "入仕官员";
 const AUTHORITY_BOUNDARY =
-  "appointmentTrack 只读服务器 canonical ranking、科名荣誉、公开同年座师摘要和官缺 projection；吏部、皇帝或模型 proposal 不能直接写官职事实。";
+  "授官轨迹只读服务器定榜、科名荣誉、公开同年座师摘要和官缺摘要；吏部、皇帝或模型建议不能直接写官职事实。";
 
 const UNSAFE_PUBLIC_TEXT_PATTERNS = Object.freeze([
   /SEALED_[A-Z0-9_]+/gi,
   /hiddenNotes|hidden_notes|hiddenIntent|hidden_intent|sealedMapping|sealed_mapping/gi,
   /raw provider|raw_provider|provider proposal|raw audit|raw_audit|prompt/i,
-  /OPENAI_API_KEY|DEEPSEEK_API_KEY|MIMO_API_KEY|ANTHROPIC_API_KEY|sk-[A-Za-z0-9_-]+/gi,
+  /OPENAI_API_KEY|DEEPSEEK_API_KEY|MIMO_API_KEY|ANTHROPIC_API_KEY|sk-[A-Za-z0-9_-]+|tp-[A-Za-z0-9_-]+/gi,
   /data[\\/]sessions[\\/][^\s，。；]*|data[\\/]audit[\\/][^\s，。；]*|\/mnt\/[^\s，。；]*|[A-Z]:\\[^\s，。；]*/gi
 ]);
 

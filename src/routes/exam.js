@@ -42,6 +42,10 @@ const {
   ensureAppointmentTrackState,
   resolveInitialAppointmentTrack
 } = require("../game/appointmentTracks");
+const {
+  sanitizeExamGradePayload,
+  sanitizeExamQuestionPayload
+} = require("../game/examProviderSanitizer");
 const { buildRelationshipInspectionView, ensureRelationshipLedger } = require("../game/relationships");
 const { buildActiveNpcRequestView } = require("../game/activeRequests");
 const { buildLongTermEventView, ensureLongTermEventState } = require("../game/longTermEvents");
@@ -247,7 +251,10 @@ router.post("/question", async (req, res, next) => {
       }
 
       const provider = getProvider();
-      const question = await provider.generateExamQuestion(worldState, exam);
+      const question = sanitizeExamQuestionPayload(
+        await provider.generateExamQuestion(worldState, exam),
+        { ...exam, requirements: getExamRequirements(exam) }
+      );
 
       worldState.activeExam = {
         examId: createExamId(exam.level),
@@ -380,7 +387,9 @@ router.post("/submit", async (req, res, next) => {
         exam,
         player: worldState.player
       });
-      const grade = await provider.gradeExamEssay(worldState, exam, trimmedEssay, authenticityCheck);
+      const grade = sanitizeExamGradePayload(
+        await provider.gradeExamEssay(worldState, exam, trimmedEssay, authenticityCheck)
+      );
       const scoreBeforeExaminerReview = applyAuthenticityPenalties(grade.score, authenticityCheck, exam);
       const reviewResult = resolveExamReview({
         worldState,

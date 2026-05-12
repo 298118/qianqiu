@@ -9,7 +9,7 @@ const UNSAFE_PUBLIC_TEXT_PATTERNS = Object.freeze([
   /SEALED_[A-Z0-9_]+/gi,
   /hiddenNotes|hidden_notes|hiddenIntent|hidden_intent|sealedMapping|sealed_mapping/gi,
   /raw provider|raw_provider|provider proposal|raw audit|raw_audit|prompt/i,
-  /OPENAI_API_KEY|DEEPSEEK_API_KEY|MIMO_API_KEY|ANTHROPIC_API_KEY|sk-[A-Za-z0-9_-]+/gi,
+  /OPENAI_API_KEY|DEEPSEEK_API_KEY|MIMO_API_KEY|ANTHROPIC_API_KEY|sk-[A-Za-z0-9_-]+|tp-[A-Za-z0-9_-]+/gi,
   /data\/sessions\/[^\s，。；]*|data\/audit\/[^\s，。；]*|\/mnt\/[^\s，。；]*|[A-Z]:\\[^\s，。；]*/gi
 ]);
 
@@ -77,7 +77,7 @@ function normalizeHonorRecord(record = {}, index = 0) {
     tenDayPeriod: clampNumber(record.tenDayPeriod ?? date.tenDayPeriod, 1, 3, 1),
     turnCount: clampNumber(record.turnCount ?? date.turnCount, 0, Number.MAX_SAFE_INTEGER, 0),
     publicSummary: cleanText(record.publicSummary, `${title}由服务器榜单写定。`),
-    authorityBoundary: "名次荣誉由服务器从 canonical ranking 生成；AI、provider ranking 和考官 proposal 不能直接授予。"
+    authorityBoundary: "名次荣誉由服务器从定榜顺序生成；AI、模型排序和考官建议不能直接授予。"
   };
 }
 
@@ -346,7 +346,7 @@ function buildExamHonorView(worldState = {}) {
     publicSummary: latestAchievement?.publicSummary ||
       latestHonor?.publicSummary ||
       "科名荣誉簿尚无新记。",
-    authorityBoundary: "examHonorView 只读服务器 canonical ranking 与考试履历；不读取 provider ranking、raw proposal、hidden notes、本地路径或密钥。"
+    authorityBoundary: "科名荣誉只读服务器定榜顺序与考试履历；不读取模型排序、原始建议、隐藏札记、本地路径或密钥。"
   };
 }
 

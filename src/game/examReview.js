@@ -4,28 +4,15 @@ const {
   EXAM_REVIEW_LIMITS,
   EXAM_REVIEW_SCHEMA_VERSION
 } = require("./examReviewConfig");
+const { cleanProviderText } = require("./examProviderSanitizer");
 const { scoreToRank } = require("./essayChecks");
-
-const UNSAFE_PUBLIC_TEXT_PATTERNS = Object.freeze([
-  /SEALED_[A-Z0-9_]+/gi,
-  /hiddenNotes|hidden_notes|hiddenIntent|hidden_intent|sealedMapping|sealed_mapping/gi,
-  /raw provider|raw_provider|provider proposal|raw audit|raw_audit|prompt/i,
-  /OPENAI_API_KEY|DEEPSEEK_API_KEY|MIMO_API_KEY|ANTHROPIC_API_KEY|sk-[A-Za-z0-9_-]+/gi,
-  /data\/sessions\/[^\s，。；]*|data\/audit\/[^\s，。；]*|\/mnt\/[^\s，。；]*|[A-Z]:\\[^\s，。；]*/gi
-]);
 
 function isPlainObject(value) {
   return value !== null && typeof value === "object" && !Array.isArray(value);
 }
 
 function cleanText(value, fallback = "", maxLength = EXAM_REVIEW_LIMITS.textPreviewLength) {
-  if (typeof value !== "string") return fallback;
-  let trimmed = value.trim().replace(/\s+/g, " ");
-  for (const pattern of UNSAFE_PUBLIC_TEXT_PATTERNS) {
-    trimmed = trimmed.replace(pattern, "已遮蔽");
-  }
-  if (!trimmed) return fallback;
-  return trimmed.slice(0, maxLength);
+  return cleanProviderText(value, fallback, maxLength);
 }
 
 function clampNumber(value, min, max, fallback = min) {
@@ -437,7 +424,7 @@ function resolveExamReview({ worldState = {}, activeExam = {}, exam = {}, essay 
     : rejectedProviderCount
       ? "模型考官建议已脱敏留痕，但未直接采纳为定榜事实。"
       : "多考官意见未见重大分歧，服务器照复核后分数定序。";
-  const serverDecision = `服务器以${adjustedScore.overall_score}分作为榜前定序输入；provider ranking、虚拟考生和考官建议均不得成为 canonical 榜单。`;
+  const serverDecision = `服务器以${adjustedScore.overall_score}分作为榜前定序输入；模型榜单建议、虚拟考生和考官建议均不得成为最终榜单。`;
   const panel = buildExaminerPanelView({
     level: activeExam.level || exam.level,
     examName: activeExam.examName || exam.name,

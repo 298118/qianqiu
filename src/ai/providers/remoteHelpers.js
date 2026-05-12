@@ -131,7 +131,72 @@ function normalizeTeacherFeedbackProposal(proposal) {
   return normalized;
 }
 
+function normalizeLooseText(value, maxLength = 120) {
+  if (typeof value === "string") return cleanText(value, maxLength);
+  if (typeof value === "number" || typeof value === "boolean") {
+    return cleanText(String(value), maxLength);
+  }
+  if (Array.isArray(value)) {
+    return cleanText(
+      value
+        .filter((item) => typeof item === "string" || typeof item === "number" || typeof item === "boolean")
+        .map(String)
+        .join("；"),
+      maxLength
+    );
+  }
+  return "";
+}
+
+function normalizeExaminerReview(review) {
+  if (!review || typeof review !== "object" || Array.isArray(review)) {
+    return null;
+  }
+
+  const normalized = {};
+  for (const [key, limit] of [
+    ["actor", 40],
+    ["label", 48],
+    ["recommendation", 48],
+    ["comment", 240],
+    ["concern", 120]
+  ]) {
+    if (key in review) {
+      const text = normalizeLooseText(review[key], limit);
+      if (text) normalized[key] = text;
+    }
+  }
+
+  if ("suggestedScoreDelta" in review || "scoreDelta" in review) {
+    const rawDelta = Number(review.suggestedScoreDelta ?? review.scoreDelta);
+    if (Number.isFinite(rawDelta)) {
+      normalized.suggestedScoreDelta = clampNumber(Math.round(rawDelta), -2, 2);
+    }
+  }
+
+  return Object.keys(normalized).length ? normalized : null;
+}
+
+function normalizeGradePayload(payload) {
+  if (!payload || typeof payload !== "object") return payload;
+
+  if (Array.isArray(payload.examiner_reviews)) {
+    payload.examiner_reviews = payload.examiner_reviews
+      .map(normalizeExaminerReview)
+      .filter(Boolean)
+      .slice(0, 6);
+  } else {
+    delete payload.examiner_reviews;
+  }
+
+  return payload;
+}
+
 function normalizeModelPayload(schemaName, payload) {
+  if (schemaName === "grade") {
+    return normalizeGradePayload(payload);
+  }
+
   if (schemaName !== "turn" || !payload || typeof payload !== "object") {
     return payload;
   }

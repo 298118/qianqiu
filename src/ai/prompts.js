@@ -140,7 +140,7 @@ function buildTurnTask(worldState, input) {
       "If the action should affect social memory, use top-level relationshipChanges with existing visible target ids only.",
       "relationshipChanges are suggestions: use relationshipDelta -12..12 and resentmentDelta -10..10; the server will clamp, ignore hidden or invented targets, and merge final ledger state.",
       "relationshipChanges should summarize important NPC/faction relationship consequences; use [] when there is no meaningful social consequence.",
-      "For teacher-style study feedback, you may include teacherFeedbackProposal with focus, advice, reason, and optional focusKey/teacherName. It is only a proposal: the server may sanitize, accept, or ignore it, and it cannot grant exam status, relationships, rank, office, hidden facts, or database writes.",
+      "For teacher-style study feedback, include teacherFeedbackProposal with focus, advice, reason, and optional focusKey/teacherName. It is only a proposal: the server may sanitize, accept, or ignore it, and it cannot grant exam status, relationships, rank, office, hidden facts, or database writes.",
       "If the player clearly asks to take the next imperial exam, set examTrigger.shouldStart=true and use the next legal level.",
       "Use retrievalContext as the first index of role-visible countries, cities, NPCs, offices, postings, institutions, and event summaries. Do not infer hidden data beyond it.",
       `Player action: ${input}`,

@@ -115,7 +115,7 @@
 | S69.2 | DONE | 同年、座师与考官网络：房官、主考、座师、门生、同年关系进入可见关系和事件档案 | 2026-05-12 | Codex / 子代理调研与复审尝试超时 | 本次提交 |
 | S69.3 | DONE | 授官路径深化：一甲翰林、二甲馆选/庶吉士/观政、三甲铨选/部属/外放/候缺和籍贯回避 resolver | 2026-05-12 | Codex / 子代理调研与只读复审 | 本次提交 |
 | S69.4 | DONE | 浏览器科举档案面板：读书簿、科场档案、榜单、同年考官、授官轨迹和 hidden-token smoke | 2026-05-12 | Codex / 子代理调研与只读复审 | 本次提交 |
-| S69.5 | TODO | Provider/Mock 验收：真实 provider 出题/评卷/点评 smoke、Mock deterministic 路径和越权红队 | - | - | S69.4 后 |
+| S69.5 | DONE | Provider/Mock 验收：真实 provider 出题/评卷/点评 smoke、Mock deterministic 路径和越权红队 | 2026-05-12 | Codex / 子代理只读调研与复审 | 本次提交 |
 | S69.6 | TODO | S68-S69 归档与交接：科举深化实现归档、brief/context/验收更新和 S70 衔接建议 | - | - | S69.5 后 |
 | S70.0 | DONE | AI 编排提前规划：固定 AI 核心地位、现实权力原型、工具调用路线、actor 权限层和 S70 子步骤 | 2026-05-08 | Codex / Web / 子代理 | 见 git history |
 | S70.1 | TODO | AI 提示词与工具协议契约：prompt pack 分层、actor/scene contract、MCP-friendly tool envelope、proposal/result schema、request-adjudication、direct-write 禁止、strict schema、MiMo-V2.5-Pro 工具调用 smoke、失败降级和 provider 兼容策略 | - | - | S69 后启动 |
@@ -220,6 +220,46 @@ S71 详细规划见 [DATABASE_GAMEPLAY_RESOLVER_ROADMAP.md](DATABASE_GAMEPLAY_RE
 4. S71.9-S71.12：接入多 actor 场景、NPC 记忆和 AI 调动审计面板，最后做 dual-mode、Mock/no-key、browser 和 provider smoke 归档。
 
 ## 8. 进度记录
+
+### 2026-05-12
+
+工具：Codex、子代理只读调研与复审。
+
+步骤：S69.5 Provider/Mock 验收。
+
+提交：本次提交。
+
+完成：
+
+- 新增 `src/game/examProviderSanitizer.js`，在 `/api/exam/question` 和 `/api/exam/submit` 把真实 provider 的题面、要求、名位文本、五维评语、rank 和 detailed feedback 落盘前统一清洗，遮蔽 hidden token、raw provider/proposal、prompt/index/table 名、本地路径、`sk-` 与 `tp-` 形状凭据。
+- `scripts/providerSmoke.js` 扩展 S69 验收：真实 provider smoke 除开局、普通回合、出题和评卷外，新增老师点评 turn，要求返回 `teacherFeedbackProposal.focus/advice/reason`；同时检查 provider 不得 patch `studyProfile`、`examProcedure`、`examHonorLedger`、`appointmentTrack`、`activeExam`、`examCalendar`、`player.examRank`、`player.officeTitle` 或 `player.examHistory`。
+- 新增 `scripts/mockImperialExamAcceptance.js` 与 `npm run smoke:exam-s69`，用 Mock deterministic provider 完整跑通童试、乡试、会试、殿试到入仕，验证 `studyProfileView`、`examProcedureView`、`examinerPanelView`、`examHonorView`、`relationshipView` / `worldPeopleView`、殿试 `appointmentTrackView` 和四次考试历史安全快照。
+- 补充 `test/examProviderSanitizer.test.js`、`test/mockImperialExamAcceptanceScript.test.js`、`test/providerSmokeScript.test.js` 和 `test/aiControlRedTeam.test.js`，覆盖 provider 文本清洗、Mock 完整路径、老师点评 proposal、S69 server-owned patch 越权和考试 route 持久化前脱敏。
+- 提交前只读复审发现 provider `examiner_reviews` 旧清洗不覆盖 `statePatch`、`appointmentTrack`、`retrievalContext`、`worldState`、`event_log`、`ai_change_proposals` 等 source token，已处理：`examReview` 复用 S69.5 清洗器，grade sanitizer 预清洗 provider review 字段，Mock 验收改为扫描字符串值并扩大 source-token/path 守卫，remote helper 对真实 provider 松散 `examiner_reviews` 文本字段做归一和 delta 夹断，避免非字符串 concern 让整次评卷 schema 失败。
+- 同步 README、brief、AI 控制矩阵、真实 provider 验收文档和共享上下文，把下一步切到 S69.6 归档与交接。
+
+验证：
+
+- 已通过：`node --check src/game/examProviderSanitizer.js`、`node --check src/routes/exam.js`、`node --check scripts/providerSmoke.js`、`node --check scripts/mockImperialExamAcceptance.js`。
+- 已通过：`node --check src/game/examReview.js`、`node --check src/game/examHonors.js`、`node --check src/game/appointmentTracks.js`、`node --check src/ai/providers/remoteHelpers.js`。
+- 已通过：`node --test test/examProviderSanitizer.test.js test/mockImperialExamAcceptanceScript.test.js test/providerSmokeScript.test.js test/aiControlRedTeam.test.js`，22/22。
+- 已通过：`node --test test/examReview.test.js test/examHonors.test.js test/appointmentTracks.test.js test/examHonorsRoute.test.js test/appointmentTracksRoute.test.js test/examNetworks.test.js`，15/15。
+- 已通过：`node --test test/remoteHelpers.test.js test/aiSchemas.test.js`，17/17。
+- 已通过：`npm run smoke:exam-s69`，Mock 路径完成 `child_exam -> provincial_exam -> metropolitan_exam -> palace_exam`，最终 `role=official`、初授翰林院修撰。
+- 已通过：`npm run smoke:provider`，本机 keyed `mimo-deepseek` 完成真实 provider 开局、普通回合、老师点评、出题和评卷 smoke。
+- 已通过：`npm run smoke:provider:route`，本机 keyed `mimo-deepseek` route health 通过，确认 route 连接诊断、streaming 能力、模型摘要和无 session 写入。
+- 已通过：`npm run check:docs-governance`、`git diff --check`。
+- 提交前只读子代理复审最终 diff 与验证证据，未发现阻断问题。
+
+风险/遗留：
+
+- S69.5 是 provider/Mock 验收与清洗守卫，不新增 SQLite 科举派生表，也不保存 hidden 科场私档、弥封身份映射、考官私意、raw provider proposal、完整 prompt、本地路径或 key。
+- 本机有真实 `mimo-deepseek` key，因此本次实际跑了 keyed smoke；无 key 环境仍应把 provider network gate 的 no-key skip 视为有效本地结果。
+- 更长 provider long-run、SQLite 科举派生 parity 和 S68-S69 文档归档留给 S69.6 或后续数据库专项。
+
+下一步：
+
+- 启动 S69.6：归档 S68-S69 科举深化实现，整理 brief/context/验收文档，并给 S70 prompt pack、工具协议和 actor 权限实施留下明确入口。
 
 ### 2026-05-12
 

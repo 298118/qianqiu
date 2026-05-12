@@ -2,8 +2,10 @@ const test = require("node:test");
 const assert = require("node:assert/strict");
 
 const {
+  assertTeacherFeedbackProposal,
   buildSmokeEssay,
   canonicalProviderName,
+  collectS69ProviderPatchViolations,
   getProviderNamesToSmoke,
   hasFlag,
   providerHasKey
@@ -90,4 +92,52 @@ test("provider smoke detects optional streaming flag", () => {
 test("provider smoke essay is long enough for the child exam smoke grade", () => {
   assert.ok(buildSmokeEssay().length >= 200);
   assert.equal(buildSmokeEssay().includes("AI"), false);
+});
+
+test("provider smoke catches S69 server-owned patch attempts", () => {
+  assert.deepEqual(
+    collectS69ProviderPatchViolations({
+      activeExam: { level: "palace_exam" },
+      examHonorLedger: { honors: [{ title: "模型状元" }] },
+      appointmentTrack: { records: [{ officeTitle: "内阁大学士" }] },
+      studyProfile: { teacherAdvice: [] },
+      worldPeople: { npcs: [] },
+      player: {
+        teacher: "模型先生",
+        position: "新科状元",
+        officeTitle: "翰林院修撰",
+        examHistory: []
+      }
+    }),
+    [
+      "activeExam",
+      "examHonorLedger",
+      "appointmentTrack",
+      "studyProfile",
+      "worldPeople",
+      "player.teacher",
+      "player.position",
+      "player.officeTitle",
+      "player.examHistory"
+    ]
+  );
+});
+
+test("provider smoke requires teacher feedback proposal fields", () => {
+  assert.doesNotThrow(() => assertTeacherFeedbackProposal("mock", {
+    teacherFeedbackProposal: {
+      focus: "制艺章法",
+      advice: "先练破题。",
+      reason: "玩家请老师点评文章。"
+    }
+  }));
+
+  assert.throws(
+    () => assertTeacherFeedbackProposal("mock", { teacherFeedbackProposal: { focus: "制艺章法" } }),
+    /teacherFeedbackProposal\.advice/
+  );
+  assert.throws(
+    () => assertTeacherFeedbackProposal("mock", {}),
+    /did not return teacherFeedbackProposal/
+  );
 });

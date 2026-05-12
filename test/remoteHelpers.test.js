@@ -117,6 +117,33 @@ test("remote payload normalization leaves non-turn payloads unchanged", () => {
   assert.equal(normalizeModelPayload("opening", payload), payload);
 });
 
+test("remote grade payload normalization tolerates loose examiner review text", () => {
+  const payload = {
+    score: {},
+    examiner_reviews: [
+      {
+        actor: "room_officer",
+        label: ["房官", "初评"],
+        recommendation: 123,
+        suggestedScoreDelta: 8,
+        comment: true,
+        concern: { nested: "模型有时给对象" }
+      },
+      "invalid"
+    ]
+  };
+
+  assert.deepEqual(normalizeModelPayload("grade", payload).examiner_reviews, [
+    {
+      actor: "room_officer",
+      label: "房官；初评",
+      recommendation: "123",
+      suggestedScoreDelta: 2,
+      comment: "true"
+    }
+  ]);
+});
+
 test("remote provider state patch normalization drops server-owned and unknown fields", () => {
   assert.deepEqual(
     normalizeProviderStatePatch({

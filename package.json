@@ -14,6 +14,7 @@
     "smoke:provider": "node scripts/providerSmoke.js",
     "smoke:provider:route": "node scripts/providerRouteHealth.js",
     "smoke:provider:long": "node scripts/providerLongRun.js",
+    "smoke:exam-s69": "node scripts/mockImperialExamAcceptance.js",
     "storage:import:sqlite": "node scripts/importJsonSessionsToSqlite.js",
     "storage:geography:sqlite": "node scripts/sqliteGeographyTool.js",
     "storage:audit-events": "node scripts/auditEventArchiveTool.js"
