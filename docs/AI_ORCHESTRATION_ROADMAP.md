@@ -633,6 +633,8 @@ S70 要准备这些 fixture：
 
 ### S70.5：制度 AI 与朝议/科场场景
 
+当前状态（2026-05-12）：S70.5 已落地首版制度场景 helper。已新增 `src/game/institutionSceneConfig.js` 和 `src/game/institutionScenes.js`，覆盖朝议/科场 scene type、参与者预设、轮次/提案预算、公开 context 压缩清洗、Mock/no-key heuristic proposal、场景轮次收束和 `pending_server_resolution` outcome。朝议参与者覆盖皇帝、堂官/吏部、御史和按议题选择的领域官署；科场评议覆盖房官、同考官、主考官和复核 critic。当前实现不接普通 turn、不运行真实 provider、不写 session/SQLite、不推进全局时间、不执行工具；真实领域后果仍留给后续 resolver。
+
 前置依赖：S70.3-S70.4；S68-S69 科举深化完成。
 
 需要资料：科举制度契约、examProcedure/examReview/examHonors/examNetwork、官制资料、朝议资料。

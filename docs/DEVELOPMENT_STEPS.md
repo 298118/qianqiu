@@ -9,7 +9,7 @@
 - S48 时间专项：[TIME_SPECIALTY_ROADMAP_ARCHIVE.md](TIME_SPECIALTY_ROADMAP_ARCHIVE.md)。
 - S49-S67 本地数据库基础、SQLite 业务表、双模式验收、超大动态世界内容与 S60 内容契约：[LOCAL_DATABASE_AND_WORLD_CONTENT_ARCHIVE.md](LOCAL_DATABASE_AND_WORLD_CONTENT_ARCHIVE.md)。旧分卷归档和 S60 契约文件保留为跳转页。
 
-当前活动路线图已交接到 S70：S68-S69 的书生主线科举、读书、评卷与授官制度已归档，S70.1 prompt pack 与工具协议、S70.2 actor 权限模型、S70.3 `game_ai_tools` 运行时和 S70.4 NPC mind 基础已落地，下一步进入 S70.5 制度 AI 与朝议/科场场景。S71 作为 S70 之后的数据库玩法化、维护、安全检索和 redacted API 专项，规划见 [DATABASE_GAMEPLAY_RESOLVER_ROADMAP.md](DATABASE_GAMEPLAY_RESOLVER_ROADMAP.md)。数据库方向继续只考虑本机 JSON/SQLite 持久化增强；远程存档、账号体系、多人同步、云端冲突解决和托管数据库不进入当前规划。
+当前活动路线图已交接到 S70：S68-S69 的书生主线科举、读书、评卷与授官制度已归档，S70.1 prompt pack 与工具协议、S70.2 actor 权限模型、S70.3 `game_ai_tools` 运行时、S70.4 NPC mind 基础和 S70.5 制度场景 helper 已落地，下一步进入 S70.6 压力事件工具协议与 actor proposal。S71 作为 S70 之后的数据库玩法化、维护、安全检索和 redacted API 专项，规划见 [DATABASE_GAMEPLAY_RESOLVER_ROADMAP.md](DATABASE_GAMEPLAY_RESOLVER_ROADMAP.md)。数据库方向继续只考虑本机 JSON/SQLite 持久化增强；远程存档、账号体系、多人同步、云端冲突解决和托管数据库不进入当前规划。
 
 ## 1. 开发规范继承
 
@@ -107,8 +107,8 @@
 | S70.1 | DONE | AI 提示词与工具协议契约：prompt pack 分层、actor/scene contract、MCP-friendly tool envelope、proposal/result schema、request-adjudication、direct-write 禁止、strict schema、MiMo-V2.5-Pro 工具调用 smoke、失败降级和 provider 兼容策略 | 2026-05-12 | Codex / Web / 子代理 | `ba576a1` |
 | S70.2 | DONE | AI actor 与权限模型：按书生、士绅、地方官、大臣、将领、皇帝、系统引擎划分读取范围和工具组 | 2026-05-12 | Codex / 子代理 | `636f30a` |
 | S70.3 | DONE | 内部工具运行时：`game_ai_tools` registry、权限检查、read/proposal/request-adjudication runner、服务器 resolver、审计 hook 和 Mock runner | 2026-05-12 | Codex / 子代理 | `4f94de9` |
-| S70.4 | DONE | NPC mind 与记忆：高显著度 NPC LLM loop、背景 NPC heuristic、目标/恩怨/人情债记忆演化 | 2026-05-12 | Codex / 子代理 | 本次提交 |
-| S70.5 | TODO | 制度 AI 与朝议/科场场景：官署、派系、大臣、谏官、老师、考官围绕奏折/弹章/政令/考卷推演 | - | - | S70.4 后 |
+| S70.4 | DONE | NPC mind 与记忆：高显著度 NPC LLM loop、背景 NPC heuristic、目标/恩怨/人情债记忆演化 | 2026-05-12 | Codex / 子代理 | `e030dc5` |
+| S70.5 | DONE | 制度 AI 与朝议/科场场景：官署、派系、大臣、谏官、老师、考官围绕奏折/弹章/政令/考卷推演 | 2026-05-12 | Codex / 子代理 | 本次提交 |
 | S70.6 | TODO | 压力事件工具协议与 actor proposal：由城市、财政、军政、关系、情报压力提出事件候选，固定工具 envelope、权限、Mock/provider 基础和服务器成案语义 | - | - | S70.5 后 |
 | S70.7 | TODO | 刑名、财政、军事、外交与科举工具：案牍、赈济、军令、战役、和议、宣战、评卷、授官 proposal 与 resolver | - | - | S70.6 后 |
 | S70.8 | TODO | 多模型路由与仲裁：narrator、actor_mind、planner、domain_specialist、critic、safety 分工与成本边界 | - | - | S70.7 后 |
@@ -209,11 +209,42 @@ S71 详细规划见 [DATABASE_GAMEPLAY_RESOLVER_ROADMAP.md](DATABASE_GAMEPLAY_RE
 
 ### 2026-05-12
 
+工具：Codex、子代理。
+
+步骤：S70.5 制度 AI 与朝议/科场场景。
+
+提交：本次提交。
+
+完成：
+
+- 新增 `src/game/institutionSceneConfig.js`，集中定义制度场景 schema version、朝议/科场 scene type、参与者预设、proposal type、轮次/提案/证据/文本上限。
+- 新增 `src/game/institutionScenes.js`，提供 `createCourtDebateScene()`、`createExamReviewScene()`、`runInstitutionSceneRound()`、`collectInstitutionProposals()`、`resolveInstitutionSceneOutcome()` 与 `sanitizeInstitutionProposal()`。朝议参与者覆盖皇帝、吏部/堂官、御史和按议题选择的领域官署；科场评议覆盖房官、同考官、主考官和磨勘/复核 critic。
+- 制度场景只读取服务器安全 projection：官署任所、案牍、财赋、军务、科场流程、多考官阅卷、科名荣誉、同年座师和授官轨迹公开摘要；考试相关摘要会再压缩清洗，避免 `provider` / `prompt` / 本地路径 / key 形状进入场景 context。
+- `runInstitutionSceneRound()` 默认 Mock/no-key heuristic，每个参与者只产 scene-local proposal，不推进全局年月旬，不写 session/SQLite，不执行工具；`resolveInstitutionSceneOutcome()` 只返回 `pending_server_resolution`，把伪造参与者 proposal 丢弃，并把 actorId 锚回场景参与者。
+- 新增 `test/institutionScenes.test.js`、`test/institutionSceneVisibility.test.js` 和 `test/examInstitutionScene.test.js`，覆盖朝议参与者、边务领域官署选择、科场评议参与者、scene-local time、不修改 worldState、工具调用丢弃、隐藏/source token 清洗、伪造参与者丢弃和 actor retarget 防护。
+- 提交前只读复审提出 P2：独立 `source` / `path` / `key` / `hidden` / `raw` token 可能进入场景文本，AI 传入的 `requestedToolName` 可能残留内部工具意图，第二轮复审又指出 `server.*` 内部 resolver 名可从 topic、note、proposalId、publicPosition、evidenceRefs、visibleEffects 或 riskTags 旁路泄漏。已扩大制度场景文本清洗词表，并在 `sanitizeInstitutionProposal()` 中固定清空 `requestedToolName`，补回归测试。
+
+验证：
+
+- 已通过：`node --check src/game/institutionSceneConfig.js`、`node --check src/game/institutionScenes.js`、`node --check test/institutionScenes.test.js`、`node --check test/institutionSceneVisibility.test.js`、`node --check test/examInstitutionScene.test.js`。
+- 已通过：`node --test test/institutionScenes.test.js test/institutionSceneVisibility.test.js test/examInstitutionScene.test.js`，4/4。
+
+风险/遗留：
+
+- S70.5 只建立制度场景的安全编排 helper 和 Mock/no-key proposal 收束，不把朝议/科场接入普通回合、不运行真实 provider、不写审计表或持久 actor memory；真实领域工具、压力事件和 resolver 仍留给 S70.6-S70.7。
+- 当前朝议只覆盖奏议、弹章、政策/财赋/边务/刑名/工务意见候选；堂审、会盟、战役等更复杂 scene-local runtime 留给后续 S71.9 数据库玩法化阶段。
+
+下一步：
+
+- 启动 S70.6：压力事件工具协议与 actor proposal。先固定城市、财政、军务、关系、情报等压力提出事件候选时的工具 envelope、权限、Mock/provider 形状、服务器成案语义和安全测试。
+
+### 2026-05-12
+
 工具：Codex、子代理复审。
 
 步骤：S70.4 NPC mind 与记忆基础。
 
-提交：本次提交。
+提交：`e030dc5`。
 
 完成：
 
