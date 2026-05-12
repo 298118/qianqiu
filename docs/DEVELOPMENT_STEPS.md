@@ -9,7 +9,7 @@
 - S48 时间专项：[TIME_SPECIALTY_ROADMAP_ARCHIVE.md](TIME_SPECIALTY_ROADMAP_ARCHIVE.md)。
 - S49-S67 本地数据库基础、SQLite 业务表、双模式验收、超大动态世界内容与 S60 内容契约：[LOCAL_DATABASE_AND_WORLD_CONTENT_ARCHIVE.md](LOCAL_DATABASE_AND_WORLD_CONTENT_ARCHIVE.md)。旧分卷归档和 S60 契约文件保留为跳转页。
 
-当前活动路线图已交接到 S70：S68-S69 的书生主线科举、读书、评卷与授官制度已归档，S70.1 prompt pack 与工具协议、S70.2 actor 权限模型、S70.3 `game_ai_tools` 运行时、S70.4 NPC mind 基础、S70.5 制度场景 helper 和 S70.6 压力事件工具协议已落地，下一步进入 S70.7 刑名、财政、军事、外交与科举领域工具。S71 作为 S70 之后的数据库玩法化、维护、安全检索和 redacted API 专项，规划见 [DATABASE_GAMEPLAY_RESOLVER_ROADMAP.md](DATABASE_GAMEPLAY_RESOLVER_ROADMAP.md)。数据库方向继续只考虑本机 JSON/SQLite 持久化增强；远程存档、账号体系、多人同步、云端冲突解决和托管数据库不进入当前规划。
+当前活动路线图已交接到 S70：S68-S69 的书生主线科举、读书、评卷与授官制度已归档，S70.1 prompt pack 与工具协议、S70.2 actor 权限模型、S70.3 `game_ai_tools` 运行时、S70.4 NPC mind 基础、S70.5 制度场景 helper、S70.6 压力事件工具协议和 S70.7 领域工具协议已落地，下一步进入 S70.8 多模型路由、提示词评测与仲裁。S71 作为 S70 之后的数据库玩法化、维护、安全检索和 redacted API 专项，规划见 [DATABASE_GAMEPLAY_RESOLVER_ROADMAP.md](DATABASE_GAMEPLAY_RESOLVER_ROADMAP.md)。数据库方向继续只考虑本机 JSON/SQLite 持久化增强；远程存档、账号体系、多人同步、云端冲突解决和托管数据库不进入当前规划。
 
 ## 1. 开发规范继承
 
@@ -110,7 +110,7 @@
 | S70.4 | DONE | NPC mind 与记忆：高显著度 NPC LLM loop、背景 NPC heuristic、目标/恩怨/人情债记忆演化 | 2026-05-12 | Codex / 子代理 | `e030dc5` |
 | S70.5 | DONE | 制度 AI 与朝议/科场场景：官署、派系、大臣、谏官、老师、考官围绕奏折/弹章/政令/考卷推演 | 2026-05-12 | Codex / 子代理 | `029d65a` |
 | S70.6 | DONE | 压力事件工具协议与 actor proposal：由城市、财政、军政、关系、情报压力提出事件候选，固定工具 envelope、权限、Mock/provider 基础和服务器成案语义 | 2026-05-12 | Codex / 子代理 | `3847c5a` |
-| S70.7 | IN_PROGRESS | 刑名、财政、军事、外交与科举工具：案牍、赈济、军令、战役、和议、宣战、评卷、授官 proposal 与 resolver | 2026-05-12 | Codex / 子代理 | 进行中 |
+| S70.7 | DONE | 刑名、财政、军事、外交与科举工具：案牍、赈济、军令、战役、和议、宣战、评卷、授官 proposal 与 resolver | 2026-05-12 | Codex / 子代理 | 待本次提交 |
 | S70.8 | TODO | 多模型路由与仲裁：narrator、actor_mind、planner、domain_specialist、critic、safety 分工与成本边界 | - | - | S70.7 后 |
 | S70.9 | TODO | AI 设置与可观测性：按叙事、NPC、科举、政务、战争、记忆、critic/safety 配置模型路由、输出长度、并发、工具预算、审计面板和 hidden-safe 诊断 | - | - | S70.8 后 |
 | S70.10 | TODO | 玩家官职月报与 AI 推动世界：每三旬生成职位化月报、上级态度、同僚风向、NPC 主动请求、下月风险和待裁决差事 | - | - | S70.9 后 |
@@ -206,6 +206,38 @@ S71 详细规划见 [DATABASE_GAMEPLAY_RESOLVER_ROADMAP.md](DATABASE_GAMEPLAY_RE
 4. S71.9-S71.12：接入多 actor 场景、NPC 记忆和 AI 调动审计面板，最后做 dual-mode、Mock/no-key、browser 和 provider smoke 归档。
 
 ## 8. 进度记录
+
+### 2026-05-12
+
+工具：Codex、子代理。
+
+步骤：S70.7 刑名、财政、军事、外交与科举领域工具。
+
+提交：待本次提交后回填。
+
+完成：
+
+- 新增 `src/ai/domainToolDefinitions.js`，集中定义 `judicial.propose_case_resolution`、`city.propose_policy`、`military.propose_order`、`diplomacy.propose_move`、`exam.request_ranking_adjudication`、`office.request_appointment_adjudication`、`career.propose_reward_or_promotion` 和 `career.request_discipline_adjudication` 八个领域工具。所有工具使用 strict `inputSchema`、空 `privateResultRefs`、actor 权限、证据要求、冷却、Mock pending fallback、内部 `server.resolve_domain_tool_proposal` / `server.request_domain_tool_adjudication` resolver label 和 hidden-safe audit 字段。
+- 新增 `src/game/domainToolResolvers.js`，提供 `collectVisibleDomainEvidenceRefs()`、`normalizeDomainToolProposal()`、`validateDomainToolAuthority()`、`resolveDomainTool()`、`resolveDomainToolCall()` 与 `buildDomainToolAudit()`。证据只来自服务器安全 projection：地方案牍、财赋市场、军务外交、公开情报、地理、官署任所、科场流程/阅卷/荣誉、授官轨迹、可见人物和事件档案；模型夹带 hidden/raw/provider/source/path/key/SQL/server.*、`statePatch`、`worldState`、raw table/index/audit 形状或不可见 evidence 会被拒绝。提交前只读复审指出辖区型工具未校验证据自身范围，已为 evidence refs 增加 `scopeRefs`，并要求 `judicial` / `city` 等 `requiresJurisdiction` 工具的证据范围与 actor 辖区相交；无范围事件档案不能单独作为辖区工具证据。
+- `createGameAiToolRegistry()` 默认包含 S70.7 领域工具；`src/game/aiToolResolvers.js` 已接入领域 resolver bridge。无完整领域裁决的工具只返回 `pending` 或 `rejected`，`privateResultRefs` / `appliedEventIds` 为空，不写 `worldState`、session、SQLite、事件档案、官职、榜单、判决、军令、战和、赏罚或审计表成案结果。
+- 新增 `test/domainToolDefinitions.test.js`、`test/domainToolPermissions.test.js`、`test/domainToolResolvers.test.js` 和 `test/careerToolRedTeam.test.js`，覆盖 strict schema、默认 registry、provider name map、actor 权限、辖区过滤、每个领域工具 pending 不改状态、错误领域/伪造证据拒绝、外辖/无范围证据拒绝、赏罚/授官红队脱敏和 runner schema 走私拒绝。
+- 同步 brief、AI 工具协议契约、AI 控制矩阵、S70 编排路线图和共享上下文，记录 S70.7 只做领域工具协议与 thin resolver bridge，不提前实现 S71 的财政、刑名、军务、外交或任免结算。
+
+验证：
+
+- 已通过：`node --check src/ai/domainToolDefinitions.js`、`node --check src/game/domainToolResolvers.js`、`node --check src/ai/gameAiTools.js`、`node --check src/game/aiToolResolvers.js`、`node --check test/domainToolDefinitions.test.js`、`node --check test/domainToolPermissions.test.js`、`node --check test/domainToolResolvers.test.js`、`node --check test/careerToolRedTeam.test.js`。
+- 已通过：`node --test test/domainToolDefinitions.test.js test/domainToolPermissions.test.js test/domainToolResolvers.test.js test/careerToolRedTeam.test.js`，12/12。
+- 已通过：`node --test test/aiToolProtocolContract.test.js test/aiActorToolPermissions.test.js test/gameAiTools.test.js test/gameAiToolRunner.test.js test/aiEventProposal.test.js test/aiEventProposalRedTeam.test.js test/domainToolDefinitions.test.js test/domainToolPermissions.test.js test/domainToolResolvers.test.js test/careerToolRedTeam.test.js`，41/41。
+- 已运行：`npm test`，全量 641 个子测试中 640 个通过，1 个既有 S67 性能阈值抖动失败：`dual-mode S67 scale regression records large fixture, prompt strategy, paging, repair and timing` 的 `sqliteReadRepairMs 4585.954 > 3000`。随后单独重跑 `node --test test/dualModeAcceptanceScript.test.js` 通过 6/6。
+
+风险/遗留：
+
+- S70.7 不接普通 turn 自动调度、不调用真实 provider、不写 session/SQLite、不把工具调用记为已发生事实；真实审案、赈济、征粮、战役、和议、宣战、定榜、授官、赏罚和处分仍留给后续服务器 resolver。
+- 领域 resolver 当前只校验证据、权限、辖区、冷却和脱敏边界；JSON/SQLite projection 驱动的真实结算、事件档案写入和更深审计面板仍归 S71 及后续步骤。
+
+下一步：
+
+- 启动 S70.8：多模型路由、提示词评测与仲裁，建立 task type 到 provider/model 的路由策略，并确保 critic/safety 只能输出风险建议，不能绕过服务器裁决。
 
 ### 2026-05-12
 

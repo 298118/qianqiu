@@ -695,6 +695,8 @@ S70 要准备这些 fixture：
 
 ### S70.7：刑名、财政、军事、外交与科举工具
 
+当前状态（2026-05-12）：S70.7 已落地首版领域工具协议与 thin resolver bridge。已新增 `src/ai/domainToolDefinitions.js` 与 `src/game/domainToolResolvers.js`，默认 `game_ai_tools` registry 包含刑名、地方政策、军务、外交、科举定榜复核、授官复核、赏赐升迁和处分复核八个工具。领域工具只可引用 actor 可见的地方案牍、财赋市场、军务外交、公开情报、地理、官署任所、科场流程/阅卷/荣誉、授官轨迹、可见人物和事件档案 evidence refs；服务器 resolver 锚定 actor、校验权限、辖区、证据领域、证据范围、冷却和敏感文本，清空 private refs，并返回 `pending` / `rejected`。辖区型工具要求 evidence `scopeRefs` 与 actor 辖区相交，无范围事件档案不能单独作为辖区证据。本步不接普通 turn、不运行真实 provider、不写状态/session/SQLite/事件档案/官职/榜单/判决/军令/战和/赏罚；真实领域结算仍留给 S71 服务器 resolver。
+
 前置依赖：S70.3、S70.6；领域玩法 resolver 可先用轻量 stub，S71 再做数据库驱动深裁决。
 
 需要资料：财政、刑名、军务外交、科举授官、官制赏罚资料笔记。
@@ -719,6 +721,7 @@ S70 要准备这些 fixture：
 
 - `test/domainToolDefinitions.test.js`
 - `test/domainToolPermissions.test.js`
+- `test/domainToolResolvers.test.js`
 - `test/careerToolRedTeam.test.js`
 
 验收：

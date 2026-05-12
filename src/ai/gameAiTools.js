@@ -3,6 +3,7 @@ const {
   createVisibleContextReadToolDefinition,
   validateToolDefinition
 } = require("./toolSchemas");
+const { createDomainToolDefinitions } = require("./domainToolDefinitions");
 const { createEventToolDefinitions } = require("./eventToolDefinitions");
 const { filterActorTools } = require("../game/aiActorProfiles");
 
@@ -17,7 +18,8 @@ function normalizeToolName(name) {
 function createBaseGameAiToolDefinitions() {
   return [
     createVisibleContextReadToolDefinition(),
-    ...createEventToolDefinitions()
+    ...createEventToolDefinitions(),
+    ...createDomainToolDefinitions()
   ];
 }
 
