@@ -1,0 +1,194 @@
+const test = require("node:test");
+const assert = require("node:assert/strict");
+const express = require("express");
+const fs = require("node:fs/promises");
+const path = require("node:path");
+
+process.env.AI_PROVIDER = "mock";
+
+const gameRoutes = require("../src/routes/game");
+const { createInitialState } = require("../src/game/initialState");
+const {
+  SAFE_WORLD_SEARCH_MAX_PAGE_SIZE,
+  SAFE_WORLD_SEARCH_MAX_QUERY_LENGTH,
+  buildSafeSearchRows,
+  normalizeSearchQuery,
+  searchSafeWorldIndex
+} = require("../src/game/safeWorldSearch");
+const { writeSession } = require("../src/storage/sessionStore");
+const { createFetchSafeServer } = require("../test-helpers/fetchSafeServer");
+
+const sessionsDir = path.join(__dirname, "..", "data", "sessions");
+const auditDir = path.join(__dirname, "..", "data", "audit");
+
+function clone(value) {
+  return JSON.parse(JSON.stringify(value));
+}
+
+async function removeSessionArtifacts(sessionId) {
+  await fs.rm(path.join(sessionsDir, `${sessionId}.json`), { force: true });
+  await fs.rm(path.join(auditDir, `${sessionId}.event-log.jsonl`), { force: true });
+  await fs.rm(path.join(auditDir, `${sessionId}.ai-proposals.jsonl`), { force: true });
+}
+
+function createTestServer() {
+  const app = express();
+  app.use(express.json());
+  app.use("/api/game", gameRoutes);
+  app.use((error, req, res, next) => {
+    res.status(error.statusCode || 500).json({ error: error.message || "Internal server error" });
+  });
+  return createFetchSafeServer(app);
+}
+
+function createSearchWorldState() {
+  const worldState = createInitialState({
+    role: "official",
+    playerName: "检索御史"
+  });
+  Object.assign(worldState, {
+    treasury: 240,
+    grainReserve: 170,
+    taxRate: 68,
+    corruption: 88,
+    borderThreat: 88,
+    armyMorale: 34,
+    publicOrder: 26,
+    turnCount: 7
+  });
+  Object.assign(worldState.player, {
+    officeTitle: "户部主事",
+    position: "户部主事"
+  });
+  worldState.eventHistory = [
+    "户部催核京杭漕运北段账册，命本任先查北京仓储。",
+    "山海关边报称辽东粮道风声趋紧。"
+  ];
+  worldState.worldPeople.npcs.push({
+    id: "npc-safe-search-gu",
+    name: "顾衡",
+    visibility: "public",
+    knownToPlayer: true,
+    rankLabel: "候补主簿",
+    publicSummary: "顾衡在北京递送户部钱粮消息。",
+    reputation: 50,
+    influence: 40,
+    lastUpdatedTurn: worldState.turnCount
+  });
+  worldState.worldPeople.npcs.push({
+    id: "npc-safe-search-hidden",
+    name: "SEALED_SAFE_SEARCH_NPC",
+    visibility: "hidden",
+    knownToPlayer: false,
+    hiddenIntent: "SEALED_SAFE_SEARCH_INTENT",
+    hiddenNotes: ["SEALED_SAFE_SEARCH_NOTE"]
+  });
+  worldState.worldGeography.cities.push({
+    id: "city-safe-search-hidden",
+    countryId: "country-ming",
+    name: "SEALED_SAFE_SEARCH_CITY",
+    visibility: "hidden",
+    knownToPlayer: false,
+    publicSummary: "SEALED_SAFE_SEARCH_CITY prompt_retrieval_index"
+  });
+  worldState.worldGeography.cities[0].publicSummary =
+    "京师为朝廷中枢，官缺与仓场公开可见。prompt_retrieval_index data/sessions/secret sk-safe-search-secret";
+  return worldState;
+}
+
+test("S71.3 safe world search returns capped player-facing snippets across domains", () => {
+  const worldState = createSearchWorldState();
+  const checks = [
+    ["北京", "geography"],
+    ["顾衡", "people"],
+    ["户部", "offices"],
+    ["边报", "events"],
+    ["粮道", "reports"],
+    ["官署", "rumors"]
+  ];
+
+  for (const [query, domain] of checks) {
+    const view = searchSafeWorldIndex(worldState, { query, domain, pageSize: 3 });
+    assert.equal(view.schemaVersion, 1);
+    assert.equal(view.query, query);
+    assert.equal(view.domains[0], domain);
+    assert.equal(view.results.length > 0, true, `${domain} should return results for ${query}`);
+    assert.ok(view.results.every((item) => item.domain === domain));
+    assert.ok(view.results.every((item) => item.sourceView && item.sourceId && item.title && item.snippet));
+    assert.ok(view.results.every((item) => item.snippet.length <= 183));
+    assert.ok(view.results.every((item) => item.routeViewRef?.sourceView && item.routeViewRef?.sourceId));
+  }
+});
+
+test("S71.3 safe world search rejects raw/hidden queries and redacts polluted visible text", () => {
+  const worldState = createSearchWorldState();
+  const rejected = searchSafeWorldIndex(worldState, {
+    query: "prompt_retrieval_index event_log world_sessions sk-safe-search-secret",
+    pageSize: 50
+  });
+  assert.equal(rejected.queryRejected, true);
+  assert.equal(rejected.results.length, 0);
+
+  const visible = searchSafeWorldIndex(worldState, { query: "北京", pageSize: 50 });
+  const serialized = JSON.stringify(visible);
+  assert.doesNotMatch(
+    serialized,
+    /SEALED_SAFE_SEARCH|prompt_retrieval_index|event_log|world_sessions|data\/sessions|sk-safe-search-secret|hiddenNotes|hiddenIntent|provider|proposal|raw/
+  );
+
+  const rows = buildSafeSearchRows(worldState);
+  assert.equal(rows.some((row) => row.sourceId === "npc-safe-search-hidden"), false);
+  assert.equal(rows.some((row) => row.searchText.includes("SEALED_SAFE_SEARCH")), false);
+});
+
+test("S71.3 safe world search normalizes query and pagination caps", () => {
+  const worldState = createSearchWorldState();
+  const longQuery = "北京".repeat(80);
+  const normalized = normalizeSearchQuery(longQuery);
+  assert.equal(normalized.truncated, true);
+  assert.equal(normalized.query.length, SAFE_WORLD_SEARCH_MAX_QUERY_LENGTH);
+
+  const view = searchSafeWorldIndex(worldState, {
+    query: "北京",
+    page: -4,
+    pageSize: 200
+  });
+  assert.equal(view.pagination.page, 1);
+  assert.equal(view.pagination.pageSize, SAFE_WORLD_SEARCH_MAX_PAGE_SIZE);
+  assert.equal(view.results.length <= SAFE_WORLD_SEARCH_MAX_PAGE_SIZE, true);
+});
+
+test("GET /api/game/search/:sessionId returns safe snippets from JSON storage", async (t) => {
+  const server = createTestServer();
+  t.after(server.close);
+
+  const worldState = createSearchWorldState();
+  await writeSession(clone(worldState));
+  t.after(() => removeSessionArtifacts(worldState.sessionId));
+
+  const response = await fetch(
+    `${server.baseUrl}/api/game/search/${worldState.sessionId}?q=${encodeURIComponent("顾衡")}&domain=people&page=1&pageSize=4`
+  );
+  const payload = await response.json();
+
+  assert.equal(response.status, 200);
+  assert.equal(payload.sessionId, worldState.sessionId);
+  assert.equal(payload.safeWorldSearchView.query, "顾衡");
+  assert.equal(payload.safeWorldSearchView.pagination.pageSize, 4);
+  assert.equal(payload.safeWorldSearchView.results.length, 1);
+  assert.equal(payload.safeWorldSearchView.results[0].sourceId, "npc-safe-search-gu");
+  assert.doesNotMatch(JSON.stringify(payload), /SEALED_SAFE_SEARCH|prompt_retrieval_index|event_log|world_sessions|sk-safe-search-secret/);
+});
+
+test("GET /api/game/search/:sessionId keeps missing sessions on normal storage errors", async (t) => {
+  const server = createTestServer();
+  t.after(server.close);
+
+  const response = await fetch(
+    `${server.baseUrl}/api/game/search/00000000-0000-4000-8000-000000000000?q=${encodeURIComponent("北京")}`
+  );
+  const payload = await response.json();
+
+  assert.equal(response.status, 404);
+  assert.match(payload.error, /Session not found/);
+});

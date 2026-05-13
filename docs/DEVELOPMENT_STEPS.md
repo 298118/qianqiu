@@ -10,7 +10,7 @@
 - S49-S67 本地数据库基础、SQLite 业务表、双模式验收、超大动态世界内容与 S60 内容契约：[LOCAL_DATABASE_AND_WORLD_CONTENT_ARCHIVE.md](LOCAL_DATABASE_AND_WORLD_CONTENT_ARCHIVE.md)。旧分卷归档和 S60 契约文件保留为跳转页。
 - S70 AI 编排与权力工具：[AI_ORCHESTRATION_ARCHIVE.md](AI_ORCHESTRATION_ARCHIVE.md)。S70 规划源头仍见 [AI_ORCHESTRATION_ROADMAP.md](AI_ORCHESTRATION_ROADMAP.md)。
 
-当前活动路线图已交接到 S71：S68-S69 的书生主线科举、读书、评卷与授官制度已归档，S70.1-S70.14 的 AI prompt/tool/actor/多模型路由、AI 设置、月报、跳时、记忆、地图接口、provider AI-first smoke 与 JSON/SQLite parity 已归档。S71 作为 S70 之后的数据库玩法化、维护、安全检索和 redacted API 专项，规划见 [DATABASE_GAMEPLAY_RESOLVER_ROADMAP.md](DATABASE_GAMEPLAY_RESOLVER_ROADMAP.md)。S71.0 数据库玩法化专项契约已固定在 [DATABASE_RESOLVER_INPUT_CONTRACT.md](DATABASE_RESOLVER_INPUT_CONTRACT.md)，S71.1 已落地只读 `resolverInputContext` 输入层，S71.2 已落地本地 SQLite schema migration 与维护层；下一步启动 S71.3 安全全文检索 / 本地搜索。数据库方向继续只考虑本机 JSON/SQLite 持久化增强；远程存档、账号体系、多人同步、云端冲突解决和托管数据库不进入当前规划。
+当前活动路线图已交接到 S71：S68-S69 的书生主线科举、读书、评卷与授官制度已归档，S70.1-S70.14 的 AI prompt/tool/actor/多模型路由、AI 设置、月报、跳时、记忆、地图接口、provider AI-first smoke 与 JSON/SQLite parity 已归档。S71 作为 S70 之后的数据库玩法化、维护、安全检索和 redacted API 专项，规划见 [DATABASE_GAMEPLAY_RESOLVER_ROADMAP.md](DATABASE_GAMEPLAY_RESOLVER_ROADMAP.md)。S71.0 数据库玩法化专项契约已固定在 [DATABASE_RESOLVER_INPUT_CONTRACT.md](DATABASE_RESOLVER_INPUT_CONTRACT.md)，S71.1 已落地只读 `resolverInputContext` 输入层，S71.2 已落地本地 SQLite schema migration 与维护层，S71.3 已落地安全全文检索 / 本地搜索；下一步启动 S71.4 redacted player API 与开发诊断 API。数据库方向继续只考虑本机 JSON/SQLite 持久化增强；远程存档、账号体系、多人同步、云端冲突解决和托管数据库不进入当前规划。
 
 ## 1. 开发规范继承
 
@@ -82,7 +82,7 @@
 
 ## 3. 当前边界与已归档摘要
 
-当前活动工作已交接到 S71.3。S49-S67 的本地数据库与大世界内容实现细节已经迁入统一归档，S68-S69 科举深化已迁入科举归档，S70 AI 编排已迁入 S70 归档；活动台账只保留索引和后续边界：
+当前活动工作已交接到 S71.4。S49-S67 的本地数据库与大世界内容实现细节已经迁入统一归档，S68-S69 科举深化已迁入科举归档，S70 AI 编排已迁入 S70 归档；活动台账只保留索引和后续边界：
 
 | 范围 | 状态 | 摘要 | 归档 |
 | --- | --- | --- | --- |
@@ -123,7 +123,7 @@
 | S71.0 | DONE | 数据库玩法化专项契约：确认 S70 后接入点、resolver 输入清单、维护/检索/redacted API 边界和内容保护 | 2026-05-13 | Codex / 子代理 | `9a3c1fa` |
 | S71.1 | DONE | 数据库作为玩法 resolver 输入：财政、城市、NPC、官职、事件、情报 projection 进入服务器裁决上下文 | 2026-05-13 | Codex / 子代理 | `7136953` |
 | S71.2 | DONE | 本地 SQLite schema migration 与维护层：`schema_migrations`、备份、VACUUM、索引健康、体积提示和脱敏导出 | 2026-05-13 | Codex / 子代理 | `deb7c27` |
-| S71.3 | TODO | 安全全文检索 / 本地搜索：FTS5 或 fallback，只索引 player-facing projection，不索引 hidden/raw | - | - | S71.2 后 |
+| S71.3 | DONE | 安全全文检索 / 本地搜索：FTS5 或 fallback，只索引 player-facing projection，不索引 hidden/raw | 2026-05-13 | Codex / 子代理 | 待提交 |
 | S71.4 | TODO | Redacted player API 与开发诊断 API：保存 hidden 私档前先拆玩家可见 state 和 hidden-safe diagnostics | - | - | S71.3 后 |
 | S71.5 | TODO | 财政与城市政策 resolver：征粮、赈济、修堤、平粜、清丈、钱粮差事等服务器裁决 | - | - | S71.4 后 |
 | S71.6 | TODO | 地方案件与刑名 resolver：堂审、证据、士绅压力、胥吏阻力、判决后果和案牍归档 | - | - | S71.5 后 |
@@ -208,6 +208,44 @@ S71 详细规划见 [DATABASE_GAMEPLAY_RESOLVER_ROADMAP.md](DATABASE_GAMEPLAY_RE
 4. S71.9-S71.12：接入多 actor 场景、NPC 记忆和 AI 调动审计面板，最后做 dual-mode、Mock/no-key、browser 和 provider smoke 归档。
 
 ## 8. 进度记录
+
+### 2026-05-13
+
+工具：Codex、子代理。
+
+步骤：S71.3 安全全文检索 / 本地搜索。
+
+提交：待提交。
+
+完成：
+
+- 新增 `src/game/safeWorldSearch.js`，从 `worldGeographyView`、`worldPeopleView`、`officialPostingsView`、地方案牍、军务外交报告、经济财政报告、公开历史事件链、`eventArchiveView` 和 `intelligenceRumorView` 构建安全搜索行；查询长度、page/pageSize、snippet 长度和 domain filter 均有 cap。
+- 新增 `src/storage/sqliteSafeSearchTables.js`，创建 `safe_search_index`，探测 FTS5 并在可用时创建 `safe_search_fts`，不可用时保留 LIKE fallback；每行记录 `metadata_json.contentHash`，读档按 `world_sessions.world_state_json -> server view` 单向修复缺失、陈旧、错行、内容污染和 FTS mirror 漂移。
+- SQLite adapter 初始化、写入、读修复、删除和导入路径已同步安全搜索派生表；`sqliteMaintenance` 的表/索引健康与派生表漂移诊断已纳入 `safeSearch`。
+- 新增 `GET /api/game/search/:sessionId?q=&domain=&page=&pageSize=`。JSON 模式直接用安全 view 搜索，SQLite 模式使用 `searchSafeSearchIndex()`；返回 `safeWorldSearchView`，结果只含 `domain`、`sourceView`、`sourceId`、`title`、`snippet`、`confidence`、`visibility`、`relatedRefs` 和 `routeViewRef`。
+- 新增 `test/safeWorldSearch.test.js` 与 `test/sqliteSafeSearch.test.js`，覆盖人物/城市/官职/事件/报告/传闻搜索、raw/hidden 查询拒绝、query/page/pageSize/snippet cap、JSON route、FTS5 available/unavailable fallback、同 row 内容污染修复，以及 raw `geo_*` / audit 污染不被吸入安全搜索。
+- 同步 README、架构、brief、AI 控制矩阵、动态数据库规划、S71 路线图和共享上下文；S71.3 不新增 AI 写权、不让 AI 执行 SQL、不改变财政/刑名/军务/外交玩法裁决。
+
+验证：
+
+- 已通过：`node --check src/game/safeWorldSearch.js && node --check src/storage/sqliteSafeSearchTables.js && node --check src/storage/sqliteMaintenance.js && node --check src/storage/sqliteSessionAdapter.js && node --check src/routes/game.js && node --check test/safeWorldSearch.test.js && node --check test/sqliteSafeSearch.test.js`。
+- 已通过：`node --test test/safeWorldSearch.test.js test/sqliteSafeSearch.test.js`（9/9）。
+- 已通过：`node --test test/sqliteMaintenanceTool.test.js test/sessionStoreAdapterContract.test.js test/informationPanelPage.test.js`（62/62）。
+- 已通过：`node --test test/sqlitePromptRetrieval.test.js test/resolverInputContext.test.js test/documentationGovernance.test.js`（20/20）。
+- 已通过：`npm run check:docs-governance`。
+- 已通过：`git diff --check`。
+- 全量 `npm test` 本轮 754/755，通过项之外仅既有 S67 `sqliteReadRepairMs` 性能阈值抖动失败（5188.163 > 3000）；随后单独复跑 `node --test test/dualModeAcceptanceScript.test.js`（8/8）通过。
+- 提交前只读复审发现 P2：SQLite 搜索 payload 曾暴露 `safe_search_index` 表名且 public `source` 与 JSON 路径不一致；已改为统一 `SAFE_WORLD_SEARCH_SOURCE`、移除 public `storage.canonicalTable`，并补 SQLite result 不含 `safe_search_index` / `safe_search_fts` 的回归。复跑 `node --check src/storage/sqliteSafeSearchTables.js && node --check test/sqliteSafeSearch.test.js`、`node --test test/sqliteSafeSearch.test.js`（4/4）、`node --test test/safeWorldSearch.test.js test/sqliteSafeSearch.test.js`（9/9）、`npm run check:docs-governance` 和 `git diff --check` 均通过；二轮只读复查确认 P2 已解决，未发现新的 P0/P1/P2。
+
+风险/遗留：
+
+- S71.3 先提供 route/API 与本地索引层，不新增浏览器搜索面板；浏览器可后续在 S71.4 或面板专项接入该 route。
+- FTS5 mirror 只是本地搜索加速层，不是 truth source；SQLite 不支持 FTS5 时 LIKE fallback 仍可用。
+- 搜索结果是 capped snippet 和 route view ref，不返回完整搜索行；后续 AI prompt 若需要主动搜索，应继续只读该安全结果形状。
+
+下一步：
+
+- 启动 S71.4：Redacted player API 与开发诊断 API，为真正 hidden 私档和开发诊断面板拆出玩家可见 state 边界。
 
 ### 2026-05-13
 

@@ -22,6 +22,9 @@ const {
   getPromptRetrievalRepairStatus
 } = require("./sqlitePromptRetrievalTables");
 const {
+  getSafeSearchRepairStatus
+} = require("./sqliteSafeSearchTables");
+const {
   assertMigrationIntegrity,
   listAppliedMigrations,
   schemaMigrationsTableExists
@@ -50,7 +53,8 @@ const EXPECTED_SQLITE_TABLES = Object.freeze([
   "office_assessments",
   "office_transfers",
   "event_archive_index",
-  "prompt_retrieval_index"
+  "prompt_retrieval_index",
+  "safe_search_index"
 ]);
 
 const EXPECTED_SQLITE_INDEXES = Object.freeze([
@@ -90,7 +94,9 @@ const EXPECTED_SQLITE_INDEXES = Object.freeze([
   "idx_event_archive_index_session_sort",
   "idx_event_archive_index_session_source",
   "idx_prompt_retrieval_session_domain",
-  "idx_prompt_retrieval_session_revision"
+  "idx_prompt_retrieval_session_revision",
+  "idx_safe_search_session_domain",
+  "idx_safe_search_session_revision"
 ]);
 
 const DERIVED_TABLE_GROUPS = Object.freeze({
@@ -118,7 +124,8 @@ const DERIVED_TABLE_GROUPS = Object.freeze({
     "office_transfers"
   ],
   eventArchive: ["event_archive_index"],
-  promptRetrieval: ["prompt_retrieval_index"]
+  promptRetrieval: ["prompt_retrieval_index"],
+  safeSearch: ["safe_search_index"]
 });
 
 function loadDatabaseSync() {
@@ -295,6 +302,8 @@ function toPublicDriftStatus(status) {
     contentMismatches: Boolean(status.contentMismatches),
     expectedCount: status.expectedCount,
     expectedCounts: status.expectedCounts,
+    ftsAvailable: Boolean(status.ftsAvailable),
+    ftsMismatches: Boolean(status.ftsMismatches),
     missingOrMismatched: Boolean(status.missingOrMismatched),
     mismatchedRowIds: Boolean(status.mismatchedRowIds),
     needsRepair: Boolean(status.needsRepair),
@@ -322,7 +331,8 @@ function getSessionDerivedDriftStatus(database, record) {
     people: getDomainDriftStatus(database, record, "people", getPeopleRepairStatus),
     officialPostings: getDomainDriftStatus(database, record, "officialPostings", getOfficialPostingRepairStatus),
     eventArchive: getDomainDriftStatus(database, record, "eventArchive", getEventArchiveRepairStatus),
-    promptRetrieval: getDomainDriftStatus(database, record, "promptRetrieval", getPromptRetrievalRepairStatus)
+    promptRetrieval: getDomainDriftStatus(database, record, "promptRetrieval", getPromptRetrievalRepairStatus),
+    safeSearch: getDomainDriftStatus(database, record, "safeSearch", getSafeSearchRepairStatus)
   };
 
   return {

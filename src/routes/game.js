@@ -76,6 +76,7 @@ const {
   buildInformationPanelPageViews,
   informationPanelOptionsFromQuery
 } = require("../game/informationPanelPage");
+const { searchSafeWorldIndex } = require("../game/safeWorldSearch");
 const { buildEconomicFiscalView } = require("../game/economicFiscal");
 const { buildHistoricalEventArchiveView } = require("../game/historicalEventArchive");
 const { buildIntelligenceRumorView } = require("../game/intelligenceRumors");
@@ -139,7 +140,13 @@ const {
 } = require("../game/timeSkip");
 const { TIME_SKIP_ACTIONS } = require("../game/timeSkipConfig");
 const { redactSecrets } = require("../ai/diagnostics");
-const { listSessions, mutateSession, readSession, writeSession } = require("../storage/sessionStore");
+const {
+  getSessionStorageAdapter,
+  listSessions,
+  mutateSession,
+  readSession,
+  writeSession
+} = require("../storage/sessionStore");
 const { chunkTextForSse, closeSse, sendSseEvent, writeSseHeaders } = require("../utils/sse");
 const { createJsonStringFieldExtractor } = require("../utils/streamingJson");
 
@@ -334,6 +341,34 @@ function eventArchiveOptionsFromQuery(query = {}) {
     page: query.eventArchivePage ?? query.archivePage,
     pageSize: query.eventArchivePageSize ?? query.archivePageSize
   };
+}
+
+function safeSearchOptionsFromQuery(query = {}) {
+  return {
+    query: query.q ?? query.query,
+    domain: query.domain,
+    page: query.page,
+    pageSize: query.pageSize
+  };
+}
+
+function ensureRouteProjectionState(worldState) {
+  ensureRelationshipLedger(worldState);
+  ensureExamCalendarState(worldState);
+  ensureStudyProfileState(worldState);
+  ensureExamHonorLedgerState(worldState);
+  ensureAppointmentTrackState(worldState);
+  ensureLongTermEventState(worldState);
+  ensureOfficialCareerState(worldState);
+  ensureRoleWorldCouplingState(worldState);
+  ensureWorldGeographyState(worldState);
+  ensureOfficialPostingsState(worldState);
+  ensureWorldEntityState(worldState);
+  ensureWorldPeopleState(worldState);
+  ensureWorldThreadState(worldState);
+  ensurePlayerMonthlyBriefingState(worldState);
+  ensureActorMemoryLedgerState(worldState);
+  ensureSessionSummaryState(worldState);
 }
 
 function buildCommonTurnViews(worldState, options = {}) {
@@ -1101,22 +1136,7 @@ router.post("/start", async (req, res, next) => {
 router.get("/state/:sessionId", async (req, res, next) => {
   try {
     const worldState = await readSession(req.params.sessionId);
-    ensureRelationshipLedger(worldState);
-    ensureExamCalendarState(worldState);
-    ensureStudyProfileState(worldState);
-    ensureExamHonorLedgerState(worldState);
-    ensureAppointmentTrackState(worldState);
-    ensureLongTermEventState(worldState);
-    ensureOfficialCareerState(worldState);
-    ensureRoleWorldCouplingState(worldState);
-    ensureWorldGeographyState(worldState);
-    ensureOfficialPostingsState(worldState);
-    ensureWorldEntityState(worldState);
-    ensureWorldPeopleState(worldState);
-    ensureWorldThreadState(worldState);
-    ensurePlayerMonthlyBriefingState(worldState);
-    ensureActorMemoryLedgerState(worldState);
-    ensureSessionSummaryState(worldState);
+    ensureRouteProjectionState(worldState);
     res.json({
       sessionId: worldState.sessionId,
       worldState: buildClientWorldState(worldState),
@@ -1124,6 +1144,29 @@ router.get("/state/:sessionId", async (req, res, next) => {
         eventArchive: eventArchiveOptionsFromQuery(req.query),
         informationPanel: informationPanelOptionsFromQuery(req.query)
       })
+    });
+  } catch (error) {
+    next(error);
+  }
+});
+
+router.get("/search/:sessionId", async (req, res, next) => {
+  try {
+    const options = safeSearchOptionsFromQuery(req.query);
+    const adapter = getSessionStorageAdapter();
+    if (typeof adapter.searchSafeSearchIndex === "function") {
+      res.json({
+        sessionId: req.params.sessionId,
+        safeWorldSearchView: await adapter.searchSafeSearchIndex(req.params.sessionId, options)
+      });
+      return;
+    }
+
+    const worldState = await readSession(req.params.sessionId);
+    ensureRouteProjectionState(worldState);
+    res.json({
+      sessionId: worldState.sessionId,
+      safeWorldSearchView: searchSafeWorldIndex(worldState, options)
     });
   } catch (error) {
     next(error);

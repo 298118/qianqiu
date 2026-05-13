@@ -54,6 +54,13 @@ const {
   syncPromptRetrievalTables
 } = require("./sqlitePromptRetrievalTables");
 const {
+  deleteSafeSearchRows,
+  ensureSafeSearchTablesForRecord,
+  initializeSafeSearchTables,
+  searchSafeSearchTables,
+  syncSafeSearchTables
+} = require("./sqliteSafeSearchTables");
+const {
   initializeSchemaMigrationsTable
 } = require("./sqliteMigrations");
 
@@ -232,6 +239,7 @@ function createSqliteSessionAdapter(options = {}) {
     initializeOfficialPostingTables(database);
     initializeEventArchiveTables(database);
     initializePromptRetrievalTables(database);
+    initializeSafeSearchTables(database);
 
     if (databasePath !== ":memory:") {
       database.exec("PRAGMA journal_mode = WAL");
@@ -322,6 +330,7 @@ function createSqliteSessionAdapter(options = {}) {
     syncOfficialPostingTables(getDatabase(), record);
     syncEventArchiveTables(getDatabase(), record);
     syncPromptRetrievalTables(getDatabase(), record);
+    syncSafeSearchTables(getDatabase(), record);
   }
 
   function attachSqlitePromptRetrieval(record) {
@@ -540,6 +549,7 @@ function createSqliteSessionAdapter(options = {}) {
       const repairedOfficialPostings = ensureOfficialPostingTablesForRecord(getDatabase(), migrated.record);
       ensureEventArchiveTablesForRecord(getDatabase(), migrated.record);
       ensurePromptRetrievalTablesForRecord(getDatabase(), migrated.record);
+      ensureSafeSearchTablesForRecord(getDatabase(), migrated.record);
       if (repaired || repairedOfficialPostings) updateSessionRecordPayload(migrated.record);
       attachSqlitePromptRetrieval(migrated.record);
       return migrated;
@@ -654,7 +664,23 @@ function createSqliteSessionAdapter(options = {}) {
       deleteOfficialPostingRows(getDatabase(), sessionId);
       deleteEventArchiveRows(getDatabase(), sessionId);
       deletePromptRetrievalRows(getDatabase(), sessionId);
+      deleteSafeSearchRows(getDatabase(), sessionId);
       getDatabase().prepare("DELETE FROM world_sessions WHERE session_id = ?").run(sessionId);
+    });
+  }
+
+  async function searchSafeSearchIndex(sessionId, options = {}) {
+    return withSessionLock(sessionId, async () => {
+      const { record } = await readSessionRecordUnlocked(sessionId);
+      return {
+        generatedAtTurn: record.metadata.turnCount,
+        ...searchSafeSearchTables(
+          getDatabase(),
+          sessionId,
+          options.query ?? options.q,
+          options
+        )
+      };
     });
   }
 
@@ -744,6 +770,7 @@ function createSqliteSessionAdapter(options = {}) {
     appendAiProposal,
     listAuditEvents,
     listAiProposals,
+    searchSafeSearchIndex,
     importSessionRecord,
     cleanupSessionTempFiles,
     buildSessionMetadata,

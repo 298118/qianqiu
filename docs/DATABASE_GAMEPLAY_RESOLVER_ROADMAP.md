@@ -32,7 +32,7 @@
 | S71.0 | 专项契约与接入点 | 本文件、[DATABASE_RESOLVER_INPUT_CONTRACT.md](DATABASE_RESOLVER_INPUT_CONTRACT.md)、brief/context/AI 矩阵补充、resolver 输入清单 | 不改运行时；明确 S70 依赖、S71 边界、禁止源和测试矩阵 |
 | S71.1 | 数据库作为玩法 resolver 输入 | `resolverInputContext` 契约与初版实现；城市/国家/NPC/官职/事件/情报 projection 到 resolver 的只读输入 | 已落地；resolver 不读 raw table；AI 不能写输入；JSON/SQLite 输入 parity |
 | S71.2 | 本地 schema migration 与维护层 | `schema_migrations`、维护命令、备份、VACUUM、索引健康、数据库体积提示 | 已落地；dry-run 不改库；输出不泄漏路径/key/hidden；Windows/Node SQLite 可用 |
-| S71.3 | 安全全文检索 / 本地搜索 | SQLite FTS5 或等价安全搜索索引，只索引 player-facing projection | 不索引 raw audit/hidden；prompt/UI 查询有 cap；污染行可修复 |
+| S71.3 | 安全全文检索 / 本地搜索 | 已落地：`safeWorldSearch`、`safe_search_index` / 可选 FTS5 镜像、`GET /api/game/search/:sessionId` | 只索引玩家可见 projection；查询和 snippet 有 cap；污染行可修复 |
 | S71.4 | Redacted player API 与开发诊断 API | 玩家可见 state route、开发诊断 route 或工具出口、保存列表继续脱敏 | hidden 私档前置条件；普通 UI 不拿完整 raw state |
 | S71.5 | 财政与城市政策 resolver | 征粮、赈济、修堤、平粜、清丈、钱粮差事等服务器裁决 | 从城市/经济 projection 取输入；AI 只给政策 proposal |
 | S71.6 | 地方案件与刑名 resolver | 堂审、证据、士绅压力、胥吏阻力、判决后果、案牍归档 | 证据不足能拒绝；县令不越权；事件档案安全公开 |
@@ -84,17 +84,19 @@ S71.2 的维护层已先做成本地命令，不改变默认启动方式：
 
 ## 6. 安全全文检索
 
-S71.3 可先评估 SQLite FTS5。若当前 Node SQLite 编译不支持 FTS5，则保留普通 `LIKE` / token index fallback，不新增外部依赖，除非依赖治理明确通过。
+S71.3 已落地安全全文检索初版。JSON 路径由 `src/game/safeWorldSearch.js` 从服务器安全 view 即时生成搜索行；SQLite 路径由 `src/storage/sqliteSafeSearchTables.js` 同步 `safe_search_index`，当前 Node SQLite 支持 FTS5 时额外维护 `safe_search_fts`，不支持时使用本地 `LIKE` fallback，不新增外部依赖。
 
 索引范围：
 
-- 可索引：`worldGeographyView` 的地名/公开摘要、`worldPeopleView` 的可见人物/关系摘要、`officialPostingsView` 的公开官职/任所摘要、`eventArchiveView` 公开事件、`intelligenceRumorView` 角色可见传闻、`historicalEventArchiveView.publicChains`。
-- 不索引：raw audit、raw provider response、完整 prompt、hidden notes、hidden intent、资产真数、未公开关系、密档链、数据库路径、key。
+- 可索引：`worldGeographyView` 的地名/公开摘要、`worldPeopleView` 的可见人物/关系摘要、`officialPostingsView` 的公开官职/任所摘要、`localAffairsDocketView` 案牍、`militaryDiplomacyView` 军务报告、`economicFiscalView` 财赋报告、`eventArchiveView` 公开事件、`intelligenceRumorView` 角色可见传闻、`historicalEventArchiveView.publicChains`。
+- 不索引：内部审计、provider 原始响应、完整 prompt、hidden notes、hidden intent、资产真数、未公开关系、密档链、数据库路径、key。
 
 推荐接口：
 
 ```text
-searchSafeWorldIndex(sessionId, {
+GET /api/game/search/:sessionId?q=&domain=&page=&pageSize=
+
+searchSafeWorldIndex(worldState, {
   query,
   domains,
   role,
@@ -105,7 +107,7 @@ searchSafeWorldIndex(sessionId, {
 })
 ```
 
-搜索结果只返回 safe snippet、sourceView、domain、visibility、confidence、relatedRefs 和可跳转的 route view ref，不返回 raw row。
+搜索结果只返回 safe snippet、sourceView、sourceId、domain、visibility、confidence、relatedRefs 和可跳转的 route view ref，不返回内部行。敏感查询会 `queryRejected`，pageSize 最大 25；SQLite 读档会用内容 hash 修复 `safe_search_index` 同 id/同 revision 污染，FTS mirror 也按 canonical index 重建。
 
 ## 7. Redacted API 前置
 
