@@ -10,7 +10,7 @@
 - S49-S67 本地数据库基础、SQLite 业务表、双模式验收、超大动态世界内容与 S60 内容契约：[LOCAL_DATABASE_AND_WORLD_CONTENT_ARCHIVE.md](LOCAL_DATABASE_AND_WORLD_CONTENT_ARCHIVE.md)。旧分卷归档和 S60 契约文件保留为跳转页。
 - S70 AI 编排与权力工具：[AI_ORCHESTRATION_ARCHIVE.md](AI_ORCHESTRATION_ARCHIVE.md)。S70 规划源头仍见 [AI_ORCHESTRATION_ROADMAP.md](AI_ORCHESTRATION_ROADMAP.md)。
 
-当前活动路线图已交接到 S71：S68-S69 的书生主线科举、读书、评卷与授官制度已归档，S70.1-S70.14 的 AI prompt/tool/actor/多模型路由、AI 设置、月报、跳时、记忆、地图接口、provider AI-first smoke 与 JSON/SQLite parity 已归档。S71 作为 S70 之后的数据库玩法化、维护、安全检索和 redacted API 专项，规划见 [DATABASE_GAMEPLAY_RESOLVER_ROADMAP.md](DATABASE_GAMEPLAY_RESOLVER_ROADMAP.md)。下一步启动 S71.0 数据库玩法化专项契约。数据库方向继续只考虑本机 JSON/SQLite 持久化增强；远程存档、账号体系、多人同步、云端冲突解决和托管数据库不进入当前规划。
+当前活动路线图已交接到 S71：S68-S69 的书生主线科举、读书、评卷与授官制度已归档，S70.1-S70.14 的 AI prompt/tool/actor/多模型路由、AI 设置、月报、跳时、记忆、地图接口、provider AI-first smoke 与 JSON/SQLite parity 已归档。S71 作为 S70 之后的数据库玩法化、维护、安全检索和 redacted API 专项，规划见 [DATABASE_GAMEPLAY_RESOLVER_ROADMAP.md](DATABASE_GAMEPLAY_RESOLVER_ROADMAP.md)。S71.0 数据库玩法化专项契约已固定在 [DATABASE_RESOLVER_INPUT_CONTRACT.md](DATABASE_RESOLVER_INPUT_CONTRACT.md)；下一步启动 S71.1 数据库作为玩法 resolver 输入。数据库方向继续只考虑本机 JSON/SQLite 持久化增强；远程存档、账号体系、多人同步、云端冲突解决和托管数据库不进入当前规划。
 
 ## 1. 开发规范继承
 
@@ -82,7 +82,7 @@
 
 ## 3. 当前边界与已归档摘要
 
-当前活动工作从 S70.1 开始。S49-S67 的本地数据库与大世界内容实现细节已经迁入统一归档，S68-S69 科举深化已迁入科举归档，活动台账只保留索引和后续边界：
+当前活动工作已交接到 S71.1。S49-S67 的本地数据库与大世界内容实现细节已经迁入统一归档，S68-S69 科举深化已迁入科举归档，S70 AI 编排已迁入 S70 归档；活动台账只保留索引和后续边界：
 
 | 范围 | 状态 | 摘要 | 归档 |
 | --- | --- | --- | --- |
@@ -101,7 +101,7 @@
 
 ## 4. 活动路线图总览
 
-已归档的 S49-S69 不再逐行列入活动总览；需要追溯时阅读上方归档摘要、对应归档文件和下方进度记录。当前活动总览只保留 S70 及后续待推进步骤。
+已归档的 S49-S69 不再逐行列入活动总览；需要追溯时阅读上方归档摘要、对应归档文件和下方进度记录。当前活动总览保留 S70 归档索引和 S71 待推进步骤。
 
 | ID | 状态 | 目标 | 完成日期 | 工具 | 提交 |
 | --- | --- | --- | --- | --- | --- |
@@ -120,7 +120,7 @@
 | S70.12 | DONE | 大模型记忆系统：actor memory ledger、fact/impression memory、月度 summary、安全检索、来源/置信度/可见性/衰减 | 2026-05-13 | Codex / 子代理 | `29ea72d` |
 | S70.13 | DONE | 地图系统 AI 接口预留：`mapContextView`、`mapEntityRef`、地图可见性、移动/行军/赴任/赶考/外交 proposal schema | 2026-05-13 | Codex / 子代理 | `8f3218c` |
 | S70.14 | DONE | 真实 MiMo 验收与 S70 归档：MiMo-required provider smoke、JSON/SQLite parity、Mock 开发安全网、hidden-token、越权工具、browser smoke 和归档 | 2026-05-13 | Codex / 子代理 | `6fc1561` |
-| S71.0 | TODO | 数据库玩法化专项契约：确认 S70 后接入点、resolver 输入清单、维护/检索/redacted API 边界和内容保护 | - | - | S70.14 后 |
+| S71.0 | DONE | 数据库玩法化专项契约：确认 S70 后接入点、resolver 输入清单、维护/检索/redacted API 边界和内容保护 | 2026-05-13 | Codex / 子代理 | 待回填 |
 | S71.1 | TODO | 数据库作为玩法 resolver 输入：财政、城市、NPC、官职、事件、情报 projection 进入服务器裁决上下文 | - | - | S71.0 后 |
 | S71.2 | TODO | 本地 SQLite schema migration 与维护层：`schema_migrations`、备份、VACUUM、索引健康、体积提示和脱敏导出 | - | - | S71.1 后 |
 | S71.3 | TODO | 安全全文检索 / 本地搜索：FTS5 或 fallback，只索引 player-facing projection，不索引 hidden/raw | - | - | S71.2 后 |
@@ -187,7 +187,7 @@ S70 是 MiMo + DeepSeek 之后的 AI 编排专项，已归档见 [AI_ORCHESTRATI
 
 ## 7. S71：数据库玩法化、维护、检索与安全 API
 
-S71 详细规划见 [DATABASE_GAMEPLAY_RESOLVER_ROADMAP.md](DATABASE_GAMEPLAY_RESOLVER_ROADMAP.md)。它不抢占 S69，也不替代 S70；S70 先解决 prompt、actor 和工具协议，S71 再把 S49-S67 已有的国家、城市、NPC、官职、案牍、军务、财赋、事件链、情报和检索内容接进真实服务器玩法裁决。该文档第 11-13 节已扩展为后续 Codex 开发任务书，逐项写明依赖、所需资料、建议模块/函数、接口、测试与验收。
+S71 详细规划见 [DATABASE_GAMEPLAY_RESOLVER_ROADMAP.md](DATABASE_GAMEPLAY_RESOLVER_ROADMAP.md)。它不抢占 S69，也不替代 S70；S70 已解决 prompt、actor 和工具协议，S71 再把 S49-S67 已有的国家、城市、NPC、官职、案牍、军务、财赋、事件链、情报和检索内容接进真实服务器玩法裁决。S71.0 已新增 [DATABASE_RESOLVER_INPUT_CONTRACT.md](DATABASE_RESOLVER_INPUT_CONTRACT.md)，作为 `resolverInputContext` 字段、允许来源、禁止源、evidence ref、AI 权限和 JSON/SQLite parity 的后续实现源。[DATABASE_GAMEPLAY_RESOLVER_ROADMAP.md](DATABASE_GAMEPLAY_RESOLVER_ROADMAP.md) 第 11-13 节已扩展为后续 Codex 开发任务书，逐项写明依赖、所需资料、建议模块/函数、接口、测试与验收。
 
 ### S71 设计基线
 
@@ -208,6 +208,36 @@ S71 详细规划见 [DATABASE_GAMEPLAY_RESOLVER_ROADMAP.md](DATABASE_GAMEPLAY_RE
 4. S71.9-S71.12：接入多 actor 场景、NPC 记忆和 AI 调动审计面板，最后做 dual-mode、Mock/no-key、browser 和 provider smoke 归档。
 
 ## 8. 进度记录
+
+### 2026-05-13
+
+工具：Codex、子代理。
+
+步骤：S71.0 数据库玩法化专项契约。
+
+提交：待回填。
+
+完成：
+
+- 新增 [DATABASE_RESOLVER_INPUT_CONTRACT.md](DATABASE_RESOLVER_INPUT_CONTRACT.md)，固定 S71 后续 `resolverInputContext` 顶层字段、允许来源、禁止来源、evidence ref、AI read/proposal/request-adjudication 权限、服务器写入边界、JSON/SQLite parity 与 hidden-token 红队矩阵。
+- 同步 [DATABASE_GAMEPLAY_RESOLVER_ROADMAP.md](DATABASE_GAMEPLAY_RESOLVER_ROADMAP.md)、[AI_CONTROL_AUDIT_MATRIX.md](AI_CONTROL_AUDIT_MATRIX.md)、brief、README 和共享上下文，把 S71.0 标为契约完成，把下一步切到 S71.1 数据库作为玩法 resolver 输入。
+- 明确本轮不改运行时代码、API、存档格式、SQLite schema、provider 行为或默认 JSON/Mock 路径；S71 继续 local-only，redacted API 是 hidden 私档前置，hidden/raw 内容不得回填普通 state route，AI 不执行 SQL、不直写数据库。
+
+验证：
+
+- 已通过：`npm run check:docs-governance`。
+- 已通过：`node --test test/documentationGovernance.test.js`（1/1）。
+- 已通过：`git diff --check`。
+- 已完成只读子代理复审，未发现 P0/P1；P2 stale wording 已处理，二轮复查无剩余 P0/P1/P2。
+
+风险/遗留：
+
+- S71.0 只落契约，不提供 `src/game/resolverInputContext.js` 或运行时 parity 测试；这些留给 S71.1。
+- 后续实现必须按契约补 allowlist/forbidden source、actor visibility、JSON/SQLite parity、large fixture cap 和 hidden-token 红队。
+
+下一步：
+
+- 启动 S71.1：实现 `resolverInputContext` 只读输入层和聚焦测试。
 
 ### 2026-05-13
 
