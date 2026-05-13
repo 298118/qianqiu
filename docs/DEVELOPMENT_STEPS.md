@@ -10,7 +10,7 @@
 - S49-S67 本地数据库基础、SQLite 业务表、双模式验收、超大动态世界内容与 S60 内容契约：[LOCAL_DATABASE_AND_WORLD_CONTENT_ARCHIVE.md](LOCAL_DATABASE_AND_WORLD_CONTENT_ARCHIVE.md)。旧分卷归档和 S60 契约文件保留为跳转页。
 - S70 AI 编排与权力工具：[AI_ORCHESTRATION_ARCHIVE.md](AI_ORCHESTRATION_ARCHIVE.md)。S70 规划源头仍见 [AI_ORCHESTRATION_ROADMAP.md](AI_ORCHESTRATION_ROADMAP.md)。
 
-当前活动路线图已交接到 S71：S68-S69 的书生主线科举、读书、评卷与授官制度已归档，S70.1-S70.14 的 AI prompt/tool/actor/多模型路由、AI 设置、月报、跳时、记忆、地图接口、provider AI-first smoke 与 JSON/SQLite parity 已归档。S71 作为 S70 之后的数据库玩法化、维护、安全检索和 redacted API 专项，规划见 [DATABASE_GAMEPLAY_RESOLVER_ROADMAP.md](DATABASE_GAMEPLAY_RESOLVER_ROADMAP.md)。S71.0 数据库玩法化专项契约已固定在 [DATABASE_RESOLVER_INPUT_CONTRACT.md](DATABASE_RESOLVER_INPUT_CONTRACT.md)，S71.1 已落地只读 `resolverInputContext` 输入层，S71.2 已落地本地 SQLite schema migration 与维护层，S71.3 已落地安全全文检索 / 本地搜索；下一步启动 S71.4 redacted player API 与开发诊断 API。数据库方向继续只考虑本机 JSON/SQLite 持久化增强；远程存档、账号体系、多人同步、云端冲突解决和托管数据库不进入当前规划。
+当前活动路线图已交接到 S71：S68-S69 的书生主线科举、读书、评卷与授官制度已归档，S70.1-S70.14 的 AI prompt/tool/actor/多模型路由、AI 设置、月报、跳时、记忆、地图接口、provider AI-first smoke 与 JSON/SQLite parity 已归档。S71 作为 S70 之后的数据库玩法化、维护、安全检索和 redacted API 专项，规划见 [DATABASE_GAMEPLAY_RESOLVER_ROADMAP.md](DATABASE_GAMEPLAY_RESOLVER_ROADMAP.md)。S71.0 数据库玩法化专项契约已固定在 [DATABASE_RESOLVER_INPUT_CONTRACT.md](DATABASE_RESOLVER_INPUT_CONTRACT.md)，S71.1 已落地只读 `resolverInputContext` 输入层，S71.2 已落地本地 SQLite schema migration 与维护层，S71.3 已落地安全全文检索 / 本地搜索，S71.4 已落地 redacted player API 与本机开发诊断 API；下一步启动 S71.5 财政与城市政策 resolver。数据库方向继续只考虑本机 JSON/SQLite 持久化增强；远程存档、账号体系、多人同步、云端冲突解决和托管数据库不进入当前规划。
 
 ## 1. 开发规范继承
 
@@ -82,7 +82,7 @@
 
 ## 3. 当前边界与已归档摘要
 
-当前活动工作已交接到 S71.4。S49-S67 的本地数据库与大世界内容实现细节已经迁入统一归档，S68-S69 科举深化已迁入科举归档，S70 AI 编排已迁入 S70 归档；活动台账只保留索引和后续边界：
+当前活动工作已交接到 S71.5。S49-S67 的本地数据库与大世界内容实现细节已经迁入统一归档，S68-S69 科举深化已迁入科举归档，S70 AI 编排已迁入 S70 归档；活动台账只保留索引和后续边界：
 
 | 范围 | 状态 | 摘要 | 归档 |
 | --- | --- | --- | --- |
@@ -124,7 +124,7 @@
 | S71.1 | DONE | 数据库作为玩法 resolver 输入：财政、城市、NPC、官职、事件、情报 projection 进入服务器裁决上下文 | 2026-05-13 | Codex / 子代理 | `7136953` |
 | S71.2 | DONE | 本地 SQLite schema migration 与维护层：`schema_migrations`、备份、VACUUM、索引健康、体积提示和脱敏导出 | 2026-05-13 | Codex / 子代理 | `deb7c27` |
 | S71.3 | DONE | 安全全文检索 / 本地搜索：FTS5 或 fallback，只索引 player-facing projection，不索引 hidden/raw | 2026-05-13 | Codex / 子代理 | `e5cdfd7` |
-| S71.4 | TODO | Redacted player API 与开发诊断 API：保存 hidden 私档前先拆玩家可见 state 和 hidden-safe diagnostics | - | - | S71.3 后 |
+| S71.4 | DONE | Redacted player API 与开发诊断 API：保存 hidden 私档前先拆玩家可见 state 和 hidden-safe diagnostics | 2026-05-13 | Codex / 子代理 | 待本次提交 |
 | S71.5 | TODO | 财政与城市政策 resolver：征粮、赈济、修堤、平粜、清丈、钱粮差事等服务器裁决 | - | - | S71.4 后 |
 | S71.6 | TODO | 地方案件与刑名 resolver：堂审、证据、士绅压力、胥吏阻力、判决后果和案牍归档 | - | - | S71.5 后 |
 | S71.7 | TODO | 军务与外交 resolver：侦察、固守、调粮、练兵、会战、互市、和议、宣战 request 和服务器裁决 | - | - | S71.6 后 |
@@ -213,6 +213,45 @@ S71 详细规划见 [DATABASE_GAMEPLAY_RESOLVER_ROADMAP.md](DATABASE_GAMEPLAY_RE
 
 工具：Codex、子代理。
 
+步骤：S71.4 Redacted player API 与开发诊断 API。
+
+提交：待本次提交。
+
+完成：
+
+- 新增 `src/game/redactedState.js`，提供 `buildPlayerVisibleState()`、`buildPlayerStateEnvelope()`、`buildDeveloperDiagnostics()`、`redactDiagnosticValue()` 和 `redactPlayerRouteViews()`。玩家 envelope 只保留 allowlist 顶层状态、玩家字段、metadata 与 redaction 边界；开发诊断只返回 storage/features/counts/resolver input summary/safe search row count/AI 调动摘要等统计，不返回 raw state、raw audit、raw provider payload、prompt、key、本地路径或 SQLite 原始行。
+- 新增 `src/utils/localOrigins.js`，把本地 CORS Origin 解析抽出复用；开发诊断门禁要求远端地址为 loopback，并且只允许无 `Origin` 或已配置且确认为 loopback/local 的 Origin，显式配置的非本地域也不会打开诊断面。
+- 新增 `src/routes/dev.js` 并在 `server.js` 挂载 `/api/dev`。`GET /api/dev/session-diagnostics/:sessionId` 默认关闭，`NODE_ENV=production` 强制关闭，仅 `ENABLE_DEV_DIAGNOSTICS=true` 且远端 loopback 与 Origin 门禁通过后返回脱敏诊断。
+- 新增 `GET /api/game/player-state/:sessionId`。该 route 读取 session record，返回 redacted player state envelope 和再次清洗后的 route views；`GET /api/game/state/:sessionId` 短期保留为开发兼容路径。
+- 浏览器读档和局势簿分页刷新已改用 `/api/game/player-state/:sessionId`，不再在这些路径读取开发兼容 state route。
+- 新增 `test/redactedState.test.js`、`test/gamePlayerStateRoute.test.js`、`test/devDiagnosticsRoute.test.js`，并扩展 `test/publicAppSource.test.js`，覆盖 hidden-canary 不进入 player-state、route views 二次清洗、开发诊断默认关闭/生产关闭/Origin 与远端 loopback 门禁、无 Origin 非本机请求拒绝、非本地配置 Origin 拒绝和前端 route 使用。
+
+验证：
+
+- 已通过：`node --check src/utils/localOrigins.js && node --check src/game/redactedState.js && node --check src/routes/dev.js && node --check src/routes/game.js && node --check server.js && node --check public/app.js && node --check test/redactedState.test.js && node --check test/gamePlayerStateRoute.test.js && node --check test/devDiagnosticsRoute.test.js && node --check test/publicAppSource.test.js`。
+- 已通过：`node --test test/redactedState.test.js test/gamePlayerStateRoute.test.js test/devDiagnosticsRoute.test.js test/publicAppSource.test.js`（23/23）。
+- 已通过：`node --test test/serverCors.test.js`（4/4）。
+- 已通过：`node --test test/serverCors.test.js test/aiSettingsRoute.test.js test/aiSettings.test.js test/gameSavesRoute.test.js test/informationPanelPage.test.js test/safeWorldSearch.test.js`（25/25）。
+- 已通过：`node --test test/sessionStoreAdapterContract.test.js test/sqliteSafeSearch.test.js test/sqliteMaintenanceTool.test.js`（60/60）。
+- 已通过：`npm run check:docs-governance`、`node --test test/documentationGovernance.test.js`、`git diff --check`。
+- 已通过污染串扫描：`rg -n "xxxxxxxxxx|npm run check:docs-governancegit diff" docs README.md public src test || true` 无命中。
+- 修复只读复审 P2 后最终全量 `npm test` 为 769/770；唯一失败仍为既有 S67 `sqliteReadRepairMs` 性能阈值抖动（`5741.979 > 3000`）。随后单独复跑 `node --test test/dualModeAcceptanceScript.test.js`（8/8）通过；修复前也已单独复跑 `node --test test/gameTurnTick.test.js`（9/9）通过。
+
+风险/遗留：
+
+- `GET /api/game/state/:sessionId` 仍保留为本地开发兼容 route，不能承载 future hidden 私档；普通浏览器读档与局势簿分页已切到 player-state。
+- 开发诊断 route 是本机调试能力，不进入玩家 API、prompt 或 AI 工具调用；后续 S71.11 若做面板，仍只能读取该安全 projection 或更窄的公开摘要。
+- `redactPlayerRouteViews()` 是 S71.4 的防线，后续新增 route view 时仍要在源 view builder 保持 hidden/raw 清洗，不能依赖最后一道清洗承载完整权限模型。
+- 提交前只读复审发现 P2：无 Origin 请求只按 Origin gate 放行，若本地服务经 LAN、容器端口、反向代理或隧道暴露，非本机客户端可省略 Origin 访问已启用诊断。已补 `isLoopbackRemoteAddress()`，开发诊断现在要求远端地址为 `localhost` / `127.0.0.0/8` / `::1` / `::ffff:127.*` 等 loopback，且不信任 `X-Forwarded-For`；新增无 Origin 非本机请求拒绝测试，并复跑相关测试。复审未发现 P0/P1，P2 已处理。
+
+下一步：
+
+- 启动 S71.5：财政与城市政策 resolver，基于 S71.1 只读输入和 S71.4 玩家/诊断边界实现征粮、赈济、修堤、平粜、清丈等服务器裁决。
+
+### 2026-05-13
+
+工具：Codex、子代理。
+
 步骤：S71.3 安全全文检索 / 本地搜索。
 
 提交：`e5cdfd7`。
@@ -243,7 +282,7 @@ S71 详细规划见 [DATABASE_GAMEPLAY_RESOLVER_ROADMAP.md](DATABASE_GAMEPLAY_RE
 - FTS5 mirror 只是本地搜索加速层，不是 truth source；SQLite 不支持 FTS5 时 LIKE fallback 仍可用。
 - 搜索结果是 capped snippet 和 route view ref，不返回完整搜索行；后续 AI prompt 若需要主动搜索，应继续只读该安全结果形状。
 
-下一步：
+当时下一步（已完成）：
 
 - 启动 S71.4：Redacted player API 与开发诊断 API，为真正 hidden 私档和开发诊断面板拆出玩家可见 state 边界。
 

@@ -6,7 +6,7 @@
 
 ## 这次主要更新
 
-当前项目已经完成可玩纵切、浏览器验收、时间专项、AI provider 扩展、本地动态数据库基础、S54-S59 SQLite 业务表拆分、S60-S67 超大动态世界数据库内容充实、S68-S69 科举读书深化与归档、S70 AI 编排归档，以及 S71.0-S71.3 数据库 resolver 输入、本地 SQLite 维护层和安全全文检索。近期重点更新集中在“本地数据库专项归档”“S68-S69 科举读书深化”“多 provider 能力”“S70 AI 编排”和“S71 数据库玩法化入口”：
+当前项目已经完成可玩纵切、浏览器验收、时间专项、AI provider 扩展、本地动态数据库基础、S54-S59 SQLite 业务表拆分、S60-S67 超大动态世界数据库内容充实、S68-S69 科举读书深化与归档、S70 AI 编排归档，以及 S71.0-S71.4 数据库 resolver 输入、本地 SQLite 维护层、安全全文检索和 redacted player API。近期重点更新集中在“本地数据库专项归档”“S68-S69 科举读书深化”“多 provider 能力”“S70 AI 编排”和“S71 数据库玩法化入口”：
 
 - 完成 S70.1 AI 提示词与工具协议契约：新增 [docs/AI_PROMPT_ENGINEERING_CONTRACT.md](docs/AI_PROMPT_ENGINEERING_CONTRACT.md) 和 [docs/AI_TOOL_PROTOCOL_CONTRACT.md](docs/AI_TOOL_PROTOCOL_CONTRACT.md)，固定 prompt pack 七层、actor/scene/output/tool policy 边界、MCP-friendly tool envelope、proposal/result/request-adjudication schema、`server.*` 内部化、strict `inputSchema`、Mock/no-key fallback 和 provider smoke 口径。新增 `src/ai/toolSchemas.js`、`scripts/providerToolSmoke.js` 与 `npm run smoke:provider:tools`，可在有 MiMo key 时探测 `tools` / `tool_choice` / `tool_calls` 与工具结果回填形状；无 key 时明确 skip。
 - 完成 S70.8 多模型路由与 S70.9 AI 设置：`src/ai/modelRoutePolicy.js` 固定 narrator、actor_mind、planner、domain_specialist、critic、safety_gate、memory_summarizer、monthly_briefing、time_skip_planner 九类任务的 provider/model/budget/tool 边界，`npm run eval:ai` 会先跑本地 route/eval runner；`src/game/aiSettings.js`、`GET/POST /api/ai/settings/:sessionId` 和浏览器 `#ai-control-panel` 让玩家按任务调整 provider/model、输出长度、工具预算、并发和安全严格度。设置与调动摘要只返回 hidden-safe view，不暴露 key、base URL、raw prompt、raw provider payload、本地路径或 raw table，critic/safety 仍强制 review-only。
@@ -17,6 +17,7 @@
 - 完成 S71.0-S71.1 数据库 resolver 输入契约与只读输入层：新增 [docs/DATABASE_RESOLVER_INPUT_CONTRACT.md](docs/DATABASE_RESOLVER_INPUT_CONTRACT.md)、`src/game/resolverInputConfig.js`、`src/game/resolverInputContext.js` 和 `test/resolverInputContext.test.js`。`resolverInputContext` 从服务器安全 view 生成 geography/people/offices/economy/military/events/intel/player/map/memory evidence buckets，带 `sourceViews`、caps、safety 和 audit summary；actor filter 会按 read domain 裁剪，JSON/SQLite adapter 读同一 fixture 后 context 等价，hidden/raw/prompt/path/key 污染会被清洗或拒绝。S71 仍 local-only，redacted API 是 hidden 私档前置，AI 只能读 actor 可见 projection 并提交 proposal/request-adjudication，不能执行 SQL、直写数据库或把 hidden/raw 内容回填普通 state route。
 - 完成 S71.2 本地 SQLite schema migration 与维护层初版：新增 `src/storage/sqliteMigrations.js`、`src/storage/sqliteMaintenance.js`、`scripts/sqliteMaintenanceTool.js`、`test/sqliteMigrations.test.js` 和 `test/sqliteMaintenanceTool.test.js`。SQLite adapter 初始化 `schema_migrations`；migration runner 支持 dry-run、幂等跳过、checksum mismatch 阻断、事务回滚、失败不落 applied、forward-only 和破坏性迁移备份确认；维护命令新增 `storage:sqlite:status|health|backup|vacuum|export-safe`，输出数据库体积、迁移状态、索引健康、派生表漂移、备份/VACUUM dry-run 和脱敏诊断，不进入玩家 API、prompt 或浏览器。
 - 完成 S71.3 安全全文检索 / 本地搜索：新增 `src/game/safeWorldSearch.js`、`src/storage/sqliteSafeSearchTables.js`、`GET /api/game/search/:sessionId` 和聚焦测试。搜索只从 `worldGeographyView`、`worldPeopleView`、`officialPostingsView`、案牍/军务/财赋报告、公开事件链、事件档案和角色可见传闻生成安全行；JSON 模式直接用 view helper，SQLite 模式同步 `safe_search_index`，FTS5 可用时维护 `safe_search_fts`，不可用时自动走 LIKE fallback。结果只返回 `domain/sourceView/sourceId/title/snippet/confidence/visibility/relatedRefs/routeViewRef`，不会返回内部行、审计原文、提示全文、本地路径、密钥或隐藏私档。
+- 完成 S71.4 Redacted player API 与开发诊断 API：新增 `src/game/redactedState.js`、`GET /api/game/player-state/:sessionId`、`GET /api/dev/session-diagnostics/:sessionId` 和聚焦测试。玩家状态 route 只返回 allowlist `worldState`、metadata、redaction 边界和二次清洗 route views；浏览器读档与局势簿分页已改用 player-state。开发诊断默认关闭，production 强制关闭，仅 `ENABLE_DEV_DIAGNOSTICS=true`、远端地址为 loopback，且 Origin 为空或本机 loopback Origin 通过时返回 storage/counts/resolver/AI 摘要统计，不返回 raw state、raw audit、provider payload、prompt、key、本地路径或 SQLite 原始行。
 - 新增可选 SQLite 存储模式：默认仍是 JSON 存档；设置 `STORAGE_ADAPTER=sqlite` 后，本地使用 `schema_migrations`、`world_sessions`、审计表、地理 `geo_*`、人物 `people_*`、官职任所 `office_*` 派生业务表、安全事件档案 `event_archive_index`、安全 prompt 检索派生索引和安全搜索派生索引。
 - 新增地理业务表同步：SQLite 模式会把 `worldState.worldGeography` 同步到 `geo_countries`、`geo_regions`、`geo_cities`、`geo_routes`、`geo_frontier_zones`、`geo_office_jurisdictions`，读档时可按 JSON snapshot 修复缺失或陈旧行。
 - 新增地理维护工具：`npm run storage:geography:sqlite -- import|status|repair|export` 支持导入、漂移检查、修复和脱敏 debug dump；通用 SQLite 维护入口 `npm run storage:sqlite:status|health|backup|vacuum|export-safe` 用于本地迁移状态、索引健康、数据库体积、备份/VACUUM 和安全诊断。
@@ -233,7 +234,9 @@ npm run storage:sqlite:export-safe -- --db data/qianqiu.sqlite
 GET  /api/health
 POST /api/game/start
 GET  /api/game/saves
+GET  /api/game/player-state/:sessionId
 GET  /api/game/state/:sessionId
+GET  /api/game/search/:sessionId
 POST /api/game/turn
 POST /api/ai/connection-test
 GET  /api/ai/settings/:sessionId
@@ -247,11 +250,13 @@ POST /api/exam/submit
 
 - `POST /api/game/start` 校验身份，只允许 `scholar`、`emperor`、`minister`、`general`、`magistrate`、`official`。
 - `GET /api/game/saves` 只返回脱敏 metadata，不返回完整 `worldState`、隐藏关系、provider 配置或本地路径。
+- `GET /api/game/player-state/:sessionId` 是普通浏览器读档优先入口，返回 redacted player state 和清洗后的 route views；支持与 state route 相同的局势簿分页查询参数。
 - `POST /api/game/turn` 支持普通 JSON 与 SSE。SSE 事件包括 `state_preview`、`narrative_chunk`、`final_state`、`error`。
 - `POST /api/ai/connection-test` 不创建 session、不写存档、不用 Mock fallback 掩盖真实 provider 问题。
 - `GET/POST /api/ai/settings/:sessionId` 读取或更新 session 级 AI 设置；服务端只接受 provider/model、输出长度、预算、并发、安全严格度等质量/路由设置，拒绝 hidden/raw/server/path/key、直写状态/数据库和观测日志伪造。
-- `GET /api/game/state/:sessionId` 可用 `informationTab`、`informationQuery`、`informationFilter`、`informationSort`、`informationPage`、`informationPageSize` 查询局势簿分页；兼容别名 `informationPanelTab` / `informationCollection` 和 `informationSearch`。S70.12 起响应 `worldState` 不携带 raw `actorMemoryLedger` / `sessionSummary`，请读取 `actorMemoryView` / `sessionSummaryView`。
+- `GET /api/game/state/:sessionId` 可用 `informationTab`、`informationQuery`、`informationFilter`、`informationSort`、`informationPage`、`informationPageSize` 查询局势簿分页；兼容别名 `informationPanelTab` / `informationCollection` 和 `informationSearch`。S70.12 起响应 `worldState` 不携带 raw `actorMemoryLedger` / `sessionSummary`，S71.4 后该 route 保留为开发兼容快照，普通浏览器读档请用 player-state。
 - `GET /api/game/search/:sessionId` 可用 `q` / `query`、`domain`、`page`、`pageSize` 查询安全世界索引；`domain` 支持 `geography`、`people`、`offices`、`events`、`reports`、`rumors`，`pageSize` 最大 25。返回 `safeWorldSearchView`，结果只含摘要片段、来源视图和可跳转 ref；敏感查询会 `queryRejected`，不会暴露内部表名、审计原文、提示全文、本地路径、密钥或隐藏私档。
+- `GET /api/dev/session-diagnostics/:sessionId` 是本机开发诊断入口，不属于普通玩家 API；默认关闭，production 关闭，仅 `ENABLE_DEV_DIAGNOSTICS=true`、远端地址为 loopback，且 Origin 为空或本机 loopback Origin 门禁通过后返回脱敏统计。
 - 游戏与考试路由会返回服务器整理后的可见视图，例如 `examProcedureView`、`examinerPanelView`、`examHonorView`、`appointmentTrackView`、`studyProfileView`、`relationshipView`、`worldGeographyView`、`worldPeopleView`、`officialPostingsView`、`localAffairsDocketView`、`militaryDiplomacyView`、`economicFiscalView`、`historicalEventArchiveView`、`eventArchiveView`、`informationPanelPageView`、`aiSettingsView`、`aiInvocationSummaryView`、`playerMonthlyBriefingView`、`actorMemoryView`、`sessionSummaryView` 和 `mapContextView`。S69.2 的同年/座师/考官事实通过 `relationshipView`、`worldPeopleView`、`eventArchiveView` 和考试历史 `examNetwork` 快照暴露；S69.3 的初授事实通过 `appointmentTrackView`、`officialCareerView`、`eventArchiveView` 和考试历史 `appointmentTrack` 快照暴露；S69.4 的浏览器科举档案面板只组合这些 route view 与安全快照，不新增 raw route 入口；S70.9 的 AI 设置面板只读 AI route view，不读取 raw `worldState.aiSettings`；S70.10 的官职月报面板只读 `playerMonthlyBriefingView` 和本回合 `playerMonthlyBriefing` 反馈，不读取 raw `worldState.playerMonthlyBriefing`；S70.11 的跳时叙事只读本回合 `timeSkip` 安全总结，不读取 raw 计划或隐藏状态；S70.12 的记忆与经历摘要只读 `actorMemoryView`、`sessionSummaryView` 和本回合安全反馈，不读取 raw `worldState.actorMemoryLedger` 或 `worldState.sessionSummary`；S70.13 的地图接口只读 `mapContextView` 和稳定 refs，不读取 raw coordinate table 或 hidden enemy truth。
 
 ## 项目结构
@@ -278,7 +283,7 @@ data/sessions/
 
 - [docs/SHARED_CONTEXT.md](docs/SHARED_CONTEXT.md)：Codex 与 Claude Code 共享交接板。
 - [docs/QIANQIU_DEVELOPMENT_BRIEF.md](docs/QIANQIU_DEVELOPMENT_BRIEF.md)：产品目标、架构、数据契约和交付标准。
-- [docs/DEVELOPMENT_STEPS.md](docs/DEVELOPMENT_STEPS.md)：当前活动路线图与进度台账，已交接到 S71；下一步从 S71.4 Redacted player API 与开发诊断 API 继续。
+- [docs/DEVELOPMENT_STEPS.md](docs/DEVELOPMENT_STEPS.md)：当前活动路线图与进度台账，已交接到 S71；下一步从 S71.5 财政与城市政策 resolver 继续。
 - [docs/DEVELOPMENT_GOVERNANCE.md](docs/DEVELOPMENT_GOVERNANCE.md)：稳定开发治理锚点。
 - [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)：当前架构、API、状态模型和验证要求。
 - [docs/AI_CONTROL_AUDIT_MATRIX.md](docs/AI_CONTROL_AUDIT_MATRIX.md)：AI/server 权限矩阵。
@@ -299,5 +304,5 @@ data/sessions/
 - 真实 provider 网络调用需要配置 API key；无 key 环境只验证 Mock、缺 key 分支和 no-key skip。
 - 浏览器 smoke 覆盖完整主线和代表身份回合，但不等同于所有身份的长线游玩验收。
 - SQLite 目前已经包含 `schema_migrations`、session row、审计表、地理 `geo_*` 业务表、可见人物 `people_*` bridge rows、人物事件到 `people_*.last_event_id` 的本地关联、带内容漂移探针的官职任所 `office_*` 派生业务表、安全事件档案 `event_archive_index`、安全 prompt 检索索引、安全搜索索引，以及只输出 allowlist public 摘要的本地审计公开 projection 工具和本地维护命令；它们都不是浏览器、prompt 或服务器裁决的内部来源。
-- “超大动态世界数据库”的 S60-S67 内容充实阶段已并入统一归档；S68-S69 科举深化和 S70 AI 编排也已归档，S71.0-S71.3 已固定 resolver 输入边界、落地只读 `resolverInputContext`、补本地 SQLite migration/maintenance 初版并新增安全全文检索，后续活动重点进入 S71.4 redacted player API 与开发诊断 API。
+- “超大动态世界数据库”的 S60-S67 内容充实阶段已并入统一归档；S68-S69 科举深化和 S70 AI 编排也已归档，S71.0-S71.4 已固定 resolver 输入边界、落地只读 `resolverInputContext`、补本地 SQLite migration/maintenance、安全全文检索、redacted player API 与开发诊断 API，后续活动重点进入 S71.5 财政与城市政策 resolver。
 - 当前不包含远程存档、账号体系、多人同步或云端数据库。

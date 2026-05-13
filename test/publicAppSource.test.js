@@ -192,3 +192,22 @@ test("S70.12 browser does not read raw actor memory or session summary ledgers",
   assert.doesNotMatch(source, /worldState\?\.sessionSummary/);
   assert.doesNotMatch(source, /worldState\.sessionSummary/);
 });
+
+test("S71.4 browser loads saved state and information pages through player-state route", () => {
+  const source = publicAppSource();
+  const loadSaveSource = sourceBetween(
+    source,
+    "async function loadSaveSession(sessionId, options = {})",
+    "function createPanelValue("
+  );
+  const informationSource = sourceBetween(
+    source,
+    "async function fetchInformationPanelPage(tabId, patch = {})",
+    "function renderInformationControls("
+  );
+
+  assert.match(loadSaveSource, /\/api\/game\/player-state\/\$\{sessionId\}/);
+  assert.doesNotMatch(loadSaveSource, /\/api\/game\/state\/\$\{sessionId\}/);
+  assert.match(informationSource, /\/api\/game\/player-state\/\$\{currentSessionId\}\?\$\{params\.toString\(\)\}/);
+  assert.doesNotMatch(informationSource, /\/api\/game\/state\/\$\{currentSessionId\}/);
+});

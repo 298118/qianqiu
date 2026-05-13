@@ -588,7 +588,7 @@ async function loadSaveSession(sessionId, options = {}) {
   if (!sessionId) return;
 
   try {
-    const response = await fetch(`/api/game/state/${sessionId}`);
+    const response = await fetch(`/api/game/player-state/${sessionId}`);
     if (!response.ok) {
       if (response.status === 404) localStorage.removeItem("qianqiu.sessionId");
       throw new Error(`载入失败：${response.status}`);
@@ -3336,7 +3336,7 @@ async function fetchInformationPanelPage(tabId, patch = {}) {
   });
   if (control.query) params.set("informationQuery", control.query);
 
-  const response = await fetch(`/api/game/state/${currentSessionId}?${params.toString()}`);
+  const response = await fetch(`/api/game/player-state/${currentSessionId}?${params.toString()}`);
   if (!response.ok) {
     throw new Error(`局势簿读取失败：${response.status}`);
   }

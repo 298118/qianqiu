@@ -25,7 +25,7 @@ npm start
 
 Then visit `http://localhost:3000`. Mock mode is the default local path.
 
-`server.js` applies a restrictive CORS policy by default: no-`Origin` requests and the current `PORT`'s localhost/127.0.0.1/[::1] origins are allowed, while extra development origins must be listed in `CORS_ALLOWED_ORIGINS`.
+`server.js` applies a restrictive CORS policy by default: no-`Origin` requests and the current `PORT`'s localhost/127.0.0.1/[::1] origins are allowed, while extra development origins must be listed in `CORS_ALLOWED_ORIGINS`. S71.4 also reuses this local-origin helper for dev diagnostics, but diagnostics additionally require the remote address to be loopback and then accept only no Origin or configured loopback/local Origins; non-local extra CORS origins do not open `/api/dev`.
 
 ## Request Flow
 
@@ -53,6 +53,7 @@ Important route ownership:
 - `src/routes/ai.js` owns no-session AI diagnostics such as provider connection checks.
 - `src/game/informationPanelPage.js` owns the S66.2 browser information paging projection. It builds `informationPanelPageView` for 天下格局、任所地理、人物谱牒、官职簿 and 事件档案 from server route views plus sanitized event archive index items, supports query/filter/sort/page/pageSize, and filters hidden/raw/path/key-shaped text. It does not read raw SQLite tables, raw audit rows, provider proposals, full prompts, local paths, or keys.
 - `src/game/safeWorldSearch.js` owns the S71.3 player-facing safe search projection. It builds capped search rows from server-visible geography, people, official postings, local docket, military, economic, public event-chain, event archive, and intelligence-rumor views, normalizes/rejects sensitive queries, and returns only snippets plus route-view refs. `GET /api/game/search/:sessionId` uses this helper in JSON mode; SQLite mode may use `safe_search_index` / `safe_search_fts` but must keep the same public result contract.
+- `src/game/redactedState.js` owns the S71.4 player-state and diagnostics redaction boundary. It builds the `server_player_visible_state_projection` envelope, removes raw ledgers from player-visible `worldState`, sanitizes legacy route views before `/api/game/player-state/:sessionId` returns them, and builds hidden-safe developer diagnostics containing only storage/count/resolver/AI summary statistics. `src/routes/dev.js` gates diagnostics behind `ENABLE_DEV_DIAGNOSTICS=true`, `NODE_ENV !== "production"`, remote loopback address checks, and no-Origin or local loopback Origin checks.
 - `docs/BROWSER_INFORMATION_PANEL_PLAN.md` owns the S53/S66 browser information panel plan. It maps 天下格局、任所地理、人物谱牒、官职簿 and 事件档案 panels to route views, with S53.4 covering geography/posting geography, S53.5 covering people/official-posting cards, S53.6 covering the sanitized event archive projection plus browser cards, and S66.2 covering server-side search/filter/sort/pagination metadata.
 - `src/game/stateRules.js` is the only way provider state patches should be merged.
 - `src/game/exams.js` owns exam levels, gates, thresholds and next-exam mapping.
@@ -141,6 +142,14 @@ S66.2 adds optional information panel query parameters:
 
 The route uses those parameters only to shape `informationPanelPageView.activePage`; every page is still derived from server route views or sanitized event archive items. Unsafe query text is rejected and the payload must not expose raw SQLite table names, audit rows, provider proposals, prompt text, local paths, keys, or hidden notes.
 
+S71.4 keeps this route as a short-term developer compatibility surface. Ordinary browser save loading and information-panel paging should prefer `GET /api/game/player-state/:sessionId`.
+
+### `GET /api/game/player-state/:sessionId`
+
+S71.4 adds the player-state route for ordinary UI loading. It reads the session record, returns a `server_player_visible_state_projection` envelope with storage metadata, redaction metadata, and an allowlisted `worldState`, then appends route views after `redactPlayerRouteViews()` sanitizes hidden/raw canaries from legacy view payloads. It accepts the same `information*` and `eventArchive*` query parameters as the compatibility state route.
+
+The payload must not contain raw `characters`, `relationshipLedger`, `actorMemoryLedger`, `sessionSummary`, raw provider payloads, prompt/index/table names, local paths, keys, hidden notes, hidden intent, SQLite physical rows, or future hidden private ledgers.
+
 ### `GET /api/game/search/:sessionId`
 
 S71.3 adds a player-facing local search route. Query parameters:
@@ -151,6 +160,10 @@ S71.3 adds a player-facing local search route. Query parameters:
 - `pageSize`，最大 25
 
 The route returns `safeWorldSearchView` with capped `results[]` fields: `domain`, `sourceView`, `sourceId`, `title`, `snippet`, `confidence`, `visibility`, `relatedRefs`, and `routeViewRef`. JSON mode builds results from `safeWorldSearch` over server route views. SQLite mode reads the derived `safe_search_index` and optional `safe_search_fts` mirror; if FTS5 is unavailable it uses LIKE fallback. Sensitive query text sets `queryRejected: true` and returns no hits. The route never returns internal rows, audit originals, provider proposals, full prompt text, local paths, keys, or hidden ledgers.
+
+### `GET /api/dev/session-diagnostics/:sessionId`
+
+S71.4 adds a local developer diagnostics route. It is disabled unless `ENABLE_DEV_DIAGNOSTICS=true`, remains disabled when `NODE_ENV=production`, and rejects requests with non-local `Origin` headers even when those Origins are listed for general CORS. Successful responses return only safe metadata and summaries: storage adapter/features, revision timestamps, high-level state counts, resolver input audit summary, safe-search row count, and AI route/tool invocation summaries. It does not return raw state snapshots, audit rows, provider payloads, prompts, local filesystem paths, keys, SQLite table rows, or hidden/private ledgers.
 
 ### `GET /api/game/saves`
 
@@ -185,7 +198,7 @@ Returns the local save list as redacted session metadata:
 
 The route does not return full `worldState`, raw relationship ledgers, hidden contacts, provider config, prompts, or local file paths. It sorts saves by `updatedAt` descending. Malformed or unsupported `.json` files are reported under `skipped` instead of being auto-deleted.
 
-The browser consumes this route in two places: the start panel renders `#save-list-panel` for recent local saves, and the in-game status strip exposes a `#save-list-open` button that opens `#save-list-modal`. Loading a save still reads `GET /api/game/state/:sessionId`, writes `localStorage["qianqiu.sessionId"]` for compatibility, and renders only the normal route payloads.
+The browser consumes this route in two places: the start panel renders `#save-list-panel` for recent local saves, and the in-game status strip exposes a `#save-list-open` button that opens `#save-list-modal`. Loading a save reads `GET /api/game/player-state/:sessionId`, writes `localStorage["qianqiu.sessionId"]` for compatibility, and renders only the normal route payloads.
 
 ### `POST /api/ai/connection-test`
 

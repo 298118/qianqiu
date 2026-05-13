@@ -132,6 +132,10 @@ const {
 } = require("../game/sessionSummary");
 const { buildClientWorldState } = require("../game/clientWorldState");
 const {
+  buildPlayerStateEnvelope,
+  redactPlayerRouteViews
+} = require("../game/redactedState");
+const {
   buildTimeSkipPlan,
   buildTimeSkipSummary,
   detectTimeSkipIntent,
@@ -1144,6 +1148,24 @@ router.get("/state/:sessionId", async (req, res, next) => {
         eventArchive: eventArchiveOptionsFromQuery(req.query),
         informationPanel: informationPanelOptionsFromQuery(req.query)
       })
+    });
+  } catch (error) {
+    next(error);
+  }
+});
+
+router.get("/player-state/:sessionId", async (req, res, next) => {
+  try {
+    const adapter = getSessionStorageAdapter();
+    const { record } = await adapter.readSessionRecord(req.params.sessionId);
+    ensureRouteProjectionState(record.worldState);
+    const routeViews = redactPlayerRouteViews(buildCommonTurnViews(record.worldState, {
+      eventArchive: eventArchiveOptionsFromQuery(req.query),
+      informationPanel: informationPanelOptionsFromQuery(req.query)
+    }));
+    res.json({
+      ...buildPlayerStateEnvelope(record),
+      ...routeViews
     });
   } catch (error) {
     next(error);
