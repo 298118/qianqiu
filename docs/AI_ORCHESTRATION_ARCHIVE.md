@@ -51,7 +51,7 @@ S70 已把《千秋》的 AI 从“叙事与评分器”推进为有身份、权
 - 真实 MiMo、DeepSeek、OpenAI、Anthropic 或 Mock 只影响叙事、建议质量、预算和审查力度，不能绕过 schema、actor 权限、hidden 过滤、promotion rule、appointment rule、battle/diplomacy/fiscal resolver 或持久化 transaction。
 - `actorMemoryLedger`、`sessionSummary`、`playerMonthlyBriefing`、`mapContextView`、AI 设置和工具审计都有玩家可见 view；浏览器、prompt、事件档案和 smoke 只能读取服务器清洗后的 route view / capped summary。
 - 当前不保存 NPC deep private memory、hidden enemy truth、raw coordinate table、raw provider payload、完整 prompt、raw SQLite row、raw audit、provider key、本地路径或 hidden 私档。后续若要保存真正 hidden 私档，必须先完成 S71 redacted player API 与 hidden-safe diagnostics。
-- S70 归档时，地图移动、行军、赴任、押解、使节、商路、财政、刑名、外交、任免和赏罚只到 pending/rejected proposal；真实后果交给 S71 resolver。S71.5 已把财政与城市政策接入服务器 resolver，S71.6 已把地方案件与刑名接入服务器 resolver，其它领域仍按后续 S71 步骤推进。
+- S70 归档时，地图移动、行军、赴任、押解、使节、商路、财政、刑名、外交、任免和赏罚只到 pending/rejected proposal；真实后果交给 S71 resolver。S71.5 已把财政与城市政策接入服务器 resolver，S71.6 已把地方案件与刑名接入服务器 resolver，S71.7 已把军务与外交接入服务器 resolver；其它领域仍按后续 S71 步骤推进。
 
 ## 4. 验收与回归入口
 

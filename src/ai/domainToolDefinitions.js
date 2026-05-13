@@ -1,4 +1,8 @@
 const { JUDICIAL_CASE_ACTIONS } = require("../game/judicialCaseConfig");
+const {
+  DIPLOMACY_MOVE_ACTIONS,
+  MILITARY_ORDER_ACTIONS
+} = require("../game/militaryDiplomacyResolverConfig");
 
 function stringArraySchema(maxItems) {
   return {
@@ -106,12 +110,12 @@ const DOMAIN_TOOL_CONFIGS = Object.freeze([
     name: "military.propose_order",
     description: "提交军令、边防、调粮或战役行动 proposal；服务器裁决军心、粮道、兵力、战果和审计。",
     actionProperty: "orderKind",
-    actionEnum: ["defend", "train", "scout", "resupply", "mobilize", "engage", "withdraw"],
+    actionEnum: Object.keys(MILITARY_ORDER_ACTIONS),
     toolType: "proposal",
     authorityTiers: ["T4", "T5"],
     actorTypes: ["general", "minister", "emperor", "foreign_ruler"],
     toolGroups: ["military"],
-    readScope: ["militaryDiplomacyView", "worldGeographyView", "intelligenceRumorView", "eventArchiveView"],
+    readScope: ["militaryDiplomacyView", "economicFiscalView", "worldGeographyView", "intelligenceRumorView", "eventArchiveView"],
     proposalScope: ["military_order_candidate"],
     resolverName: "server.resolve_domain_tool_proposal",
     auditEventType: "ai_tool_military_order_proposal",
@@ -125,12 +129,12 @@ const DOMAIN_TOOL_CONFIGS = Object.freeze([
     name: "diplomacy.propose_move",
     description: "提交互市、遣使、和议、警告或宣战请求 proposal；服务器裁决礼法、边情、财政和战和后果。",
     actionProperty: "moveKind",
-    actionEnum: ["envoy", "negotiate_trade", "seek_truce", "demand_tribute", "warn_border", "declare_war_request", "alliance"],
+    actionEnum: Object.keys(DIPLOMACY_MOVE_ACTIONS),
     toolType: "proposal",
     authorityTiers: ["T4", "T5"],
     actorTypes: ["general", "minister", "emperor", "foreign_ruler"],
     toolGroups: ["diplomacy"],
-    readScope: ["militaryDiplomacyView", "worldGeographyView", "intelligenceRumorView", "eventArchiveView"],
+    readScope: ["militaryDiplomacyView", "economicFiscalView", "worldGeographyView", "intelligenceRumorView", "eventArchiveView"],
     proposalScope: ["diplomacy_move_candidate"],
     resolverName: "server.resolve_domain_tool_proposal",
     auditEventType: "ai_tool_diplomacy_move_proposal",

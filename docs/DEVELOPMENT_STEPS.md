@@ -10,7 +10,7 @@
 - S49-S67 本地数据库基础、SQLite 业务表、双模式验收、超大动态世界内容与 S60 内容契约：[LOCAL_DATABASE_AND_WORLD_CONTENT_ARCHIVE.md](LOCAL_DATABASE_AND_WORLD_CONTENT_ARCHIVE.md)。旧分卷归档和 S60 契约文件保留为跳转页。
 - S70 AI 编排与权力工具：[AI_ORCHESTRATION_ARCHIVE.md](AI_ORCHESTRATION_ARCHIVE.md)。S70 规划源头仍见 [AI_ORCHESTRATION_ROADMAP.md](AI_ORCHESTRATION_ROADMAP.md)。
 
-当前活动路线图已交接到 S71：S68-S69 的书生主线科举、读书、评卷与授官制度已归档，S70.1-S70.14 的 AI prompt/tool/actor/多模型路由、AI 设置、月报、跳时、记忆、地图接口、provider AI-first smoke 与 JSON/SQLite parity 已归档。S71 作为 S70 之后的数据库玩法化、维护、安全检索和 redacted API 专项，规划见 [DATABASE_GAMEPLAY_RESOLVER_ROADMAP.md](DATABASE_GAMEPLAY_RESOLVER_ROADMAP.md)。S71.0 数据库玩法化专项契约已固定在 [DATABASE_RESOLVER_INPUT_CONTRACT.md](DATABASE_RESOLVER_INPUT_CONTRACT.md)，S71.1 已落地只读 `resolverInputContext` 输入层，S71.2 已落地本地 SQLite schema migration 与维护层，S71.3 已落地安全全文检索 / 本地搜索，S71.4 已落地 redacted player API 与本机开发诊断 API，S71.5 已落地财政与城市政策 resolver，S71.6 已落地地方案件与刑名 resolver；下一步启动 S71.7 军务与外交 resolver。数据库方向继续只考虑本机 JSON/SQLite 持久化增强；远程存档、账号体系、多人同步、云端冲突解决和托管数据库不进入当前规划。
+当前活动路线图已交接到 S71：S68-S69 的书生主线科举、读书、评卷与授官制度已归档，S70.1-S70.14 的 AI prompt/tool/actor/多模型路由、AI 设置、月报、跳时、记忆、地图接口、provider AI-first smoke 与 JSON/SQLite parity 已归档。S71 作为 S70 之后的数据库玩法化、维护、安全检索和 redacted API 专项，规划见 [DATABASE_GAMEPLAY_RESOLVER_ROADMAP.md](DATABASE_GAMEPLAY_RESOLVER_ROADMAP.md)。S71.0 数据库玩法化专项契约已固定在 [DATABASE_RESOLVER_INPUT_CONTRACT.md](DATABASE_RESOLVER_INPUT_CONTRACT.md)，S71.1 已落地只读 `resolverInputContext` 输入层，S71.2 已落地本地 SQLite schema migration 与维护层，S71.3 已落地安全全文检索 / 本地搜索，S71.4 已落地 redacted player API 与本机开发诊断 API，S71.5 已落地财政与城市政策 resolver，S71.6 已落地地方案件与刑名 resolver，S71.7 已落地军务与外交 resolver；下一步启动 S71.8 压力驱动事件生成器。数据库方向继续只考虑本机 JSON/SQLite 持久化增强；远程存档、账号体系、多人同步、云端冲突解决和托管数据库不进入当前规划。
 
 ## 1. 开发规范继承
 
@@ -82,7 +82,7 @@
 
 ## 3. 当前边界与已归档摘要
 
-当前活动工作已交接到 S71.7。S49-S67 的本地数据库与大世界内容实现细节已经迁入统一归档，S68-S69 科举深化已迁入科举归档，S70 AI 编排已迁入 S70 归档；活动台账只保留索引和后续边界：
+当前活动工作已交接到 S71.8。S49-S67 的本地数据库与大世界内容实现细节已经迁入统一归档，S68-S69 科举深化已迁入科举归档，S70 AI 编排已迁入 S70 归档；活动台账只保留索引和后续边界：
 
 | 范围 | 状态 | 摘要 | 归档 |
 | --- | --- | --- | --- |
@@ -127,7 +127,7 @@
 | S71.4 | DONE | Redacted player API 与开发诊断 API：保存 hidden 私档前先拆玩家可见 state 和 hidden-safe diagnostics | 2026-05-13 | Codex / 子代理 | `746370a` |
 | S71.5 | DONE | 财政与城市政策 resolver：征粮、赈济、修堤、平粜、清丈、钱粮差事等服务器裁决 | 2026-05-13 | Codex / 子代理 | `3cca9bd` |
 | S71.6 | DONE | 地方案件与刑名 resolver：堂审、证据、士绅压力、胥吏阻力、判决后果和案牍归档 | 2026-05-13 | Codex / 子代理 | `4d93b2d` |
-| S71.7 | TODO | 军务与外交 resolver：侦察、固守、调粮、练兵、会战、互市、和议、宣战 request 和服务器裁决 | - | - | S71.6 后 |
+| S71.7 | DONE | 军务与外交 resolver：侦察、固守、调粮、练兵、会战、互市、和议、宣战 request 和服务器裁决 | 2026-05-13 | Codex / 子代理 | `待提交` |
 | S71.8 | TODO | 压力驱动事件生成器：从粮价、水利、腐败、边防、NPC 怨怼和情报压力生成事件候选 | - | - | S71.7 后 |
 | S71.9 | TODO | 多 actor 场景运行时：朝议、堂审、会盟、战役 scene-local time 与 actor proposal 编排 | - | - | S71.8 后 |
 | S71.10 | TODO | NPC 记忆账本：高显著 NPC 长期记忆、人情债、恩怨、家族风险和背景 NPC heuristic | - | - | S71.9 后 |
@@ -210,6 +210,37 @@ S71 详细规划见 [DATABASE_GAMEPLAY_RESOLVER_ROADMAP.md](DATABASE_GAMEPLAY_RE
 ## 8. 进度记录
 
 ### 2026-05-13
+
+工具：Codex、子代理。
+
+步骤：S71.7 军务与外交 resolver。
+
+提交：`待提交`。
+
+完成：
+
+- 新增 `src/game/militaryDiplomacyResolverConfig.js`，集中配置军务外交 schema version、ledger 上限、允许权限层、证据领域、证据可信度、制度路径、action alias、受控 `stateDelta` / `playerDelta`、资源成本、证据门槛和风险标签。首版支持侦察、固守、练兵、调粮、出击、会战、大会战、撤军、遣使、互市、和议、朝贡、威慑、宣战 request、会盟和扣使。
+- 新增 `src/game/militaryDiplomacyResolver.js`，提供 `normalizeMilitaryProposal()`、`normalizeDiplomacyProposal()`、`buildMilitaryDiplomacyEvidenceContext()`、`validateMilitaryAuthority()`、`validateDiplomacyAuthority()`、`resolveCampaignOrDefense()`、`resolveDiplomaticMove()`、`applyMilitaryDiplomacyOutcome()`、`buildMilitaryDiplomacyPublicEvent()` 和 `resolveMilitaryDiplomacyFromDomainTool()`。resolver 只读 S71.1 `resolverInputContext` 与 S70 领域工具可见 evidence refs，校验 T4-T5、军务/外交工具组、对应工具来源、证据领域、证据数量/可信度、低可信边报、调粮/互市/朝贡的钱粮/市场证据、兵粮资源、target refs 与证据/scope 锚定、高风险制度路径和 hidden/raw 污染。
+- `resolveCampaignOrDefense()` / `resolveDiplomaticMove()` 只产服务器裁决 outcome，不直接变更状态；`applyMilitaryDiplomacyOutcome()` 才写受控府库/粮储/军心/边患字段、玩家将领/外交字段、公开 `eventHistory` 和内部 `militaryDiplomacyLedger`。公开事件只显示可见证据摘要，不公开 evidence ref、raw proposal 或 hidden 情报；拒绝 outcome 不改 `worldState`，audit 只含 resolver input 统计、受控 delta、证据分和安全布尔标志。
+- 扩展 `military.propose_order` / `diplomacy.propose_move` 的 action enum 到 S71.7 配置全集，并把 `economicFiscalView` / `market` evidence 纳入军务外交领域工具读取范围；S70 bridge evidence 会保留来源可信度，高风险军务/外交动作必须有本领域可信 evidence，不能只靠强旁证稀释低可信边报。普通 S70 domain tool runner 仍只返回 pending/rejected、不写状态。`resolveMilitaryDiplomacyFromDomainTool()` 可由服务器桥接 pending proposal 做内部裁决，并显式拒绝非军务/外交 payload；`server.resolve_battle` / `server.apply_diplomacy` 不进入默认 registry、provider name map、模型可见 tool list 或玩家可伪造 tool call。
+- 新增 `test/militaryDiplomacyResolver.test.js`、`test/militaryDiplomacyAuthority.test.js`、`test/militaryDiplomacyIntelConfidence.test.js`、`test/militaryDiplomacyRedaction.test.js` 和 `test/militaryDiplomacyDomainToolBridge.test.js`，并扩展 `test/domainToolDefinitions.test.js`，覆盖成功会战/宣战 request/调粮、书生越权、T4 宣战拒绝、高风险缺制度路径、资源不足、调粮缺钱粮证据、低可信边报、hidden/raw 污染、公开事件不泄漏证据 ref、玩家 state redaction、领域工具桥接和 server tool 不可见。
+
+验证：
+
+- 已通过：`node --check src/ai/domainToolDefinitions.js && node --check src/game/domainToolResolvers.js && node --check src/game/militaryDiplomacyResolverConfig.js && node --check src/game/militaryDiplomacyResolver.js && node --check test/militaryDiplomacyResolver.test.js && node --check test/militaryDiplomacyAuthority.test.js && node --check test/militaryDiplomacyIntelConfidence.test.js && node --check test/militaryDiplomacyRedaction.test.js && node --check test/militaryDiplomacyDomainToolBridge.test.js`。
+- 已通过：`node --test test/militaryDiplomacyResolver.test.js test/militaryDiplomacyAuthority.test.js test/militaryDiplomacyIntelConfidence.test.js test/militaryDiplomacyRedaction.test.js test/militaryDiplomacyDomainToolBridge.test.js`（修复复审问题后 15/15）。
+- 已通过：`node --test test/domainToolDefinitions.test.js test/domainToolResolvers.test.js test/domainToolPermissions.test.js test/gameAiToolRunner.test.js test/aiActorToolPermissions.test.js`（22/22）。
+- 已通过：`node --test test/militaryDiplomacy.test.js test/resolverInputContext.test.js test/redactedState.test.js test/stateRules.test.js test/eventArchive.test.js`（34/34）。
+- 已通过：`node --test test/cityPolicyResolver.test.js test/cityPolicyAuthority.test.js test/cityPolicyHiddenRedaction.test.js test/cityPolicyDomainToolBridge.test.js test/judicialCaseResolver.test.js test/judicialCaseAuthority.test.js test/judicialCaseEvidenceRedaction.test.js test/judicialCaseDomainToolBridge.test.js`（22/22）。
+- 已通过：`npm run check:docs-governance`、`node --test test/documentationGovernance.test.js`、`git diff --check`。
+- 全量 `npm test` 本轮两次均为 804/805，唯一失败均为既有 S67 `sqliteReadRepairMs` 性能阈值抖动（第二次日志：7120.156ms > 3000ms）；随后单独复跑 `node --test test/dualModeAcceptanceScript.test.js` 8/8 通过。confidence 修复后未重跑全量，只复跑 S71.7 聚焦、领域工具、军务 projection/redaction/event、S71.5-S71.6 回归和文档治理。
+- 提交前只读子代理复审首轮发现 P1：S70 bridge evidence 丢失来源可信度且 S71.7 bridge 硬编码 0.68，低可信军情可能支持高风险会战；同时强 geography/economy 旁证可稀释低可信军务证据。已让 `collectVisibleDomainEvidenceRefs()` 传播 `confidence` / `intelConfidence`，S71.7 bridge 使用来源可信度，并要求高风险军务/外交动作至少有一条本领域可信 evidence；新增对应回归。复审还发现 P2：工具协议文档曾写 `.action` 字段，已改为 `military.propose_order.orderKind` 与 `diplomacy.propose_move.moveKind`。二轮只读复审未发现 P0/P1/P2，残余非阻断风险仅为 confidence 修复后未重跑全量 `npm test`。
+
+风险/遗留：
+
+- S71.7 先提供服务器 resolver 和领域工具 bridge，不接普通 `/api/game/turn` 自动调度，不新增浏览器战役/会盟面板，不写 SQLite 派生表或审计业务表；后续 S71.9 会盟/战役多 actor 场景与 S71.11 审计面板只能读取 hidden-safe outcome/audit projection。
+- `militaryDiplomacyLedger` 是内部执行台账，不进入 `GET /api/game/player-state/:sessionId`；玩家只看到受控 meters、公开军务外交摘要与事件摘要。
+- 下一步进入 S71.8 压力驱动事件生成器，需复用 S70.6 事件工具协议、S71.1 resolver input、S71.4 redacted API 和 S71.5-S71.7 resolver 边界。
 
 工具：Codex、子代理。
 

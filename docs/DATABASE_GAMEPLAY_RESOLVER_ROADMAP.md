@@ -1,6 +1,6 @@
 # S71 数据库玩法化、维护与安全 API 规划
 
-本文承接 S49-S67 本地数据库与超大动态世界内容归档，以及 S70 AI prompt / tool / actor 编排归档。目标是把现有“安全索引 / projection / 局势簿”继续推进为真正驱动玩法的服务器 resolver 输入，同时补齐本地数据库维护、全文检索、redacted API、AI actor 角色卡、压力事件、场景推演、NPC 记忆和 AI 调动可观测性。S71.0 已将 resolver 输入边界收束为 [DATABASE_RESOLVER_INPUT_CONTRACT.md](DATABASE_RESOLVER_INPUT_CONTRACT.md)，S71.1 已按该契约落地只读 `resolverInputContext` 初版，S71.2 已落地本地 SQLite migration/maintenance 初版，S71.3 已落地安全全文检索，S71.4 已落地 redacted player API 与本机开发诊断 API，S71.5 已落地财政与城市政策服务器 resolver，S71.6 已落地地方案件与刑名服务器 resolver；后续玩法 resolver 应优先复用该输入层、本地维护工具、玩家/诊断分层和 proposal-only 领域工具边界。
+本文承接 S49-S67 本地数据库与超大动态世界内容归档，以及 S70 AI prompt / tool / actor 编排归档。目标是把现有“安全索引 / projection / 局势簿”继续推进为真正驱动玩法的服务器 resolver 输入，同时补齐本地数据库维护、全文检索、redacted API、AI actor 角色卡、压力事件、场景推演、NPC 记忆和 AI 调动可观测性。S71.0 已将 resolver 输入边界收束为 [DATABASE_RESOLVER_INPUT_CONTRACT.md](DATABASE_RESOLVER_INPUT_CONTRACT.md)，S71.1 已按该契约落地只读 `resolverInputContext` 初版，S71.2 已落地本地 SQLite migration/maintenance 初版，S71.3 已落地安全全文检索，S71.4 已落地 redacted player API 与本机开发诊断 API，S71.5 已落地财政与城市政策服务器 resolver，S71.6 已落地地方案件与刑名服务器 resolver，S71.7 已落地军务与外交服务器 resolver；后续玩法 resolver 应优先复用该输入层、本地维护工具、玩家/诊断分层和 proposal-only 领域工具边界。
 
 ## 1. 台账位置建议
 
@@ -36,7 +36,7 @@
 | S71.4 | Redacted player API 与开发诊断 API | 已落地：`redactedState`、`GET /api/game/player-state/:sessionId`、`GET /api/dev/session-diagnostics/:sessionId`、前端读档切换 | hidden 私档前置条件；普通 UI 不拿完整 raw state |
 | S71.5 | 财政与城市政策 resolver | 已落地：`cityPolicyResolver`、`cityPolicyResolverConfig`、`city.propose_policy` policy enum 扩展、domain tool bridge | 从城市/经济 projection 取输入；AI 只给政策 proposal，server 内部裁决后才写受控 meters |
 | S71.6 | 地方案件与刑名 resolver | 已落地：`judicialCaseResolver`、`judicialCaseConfig`、`judicial.propose_case_resolution` action enum 扩展、domain tool bridge | 证据不足能拒绝；县令不越权；公开案牍只显示可见证据摘要 |
-| S71.7 | 军务与外交 resolver | 侦察、固守、调粮、练兵、会战、朝贡、互市、和议、宣战 proposal | 兵粮、地形、情报可信度和授权检查；AI 不能直接开战/议和 |
+| S71.7 | 军务与外交 resolver | 已落地：`militaryDiplomacyResolver`、`militaryDiplomacyResolverConfig`、军令/外交 action enum 与 domain tool bridge | 兵粮、地形、情报可信度和授权检查；AI 不能直接开战/议和 |
 | S71.8 | 压力驱动事件生成器 | 从粮价、水利、腐败、边防、NPC 怨怼、财政缺口生成事件候选 | 服务器成案；冷却/概率配置集中；hidden 不泄漏 |
 | S71.9 | 多 actor 场景运行时 | 朝议、堂审、会盟、战役 scene-local time；多 actor 发言和提案 | 场景不乱推全局旬；每个 actor 只见自身视野 |
 | S71.10 | NPC 记忆账本 | 高显著 NPC 记忆、人情债、恩怨、家族风险、目标；背景 NPC heuristic | 记忆可解释、可裁剪、可审计；不全量 LLM 调用 |
@@ -147,6 +147,8 @@ S71.4 是 hidden 私档真正落地前的硬门槛。
 动作：侦察、固守、练兵、调粮、出击、撤军、议和、朝贡、互市、扣使、威慑、宣战 request。
 
 服务器裁决：军需、地形、士气、授权、外交后果、财政压力、情报可信度和朝局阻力。AI 不能直接改战争状态、外交关系或战役胜负。
+
+S71.7 已新增 `src/game/militaryDiplomacyResolverConfig.js` 与 `src/game/militaryDiplomacyResolver.js`。AI 仍只能通过 `military.propose_order` / `diplomacy.propose_move` 提交 proposal，普通 domain tool runner 保持 pending-only；服务器内部 resolver 复用 `resolverInputContext` 与 S70 可见 evidence refs，校验 T4-T5、军务/外交工具组、证据领域/数量/可信度、钱粮/市场证据、兵粮资源、目标范围、制度路径和 hidden/raw 污染后，才写受控府库/粮储/军心/边患/玩家将领或外交字段、公开事件与内部 `militaryDiplomacyLedger`。公开 event 只显示可见证据摘要，不公开 evidence ref、raw proposal 或 hidden 情报；`server.resolve_battle` / `server.apply_diplomacy` 不进入模型可见工具或 provider schema。
 
 ### 压力事件生成器
 

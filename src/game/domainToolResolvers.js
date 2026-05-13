@@ -65,8 +65,8 @@ const EVIDENCE_DOMAIN_ALIASES = Object.freeze({
 const TOOL_EVIDENCE_DOMAINS = Object.freeze({
   "judicial.propose_case_resolution": ["local_docket", "office", "people", "events"],
   "city.propose_policy": ["local_docket", "market", "geography", "events"],
-  "military.propose_order": ["military", "diplomacy", "geography", "intel", "events"],
-  "diplomacy.propose_move": ["diplomacy", "military", "geography", "intel", "events"],
+  "military.propose_order": ["military", "diplomacy", "geography", "intel", "events", "market"],
+  "diplomacy.propose_move": ["diplomacy", "military", "geography", "intel", "events", "market"],
   "exam.request_ranking_adjudication": ["exam", "office", "events"],
   "office.request_appointment_adjudication": ["office", "career", "exam", "events"],
   "career.propose_reward_or_promotion": ["office", "career", "exam", "people", "events"],
@@ -103,6 +103,14 @@ function clampFloat(value, min, max, fallback) {
   const parsed = Number(value);
   if (!Number.isFinite(parsed)) return fallback;
   return Math.max(min, Math.min(max, parsed));
+}
+
+function normalizeEvidenceConfidence(entry = {}, fallback = 0.6) {
+  const value = entry.confidence ?? entry.intelConfidence ?? entry.trustScore ?? entry.reliability;
+  const parsed = Number(value);
+  if (!Number.isFinite(parsed)) return fallback;
+  const normalized = parsed > 1 ? parsed / 100 : parsed;
+  return Number(clampFloat(normalized, 0, 1, fallback).toFixed(3));
 }
 
 function cleanTextList(values, limit = 6, maxLength = 120) {
@@ -262,6 +270,7 @@ function pushEvidenceRef(refs, actorProfile, entry) {
     sourceView: cleanText(entry.sourceView, "", 80),
     title: cleanText(entry.title, "", 80),
     publicSummary: cleanText(entry.publicSummary, "可见证据摘要。", 160),
+    confidence: normalizeEvidenceConfidence(entry),
     scopeRefs: scopeRefsForEntry(entry),
     riskTags: cleanRefList(entry.riskTags, 6)
   });
@@ -278,6 +287,7 @@ function collectVisibleDomainEvidenceRefs(worldState = {}, actorProfile = {}) {
       sourceView: "localAffairsDocketView.dockets",
       title: docket.title,
       publicSummary: docket.publicSummary,
+      confidence: docket.confidence ?? docket.intelConfidence,
       jurisdictionId: docket.jurisdictionId,
       cityId: docket.cityId,
       regionId: docket.regionId,
@@ -297,6 +307,7 @@ function collectVisibleDomainEvidenceRefs(worldState = {}, actorProfile = {}) {
       sourceView: "economicFiscalView.fiscalLedgers",
       title: ledger.title,
       publicSummary: ledger.publicSummary,
+      confidence: ledger.confidence ?? ledger.intelConfidence,
       countryId: ledger.countryId,
       riskTags: ["fiscal", ledger.status || ""]
     });
@@ -308,6 +319,7 @@ function collectVisibleDomainEvidenceRefs(worldState = {}, actorProfile = {}) {
       sourceView: "economicFiscalView.market",
       title: market.title,
       publicSummary: market.publicSummary,
+      confidence: market.confidence ?? market.intelConfidence,
       cityId: market.cityId,
       regionId: market.regionId,
       countryId: market.countryId,
@@ -323,6 +335,7 @@ function collectVisibleDomainEvidenceRefs(worldState = {}, actorProfile = {}) {
       sourceView: "militaryDiplomacyView.theaters",
       title: theater.title || theater.name,
       publicSummary: theater.publicSummary,
+      confidence: theater.confidence ?? theater.intelConfidence,
       frontierZoneId: theater.frontierZoneId,
       cityIds: theater.cityIds,
       routeIds: theater.routeIds,
@@ -336,6 +349,7 @@ function collectVisibleDomainEvidenceRefs(worldState = {}, actorProfile = {}) {
       sourceView: "militaryDiplomacyView.theaters",
       title: theater.title || theater.name,
       publicSummary: theater.publicSummary,
+      confidence: theater.confidence ?? theater.intelConfidence,
       frontierZoneId: theater.frontierZoneId,
       cityIds: theater.cityIds,
       routeIds: theater.routeIds,
@@ -351,6 +365,7 @@ function collectVisibleDomainEvidenceRefs(worldState = {}, actorProfile = {}) {
       sourceView: "militaryDiplomacyView.frontierIncidents",
       title: incident.title,
       publicSummary: incident.publicSummary,
+      confidence: incident.confidence ?? incident.intelConfidence,
       frontierZoneId: incident.frontierZoneId,
       cityId: incident.cityId,
       regionId: incident.regionId,
@@ -368,6 +383,7 @@ function collectVisibleDomainEvidenceRefs(worldState = {}, actorProfile = {}) {
       sourceView: "intelligenceRumorView.publicRumors",
       title: rumor.sourceLabel || rumor.channelLabel,
       publicSummary: rumor.publicSummary,
+      confidence: rumor.confidence ?? rumor.intelConfidence,
       cityId: rumor.cityId,
       regionId: rumor.regionId,
       countryId: rumor.countryId,
@@ -384,6 +400,7 @@ function collectVisibleDomainEvidenceRefs(worldState = {}, actorProfile = {}) {
       sourceView: "worldGeographyView.cities",
       title: city.name,
       publicSummary: city.publicSummary || city.regionName,
+      confidence: city.confidence ?? city.intelConfidence,
       cityId: city.id,
       regionId: city.regionId,
       countryId: city.countryId,
@@ -397,6 +414,7 @@ function collectVisibleDomainEvidenceRefs(worldState = {}, actorProfile = {}) {
       sourceView: "worldGeographyView.frontierZones",
       title: frontier.name,
       publicSummary: frontier.publicSummary,
+      confidence: frontier.confidence ?? frontier.intelConfidence,
       frontierZoneId: frontier.id,
       countryId: frontier.countryId,
       neighborCountryId: frontier.neighborCountryId,

@@ -6,6 +6,10 @@ const { createGameAiToolRegistry } = require("../src/ai/gameAiTools");
 const { validateToolDefinition } = require("../src/ai/toolSchemas");
 const { CITY_POLICY_ACTIONS } = require("../src/game/cityPolicyResolverConfig");
 const { JUDICIAL_CASE_ACTIONS } = require("../src/game/judicialCaseConfig");
+const {
+  DIPLOMACY_MOVE_ACTIONS,
+  MILITARY_ORDER_ACTIONS
+} = require("../src/game/militaryDiplomacyResolverConfig");
 
 const EXPECTED_DOMAIN_TOOLS = [
   "judicial.propose_case_resolution",
@@ -52,6 +56,16 @@ test("S70.7 domain tool definitions are strict, server-owned and default registr
   assert.deepEqual(
     [...judicialTool.inputSchema.properties.caseAction.enum].sort(),
     Object.keys(JUDICIAL_CASE_ACTIONS).sort()
+  );
+  const militaryTool = registry.getTool("military.propose_order");
+  assert.deepEqual(
+    [...militaryTool.inputSchema.properties.orderKind.enum].sort(),
+    Object.keys(MILITARY_ORDER_ACTIONS).sort()
+  );
+  const diplomacyTool = registry.getTool("diplomacy.propose_move");
+  assert.deepEqual(
+    [...diplomacyTool.inputSchema.properties.moveKind.enum].sort(),
+    Object.keys(DIPLOMACY_MOVE_ACTIONS).sort()
   );
   assert.equal(Object.keys(registry.buildProviderNameMap()).length, registry.listAllTools().length);
 });
