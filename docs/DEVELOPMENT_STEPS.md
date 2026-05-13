@@ -10,7 +10,7 @@
 - S49-S67 本地数据库基础、SQLite 业务表、双模式验收、超大动态世界内容与 S60 内容契约：[LOCAL_DATABASE_AND_WORLD_CONTENT_ARCHIVE.md](LOCAL_DATABASE_AND_WORLD_CONTENT_ARCHIVE.md)。旧分卷归档和 S60 契约文件保留为跳转页。
 - S70 AI 编排与权力工具：[AI_ORCHESTRATION_ARCHIVE.md](AI_ORCHESTRATION_ARCHIVE.md)。S70 规划源头仍见 [AI_ORCHESTRATION_ROADMAP.md](AI_ORCHESTRATION_ROADMAP.md)。
 
-当前活动路线图已交接到 S71：S68-S69 的书生主线科举、读书、评卷与授官制度已归档，S70.1-S70.14 的 AI prompt/tool/actor/多模型路由、AI 设置、月报、跳时、记忆、地图接口、provider AI-first smoke 与 JSON/SQLite parity 已归档。S71 作为 S70 之后的数据库玩法化、维护、安全检索和 redacted API 专项，规划见 [DATABASE_GAMEPLAY_RESOLVER_ROADMAP.md](DATABASE_GAMEPLAY_RESOLVER_ROADMAP.md)。S71.0 数据库玩法化专项契约已固定在 [DATABASE_RESOLVER_INPUT_CONTRACT.md](DATABASE_RESOLVER_INPUT_CONTRACT.md)，S71.1 已落地只读 `resolverInputContext` 输入层，S71.2 已落地本地 SQLite schema migration 与维护层，S71.3 已落地安全全文检索 / 本地搜索，S71.4 已落地 redacted player API 与本机开发诊断 API，S71.5 已落地财政与城市政策 resolver，S71.6 已落地地方案件与刑名 resolver，S71.7 已落地军务与外交 resolver；下一步启动 S71.8 压力驱动事件生成器。数据库方向继续只考虑本机 JSON/SQLite 持久化增强；远程存档、账号体系、多人同步、云端冲突解决和托管数据库不进入当前规划。
+当前活动路线图已交接到 S71：S68-S69 的书生主线科举、读书、评卷与授官制度已归档，S70.1-S70.14 的 AI prompt/tool/actor/多模型路由、AI 设置、月报、跳时、记忆、地图接口、provider AI-first smoke 与 JSON/SQLite parity 已归档。S71 作为 S70 之后的数据库玩法化、维护、安全检索和 redacted API 专项，规划见 [DATABASE_GAMEPLAY_RESOLVER_ROADMAP.md](DATABASE_GAMEPLAY_RESOLVER_ROADMAP.md)。S71.0 数据库玩法化专项契约已固定在 [DATABASE_RESOLVER_INPUT_CONTRACT.md](DATABASE_RESOLVER_INPUT_CONTRACT.md)，S71.1 已落地只读 `resolverInputContext` 输入层，S71.2 已落地本地 SQLite schema migration 与维护层，S71.3 已落地安全全文检索 / 本地搜索，S71.4 已落地 redacted player API 与本机开发诊断 API，S71.5 已落地财政与城市政策 resolver，S71.6 已落地地方案件与刑名 resolver，S71.7 已落地军务与外交 resolver，S71.8 已落地压力驱动事件生成器；下一步启动 S71.9 多 actor 场景运行时。数据库方向继续只考虑本机 JSON/SQLite 持久化增强；远程存档、账号体系、多人同步、云端冲突解决和托管数据库不进入当前规划。
 
 ## 1. 开发规范继承
 
@@ -82,7 +82,7 @@
 
 ## 3. 当前边界与已归档摘要
 
-当前活动工作已交接到 S71.8。S49-S67 的本地数据库与大世界内容实现细节已经迁入统一归档，S68-S69 科举深化已迁入科举归档，S70 AI 编排已迁入 S70 归档；活动台账只保留索引和后续边界：
+当前活动工作已交接到 S71.9。S49-S67 的本地数据库与大世界内容实现细节已经迁入统一归档，S68-S69 科举深化已迁入科举归档，S70 AI 编排已迁入 S70 归档；活动台账只保留索引和后续边界：
 
 | 范围 | 状态 | 摘要 | 归档 |
 | --- | --- | --- | --- |
@@ -128,7 +128,7 @@
 | S71.5 | DONE | 财政与城市政策 resolver：征粮、赈济、修堤、平粜、清丈、钱粮差事等服务器裁决 | 2026-05-13 | Codex / 子代理 | `3cca9bd` |
 | S71.6 | DONE | 地方案件与刑名 resolver：堂审、证据、士绅压力、胥吏阻力、判决后果和案牍归档 | 2026-05-13 | Codex / 子代理 | `4d93b2d` |
 | S71.7 | DONE | 军务与外交 resolver：侦察、固守、调粮、练兵、会战、互市、和议、宣战 request 和服务器裁决 | 2026-05-13 | Codex / 子代理 | `761ec99` |
-| S71.8 | TODO | 压力驱动事件生成器：从粮价、水利、腐败、边防、NPC 怨怼和情报压力生成事件候选 | - | - | S71.7 后 |
+| S71.8 | DONE | 压力驱动事件生成器：从粮价、水利、腐败、边防、NPC 怨怼和情报压力生成事件候选 | 2026-05-13 | Codex / 子代理 | 本次提交 |
 | S71.9 | TODO | 多 actor 场景运行时：朝议、堂审、会盟、战役 scene-local time 与 actor proposal 编排 | - | - | S71.8 后 |
 | S71.10 | TODO | NPC 记忆账本：高显著 NPC 长期记忆、人情债、恩怨、家族风险和背景 NPC heuristic | - | - | S71.9 后 |
 | S71.11 | TODO | AI 调动审计面板：工具摘要、拒绝原因、成本、公开结果和 hidden-safe 开发诊断，不泄漏 raw prompt/proposal | - | - | S71.10 后 |
@@ -208,6 +208,38 @@ S71 详细规划见 [DATABASE_GAMEPLAY_RESOLVER_ROADMAP.md](DATABASE_GAMEPLAY_RE
 4. S71.9-S71.12：接入多 actor 场景、NPC 记忆和 AI 调动审计面板，最后做 dual-mode、Mock/no-key、browser 和 provider smoke 归档。
 
 ## 8. 进度记录
+
+### 2026-05-13
+
+工具：Codex、子代理。
+
+步骤：S71.8 压力驱动事件生成器。
+
+提交：本次提交。
+
+完成：
+
+- 新增 `src/game/worldPressureEventConfig.js`，集中配置 S71.8 schema version、记录上限、信号上限、每旬候选/成案上限、受控 world meter 写入白名单，以及民生扰动、边面试探、人物怨望、士论科场、台谏风闻、财赋市价、案牍升温、传闻流动等压力组合规则。规则集中定义 primary/support domain、incident kind、最小来源数、分数阈值、确定性概率阈值、优先级、冷却键、冷却旬数、受控 `stateDelta`、风险标签和公开摘要前缀。
+- 新增 `src/game/worldPressureEventGenerator.js`，提供 `collectWorldPressureSignals()`、`scorePressureEventCandidate()`、`generatePressureEventCandidates()`、`resolvePressureEventCandidate()`、`applyPressureEventOutcome()` 和 `resolveAndApplyPressureEvents()`。生成器只读取 S70.6 `collectVisiblePressureRefs()` 与 S71.1 `resolverInputContext` 的安全 projection，把地理/财赋/案牍/军务/情报/人物/官署/事件档案信号归一为 pressure signal，再按规则组合成候选；不重定义 S70.6 事件工具协议，也不让模型直接成案。
+- `resolvePressureEventCandidate()` 校验规则存在、source refs 仍在当前服务器 projection 可见，并从当前可见 signals 重建候选事实、要求 `sourcePressureRefs[0]` 是符合规则的主压力来源、用主压力来源稳定 scope 派生冷却键、重算分数/确定性概率、强制规则最小来源数后，才返回 accepted outcome；拒绝 outcome 不改 `worldState`，也不信任候选自带分数、source domain、冷却键或 direct write 字段。`resolveAndApplyPressureEvents()` 会读取 `worldPressureEventLedger.records` 当前旬已成案数量，保证每旬上限跨重复调用生效。`applyPressureEventOutcome()` 再次过滤白名单 `stateDelta`、重建公开事件摘要，才写受控 `treasury` / `grainReserve` / `publicOrder` / `corruption` / `armyMorale` / `borderThreat` 等 world meters、公开 `eventHistory` 和内部 `worldPressureEventLedger`；公开事件只显示可见线索摘要，不公开 sourcePressureRefs、raw proposal、hidden 私档、密情真值或 `server.*`。
+- 新增 `test/worldPressureEventGenerator.test.js`、`test/worldPressureEventCooldown.test.js`、`test/worldPressureEventHiddenRedaction.test.js`，覆盖数据库 projection 驱动候选、民生扰动成案、NPC 怨望候选、冷却拒绝重复刷屏、模型伪造冷却键不能绕过、同一主压力源换佐证仍命中冷却、同旬重复调用仍受每旬上限、hidden/private extra evidence 丢弃、污染候选拒绝并脱敏、伪造高分/单 ref 候选拒绝、direct apply 不能写非白名单字段或污染公开事件、redacted player state 不暴露 `worldPressureEventLedger`。
+- 同步 brief、architecture、动态数据库规划、路线图、AI 控制矩阵、README 与共享上下文，把下一步切到 S71.9 多 actor 场景运行时。
+
+验证：
+
+- 已通过：`node --check src/game/worldPressureEventConfig.js`、`node --check src/game/worldPressureEventGenerator.js`、`node --check test/worldPressureEventGenerator.test.js`、`node --check test/worldPressureEventCooldown.test.js`、`node --check test/worldPressureEventHiddenRedaction.test.js`。
+- 已通过：`node --test test/worldPressureEventGenerator.test.js test/worldPressureEventCooldown.test.js test/worldPressureEventHiddenRedaction.test.js`（12/12）。
+- 已通过：`node --test test/aiEventProposal.test.js test/aiEventProposalRedTeam.test.js test/resolverInputContext.test.js test/redactedState.test.js`（21/21）。
+- 已通过：`node --test test/eventArchive.test.js test/stateRules.test.js test/cityPolicyHiddenRedaction.test.js test/militaryDiplomacyRedaction.test.js`（22/22）。
+- 已通过：`npm run check:docs-governance`、`node --test test/documentationGovernance.test.js`、`git diff --check`。
+- 全量 `npm test` 修复后最终 818/819，唯一失败为既有 S67 `sqliteReadRepairMs` 性能阈值抖动（5159.042ms > 3000ms）；随后单独复跑 `node --test test/dualModeAcceptanceScript.test.js` 8/8 通过。
+- 提交前只读子代理复审首轮发现 P1：resolver 信任候选自带分数/冷却键，direct apply 可写非白名单字段并污染公开事件；已修复为裁决时从可见 signals 重建候选事实、应用时重新过滤 stateDelta 与公开摘要，并补红队回归。二轮复审发现 P1：同一主压力源可换 support refs 绕过冷却，以及 P2：`maxEvents` 只限单次调用；已改为冷却锚定主压力来源稳定 scope，并让批量 resolver 读取当前旬既有 ledger 成案数，补换佐证冷却与同旬重复调用上限测试。第三轮只读复审未发现 P0/P1/P2；残余非阻断风险是主压力源第一个 scope 可能偏宽导致 fail-closed 过度冷却，后续若接普通 turn 自动调度需补 route 集成测试。
+
+风险/遗留：
+
+- S71.8 先提供服务器 pressure event generator 与内部 apply helper，不接普通 `/api/game/turn` 自动调度，不新增浏览器事件链面板，不写 SQLite 派生表或审计业务表；后续 S71.9 场景运行时和 S71.11 审计面板只能读取 hidden-safe outcome/audit projection。
+- `worldPressureEventLedger` 是内部执行台账，不进入 `GET /api/game/player-state/:sessionId`；玩家只看到受控 meters 和公开事件摘要。
+- 下一步进入 S71.9 多 actor 场景运行时，需复用 S70 actor/tool runtime、S71.1 resolver input、S71.4 redacted API 和 S71.5-S71.8 服务器 resolver 边界。
 
 ### 2026-05-13
 
