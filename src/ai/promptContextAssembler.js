@@ -12,6 +12,7 @@ const {
   buildMilitaryDiplomacyRetrievalRows,
   summarizeMilitaryDiplomacyForPrompt
 } = require("../game/militaryDiplomacy");
+const { summarizeMapContextForPrompt } = require("../game/mapContext");
 const {
   buildEconomicFiscalRetrievalRows,
   summarizeEconomicFiscalForPrompt
@@ -1441,6 +1442,7 @@ function buildRankedRetrievalContext(worldState = {}, options = {}) {
       "localAffairsDocketView",
       "militaryDiplomacyView",
       "economicFiscalView",
+      "mapContextView",
       "historicalEventArchiveView",
       "intelligenceRumorView",
       "worldEntityView",
@@ -1491,6 +1493,7 @@ function assemblePromptContext(worldState = {}, options = {}) {
     localAffairsDockets: summarizeLocalAffairsDocketsForPrompt(worldState),
     militaryDiplomacy: summarizeMilitaryDiplomacyForPrompt(worldState),
     economicFiscal: summarizeEconomicFiscalForPrompt(worldState),
+    mapContext: summarizeMapContextForPrompt(worldState, options),
     intelligenceRumors: summarizeIntelligenceRumorsForPrompt(worldState, options),
     officialCareer: summarizeOfficialCareerForPrompt(worldState),
     officialPostings: summarizeOfficialPostingsForPrompt(worldState),

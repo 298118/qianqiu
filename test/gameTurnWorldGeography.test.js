@@ -109,8 +109,11 @@ test("POST /api/game/start returns visible world geography view without hidden r
   assert.equal(response.status, 201);
   assert.equal(payload.worldState.worldGeography.schemaVersion, 1);
   assert.equal(payload.worldGeographyView.schemaVersion, 1);
+  assert.equal(payload.mapContextView.schemaVersion, 1);
   assert.ok(payload.worldGeographyView.cities.some((city) => city.id === "city-beijing"));
+  assert.ok(payload.mapContextView.mapEntityRefs.some((ref) => ref.refId === "map:geography:city:city-beijing"));
   assert.equal(serializedView.includes("SEALED_ROUTE_NOTE"), false);
+  assert.equal(JSON.stringify(payload.mapContextView).includes("SEALED_ROUTE_NOTE"), false);
   assert.equal(serializedView.includes("frontier-hidden-palace-intel"), false);
   assert.equal(serializedView.includes("city-hanseong"), false);
 });
@@ -130,6 +133,7 @@ test("GET /api/game/state backfills world geography view for old saves", async (
   assert.equal(response.status, 200);
   assert.equal(payload.worldState.worldGeography.schemaVersion, 1);
   assert.equal(payload.worldGeographyView.schemaVersion, 1);
+  assert.equal(payload.mapContextView.schemaVersion, 1);
   assert.ok(payload.worldGeographyView.frontierZones.some((frontier) =>
     frontier.id === "frontier-shanhai-liaodong"
   ));

@@ -81,6 +81,7 @@ const { buildHistoricalEventArchiveView } = require("../game/historicalEventArch
 const { buildIntelligenceRumorView } = require("../game/intelligenceRumors");
 const { buildLocalAffairsDocketView } = require("../game/localAffairsDockets");
 const { buildMilitaryDiplomacyView } = require("../game/militaryDiplomacy");
+const { buildMapContextView } = require("../game/mapContext");
 const { canEnterExam, getExam } = require("../game/exams");
 const {
   advanceExamScenePhase,
@@ -363,6 +364,7 @@ function buildCommonTurnViews(worldState, options = {}) {
     localAffairsDocketView: buildLocalAffairsDocketView(worldState),
     militaryDiplomacyView: buildMilitaryDiplomacyView(worldState),
     economicFiscalView: buildEconomicFiscalView(worldState),
+    mapContextView: buildMapContextView(worldState),
     historicalEventArchiveView: buildHistoricalEventArchiveView(worldState),
     intelligenceRumorView: buildIntelligenceRumorView(worldState),
     playerMonthlyBriefingView: buildPlayerMonthlyBriefingView(worldState),
@@ -1032,6 +1034,7 @@ async function streamTurn(res, sessionId, input) {
       localAffairsDocketView: payload.localAffairsDocketView,
       militaryDiplomacyView: payload.militaryDiplomacyView,
       economicFiscalView: payload.economicFiscalView,
+      mapContextView: payload.mapContextView,
       historicalEventArchiveView: payload.historicalEventArchiveView,
       intelligenceRumorView: payload.intelligenceRumorView,
       playerMonthlyBriefingView: payload.playerMonthlyBriefingView,

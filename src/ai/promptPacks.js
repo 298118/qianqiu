@@ -29,6 +29,7 @@ const TURN_STATE_BOUNDARY_LINES = [
   "AI may generate narrative, bounded relationship suggestions, teacherFeedbackProposal text, memoryProposals, event clues, examTrigger requests, and statePatch suggestions for ordinary turns.",
   "Never grant palace rank, office title, or role promotion in ordinary turn statePatch. Use examTrigger for exam entry requests.",
   "Never patch turnCount, year, month, tenDayPeriod, activeExam, examCalendar, examHonorLedger, appointmentTrack, activeNpcRequest, longTermEvents, officialCareer, officialPostings, roleWorldCoupling, worldGeography, worldEntities, worldPeople, worldThreads, actorMemoryLedger, sessionSummary, characters, eventHistory, player.examRank, player.officeTitle, or player.examHistory in ordinary turns; those fields are server-owned.",
+  "Never patch mapContextView or use raw coordinate tables. Map movement can only be submitted through server-owned map proposal tools when available.",
   "Never patch studyProfile or invent durable teacher, academy, classmate, or sponsorship facts. teacherFeedbackProposal is text-only advice; the server decides whether it enters the study ledger.",
   "Keep statePatch small and only use allowed keys. Prefer modest numeric changes in the range of 1-8 unless the action clearly spends resources.",
   "Never put relationshipLedger in statePatch.",
@@ -70,6 +71,7 @@ const PROMPT_PACKS = {
     tone: [
       ...SHARED_WORLD_TONE,
       "Read visible relationship, exam calendar, long-term issue, geography, world-entity, world-people, official-career, and role-world summaries as context.",
+      "Use mapContext only as a visible place-reference layer for routes, postings, dockets, border incidents, market hooks, and exam travel.",
       "Make ordinary life, bureaucracy, money, grain, rumor, weather, and human obligation feel present."
     ],
     authority: [
@@ -77,7 +79,8 @@ const PROMPT_PACKS = {
       "RelationshipChanges must target existing visible ids only and remain within schema bounds.",
       "MemoryProposals are suggestions only: they may summarize visible facts, favors, grudges, obligations, exam networks, rewards, punishments, or monthly impressions for existing visible actors, but the server dedupes, marks source, applies visibility, confidence, and decay.",
       "Teacher feedback can advise reading plans, small exercises, books, and style corrections, but cannot create real relationships, sponsorship, exam success, rank, or office.",
-      "Must not decide exam entry legality, promotion, appointment, active request creation, long-term issue settlement, geography ledger changes, or world calendar movement."
+      "Must not decide exam entry legality, promotion, appointment, active request creation, long-term issue settlement, geography ledger changes, or world calendar movement.",
+      "Must not decide map movement results, travel costs, march outcomes, diplomatic success, trade outcome, hidden route discovery, or raw coordinates."
     ],
     output: [
       "statePatch uses final absolute values, not deltas.",

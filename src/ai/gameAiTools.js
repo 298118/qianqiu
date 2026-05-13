@@ -5,6 +5,7 @@ const {
 } = require("./toolSchemas");
 const { createDomainToolDefinitions } = require("./domainToolDefinitions");
 const { createEventToolDefinitions } = require("./eventToolDefinitions");
+const { createMapToolDefinitions } = require("./mapToolDefinitions");
 const { filterActorTools } = require("../game/aiActorProfiles");
 
 function cloneJson(value) {
@@ -19,7 +20,8 @@ function createBaseGameAiToolDefinitions() {
   return [
     createVisibleContextReadToolDefinition(),
     ...createEventToolDefinitions(),
-    ...createDomainToolDefinitions()
+    ...createDomainToolDefinitions(),
+    ...createMapToolDefinitions()
   ];
 }
 

@@ -54,6 +54,7 @@ const { buildOfficialPostingsView, ensureOfficialPostingsState } = require("../g
 const { buildLocalAffairsDocketView } = require("../game/localAffairsDockets");
 const { buildMilitaryDiplomacyView } = require("../game/militaryDiplomacy");
 const { buildEconomicFiscalView } = require("../game/economicFiscal");
+const { buildMapContextView } = require("../game/mapContext");
 const { buildHistoricalEventArchiveView } = require("../game/historicalEventArchive");
 const { buildIntelligenceRumorView } = require("../game/intelligenceRumors");
 const { buildRoleWorldCouplingView, ensureRoleWorldCouplingState } = require("../game/roleWorldCoupling");
@@ -152,6 +153,7 @@ function toExamPayload(worldState) {
     localAffairsDocketView: buildLocalAffairsDocketView(worldState),
     militaryDiplomacyView: buildMilitaryDiplomacyView(worldState),
     economicFiscalView: buildEconomicFiscalView(worldState),
+    mapContextView: buildMapContextView(worldState),
     historicalEventArchiveView: buildHistoricalEventArchiveView(worldState),
     intelligenceRumorView: buildIntelligenceRumorView(worldState),
     playerMonthlyBriefingView: buildPlayerMonthlyBriefingView(worldState),
@@ -614,6 +616,7 @@ router.post("/submit", async (req, res, next) => {
         localAffairsDocketView: buildLocalAffairsDocketView(worldState),
         militaryDiplomacyView: buildMilitaryDiplomacyView(worldState),
         economicFiscalView: buildEconomicFiscalView(worldState),
+        mapContextView: buildMapContextView(worldState),
         historicalEventArchiveView: buildHistoricalEventArchiveView(worldState),
         intelligenceRumorView: buildIntelligenceRumorView(worldState),
         playerMonthlyBriefingView: buildPlayerMonthlyBriefingView(worldState),

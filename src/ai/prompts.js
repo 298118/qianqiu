@@ -142,6 +142,7 @@ function buildTurnTask(worldState, input) {
       "relationshipChanges should summarize important NPC/faction relationship consequences; use [] when there is no meaningful social consequence.",
       "For teacher-style study feedback, include teacherFeedbackProposal with focus, advice, reason, and optional focusKey/teacherName. It is only a proposal: the server may sanitize, accept, or ignore it, and it cannot grant exam status, relationships, rank, office, hidden facts, or database writes.",
       "For durable social memory, include memoryProposals only for existing visible actors such as npc:C01, faction:scholarOfficials, or player:P1. Memory proposals are server-adjudicated suggestions; never put actorMemoryLedger or sessionSummary in statePatch, and never include private, hidden, raw prompt/provider/audit/table/path/key content.",
+      "For map movement, use only visible mapContext refs if a tool call is available; never patch worldGeography or invent hidden routes, raw coordinates, enemy truth, travel costs, appointments, exam entry, diplomacy, march results, or trade outcomes.",
       "If the player clearly asks to take the next imperial exam, set examTrigger.shouldStart=true and use the next legal level.",
       "Use retrievalContext as the first index of role-visible countries, cities, NPCs, offices, postings, institutions, and event summaries. Do not infer hidden data beyond it.",
       `Player action: ${input}`,

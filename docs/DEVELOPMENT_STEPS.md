@@ -9,7 +9,7 @@
 - S48 时间专项：[TIME_SPECIALTY_ROADMAP_ARCHIVE.md](TIME_SPECIALTY_ROADMAP_ARCHIVE.md)。
 - S49-S67 本地数据库基础、SQLite 业务表、双模式验收、超大动态世界内容与 S60 内容契约：[LOCAL_DATABASE_AND_WORLD_CONTENT_ARCHIVE.md](LOCAL_DATABASE_AND_WORLD_CONTENT_ARCHIVE.md)。旧分卷归档和 S60 契约文件保留为跳转页。
 
-当前活动路线图已交接到 S70：S68-S69 的书生主线科举、读书、评卷与授官制度已归档，S70.1 prompt pack 与工具协议、S70.2 actor 权限模型、S70.3 `game_ai_tools` 运行时、S70.4 NPC mind 基础、S70.5 制度场景 helper、S70.6 压力事件工具协议、S70.7 领域工具协议、S70.8 多模型路由/eval 基础、S70.9 AI 设置与可观测性、S70.10 玩家官职月报、S70.11 自然语言跳时和 S70.12 大模型记忆系统已落地，下一步进入 S70.13 地图系统 AI 接口预留。S71 作为 S70 之后的数据库玩法化、维护、安全检索和 redacted API 专项，规划见 [DATABASE_GAMEPLAY_RESOLVER_ROADMAP.md](DATABASE_GAMEPLAY_RESOLVER_ROADMAP.md)。数据库方向继续只考虑本机 JSON/SQLite 持久化增强；远程存档、账号体系、多人同步、云端冲突解决和托管数据库不进入当前规划。
+当前活动路线图已交接到 S70：S68-S69 的书生主线科举、读书、评卷与授官制度已归档，S70.1 prompt pack 与工具协议、S70.2 actor 权限模型、S70.3 `game_ai_tools` 运行时、S70.4 NPC mind 基础、S70.5 制度场景 helper、S70.6 压力事件工具协议、S70.7 领域工具协议、S70.8 多模型路由/eval 基础、S70.9 AI 设置与可观测性、S70.10 玩家官职月报、S70.11 自然语言跳时、S70.12 大模型记忆系统和 S70.13 地图系统 AI 接口预留已落地，下一步进入 S70.14 真实 MiMo 验收与 S70 归档。S71 作为 S70 之后的数据库玩法化、维护、安全检索和 redacted API 专项，规划见 [DATABASE_GAMEPLAY_RESOLVER_ROADMAP.md](DATABASE_GAMEPLAY_RESOLVER_ROADMAP.md)。数据库方向继续只考虑本机 JSON/SQLite 持久化增强；远程存档、账号体系、多人同步、云端冲突解决和托管数据库不进入当前规划。
 
 ## 1. 开发规范继承
 
@@ -116,7 +116,7 @@
 | S70.10 | DONE | 玩家官职月报与 AI 推动世界：每三旬生成职位化月报、上级态度、同僚风向、NPC 主动请求、下月风险和待裁决差事 | 2026-05-12 | Codex / 子代理 | `16d5f08` |
 | S70.11 | DONE | 自然语言跳时：解析“学习一月/养病半月/照旧处理一月”，拆为多旬 batch tick、事件中断和跳时总结 | 2026-05-13 | Codex / 子代理 | `e18720e` |
 | S70.12 | DONE | 大模型记忆系统：actor memory ledger、fact/impression memory、月度 summary、安全检索、来源/置信度/可见性/衰减 | 2026-05-13 | Codex / 子代理 | `29ea72d` |
-| S70.13 | TODO | 地图系统 AI 接口预留：`mapContextView`、`mapEntityRef`、地图可见性、移动/行军/赴任/赶考/外交 proposal schema | - | - | S70.12 后 |
+| S70.13 | DONE | 地图系统 AI 接口预留：`mapContextView`、`mapEntityRef`、地图可见性、移动/行军/赴任/赶考/外交 proposal schema | 2026-05-13 | Codex / 子代理 | 待提交 |
 | S70.14 | TODO | 真实 MiMo 验收与 S70 归档：MiMo-required provider smoke、JSON/SQLite parity、Mock 开发安全网、hidden-token、越权工具、browser smoke 和归档 | - | - | S70.13 后 |
 | S71.0 | TODO | 数据库玩法化专项契约：确认 S70 后接入点、resolver 输入清单、维护/检索/redacted API 边界和内容保护 | - | - | S70.14 后 |
 | S71.1 | TODO | 数据库作为玩法 resolver 输入：财政、城市、NPC、官职、事件、情报 projection 进入服务器裁决上下文 | - | - | S71.0 后 |
@@ -156,7 +156,7 @@ S68-S69 是书生主线的深度专项，详细提前规划见 [IMPERIAL_EXAM_DE
 
 ## 6. S70：AI 提示词、工具协议与多 AI 编排
 
-S70 是 MiMo + DeepSeek 之后的 AI 编排专项。S70.8 起，`src/ai/index.js` 已提供 task-aware provider facade；`AI_PROVIDER=mock` 仍强制全任务本地 Mock，兼容路径中普通叙事、开局、流式回合和科举出题仍优先 MiMo，科举评卷与 domain_specialist/critic/safety 可按 route policy 使用 DeepSeek。S70.9 起，每个 session 有服务器维护的 AI 设置、玩家可见设置 view、浏览器 AI 设置面板和 hidden-safe 调动摘要；设置只改变 route/model/预算/并发/安全严格度，不改变 actor 权限、工具权限或服务器裁决。S70.10 起，玩家行政/官职身份会在月末收到服务器清洗的 `playerMonthlyBriefingView`，月报只读公开 projection 并写脱敏月报账本、事件档案和 bounded AI 调动摘要，不直接裁决官职、财政、军务、案牍或 NPC。S70.11 起，“学习一月/养病半月/照旧处理一月”等自然语言跳时会先生成服务器可裁决的 `timeSkipPlan`，再逐旬复用普通回合结算链，并在科期、急件或重大事件时中断。S70.12 起，普通回合和月末结算会写入服务器清洗后的 `actorMemoryView` 与 `sessionSummaryView`，AI 只能提交 `memoryProposals`，不能直接 patch 记忆账本、保存 private/hidden memory 或为不可见 actor 发明记忆；响应 `worldState` 也剥离 raw `actorMemoryLedger` / `sessionSummary`。后续 AI actor、工具调用、NPC 智力、事件生成、制度推演、narrator/planner/critic/safety 仲裁、成本边界、失败降级和可观测性继续按 S70.13-S70.14 推进。
+S70 是 MiMo + DeepSeek 之后的 AI 编排专项。S70.8 起，`src/ai/index.js` 已提供 task-aware provider facade；`AI_PROVIDER=mock` 仍强制全任务本地 Mock，兼容路径中普通叙事、开局、流式回合和科举出题仍优先 MiMo，科举评卷与 domain_specialist/critic/safety 可按 route policy 使用 DeepSeek。S70.9 起，每个 session 有服务器维护的 AI 设置、玩家可见设置 view、浏览器 AI 设置面板和 hidden-safe 调动摘要；设置只改变 route/model/预算/并发/安全严格度，不改变 actor 权限、工具权限或服务器裁决。S70.10 起，玩家行政/官职身份会在月末收到服务器清洗的 `playerMonthlyBriefingView`，月报只读公开 projection 并写脱敏月报账本、事件档案和 bounded AI 调动摘要，不直接裁决官职、财政、军务、案牍或 NPC。S70.11 起，“学习一月/养病半月/照旧处理一月”等自然语言跳时会先生成服务器可裁决的 `timeSkipPlan`，再逐旬复用普通回合结算链，并在科期、急件或重大事件时中断。S70.12 起，普通回合和月末结算会写入服务器清洗后的 `actorMemoryView` 与 `sessionSummaryView`，AI 只能提交 `memoryProposals`，不能直接 patch 记忆账本、保存 private/hidden memory 或为不可见 actor 发明记忆；响应 `worldState` 也剥离 raw `actorMemoryLedger` / `sessionSummary`。S70.13 起，游戏/考试/SSE payload 增加服务器生成的 `mapContextView`，prompt 只读 capped `mapContext`，模型只能通过 `map.propose_route_or_geopolitical_move` 提交待裁决地图移动或地缘 proposal，不读取 raw coordinate table 或 hidden enemy truth。后续真实 provider 验收、JSON/SQLite parity、browser smoke、hidden-token/越权工具红队和 S70 归档继续按 S70.14 推进。
 
 详细提前规划见 [AI_ORCHESTRATION_ROADMAP.md](AI_ORCHESTRATION_ROADMAP.md)。S70 的核心目标不是让模型直接改库，而是让 AI 在服务器法度内变成“有身份、有记忆、有权限、有后果”的世界行动者网络；S68-S69 提供科场、老师、考官和授官 resolver 的先行用例。该文档第 13-16 节已扩展为后续 Codex 开发任务书，逐项写明执行规则、运行依赖、项目资料、玩法资料、测试资料、建议模块/函数、工具/route 接口、测试文件和验收重点。
 
@@ -206,6 +206,43 @@ S71 详细规划见 [DATABASE_GAMEPLAY_RESOLVER_ROADMAP.md](DATABASE_GAMEPLAY_RE
 4. S71.9-S71.12：接入多 actor 场景、NPC 记忆和 AI 调动审计面板，最后做 dual-mode、Mock/no-key、browser 和 provider smoke 归档。
 
 ## 8. 进度记录
+
+### 2026-05-13
+
+工具：Codex、子代理。
+
+步骤：S70.13 地图系统 AI 接口预留。
+
+提交：待提交。
+
+完成：
+
+- 新增 `src/game/mapContextConfig.js` 与 `src/game/mapContext.js`，把 `worldGeographyView`、`officialPostingsView`、`localAffairsDocketView`、`militaryDiplomacyView`、`economicFiscalView`、科举赶考信息和事件压力 projection 归并为 `mapContextView`、稳定 `mapEntityRef`、`mapVisibility` 与 `mapEventHooks`；输出只保留可见 ref、label、类型、跳转目标、管辖/路线摘要和 movement affordances，不暴露 raw coordinate table、hidden enemy truth、hidden notes、SQLite raw rows、本地路径或 key。
+- 新增 `src/ai/mapToolDefinitions.js` 与 `src/game/mapToolResolvers.js`，默认 `game_ai_tools` registry 接入 `map.propose_route_or_geopolitical_move`，覆盖赶考、赴任、巡查、行军、押解、使节出行和商路活动。resolver 会锚定 actor、校验工具组/移动类型/可见 origin-destination-route-evidence refs/route ref 类型/污染文本，清空 `privateResultRefs` 后只返回 pending 或 rejected；不写 `worldState`、session、SQLite、事件档案、军事外交、财政、任免或真实移动后果。
+- `src/routes/game.js` 与 `src/routes/exam.js` 已在 start/state/普通 turn/SSE final/exam question/exam submit payload 中返回 `mapContextView`；`src/ai/promptContextAssembler.js`、`src/ai/prompts.js` 与 `src/ai/promptPacks.js` 已把 `mapContextView` 纳入 capped prompt/source boundary，并明确模型不得 patch 地图、伪造隐藏路线、读取坐标或决定移动后果。
+- 新增 `test/mapContext.test.js`、`test/mapVisibility.test.js`、`test/mapMovementProposal.test.js`，并扩展 `test/gameTurnWorldGeography.test.js` 与 `test/examTravel.test.js`，覆盖安全稳定 ref、事件 hook、角色可见性、书生/将领差异、工具 strict schema、伪造/不可见/wrong-type/坐标污染拒绝、route/exam payload 和完整书生赶考路径。
+
+验证：
+
+- 已通过：`node --check src/game/mapContextConfig.js && node --check src/game/mapContext.js && node --check src/ai/mapToolDefinitions.js && node --check src/game/mapToolResolvers.js && node --check src/ai/gameAiTools.js && node --check src/game/aiToolResolvers.js && node --check src/ai/promptContextAssembler.js && node --check src/ai/prompts.js && node --check src/ai/promptPacks.js && node --check src/routes/game.js && node --check src/routes/exam.js`。
+- 已通过：`node --test test/mapContext.test.js test/mapVisibility.test.js test/mapMovementProposal.test.js`（12/12）。
+- 已通过：`node --test test/gameAiTools.test.js test/gameAiToolRunner.test.js test/aiActorToolPermissions.test.js test/domainToolPermissions.test.js test/aiToolProtocolContract.test.js`（27/27）。
+- 已通过：`node --test test/promptContextAssembler.test.js test/prompts.test.js`（35/35）。
+- 已通过：`node --test test/gameTurnWorldGeography.test.js test/examTravel.test.js`（12/12）。
+- 已通过：`npm run check:docs-governance`。
+- 已通过：`node --test test/documentationGovernance.test.js`（1/1）。
+- 已通过：`npm run eval:ai`。
+- 已通过：`git diff --check`。
+- 提交前只读子代理复审：首轮发现空目的地地图移动仍可 pending、直接调用 resolver 可把未知 `moveType` 回落为 `exam_travel`、工具 `readScope` 元数据过宽；已收紧 schema 与 resolver，补直接 resolver 回归，并把工具 readScope 收窄为 `mapContextView`。整改后二轮复审未发现 P0/P1/P2；残余非阻断是直接 resolver 的无 map 工具组拒绝原因会因英文 proposal token 回落为通用拒绝，正常 runner 路径会提前给出具体权限拒绝。
+
+风险/遗留：
+
+- S70.13 只预留地图 AI 接口，不做完整地图 UI、不裁决路线耗时/战争/外交/商路收益，也不新增 SQLite map business tables；后续若保存真实坐标、hidden 敌情或私密路线，必须先做 redacted API 与角色视野分层。
+- 地图移动 proposal 当前只到 pending/rejected；真实赴任、行军、押解、使节和商路后果留给 S71 resolver 或后续地图 UI 专项。
+
+下一步：
+
+- 启动 S70.14：真实 MiMo 验收与 S70 归档，覆盖 MiMo-required provider smoke、JSON/SQLite parity、Mock/no-key、hidden-token、越权工具、browser smoke 和归档。
 
 ### 2026-05-13
 

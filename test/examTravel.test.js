@@ -116,6 +116,8 @@ test("exam question entry applies funded travel cost without advancing time", as
   assert.deepEqual(payload.worldState.activeExam.entryPreparation, payload.entryPreparation);
   assert.equal(payload.studyProfileView.schemaVersion, 1);
   assert.equal(payload.worldGeographyView.schemaVersion, 1);
+  assert.equal(payload.mapContextView.schemaVersion, 1);
+  assert.ok(payload.mapContextView.mapEntityRefs.some((ref) => ref.entityType === "exam_travel"));
   assert.equal(JSON.stringify(payload.worldGeographyView).includes("SEALED_ROUTE_NOTE"), false);
 
   const saved = await readSession(worldState.sessionId);

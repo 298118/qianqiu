@@ -14,6 +14,7 @@ const { buildWorldGeographyView } = require("./worldGeography");
 const { buildWorldPeopleView } = require("./worldPeople");
 const { resolveEventProposal } = require("./aiEventProposal");
 const { resolveDomainToolCall } = require("./domainToolResolvers");
+const { resolveMapMovementTool } = require("./mapToolResolvers");
 
 const MAX_ITEM_TEXT_LENGTH = 140;
 const SENSITIVE_TOOL_TEXT_PATTERN = /(hiddenNotes|hiddenIntent|raw[_ -]?(?:provider|audit|table|ledger|prompt)|\b(?:provider|prompt|source|path|key|hidden|raw|SQL)\b|server\.[A-Za-z0-9_.:-]+|rawSql|retrievalContext|statePatch|worldState|prompt_retrieval_index|event_archive_index|world_sessions|api[_ -]?key|OPENAI_API_KEY|DEEPSEEK_API_KEY|MIMO_API_KEY|ANTHROPIC_API_KEY|data[\\/](?:sessions|audit)|ai_change_proposals|event_log|sqlite|sk-[A-Za-z0-9_-]{6,}|tp-[A-Za-z0-9_-]{6,}|[A-Za-z]:\\[^\s"'<>]+|(?:file:\/\/)?(?:\/Users|\/home|\/tmp|\/var|\/mnt|\/opt)\/[^\s"'<>]+)/i;
@@ -185,6 +186,7 @@ const DEFAULT_AI_TOOL_RESOLVERS = Object.freeze({
   "server.request_event_incident_adjudication": resolveEventProposalTool,
   "server.resolve_domain_tool_proposal": resolveDomainToolCall,
   "server.request_domain_tool_adjudication": resolveDomainToolCall,
+  "server.resolve_map_movement_proposal": resolveMapMovementTool,
   "server.pending_proposal": resolvePendingProposalTool,
   "server.pending_adjudication": resolvePendingProposalTool
 });
