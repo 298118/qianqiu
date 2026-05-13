@@ -103,9 +103,14 @@ async function postMimoRequest({ fetchImpl, endpoint, apiKey, body, timeoutMs })
   }
 }
 
-function buildCompletionParams({ instructions, input, schemaName, schema, maxOutputTokens }) {
+function applyRouteTokenBudget(taskMaxOutputTokens, routeMaxOutputTokens) {
+  const routeValue = Number(routeMaxOutputTokens);
+  return Number.isFinite(routeValue) && routeValue > 0 ? Math.trunc(routeValue) : taskMaxOutputTokens;
+}
+
+function buildCompletionParams({ instructions, input, schemaName, schema, maxOutputTokens }, route = {}) {
   return {
-    model: readMimoModel(),
+    model: route.model || readMimoModel(),
     messages: [
       { role: "system", content: instructions },
       {
@@ -118,8 +123,8 @@ function buildCompletionParams({ instructions, input, schemaName, schema, maxOut
         ].join("\n")
       }
     ],
-    max_completion_tokens: maxOutputTokens,
-    temperature: readNumberEnv("MIMO_TEMPERATURE", 0.7),
+    max_completion_tokens: applyRouteTokenBudget(maxOutputTokens, route.maxOutputTokens),
+    temperature: Number.isFinite(Number(route.temperature)) ? Number(route.temperature) : readNumberEnv("MIMO_TEMPERATURE", 0.7),
     top_p: readNumberEnv("MIMO_TOP_P", 0.95),
     stream: false,
     response_format: { type: "json_object" },
@@ -174,6 +179,7 @@ async function readStreamingResponse(response, onTextDelta) {
 }
 
 function createMimoProvider(options = {}) {
+  const route = options.route || {};
   const apiKey = requireEnv("MIMO_API_KEY", "MiMo");
   const fetchImpl = options.fetchImpl || globalThis.fetch;
   if (typeof fetchImpl !== "function") {
@@ -181,14 +187,14 @@ function createMimoProvider(options = {}) {
   }
 
   const endpoint = buildChatCompletionsUrl(options.baseUrl);
-  const timeoutMs = options.timeoutMs || readTimeoutMs();
+  const timeoutMs = route.timeoutMs || options.timeoutMs || readTimeoutMs();
 
   return createRemoteProvider(async (task) => {
     const response = await postMimoRequest({
       fetchImpl,
       endpoint,
       apiKey,
-      body: buildCompletionParams(task),
+      body: buildCompletionParams(task, route),
       timeoutMs
     });
     const payload = await parseJsonResponse(response);
@@ -199,7 +205,7 @@ function createMimoProvider(options = {}) {
       endpoint,
       apiKey,
       body: {
-        ...buildCompletionParams(task),
+        ...buildCompletionParams(task, route),
         stream: true
       },
       timeoutMs

@@ -19,18 +19,24 @@ function readTaskModel(schemaName) {
   );
 }
 
-function createDeepSeekProvider() {
+function applyRouteTokenBudget(taskMaxOutputTokens, routeMaxOutputTokens) {
+  const routeValue = Number(routeMaxOutputTokens);
+  return Number.isFinite(routeValue) && routeValue > 0 ? Math.trunc(routeValue) : taskMaxOutputTokens;
+}
+
+function createDeepSeekProvider(options = {}) {
+  const route = options.route || {};
   const apiKey = requireEnv("DEEPSEEK_API_KEY", "DeepSeek");
   const client = new OpenAI({
     apiKey,
     baseURL: process.env.DEEPSEEK_BASE_URL || "https://api.deepseek.com",
     maxRetries: 0,
-    timeout: readTimeoutMs()
+    timeout: route.timeoutMs || readTimeoutMs()
   });
 
   function buildCompletionParams({ instructions, input, schemaName, schema, maxOutputTokens }) {
     return {
-      model: readTaskModel(schemaName),
+      model: route.model || readTaskModel(schemaName),
       messages: [
         { role: "system", content: instructions },
         {
@@ -43,8 +49,8 @@ function createDeepSeekProvider() {
           ].join("\n")
         }
       ],
-      max_tokens: maxOutputTokens,
-      temperature: 0.7,
+      max_tokens: applyRouteTokenBudget(maxOutputTokens, route.maxOutputTokens),
+      temperature: Number.isFinite(Number(route.temperature)) ? Number(route.temperature) : 0.7,
       response_format: { type: "json_object" },
       thinking: { type: "disabled" }
     };

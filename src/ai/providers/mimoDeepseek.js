@@ -2,8 +2,9 @@ const { createDeepSeekProvider } = require("./deepseek");
 const { createMimoProvider } = require("./mimo");
 
 function createMimoDeepSeekProvider(options = {}) {
-  const mimoProvider = options.mimoProvider || createMimoProvider();
-  const deepSeekProvider = options.deepSeekProvider || createDeepSeekProvider();
+  const routeOptions = options.route ? { route: options.route } : {};
+  const mimoProvider = options.mimoProvider || createMimoProvider(routeOptions);
+  const deepSeekProvider = options.deepSeekProvider || createDeepSeekProvider(routeOptions);
 
   return {
     supportsStreaming: Boolean(mimoProvider.supportsStreaming && typeof mimoProvider.streamTurn === "function"),

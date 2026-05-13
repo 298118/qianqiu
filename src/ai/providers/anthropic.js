@@ -12,19 +12,33 @@ function getTextFromMessage(message) {
     .join("\n");
 }
 
-function createAnthropicProvider() {
+function applyRouteTokenBudget(taskMaxOutputTokens, routeMaxOutputTokens) {
+  const routeValue = Number(routeMaxOutputTokens);
+  return Number.isFinite(routeValue) && routeValue > 0 ? Math.trunc(routeValue) : taskMaxOutputTokens;
+}
+
+function applyRouteTemperature(params, routeTemperature) {
+  if (routeTemperature === undefined || routeTemperature === null || routeTemperature === "") {
+    return params;
+  }
+  const temperature = Number(routeTemperature);
+  return Number.isFinite(temperature) ? { ...params, temperature } : params;
+}
+
+function createAnthropicProvider(options = {}) {
+  const route = options.route || {};
   const apiKey = requireEnv("ANTHROPIC_API_KEY", "Claude");
   const client = new Anthropic({
     apiKey,
     maxRetries: 0,
-    timeout: readTimeoutMs()
+    timeout: route.timeoutMs || readTimeoutMs()
   });
-  const model = process.env.ANTHROPIC_MODEL || "claude-sonnet-4-5";
+  const model = route.model || process.env.ANTHROPIC_MODEL || "claude-sonnet-4-5";
 
   function buildMessageParams({ instructions, input, schema, maxOutputTokens }) {
-    return {
+    return applyRouteTemperature({
       model,
-      max_tokens: maxOutputTokens,
+      max_tokens: applyRouteTokenBudget(maxOutputTokens, route.maxOutputTokens),
       system: instructions,
       messages: [{ role: "user", content: input }],
       output_config: {
@@ -33,7 +47,7 @@ function createAnthropicProvider() {
           schema
         }
       }
-    };
+    }, route.temperature);
   }
 
   function getStreamingTextDelta(event) {

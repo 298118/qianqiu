@@ -735,6 +735,8 @@ S70 要准备这些 fixture：
 
 需要资料：现有 provider adapters、provider smoke scripts、AI eval fixtures、MiMo/DeepSeek/OpenAI/Anthropic 能力差异。
 
+当前状态（2026-05-12）：S70.8 已落地首版多模型 task route policy 与本地 eval runner。已新增 `src/ai/modelRoutePolicy.js`，固定 `narrator`、`actor_mind`、`planner`、`domain_specialist`、`critic`、`safety_gate`、`memory_summarizer`、`monthly_briefing` 和 `time_skip_planner` 的 provider/model/budget/tool policy；`AI_PROVIDER=mock` 即使本机有真实 key 也保持全任务 Mock；`critic` / `safety_gate` 强制 review-only，不能用工具、request adjudication、调用 `server.*` 或写状态。`src/ai/index.js` 现在保留原有五方法 provider 接口，同时提供 `getProviderForTask()` / `createRoutedProvider()`；route 的 model、timeout、temperature 和 token budget 会传入支持的 adapter，现有 route 不需要直接理解 task type。已新增 `src/ai/aiEvaluationRunner.js` 与 `scripts/aiEvaluationRunner.js`，`npm run eval:ai` 运行本地 fixture、schema、语气、hidden/raw canary、canonical ranking overreach、review-only 和成本摘要检查。本步不做真实 provider 多模型共识、不新增持久审计表，S70.9 继续 AI 设置与可观测性。
+
 具体实现：
 
 - 新增 `src/ai/modelRoutePolicy.js`：

@@ -9,7 +9,7 @@
 - S48 时间专项：[TIME_SPECIALTY_ROADMAP_ARCHIVE.md](TIME_SPECIALTY_ROADMAP_ARCHIVE.md)。
 - S49-S67 本地数据库基础、SQLite 业务表、双模式验收、超大动态世界内容与 S60 内容契约：[LOCAL_DATABASE_AND_WORLD_CONTENT_ARCHIVE.md](LOCAL_DATABASE_AND_WORLD_CONTENT_ARCHIVE.md)。旧分卷归档和 S60 契约文件保留为跳转页。
 
-当前活动路线图已交接到 S70：S68-S69 的书生主线科举、读书、评卷与授官制度已归档，S70.1 prompt pack 与工具协议、S70.2 actor 权限模型、S70.3 `game_ai_tools` 运行时、S70.4 NPC mind 基础、S70.5 制度场景 helper、S70.6 压力事件工具协议和 S70.7 领域工具协议已落地，下一步进入 S70.8 多模型路由、提示词评测与仲裁。S71 作为 S70 之后的数据库玩法化、维护、安全检索和 redacted API 专项，规划见 [DATABASE_GAMEPLAY_RESOLVER_ROADMAP.md](DATABASE_GAMEPLAY_RESOLVER_ROADMAP.md)。数据库方向继续只考虑本机 JSON/SQLite 持久化增强；远程存档、账号体系、多人同步、云端冲突解决和托管数据库不进入当前规划。
+当前活动路线图已交接到 S70：S68-S69 的书生主线科举、读书、评卷与授官制度已归档，S70.1 prompt pack 与工具协议、S70.2 actor 权限模型、S70.3 `game_ai_tools` 运行时、S70.4 NPC mind 基础、S70.5 制度场景 helper、S70.6 压力事件工具协议、S70.7 领域工具协议和 S70.8 多模型路由/eval 基础已落地，下一步进入 S70.9 AI 设置与可观测性。S71 作为 S70 之后的数据库玩法化、维护、安全检索和 redacted API 专项，规划见 [DATABASE_GAMEPLAY_RESOLVER_ROADMAP.md](DATABASE_GAMEPLAY_RESOLVER_ROADMAP.md)。数据库方向继续只考虑本机 JSON/SQLite 持久化增强；远程存档、账号体系、多人同步、云端冲突解决和托管数据库不进入当前规划。
 
 ## 1. 开发规范继承
 
@@ -111,7 +111,7 @@
 | S70.5 | DONE | 制度 AI 与朝议/科场场景：官署、派系、大臣、谏官、老师、考官围绕奏折/弹章/政令/考卷推演 | 2026-05-12 | Codex / 子代理 | `029d65a` |
 | S70.6 | DONE | 压力事件工具协议与 actor proposal：由城市、财政、军政、关系、情报压力提出事件候选，固定工具 envelope、权限、Mock/provider 基础和服务器成案语义 | 2026-05-12 | Codex / 子代理 | `3847c5a` |
 | S70.7 | DONE | 刑名、财政、军事、外交与科举工具：案牍、赈济、军令、战役、和议、宣战、评卷、授官 proposal 与 resolver | 2026-05-12 | Codex / 子代理 | `a01fbaa` |
-| S70.8 | IN_PROGRESS | 多模型路由与仲裁：narrator、actor_mind、planner、domain_specialist、critic、safety 分工与成本边界 | 2026-05-12 | Codex / 子代理 | 进行中 |
+| S70.8 | DONE | 多模型路由与仲裁：narrator、actor_mind、planner、domain_specialist、critic、safety 分工与成本边界 | 2026-05-12 | Codex / 子代理 | 待本次提交 |
 | S70.9 | TODO | AI 设置与可观测性：按叙事、NPC、科举、政务、战争、记忆、critic/safety 配置模型路由、输出长度、并发、工具预算、审计面板和 hidden-safe 诊断 | - | - | S70.8 后 |
 | S70.10 | TODO | 玩家官职月报与 AI 推动世界：每三旬生成职位化月报、上级态度、同僚风向、NPC 主动请求、下月风险和待裁决差事 | - | - | S70.9 后 |
 | S70.11 | TODO | 自然语言跳时：解析“学习一月/养病半月/照旧处理一月”，拆为多旬 batch tick、事件中断和跳时总结 | - | - | S70.10 后 |
@@ -156,7 +156,7 @@ S68-S69 是书生主线的深度专项，详细提前规划见 [IMPERIAL_EXAM_DE
 
 ## 6. S70：AI 提示词、工具协议与多 AI 编排
 
-S70 是 MiMo + DeepSeek 之后的 AI 编排专项。当前 `mimo-deepseek` 仍只是 provider 方法级路由：普通叙事、开局、流式回合和科举出题走 MiMo，科举评卷走 DeepSeek V4 Pro。完整 AI actor、工具调用、NPC 智力、事件生成、制度推演、narrator/planner/critic/safety 仲裁、成本边界、失败降级和可观测性排在 S68-S69 之后启动。
+S70 是 MiMo + DeepSeek 之后的 AI 编排专项。S70.8 起，`src/ai/index.js` 已提供 task-aware provider facade；`AI_PROVIDER=mock` 仍强制全任务本地 Mock，兼容路径中普通叙事、开局、流式回合和科举出题仍优先 MiMo，科举评卷与 domain_specialist/critic/safety 可按 route policy 使用 DeepSeek。后续 AI actor、工具调用、NPC 智力、事件生成、制度推演、narrator/planner/critic/safety 仲裁、成本边界、失败降级和可观测性继续按 S70.9-S70.14 推进。
 
 详细提前规划见 [AI_ORCHESTRATION_ROADMAP.md](AI_ORCHESTRATION_ROADMAP.md)。S70 的核心目标不是让模型直接改库，而是让 AI 在服务器法度内变成“有身份、有记忆、有权限、有后果”的世界行动者网络；S68-S69 提供科场、老师、考官和授官 resolver 的先行用例。该文档第 13-16 节已扩展为后续 Codex 开发任务书，逐项写明执行规则、运行依赖、项目资料、玩法资料、测试资料、建议模块/函数、工具/route 接口、测试文件和验收重点。
 
@@ -206,6 +206,40 @@ S71 详细规划见 [DATABASE_GAMEPLAY_RESOLVER_ROADMAP.md](DATABASE_GAMEPLAY_RE
 4. S71.9-S71.12：接入多 actor 场景、NPC 记忆和 AI 调动审计面板，最后做 dual-mode、Mock/no-key、browser 和 provider smoke 归档。
 
 ## 8. 进度记录
+
+### 2026-05-12
+
+工具：Codex、子代理。
+
+步骤：S70.8 多模型路由、提示词评测与仲裁。
+
+提交：待本次提交。
+
+完成：
+
+- 新增 `src/ai/modelRoutePolicy.js`，固定 S70.8 task type：`narrator`、`actor_mind`、`planner`、`domain_specialist`、`critic`、`safety_gate`、`memory_summarizer`、`monthly_briefing` 和 `time_skip_planner`，提供 `buildDefaultModelRoutePolicy()`、`resolveModelForTask()`、`validateModelRoutePolicy()` 与 hidden-safe policy summary。默认保持 Mock/no-key 可回归，`AI_PROVIDER=mock` 即使本机有真实 key 也保持全任务 Mock；`mimo-deepseek` 下 narrator/科举出题继续优先 MiMo，domain_specialist/科举评卷和 critic/safety 在 DeepSeek key 可用时走 DeepSeek。
+- 扩展 `src/ai/index.js` provider facade，保留原有 `getProvider()` 五方法接口，并新增 `getProviderForTask()` / `createRoutedProvider()`；现有 start/runTurn/stream/exam route 不需要直接理解 task type，后续月报、跳时、记忆和审计可按任务取模型。route 的 model、timeout、temperature 和 token budget 会传给 MiMo/DeepSeek/OpenAI/Anthropic adapter；critic/safety 默认返回 review-only guard，避免调用普通 gameplay provider methods。
+- 新增 `src/ai/aiEvaluationRunner.js` 与 `scripts/aiEvaluationRunner.js`，把本地 prompt fixture、schema 合规、历史语气、hidden/raw canary、canonical ranking overreach 红队、critic/safety review-only 和成本摘要整理为 `npm run eval:ai` 的新入口；该脚本随后继续运行既有 `test/aiEvalFixtures.test.js`，eval 不打印 key、raw prompt、raw provider payload、本地路径或 raw table。
+- 新增 `test/modelRoutePolicy.test.js` 与 `test/aiEvaluationRunner.test.js`，覆盖 task 覆盖面、provider/env 路由、Mock key 回归、critic/safety 禁止工具和 adjudication、`server.*` 暴露拒绝、provider facade task route、actual adapter request model/temperature/budget override、route summary 脱敏、eval runner review-only、canonical ranking 红队与 hidden/raw 红队。
+- 同步 brief、AI 控制矩阵和共享上下文，明确多数模型、critic 或 safety 同意也不能绕过 schema、actor tool 权限、服务器 resolver、状态边界或持久化裁决。
+
+验证：
+
+- 已通过：`node --check src/ai/modelRoutePolicy.js`、`node --check src/ai/aiEvaluationRunner.js`、`node --check src/ai/index.js`、`node --check scripts/aiEvaluationRunner.js`、`node --check test/modelRoutePolicy.test.js`、`node --check test/aiEvaluationRunner.test.js`。
+- 已通过：`node --test test/modelRoutePolicy.test.js test/aiEvaluationRunner.test.js test/mimoProvider.test.js test/mimoDeepseekProvider.test.js test/aiEvalFixtures.test.js`，32/32。
+- 已通过：`node --test test/mockImperialExamAcceptanceScript.test.js`，3/3，确认 `AI_PROVIDER=mock` 不受本机真实 key 影响。
+- 已通过：`node --test test/dualModeAcceptanceScript.test.js`，6/6。
+- 已通过：`npm run eval:ai`，本地 fixture 全部通过，输出仅含 route/cost summary、red-team finding 计数和失败摘要。
+- 全量 `node --test` 本轮 657/658，通过项之外只有既有 S67 `sqliteReadRepairMs` 性能阈值抖动失败（4775.472 > 3000），单独重跑 `test/dualModeAcceptanceScript.test.js` 6/6 通过。
+
+风险/遗留：
+
+- S70.8 只建立路由策略、provider facade 和本地 eval runner；不调用真实 provider 做多模型共识，不新增持久审计表，不让 critic/safety 调工具或裁决后果。
+- 后续 S70.9 继续把路由策略做成玩家可配置的 AI 设置和 hidden-safe 可观测面板；真实 provider 长跑与 MiMo-required 验收仍在 S70.14 收束。
+
+下一步：
+
+- 启动 S70.9：AI 设置与可观测性，新增 session 级 AI 设置、玩家可见设置面板、工具/任务成本摘要和越权设置红队。
 
 ### 2026-05-12
 
