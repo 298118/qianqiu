@@ -6,7 +6,7 @@
 
 ## 这次主要更新
 
-当前项目已经完成可玩纵切、浏览器验收、时间专项、AI provider 扩展、本地动态数据库基础、S54-S59 SQLite 业务表拆分、S60-S67 超大动态世界数据库内容充实、S68-S69 科举读书深化与归档、S70 AI 编排归档，以及 S71.0-S71.9 数据库 resolver 输入、本地 SQLite 维护层、安全全文检索、redacted player API、财政/城市政策服务器裁决、地方案件/刑名服务器裁决、军务/外交服务器裁决、压力驱动事件生成器和多 actor 场景运行时。近期重点更新集中在“本地数据库专项归档”“S68-S69 科举读书深化”“多 provider 能力”“S70 AI 编排”和“S71 数据库玩法化入口”：
+当前项目已经完成可玩纵切、浏览器验收、时间专项、AI provider 扩展、本地动态数据库基础、S54-S59 SQLite 业务表拆分、S60-S67 超大动态世界数据库内容充实、S68-S69 科举读书深化与归档、S70 AI 编排归档，以及 S71.0-S71.10 数据库 resolver 输入、本地 SQLite 维护层、安全全文检索、redacted player API、财政/城市政策服务器裁决、地方案件/刑名服务器裁决、军务/外交服务器裁决、压力驱动事件生成器、多 actor 场景运行时和 NPC 记忆账本。近期重点更新集中在“本地数据库专项归档”“S68-S69 科举读书深化”“多 provider 能力”“S70 AI 编排”和“S71 数据库玩法化入口”：
 
 - 完成 S70.1 AI 提示词与工具协议契约：新增 [docs/AI_PROMPT_ENGINEERING_CONTRACT.md](docs/AI_PROMPT_ENGINEERING_CONTRACT.md) 和 [docs/AI_TOOL_PROTOCOL_CONTRACT.md](docs/AI_TOOL_PROTOCOL_CONTRACT.md)，固定 prompt pack 七层、actor/scene/output/tool policy 边界、MCP-friendly tool envelope、proposal/result/request-adjudication schema、`server.*` 内部化、strict `inputSchema`、Mock/no-key fallback 和 provider smoke 口径。新增 `src/ai/toolSchemas.js`、`scripts/providerToolSmoke.js` 与 `npm run smoke:provider:tools`，可在有 MiMo key 时探测 `tools` / `tool_choice` / `tool_calls` 与工具结果回填形状；无 key 时明确 skip。
 - 完成 S70.8 多模型路由与 S70.9 AI 设置：`src/ai/modelRoutePolicy.js` 固定 narrator、actor_mind、planner、domain_specialist、critic、safety_gate、memory_summarizer、monthly_briefing、time_skip_planner 九类任务的 provider/model/budget/tool 边界，`npm run eval:ai` 会先跑本地 route/eval runner；`src/game/aiSettings.js`、`GET/POST /api/ai/settings/:sessionId` 和浏览器 `#ai-control-panel` 让玩家按任务调整 provider/model、输出长度、工具预算、并发和安全严格度。设置与调动摘要只返回 hidden-safe view，不暴露 key、base URL、raw prompt、raw provider payload、本地路径或 raw table，critic/safety 仍强制 review-only。
@@ -23,6 +23,7 @@
 - 完成 S71.7 军务与外交 resolver：新增 `src/game/militaryDiplomacyResolverConfig.js`、`src/game/militaryDiplomacyResolver.js` 和聚焦测试，支持侦察、固守、练兵、调粮、出击、会战、大会战、撤军、遣使、互市、和议、朝贡、威慑、宣战 request、会盟和扣使。AI 仍只能通过 `military.propose_order` / `diplomacy.propose_move` 提交 proposal；服务器校验 T4-T5 权限、军务/外交工具组、可见 evidence、证据领域/数量/可信度、钱粮/市场证据、兵粮资源、target scope、制度路径和 hidden/raw 污染后，才应用受控府库/粮储/军心/边患/玩家将领或外交字段 delta、公开事件和内部 `militaryDiplomacyLedger`。`server.resolve_battle` / `server.apply_diplomacy` 不进入模型可见工具或 provider schema，普通 domain tool runner 仍保持 pending-only。
 - 完成 S71.8 压力驱动事件生成器：新增 `src/game/worldPressureEventConfig.js`、`src/game/worldPressureEventGenerator.js` 和聚焦测试，从 S70.6 可见 pressure refs 与 S71.1 `resolverInputContext` 汇集城市、财赋、案牍、边防、情报、人物怨望、书院/士论和官场压力信号。服务器按组合规则、优先级、分数、确定性概率、冷却和每旬上限生成候选并裁决成案；只有 `applyPressureEventOutcome()` 写受控 world meters、公开事件和内部 `worldPressureEventLedger`，公开摘要不泄漏 source refs、raw proposal、hidden 私档或密情真值。
 - 完成 S71.9 多 actor 场景运行时：新增 `src/game/sceneRuntimeConfig.js`、`src/game/sceneRuntime.js` 和聚焦测试，支持朝议、堂审、会盟和战役军议 scene-local 场景。每个 actor 单独过滤 `resolverInputContext` 与领域工具可见 evidence refs；Mock/no-key 可 deterministic 生成场景意见，真实运行时可接 proposal generator，但 sanitizer 会锚定参与者、限制场景意见类型、过滤不可见证据并拒绝工具直写/成案伪造。`resolveSceneOutcome()` 只返回 S71.5-S71.7 resolve-only 的 hidden-safe 摘要，不推进全局旬、不写状态或 SQLite。
+- 完成 S71.10 NPC 记忆账本：扩展 `src/game/actorMemoryConfig.js`、`src/game/actorMemoryLedger.js` 和聚焦测试，新增目标、家族风险、畏惧、野心等 NPC 记忆类型，并把 NPC mind 的安全 `memoryCandidates` 与背景 NPC heuristic 纳入服务器记忆提案边界。普通回合会基于 `worldPeopleView` 和可见关系 capped 写入高显著 NPC 的长期目标、人情债、恩怨、家族风险等可见记忆；重复/污染/hidden/private 文本仍由服务器清洗或拒绝，浏览器、prompt、搜索、redacted player state 和场景 context 只读安全 `actorMemoryView` / capped 摘要，不暴露 raw `actorMemoryLedger`。
 - 新增可选 SQLite 存储模式：默认仍是 JSON 存档；设置 `STORAGE_ADAPTER=sqlite` 后，本地使用 `schema_migrations`、`world_sessions`、审计表、地理 `geo_*`、人物 `people_*`、官职任所 `office_*` 派生业务表、安全事件档案 `event_archive_index`、安全 prompt 检索派生索引和安全搜索派生索引。
 - 新增地理业务表同步：SQLite 模式会把 `worldState.worldGeography` 同步到 `geo_countries`、`geo_regions`、`geo_cities`、`geo_routes`、`geo_frontier_zones`、`geo_office_jurisdictions`，读档时可按 JSON snapshot 修复缺失或陈旧行。
 - 新增地理维护工具：`npm run storage:geography:sqlite -- import|status|repair|export` 支持导入、漂移检查、修复和脱敏 debug dump；通用 SQLite 维护入口 `npm run storage:sqlite:status|health|backup|vacuum|export-safe` 用于本地迁移状态、索引健康、数据库体积、备份/VACUUM 和安全诊断。
@@ -288,7 +289,7 @@ data/sessions/
 
 - [docs/SHARED_CONTEXT.md](docs/SHARED_CONTEXT.md)：Codex 与 Claude Code 共享交接板。
 - [docs/QIANQIU_DEVELOPMENT_BRIEF.md](docs/QIANQIU_DEVELOPMENT_BRIEF.md)：产品目标、架构、数据契约和交付标准。
-- [docs/DEVELOPMENT_STEPS.md](docs/DEVELOPMENT_STEPS.md)：当前活动路线图与进度台账，已交接到 S71；下一步从 S71.10 NPC 记忆账本继续。
+- [docs/DEVELOPMENT_STEPS.md](docs/DEVELOPMENT_STEPS.md)：当前活动路线图与进度台账，已交接到 S71；下一步从 S71.11 AI 调动审计面板继续。
 - [docs/DEVELOPMENT_GOVERNANCE.md](docs/DEVELOPMENT_GOVERNANCE.md)：稳定开发治理锚点。
 - [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)：当前架构、API、状态模型和验证要求。
 - [docs/AI_CONTROL_AUDIT_MATRIX.md](docs/AI_CONTROL_AUDIT_MATRIX.md)：AI/server 权限矩阵。
@@ -309,5 +310,5 @@ data/sessions/
 - 真实 provider 网络调用需要配置 API key；无 key 环境只验证 Mock、缺 key 分支和 no-key skip。
 - 浏览器 smoke 覆盖完整主线和代表身份回合，但不等同于所有身份的长线游玩验收。
 - SQLite 目前已经包含 `schema_migrations`、session row、审计表、地理 `geo_*` 业务表、可见人物 `people_*` bridge rows、人物事件到 `people_*.last_event_id` 的本地关联、带内容漂移探针的官职任所 `office_*` 派生业务表、安全事件档案 `event_archive_index`、安全 prompt 检索索引、安全搜索索引，以及只输出 allowlist public 摘要的本地审计公开 projection 工具和本地维护命令；它们都不是浏览器、prompt 或服务器裁决的内部来源。
-- “超大动态世界数据库”的 S60-S67 内容充实阶段已并入统一归档；S68-S69 科举深化和 S70 AI 编排也已归档，S71.0-S71.7 已固定 resolver 输入边界、落地只读 `resolverInputContext`、补本地 SQLite migration/maintenance、安全全文检索、redacted player API、开发诊断 API、财政/城市政策服务器裁决、地方案件/刑名服务器裁决与军务/外交服务器裁决；后续活动重点进入压力事件、NPC 记忆和 AI 调动审计面板。
+- “超大动态世界数据库”的 S60-S67 内容充实阶段已并入统一归档；S68-S69 科举深化和 S70 AI 编排也已归档，S71.0-S71.10 已固定 resolver 输入边界、落地只读 `resolverInputContext`、补本地 SQLite migration/maintenance、安全全文检索、redacted player API、开发诊断 API、财政/城市政策服务器裁决、地方案件/刑名服务器裁决、军务/外交服务器裁决、压力驱动事件生成器、多 actor 场景运行时和 NPC 记忆账本；后续活动重点进入 AI 调动审计面板。
 - 当前不包含远程存档、账号体系、多人同步或云端数据库。

@@ -10,7 +10,7 @@
 - S49-S67 本地数据库基础、SQLite 业务表、双模式验收、超大动态世界内容与 S60 内容契约：[LOCAL_DATABASE_AND_WORLD_CONTENT_ARCHIVE.md](LOCAL_DATABASE_AND_WORLD_CONTENT_ARCHIVE.md)。旧分卷归档和 S60 契约文件保留为跳转页。
 - S70 AI 编排与权力工具：[AI_ORCHESTRATION_ARCHIVE.md](AI_ORCHESTRATION_ARCHIVE.md)。S70 规划源头仍见 [AI_ORCHESTRATION_ROADMAP.md](AI_ORCHESTRATION_ROADMAP.md)。
 
-当前活动路线图已交接到 S71：S68-S69 的书生主线科举、读书、评卷与授官制度已归档，S70.1-S70.14 的 AI prompt/tool/actor/多模型路由、AI 设置、月报、跳时、记忆、地图接口、provider AI-first smoke 与 JSON/SQLite parity 已归档。S71 作为 S70 之后的数据库玩法化、维护、安全检索和 redacted API 专项，规划见 [DATABASE_GAMEPLAY_RESOLVER_ROADMAP.md](DATABASE_GAMEPLAY_RESOLVER_ROADMAP.md)。S71.0 数据库玩法化专项契约已固定在 [DATABASE_RESOLVER_INPUT_CONTRACT.md](DATABASE_RESOLVER_INPUT_CONTRACT.md)，S71.1 已落地只读 `resolverInputContext` 输入层，S71.2 已落地本地 SQLite schema migration 与维护层，S71.3 已落地安全全文检索 / 本地搜索，S71.4 已落地 redacted player API 与本机开发诊断 API，S71.5 已落地财政与城市政策 resolver，S71.6 已落地地方案件与刑名 resolver，S71.7 已落地军务与外交 resolver，S71.8 已落地压力驱动事件生成器，S71.9 已落地多 actor 场景运行时；下一步启动 S71.10 NPC 记忆账本。数据库方向继续只考虑本机 JSON/SQLite 持久化增强；远程存档、账号体系、多人同步、云端冲突解决和托管数据库不进入当前规划。
+当前活动路线图已交接到 S71：S68-S69 的书生主线科举、读书、评卷与授官制度已归档，S70.1-S70.14 的 AI prompt/tool/actor/多模型路由、AI 设置、月报、跳时、记忆、地图接口、provider AI-first smoke 与 JSON/SQLite parity 已归档。S71 作为 S70 之后的数据库玩法化、维护、安全检索和 redacted API 专项，规划见 [DATABASE_GAMEPLAY_RESOLVER_ROADMAP.md](DATABASE_GAMEPLAY_RESOLVER_ROADMAP.md)。S71.0 数据库玩法化专项契约已固定在 [DATABASE_RESOLVER_INPUT_CONTRACT.md](DATABASE_RESOLVER_INPUT_CONTRACT.md)，S71.1 已落地只读 `resolverInputContext` 输入层，S71.2 已落地本地 SQLite schema migration 与维护层，S71.3 已落地安全全文检索 / 本地搜索，S71.4 已落地 redacted player API 与本机开发诊断 API，S71.5 已落地财政与城市政策 resolver，S71.6 已落地地方案件与刑名 resolver，S71.7 已落地军务与外交 resolver，S71.8 已落地压力驱动事件生成器，S71.9 已落地多 actor 场景运行时，S71.10 已落地 NPC 记忆账本；下一步启动 S71.11 AI 调动审计面板。数据库方向继续只考虑本机 JSON/SQLite 持久化增强；远程存档、账号体系、多人同步、云端冲突解决和托管数据库不进入当前规划。
 
 ## 1. 开发规范继承
 
@@ -82,7 +82,7 @@
 
 ## 3. 当前边界与已归档摘要
 
-当前活动工作已交接到 S71.10。S49-S67 的本地数据库与大世界内容实现细节已经迁入统一归档，S68-S69 科举深化已迁入科举归档，S70 AI 编排已迁入 S70 归档；活动台账只保留索引和后续边界：
+当前活动工作已交接到 S71.11。S49-S67 的本地数据库与大世界内容实现细节已经迁入统一归档，S68-S69 科举深化已迁入科举归档，S70 AI 编排已迁入 S70 归档；活动台账只保留索引和后续边界：
 
 | 范围 | 状态 | 摘要 | 归档 |
 | --- | --- | --- | --- |
@@ -130,7 +130,7 @@
 | S71.7 | DONE | 军务与外交 resolver：侦察、固守、调粮、练兵、会战、互市、和议、宣战 request 和服务器裁决 | 2026-05-13 | Codex / 子代理 | `761ec99` |
 | S71.8 | DONE | 压力驱动事件生成器：从粮价、水利、腐败、边防、NPC 怨怼和情报压力生成事件候选 | 2026-05-13 | Codex / 子代理 | `5ead9e5` |
 | S71.9 | DONE | 多 actor 场景运行时：朝议、堂审、会盟、战役 scene-local time 与 actor proposal 编排 | 2026-05-13 | Codex / 子代理 | `6440614` |
-| S71.10 | TODO | NPC 记忆账本：高显著 NPC 长期记忆、人情债、恩怨、家族风险和背景 NPC heuristic | - | - | S71.9 后 |
+| S71.10 | DONE | NPC 记忆账本：高显著 NPC 长期记忆、人情债、恩怨、家族风险和背景 NPC heuristic | 2026-05-13 | Codex / 子代理 | 待本次提交 |
 | S71.11 | TODO | AI 调动审计面板：工具摘要、拒绝原因、成本、公开结果和 hidden-safe 开发诊断，不泄漏 raw prompt/proposal | - | - | S71.10 后 |
 | S71.12 | TODO | S71 验收与归档：JSON/SQLite parity、Mock/no-key、provider smoke、browser smoke、hidden-token 和完整书生路径回归 | - | - | S71.11 后 |
 
@@ -208,6 +208,40 @@ S71 详细规划见 [DATABASE_GAMEPLAY_RESOLVER_ROADMAP.md](DATABASE_GAMEPLAY_RE
 4. S71.9-S71.12：接入多 actor 场景、NPC 记忆和 AI 调动审计面板，最后做 dual-mode、Mock/no-key、browser 和 provider smoke 归档。
 
 ## 8. 进度记录
+
+### 2026-05-13
+
+工具：Codex、子代理。
+
+步骤：S71.10 NPC 记忆账本。
+
+提交：待本次提交。
+
+完成：
+
+- 扩展 `src/game/actorMemoryConfig.js`，新增 `current_goal`、`family_risk`、`fear`、`ambition` 等 NPC 记忆类型，新增 `npc_memory_heuristic` 与 `scene_runtime` 来源类型，并集中背景 NPC 提案总量、单 actor 每回合数量和最低显著度阈值。
+- 扩展 `src/game/actorMemoryLedger.js`，新增 `memoryProposalsFromNpcMindResult()` 与 `deriveNpcBackgroundMemoryProposals()`。前者把 S70.4 NPC mind 的安全 `memoryCandidates` 映射为服务器记忆 proposal，assist/obstruct/request/warn 分别进入人情、恩怨、义务和目标记忆，并忽略候选内伪造 `actorId`，始终锚定到 NPC mind proposal 的 actor；后者只从 `worldPeopleView` 和可见关系行读取 NPC 目标、关系、人情债、怨望、畏惧、影响、野心和可见家族/身家风险，跳过 hidden、不可见或死亡 NPC，生成 capped 背景 NPC heuristic proposal。
+- `src/routes/game.js` 的普通回合 actor memory 更新现传入 `npcMemory.includeBackground`，让每旬结算可以写入高显著背景 NPC 的可见长期目标、人情往来、恩怨、家族风险、畏惧和野心。所有写入仍复用 S70.12 `proposeActorMemoryUpdate()` / `applyTurnActorMemoryUpdates()` 的服务器边界，只接受安全 `public` / `player_visible` / `relationship_visible` 记忆，拒绝污染文本、不可见 actor、private/hidden/actor-private visibility 和 raw source；同一静态 `npc_memory_heuristic` 记忆在无新来源、无更高 salience/confidence 时会跳过重复强化，避免 recent updates 刷屏。
+- 新增 `test/npcMemoryLedger.test.js`，覆盖背景 NPC heuristic 写入目标/人情债、连续回合无变化不重复强化、中文目标变化可生成新记忆、NPC mind 多条中文候选不误合并、NPC mind 候选通过服务器 proposal 边界入账、候选级 actor retarget 被锚定、污染候选拒绝，以及家族风险记忆不泄漏到 raw route state、redacted player state、安全搜索、prompt 或 S71.9 scene actor context。
+- 同步 README、brief、architecture、动态数据库规划、S71 路线图、AI 控制矩阵和共享上下文，把下一步切到 S71.11 AI 调动审计面板。
+
+验证：
+
+- 已通过：`node --check src/game/actorMemoryLedger.js`、`node --check src/game/actorMemoryConfig.js`、`node --check src/routes/game.js`、`node --check test/npcMemoryLedger.test.js`。
+- 已通过：`node --test test/npcMemoryLedger.test.js`（3/3）。
+- 已通过：`node --test test/npcMemoryLedger.test.js test/actorMemoryLedger.test.js test/actorMemoryVisibility.test.js test/actorMemoryRoute.test.js test/npcMind.test.js test/npcMindSalience.test.js test/npcMindHiddenRedaction.test.js`（29/29）。
+- 已通过：`node --test test/redactedState.test.js test/gamePlayerStateRoute.test.js test/safeWorldSearch.test.js`（13/13）。
+- 已通过：`node --test test/promptContextAssembler.test.js test/eventArchive.test.js test/sceneRuntime.test.js test/sceneActorVisibility.test.js test/sceneRuntimeMock.test.js`（31/31）。
+- 已通过：`node --test test/redactedState.test.js test/gamePlayerStateRoute.test.js test/safeWorldSearch.test.js test/promptContextAssembler.test.js test/eventArchive.test.js test/sceneRuntime.test.js test/sceneActorVisibility.test.js test/sceneRuntimeMock.test.js`（44/44）。
+- 已通过：`node --test test/stateRules.test.js test/publicAppSource.test.js`（16/16）。
+- 已通过：`npm run check:docs-governance`、`node --test test/documentationGovernance.test.js` 和 `git diff --check`。
+- 提交前只读复审未发现 P0/P1；首轮 P2 指出背景 NPC heuristic 每回合重复强化静态记忆会刷 `recentUpdates`，已改为无新来源、无更高 salience/confidence 时 no-op，并补连续回合测试。二轮 P2 指出中文摘要经 `cleanId()` 后会让不同记忆 fingerprint 退化为同一键，已改为使用清洗文本哈希参与 fingerprint，并补中文目标变化与多候选不误合并回归。候选级 actor retarget 也已在主代理自查中收口并补断言。
+
+风险/遗留：
+
+- S71.10 没有新增 private/hidden NPC 私档、独立 SQLite 记忆表、浏览器 NPC 私心面板或真实 provider 长循环；只把 NPC mind 安全候选和背景 NPC heuristic 接入现有服务器 actor memory ledger。
+- 背景 NPC heuristic 当前只使用玩家可见 projection 与关系行；更复杂的 actor-private 记忆、场景后果自动影响 NPC 心智和真实 provider 记忆提炼留给后续专项。
+- 下一步进入 S71.11 AI 调动审计面板，需只读安全调动摘要、拒绝原因、成本/耗时和公开结果，不得展示 raw prompt、raw provider proposal、hidden ledger、SQLite raw row、本地路径或 key。
 
 ### 2026-05-13
 

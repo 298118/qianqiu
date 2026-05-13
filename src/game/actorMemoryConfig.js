@@ -26,6 +26,26 @@ const ACTOR_MEMORY_TYPES = Object.freeze({
     defaultSalience: 70,
     decayPerMonth: 1
   }),
+  current_goal: Object.freeze({
+    label: "目标",
+    defaultSalience: 62,
+    decayPerMonth: 2
+  }),
+  family_risk: Object.freeze({
+    label: "家族风险",
+    defaultSalience: 64,
+    decayPerMonth: 2
+  }),
+  fear: Object.freeze({
+    label: "畏惧",
+    defaultSalience: 60,
+    decayPerMonth: 2
+  }),
+  ambition: Object.freeze({
+    label: "野心",
+    defaultSalience: 60,
+    decayPerMonth: 2
+  }),
   exam_network: Object.freeze({
     label: "科场人脉",
     defaultSalience: 66,
@@ -66,6 +86,8 @@ const ACTOR_MEMORY_SOURCE_TYPES = Object.freeze([
   "ai_memory_proposal",
   "relationship_change",
   "npc_mind",
+  "npc_memory_heuristic",
+  "scene_runtime",
   "active_request",
   "study_interaction",
   "exam_network",
@@ -87,6 +109,9 @@ const ACTOR_MEMORY_LIMITS = Object.freeze({
   maxSourceLabelLength: 80,
   maxSourceRefs: 5,
   maxTags: 6,
+  maxNpcMemoryProposals: 8,
+  maxNpcMemoryPerActorPerTurn: 3,
+  minNpcMemorySalience: 24,
   minSalience: 5,
   maxSalience: 100,
   minPromptSalience: 12,

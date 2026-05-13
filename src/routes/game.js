@@ -817,7 +817,8 @@ async function finalizeTurn(worldState, result, input, auditOptions = {}) {
     providerMemoryProposalRejections: result.memoryProposalRejections,
     relationshipChanges: allRelationshipChanges,
     activeNpcRequest,
-    playerMonthlyBriefing
+    playerMonthlyBriefing,
+    npcMemory: { includeBackground: true }
   }, actorMemoryAuditContext);
   const sessionSummary = updateMonthlySessionSummary(worldState, {
     worldTick,

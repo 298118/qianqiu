@@ -1,3 +1,5 @@
+const { createHash } = require("node:crypto");
+
 const {
   ACTOR_MEMORY_LIMITS,
   ACTOR_MEMORY_REJECTED_VISIBILITIES,
@@ -63,6 +65,14 @@ function cleanText(value, fallback = "", maxLength = ACTOR_MEMORY_LIMITS.maxSumm
 function cleanId(value, fallback = "") {
   const text = cleanText(value, fallback, 120);
   return text.replace(/[^A-Za-z0-9_.:-]+/g, "-").replace(/^-+|-+$/g, "") || fallback;
+}
+
+function stableTextHash(value, fallback = "empty") {
+  const text = cleanText(value, "", ACTOR_MEMORY_LIMITS.maxSummaryLength)
+    .toLowerCase()
+    .replace(/[^\w\u4e00-\u9fff]+/gu, "");
+  if (!text) return fallback;
+  return createHash("sha256").update(text).digest("hex").slice(0, 16);
 }
 
 function cleanList(values, limit, maxLength = 80) {
@@ -262,9 +272,7 @@ function ensureActorMemoryLedgerState(worldState = {}) {
 }
 
 function buildMemoryFingerprint(memory) {
-  const summaryKey = cleanText(memory.summary, "", 80)
-    .toLowerCase()
-    .replace(/[^\w\u4e00-\u9fff]+/gu, "");
+  const summaryKey = stableTextHash(memory.summary);
   return cleanId(`${memory.actorId}:${memory.type}:${memory.subjectType}:${memory.subjectId}:${summaryKey}`, "memory");
 }
 
@@ -368,6 +376,33 @@ function mergeSourceRefs(first = [], second = []) {
   return normalizeSourceRefs([...(Array.isArray(first) ? first : []), ...(Array.isArray(second) ? second : [])]);
 }
 
+function sourceRefIdentity(ref = {}) {
+  if (!isPlainObject(ref)) return "";
+  return `${cleanText(ref.sourceView, "", 80)}:${cleanId(ref.id, "")}:${cleanText(ref.label, "", 80)}`;
+}
+
+function hasNewMemoryMetadata(existing = {}, update = {}) {
+  const existingRefs = new Set((Array.isArray(existing.sourceRefs) ? existing.sourceRefs : [])
+    .map(sourceRefIdentity)
+    .filter(Boolean));
+  const updateHasNewRef = (Array.isArray(update.sourceRefs) ? update.sourceRefs : [])
+    .some((ref) => {
+      const key = sourceRefIdentity(ref);
+      return key && !existingRefs.has(key);
+    });
+  if (updateHasNewRef) return true;
+  const existingTags = new Set(Array.isArray(existing.tags) ? existing.tags : []);
+  return (Array.isArray(update.tags) ? update.tags : []).some((tag) => tag && !existingTags.has(tag));
+}
+
+function shouldSkipNpcHeuristicReinforcement(existing = {}, update = {}) {
+  return existing.sourceType === "npc_memory_heuristic" &&
+    update.sourceType === "npc_memory_heuristic" &&
+    update.salience <= existing.salience &&
+    update.confidence <= existing.confidence &&
+    !hasNewMemoryMetadata(existing, update);
+}
+
 function appendRecentUpdate(ledger, memory, status) {
   ledger.recentUpdates.push({
     actorId: memory.actorId,
@@ -398,6 +433,9 @@ function applyActorMemoryUpdate(worldState = {}, memoryUpdate, auditContext = {}
     : [];
   const existing = actorRows.find((memory) => memory.fingerprint === update.fingerprint);
   if (existing) {
+    if (shouldSkipNpcHeuristicReinforcement(existing, update)) {
+      return { applied: false, deduped: false, skipped: true, memory: null, rejectedReasons: [] };
+    }
     existing.summary = update.summary.length > existing.summary.length ? update.summary : existing.summary;
     existing.salience = Math.min(
       ACTOR_MEMORY_LIMITS.maxSalience,
@@ -716,6 +754,234 @@ function memoryProposalsFromMonthlyBriefing(playerMonthlyBriefing = {}) {
   }];
 }
 
+function relationshipRowsByNpcId(worldState = {}) {
+  const people = buildWorldPeopleView(worldState);
+  const rows = new Map();
+  for (const relationship of Array.isArray(people.relationships) ? people.relationships : []) {
+    if (relationship?.targetType !== "npc") continue;
+    const npcId = cleanId(relationship.targetId, "");
+    if (npcId) rows.set(npcId, relationship);
+  }
+  return rows;
+}
+
+function npcMemorySourceRef(sourceView, id, label) {
+  return {
+    sourceView,
+    id: cleanId(id, ""),
+    label: cleanText(label, sourceView, ACTOR_MEMORY_LIMITS.maxSourceLabelLength)
+  };
+}
+
+function npcMindMemoryType(intentType = "memory") {
+  const intent = cleanId(intentType, "memory");
+  if (intent === "assist") return "favor";
+  if (intent === "obstruct") return "grievance";
+  if (intent === "request") return "obligation";
+  if (intent === "warn") return "current_goal";
+  return "impression";
+}
+
+function memoryProposalsFromNpcMindResult(npcMindResult = {}) {
+  const result = isPlainObject(npcMindResult) ? npcMindResult : {};
+  const proposal = isPlainObject(result.proposal) ? result.proposal : result;
+  const actorId = normalizeActorId(proposal.actorId || (proposal.npcId ? `npc:${proposal.npcId}` : ""), "");
+  const npcId = cleanId(proposal.npcId || actorId.replace(/^npc:/, ""), "");
+  const intentType = cleanId(proposal.intentType, "memory");
+  const type = npcMindMemoryType(intentType);
+  const candidates = Array.isArray(result.memoryCandidates)
+    ? result.memoryCandidates
+    : Array.isArray(proposal.memoryCandidates)
+      ? proposal.memoryCandidates
+      : [];
+  return candidates
+    .map((candidate, index) => {
+      const source = isPlainObject(candidate) ? candidate : { summary: candidate };
+      const summary = cleanText(source.summary || source.publicSummary || source.text, "", 140);
+      return {
+        actorId,
+        type,
+        visibility: "player_visible",
+        subjectType: "player",
+        subjectId: "P1",
+        summary,
+        salience: clampNumber(source.salience, ACTOR_MEMORY_LIMITS.minSalience, ACTOR_MEMORY_LIMITS.maxSalience, type === "grievance" ? 74 : 66),
+        confidence: clampFloat(source.confidence, ACTOR_MEMORY_LIMITS.minConfidence, ACTOR_MEMORY_LIMITS.maxConfidence, proposal.confidence ?? 0.66),
+        sourceType: "npc_mind",
+        sourceLabel: "NPC 心念",
+        sourceRefs: [npcMemorySourceRef("npcMind", proposal.proposalId || npcId, `NPC 心念 ${index + 1}`)],
+        tags: [ACTOR_MEMORY_TYPES[type]?.label || "印象", "NPC心念"],
+        requireKnownActor: true
+      };
+    })
+    .filter((proposal) => proposal.actorId);
+}
+
+function addNpcMemoryProposal(proposals, proposal) {
+  if (!proposal?.actorId || !proposal?.summary) return;
+  const existingForActor = proposals.filter((entry) => entry.actorId === proposal.actorId).length;
+  if (existingForActor >= ACTOR_MEMORY_LIMITS.maxNpcMemoryPerActorPerTurn) return;
+  proposals.push(proposal);
+}
+
+function deriveNpcBackgroundMemoryProposals(worldState = {}, options = {}) {
+  const people = buildWorldPeopleView(worldState);
+  const relationshipByNpc = relationshipRowsByNpcId(worldState);
+  const maxProposals = clampNumber(
+    options.maxProposals,
+    0,
+    ACTOR_MEMORY_LIMITS.maxNpcMemoryProposals,
+    ACTOR_MEMORY_LIMITS.maxNpcMemoryProposals
+  );
+  if (!maxProposals) return [];
+  const rows = [];
+  for (const npc of Array.isArray(people.npcs) ? people.npcs : []) {
+    const npcId = cleanId(npc.id, "");
+    if (!npcId || npc.alive === false || npc.knownToPlayer === false || npc.visibility === "hidden") continue;
+    const relationship = relationshipByNpc.get(npcId) || {};
+    const relationValue = clampNumber(relationship.relationship, -100, 100, 0);
+    const trust = clampNumber(relationship.trust, 0, 100, 0);
+    const resentment = clampNumber(relationship.resentment ?? npc.resentmentRisk, 0, 100, 0);
+    const obligation = clampNumber(relationship.obligation, 0, 100, 0);
+    const fear = clampNumber(relationship.fear, 0, 100, 0);
+    const influence = clampNumber(npc.influence, 0, 100, 0);
+    const ambition = clampNumber(npc.temperament?.ambition, 0, 100, 0);
+    const familyRisk = Math.max(
+      clampNumber(npc.legalRisk, 0, 100, 0),
+      clampNumber(npc.impeachmentRisk, 0, 100, 0),
+      clampNumber(Number(npc.debts) > 0 ? Math.min(100, Number(npc.debts) / 10) : 0, 0, 100, 0)
+    );
+    const salienceScore = Math.round(
+      Math.abs(relationValue) * 0.32 +
+      trust * 0.12 +
+      resentment * 0.24 +
+      obligation * 0.18 +
+      fear * 0.12 +
+      influence * 0.12 +
+      ambition * 0.1 +
+      familyRisk * 0.18
+    );
+    if (salienceScore < clampNumber(options.minSalience, 0, 100, ACTOR_MEMORY_LIMITS.minNpcMemorySalience)) {
+      continue;
+    }
+    rows.push({ npc, relationship, salienceScore, relationValue, trust, resentment, obligation, fear, influence, ambition, familyRisk });
+  }
+
+  const proposals = [];
+  for (const row of rows.sort((first, second) => second.salienceScore - first.salienceScore || String(first.npc.id).localeCompare(String(second.npc.id)))) {
+    const npcId = cleanId(row.npc.id, "");
+    const actorId = normalizeActorId(`npc:${npcId}`, "");
+    const name = cleanText(row.npc.name, "可见人物", 48);
+    const sourceRefs = [npcMemorySourceRef("worldPeopleView", npcId, name)];
+    const salienceBase = Math.max(ACTOR_MEMORY_LIMITS.minNpcMemorySalience, Math.min(88, row.salienceScore + 40));
+    const currentGoal = cleanText(row.npc.currentGoal || row.relationship.recentIntent, "", 110);
+    if (currentGoal) {
+      addNpcMemoryProposal(proposals, {
+        actorId,
+        type: "current_goal",
+        visibility: "player_visible",
+        subjectType: "player",
+        subjectId: "P1",
+        summary: `${name}当前记挂：${currentGoal}`,
+        salience: salienceBase,
+        confidence: 0.72,
+        sourceType: "npc_memory_heuristic",
+        sourceLabel: "背景 NPC 目标",
+        sourceRefs,
+        tags: ["目标", "背景NPC"],
+        requireKnownActor: true
+      });
+    }
+    if (row.resentment >= 24 || row.relationValue <= -18) {
+      addNpcMemoryProposal(proposals, {
+        actorId,
+        type: "grievance",
+        visibility: "player_visible",
+        subjectType: "player",
+        subjectId: "P1",
+        summary: `${name}把与玩家的龃龉记在心里，怨望仍待化解。`,
+        salience: Math.max(salienceBase, 70),
+        confidence: 0.74,
+        sourceType: "npc_memory_heuristic",
+        sourceLabel: "背景 NPC 恩怨",
+        sourceRefs,
+        tags: ["怨望", "背景NPC"],
+        requireKnownActor: true
+      });
+    }
+    if (row.obligation >= 8 || row.relationValue >= 24 || row.trust >= 66) {
+      addNpcMemoryProposal(proposals, {
+        actorId,
+        type: row.obligation >= 8 ? "obligation" : "favor",
+        visibility: "player_visible",
+        subjectType: "player",
+        subjectId: "P1",
+        summary: `${name}记得与玩家之间尚有人情往来可循。`,
+        salience: Math.max(salienceBase, 66),
+        confidence: 0.76,
+        sourceType: "npc_memory_heuristic",
+        sourceLabel: "背景 NPC 人情",
+        sourceRefs,
+        tags: ["人情", "背景NPC"],
+        requireKnownActor: true
+      });
+    }
+    if (row.familyRisk >= 20) {
+      addNpcMemoryProposal(proposals, {
+        actorId,
+        type: "family_risk",
+        visibility: "player_visible",
+        subjectType: "player",
+        subjectId: "P1",
+        summary: `${name}家门与身家风险已成可见牵挂，行事更趋谨慎。`,
+        salience: Math.max(salienceBase, 64),
+        confidence: 0.68,
+        sourceType: "npc_memory_heuristic",
+        sourceLabel: "背景 NPC 家族风险",
+        sourceRefs,
+        tags: ["家族风险", "背景NPC"],
+        requireKnownActor: true
+      });
+    }
+    if (row.fear >= 24) {
+      addNpcMemoryProposal(proposals, {
+        actorId,
+        type: "fear",
+        visibility: "player_visible",
+        subjectType: "player",
+        subjectId: "P1",
+        summary: `${name}对玩家或局势心存畏惧，后续往来会更加避让。`,
+        salience: Math.max(salienceBase, 60),
+        confidence: 0.66,
+        sourceType: "npc_memory_heuristic",
+        sourceLabel: "背景 NPC 畏惧",
+        sourceRefs,
+        tags: ["畏惧", "背景NPC"],
+        requireKnownActor: true
+      });
+    }
+    if (row.ambition >= 66 && row.influence >= 35) {
+      addNpcMemoryProposal(proposals, {
+        actorId,
+        type: "ambition",
+        visibility: "player_visible",
+        subjectType: "player",
+        subjectId: "P1",
+        summary: `${name}的进取之心与声势渐显，可能借玩家行止衡量机会。`,
+        salience: Math.max(salienceBase, 60),
+        confidence: 0.64,
+        sourceType: "npc_memory_heuristic",
+        sourceLabel: "背景 NPC 野心",
+        sourceRefs,
+        tags: ["野心", "背景NPC"],
+        requireKnownActor: true
+      });
+    }
+    if (proposals.length >= maxProposals) break;
+  }
+  return proposals.slice(0, maxProposals);
+}
+
 function collectTurnActorMemoryProposalResults(worldState = {}, context = {}) {
   const providerResults = (Array.isArray(context.providerMemoryProposals) ? context.providerMemoryProposals : [])
     .map((proposal) => proposeActorMemoryUpdate(proposal.actorId, proposal, {
@@ -723,15 +989,29 @@ function collectTurnActorMemoryProposalResults(worldState = {}, context = {}) {
       requireKnownActor: true,
       sourceType: "ai_memory_proposal"
     }));
+  const npcMindResults = [
+    ...(Array.isArray(context.npcMindResults) ? context.npcMindResults : []),
+    ...(context.npcMindResult ? [context.npcMindResult] : [])
+  ];
+  const npcMindProposals = npcMindResults.flatMap(memoryProposalsFromNpcMindResult);
+  const npcBackgroundProposals = context.npcMemory?.includeBackground || context.includeBackgroundNpcMemory
+    ? deriveNpcBackgroundMemoryProposals(worldState, context.npcMemory || {})
+    : [];
   const proposals = [
     ...(Array.isArray(context.relationshipChanges) ? context.relationshipChanges : [])
       .map(memoryProposalFromRelationshipChange)
       .filter(Boolean),
     ...memoryProposalsFromActiveRequest(context.activeNpcRequest),
-    ...memoryProposalsFromMonthlyBriefing(context.playerMonthlyBriefing)
+    ...memoryProposalsFromMonthlyBriefing(context.playerMonthlyBriefing),
+    ...npcMindProposals,
+    ...npcBackgroundProposals
   ];
   const serverResults = proposals
-    .map((proposal) => proposeActorMemoryUpdate(proposal.actorId, proposal, { worldState }));
+    .map((proposal) => proposeActorMemoryUpdate(proposal.actorId, proposal, {
+      worldState,
+      requireKnownActor: proposal.requireKnownActor === true,
+      sourceType: proposal.sourceType
+    }));
   return [...providerResults, ...serverResults];
 }
 
@@ -877,9 +1157,11 @@ module.exports = {
   buildActorMemoryView,
   createInitialActorMemoryLedger,
   decayActorMemoryLedger,
+  deriveNpcBackgroundMemoryProposals,
   deriveActorMemoryUpdatesForTurn,
   ensureActorMemoryLedgerState,
   isVisibleActorId,
+  memoryProposalsFromNpcMindResult,
   proposeActorMemoryUpdate,
   summarizeActorMemoryForPrompt
 };
