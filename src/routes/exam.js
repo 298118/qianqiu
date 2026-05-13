@@ -92,6 +92,7 @@ const {
   redactAiSettingsForClient,
   resolveAiSettingsForSession
 } = require("../game/aiSettings");
+const { buildAiControlAuditView } = require("../game/aiControlAudit");
 const {
   buildPlayerMonthlyBriefingView,
   ensurePlayerMonthlyBriefingState
@@ -115,10 +116,15 @@ function toExamPayload(worldState) {
   const worldPeopleView = buildWorldPeopleView(worldState);
   const officialPostingsView = buildOfficialPostingsView(worldState);
   const { settings, routePolicy } = resolveAiSettingsForSession(worldState);
+  const aiInvocationSummaryView = buildAiInvocationSummaryView(worldState, routePolicy);
   return {
     sessionId: worldState.sessionId,
     aiSettingsView: redactAiSettingsForClient({ ...settings, routePolicy }),
-    aiInvocationSummaryView: buildAiInvocationSummaryView(worldState, routePolicy),
+    aiInvocationSummaryView,
+    aiControlAuditView: buildAiControlAuditView(worldState, {
+      routePolicy,
+      aiInvocationSummaryView
+    }),
     examId: activeExam.examId,
     level: activeExam.level,
     examName: activeExam.examName,
@@ -575,10 +581,15 @@ router.post("/submit", async (req, res, next) => {
       const worldGeographyView = buildWorldGeographyView(worldState);
       const worldPeopleView = buildWorldPeopleView(worldState);
       const officialPostingsView = buildOfficialPostingsView(worldState);
+      const aiInvocationSummaryView = buildAiInvocationSummaryView(worldState, routePolicy);
       return {
         sessionId: worldState.sessionId,
         aiSettingsView: redactAiSettingsForClient({ ...worldState.aiSettings, routePolicy }),
-        aiInvocationSummaryView: buildAiInvocationSummaryView(worldState, routePolicy),
+        aiInvocationSummaryView,
+        aiControlAuditView: buildAiControlAuditView(worldState, {
+          routePolicy,
+          aiInvocationSummaryView
+        }),
         examId,
         level: exam.level,
         examName: activeExam.examName,

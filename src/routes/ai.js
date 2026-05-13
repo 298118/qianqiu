@@ -6,6 +6,7 @@ const {
   resolveAiSettingsForSession,
   updateAiSettings
 } = require("../game/aiSettings");
+const { buildAiControlAuditView } = require("../game/aiControlAudit");
 const { mutateSession, readSession } = require("../storage/sessionStore");
 
 const router = express.Router();
@@ -29,10 +30,15 @@ router.get("/settings/:sessionId", async (req, res, next) => {
   try {
     const worldState = await readSession(req.params.sessionId);
     const { settings, routePolicy } = resolveAiSettingsForSession(worldState);
+    const aiInvocationSummaryView = buildAiInvocationSummaryView(worldState, routePolicy);
     res.json({
       sessionId: worldState.sessionId,
       aiSettingsView: redactAiSettingsForClient({ ...settings, routePolicy }),
-      aiInvocationSummaryView: buildAiInvocationSummaryView(worldState, routePolicy)
+      aiInvocationSummaryView,
+      aiControlAuditView: buildAiControlAuditView(worldState, {
+        routePolicy,
+        aiInvocationSummaryView
+      })
     });
   } catch (error) {
     next(error);
@@ -48,10 +54,15 @@ router.post("/settings/:sessionId", async (req, res, next) => {
 
     const payload = await mutateSession(req.params.sessionId, async (worldState) => {
       const result = updateAiSettings(worldState, patch);
+      const { routePolicy } = resolveAiSettingsForSession(worldState);
       return {
         sessionId: worldState.sessionId,
         aiSettingsView: result.aiSettingsView,
-        aiInvocationSummaryView: result.aiInvocationSummaryView
+        aiInvocationSummaryView: result.aiInvocationSummaryView,
+        aiControlAuditView: buildAiControlAuditView(worldState, {
+          routePolicy,
+          aiInvocationSummaryView: result.aiInvocationSummaryView
+        })
       };
     });
 

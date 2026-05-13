@@ -10,7 +10,7 @@
 - S49-S67 本地数据库基础、SQLite 业务表、双模式验收、超大动态世界内容与 S60 内容契约：[LOCAL_DATABASE_AND_WORLD_CONTENT_ARCHIVE.md](LOCAL_DATABASE_AND_WORLD_CONTENT_ARCHIVE.md)。旧分卷归档和 S60 契约文件保留为跳转页。
 - S70 AI 编排与权力工具：[AI_ORCHESTRATION_ARCHIVE.md](AI_ORCHESTRATION_ARCHIVE.md)。S70 规划源头仍见 [AI_ORCHESTRATION_ROADMAP.md](AI_ORCHESTRATION_ROADMAP.md)。
 
-当前活动路线图已交接到 S71：S68-S69 的书生主线科举、读书、评卷与授官制度已归档，S70.1-S70.14 的 AI prompt/tool/actor/多模型路由、AI 设置、月报、跳时、记忆、地图接口、provider AI-first smoke 与 JSON/SQLite parity 已归档。S71 作为 S70 之后的数据库玩法化、维护、安全检索和 redacted API 专项，规划见 [DATABASE_GAMEPLAY_RESOLVER_ROADMAP.md](DATABASE_GAMEPLAY_RESOLVER_ROADMAP.md)。S71.0 数据库玩法化专项契约已固定在 [DATABASE_RESOLVER_INPUT_CONTRACT.md](DATABASE_RESOLVER_INPUT_CONTRACT.md)，S71.1 已落地只读 `resolverInputContext` 输入层，S71.2 已落地本地 SQLite schema migration 与维护层，S71.3 已落地安全全文检索 / 本地搜索，S71.4 已落地 redacted player API 与本机开发诊断 API，S71.5 已落地财政与城市政策 resolver，S71.6 已落地地方案件与刑名 resolver，S71.7 已落地军务与外交 resolver，S71.8 已落地压力驱动事件生成器，S71.9 已落地多 actor 场景运行时，S71.10 已落地 NPC 记忆账本；下一步启动 S71.11 AI 调动审计面板。数据库方向继续只考虑本机 JSON/SQLite 持久化增强；远程存档、账号体系、多人同步、云端冲突解决和托管数据库不进入当前规划。
+当前活动路线图已交接到 S71：S68-S69 的书生主线科举、读书、评卷与授官制度已归档，S70.1-S70.14 的 AI prompt/tool/actor/多模型路由、AI 设置、月报、跳时、记忆、地图接口、provider AI-first smoke 与 JSON/SQLite parity 已归档。S71 作为 S70 之后的数据库玩法化、维护、安全检索和 redacted API 专项，规划见 [DATABASE_GAMEPLAY_RESOLVER_ROADMAP.md](DATABASE_GAMEPLAY_RESOLVER_ROADMAP.md)。S71.0 数据库玩法化专项契约已固定在 [DATABASE_RESOLVER_INPUT_CONTRACT.md](DATABASE_RESOLVER_INPUT_CONTRACT.md)，S71.1 已落地只读 `resolverInputContext` 输入层，S71.2 已落地本地 SQLite schema migration 与维护层，S71.3 已落地安全全文检索 / 本地搜索，S71.4 已落地 redacted player API 与本机开发诊断 API，S71.5 已落地财政与城市政策 resolver，S71.6 已落地地方案件与刑名 resolver，S71.7 已落地军务与外交 resolver，S71.8 已落地压力驱动事件生成器，S71.9 已落地多 actor 场景运行时，S71.10 已落地 NPC 记忆账本，S71.11 已落地 AI 调动审计面板；下一步启动 S71.12 验收与归档。数据库方向继续只考虑本机 JSON/SQLite 持久化增强；远程存档、账号体系、多人同步、云端冲突解决和托管数据库不进入当前规划。
 
 ## 1. 开发规范继承
 
@@ -82,7 +82,7 @@
 
 ## 3. 当前边界与已归档摘要
 
-当前活动工作已交接到 S71.11。S49-S67 的本地数据库与大世界内容实现细节已经迁入统一归档，S68-S69 科举深化已迁入科举归档，S70 AI 编排已迁入 S70 归档；活动台账只保留索引和后续边界：
+当前活动工作已交接到 S71.12。S49-S67 的本地数据库与大世界内容实现细节已经迁入统一归档，S68-S69 科举深化已迁入科举归档，S70 AI 编排已迁入 S70 归档；活动台账只保留索引和后续边界：
 
 | 范围 | 状态 | 摘要 | 归档 |
 | --- | --- | --- | --- |
@@ -131,7 +131,7 @@
 | S71.8 | DONE | 压力驱动事件生成器：从粮价、水利、腐败、边防、NPC 怨怼和情报压力生成事件候选 | 2026-05-13 | Codex / 子代理 | `5ead9e5` |
 | S71.9 | DONE | 多 actor 场景运行时：朝议、堂审、会盟、战役 scene-local time 与 actor proposal 编排 | 2026-05-13 | Codex / 子代理 | `6440614` |
 | S71.10 | DONE | NPC 记忆账本：高显著 NPC 长期记忆、人情债、恩怨、家族风险和背景 NPC heuristic | 2026-05-13 | Codex / 子代理 | `a88b429` |
-| S71.11 | TODO | AI 调动审计面板：工具摘要、拒绝原因、成本、公开结果和 hidden-safe 开发诊断，不泄漏 raw prompt/proposal | - | - | S71.10 后 |
+| S71.11 | DONE | AI 调动审计面板：工具摘要、拒绝原因、成本、公开结果和 hidden-safe 开发诊断，不泄漏 raw prompt/proposal | 2026-05-13 | Codex / 子代理 | `待本次提交` |
 | S71.12 | TODO | S71 验收与归档：JSON/SQLite parity、Mock/no-key、provider smoke、browser smoke、hidden-token 和完整书生路径回归 | - | - | S71.11 后 |
 
 ## 5. S68-S69：科举、读书、评卷与授官深化
@@ -208,6 +208,35 @@ S71 详细规划见 [DATABASE_GAMEPLAY_RESOLVER_ROADMAP.md](DATABASE_GAMEPLAY_RE
 4. S71.9-S71.12：接入多 actor 场景、NPC 记忆和 AI 调动审计面板，最后做 dual-mode、Mock/no-key、browser 和 provider smoke 归档。
 
 ## 8. 进度记录
+
+### 2026-05-13
+
+工具：Codex、子代理。
+
+步骤：S71.11 AI 调动审计面板。
+
+提交：`待本次提交`。
+
+完成：
+
+- 新增 `src/game/aiControlAudit.js`，输出 `s71.11-ai-control-audit.v1` hidden-safe route view。该 view 复用 `aiInvocationSummaryView` 的任务/provider/model/耗时/工具调用/拒绝摘要，并从 `eventArchiveView`、`actorMemoryView`、`playerMonthlyBriefingView` 和 `sessionSummaryView` 汇总公开结果；所有文本都会再次清洗 `server.*`、raw prompt/provider/audit/proposal、SQLite 表/行、本地路径、key 和 hidden/raw ledger 形状。
+- `src/routes/game.js`、`src/routes/exam.js` 与 `src/routes/ai.js` 已在 start/state/player-state/turn/SSE、考试取题/交卷和 AI 设置 GET/POST payload 中返回 `aiControlAuditView`。`src/game/redactedState.js` 的开发诊断新增 `diagnostics.ai.controlAudit`，继续通过 S71.4 本机诊断门禁与二次清洗，不暴露 raw state、raw audit、provider payload、完整 prompt、SQLite 原始行、本地路径或 key。
+- 浏览器新增 `#ai-control-audit-panel`，与 AI 设置面板并列显示公开结果、工具预算/调用/拒绝数、近期调动和服务器裁决边界。前端只读取 `payload.aiControlAuditView`，不从 `worldState.aiSettings`、raw audit table、provider payload、prompt retrieval index 或 raw ledger 拼面板；样式补 `overflow-wrap` 与紧凑网格，降低长 provider/model/reason 文本横向溢出风险。
+- 新增 `test/aiControlAudit.test.js`，并扩展 `test/aiSettingsRoute.test.js`、`test/redactedState.test.js`、`test/publicAppSource.test.js` 和 `test/streamingTurnRoute.test.js`，覆盖 route/player-state/SSE/dev diagnostics 接线、前端只读 route view、路径/key/server.* canary 清洗和公开结果/拒绝摘要不泄漏。
+- 同步 README、brief、architecture、动态数据库规划、S71 路线图、AI 控制矩阵和共享上下文，把下一步切到 S71.12 验收与归档。
+
+验证：
+
+- 已通过：`node --check src/game/aiControlAudit.js`、`node --check src/routes/game.js`、`node --check src/routes/exam.js`、`node --check src/routes/ai.js`、`node --check src/game/redactedState.js`、`node --check public/app.js`。
+- 已通过：`node --check test/aiControlAudit.test.js`、`node --check test/aiSettingsRoute.test.js`、`node --check test/redactedState.test.js`、`node --check test/publicAppSource.test.js`、`node --check test/streamingTurnRoute.test.js`。
+- 已通过：`node --test test/aiControlAudit.test.js test/aiSettingsRoute.test.js test/redactedState.test.js test/publicAppSource.test.js test/streamingTurnRoute.test.js`（26/26）。
+- 已通过：`node --test test/aiControlAudit.test.js test/aiSettingsRoute.test.js test/redactedState.test.js test/publicAppSource.test.js test/streamingTurnRoute.test.js test/gamePlayerStateRoute.test.js test/devDiagnosticsRoute.test.js test/examHonorsRoute.test.js test/appointmentTracksRoute.test.js test/actorMemoryRoute.test.js test/playerMonthlyBriefingRoute.test.js`（41/41）。
+- 已通过：`npm run check:docs-governance`、`node --test test/documentationGovernance.test.js` 和 `git diff --check`。
+
+风险/遗留：
+
+- S71.11 不新增 SQLite 审计业务表、provider tracing 后端、真实 provider 长循环或单独开发者 raw audit 浏览器；面板当前只读服务器已清洗 route view 与 bounded AI observability。
+- 当前展示的是预算/调用/拒绝摘要，不声称真实 token 花费；后续 S71.12 需做 JSON/SQLite parity、Mock/no-key、provider smoke、browser smoke、hidden-token 和完整书生路径回归。
 
 ### 2026-05-13
 
@@ -800,7 +829,7 @@ S71 详细规划见 [DATABASE_GAMEPLAY_RESOLVER_ROADMAP.md](DATABASE_GAMEPLAY_RE
 
 风险/遗留：
 
-- S70.9 记录的是 session 内 bounded AI 调动摘要，不新增 SQLite 审计表、provider tracing 后端或真实多模型长跑；更完整的工具调用审计面板与数据库持久化审计仍留给 S71.11。
+- S70.9 记录的是 session 内 bounded AI 调动摘要，不新增 SQLite 审计表、provider tracing 后端或真实多模型长跑；更完整的工具调用审计面板已由 S71.11 以 hidden-safe route view 形式接上，数据库持久化审计仍留给后续专项。
 - 设置面板只影响 S70.8 route policy 和预算，不让 critic/safety 调工具，不改变领域 resolver 裁决，不开启 hidden/raw/直写库能力。
 
 下一步：

@@ -138,6 +138,32 @@ test("S70.9 AI control panel reads route AI views instead of raw world state set
   assert.doesNotMatch(aiPanelSource, /OPENAI_API_KEY|DEEPSEEK_API_KEY|MIMO_API_KEY|ANTHROPIC_API_KEY/);
 });
 
+test("S71.11 AI control audit panel reads route audit view only", () => {
+  const source = publicAppSource();
+  const auditPanelSource = sourceBetween(
+    source,
+    "function getAiControlAuditView(",
+    "function appendOptionalPanel("
+  );
+
+  assert.match(source, /let currentAiControlAuditView = null;/);
+  assert.match(source, /function renderAiControlAuditPanel\(aiControlAuditView = currentAiControlAuditView\)/);
+  assert.match(source, /payload\.aiControlAuditView/);
+  assert.match(source, /currentAiControlAuditView = getAiControlAuditView\(aiControlAuditView\);/);
+  assert.match(source, /appendOptionalPanel\(renderAiControlAuditPanel\(\)\);/);
+  assert.match(auditPanelSource, /publicPanel/);
+  assert.match(auditPanelSource, /routeCostSummary/);
+  assert.match(auditPanelSource, /toolCallSummary/);
+  assert.match(auditPanelSource, /recentInvocations/);
+
+  assert.doesNotMatch(auditPanelSource, /worldState\?\.aiSettings/);
+  assert.doesNotMatch(auditPanelSource, /worldState\.aiSettings/);
+  assert.doesNotMatch(auditPanelSource, /worldState\.actorMemoryLedger/);
+  assert.doesNotMatch(auditPanelSource, /event_log|ai_change_proposals|world_state_json/);
+  assert.doesNotMatch(auditPanelSource, /rawPrompt|rawProvider|providerPayload|statePatch/);
+  assert.doesNotMatch(auditPanelSource, /prompt_retrieval_index|world_sessions/);
+});
+
 test("S70.10 player monthly briefing panel reads route view and turn feedback", () => {
   const source = publicAppSource();
   const monthlyPanelSource = sourceBetween(

@@ -1,5 +1,6 @@
 const { redactSecrets } = require("../ai/diagnostics");
 const { buildAiInvocationSummaryView, resolveAiSettingsForSession } = require("./aiSettings");
+const { buildAiControlAuditDiagnostics } = require("./aiControlAudit");
 const {
   buildResolverInputContext,
   summarizeResolverInputForAudit
@@ -297,6 +298,10 @@ function buildDeveloperDiagnostics(recordOrWorldState = {}, options = {}) {
   const worldState = record.worldState || {};
   const routePolicy = resolveAiSettingsForSession(worldState).routePolicy;
   const aiInvocationSummaryView = buildAiInvocationSummaryView(worldState, routePolicy);
+  const aiControlAudit = buildAiControlAuditDiagnostics(worldState, {
+    routePolicy,
+    aiInvocationSummaryView
+  });
   const safeSearchRows = buildSafeSearchRows(worldState);
   const adapter = options.storageAdapter || {};
 
@@ -336,7 +341,8 @@ function buildDeveloperDiagnostics(recordOrWorldState = {}, options = {}) {
     ai: {
       routeCostSummary: aiInvocationSummaryView.routeCostSummary,
       toolCallSummary: aiInvocationSummaryView.toolCallSummary,
-      recentInvocations: aiInvocationSummaryView.recentInvocations
+      recentInvocations: aiInvocationSummaryView.recentInvocations,
+      controlAudit: aiControlAudit
     },
     safety: {
       localOnly: true,

@@ -140,9 +140,13 @@ test("POST /api/game/turn streams extracted provider narrative before final_stat
     .map((event) => event.data.text)
     .join("");
   const finalState = events.find((event) => event.event === "final_state");
+  const preview = events.find((event) => event.event === "state_preview" && event.data?.aiControlAuditView);
 
   assert.equal(narrative, payload.narrative);
   assert.ok(finalState);
+  assert.ok(preview);
+  assert.equal(preview.data.aiControlAuditView.schemaVersion, "s71.11-ai-control-audit.v1");
+  assert.equal(finalState.data.aiControlAuditView.schemaVersion, "s71.11-ai-control-audit.v1");
   assert.equal(finalState.data.worldState.turnCount, 1);
   assert.equal(finalState.data.worldState.player.academia, 13);
 

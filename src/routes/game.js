@@ -114,6 +114,7 @@ const {
   resolveAiSettingsForSession,
   updateAiSettings
 } = require("../game/aiSettings");
+const { buildAiControlAuditView } = require("../game/aiControlAudit");
 const {
   buildPlayerMonthlyBriefingView,
   ensurePlayerMonthlyBriefingState,
@@ -380,9 +381,14 @@ function buildCommonTurnViews(worldState, options = {}) {
   const worldPeopleView = buildWorldPeopleView(worldState);
   const officialPostingsView = buildOfficialPostingsView(worldState);
   const { settings, routePolicy } = resolveAiSettingsForSession(worldState);
+  const aiInvocationSummaryView = buildAiInvocationSummaryView(worldState, routePolicy);
   return {
     aiSettingsView: redactAiSettingsForClient({ ...settings, routePolicy }),
-    aiInvocationSummaryView: buildAiInvocationSummaryView(worldState, routePolicy),
+    aiInvocationSummaryView,
+    aiControlAuditView: buildAiControlAuditView(worldState, {
+      routePolicy,
+      aiInvocationSummaryView
+    }),
     examCalendarView: buildExamCalendarView(worldState),
     examRivalView: buildExamRivalView(worldState),
     examProcedureView: buildExamProcedureView(worldState),
@@ -1051,6 +1057,7 @@ async function streamTurn(res, sessionId, input) {
       relationshipChanges: payload.relationshipChanges,
       aiSettingsView: payload.aiSettingsView,
       aiInvocationSummaryView: payload.aiInvocationSummaryView,
+      aiControlAuditView: payload.aiControlAuditView,
       examCalendarView: payload.examCalendarView,
       examRivalView: payload.examRivalView,
       examProcedureView: payload.examProcedureView,

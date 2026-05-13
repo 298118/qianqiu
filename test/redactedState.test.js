@@ -117,6 +117,9 @@ test("S71.4 developer diagnostics expose statistics without raw hidden material"
   assert.equal(diagnostics.safety.stateSnapshotIncluded, false);
   assert.equal(diagnostics.safety.auditRowsIncluded, false);
   assert.ok(diagnostics.resolverInputSummary);
+  assert.equal(diagnostics.ai.controlAudit.schemaVersion, "s71.11-ai-control-audit.v1");
+  assert.equal(diagnostics.ai.controlAudit.safety.promptTextIncluded, false);
+  assert.equal(diagnostics.ai.controlAudit.safety.databaseRowsIncluded, false);
   assert.doesNotMatch(serialized, /SEALED_|event_log|ai_change_proposals|world_state_json|prompt_retrieval_index|safe_search_index|rawProviderPayload|sk-redacted-route-secret/);
 });
 

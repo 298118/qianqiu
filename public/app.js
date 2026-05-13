@@ -57,6 +57,7 @@ let currentEventArchiveView = null;
 let currentInformationPanelPageView = null;
 let currentAiSettingsView = null;
 let currentAiInvocationSummaryView = null;
+let currentAiControlAuditView = null;
 let currentPlayerMonthlyBriefingView = null;
 let currentInformationPanelTab = "world-geography";
 let currentInformationPanelControls = {};
@@ -3682,6 +3683,10 @@ function getAiInvocationSummaryView(aiInvocationSummaryView) {
     : null;
 }
 
+function getAiControlAuditView(aiControlAuditView) {
+  return getRouteView(aiControlAuditView);
+}
+
 function providerOptionLabel(option = {}) {
   const suffix = option.available ? "" : "（未配置）";
   return `${option.provider}${suffix}`;
@@ -3751,6 +3756,7 @@ async function submitAiSettingsPatch(form) {
   }
   currentAiSettingsView = getAiSettingsView(payload.aiSettingsView);
   currentAiInvocationSummaryView = getAiInvocationSummaryView(payload.aiInvocationSummaryView);
+  currentAiControlAuditView = getAiControlAuditView(payload.aiControlAuditView);
   renderScholarPanel(currentWorldState);
 }
 
@@ -3916,6 +3922,83 @@ function renderAiControlPanel(aiSettingsView = currentAiSettingsView, aiInvocati
   return panel;
 }
 
+function renderAiControlAuditPanel(aiControlAuditView = currentAiControlAuditView) {
+  const audit = getAiControlAuditView(aiControlAuditView);
+  if (!audit) return null;
+
+  const publicPanel = audit.publicPanel || {};
+  const developerPanel = audit.developerPanel || {};
+  const routeCostSummary = developerPanel.routeCostSummary || {};
+  const toolCallSummary = developerPanel.toolCallSummary || {};
+
+  const panel = document.createElement("section");
+  panel.className = "ai-control-audit-panel";
+  panel.id = "ai-control-audit-panel";
+  panel.dataset.schemaVersion = audit.schemaVersion || "";
+  panel.dataset.source = "route-view";
+  panel.dataset.serverProjection = "true";
+
+  const header = document.createElement("header");
+  appendIfText(header, "strong", publicPanel.title || "AI 调动审计");
+  appendIfText(header, "span", `第 ${audit.generatedAtTurn ?? 0} 回 · 公开摘要`);
+
+  const summary = document.createElement("p");
+  summary.className = "ai-audit-summary";
+  summary.textContent = publicPanel.summary || "暂无可见调动摘要。";
+
+  const stats = document.createElement("section");
+  stats.className = "ai-audit-stats";
+  stats.append(
+    createPanelValue("公开结果", publicPanel.publicResultCount ?? 0, "p"),
+    createPanelValue("工具拒绝", publicPanel.rejectedToolCallCount ?? 0, "p"),
+    createPanelValue("调动记录", developerPanel.recentInvocations?.length ?? 0, "p"),
+    createPanelValue("工具预算", routeCostSummary.maxToolCalls ?? 0, "p"),
+    createPanelValue("工具调用", toolCallSummary.recentToolCalls ?? 0, "p")
+  );
+
+  const results = document.createElement("section");
+  results.className = "ai-audit-results";
+  (publicPanel.publicResults || []).slice(0, 4).forEach((item) => {
+    const entry = document.createElement("article");
+    entry.className = "ai-audit-result";
+    appendIfText(entry, "strong", item.title || "公开结果");
+    appendIfText(entry, "p", item.summary || "");
+    const meta = [item.statusLabel, item.dateLabel].filter(Boolean).join(" · ");
+    appendIfText(entry, "span", meta || item.kind || "已记录");
+    results.appendChild(entry);
+  });
+  if (!results.childElementCount) {
+    appendIfText(results, "p", "暂无可见公开结果。");
+  }
+
+  const invocations = document.createElement("section");
+  invocations.className = "ai-audit-invocations";
+  (developerPanel.recentInvocations || []).slice(-4).forEach((item) => {
+    const entry = document.createElement("p");
+    entry.textContent = `${item.label || item.taskType}：${item.provider} / ${item.model}，${item.status}，${item.durationMs}ms，工具 ${item.toolCallCount ?? 0}/${item.rejectedToolCallCount ?? 0}`;
+    invocations.appendChild(entry);
+  });
+
+  const boundaries = document.createElement("section");
+  boundaries.className = "ai-audit-boundaries";
+  (developerPanel.proposalBoundaries || []).forEach((item) => {
+    const entry = document.createElement("p");
+    entry.textContent = `${item.label || "边界"}：${item.summary || item.status || "服务器裁决"}`;
+    boundaries.appendChild(entry);
+  });
+  (toolCallSummary.rejectionReasons || []).slice(0, 3).forEach((reason) => {
+    const entry = document.createElement("p");
+    entry.textContent = `拒绝：${reason}`;
+    boundaries.appendChild(entry);
+  });
+
+  panel.append(header, summary, stats, results);
+  if (invocations.childElementCount) panel.appendChild(invocations);
+  if (boundaries.childElementCount) panel.appendChild(boundaries);
+  appendIfText(panel, "p", audit.hiddenNotice || "", "ai-control-notice");
+  return panel;
+}
+
 function appendOptionalPanel(panel) {
   if (panel) {
     scholarPanel.appendChild(panel);
@@ -4034,6 +4117,7 @@ function renderRolePanel(worldState) {
   appendOptionalPanel(createExamHonorBlock(currentExamHonorView, { className: "exam-honor-panel" }));
   appendOptionalPanel(renderWorldThreadPanel());
   appendOptionalPanel(renderAiControlPanel());
+  appendOptionalPanel(renderAiControlAuditPanel());
   appendOptionalPanel(renderInformationPanelShell());
   scholarPanel.appendChild(renderRelationshipPanel());
   appendOptionalPanel(renderExamRivalPanel());
@@ -4124,6 +4208,7 @@ function renderScholarPanel(worldState) {
   appendOptionalPanel(renderStudyProfilePanel());
   appendOptionalPanel(renderWorldThreadPanel());
   appendOptionalPanel(renderAiControlPanel());
+  appendOptionalPanel(renderAiControlAuditPanel());
   appendOptionalPanel(renderInformationPanelShell());
   scholarPanel.append(stepList, stats, lists, renderRelationshipPanel());
   appendOptionalPanel(renderExamRivalPanel());
@@ -4152,6 +4237,7 @@ function renderWorldState(
   informationPanelPageView,
   aiSettingsView,
   aiInvocationSummaryView,
+  aiControlAuditView,
   playerMonthlyBriefingView
 ) {
   currentWorldState = worldState;
@@ -4175,6 +4261,7 @@ function renderWorldState(
   currentInformationPanelPageView = getRouteView(informationPanelPageView);
   currentAiSettingsView = getAiSettingsView(aiSettingsView);
   currentAiInvocationSummaryView = getAiInvocationSummaryView(aiInvocationSummaryView);
+  currentAiControlAuditView = getAiControlAuditView(aiControlAuditView);
   currentPlayerMonthlyBriefingView = getPlayerMonthlyBriefingView(playerMonthlyBriefingView);
   syncInformationControlsFromPageView(currentInformationPanelPageView);
   setStatus(worldState);
@@ -4205,6 +4292,7 @@ function renderPayloadWorldState(payload) {
     payload.informationPanelPageView,
     payload.aiSettingsView,
     payload.aiInvocationSummaryView,
+    payload.aiControlAuditView,
     payload.playerMonthlyBriefingView
   );
 }

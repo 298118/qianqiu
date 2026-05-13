@@ -66,15 +66,26 @@ test("S70.9 game start and state return AI settings and observability views", as
   assert.equal(started.response.status, 201);
   assert.equal(started.payload.aiSettingsView.schemaVersion, "s70.9-ai-settings.v1");
   assert.equal(started.payload.aiInvocationSummaryView.routeCostSummary.taskCount, 9);
+  assert.equal(started.payload.aiControlAuditView.schemaVersion, "s71.11-ai-control-audit.v1");
+  assert.equal(started.payload.aiControlAuditView.publicPanel.rejectedToolCallCount, 0);
   assert.ok(started.payload.aiInvocationSummaryView.recentInvocations.length >= 1);
   assertHiddenSafe(started.payload.aiSettingsView);
+  assertHiddenSafe(started.payload.aiControlAuditView);
 
   const stateResponse = await fetch(`${server.baseUrl}/api/game/state/${sessionId}`);
   const statePayload = await stateResponse.json();
   assert.equal(stateResponse.status, 200);
   assert.equal(statePayload.aiSettingsView.preset, "balanced");
   assert.equal(statePayload.aiInvocationSummaryView.routeCostSummary.taskCount, 9);
+  assert.equal(statePayload.aiControlAuditView.developerPanel.routeCostSummary.taskCount, 9);
   assertHiddenSafe(statePayload.aiInvocationSummaryView);
+  assertHiddenSafe(statePayload.aiControlAuditView);
+
+  const playerStateResponse = await fetch(`${server.baseUrl}/api/game/player-state/${sessionId}`);
+  const playerStatePayload = await playerStateResponse.json();
+  assert.equal(playerStateResponse.status, 200);
+  assert.equal(playerStatePayload.aiControlAuditView.schemaVersion, "s71.11-ai-control-audit.v1");
+  assertHiddenSafe(playerStatePayload.aiControlAuditView);
 });
 
 test("S70.9 settings route updates session route policy and rejects overreach", async (t) => {
@@ -128,6 +139,7 @@ test("S70.9 settings route updates session route policy and rejects overreach", 
   assert.equal(narrator.toolBudget, 1);
   assert.equal(safetyGate.toolBudget, 0);
   assert.equal(safetyGate.reviewerOnly, true);
+  assert.equal(updated.payload.aiControlAuditView.schemaVersion, "s71.11-ai-control-audit.v1");
   assertHiddenSafe(updated.payload);
 
   const rejected = await postJson(`${server.baseUrl}/api/ai/settings/${sessionId}`, {
@@ -205,5 +217,8 @@ test("S70.9 turn payload includes updated AI settings and invocation summary", a
   assert.equal(turned.payload.aiSettingsView.taskRoutes.length, 9);
   assert.ok(turned.payload.aiInvocationSummaryView.recentInvocations.length >= 2);
   assert.ok(turned.payload.aiInvocationSummaryView.routeCostSummary.maxOutputTokens > 0);
+  assert.equal(turned.payload.aiControlAuditView.publicPanel.title, "AI 调动审计");
+  assert.equal(turned.payload.aiControlAuditView.developerPanel.recentInvocations.length >= 2, true);
   assertHiddenSafe(turned.payload.aiInvocationSummaryView);
+  assertHiddenSafe(turned.payload.aiControlAuditView);
 });

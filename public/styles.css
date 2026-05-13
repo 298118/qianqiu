@@ -651,7 +651,8 @@ button:disabled {
   border-top: 1px solid rgba(54, 39, 27, 0.16);
 }
 
-.ai-control-panel {
+.ai-control-panel,
+.ai-control-audit-panel {
   grid-column: 1 / -1;
   display: grid;
   gap: 8px;
@@ -661,27 +662,40 @@ button:disabled {
 }
 
 .ai-control-panel > header,
+.ai-control-audit-panel > header,
 .ai-control-form,
 .ai-route-row,
-.ai-observability {
+.ai-observability,
+.ai-audit-stats,
+.ai-audit-results,
+.ai-audit-result,
+.ai-audit-invocations,
+.ai-audit-boundaries {
   min-width: 0;
 }
 
-.ai-control-panel > header {
+.ai-control-panel > header,
+.ai-control-audit-panel > header {
   display: flex;
   align-items: baseline;
   justify-content: space-between;
   gap: 10px;
 }
 
-.ai-control-panel > header strong {
+.ai-control-panel > header strong,
+.ai-control-audit-panel > header strong {
   color: var(--cinnabar-deep);
   font-size: 0.98rem;
 }
 
 .ai-control-panel > header span,
+.ai-control-audit-panel > header span,
 .ai-control-notice,
-.ai-recent-invocations p {
+.ai-recent-invocations p,
+.ai-audit-summary,
+.ai-audit-result span,
+.ai-audit-invocations p,
+.ai-audit-boundaries p {
   color: var(--muted);
   font-size: 0.8rem;
   overflow-wrap: anywhere;
@@ -693,7 +707,8 @@ button:disabled {
 }
 
 .ai-control-fields,
-.ai-observability {
+.ai-observability,
+.ai-audit-stats {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(105px, 1fr));
   gap: 8px;
@@ -748,7 +763,9 @@ button:disabled {
   font-size: 0.78rem;
 }
 
-.ai-observability > div {
+.ai-observability > div,
+.ai-audit-stats > div,
+.ai-audit-result {
   min-width: 0;
   padding: 7px 8px;
   border: 1px solid rgba(54, 39, 27, 0.14);
@@ -758,9 +775,28 @@ button:disabled {
 
 .ai-observability p,
 .ai-control-notice,
-.ai-recent-invocations p {
+.ai-recent-invocations p,
+.ai-audit-summary,
+.ai-audit-result p,
+.ai-audit-result span,
+.ai-audit-invocations p,
+.ai-audit-boundaries p {
   margin: 0;
   line-height: 1.38;
+}
+
+.ai-audit-results,
+.ai-audit-invocations,
+.ai-audit-boundaries {
+  display: grid;
+  gap: 6px;
+}
+
+.ai-audit-result strong {
+  display: block;
+  color: var(--ink);
+  font-size: 0.84rem;
+  overflow-wrap: anywhere;
 }
 
 .information-panel > header,
@@ -2511,7 +2547,8 @@ button:disabled {
   }
 
   .ai-control-fields,
-  .ai-observability {
+  .ai-observability,
+  .ai-audit-stats {
     grid-template-columns: 1fr 1fr;
   }
 
