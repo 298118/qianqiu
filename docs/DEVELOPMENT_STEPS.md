@@ -9,7 +9,7 @@
 - S48 时间专项：[TIME_SPECIALTY_ROADMAP_ARCHIVE.md](TIME_SPECIALTY_ROADMAP_ARCHIVE.md)。
 - S49-S67 本地数据库基础、SQLite 业务表、双模式验收、超大动态世界内容与 S60 内容契约：[LOCAL_DATABASE_AND_WORLD_CONTENT_ARCHIVE.md](LOCAL_DATABASE_AND_WORLD_CONTENT_ARCHIVE.md)。旧分卷归档和 S60 契约文件保留为跳转页。
 
-当前活动路线图已交接到 S70：S68-S69 的书生主线科举、读书、评卷与授官制度已归档，S70.1 prompt pack 与工具协议、S70.2 actor 权限模型、S70.3 `game_ai_tools` 运行时、S70.4 NPC mind 基础、S70.5 制度场景 helper、S70.6 压力事件工具协议、S70.7 领域工具协议、S70.8 多模型路由/eval 基础、S70.9 AI 设置与可观测性和 S70.10 玩家官职月报已落地，下一步进入 S70.11 自然语言跳时。S71 作为 S70 之后的数据库玩法化、维护、安全检索和 redacted API 专项，规划见 [DATABASE_GAMEPLAY_RESOLVER_ROADMAP.md](DATABASE_GAMEPLAY_RESOLVER_ROADMAP.md)。数据库方向继续只考虑本机 JSON/SQLite 持久化增强；远程存档、账号体系、多人同步、云端冲突解决和托管数据库不进入当前规划。
+当前活动路线图已交接到 S70：S68-S69 的书生主线科举、读书、评卷与授官制度已归档，S70.1 prompt pack 与工具协议、S70.2 actor 权限模型、S70.3 `game_ai_tools` 运行时、S70.4 NPC mind 基础、S70.5 制度场景 helper、S70.6 压力事件工具协议、S70.7 领域工具协议、S70.8 多模型路由/eval 基础、S70.9 AI 设置与可观测性、S70.10 玩家官职月报和 S70.11 自然语言跳时已落地，下一步进入 S70.12 大模型记忆系统。S71 作为 S70 之后的数据库玩法化、维护、安全检索和 redacted API 专项，规划见 [DATABASE_GAMEPLAY_RESOLVER_ROADMAP.md](DATABASE_GAMEPLAY_RESOLVER_ROADMAP.md)。数据库方向继续只考虑本机 JSON/SQLite 持久化增强；远程存档、账号体系、多人同步、云端冲突解决和托管数据库不进入当前规划。
 
 ## 1. 开发规范继承
 
@@ -114,7 +114,7 @@
 | S70.8 | DONE | 多模型路由与仲裁：narrator、actor_mind、planner、domain_specialist、critic、safety 分工与成本边界 | 2026-05-12 | Codex / 子代理 | 1b52156 |
 | S70.9 | DONE | AI 设置与可观测性：按叙事、NPC、科举、政务、战争、记忆、critic/safety 配置模型路由、输出长度、并发、工具预算、审计面板和 hidden-safe 诊断 | 2026-05-12 | Codex / 子代理 | `cbb8b1e` |
 | S70.10 | DONE | 玩家官职月报与 AI 推动世界：每三旬生成职位化月报、上级态度、同僚风向、NPC 主动请求、下月风险和待裁决差事 | 2026-05-12 | Codex / 子代理 | `16d5f08` |
-| S70.11 | TODO | 自然语言跳时：解析“学习一月/养病半月/照旧处理一月”，拆为多旬 batch tick、事件中断和跳时总结 | - | - | S70.10 后 |
+| S70.11 | DONE | 自然语言跳时：解析“学习一月/养病半月/照旧处理一月”，拆为多旬 batch tick、事件中断和跳时总结 | 2026-05-13 | Codex / 子代理 | 待提交 |
 | S70.12 | TODO | 大模型记忆系统：actor memory ledger、fact/impression memory、月度 summary、安全检索、来源/置信度/可见性/衰减 | - | - | S70.11 后 |
 | S70.13 | TODO | 地图系统 AI 接口预留：`mapContextView`、`mapEntityRef`、地图可见性、移动/行军/赴任/赶考/外交 proposal schema | - | - | S70.12 后 |
 | S70.14 | TODO | 真实 MiMo 验收与 S70 归档：MiMo-required provider smoke、JSON/SQLite parity、Mock 开发安全网、hidden-token、越权工具、browser smoke 和归档 | - | - | S70.13 后 |
@@ -156,7 +156,7 @@ S68-S69 是书生主线的深度专项，详细提前规划见 [IMPERIAL_EXAM_DE
 
 ## 6. S70：AI 提示词、工具协议与多 AI 编排
 
-S70 是 MiMo + DeepSeek 之后的 AI 编排专项。S70.8 起，`src/ai/index.js` 已提供 task-aware provider facade；`AI_PROVIDER=mock` 仍强制全任务本地 Mock，兼容路径中普通叙事、开局、流式回合和科举出题仍优先 MiMo，科举评卷与 domain_specialist/critic/safety 可按 route policy 使用 DeepSeek。S70.9 起，每个 session 有服务器维护的 AI 设置、玩家可见设置 view、浏览器 AI 设置面板和 hidden-safe 调动摘要；设置只改变 route/model/预算/并发/安全严格度，不改变 actor 权限、工具权限或服务器裁决。S70.10 起，玩家行政/官职身份会在月末收到服务器清洗的 `playerMonthlyBriefingView`，月报只读公开 projection 并写脱敏月报账本、事件档案和 bounded AI 调动摘要，不直接裁决官职、财政、军务、案牍或 NPC。后续 AI actor、工具调用、NPC 智力、事件生成、制度推演、narrator/planner/critic/safety 仲裁、成本边界、失败降级和可观测性继续按 S70.11-S70.14 推进。
+S70 是 MiMo + DeepSeek 之后的 AI 编排专项。S70.8 起，`src/ai/index.js` 已提供 task-aware provider facade；`AI_PROVIDER=mock` 仍强制全任务本地 Mock，兼容路径中普通叙事、开局、流式回合和科举出题仍优先 MiMo，科举评卷与 domain_specialist/critic/safety 可按 route policy 使用 DeepSeek。S70.9 起，每个 session 有服务器维护的 AI 设置、玩家可见设置 view、浏览器 AI 设置面板和 hidden-safe 调动摘要；设置只改变 route/model/预算/并发/安全严格度，不改变 actor 权限、工具权限或服务器裁决。S70.10 起，玩家行政/官职身份会在月末收到服务器清洗的 `playerMonthlyBriefingView`，月报只读公开 projection 并写脱敏月报账本、事件档案和 bounded AI 调动摘要，不直接裁决官职、财政、军务、案牍或 NPC。S70.11 起，“学习一月/养病半月/照旧处理一月”等自然语言跳时会先生成服务器可裁决的 `timeSkipPlan`，再逐旬复用普通回合结算链，并在科期、急件或重大事件时中断。后续 AI actor、工具调用、NPC 智力、事件生成、制度推演、narrator/planner/critic/safety 仲裁、成本边界、失败降级和可观测性继续按 S70.12-S70.14 推进。
 
 详细提前规划见 [AI_ORCHESTRATION_ROADMAP.md](AI_ORCHESTRATION_ROADMAP.md)。S70 的核心目标不是让模型直接改库，而是让 AI 在服务器法度内变成“有身份、有记忆、有权限、有后果”的世界行动者网络；S68-S69 提供科场、老师、考官和授官 resolver 的先行用例。该文档第 13-16 节已扩展为后续 Codex 开发任务书，逐项写明执行规则、运行依赖、项目资料、玩法资料、测试资料、建议模块/函数、工具/route 接口、测试文件和验收重点。
 
@@ -206,6 +206,40 @@ S71 详细规划见 [DATABASE_GAMEPLAY_RESOLVER_ROADMAP.md](DATABASE_GAMEPLAY_RE
 4. S71.9-S71.12：接入多 actor 场景、NPC 记忆和 AI 调动审计面板，最后做 dual-mode、Mock/no-key、browser 和 provider smoke 归档。
 
 ## 8. 进度记录
+
+### 2026-05-13
+
+工具：Codex、子代理。
+
+步骤：S70.11 自然语言跳时。
+
+提交：待提交。
+
+完成：
+
+- 新增 `src/game/timeSkipConfig.js` 与 `src/game/timeSkip.js`，集中跳时 schema、最大 6 旬、可中断事件类型、每步预算、默认 `ten_day_batch` 策略、动作类型和 hidden/raw/provider/prompt/key/path/SQLite 文本清洗。`detectTimeSkipIntent()` 可识别“学习一月”“养病半月”“照旧处理一月”，`buildTimeSkipPlan()` 生成逐旬指令，`validateTimeSkipPlan()` 拦截过长/考试中/非法策略，`runTimeSkipTicks()` 停在首个中断，`buildTimeSkipSummary()` 只输出玩家可见摘要。
+- `/api/game/turn` 普通与 SSE 路径在 narrator provider 调用前识别跳时，记录 bounded `time_skip_planner` 调动摘要；实际逐旬推进复用既有 `finalizeTurn()`，因此读书账本、老师/人脉互动、角色联动、worldTick、longTermEvents、officialCareer、worldPeopleLifecycle、S70.10 月报、事件和审计仍按服务器原顺序结算。
+- 跳时中断覆盖考试场景、待取题考试、科期开场、重大长期事件和署中急件；“学习一月”从普通书生状态会推进三旬，不因同一跨月童试窗口误停；从七月下旬推进到八月乡试开场会停在八月上旬并返回赶考/继续跳时提示；已有 `activeExam` 但尚未取题时会阻断跳时且不推进全局时间。
+- 浏览器新增 `[跳时]` 叙事反馈和 `time-skip-event` 样式，只读本回合 `timeSkip` 安全总结、是否中断与下一步提示，不读取 raw plan、raw `worldState`、provider payload、hidden ledger 或本地路径。
+
+验证：
+
+- 已通过：`node --check src/game/timeSkip.js`、`node --check src/game/timeSkipConfig.js`、`node --check src/routes/game.js`、`node --check public/app.js`、`node --check test/timeSkip.test.js`、`node --check test/timeSkipInterruptions.test.js`、`node --check test/gameTurnTimeSkip.test.js`、`node --check test/publicAppSource.test.js`。
+- 已通过：`node --test test/timeSkip.test.js`，4/4；`node --test test/timeSkipInterruptions.test.js`，2/2；`node --test test/gameTurnTimeSkip.test.js`，5/5；`node --test test/publicAppSource.test.js`，7/7。
+- 已通过：`node --test test/timeSkip.test.js test/timeSkipInterruptions.test.js test/gameTurnTimeSkip.test.js test/publicAppSource.test.js`，18/18。
+- 已通过：`node --test test/timeSkip.test.js test/timeSkipInterruptions.test.js test/gameTurnTimeSkip.test.js test/gameTurnTick.test.js test/streamingTurnRoute.test.js test/playerMonthlyBriefing.test.js test/playerMonthlyBriefingRoute.test.js test/aiSettings.test.js test/aiSettingsRoute.test.js test/eventArchive.test.js test/publicAppSource.test.js`，56/56。
+- 已通过：`npm run check:docs-governance`、`npm run eval:ai`、`git diff --check`。
+- 全量 `node --test` 本轮 686/687，通过项之外只有既有 S67 `sqliteReadRepairMs` 性能阈值抖动失败（4221.373 > 3000）；单独复跑 `node --test test/dualModeAcceptanceScript.test.js` 6/6 通过，S70.11 聚焦复跑 10/10 通过。
+- 提交前只读复审发现 P1：已报名/入场但尚未取题的 `activeExam` 会允许跳时；已改为任意 `activeExam` 阻断跳时并补 pending-question 路由回归。复审确认 P1 已解决，未发现新的 P0/P1/P2。
+
+风险/遗留：
+
+- S70.11 目前使用 deterministic parser / Mock-no-key planner 记录 `time_skip_planner` 调动摘要，不调用真实 provider 生成复杂跳时计划；真实 MiMo planner smoke 留给 S70.14。
+- 中断类型已覆盖科期、考试中、重大长期事件和署中急件；亲友急信、死亡/重病、战事等更细颗粒来源仍需后续 actor memory / S71 resolver 深化。
+
+下一步：
+
+- S70.12 大模型记忆系统：actor memory ledger、fact/impression memory、月度 summary、安全检索、来源/置信度/可见性/衰减。
 
 ### 2026-05-12
 

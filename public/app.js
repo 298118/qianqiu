@@ -4368,6 +4368,14 @@ function appendPlayerMonthlyBriefingFeedback(playerMonthlyBriefing) {
   });
 }
 
+function appendTimeSkipFeedback(timeSkip) {
+  if (!timeSkip) return;
+  const entries = [];
+  if (timeSkip.summary) entries.push(timeSkip.summary);
+  if (timeSkip.interrupted && timeSkip.nextTodo) entries.push(timeSkip.nextTodo);
+  entries.forEach((entry) => appendNarrative(`[跳时] ${entry}`, "time-skip-event"));
+}
+
 function getExamSceneTime(payload) {
   return payload?.sceneTime || payload?.examScene || payload?.worldState?.activeExam?.sceneTime || null;
 }
@@ -5297,6 +5305,7 @@ async function handleTurnPayload(payload) {
   appendLongTermEventFeedback(payload.longTermEvents);
   appendOfficialCareerFeedback(payload.officialCareer);
   appendPlayerMonthlyBriefingFeedback(payload.playerMonthlyBriefing);
+  appendTimeSkipFeedback(payload.timeSkip);
   renderPayloadWorldState(payload);
   const activeExam = payload.worldState?.activeExam || null;
   if (activeExam && currentExamPayload?.examId === activeExam.examId) {

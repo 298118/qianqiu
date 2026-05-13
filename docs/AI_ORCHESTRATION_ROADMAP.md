@@ -829,6 +829,8 @@ S70 要准备这些 fixture：
 
 前置依赖：S70.8-S70.10。
 
+当前状态（2026-05-13）：S70.11 已落地首版自然语言跳时。已新增 `src/game/timeSkipConfig.js` 与 `src/game/timeSkip.js`，解析“学习一月”“养病半月”“照旧处理一月”等输入，生成 `timeSkipPlan`、校验最大 6 旬、清洗 hidden/raw/provider/prompt/key/path/SQLite 文本，并用 `runTimeSkipTicks()` 逐旬执行。`POST /api/game/turn` 和 SSE 在 narrator 调用前分流跳时请求，记录 `time_skip_planner` AI 调动摘要，但实际世界推进继续复用既有 `finalizeTurn()` 结算链；因此读书账本、角色联动、人脉请托、worldTick、longTermEvents、officialCareer、worldPeopleLifecycle 与 S70.10 月报按每旬/每月原规则运行。跳时会在考试场景、科期开场、重大长期事件或署中急件出现时停在当旬，并返回 `timeSkip` 安全总结、逐旬摘要、是否中断和下一步提示；浏览器只读本回合 `timeSkip` feedback 追加 `[跳时]` 叙事。
+
 需要资料：`src/game/time.js`、worldTick、exam calendar、active requests、studyProfile、monthly briefing。
 
 具体实现：

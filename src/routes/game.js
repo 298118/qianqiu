@@ -117,6 +117,14 @@ const {
   ensurePlayerMonthlyBriefingState,
   runPlayerMonthlyBriefingStep
 } = require("../game/playerMonthlyBriefing");
+const {
+  buildTimeSkipPlan,
+  buildTimeSkipSummary,
+  detectTimeSkipIntent,
+  runTimeSkipTicks,
+  validateTimeSkipPlan
+} = require("../game/timeSkip");
+const { TIME_SKIP_ACTIONS } = require("../game/timeSkipConfig");
 const { redactSecrets } = require("../ai/diagnostics");
 const { listSessions, mutateSession, readSession, writeSession } = require("../storage/sessionStore");
 const { chunkTextForSse, closeSse, sendSseEvent, writeSseHeaders } = require("../utils/sse");
@@ -168,6 +176,10 @@ async function processTurn(sessionId, input) {
     if (isWritingExam(worldState.activeExam)) {
       return finalizeExamSceneTurn(worldState, input, context);
     }
+    const timeSkipIntent = detectTimeSkipIntent(input, { worldState });
+    if (timeSkipIntent?.detected) {
+      return processTimeSkipTurn(worldState, input, { context, intent: timeSkipIntent });
+    }
     const { routePolicy } = resolveAiSettingsForSession(worldState);
     const route = resolveModelForTask("narrator", routePolicy);
     const provider = getProvider({ routePolicy });
@@ -202,6 +214,10 @@ async function processStreamingTurn(sessionId, input, streamHandlers = {}) {
     ensurePlayerMonthlyBriefingState(worldState);
     if (isWritingExam(worldState.activeExam)) {
       return finalizeExamSceneTurn(worldState, input, context);
+    }
+    const timeSkipIntent = detectTimeSkipIntent(input, { worldState });
+    if (timeSkipIntent?.detected) {
+      return processTimeSkipTurn(worldState, input, { context, intent: timeSkipIntent });
     }
     const { routePolicy } = resolveAiSettingsForSession(worldState);
     const route = resolveModelForTask("narrator", routePolicy);
@@ -341,6 +357,254 @@ function buildCommonTurnViews(worldState, options = {}) {
       officialPostingsView
     })
   };
+}
+
+function clampPlayerMetric(value, min = 0, max = 100) {
+  const numeric = Number(value);
+  const base = Number.isFinite(numeric) ? numeric : min;
+  return Math.max(min, Math.min(max, Math.round(base)));
+}
+
+function buildTimeSkipPlayerPatch(worldState, actionType) {
+  const player = worldState.player || {};
+  const role = player.role || "scholar";
+  const patch = {};
+  const setDelta = (key, delta, min = 0, max = 100) => {
+    const before = clampPlayerMetric(player[key], min, max);
+    const after = clampPlayerMetric(before + delta, min, max);
+    if (after !== before) patch[key] = after;
+  };
+
+  if (actionType === "official_routine") {
+    if (role === "magistrate") {
+      setDelta("localOrder", 1);
+      setDelta("pendingLawsuits", -1);
+    } else if (role === "general") {
+      setDelta("command", 1);
+      setDelta("scouting", 1);
+    } else if (role === "minister" || role === "emperor") {
+      setDelta("influence", 1);
+    } else {
+      setDelta("performanceMerit", 1);
+    }
+    return patch;
+  }
+
+  const action = TIME_SKIP_ACTIONS[actionType] || TIME_SKIP_ACTIONS.routine;
+  for (const [key, delta] of Object.entries(action.playerPatch || {})) {
+    setDelta(key, delta);
+  }
+  return patch;
+}
+
+const TIME_SKIP_ATTRIBUTE_LABELS = {
+  academia: "学识",
+  literaryTalent: "文采",
+  mentality: "心态",
+  health: "体力",
+  performanceMerit: "考成",
+  localOrder: "地方秩序",
+  pendingLawsuits: "积案",
+  command: "统御",
+  scouting: "侦察",
+  influence: "影响"
+};
+
+function buildTimeSkipAttributeChanges(worldState, playerPatch, reason) {
+  const player = worldState.player || {};
+  return Object.entries(playerPatch)
+    .map(([key, after]) => {
+      const before = Number.isFinite(Number(player[key])) ? Math.round(Number(player[key])) : 0;
+      if (before === after) return null;
+      return {
+        path: `player.${key}`,
+        label: TIME_SKIP_ATTRIBUTE_LABELS[key] || key,
+        before,
+        after,
+        reason
+      };
+    })
+    .filter(Boolean);
+}
+
+function buildTimeSkipSyntheticResult(worldState, plan, tick) {
+  const action = TIME_SKIP_ACTIONS[tick.actionType] || TIME_SKIP_ACTIONS.routine;
+  const playerPatch = buildTimeSkipPlayerPatch(worldState, tick.actionType);
+  const reason = `自然语言跳时：${tick.actionLabel}`;
+  return {
+    narrative: `${action.narrative}（第${tick.index}旬）`,
+    statePatch: Object.keys(playerPatch).length ? { player: playerPatch } : {},
+    attributeChanges: buildTimeSkipAttributeChanges(worldState, playerPatch, reason),
+    relationshipChanges: [],
+    events: [`[跳时] ${worldState.player?.name || "玩家"}${tick.actionLabel}，第${tick.index}旬按服务器规则结算。`],
+    examTrigger: { shouldStart: false, level: null, reason: "跳时逐旬结算不直接开启考试。" }
+  };
+}
+
+function openExamSnapshot(worldState) {
+  const nextExam = buildExamCalendarView(worldState).nextExam;
+  if (!nextExam?.isOpen) return null;
+  return {
+    level: nextExam.level,
+    examName: nextExam.examName,
+    year: nextExam.currentYear,
+    month: nextExam.currentMonth,
+    dateLabel: nextExam.currentDateLabel
+  };
+}
+
+function detectTimeSkipRouteInterruption({ beforeOpenExam, afterOpenExam, payload, plan, tick }) {
+  if (payload.worldState?.activeExam) {
+    return {
+      type: "active_exam",
+      label: "考试中断",
+      reason: "跳时期间出现考试场景或待取题考试，服务器已停止继续快进。",
+      todo: "请先完成当前考试流程，再决定是否继续跳时。",
+      tickIndex: tick.index
+    };
+  }
+
+  if (afterOpenExam && !beforeOpenExam) {
+    return {
+      type: "exam_window",
+      label: "科期开场",
+      reason: `${afterOpenExam.examName || "科场"}已在${afterOpenExam.dateLabel || "本旬"}开场，跳时停在此旬。`,
+      todo: "若要应考，请输入赶考或报名；若暂不应考，可再输入跳时行动。",
+      tickIndex: tick.index
+    };
+  }
+
+  const urgentLongTerm = (payload.longTermEvents?.scheduled || []).find((event) =>
+    ["disaster", "border", "court", "local_case"].includes(event.type)
+  );
+  if (urgentLongTerm) {
+    return {
+      type: urgentLongTerm.type === "border" ? "war" : urgentLongTerm.type,
+      label: urgentLongTerm.title || "大势急报",
+      reason: `${urgentLongTerm.title || "大势急报"}已成跨月议题，跳时停在本旬待玩家裁量。`,
+      todo: "请先查看世界议程或输入处置方向，再决定是否继续跳时。",
+      tickIndex: tick.index
+    };
+  }
+
+  const officialUrgentCount = payload.officialCareerView?.assignmentSummary?.urgentCount || 0;
+  if (officialUrgentCount > 0 && plan.actionType !== "official_routine") {
+    return {
+      type: "urgent_assignment",
+      label: "署中急件",
+      reason: "本署已有临近期限的差事，跳时停在本旬。",
+      todo: "请先处理急件，或明确输入照旧办差类跳时。",
+      tickIndex: tick.index
+    };
+  }
+
+  return null;
+}
+
+function aggregatePayloadList(payloads, key, limit = 40) {
+  return payloads.flatMap((payload) => Array.isArray(payload[key]) ? payload[key] : []).slice(-limit);
+}
+
+function mergeTimeSkipPayloads(lastPayload, tickResults, timeSkip) {
+  const payloads = tickResults.map((result) => result.payload).filter(Boolean);
+  return {
+    ...lastPayload,
+    narrative: timeSkip.summary,
+    timeSkip,
+    attributeChanges: aggregatePayloadList(payloads, "attributeChanges", 40),
+    relationshipChanges: aggregatePayloadList(payloads, "relationshipChanges", 40),
+    activeNpcRequestEvents: aggregatePayloadList(payloads, "activeNpcRequestEvents", 20),
+    worldEntityImpacts: aggregatePayloadList(payloads, "worldEntityImpacts", 30)
+  };
+}
+
+function buildTimeSkipBlockedPayload(worldState, plan, validation, route) {
+  const timeSkip = buildTimeSkipSummary({
+    executed: false,
+    blocked: true,
+    plan,
+    validation,
+    requestedTicks: Number(plan?.ticks) || 0,
+    completedTicks: 0,
+    tickResults: []
+  }, {}, { route });
+  return {
+    sessionId: worldState.sessionId,
+    narrative: timeSkip.summary,
+    attributeChanges: [],
+    relationshipChanges: [],
+    ...buildCommonTurnViews(worldState),
+    activeNpcRequestEvents: [],
+    worldEntityImpacts: [],
+    roleWorldCoupling: emptySystemFeedback(),
+    longTermEvents: {
+      ...emptySystemFeedback(),
+      scheduled: [],
+      resolved: []
+    },
+    officialCareer: emptySystemFeedback(),
+    playerMonthlyBriefing: {
+      generated: false,
+      summary: "",
+      events: [],
+      reportId: null
+    },
+    timeSkip,
+    examTrigger: {
+      shouldStart: false,
+      level: null,
+      reason: "跳时计划未执行。"
+    },
+    worldTick: null,
+    worldState
+  };
+}
+
+async function processTimeSkipTurn(worldState, input, options = {}) {
+  const { context = null, intent = null } = options;
+  const { routePolicy } = resolveAiSettingsForSession(worldState);
+  const route = resolveModelForTask("time_skip_planner", routePolicy);
+  const startedAt = Date.now();
+  const plan = buildTimeSkipPlan(input, { routePolicy }, { worldState, intent });
+  const validation = validateTimeSkipPlan(plan, worldState);
+
+  recordAiInvocation(worldState, {
+    taskType: "time_skip_planner",
+    route,
+    status: validation.ok ? "completed" : "rejected",
+    durationMs: Date.now() - startedAt,
+    maxOutputTokens: route.maxOutputTokens
+  });
+
+  if (!validation.ok) {
+    return buildTimeSkipBlockedPayload(worldState, plan, validation, route);
+  }
+
+  const plannerProvider = { auditName: "time_skip_planner" };
+  const results = await runTimeSkipTicks(worldState, plan, {
+    async runTick({ tick }) {
+      const beforeOpenExam = openExamSnapshot(worldState);
+      const syntheticResult = buildTimeSkipSyntheticResult(worldState, plan, tick);
+      const payload = await finalizeTurn(worldState, syntheticResult, tick.input, {
+        context,
+        provider: plannerProvider
+      });
+      const afterOpenExam = openExamSnapshot(worldState);
+      return {
+        payload,
+        interruption: detectTimeSkipRouteInterruption({
+          beforeOpenExam,
+          afterOpenExam,
+          payload,
+          plan,
+          tick
+        })
+      };
+    }
+  });
+  const timeSkip = buildTimeSkipSummary(results, {}, { route });
+  const lastPayload = results.tickResults.at(-1)?.payload || buildTimeSkipBlockedPayload(worldState, plan, validation, route);
+  return mergeTimeSkipPayloads(lastPayload, results.tickResults, timeSkip);
 }
 
 async function finalizeExamSceneTurn(worldState, input, context = null) {
@@ -683,6 +947,7 @@ async function streamTurn(res, sessionId, input) {
       informationPanelPageView: payload.informationPanelPageView,
       officialCareer: payload.officialCareer,
       playerMonthlyBriefing: payload.playerMonthlyBriefing,
+      timeSkip: payload.timeSkip || null,
       examTrigger: payload.examTrigger,
       examScene: payload.examScene || null,
       worldTick: payload.worldTick

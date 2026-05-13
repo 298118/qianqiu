@@ -165,3 +165,21 @@ test("S70.10 player monthly briefing panel reads route view and turn feedback", 
   assert.doesNotMatch(monthlyPanelSource, /worldState\.playerMonthlyBriefing/);
   assert.doesNotMatch(monthlyPanelSource, /raw|proposal|audit|prompt|table|path|key/i);
 });
+
+test("S70.11 time skip feedback reads turn payload summary only", () => {
+  const source = publicAppSource();
+  const timeSkipSource = sourceBetween(
+    source,
+    "function appendTimeSkipFeedback(",
+    "function getExamSceneTime("
+  );
+
+  assert.match(source, /function appendTimeSkipFeedback\(timeSkip\)/);
+  assert.match(source, /appendTimeSkipFeedback\(payload\.timeSkip\);/);
+  assert.match(timeSkipSource, /timeSkip\.summary/);
+  assert.match(timeSkipSource, /timeSkip\.interrupted/);
+  assert.match(timeSkipSource, /timeSkip\.nextTodo/);
+  assert.doesNotMatch(timeSkipSource, /worldState\?\.timeSkip/);
+  assert.doesNotMatch(timeSkipSource, /worldState\.timeSkip/);
+  assert.doesNotMatch(timeSkipSource, /raw|proposal|audit|prompt|table|path|key/i);
+});

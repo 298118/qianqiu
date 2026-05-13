@@ -6,11 +6,12 @@
 
 ## 这次主要更新
 
-当前项目已经完成可玩纵切、浏览器验收、时间专项、AI provider 扩展、本地动态数据库基础、S54-S59 SQLite 业务表拆分、S60-S67 超大动态世界数据库内容充实、S68-S69 科举读书深化与归档、S70.1-S70.7 AI prompt/tool/actor/领域工具基础、S70.8 多模型路由与本地 eval runner、S70.9 AI 设置与可观测性，以及 S70.10 玩家官职月报。近期重点更新集中在“本地数据库专项归档”“S68-S69 科举读书深化”“多 provider 能力”和“S70 AI 编排”：
+当前项目已经完成可玩纵切、浏览器验收、时间专项、AI provider 扩展、本地动态数据库基础、S54-S59 SQLite 业务表拆分、S60-S67 超大动态世界数据库内容充实、S68-S69 科举读书深化与归档、S70.1-S70.7 AI prompt/tool/actor/领域工具基础、S70.8 多模型路由与本地 eval runner、S70.9 AI 设置与可观测性、S70.10 玩家官职月报，以及 S70.11 自然语言跳时。近期重点更新集中在“本地数据库专项归档”“S68-S69 科举读书深化”“多 provider 能力”和“S70 AI 编排”：
 
 - 完成 S70.1 AI 提示词与工具协议契约：新增 [docs/AI_PROMPT_ENGINEERING_CONTRACT.md](docs/AI_PROMPT_ENGINEERING_CONTRACT.md) 和 [docs/AI_TOOL_PROTOCOL_CONTRACT.md](docs/AI_TOOL_PROTOCOL_CONTRACT.md)，固定 prompt pack 七层、actor/scene/output/tool policy 边界、MCP-friendly tool envelope、proposal/result/request-adjudication schema、`server.*` 内部化、strict `inputSchema`、Mock/no-key fallback 和 provider smoke 口径。新增 `src/ai/toolSchemas.js`、`scripts/providerToolSmoke.js` 与 `npm run smoke:provider:tools`，可在有 MiMo key 时探测 `tools` / `tool_choice` / `tool_calls` 与工具结果回填形状；无 key 时明确 skip。
 - 完成 S70.8 多模型路由与 S70.9 AI 设置：`src/ai/modelRoutePolicy.js` 固定 narrator、actor_mind、planner、domain_specialist、critic、safety_gate、memory_summarizer、monthly_briefing、time_skip_planner 九类任务的 provider/model/budget/tool 边界，`npm run eval:ai` 会先跑本地 route/eval runner；`src/game/aiSettings.js`、`GET/POST /api/ai/settings/:sessionId` 和浏览器 `#ai-control-panel` 让玩家按任务调整 provider/model、输出长度、工具预算、并发和安全严格度。设置与调动摘要只返回 hidden-safe view，不暴露 key、base URL、raw prompt、raw provider payload、本地路径或 raw table，critic/safety 仍强制 review-only。
 - 完成 S70.10 玩家官职月报：`src/game/playerMonthlyBriefing.js` 在玩家为入仕官员、地方官、大臣、将领或皇帝时，于下旬进入下月上旬的月末 tick 生成一次 `playerMonthlyBriefingView`。月报只读取服务器公开 projection（官场、任所、案牍、财赋、军务、人物与事件档案），写入脱敏月报账本、事件档案 `monthly_briefing` 条目和 bounded AI 调动摘要；不会直接改官职、财政、案牍、军务、NPC 或数据库。浏览器新增“官职月报”面板，只读 route view 和 turn feedback。
+- 完成 S70.11 自然语言跳时：`src/game/timeSkip.js` 把“学习一月”“养病半月”“照旧处理一月”等输入解析为 `timeSkipPlan`，服务器再逐旬调用既有回合结算链，依次处理读书、政务、人脉请托、世界 tick、长期事件、官职月报和中断检测。跳时不会让模型直接改状态或跳过科期/急件；`timeSkip` 反馈只返回安全总结、逐旬摘要、是否中断和下一步提示。
 - 新增可选 SQLite 存储模式：默认仍是 JSON 存档；设置 `STORAGE_ADAPTER=sqlite` 后，本地使用 `world_sessions`、审计表、地理 `geo_*`、人物 `people_*`、官职任所 `office_*` 派生业务表、安全事件档案 `event_archive_index` 和安全 prompt 检索派生索引。
 - 新增地理业务表同步：SQLite 模式会把 `worldState.worldGeography` 同步到 `geo_countries`、`geo_regions`、`geo_cities`、`geo_routes`、`geo_frontier_zones`、`geo_office_jurisdictions`，读档时可按 JSON snapshot 修复缺失或陈旧行。
 - 新增地理维护工具：`npm run storage:geography:sqlite -- import|status|repair|export` 支持导入、漂移检查、修复和脱敏 debug dump。
@@ -58,7 +59,7 @@
 - 自由文本玩法：玩家不被固定选项限制，可以用自然语言下旨、读书、赶考、办案、治军、结交、上疏或处理地方事务。
 - 完整书生路径：保护 `scholar -> child_exam -> provincial_exam -> metropolitan_exam -> palace_exam -> official`，从寒窗到入仕是当前第一优先级体验。
 - 多身份循环：书生、皇帝、大臣、将领、地方官、入仕官员都有代表性开局与行动反馈。
-- 旬制时间系统：普通自由行动按“上旬 -> 中旬 -> 下旬 -> 下月上旬”推进；考试等密集场景使用 scene-local time，不强制消耗全局旬。
+- 旬制时间系统：普通自由行动按“上旬 -> 中旬 -> 下旬 -> 下月上旬”推进；“学习一月/养病半月/照旧处理一月”等自然语言跳时会拆成多旬批处理；考试等密集场景使用 scene-local time，不强制消耗全局旬。
 - 长期世界模拟：关系账本、读书账本、主动 NPC 请托、长期事件、官场考成、科举日历、角色世界联动、World Entities 和 World Threads 已接入。
 - View-first 安全架构：玩家界面和 prompt 使用服务器裁剪后的安全视图，隐藏关系、密札、raw audit、provider proposal 和本地路径不会进入玩家 payload。
 - 本地优先：默认 JSON 存档，SQLite 仅作为本机增强；当前不引入远程存档、账号体系、多人同步或托管数据库。
@@ -235,7 +236,7 @@ POST /api/exam/submit
 - `POST /api/ai/connection-test` 不创建 session、不写存档、不用 Mock fallback 掩盖真实 provider 问题。
 - `GET/POST /api/ai/settings/:sessionId` 读取或更新 session 级 AI 设置；服务端只接受 provider/model、输出长度、预算、并发、安全严格度等质量/路由设置，拒绝 hidden/raw/server/path/key、直写状态/数据库和观测日志伪造。
 - `GET /api/game/state/:sessionId` 可用 `informationTab`、`informationQuery`、`informationFilter`、`informationSort`、`informationPage`、`informationPageSize` 查询局势簿分页；兼容别名 `informationPanelTab` / `informationCollection` 和 `informationSearch`。
-- 游戏与考试路由会返回服务器整理后的可见视图，例如 `examProcedureView`、`examinerPanelView`、`examHonorView`、`appointmentTrackView`、`studyProfileView`、`relationshipView`、`worldGeographyView`、`worldPeopleView`、`officialPostingsView`、`localAffairsDocketView`、`militaryDiplomacyView`、`economicFiscalView`、`historicalEventArchiveView`、`eventArchiveView`、`informationPanelPageView`、`aiSettingsView`、`aiInvocationSummaryView` 和 `playerMonthlyBriefingView`。S69.2 的同年/座师/考官事实通过 `relationshipView`、`worldPeopleView`、`eventArchiveView` 和考试历史 `examNetwork` 快照暴露；S69.3 的初授事实通过 `appointmentTrackView`、`officialCareerView`、`eventArchiveView` 和考试历史 `appointmentTrack` 快照暴露；S69.4 的浏览器科举档案面板只组合这些 route view 与安全快照，不新增 raw route 入口；S70.9 的 AI 设置面板只读 AI route view，不读取 raw `worldState.aiSettings`；S70.10 的官职月报面板只读 `playerMonthlyBriefingView` 和本回合 `playerMonthlyBriefing` 反馈，不读取 raw `worldState.playerMonthlyBriefing`。
+- 游戏与考试路由会返回服务器整理后的可见视图，例如 `examProcedureView`、`examinerPanelView`、`examHonorView`、`appointmentTrackView`、`studyProfileView`、`relationshipView`、`worldGeographyView`、`worldPeopleView`、`officialPostingsView`、`localAffairsDocketView`、`militaryDiplomacyView`、`economicFiscalView`、`historicalEventArchiveView`、`eventArchiveView`、`informationPanelPageView`、`aiSettingsView`、`aiInvocationSummaryView` 和 `playerMonthlyBriefingView`。S69.2 的同年/座师/考官事实通过 `relationshipView`、`worldPeopleView`、`eventArchiveView` 和考试历史 `examNetwork` 快照暴露；S69.3 的初授事实通过 `appointmentTrackView`、`officialCareerView`、`eventArchiveView` 和考试历史 `appointmentTrack` 快照暴露；S69.4 的浏览器科举档案面板只组合这些 route view 与安全快照，不新增 raw route 入口；S70.9 的 AI 设置面板只读 AI route view，不读取 raw `worldState.aiSettings`；S70.10 的官职月报面板只读 `playerMonthlyBriefingView` 和本回合 `playerMonthlyBriefing` 反馈，不读取 raw `worldState.playerMonthlyBriefing`；S70.11 的跳时叙事只读本回合 `timeSkip` 安全总结，不读取 raw 计划或隐藏状态。
 
 ## 项目结构
 
@@ -261,7 +262,7 @@ data/sessions/
 
 - [docs/SHARED_CONTEXT.md](docs/SHARED_CONTEXT.md)：Codex 与 Claude Code 共享交接板。
 - [docs/QIANQIU_DEVELOPMENT_BRIEF.md](docs/QIANQIU_DEVELOPMENT_BRIEF.md)：产品目标、架构、数据契约和交付标准。
-- [docs/DEVELOPMENT_STEPS.md](docs/DEVELOPMENT_STEPS.md)：当前活动路线图与进度台账，已交接到 S70 AI 编排；S70.1 已完成，后续从 S70.2 actor 权限模型继续。
+- [docs/DEVELOPMENT_STEPS.md](docs/DEVELOPMENT_STEPS.md)：当前活动路线图与进度台账，已交接到 S70 AI 编排；S70.11 已完成自然语言跳时，后续从 S70.12 大模型记忆系统继续。
 - [docs/DEVELOPMENT_GOVERNANCE.md](docs/DEVELOPMENT_GOVERNANCE.md)：稳定开发治理锚点。
 - [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)：当前架构、API、状态模型和验证要求。
 - [docs/AI_CONTROL_AUDIT_MATRIX.md](docs/AI_CONTROL_AUDIT_MATRIX.md)：AI/server 权限矩阵。

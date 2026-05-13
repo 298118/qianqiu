@@ -1792,6 +1792,12 @@ button:disabled {
   background: rgba(53, 75, 99, 0.06);
 }
 
+.narrative .time-skip-event {
+  color: var(--indigo);
+  border-left-color: rgba(30, 91, 78, 0.42);
+  background: rgba(30, 91, 78, 0.07);
+}
+
 .narrative .long-term-event {
   color: #6f3d23;
   border-left-color: rgba(111, 61, 35, 0.42);
