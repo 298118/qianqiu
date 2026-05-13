@@ -5,6 +5,7 @@ const { createDomainToolDefinitions } = require("../src/ai/domainToolDefinitions
 const { createGameAiToolRegistry } = require("../src/ai/gameAiTools");
 const { validateToolDefinition } = require("../src/ai/toolSchemas");
 const { CITY_POLICY_ACTIONS } = require("../src/game/cityPolicyResolverConfig");
+const { JUDICIAL_CASE_ACTIONS } = require("../src/game/judicialCaseConfig");
 
 const EXPECTED_DOMAIN_TOOLS = [
   "judicial.propose_case_resolution",
@@ -46,6 +47,11 @@ test("S70.7 domain tool definitions are strict, server-owned and default registr
   assert.deepEqual(
     [...cityTool.inputSchema.properties.policyKind.enum].sort(),
     Object.keys(CITY_POLICY_ACTIONS).sort()
+  );
+  const judicialTool = registry.getTool("judicial.propose_case_resolution");
+  assert.deepEqual(
+    [...judicialTool.inputSchema.properties.caseAction.enum].sort(),
+    Object.keys(JUDICIAL_CASE_ACTIONS).sort()
   );
   assert.equal(Object.keys(registry.buildProviderNameMap()).length, registry.listAllTools().length);
 });

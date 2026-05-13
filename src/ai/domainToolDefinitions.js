@@ -1,3 +1,5 @@
+const { JUDICIAL_CASE_ACTIONS } = require("../game/judicialCaseConfig");
+
 function stringArraySchema(maxItems) {
   return {
     type: "array",
@@ -54,7 +56,7 @@ const DOMAIN_TOOL_CONFIGS = Object.freeze([
     name: "judicial.propose_case_resolution",
     description: "提交刑名案牍处置 proposal；服务器复核证据、辖区、士绅压力和法度后才可形成判决或归档。",
     actionProperty: "caseAction",
-    actionEnum: ["mediate", "fine", "detain", "dismiss", "escalate", "defer"],
+    actionEnum: Object.keys(JUDICIAL_CASE_ACTIONS),
     toolType: "proposal",
     authorityTiers: ["T2", "T3", "T4", "T5"],
     actorTypes: ["clerk", "magistrate", "minister", "censor", "emperor"],

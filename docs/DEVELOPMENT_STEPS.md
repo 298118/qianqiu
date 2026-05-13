@@ -10,7 +10,7 @@
 - S49-S67 本地数据库基础、SQLite 业务表、双模式验收、超大动态世界内容与 S60 内容契约：[LOCAL_DATABASE_AND_WORLD_CONTENT_ARCHIVE.md](LOCAL_DATABASE_AND_WORLD_CONTENT_ARCHIVE.md)。旧分卷归档和 S60 契约文件保留为跳转页。
 - S70 AI 编排与权力工具：[AI_ORCHESTRATION_ARCHIVE.md](AI_ORCHESTRATION_ARCHIVE.md)。S70 规划源头仍见 [AI_ORCHESTRATION_ROADMAP.md](AI_ORCHESTRATION_ROADMAP.md)。
 
-当前活动路线图已交接到 S71：S68-S69 的书生主线科举、读书、评卷与授官制度已归档，S70.1-S70.14 的 AI prompt/tool/actor/多模型路由、AI 设置、月报、跳时、记忆、地图接口、provider AI-first smoke 与 JSON/SQLite parity 已归档。S71 作为 S70 之后的数据库玩法化、维护、安全检索和 redacted API 专项，规划见 [DATABASE_GAMEPLAY_RESOLVER_ROADMAP.md](DATABASE_GAMEPLAY_RESOLVER_ROADMAP.md)。S71.0 数据库玩法化专项契约已固定在 [DATABASE_RESOLVER_INPUT_CONTRACT.md](DATABASE_RESOLVER_INPUT_CONTRACT.md)，S71.1 已落地只读 `resolverInputContext` 输入层，S71.2 已落地本地 SQLite schema migration 与维护层，S71.3 已落地安全全文检索 / 本地搜索，S71.4 已落地 redacted player API 与本机开发诊断 API，S71.5 已落地财政与城市政策 resolver；下一步启动 S71.6 地方案件与刑名 resolver。数据库方向继续只考虑本机 JSON/SQLite 持久化增强；远程存档、账号体系、多人同步、云端冲突解决和托管数据库不进入当前规划。
+当前活动路线图已交接到 S71：S68-S69 的书生主线科举、读书、评卷与授官制度已归档，S70.1-S70.14 的 AI prompt/tool/actor/多模型路由、AI 设置、月报、跳时、记忆、地图接口、provider AI-first smoke 与 JSON/SQLite parity 已归档。S71 作为 S70 之后的数据库玩法化、维护、安全检索和 redacted API 专项，规划见 [DATABASE_GAMEPLAY_RESOLVER_ROADMAP.md](DATABASE_GAMEPLAY_RESOLVER_ROADMAP.md)。S71.0 数据库玩法化专项契约已固定在 [DATABASE_RESOLVER_INPUT_CONTRACT.md](DATABASE_RESOLVER_INPUT_CONTRACT.md)，S71.1 已落地只读 `resolverInputContext` 输入层，S71.2 已落地本地 SQLite schema migration 与维护层，S71.3 已落地安全全文检索 / 本地搜索，S71.4 已落地 redacted player API 与本机开发诊断 API，S71.5 已落地财政与城市政策 resolver，S71.6 已落地地方案件与刑名 resolver；下一步启动 S71.7 军务与外交 resolver。数据库方向继续只考虑本机 JSON/SQLite 持久化增强；远程存档、账号体系、多人同步、云端冲突解决和托管数据库不进入当前规划。
 
 ## 1. 开发规范继承
 
@@ -82,7 +82,7 @@
 
 ## 3. 当前边界与已归档摘要
 
-当前活动工作已交接到 S71.5。S49-S67 的本地数据库与大世界内容实现细节已经迁入统一归档，S68-S69 科举深化已迁入科举归档，S70 AI 编排已迁入 S70 归档；活动台账只保留索引和后续边界：
+当前活动工作已交接到 S71.7。S49-S67 的本地数据库与大世界内容实现细节已经迁入统一归档，S68-S69 科举深化已迁入科举归档，S70 AI 编排已迁入 S70 归档；活动台账只保留索引和后续边界：
 
 | 范围 | 状态 | 摘要 | 归档 |
 | --- | --- | --- | --- |
@@ -126,7 +126,7 @@
 | S71.3 | DONE | 安全全文检索 / 本地搜索：FTS5 或 fallback，只索引 player-facing projection，不索引 hidden/raw | 2026-05-13 | Codex / 子代理 | `e5cdfd7` |
 | S71.4 | DONE | Redacted player API 与开发诊断 API：保存 hidden 私档前先拆玩家可见 state 和 hidden-safe diagnostics | 2026-05-13 | Codex / 子代理 | `746370a` |
 | S71.5 | DONE | 财政与城市政策 resolver：征粮、赈济、修堤、平粜、清丈、钱粮差事等服务器裁决 | 2026-05-13 | Codex / 子代理 | `3cca9bd` |
-| S71.6 | TODO | 地方案件与刑名 resolver：堂审、证据、士绅压力、胥吏阻力、判决后果和案牍归档 | - | - | S71.5 后 |
+| S71.6 | DONE | 地方案件与刑名 resolver：堂审、证据、士绅压力、胥吏阻力、判决后果和案牍归档 | 2026-05-13 | Codex / 子代理 | 待提交 |
 | S71.7 | TODO | 军务与外交 resolver：侦察、固守、调粮、练兵、会战、互市、和议、宣战 request 和服务器裁决 | - | - | S71.6 后 |
 | S71.8 | TODO | 压力驱动事件生成器：从粮价、水利、腐败、边防、NPC 怨怼和情报压力生成事件候选 | - | - | S71.7 后 |
 | S71.9 | TODO | 多 actor 场景运行时：朝议、堂审、会盟、战役 scene-local time 与 actor proposal 编排 | - | - | S71.8 后 |
@@ -208,6 +208,41 @@ S71 详细规划见 [DATABASE_GAMEPLAY_RESOLVER_ROADMAP.md](DATABASE_GAMEPLAY_RE
 4. S71.9-S71.12：接入多 actor 场景、NPC 记忆和 AI 调动审计面板，最后做 dual-mode、Mock/no-key、browser 和 provider smoke 归档。
 
 ## 8. 进度记录
+
+### 2026-05-13
+
+工具：Codex、子代理。
+
+步骤：S71.6 地方案件与刑名 resolver。
+
+提交：待提交。
+
+完成：
+
+- 新增 `src/game/judicialCaseConfig.js`，集中配置刑名案件 schema version、ledger 上限、允许权限层、证据领域、证据可信度、制度路径、action alias、受控 `stateDelta` / `playerDelta`、关系反噬、胥吏阻力和风险标签。首版支持受理、传唤、查证、调解、罚银、羁押、驳回、判决、申详、移交和缓审。
+- 新增 `src/game/judicialCaseResolver.js`，提供 `normalizeCaseProposal()`、`buildCaseEvidenceContext()`、`validateCaseAuthority()`、`resolveJudicialCase()`、`applyJudicialCaseOutcome()`、`buildJudicialCasePublicEvent()` 和 `resolveJudicialCaseFromDomainTool()`。resolver 只读 S71.1 `resolverInputContext` 与 S70 领域工具可见 evidence refs，校验 T2-T5、`judicial` 工具组、辖区范围、证据领域、证据数量/可信度、罚银/羁押/判决必须至少有一条可见案牍证据、重大案件制度路径和 hidden/raw 污染；模型夹带 `statePatch`、`worldState`、SQL、路径、key、hidden notes、raw evidence/proposal 或 private refs 会被拒绝并脱敏。
+- `resolveJudicialCase()` 只产服务器裁决 outcome，不直接变更状态；`applyJudicialCaseOutcome()` 才写受控顶层治安/腐败/府库字段、玩家刑名考成相关字段、公开 `eventHistory` 和内部 `judicialCaseLedger`。公开 `publicDocket` / `publicEvent` 只显示可见证据摘要，不公开 evidence ref、raw proposal 或 hidden 证据；拒绝 outcome 不改 `worldState`，audit 只含 resolver input 统计、受控 delta、证据分和安全布尔标志。
+- 扩展 `judicial.propose_case_resolution` 的 `caseAction` enum 到 S71.6 动作全集；普通 S70 domain tool runner 仍只返回 pending/rejected、不写状态。`resolveJudicialCaseFromDomainTool()` 可由服务器桥接 pending proposal 做内部裁决，并显式拒绝非 `judicial.propose_case_resolution` payload；`server.resolve_case` 不进入默认 registry、provider name map、模型可见 tool list 或玩家可伪造 tool call。
+- 新增 `test/judicialCaseResolver.test.js`、`test/judicialCaseAuthority.test.js`、`test/judicialCaseEvidenceRedaction.test.js` 和 `test/judicialCaseDomainToolBridge.test.js`，并扩展 `test/domainToolDefinitions.test.js`，覆盖成功判决/调解、书生越权、证据不足、惩罚性处置缺案牍证据、外辖重大案件、高官缺制度路径、hidden/raw 污染、公开证据摘要、玩家 state redaction、领域工具桥接和 server tool 不可见。
+
+验证：
+
+- 已通过：`node --check src/ai/domainToolDefinitions.js && node --check src/game/judicialCaseConfig.js && node --check src/game/judicialCaseResolver.js && node --check test/judicialCaseResolver.test.js && node --check test/judicialCaseAuthority.test.js && node --check test/judicialCaseEvidenceRedaction.test.js && node --check test/judicialCaseDomainToolBridge.test.js && node --check test/domainToolDefinitions.test.js`。
+- 已通过：`node --test test/judicialCaseResolver.test.js test/judicialCaseAuthority.test.js test/judicialCaseEvidenceRedaction.test.js test/judicialCaseDomainToolBridge.test.js test/domainToolDefinitions.test.js test/domainToolResolvers.test.js test/domainToolPermissions.test.js`（23/23）。
+- 已通过：`node --test test/resolverInputContext.test.js test/localAffairsDockets.test.js test/redactedState.test.js test/gamePlayerStateRoute.test.js test/gameAiToolRunner.test.js test/aiActorToolPermissions.test.js test/domainToolDefinitions.test.js test/domainToolResolvers.test.js test/domainToolPermissions.test.js test/stateRules.test.js test/eventArchive.test.js test/publicAppSource.test.js test/cityPolicyResolver.test.js test/cityPolicyAuthority.test.js test/cityPolicyHiddenRedaction.test.js test/cityPolicyDomainToolBridge.test.js`（77/77）。
+- 已通过：`npm run check:docs-governance`、`node --test test/documentationGovernance.test.js` 和 `git diff --check`。
+- 全量 `npm test` 最终状态 791/792，唯一失败为既有 S67 `sqliteReadRepairMs` 性能阈值抖动（5700.336ms > 3000ms）；随后单独复跑 `node --test test/dualModeAcceptanceScript.test.js`（8/8）通过。
+- 待提交前完成只读子代理最终 diff 复审。
+
+风险/遗留：
+
+- S71.6 先提供服务器 resolver 和领域工具 bridge，不接普通 `/api/game/turn` 自动调度，不新增浏览器堂审面板，不写 SQLite 派生表或审计业务表；后续 S71.9 堂审多 actor 场景与 S71.11 审计面板只能读取 hidden-safe outcome/audit projection。
+- `judicialCaseLedger` 是内部执行台账，不进入 `GET /api/game/player-state/:sessionId`；玩家只看到受控 meters、公开案牍摘要与事件摘要。
+- `judicial.request_case_adjudication` 仍停留在工具协议示例/后续建议，本步只扩展并桥接既有 `judicial.propose_case_resolution`；若后续新增 request-adjudication 工具，必须补 registry/schema/权限/bridge 测试。
+
+下一步：
+
+- 启动 S71.7：军务与外交 resolver，复用 S71.1 evidence refs、S71.4 redaction 边界、S71.5/S71.6 outcome/audit 模式和 S70 `military.propose_order` / `diplomacy.propose_move`，实现侦察、固守、调粮、练兵、会战、互市、和议、宣战 request 和服务器裁决。
 
 ### 2026-05-13
 
