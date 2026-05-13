@@ -10,7 +10,7 @@
 - S49-S67 本地数据库基础、SQLite 业务表、双模式验收、超大动态世界内容与 S60 内容契约：[LOCAL_DATABASE_AND_WORLD_CONTENT_ARCHIVE.md](LOCAL_DATABASE_AND_WORLD_CONTENT_ARCHIVE.md)。旧分卷归档和 S60 契约文件保留为跳转页。
 - S70 AI 编排与权力工具：[AI_ORCHESTRATION_ARCHIVE.md](AI_ORCHESTRATION_ARCHIVE.md)。S70 规划源头仍见 [AI_ORCHESTRATION_ROADMAP.md](AI_ORCHESTRATION_ROADMAP.md)。
 
-当前活动路线图已交接到 S71：S68-S69 的书生主线科举、读书、评卷与授官制度已归档，S70.1-S70.14 的 AI prompt/tool/actor/多模型路由、AI 设置、月报、跳时、记忆、地图接口、provider AI-first smoke 与 JSON/SQLite parity 已归档。S71 作为 S70 之后的数据库玩法化、维护、安全检索和 redacted API 专项，规划见 [DATABASE_GAMEPLAY_RESOLVER_ROADMAP.md](DATABASE_GAMEPLAY_RESOLVER_ROADMAP.md)。S71.0 数据库玩法化专项契约已固定在 [DATABASE_RESOLVER_INPUT_CONTRACT.md](DATABASE_RESOLVER_INPUT_CONTRACT.md)，S71.1 已落地只读 `resolverInputContext` 输入层，S71.2 已落地本地 SQLite schema migration 与维护层，S71.3 已落地安全全文检索 / 本地搜索，S71.4 已落地 redacted player API 与本机开发诊断 API，S71.5 已落地财政与城市政策 resolver，S71.6 已落地地方案件与刑名 resolver，S71.7 已落地军务与外交 resolver，S71.8 已落地压力驱动事件生成器；下一步启动 S71.9 多 actor 场景运行时。数据库方向继续只考虑本机 JSON/SQLite 持久化增强；远程存档、账号体系、多人同步、云端冲突解决和托管数据库不进入当前规划。
+当前活动路线图已交接到 S71：S68-S69 的书生主线科举、读书、评卷与授官制度已归档，S70.1-S70.14 的 AI prompt/tool/actor/多模型路由、AI 设置、月报、跳时、记忆、地图接口、provider AI-first smoke 与 JSON/SQLite parity 已归档。S71 作为 S70 之后的数据库玩法化、维护、安全检索和 redacted API 专项，规划见 [DATABASE_GAMEPLAY_RESOLVER_ROADMAP.md](DATABASE_GAMEPLAY_RESOLVER_ROADMAP.md)。S71.0 数据库玩法化专项契约已固定在 [DATABASE_RESOLVER_INPUT_CONTRACT.md](DATABASE_RESOLVER_INPUT_CONTRACT.md)，S71.1 已落地只读 `resolverInputContext` 输入层，S71.2 已落地本地 SQLite schema migration 与维护层，S71.3 已落地安全全文检索 / 本地搜索，S71.4 已落地 redacted player API 与本机开发诊断 API，S71.5 已落地财政与城市政策 resolver，S71.6 已落地地方案件与刑名 resolver，S71.7 已落地军务与外交 resolver，S71.8 已落地压力驱动事件生成器，S71.9 已落地多 actor 场景运行时；下一步启动 S71.10 NPC 记忆账本。数据库方向继续只考虑本机 JSON/SQLite 持久化增强；远程存档、账号体系、多人同步、云端冲突解决和托管数据库不进入当前规划。
 
 ## 1. 开发规范继承
 
@@ -82,7 +82,7 @@
 
 ## 3. 当前边界与已归档摘要
 
-当前活动工作已交接到 S71.9。S49-S67 的本地数据库与大世界内容实现细节已经迁入统一归档，S68-S69 科举深化已迁入科举归档，S70 AI 编排已迁入 S70 归档；活动台账只保留索引和后续边界：
+当前活动工作已交接到 S71.10。S49-S67 的本地数据库与大世界内容实现细节已经迁入统一归档，S68-S69 科举深化已迁入科举归档，S70 AI 编排已迁入 S70 归档；活动台账只保留索引和后续边界：
 
 | 范围 | 状态 | 摘要 | 归档 |
 | --- | --- | --- | --- |
@@ -129,7 +129,7 @@
 | S71.6 | DONE | 地方案件与刑名 resolver：堂审、证据、士绅压力、胥吏阻力、判决后果和案牍归档 | 2026-05-13 | Codex / 子代理 | `4d93b2d` |
 | S71.7 | DONE | 军务与外交 resolver：侦察、固守、调粮、练兵、会战、互市、和议、宣战 request 和服务器裁决 | 2026-05-13 | Codex / 子代理 | `761ec99` |
 | S71.8 | DONE | 压力驱动事件生成器：从粮价、水利、腐败、边防、NPC 怨怼和情报压力生成事件候选 | 2026-05-13 | Codex / 子代理 | `5ead9e5` |
-| S71.9 | TODO | 多 actor 场景运行时：朝议、堂审、会盟、战役 scene-local time 与 actor proposal 编排 | - | - | S71.8 后 |
+| S71.9 | DONE | 多 actor 场景运行时：朝议、堂审、会盟、战役 scene-local time 与 actor proposal 编排 | 2026-05-13 | Codex / 子代理 | 待本次提交 |
 | S71.10 | TODO | NPC 记忆账本：高显著 NPC 长期记忆、人情债、恩怨、家族风险和背景 NPC heuristic | - | - | S71.9 后 |
 | S71.11 | TODO | AI 调动审计面板：工具摘要、拒绝原因、成本、公开结果和 hidden-safe 开发诊断，不泄漏 raw prompt/proposal | - | - | S71.10 后 |
 | S71.12 | TODO | S71 验收与归档：JSON/SQLite parity、Mock/no-key、provider smoke、browser smoke、hidden-token 和完整书生路径回归 | - | - | S71.11 后 |
@@ -208,6 +208,41 @@ S71 详细规划见 [DATABASE_GAMEPLAY_RESOLVER_ROADMAP.md](DATABASE_GAMEPLAY_RE
 4. S71.9-S71.12：接入多 actor 场景、NPC 记忆和 AI 调动审计面板，最后做 dual-mode、Mock/no-key、browser 和 provider smoke 归档。
 
 ## 8. 进度记录
+
+### 2026-05-13
+
+工具：Codex、子代理。
+
+步骤：S71.9 多 actor 场景运行时。
+
+提交：待本次提交。
+
+完成：
+
+- 新增 `src/game/sceneRuntimeConfig.js`，集中配置 S71.9 schema version、scene types、proposal kinds、actor/round/evidence/transcript 上限，以及朝议、堂审、会盟、战役军议四类场景的参与者、默认意见类型、默认动作、允许意见类型和 evidence domain。场景类型只定义多 actor 编排边界，不新增 provider-visible `server.*` 工具。
+- 新增 `src/game/sceneRuntime.js`，提供 `createScene()`、`buildSceneActorContext()`、`runSceneRound()`、`collectSceneProposals()`、`resolveSceneOutcome()` 和 `sanitizeSceneProposal()`。场景创建会生成 scene-local time、参与 actor profile 和安全 actor 摘要；actor context 会对每个参与者分别过滤 S71.1 `resolverInputContext`，再合并 S70 领域工具可见 evidence refs，只暴露 `refId/domain/visibility/confidence/scopeRefs/generatedAtTurn`，不暴露 sourceView/sourceId/raw table/audit/provider/prompt。
+- `runSceneRound()` 在 Mock/no-key 下 deterministic 生成场景意见；真实运行时可传 `aiRuntime.generateSceneProposal()`，但只接收安全 scene / participant / options 摘要，不接完整 caller options、raw resolver input 或审计上下文；sanitizer 会强制锚定 `sceneId`、`participantId`、`actorId`，按 sceneType 二次限制 proposal kind，过滤不可见 evidence refs，丢弃 private result refs、tool calls、requested tool name、accepted/status/stateDelta 等伪造成案或直写字段，并用安全 flags 让服务器收束时 fail closed。
+- `collectSceneProposals()` 只整理 `runSceneRound()` 已收集的回合意见，并按 sceneType allowlist 与本轮 actor context 重审 evidence；外部或未信任 proposal 仍必须交给 `resolveSceneOutcome()` 用完整 scene 和当前 world state 重审。
+- `resolveSceneOutcome()` 只桥接到 S71.5 `resolveCityPolicy()`、S71.6 `resolveJudicialCase()`、S71.7 `resolveCampaignOrDefense()` / `resolveDiplomaticMove()` 的 resolve-only 接口，返回 hidden-safe outcome 摘要；场景本身不推进全局年月旬或回合、不应用 `stateDelta`、不写 `worldState`、session、SQLite、审计表或内部 ledger。伪造参与者会被忽略，程序意见和 S71.8 pressure-event 场景意见当前只进入纪要/拒绝摘要，不直接成案。
+- 新增 `test/sceneRuntime.test.js`、`test/sceneActorVisibility.test.js` 和 `test/sceneRuntimeMock.test.js`，覆盖堂审/朝议/会盟/战役场景、scene-local time、不写状态、多 actor proposal 收集、resolver outcome 收束、Mock fallback、轮次预算、伪造参与者忽略、伪造工具调用和 hidden/raw/path/key/server.* 污染清洗。
+- 同步 brief、architecture、动态数据库规划、路线图、AI 控制矩阵、README 与共享上下文，把下一步切到 S71.10 NPC 记忆账本。
+
+验证：
+
+- 已通过：`node --check src/game/sceneRuntime.js`、`node --check src/game/sceneRuntimeConfig.js`、`node --check test/sceneRuntime.test.js`、`node --check test/sceneActorVisibility.test.js`、`node --check test/sceneRuntimeMock.test.js`。
+- 已通过：`node --test test/sceneRuntime.test.js test/sceneActorVisibility.test.js test/sceneRuntimeMock.test.js`（6/6）。
+- 已通过：`node --test test/institutionScenes.test.js test/institutionSceneVisibility.test.js test/resolverInputContext.test.js test/redactedState.test.js`（17/17）。
+- 已通过：`node --test test/cityPolicyResolver.test.js test/cityPolicyHiddenRedaction.test.js test/judicialCaseResolver.test.js test/judicialCaseRedaction.test.js`（8/8）。
+- 已通过：`node --test test/militaryDiplomacyResolver.test.js test/militaryDiplomacyRedaction.test.js test/worldPressureEventGenerator.test.js test/worldPressureEventCooldown.test.js test/worldPressureEventHiddenRedaction.test.js`（17/17）。
+- 已通过：`npm run check:docs-governance`、`node --test test/documentationGovernance.test.js`、`git diff --check`。
+- 已运行：`npm test` 三次均为 824/825，唯一失败是既有 S67 `dual-mode S67 scale regression records large fixture, prompt strategy, paging, repair and timing` 中 `sqliteReadRepairMs` 性能阈值抖动（最终一次 5661.114ms > 3000ms）；单独复跑 `node --test test/dualModeAcceptanceScript.test.js` 8/8 通过。
+- 提交前只读复审首轮发现 P1：完整 `options` 传给 `aiRuntime.generateSceneProposal()` 可能暴露未按 actor 裁剪的 context；已改为只传安全 scene / participant / options 摘要并补 options 泄漏红队。首轮还指出 `collectSceneProposals()` 需避免被误用为通用 sanitizer，已改为只整理 `runSceneRound()` 产物并用本轮 actor context 重审 evidence。第二轮只读复审未发现 P0/P1/P2，建议提交。
+
+风险/遗留：
+
+- S71.9 只提供内部 scene runtime，不接普通 `/api/game/turn` 自动调度，不新增浏览器堂审/朝议/会盟/战役面板，不写 SQLite 派生表或审计业务表，不调用真实 provider 做多 actor 长循环。
+- 场景 outcome 只返回 resolver 摘要；真正应用后果仍必须由调用方显式调用 S71.5-S71.8 对应 apply helper，并保留各 resolver 的白名单、审计和 redacted player state 边界。
+- 下一步进入 S71.10 NPC 记忆账本，需复用 S70.12 actor memory、S71.4 redacted API 与 S71.9 scene actor context。
 
 ### 2026-05-13
 
