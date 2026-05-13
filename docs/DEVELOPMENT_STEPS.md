@@ -131,7 +131,7 @@
 | S71.8 | DONE | 压力驱动事件生成器：从粮价、水利、腐败、边防、NPC 怨怼和情报压力生成事件候选 | 2026-05-13 | Codex / 子代理 | `5ead9e5` |
 | S71.9 | DONE | 多 actor 场景运行时：朝议、堂审、会盟、战役 scene-local time 与 actor proposal 编排 | 2026-05-13 | Codex / 子代理 | `6440614` |
 | S71.10 | DONE | NPC 记忆账本：高显著 NPC 长期记忆、人情债、恩怨、家族风险和背景 NPC heuristic | 2026-05-13 | Codex / 子代理 | `a88b429` |
-| S71.11 | DONE | AI 调动审计面板：工具摘要、拒绝原因、成本、公开结果和 hidden-safe 开发诊断，不泄漏 raw prompt/proposal | 2026-05-13 | Codex / 子代理 | `待本次提交` |
+| S71.11 | DONE | AI 调动审计面板：工具摘要、拒绝原因、成本、公开结果和 hidden-safe 开发诊断，不泄漏 raw prompt/proposal | 2026-05-13 | Codex / 子代理 | `cf1abbf` |
 | S71.12 | TODO | S71 验收与归档：JSON/SQLite parity、Mock/no-key、provider smoke、browser smoke、hidden-token 和完整书生路径回归 | - | - | S71.11 后 |
 
 ## 5. S68-S69：科举、读书、评卷与授官深化
@@ -215,7 +215,7 @@ S71 详细规划见 [DATABASE_GAMEPLAY_RESOLVER_ROADMAP.md](DATABASE_GAMEPLAY_RE
 
 步骤：S71.11 AI 调动审计面板。
 
-提交：`待本次提交`。
+提交：`cf1abbf`。
 
 完成：
 
@@ -236,6 +236,8 @@ S71 详细规划见 [DATABASE_GAMEPLAY_RESOLVER_ROADMAP.md](DATABASE_GAMEPLAY_RE
 风险/遗留：
 
 - S71.11 不新增 SQLite 审计业务表、provider tracing 后端、真实 provider 长循环或单独开发者 raw audit 浏览器；面板当前只读服务器已清洗 route view 与 bounded AI observability。
+- 提交前只读子代理复审发现两轮 P2：POSIX 绝对路径清洗未覆盖 `/srv` 等通用根目录，以及 `path=/srv...` / `model:/etc...` 等带分隔符格式。已扩展 file URI / POSIX 路径规则，新增 strict provider token 清洗，并补 `/srv`、`/etc`、`/private`、`path=...`、`model:...` 和 `cache='...'` canary；最终复审未发现 P0/P1/P2。
+- 哈希回填为低风险纯文档更新，跳过额外子代理复审。
 - 当前展示的是预算/调用/拒绝摘要，不声称真实 token 花费；后续 S71.12 需做 JSON/SQLite parity、Mock/no-key、provider smoke、browser smoke、hidden-token 和完整书生路径回归。
 
 ### 2026-05-13
