@@ -9,7 +9,7 @@
 - 前端：纯 HTML + CSS + JavaScript，无构建步骤。
 - 后端：Node.js + Express，plain JavaScript。
 - AI：适配器模式，支持 Mock、OpenAI、DeepSeek、Claude/Anthropic。
-- 存储：默认本地 JSON session 文件；可选本地 SQLite session row adapter 与本地审计日志。
+- 存储：默认本地 JSON session 文件；可选本地 SQLite session row adapter、本地审计日志、`schema_migrations` 与维护命令。
 - 默认体验：`npm install && npm start` 后访问 `http://localhost:3000` 即可游玩，默认不需要 API Key。
 
 第一阶段最重要的完整体验是 **书生 -> 科举 -> 入仕**，后续任何路线图都不得破坏完整路径：`scholar -> child_exam -> provincial_exam -> metropolitan_exam -> palace_exam -> official`。
@@ -28,7 +28,7 @@
 - S49-S67 本地数据库与大世界内容：storage adapter、可选 SQLite session row、本地审计、地理/人物/官职任所业务表、安全事件档案、prompt 检索、双模式验收、规模内容契约、small/medium/large fixture、国家/城市/NPC/官职/案牍/军务/财赋/事件链/情报、prompt 策略、浏览器分页和 large fixture 规模验收，统一归档见 [LOCAL_DATABASE_AND_WORLD_CONTENT_ARCHIVE.md](LOCAL_DATABASE_AND_WORLD_CONTENT_ARCHIVE.md)。旧分卷归档和 S60 契约文件仅保留为跳转页。
 - S68-S69 科举、读书、评卷与授官深化：科举制度契约、读书账本、老师点评、科场流程、多考官阅卷、榜单荣誉、同年座师网络、授官轨迹、浏览器科举档案面板和 Provider/Mock 验收，归档见 [IMPERIAL_EXAM_DEEPENING_ARCHIVE.md](IMPERIAL_EXAM_DEEPENING_ARCHIVE.md)。
 
-当前活动路线图见 [DEVELOPMENT_STEPS.md](DEVELOPMENT_STEPS.md)，数据库方向见 [DYNAMIC_WORLD_DATABASE_PLAN.md](DYNAMIC_WORLD_DATABASE_PLAN.md)。S49-S67 已把本地数据库和“超大动态世界数据库”的内容密度、可见性、prompt 检索、浏览器分页和规模验收收束为统一归档；S68-S69 已完成并归档；S70 AI prompt/tool/actor/多模型路由、AI 设置、月报、跳时、记忆、地图接口、provider AI-first smoke 和 JSON/SQLite parity 已完成并归档到 [AI_ORCHESTRATION_ARCHIVE.md](AI_ORCHESTRATION_ARCHIVE.md)。S71 的数据库玩法化、维护、安全检索和 redacted API 规划见 [DATABASE_GAMEPLAY_RESOLVER_ROADMAP.md](DATABASE_GAMEPLAY_RESOLVER_ROADMAP.md)；S71.0 已新增 [DATABASE_RESOLVER_INPUT_CONTRACT.md](DATABASE_RESOLVER_INPUT_CONTRACT.md)，固定 `resolverInputContext` 字段、允许来源、禁止源、evidence ref、AI 权限和 JSON/SQLite parity 测试矩阵；S71.1 已新增 `src/game/resolverInputConfig.js`、`src/game/resolverInputContext.js` 与聚焦测试，把既有 server view 汇总为 capped 只读 resolver evidence buckets，下一步从 S71.2 本地 schema migration 与维护层开始。该 S71 文档已扩展为后续 Codex 开发任务书，明确每步依赖、资料、建议模块/函数、route/tool 接口、测试和验收。真正 hidden 私档、资产真数、隐藏动机、未公开任免、密档事件链和隐藏情报真值仍不回填当前 raw route state；S70.12 已先把原始记忆和经历摘要账本从玩家 route `worldState` 中剥离。当前不规划远程存档、账号体系、多人同步、云端冲突解决或托管数据库。
+当前活动路线图见 [DEVELOPMENT_STEPS.md](DEVELOPMENT_STEPS.md)，数据库方向见 [DYNAMIC_WORLD_DATABASE_PLAN.md](DYNAMIC_WORLD_DATABASE_PLAN.md)。S49-S67 已把本地数据库和“超大动态世界数据库”的内容密度、可见性、prompt 检索、浏览器分页和规模验收收束为统一归档；S68-S69 已完成并归档；S70 AI prompt/tool/actor/多模型路由、AI 设置、月报、跳时、记忆、地图接口、provider AI-first smoke 和 JSON/SQLite parity 已完成并归档到 [AI_ORCHESTRATION_ARCHIVE.md](AI_ORCHESTRATION_ARCHIVE.md)。S71 的数据库玩法化、维护、安全检索和 redacted API 规划见 [DATABASE_GAMEPLAY_RESOLVER_ROADMAP.md](DATABASE_GAMEPLAY_RESOLVER_ROADMAP.md)；S71.0 已新增 [DATABASE_RESOLVER_INPUT_CONTRACT.md](DATABASE_RESOLVER_INPUT_CONTRACT.md)，固定 `resolverInputContext` 字段、允许来源、禁止源、evidence ref、AI 权限和 JSON/SQLite parity 测试矩阵；S71.1 已新增 `src/game/resolverInputConfig.js`、`src/game/resolverInputContext.js` 与聚焦测试，把既有 server view 汇总为 capped 只读 resolver evidence buckets；S71.2 已新增 `src/storage/sqliteMigrations.js`、`src/storage/sqliteMaintenance.js`、`scripts/sqliteMaintenanceTool.js` 与维护脚本，提供 `schema_migrations`、forward-only migration runner、状态/健康/备份/VACUUM/安全导出和脱敏漂移诊断。下一步进入 S71.3 安全全文检索 / 本地搜索。该 S71 文档已扩展为后续 Codex 开发任务书，明确每步依赖、资料、建议模块/函数、route/tool 接口、测试和验收。真正 hidden 私档、资产真数、隐藏动机、未公开任免、密档事件链和隐藏情报真值仍不回填当前 raw route state；S70.12 已先把原始记忆和经历摘要账本从玩家 route `worldState` 中剥离。当前不规划远程存档、账号体系、多人同步、云端冲突解决或托管数据库。
 
 S68-S69 科举、读书、评卷与授官深化规划见 [IMPERIAL_EXAM_DEEPENING_ROADMAP.md](IMPERIAL_EXAM_DEEPENING_ROADMAP.md)，S68.1 制度契约见 [IMPERIAL_EXAM_SYSTEM_CONTRACT.md](IMPERIAL_EXAM_SYSTEM_CONTRACT.md)，完成归档见 [IMPERIAL_EXAM_DEEPENING_ARCHIVE.md](IMPERIAL_EXAM_DEEPENING_ARCHIVE.md)。该专项要求外层 `child_exam -> provincial_exam -> metropolitan_exam -> palace_exam` API 保持兼容，内部把童试拆为县试/府试/院试，把乡试/会试扩为三场、多日、多卷、号舍、弥封、誊录、对读、磨勘、复核、房官/同考官/主考官阅卷、canonical 榜单荣誉和授官轨迹，并把 AI 老师、同年、考官、吏部、皇帝和授官 proposal 全部限制在服务器裁决之下。弥封身份映射、考官 hidden intent、保结 hidden notes 和 raw provider proposal 不得回填普通 route `worldState` 或浏览器/prompt view。
 
@@ -417,7 +417,7 @@ chore: update env example
 
 已完成的本地数据库底座：
 
-1. JSON 默认仍可玩；SQLite 通过 `STORAGE_ADAPTER=sqlite` 显式启用，当前包含一行一 session、审计表、地理 `geo_*`、人物 `people_*`、官职任所 `office_*`、安全 `event_archive_index` 和安全 `prompt_retrieval_index` 派生表。
+1. JSON 默认仍可玩；SQLite 通过 `STORAGE_ADAPTER=sqlite` 显式启用，当前包含 `schema_migrations`、一行一 session、审计表、地理 `geo_*`、人物 `people_*`、官职任所 `office_*`、安全 `event_archive_index` 和安全 `prompt_retrieval_index` 派生表。
 2. S49-S67 已统一归档到 [LOCAL_DATABASE_AND_WORLD_CONTENT_ARCHIVE.md](LOCAL_DATABASE_AND_WORLD_CONTENT_ARCHIVE.md)：S49-S53 本地数据库基础、S54-S59 SQLite 业务表/索引/维护/双模式验收、S60-S67 内容契约/规模 fixture/国家/城市/NPC/官职/案牍/军务/财赋/事件链/情报/prompt/局势簿分页/large fixture scale acceptance 都以该文件为追溯入口。
 3. 旧的 `LOCAL_DATABASE_FOUNDATION_ARCHIVE.md`、`LOCAL_DATABASE_BUSINESS_TABLE_ARCHIVE.md`、`HUGE_DYNAMIC_WORLD_CONTENT_ARCHIVE.md` 和 `HUGE_DYNAMIC_WORLD_CONTENT_CONTRACT.md` 仅保留为跳转页，避免历史链接失效。
 4. `event_log` / `ai_change_proposals` 是本地脱敏审计，不进入玩家 API，也不让 AI 直接写表；AI 领域工具最多提交 proposal，由服务器记录接受/拒绝原因。
@@ -428,7 +428,7 @@ chore: update env example
 
 - S68-S69：科举、读书、评卷与授官深化已完成并归档到 [IMPERIAL_EXAM_DEEPENING_ARCHIVE.md](IMPERIAL_EXAM_DEEPENING_ARCHIVE.md)。
 - S70：AI 提示词、工具协议、actor 权限、多 AI 编排、AI 设置、官职月报、跳时、记忆、地图接口、provider AI-first smoke、JSON/SQLite parity 和归档已完成，见 [AI_ORCHESTRATION_ARCHIVE.md](AI_ORCHESTRATION_ARCHIVE.md)。
-- S71：数据库玩法化、维护、安全检索和 redacted API，S71.0 契约已固定在 [DATABASE_RESOLVER_INPUT_CONTRACT.md](DATABASE_RESOLVER_INPUT_CONTRACT.md)，S71.1 已落地只读 `resolverInputContext` 输入层，让安全 projection 成为后续财政、地方政策、案件、军务、外交和事件链 resolver 的共用证据包；下一步补 `schema_migrations`、本地维护、FTS/安全搜索、AI actor 场景、NPC 记忆和 AI 调动审计面板。
+- S71：数据库玩法化、维护、安全检索和 redacted API，S71.0 契约已固定在 [DATABASE_RESOLVER_INPUT_CONTRACT.md](DATABASE_RESOLVER_INPUT_CONTRACT.md)，S71.1 已落地只读 `resolverInputContext` 输入层，S71.2 已落地本地 SQLite migration/maintenance 初版，让安全 projection 和本地维护工具成为后续财政、地方政策、案件、军务、外交和事件链 resolver 的基础；下一步补 FTS/安全搜索、redacted API、AI actor 场景、NPC 记忆和 AI 调动审计面板。
 
 本地数据库专项必须满足同一边界：默认 JSON/Mock 路径不得被破坏；SQLite local-only；AI 可以通过领域工具提交 proposal，但不执行 SQL、不直接写 canonical 状态、业务表或审计表；浏览器和 prompt 只读服务器 projection；hidden 私档不回填当前 raw route `worldState`；服务器继续拥有 schema、白名单、clamp、隐藏过滤、科举晋级、官职任免、长期事件、世界实体、世界议程、数据库写入和持久化事务。
 
@@ -444,3 +444,4 @@ chore: update env example
 - [IMPERIAL_EXAM_DEEPENING_ARCHIVE.md](IMPERIAL_EXAM_DEEPENING_ARCHIVE.md)：S68-S69 科举、读书、评卷、榜单、同年座师、授官与 Provider/Mock 验收归档。
 - [AI_ORCHESTRATION_ARCHIVE.md](AI_ORCHESTRATION_ARCHIVE.md)：S70 AI prompt/tool/actor/多模型路由、AI 设置、官职月报、跳时、记忆、地图接口、provider AI-first smoke、JSON/SQLite parity 与归档。
 - [DATABASE_RESOLVER_INPUT_CONTRACT.md](DATABASE_RESOLVER_INPUT_CONTRACT.md)：S71 数据库 resolver 输入契约，固定 `resolverInputContext` 字段、允许来源、禁止源、evidence ref、AI 权限和 JSON/SQLite parity 测试矩阵；S71.1 已按该契约提供 `resolverInputConfig` / `resolverInputContext` 初版。
+- [DATABASE_GAMEPLAY_RESOLVER_ROADMAP.md](DATABASE_GAMEPLAY_RESOLVER_ROADMAP.md)：S71 数据库玩法化、维护、安全检索、redacted API、玩法 resolver、actor 场景、NPC 记忆和 AI 调动审计面板任务书；S71.2 已按该路线提供本地 SQLite migration/maintenance 初版。

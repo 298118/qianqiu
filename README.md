@@ -6,7 +6,7 @@
 
 ## 这次主要更新
 
-当前项目已经完成可玩纵切、浏览器验收、时间专项、AI provider 扩展、本地动态数据库基础、S54-S59 SQLite 业务表拆分、S60-S67 超大动态世界数据库内容充实、S68-S69 科举读书深化与归档、S70 AI 编排归档，以及 S71.0-S71.1 数据库 resolver 输入契约与只读输入层。近期重点更新集中在“本地数据库专项归档”“S68-S69 科举读书深化”“多 provider 能力”“S70 AI 编排”和“S71 数据库玩法化入口”：
+当前项目已经完成可玩纵切、浏览器验收、时间专项、AI provider 扩展、本地动态数据库基础、S54-S59 SQLite 业务表拆分、S60-S67 超大动态世界数据库内容充实、S68-S69 科举读书深化与归档、S70 AI 编排归档，以及 S71.0-S71.2 数据库 resolver 输入与本地 SQLite 维护层。近期重点更新集中在“本地数据库专项归档”“S68-S69 科举读书深化”“多 provider 能力”“S70 AI 编排”和“S71 数据库玩法化入口”：
 
 - 完成 S70.1 AI 提示词与工具协议契约：新增 [docs/AI_PROMPT_ENGINEERING_CONTRACT.md](docs/AI_PROMPT_ENGINEERING_CONTRACT.md) 和 [docs/AI_TOOL_PROTOCOL_CONTRACT.md](docs/AI_TOOL_PROTOCOL_CONTRACT.md)，固定 prompt pack 七层、actor/scene/output/tool policy 边界、MCP-friendly tool envelope、proposal/result/request-adjudication schema、`server.*` 内部化、strict `inputSchema`、Mock/no-key fallback 和 provider smoke 口径。新增 `src/ai/toolSchemas.js`、`scripts/providerToolSmoke.js` 与 `npm run smoke:provider:tools`，可在有 MiMo key 时探测 `tools` / `tool_choice` / `tool_calls` 与工具结果回填形状；无 key 时明确 skip。
 - 完成 S70.8 多模型路由与 S70.9 AI 设置：`src/ai/modelRoutePolicy.js` 固定 narrator、actor_mind、planner、domain_specialist、critic、safety_gate、memory_summarizer、monthly_briefing、time_skip_planner 九类任务的 provider/model/budget/tool 边界，`npm run eval:ai` 会先跑本地 route/eval runner；`src/game/aiSettings.js`、`GET/POST /api/ai/settings/:sessionId` 和浏览器 `#ai-control-panel` 让玩家按任务调整 provider/model、输出长度、工具预算、并发和安全严格度。设置与调动摘要只返回 hidden-safe view，不暴露 key、base URL、raw prompt、raw provider payload、本地路径或 raw table，critic/safety 仍强制 review-only。
@@ -15,9 +15,10 @@
 - 完成 S70.12 大模型记忆系统：新增 `actorMemoryLedger`、`actorMemoryView`、`sessionSummary` 和 `sessionSummaryView`，普通回合会把 provider `memoryProposals`、可见关系变化、主动 NPC 请求、官职月报和科举同年座师网络整理为可见 actor memory；月末会生成玩家经历摘要并记录 `memory_summarizer` 调动摘要。provider 记忆 proposal 的来源类型由服务器强制归为 `ai_memory_proposal`，被拒绝的 private/hidden、不可见 actor、跨 actor 或污染文本只进入 hidden-safe 拒绝计数和原因码；浏览器、prompt、事件档案和响应 `worldState` 只接触服务器清洗后的 capped view，不暴露 raw 记忆/摘要账本。
 - 完成 S70.13 地图 AI 接口预留与 S70.14 归档验收：新增 `mapContextView`、稳定 `mapEntityRef`、地图可见性和 `map.propose_route_or_geopolitical_move` 待裁决工具；游戏、考试和 prompt 只读地图安全 projection，不暴露 raw coordinate table 或 hidden enemy truth。新增 `scripts/providerAiFirstSmoke.js` 与 `npm run smoke:provider:ai-first`，有 MiMo key 时验收真实开局/普通长回合 JSON 和月报、跳时、记忆、地图、critic/safety、AI 设置等 S70 surface；无 key 时明确 skip，`MIMO_REQUIRED=1` 时缺 key fail。`npm run smoke:dual-mode -- --storage-only` 现在也比较 S70 AI-first JSON/SQLite route-view parity；S70 完成范围见 [docs/AI_ORCHESTRATION_ARCHIVE.md](docs/AI_ORCHESTRATION_ARCHIVE.md)。
 - 完成 S71.0-S71.1 数据库 resolver 输入契约与只读输入层：新增 [docs/DATABASE_RESOLVER_INPUT_CONTRACT.md](docs/DATABASE_RESOLVER_INPUT_CONTRACT.md)、`src/game/resolverInputConfig.js`、`src/game/resolverInputContext.js` 和 `test/resolverInputContext.test.js`。`resolverInputContext` 从服务器安全 view 生成 geography/people/offices/economy/military/events/intel/player/map/memory evidence buckets，带 `sourceViews`、caps、safety 和 audit summary；actor filter 会按 read domain 裁剪，JSON/SQLite adapter 读同一 fixture 后 context 等价，hidden/raw/prompt/path/key 污染会被清洗或拒绝。S71 仍 local-only，redacted API 是 hidden 私档前置，AI 只能读 actor 可见 projection 并提交 proposal/request-adjudication，不能执行 SQL、直写数据库或把 hidden/raw 内容回填普通 state route。
-- 新增可选 SQLite 存储模式：默认仍是 JSON 存档；设置 `STORAGE_ADAPTER=sqlite` 后，本地使用 `world_sessions`、审计表、地理 `geo_*`、人物 `people_*`、官职任所 `office_*` 派生业务表、安全事件档案 `event_archive_index` 和安全 prompt 检索派生索引。
+- 完成 S71.2 本地 SQLite schema migration 与维护层初版：新增 `src/storage/sqliteMigrations.js`、`src/storage/sqliteMaintenance.js`、`scripts/sqliteMaintenanceTool.js`、`test/sqliteMigrations.test.js` 和 `test/sqliteMaintenanceTool.test.js`。SQLite adapter 初始化 `schema_migrations`；migration runner 支持 dry-run、幂等跳过、checksum mismatch 阻断、事务回滚、失败不落 applied、forward-only 和破坏性迁移备份确认；维护命令新增 `storage:sqlite:status|health|backup|vacuum|export-safe`，输出数据库体积、迁移状态、索引健康、派生表漂移、备份/VACUUM dry-run 和脱敏诊断，不进入玩家 API、prompt 或浏览器。
+- 新增可选 SQLite 存储模式：默认仍是 JSON 存档；设置 `STORAGE_ADAPTER=sqlite` 后，本地使用 `schema_migrations`、`world_sessions`、审计表、地理 `geo_*`、人物 `people_*`、官职任所 `office_*` 派生业务表、安全事件档案 `event_archive_index` 和安全 prompt 检索派生索引。
 - 新增地理业务表同步：SQLite 模式会把 `worldState.worldGeography` 同步到 `geo_countries`、`geo_regions`、`geo_cities`、`geo_routes`、`geo_frontier_zones`、`geo_office_jurisdictions`，读档时可按 JSON snapshot 修复缺失或陈旧行。
-- 新增地理维护工具：`npm run storage:geography:sqlite -- import|status|repair|export` 支持导入、漂移检查、修复和脱敏 debug dump。
+- 新增地理维护工具：`npm run storage:geography:sqlite -- import|status|repair|export` 支持导入、漂移检查、修复和脱敏 debug dump；通用 SQLite 维护入口 `npm run storage:sqlite:status|health|backup|vacuum|export-safe` 用于本地迁移状态、索引健康、数据库体积、备份/VACUUM 和安全诊断。
 - 新增人物域 SQLite 持久化：SQLite 模式会把规范化后的可见 `worldPeople` bridge rows 同步到 `people_npcs`、`people_households`、`people_assets`、`people_estates`、`people_relationships`；prompt/UI 仍只读 `worldPeopleView`。
 - 新增官职任所 SQLite 持久化：SQLite 模式会把规范化后的安全 `officialPostings` projection 同步到 `office_bureaus`、`office_catalog`、`office_city_jurisdictions`、`office_postings`、`office_assessments`、`office_transfers`；读档可按 JSON snapshot 修复缺失、陈旧、错行、同 id/同 revision 内容污染或旧行缺指纹。
 - 新增安全事件索引：SQLite 模式会把 `eventArchiveView` 的安全分页 projection 同步到 `event_archive_index`，读档按 `world_sessions.world_state_json` 单向修复；prompt 近事、顶层 `recentEvents`、地方案牍、军务外交预警、经济财政预警、S65.1 公开历史事件链和 S65.2 情报传闻都只读事件档案安全条目。
@@ -168,7 +169,7 @@ STORAGE_ADAPTER=sqlite
 SQLITE_DATABASE_PATH=data/qianqiu.sqlite
 ```
 
-SQLite 模式需要当前 Node.js 运行时提供 `node:sqlite`。它会保留完整 `world_sessions.world_state_json`，同步地理 `geo_*` 业务表、可见人物 `people_*` bridge rows、官职任所 `office_*` projection rows、安全事件档案 `event_archive_index` 和安全 prompt 检索索引，并把服务器人物事件关联到本地 `people_*.last_event_id`。`office_*`、`event_archive_index` 和 prompt 检索索引派生行带本地内容指纹；`prompt_retrieval_index` 也包含 `localAffairsDocketView` 的地方案牍 compact rows、`militaryDiplomacyView` 的军务外交 compact rows、`economicFiscalView` 的经济财政 compact rows、`historicalEventArchiveView` 的公开事件链 compact rows 和 `intelligenceRumorView` 的情报传闻 compact rows，用于发现同 id/同 revision 的 raw table 污染或旧行缺指纹。raw SQLite table 不进入浏览器、prompt 或 save-list payload；读取修复也只从 `world_state_json` 单向重建，不把 raw row、事件 id、密档链或隐藏情报真值回填为 route state。
+SQLite 模式需要当前 Node.js 运行时提供 `node:sqlite`。它会保留完整 `world_sessions.world_state_json`，初始化 `schema_migrations`，同步地理 `geo_*` 业务表、可见人物 `people_*` bridge rows、官职任所 `office_*` projection rows、安全事件档案 `event_archive_index` 和安全 prompt 检索索引，并把服务器人物事件关联到本地 `people_*.last_event_id`。`office_*`、`event_archive_index` 和 prompt 检索索引派生行带本地内容指纹；`prompt_retrieval_index` 也包含 `localAffairsDocketView` 的地方案牍 compact rows、`militaryDiplomacyView` 的军务外交 compact rows、`economicFiscalView` 的经济财政 compact rows、`historicalEventArchiveView` 的公开事件链 compact rows 和 `intelligenceRumorView` 的情报传闻 compact rows，用于发现同 id/同 revision 的 raw table 污染或旧行缺指纹。raw SQLite table 不进入浏览器、prompt 或 save-list payload；读取修复也只从 `world_state_json` 单向重建，不把 raw row、事件 id、密档链或隐藏情报真值回填为 route state。
 
 导入、地理维护与审计公开 projection：
 
@@ -179,10 +180,15 @@ npm run storage:geography:sqlite -- repair --dry-run
 npm run storage:geography:sqlite -- export
 npm run storage:audit-events -- status --adapter json
 npm run storage:audit-events -- export --adapter sqlite --db data/qianqiu.sqlite
+npm run storage:sqlite:status -- --db data/qianqiu.sqlite
+npm run storage:sqlite:health -- --db data/qianqiu.sqlite
+npm run storage:sqlite:backup -- --db data/qianqiu.sqlite --dry-run
+npm run storage:sqlite:vacuum -- --db data/qianqiu.sqlite --dry-run
+npm run storage:sqlite:export-safe -- --db data/qianqiu.sqlite
 npm run smoke:dual-mode -- --storage-only
 ```
 
-`storage:import:sqlite` 会通过 SQLite adapter 同步 `geo_*`、`people_*`、`office_*`、`event_archive_index` 和 `prompt_retrieval_index` 等派生表；`smoke:dual-mode -- --storage-only` 是当前 JSON/SQLite 快速整体验收，串联 JSON -> SQLite dry-run/正式导入、地理修复/导出、审计公开 projection、派生表计数、large fixture scale regression、prompt 策略、局势簿分页、S70 AI-first route-view parity、SQLite 读档修复、性能门槛和 hidden-token 防线。
+`storage:import:sqlite` 会通过 SQLite adapter 同步 `geo_*`、`people_*`、`office_*`、`event_archive_index` 和 `prompt_retrieval_index` 等派生表；`storage:sqlite:*` 仅作为本地维护命令，缺失数据库时 status/health/export-safe 不创建文件，backup/vacuum 支持 `--dry-run`，输出会脱敏本机路径、key、raw prompt 和 hidden/private 字段；`smoke:dual-mode -- --storage-only` 是当前 JSON/SQLite 快速整体验收，串联 JSON -> SQLite dry-run/正式导入、地理修复/导出、审计公开 projection、派生表计数、large fixture scale regression、prompt 策略、局势簿分页、S70 AI-first route-view parity、SQLite 读档修复、性能门槛和 hidden-token 防线。
 
 回滚优先关闭 `STORAGE_ADAPTER=sqlite` 回到 JSON adapter，或保留/恢复原 JSON 存档。
 
@@ -202,6 +208,8 @@ npm run smoke:provider:ai-first
 npm run smoke:provider:route
 npm run smoke:provider:long
 npm run storage:audit-events -- status
+npm run storage:sqlite:status -- --db data/qianqiu.sqlite
+npm run storage:sqlite:export-safe -- --db data/qianqiu.sqlite
 ```
 
 说明：
@@ -216,6 +224,7 @@ npm run storage:audit-events -- status
 - `npm run smoke:provider:ai-first` 是 S70.14 MiMo AI-first 验收；有 key 时真实调用 MiMo 开局和普通长回合，再以内存 fixture 验证月报、跳时、记忆、地图 proposal、critic/safety review-only 和 AI 设置 surface；缺 key 时明确跳过，`MIMO_REQUIRED=1` 或 `--required` 时缺 key 失败。
 - `npm run smoke:provider*` 只在配置真实 provider key 时进行网络调用；无 key 环境会成功跳过。
 - `npm run storage:audit-events -- status|export` 是本地审计公开 projection 工具，默认只输出脱敏统计和 public 事件摘要，不输出 raw audit、provider proposal、prompt、key、本地路径或 hidden notes。
+- `npm run storage:sqlite:status|health|backup|vacuum|export-safe` 是本地 SQLite 维护入口，覆盖 `schema_migrations`、索引健康、派生表漂移、数据库体积、备份、VACUUM 和安全诊断；这些命令不进入玩家 API，缺 `node:sqlite` 时给出可读错误或由测试受控 skip。
 
 ## API 概览
 
@@ -267,7 +276,7 @@ data/sessions/
 
 - [docs/SHARED_CONTEXT.md](docs/SHARED_CONTEXT.md)：Codex 与 Claude Code 共享交接板。
 - [docs/QIANQIU_DEVELOPMENT_BRIEF.md](docs/QIANQIU_DEVELOPMENT_BRIEF.md)：产品目标、架构、数据契约和交付标准。
-- [docs/DEVELOPMENT_STEPS.md](docs/DEVELOPMENT_STEPS.md)：当前活动路线图与进度台账，已交接到 S71；下一步从 S71.2 本地 SQLite schema migration 与维护层继续。
+- [docs/DEVELOPMENT_STEPS.md](docs/DEVELOPMENT_STEPS.md)：当前活动路线图与进度台账，已交接到 S71；下一步从 S71.3 安全全文检索 / 本地搜索继续。
 - [docs/DEVELOPMENT_GOVERNANCE.md](docs/DEVELOPMENT_GOVERNANCE.md)：稳定开发治理锚点。
 - [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)：当前架构、API、状态模型和验证要求。
 - [docs/AI_CONTROL_AUDIT_MATRIX.md](docs/AI_CONTROL_AUDIT_MATRIX.md)：AI/server 权限矩阵。
@@ -287,6 +296,6 @@ data/sessions/
 
 - 真实 provider 网络调用需要配置 API key；无 key 环境只验证 Mock、缺 key 分支和 no-key skip。
 - 浏览器 smoke 覆盖完整主线和代表身份回合，但不等同于所有身份的长线游玩验收。
-- SQLite 目前已经包含 session row、审计表、地理 `geo_*` 业务表、可见人物 `people_*` bridge rows、人物事件到 `people_*.last_event_id` 的本地关联、带内容漂移探针的官职任所 `office_*` 派生业务表、安全事件档案 `event_archive_index`、安全 prompt 检索索引，以及只输出 allowlist public 摘要的本地审计公开 projection 工具；它们都不是浏览器、prompt 或服务器裁决的 raw 来源。
-- “超大动态世界数据库”的 S60-S67 内容充实阶段已并入统一归档；S68-S69 科举深化和 S70 AI 编排也已归档，S71.0-S71.1 已固定 resolver 输入边界并落地只读 `resolverInputContext`，后续活动重点进入 S71.2 本地 SQLite schema migration 与维护层。
+- SQLite 目前已经包含 `schema_migrations`、session row、审计表、地理 `geo_*` 业务表、可见人物 `people_*` bridge rows、人物事件到 `people_*.last_event_id` 的本地关联、带内容漂移探针的官职任所 `office_*` 派生业务表、安全事件档案 `event_archive_index`、安全 prompt 检索索引，以及只输出 allowlist public 摘要的本地审计公开 projection 工具和本地维护命令；它们都不是浏览器、prompt 或服务器裁决的 raw 来源。
+- “超大动态世界数据库”的 S60-S67 内容充实阶段已并入统一归档；S68-S69 科举深化和 S70 AI 编排也已归档，S71.0-S71.2 已固定 resolver 输入边界、落地只读 `resolverInputContext` 并补本地 SQLite migration/maintenance 初版，后续活动重点进入 S71.3 安全全文检索 / 本地搜索。
 - 当前不包含远程存档、账号体系、多人同步或云端数据库。

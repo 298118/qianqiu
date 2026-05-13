@@ -53,6 +53,9 @@ const {
   readPromptRetrievalSource,
   syncPromptRetrievalTables
 } = require("./sqlitePromptRetrievalTables");
+const {
+  initializeSchemaMigrationsTable
+} = require("./sqliteMigrations");
 
 const DEFAULT_SQLITE_DATABASE_PATH = path.join(__dirname, "..", "..", "data", "qianqiu.sqlite");
 const SQLITE_BUSY_TIMEOUT_MS = 5000;
@@ -152,6 +155,8 @@ function createSqliteSessionAdapter(options = {}) {
 
   function initializeDatabase(database) {
     if (initialized) return;
+
+    initializeSchemaMigrationsTable(database);
 
     database.exec(`
       CREATE TABLE IF NOT EXISTS world_sessions (

@@ -10,7 +10,7 @@
 - S49-S67 本地数据库基础、SQLite 业务表、双模式验收、超大动态世界内容与 S60 内容契约：[LOCAL_DATABASE_AND_WORLD_CONTENT_ARCHIVE.md](LOCAL_DATABASE_AND_WORLD_CONTENT_ARCHIVE.md)。旧分卷归档和 S60 契约文件保留为跳转页。
 - S70 AI 编排与权力工具：[AI_ORCHESTRATION_ARCHIVE.md](AI_ORCHESTRATION_ARCHIVE.md)。S70 规划源头仍见 [AI_ORCHESTRATION_ROADMAP.md](AI_ORCHESTRATION_ROADMAP.md)。
 
-当前活动路线图已交接到 S71：S68-S69 的书生主线科举、读书、评卷与授官制度已归档，S70.1-S70.14 的 AI prompt/tool/actor/多模型路由、AI 设置、月报、跳时、记忆、地图接口、provider AI-first smoke 与 JSON/SQLite parity 已归档。S71 作为 S70 之后的数据库玩法化、维护、安全检索和 redacted API 专项，规划见 [DATABASE_GAMEPLAY_RESOLVER_ROADMAP.md](DATABASE_GAMEPLAY_RESOLVER_ROADMAP.md)。S71.0 数据库玩法化专项契约已固定在 [DATABASE_RESOLVER_INPUT_CONTRACT.md](DATABASE_RESOLVER_INPUT_CONTRACT.md)，S71.1 已落地只读 `resolverInputContext` 输入层；下一步启动 S71.2 本地 SQLite schema migration 与维护层。数据库方向继续只考虑本机 JSON/SQLite 持久化增强；远程存档、账号体系、多人同步、云端冲突解决和托管数据库不进入当前规划。
+当前活动路线图已交接到 S71：S68-S69 的书生主线科举、读书、评卷与授官制度已归档，S70.1-S70.14 的 AI prompt/tool/actor/多模型路由、AI 设置、月报、跳时、记忆、地图接口、provider AI-first smoke 与 JSON/SQLite parity 已归档。S71 作为 S70 之后的数据库玩法化、维护、安全检索和 redacted API 专项，规划见 [DATABASE_GAMEPLAY_RESOLVER_ROADMAP.md](DATABASE_GAMEPLAY_RESOLVER_ROADMAP.md)。S71.0 数据库玩法化专项契约已固定在 [DATABASE_RESOLVER_INPUT_CONTRACT.md](DATABASE_RESOLVER_INPUT_CONTRACT.md)，S71.1 已落地只读 `resolverInputContext` 输入层，S71.2 已落地本地 SQLite schema migration 与维护层；下一步启动 S71.3 安全全文检索 / 本地搜索。数据库方向继续只考虑本机 JSON/SQLite 持久化增强；远程存档、账号体系、多人同步、云端冲突解决和托管数据库不进入当前规划。
 
 ## 1. 开发规范继承
 
@@ -82,7 +82,7 @@
 
 ## 3. 当前边界与已归档摘要
 
-当前活动工作已交接到 S71.2。S49-S67 的本地数据库与大世界内容实现细节已经迁入统一归档，S68-S69 科举深化已迁入科举归档，S70 AI 编排已迁入 S70 归档；活动台账只保留索引和后续边界：
+当前活动工作已交接到 S71.3。S49-S67 的本地数据库与大世界内容实现细节已经迁入统一归档，S68-S69 科举深化已迁入科举归档，S70 AI 编排已迁入 S70 归档；活动台账只保留索引和后续边界：
 
 | 范围 | 状态 | 摘要 | 归档 |
 | --- | --- | --- | --- |
@@ -122,7 +122,7 @@
 | S70.14 | DONE | 真实 MiMo 验收与 S70 归档：MiMo-required provider smoke、JSON/SQLite parity、Mock 开发安全网、hidden-token、越权工具、browser smoke 和归档 | 2026-05-13 | Codex / 子代理 | `6fc1561` |
 | S71.0 | DONE | 数据库玩法化专项契约：确认 S70 后接入点、resolver 输入清单、维护/检索/redacted API 边界和内容保护 | 2026-05-13 | Codex / 子代理 | `9a3c1fa` |
 | S71.1 | DONE | 数据库作为玩法 resolver 输入：财政、城市、NPC、官职、事件、情报 projection 进入服务器裁决上下文 | 2026-05-13 | Codex / 子代理 | `7136953` |
-| S71.2 | TODO | 本地 SQLite schema migration 与维护层：`schema_migrations`、备份、VACUUM、索引健康、体积提示和脱敏导出 | - | - | S71.1 后 |
+| S71.2 | DONE | 本地 SQLite schema migration 与维护层：`schema_migrations`、备份、VACUUM、索引健康、体积提示和脱敏导出 | 2026-05-13 | Codex / 子代理 | 待回填 |
 | S71.3 | TODO | 安全全文检索 / 本地搜索：FTS5 或 fallback，只索引 player-facing projection，不索引 hidden/raw | - | - | S71.2 后 |
 | S71.4 | TODO | Redacted player API 与开发诊断 API：保存 hidden 私档前先拆玩家可见 state 和 hidden-safe diagnostics | - | - | S71.3 后 |
 | S71.5 | TODO | 财政与城市政策 resolver：征粮、赈济、修堤、平粜、清丈、钱粮差事等服务器裁决 | - | - | S71.4 后 |
@@ -213,6 +213,42 @@ S71 详细规划见 [DATABASE_GAMEPLAY_RESOLVER_ROADMAP.md](DATABASE_GAMEPLAY_RE
 
 工具：Codex、子代理。
 
+步骤：S71.2 本地 SQLite schema migration 与维护层。
+
+提交：待回填。
+
+完成：
+
+- 新增 `src/storage/sqliteMigrations.js`，提供 `initializeSchemaMigrationsTable()`、`listAppliedMigrations()`、`applyPendingMigrations()`、`assertMigrationIntegrity()` 和 checksum helper。`schema_migrations` 字段包含 `migration_id`、`schema_version`、`applied_at`、`checksum`、`status`、`error_summary`；SQLite adapter 初始化该表和版本索引。
+- migration runner 固定 dry-run 不写库、同 checksum 幂等跳过、checksum mismatch 阻断、单 migration 事务 / savepoint、失败不落 applied、forward-only 顺序和破坏性迁移显式备份确认。
+- 新增 `src/storage/sqliteMaintenance.js`，提供 `getSqliteDatabaseStatus()`、`getSqliteIndexHealth()`、`getDerivedTableDriftStatus()`、`backupSqliteDatabase()`、`vacuumSqliteDatabase()` 和 `exportSafeSqliteDiagnostics()`；状态/健康/导出只读已有数据库，备份用 `VACUUM INTO`，VACUUM 命令执行 WAL checkpoint、`VACUUM` 与 `PRAGMA optimize`。
+- 新增 `scripts/sqliteMaintenanceTool.js` 和 package scripts：`storage:sqlite:status`、`storage:sqlite:health`、`storage:sqlite:backup`、`storage:sqlite:vacuum`、`storage:sqlite:export-safe`。缺库时 status/health/export-safe 不创建文件，backup/vacuum 支持 `--dry-run`。
+- 新增 `test/sqliteMigrations.test.js` 与 `test/sqliteMaintenanceTool.test.js`，覆盖 dry-run、幂等、checksum mismatch、事务回滚、失败不 applied、forward-only、破坏性迁移备份提示、缺库不创建、备份/VACUUM dry-run、索引健康、派生表 drift 和输出脱敏。
+- 同步 README、brief、动态数据库规划、S71 路线图与共享上下文；S71.2 不新增玩家 route、浏览器面板、AI provider 行为、FTS 搜索索引或玩法 resolver。
+
+验证：
+
+- 已通过：`node --check src/storage/sqliteMigrations.js && node --check src/storage/sqliteMaintenance.js && node --check scripts/sqliteMaintenanceTool.js`。
+- 已通过：`node --test test/sqliteMigrations.test.js test/sqliteMaintenanceTool.test.js`（7/7）。
+- 已通过：`node --test test/sqliteGeographyTool.test.js test/auditEventArchiveTool.test.js test/sqlitePromptRetrieval.test.js`（17/17）。
+- 已通过：`node --test test/sessionStoreAdapterContract.test.js`（53/53）。
+- 全量 `npm test` 本轮 745/746，唯一失败为既有 S67 `sqliteReadRepairMs` 性能阈值抖动（3875.301 > 3000）；随后单独复跑 `node --test test/dualModeAcceptanceScript.test.js` 8/8 通过。
+- 提交前只读子代理勘察建议沿用现有 CLI 模式、缺库不创建、集中脱敏、VACUUM INTO 备份和测试矩阵；最终 diff 复审发现 CLI 异常路径脱敏和 POSIX 路径脱敏覆盖不足两个 P2，已改为导出 `redactUnsafeText()`、CLI 顶层 catch 统一脱敏，并补 `/tmp`、`/var`、`/workspace`、`file://`、Windows 路径、key/env/raw/hidden 回归。二轮只读复审未发现剩余 P0/P1/P2。
+
+风险/遗留：
+
+- 旧 `CREATE TABLE IF NOT EXISTS` 仍保留作首次启动兜底；S71.2 先提供 migration runner 和维护入口，不把既有 DDL 全量重排为历史 migration。
+- `storage:sqlite:health` 当前检查缺表/缺索引；orphan rows、FTS 行数 parity 和更细 contentHash 修复矩阵留给 S71.3/S71.4 或后续维护扩展。
+- 备份/VACUUM 是本地命令行能力，不进入玩家 API、prompt 或浏览器。
+
+下一步：
+
+- 启动 S71.3：安全全文检索 / 本地搜索，优先评估 SQLite FTS5；不可用时保留安全 fallback，只索引 player-facing projection，不索引 raw audit、provider proposal、hidden 私档、完整 prompt、本地路径或 key。
+
+### 2026-05-13
+
+工具：Codex、子代理。
+
 步骤：S71.1 数据库作为玩法 resolver 输入。
 
 提交：`7136953`。
@@ -240,7 +276,7 @@ S71 详细规划见 [DATABASE_GAMEPLAY_RESOLVER_ROADMAP.md](DATABASE_GAMEPLAY_RE
 - `resolverInputContext` 当前只从 JSON snapshot 经 server view 构建；SQLite parity 通过 adapter 读同一 `world_state_json` 验证，不反向采信 raw 派生表。
 - 后续 S71.2/S71.3 可补“污染 SQLite 派生表后 `resolverInputContext` 不变”的专项测试；当前实现不读取 raw 派生表，二轮复审将此列为非阻断残余。
 
-下一步：
+当时下一步（已完成）：
 
 - 启动 S71.2：本地 SQLite schema migration 与维护层，优先 dry-run、备份、状态/健康检查、路径/key/hidden 脱敏和 `node:sqlite` 不可用时受控 skip。
 

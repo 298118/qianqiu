@@ -19,7 +19,12 @@
     "smoke:exam-s69": "node scripts/mockImperialExamAcceptance.js",
     "storage:import:sqlite": "node scripts/importJsonSessionsToSqlite.js",
     "storage:geography:sqlite": "node scripts/sqliteGeographyTool.js",
-    "storage:audit-events": "node scripts/auditEventArchiveTool.js"
+    "storage:audit-events": "node scripts/auditEventArchiveTool.js",
+    "storage:sqlite:status": "node scripts/sqliteMaintenanceTool.js status",
+    "storage:sqlite:health": "node scripts/sqliteMaintenanceTool.js health",
+    "storage:sqlite:backup": "node scripts/sqliteMaintenanceTool.js backup",
+    "storage:sqlite:vacuum": "node scripts/sqliteMaintenanceTool.js vacuum",
+    "storage:sqlite:export-safe": "node scripts/sqliteMaintenanceTool.js export-safe"
   },
   "keywords": [
     "historical-simulation",
