@@ -127,7 +127,7 @@
 | S71.4 | DONE | Redacted player API 与开发诊断 API：保存 hidden 私档前先拆玩家可见 state 和 hidden-safe diagnostics | 2026-05-13 | Codex / 子代理 | `746370a` |
 | S71.5 | DONE | 财政与城市政策 resolver：征粮、赈济、修堤、平粜、清丈、钱粮差事等服务器裁决 | 2026-05-13 | Codex / 子代理 | `3cca9bd` |
 | S71.6 | DONE | 地方案件与刑名 resolver：堂审、证据、士绅压力、胥吏阻力、判决后果和案牍归档 | 2026-05-13 | Codex / 子代理 | `4d93b2d` |
-| S71.7 | DONE | 军务与外交 resolver：侦察、固守、调粮、练兵、会战、互市、和议、宣战 request 和服务器裁决 | 2026-05-13 | Codex / 子代理 | `待提交` |
+| S71.7 | DONE | 军务与外交 resolver：侦察、固守、调粮、练兵、会战、互市、和议、宣战 request 和服务器裁决 | 2026-05-13 | Codex / 子代理 | `761ec99` |
 | S71.8 | TODO | 压力驱动事件生成器：从粮价、水利、腐败、边防、NPC 怨怼和情报压力生成事件候选 | - | - | S71.7 后 |
 | S71.9 | TODO | 多 actor 场景运行时：朝议、堂审、会盟、战役 scene-local time 与 actor proposal 编排 | - | - | S71.8 后 |
 | S71.10 | TODO | NPC 记忆账本：高显著 NPC 长期记忆、人情债、恩怨、家族风险和背景 NPC heuristic | - | - | S71.9 后 |
@@ -215,7 +215,7 @@ S71 详细规划见 [DATABASE_GAMEPLAY_RESOLVER_ROADMAP.md](DATABASE_GAMEPLAY_RE
 
 步骤：S71.7 军务与外交 resolver。
 
-提交：`待提交`。
+提交：`761ec99`。
 
 完成：
 
