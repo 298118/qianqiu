@@ -84,6 +84,13 @@ const {
 } = require("../game/examProcedure");
 const { buildExaminerPanelView } = require("../game/examReview");
 const { mutateSession } = require("../storage/sessionStore");
+const { resolveModelForTask } = require("../ai/modelRoutePolicy");
+const {
+  buildAiInvocationSummaryView,
+  recordAiInvocation,
+  redactAiSettingsForClient,
+  resolveAiSettingsForSession
+} = require("../game/aiSettings");
 
 const router = express.Router();
 
@@ -92,8 +99,11 @@ function toExamPayload(worldState) {
   const worldGeographyView = buildWorldGeographyView(worldState);
   const worldPeopleView = buildWorldPeopleView(worldState);
   const officialPostingsView = buildOfficialPostingsView(worldState);
+  const { settings, routePolicy } = resolveAiSettingsForSession(worldState);
   return {
     sessionId: worldState.sessionId,
+    aiSettingsView: redactAiSettingsForClient({ ...settings, routePolicy }),
+    aiInvocationSummaryView: buildAiInvocationSummaryView(worldState, routePolicy),
     examId: activeExam.examId,
     level: activeExam.level,
     examName: activeExam.examName,
@@ -250,11 +260,21 @@ router.post("/question", async (req, res, next) => {
         applyStatePatch(worldState, preparationResult.statePatch, { incrementTurnCount: false });
       }
 
-      const provider = getProvider();
+      const { routePolicy } = resolveAiSettingsForSession(worldState);
+      const route = resolveModelForTask("narrator", routePolicy);
+      const provider = getProvider({ routePolicy });
+      const startedAt = Date.now();
       const question = sanitizeExamQuestionPayload(
         await provider.generateExamQuestion(worldState, exam),
         { ...exam, requirements: getExamRequirements(exam) }
       );
+      recordAiInvocation(worldState, {
+        taskType: "narrator",
+        route,
+        status: "completed",
+        durationMs: Date.now() - startedAt,
+        maxOutputTokens: route.maxOutputTokens
+      });
 
       worldState.activeExam = {
         examId: createExamId(exam.level),
@@ -380,7 +400,10 @@ router.post("/submit", async (req, res, next) => {
         throw fail(400, "Unknown exam level");
       }
 
-      const provider = getProvider();
+      const { routePolicy } = resolveAiSettingsForSession(worldState);
+      const route = resolveModelForTask("domain_specialist", routePolicy);
+      const provider = getProvider({ routePolicy });
+      const startedAt = Date.now();
       const trimmedEssay = essay.trim();
       const authenticityCheck = checkEssayAuthenticity({
         essay: trimmedEssay,
@@ -390,6 +413,13 @@ router.post("/submit", async (req, res, next) => {
       const grade = sanitizeExamGradePayload(
         await provider.gradeExamEssay(worldState, exam, trimmedEssay, authenticityCheck)
       );
+      recordAiInvocation(worldState, {
+        taskType: "domain_specialist",
+        route,
+        status: "completed",
+        durationMs: Date.now() - startedAt,
+        maxOutputTokens: route.maxOutputTokens
+      });
       const scoreBeforeExaminerReview = applyAuthenticityPenalties(grade.score, authenticityCheck, exam);
       const reviewResult = resolveExamReview({
         worldState,
@@ -524,6 +554,8 @@ router.post("/submit", async (req, res, next) => {
       const officialPostingsView = buildOfficialPostingsView(worldState);
       return {
         sessionId: worldState.sessionId,
+        aiSettingsView: redactAiSettingsForClient({ ...worldState.aiSettings, routePolicy }),
+        aiInvocationSummaryView: buildAiInvocationSummaryView(worldState, routePolicy),
         examId,
         level: exam.level,
         examName: activeExam.examName,

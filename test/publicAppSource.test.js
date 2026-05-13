@@ -114,3 +114,26 @@ test("imperial exam archive panel reads route views and safe exam snapshots", ()
   assert.doesNotMatch(archiveSource, /providerProposal|provider proposal|raw proposal|raw audit/i);
   assert.doesNotMatch(archiveSource, /prompt_retrieval_index|event_archive_index|world_state_json/);
 });
+
+test("S70.9 AI control panel reads route AI views instead of raw world state settings", () => {
+  const source = publicAppSource();
+  const aiPanelSource = sourceBetween(
+    source,
+    "function getAiSettingsView(",
+    "function appendOptionalPanel("
+  );
+
+  assert.match(source, /let currentAiSettingsView = null;/);
+  assert.match(source, /let currentAiInvocationSummaryView = null;/);
+  assert.match(source, /function renderAiControlPanel\(aiSettingsView = currentAiSettingsView/);
+  assert.match(source, /payload\.aiSettingsView/);
+  assert.match(source, /payload\.aiInvocationSummaryView/);
+  assert.match(source, /\/api\/ai\/settings\/\$\{currentSessionId\}/);
+  assert.match(source, /appendOptionalPanel\(renderAiControlPanel\(\)\);/);
+
+  assert.doesNotMatch(aiPanelSource, /worldState\?\.aiSettings/);
+  assert.doesNotMatch(aiPanelSource, /worldState\.aiSettings/);
+  assert.doesNotMatch(aiPanelSource, /raw proposal|raw audit|raw provider/i);
+  assert.doesNotMatch(aiPanelSource, /retrievalContext|prompt_retrieval_index|event_archive_index|world_sessions/);
+  assert.doesNotMatch(aiPanelSource, /OPENAI_API_KEY|DEEPSEEK_API_KEY|MIMO_API_KEY|ANTHROPIC_API_KEY/);
+});

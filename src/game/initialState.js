@@ -224,6 +224,7 @@ function createInitialState(input = {}) {
     activeExam: null,
     studyProfile: null,
     appointmentTrack: null,
+    aiSettings: null,
     examCalendar: createInitialExamCalendar(),
     activeNpcRequest: null,
     longTermEvents: {

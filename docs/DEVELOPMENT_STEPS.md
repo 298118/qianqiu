@@ -9,7 +9,7 @@
 - S48 时间专项：[TIME_SPECIALTY_ROADMAP_ARCHIVE.md](TIME_SPECIALTY_ROADMAP_ARCHIVE.md)。
 - S49-S67 本地数据库基础、SQLite 业务表、双模式验收、超大动态世界内容与 S60 内容契约：[LOCAL_DATABASE_AND_WORLD_CONTENT_ARCHIVE.md](LOCAL_DATABASE_AND_WORLD_CONTENT_ARCHIVE.md)。旧分卷归档和 S60 契约文件保留为跳转页。
 
-当前活动路线图已交接到 S70：S68-S69 的书生主线科举、读书、评卷与授官制度已归档，S70.1 prompt pack 与工具协议、S70.2 actor 权限模型、S70.3 `game_ai_tools` 运行时、S70.4 NPC mind 基础、S70.5 制度场景 helper、S70.6 压力事件工具协议、S70.7 领域工具协议和 S70.8 多模型路由/eval 基础已落地，下一步进入 S70.9 AI 设置与可观测性。S71 作为 S70 之后的数据库玩法化、维护、安全检索和 redacted API 专项，规划见 [DATABASE_GAMEPLAY_RESOLVER_ROADMAP.md](DATABASE_GAMEPLAY_RESOLVER_ROADMAP.md)。数据库方向继续只考虑本机 JSON/SQLite 持久化增强；远程存档、账号体系、多人同步、云端冲突解决和托管数据库不进入当前规划。
+当前活动路线图已交接到 S70：S68-S69 的书生主线科举、读书、评卷与授官制度已归档，S70.1 prompt pack 与工具协议、S70.2 actor 权限模型、S70.3 `game_ai_tools` 运行时、S70.4 NPC mind 基础、S70.5 制度场景 helper、S70.6 压力事件工具协议、S70.7 领域工具协议、S70.8 多模型路由/eval 基础和 S70.9 AI 设置与可观测性已落地，下一步进入 S70.10 玩家官职月报与 AI 推动世界。S71 作为 S70 之后的数据库玩法化、维护、安全检索和 redacted API 专项，规划见 [DATABASE_GAMEPLAY_RESOLVER_ROADMAP.md](DATABASE_GAMEPLAY_RESOLVER_ROADMAP.md)。数据库方向继续只考虑本机 JSON/SQLite 持久化增强；远程存档、账号体系、多人同步、云端冲突解决和托管数据库不进入当前规划。
 
 ## 1. 开发规范继承
 
@@ -112,7 +112,7 @@
 | S70.6 | DONE | 压力事件工具协议与 actor proposal：由城市、财政、军政、关系、情报压力提出事件候选，固定工具 envelope、权限、Mock/provider 基础和服务器成案语义 | 2026-05-12 | Codex / 子代理 | `3847c5a` |
 | S70.7 | DONE | 刑名、财政、军事、外交与科举工具：案牍、赈济、军令、战役、和议、宣战、评卷、授官 proposal 与 resolver | 2026-05-12 | Codex / 子代理 | `a01fbaa` |
 | S70.8 | DONE | 多模型路由与仲裁：narrator、actor_mind、planner、domain_specialist、critic、safety 分工与成本边界 | 2026-05-12 | Codex / 子代理 | 1b52156 |
-| S70.9 | TODO | AI 设置与可观测性：按叙事、NPC、科举、政务、战争、记忆、critic/safety 配置模型路由、输出长度、并发、工具预算、审计面板和 hidden-safe 诊断 | - | - | S70.8 后 |
+| S70.9 | DONE | AI 设置与可观测性：按叙事、NPC、科举、政务、战争、记忆、critic/safety 配置模型路由、输出长度、并发、工具预算、审计面板和 hidden-safe 诊断 | 2026-05-12 | Codex / 子代理 | 待本次提交 |
 | S70.10 | TODO | 玩家官职月报与 AI 推动世界：每三旬生成职位化月报、上级态度、同僚风向、NPC 主动请求、下月风险和待裁决差事 | - | - | S70.9 后 |
 | S70.11 | TODO | 自然语言跳时：解析“学习一月/养病半月/照旧处理一月”，拆为多旬 batch tick、事件中断和跳时总结 | - | - | S70.10 后 |
 | S70.12 | TODO | 大模型记忆系统：actor memory ledger、fact/impression memory、月度 summary、安全检索、来源/置信度/可见性/衰减 | - | - | S70.11 后 |
@@ -156,7 +156,7 @@ S68-S69 是书生主线的深度专项，详细提前规划见 [IMPERIAL_EXAM_DE
 
 ## 6. S70：AI 提示词、工具协议与多 AI 编排
 
-S70 是 MiMo + DeepSeek 之后的 AI 编排专项。S70.8 起，`src/ai/index.js` 已提供 task-aware provider facade；`AI_PROVIDER=mock` 仍强制全任务本地 Mock，兼容路径中普通叙事、开局、流式回合和科举出题仍优先 MiMo，科举评卷与 domain_specialist/critic/safety 可按 route policy 使用 DeepSeek。后续 AI actor、工具调用、NPC 智力、事件生成、制度推演、narrator/planner/critic/safety 仲裁、成本边界、失败降级和可观测性继续按 S70.9-S70.14 推进。
+S70 是 MiMo + DeepSeek 之后的 AI 编排专项。S70.8 起，`src/ai/index.js` 已提供 task-aware provider facade；`AI_PROVIDER=mock` 仍强制全任务本地 Mock，兼容路径中普通叙事、开局、流式回合和科举出题仍优先 MiMo，科举评卷与 domain_specialist/critic/safety 可按 route policy 使用 DeepSeek。S70.9 起，每个 session 有服务器维护的 AI 设置、玩家可见设置 view、浏览器 AI 设置面板和 hidden-safe 调动摘要；设置只改变 route/model/预算/并发/安全严格度，不改变 actor 权限、工具权限或服务器裁决。后续 AI actor、工具调用、NPC 智力、事件生成、制度推演、narrator/planner/critic/safety 仲裁、成本边界、失败降级和可观测性继续按 S70.10-S70.14 推进。
 
 详细提前规划见 [AI_ORCHESTRATION_ROADMAP.md](AI_ORCHESTRATION_ROADMAP.md)。S70 的核心目标不是让模型直接改库，而是让 AI 在服务器法度内变成“有身份、有记忆、有权限、有后果”的世界行动者网络；S68-S69 提供科场、老师、考官和授官 resolver 的先行用例。该文档第 13-16 节已扩展为后续 Codex 开发任务书，逐项写明执行规则、运行依赖、项目资料、玩法资料、测试资料、建议模块/函数、工具/route 接口、测试文件和验收重点。
 
@@ -206,6 +206,40 @@ S71 详细规划见 [DATABASE_GAMEPLAY_RESOLVER_ROADMAP.md](DATABASE_GAMEPLAY_RE
 4. S71.9-S71.12：接入多 actor 场景、NPC 记忆和 AI 调动审计面板，最后做 dual-mode、Mock/no-key、browser 和 provider smoke 归档。
 
 ## 8. 进度记录
+
+### 2026-05-12
+
+工具：Codex、子代理。
+
+步骤：S70.9 AI 设置与可观测性。
+
+提交：待本次提交。
+
+完成：
+
+- 新增 `src/game/aiSettingsConfig.js` 与 `src/game/aiSettings.js`，提供 session 级 AI 设置 schema、预设（均衡/质量优先/快速/长上下文/MiMo 全量）、任务标签、设置 patch 校验、route policy 合成、provider key 可用性摘要、玩家可见设置 view 和 AI 调动摘要 view。设置只允许调整 provider/model、输出 token、工具预算、输出倍率、并发和安全严格度；hidden/raw/server/path/key、直写状态/数据库、server resolver、raw audit、观测日志伪造等字段会被拒绝。critic/safety 仍强制 review-only，客户端传入工具预算会被服务器裁剪为 0。
+- `/api/game/start`、`GET /api/game/state/:sessionId`、普通/流式 `/api/game/turn`、`/api/exam/question` 和 `/api/exam/submit` 现在返回 `aiSettingsView` 与 `aiInvocationSummaryView`；普通叙事、流式叙事和科举出题/评卷会按 session route policy 取 provider，并把任务类型、provider/model、耗时、token 上限、工具调用/拒绝数量写入 bounded `worldState.aiSettings.observability.recentInvocations`。新增 `GET /api/ai/settings/:sessionId` 与 `POST /api/ai/settings/:sessionId`，后者只写服务器校验后的 AI 设置和观测摘要，不返回 key、base URL、raw prompt、raw provider payload、本地路径或 raw table。
+- 浏览器 `public/app.js` 新增 `#ai-control-panel`，在书生和入仕/官员等角色侧栏中读取 route `aiSettingsView` / `aiInvocationSummaryView`，展示预设、输出倍率、并发、安全严格度、critic/safety 开关、九类任务 route、review-only 标记、成本摘要和最近调动；面板保存时只调用 `/api/ai/settings/:sessionId`，不读取 raw `worldState.aiSettings`。`public/styles.css` 增加响应式面板样式。
+- 新增 `test/aiSettings.test.js`、`test/aiSettingsRoute.test.js`，并扩展 `test/publicAppSource.test.js`，覆盖默认设置 view 脱敏、route 质量调整、review-only 权限不扩张、hidden/raw/server/key/path/direct write/observability 改写拒绝、观测摘要脱敏、start/state/settings/turn payload、设置接口越权拒绝和浏览器源码只读 route view。
+
+验证：
+
+- 已通过：`node --check src/game/aiSettings.js`、`node --check src/game/aiSettingsConfig.js`、`node --check src/routes/game.js`、`node --check src/routes/exam.js`、`node --check src/routes/ai.js`、`node --check public/app.js`、`node --check test/aiSettings.test.js`、`node --check test/aiSettingsRoute.test.js`、`node --check test/publicAppSource.test.js`。
+- 已通过：`node --test test/aiSettings.test.js test/aiSettingsRoute.test.js test/publicAppSource.test.js`，14/14。
+- 已通过：`node --test test/aiSettings.test.js test/aiSettingsRoute.test.js test/publicAppSource.test.js test/modelRoutePolicy.test.js test/aiConnectionRoute.test.js`，31/31。
+- 已通过：`node --test test/modelRoutePolicy.test.js test/aiConnectionRoute.test.js test/gameTurnTick.test.js test/examRoute.test.js`，25/25。
+- 已通过：`npm run eval:ai`，本地 route/eval 与既有 AI fixture 全部通过，输出未暴露 key、raw prompt、raw provider payload、本地路径或 raw table。
+- 已通过：`npm run check:docs-governance`、`git diff --check`。
+- 全量 `node --test` 本轮 666/667，通过项之外只有既有 S67 `sqliteReadRepairMs` 性能阈值抖动失败（5033.127 > 3000）；单独重跑 `node --test test/dualModeAcceptanceScript.test.js` 6/6 通过，`node --test test/gameTurnTick.test.js` 8/8 通过。
+
+风险/遗留：
+
+- S70.9 记录的是 session 内 bounded AI 调动摘要，不新增 SQLite 审计表、provider tracing 后端或真实多模型长跑；更完整的工具调用审计面板与数据库持久化审计仍留给 S71.11。
+- 设置面板只影响 S70.8 route policy 和预算，不让 critic/safety 调工具，不改变领域 resolver 裁决，不开启 hidden/raw/直写库能力。
+
+下一步：
+
+- 启动 S70.10：玩家官职月报与 AI 推动世界，复用 S70.8 route policy 和 S70.9 设置/观测摘要，在月末生成玩家可见职位月报、上级/同僚/NPC 风向和待裁决差事。
 
 ### 2026-05-12
 

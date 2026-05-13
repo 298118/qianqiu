@@ -651,6 +651,118 @@ button:disabled {
   border-top: 1px solid rgba(54, 39, 27, 0.16);
 }
 
+.ai-control-panel {
+  grid-column: 1 / -1;
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+  padding-top: 9px;
+  border-top: 1px solid rgba(54, 39, 27, 0.16);
+}
+
+.ai-control-panel > header,
+.ai-control-form,
+.ai-route-row,
+.ai-observability {
+  min-width: 0;
+}
+
+.ai-control-panel > header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.ai-control-panel > header strong {
+  color: var(--cinnabar-deep);
+  font-size: 0.98rem;
+}
+
+.ai-control-panel > header span,
+.ai-control-notice,
+.ai-recent-invocations p {
+  color: var(--muted);
+  font-size: 0.8rem;
+  overflow-wrap: anywhere;
+}
+
+.ai-control-form {
+  display: grid;
+  gap: 8px;
+}
+
+.ai-control-fields,
+.ai-observability {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(105px, 1fr));
+  gap: 8px;
+}
+
+.ai-control-fields label,
+.ai-route-row {
+  font-size: 0.78rem;
+}
+
+.ai-control-check {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--ink);
+}
+
+.ai-control-check input {
+  width: auto;
+}
+
+.ai-control-fields button {
+  min-height: 34px;
+  padding: 6px 10px;
+  font-size: 0.82rem;
+}
+
+.ai-route-grid {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+}
+
+.ai-route-row {
+  display: grid;
+  grid-template-columns: minmax(76px, 0.7fr) minmax(92px, 0.8fr) minmax(130px, 1.25fr) repeat(3, minmax(72px, 0.62fr));
+  gap: 6px;
+  align-items: end;
+}
+
+.ai-route-row strong {
+  color: var(--ink);
+  overflow-wrap: anywhere;
+}
+
+.ai-route-row input,
+.ai-route-row select,
+.ai-control-fields input,
+.ai-control-fields select {
+  min-height: 30px;
+  padding: 5px 7px;
+  font-size: 0.78rem;
+}
+
+.ai-observability > div {
+  min-width: 0;
+  padding: 7px 8px;
+  border: 1px solid rgba(54, 39, 27, 0.14);
+  border-radius: 4px;
+  background: rgba(255, 250, 239, 0.46);
+}
+
+.ai-observability p,
+.ai-control-notice,
+.ai-recent-invocations p {
+  margin: 0;
+  line-height: 1.38;
+}
+
 .information-panel > header,
 .information-panel-page > header {
   display: flex;
@@ -2342,6 +2454,19 @@ button:disabled {
 
   .information-controls {
     grid-template-columns: 1fr 1fr;
+  }
+
+  .ai-control-fields,
+  .ai-observability {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .ai-route-row {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .ai-route-row strong {
+    grid-column: 1 / -1;
   }
 
   .information-search,

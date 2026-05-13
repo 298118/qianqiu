@@ -104,12 +104,24 @@ const {
 const { applyStatePatch, appendEvents } = require("../game/stateRules");
 const { runWorldTick } = require("../game/worldTick");
 const { getProvider } = require("../ai");
+const { resolveModelForTask } = require("../ai/modelRoutePolicy");
+const {
+  buildAiInvocationSummaryView,
+  recordAiInvocation,
+  redactAiSettingsForClient,
+  resolveAiSettingsForSession,
+  updateAiSettings
+} = require("../game/aiSettings");
 const { redactSecrets } = require("../ai/diagnostics");
 const { listSessions, mutateSession, readSession, writeSession } = require("../storage/sessionStore");
 const { chunkTextForSse, closeSse, sendSseEvent, writeSseHeaders } = require("../utils/sse");
 const { createJsonStringFieldExtractor } = require("../utils/streamingJson");
 
 const router = express.Router();
+
+function isAiSettingsValidationError(error) {
+  return /AI 设置|AI 路由|不支持字段|禁止|hidden|raw|server|provider|model|任务|服务器维护/.test(error.message || "");
+}
 
 function validateTurnInput(body) {
   const { sessionId, input } = body;
@@ -150,8 +162,18 @@ async function processTurn(sessionId, input) {
     if (isWritingExam(worldState.activeExam)) {
       return finalizeExamSceneTurn(worldState, input, context);
     }
-    const provider = getProvider();
+    const { routePolicy } = resolveAiSettingsForSession(worldState);
+    const route = resolveModelForTask("narrator", routePolicy);
+    const provider = getProvider({ routePolicy });
+    const startedAt = Date.now();
     const result = await provider.runTurn(worldState, input);
+    recordAiInvocation(worldState, {
+      taskType: "narrator",
+      route,
+      status: "completed",
+      durationMs: Date.now() - startedAt,
+      maxOutputTokens: route.maxOutputTokens
+    });
     return finalizeTurn(worldState, result, input, { context, provider });
   });
 }
@@ -174,11 +196,21 @@ async function processStreamingTurn(sessionId, input, streamHandlers = {}) {
     if (isWritingExam(worldState.activeExam)) {
       return finalizeExamSceneTurn(worldState, input, context);
     }
-    const provider = getProvider();
+    const { routePolicy } = resolveAiSettingsForSession(worldState);
+    const route = resolveModelForTask("narrator", routePolicy);
+    const provider = getProvider({ routePolicy });
     const canStream = provider.supportsStreaming && typeof provider.streamTurn === "function";
+    const startedAt = Date.now();
     const result = canStream
       ? await provider.streamTurn(worldState, input, streamHandlers)
       : await provider.runTurn(worldState, input);
+    recordAiInvocation(worldState, {
+      taskType: "narrator",
+      route,
+      status: canStream ? "streamed" : "completed",
+      durationMs: Date.now() - startedAt,
+      maxOutputTokens: route.maxOutputTokens
+    });
 
     return finalizeTurn(worldState, result, input, { context, provider });
   });
@@ -268,7 +300,10 @@ function buildCommonTurnViews(worldState, options = {}) {
   const worldGeographyView = buildWorldGeographyView(worldState);
   const worldPeopleView = buildWorldPeopleView(worldState);
   const officialPostingsView = buildOfficialPostingsView(worldState);
+  const { settings, routePolicy } = resolveAiSettingsForSession(worldState);
   return {
+    aiSettingsView: redactAiSettingsForClient({ ...settings, routePolicy }),
+    aiInvocationSummaryView: buildAiInvocationSummaryView(worldState, routePolicy),
     examCalendarView: buildExamCalendarView(worldState),
     examRivalView: buildExamRivalView(worldState),
     examProcedureView: buildExamProcedureView(worldState),
@@ -581,6 +616,8 @@ async function streamTurn(res, sessionId, input) {
       sessionId: payload.sessionId,
       attributeChanges: payload.attributeChanges,
       relationshipChanges: payload.relationshipChanges,
+      aiSettingsView: payload.aiSettingsView,
+      aiInvocationSummaryView: payload.aiInvocationSummaryView,
       examCalendarView: payload.examCalendarView,
       examRivalView: payload.examRivalView,
       examProcedureView: payload.examProcedureView,
@@ -627,8 +664,21 @@ async function streamTurn(res, sessionId, input) {
 router.post("/start", async (req, res, next) => {
   try {
     const worldState = createInitialState(req.body);
-    const provider = getProvider();
+    const aiSettingsPatch = req.body?.aiSettings;
+    const aiRuntime = aiSettingsPatch && typeof aiSettingsPatch === "object"
+      ? updateAiSettings(worldState, aiSettingsPatch)
+      : resolveAiSettingsForSession(worldState);
+    const route = resolveModelForTask("narrator", aiRuntime.routePolicy);
+    const provider = getProvider({ routePolicy: aiRuntime.routePolicy });
+    const startedAt = Date.now();
     const opening = await provider.startGame(worldState);
+    recordAiInvocation(worldState, {
+      taskType: "narrator",
+      route,
+      status: "completed",
+      durationMs: Date.now() - startedAt,
+      maxOutputTokens: route.maxOutputTokens
+    });
 
     worldState.eventHistory.push(...opening.events);
     await writeSession(worldState, createOpeningAuditRecords(worldState, opening, provider));
@@ -636,33 +686,13 @@ router.post("/start", async (req, res, next) => {
     res.status(201).json({
       sessionId: worldState.sessionId,
       worldState,
-      examCalendarView: buildExamCalendarView(worldState),
-      examRivalView: buildExamRivalView(worldState),
-      examProcedureView: buildExamProcedureView(worldState),
-      examinerPanelView: null,
-      examHonorView: buildExamHonorView(worldState),
-      appointmentTrackView: buildAppointmentTrackView(worldState),
-      studyProfileView: buildStudyProfileView(worldState),
-      relationshipView: buildRelationshipInspectionView(worldState),
-      activeNpcRequestView: buildActiveNpcRequestView(worldState),
-      roleWorldCouplingView: buildRoleWorldCouplingView(worldState),
-      worldGeographyView: buildWorldGeographyView(worldState),
-      worldEntityView: buildWorldEntityView(worldState),
-      worldPeopleView: buildWorldPeopleView(worldState),
-      worldThreadView: buildWorldThreadView(worldState),
-      longTermEventView: buildLongTermEventView(worldState),
-      officialCareerView: buildOfficialCareerView(worldState),
-      officialPostingsView: buildOfficialPostingsView(worldState),
-      localAffairsDocketView: buildLocalAffairsDocketView(worldState),
-      militaryDiplomacyView: buildMilitaryDiplomacyView(worldState),
-      economicFiscalView: buildEconomicFiscalView(worldState),
-      historicalEventArchiveView: buildHistoricalEventArchiveView(worldState),
-      intelligenceRumorView: buildIntelligenceRumorView(worldState),
-      eventArchiveView: buildEventArchiveView(worldState),
-      informationPanelPageView: buildInformationPanelPageViews(worldState),
+      ...buildCommonTurnViews(worldState),
       narrative: opening.narrative
     });
   } catch (error) {
+    if (!error.statusCode && isAiSettingsValidationError(error)) {
+      error.statusCode = 400;
+    }
     next(error);
   }
 });

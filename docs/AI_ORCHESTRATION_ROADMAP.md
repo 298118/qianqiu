@@ -790,6 +790,8 @@ S70 要准备这些 fixture：
 - 玩家能配置不同任务的 AI 策略。
 - 设置只影响质量/预算/路由，不改变权限。
 
+当前状态（2026-05-12）：S70.9 已落地首版 session 级 AI 设置与可观测性。已新增 `src/game/aiSettingsConfig.js` 与 `src/game/aiSettings.js`，提供均衡、质量优先、快速、长上下文和 MiMo 全量预设，按 S70.8 九类 task type 合成 route policy，并生成 hidden-safe `aiSettingsView` / `aiInvocationSummaryView`。`/api/game/start`、state、普通/流式 turn、`/api/exam/question`、`/api/exam/submit` 都返回 AI 设置与调动摘要；新增 `GET/POST /api/ai/settings/:sessionId`，只允许玩家调整 provider/model、输出长度、工具预算、输出倍率、并发和安全严格度。浏览器 `#ai-control-panel` 只读 route view，不读 raw `worldState.aiSettings`；设置 patch 会拒绝 hidden/raw/server/path/key、直写状态/数据库、server resolver、raw audit 和观测日志伪造，critic/safety 等 review-only 任务工具预算强制为 0。本步只做 session 内 bounded 调动摘要，不新增 SQLite 审计表、provider tracing 或真实 provider 长跑；更完整的 AI 调动审计面板留给 S71.11。
+
 ### S70.10：玩家官职月报与 AI 推动世界
 
 前置依赖：S70.8-S70.9；最好 S69.3 授官路径完成。

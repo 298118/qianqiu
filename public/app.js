@@ -55,6 +55,8 @@ let currentWorldPeopleView = null;
 let currentOfficialPostingsView = null;
 let currentEventArchiveView = null;
 let currentInformationPanelPageView = null;
+let currentAiSettingsView = null;
+let currentAiInvocationSummaryView = null;
 let currentInformationPanelTab = "world-geography";
 let currentInformationPanelControls = {};
 let currentExamPayload = null;
@@ -3554,6 +3556,252 @@ function renderInformationPanelShell() {
   return panel;
 }
 
+function getAiSettingsView(aiSettingsView) {
+  return aiSettingsView && typeof aiSettingsView === "object" && !Array.isArray(aiSettingsView)
+    ? aiSettingsView
+    : null;
+}
+
+function getAiInvocationSummaryView(aiInvocationSummaryView) {
+  return aiInvocationSummaryView && typeof aiInvocationSummaryView === "object" && !Array.isArray(aiInvocationSummaryView)
+    ? aiInvocationSummaryView
+    : null;
+}
+
+function providerOptionLabel(option = {}) {
+  const suffix = option.available ? "" : "（未配置）";
+  return `${option.provider}${suffix}`;
+}
+
+function createAiSettingInput(name, value, options = {}) {
+  const input = document.createElement("input");
+  input.name = name;
+  input.value = value ?? "";
+  input.autocomplete = "off";
+  if (options.type) input.type = options.type;
+  if (options.min !== undefined) input.min = String(options.min);
+  if (options.max !== undefined) input.max = String(options.max);
+  if (options.step !== undefined) input.step = String(options.step);
+  if (options.disabled) input.disabled = true;
+  return input;
+}
+
+function createAiProviderSelect(taskType, value, providerOptions = []) {
+  const select = document.createElement("select");
+  select.name = `provider:${taskType}`;
+  providerOptions.forEach((option) => {
+    const item = document.createElement("option");
+    item.value = option.provider;
+    item.textContent = providerOptionLabel(option);
+    item.selected = option.provider === value;
+    select.appendChild(item);
+  });
+  return select;
+}
+
+async function submitAiSettingsPatch(form) {
+  if (!currentSessionId) return;
+  const data = new FormData(form);
+  const taskRoutes = {};
+  (currentAiSettingsView?.taskRoutes || []).forEach((route) => {
+    const taskType = route.taskType;
+    taskRoutes[taskType] = {
+      provider: data.get(`provider:${taskType}`),
+      model: data.get(`model:${taskType}`),
+      maxOutputTokens: Number(data.get(`maxOutputTokens:${taskType}`)),
+      toolBudget: Number(data.get(`toolBudget:${taskType}`)),
+      temperature: Number(data.get(`temperature:${taskType}`))
+    };
+  });
+
+  const response = await fetch(`/api/ai/settings/${currentSessionId}`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      settings: {
+        preset: data.get("preset"),
+        controls: {
+          outputScale: Number(data.get("outputScale")),
+          maxConcurrency: Number(data.get("maxConcurrency")),
+          safetyStrictness: data.get("safetyStrictness"),
+          criticEnabled: data.get("criticEnabled") === "on",
+          safetyGateEnabled: data.get("safetyGateEnabled") === "on"
+        },
+        taskRoutes
+      }
+    })
+  });
+  const payload = await response.json();
+  if (!response.ok) {
+    throw new Error(payload.error || `AI 设置更新失败：${response.status}`);
+  }
+  currentAiSettingsView = getAiSettingsView(payload.aiSettingsView);
+  currentAiInvocationSummaryView = getAiInvocationSummaryView(payload.aiInvocationSummaryView);
+  renderScholarPanel(currentWorldState);
+}
+
+function renderAiControlPanel(aiSettingsView = currentAiSettingsView, aiInvocationSummaryView = currentAiInvocationSummaryView) {
+  if (!aiSettingsView) return null;
+  const panel = document.createElement("section");
+  panel.className = "ai-control-panel";
+  panel.id = "ai-control-panel";
+  panel.dataset.schemaVersion = aiSettingsView.schemaVersion || "";
+  panel.dataset.preset = aiSettingsView.preset || "balanced";
+  panel.dataset.serverOwnsState = aiSettingsView.safeguards?.serverOwnsState ? "true" : "false";
+  panel.dataset.noHiddenRawAccess = aiSettingsView.safeguards?.noHiddenRawAccess ? "true" : "false";
+  panel.dataset.directDatabaseWrites = "false";
+
+  const header = document.createElement("header");
+  appendIfText(header, "strong", "AI 设置");
+  appendIfText(header, "span", `${aiSettingsView.presetLabel || aiSettingsView.preset || "均衡"} · 服务器裁决`);
+
+  const form = document.createElement("form");
+  form.className = "ai-control-form";
+  form.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    const submit = form.querySelector("button[type='submit']");
+    if (submit) submit.disabled = true;
+    try {
+      await submitAiSettingsPatch(form);
+      appendNarrative("AI 设置已更新。");
+    } catch (error) {
+      appendNarrative(error.message, "error");
+    } finally {
+      if (submit) submit.disabled = false;
+    }
+  });
+
+  const controls = document.createElement("section");
+  controls.className = "ai-control-fields";
+
+  const presetLabel = document.createElement("label");
+  presetLabel.textContent = "预设";
+  const preset = document.createElement("select");
+  preset.name = "preset";
+  (aiSettingsView.presets || []).forEach((option) => {
+    const item = document.createElement("option");
+    item.value = option.id;
+    item.textContent = option.label;
+    item.selected = option.id === aiSettingsView.preset;
+    preset.appendChild(item);
+  });
+  presetLabel.appendChild(preset);
+
+  const outputLabel = document.createElement("label");
+  outputLabel.textContent = "输出倍率";
+  outputLabel.appendChild(createAiSettingInput("outputScale", aiSettingsView.controls?.outputScale ?? 1, {
+    type: "number",
+    min: 0.5,
+    max: 1.75,
+    step: 0.05
+  }));
+
+  const concurrencyLabel = document.createElement("label");
+  concurrencyLabel.textContent = "并发";
+  concurrencyLabel.appendChild(createAiSettingInput("maxConcurrency", aiSettingsView.controls?.maxConcurrency ?? 2, {
+    type: "number",
+    min: 1,
+    max: 4,
+    step: 1
+  }));
+
+  const safetyLabel = document.createElement("label");
+  safetyLabel.textContent = "安全";
+  const safety = document.createElement("select");
+  safety.name = "safetyStrictness";
+  ["standard", "strict", "maximum"].forEach((value) => {
+    const item = document.createElement("option");
+    item.value = value;
+    item.textContent = { standard: "常规", strict: "严格", maximum: "最严" }[value];
+    item.selected = value === aiSettingsView.controls?.safetyStrictness;
+    safety.appendChild(item);
+  });
+  safetyLabel.appendChild(safety);
+
+  const criticLabel = document.createElement("label");
+  criticLabel.className = "ai-control-check";
+  const critic = document.createElement("input");
+  critic.type = "checkbox";
+  critic.name = "criticEnabled";
+  critic.checked = Boolean(aiSettingsView.controls?.criticEnabled);
+  criticLabel.append(critic, document.createTextNode("复核"));
+
+  const safetyGateLabel = document.createElement("label");
+  safetyGateLabel.className = "ai-control-check";
+  const safetyGate = document.createElement("input");
+  safetyGate.type = "checkbox";
+  safetyGate.name = "safetyGateEnabled";
+  safetyGate.checked = Boolean(aiSettingsView.controls?.safetyGateEnabled);
+  safetyGateLabel.append(safetyGate, document.createTextNode("安全门"));
+
+  const submit = document.createElement("button");
+  submit.type = "submit";
+  submit.textContent = "保存";
+  submit.disabled = !currentSessionId;
+
+  controls.append(presetLabel, outputLabel, concurrencyLabel, safetyLabel, criticLabel, safetyGateLabel, submit);
+
+  const routes = document.createElement("section");
+  routes.className = "ai-route-grid";
+  (aiSettingsView.taskRoutes || []).forEach((route) => {
+    const row = document.createElement("div");
+    row.className = "ai-route-row";
+    row.dataset.taskType = route.taskType;
+    row.dataset.reviewerOnly = route.reviewerOnly ? "true" : "false";
+    const title = document.createElement("strong");
+    title.textContent = route.label || route.taskType;
+    row.append(
+      title,
+      createAiProviderSelect(route.taskType, route.provider, aiSettingsView.providerOptions || []),
+      createAiSettingInput(`model:${route.taskType}`, route.model),
+      createAiSettingInput(`maxOutputTokens:${route.taskType}`, route.maxOutputTokens, {
+        type: "number",
+        min: 128,
+        max: 16000,
+        step: 64
+      }),
+      createAiSettingInput(`toolBudget:${route.taskType}`, route.toolBudget, {
+        type: "number",
+        min: 0,
+        max: 20,
+        step: 1,
+        disabled: route.reviewerOnly
+      }),
+      createAiSettingInput(`temperature:${route.taskType}`, route.temperature, {
+        type: "number",
+        min: 0,
+        max: 1,
+        step: 0.05
+      })
+    );
+    routes.appendChild(row);
+  });
+
+  const summary = aiInvocationSummaryView || {};
+  const observability = document.createElement("section");
+  observability.className = "ai-observability";
+  const cost = summary.routeCostSummary || {};
+  observability.append(
+    createPanelValue("任务", cost.taskCount ?? 0, "p"),
+    createPanelValue("输出上限", cost.maxOutputTokens ?? 0, "p"),
+    createPanelValue("工具预算", cost.maxToolCalls ?? 0, "p"),
+    createPanelValue("拒绝工具", summary.toolCallSummary?.recentRejectedToolCalls ?? 0, "p")
+  );
+
+  const recent = document.createElement("section");
+  recent.className = "ai-recent-invocations";
+  (summary.recentInvocations || []).slice(-4).forEach((item) => {
+    const entry = document.createElement("p");
+    entry.textContent = `${item.label || item.taskType}：${item.provider} / ${item.model}，${item.status}，${item.durationMs}ms`;
+    recent.appendChild(entry);
+  });
+
+  form.append(controls, routes);
+  panel.append(header, form, observability);
+  if (recent.childElementCount) panel.appendChild(recent);
+  return panel;
+}
+
 function appendOptionalPanel(panel) {
   if (panel) {
     scholarPanel.appendChild(panel);
@@ -3670,6 +3918,7 @@ function renderRolePanel(worldState) {
   appendOptionalPanel(createExaminerPanelBlock(currentExaminerPanelView, { className: "examiner-panel-panel" }));
   appendOptionalPanel(createExamHonorBlock(currentExamHonorView, { className: "exam-honor-panel" }));
   appendOptionalPanel(renderWorldThreadPanel());
+  appendOptionalPanel(renderAiControlPanel());
   appendOptionalPanel(renderInformationPanelShell());
   scholarPanel.appendChild(renderRelationshipPanel());
   appendOptionalPanel(renderExamRivalPanel());
@@ -3758,6 +4007,7 @@ function renderScholarPanel(worldState) {
   appendOptionalPanel(createExamHonorBlock(currentExamHonorView, { className: "exam-honor-panel" }));
   appendOptionalPanel(renderStudyProfilePanel());
   appendOptionalPanel(renderWorldThreadPanel());
+  appendOptionalPanel(renderAiControlPanel());
   appendOptionalPanel(renderInformationPanelShell());
   scholarPanel.append(stepList, stats, lists, renderRelationshipPanel());
   appendOptionalPanel(renderExamRivalPanel());
@@ -3783,7 +4033,9 @@ function renderWorldState(
   worldPeopleView,
   officialPostingsView,
   eventArchiveView,
-  informationPanelPageView
+  informationPanelPageView,
+  aiSettingsView,
+  aiInvocationSummaryView
 ) {
   currentWorldState = worldState;
   currentRelationshipView = getRelationshipView(worldState, relationshipView);
@@ -3804,6 +4056,8 @@ function renderWorldState(
   currentOfficialPostingsView = getRouteView(officialPostingsView);
   currentEventArchiveView = getRouteView(eventArchiveView);
   currentInformationPanelPageView = getRouteView(informationPanelPageView);
+  currentAiSettingsView = getAiSettingsView(aiSettingsView);
+  currentAiInvocationSummaryView = getAiInvocationSummaryView(aiInvocationSummaryView);
   syncInformationControlsFromPageView(currentInformationPanelPageView);
   setStatus(worldState);
   renderScholarPanel(worldState);
@@ -3830,7 +4084,9 @@ function renderPayloadWorldState(payload) {
     payload.worldPeopleView,
     payload.officialPostingsView,
     payload.eventArchiveView,
-    payload.informationPanelPageView
+    payload.informationPanelPageView,
+    payload.aiSettingsView,
+    payload.aiInvocationSummaryView
   );
 }
 
