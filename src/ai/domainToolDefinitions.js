@@ -71,9 +71,21 @@ const DOMAIN_TOOL_CONFIGS = Object.freeze([
   }),
   Object.freeze({
     name: "city.propose_policy",
-    description: "提交地方钱粮、水利、赈济或治安政策 proposal；服务器裁决财政、民情、执行链和持久化。",
+    description: "提交地方钱粮、水利、赈济、清丈、盐漕、徭役或治安政策 proposal；服务器裁决财政、民情、执行链和持久化。",
     actionProperty: "policyKind",
-    actionEnum: ["relief", "grain_price_stabilization", "tax_collection", "waterworks", "public_order", "market_regulation"],
+    actionEnum: [
+      "relief",
+      "grain_price_stabilization",
+      "tax_collection",
+      "waterworks",
+      "land_survey",
+      "tax_remission",
+      "asset_recovery",
+      "salt_canal_reform",
+      "corvee_adjustment",
+      "public_order",
+      "market_regulation"
+    ],
     toolType: "proposal",
     authorityTiers: ["T3", "T4", "T5"],
     actorTypes: ["magistrate", "minister", "emperor"],

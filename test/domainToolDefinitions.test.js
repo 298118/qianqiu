@@ -4,6 +4,7 @@ const assert = require("node:assert/strict");
 const { createDomainToolDefinitions } = require("../src/ai/domainToolDefinitions");
 const { createGameAiToolRegistry } = require("../src/ai/gameAiTools");
 const { validateToolDefinition } = require("../src/ai/toolSchemas");
+const { CITY_POLICY_ACTIONS } = require("../src/game/cityPolicyResolverConfig");
 
 const EXPECTED_DOMAIN_TOOLS = [
   "judicial.propose_case_resolution",
@@ -41,6 +42,11 @@ test("S70.7 domain tool definitions are strict, server-owned and default registr
   for (const name of EXPECTED_DOMAIN_TOOLS) {
     assert.ok(registry.getTool(name), `默认 registry 缺少 ${name}`);
   }
+  const cityTool = registry.getTool("city.propose_policy");
+  assert.deepEqual(
+    [...cityTool.inputSchema.properties.policyKind.enum].sort(),
+    Object.keys(CITY_POLICY_ACTIONS).sort()
+  );
   assert.equal(Object.keys(registry.buildProviderNameMap()).length, registry.listAllTools().length);
 });
 

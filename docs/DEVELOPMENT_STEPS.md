@@ -10,7 +10,7 @@
 - S49-S67 本地数据库基础、SQLite 业务表、双模式验收、超大动态世界内容与 S60 内容契约：[LOCAL_DATABASE_AND_WORLD_CONTENT_ARCHIVE.md](LOCAL_DATABASE_AND_WORLD_CONTENT_ARCHIVE.md)。旧分卷归档和 S60 契约文件保留为跳转页。
 - S70 AI 编排与权力工具：[AI_ORCHESTRATION_ARCHIVE.md](AI_ORCHESTRATION_ARCHIVE.md)。S70 规划源头仍见 [AI_ORCHESTRATION_ROADMAP.md](AI_ORCHESTRATION_ROADMAP.md)。
 
-当前活动路线图已交接到 S71：S68-S69 的书生主线科举、读书、评卷与授官制度已归档，S70.1-S70.14 的 AI prompt/tool/actor/多模型路由、AI 设置、月报、跳时、记忆、地图接口、provider AI-first smoke 与 JSON/SQLite parity 已归档。S71 作为 S70 之后的数据库玩法化、维护、安全检索和 redacted API 专项，规划见 [DATABASE_GAMEPLAY_RESOLVER_ROADMAP.md](DATABASE_GAMEPLAY_RESOLVER_ROADMAP.md)。S71.0 数据库玩法化专项契约已固定在 [DATABASE_RESOLVER_INPUT_CONTRACT.md](DATABASE_RESOLVER_INPUT_CONTRACT.md)，S71.1 已落地只读 `resolverInputContext` 输入层，S71.2 已落地本地 SQLite schema migration 与维护层，S71.3 已落地安全全文检索 / 本地搜索，S71.4 已落地 redacted player API 与本机开发诊断 API；下一步启动 S71.5 财政与城市政策 resolver。数据库方向继续只考虑本机 JSON/SQLite 持久化增强；远程存档、账号体系、多人同步、云端冲突解决和托管数据库不进入当前规划。
+当前活动路线图已交接到 S71：S68-S69 的书生主线科举、读书、评卷与授官制度已归档，S70.1-S70.14 的 AI prompt/tool/actor/多模型路由、AI 设置、月报、跳时、记忆、地图接口、provider AI-first smoke 与 JSON/SQLite parity 已归档。S71 作为 S70 之后的数据库玩法化、维护、安全检索和 redacted API 专项，规划见 [DATABASE_GAMEPLAY_RESOLVER_ROADMAP.md](DATABASE_GAMEPLAY_RESOLVER_ROADMAP.md)。S71.0 数据库玩法化专项契约已固定在 [DATABASE_RESOLVER_INPUT_CONTRACT.md](DATABASE_RESOLVER_INPUT_CONTRACT.md)，S71.1 已落地只读 `resolverInputContext` 输入层，S71.2 已落地本地 SQLite schema migration 与维护层，S71.3 已落地安全全文检索 / 本地搜索，S71.4 已落地 redacted player API 与本机开发诊断 API，S71.5 已落地财政与城市政策 resolver；下一步启动 S71.6 地方案件与刑名 resolver。数据库方向继续只考虑本机 JSON/SQLite 持久化增强；远程存档、账号体系、多人同步、云端冲突解决和托管数据库不进入当前规划。
 
 ## 1. 开发规范继承
 
@@ -125,7 +125,7 @@
 | S71.2 | DONE | 本地 SQLite schema migration 与维护层：`schema_migrations`、备份、VACUUM、索引健康、体积提示和脱敏导出 | 2026-05-13 | Codex / 子代理 | `deb7c27` |
 | S71.3 | DONE | 安全全文检索 / 本地搜索：FTS5 或 fallback，只索引 player-facing projection，不索引 hidden/raw | 2026-05-13 | Codex / 子代理 | `e5cdfd7` |
 | S71.4 | DONE | Redacted player API 与开发诊断 API：保存 hidden 私档前先拆玩家可见 state 和 hidden-safe diagnostics | 2026-05-13 | Codex / 子代理 | `746370a` |
-| S71.5 | TODO | 财政与城市政策 resolver：征粮、赈济、修堤、平粜、清丈、钱粮差事等服务器裁决 | - | - | S71.4 后 |
+| S71.5 | DONE | 财政与城市政策 resolver：征粮、赈济、修堤、平粜、清丈、钱粮差事等服务器裁决 | 2026-05-13 | Codex / 子代理 | 待本次提交 |
 | S71.6 | TODO | 地方案件与刑名 resolver：堂审、证据、士绅压力、胥吏阻力、判决后果和案牍归档 | - | - | S71.5 后 |
 | S71.7 | TODO | 军务与外交 resolver：侦察、固守、调粮、练兵、会战、互市、和议、宣战 request 和服务器裁决 | - | - | S71.6 后 |
 | S71.8 | TODO | 压力驱动事件生成器：从粮价、水利、腐败、边防、NPC 怨怼和情报压力生成事件候选 | - | - | S71.7 后 |
@@ -213,6 +213,40 @@ S71 详细规划见 [DATABASE_GAMEPLAY_RESOLVER_ROADMAP.md](DATABASE_GAMEPLAY_RE
 
 工具：Codex、子代理。
 
+步骤：S71.5 财政与城市政策 resolver。
+
+提交：待本次提交。
+
+完成：
+
+- 新增 `src/game/cityPolicyResolverConfig.js`，集中配置财政/城市政策 schema version、ledger 上限、允许权限层、证据领域、policy alias、受控 `stateDelta` / `playerDelta`、风险标签和公开动词。首版支持开仓赈济、平粜稳价、征粮催科、修堤水利、清丈田亩、减免钱粮、追赃清欠、盐漕整顿、徭役调整、市价整肃和安民缉盗。
+- 新增 `src/game/cityPolicyResolver.js`，提供 `normalizeCityPolicyProposal()`、`validateCityPolicyAuthority()`、`resolveCityPolicy()`、`applyCityPolicyOutcome()`、`buildCityPolicyPublicEvent()` 和 `resolveCityPolicyFromDomainTool()`。resolver 只读 S71.1 `resolverInputContext` 与 S70 领域工具可见 evidence refs，校验 T3-T5、`city_policy` 工具组、辖区范围、证据领域、财政/粮储资源和 hidden/raw 污染；模型夹带 `statePatch`、`worldState`、SQL、路径、key、hidden notes、raw proposal 或 private refs 会被拒绝并脱敏。
+- `resolveCityPolicy()` 只产服务器裁决 outcome，不直接变更状态；`applyCityPolicyOutcome()` 才写受控顶层 meters、玩家官声/考成字段、公开 `eventHistory` 和内部 `cityPolicyLedger`。拒绝 outcome 不改 `worldState`，audit 只含 resolver input 统计、受控 delta、资源消耗和安全布尔标志。
+- 扩展 `city.propose_policy` 的 `policyKind` enum 到 S71.5 政策全集；普通 S70 domain tool runner 仍只返回 pending/rejected、不写状态。`resolveCityPolicyFromDomainTool()` 可由服务器桥接 pending proposal 做内部裁决，但 `server.adjudicate_policy` 不进入默认 registry、provider name map、模型可见 tool list 或玩家可伪造 tool call。
+- 新增 `test/cityPolicyResolver.test.js`、`test/cityPolicyAuthority.test.js`、`test/cityPolicyHiddenRedaction.test.js` 和 `test/cityPolicyDomainToolBridge.test.js`，并扩展 `test/domainToolDefinitions.test.js`，覆盖成功赈济/清丈、书生越权、外辖证据、资源不足、hidden/raw 污染、玩家 state redaction、领域工具桥接和 server tool 不可见。
+
+验证：
+
+- 已通过：`node --check src/ai/domainToolDefinitions.js && node --check src/game/cityPolicyResolverConfig.js && node --check src/game/cityPolicyResolver.js && node --check test/cityPolicyResolver.test.js && node --check test/cityPolicyAuthority.test.js && node --check test/cityPolicyHiddenRedaction.test.js && node --check test/cityPolicyDomainToolBridge.test.js && node --check test/domainToolDefinitions.test.js`。
+- 已通过：`node --test test/cityPolicyResolver.test.js test/cityPolicyAuthority.test.js test/cityPolicyHiddenRedaction.test.js test/cityPolicyDomainToolBridge.test.js test/domainToolDefinitions.test.js test/domainToolResolvers.test.js test/domainToolPermissions.test.js`（19/19）。
+- 已通过：`node --test test/resolverInputContext.test.js test/economicFiscal.test.js test/localAffairsDockets.test.js test/redactedState.test.js test/gamePlayerStateRoute.test.js test/gameAiToolRunner.test.js test/aiActorToolPermissions.test.js test/domainToolDefinitions.test.js test/domainToolResolvers.test.js test/domainToolPermissions.test.js test/stateRules.test.js test/eventArchive.test.js test/publicAppSource.test.js`（72/72）。
+- 已通过：`npm run check:docs-governance`、`node --test test/documentationGovernance.test.js`、`git diff --check`。
+- 全量 `npm test` 本轮 778/779，单一失败的详细 TAP 片段被当前工具输出截断；随后单独复跑 `node --test test/dualModeAcceptanceScript.test.js`（8/8）通过，符合既有 S67 性能阈值抖动形态。
+
+风险/遗留：
+
+- S71.5 先提供服务器 resolver 和领域工具 bridge，不接普通 `/api/game/turn` 自动调度，不新增浏览器财赋面板，不写 SQLite 派生表或审计业务表；后续 S71.11 审计面板只能读取 hidden-safe outcome/audit projection。
+- `cityPolicyLedger` 是内部执行台账，不进入 `GET /api/game/player-state/:sessionId`；玩家只看到受控 meters 与公开事件摘要。
+- 提交前只读复审未发现 P0/P1/P2；残余非阻断建议是未来可让 `resolveCityPolicyFromDomainTool()` 显式拒绝非 `city.propose_policy` 调用。
+
+下一步：
+
+- 启动 S71.6：地方案件与刑名 resolver，复用 S71.1 evidence refs、S71.4 redaction 边界和 S70 `judicial.propose_case_resolution`，实现堂审、证据、士绅压力、胥吏阻力、判决后果和案牍归档。
+
+### 2026-05-13
+
+工具：Codex、子代理。
+
 步骤：S71.4 Redacted player API 与开发诊断 API。
 
 提交：`746370a`。
@@ -244,7 +278,7 @@ S71 详细规划见 [DATABASE_GAMEPLAY_RESOLVER_ROADMAP.md](DATABASE_GAMEPLAY_RE
 - `redactPlayerRouteViews()` 是 S71.4 的防线，后续新增 route view 时仍要在源 view builder 保持 hidden/raw 清洗，不能依赖最后一道清洗承载完整权限模型。
 - 提交前只读复审发现 P2：无 Origin 请求只按 Origin gate 放行，若本地服务经 LAN、容器端口、反向代理或隧道暴露，非本机客户端可省略 Origin 访问已启用诊断。已补 `isLoopbackRemoteAddress()`，开发诊断现在要求远端地址为 `localhost` / `127.0.0.0/8` / `::1` / `::ffff:127.*` 等 loopback，且不信任 `X-Forwarded-For`；新增无 Origin 非本机请求拒绝测试，并复跑相关测试。复审未发现 P0/P1，P2 已处理。
 
-下一步：
+当时下一步（已完成）：
 
 - 启动 S71.5：财政与城市政策 resolver，基于 S71.1 只读输入和 S71.4 玩家/诊断边界实现征粮、赈济、修堤、平粜、清丈等服务器裁决。
 
