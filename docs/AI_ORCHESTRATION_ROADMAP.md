@@ -823,6 +823,8 @@ S70 要准备这些 fixture：
 - 三旬一月触发一次，不给所有 NPC 全量生成月报。
 - 月报不会泄漏 hidden/private，也不会直接改官职/财政。
 
+当前状态（2026-05-12）：S70.10 已落地首版玩家官职月报。已新增 `src/game/playerMonthlyBriefingConfig.js` 与 `src/game/playerMonthlyBriefing.js`，玩家为入仕官员、地方官、大臣、将领或皇帝时，在下旬进入下月上旬的月末 tick 生成一次 `playerMonthlyBriefingView`；同一 `periodKey` 重复触发会被拒绝。月报 context 只读 `officialCareerView`、`officialPostingsView`、`localAffairsDocketView`、`economicFiscalView`、`militaryDiplomacyView`、`worldPeopleView` 与事件档案等安全 projection，输出本职差事、钱粮案牍、军务边情、上官同僚、下月待办和风险摘要；resolver 只写脱敏 `worldState.playerMonthlyBriefing`、月报事件、`monthly_briefing` 事件档案条目和 bounded AI 调动摘要，不直接改官职、财政、案牍、军务、NPC、SQLite 或审计表。游戏、考试和 SSE payload 已接入 `playerMonthlyBriefingView`，浏览器新增“官职月报”面板和 `[月报]` 叙事反馈，只读 route view 与 turn feedback。本步使用 Mock/no-key deterministic heuristic 和 S70.8 `monthly_briefing` route 观测记录，真实 provider 月报长跑留给 S70.14。
+
 ### S70.11：自然语言跳时
 
 前置依赖：S70.8-S70.10。

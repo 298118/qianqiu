@@ -91,6 +91,10 @@ const {
   redactAiSettingsForClient,
   resolveAiSettingsForSession
 } = require("../game/aiSettings");
+const {
+  buildPlayerMonthlyBriefingView,
+  ensurePlayerMonthlyBriefingState
+} = require("../game/playerMonthlyBriefing");
 
 const router = express.Router();
 
@@ -140,6 +144,7 @@ function toExamPayload(worldState) {
     economicFiscalView: buildEconomicFiscalView(worldState),
     historicalEventArchiveView: buildHistoricalEventArchiveView(worldState),
     intelligenceRumorView: buildIntelligenceRumorView(worldState),
+    playerMonthlyBriefingView: buildPlayerMonthlyBriefingView(worldState),
     eventArchiveView: buildEventArchiveView(worldState),
     informationPanelPageView: buildInformationPanelPageViews(worldState, {}, {
       worldGeographyView,
@@ -180,6 +185,7 @@ function ensureCommonState(worldState) {
   ensureWorldEntityState(worldState);
   ensureWorldPeopleState(worldState);
   ensureWorldThreadState(worldState);
+  ensurePlayerMonthlyBriefingState(worldState);
 }
 
 function isWritingExam(activeExam) {

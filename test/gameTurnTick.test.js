@@ -285,6 +285,39 @@ test("POST /api/game/turn remains stable across repeated Mock turns", async (t) 
   assert.equal(latest.player.examRank, null);
 });
 
+test("POST /api/game/turn generates official player monthly briefing only at month end", async (t) => {
+  const server = createTestServer();
+  t.after(server.close);
+
+  const worldState = createInitialState({ role: "official", playerName: "Tick 月报" });
+  worldState.year = 1644;
+  worldState.month = 6;
+  worldState.tenDayPeriod = 2;
+  t.after(() => removeSessionFile(worldState.sessionId));
+  await writeSession(worldState);
+
+  const tenDay = await postJson(`${server.baseUrl}/api/game/turn`, {
+    sessionId: worldState.sessionId,
+    input: "先清点案卷。"
+  });
+
+  assert.equal(tenDay.response.status, 200);
+  assert.equal(tenDay.payload.worldTick.completedMonth, false);
+  assert.equal(tenDay.payload.playerMonthlyBriefing.generated, false);
+  assert.equal(tenDay.payload.playerMonthlyBriefingView.latest, null);
+
+  const monthEnd = await postJson(`${server.baseUrl}/api/game/turn`, {
+    sessionId: worldState.sessionId,
+    input: "月末汇总差事。"
+  });
+
+  assert.equal(monthEnd.response.status, 200);
+  assert.equal(monthEnd.payload.worldTick.completedMonth, true);
+  assert.equal(monthEnd.payload.playerMonthlyBriefing.generated, true);
+  assert.equal(monthEnd.payload.playerMonthlyBriefingView.latest.periodKey, "1644-06");
+  assert.ok(monthEnd.payload.playerMonthlyBriefing.events.length >= 1);
+});
+
 test("exam trigger preserves a valid calendar window across the month-end tick", async (t) => {
   const server = createTestServer();
   t.after(server.close);

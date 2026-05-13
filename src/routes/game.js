@@ -112,6 +112,11 @@ const {
   resolveAiSettingsForSession,
   updateAiSettings
 } = require("../game/aiSettings");
+const {
+  buildPlayerMonthlyBriefingView,
+  ensurePlayerMonthlyBriefingState,
+  runPlayerMonthlyBriefingStep
+} = require("../game/playerMonthlyBriefing");
 const { redactSecrets } = require("../ai/diagnostics");
 const { listSessions, mutateSession, readSession, writeSession } = require("../storage/sessionStore");
 const { chunkTextForSse, closeSse, sendSseEvent, writeSseHeaders } = require("../utils/sse");
@@ -159,6 +164,7 @@ async function processTurn(sessionId, input) {
     ensureWorldEntityState(worldState);
     ensureWorldPeopleState(worldState);
     ensureWorldThreadState(worldState);
+    ensurePlayerMonthlyBriefingState(worldState);
     if (isWritingExam(worldState.activeExam)) {
       return finalizeExamSceneTurn(worldState, input, context);
     }
@@ -193,6 +199,7 @@ async function processStreamingTurn(sessionId, input, streamHandlers = {}) {
     ensureWorldEntityState(worldState);
     ensureWorldPeopleState(worldState);
     ensureWorldThreadState(worldState);
+    ensurePlayerMonthlyBriefingState(worldState);
     if (isWritingExam(worldState.activeExam)) {
       return finalizeExamSceneTurn(worldState, input, context);
     }
@@ -326,6 +333,7 @@ function buildCommonTurnViews(worldState, options = {}) {
     economicFiscalView: buildEconomicFiscalView(worldState),
     historicalEventArchiveView: buildHistoricalEventArchiveView(worldState),
     intelligenceRumorView: buildIntelligenceRumorView(worldState),
+    playerMonthlyBriefingView: buildPlayerMonthlyBriefingView(worldState),
     eventArchiveView: buildEventArchiveView(worldState, options.eventArchive),
     informationPanelPageView: buildInformationPanelPageViews(worldState, options.informationPanel || {}, {
       worldGeographyView,
@@ -351,6 +359,7 @@ async function finalizeExamSceneTurn(worldState, input, context = null) {
   ensureWorldEntityState(worldState);
   ensureWorldPeopleState(worldState);
   ensureWorldThreadState(worldState);
+  ensurePlayerMonthlyBriefingState(worldState);
   const worldTick = buildExamSceneFeedback(worldState, scene.sceneTime, scene.event);
   enqueueAuditRecords(context, createExamProgressAuditRecords(worldState, scene));
 
@@ -411,6 +420,7 @@ async function finalizeTurn(worldState, result, input, auditOptions = {}) {
     roleWorldCoupling.relationshipChanges
   );
 
+  const beforeWorldTickState = JSON.parse(JSON.stringify(worldState));
   const worldTick = runWorldTick(worldState);
   applyStatePatch(worldState, worldTick.statePatch, {
     incrementTurnCount: false,
@@ -448,6 +458,22 @@ async function finalizeTurn(worldState, result, input, auditOptions = {}) {
     longTermEvents,
     officialCareer
   });
+  const playerMonthlyBriefing = runPlayerMonthlyBriefingStep(worldState, {
+    previousState: beforeWorldTickState,
+    worldTick,
+    officialCareer
+  });
+  if (playerMonthlyBriefing.generated) {
+    const { routePolicy: briefingRoutePolicy } = resolveAiSettingsForSession(worldState);
+    const monthlyRoute = resolveModelForTask("monthly_briefing", briefingRoutePolicy);
+    recordAiInvocation(worldState, {
+      taskType: "monthly_briefing",
+      route: monthlyRoute,
+      status: "completed",
+      durationMs: playerMonthlyBriefing.durationMs,
+      maxOutputTokens: monthlyRoute.maxOutputTokens
+    });
+  }
 
   const allRelationshipChanges = [
     ...relationshipChanges,
@@ -489,6 +515,7 @@ async function finalizeTurn(worldState, result, input, auditOptions = {}) {
   appendEvents(worldState, longTermEvents.events);
   appendEvents(worldState, officialCareer.events);
   appendEvents(worldState, worldPeopleLifecycle.events);
+  appendEvents(worldState, playerMonthlyBriefing.events);
   ensureRelationshipLedger(worldState);
   ensureExamCalendarState(worldState);
   ensureStudyProfileState(worldState);
@@ -502,6 +529,7 @@ async function finalizeTurn(worldState, result, input, auditOptions = {}) {
   ensureWorldEntityState(worldState);
   ensureWorldPeopleState(worldState);
   ensureWorldThreadState(worldState);
+  ensurePlayerMonthlyBriefingState(worldState);
 
   const worldTickFeedback = {
     cadence: worldTick.cadence,
@@ -529,6 +557,7 @@ async function finalizeTurn(worldState, result, input, auditOptions = {}) {
     worldTick,
     longTermEvents,
     officialCareer,
+    playerMonthlyBriefing,
     worldEntityImpacts,
     worldPeopleAuditEvents: worldPeopleEvents.auditEvents
   }));
@@ -575,6 +604,12 @@ async function finalizeTurn(worldState, result, input, auditOptions = {}) {
       events: Array.isArray(officialCareer.events) ? officialCareer.events : [],
       attributeChanges: Array.isArray(officialCareer.attributeChanges) ? officialCareer.attributeChanges : [],
       outcome: officialCareer.outcome
+    },
+    playerMonthlyBriefing: {
+      generated: Boolean(playerMonthlyBriefing.generated),
+      summary: playerMonthlyBriefing.summary || "",
+      events: Array.isArray(playerMonthlyBriefing.events) ? playerMonthlyBriefing.events : [],
+      reportId: playerMonthlyBriefing.reportId || null
     },
     examTrigger,
     worldTick: worldTickFeedback,
@@ -643,9 +678,11 @@ async function streamTurn(res, sessionId, input) {
       economicFiscalView: payload.economicFiscalView,
       historicalEventArchiveView: payload.historicalEventArchiveView,
       intelligenceRumorView: payload.intelligenceRumorView,
+      playerMonthlyBriefingView: payload.playerMonthlyBriefingView,
       eventArchiveView: payload.eventArchiveView,
       informationPanelPageView: payload.informationPanelPageView,
       officialCareer: payload.officialCareer,
+      playerMonthlyBriefing: payload.playerMonthlyBriefing,
       examTrigger: payload.examTrigger,
       examScene: payload.examScene || null,
       worldTick: payload.worldTick
@@ -713,6 +750,7 @@ router.get("/state/:sessionId", async (req, res, next) => {
     ensureWorldEntityState(worldState);
     ensureWorldPeopleState(worldState);
     ensureWorldThreadState(worldState);
+    ensurePlayerMonthlyBriefingState(worldState);
     res.json({
       sessionId: worldState.sessionId,
       worldState,

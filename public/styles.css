@@ -1033,7 +1033,8 @@ button:disabled {
   overflow-wrap: anywhere;
 }
 
-.official-career-panel {
+.official-career-panel,
+.player-monthly-briefing-panel {
   grid-column: 1 / -1;
   display: grid;
   gap: 8px;
@@ -1043,6 +1044,7 @@ button:disabled {
 }
 
 .official-career-panel > header,
+.player-monthly-briefing-panel > header,
 .official-career-section > header,
 .official-career-outcome header,
 .official-career-assignment header {
@@ -1054,22 +1056,28 @@ button:disabled {
 }
 
 .official-career-panel > header strong,
+.player-monthly-briefing-panel > header strong,
 .official-career-section > header strong {
   color: var(--cinnabar-deep);
   font-size: 0.98rem;
 }
 
 .official-career-panel > header span,
+.player-monthly-briefing-panel > header span,
 .official-career-section > header span,
 .official-career-assignment header span,
 .official-career-outcome header span,
-.official-career-empty {
+.official-career-empty,
+.player-monthly-briefing-summary {
   color: var(--muted);
   font-size: 0.8rem;
   overflow-wrap: anywhere;
 }
 
 .official-career-meta,
+.player-monthly-briefing-meta,
+.player-monthly-briefing-body,
+.player-monthly-briefing-followups,
 .official-career-history,
 .official-career-section-grid,
 .official-career-assignment-summary,
@@ -1081,6 +1089,8 @@ button:disabled {
 }
 
 .official-career-meta > div,
+.player-monthly-briefing-meta > div,
+.player-monthly-briefing-section,
 .official-career-section,
 .official-career-outcome,
 .official-career-assignment,
@@ -1091,6 +1101,40 @@ button:disabled {
   border: 1px solid rgba(54, 39, 27, 0.16);
   border-radius: 4px;
   background: rgba(255, 250, 239, 0.5);
+}
+
+.player-monthly-briefing-panel {
+  align-content: start;
+}
+
+.player-monthly-briefing-summary,
+.player-monthly-briefing-section p,
+.player-monthly-briefing-list,
+.player-monthly-briefing-section ul {
+  margin: 0;
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+}
+
+.player-monthly-briefing-section {
+  display: grid;
+  gap: 5px;
+}
+
+.player-monthly-briefing-section strong {
+  color: var(--cinnabar-deep);
+  font-size: 0.84rem;
+}
+
+.player-monthly-briefing-section ul {
+  padding-left: 18px;
+}
+
+.player-monthly-briefing-section li {
+  margin: 0 0 3px;
+  color: var(--ink);
+  font-size: 0.8rem;
+  overflow-wrap: anywhere;
 }
 
 .official-career-section,
@@ -1553,6 +1597,7 @@ button:disabled {
   .scholar-panel .appointment-track-block,
   .scholar-panel .imperial-exam-archive-panel,
   .scholar-panel .active-request-panel,
+  .scholar-panel .player-monthly-briefing-panel,
   .scholar-panel .official-career-panel {
     grid-column: span 2;
   }
@@ -1562,6 +1607,9 @@ button:disabled {
   .scholar-panel .exam-procedure-grid,
   .scholar-panel .imperial-exam-archive-grid,
   .scholar-panel .imperial-exam-archive-stats,
+  .scholar-panel .player-monthly-briefing-meta,
+  .scholar-panel .player-monthly-briefing-body,
+  .scholar-panel .player-monthly-briefing-followups,
   .scholar-panel .study-profile-meters,
   .scholar-panel .study-profile-lists {
     grid-template-columns: repeat(auto-fit, minmax(104px, 1fr));
@@ -2467,6 +2515,12 @@ button:disabled {
 
   .ai-route-row strong {
     grid-column: 1 / -1;
+  }
+
+  .player-monthly-briefing-meta,
+  .player-monthly-briefing-body,
+  .player-monthly-briefing-followups {
+    grid-template-columns: 1fr;
   }
 
   .information-search,

@@ -57,6 +57,7 @@ let currentEventArchiveView = null;
 let currentInformationPanelPageView = null;
 let currentAiSettingsView = null;
 let currentAiInvocationSummaryView = null;
+let currentPlayerMonthlyBriefingView = null;
 let currentInformationPanelTab = "world-geography";
 let currentInformationPanelControls = {};
 let currentExamPayload = null;
@@ -3556,6 +3557,119 @@ function renderInformationPanelShell() {
   return panel;
 }
 
+function getPlayerMonthlyBriefingView(playerMonthlyBriefingView) {
+  return getRouteView(playerMonthlyBriefingView);
+}
+
+function normalizeBriefingItems(items) {
+  if (Array.isArray(items)) return items.filter((item) => item !== undefined && item !== null && item !== "");
+  if (items === undefined || items === null || items === "") return [];
+  return [items];
+}
+
+function renderBriefingItems(items, className) {
+  const list = document.createElement("ul");
+  if (className) list.className = className;
+  normalizeBriefingItems(items).slice(0, 5).forEach((item) => {
+    const entry = document.createElement("li");
+    if (typeof item === "object") {
+      entry.textContent = [item.title, item.summary, item.publicSummary, item.detail]
+        .filter(Boolean)
+        .join("：");
+    } else {
+      entry.textContent = String(item);
+    }
+    list.appendChild(entry);
+  });
+  return list;
+}
+
+function normalizeBriefingSections(sections) {
+  if (Array.isArray(sections)) return sections;
+  if (sections && typeof sections === "object") return Object.values(sections);
+  return [];
+}
+
+function renderBriefingSection(section, order) {
+  const card = document.createElement("article");
+  card.className = "player-monthly-briefing-section";
+  const title = document.createElement("strong");
+  title.textContent = section?.title || section?.label || `月报分项${order + 1}`;
+  card.appendChild(title);
+  if (!section || typeof section !== "object") {
+    appendIfText(card, "p", section ? String(section) : "");
+    return card;
+  }
+  const summary = section?.publicSummary || section?.summary || section?.body || "";
+  appendIfText(card, "p", summary);
+  const points = normalizeBriefingItems(section?.items || section?.points || section?.events);
+  if (points.length) card.appendChild(renderBriefingItems(points));
+  return card;
+}
+
+function renderPlayerMonthlyBriefingPanel(playerMonthlyBriefingView = currentPlayerMonthlyBriefingView) {
+  const view = getPlayerMonthlyBriefingView(playerMonthlyBriefingView);
+  const latest = getRouteView(view?.latest);
+  const recentReports = viewArray(view, "recentReports");
+  if (!latest && !recentReports.length) return null;
+
+  const report = latest || getRouteView(recentReports.at(-1));
+  if (!report) return null;
+
+  const panel = document.createElement("section");
+  panel.id = "player-monthly-briefing-panel";
+  panel.className = "player-monthly-briefing-panel";
+  panel.dataset.schemaVersion = view?.schemaVersion || "";
+  panel.dataset.active = view?.active ? "true" : "false";
+  panel.dataset.reportId = report.reportId || "";
+
+  const header = document.createElement("header");
+  appendIfText(header, "strong", "官职月报");
+  appendIfText(header, "span", [report.periodLabel, report.title].filter(Boolean).join(" · ") || "近月奏报");
+
+  const summary = document.createElement("p");
+  summary.className = "player-monthly-briefing-summary";
+  summary.textContent = report.publicSummary || report.summary || "本月暂无详报。";
+
+  const meta = document.createElement("section");
+  meta.className = "player-monthly-briefing-meta";
+  meta.append(
+    createPanelValue("待办", normalizeBriefingItems(report.actionItems).length, "p"),
+    createPanelValue("风险", normalizeBriefingItems(report.riskItems).length, "p"),
+    createPanelValue("依据", normalizeBriefingItems(report.sourceRefs).length, "p")
+  );
+
+  const body = document.createElement("section");
+  body.className = "player-monthly-briefing-body";
+  normalizeBriefingSections(report.sections).slice(0, 4).forEach((section, order) => {
+    body.appendChild(renderBriefingSection(section, order));
+  });
+
+  const followups = document.createElement("section");
+  followups.className = "player-monthly-briefing-followups";
+  const actionItems = normalizeBriefingItems(report.actionItems);
+  if (actionItems.length) {
+    const actionCard = document.createElement("article");
+    actionCard.className = "player-monthly-briefing-section";
+    appendIfText(actionCard, "strong", "下月待办");
+    actionCard.appendChild(renderBriefingItems(actionItems, "player-monthly-briefing-list"));
+    followups.appendChild(actionCard);
+  }
+  const riskItems = normalizeBriefingItems(report.riskItems);
+  if (riskItems.length) {
+    const riskCard = document.createElement("article");
+    riskCard.className = "player-monthly-briefing-section";
+    appendIfText(riskCard, "strong", "风险留意");
+    riskCard.appendChild(renderBriefingItems(riskItems, "player-monthly-briefing-list"));
+    followups.appendChild(riskCard);
+  }
+
+  panel.append(header, summary, meta);
+  if (body.childElementCount) panel.appendChild(body);
+  if (followups.childElementCount) panel.appendChild(followups);
+  return panel;
+}
+
 function getAiSettingsView(aiSettingsView) {
   return aiSettingsView && typeof aiSettingsView === "object" && !Array.isArray(aiSettingsView)
     ? aiSettingsView
@@ -3913,6 +4027,7 @@ function renderRolePanel(worldState) {
 
   scholarPanel.append(overview, renderActionHints(player.role), stats, lists);
   appendOptionalPanel(renderOfficialCareerPanel());
+  appendOptionalPanel(renderPlayerMonthlyBriefingPanel());
   appendOptionalPanel(renderImperialExamArchivePanel());
   appendOptionalPanel(renderExamProcedurePanel());
   appendOptionalPanel(createExaminerPanelBlock(currentExaminerPanelView, { className: "examiner-panel-panel" }));
@@ -4001,6 +4116,7 @@ function renderScholarPanel(worldState) {
 
   scholarPanel.append(progressBlock);
   appendOptionalPanel(renderExamCalendarPanel());
+  appendOptionalPanel(renderPlayerMonthlyBriefingPanel());
   appendOptionalPanel(renderImperialExamArchivePanel());
   appendOptionalPanel(renderExamProcedurePanel());
   appendOptionalPanel(createExaminerPanelBlock(currentExaminerPanelView, { className: "examiner-panel-panel" }));
@@ -4035,7 +4151,8 @@ function renderWorldState(
   eventArchiveView,
   informationPanelPageView,
   aiSettingsView,
-  aiInvocationSummaryView
+  aiInvocationSummaryView,
+  playerMonthlyBriefingView
 ) {
   currentWorldState = worldState;
   currentRelationshipView = getRelationshipView(worldState, relationshipView);
@@ -4058,6 +4175,7 @@ function renderWorldState(
   currentInformationPanelPageView = getRouteView(informationPanelPageView);
   currentAiSettingsView = getAiSettingsView(aiSettingsView);
   currentAiInvocationSummaryView = getAiInvocationSummaryView(aiInvocationSummaryView);
+  currentPlayerMonthlyBriefingView = getPlayerMonthlyBriefingView(playerMonthlyBriefingView);
   syncInformationControlsFromPageView(currentInformationPanelPageView);
   setStatus(worldState);
   renderScholarPanel(worldState);
@@ -4086,7 +4204,8 @@ function renderPayloadWorldState(payload) {
     payload.eventArchiveView,
     payload.informationPanelPageView,
     payload.aiSettingsView,
-    payload.aiInvocationSummaryView
+    payload.aiInvocationSummaryView,
+    payload.playerMonthlyBriefingView
   );
 }
 
@@ -4232,6 +4351,21 @@ function appendOfficialCareerFeedback(officialCareer) {
   if (!officialCareer) return;
   const events = Array.isArray(officialCareer.events) ? officialCareer.events : [];
   events.forEach((event) => appendNarrative(event, "official-career-event"));
+}
+
+function appendPlayerMonthlyBriefingFeedback(playerMonthlyBriefing) {
+  if (!playerMonthlyBriefing) return;
+  const entries = [];
+  if (playerMonthlyBriefing.summary) entries.push(playerMonthlyBriefing.summary);
+  if (Array.isArray(playerMonthlyBriefing.events)) {
+    playerMonthlyBriefing.events.forEach((event) => {
+      if (event) entries.push(event);
+    });
+  }
+  entries.forEach((entry) => {
+    const item = appendNarrative(`[月报] ${entry}`, "player-monthly-briefing-event");
+    if (playerMonthlyBriefing.reportId) item.dataset.reportId = playerMonthlyBriefing.reportId;
+  });
 }
 
 function getExamSceneTime(payload) {
@@ -5162,6 +5296,7 @@ async function handleTurnPayload(payload) {
   appendWorldTickFeedback(payload.worldTick);
   appendLongTermEventFeedback(payload.longTermEvents);
   appendOfficialCareerFeedback(payload.officialCareer);
+  appendPlayerMonthlyBriefingFeedback(payload.playerMonthlyBriefing);
   renderPayloadWorldState(payload);
   const activeExam = payload.worldState?.activeExam || null;
   if (activeExam && currentExamPayload?.examId === activeExam.examId) {

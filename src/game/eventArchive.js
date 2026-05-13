@@ -17,6 +17,7 @@ const MAX_HISTORY_ITEMS = 8;
 const MAX_THREADS = 6;
 const MAX_LONG_TERM_EVENTS = 5;
 const MAX_OFFICIAL_OUTCOMES = 5;
+const MAX_MONTHLY_BRIEFINGS = 4;
 const MAX_OFFICIAL_ASSESSMENTS = 4;
 const MAX_LOCAL_DOCKETS = 6;
 const MAX_MILITARY_INCIDENTS = 5;
@@ -31,13 +32,14 @@ const MAX_PAGE_SIZE = 50;
 
 const SECRET_ENV_NAME_PATTERN = /(KEY|TOKEN|SECRET|PASSWORD|CREDENTIAL)/i;
 const SENSITIVE_ARCHIVE_TEXT_PATTERN =
-  /(hiddenNotes|hiddenIntent|relationshipLedger|retrievalContext|statePatch|worldState|provider|proposal|prompt|api[_ -]?key|OPENAI_API_KEY|DEEPSEEK_API_KEY|MIMO_API_KEY|ANTHROPIC_API_KEY|data[\\/](?:sessions|audit)|ai_change_proposals|event_log|sqlite|world_sessions|prompt_retrieval_index|event_archive_index|raw[_ -]?(?:table|ledger|audit)|(?:geo|people|office)_[A-Za-z0-9_]+|\b[A-Z0-9_]*(?:KEY|TOKEN|SECRET|PASSWORD|CREDENTIAL)[A-Z0-9_]*\b|[A-Za-z]:\\[^\s"'<>]+|\b(?:\/Users|\/home|\/tmp|\/var|\/mnt|\/opt)\/[^\s"'<>]+|sk-[A-Za-z0-9_-]{8,}|tp-[A-Za-z0-9_-]{8,})/i;
+  /(hiddenNotes|hiddenIntent|relationshipLedger|retrievalContext|statePatch|worldState|provider|proposal|prompt|api[_ -]?key|OPENAI_API_KEY|DEEPSEEK_API_KEY|MIMO_API_KEY|ANTHROPIC_API_KEY|data[\\/](?:sessions|audit)|ai_change_proposals|event_log|sqlite|world_sessions|prompt_retrieval_index|event_archive_index|raw[_ -]?(?:table|ledger|audit)|(?:geo|people|office)_[A-Za-z0-9_]+|\b[A-Z0-9_]*(?:KEY|TOKEN|SECRET|PASSWORD|CREDENTIAL)[A-Z0-9_]*\b|file:\/\/\/?(?:[A-Za-z]:[\\/]|(?:\/Users|\/home|\/tmp|\/var|\/mnt|\/opt)\/)[^\s"'<>]+|[A-Za-z]:[\\/][^\s"'<>]+|\b(?:\/Users|\/home|\/tmp|\/var|\/mnt|\/opt)\/[^\s"'<>]+|sk-[A-Za-z0-9_-]{8,}|tp-[A-Za-z0-9_-]{8,})/i;
 
 const SOURCE_LABELS = {
   event_history: "近事",
   world_thread: "议程",
   long_term_event: "长期",
   official_career: "官场",
+  monthly_briefing: "月报",
   official_assessment: "考成",
   local_docket: "案牍",
   military_diplomacy: "军务",
@@ -83,7 +85,8 @@ function redactArchiveText(value) {
   }
 
   text = text.replace(/\bsk-[A-Za-z0-9_-]{8,}\b/g, "[redacted]");
-  text = text.replace(/[A-Za-z]:\\[^\s"'<>]+/g, "[redacted-path]");
+  text = text.replace(/\bfile:\/\/\/?(?:[A-Za-z]:[\\/]|(?:\/Users|\/home|\/tmp|\/var|\/mnt|\/opt)\/)[^\s"'<>]+/gi, "[redacted-path]");
+  text = text.replace(/[A-Za-z]:[\\/][^\s"'<>]+/g, "[redacted-path]");
   text = text.replace(/(^|\s)(?:\.{0,2}[\\/])?data[\\/][^\s"'<>]+/g, "$1[redacted-path]");
   text = text.replace(/\b(?:\/Users|\/home|\/tmp|\/var|\/mnt|\/opt)\/[^\s"'<>]+/g, "[redacted-path]");
   return text;
@@ -241,6 +244,27 @@ function collectOfficialItems(worldState, items, officialCareerView) {
       date: outcome,
       turn: outcome.turn,
       status: outcome.status === "pending" ? "watch" : "resolved"
+    });
+  });
+}
+
+function collectMonthlyBriefingItems(worldState, items) {
+  const reports = Array.isArray(worldState.playerMonthlyBriefing?.reports)
+    ? worldState.playerMonthlyBriefing.reports
+    : [];
+  reports.slice(-MAX_MONTHLY_BRIEFINGS).forEach((report) => {
+    addItem(items, worldState, {
+      sourceType: "monthly_briefing",
+      kind: report.role || "official",
+      title: report.title || "官职月报",
+      summary: report.publicSummary,
+      date: report.generatedAt || report,
+      turn: report.generatedAtTurn,
+      status: "recorded",
+      riskLabel: Array.isArray(report.riskItems) && report.riskItems.length ? "月报风险" : "",
+      relatedLabels: Array.isArray(report.sourceRefs)
+        ? report.sourceRefs.map((ref) => ref.label || ref.id || ref.source)
+        : []
     });
   });
 }
@@ -527,6 +551,7 @@ function buildEventArchiveIndexItems(worldState = {}) {
   collectWorldThreadItems(worldState, items, worldThreadView);
   collectLongTermItems(worldState, items, longTermEventView);
   collectOfficialItems(worldState, items, officialCareerView);
+  collectMonthlyBriefingItems(worldState, items);
   collectAppointmentTrackItems(worldState, items);
   collectOfficialAssessmentItems(worldState, items, officialPostingsView);
   collectLocalDocketItems(worldState, items, localAffairsDocketView);

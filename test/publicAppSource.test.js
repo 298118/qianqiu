@@ -137,3 +137,31 @@ test("S70.9 AI control panel reads route AI views instead of raw world state set
   assert.doesNotMatch(aiPanelSource, /retrievalContext|prompt_retrieval_index|event_archive_index|world_sessions/);
   assert.doesNotMatch(aiPanelSource, /OPENAI_API_KEY|DEEPSEEK_API_KEY|MIMO_API_KEY|ANTHROPIC_API_KEY/);
 });
+
+test("S70.10 player monthly briefing panel reads route view and turn feedback", () => {
+  const source = publicAppSource();
+  const monthlyPanelSource = sourceBetween(
+    source,
+    "function getPlayerMonthlyBriefingView(",
+    "function getAiSettingsView("
+  );
+
+  assert.match(source, /let currentPlayerMonthlyBriefingView = null;/);
+  assert.match(source, /function renderPlayerMonthlyBriefingPanel\(playerMonthlyBriefingView = currentPlayerMonthlyBriefingView\)/);
+  assert.match(source, /function appendPlayerMonthlyBriefingFeedback\(playerMonthlyBriefing\)/);
+  assert.match(source, /payload\.playerMonthlyBriefingView/);
+  assert.match(source, /appendPlayerMonthlyBriefingFeedback\(payload\.playerMonthlyBriefing\);/);
+  assert.match(source, /appendOptionalPanel\(renderPlayerMonthlyBriefingPanel\(\)\);/);
+
+  assert.match(monthlyPanelSource, /getPlayerMonthlyBriefingView\(playerMonthlyBriefingView\)/);
+  assert.match(monthlyPanelSource, /view\?\.latest/);
+  assert.match(monthlyPanelSource, /recentReports/);
+  assert.match(monthlyPanelSource, /publicSummary/);
+  assert.match(monthlyPanelSource, /actionItems/);
+  assert.match(monthlyPanelSource, /riskItems/);
+  assert.match(monthlyPanelSource, /sourceRefs/);
+
+  assert.doesNotMatch(monthlyPanelSource, /worldState\?\.playerMonthlyBriefing/);
+  assert.doesNotMatch(monthlyPanelSource, /worldState\.playerMonthlyBriefing/);
+  assert.doesNotMatch(monthlyPanelSource, /raw|proposal|audit|prompt|table|path|key/i);
+});

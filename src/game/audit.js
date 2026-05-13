@@ -285,6 +285,7 @@ function createTurnAuditRecords({
   worldTick,
   longTermEvents,
   officialCareer,
+  playerMonthlyBriefing,
   worldEntityImpacts,
   worldPeopleAuditEvents = []
 }) {
@@ -328,7 +329,8 @@ function createTurnAuditRecords({
     buildFeedbackEvent(worldState, "role_world_coupling", "role_world_coupling_step", roleWorldCoupling),
     buildFeedbackEvent(worldState, "world_tick", "world_tick_step", worldTick),
     buildFeedbackEvent(worldState, "long_term_events", "long_term_event_step", longTermEvents),
-    buildFeedbackEvent(worldState, "official_career", "official_career_step", officialCareer)
+    buildFeedbackEvent(worldState, "official_career", "official_career_step", officialCareer),
+    buildFeedbackEvent(worldState, "player_monthly_briefing", "player_monthly_briefing_step", playerMonthlyBriefing)
   ].filter(Boolean);
   const auditEvents = [
     providerEvent,
