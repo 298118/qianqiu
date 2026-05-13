@@ -126,7 +126,7 @@
 | S71.3 | DONE | 安全全文检索 / 本地搜索：FTS5 或 fallback，只索引 player-facing projection，不索引 hidden/raw | 2026-05-13 | Codex / 子代理 | `e5cdfd7` |
 | S71.4 | DONE | Redacted player API 与开发诊断 API：保存 hidden 私档前先拆玩家可见 state 和 hidden-safe diagnostics | 2026-05-13 | Codex / 子代理 | `746370a` |
 | S71.5 | DONE | 财政与城市政策 resolver：征粮、赈济、修堤、平粜、清丈、钱粮差事等服务器裁决 | 2026-05-13 | Codex / 子代理 | `3cca9bd` |
-| S71.6 | DONE | 地方案件与刑名 resolver：堂审、证据、士绅压力、胥吏阻力、判决后果和案牍归档 | 2026-05-13 | Codex / 子代理 | 待提交 |
+| S71.6 | DONE | 地方案件与刑名 resolver：堂审、证据、士绅压力、胥吏阻力、判决后果和案牍归档 | 2026-05-13 | Codex / 子代理 | `4d93b2d` |
 | S71.7 | TODO | 军务与外交 resolver：侦察、固守、调粮、练兵、会战、互市、和议、宣战 request 和服务器裁决 | - | - | S71.6 后 |
 | S71.8 | TODO | 压力驱动事件生成器：从粮价、水利、腐败、边防、NPC 怨怼和情报压力生成事件候选 | - | - | S71.7 后 |
 | S71.9 | TODO | 多 actor 场景运行时：朝议、堂审、会盟、战役 scene-local time 与 actor proposal 编排 | - | - | S71.8 后 |
@@ -215,7 +215,7 @@ S71 详细规划见 [DATABASE_GAMEPLAY_RESOLVER_ROADMAP.md](DATABASE_GAMEPLAY_RE
 
 步骤：S71.6 地方案件与刑名 resolver。
 
-提交：待提交。
+提交：`4d93b2d`。
 
 完成：
 
@@ -232,7 +232,7 @@ S71 详细规划见 [DATABASE_GAMEPLAY_RESOLVER_ROADMAP.md](DATABASE_GAMEPLAY_RE
 - 已通过：`node --test test/resolverInputContext.test.js test/localAffairsDockets.test.js test/redactedState.test.js test/gamePlayerStateRoute.test.js test/gameAiToolRunner.test.js test/aiActorToolPermissions.test.js test/domainToolDefinitions.test.js test/domainToolResolvers.test.js test/domainToolPermissions.test.js test/stateRules.test.js test/eventArchive.test.js test/publicAppSource.test.js test/cityPolicyResolver.test.js test/cityPolicyAuthority.test.js test/cityPolicyHiddenRedaction.test.js test/cityPolicyDomainToolBridge.test.js`（77/77）。
 - 已通过：`npm run check:docs-governance`、`node --test test/documentationGovernance.test.js` 和 `git diff --check`。
 - 全量 `npm test` 最终状态 791/792，唯一失败为既有 S67 `sqliteReadRepairMs` 性能阈值抖动（5700.336ms > 3000ms）；随后单独复跑 `node --test test/dualModeAcceptanceScript.test.js`（8/8）通过。
-- 待提交前完成只读子代理最终 diff 复审。
+- 提交前只读子代理最终 diff 复审首轮发现 P2：公开案牍摘要可能 fallback 到 evidence `sourceId`。已改为 bridge evidence 带入清洗后的 title/summary，公开摘要不再 fallback 到 `sourceId`，并补 public docket/event 不含 docket ref、docket id、person id 的回归；二轮复审确认 P2 已关闭，未发现新的 P0/P1/P2。
 
 风险/遗留：
 
