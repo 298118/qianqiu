@@ -6,13 +6,14 @@
 
 ## 这次主要更新
 
-当前项目已经完成可玩纵切、浏览器验收、时间专项、AI provider 扩展、本地动态数据库基础、S54-S59 SQLite 业务表拆分、S60-S67 超大动态世界数据库内容充实、S68-S69 科举读书深化与归档、S70.1-S70.7 AI prompt/tool/actor/领域工具基础、S70.8 多模型路由与本地 eval runner、S70.9 AI 设置与可观测性、S70.10 玩家官职月报、S70.11 自然语言跳时，以及 S70.12 大模型记忆系统。近期重点更新集中在“本地数据库专项归档”“S68-S69 科举读书深化”“多 provider 能力”和“S70 AI 编排”：
+当前项目已经完成可玩纵切、浏览器验收、时间专项、AI provider 扩展、本地动态数据库基础、S54-S59 SQLite 业务表拆分、S60-S67 超大动态世界数据库内容充实、S68-S69 科举读书深化与归档，以及 S70 AI 编排归档。近期重点更新集中在“本地数据库专项归档”“S68-S69 科举读书深化”“多 provider 能力”和“S70 AI 编排”：
 
 - 完成 S70.1 AI 提示词与工具协议契约：新增 [docs/AI_PROMPT_ENGINEERING_CONTRACT.md](docs/AI_PROMPT_ENGINEERING_CONTRACT.md) 和 [docs/AI_TOOL_PROTOCOL_CONTRACT.md](docs/AI_TOOL_PROTOCOL_CONTRACT.md)，固定 prompt pack 七层、actor/scene/output/tool policy 边界、MCP-friendly tool envelope、proposal/result/request-adjudication schema、`server.*` 内部化、strict `inputSchema`、Mock/no-key fallback 和 provider smoke 口径。新增 `src/ai/toolSchemas.js`、`scripts/providerToolSmoke.js` 与 `npm run smoke:provider:tools`，可在有 MiMo key 时探测 `tools` / `tool_choice` / `tool_calls` 与工具结果回填形状；无 key 时明确 skip。
 - 完成 S70.8 多模型路由与 S70.9 AI 设置：`src/ai/modelRoutePolicy.js` 固定 narrator、actor_mind、planner、domain_specialist、critic、safety_gate、memory_summarizer、monthly_briefing、time_skip_planner 九类任务的 provider/model/budget/tool 边界，`npm run eval:ai` 会先跑本地 route/eval runner；`src/game/aiSettings.js`、`GET/POST /api/ai/settings/:sessionId` 和浏览器 `#ai-control-panel` 让玩家按任务调整 provider/model、输出长度、工具预算、并发和安全严格度。设置与调动摘要只返回 hidden-safe view，不暴露 key、base URL、raw prompt、raw provider payload、本地路径或 raw table，critic/safety 仍强制 review-only。
 - 完成 S70.10 玩家官职月报：`src/game/playerMonthlyBriefing.js` 在玩家为入仕官员、地方官、大臣、将领或皇帝时，于下旬进入下月上旬的月末 tick 生成一次 `playerMonthlyBriefingView`。月报只读取服务器公开 projection（官场、任所、案牍、财赋、军务、人物与事件档案），写入脱敏月报账本、事件档案 `monthly_briefing` 条目和 bounded AI 调动摘要；不会直接改官职、财政、案牍、军务、NPC 或数据库。浏览器新增“官职月报”面板，只读 route view 和 turn feedback。
 - 完成 S70.11 自然语言跳时：`src/game/timeSkip.js` 把“学习一月”“养病半月”“照旧处理一月”等输入解析为 `timeSkipPlan`，服务器再逐旬调用既有回合结算链，依次处理读书、政务、人脉请托、世界 tick、长期事件、官职月报和中断检测。跳时不会让模型直接改状态或跳过科期/急件；`timeSkip` 反馈只返回安全总结、逐旬摘要、是否中断和下一步提示。
 - 完成 S70.12 大模型记忆系统：新增 `actorMemoryLedger`、`actorMemoryView`、`sessionSummary` 和 `sessionSummaryView`，普通回合会把 provider `memoryProposals`、可见关系变化、主动 NPC 请求、官职月报和科举同年座师网络整理为可见 actor memory；月末会生成玩家经历摘要并记录 `memory_summarizer` 调动摘要。provider 记忆 proposal 的来源类型由服务器强制归为 `ai_memory_proposal`，被拒绝的 private/hidden、不可见 actor、跨 actor 或污染文本只进入 hidden-safe 拒绝计数和原因码；浏览器、prompt、事件档案和响应 `worldState` 只接触服务器清洗后的 capped view，不暴露 raw 记忆/摘要账本。
+- 完成 S70.13 地图 AI 接口预留与 S70.14 归档验收：新增 `mapContextView`、稳定 `mapEntityRef`、地图可见性和 `map.propose_route_or_geopolitical_move` 待裁决工具；游戏、考试和 prompt 只读地图安全 projection，不暴露 raw coordinate table 或 hidden enemy truth。新增 `scripts/providerAiFirstSmoke.js` 与 `npm run smoke:provider:ai-first`，有 MiMo key 时验收真实开局/普通长回合 JSON 和月报、跳时、记忆、地图、critic/safety、AI 设置等 S70 surface；无 key 时明确 skip，`MIMO_REQUIRED=1` 时缺 key fail。`npm run smoke:dual-mode -- --storage-only` 现在也比较 S70 AI-first JSON/SQLite route-view parity；S70 完成范围见 [docs/AI_ORCHESTRATION_ARCHIVE.md](docs/AI_ORCHESTRATION_ARCHIVE.md)。
 - 新增可选 SQLite 存储模式：默认仍是 JSON 存档；设置 `STORAGE_ADAPTER=sqlite` 后，本地使用 `world_sessions`、审计表、地理 `geo_*`、人物 `people_*`、官职任所 `office_*` 派生业务表、安全事件档案 `event_archive_index` 和安全 prompt 检索派生索引。
 - 新增地理业务表同步：SQLite 模式会把 `worldState.worldGeography` 同步到 `geo_countries`、`geo_regions`、`geo_cities`、`geo_routes`、`geo_frontier_zones`、`geo_office_jurisdictions`，读档时可按 JSON snapshot 修复缺失或陈旧行。
 - 新增地理维护工具：`npm run storage:geography:sqlite -- import|status|repair|export` 支持导入、漂移检查、修复和脱敏 debug dump。
@@ -180,7 +181,7 @@ npm run storage:audit-events -- export --adapter sqlite --db data/qianqiu.sqlite
 npm run smoke:dual-mode -- --storage-only
 ```
 
-`storage:import:sqlite` 会通过 SQLite adapter 同步 `geo_*`、`people_*`、`office_*`、`event_archive_index` 和 `prompt_retrieval_index` 等派生表；`smoke:dual-mode -- --storage-only` 是 S67.1 的快速整体验收，串联 JSON -> SQLite dry-run/正式导入、地理修复/导出、审计公开 projection、派生表计数、large fixture scale regression、prompt 策略、局势簿分页、SQLite 读档修复、性能门槛和 hidden-token 防线。
+`storage:import:sqlite` 会通过 SQLite adapter 同步 `geo_*`、`people_*`、`office_*`、`event_archive_index` 和 `prompt_retrieval_index` 等派生表；`smoke:dual-mode -- --storage-only` 是当前 JSON/SQLite 快速整体验收，串联 JSON -> SQLite dry-run/正式导入、地理修复/导出、审计公开 projection、派生表计数、large fixture scale regression、prompt 策略、局势簿分页、S70 AI-first route-view parity、SQLite 读档修复、性能门槛和 hidden-token 防线。
 
 回滚优先关闭 `STORAGE_ADAPTER=sqlite` 回到 JSON adapter，或保留/恢复原 JSON 存档。
 
@@ -196,6 +197,7 @@ npm run smoke:dual-mode -- --storage-only
 npm run smoke:exam-s69
 npm run smoke:provider
 npm run smoke:provider:tools
+npm run smoke:provider:ai-first
 npm run smoke:provider:route
 npm run smoke:provider:long
 npm run storage:audit-events -- status
@@ -207,9 +209,10 @@ npm run storage:audit-events -- status
 - `npm run check:docs-governance` 检查开发治理规范、活动路线图和必读文档中的受保护规则。
 - `npm run eval:ai` 是离线 AI 输出质量门槛，覆盖 provider-shaped JSON、越权风险、历史语气、评分边界和作弊处罚。
 - `npm run smoke:browser` 启动临时 Mock 服务器，覆盖完整书生到入仕路径、作弊样例、代表身份回合、存档簿、年月旬显示和桌面/移动布局；`--information-parity` 专项比对 JSON/SQLite 双模式下“局势簿”五类面板、搜索/筛选/排序/分页控件、分页 metadata 和 hidden-token 防线。
-- `npm run smoke:dual-mode` 串联 JSON/SQLite 完整 Mock browser smoke、局势簿 parity、S59 存储维护和 S67.1 large fixture 规模回归；无浏览器或只想核验导入/修复/导出、读档修复、prompt/局势簿/性能门槛时可加 `--storage-only`。
+- `npm run smoke:dual-mode` 串联 JSON/SQLite 完整 Mock browser smoke、局势簿 parity、S59 存储维护、S67.1 large fixture 规模回归和 S70 AI-first route-view parity；无浏览器或只想核验导入/修复/导出、读档修复、prompt/局势簿/S70 views/性能门槛时可加 `--storage-only`。
 - `npm run smoke:exam-s69` 使用 Mock deterministic provider 完整跑通四级科举到初授入仕，验证 S68-S69 的读书、科场、评卷、荣誉、同年座师网络、授官轨迹和 hidden-token 防线。
 - `npm run smoke:provider:tools` 是 S70.1 MiMo 工具调用形状探针；缺 `MIMO_API_KEY` 时明确跳过，`MIMO_REQUIRED=1` 或 `--required` 时缺 key 失败。
+- `npm run smoke:provider:ai-first` 是 S70.14 MiMo AI-first 验收；有 key 时真实调用 MiMo 开局和普通长回合，再以内存 fixture 验证月报、跳时、记忆、地图 proposal、critic/safety review-only 和 AI 设置 surface；缺 key 时明确跳过，`MIMO_REQUIRED=1` 或 `--required` 时缺 key 失败。
 - `npm run smoke:provider*` 只在配置真实 provider key 时进行网络调用；无 key 环境会成功跳过。
 - `npm run storage:audit-events -- status|export` 是本地审计公开 projection 工具，默认只输出脱敏统计和 public 事件摘要，不输出 raw audit、provider proposal、prompt、key、本地路径或 hidden notes。
 
@@ -237,7 +240,7 @@ POST /api/exam/submit
 - `POST /api/ai/connection-test` 不创建 session、不写存档、不用 Mock fallback 掩盖真实 provider 问题。
 - `GET/POST /api/ai/settings/:sessionId` 读取或更新 session 级 AI 设置；服务端只接受 provider/model、输出长度、预算、并发、安全严格度等质量/路由设置，拒绝 hidden/raw/server/path/key、直写状态/数据库和观测日志伪造。
 - `GET /api/game/state/:sessionId` 可用 `informationTab`、`informationQuery`、`informationFilter`、`informationSort`、`informationPage`、`informationPageSize` 查询局势簿分页；兼容别名 `informationPanelTab` / `informationCollection` 和 `informationSearch`。S70.12 起响应 `worldState` 不携带 raw `actorMemoryLedger` / `sessionSummary`，请读取 `actorMemoryView` / `sessionSummaryView`。
-- 游戏与考试路由会返回服务器整理后的可见视图，例如 `examProcedureView`、`examinerPanelView`、`examHonorView`、`appointmentTrackView`、`studyProfileView`、`relationshipView`、`worldGeographyView`、`worldPeopleView`、`officialPostingsView`、`localAffairsDocketView`、`militaryDiplomacyView`、`economicFiscalView`、`historicalEventArchiveView`、`eventArchiveView`、`informationPanelPageView`、`aiSettingsView`、`aiInvocationSummaryView`、`playerMonthlyBriefingView`、`actorMemoryView` 和 `sessionSummaryView`。S69.2 的同年/座师/考官事实通过 `relationshipView`、`worldPeopleView`、`eventArchiveView` 和考试历史 `examNetwork` 快照暴露；S69.3 的初授事实通过 `appointmentTrackView`、`officialCareerView`、`eventArchiveView` 和考试历史 `appointmentTrack` 快照暴露；S69.4 的浏览器科举档案面板只组合这些 route view 与安全快照，不新增 raw route 入口；S70.9 的 AI 设置面板只读 AI route view，不读取 raw `worldState.aiSettings`；S70.10 的官职月报面板只读 `playerMonthlyBriefingView` 和本回合 `playerMonthlyBriefing` 反馈，不读取 raw `worldState.playerMonthlyBriefing`；S70.11 的跳时叙事只读本回合 `timeSkip` 安全总结，不读取 raw 计划或隐藏状态；S70.12 的记忆与经历摘要只读 `actorMemoryView`、`sessionSummaryView` 和本回合安全反馈，不读取 raw `worldState.actorMemoryLedger` 或 `worldState.sessionSummary`。
+- 游戏与考试路由会返回服务器整理后的可见视图，例如 `examProcedureView`、`examinerPanelView`、`examHonorView`、`appointmentTrackView`、`studyProfileView`、`relationshipView`、`worldGeographyView`、`worldPeopleView`、`officialPostingsView`、`localAffairsDocketView`、`militaryDiplomacyView`、`economicFiscalView`、`historicalEventArchiveView`、`eventArchiveView`、`informationPanelPageView`、`aiSettingsView`、`aiInvocationSummaryView`、`playerMonthlyBriefingView`、`actorMemoryView`、`sessionSummaryView` 和 `mapContextView`。S69.2 的同年/座师/考官事实通过 `relationshipView`、`worldPeopleView`、`eventArchiveView` 和考试历史 `examNetwork` 快照暴露；S69.3 的初授事实通过 `appointmentTrackView`、`officialCareerView`、`eventArchiveView` 和考试历史 `appointmentTrack` 快照暴露；S69.4 的浏览器科举档案面板只组合这些 route view 与安全快照，不新增 raw route 入口；S70.9 的 AI 设置面板只读 AI route view，不读取 raw `worldState.aiSettings`；S70.10 的官职月报面板只读 `playerMonthlyBriefingView` 和本回合 `playerMonthlyBriefing` 反馈，不读取 raw `worldState.playerMonthlyBriefing`；S70.11 的跳时叙事只读本回合 `timeSkip` 安全总结，不读取 raw 计划或隐藏状态；S70.12 的记忆与经历摘要只读 `actorMemoryView`、`sessionSummaryView` 和本回合安全反馈，不读取 raw `worldState.actorMemoryLedger` 或 `worldState.sessionSummary`；S70.13 的地图接口只读 `mapContextView` 和稳定 refs，不读取 raw coordinate table 或 hidden enemy truth。
 
 ## 项目结构
 
@@ -263,7 +266,7 @@ data/sessions/
 
 - [docs/SHARED_CONTEXT.md](docs/SHARED_CONTEXT.md)：Codex 与 Claude Code 共享交接板。
 - [docs/QIANQIU_DEVELOPMENT_BRIEF.md](docs/QIANQIU_DEVELOPMENT_BRIEF.md)：产品目标、架构、数据契约和交付标准。
-- [docs/DEVELOPMENT_STEPS.md](docs/DEVELOPMENT_STEPS.md)：当前活动路线图与进度台账，已交接到 S70 AI 编排；S70.12 已完成大模型记忆系统，后续从 S70.13 地图系统 AI 接口预留继续。
+- [docs/DEVELOPMENT_STEPS.md](docs/DEVELOPMENT_STEPS.md)：当前活动路线图与进度台账，已交接到 S71；下一步从 S71.0 数据库玩法化专项契约继续。
 - [docs/DEVELOPMENT_GOVERNANCE.md](docs/DEVELOPMENT_GOVERNANCE.md)：稳定开发治理锚点。
 - [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)：当前架构、API、状态模型和验证要求。
 - [docs/AI_CONTROL_AUDIT_MATRIX.md](docs/AI_CONTROL_AUDIT_MATRIX.md)：AI/server 权限矩阵。
@@ -273,6 +276,7 @@ data/sessions/
 - [docs/DYNAMIC_WORLD_DATABASE_PLAN.md](docs/DYNAMIC_WORLD_DATABASE_PLAN.md)：本地动态数据库规划。
 - [docs/LOCAL_DATABASE_AND_WORLD_CONTENT_ARCHIVE.md](docs/LOCAL_DATABASE_AND_WORLD_CONTENT_ARCHIVE.md)：S49-S67 本地数据库基础、SQLite 业务表、双模式验收、超大动态世界内容归档与 S60 内容契约。
 - [docs/IMPERIAL_EXAM_DEEPENING_ARCHIVE.md](docs/IMPERIAL_EXAM_DEEPENING_ARCHIVE.md)：S68-S69 科举、读书、评卷、榜单、同年座师、授官和 Provider/Mock 验收归档。
+- [docs/AI_ORCHESTRATION_ARCHIVE.md](docs/AI_ORCHESTRATION_ARCHIVE.md)：S70 AI prompt/tool/actor/多模型路由、AI 设置、官职月报、跳时、记忆、地图接口、provider AI-first smoke、JSON/SQLite parity 与归档。
 - [docs/WORLD_GEOGRAPHY_SEED_CONTRACT.md](docs/WORLD_GEOGRAPHY_SEED_CONTRACT.md)：天下地理与 SQLite 地理业务表契约。
 - [docs/NPC_HOUSEHOLD_ASSET_RELATIONSHIP_CONTRACT.md](docs/NPC_HOUSEHOLD_ASSET_RELATIONSHIP_CONTRACT.md)：人物、家族、资产、田产、关系 schema/桥接与 S55 SQLite 人物域表契约/实现边界。
 - [docs/OFFICIAL_POSTING_DATABASE_CONTRACT.md](docs/OFFICIAL_POSTING_DATABASE_CONTRACT.md)：官署、官职、任所、考成、迁转 schema/桥接与 S56 SQLite 官职任所表契约。
@@ -282,5 +286,5 @@ data/sessions/
 - 真实 provider 网络调用需要配置 API key；无 key 环境只验证 Mock、缺 key 分支和 no-key skip。
 - 浏览器 smoke 覆盖完整主线和代表身份回合，但不等同于所有身份的长线游玩验收。
 - SQLite 目前已经包含 session row、审计表、地理 `geo_*` 业务表、可见人物 `people_*` bridge rows、人物事件到 `people_*.last_event_id` 的本地关联、带内容漂移探针的官职任所 `office_*` 派生业务表、安全事件档案 `event_archive_index`、安全 prompt 检索索引，以及只输出 allowlist public 摘要的本地审计公开 projection 工具；它们都不是浏览器、prompt 或服务器裁决的 raw 来源。
-- “超大动态世界数据库”的 S60-S67 内容充实阶段已并入统一归档；S68-S69 科举深化也已归档，后续活动重点进入 S70 AI 提示词、工具协议和多 AI 编排。
+- “超大动态世界数据库”的 S60-S67 内容充实阶段已并入统一归档；S68-S69 科举深化和 S70 AI 编排也已归档，后续活动重点进入 S71 数据库玩法化、维护、安全检索和 redacted API。
 - 当前不包含远程存档、账号体系、多人同步或云端数据库。

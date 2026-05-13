@@ -9,8 +9,11 @@ const {
   S67_SCALE_ACCEPTANCE_THRESHOLDS,
   assertNoBlockedTokens,
   buildS59WorldState,
+  buildS70AiFirstParityWorldState,
+  buildS70AiFirstVisiblePayload,
   parseArgs,
   resolveSqlitePlan,
+  runS70AiFirstParityAcceptance,
   runScaleRegressionAcceptance,
   runStorageMaintenanceAcceptance
 } = require("../scripts/dualModeAcceptance");
@@ -85,6 +88,52 @@ test("dual-mode acceptance fixture keeps visible official mainline shape", () =>
   assert.equal(worldState.player.examRank, "进士");
   assert.equal(worldState.player.examHistory.length, 4);
   assert.ok(worldState.eventHistory.some((entry) => entry.includes("书生连捷四场")));
+});
+
+test("dual-mode S70 AI-first fixture exposes only route-view surfaces", () => {
+  const { worldState, actorMemory } = buildS70AiFirstParityWorldState();
+  const payload = buildS70AiFirstVisiblePayload(worldState);
+  const serialized = JSON.stringify(payload);
+
+  assert.equal(payload.aiSettingsView.schemaVersion, "s70.9-ai-settings.v1");
+  assert.equal(payload.aiInvocationSummaryView.recentInvocations.length >= 1, true);
+  assert.equal(payload.playerMonthlyBriefingView.active, true);
+  assert.equal(Boolean(payload.playerMonthlyBriefingView.latest), true);
+  assert.equal(payload.timeSkip.requestedTicks, 3);
+  assert.equal(payload.actorMemoryView.actors.length >= 1, true);
+  assert.equal(payload.sessionSummaryView.recentMonthlySummaries.length, 1);
+  assert.equal(payload.mapContextView.schemaVersion, 1);
+  assert.equal(payload.mapContextView.mapEntityRefs.length > 0, true);
+  assert.equal(actorMemory.rejectedCount >= 1, true);
+  assert.equal(serialized.includes("actorMemoryLedger"), false);
+  assert.equal(serialized.includes("sessionSummary\""), false);
+  assert.equal(serialized.includes("world_state_json"), false);
+  assert.equal(serialized.includes("sk-proj-s70-secret"), false);
+});
+
+test("dual-mode S70 AI-first parity compares JSON and SQLite route views", {
+  skip: hasNodeSqlite ? false : "node:sqlite is unavailable in this Node.js runtime"
+}, async (t) => {
+  const dbPath = path.join(dataDir, `test-s70-ai-first-${randomUUID()}.sqlite`);
+  t.after(() => removeSqliteArtifacts(dbPath));
+
+  const result = await runS70AiFirstParityAcceptance({ sqliteDatabasePath: dbPath });
+  const serialized = JSON.stringify(result);
+
+  assert.equal(result.views.aiRoutes >= 9, true);
+  assert.equal(result.views.recentInvocations >= 1, true);
+  assert.equal(result.views.monthlyBriefingActive, true);
+  assert.ok(result.views.monthlyBriefingReportId);
+  assert.equal(result.views.timeSkipDetected, true);
+  assert.equal(result.views.actorMemoryActors >= 1, true);
+  assert.equal(result.views.sessionSummaryCount, 1);
+  assert.equal(result.views.mapRefs > 0, true);
+  assert.equal(result.memory.appliedCount >= 1, true);
+  assert.equal(result.memory.rejectedCount >= 1, true);
+  assert.equal(serialized.includes(dbPath), false);
+  assert.equal(serialized.includes("world_sessions"), false);
+  assert.equal(serialized.includes("prompt_retrieval_index"), false);
+  assert.equal(serialized.includes("sk-proj-s70-secret"), false);
 });
 
 test("dual-mode storage maintenance acceptance imports, repairs, exports, and redacts", {

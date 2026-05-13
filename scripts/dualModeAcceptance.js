@@ -7,7 +7,33 @@ const { assemblePromptContext } = require("../src/ai/promptContextAssembler");
 const { buildEventArchiveView } = require("../src/game/eventArchive");
 const { buildInformationPanelPageViews } = require("../src/game/informationPanelPage");
 const { createInitialState } = require("../src/game/initialState");
+const {
+  buildAiInvocationSummaryView,
+  recordAiInvocation,
+  redactAiSettingsForClient,
+  resolveAiSettingsForSession
+} = require("../src/game/aiSettings");
+const {
+  applyTurnActorMemoryUpdates,
+  buildActorMemoryView
+} = require("../src/game/actorMemoryLedger");
+const { buildMapContextView } = require("../src/game/mapContext");
 const { buildOfficialPostingsView } = require("../src/game/officialPostings");
+const {
+  buildPlayerMonthlyBriefingView,
+  runPlayerMonthlyBriefingStep
+} = require("../src/game/playerMonthlyBriefing");
+const { buildPlayerAiActorProfile } = require("../src/game/aiActorProfiles");
+const {
+  buildSessionSummaryView,
+  updateMonthlySessionSummary
+} = require("../src/game/sessionSummary");
+const { applyStatePatch } = require("../src/game/stateRules");
+const {
+  buildTimeSkipPlan,
+  buildTimeSkipSummary
+} = require("../src/game/timeSkip");
+const { runWorldTick } = require("../src/game/worldTick");
 const { buildWorldGeographyView } = require("../src/game/worldGeography");
 const {
   WORLD_CONTENT_BROWSER_PAGE,
@@ -114,17 +140,19 @@ function printHelp(io = console) {
   io.log(`
 Usage: node scripts/dualModeAcceptance.js [options]
 
-Runs the S67 JSON/SQLite dual-mode acceptance:
+Runs the JSON/SQLite dual-mode acceptance:
   1. Full Mock browser journey in JSON mode.
   2. Full Mock browser journey in SQLite mode.
   3. Focused JSON/SQLite information-panel parity smoke.
   4. Storage maintenance acceptance for JSON -> SQLite import, geography repair/export,
      audit public projection, derived table counts, and hidden-token checks.
-  5. S67.1 scale regression for large fixture counts, prompt strategy, information panel
+  5. S70 AI-first route-view parity for AI settings, monthly briefing, time skip,
+     actor memory, session summary, and map context.
+  6. S67.1 scale regression for large fixture counts, prompt strategy, information panel
      paging, event archive pagination, SQLite prompt-index read repair, memory, and timing.
 
 Options:
-  --storage-only       Skip browser journeys and run only storage/tooling/scale acceptance.
+  --storage-only       Skip browser journeys and run only storage/tooling/S70 parity/scale acceptance.
   --sqlite-db <path>   SQLite database path. Defaults to a temporary data/s67-*.sqlite file.
   --browser <path>     Browser executable path for browser smoke.
   --screenshots <dir>  Save browser acceptance screenshots.
@@ -440,6 +468,107 @@ function buildS59WorldState() {
   return worldState;
 }
 
+function buildS70AiFirstParityWorldState() {
+  const worldState = createInitialState({
+    dynasty: "明",
+    role: "official",
+    playerName: "S70双模验收",
+    year: 1644,
+    nativePlace: "苏州府",
+    background: "新科进士入部观政。",
+    customSetting: "S70 JSON/SQLite parity checks AI-first route views only."
+  });
+  Object.assign(worldState, {
+    month: 5,
+    tenDayPeriod: 3,
+    turnCount: 8,
+    borderThreat: 58,
+    corruption: 54,
+    grainReserve: 820,
+    publicOrder: 68
+  });
+  Object.assign(worldState.player, {
+    officeTitle: "吏部主事",
+    position: "吏部主事",
+    superiorFavor: 47,
+    peerNetwork: 43,
+    performanceMerit: 39,
+    promotionProspect: 31,
+    impeachmentRisk: 22,
+    cleanReputation: 72
+  });
+  Object.assign(worldState.officialCareer, {
+    currentPosting: "吏部主事",
+    bureauId: "ministry_personnel"
+  });
+  worldState.officialCareer.assignments.push({
+    id: "s70-parity-assignment",
+    title: "核验候补官缺",
+    status: "active",
+    progress: 45,
+    turnsRemaining: 1,
+    deadlineLabel: "下月上旬"
+  });
+  worldState.eventHistory.push(
+    "S70公开近事：吏部核验候补官缺，署中同僚请玩家复核籍贯回避。",
+    "S70公开地图：京师与通州粮道、公文往返均为公开差遣线索。",
+    "prompt provider proposal statePatch event_log ai_change_proposals sk-proj-s70-secret"
+  );
+  recordAiInvocation(worldState, {
+    id: "s70-parity-narrator",
+    taskType: "narrator",
+    provider: "mock",
+    model: "mock",
+    status: "completed",
+    durationMs: 2,
+    maxOutputTokens: 1600,
+    toolCallCount: 0,
+    rejectedToolCallCount: 0
+  });
+
+  const previousState = clone(worldState);
+  const worldTick = runWorldTick(worldState);
+  applyStatePatch(worldState, worldTick.statePatch, {
+    incrementTurnCount: false,
+    allowServerOwnedPatchKeys: true
+  });
+  const playerMonthlyBriefing = runPlayerMonthlyBriefingStep(worldState, {
+    previousState,
+    worldTick
+  });
+  const actorMemory = applyTurnActorMemoryUpdates(worldState, {
+    playerMonthlyBriefing,
+    providerMemoryProposals: [{
+      actorId: "npc:C01",
+      type: "impression",
+      visibility: "player_visible",
+      subjectType: "player",
+      subjectId: "P1",
+      summary: "赵给事记得玩家复核官缺案牍时谨慎守法。",
+      salience: 64,
+      confidence: 0.74,
+      sourceRefs: [{ id: "s70-parity-turn", sourceView: "provider_turn", label: "署务札记" }]
+    }, {
+      actorId: "npc:C01",
+      type: "fact",
+      visibility: "private",
+      summary: "这条私密记忆应被服务器拒绝。"
+    }]
+  });
+  updateMonthlySessionSummary(worldState, {
+    worldTick,
+    playerMonthlyBriefing,
+    actorMemory
+  }, { taskType: "memory_summarizer" });
+
+  return {
+    worldState,
+    worldTick,
+    playerMonthlyBriefing,
+    actorMemory
+  };
+}
+
 async function seedAudit(adapter, worldState) {
   await adapter.appendAuditEvent(worldState.sessionId, {
     eventType: "turn_completed",
@@ -498,6 +627,31 @@ function buildVisiblePayload(worldState) {
   };
 }
 
+function buildS70AiFirstVisiblePayload(worldState) {
+  const env = { AI_PROVIDER: "mock" };
+  const { settings, routePolicy } = resolveAiSettingsForSession(worldState, env);
+  const aiSettingsView = redactAiSettingsForClient({ ...settings, routePolicy }, env);
+  const timeSkipPlan = buildTimeSkipPlan("照旧处理一月", {}, { worldState });
+  const timeSkip = buildTimeSkipSummary({
+    executed: false,
+    blocked: true,
+    plan: timeSkipPlan,
+    validation: { reasons: ["S70 双模验收只比较跳时安全摘要，不执行额外回合。"] },
+    requestedTicks: timeSkipPlan.ticks || 0,
+    completedTicks: 0,
+    tickResults: []
+  }, { provider: "mock", model: "mock" });
+  return {
+    aiSettingsView,
+    aiInvocationSummaryView: buildAiInvocationSummaryView(worldState, routePolicy, env),
+    playerMonthlyBriefingView: buildPlayerMonthlyBriefingView(worldState),
+    timeSkip,
+    actorMemoryView: buildActorMemoryView(worldState),
+    sessionSummaryView: buildSessionSummaryView(worldState),
+    mapContextView: buildMapContextView(worldState, buildPlayerAiActorProfile(worldState))
+  };
+}
+
 function normalizePayloadForParity(payload = {}) {
   return {
     worldGeographyView: payload.worldGeographyView,
@@ -516,6 +670,17 @@ function assertVisibleParity(jsonWorldState, sqliteWorldState) {
   if (JSON.stringify(normalizePayloadForParity(jsonPayload)) !== JSON.stringify(normalizePayloadForParity(sqlitePayload))) {
     throw new Error("JSON/SQLite visible route and prompt payloads differ after import.");
   }
+}
+
+function assertS70AiFirstVisibleParity(jsonWorldState, sqliteWorldState) {
+  const jsonPayload = buildS70AiFirstVisiblePayload(jsonWorldState);
+  const sqlitePayload = buildS70AiFirstVisiblePayload(sqliteWorldState);
+  assertNoBlockedTokens("S70 JSON AI-first visible payload", jsonPayload);
+  assertNoBlockedTokens("S70 SQLite AI-first visible payload", sqlitePayload);
+  if (JSON.stringify(jsonPayload) !== JSON.stringify(sqlitePayload)) {
+    throw new Error("S70 JSON/SQLite AI-first visible payloads differ after adapter round trip.");
+  }
+  return { jsonPayload, sqlitePayload };
 }
 
 function tamperGeographyRows(dbPath, sessionId) {
@@ -670,6 +835,62 @@ async function runStorageMaintenanceAcceptance(options = {}) {
     if (!ownsDatabase) deleteSqliteAuditRows(sqliteDatabasePath, worldState.sessionId);
     await removeSessionArtifacts(worldState.sessionId);
     await fs.rm(geographyOutPath, { force: true });
+    if (ownsDatabase) await removeSqliteArtifacts(sqliteDatabasePath);
+  }
+}
+
+async function runS70AiFirstParityAcceptance(options = {}) {
+  if (!(typeof isBuiltin === "function" && isBuiltin("node:sqlite"))) {
+    throw new Error("S70 AI-first parity acceptance requires a Node.js runtime with node:sqlite support");
+  }
+
+  const { ownsDatabase, sqliteDatabasePath } = resolveSqlitePlan(options.sqliteDatabasePath);
+  const jsonAdapter = createJsonSessionAdapter();
+  const fixture = buildS70AiFirstParityWorldState();
+  const worldState = fixture.worldState;
+  const sqliteAdapter = createSqliteSessionAdapter({ databasePath: sqliteDatabasePath });
+
+  try {
+    await jsonAdapter.writeSession(clone(worldState));
+    await sqliteAdapter.writeSession(clone(worldState));
+    const { record: jsonRecord } = await jsonAdapter.readSessionRecord(worldState.sessionId);
+    const { record: sqliteRecord } = await sqliteAdapter.readSessionRecord(worldState.sessionId);
+    const { jsonPayload } = assertS70AiFirstVisibleParity(jsonRecord.worldState, sqliteRecord.worldState);
+
+    return {
+      sessionId: worldState.sessionId,
+      sqliteDatabase: ownsDatabase ? "temporary" : "provided",
+      views: {
+        aiRoutes: jsonPayload.aiSettingsView.taskRoutes.length,
+        recentInvocations: jsonPayload.aiInvocationSummaryView.recentInvocations.length,
+        monthlyBriefingActive: jsonPayload.playerMonthlyBriefingView.active,
+        monthlyBriefingReportId: jsonPayload.playerMonthlyBriefingView.latest?.reportId || null,
+        timeSkipDetected: jsonPayload.timeSkip.requestedTicks === 3,
+        actorMemoryActors: jsonPayload.actorMemoryView.actors.length,
+        sessionSummaryCount: jsonPayload.sessionSummaryView.recentMonthlySummaries.length,
+        mapRefs: jsonPayload.mapContextView.mapEntityRefs.length
+      },
+      memory: {
+        appliedCount: fixture.actorMemory.appliedCount,
+        rejectedCount: fixture.actorMemory.rejectedCount
+      },
+      hiddenTokenGuard: {
+        blockedTokenCount: BLOCKED_TOKENS.length
+      }
+    };
+  } finally {
+    try {
+      await jsonAdapter.deleteSession(worldState.sessionId);
+    } catch (error) {
+      if (error.statusCode !== 404) throw error;
+    }
+    try {
+      await sqliteAdapter.deleteSession(worldState.sessionId);
+    } catch (error) {
+      if (error.statusCode !== 404) throw error;
+    } finally {
+      sqliteAdapter.close();
+    }
     if (ownsDatabase) await removeSqliteArtifacts(sqliteDatabasePath);
   }
 }
@@ -934,11 +1155,13 @@ async function runBrowserDualModeAcceptance(options = {}) {
 
 async function runDualModeAcceptance(options = {}) {
   const storage = await runStorageMaintenanceAcceptance(options);
+  const s70AiFirstParity = await runS70AiFirstParityAcceptance(options);
   const scale = await runScaleRegressionAcceptance(options);
   const browser = options.skipBrowser ? { skipped: true } : await runBrowserDualModeAcceptance(options);
   return {
     ok: true,
     storage,
+    s70AiFirstParity,
     scale,
     browser
   };
@@ -957,7 +1180,7 @@ async function main(argv = process.argv.slice(2), io = console) {
 
 if (require.main === module) {
   main().catch((error) => {
-    console.error(`S67 dual-mode acceptance failed: ${error.message}`);
+    console.error(`Dual-mode acceptance failed: ${error.message}`);
     process.exitCode = 1;
   });
 }
@@ -966,11 +1189,14 @@ module.exports = {
   S67_SCALE_ACCEPTANCE_THRESHOLDS,
   assertNoBlockedTokens,
   buildS59WorldState,
+  buildS70AiFirstParityWorldState,
+  buildS70AiFirstVisiblePayload,
   deleteSqliteAuditRows,
   parseArgs,
   resolveSqlitePlan,
   runBrowserDualModeAcceptance,
   runDualModeAcceptance,
+  runS70AiFirstParityAcceptance,
   runScaleRegressionAcceptance,
   runS67SqliteReadRepairAcceptance,
   runStorageMaintenanceAcceptance

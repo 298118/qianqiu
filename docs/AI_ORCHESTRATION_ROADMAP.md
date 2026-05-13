@@ -927,6 +927,8 @@ S70 要准备这些 fixture：
 
 ### S70.14：真实 MiMo 验收与 S70 归档
 
+当前状态（2026-05-13）：S70.14 已落地归档验收入口。新增 `scripts/providerAiFirstSmoke.js` 与 `npm run smoke:provider:ai-first`，缺 `MIMO_API_KEY` 时明确 skip，`MIMO_REQUIRED=1` / `--required` 缺 key 时失败；有 key 时真实调用 MiMo 开局和普通长回合 JSON，再以内存 fixture 验证 S70 月报、跳时、记忆、地图 proposal、critic/safety review-only 和 AI 设置 surface，不写 session，不打印 key、raw prompt、provider payload、SQLite row 或本地路径。`scripts/dualModeAcceptance.js` 已新增 S70 AI-first JSON/SQLite parity fixture，比较 `aiSettingsView`、`aiInvocationSummaryView`、`playerMonthlyBriefingView`、`timeSkip`、`actorMemoryView`、`sessionSummaryView` 和 `mapContextView` 的玩家可见 payload，并保留 hidden-token guard。S70 完成范围已归档到 [AI_ORCHESTRATION_ARCHIVE.md](AI_ORCHESTRATION_ARCHIVE.md)。`smoke:provider:tools` 当前真实执行 forced tool call 与 tool-result roundtrip；`multi_tool`、streaming tool delta 和 provider schema failure 的深度实探仍需后续扩展 `--full` / `--stream` 后再作为正式多工具编排门槛。
+
 前置依赖：S70.1-S70.13。
 
 需要资料：所有 S70 测试结果、真实 provider key 配置、browser smoke、dual-mode smoke、AI 控制红队、子代理复审报告。
@@ -938,9 +940,9 @@ S70 要准备这些 fixture：
   - `scripts/providerAiFirstSmoke.js`
   - npm scripts：`smoke:provider:tools`、`smoke:provider:ai-first`
 - `MIMO_REQUIRED=1` 或等价开关：用于明确要求真实 MiMo 的验收，不允许缺 key 时假通过。
-- 覆盖场景：普通回合、长叙事、NPC mind、工具调用、月报、跳时、记忆提炼、地图 context、critic/safety、多工具回填、schema 失败。
+- 覆盖场景：普通回合、长叙事、月报、跳时、可见记忆 proposal、地图 context、critic/safety 和 AI 设置 surface；工具调用形状由 `smoke:provider:tools` 覆盖，NPC mind / 制度场景 / 多工具回填 / streaming / schema 失败作为后续 full provider matrix 扩展。
 - 新增 `docs/AI_ORCHESTRATION_ARCHIVE.md`，归档 S70 完成范围、接口、工具、设置、验收、风险和 S71 交接。
-- 压缩 `docs/DEVELOPMENT_STEPS.md` 中 S70 长记录，保留归档入口。
+- `docs/DEVELOPMENT_STEPS.md` 已把活动入口交接到 S71，并保留 S70 归档入口。
 
 验收命令建议：
 
@@ -966,7 +968,7 @@ S70 要准备这些 fixture：
 - 契约：`AI_PROMPT_ENGINEERING_CONTRACT`、`AI_TOOL_PROTOCOL_CONTRACT`、AI 控制矩阵、brief、shared context 同步。
 - 工具：所有模型可见工具都有 `name`、`description`、`inputSchema`、`permission`、`resolver`、`audit`、`cooldown`、`mockFallback`。
 - 权限：书生/县令/大臣/将领/皇帝/系统引擎工具隔离，越权有拒绝原因和审计。
-- Provider：MiMo 工具调用形状、streaming、多工具、工具回填、schema 失败均有 smoke。
+- Provider：MiMo 开局/普通长回合和 S70 AI-first surface 有 `smoke:provider:ai-first`；forced tool call 与工具结果回填有 `smoke:provider:tools`；streaming、多工具和 schema 失败留给后续 full provider matrix，不作为 S70 已完成运行时写权。
 - AI 设置：玩家可配质量、长度、并发、模型路由和安全严格度，但不能开启 hidden/raw/直写库。
 - 月报：三旬一月，只针对玩家，按职位裁剪，能带出 NPC 主动请求和下月风险。
 - 跳时：自然语言跳时逐旬结算，可中断，有合并总结。

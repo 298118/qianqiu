@@ -8,8 +8,9 @@
 - 第四阶段：[PHASE_FOUR_ROADMAP_ARCHIVE.md](PHASE_FOUR_ROADMAP_ARCHIVE.md)，早期详细进度见 [FOURTH_PHASE_PROGRESS_ARCHIVE.md](FOURTH_PHASE_PROGRESS_ARCHIVE.md)。
 - S48 时间专项：[TIME_SPECIALTY_ROADMAP_ARCHIVE.md](TIME_SPECIALTY_ROADMAP_ARCHIVE.md)。
 - S49-S67 本地数据库基础、SQLite 业务表、双模式验收、超大动态世界内容与 S60 内容契约：[LOCAL_DATABASE_AND_WORLD_CONTENT_ARCHIVE.md](LOCAL_DATABASE_AND_WORLD_CONTENT_ARCHIVE.md)。旧分卷归档和 S60 契约文件保留为跳转页。
+- S70 AI 编排与权力工具：[AI_ORCHESTRATION_ARCHIVE.md](AI_ORCHESTRATION_ARCHIVE.md)。S70 规划源头仍见 [AI_ORCHESTRATION_ROADMAP.md](AI_ORCHESTRATION_ROADMAP.md)。
 
-当前活动路线图已交接到 S70：S68-S69 的书生主线科举、读书、评卷与授官制度已归档，S70.1 prompt pack 与工具协议、S70.2 actor 权限模型、S70.3 `game_ai_tools` 运行时、S70.4 NPC mind 基础、S70.5 制度场景 helper、S70.6 压力事件工具协议、S70.7 领域工具协议、S70.8 多模型路由/eval 基础、S70.9 AI 设置与可观测性、S70.10 玩家官职月报、S70.11 自然语言跳时、S70.12 大模型记忆系统和 S70.13 地图系统 AI 接口预留已落地，下一步进入 S70.14 真实 MiMo 验收与 S70 归档。S71 作为 S70 之后的数据库玩法化、维护、安全检索和 redacted API 专项，规划见 [DATABASE_GAMEPLAY_RESOLVER_ROADMAP.md](DATABASE_GAMEPLAY_RESOLVER_ROADMAP.md)。数据库方向继续只考虑本机 JSON/SQLite 持久化增强；远程存档、账号体系、多人同步、云端冲突解决和托管数据库不进入当前规划。
+当前活动路线图已交接到 S71：S68-S69 的书生主线科举、读书、评卷与授官制度已归档，S70.1-S70.14 的 AI prompt/tool/actor/多模型路由、AI 设置、月报、跳时、记忆、地图接口、provider AI-first smoke 与 JSON/SQLite parity 已归档。S71 作为 S70 之后的数据库玩法化、维护、安全检索和 redacted API 专项，规划见 [DATABASE_GAMEPLAY_RESOLVER_ROADMAP.md](DATABASE_GAMEPLAY_RESOLVER_ROADMAP.md)。下一步启动 S71.0 数据库玩法化专项契约。数据库方向继续只考虑本机 JSON/SQLite 持久化增强；远程存档、账号体系、多人同步、云端冲突解决和托管数据库不进入当前规划。
 
 ## 1. 开发规范继承
 
@@ -87,6 +88,7 @@
 | --- | --- | --- | --- |
 | S49-S67 | DONE | 本地数据库基础、SQLite 业务表、双模式验收、大世界内容契约、规模 fixture、国家/城市/NPC/官职/案牍/军务/财赋/事件链/情报/prompt/UI 分页和规模验收 | [LOCAL_DATABASE_AND_WORLD_CONTENT_ARCHIVE.md](LOCAL_DATABASE_AND_WORLD_CONTENT_ARCHIVE.md) |
 | S68-S69 | DONE | 科举制度、读书账本、老师点评、科场流程、多考官阅卷、榜单荣誉、同年座师网络、授官轨迹、浏览器面板和 Provider/Mock 验收 | [IMPERIAL_EXAM_DEEPENING_ARCHIVE.md](IMPERIAL_EXAM_DEEPENING_ARCHIVE.md) |
+| S70 | DONE | AI prompt/tool/actor/领域工具、多模型路由、AI 设置、月报、跳时、记忆、地图接口、MiMo AI-first smoke、JSON/SQLite parity 和 S70 归档 | [AI_ORCHESTRATION_ARCHIVE.md](AI_ORCHESTRATION_ARCHIVE.md) |
 
 必须继续保护的边界：
 
@@ -117,7 +119,7 @@
 | S70.11 | DONE | 自然语言跳时：解析“学习一月/养病半月/照旧处理一月”，拆为多旬 batch tick、事件中断和跳时总结 | 2026-05-13 | Codex / 子代理 | `e18720e` |
 | S70.12 | DONE | 大模型记忆系统：actor memory ledger、fact/impression memory、月度 summary、安全检索、来源/置信度/可见性/衰减 | 2026-05-13 | Codex / 子代理 | `29ea72d` |
 | S70.13 | DONE | 地图系统 AI 接口预留：`mapContextView`、`mapEntityRef`、地图可见性、移动/行军/赴任/赶考/外交 proposal schema | 2026-05-13 | Codex / 子代理 | `8f3218c` |
-| S70.14 | TODO | 真实 MiMo 验收与 S70 归档：MiMo-required provider smoke、JSON/SQLite parity、Mock 开发安全网、hidden-token、越权工具、browser smoke 和归档 | - | - | S70.13 后 |
+| S70.14 | DONE | 真实 MiMo 验收与 S70 归档：MiMo-required provider smoke、JSON/SQLite parity、Mock 开发安全网、hidden-token、越权工具、browser smoke 和归档 | 2026-05-13 | Codex / 子代理 | 本次提交 |
 | S71.0 | TODO | 数据库玩法化专项契约：确认 S70 后接入点、resolver 输入清单、维护/检索/redacted API 边界和内容保护 | - | - | S70.14 后 |
 | S71.1 | TODO | 数据库作为玩法 resolver 输入：财政、城市、NPC、官职、事件、情报 projection 进入服务器裁决上下文 | - | - | S71.0 后 |
 | S71.2 | TODO | 本地 SQLite schema migration 与维护层：`schema_migrations`、备份、VACUUM、索引健康、体积提示和脱敏导出 | - | - | S71.1 后 |
@@ -156,7 +158,7 @@ S68-S69 是书生主线的深度专项，详细提前规划见 [IMPERIAL_EXAM_DE
 
 ## 6. S70：AI 提示词、工具协议与多 AI 编排
 
-S70 是 MiMo + DeepSeek 之后的 AI 编排专项。S70.8 起，`src/ai/index.js` 已提供 task-aware provider facade；`AI_PROVIDER=mock` 仍强制全任务本地 Mock，兼容路径中普通叙事、开局、流式回合和科举出题仍优先 MiMo，科举评卷与 domain_specialist/critic/safety 可按 route policy 使用 DeepSeek。S70.9 起，每个 session 有服务器维护的 AI 设置、玩家可见设置 view、浏览器 AI 设置面板和 hidden-safe 调动摘要；设置只改变 route/model/预算/并发/安全严格度，不改变 actor 权限、工具权限或服务器裁决。S70.10 起，玩家行政/官职身份会在月末收到服务器清洗的 `playerMonthlyBriefingView`，月报只读公开 projection 并写脱敏月报账本、事件档案和 bounded AI 调动摘要，不直接裁决官职、财政、军务、案牍或 NPC。S70.11 起，“学习一月/养病半月/照旧处理一月”等自然语言跳时会先生成服务器可裁决的 `timeSkipPlan`，再逐旬复用普通回合结算链，并在科期、急件或重大事件时中断。S70.12 起，普通回合和月末结算会写入服务器清洗后的 `actorMemoryView` 与 `sessionSummaryView`，AI 只能提交 `memoryProposals`，不能直接 patch 记忆账本、保存 private/hidden memory 或为不可见 actor 发明记忆；响应 `worldState` 也剥离 raw `actorMemoryLedger` / `sessionSummary`。S70.13 起，游戏/考试/SSE payload 增加服务器生成的 `mapContextView`，prompt 只读 capped `mapContext`，模型只能通过 `map.propose_route_or_geopolitical_move` 提交待裁决地图移动或地缘 proposal，不读取 raw coordinate table 或 hidden enemy truth。后续真实 provider 验收、JSON/SQLite parity、browser smoke、hidden-token/越权工具红队和 S70 归档继续按 S70.14 推进。
+S70 是 MiMo + DeepSeek 之后的 AI 编排专项，已归档见 [AI_ORCHESTRATION_ARCHIVE.md](AI_ORCHESTRATION_ARCHIVE.md)。S70.8 起，`src/ai/index.js` 已提供 task-aware provider facade；`AI_PROVIDER=mock` 仍强制全任务本地 Mock，兼容路径中普通叙事、开局、流式回合和科举出题仍优先 MiMo，科举评卷与 domain_specialist/critic/safety 可按 route policy 使用 DeepSeek。S70.9 起，每个 session 有服务器维护的 AI 设置、玩家可见设置 view、浏览器 AI 设置面板和 hidden-safe 调动摘要；设置只改变 route/model/预算/并发/安全严格度，不改变 actor 权限、工具权限或服务器裁决。S70.10 起，玩家行政/官职身份会在月末收到服务器清洗的 `playerMonthlyBriefingView`，月报只读公开 projection 并写脱敏月报账本、事件档案和 bounded AI 调动摘要，不直接裁决官职、财政、军务、案牍或 NPC。S70.11 起，“学习一月/养病半月/照旧处理一月”等自然语言跳时会先生成服务器可裁决的 `timeSkipPlan`，再逐旬复用普通回合结算链，并在科期、急件或重大事件时中断。S70.12 起，普通回合和月末结算会写入服务器清洗后的 `actorMemoryView` 与 `sessionSummaryView`，AI 只能提交 `memoryProposals`，不能直接 patch 记忆账本、保存 private/hidden memory 或为不可见 actor 发明记忆；响应 `worldState` 也剥离 raw `actorMemoryLedger` / `sessionSummary`。S70.13 起，游戏/考试/SSE payload 增加服务器生成的 `mapContextView`，prompt 只读 capped `mapContext`，模型只能通过 `map.propose_route_or_geopolitical_move` 提交待裁决地图移动或地缘 proposal，不读取 raw coordinate table 或 hidden enemy truth。S70.14 起，`npm run smoke:provider:ai-first` 覆盖真实 MiMo 开局/普通长回合和 S70 AI-first surface，`npm run smoke:dual-mode -- --storage-only` 增加 S70 AI-first JSON/SQLite route-view parity；真实工具调用形状仍由 `npm run smoke:provider:tools` 负责。
 
 详细提前规划见 [AI_ORCHESTRATION_ROADMAP.md](AI_ORCHESTRATION_ROADMAP.md)。S70 的核心目标不是让模型直接改库，而是让 AI 在服务器法度内变成“有身份、有记忆、有权限、有后果”的世界行动者网络；S68-S69 提供科场、老师、考官和授官 resolver 的先行用例。该文档第 13-16 节已扩展为后续 Codex 开发任务书，逐项写明执行规则、运行依赖、项目资料、玩法资料、测试资料、建议模块/函数、工具/route 接口、测试文件和验收重点。
 
@@ -206,6 +208,43 @@ S71 详细规划见 [DATABASE_GAMEPLAY_RESOLVER_ROADMAP.md](DATABASE_GAMEPLAY_RE
 4. S71.9-S71.12：接入多 actor 场景、NPC 记忆和 AI 调动审计面板，最后做 dual-mode、Mock/no-key、browser 和 provider smoke 归档。
 
 ## 8. 进度记录
+
+### 2026-05-13
+
+工具：Codex、子代理。
+
+步骤：S70.14 真实 MiMo 验收与 S70 归档。
+
+提交：本次提交。
+
+完成：
+
+- 新增 `scripts/providerAiFirstSmoke.js` 与 `npm run smoke:provider:ai-first`。脚本缺 `MIMO_API_KEY` 时明确 skip，`MIMO_REQUIRED=1` / `--required` 缺 key 时失败；有 key 时真实调用 MiMo 开局和普通长回合 JSON，再在内存中验证 S70 月报、跳时、记忆、地图 proposal、critic/safety review-only 和 AI 设置 surface。脚本不写 session，不打印 key、raw prompt、provider payload、SQLite row 或本地路径。
+- 扩展 `scripts/dualModeAcceptance.js`，新增 S70 AI-first JSON/SQLite parity fixture，把 `aiSettingsView`、`aiInvocationSummaryView`、`playerMonthlyBriefingView`、`timeSkip` 安全摘要、`actorMemoryView`、`sessionSummaryView` 和 `mapContextView` 在 JSON/SQLite adapter round trip 后做 player-facing payload 比对，并保留 hidden-token guard。
+- 新增 `test/providerAiFirstSmokeScript.test.js`，扩展 `test/dualModeAcceptanceScript.test.js`，覆盖 no-key skip / required fail、MiMo AI-first fake provider、S70 server-owned patch 拒绝、成功结果不打印 raw provider turn payload、S70 AI-first route-view parity、private memory 拒绝和 map proposal pending。
+- 新增 [AI_ORCHESTRATION_ARCHIVE.md](AI_ORCHESTRATION_ARCHIVE.md)，归档 S70.1-S70.14 完成范围、接口、工具、设置、验收入口、稳定边界、残余风险和 S71 交接；README、brief、活动台账和共享上下文同步到 S71.0。
+
+验证：
+
+- 已通过：`node --check scripts/providerAiFirstSmoke.js`、`node --check scripts/dualModeAcceptance.js`、`node --check test/providerAiFirstSmokeScript.test.js`、`node --check test/dualModeAcceptanceScript.test.js`。
+- 已通过：`node --test test/providerAiFirstSmokeScript.test.js test/dualModeAcceptanceScript.test.js`（14/14）。
+- 已通过：`node --test test/aiToolProtocolContract.test.js test/aiActorProfiles.test.js test/gameAiTools.test.js test/gameAiToolRunner.test.js test/npcMind.test.js test/institutionScenes.test.js test/aiEventProposal.test.js test/domainToolDefinitions.test.js test/modelRoutePolicy.test.js test/aiSettings.test.js test/playerMonthlyBriefing.test.js test/timeSkip.test.js test/actorMemoryLedger.test.js test/mapContext.test.js`（71/71）。
+- 已通过：`npm run check:docs-governance`、`node --test test/documentationGovernance.test.js`、`npm run eval:ai`、`npm run smoke:dual-mode -- --storage-only`、`npm run smoke:browser`。
+- 已通过无 key skip 分支：`MIMO_API_KEY= npm run smoke:provider:ai-first`、`MIMO_API_KEY= npm run smoke:provider:tools`。
+- 全量 `npm test` 跑到 728/729，仅既有 S67 `sqliteReadRepairMs` 性能阈值抖动失败（4161.851 > 3000）；随后单独复跑 `node --test test/dualModeAcceptanceScript.test.js` 8/8 通过。
+- 本机 `.env` 有 MiMo 配置时，`AI_PROVIDER_TIMEOUT_MS=90000 npm run smoke:provider:ai-first` 与 `AI_PROVIDER_TIMEOUT_MS=90000 npm run smoke:provider:tools` 均在真实 provider fetch 阶段失败：`fetch failed`，未打印密钥；按 provider endpoint/网络配置问题记录为残余风险，required keyed acceptance 需在可达 MiMo 环境复跑。
+- 已通过：`git diff --check`。
+- 已完成只读子代理复审；复审发现 P1：成功 CLI 结果会携带 raw provider turn payload，可能打印 raw `statePatch` / `memoryProposals` / provider debug 字段。已改为只返回安全摘要、把 provider turn 仅作为内部 surface probe 输入，并补“不打印 raw provider turn payload”回归测试；P2 wording 已收敛为 adapter-normalized patch safety，P3 README 过期 S70 口径已修正。
+
+风险/遗留：
+
+- `smoke:provider:tools` 当前真实执行 forced tool call 与 tool-result roundtrip；`multi_tool`、streaming tool delta 和 provider schema failure 的实探仍需后续扩展 `--full` / `--stream` 后再作为正式多工具编排门槛。
+- 本机 keyed MiMo provider fetch 当前失败；S70.14 保留 required 开关和 no-key skip 安全网，真实 keyed provider acceptance 需在网络/base URL/key 可用环境补跑。
+- S70.14 没有授予 AI 新写权；月报、跳时、记忆、地图、工具和设置仍只读安全 view 或提交 proposal，服务器拥有状态、SQLite、事件档案、审计、晋级、任免、移动和领域结算。
+
+下一步：
+
+- 启动 S71.0：数据库玩法化专项契约，确认 S70 后接入点、resolver 输入清单、维护/检索/redacted API 边界和内容保护。
 
 ### 2026-05-13
 
