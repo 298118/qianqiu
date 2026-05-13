@@ -120,7 +120,7 @@
 | S70.12 | DONE | 大模型记忆系统：actor memory ledger、fact/impression memory、月度 summary、安全检索、来源/置信度/可见性/衰减 | 2026-05-13 | Codex / 子代理 | `29ea72d` |
 | S70.13 | DONE | 地图系统 AI 接口预留：`mapContextView`、`mapEntityRef`、地图可见性、移动/行军/赴任/赶考/外交 proposal schema | 2026-05-13 | Codex / 子代理 | `8f3218c` |
 | S70.14 | DONE | 真实 MiMo 验收与 S70 归档：MiMo-required provider smoke、JSON/SQLite parity、Mock 开发安全网、hidden-token、越权工具、browser smoke 和归档 | 2026-05-13 | Codex / 子代理 | `6fc1561` |
-| S71.0 | DONE | 数据库玩法化专项契约：确认 S70 后接入点、resolver 输入清单、维护/检索/redacted API 边界和内容保护 | 2026-05-13 | Codex / 子代理 | 待回填 |
+| S71.0 | DONE | 数据库玩法化专项契约：确认 S70 后接入点、resolver 输入清单、维护/检索/redacted API 边界和内容保护 | 2026-05-13 | Codex / 子代理 | `9a3c1fa` |
 | S71.1 | TODO | 数据库作为玩法 resolver 输入：财政、城市、NPC、官职、事件、情报 projection 进入服务器裁决上下文 | - | - | S71.0 后 |
 | S71.2 | TODO | 本地 SQLite schema migration 与维护层：`schema_migrations`、备份、VACUUM、索引健康、体积提示和脱敏导出 | - | - | S71.1 后 |
 | S71.3 | TODO | 安全全文检索 / 本地搜索：FTS5 或 fallback，只索引 player-facing projection，不索引 hidden/raw | - | - | S71.2 后 |
@@ -215,7 +215,7 @@ S71 详细规划见 [DATABASE_GAMEPLAY_RESOLVER_ROADMAP.md](DATABASE_GAMEPLAY_RE
 
 步骤：S71.0 数据库玩法化专项契约。
 
-提交：待回填。
+提交：`9a3c1fa`。
 
 完成：
 
