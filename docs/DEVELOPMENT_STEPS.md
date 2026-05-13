@@ -128,7 +128,7 @@
 | S71.5 | DONE | 财政与城市政策 resolver：征粮、赈济、修堤、平粜、清丈、钱粮差事等服务器裁决 | 2026-05-13 | Codex / 子代理 | `3cca9bd` |
 | S71.6 | DONE | 地方案件与刑名 resolver：堂审、证据、士绅压力、胥吏阻力、判决后果和案牍归档 | 2026-05-13 | Codex / 子代理 | `4d93b2d` |
 | S71.7 | DONE | 军务与外交 resolver：侦察、固守、调粮、练兵、会战、互市、和议、宣战 request 和服务器裁决 | 2026-05-13 | Codex / 子代理 | `761ec99` |
-| S71.8 | DONE | 压力驱动事件生成器：从粮价、水利、腐败、边防、NPC 怨怼和情报压力生成事件候选 | 2026-05-13 | Codex / 子代理 | 本次提交 |
+| S71.8 | DONE | 压力驱动事件生成器：从粮价、水利、腐败、边防、NPC 怨怼和情报压力生成事件候选 | 2026-05-13 | Codex / 子代理 | `5ead9e5` |
 | S71.9 | TODO | 多 actor 场景运行时：朝议、堂审、会盟、战役 scene-local time 与 actor proposal 编排 | - | - | S71.8 后 |
 | S71.10 | TODO | NPC 记忆账本：高显著 NPC 长期记忆、人情债、恩怨、家族风险和背景 NPC heuristic | - | - | S71.9 后 |
 | S71.11 | TODO | AI 调动审计面板：工具摘要、拒绝原因、成本、公开结果和 hidden-safe 开发诊断，不泄漏 raw prompt/proposal | - | - | S71.10 后 |
@@ -215,7 +215,7 @@ S71 详细规划见 [DATABASE_GAMEPLAY_RESOLVER_ROADMAP.md](DATABASE_GAMEPLAY_RE
 
 步骤：S71.8 压力驱动事件生成器。
 
-提交：本次提交。
+提交：`5ead9e5`。
 
 完成：
 
@@ -234,6 +234,7 @@ S71 详细规划见 [DATABASE_GAMEPLAY_RESOLVER_ROADMAP.md](DATABASE_GAMEPLAY_RE
 - 已通过：`npm run check:docs-governance`、`node --test test/documentationGovernance.test.js`、`git diff --check`。
 - 全量 `npm test` 修复后最终 818/819，唯一失败为既有 S67 `sqliteReadRepairMs` 性能阈值抖动（5159.042ms > 3000ms）；随后单独复跑 `node --test test/dualModeAcceptanceScript.test.js` 8/8 通过。
 - 提交前只读子代理复审首轮发现 P1：resolver 信任候选自带分数/冷却键，direct apply 可写非白名单字段并污染公开事件；已修复为裁决时从可见 signals 重建候选事实、应用时重新过滤 stateDelta 与公开摘要，并补红队回归。二轮复审发现 P1：同一主压力源可换 support refs 绕过冷却，以及 P2：`maxEvents` 只限单次调用；已改为冷却锚定主压力来源稳定 scope，并让批量 resolver 读取当前旬既有 ledger 成案数，补换佐证冷却与同旬重复调用上限测试。第三轮只读复审未发现 P0/P1/P2；残余非阻断风险是主压力源第一个 scope 可能偏宽导致 fail-closed 过度冷却，后续若接普通 turn 自动调度需补 route 集成测试。
+- 哈希回填为低风险纯文档更新，跳过额外子代理复审。
 
 风险/遗留：
 
