@@ -25,7 +25,7 @@
 - 需要本机多 session 比较、导入导出、长期世界演化和本地检索。
 - 需要让 prompt 按“玩家当前可知范围”取上下文，而不是把全部世界状态塞给模型。
 
-所以推荐节奏是：**先规划和适配器，再 SQLite session row；只做本地数据库，不做云端/账号/多人；先事件/索引表，后全量实体拆表；底座稳定后再补内容密度。** S49-S59 已完成前半段：adapter 边界、可选 SQLite session row、事件日志和 AI proposal 审计、天下地理/人物/官职任所可见 projection、检索式 prompt context、浏览器“局势簿”、本地业务派生表和双模式验收。S60-S67 已完成内容密度阶段：国家/城市/NPC/官职/案牍/军务/财赋/事件链/情报、prompt retrieval 策略、浏览器分页和 large fixture scale acceptance。S68-S69 科举深化与 S70 AI 工具协议/多 AI 编排已归档；后续活动重点进入 S71.1 数据库 projection 驱动的玩法 resolver 输入。
+所以推荐节奏是：**先规划和适配器，再 SQLite session row；只做本地数据库，不做云端/账号/多人；先事件/索引表，后全量实体拆表；底座稳定后再补内容密度。** S49-S59 已完成前半段：adapter 边界、可选 SQLite session row、事件日志和 AI proposal 审计、天下地理/人物/官职任所可见 projection、检索式 prompt context、浏览器“局势簿”、本地业务派生表和双模式验收。S60-S67 已完成内容密度阶段：国家/城市/NPC/官职/案牍/军务/财赋/事件链/情报、prompt retrieval 策略、浏览器分页和 large fixture scale acceptance。S68-S69 科举深化与 S70 AI 工具协议/多 AI 编排已归档；S71.1 已落地数据库 projection 驱动的只读玩法 resolver 输入，后续活动重点进入 S71.2 本地 SQLite schema migration 与维护层。
 
 ## 1.1 当前不做的范围
 
@@ -585,11 +585,11 @@ S70 的数据库关系：
 
 ### S71：数据库玩法化、维护、安全检索与 redacted API
 
-S71 规划见 [DATABASE_GAMEPLAY_RESOLVER_ROADMAP.md](DATABASE_GAMEPLAY_RESOLVER_ROADMAP.md)。它排在 S70 工具协议和 actor 权限之后，目标是把现有安全 projection 从“可展示、可检索”推进为“可驱动服务器玩法 resolver 的输入”。S71.0 已用 [DATABASE_RESOLVER_INPUT_CONTRACT.md](DATABASE_RESOLVER_INPUT_CONTRACT.md) 固定 `resolverInputContext` 的字段、允许来源、禁止源、evidence ref、AI 权限和 JSON/SQLite parity 测试矩阵。该文档后半部分已细化为后续 Codex 开发任务书，覆盖依赖、资料、fixture、建议模块/函数、route/tool 接口、测试文件和验收命令。
+S71 规划见 [DATABASE_GAMEPLAY_RESOLVER_ROADMAP.md](DATABASE_GAMEPLAY_RESOLVER_ROADMAP.md)。它排在 S70 工具协议和 actor 权限之后，目标是把现有安全 projection 从“可展示、可检索”推进为“可驱动服务器玩法 resolver 的输入”。S71.0 已用 [DATABASE_RESOLVER_INPUT_CONTRACT.md](DATABASE_RESOLVER_INPUT_CONTRACT.md) 固定 `resolverInputContext` 的字段、允许来源、禁止源、evidence ref、AI 权限和 JSON/SQLite parity 测试矩阵；S71.1 已新增 `src/game/resolverInputConfig.js` 与 `src/game/resolverInputContext.js`，从既有 server view 构建 capped 只读证据包。该文档后半部分已细化为后续 Codex 开发任务书，覆盖依赖、资料、fixture、建议模块/函数、route/tool 接口、测试文件和验收命令。
 
 S71 的数据库关系：
 
-- 新增 `resolverInputContext` 或等价上下文层，把国家、城市、NPC、官职、案牍、军务、财赋、事件链和情报 projection 作为财政结算、地方政策、案件、战役、外交和事件成案的只读输入。
+- 复用 S71.1 `resolverInputContext` 上下文层，把国家、城市、NPC、官职、案牍、军务、财赋、事件链、情报、地图、记忆和玩家月报 projection 作为财政结算、地方政策、案件、战役、外交和事件成案的只读输入。
 - 补正式本地维护层：`schema_migrations`、备份、VACUUM、索引健康、数据库体积提示、脱敏导出和 dry-run。
 - 增强本地安全检索：优先评估 SQLite FTS5；不可用时保留安全 fallback。只索引 player-facing projection，不索引 raw audit、provider proposal、hidden 私档、完整 prompt、本地路径或 key。
 - 保存真正 hidden 私档之前，先拆 redacted player API 与 hidden-safe 开发诊断 API，避免当前完整 `worldState` route 泄漏未来私档。
