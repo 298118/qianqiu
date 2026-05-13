@@ -116,7 +116,7 @@
 | S70.10 | DONE | 玩家官职月报与 AI 推动世界：每三旬生成职位化月报、上级态度、同僚风向、NPC 主动请求、下月风险和待裁决差事 | 2026-05-12 | Codex / 子代理 | `16d5f08` |
 | S70.11 | DONE | 自然语言跳时：解析“学习一月/养病半月/照旧处理一月”，拆为多旬 batch tick、事件中断和跳时总结 | 2026-05-13 | Codex / 子代理 | `e18720e` |
 | S70.12 | DONE | 大模型记忆系统：actor memory ledger、fact/impression memory、月度 summary、安全检索、来源/置信度/可见性/衰减 | 2026-05-13 | Codex / 子代理 | `29ea72d` |
-| S70.13 | DONE | 地图系统 AI 接口预留：`mapContextView`、`mapEntityRef`、地图可见性、移动/行军/赴任/赶考/外交 proposal schema | 2026-05-13 | Codex / 子代理 | 待提交 |
+| S70.13 | DONE | 地图系统 AI 接口预留：`mapContextView`、`mapEntityRef`、地图可见性、移动/行军/赴任/赶考/外交 proposal schema | 2026-05-13 | Codex / 子代理 | `8f3218c` |
 | S70.14 | TODO | 真实 MiMo 验收与 S70 归档：MiMo-required provider smoke、JSON/SQLite parity、Mock 开发安全网、hidden-token、越权工具、browser smoke 和归档 | - | - | S70.13 后 |
 | S71.0 | TODO | 数据库玩法化专项契约：确认 S70 后接入点、resolver 输入清单、维护/检索/redacted API 边界和内容保护 | - | - | S70.14 后 |
 | S71.1 | TODO | 数据库作为玩法 resolver 输入：财政、城市、NPC、官职、事件、情报 projection 进入服务器裁决上下文 | - | - | S71.0 后 |
@@ -213,7 +213,7 @@ S71 详细规划见 [DATABASE_GAMEPLAY_RESOLVER_ROADMAP.md](DATABASE_GAMEPLAY_RE
 
 步骤：S70.13 地图系统 AI 接口预留。
 
-提交：待提交。
+提交：`8f3218c`。
 
 完成：
 
