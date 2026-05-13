@@ -112,7 +112,7 @@
 | S70.6 | DONE | 压力事件工具协议与 actor proposal：由城市、财政、军政、关系、情报压力提出事件候选，固定工具 envelope、权限、Mock/provider 基础和服务器成案语义 | 2026-05-12 | Codex / 子代理 | `3847c5a` |
 | S70.7 | DONE | 刑名、财政、军事、外交与科举工具：案牍、赈济、军令、战役、和议、宣战、评卷、授官 proposal 与 resolver | 2026-05-12 | Codex / 子代理 | `a01fbaa` |
 | S70.8 | DONE | 多模型路由与仲裁：narrator、actor_mind、planner、domain_specialist、critic、safety 分工与成本边界 | 2026-05-12 | Codex / 子代理 | 1b52156 |
-| S70.9 | DONE | AI 设置与可观测性：按叙事、NPC、科举、政务、战争、记忆、critic/safety 配置模型路由、输出长度、并发、工具预算、审计面板和 hidden-safe 诊断 | 2026-05-12 | Codex / 子代理 | 待本次提交 |
+| S70.9 | DONE | AI 设置与可观测性：按叙事、NPC、科举、政务、战争、记忆、critic/safety 配置模型路由、输出长度、并发、工具预算、审计面板和 hidden-safe 诊断 | 2026-05-12 | Codex / 子代理 | `cbb8b1e` |
 | S70.10 | TODO | 玩家官职月报与 AI 推动世界：每三旬生成职位化月报、上级态度、同僚风向、NPC 主动请求、下月风险和待裁决差事 | - | - | S70.9 后 |
 | S70.11 | TODO | 自然语言跳时：解析“学习一月/养病半月/照旧处理一月”，拆为多旬 batch tick、事件中断和跳时总结 | - | - | S70.10 后 |
 | S70.12 | TODO | 大模型记忆系统：actor memory ledger、fact/impression memory、月度 summary、安全检索、来源/置信度/可见性/衰减 | - | - | S70.11 后 |
@@ -213,7 +213,7 @@ S71 详细规划见 [DATABASE_GAMEPLAY_RESOLVER_ROADMAP.md](DATABASE_GAMEPLAY_RE
 
 步骤：S70.9 AI 设置与可观测性。
 
-提交：待本次提交。
+提交：`cbb8b1e`。
 
 完成：
 
