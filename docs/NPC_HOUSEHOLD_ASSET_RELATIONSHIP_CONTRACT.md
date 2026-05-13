@@ -114,7 +114,7 @@ NPC 是未来人物表的主行，覆盖现有 `characters[]` 不能承载的家
 
 ## S55 SQLite 人物域业务表契约与实现边界
 
-S55.1 固定人物域本地 SQLite 表形状；S55.2 已实现可见 bridge 行持久化；S55.3 已实现服务器人物事件和本地 `last_event_id` 关联。SQLite 表是本机索引、修复和长期检索层，不替代当前 route-facing `worldState` snapshot。因为当前 `GET /api/game/state/:sessionId` 仍返回完整本地 `worldState`，真正 hidden NPC 私档、资产真数、隐藏意图、密札备注和审计索引不得回写到 `worldState.worldPeople`；后续如要让玩家 API 不再返回 raw state，必须另立 redaction/API 切片。
+S55.1 固定人物域本地 SQLite 表形状；S55.2 已实现可见 bridge 行持久化；S55.3 已实现服务器人物事件和本地 `last_event_id` 关联。SQLite 表是本机索引、修复和长期检索层，不替代当前 route-facing `worldState` snapshot。因为当前 `GET /api/game/state/:sessionId` 仍为开发兼容返回本地 `worldState` 的大部分 legacy 字段，真正 hidden NPC 私档、资产真数、隐藏意图、密札备注和审计索引不得回写到 `worldState.worldPeople`；S70.12 的 raw `actorMemoryLedger` / `sessionSummary` 已从响应 `worldState` 剥离，后续如要让玩家 API 进一步不返回 raw state，必须另立 redaction/API 切片。
 
 ### 总体原则
 

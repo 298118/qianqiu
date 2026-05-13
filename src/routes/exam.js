@@ -95,6 +95,16 @@ const {
   buildPlayerMonthlyBriefingView,
   ensurePlayerMonthlyBriefingState
 } = require("../game/playerMonthlyBriefing");
+const {
+  applyExamNetworkMemoryUpdates,
+  buildActorMemoryView,
+  ensureActorMemoryLedgerState
+} = require("../game/actorMemoryLedger");
+const {
+  buildSessionSummaryView,
+  ensureSessionSummaryState
+} = require("../game/sessionSummary");
+const { buildClientWorldState } = require("../game/clientWorldState");
 
 const router = express.Router();
 
@@ -145,13 +155,15 @@ function toExamPayload(worldState) {
     historicalEventArchiveView: buildHistoricalEventArchiveView(worldState),
     intelligenceRumorView: buildIntelligenceRumorView(worldState),
     playerMonthlyBriefingView: buildPlayerMonthlyBriefingView(worldState),
+    actorMemoryView: buildActorMemoryView(worldState),
+    sessionSummaryView: buildSessionSummaryView(worldState),
     eventArchiveView: buildEventArchiveView(worldState),
     informationPanelPageView: buildInformationPanelPageViews(worldState, {}, {
       worldGeographyView,
       worldPeopleView,
       officialPostingsView
     }),
-    worldState
+    worldState: buildClientWorldState(worldState)
   };
 }
 
@@ -186,6 +198,8 @@ function ensureCommonState(worldState) {
   ensureWorldPeopleState(worldState);
   ensureWorldThreadState(worldState);
   ensurePlayerMonthlyBriefingState(worldState);
+  ensureActorMemoryLedgerState(worldState);
+  ensureSessionSummaryState(worldState);
 }
 
 function isWritingExam(activeExam) {
@@ -478,6 +492,7 @@ router.post("/submit", async (req, res, next) => {
         promotionResult,
         examHonor
       });
+      const actorMemory = applyExamNetworkMemoryUpdates(worldState, examNetwork);
       const appointmentTrack = resolveInitialAppointmentTrack({
         worldState,
         activeExam,
@@ -601,13 +616,20 @@ router.post("/submit", async (req, res, next) => {
         economicFiscalView: buildEconomicFiscalView(worldState),
         historicalEventArchiveView: buildHistoricalEventArchiveView(worldState),
         intelligenceRumorView: buildIntelligenceRumorView(worldState),
+        playerMonthlyBriefingView: buildPlayerMonthlyBriefingView(worldState),
+        actorMemoryView: buildActorMemoryView(worldState),
+        sessionSummaryView: buildSessionSummaryView(worldState),
+        actorMemory: {
+          appliedCount: actorMemory.appliedCount,
+          reinforcedCount: actorMemory.reinforcedCount
+        },
         eventArchiveView: buildEventArchiveView(worldState),
         informationPanelPageView: buildInformationPanelPageViews(worldState, {}, {
           worldGeographyView,
           worldPeopleView,
           officialPostingsView
         }),
-        worldState
+        worldState: buildClientWorldState(worldState)
       };
     });
 

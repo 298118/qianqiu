@@ -11,6 +11,8 @@ test("applyStatePatch applies only whitelisted fields and clamps numeric ranges"
   const originalCharacters = JSON.parse(JSON.stringify(worldState.characters));
   const originalOfficialPostings = JSON.parse(JSON.stringify(worldState.officialPostings));
   const originalWorldPeople = JSON.parse(JSON.stringify(worldState.worldPeople));
+  const originalActorMemoryLedger = JSON.parse(JSON.stringify(worldState.actorMemoryLedger));
+  const originalSessionSummary = JSON.parse(JSON.stringify(worldState.sessionSummary));
   const originalStudyProfile = JSON.parse(JSON.stringify(worldState.studyProfile));
   const originalExamHonorLedger = JSON.parse(JSON.stringify(worldState.examHonorLedger));
   const originalAppointmentTrack = JSON.parse(JSON.stringify(worldState.appointmentTrack));
@@ -37,6 +39,8 @@ test("applyStatePatch applies only whitelisted fields and clamps numeric ranges"
     worldEntities: { entities: [{ id: "provider-forged", name: "伪实体" }] },
     worldPeople: { npcs: [{ id: "provider-forged-npc", name: "伪人物" }] },
     worldThreads: { threads: [{ id: "provider-forged", title: "伪议题" }] },
+    actorMemoryLedger: { memoriesByActor: { "npc:C01": [{ summary: "模型记忆" }] } },
+    sessionSummary: { monthlySummaries: [{ publicSummary: "模型摘要" }] },
     characters: [{ id: "C99", name: "Invented", role: "patron" }],
     eventHistory: ["provider tries to replace history"],
     publicOrder: -10,
@@ -77,6 +81,8 @@ test("applyStatePatch applies only whitelisted fields and clamps numeric ranges"
   assert.equal(worldState.worldEntities.entities.some((entity) => entity.id === "provider-forged"), false);
   assert.deepEqual(worldState.worldPeople, originalWorldPeople);
   assert.deepEqual(worldState.worldThreads.threads, []);
+  assert.deepEqual(worldState.actorMemoryLedger, originalActorMemoryLedger);
+  assert.deepEqual(worldState.sessionSummary, originalSessionSummary);
   assert.deepEqual(worldState.characters, originalCharacters);
   assert.deepEqual(worldState.eventHistory, []);
   assert.equal(worldState.publicOrder, 0);
@@ -109,6 +115,8 @@ test("ordinary state patches preserve server-owned exam and narrative fields", (
   worldState.worldEntities.entities = [{ id: "server-entity", category: "court", kind: "court_office", name: "Server entity" }];
   worldState.worldPeople.npcs = [{ id: "server-npc", name: "Server NPC" }];
   worldState.worldThreads.threads = [{ id: "WT-server", title: "Server thread" }];
+  worldState.actorMemoryLedger.memoriesByActor = { "npc:C01": [{ id: "server-memory", summary: "服务器记忆" }] };
+  worldState.sessionSummary.monthlySummaries = [{ id: "server-summary", publicSummary: "服务器摘要" }];
   worldState.characters = [{ id: "C01", name: "Original mentor", role: "teacher" }];
   worldState.eventHistory = ["existing history"];
   worldState.player.examRank = "server-rank";
@@ -127,6 +135,8 @@ test("ordinary state patches preserve server-owned exam and narrative fields", (
     worldEntities: { entities: [{ id: "model-entity", category: "court", kind: "court_office", name: "Model entity" }] },
     worldPeople: { npcs: [{ id: "model-npc", name: "Model NPC" }] },
     worldThreads: { threads: [{ id: "WT-model", title: "Model thread" }] },
+    actorMemoryLedger: { memoriesByActor: { "npc:C99": [{ id: "model-memory", summary: "模型记忆" }] } },
+    sessionSummary: { monthlySummaries: [{ id: "model-summary", publicSummary: "模型摘要" }] },
     characters: [{ id: "C99", name: "Invented patron", role: "patron" }],
     eventHistory: ["provider replacement"],
     publicOrder: 65,
@@ -151,6 +161,8 @@ test("ordinary state patches preserve server-owned exam and narrative fields", (
   assert.deepEqual(worldState.worldEntities.entities, [{ id: "server-entity", category: "court", kind: "court_office", name: "Server entity" }]);
   assert.deepEqual(worldState.worldPeople.npcs, [{ id: "server-npc", name: "Server NPC" }]);
   assert.deepEqual(worldState.worldThreads.threads, [{ id: "WT-server", title: "Server thread" }]);
+  assert.deepEqual(worldState.actorMemoryLedger.memoriesByActor, { "npc:C01": [{ id: "server-memory", summary: "服务器记忆" }] });
+  assert.deepEqual(worldState.sessionSummary.monthlySummaries, [{ id: "server-summary", publicSummary: "服务器摘要" }]);
   assert.deepEqual(worldState.characters, [{ id: "C01", name: "Original mentor", role: "teacher" }]);
   assert.deepEqual(worldState.eventHistory, ["existing history"]);
   assert.equal(worldState.player.examRank, "server-rank");
@@ -224,6 +236,8 @@ test("applyStatePatch can apply server follow-up patches without incrementing tu
     worldEntities: { schemaVersion: 1, entities: [{ id: "server-entity", category: "court", kind: "court_office", name: "Server entity" }], recentNotes: [] },
     worldPeople: { schemaVersion: 1, npcs: [{ id: "server-npc", name: "Server NPC" }], relationships: [] },
     worldThreads: { schemaVersion: 1, threads: [{ id: "WT-server", title: "Server thread" }], recentResolved: [] },
+    actorMemoryLedger: { schemaVersion: 1, memoriesByActor: { "npc:C01": [{ id: "server-memory", summary: "服务器记忆" }] }, recentUpdates: [] },
+    sessionSummary: { schemaVersion: 1, monthlySummaries: [{ id: "server-summary", publicSummary: "服务器摘要" }], lastPeriodKey: "1644-01" },
     officialCareer: { schemaVersion: 1, careerHistory: [{ type: "retention", label: "留任" }] },
     eventHistory: Array.from({ length: MAX_EVENT_HISTORY + 1 }, (_, index) => `server-event-${index}`),
     publicOrder: 80
@@ -242,6 +256,8 @@ test("applyStatePatch can apply server follow-up patches without incrementing tu
   assert.equal(worldState.worldEntities.entities[0].id, "server-entity");
   assert.equal(worldState.worldPeople.npcs[0].id, "server-npc");
   assert.equal(worldState.worldThreads.threads[0].id, "WT-server");
+  assert.equal(worldState.actorMemoryLedger.memoriesByActor["npc:C01"][0].id, "server-memory");
+  assert.equal(worldState.sessionSummary.monthlySummaries[0].id, "server-summary");
   assert.equal(worldState.officialCareer.careerHistory[0].label, "留任");
   assert.equal(worldState.eventHistory.length, MAX_EVENT_HISTORY);
   assert.equal(worldState.eventHistory[0], "server-event-1");

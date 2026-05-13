@@ -131,6 +131,96 @@ function normalizeTeacherFeedbackProposal(proposal) {
   return normalized;
 }
 
+const MEMORY_PROPOSAL_TYPES = new Set([
+  "fact",
+  "impression",
+  "favor",
+  "grievance",
+  "obligation",
+  "exam_network",
+  "reward_punishment",
+  "official",
+  "monthly_summary"
+]);
+
+const MEMORY_VISIBILITIES = new Set(["public", "player_visible", "relationship_visible"]);
+const REJECTED_MEMORY_VISIBILITIES = new Set(["private", "actor_private", "hidden", "server_hidden", "gm_only"]);
+
+function memoryProposalRejection(reason) {
+  return { reason, count: 1 };
+}
+
+function normalizeMemoryVisibility(value) {
+  return cleanText(value, 40).toLowerCase().replace(/[\s-]+/g, "_");
+}
+
+function normalizeMemorySourceRef(ref) {
+  if (!ref || typeof ref !== "object" || Array.isArray(ref)) return null;
+  const normalized = {};
+  for (const key of ["id", "sourceView", "label"]) {
+    const text = cleanText(ref[key], 80);
+    if (text) normalized[key] = text;
+  }
+  return Object.keys(normalized).length ? normalized : null;
+}
+
+function normalizeMemoryProposal(proposal) {
+  if (!proposal || typeof proposal !== "object" || Array.isArray(proposal)) {
+    return { proposal: null, rejection: memoryProposalRejection("malformed_memory_proposal") };
+  }
+  const actorId = cleanText(proposal.actorId, 96);
+  const type = cleanText(proposal.type || proposal.memoryType, 40);
+  const visibility = normalizeMemoryVisibility(proposal.visibility) || "player_visible";
+  const summary = cleanText(proposal.summary || proposal.publicSummary || proposal.text, 160);
+  if (!actorId) return { proposal: null, rejection: memoryProposalRejection("missing_actor") };
+  if (!MEMORY_PROPOSAL_TYPES.has(type)) {
+    return { proposal: null, rejection: memoryProposalRejection("invalid_memory_type") };
+  }
+  if (!summary) return { proposal: null, rejection: memoryProposalRejection("unsafe_or_empty_summary") };
+  if (REJECTED_MEMORY_VISIBILITIES.has(visibility)) {
+    return { proposal: null, rejection: memoryProposalRejection("private_or_hidden_memory_requires_redacted_api") };
+  }
+  if (!MEMORY_VISIBILITIES.has(visibility)) {
+    return { proposal: null, rejection: memoryProposalRejection("invalid_memory_visibility") };
+  }
+
+  const normalized = {
+    actorId,
+    type,
+    visibility,
+    summary
+  };
+  for (const key of ["id", "proposalId", "subjectType", "subjectId", "sourceLabel"]) {
+    const text = cleanText(proposal[key], key === "sourceLabel" ? 80 : 96);
+    if (text) normalized[key] = text;
+  }
+  const salience = Number(proposal.salience);
+  if (Number.isFinite(salience)) normalized.salience = clampNumber(Math.round(salience), 0, 100);
+  const confidence = Number(proposal.confidence);
+  if (Number.isFinite(confidence)) normalized.confidence = Math.max(0, Math.min(1, confidence));
+  if (Array.isArray(proposal.sourceRefs)) {
+    normalized.sourceRefs = proposal.sourceRefs.map(normalizeMemorySourceRef).filter(Boolean).slice(0, 5);
+  }
+  if (Array.isArray(proposal.tags)) {
+    normalized.tags = proposal.tags
+      .map((tag) => cleanText(tag, 40))
+      .filter(Boolean)
+      .slice(0, 6);
+  }
+  return { proposal: normalized, rejection: null };
+}
+
+function summarizeMemoryProposalRejections(rejections = []) {
+  const counts = new Map();
+  for (const rejection of Array.isArray(rejections) ? rejections : []) {
+    if (!rejection?.reason) continue;
+    counts.set(rejection.reason, (counts.get(rejection.reason) || 0) + 1);
+  }
+  return [...counts.entries()]
+    .map(([reason, count]) => ({ reason, count: clampNumber(count, 1, 6) }))
+    .slice(0, 6);
+}
+
 function normalizeLooseText(value, maxLength = 120) {
   if (typeof value === "string") return cleanText(value, maxLength);
   if (typeof value === "number" || typeof value === "boolean") {
@@ -225,6 +315,22 @@ function normalizeModelPayload(schemaName, payload) {
     payload.teacherFeedbackProposal = teacherFeedbackProposal;
   } else {
     delete payload.teacherFeedbackProposal;
+  }
+
+  if (Array.isArray(payload.memoryProposals)) {
+    const memoryProposalResults = payload.memoryProposals.map(normalizeMemoryProposal);
+    payload.memoryProposals = memoryProposalResults
+      .map((result) => result.proposal)
+      .filter(Boolean)
+      .slice(0, 6);
+    const memoryProposalRejections = summarizeMemoryProposalRejections(
+      memoryProposalResults.map((result) => result.rejection).filter(Boolean)
+    );
+    if (memoryProposalRejections.length) payload.memoryProposalRejections = memoryProposalRejections;
+    else delete payload.memoryProposalRejections;
+  } else {
+    delete payload.memoryProposals;
+    delete payload.memoryProposalRejections;
   }
 
   return payload;

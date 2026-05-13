@@ -183,3 +183,12 @@ test("S70.11 time skip feedback reads turn payload summary only", () => {
   assert.doesNotMatch(timeSkipSource, /worldState\.timeSkip/);
   assert.doesNotMatch(timeSkipSource, /raw|proposal|audit|prompt|table|path|key/i);
 });
+
+test("S70.12 browser does not read raw actor memory or session summary ledgers", () => {
+  const source = publicAppSource();
+
+  assert.doesNotMatch(source, /worldState\?\.actorMemoryLedger/);
+  assert.doesNotMatch(source, /worldState\.actorMemoryLedger/);
+  assert.doesNotMatch(source, /worldState\?\.sessionSummary/);
+  assert.doesNotMatch(source, /worldState\.sessionSummary/);
+});

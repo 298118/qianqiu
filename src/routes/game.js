@@ -118,6 +118,18 @@ const {
   runPlayerMonthlyBriefingStep
 } = require("../game/playerMonthlyBriefing");
 const {
+  applyTurnActorMemoryUpdates,
+  buildActorMemoryView,
+  decayActorMemoryLedger,
+  ensureActorMemoryLedgerState
+} = require("../game/actorMemoryLedger");
+const {
+  buildSessionSummaryView,
+  ensureSessionSummaryState,
+  updateMonthlySessionSummary
+} = require("../game/sessionSummary");
+const { buildClientWorldState } = require("../game/clientWorldState");
+const {
   buildTimeSkipPlan,
   buildTimeSkipSummary,
   detectTimeSkipIntent,
@@ -173,6 +185,8 @@ async function processTurn(sessionId, input) {
     ensureWorldPeopleState(worldState);
     ensureWorldThreadState(worldState);
     ensurePlayerMonthlyBriefingState(worldState);
+    ensureActorMemoryLedgerState(worldState);
+    ensureSessionSummaryState(worldState);
     if (isWritingExam(worldState.activeExam)) {
       return finalizeExamSceneTurn(worldState, input, context);
     }
@@ -212,6 +226,8 @@ async function processStreamingTurn(sessionId, input, streamHandlers = {}) {
     ensureWorldPeopleState(worldState);
     ensureWorldThreadState(worldState);
     ensurePlayerMonthlyBriefingState(worldState);
+    ensureActorMemoryLedgerState(worldState);
+    ensureSessionSummaryState(worldState);
     if (isWritingExam(worldState.activeExam)) {
       return finalizeExamSceneTurn(worldState, input, context);
     }
@@ -350,6 +366,8 @@ function buildCommonTurnViews(worldState, options = {}) {
     historicalEventArchiveView: buildHistoricalEventArchiveView(worldState),
     intelligenceRumorView: buildIntelligenceRumorView(worldState),
     playerMonthlyBriefingView: buildPlayerMonthlyBriefingView(worldState),
+    actorMemoryView: buildActorMemoryView(worldState),
+    sessionSummaryView: buildSessionSummaryView(worldState),
     eventArchiveView: buildEventArchiveView(worldState, options.eventArchive),
     informationPanelPageView: buildInformationPanelPageViews(worldState, options.informationPanel || {}, {
       worldGeographyView,
@@ -556,7 +574,7 @@ function buildTimeSkipBlockedPayload(worldState, plan, validation, route) {
       reason: "跳时计划未执行。"
     },
     worldTick: null,
-    worldState
+    worldState: buildClientWorldState(worldState)
   };
 }
 
@@ -624,6 +642,8 @@ async function finalizeExamSceneTurn(worldState, input, context = null) {
   ensureWorldPeopleState(worldState);
   ensureWorldThreadState(worldState);
   ensurePlayerMonthlyBriefingState(worldState);
+  ensureActorMemoryLedgerState(worldState);
+  ensureSessionSummaryState(worldState);
   const worldTick = buildExamSceneFeedback(worldState, scene.sceneTime, scene.event);
   enqueueAuditRecords(context, createExamProgressAuditRecords(worldState, scene));
 
@@ -649,7 +669,7 @@ async function finalizeExamSceneTurn(worldState, input, context = null) {
     },
     examScene: scene.sceneTime,
     worldTick,
-    worldState
+    worldState: buildClientWorldState(worldState)
   };
 }
 
@@ -747,6 +767,35 @@ async function finalizeTurn(worldState, result, input, auditOptions = {}) {
     ...longTermRelationshipChanges,
     ...officialCareerRelationshipChanges
   ];
+  const actorMemoryDecay = worldTick.completedMonth
+    ? decayActorMemoryLedger(worldState, { months: 1 })
+    : { decayed: 0, removed: 0 };
+  const actorMemoryAuditContext = { actorMemoryRecords: [] };
+  const actorMemory = applyTurnActorMemoryUpdates(worldState, {
+    providerMemoryProposals: result.memoryProposals,
+    providerMemoryProposalRejections: result.memoryProposalRejections,
+    relationshipChanges: allRelationshipChanges,
+    activeNpcRequest,
+    playerMonthlyBriefing
+  }, actorMemoryAuditContext);
+  const sessionSummary = updateMonthlySessionSummary(worldState, {
+    worldTick,
+    playerMonthlyBriefing,
+    officialCareer,
+    longTermEvents,
+    relationshipChanges: allRelationshipChanges
+  }, null);
+  if (sessionSummary.updated) {
+    const { routePolicy: memoryRoutePolicy } = resolveAiSettingsForSession(worldState);
+    const memoryRoute = resolveModelForTask("memory_summarizer", memoryRoutePolicy);
+    recordAiInvocation(worldState, {
+      taskType: "memory_summarizer",
+      route: memoryRoute,
+      status: "completed",
+      durationMs: sessionSummary.durationMs,
+      maxOutputTokens: memoryRoute.maxOutputTokens
+    });
+  }
   const worldEntityInfluences = deriveWorldEntityInfluences(worldState, {
     stateDeltas: [{
       before: providerStateBefore,
@@ -794,6 +843,8 @@ async function finalizeTurn(worldState, result, input, auditOptions = {}) {
   ensureWorldPeopleState(worldState);
   ensureWorldThreadState(worldState);
   ensurePlayerMonthlyBriefingState(worldState);
+  ensureActorMemoryLedgerState(worldState);
+  ensureSessionSummaryState(worldState);
 
   const worldTickFeedback = {
     cadence: worldTick.cadence,
@@ -822,6 +873,33 @@ async function finalizeTurn(worldState, result, input, auditOptions = {}) {
     longTermEvents,
     officialCareer,
     playerMonthlyBriefing,
+    actorMemory: {
+      summary: actorMemory.appliedCount
+        ? `本旬写入${actorMemory.appliedCount}条可见记忆，强化${actorMemory.reinforcedCount}条。`
+        : actorMemory.rejectedCount
+          ? `本旬拒绝${actorMemory.rejectedCount}条越权或不可见记忆提案。`
+          : "",
+      events: [],
+      attributeChanges: [],
+      outcome: {
+        appliedCount: actorMemory.appliedCount,
+        reinforcedCount: actorMemory.reinforcedCount,
+        rejectedCount: actorMemory.rejectedCount,
+        rejectedReasons: actorMemory.rejectedReasons,
+        decayed: actorMemoryDecay.decayed,
+        removed: actorMemoryDecay.removed
+      }
+    },
+    sessionSummary: {
+      summary: sessionSummary.updated ? sessionSummary.summary?.publicSummary : "",
+      events: [],
+      attributeChanges: [],
+      outcome: {
+        updated: sessionSummary.updated,
+        reason: sessionSummary.reason,
+        summaryId: sessionSummary.summary?.id || null
+      }
+    },
     worldEntityImpacts,
     worldPeopleAuditEvents: worldPeopleEvents.auditEvents
   }));
@@ -875,9 +953,23 @@ async function finalizeTurn(worldState, result, input, auditOptions = {}) {
       events: Array.isArray(playerMonthlyBriefing.events) ? playerMonthlyBriefing.events : [],
       reportId: playerMonthlyBriefing.reportId || null
     },
+    actorMemory: {
+      appliedCount: actorMemory.appliedCount,
+      reinforcedCount: actorMemory.reinforcedCount,
+      rejectedCount: actorMemory.rejectedCount,
+      rejectedReasons: actorMemory.rejectedReasons,
+      decayed: actorMemoryDecay.decayed,
+      removed: actorMemoryDecay.removed
+    },
+    sessionSummary: {
+      updated: sessionSummary.updated,
+      reason: sessionSummary.reason,
+      summaryId: sessionSummary.summary?.id || null,
+      publicSummary: sessionSummary.summary?.publicSummary || ""
+    },
     examTrigger,
     worldTick: worldTickFeedback,
-    worldState
+    worldState: buildClientWorldState(worldState)
   };
 }
 
@@ -943,10 +1035,14 @@ async function streamTurn(res, sessionId, input) {
       historicalEventArchiveView: payload.historicalEventArchiveView,
       intelligenceRumorView: payload.intelligenceRumorView,
       playerMonthlyBriefingView: payload.playerMonthlyBriefingView,
+      actorMemoryView: payload.actorMemoryView,
+      sessionSummaryView: payload.sessionSummaryView,
       eventArchiveView: payload.eventArchiveView,
       informationPanelPageView: payload.informationPanelPageView,
       officialCareer: payload.officialCareer,
       playerMonthlyBriefing: payload.playerMonthlyBriefing,
+      actorMemory: payload.actorMemory,
+      sessionSummary: payload.sessionSummary,
       timeSkip: payload.timeSkip || null,
       examTrigger: payload.examTrigger,
       examScene: payload.examScene || null,
@@ -987,7 +1083,7 @@ router.post("/start", async (req, res, next) => {
 
     res.status(201).json({
       sessionId: worldState.sessionId,
-      worldState,
+      worldState: buildClientWorldState(worldState),
       ...buildCommonTurnViews(worldState),
       narrative: opening.narrative
     });
@@ -1016,9 +1112,11 @@ router.get("/state/:sessionId", async (req, res, next) => {
     ensureWorldPeopleState(worldState);
     ensureWorldThreadState(worldState);
     ensurePlayerMonthlyBriefingState(worldState);
+    ensureActorMemoryLedgerState(worldState);
+    ensureSessionSummaryState(worldState);
     res.json({
       sessionId: worldState.sessionId,
-      worldState,
+      worldState: buildClientWorldState(worldState),
       ...buildCommonTurnViews(worldState, {
         eventArchive: eventArchiveOptionsFromQuery(req.query),
         informationPanel: informationPanelOptionsFromQuery(req.query)

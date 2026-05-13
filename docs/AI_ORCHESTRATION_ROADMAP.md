@@ -861,6 +861,8 @@ S70 要准备这些 fixture：
 
 前置依赖：S70.4、S70.8、S70.11；private memory 深化依赖 redacted API。
 
+当前状态（2026-05-13）：S70.12 已落地首版大模型记忆系统。已新增 `src/game/actorMemoryConfig.js`、`src/game/actorMemoryLedger.js`、`src/game/sessionSummary.js` 与 `src/game/clientWorldState.js`，提供 actor memory 类型、来源、显著度、置信度、可见性、衰减、去重、prompt cap、月度经历摘要和 response-level raw ledger 剥离。普通回合会把 schema 校验后的 provider `memoryProposals`、可见关系变化、主动 NPC 请求、玩家官职月报和科举同年座师网络写入 server-owned `actorMemoryLedger`；provider 来源类型由服务器强制为 `ai_memory_proposal`，被拒绝的 private/hidden、不可见 actor、跨 actor 或污染文本只进入 hidden-safe 计数和原因码，remote helper 对 malformed、hidden/private、非法 type、缺 actor 或空摘要 proposal 也会生成脱敏拒绝 telemetry；月末会写入 `sessionSummary` 并记录 bounded `memory_summarizer` 调动摘要。游戏、考试和 SSE payload 已返回 `actorMemoryView` / `sessionSummaryView` 与本回合安全 feedback，响应 `worldState` 不返回 raw `actorMemoryLedger` / `sessionSummary`，`actorMemoryView`、recent updates 和事件档案都要求 actor 仍在可见 actor label map 内，事件档案新增 `actor_memory` / `session_summary` 来源并过滤 hidden notes/intent、密档/私档、raw provider/prompt/path/key/SQLite 变体，prompt context 新增 capped `actorMemory` 和 `recentPlayerHistory`。当前只接受 `public` / `player_visible` / `relationship_visible` 记忆，private/hidden/actor-private 及其空格/连字符别名在 redacted API 完成前一律拒绝；provider 不能 patch `actorMemoryLedger` 或 `sessionSummary`，也不能为不可见或未知 actor 写入记忆。
+
 需要资料：eventArchive、relationshipLedger、examNetwork、monthlyBriefing、promptContextAssembler、NPC 记忆玩法资料。
 
 具体实现：
@@ -875,6 +877,8 @@ S70 要准备这些 fixture：
 - 新增 `src/game/sessionSummary.js`：
   - `updateMonthlySessionSummary(worldState, monthResult, aiRuntime, options)`
   - `summarizeRecentPlayerHistory(worldState, options)`
+- 新增 `src/game/clientWorldState.js`：
+  - `buildClientWorldState(worldState)` 从 route response `worldState` 中剥离 raw `actorMemoryLedger` / `sessionSummary`。
 - 记忆分层：hot context、session summary、fact memory、impression memory、actor memory ledger、safe retrieval index。
 - AI 只能提交 memory proposal；服务器去重、标来源、置信度、可见性和衰减。
 

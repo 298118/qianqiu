@@ -234,7 +234,7 @@ S54.1 只固定契约；S54.2 已在 `STORAGE_ADAPTER=sqlite` 模式下按本节
 
 ## View 与 Prompt Projection
 
-游戏与考试路由现在返回 `worldGeographyView`。S53.4 的浏览器“天下格局”和“任所地理”面板必须读取这个 view 或可见 `officialPostingsView`，不要直接渲染 raw `worldState.worldGeography`。现有 API 为保持开发兼容仍随 payload 返回完整本地 `worldState`。
+游戏与考试路由现在返回 `worldGeographyView`。S53.4 的浏览器“天下格局”和“任所地理”面板必须读取这个 view 或可见 `officialPostingsView`，不要直接渲染 raw `worldState.worldGeography`。现有 API 为保持开发兼容仍随 payload 返回本地 `worldState` 的大部分 legacy 字段；S70.12 起 raw `actorMemoryLedger` / `sessionSummary` 会从响应 `worldState` 剥离。
 
 Prompt 中的 `worldGeography` summary 上限：
 

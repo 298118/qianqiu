@@ -10,6 +10,7 @@ const { buildOfficialCareerView } = require("./officialCareer");
 const { buildOfficialPostingsView } = require("./officialPostings");
 const { formatYearMonthPeriod, normalizeMonth, normalizeTenDayPeriod, normalizeYear } = require("./time");
 const { buildWorldThreadView } = require("./worldThreads");
+const { isVisibleActorId } = require("./actorMemoryLedger");
 
 const EVENT_ARCHIVE_SCHEMA_VERSION = 1;
 const MAX_ARCHIVE_ITEMS = 24;
@@ -26,13 +27,15 @@ const MAX_HISTORICAL_EVENT_CHAINS = 6;
 const MAX_INTELLIGENCE_RUMORS = 6;
 const MAX_EXAM_RECORDS = 5;
 const MAX_EXAM_NETWORK_RECORDS = 5;
+const MAX_ACTOR_MEMORY_RECORDS = 6;
+const MAX_SESSION_SUMMARIES = 4;
 const MAX_TEXT_LENGTH = 180;
 const MIN_PAGE_SIZE = 1;
 const MAX_PAGE_SIZE = 50;
 
 const SECRET_ENV_NAME_PATTERN = /(KEY|TOKEN|SECRET|PASSWORD|CREDENTIAL)/i;
 const SENSITIVE_ARCHIVE_TEXT_PATTERN =
-  /(hiddenNotes|hiddenIntent|relationshipLedger|retrievalContext|statePatch|worldState|provider|proposal|prompt|api[_ -]?key|OPENAI_API_KEY|DEEPSEEK_API_KEY|MIMO_API_KEY|ANTHROPIC_API_KEY|data[\\/](?:sessions|audit)|ai_change_proposals|event_log|sqlite|world_sessions|prompt_retrieval_index|event_archive_index|raw[_ -]?(?:table|ledger|audit)|(?:geo|people|office)_[A-Za-z0-9_]+|\b[A-Z0-9_]*(?:KEY|TOKEN|SECRET|PASSWORD|CREDENTIAL)[A-Z0-9_]*\b|file:\/\/\/?(?:[A-Za-z]:[\\/]|(?:\/Users|\/home|\/tmp|\/var|\/mnt|\/opt)\/)[^\s"'<>]+|[A-Za-z]:[\\/][^\s"'<>]+|\b(?:\/Users|\/home|\/tmp|\/var|\/mnt|\/opt)\/[^\s"'<>]+|sk-[A-Za-z0-9_-]{8,}|tp-[A-Za-z0-9_-]{8,})/i;
+  /(hidden[_ -]?(?:notes?|intent)|hidden\s+(?:notes?|intent)|relationshipLedger|actorMemoryLedger|sessionSummary|retrievalContext|sealedMapping|sealed_mapping|密档|私档|密札|密信|隐藏(?:意图|动机|事实|札记)|隐秘(?:意图|动机|事实)|raw[_ -]?(?:provider|audit|table|ledger|prompt|proposal)|\b(?:statePatch|worldState|provider|proposal|prompt|rawSql)\b|api[_ -]?key|OPENAI_API_KEY|DEEPSEEK_API_KEY|MIMO_API_KEY|ANTHROPIC_API_KEY|data[\\/](?:sessions|audit)|ai_change_proposals|event_log|sqlite|world_sessions|world_state_json|prompt_retrieval_index|event_archive_index|raw[_ -]?(?:table|ledger|audit)|(?:geo|people|office)_[A-Za-z0-9_]+|\b[A-Z0-9_]*(?:KEY|TOKEN|SECRET|PASSWORD|CREDENTIAL)[A-Z0-9_]*\b|file:\/\/\/?(?:[A-Za-z]:[\\/]|(?:\/Users|\/home|\/tmp|\/var|\/mnt|\/opt)\/)[^\s"'<>]+|[A-Za-z]:[\\/][^\s"'<>]+|\b(?:\/Users|\/home|\/tmp|\/var|\/mnt|\/opt)\/[^\s"'<>]+|sk-[A-Za-z0-9_-]{8,}|tp-[A-Za-z0-9_-]{8,})/i;
 
 const SOURCE_LABELS = {
   event_history: "近事",
@@ -48,7 +51,9 @@ const SOURCE_LABELS = {
   intelligence_rumor: "情报",
   exam_record: "科场",
   exam_network: "科场人脉",
-  appointment_result: "授官"
+  appointment_result: "授官",
+  actor_memory: "记忆",
+  session_summary: "经历"
 };
 
 const STATUS_LABELS = {
@@ -85,6 +90,7 @@ function redactArchiveText(value) {
   }
 
   text = text.replace(/\bsk-[A-Za-z0-9_-]{8,}\b/g, "[redacted]");
+  text = text.replace(/\btp-[A-Za-z0-9_-]{8,}\b/g, "[redacted]");
   text = text.replace(/\bfile:\/\/\/?(?:[A-Za-z]:[\\/]|(?:\/Users|\/home|\/tmp|\/var|\/mnt|\/opt)\/)[^\s"'<>]+/gi, "[redacted-path]");
   text = text.replace(/[A-Za-z]:[\\/][^\s"'<>]+/g, "[redacted-path]");
   text = text.replace(/(^|\s)(?:\.{0,2}[\\/])?data[\\/][^\s"'<>]+/g, "$1[redacted-path]");
@@ -512,6 +518,65 @@ function collectAppointmentTrackItems(worldState, items) {
     });
 }
 
+function collectActorMemoryItems(worldState, items) {
+  const ledger = worldState.actorMemoryLedger || {};
+  const visible = [];
+  const memoriesByActor = ledger.memoriesByActor && typeof ledger.memoriesByActor === "object"
+    ? ledger.memoriesByActor
+    : {};
+  for (const [actorId, rows] of Object.entries(memoriesByActor)) {
+    if (!isVisibleActorId(worldState, actorId)) continue;
+    for (const memory of Array.isArray(rows) ? rows : []) {
+      if (!["public", "player_visible", "relationship_visible"].includes(memory.visibility)) continue;
+      const summary = cleanArchiveText(memory.summary, "");
+      if (!summary) continue;
+      visible.push({
+        actorId,
+        memory,
+        summary,
+        salience: clampNumber(memory.salience, 0, 100, 0),
+        turn: clampNumber(memory.lastTouchedTurn, 0, Number.MAX_SAFE_INTEGER, currentTurn(worldState))
+      });
+    }
+  }
+  visible
+    .sort((first, second) => second.salience - first.salience || second.turn - first.turn)
+    .slice(0, MAX_ACTOR_MEMORY_RECORDS)
+    .forEach(({ actorId, memory, summary, turn }) => {
+      addItem(items, worldState, {
+        sourceType: "actor_memory",
+        kind: memory.type || "memory",
+        title: memory.typeLabel ? `可见记忆：${memory.typeLabel}` : "可见记忆",
+        summary,
+        date: memory.createdAt || worldState,
+        turn,
+        status: "recorded",
+        relatedLabels: [
+          actorId,
+          ...(Array.isArray(memory.tags) ? memory.tags : [])
+        ].filter(Boolean)
+      });
+    });
+}
+
+function collectSessionSummaryItems(worldState, items) {
+  const summaries = Array.isArray(worldState.sessionSummary?.monthlySummaries)
+    ? worldState.sessionSummary.monthlySummaries
+    : [];
+  summaries.slice(-MAX_SESSION_SUMMARIES).forEach((summary) => {
+    addItem(items, worldState, {
+      sourceType: "session_summary",
+      kind: "monthly_summary",
+      title: summary.periodLabel || "月度经历",
+      summary: summary.publicSummary,
+      date: summary.generatedAt || worldState,
+      turn: summary.generatedAtTurn,
+      status: "recorded",
+      relatedLabels: Array.isArray(summary.highlights) ? summary.highlights.slice(0, 3) : []
+    });
+  });
+}
+
 function sortArchiveItems(first, second) {
   if (second.turn !== first.turn) return second.turn - first.turn;
   if (second.year !== first.year) return second.year - first.year;
@@ -561,6 +626,8 @@ function buildEventArchiveIndexItems(worldState = {}) {
   collectIntelligenceRumorItems(worldState, items, intelligenceRumorView);
   collectExamItems(worldState, items);
   collectExamNetworkItems(worldState, items);
+  collectActorMemoryItems(worldState, items);
+  collectSessionSummaryItems(worldState, items);
 
   return items.sort(sortArchiveItems);
 }

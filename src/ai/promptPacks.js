@@ -26,12 +26,13 @@ const UNIVERSAL_STABLE_PREFIX_LINES = [
 ];
 
 const TURN_STATE_BOUNDARY_LINES = [
-  "AI may generate narrative, bounded relationship suggestions, teacherFeedbackProposal text, event clues, examTrigger requests, and statePatch suggestions for ordinary turns.",
+  "AI may generate narrative, bounded relationship suggestions, teacherFeedbackProposal text, memoryProposals, event clues, examTrigger requests, and statePatch suggestions for ordinary turns.",
   "Never grant palace rank, office title, or role promotion in ordinary turn statePatch. Use examTrigger for exam entry requests.",
-  "Never patch turnCount, year, month, tenDayPeriod, activeExam, examCalendar, examHonorLedger, appointmentTrack, activeNpcRequest, longTermEvents, officialCareer, officialPostings, roleWorldCoupling, worldGeography, worldEntities, worldPeople, worldThreads, characters, eventHistory, player.examRank, player.officeTitle, or player.examHistory in ordinary turns; those fields are server-owned.",
+  "Never patch turnCount, year, month, tenDayPeriod, activeExam, examCalendar, examHonorLedger, appointmentTrack, activeNpcRequest, longTermEvents, officialCareer, officialPostings, roleWorldCoupling, worldGeography, worldEntities, worldPeople, worldThreads, actorMemoryLedger, sessionSummary, characters, eventHistory, player.examRank, player.officeTitle, or player.examHistory in ordinary turns; those fields are server-owned.",
   "Never patch studyProfile or invent durable teacher, academy, classmate, or sponsorship facts. teacherFeedbackProposal is text-only advice; the server decides whether it enters the study ledger.",
   "Keep statePatch small and only use allowed keys. Prefer modest numeric changes in the range of 1-8 unless the action clearly spends resources.",
   "Never put relationshipLedger in statePatch.",
+  "Never put actorMemoryLedger or sessionSummary in statePatch; use memoryProposals only. Memory proposals must be public, player_visible, or relationship_visible and may not include private, hidden, raw prompt/provider/audit/table/path/key content.",
   "Same-year, seat-teacher, room-officer, chief-examiner, and examiner network facts are server-owned; models may only narrate or propose comments, not create durable exam relationships.",
   "Appointment tracks, ministry proposals, emperor signals, avoidance checks, and officeTitle facts are server-owned; models may only narrate or propose visible opinions.",
   `Allowed top-level patch keys: ${TURN_ALLOWED_PATCH_KEYS.join(", ")}.`,
@@ -72,8 +73,9 @@ const PROMPT_PACKS = {
       "Make ordinary life, bureaucracy, money, grain, rumor, weather, and human obligation feel present."
     ],
     authority: [
-      "May suggest bounded statePatch values, relationshipChanges, teacherFeedbackProposal, visible events, and examTrigger.",
+      "May suggest bounded statePatch values, relationshipChanges, teacherFeedbackProposal, memoryProposals, visible events, and examTrigger.",
       "RelationshipChanges must target existing visible ids only and remain within schema bounds.",
+      "MemoryProposals are suggestions only: they may summarize visible facts, favors, grudges, obligations, exam networks, rewards, punishments, or monthly impressions for existing visible actors, but the server dedupes, marks source, applies visibility, confidence, and decay.",
       "Teacher feedback can advise reading plans, small exercises, books, and style corrections, but cannot create real relationships, sponsorship, exam success, rank, or office.",
       "Must not decide exam entry legality, promotion, appointment, active request creation, long-term issue settlement, geography ledger changes, or world calendar movement."
     ],

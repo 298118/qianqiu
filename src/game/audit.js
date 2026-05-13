@@ -133,7 +133,14 @@ function hasAcceptedStateDelta(delta) {
   });
 }
 
-function buildRejectedReasons(result = {}, acceptedPaths = new Set(), relationshipChanges = [], examTrigger = {}, teacherFeedbackProposal = {}) {
+function buildRejectedReasons(
+  result = {},
+  acceptedPaths = new Set(),
+  relationshipChanges = [],
+  examTrigger = {},
+  teacherFeedbackProposal = {},
+  actorMemory = {}
+) {
   const reasons = [];
   for (const path of listProposedPatchPaths(result.statePatch).slice(0, 20)) {
     if (!acceptedPaths.has(path)) {
@@ -154,6 +161,15 @@ function buildRejectedReasons(result = {}, acceptedPaths = new Set(), relationsh
 
   if (result.teacherFeedbackProposal && teacherFeedbackProposal?.accepted !== true) {
     reasons.push(`老师点评 proposal 被拒绝：${safePreviewText(teacherFeedbackProposal?.reason || "未通过服务器清洗。", 80)}。`);
+  }
+
+  const memoryOutcome = actorMemory?.outcome || actorMemory || {};
+  const rejectedMemoryCount = Number(memoryOutcome.rejectedCount || 0);
+  if (Number.isFinite(rejectedMemoryCount) && rejectedMemoryCount > 0) {
+    const reasonText = Array.isArray(memoryOutcome.rejectedReasons) && memoryOutcome.rejectedReasons.length
+      ? `：${safePreviewText(memoryOutcome.rejectedReasons.join("，"), 120)}`
+      : "";
+    reasons.push(`记忆提案 ${rejectedMemoryCount} 条被服务器拒绝${reasonText}。`);
   }
 
   return reasons;
@@ -177,6 +193,7 @@ function buildTurnProposalRecord({
   relationshipChanges,
   examTrigger,
   teacherFeedbackProposal,
+  actorMemory,
   appliedEventIds
 }) {
   const { delta, acceptedPaths } = diffProviderAcceptedState(
@@ -189,17 +206,23 @@ function buildTurnProposalRecord({
     acceptedPaths,
     relationshipChanges,
     examTrigger,
-    teacherFeedbackProposal
+    teacherFeedbackProposal,
+    actorMemory
   );
   const eventCount = Array.isArray(result.events) ? result.events.length : 0;
+  const memoryOutcome = actorMemory?.outcome || actorMemory || {};
+  const memoryProposalCount = Array.isArray(result.memoryProposals) ? result.memoryProposals.length : 0;
+  const memoryAcceptedCount = Number(memoryOutcome.appliedCount || 0);
   const accepted = {
     stateDelta: delta,
     relationshipChangeCount: Array.isArray(relationshipChanges) ? relationshipChanges.length : 0,
     eventCount,
+    memoryProposalAcceptedCount: memoryAcceptedCount,
     examTrigger
   };
   const acceptedSomething = hasAcceptedStateDelta(delta) ||
     accepted.relationshipChangeCount > 0 ||
+    memoryAcceptedCount > 0 ||
     eventCount > 0 ||
     teacherFeedbackProposal?.accepted === true ||
     Boolean(examTrigger?.shouldStart);
@@ -208,6 +231,7 @@ function buildTurnProposalRecord({
     result.statePatch ||
     eventCount ||
     (Array.isArray(result.relationshipChanges) && result.relationshipChanges.length) ||
+    memoryProposalCount ||
     result.teacherFeedbackProposal ||
     result.examTrigger?.shouldStart
   );
@@ -225,6 +249,7 @@ function buildTurnProposalRecord({
       attributeChangeCount: Array.isArray(result.attributeChanges) ? result.attributeChanges.length : 0,
       eventCount,
       eventsPreview: (result.events || []).slice(0, 3),
+      memoryProposalCount,
       relationshipChangeCount: Array.isArray(result.relationshipChanges)
         ? result.relationshipChanges.length
         : 0,
@@ -249,6 +274,7 @@ function buildTurnProposalRecord({
 }
 
 function buildFeedbackEvent(worldState, sourceSystem, eventType, feedback = {}, sceneCadence = "ordinary_turn") {
+  feedback = isPlainObject(feedback) ? feedback : {};
   const events = Array.isArray(feedback.events) ? feedback.events : [];
   const summary = previewText(feedback.summary || events[0] || "");
   if (!summary && !events.length && !feedback.outcome) return null;
@@ -286,6 +312,8 @@ function createTurnAuditRecords({
   longTermEvents,
   officialCareer,
   playerMonthlyBriefing,
+  actorMemory,
+  sessionSummary,
   worldEntityImpacts,
   worldPeopleAuditEvents = []
 }) {
@@ -330,7 +358,9 @@ function createTurnAuditRecords({
     buildFeedbackEvent(worldState, "world_tick", "world_tick_step", worldTick),
     buildFeedbackEvent(worldState, "long_term_events", "long_term_event_step", longTermEvents),
     buildFeedbackEvent(worldState, "official_career", "official_career_step", officialCareer),
-    buildFeedbackEvent(worldState, "player_monthly_briefing", "player_monthly_briefing_step", playerMonthlyBriefing)
+    buildFeedbackEvent(worldState, "player_monthly_briefing", "player_monthly_briefing_step", playerMonthlyBriefing),
+    buildFeedbackEvent(worldState, "actor_memory", "actor_memory_step", actorMemory),
+    buildFeedbackEvent(worldState, "session_summary", "session_summary_step", sessionSummary)
   ].filter(Boolean);
   const auditEvents = [
     providerEvent,
@@ -351,6 +381,7 @@ function createTurnAuditRecords({
         providerStateAfter,
         relationshipChanges,
         examTrigger,
+        actorMemory,
         teacherFeedbackProposal,
         appliedEventIds: auditEvents.map((event) => event.eventId)
       })

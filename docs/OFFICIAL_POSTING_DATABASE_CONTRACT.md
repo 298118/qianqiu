@@ -73,7 +73,7 @@ S52.1 新增运行时契约 helper：`src/game/officialPostingSchemas.js`。
 - `transferRecords` 从服务器拥有的 `officialCareer.careerHistory` 派生；重复 `ensure` 必须幂等，不会反复追加迁转。
 - `assessmentRecords` 从服务器拥有的 `officialCareer.assessmentDossier`、地方官可见地方指标和 S61 可见城市深度 projection 派生；S61.2 起当前任所考成可追加“任所奏报”，概括税基、粮储、市价、士绅、词讼、徭役、水利、灾害、交通、驻军和书院压力。它只作 prompt/view 背景，不替代官场结算，也不改写 merit/risk/recommendation。
 - S63.1 任命池行由 `officialEcosystemConfig` 配置。`role_visible` 官缺、候补、丁忧、起复和弹劾候勘只对行政身份开放；书生默认不读这些行。任命池考成是案牍压力 projection，不进入 `eventArchiveView` 的公开历史事件；只有真实任所考成仍可生成 `official_assessment` 事件档案条目。
-- 由于 game/exam route 仍为开发兼容返回完整本地 `worldState`，`worldState.officialPostings` 只保存 `buildOfficialPostingSchemaView()` 后的安全可见 projection，不保存 hidden 官员私档、密札考成或未公开调任。
+- 由于 game/exam route 仍为开发兼容返回本地 `worldState` 的大部分 legacy 字段，`worldState.officialPostings` 只保存 `buildOfficialPostingSchemaView()` 后的安全可见 projection，不保存 hidden 官员私档、密札考成或未公开调任。S70.12 起 raw `actorMemoryLedger` / `sessionSummary` 是明确的 response-redacted 例外。
 
 路由与 prompt：
 

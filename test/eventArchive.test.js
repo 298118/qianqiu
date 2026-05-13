@@ -331,6 +331,54 @@ test("event archive sanitizer drops prompt, provider, path, key, and raw state t
   assert.equal(cleanArchiveText("prompt_retrieval_index people_npcs TOKEN_VALUE"), "");
 });
 
+test("event archive drops polluted actor memory and session summary raw text variants", () => {
+  const worldState = createInitialState({ playerName: "记忆归档过滤", role: "official" });
+  worldState.turnCount = 18;
+  worldState.actorMemoryLedger = {
+    schemaVersion: 1,
+    generatedAtTurn: 18,
+    memoriesByActor: {
+      "npc:C01": [{
+        id: "AM-polluted-archive",
+        actorId: "npc:C01",
+        type: "fact",
+        typeLabel: "事实",
+        visibility: "player_visible",
+        summary: "顾文衡 hidden notes 中有一条不该进入事件档案的私评。",
+        salience: 95,
+        confidence: 0.9,
+        sourceType: "ai_memory_proposal",
+        sourceLabel: "记忆提案",
+        tags: ["密档线索"],
+        createdAt: { year: 1644, month: 1, tenDayPeriod: 1, turn: 18 },
+        lastTouchedTurn: 18,
+        lastReinforcedTurn: 18,
+        reinforcementCount: 1
+      }]
+    },
+    recentUpdates: []
+  };
+  worldState.sessionSummary = {
+    schemaVersion: 1,
+    generatedAtTurn: 18,
+    monthlySummaries: [{
+      id: "SS-polluted-archive",
+      periodLabel: "1644年一月",
+      publicSummary: "本月私档记录了一条隐藏意图。",
+      highlights: ["hidden intent", "公开摘要"],
+      generatedAt: { year: 1644, month: 1, tenDayPeriod: 3, turn: 18 },
+      generatedAtTurn: 18
+    }]
+  };
+
+  const archive = buildEventArchiveView(worldState, { pageSize: 50 });
+  const serialized = JSON.stringify(archive);
+
+  assert.equal(archive.counts.actor_memory || 0, 0);
+  assert.equal(archive.counts.session_summary || 0, 0);
+  assert.doesNotMatch(serialized, /hidden notes|hidden intent|私档|隐藏意图|密档线索/);
+});
+
 test("event archive includes S65.2 intelligence rumors without hidden source leakage", () => {
   const worldState = createInitialState({ role: "official", playerName: "情报归档" });
   Object.assign(worldState, {

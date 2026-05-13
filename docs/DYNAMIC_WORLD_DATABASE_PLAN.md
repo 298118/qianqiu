@@ -569,7 +569,7 @@ S60-S67 已完成并并入 [LOCAL_DATABASE_AND_WORLD_CONTENT_ARCHIVE.md](LOCAL_D
 - S66：大规模 prompt retrieval 策略与浏览器局势簿分页、检索、筛选、排序。
 - S67：large fixture 规模/性能/回归验收与本阶段归档交接。
 
-内容保护原则不变：AI 可以通过领域工具提交 proposal / request-adjudication，但不直写库；hidden 私档不回填当前 raw route `worldState`，浏览器/prompt 只读服务器 projection。若后续确需保存完整 hidden 私档，必须先完成 API redaction 与角色视野分层设计。
+内容保护原则不变：AI 可以通过领域工具提交 proposal / request-adjudication，但不直写库；hidden 私档不回填当前 raw route `worldState`，浏览器/prompt 只读服务器 projection。S70.12 起原始记忆与经历摘要账本已从玩家 route `worldState` 剥离，只通过安全 view 暴露。若后续确需保存完整 hidden 私档，必须先完成 API redaction 与角色视野分层设计。
 
 ### S70：AI 编排、actor 智力与工具权限
 

@@ -56,6 +56,17 @@ test("turn schema accepts whitelisted state patches", () => {
       advice: "先练破题承题，再看辞采。",
       reason: "老师点评只作为文本 proposal。"
     },
+    memoryProposals: [{
+      actorId: "npc:C01",
+      type: "favor",
+      visibility: "player_visible",
+      summary: "顾文衡记得玩家曾代修书卷。",
+      salience: 72,
+      confidence: 0.8,
+      sourceType: "ai_memory_proposal",
+      sourceRefs: [{ sourceView: "relationshipView", id: "C01", label: "顾文衡" }],
+      tags: ["人情"]
+    }],
     events: ["event"],
     examTrigger: {
       shouldStart: false,
@@ -88,6 +99,44 @@ test("turn schema rejects teacher proposal attempts to include unknown authority
   };
 
   assert.throws(() => validatePayload("turn", payload), /schema validation/);
+});
+
+test("turn schema rejects private or overbroad memory proposals", () => {
+  const base = {
+    narrative: "A memory proposal happened.",
+    statePatch: {},
+    attributeChanges: [],
+    events: [],
+    examTrigger: {
+      shouldStart: false,
+      level: null,
+      reason: ""
+    }
+  };
+
+  for (const memoryProposals of [
+    [{
+      actorId: "npc:C01",
+      type: "favor",
+      visibility: "actor_private",
+      summary: "private memory"
+    }],
+    [{
+      actorId: "npc:C01",
+      type: "secret_fact",
+      visibility: "player_visible",
+      summary: "bad type"
+    }],
+    [{
+      actorId: "npc:C01",
+      type: "favor",
+      visibility: "player_visible",
+      summary: "tries to write",
+      statePatch: { actorMemoryLedger: {} }
+    }]
+  ]) {
+    assert.throws(() => validatePayload("turn", { ...base, memoryProposals }), /schema validation/);
+  }
 });
 
 test("turn schema rejects unsafe relationship change suggestions", () => {
@@ -195,6 +244,8 @@ test("turn schema rejects model attempts to patch ordinary-turn server-owned fie
     { worldEntities: { entities: [{ id: "provider-forged", name: "伪实体" }] } },
     { worldPeople: { npcs: [{ id: "provider-forged-npc", name: "伪人物" }] } },
     { worldThreads: { threads: [{ id: "provider-forged", title: "伪议题" }] } },
+    { actorMemoryLedger: { memoriesByActor: { "npc:C01": [{ summary: "模型记忆" }] } } },
+    { sessionSummary: { monthlySummaries: [{ publicSummary: "模型摘要" }] } },
     { characters: [{ id: "C99", name: "Invented official" }] },
     { eventHistory: ["provider tries to replace history"] },
     { player: { examRank: "秀才" } },

@@ -9,7 +9,7 @@
 - S48 时间专项：[TIME_SPECIALTY_ROADMAP_ARCHIVE.md](TIME_SPECIALTY_ROADMAP_ARCHIVE.md)。
 - S49-S67 本地数据库基础、SQLite 业务表、双模式验收、超大动态世界内容与 S60 内容契约：[LOCAL_DATABASE_AND_WORLD_CONTENT_ARCHIVE.md](LOCAL_DATABASE_AND_WORLD_CONTENT_ARCHIVE.md)。旧分卷归档和 S60 契约文件保留为跳转页。
 
-当前活动路线图已交接到 S70：S68-S69 的书生主线科举、读书、评卷与授官制度已归档，S70.1 prompt pack 与工具协议、S70.2 actor 权限模型、S70.3 `game_ai_tools` 运行时、S70.4 NPC mind 基础、S70.5 制度场景 helper、S70.6 压力事件工具协议、S70.7 领域工具协议、S70.8 多模型路由/eval 基础、S70.9 AI 设置与可观测性、S70.10 玩家官职月报和 S70.11 自然语言跳时已落地，下一步进入 S70.12 大模型记忆系统。S71 作为 S70 之后的数据库玩法化、维护、安全检索和 redacted API 专项，规划见 [DATABASE_GAMEPLAY_RESOLVER_ROADMAP.md](DATABASE_GAMEPLAY_RESOLVER_ROADMAP.md)。数据库方向继续只考虑本机 JSON/SQLite 持久化增强；远程存档、账号体系、多人同步、云端冲突解决和托管数据库不进入当前规划。
+当前活动路线图已交接到 S70：S68-S69 的书生主线科举、读书、评卷与授官制度已归档，S70.1 prompt pack 与工具协议、S70.2 actor 权限模型、S70.3 `game_ai_tools` 运行时、S70.4 NPC mind 基础、S70.5 制度场景 helper、S70.6 压力事件工具协议、S70.7 领域工具协议、S70.8 多模型路由/eval 基础、S70.9 AI 设置与可观测性、S70.10 玩家官职月报、S70.11 自然语言跳时和 S70.12 大模型记忆系统已落地，下一步进入 S70.13 地图系统 AI 接口预留。S71 作为 S70 之后的数据库玩法化、维护、安全检索和 redacted API 专项，规划见 [DATABASE_GAMEPLAY_RESOLVER_ROADMAP.md](DATABASE_GAMEPLAY_RESOLVER_ROADMAP.md)。数据库方向继续只考虑本机 JSON/SQLite 持久化增强；远程存档、账号体系、多人同步、云端冲突解决和托管数据库不进入当前规划。
 
 ## 1. 开发规范继承
 
@@ -92,10 +92,10 @@
 
 - JSON adapter 继续是默认路径，Mock 模式继续完整可玩。
 - SQLite 模式只表示本机不同存档，不引入远程、账号、多人或云端语义。
-- `worldState` snapshot 继续可读、可导入、可导出；SQLite 派生表继续可从 `world_sessions.world_state_json` 单向修复。
+- `worldState` snapshot 继续可读、可导入、可导出；SQLite 派生表继续可从 `world_sessions.world_state_json` 单向修复。S70.12 起玩家 route response 内的兼容 `worldState` 会剥离 raw `actorMemoryLedger` / `sessionSummary`，记忆与经历摘要只能通过安全 view 暴露。
 - AI 可以通过身份受限的领域工具提交 proposal 或 request-adjudication，但不能执行 SQL，不能直接写 canonical 状态、业务表或审计表，也不能把 tool call 伪装成已经发生的世界事实。
 - API、prompt 和浏览器只读服务器整理后的 projection；不得暴露 raw audit、provider proposal、完整 prompt、本地路径、密钥、隐藏 notes、hidden intent、未公开任所、未公开关系或 hidden raw rows。
-- S60-S67 的 hidden 私档、资产真数、密档事件链和隐藏情报真值没有回填当前 raw route `worldState`；后续若保存真正 hidden 私档，必须先设计玩家 API redaction 和 prompt role-visibility 分层。
+- S60-S67 的 hidden 私档、资产真数、密档事件链和隐藏情报真值没有回填当前 raw route `worldState`；后续若保存真正 hidden 私档，必须先设计玩家 API redaction 和 prompt role-visibility 分层。S70.12 已先把记忆/摘要原始账本从响应 `worldState` 中剥离。
 
 ## 4. 活动路线图总览
 
@@ -115,7 +115,7 @@
 | S70.9 | DONE | AI 设置与可观测性：按叙事、NPC、科举、政务、战争、记忆、critic/safety 配置模型路由、输出长度、并发、工具预算、审计面板和 hidden-safe 诊断 | 2026-05-12 | Codex / 子代理 | `cbb8b1e` |
 | S70.10 | DONE | 玩家官职月报与 AI 推动世界：每三旬生成职位化月报、上级态度、同僚风向、NPC 主动请求、下月风险和待裁决差事 | 2026-05-12 | Codex / 子代理 | `16d5f08` |
 | S70.11 | DONE | 自然语言跳时：解析“学习一月/养病半月/照旧处理一月”，拆为多旬 batch tick、事件中断和跳时总结 | 2026-05-13 | Codex / 子代理 | `e18720e` |
-| S70.12 | TODO | 大模型记忆系统：actor memory ledger、fact/impression memory、月度 summary、安全检索、来源/置信度/可见性/衰减 | - | - | S70.11 后 |
+| S70.12 | DONE | 大模型记忆系统：actor memory ledger、fact/impression memory、月度 summary、安全检索、来源/置信度/可见性/衰减 | 2026-05-13 | Codex / 子代理 | 本次实现提交待回填 |
 | S70.13 | TODO | 地图系统 AI 接口预留：`mapContextView`、`mapEntityRef`、地图可见性、移动/行军/赴任/赶考/外交 proposal schema | - | - | S70.12 后 |
 | S70.14 | TODO | 真实 MiMo 验收与 S70 归档：MiMo-required provider smoke、JSON/SQLite parity、Mock 开发安全网、hidden-token、越权工具、browser smoke 和归档 | - | - | S70.13 后 |
 | S71.0 | TODO | 数据库玩法化专项契约：确认 S70 后接入点、resolver 输入清单、维护/检索/redacted API 边界和内容保护 | - | - | S70.14 后 |
@@ -156,7 +156,7 @@ S68-S69 是书生主线的深度专项，详细提前规划见 [IMPERIAL_EXAM_DE
 
 ## 6. S70：AI 提示词、工具协议与多 AI 编排
 
-S70 是 MiMo + DeepSeek 之后的 AI 编排专项。S70.8 起，`src/ai/index.js` 已提供 task-aware provider facade；`AI_PROVIDER=mock` 仍强制全任务本地 Mock，兼容路径中普通叙事、开局、流式回合和科举出题仍优先 MiMo，科举评卷与 domain_specialist/critic/safety 可按 route policy 使用 DeepSeek。S70.9 起，每个 session 有服务器维护的 AI 设置、玩家可见设置 view、浏览器 AI 设置面板和 hidden-safe 调动摘要；设置只改变 route/model/预算/并发/安全严格度，不改变 actor 权限、工具权限或服务器裁决。S70.10 起，玩家行政/官职身份会在月末收到服务器清洗的 `playerMonthlyBriefingView`，月报只读公开 projection 并写脱敏月报账本、事件档案和 bounded AI 调动摘要，不直接裁决官职、财政、军务、案牍或 NPC。S70.11 起，“学习一月/养病半月/照旧处理一月”等自然语言跳时会先生成服务器可裁决的 `timeSkipPlan`，再逐旬复用普通回合结算链，并在科期、急件或重大事件时中断。后续 AI actor、工具调用、NPC 智力、事件生成、制度推演、narrator/planner/critic/safety 仲裁、成本边界、失败降级和可观测性继续按 S70.12-S70.14 推进。
+S70 是 MiMo + DeepSeek 之后的 AI 编排专项。S70.8 起，`src/ai/index.js` 已提供 task-aware provider facade；`AI_PROVIDER=mock` 仍强制全任务本地 Mock，兼容路径中普通叙事、开局、流式回合和科举出题仍优先 MiMo，科举评卷与 domain_specialist/critic/safety 可按 route policy 使用 DeepSeek。S70.9 起，每个 session 有服务器维护的 AI 设置、玩家可见设置 view、浏览器 AI 设置面板和 hidden-safe 调动摘要；设置只改变 route/model/预算/并发/安全严格度，不改变 actor 权限、工具权限或服务器裁决。S70.10 起，玩家行政/官职身份会在月末收到服务器清洗的 `playerMonthlyBriefingView`，月报只读公开 projection 并写脱敏月报账本、事件档案和 bounded AI 调动摘要，不直接裁决官职、财政、军务、案牍或 NPC。S70.11 起，“学习一月/养病半月/照旧处理一月”等自然语言跳时会先生成服务器可裁决的 `timeSkipPlan`，再逐旬复用普通回合结算链，并在科期、急件或重大事件时中断。S70.12 起，普通回合和月末结算会写入服务器清洗后的 `actorMemoryView` 与 `sessionSummaryView`，AI 只能提交 `memoryProposals`，不能直接 patch 记忆账本、保存 private/hidden memory 或为不可见 actor 发明记忆；响应 `worldState` 也剥离 raw `actorMemoryLedger` / `sessionSummary`。后续 AI actor、工具调用、NPC 智力、事件生成、制度推演、narrator/planner/critic/safety 仲裁、成本边界、失败降级和可观测性继续按 S70.13-S70.14 推进。
 
 详细提前规划见 [AI_ORCHESTRATION_ROADMAP.md](AI_ORCHESTRATION_ROADMAP.md)。S70 的核心目标不是让模型直接改库，而是让 AI 在服务器法度内变成“有身份、有记忆、有权限、有后果”的世界行动者网络；S68-S69 提供科场、老师、考官和授官 resolver 的先行用例。该文档第 13-16 节已扩展为后续 Codex 开发任务书，逐项写明执行规则、运行依赖、项目资料、玩法资料、测试资料、建议模块/函数、工具/route 接口、测试文件和验收重点。
 
@@ -206,6 +206,47 @@ S71 详细规划见 [DATABASE_GAMEPLAY_RESOLVER_ROADMAP.md](DATABASE_GAMEPLAY_RE
 4. S71.9-S71.12：接入多 actor 场景、NPC 记忆和 AI 调动审计面板，最后做 dual-mode、Mock/no-key、browser 和 provider smoke 归档。
 
 ## 8. 进度记录
+
+### 2026-05-13
+
+工具：Codex、子代理。
+
+步骤：S70.12 大模型记忆系统。
+
+提交：本次实现提交待回填。
+
+完成：
+
+- 新增 `src/game/actorMemoryConfig.js`、`src/game/actorMemoryLedger.js`、`src/game/sessionSummary.js` 与 `src/game/clientWorldState.js`，集中 actor memory 类型、来源、显著度、置信度、可见性、衰减、去重、session summary cap、hidden/raw/provider/prompt/path/key/SQLite 文本清洗和 route response raw ledger 剥离。
+- 普通回合接入 `memoryProposals`、可见关系变化、主动 NPC 请求、玩家官职月报和科举同年座师网络，服务器写入 `actorMemoryLedger` 并返回 `actorMemoryView`、本回合 `actorMemory` feedback、事件档案 `actor_memory` 条目和 capped prompt `actorMemory` 摘要。
+- 月末结算写入 `sessionSummary` 玩家经历摘要，返回 `sessionSummaryView`、本回合 `sessionSummary` feedback、事件档案 `session_summary` 条目和 bounded `memory_summarizer` AI 调动摘要；跳时逐旬复用 `finalizeTurn()`，因此月末摘要仍按同一去重规则运行。
+- `src/ai/schemas.js`、`src/ai/providers/remoteHelpers.js`、`src/ai/promptPacks.js`、`src/ai/prompts.js` 与 `src/game/stateRules.js` 已固定边界：provider 只能提交 schema 兼容的 `memoryProposals`，不能 patch `actorMemoryLedger` / `sessionSummary`，private/hidden/actor-private 及其空格/连字符别名 memory 在 redacted API 完成前一律拒绝；provider 发明不可见 actor 的记忆会被拒绝，provider 伪造 `sourceType` 会被服务器强制归为 `ai_memory_proposal`。
+- 游戏、考试和 SSE payload 已返回 `actorMemoryView` / `sessionSummaryView`；被拒绝的记忆 proposal 只进入 hidden-safe 计数和原因码，并纳入 turn feedback / audit proposal 拒绝摘要，真实 provider remote helper 对非法/hidden/private 记忆提案也会输出脱敏拒绝 telemetry 而不是静默丢弃；`actorMemoryView`、recent updates 和 `eventArchiveView` 只展示仍在 `worldPeopleView` / actor label map 中可见的 actor 记忆；`promptContextAssembler` 新增 memory 检索域和 `recentPlayerHistory` 安全摘要；`eventArchiveView` 新增 `actor_memory` / `session_summary` 来源，并过滤 hidden notes/intent、密档/私档、raw provider/prompt/path/key/SQLite 变体；浏览器源码测试守卫禁止读取 raw `worldState.actorMemoryLedger` / `worldState.sessionSummary`，route response `worldState` 同步剥离这两个 raw ledger。
+
+验证：
+
+- 已通过：`node --check src/game/clientWorldState.js`、`node --check src/game/actorMemoryLedger.js`、`node --check src/game/sessionSummary.js`、`node --check src/game/audit.js`、`node --check src/game/eventArchive.js`、`node --check src/routes/game.js`、`node --check src/routes/exam.js`、`node --check src/ai/providers/remoteHelpers.js`。
+- 已通过：`node --test test/actorMemoryLedger.test.js test/actorMemoryVisibility.test.js test/sessionSummary.test.js test/actorMemoryRoute.test.js test/promptContextAssembler.test.js test/aiSchemas.test.js test/stateRules.test.js test/publicAppSource.test.js test/eventArchive.test.js test/remoteHelpers.test.js`（76/76）。
+- 已通过：`node --test test/playerMonthlyBriefing.test.js test/playerMonthlyBriefingRoute.test.js`（6/6）。
+- 已通过：`node --test test/timeSkip.test.js test/timeSkipInterruptions.test.js test/gameTurnTimeSkip.test.js test/gameTurnTick.test.js`（20/20）。
+- 已通过：`node --test test/streamingTurnRoute.test.js test/examNetworks.test.js test/examHonorsRoute.test.js`（8/8）。
+- 已通过：`node --test test/eventArchive.test.js`（10/10，已包含在 S70.12 核心组合中）。
+- 已通过：`node --test test/gameTurnRelationships.test.js test/gameTurnOfficialCareer.test.js test/gameTurnRoleWorldCoupling.test.js`（16/16）。
+- 已通过：`npm run check:docs-governance`。
+- 已通过：`node --test test/documentationGovernance.test.js`（1/1）。
+- 已通过：`npm run eval:ai`。
+- 已通过：`git diff --check`。
+- 已运行：`npm test`（706/707；1 个 S67 dual-mode timing 阈值抖动失败，随后 `node --test test/dualModeAcceptanceScript.test.js` 单独复跑 6/6 通过）。
+- 提交前只读子代理复审：首轮发现 provider `sourceType` spoof、拒绝提案可观测性、事件档案 raw memory/session sanitizer、remote helper 静默丢弃坏记忆 proposal、不可见 actor 旧记忆可进入 view/archive 等问题；已逐项修复并补回归。整改后复审未发现 P0/P1/P2；残余风险是本轮未重跑全量 `npm test`，此前全量仅 S67 dual-mode timing flake，聚焦复跑已通过。
+
+风险/遗留：
+
+- 当前版本只保存 `public`、`player_visible`、`relationship_visible` 记忆；真正 NPC 私密记忆、hidden 动机和按 actor 视野读取的 private memory 必须等 redacted player API 与 hidden-safe diagnostics 完成后再做。
+- 记忆摘要使用 deterministic server helper 与 schema-cleaned provider proposal；真实 MiMo 记忆提炼 smoke、长上下文压缩质量和 SQLite prompt index parity 留给 S70.14 / S71 专项。
+
+下一步：
+
+- 启动 S70.13：地图系统 AI 接口预留，新增 `mapContextView`、`mapEntityRef`、地图可见性、移动/行军/赴任/赶考/外交 proposal schema，并继续保护 hidden/raw/SQLite raw table、本地路径和 key 不进入普通 turn、浏览器或模型。
 
 ### 2026-05-13
 

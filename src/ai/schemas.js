@@ -94,6 +94,98 @@ const teacherFeedbackProposalSchema = {
   }
 };
 
+const memorySourceRefSchema = {
+  type: "object",
+  additionalProperties: false,
+  properties: {
+    id: { type: "string" },
+    sourceView: { type: "string" },
+    label: { type: "string" }
+  }
+};
+
+const memoryProposalSchema = {
+  type: "object",
+  required: ["actorId", "type", "visibility", "summary"],
+  additionalProperties: false,
+  properties: {
+    id: { type: "string" },
+    proposalId: { type: "string" },
+    actorId: { type: "string", minLength: 1 },
+    type: {
+      type: "string",
+      enum: [
+        "fact",
+        "impression",
+        "favor",
+        "grievance",
+        "obligation",
+        "exam_network",
+        "reward_punishment",
+        "official",
+        "monthly_summary"
+      ]
+    },
+    visibility: {
+      type: "string",
+      enum: ["public", "player_visible", "relationship_visible"]
+    },
+    subjectType: { type: "string" },
+    subjectId: { type: "string" },
+    summary: { type: "string", minLength: 1 },
+    salience: { type: "number", minimum: 0, maximum: 100 },
+    confidence: { type: "number", minimum: 0, maximum: 1 },
+    sourceType: { type: "string" },
+    sourceLabel: { type: "string" },
+    sourceRefs: {
+      type: "array",
+      maxItems: 5,
+      items: memorySourceRefSchema
+    },
+    tags: {
+      type: "array",
+      maxItems: 6,
+      items: { type: "string" }
+    }
+  }
+};
+
+const memoryProposalsSchema = {
+  type: "array",
+  minItems: 0,
+  maxItems: 6,
+  items: memoryProposalSchema,
+  default: []
+};
+
+const memoryProposalRejectionSchema = {
+  type: "object",
+  required: ["reason", "count"],
+  additionalProperties: false,
+  properties: {
+    reason: {
+      type: "string",
+      enum: [
+        "malformed_memory_proposal",
+        "missing_actor",
+        "invalid_memory_type",
+        "invalid_memory_visibility",
+        "private_or_hidden_memory_requires_redacted_api",
+        "unsafe_or_empty_summary"
+      ]
+    },
+    count: { type: "integer", minimum: 1, maximum: 6 }
+  }
+};
+
+const memoryProposalRejectionsSchema = {
+  type: "array",
+  minItems: 0,
+  maxItems: 6,
+  items: memoryProposalRejectionSchema,
+  default: []
+};
+
 const statePatchSchema = {
   type: "object",
   additionalProperties: false,
@@ -196,6 +288,8 @@ const turnSchema = {
     },
     relationshipChanges: relationshipChangesSchema,
     teacherFeedbackProposal: teacherFeedbackProposalSchema,
+    memoryProposals: memoryProposalsSchema,
+    memoryProposalRejections: memoryProposalRejectionsSchema,
     events: eventSchema,
     examTrigger: examTriggerSchema
   }
@@ -396,6 +490,44 @@ const modelTeacherFeedbackProposalSchema = {
   }
 };
 
+const modelMemorySourceRefSchema = {
+  type: "object",
+  additionalProperties: false,
+  properties: {
+    id: { type: "string" },
+    sourceView: { type: "string" },
+    label: { type: "string" }
+  }
+};
+
+const modelMemoryProposalSchema = {
+  type: "object",
+  required: ["actorId", "type", "summary"],
+  additionalProperties: false,
+  properties: {
+    id: { type: "string" },
+    proposalId: { type: "string" },
+    actorId: { type: "string" },
+    type: { type: "string" },
+    visibility: { type: "string" },
+    subjectType: { type: "string" },
+    subjectId: { type: "string" },
+    summary: { type: "string" },
+    salience: { type: "number" },
+    confidence: { type: "number" },
+    sourceType: { type: "string" },
+    sourceLabel: { type: "string" },
+    sourceRefs: {
+      type: "array",
+      items: modelMemorySourceRefSchema
+    },
+    tags: {
+      type: "array",
+      items: { type: "string" }
+    }
+  }
+};
+
 const modelExamQuestionSchema = {
   type: "object",
   required: [
@@ -496,6 +628,10 @@ const MODEL_SCHEMAS = {
         items: modelRelationshipChangeSchema
       },
       teacherFeedbackProposal: modelTeacherFeedbackProposalSchema,
+      memoryProposals: {
+        type: "array",
+        items: modelMemoryProposalSchema
+      },
       events: modelEventSchema,
       examTrigger: modelExamTriggerSchema
     }

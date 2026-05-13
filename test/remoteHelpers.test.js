@@ -2,6 +2,7 @@ const assert = require("assert/strict");
 const test = require("node:test");
 
 const { normalizeModelPayload, normalizeProviderStatePatch } = require("../src/ai/providers/remoteHelpers");
+const { validatePayload } = require("../src/ai/schemas");
 
 test("remote turn payload normalization drops malformed display-only attribute changes", () => {
   const payload = {
@@ -110,6 +111,55 @@ test("remote turn payload normalization drops incomplete teacher feedback propos
   const normalized = normalizeModelPayload("turn", payload);
 
   assert.equal(normalized.teacherFeedbackProposal, undefined);
+});
+
+test("remote turn payload normalization reports hidden-safe memory proposal rejections", () => {
+  const payload = {
+    narrative: "你与塾师交谈。",
+    statePatch: {},
+    attributeChanges: [],
+    relationshipChanges: [],
+    memoryProposals: [{
+      actorId: "npc:C01",
+      type: "favor",
+      visibility: "player_visible",
+      summary: "顾文衡记得玩家曾代修书卷。"
+    }, {
+      actorId: "npc:C01",
+      type: "favor",
+      visibility: "server-hidden",
+      summary: "顾文衡暗藏一条私密印象。"
+    }, {
+      actorId: "npc:C01",
+      type: "secret_fact",
+      visibility: "player_visible",
+      summary: "非法类型。"
+    }, {
+      actorId: "",
+      type: "fact",
+      visibility: "player_visible",
+      summary: "缺 actor。"
+    }, "bad proposal"],
+    memoryProposalRejections: [{ reason: "invalid_memory_type", count: 6 }],
+    events: ["交谈。"],
+    examTrigger: { shouldStart: false, level: null, reason: "" }
+  };
+
+  const normalized = normalizeModelPayload("turn", payload);
+
+  assert.deepEqual(normalized.memoryProposals, [{
+    actorId: "npc:C01",
+    type: "favor",
+    visibility: "player_visible",
+    summary: "顾文衡记得玩家曾代修书卷。"
+  }]);
+  assert.deepEqual(normalized.memoryProposalRejections, [
+    { reason: "private_or_hidden_memory_requires_redacted_api", count: 1 },
+    { reason: "invalid_memory_type", count: 1 },
+    { reason: "missing_actor", count: 1 },
+    { reason: "malformed_memory_proposal", count: 1 }
+  ]);
+  assert.equal(validatePayload("turn", normalized), normalized);
 });
 
 test("remote payload normalization leaves non-turn payloads unchanged", () => {

@@ -7,6 +7,11 @@ const {
   assemblePromptContext,
   buildRankedRetrievalContext
 } = require("../src/ai/promptContextAssembler");
+const {
+  applyActorMemoryUpdate,
+  proposeActorMemoryUpdate
+} = require("../src/game/actorMemoryLedger");
+const { updateMonthlySessionSummary } = require("../src/game/sessionSummary");
 
 test("prompt context assembler centralizes visible summaries and ranked retrieval context", () => {
   const worldState = createInitialState({ role: "official", playerName: "Assembler Tester" });
@@ -167,6 +172,51 @@ test("prompt context includes capped appointment track summary without appointme
   assert.match(serialized, /一甲翰林修撰|翰林院修撰|状元/);
   assert.doesNotMatch(serialized, /SEALED_APPOINTMENT_PROMPT|raw provider|sk-test-secret|E:\\secret/);
   assert.match(serialized, /不得要求模型绕过官缺/);
+});
+
+test("prompt context includes capped actor memory and recent player history summaries", () => {
+  const worldState = createInitialState({ role: "official", playerName: "Memory Prompt Tester" });
+  for (let index = 0; index < 10; index += 1) {
+    const proposed = proposeActorMemoryUpdate("npc:C01", {
+      type: index % 2 === 0 ? "favor" : "grievance",
+      visibility: "player_visible",
+      summary: index === 2
+        ? "SEALED_MEMORY_PROMPT raw provider prompt_retrieval_index file:///home/user/.env sk-test-secret-123456"
+        : `顾文衡记得第${index}次公开往来。`,
+      salience: 90 - index,
+      confidence: 0.7,
+      tags: ["往来"]
+    }, { worldState });
+    if (proposed.accepted) applyActorMemoryUpdate(worldState, proposed.memoryUpdate);
+  }
+  updateMonthlySessionSummary(worldState, {
+    worldTick: {
+      completedMonth: true,
+      timeAdvance: {
+        from: { year: 1644, month: 5, tenDayPeriod: 3 },
+        to: { year: 1644, month: 6, tenDayPeriod: 1 }
+      }
+    },
+    playerMonthlyBriefing: {
+      generated: true,
+      summary: "本月官务与人情往来已入摘要。",
+      reportId: "PMB-1644-05"
+    }
+  });
+
+  const context = assemblePromptContext(worldState, {
+    task: "world_turn",
+    playerAction: "回顾顾文衡旧日人情",
+    promptBudgetProfile: "ordinary"
+  });
+  const serialized = JSON.stringify(context);
+
+  assert.ok(context.actorMemory.actors[0].memories.length <= 4);
+  assert.ok(context.retrievalContext.memory.actorMemories.length <= 3);
+  assert.equal(context.recentPlayerHistory.recentMonthlySummaries.length, 1);
+  assert.match(serialized, /顾文衡记得第0次公开往来|本月官务与人情往来/);
+  assert.doesNotMatch(serialized, /SEALED_MEMORY_PROMPT|raw provider|prompt_retrieval_index|file:\/\/|sk-test-secret/);
+  assert.match(serialized, /模型只能提交 memoryProposals/);
 });
 
 test("prompt context assembler filters hidden rows, hidden refs, raw ledgers, and raw audit-like fields", () => {

@@ -10,6 +10,8 @@ const { createInitialOfficialPostingsState } = require("./officialPostings");
 const { createInitialStudyProfile } = require("./studyProfile");
 const { createInitialExamHonorLedger } = require("./examHonors");
 const { createInitialAppointmentTrackLedger } = require("./appointmentTracks");
+const { createInitialActorMemoryLedger } = require("./actorMemoryLedger");
+const { createInitialSessionSummaryState } = require("./sessionSummary");
 const { NUMERIC_RANGES, clamp } = require("./stateRules");
 
 const ROLE_LABELS = {
@@ -226,6 +228,8 @@ function createInitialState(input = {}) {
     appointmentTrack: null,
     aiSettings: null,
     playerMonthlyBriefing: null,
+    actorMemoryLedger: null,
+    sessionSummary: null,
     examCalendar: createInitialExamCalendar(),
     activeNpcRequest: null,
     longTermEvents: {
@@ -312,6 +316,8 @@ function createInitialState(input = {}) {
   worldState.studyProfile = createInitialStudyProfile(worldState);
   worldState.examHonorLedger = createInitialExamHonorLedger(worldState);
   worldState.appointmentTrack = createInitialAppointmentTrackLedger(worldState);
+  worldState.actorMemoryLedger = createInitialActorMemoryLedger(worldState);
+  worldState.sessionSummary = createInitialSessionSummaryState(worldState);
   return worldState;
 }
 

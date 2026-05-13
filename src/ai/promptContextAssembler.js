@@ -50,6 +50,8 @@ const {
   buildWorldThreadView,
   summarizeWorldThreadsForPrompt
 } = require("../game/worldThreads");
+const { summarizeActorMemoryForPrompt } = require("../game/actorMemoryLedger");
+const { summarizeRecentPlayerHistory } = require("../game/sessionSummary");
 const { getPromptRetrievalSource } = require("./promptContextSource");
 
 const RETRIEVAL_CONTEXT_SCHEMA_VERSION = 1;
@@ -79,7 +81,9 @@ const LIMITS = Object.freeze({
   eventChains: 4,
   recentEvents: 6,
   rumors: 4,
-  entities: 5
+  entities: 5,
+  actorMemories: 6,
+  sessionSummaries: 3
 });
 
 const ORDINARY_TURN_LIMITS = Object.freeze({
@@ -104,7 +108,9 @@ const ORDINARY_TURN_LIMITS = Object.freeze({
   eventChains: 1,
   recentEvents: 4,
   rumors: 1,
-  entities: 1
+  entities: 1,
+  actorMemories: 3,
+  sessionSummaries: 2
 });
 
 const PROMPT_BUDGET_PROFILES = Object.freeze({
@@ -142,7 +148,9 @@ const RETRIEVAL_ROW_PATHS = Object.freeze([
   ["events", "militaryReports"],
   ["events", "economicReports"],
   ["events", "eventChains"],
-  ["entities", "highlights"]
+  ["entities", "highlights"],
+  ["memory", "actorMemories"],
+  ["memory", "sessionSummaries"]
 ]);
 
 const UNSAFE_RETRIEVAL_TEXT_PATTERNS = Object.freeze([
@@ -178,7 +186,9 @@ const SOURCE_TYPE_COLLECTION_PATHS = Object.freeze({
   "historicalEventArchiveView.chain": ["events", "eventChains"],
   eventArchiveView: ["events", "recentEvents"],
   "intelligenceRumorView.rumor": ["intel", "rumors"],
-  "worldEntities.highlight": ["entities", "highlights"]
+  "worldEntities.highlight": ["entities", "highlights"],
+  "actorMemoryView.memory": ["memory", "actorMemories"],
+  "sessionSummaryView.summary": ["memory", "sessionSummaries"]
 });
 
 function cleanText(value, fallback = "", maxLength = MAX_TEXT_LENGTH) {
@@ -985,6 +995,74 @@ function compactEntity(entity) {
   };
 }
 
+function compactActorMemory(row = {}) {
+  return {
+    id: row.id,
+    actorId: row.actorId,
+    actorLabel: row.actorLabel,
+    type: row.type,
+    typeLabel: row.typeLabel,
+    summary: cleanText(row.summary, "", 120),
+    salience: row.salience,
+    confidence: row.confidence,
+    sourceType: row.sourceType,
+    tags: unique(row.tags || [], 4)
+  };
+}
+
+function compactSessionSummary(row = {}) {
+  return {
+    id: row.id,
+    periodKey: row.periodKey,
+    periodLabel: row.periodLabel,
+    publicSummary: cleanText(row.publicSummary, "", 120),
+    highlights: unique(row.highlights || [], 4),
+    sourceRefs: (row.sourceRefs || []).slice(0, 3)
+  };
+}
+
+function flattenActorMemoryRows(worldState = {}) {
+  const summary = summarizeActorMemoryForPrompt(worldState);
+  const rows = [];
+  for (const actor of summary.actors || []) {
+    for (const [index, memory] of (actor.memories || []).entries()) {
+      rows.push({
+        id: `${actor.actorId}:${memory.type}:${index}`,
+        actorId: actor.actorId,
+        actorLabel: actor.actorLabel,
+        ...memory
+      });
+    }
+  }
+  return rows;
+}
+
+function buildMemoryContext(worldState, query) {
+  const playerHistory = summarizeRecentPlayerHistory(worldState);
+  const actorMemories = flattenActorMemoryRows(worldState);
+  const sessionSummaries = Array.isArray(playerHistory.recentMonthlySummaries)
+    ? playerHistory.recentMonthlySummaries
+    : [];
+  return {
+    actorMemories: rankRows(actorMemories, {
+      query,
+      limit: LIMITS.actorMemories,
+      sourceType: "actorMemoryView.memory",
+      textFields: ["actorId", "actorLabel", "type", "summary", "tags", "sourceType"],
+      baseScore: (row) => clampNumber(row.salience, 0, 100, 0),
+      mapRow: compactActorMemory
+    }),
+    sessionSummaries: rankRows(sessionSummaries, {
+      query,
+      limit: LIMITS.sessionSummaries,
+      sourceType: "sessionSummaryView.summary",
+      textFields: ["periodKey", "periodLabel", "publicSummary", "highlights"],
+      baseScore: () => 20,
+      mapRow: compactSessionSummary
+    })
+  };
+}
+
 function buildEventContext(worldState, query, retrievalSource = null) {
   const threadView = buildWorldThreadView(worldState);
   const longTermView = buildLongTermEventView(worldState);
@@ -1138,7 +1216,8 @@ function cloneRetrievalContext(context) {
     offices: { ...context.offices },
     events: { ...context.events },
     intel: { ...context.intel },
-    entities: { ...context.entities }
+    entities: { ...context.entities },
+    memory: { ...context.memory }
   };
 }
 
@@ -1264,6 +1343,8 @@ function applyPromptBudget(context, options = {}) {
     next.intel.rumors = mapRankedRows(next.intel.rumors, compactOrdinaryRumor);
   }
   next.entities.highlights = sliceRankedRows(next.entities.highlights, limits.entities);
+  next.memory.actorMemories = sliceRankedRows(next.memory.actorMemories, limits.actorMemories);
+  next.memory.sessionSummaries = sliceRankedRows(next.memory.sessionSummaries, limits.sessionSummaries);
 
   const beforeOverflowRows = countRetrievalRows(next);
   let overflow = countRetrievalRows(next) - profile.maxRows;
@@ -1363,7 +1444,9 @@ function buildRankedRetrievalContext(worldState = {}, options = {}) {
       "historicalEventArchiveView",
       "intelligenceRumorView",
       "worldEntityView",
-      "eventArchiveView"
+      "eventArchiveView",
+      "actorMemoryView",
+      "sessionSummaryView"
     ],
     query: {
       task: query.task,
@@ -1381,6 +1464,7 @@ function buildRankedRetrievalContext(worldState = {}, options = {}) {
     events: buildEventContext(worldState, query, retrievalSource),
     intel: buildIntelContext(worldState, query, retrievalSource),
     entities: buildEntityContext(worldState, query),
+    memory: buildMemoryContext(worldState, query),
     safety: {
       visibility: "Only server-built player-visible projections are assembled here.",
       authority: "This context is read-only for model adapters; appointments, transfers, events, ledgers, and database writes remain server-owned."
@@ -1411,6 +1495,8 @@ function assemblePromptContext(worldState = {}, options = {}) {
     officialCareer: summarizeOfficialCareerForPrompt(worldState),
     officialPostings: summarizeOfficialPostingsForPrompt(worldState),
     roleWorldCoupling: summarizeRoleWorldCouplingForPrompt(worldState),
+    actorMemory: summarizeActorMemoryForPrompt(worldState, null, options),
+    recentPlayerHistory: summarizeRecentPlayerHistory(worldState, options),
     retrievalContext: buildRankedRetrievalContext(worldState, options)
   };
 }
