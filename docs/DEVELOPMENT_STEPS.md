@@ -122,7 +122,7 @@
 | S70.14 | DONE | 真实 MiMo 验收与 S70 归档：MiMo-required provider smoke、JSON/SQLite parity、Mock 开发安全网、hidden-token、越权工具、browser smoke 和归档 | 2026-05-13 | Codex / 子代理 | `6fc1561` |
 | S71.0 | DONE | 数据库玩法化专项契约：确认 S70 后接入点、resolver 输入清单、维护/检索/redacted API 边界和内容保护 | 2026-05-13 | Codex / 子代理 | `9a3c1fa` |
 | S71.1 | DONE | 数据库作为玩法 resolver 输入：财政、城市、NPC、官职、事件、情报 projection 进入服务器裁决上下文 | 2026-05-13 | Codex / 子代理 | `7136953` |
-| S71.2 | DONE | 本地 SQLite schema migration 与维护层：`schema_migrations`、备份、VACUUM、索引健康、体积提示和脱敏导出 | 2026-05-13 | Codex / 子代理 | 待回填 |
+| S71.2 | DONE | 本地 SQLite schema migration 与维护层：`schema_migrations`、备份、VACUUM、索引健康、体积提示和脱敏导出 | 2026-05-13 | Codex / 子代理 | `deb7c27` |
 | S71.3 | TODO | 安全全文检索 / 本地搜索：FTS5 或 fallback，只索引 player-facing projection，不索引 hidden/raw | - | - | S71.2 后 |
 | S71.4 | TODO | Redacted player API 与开发诊断 API：保存 hidden 私档前先拆玩家可见 state 和 hidden-safe diagnostics | - | - | S71.3 后 |
 | S71.5 | TODO | 财政与城市政策 resolver：征粮、赈济、修堤、平粜、清丈、钱粮差事等服务器裁决 | - | - | S71.4 后 |
@@ -215,7 +215,7 @@ S71 详细规划见 [DATABASE_GAMEPLAY_RESOLVER_ROADMAP.md](DATABASE_GAMEPLAY_RE
 
 步骤：S71.2 本地 SQLite schema migration 与维护层。
 
-提交：待回填。
+提交：`deb7c27`。
 
 完成：
 
