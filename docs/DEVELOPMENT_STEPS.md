@@ -130,7 +130,7 @@
 | S71.7 | DONE | 军务与外交 resolver：侦察、固守、调粮、练兵、会战、互市、和议、宣战 request 和服务器裁决 | 2026-05-13 | Codex / 子代理 | `761ec99` |
 | S71.8 | DONE | 压力驱动事件生成器：从粮价、水利、腐败、边防、NPC 怨怼和情报压力生成事件候选 | 2026-05-13 | Codex / 子代理 | `5ead9e5` |
 | S71.9 | DONE | 多 actor 场景运行时：朝议、堂审、会盟、战役 scene-local time 与 actor proposal 编排 | 2026-05-13 | Codex / 子代理 | `6440614` |
-| S71.10 | DONE | NPC 记忆账本：高显著 NPC 长期记忆、人情债、恩怨、家族风险和背景 NPC heuristic | 2026-05-13 | Codex / 子代理 | 待本次提交 |
+| S71.10 | DONE | NPC 记忆账本：高显著 NPC 长期记忆、人情债、恩怨、家族风险和背景 NPC heuristic | 2026-05-13 | Codex / 子代理 | `a88b429` |
 | S71.11 | TODO | AI 调动审计面板：工具摘要、拒绝原因、成本、公开结果和 hidden-safe 开发诊断，不泄漏 raw prompt/proposal | - | - | S71.10 后 |
 | S71.12 | TODO | S71 验收与归档：JSON/SQLite parity、Mock/no-key、provider smoke、browser smoke、hidden-token 和完整书生路径回归 | - | - | S71.11 后 |
 
@@ -215,7 +215,7 @@ S71 详细规划见 [DATABASE_GAMEPLAY_RESOLVER_ROADMAP.md](DATABASE_GAMEPLAY_RE
 
 步骤：S71.10 NPC 记忆账本。
 
-提交：待本次提交。
+提交：`a88b429`。
 
 完成：
 
