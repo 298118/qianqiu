@@ -115,7 +115,7 @@
 | S72.3 | DONE | Codex | 水墨地图素材生成、manifest 与台账 | 已完成首批底图/纸纹/路线/涟漪/图标素材生成、视觉审核、alpha 后处理、manifest、台账和 manifest 安全测试 |
 | S72.4 | DONE | Gemini CLI，Codex 审核提交 | PixiJS 地图 shell 与图层系统 | 已接入本地 PixiJS vendor、固定 CDN fallback、地图 renderer/panel、manifest-driven 素材加载、tooltip/label、行动草稿回填和资源失败 fallback；Codex 审查并补充验证测试 |
 | S72.5 | DONE | Gemini CLI，Codex 审核提交 | 地图与游戏系统深度联动 | 已完成地点、路线和事件点击选中态，tooltip 只读安全 `mapRuntimeView` ref/sourceRefs，可跳转已公开渲染的局势簿卡片；行动草稿仍只回填输入框，不直写状态 |
-| S72.6 | TODO | Gemini CLI，Codex 提供素材 | 水墨动效与视觉 polish | 保证拖拽/缩放/路线/事件动效流畅，支持降级与窄屏布局 |
+| S72.6 | DONE | Gemini CLI，Codex 审核提交 | 水墨动效与视觉 polish | 已完成路线墨线呼吸、事件涟漪扩散、朱砂双圈选中态、tooltip/fallback 案头舆图视觉、reduced-motion 与可见性暂停守卫；Codex 已修正 Gemini patch 的脚本残片和路线动效 `NaN` 风险 |
 | S72.7 | TODO | Codex | 验收、安全与性能回归 | 覆盖文档治理、node tests、browser smoke、canvas 非空、资源失败降级、hidden/raw 不外泄 |
 | S72.8 | TODO | Codex | S72 专项归档 | 完成后归档范围、风险和后续地图玩法，不把长实现记录留在活动台账 |
 
@@ -482,3 +482,42 @@
 下一步：
 
 - 执行 S72.6：水墨动效与视觉 polish，重点检查路线流动、事件涟漪、marker 状态、缩放/窄屏、资源失败降级和 reduced-motion。
+
+### 2026-05-14
+
+工具：Gemini CLI 前端 patch，Codex 审核、修正、测试、浏览器验证与收口。
+
+步骤：S72.6 水墨动效与视觉 polish。
+
+提交：本次提交。
+
+完成：
+
+- 审核 Gemini 的 S72.6 前端 polish patch，并保留 `S72.6_DELIVERY_REPORT.md` 作为本轮 Gemini 交付说明。
+- `public/mapRenderer.js` 新增路线墨线 alpha 呼吸、事件涟漪 scale/alpha 扩散、事件动效按 severity 优先和动画数量上限；开启 `prefers-reduced-motion: reduce` 时不创建新增动画，且 tick 直接退出。
+- 修正 Gemini patch 中会导致脚本语法失败的末尾残片，并修正路线对象没有 `baseScale` 却被通用 tick 写 scale 的 `NaN` 风险；路线现在只改 alpha，不重算路径几何。
+- 地图 renderer 接入 `IntersectionObserver` 与 `visibilitychange` 守卫，地图离屏或浏览器 tab 隐藏时跳过 `onTick` 动效更新；销毁时清理 resize、intersection、visibility 和 media query 监听器。
+- 选中态改为深朱砂双圈，tooltip、行动草稿按钮、局势簿跳转按钮和资源 fallback 面板改为更贴近案头舆图的纸色渐变、硬边与浅朱砂分隔线。
+- `test/mapFrontendShell.test.js` 新增 S72.6 源码回归断言，覆盖动画上限、可见性守卫、路线/涟漪动效分支和朱砂选中态。
+- 本轮不改后端逻辑、API/schema、SQLite 逻辑、provider schema、prompt 或正式地图素材。
+
+验证：
+
+- 已通过：`node --check public/mapRenderer.js`。
+- 已通过：`node --test test/mapFrontendShell.test.js`。
+- 已通过：`node --test test/mapAssetsManifest.test.js test/mapRuntimeView.test.js test/mapRuntimeRoute.test.js`。
+- 已通过：`npm run check:docs-governance`。
+- 已通过：`node --test test/documentationGovernance.test.js`。
+- 已通过：`git diff --check`。
+- 已通过：本地 `AI_PROVIDER=mock PORT=3100 node server.js` 浏览器验证；桌面端 canvas 非空、地图点击显示 tooltip、朱砂双圈选中态可见、控制台无错误；窄屏端主布局与长文本无明显溢出，地图 canvas 存在且控制台无错误。
+- 已运行但未完全通过：`npm test`。失败项为既有 S67 large fixture 性能阈值波动，`fixtureGenerationMs 10274.08 > 10000`；本轮未改 S67 fixture，随后单跑 `node --test test/dualModeAcceptanceScript.test.js` 已通过。
+- 已完成：只读子代理最终 diff 复审，未发现 P0/P1/P2；P3 提醒 `S72.6_DELIVERY_REPORT.md` 仍是未跟踪文件，本轮提交会一并纳入。
+
+风险/遗留：
+
+- 本轮动效为轻量 alpha/scale，不引入 shader 或额外库；更细的纸面毛边晕染可留给后续素材或 S72 之后的视觉专项。
+- S72.6 继续保持地图前端只读 `mapRuntimeView`，地图行动仍只回填自然语言草稿，不直写状态、不调用 resolver。
+
+下一步：
+
+- 执行 S72.7：做地图验收、安全与性能回归，覆盖浏览器 smoke、canvas 非空、资源失败降级、hidden/raw 不外泄和完整主线不回退。

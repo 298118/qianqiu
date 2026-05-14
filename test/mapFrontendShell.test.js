@@ -75,3 +75,23 @@ test("S72.5 map frontend links selected refs to safe information-panel cards", (
   assert.match(panelJs, /input\.value = draft\.actionText;/);
   assert.doesNotMatch(panelJs, /fetch\([^)]*turn/);
 });
+
+test("S72.6 map renderer gates ink motion and keeps selection in cinnabar style", () => {
+  const rendererJs = readPublicFile("mapRenderer.js");
+
+  assert.match(rendererJs, /const ROUTE_ANIMATION_LIMIT = 15;/);
+  assert.match(rendererJs, /const EFFECT_ANIMATION_LIMIT = 25;/);
+  assert.match(rendererJs, /IntersectionObserver/);
+  assert.match(rendererJs, /document\.addEventListener\("visibilitychange"/);
+  assert.match(rendererJs, /document\.removeEventListener\("visibilitychange"/);
+  assert.match(rendererJs, /this\.reducedMotion \|\| !this\.isPanelVisible \|\| !this\.isDocumentVisible/);
+
+  assert.match(rendererJs, /type: 'route'[\s\S]*baseAlpha: ROUTE_BASE_ALPHA/);
+  assert.match(rendererJs, /if \(eff\.type === "route"\)[\s\S]*eff\.sprite\.alpha = eff\.baseAlpha \+ wave \* ROUTE_ALPHA_PULSE;/);
+  assert.match(rendererJs, /else if \(eff\.type === "ripple"\)[\s\S]*eff\.sprite\.scale\.set\(eff\.baseScale \* \(1 \+ spread \* RIPPLE_SCALE_PULSE\)\)/);
+  assert.doesNotMatch(rendererJs, /eff\.sprite\.scale\.set\(eff\.baseScale \+ Math\.sin/);
+
+  assert.match(rendererJs, /highlight\.lineStyle\(3, 0x9b2f22, 0\.84\);/);
+  assert.match(rendererJs, /highlight\.lineStyle\(1, 0x9b2f22, 0\.64\);/);
+  assert.doesNotMatch(rendererJs, /highlight\.lineStyle\(2, 0x2f6f5e/);
+});
