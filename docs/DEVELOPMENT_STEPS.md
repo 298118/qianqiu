@@ -12,7 +12,7 @@
 - S70 AI prompt/tool/actor/多模型路由、AI 设置、官职月报、跳时、记忆、地图接口、provider AI-first smoke 和 JSON/SQLite parity：[AI_ORCHESTRATION_ARCHIVE.md](AI_ORCHESTRATION_ARCHIVE.md)。规划源头仍见 [AI_ORCHESTRATION_ROADMAP.md](AI_ORCHESTRATION_ROADMAP.md)。
 - S71 数据库玩法化、维护、安全检索、redacted player API、财政/刑名/军务外交服务器 resolver、压力事件、多 actor 场景、NPC 记忆账本、AI 调动审计和验收：[DATABASE_GAMEPLAY_RESOLVER_ARCHIVE.md](DATABASE_GAMEPLAY_RESOLVER_ARCHIVE.md)。规划源头仍见 [DATABASE_GAMEPLAY_RESOLVER_ROADMAP.md](DATABASE_GAMEPLAY_RESOLVER_ROADMAP.md)，resolver 输入契约见 [DATABASE_RESOLVER_INPUT_CONTRACT.md](DATABASE_RESOLVER_INPUT_CONTRACT.md)。
 
-当前活动路线图已完成到 S71 归档，并已启动 S72 PixiJS 水墨地图专项规划。S72 的专项任务书见 [PIXIJS_INK_MAP_ROADMAP.md](PIXIJS_INK_MAP_ROADMAP.md)，素材台账见 [MAP_ASSET_LEDGER.md](MAP_ASSET_LEDGER.md)。后续开发继续只考虑本机 JSON/SQLite 持久化增强，远程存档、账号体系、多人同步、云端冲突解决和托管数据库不进入当前规划。
+当前活动路线图已完成到 S71 归档，并已启动 S72 PixiJS 水墨地图专项规划。S72 的专项任务书见 [PIXIJS_INK_MAP_ROADMAP.md](PIXIJS_INK_MAP_ROADMAP.md)，素材指南见 [MAP_ASSET_GUIDE.md](MAP_ASSET_GUIDE.md)，素材台账见 [MAP_ASSET_LEDGER.md](MAP_ASSET_LEDGER.md)。Gemini CLI 项目指引见仓库根目录 [GEMINI.md](../GEMINI.md)。后续开发继续只考虑本机 JSON/SQLite 持久化增强，远程存档、账号体系、多人同步、云端冲突解决和托管数据库不进入当前规划。
 
 ## 1. 开发规范继承
 
@@ -109,7 +109,8 @@
 | ID | 状态 | Owner | 目标 | 说明 |
 | --- | --- | --- | --- | --- |
 | S72.0 | DONE | Codex | PixiJS 水墨地图规划与 Gemini 协作切换 | 本次只改文档：确认 PixiJS 方向、Codex 后端/素材/审核提交、Gemini CLI 前端 patch 且不提交代码；新增专项路线图和素材台账模板 |
-| S72.1 | TODO | Codex，Gemini 提供前端约束 | PixiJS 依赖治理与地图 runtime 契约 | 决定 PixiJS 加载方式，固定 `mapRuntimeView` / 显示布局草案，保留无 build step 除非后续明确批准 |
+| S72.0a | DONE | Codex | 细化 Codex/Gemini 实施规格 | 扩展专项路线图、补素材指南、创建 `GEMINI.md` 与 `.geminiignore`，让 Gemini 可按项目指引做前端只读报告或 patch |
+| S72.1 | TODO | Codex，Gemini 提供前端约束 | PixiJS 依赖治理与地图 runtime 契约 | 决定 PixiJS 加载方式，固定 `mapRuntimeView` / 显示布局草案，保留无 build step 除非后续明确批准；Gemini 首个任务应是只读前端约束报告 |
 | S72.2 | TODO | Codex | 后端地图 runtime view、布局契约与测试 | 基于 `mapContextView` 扩展安全投影；显示坐标只用于 UI，不暴露 raw/hidden/坐标污染 |
 | S72.3 | TODO | Codex | 水墨地图素材生成、manifest 与台账 | AI 生成底图/图标/纹理，保存到 `public/assets/maps/`，更新 `docs/MAP_ASSET_LEDGER.md` |
 | S72.4 | TODO | Gemini CLI，Codex 审核提交 | PixiJS 地图 shell 与图层系统 | Gemini 负责前端 patch 和浏览器验证说明；不得暂存、提交、推送或创建 PR |
@@ -185,3 +186,35 @@
 下一步：
 
 - 执行 S72.1：Codex 固定 PixiJS 依赖治理、地图 runtime view 草案和 Gemini 前端 patch 边界；Gemini 在契约明确后再开始 S72.4 前端地图 shell。
+
+### 2026-05-14
+
+工具：Codex。
+
+步骤：S72.0a 细化 Codex/Gemini 实施规格。
+
+提交：本次提交。
+
+完成：
+
+- 扩展 [PIXIJS_INK_MAP_ROADMAP.md](PIXIJS_INK_MAP_ROADMAP.md)：新增后端 `mapRuntimeView` 草案、建议文件、后端测试点、前端 PixiJS 文件/图层/接口、动效与性能预算、视觉规范、Gemini 交付格式和首个只读前端约束任务。
+- 新增 [MAP_ASSET_GUIDE.md](MAP_ASSET_GUIDE.md)：细化 AI 生图流程、prompt 模板、历史参考素材查找关键词、许可记录、manifest 草案、文件规格、质量验收和 Gemini 素材边界。
+- 更新 [MAP_ASSET_LEDGER.md](MAP_ASSET_LEDGER.md)，指向素材指南。
+- 新增根目录 [GEMINI.md](../GEMINI.md)，作为 Gemini CLI 项目开发指引；新增 `.geminiignore`，排除 `.env`、存档、审计、SQLite、产物、依赖和日志目录。
+- 本轮不改运行时代码、API、provider schema、存档格式、SQLite 表结构、提示词、验证脚本或 AI 权限。
+
+验证：
+
+- 已通过：`npm run check:docs-governance`。
+- 已通过：`node --test test/documentationGovernance.test.js`。
+- 已通过：`git diff --check`。
+- 已完成：只读子代理复审，未发现 P0/P2；P1 台账验证状态已由“待运行”改为实际结果，P3 已调整 `.geminiignore` 以保留 `.env.example` 可读。
+
+风险/遗留：
+
+- `GEMINI.md` 是 Gemini CLI 官方项目上下文文件口径；没有创建 `.gemini` 项目指引文件。`.geminiignore` 只用于排除上下文文件。
+- S72.1 仍需正式完成 PixiJS 依赖治理；本轮没有引入 PixiJS 依赖。
+
+下一步：
+
+- 执行 S72.1：先让 Gemini 按 `GEMINI.md` 的首个建议任务做只读前端约束报告；Codex 再固定 PixiJS 依赖治理、`mapRuntimeView` 契约和素材首批清单。
