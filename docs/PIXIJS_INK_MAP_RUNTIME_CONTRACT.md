@@ -258,7 +258,7 @@ if (window.QianqiuMapRenderer && currentMapRuntimeView) {
 
 .map-panel {
   position: relative;
-  height: clamp(200px, 35vh, 400px);
+  height: clamp(200px, 24vh, 280px);
   min-height: 200px;
   overflow: hidden;
 }
@@ -290,7 +290,7 @@ if (window.QianqiuMapRenderer && currentMapRuntimeView) {
 
 约束：
 
-- 地图高度使用 `clamp(200px, 35vh, 400px)` 作为首版上限，确保窄屏下 narrative 和 sticky action-area 仍可见。
+- 地图高度使用 `clamp(200px, 24vh, 280px)` 作为当前验收上限，并在桌面游戏态将书生信息面板限制为可滚动摘要区，确保窄屏和桌面下 narrative 与 sticky action-area 仍可见。
 - DOM overlay 默认 `pointer-events: none`，只有真正需要点击的按钮或控件局部恢复 `pointer-events: auto`。
 - tooltip 和 label 必须做边界检测、截断或换行，不能压住行动按钮。
 - `prefers-reduced-motion: reduce` 时，CSS 动画停止，并通知 Pixi ticker 降低或暂停水波纹、路线流动和 marker pulse。

@@ -116,7 +116,7 @@
 | S72.4 | DONE | Gemini CLI，Codex 审核提交 | PixiJS 地图 shell 与图层系统 | 已接入本地 PixiJS vendor、固定 CDN fallback、地图 renderer/panel、manifest-driven 素材加载、tooltip/label、行动草稿回填和资源失败 fallback；Codex 审查并补充验证测试 |
 | S72.5 | DONE | Gemini CLI，Codex 审核提交 | 地图与游戏系统深度联动 | 已完成地点、路线和事件点击选中态，tooltip 只读安全 `mapRuntimeView` ref/sourceRefs，可跳转已公开渲染的局势簿卡片；行动草稿仍只回填输入框，不直写状态 |
 | S72.6 | DONE | Gemini CLI，Codex 审核提交 | 水墨动效与视觉 polish | 已完成路线墨线呼吸、事件涟漪扩散、朱砂双圈选中态、tooltip/fallback 案头舆图视觉、reduced-motion 与可见性暂停守卫；Codex 已修正 Gemini patch 的脚本残片和路线动效 `NaN` 风险 |
-| S72.7 | TODO | Codex | 验收、安全与性能回归 | 覆盖文档治理、node tests、browser smoke、canvas 非空、资源失败降级、hidden/raw 不外泄 |
+| S72.7 | DONE | Codex | 验收、安全与性能回归 | 已扩展 browser smoke 覆盖 PixiJS canvas 非空、资源失败静态降级、reduced-motion、桌面/窄屏无溢出、hidden/raw 防线和完整 Mock 主线 |
 | S72.8 | TODO | Codex | S72 专项归档 | 完成后归档范围、风险和后续地图玩法，不把长实现记录留在活动台账 |
 
 ## 5. 进度记录
@@ -280,7 +280,7 @@
 
 - 新增 [PIXIJS_INK_MAP_RUNTIME_CONTRACT.md](PIXIJS_INK_MAP_RUNTIME_CONTRACT.md)，把 Gemini 报告沉淀为正式契约：地图 DOM 插入在 `#scholar-panel` 与 `#narrative` 之间，`app.js` 只保存 `currentMapRuntimeView` 并调用 `window.QianqiuMapRenderer`，action draft 只回填 `#action-input`，玩家仍通过现有行动按钮提交。
 - 固定 `mapRuntimeView` schema：`schemaVersion`、`generatedAtTurn`、`assetSetId`、`viewportHint`、`mapBounds`、`layers`、`refs`、`routes`、`eventEffects`、字典式 `actionDrafts` 和 `hiddenNotice`；自然语言行动草稿必须由服务器预渲染，前端不得拼接。
-- 固定前端 CSS 约束：地图作为独立 grid row，首版高度 `clamp(200px, 35vh, 400px)`，DOM overlay 默认 `pointer-events: none`，标签/tooltip 必须截断或边界检测，`prefers-reduced-motion` 时停止 CSS 动画并通知 Pixi ticker 降级。
+- 固定前端 CSS 约束：地图作为独立 grid row；S72.7 验收后高度收束为 `clamp(200px, 24vh, 280px)`，并限制桌面游戏态书生信息面板高度以保护 narrative / action 区域。DOM overlay 默认 `pointer-events: none`，标签/tooltip 必须截断或边界检测，`prefers-reduced-motion` 时停止 CSS 动画并通知 Pixi ticker 降级。
 - 固定首版素材库契约：`assetSetId` 为 `ink-map-v1`，manifest 路径为 `public/assets/maps/ink-map-manifest.json`，素材仍归 S72.3 使用 `gpt-image-2` 生成、视觉审核和登记。
 - 更新 [PIXIJS_INK_MAP_ROADMAP.md](PIXIJS_INK_MAP_ROADMAP.md)、[SHARED_CONTEXT.md](SHARED_CONTEXT.md)、brief 和 `GEMINI.md`，让 S72.2/S72.4 可直接按契约接手。
 - 本轮不改运行时代码、API、provider schema、存档格式、SQLite 表结构、提示词、验证脚本、素材文件或 `package.json`。
@@ -521,3 +521,41 @@
 下一步：
 
 - 执行 S72.7：做地图验收、安全与性能回归，覆盖浏览器 smoke、canvas 非空、资源失败降级、hidden/raw 不外泄和完整主线不回退。
+
+### 2026-05-14
+
+工具：Codex，子代理只读差距分析。
+
+步骤：S72.7 验收、安全与性能回归。
+
+提交：本次提交。
+
+完成：
+
+- 扩展 `scripts/browserSmoke.js`，把 PixiJS 地图纳入真实浏览器验收：桌面、恢复读档、新页面恢复、窄屏、资源失败和 `prefers-reduced-motion` 场景均检查地图面板、canvas 非空、label 数、动画数量、hidden/raw 文本防线和布局溢出。
+- `public/mapRenderer.js` 新增只读 debug state、资源加载失败可观测状态、`preserveDrawingBuffer` 验收支持和无 manifest 时的纸色静态底层；资源失败时仍绘制基础舆图，不阻断文字主流程。
+- `public/mapPanel.js` 对未知 `mapRuntimeView.schemaVersion` 进入等待降级，并暴露只读 debug state 给 browser smoke；仍只使用服务器 `mapRuntimeView` 和 action draft。
+- `public/styles.css` 将地图高度收束为 `clamp(200px, 24vh, 280px)`，并把桌面游戏态书生信息面板限制为可滚动摘要区，修复 S72.7 browser smoke 捕获的 narrative / action 区域重叠。
+- 更新 README、brief、运行时契约、S72 路线图和共享上下文，记录 S72.7 验收范围与下一步 S72.8 归档。
+
+验证：
+
+- 已通过：`node --check public/mapRenderer.js`。
+- 已通过：`node --check public/mapPanel.js`。
+- 已通过：`node --test test/browserSmokeScript.test.js test/mapFrontendShell.test.js test/mapAssetsManifest.test.js test/mapRuntimeView.test.js test/mapRuntimeRoute.test.js`。
+- 已通过：`npm run smoke:browser -- --screenshots artifacts/s72-browser-smoke`，覆盖 desktop、mobile、four-exam-progression、mobile-final-archive、cheating-result、official-start、official-career、world-thread、role-world、pixi-map、map-resource-fallback 和 map-reduced-motion。
+- 已通过：`npm run check:docs-governance`。
+- 已通过：`node --test test/documentationGovernance.test.js`。
+- 已通过：`npm run smoke:dual-mode -- --storage-only`。
+- 已通过：`git diff --check`。
+- 已通过：`node --test test/dualModeAcceptanceScript.test.js`。
+- 已运行但未完全通过：`npm test`。失败项为既有 S67 large fixture 性能阈值波动，`informationPanelMs 3258.724 > 3000`；本轮未改 S67 fixture 或局势簿分页生成逻辑，随后单跑失败文件已通过。
+
+风险/遗留：
+
+- `preserveDrawingBuffer` 用于让 browser smoke 可做 canvas 像素级非空验收；当前地图规模较小，性能风险可接受，后续若地图复杂度显著增加，可用专门测试入口替代生产开关。
+- S72.7 不新增地图 resolver 或后端行动后果；地图仍只是安全 view、tooltip、局势簿跳转和自然语言行动草稿入口。
+
+下一步：
+
+- 执行 S72.8：归档 S72 PixiJS 水墨地图专项，压缩活动台账，记录后续地图玩法方向与剩余风险。

@@ -23,6 +23,9 @@ const desktopGameMinAppShare = 0.86;
 const desktopGameMinViewportShare = 0.74;
 const desktopViewportShareOnlyWhenAppShare = 0.88;
 const horizontalClipTolerance = 4;
+const mapCanvasSampleGridSize = 12;
+const mapCanvasMinimumChangedSamples = 6;
+const mapMaxAnimatedEffects = 40;
 const requiredStartRoles = Object.freeze(["scholar", "emperor", "minister", "general", "magistrate", "official"]);
 const examOpenMonthByLevel = Object.freeze({
   child_exam: 1,
@@ -615,6 +618,18 @@ function getGameLayoutFailures(metrics, mode = "game") {
     );
   }
 
+  if (metrics.mapPanelClientWidth > 0 && metrics.mapPanelScrollWidth > metrics.mapPanelClientWidth + horizontalClipTolerance) {
+    failures.push(
+      `${mode} map panel has horizontal scroll overflow (${roundMetric(metrics.mapPanelScrollWidth)}px > ${roundMetric(metrics.mapPanelClientWidth)}px).`
+    );
+  }
+
+  if (metrics.mapUiLayerClientWidth > 0 && metrics.mapUiLayerScrollWidth > metrics.mapUiLayerClientWidth + horizontalClipTolerance) {
+    failures.push(
+      `${mode} map UI layer has horizontal scroll overflow (${roundMetric(metrics.mapUiLayerScrollWidth)}px > ${roundMetric(metrics.mapUiLayerClientWidth)}px).`
+    );
+  }
+
   if (metrics.relationshipClientWidth > 0 && metrics.relationshipScrollWidth > metrics.relationshipClientWidth + horizontalClipTolerance) {
     failures.push(
       `${mode} relationship panel has horizontal scroll overflow (${roundMetric(metrics.relationshipScrollWidth)}px > ${roundMetric(metrics.relationshipClientWidth)}px).`
@@ -723,6 +738,9 @@ function getGameLayoutFailures(metrics, mode = "game") {
   if (metrics.scholarRight > metrics.gameRight + horizontalClipTolerance) {
     failures.push(`${mode} role panel extends outside the game panel.`);
   }
+  if (metrics.mapPanelClientWidth > 0 && metrics.mapPanelHeight < 180) {
+    failures.push(`${mode} map panel is too short (${roundMetric(metrics.mapPanelHeight)}px).`);
+  }
 
   return failures;
 }
@@ -745,6 +763,8 @@ async function readGameLayoutMetrics(page) {
     const app = box(".app-shell");
     const game = box(".game-panel");
     const scholar = box("#scholar-panel");
+    const mapPanel = box("#map-panel");
+    const mapUiLayer = box("#map-ui-layer");
     const relationship = box("#relationship-panel");
     const activeRequest = box("#active-request-panel");
     const officialCareer = box("#official-career-panel");
@@ -776,6 +796,13 @@ async function readGameLayoutMetrics(page) {
       scholarRight: scholar?.right || 0,
       scholarScrollWidth: scholar?.scrollWidth || 0,
       scholarWidth: scholar?.width || 0,
+      mapPanelClientWidth: mapPanel?.clientWidth || 0,
+      mapPanelHeight: mapPanel?.height || 0,
+      mapPanelScrollWidth: mapPanel?.scrollWidth || 0,
+      mapPanelWidth: mapPanel?.width || 0,
+      mapUiLayerClientWidth: mapUiLayer?.clientWidth || 0,
+      mapUiLayerScrollWidth: mapUiLayer?.scrollWidth || 0,
+      mapUiLayerWidth: mapUiLayer?.width || 0,
       relationshipClientWidth: relationship?.clientWidth || 0,
       relationshipScrollWidth: relationship?.scrollWidth || 0,
       relationshipWidth: relationship?.width || 0,
@@ -2228,6 +2255,166 @@ async function assertGameLayout(page, mode) {
   }
 }
 
+function getMapPanelFailures(snapshot = {}, expectations = {}, mode = "map") {
+  const failures = [];
+  const hiddenTextTokens = expectations.hiddenTextTokens || [];
+  const panelText = String(snapshot.text || "");
+
+  if (!snapshot.visible) {
+    failures.push(`${mode} map panel is not visible.`);
+  }
+  if (!snapshot.canvasCount) {
+    failures.push(`${mode} map panel did not mount a PixiJS canvas.`);
+  }
+  if (snapshot.canvasWidth <= 0 || snapshot.canvasHeight <= 0) {
+    failures.push(`${mode} map canvas has no drawable size.`);
+  }
+  if (!snapshot.canvasNonBlank) {
+    failures.push(`${mode} map canvas appears blank.`);
+  }
+  if (snapshot.labelCount < (expectations.minLabels || 1)) {
+    failures.push(`${mode} map panel rendered too few labels (${snapshot.labelCount}).`);
+  }
+  if (snapshot.tooltipOutOfBounds) {
+    failures.push(`${mode} map tooltip overflows the map panel.`);
+  }
+  if (snapshot.debug?.renderer?.animatedEffectCount > mapMaxAnimatedEffects) {
+    failures.push(`${mode} map animated effect count exceeds cap (${snapshot.debug.renderer.animatedEffectCount}).`);
+  }
+  if (expectations.expectFallbackAssetMode && snapshot.debug?.renderer?.assetMode !== "fallback") {
+    failures.push(`${mode} map did not enter fallback asset mode.`);
+  }
+  if (expectations.expectReducedMotion && !snapshot.debug?.renderer?.reducedMotion) {
+    failures.push(`${mode} map renderer did not observe prefers-reduced-motion.`);
+  }
+  if (expectations.expectReducedMotion && snapshot.debug?.renderer?.animatedEffectCount !== 0) {
+    failures.push(`${mode} map renderer created animations while reduced motion was requested.`);
+  }
+  if (expectations.expectPixiFallbackText && !/舆图组件暂缺|舆图资料待生成/.test(panelText)) {
+    failures.push(`${mode} map did not render the static PixiJS fallback text.`);
+  }
+
+  const leakedTokens = hiddenTextTokens.filter((token) => token && panelText.includes(token));
+  if (leakedTokens.length) {
+    failures.push(`${mode} map panel leaked hidden text tokens: ${leakedTokens.join(", ")}.`);
+  }
+
+  return failures;
+}
+
+async function readMapPanelSnapshot(page) {
+  return page.evaluate(({ sampleGridSize, minimumChangedSamples }) => {
+    const panel = document.querySelector("#map-panel");
+    const canvas = document.querySelector("#map-canvas canvas");
+    const panelRect = panel?.getBoundingClientRect();
+    let canvasNonBlank = false;
+    let changedSamples = 0;
+    let canvasWidth = 0;
+    let canvasHeight = 0;
+
+    if (canvas) {
+      canvasWidth = canvas.width;
+      canvasHeight = canvas.height;
+      try {
+        const sampleCanvas = document.createElement("canvas");
+        sampleCanvas.width = sampleGridSize;
+        sampleCanvas.height = sampleGridSize;
+        const context = sampleCanvas.getContext("2d", { willReadFrequently: true });
+        context.drawImage(canvas, 0, 0, sampleGridSize, sampleGridSize);
+        const pixels = context.getImageData(0, 0, sampleGridSize, sampleGridSize).data;
+        for (let index = 0; index < pixels.length; index += 4) {
+          const alpha = pixels[index + 3];
+          const red = pixels[index];
+          const green = pixels[index + 1];
+          const blue = pixels[index + 2];
+          if (alpha > 8 && (red < 246 || green < 246 || blue < 246)) {
+            changedSamples += 1;
+          }
+        }
+        canvasNonBlank = changedSamples >= minimumChangedSamples;
+      } catch (error) {
+        canvasNonBlank = false;
+      }
+    }
+
+    const tooltip = document.querySelector("#map-ui-layer .map-tooltip");
+    const tooltipRect = tooltip?.getBoundingClientRect();
+    const tooltipOutOfBounds = Boolean(
+      panelRect &&
+      tooltipRect &&
+      (
+        tooltipRect.left < panelRect.left - 2 ||
+        tooltipRect.right > panelRect.right + 2 ||
+        tooltipRect.top < panelRect.top - 2 ||
+        tooltipRect.bottom > panelRect.bottom + 2
+      )
+    );
+
+    return {
+      canvasCount: document.querySelectorAll("#map-canvas canvas").length,
+      canvasHeight,
+      canvasNonBlank,
+      canvasWidth,
+      changedSamples,
+      debug: window.QianqiuMapRenderer?.getDebugState?.() || null,
+      labelCount: document.querySelectorAll("#map-ui-layer .map-label").length,
+      text: panel?.innerText || "",
+      tooltipOutOfBounds,
+      visible: Boolean(panel && !panel.hidden && getComputedStyle(panel).display !== "none")
+    };
+  }, {
+    minimumChangedSamples: mapCanvasMinimumChangedSamples,
+    sampleGridSize: mapCanvasSampleGridSize
+  });
+}
+
+async function assertMapPanel(page, mode, expectations = {}) {
+  await page.locator("#map-panel").waitFor({ state: "visible", timeout: 10000 });
+  await page.waitForFunction(() => {
+    const debug = window.QianqiuMapRenderer?.getDebugState?.();
+    const canvas = document.querySelector("#map-canvas canvas");
+    return debug && (debug.renderer || debug.fallbackText) && (canvas || debug.fallbackText);
+  }, null, { timeout: 10000 });
+
+  if (!expectations.expectPixiFallbackText) {
+    await page.waitForFunction(() => {
+      const debug = window.QianqiuMapRenderer?.getDebugState?.();
+      return debug?.renderer?.assetMode === "loaded" || debug?.renderer?.assetMode === "fallback";
+    }, null, { timeout: 15000 });
+  }
+
+  const snapshot = await readMapPanelSnapshot(page);
+  const failures = getMapPanelFailures(snapshot, expectations, mode);
+  if (failures.length) {
+    failUiAcceptance(failures.join(" "));
+  }
+
+  const layoutFailures = getGameLayoutFailures(await readGameLayoutMetrics(page), mode)
+    .filter((failure) => /map/.test(failure));
+  if (layoutFailures.length) {
+    failUiAcceptance(layoutFailures.join(" "));
+  }
+
+  return snapshot;
+}
+
+async function startScholarGame(page, options = {}) {
+  await openCleanStartPage(page, options.baseUrl);
+  await assertStartRoleOptions(page);
+  await page.locator('input[name="dynasty"]').fill(options.dynasty || "Ming");
+  await page.locator('input[name="year"]').fill(options.year || "1644");
+  await page.locator('select[name="role"]').selectOption("scholar");
+  await page.locator('input[name="playerName"]').fill(options.playerName || "Browser Map Smoke");
+  await page.locator('input[name="background"]').fill(options.background || "county school student");
+  await page.locator('textarea[name="customSetting"]').fill(options.customSetting || "map browser acceptance run");
+  await page.locator('#start-form button[type="submit"]').click();
+  await page.locator("#action-area").waitFor({ state: "visible", timeout: 10000 });
+  await page.locator("#scholar-panel").waitFor({ state: "visible", timeout: 10000 });
+  const sessionId = await page.evaluate(() => window.localStorage.getItem("qianqiu.sessionId"));
+  if (!sessionId) throw new Error("Start flow did not write qianqiu.sessionId to localStorage.");
+  return sessionId;
+}
+
 async function assertExamWritingLayout(page, mode) {
   await assertNoHorizontalOverflow(page, `${mode} exam writing modal`);
 
@@ -2534,6 +2721,9 @@ async function runMobileUiAcceptance(page, recorder) {
   await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
   await page.waitForTimeout(100);
   await assertGameLayout(page, "mobile");
+  await assertMapPanel(page, "mobile map", {
+    hiddenTextTokens: ["hiddenNotes", "hiddenIntent", "OPENAI_API_KEY", "data/sessions", "world_sessions", "prompt_retrieval_index"]
+  });
   await assertRelationshipPanel(page, "mobile scholar", {
     expectedIds: ["C01", "scholarOfficials"],
     expectedTypes: ["character", "faction"],
@@ -2575,6 +2765,68 @@ async function runMobileUiAcceptance(page, recorder) {
   await recorder.capture(page, "mobile-exam-archive");
   await page.locator("#exam-close").click();
   await page.locator("#exam-backdrop").waitFor({ state: "hidden", timeout: 10000 });
+}
+
+async function runMapResourceFailureAcceptance(browser, { baseUrl, onSessionId, pageErrors }) {
+  const context = await browser.newContext({ viewport: VIEWPORTS.desktop });
+  let sessionId = null;
+  try {
+    await context.route("**/assets/maps/ink-map-manifest.json", (route) => route.fulfill({
+      status: 404,
+      contentType: "application/json",
+      body: "{\"error\":\"missing manifest for fallback smoke\"}"
+    }));
+    const page = await context.newPage();
+    page.on("pageerror", (error) => pageErrors.push(error.message));
+    sessionId = await startScholarGame(page, {
+      baseUrl,
+      playerName: "Browser Map Fallback",
+      customSetting: "map resource failure acceptance run"
+    });
+    onSessionId(sessionId);
+    await assertGameLayout(page, "map resource fallback");
+    const snapshot = await assertMapPanel(page, "map resource fallback", {
+      expectFallbackAssetMode: true,
+      hiddenTextTokens: ["hiddenNotes", "hiddenIntent", "OPENAI_API_KEY", "data/sessions", "world_sessions", "prompt_retrieval_index"]
+    });
+    return {
+      sessionId,
+      assetMode: snapshot.debug?.renderer?.assetMode || "unknown",
+      markerCount: snapshot.debug?.renderer?.markerCount || 0
+    };
+  } finally {
+    await context.close();
+  }
+}
+
+async function runMapReducedMotionAcceptance(browser, { baseUrl, onSessionId, pageErrors }) {
+  const context = await browser.newContext({
+    viewport: VIEWPORTS.desktop,
+    reducedMotion: "reduce"
+  });
+  let sessionId = null;
+  try {
+    const page = await context.newPage();
+    page.on("pageerror", (error) => pageErrors.push(error.message));
+    sessionId = await startScholarGame(page, {
+      baseUrl,
+      playerName: "Browser Map Reduced Motion",
+      customSetting: "map reduced motion acceptance run"
+    });
+    onSessionId(sessionId);
+    await assertGameLayout(page, "map reduced motion");
+    const snapshot = await assertMapPanel(page, "map reduced motion", {
+      expectReducedMotion: true,
+      hiddenTextTokens: ["hiddenNotes", "hiddenIntent", "OPENAI_API_KEY", "data/sessions", "world_sessions", "prompt_retrieval_index"]
+    });
+    return {
+      sessionId,
+      animatedEffectCount: snapshot.debug?.renderer?.animatedEffectCount || 0,
+      reducedMotion: Boolean(snapshot.debug?.renderer?.reducedMotion)
+    };
+  } finally {
+    await context.close();
+  }
 }
 
 async function runFinalMobileOfficialAcceptance(page, recorder, expectations = {}) {
@@ -3152,6 +3404,9 @@ async function runBrowserJourney({
     onSessionId(sessionId);
 
     await assertGameLayout(page, "desktop");
+    await assertMapPanel(page, "desktop map", {
+      hiddenTextTokens: ["Hidden Palace Thread", "sealed palace dossier", "C99-hidden", "hiddenNotes", "hiddenIntent", "OPENAI_API_KEY", "data/sessions", "world_sessions", "prompt_retrieval_index"]
+    });
     await assertGameSaveModal(page, sessionId);
     await assertStartPageSaveLoad(browser, { baseUrl, sessionId, pageErrors });
     await assertFailedSseRollback(page);
@@ -3214,6 +3469,9 @@ async function runBrowserJourney({
     await page.locator("#action-area").waitFor({ state: "visible", timeout: 10000 });
     await page.locator("#scholar-panel").waitFor({ state: "visible", timeout: 10000 });
     await assertGameLayout(page, "desktop restored");
+    await assertMapPanel(page, "desktop restored map", {
+      hiddenTextTokens: ["Hidden Palace Thread", "sealed palace dossier", "C99-hidden", "hiddenNotes", "hiddenIntent", "OPENAI_API_KEY", "data/sessions", "world_sessions", "prompt_retrieval_index"]
+    });
     await assertRelationshipPanel(page, "desktop restored scholar", {
       expectedIds: ["C01", "scholarOfficials"],
       expectedTypes: ["character", "faction"],
@@ -3259,6 +3517,9 @@ async function runBrowserJourney({
     await freshPage.locator("#action-area").waitFor({ state: "visible", timeout: 10000 });
     await freshPage.locator("#scholar-panel").waitFor({ state: "visible", timeout: 10000 });
     await assertGameLayout(freshPage, "fresh page desktop");
+    await assertMapPanel(freshPage, "fresh page desktop map", {
+      hiddenTextTokens: ["Hidden Palace Thread", "sealed palace dossier", "C99-hidden", "hiddenNotes", "hiddenIntent", "OPENAI_API_KEY", "data/sessions", "world_sessions", "prompt_retrieval_index"]
+    });
     await assertRelationshipPanel(freshPage, "fresh page desktop scholar", {
       expectedIds: ["C01", "scholarOfficials"],
       expectedTypes: ["character", "faction"],
@@ -3342,6 +3603,24 @@ async function runBrowserJourney({
       recorder
     });
 
+    const mapResourceFallback = await runMapResourceFailureAcceptance(browser, {
+      baseUrl,
+      onSessionId: (createdSessionId) => {
+        sessionIds.push(createdSessionId);
+        onSessionId(createdSessionId);
+      },
+      pageErrors
+    });
+
+    const mapReducedMotion = await runMapReducedMotionAcceptance(browser, {
+      baseUrl,
+      onSessionId: (createdSessionId) => {
+        sessionIds.push(createdSessionId);
+        onSessionId(createdSessionId);
+      },
+      pageErrors
+    });
+
     if (pageErrors.length) {
       throw new Error(`Browser page errors detected: ${pageErrors.join("; ")}`);
     }
@@ -3358,7 +3637,10 @@ async function runBrowserJourney({
       "official-start",
       "official-career",
       "world-thread",
-      "role-world"
+      "role-world",
+      "pixi-map",
+      "map-resource-fallback",
+      "map-reduced-motion"
     ];
     if (aiConnection) acceptanceAreas.unshift("ai-connection");
 
@@ -3372,6 +3654,8 @@ async function runBrowserJourney({
       examProgression,
       officialStart,
       cheatingExam,
+      mapReducedMotion,
+      mapResourceFallback,
       roleWorldCoupling,
       identityTurns: ["scholar", "official", ...roleWorldAcceptanceCases.map((acceptanceCase) => acceptanceCase.role)],
       uiAcceptance: {
@@ -3602,6 +3886,7 @@ module.exports = {
   getImperialExamArchivePanelFailures,
   getInformationPanelShellFailures,
   getInformationPanelParityFailures,
+  getMapPanelFailures,
   getTenDayDateFailures,
   getMissingExamLevels,
   getHiddenRelationshipLeaks,

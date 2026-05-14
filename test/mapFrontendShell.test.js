@@ -52,8 +52,19 @@ test("S72.4 map scripts keep the shell syntax-valid and manifest-driven", () => 
   const rendererJs = readPublicFile("mapRenderer.js");
   assert.match(rendererJs, /\/assets\/maps\/ink-map-manifest\.json/);
   assert.match(rendererJs, /PIXI\.Assets\.loadBundle/);
+  assert.match(rendererJs, /this\.assetLoadFailed = true;/);
+  assert.match(rendererJs, /onLoadError/);
+  assert.match(rendererJs, /fallbackBase\.drawRect/);
   assert.match(rendererJs, /this\.options\.onNeedsUpdate/);
+  assert.match(rendererJs, /getDebugState\(\)/);
   assert.match(rendererJs, /\.destroy\(\{ children: true \}\);/);
+
+  const panelJs = readPublicFile("mapPanel.js");
+  assert.match(panelJs, /function destroyRenderer\(\)/);
+  assert.match(panelJs, /canvasContainer\.innerHTML = "";/);
+  assert.match(panelJs, /mapRuntimeView\.schemaVersion !== 1/);
+  assert.match(panelJs, /createWaiting\(\);[\s\S]*return;/);
+  assert.match(panelJs, /getDebugState\(\)/);
 });
 
 test("S72.5 map frontend links selected refs to safe information-panel cards", () => {
@@ -81,6 +92,7 @@ test("S72.6 map renderer gates ink motion and keeps selection in cinnabar style"
 
   assert.match(rendererJs, /const ROUTE_ANIMATION_LIMIT = 15;/);
   assert.match(rendererJs, /const EFFECT_ANIMATION_LIMIT = 25;/);
+  assert.match(rendererJs, /preserveDrawingBuffer: true/);
   assert.match(rendererJs, /IntersectionObserver/);
   assert.match(rendererJs, /document\.addEventListener\("visibilitychange"/);
   assert.match(rendererJs, /document\.removeEventListener\("visibilitychange"/);

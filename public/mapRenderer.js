@@ -22,6 +22,7 @@
         backgroundAlpha: 0,
         resolution: window.devicePixelRatio || 1,
         autoDensity: true,
+        preserveDrawingBuffer: true,
         antialias: true
       });
       container.appendChild(this.app.view);
@@ -44,6 +45,7 @@
       this.animatedEffects = [];
       this.fallbackTexture = null;
       this.assets = null;
+      this.assetLoadFailed = false;
       this.assetsLoading = false;
       this.isPanelVisible = true;
       this.isDocumentVisible = document.visibilityState !== "hidden";
@@ -127,6 +129,8 @@
             }
         } catch(e) {
             console.warn('Failed to load map assets', e);
+            if (this.options.onLoadError) this.options.onLoadError(e);
+            this.assetLoadFailed = true;
             this.assets = 'fallback'; // mark as attempted
         } finally {
             this.assetsLoading = false;
@@ -173,6 +177,17 @@
             baseSprite.y = this.app.screen.height / 2;
             this.layers.base.addChild(baseSprite);
          }
+      } else {
+         const fallbackBase = new PIXI.Graphics();
+         fallbackBase.beginFill(0xf7eed8, 0.72);
+         fallbackBase.drawRect(0, 0, this.app.screen.width, this.app.screen.height);
+         fallbackBase.endFill();
+         fallbackBase.lineStyle(1, 0x9b2f22, 0.12);
+         for (let y = 24; y < this.app.screen.height; y += 42) {
+            fallbackBase.moveTo(0, y);
+            fallbackBase.lineTo(this.app.screen.width, y + Math.sin(y) * 6);
+         }
+         this.layers.base.addChild(fallbackBase);
       }
 
       (mapRuntimeView.routes || []).forEach(route => {
@@ -373,6 +388,22 @@
       }
       this.app.ticker.remove(this.onTick, this);
       this.app.destroy(true, { children: true });
+    }
+
+    getDebugState() {
+      return {
+        animatedEffectCount: this.animatedEffects.length,
+        assetMode: this.assets === 'fallback' ? 'fallback' : (this.assets ? 'loaded' : 'loading'),
+        assetLoadFailed: this.assetLoadFailed,
+        canvasHeight: this.app.view.height,
+        canvasWidth: this.app.view.width,
+        documentVisible: this.isDocumentVisible,
+        markerCount: this.markers.size,
+        panelVisible: this.isPanelVisible,
+        reducedMotion: this.reducedMotion,
+        rendererHeight: this.app.screen.height,
+        rendererWidth: this.app.screen.width
+      };
     }
   }
 

@@ -324,7 +324,7 @@ button:disabled {
 
 .map-panel {
   position: relative;
-  height: clamp(200px, 35vh, 400px);
+  height: clamp(200px, 24vh, 280px);
   min-height: 200px;
   overflow: hidden;
   border-bottom: 1px solid var(--line);
@@ -1728,7 +1728,7 @@ button:disabled {
 
 @media (min-width: 821px) {
   .app-shell--game-active .scholar-panel {
-    max-height: min(58vh, 560px);
+    max-height: min(40vh, 380px);
     overflow-y: auto;
     align-content: start;
     scrollbar-gutter: stable;
@@ -1868,7 +1868,7 @@ button:disabled {
 }
 
 .narrative {
-  height: 100%;
+  height: auto;
   min-height: 0;
   padding: 18px 30px;
   font-size: 1.08rem;

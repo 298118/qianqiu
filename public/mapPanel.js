@@ -8,12 +8,21 @@
   let currentView = null;
   let activeTooltip = null;
 
+  function destroyRenderer() {
+    if (renderer && typeof renderer.destroy === "function") {
+      renderer.destroy();
+    }
+    renderer = null;
+    canvasContainer.innerHTML = "";
+  }
+
   function clearDOM() {
     uiLayer.innerHTML = "";
     activeTooltip = null;
   }
   
   function createFallback() {
+    destroyRenderer();
     clearDOM();
     const fallback = document.createElement("div");
     fallback.className = "map-fallback";
@@ -22,6 +31,7 @@
   }
   
   function createWaiting() {
+    destroyRenderer();
     clearDOM();
     const waiting = document.createElement("div");
     waiting.className = "map-fallback";
@@ -166,6 +176,11 @@
     update(mapRuntimeView) {
       currentView = mapRuntimeView;
       panel.hidden = false;
+
+      if (!mapRuntimeView || mapRuntimeView.schemaVersion !== 1) {
+        createWaiting();
+        return;
+      }
       
       if (!window.PIXI || !window.MapRenderer) {
         createFallback();
@@ -205,6 +220,18 @@
     showWaitingState() {
       panel.hidden = false;
       createWaiting();
+    },
+    getDebugState() {
+      return {
+        hasRenderer: Boolean(renderer),
+        hidden: Boolean(panel.hidden),
+        labelCount: uiLayer.querySelectorAll(".map-label").length,
+        fallbackText: uiLayer.querySelector(".map-fallback")?.textContent || "",
+        tooltipVisible: Boolean(activeTooltip),
+        renderer: renderer && typeof renderer.getDebugState === "function"
+          ? renderer.getDebugState()
+          : null
+      };
     }
   };
 

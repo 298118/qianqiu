@@ -16,6 +16,7 @@ const {
   getImperialExamArchivePanelFailures,
   getInformationPanelShellFailures,
   getInformationPanelParityFailures,
+  getMapPanelFailures,
   getTenDayDateFailures,
   getMissingExamLevels,
   getHiddenRelationshipLeaks,
@@ -56,6 +57,13 @@ function createLayoutMetrics(overrides = {}) {
     scholarRight: 1230,
     scholarScrollWidth: 1180,
     scholarWidth: 1180,
+    mapPanelClientWidth: 1180,
+    mapPanelHeight: 260,
+    mapPanelScrollWidth: 1180,
+    mapPanelWidth: 1180,
+    mapUiLayerClientWidth: 1180,
+    mapUiLayerScrollWidth: 1180,
+    mapUiLayerWidth: 1180,
     relationshipClientWidth: 1180,
     relationshipScrollWidth: 1180,
     relationshipWidth: 1180,
@@ -390,6 +398,71 @@ test("browser smoke game layout helper catches relationship panel overflow", () 
   );
 
   assert.match(failures.join("\n"), /relationship panel has horizontal scroll overflow/);
+});
+
+test("browser smoke map panel helper catches blank canvas, leaks, and motion regressions", () => {
+  const failures = getMapPanelFailures(
+    {
+      canvasCount: 1,
+      canvasHeight: 240,
+      canvasNonBlank: false,
+      canvasWidth: 900,
+      debug: {
+        renderer: {
+          animatedEffectCount: 41,
+          assetMode: "loaded",
+          reducedMotion: false
+        }
+      },
+      labelCount: 0,
+      text: "案头舆图 hiddenNotes OPENAI_API_KEY",
+      tooltipOutOfBounds: true,
+      visible: true
+    },
+    {
+      expectReducedMotion: true,
+      hiddenTextTokens: ["hiddenNotes", "OPENAI_API_KEY"]
+    },
+    "map fixture"
+  );
+
+  assert.match(failures.join("\n"), /appears blank/);
+  assert.match(failures.join("\n"), /too few labels/);
+  assert.match(failures.join("\n"), /tooltip overflows/);
+  assert.match(failures.join("\n"), /animated effect count exceeds cap/);
+  assert.match(failures.join("\n"), /did not observe prefers-reduced-motion/);
+  assert.match(failures.join("\n"), /leaked hidden text tokens: hiddenNotes, OPENAI_API_KEY/);
+});
+
+test("browser smoke map panel helper accepts resource fallback and reduced motion states", () => {
+  assert.deepEqual(
+    getMapPanelFailures(
+      {
+        canvasCount: 1,
+        canvasHeight: 240,
+        canvasNonBlank: true,
+        canvasWidth: 900,
+        debug: {
+          renderer: {
+            animatedEffectCount: 0,
+            assetMode: "fallback",
+            reducedMotion: true
+          }
+        },
+        labelCount: 3,
+        text: "案头舆图",
+        tooltipOutOfBounds: false,
+        visible: true
+      },
+      {
+        expectFallbackAssetMode: true,
+        expectReducedMotion: true,
+        hiddenTextTokens: ["hiddenNotes", "OPENAI_API_KEY"]
+      },
+      "map fixture"
+    ),
+    []
+  );
 });
 
 test("browser smoke active request helpers catch missing and hidden targets", () => {
