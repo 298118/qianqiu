@@ -52,5 +52,26 @@ test("S72.4 map scripts keep the shell syntax-valid and manifest-driven", () => 
   const rendererJs = readPublicFile("mapRenderer.js");
   assert.match(rendererJs, /\/assets\/maps\/ink-map-manifest\.json/);
   assert.match(rendererJs, /PIXI\.Assets\.loadBundle/);
+  assert.match(rendererJs, /this\.options\.onNeedsUpdate/);
   assert.match(rendererJs, /\.destroy\(\{ children: true \}\);/);
+});
+
+test("S72.5 map frontend links selected refs to safe information-panel cards", () => {
+  const rendererJs = readPublicFile("mapRenderer.js");
+  assert.match(rendererJs, /this\.selectRef\(route, midPoint\)/);
+  assert.match(rendererJs, /this\.selectRef\(ref, pos\)/);
+  assert.match(rendererJs, /effectDisplay\.hitArea = new PIXI\.Circle/);
+  assert.match(rendererJs, /sourceRefs: effect\.sourceRefs \|\| \[\]/);
+
+  const panelJs = readPublicFile("mapPanel.js");
+  assert.match(panelJs, /function findInformationPanelCard\(ref\)/);
+  assert.match(panelJs, /article\[data-entity-id\], article\[data-event-id\]/);
+  assert.match(panelJs, /function activateInformationPanelPage\(page\)/);
+  assert.match(panelJs, /function focusInformationPanelCard\(ref\)/);
+  assert.match(panelJs, /requestAnimationFrame\(\(\) => \{/);
+  assert.match(panelJs, /freshCard && freshCard\.isConnected/);
+  assert.doesNotMatch(panelJs, /querySelector\(`article\[data-entity-id="\$\{entityId\}"\]`\)/);
+  assert.doesNotMatch(panelJs, /\.click\(\);/);
+  assert.match(panelJs, /input\.value = draft\.actionText;/);
+  assert.doesNotMatch(panelJs, /fetch\([^)]*turn/);
 });

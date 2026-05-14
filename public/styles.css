@@ -408,6 +408,12 @@ button:disabled {
   filter: saturate(1.06) brightness(1.02);
 }
 
+.map-information-link {
+  margin-right: 6px;
+  background: linear-gradient(180deg, var(--indigo), #26394b);
+  border-color: rgba(38, 57, 75, 0.42);
+}
+
 .map-fallback {
   position: absolute;
   inset: 0;

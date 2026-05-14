@@ -114,7 +114,7 @@
 | S72.2 | DONE | Codex | 后端地图 runtime view、布局契约与测试 | 已基于 `mapContextView` 扩展安全 `mapRuntimeView`、显示 layout seed、route payload 和测试；显示坐标只用于 UI，不暴露 raw/hidden/坐标污染 |
 | S72.3 | DONE | Codex | 水墨地图素材生成、manifest 与台账 | 已完成首批底图/纸纹/路线/涟漪/图标素材生成、视觉审核、alpha 后处理、manifest、台账和 manifest 安全测试 |
 | S72.4 | DONE | Gemini CLI，Codex 审核提交 | PixiJS 地图 shell 与图层系统 | 已接入本地 PixiJS vendor、固定 CDN fallback、地图 renderer/panel、manifest-driven 素材加载、tooltip/label、行动草稿回填和资源失败 fallback；Codex 审查并补充验证测试 |
-| S72.5 | TODO | Codex + Gemini CLI | 地图与游戏系统深度联动 | 点击地点/路线/事件联动局势簿、行动草稿和服务器 proposal；前端不得直接写状态 |
+| S72.5 | DONE | Gemini CLI，Codex 审核提交 | 地图与游戏系统深度联动 | 已完成地点、路线和事件点击选中态，tooltip 只读安全 `mapRuntimeView` ref/sourceRefs，可跳转已公开渲染的局势簿卡片；行动草稿仍只回填输入框，不直写状态 |
 | S72.6 | TODO | Gemini CLI，Codex 提供素材 | 水墨动效与视觉 polish | 保证拖拽/缩放/路线/事件动效流畅，支持降级与窄屏布局 |
 | S72.7 | TODO | Codex | 验收、安全与性能回归 | 覆盖文档治理、node tests、browser smoke、canvas 非空、资源失败降级、hidden/raw 不外泄 |
 | S72.8 | TODO | Codex | S72 专项归档 | 完成后归档范围、风险和后续地图玩法，不把长实现记录留在活动台账 |
@@ -438,3 +438,47 @@
 
 - 地图图标和涟漪首版偏大、偏具象，适合 S72.4 可读性；S72.6 可继续做贴图尺寸、路线笔触和动效 polish。
 - S72.4 只完成地图 shell 与行动草稿桥接；S72.5 仍需把点击地点/路线/事件与局势簿、行动草稿和服务器 proposal 深度联动。
+
+### 2026-05-14
+
+工具：Gemini CLI 前端 patch，Codex 审核、修正、浏览器验证与收口。
+
+步骤：S72.5 地图与游戏系统深度联动。
+
+提交：本次提交。
+
+完成：
+
+- 审核 Gemini 的 S72.5 前端联动 patch，并保留 `S72.5_DELIVERY_REPORT.md` 作为本轮 Gemini 交付说明。
+- `public/mapRenderer.js` 新增统一选中态：地点、路线和事件涟漪点击都会在 selection 图层绘制安全视觉高亮；事件点击只把安全 `mapRuntimeView` target ref 与 `sourceRefs` 交给 tooltip，不读取 raw state 或后端内部行；事件贴图使用小范围 hitArea，避免透明外框抢占周边 marker 点击。
+- 修正素材异步加载完成后的重绘路径，改走 `mapPanel` 现有 update 回调清理 DOM overlay，避免 label 因 renderer 自己二次 update 而重复。
+- 根据只读子代理复审修正隐藏 tab 跳转的 stale DOM 边界：地图“查阅局势簿”只在当前已渲染的局势簿 DOM 内切换 tab 可见性，不触发 `app.js` 的分页重置与重渲染。
+- `public/mapPanel.js` 的 tooltip 现在可从 `mapEntityRef`、`sourceRef` 和事件 `sourceRefs` 匹配已公开渲染的 `data-entity-id` / `data-event-id` 局势簿卡片；点击“查阅局势簿”会在局势簿现有 DOM 内切换 tab 可见性、重新定位已连接卡片并短暂高亮，避免旧 DOM 引用失效。
+- 行动草稿仍只读取服务器 `actionDrafts` 字典，把 `actionDraft.actionText` 写入 `#action-input`，不自动提交、不调用 `POST /api/game/turn`、不伪造 proposal result、不直写 canonical 状态。
+- 新增 `test/mapFrontendShell.test.js` 的 S72.5 源码回归断言，覆盖路线/地点选中态、事件安全 `sourceRefs`、局势簿安全卡片查找、DOM 内 tab 激活、行动草稿只回填输入框。
+- 更新 README、brief、S72 路线图和共享上下文，记录 S72.5 已完成并把下一步指向 S72.6。
+
+验证：
+
+- 已通过：`node --test test/mapFrontendShell.test.js`。
+- 已通过：`node --test test/mapFrontendShell.test.js test/mapAssetsManifest.test.js test/mapRuntimeView.test.js test/mapRuntimeRoute.test.js`。
+- 已通过：`node --check public/mapPanel.js`。
+- 已通过：`node --check public/mapRenderer.js`。
+- 已通过：`npm run check:docs-governance`。
+- 已通过：`node --test test/documentationGovernance.test.js`。
+- 已通过：`git diff --check`。
+- 已通过：临时 `PORT=3100 node server.js` 浏览器验证；默认 Mock 开局后 canvas 非空、地图标签不重复、点击“大明”显示“查阅局势簿”、切到局势簿卡片并高亮、点击“赴童试”行动草稿只回填 `#action-input`、控制台无错误。
+- 已通过：`node --test test/dualModeAcceptanceScript.test.js`。
+- 已运行但未完全通过：`npm test`。失败项为既有 S67 large fixture 性能阈值波动，`fixtureGenerationMs 10658.028 > 10000`；本轮未改 S67 fixture，随后单跑 `test/dualModeAcceptanceScript.test.js` 已通过。
+- 已完成：只读子代理复审最终 diff 与验证证据，未发现 P0/P1；P2 stale DOM 边界已修正，残余风险已记录。
+
+风险/遗留：
+
+- 事件涟漪首版仍以目标地点/路线为 tooltip 锚点；后续若局势簿为更多事件源提供稳定 `data-event-id`，S72.6/S72.7 可继续加强事件档案定位覆盖。
+- 地图前端联动自动化仍以源码回归断言和本轮浏览器手测为主，隐藏 tab / 分页非首页的 DOM fixture 可在 S72.7 安全回归中继续补强。
+- marker 图标自身仍使用 sprite 默认交互区域；若后续图标透明边距变大，S72.6 可为 marker 也补明确 hitArea。
+- S72.5 不新增后端 proposal resolver；地图行动仍是自然语言草稿入口，真实移动、办案、军务、财政和外交后果继续由普通回合服务器裁决。
+
+下一步：
+
+- 执行 S72.6：水墨动效与视觉 polish，重点检查路线流动、事件涟漪、marker 状态、缩放/窄屏、资源失败降级和 reduced-motion。

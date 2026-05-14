@@ -89,7 +89,11 @@
             this.assets = await PIXI.Assets.loadBundle('ink-map-v1');
             
             if (this.lastView) {
-                this.update(this.lastView);
+                if (this.options.onNeedsUpdate) {
+                    this.options.onNeedsUpdate();
+                } else {
+                    this.update(this.lastView);
+                }
             }
         } catch(e) {
             console.warn('Failed to load map assets', e);
@@ -159,6 +163,7 @@
               route.layoutPath[Math.floor(route.layoutPath.length / 2)][0],
               route.layoutPath[Math.floor(route.layoutPath.length / 2)][1]
            );
+           this.selectRef(route, midPoint);
            if (this.options.onClickRef) this.options.onClickRef(route, midPoint);
         });
 
@@ -191,6 +196,7 @@
         marker.eventMode = 'static';
         marker.cursor = 'pointer';
         marker.on('pointertap', () => {
+          this.selectRef(ref, pos);
           if (this.options.onClickRef) this.options.onClickRef(ref, pos);
         });
 
@@ -219,6 +225,26 @@
             }
             effectDisplay.x = targetMarker.x;
             effectDisplay.y = targetMarker.y;
+            effectDisplay.hitArea = new PIXI.Circle(0, 0, 28 + Math.min(1, effect.severity || 0) * 14);
+
+            effectDisplay.eventMode = 'static';
+            effectDisplay.cursor = 'pointer';
+            effectDisplay.on('pointertap', () => {
+               const targetRef = (mapRuntimeView.refs || []).find(r => r.mapEntityRef === effect.targetRef);
+               const clickRef = {
+                 ...(targetRef || {}),
+                 mapEntityRef: targetRef?.mapEntityRef || effect.targetRef,
+                 sourceRef: targetRef?.sourceRef || effect.targetRef,
+                 sourceRefs: effect.sourceRefs || [],
+                 label: effect.label || targetRef?.label || "地图近事",
+                 summary: targetRef?.label
+                   ? `${targetRef.label}附近有${effect.label || "近事"}牵动。${targetRef.summary || ""}`
+                   : effect.kind || ""
+               };
+               this.selectRef(clickRef, targetMarker.position);
+               if (this.options.onClickRef) this.options.onClickRef(clickRef, targetMarker.position);
+            });
+
             this.layers.events.addChild(effectDisplay);
             
             if (effect.animationToken) {
@@ -228,6 +254,18 @@
       });
     }
     
+    selectRef(ref, pos) {
+       this.layers.selection.removeChildren().forEach(child => child.destroy({ children: true }));
+       if (!ref || !pos) return;
+
+       const highlight = new PIXI.Graphics();
+       highlight.lineStyle(2, 0x2f6f5e, 0.8);
+       highlight.drawCircle(0, 0, 24);
+       highlight.x = pos.x;
+       highlight.y = pos.y;
+       this.layers.selection.addChild(highlight);
+    }
+
     onTick() {
         if (this.reducedMotion) return;
         const time = performance.now() * 0.005;

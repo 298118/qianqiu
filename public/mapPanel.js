@@ -29,6 +29,63 @@
     uiLayer.appendChild(waiting);
   }
 
+  function idsFromMapRef(value) {
+    if (!value || typeof value !== "string") return [];
+    const pieces = value.split(":").filter(Boolean);
+    return [value, pieces[pieces.length - 1]].filter(Boolean);
+  }
+
+  function cardCandidateIds(ref = {}) {
+    const ids = new Set();
+    idsFromMapRef(ref.mapEntityRef).forEach((id) => ids.add(id));
+    idsFromMapRef(ref.sourceRef).forEach((id) => ids.add(id));
+    (Array.isArray(ref.sourceRefs) ? ref.sourceRefs : []).forEach((sourceRef) => {
+      idsFromMapRef(sourceRef).forEach((id) => ids.add(id));
+    });
+    return ids;
+  }
+
+  function findInformationPanelCard(ref) {
+    const ids = cardCandidateIds(ref);
+    if (!ids.size) return null;
+    return Array.from(document.querySelectorAll("article[data-entity-id], article[data-event-id]"))
+      .find((card) => ids.has(card.dataset.entityId) || ids.has(card.dataset.eventId)) || null;
+  }
+
+  function highlightInformationCard(card) {
+    card.scrollIntoView({ behavior: "smooth", block: "center" });
+    card.style.transition = "box-shadow 0.3s";
+    card.style.boxShadow = "0 0 0 2px var(--jade)";
+    setTimeout(() => { card.style.boxShadow = ""; }, 2000);
+  }
+
+  function activateInformationPanelPage(page) {
+    const panel = page.closest("#information-panel");
+    const tabId = page.dataset.tabId || page.id.replace("-panel", "");
+    if (!panel || !tabId) return;
+    panel.dataset.activeTab = tabId;
+    panel.querySelectorAll(".information-tab").forEach((tab) => {
+      const selected = tab.dataset.tabId === tabId;
+      tab.setAttribute("aria-selected", selected ? "true" : "false");
+    });
+    panel.querySelectorAll(".information-panel-page").forEach((candidate) => {
+      candidate.hidden = candidate !== page;
+    });
+  }
+
+  function focusInformationPanelCard(ref) {
+    const card = findInformationPanelCard(ref);
+    if (!card) return;
+    const page = card.closest(".information-panel-page");
+    if (page && page.id && page.hidden) {
+      activateInformationPanelPage(page);
+    }
+    requestAnimationFrame(() => {
+      const freshCard = findInformationPanelCard(ref);
+      if (freshCard && freshCard.isConnected) highlightInformationCard(freshCard);
+    });
+  }
+
   function handleClickRef(ref, pos) {
      if (activeTooltip) activeTooltip.remove();
      
@@ -47,6 +104,17 @@
        activeTooltip.appendChild(desc);
      }
      
+     if (findInformationPanelCard(ref)) {
+       const btnLink = document.createElement("button");
+       btnLink.className = "map-action-draft map-information-link";
+       btnLink.textContent = "查阅局势簿";
+       btnLink.onclick = (e) => {
+         e.stopPropagation();
+         focusInformationPanelCard(ref);
+       };
+       activeTooltip.appendChild(btnLink);
+     }
+
      if (ref.actionDraftRefs && ref.actionDraftRefs.length > 0 && currentView && currentView.actionDrafts) {
        ref.actionDraftRefs.forEach(draftId => {
          const draft = currentView.actionDrafts[draftId];
