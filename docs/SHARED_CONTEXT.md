@@ -17,10 +17,10 @@
 
 - Product: browser + Node.js historical simulation text game **Qianqiu / 千秋**。
 - Runtime target: `npm install && npm start`，然后打开 `http://localhost:3000`。
-- Frontend: 当前发布入口仍是 plain HTML/CSS/JS，无 build step；S74.0 已规划可在依赖治理通过后引入 React + TypeScript + Vite 并行前端岛，S77 验收后才切默认入口。Backend: Node.js + Express，plain JavaScript。
+- Frontend: 当前发布入口仍是 plain HTML/CSS/JS，无 build step；S74.0 已规划可在依赖治理通过后引入 React + TypeScript + Vite + React Router Data Mode 并行多页前端岛，S77 验收后才切默认入口。Backend: Node.js + Express，plain JavaScript。
 - AI providers: adapter-based Mock/OpenAI/DeepSeek/MiMo/MiMo+DeepSeek/Anthropic。`AI_PROVIDER=mock` 仍是默认可玩模式，即使本机存在真实 provider key 也不会自动改走真实模型；`mimo-deepseek` 下 narrator/科举出题仍优先 MiMo，domain_specialist/科举评卷和 critic/safety 在 DeepSeek key 可用时走 DeepSeek。
 - Storage: 默认 JSON session files under `data/sessions/`；可选 `STORAGE_ADAPTER=sqlite` 使用本地 `schema_migrations`、`world_sessions`、audit tables、`geo_*`、`people_*`、`office_*`、`event_archive_index`、`prompt_retrieval_index` 和 `safe_search_index`。SQLite 派生行只从 `world_sessions.world_state_json` 单向修复；raw business/audit rows 不是 route、prompt、browser、搜索或服务器裁决 truth source。
-- Roadmap status: S49-S67 本地数据库与大世界内容、S68-S69 科举深化、S70 AI 编排、S71 数据库玩法化和 S72 PixiJS 水墨地图均已完成并归档。当前活动路线进入 S73-S77 前端水墨重构，任务书见 `docs/FRONTEND_INK_REDESIGN_ROADMAP.md`；S73.0a 已把规划细化为素材矩阵、React/Vite 迁移路线、身份/场景专题、小步骤验收和长期 300-400 张立绘分期。S72 归档见 `docs/PIXIJS_INK_MAP_ARCHIVE.md`。
+- Roadmap status: S49-S67 本地数据库与大世界内容、S68-S69 科举深化、S70 AI 编排、S71 数据库玩法化和 S72 PixiJS 水墨地图均已完成并归档。当前活动路线进入 S73-S77 前端水墨重构，任务书见 `docs/FRONTEND_INK_REDESIGN_ROADMAP.md`；S73.0a 已把规划细化为素材矩阵、React/Vite 迁移路线、身份/场景专题、小步骤验收和长期 300-400 张立绘分期，S73.0b 已按用户要求改为 React Router 多页 SPA 并把地图重构为独立“舆图”页。S72 归档见 `docs/PIXIJS_INK_MAP_ARCHIVE.md`。
 - Current collaboration: 2026-05-14 起停止与 Gemini CLI 协作，后续开发全部由 Codex 承担。Codex 负责后端、前端、AI/server 权限、素材生成与台账、视觉审核、最终文档同步、验证和 Git 提交；S73-S77 的 AI 生图统一由 Codex 使用 `gpt-image-2` 完成，AI 生成素材和第三方入库候选素材都必须由 Codex 做视觉审核，确认游戏基调、历史/水墨适配、可读性和同批一致性。
 - Current local `.env`: 可能含用户提供的 provider keys。`.env` 被 Git 忽略，不能打印或提交。
 
@@ -127,7 +127,8 @@ Important module areas:
 - 2026-05-14：按用户要求完成 S72 PixiJS 水墨地图专项归档。新增 `docs/PIXIJS_INK_MAP_ARCHIVE.md`，并把 `docs/DEVELOPMENT_STEPS.md`、`docs/QIANQIU_DEVELOPMENT_BRIEF.md` 和 `README.md` 的 S72 口径统一改为“已完成归档”；`docs/SHARED_CONTEXT.md` 也已更新为归档后的下一步建议。本轮仍不改运行时代码、API、provider schema、存档格式、SQLite 表结构、提示词、验证脚本或 AI 权限；验证完成后将按 Git 提交收口。
 - 2026-05-14：按用户要求启动 S73-S77 前端水墨重构规划。已让 medium 子代理做创意发散/prompt 草案，Codex 收口为 `docs/FRONTEND_INK_REDESIGN_ROADMAP.md`，将用户提出的水墨、手绘、泛黄宣纸/奏折、首页画卷、右上角设置、存档/读档/返回首页、底部奏折输入、科举/放榜全屏、身份/场景专属面板、NPC/玩家立绘长期管线拆成 S73 素材、S74 信息架构拆分、S75 首页 shell、S76 身份/场景专题界面、S77 验收归档。S73-S77 继续纯 HTML/CSS/JS、Mock 默认可玩、S72 地图只读安全 view、存档/AI 设置安全 API 和完整书生路径不回退；立绘边界收束为成人、端庄、身份明确、俊美但不露骨。本轮只改规划/交接文档，不改运行时代码、API、provider schema、SQLite schema、存档格式、提示词、验证脚本或素材文件。验证已通过 `npm run check:docs-governance`、`node --test test/documentationGovernance.test.js` 和 `git diff --check`；只读子代理复审未发现 P0/P1，P2 brief 后段活动方向遗漏已修正，P3 复审状态已闭环。
 - 2026-05-14：按用户反馈补强 S73-S77 规划。`docs/FRONTEND_INK_REDESIGN_ROADMAP.md` 已重写为详细开发蓝图：S73 拆成视觉资产指南、manifest/台账、UI 材质、首页资产、场景插画、身份背景、玩家/NPC 立绘基准、动效/fallback、素材预览/QA 和长期立绘分期；S74 调整为 React + TypeScript + Vite 渐进式接管，先通过依赖治理和 `/ink-client/` 并行前端岛，不在 S77 前切默认入口；S75-S77 拆出首页、印匣、存档/读档、返回首页、底部奏折、身份专属面板、考试/放榜、舆图、立绘接线、安全/性能/可访问性验收。女性立绘边界更新为成年、端庄、高颜值、身份感强，可通过服饰剪裁和姿态体现优雅成熟女性身形比例，但不得露骨、挑逗、幼态或过度暴露。本轮仍只改规划/交接文档，不安装依赖、不生成素材、不改运行时代码或 API。
+- 2026-05-14：按用户进一步确认，当前旧前端是单页游戏壳，继续堆地图、科举、NPC、史册、设置和多身份面板会拥挤；S73.0b 已将新前端方向改为 React Router 多页 SPA。S74.0 候选依赖新增 `react-router`，采用 Data Mode（`createBrowserRouter` / `RouterProvider`，`basename: "/ink-client"`），不用 Framework Mode 接管 Express；推荐路由包括首页、主叙事、独立舆图、人物、史册/局势簿、科举考试、放榜、皇帝/朝议或官署公文、设置/存档。地图重构为独立“舆图”页，主叙事页只保留入口或摘要；`mapRuntimeView` 仍只供浏览器渲染，不进入 prompt、AI 工具或服务器裁决。本轮仍只改规划/交接文档。
 
 ## Next Recommended Step
 
-执行 S73.1：新增 `docs/FRONTEND_VISUAL_ASSET_GUIDE.md`，固定首页、主界面、身份/场景、NPC/玩家立绘、UI 材质、动效和 fallback 的尺寸、命名、裁切、审美、安全和审核标准；S73.2 再新增 UI manifest 草案与素材台账。继续保持 JSON/Mock 默认可玩、SQLite local-only、AI proposal-only、server resolver 裁决、地图前端只读安全 view 和完整书生路径不回退。
+执行 S73.1：新增 `docs/FRONTEND_VISUAL_ASSET_GUIDE.md`，固定首页、主叙事页、独立舆图页、身份/场景、NPC/玩家立绘、UI 材质、动效和 fallback 的尺寸、命名、裁切、审美、安全和审核标准；S73.2 再新增 UI manifest 草案与素材台账。S74.0 前不得直接安装 React Router 或其他新依赖；继续保持 JSON/Mock 默认可玩、SQLite local-only、AI proposal-only、server resolver 裁决、地图前端只读安全 view 和完整书生路径不回退。

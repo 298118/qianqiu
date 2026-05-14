@@ -3,9 +3,10 @@
 本文档是《千秋》前端大重构的活动任务书。2026-05-14 用户进一步要求把原规划细化到可执行开发粒度，并允许为了更好的前端开发引入外部依赖和框架。因此本版不再把“无构建前端”视为 S74-S77 的固定技术上限，而是改为：
 
 - S73 先完成素材体系、视觉规范、manifest、台账和审核流程，不引入运行时框架。
-- S74.0 先走依赖治理，若验证通过，采用 React + TypeScript + Vite 渐进式接管新前端；旧 `public/app.js` 保留为回滚路径。
-- S75 先让 React 前端岛接管首页与全局 shell。
-- S76 再接管主游戏、身份面板、考试/放榜专题和地图桥接。
+- S74.0 先走依赖治理，若验证通过，采用 React + TypeScript + Vite + React Router 渐进式接管新前端；旧 `public/app.js` 保留为回滚路径。
+- 新前端按多页 SPA 路由设计，不再把首页、主叙事、地图、人物、史册、考试、放榜和设置全部塞进一个单页壳。
+- S75 先让 React 前端岛接管首页、全局 shell 和基础路由。
+- S76 再接管主叙事页、身份面板、考试/放榜专题和独立舆图页。
 - S77 通过验收后再切默认入口，并保证 `npm install && npm start` 仍可本地可玩。
 
 目标不是只给旧界面换皮，而是把《千秋》升级为中国古典水墨、手绘、泛黄宣纸与奏折质感的沉浸式史书/案头体验，同时继续保护 Mock 默认可玩、服务器裁决、存档安全、地图安全 view、AI proposal-only 和完整书生科举路径。
@@ -18,7 +19,8 @@
 - 将“素材生成必须全面”落成素材矩阵：UI 材质、首页、场景、身份背景、考试/放榜、NPC/玩家立绘、动效、fallback、缩略图和 manifest。
 - 把长期 300-400 张立绘目标拆成四期，不把首轮开发压垮。
 - 明确女性立绘边界：全部为成年角色，端庄、服饰严整、高颜值、身份感强，可用剪裁、腰封、衣料层次和站姿表现优雅成熟女性身形比例；不得露骨、挑逗、幼态化或把身体部位当作卖点。
-- 允许 S74 之后通过治理引入 React/TypeScript/Vite，但不在本规划提交里安装依赖；真正安装依赖必须单独执行 S74.0。
+- 允许 S74 之后通过治理引入 React/TypeScript/Vite/React Router，但不在本规划提交里安装依赖；真正安装依赖必须单独执行 S74.0。
+- 当前旧前端本质是单页游戏壳，已经不适合承载地图、科举、NPC、史册、存档和多身份专属玩法；新前端采用多页 SPA 路由，主页面只放当下最重要的信息。
 - 明确 `@pixi/react` 暂缓，S72 已落地的 `public/mapRenderer.js` / `public/mapPanel.js` 继续作为 imperative PixiJS island。
 
 ## 2. 设计目标
@@ -28,12 +30,12 @@
 整体方向：
 
 - 首页是展开的画卷：顶部“千秋”，下方水墨云雾轻动，表单如题名册或户籍册，开始按钮如玉玺落印。
-- 主界面是活的史书与案头工具：叙事正文优先阅读，地图、身份面板、人物、局势簿和专属功能按页签、抽屉、专题界面分层。
+- 主界面是活的史书与案头工具：叙事正文优先阅读，地图、身份面板、人物、局势簿和专属功能按独立页面、局部页签、抽屉、专题界面分层。
 - 输入区固定底部：多行输入框伪作展开竹简或空白奏折，右侧“呈上”朱印按钮，支持 Enter 提交、Shift+Enter 换行，并在上方淡显最近一次 AI 行动提示。
 - 设置统一右上角：AI 设置、存档/读档、返回首页、显示偏好、可访问性和本地安全摘要都进入“印匣/设置”入口，避免散落在页面各处。
 - 专属场景全屏化：科举考试、放榜、殿试、朝议、县衙审案、军营、城市、书斋、御案等重要场景有独立界面与插画。
 - 身份面板差异化：书生、地方官、入仕官员、大臣、将领、皇帝拥有不同背景、色彩权重、交互入口、核心指标和未来玩法预留；皇帝预留奏折、圣旨、任免、朝议等扩展位。
-- 地图升级复用 S72 PixiJS：不推倒 `mapRuntimeView` 和 `public/mapRenderer.js`，而是纳入新主界面布局、视觉皮肤、场景背景和设置抽屉。
+- 地图升级复用 S72 PixiJS：不推倒 `mapRuntimeView` 和 `public/mapRenderer.js`，而是把地图重构为独立“舆图”页面，主叙事页只保留小型地图入口或局势提示。
 
 视觉原则：
 
@@ -54,7 +56,7 @@
 - 人物谱牒：NPC 不只显示头像，还显示关系、身份、公开评价、最近互动和可见记忆摘要；hidden 私档不进入前端。
 - 科举沉浸：考试中不只写文章，还展示号舍、考篮、弥封、誊录、磨勘、考官评语、同年关系和授官轨迹。
 - 皇帝专属：奏折队列、朱批、圣旨草稿、朝议、任免候选和史官记录。首轮只做前端草稿与安全 proposal 入口，后果仍由服务器普通回合或后续 resolver 裁决。
-- 地图叙事化：舆图页不仅显示地点，也能联动局势簿、任所、军务、商路、赶考路线和当前行动草稿。
+- 地图叙事化：舆图页独立承载大画布、图层、地点、路线、事件、局势联动、任所、军务、商路、赶考路线和当前行动草稿，避免挤压主叙事。
 - 可访问性：低动效、字体大小、对比度、键盘焦点和移动端底部输入都从 S75 开始作为正式功能，不留到最后补丁。
 
 ## 4. 技术依赖路线
@@ -77,6 +79,7 @@
 | `react` / `react-dom` | 引入 | 首页、shell、抽屉、考试全屏、身份面板、底部奏折 | 复杂 UI 状态和组件复用明显多于旧原生脚本能舒适承担的范围。 |
 | `typescript` | 引入 dev | 只用于 `client/` 类型 | 不把后端 CJS 转 ESM，不在根级加 `"type": "module"`。 |
 | `vite` | 引入 dev | React 前端岛 dev/build | 构建输出先放 `public/ink-client/`，S77 再切默认入口。 |
+| `react-router` | 引入 | 多页 SPA 路由、页面过场、深链接、loader、pending/error/focus/scroll 边界 | 采用 Data Mode，不启用 React Router Framework Mode；Express 仍是后端 API 与静态资源服务器。 |
 | `zustand` | 引入 | 前端视图缓存与 UI 状态 | 仅保存 `sessionId`、当前安全 payload、tab/drawer/modal 状态；不能当 canonical state。 |
 | `lucide-react` | 引入 | 设置、存档、发送、返回、关闭等图标 | 图标再用 CSS 做朱印/淡墨样式，避免手画一堆不可维护 SVG。 |
 | `vitest` | 引入 dev | client 纯函数、store、组件测试 | 后端继续保留 `node --test`。 |
@@ -86,7 +89,6 @@
 
 | 依赖 | 结论 | 原因 |
 | --- | --- | --- |
-| `react-router` | 暂缓 | 当前是单页游戏，home/game/exam/settings 可先用 store 状态；URL 路由会增加读档和返回首页边界复杂度。 |
 | `@tanstack/react-query` | 暂缓 | 回合提交、SSE、考试流程是强顺序事务；缓存层容易制造 stale payload。等存档/设置/列表查询明显复杂后再评估。 |
 | `@pixi/react` | 暂缓 | 当前 S72 固定 PixiJS v7 UMD；最新 React wrapper 面向 PixiJS v8，直接引入会冲撞既有地图运行时。 |
 | Tailwind / UI component kit | 暂缓 | 水墨 UI 需要强定制材料语言，现成组件库容易把界面带回现代仪表盘气质。 |
@@ -98,6 +100,7 @@
 
 - React 官方文档建议新 React 应用使用框架，也允许从 build tool 如 Vite 起步：[Creating a React App](https://react.dev/learn/start-a-new-react-project)。
 - Vite 官方文档列出 `react-ts` 模板、dev/build 脚本和 Node 要求：[Getting Started | Vite](https://vite.dev/guide/)。
+- React Router 官方文档说明其有 Declarative、Data、Framework 三种模式；本项目采用 Data Mode，以 `createBrowserRouter` / `RouterProvider` 提供 route loader、pending UI 和 error boundary，同时避免把 Express 游戏后端改造成 React Router framework server：[Picking a Mode | React Router](https://reactrouter.com/start/modes)。
 - Zustand 官方说明其轻量 hook store API：[Introduction - Zustand](https://zustand.docs.pmnd.rs/getting-started/introduction)。
 - Vitest 官方说明默认测试文件匹配和 TypeScript 支持：[Writing Tests | Vitest](https://main.vitest.dev/guide/learn/writing-tests)。
 - Testing Library 官方资料建议用 user-event 测试用户交互：[user-event Introduction](https://testing-library.com/docs/user-event/intro)。
@@ -110,8 +113,9 @@
 
 - `npm install && npm start` 必须一直可运行，默认打开 `http://localhost:3000`。
 - S73 不安装新运行时依赖，不改运行时代码，专注素材/契约/审核。
-- S74.0 只有在依赖治理记录和验证通过后，才允许安装 React/TypeScript/Vite 等依赖。
-- S74-S76 采用并行前端岛：`/ink-client/` 先运行新 React 前端，`/` 仍保持旧前端可用。
+- S74.0 只有在依赖治理记录和验证通过后，才允许安装 React/TypeScript/Vite/React Router 等依赖。
+- S74-S76 采用并行前端岛：`/ink-client/` 先运行新 React 多页 SPA，`/` 仍保持旧前端可用。
+- 新前端可以使用 URL 路由表达游戏页面，但路由参数只能保存 `sessionId` 或公开页面状态；不得把 hidden refs、raw query、prompt、provider payload 或本地路径写入 URL。
 - S77 验收通过后才把 `/` 切到新前端；旧版保留为 `/legacy.html` 或等价回滚入口至少一个发布周期。
 - 存档仍优先走 `GET /api/game/saves` 与 `GET /api/game/player-state/:sessionId`；普通读档不得使用 raw session 或 raw audit。
 - AI 设置仍走 `GET/POST /api/ai/settings/:sessionId` 和安全 `aiSettingsView` / `aiControlAuditView`；前端不得读取 `.env`、本地路径、raw prompt、raw provider payload 或 hidden ledger。
@@ -167,6 +171,28 @@
 - 功能页签/抽屉：舆图、人物、局势簿、科举档案、官职履历、AI 调动审计等进入分层界面，不全部常驻堆叠。
 - 底部行动奏折：固定输入与“呈上”，响应身份 placeholder。
 
+### 多页路由
+
+新前端不再追求所有内容都在一个单页壳内展开，而是使用 React Router 做多页 SPA。推荐路由：
+
+- `/ink-client/`：首页画卷、开局、案卷式存档、继续本局。
+- `/ink-client/game/:sessionId`：主叙事页，只放当前场景、身份摘要、最近 AI 回响、底部奏折和少量必要入口。
+- `/ink-client/game/:sessionId/map`：独立“舆图”页，承载大画布地图、图层筛选、地点/路线/事件、局势簿联动和行动草稿。
+- `/ink-client/game/:sessionId/people`：人物谱牒页，显示公开 NPC、关系、可见记忆和立绘。
+- `/ink-client/game/:sessionId/archive`：史册/局势簿页，容纳事件档案、天下格局、官职簿、搜索和分页。
+- `/ink-client/game/:sessionId/exam`：科举考试页，全屏号舍与试卷体验。
+- `/ink-client/game/:sessionId/ranking`：放榜页，皇榜、名次、评语、防作弊和授官提示。
+- `/ink-client/game/:sessionId/court`：皇帝/朝议/奏折/圣旨草稿页；非皇帝身份可隐藏或改为官署公文页。
+- `/ink-client/game/:sessionId/settings`：可选设置页；右上角印匣仍可作为全局抽屉快捷入口。
+
+路由原则：
+
+- 主叙事页不塞满所有系统；只显示当前回合最需要读和写的内容。
+- 地图、人物、史册、考试、放榜、朝议都可以有独立页面与插画。
+- 设置/存档在任何页面可打开，但不应遮挡主流程太久。
+- 页面切换使用纸页轻翻、墨晕淡入、卷轴展开等短动效，必须尊重 reduced-motion。
+- 每个路由重新加载时都只通过安全 API 恢复，不依赖内存中的 raw state。
+
 ### 右上角设置
 
 统一入口建议命名为“印匣”或“设置”：
@@ -206,6 +232,22 @@
 
 - 不安装依赖、不改运行时代码、不生成素材。
 - docs governance 与 diff check 通过。
+
+### S73.0b 多页信息架构与舆图页决策
+
+状态：本文档本版补强即 S73.0b 的交付。
+
+交付：
+
+- 明确当前旧前端是近似单页游戏壳，继续堆面板会让地图、科举、NPC、局势簿、设置和身份专属玩法互相挤压。
+- 将 S74 之后的目标改为 React Router 多页 SPA：主叙事页保持轻量，地图、人物、史册、考试、放榜、朝议/官署等进入独立页面。
+- 将 `react-router` 从暂缓项调整为 S74.0 候选依赖，并要求依赖治理记录其模式选择、URL 安全边界、刷新 fallback、动效和回滚。
+- 固定地图重构方向：独立“舆图”页承载大画布、图层筛选、地点/路线/事件详情和行动草稿，主叙事页只保留入口或摘要。
+
+验收：
+
+- 不安装依赖、不改运行时代码、不生成素材。
+- `mapRuntimeView` 仍只供浏览器渲染，不进入 prompt 或服务器裁决。
 
 ### S73.1 视觉资产指南
 
@@ -463,8 +505,9 @@ Manifest 示例：
 
 实现功能：
 
-- 按治理模板记录 React、React DOM、TypeScript、Vite、Zustand、Lucide、Vitest、Testing Library、jsdom。
+- 按治理模板记录 React、React DOM、TypeScript、Vite、React Router、Zustand、Lucide、Vitest、Testing Library、jsdom。
 - 新增 `docs/FRONTEND_REACT_MIGRATION_CONTRACT.md`。
+- 在迁移契约里固定 React Router 模式：采用 Data Mode，使用 `createBrowserRouter` / `RouterProvider`、`basename: "/ink-client"`、route loader、pending UI、error boundary 和滚动/焦点恢复；不采用 Framework Mode，不让 React Router 接管 Express 后端。
 - 安装依赖并更新 lockfile。
 - 新增 npm scripts 草案：
   - `dev:client`
@@ -489,14 +532,17 @@ Manifest 示例：
   - `client/index.html`
   - `client/src/main.tsx`
   - `client/src/App.tsx`
-  - `client/src/api/`
+- `client/src/api/`
+- `client/src/routes/`
+- `client/src/pages/`
+- `client/src/router.tsx`
   - `client/src/types/`
   - `client/src/state/`
   - `client/src/styles/`
   - `vite.config.mjs`
   - `tsconfig.client.json`
   - `vitest.config.mjs`
-- Express 暂不改默认入口；通过 `/ink-client/` 访问构建产物。
+- Express 暂不改默认入口；通过 `/ink-client/` 访问构建产物。React Router Data Mode 在 `/ink-client/` base 下管理多页 SPA 路由，并要求后续 Express 为 `/ink-client/*` 提供 history fallback。
 
 验收：
 
@@ -533,7 +579,7 @@ Manifest 示例：
 - 用 Zustand 管理：
   - `sessionId`
   - 当前安全 player payload
-  - 当前页面状态：home/game/exam/ranking
+  - 当前路由衍生的页面状态：home/game/map/people/archive/exam/ranking/court/settings
   - 设置抽屉状态
   - 当前 modal/surface
   - action draft
@@ -550,12 +596,13 @@ Manifest 示例：
 实现功能：
 
 - 建立 `AppShell`、`HomeScreen`、`GameScreen`、`SettingsDrawer`、`SurfaceHost`。
-- 建立 surface registry：exam、ranking、map-expanded、npc-profile、edict-draft、memorial-review。
+- 建立 React Router Data Mode 路由表和页面组件：Home、Game、Map、People、Archive、Exam、Ranking、Court、Settings。
+- 建立 surface registry：npc-profile、edict-draft、memorial-review、map-filter-drawer 等局部专题层。
 - 所有全屏 surface 能 Esc 关闭并回收焦点。
 
 验收：
 
-- 组件测试覆盖抽屉、全屏 modal、焦点回收和键盘行为。
+- 组件测试覆盖路由导航、抽屉、全屏 modal、焦点回收、滚动恢复和键盘行为。
 
 ### S74.5 资产加载层
 
@@ -582,6 +629,7 @@ Manifest 示例：
 验收：
 
 - `/` 旧版、`/ink-client/` 新版都能启动 Mock 开局。
+- `/ink-client/game/:sessionId/map`、`/people`、`/archive` 等路由刷新后能通过安全 API 恢复。
 - 无双重提交、无重复读档、无隐藏字段进入 DOM。
 
 ### S74.7 回滚策略
@@ -612,6 +660,7 @@ Manifest 示例：
 - 构建流程破坏开箱可玩。
 - 新前端误读 raw state route。
 - 新 store 保存过多服务器状态。
+- React Router 路由把 hidden refs、raw query 或 provider 内容写入 URL。
 - 地图桥绕过玩家确认提交。
 
 ## 10. S75 首页与全局 Shell
@@ -863,18 +912,24 @@ Manifest 示例：
 - 防作弊和考官评语来自安全 view。
 - 不读取 raw review 或 provider 未采纳原文。
 
-### S76.9 地图舆图页升级
+### S76.9 独立舆图页与地图重构
 
 实现功能：
 
-- 将 S72 地图作为“舆图”页纳入 React shell。
-- 支持缩放查看、场景背景联动、tooltip、局势簿跳转、行动草稿。
+- 将 S72 地图从主界面小面板升级为 `/game/:sessionId/map` 独立“舆图”页。
+- 主叙事页只保留小型入口、当前地点/路线摘要或小缩略图，不常驻完整地图。
+- 舆图页使用更大的画布区域，适合桌面宽屏和移动横向/纵向查看。
+- 左侧或底部提供图层筛选：地点、路线、事件、任所、科举路线、军务、商路、传闻。
+- 右侧或底部提供所选地点/路线/事件详情、局势簿跳转、公开 evidence 摘要和行动草稿。
+- 支持缩放查看、平移、重置视角、场景背景联动、tooltip、局势簿跳转、行动草稿。
+- 优先复用 `public/mapRenderer.js` / `public/mapPanel.js` 作为 v1 bridge；后续可在 S77 后单开地图二期，重构为 route-aware renderer、图层配置和更完整地图素材包。
 - 地图素材失败时回退到纸色静态底。
 
 验收：
 
 - 继续只读 `mapRuntimeView`。
 - 地图按钮只回填行动草稿，不自动提交。
+- URL 不保存坐标、hidden ref、raw query 或行动结果。
 - canvas 非空、reduced-motion、资源失败 smoke 继续覆盖。
 
 ### S76.10 NPC 与玩家立绘接线
@@ -928,6 +983,8 @@ Manifest 示例：
 实现功能：
 
 - 将 `/` 切到新 React 构建产物。
+- 将 React Router `basename` 从 S74-S76 的 `/ink-client` 重配为 `/`，或提供等价构建时配置；`/ink-client` 可保留为一个发布周期的兼容 redirect/dual mount。
+- Express 为最终默认 React Router routes 提供静态 fallback，刷新 `/game/:sessionId/map`、`/game/:sessionId/people`、`/game/:sessionId/archive`、`/game/:sessionId/exam`、`/game/:sessionId/ranking` 等页面不 404；S74-S76 并行阶段则对应验证 `/ink-client/game/:sessionId/...`。
 - 旧版保留为 `/legacy.html` 或等价路径。
 - 新增 `scripts/ensureClientBuild.js` 或等价机制，保证 `npm install && npm start` 不因缺 client build 直接坏掉。
 
@@ -947,6 +1004,7 @@ Manifest 示例：
 - 开局。
 - 主游戏普通回合。
 - 地图。
+- 多页路由刷新和前进/后退导航。
 - 科举考试。
 - 放榜。
 - 皇帝/将领/地方官/大臣代表身份行动。
