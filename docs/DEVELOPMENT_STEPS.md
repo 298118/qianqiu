@@ -12,7 +12,7 @@
 - S70 AI prompt/tool/actor/多模型路由、AI 设置、官职月报、跳时、记忆、地图接口、provider AI-first smoke 和 JSON/SQLite parity：[AI_ORCHESTRATION_ARCHIVE.md](AI_ORCHESTRATION_ARCHIVE.md)。规划源头仍见 [AI_ORCHESTRATION_ROADMAP.md](AI_ORCHESTRATION_ROADMAP.md)。
 - S71 数据库玩法化、维护、安全检索、redacted player API、财政/刑名/军务外交服务器 resolver、压力事件、多 actor 场景、NPC 记忆账本、AI 调动审计和验收：[DATABASE_GAMEPLAY_RESOLVER_ARCHIVE.md](DATABASE_GAMEPLAY_RESOLVER_ARCHIVE.md)。规划源头仍见 [DATABASE_GAMEPLAY_RESOLVER_ROADMAP.md](DATABASE_GAMEPLAY_RESOLVER_ROADMAP.md)，resolver 输入契约见 [DATABASE_RESOLVER_INPUT_CONTRACT.md](DATABASE_RESOLVER_INPUT_CONTRACT.md)。
 
-当前活动路线图已完成到 S72 归档。S72 的专项归档见 [PIXIJS_INK_MAP_ARCHIVE.md](PIXIJS_INK_MAP_ARCHIVE.md)，规划源头见 [PIXIJS_INK_MAP_ROADMAP.md](PIXIJS_INK_MAP_ROADMAP.md)，运行时契约见 [PIXIJS_INK_MAP_RUNTIME_CONTRACT.md](PIXIJS_INK_MAP_RUNTIME_CONTRACT.md)，素材指南见 [MAP_ASSET_GUIDE.md](MAP_ASSET_GUIDE.md)，素材台账见 [MAP_ASSET_LEDGER.md](MAP_ASSET_LEDGER.md)。2026-05-14 起，按用户要求停止与 Gemini CLI 共同开发；后续开发全部由 Codex 负责。后续新开发应从新的小步骤继续，远程存档、账号体系、多人同步、云端冲突解决和托管数据库不进入当前规划。
+当前活动路线图已进入 S73-S77 前端水墨重构专项。S72 的专项归档见 [PIXIJS_INK_MAP_ARCHIVE.md](PIXIJS_INK_MAP_ARCHIVE.md)，规划源头见 [PIXIJS_INK_MAP_ROADMAP.md](PIXIJS_INK_MAP_ROADMAP.md)，运行时契约见 [PIXIJS_INK_MAP_RUNTIME_CONTRACT.md](PIXIJS_INK_MAP_RUNTIME_CONTRACT.md)，素材指南见 [MAP_ASSET_GUIDE.md](MAP_ASSET_GUIDE.md)，素材台账见 [MAP_ASSET_LEDGER.md](MAP_ASSET_LEDGER.md)。S73-S77 规划源头见 [FRONTEND_INK_REDESIGN_ROADMAP.md](FRONTEND_INK_REDESIGN_ROADMAP.md)。2026-05-14 起，按用户要求停止与 Gemini CLI 共同开发；后续开发全部由 Codex 负责。远程存档、账号体系、多人同步、云端冲突解决和托管数据库不进入当前规划。
 
 ## 1. 开发规范继承
 
@@ -84,7 +84,7 @@
 
 ## 3. 当前边界与归档索引
 
-当前活动工作已完成到 S72 归档。S49-S67、本地数据库与大世界内容，S68-S69 科举深化，S70 AI 编排，S71 数据库玩法化和 S72 PixiJS 水墨地图都已迁入专题归档；活动台账只保留索引和后续边界：
+S49-S67、本地数据库与大世界内容，S68-S69 科举深化，S70 AI 编排，S71 数据库玩法化和 S72 PixiJS 水墨地图都已迁入专题归档；当前活动工作从 S73-S77 前端水墨重构继续：
 
 | 范围 | 状态 | 摘要 | 归档 |
 | --- | --- | --- | --- |
@@ -92,6 +92,8 @@
 | S68-S69 | DONE | 科举制度、读书账本、老师点评、科场流程、多考官阅卷、榜单荣誉、同年座师网络、授官轨迹、浏览器面板和 Provider/Mock 验收 | [IMPERIAL_EXAM_DEEPENING_ARCHIVE.md](IMPERIAL_EXAM_DEEPENING_ARCHIVE.md) |
 | S70 | DONE | AI prompt/tool/actor/领域工具、多模型路由、AI 设置、月报、跳时、记忆、地图接口、MiMo AI-first smoke、JSON/SQLite parity 和 S70 归档 | [AI_ORCHESTRATION_ARCHIVE.md](AI_ORCHESTRATION_ARCHIVE.md) |
 | S71 | DONE | 数据库 resolver 输入、SQLite 维护、安全搜索、redacted API、财政/刑名/军务外交 resolver、压力事件、场景运行时、NPC 记忆、AI 调动审计和验收归档 | [DATABASE_GAMEPLAY_RESOLVER_ARCHIVE.md](DATABASE_GAMEPLAY_RESOLVER_ARCHIVE.md) |
+| S72 | DONE | PixiJS 水墨地图、首批地图素材、局势簿联动、水墨动效、浏览器验收、安全回归和归档 | [PIXIJS_INK_MAP_ARCHIVE.md](PIXIJS_INK_MAP_ARCHIVE.md) |
+| S73-S77 | ACTIVE | 前端水墨重构：素材体系、信息架构拆分、首页/全局 shell、身份/场景专题界面、验收与归档 | [FRONTEND_INK_REDESIGN_ROADMAP.md](FRONTEND_INK_REDESIGN_ROADMAP.md) |
 
 必须继续保护的边界：
 
@@ -104,23 +106,54 @@
 
 ## 4. 活动路线图总览
 
-当前活动路线已完成到 S72 PixiJS 水墨地图专项归档。专项细节见 [PIXIJS_INK_MAP_ARCHIVE.md](PIXIJS_INK_MAP_ARCHIVE.md) 和 [PIXIJS_INK_MAP_ROADMAP.md](PIXIJS_INK_MAP_ROADMAP.md)；本节只保留已完成步骤、owner 和交接边界，不把 S49-S71 的 DONE 长表展开回活动台账。
+当前活动路线进入 S73-S77 前端水墨重构专项。S72 细节见 [PIXIJS_INK_MAP_ARCHIVE.md](PIXIJS_INK_MAP_ARCHIVE.md)；S73-S77 任务书见 [FRONTEND_INK_REDESIGN_ROADMAP.md](FRONTEND_INK_REDESIGN_ROADMAP.md)。本节只保留当前专项小步骤、owner 和交接边界，不把 S49-S72 的 DONE 长表展开回活动台账。
 
 | ID | 状态 | Owner | 目标 | 说明 |
 | --- | --- | --- | --- | --- |
-| S72.0 | DONE | Codex | PixiJS 水墨地图规划与协作切换 | 已完成协作切换说明、专项路线图和素材台账模板；历史细节见专项归档 |
-| S72.0a | DONE | Codex | 细化实施规格 | 已扩展专项路线图、补素材指南、创建项目指引与上下文排除规则；历史细节见专项归档 |
-| S72.1 | DONE | Codex | PixiJS 依赖治理与地图 runtime 契约 | 已固定 `pixi.js@7.4.3` UMD、本地 vendor 优先、固定 CDN fallback、`mapRuntimeView` 字段、DOM/app/CSS 接线和验收边界 |
-| S72.2 | DONE | Codex | 后端地图 runtime view、布局契约与测试 | 已基于 `mapContextView` 扩展安全 `mapRuntimeView`、显示 layout seed、route payload 和测试 |
-| S72.3 | DONE | Codex | 水墨地图素材生成、manifest 与台账 | 已完成首批底图/纸纹/路线/涟漪/图标素材生成、视觉审核、alpha 后处理、manifest、台账和 manifest 安全测试 |
-| S72.4 | DONE | Codex | PixiJS 地图 shell 与图层系统 | 已接入本地 PixiJS vendor、固定 CDN fallback、地图 renderer/panel、manifest-driven 素材加载、tooltip/label、行动草稿回填和资源失败 fallback |
-| S72.5 | DONE | Codex | 地图与游戏系统深度联动 | 已完成地点、路线和事件点击选中态，tooltip 只读安全 `mapRuntimeView` ref/sourceRefs，可跳转已公开渲染的局势簿卡片 |
-| S72.6 | DONE | Codex | 水墨动效与视觉 polish | 已完成路线墨线呼吸、事件涟漪扩散、朱砂双圈选中态、tooltip/fallback 案头舆图视觉、reduced-motion 与可见性暂停守卫 |
-| S72.7 | DONE | Codex | 验收、安全与性能回归 | 已扩展 browser smoke 覆盖 PixiJS canvas 非空、资源失败静态降级、reduced-motion、桌面/窄屏无溢出、hidden/raw 防线和完整 Mock 主线 |
-| S72.7a | DONE | Codex | 协作模式切换为 Codex-only | 已停止后续 Gemini CLI 协作，并同步 `AGENTS.md`、`CLAUDE.md`、治理、brief、路线图、运行时契约、素材指南和共享上下文 |
-| S72.8 | DONE | Codex | S72 专项归档 | 已将完成范围、风险和后续地图玩法迁入归档，不再保留进行中小步骤 |
+| S73.0 | DONE | Codex + medium 子代理 | 前端水墨重构规划 | 已新增 S73-S77 任务书，收束用户设想、创意发散、素材边界、安全边界和步骤拆分 |
+| S73.1 | TODO | Codex | 视觉规范与素材契约 | 新增前端视觉资产指南、UI manifest 草案、素材台账和审核字段；不改运行时代码 |
+| S73.2 | TODO | Codex | 首批界面素材生成与审核 | 生成首页画卷、宣纸/奏折/竹简材质、贡院/皇榜/书斋/官署/军帐/御案等场景素材，登记 manifest 与台账 |
+| S73.3 | TODO | Codex + 子代理创意草案 | NPC 与玩家立绘风格基准 | 先做成人、端庄、身份明确的少量样张和 prompt 规范，预留长期 3-4 百张立绘批量管线 |
+| S73.4 | TODO | Codex | 素材预览与 QA | 新增素材预览或测试脚本，校验路径、尺寸、透明度、安全字段、fallback 和视觉审核状态 |
+| S74 | TODO | Codex + 实施子代理 | 信息架构与前端拆分 | 将 `public/app.js` 逐步拆分为状态、API、shell、设置抽屉、行动区、身份面板、考试界面与资产加载模块 |
+| S75 | TODO | Codex + 实施子代理 | 首页与全局 shell | 重做水墨画卷首页、右上角设置/印匣、存档/读档、返回首页和底部行动奏折 |
+| S76 | TODO | Codex + 实施子代理 | 身份、场景与专题界面 | 完成身份专属面板、科举考试全屏、放榜全屏、地图整合与皇帝奏折/圣旨等未来玩法入口 |
+| S77 | TODO | Codex + 只读复审子代理 | 验收、性能、安全与归档 | 扩展 browser smoke、视觉/像素检查、reduced-motion、hidden/raw 防线、移动布局和专项归档 |
 
 ## 5. 进度记录
+
+### 2026-05-14
+
+工具：Codex，medium 子代理创意发散，只读子代理提交前复审。
+
+步骤：S73.0 前端水墨重构规划。
+
+提交：本次提交。
+
+完成：
+
+- 按用户要求启动 S73-S77 前端水墨重构规划，并明确 S73 先做素材体系、manifest、台账和视觉审核，S74-S77 再推进信息架构、首页/global shell、身份/场景专题界面和验收归档。
+- 让 medium 子代理做创意发散与 prompt 草案，Codex 收口为正式路线图和安全边界。
+- 新增 [FRONTEND_INK_REDESIGN_ROADMAP.md](FRONTEND_INK_REDESIGN_ROADMAP.md)，覆盖首页“千秋”画卷、水墨云雾、右上角设置/存档/读档/返回首页、底部奏折输入区、科举考试/放榜全屏、身份/场景专属面板、NPC/玩家立绘长期管线和验收矩阵。
+- 将活动台账切换到 S73-S77，记录 S73.0 DONE、S73.1-S73.4、S74-S77 TODO。
+- 更新 `docs/SHARED_CONTEXT.md`、`docs/QIANQIU_DEVELOPMENT_BRIEF.md` 和 `README.md`，同步当前活动方向、下一步 S73.1、Codex-only 生图审核责任、存档/AI 设置安全 API、S72 地图只读安全 view，以及成人、端庄、身份明确、俊美但不露骨的立绘边界。
+- 本轮不改运行时代码、API、provider schema、SQLite schema、存档格式、提示词、验证脚本或素材文件。
+
+验证：
+
+- 已通过：`npm run check:docs-governance`。
+- 已通过：`node --test test/documentationGovernance.test.js`。
+- 已通过：`git diff --check`。
+- 已完成：只读子代理复审未发现 P0/P1；P2 brief 后段“当前活动方向”遗漏 S72/S73-S77 已修正，P3 共享上下文复审状态已闭环。
+
+风险/遗留：
+
+- 本轮是规划与交接文档，不生成实际素材、不改首页、不改主界面；S73.1 仍需新增正式视觉资产指南、manifest 草案和素材台账。
+- 长期 3-4 百张立绘规模需要分批生成、懒加载、manifest 驱动和视觉审核，不能在单一步骤一次性塞入。
+
+下一步：
+
+- 执行 S73.1：前端视觉资产指南、UI manifest 草案和素材台账。
 
 ### 2026-05-14
 
