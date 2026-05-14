@@ -111,7 +111,7 @@
 | S72.0 | DONE | Codex | PixiJS 水墨地图规划与 Gemini 协作切换 | 本次只改文档：确认 PixiJS 方向、Codex 后端/素材/审核/Git 提交、Gemini CLI 前端 patch 且不做 Git 提交；新增专项路线图和素材台账模板 |
 | S72.0a | DONE | Codex | 细化 Codex/Gemini 实施规格 | 扩展专项路线图、补素材指南、创建 `GEMINI.md` 与 `.geminiignore`，让 Gemini 可按项目指引做前端只读报告或 patch |
 | S72.1 | DONE | Codex，Gemini 提供前端约束 | PixiJS 依赖治理与地图 runtime 契约 | Gemini 只读前端约束报告已由用户转交；Codex 新增运行时契约，固定 `pixi.js@7.4.3` UMD、本地 vendor 优先、固定 CDN fallback、`mapRuntimeView` 字段、DOM/app/CSS 接线和 S72.2/S72.4 验收边界 |
-| S72.2 | TODO | Codex | 后端地图 runtime view、布局契约与测试 | 基于 `mapContextView` 扩展安全投影；显示坐标只用于 UI，不暴露 raw/hidden/坐标污染 |
+| S72.2 | DONE | Codex | 后端地图 runtime view、布局契约与测试 | 已基于 `mapContextView` 扩展安全 `mapRuntimeView`、显示 layout seed、route payload 和测试；显示坐标只用于 UI，不暴露 raw/hidden/坐标污染 |
 | S72.3 | TODO | Codex | 水墨地图素材生成、manifest 与台账 | Codex 使用 `gpt-image-2` 生成底图/图标/纹理；第三方优秀素材可作为候选但必须登记许可；所有入库素材先由 Codex 视觉审核游戏基调与一致性，再保存到 `public/assets/maps/` 并更新 `docs/MAP_ASSET_LEDGER.md` |
 | S72.4 | TODO | Gemini CLI，Codex 审核提交 | PixiJS 地图 shell 与图层系统 | Gemini 可修改/新增 scoped 前端文件并交付 patch、上下文说明和浏览器验证；不得暂存、提交、推送或创建 PR，Codex 审查 diff 后提交 |
 | S72.5 | TODO | Codex + Gemini CLI | 地图与游戏系统深度联动 | 点击地点/路线/事件联动局势簿、行动草稿和服务器 proposal；前端不得直接写状态 |
@@ -331,3 +331,41 @@
 下一步：
 
 - 执行 S72.2：Codex 继续实现后端 `mapRuntimeView`；S72.4 再让 Gemini 按契约修改前端文件。
+
+### 2026-05-14
+
+工具：Codex，子代理只读接线点分析，子代理只读提交前复审。
+
+步骤：S72.2 后端地图 runtime view、布局契约与测试。
+
+提交：本次提交。
+
+完成：
+
+- 新增 `src/game/mapRuntimeConfig.js`、`src/game/mapVisualLayoutSeed.js` 和 `src/game/mapRuntimeView.js`，从安全 `mapContextView` 派生 `mapRuntimeView`，包含显示 layout、layer/style token、route path、event effect 和服务器预渲染 action draft。
+- `mapRuntimeView` 只使用显示坐标；坐标 clamp 到 `0..1`，`viewportHint.centerRef` 回退到当前可渲染安全 ref，action draft 只写入玩家输入框并要求普通回合确认，不直接执行 resolver 或改状态。
+- `POST /api/game/start`、`GET /api/game/state/:sessionId`、`GET /api/game/player-state/:sessionId`、`POST /api/game/turn`、SSE `state_preview`/`final_state`、`POST /api/exam/question`、`POST /api/exam/progress` 和 `POST /api/exam/submit` 均返回 `mapRuntimeView`。
+- `scripts/dualModeAcceptance.js` 的 S70 AI-first parity visible payload 加入 `mapRuntimeView`，确保 JSON/SQLite round trip 下地图 runtime 投影一致。
+- 更新 README、brief、架构文档、AI 控制矩阵、S72 路线图和共享上下文，明确 `mapRuntimeView` 不进入 prompt、AI 工具或服务器裁决事实。
+- 本轮不改 PixiJS 前端文件、不提交 `public/vendor/pixi.min.js`、不生成素材、不改 provider schema、SQLite schema、存档格式或 `package.json`。
+
+验证：
+
+- 已通过：`node --test test/mapRuntimeView.test.js`。
+- 已通过：`node --test test/mapRuntimeRoute.test.js`。
+- 已通过：`node --test test/mapContext.test.js test/mapVisibility.test.js test/mapMovementProposal.test.js test/gameTurnWorldGeography.test.js test/examTravel.test.js test/redactedState.test.js test/dualModeAcceptanceScript.test.js`。
+- 已通过：`npm run check:docs-governance`。
+- 已通过：`git diff --check`。
+- 已通过：`npm run smoke:dual-mode -- --storage-only`，S70 parity 输出包含 `mapRuntimeRefs: 55`。
+- 已通过：`npm test`，839 项通过、0 失败；此前首次完整运行遇到 `test/serverCors.test.js` 的 Node test runner transient deserialization error，单跑该文件通过，后续完整重跑已通过。
+- 已完成：只读子代理复审最终 diff 与验证证据，未发现 P0/P1/P2；P3 台账状态提示已修正。
+
+风险/遗留：
+
+- `mapRuntimeView` 已满足后端和 route 契约，但前端 PixiJS shell、vendor、canvas 非空、资源失败 fallback 与地图素材仍未接入。
+- S72.3 仍需由 Codex 使用 `gpt-image-2` 生成并视觉审核 `ink-map-v1` 素材，更新 manifest 和素材台账。
+- S72.4 才让 Gemini CLI 在已提交后端契约和已审核素材范围内修改前端文件；Gemini 不运行 Git 命令。
+
+下一步：
+
+- 执行 S72.3：生成、审核并登记首批水墨地图素材与 manifest；随后进入 S72.4 PixiJS 地图 shell。

@@ -18,6 +18,7 @@ const {
   buildActorMemoryView
 } = require("../src/game/actorMemoryLedger");
 const { buildMapContextView } = require("../src/game/mapContext");
+const { buildMapRuntimeView } = require("../src/game/mapRuntimeView");
 const { buildOfficialPostingsView } = require("../src/game/officialPostings");
 const {
   buildPlayerMonthlyBriefingView,
@@ -642,6 +643,7 @@ function buildS70AiFirstVisiblePayload(worldState) {
   const env = { AI_PROVIDER: "mock" };
   const { settings, routePolicy } = resolveAiSettingsForSession(worldState, env);
   const aiSettingsView = redactAiSettingsForClient({ ...settings, routePolicy }, env);
+  const mapContextView = buildMapContextView(worldState, buildPlayerAiActorProfile(worldState));
   const timeSkipPlan = buildTimeSkipPlan("照旧处理一月", {}, { worldState });
   const timeSkip = buildTimeSkipSummary({
     executed: false,
@@ -659,7 +661,8 @@ function buildS70AiFirstVisiblePayload(worldState) {
     timeSkip,
     actorMemoryView: buildActorMemoryView(worldState),
     sessionSummaryView: buildSessionSummaryView(worldState),
-    mapContextView: buildMapContextView(worldState, buildPlayerAiActorProfile(worldState))
+    mapContextView,
+    mapRuntimeView: buildMapRuntimeView(worldState, { mapContextView })
   };
 }
 
@@ -879,7 +882,8 @@ async function runS70AiFirstParityAcceptance(options = {}) {
         timeSkipDetected: jsonPayload.timeSkip.requestedTicks === 3,
         actorMemoryActors: jsonPayload.actorMemoryView.actors.length,
         sessionSummaryCount: jsonPayload.sessionSummaryView.recentMonthlySummaries.length,
-        mapRefs: jsonPayload.mapContextView.mapEntityRefs.length
+        mapRefs: jsonPayload.mapContextView.mapEntityRefs.length,
+        mapRuntimeRefs: jsonPayload.mapRuntimeView.refs.length
       },
       memory: {
         appliedCount: fixture.actorMemory.appliedCount,

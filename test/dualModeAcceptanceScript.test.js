@@ -104,6 +104,8 @@ test("dual-mode S70 AI-first fixture exposes only route-view surfaces", () => {
   assert.equal(payload.sessionSummaryView.recentMonthlySummaries.length, 1);
   assert.equal(payload.mapContextView.schemaVersion, 1);
   assert.equal(payload.mapContextView.mapEntityRefs.length > 0, true);
+  assert.equal(payload.mapRuntimeView.schemaVersion, 1);
+  assert.equal(payload.mapRuntimeView.refs.length > 0, true);
   assert.equal(actorMemory.rejectedCount >= 1, true);
   assert.equal(serialized.includes("actorMemoryLedger"), false);
   assert.equal(serialized.includes("sessionSummary\""), false);
@@ -128,6 +130,7 @@ test("dual-mode S70 AI-first parity compares JSON and SQLite route views", {
   assert.equal(result.views.actorMemoryActors >= 1, true);
   assert.equal(result.views.sessionSummaryCount, 1);
   assert.equal(result.views.mapRefs > 0, true);
+  assert.equal(result.views.mapRuntimeRefs > 0, true);
   assert.equal(result.memory.appliedCount >= 1, true);
   assert.equal(result.memory.rejectedCount >= 1, true);
   assert.equal(serialized.includes(dbPath), false);

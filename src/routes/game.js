@@ -83,6 +83,7 @@ const { buildIntelligenceRumorView } = require("../game/intelligenceRumors");
 const { buildLocalAffairsDocketView } = require("../game/localAffairsDockets");
 const { buildMilitaryDiplomacyView } = require("../game/militaryDiplomacy");
 const { buildMapContextView } = require("../game/mapContext");
+const { buildMapRuntimeView } = require("../game/mapRuntimeView");
 const { canEnterExam, getExam } = require("../game/exams");
 const {
   advanceExamScenePhase,
@@ -380,6 +381,7 @@ function buildCommonTurnViews(worldState, options = {}) {
   const worldGeographyView = buildWorldGeographyView(worldState);
   const worldPeopleView = buildWorldPeopleView(worldState);
   const officialPostingsView = buildOfficialPostingsView(worldState);
+  const mapContextView = buildMapContextView(worldState);
   const { settings, routePolicy } = resolveAiSettingsForSession(worldState);
   const aiInvocationSummaryView = buildAiInvocationSummaryView(worldState, routePolicy);
   return {
@@ -409,7 +411,8 @@ function buildCommonTurnViews(worldState, options = {}) {
     localAffairsDocketView: buildLocalAffairsDocketView(worldState),
     militaryDiplomacyView: buildMilitaryDiplomacyView(worldState),
     economicFiscalView: buildEconomicFiscalView(worldState),
-    mapContextView: buildMapContextView(worldState),
+    mapContextView,
+    mapRuntimeView: buildMapRuntimeView(worldState, { mapContextView }),
     historicalEventArchiveView: buildHistoricalEventArchiveView(worldState),
     intelligenceRumorView: buildIntelligenceRumorView(worldState),
     playerMonthlyBriefingView: buildPlayerMonthlyBriefingView(worldState),
@@ -1082,6 +1085,7 @@ async function streamTurn(res, sessionId, input) {
       militaryDiplomacyView: payload.militaryDiplomacyView,
       economicFiscalView: payload.economicFiscalView,
       mapContextView: payload.mapContextView,
+      mapRuntimeView: payload.mapRuntimeView,
       historicalEventArchiveView: payload.historicalEventArchiveView,
       intelligenceRumorView: payload.intelligenceRumorView,
       playerMonthlyBriefingView: payload.playerMonthlyBriefingView,

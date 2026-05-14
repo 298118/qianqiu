@@ -55,6 +55,7 @@ const { buildLocalAffairsDocketView } = require("../game/localAffairsDockets");
 const { buildMilitaryDiplomacyView } = require("../game/militaryDiplomacy");
 const { buildEconomicFiscalView } = require("../game/economicFiscal");
 const { buildMapContextView } = require("../game/mapContext");
+const { buildMapRuntimeView } = require("../game/mapRuntimeView");
 const { buildHistoricalEventArchiveView } = require("../game/historicalEventArchive");
 const { buildIntelligenceRumorView } = require("../game/intelligenceRumors");
 const { buildRoleWorldCouplingView, ensureRoleWorldCouplingState } = require("../game/roleWorldCoupling");
@@ -115,6 +116,7 @@ function toExamPayload(worldState) {
   const worldGeographyView = buildWorldGeographyView(worldState);
   const worldPeopleView = buildWorldPeopleView(worldState);
   const officialPostingsView = buildOfficialPostingsView(worldState);
+  const mapContextView = buildMapContextView(worldState);
   const { settings, routePolicy } = resolveAiSettingsForSession(worldState);
   const aiInvocationSummaryView = buildAiInvocationSummaryView(worldState, routePolicy);
   return {
@@ -159,7 +161,8 @@ function toExamPayload(worldState) {
     localAffairsDocketView: buildLocalAffairsDocketView(worldState),
     militaryDiplomacyView: buildMilitaryDiplomacyView(worldState),
     economicFiscalView: buildEconomicFiscalView(worldState),
-    mapContextView: buildMapContextView(worldState),
+    mapContextView,
+    mapRuntimeView: buildMapRuntimeView(worldState, { mapContextView }),
     historicalEventArchiveView: buildHistoricalEventArchiveView(worldState),
     intelligenceRumorView: buildIntelligenceRumorView(worldState),
     playerMonthlyBriefingView: buildPlayerMonthlyBriefingView(worldState),
@@ -581,6 +584,7 @@ router.post("/submit", async (req, res, next) => {
       const worldGeographyView = buildWorldGeographyView(worldState);
       const worldPeopleView = buildWorldPeopleView(worldState);
       const officialPostingsView = buildOfficialPostingsView(worldState);
+      const mapContextView = buildMapContextView(worldState);
       const aiInvocationSummaryView = buildAiInvocationSummaryView(worldState, routePolicy);
       return {
         sessionId: worldState.sessionId,
@@ -627,7 +631,8 @@ router.post("/submit", async (req, res, next) => {
         localAffairsDocketView: buildLocalAffairsDocketView(worldState),
         militaryDiplomacyView: buildMilitaryDiplomacyView(worldState),
         economicFiscalView: buildEconomicFiscalView(worldState),
-        mapContextView: buildMapContextView(worldState),
+        mapContextView,
+        mapRuntimeView: buildMapRuntimeView(worldState, { mapContextView }),
         historicalEventArchiveView: buildHistoricalEventArchiveView(worldState),
         intelligenceRumorView: buildIntelligenceRumorView(worldState),
         playerMonthlyBriefingView: buildPlayerMonthlyBriefingView(worldState),
