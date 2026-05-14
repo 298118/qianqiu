@@ -251,6 +251,8 @@
 
 ### S73.1 视觉资产指南
 
+状态：已完成，交付见 [FRONTEND_VISUAL_ASSET_GUIDE.md](FRONTEND_VISUAL_ASSET_GUIDE.md)。
+
 需要资料：
 
 - 宣纸、奏折、榜文、科举、官服、书斋、县衙、军帐、御案资料。
