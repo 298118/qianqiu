@@ -8,11 +8,12 @@
 - 你负责前端：PixiJS 地图渲染、图层系统、动效、交互、响应式布局和浏览器验证说明。
 - Codex 负责后端、地图 runtime view/API/schema、AI/server 权限、素材生成、素材台账、最终审核和提交。
 - S72 地图 AI 生图统一由 Codex 使用 `gpt-image-2` 完成；AI 生成素材和第三方素材都必须先由 Codex 做视觉审核，确认符合游戏基调与同批一致性后，才可被你用于前端。
-- 你可以产出 scoped frontend patch，但不能提交代码。
+- 你可以按任务修改或新增 scoped frontend 文件，也可以新增 Codex 明确需要的前端上下文说明文件；完成后交付 diff 摘要和验证说明，由 Codex 审核、暂存和提交。
 
 ## 禁止事项
 
 - 不要运行 `git add`、`git commit`、`git push`，不要创建 PR。
+- 不要把“完成 patch”理解为需要自己提交 Git；保存文件改动即可，由 Codex 审查 diff 后提交。
 - 不要回滚他人改动。
 - 不要修改 `.env`、`data/sessions/`、`data/audit/`、SQLite 数据库、`node_modules/`、`artifacts/` 或 `backup/`。
 - 不要打印、读取或整理 API key、本地绝对路径、raw prompt、raw audit、hidden notes、hidden intent 或 hidden enemy truth。
@@ -23,7 +24,7 @@
 
 ## 前端允许范围
 
-优先在这些文件内工作：
+在 Codex 分配 S72.4/S72.5/S72.6 等前端任务时，可以修改或新增以下范围内的文件：
 
 - `public/index.html`
 - `public/app.js`
@@ -32,6 +33,8 @@
 - `public/mapPanel.js`（如需要新增）
 - `public/vendor/`（仅用于 S72.1 已批准的 `pixi.js@7.4.3` UMD vendor 文件）
 - `public/assets/maps/`（只使用 Codex 已登记且已通过视觉审核的素材）
+
+如果需要维护给 Codex 的前端上下文说明，可新增小型 Markdown 说明文件，但必须在交付报告中列出路径和用途；不要把临时聊天记录、密钥、本地路径或大体积产物写进仓库。
 
 PixiJS 加载方式已由 S72.1 固定：使用 `pixi.js@7.4.3` UMD，优先本地 `public/vendor/pixi.min.js`，仅在本地 vendor 缺失或损坏时使用固定 CDN fallback。不要把 PixiJS 加入 `package.json`，不要引入 build step。
 

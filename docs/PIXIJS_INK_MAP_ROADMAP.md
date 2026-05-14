@@ -11,7 +11,7 @@
 - 地图中文字、地点名、事件标签不得烘进底图，统一由前端按 `mapEntityRef` 和服务器 view 渲染，避免 AI 图片文字错误和后续改名返工。
 - 地图显示坐标只用于前端布局，不是 canonical 地理真值，不参与科举资格、行军结果、任免、外交、战和、商路收益或 AI 裁决。
 - 默认仍保持 `npm install && npm start` 可运行；新增 PixiJS 或资产加载策略必须先通过依赖治理记录。
-- S72 期间项目协作以 Codex + Gemini CLI 为准：Codex 负责后端、素材、审核和提交；Gemini CLI 负责前端 PixiJS patch 和验证报告，不提交代码。
+- S72 期间项目协作以 Codex + Gemini CLI 为准：Codex 负责后端、素材、审核和 Git 提交；Gemini CLI 负责前端 PixiJS patch、必要前端上下文说明和验证报告，可以按任务修改或新增前端文件，但不运行 Git 提交/推送命令。
 - S72.1 已固定运行时契约，详见 [PIXIJS_INK_MAP_RUNTIME_CONTRACT.md](PIXIJS_INK_MAP_RUNTIME_CONTRACT.md)：PixiJS 使用 `pixi.js@7.4.3` UMD，本地 vendor 优先、固定 CDN fallback，不进入 `package.json`，继续保持无 build step。
 
 ## 2. 非目标与安全边界
@@ -29,10 +29,10 @@
 | 角色 | 主要职责 | 禁止事项 |
 | --- | --- | --- |
 | Codex | 后端地图 runtime view、API/schema、服务器裁决边界、AI 工具权限、Mock/no-key fallback、测试、使用 `gpt-image-2` 生成素材、第三方素材筛选、素材视觉审核、素材台账、Gemini patch 审核、最终提交 | 不把未审查的 Gemini patch 直接提交；不把素材来源或视觉审核结论只留在聊天里；不使用其他 AI 生图工具生成 S72 地图素材 |
-| Gemini CLI | 前端 PixiJS 地图渲染、图层系统、动效、交互、响应式布局、浏览器验证截图/说明 | 不运行 `git add`、`git commit`、`git push`，不创建 PR，不改后端裁决逻辑，不回滚他人改动，不自行生成或引入未登记素材 |
+| Gemini CLI | 前端 PixiJS 地图渲染、图层系统、动效、交互、响应式布局、必要前端上下文说明、浏览器验证截图/说明；可按任务修改或新增 scoped frontend 文件 | 不运行 `git add`、`git commit`、`git push`，不创建 PR，不改后端裁决逻辑，不回滚他人改动，不自行生成或引入未登记素材 |
 | Codex 子代理 | 只读复审或明确 scoped patch；用于提交前风险检查 | 不提交、不推送、不创建 PR |
 
-Gemini 的交付必须列出改动文件、核心实现、浏览器验证步骤、已知风险和未完成事项。Codex 必须审查 diff、运行验证、同步文档后再提交。
+Gemini 的交付必须列出改动文件、新增文件用途、核心实现、浏览器验证步骤、已知风险和未完成事项。Codex 必须审查 diff、运行验证、同步文档后再提交。只有明确标注为只读的任务才禁止 Gemini 编辑文件；普通 S72 前端 patch 允许保存文件改动。
 
 ## 4. 后端实施规格（Codex）
 
@@ -254,7 +254,7 @@ AI 生图与素材准入约束：
 | S72.1 | DONE | Codex，Gemini 提供前端约束 | PixiJS 依赖治理与 runtime 契约 | 新增 [PIXIJS_INK_MAP_RUNTIME_CONTRACT.md](PIXIJS_INK_MAP_RUNTIME_CONTRACT.md)；固定 `pixi.js@7.4.3` UMD、本地 vendor 优先和固定 CDN fallback；固定 `mapRuntimeView` 字段、DOM/app/CSS 接线、manifest 与 S72.2/S72.4 验收边界 |
 | S72.2 | TODO | Codex | 后端地图 runtime view 与布局契约 | 新增/扩展安全 view、配置、测试；确保 raw/hidden/坐标污染不外泄 |
 | S72.3 | TODO | Codex | 水墨底图、图标、纹理与素材 manifest | 使用 `gpt-image-2` 生成项目内 AI 资产；第三方素材可筛选但必须登记许可；所有入库素材先经 Codex 视觉审核；更新素材台账；基础图片尺寸/透明度/加载检查 |
-| S72.4 | TODO | Gemini CLI，Codex 审核提交 | PixiJS 地图 shell 与图层系统 | 前端 patch；桌面/移动浏览器截图或说明；Codex 审查后提交 |
+| S72.4 | TODO | Gemini CLI，Codex 审核提交 | PixiJS 地图 shell 与图层系统 | Gemini 可修改/新增前端文件并交付 patch；桌面/移动浏览器截图或说明；Codex 审查 diff 后提交 |
 | S72.5 | TODO | Codex + Gemini CLI | 地图与游戏系统联动 | 点击 ref 联动局势簿/行动草稿；服务器权限校验；地图 action 不直写状态 |
 | S72.6 | TODO | Gemini CLI，Codex 提供素材 | 水墨动效与视觉 polish | 路线流动、事件涟漪、marker 状态、降级模式；浏览器动效验证 |
 | S72.7 | TODO | Codex | 验收、性能与安全回归 | `npm test` 或相关 node tests、browser smoke、canvas 非空/帧率/资源失败降级、JSON/SQLite parity |
@@ -275,7 +275,7 @@ AI 生图与素材准入约束：
 
 Gemini 的首个只读前端约束报告已经由用户转交给 Codex，并已沉淀到 [PIXIJS_INK_MAP_RUNTIME_CONTRACT.md](PIXIJS_INK_MAP_RUNTIME_CONTRACT.md)。后续 Gemini 进入 S72.4 前端 patch 时，必须先阅读本路线图、运行时契约、`GEMINI.md`、`public/index.html`、`public/app.js` 和 `public/styles.css`，并遵守以下边界：
 
-- 只改前端 patch 范围内文件，不运行 `git add`、`git commit`、`git push`，不创建 PR。
+- 可修改或新增前端 patch 范围内文件，也可新增必要前端上下文说明文件；不运行 `git add`、`git commit`、`git push`，不创建 PR。
 - 不从 raw `worldState`、SQLite、prompt、provider payload 或 hidden ledger 推导地图数据。
 - 如果 `mapRuntimeView` 缺失或 `window.PIXI` 不可用，显示等待/静态降级，不阻断主文字流程。
 - 浏览器验证报告需覆盖桌面和窄屏、canvas 非空、资源失败 fallback、tooltip/label 不重叠、`prefers-reduced-motion` 降级。

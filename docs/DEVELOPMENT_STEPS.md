@@ -108,12 +108,12 @@
 
 | ID | 状态 | Owner | 目标 | 说明 |
 | --- | --- | --- | --- | --- |
-| S72.0 | DONE | Codex | PixiJS 水墨地图规划与 Gemini 协作切换 | 本次只改文档：确认 PixiJS 方向、Codex 后端/素材/审核提交、Gemini CLI 前端 patch 且不提交代码；新增专项路线图和素材台账模板 |
+| S72.0 | DONE | Codex | PixiJS 水墨地图规划与 Gemini 协作切换 | 本次只改文档：确认 PixiJS 方向、Codex 后端/素材/审核/Git 提交、Gemini CLI 前端 patch 且不做 Git 提交；新增专项路线图和素材台账模板 |
 | S72.0a | DONE | Codex | 细化 Codex/Gemini 实施规格 | 扩展专项路线图、补素材指南、创建 `GEMINI.md` 与 `.geminiignore`，让 Gemini 可按项目指引做前端只读报告或 patch |
 | S72.1 | DONE | Codex，Gemini 提供前端约束 | PixiJS 依赖治理与地图 runtime 契约 | Gemini 只读前端约束报告已由用户转交；Codex 新增运行时契约，固定 `pixi.js@7.4.3` UMD、本地 vendor 优先、固定 CDN fallback、`mapRuntimeView` 字段、DOM/app/CSS 接线和 S72.2/S72.4 验收边界 |
 | S72.2 | TODO | Codex | 后端地图 runtime view、布局契约与测试 | 基于 `mapContextView` 扩展安全投影；显示坐标只用于 UI，不暴露 raw/hidden/坐标污染 |
 | S72.3 | TODO | Codex | 水墨地图素材生成、manifest 与台账 | Codex 使用 `gpt-image-2` 生成底图/图标/纹理；第三方优秀素材可作为候选但必须登记许可；所有入库素材先由 Codex 视觉审核游戏基调与一致性，再保存到 `public/assets/maps/` 并更新 `docs/MAP_ASSET_LEDGER.md` |
-| S72.4 | TODO | Gemini CLI，Codex 审核提交 | PixiJS 地图 shell 与图层系统 | Gemini 负责前端 patch 和浏览器验证说明；不得暂存、提交、推送或创建 PR |
+| S72.4 | TODO | Gemini CLI，Codex 审核提交 | PixiJS 地图 shell 与图层系统 | Gemini 可修改/新增 scoped 前端文件并交付 patch、上下文说明和浏览器验证；不得暂存、提交、推送或创建 PR，Codex 审查 diff 后提交 |
 | S72.5 | TODO | Codex + Gemini CLI | 地图与游戏系统深度联动 | 点击地点/路线/事件联动局势簿、行动草稿和服务器 proposal；前端不得直接写状态 |
 | S72.6 | TODO | Gemini CLI，Codex 提供素材 | 水墨动效与视觉 polish | 保证拖拽/缩放/路线/事件动效流畅，支持降级与窄屏布局 |
 | S72.7 | TODO | Codex | 验收、安全与性能回归 | 覆盖文档治理、node tests、browser smoke、canvas 非空、资源失败降级、hidden/raw 不外泄 |
@@ -264,7 +264,7 @@
 - 版本或范围：固定 `7.4.3`。
 - 是否使用 `latest` 及理由：不使用。2026-05-14 通过 `npm view pixi.js version` 确认最新主版本为 `8.18.1`；S72 固定 7 系列最后版本 `7.4.3`，因为它有稳定 UMD bundle，适合当前无构建、传统 script 加载方式。
 - 引入步骤：S72.1 只批准版本与加载策略；S72.4 才能提交 `public/vendor/pixi.min.js` 和前端接线。
-- 负责人/工具：Codex 负责治理、后端契约、素材审核和最终提交；Gemini CLI 只提供前端约束报告和后续 patch，不运行 Git 命令。
+- 负责人/工具：Codex 负责治理、后端契约、素材审核和最终提交；Gemini CLI 提供前端约束报告和后续 patch，可按任务修改/新增前端文件，但不运行 Git 命令。
 - 用途：水墨地图 canvas 渲染、图层合成、marker、route、pressure effect、hit testing 和后续动效。
 - 影响范围：browser/docs；本轮不改 server、storage、AI provider、`package.json` 或安装流程。
 - 许可证：MIT。
@@ -301,3 +301,33 @@
 下一步：
 
 - 执行 S72.2：Codex 按契约实现后端 `mapRuntimeView`、layout seed、route payload 和测试，继续确保 JSON/Mock 默认可玩、hidden/raw 不外泄。
+
+### 2026-05-14
+
+工具：Codex。
+
+步骤：Gemini CLI 协作口径修正。
+
+提交：本次提交。
+
+完成：
+
+- 按用户澄清修正 S72 Gemini CLI 权限表述：Gemini 不是全程只读；除明确只读任务外，Gemini 可以修改代码、增加 scoped 前端文件，或维护必要前端上下文说明。
+- 明确真正禁止的是运行 `git add`、`git commit`、`git push`、创建 PR、回滚他人改动、改后端裁决逻辑或引入未审核素材。
+- 更新 `AGENTS.md`、`GEMINI.md`、`docs/SHARED_CONTEXT.md`、`docs/PIXIJS_INK_MAP_ROADMAP.md`、`docs/PIXIJS_INK_MAP_RUNTIME_CONTRACT.md` 和本台账。
+- 本轮不改运行时代码、API、provider schema、存档格式、SQLite 表结构、提示词、验证脚本、素材文件或 `package.json`。
+
+验证：
+
+- 已通过：`npm run check:docs-governance`。
+- 已通过：`node --test test/documentationGovernance.test.js`。
+- 已通过：`git diff --check`。
+
+风险/遗留：
+
+- 本轮是纯文档协作口径修正；实际前端 patch 仍从 S72.4 开始，Codex 仍需审查 diff 后提交。
+- 纯文档低风险改动，未执行子代理复审。
+
+下一步：
+
+- 执行 S72.2：Codex 继续实现后端 `mapRuntimeView`；S72.4 再让 Gemini 按契约修改前端文件。
