@@ -1439,6 +1439,440 @@
         "thumbnailBytes": 3618
       },
       "ledgerId": "ui-paper-edge-shadow-v1"
+    },
+    {
+      "id": "ui-home-scroll-landscape-v1",
+      "version": 1,
+      "phase": "S73.4",
+      "category": "background",
+      "subcategory": "home_scroll_landscape",
+      "usage": [
+        "home"
+      ],
+      "role": null,
+      "scene": "home",
+      "path": "/assets/ui/home/home-scroll-landscape-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-home-scroll-landscape-v1.webp",
+      "fallbackRef": "fallback-paper-panel-v1",
+      "dimensions": {
+        "width": 2560,
+        "height": 1440
+      },
+      "aspectRatio": "2560:1440",
+      "format": "webp",
+      "transparent": false,
+      "safeArea": {
+        "x": 0.22,
+        "y": 0.1,
+        "width": 0.56,
+        "height": 0.56
+      },
+      "focalPoint": {
+        "x": 0.5,
+        "y": 0.48
+      },
+      "mobileCrop": {
+        "mode": "center_crop",
+        "keepSafeArea": true,
+        "notes": "窄屏优先保留中央留白、远山和书案画卷边缘。"
+      },
+      "motion": {
+        "type": "none"
+      },
+      "reducedMotionFallback": "ui-home-static-reduced-motion-v1",
+      "source": {
+        "type": "ai_generated",
+        "tool": "Codex imagegen",
+        "model": "gpt-image-2",
+        "generatedAt": "2026-05-14",
+        "promptSummary": "首页水墨山水长卷，泛黄宣纸、远山江雾、古城与驿道，中央和上方留白承载标题与开局表单。"
+      },
+      "license": {
+        "type": "ai_generated_project_asset",
+        "commercialUseConfirmed": false,
+        "summary": "原创 AI 生成素材，当前仅个人游玩/开发使用；未做公开商用确认。"
+      },
+      "reviewStatus": "approved",
+      "visualReview": {
+        "reviewedBy": "Codex",
+        "reviewedAt": "2026-05-14",
+        "status": "approved",
+        "summary": "通过：首屏山水、书案和画卷气质明确，中央留白充足；无可读文字、水印、现代 UI 或现代建筑；只用于首页背景。"
+      },
+      "safetyReview": {
+        "reviewedBy": "Codex",
+        "reviewedAt": "2026-05-14",
+        "status": "approved",
+        "summary": "通过：素材和 manifest 只包含安全项目相对路径、用途、fallback、审核状态和台账 id；不含本地路径、key、raw/hidden 内容、可读乱码或未公开剧情事实。"
+      },
+      "performance": {
+        "bytes": 284254,
+        "targetMaxBytes": 1572864,
+        "thumbnailBytes": 7552
+      },
+      "ledgerId": "ui-home-scroll-landscape-v1"
+    },
+    {
+      "id": "ui-home-mist-layer-v1",
+      "version": 1,
+      "phase": "S73.4",
+      "category": "effect",
+      "subcategory": "home_mist_overlay",
+      "usage": [
+        "home"
+      ],
+      "role": null,
+      "scene": "home",
+      "path": "/assets/ui/home/home-mist-layer-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-home-mist-layer-v1.webp",
+      "fallbackRef": "fallback-paper-panel-v1",
+      "dimensions": {
+        "width": 2560,
+        "height": 720
+      },
+      "aspectRatio": "2560:720",
+      "format": "webp",
+      "transparent": true,
+      "safeArea": {
+        "x": 0,
+        "y": 0,
+        "width": 1,
+        "height": 1
+      },
+      "focalPoint": {
+        "x": 0.5,
+        "y": 0.56
+      },
+      "mobileCrop": {
+        "mode": "contain_or_center_crop",
+        "keepSafeArea": true,
+        "notes": "作为透明叠加层使用，移动端可缩放或裁边，不承载正文。"
+      },
+      "motion": {
+        "type": "ambient_overlay",
+        "suggestedUse": "首页云雾慢速横移；reduced-motion 时静态显示或关闭。"
+      },
+      "reducedMotionFallback": "ui-home-static-reduced-motion-v1",
+      "source": {
+        "type": "ai_generated",
+        "tool": "Codex imagegen",
+        "model": "gpt-image-2",
+        "generatedAt": "2026-05-14",
+        "promptSummary": "首页淡墨云雾透明叠加层，后处理去除 chroma key 并调为暖灰低对比。"
+      },
+      "license": {
+        "type": "ai_generated_project_asset",
+        "commercialUseConfirmed": false,
+        "summary": "原创 AI 生成素材，当前仅个人游玩/开发使用；未做公开商用确认。"
+      },
+      "reviewStatus": "approved_with_limits",
+      "visualReview": {
+        "reviewedBy": "Codex",
+        "reviewedAt": "2026-05-14",
+        "status": "approved_with_limits",
+        "summary": "通过但限用：透明雾气边缘干净、无文字和现代符号；只适合作为首页低透明度云雾叠加，不单独承载信息。"
+      },
+      "safetyReview": {
+        "reviewedBy": "Codex",
+        "reviewedAt": "2026-05-14",
+        "status": "approved",
+        "summary": "通过：素材和 manifest 只包含安全项目相对路径、用途、fallback、审核状态和台账 id；不含本地路径、key、raw/hidden 内容、可读乱码或未公开剧情事实。"
+      },
+      "performance": {
+        "bytes": 61074,
+        "targetMaxBytes": 524288,
+        "thumbnailBytes": 228
+      },
+      "ledgerId": "ui-home-mist-layer-v1"
+    },
+    {
+      "id": "ui-home-register-form-paper-v1",
+      "version": 1,
+      "phase": "S73.4",
+      "category": "material",
+      "subcategory": "home_register_form",
+      "usage": [
+        "home"
+      ],
+      "role": null,
+      "scene": "home",
+      "path": "/assets/ui/home/home-register-form-paper-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-home-register-form-paper-v1.webp",
+      "fallbackRef": "fallback-paper-panel-v1",
+      "dimensions": {
+        "width": 1600,
+        "height": 900
+      },
+      "aspectRatio": "1600:900",
+      "format": "webp",
+      "transparent": true,
+      "safeArea": {
+        "x": 0.18,
+        "y": 0.16,
+        "width": 0.64,
+        "height": 0.66
+      },
+      "focalPoint": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "mobileCrop": {
+        "mode": "center_crop_or_contain",
+        "keepSafeArea": true,
+        "notes": "移动端保留整册页与中央表单留白。"
+      },
+      "motion": {
+        "type": "none"
+      },
+      "reducedMotionFallback": "fallback-ink-motion-static-v1",
+      "source": {
+        "type": "ai_generated",
+        "tool": "Codex imagegen",
+        "model": "gpt-image-2",
+        "generatedAt": "2026-05-14",
+        "promptSummary": "首页题名册/户籍册表单底，展开旧册页、浅界栏和泛黄纸面，中央留白。"
+      },
+      "license": {
+        "type": "ai_generated_project_asset",
+        "commercialUseConfirmed": false,
+        "summary": "原创 AI 生成素材，当前仅个人游玩/开发使用；未做公开商用确认。"
+      },
+      "reviewStatus": "approved",
+      "visualReview": {
+        "reviewedBy": "Codex",
+        "reviewedAt": "2026-05-14",
+        "status": "approved",
+        "summary": "通过：册页端正、纸色克制、中央表单区清楚；无伪文字、水印、现代控件或现代书本；适合首页开局表单底。"
+      },
+      "safetyReview": {
+        "reviewedBy": "Codex",
+        "reviewedAt": "2026-05-14",
+        "status": "approved",
+        "summary": "通过：素材和 manifest 只包含安全项目相对路径、用途、fallback、审核状态和台账 id；不含本地路径、key、raw/hidden 内容、可读乱码或未公开剧情事实。"
+      },
+      "performance": {
+        "bytes": 71096,
+        "targetMaxBytes": 524288,
+        "thumbnailBytes": 1838
+      },
+      "ledgerId": "ui-home-register-form-paper-v1"
+    },
+    {
+      "id": "ui-home-cinnabar-start-seal-v1",
+      "version": 1,
+      "phase": "S73.4",
+      "category": "material",
+      "subcategory": "home_start_seal",
+      "usage": [
+        "home"
+      ],
+      "role": null,
+      "scene": "home",
+      "path": "/assets/ui/home/home-cinnabar-start-seal-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-home-cinnabar-start-seal-v1.webp",
+      "fallbackRef": "fallback-paper-panel-v1",
+      "dimensions": {
+        "width": 512,
+        "height": 512
+      },
+      "aspectRatio": "512:512",
+      "format": "webp",
+      "transparent": true,
+      "safeArea": {
+        "x": 0.22,
+        "y": 0.22,
+        "width": 0.56,
+        "height": 0.56
+      },
+      "focalPoint": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "mobileCrop": {
+        "mode": "contain",
+        "keepSafeArea": true,
+        "notes": "方形印章按钮素材，不裁切主体。"
+      },
+      "motion": {
+        "type": "stamp_feedback_base",
+        "suggestedUse": "首页开始按钮默认态，可配合 CSS transform 做落印反馈。"
+      },
+      "reducedMotionFallback": "fallback-ink-motion-static-v1",
+      "source": {
+        "type": "ai_generated",
+        "tool": "Codex imagegen",
+        "model": "gpt-image-2",
+        "generatedAt": "2026-05-14",
+        "promptSummary": "首页无字朱砂开始按钮底，圆角方印、厚实印泥、中心可叠 DOM 文本。"
+      },
+      "license": {
+        "type": "ai_generated_project_asset",
+        "commercialUseConfirmed": false,
+        "summary": "原创 AI 生成素材，当前仅个人游玩/开发使用；未做公开商用确认。"
+      },
+      "reviewStatus": "approved",
+      "visualReview": {
+        "reviewedBy": "Codex",
+        "reviewedAt": "2026-05-14",
+        "status": "approved",
+        "summary": "通过：无字朱砂印底完整，小尺寸识别度强，中心可叠前端文字；无汉字、伪字、水印或现代按钮质感。"
+      },
+      "safetyReview": {
+        "reviewedBy": "Codex",
+        "reviewedAt": "2026-05-14",
+        "status": "approved",
+        "summary": "通过：素材和 manifest 只包含安全项目相对路径、用途、fallback、审核状态和台账 id；不含本地路径、key、raw/hidden 内容、可读乱码或未公开剧情事实。"
+      },
+      "performance": {
+        "bytes": 66204,
+        "targetMaxBytes": 307200,
+        "thumbnailBytes": 11262
+      },
+      "ledgerId": "ui-home-cinnabar-start-seal-v1"
+    },
+    {
+      "id": "ui-home-archive-casefile-v1",
+      "version": 1,
+      "phase": "S73.4",
+      "category": "material",
+      "subcategory": "home_archive_casefile",
+      "usage": [
+        "home"
+      ],
+      "role": null,
+      "scene": "home",
+      "path": "/assets/ui/home/home-archive-casefile-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-home-archive-casefile-v1.webp",
+      "fallbackRef": "fallback-paper-panel-v1",
+      "dimensions": {
+        "width": 1400,
+        "height": 900
+      },
+      "aspectRatio": "1400:900",
+      "format": "webp",
+      "transparent": true,
+      "safeArea": {
+        "x": 0.2,
+        "y": 0.18,
+        "width": 0.58,
+        "height": 0.58
+      },
+      "focalPoint": {
+        "x": 0.52,
+        "y": 0.54
+      },
+      "mobileCrop": {
+        "mode": "center_crop_or_contain",
+        "keepSafeArea": true,
+        "notes": "保留中央空白卷宗区和左右案卷边缘。"
+      },
+      "motion": {
+        "type": "none"
+      },
+      "reducedMotionFallback": "fallback-ink-motion-static-v1",
+      "source": {
+        "type": "ai_generated",
+        "tool": "Codex imagegen",
+        "model": "gpt-image-2",
+        "generatedAt": "2026-05-14",
+        "promptSummary": "首页案卷式存档/读档素材，空白卷宗、薄册、竹签、系绳和旧纸签。"
+      },
+      "license": {
+        "type": "ai_generated_project_asset",
+        "commercialUseConfirmed": false,
+        "summary": "原创 AI 生成素材，当前仅个人游玩/开发使用；未做公开商用确认。"
+      },
+      "reviewStatus": "approved",
+      "visualReview": {
+        "reviewedBy": "Codex",
+        "reviewedAt": "2026-05-14",
+        "status": "approved",
+        "summary": "通过：案卷层次清楚，中央空白适合存档列表；无可读档案文字、水印、现代文件夹或现代办公物。"
+      },
+      "safetyReview": {
+        "reviewedBy": "Codex",
+        "reviewedAt": "2026-05-14",
+        "status": "approved",
+        "summary": "通过：素材和 manifest 只包含安全项目相对路径、用途、fallback、审核状态和台账 id；不含本地路径、key、raw/hidden 内容、可读乱码或未公开剧情事实。"
+      },
+      "performance": {
+        "bytes": 110554,
+        "targetMaxBytes": 524288,
+        "thumbnailBytes": 3842
+      },
+      "ledgerId": "ui-home-archive-casefile-v1"
+    },
+    {
+      "id": "ui-home-static-reduced-motion-v1",
+      "version": 1,
+      "phase": "S73.4",
+      "category": "background",
+      "subcategory": "home_reduced_motion_static",
+      "usage": [
+        "home"
+      ],
+      "role": null,
+      "scene": "home",
+      "path": "/assets/ui/home/home-static-reduced-motion-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-home-static-reduced-motion-v1.webp",
+      "fallbackRef": "fallback-paper-panel-v1",
+      "dimensions": {
+        "width": 2560,
+        "height": 1440
+      },
+      "aspectRatio": "2560:1440",
+      "format": "webp",
+      "transparent": false,
+      "safeArea": {
+        "x": 0.2,
+        "y": 0.12,
+        "width": 0.6,
+        "height": 0.58
+      },
+      "focalPoint": {
+        "x": 0.5,
+        "y": 0.48
+      },
+      "mobileCrop": {
+        "mode": "center_crop",
+        "keepSafeArea": true,
+        "notes": "作为低动效首页底，窄屏保留中央留白与山水纸纹。"
+      },
+      "motion": {
+        "type": "none"
+      },
+      "reducedMotionFallback": "fallback-ink-motion-static-v1",
+      "source": {
+        "type": "ai_generated",
+        "tool": "Codex imagegen",
+        "model": "gpt-image-2",
+        "generatedAt": "2026-05-14",
+        "promptSummary": "首页低动效静态替代底，泛黄宣纸、淡墨远山和安静留白。"
+      },
+      "license": {
+        "type": "ai_generated_project_asset",
+        "commercialUseConfirmed": false,
+        "summary": "原创 AI 生成素材，当前仅个人游玩/开发使用；未做公开商用确认。"
+      },
+      "reviewStatus": "approved",
+      "visualReview": {
+        "reviewedBy": "Codex",
+        "reviewedAt": "2026-05-14",
+        "status": "approved",
+        "summary": "通过：静态首页氛围完整、比主背景更淡，适合关闭云雾动效时承载标题和表单；无文字、水印、现代 UI 或现代建筑。"
+      },
+      "safetyReview": {
+        "reviewedBy": "Codex",
+        "reviewedAt": "2026-05-14",
+        "status": "approved",
+        "summary": "通过：素材和 manifest 只包含安全项目相对路径、用途、fallback、审核状态和台账 id；不含本地路径、key、raw/hidden 内容、可读乱码或未公开剧情事实。"
+      },
+      "performance": {
+        "bytes": 104130,
+        "targetMaxBytes": 1572864,
+        "thumbnailBytes": 2028
+      },
+      "ledgerId": "ui-home-static-reduced-motion-v1"
     }
   ],
   "updatedAt": "2026-05-14"

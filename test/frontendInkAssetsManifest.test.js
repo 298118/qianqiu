@@ -1,11 +1,13 @@
 const test = require("node:test");
 const assert = require("node:assert/strict");
+const crypto = require("node:crypto");
 const fs = require("node:fs");
 const path = require("node:path");
 
 const repoRoot = path.join(__dirname, "..");
 const manifestPath = path.join(repoRoot, "public", "assets", "ui", "ink-ui-manifest.json");
 const ledgerPath = path.join(repoRoot, "docs", "FRONTEND_ASSET_LEDGER.md");
+const homeTransparencyQaPath = path.join(repoRoot, "public", "assets", "ui", "home", "home-transparency-qa-v1.json");
 
 const FORBIDDEN_SECRET_OR_LOCAL_PATH =
   /(OPENAI_API_KEY|DEEPSEEK_API_KEY|MIMO_API_KEY|ANTHROPIC_API_KEY|sk-[A-Za-z0-9_-]{6,}|tp-[A-Za-z0-9_-]{6,}|[A-Za-z]:[\\/]|file:\/\/|data:|data[\\/](?:sessions|audit))/i;
@@ -102,6 +104,10 @@ function readImageInfo(filePath) {
   throw new Error(`Unsupported S73 UI image type: ${filePath}`);
 }
 
+function sha256File(filePath) {
+  return crypto.createHash("sha256").update(fs.readFileSync(filePath)).digest("hex");
+}
+
 test("S73.2 ink UI manifest fixes schema, safety, fallback, and portrait policies", () => {
   const manifestText = fs.readFileSync(manifestPath, "utf8");
   assert.doesNotMatch(manifestText, FORBIDDEN_MANIFEST_REMOTE_OR_LOCAL_PATH);
@@ -196,11 +202,20 @@ test("S73.2 ink UI manifest fixes schema, safety, fallback, and portrait policie
   });
 
   assert.equal(Array.isArray(manifest.assets), true);
-  assert.equal(manifest.assets.length, 16, "S73.3 adds the first UI material pack");
+  assert.equal(manifest.assets.length, 22, "S73.3 UI materials plus S73.4 home assets are active");
+
+  const phaseCounts = manifest.assets.reduce((counts, asset) => {
+    counts[asset.phase] = (counts[asset.phase] || 0) + 1;
+    return counts;
+  }, {});
+  assert.equal(phaseCounts["S73.3"], 16);
+  assert.equal(phaseCounts["S73.4"], 6);
 
   for (const asset of manifest.assets) {
-    assert.equal(asset.phase, "S73.3", asset.id);
-    assert.equal(asset.category, "material", asset.id);
+    assert.equal(["S73.3", "S73.4"].includes(asset.phase), true, asset.id);
+    assert.equal(manifest.allowedCategories.includes(asset.category), true, asset.id);
+    if (asset.phase === "S73.3") assert.equal(asset.category, "material", asset.id);
+    if (asset.phase === "S73.4") assert.equal(asset.usage.includes("home"), true, asset.id);
     assert.equal(manifest.runtimeUsableReviewStatuses.includes(asset.reviewStatus), true, asset.id);
     assertSafeUiAssetPath(asset.path, `${asset.id}.path`);
     assertSafeUiAssetPath(asset.thumbnailPath, `${asset.id}.thumbnailPath`);
@@ -220,6 +235,7 @@ test("S73.2 ink UI manifest fixes schema, safety, fallback, and portrait policie
     assert.equal(asset.performance.bytes <= asset.performance.targetMaxBytes, true, asset.id);
     assert.equal(asset.source.type, "ai_generated", asset.id);
     assert.equal(asset.source.model, "gpt-image-2", asset.id);
+    assert.equal(asset.source.tool, "Codex imagegen", asset.id);
     assert.equal(asset.visualReview.reviewedBy, "Codex", asset.id);
     assert.equal(asset.safetyReview.reviewedBy, "Codex", asset.id);
     assert.equal(asset.license.commercialUseConfirmed, false, asset.id);
@@ -232,9 +248,46 @@ test("S73.2 ink UI manifest fixes schema, safety, fallback, and portrait policie
     "ui-bamboo-slip-strip-v1",
     "ui-vermilion-seal-button-v1",
     "ui-exam-grid-paper-v1",
-    "ui-imperial-notice-paper-v1"
+    "ui-imperial-notice-paper-v1",
+    "ui-home-scroll-landscape-v1",
+    "ui-home-mist-layer-v1",
+    "ui-home-register-form-paper-v1",
+    "ui-home-cinnabar-start-seal-v1",
+    "ui-home-archive-casefile-v1",
+    "ui-home-static-reduced-motion-v1"
   ]) {
     assert.equal(assetIds.has(requiredId), true, requiredId);
+  }
+});
+
+test("S73.4 transparent home assets keep a current transparency QA pass", () => {
+  const qaText = fs.readFileSync(homeTransparencyQaPath, "utf8");
+  assert.doesNotMatch(qaText, FORBIDDEN_MANIFEST_REMOTE_OR_LOCAL_PATH);
+  assert.doesNotMatch(qaText, FORBIDDEN_ASSET_VALUE);
+  const qa = JSON.parse(qaText);
+
+  assert.equal(qa.schemaVersion, 1);
+  assert.equal(qa.phase, "S73.4");
+  assert.equal(qa.reviewer, "Codex");
+  assert.deepEqual(qa.compositeBackgroundsReviewed, ["#f5f0e6", "#201c16"]);
+
+  const qaById = new Map(qa.assets.map((entry) => [entry.id, entry]));
+  for (const requiredId of [
+    "ui-home-mist-layer-v1",
+    "ui-home-register-form-paper-v1",
+    "ui-home-cinnabar-start-seal-v1",
+    "ui-home-archive-casefile-v1"
+  ]) {
+    const entry = qaById.get(requiredId);
+    assert.ok(entry, requiredId);
+    assertSafeUiAssetPath(entry.path, `${requiredId}.qa.path`);
+    const assetPath = resolveUiAssetPath(entry.path);
+    assert.equal(fs.existsSync(assetPath), true, requiredId);
+    assert.equal(entry.sha256, sha256File(assetPath), requiredId);
+    assert.equal(entry.bytes, fs.statSync(assetPath).size, requiredId);
+    assert.equal(entry.metrics.borderVisibleAlphaPixels <= entry.metrics.maxAllowedBorderVisibleAlphaPixels, true, requiredId);
+    assert.equal(entry.metrics.highSaturationGreenOrMagentaPixels <= entry.metrics.maxAllowedHighSaturationPixels, true, requiredId);
+    assert.equal(entry.metrics.hardAlphaJumpPixels <= entry.metrics.maxAllowedHardAlphaJumpPixels, true, requiredId);
   }
 });
 
@@ -260,7 +313,10 @@ test("S73.2 frontend asset ledger records manifest, fallback, portrait, and sour
     "S73.10 全量立绘池不得标记为首页 eager load",
     "ui-paper-xuan-base-v1",
     "ui-vermilion-seal-button-v1",
-    "ui-imperial-notice-paper-v1"
+    "ui-imperial-notice-paper-v1",
+    "ui-home-scroll-landscape-v1",
+    "ui-home-cinnabar-start-seal-v1",
+    "ui-home-static-reduced-motion-v1"
   ]) {
     assert.equal(ledgerText.includes(requiredText), true, requiredText);
   }

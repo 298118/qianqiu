@@ -365,22 +365,24 @@ Manifest 示例：
 
 ### S73.4 首页资产包
 
+状态：已完成，首页素材见 `public/assets/ui/home/`，缩略图见 `public/assets/ui/thumbs/`，manifest 见 `public/assets/ui/ink-ui-manifest.json`，台账见 [FRONTEND_ASSET_LEDGER.md](FRONTEND_ASSET_LEDGER.md)。
+
 首轮数量：4-6 个。
 
 实现功能：
 
-- 首页山水画卷主背景。
-- 水墨云雾透明层。
-- 题名册/户籍册表单底。
-- “开始”朱印/玉玺按钮底。
-- 首页案卷存档列表背景或图标。
-- reduced-motion 静态云雾 fallback。
+- 已生成并入库 6 个首页资产：首页水墨山水画卷主背景、云雾透明层、题名册/户籍册表单底、无字朱印开始按钮、首页案卷存档素材和 reduced-motion 静态首页底。
+- 已为每个素材生成缩略图，记录 `safeArea`、`focalPoint`、`mobileCrop`、`motion` / `reducedMotionFallback`、性能预算、fallback、视觉审核和安全审核。
+- 透明素材已用 chroma-key 去底、despill、alpha 软化和 WebP alpha 压缩；云雾层经复审后改为基于 AI 雾层的柔化 alpha mask、低频雾团和边界渐隐，朱印首版空心感过强后已重生成厚实无字版本。
+- 已新增透明素材 QA sidecar，记录纸色/深色合成复审背景、SHA-256 和色边/边界指标，避免透明素材变更绕过复审。
+- 所有首页素材不承载正式 UI 文案；“千秋”、表单、开始按钮和存档 metadata 仍由 DOM 渲染。
 
 验收：
 
-- 第一屏直接显示“千秋”视觉气质。
-- 桌面、移动裁切都有留白，不遮挡表单。
-- 无可读文字、水印、现代物品、乱码。
+- 第一屏可直接显示“千秋”视觉气质：首页画卷、云雾、册页表单、朱印和案卷素材已形成完整组合。
+- 桌面、移动裁切都有留白，不遮挡标题、表单或存档列表。
+- 已经 Codex 视觉审核：无可读文字、水印、现代物品、乱码、本地路径、key、raw/hidden 内容。
+- `test/frontendInkAssetsManifest.test.js` 已扩展为校验 S73.4 真实图片存在性、尺寸、alpha、性能预算、审核状态、透明 QA sidecar 和安全字段。
 
 ### S73.5 场景插画包
 
@@ -476,11 +478,13 @@ Manifest 示例：
 - 新增素材预览页或脚本，列出 manifest 项目、尺寸、路径、透明度、用途和审核状态。
 - 新增 Node 测试校验 manifest 路径只指向 `public/assets/`，字段不含 key/path/raw/prompt 原文泄漏，图片存在且尺寸符合预期。
 - 抽检移动裁切、缩略图和 fallback。
+- 透明素材额外做纸色/深色合成预览和 chroma-key 高饱和绿/紫色边检查，避免去底残留、矩形切口或黑线进入首页和专题界面。
 
 验收：
 
 - 未审核或 rejected 素材不能被 UI 默认引用。
 - 测试能发现路径缺失、尺寸错配、敏感字段和 manifest 引用错误。
+- QA 能暴露透明素材的绿边、紫边、横线、矩形切口和深浅底合成瑕疵。
 
 ### S73.10 全量立绘生产与入库
 

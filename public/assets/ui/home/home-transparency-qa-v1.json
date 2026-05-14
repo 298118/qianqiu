@@ -1,0 +1,73 @@
+{
+  "schemaVersion": 1,
+  "phase": "S73.4",
+  "generatedAt": "2026-05-14",
+  "reviewer": "Codex",
+  "purpose": "Transparency QA sidecar for S73.4 home assets. Metrics are generated after compositing review on paper and dark backgrounds; tests pin hashes and thresholds so transparent assets cannot change without a refreshed QA pass.",
+  "compositeBackgroundsReviewed": [
+    "#f5f0e6",
+    "#201c16"
+  ],
+  "assets": [
+    {
+      "id": "ui-home-mist-layer-v1",
+      "path": "/assets/ui/home/home-mist-layer-v1.webp",
+      "sha256": "368a7b01d620990253946e992fcc69137fbff1af49df4e945b5418bec37d5b86",
+      "bytes": 61074,
+      "metrics": {
+        "visibleAlphaPixels": 324645,
+        "highSaturationGreenOrMagentaPixels": 0,
+        "borderVisibleAlphaPixels": 0,
+        "hardAlphaJumpPixels": 0,
+        "maxAllowedHighSaturationPixels": 12,
+        "maxAllowedBorderVisibleAlphaPixels": 0,
+        "maxAllowedHardAlphaJumpPixels": 500
+      }
+    },
+    {
+      "id": "ui-home-register-form-paper-v1",
+      "path": "/assets/ui/home/home-register-form-paper-v1.webp",
+      "sha256": "41949c07e83e83251fbff652158dd535b179c7e0ba1bcf264eae591c8265d9e9",
+      "bytes": 71096,
+      "metrics": {
+        "visibleAlphaPixels": 963355,
+        "highSaturationGreenOrMagentaPixels": 0,
+        "borderVisibleAlphaPixels": 0,
+        "hardAlphaJumpPixels": 2606,
+        "maxAllowedHighSaturationPixels": 12,
+        "maxAllowedBorderVisibleAlphaPixels": 0,
+        "maxAllowedHardAlphaJumpPixels": 5000
+      }
+    },
+    {
+      "id": "ui-home-cinnabar-start-seal-v1",
+      "path": "/assets/ui/home/home-cinnabar-start-seal-v1.webp",
+      "sha256": "ec00d3b6b9c85875cf8ffcefadc1d8b916739e83378253d7d4c08c37d5136972",
+      "bytes": 66204,
+      "metrics": {
+        "visibleAlphaPixels": 176628,
+        "highSaturationGreenOrMagentaPixels": 0,
+        "borderVisibleAlphaPixels": 0,
+        "hardAlphaJumpPixels": 1487,
+        "maxAllowedHighSaturationPixels": 12,
+        "maxAllowedBorderVisibleAlphaPixels": 0,
+        "maxAllowedHardAlphaJumpPixels": 2200
+      }
+    },
+    {
+      "id": "ui-home-archive-casefile-v1",
+      "path": "/assets/ui/home/home-archive-casefile-v1.webp",
+      "sha256": "a1741df06fb0cd35abef5cd62f0b6993281c48316018a573946564b990325d63",
+      "bytes": 110554,
+      "metrics": {
+        "visibleAlphaPixels": 653592,
+        "highSaturationGreenOrMagentaPixels": 2,
+        "borderVisibleAlphaPixels": 0,
+        "hardAlphaJumpPixels": 3875,
+        "maxAllowedHighSaturationPixels": 12,
+        "maxAllowedBorderVisibleAlphaPixels": 0,
+        "maxAllowedHardAlphaJumpPixels": 5000
+      }
+    }
+  ]
+}
