@@ -112,7 +112,7 @@
 | S72.0a | DONE | Codex | 细化 Codex/Gemini 实施规格 | 扩展专项路线图、补素材指南、创建 `GEMINI.md` 与 `.geminiignore`，让 Gemini 可按项目指引做前端只读报告或 patch |
 | S72.1 | DONE | Codex，Gemini 提供前端约束 | PixiJS 依赖治理与地图 runtime 契约 | Gemini 只读前端约束报告已由用户转交；Codex 新增运行时契约，固定 `pixi.js@7.4.3` UMD、本地 vendor 优先、固定 CDN fallback、`mapRuntimeView` 字段、DOM/app/CSS 接线和 S72.2/S72.4 验收边界 |
 | S72.2 | DONE | Codex | 后端地图 runtime view、布局契约与测试 | 已基于 `mapContextView` 扩展安全 `mapRuntimeView`、显示 layout seed、route payload 和测试；显示坐标只用于 UI，不暴露 raw/hidden/坐标污染 |
-| S72.3 | TODO | Codex | 水墨地图素材生成、manifest 与台账 | Codex 使用 `gpt-image-2` 生成底图/图标/纹理；第三方优秀素材可作为候选但必须登记许可；所有入库素材先由 Codex 视觉审核游戏基调与一致性，再保存到 `public/assets/maps/` 并更新 `docs/MAP_ASSET_LEDGER.md` |
+| S72.3 | DONE | Codex | 水墨地图素材生成、manifest 与台账 | 已完成首批底图/纸纹/路线/涟漪/图标素材生成、视觉审核、alpha 后处理、manifest、台账和 manifest 安全测试 |
 | S72.4 | TODO | Gemini CLI，Codex 审核提交 | PixiJS 地图 shell 与图层系统 | Gemini 可修改/新增 scoped 前端文件并交付 patch、上下文说明和浏览器验证；不得暂存、提交、推送或创建 PR，Codex 审查 diff 后提交 |
 | S72.5 | TODO | Codex + Gemini CLI | 地图与游戏系统深度联动 | 点击地点/路线/事件联动局势簿、行动草稿和服务器 proposal；前端不得直接写状态 |
 | S72.6 | TODO | Gemini CLI，Codex 提供素材 | 水墨动效与视觉 polish | 保证拖拽/缩放/路线/事件动效流畅，支持降级与窄屏布局 |
@@ -369,3 +369,41 @@
 下一步：
 
 - 执行 S72.3：生成、审核并登记首批水墨地图素材与 manifest；随后进入 S72.4 PixiJS 地图 shell。
+
+### 2026-05-14
+
+工具：Codex，medium 子代理创意发散，Codex 视觉审核，待提交前只读复审。
+
+步骤：S72.3 水墨地图素材生成、manifest 与台账。
+
+提交：本次提交。
+
+完成：
+
+- 按用户要求将创意发散 / prompt 草案交给 medium 子代理，Codex 负责 prompt 定稿、素材生成、视觉审核、后处理和入库。
+- 新增 `public/assets/maps/ink-map-manifest.json`，登记 `ink-map-v1` 的底图、纸纹、路线笔触、事件涟漪、图标、route/effect token 映射和安全 license 摘要。
+- 新增首批项目素材：`ink-world-base-v1.webp`、`paper-texture-v1.webp`、`route-brush-v1.png`、`ink-ripple-red-v1.png`、`ink-ripple-blue-v1.png`，以及府城、县城、贡院、驿站、关隘、军镇、商埠、案牍和诏令 9 个透明图标。
+- 对 chroma-key 源图做本地 alpha 移除、图标切图、碎片清理、尺寸压缩与可读性复审；Codex 视觉审核确认首批素材符合文人案头舆图气质，无文字/水印/现代 UI/本地路径/key/hidden/raw 内容。
+- 更新 `docs/MAP_ASSET_LEDGER.md`，记录 prompt 摘要、生成工具、后处理、许可说明、Codex 视觉审核结论和项目路径；本轮未使用第三方或历史地图参考素材。
+- 新增 `test/mapAssetsManifest.test.js`，校验 manifest 本地安全路径、尺寸、alpha、token 引用和敏感字段过滤。
+- 更新 README、brief、S72 路线图和共享上下文，说明 S72.3 已为 S72.4 前端地图 shell 提供首批素材。
+- 本轮不改 PixiJS 前端、不提交 `public/vendor/pixi.min.js`、不改 provider schema、SQLite schema、存档格式或 `package.json`。
+
+验证：
+
+- 已通过：`node --test test/mapAssetsManifest.test.js`。
+- 已通过：`node --test test/mapAssetsManifest.test.js test/mapRuntimeView.test.js test/mapRuntimeRoute.test.js`。
+- 已通过：`npm run check:docs-governance`。
+- 已通过：`git diff --check`。
+- 已通过：`npm test`，最新完整运行 840 项通过、0 失败；此前一次完整运行出现 S67 large fixture 性能阈值波动和 `test/npcMindSalience.test.js` spawn EPERM，两个失败项单跑均通过。
+- 已完成：只读子代理复审最终 diff 与验证证据，未发现 P0/P1；P2 台账尺寸错配已修正，P3 图标尺寸测试收紧为 256x256。
+
+风险/遗留：
+
+- 首批图标偏具象，适合 S72.4 首版可读性；后续 S72.6 可继续生成更抽象的印章式变体。
+- 底图没有真实地名和 canonical 坐标语义，只作为 PixiJS 显示底层；地图标签、选中态和交互仍由 S72.4 前端实现。
+- S72.4 仍需提交 PixiJS vendor、地图 shell、资源失败 fallback、canvas 非空和桌面/窄屏浏览器验证。
+
+下一步：
+
+- 执行 S72.4：Gemini CLI 基于 `mapRuntimeView` 和 `ink-map-v1` 素材实现 PixiJS 地图 shell，Codex 审查前端 diff 并提交。
