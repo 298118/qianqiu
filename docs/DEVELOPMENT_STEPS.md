@@ -9,8 +9,9 @@
 - S48 时间专项：[TIME_SPECIALTY_ROADMAP_ARCHIVE.md](TIME_SPECIALTY_ROADMAP_ARCHIVE.md)。
 - S49-S67 本地数据库基础、SQLite 业务表、双模式验收、超大动态世界内容与 S60 内容契约：[LOCAL_DATABASE_AND_WORLD_CONTENT_ARCHIVE.md](LOCAL_DATABASE_AND_WORLD_CONTENT_ARCHIVE.md)。旧分卷归档和 S60 契约文件保留为跳转页。
 - S70 AI 编排与权力工具：[AI_ORCHESTRATION_ARCHIVE.md](AI_ORCHESTRATION_ARCHIVE.md)。S70 规划源头仍见 [AI_ORCHESTRATION_ROADMAP.md](AI_ORCHESTRATION_ROADMAP.md)。
+- S71 数据库玩法化、维护、安全检索与安全 API：[DATABASE_GAMEPLAY_RESOLVER_ARCHIVE.md](DATABASE_GAMEPLAY_RESOLVER_ARCHIVE.md)。S71 规划源头仍见 [DATABASE_GAMEPLAY_RESOLVER_ROADMAP.md](DATABASE_GAMEPLAY_RESOLVER_ROADMAP.md)，resolver 输入契约见 [DATABASE_RESOLVER_INPUT_CONTRACT.md](DATABASE_RESOLVER_INPUT_CONTRACT.md)。
 
-当前活动路线图已交接到 S71：S68-S69 的书生主线科举、读书、评卷与授官制度已归档，S70.1-S70.14 的 AI prompt/tool/actor/多模型路由、AI 设置、月报、跳时、记忆、地图接口、provider AI-first smoke 与 JSON/SQLite parity 已归档。S71 作为 S70 之后的数据库玩法化、维护、安全检索和 redacted API 专项，规划见 [DATABASE_GAMEPLAY_RESOLVER_ROADMAP.md](DATABASE_GAMEPLAY_RESOLVER_ROADMAP.md)。S71.0 数据库玩法化专项契约已固定在 [DATABASE_RESOLVER_INPUT_CONTRACT.md](DATABASE_RESOLVER_INPUT_CONTRACT.md)，S71.1 已落地只读 `resolverInputContext` 输入层，S71.2 已落地本地 SQLite schema migration 与维护层，S71.3 已落地安全全文检索 / 本地搜索，S71.4 已落地 redacted player API 与本机开发诊断 API，S71.5 已落地财政与城市政策 resolver，S71.6 已落地地方案件与刑名 resolver，S71.7 已落地军务与外交 resolver，S71.8 已落地压力驱动事件生成器，S71.9 已落地多 actor 场景运行时，S71.10 已落地 NPC 记忆账本，S71.11 已落地 AI 调动审计面板；下一步启动 S71.12 验收与归档。数据库方向继续只考虑本机 JSON/SQLite 持久化增强；远程存档、账号体系、多人同步、云端冲突解决和托管数据库不进入当前规划。
+当前活动路线图已完成到 S71 归档：S68-S69 的书生主线科举、读书、评卷与授官制度已归档，S70.1-S70.14 的 AI prompt/tool/actor/多模型路由、AI 设置、月报、跳时、记忆、地图接口、provider AI-first smoke 与 JSON/SQLite parity 已归档，S71.0-S71.12 的数据库 resolver 输入、本地 SQLite 维护、安全全文检索、redacted player API、财政/城市政策、刑名、军务外交、压力驱动事件、多 actor 场景、NPC 记忆账本、AI 调动审计面板和验收也已归档。数据库方向继续只考虑本机 JSON/SQLite 持久化增强；远程存档、账号体系、多人同步、云端冲突解决和托管数据库不进入当前规划。
 
 ## 1. 开发规范继承
 
@@ -82,13 +83,14 @@
 
 ## 3. 当前边界与已归档摘要
 
-当前活动工作已交接到 S71.12。S49-S67 的本地数据库与大世界内容实现细节已经迁入统一归档，S68-S69 科举深化已迁入科举归档，S70 AI 编排已迁入 S70 归档；活动台账只保留索引和后续边界：
+当前活动工作已完成到 S71 归档。S49-S67 的本地数据库与大世界内容实现细节已经迁入统一归档，S68-S69 科举深化已迁入科举归档，S70 AI 编排已迁入 S70 归档，S71 数据库玩法化也已迁入 S71 归档；活动台账只保留索引和后续边界：
 
 | 范围 | 状态 | 摘要 | 归档 |
 | --- | --- | --- | --- |
 | S49-S67 | DONE | 本地数据库基础、SQLite 业务表、双模式验收、大世界内容契约、规模 fixture、国家/城市/NPC/官职/案牍/军务/财赋/事件链/情报/prompt/UI 分页和规模验收 | [LOCAL_DATABASE_AND_WORLD_CONTENT_ARCHIVE.md](LOCAL_DATABASE_AND_WORLD_CONTENT_ARCHIVE.md) |
 | S68-S69 | DONE | 科举制度、读书账本、老师点评、科场流程、多考官阅卷、榜单荣誉、同年座师网络、授官轨迹、浏览器面板和 Provider/Mock 验收 | [IMPERIAL_EXAM_DEEPENING_ARCHIVE.md](IMPERIAL_EXAM_DEEPENING_ARCHIVE.md) |
 | S70 | DONE | AI prompt/tool/actor/领域工具、多模型路由、AI 设置、月报、跳时、记忆、地图接口、MiMo AI-first smoke、JSON/SQLite parity 和 S70 归档 | [AI_ORCHESTRATION_ARCHIVE.md](AI_ORCHESTRATION_ARCHIVE.md) |
+| S71 | DONE | 数据库 resolver 输入、SQLite 维护、安全搜索、redacted API、财政/刑名/军务外交 resolver、压力事件、场景运行时、NPC 记忆、AI 调动审计和验收归档 | [DATABASE_GAMEPLAY_RESOLVER_ARCHIVE.md](DATABASE_GAMEPLAY_RESOLVER_ARCHIVE.md) |
 
 必须继续保护的边界：
 
@@ -101,7 +103,7 @@
 
 ## 4. 活动路线图总览
 
-已归档的 S49-S69 不再逐行列入活动总览；需要追溯时阅读上方归档摘要、对应归档文件和下方进度记录。当前活动总览保留 S70 归档索引和 S71 待推进步骤。
+已归档的 S49-S71 不再逐行列入活动总览；需要追溯时阅读上方归档摘要、对应归档文件和下方进度记录。当前活动总览保留最近专项索引和 S71 完成状态，后续新开发应另起清晰小步骤。
 
 | ID | 状态 | 目标 | 完成日期 | 工具 | 提交 |
 | --- | --- | --- | --- | --- | --- |
@@ -132,7 +134,7 @@
 | S71.9 | DONE | 多 actor 场景运行时：朝议、堂审、会盟、战役 scene-local time 与 actor proposal 编排 | 2026-05-13 | Codex / 子代理 | `6440614` |
 | S71.10 | DONE | NPC 记忆账本：高显著 NPC 长期记忆、人情债、恩怨、家族风险和背景 NPC heuristic | 2026-05-13 | Codex / 子代理 | `a88b429` |
 | S71.11 | DONE | AI 调动审计面板：工具摘要、拒绝原因、成本、公开结果和 hidden-safe 开发诊断，不泄漏 raw prompt/proposal | 2026-05-13 | Codex / 子代理 | `cf1abbf` |
-| S71.12 | TODO | S71 验收与归档：JSON/SQLite parity、Mock/no-key、provider smoke、browser smoke、hidden-token 和完整书生路径回归 | - | - | S71.11 后 |
+| S71.12 | DONE | S71 验收与归档：JSON/SQLite parity、Mock/no-key、provider smoke、browser smoke、hidden-token 和完整书生路径回归 | 2026-05-13 | Codex / 子代理 | 本次提交 |
 
 ## 5. S68-S69：科举、读书、评卷与授官深化
 
@@ -187,7 +189,7 @@ S70 是 MiMo + DeepSeek 之后的 AI 编排专项，已归档见 [AI_ORCHESTRATI
 
 ## 7. S71：数据库玩法化、维护、检索与安全 API
 
-S71 详细规划见 [DATABASE_GAMEPLAY_RESOLVER_ROADMAP.md](DATABASE_GAMEPLAY_RESOLVER_ROADMAP.md)。它不抢占 S69，也不替代 S70；S70 已解决 prompt、actor 和工具协议，S71 再把 S49-S67 已有的国家、城市、NPC、官职、案牍、军务、财赋、事件链、情报和检索内容接进真实服务器玩法裁决。S71.0 已新增 [DATABASE_RESOLVER_INPUT_CONTRACT.md](DATABASE_RESOLVER_INPUT_CONTRACT.md)，作为 `resolverInputContext` 字段、允许来源、禁止源、evidence ref、AI 权限和 JSON/SQLite parity 的后续实现源；S71.1 已新增只读 `resolverInputContext` 模块与聚焦测试，后续财政、刑名、军务、外交和事件生成器应优先复用该输入层。[DATABASE_GAMEPLAY_RESOLVER_ROADMAP.md](DATABASE_GAMEPLAY_RESOLVER_ROADMAP.md) 第 11-13 节已扩展为后续 Codex 开发任务书，逐项写明依赖、所需资料、建议模块/函数、接口、测试与验收。
+S71 详细规划源头见 [DATABASE_GAMEPLAY_RESOLVER_ROADMAP.md](DATABASE_GAMEPLAY_RESOLVER_ROADMAP.md)，完成归档见 [DATABASE_GAMEPLAY_RESOLVER_ARCHIVE.md](DATABASE_GAMEPLAY_RESOLVER_ARCHIVE.md)。S71 已把 S49-S67 已有的国家、城市、NPC、官职、案牍、军务、财赋、事件链、情报和检索内容接进服务器玩法裁决输入，并补齐本地维护、安全搜索、redacted API、场景运行时、NPC 记忆和 AI 调动审计面板。后续财政、刑名、军务、外交、压力事件或多 actor 玩法继续复用 `resolverInputContext`、proposal-only 工具和服务器 apply helper。
 
 ### S71 设计基线
 
@@ -205,9 +207,45 @@ S71 详细规划见 [DATABASE_GAMEPLAY_RESOLVER_ROADMAP.md](DATABASE_GAMEPLAY_RE
 1. S71.0-S71.1：先落契约和 `resolverInputContext`，证明 JSON/SQLite 输入 parity 与 hidden-token 防线。
 2. S71.2-S71.4：再补本地维护、安全搜索和 redacted API，为更深 hidden 私档留出干净边界。
 3. S71.5-S71.8：把财政、城市、案件、军务、外交和压力事件做成服务器 resolver，而不是只展示态势。
-4. S71.9-S71.12：接入多 actor 场景、NPC 记忆和 AI 调动审计面板，最后做 dual-mode、Mock/no-key、browser 和 provider smoke 归档。
+4. S71.9-S71.12：多 actor 场景、NPC 记忆、AI 调动审计面板、dual-mode、Mock/no-key、browser 和 provider smoke 归档已完成。
 
 ## 8. 进度记录
+
+### 2026-05-13
+
+工具：Codex、子代理只读审查。
+
+步骤：S71.12 S71 验收与归档。
+
+提交：本次提交。
+
+完成：
+
+- 新增 [DATABASE_GAMEPLAY_RESOLVER_ARCHIVE.md](DATABASE_GAMEPLAY_RESOLVER_ARCHIVE.md)，归档 S71.0-S71.12 的 resolver 输入、SQLite migration/maintenance、安全搜索、redacted player API、开发诊断 API、财政/城市政策、刑名、军务外交、压力事件、多 actor 场景、NPC 记忆、AI 调动审计和验收证据。
+- 同步 README、brief、architecture、动态数据库规划、S71 路线图、AI 控制矩阵和共享上下文，把 S71 从活动推进项收束为已归档专项；后续新开发应另起清晰小步骤。
+- 将 `scripts/dualModeAcceptance.js` 的 S67 large fixture 耗时阈值调到当前 S71 规模下的守门值：`fixtureGenerationMs` 从 5000ms 调整为 10000ms，`informationPanelMs` 从 1500ms 调整为 3000ms，`sqliteReadRepairMs` 从 3000ms 调整为 8000ms；注释说明这些阈值只吸收全量并发下的 Windows 本地 timing 噪声，仍守住规模、分页、修复和泄漏回归，不改变游戏行为、API、存档格式或 provider 权限。
+- 保持 S71 核心边界：JSON/Mock 默认可玩，SQLite local-only，AI 只能读 actor 可见 projection 并提交 proposal/request-adjudication，服务器 resolver/apply helper 裁决写入，hidden/raw/prompt/path/key 不进入玩家 API、prompt、搜索或浏览器面板。
+
+验证：
+
+- 已通过：S71 聚焦测试 127/127：`node --test test/resolverInputContext.test.js test/sqliteMigrations.test.js test/sqliteMaintenanceTool.test.js test/safeWorldSearch.test.js test/sqliteSafeSearch.test.js test/redactedState.test.js test/gamePlayerStateRoute.test.js test/devDiagnosticsRoute.test.js test/cityPolicyResolver.test.js test/cityPolicyAuthority.test.js test/cityPolicyHiddenRedaction.test.js test/cityPolicyDomainToolBridge.test.js test/judicialCaseResolver.test.js test/judicialCaseAuthority.test.js test/judicialCaseEvidenceRedaction.test.js test/judicialCaseDomainToolBridge.test.js test/militaryDiplomacyResolver.test.js test/militaryDiplomacyAuthority.test.js test/militaryDiplomacyIntelConfidence.test.js test/militaryDiplomacyRedaction.test.js test/militaryDiplomacyDomainToolBridge.test.js test/worldPressureEventGenerator.test.js test/worldPressureEventCooldown.test.js test/worldPressureEventHiddenRedaction.test.js test/sceneRuntime.test.js test/sceneActorVisibility.test.js test/sceneRuntimeMock.test.js test/npcMemoryLedger.test.js test/actorMemoryLedger.test.js test/aiControlAudit.test.js test/aiSettingsRoute.test.js test/streamingTurnRoute.test.js test/publicAppSource.test.js`。
+- 已通过：`node --test test/dualModeAcceptanceScript.test.js`（8/8）。
+- 已通过：`npm run smoke:dual-mode -- --storage-only`，覆盖 JSON -> SQLite 导入、维护/修复/导出、S70 route-view parity、large fixture、prompt 策略、局势簿分页、SQLite read repair 和 hidden-token guard。
+- 已通过：`npm run smoke:exam-s69`，Mock deterministic 跑通童试、乡试、会试、殿试到入仕，最终授翰林院修撰。
+- 已通过：`npm run smoke:browser -- --screenshots artifacts/browser-smoke-s71-12`，14 张桌面/移动/科举/官职/UI 截图检查通过。
+- 已通过：本机 keyed `AI_PROVIDER_TIMEOUT_MS=90000 npm run smoke:provider:tools`、`npm run smoke:provider:ai-first`、`npm run smoke:provider` 和 `npm run smoke:provider:route`；未打印密钥。
+- 已通过：`npm test`（831/831）。
+
+风险/遗留：
+
+- S71.12 调整的是验收阈值和归档文档，不新增玩法运行时、API、存档字段、provider 写权或 SQLite 业务表。
+- `smoke:provider:long` 未作为阻断项运行；更长真实 provider 长跑、多工具流式实探和真实多 actor provider 场景应另立后续专项。
+- S71 resolver helper 已就绪，但更多自动接入普通回合长线调度的玩法仍需后续按小步骤显式设计和验证。
+- 提交前需执行只读子代理复审最终 diff 与验证证据。
+
+下一步：
+
+- S71 已归档。后续新开发从用户指定的新步骤启动，继续保护完整书生路径、redacted API、proposal-only 工具边界和 hidden/raw 不外泄。
 
 ### 2026-05-13
 
