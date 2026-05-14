@@ -74,6 +74,10 @@
           <span>尚未开局</span>
         </div>
         <aside class="scholar-panel" id="scholar-panel" hidden></aside>
+        <section id="map-panel" class="map-panel" hidden>
+          <div id="map-canvas" class="map-canvas"></div>
+          <div id="map-ui-layer" class="map-ui-layer" aria-live="polite"></div>
+        </section>
         <article class="narrative" id="narrative">
           <p class="placeholder">填写开局设定，进入千秋第一卷。</p>
         </article>
@@ -125,6 +129,12 @@
       </div>
     </main>
 
+    <script src="/vendor/pixi.min.js"></script>
+    <script>
+      window.PIXI || document.write('<script src="https://cdn.jsdelivr.net/npm/pixi.js@7.4.3/dist/pixi.min.js"><\\/script>');
+    </script>
+    <script src="/mapRenderer.js"></script>
+    <script src="/mapPanel.js"></script>
     <script src="/app.js"></script>
   </body>
 </html>

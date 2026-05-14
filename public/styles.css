@@ -315,11 +315,118 @@ button:disabled {
 
 .game-panel {
   display: grid;
-  grid-template-rows: auto auto minmax(0, 1fr) auto;
+  grid-template-rows: auto auto auto minmax(0, 1fr) auto;
   min-width: 0;
   height: calc(100vh - 64px);
   min-height: calc(100vh - 64px);
   overflow: hidden;
+}
+
+.map-panel {
+  position: relative;
+  height: clamp(200px, 35vh, 400px);
+  min-height: 200px;
+  overflow: hidden;
+  border-bottom: 1px solid var(--line);
+  background: var(--paper-soft);
+}
+
+.map-canvas {
+  width: 100%;
+  height: 100%;
+}
+
+.map-ui-layer {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 2;
+}
+
+.map-label,
+.map-tooltip {
+  max-width: min(18rem, calc(100% - 24px));
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.map-label {
+  position: absolute;
+  transform: translate(-50%, -100%);
+  margin-top: -12px;
+  color: var(--ink);
+  font-size: 0.8rem;
+  font-weight: 700;
+  pointer-events: none;
+  text-shadow: 0 1px 2px var(--paper-soft), 1px 0 2px var(--paper-soft), -1px 0 2px var(--paper-soft), 0 -1px 2px var(--paper-soft);
+}
+
+.map-tooltip {
+  position: absolute;
+  background: rgba(255, 250, 239, 0.94);
+  border: 1px solid rgba(54, 39, 27, 0.28);
+  border-radius: 4px;
+  padding: 8px 10px;
+  box-shadow: 0 4px 12px rgba(48, 31, 18, 0.16);
+  z-index: 10;
+  transform: translate(-50%, -100%);
+  margin-top: -24px;
+  pointer-events: auto;
+  white-space: normal;
+}
+
+.map-tooltip strong {
+  display: block;
+  color: var(--cinnabar-deep);
+  font-size: 0.88rem;
+  margin-bottom: 4px;
+  white-space: normal;
+}
+
+.map-tooltip p {
+  margin: 0;
+  color: var(--ink);
+  font-size: 0.76rem;
+  line-height: 1.45;
+  white-space: normal;
+}
+
+.map-action-draft {
+  margin-top: 6px;
+  display: inline-block;
+  padding: 4px 8px;
+  font-size: 0.74rem;
+  color: #fff8ea;
+  background: linear-gradient(180deg, var(--jade), #245447);
+  border: 1px solid rgba(24, 72, 60, 0.42);
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.map-action-draft:hover {
+  filter: saturate(1.06) brightness(1.02);
+}
+
+.map-fallback {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  background: rgba(255, 250, 239, 0.8);
+  color: var(--muted);
+  font-size: 0.88rem;
+  text-align: center;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .map-panel *,
+  .map-panel *::before,
+  .map-panel *::after {
+    animation: none !important;
+    transition: none !important;
+  }
 }
 
 .status-strip {

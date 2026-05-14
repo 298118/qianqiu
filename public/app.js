@@ -59,6 +59,7 @@ let currentAiSettingsView = null;
 let currentAiInvocationSummaryView = null;
 let currentAiControlAuditView = null;
 let currentPlayerMonthlyBriefingView = null;
+let currentMapRuntimeView = null;
 let currentInformationPanelTab = "world-geography";
 let currentInformationPanelControls = {};
 let currentExamPayload = null;
@@ -4295,6 +4296,14 @@ function renderPayloadWorldState(payload) {
     payload.aiControlAuditView,
     payload.playerMonthlyBriefingView
   );
+
+  currentMapRuntimeView = payload.mapRuntimeView || null;
+
+  if (window.QianqiuMapRenderer && currentMapRuntimeView) {
+    window.QianqiuMapRenderer.update(currentMapRuntimeView);
+  } else if (window.QianqiuMapRenderer) {
+    window.QianqiuMapRenderer.showWaitingState();
+  }
 }
 
 function appendNarrative(text, className) {

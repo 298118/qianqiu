@@ -113,7 +113,7 @@
 | S72.1 | DONE | Codex，Gemini 提供前端约束 | PixiJS 依赖治理与地图 runtime 契约 | Gemini 只读前端约束报告已由用户转交；Codex 新增运行时契约，固定 `pixi.js@7.4.3` UMD、本地 vendor 优先、固定 CDN fallback、`mapRuntimeView` 字段、DOM/app/CSS 接线和 S72.2/S72.4 验收边界 |
 | S72.2 | DONE | Codex | 后端地图 runtime view、布局契约与测试 | 已基于 `mapContextView` 扩展安全 `mapRuntimeView`、显示 layout seed、route payload 和测试；显示坐标只用于 UI，不暴露 raw/hidden/坐标污染 |
 | S72.3 | DONE | Codex | 水墨地图素材生成、manifest 与台账 | 已完成首批底图/纸纹/路线/涟漪/图标素材生成、视觉审核、alpha 后处理、manifest、台账和 manifest 安全测试 |
-| S72.4 | TODO | Gemini CLI，Codex 审核提交 | PixiJS 地图 shell 与图层系统 | Gemini 可修改/新增 scoped 前端文件并交付 patch、上下文说明和浏览器验证；不得暂存、提交、推送或创建 PR，Codex 审查 diff 后提交 |
+| S72.4 | DONE | Gemini CLI，Codex 审核提交 | PixiJS 地图 shell 与图层系统 | 已接入本地 PixiJS vendor、固定 CDN fallback、地图 renderer/panel、manifest-driven 素材加载、tooltip/label、行动草稿回填和资源失败 fallback；Codex 审查并补充验证测试 |
 | S72.5 | TODO | Codex + Gemini CLI | 地图与游戏系统深度联动 | 点击地点/路线/事件联动局势簿、行动草稿和服务器 proposal；前端不得直接写状态 |
 | S72.6 | TODO | Gemini CLI，Codex 提供素材 | 水墨动效与视觉 polish | 保证拖拽/缩放/路线/事件动效流畅，支持降级与窄屏布局 |
 | S72.7 | TODO | Codex | 验收、安全与性能回归 | 覆盖文档治理、node tests、browser smoke、canvas 非空、资源失败降级、hidden/raw 不外泄 |
@@ -407,3 +407,34 @@
 下一步：
 
 - 执行 S72.4：Gemini CLI 基于 `mapRuntimeView` 和 `ink-map-v1` 素材实现 PixiJS 地图 shell，Codex 审查前端 diff 并提交。
+
+### 2026-05-14
+
+工具：Gemini CLI 前端 patch，Codex 审核、浏览器验证与收口。
+
+步骤：S72.4 PixiJS 地图 shell 与图层系统。
+
+提交：本次提交。
+
+完成：
+
+- 审核 Gemini 的 S72.4 前端 patch，并修复初审发现的脚本未加载、本地 vendor 缺失、隐式全局变量、未加载 S72.3 素材、Pixi 显示对象清理和 tooltip 边界处理问题。
+- 新增 `public/vendor/pixi.min.js` 和 `public/vendor/pixi-LICENSE.txt`，固定 `pixi.js@7.4.3` UMD 本地优先；`index.html` 按契约加载本地 vendor、固定 CDN fallback、`mapRenderer.js`、`mapPanel.js` 和 `app.js`。
+- 新增 `public/mapRenderer.js`，创建 PixiJS 图层，读取 `public/assets/maps/ink-map-manifest.json` 并加载底图、图标和事件涟漪；素材缺失时回退到基础 Graphics 渲染，重复 update 会销毁旧显示对象。
+- 新增 `public/mapPanel.js` 和地图 CSS，提供地图 DOM shell、label、tooltip、资源失败/等待 fallback、`prefers-reduced-motion` 降级和行动草稿按钮；行动草稿只把服务器给出的 `actionDraft.actionText` 填入 `#action-input`，仍需玩家点击现有行动按钮提交。
+- 新增 `test/mapFrontendShell.test.js`，校验本地 Pixi vendor/许可证、HTML 脚本顺序、地图脚本语法、manifest-driven 加载和 `app.js` 只读 `payload.mapRuntimeView` 接线。
+- 更新 README、brief、S72 路线图和共享上下文，记录 S72.4 已完成并把下一步指向 S72.5。
+
+验证：
+
+- 已通过：`node --test test/mapFrontendShell.test.js test/mapAssetsManifest.test.js test/mapRuntimeView.test.js test/mapRuntimeRoute.test.js`。
+- 已通过：`npm run check:docs-governance`。
+- 已通过：`git diff --check`。
+- 已通过：临时 `PORT=3100 node server.js` 浏览器验证；默认 Mock 开局后地图面板可见、canvas 挂载、底图/图标/事件涟漪渲染、tooltip 可打开、行动草稿可回填输入框、控制台无错误。
+- 已通过：`node --test test/dualModeAcceptanceScript.test.js`；完整 `npm test` 本轮运行 841 项通过、1 项失败，失败为既有 S67 large fixture 性能阈值波动 `fixtureGenerationMs 10482.177 > 10000`，该失败项随后单跑通过。
+- 已完成：只读子代理复审最终 diff 与验证证据，未发现 P0/P1/P2；P3 提醒不要暂存浏览器验证残留的 session lock/tmp，本轮最终候选未包含此类文件。
+
+风险/遗留：
+
+- 地图图标和涟漪首版偏大、偏具象，适合 S72.4 可读性；S72.6 可继续做贴图尺寸、路线笔触和动效 polish。
+- S72.4 只完成地图 shell 与行动草稿桥接；S72.5 仍需把点击地点/路线/事件与局势簿、行动草稿和服务器 proposal 深度联动。
