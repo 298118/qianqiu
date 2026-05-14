@@ -17,10 +17,10 @@
 
 - Product: browser + Node.js historical simulation text game **Qianqiu / 千秋**。
 - Runtime target: `npm install && npm start`，然后打开 `http://localhost:3000`。
-- Frontend: plain HTML/CSS/JS，无 build step。Backend: Node.js + Express，plain JavaScript。
+- Frontend: 当前发布入口仍是 plain HTML/CSS/JS，无 build step；S74.0 已规划可在依赖治理通过后引入 React + TypeScript + Vite 并行前端岛，S77 验收后才切默认入口。Backend: Node.js + Express，plain JavaScript。
 - AI providers: adapter-based Mock/OpenAI/DeepSeek/MiMo/MiMo+DeepSeek/Anthropic。`AI_PROVIDER=mock` 仍是默认可玩模式，即使本机存在真实 provider key 也不会自动改走真实模型；`mimo-deepseek` 下 narrator/科举出题仍优先 MiMo，domain_specialist/科举评卷和 critic/safety 在 DeepSeek key 可用时走 DeepSeek。
 - Storage: 默认 JSON session files under `data/sessions/`；可选 `STORAGE_ADAPTER=sqlite` 使用本地 `schema_migrations`、`world_sessions`、audit tables、`geo_*`、`people_*`、`office_*`、`event_archive_index`、`prompt_retrieval_index` 和 `safe_search_index`。SQLite 派生行只从 `world_sessions.world_state_json` 单向修复；raw business/audit rows 不是 route、prompt、browser、搜索或服务器裁决 truth source。
-- Roadmap status: S49-S67 本地数据库与大世界内容、S68-S69 科举深化、S70 AI 编排、S71 数据库玩法化和 S72 PixiJS 水墨地图均已完成并归档。当前活动路线进入 S73-S77 前端水墨重构，任务书见 `docs/FRONTEND_INK_REDESIGN_ROADMAP.md`；S72 归档见 `docs/PIXIJS_INK_MAP_ARCHIVE.md`。
+- Roadmap status: S49-S67 本地数据库与大世界内容、S68-S69 科举深化、S70 AI 编排、S71 数据库玩法化和 S72 PixiJS 水墨地图均已完成并归档。当前活动路线进入 S73-S77 前端水墨重构，任务书见 `docs/FRONTEND_INK_REDESIGN_ROADMAP.md`；S73.0a 已把规划细化为素材矩阵、React/Vite 迁移路线、身份/场景专题、小步骤验收和长期 300-400 张立绘分期。S72 归档见 `docs/PIXIJS_INK_MAP_ARCHIVE.md`。
 - Current collaboration: 2026-05-14 起停止与 Gemini CLI 协作，后续开发全部由 Codex 承担。Codex 负责后端、前端、AI/server 权限、素材生成与台账、视觉审核、最终文档同步、验证和 Git 提交；S73-S77 的 AI 生图统一由 Codex 使用 `gpt-image-2` 完成，AI 生成素材和第三方入库候选素材都必须由 Codex 做视觉审核，确认游戏基调、历史/水墨适配、可读性和同批一致性。
 - Current local `.env`: 可能含用户提供的 provider keys。`.env` 被 Git 忽略，不能打印或提交。
 
@@ -46,7 +46,7 @@
 - 本机开发诊断 `GET /api/dev/session-diagnostics/:sessionId` 默认关闭，production 强制关闭，只在 `ENABLE_DEV_DIAGNOSTICS=true`、远端地址为 loopback 且 Origin 为空或本机 loopback Origin 通过时返回安全统计；不返回 raw state、raw audit、provider payload、prompt、本地路径、key、SQLite 原始行或 hidden ledger。
 - S70/S71 领域工具与 resolver 边界：`cityPolicyResolver`、`judicialCaseResolver`、`militaryDiplomacyResolver`、`worldPressureEventGenerator`、`sceneRuntime`、NPC 记忆和 AI 调动审计均由服务器拥有裁决与 apply；`server.*` 只能是内部 resolver/audit label，不能进入模型可见工具列表或 provider schema。
 - S68-S69 科举深化继续保持 proposal-only：老师、保人、同年、考官、吏部和皇帝只能提交题目、点评、事件、批语、复核疑点或授官 proposal；服务器仍拥有资格、舞弊、榜单、名次、授官、任免和持久化裁决。外层 API 保持 `child_exam -> provincial_exam -> metropolitan_exam -> palace_exam`，浏览器/prompt 只读 `studyProfileView`、`examProcedureView`、`examinerPanelView`、`examHonorView`、`examNetwork`、`appointmentTrackView` 和考试历史安全快照。
-- S73-S77 前端重构只能组合安全 route view、redacted player state、AI 设置 view、地图 runtime view 和考试安全快照；新增身份/场景/NPC/设置界面不得读取 raw audit、provider proposal、完整 prompt、本地路径、key、hidden notes 或 hidden intent。玩家与 NPC 立绘要求成年、端庄、身份明确、俊美但不露骨；不得性化未成年人、不得幼态化或过度暴露。
+- S73-S77 前端重构只能组合安全 route view、redacted player state、AI 设置 view、地图 runtime view 和考试安全快照；新增身份/场景/NPC/设置界面不得读取 raw audit、provider proposal、完整 prompt、本地路径、key、hidden notes 或 hidden intent。玩家与 NPC 立绘要求成年、端庄、身份明确、高颜值但不露骨；女性角色可用服饰剪裁、腰封、衣料层次和站姿体现优雅成熟女性身形比例，但不得性化未成年人、不得幼态化、不得挑逗或过度暴露。
 
 ## Subagent Discipline
 
@@ -126,7 +126,8 @@ Important module areas:
 - 2026-05-14：按用户要求停止与 Gemini CLI 共同开发，后续开发全部改为 Codex-only。已同步 `AGENTS.md`、`CLAUDE.md`、治理锚点、brief、路线图、S72 契约/素材文档和本交接板；删除 Gemini 专用上下文入口 `GEMINI.md` 与 `.geminiignore`。历史记录中已经发生的 Gemini patch 作为事实保留，但不再作为未来协作模式。本轮只改文档、治理检查脚本和 Gemini 专用上下文文件，不改运行时代码、API、provider schema、SQLite schema、素材 manifest 或提示词；纯文档/治理改动，已进行只读子代理复审。
 - 2026-05-14：按用户要求完成 S72 PixiJS 水墨地图专项归档。新增 `docs/PIXIJS_INK_MAP_ARCHIVE.md`，并把 `docs/DEVELOPMENT_STEPS.md`、`docs/QIANQIU_DEVELOPMENT_BRIEF.md` 和 `README.md` 的 S72 口径统一改为“已完成归档”；`docs/SHARED_CONTEXT.md` 也已更新为归档后的下一步建议。本轮仍不改运行时代码、API、provider schema、存档格式、SQLite 表结构、提示词、验证脚本或 AI 权限；验证完成后将按 Git 提交收口。
 - 2026-05-14：按用户要求启动 S73-S77 前端水墨重构规划。已让 medium 子代理做创意发散/prompt 草案，Codex 收口为 `docs/FRONTEND_INK_REDESIGN_ROADMAP.md`，将用户提出的水墨、手绘、泛黄宣纸/奏折、首页画卷、右上角设置、存档/读档/返回首页、底部奏折输入、科举/放榜全屏、身份/场景专属面板、NPC/玩家立绘长期管线拆成 S73 素材、S74 信息架构拆分、S75 首页 shell、S76 身份/场景专题界面、S77 验收归档。S73-S77 继续纯 HTML/CSS/JS、Mock 默认可玩、S72 地图只读安全 view、存档/AI 设置安全 API 和完整书生路径不回退；立绘边界收束为成人、端庄、身份明确、俊美但不露骨。本轮只改规划/交接文档，不改运行时代码、API、provider schema、SQLite schema、存档格式、提示词、验证脚本或素材文件。验证已通过 `npm run check:docs-governance`、`node --test test/documentationGovernance.test.js` 和 `git diff --check`；只读子代理复审未发现 P0/P1，P2 brief 后段活动方向遗漏已修正，P3 复审状态已闭环。
+- 2026-05-14：按用户反馈补强 S73-S77 规划。`docs/FRONTEND_INK_REDESIGN_ROADMAP.md` 已重写为详细开发蓝图：S73 拆成视觉资产指南、manifest/台账、UI 材质、首页资产、场景插画、身份背景、玩家/NPC 立绘基准、动效/fallback、素材预览/QA 和长期立绘分期；S74 调整为 React + TypeScript + Vite 渐进式接管，先通过依赖治理和 `/ink-client/` 并行前端岛，不在 S77 前切默认入口；S75-S77 拆出首页、印匣、存档/读档、返回首页、底部奏折、身份专属面板、考试/放榜、舆图、立绘接线、安全/性能/可访问性验收。女性立绘边界更新为成年、端庄、高颜值、身份感强，可通过服饰剪裁和姿态体现优雅成熟女性身形比例，但不得露骨、挑逗、幼态或过度暴露。本轮仍只改规划/交接文档，不安装依赖、不生成素材、不改运行时代码或 API。
 
 ## Next Recommended Step
 
-执行 S73.1：新增前端视觉资产指南、UI manifest 草案和素材台账，固定首页、主界面、身份/场景、NPC 立绘、UI 材质、动效和 fallback 的尺寸、命名、审核字段与安全边界；继续保持 JSON/Mock 默认可玩、SQLite local-only、AI proposal-only、server resolver 裁决、地图前端只读安全 view 和完整书生路径不回退。
+执行 S73.1：新增 `docs/FRONTEND_VISUAL_ASSET_GUIDE.md`，固定首页、主界面、身份/场景、NPC/玩家立绘、UI 材质、动效和 fallback 的尺寸、命名、裁切、审美、安全和审核标准；S73.2 再新增 UI manifest 草案与素材台账。继续保持 JSON/Mock 默认可玩、SQLite local-only、AI proposal-only、server resolver 裁决、地图前端只读安全 view 和完整书生路径不回退。
