@@ -7,6 +7,7 @@
 - 当前专项是 S72 PixiJS 水墨地图。
 - 你负责前端：PixiJS 地图渲染、图层系统、动效、交互、响应式布局和浏览器验证说明。
 - Codex 负责后端、地图 runtime view/API/schema、AI/server 权限、素材生成、素材台账、最终审核和提交。
+- S72 地图 AI 生图统一由 Codex 使用 `gpt-image-2` 完成；AI 生成素材和第三方素材都必须先由 Codex 做视觉审核，确认符合游戏基调与同批一致性后，才可被你用于前端。
 - 你可以产出 scoped frontend patch，但不能提交代码。
 
 ## 禁止事项
@@ -18,6 +19,7 @@
 - 不要改后端裁决逻辑、AI provider schema、地图 resolver、考试晋级、官职任免、存档格式或 SQLite 表结构，除非 Codex 明确把某个后端小任务交给你。
 - 不要让前端直接写游戏状态；地图 action 必须走玩家确认后的普通行动或服务器 proposal/resolver。
 - 不要从兼容 `worldState` raw ledger 推导隐藏地图信息；地图 UI 只读服务器安全 view。
+- 不要自行使用 AI 生图工具生成 S72 地图素材，不要提交未经 Codex 视觉审核和台账登记的第三方素材。
 
 ## 前端允许范围
 
@@ -29,7 +31,7 @@
 - `public/mapRenderer.js`（如需要新增）
 - `public/mapPanel.js`（如需要新增）
 - `public/vendor/` 或 `public/lib/`（仅在 S72.1 依赖治理批准后）
-- `public/assets/maps/`（只使用 Codex 已登记素材）
+- `public/assets/maps/`（只使用 Codex 已登记且已通过视觉审核的素材）
 
 新增 PixiJS 依赖前必须确认 S72.1 已完成。若使用 CDN，必须固定版本，并提供本地 fallback；优先本地 vendor 固定版本，保持无 build step。
 

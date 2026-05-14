@@ -112,7 +112,7 @@
 | S72.0a | DONE | Codex | 细化 Codex/Gemini 实施规格 | 扩展专项路线图、补素材指南、创建 `GEMINI.md` 与 `.geminiignore`，让 Gemini 可按项目指引做前端只读报告或 patch |
 | S72.1 | TODO | Codex，Gemini 提供前端约束 | PixiJS 依赖治理与地图 runtime 契约 | 决定 PixiJS 加载方式，固定 `mapRuntimeView` / 显示布局草案，保留无 build step 除非后续明确批准；Gemini 首个任务应是只读前端约束报告 |
 | S72.2 | TODO | Codex | 后端地图 runtime view、布局契约与测试 | 基于 `mapContextView` 扩展安全投影；显示坐标只用于 UI，不暴露 raw/hidden/坐标污染 |
-| S72.3 | TODO | Codex | 水墨地图素材生成、manifest 与台账 | AI 生成底图/图标/纹理，保存到 `public/assets/maps/`，更新 `docs/MAP_ASSET_LEDGER.md` |
+| S72.3 | TODO | Codex | 水墨地图素材生成、manifest 与台账 | Codex 使用 `gpt-image-2` 生成底图/图标/纹理；第三方优秀素材可作为候选但必须登记许可；所有入库素材先由 Codex 视觉审核游戏基调与一致性，再保存到 `public/assets/maps/` 并更新 `docs/MAP_ASSET_LEDGER.md` |
 | S72.4 | TODO | Gemini CLI，Codex 审核提交 | PixiJS 地图 shell 与图层系统 | Gemini 负责前端 patch 和浏览器验证说明；不得暂存、提交、推送或创建 PR |
 | S72.5 | TODO | Codex + Gemini CLI | 地图与游戏系统深度联动 | 点击地点/路线/事件联动局势簿、行动草稿和服务器 proposal；前端不得直接写状态 |
 | S72.6 | TODO | Gemini CLI，Codex 提供素材 | 水墨动效与视觉 polish | 保证拖拽/缩放/路线/事件动效流畅，支持降级与窄屏布局 |
@@ -218,3 +218,33 @@
 下一步：
 
 - 执行 S72.1：先让 Gemini 按 `GEMINI.md` 的首个建议任务做只读前端约束报告；Codex 再固定 PixiJS 依赖治理、`mapRuntimeView` 契约和素材首批清单。
+
+### 2026-05-14
+
+工具：Codex。
+
+步骤：S72 地图素材生成与视觉审核规则补充。
+
+提交：本次提交。
+
+完成：
+
+- 按用户要求固定 S72 AI 生图来源：地图 AI 生成素材统一由 Codex 使用 `gpt-image-2` 完成，不使用其他 AI 生图工具作为正式素材来源。
+- 补充 Codex 视觉审核准入：AI 生成素材和第三方优秀素材入库前，都要审核游戏基调、历史/水墨适配、同批一致性、缩放可读性、现代元素/水印/误生成文字和 hidden/raw/path/key 污染风险。
+- 更新 `docs/PIXIJS_INK_MAP_ROADMAP.md`、`docs/MAP_ASSET_GUIDE.md`、`docs/MAP_ASSET_LEDGER.md`、`GEMINI.md`、`AGENTS.md`、`docs/SHARED_CONTEXT.md` 和 brief 中的 S72 素材职责说明。
+- 本轮不改运行时代码、API、provider schema、存档格式、SQLite 表结构、提示词、验证脚本或 AI 权限。
+
+验证：
+
+- 已通过：`npm run check:docs-governance`。
+- 已通过：`node --test test/documentationGovernance.test.js`。
+- 已通过：`git diff --check`。
+
+风险/遗留：
+
+- 本轮是纯文档准入规则补充；实际素材生成、视觉审核和 manifest 更新仍归 S72.3。
+- 纯文档改动，未执行子代理复审。
+
+下一步：
+
+- 执行 S72.1：先收 Gemini 只读前端约束报告，再固定 PixiJS 依赖治理和 `mapRuntimeView` 契约。

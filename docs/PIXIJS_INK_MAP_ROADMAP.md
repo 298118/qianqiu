@@ -6,7 +6,8 @@
 
 - 地图运行时采用 PixiJS，服务于流畅动效、图层合成、大量 marker / route / pressure effect 和后续玩法扩展。
 - 视觉目标为水墨手绘风格：宣纸底、淡墨山川、手绘城池、朱砂/青绿少量点染、路线墨线、事件涟漪和低饱和古籍 UI。
-- 地图素材优先由 Codex 使用 AI 生图生成原创资产；历史地图只作构图、地貌纹理或时代气质参考。
+- 地图素材优先由 Codex 使用 `gpt-image-2` 生成原创资产；其他 AI 生图工具不得作为 S72 地图素材来源。生成后的素材必须由 Codex 使用视觉能力审核游戏基调、历史/水墨适配、图标可读性和同批一致性。
+- 鼓励使用第三方优秀素材作为参考、纹理或直接资产候选，但直接入库前必须完成许可登记，并由 Codex 使用视觉能力审核是否符合《千秋》的水墨历史基调和现有素材一致性。
 - 地图中文字、地点名、事件标签不得烘进底图，统一由前端按 `mapEntityRef` 和服务器 view 渲染，避免 AI 图片文字错误和后续改名返工。
 - 地图显示坐标只用于前端布局，不是 canonical 地理真值，不参与科举资格、行军结果、任免、外交、战和、商路收益或 AI 裁决。
 - 默认仍保持 `npm install && npm start` 可运行；新增 PixiJS 或资产加载策略必须先通过依赖治理记录。
@@ -26,8 +27,8 @@
 
 | 角色 | 主要职责 | 禁止事项 |
 | --- | --- | --- |
-| Codex | 后端地图 runtime view、API/schema、服务器裁决边界、AI 工具权限、Mock/no-key fallback、测试、素材生成、素材台账、Gemini patch 审核、最终提交 | 不把未审查的 Gemini patch 直接提交；不把素材来源只留在聊天里 |
-| Gemini CLI | 前端 PixiJS 地图渲染、图层系统、动效、交互、响应式布局、浏览器验证截图/说明 | 不运行 `git add`、`git commit`、`git push`，不创建 PR，不改后端裁决逻辑，不回滚他人改动 |
+| Codex | 后端地图 runtime view、API/schema、服务器裁决边界、AI 工具权限、Mock/no-key fallback、测试、使用 `gpt-image-2` 生成素材、第三方素材筛选、素材视觉审核、素材台账、Gemini patch 审核、最终提交 | 不把未审查的 Gemini patch 直接提交；不把素材来源或视觉审核结论只留在聊天里；不使用其他 AI 生图工具生成 S72 地图素材 |
+| Gemini CLI | 前端 PixiJS 地图渲染、图层系统、动效、交互、响应式布局、浏览器验证截图/说明 | 不运行 `git add`、`git commit`、`git push`，不创建 PR，不改后端裁决逻辑，不回滚他人改动，不自行生成或引入未登记素材 |
 | Codex 子代理 | 只读复审或明确 scoped patch；用于提交前风险检查 | 不提交、不推送、不创建 PR |
 
 Gemini 的交付必须列出改动文件、核心实现、浏览器验证步骤、已知风险和未完成事项。Codex 必须审查 diff、运行验证、同步文档后再提交。
@@ -233,12 +234,15 @@ Gemini 每次完成 frontend patch 后，必须在报告中列出：
 - `ink-effect-ripple-v1.png`：事件涟漪/墨晕纹理。
 - `ink-map-manifest.json`：资产 id、路径、尺寸、用途、版本、fallback 和 license 摘要。
 
-AI 生图约束：
+AI 生图与素材准入约束：
 
+- AI 生成地图素材统一由 Codex 使用 `gpt-image-2` 完成；不使用其他 AI 生图工具作为正式素材来源。
 - 底图无文字、无现代边框、无罗盘英文、无图例文字、无水印。
 - 图标需留足透明边距，统一视角和墨色，不混入真实文字。
 - 透明图标优先生成纯色 chroma-key 背景后本地抠 alpha，复杂透明需求再走专门透明工作流。
-- 每次生成都记录 prompt、模型/工具、日期、参考素材、后处理和最终项目路径。
+- 每次生成都记录 prompt、模型/工具、日期、参考素材、后处理、Codex 视觉审核结论和最终项目路径。
+- 第三方优秀素材可以作为参考、纹理或直接资产候选；直接进入 `public/assets/maps/` 或 manifest 前，必须登记许可/来源并通过 Codex 视觉审核。
+- Codex 视觉审核至少判断：是否符合《千秋》水墨历史基调、是否与已有素材色彩/笔触/视角一致、缩放后是否可读、是否存在现代元素/水印/文字误生成、是否含本地路径/key/hidden 真值。
 
 ## 7. S72 小步骤
 
@@ -247,7 +251,7 @@ AI 生图约束：
 | S72.0 | DONE | Codex | 确认 PixiJS 水墨地图方向，切换当前协作台账为 Codex + Gemini CLI | 本路线图、素材台账模板、`DEVELOPMENT_STEPS` 和 `SHARED_CONTEXT` 同步；不改运行时代码 |
 | S72.1 | TODO | Codex，Gemini 提供前端约束 | PixiJS 依赖治理与 runtime 契约 | 更新依赖治理记录；决定 CDN/vendor/npm；若选 CDN 必须固定版本并提供本地 fallback，避免运行时强依赖外网；固定 `mapRuntimeView` 字段草案；验证 docs governance |
 | S72.2 | TODO | Codex | 后端地图 runtime view 与布局契约 | 新增/扩展安全 view、配置、测试；确保 raw/hidden/坐标污染不外泄 |
-| S72.3 | TODO | Codex | 水墨底图、图标、纹理与素材 manifest | 生成项目内资产；更新素材台账；基础图片尺寸/透明度/加载检查 |
+| S72.3 | TODO | Codex | 水墨底图、图标、纹理与素材 manifest | 使用 `gpt-image-2` 生成项目内 AI 资产；第三方素材可筛选但必须登记许可；所有入库素材先经 Codex 视觉审核；更新素材台账；基础图片尺寸/透明度/加载检查 |
 | S72.4 | TODO | Gemini CLI，Codex 审核提交 | PixiJS 地图 shell 与图层系统 | 前端 patch；桌面/移动浏览器截图或说明；Codex 审查后提交 |
 | S72.5 | TODO | Codex + Gemini CLI | 地图与游戏系统联动 | 点击 ref 联动局势簿/行动草稿；服务器权限校验；地图 action 不直写状态 |
 | S72.6 | TODO | Gemini CLI，Codex 提供素材 | 水墨动效与视觉 polish | 路线流动、事件涟漪、marker 状态、降级模式；浏览器动效验证 |
@@ -261,7 +265,7 @@ AI 生图约束：
 - 地图至少显示核心城邑、路线、当前玩家相关地点和 1-2 类事件压力。
 - 地图点击只读取安全 view 并触发前端选择、信息面板联动或行动草稿；不直接修改状态。
 - 后端测试证明地图 view 不暴露 raw coordinate table、hidden enemy truth、hidden notes、provider proposal、完整 prompt、本地路径或 key。
-- 素材已落入项目目录并登记来源；AI 生成资产有 prompt 和使用说明。
+- 素材已落入项目目录并登记来源；AI 生成资产明确记录 `gpt-image-2`、prompt、后处理和 Codex 视觉审核结论；第三方素材记录许可、用途和 Codex 视觉审核结论。
 - 资源加载失败时有静态 fallback，地图面板不让游戏主流程不可用。
 - `prefers-reduced-motion` 下动态效果明显减少或停止。
 
