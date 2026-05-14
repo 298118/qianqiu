@@ -1,10 +1,10 @@
 # Gemini CLI Project Instructions
 
-本文件是 Gemini CLI 在《千秋》仓库中的项目上下文。请先阅读本文件，再阅读 `AGENTS.md`、`docs/SHARED_CONTEXT.md`、`docs/QIANQIU_DEVELOPMENT_BRIEF.md`、`docs/DEVELOPMENT_STEPS.md` 和 `docs/PIXIJS_INK_MAP_ROADMAP.md`。
+本文件是 Gemini CLI 在《千秋》仓库中的项目上下文。请先阅读本文件，再阅读 `AGENTS.md`、`docs/SHARED_CONTEXT.md`、`docs/QIANQIU_DEVELOPMENT_BRIEF.md`、`docs/DEVELOPMENT_STEPS.md`、`docs/PIXIJS_INK_MAP_ROADMAP.md` 和 `docs/PIXIJS_INK_MAP_RUNTIME_CONTRACT.md`。
 
 ## 你的当前角色
 
-- 当前专项是 S72 PixiJS 水墨地图。
+- 当前专项是 S72 PixiJS 水墨地图，S72.1 依赖治理与 runtime 契约已完成。
 - 你负责前端：PixiJS 地图渲染、图层系统、动效、交互、响应式布局和浏览器验证说明。
 - Codex 负责后端、地图 runtime view/API/schema、AI/server 权限、素材生成、素材台账、最终审核和提交。
 - S72 地图 AI 生图统一由 Codex 使用 `gpt-image-2` 完成；AI 生成素材和第三方素材都必须先由 Codex 做视觉审核，确认符合游戏基调与同批一致性后，才可被你用于前端。
@@ -30,10 +30,10 @@
 - `public/styles.css`
 - `public/mapRenderer.js`（如需要新增）
 - `public/mapPanel.js`（如需要新增）
-- `public/vendor/` 或 `public/lib/`（仅在 S72.1 依赖治理批准后）
+- `public/vendor/`（仅用于 S72.1 已批准的 `pixi.js@7.4.3` UMD vendor 文件）
 - `public/assets/maps/`（只使用 Codex 已登记且已通过视觉审核的素材）
 
-新增 PixiJS 依赖前必须确认 S72.1 已完成。若使用 CDN，必须固定版本，并提供本地 fallback；优先本地 vendor 固定版本，保持无 build step。
+PixiJS 加载方式已由 S72.1 固定：使用 `pixi.js@7.4.3` UMD，优先本地 `public/vendor/pixi.min.js`，仅在本地 vendor 缺失或损坏时使用固定 CDN fallback。不要把 PixiJS 加入 `package.json`，不要引入 build step。
 
 ## 必守技术边界
 
@@ -65,14 +65,10 @@
 - 已知风险和需要 Codex 提供的后端字段或素材。
 - 明确声明：未运行 `git add`、`git commit`、`git push`，未创建 PR，未改后端裁决逻辑。
 
-## 首个建议任务
+## 当前建议任务
 
-在 Codex 完成 S72.1 前，请先做只读前端约束报告：
+首个只读前端约束报告已经由用户转交给 Codex，并已沉淀到 `docs/PIXIJS_INK_MAP_RUNTIME_CONTRACT.md`。后续进入 S72.4 前端 patch 前，请先确认 Codex 已完成 S72.2 后端 `mapRuntimeView` 或明确提供了临时 fixture；然后按以下边界实施：
 
-```text
-阅读 GEMINI.md、docs/SHARED_CONTEXT.md、docs/PIXIJS_INK_MAP_ROADMAP.md、public/index.html、public/app.js、public/styles.css。
-不要编辑文件，不要运行 git 命令。
-请报告：地图面板适合插入的 DOM 位置、app.js 最小接线点、CSS 响应式约束、PixiJS vendor/CDN 对前端的影响、需要 Codex 后端提供的 mapRuntimeView 字段。
-```
-
-Codex 会基于你的报告固定后端契约和依赖治理，再安排正式前端 patch。
+- 遵守 `docs/PIXIJS_INK_MAP_RUNTIME_CONTRACT.md` 的 DOM 插入点、`app.js` 最小接线、CSS 高度/overlay/reduced-motion 约束和 action draft 回填规则。
+- 若 `mapRuntimeView`、`window.PIXI` 或 manifest 缺失，显示等待/静态降级，不阻断 narrative 和 action area。
+- 浏览器验证报告必须覆盖桌面、窄屏、canvas 非空、资源失败 fallback、tooltip/label 不重叠和 reduced-motion 降级。

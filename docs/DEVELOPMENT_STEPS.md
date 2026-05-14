@@ -110,7 +110,7 @@
 | --- | --- | --- | --- | --- |
 | S72.0 | DONE | Codex | PixiJS 水墨地图规划与 Gemini 协作切换 | 本次只改文档：确认 PixiJS 方向、Codex 后端/素材/审核提交、Gemini CLI 前端 patch 且不提交代码；新增专项路线图和素材台账模板 |
 | S72.0a | DONE | Codex | 细化 Codex/Gemini 实施规格 | 扩展专项路线图、补素材指南、创建 `GEMINI.md` 与 `.geminiignore`，让 Gemini 可按项目指引做前端只读报告或 patch |
-| S72.1 | TODO | Codex，Gemini 提供前端约束 | PixiJS 依赖治理与地图 runtime 契约 | 决定 PixiJS 加载方式，固定 `mapRuntimeView` / 显示布局草案，保留无 build step 除非后续明确批准；Gemini 首个任务应是只读前端约束报告 |
+| S72.1 | DONE | Codex，Gemini 提供前端约束 | PixiJS 依赖治理与地图 runtime 契约 | Gemini 只读前端约束报告已由用户转交；Codex 新增运行时契约，固定 `pixi.js@7.4.3` UMD、本地 vendor 优先、固定 CDN fallback、`mapRuntimeView` 字段、DOM/app/CSS 接线和 S72.2/S72.4 验收边界 |
 | S72.2 | TODO | Codex | 后端地图 runtime view、布局契约与测试 | 基于 `mapContextView` 扩展安全投影；显示坐标只用于 UI，不暴露 raw/hidden/坐标污染 |
 | S72.3 | TODO | Codex | 水墨地图素材生成、manifest 与台账 | Codex 使用 `gpt-image-2` 生成底图/图标/纹理；第三方优秀素材可作为候选但必须登记许可；所有入库素材先由 Codex 视觉审核游戏基调与一致性，再保存到 `public/assets/maps/` 并更新 `docs/MAP_ASSET_LEDGER.md` |
 | S72.4 | TODO | Gemini CLI，Codex 审核提交 | PixiJS 地图 shell 与图层系统 | Gemini 负责前端 patch 和浏览器验证说明；不得暂存、提交、推送或创建 PR |
@@ -248,3 +248,56 @@
 下一步：
 
 - 执行 S72.1：先收 Gemini 只读前端约束报告，再固定 PixiJS 依赖治理和 `mapRuntimeView` 契约。
+
+### 2026-05-14
+
+工具：Codex，Gemini 只读前端约束报告，子代理只读复审。
+
+步骤：S72.1 PixiJS 依赖治理与地图 runtime 契约。
+
+提交：本次提交。
+
+依赖/插件记录：
+
+- 名称：`pixi.js`。
+- 类型：browser vendor runtime，不作为 npm dependency 提交。
+- 版本或范围：固定 `7.4.3`。
+- 是否使用 `latest` 及理由：不使用。2026-05-14 通过 `npm view pixi.js version` 确认最新主版本为 `8.18.1`；S72 固定 7 系列最后版本 `7.4.3`，因为它有稳定 UMD bundle，适合当前无构建、传统 script 加载方式。
+- 引入步骤：S72.1 只批准版本与加载策略；S72.4 才能提交 `public/vendor/pixi.min.js` 和前端接线。
+- 负责人/工具：Codex 负责治理、后端契约、素材审核和最终提交；Gemini CLI 只提供前端约束报告和后续 patch，不运行 Git 命令。
+- 用途：水墨地图 canvas 渲染、图层合成、marker、route、pressure effect、hit testing 和后续动效。
+- 影响范围：browser/docs；本轮不改 server、storage、AI provider、`package.json` 或安装流程。
+- 许可证：MIT。
+- 安全与隐私：本地 vendor 不需要 key、账户、telemetry、postinstall、原生编译或二进制；固定 CDN fallback 只在本地 vendor 失败时触发。
+- Mock/no-key 影响：无。缺 PixiJS 或缺素材时地图面板必须静态降级，不阻断文字主流程。
+- 验证命令：`npm run check:docs-governance`、`node --test test/documentationGovernance.test.js`、`git diff --check`。
+- 回滚策略：删除 S72 地图 vendor/script/DOM/CSS 接线和 `mapRuntimeView` route 接线，保留现有文字游戏与 `mapContextView` 安全接口。
+- 文档落点：[PIXIJS_INK_MAP_RUNTIME_CONTRACT.md](PIXIJS_INK_MAP_RUNTIME_CONTRACT.md)、[PIXIJS_INK_MAP_ROADMAP.md](PIXIJS_INK_MAP_ROADMAP.md)、本台账、[SHARED_CONTEXT.md](SHARED_CONTEXT.md)、[QIANQIU_DEVELOPMENT_BRIEF.md](QIANQIU_DEVELOPMENT_BRIEF.md)、根目录 [GEMINI.md](../GEMINI.md)。
+- 决策：批准 `pixi.js@7.4.3` UMD、本地 vendor 优先、固定 CDN fallback、无 build step。
+- 后续复查：若未来升级 PixiJS 8 或改用 npm/bundler，必须重新走依赖治理并更新 README、brief、browser smoke 和回滚策略。
+
+完成：
+
+- 新增 [PIXIJS_INK_MAP_RUNTIME_CONTRACT.md](PIXIJS_INK_MAP_RUNTIME_CONTRACT.md)，把 Gemini 报告沉淀为正式契约：地图 DOM 插入在 `#scholar-panel` 与 `#narrative` 之间，`app.js` 只保存 `currentMapRuntimeView` 并调用 `window.QianqiuMapRenderer`，action draft 只回填 `#action-input`，玩家仍通过现有行动按钮提交。
+- 固定 `mapRuntimeView` schema：`schemaVersion`、`generatedAtTurn`、`assetSetId`、`viewportHint`、`mapBounds`、`layers`、`refs`、`routes`、`eventEffects`、字典式 `actionDrafts` 和 `hiddenNotice`；自然语言行动草稿必须由服务器预渲染，前端不得拼接。
+- 固定前端 CSS 约束：地图作为独立 grid row，首版高度 `clamp(200px, 35vh, 400px)`，DOM overlay 默认 `pointer-events: none`，标签/tooltip 必须截断或边界检测，`prefers-reduced-motion` 时停止 CSS 动画并通知 Pixi ticker 降级。
+- 固定首版素材库契约：`assetSetId` 为 `ink-map-v1`，manifest 路径为 `public/assets/maps/ink-map-manifest.json`，素材仍归 S72.3 使用 `gpt-image-2` 生成、视觉审核和登记。
+- 更新 [PIXIJS_INK_MAP_ROADMAP.md](PIXIJS_INK_MAP_ROADMAP.md)、[SHARED_CONTEXT.md](SHARED_CONTEXT.md)、brief 和 `GEMINI.md`，让 S72.2/S72.4 可直接按契约接手。
+- 本轮不改运行时代码、API、provider schema、存档格式、SQLite 表结构、提示词、验证脚本、素材文件或 `package.json`。
+
+验证：
+
+- 已通过：`npm run check:docs-governance`。
+- 已通过：`node --test test/documentationGovernance.test.js`。
+- 已通过：`git diff --check`。
+- 已完成：只读子代理复审，未发现 P0/P1/P2；确认依赖治理、hidden/raw 边界、无 build step 和 Gemini Git 禁止规则未被删弱。复审建议已纳入契约：S72.2 应确保 `viewportHint.centerRef` 解析到带有效 layout 的可渲染 ref，否则使用安全 fallback。
+
+风险/遗留：
+
+- S72.1 只固定契约，不提交 `public/vendor/pixi.min.js`，不生成地图素材，不返回真实 `mapRuntimeView`。
+- S72.4 接入 CDN fallback 后会有可选外网请求；默认本地 vendor 优先，离线游玩不应依赖 CDN。
+- 宽屏地图/叙事分列暂不作为 S72.4 首版硬门槛，避免一次性重写现有游戏主布局；S72.6 可作为 polish 继续增强。
+
+下一步：
+
+- 执行 S72.2：Codex 按契约实现后端 `mapRuntimeView`、layout seed、route payload 和测试，继续确保 JSON/Mock 默认可玩、hidden/raw 不外泄。
