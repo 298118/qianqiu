@@ -48,6 +48,60 @@ function assertSafeUiAssetPath(assetPath, fieldName) {
   assert.equal(/^data:/i.test(assetPath), false, fieldName);
 }
 
+function resolveUiAssetPath(assetPath) {
+  assertSafeUiAssetPath(assetPath, assetPath);
+  return path.join(repoRoot, "public", assetPath.replace(/^\//, ""));
+}
+
+function readUInt24LE(buffer, offset) {
+  return buffer[offset] + (buffer[offset + 1] << 8) + (buffer[offset + 2] << 16);
+}
+
+function readWebpInfo(buffer) {
+  assert.equal(buffer.toString("ascii", 0, 4), "RIFF");
+  assert.equal(buffer.toString("ascii", 8, 12), "WEBP");
+  let offset = 12;
+  while (offset + 8 <= buffer.length) {
+    const chunk = buffer.toString("ascii", offset, offset + 4);
+    const size = buffer.readUInt32LE(offset + 4);
+    const data = offset + 8;
+    if (chunk === "VP8X") {
+      const flags = buffer.readUInt8(data);
+      return {
+        width: readUInt24LE(buffer, data + 4) + 1,
+        height: readUInt24LE(buffer, data + 7) + 1,
+        alpha: Boolean(flags & 0x10)
+      };
+    }
+    if (chunk === "VP8 ") {
+      return {
+        width: buffer.readUInt16LE(data + 6) & 0x3fff,
+        height: buffer.readUInt16LE(data + 8) & 0x3fff,
+        alpha: false
+      };
+    }
+    if (chunk === "VP8L") {
+      const b0 = buffer[data + 1];
+      const b1 = buffer[data + 2];
+      const b2 = buffer[data + 3];
+      const b3 = buffer[data + 4];
+      return {
+        width: 1 + (((b1 & 0x3f) << 8) | b0),
+        height: 1 + (((b3 & 0x0f) << 10) | (b2 << 2) | ((b1 & 0xc0) >> 6)),
+        alpha: true
+      };
+    }
+    offset += 8 + size + (size % 2);
+  }
+  throw new Error("Unsupported WebP encoding");
+}
+
+function readImageInfo(filePath) {
+  const buffer = fs.readFileSync(filePath);
+  if (filePath.endsWith(".webp")) return readWebpInfo(buffer);
+  throw new Error(`Unsupported S73 UI image type: ${filePath}`);
+}
+
 test("S73.2 ink UI manifest fixes schema, safety, fallback, and portrait policies", () => {
   const manifestText = fs.readFileSync(manifestPath, "utf8");
   assert.doesNotMatch(manifestText, FORBIDDEN_MANIFEST_REMOTE_OR_LOCAL_PATH);
@@ -56,7 +110,7 @@ test("S73.2 ink UI manifest fixes schema, safety, fallback, and portrait policie
 
   assert.equal(manifest.schemaVersion, 1);
   assert.equal(manifest.assetSetId, "ink-ui-v1");
-  assert.equal(manifest.status, "schema_draft");
+  assert.equal(["schema_draft", "assets_active"].includes(manifest.status), true);
   assert.equal(manifest.phase, "S73");
   assert.equal(manifest.style, "ink-wash-hand-drawn-xuan-paper");
   assert.equal(manifest.assetRoot, "/assets/ui/");
@@ -142,13 +196,45 @@ test("S73.2 ink UI manifest fixes schema, safety, fallback, and portrait policie
   });
 
   assert.equal(Array.isArray(manifest.assets), true);
-  assert.equal(manifest.assets.length, 0, "S73.2 only defines schema; S73.3-S73.10 add assets");
+  assert.equal(manifest.assets.length, 16, "S73.3 adds the first UI material pack");
 
   for (const asset of manifest.assets) {
+    assert.equal(asset.phase, "S73.3", asset.id);
+    assert.equal(asset.category, "material", asset.id);
+    assert.equal(manifest.runtimeUsableReviewStatuses.includes(asset.reviewStatus), true, asset.id);
     assertSafeUiAssetPath(asset.path, `${asset.id}.path`);
     assertSafeUiAssetPath(asset.thumbnailPath, `${asset.id}.thumbnailPath`);
     assertSafeUiAssetPath(asset.lowResPlaceholderPath, `${asset.id}.lowResPlaceholderPath`);
     if (asset.category !== "fallback") assert.equal(fallbackIds.has(asset.fallbackRef), true, asset.id);
+
+    const filePath = resolveUiAssetPath(asset.path);
+    const thumbnailPath = resolveUiAssetPath(asset.thumbnailPath);
+    assert.equal(fs.existsSync(filePath), true, asset.path);
+    assert.equal(fs.existsSync(thumbnailPath), true, asset.thumbnailPath);
+    const info = readImageInfo(filePath);
+    assert.equal(info.width, asset.dimensions.width, asset.id);
+    assert.equal(info.height, asset.dimensions.height, asset.id);
+    assert.equal(info.alpha, asset.transparent, asset.id);
+    assert.equal(asset.performance.bytes, fs.statSync(filePath).size, asset.id);
+    assert.equal(asset.performance.thumbnailBytes, fs.statSync(thumbnailPath).size, asset.id);
+    assert.equal(asset.performance.bytes <= asset.performance.targetMaxBytes, true, asset.id);
+    assert.equal(asset.source.type, "ai_generated", asset.id);
+    assert.equal(asset.source.model, "gpt-image-2", asset.id);
+    assert.equal(asset.visualReview.reviewedBy, "Codex", asset.id);
+    assert.equal(asset.safetyReview.reviewedBy, "Codex", asset.id);
+    assert.equal(asset.license.commercialUseConfirmed, false, asset.id);
+  }
+
+  const assetIds = new Set(manifest.assets.map((asset) => asset.id));
+  for (const requiredId of [
+    "ui-paper-xuan-base-v1",
+    "ui-memorial-folded-paper-v1",
+    "ui-bamboo-slip-strip-v1",
+    "ui-vermilion-seal-button-v1",
+    "ui-exam-grid-paper-v1",
+    "ui-imperial-notice-paper-v1"
+  ]) {
+    assert.equal(assetIds.has(requiredId), true, requiredId);
   }
 });
 
@@ -171,7 +257,10 @@ test("S73.2 frontend asset ledger records manifest, fallback, portrait, and sour
     "reference-only",
     "texture-source",
     "direct-asset-candidate",
-    "S73.10 全量立绘池不得标记为首页 eager load"
+    "S73.10 全量立绘池不得标记为首页 eager load",
+    "ui-paper-xuan-base-v1",
+    "ui-vermilion-seal-button-v1",
+    "ui-imperial-notice-paper-v1"
   ]) {
     assert.equal(ledgerText.includes(requiredText), true, requiredText);
   }

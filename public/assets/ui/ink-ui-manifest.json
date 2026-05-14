@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "assetSetId": "ink-ui-v1",
-  "status": "schema_draft",
+  "status": "assets_active",
   "createdAt": "2026-05-14",
   "phase": "S73",
   "style": "ink-wash-hand-drawn-xuan-paper",
@@ -348,5 +348,1098 @@
       }
     }
   ],
-  "assets": []
+  "assets": [
+    {
+      "id": "ui-paper-xuan-base-v1",
+      "version": 1,
+      "phase": "S73.3",
+      "category": "material",
+      "subcategory": "paper_xuan",
+      "usage": [
+        "game_main",
+        "global_fallback"
+      ],
+      "role": null,
+      "scene": null,
+      "path": "/assets/ui/materials/paper-xuan-base-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-paper-xuan-base-v1.webp",
+      "fallbackRef": "fallback-paper-panel-v1",
+      "dimensions": {
+        "width": 2048,
+        "height": 2048
+      },
+      "aspectRatio": "2048:2048",
+      "format": "webp",
+      "transparent": false,
+      "safeArea": {
+        "x": 0.08,
+        "y": 0.08,
+        "width": 0.84,
+        "height": 0.84
+      },
+      "focalPoint": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "mobileCrop": {
+        "mode": "center_crop_or_contain",
+        "keepSafeArea": true
+      },
+      "source": {
+        "type": "ai_generated",
+        "tool": "Codex imagegen",
+        "model": "gpt-image-2",
+        "generatedAt": "2026-05-14",
+        "promptSummary": "通用宣纸底，低对比纸纤维与淡墨气，适合主叙事和缺图 fallback。"
+      },
+      "license": {
+        "type": "ai_generated_project_asset",
+        "commercialUseConfirmed": false,
+        "summary": "原创 AI 生成素材，当前仅个人游玩/开发使用；未做公开商用确认。"
+      },
+      "reviewStatus": "approved",
+      "visualReview": {
+        "reviewedBy": "Codex",
+        "reviewedAt": "2026-05-14",
+        "status": "approved",
+        "summary": "通过：符合水墨、宣纸、奏折/案头 UI 基调；无可读文字、水印、现代 UI 或现代器物；可在指定 usage 中承载 DOM 文本。"
+      },
+      "safetyReview": {
+        "reviewedBy": "Codex",
+        "reviewedAt": "2026-05-14",
+        "status": "approved",
+        "summary": "通过：manifest 只引用安全项目路径和台账 id；素材不含本地路径、key、raw/hidden 内容或未公开剧情事实。"
+      },
+      "performance": {
+        "bytes": 210054,
+        "targetMaxBytes": 307200,
+        "thumbnailBytes": 1986
+      },
+      "ledgerId": "ui-paper-xuan-base-v1"
+    },
+    {
+      "id": "ui-paper-aged-silk-v1",
+      "version": 1,
+      "phase": "S73.3",
+      "category": "material",
+      "subcategory": "aged_silk",
+      "usage": [
+        "settings_surface",
+        "game_main"
+      ],
+      "role": null,
+      "scene": null,
+      "path": "/assets/ui/materials/paper-aged-silk-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-paper-aged-silk-v1.webp",
+      "fallbackRef": "fallback-paper-panel-v1",
+      "dimensions": {
+        "width": 2048,
+        "height": 2048
+      },
+      "aspectRatio": "2048:2048",
+      "format": "webp",
+      "transparent": false,
+      "safeArea": {
+        "x": 0.1,
+        "y": 0.1,
+        "width": 0.8,
+        "height": 0.78
+      },
+      "focalPoint": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "mobileCrop": {
+        "mode": "center_crop_or_contain",
+        "keepSafeArea": true
+      },
+      "source": {
+        "type": "ai_generated",
+        "tool": "Codex imagegen",
+        "model": "gpt-image-2",
+        "generatedAt": "2026-05-14",
+        "promptSummary": "旧绢纸底，适合设置、身份面板和档案抽屉，纹理克制。"
+      },
+      "license": {
+        "type": "ai_generated_project_asset",
+        "commercialUseConfirmed": false,
+        "summary": "原创 AI 生成素材，当前仅个人游玩/开发使用；未做公开商用确认。"
+      },
+      "reviewStatus": "approved",
+      "visualReview": {
+        "reviewedBy": "Codex",
+        "reviewedAt": "2026-05-14",
+        "status": "approved",
+        "summary": "通过：符合水墨、宣纸、奏折/案头 UI 基调；无可读文字、水印、现代 UI 或现代器物；可在指定 usage 中承载 DOM 文本。"
+      },
+      "safetyReview": {
+        "reviewedBy": "Codex",
+        "reviewedAt": "2026-05-14",
+        "status": "approved",
+        "summary": "通过：manifest 只引用安全项目路径和台账 id；素材不含本地路径、key、raw/hidden 内容或未公开剧情事实。"
+      },
+      "performance": {
+        "bytes": 287844,
+        "targetMaxBytes": 307200,
+        "thumbnailBytes": 5494
+      },
+      "ledgerId": "ui-paper-aged-silk-v1"
+    },
+    {
+      "id": "ui-memorial-folded-paper-v1",
+      "version": 1,
+      "phase": "S73.3",
+      "category": "material",
+      "subcategory": "memorial_paper",
+      "usage": [
+        "game_main",
+        "court_page"
+      ],
+      "role": null,
+      "scene": null,
+      "path": "/assets/ui/materials/memorial-folded-paper-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-memorial-folded-paper-v1.webp",
+      "fallbackRef": "fallback-paper-panel-v1",
+      "dimensions": {
+        "width": 1600,
+        "height": 2400
+      },
+      "aspectRatio": "1600:2400",
+      "format": "webp",
+      "transparent": false,
+      "safeArea": {
+        "x": 0.2,
+        "y": 0.08,
+        "width": 0.6,
+        "height": 0.84
+      },
+      "focalPoint": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "mobileCrop": {
+        "mode": "center_crop_or_contain",
+        "keepSafeArea": true
+      },
+      "source": {
+        "type": "ai_generated",
+        "tool": "Codex imagegen",
+        "model": "gpt-image-2",
+        "generatedAt": "2026-05-14",
+        "promptSummary": "竖向奏折纸面，折痕清淡，中央可承载叙事或奏疏文本。"
+      },
+      "license": {
+        "type": "ai_generated_project_asset",
+        "commercialUseConfirmed": false,
+        "summary": "原创 AI 生成素材，当前仅个人游玩/开发使用；未做公开商用确认。"
+      },
+      "reviewStatus": "approved",
+      "visualReview": {
+        "reviewedBy": "Codex",
+        "reviewedAt": "2026-05-14",
+        "status": "approved",
+        "summary": "通过：符合水墨、宣纸、奏折/案头 UI 基调；无可读文字、水印、现代 UI 或现代器物；可在指定 usage 中承载 DOM 文本。"
+      },
+      "safetyReview": {
+        "reviewedBy": "Codex",
+        "reviewedAt": "2026-05-14",
+        "status": "approved",
+        "summary": "通过：manifest 只引用安全项目路径和台账 id；素材不含本地路径、key、raw/hidden 内容或未公开剧情事实。"
+      },
+      "performance": {
+        "bytes": 204838,
+        "targetMaxBytes": 307200,
+        "thumbnailBytes": 3520
+      },
+      "ledgerId": "ui-memorial-folded-paper-v1"
+    },
+    {
+      "id": "ui-bamboo-slip-strip-v1",
+      "version": 1,
+      "phase": "S73.3",
+      "category": "material",
+      "subcategory": "bamboo_slip",
+      "usage": [
+        "game_main"
+      ],
+      "role": null,
+      "scene": null,
+      "path": "/assets/ui/materials/bamboo-slip-strip-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-bamboo-slip-strip-v1.webp",
+      "fallbackRef": "fallback-paper-panel-v1",
+      "dimensions": {
+        "width": 2048,
+        "height": 512
+      },
+      "aspectRatio": "2048:512",
+      "format": "webp",
+      "transparent": true,
+      "safeArea": {
+        "x": 0.14,
+        "y": 0.18,
+        "width": 0.72,
+        "height": 0.64
+      },
+      "focalPoint": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "mobileCrop": {
+        "mode": "center_crop_or_contain",
+        "keepSafeArea": true
+      },
+      "source": {
+        "type": "ai_generated",
+        "tool": "Codex imagegen",
+        "model": "gpt-image-2",
+        "generatedAt": "2026-05-14",
+        "promptSummary": "横向竹简输入条，适合底部行动奏折/竹简输入外观。"
+      },
+      "license": {
+        "type": "ai_generated_project_asset",
+        "commercialUseConfirmed": false,
+        "summary": "原创 AI 生成素材，当前仅个人游玩/开发使用；未做公开商用确认。"
+      },
+      "reviewStatus": "approved",
+      "visualReview": {
+        "reviewedBy": "Codex",
+        "reviewedAt": "2026-05-14",
+        "status": "approved",
+        "summary": "通过：符合水墨、宣纸、奏折/案头 UI 基调；无可读文字、水印、现代 UI 或现代器物；可在指定 usage 中承载 DOM 文本。"
+      },
+      "safetyReview": {
+        "reviewedBy": "Codex",
+        "reviewedAt": "2026-05-14",
+        "status": "approved",
+        "summary": "通过：manifest 只引用安全项目路径和台账 id；素材不含本地路径、key、raw/hidden 内容或未公开剧情事实。"
+      },
+      "performance": {
+        "bytes": 75314,
+        "targetMaxBytes": 307200,
+        "thumbnailBytes": 5324
+      },
+      "ledgerId": "ui-bamboo-slip-strip-v1"
+    },
+    {
+      "id": "ui-scroll-panel-base-v1",
+      "version": 1,
+      "phase": "S73.3",
+      "category": "material",
+      "subcategory": "scroll_panel",
+      "usage": [
+        "settings_surface",
+        "global_fallback"
+      ],
+      "role": null,
+      "scene": null,
+      "path": "/assets/ui/materials/scroll-panel-base-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-scroll-panel-base-v1.webp",
+      "fallbackRef": "fallback-paper-panel-v1",
+      "dimensions": {
+        "width": 1800,
+        "height": 1200
+      },
+      "aspectRatio": "1800:1200",
+      "format": "webp",
+      "transparent": true,
+      "safeArea": {
+        "x": 0.2,
+        "y": 0.2,
+        "width": 0.6,
+        "height": 0.58
+      },
+      "focalPoint": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "mobileCrop": {
+        "mode": "center_crop_or_contain",
+        "keepSafeArea": true
+      },
+      "source": {
+        "type": "ai_generated",
+        "tool": "Codex imagegen",
+        "model": "gpt-image-2",
+        "generatedAt": "2026-05-14",
+        "promptSummary": "卷轴式弹层底，可用于设置、存档和通用弹窗。"
+      },
+      "license": {
+        "type": "ai_generated_project_asset",
+        "commercialUseConfirmed": false,
+        "summary": "原创 AI 生成素材，当前仅个人游玩/开发使用；未做公开商用确认。"
+      },
+      "reviewStatus": "approved",
+      "visualReview": {
+        "reviewedBy": "Codex",
+        "reviewedAt": "2026-05-14",
+        "status": "approved",
+        "summary": "通过：符合水墨、宣纸、奏折/案头 UI 基调；无可读文字、水印、现代 UI 或现代器物；可在指定 usage 中承载 DOM 文本。"
+      },
+      "safetyReview": {
+        "reviewedBy": "Codex",
+        "reviewedAt": "2026-05-14",
+        "status": "approved",
+        "summary": "通过：manifest 只引用安全项目路径和台账 id；素材不含本地路径、key、raw/hidden 内容或未公开剧情事实。"
+      },
+      "performance": {
+        "bytes": 78202,
+        "targetMaxBytes": 307200,
+        "thumbnailBytes": 4180
+      },
+      "ledgerId": "ui-scroll-panel-base-v1"
+    },
+    {
+      "id": "ui-torn-paper-card-v1",
+      "version": 1,
+      "phase": "S73.3",
+      "category": "material",
+      "subcategory": "torn_card",
+      "usage": [
+        "archive_page",
+        "game_main"
+      ],
+      "role": null,
+      "scene": null,
+      "path": "/assets/ui/materials/torn-paper-card-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-torn-paper-card-v1.webp",
+      "fallbackRef": "fallback-paper-panel-v1",
+      "dimensions": {
+        "width": 1200,
+        "height": 800
+      },
+      "aspectRatio": "1200:800",
+      "format": "webp",
+      "transparent": true,
+      "safeArea": {
+        "x": 0.14,
+        "y": 0.22,
+        "width": 0.72,
+        "height": 0.5
+      },
+      "focalPoint": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "mobileCrop": {
+        "mode": "center_crop_or_contain",
+        "keepSafeArea": true
+      },
+      "source": {
+        "type": "ai_generated",
+        "tool": "Codex imagegen",
+        "model": "gpt-image-2",
+        "generatedAt": "2026-05-14",
+        "promptSummary": "残纸卡片，用于提示、摘要和档案条目。"
+      },
+      "license": {
+        "type": "ai_generated_project_asset",
+        "commercialUseConfirmed": false,
+        "summary": "原创 AI 生成素材，当前仅个人游玩/开发使用；未做公开商用确认。"
+      },
+      "reviewStatus": "approved",
+      "visualReview": {
+        "reviewedBy": "Codex",
+        "reviewedAt": "2026-05-14",
+        "status": "approved",
+        "summary": "通过：符合水墨、宣纸、奏折/案头 UI 基调；无可读文字、水印、现代 UI 或现代器物；可在指定 usage 中承载 DOM 文本。"
+      },
+      "safetyReview": {
+        "reviewedBy": "Codex",
+        "reviewedAt": "2026-05-14",
+        "status": "approved",
+        "summary": "通过：manifest 只引用安全项目路径和台账 id；素材不含本地路径、key、raw/hidden 内容或未公开剧情事实。"
+      },
+      "performance": {
+        "bytes": 74272,
+        "targetMaxBytes": 307200,
+        "thumbnailBytes": 4700
+      },
+      "ledgerId": "ui-torn-paper-card-v1"
+    },
+    {
+      "id": "ui-water-stain-soft-v1",
+      "version": 1,
+      "phase": "S73.3",
+      "category": "material",
+      "subcategory": "water_stain_overlay",
+      "usage": [
+        "game_main",
+        "settings_surface"
+      ],
+      "role": null,
+      "scene": null,
+      "path": "/assets/ui/materials/water-stain-soft-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-water-stain-soft-v1.webp",
+      "fallbackRef": "fallback-paper-panel-v1",
+      "dimensions": {
+        "width": 1024,
+        "height": 1024
+      },
+      "aspectRatio": "1024:1024",
+      "format": "webp",
+      "transparent": true,
+      "safeArea": {
+        "x": 0,
+        "y": 0,
+        "width": 1,
+        "height": 1
+      },
+      "focalPoint": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "mobileCrop": {
+        "mode": "center_crop_or_contain",
+        "keepSafeArea": true
+      },
+      "source": {
+        "type": "ai_generated",
+        "tool": "Codex imagegen",
+        "model": "gpt-image-2",
+        "generatedAt": "2026-05-14",
+        "promptSummary": "浅茶水渍叠加层，低对比透明装饰。"
+      },
+      "license": {
+        "type": "ai_generated_project_asset",
+        "commercialUseConfirmed": false,
+        "summary": "原创 AI 生成素材，当前仅个人游玩/开发使用；未做公开商用确认。"
+      },
+      "reviewStatus": "approved",
+      "visualReview": {
+        "reviewedBy": "Codex",
+        "reviewedAt": "2026-05-14",
+        "status": "approved",
+        "summary": "通过：符合水墨、宣纸、奏折/案头 UI 基调；无可读文字、水印、现代 UI 或现代器物；可在指定 usage 中承载 DOM 文本。"
+      },
+      "safetyReview": {
+        "reviewedBy": "Codex",
+        "reviewedAt": "2026-05-14",
+        "status": "approved",
+        "summary": "通过：manifest 只引用安全项目路径和台账 id；素材不含本地路径、key、raw/hidden 内容或未公开剧情事实。"
+      },
+      "performance": {
+        "bytes": 85470,
+        "targetMaxBytes": 307200,
+        "thumbnailBytes": 3446
+      },
+      "ledgerId": "ui-water-stain-soft-v1"
+    },
+    {
+      "id": "ui-ink-divider-line-v1",
+      "version": 1,
+      "phase": "S73.3",
+      "category": "material",
+      "subcategory": "ink_divider",
+      "usage": [
+        "game_main",
+        "archive_page",
+        "settings_surface"
+      ],
+      "role": null,
+      "scene": null,
+      "path": "/assets/ui/materials/ink-divider-line-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-ink-divider-line-v1.webp",
+      "fallbackRef": "fallback-paper-panel-v1",
+      "dimensions": {
+        "width": 1600,
+        "height": 96
+      },
+      "aspectRatio": "1600:96",
+      "format": "webp",
+      "transparent": true,
+      "safeArea": {
+        "x": 0,
+        "y": 0,
+        "width": 1,
+        "height": 1
+      },
+      "focalPoint": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "mobileCrop": {
+        "mode": "center_crop_or_contain",
+        "keepSafeArea": true
+      },
+      "source": {
+        "type": "ai_generated",
+        "tool": "Codex imagegen",
+        "model": "gpt-image-2",
+        "generatedAt": "2026-05-14",
+        "promptSummary": "淡墨分隔线，用于列表、tab 与章节分割。"
+      },
+      "license": {
+        "type": "ai_generated_project_asset",
+        "commercialUseConfirmed": false,
+        "summary": "原创 AI 生成素材，当前仅个人游玩/开发使用；未做公开商用确认。"
+      },
+      "reviewStatus": "approved",
+      "visualReview": {
+        "reviewedBy": "Codex",
+        "reviewedAt": "2026-05-14",
+        "status": "approved",
+        "summary": "通过：符合水墨、宣纸、奏折/案头 UI 基调；无可读文字、水印、现代 UI 或现代器物；可在指定 usage 中承载 DOM 文本。"
+      },
+      "safetyReview": {
+        "reviewedBy": "Codex",
+        "reviewedAt": "2026-05-14",
+        "status": "approved",
+        "summary": "通过：manifest 只引用安全项目路径和台账 id；素材不含本地路径、key、raw/hidden 内容或未公开剧情事实。"
+      },
+      "performance": {
+        "bytes": 21208,
+        "targetMaxBytes": 307200,
+        "thumbnailBytes": 3072
+      },
+      "ledgerId": "ui-ink-divider-line-v1"
+    },
+    {
+      "id": "ui-ink-corner-brush-v1",
+      "version": 1,
+      "phase": "S73.3",
+      "category": "material",
+      "subcategory": "ink_corner",
+      "usage": [
+        "game_main",
+        "settings_surface"
+      ],
+      "role": null,
+      "scene": null,
+      "path": "/assets/ui/materials/ink-corner-brush-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-ink-corner-brush-v1.webp",
+      "fallbackRef": "fallback-paper-panel-v1",
+      "dimensions": {
+        "width": 512,
+        "height": 512
+      },
+      "aspectRatio": "512:512",
+      "format": "webp",
+      "transparent": true,
+      "safeArea": {
+        "x": 0.08,
+        "y": 0.08,
+        "width": 0.84,
+        "height": 0.84
+      },
+      "focalPoint": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "mobileCrop": {
+        "mode": "center_crop_or_contain",
+        "keepSafeArea": true
+      },
+      "source": {
+        "type": "ai_generated",
+        "tool": "Codex imagegen",
+        "model": "gpt-image-2",
+        "generatedAt": "2026-05-14",
+        "promptSummary": "淡墨竹影式角饰，只作低存在感卡片角落装饰。"
+      },
+      "license": {
+        "type": "ai_generated_project_asset",
+        "commercialUseConfirmed": false,
+        "summary": "原创 AI 生成素材，当前仅个人游玩/开发使用；未做公开商用确认。"
+      },
+      "reviewStatus": "approved_with_limits",
+      "visualReview": {
+        "reviewedBy": "Codex",
+        "reviewedAt": "2026-05-14",
+        "status": "approved_with_limits",
+        "summary": "通过但限用：角饰带竹影意象，只用于低存在感卡片角落，不用于正文底或核心按钮。"
+      },
+      "safetyReview": {
+        "reviewedBy": "Codex",
+        "reviewedAt": "2026-05-14",
+        "status": "approved",
+        "summary": "通过：manifest 只引用安全项目路径和台账 id；素材不含本地路径、key、raw/hidden 内容或未公开剧情事实。"
+      },
+      "performance": {
+        "bytes": 21760,
+        "targetMaxBytes": 307200,
+        "thumbnailBytes": 4574
+      },
+      "ledgerId": "ui-ink-corner-brush-v1"
+    },
+    {
+      "id": "ui-vermilion-seal-button-v1",
+      "version": 1,
+      "phase": "S73.3",
+      "category": "material",
+      "subcategory": "vermilion_button",
+      "usage": [
+        "home",
+        "game_main",
+        "exam_page",
+        "ranking_page"
+      ],
+      "role": null,
+      "scene": null,
+      "path": "/assets/ui/materials/vermilion-seal-button-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-vermilion-seal-button-v1.webp",
+      "fallbackRef": "fallback-paper-panel-v1",
+      "dimensions": {
+        "width": 512,
+        "height": 512
+      },
+      "aspectRatio": "512:512",
+      "format": "webp",
+      "transparent": true,
+      "safeArea": {
+        "x": 0.2,
+        "y": 0.22,
+        "width": 0.6,
+        "height": 0.56
+      },
+      "focalPoint": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "mobileCrop": {
+        "mode": "center_crop_or_contain",
+        "keepSafeArea": true
+      },
+      "source": {
+        "type": "ai_generated",
+        "tool": "Codex imagegen",
+        "model": "gpt-image-2",
+        "generatedAt": "2026-05-14",
+        "promptSummary": "朱印按钮默认态，中心无字，供 DOM 文本覆盖。"
+      },
+      "license": {
+        "type": "ai_generated_project_asset",
+        "commercialUseConfirmed": false,
+        "summary": "原创 AI 生成素材，当前仅个人游玩/开发使用；未做公开商用确认。"
+      },
+      "reviewStatus": "approved",
+      "visualReview": {
+        "reviewedBy": "Codex",
+        "reviewedAt": "2026-05-14",
+        "status": "approved",
+        "summary": "通过：符合水墨、宣纸、奏折/案头 UI 基调；无可读文字、水印、现代 UI 或现代器物；可在指定 usage 中承载 DOM 文本。"
+      },
+      "safetyReview": {
+        "reviewedBy": "Codex",
+        "reviewedAt": "2026-05-14",
+        "status": "approved",
+        "summary": "通过：manifest 只引用安全项目路径和台账 id；素材不含本地路径、key、raw/hidden 内容或未公开剧情事实。"
+      },
+      "performance": {
+        "bytes": 44754,
+        "targetMaxBytes": 307200,
+        "thumbnailBytes": 11776
+      },
+      "ledgerId": "ui-vermilion-seal-button-v1"
+    },
+    {
+      "id": "ui-vermilion-seal-button-pressed-v1",
+      "version": 1,
+      "phase": "S73.3",
+      "category": "material",
+      "subcategory": "vermilion_button_pressed",
+      "usage": [
+        "home",
+        "game_main",
+        "exam_page",
+        "ranking_page"
+      ],
+      "role": null,
+      "scene": null,
+      "path": "/assets/ui/materials/vermilion-seal-button-pressed-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-vermilion-seal-button-pressed-v1.webp",
+      "fallbackRef": "fallback-paper-panel-v1",
+      "dimensions": {
+        "width": 512,
+        "height": 512
+      },
+      "aspectRatio": "512:512",
+      "format": "webp",
+      "transparent": true,
+      "safeArea": {
+        "x": 0.2,
+        "y": 0.22,
+        "width": 0.6,
+        "height": 0.56
+      },
+      "focalPoint": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "mobileCrop": {
+        "mode": "center_crop_or_contain",
+        "keepSafeArea": true
+      },
+      "source": {
+        "type": "ai_generated",
+        "tool": "Codex imagegen",
+        "model": "gpt-image-2",
+        "generatedAt": "2026-05-14",
+        "promptSummary": "朱印按钮按下态，边缘更深，供 active/提交反馈使用。"
+      },
+      "license": {
+        "type": "ai_generated_project_asset",
+        "commercialUseConfirmed": false,
+        "summary": "原创 AI 生成素材，当前仅个人游玩/开发使用；未做公开商用确认。"
+      },
+      "reviewStatus": "approved",
+      "visualReview": {
+        "reviewedBy": "Codex",
+        "reviewedAt": "2026-05-14",
+        "status": "approved",
+        "summary": "通过：符合水墨、宣纸、奏折/案头 UI 基调；无可读文字、水印、现代 UI 或现代器物；可在指定 usage 中承载 DOM 文本。"
+      },
+      "safetyReview": {
+        "reviewedBy": "Codex",
+        "reviewedAt": "2026-05-14",
+        "status": "approved",
+        "summary": "通过：manifest 只引用安全项目路径和台账 id；素材不含本地路径、key、raw/hidden 内容或未公开剧情事实。"
+      },
+      "performance": {
+        "bytes": 23966,
+        "targetMaxBytes": 307200,
+        "thumbnailBytes": 7030
+      },
+      "ledgerId": "ui-vermilion-seal-button-pressed-v1"
+    },
+    {
+      "id": "ui-seal-box-texture-v1",
+      "version": 1,
+      "phase": "S73.3",
+      "category": "material",
+      "subcategory": "seal_box",
+      "usage": [
+        "settings_surface"
+      ],
+      "role": null,
+      "scene": null,
+      "path": "/assets/ui/materials/seal-box-texture-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-seal-box-texture-v1.webp",
+      "fallbackRef": "fallback-paper-panel-v1",
+      "dimensions": {
+        "width": 1200,
+        "height": 900
+      },
+      "aspectRatio": "1200:900",
+      "format": "webp",
+      "transparent": false,
+      "safeArea": {
+        "x": 0.08,
+        "y": 0.12,
+        "width": 0.72,
+        "height": 0.76
+      },
+      "focalPoint": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "mobileCrop": {
+        "mode": "center_crop_or_contain",
+        "keepSafeArea": true
+      },
+      "source": {
+        "type": "ai_generated",
+        "tool": "Codex imagegen",
+        "model": "gpt-image-2",
+        "generatedAt": "2026-05-14",
+        "promptSummary": "印匣/木匣纹理，限设置或存档抽屉局部使用。"
+      },
+      "license": {
+        "type": "ai_generated_project_asset",
+        "commercialUseConfirmed": false,
+        "summary": "原创 AI 生成素材，当前仅个人游玩/开发使用；未做公开商用确认。"
+      },
+      "reviewStatus": "approved_with_limits",
+      "visualReview": {
+        "reviewedBy": "Codex",
+        "reviewedAt": "2026-05-14",
+        "status": "approved_with_limits",
+        "summary": "通过但限用：木匣纹理偏深，只适合设置/存档抽屉局部或叠加浅色遮罩，不作为正文大面积底。"
+      },
+      "safetyReview": {
+        "reviewedBy": "Codex",
+        "reviewedAt": "2026-05-14",
+        "status": "approved",
+        "summary": "通过：manifest 只引用安全项目路径和台账 id；素材不含本地路径、key、raw/hidden 内容或未公开剧情事实。"
+      },
+      "performance": {
+        "bytes": 154788,
+        "targetMaxBytes": 307200,
+        "thumbnailBytes": 4834
+      },
+      "ledgerId": "ui-seal-box-texture-v1"
+    },
+    {
+      "id": "ui-exam-grid-paper-v1",
+      "version": 1,
+      "phase": "S73.3",
+      "category": "material",
+      "subcategory": "exam_grid_paper",
+      "usage": [
+        "exam_page"
+      ],
+      "role": null,
+      "scene": "exam",
+      "path": "/assets/ui/materials/exam-grid-paper-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-exam-grid-paper-v1.webp",
+      "fallbackRef": "fallback-paper-panel-v1",
+      "dimensions": {
+        "width": 1600,
+        "height": 2200
+      },
+      "aspectRatio": "1600:2200",
+      "format": "webp",
+      "transparent": false,
+      "safeArea": {
+        "x": 0.16,
+        "y": 0.08,
+        "width": 0.68,
+        "height": 0.84
+      },
+      "focalPoint": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "mobileCrop": {
+        "mode": "center_crop_or_contain",
+        "keepSafeArea": true
+      },
+      "source": {
+        "type": "ai_generated",
+        "tool": "Codex imagegen",
+        "model": "gpt-image-2",
+        "generatedAt": "2026-05-14",
+        "promptSummary": "科举试卷界栏底，线条极浅，供考试写作区使用。"
+      },
+      "license": {
+        "type": "ai_generated_project_asset",
+        "commercialUseConfirmed": false,
+        "summary": "原创 AI 生成素材，当前仅个人游玩/开发使用；未做公开商用确认。"
+      },
+      "reviewStatus": "approved",
+      "visualReview": {
+        "reviewedBy": "Codex",
+        "reviewedAt": "2026-05-14",
+        "status": "approved",
+        "summary": "通过：符合水墨、宣纸、奏折/案头 UI 基调；无可读文字、水印、现代 UI 或现代器物；可在指定 usage 中承载 DOM 文本。"
+      },
+      "safetyReview": {
+        "reviewedBy": "Codex",
+        "reviewedAt": "2026-05-14",
+        "status": "approved",
+        "summary": "通过：manifest 只引用安全项目路径和台账 id；素材不含本地路径、key、raw/hidden 内容或未公开剧情事实。"
+      },
+      "performance": {
+        "bytes": 130154,
+        "targetMaxBytes": 307200,
+        "thumbnailBytes": 2242
+      },
+      "ledgerId": "ui-exam-grid-paper-v1"
+    },
+    {
+      "id": "ui-imperial-notice-paper-v1",
+      "version": 1,
+      "phase": "S73.3",
+      "category": "material",
+      "subcategory": "imperial_notice",
+      "usage": [
+        "ranking_page"
+      ],
+      "role": null,
+      "scene": "ranking",
+      "path": "/assets/ui/materials/imperial-notice-paper-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-imperial-notice-paper-v1.webp",
+      "fallbackRef": "fallback-paper-panel-v1",
+      "dimensions": {
+        "width": 1800,
+        "height": 2400
+      },
+      "aspectRatio": "1800:2400",
+      "format": "webp",
+      "transparent": false,
+      "safeArea": {
+        "x": 0.18,
+        "y": 0.1,
+        "width": 0.64,
+        "height": 0.78
+      },
+      "focalPoint": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "mobileCrop": {
+        "mode": "center_crop_or_contain",
+        "keepSafeArea": true
+      },
+      "source": {
+        "type": "ai_generated",
+        "tool": "Codex imagegen",
+        "model": "gpt-image-2",
+        "generatedAt": "2026-05-14",
+        "promptSummary": "皇榜纸底，暖黄竖幅，供放榜页承载 DOM 名单。"
+      },
+      "license": {
+        "type": "ai_generated_project_asset",
+        "commercialUseConfirmed": false,
+        "summary": "原创 AI 生成素材，当前仅个人游玩/开发使用；未做公开商用确认。"
+      },
+      "reviewStatus": "approved_with_limits",
+      "visualReview": {
+        "reviewedBy": "Codex",
+        "reviewedAt": "2026-05-14",
+        "status": "approved_with_limits",
+        "summary": "通过但限用：皇榜纸底颜色更暖，只用于放榜/榜单页面，不作为通用正文底。"
+      },
+      "safetyReview": {
+        "reviewedBy": "Codex",
+        "reviewedAt": "2026-05-14",
+        "status": "approved",
+        "summary": "通过：manifest 只引用安全项目路径和台账 id；素材不含本地路径、key、raw/hidden 内容或未公开剧情事实。"
+      },
+      "performance": {
+        "bytes": 181038,
+        "targetMaxBytes": 307200,
+        "thumbnailBytes": 3320
+      },
+      "ledgerId": "ui-imperial-notice-paper-v1"
+    },
+    {
+      "id": "ui-red-ink-smudge-v1",
+      "version": 1,
+      "phase": "S73.3",
+      "category": "material",
+      "subcategory": "red_ink_smudge",
+      "usage": [
+        "game_main",
+        "settings_surface",
+        "ranking_page"
+      ],
+      "role": null,
+      "scene": null,
+      "path": "/assets/ui/materials/red-ink-smudge-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-red-ink-smudge-v1.webp",
+      "fallbackRef": "fallback-paper-panel-v1",
+      "dimensions": {
+        "width": 512,
+        "height": 512
+      },
+      "aspectRatio": "512:512",
+      "format": "webp",
+      "transparent": true,
+      "safeArea": {
+        "x": 0.12,
+        "y": 0.12,
+        "width": 0.76,
+        "height": 0.76
+      },
+      "focalPoint": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "mobileCrop": {
+        "mode": "center_crop_or_contain",
+        "keepSafeArea": true
+      },
+      "source": {
+        "type": "ai_generated",
+        "tool": "Codex imagegen",
+        "model": "gpt-image-2",
+        "generatedAt": "2026-05-14",
+        "promptSummary": "小块朱砂墨迹点缀，用于 hover、重点标记和状态提示。"
+      },
+      "license": {
+        "type": "ai_generated_project_asset",
+        "commercialUseConfirmed": false,
+        "summary": "原创 AI 生成素材，当前仅个人游玩/开发使用；未做公开商用确认。"
+      },
+      "reviewStatus": "approved",
+      "visualReview": {
+        "reviewedBy": "Codex",
+        "reviewedAt": "2026-05-14",
+        "status": "approved",
+        "summary": "通过：符合水墨、宣纸、奏折/案头 UI 基调；无可读文字、水印、现代 UI 或现代器物；可在指定 usage 中承载 DOM 文本。"
+      },
+      "safetyReview": {
+        "reviewedBy": "Codex",
+        "reviewedAt": "2026-05-14",
+        "status": "approved",
+        "summary": "通过：manifest 只引用安全项目路径和台账 id；素材不含本地路径、key、raw/hidden 内容或未公开剧情事实。"
+      },
+      "performance": {
+        "bytes": 38850,
+        "targetMaxBytes": 307200,
+        "thumbnailBytes": 11992
+      },
+      "ledgerId": "ui-red-ink-smudge-v1"
+    },
+    {
+      "id": "ui-paper-edge-shadow-v1",
+      "version": 1,
+      "phase": "S73.3",
+      "category": "material",
+      "subcategory": "paper_edge_shadow",
+      "usage": [
+        "game_main",
+        "settings_surface",
+        "archive_page"
+      ],
+      "role": null,
+      "scene": null,
+      "path": "/assets/ui/materials/paper-edge-shadow-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-paper-edge-shadow-v1.webp",
+      "fallbackRef": "fallback-paper-panel-v1",
+      "dimensions": {
+        "width": 1600,
+        "height": 256
+      },
+      "aspectRatio": "1600:256",
+      "format": "webp",
+      "transparent": true,
+      "safeArea": {
+        "x": 0,
+        "y": 0,
+        "width": 1,
+        "height": 1
+      },
+      "focalPoint": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "mobileCrop": {
+        "mode": "center_crop_or_contain",
+        "keepSafeArea": true
+      },
+      "source": {
+        "type": "ai_generated",
+        "tool": "Codex imagegen",
+        "model": "gpt-image-2",
+        "generatedAt": "2026-05-14",
+        "promptSummary": "透明纸页边缘阴影，用于纸面层次而非现代投影。"
+      },
+      "license": {
+        "type": "ai_generated_project_asset",
+        "commercialUseConfirmed": false,
+        "summary": "原创 AI 生成素材，当前仅个人游玩/开发使用；未做公开商用确认。"
+      },
+      "reviewStatus": "approved",
+      "visualReview": {
+        "reviewedBy": "Codex",
+        "reviewedAt": "2026-05-14",
+        "status": "approved",
+        "summary": "通过：符合水墨、宣纸、奏折/案头 UI 基调；无可读文字、水印、现代 UI 或现代器物；可在指定 usage 中承载 DOM 文本。"
+      },
+      "safetyReview": {
+        "reviewedBy": "Codex",
+        "reviewedAt": "2026-05-14",
+        "status": "approved",
+        "summary": "通过：manifest 只引用安全项目路径和台账 id；素材不含本地路径、key、raw/hidden 内容或未公开剧情事实。"
+      },
+      "performance": {
+        "bytes": 30582,
+        "targetMaxBytes": 307200,
+        "thumbnailBytes": 3618
+      },
+      "ledgerId": "ui-paper-edge-shadow-v1"
+    }
+  ],
+  "updatedAt": "2026-05-14"
 }

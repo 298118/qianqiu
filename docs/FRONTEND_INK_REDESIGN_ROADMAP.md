@@ -345,19 +345,23 @@ Manifest 示例：
 
 ### S73.3 UI 材质包
 
+状态：已完成，首批素材见 `public/assets/ui/materials/`，缩略图见 `public/assets/ui/thumbs/`，manifest 见 `public/assets/ui/ink-ui-manifest.json`，台账见 [FRONTEND_ASSET_LEDGER.md](FRONTEND_ASSET_LEDGER.md)。
+
 首轮数量：12-20 个。
 
 实现功能：
 
-- 生成或制作宣纸纹理、旧绢纹理、奏折纸、竹简纸、卷轴边、残纸边、水渍、淡墨分隔线、朱印按钮底、印匣纹理、试卷界栏、皇榜纸底。
-- 为每类材质准备桌面/移动或可平铺版本。
-- 所有纹理低对比，不抢正文。
+- 已生成并入库 16 个首批 UI 材质：宣纸、旧绢、奏折纸面、竹简输入条、卷轴面板、残纸卡片、水渍叠加层、淡墨分隔线、角饰笔触、朱印按钮默认/按下态、印匣纹理、试卷界栏、皇榜纸底、朱砂墨迹和纸页边缘阴影。
+- 已为每个素材生成缩略图，记录 `safeArea`、`focalPoint`、`mobileCrop`、性能预算、fallback、视觉审核和安全审核。
+- 透明素材已用 chroma-key 去底、despill 和 WebP alpha 压缩；不透明材质统一压缩为 WebP。
+- 所有纹理低对比，不承载正式 UI 文案；真实文字仍由 DOM 渲染。
 
 验收：
 
 - 每个素材有 manifest、缩略图、台账记录和 Codex 视觉审核。
 - 支持 CSS `background-image` 或 React 组件引用。
 - 缺失时可回退到纯 CSS 纸色。
+- `test/frontendInkAssetsManifest.test.js` 已扩展为校验素材存在性、尺寸、alpha、性能预算、审核状态和安全字段。
 
 ### S73.4 首页资产包
 
