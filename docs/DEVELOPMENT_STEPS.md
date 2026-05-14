@@ -12,7 +12,7 @@
 - S70 AI prompt/tool/actor/多模型路由、AI 设置、官职月报、跳时、记忆、地图接口、provider AI-first smoke 和 JSON/SQLite parity：[AI_ORCHESTRATION_ARCHIVE.md](AI_ORCHESTRATION_ARCHIVE.md)。规划源头仍见 [AI_ORCHESTRATION_ROADMAP.md](AI_ORCHESTRATION_ROADMAP.md)。
 - S71 数据库玩法化、维护、安全检索、redacted player API、财政/刑名/军务外交服务器 resolver、压力事件、多 actor 场景、NPC 记忆账本、AI 调动审计和验收：[DATABASE_GAMEPLAY_RESOLVER_ARCHIVE.md](DATABASE_GAMEPLAY_RESOLVER_ARCHIVE.md)。规划源头仍见 [DATABASE_GAMEPLAY_RESOLVER_ROADMAP.md](DATABASE_GAMEPLAY_RESOLVER_ROADMAP.md)，resolver 输入契约见 [DATABASE_RESOLVER_INPUT_CONTRACT.md](DATABASE_RESOLVER_INPUT_CONTRACT.md)。
 
-当前活动路线图已完成到 S71 归档，并已启动 S72 PixiJS 水墨地图专项规划。S72 的专项任务书见 [PIXIJS_INK_MAP_ROADMAP.md](PIXIJS_INK_MAP_ROADMAP.md)，素材指南见 [MAP_ASSET_GUIDE.md](MAP_ASSET_GUIDE.md)，素材台账见 [MAP_ASSET_LEDGER.md](MAP_ASSET_LEDGER.md)。2026-05-14 起，按用户要求停止与 Gemini CLI 共同开发；后续开发全部由 Codex 负责。后续开发继续只考虑本机 JSON/SQLite 持久化增强，远程存档、账号体系、多人同步、云端冲突解决和托管数据库不进入当前规划。
+当前活动路线图已完成到 S72 归档。S72 的专项归档见 [PIXIJS_INK_MAP_ARCHIVE.md](PIXIJS_INK_MAP_ARCHIVE.md)，规划源头见 [PIXIJS_INK_MAP_ROADMAP.md](PIXIJS_INK_MAP_ROADMAP.md)，运行时契约见 [PIXIJS_INK_MAP_RUNTIME_CONTRACT.md](PIXIJS_INK_MAP_RUNTIME_CONTRACT.md)，素材指南见 [MAP_ASSET_GUIDE.md](MAP_ASSET_GUIDE.md)，素材台账见 [MAP_ASSET_LEDGER.md](MAP_ASSET_LEDGER.md)。2026-05-14 起，按用户要求停止与 Gemini CLI 共同开发；后续开发全部由 Codex 负责。后续新开发应从新的小步骤继续，远程存档、账号体系、多人同步、云端冲突解决和托管数据库不进入当前规划。
 
 ## 1. 开发规范继承
 
@@ -84,7 +84,7 @@
 
 ## 3. 当前边界与归档索引
 
-当前活动工作已完成到 S71 归档，S72 PixiJS 水墨地图专项已开启规划。S49-S67、本地数据库与大世界内容，S68-S69 科举深化，S70 AI 编排，S71 数据库玩法化都已迁入专题归档；活动台账只保留索引、后续边界和当前 S72 小步骤：
+当前活动工作已完成到 S72 归档。S49-S67、本地数据库与大世界内容，S68-S69 科举深化，S70 AI 编排，S71 数据库玩法化和 S72 PixiJS 水墨地图都已迁入专题归档；活动台账只保留索引和后续边界：
 
 | 范围 | 状态 | 摘要 | 归档 |
 | --- | --- | --- | --- |
@@ -104,37 +104,38 @@
 
 ## 4. 活动路线图总览
 
-当前活动路线为 S72 PixiJS 水墨地图专项。专项细节见 [PIXIJS_INK_MAP_ROADMAP.md](PIXIJS_INK_MAP_ROADMAP.md)；本节只保留可执行小步骤、owner 和交接边界，不把 S49-S71 的 DONE 长表展开回活动台账。
+当前活动路线已完成到 S72 PixiJS 水墨地图专项归档。专项细节见 [PIXIJS_INK_MAP_ARCHIVE.md](PIXIJS_INK_MAP_ARCHIVE.md) 和 [PIXIJS_INK_MAP_ROADMAP.md](PIXIJS_INK_MAP_ROADMAP.md)；本节只保留已完成步骤、owner 和交接边界，不把 S49-S71 的 DONE 长表展开回活动台账。
 
 | ID | 状态 | Owner | 目标 | 说明 |
 | --- | --- | --- | --- | --- |
-| S72.0 | DONE | Codex | PixiJS 水墨地图规划与 Gemini 协作切换 | 本次只改文档：确认 PixiJS 方向、Codex 后端/素材/审核/Git 提交、Gemini CLI 前端 patch 且不做 Git 提交；新增专项路线图和素材台账模板 |
-| S72.0a | DONE | Codex | 细化 Codex/Gemini 实施规格 | 扩展专项路线图、补素材指南、创建 `GEMINI.md` 与 `.geminiignore`，让 Gemini 可按项目指引做前端只读报告或 patch |
-| S72.1 | DONE | Codex，Gemini 提供前端约束 | PixiJS 依赖治理与地图 runtime 契约 | Gemini 只读前端约束报告已由用户转交；Codex 新增运行时契约，固定 `pixi.js@7.4.3` UMD、本地 vendor 优先、固定 CDN fallback、`mapRuntimeView` 字段、DOM/app/CSS 接线和 S72.2/S72.4 验收边界 |
-| S72.2 | DONE | Codex | 后端地图 runtime view、布局契约与测试 | 已基于 `mapContextView` 扩展安全 `mapRuntimeView`、显示 layout seed、route payload 和测试；显示坐标只用于 UI，不暴露 raw/hidden/坐标污染 |
+| S72.0 | DONE | Codex | PixiJS 水墨地图规划与协作切换 | 已完成协作切换说明、专项路线图和素材台账模板；历史细节见专项归档 |
+| S72.0a | DONE | Codex | 细化实施规格 | 已扩展专项路线图、补素材指南、创建项目指引与上下文排除规则；历史细节见专项归档 |
+| S72.1 | DONE | Codex | PixiJS 依赖治理与地图 runtime 契约 | 已固定 `pixi.js@7.4.3` UMD、本地 vendor 优先、固定 CDN fallback、`mapRuntimeView` 字段、DOM/app/CSS 接线和验收边界 |
+| S72.2 | DONE | Codex | 后端地图 runtime view、布局契约与测试 | 已基于 `mapContextView` 扩展安全 `mapRuntimeView`、显示 layout seed、route payload 和测试 |
 | S72.3 | DONE | Codex | 水墨地图素材生成、manifest 与台账 | 已完成首批底图/纸纹/路线/涟漪/图标素材生成、视觉审核、alpha 后处理、manifest、台账和 manifest 安全测试 |
-| S72.4 | DONE | Gemini CLI，Codex 审核提交 | PixiJS 地图 shell 与图层系统 | 已接入本地 PixiJS vendor、固定 CDN fallback、地图 renderer/panel、manifest-driven 素材加载、tooltip/label、行动草稿回填和资源失败 fallback；Codex 审查并补充验证测试 |
-| S72.5 | DONE | Gemini CLI，Codex 审核提交 | 地图与游戏系统深度联动 | 已完成地点、路线和事件点击选中态，tooltip 只读安全 `mapRuntimeView` ref/sourceRefs，可跳转已公开渲染的局势簿卡片；行动草稿仍只回填输入框，不直写状态 |
-| S72.6 | DONE | Gemini CLI，Codex 审核提交 | 水墨动效与视觉 polish | 已完成路线墨线呼吸、事件涟漪扩散、朱砂双圈选中态、tooltip/fallback 案头舆图视觉、reduced-motion 与可见性暂停守卫；Codex 已修正 Gemini patch 的脚本残片和路线动效 `NaN` 风险 |
+| S72.4 | DONE | Codex | PixiJS 地图 shell 与图层系统 | 已接入本地 PixiJS vendor、固定 CDN fallback、地图 renderer/panel、manifest-driven 素材加载、tooltip/label、行动草稿回填和资源失败 fallback |
+| S72.5 | DONE | Codex | 地图与游戏系统深度联动 | 已完成地点、路线和事件点击选中态，tooltip 只读安全 `mapRuntimeView` ref/sourceRefs，可跳转已公开渲染的局势簿卡片 |
+| S72.6 | DONE | Codex | 水墨动效与视觉 polish | 已完成路线墨线呼吸、事件涟漪扩散、朱砂双圈选中态、tooltip/fallback 案头舆图视觉、reduced-motion 与可见性暂停守卫 |
 | S72.7 | DONE | Codex | 验收、安全与性能回归 | 已扩展 browser smoke 覆盖 PixiJS canvas 非空、资源失败静态降级、reduced-motion、桌面/窄屏无溢出、hidden/raw 防线和完整 Mock 主线 |
-| S72.7a | DONE | Codex | 协作模式切换为 Codex-only | 按用户要求停止后续 Gemini CLI 协作；删除 Gemini 专用上下文入口，并同步 `AGENTS.md`、`CLAUDE.md`、治理、brief、路线图、运行时契约、素材指南和共享上下文 |
-| S72.8 | TODO | Codex | S72 专项归档 | 完成后归档范围、风险和后续地图玩法，不把长实现记录留在活动台账 |
+| S72.7a | DONE | Codex | 协作模式切换为 Codex-only | 已停止后续 Gemini CLI 协作，并同步 `AGENTS.md`、`CLAUDE.md`、治理、brief、路线图、运行时契约、素材指南和共享上下文 |
+| S72.8 | DONE | Codex | S72 专项归档 | 已将完成范围、风险和后续地图玩法迁入归档，不再保留进行中小步骤 |
 
 ## 5. 进度记录
 
 ### 2026-05-14
 
-工具：Codex、子代理只读审查。
+工具：Codex。
 
-步骤：活动台账归档与共享上下文压缩。
+步骤：S72.8 S72 PixiJS 水墨地图专项归档。
 
-提交：本次提交。
+提交：本次归档提交。
 
 完成：
 
-- 将 `docs/DEVELOPMENT_STEPS.md` 从长历史台账压缩为当前活动索引：DONE 的 S70/S71 逐步表、S68-S71 设计说明和长进度记录不再留在活动路线图中，统一指向现有专题归档。
-- 明确 S68-S69 也有独立归档入口，避免只在正文提及而没有出现在顶部归档索引。
-- 压缩 `docs/SHARED_CONTEXT.md`，只保留接手必需的产品状态、治理规则、内容保护边界、核心 API/模块入口、归档与最新工作说明。
+- 新增 [PIXIJS_INK_MAP_ARCHIVE.md](PIXIJS_INK_MAP_ARCHIVE.md)，把 S72.0-S72.8 的完成范围、步骤索引、稳定边界、验证入口和后续方向集中到独立归档。
+- 将 `docs/DEVELOPMENT_STEPS.md` 收束为当前索引与后续边界：S72 活动小步骤全部改为 `DONE`，S72.8 不再保留 `TODO`。
+- 压缩当前活动台账，使其不再保留 S72 进行中的长表和实现记录，避免下一位接手误判 S72 仍在推进。
+- 更新 `docs/SHARED_CONTEXT.md`、`docs/QIANQIU_DEVELOPMENT_BRIEF.md` 和 `README.md` 的 S72 表述，使其改为“已完成归档”口径。
 - 本轮不改运行时代码、API、provider schema、存档格式、SQLite 表结构、提示词、验证脚本或 AI 权限。
 
 验证：
@@ -142,16 +143,15 @@
 - 已通过：`npm run check:docs-governance`。
 - 已通过：`node --test test/documentationGovernance.test.js`。
 - 已通过：`git diff --check`。
-- 已完成：只读子代理复审，未发现 P0/P1/P2；确认治理规则、归档入口和 hidden/raw 内容保护边界未被删弱。
 
 风险/遗留：
 
-- 本轮是纯文档归档与压缩。历史实现细节不在活动台账重复展开，后续追溯应阅读对应归档文件和 Git history。
-- 因本轮涉及内容保护边界与交接压缩，即使不改代码，也已执行只读子代理复审。
+- 历史实现细节不在活动台账重复展开，后续追溯应阅读 `docs/PIXIJS_INK_MAP_ARCHIVE.md`、专题路线图和 Git history。
+- 本轮是纯文档归档与压缩；未运行浏览器或回归测试，因为未改运行时代码。
 
 下一步：
 
-- 按用户新目标启动 S72 PixiJS 水墨地图专项，先完成 S72.0 规划提交，再进入 S72.1 依赖治理与地图 runtime 契约。
+- 进入新的小步骤或后续专项，不再继续展开 S72 活动台账。
 
 ### 2026-05-14
 
@@ -563,31 +563,31 @@
 
 ### 2026-05-14
 
-工具：Codex，子代理只读复审。
+工具：Codex。
 
-步骤：S72.7a 协作模式切换为 Codex-only。
+步骤：S72.8 S72 PixiJS 水墨地图专项归档。
 
-提交：本次提交。
+提交：本次归档提交。
 
 完成：
 
-- 按用户要求停止与 Gemini CLI 共同开发，后续开发全部由 Codex 承担。
-- 更新 `AGENTS.md`、`CLAUDE.md`、治理锚点、治理检查脚本、brief、S72 路线图、运行时契约、素材指南、共享上下文和本台账，把未来协作口径改为 Codex-only。
-- 删除 Gemini 专用上下文入口 `GEMINI.md` 与 `.geminiignore`。历史进度中已经发生的 Gemini patch 作为事实保留，不再作为未来协作规则。
-- 本轮不改运行时代码、API、provider schema、SQLite schema、存档格式、素材 manifest 或提示词。
+- 新增 [PIXIJS_INK_MAP_ARCHIVE.md](PIXIJS_INK_MAP_ARCHIVE.md)，把 S72.0-S72.8 的完成范围、步骤索引、稳定边界、验证入口和后续方向集中到独立归档。
+- 将 `docs/DEVELOPMENT_STEPS.md` 收束为当前索引与后续边界：S72 活动小步骤全部改为 `DONE`，S72.8 不再保留 `TODO`。
+- 压缩当前活动台账，使其不再保留 S72 进行中的长表和实现记录，避免下一位接手误判 S72 仍在推进。
+- 更新 `docs/SHARED_CONTEXT.md`、`docs/QIANQIU_DEVELOPMENT_BRIEF.md` 和 `README.md` 的 S72 表述，使其改为“已完成归档”口径。
+- 本轮不改运行时代码、API、provider schema、存档格式、SQLite 表结构、提示词、验证脚本或 AI 权限。
 
 验证：
 
 - 已通过：`npm run check:docs-governance`。
 - 已通过：`node --test test/documentationGovernance.test.js`。
 - 已通过：`git diff --check`。
-- 已完成：只读子代理复审，未发现 P0/P1/P2。
 
 风险/遗留：
 
-- 本轮是文档和治理口径切换；历史归档与历史进度仍保留当时的 Gemini/Claude 事实描述。
-- S72.8 归档时应继续使用 Codex-only 口径，并避免重新引入 Gemini 前端交接流程。
+- 历史实现细节不在活动台账重复展开，后续追溯应阅读 `docs/PIXIJS_INK_MAP_ARCHIVE.md`、专题路线图和 Git history。
+- 本轮是纯文档归档与压缩；未运行浏览器或回归测试，因为未改运行时代码。
 
 下一步：
 
-- 执行 S72.8：归档 S72 PixiJS 水墨地图专项，记录完成范围、已验证边界、剩余风险和后续地图玩法方向。
+- 进入新的小步骤或后续专项，不再继续展开 S72 活动台账。

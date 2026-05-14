@@ -20,7 +20,7 @@
 - Frontend: plain HTML/CSS/JS，无 build step。Backend: Node.js + Express，plain JavaScript。
 - AI providers: adapter-based Mock/OpenAI/DeepSeek/MiMo/MiMo+DeepSeek/Anthropic。`AI_PROVIDER=mock` 仍是默认可玩模式，即使本机存在真实 provider key 也不会自动改走真实模型；`mimo-deepseek` 下 narrator/科举出题仍优先 MiMo，domain_specialist/科举评卷和 critic/safety 在 DeepSeek key 可用时走 DeepSeek。
 - Storage: 默认 JSON session files under `data/sessions/`；可选 `STORAGE_ADAPTER=sqlite` 使用本地 `schema_migrations`、`world_sessions`、audit tables、`geo_*`、`people_*`、`office_*`、`event_archive_index`、`prompt_retrieval_index` 和 `safe_search_index`。SQLite 派生行只从 `world_sessions.world_state_json` 单向修复；raw business/audit rows 不是 route、prompt、browser、搜索或服务器裁决 truth source。
-- Roadmap status: S49-S67 本地数据库与大世界内容、S68-S69 科举深化、S70 AI 编排和 S71 数据库玩法化均已完成并归档。S72 PixiJS 水墨地图专项已完成 S72.1 依赖治理/runtime 契约、S72.2 后端 `mapRuntimeView`/layout seed/route payload/testing、S72.3 `ink-map-v1` 首批素材/manifest/台账、S72.4 前端 PixiJS 地图 shell、S72.5 地图/局势簿/行动草稿联动、S72.6 水墨动效/视觉 polish 和 S72.7 验收/安全/性能回归，任务书见 `docs/PIXIJS_INK_MAP_ROADMAP.md`，运行时契约见 `docs/PIXIJS_INK_MAP_RUNTIME_CONTRACT.md`，素材指南见 `docs/MAP_ASSET_GUIDE.md`，素材台账见 `docs/MAP_ASSET_LEDGER.md`。
+- Roadmap status: S49-S67 本地数据库与大世界内容、S68-S69 科举深化、S70 AI 编排和 S71 数据库玩法化均已完成并归档。S72 PixiJS 水墨地图专项已完成归档，归档见 `docs/PIXIJS_INK_MAP_ARCHIVE.md`；任务书见 `docs/PIXIJS_INK_MAP_ROADMAP.md`，运行时契约见 `docs/PIXIJS_INK_MAP_RUNTIME_CONTRACT.md`，素材指南见 `docs/MAP_ASSET_GUIDE.md`，素材台账见 `docs/MAP_ASSET_LEDGER.md`。
 - Current collaboration: 2026-05-14 起停止与 Gemini CLI 协作，后续开发全部由 Codex 承担。Codex 负责后端、前端、AI/server 权限、素材生成与台账、视觉审核、最终文档同步、验证和 Git 提交；S72 地图 AI 生图仍统一由 Codex 使用 `gpt-image-2` 完成，AI 生成素材和第三方入库候选素材都必须由 Codex 做视觉审核，确认游戏基调、历史/水墨适配、可读性和同批一致性。
 - Current local `.env`: 可能含用户提供的 provider keys。`.env` 被 Git 忽略，不能打印或提交。
 
@@ -102,6 +102,7 @@ Important module areas:
 - `docs/DATABASE_RESOLVER_INPUT_CONTRACT.md`
 - `docs/DATABASE_GAMEPLAY_RESOLVER_ARCHIVE.md`
 - `docs/DATABASE_GAMEPLAY_RESOLVER_ROADMAP.md`
+- `docs/PIXIJS_INK_MAP_ARCHIVE.md`
 - `docs/PIXIJS_INK_MAP_ROADMAP.md`
 - `docs/MAP_ASSET_GUIDE.md`
 - `docs/MAP_ASSET_LEDGER.md`
@@ -121,7 +122,8 @@ Important module areas:
 - 2026-05-14：审查并收口 Gemini S72.6 前端 polish patch。`public/mapRenderer.js` 新增路线墨线 alpha 呼吸、事件涟漪 scale/alpha 扩散、深朱砂双圈选中态、`prefers-reduced-motion` 降级，以及 `IntersectionObserver`/`visibilitychange` 可见性守卫；Codex 修正了 Gemini patch 中会导致脚本语法失败的末尾残片，并修正路线动效被通用 tick 写入 `baseScale` 导致 `NaN` 的风险。`public/styles.css` 将 tooltip、行动草稿按钮和 fallback 面板调整为纸色渐变、硬边与浅朱砂分隔线。新增 `test/mapFrontendShell.test.js` S72.6 回归断言，并保留 `S72.6_DELIVERY_REPORT.md` 作为 Gemini 交付说明。本轮不改后端、API/schema、SQLite、provider schema、prompt 或素材 manifest；验证已通过前端/manifest/runtime 聚焦测试、docs governance、`git diff --check`、本地 Mock 浏览器桌面/窄屏检查和单跑 `test/dualModeAcceptanceScript.test.js`。完整 `npm test` 仅遇到既有 S67 large fixture 性能阈值波动 `fixtureGenerationMs 10274.08 > 10000`，单跑失败文件已通过；只读子代理复审未发现 P0/P1/P2。
 - 2026-05-14：执行并完成 S72.7 PixiJS 地图验收、安全与性能回归。`scripts/browserSmoke.js` 现在真实检查地图面板、canvas 像素非空、label、动画数量、hidden/raw 文本、资源失败静态降级、`prefers-reduced-motion` 禁用动效、恢复读档/新页面恢复和桌面/窄屏布局。S72.7 browser smoke 捕获并修复了地图/书生面板挤压叙事区的问题：地图高度收束为 `clamp(200px, 24vh, 280px)`，桌面游戏态书生信息面板改为较短的可滚动摘要区，`narrative` 不再用固定 100% 高度。`public/mapRenderer.js` 新增只读 debug state、资源失败可观测状态、纸色 fallback base 和 `preserveDrawingBuffer` 以支持 canvas 非空验收；`public/mapPanel.js` 对未知 schemaVersion 降级等待并销毁旧 renderer/canvas，避免旧地图残留。本轮不改后端 API/schema、SQLite、provider schema、prompt 或素材 manifest；地图仍只读安全 `mapRuntimeView`，行动草稿仍需玩家提交普通回合。已通过聚焦 node tests、`npm run smoke:browser -- --screenshots artifacts/s72-browser-smoke`、docs governance、dual-mode storage-only、`git diff --check`；完整 `npm test` 仅遇到既有 S67 large fixture 性能阈值波动 `informationPanelMs 3258.724 > 3000`，随后单跑 `node --test test/dualModeAcceptanceScript.test.js` 已通过。提交前只读子代理复审最初发现 P2 旧 canvas 残留问题，已修复；无剩余 P0/P1/P2。
 - 2026-05-14：按用户要求停止与 Gemini CLI 共同开发，后续开发全部改为 Codex-only。已同步 `AGENTS.md`、`CLAUDE.md`、治理锚点、brief、路线图、S72 契约/素材文档和本交接板；删除 Gemini 专用上下文入口 `GEMINI.md` 与 `.geminiignore`。历史记录中已经发生的 Gemini patch 作为事实保留，但不再作为未来协作模式。本轮只改文档、治理检查脚本和 Gemini 专用上下文文件，不改运行时代码、API、provider schema、SQLite schema、素材 manifest 或提示词；纯文档/治理改动，已进行只读子代理复审。
+- 2026-05-14：按用户要求完成 S72 PixiJS 水墨地图专项归档。新增 `docs/PIXIJS_INK_MAP_ARCHIVE.md`，并把 `docs/DEVELOPMENT_STEPS.md`、`docs/QIANQIU_DEVELOPMENT_BRIEF.md` 和 `README.md` 的 S72 口径统一改为“已完成归档”；`docs/SHARED_CONTEXT.md` 也已更新为归档后的下一步建议。本轮仍不改运行时代码、API、provider schema、存档格式、SQLite 表结构、提示词、验证脚本或 AI 权限；验证完成后将按 Git 提交收口。
 
 ## Next Recommended Step
 
-执行 S72.8：归档 S72 PixiJS 水墨地图专项。重点记录完成范围、验收证据、剩余风险、后续地图玩法方向，并继续保持 JSON/Mock 默认可玩、SQLite local-only、AI proposal-only、server resolver 裁决、地图前端只读安全 view 和完整书生路径不回退。
+S72 已完成归档。后续若继续扩展地图玩法，应从新的小步骤重新开题，并继续保持 JSON/Mock 默认可玩、SQLite local-only、AI proposal-only、server resolver 裁决、地图前端只读安全 view 和完整书生路径不回退。
