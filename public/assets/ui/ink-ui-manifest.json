@@ -1,0 +1,352 @@
+{
+  "schemaVersion": 1,
+  "assetSetId": "ink-ui-v1",
+  "status": "schema_draft",
+  "createdAt": "2026-05-14",
+  "phase": "S73",
+  "style": "ink-wash-hand-drawn-xuan-paper",
+  "licenseSummary": "See docs/FRONTEND_ASSET_LEDGER.md.",
+  "guideRef": "docs/FRONTEND_VISUAL_ASSET_GUIDE.md",
+  "ledgerRef": "docs/FRONTEND_ASSET_LEDGER.md",
+  "assetRoot": "/assets/ui/",
+  "description": "S73-S77 前端水墨视觉资产 manifest 草案。本文件只保存浏览器可读取的安全字段、fallback token、资产组计划和审核状态，不保存完整 prompt、provider 原始响应、本地路径、key、raw audit 或 hidden 真值。",
+  "reviewPolicy": {
+    "requiresCodexVisualReview": true,
+    "usableStatuses": [
+      "approved",
+      "approved_with_limits"
+    ],
+    "blockedStatuses": [
+      "planned",
+      "draft",
+      "review_pending",
+      "rejected",
+      "replaced"
+    ]
+  },
+  "pathPolicy": {
+    "allowedPrefix": "/assets/ui/",
+    "disallowRemoteUrls": true,
+    "disallowParentTraversal": true,
+    "disallowAbsoluteLocalPaths": true
+  },
+  "portraitPolicy": {
+    "portraitRefPrefix": "portrait-",
+    "baseRequiredFieldsRef": "requiredAssetFields",
+    "extensionRequiredFieldsRef": "requiredPortraitFields",
+    "requiresThumbnail": true,
+    "requiresLowResPlaceholder": true,
+    "requiresFallback": true,
+    "lazyLoadOnly": true,
+    "maxInitialPortraits": 8
+  },
+  "allowedCategories": [
+    "material",
+    "background",
+    "scene",
+    "role_background",
+    "portrait",
+    "effect",
+    "fallback",
+    "thumbnail"
+  ],
+  "allowedReviewStatuses": [
+    "planned",
+    "draft",
+    "review_pending",
+    "approved",
+    "approved_with_limits",
+    "rejected",
+    "replaced"
+  ],
+  "runtimeUsableReviewStatuses": [
+    "approved",
+    "approved_with_limits"
+  ],
+  "runtimeBlockedReviewStatuses": [
+    "planned",
+    "draft",
+    "review_pending",
+    "rejected",
+    "replaced"
+  ],
+  "supportedFormats": [
+    "webp",
+    "png",
+    "json"
+  ],
+  "requiredAssetFields": [
+    "id",
+    "version",
+    "phase",
+    "category",
+    "subcategory",
+    "usage",
+    "path",
+    "thumbnailPath",
+    "fallbackRef",
+    "dimensions",
+    "aspectRatio",
+    "format",
+    "transparent",
+    "safeArea",
+    "focalPoint",
+    "mobileCrop",
+    "source",
+    "license",
+    "reviewStatus",
+    "visualReview",
+    "safetyReview",
+    "performance",
+    "ledgerId"
+  ],
+  "requiredPortraitFields": [
+    "portraitRef",
+    "role",
+    "genderPresentation",
+    "ageBand",
+    "statusVariant",
+    "identityTags",
+    "emotionTags",
+    "thumbnailPath",
+    "lowResPlaceholderPath",
+    "fallbackRef",
+    "safeArea",
+    "focalPoint",
+    "lazyLoad",
+    "reviewStatus",
+    "visualReview",
+    "safetyReview",
+    "ledgerId"
+  ],
+  "usageCatalog": [
+    "home",
+    "game_main",
+    "map_page",
+    "people_page",
+    "archive_page",
+    "exam_page",
+    "ranking_page",
+    "court_page",
+    "settings_surface",
+    "global_fallback"
+  ],
+  "roleCatalog": [
+    "scholar",
+    "magistrate",
+    "official",
+    "minister",
+    "general",
+    "emperor",
+    "npc_teacher",
+    "npc_examiner",
+    "npc_official",
+    "npc_military",
+    "npc_merchant",
+    "npc_court",
+    "npc_commoner"
+  ],
+  "fallbackCatalog": [
+    {
+      "id": "fallback-paper-panel-v1",
+      "category": "fallback",
+      "type": "css_token",
+      "usage": [
+        "global_fallback"
+      ],
+      "cssTokens": {
+        "backgroundColor": "#f5f0e6",
+        "borderColor": "#c9b898",
+        "textColor": "#241f18"
+      },
+      "reviewStatus": "approved",
+      "ledgerId": "ui-fallback-paper-panel-v1"
+    },
+    {
+      "id": "fallback-role-silhouette-v1",
+      "category": "fallback",
+      "type": "css_token",
+      "usage": [
+        "people_page",
+        "game_main"
+      ],
+      "cssTokens": {
+        "backgroundColor": "#e8dcc8",
+        "accentColor": "#a53a2a",
+        "textColor": "#241f18"
+      },
+      "reviewStatus": "approved",
+      "ledgerId": "ui-fallback-role-silhouette-v1"
+    },
+    {
+      "id": "fallback-ink-motion-static-v1",
+      "category": "fallback",
+      "type": "css_token",
+      "usage": [
+        "home",
+        "exam_page",
+        "ranking_page"
+      ],
+      "cssTokens": {
+        "backgroundColor": "#f5f0e6",
+        "accentColor": "#6f6659",
+        "motion": "none"
+      },
+      "reviewStatus": "approved",
+      "ledgerId": "ui-fallback-ink-motion-static-v1"
+    }
+  ],
+  "plannedAssetGroups": [
+    {
+      "phase": "S73.3",
+      "category": "material",
+      "subcategory": "paper_and_memorial_surfaces",
+      "targetCount": {
+        "min": 12,
+        "max": 20
+      },
+      "usage": [
+        "game_main",
+        "settings_surface",
+        "exam_page",
+        "ranking_page",
+        "global_fallback"
+      ],
+      "defaultFallbackRef": "fallback-paper-panel-v1",
+      "requiredFields": [
+        "safeArea",
+        "focalPoint",
+        "performance",
+        "reviewStatus"
+      ]
+    },
+    {
+      "phase": "S73.4",
+      "category": "background",
+      "subcategory": "home_scroll",
+      "targetCount": {
+        "min": 4,
+        "max": 8
+      },
+      "usage": [
+        "home"
+      ],
+      "defaultFallbackRef": "fallback-paper-panel-v1",
+      "requiredFields": [
+        "safeArea",
+        "focalPoint",
+        "mobileCrop",
+        "reducedMotionFallback"
+      ]
+    },
+    {
+      "phase": "S73.5",
+      "category": "scene",
+      "subcategory": "scene_illustrations",
+      "targetCount": {
+        "min": 8,
+        "max": 12
+      },
+      "usage": [
+        "game_main",
+        "exam_page",
+        "ranking_page",
+        "court_page"
+      ],
+      "defaultFallbackRef": "fallback-paper-panel-v1",
+      "requiredFields": [
+        "scene",
+        "safeArea",
+        "mobileCrop",
+        "visualReview"
+      ]
+    },
+    {
+      "phase": "S73.6",
+      "category": "role_background",
+      "subcategory": "identity_backgrounds",
+      "targetCount": {
+        "min": 6,
+        "max": 10
+      },
+      "usage": [
+        "game_main",
+        "court_page",
+        "people_page"
+      ],
+      "defaultFallbackRef": "fallback-paper-panel-v1",
+      "requiredFields": [
+        "role",
+        "safeArea",
+        "focalPoint",
+        "safetyReview"
+      ]
+    },
+    {
+      "phase": "S73.7",
+      "category": "portrait",
+      "subcategory": "portrait_style_baseline",
+      "targetCount": {
+        "min": 24,
+        "max": 40
+      },
+      "usage": [
+        "people_page",
+        "game_main",
+        "court_page"
+      ],
+      "defaultFallbackRef": "fallback-role-silhouette-v1",
+      "baseRequiredFieldsRef": "requiredAssetFields",
+      "requiredFieldsRef": "requiredPortraitFields"
+    },
+    {
+      "phase": "S73.8",
+      "category": "effect",
+      "subcategory": "ink_motion_and_stamp",
+      "targetCount": {
+        "min": 6,
+        "max": 12
+      },
+      "usage": [
+        "home",
+        "game_main",
+        "exam_page",
+        "ranking_page"
+      ],
+      "defaultFallbackRef": "fallback-ink-motion-static-v1",
+      "requiredFields": [
+        "motion",
+        "reducedMotionFallback",
+        "performance",
+        "reviewStatus"
+      ]
+    },
+    {
+      "phase": "S73.10",
+      "category": "portrait",
+      "subcategory": "full_portrait_pool",
+      "targetCount": {
+        "min": 300,
+        "max": 400
+      },
+      "usage": [
+        "people_page",
+        "game_main",
+        "court_page",
+        "exam_page",
+        "ranking_page"
+      ],
+      "defaultFallbackRef": "fallback-role-silhouette-v1",
+      "baseRequiredFieldsRef": "requiredAssetFields",
+      "requiredFieldsRef": "requiredPortraitFields",
+      "loadingPolicy": {
+        "lazyLoad": true,
+        "allowEagerLoad": false,
+        "thumbnailFirst": true,
+        "lowResPlaceholder": true,
+        "maxInitialPortraits": 8
+      }
+    }
+  ],
+  "assets": []
+}

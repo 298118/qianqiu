@@ -272,6 +272,8 @@
 
 ### S73.2 UI 素材 manifest schema 与台账
 
+状态：已完成，manifest 草案见 `public/assets/ui/ink-ui-manifest.json`，台账见 [FRONTEND_ASSET_LEDGER.md](FRONTEND_ASSET_LEDGER.md)。
+
 实现功能：
 
 - 新增 `public/assets/ui/ink-ui-manifest.json` 草案。
