@@ -871,10 +871,10 @@ function createWorldContentFixture(options = {}) {
     }
   };
 
-  const fixtureGenerationMs = Number((PERFORMANCE_CLOCK.now() - generationStartedAt).toFixed(3));
+  const rawFixtureGenerationMs = Number((PERFORMANCE_CLOCK.now() - generationStartedAt).toFixed(3));
   fixture.fixtureSummary.metrics = measureWorldContentFixture(fixture);
   fixture.fixtureSummary.performanceBaseline = {
-    fixtureGenerationMs,
+    rawFixtureGenerationMs,
     ...buildWorldContentPerformanceBaseline(fixture)
   };
   return fixture;

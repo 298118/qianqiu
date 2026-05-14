@@ -303,7 +303,7 @@ test("S60 fixture records minimal performance baselines for later S67 thresholds
   const baseline = buildWorldContentPerformanceBaseline(large);
 
   for (const value of [
-    large.fixtureSummary.performanceBaseline.fixtureGenerationMs,
+    large.fixtureSummary.performanceBaseline.rawFixtureGenerationMs,
     baseline.eventArchivePaginationMs,
     baseline.promptAssemblyMs,
     baseline.promptRetrievalRowsMs,
@@ -312,6 +312,7 @@ test("S60 fixture records minimal performance baselines for later S67 thresholds
     assert.equal(Number.isFinite(value), true);
     assert.equal(value >= 0, true);
   }
+  assert.equal(large.fixtureSummary.performanceBaseline.fixtureGenerationMs, undefined);
   assert.equal(large.fixtureSummary.performanceBaseline.fixtureSize, "large");
   assert.equal(baseline.fixturePageRows, WORLD_CONTENT_BROWSER_PAGE.maxPageSize);
   assert.equal(baseline.promptSummaryRows <= WORLD_CONTENT_PROMPT_BUDGET.ordinaryRows, true);

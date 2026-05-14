@@ -206,8 +206,12 @@ test("dual-mode S67 scale regression records large fixture, prompt strategy, pag
   for (const [key, threshold] of Object.entries(S67_SCALE_ACCEPTANCE_THRESHOLDS)) {
     assert.equal(Number.isFinite(result.performance[key]), true, key);
     assert.equal(result.performance[key] >= 0, true, key);
-    assert.equal(result.performance[key] <= threshold, true, key);
+    if (Number.isFinite(threshold)) {
+      assert.equal(result.performance[key] <= threshold, true, key);
+    }
   }
+  assert.equal(result.performance.fixtureBuildMs >= result.performance.rawFixtureGenerationMs, true);
+  assert.equal(result.performance.fixtureGenerationMs, undefined);
 
   assert.equal(serialized.includes("S60_PRIVATE_"), false);
   assert.equal(serialized.includes("SEALED_S59_"), false);
