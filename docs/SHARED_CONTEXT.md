@@ -1,6 +1,6 @@
 # Shared AI Development Context
 
-这是 Codex 与 Claude Code 共用的精简交接板。详细历史请看 `docs/DEVELOPMENT_STEPS.md`、各阶段归档和专题契约文档；本文件只保留接手下一步所必需的状态、规则和内容保护边界。
+这是 Codex 与 Gemini CLI 当前共用的精简交接板。详细历史请看 `docs/DEVELOPMENT_STEPS.md`、各阶段归档和专题契约文档；本文件只保留接手下一步所必需的状态、规则和内容保护边界。
 
 ## Read First
 
@@ -20,7 +20,8 @@
 - Frontend: plain HTML/CSS/JS，无 build step。Backend: Node.js + Express，plain JavaScript。
 - AI providers: adapter-based Mock/OpenAI/DeepSeek/MiMo/MiMo+DeepSeek/Anthropic。`AI_PROVIDER=mock` 仍是默认可玩模式，即使本机存在真实 provider key 也不会自动改走真实模型；`mimo-deepseek` 下 narrator/科举出题仍优先 MiMo，domain_specialist/科举评卷和 critic/safety 在 DeepSeek key 可用时走 DeepSeek。
 - Storage: 默认 JSON session files under `data/sessions/`；可选 `STORAGE_ADAPTER=sqlite` 使用本地 `schema_migrations`、`world_sessions`、audit tables、`geo_*`、`people_*`、`office_*`、`event_archive_index`、`prompt_retrieval_index` 和 `safe_search_index`。SQLite 派生行只从 `world_sessions.world_state_json` 单向修复；raw business/audit rows 不是 route、prompt、browser、搜索或服务器裁决 truth source。
-- Roadmap status: S49-S67 本地数据库与大世界内容、S68-S69 科举深化、S70 AI 编排和 S71 数据库玩法化均已完成并归档。`docs/DEVELOPMENT_STEPS.md` 当前只保留活动索引、治理保护块和最新归档说明；后续新开发另起小步骤。
+- Roadmap status: S49-S67 本地数据库与大世界内容、S68-S69 科举深化、S70 AI 编排和 S71 数据库玩法化均已完成并归档。S72 PixiJS 水墨地图专项已启动规划，任务书见 `docs/PIXIJS_INK_MAP_ROADMAP.md`，素材台账见 `docs/MAP_ASSET_LEDGER.md`。
+- Current collaboration: Codex 负责后端地图 view/API/schema、AI/server 权限、素材生成与台账、Gemini patch 审核、最终文档同步和提交；Gemini CLI 负责前端 PixiJS patch、图层、动效、交互和浏览器验证说明，但不得运行 `git add`、`git commit`、`git push` 或创建 PR。
 - Current local `.env`: 可能含用户提供的 provider keys。`.env` 被 Git 忽略，不能打印或提交。
 
 ## Core Invariants
@@ -48,7 +49,7 @@
 
 ## Subagent Discipline
 
-- 用户已授权 Codex 和 Claude Code 在本仓库使用子代理，除非后续指令撤销，否则视为长期项目上下文。
+- 用户已授权 Codex 在本仓库使用子代理，除非后续指令撤销，否则视为长期项目上下文。当前协作对象 Gemini CLI 不是提交者；它只交付前端 patch 与验证报告。
 - 实施子代理只能做 scoped patches 和 focused verification；不得运行 `git add`、`git commit`、`git push` 或创建 PR。
 - 主代理负责整合、最终验证、共享文档同步和唯一 coherent commit。
 - 包含代码、测试、运行时行为、API/schema、提示词或验证工具变化的提交，暂存和提交前必须至少委派一个只读子代理审查最终 diff 与验证证据。
@@ -100,11 +101,14 @@ Important module areas:
 - `docs/DATABASE_RESOLVER_INPUT_CONTRACT.md`
 - `docs/DATABASE_GAMEPLAY_RESOLVER_ARCHIVE.md`
 - `docs/DATABASE_GAMEPLAY_RESOLVER_ROADMAP.md`
+- `docs/PIXIJS_INK_MAP_ROADMAP.md`
+- `docs/MAP_ASSET_LEDGER.md`
 
 ## Current Work Note
 
 - 2026-05-14：按用户要求归档活动台账中的已完成路线并压缩共享上下文。`docs/DEVELOPMENT_STEPS.md` 已改为只保留治理保护块、归档索引、当前边界、空活动总览和本轮记录；DONE 的 S68-S71 长表与长进度记录不再留在活动台账。`docs/SHARED_CONTEXT.md` 已压缩为必读状态、核心边界、内容保护、实现入口和归档入口。本轮不改运行时代码、API、provider schema、存档格式、SQLite 表结构、提示词、验证脚本或 AI 权限。验证已通过 `npm run check:docs-governance`、`node --test test/documentationGovernance.test.js` 和 `git diff --check`；只读子代理复审未发现 P0/P1/P2，确认治理规则、归档入口和 hidden/raw 内容保护边界未被删弱。
+- 2026-05-14：按用户新要求启动 S72 PixiJS 水墨地图专项规划，并把当前活动协作从 Claude Code 交接切换为 Codex + Gemini CLI。Codex 负责后端、素材、审核与提交；Gemini CLI 负责前端 PixiJS patch 且不提交代码。新增 `docs/PIXIJS_INK_MAP_ROADMAP.md` 和 `docs/MAP_ASSET_LEDGER.md`，`docs/DEVELOPMENT_STEPS.md` 已写明 S72.0-S72.8 owner 与验收边界。本轮仍不改运行时代码、API、provider schema、存档格式、SQLite 表结构、提示词、验证脚本或 AI 权限；S72.1 前不得直接接入 PixiJS 依赖。验证已通过 `npm run check:docs-governance`、`node --test test/documentationGovernance.test.js` 和 `git diff --check`；只读子代理复审未发现 P0/P1/P2。完整 `npm test` 已运行但未全过，唯一失败为既有 S67 大规模 fixture 性能阈值：`fixtureGenerationMs 11122.608 > 10000`，其余 830 项通过；本轮未改 S67 fixture 或运行时代码。
 
 ## Next Recommended Step
 
-S71 已完成验收并归档，当前没有活动开发步骤。下一步由后续用户目标决定；新步骤启动时继续先读本文件、brief 和活动台账，保持 JSON/Mock 默认可玩、SQLite local-only、AI proposal-only、server resolver 裁决、hidden/raw 不外泄和完整书生路径不回退。
+执行 S72.1：Codex 先完成 PixiJS 依赖治理、`mapRuntimeView` / 显示布局草案、Gemini 前端 patch 边界和验证清单；Gemini CLI 在契约明确后再实现 S72.4 前端 PixiJS 地图 shell。继续保持 JSON/Mock 默认可玩、SQLite local-only、AI proposal-only、server resolver 裁决、hidden/raw 不外泄和完整书生路径不回退。

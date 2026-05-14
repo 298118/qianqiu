@@ -1,6 +1,6 @@
 # 《千秋》活动路线图与进度台账
 
-本文件是 Codex 与 Claude Code 共同维护的当前活动路线图与进度台账。已完成路线不再在本文件展开长表或逐日实现记录；需要追溯时阅读对应归档：
+本文件是 Codex 与 Gemini CLI 当前共同维护的活动路线图与进度台账。已完成路线不再在本文件展开长表或逐日实现记录；需要追溯时阅读对应归档：
 
 - 第一阶段：[PHASE_ONE_ROADMAP_ARCHIVE.md](PHASE_ONE_ROADMAP_ARCHIVE.md)，验收见 [PHASE_ONE_ACCEPTANCE.md](PHASE_ONE_ACCEPTANCE.md)。
 - 第二阶段：[PHASE_TWO_ROADMAP_ARCHIVE.md](PHASE_TWO_ROADMAP_ARCHIVE.md)，验收见 [PHASE_TWO_ACCEPTANCE.md](PHASE_TWO_ACCEPTANCE.md)。
@@ -12,7 +12,7 @@
 - S70 AI prompt/tool/actor/多模型路由、AI 设置、官职月报、跳时、记忆、地图接口、provider AI-first smoke 和 JSON/SQLite parity：[AI_ORCHESTRATION_ARCHIVE.md](AI_ORCHESTRATION_ARCHIVE.md)。规划源头仍见 [AI_ORCHESTRATION_ROADMAP.md](AI_ORCHESTRATION_ROADMAP.md)。
 - S71 数据库玩法化、维护、安全检索、redacted player API、财政/刑名/军务外交服务器 resolver、压力事件、多 actor 场景、NPC 记忆账本、AI 调动审计和验收：[DATABASE_GAMEPLAY_RESOLVER_ARCHIVE.md](DATABASE_GAMEPLAY_RESOLVER_ARCHIVE.md)。规划源头仍见 [DATABASE_GAMEPLAY_RESOLVER_ROADMAP.md](DATABASE_GAMEPLAY_RESOLVER_ROADMAP.md)，resolver 输入契约见 [DATABASE_RESOLVER_INPUT_CONTRACT.md](DATABASE_RESOLVER_INPUT_CONTRACT.md)。
 
-当前活动路线图已完成到 S71 归档。后续新开发应另起清晰小步骤；数据库方向继续只考虑本机 JSON/SQLite 持久化增强，远程存档、账号体系、多人同步、云端冲突解决和托管数据库不进入当前规划。
+当前活动路线图已完成到 S71 归档，并已启动 S72 PixiJS 水墨地图专项规划。S72 的专项任务书见 [PIXIJS_INK_MAP_ROADMAP.md](PIXIJS_INK_MAP_ROADMAP.md)，素材台账见 [MAP_ASSET_LEDGER.md](MAP_ASSET_LEDGER.md)。后续开发继续只考虑本机 JSON/SQLite 持久化增强，远程存档、账号体系、多人同步、云端冲突解决和托管数据库不进入当前规划。
 
 ## 1. 开发规范继承
 
@@ -70,7 +70,7 @@
 
 ## 2. 依赖、插件与开源参考策略
 
-数据库专项继续继承 S46.1 的依赖、插件与开源参考治理。后续新增或升级 `package.json` 依赖、开发工具、外部服务 SDK、Codex/Claude 插件工作流或开源参考时，必须先按 [依赖、插件与开源参考治理](DEPENDENCY_PLUGIN_GOVERNANCE.md) 记录和验证。
+当前专项继续继承 S46.1 的依赖、插件与开源参考治理。后续新增或升级 `package.json` 依赖、开发工具、外部服务 SDK、Codex/Gemini 协作工作流或开源参考时，必须先按 [依赖、插件与开源参考治理](DEPENDENCY_PLUGIN_GOVERNANCE.md) 记录和验证。
 
 - 依赖或插件必须明显降低复杂度、提升可靠性、改善安全性、改善浏览器体验或提供成熟标准能力。
 - 记录必须说明用途、运行入口、测试覆盖、替代方案、许可证、维护状态、安全/隐私影响、Mock/no-key 影响、文档落点和回滚策略。
@@ -84,7 +84,7 @@
 
 ## 3. 当前边界与归档索引
 
-当前活动工作已完成到 S71 归档。S49-S67、本地数据库与大世界内容，S68-S69 科举深化，S70 AI 编排，S71 数据库玩法化都已迁入专题归档；活动台账只保留索引和后续边界：
+当前活动工作已完成到 S71 归档，S72 PixiJS 水墨地图专项已开启规划。S49-S67、本地数据库与大世界内容，S68-S69 科举深化，S70 AI 编排，S71 数据库玩法化都已迁入专题归档；活动台账只保留索引、后续边界和当前 S72 小步骤：
 
 | 范围 | 状态 | 摘要 | 归档 |
 | --- | --- | --- | --- |
@@ -104,11 +104,19 @@
 
 ## 4. 活动路线图总览
 
-当前没有 `TODO` 或 `IN_PROGRESS` 路线。后续新开发应在本节新增小步骤，完成后再把细节迁入对应归档，不要把 S49-S71 的 DONE 长表展开回活动台账。
+当前活动路线为 S72 PixiJS 水墨地图专项。专项细节见 [PIXIJS_INK_MAP_ROADMAP.md](PIXIJS_INK_MAP_ROADMAP.md)；本节只保留可执行小步骤、owner 和交接边界，不把 S49-S71 的 DONE 长表展开回活动台账。
 
-| ID | 状态 | 目标 | 说明 |
-| --- | --- | --- | --- |
-| 暂无 | - | 等待用户指定下一步 | 新步骤启动时继续先读必读四件套，保护 JSON/Mock 默认路径、SQLite local-only、AI proposal-only、server resolver 裁决、hidden/raw 不外泄和完整书生路径。 |
+| ID | 状态 | Owner | 目标 | 说明 |
+| --- | --- | --- | --- | --- |
+| S72.0 | DONE | Codex | PixiJS 水墨地图规划与 Gemini 协作切换 | 本次只改文档：确认 PixiJS 方向、Codex 后端/素材/审核提交、Gemini CLI 前端 patch 且不提交代码；新增专项路线图和素材台账模板 |
+| S72.1 | TODO | Codex，Gemini 提供前端约束 | PixiJS 依赖治理与地图 runtime 契约 | 决定 PixiJS 加载方式，固定 `mapRuntimeView` / 显示布局草案，保留无 build step 除非后续明确批准 |
+| S72.2 | TODO | Codex | 后端地图 runtime view、布局契约与测试 | 基于 `mapContextView` 扩展安全投影；显示坐标只用于 UI，不暴露 raw/hidden/坐标污染 |
+| S72.3 | TODO | Codex | 水墨地图素材生成、manifest 与台账 | AI 生成底图/图标/纹理，保存到 `public/assets/maps/`，更新 `docs/MAP_ASSET_LEDGER.md` |
+| S72.4 | TODO | Gemini CLI，Codex 审核提交 | PixiJS 地图 shell 与图层系统 | Gemini 负责前端 patch 和浏览器验证说明；不得暂存、提交、推送或创建 PR |
+| S72.5 | TODO | Codex + Gemini CLI | 地图与游戏系统深度联动 | 点击地点/路线/事件联动局势簿、行动草稿和服务器 proposal；前端不得直接写状态 |
+| S72.6 | TODO | Gemini CLI，Codex 提供素材 | 水墨动效与视觉 polish | 保证拖拽/缩放/路线/事件动效流畅，支持降级与窄屏布局 |
+| S72.7 | TODO | Codex | 验收、安全与性能回归 | 覆盖文档治理、node tests、browser smoke、canvas 非空、资源失败降级、hidden/raw 不外泄 |
+| S72.8 | TODO | Codex | S72 专项归档 | 完成后归档范围、风险和后续地图玩法，不把长实现记录留在活动台账 |
 
 ## 5. 进度记录
 
@@ -141,4 +149,39 @@
 
 下一步：
 
-- 等待用户指定新的开发目标；新步骤应从本文件第 4 节新增 `TODO` 或 `IN_PROGRESS` 条目开始。
+- 按用户新目标启动 S72 PixiJS 水墨地图专项，先完成 S72.0 规划提交，再进入 S72.1 依赖治理与地图 runtime 契约。
+
+### 2026-05-14
+
+工具：Codex。
+
+步骤：S72.0 PixiJS 水墨地图规划与 Gemini 协作切换。
+
+提交：本次提交。
+
+完成：
+
+- 按用户要求将当前活动协作从 Claude Code 交接改为 Codex + Gemini CLI：Codex 负责后端、素材、审核、文档同步和提交；Gemini CLI 负责前端 PixiJS patch，但不运行 `git add`、`git commit`、`git push` 或创建 PR。
+- 确认 PixiJS 作为长期地图运行时，用于水墨手绘地图、流畅动效、大量图层和后续深度玩法联动。
+- 新增 [PIXIJS_INK_MAP_ROADMAP.md](PIXIJS_INK_MAP_ROADMAP.md)，记录 S72 目标、非目标、Codex/Gemini 分工、后端 view 契约、前端 PixiJS 图层、素材策略、小步骤和验收标准。
+- 新增 [MAP_ASSET_LEDGER.md](MAP_ASSET_LEDGER.md)，作为 AI 生成素材、历史地图参考和后处理记录的台账模板。
+- 本轮不改运行时代码、API、provider schema、存档格式、SQLite 表结构、提示词、验证脚本或 AI 权限。
+
+验证：
+
+- 已通过：`npm run check:docs-governance`。
+- 已通过：`node --test test/documentationGovernance.test.js`。
+- 已通过：`git diff --check`。
+- 已完成：只读子代理复审，未发现 P0/P1/P2；P3 建议已补充依赖治理措辞、CDN/local fallback 要求和素材台账字段。
+- 已运行但未完全通过：`npm test`。失败项为 `test/dualModeAcceptanceScript.test.js` 中 S67 大规模 fixture 性能阈值，`fixtureGenerationMs` 为 `11122.608`，超过既有 `10000` 阈值；其余 830 项通过。本轮只改文档与规划，未改 S67 fixture 或运行时代码。
+
+风险/遗留：
+
+- 规划已选择 PixiJS，但实际接入依赖方式还未决定；S72.1 必须先走依赖治理。
+- 历史地图仅作参考或个人游玩临时素材来源，仍需登记来源与许可，避免后续公开时无法回溯。
+- `docs/DEVELOPMENT_GOVERNANCE.md` 的受保护治理锚点仍保留历史 Codex/Claude Code 文案；当前活动交接以本台账、`AGENTS.md` 和 `docs/SHARED_CONTEXT.md` 的 Codex/Gemini 说明为准。
+- 完整 `npm test` 触发既有 S67 性能阈值失败；后续若性能门槛持续波动，应单独处理 S67 fixture 生成耗时或验收阈值，不与 S72 地图规划混在同一提交中。
+
+下一步：
+
+- 执行 S72.1：Codex 固定 PixiJS 依赖治理、地图 runtime view 草案和 Gemini 前端 patch 边界；Gemini 在契约明确后再开始 S72.4 前端地图 shell。
