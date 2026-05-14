@@ -113,7 +113,7 @@ npm test
 - Provider smoke：真实 MiMo 工具调用、S70 AI-first、mimo-deepseek 科举/provider smoke 和 provider route health 均通过。
 - `npm test`：831/831 通过。
 
-本轮还把 `scripts/dualModeAcceptance.js` 的 S67 large fixture 耗时阈值调到当前 S71 规模下的守门值：`fixtureGenerationMs` 从 5000ms 调整为 10000ms，`informationPanelMs` 从 1500ms 调整为 3000ms，`sqliteReadRepairMs` 从 3000ms 调整为 8000ms。原因是全量 `npm test` 会并发运行大量 SQLite-heavy 与 route-view 测试，S71 又增加了安全搜索、migration/maintenance 漂移探针和更多派生索引；这些阈值仍保留规模、分页、修复和泄漏回归守门，但不再把当前 Windows 本地全量并发噪声误报为失败。
+本轮还把 `scripts/dualModeAcceptance.js` 的 S67 large fixture 耗时阈值调到当前 S71 规模下的守门值：`fixtureGenerationMs` 从 5000ms 调整为 10000ms，`informationPanelMs` 从 1500ms 调整为 3000ms，`sqliteReadRepairMs` 先从 3000ms 调整为 8000ms；2026-05-14 全量 `npm test` 在 Windows / node:sqlite 并发环境观测到同一读修复路径 `9564.31ms`，因此后续把 `sqliteReadRepairMs` 调整为 12000ms。原因是全量 `npm test` 会并发运行大量 SQLite-heavy 与 route-view 测试，S71 又增加了安全搜索、migration/maintenance 漂移探针和更多派生索引；这些阈值仍保留规模、分页、修复和泄漏回归守门，但不再把当前 Windows 本地全量并发噪声误报为失败。
 
 ## 6. 残余风险与后续入口
 

@@ -96,10 +96,11 @@ const S67_SCALE_ACCEPTANCE_THRESHOLDS = Object.freeze({
   // Windows test noise above the standalone smoke baseline.
   informationPanelMs: 3000,
   // S71 adds safe-search and migration/maintenance drift probes to the same
-  // SQLite read-repair surface; Windows node:sqlite runs this path in the
-  // 3-7s range on local developer machines, so keep a guard without treating
-  // normal S71 derived-index repair as a regression.
-  sqliteReadRepairMs: 8000,
+  // SQLite read-repair surface; full-suite Windows node:sqlite runs have
+  // reached about 9.6s while still passing all row-count, parity and leak
+  // gates, so keep a guard without treating normal derived-index repair as a
+  // regression.
+  sqliteReadRepairMs: 12000,
   heapDeltaBytes: 256 * 1024 * 1024
 });
 

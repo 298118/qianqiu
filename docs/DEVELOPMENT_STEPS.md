@@ -211,6 +211,35 @@ S71 详细规划源头见 [DATABASE_GAMEPLAY_RESOLVER_ROADMAP.md](DATABASE_GAMEP
 
 ## 8. 进度记录
 
+### 2026-05-14
+
+工具：Codex。
+
+步骤：S71.12 验收阈值跟进。
+
+提交：本次提交。
+
+完成：
+
+- 全量 `npm test` 在当前 Windows / node:sqlite 并发环境复现唯一失败：S67 scale regression 的 `sqliteReadRepairMs` 为 `9564.31ms`，超过 S71.12 设置的 `8000ms`，其余 830/831 项通过；该用例此前单跑通过，失败仍是大样本 SQLite 派生索引读修复 timing guard 过紧。
+- 将 `scripts/dualModeAcceptance.js` 的 `S67_SCALE_ACCEPTANCE_THRESHOLDS.sqliteReadRepairMs` 从 `8000ms` 调整为 `12000ms`。规模数量、分页 cap、读修复后 prompt row count、JSON/SQLite prompt parity、hidden-token 防泄漏和内存阈值仍保留；本轮不改变游戏行为、API、存档格式、SQLite 修复算法、provider schema 或 AI 权限。
+- 同步本台账、共享上下文和 S71 归档说明，记录 2026-05-14 的全量并发观测值，避免后续把正常 Windows 本地并发噪声误判为玩法或存储回归。
+
+验证：
+
+- 已通过：`node --test test/dualModeAcceptanceScript.test.js`（8/8），覆盖 dual-mode options、hidden-token guard、S70 parity、SQLite storage maintenance 和 S67 large fixture scale regression。
+- 已通过：`npm run check:docs-governance`。
+- 已通过：`git diff --check`。
+- 已通过：`npm test`（831/831），阈值调整后全量并发测试恢复全绿。
+
+风险/遗留：
+
+- 这是验收 timing guard 调整，不是性能优化。若后续 `sqliteReadRepairMs` 稳定超过 `12000ms`，应另起 SQLite 派生表读修复性能专项，重点拆分 prompt retrieval / safe search / event archive 修复耗时。
+
+下一步：
+
+- S71.12 阈值跟进已收束；后续如 `sqliteReadRepairMs` 再稳定越过 12000ms，另起 SQLite 派生表读修复性能专项。
+
 ### 2026-05-13
 
 工具：Codex、子代理只读审查。
@@ -223,7 +252,7 @@ S71 详细规划源头见 [DATABASE_GAMEPLAY_RESOLVER_ROADMAP.md](DATABASE_GAMEP
 
 - 新增 [DATABASE_GAMEPLAY_RESOLVER_ARCHIVE.md](DATABASE_GAMEPLAY_RESOLVER_ARCHIVE.md)，归档 S71.0-S71.12 的 resolver 输入、SQLite migration/maintenance、安全搜索、redacted player API、开发诊断 API、财政/城市政策、刑名、军务外交、压力事件、多 actor 场景、NPC 记忆、AI 调动审计和验收证据。
 - 同步 README、brief、architecture、动态数据库规划、S71 路线图、AI 控制矩阵和共享上下文，把 S71 从活动推进项收束为已归档专项；后续新开发应另起清晰小步骤。
-- 将 `scripts/dualModeAcceptance.js` 的 S67 large fixture 耗时阈值调到当前 S71 规模下的守门值：`fixtureGenerationMs` 从 5000ms 调整为 10000ms，`informationPanelMs` 从 1500ms 调整为 3000ms，`sqliteReadRepairMs` 从 3000ms 调整为 8000ms；注释说明这些阈值只吸收全量并发下的 Windows 本地 timing 噪声，仍守住规模、分页、修复和泄漏回归，不改变游戏行为、API、存档格式或 provider 权限。
+- 将 `scripts/dualModeAcceptance.js` 的 S67 large fixture 耗时阈值调到当前 S71 规模下的守门值：`fixtureGenerationMs` 从 5000ms 调整为 10000ms，`informationPanelMs` 从 1500ms 调整为 3000ms，`sqliteReadRepairMs` 从 3000ms 调整为 8000ms；2026-05-14 后续全量并发观测把 `sqliteReadRepairMs` 进一步调到 12000ms。注释说明这些阈值只吸收全量并发下的 Windows 本地 timing 噪声，仍守住规模、分页、修复和泄漏回归，不改变游戏行为、API、存档格式或 provider 权限。
 - 保持 S71 核心边界：JSON/Mock 默认可玩，SQLite local-only，AI 只能读 actor 可见 projection 并提交 proposal/request-adjudication，服务器 resolver/apply helper 裁决写入，hidden/raw/prompt/path/key 不进入玩家 API、prompt、搜索或浏览器面板。
 
 验证：
