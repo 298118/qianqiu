@@ -134,7 +134,7 @@
 | S71.9 | DONE | 多 actor 场景运行时：朝议、堂审、会盟、战役 scene-local time 与 actor proposal 编排 | 2026-05-13 | Codex / 子代理 | `6440614` |
 | S71.10 | DONE | NPC 记忆账本：高显著 NPC 长期记忆、人情债、恩怨、家族风险和背景 NPC heuristic | 2026-05-13 | Codex / 子代理 | `a88b429` |
 | S71.11 | DONE | AI 调动审计面板：工具摘要、拒绝原因、成本、公开结果和 hidden-safe 开发诊断，不泄漏 raw prompt/proposal | 2026-05-13 | Codex / 子代理 | `cf1abbf` |
-| S71.12 | DONE | S71 验收与归档：JSON/SQLite parity、Mock/no-key、provider smoke、browser smoke、hidden-token 和完整书生路径回归 | 2026-05-13 | Codex / 子代理 | 本次提交 |
+| S71.12 | DONE | S71 验收与归档：JSON/SQLite parity、Mock/no-key、provider smoke、browser smoke、hidden-token 和完整书生路径回归 | 2026-05-13 | Codex / 子代理 | `efa2c13` |
 
 ## 5. S68-S69：科举、读书、评卷与授官深化
 
@@ -217,7 +217,7 @@ S71 详细规划源头见 [DATABASE_GAMEPLAY_RESOLVER_ROADMAP.md](DATABASE_GAMEP
 
 步骤：S71.12 S71 验收与归档。
 
-提交：本次提交。
+提交：`efa2c13`。
 
 完成：
 
@@ -241,7 +241,7 @@ S71 详细规划源头见 [DATABASE_GAMEPLAY_RESOLVER_ROADMAP.md](DATABASE_GAMEP
 - S71.12 调整的是验收阈值和归档文档，不新增玩法运行时、API、存档字段、provider 写权或 SQLite 业务表。
 - `smoke:provider:long` 未作为阻断项运行；更长真实 provider 长跑、多工具流式实探和真实多 actor provider 场景应另立后续专项。
 - S71 resolver helper 已就绪，但更多自动接入普通回合长线调度的玩法仍需后续按小步骤显式设计和验证。
-- 提交前需执行只读子代理复审最终 diff 与验证证据。
+- 提交前只读子代理复审最终 diff 与验证证据，首轮 P2 路线图旧状态已修正并复查关闭；提交哈希回填为低风险纯文档更新。
 
 下一步：
 
