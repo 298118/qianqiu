@@ -10,7 +10,7 @@
 - 本地 vendor 文件应在 S72.4 接入时保存为 `public/vendor/pixi.min.js`，并同时保存 MIT license 说明或在台账中明确来源。S72.1 不提前提交第三方压缩文件。
 - `assetSetId` 首版固定为 `ink-map-v1`，manifest 路径固定为 `public/assets/maps/ink-map-manifest.json`。真实图片素材仍由 S72.3 生成、视觉审核和登记。
 - `mapRuntimeView` 只从安全 `mapContextView` 与玩家可见 route views 派生，显示坐标只服务 UI 布局，不代表 canonical 地理真值。
-- Gemini CLI 后续 S72.4 前端 patch 必须遵循本契约；Gemini 可以按任务修改或新增前端文件，但不运行 Git 命令、不提交、不推送、不创建 PR。Codex 在 S72.2 先实现后端 view 与测试，并负责最终 diff 审核、暂存和提交。
+- 2026-05-14 起，按用户要求停止与 Gemini CLI 共同开发；后续前端、后端、验证和提交均由 Codex 负责。本契约仍是地图运行时与前端接线的稳定边界。
 
 ## 2. 依赖治理记录
 
@@ -21,7 +21,7 @@
 - 版本或范围：固定 `7.4.3`。
 - 是否使用 `latest` 及理由：不使用。2026-05-14 通过 `npm view pixi.js version` 查得最新主版本为 `8.18.1`；S72 选择 `7.4.3` 是因为 7 系列有稳定 UMD 全量 bundle，适合当前无构建、传统 `<script>` 加载方式。
 - 引入步骤：S72.1 只批准版本与加载策略；S72.4 才能提交 `public/vendor/pixi.min.js` 和前端接线。
-- 负责人/工具：Codex 负责治理、下载来源核对、最终提交；Gemini CLI 可在 S72.4 使用已批准路径修改或新增前端文件，但不运行 Git 命令、不提交。
+- 负责人/工具：Codex 负责治理、下载来源核对、前端接线、验证和最终提交。
 - 用途：水墨地图 canvas 渲染、图层合成、marker、route、pressure effect、hit testing 和后续地图动效。
 - 替代的手写逻辑或人工流程：避免手写 canvas scene graph、texture cache、hit area、ticker 和 resize 生命周期。
 - 影响范围：browser、docs、后续 browser smoke；S72.1 不影响 server、storage、AI provider 或 npm install。
@@ -33,7 +33,7 @@
 - 安装与运行影响：S72.1 无 package 变更。S72.4 提交 vendor 后，`npm install && npm start` 仍不需要构建步骤。
 - 验证命令：S72.1 运行 `npm run check:docs-governance`、`node --test test/documentationGovernance.test.js`、`git diff --check`。S72.4 还需运行 `npm start` 或 browser smoke，并验证 canvas 非空、资源失败 fallback、窄屏不遮挡行动区。
 - 回滚策略：删除 `public/vendor/pixi.min.js`、地图脚本、地图 DOM/CSS 和 `mapRuntimeView` route 接线；保留原文字叙事、行动输入和 `mapContextView` 安全接口。
-- 文档落点：本文件、`docs/PIXIJS_INK_MAP_ROADMAP.md`、`docs/DEVELOPMENT_STEPS.md`、`docs/SHARED_CONTEXT.md`、`GEMINI.md`。
+- 文档落点：本文件、`docs/PIXIJS_INK_MAP_ROADMAP.md`、`docs/DEVELOPMENT_STEPS.md`、`docs/SHARED_CONTEXT.md`。
 - 决策：批准 `pixi.js@7.4.3` UMD、本地 vendor 优先、固定 CDN fallback、无 build step。
 - 后续复查：若未来升级 PixiJS 8 或改用 npm/bundler，必须重新走依赖治理并更新 README、brief、browser smoke 和回滚策略。
 
@@ -314,5 +314,5 @@ S72.3 前不得把未生成、未登记、未视觉审核的图片写入 manifes
 
 - S72.2：Codex 实现 `mapRuntimeView`、layout seed、测试和 route 接线。
 - S72.3：Codex 使用 `gpt-image-2` 生成首批素材，做视觉审核，更新 manifest 和素材台账。
-- S72.4：Gemini CLI 在本契约和已提交素材范围内实现前端 PixiJS shell，可以保存前端文件改动或新增必要前端文件，不运行 Git 命令，不创建 PR；Codex 审查 diff 后提交。
+- S72.4：已完成前端 PixiJS shell；后续前端维护由 Codex 在本契约和已提交素材范围内直接完成，并继续保持前端只读安全 view。
 - S72.5 以后：地图点击、局势簿联动、行动草稿和服务器 proposal 继续保持前端只读、服务器裁决。

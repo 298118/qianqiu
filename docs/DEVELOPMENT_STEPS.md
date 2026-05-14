@@ -1,6 +1,6 @@
 # 《千秋》活动路线图与进度台账
 
-本文件是 Codex 与 Gemini CLI 当前共同维护的活动路线图与进度台账。已完成路线不再在本文件展开长表或逐日实现记录；需要追溯时阅读对应归档：
+本文件是 Codex 当前维护的活动路线图与进度台账。已完成路线不再在本文件展开长表或逐日实现记录；需要追溯时阅读对应归档：
 
 - 第一阶段：[PHASE_ONE_ROADMAP_ARCHIVE.md](PHASE_ONE_ROADMAP_ARCHIVE.md)，验收见 [PHASE_ONE_ACCEPTANCE.md](PHASE_ONE_ACCEPTANCE.md)。
 - 第二阶段：[PHASE_TWO_ROADMAP_ARCHIVE.md](PHASE_TWO_ROADMAP_ARCHIVE.md)，验收见 [PHASE_TWO_ACCEPTANCE.md](PHASE_TWO_ACCEPTANCE.md)。
@@ -12,7 +12,7 @@
 - S70 AI prompt/tool/actor/多模型路由、AI 设置、官职月报、跳时、记忆、地图接口、provider AI-first smoke 和 JSON/SQLite parity：[AI_ORCHESTRATION_ARCHIVE.md](AI_ORCHESTRATION_ARCHIVE.md)。规划源头仍见 [AI_ORCHESTRATION_ROADMAP.md](AI_ORCHESTRATION_ROADMAP.md)。
 - S71 数据库玩法化、维护、安全检索、redacted player API、财政/刑名/军务外交服务器 resolver、压力事件、多 actor 场景、NPC 记忆账本、AI 调动审计和验收：[DATABASE_GAMEPLAY_RESOLVER_ARCHIVE.md](DATABASE_GAMEPLAY_RESOLVER_ARCHIVE.md)。规划源头仍见 [DATABASE_GAMEPLAY_RESOLVER_ROADMAP.md](DATABASE_GAMEPLAY_RESOLVER_ROADMAP.md)，resolver 输入契约见 [DATABASE_RESOLVER_INPUT_CONTRACT.md](DATABASE_RESOLVER_INPUT_CONTRACT.md)。
 
-当前活动路线图已完成到 S71 归档，并已启动 S72 PixiJS 水墨地图专项规划。S72 的专项任务书见 [PIXIJS_INK_MAP_ROADMAP.md](PIXIJS_INK_MAP_ROADMAP.md)，素材指南见 [MAP_ASSET_GUIDE.md](MAP_ASSET_GUIDE.md)，素材台账见 [MAP_ASSET_LEDGER.md](MAP_ASSET_LEDGER.md)。Gemini CLI 项目指引见仓库根目录 [GEMINI.md](../GEMINI.md)。后续开发继续只考虑本机 JSON/SQLite 持久化增强，远程存档、账号体系、多人同步、云端冲突解决和托管数据库不进入当前规划。
+当前活动路线图已完成到 S71 归档，并已启动 S72 PixiJS 水墨地图专项规划。S72 的专项任务书见 [PIXIJS_INK_MAP_ROADMAP.md](PIXIJS_INK_MAP_ROADMAP.md)，素材指南见 [MAP_ASSET_GUIDE.md](MAP_ASSET_GUIDE.md)，素材台账见 [MAP_ASSET_LEDGER.md](MAP_ASSET_LEDGER.md)。2026-05-14 起，按用户要求停止与 Gemini CLI 共同开发；后续开发全部由 Codex 负责。后续开发继续只考虑本机 JSON/SQLite 持久化增强，远程存档、账号体系、多人同步、云端冲突解决和托管数据库不进入当前规划。
 
 ## 1. 开发规范继承
 
@@ -29,11 +29,11 @@
 - 游戏规则、数值阈值、时间间隔、概率、UI 限制、fixture 规模和 prompt budget 等可调参数不得散落为魔法数字；新增或调整时优先集中到具名配置模块，例如 `src/config/GameConfig.js` 或更贴近领域的 `src/game/*Config.js`，并写清单位、范围和默认值意图。
 - 项目内协作文档、路线图、交接记录、领域注释和玩家可见文案优先使用中文。
 - 每个 coherent change 必须更新 `docs/SHARED_CONTEXT.md`，必要时同步 README、产品 brief、架构/契约文档，并用 Git 提交。
-- 关键决策不能只留在聊天记录里；会影响后续 Codex 或 Claude Code 接手的内容必须写入仓库文档。
+- 关键决策不能只留在聊天记录里；会影响后续 Codex 接手的内容必须写入仓库文档。
 
 ### 子代理使用规则
 
-- 用户已明确授权 Codex 和 Claude Code 在本仓库使用子代理；除非后续用户指令收窄或撤销，否则视为长期项目上下文。
+- 用户已明确授权 Codex 在本仓库使用子代理；除非后续用户指令收窄或撤销，否则视为长期项目上下文。
 - 对路线图阶段或步骤簇，应在可拆分为独立小步骤时主动使用子代理；不要把“较大步骤”理解为只能交给一个超大实现任务，优先按 `Sxx.y` 这类可审查粒度拆分。
 - 子代理实施任务必须有清晰职责边界和文件/模块归属；多个实施子代理并行时，写入范围应尽量互不重叠。
 - 每个实施子代理提示词必须明确：不得运行 `git add`、`git commit`、`git push` 或创建 PR；不得回滚他人改动；最终报告列出改动文件和验证命令。
@@ -70,7 +70,7 @@
 
 ## 2. 依赖、插件与开源参考策略
 
-当前专项继续继承 S46.1 的依赖、插件与开源参考治理。后续新增或升级 `package.json` 依赖、开发工具、外部服务 SDK、Codex/Gemini 协作工作流或开源参考时，必须先按 [依赖、插件与开源参考治理](DEPENDENCY_PLUGIN_GOVERNANCE.md) 记录和验证。
+当前专项继续继承 S46.1 的依赖、插件与开源参考治理。后续新增或升级 `package.json` 依赖、开发工具、外部服务 SDK、Codex 工作流或开源参考时，必须先按 [依赖、插件与开源参考治理](DEPENDENCY_PLUGIN_GOVERNANCE.md) 记录和验证。
 
 - 依赖或插件必须明显降低复杂度、提升可靠性、改善安全性、改善浏览器体验或提供成熟标准能力。
 - 记录必须说明用途、运行入口、测试覆盖、替代方案、许可证、维护状态、安全/隐私影响、Mock/no-key 影响、文档落点和回滚策略。
@@ -117,6 +117,7 @@
 | S72.5 | DONE | Gemini CLI，Codex 审核提交 | 地图与游戏系统深度联动 | 已完成地点、路线和事件点击选中态，tooltip 只读安全 `mapRuntimeView` ref/sourceRefs，可跳转已公开渲染的局势簿卡片；行动草稿仍只回填输入框，不直写状态 |
 | S72.6 | DONE | Gemini CLI，Codex 审核提交 | 水墨动效与视觉 polish | 已完成路线墨线呼吸、事件涟漪扩散、朱砂双圈选中态、tooltip/fallback 案头舆图视觉、reduced-motion 与可见性暂停守卫；Codex 已修正 Gemini patch 的脚本残片和路线动效 `NaN` 风险 |
 | S72.7 | DONE | Codex | 验收、安全与性能回归 | 已扩展 browser smoke 覆盖 PixiJS canvas 非空、资源失败静态降级、reduced-motion、桌面/窄屏无溢出、hidden/raw 防线和完整 Mock 主线 |
+| S72.7a | DONE | Codex | 协作模式切换为 Codex-only | 按用户要求停止后续 Gemini CLI 协作；删除 Gemini 专用上下文入口，并同步 `AGENTS.md`、`CLAUDE.md`、治理、brief、路线图、运行时契约、素材指南和共享上下文 |
 | S72.8 | TODO | Codex | S72 专项归档 | 完成后归档范围、风险和后续地图玩法，不把长实现记录留在活动台账 |
 
 ## 5. 进度记录
@@ -559,3 +560,34 @@
 下一步：
 
 - 执行 S72.8：归档 S72 PixiJS 水墨地图专项，压缩活动台账，记录后续地图玩法方向与剩余风险。
+
+### 2026-05-14
+
+工具：Codex，子代理只读复审。
+
+步骤：S72.7a 协作模式切换为 Codex-only。
+
+提交：本次提交。
+
+完成：
+
+- 按用户要求停止与 Gemini CLI 共同开发，后续开发全部由 Codex 承担。
+- 更新 `AGENTS.md`、`CLAUDE.md`、治理锚点、治理检查脚本、brief、S72 路线图、运行时契约、素材指南、共享上下文和本台账，把未来协作口径改为 Codex-only。
+- 删除 Gemini 专用上下文入口 `GEMINI.md` 与 `.geminiignore`。历史进度中已经发生的 Gemini patch 作为事实保留，不再作为未来协作规则。
+- 本轮不改运行时代码、API、provider schema、SQLite schema、存档格式、素材 manifest 或提示词。
+
+验证：
+
+- 已通过：`npm run check:docs-governance`。
+- 已通过：`node --test test/documentationGovernance.test.js`。
+- 已通过：`git diff --check`。
+- 已完成：只读子代理复审，未发现 P0/P1/P2。
+
+风险/遗留：
+
+- 本轮是文档和治理口径切换；历史归档与历史进度仍保留当时的 Gemini/Claude 事实描述。
+- S72.8 归档时应继续使用 Codex-only 口径，并避免重新引入 Gemini 前端交接流程。
+
+下一步：
+
+- 执行 S72.8：归档 S72 PixiJS 水墨地图专项，记录完成范围、已验证边界、剩余风险和后续地图玩法方向。

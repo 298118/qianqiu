@@ -6,7 +6,7 @@
 
 - `package.json` / `package-lock.json` 中的运行依赖和开发依赖。
 - 浏览器 smoke、provider smoke、文档/表格/演示等开发工具依赖。
-- Codex/Claude 工作流中会影响仓库开发方式的插件、脚本、MCP 或外部工具。
+- Codex 工作流中会影响仓库开发方式的插件、脚本、MCP 或外部工具。
 - 参考开源项目、示例代码、算法描述或设计素材，但不直接写入 `package.json` 的情况。
 - 新增外部服务 SDK、API 客户端或二进制运行时。
 
@@ -99,7 +99,7 @@
 依赖或插件变更至少更新：
 
 - `docs/DEVELOPMENT_STEPS.md`：记录步骤、原因、验证、风险、回滚和提交哈希。
-- `docs/SHARED_CONTEXT.md`：压缩成未来 Codex/Claude 需要知道的状态、验证和下一步。
+- `docs/SHARED_CONTEXT.md`：压缩成未来 Codex 需要知道的状态、验证和下一步。
 - `README.md`：当安装、启动、常用命令、技术栈或玩家/开发者体验改变时更新。
 - `docs/QIANQIU_DEVELOPMENT_BRIEF.md`：当依赖改变产品/架构约束、AI/provider 策略或验收标准时更新。
 - `docs/ARCHITECTURE.md`：当运行时形态、路由、状态、脚本或工具链改变时更新。

@@ -1,6 +1,6 @@
 # Shared AI Development Context
 
-这是 Codex 与 Gemini CLI 当前共用的精简交接板。详细历史请看 `docs/DEVELOPMENT_STEPS.md`、各阶段归档和专题契约文档；本文件只保留接手下一步所必需的状态、规则和内容保护边界。
+这是 Codex 当前使用的精简交接板。详细历史请看 `docs/DEVELOPMENT_STEPS.md`、各阶段归档和专题契约文档；本文件只保留接手下一步所必需的状态、规则和内容保护边界。
 
 ## Read First
 
@@ -21,8 +21,7 @@
 - AI providers: adapter-based Mock/OpenAI/DeepSeek/MiMo/MiMo+DeepSeek/Anthropic。`AI_PROVIDER=mock` 仍是默认可玩模式，即使本机存在真实 provider key 也不会自动改走真实模型；`mimo-deepseek` 下 narrator/科举出题仍优先 MiMo，domain_specialist/科举评卷和 critic/safety 在 DeepSeek key 可用时走 DeepSeek。
 - Storage: 默认 JSON session files under `data/sessions/`；可选 `STORAGE_ADAPTER=sqlite` 使用本地 `schema_migrations`、`world_sessions`、audit tables、`geo_*`、`people_*`、`office_*`、`event_archive_index`、`prompt_retrieval_index` 和 `safe_search_index`。SQLite 派生行只从 `world_sessions.world_state_json` 单向修复；raw business/audit rows 不是 route、prompt、browser、搜索或服务器裁决 truth source。
 - Roadmap status: S49-S67 本地数据库与大世界内容、S68-S69 科举深化、S70 AI 编排和 S71 数据库玩法化均已完成并归档。S72 PixiJS 水墨地图专项已完成 S72.1 依赖治理/runtime 契约、S72.2 后端 `mapRuntimeView`/layout seed/route payload/testing、S72.3 `ink-map-v1` 首批素材/manifest/台账、S72.4 前端 PixiJS 地图 shell、S72.5 地图/局势簿/行动草稿联动、S72.6 水墨动效/视觉 polish 和 S72.7 验收/安全/性能回归，任务书见 `docs/PIXIJS_INK_MAP_ROADMAP.md`，运行时契约见 `docs/PIXIJS_INK_MAP_RUNTIME_CONTRACT.md`，素材指南见 `docs/MAP_ASSET_GUIDE.md`，素材台账见 `docs/MAP_ASSET_LEDGER.md`。
-- Current collaboration: Codex 负责后端地图 view/API/schema、AI/server 权限、素材生成与台账、Gemini diff 审核、最终文档同步和提交；S72 地图 AI 生图统一由 Codex 使用 `gpt-image-2` 完成，AI 生成素材和第三方入库候选素材都必须由 Codex 做视觉审核，确认游戏基调、历史/水墨适配、可读性和同批一致性；Gemini CLI 负责前端 PixiJS patch、图层、动效、交互和浏览器验证说明，可以按任务修改或新增 scoped frontend 文件和必要前端上下文说明，但不得运行 `git add`、`git commit`、`git push` 或创建 PR，也不得自行生成或引入未经审核登记的素材。
-- Gemini context: 仓库根目录 `GEMINI.md` 是 Gemini CLI 的项目开发指引；`.geminiignore` 用于排除 `.env`、存档、审计、数据库、产物和依赖目录，避免 Gemini 读取敏感或大体积本地文件。
+- Current collaboration: 2026-05-14 起停止与 Gemini CLI 协作，后续开发全部由 Codex 承担。Codex 负责后端、前端、AI/server 权限、素材生成与台账、视觉审核、最终文档同步、验证和 Git 提交；S72 地图 AI 生图仍统一由 Codex 使用 `gpt-image-2` 完成，AI 生成素材和第三方入库候选素材都必须由 Codex 做视觉审核，确认游戏基调、历史/水墨适配、可读性和同批一致性。
 - Current local `.env`: 可能含用户提供的 provider keys。`.env` 被 Git 忽略，不能打印或提交。
 
 ## Core Invariants
@@ -50,7 +49,7 @@
 
 ## Subagent Discipline
 
-- 用户已授权 Codex 在本仓库使用子代理，除非后续指令撤销，否则视为长期项目上下文。当前协作对象 Gemini CLI 不是 Git 提交者；它可以修改或新增 scoped 前端文件并交付 patch、上下文说明与验证报告，Codex 负责审查 diff、验证、暂存和提交。
+- 用户已授权 Codex 在本仓库使用子代理，除非后续指令撤销，否则视为长期项目上下文。Gemini CLI 协作已停止，后续实施、复审、验证和提交均由 Codex 及 Codex 子代理完成。
 - 实施子代理只能做 scoped patches 和 focused verification；不得运行 `git add`、`git commit`、`git push` 或创建 PR。
 - 主代理负责整合、最终验证、共享文档同步和唯一 coherent commit。
 - 包含代码、测试、运行时行为、API/schema、提示词或验证工具变化的提交，暂存和提交前必须至少委派一个只读子代理审查最终 diff 与验证证据。
@@ -106,7 +105,6 @@ Important module areas:
 - `docs/PIXIJS_INK_MAP_ROADMAP.md`
 - `docs/MAP_ASSET_GUIDE.md`
 - `docs/MAP_ASSET_LEDGER.md`
-- `GEMINI.md`
 
 ## Current Work Note
 
@@ -122,6 +120,7 @@ Important module areas:
 - 2026-05-14：审查并收口 Gemini S72.5 前端联动 patch。`public/mapRenderer.js` 现在在地点、路线和事件涟漪点击时统一绘制选中圈，事件点击只携带安全 `mapRuntimeView` ref/sourceRefs 给 tooltip，且事件贴图 hitArea 不再用透明外框抢占周边 marker；素材异步加载完成后改走 panel 更新回调，避免 DOM 标签重复。`public/mapPanel.js` 只从安全 ref/sourceRefs 匹配已渲染的 `data-entity-id` / `data-event-id` 局势簿卡片，点击“查阅局势簿”会在局势簿现有 DOM 内切换 tab 可见性、重新定位已连接卡片并短暂高亮。行动草稿仍只把服务器 `actionDraft.actionText` 写入 `#action-input`，不自动提交、不调用后端 resolver、不直写状态；新增 `test/mapFrontendShell.test.js` 回归断言防止 unsafe selector、前端自行 turn fetch 和选中态漏接。验证已通过地图/manifest/runtime/route 聚焦测试、docs governance、`git diff --check`、浏览器临时端口手测和 `node --test test/dualModeAcceptanceScript.test.js`；完整 `npm test` 仅遇到既有 S67 large fixture 性能阈值波动 `fixtureGenerationMs 10658.028 > 10000`，单跑失败文件已通过。
 - 2026-05-14：审查并收口 Gemini S72.6 前端 polish patch。`public/mapRenderer.js` 新增路线墨线 alpha 呼吸、事件涟漪 scale/alpha 扩散、深朱砂双圈选中态、`prefers-reduced-motion` 降级，以及 `IntersectionObserver`/`visibilitychange` 可见性守卫；Codex 修正了 Gemini patch 中会导致脚本语法失败的末尾残片，并修正路线动效被通用 tick 写入 `baseScale` 导致 `NaN` 的风险。`public/styles.css` 将 tooltip、行动草稿按钮和 fallback 面板调整为纸色渐变、硬边与浅朱砂分隔线。新增 `test/mapFrontendShell.test.js` S72.6 回归断言，并保留 `S72.6_DELIVERY_REPORT.md` 作为 Gemini 交付说明。本轮不改后端、API/schema、SQLite、provider schema、prompt 或素材 manifest；验证已通过前端/manifest/runtime 聚焦测试、docs governance、`git diff --check`、本地 Mock 浏览器桌面/窄屏检查和单跑 `test/dualModeAcceptanceScript.test.js`。完整 `npm test` 仅遇到既有 S67 large fixture 性能阈值波动 `fixtureGenerationMs 10274.08 > 10000`，单跑失败文件已通过；只读子代理复审未发现 P0/P1/P2。
 - 2026-05-14：执行并完成 S72.7 PixiJS 地图验收、安全与性能回归。`scripts/browserSmoke.js` 现在真实检查地图面板、canvas 像素非空、label、动画数量、hidden/raw 文本、资源失败静态降级、`prefers-reduced-motion` 禁用动效、恢复读档/新页面恢复和桌面/窄屏布局。S72.7 browser smoke 捕获并修复了地图/书生面板挤压叙事区的问题：地图高度收束为 `clamp(200px, 24vh, 280px)`，桌面游戏态书生信息面板改为较短的可滚动摘要区，`narrative` 不再用固定 100% 高度。`public/mapRenderer.js` 新增只读 debug state、资源失败可观测状态、纸色 fallback base 和 `preserveDrawingBuffer` 以支持 canvas 非空验收；`public/mapPanel.js` 对未知 schemaVersion 降级等待并销毁旧 renderer/canvas，避免旧地图残留。本轮不改后端 API/schema、SQLite、provider schema、prompt 或素材 manifest；地图仍只读安全 `mapRuntimeView`，行动草稿仍需玩家提交普通回合。已通过聚焦 node tests、`npm run smoke:browser -- --screenshots artifacts/s72-browser-smoke`、docs governance、dual-mode storage-only、`git diff --check`；完整 `npm test` 仅遇到既有 S67 large fixture 性能阈值波动 `informationPanelMs 3258.724 > 3000`，随后单跑 `node --test test/dualModeAcceptanceScript.test.js` 已通过。提交前只读子代理复审最初发现 P2 旧 canvas 残留问题，已修复；无剩余 P0/P1/P2。
+- 2026-05-14：按用户要求停止与 Gemini CLI 共同开发，后续开发全部改为 Codex-only。已同步 `AGENTS.md`、`CLAUDE.md`、治理锚点、brief、路线图、S72 契约/素材文档和本交接板；删除 Gemini 专用上下文入口 `GEMINI.md` 与 `.geminiignore`。历史记录中已经发生的 Gemini patch 作为事实保留，但不再作为未来协作模式。本轮只改文档、治理检查脚本和 Gemini 专用上下文文件，不改运行时代码、API、provider schema、SQLite schema、素材 manifest 或提示词；纯文档/治理改动，已进行只读子代理复审。
 
 ## Next Recommended Step
 

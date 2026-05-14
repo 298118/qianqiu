@@ -290,7 +290,7 @@ data/sessions/
 
 ## 重要文档
 
-- [docs/SHARED_CONTEXT.md](docs/SHARED_CONTEXT.md)：Codex 与 Claude Code 共享交接板。
+- [docs/SHARED_CONTEXT.md](docs/SHARED_CONTEXT.md)：Codex 交接板。
 - [docs/QIANQIU_DEVELOPMENT_BRIEF.md](docs/QIANQIU_DEVELOPMENT_BRIEF.md)：产品目标、架构、数据契约和交付标准。
 - [docs/DEVELOPMENT_STEPS.md](docs/DEVELOPMENT_STEPS.md)：当前活动路线图与进度台账；S71 已完成验收归档，后续新开发应从新的小步骤继续。
 - [docs/DEVELOPMENT_GOVERNANCE.md](docs/DEVELOPMENT_GOVERNANCE.md)：稳定开发治理锚点。

@@ -216,15 +216,15 @@ OpenGameArt ink brush icon CC0
 - 性能：首屏地图资源可接受；图标与纹理不造成明显卡顿。
 - 可维护：每个资产能在台账中找到来源、生成 prompt 或参考记录。
 
-## 10. Gemini 与素材边界
+## 10. 地图素材边界
 
-Gemini CLI 可以使用 Codex 已提交到 `public/assets/maps/` 的素材和 manifest，但不得：
+2026-05-14 起，后续开发全部由 Codex 负责。任何地图前端或素材改动都只能使用已提交到 `public/assets/maps/` 的素材和 manifest；如需新增素材，仍由 Codex 按本指南生成、审核和登记。后续维护不得：
 
 - 自行下载并提交未经登记的历史地图。
 - 自行使用 AI 生图工具生成 S72 地图素材；AI 生图统一由 Codex 使用 `gpt-image-2` 完成。
 - 把网络图片 URL 直接写进前端运行时代码。
 - 把 `$CODEX_HOME`、下载目录或本地绝对路径写进 manifest。
-- 修改 `docs/MAP_ASSET_LEDGER.md` 声称某素材已授权，除非 Codex 已确认来源。
+- 修改 `docs/MAP_ASSET_LEDGER.md` 声称某素材已授权，除非已经完成来源确认和 Codex 视觉审核。
 - 生成或提交大体积二进制废稿。
 
-Gemini 如果发现缺素材，应在交付报告中列“需要 Codex 提供的素材清单”，由 Codex 生成、登记并提交。
+如果后续发现缺素材，应先在路线图或交接记录中列出“需要 Codex 提供的素材清单”，再由 Codex 生成、登记并提交。

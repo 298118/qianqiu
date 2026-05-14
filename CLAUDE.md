@@ -1,19 +1,21 @@
-# Claude Code Project Instructions
+# Legacy Claude Code Project Instructions
 
 This repository contains **Qianqiu / 千秋**, an AI-driven Chinese historical simulation text game.
 
-Before implementing anything, read [docs/SHARED_CONTEXT.md](docs/SHARED_CONTEXT.md), [docs/QIANQIU_DEVELOPMENT_BRIEF.md](docs/QIANQIU_DEVELOPMENT_BRIEF.md), and [docs/DEVELOPMENT_STEPS.md](docs/DEVELOPMENT_STEPS.md). Treat the shared context as the handoff board between Codex and Claude Code, the development brief as the canonical project brief, and the development steps file as the shared progress ledger.
+2026-05-14 起，按用户要求，本仓库后续开发全部由 Codex 负责；Claude Code 不再作为协作开发者参与。保留本文件只是为了让误读旧入口的工具看到同一条 Codex-only 规则。
+
+Before implementing anything, read [docs/SHARED_CONTEXT.md](docs/SHARED_CONTEXT.md), [docs/QIANQIU_DEVELOPMENT_BRIEF.md](docs/QIANQIU_DEVELOPMENT_BRIEF.md), and [docs/DEVELOPMENT_STEPS.md](docs/DEVELOPMENT_STEPS.md). Treat the shared context as the Codex handoff board, the development brief as the canonical project brief, and the development steps file as the shared progress ledger.
 
 Stable development governance is protected in [docs/DEVELOPMENT_GOVERNANCE.md](docs/DEVELOPMENT_GOVERNANCE.md). Do not delete or weaken those rules when rewriting roadmap or handoff documents; `npm run check:docs-governance` and `npm test` guard the protected content.
 
 ## Required Habits
 
 - Maintain project context continuously. Any important decision, changed assumption, new route, new state field, prompt change, or setup requirement must be written back into the repository.
-- Keep Claude Code and Codex synchronized. Before finishing every coherent change, update [docs/SHARED_CONTEXT.md](docs/SHARED_CONTEXT.md) with the current state, important decisions, verification, and next recommended step.
+- Keep future Codex sessions synchronized. Before finishing every coherent change, update [docs/SHARED_CONTEXT.md](docs/SHARED_CONTEXT.md) with the current state, important decisions, verification, and next recommended step.
 - Update [docs/DEVELOPMENT_STEPS.md](docs/DEVELOPMENT_STEPS.md) whenever a roadmap step starts, completes, blocks, or changes scope. Record the step ID, what changed, verification, and commit hash.
 - Save each coherent change in local Git. Check status first, make the change, verify it, then commit it with a descriptive message.
-- The user has explicitly authorized Codex and Claude Code to use subagents for this repository. Treat that authorization as durable project context unless a newer user instruction narrows or revokes it.
-- Codex and Claude should use subagents proactively for roadmap phases or step clusters when the work can be split into independent small steps. For example, a phase such as S25 may have S25.1, S25.2, and S25.3 handled by separate subagents if their file ownership and verification responsibilities are clear.
+- The user has explicitly authorized Codex to use subagents for this repository. Treat that authorization as durable project context unless a newer user instruction narrows or revokes it.
+- Codex should use subagents proactively for roadmap phases or step clusters when the work can be split into independent small steps. For example, a phase such as S25 may have S25.1, S25.2, and S25.3 handled by separate subagents if their file ownership and verification responsibilities are clear.
 - Do not interpret "larger step" as only one oversized implementation task. The preferred delegation grain is often a roadmap substep inside a larger phase, such as one agent owning S25.1 smoke scripts while another investigates S25.2 streaming compatibility.
 - Subagents may only produce scoped patches and focused verification reports. They must not run `git add`, `git commit`, `git push`, or create pull requests.
 - Delegation prompts must assign clear file/module ownership, tell subagents not to revert others' edits, and ask them to report changed files plus verification commands. The main agent remains responsible for reviewing diffs, resolving integration issues, updating shared docs, running final verification, and making the single coherent commit.

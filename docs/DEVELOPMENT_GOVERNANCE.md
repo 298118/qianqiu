@@ -1,6 +1,6 @@
 # 《千秋》开发治理规范
 
-本文件是 Codex 与 Claude Code 共同使用的开发规范锚点。`AGENTS.md`、`CLAUDE.md`、`docs/SHARED_CONTEXT.md`、`docs/QIANQIU_DEVELOPMENT_BRIEF.md` 和 `docs/DEVELOPMENT_STEPS.md` 可以保留摘要，但不得删弱本文件的必守规则。
+本文件是 Codex 使用的开发规范锚点。`AGENTS.md`、`CLAUDE.md`、`docs/SHARED_CONTEXT.md`、`docs/QIANQIU_DEVELOPMENT_BRIEF.md` 和 `docs/DEVELOPMENT_STEPS.md` 可以保留摘要，但不得删弱本文件的必守规则。
 
 `scripts/checkGovernanceDocs.js` 和 `test/documentationGovernance.test.js` 会检查本文件和活动路线图中的保护段落。修改下方保护段时，必须同步更新检查脚本、共享上下文和路线图进度记录。
 
@@ -10,7 +10,7 @@
 
 - 每次开发开始前读取 `AGENTS.md` 或 `CLAUDE.md`、`docs/SHARED_CONTEXT.md`、`docs/QIANQIU_DEVELOPMENT_BRIEF.md` 和 `docs/DEVELOPMENT_STEPS.md`，并先执行 `git status --short`。
 - 每个 coherent change 必须更新 `docs/SHARED_CONTEXT.md`；开始、完成、阻塞或调整路线图步骤时必须更新 `docs/DEVELOPMENT_STEPS.md`，写明步骤 ID、完成内容、验证结果和提交哈希。
-- 关键决策不能只留在聊天记录里；会影响后续 Codex 或 Claude Code 接手的内容必须写入仓库文档。
+- 关键决策不能只留在聊天记录里；会影响后续 Codex 接手的内容必须写入仓库文档。
 - 使用 Git 保存每个 coherent change。提交前确认工作树、验证结果和最终回复描述一致，不提交 `.env`、`data/sessions/*.json`、`node_modules/` 或密钥。
 - 保持 `npm install && npm start` 可运行，默认访问 `http://localhost:3000`；Mock AI 必须默认完整可玩，真实 provider 只作为可选配置。
 - 不破坏完整书生路径：`scholar -> child_exam -> provincial_exam -> metropolitan_exam -> palace_exam -> official`。
@@ -21,7 +21,7 @@
 
 ## 子代理纪律
 
-- 用户已明确授权 Codex 和 Claude Code 在本仓库使用子代理；除非后续用户指令收窄或撤销，否则视为长期项目上下文。
+- 用户已明确授权 Codex 在本仓库使用子代理；除非后续用户指令收窄或撤销，否则视为长期项目上下文。
 - 对路线图阶段或步骤簇，应在可拆分为独立小步骤时主动使用子代理；优先按 `Sxx.y` 这类可审查粒度拆分，而不是把“大步”交给一个超大任务。
 - 子代理实施任务必须有清晰职责边界和文件/模块归属；多个实施子代理并行时，写入范围应尽量互不重叠。
 - 每个实施子代理提示词必须明确：不得运行 `git add`、`git commit`、`git push` 或创建 PR；不得回滚他人改动；最终报告列出改动文件和验证命令。
@@ -32,7 +32,7 @@
 
 ## 依赖、插件与开源参考
 
-- 新增或升级 `package.json` 依赖、开发工具、外部服务 SDK、Codex/Claude 插件工作流或开源参考时，必须按 [依赖、插件与开源参考治理](DEPENDENCY_PLUGIN_GOVERNANCE.md) 记录和验证。
+- 新增或升级 `package.json` 依赖、开发工具、外部服务 SDK、Codex 插件工作流或开源参考时，必须按 [依赖、插件与开源参考治理](DEPENDENCY_PLUGIN_GOVERNANCE.md) 记录和验证。
 - 记录必须说明用途、运行入口、测试覆盖、替代方案、许可证、维护状态、安全/隐私影响、Mock/no-key 影响、文档落点和回滚策略。
 - 前端继续保持无构建流程，除非活动路线图或后续明确步骤批准升级。
 - 核心游戏规则、时间推进、科举晋级、状态边界、作弊惩罚、官职任免和持久化不能完全交给模型或黑箱库。

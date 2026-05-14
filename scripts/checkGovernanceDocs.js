@@ -63,7 +63,7 @@ function runGovernanceChecks() {
     "docs/DEVELOPMENT_GOVERNANCE.md protected block",
     canonicalBlock,
     [
-      "Codex 和 Claude Code",
+      "用户已明确授权 Codex 在本仓库使用子代理",
       "git status --short",
       "关键决策不能只留在聊天记录里",
       "Mock AI 必须默认完整可玩",
@@ -97,7 +97,7 @@ function runGovernanceChecks() {
     roadmapBlock,
     [
       "docs/DEVELOPMENT_GOVERNANCE.md",
-      "Codex 和 Claude Code",
+      "用户已明确授权 Codex 在本仓库使用子代理",
       "关键决策不能只留在聊天记录里",
       "Mock AI 默认完整可玩",
       "scholar -> child_exam -> provincial_exam -> metropolitan_exam -> palace_exam -> official",
