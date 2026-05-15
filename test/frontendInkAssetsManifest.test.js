@@ -8,6 +8,7 @@ const repoRoot = path.join(__dirname, "..");
 const manifestPath = path.join(repoRoot, "public", "assets", "ui", "ink-ui-manifest.json");
 const ledgerPath = path.join(repoRoot, "docs", "FRONTEND_ASSET_LEDGER.md");
 const homeTransparencyQaPath = path.join(repoRoot, "public", "assets", "ui", "home", "home-transparency-qa-v1.json");
+const portraitBaselineQaPath = path.join(repoRoot, "public", "assets", "ui", "portraits", "portrait-baseline-qa-v1.json");
 
 const FORBIDDEN_SECRET_OR_LOCAL_PATH =
   /(OPENAI_API_KEY|DEEPSEEK_API_KEY|MIMO_API_KEY|ANTHROPIC_API_KEY|sk-[A-Za-z0-9_-]{6,}|tp-[A-Za-z0-9_-]{6,}|[A-Za-z]:[\\/]|file:\/\/|data:|data[\\/](?:sessions|audit))/i;
@@ -202,7 +203,7 @@ test("S73.2 ink UI manifest fixes schema, safety, fallback, and portrait policie
   });
 
   assert.equal(Array.isArray(manifest.assets), true);
-  assert.equal(manifest.assets.length, 38, "S73.3-S73.6 UI assets are active");
+  assert.equal(manifest.assets.length, 62, "S73.3-S73.7 UI assets are active");
 
   const phaseCounts = manifest.assets.reduce((counts, asset) => {
     counts[asset.phase] = (counts[asset.phase] || 0) + 1;
@@ -212,9 +213,10 @@ test("S73.2 ink UI manifest fixes schema, safety, fallback, and portrait policie
   assert.equal(phaseCounts["S73.4"], 6);
   assert.equal(phaseCounts["S73.5"], 10);
   assert.equal(phaseCounts["S73.6"], 6);
+  assert.equal(phaseCounts["S73.7"], 24);
 
   for (const asset of manifest.assets) {
-    assert.equal(["S73.3", "S73.4", "S73.5", "S73.6"].includes(asset.phase), true, asset.id);
+    assert.equal(["S73.3", "S73.4", "S73.5", "S73.6", "S73.7"].includes(asset.phase), true, asset.id);
     assert.equal(manifest.allowedCategories.includes(asset.category), true, asset.id);
     if (asset.phase === "S73.3") assert.equal(asset.category, "material", asset.id);
     if (asset.phase === "S73.4") assert.equal(asset.usage.includes("home"), true, asset.id);
@@ -238,6 +240,37 @@ test("S73.2 ink UI manifest fixes schema, safety, fallback, and portrait policie
       assert.equal(typeof asset.roleStyle.colorWeightsPercent, "object", asset.id);
       assert.equal(Array.isArray(asset.roleStyle.panelMaterials), true, asset.id);
       assert.equal(Array.isArray(asset.roleStyle.avoid), true, asset.id);
+    }
+    if (asset.phase === "S73.7") {
+      assert.equal(asset.category, "portrait", asset.id);
+      assert.equal(asset.subcategory, "portrait_style_baseline", asset.id);
+      assert.equal(asset.dimensions.width, 1024, asset.id);
+      assert.equal(asset.dimensions.height, 1536, asset.id);
+      assert.equal(asset.transparent, false, asset.id);
+      assert.equal(asset.portraitRef, asset.id, asset.id);
+      assert.equal(asset.portraitRef.startsWith(manifest.portraitPolicy.portraitRefPrefix), true, asset.id);
+      assert.equal(manifest.roleCatalog.includes(asset.role), true, asset.id);
+      assert.equal(["masculine", "feminine"].includes(asset.genderPresentation), true, asset.id);
+      assert.equal(asset.ageBand.startsWith("adult"), true, asset.id);
+      assert.equal(asset.statusVariant, "baseline", asset.id);
+      assert.equal(Array.isArray(asset.identityTags), true, asset.id);
+      assert.equal(Array.isArray(asset.emotionTags), true, asset.id);
+      assertSafeUiAssetPath(asset.lowResPlaceholderPath, `${asset.id}.lowResPlaceholderPath`);
+      assert.equal(asset.fallbackRef, "fallback-role-silhouette-v1", asset.id);
+      assert.deepEqual(asset.lazyLoad, {
+        group: "portrait_baseline_s73_7",
+        allowEagerLoad: false,
+        thumbnailFirst: true,
+        lowResPlaceholder: true,
+        maxInitialPortraits: 8
+      });
+      const placeholderPath = resolveUiAssetPath(asset.lowResPlaceholderPath);
+      assert.equal(fs.existsSync(placeholderPath), true, asset.lowResPlaceholderPath);
+      const placeholderInfo = readImageInfo(placeholderPath);
+      assert.equal(placeholderInfo.width, 64, asset.id);
+      assert.equal(placeholderInfo.height, 96, asset.id);
+      assert.equal(asset.performance.lowResPlaceholderBytes, fs.statSync(placeholderPath).size, asset.id);
+      assert.equal(asset.performance.thumbnailBytes <= asset.performance.thumbnailTargetMaxBytes, true, asset.id);
     }
     assert.equal(manifest.runtimeUsableReviewStatuses.includes(asset.reviewStatus), true, asset.id);
     assertSafeUiAssetPath(asset.path, `${asset.id}.path`);
@@ -293,7 +326,31 @@ test("S73.2 ink UI manifest fixes schema, safety, fallback, and portrait policie
     "ui-role-official-duty-room-v1",
     "ui-role-minister-palace-desk-v1",
     "ui-role-general-frontier-tent-v1",
-    "ui-role-emperor-imperial-desk-v1"
+    "ui-role-emperor-imperial-desk-v1",
+    "portrait-player-scholar-m01-v1",
+    "portrait-player-juren-m01-v1",
+    "portrait-player-jinshi-m01-v1",
+    "portrait-player-official-junior-m01-v1",
+    "portrait-npc-magistrate-m01-v1",
+    "portrait-npc-clerk-m01-v1",
+    "portrait-npc-ministry-official-m01-v1",
+    "portrait-npc-grand-minister-m01-v1",
+    "portrait-npc-general-m01-v1",
+    "portrait-npc-regent-m01-v1",
+    "portrait-npc-emperor-m01-v1",
+    "portrait-npc-teacher-m01-v1",
+    "portrait-player-scholar-f01-v1",
+    "portrait-npc-gentry-woman-f01-v1",
+    "portrait-npc-female-official-f01-v1",
+    "portrait-npc-palace-attendant-f01-v1",
+    "portrait-npc-court-lady-high-f01-v1",
+    "portrait-npc-examiner-f01-v1",
+    "portrait-npc-merchant-f01-v1",
+    "portrait-npc-commoner-healer-f01-v1",
+    "portrait-npc-exam-peer-m01-v1",
+    "portrait-npc-examiner-m01-v1",
+    "portrait-npc-local-gentry-m01-v1",
+    "portrait-npc-storyteller-m01-v1",
   ]) {
     assert.equal(assetIds.has(requiredId), true, requiredId);
   }
@@ -331,6 +388,7 @@ test("S73.2 ink UI manifest fixes schema, safety, fallback, and portrait policie
     assert.ok(asset, requiredId);
     assert.equal(asset.role, requiredRole, requiredId);
   }
+
 });
 
 test("S73.4 transparent home assets keep a current transparency QA pass", () => {
@@ -361,6 +419,41 @@ test("S73.4 transparent home assets keep a current transparency QA pass", () => 
     assert.equal(entry.metrics.borderVisibleAlphaPixels <= entry.metrics.maxAllowedBorderVisibleAlphaPixels, true, requiredId);
     assert.equal(entry.metrics.highSaturationGreenOrMagentaPixels <= entry.metrics.maxAllowedHighSaturationPixels, true, requiredId);
     assert.equal(entry.metrics.hardAlphaJumpPixels <= entry.metrics.maxAllowedHardAlphaJumpPixels, true, requiredId);
+  }
+});
+
+test("S73.7 portrait baseline QA records approved adult-safe portraits", () => {
+  const qaText = fs.readFileSync(portraitBaselineQaPath, "utf8");
+  assert.doesNotMatch(qaText, FORBIDDEN_MANIFEST_REMOTE_OR_LOCAL_PATH);
+  assert.doesNotMatch(qaText, FORBIDDEN_ASSET_VALUE);
+  const qa = JSON.parse(qaText);
+
+  assert.equal(qa.schemaVersion, 1);
+  assert.equal(qa.phase, "S73.7");
+  assert.equal(qa.reviewedBy, "Codex");
+  assert.equal(qa.assets.length, 24);
+  assert.equal(qa.visualReviewSummary.includes("成人端庄"), true);
+  assert.equal(qa.visualReviewSummary.includes("无露骨"), true);
+  assert.equal(qa.visualReviewSummary.includes("可读文字"), true);
+
+  const manifest = readJson(manifestPath);
+  const portraitAssets = new Map(manifest.assets.filter((asset) => asset.phase === "S73.7").map((asset) => [asset.id, asset]));
+  for (const entry of qa.assets) {
+    const asset = portraitAssets.get(entry.id);
+    assert.ok(asset, entry.id);
+    assert.equal(entry.path, asset.path, entry.id);
+    assert.equal(entry.thumbnailPath, asset.thumbnailPath, entry.id);
+    assert.equal(entry.lowResPlaceholderPath, asset.lowResPlaceholderPath, entry.id);
+    for (const field of ["path", "thumbnailPath", "lowResPlaceholderPath"]) {
+      assertSafeUiAssetPath(entry[field], `${entry.id}.${field}`);
+      assert.equal(fs.existsSync(resolveUiAssetPath(entry[field])), true, `${entry.id}.${field}`);
+    }
+    assert.equal(entry.bytes, fs.statSync(resolveUiAssetPath(entry.path)).size, entry.id);
+    assert.equal(entry.thumbnailBytes, fs.statSync(resolveUiAssetPath(entry.thumbnailPath)).size, entry.id);
+    assert.equal(entry.lowResPlaceholderBytes, fs.statSync(resolveUiAssetPath(entry.lowResPlaceholderPath)).size, entry.id);
+    assert.equal(entry.sha256, sha256File(resolveUiAssetPath(entry.path)), entry.id);
+    assert.equal(entry.thumbnailSha256, sha256File(resolveUiAssetPath(entry.thumbnailPath)), entry.id);
+    assert.equal(entry.lowResPlaceholderSha256, sha256File(resolveUiAssetPath(entry.lowResPlaceholderPath)), entry.id);
   }
 });
 
@@ -405,7 +498,14 @@ test("S73.2 frontend asset ledger records manifest, fallback, portrait, and sour
     "ui-role-official-duty-room-v1",
     "ui-role-minister-palace-desk-v1",
     "ui-role-general-frontier-tent-v1",
-    "ui-role-emperor-imperial-desk-v1"
+    "ui-role-emperor-imperial-desk-v1",
+    "portrait-player-scholar-m01-v1",
+    "portrait-player-scholar-f01-v1",
+    "portrait-npc-female-official-f01-v1",
+    "portrait-npc-examiner-m01-v1",
+    "portrait-baseline-qa-v1.json",
+    "portrait_baseline_s73_7",
+    "fallback-ink-motion-static-v1"
   ]) {
     assert.equal(ledgerText.includes(requiredText), true, requiredText);
   }

@@ -441,6 +441,8 @@ Manifest 示例：
 
 首轮数量：24-40 张风格基准，为 S73.10 的 300-400 张全量生产锁定审美、安全、裁切和 manifest 规则。
 
+执行结果：S73.7 已完成 24 张基准立绘，统一为 1024x1536 WebP、384x576 缩略图和 64x96 低清占位，登记在 `public/assets/ui/portraits/`、`public/assets/ui/thumbs/`、`public/assets/ui/portraits/placeholders/`、`public/assets/ui/ink-ui-manifest.json`、`docs/FRONTEND_ASSET_LEDGER.md` 和 `public/assets/ui/portraits/portrait-baseline-qa-v1.json`。本步采用极淡宣纸底而非强制透明，先锁定小尺寸可读性、成人端庄安全边界、`portraitRef`、fallback 与懒加载规则；S73.10 可再按全量池需求补透明或状态变体。
+
 实现功能：
 
 - 玩家基准：成年男女书生、成年男女入仕官员、成年男女将领、成年男女皇帝/摄政视角、成年男女地方官/大臣。

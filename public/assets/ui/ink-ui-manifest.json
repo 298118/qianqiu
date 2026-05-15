@@ -144,7 +144,14 @@
     "npc_military",
     "npc_merchant",
     "npc_court",
-    "npc_commoner"
+    "npc_commoner",
+    "npc_clerk",
+    "npc_gentry",
+    "npc_exam_peer",
+    "npc_regent",
+    "npc_female_official",
+    "npc_palace_attendant",
+    "npc_court_lady_high"
   ],
   "fallbackCatalog": [
     {
@@ -3162,7 +3169,2311 @@
         "thumbnailBytes": 8322
       },
       "ledgerId": "ui-role-emperor-imperial-desk-v1"
+    },
+    {
+      "id": "portrait-player-scholar-m01-v1",
+      "version": 1,
+      "phase": "S73.7",
+      "category": "portrait",
+      "subcategory": "portrait_style_baseline",
+      "usage": [
+        "people_page",
+        "game_main",
+        "archive_page"
+      ],
+      "role": "scholar",
+      "scene": null,
+      "portraitRef": "portrait-player-scholar-m01-v1",
+      "genderPresentation": "masculine",
+      "ageBand": "adult_young",
+      "roleStage": "student",
+      "statusVariant": "baseline",
+      "emotionVariant": "neutral",
+      "identityTags": [
+        "player",
+        "scholar",
+        "book",
+        "blue_gray_robe"
+      ],
+      "emotionTags": [
+        "neutral",
+        "baseline"
+      ],
+      "path": "/assets/ui/portraits/portrait-player-scholar-m01-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-portrait-player-scholar-m01-v1.webp",
+      "lowResPlaceholderPath": "/assets/ui/portraits/placeholders/placeholder-portrait-player-scholar-m01-v1.webp",
+      "fallbackRef": "fallback-role-silhouette-v1",
+      "dimensions": {
+        "width": 1024,
+        "height": 1536
+      },
+      "aspectRatio": "1024:1536",
+      "format": "webp",
+      "transparent": false,
+      "safeArea": {
+        "x": 0.12,
+        "y": 0.04,
+        "width": 0.76,
+        "height": 0.88
+      },
+      "focalPoint": {
+        "x": 0.5,
+        "y": 0.28
+      },
+      "mobileCrop": {
+        "mode": "center_crop_or_contain",
+        "keepSafeArea": true,
+        "notes": "窄屏人物卡保留头冠、面部、上身衣纹和身份道具，不裁断手部或袖缘。"
+      },
+      "lazyLoad": {
+        "group": "portrait_baseline_s73_7",
+        "allowEagerLoad": false,
+        "thumbnailFirst": true,
+        "lowResPlaceholder": true,
+        "maxInitialPortraits": 8
+      },
+      "source": {
+        "type": "ai_generated",
+        "tool": "Codex imagegen",
+        "model": "gpt-image-2",
+        "generatedAt": "2026-05-15",
+        "promptSummary": "寒窗书生，青布儒衫、素冠、书卷在手，清俊沉静，锁定书生玩家基准。"
+      },
+      "license": {
+        "type": "ai_generated_project_asset",
+        "commercialUseConfirmed": false,
+        "summary": "原创 AI 生成素材，当前仅个人游玩/开发使用；未做公开商用确认。"
+      },
+      "reviewStatus": "approved",
+      "visualReview": {
+        "reviewedBy": "Codex",
+        "reviewedAt": "2026-05-15",
+        "status": "approved",
+        "summary": "通过：成人端庄，身份符号清楚，水墨淡彩与极淡宣纸底同批一致；中小尺寸仍能辨认脸部、冠服和主要身份道具。"
+      },
+      "safetyReview": {
+        "reviewedBy": "Codex",
+        "reviewedAt": "2026-05-15",
+        "status": "approved",
+        "summary": "通过：无露骨、挑逗、幼态、现代物、水印、徽标、可读文字、本地路径、key、raw/hidden 内容或未公开剧情事实；人物道具只作身份提示。"
+      },
+      "performance": {
+        "bytes": 207110,
+        "targetMaxBytes": 614400,
+        "thumbnailBytes": 17254,
+        "thumbnailTargetMaxBytes": 256000,
+        "lowResPlaceholderBytes": 470
+      },
+      "ledgerId": "portrait-player-scholar-m01-v1"
+    },
+    {
+      "id": "portrait-player-juren-m01-v1",
+      "version": 1,
+      "phase": "S73.7",
+      "category": "portrait",
+      "subcategory": "portrait_style_baseline",
+      "usage": [
+        "people_page",
+        "game_main",
+        "archive_page"
+      ],
+      "role": "scholar",
+      "scene": null,
+      "portraitRef": "portrait-player-juren-m01-v1",
+      "genderPresentation": "masculine",
+      "ageBand": "adult_young",
+      "roleStage": "juren",
+      "statusVariant": "baseline",
+      "emotionVariant": "calm_proud",
+      "identityTags": [
+        "player",
+        "juren",
+        "exam",
+        "formal_scholar"
+      ],
+      "emotionTags": [
+        "calm_proud",
+        "baseline"
+      ],
+      "path": "/assets/ui/portraits/portrait-player-juren-m01-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-portrait-player-juren-m01-v1.webp",
+      "lowResPlaceholderPath": "/assets/ui/portraits/placeholders/placeholder-portrait-player-juren-m01-v1.webp",
+      "fallbackRef": "fallback-role-silhouette-v1",
+      "dimensions": {
+        "width": 1024,
+        "height": 1536
+      },
+      "aspectRatio": "1024:1536",
+      "format": "webp",
+      "transparent": false,
+      "safeArea": {
+        "x": 0.12,
+        "y": 0.04,
+        "width": 0.76,
+        "height": 0.88
+      },
+      "focalPoint": {
+        "x": 0.5,
+        "y": 0.28
+      },
+      "mobileCrop": {
+        "mode": "center_crop_or_contain",
+        "keepSafeArea": true,
+        "notes": "窄屏人物卡保留头冠、面部、上身衣纹和身份道具，不裁断手部或袖缘。"
+      },
+      "lazyLoad": {
+        "group": "portrait_baseline_s73_7",
+        "allowEagerLoad": false,
+        "thumbnailFirst": true,
+        "lowResPlaceholder": true,
+        "maxInitialPortraits": 8
+      },
+      "source": {
+        "type": "ai_generated",
+        "tool": "Codex imagegen",
+        "model": "gpt-image-2",
+        "generatedAt": "2026-05-15",
+        "promptSummary": "乡试举人，素雅襕衫和无字卷轴，意气初成但不张扬。"
+      },
+      "license": {
+        "type": "ai_generated_project_asset",
+        "commercialUseConfirmed": false,
+        "summary": "原创 AI 生成素材，当前仅个人游玩/开发使用；未做公开商用确认。"
+      },
+      "reviewStatus": "approved",
+      "visualReview": {
+        "reviewedBy": "Codex",
+        "reviewedAt": "2026-05-15",
+        "status": "approved",
+        "summary": "通过：成人端庄，身份符号清楚，水墨淡彩与极淡宣纸底同批一致；中小尺寸仍能辨认脸部、冠服和主要身份道具。"
+      },
+      "safetyReview": {
+        "reviewedBy": "Codex",
+        "reviewedAt": "2026-05-15",
+        "status": "approved",
+        "summary": "通过：无露骨、挑逗、幼态、现代物、水印、徽标、可读文字、本地路径、key、raw/hidden 内容或未公开剧情事实；人物道具只作身份提示。"
+      },
+      "performance": {
+        "bytes": 178322,
+        "targetMaxBytes": 614400,
+        "thumbnailBytes": 15916,
+        "thumbnailTargetMaxBytes": 256000,
+        "lowResPlaceholderBytes": 398
+      },
+      "ledgerId": "portrait-player-juren-m01-v1"
+    },
+    {
+      "id": "portrait-player-jinshi-m01-v1",
+      "version": 1,
+      "phase": "S73.7",
+      "category": "portrait",
+      "subcategory": "portrait_style_baseline",
+      "usage": [
+        "people_page",
+        "game_main",
+        "archive_page"
+      ],
+      "role": "scholar",
+      "scene": null,
+      "portraitRef": "portrait-player-jinshi-m01-v1",
+      "genderPresentation": "masculine",
+      "ageBand": "adult_young",
+      "roleStage": "jinshi",
+      "statusVariant": "baseline",
+      "emotionVariant": "focused",
+      "identityTags": [
+        "player",
+        "jinshi",
+        "new_success",
+        "formal_scholar"
+      ],
+      "emotionTags": [
+        "focused",
+        "baseline"
+      ],
+      "path": "/assets/ui/portraits/portrait-player-jinshi-m01-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-portrait-player-jinshi-m01-v1.webp",
+      "lowResPlaceholderPath": "/assets/ui/portraits/placeholders/placeholder-portrait-player-jinshi-m01-v1.webp",
+      "fallbackRef": "fallback-role-silhouette-v1",
+      "dimensions": {
+        "width": 1024,
+        "height": 1536
+      },
+      "aspectRatio": "1024:1536",
+      "format": "webp",
+      "transparent": false,
+      "safeArea": {
+        "x": 0.12,
+        "y": 0.04,
+        "width": 0.76,
+        "height": 0.88
+      },
+      "focalPoint": {
+        "x": 0.5,
+        "y": 0.28
+      },
+      "mobileCrop": {
+        "mode": "center_crop_or_contain",
+        "keepSafeArea": true,
+        "notes": "窄屏人物卡保留头冠、面部、上身衣纹和身份道具，不裁断手部或袖缘。"
+      },
+      "lazyLoad": {
+        "group": "portrait_baseline_s73_7",
+        "allowEagerLoad": false,
+        "thumbnailFirst": true,
+        "lowResPlaceholder": true,
+        "maxInitialPortraits": 8
+      },
+      "source": {
+        "type": "ai_generated",
+        "tool": "Codex imagegen",
+        "model": "gpt-image-2",
+        "generatedAt": "2026-05-15",
+        "promptSummary": "新科进士，衣冠更整肃，淡金与杏色气息提示入仕前夜。"
+      },
+      "license": {
+        "type": "ai_generated_project_asset",
+        "commercialUseConfirmed": false,
+        "summary": "原创 AI 生成素材，当前仅个人游玩/开发使用；未做公开商用确认。"
+      },
+      "reviewStatus": "approved",
+      "visualReview": {
+        "reviewedBy": "Codex",
+        "reviewedAt": "2026-05-15",
+        "status": "approved",
+        "summary": "通过：成人端庄，身份符号清楚，水墨淡彩与极淡宣纸底同批一致；中小尺寸仍能辨认脸部、冠服和主要身份道具。"
+      },
+      "safetyReview": {
+        "reviewedBy": "Codex",
+        "reviewedAt": "2026-05-15",
+        "status": "approved",
+        "summary": "通过：无露骨、挑逗、幼态、现代物、水印、徽标、可读文字、本地路径、key、raw/hidden 内容或未公开剧情事实；人物道具只作身份提示。"
+      },
+      "performance": {
+        "bytes": 168874,
+        "targetMaxBytes": 614400,
+        "thumbnailBytes": 14826,
+        "thumbnailTargetMaxBytes": 256000,
+        "lowResPlaceholderBytes": 382
+      },
+      "ledgerId": "portrait-player-jinshi-m01-v1"
+    },
+    {
+      "id": "portrait-player-official-junior-m01-v1",
+      "version": 1,
+      "phase": "S73.7",
+      "category": "portrait",
+      "subcategory": "portrait_style_baseline",
+      "usage": [
+        "people_page",
+        "game_main",
+        "archive_page"
+      ],
+      "role": "official",
+      "scene": null,
+      "portraitRef": "portrait-player-official-junior-m01-v1",
+      "genderPresentation": "masculine",
+      "ageBand": "adult_young",
+      "roleStage": "junior_official",
+      "statusVariant": "baseline",
+      "emotionVariant": "cautious",
+      "identityTags": [
+        "player",
+        "official",
+        "junior",
+        "document"
+      ],
+      "emotionTags": [
+        "cautious",
+        "baseline"
+      ],
+      "path": "/assets/ui/portraits/portrait-player-official-junior-m01-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-portrait-player-official-junior-m01-v1.webp",
+      "lowResPlaceholderPath": "/assets/ui/portraits/placeholders/placeholder-portrait-player-official-junior-m01-v1.webp",
+      "fallbackRef": "fallback-role-silhouette-v1",
+      "dimensions": {
+        "width": 1024,
+        "height": 1536
+      },
+      "aspectRatio": "1024:1536",
+      "format": "webp",
+      "transparent": false,
+      "safeArea": {
+        "x": 0.12,
+        "y": 0.04,
+        "width": 0.76,
+        "height": 0.88
+      },
+      "focalPoint": {
+        "x": 0.5,
+        "y": 0.28
+      },
+      "mobileCrop": {
+        "mode": "center_crop_or_contain",
+        "keepSafeArea": true,
+        "notes": "窄屏人物卡保留头冠、面部、上身衣纹和身份道具，不裁断手部或袖缘。"
+      },
+      "lazyLoad": {
+        "group": "portrait_baseline_s73_7",
+        "allowEagerLoad": false,
+        "thumbnailFirst": true,
+        "lowResPlaceholder": true,
+        "maxInitialPortraits": 8
+      },
+      "source": {
+        "type": "ai_generated",
+        "tool": "Codex imagegen",
+        "model": "gpt-image-2",
+        "generatedAt": "2026-05-15",
+        "promptSummary": "初任官员，浅青官服、笏板和卷宗提示刚入官署的谨慎。"
+      },
+      "license": {
+        "type": "ai_generated_project_asset",
+        "commercialUseConfirmed": false,
+        "summary": "原创 AI 生成素材，当前仅个人游玩/开发使用；未做公开商用确认。"
+      },
+      "reviewStatus": "approved",
+      "visualReview": {
+        "reviewedBy": "Codex",
+        "reviewedAt": "2026-05-15",
+        "status": "approved",
+        "summary": "通过：成人端庄，身份符号清楚，水墨淡彩与极淡宣纸底同批一致；中小尺寸仍能辨认脸部、冠服和主要身份道具。"
+      },
+      "safetyReview": {
+        "reviewedBy": "Codex",
+        "reviewedAt": "2026-05-15",
+        "status": "approved",
+        "summary": "通过：无露骨、挑逗、幼态、现代物、水印、徽标、可读文字、本地路径、key、raw/hidden 内容或未公开剧情事实；人物道具只作身份提示。"
+      },
+      "performance": {
+        "bytes": 224066,
+        "targetMaxBytes": 614400,
+        "thumbnailBytes": 18302,
+        "thumbnailTargetMaxBytes": 256000,
+        "lowResPlaceholderBytes": 472
+      },
+      "ledgerId": "portrait-player-official-junior-m01-v1"
+    },
+    {
+      "id": "portrait-npc-magistrate-m01-v1",
+      "version": 1,
+      "phase": "S73.7",
+      "category": "portrait",
+      "subcategory": "portrait_style_baseline",
+      "usage": [
+        "people_page",
+        "game_main",
+        "archive_page"
+      ],
+      "role": "magistrate",
+      "scene": null,
+      "portraitRef": "portrait-npc-magistrate-m01-v1",
+      "genderPresentation": "masculine",
+      "ageBand": "adult_middle",
+      "roleStage": "magistrate",
+      "statusVariant": "baseline",
+      "emotionVariant": "stern_clear",
+      "identityTags": [
+        "npc",
+        "magistrate",
+        "county_yamen",
+        "public_official"
+      ],
+      "emotionTags": [
+        "stern_clear",
+        "baseline"
+      ],
+      "path": "/assets/ui/portraits/portrait-npc-magistrate-m01-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-portrait-npc-magistrate-m01-v1.webp",
+      "lowResPlaceholderPath": "/assets/ui/portraits/placeholders/placeholder-portrait-npc-magistrate-m01-v1.webp",
+      "fallbackRef": "fallback-role-silhouette-v1",
+      "dimensions": {
+        "width": 1024,
+        "height": 1536
+      },
+      "aspectRatio": "1024:1536",
+      "format": "webp",
+      "transparent": false,
+      "safeArea": {
+        "x": 0.12,
+        "y": 0.04,
+        "width": 0.76,
+        "height": 0.88
+      },
+      "focalPoint": {
+        "x": 0.5,
+        "y": 0.28
+      },
+      "mobileCrop": {
+        "mode": "center_crop_or_contain",
+        "keepSafeArea": true,
+        "notes": "窄屏人物卡保留头冠、面部、上身衣纹和身份道具，不裁断手部或袖缘。"
+      },
+      "lazyLoad": {
+        "group": "portrait_baseline_s73_7",
+        "allowEagerLoad": false,
+        "thumbnailFirst": true,
+        "lowResPlaceholder": true,
+        "maxInitialPortraits": 8
+      },
+      "source": {
+        "type": "ai_generated",
+        "tool": "Codex imagegen",
+        "model": "gpt-image-2",
+        "generatedAt": "2026-05-15",
+        "promptSummary": "清介县令，乌纱与简素官袍明确地方治理身份。"
+      },
+      "license": {
+        "type": "ai_generated_project_asset",
+        "commercialUseConfirmed": false,
+        "summary": "原创 AI 生成素材，当前仅个人游玩/开发使用；未做公开商用确认。"
+      },
+      "reviewStatus": "approved",
+      "visualReview": {
+        "reviewedBy": "Codex",
+        "reviewedAt": "2026-05-15",
+        "status": "approved",
+        "summary": "通过：成人端庄，身份符号清楚，水墨淡彩与极淡宣纸底同批一致；中小尺寸仍能辨认脸部、冠服和主要身份道具。"
+      },
+      "safetyReview": {
+        "reviewedBy": "Codex",
+        "reviewedAt": "2026-05-15",
+        "status": "approved",
+        "summary": "通过：无露骨、挑逗、幼态、现代物、水印、徽标、可读文字、本地路径、key、raw/hidden 内容或未公开剧情事实；人物道具只作身份提示。"
+      },
+      "performance": {
+        "bytes": 250410,
+        "targetMaxBytes": 614400,
+        "thumbnailBytes": 19960,
+        "thumbnailTargetMaxBytes": 256000,
+        "lowResPlaceholderBytes": 514
+      },
+      "ledgerId": "portrait-npc-magistrate-m01-v1"
+    },
+    {
+      "id": "portrait-npc-clerk-m01-v1",
+      "version": 1,
+      "phase": "S73.7",
+      "category": "portrait",
+      "subcategory": "portrait_style_baseline",
+      "usage": [
+        "people_page",
+        "game_main",
+        "archive_page"
+      ],
+      "role": "npc_clerk",
+      "scene": null,
+      "portraitRef": "portrait-npc-clerk-m01-v1",
+      "genderPresentation": "masculine",
+      "ageBand": "adult_mature",
+      "roleStage": "clerk",
+      "statusVariant": "baseline",
+      "emotionVariant": "reserved",
+      "identityTags": [
+        "npc",
+        "clerk",
+        "ledger",
+        "local_office"
+      ],
+      "emotionTags": [
+        "reserved",
+        "baseline"
+      ],
+      "path": "/assets/ui/portraits/portrait-npc-clerk-m01-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-portrait-npc-clerk-m01-v1.webp",
+      "lowResPlaceholderPath": "/assets/ui/portraits/placeholders/placeholder-portrait-npc-clerk-m01-v1.webp",
+      "fallbackRef": "fallback-role-silhouette-v1",
+      "dimensions": {
+        "width": 1024,
+        "height": 1536
+      },
+      "aspectRatio": "1024:1536",
+      "format": "webp",
+      "transparent": false,
+      "safeArea": {
+        "x": 0.12,
+        "y": 0.04,
+        "width": 0.76,
+        "height": 0.88
+      },
+      "focalPoint": {
+        "x": 0.5,
+        "y": 0.28
+      },
+      "mobileCrop": {
+        "mode": "center_crop_or_contain",
+        "keepSafeArea": true,
+        "notes": "窄屏人物卡保留头冠、面部、上身衣纹和身份道具，不裁断手部或袖缘。"
+      },
+      "lazyLoad": {
+        "group": "portrait_baseline_s73_7",
+        "allowEagerLoad": false,
+        "thumbnailFirst": true,
+        "lowResPlaceholder": true,
+        "maxInitialPortraits": 8
+      },
+      "source": {
+        "type": "ai_generated",
+        "tool": "Codex imagegen",
+        "model": "gpt-image-2",
+        "generatedAt": "2026-05-15",
+        "promptSummary": "老成吏员，吏帽、账册和笔囊表现办事经验，不滑稽化。"
+      },
+      "license": {
+        "type": "ai_generated_project_asset",
+        "commercialUseConfirmed": false,
+        "summary": "原创 AI 生成素材，当前仅个人游玩/开发使用；未做公开商用确认。"
+      },
+      "reviewStatus": "approved",
+      "visualReview": {
+        "reviewedBy": "Codex",
+        "reviewedAt": "2026-05-15",
+        "status": "approved",
+        "summary": "通过：成人端庄，身份符号清楚，水墨淡彩与极淡宣纸底同批一致；中小尺寸仍能辨认脸部、冠服和主要身份道具。"
+      },
+      "safetyReview": {
+        "reviewedBy": "Codex",
+        "reviewedAt": "2026-05-15",
+        "status": "approved",
+        "summary": "通过：无露骨、挑逗、幼态、现代物、水印、徽标、可读文字、本地路径、key、raw/hidden 内容或未公开剧情事实；人物道具只作身份提示。"
+      },
+      "performance": {
+        "bytes": 241112,
+        "targetMaxBytes": 614400,
+        "thumbnailBytes": 18076,
+        "thumbnailTargetMaxBytes": 256000,
+        "lowResPlaceholderBytes": 452
+      },
+      "ledgerId": "portrait-npc-clerk-m01-v1"
+    },
+    {
+      "id": "portrait-npc-ministry-official-m01-v1",
+      "version": 1,
+      "phase": "S73.7",
+      "category": "portrait",
+      "subcategory": "portrait_style_baseline",
+      "usage": [
+        "people_page",
+        "game_main",
+        "archive_page"
+      ],
+      "role": "npc_official",
+      "scene": null,
+      "portraitRef": "portrait-npc-ministry-official-m01-v1",
+      "genderPresentation": "masculine",
+      "ageBand": "adult_young",
+      "roleStage": "ministry_official",
+      "statusVariant": "baseline",
+      "emotionVariant": "restrained",
+      "identityTags": [
+        "npc",
+        "ministry",
+        "official",
+        "tablet"
+      ],
+      "emotionTags": [
+        "restrained",
+        "baseline"
+      ],
+      "path": "/assets/ui/portraits/portrait-npc-ministry-official-m01-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-portrait-npc-ministry-official-m01-v1.webp",
+      "lowResPlaceholderPath": "/assets/ui/portraits/placeholders/placeholder-portrait-npc-ministry-official-m01-v1.webp",
+      "fallbackRef": "fallback-role-silhouette-v1",
+      "dimensions": {
+        "width": 1024,
+        "height": 1536
+      },
+      "aspectRatio": "1024:1536",
+      "format": "webp",
+      "transparent": false,
+      "safeArea": {
+        "x": 0.12,
+        "y": 0.04,
+        "width": 0.76,
+        "height": 0.88
+      },
+      "focalPoint": {
+        "x": 0.5,
+        "y": 0.28
+      },
+      "mobileCrop": {
+        "mode": "center_crop_or_contain",
+        "keepSafeArea": true,
+        "notes": "窄屏人物卡保留头冠、面部、上身衣纹和身份道具，不裁断手部或袖缘。"
+      },
+      "lazyLoad": {
+        "group": "portrait_baseline_s73_7",
+        "allowEagerLoad": false,
+        "thumbnailFirst": true,
+        "lowResPlaceholder": true,
+        "maxInitialPortraits": 8
+      },
+      "source": {
+        "type": "ai_generated",
+        "tool": "Codex imagegen",
+        "model": "gpt-image-2",
+        "generatedAt": "2026-05-15",
+        "promptSummary": "部院郎官，深色官服和笏板表现中层官署人物。"
+      },
+      "license": {
+        "type": "ai_generated_project_asset",
+        "commercialUseConfirmed": false,
+        "summary": "原创 AI 生成素材，当前仅个人游玩/开发使用；未做公开商用确认。"
+      },
+      "reviewStatus": "approved",
+      "visualReview": {
+        "reviewedBy": "Codex",
+        "reviewedAt": "2026-05-15",
+        "status": "approved",
+        "summary": "通过：成人端庄，身份符号清楚，水墨淡彩与极淡宣纸底同批一致；中小尺寸仍能辨认脸部、冠服和主要身份道具。"
+      },
+      "safetyReview": {
+        "reviewedBy": "Codex",
+        "reviewedAt": "2026-05-15",
+        "status": "approved",
+        "summary": "通过：无露骨、挑逗、幼态、现代物、水印、徽标、可读文字、本地路径、key、raw/hidden 内容或未公开剧情事实；人物道具只作身份提示。"
+      },
+      "performance": {
+        "bytes": 201370,
+        "targetMaxBytes": 614400,
+        "thumbnailBytes": 14898,
+        "thumbnailTargetMaxBytes": 256000,
+        "lowResPlaceholderBytes": 504
+      },
+      "ledgerId": "portrait-npc-ministry-official-m01-v1"
+    },
+    {
+      "id": "portrait-npc-grand-minister-m01-v1",
+      "version": 1,
+      "phase": "S73.7",
+      "category": "portrait",
+      "subcategory": "portrait_style_baseline",
+      "usage": [
+        "people_page",
+        "game_main",
+        "court_page"
+      ],
+      "role": "minister",
+      "scene": null,
+      "portraitRef": "portrait-npc-grand-minister-m01-v1",
+      "genderPresentation": "masculine",
+      "ageBand": "adult_mature",
+      "roleStage": "grand_minister",
+      "statusVariant": "baseline",
+      "emotionVariant": "composed",
+      "identityTags": [
+        "npc",
+        "minister",
+        "court",
+        "senior_official"
+      ],
+      "emotionTags": [
+        "composed",
+        "baseline"
+      ],
+      "path": "/assets/ui/portraits/portrait-npc-grand-minister-m01-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-portrait-npc-grand-minister-m01-v1.webp",
+      "lowResPlaceholderPath": "/assets/ui/portraits/placeholders/placeholder-portrait-npc-grand-minister-m01-v1.webp",
+      "fallbackRef": "fallback-role-silhouette-v1",
+      "dimensions": {
+        "width": 1024,
+        "height": 1536
+      },
+      "aspectRatio": "1024:1536",
+      "format": "webp",
+      "transparent": false,
+      "safeArea": {
+        "x": 0.12,
+        "y": 0.04,
+        "width": 0.76,
+        "height": 0.88
+      },
+      "focalPoint": {
+        "x": 0.5,
+        "y": 0.28
+      },
+      "mobileCrop": {
+        "mode": "center_crop_or_contain",
+        "keepSafeArea": true,
+        "notes": "窄屏人物卡保留头冠、面部、上身衣纹和身份道具，不裁断手部或袖缘。"
+      },
+      "lazyLoad": {
+        "group": "portrait_baseline_s73_7",
+        "allowEagerLoad": false,
+        "thumbnailFirst": true,
+        "lowResPlaceholder": true,
+        "maxInitialPortraits": 8
+      },
+      "source": {
+        "type": "ai_generated",
+        "tool": "Codex imagegen",
+        "model": "gpt-image-2",
+        "generatedAt": "2026-05-15",
+        "promptSummary": "台阁大臣，高阶官服、玉带和沉稳姿态表现谋国重量。"
+      },
+      "license": {
+        "type": "ai_generated_project_asset",
+        "commercialUseConfirmed": false,
+        "summary": "原创 AI 生成素材，当前仅个人游玩/开发使用；未做公开商用确认。"
+      },
+      "reviewStatus": "approved",
+      "visualReview": {
+        "reviewedBy": "Codex",
+        "reviewedAt": "2026-05-15",
+        "status": "approved",
+        "summary": "通过：成人端庄，身份符号清楚，水墨淡彩与极淡宣纸底同批一致；中小尺寸仍能辨认脸部、冠服和主要身份道具。"
+      },
+      "safetyReview": {
+        "reviewedBy": "Codex",
+        "reviewedAt": "2026-05-15",
+        "status": "approved",
+        "summary": "通过：无露骨、挑逗、幼态、现代物、水印、徽标、可读文字、本地路径、key、raw/hidden 内容或未公开剧情事实；人物道具只作身份提示。"
+      },
+      "performance": {
+        "bytes": 236832,
+        "targetMaxBytes": 614400,
+        "thumbnailBytes": 18204,
+        "thumbnailTargetMaxBytes": 256000,
+        "lowResPlaceholderBytes": 524
+      },
+      "ledgerId": "portrait-npc-grand-minister-m01-v1"
+    },
+    {
+      "id": "portrait-npc-general-m01-v1",
+      "version": 1,
+      "phase": "S73.7",
+      "category": "portrait",
+      "subcategory": "portrait_style_baseline",
+      "usage": [
+        "people_page",
+        "game_main",
+        "court_page"
+      ],
+      "role": "general",
+      "scene": null,
+      "portraitRef": "portrait-npc-general-m01-v1",
+      "genderPresentation": "masculine",
+      "ageBand": "adult_middle",
+      "roleStage": "general",
+      "statusVariant": "baseline",
+      "emotionVariant": "steady",
+      "identityTags": [
+        "npc",
+        "general",
+        "military",
+        "armor"
+      ],
+      "emotionTags": [
+        "steady",
+        "baseline"
+      ],
+      "path": "/assets/ui/portraits/portrait-npc-general-m01-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-portrait-npc-general-m01-v1.webp",
+      "lowResPlaceholderPath": "/assets/ui/portraits/placeholders/placeholder-portrait-npc-general-m01-v1.webp",
+      "fallbackRef": "fallback-role-silhouette-v1",
+      "dimensions": {
+        "width": 1024,
+        "height": 1536
+      },
+      "aspectRatio": "1024:1536",
+      "format": "webp",
+      "transparent": false,
+      "safeArea": {
+        "x": 0.12,
+        "y": 0.04,
+        "width": 0.76,
+        "height": 0.88
+      },
+      "focalPoint": {
+        "x": 0.5,
+        "y": 0.28
+      },
+      "mobileCrop": {
+        "mode": "center_crop_or_contain",
+        "keepSafeArea": true,
+        "notes": "窄屏人物卡保留头冠、面部、上身衣纹和身份道具，不裁断手部或袖缘。"
+      },
+      "lazyLoad": {
+        "group": "portrait_baseline_s73_7",
+        "allowEagerLoad": false,
+        "thumbnailFirst": true,
+        "lowResPlaceholder": true,
+        "maxInitialPortraits": 8
+      },
+      "source": {
+        "type": "ai_generated",
+        "tool": "Codex imagegen",
+        "model": "gpt-image-2",
+        "generatedAt": "2026-05-15",
+        "promptSummary": "边镇将领，甲胄外罩战袍、按剑不拔剑，军务感克制无血腥。"
+      },
+      "license": {
+        "type": "ai_generated_project_asset",
+        "commercialUseConfirmed": false,
+        "summary": "原创 AI 生成素材，当前仅个人游玩/开发使用；未做公开商用确认。"
+      },
+      "reviewStatus": "approved",
+      "visualReview": {
+        "reviewedBy": "Codex",
+        "reviewedAt": "2026-05-15",
+        "status": "approved",
+        "summary": "通过：成人端庄，身份符号清楚，水墨淡彩与极淡宣纸底同批一致；中小尺寸仍能辨认脸部、冠服和主要身份道具。"
+      },
+      "safetyReview": {
+        "reviewedBy": "Codex",
+        "reviewedAt": "2026-05-15",
+        "status": "approved",
+        "summary": "通过：无露骨、挑逗、幼态、现代物、水印、徽标、可读文字、本地路径、key、raw/hidden 内容或未公开剧情事实；人物道具只作身份提示。"
+      },
+      "performance": {
+        "bytes": 243280,
+        "targetMaxBytes": 614400,
+        "thumbnailBytes": 20708,
+        "thumbnailTargetMaxBytes": 256000,
+        "lowResPlaceholderBytes": 464
+      },
+      "ledgerId": "portrait-npc-general-m01-v1"
+    },
+    {
+      "id": "portrait-npc-regent-m01-v1",
+      "version": 1,
+      "phase": "S73.7",
+      "category": "portrait",
+      "subcategory": "portrait_style_baseline",
+      "usage": [
+        "people_page",
+        "game_main",
+        "archive_page"
+      ],
+      "role": "npc_regent",
+      "scene": null,
+      "portraitRef": "portrait-npc-regent-m01-v1",
+      "genderPresentation": "masculine",
+      "ageBand": "adult_middle",
+      "roleStage": "regent",
+      "statusVariant": "baseline",
+      "emotionVariant": "commanding",
+      "identityTags": [
+        "npc",
+        "regent",
+        "court",
+        "princely"
+      ],
+      "emotionTags": [
+        "commanding",
+        "baseline"
+      ],
+      "path": "/assets/ui/portraits/portrait-npc-regent-m01-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-portrait-npc-regent-m01-v1.webp",
+      "lowResPlaceholderPath": "/assets/ui/portraits/placeholders/placeholder-portrait-npc-regent-m01-v1.webp",
+      "fallbackRef": "fallback-role-silhouette-v1",
+      "dimensions": {
+        "width": 1024,
+        "height": 1536
+      },
+      "aspectRatio": "1024:1536",
+      "format": "webp",
+      "transparent": false,
+      "safeArea": {
+        "x": 0.12,
+        "y": 0.04,
+        "width": 0.76,
+        "height": 0.88
+      },
+      "focalPoint": {
+        "x": 0.5,
+        "y": 0.28
+      },
+      "mobileCrop": {
+        "mode": "center_crop_or_contain",
+        "keepSafeArea": true,
+        "notes": "窄屏人物卡保留头冠、面部、上身衣纹和身份道具，不裁断手部或袖缘。"
+      },
+      "lazyLoad": {
+        "group": "portrait_baseline_s73_7",
+        "allowEagerLoad": false,
+        "thumbnailFirst": true,
+        "lowResPlaceholder": true,
+        "maxInitialPortraits": 8
+      },
+      "source": {
+        "type": "ai_generated",
+        "tool": "Codex imagegen",
+        "model": "gpt-image-2",
+        "generatedAt": "2026-05-15",
+        "promptSummary": "摄政亲王，玄青王爵冠服与玉带表现权势，不皇帝化。"
+      },
+      "license": {
+        "type": "ai_generated_project_asset",
+        "commercialUseConfirmed": false,
+        "summary": "原创 AI 生成素材，当前仅个人游玩/开发使用；未做公开商用确认。"
+      },
+      "reviewStatus": "approved",
+      "visualReview": {
+        "reviewedBy": "Codex",
+        "reviewedAt": "2026-05-15",
+        "status": "approved",
+        "summary": "通过：成人端庄，身份符号清楚，水墨淡彩与极淡宣纸底同批一致；中小尺寸仍能辨认脸部、冠服和主要身份道具。"
+      },
+      "safetyReview": {
+        "reviewedBy": "Codex",
+        "reviewedAt": "2026-05-15",
+        "status": "approved",
+        "summary": "通过：无露骨、挑逗、幼态、现代物、水印、徽标、可读文字、本地路径、key、raw/hidden 内容或未公开剧情事实；人物道具只作身份提示。"
+      },
+      "performance": {
+        "bytes": 214738,
+        "targetMaxBytes": 614400,
+        "thumbnailBytes": 20118,
+        "thumbnailTargetMaxBytes": 256000,
+        "lowResPlaceholderBytes": 450
+      },
+      "ledgerId": "portrait-npc-regent-m01-v1"
+    },
+    {
+      "id": "portrait-npc-emperor-m01-v1",
+      "version": 1,
+      "phase": "S73.7",
+      "category": "portrait",
+      "subcategory": "portrait_style_baseline",
+      "usage": [
+        "people_page",
+        "game_main",
+        "court_page"
+      ],
+      "role": "emperor",
+      "scene": null,
+      "portraitRef": "portrait-npc-emperor-m01-v1",
+      "genderPresentation": "masculine",
+      "ageBand": "adult_young",
+      "roleStage": "emperor",
+      "statusVariant": "baseline",
+      "emotionVariant": "aloof",
+      "identityTags": [
+        "npc",
+        "emperor",
+        "court",
+        "imperial"
+      ],
+      "emotionTags": [
+        "aloof",
+        "baseline"
+      ],
+      "path": "/assets/ui/portraits/portrait-npc-emperor-m01-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-portrait-npc-emperor-m01-v1.webp",
+      "lowResPlaceholderPath": "/assets/ui/portraits/placeholders/placeholder-portrait-npc-emperor-m01-v1.webp",
+      "fallbackRef": "fallback-role-silhouette-v1",
+      "dimensions": {
+        "width": 1024,
+        "height": 1536
+      },
+      "aspectRatio": "1024:1536",
+      "format": "webp",
+      "transparent": false,
+      "safeArea": {
+        "x": 0.12,
+        "y": 0.04,
+        "width": 0.76,
+        "height": 0.88
+      },
+      "focalPoint": {
+        "x": 0.5,
+        "y": 0.28
+      },
+      "mobileCrop": {
+        "mode": "center_crop_or_contain",
+        "keepSafeArea": true,
+        "notes": "窄屏人物卡保留头冠、面部、上身衣纹和身份道具，不裁断手部或袖缘。"
+      },
+      "lazyLoad": {
+        "group": "portrait_baseline_s73_7",
+        "allowEagerLoad": false,
+        "thumbnailFirst": true,
+        "lowResPlaceholder": true,
+        "maxInitialPortraits": 8
+      },
+      "source": {
+        "type": "ai_generated",
+        "tool": "Codex imagegen",
+        "model": "gpt-image-2",
+        "generatedAt": "2026-05-15",
+        "promptSummary": "年轻皇帝，低饱和明黄常朝服和克制神情体现帝王威仪。"
+      },
+      "license": {
+        "type": "ai_generated_project_asset",
+        "commercialUseConfirmed": false,
+        "summary": "原创 AI 生成素材，当前仅个人游玩/开发使用；未做公开商用确认。"
+      },
+      "reviewStatus": "approved",
+      "visualReview": {
+        "reviewedBy": "Codex",
+        "reviewedAt": "2026-05-15",
+        "status": "approved",
+        "summary": "通过：成人端庄，身份符号清楚，水墨淡彩与极淡宣纸底同批一致；中小尺寸仍能辨认脸部、冠服和主要身份道具。"
+      },
+      "safetyReview": {
+        "reviewedBy": "Codex",
+        "reviewedAt": "2026-05-15",
+        "status": "approved",
+        "summary": "通过：无露骨、挑逗、幼态、现代物、水印、徽标、可读文字、本地路径、key、raw/hidden 内容或未公开剧情事实；人物道具只作身份提示。"
+      },
+      "performance": {
+        "bytes": 200626,
+        "targetMaxBytes": 614400,
+        "thumbnailBytes": 17220,
+        "thumbnailTargetMaxBytes": 256000,
+        "lowResPlaceholderBytes": 386
+      },
+      "ledgerId": "portrait-npc-emperor-m01-v1"
+    },
+    {
+      "id": "portrait-npc-teacher-m01-v1",
+      "version": 1,
+      "phase": "S73.7",
+      "category": "portrait",
+      "subcategory": "portrait_style_baseline",
+      "usage": [
+        "people_page",
+        "game_main",
+        "archive_page"
+      ],
+      "role": "npc_teacher",
+      "scene": null,
+      "portraitRef": "portrait-npc-teacher-m01-v1",
+      "genderPresentation": "masculine",
+      "ageBand": "adult_mature",
+      "roleStage": "teacher",
+      "statusVariant": "baseline",
+      "emotionVariant": "strict_warm",
+      "identityTags": [
+        "npc",
+        "teacher",
+        "academy",
+        "book"
+      ],
+      "emotionTags": [
+        "strict_warm",
+        "baseline"
+      ],
+      "path": "/assets/ui/portraits/portrait-npc-teacher-m01-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-portrait-npc-teacher-m01-v1.webp",
+      "lowResPlaceholderPath": "/assets/ui/portraits/placeholders/placeholder-portrait-npc-teacher-m01-v1.webp",
+      "fallbackRef": "fallback-role-silhouette-v1",
+      "dimensions": {
+        "width": 1024,
+        "height": 1536
+      },
+      "aspectRatio": "1024:1536",
+      "format": "webp",
+      "transparent": false,
+      "safeArea": {
+        "x": 0.12,
+        "y": 0.04,
+        "width": 0.76,
+        "height": 0.88
+      },
+      "focalPoint": {
+        "x": 0.5,
+        "y": 0.28
+      },
+      "mobileCrop": {
+        "mode": "center_crop_or_contain",
+        "keepSafeArea": true,
+        "notes": "窄屏人物卡保留头冠、面部、上身衣纹和身份道具，不裁断手部或袖缘。"
+      },
+      "lazyLoad": {
+        "group": "portrait_baseline_s73_7",
+        "allowEagerLoad": false,
+        "thumbnailFirst": true,
+        "lowResPlaceholder": true,
+        "maxInitialPortraits": 8
+      },
+      "source": {
+        "type": "ai_generated",
+        "tool": "Codex imagegen",
+        "model": "gpt-image-2",
+        "generatedAt": "2026-05-15",
+        "promptSummary": "严师儒者，方巾旧袍、批卷旧书和霜鬓表现温厉并存。"
+      },
+      "license": {
+        "type": "ai_generated_project_asset",
+        "commercialUseConfirmed": false,
+        "summary": "原创 AI 生成素材，当前仅个人游玩/开发使用；未做公开商用确认。"
+      },
+      "reviewStatus": "approved",
+      "visualReview": {
+        "reviewedBy": "Codex",
+        "reviewedAt": "2026-05-15",
+        "status": "approved",
+        "summary": "通过：成人端庄，身份符号清楚，水墨淡彩与极淡宣纸底同批一致；中小尺寸仍能辨认脸部、冠服和主要身份道具。"
+      },
+      "safetyReview": {
+        "reviewedBy": "Codex",
+        "reviewedAt": "2026-05-15",
+        "status": "approved",
+        "summary": "通过：无露骨、挑逗、幼态、现代物、水印、徽标、可读文字、本地路径、key、raw/hidden 内容或未公开剧情事实；人物道具只作身份提示。"
+      },
+      "performance": {
+        "bytes": 243900,
+        "targetMaxBytes": 614400,
+        "thumbnailBytes": 20196,
+        "thumbnailTargetMaxBytes": 256000,
+        "lowResPlaceholderBytes": 488
+      },
+      "ledgerId": "portrait-npc-teacher-m01-v1"
+    },
+    {
+      "id": "portrait-player-scholar-f01-v1",
+      "version": 1,
+      "phase": "S73.7",
+      "category": "portrait",
+      "subcategory": "portrait_style_baseline",
+      "usage": [
+        "people_page",
+        "game_main",
+        "archive_page"
+      ],
+      "role": "scholar",
+      "scene": null,
+      "portraitRef": "portrait-player-scholar-f01-v1",
+      "genderPresentation": "feminine",
+      "ageBand": "adult_young",
+      "roleStage": "student",
+      "statusVariant": "baseline",
+      "emotionVariant": "self_possessed",
+      "identityTags": [
+        "player",
+        "scholar",
+        "female",
+        "book"
+      ],
+      "emotionTags": [
+        "self_possessed",
+        "baseline"
+      ],
+      "path": "/assets/ui/portraits/portrait-player-scholar-f01-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-portrait-player-scholar-f01-v1.webp",
+      "lowResPlaceholderPath": "/assets/ui/portraits/placeholders/placeholder-portrait-player-scholar-f01-v1.webp",
+      "fallbackRef": "fallback-role-silhouette-v1",
+      "dimensions": {
+        "width": 1024,
+        "height": 1536
+      },
+      "aspectRatio": "1024:1536",
+      "format": "webp",
+      "transparent": false,
+      "safeArea": {
+        "x": 0.12,
+        "y": 0.04,
+        "width": 0.76,
+        "height": 0.88
+      },
+      "focalPoint": {
+        "x": 0.5,
+        "y": 0.27
+      },
+      "mobileCrop": {
+        "mode": "center_crop_or_contain",
+        "keepSafeArea": true,
+        "notes": "窄屏人物卡保留头冠、面部、上身衣纹和身份道具，不裁断手部或袖缘。"
+      },
+      "lazyLoad": {
+        "group": "portrait_baseline_s73_7",
+        "allowEagerLoad": false,
+        "thumbnailFirst": true,
+        "lowResPlaceholder": true,
+        "maxInitialPortraits": 8
+      },
+      "source": {
+        "type": "ai_generated",
+        "tool": "Codex imagegen",
+        "model": "gpt-image-2",
+        "generatedAt": "2026-05-15",
+        "promptSummary": "成年女书生，儒服束发、书卷和清亮自持神情锁定女性玩家基准。"
+      },
+      "license": {
+        "type": "ai_generated_project_asset",
+        "commercialUseConfirmed": false,
+        "summary": "原创 AI 生成素材，当前仅个人游玩/开发使用；未做公开商用确认。"
+      },
+      "reviewStatus": "approved",
+      "visualReview": {
+        "reviewedBy": "Codex",
+        "reviewedAt": "2026-05-15",
+        "status": "approved",
+        "summary": "通过：成人端庄，身份符号清楚，水墨淡彩与极淡宣纸底同批一致；中小尺寸仍能辨认脸部、冠服和主要身份道具。"
+      },
+      "safetyReview": {
+        "reviewedBy": "Codex",
+        "reviewedAt": "2026-05-15",
+        "status": "approved",
+        "summary": "通过：无露骨、挑逗、幼态、现代物、水印、徽标、可读文字、本地路径、key、raw/hidden 内容或未公开剧情事实；人物道具只作身份提示。"
+      },
+      "performance": {
+        "bytes": 158648,
+        "targetMaxBytes": 614400,
+        "thumbnailBytes": 14488,
+        "thumbnailTargetMaxBytes": 256000,
+        "lowResPlaceholderBytes": 354
+      },
+      "ledgerId": "portrait-player-scholar-f01-v1"
+    },
+    {
+      "id": "portrait-npc-gentry-woman-f01-v1",
+      "version": 1,
+      "phase": "S73.7",
+      "category": "portrait",
+      "subcategory": "portrait_style_baseline",
+      "usage": [
+        "people_page",
+        "game_main",
+        "archive_page"
+      ],
+      "role": "npc_gentry",
+      "scene": null,
+      "portraitRef": "portrait-npc-gentry-woman-f01-v1",
+      "genderPresentation": "feminine",
+      "ageBand": "adult_young",
+      "roleStage": "gentry_woman",
+      "statusVariant": "baseline",
+      "emotionVariant": "gentle_firm",
+      "identityTags": [
+        "npc",
+        "gentry",
+        "female",
+        "elite"
+      ],
+      "emotionTags": [
+        "gentle_firm",
+        "baseline"
+      ],
+      "path": "/assets/ui/portraits/portrait-npc-gentry-woman-f01-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-portrait-npc-gentry-woman-f01-v1.webp",
+      "lowResPlaceholderPath": "/assets/ui/portraits/placeholders/placeholder-portrait-npc-gentry-woman-f01-v1.webp",
+      "fallbackRef": "fallback-role-silhouette-v1",
+      "dimensions": {
+        "width": 1024,
+        "height": 1536
+      },
+      "aspectRatio": "1024:1536",
+      "format": "webp",
+      "transparent": false,
+      "safeArea": {
+        "x": 0.12,
+        "y": 0.04,
+        "width": 0.76,
+        "height": 0.88
+      },
+      "focalPoint": {
+        "x": 0.5,
+        "y": 0.27
+      },
+      "mobileCrop": {
+        "mode": "center_crop_or_contain",
+        "keepSafeArea": true,
+        "notes": "窄屏人物卡保留头冠、面部、上身衣纹和身份道具，不裁断手部或袖缘。"
+      },
+      "lazyLoad": {
+        "group": "portrait_baseline_s73_7",
+        "allowEagerLoad": false,
+        "thumbnailFirst": true,
+        "lowResPlaceholder": true,
+        "maxInitialPortraits": 8
+      },
+      "source": {
+        "type": "ai_generated",
+        "tool": "Codex imagegen",
+        "model": "gpt-image-2",
+        "generatedAt": "2026-05-15",
+        "promptSummary": "名门才媛，士族襦裙与披帛端庄温雅，不弱化人物气度。"
+      },
+      "license": {
+        "type": "ai_generated_project_asset",
+        "commercialUseConfirmed": false,
+        "summary": "原创 AI 生成素材，当前仅个人游玩/开发使用；未做公开商用确认。"
+      },
+      "reviewStatus": "approved",
+      "visualReview": {
+        "reviewedBy": "Codex",
+        "reviewedAt": "2026-05-15",
+        "status": "approved",
+        "summary": "通过：成人端庄，身份符号清楚，水墨淡彩与极淡宣纸底同批一致；中小尺寸仍能辨认脸部、冠服和主要身份道具。"
+      },
+      "safetyReview": {
+        "reviewedBy": "Codex",
+        "reviewedAt": "2026-05-15",
+        "status": "approved",
+        "summary": "通过：无露骨、挑逗、幼态、现代物、水印、徽标、可读文字、本地路径、key、raw/hidden 内容或未公开剧情事实；人物道具只作身份提示。"
+      },
+      "performance": {
+        "bytes": 187396,
+        "targetMaxBytes": 614400,
+        "thumbnailBytes": 15114,
+        "thumbnailTargetMaxBytes": 256000,
+        "lowResPlaceholderBytes": 348
+      },
+      "ledgerId": "portrait-npc-gentry-woman-f01-v1"
+    },
+    {
+      "id": "portrait-npc-female-official-f01-v1",
+      "version": 1,
+      "phase": "S73.7",
+      "category": "portrait",
+      "subcategory": "portrait_style_baseline",
+      "usage": [
+        "people_page",
+        "game_main",
+        "archive_page"
+      ],
+      "role": "npc_female_official",
+      "scene": null,
+      "portraitRef": "portrait-npc-female-official-f01-v1",
+      "genderPresentation": "feminine",
+      "ageBand": "adult_young",
+      "roleStage": "female_official",
+      "statusVariant": "baseline",
+      "emotionVariant": "capable",
+      "identityTags": [
+        "npc",
+        "female_official",
+        "record_keeper",
+        "book"
+      ],
+      "emotionTags": [
+        "capable",
+        "baseline"
+      ],
+      "path": "/assets/ui/portraits/portrait-npc-female-official-f01-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-portrait-npc-female-official-f01-v1.webp",
+      "lowResPlaceholderPath": "/assets/ui/portraits/placeholders/placeholder-portrait-npc-female-official-f01-v1.webp",
+      "fallbackRef": "fallback-role-silhouette-v1",
+      "dimensions": {
+        "width": 1024,
+        "height": 1536
+      },
+      "aspectRatio": "1024:1536",
+      "format": "webp",
+      "transparent": false,
+      "safeArea": {
+        "x": 0.12,
+        "y": 0.04,
+        "width": 0.76,
+        "height": 0.88
+      },
+      "focalPoint": {
+        "x": 0.5,
+        "y": 0.27
+      },
+      "mobileCrop": {
+        "mode": "center_crop_or_contain",
+        "keepSafeArea": true,
+        "notes": "窄屏人物卡保留头冠、面部、上身衣纹和身份道具，不裁断手部或袖缘。"
+      },
+      "lazyLoad": {
+        "group": "portrait_baseline_s73_7",
+        "allowEagerLoad": false,
+        "thumbnailFirst": true,
+        "lowResPlaceholder": true,
+        "maxInitialPortraits": 8
+      },
+      "source": {
+        "type": "ai_generated",
+        "tool": "Codex imagegen",
+        "model": "gpt-image-2",
+        "generatedAt": "2026-05-15",
+        "promptSummary": "女官掌记，女官冠、窄袖官服和无字簿册表现文书能力。"
+      },
+      "license": {
+        "type": "ai_generated_project_asset",
+        "commercialUseConfirmed": false,
+        "summary": "原创 AI 生成素材，当前仅个人游玩/开发使用；未做公开商用确认。"
+      },
+      "reviewStatus": "approved",
+      "visualReview": {
+        "reviewedBy": "Codex",
+        "reviewedAt": "2026-05-15",
+        "status": "approved",
+        "summary": "通过：成人端庄，身份符号清楚，水墨淡彩与极淡宣纸底同批一致；中小尺寸仍能辨认脸部、冠服和主要身份道具。"
+      },
+      "safetyReview": {
+        "reviewedBy": "Codex",
+        "reviewedAt": "2026-05-15",
+        "status": "approved",
+        "summary": "通过：无露骨、挑逗、幼态、现代物、水印、徽标、可读文字、本地路径、key、raw/hidden 内容或未公开剧情事实；人物道具只作身份提示。"
+      },
+      "performance": {
+        "bytes": 191780,
+        "targetMaxBytes": 614400,
+        "thumbnailBytes": 15348,
+        "thumbnailTargetMaxBytes": 256000,
+        "lowResPlaceholderBytes": 470
+      },
+      "ledgerId": "portrait-npc-female-official-f01-v1"
+    },
+    {
+      "id": "portrait-npc-palace-attendant-f01-v1",
+      "version": 1,
+      "phase": "S73.7",
+      "category": "portrait",
+      "subcategory": "portrait_style_baseline",
+      "usage": [
+        "people_page",
+        "game_main",
+        "archive_page"
+      ],
+      "role": "npc_palace_attendant",
+      "scene": null,
+      "portraitRef": "portrait-npc-palace-attendant-f01-v1",
+      "genderPresentation": "feminine",
+      "ageBand": "adult_middle",
+      "roleStage": "palace_attendant",
+      "statusVariant": "baseline",
+      "emotionVariant": "courteous",
+      "identityTags": [
+        "npc",
+        "palace",
+        "attendant",
+        "court"
+      ],
+      "emotionTags": [
+        "courteous",
+        "baseline"
+      ],
+      "path": "/assets/ui/portraits/portrait-npc-palace-attendant-f01-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-portrait-npc-palace-attendant-f01-v1.webp",
+      "lowResPlaceholderPath": "/assets/ui/portraits/placeholders/placeholder-portrait-npc-palace-attendant-f01-v1.webp",
+      "fallbackRef": "fallback-role-silhouette-v1",
+      "dimensions": {
+        "width": 1024,
+        "height": 1536
+      },
+      "aspectRatio": "1024:1536",
+      "format": "webp",
+      "transparent": false,
+      "safeArea": {
+        "x": 0.12,
+        "y": 0.04,
+        "width": 0.76,
+        "height": 0.88
+      },
+      "focalPoint": {
+        "x": 0.5,
+        "y": 0.27
+      },
+      "mobileCrop": {
+        "mode": "center_crop_or_contain",
+        "keepSafeArea": true,
+        "notes": "窄屏人物卡保留头冠、面部、上身衣纹和身份道具，不裁断手部或袖缘。"
+      },
+      "lazyLoad": {
+        "group": "portrait_baseline_s73_7",
+        "allowEagerLoad": false,
+        "thumbnailFirst": true,
+        "lowResPlaceholder": true,
+        "maxInitialPortraits": 8
+      },
+      "source": {
+        "type": "ai_generated",
+        "tool": "Codex imagegen",
+        "model": "gpt-image-2",
+        "generatedAt": "2026-05-15",
+        "promptSummary": "宫中掌事，高髻宫装与稳重站姿表现宫廷礼法。"
+      },
+      "license": {
+        "type": "ai_generated_project_asset",
+        "commercialUseConfirmed": false,
+        "summary": "原创 AI 生成素材，当前仅个人游玩/开发使用；未做公开商用确认。"
+      },
+      "reviewStatus": "approved",
+      "visualReview": {
+        "reviewedBy": "Codex",
+        "reviewedAt": "2026-05-15",
+        "status": "approved",
+        "summary": "通过：成人端庄，身份符号清楚，水墨淡彩与极淡宣纸底同批一致；中小尺寸仍能辨认脸部、冠服和主要身份道具。"
+      },
+      "safetyReview": {
+        "reviewedBy": "Codex",
+        "reviewedAt": "2026-05-15",
+        "status": "approved",
+        "summary": "通过：无露骨、挑逗、幼态、现代物、水印、徽标、可读文字、本地路径、key、raw/hidden 内容或未公开剧情事实；人物道具只作身份提示。"
+      },
+      "performance": {
+        "bytes": 201712,
+        "targetMaxBytes": 614400,
+        "thumbnailBytes": 16594,
+        "thumbnailTargetMaxBytes": 256000,
+        "lowResPlaceholderBytes": 414
+      },
+      "ledgerId": "portrait-npc-palace-attendant-f01-v1"
+    },
+    {
+      "id": "portrait-npc-court-lady-high-f01-v1",
+      "version": 1,
+      "phase": "S73.7",
+      "category": "portrait",
+      "subcategory": "portrait_style_baseline",
+      "usage": [
+        "people_page",
+        "game_main",
+        "archive_page"
+      ],
+      "role": "npc_court_lady_high",
+      "scene": null,
+      "portraitRef": "portrait-npc-court-lady-high-f01-v1",
+      "genderPresentation": "feminine",
+      "ageBand": "adult_mature",
+      "roleStage": "high_court_lady",
+      "statusVariant": "baseline",
+      "emotionVariant": "quiet_authority",
+      "identityTags": [
+        "npc",
+        "court",
+        "high_status_female",
+        "formal"
+      ],
+      "emotionTags": [
+        "quiet_authority",
+        "baseline"
+      ],
+      "path": "/assets/ui/portraits/portrait-npc-court-lady-high-f01-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-portrait-npc-court-lady-high-f01-v1.webp",
+      "lowResPlaceholderPath": "/assets/ui/portraits/placeholders/placeholder-portrait-npc-court-lady-high-f01-v1.webp",
+      "fallbackRef": "fallback-role-silhouette-v1",
+      "dimensions": {
+        "width": 1024,
+        "height": 1536
+      },
+      "aspectRatio": "1024:1536",
+      "format": "webp",
+      "transparent": false,
+      "safeArea": {
+        "x": 0.12,
+        "y": 0.04,
+        "width": 0.76,
+        "height": 0.88
+      },
+      "focalPoint": {
+        "x": 0.5,
+        "y": 0.27
+      },
+      "mobileCrop": {
+        "mode": "center_crop_or_contain",
+        "keepSafeArea": true,
+        "notes": "窄屏人物卡保留头冠、面部、上身衣纹和身份道具，不裁断手部或袖缘。"
+      },
+      "lazyLoad": {
+        "group": "portrait_baseline_s73_7",
+        "allowEagerLoad": false,
+        "thumbnailFirst": true,
+        "lowResPlaceholder": true,
+        "maxInitialPortraits": 8
+      },
+      "source": {
+        "type": "ai_generated",
+        "tool": "Codex imagegen",
+        "model": "gpt-image-2",
+        "generatedAt": "2026-05-15",
+        "promptSummary": "高阶宫廷女性，礼服层次和凤簪表现威仪安静。"
+      },
+      "license": {
+        "type": "ai_generated_project_asset",
+        "commercialUseConfirmed": false,
+        "summary": "原创 AI 生成素材，当前仅个人游玩/开发使用；未做公开商用确认。"
+      },
+      "reviewStatus": "approved",
+      "visualReview": {
+        "reviewedBy": "Codex",
+        "reviewedAt": "2026-05-15",
+        "status": "approved",
+        "summary": "通过：成人端庄，身份符号清楚，水墨淡彩与极淡宣纸底同批一致；中小尺寸仍能辨认脸部、冠服和主要身份道具。"
+      },
+      "safetyReview": {
+        "reviewedBy": "Codex",
+        "reviewedAt": "2026-05-15",
+        "status": "approved",
+        "summary": "通过：无露骨、挑逗、幼态、现代物、水印、徽标、可读文字、本地路径、key、raw/hidden 内容或未公开剧情事实；人物道具只作身份提示。"
+      },
+      "performance": {
+        "bytes": 247690,
+        "targetMaxBytes": 614400,
+        "thumbnailBytes": 23920,
+        "thumbnailTargetMaxBytes": 256000,
+        "lowResPlaceholderBytes": 502
+      },
+      "ledgerId": "portrait-npc-court-lady-high-f01-v1"
+    },
+    {
+      "id": "portrait-npc-examiner-f01-v1",
+      "version": 1,
+      "phase": "S73.7",
+      "category": "portrait",
+      "subcategory": "portrait_style_baseline",
+      "usage": [
+        "people_page",
+        "game_main",
+        "archive_page"
+      ],
+      "role": "npc_examiner",
+      "scene": null,
+      "portraitRef": "portrait-npc-examiner-f01-v1",
+      "genderPresentation": "feminine",
+      "ageBand": "adult_middle",
+      "roleStage": "examiner",
+      "statusVariant": "baseline",
+      "emotionVariant": "judicious",
+      "identityTags": [
+        "npc",
+        "examiner",
+        "female_official",
+        "exam"
+      ],
+      "emotionTags": [
+        "judicious",
+        "baseline"
+      ],
+      "path": "/assets/ui/portraits/portrait-npc-examiner-f01-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-portrait-npc-examiner-f01-v1.webp",
+      "lowResPlaceholderPath": "/assets/ui/portraits/placeholders/placeholder-portrait-npc-examiner-f01-v1.webp",
+      "fallbackRef": "fallback-role-silhouette-v1",
+      "dimensions": {
+        "width": 1024,
+        "height": 1536
+      },
+      "aspectRatio": "1024:1536",
+      "format": "webp",
+      "transparent": false,
+      "safeArea": {
+        "x": 0.12,
+        "y": 0.04,
+        "width": 0.76,
+        "height": 0.88
+      },
+      "focalPoint": {
+        "x": 0.5,
+        "y": 0.27
+      },
+      "mobileCrop": {
+        "mode": "center_crop_or_contain",
+        "keepSafeArea": true,
+        "notes": "窄屏人物卡保留头冠、面部、上身衣纹和身份道具，不裁断手部或袖缘。"
+      },
+      "lazyLoad": {
+        "group": "portrait_baseline_s73_7",
+        "allowEagerLoad": false,
+        "thumbnailFirst": true,
+        "lowResPlaceholder": true,
+        "maxInitialPortraits": 8
+      },
+      "source": {
+        "type": "ai_generated",
+        "tool": "Codex imagegen",
+        "model": "gpt-image-2",
+        "generatedAt": "2026-05-15",
+        "promptSummary": "女考官/学官，端正学官服、试卷和墨笔表现科场审慎。"
+      },
+      "license": {
+        "type": "ai_generated_project_asset",
+        "commercialUseConfirmed": false,
+        "summary": "原创 AI 生成素材，当前仅个人游玩/开发使用；未做公开商用确认。"
+      },
+      "reviewStatus": "approved",
+      "visualReview": {
+        "reviewedBy": "Codex",
+        "reviewedAt": "2026-05-15",
+        "status": "approved",
+        "summary": "通过：成人端庄，身份符号清楚，水墨淡彩与极淡宣纸底同批一致；中小尺寸仍能辨认脸部、冠服和主要身份道具。"
+      },
+      "safetyReview": {
+        "reviewedBy": "Codex",
+        "reviewedAt": "2026-05-15",
+        "status": "approved",
+        "summary": "通过：无露骨、挑逗、幼态、现代物、水印、徽标、可读文字、本地路径、key、raw/hidden 内容或未公开剧情事实；人物道具只作身份提示。"
+      },
+      "performance": {
+        "bytes": 221112,
+        "targetMaxBytes": 614400,
+        "thumbnailBytes": 19028,
+        "thumbnailTargetMaxBytes": 256000,
+        "lowResPlaceholderBytes": 508
+      },
+      "ledgerId": "portrait-npc-examiner-f01-v1"
+    },
+    {
+      "id": "portrait-npc-merchant-f01-v1",
+      "version": 1,
+      "phase": "S73.7",
+      "category": "portrait",
+      "subcategory": "portrait_style_baseline",
+      "usage": [
+        "people_page",
+        "game_main",
+        "archive_page"
+      ],
+      "role": "npc_merchant",
+      "scene": null,
+      "portraitRef": "portrait-npc-merchant-f01-v1",
+      "genderPresentation": "feminine",
+      "ageBand": "adult_middle",
+      "roleStage": "merchant",
+      "statusVariant": "baseline",
+      "emotionVariant": "confident",
+      "identityTags": [
+        "npc",
+        "merchant",
+        "female",
+        "ledger"
+      ],
+      "emotionTags": [
+        "confident",
+        "baseline"
+      ],
+      "path": "/assets/ui/portraits/portrait-npc-merchant-f01-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-portrait-npc-merchant-f01-v1.webp",
+      "lowResPlaceholderPath": "/assets/ui/portraits/placeholders/placeholder-portrait-npc-merchant-f01-v1.webp",
+      "fallbackRef": "fallback-role-silhouette-v1",
+      "dimensions": {
+        "width": 1024,
+        "height": 1536
+      },
+      "aspectRatio": "1024:1536",
+      "format": "webp",
+      "transparent": false,
+      "safeArea": {
+        "x": 0.12,
+        "y": 0.04,
+        "width": 0.76,
+        "height": 0.88
+      },
+      "focalPoint": {
+        "x": 0.5,
+        "y": 0.27
+      },
+      "mobileCrop": {
+        "mode": "center_crop_or_contain",
+        "keepSafeArea": true,
+        "notes": "窄屏人物卡保留头冠、面部、上身衣纹和身份道具，不裁断手部或袖缘。"
+      },
+      "lazyLoad": {
+        "group": "portrait_baseline_s73_7",
+        "allowEagerLoad": false,
+        "thumbnailFirst": true,
+        "lowResPlaceholder": true,
+        "maxInitialPortraits": 8
+      },
+      "source": {
+        "type": "ai_generated",
+        "tool": "Codex imagegen",
+        "model": "gpt-image-2",
+        "generatedAt": "2026-05-15",
+        "promptSummary": "商贾女东家，算盘和契纸道具提示经营身份，端庄从容。"
+      },
+      "license": {
+        "type": "ai_generated_project_asset",
+        "commercialUseConfirmed": false,
+        "summary": "原创 AI 生成素材，当前仅个人游玩/开发使用；未做公开商用确认。"
+      },
+      "reviewStatus": "approved",
+      "visualReview": {
+        "reviewedBy": "Codex",
+        "reviewedAt": "2026-05-15",
+        "status": "approved",
+        "summary": "通过：成人端庄，身份符号清楚，水墨淡彩与极淡宣纸底同批一致；中小尺寸仍能辨认脸部、冠服和主要身份道具。"
+      },
+      "safetyReview": {
+        "reviewedBy": "Codex",
+        "reviewedAt": "2026-05-15",
+        "status": "approved",
+        "summary": "通过：无露骨、挑逗、幼态、现代物、水印、徽标、可读文字、本地路径、key、raw/hidden 内容或未公开剧情事实；人物道具只作身份提示。"
+      },
+      "performance": {
+        "bytes": 218478,
+        "targetMaxBytes": 614400,
+        "thumbnailBytes": 20734,
+        "thumbnailTargetMaxBytes": 256000,
+        "lowResPlaceholderBytes": 450
+      },
+      "ledgerId": "portrait-npc-merchant-f01-v1"
+    },
+    {
+      "id": "portrait-npc-commoner-healer-f01-v1",
+      "version": 1,
+      "phase": "S73.7",
+      "category": "portrait",
+      "subcategory": "portrait_style_baseline",
+      "usage": [
+        "people_page",
+        "game_main",
+        "archive_page"
+      ],
+      "role": "npc_commoner",
+      "scene": null,
+      "portraitRef": "portrait-npc-commoner-healer-f01-v1",
+      "genderPresentation": "feminine",
+      "ageBand": "adult_young",
+      "roleStage": "commoner_healer",
+      "statusVariant": "baseline",
+      "emotionVariant": "warm",
+      "identityTags": [
+        "npc",
+        "commoner",
+        "healer",
+        "medicine"
+      ],
+      "emotionTags": [
+        "warm",
+        "baseline"
+      ],
+      "path": "/assets/ui/portraits/portrait-npc-commoner-healer-f01-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-portrait-npc-commoner-healer-f01-v1.webp",
+      "lowResPlaceholderPath": "/assets/ui/portraits/placeholders/placeholder-portrait-npc-commoner-healer-f01-v1.webp",
+      "fallbackRef": "fallback-role-silhouette-v1",
+      "dimensions": {
+        "width": 1024,
+        "height": 1536
+      },
+      "aspectRatio": "1024:1536",
+      "format": "webp",
+      "transparent": false,
+      "safeArea": {
+        "x": 0.12,
+        "y": 0.04,
+        "width": 0.76,
+        "height": 0.88
+      },
+      "focalPoint": {
+        "x": 0.5,
+        "y": 0.27
+      },
+      "mobileCrop": {
+        "mode": "center_crop_or_contain",
+        "keepSafeArea": true,
+        "notes": "窄屏人物卡保留头冠、面部、上身衣纹和身份道具，不裁断手部或袖缘。"
+      },
+      "lazyLoad": {
+        "group": "portrait_baseline_s73_7",
+        "allowEagerLoad": false,
+        "thumbnailFirst": true,
+        "lowResPlaceholder": true,
+        "maxInitialPortraits": 8
+      },
+      "source": {
+        "type": "ai_generated",
+        "tool": "Codex imagegen",
+        "model": "gpt-image-2",
+        "generatedAt": "2026-05-15",
+        "promptSummary": "市井医者女郎，药囊和布衣表现生活气，成年端庄。"
+      },
+      "license": {
+        "type": "ai_generated_project_asset",
+        "commercialUseConfirmed": false,
+        "summary": "原创 AI 生成素材，当前仅个人游玩/开发使用；未做公开商用确认。"
+      },
+      "reviewStatus": "approved",
+      "visualReview": {
+        "reviewedBy": "Codex",
+        "reviewedAt": "2026-05-15",
+        "status": "approved",
+        "summary": "通过：成人端庄，身份符号清楚，水墨淡彩与极淡宣纸底同批一致；中小尺寸仍能辨认脸部、冠服和主要身份道具。"
+      },
+      "safetyReview": {
+        "reviewedBy": "Codex",
+        "reviewedAt": "2026-05-15",
+        "status": "approved",
+        "summary": "通过：无露骨、挑逗、幼态、现代物、水印、徽标、可读文字、本地路径、key、raw/hidden 内容或未公开剧情事实；人物道具只作身份提示。"
+      },
+      "performance": {
+        "bytes": 190250,
+        "targetMaxBytes": 614400,
+        "thumbnailBytes": 17490,
+        "thumbnailTargetMaxBytes": 256000,
+        "lowResPlaceholderBytes": 428
+      },
+      "ledgerId": "portrait-npc-commoner-healer-f01-v1"
+    },
+    {
+      "id": "portrait-npc-exam-peer-m01-v1",
+      "version": 1,
+      "phase": "S73.7",
+      "category": "portrait",
+      "subcategory": "portrait_style_baseline",
+      "usage": [
+        "people_page",
+        "game_main",
+        "archive_page"
+      ],
+      "role": "npc_exam_peer",
+      "scene": null,
+      "portraitRef": "portrait-npc-exam-peer-m01-v1",
+      "genderPresentation": "masculine",
+      "ageBand": "adult_young",
+      "roleStage": "exam_peer",
+      "statusVariant": "baseline",
+      "emotionVariant": "friendly",
+      "identityTags": [
+        "npc",
+        "exam_peer",
+        "scholar",
+        "peer"
+      ],
+      "emotionTags": [
+        "friendly",
+        "baseline"
+      ],
+      "path": "/assets/ui/portraits/portrait-npc-exam-peer-m01-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-portrait-npc-exam-peer-m01-v1.webp",
+      "lowResPlaceholderPath": "/assets/ui/portraits/placeholders/placeholder-portrait-npc-exam-peer-m01-v1.webp",
+      "fallbackRef": "fallback-role-silhouette-v1",
+      "dimensions": {
+        "width": 1024,
+        "height": 1536
+      },
+      "aspectRatio": "1024:1536",
+      "format": "webp",
+      "transparent": false,
+      "safeArea": {
+        "x": 0.12,
+        "y": 0.04,
+        "width": 0.76,
+        "height": 0.88
+      },
+      "focalPoint": {
+        "x": 0.5,
+        "y": 0.28
+      },
+      "mobileCrop": {
+        "mode": "center_crop_or_contain",
+        "keepSafeArea": true,
+        "notes": "窄屏人物卡保留头冠、面部、上身衣纹和身份道具，不裁断手部或袖缘。"
+      },
+      "lazyLoad": {
+        "group": "portrait_baseline_s73_7",
+        "allowEagerLoad": false,
+        "thumbnailFirst": true,
+        "lowResPlaceholder": true,
+        "maxInitialPortraits": 8
+      },
+      "source": {
+        "type": "ai_generated",
+        "tool": "Codex imagegen",
+        "model": "gpt-image-2",
+        "generatedAt": "2026-05-15",
+        "promptSummary": "同年友人，举人/进士常服和拱手姿态表现亲和与锋芒。"
+      },
+      "license": {
+        "type": "ai_generated_project_asset",
+        "commercialUseConfirmed": false,
+        "summary": "原创 AI 生成素材，当前仅个人游玩/开发使用；未做公开商用确认。"
+      },
+      "reviewStatus": "approved",
+      "visualReview": {
+        "reviewedBy": "Codex",
+        "reviewedAt": "2026-05-15",
+        "status": "approved",
+        "summary": "通过：成人端庄，身份符号清楚，水墨淡彩与极淡宣纸底同批一致；中小尺寸仍能辨认脸部、冠服和主要身份道具。"
+      },
+      "safetyReview": {
+        "reviewedBy": "Codex",
+        "reviewedAt": "2026-05-15",
+        "status": "approved",
+        "summary": "通过：无露骨、挑逗、幼态、现代物、水印、徽标、可读文字、本地路径、key、raw/hidden 内容或未公开剧情事实；人物道具只作身份提示。"
+      },
+      "performance": {
+        "bytes": 190166,
+        "targetMaxBytes": 614400,
+        "thumbnailBytes": 15170,
+        "thumbnailTargetMaxBytes": 256000,
+        "lowResPlaceholderBytes": 472
+      },
+      "ledgerId": "portrait-npc-exam-peer-m01-v1"
+    },
+    {
+      "id": "portrait-npc-examiner-m01-v1",
+      "version": 1,
+      "phase": "S73.7",
+      "category": "portrait",
+      "subcategory": "portrait_style_baseline",
+      "usage": [
+        "people_page",
+        "game_main",
+        "archive_page"
+      ],
+      "role": "npc_examiner",
+      "scene": null,
+      "portraitRef": "portrait-npc-examiner-m01-v1",
+      "genderPresentation": "masculine",
+      "ageBand": "adult_mature",
+      "roleStage": "chief_examiner",
+      "statusVariant": "baseline",
+      "emotionVariant": "judicious",
+      "identityTags": [
+        "npc",
+        "examiner",
+        "exam",
+        "official"
+      ],
+      "emotionTags": [
+        "judicious",
+        "baseline"
+      ],
+      "path": "/assets/ui/portraits/portrait-npc-examiner-m01-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-portrait-npc-examiner-m01-v1.webp",
+      "lowResPlaceholderPath": "/assets/ui/portraits/placeholders/placeholder-portrait-npc-examiner-m01-v1.webp",
+      "fallbackRef": "fallback-role-silhouette-v1",
+      "dimensions": {
+        "width": 1024,
+        "height": 1536
+      },
+      "aspectRatio": "1024:1536",
+      "format": "webp",
+      "transparent": false,
+      "safeArea": {
+        "x": 0.12,
+        "y": 0.04,
+        "width": 0.76,
+        "height": 0.88
+      },
+      "focalPoint": {
+        "x": 0.5,
+        "y": 0.28
+      },
+      "mobileCrop": {
+        "mode": "center_crop_or_contain",
+        "keepSafeArea": true,
+        "notes": "窄屏人物卡保留头冠、面部、上身衣纹和身份道具，不裁断手部或袖缘。"
+      },
+      "lazyLoad": {
+        "group": "portrait_baseline_s73_7",
+        "allowEagerLoad": false,
+        "thumbnailFirst": true,
+        "lowResPlaceholder": true,
+        "maxInitialPortraits": 8
+      },
+      "source": {
+        "type": "ai_generated",
+        "tool": "Codex imagegen",
+        "model": "gpt-image-2",
+        "generatedAt": "2026-05-15",
+        "promptSummary": "主考官，肃穆官服和无字试卷表现科场权衡，不泄漏结果。"
+      },
+      "license": {
+        "type": "ai_generated_project_asset",
+        "commercialUseConfirmed": false,
+        "summary": "原创 AI 生成素材，当前仅个人游玩/开发使用；未做公开商用确认。"
+      },
+      "reviewStatus": "approved",
+      "visualReview": {
+        "reviewedBy": "Codex",
+        "reviewedAt": "2026-05-15",
+        "status": "approved",
+        "summary": "通过：成人端庄，身份符号清楚，水墨淡彩与极淡宣纸底同批一致；中小尺寸仍能辨认脸部、冠服和主要身份道具。"
+      },
+      "safetyReview": {
+        "reviewedBy": "Codex",
+        "reviewedAt": "2026-05-15",
+        "status": "approved",
+        "summary": "通过：无露骨、挑逗、幼态、现代物、水印、徽标、可读文字、本地路径、key、raw/hidden 内容或未公开剧情事实；人物道具只作身份提示。"
+      },
+      "performance": {
+        "bytes": 239166,
+        "targetMaxBytes": 614400,
+        "thumbnailBytes": 19232,
+        "thumbnailTargetMaxBytes": 256000,
+        "lowResPlaceholderBytes": 546
+      },
+      "ledgerId": "portrait-npc-examiner-m01-v1"
+    },
+    {
+      "id": "portrait-npc-local-gentry-m01-v1",
+      "version": 1,
+      "phase": "S73.7",
+      "category": "portrait",
+      "subcategory": "portrait_style_baseline",
+      "usage": [
+        "people_page",
+        "game_main",
+        "archive_page"
+      ],
+      "role": "npc_gentry",
+      "scene": null,
+      "portraitRef": "portrait-npc-local-gentry-m01-v1",
+      "genderPresentation": "masculine",
+      "ageBand": "adult_mature",
+      "roleStage": "local_gentry",
+      "statusVariant": "baseline",
+      "emotionVariant": "amiable_guarded",
+      "identityTags": [
+        "npc",
+        "gentry",
+        "local_power",
+        "fan"
+      ],
+      "emotionTags": [
+        "amiable_guarded",
+        "baseline"
+      ],
+      "path": "/assets/ui/portraits/portrait-npc-local-gentry-m01-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-portrait-npc-local-gentry-m01-v1.webp",
+      "lowResPlaceholderPath": "/assets/ui/portraits/placeholders/placeholder-portrait-npc-local-gentry-m01-v1.webp",
+      "fallbackRef": "fallback-role-silhouette-v1",
+      "dimensions": {
+        "width": 1024,
+        "height": 1536
+      },
+      "aspectRatio": "1024:1536",
+      "format": "webp",
+      "transparent": false,
+      "safeArea": {
+        "x": 0.12,
+        "y": 0.04,
+        "width": 0.76,
+        "height": 0.88
+      },
+      "focalPoint": {
+        "x": 0.5,
+        "y": 0.28
+      },
+      "mobileCrop": {
+        "mode": "center_crop_or_contain",
+        "keepSafeArea": true,
+        "notes": "窄屏人物卡保留头冠、面部、上身衣纹和身份道具，不裁断手部或袖缘。"
+      },
+      "lazyLoad": {
+        "group": "portrait_baseline_s73_7",
+        "allowEagerLoad": false,
+        "thumbnailFirst": true,
+        "lowResPlaceholder": true,
+        "maxInitialPortraits": 8
+      },
+      "source": {
+        "type": "ai_generated",
+        "tool": "Codex imagegen",
+        "model": "gpt-image-2",
+        "generatedAt": "2026-05-15",
+        "promptSummary": "地方士绅，绸袍、玉佩和折扇表现乡里势力的分寸感。"
+      },
+      "license": {
+        "type": "ai_generated_project_asset",
+        "commercialUseConfirmed": false,
+        "summary": "原创 AI 生成素材，当前仅个人游玩/开发使用；未做公开商用确认。"
+      },
+      "reviewStatus": "approved",
+      "visualReview": {
+        "reviewedBy": "Codex",
+        "reviewedAt": "2026-05-15",
+        "status": "approved",
+        "summary": "通过：成人端庄，身份符号清楚，水墨淡彩与极淡宣纸底同批一致；中小尺寸仍能辨认脸部、冠服和主要身份道具。"
+      },
+      "safetyReview": {
+        "reviewedBy": "Codex",
+        "reviewedAt": "2026-05-15",
+        "status": "approved",
+        "summary": "通过：无露骨、挑逗、幼态、现代物、水印、徽标、可读文字、本地路径、key、raw/hidden 内容或未公开剧情事实；人物道具只作身份提示。"
+      },
+      "performance": {
+        "bytes": 209636,
+        "targetMaxBytes": 614400,
+        "thumbnailBytes": 16954,
+        "thumbnailTargetMaxBytes": 256000,
+        "lowResPlaceholderBytes": 452
+      },
+      "ledgerId": "portrait-npc-local-gentry-m01-v1"
+    },
+    {
+      "id": "portrait-npc-storyteller-m01-v1",
+      "version": 1,
+      "phase": "S73.7",
+      "category": "portrait",
+      "subcategory": "portrait_style_baseline",
+      "usage": [
+        "people_page",
+        "game_main",
+        "archive_page"
+      ],
+      "role": "npc_commoner",
+      "scene": null,
+      "portraitRef": "portrait-npc-storyteller-m01-v1",
+      "genderPresentation": "masculine",
+      "ageBand": "adult_middle",
+      "roleStage": "storyteller",
+      "statusVariant": "baseline",
+      "emotionVariant": "lively",
+      "identityTags": [
+        "npc",
+        "commoner",
+        "storyteller",
+        "teahouse"
+      ],
+      "emotionTags": [
+        "lively",
+        "baseline"
+      ],
+      "path": "/assets/ui/portraits/portrait-npc-storyteller-m01-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-portrait-npc-storyteller-m01-v1.webp",
+      "lowResPlaceholderPath": "/assets/ui/portraits/placeholders/placeholder-portrait-npc-storyteller-m01-v1.webp",
+      "fallbackRef": "fallback-role-silhouette-v1",
+      "dimensions": {
+        "width": 1024,
+        "height": 1536
+      },
+      "aspectRatio": "1024:1536",
+      "format": "webp",
+      "transparent": false,
+      "safeArea": {
+        "x": 0.12,
+        "y": 0.04,
+        "width": 0.76,
+        "height": 0.88
+      },
+      "focalPoint": {
+        "x": 0.5,
+        "y": 0.28
+      },
+      "mobileCrop": {
+        "mode": "center_crop_or_contain",
+        "keepSafeArea": true,
+        "notes": "窄屏人物卡保留头冠、面部、上身衣纹和身份道具，不裁断手部或袖缘。"
+      },
+      "lazyLoad": {
+        "group": "portrait_baseline_s73_7",
+        "allowEagerLoad": false,
+        "thumbnailFirst": true,
+        "lowResPlaceholder": true,
+        "maxInitialPortraits": 8
+      },
+      "source": {
+        "type": "ai_generated",
+        "tool": "Codex imagegen",
+        "model": "gpt-image-2",
+        "generatedAt": "2026-05-15",
+        "promptSummary": "市井说书人，布袍折扇与含笑神情表现消息灵通但不滑稽。"
+      },
+      "license": {
+        "type": "ai_generated_project_asset",
+        "commercialUseConfirmed": false,
+        "summary": "原创 AI 生成素材，当前仅个人游玩/开发使用；未做公开商用确认。"
+      },
+      "reviewStatus": "approved",
+      "visualReview": {
+        "reviewedBy": "Codex",
+        "reviewedAt": "2026-05-15",
+        "status": "approved",
+        "summary": "通过：成人端庄，身份符号清楚，水墨淡彩与极淡宣纸底同批一致；中小尺寸仍能辨认脸部、冠服和主要身份道具。"
+      },
+      "safetyReview": {
+        "reviewedBy": "Codex",
+        "reviewedAt": "2026-05-15",
+        "status": "approved",
+        "summary": "通过：无露骨、挑逗、幼态、现代物、水印、徽标、可读文字、本地路径、key、raw/hidden 内容或未公开剧情事实；人物道具只作身份提示。"
+      },
+      "performance": {
+        "bytes": 261508,
+        "targetMaxBytes": 614400,
+        "thumbnailBytes": 21282,
+        "thumbnailTargetMaxBytes": 256000,
+        "lowResPlaceholderBytes": 496
+      },
+      "ledgerId": "portrait-npc-storyteller-m01-v1"
     }
   ],
-  "updatedAt": "2026-05-14"
+  "updatedAt": "2026-05-15"
 }
