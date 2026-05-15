@@ -1873,6 +1873,733 @@
         "thumbnailBytes": 2028
       },
       "ledgerId": "ui-home-static-reduced-motion-v1"
+    },
+    {
+      "id": "ui-scene-study-chamber-v1",
+      "version": 1,
+      "phase": "S73.5",
+      "category": "scene",
+      "subcategory": "study_chamber",
+      "usage": [
+        "game_main"
+      ],
+      "role": null,
+      "scene": "study_chamber",
+      "path": "/assets/ui/scenes/scene-study-chamber-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-scene-study-chamber-v1.webp",
+      "fallbackRef": "fallback-paper-panel-v1",
+      "dimensions": {
+        "width": 1920,
+        "height": 1080
+      },
+      "aspectRatio": "1920:1080",
+      "format": "webp",
+      "transparent": false,
+      "safeArea": {
+        "x": 0.5,
+        "y": 0.08,
+        "width": 0.44,
+        "height": 0.72
+      },
+      "focalPoint": {
+        "x": 0.34,
+        "y": 0.55
+      },
+      "mobileCrop": {
+        "mode": "center_crop",
+        "keepSafeArea": true,
+        "notes": "窄屏优先保留书案、窗竹与右侧浅纸留白。"
+      },
+      "motion": {
+        "type": "none"
+      },
+      "reducedMotionFallback": "fallback-ink-motion-static-v1",
+      "source": {
+        "type": "ai_generated",
+        "tool": "Codex imagegen",
+        "model": "gpt-image-2",
+        "generatedAt": "2026-05-14",
+        "promptSummary": "夜色书斋，矮案、砚台、空白书卷、竹帘月影和右侧留白，服务书生读书与练文界面。"
+      },
+      "license": {
+        "type": "ai_generated_project_asset",
+        "commercialUseConfirmed": false,
+        "summary": "原创 AI 生成素材，当前仅个人游玩/开发使用；未做公开商用确认。"
+      },
+      "reviewStatus": "approved",
+      "visualReview": {
+        "reviewedBy": "Codex",
+        "reviewedAt": "2026-05-14",
+        "status": "approved",
+        "summary": "通过：书斋气质清寒端正，右侧留白充足；无可读文字、水印、现代灯具或现代家具。"
+      },
+      "safetyReview": {
+        "reviewedBy": "Codex",
+        "reviewedAt": "2026-05-14",
+        "status": "approved",
+        "summary": "通过：素材和 manifest 只包含安全项目相对路径、用途、fallback、审核状态和台账 id；不含本地路径、key、raw/hidden 内容、可读乱码或未公开剧情事实。"
+      },
+      "performance": {
+        "bytes": 214492,
+        "targetMaxBytes": 1258291,
+        "thumbnailBytes": 5610
+      },
+      "ledgerId": "ui-scene-study-chamber-v1"
+    },
+    {
+      "id": "ui-scene-exam-cell-v1",
+      "version": 1,
+      "phase": "S73.5",
+      "category": "scene",
+      "subcategory": "exam_cell",
+      "usage": [
+        "exam_page"
+      ],
+      "role": null,
+      "scene": "exam_cell",
+      "path": "/assets/ui/scenes/scene-exam-cell-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-scene-exam-cell-v1.webp",
+      "fallbackRef": "fallback-paper-panel-v1",
+      "dimensions": {
+        "width": 1920,
+        "height": 1080
+      },
+      "aspectRatio": "1920:1080",
+      "format": "webp",
+      "transparent": false,
+      "safeArea": {
+        "x": 0.42,
+        "y": 0.05,
+        "width": 0.5,
+        "height": 0.42
+      },
+      "focalPoint": {
+        "x": 0.37,
+        "y": 0.62
+      },
+      "mobileCrop": {
+        "mode": "center_crop",
+        "keepSafeArea": true,
+        "notes": "窄屏保留号舍纵深、雨痕和上部题面留白。"
+      },
+      "motion": {
+        "type": "none"
+      },
+      "reducedMotionFallback": "fallback-ink-motion-static-v1",
+      "source": {
+        "type": "ai_generated",
+        "tool": "Codex imagegen",
+        "model": "gpt-image-2",
+        "generatedAt": "2026-05-14",
+        "promptSummary": "贡院号舍雨后清冷纵深，木桌、考篮和上方雾化留白，服务科举考试全屏背景。"
+      },
+      "license": {
+        "type": "ai_generated_project_asset",
+        "commercialUseConfirmed": false,
+        "summary": "原创 AI 生成素材，当前仅个人游玩/开发使用；未做公开商用确认。"
+      },
+      "reviewStatus": "approved",
+      "visualReview": {
+        "reviewedBy": "Codex",
+        "reviewedAt": "2026-05-14",
+        "status": "approved",
+        "summary": "通过：贡院号舍结构清楚、压迫感克制，上方可承载考题；无可读文字、现代考场或恐怖血腥元素。"
+      },
+      "safetyReview": {
+        "reviewedBy": "Codex",
+        "reviewedAt": "2026-05-14",
+        "status": "approved",
+        "summary": "通过：素材和 manifest 只包含安全项目相对路径、用途、fallback、审核状态和台账 id；不含本地路径、key、raw/hidden 内容、可读乱码或未公开剧情事实。"
+      },
+      "performance": {
+        "bytes": 233268,
+        "targetMaxBytes": 1258291,
+        "thumbnailBytes": 5662
+      },
+      "ledgerId": "ui-scene-exam-cell-v1"
+    },
+    {
+      "id": "ui-scene-ranking-wall-v1",
+      "version": 1,
+      "phase": "S73.5",
+      "category": "scene",
+      "subcategory": "ranking_wall",
+      "usage": [
+        "ranking_page"
+      ],
+      "role": null,
+      "scene": "ranking_wall",
+      "path": "/assets/ui/scenes/scene-ranking-wall-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-scene-ranking-wall-v1.webp",
+      "fallbackRef": "fallback-paper-panel-v1",
+      "dimensions": {
+        "width": 1920,
+        "height": 1080
+      },
+      "aspectRatio": "1920:1080",
+      "format": "webp",
+      "transparent": false,
+      "safeArea": {
+        "x": 0.47,
+        "y": 0.14,
+        "width": 0.42,
+        "height": 0.56
+      },
+      "focalPoint": {
+        "x": 0.63,
+        "y": 0.46
+      },
+      "mobileCrop": {
+        "mode": "center_crop",
+        "keepSafeArea": true,
+        "notes": "窄屏优先保留无字榜纸和下方围观士子剪影。"
+      },
+      "motion": {
+        "type": "none"
+      },
+      "reducedMotionFallback": "fallback-ink-motion-static-v1",
+      "source": {
+        "type": "ai_generated",
+        "tool": "Codex imagegen",
+        "model": "gpt-image-2",
+        "generatedAt": "2026-05-14",
+        "promptSummary": "贡院外无字榜墙、士子围观和晨雾，榜纸中央留白供 DOM 渲染名次。"
+      },
+      "license": {
+        "type": "ai_generated_project_asset",
+        "commercialUseConfirmed": false,
+        "summary": "原创 AI 生成素材，当前仅个人游玩/开发使用；未做公开商用确认。"
+      },
+      "reviewStatus": "approved",
+      "visualReview": {
+        "reviewedBy": "Codex",
+        "reviewedAt": "2026-05-14",
+        "status": "approved",
+        "summary": "通过：榜纸完全无字，围观人群为古代剪影且不拥挤；无现代告示栏、水印或可读伪文字。"
+      },
+      "safetyReview": {
+        "reviewedBy": "Codex",
+        "reviewedAt": "2026-05-14",
+        "status": "approved",
+        "summary": "通过：素材和 manifest 只包含安全项目相对路径、用途、fallback、审核状态和台账 id；不含本地路径、key、raw/hidden 内容、可读乱码或未公开剧情事实。"
+      },
+      "performance": {
+        "bytes": 269496,
+        "targetMaxBytes": 1258291,
+        "thumbnailBytes": 7496
+      },
+      "ledgerId": "ui-scene-ranking-wall-v1"
+    },
+    {
+      "id": "ui-scene-palace-exam-hall-v1",
+      "version": 1,
+      "phase": "S73.5",
+      "category": "scene",
+      "subcategory": "palace_exam_hall",
+      "usage": [
+        "exam_page",
+        "court_page"
+      ],
+      "role": null,
+      "scene": "palace_exam_hall",
+      "path": "/assets/ui/scenes/scene-palace-exam-hall-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-scene-palace-exam-hall-v1.webp",
+      "fallbackRef": "fallback-paper-panel-v1",
+      "dimensions": {
+        "width": 1920,
+        "height": 1080
+      },
+      "aspectRatio": "1920:1080",
+      "format": "webp",
+      "transparent": false,
+      "safeArea": {
+        "x": 0.34,
+        "y": 0.05,
+        "width": 0.34,
+        "height": 0.36
+      },
+      "focalPoint": {
+        "x": 0.5,
+        "y": 0.55
+      },
+      "mobileCrop": {
+        "mode": "center_crop",
+        "keepSafeArea": true,
+        "notes": "窄屏保留殿试中轴、考生案几和上方策问留白。"
+      },
+      "motion": {
+        "type": "none"
+      },
+      "reducedMotionFallback": "fallback-ink-motion-static-v1",
+      "source": {
+        "type": "ai_generated",
+        "tool": "Codex imagegen",
+        "model": "gpt-image-2",
+        "generatedAt": "2026-05-14",
+        "promptSummary": "殿试大殿纵深、屏风帘幕、考生案几与上方雾化留白，庄重克制。"
+      },
+      "license": {
+        "type": "ai_generated_project_asset",
+        "commercialUseConfirmed": false,
+        "summary": "原创 AI 生成素材，当前仅个人游玩/开发使用；未做公开商用确认。"
+      },
+      "reviewStatus": "approved",
+      "visualReview": {
+        "reviewedBy": "Codex",
+        "reviewedAt": "2026-05-14",
+        "status": "approved",
+        "summary": "通过：殿试空间庄严且留白明确；无可读匾额、现代红毯、真实帝王肖像或过度金色。"
+      },
+      "safetyReview": {
+        "reviewedBy": "Codex",
+        "reviewedAt": "2026-05-14",
+        "status": "approved",
+        "summary": "通过：素材和 manifest 只包含安全项目相对路径、用途、fallback、审核状态和台账 id；不含本地路径、key、raw/hidden 内容、可读乱码或未公开剧情事实。"
+      },
+      "performance": {
+        "bytes": 249686,
+        "targetMaxBytes": 1258291,
+        "thumbnailBytes": 7694
+      },
+      "ledgerId": "ui-scene-palace-exam-hall-v1"
+    },
+    {
+      "id": "ui-scene-county-yamen-v1",
+      "version": 1,
+      "phase": "S73.5",
+      "category": "scene",
+      "subcategory": "county_yamen",
+      "usage": [
+        "game_main"
+      ],
+      "role": null,
+      "scene": "county_yamen",
+      "path": "/assets/ui/scenes/scene-county-yamen-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-scene-county-yamen-v1.webp",
+      "fallbackRef": "fallback-paper-panel-v1",
+      "dimensions": {
+        "width": 1920,
+        "height": 1080
+      },
+      "aspectRatio": "1920:1080",
+      "format": "webp",
+      "transparent": false,
+      "safeArea": {
+        "x": 0.06,
+        "y": 0.08,
+        "width": 0.46,
+        "height": 0.34
+      },
+      "focalPoint": {
+        "x": 0.62,
+        "y": 0.56
+      },
+      "mobileCrop": {
+        "mode": "center_crop",
+        "keepSafeArea": true,
+        "notes": "窄屏保留县衙门庭、鼓和庭院制度感。"
+      },
+      "motion": {
+        "type": "none"
+      },
+      "reducedMotionFallback": "fallback-ink-motion-static-v1",
+      "source": {
+        "type": "ai_generated",
+        "tool": "Codex imagegen",
+        "model": "gpt-image-2",
+        "generatedAt": "2026-05-14",
+        "promptSummary": "县衙外院、木门石阶、堂鼓和晨雾纸光，服务地方官政务面板。"
+      },
+      "license": {
+        "type": "ai_generated_project_asset",
+        "commercialUseConfirmed": false,
+        "summary": "原创 AI 生成素材，当前仅个人游玩/开发使用；未做公开商用确认。"
+      },
+      "reviewStatus": "approved",
+      "visualReview": {
+        "reviewedBy": "Codex",
+        "reviewedAt": "2026-05-14",
+        "status": "approved",
+        "summary": "通过：县衙制度感明确，牌匾为空白；无现代政府建筑、现代徽章或宫殿化红墙。"
+      },
+      "safetyReview": {
+        "reviewedBy": "Codex",
+        "reviewedAt": "2026-05-14",
+        "status": "approved",
+        "summary": "通过：素材和 manifest 只包含安全项目相对路径、用途、fallback、审核状态和台账 id；不含本地路径、key、raw/hidden 内容、可读乱码或未公开剧情事实。"
+      },
+      "performance": {
+        "bytes": 304368,
+        "targetMaxBytes": 1258291,
+        "thumbnailBytes": 8862
+      },
+      "ledgerId": "ui-scene-county-yamen-v1"
+    },
+    {
+      "id": "ui-scene-courtroom-trial-v1",
+      "version": 1,
+      "phase": "S73.5",
+      "category": "scene",
+      "subcategory": "courtroom_trial",
+      "usage": [
+        "game_main",
+        "archive_page"
+      ],
+      "role": null,
+      "scene": "courtroom_trial",
+      "path": "/assets/ui/scenes/scene-courtroom-trial-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-scene-courtroom-trial-v1.webp",
+      "fallbackRef": "fallback-paper-panel-v1",
+      "dimensions": {
+        "width": 1920,
+        "height": 1080
+      },
+      "aspectRatio": "1920:1080",
+      "format": "webp",
+      "transparent": false,
+      "safeArea": {
+        "x": 0.4,
+        "y": 0.18,
+        "width": 0.52,
+        "height": 0.58
+      },
+      "focalPoint": {
+        "x": 0.42,
+        "y": 0.52
+      },
+      "mobileCrop": {
+        "mode": "center_crop",
+        "keepSafeArea": true,
+        "notes": "窄屏保留堂案、原被告空地和右侧案情留白。"
+      },
+      "motion": {
+        "type": "none"
+      },
+      "reducedMotionFallback": "fallback-ink-motion-static-v1",
+      "source": {
+        "type": "ai_generated",
+        "tool": "Codex imagegen",
+        "model": "gpt-image-2",
+        "generatedAt": "2026-05-14",
+        "promptSummary": "公堂审案，堂案、签筒、衙役虚影和中下部空地，服务刑名案件界面。"
+      },
+      "license": {
+        "type": "ai_generated_project_asset",
+        "commercialUseConfirmed": false,
+        "summary": "原创 AI 生成素材，当前仅个人游玩/开发使用；未做公开商用确认。"
+      },
+      "reviewStatus": "approved",
+      "visualReview": {
+        "reviewedBy": "Codex",
+        "reviewedAt": "2026-05-14",
+        "status": "approved",
+        "summary": "通过：公堂肃穆但不血腥，右侧留白适合案情卡；无刑具特写、现代法庭或可读牌匾。"
+      },
+      "safetyReview": {
+        "reviewedBy": "Codex",
+        "reviewedAt": "2026-05-14",
+        "status": "approved",
+        "summary": "通过：素材和 manifest 只包含安全项目相对路径、用途、fallback、审核状态和台账 id；不含本地路径、key、raw/hidden 内容、可读乱码或未公开剧情事实。"
+      },
+      "performance": {
+        "bytes": 233578,
+        "targetMaxBytes": 1258291,
+        "thumbnailBytes": 5658
+      },
+      "ledgerId": "ui-scene-courtroom-trial-v1"
+    },
+    {
+      "id": "ui-scene-military-tent-v1",
+      "version": 1,
+      "phase": "S73.5",
+      "category": "scene",
+      "subcategory": "military_tent",
+      "usage": [
+        "game_main"
+      ],
+      "role": null,
+      "scene": "military_tent",
+      "path": "/assets/ui/scenes/scene-military-tent-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-scene-military-tent-v1.webp",
+      "fallbackRef": "fallback-paper-panel-v1",
+      "dimensions": {
+        "width": 1920,
+        "height": 1080
+      },
+      "aspectRatio": "1920:1080",
+      "format": "webp",
+      "transparent": false,
+      "safeArea": {
+        "x": 0.3,
+        "y": 0.28,
+        "width": 0.48,
+        "height": 0.42
+      },
+      "focalPoint": {
+        "x": 0.5,
+        "y": 0.52
+      },
+      "mobileCrop": {
+        "mode": "center_crop",
+        "keepSafeArea": true,
+        "notes": "窄屏保留军帐案面、旌旗与营火远景。"
+      },
+      "motion": {
+        "type": "none"
+      },
+      "reducedMotionFallback": "fallback-ink-motion-static-v1",
+      "source": {
+        "type": "ai_generated",
+        "tool": "Codex imagegen",
+        "model": "gpt-image-2",
+        "generatedAt": "2026-05-14",
+        "promptSummary": "夜中军帐，空白战术案面、箭矢、甲胄、旌旗和营火远景，服务将领战报界面。"
+      },
+      "license": {
+        "type": "ai_generated_project_asset",
+        "commercialUseConfirmed": false,
+        "summary": "原创 AI 生成素材，当前仅个人游玩/开发使用；未做公开商用确认。"
+      },
+      "reviewStatus": "approved",
+      "visualReview": {
+        "reviewedBy": "Codex",
+        "reviewedAt": "2026-05-14",
+        "status": "approved",
+        "summary": "通过：军帐氛围紧张但克制，重生成版本未见现代枪械或火炮；无血腥、爆炸或现代军装。"
+      },
+      "safetyReview": {
+        "reviewedBy": "Codex",
+        "reviewedAt": "2026-05-14",
+        "status": "approved",
+        "summary": "通过：素材和 manifest 只包含安全项目相对路径、用途、fallback、审核状态和台账 id；不含本地路径、key、raw/hidden 内容、可读乱码或未公开剧情事实。"
+      },
+      "performance": {
+        "bytes": 261162,
+        "targetMaxBytes": 1258291,
+        "thumbnailBytes": 6414
+      },
+      "ledgerId": "ui-scene-military-tent-v1"
+    },
+    {
+      "id": "ui-scene-imperial-desk-v1",
+      "version": 1,
+      "phase": "S73.5",
+      "category": "scene",
+      "subcategory": "imperial_desk",
+      "usage": [
+        "court_page",
+        "game_main"
+      ],
+      "role": null,
+      "scene": "imperial_desk",
+      "path": "/assets/ui/scenes/scene-imperial-desk-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-scene-imperial-desk-v1.webp",
+      "fallbackRef": "fallback-paper-panel-v1",
+      "dimensions": {
+        "width": 1920,
+        "height": 1080
+      },
+      "aspectRatio": "1920:1080",
+      "format": "webp",
+      "transparent": false,
+      "safeArea": {
+        "x": 0.36,
+        "y": 0.34,
+        "width": 0.5,
+        "height": 0.48
+      },
+      "focalPoint": {
+        "x": 0.55,
+        "y": 0.58
+      },
+      "mobileCrop": {
+        "mode": "center_crop",
+        "keepSafeArea": true,
+        "notes": "窄屏保留御案大幅无字纸面、朱笔和玉玺。"
+      },
+      "motion": {
+        "type": "none"
+      },
+      "reducedMotionFallback": "fallback-ink-motion-static-v1",
+      "source": {
+        "type": "ai_generated",
+        "tool": "Codex imagegen",
+        "model": "gpt-image-2",
+        "generatedAt": "2026-05-14",
+        "promptSummary": "御案近景，无字奏折纸面、朱笔、印盒、宫灯和帘影，服务皇帝朱批/诏令界面。"
+      },
+      "license": {
+        "type": "ai_generated_project_asset",
+        "commercialUseConfirmed": false,
+        "summary": "原创 AI 生成素材，当前仅个人游玩/开发使用；未做公开商用确认。"
+      },
+      "reviewStatus": "approved",
+      "visualReview": {
+        "reviewedBy": "Codex",
+        "reviewedAt": "2026-05-14",
+        "status": "approved",
+        "summary": "通过：案头权力感明确，大幅纸面无字可承载 DOM；无现代办公物、真实帝王肖像或可读圣旨。"
+      },
+      "safetyReview": {
+        "reviewedBy": "Codex",
+        "reviewedAt": "2026-05-14",
+        "status": "approved",
+        "summary": "通过：素材和 manifest 只包含安全项目相对路径、用途、fallback、审核状态和台账 id；不含本地路径、key、raw/hidden 内容、可读乱码或未公开剧情事实。"
+      },
+      "performance": {
+        "bytes": 229902,
+        "targetMaxBytes": 1258291,
+        "thumbnailBytes": 6182
+      },
+      "ledgerId": "ui-scene-imperial-desk-v1"
+    },
+    {
+      "id": "ui-scene-city-lanes-v1",
+      "version": 1,
+      "phase": "S73.5",
+      "category": "scene",
+      "subcategory": "city_lanes",
+      "usage": [
+        "game_main",
+        "people_page",
+        "archive_page"
+      ],
+      "role": null,
+      "scene": "city_lanes",
+      "path": "/assets/ui/scenes/scene-city-lanes-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-scene-city-lanes-v1.webp",
+      "fallbackRef": "fallback-paper-panel-v1",
+      "dimensions": {
+        "width": 1920,
+        "height": 1080
+      },
+      "aspectRatio": "1920:1080",
+      "format": "webp",
+      "transparent": false,
+      "safeArea": {
+        "x": 0.58,
+        "y": 0.08,
+        "width": 0.36,
+        "height": 0.7
+      },
+      "focalPoint": {
+        "x": 0.36,
+        "y": 0.55
+      },
+      "mobileCrop": {
+        "mode": "center_crop",
+        "keepSafeArea": true,
+        "notes": "窄屏保留街巷、桥影、茶肆帘幕和右侧淡墨留白。"
+      },
+      "motion": {
+        "type": "none"
+      },
+      "reducedMotionFallback": "fallback-ink-motion-static-v1",
+      "source": {
+        "type": "ai_generated",
+        "tool": "Codex imagegen",
+        "model": "gpt-image-2",
+        "generatedAt": "2026-05-14",
+        "promptSummary": "雨后古城街巷、茶肆帘幕、桥影与行人淡影，服务城市传闻和人物页背景。"
+      },
+      "license": {
+        "type": "ai_generated_project_asset",
+        "commercialUseConfirmed": false,
+        "summary": "原创 AI 生成素材，当前仅个人游玩/开发使用；未做公开商用确认。"
+      },
+      "reviewStatus": "approved",
+      "visualReview": {
+        "reviewedBy": "Codex",
+        "reviewedAt": "2026-05-14",
+        "status": "approved",
+        "summary": "通过：街巷生活气安静且留白充足；无现代招牌、电线、玻璃橱窗或可读店名。"
+      },
+      "safetyReview": {
+        "reviewedBy": "Codex",
+        "reviewedAt": "2026-05-14",
+        "status": "approved",
+        "summary": "通过：素材和 manifest 只包含安全项目相对路径、用途、fallback、审核状态和台账 id；不含本地路径、key、raw/hidden 内容、可读乱码或未公开剧情事实。"
+      },
+      "performance": {
+        "bytes": 204598,
+        "targetMaxBytes": 1258291,
+        "thumbnailBytes": 5062
+      },
+      "ledgerId": "ui-scene-city-lanes-v1"
+    },
+    {
+      "id": "ui-scene-bureau-documents-v1",
+      "version": 1,
+      "phase": "S73.5",
+      "category": "scene",
+      "subcategory": "bureau_documents",
+      "usage": [
+        "game_main",
+        "court_page",
+        "archive_page"
+      ],
+      "role": null,
+      "scene": "bureau_documents",
+      "path": "/assets/ui/scenes/scene-bureau-documents-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-scene-bureau-documents-v1.webp",
+      "fallbackRef": "fallback-paper-panel-v1",
+      "dimensions": {
+        "width": 1920,
+        "height": 1080
+      },
+      "aspectRatio": "1920:1080",
+      "format": "webp",
+      "transparent": false,
+      "safeArea": {
+        "x": 0.55,
+        "y": 0.08,
+        "width": 0.4,
+        "height": 0.72
+      },
+      "focalPoint": {
+        "x": 0.38,
+        "y": 0.52
+      },
+      "mobileCrop": {
+        "mode": "center_crop",
+        "keepSafeArea": true,
+        "notes": "窄屏保留文书案头、屏后官员剪影和右侧纵向留白。"
+      },
+      "motion": {
+        "type": "none"
+      },
+      "reducedMotionFallback": "fallback-ink-motion-static-v1",
+      "source": {
+        "type": "ai_generated",
+        "tool": "Codex imagegen",
+        "model": "gpt-image-2",
+        "generatedAt": "2026-05-14",
+        "promptSummary": "部院值房，空白卷宗、公文束、笔墨和屏后官员剪影，服务大臣/入仕官员面板。"
+      },
+      "license": {
+        "type": "ai_generated_project_asset",
+        "commercialUseConfirmed": false,
+        "summary": "原创 AI 生成素材，当前仅个人游玩/开发使用；未做公开商用确认。"
+      },
+      "reviewStatus": "approved",
+      "visualReview": {
+        "reviewedBy": "Codex",
+        "reviewedAt": "2026-05-14",
+        "status": "approved",
+        "summary": "通过：部院文书气质清楚，重生成版本纸束干净无印章字；无现代档案柜、电脑或可读公文。"
+      },
+      "safetyReview": {
+        "reviewedBy": "Codex",
+        "reviewedAt": "2026-05-14",
+        "status": "approved",
+        "summary": "通过：素材和 manifest 只包含安全项目相对路径、用途、fallback、审核状态和台账 id；不含本地路径、key、raw/hidden 内容、可读乱码或未公开剧情事实。"
+      },
+      "performance": {
+        "bytes": 260228,
+        "targetMaxBytes": 1258291,
+        "thumbnailBytes": 5886
+      },
+      "ledgerId": "ui-scene-bureau-documents-v1"
     }
   ],
   "updatedAt": "2026-05-14"

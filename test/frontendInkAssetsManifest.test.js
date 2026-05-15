@@ -202,7 +202,7 @@ test("S73.2 ink UI manifest fixes schema, safety, fallback, and portrait policie
   });
 
   assert.equal(Array.isArray(manifest.assets), true);
-  assert.equal(manifest.assets.length, 22, "S73.3 UI materials plus S73.4 home assets are active");
+  assert.equal(manifest.assets.length, 32, "S73.3 UI materials, S73.4 home assets, and S73.5 scene assets are active");
 
   const phaseCounts = manifest.assets.reduce((counts, asset) => {
     counts[asset.phase] = (counts[asset.phase] || 0) + 1;
@@ -210,12 +210,21 @@ test("S73.2 ink UI manifest fixes schema, safety, fallback, and portrait policie
   }, {});
   assert.equal(phaseCounts["S73.3"], 16);
   assert.equal(phaseCounts["S73.4"], 6);
+  assert.equal(phaseCounts["S73.5"], 10);
 
   for (const asset of manifest.assets) {
-    assert.equal(["S73.3", "S73.4"].includes(asset.phase), true, asset.id);
+    assert.equal(["S73.3", "S73.4", "S73.5"].includes(asset.phase), true, asset.id);
     assert.equal(manifest.allowedCategories.includes(asset.category), true, asset.id);
     if (asset.phase === "S73.3") assert.equal(asset.category, "material", asset.id);
     if (asset.phase === "S73.4") assert.equal(asset.usage.includes("home"), true, asset.id);
+    if (asset.phase === "S73.5") {
+      assert.equal(asset.category, "scene", asset.id);
+      assert.equal(asset.dimensions.width, 1920, asset.id);
+      assert.equal(asset.dimensions.height, 1080, asset.id);
+      assert.equal(asset.transparent, false, asset.id);
+      assert.equal(asset.reducedMotionFallback, "fallback-ink-motion-static-v1", asset.id);
+      assert.equal(typeof asset.scene, "string", asset.id);
+    }
     assert.equal(manifest.runtimeUsableReviewStatuses.includes(asset.reviewStatus), true, asset.id);
     assertSafeUiAssetPath(asset.path, `${asset.id}.path`);
     assertSafeUiAssetPath(asset.thumbnailPath, `${asset.id}.thumbnailPath`);
@@ -254,9 +263,38 @@ test("S73.2 ink UI manifest fixes schema, safety, fallback, and portrait policie
     "ui-home-register-form-paper-v1",
     "ui-home-cinnabar-start-seal-v1",
     "ui-home-archive-casefile-v1",
-    "ui-home-static-reduced-motion-v1"
+    "ui-home-static-reduced-motion-v1",
+    "ui-scene-study-chamber-v1",
+    "ui-scene-exam-cell-v1",
+    "ui-scene-ranking-wall-v1",
+    "ui-scene-palace-exam-hall-v1",
+    "ui-scene-county-yamen-v1",
+    "ui-scene-courtroom-trial-v1",
+    "ui-scene-military-tent-v1",
+    "ui-scene-imperial-desk-v1",
+    "ui-scene-city-lanes-v1",
+    "ui-scene-bureau-documents-v1"
   ]) {
     assert.equal(assetIds.has(requiredId), true, requiredId);
+  }
+
+  const s735ScenesById = new Map(manifest.assets.filter((asset) => asset.phase === "S73.5").map((asset) => [asset.id, asset]));
+  const requiredS735Scenes = {
+    "ui-scene-study-chamber-v1": "study_chamber",
+    "ui-scene-exam-cell-v1": "exam_cell",
+    "ui-scene-ranking-wall-v1": "ranking_wall",
+    "ui-scene-palace-exam-hall-v1": "palace_exam_hall",
+    "ui-scene-county-yamen-v1": "county_yamen",
+    "ui-scene-courtroom-trial-v1": "courtroom_trial",
+    "ui-scene-military-tent-v1": "military_tent",
+    "ui-scene-imperial-desk-v1": "imperial_desk",
+    "ui-scene-city-lanes-v1": "city_lanes",
+    "ui-scene-bureau-documents-v1": "bureau_documents"
+  };
+  for (const [requiredId, requiredScene] of Object.entries(requiredS735Scenes)) {
+    const asset = s735ScenesById.get(requiredId);
+    assert.ok(asset, requiredId);
+    assert.equal(asset.scene, requiredScene, requiredId);
   }
 });
 
@@ -316,7 +354,17 @@ test("S73.2 frontend asset ledger records manifest, fallback, portrait, and sour
     "ui-imperial-notice-paper-v1",
     "ui-home-scroll-landscape-v1",
     "ui-home-cinnabar-start-seal-v1",
-    "ui-home-static-reduced-motion-v1"
+    "ui-home-static-reduced-motion-v1",
+    "ui-scene-study-chamber-v1",
+    "ui-scene-exam-cell-v1",
+    "ui-scene-ranking-wall-v1",
+    "ui-scene-palace-exam-hall-v1",
+    "ui-scene-county-yamen-v1",
+    "ui-scene-courtroom-trial-v1",
+    "ui-scene-military-tent-v1",
+    "ui-scene-imperial-desk-v1",
+    "ui-scene-city-lanes-v1",
+    "ui-scene-bureau-documents-v1"
   ]) {
     assert.equal(ledgerText.includes(requiredText), true, requiredText);
   }
