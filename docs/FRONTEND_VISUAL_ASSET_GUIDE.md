@@ -33,7 +33,7 @@ public/assets/ui/
 - 使用 `kebab-case-vN.ext`，例如 `paper-xuan-soft-v1.webp`、`portrait-scholar-male-young-official-v1.png`。
 - 版本递增不覆盖旧文件。替换资产使用 `v2`，并在 manifest 和台账说明替换原因。
 - 文件名只描述安全用途、风格和版本，不写真实 prompt、人物 hidden 身份、本地路径、provider 名称、key 片段或未公开剧情。
-- `id` / `portraitRef` / `fallbackRef` 稳定引用资产，不在 React 组件或旧前端脚本里硬编码具体图片路径。
+- `id` / `portraitRef` / `fallbackRef` 稳定引用资产，不在 React 组件、地图桥或其他前端运行时代码里硬编码具体图片路径。
 
 推荐分类前缀：
 
@@ -52,14 +52,14 @@ public/assets/ui/
 
 | usage | 对应页面 |
 | --- | --- |
-| `home` | `/ink-client/` 首页画卷、开局、案卷式存档 |
-| `game_main` | `/ink-client/game/:sessionId` 主叙事页 |
-| `map_page` | `/ink-client/game/:sessionId/map` 独立舆图页 |
-| `people_page` | `/ink-client/game/:sessionId/people` 人物谱牒页 |
-| `archive_page` | `/ink-client/game/:sessionId/archive` 史册/局势簿页 |
-| `exam_page` | `/ink-client/game/:sessionId/exam` 科举考试页 |
-| `ranking_page` | `/ink-client/game/:sessionId/ranking` 放榜页 |
-| `court_page` | `/ink-client/game/:sessionId/court` 皇帝/朝议或官署公文页 |
+| `home` | `/` 首页画卷、开局、案卷式存档 |
+| `game_main` | `/game/:sessionId` 主叙事页 |
+| `map_page` | `/game/:sessionId/map` 独立舆图页 |
+| `people_page` | `/game/:sessionId/people` 人物谱牒页 |
+| `archive_page` | `/game/:sessionId/archive` 史册/局势簿页 |
+| `exam_page` | `/game/:sessionId/exam` 科举考试页 |
+| `ranking_page` | `/game/:sessionId/ranking` 放榜页 |
+| `court_page` | `/game/:sessionId/court` 皇帝/朝议或官署公文页 |
 | `settings_surface` | 右上角印匣、设置、存档和显示偏好 |
 
 后续资产加载层应按 usage、role、scene 和可见 `portraitRef` 懒加载；不得在首页或主叙事页一次性加载 S73.10 全量立绘池、全部场景插画或全部专题背景。
