@@ -9,6 +9,7 @@ const manifestPath = path.join(repoRoot, "public", "assets", "ui", "ink-ui-manif
 const ledgerPath = path.join(repoRoot, "docs", "FRONTEND_ASSET_LEDGER.md");
 const homeTransparencyQaPath = path.join(repoRoot, "public", "assets", "ui", "home", "home-transparency-qa-v1.json");
 const portraitBaselineQaPath = path.join(repoRoot, "public", "assets", "ui", "portraits", "portrait-baseline-qa-v1.json");
+const portraitPlayerPoolQaPath = path.join(repoRoot, "public", "assets", "ui", "portraits", "portrait-player-pool-qa-v1.json");
 const effectMotionQaPath = path.join(repoRoot, "public", "assets", "ui", "effects", "effect-motion-qa-v1.json");
 const assetQaReportPath = path.join(repoRoot, "public", "assets", "ui", "asset-qa-report-v1.json");
 const assetQaPreviewPath = path.join(repoRoot, "public", "assets", "ui", "asset-qa-preview.html");
@@ -210,7 +211,7 @@ test("S73.2 ink UI manifest fixes schema, safety, fallback, and portrait policie
   });
 
   assert.equal(Array.isArray(manifest.assets), true);
-  assert.equal(manifest.assets.length, 70, "S73.3-S73.8 UI assets are active");
+  assert.equal(manifest.assets.length, 142, "S73.3-S73.10.2 UI assets are active");
 
   const phaseCounts = manifest.assets.reduce((counts, asset) => {
     counts[asset.phase] = (counts[asset.phase] || 0) + 1;
@@ -222,9 +223,10 @@ test("S73.2 ink UI manifest fixes schema, safety, fallback, and portrait policie
   assert.equal(phaseCounts["S73.6"], 6);
   assert.equal(phaseCounts["S73.7"], 24);
   assert.equal(phaseCounts["S73.8"], 8);
+  assert.equal(phaseCounts["S73.10.2"], 72);
 
   for (const asset of manifest.assets) {
-    assert.equal(["S73.3", "S73.4", "S73.5", "S73.6", "S73.7", "S73.8"].includes(asset.phase), true, asset.id);
+    assert.equal(["S73.3", "S73.4", "S73.5", "S73.6", "S73.7", "S73.8", "S73.10.2"].includes(asset.phase), true, asset.id);
     assert.equal(manifest.allowedCategories.includes(asset.category), true, asset.id);
     if (asset.phase === "S73.3") assert.equal(asset.category, "material", asset.id);
     if (asset.phase === "S73.4") assert.equal(asset.usage.includes("home"), true, asset.id);
@@ -267,6 +269,37 @@ test("S73.2 ink UI manifest fixes schema, safety, fallback, and portrait policie
       assert.equal(asset.fallbackRef, "fallback-role-silhouette-v1", asset.id);
       assert.deepEqual(asset.lazyLoad, {
         group: "portrait_baseline_s73_7",
+        allowEagerLoad: false,
+        thumbnailFirst: true,
+        lowResPlaceholder: true,
+        maxInitialPortraits: 8
+      });
+      const placeholderPath = resolveUiAssetPath(asset.lowResPlaceholderPath);
+      assert.equal(fs.existsSync(placeholderPath), true, asset.lowResPlaceholderPath);
+      const placeholderInfo = readImageInfo(placeholderPath);
+      assert.equal(placeholderInfo.width, 64, asset.id);
+      assert.equal(placeholderInfo.height, 96, asset.id);
+      assert.equal(asset.performance.lowResPlaceholderBytes, fs.statSync(placeholderPath).size, asset.id);
+      assert.equal(asset.performance.thumbnailBytes <= asset.performance.thumbnailTargetMaxBytes, true, asset.id);
+    }
+    if (asset.phase === "S73.10.2") {
+      assert.equal(asset.category, "portrait", asset.id);
+      assert.equal(asset.subcategory, "player_identity_stage_pool", asset.id);
+      assert.equal(asset.dimensions.width, 1024, asset.id);
+      assert.equal(asset.dimensions.height, 1536, asset.id);
+      assert.equal(asset.transparent, false, asset.id);
+      assert.equal(asset.portraitRef, asset.id, asset.id);
+      assert.equal(asset.portraitRef.startsWith("portrait-s73-10-player-"), true, asset.id);
+      assert.equal(manifest.roleCatalog.includes(asset.role), true, asset.id);
+      assert.equal(["masculine", "feminine"].includes(asset.genderPresentation), true, asset.id);
+      assert.equal(asset.ageBand.startsWith("adult"), true, asset.id);
+      assert.equal(["baseline", "formal", "travel_or_duty"].includes(asset.statusVariant), true, asset.id);
+      assert.equal(Array.isArray(asset.identityTags), true, asset.id);
+      assert.equal(Array.isArray(asset.emotionTags), true, asset.id);
+      assertSafeUiAssetPath(asset.lowResPlaceholderPath, `${asset.id}.lowResPlaceholderPath`);
+      assert.equal(asset.fallbackRef, "fallback-role-silhouette-v1", asset.id);
+      assert.deepEqual(asset.lazyLoad, {
+        group: "portrait_pool_player_s73_10",
         allowEagerLoad: false,
         thumbnailFirst: true,
         lowResPlaceholder: true,
@@ -371,6 +404,18 @@ test("S73.2 ink UI manifest fixes schema, safety, fallback, and portrait policie
     "portrait-npc-examiner-m01-v1",
     "portrait-npc-local-gentry-m01-v1",
     "portrait-npc-storyteller-m01-v1",
+    "portrait-s73-10-player-scholar-m01-v1",
+    "portrait-s73-10-player-child-exam-candidate-f02-v1",
+    "portrait-s73-10-player-xiucai-m03-v1",
+    "portrait-s73-10-player-juren-f01-v1",
+    "portrait-s73-10-player-gongshi-m02-v1",
+    "portrait-s73-10-player-jinshi-f03-v1",
+    "portrait-s73-10-player-junior-official-m01-v1",
+    "portrait-s73-10-player-local-official-f02-v1",
+    "portrait-s73-10-player-capital-official-m03-v1",
+    "portrait-s73-10-player-grand-minister-f01-v1",
+    "portrait-s73-10-player-general-m02-v1",
+    "portrait-s73-10-player-emperor-regent-f03-v1",
     "ui-effect-mist-wash-v1",
     "ui-effect-ink-spread-v1",
     "ui-effect-cinnabar-seal-imprint-v1",
@@ -482,6 +527,52 @@ test("S73.7 portrait baseline QA records approved adult-safe portraits", () => {
     assert.equal(entry.sha256, sha256File(resolveUiAssetPath(entry.path)), entry.id);
     assert.equal(entry.thumbnailSha256, sha256File(resolveUiAssetPath(entry.thumbnailPath)), entry.id);
     assert.equal(entry.lowResPlaceholderSha256, sha256File(resolveUiAssetPath(entry.lowResPlaceholderPath)), entry.id);
+  }
+});
+
+test("S73.10.2 player portrait pool QA records approved staged player portraits", () => {
+  const qaText = fs.readFileSync(portraitPlayerPoolQaPath, "utf8");
+  assert.doesNotMatch(qaText, FORBIDDEN_MANIFEST_REMOTE_OR_LOCAL_PATH);
+  assert.doesNotMatch(qaText, FORBIDDEN_ASSET_VALUE);
+  const qa = JSON.parse(qaText);
+
+  assert.equal(qa.schemaVersion, 1);
+  assert.equal(qa.phase, "S73.10.2");
+  assert.equal(qa.reviewedBy, "Codex");
+  assert.equal(qa.assets.length, 72);
+  assert.equal(qa.sourceSheets.length, 12);
+  assert.equal(qa.visualReviewSummary.includes("成年端庄"), true);
+  assert.equal(qa.visualReviewSummary.includes("无可读文字"), true);
+  assert.equal(qa.safetyReviewSummary.includes("provider 原始响应"), true);
+
+  const manifest = readJson(manifestPath);
+  const poolAssets = new Map(manifest.assets.filter((asset) => asset.phase === "S73.10.2").map((asset) => [asset.id, asset]));
+  const roles = new Set();
+  const variantsByRole = new Map();
+  for (const entry of qa.assets) {
+    const asset = poolAssets.get(entry.id);
+    assert.ok(asset, entry.id);
+    assert.equal(entry.path, asset.path, entry.id);
+    assert.equal(entry.thumbnailPath, asset.thumbnailPath, entry.id);
+    assert.equal(entry.lowResPlaceholderPath, asset.lowResPlaceholderPath, entry.id);
+    roles.add(entry.role);
+    variantsByRole.set(entry.role, (variantsByRole.get(entry.role) || 0) + 1);
+    for (const field of ["path", "thumbnailPath", "lowResPlaceholderPath"]) {
+      assertSafeUiAssetPath(entry[field], `${entry.id}.${field}`);
+      assert.equal(fs.existsSync(resolveUiAssetPath(entry[field])), true, `${entry.id}.${field}`);
+    }
+    assert.equal(entry.bytes, fs.statSync(resolveUiAssetPath(entry.path)).size, entry.id);
+    assert.equal(entry.thumbnailBytes, fs.statSync(resolveUiAssetPath(entry.thumbnailPath)).size, entry.id);
+    assert.equal(entry.lowResPlaceholderBytes, fs.statSync(resolveUiAssetPath(entry.lowResPlaceholderPath)).size, entry.id);
+    assert.equal(entry.sha256, sha256File(resolveUiAssetPath(entry.path)), entry.id);
+    assert.equal(entry.thumbnailSha256, sha256File(resolveUiAssetPath(entry.thumbnailPath)), entry.id);
+    assert.equal(entry.lowResPlaceholderSha256, sha256File(resolveUiAssetPath(entry.lowResPlaceholderPath)), entry.id);
+    assert.equal(entry.visualReviewStatus, "approved", entry.id);
+    assert.equal(entry.safetyReviewStatus, "approved", entry.id);
+  }
+  assert.equal(roles.size, 12);
+  for (const [role, count] of variantsByRole) {
+    assert.equal(count, 6, role);
   }
 });
 
@@ -598,7 +689,7 @@ test("S73.9 frontend asset QA script and preview expose the reusable QA workflow
   }
 });
 
-test("S73.10.1 portrait pool matrix locks planned counts without making assets runtime usable", () => {
+test("S73.10 portrait pool matrix locks planned counts and player pool handoff", () => {
   const matrixText = fs.readFileSync(portraitPoolMatrixPath, "utf8");
   assert.doesNotMatch(matrixText, FORBIDDEN_MANIFEST_REMOTE_OR_LOCAL_PATH);
   const matrix = JSON.parse(matrixText);
@@ -638,7 +729,8 @@ test("S73.10.1 portrait pool matrix locks planned counts without making assets r
     assert.equal(entry.runtimeUsable, false, entry.portraitRef);
     assert.equal(entry.fallbackRef, "fallback-role-silhouette-v1", entry.portraitRef);
     assert.equal(entry.portraitRef.startsWith("portrait-s73-10-"), true, entry.portraitRef);
-    assert.equal(manifestPortraitRefs.has(entry.portraitRef), false, entry.portraitRef);
+    const isGeneratedPlayerPoolEntry = entry.matrixGroup === "player" && entry.productionStep === "S73.10.2";
+    assert.equal(manifestPortraitRefs.has(entry.portraitRef), isGeneratedPlayerPoolEntry, entry.portraitRef);
     assert.equal(String(entry.ageBand).startsWith("adult"), true, entry.portraitRef);
     assert.equal(templateIds.has(entry.promptTemplateRef), true, entry.portraitRef);
     if (entry.matrixGroup === "signature_npc") {
@@ -737,7 +829,9 @@ test("S73.2 frontend asset ledger records manifest, fallback, portrait, and sour
     "portrait-npc-female-official-f01-v1",
     "portrait-npc-examiner-m01-v1",
     "portrait-baseline-qa-v1.json",
+    "portrait-player-pool-qa-v1.json",
     "portrait_baseline_s73_7",
+    "portrait_pool_player_s73_10",
     "fallback-ink-motion-static-v1"
   ]) {
     assert.equal(ledgerText.includes(requiredText), true, requiredText);

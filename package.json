@@ -12,6 +12,8 @@
     "qa:frontend-assets:write": "node scripts/frontendAssetQa.js --write --pixel",
     "qa:portrait-matrix": "node scripts/frontendPortraitMatrix.js",
     "qa:portrait-matrix:write": "node scripts/frontendPortraitMatrix.js --write",
+    "qa:player-portraits": "node scripts/frontendPlayerPortraitAssets.js --check",
+    "qa:player-portraits:write": "node scripts/frontendPlayerPortraitAssets.js --write",
     "eval:ai": "node scripts/aiEvaluationRunner.js && node --test test/aiEvalFixtures.test.js",
     "smoke:browser": "node scripts/browserSmoke.js",
     "smoke:dual-mode": "node scripts/dualModeAcceptance.js",
