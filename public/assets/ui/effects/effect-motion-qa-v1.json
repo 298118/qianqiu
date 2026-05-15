@@ -1,0 +1,155 @@
+{
+  "schemaVersion": 1,
+  "phase": "S73.8",
+  "reviewedBy": "Codex",
+  "generatedAt": "2026-05-15",
+  "sourceDirectory": "Codex generated_images retained outside project; manifest stores only safe project paths.",
+  "assets": [
+    {
+      "id": "ui-effect-mist-wash-v1",
+      "path": "/assets/ui/effects/effect-mist-wash-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-effect-mist-wash-v1.webp",
+      "sourceFileName": "ig_0c011e664bfb2ee2016a0694cda6f481998301c1bf4d4d36e7.png",
+      "sha256": "1e930855cd0404c5455af2dceb526a7a57aff170e921adb05525d3d4fa9edb16",
+      "thumbnailSha256": "cf6ddb5e4192b0d975d82733134919038cc3dcb64832e16b09aac382eb4a2c84",
+      "bytes": 82422,
+      "thumbnailBytes": 826,
+      "dimensions": {
+        "width": 2560,
+        "height": 720
+      },
+      "transparent": false,
+      "visibleAlphaRatio": 1.0,
+      "borderVisibleAlphaPixels": 0,
+      "review": "通过：视觉符合水墨/宣纸/奏折案头基调，无可读文字、水印、现代 UI、本地路径、key、raw/hidden 内容；仅作为低成本视觉动效或静态 fallback 使用。"
+    },
+    {
+      "id": "ui-effect-ink-spread-v1",
+      "path": "/assets/ui/effects/effect-ink-spread-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-effect-ink-spread-v1.webp",
+      "sourceFileName": "ig_0c011e664bfb2ee2016a06950cc7c8819996f9282bf51466eb.png",
+      "sha256": "956e078a41f5a8b1d09833f388a28a2b165190eb34cdcac5309d1bb297e0eeb6",
+      "thumbnailSha256": "bacfd94df7e879ac42160e2a7e945da6062f018a304310310d8496ff82bd6a2d",
+      "bytes": 141828,
+      "thumbnailBytes": 5568,
+      "dimensions": {
+        "width": 1024,
+        "height": 1024
+      },
+      "transparent": true,
+      "visibleAlphaRatio": 0.6598,
+      "borderVisibleAlphaPixels": 0,
+      "review": "通过：视觉符合水墨/宣纸/奏折案头基调，无可读文字、水印、现代 UI、本地路径、key、raw/hidden 内容；仅作为低成本视觉动效或静态 fallback 使用。"
+    },
+    {
+      "id": "ui-effect-cinnabar-seal-imprint-v1",
+      "path": "/assets/ui/effects/effect-cinnabar-seal-imprint-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-effect-cinnabar-seal-imprint-v1.webp",
+      "sourceFileName": "ig_0c011e664bfb2ee2016a069576090c819997ecc87357dd2621.png",
+      "sha256": "f76065500670d7044f6069bcb028e926f0a2eccf3f57db38cfdd768368f09c25",
+      "thumbnailSha256": "2806f39f0d496b01af22a30670061a786aae526c761970c36deedbffd70adcb6",
+      "bytes": 156474,
+      "thumbnailBytes": 20120,
+      "dimensions": {
+        "width": 768,
+        "height": 768
+      },
+      "transparent": true,
+      "visibleAlphaRatio": 0.8225,
+      "borderVisibleAlphaPixels": 0,
+      "review": "通过：视觉符合水墨/宣纸/奏折案头基调，无可读文字、水印、现代 UI、本地路径、key、raw/hidden 内容；仅作为低成本视觉动效或静态 fallback 使用。"
+    },
+    {
+      "id": "ui-effect-paper-unfold-v1",
+      "path": "/assets/ui/effects/effect-paper-unfold-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-effect-paper-unfold-v1.webp",
+      "sourceFileName": "ig_0c011e664bfb2ee2016a0695bc15e48199804d8f17e0090c47.png",
+      "sha256": "b5eddfb47b383f172f10b4db7d1e7fb0ef24745d095a13ebbce790cd422da7f1",
+      "thumbnailSha256": "5b1e677bb2e1522f740f33172a4714c84ca5c03a687ba3f4485094c04516c896",
+      "bytes": 80416,
+      "thumbnailBytes": 2448,
+      "dimensions": {
+        "width": 1600,
+        "height": 900
+      },
+      "transparent": false,
+      "visibleAlphaRatio": 1.0,
+      "borderVisibleAlphaPixels": 0,
+      "review": "通过：视觉符合水墨/宣纸/奏折案头基调，无可读文字、水印、现代 UI、本地路径、key、raw/hidden 内容；仅作为低成本视觉动效或静态 fallback 使用。"
+    },
+    {
+      "id": "ui-effect-ranking-reveal-v1",
+      "path": "/assets/ui/effects/effect-ranking-reveal-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-effect-ranking-reveal-v1.webp",
+      "sourceFileName": "ig_0c011e664bfb2ee2016a0695e8faac819994fcd94c5b8a26bf.png",
+      "sha256": "f55e08eb19c4759bf6eee61f6c4359ed4908f95629006b43ded896682eef4a28",
+      "thumbnailSha256": "edacd9b4074e9e5544001f73a84898aca97bc32815db195ee3d8724209d9b094",
+      "bytes": 83606,
+      "thumbnailBytes": 3776,
+      "dimensions": {
+        "width": 1600,
+        "height": 900
+      },
+      "transparent": false,
+      "visibleAlphaRatio": 1.0,
+      "borderVisibleAlphaPixels": 0,
+      "review": "通过：视觉符合水墨/宣纸/奏折案头基调，无可读文字、水印、现代 UI、本地路径、key、raw/hidden 内容；仅作为低成本视觉动效或静态 fallback 使用。"
+    },
+    {
+      "id": "ui-effect-exam-seal-v1",
+      "path": "/assets/ui/effects/effect-exam-seal-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-effect-exam-seal-v1.webp",
+      "sourceFileName": "ig_0c011e664bfb2ee2016a06960fc7348199bf102b6a10209b08.png",
+      "sha256": "53f3319f859a9482f1f45d626bf490637eb02385617d015c9b8f9dfe0e066bdb",
+      "thumbnailSha256": "db17b39a92e597168d479f041cb07e351ae4679c6c704e97cbee917962f2e355",
+      "bytes": 84254,
+      "thumbnailBytes": 4264,
+      "dimensions": {
+        "width": 1024,
+        "height": 768
+      },
+      "transparent": true,
+      "visibleAlphaRatio": 0.4864,
+      "borderVisibleAlphaPixels": 0,
+      "review": "通过：视觉符合水墨/宣纸/奏折案头基调，无可读文字、水印、现代 UI、本地路径、key、raw/hidden 内容；仅作为低成本视觉动效或静态 fallback 使用。"
+    },
+    {
+      "id": "ui-effect-ink-wipe-v1",
+      "path": "/assets/ui/effects/effect-ink-wipe-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-effect-ink-wipe-v1.webp",
+      "sourceFileName": "ig_0c011e664bfb2ee2016a069651e4608199bfd9a6251bfa1fd8.png",
+      "sha256": "0ca181eec68f2d9fc15bb6c3e36e1496fbbbe3b3f717c5f199b2dd476c5c6464",
+      "thumbnailSha256": "cef00769ac1de7052ead7a12dce0d43bc880cc32ec4de268041b2faa4de30737",
+      "bytes": 166494,
+      "thumbnailBytes": 1600,
+      "dimensions": {
+        "width": 1920,
+        "height": 720
+      },
+      "transparent": true,
+      "visibleAlphaRatio": 0.2641,
+      "borderVisibleAlphaPixels": 0,
+      "review": "通过：视觉符合水墨/宣纸/奏折案头基调，无可读文字、水印、现代 UI、本地路径、key、raw/hidden 内容；仅作为低成本视觉动效或静态 fallback 使用。"
+    },
+    {
+      "id": "ui-effect-page-curl-v1",
+      "path": "/assets/ui/effects/effect-page-curl-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-effect-page-curl-v1.webp",
+      "sourceFileName": "ig_0c011e664bfb2ee2016a069674cf148199bdfc18cd18ee9fee.png",
+      "sha256": "8d35cdf137ba3787825e12aabf7fb6eb5cffa08818e2666957f374bba42ff726",
+      "thumbnailSha256": "d2c245b43007c19f1cbd0b30b16399222927ced55450093dfbfdfc091c353cd9",
+      "bytes": 44870,
+      "thumbnailBytes": 2458,
+      "dimensions": {
+        "width": 1024,
+        "height": 1024
+      },
+      "transparent": true,
+      "visibleAlphaRatio": 0.4035,
+      "borderVisibleAlphaPixels": 799,
+      "review": "通过：视觉符合水墨/宣纸/奏折案头基调，无可读文字、水印、现代 UI、本地路径、key、raw/hidden 内容；仅作为低成本视觉动效或静态 fallback 使用。"
+    }
+  ],
+  "visualReviewSummary": "8 个动效/fallback 素材均经 Codex 视觉审核：无可读文字、水印、现代 UI/器物、本地路径、key、raw/hidden 内容；动效只作为 CSS opacity/scale/clip-path 或静态贴图使用，不表达服务器裁决或游戏状态。",
+  "reducedMotionPolicy": "prefers-reduced-motion 或用户关闭动效时，使用静态最后帧、纸色底或 fallback-ink-motion-static-v1；素材失败不得阻断开局、读档、提交行动、考试交卷或查看榜单。"
+}

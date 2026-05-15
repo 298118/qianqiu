@@ -468,6 +468,12 @@ Manifest 示例：
 
 首轮数量：6-10 个。
 
+执行结果：
+
+- 已完成 8 个已审核动效/fallback 素材：水墨云雾缓入层、墨迹扩散圆晕、无字朱印落章、纸页展开横幅、榜文揭示纸幕、考试交卷朱封、淡墨分场擦拭和卷边揭页角标。
+- 已保存到 `public/assets/ui/effects/`，缩略图保存到 `public/assets/ui/thumbs/`，QA sidecar 为 `public/assets/ui/effects/effect-motion-qa-v1.json`。
+- `public/assets/ui/ink-ui-manifest.json` 已登记 `category: "effect"`、`scene`、`motion.type`、`motion.suggestedUse`、最长建议时长、`fallbackRef` 和 `reducedMotionFallback`；动效只作为 opacity/scale/clip-path/遮罩/静态关键帧建议，不改变游戏状态。
+
 实现功能：
 
 - 水墨云雾、墨迹扩散、朱印落章、纸页展开、榜文揭示、考试交卷火漆印。

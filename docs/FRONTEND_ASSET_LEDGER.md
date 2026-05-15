@@ -16,7 +16,7 @@
 
 | Manifest ID | 状态 | 路径 | 作用 | 安全边界 | 备注 |
 | --- | --- | --- | --- | --- | --- |
-| ink-ui-v1 | assets_active | `public/assets/ui/ink-ui-manifest.json` | S73-S77 前端 UI 素材 manifest，已登记 S73.3 首批 UI 材质、S73.4 首页资产、S73.5 场景插画、S73.6 身份背景和 S73.7 立绘风格基准，并继续保留 fallback token、审核状态、usage、立绘字段和懒加载策略 | 只保存安全路径、尺寸、用途、fallback、审核状态和台账 id；立绘资产必须同时满足基础素材字段与立绘扩展字段；不保存完整 prompt、provider 原始响应、本地路径、key、raw audit 或 hidden 真值 | S73.3 已填入 16 个已审核 UI 材质，S73.4 已填入 6 个已审核/限用首页素材，S73.5 已填入 10 个已审核场景插画，S73.6 已填入 6 个已审核身份背景，S73.7 已填入 24 张已审核立绘风格基准；S73.8-S73.10 继续按本契约逐步填充 |
+| ink-ui-v1 | assets_active | `public/assets/ui/ink-ui-manifest.json` | S73-S77 前端 UI 素材 manifest，已登记 S73.3 首批 UI 材质、S73.4 首页资产、S73.5 场景插画、S73.6 身份背景、S73.7 立绘风格基准和 S73.8 动效/fallback 素材，并继续保留 fallback token、审核状态、usage、立绘字段、动效字段和懒加载策略 | 只保存安全路径、尺寸、用途、fallback、reduced-motion fallback、审核状态和台账 id；立绘资产必须同时满足基础素材字段与立绘扩展字段；不保存完整 prompt、provider 原始响应、本地路径、key、raw audit 或 hidden 真值 | S73.3 已填入 16 个已审核 UI 材质，S73.4 已填入 6 个已审核/限用首页素材，S73.5 已填入 10 个已审核场景插画，S73.6 已填入 6 个已审核身份背景，S73.7 已填入 24 张已审核立绘风格基准，S73.8 已填入 8 个已审核动效/fallback 素材；S73.9-S73.10 继续按本契约逐步填充 |
 
 ## 素材记录
 
@@ -95,6 +95,21 @@ S73.2 只固定字段；S73.7 已写入 24 张基准立绘，S73.10 写入 300-4
 | portrait-npc-examiner-m01-v1 | approved | NPC 类型基准 | 不适用 | chief_examiner | 男性气质 | adult_mature | chief_examiner | baseline | judicious | `assets/ui/portraits/portrait-npc-examiner-m01-v1.webp` | `assets/ui/thumbs/thumb-portrait-npc-examiner-m01-v1.webp` | `assets/ui/portraits/placeholders/placeholder-portrait-npc-examiner-m01-v1.webp` | `fallback-role-silhouette-v1` | 通过：缩略图中脸部、冠服和主要身份道具可辨。 | 通过：成年、端庄，姿态克制，无幼态或性化表现。 | 通过：无现代物、水印、徽标、可读文字、本地路径、key、raw/hidden 内容或未公开剧情事实。 | portrait-npc-examiner-m01-v1 | portrait_baseline_s73_7 | 主考官，肃穆官服和无字试卷表现科场权衡，不泄漏结果。；portrait_baseline_s73_7；低清占位 546 bytes。 |
 | portrait-npc-local-gentry-m01-v1 | approved | NPC 类型基准 | 不适用 | local_gentry | 男性气质 | adult_mature | local_gentry | baseline | amiable_guarded | `assets/ui/portraits/portrait-npc-local-gentry-m01-v1.webp` | `assets/ui/thumbs/thumb-portrait-npc-local-gentry-m01-v1.webp` | `assets/ui/portraits/placeholders/placeholder-portrait-npc-local-gentry-m01-v1.webp` | `fallback-role-silhouette-v1` | 通过：缩略图中脸部、冠服和主要身份道具可辨。 | 通过：成年、端庄，姿态克制，无幼态或性化表现。 | 通过：无现代物、水印、徽标、可读文字、本地路径、key、raw/hidden 内容或未公开剧情事实。 | portrait-npc-local-gentry-m01-v1 | portrait_baseline_s73_7 | 地方士绅，绸袍、玉佩和折扇表现乡里势力的分寸感。；portrait_baseline_s73_7；低清占位 452 bytes。 |
 | portrait-npc-storyteller-m01-v1 | approved | NPC 类型基准 | 不适用 | storyteller | 男性气质 | adult_middle | storyteller | baseline | lively | `assets/ui/portraits/portrait-npc-storyteller-m01-v1.webp` | `assets/ui/thumbs/thumb-portrait-npc-storyteller-m01-v1.webp` | `assets/ui/portraits/placeholders/placeholder-portrait-npc-storyteller-m01-v1.webp` | `fallback-role-silhouette-v1` | 通过：缩略图中脸部、冠服和主要身份道具可辨。 | 通过：成年、端庄，姿态克制，无幼态或性化表现。 | 通过：无现代物、水印、徽标、可读文字、本地路径、key、raw/hidden 内容或未公开剧情事实。 | portrait-npc-storyteller-m01-v1 | portrait_baseline_s73_7 | 市井说书人，布袍折扇与含笑神情表现消息灵通但不滑稽。；portrait_baseline_s73_7；低清占位 496 bytes。 |
+
+## S73.8 动效与 fallback 简表
+
+S73.8 已完成 8 个动效/fallback 素材。创意发散 prompt 草案由 medium 子代理完成，Codex 定稿 prompt、使用 `gpt-image-2` 生成、后处理为 WebP、生成缩略图并完成视觉/安全审核。完整 QA sidecar 见 `assets/ui/effects/effect-motion-qa-v1.json`；manifest 只登记安全项目路径、动效建议、fallback、reduced-motion fallback、性能预算和审核摘要。
+
+| Asset ID | 状态 | 项目路径 | 缩略图路径 | usage | scene | fallbackRef | reduced-motion fallback | 动效建议 | 审核/备注 |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| ui-effect-mist-wash-v1 | approved | `assets/ui/effects/effect-mist-wash-v1.webp` | `assets/ui/thumbs/thumb-effect-mist-wash-v1.webp` | `home, game_main` | home_mist_transition | `fallback-ink-motion-static-v1` | `fallback-ink-motion-static-v1` | opacity drift overlay | 水墨云雾低对比，无文字、水印、现代 UI、本地路径、key、raw/hidden 内容 |
+| ui-effect-ink-spread-v1 | approved | `assets/ui/effects/effect-ink-spread-v1.webp` | `assets/ui/thumbs/thumb-effect-ink-spread-v1.webp` | `game_main, exam_page` | ink_spread_reveal | `fallback-ink-motion-static-v1` | `fallback-ink-motion-static-v1` | scale opacity reveal | 只作局部揭示/回合反馈，不代表服务器裁决 |
+| ui-effect-cinnabar-seal-imprint-v1 | approved | `assets/ui/effects/effect-cinnabar-seal-imprint-v1.webp` | `assets/ui/thumbs/thumb-effect-cinnabar-seal-imprint-v1.webp` | `home, game_main, exam_page, ranking_page` | cinnabar_seal_feedback | `fallback-paper-panel-v1` | `fallback-ink-motion-static-v1` | stamp pop fade | 无字朱印，文字和结果必须来自 DOM/服务器 |
+| ui-effect-paper-unfold-v1 | approved | `assets/ui/effects/effect-paper-unfold-v1.webp` | `assets/ui/thumbs/thumb-effect-paper-unfold-v1.webp` | `home, game_main, archive_page` | paper_unfold_panel | `fallback-paper-panel-v1` | `fallback-ink-motion-static-v1` | clip-path unfold | 面板展开关键帧；失败时回退纸色面板 |
+| ui-effect-ranking-reveal-v1 | approved | `assets/ui/effects/effect-ranking-reveal-v1.webp` | `assets/ui/thumbs/thumb-effect-ranking-reveal-v1.webp` | `ranking_page` | ranking_notice_reveal | `fallback-ink-motion-static-v1` | `fallback-ink-motion-static-v1` | vertical reveal mask | 放榜揭幕底图；名次、评分和评语只来自服务器数据 |
+| ui-effect-exam-seal-v1 | approved | `assets/ui/effects/effect-exam-seal-v1.webp` | `assets/ui/thumbs/thumb-effect-exam-seal-v1.webp` | `exam_page` | exam_submission_seal | `fallback-ink-motion-static-v1` | `fallback-ink-motion-static-v1` | seal press feedback | 交卷反馈；服务器仍拥有交卷、评分、舞弊和晋级裁决 |
+| ui-effect-ink-wipe-v1 | approved | `assets/ui/effects/effect-ink-wipe-v1.webp` | `assets/ui/thumbs/thumb-effect-ink-wipe-v1.webp` | `game_main, exam_page, ranking_page` | ink_wipe_transition | `fallback-ink-motion-static-v1` | `fallback-ink-motion-static-v1` | horizontal wipe mask | 低成本转场遮罩；低动效直接切换内容 |
+| ui-effect-page-curl-v1 | approved | `assets/ui/effects/effect-page-curl-v1.webp` | `assets/ui/thumbs/thumb-effect-page-curl-v1.webp` | `archive_page, game_main` | page_curl_corner | `fallback-paper-panel-v1` | `fallback-ink-motion-static-v1` | corner curl hint | 角落翻页提示；不得遮挡正文和按钮 |
 
 ## 参考素材记录
 

@@ -9,6 +9,7 @@ const manifestPath = path.join(repoRoot, "public", "assets", "ui", "ink-ui-manif
 const ledgerPath = path.join(repoRoot, "docs", "FRONTEND_ASSET_LEDGER.md");
 const homeTransparencyQaPath = path.join(repoRoot, "public", "assets", "ui", "home", "home-transparency-qa-v1.json");
 const portraitBaselineQaPath = path.join(repoRoot, "public", "assets", "ui", "portraits", "portrait-baseline-qa-v1.json");
+const effectMotionQaPath = path.join(repoRoot, "public", "assets", "ui", "effects", "effect-motion-qa-v1.json");
 
 const FORBIDDEN_SECRET_OR_LOCAL_PATH =
   /(OPENAI_API_KEY|DEEPSEEK_API_KEY|MIMO_API_KEY|ANTHROPIC_API_KEY|sk-[A-Za-z0-9_-]{6,}|tp-[A-Za-z0-9_-]{6,}|[A-Za-z]:[\\/]|file:\/\/|data:|data[\\/](?:sessions|audit))/i;
@@ -203,7 +204,7 @@ test("S73.2 ink UI manifest fixes schema, safety, fallback, and portrait policie
   });
 
   assert.equal(Array.isArray(manifest.assets), true);
-  assert.equal(manifest.assets.length, 62, "S73.3-S73.7 UI assets are active");
+  assert.equal(manifest.assets.length, 70, "S73.3-S73.8 UI assets are active");
 
   const phaseCounts = manifest.assets.reduce((counts, asset) => {
     counts[asset.phase] = (counts[asset.phase] || 0) + 1;
@@ -214,9 +215,10 @@ test("S73.2 ink UI manifest fixes schema, safety, fallback, and portrait policie
   assert.equal(phaseCounts["S73.5"], 10);
   assert.equal(phaseCounts["S73.6"], 6);
   assert.equal(phaseCounts["S73.7"], 24);
+  assert.equal(phaseCounts["S73.8"], 8);
 
   for (const asset of manifest.assets) {
-    assert.equal(["S73.3", "S73.4", "S73.5", "S73.6", "S73.7"].includes(asset.phase), true, asset.id);
+    assert.equal(["S73.3", "S73.4", "S73.5", "S73.6", "S73.7", "S73.8"].includes(asset.phase), true, asset.id);
     assert.equal(manifest.allowedCategories.includes(asset.category), true, asset.id);
     if (asset.phase === "S73.3") assert.equal(asset.category, "material", asset.id);
     if (asset.phase === "S73.4") assert.equal(asset.usage.includes("home"), true, asset.id);
@@ -270,6 +272,18 @@ test("S73.2 ink UI manifest fixes schema, safety, fallback, and portrait policie
       assert.equal(placeholderInfo.width, 64, asset.id);
       assert.equal(placeholderInfo.height, 96, asset.id);
       assert.equal(asset.performance.lowResPlaceholderBytes, fs.statSync(placeholderPath).size, asset.id);
+      assert.equal(asset.performance.thumbnailBytes <= asset.performance.thumbnailTargetMaxBytes, true, asset.id);
+    }
+    if (asset.phase === "S73.8") {
+      assert.equal(asset.category, "effect", asset.id);
+      assert.equal(asset.reducedMotionFallback, "fallback-ink-motion-static-v1", asset.id);
+      assert.equal(fallbackIds.has(asset.reducedMotionFallback), true, asset.id);
+      assert.equal(typeof asset.scene, "string", asset.id);
+      assert.equal(typeof asset.motion, "object", asset.id);
+      assert.equal(typeof asset.motion.type, "string", asset.id);
+      assert.equal(typeof asset.motion.suggestedUse, "string", asset.id);
+      assert.equal(asset.motion.suggestedUse.length > 8, true, asset.id);
+      assert.equal(asset.motion.maxSuggestedDurationMs <= 18000, true, asset.id);
       assert.equal(asset.performance.thumbnailBytes <= asset.performance.thumbnailTargetMaxBytes, true, asset.id);
     }
     assert.equal(manifest.runtimeUsableReviewStatuses.includes(asset.reviewStatus), true, asset.id);
@@ -351,6 +365,14 @@ test("S73.2 ink UI manifest fixes schema, safety, fallback, and portrait policie
     "portrait-npc-examiner-m01-v1",
     "portrait-npc-local-gentry-m01-v1",
     "portrait-npc-storyteller-m01-v1",
+    "ui-effect-mist-wash-v1",
+    "ui-effect-ink-spread-v1",
+    "ui-effect-cinnabar-seal-imprint-v1",
+    "ui-effect-paper-unfold-v1",
+    "ui-effect-ranking-reveal-v1",
+    "ui-effect-exam-seal-v1",
+    "ui-effect-ink-wipe-v1",
+    "ui-effect-page-curl-v1",
   ]) {
     assert.equal(assetIds.has(requiredId), true, requiredId);
   }
@@ -454,6 +476,39 @@ test("S73.7 portrait baseline QA records approved adult-safe portraits", () => {
     assert.equal(entry.sha256, sha256File(resolveUiAssetPath(entry.path)), entry.id);
     assert.equal(entry.thumbnailSha256, sha256File(resolveUiAssetPath(entry.thumbnailPath)), entry.id);
     assert.equal(entry.lowResPlaceholderSha256, sha256File(resolveUiAssetPath(entry.lowResPlaceholderPath)), entry.id);
+  }
+});
+
+test("S73.8 effect motion QA records approved reduced-motion fallbacks", () => {
+  const qaText = fs.readFileSync(effectMotionQaPath, "utf8");
+  assert.doesNotMatch(qaText, FORBIDDEN_MANIFEST_REMOTE_OR_LOCAL_PATH);
+  assert.doesNotMatch(qaText, FORBIDDEN_ASSET_VALUE);
+  const qa = JSON.parse(qaText);
+
+  assert.equal(qa.schemaVersion, 1);
+  assert.equal(qa.phase, "S73.8");
+  assert.equal(qa.reviewedBy, "Codex");
+  assert.equal(qa.assets.length, 8);
+  assert.equal(qa.visualReviewSummary.includes("无可读文字"), true);
+  assert.equal(qa.reducedMotionPolicy.includes("prefers-reduced-motion"), true);
+
+  const manifest = readJson(manifestPath);
+  const effectAssets = new Map(manifest.assets.filter((asset) => asset.phase === "S73.8").map((asset) => [asset.id, asset]));
+  for (const entry of qa.assets) {
+    const asset = effectAssets.get(entry.id);
+    assert.ok(asset, entry.id);
+    assert.equal(entry.path, asset.path, entry.id);
+    assert.equal(entry.thumbnailPath, asset.thumbnailPath, entry.id);
+    assert.equal(asset.reducedMotionFallback, "fallback-ink-motion-static-v1", entry.id);
+    assertSafeUiAssetPath(entry.path, `${entry.id}.path`);
+    assertSafeUiAssetPath(entry.thumbnailPath, `${entry.id}.thumbnailPath`);
+    assert.equal(fs.existsSync(resolveUiAssetPath(entry.path)), true, `${entry.id}.path`);
+    assert.equal(fs.existsSync(resolveUiAssetPath(entry.thumbnailPath)), true, `${entry.id}.thumbnailPath`);
+    assert.equal(entry.bytes, fs.statSync(resolveUiAssetPath(entry.path)).size, entry.id);
+    assert.equal(entry.thumbnailBytes, fs.statSync(resolveUiAssetPath(entry.thumbnailPath)).size, entry.id);
+    assert.equal(entry.sha256, sha256File(resolveUiAssetPath(entry.path)), entry.id);
+    assert.equal(entry.thumbnailSha256, sha256File(resolveUiAssetPath(entry.thumbnailPath)), entry.id);
+    assert.equal(asset.motion.maxSuggestedDurationMs <= 18000, true, entry.id);
   }
 });
 

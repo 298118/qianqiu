@@ -5473,6 +5473,624 @@
         "lowResPlaceholderBytes": 496
       },
       "ledgerId": "portrait-npc-storyteller-m01-v1"
+    },
+    {
+      "id": "ui-effect-mist-wash-v1",
+      "version": 1,
+      "phase": "S73.8",
+      "category": "effect",
+      "subcategory": "motion_overlay",
+      "usage": [
+        "home",
+        "game_main"
+      ],
+      "scene": "home_mist_transition",
+      "path": "/assets/ui/effects/effect-mist-wash-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-effect-mist-wash-v1.webp",
+      "fallbackRef": "fallback-ink-motion-static-v1",
+      "reducedMotionFallback": "fallback-ink-motion-static-v1",
+      "dimensions": {
+        "width": 2560,
+        "height": 720
+      },
+      "aspectRatio": "2560:720",
+      "format": "webp",
+      "transparent": false,
+      "safeArea": {
+        "x": 0.04,
+        "y": 0.08,
+        "width": 0.92,
+        "height": 0.84
+      },
+      "focalPoint": {
+        "x": 0.5,
+        "y": 0.45
+      },
+      "mobileCrop": {
+        "mode": "contain_or_center_overlay",
+        "keepSafeArea": true,
+        "notes": "动效素材只作为叠加、遮罩或静态关键帧；窄屏保持 safeArea，不承载玩家必须读取的信息。"
+      },
+      "motion": {
+        "type": "opacity_drift_overlay",
+        "suggestedUse": "云雾淡入、低速平移或静态贴图；不得承载状态文本。",
+        "maxSuggestedDurationMs": 12000
+      },
+      "source": {
+        "type": "ai_generated",
+        "tool": "Codex imagegen",
+        "model": "gpt-image-2",
+        "generatedAt": "2026-05-15",
+        "promptSummary": "水墨云雾缓入层，低对比暖灰雾气，适合首页与主界面淡入。"
+      },
+      "license": {
+        "type": "ai_generated_project_asset",
+        "commercialUseConfirmed": false,
+        "summary": "原创 AI 生成素材，当前仅个人游玩/开发使用；未做公开商用确认。"
+      },
+      "reviewStatus": "approved",
+      "visualReview": {
+        "reviewedBy": "Codex",
+        "reviewedAt": "2026-05-15",
+        "status": "approved",
+        "summary": "通过：水墨/宣纸/奏折案头基调一致，无可读文字、水印、现代 UI 或现代器物；可作为低成本动效关键帧或静态 fallback。"
+      },
+      "safetyReview": {
+        "reviewedBy": "Codex",
+        "reviewedAt": "2026-05-15",
+        "status": "approved",
+        "summary": "通过：无本地路径、key、raw/hidden 内容、未公开剧情事实或服务器裁决暗示；动效不得替代后端状态判断。"
+      },
+      "performance": {
+        "bytes": 82422,
+        "targetMaxBytes": 262144,
+        "thumbnailBytes": 826,
+        "thumbnailTargetMaxBytes": 256000,
+        "visibleAlphaRatio": 1,
+        "borderVisibleAlphaPixels": 0
+      },
+      "ledgerId": "ui-effect-mist-wash-v1"
+    },
+    {
+      "id": "ui-effect-ink-spread-v1",
+      "version": 1,
+      "phase": "S73.8",
+      "category": "effect",
+      "subcategory": "motion_mask",
+      "usage": [
+        "game_main",
+        "exam_page"
+      ],
+      "scene": "ink_spread_reveal",
+      "path": "/assets/ui/effects/effect-ink-spread-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-effect-ink-spread-v1.webp",
+      "fallbackRef": "fallback-ink-motion-static-v1",
+      "reducedMotionFallback": "fallback-ink-motion-static-v1",
+      "dimensions": {
+        "width": 1024,
+        "height": 1024
+      },
+      "aspectRatio": "1:1",
+      "format": "webp",
+      "transparent": true,
+      "safeArea": {
+        "x": 0.08,
+        "y": 0.08,
+        "width": 0.84,
+        "height": 0.84
+      },
+      "focalPoint": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "mobileCrop": {
+        "mode": "contain_or_center_overlay",
+        "keepSafeArea": true,
+        "notes": "动效素材只作为叠加、遮罩或静态关键帧；窄屏保持 safeArea，不承载玩家必须读取的信息。"
+      },
+      "motion": {
+        "type": "scale_opacity_reveal",
+        "suggestedUse": "小幅 scale 与 opacity 组合，作为局部视觉反馈；不表达服务器裁决。",
+        "maxSuggestedDurationMs": 9000
+      },
+      "source": {
+        "type": "ai_generated",
+        "tool": "Codex imagegen",
+        "model": "gpt-image-2",
+        "generatedAt": "2026-05-15",
+        "promptSummary": "墨迹扩散圆晕，透明底，可作局部揭示或回合反馈。"
+      },
+      "license": {
+        "type": "ai_generated_project_asset",
+        "commercialUseConfirmed": false,
+        "summary": "原创 AI 生成素材，当前仅个人游玩/开发使用；未做公开商用确认。"
+      },
+      "reviewStatus": "approved",
+      "visualReview": {
+        "reviewedBy": "Codex",
+        "reviewedAt": "2026-05-15",
+        "status": "approved",
+        "summary": "通过：水墨/宣纸/奏折案头基调一致，无可读文字、水印、现代 UI 或现代器物；可作为低成本动效关键帧或静态 fallback。"
+      },
+      "safetyReview": {
+        "reviewedBy": "Codex",
+        "reviewedAt": "2026-05-15",
+        "status": "approved",
+        "summary": "通过：无本地路径、key、raw/hidden 内容、未公开剧情事实或服务器裁决暗示；动效不得替代后端状态判断。"
+      },
+      "performance": {
+        "bytes": 141828,
+        "targetMaxBytes": 262144,
+        "thumbnailBytes": 5568,
+        "thumbnailTargetMaxBytes": 256000,
+        "visibleAlphaRatio": 0.6598,
+        "borderVisibleAlphaPixels": 0
+      },
+      "ledgerId": "ui-effect-ink-spread-v1"
+    },
+    {
+      "id": "ui-effect-cinnabar-seal-imprint-v1",
+      "version": 1,
+      "phase": "S73.8",
+      "category": "effect",
+      "subcategory": "motion_feedback",
+      "usage": [
+        "home",
+        "game_main",
+        "exam_page",
+        "ranking_page"
+      ],
+      "scene": "cinnabar_seal_feedback",
+      "path": "/assets/ui/effects/effect-cinnabar-seal-imprint-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-effect-cinnabar-seal-imprint-v1.webp",
+      "fallbackRef": "fallback-paper-panel-v1",
+      "reducedMotionFallback": "fallback-ink-motion-static-v1",
+      "dimensions": {
+        "width": 768,
+        "height": 768
+      },
+      "aspectRatio": "1:1",
+      "format": "webp",
+      "transparent": true,
+      "safeArea": {
+        "x": 0.12,
+        "y": 0.12,
+        "width": 0.76,
+        "height": 0.76
+      },
+      "focalPoint": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "mobileCrop": {
+        "mode": "contain_or_center_overlay",
+        "keepSafeArea": true,
+        "notes": "动效素材只作为叠加、遮罩或静态关键帧；窄屏保持 safeArea，不承载玩家必须读取的信息。"
+      },
+      "motion": {
+        "type": "stamp_pop_fade",
+        "suggestedUse": "按钮确认、交互回执或静态印痕；文字必须由 DOM 提供。",
+        "maxSuggestedDurationMs": 5000
+      },
+      "source": {
+        "type": "ai_generated",
+        "tool": "Codex imagegen",
+        "model": "gpt-image-2",
+        "generatedAt": "2026-05-15",
+        "promptSummary": "无字朱印落章印痕，边缘有宣纸渗色，可配 DOM 文案。"
+      },
+      "license": {
+        "type": "ai_generated_project_asset",
+        "commercialUseConfirmed": false,
+        "summary": "原创 AI 生成素材，当前仅个人游玩/开发使用；未做公开商用确认。"
+      },
+      "reviewStatus": "approved",
+      "visualReview": {
+        "reviewedBy": "Codex",
+        "reviewedAt": "2026-05-15",
+        "status": "approved",
+        "summary": "通过：水墨/宣纸/奏折案头基调一致，无可读文字、水印、现代 UI 或现代器物；可作为低成本动效关键帧或静态 fallback。"
+      },
+      "safetyReview": {
+        "reviewedBy": "Codex",
+        "reviewedAt": "2026-05-15",
+        "status": "approved",
+        "summary": "通过：无本地路径、key、raw/hidden 内容、未公开剧情事实或服务器裁决暗示；动效不得替代后端状态判断。"
+      },
+      "performance": {
+        "bytes": 156474,
+        "targetMaxBytes": 262144,
+        "thumbnailBytes": 20120,
+        "thumbnailTargetMaxBytes": 256000,
+        "visibleAlphaRatio": 0.8225,
+        "borderVisibleAlphaPixels": 0
+      },
+      "ledgerId": "ui-effect-cinnabar-seal-imprint-v1"
+    },
+    {
+      "id": "ui-effect-paper-unfold-v1",
+      "version": 1,
+      "phase": "S73.8",
+      "category": "effect",
+      "subcategory": "motion_panel",
+      "usage": [
+        "home",
+        "game_main",
+        "archive_page"
+      ],
+      "scene": "paper_unfold_panel",
+      "path": "/assets/ui/effects/effect-paper-unfold-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-effect-paper-unfold-v1.webp",
+      "fallbackRef": "fallback-paper-panel-v1",
+      "reducedMotionFallback": "fallback-ink-motion-static-v1",
+      "dimensions": {
+        "width": 1600,
+        "height": 900
+      },
+      "aspectRatio": "16:9",
+      "format": "webp",
+      "transparent": false,
+      "safeArea": {
+        "x": 0.12,
+        "y": 0.16,
+        "width": 0.76,
+        "height": 0.68
+      },
+      "focalPoint": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "mobileCrop": {
+        "mode": "contain_or_center_overlay",
+        "keepSafeArea": true,
+        "notes": "动效素材只作为叠加、遮罩或静态关键帧；窄屏保持 safeArea，不承载玩家必须读取的信息。"
+      },
+      "motion": {
+        "type": "clip_path_unfold",
+        "suggestedUse": "用 clip-path 或 opacity 做面板展开；低动效下回退纸色面板。",
+        "maxSuggestedDurationMs": 8000
+      },
+      "source": {
+        "type": "ai_generated",
+        "tool": "Codex imagegen",
+        "model": "gpt-image-2",
+        "generatedAt": "2026-05-15",
+        "promptSummary": "纸页展开横幅，中央留白，适合面板开合的静态关键帧。"
+      },
+      "license": {
+        "type": "ai_generated_project_asset",
+        "commercialUseConfirmed": false,
+        "summary": "原创 AI 生成素材，当前仅个人游玩/开发使用；未做公开商用确认。"
+      },
+      "reviewStatus": "approved",
+      "visualReview": {
+        "reviewedBy": "Codex",
+        "reviewedAt": "2026-05-15",
+        "status": "approved",
+        "summary": "通过：水墨/宣纸/奏折案头基调一致，无可读文字、水印、现代 UI 或现代器物；可作为低成本动效关键帧或静态 fallback。"
+      },
+      "safetyReview": {
+        "reviewedBy": "Codex",
+        "reviewedAt": "2026-05-15",
+        "status": "approved",
+        "summary": "通过：无本地路径、key、raw/hidden 内容、未公开剧情事实或服务器裁决暗示；动效不得替代后端状态判断。"
+      },
+      "performance": {
+        "bytes": 80416,
+        "targetMaxBytes": 262144,
+        "thumbnailBytes": 2448,
+        "thumbnailTargetMaxBytes": 256000,
+        "visibleAlphaRatio": 1,
+        "borderVisibleAlphaPixels": 0
+      },
+      "ledgerId": "ui-effect-paper-unfold-v1"
+    },
+    {
+      "id": "ui-effect-ranking-reveal-v1",
+      "version": 1,
+      "phase": "S73.8",
+      "category": "effect",
+      "subcategory": "motion_panel",
+      "usage": [
+        "ranking_page"
+      ],
+      "scene": "ranking_notice_reveal",
+      "path": "/assets/ui/effects/effect-ranking-reveal-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-effect-ranking-reveal-v1.webp",
+      "fallbackRef": "fallback-ink-motion-static-v1",
+      "reducedMotionFallback": "fallback-ink-motion-static-v1",
+      "dimensions": {
+        "width": 1600,
+        "height": 900
+      },
+      "aspectRatio": "16:9",
+      "format": "webp",
+      "transparent": false,
+      "safeArea": {
+        "x": 0.14,
+        "y": 0.12,
+        "width": 0.72,
+        "height": 0.72
+      },
+      "focalPoint": {
+        "x": 0.5,
+        "y": 0.48
+      },
+      "mobileCrop": {
+        "mode": "contain_or_center_overlay",
+        "keepSafeArea": true,
+        "notes": "动效素材只作为叠加、遮罩或静态关键帧；窄屏保持 safeArea，不承载玩家必须读取的信息。"
+      },
+      "motion": {
+        "type": "vertical_reveal_mask",
+        "suggestedUse": "榜单揭示遮罩或静态纸幕；排名、分数和评语只能来自服务器数据。",
+        "maxSuggestedDurationMs": 10000
+      },
+      "source": {
+        "type": "ai_generated",
+        "tool": "Codex imagegen",
+        "model": "gpt-image-2",
+        "generatedAt": "2026-05-15",
+        "promptSummary": "榜文揭示纸幕，无可读文字，给放榜全屏作为揭幕底图。"
+      },
+      "license": {
+        "type": "ai_generated_project_asset",
+        "commercialUseConfirmed": false,
+        "summary": "原创 AI 生成素材，当前仅个人游玩/开发使用；未做公开商用确认。"
+      },
+      "reviewStatus": "approved",
+      "visualReview": {
+        "reviewedBy": "Codex",
+        "reviewedAt": "2026-05-15",
+        "status": "approved",
+        "summary": "通过：水墨/宣纸/奏折案头基调一致，无可读文字、水印、现代 UI 或现代器物；可作为低成本动效关键帧或静态 fallback。"
+      },
+      "safetyReview": {
+        "reviewedBy": "Codex",
+        "reviewedAt": "2026-05-15",
+        "status": "approved",
+        "summary": "通过：无本地路径、key、raw/hidden 内容、未公开剧情事实或服务器裁决暗示；动效不得替代后端状态判断。"
+      },
+      "performance": {
+        "bytes": 83606,
+        "targetMaxBytes": 262144,
+        "thumbnailBytes": 3776,
+        "thumbnailTargetMaxBytes": 256000,
+        "visibleAlphaRatio": 1,
+        "borderVisibleAlphaPixels": 0
+      },
+      "ledgerId": "ui-effect-ranking-reveal-v1"
+    },
+    {
+      "id": "ui-effect-exam-seal-v1",
+      "version": 1,
+      "phase": "S73.8",
+      "category": "effect",
+      "subcategory": "motion_feedback",
+      "usage": [
+        "exam_page"
+      ],
+      "scene": "exam_submission_seal",
+      "path": "/assets/ui/effects/effect-exam-seal-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-effect-exam-seal-v1.webp",
+      "fallbackRef": "fallback-ink-motion-static-v1",
+      "reducedMotionFallback": "fallback-ink-motion-static-v1",
+      "dimensions": {
+        "width": 1024,
+        "height": 768
+      },
+      "aspectRatio": "4:3",
+      "format": "webp",
+      "transparent": true,
+      "safeArea": {
+        "x": 0.12,
+        "y": 0.14,
+        "width": 0.76,
+        "height": 0.72
+      },
+      "focalPoint": {
+        "x": 0.5,
+        "y": 0.54
+      },
+      "mobileCrop": {
+        "mode": "contain_or_center_overlay",
+        "keepSafeArea": true,
+        "notes": "动效素材只作为叠加、遮罩或静态关键帧；窄屏保持 safeArea，不承载玩家必须读取的信息。"
+      },
+      "motion": {
+        "type": "seal_press_feedback",
+        "suggestedUse": "考试交卷视觉反馈；服务器仍拥有交卷、评分和晋级裁决。",
+        "maxSuggestedDurationMs": 5000
+      },
+      "source": {
+        "type": "ai_generated",
+        "tool": "Codex imagegen",
+        "model": "gpt-image-2",
+        "generatedAt": "2026-05-15",
+        "promptSummary": "交卷火漆/朱封反馈，透明底，无字无题名。"
+      },
+      "license": {
+        "type": "ai_generated_project_asset",
+        "commercialUseConfirmed": false,
+        "summary": "原创 AI 生成素材，当前仅个人游玩/开发使用；未做公开商用确认。"
+      },
+      "reviewStatus": "approved",
+      "visualReview": {
+        "reviewedBy": "Codex",
+        "reviewedAt": "2026-05-15",
+        "status": "approved",
+        "summary": "通过：水墨/宣纸/奏折案头基调一致，无可读文字、水印、现代 UI 或现代器物；可作为低成本动效关键帧或静态 fallback。"
+      },
+      "safetyReview": {
+        "reviewedBy": "Codex",
+        "reviewedAt": "2026-05-15",
+        "status": "approved",
+        "summary": "通过：无本地路径、key、raw/hidden 内容、未公开剧情事实或服务器裁决暗示；动效不得替代后端状态判断。"
+      },
+      "performance": {
+        "bytes": 84254,
+        "targetMaxBytes": 262144,
+        "thumbnailBytes": 4264,
+        "thumbnailTargetMaxBytes": 256000,
+        "visibleAlphaRatio": 0.4864,
+        "borderVisibleAlphaPixels": 0
+      },
+      "ledgerId": "ui-effect-exam-seal-v1"
+    },
+    {
+      "id": "ui-effect-ink-wipe-v1",
+      "version": 1,
+      "phase": "S73.8",
+      "category": "effect",
+      "subcategory": "motion_mask",
+      "usage": [
+        "game_main",
+        "exam_page",
+        "ranking_page"
+      ],
+      "scene": "ink_wipe_transition",
+      "path": "/assets/ui/effects/effect-ink-wipe-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-effect-ink-wipe-v1.webp",
+      "fallbackRef": "fallback-ink-motion-static-v1",
+      "reducedMotionFallback": "fallback-ink-motion-static-v1",
+      "dimensions": {
+        "width": 1920,
+        "height": 720
+      },
+      "aspectRatio": "8:3",
+      "format": "webp",
+      "transparent": true,
+      "safeArea": {
+        "x": 0.02,
+        "y": 0.16,
+        "width": 0.96,
+        "height": 0.68
+      },
+      "focalPoint": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "mobileCrop": {
+        "mode": "contain_or_center_overlay",
+        "keepSafeArea": true,
+        "notes": "动效素材只作为叠加、遮罩或静态关键帧；窄屏保持 safeArea，不承载玩家必须读取的信息。"
+      },
+      "motion": {
+        "type": "horizontal_wipe_mask",
+        "suggestedUse": "CSS translate/clip-path 转场；低动效下直接切换静态内容。",
+        "maxSuggestedDurationMs": 9000
+      },
+      "source": {
+        "type": "ai_generated",
+        "tool": "Codex imagegen",
+        "model": "gpt-image-2",
+        "generatedAt": "2026-05-15",
+        "promptSummary": "淡墨分场擦拭，透明底横向笔触，适合低成本转场遮罩。"
+      },
+      "license": {
+        "type": "ai_generated_project_asset",
+        "commercialUseConfirmed": false,
+        "summary": "原创 AI 生成素材，当前仅个人游玩/开发使用；未做公开商用确认。"
+      },
+      "reviewStatus": "approved",
+      "visualReview": {
+        "reviewedBy": "Codex",
+        "reviewedAt": "2026-05-15",
+        "status": "approved",
+        "summary": "通过：水墨/宣纸/奏折案头基调一致，无可读文字、水印、现代 UI 或现代器物；可作为低成本动效关键帧或静态 fallback。"
+      },
+      "safetyReview": {
+        "reviewedBy": "Codex",
+        "reviewedAt": "2026-05-15",
+        "status": "approved",
+        "summary": "通过：无本地路径、key、raw/hidden 内容、未公开剧情事实或服务器裁决暗示；动效不得替代后端状态判断。"
+      },
+      "performance": {
+        "bytes": 166494,
+        "targetMaxBytes": 262144,
+        "thumbnailBytes": 1600,
+        "thumbnailTargetMaxBytes": 256000,
+        "visibleAlphaRatio": 0.2641,
+        "borderVisibleAlphaPixels": 0
+      },
+      "ledgerId": "ui-effect-ink-wipe-v1"
+    },
+    {
+      "id": "ui-effect-page-curl-v1",
+      "version": 1,
+      "phase": "S73.8",
+      "category": "effect",
+      "subcategory": "motion_corner",
+      "usage": [
+        "archive_page",
+        "game_main"
+      ],
+      "scene": "page_curl_corner",
+      "path": "/assets/ui/effects/effect-page-curl-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-effect-page-curl-v1.webp",
+      "fallbackRef": "fallback-paper-panel-v1",
+      "reducedMotionFallback": "fallback-ink-motion-static-v1",
+      "dimensions": {
+        "width": 1024,
+        "height": 1024
+      },
+      "aspectRatio": "1:1",
+      "format": "webp",
+      "transparent": true,
+      "safeArea": {
+        "x": 0.2,
+        "y": 0.2,
+        "width": 0.76,
+        "height": 0.76
+      },
+      "focalPoint": {
+        "x": 0.78,
+        "y": 0.78
+      },
+      "mobileCrop": {
+        "mode": "contain_or_center_overlay",
+        "keepSafeArea": true,
+        "notes": "动效素材只作为叠加、遮罩或静态关键帧；窄屏保持 safeArea，不承载玩家必须读取的信息。"
+      },
+      "motion": {
+        "type": "corner_curl_hint",
+        "suggestedUse": "角落 hover/展开提示或静态阴影；不得遮挡正文和按钮。",
+        "maxSuggestedDurationMs": 6000
+      },
+      "source": {
+        "type": "ai_generated",
+        "tool": "Codex imagegen",
+        "model": "gpt-image-2",
+        "generatedAt": "2026-05-15",
+        "promptSummary": "卷边阴影揭页角标，透明底，作为页面角落翻页提示。"
+      },
+      "license": {
+        "type": "ai_generated_project_asset",
+        "commercialUseConfirmed": false,
+        "summary": "原创 AI 生成素材，当前仅个人游玩/开发使用；未做公开商用确认。"
+      },
+      "reviewStatus": "approved",
+      "visualReview": {
+        "reviewedBy": "Codex",
+        "reviewedAt": "2026-05-15",
+        "status": "approved",
+        "summary": "通过：水墨/宣纸/奏折案头基调一致，无可读文字、水印、现代 UI 或现代器物；可作为低成本动效关键帧或静态 fallback。"
+      },
+      "safetyReview": {
+        "reviewedBy": "Codex",
+        "reviewedAt": "2026-05-15",
+        "status": "approved",
+        "summary": "通过：无本地路径、key、raw/hidden 内容、未公开剧情事实或服务器裁决暗示；动效不得替代后端状态判断。"
+      },
+      "performance": {
+        "bytes": 44870,
+        "targetMaxBytes": 262144,
+        "thumbnailBytes": 2458,
+        "thumbnailTargetMaxBytes": 256000,
+        "visibleAlphaRatio": 0.4035,
+        "borderVisibleAlphaPixels": 799
+      },
+      "ledgerId": "ui-effect-page-curl-v1"
     }
   ],
   "updatedAt": "2026-05-15"
