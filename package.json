@@ -8,6 +8,8 @@
     "dev": "node --watch server.js",
     "test": "node --test",
     "check:docs-governance": "node scripts/checkGovernanceDocs.js",
+    "qa:frontend-assets": "node scripts/frontendAssetQa.js --check",
+    "qa:frontend-assets:write": "node scripts/frontendAssetQa.js --write --pixel",
     "eval:ai": "node scripts/aiEvaluationRunner.js && node --test test/aiEvalFixtures.test.js",
     "smoke:browser": "node scripts/browserSmoke.js",
     "smoke:dual-mode": "node scripts/dualModeAcceptance.js",

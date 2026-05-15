@@ -1,0 +1,4588 @@
+{
+  "schemaVersion": 1,
+  "phase": "S73.9",
+  "generatedAt": "2026-05-15T06:37:48.555Z",
+  "manifestRef": "public/assets/ui/ink-ui-manifest.json",
+  "manifestSha256": "75e100c32fc5a0c58c399f69dab27f04339eac023d5a16e9fb703114337e7292",
+  "previewRef": "public/assets/ui/asset-qa-preview.html",
+  "compositeBackgrounds": [
+    {
+      "id": "paper",
+      "color": "#f5f0e6",
+      "label": "宣纸底"
+    },
+    {
+      "id": "dark",
+      "color": "#201c16",
+      "label": "深色底"
+    }
+  ],
+  "thresholds": {
+    "borderSampleWidthPx": 2,
+    "hardAlphaJumpThreshold": 220,
+    "maxHighSaturationGreenOrMagentaPixels": 180,
+    "maxBorderVisibleAlphaPixels": 1800
+  },
+  "pixelAnalysis": {
+    "enabled": true,
+    "browserExecutable": "chrome.exe",
+    "reason": null
+  },
+  "summary": {
+    "totalAssets": 70,
+    "transparentAssets": 19,
+    "byPhase": {
+      "S73.3": 16,
+      "S73.4": 6,
+      "S73.5": 10,
+      "S73.6": 6,
+      "S73.7": 24,
+      "S73.8": 8
+    },
+    "byCategory": {
+      "material": 19,
+      "background": 2,
+      "effect": 9,
+      "scene": 10,
+      "role_background": 6,
+      "portrait": 24
+    },
+    "byReviewStatus": {
+      "approved": 66,
+      "approved_with_limits": 4
+    },
+    "errorCount": 0,
+    "warningCount": 0
+  },
+  "assets": [
+    {
+      "id": "ui-paper-xuan-base-v1",
+      "phase": "S73.3",
+      "category": "material",
+      "subcategory": "paper_xuan",
+      "usage": [
+        "game_main",
+        "global_fallback"
+      ],
+      "path": "/assets/ui/materials/paper-xuan-base-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-paper-xuan-base-v1.webp",
+      "fallbackRef": "fallback-paper-panel-v1",
+      "reviewStatus": "approved",
+      "runtimeUsable": true,
+      "dimensions": {
+        "width": 2048,
+        "height": 2048
+      },
+      "transparent": false,
+      "files": {
+        "image": {
+          "path": "/assets/ui/materials/paper-xuan-base-v1.webp",
+          "exists": true,
+          "bytes": 210054,
+          "sha256": "0d25ba169a1d6974b90680475f334df2672fe67fc0a416ef13c9615bf2623e21",
+          "dimensions": {
+            "width": 2048,
+            "height": 2048
+          },
+          "alpha": false
+        },
+        "thumbnail": {
+          "path": "/assets/ui/thumbs/thumb-paper-xuan-base-v1.webp",
+          "exists": true,
+          "bytes": 1986,
+          "sha256": "aac19704dbf75feb57e9ed91194e53a6525c417ba3a38446e413ed1b9b3853c2",
+          "dimensions": {
+            "width": 320,
+            "height": 320,
+            "alpha": false
+          }
+        }
+      },
+      "transparentQa": {
+        "required": false,
+        "backgrounds": [],
+        "sidecar": null,
+        "pixel": null
+      },
+      "issues": []
+    },
+    {
+      "id": "ui-paper-aged-silk-v1",
+      "phase": "S73.3",
+      "category": "material",
+      "subcategory": "aged_silk",
+      "usage": [
+        "settings_surface",
+        "game_main"
+      ],
+      "path": "/assets/ui/materials/paper-aged-silk-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-paper-aged-silk-v1.webp",
+      "fallbackRef": "fallback-paper-panel-v1",
+      "reviewStatus": "approved",
+      "runtimeUsable": true,
+      "dimensions": {
+        "width": 2048,
+        "height": 2048
+      },
+      "transparent": false,
+      "files": {
+        "image": {
+          "path": "/assets/ui/materials/paper-aged-silk-v1.webp",
+          "exists": true,
+          "bytes": 287844,
+          "sha256": "aff9b3cde8a2552a401d7388ad5a6304b1530f5dadc4c4748b77624963b66b52",
+          "dimensions": {
+            "width": 2048,
+            "height": 2048
+          },
+          "alpha": false
+        },
+        "thumbnail": {
+          "path": "/assets/ui/thumbs/thumb-paper-aged-silk-v1.webp",
+          "exists": true,
+          "bytes": 5494,
+          "sha256": "73c41fda6cdf949cac7d5e8708794441dc04975784deaf8259ae64dfbdf0ae1f",
+          "dimensions": {
+            "width": 320,
+            "height": 320,
+            "alpha": false
+          }
+        }
+      },
+      "transparentQa": {
+        "required": false,
+        "backgrounds": [],
+        "sidecar": null,
+        "pixel": null
+      },
+      "issues": []
+    },
+    {
+      "id": "ui-memorial-folded-paper-v1",
+      "phase": "S73.3",
+      "category": "material",
+      "subcategory": "memorial_paper",
+      "usage": [
+        "game_main",
+        "court_page"
+      ],
+      "path": "/assets/ui/materials/memorial-folded-paper-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-memorial-folded-paper-v1.webp",
+      "fallbackRef": "fallback-paper-panel-v1",
+      "reviewStatus": "approved",
+      "runtimeUsable": true,
+      "dimensions": {
+        "width": 1600,
+        "height": 2400
+      },
+      "transparent": false,
+      "files": {
+        "image": {
+          "path": "/assets/ui/materials/memorial-folded-paper-v1.webp",
+          "exists": true,
+          "bytes": 204838,
+          "sha256": "256f253935fb31b681a6d8b3971b218312cca659d1a7f02f0e2c3939dd8ae7ae",
+          "dimensions": {
+            "width": 1600,
+            "height": 2400
+          },
+          "alpha": false
+        },
+        "thumbnail": {
+          "path": "/assets/ui/thumbs/thumb-memorial-folded-paper-v1.webp",
+          "exists": true,
+          "bytes": 3520,
+          "sha256": "11ce5c5515fc7397b9965840377f70a59c1025d5c1fdd1b66eda2188f6d9870a",
+          "dimensions": {
+            "width": 320,
+            "height": 320,
+            "alpha": false
+          }
+        }
+      },
+      "transparentQa": {
+        "required": false,
+        "backgrounds": [],
+        "sidecar": null,
+        "pixel": null
+      },
+      "issues": []
+    },
+    {
+      "id": "ui-bamboo-slip-strip-v1",
+      "phase": "S73.3",
+      "category": "material",
+      "subcategory": "bamboo_slip",
+      "usage": [
+        "game_main"
+      ],
+      "path": "/assets/ui/materials/bamboo-slip-strip-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-bamboo-slip-strip-v1.webp",
+      "fallbackRef": "fallback-paper-panel-v1",
+      "reviewStatus": "approved",
+      "runtimeUsable": true,
+      "dimensions": {
+        "width": 2048,
+        "height": 512
+      },
+      "transparent": true,
+      "files": {
+        "image": {
+          "path": "/assets/ui/materials/bamboo-slip-strip-v1.webp",
+          "exists": true,
+          "bytes": 75314,
+          "sha256": "4cc64368498192f73eb8fa2c31c0920b07181308e08cebf95228253147209639",
+          "dimensions": {
+            "width": 2048,
+            "height": 512
+          },
+          "alpha": true
+        },
+        "thumbnail": {
+          "path": "/assets/ui/thumbs/thumb-bamboo-slip-strip-v1.webp",
+          "exists": true,
+          "bytes": 5324,
+          "sha256": "37efaea7e9a52f450a92cdcbc44b030fcff27a4e9c94a8841332e36d9cab90c3",
+          "dimensions": {
+            "width": 320,
+            "height": 320,
+            "alpha": false
+          }
+        }
+      },
+      "transparentQa": {
+        "required": true,
+        "backgrounds": [
+          {
+            "id": "paper",
+            "color": "#f5f0e6",
+            "label": "宣纸底"
+          },
+          {
+            "id": "dark",
+            "color": "#201c16",
+            "label": "深色底"
+          }
+        ],
+        "sidecar": null,
+        "pixel": {
+          "width": 2048,
+          "height": 512,
+          "visibleAlphaPixels": 578045,
+          "visibleAlphaRatio": 0.5513,
+          "borderVisibleAlphaPixels": 0,
+          "highSaturationGreenOrMagentaPixels": 0,
+          "hardAlphaJumpPixels": 6618,
+          "composite": {
+            "paper": {
+              "minLuma": 1,
+              "maxLuma": 249,
+              "averageLuma": 204.83
+            },
+            "dark": {
+              "minLuma": 1,
+              "maxLuma": 249,
+              "averageLuma": 109.72
+            }
+          }
+        }
+      },
+      "issues": []
+    },
+    {
+      "id": "ui-scroll-panel-base-v1",
+      "phase": "S73.3",
+      "category": "material",
+      "subcategory": "scroll_panel",
+      "usage": [
+        "settings_surface",
+        "global_fallback"
+      ],
+      "path": "/assets/ui/materials/scroll-panel-base-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-scroll-panel-base-v1.webp",
+      "fallbackRef": "fallback-paper-panel-v1",
+      "reviewStatus": "approved",
+      "runtimeUsable": true,
+      "dimensions": {
+        "width": 1800,
+        "height": 1200
+      },
+      "transparent": true,
+      "files": {
+        "image": {
+          "path": "/assets/ui/materials/scroll-panel-base-v1.webp",
+          "exists": true,
+          "bytes": 78202,
+          "sha256": "1a63ea9641d52c959fe855ba7398c492ee13bd7383585fe2144fb834d1ec61e6",
+          "dimensions": {
+            "width": 1800,
+            "height": 1200
+          },
+          "alpha": true
+        },
+        "thumbnail": {
+          "path": "/assets/ui/thumbs/thumb-scroll-panel-base-v1.webp",
+          "exists": true,
+          "bytes": 4180,
+          "sha256": "771b211efbbdab9acbf322bdb78e5f090562f50babc0b4ebdf6c5722f38afeac",
+          "dimensions": {
+            "width": 320,
+            "height": 320,
+            "alpha": false
+          }
+        }
+      },
+      "transparentQa": {
+        "required": true,
+        "backgrounds": [
+          {
+            "id": "paper",
+            "color": "#f5f0e6",
+            "label": "宣纸底"
+          },
+          {
+            "id": "dark",
+            "color": "#201c16",
+            "label": "深色底"
+          }
+        ],
+        "sidecar": null,
+        "pixel": {
+          "width": 1800,
+          "height": 1200,
+          "visibleAlphaPixels": 944139,
+          "visibleAlphaRatio": 0.4371,
+          "borderVisibleAlphaPixels": 0,
+          "highSaturationGreenOrMagentaPixels": 0,
+          "hardAlphaJumpPixels": 4568,
+          "composite": {
+            "paper": {
+              "minLuma": 14,
+              "maxLuma": 249,
+              "averageLuma": 227.11
+            },
+            "dark": {
+              "minLuma": 14,
+              "maxLuma": 249,
+              "averageLuma": 107.81
+            }
+          }
+        }
+      },
+      "issues": []
+    },
+    {
+      "id": "ui-torn-paper-card-v1",
+      "phase": "S73.3",
+      "category": "material",
+      "subcategory": "torn_card",
+      "usage": [
+        "archive_page",
+        "game_main"
+      ],
+      "path": "/assets/ui/materials/torn-paper-card-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-torn-paper-card-v1.webp",
+      "fallbackRef": "fallback-paper-panel-v1",
+      "reviewStatus": "approved",
+      "runtimeUsable": true,
+      "dimensions": {
+        "width": 1200,
+        "height": 800
+      },
+      "transparent": true,
+      "files": {
+        "image": {
+          "path": "/assets/ui/materials/torn-paper-card-v1.webp",
+          "exists": true,
+          "bytes": 74272,
+          "sha256": "3611c08d64b6a3b92abcfe56c1f68ac446ed0b7e93645a69e3f9074206aa45f3",
+          "dimensions": {
+            "width": 1200,
+            "height": 800
+          },
+          "alpha": true
+        },
+        "thumbnail": {
+          "path": "/assets/ui/thumbs/thumb-torn-paper-card-v1.webp",
+          "exists": true,
+          "bytes": 4700,
+          "sha256": "ce91d735d0f9902ceabb76773439e1708985c52357278d740e6184f4fbb98459",
+          "dimensions": {
+            "width": 320,
+            "height": 320,
+            "alpha": false
+          }
+        }
+      },
+      "transparentQa": {
+        "required": true,
+        "backgrounds": [
+          {
+            "id": "paper",
+            "color": "#f5f0e6",
+            "label": "宣纸底"
+          },
+          {
+            "id": "dark",
+            "color": "#201c16",
+            "label": "深色底"
+          }
+        ],
+        "sidecar": null,
+        "pixel": {
+          "width": 1200,
+          "height": 800,
+          "visibleAlphaPixels": 746013,
+          "visibleAlphaRatio": 0.7771,
+          "borderVisibleAlphaPixels": 0,
+          "highSaturationGreenOrMagentaPixels": 6,
+          "hardAlphaJumpPixels": 716,
+          "composite": {
+            "paper": {
+              "minLuma": 66,
+              "maxLuma": 255,
+              "averageLuma": 226.25
+            },
+            "dark": {
+              "minLuma": 28,
+              "maxLuma": 255,
+              "averageLuma": 178.63
+            }
+          }
+        }
+      },
+      "issues": []
+    },
+    {
+      "id": "ui-water-stain-soft-v1",
+      "phase": "S73.3",
+      "category": "material",
+      "subcategory": "water_stain_overlay",
+      "usage": [
+        "game_main",
+        "settings_surface"
+      ],
+      "path": "/assets/ui/materials/water-stain-soft-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-water-stain-soft-v1.webp",
+      "fallbackRef": "fallback-paper-panel-v1",
+      "reviewStatus": "approved",
+      "runtimeUsable": true,
+      "dimensions": {
+        "width": 1024,
+        "height": 1024
+      },
+      "transparent": true,
+      "files": {
+        "image": {
+          "path": "/assets/ui/materials/water-stain-soft-v1.webp",
+          "exists": true,
+          "bytes": 85470,
+          "sha256": "45cfbecc54eb94b7dc4ff181c828fa19fbf15c136d9d7c65ebde769f05027a8a",
+          "dimensions": {
+            "width": 1024,
+            "height": 1024
+          },
+          "alpha": true
+        },
+        "thumbnail": {
+          "path": "/assets/ui/thumbs/thumb-water-stain-soft-v1.webp",
+          "exists": true,
+          "bytes": 3446,
+          "sha256": "1e6bacf976b44f88335611b86fb3b77df64a4a5bec2d200db1ccf3de19a553ff",
+          "dimensions": {
+            "width": 320,
+            "height": 320,
+            "alpha": false
+          }
+        }
+      },
+      "transparentQa": {
+        "required": true,
+        "backgrounds": [
+          {
+            "id": "paper",
+            "color": "#f5f0e6",
+            "label": "宣纸底"
+          },
+          {
+            "id": "dark",
+            "color": "#201c16",
+            "label": "深色底"
+          }
+        ],
+        "sidecar": null,
+        "pixel": {
+          "width": 1024,
+          "height": 1024,
+          "visibleAlphaPixels": 113207,
+          "visibleAlphaRatio": 0.108,
+          "borderVisibleAlphaPixels": 0,
+          "highSaturationGreenOrMagentaPixels": 0,
+          "hardAlphaJumpPixels": 0,
+          "composite": {
+            "paper": {
+              "minLuma": 161,
+              "maxLuma": 240,
+              "averageLuma": 235.25
+            },
+            "dark": {
+              "minLuma": 28,
+              "maxLuma": 113,
+              "averageLuma": 33.85
+            }
+          }
+        }
+      },
+      "issues": []
+    },
+    {
+      "id": "ui-ink-divider-line-v1",
+      "phase": "S73.3",
+      "category": "material",
+      "subcategory": "ink_divider",
+      "usage": [
+        "game_main",
+        "archive_page",
+        "settings_surface"
+      ],
+      "path": "/assets/ui/materials/ink-divider-line-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-ink-divider-line-v1.webp",
+      "fallbackRef": "fallback-paper-panel-v1",
+      "reviewStatus": "approved",
+      "runtimeUsable": true,
+      "dimensions": {
+        "width": 1600,
+        "height": 96
+      },
+      "transparent": true,
+      "files": {
+        "image": {
+          "path": "/assets/ui/materials/ink-divider-line-v1.webp",
+          "exists": true,
+          "bytes": 21208,
+          "sha256": "b8a15cfc875fe0e6930575829619d57eb4ce4d0c59400c51762032af380e1ce2",
+          "dimensions": {
+            "width": 1600,
+            "height": 96
+          },
+          "alpha": true
+        },
+        "thumbnail": {
+          "path": "/assets/ui/thumbs/thumb-ink-divider-line-v1.webp",
+          "exists": true,
+          "bytes": 3072,
+          "sha256": "eb4f10d5a58a8a315e975ccb8bbec37fcc621a9ef6341c1ab4ceeaff0a8d6e87",
+          "dimensions": {
+            "width": 320,
+            "height": 320,
+            "alpha": false
+          }
+        }
+      },
+      "transparentQa": {
+        "required": true,
+        "backgrounds": [
+          {
+            "id": "paper",
+            "color": "#f5f0e6",
+            "label": "宣纸底"
+          },
+          {
+            "id": "dark",
+            "color": "#201c16",
+            "label": "深色底"
+          }
+        ],
+        "sidecar": null,
+        "pixel": {
+          "width": 1600,
+          "height": 96,
+          "visibleAlphaPixels": 34733,
+          "visibleAlphaRatio": 0.2261,
+          "borderVisibleAlphaPixels": 0,
+          "highSaturationGreenOrMagentaPixels": 55,
+          "hardAlphaJumpPixels": 1524,
+          "composite": {
+            "paper": {
+              "minLuma": 66,
+              "maxLuma": 254,
+              "averageLuma": 224.57
+            },
+            "dark": {
+              "minLuma": 28,
+              "maxLuma": 254,
+              "averageLuma": 57.11
+            }
+          }
+        }
+      },
+      "issues": []
+    },
+    {
+      "id": "ui-ink-corner-brush-v1",
+      "phase": "S73.3",
+      "category": "material",
+      "subcategory": "ink_corner",
+      "usage": [
+        "game_main",
+        "settings_surface"
+      ],
+      "path": "/assets/ui/materials/ink-corner-brush-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-ink-corner-brush-v1.webp",
+      "fallbackRef": "fallback-paper-panel-v1",
+      "reviewStatus": "approved_with_limits",
+      "runtimeUsable": true,
+      "dimensions": {
+        "width": 512,
+        "height": 512
+      },
+      "transparent": true,
+      "files": {
+        "image": {
+          "path": "/assets/ui/materials/ink-corner-brush-v1.webp",
+          "exists": true,
+          "bytes": 21760,
+          "sha256": "75a2f7c6426969b4ea36d4b35a1a1f2f0cac13cb52f2f3979265ac089723698d",
+          "dimensions": {
+            "width": 512,
+            "height": 512
+          },
+          "alpha": true
+        },
+        "thumbnail": {
+          "path": "/assets/ui/thumbs/thumb-ink-corner-brush-v1.webp",
+          "exists": true,
+          "bytes": 4574,
+          "sha256": "4888b329911286e740d75fa9d5aedf98a666d7e79aaabc53f01fe7ffc6060a79",
+          "dimensions": {
+            "width": 320,
+            "height": 320,
+            "alpha": false
+          }
+        }
+      },
+      "transparentQa": {
+        "required": true,
+        "backgrounds": [
+          {
+            "id": "paper",
+            "color": "#f5f0e6",
+            "label": "宣纸底"
+          },
+          {
+            "id": "dark",
+            "color": "#201c16",
+            "label": "深色底"
+          }
+        ],
+        "sidecar": null,
+        "pixel": {
+          "width": 512,
+          "height": 512,
+          "visibleAlphaPixels": 13507,
+          "visibleAlphaRatio": 0.0515,
+          "borderVisibleAlphaPixels": 0,
+          "highSaturationGreenOrMagentaPixels": 9,
+          "hardAlphaJumpPixels": 373,
+          "composite": {
+            "paper": {
+              "minLuma": 35,
+              "maxLuma": 248,
+              "averageLuma": 237.13
+            },
+            "dark": {
+              "minLuma": 27,
+              "maxLuma": 248,
+              "averageLuma": 34.47
+            }
+          }
+        }
+      },
+      "issues": []
+    },
+    {
+      "id": "ui-vermilion-seal-button-v1",
+      "phase": "S73.3",
+      "category": "material",
+      "subcategory": "vermilion_button",
+      "usage": [
+        "home",
+        "game_main",
+        "exam_page",
+        "ranking_page"
+      ],
+      "path": "/assets/ui/materials/vermilion-seal-button-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-vermilion-seal-button-v1.webp",
+      "fallbackRef": "fallback-paper-panel-v1",
+      "reviewStatus": "approved",
+      "runtimeUsable": true,
+      "dimensions": {
+        "width": 512,
+        "height": 512
+      },
+      "transparent": true,
+      "files": {
+        "image": {
+          "path": "/assets/ui/materials/vermilion-seal-button-v1.webp",
+          "exists": true,
+          "bytes": 44754,
+          "sha256": "dac15057d8a2d7f258b496bd3e2a75bf5619d5e59739a7293944fe287fe59b25",
+          "dimensions": {
+            "width": 512,
+            "height": 512
+          },
+          "alpha": true
+        },
+        "thumbnail": {
+          "path": "/assets/ui/thumbs/thumb-vermilion-seal-button-v1.webp",
+          "exists": true,
+          "bytes": 11776,
+          "sha256": "2d814d7076e654924a44c6fe632a7dbd49e80e9d9d9b5ce1eff783823e25ee76",
+          "dimensions": {
+            "width": 320,
+            "height": 320,
+            "alpha": false
+          }
+        }
+      },
+      "transparentQa": {
+        "required": true,
+        "backgrounds": [
+          {
+            "id": "paper",
+            "color": "#f5f0e6",
+            "label": "宣纸底"
+          },
+          {
+            "id": "dark",
+            "color": "#201c16",
+            "label": "深色底"
+          }
+        ],
+        "sidecar": null,
+        "pixel": {
+          "width": 512,
+          "height": 512,
+          "visibleAlphaPixels": 178141,
+          "visibleAlphaRatio": 0.6796,
+          "borderVisibleAlphaPixels": 0,
+          "highSaturationGreenOrMagentaPixels": 0,
+          "hardAlphaJumpPixels": 95,
+          "composite": {
+            "paper": {
+              "minLuma": 19,
+              "maxLuma": 240,
+              "averageLuma": 129.43
+            },
+            "dark": {
+              "minLuma": 19,
+              "maxLuma": 192,
+              "averageLuma": 60.92
+            }
+          }
+        }
+      },
+      "issues": []
+    },
+    {
+      "id": "ui-vermilion-seal-button-pressed-v1",
+      "phase": "S73.3",
+      "category": "material",
+      "subcategory": "vermilion_button_pressed",
+      "usage": [
+        "home",
+        "game_main",
+        "exam_page",
+        "ranking_page"
+      ],
+      "path": "/assets/ui/materials/vermilion-seal-button-pressed-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-vermilion-seal-button-pressed-v1.webp",
+      "fallbackRef": "fallback-paper-panel-v1",
+      "reviewStatus": "approved",
+      "runtimeUsable": true,
+      "dimensions": {
+        "width": 512,
+        "height": 512
+      },
+      "transparent": true,
+      "files": {
+        "image": {
+          "path": "/assets/ui/materials/vermilion-seal-button-pressed-v1.webp",
+          "exists": true,
+          "bytes": 23966,
+          "sha256": "5b9ea9ea2956eabd644c70c6e33a2ce08e14d73bb5acdf89f5c1822014a63e37",
+          "dimensions": {
+            "width": 512,
+            "height": 512
+          },
+          "alpha": true
+        },
+        "thumbnail": {
+          "path": "/assets/ui/thumbs/thumb-vermilion-seal-button-pressed-v1.webp",
+          "exists": true,
+          "bytes": 7030,
+          "sha256": "3a63bb847dce6ba4743a66d98a765a1524c9dc3449d1b49d57a80994ead1c108",
+          "dimensions": {
+            "width": 320,
+            "height": 320,
+            "alpha": false
+          }
+        }
+      },
+      "transparentQa": {
+        "required": true,
+        "backgrounds": [
+          {
+            "id": "paper",
+            "color": "#f5f0e6",
+            "label": "宣纸底"
+          },
+          {
+            "id": "dark",
+            "color": "#201c16",
+            "label": "深色底"
+          }
+        ],
+        "sidecar": null,
+        "pixel": {
+          "width": 512,
+          "height": 512,
+          "visibleAlphaPixels": 179634,
+          "visibleAlphaRatio": 0.6852,
+          "borderVisibleAlphaPixels": 0,
+          "highSaturationGreenOrMagentaPixels": 2,
+          "hardAlphaJumpPixels": 174,
+          "composite": {
+            "paper": {
+              "minLuma": 15,
+              "maxLuma": 240,
+              "averageLuma": 115.14
+            },
+            "dark": {
+              "minLuma": 15,
+              "maxLuma": 185,
+              "averageLuma": 47.83
+            }
+          }
+        }
+      },
+      "issues": []
+    },
+    {
+      "id": "ui-seal-box-texture-v1",
+      "phase": "S73.3",
+      "category": "material",
+      "subcategory": "seal_box",
+      "usage": [
+        "settings_surface"
+      ],
+      "path": "/assets/ui/materials/seal-box-texture-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-seal-box-texture-v1.webp",
+      "fallbackRef": "fallback-paper-panel-v1",
+      "reviewStatus": "approved_with_limits",
+      "runtimeUsable": true,
+      "dimensions": {
+        "width": 1200,
+        "height": 900
+      },
+      "transparent": false,
+      "files": {
+        "image": {
+          "path": "/assets/ui/materials/seal-box-texture-v1.webp",
+          "exists": true,
+          "bytes": 154788,
+          "sha256": "512a50aa58739f2532f5aadfc3c295b708be0f0511a8ff3d12ffa2b1642b91e6",
+          "dimensions": {
+            "width": 1200,
+            "height": 900
+          },
+          "alpha": false
+        },
+        "thumbnail": {
+          "path": "/assets/ui/thumbs/thumb-seal-box-texture-v1.webp",
+          "exists": true,
+          "bytes": 4834,
+          "sha256": "0e54c70ce3c3f96b5bc66dffcc0757c76fb2fbfcb249d8c0a2ab7ddd846fb725",
+          "dimensions": {
+            "width": 320,
+            "height": 320,
+            "alpha": false
+          }
+        }
+      },
+      "transparentQa": {
+        "required": false,
+        "backgrounds": [],
+        "sidecar": null,
+        "pixel": null
+      },
+      "issues": []
+    },
+    {
+      "id": "ui-exam-grid-paper-v1",
+      "phase": "S73.3",
+      "category": "material",
+      "subcategory": "exam_grid_paper",
+      "usage": [
+        "exam_page"
+      ],
+      "path": "/assets/ui/materials/exam-grid-paper-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-exam-grid-paper-v1.webp",
+      "fallbackRef": "fallback-paper-panel-v1",
+      "reviewStatus": "approved",
+      "runtimeUsable": true,
+      "dimensions": {
+        "width": 1600,
+        "height": 2200
+      },
+      "transparent": false,
+      "files": {
+        "image": {
+          "path": "/assets/ui/materials/exam-grid-paper-v1.webp",
+          "exists": true,
+          "bytes": 130154,
+          "sha256": "afb96e224055c51017a876471dc0654958e0525cb6979e07505e3077abfac5b4",
+          "dimensions": {
+            "width": 1600,
+            "height": 2200
+          },
+          "alpha": false
+        },
+        "thumbnail": {
+          "path": "/assets/ui/thumbs/thumb-exam-grid-paper-v1.webp",
+          "exists": true,
+          "bytes": 2242,
+          "sha256": "8cd46864945924da80405630516bcdad5a80917251f032689df078107bc13b7b",
+          "dimensions": {
+            "width": 320,
+            "height": 320,
+            "alpha": false
+          }
+        }
+      },
+      "transparentQa": {
+        "required": false,
+        "backgrounds": [],
+        "sidecar": null,
+        "pixel": null
+      },
+      "issues": []
+    },
+    {
+      "id": "ui-imperial-notice-paper-v1",
+      "phase": "S73.3",
+      "category": "material",
+      "subcategory": "imperial_notice",
+      "usage": [
+        "ranking_page"
+      ],
+      "path": "/assets/ui/materials/imperial-notice-paper-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-imperial-notice-paper-v1.webp",
+      "fallbackRef": "fallback-paper-panel-v1",
+      "reviewStatus": "approved_with_limits",
+      "runtimeUsable": true,
+      "dimensions": {
+        "width": 1800,
+        "height": 2400
+      },
+      "transparent": false,
+      "files": {
+        "image": {
+          "path": "/assets/ui/materials/imperial-notice-paper-v1.webp",
+          "exists": true,
+          "bytes": 181038,
+          "sha256": "d87fc7f21169d3470b0d2c3e3f974d604ef94bc47ae8f6943924622549b8792f",
+          "dimensions": {
+            "width": 1800,
+            "height": 2400
+          },
+          "alpha": false
+        },
+        "thumbnail": {
+          "path": "/assets/ui/thumbs/thumb-imperial-notice-paper-v1.webp",
+          "exists": true,
+          "bytes": 3320,
+          "sha256": "295647c95097b758bbff1ce7316a35d0b953ac2544cf92adc97776ed30c8e0bb",
+          "dimensions": {
+            "width": 320,
+            "height": 320,
+            "alpha": false
+          }
+        }
+      },
+      "transparentQa": {
+        "required": false,
+        "backgrounds": [],
+        "sidecar": null,
+        "pixel": null
+      },
+      "issues": []
+    },
+    {
+      "id": "ui-red-ink-smudge-v1",
+      "phase": "S73.3",
+      "category": "material",
+      "subcategory": "red_ink_smudge",
+      "usage": [
+        "game_main",
+        "settings_surface",
+        "ranking_page"
+      ],
+      "path": "/assets/ui/materials/red-ink-smudge-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-red-ink-smudge-v1.webp",
+      "fallbackRef": "fallback-paper-panel-v1",
+      "reviewStatus": "approved",
+      "runtimeUsable": true,
+      "dimensions": {
+        "width": 512,
+        "height": 512
+      },
+      "transparent": true,
+      "files": {
+        "image": {
+          "path": "/assets/ui/materials/red-ink-smudge-v1.webp",
+          "exists": true,
+          "bytes": 38850,
+          "sha256": "cea8659393db3e9c3d18169ae08ed87e420799040b6a7fda2d493e67168fc80a",
+          "dimensions": {
+            "width": 512,
+            "height": 512
+          },
+          "alpha": true
+        },
+        "thumbnail": {
+          "path": "/assets/ui/thumbs/thumb-red-ink-smudge-v1.webp",
+          "exists": true,
+          "bytes": 11992,
+          "sha256": "f0740878ae95b4d16c90b46cf028045a7e8c3b8990235fa7bd5acf20bddf090f",
+          "dimensions": {
+            "width": 320,
+            "height": 320,
+            "alpha": false
+          }
+        }
+      },
+      "transparentQa": {
+        "required": true,
+        "backgrounds": [
+          {
+            "id": "paper",
+            "color": "#f5f0e6",
+            "label": "宣纸底"
+          },
+          {
+            "id": "dark",
+            "color": "#201c16",
+            "label": "深色底"
+          }
+        ],
+        "sidecar": null,
+        "pixel": {
+          "width": 512,
+          "height": 512,
+          "visibleAlphaPixels": 77138,
+          "visibleAlphaRatio": 0.2943,
+          "borderVisibleAlphaPixels": 0,
+          "highSaturationGreenOrMagentaPixels": 14,
+          "hardAlphaJumpPixels": 849,
+          "composite": {
+            "paper": {
+              "minLuma": 28,
+              "maxLuma": 241,
+              "averageLuma": 197.82
+            },
+            "dark": {
+              "minLuma": 28,
+              "maxLuma": 241,
+              "averageLuma": 46.68
+            }
+          }
+        }
+      },
+      "issues": []
+    },
+    {
+      "id": "ui-paper-edge-shadow-v1",
+      "phase": "S73.3",
+      "category": "material",
+      "subcategory": "paper_edge_shadow",
+      "usage": [
+        "game_main",
+        "settings_surface",
+        "archive_page"
+      ],
+      "path": "/assets/ui/materials/paper-edge-shadow-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-paper-edge-shadow-v1.webp",
+      "fallbackRef": "fallback-paper-panel-v1",
+      "reviewStatus": "approved",
+      "runtimeUsable": true,
+      "dimensions": {
+        "width": 1600,
+        "height": 256
+      },
+      "transparent": true,
+      "files": {
+        "image": {
+          "path": "/assets/ui/materials/paper-edge-shadow-v1.webp",
+          "exists": true,
+          "bytes": 30582,
+          "sha256": "89dfbfb2dba4fac38756cd17dedb95c453d7e12335a9ea148acdb2a8c37a9642",
+          "dimensions": {
+            "width": 1600,
+            "height": 256
+          },
+          "alpha": true
+        },
+        "thumbnail": {
+          "path": "/assets/ui/thumbs/thumb-paper-edge-shadow-v1.webp",
+          "exists": true,
+          "bytes": 3618,
+          "sha256": "de79deef5fafdfdaa9d5149f876d225aee9492a50a9305e5b59671ce18fd9b15",
+          "dimensions": {
+            "width": 320,
+            "height": 320,
+            "alpha": false
+          }
+        }
+      },
+      "transparentQa": {
+        "required": true,
+        "backgrounds": [
+          {
+            "id": "paper",
+            "color": "#f5f0e6",
+            "label": "宣纸底"
+          },
+          {
+            "id": "dark",
+            "color": "#201c16",
+            "label": "深色底"
+          }
+        ],
+        "sidecar": null,
+        "pixel": {
+          "width": 1600,
+          "height": 256,
+          "visibleAlphaPixels": 219481,
+          "visibleAlphaRatio": 0.5358,
+          "borderVisibleAlphaPixels": 0,
+          "highSaturationGreenOrMagentaPixels": 25,
+          "hardAlphaJumpPixels": 762,
+          "composite": {
+            "paper": {
+              "minLuma": 80,
+              "maxLuma": 253,
+              "averageLuma": 227.19
+            },
+            "dark": {
+              "minLuma": 28,
+              "maxLuma": 253,
+              "averageLuma": 127.86
+            }
+          }
+        }
+      },
+      "issues": []
+    },
+    {
+      "id": "ui-home-scroll-landscape-v1",
+      "phase": "S73.4",
+      "category": "background",
+      "subcategory": "home_scroll_landscape",
+      "usage": [
+        "home"
+      ],
+      "path": "/assets/ui/home/home-scroll-landscape-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-home-scroll-landscape-v1.webp",
+      "fallbackRef": "fallback-paper-panel-v1",
+      "reviewStatus": "approved",
+      "runtimeUsable": true,
+      "dimensions": {
+        "width": 2560,
+        "height": 1440
+      },
+      "transparent": false,
+      "files": {
+        "image": {
+          "path": "/assets/ui/home/home-scroll-landscape-v1.webp",
+          "exists": true,
+          "bytes": 284254,
+          "sha256": "c5813256d599fa8c6e87e356f9ff27f64e182c4c91a3f5302158a58928292318",
+          "dimensions": {
+            "width": 2560,
+            "height": 1440
+          },
+          "alpha": false
+        },
+        "thumbnail": {
+          "path": "/assets/ui/thumbs/thumb-home-scroll-landscape-v1.webp",
+          "exists": true,
+          "bytes": 7552,
+          "sha256": "fd90f0d9c06829f71baa939cdcf3b35e67f9a2e270ecb4bba66e736d81973b96",
+          "dimensions": {
+            "width": 320,
+            "height": 180,
+            "alpha": false
+          }
+        }
+      },
+      "transparentQa": {
+        "required": false,
+        "backgrounds": [],
+        "sidecar": null,
+        "pixel": null
+      },
+      "issues": []
+    },
+    {
+      "id": "ui-home-mist-layer-v1",
+      "phase": "S73.4",
+      "category": "effect",
+      "subcategory": "home_mist_overlay",
+      "usage": [
+        "home"
+      ],
+      "path": "/assets/ui/home/home-mist-layer-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-home-mist-layer-v1.webp",
+      "fallbackRef": "fallback-paper-panel-v1",
+      "reviewStatus": "approved_with_limits",
+      "runtimeUsable": true,
+      "dimensions": {
+        "width": 2560,
+        "height": 720
+      },
+      "transparent": true,
+      "files": {
+        "image": {
+          "path": "/assets/ui/home/home-mist-layer-v1.webp",
+          "exists": true,
+          "bytes": 61074,
+          "sha256": "368a7b01d620990253946e992fcc69137fbff1af49df4e945b5418bec37d5b86",
+          "dimensions": {
+            "width": 2560,
+            "height": 720
+          },
+          "alpha": true
+        },
+        "thumbnail": {
+          "path": "/assets/ui/thumbs/thumb-home-mist-layer-v1.webp",
+          "exists": true,
+          "bytes": 228,
+          "sha256": "2b1ba9421e6b111492c138892e3da7c56ba3fd7425f27742f2eedbc048c2f299",
+          "dimensions": {
+            "width": 320,
+            "height": 180,
+            "alpha": false
+          }
+        }
+      },
+      "transparentQa": {
+        "required": true,
+        "backgrounds": [
+          {
+            "id": "paper",
+            "color": "#f5f0e6",
+            "label": "宣纸底"
+          },
+          {
+            "id": "dark",
+            "color": "#201c16",
+            "label": "深色底"
+          }
+        ],
+        "sidecar": {
+          "source": "home-transparency-qa-v1",
+          "path": "public/assets/ui/home/home-transparency-qa-v1.json",
+          "sha256": "368a7b01d620990253946e992fcc69137fbff1af49df4e945b5418bec37d5b86",
+          "metrics": {
+            "visibleAlphaPixels": 324645,
+            "highSaturationGreenOrMagentaPixels": 0,
+            "borderVisibleAlphaPixels": 0,
+            "hardAlphaJumpPixels": 0,
+            "maxAllowedHighSaturationPixels": 12,
+            "maxAllowedBorderVisibleAlphaPixels": 0,
+            "maxAllowedHardAlphaJumpPixels": 500
+          }
+        },
+        "pixel": {
+          "width": 2560,
+          "height": 720,
+          "visibleAlphaPixels": 520381,
+          "visibleAlphaRatio": 0.2823,
+          "borderVisibleAlphaPixels": 0,
+          "highSaturationGreenOrMagentaPixels": 0,
+          "hardAlphaJumpPixels": 0,
+          "composite": {
+            "paper": {
+              "minLuma": 235,
+              "maxLuma": 241,
+              "averageLuma": 239.81
+            },
+            "dark": {
+              "minLuma": 28,
+              "maxLuma": 89,
+              "averageLuma": 38.1
+            }
+          }
+        }
+      },
+      "issues": []
+    },
+    {
+      "id": "ui-home-register-form-paper-v1",
+      "phase": "S73.4",
+      "category": "material",
+      "subcategory": "home_register_form",
+      "usage": [
+        "home"
+      ],
+      "path": "/assets/ui/home/home-register-form-paper-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-home-register-form-paper-v1.webp",
+      "fallbackRef": "fallback-paper-panel-v1",
+      "reviewStatus": "approved",
+      "runtimeUsable": true,
+      "dimensions": {
+        "width": 1600,
+        "height": 900
+      },
+      "transparent": true,
+      "files": {
+        "image": {
+          "path": "/assets/ui/home/home-register-form-paper-v1.webp",
+          "exists": true,
+          "bytes": 71096,
+          "sha256": "41949c07e83e83251fbff652158dd535b179c7e0ba1bcf264eae591c8265d9e9",
+          "dimensions": {
+            "width": 1600,
+            "height": 900
+          },
+          "alpha": true
+        },
+        "thumbnail": {
+          "path": "/assets/ui/thumbs/thumb-home-register-form-paper-v1.webp",
+          "exists": true,
+          "bytes": 1838,
+          "sha256": "df257c5ed0471f73b0da2c9295447cd49d33beaf8a8a9b2ae9d0dea5d69bd0df",
+          "dimensions": {
+            "width": 320,
+            "height": 180,
+            "alpha": false
+          }
+        }
+      },
+      "transparentQa": {
+        "required": true,
+        "backgrounds": [
+          {
+            "id": "paper",
+            "color": "#f5f0e6",
+            "label": "宣纸底"
+          },
+          {
+            "id": "dark",
+            "color": "#201c16",
+            "label": "深色底"
+          }
+        ],
+        "sidecar": {
+          "source": "home-transparency-qa-v1",
+          "path": "public/assets/ui/home/home-transparency-qa-v1.json",
+          "sha256": "41949c07e83e83251fbff652158dd535b179c7e0ba1bcf264eae591c8265d9e9",
+          "metrics": {
+            "visibleAlphaPixels": 963355,
+            "highSaturationGreenOrMagentaPixels": 0,
+            "borderVisibleAlphaPixels": 0,
+            "hardAlphaJumpPixels": 2606,
+            "maxAllowedHighSaturationPixels": 12,
+            "maxAllowedBorderVisibleAlphaPixels": 0,
+            "maxAllowedHardAlphaJumpPixels": 5000
+          }
+        },
+        "pixel": {
+          "width": 1600,
+          "height": 900,
+          "visibleAlphaPixels": 963582,
+          "visibleAlphaRatio": 0.6692,
+          "borderVisibleAlphaPixels": 0,
+          "highSaturationGreenOrMagentaPixels": 0,
+          "hardAlphaJumpPixels": 185,
+          "composite": {
+            "paper": {
+              "minLuma": 37,
+              "maxLuma": 240,
+              "averageLuma": 213.5
+            },
+            "dark": {
+              "minLuma": 27,
+              "maxLuma": 227,
+              "averageLuma": 143.07
+            }
+          }
+        }
+      },
+      "issues": []
+    },
+    {
+      "id": "ui-home-cinnabar-start-seal-v1",
+      "phase": "S73.4",
+      "category": "material",
+      "subcategory": "home_start_seal",
+      "usage": [
+        "home"
+      ],
+      "path": "/assets/ui/home/home-cinnabar-start-seal-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-home-cinnabar-start-seal-v1.webp",
+      "fallbackRef": "fallback-paper-panel-v1",
+      "reviewStatus": "approved",
+      "runtimeUsable": true,
+      "dimensions": {
+        "width": 512,
+        "height": 512
+      },
+      "transparent": true,
+      "files": {
+        "image": {
+          "path": "/assets/ui/home/home-cinnabar-start-seal-v1.webp",
+          "exists": true,
+          "bytes": 66204,
+          "sha256": "ec00d3b6b9c85875cf8ffcefadc1d8b916739e83378253d7d4c08c37d5136972",
+          "dimensions": {
+            "width": 512,
+            "height": 512
+          },
+          "alpha": true
+        },
+        "thumbnail": {
+          "path": "/assets/ui/thumbs/thumb-home-cinnabar-start-seal-v1.webp",
+          "exists": true,
+          "bytes": 11262,
+          "sha256": "e7656f5567d4d43dabc88b5ea7a10c987e81ac97dbed9a0307cb2d950cf378fa",
+          "dimensions": {
+            "width": 256,
+            "height": 256,
+            "alpha": false
+          }
+        }
+      },
+      "transparentQa": {
+        "required": true,
+        "backgrounds": [
+          {
+            "id": "paper",
+            "color": "#f5f0e6",
+            "label": "宣纸底"
+          },
+          {
+            "id": "dark",
+            "color": "#201c16",
+            "label": "深色底"
+          }
+        ],
+        "sidecar": {
+          "source": "home-transparency-qa-v1",
+          "path": "public/assets/ui/home/home-transparency-qa-v1.json",
+          "sha256": "ec00d3b6b9c85875cf8ffcefadc1d8b916739e83378253d7d4c08c37d5136972",
+          "metrics": {
+            "visibleAlphaPixels": 176628,
+            "highSaturationGreenOrMagentaPixels": 0,
+            "borderVisibleAlphaPixels": 0,
+            "hardAlphaJumpPixels": 1487,
+            "maxAllowedHighSaturationPixels": 12,
+            "maxAllowedBorderVisibleAlphaPixels": 0,
+            "maxAllowedHardAlphaJumpPixels": 2200
+          }
+        },
+        "pixel": {
+          "width": 512,
+          "height": 512,
+          "visibleAlphaPixels": 176766,
+          "visibleAlphaRatio": 0.6743,
+          "borderVisibleAlphaPixels": 0,
+          "highSaturationGreenOrMagentaPixels": 0,
+          "hardAlphaJumpPixels": 111,
+          "composite": {
+            "paper": {
+              "minLuma": 34,
+              "maxLuma": 241,
+              "averageLuma": 129.29
+            },
+            "dark": {
+              "minLuma": 28,
+              "maxLuma": 233,
+              "averageLuma": 59
+            }
+          }
+        }
+      },
+      "issues": []
+    },
+    {
+      "id": "ui-home-archive-casefile-v1",
+      "phase": "S73.4",
+      "category": "material",
+      "subcategory": "home_archive_casefile",
+      "usage": [
+        "home"
+      ],
+      "path": "/assets/ui/home/home-archive-casefile-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-home-archive-casefile-v1.webp",
+      "fallbackRef": "fallback-paper-panel-v1",
+      "reviewStatus": "approved",
+      "runtimeUsable": true,
+      "dimensions": {
+        "width": 1400,
+        "height": 900
+      },
+      "transparent": true,
+      "files": {
+        "image": {
+          "path": "/assets/ui/home/home-archive-casefile-v1.webp",
+          "exists": true,
+          "bytes": 110554,
+          "sha256": "a1741df06fb0cd35abef5cd62f0b6993281c48316018a573946564b990325d63",
+          "dimensions": {
+            "width": 1400,
+            "height": 900
+          },
+          "alpha": true
+        },
+        "thumbnail": {
+          "path": "/assets/ui/thumbs/thumb-home-archive-casefile-v1.webp",
+          "exists": true,
+          "bytes": 3842,
+          "sha256": "73875d9ef4cdbe2f6123cfd017a46183c768866356cd90630e9d7c9f61e55e70",
+          "dimensions": {
+            "width": 320,
+            "height": 180,
+            "alpha": false
+          }
+        }
+      },
+      "transparentQa": {
+        "required": true,
+        "backgrounds": [
+          {
+            "id": "paper",
+            "color": "#f5f0e6",
+            "label": "宣纸底"
+          },
+          {
+            "id": "dark",
+            "color": "#201c16",
+            "label": "深色底"
+          }
+        ],
+        "sidecar": {
+          "source": "home-transparency-qa-v1",
+          "path": "public/assets/ui/home/home-transparency-qa-v1.json",
+          "sha256": "a1741df06fb0cd35abef5cd62f0b6993281c48316018a573946564b990325d63",
+          "metrics": {
+            "visibleAlphaPixels": 653592,
+            "highSaturationGreenOrMagentaPixels": 2,
+            "borderVisibleAlphaPixels": 0,
+            "hardAlphaJumpPixels": 3875,
+            "maxAllowedHighSaturationPixels": 12,
+            "maxAllowedBorderVisibleAlphaPixels": 0,
+            "maxAllowedHardAlphaJumpPixels": 5000
+          }
+        },
+        "pixel": {
+          "width": 1400,
+          "height": 900,
+          "visibleAlphaPixels": 654100,
+          "visibleAlphaRatio": 0.5191,
+          "borderVisibleAlphaPixels": 0,
+          "highSaturationGreenOrMagentaPixels": 0,
+          "hardAlphaJumpPixels": 588,
+          "composite": {
+            "paper": {
+              "minLuma": 2,
+              "maxLuma": 241,
+              "averageLuma": 213.07
+            },
+            "dark": {
+              "minLuma": 2,
+              "maxLuma": 241,
+              "averageLuma": 110.52
+            }
+          }
+        }
+      },
+      "issues": []
+    },
+    {
+      "id": "ui-home-static-reduced-motion-v1",
+      "phase": "S73.4",
+      "category": "background",
+      "subcategory": "home_reduced_motion_static",
+      "usage": [
+        "home"
+      ],
+      "path": "/assets/ui/home/home-static-reduced-motion-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-home-static-reduced-motion-v1.webp",
+      "fallbackRef": "fallback-paper-panel-v1",
+      "reviewStatus": "approved",
+      "runtimeUsable": true,
+      "dimensions": {
+        "width": 2560,
+        "height": 1440
+      },
+      "transparent": false,
+      "files": {
+        "image": {
+          "path": "/assets/ui/home/home-static-reduced-motion-v1.webp",
+          "exists": true,
+          "bytes": 104130,
+          "sha256": "b86c23315502972b5769fcae766120afa3508f72e8d96f285ae6c01ed0ba7a71",
+          "dimensions": {
+            "width": 2560,
+            "height": 1440
+          },
+          "alpha": false
+        },
+        "thumbnail": {
+          "path": "/assets/ui/thumbs/thumb-home-static-reduced-motion-v1.webp",
+          "exists": true,
+          "bytes": 2028,
+          "sha256": "c3a0599c679a412e4a4e70a2f5695d5d9658406b90adab33e850acf9e48eb30c",
+          "dimensions": {
+            "width": 320,
+            "height": 180,
+            "alpha": false
+          }
+        }
+      },
+      "transparentQa": {
+        "required": false,
+        "backgrounds": [],
+        "sidecar": null,
+        "pixel": null
+      },
+      "issues": []
+    },
+    {
+      "id": "ui-scene-study-chamber-v1",
+      "phase": "S73.5",
+      "category": "scene",
+      "subcategory": "study_chamber",
+      "usage": [
+        "game_main"
+      ],
+      "path": "/assets/ui/scenes/scene-study-chamber-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-scene-study-chamber-v1.webp",
+      "fallbackRef": "fallback-paper-panel-v1",
+      "reviewStatus": "approved",
+      "runtimeUsable": true,
+      "dimensions": {
+        "width": 1920,
+        "height": 1080
+      },
+      "transparent": false,
+      "files": {
+        "image": {
+          "path": "/assets/ui/scenes/scene-study-chamber-v1.webp",
+          "exists": true,
+          "bytes": 214492,
+          "sha256": "58d6ee725044adb19b30bbf7548646da8953336828a8052b78c4f2dddb9816db",
+          "dimensions": {
+            "width": 1920,
+            "height": 1080
+          },
+          "alpha": false
+        },
+        "thumbnail": {
+          "path": "/assets/ui/thumbs/thumb-scene-study-chamber-v1.webp",
+          "exists": true,
+          "bytes": 5610,
+          "sha256": "712954dc8e12bb56ad973f8070d73a6587aae82df6814f7dcfabf8454d433602",
+          "dimensions": {
+            "width": 320,
+            "height": 180,
+            "alpha": false
+          }
+        }
+      },
+      "transparentQa": {
+        "required": false,
+        "backgrounds": [],
+        "sidecar": null,
+        "pixel": null
+      },
+      "issues": []
+    },
+    {
+      "id": "ui-scene-exam-cell-v1",
+      "phase": "S73.5",
+      "category": "scene",
+      "subcategory": "exam_cell",
+      "usage": [
+        "exam_page"
+      ],
+      "path": "/assets/ui/scenes/scene-exam-cell-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-scene-exam-cell-v1.webp",
+      "fallbackRef": "fallback-paper-panel-v1",
+      "reviewStatus": "approved",
+      "runtimeUsable": true,
+      "dimensions": {
+        "width": 1920,
+        "height": 1080
+      },
+      "transparent": false,
+      "files": {
+        "image": {
+          "path": "/assets/ui/scenes/scene-exam-cell-v1.webp",
+          "exists": true,
+          "bytes": 233268,
+          "sha256": "c28b65a75b835ad0d98f5bd175204d5b5524998c44059a50b5fb0abd4d1dbf4c",
+          "dimensions": {
+            "width": 1920,
+            "height": 1080
+          },
+          "alpha": false
+        },
+        "thumbnail": {
+          "path": "/assets/ui/thumbs/thumb-scene-exam-cell-v1.webp",
+          "exists": true,
+          "bytes": 5662,
+          "sha256": "ff86074bf0f15f6a7d9ad4e8d38d2bf5e3655ba03e81a8721908d151dbcfe2df",
+          "dimensions": {
+            "width": 320,
+            "height": 180,
+            "alpha": false
+          }
+        }
+      },
+      "transparentQa": {
+        "required": false,
+        "backgrounds": [],
+        "sidecar": null,
+        "pixel": null
+      },
+      "issues": []
+    },
+    {
+      "id": "ui-scene-ranking-wall-v1",
+      "phase": "S73.5",
+      "category": "scene",
+      "subcategory": "ranking_wall",
+      "usage": [
+        "ranking_page"
+      ],
+      "path": "/assets/ui/scenes/scene-ranking-wall-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-scene-ranking-wall-v1.webp",
+      "fallbackRef": "fallback-paper-panel-v1",
+      "reviewStatus": "approved",
+      "runtimeUsable": true,
+      "dimensions": {
+        "width": 1920,
+        "height": 1080
+      },
+      "transparent": false,
+      "files": {
+        "image": {
+          "path": "/assets/ui/scenes/scene-ranking-wall-v1.webp",
+          "exists": true,
+          "bytes": 269496,
+          "sha256": "b34deb00fd633a3bbb820a96d2bfaec004b2885de29149b9a1d86063ef29fcb7",
+          "dimensions": {
+            "width": 1920,
+            "height": 1080
+          },
+          "alpha": false
+        },
+        "thumbnail": {
+          "path": "/assets/ui/thumbs/thumb-scene-ranking-wall-v1.webp",
+          "exists": true,
+          "bytes": 7496,
+          "sha256": "e48c6f56f08f460d05fee70bdddb946e837159803975dbc32bb79ef5abcfe5e6",
+          "dimensions": {
+            "width": 320,
+            "height": 180,
+            "alpha": false
+          }
+        }
+      },
+      "transparentQa": {
+        "required": false,
+        "backgrounds": [],
+        "sidecar": null,
+        "pixel": null
+      },
+      "issues": []
+    },
+    {
+      "id": "ui-scene-palace-exam-hall-v1",
+      "phase": "S73.5",
+      "category": "scene",
+      "subcategory": "palace_exam_hall",
+      "usage": [
+        "exam_page",
+        "court_page"
+      ],
+      "path": "/assets/ui/scenes/scene-palace-exam-hall-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-scene-palace-exam-hall-v1.webp",
+      "fallbackRef": "fallback-paper-panel-v1",
+      "reviewStatus": "approved",
+      "runtimeUsable": true,
+      "dimensions": {
+        "width": 1920,
+        "height": 1080
+      },
+      "transparent": false,
+      "files": {
+        "image": {
+          "path": "/assets/ui/scenes/scene-palace-exam-hall-v1.webp",
+          "exists": true,
+          "bytes": 249686,
+          "sha256": "6ed5f1950bd0f43f3ea263f01b1312f380ea119df07fad38517a472eb572354f",
+          "dimensions": {
+            "width": 1920,
+            "height": 1080
+          },
+          "alpha": false
+        },
+        "thumbnail": {
+          "path": "/assets/ui/thumbs/thumb-scene-palace-exam-hall-v1.webp",
+          "exists": true,
+          "bytes": 7694,
+          "sha256": "d01bd0658f943d26dc5a3a9032dbc71ae8a1f5599a656892599e9ad1c23039be",
+          "dimensions": {
+            "width": 320,
+            "height": 180,
+            "alpha": false
+          }
+        }
+      },
+      "transparentQa": {
+        "required": false,
+        "backgrounds": [],
+        "sidecar": null,
+        "pixel": null
+      },
+      "issues": []
+    },
+    {
+      "id": "ui-scene-county-yamen-v1",
+      "phase": "S73.5",
+      "category": "scene",
+      "subcategory": "county_yamen",
+      "usage": [
+        "game_main"
+      ],
+      "path": "/assets/ui/scenes/scene-county-yamen-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-scene-county-yamen-v1.webp",
+      "fallbackRef": "fallback-paper-panel-v1",
+      "reviewStatus": "approved",
+      "runtimeUsable": true,
+      "dimensions": {
+        "width": 1920,
+        "height": 1080
+      },
+      "transparent": false,
+      "files": {
+        "image": {
+          "path": "/assets/ui/scenes/scene-county-yamen-v1.webp",
+          "exists": true,
+          "bytes": 304368,
+          "sha256": "23a0ac57bd3859c9128e677699018ff01a11aa9083e75c3f8ae017b5a7a74037",
+          "dimensions": {
+            "width": 1920,
+            "height": 1080
+          },
+          "alpha": false
+        },
+        "thumbnail": {
+          "path": "/assets/ui/thumbs/thumb-scene-county-yamen-v1.webp",
+          "exists": true,
+          "bytes": 8862,
+          "sha256": "44750cb840946b096bc8fb517fce485400f1aa77aa59313f3c40e652d0eb4e3f",
+          "dimensions": {
+            "width": 320,
+            "height": 180,
+            "alpha": false
+          }
+        }
+      },
+      "transparentQa": {
+        "required": false,
+        "backgrounds": [],
+        "sidecar": null,
+        "pixel": null
+      },
+      "issues": []
+    },
+    {
+      "id": "ui-scene-courtroom-trial-v1",
+      "phase": "S73.5",
+      "category": "scene",
+      "subcategory": "courtroom_trial",
+      "usage": [
+        "game_main",
+        "archive_page"
+      ],
+      "path": "/assets/ui/scenes/scene-courtroom-trial-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-scene-courtroom-trial-v1.webp",
+      "fallbackRef": "fallback-paper-panel-v1",
+      "reviewStatus": "approved",
+      "runtimeUsable": true,
+      "dimensions": {
+        "width": 1920,
+        "height": 1080
+      },
+      "transparent": false,
+      "files": {
+        "image": {
+          "path": "/assets/ui/scenes/scene-courtroom-trial-v1.webp",
+          "exists": true,
+          "bytes": 233578,
+          "sha256": "de7c93d26ddcc68c77c4f3c1d81d8cce1660c04cb27e7bed0939164de92c6a59",
+          "dimensions": {
+            "width": 1920,
+            "height": 1080
+          },
+          "alpha": false
+        },
+        "thumbnail": {
+          "path": "/assets/ui/thumbs/thumb-scene-courtroom-trial-v1.webp",
+          "exists": true,
+          "bytes": 5658,
+          "sha256": "1a8eba29f7f1a8c035f254a36670131943a26d5254d4a3a45582abcaea47909a",
+          "dimensions": {
+            "width": 320,
+            "height": 180,
+            "alpha": false
+          }
+        }
+      },
+      "transparentQa": {
+        "required": false,
+        "backgrounds": [],
+        "sidecar": null,
+        "pixel": null
+      },
+      "issues": []
+    },
+    {
+      "id": "ui-scene-military-tent-v1",
+      "phase": "S73.5",
+      "category": "scene",
+      "subcategory": "military_tent",
+      "usage": [
+        "game_main"
+      ],
+      "path": "/assets/ui/scenes/scene-military-tent-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-scene-military-tent-v1.webp",
+      "fallbackRef": "fallback-paper-panel-v1",
+      "reviewStatus": "approved",
+      "runtimeUsable": true,
+      "dimensions": {
+        "width": 1920,
+        "height": 1080
+      },
+      "transparent": false,
+      "files": {
+        "image": {
+          "path": "/assets/ui/scenes/scene-military-tent-v1.webp",
+          "exists": true,
+          "bytes": 261162,
+          "sha256": "702cc84a93574dddc6d0d7e0dcd0fc8992ac35a5d3b0fae2f185aaa384b030ad",
+          "dimensions": {
+            "width": 1920,
+            "height": 1080
+          },
+          "alpha": false
+        },
+        "thumbnail": {
+          "path": "/assets/ui/thumbs/thumb-scene-military-tent-v1.webp",
+          "exists": true,
+          "bytes": 6414,
+          "sha256": "ea50b57df88a725107981655767e4fa72392a561871247a484f95179262530bb",
+          "dimensions": {
+            "width": 320,
+            "height": 180,
+            "alpha": false
+          }
+        }
+      },
+      "transparentQa": {
+        "required": false,
+        "backgrounds": [],
+        "sidecar": null,
+        "pixel": null
+      },
+      "issues": []
+    },
+    {
+      "id": "ui-scene-imperial-desk-v1",
+      "phase": "S73.5",
+      "category": "scene",
+      "subcategory": "imperial_desk",
+      "usage": [
+        "court_page",
+        "game_main"
+      ],
+      "path": "/assets/ui/scenes/scene-imperial-desk-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-scene-imperial-desk-v1.webp",
+      "fallbackRef": "fallback-paper-panel-v1",
+      "reviewStatus": "approved",
+      "runtimeUsable": true,
+      "dimensions": {
+        "width": 1920,
+        "height": 1080
+      },
+      "transparent": false,
+      "files": {
+        "image": {
+          "path": "/assets/ui/scenes/scene-imperial-desk-v1.webp",
+          "exists": true,
+          "bytes": 229902,
+          "sha256": "1f126a4d6cb64781dbef313080513993efeaa79924e9502a83d058f401667af0",
+          "dimensions": {
+            "width": 1920,
+            "height": 1080
+          },
+          "alpha": false
+        },
+        "thumbnail": {
+          "path": "/assets/ui/thumbs/thumb-scene-imperial-desk-v1.webp",
+          "exists": true,
+          "bytes": 6182,
+          "sha256": "ce20de873ee093f8914e3c2110e3c6834844f0a64e474fc4389be2da143c8a1f",
+          "dimensions": {
+            "width": 320,
+            "height": 180,
+            "alpha": false
+          }
+        }
+      },
+      "transparentQa": {
+        "required": false,
+        "backgrounds": [],
+        "sidecar": null,
+        "pixel": null
+      },
+      "issues": []
+    },
+    {
+      "id": "ui-scene-city-lanes-v1",
+      "phase": "S73.5",
+      "category": "scene",
+      "subcategory": "city_lanes",
+      "usage": [
+        "game_main",
+        "people_page",
+        "archive_page"
+      ],
+      "path": "/assets/ui/scenes/scene-city-lanes-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-scene-city-lanes-v1.webp",
+      "fallbackRef": "fallback-paper-panel-v1",
+      "reviewStatus": "approved",
+      "runtimeUsable": true,
+      "dimensions": {
+        "width": 1920,
+        "height": 1080
+      },
+      "transparent": false,
+      "files": {
+        "image": {
+          "path": "/assets/ui/scenes/scene-city-lanes-v1.webp",
+          "exists": true,
+          "bytes": 204598,
+          "sha256": "8608d84a86fd9736e9222d85b870fa0868009bd9883100fa787d8ceb82fb862c",
+          "dimensions": {
+            "width": 1920,
+            "height": 1080
+          },
+          "alpha": false
+        },
+        "thumbnail": {
+          "path": "/assets/ui/thumbs/thumb-scene-city-lanes-v1.webp",
+          "exists": true,
+          "bytes": 5062,
+          "sha256": "01796d35e9fc2f221cb35f9b74c97e764ba4b60274e14723f74e1b07bb2af3bb",
+          "dimensions": {
+            "width": 320,
+            "height": 180,
+            "alpha": false
+          }
+        }
+      },
+      "transparentQa": {
+        "required": false,
+        "backgrounds": [],
+        "sidecar": null,
+        "pixel": null
+      },
+      "issues": []
+    },
+    {
+      "id": "ui-scene-bureau-documents-v1",
+      "phase": "S73.5",
+      "category": "scene",
+      "subcategory": "bureau_documents",
+      "usage": [
+        "game_main",
+        "court_page",
+        "archive_page"
+      ],
+      "path": "/assets/ui/scenes/scene-bureau-documents-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-scene-bureau-documents-v1.webp",
+      "fallbackRef": "fallback-paper-panel-v1",
+      "reviewStatus": "approved",
+      "runtimeUsable": true,
+      "dimensions": {
+        "width": 1920,
+        "height": 1080
+      },
+      "transparent": false,
+      "files": {
+        "image": {
+          "path": "/assets/ui/scenes/scene-bureau-documents-v1.webp",
+          "exists": true,
+          "bytes": 260228,
+          "sha256": "731b3088adbc5df4154330bd649aecf8be0d4d5ccc961e02831981dbbe86f795",
+          "dimensions": {
+            "width": 1920,
+            "height": 1080
+          },
+          "alpha": false
+        },
+        "thumbnail": {
+          "path": "/assets/ui/thumbs/thumb-scene-bureau-documents-v1.webp",
+          "exists": true,
+          "bytes": 5886,
+          "sha256": "8cba519908a92d2c058d2e132b35ced2f87df05aaf30d296449e500357e46c25",
+          "dimensions": {
+            "width": 320,
+            "height": 180,
+            "alpha": false
+          }
+        }
+      },
+      "transparentQa": {
+        "required": false,
+        "backgrounds": [],
+        "sidecar": null,
+        "pixel": null
+      },
+      "issues": []
+    },
+    {
+      "id": "ui-role-scholar-study-v1",
+      "phase": "S73.6",
+      "category": "role_background",
+      "subcategory": "scholar_study",
+      "usage": [
+        "game_main",
+        "people_page"
+      ],
+      "path": "/assets/ui/roles/role-scholar-study-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-role-scholar-study-v1.webp",
+      "fallbackRef": "fallback-paper-panel-v1",
+      "reviewStatus": "approved",
+      "runtimeUsable": true,
+      "dimensions": {
+        "width": 1800,
+        "height": 1200
+      },
+      "transparent": false,
+      "files": {
+        "image": {
+          "path": "/assets/ui/roles/role-scholar-study-v1.webp",
+          "exists": true,
+          "bytes": 322456,
+          "sha256": "7297a766f2cbf9eead6be58f2802e3f9721667c3e049c2ef3941853fedc95832",
+          "dimensions": {
+            "width": 1800,
+            "height": 1200
+          },
+          "alpha": false
+        },
+        "thumbnail": {
+          "path": "/assets/ui/thumbs/thumb-role-scholar-study-v1.webp",
+          "exists": true,
+          "bytes": 9882,
+          "sha256": "2d263e68388ab4e27cf1f01d0e4149d92e92f6b999a494060675e2172d1a8054",
+          "dimensions": {
+            "width": 320,
+            "height": 213,
+            "alpha": false
+          }
+        }
+      },
+      "transparentQa": {
+        "required": false,
+        "backgrounds": [],
+        "sidecar": null,
+        "pixel": null
+      },
+      "issues": []
+    },
+    {
+      "id": "ui-role-magistrate-yamen-desk-v1",
+      "phase": "S73.6",
+      "category": "role_background",
+      "subcategory": "magistrate_yamen_desk",
+      "usage": [
+        "game_main",
+        "archive_page"
+      ],
+      "path": "/assets/ui/roles/role-magistrate-yamen-desk-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-role-magistrate-yamen-desk-v1.webp",
+      "fallbackRef": "fallback-paper-panel-v1",
+      "reviewStatus": "approved",
+      "runtimeUsable": true,
+      "dimensions": {
+        "width": 1800,
+        "height": 1200
+      },
+      "transparent": false,
+      "files": {
+        "image": {
+          "path": "/assets/ui/roles/role-magistrate-yamen-desk-v1.webp",
+          "exists": true,
+          "bytes": 354260,
+          "sha256": "414d2687f5f9ca09feaaa0d8dd1586709ea25be9f8bd7b0033aeaa92ea0ac695",
+          "dimensions": {
+            "width": 1800,
+            "height": 1200
+          },
+          "alpha": false
+        },
+        "thumbnail": {
+          "path": "/assets/ui/thumbs/thumb-role-magistrate-yamen-desk-v1.webp",
+          "exists": true,
+          "bytes": 8982,
+          "sha256": "e496b2958234abfa23998b345390d7f64c0ea2eeabcb1d42b6c2897426ba9d18",
+          "dimensions": {
+            "width": 320,
+            "height": 213,
+            "alpha": false
+          }
+        }
+      },
+      "transparentQa": {
+        "required": false,
+        "backgrounds": [],
+        "sidecar": null,
+        "pixel": null
+      },
+      "issues": []
+    },
+    {
+      "id": "ui-role-official-duty-room-v1",
+      "phase": "S73.6",
+      "category": "role_background",
+      "subcategory": "official_duty_room",
+      "usage": [
+        "game_main",
+        "court_page",
+        "people_page"
+      ],
+      "path": "/assets/ui/roles/role-official-duty-room-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-role-official-duty-room-v1.webp",
+      "fallbackRef": "fallback-paper-panel-v1",
+      "reviewStatus": "approved",
+      "runtimeUsable": true,
+      "dimensions": {
+        "width": 1800,
+        "height": 1200
+      },
+      "transparent": false,
+      "files": {
+        "image": {
+          "path": "/assets/ui/roles/role-official-duty-room-v1.webp",
+          "exists": true,
+          "bytes": 308384,
+          "sha256": "44a851de3a0b560f1a6beda3eb8307c98e0e5ed7cb8e8c07600a39ba076977a1",
+          "dimensions": {
+            "width": 1800,
+            "height": 1200
+          },
+          "alpha": false
+        },
+        "thumbnail": {
+          "path": "/assets/ui/thumbs/thumb-role-official-duty-room-v1.webp",
+          "exists": true,
+          "bytes": 8798,
+          "sha256": "98896231b763792fc2ef2a75bc70c199ff1fa33529c4d87a85b78ae19e65eec0",
+          "dimensions": {
+            "width": 320,
+            "height": 213,
+            "alpha": false
+          }
+        }
+      },
+      "transparentQa": {
+        "required": false,
+        "backgrounds": [],
+        "sidecar": null,
+        "pixel": null
+      },
+      "issues": []
+    },
+    {
+      "id": "ui-role-minister-palace-desk-v1",
+      "phase": "S73.6",
+      "category": "role_background",
+      "subcategory": "minister_palace_desk",
+      "usage": [
+        "game_main",
+        "court_page",
+        "archive_page"
+      ],
+      "path": "/assets/ui/roles/role-minister-palace-desk-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-role-minister-palace-desk-v1.webp",
+      "fallbackRef": "fallback-paper-panel-v1",
+      "reviewStatus": "approved",
+      "runtimeUsable": true,
+      "dimensions": {
+        "width": 1800,
+        "height": 1200
+      },
+      "transparent": false,
+      "files": {
+        "image": {
+          "path": "/assets/ui/roles/role-minister-palace-desk-v1.webp",
+          "exists": true,
+          "bytes": 322800,
+          "sha256": "841c6c638e51ee460fdcf4e27fc3bf45471519be9b9c0f71eda5a26c2f779de5",
+          "dimensions": {
+            "width": 1800,
+            "height": 1200
+          },
+          "alpha": false
+        },
+        "thumbnail": {
+          "path": "/assets/ui/thumbs/thumb-role-minister-palace-desk-v1.webp",
+          "exists": true,
+          "bytes": 8400,
+          "sha256": "b709a0765cecfd5f0b0bfddab89f006f4e801e183b2f2b57b66c0c85f436cab0",
+          "dimensions": {
+            "width": 320,
+            "height": 213,
+            "alpha": false
+          }
+        }
+      },
+      "transparentQa": {
+        "required": false,
+        "backgrounds": [],
+        "sidecar": null,
+        "pixel": null
+      },
+      "issues": []
+    },
+    {
+      "id": "ui-role-general-frontier-tent-v1",
+      "phase": "S73.6",
+      "category": "role_background",
+      "subcategory": "general_frontier_tent",
+      "usage": [
+        "game_main",
+        "map_page",
+        "archive_page"
+      ],
+      "path": "/assets/ui/roles/role-general-frontier-tent-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-role-general-frontier-tent-v1.webp",
+      "fallbackRef": "fallback-paper-panel-v1",
+      "reviewStatus": "approved",
+      "runtimeUsable": true,
+      "dimensions": {
+        "width": 1800,
+        "height": 1200
+      },
+      "transparent": false,
+      "files": {
+        "image": {
+          "path": "/assets/ui/roles/role-general-frontier-tent-v1.webp",
+          "exists": true,
+          "bytes": 370600,
+          "sha256": "d9ec9fbbc52ab6f3ee333d13ba33c47da79dba9ff7af49f360508e8e4435f397",
+          "dimensions": {
+            "width": 1800,
+            "height": 1200
+          },
+          "alpha": false
+        },
+        "thumbnail": {
+          "path": "/assets/ui/thumbs/thumb-role-general-frontier-tent-v1.webp",
+          "exists": true,
+          "bytes": 10512,
+          "sha256": "ebfd0cf154d59f614d738fd16ec60bb7d7eab49a6a14c946f6114b965eed0059",
+          "dimensions": {
+            "width": 320,
+            "height": 213,
+            "alpha": false
+          }
+        }
+      },
+      "transparentQa": {
+        "required": false,
+        "backgrounds": [],
+        "sidecar": null,
+        "pixel": null
+      },
+      "issues": []
+    },
+    {
+      "id": "ui-role-emperor-imperial-desk-v1",
+      "phase": "S73.6",
+      "category": "role_background",
+      "subcategory": "emperor_imperial_desk",
+      "usage": [
+        "game_main",
+        "court_page"
+      ],
+      "path": "/assets/ui/roles/role-emperor-imperial-desk-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-role-emperor-imperial-desk-v1.webp",
+      "fallbackRef": "fallback-paper-panel-v1",
+      "reviewStatus": "approved",
+      "runtimeUsable": true,
+      "dimensions": {
+        "width": 1800,
+        "height": 1200
+      },
+      "transparent": false,
+      "files": {
+        "image": {
+          "path": "/assets/ui/roles/role-emperor-imperial-desk-v1.webp",
+          "exists": true,
+          "bytes": 331630,
+          "sha256": "3c62be7c9169269c820210c325aaadbdcde8661f17b7d3d2295bff8505188942",
+          "dimensions": {
+            "width": 1800,
+            "height": 1200
+          },
+          "alpha": false
+        },
+        "thumbnail": {
+          "path": "/assets/ui/thumbs/thumb-role-emperor-imperial-desk-v1.webp",
+          "exists": true,
+          "bytes": 8322,
+          "sha256": "657ded893cf5837ffbc1d38b727d347012158fd36797b66b4677b6e03c2913c4",
+          "dimensions": {
+            "width": 320,
+            "height": 213,
+            "alpha": false
+          }
+        }
+      },
+      "transparentQa": {
+        "required": false,
+        "backgrounds": [],
+        "sidecar": null,
+        "pixel": null
+      },
+      "issues": []
+    },
+    {
+      "id": "portrait-player-scholar-m01-v1",
+      "phase": "S73.7",
+      "category": "portrait",
+      "subcategory": "portrait_style_baseline",
+      "usage": [
+        "people_page",
+        "game_main",
+        "archive_page"
+      ],
+      "path": "/assets/ui/portraits/portrait-player-scholar-m01-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-portrait-player-scholar-m01-v1.webp",
+      "fallbackRef": "fallback-role-silhouette-v1",
+      "reviewStatus": "approved",
+      "runtimeUsable": true,
+      "dimensions": {
+        "width": 1024,
+        "height": 1536
+      },
+      "transparent": false,
+      "files": {
+        "image": {
+          "path": "/assets/ui/portraits/portrait-player-scholar-m01-v1.webp",
+          "exists": true,
+          "bytes": 207110,
+          "sha256": "65e462f395f7df5473fc4010ea62127766440a751aca869ec84be9d951bbb15a",
+          "dimensions": {
+            "width": 1024,
+            "height": 1536
+          },
+          "alpha": false
+        },
+        "thumbnail": {
+          "path": "/assets/ui/thumbs/thumb-portrait-player-scholar-m01-v1.webp",
+          "exists": true,
+          "bytes": 17254,
+          "sha256": "7bcabc98ef782337ff8462f2be65b21baa1f04b67255fe82f0a967094edb5a75",
+          "dimensions": {
+            "width": 384,
+            "height": 576,
+            "alpha": false
+          }
+        },
+        "lowResPlaceholder": {
+          "path": "/assets/ui/portraits/placeholders/placeholder-portrait-player-scholar-m01-v1.webp",
+          "exists": true,
+          "bytes": 470,
+          "sha256": "44369dec5ec502002e3d0a617e25a7461248f394259369c3c4ced2adcdf14bf1",
+          "dimensions": {
+            "width": 64,
+            "height": 96,
+            "alpha": false
+          }
+        }
+      },
+      "transparentQa": {
+        "required": false,
+        "backgrounds": [],
+        "sidecar": null,
+        "pixel": null
+      },
+      "issues": []
+    },
+    {
+      "id": "portrait-player-juren-m01-v1",
+      "phase": "S73.7",
+      "category": "portrait",
+      "subcategory": "portrait_style_baseline",
+      "usage": [
+        "people_page",
+        "game_main",
+        "archive_page"
+      ],
+      "path": "/assets/ui/portraits/portrait-player-juren-m01-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-portrait-player-juren-m01-v1.webp",
+      "fallbackRef": "fallback-role-silhouette-v1",
+      "reviewStatus": "approved",
+      "runtimeUsable": true,
+      "dimensions": {
+        "width": 1024,
+        "height": 1536
+      },
+      "transparent": false,
+      "files": {
+        "image": {
+          "path": "/assets/ui/portraits/portrait-player-juren-m01-v1.webp",
+          "exists": true,
+          "bytes": 178322,
+          "sha256": "604229782609bf19abcf9c87743a78c1c0ee891671f61299a0e70f738366712f",
+          "dimensions": {
+            "width": 1024,
+            "height": 1536
+          },
+          "alpha": false
+        },
+        "thumbnail": {
+          "path": "/assets/ui/thumbs/thumb-portrait-player-juren-m01-v1.webp",
+          "exists": true,
+          "bytes": 15916,
+          "sha256": "a16255d2e90d94f123d46ab62282c2501bce8f305c79aa332259d63eab71021f",
+          "dimensions": {
+            "width": 384,
+            "height": 576,
+            "alpha": false
+          }
+        },
+        "lowResPlaceholder": {
+          "path": "/assets/ui/portraits/placeholders/placeholder-portrait-player-juren-m01-v1.webp",
+          "exists": true,
+          "bytes": 398,
+          "sha256": "20bf91b648b84bf0c5a429e2cb889aa891c5a9618ee42594d4cbc1c1778a0f6c",
+          "dimensions": {
+            "width": 64,
+            "height": 96,
+            "alpha": false
+          }
+        }
+      },
+      "transparentQa": {
+        "required": false,
+        "backgrounds": [],
+        "sidecar": null,
+        "pixel": null
+      },
+      "issues": []
+    },
+    {
+      "id": "portrait-player-jinshi-m01-v1",
+      "phase": "S73.7",
+      "category": "portrait",
+      "subcategory": "portrait_style_baseline",
+      "usage": [
+        "people_page",
+        "game_main",
+        "archive_page"
+      ],
+      "path": "/assets/ui/portraits/portrait-player-jinshi-m01-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-portrait-player-jinshi-m01-v1.webp",
+      "fallbackRef": "fallback-role-silhouette-v1",
+      "reviewStatus": "approved",
+      "runtimeUsable": true,
+      "dimensions": {
+        "width": 1024,
+        "height": 1536
+      },
+      "transparent": false,
+      "files": {
+        "image": {
+          "path": "/assets/ui/portraits/portrait-player-jinshi-m01-v1.webp",
+          "exists": true,
+          "bytes": 168874,
+          "sha256": "5ea6b9d66a2ffcb18c688e7418a1c131164c2dfc02114f42d555a3b8b5b40a28",
+          "dimensions": {
+            "width": 1024,
+            "height": 1536
+          },
+          "alpha": false
+        },
+        "thumbnail": {
+          "path": "/assets/ui/thumbs/thumb-portrait-player-jinshi-m01-v1.webp",
+          "exists": true,
+          "bytes": 14826,
+          "sha256": "522e56a299f791a71e546250b7a331d5ae59a2645a1015b8f4878174be760b3d",
+          "dimensions": {
+            "width": 384,
+            "height": 576,
+            "alpha": false
+          }
+        },
+        "lowResPlaceholder": {
+          "path": "/assets/ui/portraits/placeholders/placeholder-portrait-player-jinshi-m01-v1.webp",
+          "exists": true,
+          "bytes": 382,
+          "sha256": "aa4b324493c56de5cc0af1e1299d68c77eff03d4351afcb9cb261bbdd762c248",
+          "dimensions": {
+            "width": 64,
+            "height": 96,
+            "alpha": false
+          }
+        }
+      },
+      "transparentQa": {
+        "required": false,
+        "backgrounds": [],
+        "sidecar": null,
+        "pixel": null
+      },
+      "issues": []
+    },
+    {
+      "id": "portrait-player-official-junior-m01-v1",
+      "phase": "S73.7",
+      "category": "portrait",
+      "subcategory": "portrait_style_baseline",
+      "usage": [
+        "people_page",
+        "game_main",
+        "archive_page"
+      ],
+      "path": "/assets/ui/portraits/portrait-player-official-junior-m01-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-portrait-player-official-junior-m01-v1.webp",
+      "fallbackRef": "fallback-role-silhouette-v1",
+      "reviewStatus": "approved",
+      "runtimeUsable": true,
+      "dimensions": {
+        "width": 1024,
+        "height": 1536
+      },
+      "transparent": false,
+      "files": {
+        "image": {
+          "path": "/assets/ui/portraits/portrait-player-official-junior-m01-v1.webp",
+          "exists": true,
+          "bytes": 224066,
+          "sha256": "4d57be2c67000cd57933ab0c88db6eecb06998c50597327d789432c082866bd7",
+          "dimensions": {
+            "width": 1024,
+            "height": 1536
+          },
+          "alpha": false
+        },
+        "thumbnail": {
+          "path": "/assets/ui/thumbs/thumb-portrait-player-official-junior-m01-v1.webp",
+          "exists": true,
+          "bytes": 18302,
+          "sha256": "cdfcd6192c10d583f1daad6d389c95b5a9b1e7991ec18f0db38a4aba749dadbe",
+          "dimensions": {
+            "width": 384,
+            "height": 576,
+            "alpha": false
+          }
+        },
+        "lowResPlaceholder": {
+          "path": "/assets/ui/portraits/placeholders/placeholder-portrait-player-official-junior-m01-v1.webp",
+          "exists": true,
+          "bytes": 472,
+          "sha256": "0b815934c88d0c17f7f50bfe18907401f1b3b8af42dee891349ffe1023860e9c",
+          "dimensions": {
+            "width": 64,
+            "height": 96,
+            "alpha": false
+          }
+        }
+      },
+      "transparentQa": {
+        "required": false,
+        "backgrounds": [],
+        "sidecar": null,
+        "pixel": null
+      },
+      "issues": []
+    },
+    {
+      "id": "portrait-npc-magistrate-m01-v1",
+      "phase": "S73.7",
+      "category": "portrait",
+      "subcategory": "portrait_style_baseline",
+      "usage": [
+        "people_page",
+        "game_main",
+        "archive_page"
+      ],
+      "path": "/assets/ui/portraits/portrait-npc-magistrate-m01-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-portrait-npc-magistrate-m01-v1.webp",
+      "fallbackRef": "fallback-role-silhouette-v1",
+      "reviewStatus": "approved",
+      "runtimeUsable": true,
+      "dimensions": {
+        "width": 1024,
+        "height": 1536
+      },
+      "transparent": false,
+      "files": {
+        "image": {
+          "path": "/assets/ui/portraits/portrait-npc-magistrate-m01-v1.webp",
+          "exists": true,
+          "bytes": 250410,
+          "sha256": "7246c15db8ef9ff6b324f80fae0416c504e35434871805e4443cd69f7aee3a17",
+          "dimensions": {
+            "width": 1024,
+            "height": 1536
+          },
+          "alpha": false
+        },
+        "thumbnail": {
+          "path": "/assets/ui/thumbs/thumb-portrait-npc-magistrate-m01-v1.webp",
+          "exists": true,
+          "bytes": 19960,
+          "sha256": "4c8a5ca99f1212e604dfa7297c3ae24b889f2ba231cb1e9baba07ac1219ddad9",
+          "dimensions": {
+            "width": 384,
+            "height": 576,
+            "alpha": false
+          }
+        },
+        "lowResPlaceholder": {
+          "path": "/assets/ui/portraits/placeholders/placeholder-portrait-npc-magistrate-m01-v1.webp",
+          "exists": true,
+          "bytes": 514,
+          "sha256": "809830763cb19c13ef9c1ea5162a1d16b1bc93cee25c249136a70707fcb646ae",
+          "dimensions": {
+            "width": 64,
+            "height": 96,
+            "alpha": false
+          }
+        }
+      },
+      "transparentQa": {
+        "required": false,
+        "backgrounds": [],
+        "sidecar": null,
+        "pixel": null
+      },
+      "issues": []
+    },
+    {
+      "id": "portrait-npc-clerk-m01-v1",
+      "phase": "S73.7",
+      "category": "portrait",
+      "subcategory": "portrait_style_baseline",
+      "usage": [
+        "people_page",
+        "game_main",
+        "archive_page"
+      ],
+      "path": "/assets/ui/portraits/portrait-npc-clerk-m01-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-portrait-npc-clerk-m01-v1.webp",
+      "fallbackRef": "fallback-role-silhouette-v1",
+      "reviewStatus": "approved",
+      "runtimeUsable": true,
+      "dimensions": {
+        "width": 1024,
+        "height": 1536
+      },
+      "transparent": false,
+      "files": {
+        "image": {
+          "path": "/assets/ui/portraits/portrait-npc-clerk-m01-v1.webp",
+          "exists": true,
+          "bytes": 241112,
+          "sha256": "0115b4c5807ee7e90cb15c14e84438a4b799b53c11b843d8bfb9764b0ea238c9",
+          "dimensions": {
+            "width": 1024,
+            "height": 1536
+          },
+          "alpha": false
+        },
+        "thumbnail": {
+          "path": "/assets/ui/thumbs/thumb-portrait-npc-clerk-m01-v1.webp",
+          "exists": true,
+          "bytes": 18076,
+          "sha256": "98e5ec4bc3b045aa1ae7ec063969a3374f7682fc0be1ee732c88ff40056dcf89",
+          "dimensions": {
+            "width": 384,
+            "height": 576,
+            "alpha": false
+          }
+        },
+        "lowResPlaceholder": {
+          "path": "/assets/ui/portraits/placeholders/placeholder-portrait-npc-clerk-m01-v1.webp",
+          "exists": true,
+          "bytes": 452,
+          "sha256": "90a2c918bb676f89645c1a0b777f0eac2b1c7c97dbd9156219294b8f7aa6ae95",
+          "dimensions": {
+            "width": 64,
+            "height": 96,
+            "alpha": false
+          }
+        }
+      },
+      "transparentQa": {
+        "required": false,
+        "backgrounds": [],
+        "sidecar": null,
+        "pixel": null
+      },
+      "issues": []
+    },
+    {
+      "id": "portrait-npc-ministry-official-m01-v1",
+      "phase": "S73.7",
+      "category": "portrait",
+      "subcategory": "portrait_style_baseline",
+      "usage": [
+        "people_page",
+        "game_main",
+        "archive_page"
+      ],
+      "path": "/assets/ui/portraits/portrait-npc-ministry-official-m01-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-portrait-npc-ministry-official-m01-v1.webp",
+      "fallbackRef": "fallback-role-silhouette-v1",
+      "reviewStatus": "approved",
+      "runtimeUsable": true,
+      "dimensions": {
+        "width": 1024,
+        "height": 1536
+      },
+      "transparent": false,
+      "files": {
+        "image": {
+          "path": "/assets/ui/portraits/portrait-npc-ministry-official-m01-v1.webp",
+          "exists": true,
+          "bytes": 201370,
+          "sha256": "c501640c4b7dbb38c09a5caca2338e102b381f31c2938bec4895130cb78ccfd4",
+          "dimensions": {
+            "width": 1024,
+            "height": 1536
+          },
+          "alpha": false
+        },
+        "thumbnail": {
+          "path": "/assets/ui/thumbs/thumb-portrait-npc-ministry-official-m01-v1.webp",
+          "exists": true,
+          "bytes": 14898,
+          "sha256": "a1a18d7c7f57be93fb904d16951b7a405668529562bdfa8c6283945641d81b27",
+          "dimensions": {
+            "width": 384,
+            "height": 576,
+            "alpha": false
+          }
+        },
+        "lowResPlaceholder": {
+          "path": "/assets/ui/portraits/placeholders/placeholder-portrait-npc-ministry-official-m01-v1.webp",
+          "exists": true,
+          "bytes": 504,
+          "sha256": "e1205f18edadef52373413415f5ca7b1e63fde028ac18e1875baee4b7d9d0bf1",
+          "dimensions": {
+            "width": 64,
+            "height": 96,
+            "alpha": false
+          }
+        }
+      },
+      "transparentQa": {
+        "required": false,
+        "backgrounds": [],
+        "sidecar": null,
+        "pixel": null
+      },
+      "issues": []
+    },
+    {
+      "id": "portrait-npc-grand-minister-m01-v1",
+      "phase": "S73.7",
+      "category": "portrait",
+      "subcategory": "portrait_style_baseline",
+      "usage": [
+        "people_page",
+        "game_main",
+        "court_page"
+      ],
+      "path": "/assets/ui/portraits/portrait-npc-grand-minister-m01-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-portrait-npc-grand-minister-m01-v1.webp",
+      "fallbackRef": "fallback-role-silhouette-v1",
+      "reviewStatus": "approved",
+      "runtimeUsable": true,
+      "dimensions": {
+        "width": 1024,
+        "height": 1536
+      },
+      "transparent": false,
+      "files": {
+        "image": {
+          "path": "/assets/ui/portraits/portrait-npc-grand-minister-m01-v1.webp",
+          "exists": true,
+          "bytes": 236832,
+          "sha256": "f26c0271d9591597fdfe03cb2d39d53c0b127c8b44b0861a823925ebf6d2b7fa",
+          "dimensions": {
+            "width": 1024,
+            "height": 1536
+          },
+          "alpha": false
+        },
+        "thumbnail": {
+          "path": "/assets/ui/thumbs/thumb-portrait-npc-grand-minister-m01-v1.webp",
+          "exists": true,
+          "bytes": 18204,
+          "sha256": "d998d81d1f85026a6692120e53ede65501bdb260703d5360f1b6b20a94c23a65",
+          "dimensions": {
+            "width": 384,
+            "height": 576,
+            "alpha": false
+          }
+        },
+        "lowResPlaceholder": {
+          "path": "/assets/ui/portraits/placeholders/placeholder-portrait-npc-grand-minister-m01-v1.webp",
+          "exists": true,
+          "bytes": 524,
+          "sha256": "21fbfbaedf15a3311d900f9b5e09d711bb6bdcee77e88d9390c0b5826f47f087",
+          "dimensions": {
+            "width": 64,
+            "height": 96,
+            "alpha": false
+          }
+        }
+      },
+      "transparentQa": {
+        "required": false,
+        "backgrounds": [],
+        "sidecar": null,
+        "pixel": null
+      },
+      "issues": []
+    },
+    {
+      "id": "portrait-npc-general-m01-v1",
+      "phase": "S73.7",
+      "category": "portrait",
+      "subcategory": "portrait_style_baseline",
+      "usage": [
+        "people_page",
+        "game_main",
+        "court_page"
+      ],
+      "path": "/assets/ui/portraits/portrait-npc-general-m01-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-portrait-npc-general-m01-v1.webp",
+      "fallbackRef": "fallback-role-silhouette-v1",
+      "reviewStatus": "approved",
+      "runtimeUsable": true,
+      "dimensions": {
+        "width": 1024,
+        "height": 1536
+      },
+      "transparent": false,
+      "files": {
+        "image": {
+          "path": "/assets/ui/portraits/portrait-npc-general-m01-v1.webp",
+          "exists": true,
+          "bytes": 243280,
+          "sha256": "8657e3aa7b307124c6183fd2fd43c72fb781e1a39c20c05e9aa6b4bbaab25d39",
+          "dimensions": {
+            "width": 1024,
+            "height": 1536
+          },
+          "alpha": false
+        },
+        "thumbnail": {
+          "path": "/assets/ui/thumbs/thumb-portrait-npc-general-m01-v1.webp",
+          "exists": true,
+          "bytes": 20708,
+          "sha256": "c4cff1960b0f080eaaddce8926ab49a3f36235d621b060158087746dbe9436f8",
+          "dimensions": {
+            "width": 384,
+            "height": 576,
+            "alpha": false
+          }
+        },
+        "lowResPlaceholder": {
+          "path": "/assets/ui/portraits/placeholders/placeholder-portrait-npc-general-m01-v1.webp",
+          "exists": true,
+          "bytes": 464,
+          "sha256": "32544f9c5ef76a7451dd108b8a15aef664587655315b1ab597d7c888fb40cea1",
+          "dimensions": {
+            "width": 64,
+            "height": 96,
+            "alpha": false
+          }
+        }
+      },
+      "transparentQa": {
+        "required": false,
+        "backgrounds": [],
+        "sidecar": null,
+        "pixel": null
+      },
+      "issues": []
+    },
+    {
+      "id": "portrait-npc-regent-m01-v1",
+      "phase": "S73.7",
+      "category": "portrait",
+      "subcategory": "portrait_style_baseline",
+      "usage": [
+        "people_page",
+        "game_main",
+        "archive_page"
+      ],
+      "path": "/assets/ui/portraits/portrait-npc-regent-m01-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-portrait-npc-regent-m01-v1.webp",
+      "fallbackRef": "fallback-role-silhouette-v1",
+      "reviewStatus": "approved",
+      "runtimeUsable": true,
+      "dimensions": {
+        "width": 1024,
+        "height": 1536
+      },
+      "transparent": false,
+      "files": {
+        "image": {
+          "path": "/assets/ui/portraits/portrait-npc-regent-m01-v1.webp",
+          "exists": true,
+          "bytes": 214738,
+          "sha256": "361f9f6403902892bf932314d89f8b385f45a9e3ec1f66e6dc9a1c32b3d82fe4",
+          "dimensions": {
+            "width": 1024,
+            "height": 1536
+          },
+          "alpha": false
+        },
+        "thumbnail": {
+          "path": "/assets/ui/thumbs/thumb-portrait-npc-regent-m01-v1.webp",
+          "exists": true,
+          "bytes": 20118,
+          "sha256": "4c5ef85e57b1ee6ffde8b6321df1507452a6d5d2c22e08b430821f47ce5f0872",
+          "dimensions": {
+            "width": 384,
+            "height": 576,
+            "alpha": false
+          }
+        },
+        "lowResPlaceholder": {
+          "path": "/assets/ui/portraits/placeholders/placeholder-portrait-npc-regent-m01-v1.webp",
+          "exists": true,
+          "bytes": 450,
+          "sha256": "71d6ac09979484d3eb0bdd059427dd9c953143c085b77a4c1a9b5cced1bd6a76",
+          "dimensions": {
+            "width": 64,
+            "height": 96,
+            "alpha": false
+          }
+        }
+      },
+      "transparentQa": {
+        "required": false,
+        "backgrounds": [],
+        "sidecar": null,
+        "pixel": null
+      },
+      "issues": []
+    },
+    {
+      "id": "portrait-npc-emperor-m01-v1",
+      "phase": "S73.7",
+      "category": "portrait",
+      "subcategory": "portrait_style_baseline",
+      "usage": [
+        "people_page",
+        "game_main",
+        "court_page"
+      ],
+      "path": "/assets/ui/portraits/portrait-npc-emperor-m01-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-portrait-npc-emperor-m01-v1.webp",
+      "fallbackRef": "fallback-role-silhouette-v1",
+      "reviewStatus": "approved",
+      "runtimeUsable": true,
+      "dimensions": {
+        "width": 1024,
+        "height": 1536
+      },
+      "transparent": false,
+      "files": {
+        "image": {
+          "path": "/assets/ui/portraits/portrait-npc-emperor-m01-v1.webp",
+          "exists": true,
+          "bytes": 200626,
+          "sha256": "30c784fbd0eb0c894f5e40a0b1904f39c82cb76d3cf31ea8b15619efdf5e45f4",
+          "dimensions": {
+            "width": 1024,
+            "height": 1536
+          },
+          "alpha": false
+        },
+        "thumbnail": {
+          "path": "/assets/ui/thumbs/thumb-portrait-npc-emperor-m01-v1.webp",
+          "exists": true,
+          "bytes": 17220,
+          "sha256": "8764114462d51bed7df07dfde34130f053caf7723c0bee96ed99e212bf970f3d",
+          "dimensions": {
+            "width": 384,
+            "height": 576,
+            "alpha": false
+          }
+        },
+        "lowResPlaceholder": {
+          "path": "/assets/ui/portraits/placeholders/placeholder-portrait-npc-emperor-m01-v1.webp",
+          "exists": true,
+          "bytes": 386,
+          "sha256": "f6faa540539502d3b2b078ff866607eed625ce2782371a6096d54cf4cb93ac0d",
+          "dimensions": {
+            "width": 64,
+            "height": 96,
+            "alpha": false
+          }
+        }
+      },
+      "transparentQa": {
+        "required": false,
+        "backgrounds": [],
+        "sidecar": null,
+        "pixel": null
+      },
+      "issues": []
+    },
+    {
+      "id": "portrait-npc-teacher-m01-v1",
+      "phase": "S73.7",
+      "category": "portrait",
+      "subcategory": "portrait_style_baseline",
+      "usage": [
+        "people_page",
+        "game_main",
+        "archive_page"
+      ],
+      "path": "/assets/ui/portraits/portrait-npc-teacher-m01-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-portrait-npc-teacher-m01-v1.webp",
+      "fallbackRef": "fallback-role-silhouette-v1",
+      "reviewStatus": "approved",
+      "runtimeUsable": true,
+      "dimensions": {
+        "width": 1024,
+        "height": 1536
+      },
+      "transparent": false,
+      "files": {
+        "image": {
+          "path": "/assets/ui/portraits/portrait-npc-teacher-m01-v1.webp",
+          "exists": true,
+          "bytes": 243900,
+          "sha256": "f327d75b932dcffa6218297733dbdc7b6df9f4ba9a8f42ef687db95e3ce56d65",
+          "dimensions": {
+            "width": 1024,
+            "height": 1536
+          },
+          "alpha": false
+        },
+        "thumbnail": {
+          "path": "/assets/ui/thumbs/thumb-portrait-npc-teacher-m01-v1.webp",
+          "exists": true,
+          "bytes": 20196,
+          "sha256": "b130165fd9bbb18e25adfc7d706746dbf0e152d73bc222411aad9a2552401be4",
+          "dimensions": {
+            "width": 384,
+            "height": 576,
+            "alpha": false
+          }
+        },
+        "lowResPlaceholder": {
+          "path": "/assets/ui/portraits/placeholders/placeholder-portrait-npc-teacher-m01-v1.webp",
+          "exists": true,
+          "bytes": 488,
+          "sha256": "99e72540bdf6c43ba0adf9d43968b1a3788aa0cdb33afa17c9b3837c1ec0c967",
+          "dimensions": {
+            "width": 64,
+            "height": 96,
+            "alpha": false
+          }
+        }
+      },
+      "transparentQa": {
+        "required": false,
+        "backgrounds": [],
+        "sidecar": null,
+        "pixel": null
+      },
+      "issues": []
+    },
+    {
+      "id": "portrait-player-scholar-f01-v1",
+      "phase": "S73.7",
+      "category": "portrait",
+      "subcategory": "portrait_style_baseline",
+      "usage": [
+        "people_page",
+        "game_main",
+        "archive_page"
+      ],
+      "path": "/assets/ui/portraits/portrait-player-scholar-f01-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-portrait-player-scholar-f01-v1.webp",
+      "fallbackRef": "fallback-role-silhouette-v1",
+      "reviewStatus": "approved",
+      "runtimeUsable": true,
+      "dimensions": {
+        "width": 1024,
+        "height": 1536
+      },
+      "transparent": false,
+      "files": {
+        "image": {
+          "path": "/assets/ui/portraits/portrait-player-scholar-f01-v1.webp",
+          "exists": true,
+          "bytes": 158648,
+          "sha256": "0fd387bdd75ff2b7b3f792b78b58663be54087209a25f070b3fe4544deba3c15",
+          "dimensions": {
+            "width": 1024,
+            "height": 1536
+          },
+          "alpha": false
+        },
+        "thumbnail": {
+          "path": "/assets/ui/thumbs/thumb-portrait-player-scholar-f01-v1.webp",
+          "exists": true,
+          "bytes": 14488,
+          "sha256": "dfa9806266ebe63e2f62ccc8c5924075ad5e598ed214a2562b937af6bcdfae1d",
+          "dimensions": {
+            "width": 384,
+            "height": 576,
+            "alpha": false
+          }
+        },
+        "lowResPlaceholder": {
+          "path": "/assets/ui/portraits/placeholders/placeholder-portrait-player-scholar-f01-v1.webp",
+          "exists": true,
+          "bytes": 354,
+          "sha256": "d90242b6937a1d94306276b135b87f209f7a35a9c519798b09281fe7860ddfdd",
+          "dimensions": {
+            "width": 64,
+            "height": 96,
+            "alpha": false
+          }
+        }
+      },
+      "transparentQa": {
+        "required": false,
+        "backgrounds": [],
+        "sidecar": null,
+        "pixel": null
+      },
+      "issues": []
+    },
+    {
+      "id": "portrait-npc-gentry-woman-f01-v1",
+      "phase": "S73.7",
+      "category": "portrait",
+      "subcategory": "portrait_style_baseline",
+      "usage": [
+        "people_page",
+        "game_main",
+        "archive_page"
+      ],
+      "path": "/assets/ui/portraits/portrait-npc-gentry-woman-f01-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-portrait-npc-gentry-woman-f01-v1.webp",
+      "fallbackRef": "fallback-role-silhouette-v1",
+      "reviewStatus": "approved",
+      "runtimeUsable": true,
+      "dimensions": {
+        "width": 1024,
+        "height": 1536
+      },
+      "transparent": false,
+      "files": {
+        "image": {
+          "path": "/assets/ui/portraits/portrait-npc-gentry-woman-f01-v1.webp",
+          "exists": true,
+          "bytes": 187396,
+          "sha256": "66f4a856826f4f6cb103660aa2588df8b2aec4a278a1e47cca6fad06328797ec",
+          "dimensions": {
+            "width": 1024,
+            "height": 1536
+          },
+          "alpha": false
+        },
+        "thumbnail": {
+          "path": "/assets/ui/thumbs/thumb-portrait-npc-gentry-woman-f01-v1.webp",
+          "exists": true,
+          "bytes": 15114,
+          "sha256": "e93a27a4d11937093a7202fef2afed1ac1f8a2b242bf0a0517df8a5963bbed0d",
+          "dimensions": {
+            "width": 384,
+            "height": 576,
+            "alpha": false
+          }
+        },
+        "lowResPlaceholder": {
+          "path": "/assets/ui/portraits/placeholders/placeholder-portrait-npc-gentry-woman-f01-v1.webp",
+          "exists": true,
+          "bytes": 348,
+          "sha256": "189938e125aa22dafc1cab7f36b0c0fcdd076bd5b4a6c4fec7f4e0c24528adfb",
+          "dimensions": {
+            "width": 64,
+            "height": 96,
+            "alpha": false
+          }
+        }
+      },
+      "transparentQa": {
+        "required": false,
+        "backgrounds": [],
+        "sidecar": null,
+        "pixel": null
+      },
+      "issues": []
+    },
+    {
+      "id": "portrait-npc-female-official-f01-v1",
+      "phase": "S73.7",
+      "category": "portrait",
+      "subcategory": "portrait_style_baseline",
+      "usage": [
+        "people_page",
+        "game_main",
+        "archive_page"
+      ],
+      "path": "/assets/ui/portraits/portrait-npc-female-official-f01-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-portrait-npc-female-official-f01-v1.webp",
+      "fallbackRef": "fallback-role-silhouette-v1",
+      "reviewStatus": "approved",
+      "runtimeUsable": true,
+      "dimensions": {
+        "width": 1024,
+        "height": 1536
+      },
+      "transparent": false,
+      "files": {
+        "image": {
+          "path": "/assets/ui/portraits/portrait-npc-female-official-f01-v1.webp",
+          "exists": true,
+          "bytes": 191780,
+          "sha256": "4353e04d83e3b32a6c35491167f65da789a29542830403781eb1ae53f4f781e0",
+          "dimensions": {
+            "width": 1024,
+            "height": 1536
+          },
+          "alpha": false
+        },
+        "thumbnail": {
+          "path": "/assets/ui/thumbs/thumb-portrait-npc-female-official-f01-v1.webp",
+          "exists": true,
+          "bytes": 15348,
+          "sha256": "654d8d3189fab3950a0d00cfa0d637fc8618001bf6c6f99769f30398949766c2",
+          "dimensions": {
+            "width": 384,
+            "height": 576,
+            "alpha": false
+          }
+        },
+        "lowResPlaceholder": {
+          "path": "/assets/ui/portraits/placeholders/placeholder-portrait-npc-female-official-f01-v1.webp",
+          "exists": true,
+          "bytes": 470,
+          "sha256": "d78a392f719c7ccf2a691175317ebb8e232f5cc8aa01044cd5399aa4a12be460",
+          "dimensions": {
+            "width": 64,
+            "height": 96,
+            "alpha": false
+          }
+        }
+      },
+      "transparentQa": {
+        "required": false,
+        "backgrounds": [],
+        "sidecar": null,
+        "pixel": null
+      },
+      "issues": []
+    },
+    {
+      "id": "portrait-npc-palace-attendant-f01-v1",
+      "phase": "S73.7",
+      "category": "portrait",
+      "subcategory": "portrait_style_baseline",
+      "usage": [
+        "people_page",
+        "game_main",
+        "archive_page"
+      ],
+      "path": "/assets/ui/portraits/portrait-npc-palace-attendant-f01-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-portrait-npc-palace-attendant-f01-v1.webp",
+      "fallbackRef": "fallback-role-silhouette-v1",
+      "reviewStatus": "approved",
+      "runtimeUsable": true,
+      "dimensions": {
+        "width": 1024,
+        "height": 1536
+      },
+      "transparent": false,
+      "files": {
+        "image": {
+          "path": "/assets/ui/portraits/portrait-npc-palace-attendant-f01-v1.webp",
+          "exists": true,
+          "bytes": 201712,
+          "sha256": "27fca2b6dad9845e2f3e1799778fd44946b5635179c3fb993ec1af40710339dd",
+          "dimensions": {
+            "width": 1024,
+            "height": 1536
+          },
+          "alpha": false
+        },
+        "thumbnail": {
+          "path": "/assets/ui/thumbs/thumb-portrait-npc-palace-attendant-f01-v1.webp",
+          "exists": true,
+          "bytes": 16594,
+          "sha256": "e780918e18c1dc190906299057b6ba04758977b0e39b071b0fad68ecae45cc01",
+          "dimensions": {
+            "width": 384,
+            "height": 576,
+            "alpha": false
+          }
+        },
+        "lowResPlaceholder": {
+          "path": "/assets/ui/portraits/placeholders/placeholder-portrait-npc-palace-attendant-f01-v1.webp",
+          "exists": true,
+          "bytes": 414,
+          "sha256": "ab8449ec3a8f61436b9f4b88af8720b7285ad756a1531dd592f2312aeec74e87",
+          "dimensions": {
+            "width": 64,
+            "height": 96,
+            "alpha": false
+          }
+        }
+      },
+      "transparentQa": {
+        "required": false,
+        "backgrounds": [],
+        "sidecar": null,
+        "pixel": null
+      },
+      "issues": []
+    },
+    {
+      "id": "portrait-npc-court-lady-high-f01-v1",
+      "phase": "S73.7",
+      "category": "portrait",
+      "subcategory": "portrait_style_baseline",
+      "usage": [
+        "people_page",
+        "game_main",
+        "archive_page"
+      ],
+      "path": "/assets/ui/portraits/portrait-npc-court-lady-high-f01-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-portrait-npc-court-lady-high-f01-v1.webp",
+      "fallbackRef": "fallback-role-silhouette-v1",
+      "reviewStatus": "approved",
+      "runtimeUsable": true,
+      "dimensions": {
+        "width": 1024,
+        "height": 1536
+      },
+      "transparent": false,
+      "files": {
+        "image": {
+          "path": "/assets/ui/portraits/portrait-npc-court-lady-high-f01-v1.webp",
+          "exists": true,
+          "bytes": 247690,
+          "sha256": "6ef41d307d26fa8c05ce03964ab423c7c70ea0077fdce94afc77663a08025d1d",
+          "dimensions": {
+            "width": 1024,
+            "height": 1536
+          },
+          "alpha": false
+        },
+        "thumbnail": {
+          "path": "/assets/ui/thumbs/thumb-portrait-npc-court-lady-high-f01-v1.webp",
+          "exists": true,
+          "bytes": 23920,
+          "sha256": "0c0d2da4c1f87baf040dfd2a8602950bb2e50cf1adf4e430677feee617122081",
+          "dimensions": {
+            "width": 384,
+            "height": 576,
+            "alpha": false
+          }
+        },
+        "lowResPlaceholder": {
+          "path": "/assets/ui/portraits/placeholders/placeholder-portrait-npc-court-lady-high-f01-v1.webp",
+          "exists": true,
+          "bytes": 502,
+          "sha256": "a00258895e698d34110cd518c2616111e4b0a1a19fc8568acbc08dce30dfafc3",
+          "dimensions": {
+            "width": 64,
+            "height": 96,
+            "alpha": false
+          }
+        }
+      },
+      "transparentQa": {
+        "required": false,
+        "backgrounds": [],
+        "sidecar": null,
+        "pixel": null
+      },
+      "issues": []
+    },
+    {
+      "id": "portrait-npc-examiner-f01-v1",
+      "phase": "S73.7",
+      "category": "portrait",
+      "subcategory": "portrait_style_baseline",
+      "usage": [
+        "people_page",
+        "game_main",
+        "archive_page"
+      ],
+      "path": "/assets/ui/portraits/portrait-npc-examiner-f01-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-portrait-npc-examiner-f01-v1.webp",
+      "fallbackRef": "fallback-role-silhouette-v1",
+      "reviewStatus": "approved",
+      "runtimeUsable": true,
+      "dimensions": {
+        "width": 1024,
+        "height": 1536
+      },
+      "transparent": false,
+      "files": {
+        "image": {
+          "path": "/assets/ui/portraits/portrait-npc-examiner-f01-v1.webp",
+          "exists": true,
+          "bytes": 221112,
+          "sha256": "aa8ce434bd7fb2dd20537905c0be163e1e2c185a435622572a8af7b24f7485e6",
+          "dimensions": {
+            "width": 1024,
+            "height": 1536
+          },
+          "alpha": false
+        },
+        "thumbnail": {
+          "path": "/assets/ui/thumbs/thumb-portrait-npc-examiner-f01-v1.webp",
+          "exists": true,
+          "bytes": 19028,
+          "sha256": "a795c8dda530ffb276ab73103c2b9ce6447d8e5d2c3bff39fb80269fcdab331a",
+          "dimensions": {
+            "width": 384,
+            "height": 576,
+            "alpha": false
+          }
+        },
+        "lowResPlaceholder": {
+          "path": "/assets/ui/portraits/placeholders/placeholder-portrait-npc-examiner-f01-v1.webp",
+          "exists": true,
+          "bytes": 508,
+          "sha256": "8a855811e44660eaecae9addb66d0c271e8627d4041bb5a8d81f4c3a7e4bce69",
+          "dimensions": {
+            "width": 64,
+            "height": 96,
+            "alpha": false
+          }
+        }
+      },
+      "transparentQa": {
+        "required": false,
+        "backgrounds": [],
+        "sidecar": null,
+        "pixel": null
+      },
+      "issues": []
+    },
+    {
+      "id": "portrait-npc-merchant-f01-v1",
+      "phase": "S73.7",
+      "category": "portrait",
+      "subcategory": "portrait_style_baseline",
+      "usage": [
+        "people_page",
+        "game_main",
+        "archive_page"
+      ],
+      "path": "/assets/ui/portraits/portrait-npc-merchant-f01-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-portrait-npc-merchant-f01-v1.webp",
+      "fallbackRef": "fallback-role-silhouette-v1",
+      "reviewStatus": "approved",
+      "runtimeUsable": true,
+      "dimensions": {
+        "width": 1024,
+        "height": 1536
+      },
+      "transparent": false,
+      "files": {
+        "image": {
+          "path": "/assets/ui/portraits/portrait-npc-merchant-f01-v1.webp",
+          "exists": true,
+          "bytes": 218478,
+          "sha256": "185d269508acf474b52b312edc176e13496504c77c0f1fc4f433a3b444274eab",
+          "dimensions": {
+            "width": 1024,
+            "height": 1536
+          },
+          "alpha": false
+        },
+        "thumbnail": {
+          "path": "/assets/ui/thumbs/thumb-portrait-npc-merchant-f01-v1.webp",
+          "exists": true,
+          "bytes": 20734,
+          "sha256": "ee31c85c668e2f26b3cb31aaafdebcb1e478c0d11fc1c4b493bd484f1e2f31a7",
+          "dimensions": {
+            "width": 384,
+            "height": 576,
+            "alpha": false
+          }
+        },
+        "lowResPlaceholder": {
+          "path": "/assets/ui/portraits/placeholders/placeholder-portrait-npc-merchant-f01-v1.webp",
+          "exists": true,
+          "bytes": 450,
+          "sha256": "db149835a5cb91ad396ba063367cc3b4fc4761c58ef6de25981fba3970f3ecca",
+          "dimensions": {
+            "width": 64,
+            "height": 96,
+            "alpha": false
+          }
+        }
+      },
+      "transparentQa": {
+        "required": false,
+        "backgrounds": [],
+        "sidecar": null,
+        "pixel": null
+      },
+      "issues": []
+    },
+    {
+      "id": "portrait-npc-commoner-healer-f01-v1",
+      "phase": "S73.7",
+      "category": "portrait",
+      "subcategory": "portrait_style_baseline",
+      "usage": [
+        "people_page",
+        "game_main",
+        "archive_page"
+      ],
+      "path": "/assets/ui/portraits/portrait-npc-commoner-healer-f01-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-portrait-npc-commoner-healer-f01-v1.webp",
+      "fallbackRef": "fallback-role-silhouette-v1",
+      "reviewStatus": "approved",
+      "runtimeUsable": true,
+      "dimensions": {
+        "width": 1024,
+        "height": 1536
+      },
+      "transparent": false,
+      "files": {
+        "image": {
+          "path": "/assets/ui/portraits/portrait-npc-commoner-healer-f01-v1.webp",
+          "exists": true,
+          "bytes": 190250,
+          "sha256": "dd491560525a7a88fa99363d94ab164a3e79749695b181ca15b0bf5b3714ce43",
+          "dimensions": {
+            "width": 1024,
+            "height": 1536
+          },
+          "alpha": false
+        },
+        "thumbnail": {
+          "path": "/assets/ui/thumbs/thumb-portrait-npc-commoner-healer-f01-v1.webp",
+          "exists": true,
+          "bytes": 17490,
+          "sha256": "64e48a3efc9242a45be7784d47f4ee7b287b731115f363703be7531c08cccefd",
+          "dimensions": {
+            "width": 384,
+            "height": 576,
+            "alpha": false
+          }
+        },
+        "lowResPlaceholder": {
+          "path": "/assets/ui/portraits/placeholders/placeholder-portrait-npc-commoner-healer-f01-v1.webp",
+          "exists": true,
+          "bytes": 428,
+          "sha256": "8612377529f01a265c0d9b2945688c7c48098f4aadd36102daf24d4ecb539660",
+          "dimensions": {
+            "width": 64,
+            "height": 96,
+            "alpha": false
+          }
+        }
+      },
+      "transparentQa": {
+        "required": false,
+        "backgrounds": [],
+        "sidecar": null,
+        "pixel": null
+      },
+      "issues": []
+    },
+    {
+      "id": "portrait-npc-exam-peer-m01-v1",
+      "phase": "S73.7",
+      "category": "portrait",
+      "subcategory": "portrait_style_baseline",
+      "usage": [
+        "people_page",
+        "game_main",
+        "archive_page"
+      ],
+      "path": "/assets/ui/portraits/portrait-npc-exam-peer-m01-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-portrait-npc-exam-peer-m01-v1.webp",
+      "fallbackRef": "fallback-role-silhouette-v1",
+      "reviewStatus": "approved",
+      "runtimeUsable": true,
+      "dimensions": {
+        "width": 1024,
+        "height": 1536
+      },
+      "transparent": false,
+      "files": {
+        "image": {
+          "path": "/assets/ui/portraits/portrait-npc-exam-peer-m01-v1.webp",
+          "exists": true,
+          "bytes": 190166,
+          "sha256": "a7ad850e7892d01b0cbd9411bc6003a2ab7d825979957cca321cbd71e3094c06",
+          "dimensions": {
+            "width": 1024,
+            "height": 1536
+          },
+          "alpha": false
+        },
+        "thumbnail": {
+          "path": "/assets/ui/thumbs/thumb-portrait-npc-exam-peer-m01-v1.webp",
+          "exists": true,
+          "bytes": 15170,
+          "sha256": "614cff23ebaba001ffd1eb0817a5d3f45d60b8728770c744efc7e1655ef2f69f",
+          "dimensions": {
+            "width": 384,
+            "height": 576,
+            "alpha": false
+          }
+        },
+        "lowResPlaceholder": {
+          "path": "/assets/ui/portraits/placeholders/placeholder-portrait-npc-exam-peer-m01-v1.webp",
+          "exists": true,
+          "bytes": 472,
+          "sha256": "02a17df615bb95dffd32b78cdd7f3c71d3e055b27a587eb48bfa15303327e9aa",
+          "dimensions": {
+            "width": 64,
+            "height": 96,
+            "alpha": false
+          }
+        }
+      },
+      "transparentQa": {
+        "required": false,
+        "backgrounds": [],
+        "sidecar": null,
+        "pixel": null
+      },
+      "issues": []
+    },
+    {
+      "id": "portrait-npc-examiner-m01-v1",
+      "phase": "S73.7",
+      "category": "portrait",
+      "subcategory": "portrait_style_baseline",
+      "usage": [
+        "people_page",
+        "game_main",
+        "archive_page"
+      ],
+      "path": "/assets/ui/portraits/portrait-npc-examiner-m01-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-portrait-npc-examiner-m01-v1.webp",
+      "fallbackRef": "fallback-role-silhouette-v1",
+      "reviewStatus": "approved",
+      "runtimeUsable": true,
+      "dimensions": {
+        "width": 1024,
+        "height": 1536
+      },
+      "transparent": false,
+      "files": {
+        "image": {
+          "path": "/assets/ui/portraits/portrait-npc-examiner-m01-v1.webp",
+          "exists": true,
+          "bytes": 239166,
+          "sha256": "791381f1f1a4bf4067b37a02ce4a36bdd69a59f61333c553dc722f7c45553680",
+          "dimensions": {
+            "width": 1024,
+            "height": 1536
+          },
+          "alpha": false
+        },
+        "thumbnail": {
+          "path": "/assets/ui/thumbs/thumb-portrait-npc-examiner-m01-v1.webp",
+          "exists": true,
+          "bytes": 19232,
+          "sha256": "d98d940f9e1c16af6c921c03e373df962c1c53fc2c8ff6b0f08d6347e702cb3b",
+          "dimensions": {
+            "width": 384,
+            "height": 576,
+            "alpha": false
+          }
+        },
+        "lowResPlaceholder": {
+          "path": "/assets/ui/portraits/placeholders/placeholder-portrait-npc-examiner-m01-v1.webp",
+          "exists": true,
+          "bytes": 546,
+          "sha256": "bbe02fffeae99548fecc0a22691afce9532c42c8ad06c92203231b0b8919433f",
+          "dimensions": {
+            "width": 64,
+            "height": 96,
+            "alpha": false
+          }
+        }
+      },
+      "transparentQa": {
+        "required": false,
+        "backgrounds": [],
+        "sidecar": null,
+        "pixel": null
+      },
+      "issues": []
+    },
+    {
+      "id": "portrait-npc-local-gentry-m01-v1",
+      "phase": "S73.7",
+      "category": "portrait",
+      "subcategory": "portrait_style_baseline",
+      "usage": [
+        "people_page",
+        "game_main",
+        "archive_page"
+      ],
+      "path": "/assets/ui/portraits/portrait-npc-local-gentry-m01-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-portrait-npc-local-gentry-m01-v1.webp",
+      "fallbackRef": "fallback-role-silhouette-v1",
+      "reviewStatus": "approved",
+      "runtimeUsable": true,
+      "dimensions": {
+        "width": 1024,
+        "height": 1536
+      },
+      "transparent": false,
+      "files": {
+        "image": {
+          "path": "/assets/ui/portraits/portrait-npc-local-gentry-m01-v1.webp",
+          "exists": true,
+          "bytes": 209636,
+          "sha256": "1e773a3ac88c126328474cad1493280e2141f26d85fae4c3e998d7b3fab1bb55",
+          "dimensions": {
+            "width": 1024,
+            "height": 1536
+          },
+          "alpha": false
+        },
+        "thumbnail": {
+          "path": "/assets/ui/thumbs/thumb-portrait-npc-local-gentry-m01-v1.webp",
+          "exists": true,
+          "bytes": 16954,
+          "sha256": "83462e26cc134c03e07fccd6ffb81d8f32a22d9cb9275277df830516f9c0bd50",
+          "dimensions": {
+            "width": 384,
+            "height": 576,
+            "alpha": false
+          }
+        },
+        "lowResPlaceholder": {
+          "path": "/assets/ui/portraits/placeholders/placeholder-portrait-npc-local-gentry-m01-v1.webp",
+          "exists": true,
+          "bytes": 452,
+          "sha256": "879215045bde32aa07a3d953363c5c5ef3ecdc3afbecbfe19826682bd1476637",
+          "dimensions": {
+            "width": 64,
+            "height": 96,
+            "alpha": false
+          }
+        }
+      },
+      "transparentQa": {
+        "required": false,
+        "backgrounds": [],
+        "sidecar": null,
+        "pixel": null
+      },
+      "issues": []
+    },
+    {
+      "id": "portrait-npc-storyteller-m01-v1",
+      "phase": "S73.7",
+      "category": "portrait",
+      "subcategory": "portrait_style_baseline",
+      "usage": [
+        "people_page",
+        "game_main",
+        "archive_page"
+      ],
+      "path": "/assets/ui/portraits/portrait-npc-storyteller-m01-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-portrait-npc-storyteller-m01-v1.webp",
+      "fallbackRef": "fallback-role-silhouette-v1",
+      "reviewStatus": "approved",
+      "runtimeUsable": true,
+      "dimensions": {
+        "width": 1024,
+        "height": 1536
+      },
+      "transparent": false,
+      "files": {
+        "image": {
+          "path": "/assets/ui/portraits/portrait-npc-storyteller-m01-v1.webp",
+          "exists": true,
+          "bytes": 261508,
+          "sha256": "fd69a7a009bb6bcc5ec506a1186b90536cede175e6025ebacc65b40b8e6f2925",
+          "dimensions": {
+            "width": 1024,
+            "height": 1536
+          },
+          "alpha": false
+        },
+        "thumbnail": {
+          "path": "/assets/ui/thumbs/thumb-portrait-npc-storyteller-m01-v1.webp",
+          "exists": true,
+          "bytes": 21282,
+          "sha256": "8d52a0295facd49185eda60fc7bb40086c7219f474f5f632a2dd998b774f2c36",
+          "dimensions": {
+            "width": 384,
+            "height": 576,
+            "alpha": false
+          }
+        },
+        "lowResPlaceholder": {
+          "path": "/assets/ui/portraits/placeholders/placeholder-portrait-npc-storyteller-m01-v1.webp",
+          "exists": true,
+          "bytes": 496,
+          "sha256": "ea24f64fdbb166f931e72de08003ab4458d0263b12f7cde684fc45478a80550a",
+          "dimensions": {
+            "width": 64,
+            "height": 96,
+            "alpha": false
+          }
+        }
+      },
+      "transparentQa": {
+        "required": false,
+        "backgrounds": [],
+        "sidecar": null,
+        "pixel": null
+      },
+      "issues": []
+    },
+    {
+      "id": "ui-effect-mist-wash-v1",
+      "phase": "S73.8",
+      "category": "effect",
+      "subcategory": "motion_overlay",
+      "usage": [
+        "home",
+        "game_main"
+      ],
+      "path": "/assets/ui/effects/effect-mist-wash-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-effect-mist-wash-v1.webp",
+      "fallbackRef": "fallback-ink-motion-static-v1",
+      "reviewStatus": "approved",
+      "runtimeUsable": true,
+      "dimensions": {
+        "width": 2560,
+        "height": 720
+      },
+      "transparent": false,
+      "files": {
+        "image": {
+          "path": "/assets/ui/effects/effect-mist-wash-v1.webp",
+          "exists": true,
+          "bytes": 82422,
+          "sha256": "1e930855cd0404c5455af2dceb526a7a57aff170e921adb05525d3d4fa9edb16",
+          "dimensions": {
+            "width": 2560,
+            "height": 720
+          },
+          "alpha": false
+        },
+        "thumbnail": {
+          "path": "/assets/ui/thumbs/thumb-effect-mist-wash-v1.webp",
+          "exists": true,
+          "bytes": 826,
+          "sha256": "cf6ddb5e4192b0d975d82733134919038cc3dcb64832e16b09aac382eb4a2c84",
+          "dimensions": {
+            "width": 320,
+            "height": 90,
+            "alpha": false
+          }
+        }
+      },
+      "transparentQa": {
+        "required": false,
+        "backgrounds": [],
+        "sidecar": null,
+        "pixel": null
+      },
+      "issues": []
+    },
+    {
+      "id": "ui-effect-ink-spread-v1",
+      "phase": "S73.8",
+      "category": "effect",
+      "subcategory": "motion_mask",
+      "usage": [
+        "game_main",
+        "exam_page"
+      ],
+      "path": "/assets/ui/effects/effect-ink-spread-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-effect-ink-spread-v1.webp",
+      "fallbackRef": "fallback-ink-motion-static-v1",
+      "reviewStatus": "approved",
+      "runtimeUsable": true,
+      "dimensions": {
+        "width": 1024,
+        "height": 1024
+      },
+      "transparent": true,
+      "files": {
+        "image": {
+          "path": "/assets/ui/effects/effect-ink-spread-v1.webp",
+          "exists": true,
+          "bytes": 141828,
+          "sha256": "956e078a41f5a8b1d09833f388a28a2b165190eb34cdcac5309d1bb297e0eeb6",
+          "dimensions": {
+            "width": 1024,
+            "height": 1024
+          },
+          "alpha": true
+        },
+        "thumbnail": {
+          "path": "/assets/ui/thumbs/thumb-effect-ink-spread-v1.webp",
+          "exists": true,
+          "bytes": 5568,
+          "sha256": "bacfd94df7e879ac42160e2a7e945da6062f018a304310310d8496ff82bd6a2d",
+          "dimensions": {
+            "width": 320,
+            "height": 320,
+            "alpha": false
+          }
+        }
+      },
+      "transparentQa": {
+        "required": true,
+        "backgrounds": [
+          {
+            "id": "paper",
+            "color": "#f5f0e6",
+            "label": "宣纸底"
+          },
+          {
+            "id": "dark",
+            "color": "#201c16",
+            "label": "深色底"
+          }
+        ],
+        "sidecar": {
+          "source": "manifest-performance-alpha",
+          "metrics": {
+            "visibleAlphaRatio": 0.6598,
+            "borderVisibleAlphaPixels": 0
+          }
+        },
+        "pixel": {
+          "width": 1024,
+          "height": 1024,
+          "visibleAlphaPixels": 691276,
+          "visibleAlphaRatio": 0.6593,
+          "borderVisibleAlphaPixels": 0,
+          "highSaturationGreenOrMagentaPixels": 0,
+          "hardAlphaJumpPixels": 949,
+          "composite": {
+            "paper": {
+              "minLuma": 6,
+              "maxLuma": 255,
+              "averageLuma": 197.56
+            },
+            "dark": {
+              "minLuma": 6,
+              "maxLuma": 255,
+              "averageLuma": 124.81
+            }
+          }
+        }
+      },
+      "issues": []
+    },
+    {
+      "id": "ui-effect-cinnabar-seal-imprint-v1",
+      "phase": "S73.8",
+      "category": "effect",
+      "subcategory": "motion_feedback",
+      "usage": [
+        "home",
+        "game_main",
+        "exam_page",
+        "ranking_page"
+      ],
+      "path": "/assets/ui/effects/effect-cinnabar-seal-imprint-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-effect-cinnabar-seal-imprint-v1.webp",
+      "fallbackRef": "fallback-paper-panel-v1",
+      "reviewStatus": "approved",
+      "runtimeUsable": true,
+      "dimensions": {
+        "width": 768,
+        "height": 768
+      },
+      "transparent": true,
+      "files": {
+        "image": {
+          "path": "/assets/ui/effects/effect-cinnabar-seal-imprint-v1.webp",
+          "exists": true,
+          "bytes": 156474,
+          "sha256": "f76065500670d7044f6069bcb028e926f0a2eccf3f57db38cfdd768368f09c25",
+          "dimensions": {
+            "width": 768,
+            "height": 768
+          },
+          "alpha": true
+        },
+        "thumbnail": {
+          "path": "/assets/ui/thumbs/thumb-effect-cinnabar-seal-imprint-v1.webp",
+          "exists": true,
+          "bytes": 20120,
+          "sha256": "2806f39f0d496b01af22a30670061a786aae526c761970c36deedbffd70adcb6",
+          "dimensions": {
+            "width": 320,
+            "height": 320,
+            "alpha": false
+          }
+        }
+      },
+      "transparentQa": {
+        "required": true,
+        "backgrounds": [
+          {
+            "id": "paper",
+            "color": "#f5f0e6",
+            "label": "宣纸底"
+          },
+          {
+            "id": "dark",
+            "color": "#201c16",
+            "label": "深色底"
+          }
+        ],
+        "sidecar": {
+          "source": "manifest-performance-alpha",
+          "metrics": {
+            "visibleAlphaRatio": 0.8225,
+            "borderVisibleAlphaPixels": 0
+          }
+        },
+        "pixel": {
+          "width": 768,
+          "height": 768,
+          "visibleAlphaPixels": 485038,
+          "visibleAlphaRatio": 0.8223,
+          "borderVisibleAlphaPixels": 0,
+          "highSaturationGreenOrMagentaPixels": 0,
+          "hardAlphaJumpPixels": 519,
+          "composite": {
+            "paper": {
+              "minLuma": 27,
+              "maxLuma": 253,
+              "averageLuma": 116.86
+            },
+            "dark": {
+              "minLuma": 27,
+              "maxLuma": 253,
+              "averageLuma": 78.77
+            }
+          }
+        }
+      },
+      "issues": []
+    },
+    {
+      "id": "ui-effect-paper-unfold-v1",
+      "phase": "S73.8",
+      "category": "effect",
+      "subcategory": "motion_panel",
+      "usage": [
+        "home",
+        "game_main",
+        "archive_page"
+      ],
+      "path": "/assets/ui/effects/effect-paper-unfold-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-effect-paper-unfold-v1.webp",
+      "fallbackRef": "fallback-paper-panel-v1",
+      "reviewStatus": "approved",
+      "runtimeUsable": true,
+      "dimensions": {
+        "width": 1600,
+        "height": 900
+      },
+      "transparent": false,
+      "files": {
+        "image": {
+          "path": "/assets/ui/effects/effect-paper-unfold-v1.webp",
+          "exists": true,
+          "bytes": 80416,
+          "sha256": "b5eddfb47b383f172f10b4db7d1e7fb0ef24745d095a13ebbce790cd422da7f1",
+          "dimensions": {
+            "width": 1600,
+            "height": 900
+          },
+          "alpha": false
+        },
+        "thumbnail": {
+          "path": "/assets/ui/thumbs/thumb-effect-paper-unfold-v1.webp",
+          "exists": true,
+          "bytes": 2448,
+          "sha256": "5b1e677bb2e1522f740f33172a4714c84ca5c03a687ba3f4485094c04516c896",
+          "dimensions": {
+            "width": 320,
+            "height": 180,
+            "alpha": false
+          }
+        }
+      },
+      "transparentQa": {
+        "required": false,
+        "backgrounds": [],
+        "sidecar": null,
+        "pixel": null
+      },
+      "issues": []
+    },
+    {
+      "id": "ui-effect-ranking-reveal-v1",
+      "phase": "S73.8",
+      "category": "effect",
+      "subcategory": "motion_panel",
+      "usage": [
+        "ranking_page"
+      ],
+      "path": "/assets/ui/effects/effect-ranking-reveal-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-effect-ranking-reveal-v1.webp",
+      "fallbackRef": "fallback-ink-motion-static-v1",
+      "reviewStatus": "approved",
+      "runtimeUsable": true,
+      "dimensions": {
+        "width": 1600,
+        "height": 900
+      },
+      "transparent": false,
+      "files": {
+        "image": {
+          "path": "/assets/ui/effects/effect-ranking-reveal-v1.webp",
+          "exists": true,
+          "bytes": 83606,
+          "sha256": "f55e08eb19c4759bf6eee61f6c4359ed4908f95629006b43ded896682eef4a28",
+          "dimensions": {
+            "width": 1600,
+            "height": 900
+          },
+          "alpha": false
+        },
+        "thumbnail": {
+          "path": "/assets/ui/thumbs/thumb-effect-ranking-reveal-v1.webp",
+          "exists": true,
+          "bytes": 3776,
+          "sha256": "edacd9b4074e9e5544001f73a84898aca97bc32815db195ee3d8724209d9b094",
+          "dimensions": {
+            "width": 320,
+            "height": 180,
+            "alpha": false
+          }
+        }
+      },
+      "transparentQa": {
+        "required": false,
+        "backgrounds": [],
+        "sidecar": null,
+        "pixel": null
+      },
+      "issues": []
+    },
+    {
+      "id": "ui-effect-exam-seal-v1",
+      "phase": "S73.8",
+      "category": "effect",
+      "subcategory": "motion_feedback",
+      "usage": [
+        "exam_page"
+      ],
+      "path": "/assets/ui/effects/effect-exam-seal-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-effect-exam-seal-v1.webp",
+      "fallbackRef": "fallback-ink-motion-static-v1",
+      "reviewStatus": "approved",
+      "runtimeUsable": true,
+      "dimensions": {
+        "width": 1024,
+        "height": 768
+      },
+      "transparent": true,
+      "files": {
+        "image": {
+          "path": "/assets/ui/effects/effect-exam-seal-v1.webp",
+          "exists": true,
+          "bytes": 84254,
+          "sha256": "53f3319f859a9482f1f45d626bf490637eb02385617d015c9b8f9dfe0e066bdb",
+          "dimensions": {
+            "width": 1024,
+            "height": 768
+          },
+          "alpha": true
+        },
+        "thumbnail": {
+          "path": "/assets/ui/thumbs/thumb-effect-exam-seal-v1.webp",
+          "exists": true,
+          "bytes": 4264,
+          "sha256": "db17b39a92e597168d479f041cb07e351ae4679c6c704e97cbee917962f2e355",
+          "dimensions": {
+            "width": 320,
+            "height": 240,
+            "alpha": false
+          }
+        }
+      },
+      "transparentQa": {
+        "required": true,
+        "backgrounds": [
+          {
+            "id": "paper",
+            "color": "#f5f0e6",
+            "label": "宣纸底"
+          },
+          {
+            "id": "dark",
+            "color": "#201c16",
+            "label": "深色底"
+          }
+        ],
+        "sidecar": {
+          "source": "manifest-performance-alpha",
+          "metrics": {
+            "visibleAlphaRatio": 0.4864,
+            "borderVisibleAlphaPixels": 0
+          }
+        },
+        "pixel": {
+          "width": 1024,
+          "height": 768,
+          "visibleAlphaPixels": 382349,
+          "visibleAlphaRatio": 0.4862,
+          "borderVisibleAlphaPixels": 0,
+          "highSaturationGreenOrMagentaPixels": 0,
+          "hardAlphaJumpPixels": 356,
+          "composite": {
+            "paper": {
+              "minLuma": 7,
+              "maxLuma": 254,
+              "averageLuma": 209.27
+            },
+            "dark": {
+              "minLuma": 7,
+              "maxLuma": 254,
+              "averageLuma": 100.04
+            }
+          }
+        }
+      },
+      "issues": []
+    },
+    {
+      "id": "ui-effect-ink-wipe-v1",
+      "phase": "S73.8",
+      "category": "effect",
+      "subcategory": "motion_mask",
+      "usage": [
+        "game_main",
+        "exam_page",
+        "ranking_page"
+      ],
+      "path": "/assets/ui/effects/effect-ink-wipe-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-effect-ink-wipe-v1.webp",
+      "fallbackRef": "fallback-ink-motion-static-v1",
+      "reviewStatus": "approved",
+      "runtimeUsable": true,
+      "dimensions": {
+        "width": 1920,
+        "height": 720
+      },
+      "transparent": true,
+      "files": {
+        "image": {
+          "path": "/assets/ui/effects/effect-ink-wipe-v1.webp",
+          "exists": true,
+          "bytes": 166494,
+          "sha256": "0ca181eec68f2d9fc15bb6c3e36e1496fbbbe3b3f717c5f199b2dd476c5c6464",
+          "dimensions": {
+            "width": 1920,
+            "height": 720
+          },
+          "alpha": true
+        },
+        "thumbnail": {
+          "path": "/assets/ui/thumbs/thumb-effect-ink-wipe-v1.webp",
+          "exists": true,
+          "bytes": 1600,
+          "sha256": "cef00769ac1de7052ead7a12dce0d43bc880cc32ec4de268041b2faa4de30737",
+          "dimensions": {
+            "width": 320,
+            "height": 120,
+            "alpha": false
+          }
+        }
+      },
+      "transparentQa": {
+        "required": true,
+        "backgrounds": [
+          {
+            "id": "paper",
+            "color": "#f5f0e6",
+            "label": "宣纸底"
+          },
+          {
+            "id": "dark",
+            "color": "#201c16",
+            "label": "深色底"
+          }
+        ],
+        "sidecar": {
+          "source": "manifest-performance-alpha",
+          "metrics": {
+            "visibleAlphaRatio": 0.2641,
+            "borderVisibleAlphaPixels": 0
+          }
+        },
+        "pixel": {
+          "width": 1920,
+          "height": 720,
+          "visibleAlphaPixels": 362758,
+          "visibleAlphaRatio": 0.2624,
+          "borderVisibleAlphaPixels": 0,
+          "highSaturationGreenOrMagentaPixels": 0,
+          "hardAlphaJumpPixels": 3550,
+          "composite": {
+            "paper": {
+              "minLuma": 83,
+              "maxLuma": 255,
+              "averageLuma": 230.67
+            },
+            "dark": {
+              "minLuma": 21,
+              "maxLuma": 255,
+              "averageLuma": 72.34
+            }
+          }
+        }
+      },
+      "issues": []
+    },
+    {
+      "id": "ui-effect-page-curl-v1",
+      "phase": "S73.8",
+      "category": "effect",
+      "subcategory": "motion_corner",
+      "usage": [
+        "archive_page",
+        "game_main"
+      ],
+      "path": "/assets/ui/effects/effect-page-curl-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-effect-page-curl-v1.webp",
+      "fallbackRef": "fallback-paper-panel-v1",
+      "reviewStatus": "approved",
+      "runtimeUsable": true,
+      "dimensions": {
+        "width": 1024,
+        "height": 1024
+      },
+      "transparent": true,
+      "files": {
+        "image": {
+          "path": "/assets/ui/effects/effect-page-curl-v1.webp",
+          "exists": true,
+          "bytes": 44870,
+          "sha256": "8d35cdf137ba3787825e12aabf7fb6eb5cffa08818e2666957f374bba42ff726",
+          "dimensions": {
+            "width": 1024,
+            "height": 1024
+          },
+          "alpha": true
+        },
+        "thumbnail": {
+          "path": "/assets/ui/thumbs/thumb-effect-page-curl-v1.webp",
+          "exists": true,
+          "bytes": 2458,
+          "sha256": "d2c245b43007c19f1cbd0b30b16399222927ced55450093dfbfdfc091c353cd9",
+          "dimensions": {
+            "width": 320,
+            "height": 320,
+            "alpha": false
+          }
+        }
+      },
+      "transparentQa": {
+        "required": true,
+        "backgrounds": [
+          {
+            "id": "paper",
+            "color": "#f5f0e6",
+            "label": "宣纸底"
+          },
+          {
+            "id": "dark",
+            "color": "#201c16",
+            "label": "深色底"
+          }
+        ],
+        "sidecar": {
+          "source": "manifest-performance-alpha",
+          "metrics": {
+            "visibleAlphaRatio": 0.4035,
+            "borderVisibleAlphaPixels": 799
+          }
+        },
+        "pixel": {
+          "width": 1024,
+          "height": 1024,
+          "visibleAlphaPixels": 422862,
+          "visibleAlphaRatio": 0.4033,
+          "borderVisibleAlphaPixels": 1598,
+          "highSaturationGreenOrMagentaPixels": 0,
+          "hardAlphaJumpPixels": 1149,
+          "composite": {
+            "paper": {
+              "minLuma": 89,
+              "maxLuma": 255,
+              "averageLuma": 223.15
+            },
+            "dark": {
+              "minLuma": 27,
+              "maxLuma": 255,
+              "averageLuma": 96.54
+            }
+          }
+        }
+      },
+      "issues": []
+    }
+  ],
+  "issues": []
+}

@@ -487,18 +487,21 @@ Manifest 示例：
 
 ### S73.9 素材预览与 QA
 
+状态：已完成。新增 `scripts/frontendAssetQa.js`、`public/assets/ui/asset-qa-preview.html`、`public/assets/ui/asset-qa-report-v1.json` 和 `npm run qa:frontend-assets`，把 manifest、缩略图、fallback、透明素材合成和审核状态收束为可重复检查流程。
+
 实现功能：
 
-- 新增素材预览页或脚本，列出 manifest 项目、尺寸、路径、透明度、用途和审核状态。
-- 新增 Node 测试校验 manifest 路径只指向 `public/assets/`，字段不含 key/path/raw/prompt 原文泄漏，图片存在且尺寸符合预期。
-- 抽检移动裁切、缩略图和 fallback。
-- 透明素材额外做纸色/深色合成预览和 chroma-key 高饱和绿/紫色边检查，避免去底残留、矩形切口或黑线进入首页和专题界面。
+- 已新增素材预览页，列出 manifest 项目、尺寸、路径、透明度、用途和审核状态，并支持阶段/分类/搜索筛选。
+- 已新增 Node QA 脚本和 `qa:frontend-assets` 命令，校验 manifest 路径只指向 `public/assets/ui/`，字段不含 key、本地路径、raw、provider、hidden 或 prompt 原文泄漏，图片存在且尺寸符合预期。
+- 已用统一报告覆盖缩略图、fallback、审核状态、性能预算、立绘低清占位和 transparent alpha 标记；当前报告覆盖 70 个 active 素材。
+- 透明素材已额外做宣纸底/深色底合成预览和 chroma-key 高饱和绿/紫色边检查，覆盖当前 19 个透明素材，避免去底残留、矩形切口或黑线进入首页和专题界面。
 
 验收：
 
 - 未审核或 rejected 素材不能被 UI 默认引用。
 - 测试能发现路径缺失、尺寸错配、敏感字段和 manifest 引用错误。
 - QA 能暴露透明素材的绿边、紫边、横线、矩形切口和深浅底合成瑕疵。
+- `npm run qa:frontend-assets` 可在后续 S73.10/S74-S77 持续校验报告与 manifest 同步。
 
 ### S73.10 全量立绘生产与入库
 

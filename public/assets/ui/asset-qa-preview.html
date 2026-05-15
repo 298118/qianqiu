@@ -1,0 +1,369 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>千秋 S73 前端素材 QA</title>
+  <style>
+    :root {
+      color: #241f18;
+      background: #f5f0e6;
+      font-family: "Noto Serif SC", "Songti SC", "SimSun", serif;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      background:
+        linear-gradient(rgba(245, 240, 230, 0.92), rgba(245, 240, 230, 0.96)),
+        repeating-linear-gradient(90deg, rgba(80, 60, 32, 0.04), rgba(80, 60, 32, 0.04) 1px, transparent 1px, transparent 8px);
+    }
+
+    header {
+      border-bottom: 1px solid #c9b898;
+      padding: 24px clamp(16px, 4vw, 48px);
+    }
+
+    h1 {
+      margin: 0 0 10px;
+      font-size: 28px;
+      font-weight: 700;
+      letter-spacing: 0;
+    }
+
+    .summary {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 14px;
+    }
+
+    .pill {
+      border: 1px solid #c9b898;
+      background: rgba(255, 252, 244, 0.68);
+      padding: 6px 10px;
+      font-size: 13px;
+    }
+
+    main {
+      padding: 22px clamp(16px, 4vw, 48px) 48px;
+    }
+
+    .toolbar {
+      align-items: center;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-bottom: 18px;
+    }
+
+    label {
+      font-size: 14px;
+    }
+
+    select,
+    input {
+      border: 1px solid #b9a98c;
+      background: #fffaf0;
+      color: #241f18;
+      min-height: 36px;
+      padding: 6px 9px;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+      gap: 14px;
+    }
+
+    article {
+      background: rgba(255, 252, 244, 0.74);
+      border: 1px solid #c9b898;
+      min-width: 0;
+      padding: 10px;
+    }
+
+    .asset-title {
+      display: flex;
+      justify-content: space-between;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+
+    .asset-title strong {
+      font-size: 14px;
+      overflow-wrap: anywhere;
+    }
+
+    .status {
+      color: #8f2f24;
+      flex: 0 0 auto;
+      font-size: 12px;
+    }
+
+    .thumb {
+      align-items: center;
+      aspect-ratio: 4 / 3;
+      background: #e8dcc8;
+      border: 1px solid #d8c7a7;
+      display: flex;
+      justify-content: center;
+      overflow: hidden;
+    }
+
+    .thumb img {
+      max-height: 100%;
+      max-width: 100%;
+      object-fit: contain;
+    }
+
+    .composites {
+      display: grid;
+      gap: 8px;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      margin-top: 8px;
+    }
+
+    .composite {
+      align-items: center;
+      border: 1px solid #c9b898;
+      display: flex;
+      justify-content: center;
+      min-height: 116px;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .composite.paper {
+      background: #f5f0e6;
+    }
+
+    .composite.dark {
+      background: #201c16;
+    }
+
+    .composite img {
+      max-height: 110px;
+      max-width: 100%;
+      object-fit: contain;
+    }
+
+    .composite span {
+      background: rgba(255, 252, 244, 0.86);
+      bottom: 4px;
+      color: #241f18;
+      font-size: 11px;
+      left: 4px;
+      padding: 2px 4px;
+      position: absolute;
+    }
+
+    dl {
+      display: grid;
+      grid-template-columns: 72px minmax(0, 1fr);
+      gap: 4px 8px;
+      margin: 10px 0 0;
+      font-size: 12px;
+    }
+
+    dt {
+      color: #6f6659;
+    }
+
+    dd {
+      margin: 0;
+      overflow-wrap: anywhere;
+    }
+
+    .issue {
+      border-left: 3px solid #a53a2a;
+      color: #6f1f18;
+      font-size: 12px;
+      margin-top: 8px;
+      padding-left: 8px;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>S73 前端素材 QA</h1>
+    <p>此页读取 `ink-ui-manifest.json` 与 `asset-qa-report-v1.json`，用于检查路径、尺寸、审核状态、fallback、缩略图和透明素材深浅底合成。</p>
+    <div class="summary" id="summary"></div>
+  </header>
+  <main>
+    <div class="toolbar">
+      <label>阶段
+        <select id="phase-filter">
+          <option value="">全部</option>
+        </select>
+      </label>
+      <label>分类
+        <select id="category-filter">
+          <option value="">全部</option>
+        </select>
+      </label>
+      <label>搜索
+        <input id="search-input" type="search" placeholder="id / usage / role / scene">
+      </label>
+    </div>
+    <section class="grid" id="asset-grid"></section>
+  </main>
+  <script>
+    const manifestUrl = "./ink-ui-manifest.json";
+    const reportUrl = "./asset-qa-report-v1.json";
+
+    const state = {
+      manifest: null,
+      report: null,
+      phase: "",
+      category: "",
+      search: ""
+    };
+
+    function text(value) {
+      if (Array.isArray(value)) return value.join(", ");
+      if (value == null) return "不适用";
+      if (typeof value === "object") return JSON.stringify(value);
+      return String(value);
+    }
+
+    function assetMatches(asset) {
+      if (state.phase && asset.phase !== state.phase) return false;
+      if (state.category && asset.category !== state.category) return false;
+      const query = state.search.trim().toLowerCase();
+      if (!query) return true;
+      return JSON.stringify(asset).toLowerCase().includes(query);
+    }
+
+    function fillFilters() {
+      const phases = [...new Set(state.manifest.assets.map((asset) => asset.phase))].sort();
+      const categories = [...new Set(state.manifest.assets.map((asset) => asset.category))].sort();
+      const phaseFilter = document.querySelector("#phase-filter");
+      const categoryFilter = document.querySelector("#category-filter");
+      for (const phase of phases) phaseFilter.append(new Option(phase, phase));
+      for (const category of categories) categoryFilter.append(new Option(category, category));
+    }
+
+    function renderSummary() {
+      const summary = document.querySelector("#summary");
+      const reportSummary = state.report.summary;
+      const warningCount = reportSummary.warningCount || 0;
+      summary.innerHTML = "";
+      for (const item of [
+        ["素材", reportSummary.totalAssets],
+        ["透明素材", reportSummary.transparentAssets],
+        ["QA 警告", warningCount],
+        ["Manifest", state.report.manifestSha256.slice(0, 12)],
+        ["生成时间", new Date(state.report.generatedAt).toLocaleString()]
+      ]) {
+        const pill = document.createElement("span");
+        pill.className = "pill";
+        pill.textContent = `${item[0]}：${item[1]}`;
+        summary.append(pill);
+      }
+    }
+
+    function renderAssets() {
+      const grid = document.querySelector("#asset-grid");
+      const reportById = new Map(state.report.assets.map((asset) => [asset.id, asset]));
+      grid.innerHTML = "";
+      for (const asset of state.manifest.assets.filter(assetMatches)) {
+        const report = reportById.get(asset.id);
+        const card = document.createElement("article");
+
+        const title = document.createElement("div");
+        title.className = "asset-title";
+        const strong = document.createElement("strong");
+        strong.textContent = asset.id;
+        const status = document.createElement("span");
+        status.className = "status";
+        status.textContent = asset.reviewStatus;
+        title.append(strong, status);
+
+        const thumb = document.createElement("div");
+        thumb.className = "thumb";
+        const thumbImg = document.createElement("img");
+        thumbImg.loading = "lazy";
+        thumbImg.src = asset.thumbnailPath;
+        thumbImg.alt = asset.id;
+        thumb.append(thumbImg);
+
+        card.append(title, thumb);
+
+        if (asset.transparent) {
+          const composites = document.createElement("div");
+          composites.className = "composites";
+          for (const background of ["paper", "dark"]) {
+            const box = document.createElement("div");
+            box.className = `composite ${background}`;
+            const img = document.createElement("img");
+            img.loading = "lazy";
+            img.src = asset.path;
+            img.alt = `${asset.id} ${background}`;
+            const label = document.createElement("span");
+            label.textContent = background === "paper" ? "宣纸底" : "深色底";
+            box.append(img, label);
+            composites.append(box);
+          }
+          card.append(composites);
+        }
+
+        const dl = document.createElement("dl");
+        for (const [key, value] of [
+          ["阶段", asset.phase],
+          ["分类", asset.category],
+          ["尺寸", `${asset.dimensions.width}x${asset.dimensions.height}`],
+          ["用途", asset.usage],
+          ["fallback", asset.fallbackRef],
+          ["路径", asset.path]
+        ]) {
+          const dt = document.createElement("dt");
+          dt.textContent = key;
+          const dd = document.createElement("dd");
+          dd.textContent = text(value);
+          dl.append(dt, dd);
+        }
+        card.append(dl);
+
+        if (report?.issues?.length) {
+          const issue = document.createElement("div");
+          issue.className = "issue";
+          issue.textContent = report.issues.map((entry) => `${entry.severity}: ${entry.message}`).join("；");
+          card.append(issue);
+        }
+
+        grid.append(card);
+      }
+    }
+
+    async function init() {
+      const [manifestResponse, reportResponse] = await Promise.all([fetch(manifestUrl), fetch(reportUrl)]);
+      state.manifest = await manifestResponse.json();
+      state.report = await reportResponse.json();
+      fillFilters();
+      renderSummary();
+      renderAssets();
+    }
+
+    document.querySelector("#phase-filter").addEventListener("change", (event) => {
+      state.phase = event.target.value;
+      renderAssets();
+    });
+    document.querySelector("#category-filter").addEventListener("change", (event) => {
+      state.category = event.target.value;
+      renderAssets();
+    });
+    document.querySelector("#search-input").addEventListener("input", (event) => {
+      state.search = event.target.value;
+      renderAssets();
+    });
+
+    init().catch((error) => {
+      document.querySelector("#asset-grid").textContent = `QA 预览加载失败：${error.message}`;
+    });
+  </script>
+</body>
+</html>

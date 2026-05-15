@@ -111,6 +111,16 @@ S73.8 已完成 8 个动效/fallback 素材。创意发散 prompt 草案由 medi
 | ui-effect-ink-wipe-v1 | approved | `assets/ui/effects/effect-ink-wipe-v1.webp` | `assets/ui/thumbs/thumb-effect-ink-wipe-v1.webp` | `game_main, exam_page, ranking_page` | ink_wipe_transition | `fallback-ink-motion-static-v1` | `fallback-ink-motion-static-v1` | horizontal wipe mask | 低成本转场遮罩；低动效直接切换内容 |
 | ui-effect-page-curl-v1 | approved | `assets/ui/effects/effect-page-curl-v1.webp` | `assets/ui/thumbs/thumb-effect-page-curl-v1.webp` | `archive_page, game_main` | page_curl_corner | `fallback-paper-panel-v1` | `fallback-ink-motion-static-v1` | corner curl hint | 角落翻页提示；不得遮挡正文和按钮 |
 
+## S73.9 素材 QA 汇总
+
+S73.9 新增统一素材 QA 流程，入口为 `scripts/frontendAssetQa.js`：
+
+- `npm run qa:frontend-assets`：校验已提交的 `public/assets/ui/asset-qa-report-v1.json` 与当前 `ink-ui-manifest.json`、真实文件 SHA-256、bytes 和审核状态同步。
+- `npm run qa:frontend-assets:write`：复用现有 `playwright-core` 与本机 Chrome/Edge，刷新 19 个透明素材的像素 QA 指标，并重写 `asset-qa-report-v1.json`。
+- `public/assets/ui/asset-qa-preview.html`：本地预览入口，按阶段、分类和搜索筛选 70 个 active 素材；透明素材同时显示宣纸底和深色底合成，用于人工复查色边、横线、矩形切口和遮挡风险。
+
+当前 `asset-qa-report-v1.json` 覆盖 70 个 active 素材、19 个透明素材，结果为 0 errors、0 warnings。报告不保存完整 prompt、provider 原始响应、本地绝对路径、key、raw audit、hidden notes 或 hidden intent；只保存 manifest 安全路径、文件 hash、尺寸、alpha、性能、fallback、审核状态和像素统计。
+
 ## 参考素材记录
 
 | Ref ID | 状态 | URL 或来源 | 类型 | 作者/机构 | 许可或权利说明 | 用途 | Codex 视觉审核 | 是否进入项目资产 | 备注 |

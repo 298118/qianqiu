@@ -10,6 +10,9 @@ const ledgerPath = path.join(repoRoot, "docs", "FRONTEND_ASSET_LEDGER.md");
 const homeTransparencyQaPath = path.join(repoRoot, "public", "assets", "ui", "home", "home-transparency-qa-v1.json");
 const portraitBaselineQaPath = path.join(repoRoot, "public", "assets", "ui", "portraits", "portrait-baseline-qa-v1.json");
 const effectMotionQaPath = path.join(repoRoot, "public", "assets", "ui", "effects", "effect-motion-qa-v1.json");
+const assetQaReportPath = path.join(repoRoot, "public", "assets", "ui", "asset-qa-report-v1.json");
+const assetQaPreviewPath = path.join(repoRoot, "public", "assets", "ui", "asset-qa-preview.html");
+const assetQaScriptPath = path.join(repoRoot, "scripts", "frontendAssetQa.js");
 
 const FORBIDDEN_SECRET_OR_LOCAL_PATH =
   /(OPENAI_API_KEY|DEEPSEEK_API_KEY|MIMO_API_KEY|ANTHROPIC_API_KEY|sk-[A-Za-z0-9_-]{6,}|tp-[A-Za-z0-9_-]{6,}|[A-Za-z]:[\\/]|file:\/\/|data:|data[\\/](?:sessions|audit))/i;
@@ -509,6 +512,86 @@ test("S73.8 effect motion QA records approved reduced-motion fallbacks", () => {
     assert.equal(entry.sha256, sha256File(resolveUiAssetPath(entry.path)), entry.id);
     assert.equal(entry.thumbnailSha256, sha256File(resolveUiAssetPath(entry.thumbnailPath)), entry.id);
     assert.equal(asset.motion.maxSuggestedDurationMs <= 18000, true, entry.id);
+  }
+});
+
+test("S73.9 frontend asset QA report covers active assets and transparent composites", () => {
+  const reportText = fs.readFileSync(assetQaReportPath, "utf8");
+  assert.doesNotMatch(reportText, FORBIDDEN_MANIFEST_REMOTE_OR_LOCAL_PATH);
+  assert.doesNotMatch(reportText, FORBIDDEN_ASSET_VALUE);
+  const report = JSON.parse(reportText);
+  const manifestText = fs.readFileSync(manifestPath, "utf8");
+  const manifest = JSON.parse(manifestText);
+
+  assert.equal(report.schemaVersion, 1);
+  assert.equal(report.phase, "S73.9");
+  assert.equal(report.manifestRef, "public/assets/ui/ink-ui-manifest.json");
+  assert.equal(report.previewRef, "public/assets/ui/asset-qa-preview.html");
+  assert.equal(report.manifestSha256, crypto.createHash("sha256").update(manifestText).digest("hex"));
+  assert.equal(report.summary.totalAssets, manifest.assets.length);
+  assert.equal(report.summary.errorCount, 0);
+  assert.equal(report.pixelAnalysis.enabled, true);
+  assert.deepEqual(report.compositeBackgrounds.map((background) => background.color), ["#f5f0e6", "#201c16"]);
+  assert.equal(fs.existsSync(assetQaPreviewPath), true);
+
+  const reportById = new Map(report.assets.map((asset) => [asset.id, asset]));
+  for (const asset of manifest.assets) {
+    const entry = reportById.get(asset.id);
+    assert.ok(entry, asset.id);
+    assert.equal(entry.path, asset.path, asset.id);
+    assert.equal(entry.thumbnailPath, asset.thumbnailPath, asset.id);
+    assert.equal(entry.reviewStatus, asset.reviewStatus, asset.id);
+    assert.equal(entry.runtimeUsable, true, asset.id);
+    assert.equal(entry.files.image.exists, true, asset.id);
+    assert.equal(entry.files.thumbnail.exists, true, asset.id);
+    assert.equal(entry.files.image.sha256, sha256File(resolveUiAssetPath(asset.path)), asset.id);
+    assert.equal(entry.files.image.bytes, fs.statSync(resolveUiAssetPath(asset.path)).size, asset.id);
+    assert.equal(entry.files.thumbnail.sha256, sha256File(resolveUiAssetPath(asset.thumbnailPath)), asset.id);
+    assert.equal(entry.files.thumbnail.bytes, fs.statSync(resolveUiAssetPath(asset.thumbnailPath)).size, asset.id);
+    assert.equal(entry.issues.some((issue) => issue.severity === "error"), false, asset.id);
+    if (asset.transparent) {
+      assert.equal(entry.transparentQa.required, true, asset.id);
+      assert.equal(entry.transparentQa.backgrounds.length, 2, asset.id);
+      assert.ok(entry.transparentQa.pixel, asset.id);
+      assert.equal(entry.transparentQa.pixel.width, asset.dimensions.width, asset.id);
+      assert.equal(entry.transparentQa.pixel.height, asset.dimensions.height, asset.id);
+      assert.equal(typeof entry.transparentQa.pixel.visibleAlphaRatio, "number", asset.id);
+      assert.equal(typeof entry.transparentQa.pixel.highSaturationGreenOrMagentaPixels, "number", asset.id);
+      assert.equal(typeof entry.transparentQa.pixel.hardAlphaJumpPixels, "number", asset.id);
+      assert.ok(entry.transparentQa.pixel.composite.paper, asset.id);
+      assert.ok(entry.transparentQa.pixel.composite.dark, asset.id);
+    }
+  }
+});
+
+test("S73.9 frontend asset QA script and preview expose the reusable QA workflow", () => {
+  const scriptText = fs.readFileSync(assetQaScriptPath, "utf8");
+  const previewText = fs.readFileSync(assetQaPreviewPath, "utf8");
+  assert.doesNotMatch(previewText, FORBIDDEN_SECRET_OR_LOCAL_PATH);
+  assert.equal(scriptText.includes("sk-live"), false);
+  assert.equal(scriptText.includes("tp-live"), false);
+
+  for (const requiredText of [
+    "--write --pixel",
+    "asset-qa-report-v1.json",
+    "highSaturationGreenOrMagentaPixels",
+    "hardAlphaJumpPixels",
+    "compositeBackgrounds",
+    "fallbackRef",
+    "runtimeUsable"
+  ]) {
+    assert.equal(scriptText.includes(requiredText), true, requiredText);
+  }
+
+  for (const requiredText of [
+    "ink-ui-manifest.json",
+    "asset-qa-report-v1.json",
+    "宣纸底",
+    "深色底",
+    "transparent",
+    "fallback"
+  ]) {
+    assert.equal(previewText.includes(requiredText), true, requiredText);
   }
 });
 
