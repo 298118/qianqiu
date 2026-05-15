@@ -507,9 +507,11 @@ Manifest 示例：
 
 目标：S73 内完成 300-400 张玩家/NPC 立绘的生成、审核、缩略图、压缩、manifest 入库和台账登记，使 S74-S77 的首页、人物谱牒、身份面板、考试/放榜、朝议/官署和后续专题界面都能直接使用同一套已审核 `portraitRef`。
 
+当前状态：S73.10.1 已完成矩阵定稿。新增 `docs/FRONTEND_PORTRAIT_MATRIX.md`、`public/assets/ui/portraits/portrait-pool-matrix-v1.json`、`scripts/frontendPortraitMatrix.js` 和 `npm run qa:portrait-matrix`，把全量池锁定为 336 张 planned 立绘：玩家身份阶段 72、通用 NPC 120、重要 NPC 72、状态姿态 48、场景锚点 24。矩阵只预置安全 `portraitRef`、生成目标路径、prompt 母版、fallback、懒加载分组和审核字段；不把未生成素材写入 `ink-ui-manifest.json` 可用集合。
+
 内部小步骤：
 
-- S73.10.1 立绘矩阵定稿：按玩家身份、性别、年龄层、身份阶段、NPC 职业、重要人物、姿态、情绪和场景用途列出完整矩阵；每条记录预置 `portraitRef`、usage、role、gender、ageBand、statusVariant、thumbnail、fallback 和审核字段。
+- S73.10.1 立绘矩阵定稿：已完成。按玩家身份、性别、年龄层、身份阶段、NPC 职业、重要人物、姿态、情绪和场景用途列出 336 条完整矩阵；每条记录预置 `portraitRef`、usage、role、gender、ageBand、statusVariant、thumbnail、fallback 和审核字段，且 `runtimeUsable` 保持 false。
 - S73.10.2 玩家立绘池：覆盖男女玩家在书生、举人/进士、地方官、入仕官员、大臣、将领、皇帝/摄政等阶段的可选半身立绘；同一玩家身份切换不能复用明显不合阶段的旧立绘。
 - S73.10.3 通用 NPC 立绘池：覆盖老师、同年、考官、县令、胥吏、士绅、商贾、书院人物、女官、宫廷人物、将领、军吏、边地人物、市井人物等常用类型，男女比例尽量接近 1:1。
 - S73.10.4 重要 NPC 专属池：为张居正、魏忠贤等已规划重要人物或拟史关键人物建立专属立绘，不把重要 NPC 混进通用头像池；未进入当前剧情公开视野的人物只登记安全 `portraitRef`，不泄漏 hidden 私档。

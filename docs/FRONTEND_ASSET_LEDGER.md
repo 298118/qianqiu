@@ -16,7 +16,8 @@
 
 | Manifest ID | 状态 | 路径 | 作用 | 安全边界 | 备注 |
 | --- | --- | --- | --- | --- | --- |
-| ink-ui-v1 | assets_active | `public/assets/ui/ink-ui-manifest.json` | S73-S77 前端 UI 素材 manifest，已登记 S73.3 首批 UI 材质、S73.4 首页资产、S73.5 场景插画、S73.6 身份背景、S73.7 立绘风格基准和 S73.8 动效/fallback 素材，并继续保留 fallback token、审核状态、usage、立绘字段、动效字段和懒加载策略 | 只保存安全路径、尺寸、用途、fallback、reduced-motion fallback、审核状态和台账 id；立绘资产必须同时满足基础素材字段与立绘扩展字段；不保存完整 prompt、provider 原始响应、本地路径、key、raw audit 或 hidden 真值 | S73.3 已填入 16 个已审核 UI 材质，S73.4 已填入 6 个已审核/限用首页素材，S73.5 已填入 10 个已审核场景插画，S73.6 已填入 6 个已审核身份背景，S73.7 已填入 24 张已审核立绘风格基准，S73.8 已填入 8 个已审核动效/fallback 素材；S73.9-S73.10 继续按本契约逐步填充 |
+| ink-ui-v1 | assets_active | `public/assets/ui/ink-ui-manifest.json` | S73-S77 前端 UI 素材 manifest，已登记 S73.3 首批 UI 材质、S73.4 首页资产、S73.5 场景插画、S73.6 身份背景、S73.7 立绘风格基准和 S73.8 动效/fallback 素材，并继续保留 fallback token、审核状态、usage、立绘字段、动效字段和懒加载策略 | 只保存安全路径、尺寸、用途、fallback、reduced-motion fallback、审核状态和台账 id；立绘资产必须同时满足基础素材字段与立绘扩展字段；不保存完整 prompt、provider 原始响应、本地路径、key、raw audit 或 hidden 真值 | S73.3 已填入 16 个已审核 UI 材质，S73.4 已填入 6 个已审核/限用首页素材，S73.5 已填入 10 个已审核场景插画，S73.6 已填入 6 个已审核身份背景，S73.7 已填入 24 张已审核立绘风格基准，S73.8 已填入 8 个已审核动效/fallback 素材；S73.9 已新增 QA 报告；S73.10.1 已锁定 336 张 planned 立绘矩阵，后续生成并审核后再逐项进入 manifest |
+| portrait-pool-matrix-v1 | matrix_locked | `public/assets/ui/portraits/portrait-pool-matrix-v1.json` | S73.10.1 全量立绘生产矩阵，预置 336 张 planned 立绘的 `portraitRef`、usage、role、genderPresentation、ageBand、statusVariant、promptTemplateRef、生成目标路径、fallback、懒加载分组和审核字段 | 矩阵不是可用素材 manifest；`runtimeUsable` 全部为 false，不保存 provider 原始响应、本地绝对路径、key、raw audit、hidden 私档或未公开剧情事实；重要 NPC 不混入通用头像池 | 机器校验入口为 `npm run qa:portrait-matrix`；中文说明见 `docs/FRONTEND_PORTRAIT_MATRIX.md`；S73.10.2 起按矩阵分批生成、缩略图、压缩、视觉/安全审核和入库 |
 
 ## 素材记录
 
@@ -66,7 +67,7 @@
 
 ## 立绘矩阵
 
-S73.2 只固定字段；S73.7 已写入 24 张基准立绘，S73.10 写入 300-400 张全量玩家/NPC 立绘池。S73.7 的压缩与视觉审核 sidecar 为 `public/assets/ui/portraits/portrait-baseline-qa-v1.json`，懒加载分组为 `portrait_baseline_s73_7`。
+S73.2 只固定字段；S73.7 已写入 24 张基准立绘，S73.10.1 已锁定 336 张 planned 立绘矩阵，S73.10.2 起再写入全量玩家/NPC 立绘池。S73.7 的压缩与视觉审核 sidecar 为 `public/assets/ui/portraits/portrait-baseline-qa-v1.json`，懒加载分组为 `portrait_baseline_s73_7`；S73.10.1 的矩阵文件为 `public/assets/ui/portraits/portrait-pool-matrix-v1.json`，所有条目当前 `runtimeUsable=false`，不得被前端当作可用素材。
 
 | portraitRef | 状态 | 人物范围 | 专属人物安全 ref | 身份/职业 | genderPresentation | ageBand | roleStage | statusVariant | emotionVariant | 源图路径 | 缩略图路径 | 低清占位路径 | fallbackRef | 小尺寸可读性 | 成年端庄审核 | 现代/水印/乱码审核 | manifest ledgerId | 懒加载分组 | 备注 |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |

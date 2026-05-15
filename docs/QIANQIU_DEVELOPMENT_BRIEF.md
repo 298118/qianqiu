@@ -36,6 +36,8 @@ S68-S69 科举、读书、评卷与授官深化规划见 [IMPERIAL_EXAM_DEEPENIN
 
 开发规范不变：Mock 默认可玩，真实 provider 可选；服务器拥有状态边界、时间推进、科举晋级、作弊处罚、官职任免、长期事件、世界实体、世界议程、数据库写入和持久化裁决。AI 可以通过身份受限的领域工具提交 structured proposal / tool call，让老师、考官、县令、大臣、将领或皇帝真实参与世界；但 AI 不能直接执行 SQL，不能直接写 canonical 状态、业务表或审计表，工具调用也不能被当作已经发生的世界事实。
 
+S73.10.1 已完成全量立绘矩阵定稿：新增 [FRONTEND_PORTRAIT_MATRIX.md](FRONTEND_PORTRAIT_MATRIX.md)、`public/assets/ui/portraits/portrait-pool-matrix-v1.json`、`scripts/frontendPortraitMatrix.js` 和 `qa:portrait-matrix`，把后续生产池锁定为 336 张 planned 立绘，覆盖玩家身份阶段、通用 NPC、重要 NPC、状态姿态和场景锚点。矩阵只保存安全 `portraitRef`、目标路径、prompt 母版、fallback、懒加载和审核字段，所有条目在实际生成、视觉/安全审核与 manifest 入库前均保持 `runtimeUsable=false`。
+
 ## 3. 核心体验
 
 玩家没有固定选项，主要通过自由文本行动推进游戏。AI 作为世界引擎，负责叙事、意图理解、出题、评分、角色反馈和世界变化建议；服务器负责状态存储、数值边界、晋级规则、作弊惩罚、官场任免、长期事件、可见性过滤和持久化。
@@ -441,6 +443,8 @@ chore: update env example
 - S71：数据库玩法化、维护、安全检索和 redacted API 已完成并归档到 [DATABASE_GAMEPLAY_RESOLVER_ARCHIVE.md](DATABASE_GAMEPLAY_RESOLVER_ARCHIVE.md)；后续新步骤继续复用安全 projection、本地维护工具、snippet 搜索、玩家/诊断分层、proposal-only 工具边界和服务器 resolver 裁决。
 - S72：PixiJS 水墨地图已完成并归档到 [PIXIJS_INK_MAP_ARCHIVE.md](PIXIJS_INK_MAP_ARCHIVE.md)；后续前端只能复用 `mapRuntimeView` 安全投影和 S72 素材/manifest 边界，不得把显示坐标变成 prompt 或服务器裁决事实。
 - S73-S77：当前活动方向为前端水墨重构，任务书见 [FRONTEND_INK_REDESIGN_ROADMAP.md](FRONTEND_INK_REDESIGN_ROADMAP.md)；S73.1 已新增 [FRONTEND_VISUAL_ASSET_GUIDE.md](FRONTEND_VISUAL_ASSET_GUIDE.md)，固定视觉资产尺寸、命名、页面 usage、裁切、审核和 fallback 标准。S73.2 已新增 `public/assets/ui/ink-ui-manifest.json`、[FRONTEND_ASSET_LEDGER.md](FRONTEND_ASSET_LEDGER.md) 和 `test/frontendInkAssetsManifest.test.js`，固定 UI manifest schema、台账字段和 S73.10 全量立绘池懒加载/审核字段。S73.3 已生成并入库 16 个已审核 UI 材质、缩略图和 manifest/台账记录；S73.4 已生成并入库 6 个已审核/限用首页素材、缩略图和 manifest/台账记录，覆盖首页画卷、云雾层、题名册表单底、朱印开始按钮、案卷存档素材和低动效静态底；S73.5 已生成并入库 10 个已审核场景插画、缩略图和 manifest/台账记录，覆盖书斋、贡院号舍、放榜、殿试、县衙、公堂、军帐、御案、城市街巷和部院公文；S73.6 已生成并入库 6 个已审核身份背景、缩略图、色彩权重和面板材料建议，覆盖书生、地方官、入仕官员、大臣、将领和皇帝；S73.7 已生成并入库 24 张已审核玩家/NPC 立绘风格基准、缩略图、低清占位和 manifest/台账记录，覆盖玩家身份阶段、官署/科举/朝堂/军务/宫廷/商贾/市井人物；S73.8 已生成并入库 8 个已审核动效/fallback 素材、缩略图、`motion`/`reducedMotionFallback` 字段和 `effect-motion-qa-v1.json`，覆盖水墨云雾、墨迹扩散、朱印落章、纸页展开、榜文揭示、考试交卷朱封、淡墨擦拭和卷边揭页；S73.9 已新增 `scripts/frontendAssetQa.js`、`asset-qa-preview.html`、`asset-qa-report-v1.json` 和 `qa:frontend-assets`，统一检查 70 个 active 素材、19 个透明素材、深浅底合成、chroma-key 色边、路径、尺寸、缩略图、fallback、审核状态和敏感字段；S73.10 在 S73 内完成 300-400 张全量玩家/NPC 立绘池，后续 S74-S77 的人物显示全部通过已审核 `portraitRef`、缩略图和 fallback 使用，仍按需懒加载，动效接入必须尊重 reduced-motion。S74.0 可在依赖治理通过后引入 React + TypeScript + Vite + React Router Data Mode 并直接接管默认 `/`，旧原生前端可替换或删除；S75-S76 再推进首页/全局 shell、设置/存档/返回首页、底部奏折、身份/场景专题、考试/放榜、独立舆图页和立绘接线，S77 做默认入口确认、浏览器、安全、性能、可访问性和归档验收。
+
+- S73.10.1：全量玩家/NPC 立绘生产矩阵已定稿，机器可读矩阵为 `public/assets/ui/portraits/portrait-pool-matrix-v1.json`，中文说明为 [FRONTEND_PORTRAIT_MATRIX.md](FRONTEND_PORTRAIT_MATRIX.md)。矩阵锁定 336 张 planned 立绘，但不代表素材可用；S74-S77 runtime 仍只能读取 `ink-ui-manifest.json` 中已审核、已入库、`runtimeUsable=true` 的立绘。
 
 本地数据库专项必须满足同一边界：默认 JSON/Mock 路径不得被破坏；SQLite local-only；AI 可以通过领域工具提交 proposal，但不执行 SQL、不直接写 canonical 状态、业务表或审计表；浏览器和 prompt 只读服务器 projection；hidden 私档不回填当前 raw route `worldState`；服务器继续拥有 schema、白名单、clamp、隐藏过滤、科举晋级、官职任免、长期事件、世界实体、世界议程、数据库写入和持久化事务。
 

@@ -13,6 +13,9 @@ const effectMotionQaPath = path.join(repoRoot, "public", "assets", "ui", "effect
 const assetQaReportPath = path.join(repoRoot, "public", "assets", "ui", "asset-qa-report-v1.json");
 const assetQaPreviewPath = path.join(repoRoot, "public", "assets", "ui", "asset-qa-preview.html");
 const assetQaScriptPath = path.join(repoRoot, "scripts", "frontendAssetQa.js");
+const portraitPoolMatrixPath = path.join(repoRoot, "public", "assets", "ui", "portraits", "portrait-pool-matrix-v1.json");
+const portraitMatrixDocPath = path.join(repoRoot, "docs", "FRONTEND_PORTRAIT_MATRIX.md");
+const portraitMatrixScriptPath = path.join(repoRoot, "scripts", "frontendPortraitMatrix.js");
 
 const FORBIDDEN_SECRET_OR_LOCAL_PATH =
   /(OPENAI_API_KEY|DEEPSEEK_API_KEY|MIMO_API_KEY|ANTHROPIC_API_KEY|sk-[A-Za-z0-9_-]{6,}|tp-[A-Za-z0-9_-]{6,}|[A-Za-z]:[\\/]|file:\/\/|data:|data[\\/](?:sessions|audit))/i;
@@ -592,6 +595,98 @@ test("S73.9 frontend asset QA script and preview expose the reusable QA workflow
     "fallback"
   ]) {
     assert.equal(previewText.includes(requiredText), true, requiredText);
+  }
+});
+
+test("S73.10.1 portrait pool matrix locks planned counts without making assets runtime usable", () => {
+  const matrixText = fs.readFileSync(portraitPoolMatrixPath, "utf8");
+  assert.doesNotMatch(matrixText, FORBIDDEN_MANIFEST_REMOTE_OR_LOCAL_PATH);
+  const matrix = JSON.parse(matrixText);
+  const manifest = readJson(manifestPath);
+  const manifestPortraitRefs = new Set(
+    manifest.assets.filter((asset) => asset.category === "portrait").map((asset) => asset.portraitRef)
+  );
+
+  assert.equal(matrix.schemaVersion, 1);
+  assert.equal(matrix.phase, "S73.10.1");
+  assert.equal(matrix.status, "matrix_locked");
+  assert.equal(matrix.targetCount, 336);
+  assert.deepEqual(matrix.countPlan, {
+    player: 72,
+    generic_npc: 120,
+    signature_npc: 72,
+    state_variant: 48,
+    scene_anchor: 24
+  });
+  assert.equal(matrix.reviewPolicy.generatedImagesRequireCodexVisualReview, true);
+  assert.equal(matrix.reviewPolicy.usableOnlyAfterManifestEntry, true);
+  assert.equal(matrix.reviewPolicy.runtimeUsableBeforeImageGeneration, false);
+  assert.equal(matrix.reviewPolicy.importantNpcMustNotUseGenericPortrait, true);
+  assert.equal(matrix.reviewPolicy.noFullPoolEagerLoad, true);
+  assert.equal(matrix.promptTemplates.length, 12);
+  assert.equal(matrix.promptTemplateCoverage.missing.length, 0);
+
+  const refs = new Set();
+  const plannedPaths = new Set();
+  const byGroup = new Map();
+  const templateIds = new Set(matrix.promptTemplates.map((template) => template.id));
+  for (const entry of matrix.entries) {
+    assert.equal(entry.phase, "S73.10.1", entry.portraitRef);
+    assert.equal(entry.reviewStatus, "planned", entry.portraitRef);
+    assert.equal(entry.visualReviewStatus, "pending_codex_review", entry.portraitRef);
+    assert.equal(entry.safetyReviewStatus, "pending_codex_review", entry.portraitRef);
+    assert.equal(entry.runtimeUsable, false, entry.portraitRef);
+    assert.equal(entry.fallbackRef, "fallback-role-silhouette-v1", entry.portraitRef);
+    assert.equal(entry.portraitRef.startsWith("portrait-s73-10-"), true, entry.portraitRef);
+    assert.equal(manifestPortraitRefs.has(entry.portraitRef), false, entry.portraitRef);
+    assert.equal(String(entry.ageBand).startsWith("adult"), true, entry.portraitRef);
+    assert.equal(templateIds.has(entry.promptTemplateRef), true, entry.portraitRef);
+    if (entry.matrixGroup === "signature_npc") {
+      assert.equal(entry.usage.includes("npc_pool"), false, entry.portraitRef);
+    }
+    for (const field of ["plannedPath", "thumbnailPath", "lowResPlaceholderPath"]) {
+      assertSafeUiAssetPath(entry[field], `${entry.portraitRef}.${field}`);
+      assert.equal(plannedPaths.has(entry[field]), false, entry[field]);
+      plannedPaths.add(entry[field]);
+    }
+    assert.equal(refs.has(entry.portraitRef), false, entry.portraitRef);
+    refs.add(entry.portraitRef);
+    byGroup.set(entry.matrixGroup, (byGroup.get(entry.matrixGroup) || 0) + 1);
+  }
+  assert.deepEqual(Object.fromEntries([...byGroup.entries()].sort()), {
+    generic_npc: 120,
+    player: 72,
+    scene_anchor: 24,
+    signature_npc: 72,
+    state_variant: 48
+  });
+});
+
+test("S73.10.1 portrait matrix keeps creative prompts natural and documents safety handoff", () => {
+  const matrix = readJson(portraitPoolMatrixPath);
+  const docText = fs.readFileSync(portraitMatrixDocPath, "utf8");
+  const scriptText = fs.readFileSync(portraitMatrixScriptPath, "utf8");
+
+  assert.doesNotMatch(docText, FORBIDDEN_SECRET_OR_LOCAL_PATH);
+  assert.equal(fs.existsSync(portraitMatrixScriptPath), true);
+  assert.equal(scriptText.includes("targetCount !== 336"), true);
+  assert.equal(scriptText.includes("runtime usable before image generation"), true);
+
+  for (const template of matrix.promptTemplates) {
+    assert.equal(typeof template.draft, "string", template.id);
+    assert.ok(template.draft.length > 40, template.id);
+    assert.doesNotMatch(template.draft, /--ar|seed|CFG|width|height|negative prompt/i, template.id);
+    assert.match(template.draft, /[，；]/, template.id);
+  }
+  for (const requiredText of [
+    "336 张",
+    "不批量生图",
+    "prompt 母版",
+    "角色必须是明确成年人",
+    "未通过审核的候选图不得进入 runtime usable 状态",
+    "重要 NPC 不混入通用头像池"
+  ]) {
+    assert.equal(docText.includes(requiredText), true, requiredText);
   }
 });
 
