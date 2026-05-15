@@ -202,7 +202,7 @@ test("S73.2 ink UI manifest fixes schema, safety, fallback, and portrait policie
   });
 
   assert.equal(Array.isArray(manifest.assets), true);
-  assert.equal(manifest.assets.length, 32, "S73.3 UI materials, S73.4 home assets, and S73.5 scene assets are active");
+  assert.equal(manifest.assets.length, 38, "S73.3-S73.6 UI assets are active");
 
   const phaseCounts = manifest.assets.reduce((counts, asset) => {
     counts[asset.phase] = (counts[asset.phase] || 0) + 1;
@@ -211,9 +211,10 @@ test("S73.2 ink UI manifest fixes schema, safety, fallback, and portrait policie
   assert.equal(phaseCounts["S73.3"], 16);
   assert.equal(phaseCounts["S73.4"], 6);
   assert.equal(phaseCounts["S73.5"], 10);
+  assert.equal(phaseCounts["S73.6"], 6);
 
   for (const asset of manifest.assets) {
-    assert.equal(["S73.3", "S73.4", "S73.5"].includes(asset.phase), true, asset.id);
+    assert.equal(["S73.3", "S73.4", "S73.5", "S73.6"].includes(asset.phase), true, asset.id);
     assert.equal(manifest.allowedCategories.includes(asset.category), true, asset.id);
     if (asset.phase === "S73.3") assert.equal(asset.category, "material", asset.id);
     if (asset.phase === "S73.4") assert.equal(asset.usage.includes("home"), true, asset.id);
@@ -224,6 +225,19 @@ test("S73.2 ink UI manifest fixes schema, safety, fallback, and portrait policie
       assert.equal(asset.transparent, false, asset.id);
       assert.equal(asset.reducedMotionFallback, "fallback-ink-motion-static-v1", asset.id);
       assert.equal(typeof asset.scene, "string", asset.id);
+    }
+    if (asset.phase === "S73.6") {
+      assert.equal(asset.category, "role_background", asset.id);
+      assert.equal(asset.dimensions.width, 1800, asset.id);
+      assert.equal(asset.dimensions.height, 1200, asset.id);
+      assert.equal(asset.transparent, false, asset.id);
+      assert.equal(asset.fallbackRef, "fallback-paper-panel-v1", asset.id);
+      assert.equal(asset.reducedMotionFallback, "fallback-ink-motion-static-v1", asset.id);
+      assert.equal(manifest.roleCatalog.includes(asset.role), true, asset.id);
+      assert.equal(typeof asset.roleStyle, "object", asset.id);
+      assert.equal(typeof asset.roleStyle.colorWeightsPercent, "object", asset.id);
+      assert.equal(Array.isArray(asset.roleStyle.panelMaterials), true, asset.id);
+      assert.equal(Array.isArray(asset.roleStyle.avoid), true, asset.id);
     }
     assert.equal(manifest.runtimeUsableReviewStatuses.includes(asset.reviewStatus), true, asset.id);
     assertSafeUiAssetPath(asset.path, `${asset.id}.path`);
@@ -273,7 +287,13 @@ test("S73.2 ink UI manifest fixes schema, safety, fallback, and portrait policie
     "ui-scene-military-tent-v1",
     "ui-scene-imperial-desk-v1",
     "ui-scene-city-lanes-v1",
-    "ui-scene-bureau-documents-v1"
+    "ui-scene-bureau-documents-v1",
+    "ui-role-scholar-study-v1",
+    "ui-role-magistrate-yamen-desk-v1",
+    "ui-role-official-duty-room-v1",
+    "ui-role-minister-palace-desk-v1",
+    "ui-role-general-frontier-tent-v1",
+    "ui-role-emperor-imperial-desk-v1"
   ]) {
     assert.equal(assetIds.has(requiredId), true, requiredId);
   }
@@ -295,6 +315,21 @@ test("S73.2 ink UI manifest fixes schema, safety, fallback, and portrait policie
     const asset = s735ScenesById.get(requiredId);
     assert.ok(asset, requiredId);
     assert.equal(asset.scene, requiredScene, requiredId);
+  }
+
+  const s736RolesById = new Map(manifest.assets.filter((asset) => asset.phase === "S73.6").map((asset) => [asset.id, asset]));
+  const requiredS736Roles = {
+    "ui-role-scholar-study-v1": "scholar",
+    "ui-role-magistrate-yamen-desk-v1": "magistrate",
+    "ui-role-official-duty-room-v1": "official",
+    "ui-role-minister-palace-desk-v1": "minister",
+    "ui-role-general-frontier-tent-v1": "general",
+    "ui-role-emperor-imperial-desk-v1": "emperor"
+  };
+  for (const [requiredId, requiredRole] of Object.entries(requiredS736Roles)) {
+    const asset = s736RolesById.get(requiredId);
+    assert.ok(asset, requiredId);
+    assert.equal(asset.role, requiredRole, requiredId);
   }
 });
 
@@ -364,7 +399,13 @@ test("S73.2 frontend asset ledger records manifest, fallback, portrait, and sour
     "ui-scene-military-tent-v1",
     "ui-scene-imperial-desk-v1",
     "ui-scene-city-lanes-v1",
-    "ui-scene-bureau-documents-v1"
+    "ui-scene-bureau-documents-v1",
+    "ui-role-scholar-study-v1",
+    "ui-role-magistrate-yamen-desk-v1",
+    "ui-role-official-duty-room-v1",
+    "ui-role-minister-palace-desk-v1",
+    "ui-role-general-frontier-tent-v1",
+    "ui-role-emperor-imperial-desk-v1"
   ]) {
     assert.equal(ledgerText.includes(requiredText), true, requiredText);
   }

@@ -2600,6 +2600,568 @@
         "thumbnailBytes": 5886
       },
       "ledgerId": "ui-scene-bureau-documents-v1"
+    },
+    {
+      "id": "ui-role-scholar-study-v1",
+      "version": 1,
+      "phase": "S73.6",
+      "category": "role_background",
+      "subcategory": "scholar_study",
+      "usage": [
+        "game_main",
+        "people_page"
+      ],
+      "role": "scholar",
+      "scene": null,
+      "path": "/assets/ui/roles/role-scholar-study-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-role-scholar-study-v1.webp",
+      "fallbackRef": "fallback-paper-panel-v1",
+      "dimensions": {
+        "width": 1800,
+        "height": 1200
+      },
+      "aspectRatio": "1800:1200",
+      "format": "webp",
+      "transparent": false,
+      "safeArea": {
+        "x": 0.36,
+        "y": 0.08,
+        "width": 0.56,
+        "height": 0.66
+      },
+      "focalPoint": {
+        "x": 0.24,
+        "y": 0.5
+      },
+      "mobileCrop": {
+        "mode": "center_crop",
+        "keepSafeArea": true,
+        "notes": "窄屏保留寒窗、竹影、书案与右侧浅纸留白。"
+      },
+      "motion": {
+        "type": "none"
+      },
+      "reducedMotionFallback": "fallback-ink-motion-static-v1",
+      "roleStyle": {
+        "colorWeightsPercent": {
+          "paper": 65,
+          "paleInk": 18,
+          "bambooGreen": 8,
+          "lightOchre": 6,
+          "cinnabar": 3
+        },
+        "panelMaterials": [
+          "宣纸纤维",
+          "淡竹影",
+          "浅墨边框"
+        ],
+        "avoid": [
+          "大面积金色",
+          "深官青",
+          "强朱砂"
+        ]
+      },
+      "source": {
+        "type": "ai_generated",
+        "tool": "Codex imagegen",
+        "model": "gpt-image-2",
+        "generatedAt": "2026-05-14",
+        "promptSummary": "寒窗书案、旧书卷、砚台、竹影、晨光和远山，表现书生清寒求学气质。"
+      },
+      "license": {
+        "type": "ai_generated_project_asset",
+        "commercialUseConfirmed": false,
+        "summary": "原创 AI 生成素材，当前仅个人游玩/开发使用；未做公开商用确认。"
+      },
+      "reviewStatus": "approved",
+      "visualReview": {
+        "reviewedBy": "Codex",
+        "reviewedAt": "2026-05-14",
+        "status": "approved",
+        "summary": "通过：寒窗、书卷、竹影和远山形成清朗书生气；大面积留白可承载 UI；无人物正脸、可读文字、水印、现代物件或直接高中暗示。"
+      },
+      "safetyReview": {
+        "reviewedBy": "Codex",
+        "reviewedAt": "2026-05-14",
+        "status": "approved",
+        "summary": "通过：身份背景只表达书生读书氛围，不暗示隐藏事实或服务器未裁决的科举结果；manifest 仅保存安全相对路径和台账 id。"
+      },
+      "performance": {
+        "bytes": 322456,
+        "targetMaxBytes": 1258291,
+        "thumbnailBytes": 9882
+      },
+      "ledgerId": "ui-role-scholar-study-v1"
+    },
+    {
+      "id": "ui-role-magistrate-yamen-desk-v1",
+      "version": 1,
+      "phase": "S73.6",
+      "category": "role_background",
+      "subcategory": "magistrate_yamen_desk",
+      "usage": [
+        "game_main",
+        "archive_page"
+      ],
+      "role": "magistrate",
+      "scene": null,
+      "path": "/assets/ui/roles/role-magistrate-yamen-desk-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-role-magistrate-yamen-desk-v1.webp",
+      "fallbackRef": "fallback-paper-panel-v1",
+      "dimensions": {
+        "width": 1800,
+        "height": 1200
+      },
+      "aspectRatio": "1800:1200",
+      "format": "webp",
+      "transparent": false,
+      "safeArea": {
+        "x": 0.36,
+        "y": 0.08,
+        "width": 0.56,
+        "height": 0.62
+      },
+      "focalPoint": {
+        "x": 0.25,
+        "y": 0.55
+      },
+      "mobileCrop": {
+        "mode": "center_crop",
+        "keepSafeArea": true,
+        "notes": "窄屏保留县城雨景、木案、卷宗盒和中央空白纸面。"
+      },
+      "motion": {
+        "type": "none"
+      },
+      "reducedMotionFallback": "fallback-ink-motion-static-v1",
+      "roleStyle": {
+        "colorWeightsPercent": {
+          "paper": 55,
+          "woodOchre": 18,
+          "paleInk": 12,
+          "officialBlue": 8,
+          "cinnabar": 5,
+          "mossGreen": 2
+        },
+        "panelMaterials": [
+          "旧木案",
+          "纸卷边",
+          "朱砂小标识"
+        ],
+        "avoid": [
+          "宫廷金纹",
+          "龙纹",
+          "过多红印"
+        ]
+      },
+      "source": {
+        "type": "ai_generated",
+        "tool": "Codex imagegen",
+        "model": "gpt-image-2",
+        "generatedAt": "2026-05-14",
+        "promptSummary": "雨后县衙侧室、木案、空白卷纸、文书盒、笔筒和淡墨县城屋脊，表现地方官日常治理。"
+      },
+      "license": {
+        "type": "ai_generated_project_asset",
+        "commercialUseConfirmed": false,
+        "summary": "原创 AI 生成素材，当前仅个人游玩/开发使用；未做公开商用确认。"
+      },
+      "reviewStatus": "approved",
+      "visualReview": {
+        "reviewedBy": "Codex",
+        "reviewedAt": "2026-05-14",
+        "status": "approved",
+        "summary": "通过：重生成版卷宗和盒面干净无伪文字，县衙与民居远景体现基层治理；无夸张刑具、现代徽章或宫廷化。"
+      },
+      "safetyReview": {
+        "reviewedBy": "Codex",
+        "reviewedAt": "2026-05-14",
+        "status": "approved",
+        "summary": "通过：只表达地方官署氛围，不表现处罚、升迁、判决或隐藏案情；manifest 仅保存安全路径、用途和审核结论。"
+      },
+      "performance": {
+        "bytes": 354260,
+        "targetMaxBytes": 1258291,
+        "thumbnailBytes": 8982
+      },
+      "ledgerId": "ui-role-magistrate-yamen-desk-v1"
+    },
+    {
+      "id": "ui-role-official-duty-room-v1",
+      "version": 1,
+      "phase": "S73.6",
+      "category": "role_background",
+      "subcategory": "official_duty_room",
+      "usage": [
+        "game_main",
+        "court_page",
+        "people_page"
+      ],
+      "role": "official",
+      "scene": null,
+      "path": "/assets/ui/roles/role-official-duty-room-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-role-official-duty-room-v1.webp",
+      "fallbackRef": "fallback-paper-panel-v1",
+      "dimensions": {
+        "width": 1800,
+        "height": 1200
+      },
+      "aspectRatio": "1800:1200",
+      "format": "webp",
+      "transparent": false,
+      "safeArea": {
+        "x": 0.24,
+        "y": 0.08,
+        "width": 0.56,
+        "height": 0.62
+      },
+      "focalPoint": {
+        "x": 0.55,
+        "y": 0.56
+      },
+      "mobileCrop": {
+        "mode": "center_crop",
+        "keepSafeArea": true,
+        "notes": "窄屏保留值房窗格、青色官袍衣角、案头空白奏本和远处廊影。"
+      },
+      "motion": {
+        "type": "none"
+      },
+      "reducedMotionFallback": "fallback-ink-motion-static-v1",
+      "roleStyle": {
+        "colorWeightsPercent": {
+          "paper": 50,
+          "officialBlue": 18,
+          "paleInk": 14,
+          "woodOchre": 8,
+          "cinnabar": 5,
+          "mutedGold": 5
+        },
+        "panelMaterials": [
+          "官青细边",
+          "淡金压纹",
+          "纸质奏本层叠"
+        ],
+        "avoid": [
+          "龙纹",
+          "玉玺",
+          "明显一品大员符号"
+        ]
+      },
+      "source": {
+        "type": "ai_generated",
+        "tool": "Codex imagegen",
+        "model": "gpt-image-2",
+        "generatedAt": "2026-05-14",
+        "promptSummary": "官署值房、空白奏本、笏板、铜镇纸、青色官袍衣角和淡淡宫城廊影，表现初入仕途的谨慎端正。"
+      },
+      "license": {
+        "type": "ai_generated_project_asset",
+        "commercialUseConfirmed": false,
+        "summary": "原创 AI 生成素材，当前仅个人游玩/开发使用；未做公开商用确认。"
+      },
+      "reviewStatus": "approved",
+      "visualReview": {
+        "reviewedBy": "Codex",
+        "reviewedAt": "2026-05-14",
+        "status": "approved",
+        "summary": "通过：官署层级克制，青色官袍和空白奏本有入仕感但不过度大臣化；无品级符号、龙纹、可读文字或现代办公物。"
+      },
+      "safetyReview": {
+        "reviewedBy": "Codex",
+        "reviewedAt": "2026-05-14",
+        "status": "approved",
+        "summary": "通过：不暗示升迁、任免或服务器未裁决结果；只作为入仕官员 UI 气质背景。"
+      },
+      "performance": {
+        "bytes": 308384,
+        "targetMaxBytes": 1258291,
+        "thumbnailBytes": 8798
+      },
+      "ledgerId": "ui-role-official-duty-room-v1"
+    },
+    {
+      "id": "ui-role-minister-palace-desk-v1",
+      "version": 1,
+      "phase": "S73.6",
+      "category": "role_background",
+      "subcategory": "minister_palace_desk",
+      "usage": [
+        "game_main",
+        "court_page",
+        "archive_page"
+      ],
+      "role": "minister",
+      "scene": null,
+      "path": "/assets/ui/roles/role-minister-palace-desk-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-role-minister-palace-desk-v1.webp",
+      "fallbackRef": "fallback-paper-panel-v1",
+      "dimensions": {
+        "width": 1800,
+        "height": 1200
+      },
+      "aspectRatio": "1800:1200",
+      "format": "webp",
+      "transparent": false,
+      "safeArea": {
+        "x": 0.32,
+        "y": 0.08,
+        "width": 0.58,
+        "height": 0.62
+      },
+      "focalPoint": {
+        "x": 0.24,
+        "y": 0.58
+      },
+      "mobileCrop": {
+        "mode": "center_crop",
+        "keepSafeArea": true,
+        "notes": "窄屏保留深殿侧案、帘幕、奏折与右侧留白。"
+      },
+      "motion": {
+        "type": "none"
+      },
+      "reducedMotionFallback": "fallback-ink-motion-static-v1",
+      "roleStyle": {
+        "colorWeightsPercent": {
+          "paper": 42,
+          "deepInk": 20,
+          "officialBlue": 14,
+          "woodOchre": 10,
+          "cinnabar": 7,
+          "mutedGold": 7
+        },
+        "panelMaterials": [
+          "厚纸奏折",
+          "暗金细线",
+          "深墨压边"
+        ],
+        "avoid": [
+          "龙椅中心构图",
+          "过度宫廷奢华",
+          "强封赏暗示"
+        ]
+      },
+      "source": {
+        "type": "ai_generated",
+        "tool": "Codex imagegen",
+        "model": "gpt-image-2",
+        "generatedAt": "2026-05-14",
+        "promptSummary": "深殿侧案、厚重木案、层叠空白奏折、笏板、沉墨砚台、帘幕和远处殿柱，表现大臣谋国责任。"
+      },
+      "license": {
+        "type": "ai_generated_project_asset",
+        "commercialUseConfirmed": false,
+        "summary": "原创 AI 生成素材，当前仅个人游玩/开发使用；未做公开商用确认。"
+      },
+      "reviewStatus": "approved",
+      "visualReview": {
+        "reviewedBy": "Codex",
+        "reviewedAt": "2026-05-14",
+        "status": "approved",
+        "summary": "通过：深墨与官青压住画面，权力重量明确但未皇帝化；无龙椅中心构图、强金色、可读文字或封赏暗示。"
+      },
+      "safetyReview": {
+        "reviewedBy": "Codex",
+        "reviewedAt": "2026-05-14",
+        "status": "approved",
+        "summary": "通过：不表现具体政绩、胜负、任免或 hidden 政局真值；只作为大臣/朝议 UI 背景。"
+      },
+      "performance": {
+        "bytes": 322800,
+        "targetMaxBytes": 1258291,
+        "thumbnailBytes": 8400
+      },
+      "ledgerId": "ui-role-minister-palace-desk-v1"
+    },
+    {
+      "id": "ui-role-general-frontier-tent-v1",
+      "version": 1,
+      "phase": "S73.6",
+      "category": "role_background",
+      "subcategory": "general_frontier_tent",
+      "usage": [
+        "game_main",
+        "map_page",
+        "archive_page"
+      ],
+      "role": "general",
+      "scene": null,
+      "path": "/assets/ui/roles/role-general-frontier-tent-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-role-general-frontier-tent-v1.webp",
+      "fallbackRef": "fallback-paper-panel-v1",
+      "dimensions": {
+        "width": 1800,
+        "height": 1200
+      },
+      "aspectRatio": "1800:1200",
+      "format": "webp",
+      "transparent": false,
+      "safeArea": {
+        "x": 0.34,
+        "y": 0.12,
+        "width": 0.56,
+        "height": 0.6
+      },
+      "focalPoint": {
+        "x": 0.54,
+        "y": 0.52
+      },
+      "mobileCrop": {
+        "mode": "center_crop",
+        "keepSafeArea": true,
+        "notes": "窄屏保留军帐案面、无字舆图、甲片和远处关城。"
+      },
+      "motion": {
+        "type": "none"
+      },
+      "reducedMotionFallback": "fallback-ink-motion-static-v1",
+      "roleStyle": {
+        "colorWeightsPercent": {
+          "paper": 45,
+          "inkBlack": 18,
+          "ironGray": 14,
+          "sandOchre": 10,
+          "darkCinnabar": 6,
+          "qingdai": 5,
+          "mutedGold": 2
+        },
+        "panelMaterials": [
+          "甲片纹",
+          "粗纸军令",
+          "暗红小标记"
+        ],
+        "avoid": [
+          "血腥",
+          "现代武器",
+          "清晰地图文字"
+        ]
+      },
+      "source": {
+        "type": "ai_generated",
+        "tool": "Codex imagegen",
+        "model": "gpt-image-2",
+        "generatedAt": "2026-05-14",
+        "promptSummary": "边塞军帐、无字地图、令箭、甲片、旧铜镇物、残烛和风沙关城，表现将领边防决断。"
+      },
+      "license": {
+        "type": "ai_generated_project_asset",
+        "commercialUseConfirmed": false,
+        "summary": "原创 AI 生成素材，当前仅个人游玩/开发使用；未做公开商用确认。"
+      },
+      "reviewStatus": "approved",
+      "visualReview": {
+        "reviewedBy": "Codex",
+        "reviewedAt": "2026-05-14",
+        "status": "approved",
+        "summary": "通过：军帐、甲片、沙色关城和无字舆图体现边防压力；无血腥、现代武器、胜利旗帜或可读地图文字。"
+      },
+      "safetyReview": {
+        "reviewedBy": "Codex",
+        "reviewedAt": "2026-05-14",
+        "status": "approved",
+        "summary": "通过：地图和战具只作视觉氛围，不进入 prompt、AI 工具或战争裁决事实；不表现胜负结果。"
+      },
+      "performance": {
+        "bytes": 370600,
+        "targetMaxBytes": 1258291,
+        "thumbnailBytes": 10512
+      },
+      "ledgerId": "ui-role-general-frontier-tent-v1"
+    },
+    {
+      "id": "ui-role-emperor-imperial-desk-v1",
+      "version": 1,
+      "phase": "S73.6",
+      "category": "role_background",
+      "subcategory": "emperor_imperial_desk",
+      "usage": [
+        "game_main",
+        "court_page"
+      ],
+      "role": "emperor",
+      "scene": null,
+      "path": "/assets/ui/roles/role-emperor-imperial-desk-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-role-emperor-imperial-desk-v1.webp",
+      "fallbackRef": "fallback-paper-panel-v1",
+      "dimensions": {
+        "width": 1800,
+        "height": 1200
+      },
+      "aspectRatio": "1800:1200",
+      "format": "webp",
+      "transparent": false,
+      "safeArea": {
+        "x": 0.32,
+        "y": 0.08,
+        "width": 0.58,
+        "height": 0.58
+      },
+      "focalPoint": {
+        "x": 0.56,
+        "y": 0.56
+      },
+      "mobileCrop": {
+        "mode": "center_crop",
+        "keepSafeArea": true,
+        "notes": "窄屏保留御案、空白奏折、低饱和金屏风和淡墨宫阙。"
+      },
+      "motion": {
+        "type": "none"
+      },
+      "reducedMotionFallback": "fallback-ink-motion-static-v1",
+      "roleStyle": {
+        "colorWeightsPercent": {
+          "paper": 38,
+          "mutedGold": 16,
+          "deepInk": 16,
+          "cinnabar": 10,
+          "officialBlue": 8,
+          "ochre": 7,
+          "blankSpace": 5
+        },
+        "panelMaterials": [
+          "暗金细框",
+          "御案木纹",
+          "宣纸叠层"
+        ],
+        "avoid": [
+          "高亮金色",
+          "满屏龙纹",
+          "现代帝王游戏 UI"
+        ]
+      },
+      "source": {
+        "type": "ai_generated",
+        "tool": "Codex imagegen",
+        "model": "gpt-image-2",
+        "generatedAt": "2026-05-14",
+        "promptSummary": "御案近景、空白奏折、玉镇、砚台、朱砂盒、低饱和金屏风和淡墨宫阙，表现克制帝王威仪。"
+      },
+      "license": {
+        "type": "ai_generated_project_asset",
+        "commercialUseConfirmed": false,
+        "summary": "原创 AI 生成素材，当前仅个人游玩/开发使用；未做公开商用确认。"
+      },
+      "reviewStatus": "approved",
+      "visualReview": {
+        "reviewedBy": "Codex",
+        "reviewedAt": "2026-05-14",
+        "status": "approved",
+        "summary": "通过：低饱和金与御案形成皇帝身份感，画面克制、留白充足；无龙形主体、可读圣旨、强金光或现代帝王游戏 UI。"
+      },
+      "safetyReview": {
+        "reviewedBy": "Codex",
+        "reviewedAt": "2026-05-14",
+        "status": "approved",
+        "summary": "通过：只作为皇帝/朝议视觉背景，不表现具体诏令、任免、赏罚或服务器未裁决结果。"
+      },
+      "performance": {
+        "bytes": 331630,
+        "targetMaxBytes": 1258291,
+        "thumbnailBytes": 8322
+      },
+      "ledgerId": "ui-role-emperor-imperial-desk-v1"
     }
   ],
   "updatedAt": "2026-05-14"
