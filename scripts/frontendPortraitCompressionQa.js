@@ -22,7 +22,7 @@ const PLACEHOLDER_HEIGHT = 96;
 const MAX_INITIAL_PORTRAITS = 8;
 const PLACEHOLDER_TARGET_MAX_BYTES = 8192;
 
-const s7310Phases = new Set(["S73.10.2", "S73.10.3", "S73.10.4", "S73.10.5"]);
+const s7310Phases = new Set(["S73.10.2", "S73.10.3", "S73.10.4", "S73.10.5", "S73.10.7"]);
 const forbiddenSecretOrLocalPath =
   /(OPENAI_API_KEY|DEEPSEEK_API_KEY|MIMO_API_KEY|ANTHROPIC_API_KEY|sk-[A-Za-z0-9_-]{6,}|tp-[A-Za-z0-9_-]{6,}|[A-Za-z]:[\\/]|file:\/\/|https?:\/\/|data:|data[\\/](?:sessions|audit))/i;
 const forbiddenAssetValue =

@@ -1,9 +1,9 @@
 {
   "schemaVersion": 1,
   "phase": "S73.9",
-  "generatedAt": "2026-05-16T06:55:21.478Z",
+  "generatedAt": "2026-05-16T10:39:49.164Z",
   "manifestRef": "public/assets/ui/ink-ui-manifest.json",
-  "manifestSha256": "3d426c78d533723e79ce520efa9367c545c4b9b78bb5ecc05363727f017523ef",
+  "manifestSha256": "23f878c69201a7052bd05959e326b6a9055a4b7114f249407c636670cce927ec",
   "previewRef": "public/assets/ui/asset-qa-preview.html",
   "compositeBackgrounds": [
     {
@@ -29,7 +29,7 @@
     "reason": null
   },
   "summary": {
-    "totalAssets": 594,
+    "totalAssets": 618,
     "transparentAssets": 19,
     "byPhase": {
       "S73.3": 16,
@@ -41,7 +41,8 @@
       "S73.10.2": 192,
       "S73.10.3": 188,
       "S73.10.4": 72,
-      "S73.10.5": 72
+      "S73.10.5": 72,
+      "S73.10.7": 24
     },
     "byCategory": {
       "material": 19,
@@ -49,10 +50,10 @@
       "effect": 9,
       "scene": 10,
       "role_background": 6,
-      "portrait": 548
+      "portrait": 572
     },
     "byReviewStatus": {
-      "approved": 590,
+      "approved": 614,
       "approved_with_limits": 4
     },
     "errorCount": 0,
@@ -37584,6 +37585,1542 @@
           "exists": true,
           "bytes": 1122,
           "sha256": "0a7f502f28a57b2eb0d143544077ec7f209521bb786785078ee6a9815b8c3b4d",
+          "dimensions": {
+            "width": 64,
+            "height": 96,
+            "alpha": false
+          }
+        }
+      },
+      "transparentQa": {
+        "required": false,
+        "backgrounds": [],
+        "sidecar": null,
+        "pixel": null
+      },
+      "issues": []
+    },
+    {
+      "id": "portrait-s73-10-young_female-court-reader-v1",
+      "phase": "S73.10.7",
+      "category": "portrait",
+      "subcategory": "young_female_style_pool",
+      "usage": [
+        "people_page",
+        "npc_dialogue",
+        "game_main",
+        "court_or_story_scene"
+      ],
+      "path": "/assets/ui/portraits/s73-10/portrait-s73-10-young_female-court-reader-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-portrait-s73-10-young_female-court-reader-v1.webp",
+      "fallbackRef": "fallback-role-silhouette-v1",
+      "reviewStatus": "approved",
+      "runtimeUsable": true,
+      "dimensions": {
+        "width": 1024,
+        "height": 1536
+      },
+      "transparent": false,
+      "files": {
+        "image": {
+          "path": "/assets/ui/portraits/s73-10/portrait-s73-10-young_female-court-reader-v1.webp",
+          "exists": true,
+          "bytes": 111848,
+          "sha256": "0267f89cdc796a374f8133c2131becf679626137d9c95a02c0428c5de884cf31",
+          "dimensions": {
+            "width": 1024,
+            "height": 1536
+          },
+          "alpha": false
+        },
+        "thumbnail": {
+          "path": "/assets/ui/thumbs/thumb-portrait-s73-10-young_female-court-reader-v1.webp",
+          "exists": true,
+          "bytes": 26442,
+          "sha256": "06778b9e6b377f59b2f3b7912fc41f91e4ef6adfc9a6de847a2359cda0d692ed",
+          "dimensions": {
+            "width": 384,
+            "height": 576,
+            "alpha": false
+          }
+        },
+        "lowResPlaceholder": {
+          "path": "/assets/ui/portraits/placeholders/placeholder-portrait-s73-10-young_female-court-reader-v1.webp",
+          "exists": true,
+          "bytes": 1304,
+          "sha256": "bf2b1c2c2f6e57e06e4651784e8eb07080e537196dfe4cd75b9533a9ca787291",
+          "dimensions": {
+            "width": 64,
+            "height": 96,
+            "alpha": false
+          }
+        }
+      },
+      "transparentQa": {
+        "required": false,
+        "backgrounds": [],
+        "sidecar": null,
+        "pixel": null
+      },
+      "issues": []
+    },
+    {
+      "id": "portrait-s73-10-young_female-young-female-official-v1",
+      "phase": "S73.10.7",
+      "category": "portrait",
+      "subcategory": "young_female_style_pool",
+      "usage": [
+        "people_page",
+        "npc_dialogue",
+        "game_main",
+        "court_or_story_scene"
+      ],
+      "path": "/assets/ui/portraits/s73-10/portrait-s73-10-young_female-young-female-official-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-portrait-s73-10-young_female-young-female-official-v1.webp",
+      "fallbackRef": "fallback-role-silhouette-v1",
+      "reviewStatus": "approved",
+      "runtimeUsable": true,
+      "dimensions": {
+        "width": 1024,
+        "height": 1536
+      },
+      "transparent": false,
+      "files": {
+        "image": {
+          "path": "/assets/ui/portraits/s73-10/portrait-s73-10-young_female-young-female-official-v1.webp",
+          "exists": true,
+          "bytes": 115148,
+          "sha256": "d20d689e0dc734b28359763813830d12d40a3c245d16df14a6e8314ba6c28e28",
+          "dimensions": {
+            "width": 1024,
+            "height": 1536
+          },
+          "alpha": false
+        },
+        "thumbnail": {
+          "path": "/assets/ui/thumbs/thumb-portrait-s73-10-young_female-young-female-official-v1.webp",
+          "exists": true,
+          "bytes": 26366,
+          "sha256": "b3bc87bcb37a4dd6fdaf456d99cf4d480f632e0f3457fc70ffa68d3d55deee2b",
+          "dimensions": {
+            "width": 384,
+            "height": 576,
+            "alpha": false
+          }
+        },
+        "lowResPlaceholder": {
+          "path": "/assets/ui/portraits/placeholders/placeholder-portrait-s73-10-young_female-young-female-official-v1.webp",
+          "exists": true,
+          "bytes": 1396,
+          "sha256": "87f97ad149b34461416685277c26ec48ff8bb51c0ad381334b6461101fc6982e",
+          "dimensions": {
+            "width": 64,
+            "height": 96,
+            "alpha": false
+          }
+        }
+      },
+      "transparentQa": {
+        "required": false,
+        "backgrounds": [],
+        "sidecar": null,
+        "pixel": null
+      },
+      "issues": []
+    },
+    {
+      "id": "portrait-s73-10-young_female-court-noble-v1",
+      "phase": "S73.10.7",
+      "category": "portrait",
+      "subcategory": "young_female_style_pool",
+      "usage": [
+        "people_page",
+        "npc_dialogue",
+        "game_main",
+        "court_or_story_scene"
+      ],
+      "path": "/assets/ui/portraits/s73-10/portrait-s73-10-young_female-court-noble-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-portrait-s73-10-young_female-court-noble-v1.webp",
+      "fallbackRef": "fallback-role-silhouette-v1",
+      "reviewStatus": "approved",
+      "runtimeUsable": true,
+      "dimensions": {
+        "width": 1024,
+        "height": 1536
+      },
+      "transparent": false,
+      "files": {
+        "image": {
+          "path": "/assets/ui/portraits/s73-10/portrait-s73-10-young_female-court-noble-v1.webp",
+          "exists": true,
+          "bytes": 164984,
+          "sha256": "5cd6e80e30b4204e296a23c39af569646f59f1454a04b60bdfb1c945791889e2",
+          "dimensions": {
+            "width": 1024,
+            "height": 1536
+          },
+          "alpha": false
+        },
+        "thumbnail": {
+          "path": "/assets/ui/thumbs/thumb-portrait-s73-10-young_female-court-noble-v1.webp",
+          "exists": true,
+          "bytes": 40576,
+          "sha256": "88f22d62cd4507bf87b90448b6613ad2aa5ddd065a6798ec61d488a44660152b",
+          "dimensions": {
+            "width": 384,
+            "height": 576,
+            "alpha": false
+          }
+        },
+        "lowResPlaceholder": {
+          "path": "/assets/ui/portraits/placeholders/placeholder-portrait-s73-10-young_female-court-noble-v1.webp",
+          "exists": true,
+          "bytes": 1480,
+          "sha256": "2818fb53e023e95c41d73dfe9c9c7dac78a52abf384f3aa1013f5bbc6a151484",
+          "dimensions": {
+            "width": 64,
+            "height": 96,
+            "alpha": false
+          }
+        }
+      },
+      "transparentQa": {
+        "required": false,
+        "backgrounds": [],
+        "sidecar": null,
+        "pixel": null
+      },
+      "issues": []
+    },
+    {
+      "id": "portrait-s73-10-young_female-scholar-poet-v1",
+      "phase": "S73.10.7",
+      "category": "portrait",
+      "subcategory": "young_female_style_pool",
+      "usage": [
+        "people_page",
+        "npc_dialogue",
+        "game_main",
+        "court_or_story_scene"
+      ],
+      "path": "/assets/ui/portraits/s73-10/portrait-s73-10-young_female-scholar-poet-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-portrait-s73-10-young_female-scholar-poet-v1.webp",
+      "fallbackRef": "fallback-role-silhouette-v1",
+      "reviewStatus": "approved",
+      "runtimeUsable": true,
+      "dimensions": {
+        "width": 1024,
+        "height": 1536
+      },
+      "transparent": false,
+      "files": {
+        "image": {
+          "path": "/assets/ui/portraits/s73-10/portrait-s73-10-young_female-scholar-poet-v1.webp",
+          "exists": true,
+          "bytes": 125868,
+          "sha256": "6c38e4634009e3e67e192b583df8b2123fedd9b38c188184bf86a0762fe88109",
+          "dimensions": {
+            "width": 1024,
+            "height": 1536
+          },
+          "alpha": false
+        },
+        "thumbnail": {
+          "path": "/assets/ui/thumbs/thumb-portrait-s73-10-young_female-scholar-poet-v1.webp",
+          "exists": true,
+          "bytes": 30058,
+          "sha256": "d294d666ed8842598a3bf3622852284bfcd72a3d1153dcaf5ede2ade90e3c735",
+          "dimensions": {
+            "width": 384,
+            "height": 576,
+            "alpha": false
+          }
+        },
+        "lowResPlaceholder": {
+          "path": "/assets/ui/portraits/placeholders/placeholder-portrait-s73-10-young_female-scholar-poet-v1.webp",
+          "exists": true,
+          "bytes": 1354,
+          "sha256": "ad5d4bb5c1b3c4a353d8742f2eb38a2604cd9394e170419eed72c55fcfd42063",
+          "dimensions": {
+            "width": 64,
+            "height": 96,
+            "alpha": false
+          }
+        }
+      },
+      "transparentQa": {
+        "required": false,
+        "backgrounds": [],
+        "sidecar": null,
+        "pixel": null
+      },
+      "issues": []
+    },
+    {
+      "id": "portrait-s73-10-young_female-merchant-clerk-v1",
+      "phase": "S73.10.7",
+      "category": "portrait",
+      "subcategory": "young_female_style_pool",
+      "usage": [
+        "people_page",
+        "npc_dialogue",
+        "game_main",
+        "court_or_story_scene"
+      ],
+      "path": "/assets/ui/portraits/s73-10/portrait-s73-10-young_female-merchant-clerk-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-portrait-s73-10-young_female-merchant-clerk-v1.webp",
+      "fallbackRef": "fallback-role-silhouette-v1",
+      "reviewStatus": "approved",
+      "runtimeUsable": true,
+      "dimensions": {
+        "width": 1024,
+        "height": 1536
+      },
+      "transparent": false,
+      "files": {
+        "image": {
+          "path": "/assets/ui/portraits/s73-10/portrait-s73-10-young_female-merchant-clerk-v1.webp",
+          "exists": true,
+          "bytes": 129822,
+          "sha256": "514a266bb8395779e870befee7623a74e0c88f81cdbe2133ae777be10259a381",
+          "dimensions": {
+            "width": 1024,
+            "height": 1536
+          },
+          "alpha": false
+        },
+        "thumbnail": {
+          "path": "/assets/ui/thumbs/thumb-portrait-s73-10-young_female-merchant-clerk-v1.webp",
+          "exists": true,
+          "bytes": 31818,
+          "sha256": "09a81149279f567a2b53fa5eb3b4f11c2ddbe10ae5cbe47111968fed2d9dc3b4",
+          "dimensions": {
+            "width": 384,
+            "height": 576,
+            "alpha": false
+          }
+        },
+        "lowResPlaceholder": {
+          "path": "/assets/ui/portraits/placeholders/placeholder-portrait-s73-10-young_female-merchant-clerk-v1.webp",
+          "exists": true,
+          "bytes": 1460,
+          "sha256": "092eebb45938222955f4f809cc23b07b5066a0a5898456bd41e58b9a1d04afd6",
+          "dimensions": {
+            "width": 64,
+            "height": 96,
+            "alpha": false
+          }
+        }
+      },
+      "transparentQa": {
+        "required": false,
+        "backgrounds": [],
+        "sidecar": null,
+        "pixel": null
+      },
+      "issues": []
+    },
+    {
+      "id": "portrait-s73-10-young_female-frontier-envoy-v1",
+      "phase": "S73.10.7",
+      "category": "portrait",
+      "subcategory": "young_female_style_pool",
+      "usage": [
+        "people_page",
+        "npc_dialogue",
+        "game_main",
+        "court_or_story_scene"
+      ],
+      "path": "/assets/ui/portraits/s73-10/portrait-s73-10-young_female-frontier-envoy-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-portrait-s73-10-young_female-frontier-envoy-v1.webp",
+      "fallbackRef": "fallback-role-silhouette-v1",
+      "reviewStatus": "approved",
+      "runtimeUsable": true,
+      "dimensions": {
+        "width": 1024,
+        "height": 1536
+      },
+      "transparent": false,
+      "files": {
+        "image": {
+          "path": "/assets/ui/portraits/s73-10/portrait-s73-10-young_female-frontier-envoy-v1.webp",
+          "exists": true,
+          "bytes": 162924,
+          "sha256": "41cd8d4eaa09f25fd4fa18a5f96b4b8079db019af8db581e6643c51fe3edb784",
+          "dimensions": {
+            "width": 1024,
+            "height": 1536
+          },
+          "alpha": false
+        },
+        "thumbnail": {
+          "path": "/assets/ui/thumbs/thumb-portrait-s73-10-young_female-frontier-envoy-v1.webp",
+          "exists": true,
+          "bytes": 37906,
+          "sha256": "a9331eefda8e07fbcce66e917f6385a43bdb6cc60d0b420d753159cdd1d1819a",
+          "dimensions": {
+            "width": 384,
+            "height": 576,
+            "alpha": false
+          }
+        },
+        "lowResPlaceholder": {
+          "path": "/assets/ui/portraits/placeholders/placeholder-portrait-s73-10-young_female-frontier-envoy-v1.webp",
+          "exists": true,
+          "bytes": 1414,
+          "sha256": "84ea181a036c27ada731e6b9789efd7cc3bbf6bcdb34d9e2179e1642bee8aae4",
+          "dimensions": {
+            "width": 64,
+            "height": 96,
+            "alpha": false
+          }
+        }
+      },
+      "transparentQa": {
+        "required": false,
+        "backgrounds": [],
+        "sidecar": null,
+        "pixel": null
+      },
+      "issues": []
+    },
+    {
+      "id": "portrait-s73-10-young_female-female-scholar-v1",
+      "phase": "S73.10.7",
+      "category": "portrait",
+      "subcategory": "young_female_style_pool",
+      "usage": [
+        "people_page",
+        "npc_dialogue",
+        "game_main",
+        "court_or_story_scene"
+      ],
+      "path": "/assets/ui/portraits/s73-10/portrait-s73-10-young_female-female-scholar-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-portrait-s73-10-young_female-female-scholar-v1.webp",
+      "fallbackRef": "fallback-role-silhouette-v1",
+      "reviewStatus": "approved",
+      "runtimeUsable": true,
+      "dimensions": {
+        "width": 1024,
+        "height": 1536
+      },
+      "transparent": false,
+      "files": {
+        "image": {
+          "path": "/assets/ui/portraits/s73-10/portrait-s73-10-young_female-female-scholar-v1.webp",
+          "exists": true,
+          "bytes": 142506,
+          "sha256": "138549dc9bfc0b44de2960347357ac5da3aa3c8596ff95001a7434ed02be95bc",
+          "dimensions": {
+            "width": 1024,
+            "height": 1536
+          },
+          "alpha": false
+        },
+        "thumbnail": {
+          "path": "/assets/ui/thumbs/thumb-portrait-s73-10-young_female-female-scholar-v1.webp",
+          "exists": true,
+          "bytes": 33470,
+          "sha256": "25d04e5f576e9a163e27303872101309b8b11fde3d3f98571e992809c16cfdbf",
+          "dimensions": {
+            "width": 384,
+            "height": 576,
+            "alpha": false
+          }
+        },
+        "lowResPlaceholder": {
+          "path": "/assets/ui/portraits/placeholders/placeholder-portrait-s73-10-young_female-female-scholar-v1.webp",
+          "exists": true,
+          "bytes": 1428,
+          "sha256": "0b8f14aec2137449efc46ae61755acdd7ad6b4efb6a639fe7db5dcfd18602f29",
+          "dimensions": {
+            "width": 64,
+            "height": 96,
+            "alpha": false
+          }
+        }
+      },
+      "transparentQa": {
+        "required": false,
+        "backgrounds": [],
+        "sidecar": null,
+        "pixel": null
+      },
+      "issues": []
+    },
+    {
+      "id": "portrait-s73-10-young_female-academy-reader-v1",
+      "phase": "S73.10.7",
+      "category": "portrait",
+      "subcategory": "young_female_style_pool",
+      "usage": [
+        "people_page",
+        "npc_dialogue",
+        "game_main",
+        "court_or_story_scene"
+      ],
+      "path": "/assets/ui/portraits/s73-10/portrait-s73-10-young_female-academy-reader-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-portrait-s73-10-young_female-academy-reader-v1.webp",
+      "fallbackRef": "fallback-role-silhouette-v1",
+      "reviewStatus": "approved",
+      "runtimeUsable": true,
+      "dimensions": {
+        "width": 1024,
+        "height": 1536
+      },
+      "transparent": false,
+      "files": {
+        "image": {
+          "path": "/assets/ui/portraits/s73-10/portrait-s73-10-young_female-academy-reader-v1.webp",
+          "exists": true,
+          "bytes": 117568,
+          "sha256": "dc1584143b7e029b36ab0e17957b5e1b85f45b6c9f310991d5e5645e1a529c28",
+          "dimensions": {
+            "width": 1024,
+            "height": 1536
+          },
+          "alpha": false
+        },
+        "thumbnail": {
+          "path": "/assets/ui/thumbs/thumb-portrait-s73-10-young_female-academy-reader-v1.webp",
+          "exists": true,
+          "bytes": 28598,
+          "sha256": "d14aac0e666cdd1a4a17918d6d03cc8b6cca08af45856e984fea803fbf42ceba",
+          "dimensions": {
+            "width": 384,
+            "height": 576,
+            "alpha": false
+          }
+        },
+        "lowResPlaceholder": {
+          "path": "/assets/ui/portraits/placeholders/placeholder-portrait-s73-10-young_female-academy-reader-v1.webp",
+          "exists": true,
+          "bytes": 1302,
+          "sha256": "9bfaf17476def466acf5ffcae549f3bd1075b634372e95d2adc4f91a77e51695",
+          "dimensions": {
+            "width": 64,
+            "height": 96,
+            "alpha": false
+          }
+        }
+      },
+      "transparentQa": {
+        "required": false,
+        "backgrounds": [],
+        "sidecar": null,
+        "pixel": null
+      },
+      "issues": []
+    },
+    {
+      "id": "portrait-s73-10-young_female-poet-woman-v1",
+      "phase": "S73.10.7",
+      "category": "portrait",
+      "subcategory": "young_female_style_pool",
+      "usage": [
+        "people_page",
+        "npc_dialogue",
+        "game_main",
+        "court_or_story_scene"
+      ],
+      "path": "/assets/ui/portraits/s73-10/portrait-s73-10-young_female-poet-woman-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-portrait-s73-10-young_female-poet-woman-v1.webp",
+      "fallbackRef": "fallback-role-silhouette-v1",
+      "reviewStatus": "approved",
+      "runtimeUsable": true,
+      "dimensions": {
+        "width": 1024,
+        "height": 1536
+      },
+      "transparent": false,
+      "files": {
+        "image": {
+          "path": "/assets/ui/portraits/s73-10/portrait-s73-10-young_female-poet-woman-v1.webp",
+          "exists": true,
+          "bytes": 136822,
+          "sha256": "78ee1be50a151287b8348805748bbf6babcdc31f095bf4025e1c9c45406892dc",
+          "dimensions": {
+            "width": 1024,
+            "height": 1536
+          },
+          "alpha": false
+        },
+        "thumbnail": {
+          "path": "/assets/ui/thumbs/thumb-portrait-s73-10-young_female-poet-woman-v1.webp",
+          "exists": true,
+          "bytes": 33800,
+          "sha256": "1ce70af1caf8dcaf6dde6418657504be828ce131689e0eb6ae758916391b4f5a",
+          "dimensions": {
+            "width": 384,
+            "height": 576,
+            "alpha": false
+          }
+        },
+        "lowResPlaceholder": {
+          "path": "/assets/ui/portraits/placeholders/placeholder-portrait-s73-10-young_female-poet-woman-v1.webp",
+          "exists": true,
+          "bytes": 1340,
+          "sha256": "ec03d1e16cd81831f4d79d45c6e052676f523ea0504c918f5d462628d60a4569",
+          "dimensions": {
+            "width": 64,
+            "height": 96,
+            "alpha": false
+          }
+        }
+      },
+      "transparentQa": {
+        "required": false,
+        "backgrounds": [],
+        "sidecar": null,
+        "pixel": null
+      },
+      "issues": []
+    },
+    {
+      "id": "portrait-s73-10-young_female-exam-companion-v1",
+      "phase": "S73.10.7",
+      "category": "portrait",
+      "subcategory": "young_female_style_pool",
+      "usage": [
+        "people_page",
+        "npc_dialogue",
+        "game_main",
+        "court_or_story_scene"
+      ],
+      "path": "/assets/ui/portraits/s73-10/portrait-s73-10-young_female-exam-companion-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-portrait-s73-10-young_female-exam-companion-v1.webp",
+      "fallbackRef": "fallback-role-silhouette-v1",
+      "reviewStatus": "approved",
+      "runtimeUsable": true,
+      "dimensions": {
+        "width": 1024,
+        "height": 1536
+      },
+      "transparent": false,
+      "files": {
+        "image": {
+          "path": "/assets/ui/portraits/s73-10/portrait-s73-10-young_female-exam-companion-v1.webp",
+          "exists": true,
+          "bytes": 140006,
+          "sha256": "54bf41f97a64852a699398f24b5d67aeacee4171c6fcb67bace0cec844ad689e",
+          "dimensions": {
+            "width": 1024,
+            "height": 1536
+          },
+          "alpha": false
+        },
+        "thumbnail": {
+          "path": "/assets/ui/thumbs/thumb-portrait-s73-10-young_female-exam-companion-v1.webp",
+          "exists": true,
+          "bytes": 32866,
+          "sha256": "4e3ec613580a8b7c4d0726c5a49fc0e56ed129fefde78ad15ed6d864268fe7e5",
+          "dimensions": {
+            "width": 384,
+            "height": 576,
+            "alpha": false
+          }
+        },
+        "lowResPlaceholder": {
+          "path": "/assets/ui/portraits/placeholders/placeholder-portrait-s73-10-young_female-exam-companion-v1.webp",
+          "exists": true,
+          "bytes": 1334,
+          "sha256": "805c54f683b3126399c76ab68cf15be7fe70c484edbb6119537fd6bb7e0d472b",
+          "dimensions": {
+            "width": 64,
+            "height": 96,
+            "alpha": false
+          }
+        }
+      },
+      "transparentQa": {
+        "required": false,
+        "backgrounds": [],
+        "sidecar": null,
+        "pixel": null
+      },
+      "issues": []
+    },
+    {
+      "id": "portrait-s73-10-young_female-night-scribe-v1",
+      "phase": "S73.10.7",
+      "category": "portrait",
+      "subcategory": "young_female_style_pool",
+      "usage": [
+        "people_page",
+        "npc_dialogue",
+        "game_main",
+        "court_or_story_scene"
+      ],
+      "path": "/assets/ui/portraits/s73-10/portrait-s73-10-young_female-night-scribe-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-portrait-s73-10-young_female-night-scribe-v1.webp",
+      "fallbackRef": "fallback-role-silhouette-v1",
+      "reviewStatus": "approved",
+      "runtimeUsable": true,
+      "dimensions": {
+        "width": 1024,
+        "height": 1536
+      },
+      "transparent": false,
+      "files": {
+        "image": {
+          "path": "/assets/ui/portraits/s73-10/portrait-s73-10-young_female-night-scribe-v1.webp",
+          "exists": true,
+          "bytes": 154246,
+          "sha256": "a72f68c6be1385f2251bcc65f1df4630f659b6df8240fc534197270ef8d56bd7",
+          "dimensions": {
+            "width": 1024,
+            "height": 1536
+          },
+          "alpha": false
+        },
+        "thumbnail": {
+          "path": "/assets/ui/thumbs/thumb-portrait-s73-10-young_female-night-scribe-v1.webp",
+          "exists": true,
+          "bytes": 38050,
+          "sha256": "97dafbc10cd4d348f626c500ccae3854e8ec7b641fae11831e9752580784dbd8",
+          "dimensions": {
+            "width": 384,
+            "height": 576,
+            "alpha": false
+          }
+        },
+        "lowResPlaceholder": {
+          "path": "/assets/ui/portraits/placeholders/placeholder-portrait-s73-10-young_female-night-scribe-v1.webp",
+          "exists": true,
+          "bytes": 1582,
+          "sha256": "def063b47bb00ca73d2507f67dd148b617a10452c167b3afc7dda4031f692c82",
+          "dimensions": {
+            "width": 64,
+            "height": 96,
+            "alpha": false
+          }
+        }
+      },
+      "transparentQa": {
+        "required": false,
+        "backgrounds": [],
+        "sidecar": null,
+        "pixel": null
+      },
+      "issues": []
+    },
+    {
+      "id": "portrait-s73-10-young_female-library-attendant-v1",
+      "phase": "S73.10.7",
+      "category": "portrait",
+      "subcategory": "young_female_style_pool",
+      "usage": [
+        "people_page",
+        "npc_dialogue",
+        "game_main",
+        "court_or_story_scene"
+      ],
+      "path": "/assets/ui/portraits/s73-10/portrait-s73-10-young_female-library-attendant-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-portrait-s73-10-young_female-library-attendant-v1.webp",
+      "fallbackRef": "fallback-role-silhouette-v1",
+      "reviewStatus": "approved",
+      "runtimeUsable": true,
+      "dimensions": {
+        "width": 1024,
+        "height": 1536
+      },
+      "transparent": false,
+      "files": {
+        "image": {
+          "path": "/assets/ui/portraits/s73-10/portrait-s73-10-young_female-library-attendant-v1.webp",
+          "exists": true,
+          "bytes": 145814,
+          "sha256": "9872b3bb707ded4ae01a00a8057751da3d68304def9fcbfdda9b31b5336c52de",
+          "dimensions": {
+            "width": 1024,
+            "height": 1536
+          },
+          "alpha": false
+        },
+        "thumbnail": {
+          "path": "/assets/ui/thumbs/thumb-portrait-s73-10-young_female-library-attendant-v1.webp",
+          "exists": true,
+          "bytes": 35048,
+          "sha256": "6e41d619afeb83df287173c4b1797fa71318dab646b827f26f13689e0b020629",
+          "dimensions": {
+            "width": 384,
+            "height": 576,
+            "alpha": false
+          }
+        },
+        "lowResPlaceholder": {
+          "path": "/assets/ui/portraits/placeholders/placeholder-portrait-s73-10-young_female-library-attendant-v1.webp",
+          "exists": true,
+          "bytes": 1434,
+          "sha256": "10164eb1bcf2dcc68a87ab268b83e0e27cbec293cb35e9d4a76fceefc3c0c424",
+          "dimensions": {
+            "width": 64,
+            "height": 96,
+            "alpha": false
+          }
+        }
+      },
+      "transparentQa": {
+        "required": false,
+        "backgrounds": [],
+        "sidecar": null,
+        "pixel": null
+      },
+      "issues": []
+    },
+    {
+      "id": "portrait-s73-10-young_female-merchant-owner-v1",
+      "phase": "S73.10.7",
+      "category": "portrait",
+      "subcategory": "young_female_style_pool",
+      "usage": [
+        "people_page",
+        "npc_dialogue",
+        "game_main",
+        "court_or_story_scene"
+      ],
+      "path": "/assets/ui/portraits/s73-10/portrait-s73-10-young_female-merchant-owner-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-portrait-s73-10-young_female-merchant-owner-v1.webp",
+      "fallbackRef": "fallback-role-silhouette-v1",
+      "reviewStatus": "approved",
+      "runtimeUsable": true,
+      "dimensions": {
+        "width": 1024,
+        "height": 1536
+      },
+      "transparent": false,
+      "files": {
+        "image": {
+          "path": "/assets/ui/portraits/s73-10/portrait-s73-10-young_female-merchant-owner-v1.webp",
+          "exists": true,
+          "bytes": 156060,
+          "sha256": "c242af6db82e0027f19bc9d386d92df60439aa5ad817d27246e5f83bbe120f6b",
+          "dimensions": {
+            "width": 1024,
+            "height": 1536
+          },
+          "alpha": false
+        },
+        "thumbnail": {
+          "path": "/assets/ui/thumbs/thumb-portrait-s73-10-young_female-merchant-owner-v1.webp",
+          "exists": true,
+          "bytes": 38440,
+          "sha256": "eda04d1a845daf1b56dde8f055260c30c960872681c7cc3a4f4118bb8a818bd5",
+          "dimensions": {
+            "width": 384,
+            "height": 576,
+            "alpha": false
+          }
+        },
+        "lowResPlaceholder": {
+          "path": "/assets/ui/portraits/placeholders/placeholder-portrait-s73-10-young_female-merchant-owner-v1.webp",
+          "exists": true,
+          "bytes": 1436,
+          "sha256": "22e2a2612525fd022812d46f53e91db18e76214c69816f96d7528f106b8bb19f",
+          "dimensions": {
+            "width": 64,
+            "height": 96,
+            "alpha": false
+          }
+        }
+      },
+      "transparentQa": {
+        "required": false,
+        "backgrounds": [],
+        "sidecar": null,
+        "pixel": null
+      },
+      "issues": []
+    },
+    {
+      "id": "portrait-s73-10-young_female-silk-proprietor-v1",
+      "phase": "S73.10.7",
+      "category": "portrait",
+      "subcategory": "young_female_style_pool",
+      "usage": [
+        "people_page",
+        "npc_dialogue",
+        "game_main",
+        "court_or_story_scene"
+      ],
+      "path": "/assets/ui/portraits/s73-10/portrait-s73-10-young_female-silk-proprietor-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-portrait-s73-10-young_female-silk-proprietor-v1.webp",
+      "fallbackRef": "fallback-role-silhouette-v1",
+      "reviewStatus": "approved",
+      "runtimeUsable": true,
+      "dimensions": {
+        "width": 1024,
+        "height": 1536
+      },
+      "transparent": false,
+      "files": {
+        "image": {
+          "path": "/assets/ui/portraits/s73-10/portrait-s73-10-young_female-silk-proprietor-v1.webp",
+          "exists": true,
+          "bytes": 155444,
+          "sha256": "274ddda916ba8a53882fd03c105e4c8f8b94fe340c55c83ad39582ee175db479",
+          "dimensions": {
+            "width": 1024,
+            "height": 1536
+          },
+          "alpha": false
+        },
+        "thumbnail": {
+          "path": "/assets/ui/thumbs/thumb-portrait-s73-10-young_female-silk-proprietor-v1.webp",
+          "exists": true,
+          "bytes": 37144,
+          "sha256": "33aa7d413ad2d7732bec78f48e8012e5c8c52a09a15005a95637e33371d08146",
+          "dimensions": {
+            "width": 384,
+            "height": 576,
+            "alpha": false
+          }
+        },
+        "lowResPlaceholder": {
+          "path": "/assets/ui/portraits/placeholders/placeholder-portrait-s73-10-young_female-silk-proprietor-v1.webp",
+          "exists": true,
+          "bytes": 1434,
+          "sha256": "1df74291bcf886b0c415a949d3f79b20cac3490d467786a80130348333a6f382",
+          "dimensions": {
+            "width": 64,
+            "height": 96,
+            "alpha": false
+          }
+        }
+      },
+      "transparentQa": {
+        "required": false,
+        "backgrounds": [],
+        "sidecar": null,
+        "pixel": null
+      },
+      "issues": []
+    },
+    {
+      "id": "portrait-s73-10-young_female-tea-manager-v1",
+      "phase": "S73.10.7",
+      "category": "portrait",
+      "subcategory": "young_female_style_pool",
+      "usage": [
+        "people_page",
+        "npc_dialogue",
+        "game_main",
+        "court_or_story_scene"
+      ],
+      "path": "/assets/ui/portraits/s73-10/portrait-s73-10-young_female-tea-manager-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-portrait-s73-10-young_female-tea-manager-v1.webp",
+      "fallbackRef": "fallback-role-silhouette-v1",
+      "reviewStatus": "approved",
+      "runtimeUsable": true,
+      "dimensions": {
+        "width": 1024,
+        "height": 1536
+      },
+      "transparent": false,
+      "files": {
+        "image": {
+          "path": "/assets/ui/portraits/s73-10/portrait-s73-10-young_female-tea-manager-v1.webp",
+          "exists": true,
+          "bytes": 150216,
+          "sha256": "7f49550e790fb543615fbc2b202a4bad7eb1346713efb854d1aace6227a245f8",
+          "dimensions": {
+            "width": 1024,
+            "height": 1536
+          },
+          "alpha": false
+        },
+        "thumbnail": {
+          "path": "/assets/ui/thumbs/thumb-portrait-s73-10-young_female-tea-manager-v1.webp",
+          "exists": true,
+          "bytes": 36822,
+          "sha256": "19e4c417fcf292fa2031e84dae3de2c61111b8c9835a298eac7e1a57f8cbd3c1",
+          "dimensions": {
+            "width": 384,
+            "height": 576,
+            "alpha": false
+          }
+        },
+        "lowResPlaceholder": {
+          "path": "/assets/ui/portraits/placeholders/placeholder-portrait-s73-10-young_female-tea-manager-v1.webp",
+          "exists": true,
+          "bytes": 1404,
+          "sha256": "62636fed37237b1ee4d52822f60ce5af0793d88a67f75b521aa83bc0cac3ec26",
+          "dimensions": {
+            "width": 64,
+            "height": 96,
+            "alpha": false
+          }
+        }
+      },
+      "transparentQa": {
+        "required": false,
+        "backgrounds": [],
+        "sidecar": null,
+        "pixel": null
+      },
+      "issues": []
+    },
+    {
+      "id": "portrait-s73-10-young_female-accountant-v1",
+      "phase": "S73.10.7",
+      "category": "portrait",
+      "subcategory": "young_female_style_pool",
+      "usage": [
+        "people_page",
+        "npc_dialogue",
+        "game_main",
+        "court_or_story_scene"
+      ],
+      "path": "/assets/ui/portraits/s73-10/portrait-s73-10-young_female-accountant-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-portrait-s73-10-young_female-accountant-v1.webp",
+      "fallbackRef": "fallback-role-silhouette-v1",
+      "reviewStatus": "approved",
+      "runtimeUsable": true,
+      "dimensions": {
+        "width": 1024,
+        "height": 1536
+      },
+      "transparent": false,
+      "files": {
+        "image": {
+          "path": "/assets/ui/portraits/s73-10/portrait-s73-10-young_female-accountant-v1.webp",
+          "exists": true,
+          "bytes": 153660,
+          "sha256": "15b44663a92231e3bac5aae6de6f2e5688110173265ac7b6edfd8cd28c6cbe01",
+          "dimensions": {
+            "width": 1024,
+            "height": 1536
+          },
+          "alpha": false
+        },
+        "thumbnail": {
+          "path": "/assets/ui/thumbs/thumb-portrait-s73-10-young_female-accountant-v1.webp",
+          "exists": true,
+          "bytes": 38136,
+          "sha256": "ead57e814db8ea0d23827c962a58373abfbb6e9896dcc0e0fbec28ce3a71146e",
+          "dimensions": {
+            "width": 384,
+            "height": 576,
+            "alpha": false
+          }
+        },
+        "lowResPlaceholder": {
+          "path": "/assets/ui/portraits/placeholders/placeholder-portrait-s73-10-young_female-accountant-v1.webp",
+          "exists": true,
+          "bytes": 1388,
+          "sha256": "1c3851225fab596e115cc042a3f63c7fdbdc4fdb02d7c150c688f03f38746555",
+          "dimensions": {
+            "width": 64,
+            "height": 96,
+            "alpha": false
+          }
+        }
+      },
+      "transparentQa": {
+        "required": false,
+        "backgrounds": [],
+        "sidecar": null,
+        "pixel": null
+      },
+      "issues": []
+    },
+    {
+      "id": "portrait-s73-10-young_female-contract-negotiator-v1",
+      "phase": "S73.10.7",
+      "category": "portrait",
+      "subcategory": "young_female_style_pool",
+      "usage": [
+        "people_page",
+        "npc_dialogue",
+        "game_main",
+        "court_or_story_scene"
+      ],
+      "path": "/assets/ui/portraits/s73-10/portrait-s73-10-young_female-contract-negotiator-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-portrait-s73-10-young_female-contract-negotiator-v1.webp",
+      "fallbackRef": "fallback-role-silhouette-v1",
+      "reviewStatus": "approved",
+      "runtimeUsable": true,
+      "dimensions": {
+        "width": 1024,
+        "height": 1536
+      },
+      "transparent": false,
+      "files": {
+        "image": {
+          "path": "/assets/ui/portraits/s73-10/portrait-s73-10-young_female-contract-negotiator-v1.webp",
+          "exists": true,
+          "bytes": 158734,
+          "sha256": "5b52e09d8a93347f3811fb6a514aa070d6b1f286c1017fb2a1db16c66169636a",
+          "dimensions": {
+            "width": 1024,
+            "height": 1536
+          },
+          "alpha": false
+        },
+        "thumbnail": {
+          "path": "/assets/ui/thumbs/thumb-portrait-s73-10-young_female-contract-negotiator-v1.webp",
+          "exists": true,
+          "bytes": 38362,
+          "sha256": "7a6b2cbd34cce28eff5da8509287d57b1b66ad3bfabaf776e42277983cc04f14",
+          "dimensions": {
+            "width": 384,
+            "height": 576,
+            "alpha": false
+          }
+        },
+        "lowResPlaceholder": {
+          "path": "/assets/ui/portraits/placeholders/placeholder-portrait-s73-10-young_female-contract-negotiator-v1.webp",
+          "exists": true,
+          "bytes": 1516,
+          "sha256": "1cecfe301248417fe8770529be3a9f93e2580b9df239e817cd0f10f4a89ad2c1",
+          "dimensions": {
+            "width": 64,
+            "height": 96,
+            "alpha": false
+          }
+        }
+      },
+      "transparentQa": {
+        "required": false,
+        "backgrounds": [],
+        "sidecar": null,
+        "pixel": null
+      },
+      "issues": []
+    },
+    {
+      "id": "portrait-s73-10-young_female-traveling-trader-v1",
+      "phase": "S73.10.7",
+      "category": "portrait",
+      "subcategory": "young_female_style_pool",
+      "usage": [
+        "people_page",
+        "npc_dialogue",
+        "game_main",
+        "court_or_story_scene"
+      ],
+      "path": "/assets/ui/portraits/s73-10/portrait-s73-10-young_female-traveling-trader-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-portrait-s73-10-young_female-traveling-trader-v1.webp",
+      "fallbackRef": "fallback-role-silhouette-v1",
+      "reviewStatus": "approved",
+      "runtimeUsable": true,
+      "dimensions": {
+        "width": 1024,
+        "height": 1536
+      },
+      "transparent": false,
+      "files": {
+        "image": {
+          "path": "/assets/ui/portraits/s73-10/portrait-s73-10-young_female-traveling-trader-v1.webp",
+          "exists": true,
+          "bytes": 156498,
+          "sha256": "4f2b587b9ac7d951b823ade4f3a56e88d11c2c38a980f7c4eacd25c762c413c2",
+          "dimensions": {
+            "width": 1024,
+            "height": 1536
+          },
+          "alpha": false
+        },
+        "thumbnail": {
+          "path": "/assets/ui/thumbs/thumb-portrait-s73-10-young_female-traveling-trader-v1.webp",
+          "exists": true,
+          "bytes": 38090,
+          "sha256": "714eaa0fa8a83096dacc87a9fa0c4a358c3f9c0a14e112b913f842c7c495290d",
+          "dimensions": {
+            "width": 384,
+            "height": 576,
+            "alpha": false
+          }
+        },
+        "lowResPlaceholder": {
+          "path": "/assets/ui/portraits/placeholders/placeholder-portrait-s73-10-young_female-traveling-trader-v1.webp",
+          "exists": true,
+          "bytes": 1402,
+          "sha256": "1494c1ad3bad8cfc4c5f20c53c88db1cfff41073e9199a765d70fedfe26a8d14",
+          "dimensions": {
+            "width": 64,
+            "height": 96,
+            "alpha": false
+          }
+        }
+      },
+      "transparentQa": {
+        "required": false,
+        "backgrounds": [],
+        "sidecar": null,
+        "pixel": null
+      },
+      "issues": []
+    },
+    {
+      "id": "portrait-s73-10-young_female-frontier-envoy-ride-v1",
+      "phase": "S73.10.7",
+      "category": "portrait",
+      "subcategory": "young_female_style_pool",
+      "usage": [
+        "people_page",
+        "npc_dialogue",
+        "game_main",
+        "court_or_story_scene"
+      ],
+      "path": "/assets/ui/portraits/s73-10/portrait-s73-10-young_female-frontier-envoy-ride-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-portrait-s73-10-young_female-frontier-envoy-ride-v1.webp",
+      "fallbackRef": "fallback-role-silhouette-v1",
+      "reviewStatus": "approved",
+      "runtimeUsable": true,
+      "dimensions": {
+        "width": 1024,
+        "height": 1536
+      },
+      "transparent": false,
+      "files": {
+        "image": {
+          "path": "/assets/ui/portraits/s73-10/portrait-s73-10-young_female-frontier-envoy-ride-v1.webp",
+          "exists": true,
+          "bytes": 165798,
+          "sha256": "dc9c6c26b396cfd36fc63a108709afacae0d3eaa27020d1cf59a31f05eb8744f",
+          "dimensions": {
+            "width": 1024,
+            "height": 1536
+          },
+          "alpha": false
+        },
+        "thumbnail": {
+          "path": "/assets/ui/thumbs/thumb-portrait-s73-10-young_female-frontier-envoy-ride-v1.webp",
+          "exists": true,
+          "bytes": 41078,
+          "sha256": "42ec60da2eac8e3364ccbdfed522e08fb27af64c7d925be14f4cac2c6988dbba",
+          "dimensions": {
+            "width": 384,
+            "height": 576,
+            "alpha": false
+          }
+        },
+        "lowResPlaceholder": {
+          "path": "/assets/ui/portraits/placeholders/placeholder-portrait-s73-10-young_female-frontier-envoy-ride-v1.webp",
+          "exists": true,
+          "bytes": 1438,
+          "sha256": "2c135b505818cf6293dc26e3623250e369585bedeafc50effde5a57d34966c21",
+          "dimensions": {
+            "width": 64,
+            "height": 96,
+            "alpha": false
+          }
+        }
+      },
+      "transparentQa": {
+        "required": false,
+        "backgrounds": [],
+        "sidecar": null,
+        "pixel": null
+      },
+      "issues": []
+    },
+    {
+      "id": "portrait-s73-10-young_female-military-scribe-v1",
+      "phase": "S73.10.7",
+      "category": "portrait",
+      "subcategory": "young_female_style_pool",
+      "usage": [
+        "people_page",
+        "npc_dialogue",
+        "game_main",
+        "court_or_story_scene"
+      ],
+      "path": "/assets/ui/portraits/s73-10/portrait-s73-10-young_female-military-scribe-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-portrait-s73-10-young_female-military-scribe-v1.webp",
+      "fallbackRef": "fallback-role-silhouette-v1",
+      "reviewStatus": "approved",
+      "runtimeUsable": true,
+      "dimensions": {
+        "width": 1024,
+        "height": 1536
+      },
+      "transparent": false,
+      "files": {
+        "image": {
+          "path": "/assets/ui/portraits/s73-10/portrait-s73-10-young_female-military-scribe-v1.webp",
+          "exists": true,
+          "bytes": 152830,
+          "sha256": "e08aa568f83b62e16352832c1dbd894d5941dd3a14be892e7347cb10624ef31f",
+          "dimensions": {
+            "width": 1024,
+            "height": 1536
+          },
+          "alpha": false
+        },
+        "thumbnail": {
+          "path": "/assets/ui/thumbs/thumb-portrait-s73-10-young_female-military-scribe-v1.webp",
+          "exists": true,
+          "bytes": 35584,
+          "sha256": "ec0382dbc5184dc40d78a5907ad6800b26e270df10bb8162001bde3346a8d113",
+          "dimensions": {
+            "width": 384,
+            "height": 576,
+            "alpha": false
+          }
+        },
+        "lowResPlaceholder": {
+          "path": "/assets/ui/portraits/placeholders/placeholder-portrait-s73-10-young_female-military-scribe-v1.webp",
+          "exists": true,
+          "bytes": 1444,
+          "sha256": "c133dd585eed334686061382c6582849e0483581579f1078443320c64fbeaeb4",
+          "dimensions": {
+            "width": 64,
+            "height": 96,
+            "alpha": false
+          }
+        }
+      },
+      "transparentQa": {
+        "required": false,
+        "backgrounds": [],
+        "sidecar": null,
+        "pixel": null
+      },
+      "issues": []
+    },
+    {
+      "id": "portrait-s73-10-young_female-female-commander-v1",
+      "phase": "S73.10.7",
+      "category": "portrait",
+      "subcategory": "young_female_style_pool",
+      "usage": [
+        "people_page",
+        "npc_dialogue",
+        "game_main",
+        "court_or_story_scene"
+      ],
+      "path": "/assets/ui/portraits/s73-10/portrait-s73-10-young_female-female-commander-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-portrait-s73-10-young_female-female-commander-v1.webp",
+      "fallbackRef": "fallback-role-silhouette-v1",
+      "reviewStatus": "approved",
+      "runtimeUsable": true,
+      "dimensions": {
+        "width": 1024,
+        "height": 1536
+      },
+      "transparent": false,
+      "files": {
+        "image": {
+          "path": "/assets/ui/portraits/s73-10/portrait-s73-10-young_female-female-commander-v1.webp",
+          "exists": true,
+          "bytes": 181118,
+          "sha256": "70c20344571af93fe46456f7a4d3719cb9fc2d7755f97629732ad1991db6a8c6",
+          "dimensions": {
+            "width": 1024,
+            "height": 1536
+          },
+          "alpha": false
+        },
+        "thumbnail": {
+          "path": "/assets/ui/thumbs/thumb-portrait-s73-10-young_female-female-commander-v1.webp",
+          "exists": true,
+          "bytes": 44912,
+          "sha256": "e2fd4958b49f0f694115326bcd78a505149eba134b69e5e9a8dcff07c5426d2e",
+          "dimensions": {
+            "width": 384,
+            "height": 576,
+            "alpha": false
+          }
+        },
+        "lowResPlaceholder": {
+          "path": "/assets/ui/portraits/placeholders/placeholder-portrait-s73-10-young_female-female-commander-v1.webp",
+          "exists": true,
+          "bytes": 1532,
+          "sha256": "51820082168eea7d3fda7fda787cf61597110eaae6e4dc411fd474b97f202f40",
+          "dimensions": {
+            "width": 64,
+            "height": 96,
+            "alpha": false
+          }
+        }
+      },
+      "transparentQa": {
+        "required": false,
+        "backgrounds": [],
+        "sidecar": null,
+        "pixel": null
+      },
+      "issues": []
+    },
+    {
+      "id": "portrait-s73-10-young_female-scout-messenger-v1",
+      "phase": "S73.10.7",
+      "category": "portrait",
+      "subcategory": "young_female_style_pool",
+      "usage": [
+        "people_page",
+        "npc_dialogue",
+        "game_main",
+        "court_or_story_scene"
+      ],
+      "path": "/assets/ui/portraits/s73-10/portrait-s73-10-young_female-scout-messenger-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-portrait-s73-10-young_female-scout-messenger-v1.webp",
+      "fallbackRef": "fallback-role-silhouette-v1",
+      "reviewStatus": "approved",
+      "runtimeUsable": true,
+      "dimensions": {
+        "width": 1024,
+        "height": 1536
+      },
+      "transparent": false,
+      "files": {
+        "image": {
+          "path": "/assets/ui/portraits/s73-10/portrait-s73-10-young_female-scout-messenger-v1.webp",
+          "exists": true,
+          "bytes": 173908,
+          "sha256": "843f71f32fa21929f9f31097cc73477d403ab839bfc97db94a77d4369cbeb8c0",
+          "dimensions": {
+            "width": 1024,
+            "height": 1536
+          },
+          "alpha": false
+        },
+        "thumbnail": {
+          "path": "/assets/ui/thumbs/thumb-portrait-s73-10-young_female-scout-messenger-v1.webp",
+          "exists": true,
+          "bytes": 43698,
+          "sha256": "709ea050aaf1477b7a560467dfb726755e5b027029a9bf3f2eea7d7787dcab55",
+          "dimensions": {
+            "width": 384,
+            "height": 576,
+            "alpha": false
+          }
+        },
+        "lowResPlaceholder": {
+          "path": "/assets/ui/portraits/placeholders/placeholder-portrait-s73-10-young_female-scout-messenger-v1.webp",
+          "exists": true,
+          "bytes": 1568,
+          "sha256": "f8ca7b6a56c2dfd5e4d1b41cb5389abce2a41094120ca267462931ab5533a024",
+          "dimensions": {
+            "width": 64,
+            "height": 96,
+            "alpha": false
+          }
+        }
+      },
+      "transparentQa": {
+        "required": false,
+        "backgrounds": [],
+        "sidecar": null,
+        "pixel": null
+      },
+      "issues": []
+    },
+    {
+      "id": "portrait-s73-10-young_female-border-negotiator-v1",
+      "phase": "S73.10.7",
+      "category": "portrait",
+      "subcategory": "young_female_style_pool",
+      "usage": [
+        "people_page",
+        "npc_dialogue",
+        "game_main",
+        "court_or_story_scene"
+      ],
+      "path": "/assets/ui/portraits/s73-10/portrait-s73-10-young_female-border-negotiator-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-portrait-s73-10-young_female-border-negotiator-v1.webp",
+      "fallbackRef": "fallback-role-silhouette-v1",
+      "reviewStatus": "approved",
+      "runtimeUsable": true,
+      "dimensions": {
+        "width": 1024,
+        "height": 1536
+      },
+      "transparent": false,
+      "files": {
+        "image": {
+          "path": "/assets/ui/portraits/s73-10/portrait-s73-10-young_female-border-negotiator-v1.webp",
+          "exists": true,
+          "bytes": 158814,
+          "sha256": "7a4f2276273d254ec4365f5c3cb20231492bf5db874792a66a0995e2001fe8b3",
+          "dimensions": {
+            "width": 1024,
+            "height": 1536
+          },
+          "alpha": false
+        },
+        "thumbnail": {
+          "path": "/assets/ui/thumbs/thumb-portrait-s73-10-young_female-border-negotiator-v1.webp",
+          "exists": true,
+          "bytes": 39696,
+          "sha256": "830142516026f179502d871c169551a5b03bb281356a59cd009d8d1428182093",
+          "dimensions": {
+            "width": 384,
+            "height": 576,
+            "alpha": false
+          }
+        },
+        "lowResPlaceholder": {
+          "path": "/assets/ui/portraits/placeholders/placeholder-portrait-s73-10-young_female-border-negotiator-v1.webp",
+          "exists": true,
+          "bytes": 1452,
+          "sha256": "3bf2b235383458b461eb04e94bba50b760260d94a440bc0fb9fef9482110bbbf",
+          "dimensions": {
+            "width": 64,
+            "height": 96,
+            "alpha": false
+          }
+        }
+      },
+      "transparentQa": {
+        "required": false,
+        "backgrounds": [],
+        "sidecar": null,
+        "pixel": null
+      },
+      "issues": []
+    },
+    {
+      "id": "portrait-s73-10-young_female-guard-officer-v1",
+      "phase": "S73.10.7",
+      "category": "portrait",
+      "subcategory": "young_female_style_pool",
+      "usage": [
+        "people_page",
+        "npc_dialogue",
+        "game_main",
+        "court_or_story_scene"
+      ],
+      "path": "/assets/ui/portraits/s73-10/portrait-s73-10-young_female-guard-officer-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-portrait-s73-10-young_female-guard-officer-v1.webp",
+      "fallbackRef": "fallback-role-silhouette-v1",
+      "reviewStatus": "approved",
+      "runtimeUsable": true,
+      "dimensions": {
+        "width": 1024,
+        "height": 1536
+      },
+      "transparent": false,
+      "files": {
+        "image": {
+          "path": "/assets/ui/portraits/s73-10/portrait-s73-10-young_female-guard-officer-v1.webp",
+          "exists": true,
+          "bytes": 166018,
+          "sha256": "69e4014338d9d48a1fec055655141ca471828816091caa77d92c97726b1c2867",
+          "dimensions": {
+            "width": 1024,
+            "height": 1536
+          },
+          "alpha": false
+        },
+        "thumbnail": {
+          "path": "/assets/ui/thumbs/thumb-portrait-s73-10-young_female-guard-officer-v1.webp",
+          "exists": true,
+          "bytes": 41388,
+          "sha256": "8a22aa35dbb1c7e7f5d3b31472a49828601820752ee807ce7773e4caed66e331",
+          "dimensions": {
+            "width": 384,
+            "height": 576,
+            "alpha": false
+          }
+        },
+        "lowResPlaceholder": {
+          "path": "/assets/ui/portraits/placeholders/placeholder-portrait-s73-10-young_female-guard-officer-v1.webp",
+          "exists": true,
+          "bytes": 1348,
+          "sha256": "9b0627e69541318db98e8618cfdd6b028f0af93164ec7cac4ed947567a8008e2",
           "dimensions": {
             "width": 64,
             "height": 96,

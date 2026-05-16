@@ -282,7 +282,30 @@
     "war-council",
     "night-study",
     "market-talk",
-    "palace-summons"
+    "palace-summons",
+    "court-reader",
+    "young-female-official",
+    "court-noble",
+    "scholar-poet",
+    "merchant-clerk",
+    "female-scholar",
+    "academy-reader",
+    "poet-woman",
+    "exam-companion",
+    "night-scribe",
+    "library-attendant",
+    "merchant-owner",
+    "silk-proprietor",
+    "tea-manager",
+    "accountant",
+    "contract-negotiator",
+    "traveling-trader",
+    "frontier-envoy-ride",
+    "military-scribe",
+    "female-commander",
+    "scout-messenger",
+    "border-negotiator",
+    "guard-officer"
   ],
   "fallbackCatalog": [
     {
@@ -58250,6 +58273,2430 @@
         "lowResPlaceholderBytes": 1122
       },
       "ledgerId": "portrait-s73-10-scene_anchor-palace-summons-resolution-v1"
+    },
+    {
+      "id": "portrait-s73-10-young_female-court-reader-v1",
+      "version": 1,
+      "phase": "S73.10.7",
+      "category": "portrait",
+      "subcategory": "young_female_style_pool",
+      "usage": [
+        "people_page",
+        "npc_dialogue",
+        "game_main",
+        "court_or_story_scene"
+      ],
+      "role": "court-reader",
+      "roleLabel": "宫廷侍读",
+      "roleStage": "young_female_patch",
+      "scene": null,
+      "portraitRef": "portrait-s73-10-young_female-court-reader-v1",
+      "genderPresentation": "feminine",
+      "ageBand": "adult_young",
+      "statusVariant": "holding_blank_scroll",
+      "emotionVariant": "poised",
+      "posture": "执空白卷轴侧立",
+      "identityTags": [
+        "young_adult_female_patch",
+        "female_explicit",
+        "not_middle_aged",
+        "not_androgynous",
+        "court-reader",
+        "holding_blank_scroll"
+      ],
+      "emotionTags": [
+        "poised",
+        "holding_blank_scroll"
+      ],
+      "path": "/assets/ui/portraits/s73-10/portrait-s73-10-young_female-court-reader-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-portrait-s73-10-young_female-court-reader-v1.webp",
+      "lowResPlaceholderPath": "/assets/ui/portraits/placeholders/placeholder-portrait-s73-10-young_female-court-reader-v1.webp",
+      "fallbackRef": "fallback-role-silhouette-v1",
+      "dimensions": {
+        "width": 1024,
+        "height": 1536
+      },
+      "aspectRatio": "1024:1536",
+      "format": "webp",
+      "transparent": false,
+      "safeArea": {
+        "x": 0.19,
+        "y": 0.05,
+        "width": 0.62,
+        "height": 0.88
+      },
+      "focalPoint": {
+        "x": 0.5,
+        "y": 0.24
+      },
+      "mobileCrop": {
+        "mode": "center_crop_or_contain",
+        "keepSafeArea": true,
+        "notes": "S73.10.7 年轻女性补充池窄屏保留脸部、发髻簪钗、上身衣料层次、腰封细腰、肩颈线和职业道具；任何中年化或中性化候选不得进入 runtime。"
+      },
+      "lazyLoad": {
+        "group": "portrait_pool_young_female_s73_10_7",
+        "allowEagerLoad": false,
+        "thumbnailFirst": true,
+        "lowResPlaceholder": true,
+        "maxInitialPortraits": 8
+      },
+      "source": {
+        "type": "ai_generated",
+        "tool": "Codex imagegen",
+        "model": "gpt-image-2",
+        "generatedAt": "2026-05-16",
+        "promptSummary": "年轻成年宫署、女官、贵女、才女、商贾和边地使者补充页；高髻簪钗、层叠衣料、腰封细腰和清楚女性面容，避免中年化与中性化。 单格角色：宫廷侍读，执空白卷轴侧立。"
+      },
+      "license": {
+        "type": "ai_generated_project_asset",
+        "commercialUseConfirmed": false,
+        "summary": "原创 AI 生成素材，当前仅个人游玩/开发使用；未做公开商用确认。"
+      },
+      "reviewStatus": "approved",
+      "visualReview": {
+        "reviewedBy": "Codex",
+        "reviewedAt": "2026-05-16",
+        "status": "approved",
+        "summary": "通过：全部为年轻成年女性，脸部、发髻簪钗、肩颈线、层叠衣料、腰封细腰和端庄姿态均能明确女性特征；未见中年化、发福化、老态或中性化问题，小尺寸可辨认身份和轮廓。"
+      },
+      "safetyReview": {
+        "reviewedBy": "Codex",
+        "reviewedAt": "2026-05-16",
+        "status": "approved",
+        "summary": "通过：完整衣着，无低胸、透视、裸露、挑逗、幼态、现代物、水印、徽标、可读文字、本地路径、key、raw/hidden 内容或未公开剧情事实。"
+      },
+      "performance": {
+        "bytes": 111848,
+        "targetMaxBytes": 614400,
+        "thumbnailBytes": 26442,
+        "thumbnailTargetMaxBytes": 256000,
+        "lowResPlaceholderBytes": 1304
+      },
+      "ledgerId": "portrait-s73-10-young_female-court-reader-v1"
+    },
+    {
+      "id": "portrait-s73-10-young_female-young-female-official-v1",
+      "version": 1,
+      "phase": "S73.10.7",
+      "category": "portrait",
+      "subcategory": "young_female_style_pool",
+      "usage": [
+        "people_page",
+        "npc_dialogue",
+        "game_main",
+        "court_or_story_scene"
+      ],
+      "role": "young-female-official",
+      "roleLabel": "年轻女官",
+      "roleStage": "young_female_patch",
+      "scene": null,
+      "portraitRef": "portrait-s73-10-young_female-young-female-official-v1",
+      "genderPresentation": "feminine",
+      "ageBand": "adult_young",
+      "statusVariant": "holding_tablet",
+      "emotionVariant": "poised",
+      "posture": "持笏板肃立",
+      "identityTags": [
+        "young_adult_female_patch",
+        "female_explicit",
+        "not_middle_aged",
+        "not_androgynous",
+        "young-female-official",
+        "holding_tablet"
+      ],
+      "emotionTags": [
+        "poised",
+        "holding_tablet"
+      ],
+      "path": "/assets/ui/portraits/s73-10/portrait-s73-10-young_female-young-female-official-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-portrait-s73-10-young_female-young-female-official-v1.webp",
+      "lowResPlaceholderPath": "/assets/ui/portraits/placeholders/placeholder-portrait-s73-10-young_female-young-female-official-v1.webp",
+      "fallbackRef": "fallback-role-silhouette-v1",
+      "dimensions": {
+        "width": 1024,
+        "height": 1536
+      },
+      "aspectRatio": "1024:1536",
+      "format": "webp",
+      "transparent": false,
+      "safeArea": {
+        "x": 0.19,
+        "y": 0.05,
+        "width": 0.62,
+        "height": 0.88
+      },
+      "focalPoint": {
+        "x": 0.5,
+        "y": 0.24
+      },
+      "mobileCrop": {
+        "mode": "center_crop_or_contain",
+        "keepSafeArea": true,
+        "notes": "S73.10.7 年轻女性补充池窄屏保留脸部、发髻簪钗、上身衣料层次、腰封细腰、肩颈线和职业道具；任何中年化或中性化候选不得进入 runtime。"
+      },
+      "lazyLoad": {
+        "group": "portrait_pool_young_female_s73_10_7",
+        "allowEagerLoad": false,
+        "thumbnailFirst": true,
+        "lowResPlaceholder": true,
+        "maxInitialPortraits": 8
+      },
+      "source": {
+        "type": "ai_generated",
+        "tool": "Codex imagegen",
+        "model": "gpt-image-2",
+        "generatedAt": "2026-05-16",
+        "promptSummary": "年轻成年宫署、女官、贵女、才女、商贾和边地使者补充页；高髻簪钗、层叠衣料、腰封细腰和清楚女性面容，避免中年化与中性化。 单格角色：年轻女官，持笏板肃立。"
+      },
+      "license": {
+        "type": "ai_generated_project_asset",
+        "commercialUseConfirmed": false,
+        "summary": "原创 AI 生成素材，当前仅个人游玩/开发使用；未做公开商用确认。"
+      },
+      "reviewStatus": "approved",
+      "visualReview": {
+        "reviewedBy": "Codex",
+        "reviewedAt": "2026-05-16",
+        "status": "approved",
+        "summary": "通过：全部为年轻成年女性，脸部、发髻簪钗、肩颈线、层叠衣料、腰封细腰和端庄姿态均能明确女性特征；未见中年化、发福化、老态或中性化问题，小尺寸可辨认身份和轮廓。"
+      },
+      "safetyReview": {
+        "reviewedBy": "Codex",
+        "reviewedAt": "2026-05-16",
+        "status": "approved",
+        "summary": "通过：完整衣着，无低胸、透视、裸露、挑逗、幼态、现代物、水印、徽标、可读文字、本地路径、key、raw/hidden 内容或未公开剧情事实。"
+      },
+      "performance": {
+        "bytes": 115148,
+        "targetMaxBytes": 614400,
+        "thumbnailBytes": 26366,
+        "thumbnailTargetMaxBytes": 256000,
+        "lowResPlaceholderBytes": 1396
+      },
+      "ledgerId": "portrait-s73-10-young_female-young-female-official-v1"
+    },
+    {
+      "id": "portrait-s73-10-young_female-court-noble-v1",
+      "version": 1,
+      "phase": "S73.10.7",
+      "category": "portrait",
+      "subcategory": "young_female_style_pool",
+      "usage": [
+        "people_page",
+        "npc_dialogue",
+        "game_main",
+        "court_or_story_scene"
+      ],
+      "role": "court-noble",
+      "roleLabel": "年轻宫廷贵女",
+      "roleStage": "young_female_patch",
+      "scene": null,
+      "portraitRef": "portrait-s73-10-young_female-court-noble-v1",
+      "genderPresentation": "feminine",
+      "ageBand": "adult_young",
+      "statusVariant": "formal_standing",
+      "emotionVariant": "poised",
+      "posture": "礼服拢袖正身",
+      "identityTags": [
+        "young_adult_female_patch",
+        "female_explicit",
+        "not_middle_aged",
+        "not_androgynous",
+        "court-noble",
+        "formal_standing"
+      ],
+      "emotionTags": [
+        "poised",
+        "formal_standing"
+      ],
+      "path": "/assets/ui/portraits/s73-10/portrait-s73-10-young_female-court-noble-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-portrait-s73-10-young_female-court-noble-v1.webp",
+      "lowResPlaceholderPath": "/assets/ui/portraits/placeholders/placeholder-portrait-s73-10-young_female-court-noble-v1.webp",
+      "fallbackRef": "fallback-role-silhouette-v1",
+      "dimensions": {
+        "width": 1024,
+        "height": 1536
+      },
+      "aspectRatio": "1024:1536",
+      "format": "webp",
+      "transparent": false,
+      "safeArea": {
+        "x": 0.19,
+        "y": 0.05,
+        "width": 0.62,
+        "height": 0.88
+      },
+      "focalPoint": {
+        "x": 0.5,
+        "y": 0.24
+      },
+      "mobileCrop": {
+        "mode": "center_crop_or_contain",
+        "keepSafeArea": true,
+        "notes": "S73.10.7 年轻女性补充池窄屏保留脸部、发髻簪钗、上身衣料层次、腰封细腰、肩颈线和职业道具；任何中年化或中性化候选不得进入 runtime。"
+      },
+      "lazyLoad": {
+        "group": "portrait_pool_young_female_s73_10_7",
+        "allowEagerLoad": false,
+        "thumbnailFirst": true,
+        "lowResPlaceholder": true,
+        "maxInitialPortraits": 8
+      },
+      "source": {
+        "type": "ai_generated",
+        "tool": "Codex imagegen",
+        "model": "gpt-image-2",
+        "generatedAt": "2026-05-16",
+        "promptSummary": "年轻成年宫署、女官、贵女、才女、商贾和边地使者补充页；高髻簪钗、层叠衣料、腰封细腰和清楚女性面容，避免中年化与中性化。 单格角色：年轻宫廷贵女，礼服拢袖正身。"
+      },
+      "license": {
+        "type": "ai_generated_project_asset",
+        "commercialUseConfirmed": false,
+        "summary": "原创 AI 生成素材，当前仅个人游玩/开发使用；未做公开商用确认。"
+      },
+      "reviewStatus": "approved",
+      "visualReview": {
+        "reviewedBy": "Codex",
+        "reviewedAt": "2026-05-16",
+        "status": "approved",
+        "summary": "通过：全部为年轻成年女性，脸部、发髻簪钗、肩颈线、层叠衣料、腰封细腰和端庄姿态均能明确女性特征；未见中年化、发福化、老态或中性化问题，小尺寸可辨认身份和轮廓。"
+      },
+      "safetyReview": {
+        "reviewedBy": "Codex",
+        "reviewedAt": "2026-05-16",
+        "status": "approved",
+        "summary": "通过：完整衣着，无低胸、透视、裸露、挑逗、幼态、现代物、水印、徽标、可读文字、本地路径、key、raw/hidden 内容或未公开剧情事实。"
+      },
+      "performance": {
+        "bytes": 164984,
+        "targetMaxBytes": 614400,
+        "thumbnailBytes": 40576,
+        "thumbnailTargetMaxBytes": 256000,
+        "lowResPlaceholderBytes": 1480
+      },
+      "ledgerId": "portrait-s73-10-young_female-court-noble-v1"
+    },
+    {
+      "id": "portrait-s73-10-young_female-scholar-poet-v1",
+      "version": 1,
+      "phase": "S73.10.7",
+      "category": "portrait",
+      "subcategory": "young_female_style_pool",
+      "usage": [
+        "people_page",
+        "npc_dialogue",
+        "game_main",
+        "court_or_story_scene"
+      ],
+      "role": "scholar-poet",
+      "roleLabel": "年轻才女",
+      "roleStage": "young_female_patch",
+      "scene": null,
+      "portraitRef": "portrait-s73-10-young_female-scholar-poet-v1",
+      "genderPresentation": "feminine",
+      "ageBand": "adult_young",
+      "statusVariant": "fan_poet",
+      "emotionVariant": "poised",
+      "posture": "持无字折扇",
+      "identityTags": [
+        "young_adult_female_patch",
+        "female_explicit",
+        "not_middle_aged",
+        "not_androgynous",
+        "scholar-poet",
+        "fan_poet"
+      ],
+      "emotionTags": [
+        "poised",
+        "fan_poet"
+      ],
+      "path": "/assets/ui/portraits/s73-10/portrait-s73-10-young_female-scholar-poet-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-portrait-s73-10-young_female-scholar-poet-v1.webp",
+      "lowResPlaceholderPath": "/assets/ui/portraits/placeholders/placeholder-portrait-s73-10-young_female-scholar-poet-v1.webp",
+      "fallbackRef": "fallback-role-silhouette-v1",
+      "dimensions": {
+        "width": 1024,
+        "height": 1536
+      },
+      "aspectRatio": "1024:1536",
+      "format": "webp",
+      "transparent": false,
+      "safeArea": {
+        "x": 0.19,
+        "y": 0.05,
+        "width": 0.62,
+        "height": 0.88
+      },
+      "focalPoint": {
+        "x": 0.5,
+        "y": 0.24
+      },
+      "mobileCrop": {
+        "mode": "center_crop_or_contain",
+        "keepSafeArea": true,
+        "notes": "S73.10.7 年轻女性补充池窄屏保留脸部、发髻簪钗、上身衣料层次、腰封细腰、肩颈线和职业道具；任何中年化或中性化候选不得进入 runtime。"
+      },
+      "lazyLoad": {
+        "group": "portrait_pool_young_female_s73_10_7",
+        "allowEagerLoad": false,
+        "thumbnailFirst": true,
+        "lowResPlaceholder": true,
+        "maxInitialPortraits": 8
+      },
+      "source": {
+        "type": "ai_generated",
+        "tool": "Codex imagegen",
+        "model": "gpt-image-2",
+        "generatedAt": "2026-05-16",
+        "promptSummary": "年轻成年宫署、女官、贵女、才女、商贾和边地使者补充页；高髻簪钗、层叠衣料、腰封细腰和清楚女性面容，避免中年化与中性化。 单格角色：年轻才女，持无字折扇。"
+      },
+      "license": {
+        "type": "ai_generated_project_asset",
+        "commercialUseConfirmed": false,
+        "summary": "原创 AI 生成素材，当前仅个人游玩/开发使用；未做公开商用确认。"
+      },
+      "reviewStatus": "approved",
+      "visualReview": {
+        "reviewedBy": "Codex",
+        "reviewedAt": "2026-05-16",
+        "status": "approved",
+        "summary": "通过：全部为年轻成年女性，脸部、发髻簪钗、肩颈线、层叠衣料、腰封细腰和端庄姿态均能明确女性特征；未见中年化、发福化、老态或中性化问题，小尺寸可辨认身份和轮廓。"
+      },
+      "safetyReview": {
+        "reviewedBy": "Codex",
+        "reviewedAt": "2026-05-16",
+        "status": "approved",
+        "summary": "通过：完整衣着，无低胸、透视、裸露、挑逗、幼态、现代物、水印、徽标、可读文字、本地路径、key、raw/hidden 内容或未公开剧情事实。"
+      },
+      "performance": {
+        "bytes": 125868,
+        "targetMaxBytes": 614400,
+        "thumbnailBytes": 30058,
+        "thumbnailTargetMaxBytes": 256000,
+        "lowResPlaceholderBytes": 1354
+      },
+      "ledgerId": "portrait-s73-10-young_female-scholar-poet-v1"
+    },
+    {
+      "id": "portrait-s73-10-young_female-merchant-clerk-v1",
+      "version": 1,
+      "phase": "S73.10.7",
+      "category": "portrait",
+      "subcategory": "young_female_style_pool",
+      "usage": [
+        "people_page",
+        "npc_dialogue",
+        "game_main",
+        "court_or_story_scene"
+      ],
+      "role": "merchant-clerk",
+      "roleLabel": "年轻商事文书",
+      "roleStage": "young_female_patch",
+      "scene": null,
+      "portraitRef": "portrait-s73-10-young_female-merchant-clerk-v1",
+      "genderPresentation": "feminine",
+      "ageBand": "adult_young",
+      "statusVariant": "ledger_poised",
+      "emotionVariant": "poised",
+      "posture": "抱空白账册",
+      "identityTags": [
+        "young_adult_female_patch",
+        "female_explicit",
+        "not_middle_aged",
+        "not_androgynous",
+        "merchant-clerk",
+        "ledger_poised"
+      ],
+      "emotionTags": [
+        "poised",
+        "ledger_poised"
+      ],
+      "path": "/assets/ui/portraits/s73-10/portrait-s73-10-young_female-merchant-clerk-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-portrait-s73-10-young_female-merchant-clerk-v1.webp",
+      "lowResPlaceholderPath": "/assets/ui/portraits/placeholders/placeholder-portrait-s73-10-young_female-merchant-clerk-v1.webp",
+      "fallbackRef": "fallback-role-silhouette-v1",
+      "dimensions": {
+        "width": 1024,
+        "height": 1536
+      },
+      "aspectRatio": "1024:1536",
+      "format": "webp",
+      "transparent": false,
+      "safeArea": {
+        "x": 0.19,
+        "y": 0.05,
+        "width": 0.62,
+        "height": 0.88
+      },
+      "focalPoint": {
+        "x": 0.5,
+        "y": 0.24
+      },
+      "mobileCrop": {
+        "mode": "center_crop_or_contain",
+        "keepSafeArea": true,
+        "notes": "S73.10.7 年轻女性补充池窄屏保留脸部、发髻簪钗、上身衣料层次、腰封细腰、肩颈线和职业道具；任何中年化或中性化候选不得进入 runtime。"
+      },
+      "lazyLoad": {
+        "group": "portrait_pool_young_female_s73_10_7",
+        "allowEagerLoad": false,
+        "thumbnailFirst": true,
+        "lowResPlaceholder": true,
+        "maxInitialPortraits": 8
+      },
+      "source": {
+        "type": "ai_generated",
+        "tool": "Codex imagegen",
+        "model": "gpt-image-2",
+        "generatedAt": "2026-05-16",
+        "promptSummary": "年轻成年宫署、女官、贵女、才女、商贾和边地使者补充页；高髻簪钗、层叠衣料、腰封细腰和清楚女性面容，避免中年化与中性化。 单格角色：年轻商事文书，抱空白账册。"
+      },
+      "license": {
+        "type": "ai_generated_project_asset",
+        "commercialUseConfirmed": false,
+        "summary": "原创 AI 生成素材，当前仅个人游玩/开发使用；未做公开商用确认。"
+      },
+      "reviewStatus": "approved",
+      "visualReview": {
+        "reviewedBy": "Codex",
+        "reviewedAt": "2026-05-16",
+        "status": "approved",
+        "summary": "通过：全部为年轻成年女性，脸部、发髻簪钗、肩颈线、层叠衣料、腰封细腰和端庄姿态均能明确女性特征；未见中年化、发福化、老态或中性化问题，小尺寸可辨认身份和轮廓。"
+      },
+      "safetyReview": {
+        "reviewedBy": "Codex",
+        "reviewedAt": "2026-05-16",
+        "status": "approved",
+        "summary": "通过：完整衣着，无低胸、透视、裸露、挑逗、幼态、现代物、水印、徽标、可读文字、本地路径、key、raw/hidden 内容或未公开剧情事实。"
+      },
+      "performance": {
+        "bytes": 129822,
+        "targetMaxBytes": 614400,
+        "thumbnailBytes": 31818,
+        "thumbnailTargetMaxBytes": 256000,
+        "lowResPlaceholderBytes": 1460
+      },
+      "ledgerId": "portrait-s73-10-young_female-merchant-clerk-v1"
+    },
+    {
+      "id": "portrait-s73-10-young_female-frontier-envoy-v1",
+      "version": 1,
+      "phase": "S73.10.7",
+      "category": "portrait",
+      "subcategory": "young_female_style_pool",
+      "usage": [
+        "people_page",
+        "npc_dialogue",
+        "game_main",
+        "court_or_story_scene"
+      ],
+      "role": "frontier-envoy",
+      "roleLabel": "年轻边地使者",
+      "roleStage": "young_female_patch",
+      "scene": null,
+      "portraitRef": "portrait-s73-10-young_female-frontier-envoy-v1",
+      "genderPresentation": "feminine",
+      "ageBand": "adult_young",
+      "statusVariant": "travel_cloak",
+      "emotionVariant": "poised",
+      "posture": "披风行旅",
+      "identityTags": [
+        "young_adult_female_patch",
+        "female_explicit",
+        "not_middle_aged",
+        "not_androgynous",
+        "frontier-envoy",
+        "travel_cloak"
+      ],
+      "emotionTags": [
+        "poised",
+        "travel_cloak"
+      ],
+      "path": "/assets/ui/portraits/s73-10/portrait-s73-10-young_female-frontier-envoy-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-portrait-s73-10-young_female-frontier-envoy-v1.webp",
+      "lowResPlaceholderPath": "/assets/ui/portraits/placeholders/placeholder-portrait-s73-10-young_female-frontier-envoy-v1.webp",
+      "fallbackRef": "fallback-role-silhouette-v1",
+      "dimensions": {
+        "width": 1024,
+        "height": 1536
+      },
+      "aspectRatio": "1024:1536",
+      "format": "webp",
+      "transparent": false,
+      "safeArea": {
+        "x": 0.19,
+        "y": 0.05,
+        "width": 0.62,
+        "height": 0.88
+      },
+      "focalPoint": {
+        "x": 0.5,
+        "y": 0.24
+      },
+      "mobileCrop": {
+        "mode": "center_crop_or_contain",
+        "keepSafeArea": true,
+        "notes": "S73.10.7 年轻女性补充池窄屏保留脸部、发髻簪钗、上身衣料层次、腰封细腰、肩颈线和职业道具；任何中年化或中性化候选不得进入 runtime。"
+      },
+      "lazyLoad": {
+        "group": "portrait_pool_young_female_s73_10_7",
+        "allowEagerLoad": false,
+        "thumbnailFirst": true,
+        "lowResPlaceholder": true,
+        "maxInitialPortraits": 8
+      },
+      "source": {
+        "type": "ai_generated",
+        "tool": "Codex imagegen",
+        "model": "gpt-image-2",
+        "generatedAt": "2026-05-16",
+        "promptSummary": "年轻成年宫署、女官、贵女、才女、商贾和边地使者补充页；高髻簪钗、层叠衣料、腰封细腰和清楚女性面容，避免中年化与中性化。 单格角色：年轻边地使者，披风行旅。"
+      },
+      "license": {
+        "type": "ai_generated_project_asset",
+        "commercialUseConfirmed": false,
+        "summary": "原创 AI 生成素材，当前仅个人游玩/开发使用；未做公开商用确认。"
+      },
+      "reviewStatus": "approved",
+      "visualReview": {
+        "reviewedBy": "Codex",
+        "reviewedAt": "2026-05-16",
+        "status": "approved",
+        "summary": "通过：全部为年轻成年女性，脸部、发髻簪钗、肩颈线、层叠衣料、腰封细腰和端庄姿态均能明确女性特征；未见中年化、发福化、老态或中性化问题，小尺寸可辨认身份和轮廓。"
+      },
+      "safetyReview": {
+        "reviewedBy": "Codex",
+        "reviewedAt": "2026-05-16",
+        "status": "approved",
+        "summary": "通过：完整衣着，无低胸、透视、裸露、挑逗、幼态、现代物、水印、徽标、可读文字、本地路径、key、raw/hidden 内容或未公开剧情事实。"
+      },
+      "performance": {
+        "bytes": 162924,
+        "targetMaxBytes": 614400,
+        "thumbnailBytes": 37906,
+        "thumbnailTargetMaxBytes": 256000,
+        "lowResPlaceholderBytes": 1414
+      },
+      "ledgerId": "portrait-s73-10-young_female-frontier-envoy-v1"
+    },
+    {
+      "id": "portrait-s73-10-young_female-female-scholar-v1",
+      "version": 1,
+      "phase": "S73.10.7",
+      "category": "portrait",
+      "subcategory": "young_female_style_pool",
+      "usage": [
+        "people_page",
+        "npc_dialogue",
+        "game_main",
+        "court_or_story_scene"
+      ],
+      "role": "female-scholar",
+      "roleLabel": "年轻女书生",
+      "roleStage": "young_female_patch",
+      "scene": null,
+      "portraitRef": "portrait-s73-10-young_female-female-scholar-v1",
+      "genderPresentation": "feminine",
+      "ageBand": "adult_young",
+      "statusVariant": "book_poised",
+      "emotionVariant": "poised",
+      "posture": "抱无字书册",
+      "identityTags": [
+        "young_adult_female_patch",
+        "female_explicit",
+        "not_middle_aged",
+        "not_androgynous",
+        "female-scholar",
+        "book_poised"
+      ],
+      "emotionTags": [
+        "poised",
+        "book_poised"
+      ],
+      "path": "/assets/ui/portraits/s73-10/portrait-s73-10-young_female-female-scholar-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-portrait-s73-10-young_female-female-scholar-v1.webp",
+      "lowResPlaceholderPath": "/assets/ui/portraits/placeholders/placeholder-portrait-s73-10-young_female-female-scholar-v1.webp",
+      "fallbackRef": "fallback-role-silhouette-v1",
+      "dimensions": {
+        "width": 1024,
+        "height": 1536
+      },
+      "aspectRatio": "1024:1536",
+      "format": "webp",
+      "transparent": false,
+      "safeArea": {
+        "x": 0.19,
+        "y": 0.05,
+        "width": 0.62,
+        "height": 0.88
+      },
+      "focalPoint": {
+        "x": 0.5,
+        "y": 0.24
+      },
+      "mobileCrop": {
+        "mode": "center_crop_or_contain",
+        "keepSafeArea": true,
+        "notes": "S73.10.7 年轻女性补充池窄屏保留脸部、发髻簪钗、上身衣料层次、腰封细腰、肩颈线和职业道具；任何中年化或中性化候选不得进入 runtime。"
+      },
+      "lazyLoad": {
+        "group": "portrait_pool_young_female_s73_10_7",
+        "allowEagerLoad": false,
+        "thumbnailFirst": true,
+        "lowResPlaceholder": true,
+        "maxInitialPortraits": 8
+      },
+      "source": {
+        "type": "ai_generated",
+        "tool": "Codex imagegen",
+        "model": "gpt-image-2",
+        "generatedAt": "2026-05-16",
+        "promptSummary": "年轻成年女书生、侍读、才女和科举同伴补充页；书卷气、发髻簪钗、衣料层次和束腰轮廓明确，清丽但不幼态。 单格角色：年轻女书生，抱无字书册。"
+      },
+      "license": {
+        "type": "ai_generated_project_asset",
+        "commercialUseConfirmed": false,
+        "summary": "原创 AI 生成素材，当前仅个人游玩/开发使用；未做公开商用确认。"
+      },
+      "reviewStatus": "approved",
+      "visualReview": {
+        "reviewedBy": "Codex",
+        "reviewedAt": "2026-05-16",
+        "status": "approved",
+        "summary": "通过：全部为年轻成年女性，脸部、发髻簪钗、肩颈线、层叠衣料、腰封细腰和端庄姿态均能明确女性特征；未见中年化、发福化、老态或中性化问题，小尺寸可辨认身份和轮廓。"
+      },
+      "safetyReview": {
+        "reviewedBy": "Codex",
+        "reviewedAt": "2026-05-16",
+        "status": "approved",
+        "summary": "通过：完整衣着，无低胸、透视、裸露、挑逗、幼态、现代物、水印、徽标、可读文字、本地路径、key、raw/hidden 内容或未公开剧情事实。"
+      },
+      "performance": {
+        "bytes": 142506,
+        "targetMaxBytes": 614400,
+        "thumbnailBytes": 33470,
+        "thumbnailTargetMaxBytes": 256000,
+        "lowResPlaceholderBytes": 1428
+      },
+      "ledgerId": "portrait-s73-10-young_female-female-scholar-v1"
+    },
+    {
+      "id": "portrait-s73-10-young_female-academy-reader-v1",
+      "version": 1,
+      "phase": "S73.10.7",
+      "category": "portrait",
+      "subcategory": "young_female_style_pool",
+      "usage": [
+        "people_page",
+        "npc_dialogue",
+        "game_main",
+        "court_or_story_scene"
+      ],
+      "role": "academy-reader",
+      "roleLabel": "书院侍读",
+      "roleStage": "young_female_patch",
+      "scene": null,
+      "portraitRef": "portrait-s73-10-young_female-academy-reader-v1",
+      "genderPresentation": "feminine",
+      "ageBand": "adult_young",
+      "statusVariant": "scroll_reader",
+      "emotionVariant": "poised",
+      "posture": "持空白卷轴",
+      "identityTags": [
+        "young_adult_female_patch",
+        "female_explicit",
+        "not_middle_aged",
+        "not_androgynous",
+        "academy-reader",
+        "scroll_reader"
+      ],
+      "emotionTags": [
+        "poised",
+        "scroll_reader"
+      ],
+      "path": "/assets/ui/portraits/s73-10/portrait-s73-10-young_female-academy-reader-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-portrait-s73-10-young_female-academy-reader-v1.webp",
+      "lowResPlaceholderPath": "/assets/ui/portraits/placeholders/placeholder-portrait-s73-10-young_female-academy-reader-v1.webp",
+      "fallbackRef": "fallback-role-silhouette-v1",
+      "dimensions": {
+        "width": 1024,
+        "height": 1536
+      },
+      "aspectRatio": "1024:1536",
+      "format": "webp",
+      "transparent": false,
+      "safeArea": {
+        "x": 0.19,
+        "y": 0.05,
+        "width": 0.62,
+        "height": 0.88
+      },
+      "focalPoint": {
+        "x": 0.5,
+        "y": 0.24
+      },
+      "mobileCrop": {
+        "mode": "center_crop_or_contain",
+        "keepSafeArea": true,
+        "notes": "S73.10.7 年轻女性补充池窄屏保留脸部、发髻簪钗、上身衣料层次、腰封细腰、肩颈线和职业道具；任何中年化或中性化候选不得进入 runtime。"
+      },
+      "lazyLoad": {
+        "group": "portrait_pool_young_female_s73_10_7",
+        "allowEagerLoad": false,
+        "thumbnailFirst": true,
+        "lowResPlaceholder": true,
+        "maxInitialPortraits": 8
+      },
+      "source": {
+        "type": "ai_generated",
+        "tool": "Codex imagegen",
+        "model": "gpt-image-2",
+        "generatedAt": "2026-05-16",
+        "promptSummary": "年轻成年女书生、侍读、才女和科举同伴补充页；书卷气、发髻簪钗、衣料层次和束腰轮廓明确，清丽但不幼态。 单格角色：书院侍读，持空白卷轴。"
+      },
+      "license": {
+        "type": "ai_generated_project_asset",
+        "commercialUseConfirmed": false,
+        "summary": "原创 AI 生成素材，当前仅个人游玩/开发使用；未做公开商用确认。"
+      },
+      "reviewStatus": "approved",
+      "visualReview": {
+        "reviewedBy": "Codex",
+        "reviewedAt": "2026-05-16",
+        "status": "approved",
+        "summary": "通过：全部为年轻成年女性，脸部、发髻簪钗、肩颈线、层叠衣料、腰封细腰和端庄姿态均能明确女性特征；未见中年化、发福化、老态或中性化问题，小尺寸可辨认身份和轮廓。"
+      },
+      "safetyReview": {
+        "reviewedBy": "Codex",
+        "reviewedAt": "2026-05-16",
+        "status": "approved",
+        "summary": "通过：完整衣着，无低胸、透视、裸露、挑逗、幼态、现代物、水印、徽标、可读文字、本地路径、key、raw/hidden 内容或未公开剧情事实。"
+      },
+      "performance": {
+        "bytes": 117568,
+        "targetMaxBytes": 614400,
+        "thumbnailBytes": 28598,
+        "thumbnailTargetMaxBytes": 256000,
+        "lowResPlaceholderBytes": 1302
+      },
+      "ledgerId": "portrait-s73-10-young_female-academy-reader-v1"
+    },
+    {
+      "id": "portrait-s73-10-young_female-poet-woman-v1",
+      "version": 1,
+      "phase": "S73.10.7",
+      "category": "portrait",
+      "subcategory": "young_female_style_pool",
+      "usage": [
+        "people_page",
+        "npc_dialogue",
+        "game_main",
+        "court_or_story_scene"
+      ],
+      "role": "poet-woman",
+      "roleLabel": "年轻才女",
+      "roleStage": "young_female_patch",
+      "scene": null,
+      "portraitRef": "portrait-s73-10-young_female-poet-woman-v1",
+      "genderPresentation": "feminine",
+      "ageBand": "adult_young",
+      "statusVariant": "fan_composed",
+      "emotionVariant": "poised",
+      "posture": "持扇静立",
+      "identityTags": [
+        "young_adult_female_patch",
+        "female_explicit",
+        "not_middle_aged",
+        "not_androgynous",
+        "poet-woman",
+        "fan_composed"
+      ],
+      "emotionTags": [
+        "poised",
+        "fan_composed"
+      ],
+      "path": "/assets/ui/portraits/s73-10/portrait-s73-10-young_female-poet-woman-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-portrait-s73-10-young_female-poet-woman-v1.webp",
+      "lowResPlaceholderPath": "/assets/ui/portraits/placeholders/placeholder-portrait-s73-10-young_female-poet-woman-v1.webp",
+      "fallbackRef": "fallback-role-silhouette-v1",
+      "dimensions": {
+        "width": 1024,
+        "height": 1536
+      },
+      "aspectRatio": "1024:1536",
+      "format": "webp",
+      "transparent": false,
+      "safeArea": {
+        "x": 0.19,
+        "y": 0.05,
+        "width": 0.62,
+        "height": 0.88
+      },
+      "focalPoint": {
+        "x": 0.5,
+        "y": 0.24
+      },
+      "mobileCrop": {
+        "mode": "center_crop_or_contain",
+        "keepSafeArea": true,
+        "notes": "S73.10.7 年轻女性补充池窄屏保留脸部、发髻簪钗、上身衣料层次、腰封细腰、肩颈线和职业道具；任何中年化或中性化候选不得进入 runtime。"
+      },
+      "lazyLoad": {
+        "group": "portrait_pool_young_female_s73_10_7",
+        "allowEagerLoad": false,
+        "thumbnailFirst": true,
+        "lowResPlaceholder": true,
+        "maxInitialPortraits": 8
+      },
+      "source": {
+        "type": "ai_generated",
+        "tool": "Codex imagegen",
+        "model": "gpt-image-2",
+        "generatedAt": "2026-05-16",
+        "promptSummary": "年轻成年女书生、侍读、才女和科举同伴补充页；书卷气、发髻簪钗、衣料层次和束腰轮廓明确，清丽但不幼态。 单格角色：年轻才女，持扇静立。"
+      },
+      "license": {
+        "type": "ai_generated_project_asset",
+        "commercialUseConfirmed": false,
+        "summary": "原创 AI 生成素材，当前仅个人游玩/开发使用；未做公开商用确认。"
+      },
+      "reviewStatus": "approved",
+      "visualReview": {
+        "reviewedBy": "Codex",
+        "reviewedAt": "2026-05-16",
+        "status": "approved",
+        "summary": "通过：全部为年轻成年女性，脸部、发髻簪钗、肩颈线、层叠衣料、腰封细腰和端庄姿态均能明确女性特征；未见中年化、发福化、老态或中性化问题，小尺寸可辨认身份和轮廓。"
+      },
+      "safetyReview": {
+        "reviewedBy": "Codex",
+        "reviewedAt": "2026-05-16",
+        "status": "approved",
+        "summary": "通过：完整衣着，无低胸、透视、裸露、挑逗、幼态、现代物、水印、徽标、可读文字、本地路径、key、raw/hidden 内容或未公开剧情事实。"
+      },
+      "performance": {
+        "bytes": 136822,
+        "targetMaxBytes": 614400,
+        "thumbnailBytes": 33800,
+        "thumbnailTargetMaxBytes": 256000,
+        "lowResPlaceholderBytes": 1340
+      },
+      "ledgerId": "portrait-s73-10-young_female-poet-woman-v1"
+    },
+    {
+      "id": "portrait-s73-10-young_female-exam-companion-v1",
+      "version": 1,
+      "phase": "S73.10.7",
+      "category": "portrait",
+      "subcategory": "young_female_style_pool",
+      "usage": [
+        "people_page",
+        "npc_dialogue",
+        "game_main",
+        "court_or_story_scene"
+      ],
+      "role": "exam-companion",
+      "roleLabel": "科举女同伴",
+      "roleStage": "young_female_patch",
+      "scene": null,
+      "portraitRef": "portrait-s73-10-young_female-exam-companion-v1",
+      "genderPresentation": "feminine",
+      "ageBand": "adult_young",
+      "statusVariant": "paper_focus",
+      "emotionVariant": "poised",
+      "posture": "持空白卷纸",
+      "identityTags": [
+        "young_adult_female_patch",
+        "female_explicit",
+        "not_middle_aged",
+        "not_androgynous",
+        "exam-companion",
+        "paper_focus"
+      ],
+      "emotionTags": [
+        "poised",
+        "paper_focus"
+      ],
+      "path": "/assets/ui/portraits/s73-10/portrait-s73-10-young_female-exam-companion-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-portrait-s73-10-young_female-exam-companion-v1.webp",
+      "lowResPlaceholderPath": "/assets/ui/portraits/placeholders/placeholder-portrait-s73-10-young_female-exam-companion-v1.webp",
+      "fallbackRef": "fallback-role-silhouette-v1",
+      "dimensions": {
+        "width": 1024,
+        "height": 1536
+      },
+      "aspectRatio": "1024:1536",
+      "format": "webp",
+      "transparent": false,
+      "safeArea": {
+        "x": 0.19,
+        "y": 0.05,
+        "width": 0.62,
+        "height": 0.88
+      },
+      "focalPoint": {
+        "x": 0.5,
+        "y": 0.24
+      },
+      "mobileCrop": {
+        "mode": "center_crop_or_contain",
+        "keepSafeArea": true,
+        "notes": "S73.10.7 年轻女性补充池窄屏保留脸部、发髻簪钗、上身衣料层次、腰封细腰、肩颈线和职业道具；任何中年化或中性化候选不得进入 runtime。"
+      },
+      "lazyLoad": {
+        "group": "portrait_pool_young_female_s73_10_7",
+        "allowEagerLoad": false,
+        "thumbnailFirst": true,
+        "lowResPlaceholder": true,
+        "maxInitialPortraits": 8
+      },
+      "source": {
+        "type": "ai_generated",
+        "tool": "Codex imagegen",
+        "model": "gpt-image-2",
+        "generatedAt": "2026-05-16",
+        "promptSummary": "年轻成年女书生、侍读、才女和科举同伴补充页；书卷气、发髻簪钗、衣料层次和束腰轮廓明确，清丽但不幼态。 单格角色：科举女同伴，持空白卷纸。"
+      },
+      "license": {
+        "type": "ai_generated_project_asset",
+        "commercialUseConfirmed": false,
+        "summary": "原创 AI 生成素材，当前仅个人游玩/开发使用；未做公开商用确认。"
+      },
+      "reviewStatus": "approved",
+      "visualReview": {
+        "reviewedBy": "Codex",
+        "reviewedAt": "2026-05-16",
+        "status": "approved",
+        "summary": "通过：全部为年轻成年女性，脸部、发髻簪钗、肩颈线、层叠衣料、腰封细腰和端庄姿态均能明确女性特征；未见中年化、发福化、老态或中性化问题，小尺寸可辨认身份和轮廓。"
+      },
+      "safetyReview": {
+        "reviewedBy": "Codex",
+        "reviewedAt": "2026-05-16",
+        "status": "approved",
+        "summary": "通过：完整衣着，无低胸、透视、裸露、挑逗、幼态、现代物、水印、徽标、可读文字、本地路径、key、raw/hidden 内容或未公开剧情事实。"
+      },
+      "performance": {
+        "bytes": 140006,
+        "targetMaxBytes": 614400,
+        "thumbnailBytes": 32866,
+        "thumbnailTargetMaxBytes": 256000,
+        "lowResPlaceholderBytes": 1334
+      },
+      "ledgerId": "portrait-s73-10-young_female-exam-companion-v1"
+    },
+    {
+      "id": "portrait-s73-10-young_female-night-scribe-v1",
+      "version": 1,
+      "phase": "S73.10.7",
+      "category": "portrait",
+      "subcategory": "young_female_style_pool",
+      "usage": [
+        "people_page",
+        "npc_dialogue",
+        "game_main",
+        "court_or_story_scene"
+      ],
+      "role": "night-scribe",
+      "roleLabel": "夜读执笔人",
+      "roleStage": "young_female_patch",
+      "scene": null,
+      "portraitRef": "portrait-s73-10-young_female-night-scribe-v1",
+      "genderPresentation": "feminine",
+      "ageBand": "adult_young",
+      "statusVariant": "writing_focus",
+      "emotionVariant": "poised",
+      "posture": "案前执笔",
+      "identityTags": [
+        "young_adult_female_patch",
+        "female_explicit",
+        "not_middle_aged",
+        "not_androgynous",
+        "night-scribe",
+        "writing_focus"
+      ],
+      "emotionTags": [
+        "poised",
+        "writing_focus"
+      ],
+      "path": "/assets/ui/portraits/s73-10/portrait-s73-10-young_female-night-scribe-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-portrait-s73-10-young_female-night-scribe-v1.webp",
+      "lowResPlaceholderPath": "/assets/ui/portraits/placeholders/placeholder-portrait-s73-10-young_female-night-scribe-v1.webp",
+      "fallbackRef": "fallback-role-silhouette-v1",
+      "dimensions": {
+        "width": 1024,
+        "height": 1536
+      },
+      "aspectRatio": "1024:1536",
+      "format": "webp",
+      "transparent": false,
+      "safeArea": {
+        "x": 0.19,
+        "y": 0.05,
+        "width": 0.62,
+        "height": 0.88
+      },
+      "focalPoint": {
+        "x": 0.5,
+        "y": 0.24
+      },
+      "mobileCrop": {
+        "mode": "center_crop_or_contain",
+        "keepSafeArea": true,
+        "notes": "S73.10.7 年轻女性补充池窄屏保留脸部、发髻簪钗、上身衣料层次、腰封细腰、肩颈线和职业道具；任何中年化或中性化候选不得进入 runtime。"
+      },
+      "lazyLoad": {
+        "group": "portrait_pool_young_female_s73_10_7",
+        "allowEagerLoad": false,
+        "thumbnailFirst": true,
+        "lowResPlaceholder": true,
+        "maxInitialPortraits": 8
+      },
+      "source": {
+        "type": "ai_generated",
+        "tool": "Codex imagegen",
+        "model": "gpt-image-2",
+        "generatedAt": "2026-05-16",
+        "promptSummary": "年轻成年女书生、侍读、才女和科举同伴补充页；书卷气、发髻簪钗、衣料层次和束腰轮廓明确，清丽但不幼态。 单格角色：夜读执笔人，案前执笔。"
+      },
+      "license": {
+        "type": "ai_generated_project_asset",
+        "commercialUseConfirmed": false,
+        "summary": "原创 AI 生成素材，当前仅个人游玩/开发使用；未做公开商用确认。"
+      },
+      "reviewStatus": "approved",
+      "visualReview": {
+        "reviewedBy": "Codex",
+        "reviewedAt": "2026-05-16",
+        "status": "approved",
+        "summary": "通过：全部为年轻成年女性，脸部、发髻簪钗、肩颈线、层叠衣料、腰封细腰和端庄姿态均能明确女性特征；未见中年化、发福化、老态或中性化问题，小尺寸可辨认身份和轮廓。"
+      },
+      "safetyReview": {
+        "reviewedBy": "Codex",
+        "reviewedAt": "2026-05-16",
+        "status": "approved",
+        "summary": "通过：完整衣着，无低胸、透视、裸露、挑逗、幼态、现代物、水印、徽标、可读文字、本地路径、key、raw/hidden 内容或未公开剧情事实。"
+      },
+      "performance": {
+        "bytes": 154246,
+        "targetMaxBytes": 614400,
+        "thumbnailBytes": 38050,
+        "thumbnailTargetMaxBytes": 256000,
+        "lowResPlaceholderBytes": 1582
+      },
+      "ledgerId": "portrait-s73-10-young_female-night-scribe-v1"
+    },
+    {
+      "id": "portrait-s73-10-young_female-library-attendant-v1",
+      "version": 1,
+      "phase": "S73.10.7",
+      "category": "portrait",
+      "subcategory": "young_female_style_pool",
+      "usage": [
+        "people_page",
+        "npc_dialogue",
+        "game_main",
+        "court_or_story_scene"
+      ],
+      "role": "library-attendant",
+      "roleLabel": "藏书楼侍读",
+      "roleStage": "young_female_patch",
+      "scene": null,
+      "portraitRef": "portrait-s73-10-young_female-library-attendant-v1",
+      "genderPresentation": "feminine",
+      "ageBand": "adult_young",
+      "statusVariant": "sealed_volume",
+      "emotionVariant": "poised",
+      "posture": "抱封面无字书",
+      "identityTags": [
+        "young_adult_female_patch",
+        "female_explicit",
+        "not_middle_aged",
+        "not_androgynous",
+        "library-attendant",
+        "sealed_volume"
+      ],
+      "emotionTags": [
+        "poised",
+        "sealed_volume"
+      ],
+      "path": "/assets/ui/portraits/s73-10/portrait-s73-10-young_female-library-attendant-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-portrait-s73-10-young_female-library-attendant-v1.webp",
+      "lowResPlaceholderPath": "/assets/ui/portraits/placeholders/placeholder-portrait-s73-10-young_female-library-attendant-v1.webp",
+      "fallbackRef": "fallback-role-silhouette-v1",
+      "dimensions": {
+        "width": 1024,
+        "height": 1536
+      },
+      "aspectRatio": "1024:1536",
+      "format": "webp",
+      "transparent": false,
+      "safeArea": {
+        "x": 0.19,
+        "y": 0.05,
+        "width": 0.62,
+        "height": 0.88
+      },
+      "focalPoint": {
+        "x": 0.5,
+        "y": 0.24
+      },
+      "mobileCrop": {
+        "mode": "center_crop_or_contain",
+        "keepSafeArea": true,
+        "notes": "S73.10.7 年轻女性补充池窄屏保留脸部、发髻簪钗、上身衣料层次、腰封细腰、肩颈线和职业道具；任何中年化或中性化候选不得进入 runtime。"
+      },
+      "lazyLoad": {
+        "group": "portrait_pool_young_female_s73_10_7",
+        "allowEagerLoad": false,
+        "thumbnailFirst": true,
+        "lowResPlaceholder": true,
+        "maxInitialPortraits": 8
+      },
+      "source": {
+        "type": "ai_generated",
+        "tool": "Codex imagegen",
+        "model": "gpt-image-2",
+        "generatedAt": "2026-05-16",
+        "promptSummary": "年轻成年女书生、侍读、才女和科举同伴补充页；书卷气、发髻簪钗、衣料层次和束腰轮廓明确，清丽但不幼态。 单格角色：藏书楼侍读，抱封面无字书。"
+      },
+      "license": {
+        "type": "ai_generated_project_asset",
+        "commercialUseConfirmed": false,
+        "summary": "原创 AI 生成素材，当前仅个人游玩/开发使用；未做公开商用确认。"
+      },
+      "reviewStatus": "approved",
+      "visualReview": {
+        "reviewedBy": "Codex",
+        "reviewedAt": "2026-05-16",
+        "status": "approved",
+        "summary": "通过：全部为年轻成年女性，脸部、发髻簪钗、肩颈线、层叠衣料、腰封细腰和端庄姿态均能明确女性特征；未见中年化、发福化、老态或中性化问题，小尺寸可辨认身份和轮廓。"
+      },
+      "safetyReview": {
+        "reviewedBy": "Codex",
+        "reviewedAt": "2026-05-16",
+        "status": "approved",
+        "summary": "通过：完整衣着，无低胸、透视、裸露、挑逗、幼态、现代物、水印、徽标、可读文字、本地路径、key、raw/hidden 内容或未公开剧情事实。"
+      },
+      "performance": {
+        "bytes": 145814,
+        "targetMaxBytes": 614400,
+        "thumbnailBytes": 35048,
+        "thumbnailTargetMaxBytes": 256000,
+        "lowResPlaceholderBytes": 1434
+      },
+      "ledgerId": "portrait-s73-10-young_female-library-attendant-v1"
+    },
+    {
+      "id": "portrait-s73-10-young_female-merchant-owner-v1",
+      "version": 1,
+      "phase": "S73.10.7",
+      "category": "portrait",
+      "subcategory": "young_female_style_pool",
+      "usage": [
+        "people_page",
+        "npc_dialogue",
+        "game_main",
+        "court_or_story_scene"
+      ],
+      "role": "merchant-owner",
+      "roleLabel": "年轻商贾女东家",
+      "roleStage": "young_female_patch",
+      "scene": null,
+      "portraitRef": "portrait-s73-10-young_female-merchant-owner-v1",
+      "genderPresentation": "feminine",
+      "ageBand": "adult_young",
+      "statusVariant": "blank_ledger",
+      "emotionVariant": "poised",
+      "posture": "持空白账册",
+      "identityTags": [
+        "young_adult_female_patch",
+        "female_explicit",
+        "not_middle_aged",
+        "not_androgynous",
+        "merchant-owner",
+        "blank_ledger"
+      ],
+      "emotionTags": [
+        "poised",
+        "blank_ledger"
+      ],
+      "path": "/assets/ui/portraits/s73-10/portrait-s73-10-young_female-merchant-owner-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-portrait-s73-10-young_female-merchant-owner-v1.webp",
+      "lowResPlaceholderPath": "/assets/ui/portraits/placeholders/placeholder-portrait-s73-10-young_female-merchant-owner-v1.webp",
+      "fallbackRef": "fallback-role-silhouette-v1",
+      "dimensions": {
+        "width": 1024,
+        "height": 1536
+      },
+      "aspectRatio": "1024:1536",
+      "format": "webp",
+      "transparent": false,
+      "safeArea": {
+        "x": 0.19,
+        "y": 0.05,
+        "width": 0.62,
+        "height": 0.88
+      },
+      "focalPoint": {
+        "x": 0.5,
+        "y": 0.24
+      },
+      "mobileCrop": {
+        "mode": "center_crop_or_contain",
+        "keepSafeArea": true,
+        "notes": "S73.10.7 年轻女性补充池窄屏保留脸部、发髻簪钗、上身衣料层次、腰封细腰、肩颈线和职业道具；任何中年化或中性化候选不得进入 runtime。"
+      },
+      "lazyLoad": {
+        "group": "portrait_pool_young_female_s73_10_7",
+        "allowEagerLoad": false,
+        "thumbnailFirst": true,
+        "lowResPlaceholder": true,
+        "maxInitialPortraits": 8
+      },
+      "source": {
+        "type": "ai_generated",
+        "tool": "Codex imagegen",
+        "model": "gpt-image-2",
+        "generatedAt": "2026-05-16",
+        "promptSummary": "年轻成年商贾女东家、铺户掌柜和市井经营者补充页；服饰完整端庄，腰封细腰与发饰明确，精明但不艳俗。 单格角色：年轻商贾女东家，持空白账册。"
+      },
+      "license": {
+        "type": "ai_generated_project_asset",
+        "commercialUseConfirmed": false,
+        "summary": "原创 AI 生成素材，当前仅个人游玩/开发使用；未做公开商用确认。"
+      },
+      "reviewStatus": "approved",
+      "visualReview": {
+        "reviewedBy": "Codex",
+        "reviewedAt": "2026-05-16",
+        "status": "approved",
+        "summary": "通过：全部为年轻成年女性，脸部、发髻簪钗、肩颈线、层叠衣料、腰封细腰和端庄姿态均能明确女性特征；未见中年化、发福化、老态或中性化问题，小尺寸可辨认身份和轮廓。"
+      },
+      "safetyReview": {
+        "reviewedBy": "Codex",
+        "reviewedAt": "2026-05-16",
+        "status": "approved",
+        "summary": "通过：完整衣着，无低胸、透视、裸露、挑逗、幼态、现代物、水印、徽标、可读文字、本地路径、key、raw/hidden 内容或未公开剧情事实。"
+      },
+      "performance": {
+        "bytes": 156060,
+        "targetMaxBytes": 614400,
+        "thumbnailBytes": 38440,
+        "thumbnailTargetMaxBytes": 256000,
+        "lowResPlaceholderBytes": 1436
+      },
+      "ledgerId": "portrait-s73-10-young_female-merchant-owner-v1"
+    },
+    {
+      "id": "portrait-s73-10-young_female-silk-proprietor-v1",
+      "version": 1,
+      "phase": "S73.10.7",
+      "category": "portrait",
+      "subcategory": "young_female_style_pool",
+      "usage": [
+        "people_page",
+        "npc_dialogue",
+        "game_main",
+        "court_or_story_scene"
+      ],
+      "role": "silk-proprietor",
+      "roleLabel": "绸铺女掌柜",
+      "roleStage": "young_female_patch",
+      "scene": null,
+      "portraitRef": "portrait-s73-10-young_female-silk-proprietor-v1",
+      "genderPresentation": "feminine",
+      "ageBand": "adult_young",
+      "statusVariant": "folded_silk",
+      "emotionVariant": "poised",
+      "posture": "抱折叠布样",
+      "identityTags": [
+        "young_adult_female_patch",
+        "female_explicit",
+        "not_middle_aged",
+        "not_androgynous",
+        "silk-proprietor",
+        "folded_silk"
+      ],
+      "emotionTags": [
+        "poised",
+        "folded_silk"
+      ],
+      "path": "/assets/ui/portraits/s73-10/portrait-s73-10-young_female-silk-proprietor-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-portrait-s73-10-young_female-silk-proprietor-v1.webp",
+      "lowResPlaceholderPath": "/assets/ui/portraits/placeholders/placeholder-portrait-s73-10-young_female-silk-proprietor-v1.webp",
+      "fallbackRef": "fallback-role-silhouette-v1",
+      "dimensions": {
+        "width": 1024,
+        "height": 1536
+      },
+      "aspectRatio": "1024:1536",
+      "format": "webp",
+      "transparent": false,
+      "safeArea": {
+        "x": 0.19,
+        "y": 0.05,
+        "width": 0.62,
+        "height": 0.88
+      },
+      "focalPoint": {
+        "x": 0.5,
+        "y": 0.24
+      },
+      "mobileCrop": {
+        "mode": "center_crop_or_contain",
+        "keepSafeArea": true,
+        "notes": "S73.10.7 年轻女性补充池窄屏保留脸部、发髻簪钗、上身衣料层次、腰封细腰、肩颈线和职业道具；任何中年化或中性化候选不得进入 runtime。"
+      },
+      "lazyLoad": {
+        "group": "portrait_pool_young_female_s73_10_7",
+        "allowEagerLoad": false,
+        "thumbnailFirst": true,
+        "lowResPlaceholder": true,
+        "maxInitialPortraits": 8
+      },
+      "source": {
+        "type": "ai_generated",
+        "tool": "Codex imagegen",
+        "model": "gpt-image-2",
+        "generatedAt": "2026-05-16",
+        "promptSummary": "年轻成年商贾女东家、铺户掌柜和市井经营者补充页；服饰完整端庄，腰封细腰与发饰明确，精明但不艳俗。 单格角色：绸铺女掌柜，抱折叠布样。"
+      },
+      "license": {
+        "type": "ai_generated_project_asset",
+        "commercialUseConfirmed": false,
+        "summary": "原创 AI 生成素材，当前仅个人游玩/开发使用；未做公开商用确认。"
+      },
+      "reviewStatus": "approved",
+      "visualReview": {
+        "reviewedBy": "Codex",
+        "reviewedAt": "2026-05-16",
+        "status": "approved",
+        "summary": "通过：全部为年轻成年女性，脸部、发髻簪钗、肩颈线、层叠衣料、腰封细腰和端庄姿态均能明确女性特征；未见中年化、发福化、老态或中性化问题，小尺寸可辨认身份和轮廓。"
+      },
+      "safetyReview": {
+        "reviewedBy": "Codex",
+        "reviewedAt": "2026-05-16",
+        "status": "approved",
+        "summary": "通过：完整衣着，无低胸、透视、裸露、挑逗、幼态、现代物、水印、徽标、可读文字、本地路径、key、raw/hidden 内容或未公开剧情事实。"
+      },
+      "performance": {
+        "bytes": 155444,
+        "targetMaxBytes": 614400,
+        "thumbnailBytes": 37144,
+        "thumbnailTargetMaxBytes": 256000,
+        "lowResPlaceholderBytes": 1434
+      },
+      "ledgerId": "portrait-s73-10-young_female-silk-proprietor-v1"
+    },
+    {
+      "id": "portrait-s73-10-young_female-tea-manager-v1",
+      "version": 1,
+      "phase": "S73.10.7",
+      "category": "portrait",
+      "subcategory": "young_female_style_pool",
+      "usage": [
+        "people_page",
+        "npc_dialogue",
+        "game_main",
+        "court_or_story_scene"
+      ],
+      "role": "tea-manager",
+      "roleLabel": "茶肆女掌事",
+      "roleStage": "young_female_patch",
+      "scene": null,
+      "portraitRef": "portrait-s73-10-young_female-tea-manager-v1",
+      "genderPresentation": "feminine",
+      "ageBand": "adult_young",
+      "statusVariant": "tea_tray",
+      "emotionVariant": "poised",
+      "posture": "端茶盘",
+      "identityTags": [
+        "young_adult_female_patch",
+        "female_explicit",
+        "not_middle_aged",
+        "not_androgynous",
+        "tea-manager",
+        "tea_tray"
+      ],
+      "emotionTags": [
+        "poised",
+        "tea_tray"
+      ],
+      "path": "/assets/ui/portraits/s73-10/portrait-s73-10-young_female-tea-manager-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-portrait-s73-10-young_female-tea-manager-v1.webp",
+      "lowResPlaceholderPath": "/assets/ui/portraits/placeholders/placeholder-portrait-s73-10-young_female-tea-manager-v1.webp",
+      "fallbackRef": "fallback-role-silhouette-v1",
+      "dimensions": {
+        "width": 1024,
+        "height": 1536
+      },
+      "aspectRatio": "1024:1536",
+      "format": "webp",
+      "transparent": false,
+      "safeArea": {
+        "x": 0.19,
+        "y": 0.05,
+        "width": 0.62,
+        "height": 0.88
+      },
+      "focalPoint": {
+        "x": 0.5,
+        "y": 0.24
+      },
+      "mobileCrop": {
+        "mode": "center_crop_or_contain",
+        "keepSafeArea": true,
+        "notes": "S73.10.7 年轻女性补充池窄屏保留脸部、发髻簪钗、上身衣料层次、腰封细腰、肩颈线和职业道具；任何中年化或中性化候选不得进入 runtime。"
+      },
+      "lazyLoad": {
+        "group": "portrait_pool_young_female_s73_10_7",
+        "allowEagerLoad": false,
+        "thumbnailFirst": true,
+        "lowResPlaceholder": true,
+        "maxInitialPortraits": 8
+      },
+      "source": {
+        "type": "ai_generated",
+        "tool": "Codex imagegen",
+        "model": "gpt-image-2",
+        "generatedAt": "2026-05-16",
+        "promptSummary": "年轻成年商贾女东家、铺户掌柜和市井经营者补充页；服饰完整端庄，腰封细腰与发饰明确，精明但不艳俗。 单格角色：茶肆女掌事，端茶盘。"
+      },
+      "license": {
+        "type": "ai_generated_project_asset",
+        "commercialUseConfirmed": false,
+        "summary": "原创 AI 生成素材，当前仅个人游玩/开发使用；未做公开商用确认。"
+      },
+      "reviewStatus": "approved",
+      "visualReview": {
+        "reviewedBy": "Codex",
+        "reviewedAt": "2026-05-16",
+        "status": "approved",
+        "summary": "通过：全部为年轻成年女性，脸部、发髻簪钗、肩颈线、层叠衣料、腰封细腰和端庄姿态均能明确女性特征；未见中年化、发福化、老态或中性化问题，小尺寸可辨认身份和轮廓。"
+      },
+      "safetyReview": {
+        "reviewedBy": "Codex",
+        "reviewedAt": "2026-05-16",
+        "status": "approved",
+        "summary": "通过：完整衣着，无低胸、透视、裸露、挑逗、幼态、现代物、水印、徽标、可读文字、本地路径、key、raw/hidden 内容或未公开剧情事实。"
+      },
+      "performance": {
+        "bytes": 150216,
+        "targetMaxBytes": 614400,
+        "thumbnailBytes": 36822,
+        "thumbnailTargetMaxBytes": 256000,
+        "lowResPlaceholderBytes": 1404
+      },
+      "ledgerId": "portrait-s73-10-young_female-tea-manager-v1"
+    },
+    {
+      "id": "portrait-s73-10-young_female-accountant-v1",
+      "version": 1,
+      "phase": "S73.10.7",
+      "category": "portrait",
+      "subcategory": "young_female_style_pool",
+      "usage": [
+        "people_page",
+        "npc_dialogue",
+        "game_main",
+        "court_or_story_scene"
+      ],
+      "role": "accountant",
+      "roleLabel": "年轻女账房",
+      "roleStage": "young_female_patch",
+      "scene": null,
+      "portraitRef": "portrait-s73-10-young_female-accountant-v1",
+      "genderPresentation": "feminine",
+      "ageBand": "adult_young",
+      "statusVariant": "abacus_focus",
+      "emotionVariant": "poised",
+      "posture": "案前算盘",
+      "identityTags": [
+        "young_adult_female_patch",
+        "female_explicit",
+        "not_middle_aged",
+        "not_androgynous",
+        "accountant",
+        "abacus_focus"
+      ],
+      "emotionTags": [
+        "poised",
+        "abacus_focus"
+      ],
+      "path": "/assets/ui/portraits/s73-10/portrait-s73-10-young_female-accountant-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-portrait-s73-10-young_female-accountant-v1.webp",
+      "lowResPlaceholderPath": "/assets/ui/portraits/placeholders/placeholder-portrait-s73-10-young_female-accountant-v1.webp",
+      "fallbackRef": "fallback-role-silhouette-v1",
+      "dimensions": {
+        "width": 1024,
+        "height": 1536
+      },
+      "aspectRatio": "1024:1536",
+      "format": "webp",
+      "transparent": false,
+      "safeArea": {
+        "x": 0.19,
+        "y": 0.05,
+        "width": 0.62,
+        "height": 0.88
+      },
+      "focalPoint": {
+        "x": 0.5,
+        "y": 0.24
+      },
+      "mobileCrop": {
+        "mode": "center_crop_or_contain",
+        "keepSafeArea": true,
+        "notes": "S73.10.7 年轻女性补充池窄屏保留脸部、发髻簪钗、上身衣料层次、腰封细腰、肩颈线和职业道具；任何中年化或中性化候选不得进入 runtime。"
+      },
+      "lazyLoad": {
+        "group": "portrait_pool_young_female_s73_10_7",
+        "allowEagerLoad": false,
+        "thumbnailFirst": true,
+        "lowResPlaceholder": true,
+        "maxInitialPortraits": 8
+      },
+      "source": {
+        "type": "ai_generated",
+        "tool": "Codex imagegen",
+        "model": "gpt-image-2",
+        "generatedAt": "2026-05-16",
+        "promptSummary": "年轻成年商贾女东家、铺户掌柜和市井经营者补充页；服饰完整端庄，腰封细腰与发饰明确，精明但不艳俗。 单格角色：年轻女账房，案前算盘。"
+      },
+      "license": {
+        "type": "ai_generated_project_asset",
+        "commercialUseConfirmed": false,
+        "summary": "原创 AI 生成素材，当前仅个人游玩/开发使用；未做公开商用确认。"
+      },
+      "reviewStatus": "approved",
+      "visualReview": {
+        "reviewedBy": "Codex",
+        "reviewedAt": "2026-05-16",
+        "status": "approved",
+        "summary": "通过：全部为年轻成年女性，脸部、发髻簪钗、肩颈线、层叠衣料、腰封细腰和端庄姿态均能明确女性特征；未见中年化、发福化、老态或中性化问题，小尺寸可辨认身份和轮廓。"
+      },
+      "safetyReview": {
+        "reviewedBy": "Codex",
+        "reviewedAt": "2026-05-16",
+        "status": "approved",
+        "summary": "通过：完整衣着，无低胸、透视、裸露、挑逗、幼态、现代物、水印、徽标、可读文字、本地路径、key、raw/hidden 内容或未公开剧情事实。"
+      },
+      "performance": {
+        "bytes": 153660,
+        "targetMaxBytes": 614400,
+        "thumbnailBytes": 38136,
+        "thumbnailTargetMaxBytes": 256000,
+        "lowResPlaceholderBytes": 1388
+      },
+      "ledgerId": "portrait-s73-10-young_female-accountant-v1"
+    },
+    {
+      "id": "portrait-s73-10-young_female-contract-negotiator-v1",
+      "version": 1,
+      "phase": "S73.10.7",
+      "category": "portrait",
+      "subcategory": "young_female_style_pool",
+      "usage": [
+        "people_page",
+        "npc_dialogue",
+        "game_main",
+        "court_or_story_scene"
+      ],
+      "role": "contract-negotiator",
+      "roleLabel": "契约女掌事",
+      "roleStage": "young_female_patch",
+      "scene": null,
+      "portraitRef": "portrait-s73-10-young_female-contract-negotiator-v1",
+      "genderPresentation": "feminine",
+      "ageBand": "adult_young",
+      "statusVariant": "sealed_paper",
+      "emotionVariant": "poised",
+      "posture": "持空白契纸",
+      "identityTags": [
+        "young_adult_female_patch",
+        "female_explicit",
+        "not_middle_aged",
+        "not_androgynous",
+        "contract-negotiator",
+        "sealed_paper"
+      ],
+      "emotionTags": [
+        "poised",
+        "sealed_paper"
+      ],
+      "path": "/assets/ui/portraits/s73-10/portrait-s73-10-young_female-contract-negotiator-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-portrait-s73-10-young_female-contract-negotiator-v1.webp",
+      "lowResPlaceholderPath": "/assets/ui/portraits/placeholders/placeholder-portrait-s73-10-young_female-contract-negotiator-v1.webp",
+      "fallbackRef": "fallback-role-silhouette-v1",
+      "dimensions": {
+        "width": 1024,
+        "height": 1536
+      },
+      "aspectRatio": "1024:1536",
+      "format": "webp",
+      "transparent": false,
+      "safeArea": {
+        "x": 0.19,
+        "y": 0.05,
+        "width": 0.62,
+        "height": 0.88
+      },
+      "focalPoint": {
+        "x": 0.5,
+        "y": 0.24
+      },
+      "mobileCrop": {
+        "mode": "center_crop_or_contain",
+        "keepSafeArea": true,
+        "notes": "S73.10.7 年轻女性补充池窄屏保留脸部、发髻簪钗、上身衣料层次、腰封细腰、肩颈线和职业道具；任何中年化或中性化候选不得进入 runtime。"
+      },
+      "lazyLoad": {
+        "group": "portrait_pool_young_female_s73_10_7",
+        "allowEagerLoad": false,
+        "thumbnailFirst": true,
+        "lowResPlaceholder": true,
+        "maxInitialPortraits": 8
+      },
+      "source": {
+        "type": "ai_generated",
+        "tool": "Codex imagegen",
+        "model": "gpt-image-2",
+        "generatedAt": "2026-05-16",
+        "promptSummary": "年轻成年商贾女东家、铺户掌柜和市井经营者补充页；服饰完整端庄，腰封细腰与发饰明确，精明但不艳俗。 单格角色：契约女掌事，持空白契纸。"
+      },
+      "license": {
+        "type": "ai_generated_project_asset",
+        "commercialUseConfirmed": false,
+        "summary": "原创 AI 生成素材，当前仅个人游玩/开发使用；未做公开商用确认。"
+      },
+      "reviewStatus": "approved",
+      "visualReview": {
+        "reviewedBy": "Codex",
+        "reviewedAt": "2026-05-16",
+        "status": "approved",
+        "summary": "通过：全部为年轻成年女性，脸部、发髻簪钗、肩颈线、层叠衣料、腰封细腰和端庄姿态均能明确女性特征；未见中年化、发福化、老态或中性化问题，小尺寸可辨认身份和轮廓。"
+      },
+      "safetyReview": {
+        "reviewedBy": "Codex",
+        "reviewedAt": "2026-05-16",
+        "status": "approved",
+        "summary": "通过：完整衣着，无低胸、透视、裸露、挑逗、幼态、现代物、水印、徽标、可读文字、本地路径、key、raw/hidden 内容或未公开剧情事实。"
+      },
+      "performance": {
+        "bytes": 158734,
+        "targetMaxBytes": 614400,
+        "thumbnailBytes": 38362,
+        "thumbnailTargetMaxBytes": 256000,
+        "lowResPlaceholderBytes": 1516
+      },
+      "ledgerId": "portrait-s73-10-young_female-contract-negotiator-v1"
+    },
+    {
+      "id": "portrait-s73-10-young_female-traveling-trader-v1",
+      "version": 1,
+      "phase": "S73.10.7",
+      "category": "portrait",
+      "subcategory": "young_female_style_pool",
+      "usage": [
+        "people_page",
+        "npc_dialogue",
+        "game_main",
+        "court_or_story_scene"
+      ],
+      "role": "traveling-trader",
+      "roleLabel": "行旅女商",
+      "roleStage": "young_female_patch",
+      "scene": null,
+      "portraitRef": "portrait-s73-10-young_female-traveling-trader-v1",
+      "genderPresentation": "feminine",
+      "ageBand": "adult_young",
+      "statusVariant": "travel_pack",
+      "emotionVariant": "poised",
+      "posture": "背行囊侧立",
+      "identityTags": [
+        "young_adult_female_patch",
+        "female_explicit",
+        "not_middle_aged",
+        "not_androgynous",
+        "traveling-trader",
+        "travel_pack"
+      ],
+      "emotionTags": [
+        "poised",
+        "travel_pack"
+      ],
+      "path": "/assets/ui/portraits/s73-10/portrait-s73-10-young_female-traveling-trader-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-portrait-s73-10-young_female-traveling-trader-v1.webp",
+      "lowResPlaceholderPath": "/assets/ui/portraits/placeholders/placeholder-portrait-s73-10-young_female-traveling-trader-v1.webp",
+      "fallbackRef": "fallback-role-silhouette-v1",
+      "dimensions": {
+        "width": 1024,
+        "height": 1536
+      },
+      "aspectRatio": "1024:1536",
+      "format": "webp",
+      "transparent": false,
+      "safeArea": {
+        "x": 0.19,
+        "y": 0.05,
+        "width": 0.62,
+        "height": 0.88
+      },
+      "focalPoint": {
+        "x": 0.5,
+        "y": 0.24
+      },
+      "mobileCrop": {
+        "mode": "center_crop_or_contain",
+        "keepSafeArea": true,
+        "notes": "S73.10.7 年轻女性补充池窄屏保留脸部、发髻簪钗、上身衣料层次、腰封细腰、肩颈线和职业道具；任何中年化或中性化候选不得进入 runtime。"
+      },
+      "lazyLoad": {
+        "group": "portrait_pool_young_female_s73_10_7",
+        "allowEagerLoad": false,
+        "thumbnailFirst": true,
+        "lowResPlaceholder": true,
+        "maxInitialPortraits": 8
+      },
+      "source": {
+        "type": "ai_generated",
+        "tool": "Codex imagegen",
+        "model": "gpt-image-2",
+        "generatedAt": "2026-05-16",
+        "promptSummary": "年轻成年商贾女东家、铺户掌柜和市井经营者补充页；服饰完整端庄，腰封细腰与发饰明确，精明但不艳俗。 单格角色：行旅女商，背行囊侧立。"
+      },
+      "license": {
+        "type": "ai_generated_project_asset",
+        "commercialUseConfirmed": false,
+        "summary": "原创 AI 生成素材，当前仅个人游玩/开发使用；未做公开商用确认。"
+      },
+      "reviewStatus": "approved",
+      "visualReview": {
+        "reviewedBy": "Codex",
+        "reviewedAt": "2026-05-16",
+        "status": "approved",
+        "summary": "通过：全部为年轻成年女性，脸部、发髻簪钗、肩颈线、层叠衣料、腰封细腰和端庄姿态均能明确女性特征；未见中年化、发福化、老态或中性化问题，小尺寸可辨认身份和轮廓。"
+      },
+      "safetyReview": {
+        "reviewedBy": "Codex",
+        "reviewedAt": "2026-05-16",
+        "status": "approved",
+        "summary": "通过：完整衣着，无低胸、透视、裸露、挑逗、幼态、现代物、水印、徽标、可读文字、本地路径、key、raw/hidden 内容或未公开剧情事实。"
+      },
+      "performance": {
+        "bytes": 156498,
+        "targetMaxBytes": 614400,
+        "thumbnailBytes": 38090,
+        "thumbnailTargetMaxBytes": 256000,
+        "lowResPlaceholderBytes": 1402
+      },
+      "ledgerId": "portrait-s73-10-young_female-traveling-trader-v1"
+    },
+    {
+      "id": "portrait-s73-10-young_female-frontier-envoy-ride-v1",
+      "version": 1,
+      "phase": "S73.10.7",
+      "category": "portrait",
+      "subcategory": "young_female_style_pool",
+      "usage": [
+        "people_page",
+        "npc_dialogue",
+        "game_main",
+        "court_or_story_scene"
+      ],
+      "role": "frontier-envoy-ride",
+      "roleLabel": "年轻边关使者",
+      "roleStage": "young_female_patch",
+      "scene": null,
+      "portraitRef": "portrait-s73-10-young_female-frontier-envoy-ride-v1",
+      "genderPresentation": "feminine",
+      "ageBand": "adult_young",
+      "statusVariant": "travel_command",
+      "emotionVariant": "poised",
+      "posture": "披风持令",
+      "identityTags": [
+        "young_adult_female_patch",
+        "female_explicit",
+        "not_middle_aged",
+        "not_androgynous",
+        "frontier-envoy-ride",
+        "travel_command"
+      ],
+      "emotionTags": [
+        "poised",
+        "travel_command"
+      ],
+      "path": "/assets/ui/portraits/s73-10/portrait-s73-10-young_female-frontier-envoy-ride-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-portrait-s73-10-young_female-frontier-envoy-ride-v1.webp",
+      "lowResPlaceholderPath": "/assets/ui/portraits/placeholders/placeholder-portrait-s73-10-young_female-frontier-envoy-ride-v1.webp",
+      "fallbackRef": "fallback-role-silhouette-v1",
+      "dimensions": {
+        "width": 1024,
+        "height": 1536
+      },
+      "aspectRatio": "1024:1536",
+      "format": "webp",
+      "transparent": false,
+      "safeArea": {
+        "x": 0.19,
+        "y": 0.05,
+        "width": 0.62,
+        "height": 0.88
+      },
+      "focalPoint": {
+        "x": 0.5,
+        "y": 0.24
+      },
+      "mobileCrop": {
+        "mode": "center_crop_or_contain",
+        "keepSafeArea": true,
+        "notes": "S73.10.7 年轻女性补充池窄屏保留脸部、发髻簪钗、上身衣料层次、腰封细腰、肩颈线和职业道具；任何中年化或中性化候选不得进入 runtime。"
+      },
+      "lazyLoad": {
+        "group": "portrait_pool_young_female_s73_10_7",
+        "allowEagerLoad": false,
+        "thumbnailFirst": true,
+        "lowResPlaceholder": true,
+        "maxInitialPortraits": 8
+      },
+      "source": {
+        "type": "ai_generated",
+        "tool": "Codex imagegen",
+        "model": "gpt-image-2",
+        "generatedAt": "2026-05-16",
+        "promptSummary": "年轻成年边关女将、军中文书、使者和护卫补充页；完整甲衣或行旅外袍，发髻和腰带轮廓突出女性特征，英气但不男性化。 单格角色：年轻边关使者，披风持令。"
+      },
+      "license": {
+        "type": "ai_generated_project_asset",
+        "commercialUseConfirmed": false,
+        "summary": "原创 AI 生成素材，当前仅个人游玩/开发使用；未做公开商用确认。"
+      },
+      "reviewStatus": "approved",
+      "visualReview": {
+        "reviewedBy": "Codex",
+        "reviewedAt": "2026-05-16",
+        "status": "approved",
+        "summary": "通过：全部为年轻成年女性，脸部、发髻簪钗、肩颈线、层叠衣料、腰封细腰和端庄姿态均能明确女性特征；未见中年化、发福化、老态或中性化问题，小尺寸可辨认身份和轮廓。"
+      },
+      "safetyReview": {
+        "reviewedBy": "Codex",
+        "reviewedAt": "2026-05-16",
+        "status": "approved",
+        "summary": "通过：完整衣着，无低胸、透视、裸露、挑逗、幼态、现代物、水印、徽标、可读文字、本地路径、key、raw/hidden 内容或未公开剧情事实。"
+      },
+      "performance": {
+        "bytes": 165798,
+        "targetMaxBytes": 614400,
+        "thumbnailBytes": 41078,
+        "thumbnailTargetMaxBytes": 256000,
+        "lowResPlaceholderBytes": 1438
+      },
+      "ledgerId": "portrait-s73-10-young_female-frontier-envoy-ride-v1"
+    },
+    {
+      "id": "portrait-s73-10-young_female-military-scribe-v1",
+      "version": 1,
+      "phase": "S73.10.7",
+      "category": "portrait",
+      "subcategory": "young_female_style_pool",
+      "usage": [
+        "people_page",
+        "npc_dialogue",
+        "game_main",
+        "court_or_story_scene"
+      ],
+      "role": "military-scribe",
+      "roleLabel": "军中文书",
+      "roleStage": "young_female_patch",
+      "scene": null,
+      "portraitRef": "portrait-s73-10-young_female-military-scribe-v1",
+      "genderPresentation": "feminine",
+      "ageBand": "adult_young",
+      "statusVariant": "blank_order",
+      "emotionVariant": "poised",
+      "posture": "持空白军令",
+      "identityTags": [
+        "young_adult_female_patch",
+        "female_explicit",
+        "not_middle_aged",
+        "not_androgynous",
+        "military-scribe",
+        "blank_order"
+      ],
+      "emotionTags": [
+        "poised",
+        "blank_order"
+      ],
+      "path": "/assets/ui/portraits/s73-10/portrait-s73-10-young_female-military-scribe-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-portrait-s73-10-young_female-military-scribe-v1.webp",
+      "lowResPlaceholderPath": "/assets/ui/portraits/placeholders/placeholder-portrait-s73-10-young_female-military-scribe-v1.webp",
+      "fallbackRef": "fallback-role-silhouette-v1",
+      "dimensions": {
+        "width": 1024,
+        "height": 1536
+      },
+      "aspectRatio": "1024:1536",
+      "format": "webp",
+      "transparent": false,
+      "safeArea": {
+        "x": 0.19,
+        "y": 0.05,
+        "width": 0.62,
+        "height": 0.88
+      },
+      "focalPoint": {
+        "x": 0.5,
+        "y": 0.24
+      },
+      "mobileCrop": {
+        "mode": "center_crop_or_contain",
+        "keepSafeArea": true,
+        "notes": "S73.10.7 年轻女性补充池窄屏保留脸部、发髻簪钗、上身衣料层次、腰封细腰、肩颈线和职业道具；任何中年化或中性化候选不得进入 runtime。"
+      },
+      "lazyLoad": {
+        "group": "portrait_pool_young_female_s73_10_7",
+        "allowEagerLoad": false,
+        "thumbnailFirst": true,
+        "lowResPlaceholder": true,
+        "maxInitialPortraits": 8
+      },
+      "source": {
+        "type": "ai_generated",
+        "tool": "Codex imagegen",
+        "model": "gpt-image-2",
+        "generatedAt": "2026-05-16",
+        "promptSummary": "年轻成年边关女将、军中文书、使者和护卫补充页；完整甲衣或行旅外袍，发髻和腰带轮廓突出女性特征，英气但不男性化。 单格角色：军中文书，持空白军令。"
+      },
+      "license": {
+        "type": "ai_generated_project_asset",
+        "commercialUseConfirmed": false,
+        "summary": "原创 AI 生成素材，当前仅个人游玩/开发使用；未做公开商用确认。"
+      },
+      "reviewStatus": "approved",
+      "visualReview": {
+        "reviewedBy": "Codex",
+        "reviewedAt": "2026-05-16",
+        "status": "approved",
+        "summary": "通过：全部为年轻成年女性，脸部、发髻簪钗、肩颈线、层叠衣料、腰封细腰和端庄姿态均能明确女性特征；未见中年化、发福化、老态或中性化问题，小尺寸可辨认身份和轮廓。"
+      },
+      "safetyReview": {
+        "reviewedBy": "Codex",
+        "reviewedAt": "2026-05-16",
+        "status": "approved",
+        "summary": "通过：完整衣着，无低胸、透视、裸露、挑逗、幼态、现代物、水印、徽标、可读文字、本地路径、key、raw/hidden 内容或未公开剧情事实。"
+      },
+      "performance": {
+        "bytes": 152830,
+        "targetMaxBytes": 614400,
+        "thumbnailBytes": 35584,
+        "thumbnailTargetMaxBytes": 256000,
+        "lowResPlaceholderBytes": 1444
+      },
+      "ledgerId": "portrait-s73-10-young_female-military-scribe-v1"
+    },
+    {
+      "id": "portrait-s73-10-young_female-female-commander-v1",
+      "version": 1,
+      "phase": "S73.10.7",
+      "category": "portrait",
+      "subcategory": "young_female_style_pool",
+      "usage": [
+        "people_page",
+        "npc_dialogue",
+        "game_main",
+        "court_or_story_scene"
+      ],
+      "role": "female-commander",
+      "roleLabel": "年轻女将",
+      "roleStage": "young_female_patch",
+      "scene": null,
+      "portraitRef": "portrait-s73-10-young_female-female-commander-v1",
+      "genderPresentation": "feminine",
+      "ageBand": "adult_young",
+      "statusVariant": "light_armor",
+      "emotionVariant": "poised",
+      "posture": "完整轻甲正身",
+      "identityTags": [
+        "young_adult_female_patch",
+        "female_explicit",
+        "not_middle_aged",
+        "not_androgynous",
+        "female-commander",
+        "light_armor"
+      ],
+      "emotionTags": [
+        "poised",
+        "light_armor"
+      ],
+      "path": "/assets/ui/portraits/s73-10/portrait-s73-10-young_female-female-commander-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-portrait-s73-10-young_female-female-commander-v1.webp",
+      "lowResPlaceholderPath": "/assets/ui/portraits/placeholders/placeholder-portrait-s73-10-young_female-female-commander-v1.webp",
+      "fallbackRef": "fallback-role-silhouette-v1",
+      "dimensions": {
+        "width": 1024,
+        "height": 1536
+      },
+      "aspectRatio": "1024:1536",
+      "format": "webp",
+      "transparent": false,
+      "safeArea": {
+        "x": 0.19,
+        "y": 0.05,
+        "width": 0.62,
+        "height": 0.88
+      },
+      "focalPoint": {
+        "x": 0.5,
+        "y": 0.24
+      },
+      "mobileCrop": {
+        "mode": "center_crop_or_contain",
+        "keepSafeArea": true,
+        "notes": "S73.10.7 年轻女性补充池窄屏保留脸部、发髻簪钗、上身衣料层次、腰封细腰、肩颈线和职业道具；任何中年化或中性化候选不得进入 runtime。"
+      },
+      "lazyLoad": {
+        "group": "portrait_pool_young_female_s73_10_7",
+        "allowEagerLoad": false,
+        "thumbnailFirst": true,
+        "lowResPlaceholder": true,
+        "maxInitialPortraits": 8
+      },
+      "source": {
+        "type": "ai_generated",
+        "tool": "Codex imagegen",
+        "model": "gpt-image-2",
+        "generatedAt": "2026-05-16",
+        "promptSummary": "年轻成年边关女将、军中文书、使者和护卫补充页；完整甲衣或行旅外袍，发髻和腰带轮廓突出女性特征，英气但不男性化。 单格角色：年轻女将，完整轻甲正身。"
+      },
+      "license": {
+        "type": "ai_generated_project_asset",
+        "commercialUseConfirmed": false,
+        "summary": "原创 AI 生成素材，当前仅个人游玩/开发使用；未做公开商用确认。"
+      },
+      "reviewStatus": "approved",
+      "visualReview": {
+        "reviewedBy": "Codex",
+        "reviewedAt": "2026-05-16",
+        "status": "approved",
+        "summary": "通过：全部为年轻成年女性，脸部、发髻簪钗、肩颈线、层叠衣料、腰封细腰和端庄姿态均能明确女性特征；未见中年化、发福化、老态或中性化问题，小尺寸可辨认身份和轮廓。"
+      },
+      "safetyReview": {
+        "reviewedBy": "Codex",
+        "reviewedAt": "2026-05-16",
+        "status": "approved",
+        "summary": "通过：完整衣着，无低胸、透视、裸露、挑逗、幼态、现代物、水印、徽标、可读文字、本地路径、key、raw/hidden 内容或未公开剧情事实。"
+      },
+      "performance": {
+        "bytes": 181118,
+        "targetMaxBytes": 614400,
+        "thumbnailBytes": 44912,
+        "thumbnailTargetMaxBytes": 256000,
+        "lowResPlaceholderBytes": 1532
+      },
+      "ledgerId": "portrait-s73-10-young_female-female-commander-v1"
+    },
+    {
+      "id": "portrait-s73-10-young_female-scout-messenger-v1",
+      "version": 1,
+      "phase": "S73.10.7",
+      "category": "portrait",
+      "subcategory": "young_female_style_pool",
+      "usage": [
+        "people_page",
+        "npc_dialogue",
+        "game_main",
+        "court_or_story_scene"
+      ],
+      "role": "scout-messenger",
+      "roleLabel": "斥候女使",
+      "roleStage": "young_female_patch",
+      "scene": null,
+      "portraitRef": "portrait-s73-10-young_female-scout-messenger-v1",
+      "genderPresentation": "feminine",
+      "ageBand": "adult_young",
+      "statusVariant": "sealed_tube",
+      "emotionVariant": "poised",
+      "posture": "持封筒",
+      "identityTags": [
+        "young_adult_female_patch",
+        "female_explicit",
+        "not_middle_aged",
+        "not_androgynous",
+        "scout-messenger",
+        "sealed_tube"
+      ],
+      "emotionTags": [
+        "poised",
+        "sealed_tube"
+      ],
+      "path": "/assets/ui/portraits/s73-10/portrait-s73-10-young_female-scout-messenger-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-portrait-s73-10-young_female-scout-messenger-v1.webp",
+      "lowResPlaceholderPath": "/assets/ui/portraits/placeholders/placeholder-portrait-s73-10-young_female-scout-messenger-v1.webp",
+      "fallbackRef": "fallback-role-silhouette-v1",
+      "dimensions": {
+        "width": 1024,
+        "height": 1536
+      },
+      "aspectRatio": "1024:1536",
+      "format": "webp",
+      "transparent": false,
+      "safeArea": {
+        "x": 0.19,
+        "y": 0.05,
+        "width": 0.62,
+        "height": 0.88
+      },
+      "focalPoint": {
+        "x": 0.5,
+        "y": 0.24
+      },
+      "mobileCrop": {
+        "mode": "center_crop_or_contain",
+        "keepSafeArea": true,
+        "notes": "S73.10.7 年轻女性补充池窄屏保留脸部、发髻簪钗、上身衣料层次、腰封细腰、肩颈线和职业道具；任何中年化或中性化候选不得进入 runtime。"
+      },
+      "lazyLoad": {
+        "group": "portrait_pool_young_female_s73_10_7",
+        "allowEagerLoad": false,
+        "thumbnailFirst": true,
+        "lowResPlaceholder": true,
+        "maxInitialPortraits": 8
+      },
+      "source": {
+        "type": "ai_generated",
+        "tool": "Codex imagegen",
+        "model": "gpt-image-2",
+        "generatedAt": "2026-05-16",
+        "promptSummary": "年轻成年边关女将、军中文书、使者和护卫补充页；完整甲衣或行旅外袍，发髻和腰带轮廓突出女性特征，英气但不男性化。 单格角色：斥候女使，持封筒。"
+      },
+      "license": {
+        "type": "ai_generated_project_asset",
+        "commercialUseConfirmed": false,
+        "summary": "原创 AI 生成素材，当前仅个人游玩/开发使用；未做公开商用确认。"
+      },
+      "reviewStatus": "approved",
+      "visualReview": {
+        "reviewedBy": "Codex",
+        "reviewedAt": "2026-05-16",
+        "status": "approved",
+        "summary": "通过：全部为年轻成年女性，脸部、发髻簪钗、肩颈线、层叠衣料、腰封细腰和端庄姿态均能明确女性特征；未见中年化、发福化、老态或中性化问题，小尺寸可辨认身份和轮廓。"
+      },
+      "safetyReview": {
+        "reviewedBy": "Codex",
+        "reviewedAt": "2026-05-16",
+        "status": "approved",
+        "summary": "通过：完整衣着，无低胸、透视、裸露、挑逗、幼态、现代物、水印、徽标、可读文字、本地路径、key、raw/hidden 内容或未公开剧情事实。"
+      },
+      "performance": {
+        "bytes": 173908,
+        "targetMaxBytes": 614400,
+        "thumbnailBytes": 43698,
+        "thumbnailTargetMaxBytes": 256000,
+        "lowResPlaceholderBytes": 1568
+      },
+      "ledgerId": "portrait-s73-10-young_female-scout-messenger-v1"
+    },
+    {
+      "id": "portrait-s73-10-young_female-border-negotiator-v1",
+      "version": 1,
+      "phase": "S73.10.7",
+      "category": "portrait",
+      "subcategory": "young_female_style_pool",
+      "usage": [
+        "people_page",
+        "npc_dialogue",
+        "game_main",
+        "court_or_story_scene"
+      ],
+      "role": "border-negotiator",
+      "roleLabel": "边务女议者",
+      "roleStage": "young_female_patch",
+      "scene": null,
+      "portraitRef": "portrait-s73-10-young_female-border-negotiator-v1",
+      "genderPresentation": "feminine",
+      "ageBand": "adult_young",
+      "statusVariant": "blank_map",
+      "emotionVariant": "poised",
+      "posture": "持空白舆图",
+      "identityTags": [
+        "young_adult_female_patch",
+        "female_explicit",
+        "not_middle_aged",
+        "not_androgynous",
+        "border-negotiator",
+        "blank_map"
+      ],
+      "emotionTags": [
+        "poised",
+        "blank_map"
+      ],
+      "path": "/assets/ui/portraits/s73-10/portrait-s73-10-young_female-border-negotiator-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-portrait-s73-10-young_female-border-negotiator-v1.webp",
+      "lowResPlaceholderPath": "/assets/ui/portraits/placeholders/placeholder-portrait-s73-10-young_female-border-negotiator-v1.webp",
+      "fallbackRef": "fallback-role-silhouette-v1",
+      "dimensions": {
+        "width": 1024,
+        "height": 1536
+      },
+      "aspectRatio": "1024:1536",
+      "format": "webp",
+      "transparent": false,
+      "safeArea": {
+        "x": 0.19,
+        "y": 0.05,
+        "width": 0.62,
+        "height": 0.88
+      },
+      "focalPoint": {
+        "x": 0.5,
+        "y": 0.24
+      },
+      "mobileCrop": {
+        "mode": "center_crop_or_contain",
+        "keepSafeArea": true,
+        "notes": "S73.10.7 年轻女性补充池窄屏保留脸部、发髻簪钗、上身衣料层次、腰封细腰、肩颈线和职业道具；任何中年化或中性化候选不得进入 runtime。"
+      },
+      "lazyLoad": {
+        "group": "portrait_pool_young_female_s73_10_7",
+        "allowEagerLoad": false,
+        "thumbnailFirst": true,
+        "lowResPlaceholder": true,
+        "maxInitialPortraits": 8
+      },
+      "source": {
+        "type": "ai_generated",
+        "tool": "Codex imagegen",
+        "model": "gpt-image-2",
+        "generatedAt": "2026-05-16",
+        "promptSummary": "年轻成年边关女将、军中文书、使者和护卫补充页；完整甲衣或行旅外袍，发髻和腰带轮廓突出女性特征，英气但不男性化。 单格角色：边务女议者，持空白舆图。"
+      },
+      "license": {
+        "type": "ai_generated_project_asset",
+        "commercialUseConfirmed": false,
+        "summary": "原创 AI 生成素材，当前仅个人游玩/开发使用；未做公开商用确认。"
+      },
+      "reviewStatus": "approved",
+      "visualReview": {
+        "reviewedBy": "Codex",
+        "reviewedAt": "2026-05-16",
+        "status": "approved",
+        "summary": "通过：全部为年轻成年女性，脸部、发髻簪钗、肩颈线、层叠衣料、腰封细腰和端庄姿态均能明确女性特征；未见中年化、发福化、老态或中性化问题，小尺寸可辨认身份和轮廓。"
+      },
+      "safetyReview": {
+        "reviewedBy": "Codex",
+        "reviewedAt": "2026-05-16",
+        "status": "approved",
+        "summary": "通过：完整衣着，无低胸、透视、裸露、挑逗、幼态、现代物、水印、徽标、可读文字、本地路径、key、raw/hidden 内容或未公开剧情事实。"
+      },
+      "performance": {
+        "bytes": 158814,
+        "targetMaxBytes": 614400,
+        "thumbnailBytes": 39696,
+        "thumbnailTargetMaxBytes": 256000,
+        "lowResPlaceholderBytes": 1452
+      },
+      "ledgerId": "portrait-s73-10-young_female-border-negotiator-v1"
+    },
+    {
+      "id": "portrait-s73-10-young_female-guard-officer-v1",
+      "version": 1,
+      "phase": "S73.10.7",
+      "category": "portrait",
+      "subcategory": "young_female_style_pool",
+      "usage": [
+        "people_page",
+        "npc_dialogue",
+        "game_main",
+        "court_or_story_scene"
+      ],
+      "role": "guard-officer",
+      "roleLabel": "年轻女护卫官",
+      "roleStage": "young_female_patch",
+      "scene": null,
+      "portraitRef": "portrait-s73-10-young_female-guard-officer-v1",
+      "genderPresentation": "feminine",
+      "ageBand": "adult_young",
+      "statusVariant": "sheathed_sword",
+      "emotionVariant": "poised",
+      "posture": "佩剑静立",
+      "identityTags": [
+        "young_adult_female_patch",
+        "female_explicit",
+        "not_middle_aged",
+        "not_androgynous",
+        "guard-officer",
+        "sheathed_sword"
+      ],
+      "emotionTags": [
+        "poised",
+        "sheathed_sword"
+      ],
+      "path": "/assets/ui/portraits/s73-10/portrait-s73-10-young_female-guard-officer-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-portrait-s73-10-young_female-guard-officer-v1.webp",
+      "lowResPlaceholderPath": "/assets/ui/portraits/placeholders/placeholder-portrait-s73-10-young_female-guard-officer-v1.webp",
+      "fallbackRef": "fallback-role-silhouette-v1",
+      "dimensions": {
+        "width": 1024,
+        "height": 1536
+      },
+      "aspectRatio": "1024:1536",
+      "format": "webp",
+      "transparent": false,
+      "safeArea": {
+        "x": 0.19,
+        "y": 0.05,
+        "width": 0.62,
+        "height": 0.88
+      },
+      "focalPoint": {
+        "x": 0.5,
+        "y": 0.24
+      },
+      "mobileCrop": {
+        "mode": "center_crop_or_contain",
+        "keepSafeArea": true,
+        "notes": "S73.10.7 年轻女性补充池窄屏保留脸部、发髻簪钗、上身衣料层次、腰封细腰、肩颈线和职业道具；任何中年化或中性化候选不得进入 runtime。"
+      },
+      "lazyLoad": {
+        "group": "portrait_pool_young_female_s73_10_7",
+        "allowEagerLoad": false,
+        "thumbnailFirst": true,
+        "lowResPlaceholder": true,
+        "maxInitialPortraits": 8
+      },
+      "source": {
+        "type": "ai_generated",
+        "tool": "Codex imagegen",
+        "model": "gpt-image-2",
+        "generatedAt": "2026-05-16",
+        "promptSummary": "年轻成年边关女将、军中文书、使者和护卫补充页；完整甲衣或行旅外袍，发髻和腰带轮廓突出女性特征，英气但不男性化。 单格角色：年轻女护卫官，佩剑静立。"
+      },
+      "license": {
+        "type": "ai_generated_project_asset",
+        "commercialUseConfirmed": false,
+        "summary": "原创 AI 生成素材，当前仅个人游玩/开发使用；未做公开商用确认。"
+      },
+      "reviewStatus": "approved",
+      "visualReview": {
+        "reviewedBy": "Codex",
+        "reviewedAt": "2026-05-16",
+        "status": "approved",
+        "summary": "通过：全部为年轻成年女性，脸部、发髻簪钗、肩颈线、层叠衣料、腰封细腰和端庄姿态均能明确女性特征；未见中年化、发福化、老态或中性化问题，小尺寸可辨认身份和轮廓。"
+      },
+      "safetyReview": {
+        "reviewedBy": "Codex",
+        "reviewedAt": "2026-05-16",
+        "status": "approved",
+        "summary": "通过：完整衣着，无低胸、透视、裸露、挑逗、幼态、现代物、水印、徽标、可读文字、本地路径、key、raw/hidden 内容或未公开剧情事实。"
+      },
+      "performance": {
+        "bytes": 166018,
+        "targetMaxBytes": 614400,
+        "thumbnailBytes": 41388,
+        "thumbnailTargetMaxBytes": 256000,
+        "lowResPlaceholderBytes": 1348
+      },
+      "ledgerId": "portrait-s73-10-young_female-guard-officer-v1"
     }
   ],
   "updatedAt": "2026-05-16"

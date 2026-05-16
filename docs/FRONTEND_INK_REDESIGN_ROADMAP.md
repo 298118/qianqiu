@@ -493,7 +493,7 @@ Manifest 示例：
 
 - 已新增素材预览页，列出 manifest 项目、尺寸、路径、透明度、用途和审核状态，并支持阶段/分类/搜索筛选。
 - 已新增 Node QA 脚本和 `qa:frontend-assets` 命令，校验 manifest 路径只指向 `public/assets/ui/`，字段不含 key、本地路径、raw、provider、hidden 或 prompt 原文泄漏，图片存在且尺寸符合预期。
-- 已用统一报告覆盖缩略图、fallback、审核状态、性能预算、立绘低清占位和 transparent alpha 标记；当前报告覆盖 594 个 active 素材。
+- 已用统一报告覆盖缩略图、fallback、审核状态、性能预算、立绘低清占位和 transparent alpha 标记；当前报告覆盖 618 个 active 素材。
 - 透明素材已额外做宣纸底/深色底合成预览和 chroma-key 高饱和绿/紫色边检查，覆盖当前 19 个透明素材，避免去底残留、矩形切口或黑线进入首页和专题界面。
 
 验收：
@@ -507,7 +507,7 @@ Manifest 示例：
 
 目标：S73 内完成 300-400 张玩家/NPC 立绘的生成、审核、缩略图、压缩、manifest 入库和台账登记，使 S74-S77 的首页、人物谱牒、身份面板、考试/放榜、朝议/官署和后续专题界面都能直接使用同一套已审核 `portraitRef`。
 
-当前状态：S73.10.1 已完成矩阵定稿。新增 `docs/FRONTEND_PORTRAIT_MATRIX.md`、`public/assets/ui/portraits/portrait-pool-matrix-v1.json`、`scripts/frontendPortraitMatrix.js` 和 `npm run qa:portrait-matrix`，把全量池锁定为 336 张 planned 立绘：玩家身份阶段 72、通用 NPC 120、重要 NPC 72、状态姿态 48、场景锚点 24。矩阵只预置安全 `portraitRef`、生成目标路径、prompt 母版、fallback、懒加载分组和审核字段；不把未生成素材写入 `ink-ui-manifest.json` 可用集合。S73.10.2 已完成玩家身份阶段 72 张立绘，并保留 60 张已审核女性玩家风格补充与 60 张已审核男性玩家风格补充，使玩家可选池男女各 96 张。S73.10.3 已完成 188 张通用 NPC 立绘，包括一开始的 120 张矩阵通用 NPC、20 张旧版 bonus 和 48 张宫装/唐装女性风格扩展；S73.10.4 已完成 72 张重要 NPC 专属立绘；S73.10.5 已完成 72 张状态/姿态与场景锚点立绘；S73.10.6 已完成缩略图与压缩总括 QA，新增 `scripts/frontendPortraitCompressionQa.js`、`public/assets/ui/portraits/portrait-compression-qa-v1.json` 和 `qa:portrait-compression`，统一校验 548 张 active 立绘、其中 524 张 S73.10 立绘的主图、缩略图、低清占位、safeArea、focalPoint、移动裁切、文件预算和禁止 eager load。manifest 与 S73.9 QA 报告当前为 594 个 active 素材。
+当前状态：S73.10.1 已完成矩阵定稿。新增 `docs/FRONTEND_PORTRAIT_MATRIX.md`、`public/assets/ui/portraits/portrait-pool-matrix-v1.json`、`scripts/frontendPortraitMatrix.js` 和 `npm run qa:portrait-matrix`，把全量池锁定为 336 张 planned 立绘：玩家身份阶段 72、通用 NPC 120、重要 NPC 72、状态姿态 48、场景锚点 24。矩阵只预置安全 `portraitRef`、生成目标路径、prompt 母版、fallback、懒加载分组和审核字段；不把未生成素材写入 `ink-ui-manifest.json` 可用集合。S73.10.2 已完成玩家身份阶段 72 张立绘，并保留 60 张已审核女性玩家风格补充与 60 张已审核男性玩家风格补充，使玩家可选池男女各 96 张。S73.10.3 已完成 188 张通用 NPC 立绘，包括一开始的 120 张矩阵通用 NPC、20 张旧版 bonus 和 48 张宫装/唐装女性风格扩展；S73.10.4 已完成 72 张重要 NPC 专属立绘；S73.10.5 已完成 72 张状态/姿态与场景锚点立绘；S73.10.7 已完成 24 张年轻成年女性补充立绘，覆盖宫署/女官、书院/才女、商事/市井和边关/军务，Codex 视觉审核确认无中年女性、无发福老态、无中性化；S73.10.6 已完成缩略图与压缩总括 QA，新增 `scripts/frontendPortraitCompressionQa.js`、`public/assets/ui/portraits/portrait-compression-qa-v1.json` 和 `qa:portrait-compression`，当前统一校验 572 张 active 立绘、其中 548 张 S73.10 立绘的主图、缩略图、低清占位、safeArea、focalPoint、移动裁切、文件预算和禁止 eager load。manifest 与 S73.9 QA 报告当前为 618 个 active 素材。
 
 内部小步骤：
 
@@ -516,8 +516,8 @@ Manifest 示例：
 - S73.10.3 通用 NPC 立绘池：已完成。覆盖一开始的 120 张矩阵通用 NPC，另把 20 张旧版源页作为 `bonus_generic_npc` 继续使用，并额外补入 48 张 `female_style_pack` 宫装/唐装女性风格扩展；女性扩展只使用 `palace-lady`、`tang-lady` 和 `palace`/`tang` 标签，作为通用已审核补充池按需懒加载。
 - S73.10.4 重要 NPC 专属池：已完成张居正、魏忠贤等已规划重要人物或拟史关键人物的专属立绘隔离方案，不把重要 NPC 混进通用头像池；未进入当前剧情公开视野的人物只登记安全 `portraitRef`，不泄漏 hidden 私档。
 - S73.10.5 状态与姿态变体：已完成重要玩家身份和高频 NPC 的状态/姿态变体与场景锚点；普通 NPC 仍至少有稳定常态 fallback。
-- S73.10.6 缩略图与压缩：已完成。`qa:portrait-compression` 固定半身主图 1024x1536、缩略图 384x576、低清占位 64x96，校验 548 张 active 立绘的 bytes、SHA-256、文件预算、safeArea、focalPoint、移动裁切和 `allowEagerLoad=false`。
-- S73.10.7 视觉与安全审核：已由 S73.10.2-S73.10.5 各批次 QA sidecar、Codex 视觉审核摘要和 manifest 审核字段覆盖；候选或拒绝源页不得进入 runtime manifest。
+- S73.10.6 缩略图与压缩：已完成并随 S73.10.7 刷新。`qa:portrait-compression` 固定半身主图 1024x1536、缩略图 384x576、低清占位 64x96，校验 572 张 active 立绘的 bytes、SHA-256、文件预算、safeArea、focalPoint、移动裁切和 `allowEagerLoad=false`。
+- S73.10.7 视觉与安全审核/年轻女性补丁池：已完成。新增 `scripts/frontendYoungFemalePortraitAssets.js`、`qa:young-female-portraits` / `qa:young-female-portraits:write` 和 `public/assets/ui/portraits/portrait-young-female-pool-qa-v1.json`，单独入库 24 张年轻成年女性立绘；候选源页经 Codex 视觉审核，确认不含中年女性、发福老态、男性化或中性化候选，且完整衣着、无露骨/挑逗/幼态/现代物/文字/水印。
 - S73.10.8 manifest 与台账验证：已由 S73.9 统一素材 QA、S73.10.6 立绘压缩 QA、`test/frontendInkAssetsManifest.test.js` 和素材台账覆盖，测试能发现缺图、尺寸错配、未审核素材引用、敏感字段、硬编码路径和全量首屏加载风险。
 
 约束：
