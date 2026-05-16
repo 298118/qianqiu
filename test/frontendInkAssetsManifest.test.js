@@ -18,6 +18,7 @@ const portraitPlayerFemaleResetQaPath = path.join(
   "portraits",
   "portrait-player-female-reset-qa-v1.json"
 );
+const portraitPlayerMaleExtraQaPath = path.join(repoRoot, "public", "assets", "ui", "portraits", "portrait-player-male-extra-qa-v1.json");
 const portraitGenericNpcPoolQaPath = path.join(repoRoot, "public", "assets", "ui", "portraits", "portrait-generic-npc-pool-qa-v1.json");
 const effectMotionQaPath = path.join(repoRoot, "public", "assets", "ui", "effects", "effect-motion-qa-v1.json");
 const assetQaReportPath = path.join(repoRoot, "public", "assets", "ui", "asset-qa-report-v1.json");
@@ -220,7 +221,7 @@ test("S73.2 ink UI manifest fixes schema, safety, fallback, and portrait policie
   });
 
   assert.equal(Array.isArray(manifest.assets), true);
-  assert.equal(manifest.assets.length, 390, "S73.3-S73.10.3 UI assets are active");
+  assert.equal(manifest.assets.length, 450, "S73.3-S73.10.3 UI assets are active");
 
   const phaseCounts = manifest.assets.reduce((counts, asset) => {
     counts[asset.phase] = (counts[asset.phase] || 0) + 1;
@@ -232,7 +233,7 @@ test("S73.2 ink UI manifest fixes schema, safety, fallback, and portrait policie
   assert.equal(phaseCounts["S73.6"], 6);
   assert.equal(phaseCounts["S73.7"], 24);
   assert.equal(phaseCounts["S73.8"], 8);
-  assert.equal(phaseCounts["S73.10.2"], 132);
+  assert.equal(phaseCounts["S73.10.2"], 192);
   assert.equal(phaseCounts["S73.10.3"], 188);
 
   for (const asset of manifest.assets) {
@@ -294,7 +295,7 @@ test("S73.2 ink UI manifest fixes schema, safety, fallback, and portrait policie
     }
     if (asset.phase === "S73.10.2") {
       assert.equal(asset.category, "portrait", asset.id);
-      assert.equal(["player_identity_stage_pool", "player_female_style_pool"].includes(asset.subcategory), true, asset.id);
+      assert.equal(["player_identity_stage_pool", "player_female_style_pool", "player_male_style_pool"].includes(asset.subcategory), true, asset.id);
       assert.equal(asset.dimensions.width, 1024, asset.id);
       assert.equal(asset.dimensions.height, 1536, asset.id);
       assert.equal(asset.transparent, false, asset.id);
@@ -306,7 +307,7 @@ test("S73.2 ink UI manifest fixes schema, safety, fallback, and portrait policie
       if (asset.subcategory === "player_identity_stage_pool") {
         assert.equal(["baseline", "formal", "travel_or_duty"].includes(asset.statusVariant), true, asset.id);
         assert.equal(asset.lazyLoad.group, "portrait_pool_player_s73_10", asset.id);
-      } else {
+      } else if (asset.subcategory === "player_female_style_pool") {
         assert.equal(asset.subcategory, "player_female_style_pool", asset.id);
         assert.equal(asset.genderPresentation, "feminine", asset.id);
         assert.equal(
@@ -316,6 +317,16 @@ test("S73.2 ink UI manifest fixes schema, safety, fallback, and portrait policie
         );
         assert.equal(asset.lazyLoad.group, "portrait_pool_player_female_extra_s73_10", asset.id);
         assert.equal(asset.identityTags.includes("female_style"), true, asset.id);
+      } else {
+        assert.equal(asset.subcategory, "player_male_style_pool", asset.id);
+        assert.equal(asset.genderPresentation, "masculine", asset.id);
+        assert.equal(
+          ["baseline", "formal", "working", "travel_or_motion", "quiet_authority", "poised"].includes(asset.statusVariant),
+          true,
+          asset.id
+        );
+        assert.equal(asset.lazyLoad.group, "portrait_pool_player_male_extra_s73_10", asset.id);
+        assert.equal(asset.identityTags.includes("male_style"), true, asset.id);
       }
       assert.equal(Array.isArray(asset.identityTags), true, asset.id);
       assert.equal(Array.isArray(asset.emotionTags), true, asset.id);
@@ -467,6 +478,7 @@ test("S73.2 ink UI manifest fixes schema, safety, fallback, and portrait policie
     "portrait-s73-10-player-grand-minister-f01-v1",
     "portrait-s73-10-player-general-m02-v1",
     "portrait-s73-10-player-emperor-regent-f03-v1",
+    "portrait-s73-10-player-male-extra-academy_scholar-look01-v1",
     "portrait-s73-10-generic_npc-teacher-m01-v1",
     "portrait-s73-10-generic_npc-magistrate-f02-v1",
     "portrait-s73-10-generic_npc-censor-elder01-v1",
@@ -627,10 +639,29 @@ test("S73.10.2 player portrait pool QA records approved staged player portraits"
   assert.equal(femaleQa.visualReviewSummary.includes("完整衣着"), true);
   assert.equal(femaleQa.safetyReviewSummary.includes("所有角色均为成年"), true);
 
+  const maleQaText = fs.readFileSync(portraitPlayerMaleExtraQaPath, "utf8");
+  assert.doesNotMatch(maleQaText, FORBIDDEN_MANIFEST_REMOTE_OR_LOCAL_PATH);
+  assert.doesNotMatch(maleQaText, FORBIDDEN_ASSET_VALUE);
+  const maleQa = JSON.parse(maleQaText);
+  assert.equal(maleQa.schemaVersion, 1);
+  assert.equal(maleQa.phase, "S73.10.2b");
+  assert.equal(maleQa.reviewedBy, "Codex");
+  assert.equal(maleQa.sourceSheets.length, 10);
+  assert.deepEqual(maleQa.counts, {
+    extraPlayerMale: 60,
+    totalReviewedMaleExtra: 60
+  });
+  assert.equal(maleQa.visualReviewSummary.includes("60 张玩家男性扩展选角立绘"), true);
+  assert.equal(maleQa.visualReviewSummary.includes("完整衣着"), true);
+  assert.equal(maleQa.safetyReviewSummary.includes("所有角色均为成年"), true);
+
   const manifest = readJson(manifestPath);
   const playerPhaseAssets = manifest.assets.filter((asset) => asset.phase === "S73.10.2");
   assert.equal(playerPhaseAssets.filter((asset) => asset.subcategory === "player_identity_stage_pool").length, 72);
   assert.equal(playerPhaseAssets.filter((asset) => asset.subcategory === "player_female_style_pool").length, 60);
+  assert.equal(playerPhaseAssets.filter((asset) => asset.subcategory === "player_male_style_pool").length, 60);
+  assert.equal(playerPhaseAssets.filter((asset) => asset.genderPresentation === "masculine").length, 96);
+  assert.equal(playerPhaseAssets.filter((asset) => asset.genderPresentation === "feminine").length, 96);
   const poolAssets = new Map(playerPhaseAssets.map((asset) => [asset.id, asset]));
   const femaleQaAssetsById = new Map(femaleQa.assets.map((entry) => [entry.id, entry]));
   const roles = new Set();
@@ -677,6 +708,33 @@ test("S73.10.2 player portrait pool QA records approved staged player portraits"
   assert.equal(extraPlayerStyles.length, 60);
   assert.equal(extraRoles.size, 10);
   for (const [role, count] of extraRoles) assert.equal(count, 6, role);
+
+  const extraPlayerMaleStyles = maleQa.assets.filter((entry) => entry.subcategory === "player_male_style_pool");
+  const extraMaleRoles = new Map();
+  for (const entry of extraPlayerMaleStyles) {
+    const asset = poolAssets.get(entry.id);
+    assert.ok(asset, entry.id);
+    assert.equal(asset.genderPresentation, "masculine", entry.id);
+    assert.equal(asset.reviewStatus, "approved", entry.id);
+    assert.equal(asset.lazyLoad.group, "portrait_pool_player_male_extra_s73_10", entry.id);
+    assert.equal(asset.identityTags.includes("male_style"), true, entry.id);
+    for (const field of ["path", "thumbnailPath", "lowResPlaceholderPath"]) {
+      assertSafeUiAssetPath(entry[field], `${entry.id}.${field}`);
+      assert.equal(fs.existsSync(resolveUiAssetPath(entry[field])), true, `${entry.id}.${field}`);
+    }
+    assert.equal(entry.bytes, fs.statSync(resolveUiAssetPath(entry.path)).size, entry.id);
+    assert.equal(entry.thumbnailBytes, fs.statSync(resolveUiAssetPath(entry.thumbnailPath)).size, entry.id);
+    assert.equal(entry.lowResPlaceholderBytes, fs.statSync(resolveUiAssetPath(entry.lowResPlaceholderPath)).size, entry.id);
+    assert.equal(entry.sha256, sha256File(resolveUiAssetPath(entry.path)), entry.id);
+    assert.equal(entry.thumbnailSha256, sha256File(resolveUiAssetPath(entry.thumbnailPath)), entry.id);
+    assert.equal(entry.lowResPlaceholderSha256, sha256File(resolveUiAssetPath(entry.lowResPlaceholderPath)), entry.id);
+    assert.equal(entry.visualReviewStatus, "approved", entry.id);
+    assert.equal(entry.safetyReviewStatus, "approved", entry.id);
+    extraMaleRoles.set(entry.role, (extraMaleRoles.get(entry.role) || 0) + 1);
+  }
+  assert.equal(extraPlayerMaleStyles.length, 60);
+  assert.equal(extraMaleRoles.size, 10);
+  for (const [role, count] of extraMaleRoles) assert.equal(count, 6, role);
 });
 
 test("S73.10.3 generic NPC portrait pool QA records matrix, bonus, and female style portraits", () => {
@@ -1003,12 +1061,15 @@ test("S73.2 frontend asset ledger records manifest, fallback, portrait, and sour
     "portrait-baseline-qa-v1.json",
     "portrait-player-pool-qa-v1.json",
     "portrait-player-female-reset-qa-v1.json",
+    "portrait-player-male-extra-qa-v1.json",
     "portrait-generic-npc-pool-qa-v1.json",
     "portrait_baseline_s73_7",
     "portrait_pool_player_s73_10",
     "portrait_pool_player_female_extra_s73_10",
+    "portrait_pool_player_male_extra_s73_10",
     "portrait_pool_generic_npc_s73_10",
     "玩家女性风格补充池",
+    "玩家男性风格补充池",
     "女性风格扩展池",
     "palace-lady",
     "tang-lady",

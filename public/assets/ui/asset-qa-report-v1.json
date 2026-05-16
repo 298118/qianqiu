@@ -1,9 +1,9 @@
 {
   "schemaVersion": 1,
   "phase": "S73.9",
-  "generatedAt": "2026-05-15T17:55:04.704Z",
+  "generatedAt": "2026-05-16T01:28:39.819Z",
   "manifestRef": "public/assets/ui/ink-ui-manifest.json",
-  "manifestSha256": "d952b2f53fd0e5eb61bbd14889dc001c884dff178c7fb684946c3e2ca08708ac",
+  "manifestSha256": "c1941341c7882d2c8a0bedd4117c389388431dd361dbd314f2f7c35a5a8c3c12",
   "previewRef": "public/assets/ui/asset-qa-preview.html",
   "compositeBackgrounds": [
     {
@@ -29,7 +29,7 @@
     "reason": null
   },
   "summary": {
-    "totalAssets": 390,
+    "totalAssets": 450,
     "transparentAssets": 19,
     "byPhase": {
       "S73.3": 16,
@@ -38,7 +38,7 @@
       "S73.6": 6,
       "S73.7": 24,
       "S73.8": 8,
-      "S73.10.2": 132,
+      "S73.10.2": 192,
       "S73.10.3": 188
     },
     "byCategory": {
@@ -47,10 +47,10 @@
       "effect": 9,
       "scene": 10,
       "role_background": 6,
-      "portrait": 344
+      "portrait": 404
     },
     "byReviewStatus": {
-      "approved": 386,
+      "approved": 446,
       "approved_with_limits": 4
     },
     "errorCount": 0,
@@ -24730,6 +24730,3786 @@
           "exists": true,
           "bytes": 1424,
           "sha256": "e1b2907f9b904ad8d2b83de37cd421959c0bdb7872af2ee59968052509ec4614",
+          "dimensions": {
+            "width": 64,
+            "height": 96,
+            "alpha": false
+          }
+        }
+      },
+      "transparentQa": {
+        "required": false,
+        "backgrounds": [],
+        "sidecar": null,
+        "pixel": null
+      },
+      "issues": []
+    },
+    {
+      "id": "portrait-s73-10-player-male-extra-academy_scholar-look01-v1",
+      "phase": "S73.10.2",
+      "category": "portrait",
+      "subcategory": "player_male_style_pool",
+      "usage": [
+        "player_identity",
+        "people_page",
+        "game_main"
+      ],
+      "path": "/assets/ui/portraits/s73-10/portrait-s73-10-player-male-extra-academy_scholar-look01-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-portrait-s73-10-player-male-extra-academy_scholar-look01-v1.webp",
+      "fallbackRef": "fallback-role-silhouette-v1",
+      "reviewStatus": "approved",
+      "runtimeUsable": true,
+      "dimensions": {
+        "width": 1024,
+        "height": 1536
+      },
+      "transparent": false,
+      "files": {
+        "image": {
+          "path": "/assets/ui/portraits/s73-10/portrait-s73-10-player-male-extra-academy_scholar-look01-v1.webp",
+          "exists": true,
+          "bytes": 147458,
+          "sha256": "4e35512be42fd9c9bce74477d37c17cdee1c74e6003ea1e25dee3a2d1c1a7c41",
+          "dimensions": {
+            "width": 1024,
+            "height": 1536
+          },
+          "alpha": false
+        },
+        "thumbnail": {
+          "path": "/assets/ui/thumbs/thumb-portrait-s73-10-player-male-extra-academy_scholar-look01-v1.webp",
+          "exists": true,
+          "bytes": 34744,
+          "sha256": "4e10f2d00995ab99a8955a22ea3039bdfc3dd31f3dcc0846124e0a178938931c",
+          "dimensions": {
+            "width": 384,
+            "height": 576,
+            "alpha": false
+          }
+        },
+        "lowResPlaceholder": {
+          "path": "/assets/ui/portraits/placeholders/placeholder-portrait-s73-10-player-male-extra-academy_scholar-look01-v1.webp",
+          "exists": true,
+          "bytes": 1546,
+          "sha256": "16f3332c4103af150ab8ac6b11749932d0dc982f0844dc2c7a229f6561d5b204",
+          "dimensions": {
+            "width": 64,
+            "height": 96,
+            "alpha": false
+          }
+        }
+      },
+      "transparentQa": {
+        "required": false,
+        "backgrounds": [],
+        "sidecar": null,
+        "pixel": null
+      },
+      "issues": []
+    },
+    {
+      "id": "portrait-s73-10-player-male-extra-academy_scholar-look02-v1",
+      "phase": "S73.10.2",
+      "category": "portrait",
+      "subcategory": "player_male_style_pool",
+      "usage": [
+        "player_identity",
+        "people_page",
+        "game_main"
+      ],
+      "path": "/assets/ui/portraits/s73-10/portrait-s73-10-player-male-extra-academy_scholar-look02-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-portrait-s73-10-player-male-extra-academy_scholar-look02-v1.webp",
+      "fallbackRef": "fallback-role-silhouette-v1",
+      "reviewStatus": "approved",
+      "runtimeUsable": true,
+      "dimensions": {
+        "width": 1024,
+        "height": 1536
+      },
+      "transparent": false,
+      "files": {
+        "image": {
+          "path": "/assets/ui/portraits/s73-10/portrait-s73-10-player-male-extra-academy_scholar-look02-v1.webp",
+          "exists": true,
+          "bytes": 143998,
+          "sha256": "cbfcf61be1e4debbd96bf5f0e5073232b10e9b6ddd77dc00caa3cb749e1f5d06",
+          "dimensions": {
+            "width": 1024,
+            "height": 1536
+          },
+          "alpha": false
+        },
+        "thumbnail": {
+          "path": "/assets/ui/thumbs/thumb-portrait-s73-10-player-male-extra-academy_scholar-look02-v1.webp",
+          "exists": true,
+          "bytes": 33790,
+          "sha256": "58081354b444cc49c041139b26f56259528cfb25513c31b18c50e2a0d10408fc",
+          "dimensions": {
+            "width": 384,
+            "height": 576,
+            "alpha": false
+          }
+        },
+        "lowResPlaceholder": {
+          "path": "/assets/ui/portraits/placeholders/placeholder-portrait-s73-10-player-male-extra-academy_scholar-look02-v1.webp",
+          "exists": true,
+          "bytes": 1560,
+          "sha256": "654c4a7910977ece0cb001abefb5238a605a5eb7da34c66531598cf6459f8b85",
+          "dimensions": {
+            "width": 64,
+            "height": 96,
+            "alpha": false
+          }
+        }
+      },
+      "transparentQa": {
+        "required": false,
+        "backgrounds": [],
+        "sidecar": null,
+        "pixel": null
+      },
+      "issues": []
+    },
+    {
+      "id": "portrait-s73-10-player-male-extra-academy_scholar-look03-v1",
+      "phase": "S73.10.2",
+      "category": "portrait",
+      "subcategory": "player_male_style_pool",
+      "usage": [
+        "player_identity",
+        "people_page",
+        "game_main"
+      ],
+      "path": "/assets/ui/portraits/s73-10/portrait-s73-10-player-male-extra-academy_scholar-look03-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-portrait-s73-10-player-male-extra-academy_scholar-look03-v1.webp",
+      "fallbackRef": "fallback-role-silhouette-v1",
+      "reviewStatus": "approved",
+      "runtimeUsable": true,
+      "dimensions": {
+        "width": 1024,
+        "height": 1536
+      },
+      "transparent": false,
+      "files": {
+        "image": {
+          "path": "/assets/ui/portraits/s73-10/portrait-s73-10-player-male-extra-academy_scholar-look03-v1.webp",
+          "exists": true,
+          "bytes": 139288,
+          "sha256": "e3ad56e0dfafd0fde6e5049701061d961dbc91b51fa20f0d9632adda061c5ce0",
+          "dimensions": {
+            "width": 1024,
+            "height": 1536
+          },
+          "alpha": false
+        },
+        "thumbnail": {
+          "path": "/assets/ui/thumbs/thumb-portrait-s73-10-player-male-extra-academy_scholar-look03-v1.webp",
+          "exists": true,
+          "bytes": 31658,
+          "sha256": "12eb09f7f4952c37e85218e6bec0720fa561d4293dd7f4e4c8861ad4e009fb60",
+          "dimensions": {
+            "width": 384,
+            "height": 576,
+            "alpha": false
+          }
+        },
+        "lowResPlaceholder": {
+          "path": "/assets/ui/portraits/placeholders/placeholder-portrait-s73-10-player-male-extra-academy_scholar-look03-v1.webp",
+          "exists": true,
+          "bytes": 1546,
+          "sha256": "b952fa88e2230584fa3f54dd0234a9368b2919228c813baeb78faf15f2377252",
+          "dimensions": {
+            "width": 64,
+            "height": 96,
+            "alpha": false
+          }
+        }
+      },
+      "transparentQa": {
+        "required": false,
+        "backgrounds": [],
+        "sidecar": null,
+        "pixel": null
+      },
+      "issues": []
+    },
+    {
+      "id": "portrait-s73-10-player-male-extra-academy_scholar-look04-v1",
+      "phase": "S73.10.2",
+      "category": "portrait",
+      "subcategory": "player_male_style_pool",
+      "usage": [
+        "player_identity",
+        "people_page",
+        "game_main"
+      ],
+      "path": "/assets/ui/portraits/s73-10/portrait-s73-10-player-male-extra-academy_scholar-look04-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-portrait-s73-10-player-male-extra-academy_scholar-look04-v1.webp",
+      "fallbackRef": "fallback-role-silhouette-v1",
+      "reviewStatus": "approved",
+      "runtimeUsable": true,
+      "dimensions": {
+        "width": 1024,
+        "height": 1536
+      },
+      "transparent": false,
+      "files": {
+        "image": {
+          "path": "/assets/ui/portraits/s73-10/portrait-s73-10-player-male-extra-academy_scholar-look04-v1.webp",
+          "exists": true,
+          "bytes": 138500,
+          "sha256": "18adeec6bd247d19726be57aacc9e71f379c8bdb4b17f5ebb563e302c3f41aac",
+          "dimensions": {
+            "width": 1024,
+            "height": 1536
+          },
+          "alpha": false
+        },
+        "thumbnail": {
+          "path": "/assets/ui/thumbs/thumb-portrait-s73-10-player-male-extra-academy_scholar-look04-v1.webp",
+          "exists": true,
+          "bytes": 31808,
+          "sha256": "f4ad73de60db20ebc986cad3cf6d46229dc5c3dbf9b46bb850648b1e22ac2fec",
+          "dimensions": {
+            "width": 384,
+            "height": 576,
+            "alpha": false
+          }
+        },
+        "lowResPlaceholder": {
+          "path": "/assets/ui/portraits/placeholders/placeholder-portrait-s73-10-player-male-extra-academy_scholar-look04-v1.webp",
+          "exists": true,
+          "bytes": 1466,
+          "sha256": "d33b3ef6f2cf247aebb2f423b100dc6341a33e8acac2da59371fd20b7b144ae1",
+          "dimensions": {
+            "width": 64,
+            "height": 96,
+            "alpha": false
+          }
+        }
+      },
+      "transparentQa": {
+        "required": false,
+        "backgrounds": [],
+        "sidecar": null,
+        "pixel": null
+      },
+      "issues": []
+    },
+    {
+      "id": "portrait-s73-10-player-male-extra-academy_scholar-look05-v1",
+      "phase": "S73.10.2",
+      "category": "portrait",
+      "subcategory": "player_male_style_pool",
+      "usage": [
+        "player_identity",
+        "people_page",
+        "game_main"
+      ],
+      "path": "/assets/ui/portraits/s73-10/portrait-s73-10-player-male-extra-academy_scholar-look05-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-portrait-s73-10-player-male-extra-academy_scholar-look05-v1.webp",
+      "fallbackRef": "fallback-role-silhouette-v1",
+      "reviewStatus": "approved",
+      "runtimeUsable": true,
+      "dimensions": {
+        "width": 1024,
+        "height": 1536
+      },
+      "transparent": false,
+      "files": {
+        "image": {
+          "path": "/assets/ui/portraits/s73-10/portrait-s73-10-player-male-extra-academy_scholar-look05-v1.webp",
+          "exists": true,
+          "bytes": 137994,
+          "sha256": "945bc242985335db616fc8e94e01fcac74d082ff51f5e6aa8f997d7ea2b27271",
+          "dimensions": {
+            "width": 1024,
+            "height": 1536
+          },
+          "alpha": false
+        },
+        "thumbnail": {
+          "path": "/assets/ui/thumbs/thumb-portrait-s73-10-player-male-extra-academy_scholar-look05-v1.webp",
+          "exists": true,
+          "bytes": 30034,
+          "sha256": "9aac3cc7eabadb7604a77c7e8123637a7939b353a7f300b8a94f2779bc2dd15f",
+          "dimensions": {
+            "width": 384,
+            "height": 576,
+            "alpha": false
+          }
+        },
+        "lowResPlaceholder": {
+          "path": "/assets/ui/portraits/placeholders/placeholder-portrait-s73-10-player-male-extra-academy_scholar-look05-v1.webp",
+          "exists": true,
+          "bytes": 1472,
+          "sha256": "983121e9cff5d3e8fc311d3c6a8173730a218028c0f32e9b7679e80e65e3ce76",
+          "dimensions": {
+            "width": 64,
+            "height": 96,
+            "alpha": false
+          }
+        }
+      },
+      "transparentQa": {
+        "required": false,
+        "backgrounds": [],
+        "sidecar": null,
+        "pixel": null
+      },
+      "issues": []
+    },
+    {
+      "id": "portrait-s73-10-player-male-extra-academy_scholar-look06-v1",
+      "phase": "S73.10.2",
+      "category": "portrait",
+      "subcategory": "player_male_style_pool",
+      "usage": [
+        "player_identity",
+        "people_page",
+        "game_main"
+      ],
+      "path": "/assets/ui/portraits/s73-10/portrait-s73-10-player-male-extra-academy_scholar-look06-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-portrait-s73-10-player-male-extra-academy_scholar-look06-v1.webp",
+      "fallbackRef": "fallback-role-silhouette-v1",
+      "reviewStatus": "approved",
+      "runtimeUsable": true,
+      "dimensions": {
+        "width": 1024,
+        "height": 1536
+      },
+      "transparent": false,
+      "files": {
+        "image": {
+          "path": "/assets/ui/portraits/s73-10/portrait-s73-10-player-male-extra-academy_scholar-look06-v1.webp",
+          "exists": true,
+          "bytes": 151216,
+          "sha256": "773465adf7efbbaf91295dc4ef558e2c516eb3370e79fae823c955733010c952",
+          "dimensions": {
+            "width": 1024,
+            "height": 1536
+          },
+          "alpha": false
+        },
+        "thumbnail": {
+          "path": "/assets/ui/thumbs/thumb-portrait-s73-10-player-male-extra-academy_scholar-look06-v1.webp",
+          "exists": true,
+          "bytes": 35994,
+          "sha256": "4a6dd7ad60df42152b14e8c309829c413952b5ae909be9568a8ff121f8192c26",
+          "dimensions": {
+            "width": 384,
+            "height": 576,
+            "alpha": false
+          }
+        },
+        "lowResPlaceholder": {
+          "path": "/assets/ui/portraits/placeholders/placeholder-portrait-s73-10-player-male-extra-academy_scholar-look06-v1.webp",
+          "exists": true,
+          "bytes": 1494,
+          "sha256": "c524843e8d8773b6f221c3b3e87627f54f206a4bcb6852931248315c73bdb4c4",
+          "dimensions": {
+            "width": 64,
+            "height": 96,
+            "alpha": false
+          }
+        }
+      },
+      "transparentQa": {
+        "required": false,
+        "backgrounds": [],
+        "sidecar": null,
+        "pixel": null
+      },
+      "issues": []
+    },
+    {
+      "id": "portrait-s73-10-player-male-extra-tang_round_collar-look01-v1",
+      "phase": "S73.10.2",
+      "category": "portrait",
+      "subcategory": "player_male_style_pool",
+      "usage": [
+        "player_identity",
+        "people_page",
+        "game_main"
+      ],
+      "path": "/assets/ui/portraits/s73-10/portrait-s73-10-player-male-extra-tang_round_collar-look01-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-portrait-s73-10-player-male-extra-tang_round_collar-look01-v1.webp",
+      "fallbackRef": "fallback-role-silhouette-v1",
+      "reviewStatus": "approved",
+      "runtimeUsable": true,
+      "dimensions": {
+        "width": 1024,
+        "height": 1536
+      },
+      "transparent": false,
+      "files": {
+        "image": {
+          "path": "/assets/ui/portraits/s73-10/portrait-s73-10-player-male-extra-tang_round_collar-look01-v1.webp",
+          "exists": true,
+          "bytes": 199470,
+          "sha256": "fd50115be864201d978bd4010e2684fbb43416e2bbc8d271e487e51949f88016",
+          "dimensions": {
+            "width": 1024,
+            "height": 1536
+          },
+          "alpha": false
+        },
+        "thumbnail": {
+          "path": "/assets/ui/thumbs/thumb-portrait-s73-10-player-male-extra-tang_round_collar-look01-v1.webp",
+          "exists": true,
+          "bytes": 45084,
+          "sha256": "aa164e59fe39c76e55acecf9e3bdc622c29961b2a64e4ec47691f13284856f69",
+          "dimensions": {
+            "width": 384,
+            "height": 576,
+            "alpha": false
+          }
+        },
+        "lowResPlaceholder": {
+          "path": "/assets/ui/portraits/placeholders/placeholder-portrait-s73-10-player-male-extra-tang_round_collar-look01-v1.webp",
+          "exists": true,
+          "bytes": 1542,
+          "sha256": "dde554e99e395889e12960a5acb1c6df6a5fd9a96c0a3b7ccf3d4b9ec546658b",
+          "dimensions": {
+            "width": 64,
+            "height": 96,
+            "alpha": false
+          }
+        }
+      },
+      "transparentQa": {
+        "required": false,
+        "backgrounds": [],
+        "sidecar": null,
+        "pixel": null
+      },
+      "issues": []
+    },
+    {
+      "id": "portrait-s73-10-player-male-extra-tang_round_collar-look02-v1",
+      "phase": "S73.10.2",
+      "category": "portrait",
+      "subcategory": "player_male_style_pool",
+      "usage": [
+        "player_identity",
+        "people_page",
+        "game_main"
+      ],
+      "path": "/assets/ui/portraits/s73-10/portrait-s73-10-player-male-extra-tang_round_collar-look02-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-portrait-s73-10-player-male-extra-tang_round_collar-look02-v1.webp",
+      "fallbackRef": "fallback-role-silhouette-v1",
+      "reviewStatus": "approved",
+      "runtimeUsable": true,
+      "dimensions": {
+        "width": 1024,
+        "height": 1536
+      },
+      "transparent": false,
+      "files": {
+        "image": {
+          "path": "/assets/ui/portraits/s73-10/portrait-s73-10-player-male-extra-tang_round_collar-look02-v1.webp",
+          "exists": true,
+          "bytes": 190062,
+          "sha256": "ba37151dbaf70494cf9eb9edeaf993734c7d8c2df9aea44670adc277295741bd",
+          "dimensions": {
+            "width": 1024,
+            "height": 1536
+          },
+          "alpha": false
+        },
+        "thumbnail": {
+          "path": "/assets/ui/thumbs/thumb-portrait-s73-10-player-male-extra-tang_round_collar-look02-v1.webp",
+          "exists": true,
+          "bytes": 44688,
+          "sha256": "e0797b9f8a23f982088b02f06395ab582714e907138bcf54339811dda898fb47",
+          "dimensions": {
+            "width": 384,
+            "height": 576,
+            "alpha": false
+          }
+        },
+        "lowResPlaceholder": {
+          "path": "/assets/ui/portraits/placeholders/placeholder-portrait-s73-10-player-male-extra-tang_round_collar-look02-v1.webp",
+          "exists": true,
+          "bytes": 1588,
+          "sha256": "7a91c4a94f6cee3c1ed3e2f21f54e1a2dafd448da6736845af3fb8f92b8c6699",
+          "dimensions": {
+            "width": 64,
+            "height": 96,
+            "alpha": false
+          }
+        }
+      },
+      "transparentQa": {
+        "required": false,
+        "backgrounds": [],
+        "sidecar": null,
+        "pixel": null
+      },
+      "issues": []
+    },
+    {
+      "id": "portrait-s73-10-player-male-extra-tang_round_collar-look03-v1",
+      "phase": "S73.10.2",
+      "category": "portrait",
+      "subcategory": "player_male_style_pool",
+      "usage": [
+        "player_identity",
+        "people_page",
+        "game_main"
+      ],
+      "path": "/assets/ui/portraits/s73-10/portrait-s73-10-player-male-extra-tang_round_collar-look03-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-portrait-s73-10-player-male-extra-tang_round_collar-look03-v1.webp",
+      "fallbackRef": "fallback-role-silhouette-v1",
+      "reviewStatus": "approved",
+      "runtimeUsable": true,
+      "dimensions": {
+        "width": 1024,
+        "height": 1536
+      },
+      "transparent": false,
+      "files": {
+        "image": {
+          "path": "/assets/ui/portraits/s73-10/portrait-s73-10-player-male-extra-tang_round_collar-look03-v1.webp",
+          "exists": true,
+          "bytes": 195834,
+          "sha256": "7a5750fa96fcfbf397e24d11e476d00af801f846244c4a557a5f14eb1f37ec0b",
+          "dimensions": {
+            "width": 1024,
+            "height": 1536
+          },
+          "alpha": false
+        },
+        "thumbnail": {
+          "path": "/assets/ui/thumbs/thumb-portrait-s73-10-player-male-extra-tang_round_collar-look03-v1.webp",
+          "exists": true,
+          "bytes": 44896,
+          "sha256": "e3c8bbe4cf98102d6149d975f37a4dac47438926cfdf01f43cd33b40881c6909",
+          "dimensions": {
+            "width": 384,
+            "height": 576,
+            "alpha": false
+          }
+        },
+        "lowResPlaceholder": {
+          "path": "/assets/ui/portraits/placeholders/placeholder-portrait-s73-10-player-male-extra-tang_round_collar-look03-v1.webp",
+          "exists": true,
+          "bytes": 1430,
+          "sha256": "07acab656abf4bf8e8862655555f60fd170bad84909d7c938bfbe9a15afe7424",
+          "dimensions": {
+            "width": 64,
+            "height": 96,
+            "alpha": false
+          }
+        }
+      },
+      "transparentQa": {
+        "required": false,
+        "backgrounds": [],
+        "sidecar": null,
+        "pixel": null
+      },
+      "issues": []
+    },
+    {
+      "id": "portrait-s73-10-player-male-extra-tang_round_collar-look04-v1",
+      "phase": "S73.10.2",
+      "category": "portrait",
+      "subcategory": "player_male_style_pool",
+      "usage": [
+        "player_identity",
+        "people_page",
+        "game_main"
+      ],
+      "path": "/assets/ui/portraits/s73-10/portrait-s73-10-player-male-extra-tang_round_collar-look04-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-portrait-s73-10-player-male-extra-tang_round_collar-look04-v1.webp",
+      "fallbackRef": "fallback-role-silhouette-v1",
+      "reviewStatus": "approved",
+      "runtimeUsable": true,
+      "dimensions": {
+        "width": 1024,
+        "height": 1536
+      },
+      "transparent": false,
+      "files": {
+        "image": {
+          "path": "/assets/ui/portraits/s73-10/portrait-s73-10-player-male-extra-tang_round_collar-look04-v1.webp",
+          "exists": true,
+          "bytes": 175484,
+          "sha256": "03303122a449c6ef4e138722565d6cfd6484d6a91c307450885b7197b18eb479",
+          "dimensions": {
+            "width": 1024,
+            "height": 1536
+          },
+          "alpha": false
+        },
+        "thumbnail": {
+          "path": "/assets/ui/thumbs/thumb-portrait-s73-10-player-male-extra-tang_round_collar-look04-v1.webp",
+          "exists": true,
+          "bytes": 39530,
+          "sha256": "a9b7cac0f63141a4c84b1814ceb59b2ba64657645247869f16746387e3cfcf29",
+          "dimensions": {
+            "width": 384,
+            "height": 576,
+            "alpha": false
+          }
+        },
+        "lowResPlaceholder": {
+          "path": "/assets/ui/portraits/placeholders/placeholder-portrait-s73-10-player-male-extra-tang_round_collar-look04-v1.webp",
+          "exists": true,
+          "bytes": 1370,
+          "sha256": "7f19352d72be3291df636dc6bfbf98a631dd9f819d1d6f9ccfee8e64ef98ba25",
+          "dimensions": {
+            "width": 64,
+            "height": 96,
+            "alpha": false
+          }
+        }
+      },
+      "transparentQa": {
+        "required": false,
+        "backgrounds": [],
+        "sidecar": null,
+        "pixel": null
+      },
+      "issues": []
+    },
+    {
+      "id": "portrait-s73-10-player-male-extra-tang_round_collar-look05-v1",
+      "phase": "S73.10.2",
+      "category": "portrait",
+      "subcategory": "player_male_style_pool",
+      "usage": [
+        "player_identity",
+        "people_page",
+        "game_main"
+      ],
+      "path": "/assets/ui/portraits/s73-10/portrait-s73-10-player-male-extra-tang_round_collar-look05-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-portrait-s73-10-player-male-extra-tang_round_collar-look05-v1.webp",
+      "fallbackRef": "fallback-role-silhouette-v1",
+      "reviewStatus": "approved",
+      "runtimeUsable": true,
+      "dimensions": {
+        "width": 1024,
+        "height": 1536
+      },
+      "transparent": false,
+      "files": {
+        "image": {
+          "path": "/assets/ui/portraits/s73-10/portrait-s73-10-player-male-extra-tang_round_collar-look05-v1.webp",
+          "exists": true,
+          "bytes": 178778,
+          "sha256": "20a1432539dcf7d8edcaffdfae6f609f4acc5f26d8c093a66b92e85f3ec4151b",
+          "dimensions": {
+            "width": 1024,
+            "height": 1536
+          },
+          "alpha": false
+        },
+        "thumbnail": {
+          "path": "/assets/ui/thumbs/thumb-portrait-s73-10-player-male-extra-tang_round_collar-look05-v1.webp",
+          "exists": true,
+          "bytes": 42496,
+          "sha256": "98fcd94cf4aa3ef88295d74fd830e9b55b1b9dfdd3b9b2542bbc4d0c380b1ee3",
+          "dimensions": {
+            "width": 384,
+            "height": 576,
+            "alpha": false
+          }
+        },
+        "lowResPlaceholder": {
+          "path": "/assets/ui/portraits/placeholders/placeholder-portrait-s73-10-player-male-extra-tang_round_collar-look05-v1.webp",
+          "exists": true,
+          "bytes": 1534,
+          "sha256": "fbd4943848706cac0a031cd3d07083fd5c0956cfbb219594c1f7080746bd83c1",
+          "dimensions": {
+            "width": 64,
+            "height": 96,
+            "alpha": false
+          }
+        }
+      },
+      "transparentQa": {
+        "required": false,
+        "backgrounds": [],
+        "sidecar": null,
+        "pixel": null
+      },
+      "issues": []
+    },
+    {
+      "id": "portrait-s73-10-player-male-extra-tang_round_collar-look06-v1",
+      "phase": "S73.10.2",
+      "category": "portrait",
+      "subcategory": "player_male_style_pool",
+      "usage": [
+        "player_identity",
+        "people_page",
+        "game_main"
+      ],
+      "path": "/assets/ui/portraits/s73-10/portrait-s73-10-player-male-extra-tang_round_collar-look06-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-portrait-s73-10-player-male-extra-tang_round_collar-look06-v1.webp",
+      "fallbackRef": "fallback-role-silhouette-v1",
+      "reviewStatus": "approved",
+      "runtimeUsable": true,
+      "dimensions": {
+        "width": 1024,
+        "height": 1536
+      },
+      "transparent": false,
+      "files": {
+        "image": {
+          "path": "/assets/ui/portraits/s73-10/portrait-s73-10-player-male-extra-tang_round_collar-look06-v1.webp",
+          "exists": true,
+          "bytes": 184608,
+          "sha256": "bc0a0eca5249848d590ee60b3f16fc338f2d6ab489468c6d5a1b627dd7f8ffaa",
+          "dimensions": {
+            "width": 1024,
+            "height": 1536
+          },
+          "alpha": false
+        },
+        "thumbnail": {
+          "path": "/assets/ui/thumbs/thumb-portrait-s73-10-player-male-extra-tang_round_collar-look06-v1.webp",
+          "exists": true,
+          "bytes": 42068,
+          "sha256": "d97d0ee09bf757408bfebe9eeacb01c7c541b9195daa3def8ce8fa947d7e8ae1",
+          "dimensions": {
+            "width": 384,
+            "height": 576,
+            "alpha": false
+          }
+        },
+        "lowResPlaceholder": {
+          "path": "/assets/ui/portraits/placeholders/placeholder-portrait-s73-10-player-male-extra-tang_round_collar-look06-v1.webp",
+          "exists": true,
+          "bytes": 1468,
+          "sha256": "ad22e7b5d0403405d59cd026f48d7ec357b161e335dccf58a16edd6ab058b4f1",
+          "dimensions": {
+            "width": 64,
+            "height": 96,
+            "alpha": false
+          }
+        }
+      },
+      "transparentQa": {
+        "required": false,
+        "backgrounds": [],
+        "sidecar": null,
+        "pixel": null
+      },
+      "issues": []
+    },
+    {
+      "id": "portrait-s73-10-player-male-extra-court_official-look01-v1",
+      "phase": "S73.10.2",
+      "category": "portrait",
+      "subcategory": "player_male_style_pool",
+      "usage": [
+        "player_identity",
+        "people_page",
+        "game_main"
+      ],
+      "path": "/assets/ui/portraits/s73-10/portrait-s73-10-player-male-extra-court_official-look01-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-portrait-s73-10-player-male-extra-court_official-look01-v1.webp",
+      "fallbackRef": "fallback-role-silhouette-v1",
+      "reviewStatus": "approved",
+      "runtimeUsable": true,
+      "dimensions": {
+        "width": 1024,
+        "height": 1536
+      },
+      "transparent": false,
+      "files": {
+        "image": {
+          "path": "/assets/ui/portraits/s73-10/portrait-s73-10-player-male-extra-court_official-look01-v1.webp",
+          "exists": true,
+          "bytes": 150878,
+          "sha256": "e384039ecc8f7c2e10eabf58e4241c8fe41e96b4237d360b9517fa011514ea46",
+          "dimensions": {
+            "width": 1024,
+            "height": 1536
+          },
+          "alpha": false
+        },
+        "thumbnail": {
+          "path": "/assets/ui/thumbs/thumb-portrait-s73-10-player-male-extra-court_official-look01-v1.webp",
+          "exists": true,
+          "bytes": 32948,
+          "sha256": "0373a6eac3674a615de03f378f9ba158c8e5dcf5f355831aa8058914792c5513",
+          "dimensions": {
+            "width": 384,
+            "height": 576,
+            "alpha": false
+          }
+        },
+        "lowResPlaceholder": {
+          "path": "/assets/ui/portraits/placeholders/placeholder-portrait-s73-10-player-male-extra-court_official-look01-v1.webp",
+          "exists": true,
+          "bytes": 1354,
+          "sha256": "665e4992e99638c312fc4822e1d331f55c084fc6bc0932587cab786163ff0b89",
+          "dimensions": {
+            "width": 64,
+            "height": 96,
+            "alpha": false
+          }
+        }
+      },
+      "transparentQa": {
+        "required": false,
+        "backgrounds": [],
+        "sidecar": null,
+        "pixel": null
+      },
+      "issues": []
+    },
+    {
+      "id": "portrait-s73-10-player-male-extra-court_official-look02-v1",
+      "phase": "S73.10.2",
+      "category": "portrait",
+      "subcategory": "player_male_style_pool",
+      "usage": [
+        "player_identity",
+        "people_page",
+        "game_main"
+      ],
+      "path": "/assets/ui/portraits/s73-10/portrait-s73-10-player-male-extra-court_official-look02-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-portrait-s73-10-player-male-extra-court_official-look02-v1.webp",
+      "fallbackRef": "fallback-role-silhouette-v1",
+      "reviewStatus": "approved",
+      "runtimeUsable": true,
+      "dimensions": {
+        "width": 1024,
+        "height": 1536
+      },
+      "transparent": false,
+      "files": {
+        "image": {
+          "path": "/assets/ui/portraits/s73-10/portrait-s73-10-player-male-extra-court_official-look02-v1.webp",
+          "exists": true,
+          "bytes": 160196,
+          "sha256": "b69e0721e1d7e17a23127595f013d6e3258590c0d81dd114e3c80f0bfaafd3f2",
+          "dimensions": {
+            "width": 1024,
+            "height": 1536
+          },
+          "alpha": false
+        },
+        "thumbnail": {
+          "path": "/assets/ui/thumbs/thumb-portrait-s73-10-player-male-extra-court_official-look02-v1.webp",
+          "exists": true,
+          "bytes": 35458,
+          "sha256": "3c6af30065fa4b20d98fe7929b67dbed69ba93bf5144bb2573cc18c4381fee27",
+          "dimensions": {
+            "width": 384,
+            "height": 576,
+            "alpha": false
+          }
+        },
+        "lowResPlaceholder": {
+          "path": "/assets/ui/portraits/placeholders/placeholder-portrait-s73-10-player-male-extra-court_official-look02-v1.webp",
+          "exists": true,
+          "bytes": 1392,
+          "sha256": "0f3ff0a9cef2316f32fbb2feb135a74e60440ebad4a1d87c86616eec36833d6e",
+          "dimensions": {
+            "width": 64,
+            "height": 96,
+            "alpha": false
+          }
+        }
+      },
+      "transparentQa": {
+        "required": false,
+        "backgrounds": [],
+        "sidecar": null,
+        "pixel": null
+      },
+      "issues": []
+    },
+    {
+      "id": "portrait-s73-10-player-male-extra-court_official-look03-v1",
+      "phase": "S73.10.2",
+      "category": "portrait",
+      "subcategory": "player_male_style_pool",
+      "usage": [
+        "player_identity",
+        "people_page",
+        "game_main"
+      ],
+      "path": "/assets/ui/portraits/s73-10/portrait-s73-10-player-male-extra-court_official-look03-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-portrait-s73-10-player-male-extra-court_official-look03-v1.webp",
+      "fallbackRef": "fallback-role-silhouette-v1",
+      "reviewStatus": "approved",
+      "runtimeUsable": true,
+      "dimensions": {
+        "width": 1024,
+        "height": 1536
+      },
+      "transparent": false,
+      "files": {
+        "image": {
+          "path": "/assets/ui/portraits/s73-10/portrait-s73-10-player-male-extra-court_official-look03-v1.webp",
+          "exists": true,
+          "bytes": 166284,
+          "sha256": "69e50657abc3529e7a045100da3a449142cf7543d6e4dda5bdd1c3913570b15b",
+          "dimensions": {
+            "width": 1024,
+            "height": 1536
+          },
+          "alpha": false
+        },
+        "thumbnail": {
+          "path": "/assets/ui/thumbs/thumb-portrait-s73-10-player-male-extra-court_official-look03-v1.webp",
+          "exists": true,
+          "bytes": 35182,
+          "sha256": "5038b6502702a0ab5c7b13746aa4d719007c218906b1ec36c1dd36498142ac52",
+          "dimensions": {
+            "width": 384,
+            "height": 576,
+            "alpha": false
+          }
+        },
+        "lowResPlaceholder": {
+          "path": "/assets/ui/portraits/placeholders/placeholder-portrait-s73-10-player-male-extra-court_official-look03-v1.webp",
+          "exists": true,
+          "bytes": 1360,
+          "sha256": "36ce77de7529a3d4696e2e58162b2bc1b1e399b331e83fb857e1e55e450598b9",
+          "dimensions": {
+            "width": 64,
+            "height": 96,
+            "alpha": false
+          }
+        }
+      },
+      "transparentQa": {
+        "required": false,
+        "backgrounds": [],
+        "sidecar": null,
+        "pixel": null
+      },
+      "issues": []
+    },
+    {
+      "id": "portrait-s73-10-player-male-extra-court_official-look04-v1",
+      "phase": "S73.10.2",
+      "category": "portrait",
+      "subcategory": "player_male_style_pool",
+      "usage": [
+        "player_identity",
+        "people_page",
+        "game_main"
+      ],
+      "path": "/assets/ui/portraits/s73-10/portrait-s73-10-player-male-extra-court_official-look04-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-portrait-s73-10-player-male-extra-court_official-look04-v1.webp",
+      "fallbackRef": "fallback-role-silhouette-v1",
+      "reviewStatus": "approved",
+      "runtimeUsable": true,
+      "dimensions": {
+        "width": 1024,
+        "height": 1536
+      },
+      "transparent": false,
+      "files": {
+        "image": {
+          "path": "/assets/ui/portraits/s73-10/portrait-s73-10-player-male-extra-court_official-look04-v1.webp",
+          "exists": true,
+          "bytes": 176706,
+          "sha256": "f835ec9914d6193b8171f435a56c31411647e599824362af0b99a82a0841ade4",
+          "dimensions": {
+            "width": 1024,
+            "height": 1536
+          },
+          "alpha": false
+        },
+        "thumbnail": {
+          "path": "/assets/ui/thumbs/thumb-portrait-s73-10-player-male-extra-court_official-look04-v1.webp",
+          "exists": true,
+          "bytes": 39062,
+          "sha256": "1f0a7fdfa420d9f5e195cef7b3e87c7652fbc84b0319e22145fa2c1479835a54",
+          "dimensions": {
+            "width": 384,
+            "height": 576,
+            "alpha": false
+          }
+        },
+        "lowResPlaceholder": {
+          "path": "/assets/ui/portraits/placeholders/placeholder-portrait-s73-10-player-male-extra-court_official-look04-v1.webp",
+          "exists": true,
+          "bytes": 1358,
+          "sha256": "af07184419e01a1c63528fd7e4b3120858a6959e81e0c07d1acebfefc798d774",
+          "dimensions": {
+            "width": 64,
+            "height": 96,
+            "alpha": false
+          }
+        }
+      },
+      "transparentQa": {
+        "required": false,
+        "backgrounds": [],
+        "sidecar": null,
+        "pixel": null
+      },
+      "issues": []
+    },
+    {
+      "id": "portrait-s73-10-player-male-extra-court_official-look05-v1",
+      "phase": "S73.10.2",
+      "category": "portrait",
+      "subcategory": "player_male_style_pool",
+      "usage": [
+        "player_identity",
+        "people_page",
+        "game_main"
+      ],
+      "path": "/assets/ui/portraits/s73-10/portrait-s73-10-player-male-extra-court_official-look05-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-portrait-s73-10-player-male-extra-court_official-look05-v1.webp",
+      "fallbackRef": "fallback-role-silhouette-v1",
+      "reviewStatus": "approved",
+      "runtimeUsable": true,
+      "dimensions": {
+        "width": 1024,
+        "height": 1536
+      },
+      "transparent": false,
+      "files": {
+        "image": {
+          "path": "/assets/ui/portraits/s73-10/portrait-s73-10-player-male-extra-court_official-look05-v1.webp",
+          "exists": true,
+          "bytes": 148328,
+          "sha256": "bb1b82ef37cf659dd9b29a496c9691df45d3c0c6c656f0da316dbeaffd5a6077",
+          "dimensions": {
+            "width": 1024,
+            "height": 1536
+          },
+          "alpha": false
+        },
+        "thumbnail": {
+          "path": "/assets/ui/thumbs/thumb-portrait-s73-10-player-male-extra-court_official-look05-v1.webp",
+          "exists": true,
+          "bytes": 31764,
+          "sha256": "f001264547453a871bae34592b99bcfec072be123138200ff440c2eb16613834",
+          "dimensions": {
+            "width": 384,
+            "height": 576,
+            "alpha": false
+          }
+        },
+        "lowResPlaceholder": {
+          "path": "/assets/ui/portraits/placeholders/placeholder-portrait-s73-10-player-male-extra-court_official-look05-v1.webp",
+          "exists": true,
+          "bytes": 1300,
+          "sha256": "a803e242ed967205d4c03418f753ee0c8503fe016b3254ff738bca776f53ab16",
+          "dimensions": {
+            "width": 64,
+            "height": 96,
+            "alpha": false
+          }
+        }
+      },
+      "transparentQa": {
+        "required": false,
+        "backgrounds": [],
+        "sidecar": null,
+        "pixel": null
+      },
+      "issues": []
+    },
+    {
+      "id": "portrait-s73-10-player-male-extra-court_official-look06-v1",
+      "phase": "S73.10.2",
+      "category": "portrait",
+      "subcategory": "player_male_style_pool",
+      "usage": [
+        "player_identity",
+        "people_page",
+        "game_main"
+      ],
+      "path": "/assets/ui/portraits/s73-10/portrait-s73-10-player-male-extra-court_official-look06-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-portrait-s73-10-player-male-extra-court_official-look06-v1.webp",
+      "fallbackRef": "fallback-role-silhouette-v1",
+      "reviewStatus": "approved",
+      "runtimeUsable": true,
+      "dimensions": {
+        "width": 1024,
+        "height": 1536
+      },
+      "transparent": false,
+      "files": {
+        "image": {
+          "path": "/assets/ui/portraits/s73-10/portrait-s73-10-player-male-extra-court_official-look06-v1.webp",
+          "exists": true,
+          "bytes": 169272,
+          "sha256": "4d8bbcc33ae3804c3647a51c9c66562c66b41e726e57f1544c31ea46bf46981c",
+          "dimensions": {
+            "width": 1024,
+            "height": 1536
+          },
+          "alpha": false
+        },
+        "thumbnail": {
+          "path": "/assets/ui/thumbs/thumb-portrait-s73-10-player-male-extra-court_official-look06-v1.webp",
+          "exists": true,
+          "bytes": 38300,
+          "sha256": "97371b520f77cb41688418d41842f80c14f9e469c950c0833af2b0b2fb851b87",
+          "dimensions": {
+            "width": 384,
+            "height": 576,
+            "alpha": false
+          }
+        },
+        "lowResPlaceholder": {
+          "path": "/assets/ui/portraits/placeholders/placeholder-portrait-s73-10-player-male-extra-court_official-look06-v1.webp",
+          "exists": true,
+          "bytes": 1300,
+          "sha256": "afd491a13ea34335bc37ad987ab8c5af9781078cef7c35c60dd6a4abf4ac20c1",
+          "dimensions": {
+            "width": 64,
+            "height": 96,
+            "alpha": false
+          }
+        }
+      },
+      "transparentQa": {
+        "required": false,
+        "backgrounds": [],
+        "sidecar": null,
+        "pixel": null
+      },
+      "issues": []
+    },
+    {
+      "id": "portrait-s73-10-player-male-extra-palace_noble-look01-v1",
+      "phase": "S73.10.2",
+      "category": "portrait",
+      "subcategory": "player_male_style_pool",
+      "usage": [
+        "player_identity",
+        "people_page",
+        "game_main"
+      ],
+      "path": "/assets/ui/portraits/s73-10/portrait-s73-10-player-male-extra-palace_noble-look01-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-portrait-s73-10-player-male-extra-palace_noble-look01-v1.webp",
+      "fallbackRef": "fallback-role-silhouette-v1",
+      "reviewStatus": "approved",
+      "runtimeUsable": true,
+      "dimensions": {
+        "width": 1024,
+        "height": 1536
+      },
+      "transparent": false,
+      "files": {
+        "image": {
+          "path": "/assets/ui/portraits/s73-10/portrait-s73-10-player-male-extra-palace_noble-look01-v1.webp",
+          "exists": true,
+          "bytes": 217488,
+          "sha256": "7fcc6a99927646b97f52418bda9f6d08dfc60a3328913945fefc5812bd1e0bb5",
+          "dimensions": {
+            "width": 1024,
+            "height": 1536
+          },
+          "alpha": false
+        },
+        "thumbnail": {
+          "path": "/assets/ui/thumbs/thumb-portrait-s73-10-player-male-extra-palace_noble-look01-v1.webp",
+          "exists": true,
+          "bytes": 53098,
+          "sha256": "ea19ea798f83ffd9ef65b553ed6fdd2b9e09654f7c97ab6a696e153ab76ed07e",
+          "dimensions": {
+            "width": 384,
+            "height": 576,
+            "alpha": false
+          }
+        },
+        "lowResPlaceholder": {
+          "path": "/assets/ui/portraits/placeholders/placeholder-portrait-s73-10-player-male-extra-palace_noble-look01-v1.webp",
+          "exists": true,
+          "bytes": 1864,
+          "sha256": "5168a77cdd7d909de6fc6f83b8f0fbf44a9ee412f65a620dc2754052c7a77a20",
+          "dimensions": {
+            "width": 64,
+            "height": 96,
+            "alpha": false
+          }
+        }
+      },
+      "transparentQa": {
+        "required": false,
+        "backgrounds": [],
+        "sidecar": null,
+        "pixel": null
+      },
+      "issues": []
+    },
+    {
+      "id": "portrait-s73-10-player-male-extra-palace_noble-look02-v1",
+      "phase": "S73.10.2",
+      "category": "portrait",
+      "subcategory": "player_male_style_pool",
+      "usage": [
+        "player_identity",
+        "people_page",
+        "game_main"
+      ],
+      "path": "/assets/ui/portraits/s73-10/portrait-s73-10-player-male-extra-palace_noble-look02-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-portrait-s73-10-player-male-extra-palace_noble-look02-v1.webp",
+      "fallbackRef": "fallback-role-silhouette-v1",
+      "reviewStatus": "approved",
+      "runtimeUsable": true,
+      "dimensions": {
+        "width": 1024,
+        "height": 1536
+      },
+      "transparent": false,
+      "files": {
+        "image": {
+          "path": "/assets/ui/portraits/s73-10/portrait-s73-10-player-male-extra-palace_noble-look02-v1.webp",
+          "exists": true,
+          "bytes": 213212,
+          "sha256": "3134e5559aad7ee9c49c5f2d7af9cf2d35c25165f29608f804c66d3395989140",
+          "dimensions": {
+            "width": 1024,
+            "height": 1536
+          },
+          "alpha": false
+        },
+        "thumbnail": {
+          "path": "/assets/ui/thumbs/thumb-portrait-s73-10-player-male-extra-palace_noble-look02-v1.webp",
+          "exists": true,
+          "bytes": 51648,
+          "sha256": "967afc7aa079d4145dab538e1b62f4c111632ba957929f282232ccdc6141f953",
+          "dimensions": {
+            "width": 384,
+            "height": 576,
+            "alpha": false
+          }
+        },
+        "lowResPlaceholder": {
+          "path": "/assets/ui/portraits/placeholders/placeholder-portrait-s73-10-player-male-extra-palace_noble-look02-v1.webp",
+          "exists": true,
+          "bytes": 1874,
+          "sha256": "79cd7b5c938bcb077f410310a4f17b0193348a4e2ddab3e5494f61946f0d638c",
+          "dimensions": {
+            "width": 64,
+            "height": 96,
+            "alpha": false
+          }
+        }
+      },
+      "transparentQa": {
+        "required": false,
+        "backgrounds": [],
+        "sidecar": null,
+        "pixel": null
+      },
+      "issues": []
+    },
+    {
+      "id": "portrait-s73-10-player-male-extra-palace_noble-look03-v1",
+      "phase": "S73.10.2",
+      "category": "portrait",
+      "subcategory": "player_male_style_pool",
+      "usage": [
+        "player_identity",
+        "people_page",
+        "game_main"
+      ],
+      "path": "/assets/ui/portraits/s73-10/portrait-s73-10-player-male-extra-palace_noble-look03-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-portrait-s73-10-player-male-extra-palace_noble-look03-v1.webp",
+      "fallbackRef": "fallback-role-silhouette-v1",
+      "reviewStatus": "approved",
+      "runtimeUsable": true,
+      "dimensions": {
+        "width": 1024,
+        "height": 1536
+      },
+      "transparent": false,
+      "files": {
+        "image": {
+          "path": "/assets/ui/portraits/s73-10/portrait-s73-10-player-male-extra-palace_noble-look03-v1.webp",
+          "exists": true,
+          "bytes": 204518,
+          "sha256": "dd6682f0d6caaf4598342ca178d09c8f0b89320c03f0b80971eccf45aecbfd73",
+          "dimensions": {
+            "width": 1024,
+            "height": 1536
+          },
+          "alpha": false
+        },
+        "thumbnail": {
+          "path": "/assets/ui/thumbs/thumb-portrait-s73-10-player-male-extra-palace_noble-look03-v1.webp",
+          "exists": true,
+          "bytes": 48122,
+          "sha256": "70c35886d9da7681792263d53ea7786f60b29092d51c5875b21abc85659e0f9d",
+          "dimensions": {
+            "width": 384,
+            "height": 576,
+            "alpha": false
+          }
+        },
+        "lowResPlaceholder": {
+          "path": "/assets/ui/portraits/placeholders/placeholder-portrait-s73-10-player-male-extra-palace_noble-look03-v1.webp",
+          "exists": true,
+          "bytes": 1722,
+          "sha256": "cb819a356d0e9c24cc1815d96c2b4a310c9b33b4f17a166428670000ec2a56f1",
+          "dimensions": {
+            "width": 64,
+            "height": 96,
+            "alpha": false
+          }
+        }
+      },
+      "transparentQa": {
+        "required": false,
+        "backgrounds": [],
+        "sidecar": null,
+        "pixel": null
+      },
+      "issues": []
+    },
+    {
+      "id": "portrait-s73-10-player-male-extra-palace_noble-look04-v1",
+      "phase": "S73.10.2",
+      "category": "portrait",
+      "subcategory": "player_male_style_pool",
+      "usage": [
+        "player_identity",
+        "people_page",
+        "game_main"
+      ],
+      "path": "/assets/ui/portraits/s73-10/portrait-s73-10-player-male-extra-palace_noble-look04-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-portrait-s73-10-player-male-extra-palace_noble-look04-v1.webp",
+      "fallbackRef": "fallback-role-silhouette-v1",
+      "reviewStatus": "approved",
+      "runtimeUsable": true,
+      "dimensions": {
+        "width": 1024,
+        "height": 1536
+      },
+      "transparent": false,
+      "files": {
+        "image": {
+          "path": "/assets/ui/portraits/s73-10/portrait-s73-10-player-male-extra-palace_noble-look04-v1.webp",
+          "exists": true,
+          "bytes": 192294,
+          "sha256": "f45c27651942f37e9e99547f022972f971dac16e1d51471f868f8b6d6e8c9495",
+          "dimensions": {
+            "width": 1024,
+            "height": 1536
+          },
+          "alpha": false
+        },
+        "thumbnail": {
+          "path": "/assets/ui/thumbs/thumb-portrait-s73-10-player-male-extra-palace_noble-look04-v1.webp",
+          "exists": true,
+          "bytes": 46096,
+          "sha256": "86ec91b00c67ba5c4d8f06a4402df71a6fd66f16c36cb6ff642e9ea244d223e9",
+          "dimensions": {
+            "width": 384,
+            "height": 576,
+            "alpha": false
+          }
+        },
+        "lowResPlaceholder": {
+          "path": "/assets/ui/portraits/placeholders/placeholder-portrait-s73-10-player-male-extra-palace_noble-look04-v1.webp",
+          "exists": true,
+          "bytes": 1630,
+          "sha256": "56b40aa91037a120ac6e8c4704dfc08fdeb4b5785b5dc04297d97e5e59b11007",
+          "dimensions": {
+            "width": 64,
+            "height": 96,
+            "alpha": false
+          }
+        }
+      },
+      "transparentQa": {
+        "required": false,
+        "backgrounds": [],
+        "sidecar": null,
+        "pixel": null
+      },
+      "issues": []
+    },
+    {
+      "id": "portrait-s73-10-player-male-extra-palace_noble-look05-v1",
+      "phase": "S73.10.2",
+      "category": "portrait",
+      "subcategory": "player_male_style_pool",
+      "usage": [
+        "player_identity",
+        "people_page",
+        "game_main"
+      ],
+      "path": "/assets/ui/portraits/s73-10/portrait-s73-10-player-male-extra-palace_noble-look05-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-portrait-s73-10-player-male-extra-palace_noble-look05-v1.webp",
+      "fallbackRef": "fallback-role-silhouette-v1",
+      "reviewStatus": "approved",
+      "runtimeUsable": true,
+      "dimensions": {
+        "width": 1024,
+        "height": 1536
+      },
+      "transparent": false,
+      "files": {
+        "image": {
+          "path": "/assets/ui/portraits/s73-10/portrait-s73-10-player-male-extra-palace_noble-look05-v1.webp",
+          "exists": true,
+          "bytes": 227628,
+          "sha256": "cc45e0984efbc6774b03b43aa41649a128d76c5579a0271c5b1f57a4924605e1",
+          "dimensions": {
+            "width": 1024,
+            "height": 1536
+          },
+          "alpha": false
+        },
+        "thumbnail": {
+          "path": "/assets/ui/thumbs/thumb-portrait-s73-10-player-male-extra-palace_noble-look05-v1.webp",
+          "exists": true,
+          "bytes": 57278,
+          "sha256": "d4c86c4095d894d3beb03167e4d6aaba1def92f3f87d82b6f0ff24deff838a56",
+          "dimensions": {
+            "width": 384,
+            "height": 576,
+            "alpha": false
+          }
+        },
+        "lowResPlaceholder": {
+          "path": "/assets/ui/portraits/placeholders/placeholder-portrait-s73-10-player-male-extra-palace_noble-look05-v1.webp",
+          "exists": true,
+          "bytes": 1858,
+          "sha256": "0dd669aad0760280ef58fb1ede2b396006758b8bf3a4cb3262fce0c6dc9fbe8a",
+          "dimensions": {
+            "width": 64,
+            "height": 96,
+            "alpha": false
+          }
+        }
+      },
+      "transparentQa": {
+        "required": false,
+        "backgrounds": [],
+        "sidecar": null,
+        "pixel": null
+      },
+      "issues": []
+    },
+    {
+      "id": "portrait-s73-10-player-male-extra-palace_noble-look06-v1",
+      "phase": "S73.10.2",
+      "category": "portrait",
+      "subcategory": "player_male_style_pool",
+      "usage": [
+        "player_identity",
+        "people_page",
+        "game_main"
+      ],
+      "path": "/assets/ui/portraits/s73-10/portrait-s73-10-player-male-extra-palace_noble-look06-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-portrait-s73-10-player-male-extra-palace_noble-look06-v1.webp",
+      "fallbackRef": "fallback-role-silhouette-v1",
+      "reviewStatus": "approved",
+      "runtimeUsable": true,
+      "dimensions": {
+        "width": 1024,
+        "height": 1536
+      },
+      "transparent": false,
+      "files": {
+        "image": {
+          "path": "/assets/ui/portraits/s73-10/portrait-s73-10-player-male-extra-palace_noble-look06-v1.webp",
+          "exists": true,
+          "bytes": 188524,
+          "sha256": "2b8d67a430ae2ddf7cd37c2608b8aea176e7be76630189be00f0d149e0f1170c",
+          "dimensions": {
+            "width": 1024,
+            "height": 1536
+          },
+          "alpha": false
+        },
+        "thumbnail": {
+          "path": "/assets/ui/thumbs/thumb-portrait-s73-10-player-male-extra-palace_noble-look06-v1.webp",
+          "exists": true,
+          "bytes": 45808,
+          "sha256": "d45e76717381a31c482122884418c578378ecacb6e8a6c42d1f4449ed197596c",
+          "dimensions": {
+            "width": 384,
+            "height": 576,
+            "alpha": false
+          }
+        },
+        "lowResPlaceholder": {
+          "path": "/assets/ui/portraits/placeholders/placeholder-portrait-s73-10-player-male-extra-palace_noble-look06-v1.webp",
+          "exists": true,
+          "bytes": 1670,
+          "sha256": "0834d6051536a4ba41bcebcf896ff9d8782f63f66ece186164027f496d84a104",
+          "dimensions": {
+            "width": 64,
+            "height": 96,
+            "alpha": false
+          }
+        }
+      },
+      "transparentQa": {
+        "required": false,
+        "backgrounds": [],
+        "sidecar": null,
+        "pixel": null
+      },
+      "issues": []
+    },
+    {
+      "id": "portrait-s73-10-player-male-extra-high_minister-look01-v1",
+      "phase": "S73.10.2",
+      "category": "portrait",
+      "subcategory": "player_male_style_pool",
+      "usage": [
+        "player_identity",
+        "people_page",
+        "game_main"
+      ],
+      "path": "/assets/ui/portraits/s73-10/portrait-s73-10-player-male-extra-high_minister-look01-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-portrait-s73-10-player-male-extra-high_minister-look01-v1.webp",
+      "fallbackRef": "fallback-role-silhouette-v1",
+      "reviewStatus": "approved",
+      "runtimeUsable": true,
+      "dimensions": {
+        "width": 1024,
+        "height": 1536
+      },
+      "transparent": false,
+      "files": {
+        "image": {
+          "path": "/assets/ui/portraits/s73-10/portrait-s73-10-player-male-extra-high_minister-look01-v1.webp",
+          "exists": true,
+          "bytes": 164566,
+          "sha256": "3f5eaceb7c85a9f49a886bc17f5d70dab93b39c63ea6ae32f334d8d91df3863c",
+          "dimensions": {
+            "width": 1024,
+            "height": 1536
+          },
+          "alpha": false
+        },
+        "thumbnail": {
+          "path": "/assets/ui/thumbs/thumb-portrait-s73-10-player-male-extra-high_minister-look01-v1.webp",
+          "exists": true,
+          "bytes": 36862,
+          "sha256": "b0f62a125ce6ff3fb2d5abd189d0cf1229566e196fec9dc97ea608a08b791440",
+          "dimensions": {
+            "width": 384,
+            "height": 576,
+            "alpha": false
+          }
+        },
+        "lowResPlaceholder": {
+          "path": "/assets/ui/portraits/placeholders/placeholder-portrait-s73-10-player-male-extra-high_minister-look01-v1.webp",
+          "exists": true,
+          "bytes": 1302,
+          "sha256": "90376d3848658e33fb367fe21911ccdc357e9af0b0dc071f5dc127d491103fa4",
+          "dimensions": {
+            "width": 64,
+            "height": 96,
+            "alpha": false
+          }
+        }
+      },
+      "transparentQa": {
+        "required": false,
+        "backgrounds": [],
+        "sidecar": null,
+        "pixel": null
+      },
+      "issues": []
+    },
+    {
+      "id": "portrait-s73-10-player-male-extra-high_minister-look02-v1",
+      "phase": "S73.10.2",
+      "category": "portrait",
+      "subcategory": "player_male_style_pool",
+      "usage": [
+        "player_identity",
+        "people_page",
+        "game_main"
+      ],
+      "path": "/assets/ui/portraits/s73-10/portrait-s73-10-player-male-extra-high_minister-look02-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-portrait-s73-10-player-male-extra-high_minister-look02-v1.webp",
+      "fallbackRef": "fallback-role-silhouette-v1",
+      "reviewStatus": "approved",
+      "runtimeUsable": true,
+      "dimensions": {
+        "width": 1024,
+        "height": 1536
+      },
+      "transparent": false,
+      "files": {
+        "image": {
+          "path": "/assets/ui/portraits/s73-10/portrait-s73-10-player-male-extra-high_minister-look02-v1.webp",
+          "exists": true,
+          "bytes": 172166,
+          "sha256": "9feda0666b60b634fa897fd13e31ac5b8b055dac372b1a615ef31546985bb8ef",
+          "dimensions": {
+            "width": 1024,
+            "height": 1536
+          },
+          "alpha": false
+        },
+        "thumbnail": {
+          "path": "/assets/ui/thumbs/thumb-portrait-s73-10-player-male-extra-high_minister-look02-v1.webp",
+          "exists": true,
+          "bytes": 39928,
+          "sha256": "6081dcd375e324a5298a44cc6ed13296db3990fc911afeafbc3861955a4009ef",
+          "dimensions": {
+            "width": 384,
+            "height": 576,
+            "alpha": false
+          }
+        },
+        "lowResPlaceholder": {
+          "path": "/assets/ui/portraits/placeholders/placeholder-portrait-s73-10-player-male-extra-high_minister-look02-v1.webp",
+          "exists": true,
+          "bytes": 1478,
+          "sha256": "9ee13d73596bd3791e8712f0179aec03cda2cb3e20ad3877ae54989c77dc6058",
+          "dimensions": {
+            "width": 64,
+            "height": 96,
+            "alpha": false
+          }
+        }
+      },
+      "transparentQa": {
+        "required": false,
+        "backgrounds": [],
+        "sidecar": null,
+        "pixel": null
+      },
+      "issues": []
+    },
+    {
+      "id": "portrait-s73-10-player-male-extra-high_minister-look03-v1",
+      "phase": "S73.10.2",
+      "category": "portrait",
+      "subcategory": "player_male_style_pool",
+      "usage": [
+        "player_identity",
+        "people_page",
+        "game_main"
+      ],
+      "path": "/assets/ui/portraits/s73-10/portrait-s73-10-player-male-extra-high_minister-look03-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-portrait-s73-10-player-male-extra-high_minister-look03-v1.webp",
+      "fallbackRef": "fallback-role-silhouette-v1",
+      "reviewStatus": "approved",
+      "runtimeUsable": true,
+      "dimensions": {
+        "width": 1024,
+        "height": 1536
+      },
+      "transparent": false,
+      "files": {
+        "image": {
+          "path": "/assets/ui/portraits/s73-10/portrait-s73-10-player-male-extra-high_minister-look03-v1.webp",
+          "exists": true,
+          "bytes": 174560,
+          "sha256": "c52c512351449217fb53ae891a83d6e78b618e6ce9e8ab80f6b22bb2318b63cf",
+          "dimensions": {
+            "width": 1024,
+            "height": 1536
+          },
+          "alpha": false
+        },
+        "thumbnail": {
+          "path": "/assets/ui/thumbs/thumb-portrait-s73-10-player-male-extra-high_minister-look03-v1.webp",
+          "exists": true,
+          "bytes": 40596,
+          "sha256": "7ecdc7f15977836770e4c7b757e3e9cb3a1e806b5324806a1ba280679262e1a6",
+          "dimensions": {
+            "width": 384,
+            "height": 576,
+            "alpha": false
+          }
+        },
+        "lowResPlaceholder": {
+          "path": "/assets/ui/portraits/placeholders/placeholder-portrait-s73-10-player-male-extra-high_minister-look03-v1.webp",
+          "exists": true,
+          "bytes": 1384,
+          "sha256": "52a3b889cc16722b9632716848c72bba4db75077eaa55d5e438d6ea6d3bbf990",
+          "dimensions": {
+            "width": 64,
+            "height": 96,
+            "alpha": false
+          }
+        }
+      },
+      "transparentQa": {
+        "required": false,
+        "backgrounds": [],
+        "sidecar": null,
+        "pixel": null
+      },
+      "issues": []
+    },
+    {
+      "id": "portrait-s73-10-player-male-extra-high_minister-look04-v1",
+      "phase": "S73.10.2",
+      "category": "portrait",
+      "subcategory": "player_male_style_pool",
+      "usage": [
+        "player_identity",
+        "people_page",
+        "game_main"
+      ],
+      "path": "/assets/ui/portraits/s73-10/portrait-s73-10-player-male-extra-high_minister-look04-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-portrait-s73-10-player-male-extra-high_minister-look04-v1.webp",
+      "fallbackRef": "fallback-role-silhouette-v1",
+      "reviewStatus": "approved",
+      "runtimeUsable": true,
+      "dimensions": {
+        "width": 1024,
+        "height": 1536
+      },
+      "transparent": false,
+      "files": {
+        "image": {
+          "path": "/assets/ui/portraits/s73-10/portrait-s73-10-player-male-extra-high_minister-look04-v1.webp",
+          "exists": true,
+          "bytes": 176664,
+          "sha256": "c3a066b0b08fb902055c898b656422c3854b17ebba0eb8047b727330cb099702",
+          "dimensions": {
+            "width": 1024,
+            "height": 1536
+          },
+          "alpha": false
+        },
+        "thumbnail": {
+          "path": "/assets/ui/thumbs/thumb-portrait-s73-10-player-male-extra-high_minister-look04-v1.webp",
+          "exists": true,
+          "bytes": 39538,
+          "sha256": "852d01f6bb526fe4627539c62b2ff69d4b9140b5538a4b130685bbfb8ebfcbbf",
+          "dimensions": {
+            "width": 384,
+            "height": 576,
+            "alpha": false
+          }
+        },
+        "lowResPlaceholder": {
+          "path": "/assets/ui/portraits/placeholders/placeholder-portrait-s73-10-player-male-extra-high_minister-look04-v1.webp",
+          "exists": true,
+          "bytes": 1344,
+          "sha256": "6106639fe188077189b352539a5913317a184d63efeb8f0222cdba68748593ab",
+          "dimensions": {
+            "width": 64,
+            "height": 96,
+            "alpha": false
+          }
+        }
+      },
+      "transparentQa": {
+        "required": false,
+        "backgrounds": [],
+        "sidecar": null,
+        "pixel": null
+      },
+      "issues": []
+    },
+    {
+      "id": "portrait-s73-10-player-male-extra-high_minister-look05-v1",
+      "phase": "S73.10.2",
+      "category": "portrait",
+      "subcategory": "player_male_style_pool",
+      "usage": [
+        "player_identity",
+        "people_page",
+        "game_main"
+      ],
+      "path": "/assets/ui/portraits/s73-10/portrait-s73-10-player-male-extra-high_minister-look05-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-portrait-s73-10-player-male-extra-high_minister-look05-v1.webp",
+      "fallbackRef": "fallback-role-silhouette-v1",
+      "reviewStatus": "approved",
+      "runtimeUsable": true,
+      "dimensions": {
+        "width": 1024,
+        "height": 1536
+      },
+      "transparent": false,
+      "files": {
+        "image": {
+          "path": "/assets/ui/portraits/s73-10/portrait-s73-10-player-male-extra-high_minister-look05-v1.webp",
+          "exists": true,
+          "bytes": 164906,
+          "sha256": "fe02e9f7ac5acee8ca1d2b77ee85374de42ebfae4f4961fd6484f61ac87e9a75",
+          "dimensions": {
+            "width": 1024,
+            "height": 1536
+          },
+          "alpha": false
+        },
+        "thumbnail": {
+          "path": "/assets/ui/thumbs/thumb-portrait-s73-10-player-male-extra-high_minister-look05-v1.webp",
+          "exists": true,
+          "bytes": 37146,
+          "sha256": "22698a937161559e1569bfad9f651f8d60a6f7f38fbb24a0642b230418d9cfd8",
+          "dimensions": {
+            "width": 384,
+            "height": 576,
+            "alpha": false
+          }
+        },
+        "lowResPlaceholder": {
+          "path": "/assets/ui/portraits/placeholders/placeholder-portrait-s73-10-player-male-extra-high_minister-look05-v1.webp",
+          "exists": true,
+          "bytes": 1392,
+          "sha256": "046cf14a2bd6364110327969e562370f9c9222ec35fa3aaf5756a09af40f2bec",
+          "dimensions": {
+            "width": 64,
+            "height": 96,
+            "alpha": false
+          }
+        }
+      },
+      "transparentQa": {
+        "required": false,
+        "backgrounds": [],
+        "sidecar": null,
+        "pixel": null
+      },
+      "issues": []
+    },
+    {
+      "id": "portrait-s73-10-player-male-extra-high_minister-look06-v1",
+      "phase": "S73.10.2",
+      "category": "portrait",
+      "subcategory": "player_male_style_pool",
+      "usage": [
+        "player_identity",
+        "people_page",
+        "game_main"
+      ],
+      "path": "/assets/ui/portraits/s73-10/portrait-s73-10-player-male-extra-high_minister-look06-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-portrait-s73-10-player-male-extra-high_minister-look06-v1.webp",
+      "fallbackRef": "fallback-role-silhouette-v1",
+      "reviewStatus": "approved",
+      "runtimeUsable": true,
+      "dimensions": {
+        "width": 1024,
+        "height": 1536
+      },
+      "transparent": false,
+      "files": {
+        "image": {
+          "path": "/assets/ui/portraits/s73-10/portrait-s73-10-player-male-extra-high_minister-look06-v1.webp",
+          "exists": true,
+          "bytes": 176826,
+          "sha256": "d92bb95800cacb1b77369bddff709736115bbfae530ff4011781b1c7ad44cb82",
+          "dimensions": {
+            "width": 1024,
+            "height": 1536
+          },
+          "alpha": false
+        },
+        "thumbnail": {
+          "path": "/assets/ui/thumbs/thumb-portrait-s73-10-player-male-extra-high_minister-look06-v1.webp",
+          "exists": true,
+          "bytes": 39540,
+          "sha256": "9d8925594ba946b44d1ec5c2513bdbfe6665161cdf7835d7ef7a7a62d8eef1a8",
+          "dimensions": {
+            "width": 384,
+            "height": 576,
+            "alpha": false
+          }
+        },
+        "lowResPlaceholder": {
+          "path": "/assets/ui/portraits/placeholders/placeholder-portrait-s73-10-player-male-extra-high_minister-look06-v1.webp",
+          "exists": true,
+          "bytes": 1306,
+          "sha256": "77a585e0288adb584d036f5b6d71773171d3ff84b68811bf45293be4330a78cd",
+          "dimensions": {
+            "width": 64,
+            "height": 96,
+            "alpha": false
+          }
+        }
+      },
+      "transparentQa": {
+        "required": false,
+        "backgrounds": [],
+        "sidecar": null,
+        "pixel": null
+      },
+      "issues": []
+    },
+    {
+      "id": "portrait-s73-10-player-male-extra-frontier_general-look01-v1",
+      "phase": "S73.10.2",
+      "category": "portrait",
+      "subcategory": "player_male_style_pool",
+      "usage": [
+        "player_identity",
+        "people_page",
+        "game_main"
+      ],
+      "path": "/assets/ui/portraits/s73-10/portrait-s73-10-player-male-extra-frontier_general-look01-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-portrait-s73-10-player-male-extra-frontier_general-look01-v1.webp",
+      "fallbackRef": "fallback-role-silhouette-v1",
+      "reviewStatus": "approved",
+      "runtimeUsable": true,
+      "dimensions": {
+        "width": 1024,
+        "height": 1536
+      },
+      "transparent": false,
+      "files": {
+        "image": {
+          "path": "/assets/ui/portraits/s73-10/portrait-s73-10-player-male-extra-frontier_general-look01-v1.webp",
+          "exists": true,
+          "bytes": 194766,
+          "sha256": "a3c2aa464199ca37d6ddb376c7987d777d101829ba394ed6ca991fbb5a3aaadc",
+          "dimensions": {
+            "width": 1024,
+            "height": 1536
+          },
+          "alpha": false
+        },
+        "thumbnail": {
+          "path": "/assets/ui/thumbs/thumb-portrait-s73-10-player-male-extra-frontier_general-look01-v1.webp",
+          "exists": true,
+          "bytes": 46736,
+          "sha256": "6a368047834ddd77ed34161547d9229b763b7b3f7b7b0893725dbafd6c060607",
+          "dimensions": {
+            "width": 384,
+            "height": 576,
+            "alpha": false
+          }
+        },
+        "lowResPlaceholder": {
+          "path": "/assets/ui/portraits/placeholders/placeholder-portrait-s73-10-player-male-extra-frontier_general-look01-v1.webp",
+          "exists": true,
+          "bytes": 1468,
+          "sha256": "9e809305179916b1884ed72548f7a92a6a10ba8ab9f8ef38006841c8553ddc84",
+          "dimensions": {
+            "width": 64,
+            "height": 96,
+            "alpha": false
+          }
+        }
+      },
+      "transparentQa": {
+        "required": false,
+        "backgrounds": [],
+        "sidecar": null,
+        "pixel": null
+      },
+      "issues": []
+    },
+    {
+      "id": "portrait-s73-10-player-male-extra-frontier_general-look02-v1",
+      "phase": "S73.10.2",
+      "category": "portrait",
+      "subcategory": "player_male_style_pool",
+      "usage": [
+        "player_identity",
+        "people_page",
+        "game_main"
+      ],
+      "path": "/assets/ui/portraits/s73-10/portrait-s73-10-player-male-extra-frontier_general-look02-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-portrait-s73-10-player-male-extra-frontier_general-look02-v1.webp",
+      "fallbackRef": "fallback-role-silhouette-v1",
+      "reviewStatus": "approved",
+      "runtimeUsable": true,
+      "dimensions": {
+        "width": 1024,
+        "height": 1536
+      },
+      "transparent": false,
+      "files": {
+        "image": {
+          "path": "/assets/ui/portraits/s73-10/portrait-s73-10-player-male-extra-frontier_general-look02-v1.webp",
+          "exists": true,
+          "bytes": 184478,
+          "sha256": "aac8adb0add8b8d9833c8fb2f8309940e890749613d1ac82152c7301223f1086",
+          "dimensions": {
+            "width": 1024,
+            "height": 1536
+          },
+          "alpha": false
+        },
+        "thumbnail": {
+          "path": "/assets/ui/thumbs/thumb-portrait-s73-10-player-male-extra-frontier_general-look02-v1.webp",
+          "exists": true,
+          "bytes": 44266,
+          "sha256": "ae5e46027b1c58919b50fd6b37a66600ea56753bfe205115729e4efb939e5cbb",
+          "dimensions": {
+            "width": 384,
+            "height": 576,
+            "alpha": false
+          }
+        },
+        "lowResPlaceholder": {
+          "path": "/assets/ui/portraits/placeholders/placeholder-portrait-s73-10-player-male-extra-frontier_general-look02-v1.webp",
+          "exists": true,
+          "bytes": 1456,
+          "sha256": "9d63845e069bc0e2569e1450590969a331772d89523ffa99fb9edcfd9f4c4faf",
+          "dimensions": {
+            "width": 64,
+            "height": 96,
+            "alpha": false
+          }
+        }
+      },
+      "transparentQa": {
+        "required": false,
+        "backgrounds": [],
+        "sidecar": null,
+        "pixel": null
+      },
+      "issues": []
+    },
+    {
+      "id": "portrait-s73-10-player-male-extra-frontier_general-look03-v1",
+      "phase": "S73.10.2",
+      "category": "portrait",
+      "subcategory": "player_male_style_pool",
+      "usage": [
+        "player_identity",
+        "people_page",
+        "game_main"
+      ],
+      "path": "/assets/ui/portraits/s73-10/portrait-s73-10-player-male-extra-frontier_general-look03-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-portrait-s73-10-player-male-extra-frontier_general-look03-v1.webp",
+      "fallbackRef": "fallback-role-silhouette-v1",
+      "reviewStatus": "approved",
+      "runtimeUsable": true,
+      "dimensions": {
+        "width": 1024,
+        "height": 1536
+      },
+      "transparent": false,
+      "files": {
+        "image": {
+          "path": "/assets/ui/portraits/s73-10/portrait-s73-10-player-male-extra-frontier_general-look03-v1.webp",
+          "exists": true,
+          "bytes": 198694,
+          "sha256": "3ed7f27823fbbe4548b7e98c8fe5a435a6a6d6696e1ab126f56b8a2669ef7add",
+          "dimensions": {
+            "width": 1024,
+            "height": 1536
+          },
+          "alpha": false
+        },
+        "thumbnail": {
+          "path": "/assets/ui/thumbs/thumb-portrait-s73-10-player-male-extra-frontier_general-look03-v1.webp",
+          "exists": true,
+          "bytes": 46258,
+          "sha256": "9958f98674e64cd73ade8676e302ac47d741476cfef4a25adfd8400292054ff8",
+          "dimensions": {
+            "width": 384,
+            "height": 576,
+            "alpha": false
+          }
+        },
+        "lowResPlaceholder": {
+          "path": "/assets/ui/portraits/placeholders/placeholder-portrait-s73-10-player-male-extra-frontier_general-look03-v1.webp",
+          "exists": true,
+          "bytes": 1396,
+          "sha256": "8ec6e907d6cf91c88065654ad399e4a9bb175b0bc33426ceb7d2f305c9e29aef",
+          "dimensions": {
+            "width": 64,
+            "height": 96,
+            "alpha": false
+          }
+        }
+      },
+      "transparentQa": {
+        "required": false,
+        "backgrounds": [],
+        "sidecar": null,
+        "pixel": null
+      },
+      "issues": []
+    },
+    {
+      "id": "portrait-s73-10-player-male-extra-frontier_general-look04-v1",
+      "phase": "S73.10.2",
+      "category": "portrait",
+      "subcategory": "player_male_style_pool",
+      "usage": [
+        "player_identity",
+        "people_page",
+        "game_main"
+      ],
+      "path": "/assets/ui/portraits/s73-10/portrait-s73-10-player-male-extra-frontier_general-look04-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-portrait-s73-10-player-male-extra-frontier_general-look04-v1.webp",
+      "fallbackRef": "fallback-role-silhouette-v1",
+      "reviewStatus": "approved",
+      "runtimeUsable": true,
+      "dimensions": {
+        "width": 1024,
+        "height": 1536
+      },
+      "transparent": false,
+      "files": {
+        "image": {
+          "path": "/assets/ui/portraits/s73-10/portrait-s73-10-player-male-extra-frontier_general-look04-v1.webp",
+          "exists": true,
+          "bytes": 197716,
+          "sha256": "f830cc4a1e866356ffa5f0414bee076ba0e92b607440cfcdb31e21e9dac0a9e2",
+          "dimensions": {
+            "width": 1024,
+            "height": 1536
+          },
+          "alpha": false
+        },
+        "thumbnail": {
+          "path": "/assets/ui/thumbs/thumb-portrait-s73-10-player-male-extra-frontier_general-look04-v1.webp",
+          "exists": true,
+          "bytes": 46824,
+          "sha256": "b7cb20902b1b71c334aa909d650fee524795c571df808e7841f617251d751d5c",
+          "dimensions": {
+            "width": 384,
+            "height": 576,
+            "alpha": false
+          }
+        },
+        "lowResPlaceholder": {
+          "path": "/assets/ui/portraits/placeholders/placeholder-portrait-s73-10-player-male-extra-frontier_general-look04-v1.webp",
+          "exists": true,
+          "bytes": 1418,
+          "sha256": "0bf5b0090d866c1c2f0e424f087b01a42573fb2dd6df8d7f9bc448b188084c2d",
+          "dimensions": {
+            "width": 64,
+            "height": 96,
+            "alpha": false
+          }
+        }
+      },
+      "transparentQa": {
+        "required": false,
+        "backgrounds": [],
+        "sidecar": null,
+        "pixel": null
+      },
+      "issues": []
+    },
+    {
+      "id": "portrait-s73-10-player-male-extra-frontier_general-look05-v1",
+      "phase": "S73.10.2",
+      "category": "portrait",
+      "subcategory": "player_male_style_pool",
+      "usage": [
+        "player_identity",
+        "people_page",
+        "game_main"
+      ],
+      "path": "/assets/ui/portraits/s73-10/portrait-s73-10-player-male-extra-frontier_general-look05-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-portrait-s73-10-player-male-extra-frontier_general-look05-v1.webp",
+      "fallbackRef": "fallback-role-silhouette-v1",
+      "reviewStatus": "approved",
+      "runtimeUsable": true,
+      "dimensions": {
+        "width": 1024,
+        "height": 1536
+      },
+      "transparent": false,
+      "files": {
+        "image": {
+          "path": "/assets/ui/portraits/s73-10/portrait-s73-10-player-male-extra-frontier_general-look05-v1.webp",
+          "exists": true,
+          "bytes": 189970,
+          "sha256": "d634375435ab1939402d8a7d65bd1622a33527bab53c4a5a9c3b2a3e892df9e0",
+          "dimensions": {
+            "width": 1024,
+            "height": 1536
+          },
+          "alpha": false
+        },
+        "thumbnail": {
+          "path": "/assets/ui/thumbs/thumb-portrait-s73-10-player-male-extra-frontier_general-look05-v1.webp",
+          "exists": true,
+          "bytes": 44862,
+          "sha256": "a5ce33828294dc11368cfa004cef8fa3170df65090f00020ad7012c20475184e",
+          "dimensions": {
+            "width": 384,
+            "height": 576,
+            "alpha": false
+          }
+        },
+        "lowResPlaceholder": {
+          "path": "/assets/ui/portraits/placeholders/placeholder-portrait-s73-10-player-male-extra-frontier_general-look05-v1.webp",
+          "exists": true,
+          "bytes": 1432,
+          "sha256": "628878091b3cceb09f2613f4bad860d741ecef6d901a1e473fca954be2e4dd27",
+          "dimensions": {
+            "width": 64,
+            "height": 96,
+            "alpha": false
+          }
+        }
+      },
+      "transparentQa": {
+        "required": false,
+        "backgrounds": [],
+        "sidecar": null,
+        "pixel": null
+      },
+      "issues": []
+    },
+    {
+      "id": "portrait-s73-10-player-male-extra-frontier_general-look06-v1",
+      "phase": "S73.10.2",
+      "category": "portrait",
+      "subcategory": "player_male_style_pool",
+      "usage": [
+        "player_identity",
+        "people_page",
+        "game_main"
+      ],
+      "path": "/assets/ui/portraits/s73-10/portrait-s73-10-player-male-extra-frontier_general-look06-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-portrait-s73-10-player-male-extra-frontier_general-look06-v1.webp",
+      "fallbackRef": "fallback-role-silhouette-v1",
+      "reviewStatus": "approved",
+      "runtimeUsable": true,
+      "dimensions": {
+        "width": 1024,
+        "height": 1536
+      },
+      "transparent": false,
+      "files": {
+        "image": {
+          "path": "/assets/ui/portraits/s73-10/portrait-s73-10-player-male-extra-frontier_general-look06-v1.webp",
+          "exists": true,
+          "bytes": 184896,
+          "sha256": "73cd95266c90e6cf612ed5b24755f8cde4fa5a740a0630fe5d3cfd8b96cfd9f7",
+          "dimensions": {
+            "width": 1024,
+            "height": 1536
+          },
+          "alpha": false
+        },
+        "thumbnail": {
+          "path": "/assets/ui/thumbs/thumb-portrait-s73-10-player-male-extra-frontier_general-look06-v1.webp",
+          "exists": true,
+          "bytes": 43250,
+          "sha256": "87a8743d01e9a7b563b4fd303ebdf814bf83d58fb2aa42072f15678be024baac",
+          "dimensions": {
+            "width": 384,
+            "height": 576,
+            "alpha": false
+          }
+        },
+        "lowResPlaceholder": {
+          "path": "/assets/ui/portraits/placeholders/placeholder-portrait-s73-10-player-male-extra-frontier_general-look06-v1.webp",
+          "exists": true,
+          "bytes": 1364,
+          "sha256": "df4503da448a7967b72c16b9ee09773cb8ad98373eabbdc075aa9aea9979d48d",
+          "dimensions": {
+            "width": 64,
+            "height": 96,
+            "alpha": false
+          }
+        }
+      },
+      "transparentQa": {
+        "required": false,
+        "backgrounds": [],
+        "sidecar": null,
+        "pixel": null
+      },
+      "issues": []
+    },
+    {
+      "id": "portrait-s73-10-player-male-extra-imperial_guard-look01-v1",
+      "phase": "S73.10.2",
+      "category": "portrait",
+      "subcategory": "player_male_style_pool",
+      "usage": [
+        "player_identity",
+        "people_page",
+        "game_main"
+      ],
+      "path": "/assets/ui/portraits/s73-10/portrait-s73-10-player-male-extra-imperial_guard-look01-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-portrait-s73-10-player-male-extra-imperial_guard-look01-v1.webp",
+      "fallbackRef": "fallback-role-silhouette-v1",
+      "reviewStatus": "approved",
+      "runtimeUsable": true,
+      "dimensions": {
+        "width": 1024,
+        "height": 1536
+      },
+      "transparent": false,
+      "files": {
+        "image": {
+          "path": "/assets/ui/portraits/s73-10/portrait-s73-10-player-male-extra-imperial_guard-look01-v1.webp",
+          "exists": true,
+          "bytes": 198320,
+          "sha256": "d327687053a026a6ac3b6b2b9221d9ed1605d3690774b054ed4cf7d130a03025",
+          "dimensions": {
+            "width": 1024,
+            "height": 1536
+          },
+          "alpha": false
+        },
+        "thumbnail": {
+          "path": "/assets/ui/thumbs/thumb-portrait-s73-10-player-male-extra-imperial_guard-look01-v1.webp",
+          "exists": true,
+          "bytes": 45888,
+          "sha256": "15b20f6ed3891c2edb26e5ff4142055e34e88a37fc13722209a2fa21a85a3f2e",
+          "dimensions": {
+            "width": 384,
+            "height": 576,
+            "alpha": false
+          }
+        },
+        "lowResPlaceholder": {
+          "path": "/assets/ui/portraits/placeholders/placeholder-portrait-s73-10-player-male-extra-imperial_guard-look01-v1.webp",
+          "exists": true,
+          "bytes": 1482,
+          "sha256": "bf141e61e6fa3273e7dd12059b2e437da82b115bd26ec84b80dd7daa181e9913",
+          "dimensions": {
+            "width": 64,
+            "height": 96,
+            "alpha": false
+          }
+        }
+      },
+      "transparentQa": {
+        "required": false,
+        "backgrounds": [],
+        "sidecar": null,
+        "pixel": null
+      },
+      "issues": []
+    },
+    {
+      "id": "portrait-s73-10-player-male-extra-imperial_guard-look02-v1",
+      "phase": "S73.10.2",
+      "category": "portrait",
+      "subcategory": "player_male_style_pool",
+      "usage": [
+        "player_identity",
+        "people_page",
+        "game_main"
+      ],
+      "path": "/assets/ui/portraits/s73-10/portrait-s73-10-player-male-extra-imperial_guard-look02-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-portrait-s73-10-player-male-extra-imperial_guard-look02-v1.webp",
+      "fallbackRef": "fallback-role-silhouette-v1",
+      "reviewStatus": "approved",
+      "runtimeUsable": true,
+      "dimensions": {
+        "width": 1024,
+        "height": 1536
+      },
+      "transparent": false,
+      "files": {
+        "image": {
+          "path": "/assets/ui/portraits/s73-10/portrait-s73-10-player-male-extra-imperial_guard-look02-v1.webp",
+          "exists": true,
+          "bytes": 188748,
+          "sha256": "e8580f766f8bb54a8962d35375e851d8d85c2a5da42152f3b98f3d3308fe729c",
+          "dimensions": {
+            "width": 1024,
+            "height": 1536
+          },
+          "alpha": false
+        },
+        "thumbnail": {
+          "path": "/assets/ui/thumbs/thumb-portrait-s73-10-player-male-extra-imperial_guard-look02-v1.webp",
+          "exists": true,
+          "bytes": 42720,
+          "sha256": "221e8c1f88ab3b7e5317fb22b5f44a4883d4a017ad10f5c71f9ebb9da206f80e",
+          "dimensions": {
+            "width": 384,
+            "height": 576,
+            "alpha": false
+          }
+        },
+        "lowResPlaceholder": {
+          "path": "/assets/ui/portraits/placeholders/placeholder-portrait-s73-10-player-male-extra-imperial_guard-look02-v1.webp",
+          "exists": true,
+          "bytes": 1468,
+          "sha256": "7b930d48824730c7db5c448f6ce49e800b58d080b01b2cd773ee0b0c3115b7d7",
+          "dimensions": {
+            "width": 64,
+            "height": 96,
+            "alpha": false
+          }
+        }
+      },
+      "transparentQa": {
+        "required": false,
+        "backgrounds": [],
+        "sidecar": null,
+        "pixel": null
+      },
+      "issues": []
+    },
+    {
+      "id": "portrait-s73-10-player-male-extra-imperial_guard-look03-v1",
+      "phase": "S73.10.2",
+      "category": "portrait",
+      "subcategory": "player_male_style_pool",
+      "usage": [
+        "player_identity",
+        "people_page",
+        "game_main"
+      ],
+      "path": "/assets/ui/portraits/s73-10/portrait-s73-10-player-male-extra-imperial_guard-look03-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-portrait-s73-10-player-male-extra-imperial_guard-look03-v1.webp",
+      "fallbackRef": "fallback-role-silhouette-v1",
+      "reviewStatus": "approved",
+      "runtimeUsable": true,
+      "dimensions": {
+        "width": 1024,
+        "height": 1536
+      },
+      "transparent": false,
+      "files": {
+        "image": {
+          "path": "/assets/ui/portraits/s73-10/portrait-s73-10-player-male-extra-imperial_guard-look03-v1.webp",
+          "exists": true,
+          "bytes": 182672,
+          "sha256": "d8c5f0b49c8d2b133617e7aa2a97ec326df88c6ab9423383c589f1a085311e13",
+          "dimensions": {
+            "width": 1024,
+            "height": 1536
+          },
+          "alpha": false
+        },
+        "thumbnail": {
+          "path": "/assets/ui/thumbs/thumb-portrait-s73-10-player-male-extra-imperial_guard-look03-v1.webp",
+          "exists": true,
+          "bytes": 42024,
+          "sha256": "87af54b8572238b6523b8e7e8137b98db7e73779a08c6fc00b9f1b18cbfa0014",
+          "dimensions": {
+            "width": 384,
+            "height": 576,
+            "alpha": false
+          }
+        },
+        "lowResPlaceholder": {
+          "path": "/assets/ui/portraits/placeholders/placeholder-portrait-s73-10-player-male-extra-imperial_guard-look03-v1.webp",
+          "exists": true,
+          "bytes": 1404,
+          "sha256": "58434599eb3d27fb13d1a7f721709ebdc4a1b6790fd776c33c23e6f85d8dbd09",
+          "dimensions": {
+            "width": 64,
+            "height": 96,
+            "alpha": false
+          }
+        }
+      },
+      "transparentQa": {
+        "required": false,
+        "backgrounds": [],
+        "sidecar": null,
+        "pixel": null
+      },
+      "issues": []
+    },
+    {
+      "id": "portrait-s73-10-player-male-extra-imperial_guard-look04-v1",
+      "phase": "S73.10.2",
+      "category": "portrait",
+      "subcategory": "player_male_style_pool",
+      "usage": [
+        "player_identity",
+        "people_page",
+        "game_main"
+      ],
+      "path": "/assets/ui/portraits/s73-10/portrait-s73-10-player-male-extra-imperial_guard-look04-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-portrait-s73-10-player-male-extra-imperial_guard-look04-v1.webp",
+      "fallbackRef": "fallback-role-silhouette-v1",
+      "reviewStatus": "approved",
+      "runtimeUsable": true,
+      "dimensions": {
+        "width": 1024,
+        "height": 1536
+      },
+      "transparent": false,
+      "files": {
+        "image": {
+          "path": "/assets/ui/portraits/s73-10/portrait-s73-10-player-male-extra-imperial_guard-look04-v1.webp",
+          "exists": true,
+          "bytes": 167160,
+          "sha256": "ea35a68ea025c124a2b57b9afdb8b875498ae71266ecaed1c3a3bb37e17623c9",
+          "dimensions": {
+            "width": 1024,
+            "height": 1536
+          },
+          "alpha": false
+        },
+        "thumbnail": {
+          "path": "/assets/ui/thumbs/thumb-portrait-s73-10-player-male-extra-imperial_guard-look04-v1.webp",
+          "exists": true,
+          "bytes": 39532,
+          "sha256": "34ce407d64feca24054e94e067343db811d3c1de3a7c9cd963cf0e85412783ab",
+          "dimensions": {
+            "width": 384,
+            "height": 576,
+            "alpha": false
+          }
+        },
+        "lowResPlaceholder": {
+          "path": "/assets/ui/portraits/placeholders/placeholder-portrait-s73-10-player-male-extra-imperial_guard-look04-v1.webp",
+          "exists": true,
+          "bytes": 1374,
+          "sha256": "4dd034c3cebddcd846f53c840307a8761b3fdb50066ef5157765b9f671ebc0d8",
+          "dimensions": {
+            "width": 64,
+            "height": 96,
+            "alpha": false
+          }
+        }
+      },
+      "transparentQa": {
+        "required": false,
+        "backgrounds": [],
+        "sidecar": null,
+        "pixel": null
+      },
+      "issues": []
+    },
+    {
+      "id": "portrait-s73-10-player-male-extra-imperial_guard-look05-v1",
+      "phase": "S73.10.2",
+      "category": "portrait",
+      "subcategory": "player_male_style_pool",
+      "usage": [
+        "player_identity",
+        "people_page",
+        "game_main"
+      ],
+      "path": "/assets/ui/portraits/s73-10/portrait-s73-10-player-male-extra-imperial_guard-look05-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-portrait-s73-10-player-male-extra-imperial_guard-look05-v1.webp",
+      "fallbackRef": "fallback-role-silhouette-v1",
+      "reviewStatus": "approved",
+      "runtimeUsable": true,
+      "dimensions": {
+        "width": 1024,
+        "height": 1536
+      },
+      "transparent": false,
+      "files": {
+        "image": {
+          "path": "/assets/ui/portraits/s73-10/portrait-s73-10-player-male-extra-imperial_guard-look05-v1.webp",
+          "exists": true,
+          "bytes": 174848,
+          "sha256": "1eba0e5dec6c81577221aad6417f679ff2c84358c5ec47152edccc73e785e9b4",
+          "dimensions": {
+            "width": 1024,
+            "height": 1536
+          },
+          "alpha": false
+        },
+        "thumbnail": {
+          "path": "/assets/ui/thumbs/thumb-portrait-s73-10-player-male-extra-imperial_guard-look05-v1.webp",
+          "exists": true,
+          "bytes": 41182,
+          "sha256": "e79e91fdb6a856060ffbffd211263dadad008952268c629ec0b7869de8784e3f",
+          "dimensions": {
+            "width": 384,
+            "height": 576,
+            "alpha": false
+          }
+        },
+        "lowResPlaceholder": {
+          "path": "/assets/ui/portraits/placeholders/placeholder-portrait-s73-10-player-male-extra-imperial_guard-look05-v1.webp",
+          "exists": true,
+          "bytes": 1386,
+          "sha256": "a442e7a05dc0aa964e54b24fa3a2c2d9e82a4bcee1ca336ca75d92531185bfb1",
+          "dimensions": {
+            "width": 64,
+            "height": 96,
+            "alpha": false
+          }
+        }
+      },
+      "transparentQa": {
+        "required": false,
+        "backgrounds": [],
+        "sidecar": null,
+        "pixel": null
+      },
+      "issues": []
+    },
+    {
+      "id": "portrait-s73-10-player-male-extra-imperial_guard-look06-v1",
+      "phase": "S73.10.2",
+      "category": "portrait",
+      "subcategory": "player_male_style_pool",
+      "usage": [
+        "player_identity",
+        "people_page",
+        "game_main"
+      ],
+      "path": "/assets/ui/portraits/s73-10/portrait-s73-10-player-male-extra-imperial_guard-look06-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-portrait-s73-10-player-male-extra-imperial_guard-look06-v1.webp",
+      "fallbackRef": "fallback-role-silhouette-v1",
+      "reviewStatus": "approved",
+      "runtimeUsable": true,
+      "dimensions": {
+        "width": 1024,
+        "height": 1536
+      },
+      "transparent": false,
+      "files": {
+        "image": {
+          "path": "/assets/ui/portraits/s73-10/portrait-s73-10-player-male-extra-imperial_guard-look06-v1.webp",
+          "exists": true,
+          "bytes": 168250,
+          "sha256": "36c64aa5f92f0bd84722b4095768b086780362ad6c3121e620aa31db71c5bcf6",
+          "dimensions": {
+            "width": 1024,
+            "height": 1536
+          },
+          "alpha": false
+        },
+        "thumbnail": {
+          "path": "/assets/ui/thumbs/thumb-portrait-s73-10-player-male-extra-imperial_guard-look06-v1.webp",
+          "exists": true,
+          "bytes": 38818,
+          "sha256": "49ec6d53e2d6d0a450dce767481d6081f8295810604fe3ae097895fc12370129",
+          "dimensions": {
+            "width": 384,
+            "height": 576,
+            "alpha": false
+          }
+        },
+        "lowResPlaceholder": {
+          "path": "/assets/ui/portraits/placeholders/placeholder-portrait-s73-10-player-male-extra-imperial_guard-look06-v1.webp",
+          "exists": true,
+          "bytes": 1316,
+          "sha256": "e1dc47f4e306b1f50592683ed435bb0be2194123f2dc093df2a7822f65ea210f",
+          "dimensions": {
+            "width": 64,
+            "height": 96,
+            "alpha": false
+          }
+        }
+      },
+      "transparentQa": {
+        "required": false,
+        "backgrounds": [],
+        "sidecar": null,
+        "pixel": null
+      },
+      "issues": []
+    },
+    {
+      "id": "portrait-s73-10-player-male-extra-gentry_heir-look01-v1",
+      "phase": "S73.10.2",
+      "category": "portrait",
+      "subcategory": "player_male_style_pool",
+      "usage": [
+        "player_identity",
+        "people_page",
+        "game_main"
+      ],
+      "path": "/assets/ui/portraits/s73-10/portrait-s73-10-player-male-extra-gentry_heir-look01-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-portrait-s73-10-player-male-extra-gentry_heir-look01-v1.webp",
+      "fallbackRef": "fallback-role-silhouette-v1",
+      "reviewStatus": "approved",
+      "runtimeUsable": true,
+      "dimensions": {
+        "width": 1024,
+        "height": 1536
+      },
+      "transparent": false,
+      "files": {
+        "image": {
+          "path": "/assets/ui/portraits/s73-10/portrait-s73-10-player-male-extra-gentry_heir-look01-v1.webp",
+          "exists": true,
+          "bytes": 190052,
+          "sha256": "c79e719aa670a19fd374a070c832f56d8889658256b37c23346c617ff67bab70",
+          "dimensions": {
+            "width": 1024,
+            "height": 1536
+          },
+          "alpha": false
+        },
+        "thumbnail": {
+          "path": "/assets/ui/thumbs/thumb-portrait-s73-10-player-male-extra-gentry_heir-look01-v1.webp",
+          "exists": true,
+          "bytes": 47090,
+          "sha256": "58966c09ef5e0a90672a0e9ecb7bf948d647b06286a3c862e18867fe826e842f",
+          "dimensions": {
+            "width": 384,
+            "height": 576,
+            "alpha": false
+          }
+        },
+        "lowResPlaceholder": {
+          "path": "/assets/ui/portraits/placeholders/placeholder-portrait-s73-10-player-male-extra-gentry_heir-look01-v1.webp",
+          "exists": true,
+          "bytes": 1586,
+          "sha256": "5bef369a9d0156537a7d867195ed92dd28c409ccb82e4536c30784eae087e4ce",
+          "dimensions": {
+            "width": 64,
+            "height": 96,
+            "alpha": false
+          }
+        }
+      },
+      "transparentQa": {
+        "required": false,
+        "backgrounds": [],
+        "sidecar": null,
+        "pixel": null
+      },
+      "issues": []
+    },
+    {
+      "id": "portrait-s73-10-player-male-extra-gentry_heir-look02-v1",
+      "phase": "S73.10.2",
+      "category": "portrait",
+      "subcategory": "player_male_style_pool",
+      "usage": [
+        "player_identity",
+        "people_page",
+        "game_main"
+      ],
+      "path": "/assets/ui/portraits/s73-10/portrait-s73-10-player-male-extra-gentry_heir-look02-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-portrait-s73-10-player-male-extra-gentry_heir-look02-v1.webp",
+      "fallbackRef": "fallback-role-silhouette-v1",
+      "reviewStatus": "approved",
+      "runtimeUsable": true,
+      "dimensions": {
+        "width": 1024,
+        "height": 1536
+      },
+      "transparent": false,
+      "files": {
+        "image": {
+          "path": "/assets/ui/portraits/s73-10/portrait-s73-10-player-male-extra-gentry_heir-look02-v1.webp",
+          "exists": true,
+          "bytes": 162654,
+          "sha256": "43b9a391607d33422319058d9244ce950112947f669f733e49da8c1990c16eed",
+          "dimensions": {
+            "width": 1024,
+            "height": 1536
+          },
+          "alpha": false
+        },
+        "thumbnail": {
+          "path": "/assets/ui/thumbs/thumb-portrait-s73-10-player-male-extra-gentry_heir-look02-v1.webp",
+          "exists": true,
+          "bytes": 38642,
+          "sha256": "b1616c3395dff66384b434950659eb76ab22ae0a784767bf26894c9390e85791",
+          "dimensions": {
+            "width": 384,
+            "height": 576,
+            "alpha": false
+          }
+        },
+        "lowResPlaceholder": {
+          "path": "/assets/ui/portraits/placeholders/placeholder-portrait-s73-10-player-male-extra-gentry_heir-look02-v1.webp",
+          "exists": true,
+          "bytes": 1356,
+          "sha256": "48fc19b12dd29824e80ebcdcb0bb4af944e11b6c037447266e1d4187e874ca25",
+          "dimensions": {
+            "width": 64,
+            "height": 96,
+            "alpha": false
+          }
+        }
+      },
+      "transparentQa": {
+        "required": false,
+        "backgrounds": [],
+        "sidecar": null,
+        "pixel": null
+      },
+      "issues": []
+    },
+    {
+      "id": "portrait-s73-10-player-male-extra-gentry_heir-look03-v1",
+      "phase": "S73.10.2",
+      "category": "portrait",
+      "subcategory": "player_male_style_pool",
+      "usage": [
+        "player_identity",
+        "people_page",
+        "game_main"
+      ],
+      "path": "/assets/ui/portraits/s73-10/portrait-s73-10-player-male-extra-gentry_heir-look03-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-portrait-s73-10-player-male-extra-gentry_heir-look03-v1.webp",
+      "fallbackRef": "fallback-role-silhouette-v1",
+      "reviewStatus": "approved",
+      "runtimeUsable": true,
+      "dimensions": {
+        "width": 1024,
+        "height": 1536
+      },
+      "transparent": false,
+      "files": {
+        "image": {
+          "path": "/assets/ui/portraits/s73-10/portrait-s73-10-player-male-extra-gentry_heir-look03-v1.webp",
+          "exists": true,
+          "bytes": 171686,
+          "sha256": "e2d2012e829d58d824e27abb754f85bbf1ebcf235f926a01c42489938b555405",
+          "dimensions": {
+            "width": 1024,
+            "height": 1536
+          },
+          "alpha": false
+        },
+        "thumbnail": {
+          "path": "/assets/ui/thumbs/thumb-portrait-s73-10-player-male-extra-gentry_heir-look03-v1.webp",
+          "exists": true,
+          "bytes": 41906,
+          "sha256": "681b2f9d9eb1fb7772bfa5137bd052582998ea65596c546952dc55afcfc18aba",
+          "dimensions": {
+            "width": 384,
+            "height": 576,
+            "alpha": false
+          }
+        },
+        "lowResPlaceholder": {
+          "path": "/assets/ui/portraits/placeholders/placeholder-portrait-s73-10-player-male-extra-gentry_heir-look03-v1.webp",
+          "exists": true,
+          "bytes": 1540,
+          "sha256": "c4edf32c1c6b19b56538be57c82883047b25ba16ed86f082b6a10f50400d93e5",
+          "dimensions": {
+            "width": 64,
+            "height": 96,
+            "alpha": false
+          }
+        }
+      },
+      "transparentQa": {
+        "required": false,
+        "backgrounds": [],
+        "sidecar": null,
+        "pixel": null
+      },
+      "issues": []
+    },
+    {
+      "id": "portrait-s73-10-player-male-extra-gentry_heir-look04-v1",
+      "phase": "S73.10.2",
+      "category": "portrait",
+      "subcategory": "player_male_style_pool",
+      "usage": [
+        "player_identity",
+        "people_page",
+        "game_main"
+      ],
+      "path": "/assets/ui/portraits/s73-10/portrait-s73-10-player-male-extra-gentry_heir-look04-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-portrait-s73-10-player-male-extra-gentry_heir-look04-v1.webp",
+      "fallbackRef": "fallback-role-silhouette-v1",
+      "reviewStatus": "approved",
+      "runtimeUsable": true,
+      "dimensions": {
+        "width": 1024,
+        "height": 1536
+      },
+      "transparent": false,
+      "files": {
+        "image": {
+          "path": "/assets/ui/portraits/s73-10/portrait-s73-10-player-male-extra-gentry_heir-look04-v1.webp",
+          "exists": true,
+          "bytes": 177108,
+          "sha256": "e208c591c4b30e9fbf99c14a9cad239ff89c313ed94de350e05ab7dc6c07ed8c",
+          "dimensions": {
+            "width": 1024,
+            "height": 1536
+          },
+          "alpha": false
+        },
+        "thumbnail": {
+          "path": "/assets/ui/thumbs/thumb-portrait-s73-10-player-male-extra-gentry_heir-look04-v1.webp",
+          "exists": true,
+          "bytes": 43420,
+          "sha256": "436748d384cb509c23f8b512a86f2d30ec53699d9ccd3a07498afb2c2c32dea5",
+          "dimensions": {
+            "width": 384,
+            "height": 576,
+            "alpha": false
+          }
+        },
+        "lowResPlaceholder": {
+          "path": "/assets/ui/portraits/placeholders/placeholder-portrait-s73-10-player-male-extra-gentry_heir-look04-v1.webp",
+          "exists": true,
+          "bytes": 1554,
+          "sha256": "024f8a40e432430038fdb42591f198af270ba05ae8f46aeffa3dd8f6a08faf7d",
+          "dimensions": {
+            "width": 64,
+            "height": 96,
+            "alpha": false
+          }
+        }
+      },
+      "transparentQa": {
+        "required": false,
+        "backgrounds": [],
+        "sidecar": null,
+        "pixel": null
+      },
+      "issues": []
+    },
+    {
+      "id": "portrait-s73-10-player-male-extra-gentry_heir-look05-v1",
+      "phase": "S73.10.2",
+      "category": "portrait",
+      "subcategory": "player_male_style_pool",
+      "usage": [
+        "player_identity",
+        "people_page",
+        "game_main"
+      ],
+      "path": "/assets/ui/portraits/s73-10/portrait-s73-10-player-male-extra-gentry_heir-look05-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-portrait-s73-10-player-male-extra-gentry_heir-look05-v1.webp",
+      "fallbackRef": "fallback-role-silhouette-v1",
+      "reviewStatus": "approved",
+      "runtimeUsable": true,
+      "dimensions": {
+        "width": 1024,
+        "height": 1536
+      },
+      "transparent": false,
+      "files": {
+        "image": {
+          "path": "/assets/ui/portraits/s73-10/portrait-s73-10-player-male-extra-gentry_heir-look05-v1.webp",
+          "exists": true,
+          "bytes": 163140,
+          "sha256": "aff6a0bf6d0dbeb4856e1c02f7dea42b669765b614f4910eedbc8c8debbcbdfb",
+          "dimensions": {
+            "width": 1024,
+            "height": 1536
+          },
+          "alpha": false
+        },
+        "thumbnail": {
+          "path": "/assets/ui/thumbs/thumb-portrait-s73-10-player-male-extra-gentry_heir-look05-v1.webp",
+          "exists": true,
+          "bytes": 40836,
+          "sha256": "9d690ed82097166b7e1953b2fb37c1d50bec7478f2740ee705c75b711a78f5ea",
+          "dimensions": {
+            "width": 384,
+            "height": 576,
+            "alpha": false
+          }
+        },
+        "lowResPlaceholder": {
+          "path": "/assets/ui/portraits/placeholders/placeholder-portrait-s73-10-player-male-extra-gentry_heir-look05-v1.webp",
+          "exists": true,
+          "bytes": 1448,
+          "sha256": "40d99111c73aee6e4945619cbe13e1f438b56502bfc8758fd8550f6f7faefbe9",
+          "dimensions": {
+            "width": 64,
+            "height": 96,
+            "alpha": false
+          }
+        }
+      },
+      "transparentQa": {
+        "required": false,
+        "backgrounds": [],
+        "sidecar": null,
+        "pixel": null
+      },
+      "issues": []
+    },
+    {
+      "id": "portrait-s73-10-player-male-extra-gentry_heir-look06-v1",
+      "phase": "S73.10.2",
+      "category": "portrait",
+      "subcategory": "player_male_style_pool",
+      "usage": [
+        "player_identity",
+        "people_page",
+        "game_main"
+      ],
+      "path": "/assets/ui/portraits/s73-10/portrait-s73-10-player-male-extra-gentry_heir-look06-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-portrait-s73-10-player-male-extra-gentry_heir-look06-v1.webp",
+      "fallbackRef": "fallback-role-silhouette-v1",
+      "reviewStatus": "approved",
+      "runtimeUsable": true,
+      "dimensions": {
+        "width": 1024,
+        "height": 1536
+      },
+      "transparent": false,
+      "files": {
+        "image": {
+          "path": "/assets/ui/portraits/s73-10/portrait-s73-10-player-male-extra-gentry_heir-look06-v1.webp",
+          "exists": true,
+          "bytes": 175874,
+          "sha256": "dd3188428398b88415ef5f3914157bdb2c155feee1aee7ff07c4581a9e1ed45b",
+          "dimensions": {
+            "width": 1024,
+            "height": 1536
+          },
+          "alpha": false
+        },
+        "thumbnail": {
+          "path": "/assets/ui/thumbs/thumb-portrait-s73-10-player-male-extra-gentry_heir-look06-v1.webp",
+          "exists": true,
+          "bytes": 43080,
+          "sha256": "162c4b469b31f67bef1d890b774ad342b3cf723c833704e403427cb17308ef00",
+          "dimensions": {
+            "width": 384,
+            "height": 576,
+            "alpha": false
+          }
+        },
+        "lowResPlaceholder": {
+          "path": "/assets/ui/portraits/placeholders/placeholder-portrait-s73-10-player-male-extra-gentry_heir-look06-v1.webp",
+          "exists": true,
+          "bytes": 1544,
+          "sha256": "5436ecce7b1acbea3493145bc95122f257ed9059c34114ee36ecaccdc0e32436",
+          "dimensions": {
+            "width": 64,
+            "height": 96,
+            "alpha": false
+          }
+        }
+      },
+      "transparentQa": {
+        "required": false,
+        "backgrounds": [],
+        "sidecar": null,
+        "pixel": null
+      },
+      "issues": []
+    },
+    {
+      "id": "portrait-s73-10-player-male-extra-merchant_owner-look01-v1",
+      "phase": "S73.10.2",
+      "category": "portrait",
+      "subcategory": "player_male_style_pool",
+      "usage": [
+        "player_identity",
+        "people_page",
+        "game_main"
+      ],
+      "path": "/assets/ui/portraits/s73-10/portrait-s73-10-player-male-extra-merchant_owner-look01-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-portrait-s73-10-player-male-extra-merchant_owner-look01-v1.webp",
+      "fallbackRef": "fallback-role-silhouette-v1",
+      "reviewStatus": "approved",
+      "runtimeUsable": true,
+      "dimensions": {
+        "width": 1024,
+        "height": 1536
+      },
+      "transparent": false,
+      "files": {
+        "image": {
+          "path": "/assets/ui/portraits/s73-10/portrait-s73-10-player-male-extra-merchant_owner-look01-v1.webp",
+          "exists": true,
+          "bytes": 178992,
+          "sha256": "a5288b1384f2c87ef48b6ee89a1bd4513e014e736d743b109b6fe5a70c581ae4",
+          "dimensions": {
+            "width": 1024,
+            "height": 1536
+          },
+          "alpha": false
+        },
+        "thumbnail": {
+          "path": "/assets/ui/thumbs/thumb-portrait-s73-10-player-male-extra-merchant_owner-look01-v1.webp",
+          "exists": true,
+          "bytes": 39302,
+          "sha256": "8003c4c2c327431283365d579a62419235221ad644876459bb98d4721c6d2530",
+          "dimensions": {
+            "width": 384,
+            "height": 576,
+            "alpha": false
+          }
+        },
+        "lowResPlaceholder": {
+          "path": "/assets/ui/portraits/placeholders/placeholder-portrait-s73-10-player-male-extra-merchant_owner-look01-v1.webp",
+          "exists": true,
+          "bytes": 1396,
+          "sha256": "82f2cf6b4958268017406b72050337672532ef610d0d1a7e8992ae5eb4cccc4e",
+          "dimensions": {
+            "width": 64,
+            "height": 96,
+            "alpha": false
+          }
+        }
+      },
+      "transparentQa": {
+        "required": false,
+        "backgrounds": [],
+        "sidecar": null,
+        "pixel": null
+      },
+      "issues": []
+    },
+    {
+      "id": "portrait-s73-10-player-male-extra-merchant_owner-look02-v1",
+      "phase": "S73.10.2",
+      "category": "portrait",
+      "subcategory": "player_male_style_pool",
+      "usage": [
+        "player_identity",
+        "people_page",
+        "game_main"
+      ],
+      "path": "/assets/ui/portraits/s73-10/portrait-s73-10-player-male-extra-merchant_owner-look02-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-portrait-s73-10-player-male-extra-merchant_owner-look02-v1.webp",
+      "fallbackRef": "fallback-role-silhouette-v1",
+      "reviewStatus": "approved",
+      "runtimeUsable": true,
+      "dimensions": {
+        "width": 1024,
+        "height": 1536
+      },
+      "transparent": false,
+      "files": {
+        "image": {
+          "path": "/assets/ui/portraits/s73-10/portrait-s73-10-player-male-extra-merchant_owner-look02-v1.webp",
+          "exists": true,
+          "bytes": 180168,
+          "sha256": "df68391d8ff0dc386774831b811b8c95edd6097e4a4ebd62d1fbf13200fbe4c8",
+          "dimensions": {
+            "width": 1024,
+            "height": 1536
+          },
+          "alpha": false
+        },
+        "thumbnail": {
+          "path": "/assets/ui/thumbs/thumb-portrait-s73-10-player-male-extra-merchant_owner-look02-v1.webp",
+          "exists": true,
+          "bytes": 42362,
+          "sha256": "d777f2723662808b78722bfa9eabdc08d2be464e85825b4ce39768c059d99ed6",
+          "dimensions": {
+            "width": 384,
+            "height": 576,
+            "alpha": false
+          }
+        },
+        "lowResPlaceholder": {
+          "path": "/assets/ui/portraits/placeholders/placeholder-portrait-s73-10-player-male-extra-merchant_owner-look02-v1.webp",
+          "exists": true,
+          "bytes": 1490,
+          "sha256": "d8ea1fe44325031585c212619a1763018b77caace620fefbd9bb3703ed05f7b3",
+          "dimensions": {
+            "width": 64,
+            "height": 96,
+            "alpha": false
+          }
+        }
+      },
+      "transparentQa": {
+        "required": false,
+        "backgrounds": [],
+        "sidecar": null,
+        "pixel": null
+      },
+      "issues": []
+    },
+    {
+      "id": "portrait-s73-10-player-male-extra-merchant_owner-look03-v1",
+      "phase": "S73.10.2",
+      "category": "portrait",
+      "subcategory": "player_male_style_pool",
+      "usage": [
+        "player_identity",
+        "people_page",
+        "game_main"
+      ],
+      "path": "/assets/ui/portraits/s73-10/portrait-s73-10-player-male-extra-merchant_owner-look03-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-portrait-s73-10-player-male-extra-merchant_owner-look03-v1.webp",
+      "fallbackRef": "fallback-role-silhouette-v1",
+      "reviewStatus": "approved",
+      "runtimeUsable": true,
+      "dimensions": {
+        "width": 1024,
+        "height": 1536
+      },
+      "transparent": false,
+      "files": {
+        "image": {
+          "path": "/assets/ui/portraits/s73-10/portrait-s73-10-player-male-extra-merchant_owner-look03-v1.webp",
+          "exists": true,
+          "bytes": 211914,
+          "sha256": "cb572b5ef8cc6d2a962c4210b409cbb831e153699cb6f61353e1ac9b1ab00c0e",
+          "dimensions": {
+            "width": 1024,
+            "height": 1536
+          },
+          "alpha": false
+        },
+        "thumbnail": {
+          "path": "/assets/ui/thumbs/thumb-portrait-s73-10-player-male-extra-merchant_owner-look03-v1.webp",
+          "exists": true,
+          "bytes": 51256,
+          "sha256": "23b5319b843a715f3b230bb7dbc2346207e4ce31996391d5a92306d96b9db4b4",
+          "dimensions": {
+            "width": 384,
+            "height": 576,
+            "alpha": false
+          }
+        },
+        "lowResPlaceholder": {
+          "path": "/assets/ui/portraits/placeholders/placeholder-portrait-s73-10-player-male-extra-merchant_owner-look03-v1.webp",
+          "exists": true,
+          "bytes": 1584,
+          "sha256": "42b6a42ae94ac00832bfbbf48ff806ffb6a5eadd879ee146dbf14f62a5c2aa15",
+          "dimensions": {
+            "width": 64,
+            "height": 96,
+            "alpha": false
+          }
+        }
+      },
+      "transparentQa": {
+        "required": false,
+        "backgrounds": [],
+        "sidecar": null,
+        "pixel": null
+      },
+      "issues": []
+    },
+    {
+      "id": "portrait-s73-10-player-male-extra-merchant_owner-look04-v1",
+      "phase": "S73.10.2",
+      "category": "portrait",
+      "subcategory": "player_male_style_pool",
+      "usage": [
+        "player_identity",
+        "people_page",
+        "game_main"
+      ],
+      "path": "/assets/ui/portraits/s73-10/portrait-s73-10-player-male-extra-merchant_owner-look04-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-portrait-s73-10-player-male-extra-merchant_owner-look04-v1.webp",
+      "fallbackRef": "fallback-role-silhouette-v1",
+      "reviewStatus": "approved",
+      "runtimeUsable": true,
+      "dimensions": {
+        "width": 1024,
+        "height": 1536
+      },
+      "transparent": false,
+      "files": {
+        "image": {
+          "path": "/assets/ui/portraits/s73-10/portrait-s73-10-player-male-extra-merchant_owner-look04-v1.webp",
+          "exists": true,
+          "bytes": 195976,
+          "sha256": "8faa885f617f6e22d089c1a59e46af3cd4efc10438cb4b4d0b3627d3fa4905be",
+          "dimensions": {
+            "width": 1024,
+            "height": 1536
+          },
+          "alpha": false
+        },
+        "thumbnail": {
+          "path": "/assets/ui/thumbs/thumb-portrait-s73-10-player-male-extra-merchant_owner-look04-v1.webp",
+          "exists": true,
+          "bytes": 45760,
+          "sha256": "8e96ad9ef4e41f14fa7a82dba48aab2d16be41ec41febac021380fbc779073f8",
+          "dimensions": {
+            "width": 384,
+            "height": 576,
+            "alpha": false
+          }
+        },
+        "lowResPlaceholder": {
+          "path": "/assets/ui/portraits/placeholders/placeholder-portrait-s73-10-player-male-extra-merchant_owner-look04-v1.webp",
+          "exists": true,
+          "bytes": 1490,
+          "sha256": "91dc5feb8aff2344964d6c624fdd77f1bf9d3110b47190280c11cf6109b33986",
+          "dimensions": {
+            "width": 64,
+            "height": 96,
+            "alpha": false
+          }
+        }
+      },
+      "transparentQa": {
+        "required": false,
+        "backgrounds": [],
+        "sidecar": null,
+        "pixel": null
+      },
+      "issues": []
+    },
+    {
+      "id": "portrait-s73-10-player-male-extra-merchant_owner-look05-v1",
+      "phase": "S73.10.2",
+      "category": "portrait",
+      "subcategory": "player_male_style_pool",
+      "usage": [
+        "player_identity",
+        "people_page",
+        "game_main"
+      ],
+      "path": "/assets/ui/portraits/s73-10/portrait-s73-10-player-male-extra-merchant_owner-look05-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-portrait-s73-10-player-male-extra-merchant_owner-look05-v1.webp",
+      "fallbackRef": "fallback-role-silhouette-v1",
+      "reviewStatus": "approved",
+      "runtimeUsable": true,
+      "dimensions": {
+        "width": 1024,
+        "height": 1536
+      },
+      "transparent": false,
+      "files": {
+        "image": {
+          "path": "/assets/ui/portraits/s73-10/portrait-s73-10-player-male-extra-merchant_owner-look05-v1.webp",
+          "exists": true,
+          "bytes": 183506,
+          "sha256": "021d22782987b468f0de4f98919639798de94905074c0a0306a0109714f28028",
+          "dimensions": {
+            "width": 1024,
+            "height": 1536
+          },
+          "alpha": false
+        },
+        "thumbnail": {
+          "path": "/assets/ui/thumbs/thumb-portrait-s73-10-player-male-extra-merchant_owner-look05-v1.webp",
+          "exists": true,
+          "bytes": 42064,
+          "sha256": "fb347d087483ea7639ef83739402986799e484d91426d4214eda24b60f5445fa",
+          "dimensions": {
+            "width": 384,
+            "height": 576,
+            "alpha": false
+          }
+        },
+        "lowResPlaceholder": {
+          "path": "/assets/ui/portraits/placeholders/placeholder-portrait-s73-10-player-male-extra-merchant_owner-look05-v1.webp",
+          "exists": true,
+          "bytes": 1454,
+          "sha256": "3201ca7142ece58181003e48e7106842fa0371648f32890d71c03edb157321aa",
+          "dimensions": {
+            "width": 64,
+            "height": 96,
+            "alpha": false
+          }
+        }
+      },
+      "transparentQa": {
+        "required": false,
+        "backgrounds": [],
+        "sidecar": null,
+        "pixel": null
+      },
+      "issues": []
+    },
+    {
+      "id": "portrait-s73-10-player-male-extra-merchant_owner-look06-v1",
+      "phase": "S73.10.2",
+      "category": "portrait",
+      "subcategory": "player_male_style_pool",
+      "usage": [
+        "player_identity",
+        "people_page",
+        "game_main"
+      ],
+      "path": "/assets/ui/portraits/s73-10/portrait-s73-10-player-male-extra-merchant_owner-look06-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-portrait-s73-10-player-male-extra-merchant_owner-look06-v1.webp",
+      "fallbackRef": "fallback-role-silhouette-v1",
+      "reviewStatus": "approved",
+      "runtimeUsable": true,
+      "dimensions": {
+        "width": 1024,
+        "height": 1536
+      },
+      "transparent": false,
+      "files": {
+        "image": {
+          "path": "/assets/ui/portraits/s73-10/portrait-s73-10-player-male-extra-merchant_owner-look06-v1.webp",
+          "exists": true,
+          "bytes": 202552,
+          "sha256": "0afea6575e8ef82732003a5148660c8c4544deef4a3208096b0663948b546b68",
+          "dimensions": {
+            "width": 1024,
+            "height": 1536
+          },
+          "alpha": false
+        },
+        "thumbnail": {
+          "path": "/assets/ui/thumbs/thumb-portrait-s73-10-player-male-extra-merchant_owner-look06-v1.webp",
+          "exists": true,
+          "bytes": 47946,
+          "sha256": "f28bf2a065c55de65b8c2ebd2be3f27ac49d41f9a61bd0d03ae9ea1dddb40458",
+          "dimensions": {
+            "width": 384,
+            "height": 576,
+            "alpha": false
+          }
+        },
+        "lowResPlaceholder": {
+          "path": "/assets/ui/portraits/placeholders/placeholder-portrait-s73-10-player-male-extra-merchant_owner-look06-v1.webp",
+          "exists": true,
+          "bytes": 1478,
+          "sha256": "0826bfd92fecc91387b84338a14d082e122ffcf8e7b35d2be6cb55a33a7b64c4",
+          "dimensions": {
+            "width": 64,
+            "height": 96,
+            "alpha": false
+          }
+        }
+      },
+      "transparentQa": {
+        "required": false,
+        "backgrounds": [],
+        "sidecar": null,
+        "pixel": null
+      },
+      "issues": []
+    },
+    {
+      "id": "portrait-s73-10-player-male-extra-travelling_strategist-look01-v1",
+      "phase": "S73.10.2",
+      "category": "portrait",
+      "subcategory": "player_male_style_pool",
+      "usage": [
+        "player_identity",
+        "people_page",
+        "game_main"
+      ],
+      "path": "/assets/ui/portraits/s73-10/portrait-s73-10-player-male-extra-travelling_strategist-look01-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-portrait-s73-10-player-male-extra-travelling_strategist-look01-v1.webp",
+      "fallbackRef": "fallback-role-silhouette-v1",
+      "reviewStatus": "approved",
+      "runtimeUsable": true,
+      "dimensions": {
+        "width": 1024,
+        "height": 1536
+      },
+      "transparent": false,
+      "files": {
+        "image": {
+          "path": "/assets/ui/portraits/s73-10/portrait-s73-10-player-male-extra-travelling_strategist-look01-v1.webp",
+          "exists": true,
+          "bytes": 177910,
+          "sha256": "7cdeaa61b9bcb14ce35c926d95bc32284cbfa8435ea0680ee4c7b266d8eac978",
+          "dimensions": {
+            "width": 1024,
+            "height": 1536
+          },
+          "alpha": false
+        },
+        "thumbnail": {
+          "path": "/assets/ui/thumbs/thumb-portrait-s73-10-player-male-extra-travelling_strategist-look01-v1.webp",
+          "exists": true,
+          "bytes": 43938,
+          "sha256": "46bae82d26b0883f6461764c28eb8e85315c33cae189ab002629f91fd4f15c71",
+          "dimensions": {
+            "width": 384,
+            "height": 576,
+            "alpha": false
+          }
+        },
+        "lowResPlaceholder": {
+          "path": "/assets/ui/portraits/placeholders/placeholder-portrait-s73-10-player-male-extra-travelling_strategist-look01-v1.webp",
+          "exists": true,
+          "bytes": 1562,
+          "sha256": "c210e3f8d1f595b24812abb44c12a6e121dc87018f367753e5225ce06fd7341e",
+          "dimensions": {
+            "width": 64,
+            "height": 96,
+            "alpha": false
+          }
+        }
+      },
+      "transparentQa": {
+        "required": false,
+        "backgrounds": [],
+        "sidecar": null,
+        "pixel": null
+      },
+      "issues": []
+    },
+    {
+      "id": "portrait-s73-10-player-male-extra-travelling_strategist-look02-v1",
+      "phase": "S73.10.2",
+      "category": "portrait",
+      "subcategory": "player_male_style_pool",
+      "usage": [
+        "player_identity",
+        "people_page",
+        "game_main"
+      ],
+      "path": "/assets/ui/portraits/s73-10/portrait-s73-10-player-male-extra-travelling_strategist-look02-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-portrait-s73-10-player-male-extra-travelling_strategist-look02-v1.webp",
+      "fallbackRef": "fallback-role-silhouette-v1",
+      "reviewStatus": "approved",
+      "runtimeUsable": true,
+      "dimensions": {
+        "width": 1024,
+        "height": 1536
+      },
+      "transparent": false,
+      "files": {
+        "image": {
+          "path": "/assets/ui/portraits/s73-10/portrait-s73-10-player-male-extra-travelling_strategist-look02-v1.webp",
+          "exists": true,
+          "bytes": 174892,
+          "sha256": "205194e74e93ce98fa43e4c76d52deee6713e1bf8c708e6c740612e581ddf258",
+          "dimensions": {
+            "width": 1024,
+            "height": 1536
+          },
+          "alpha": false
+        },
+        "thumbnail": {
+          "path": "/assets/ui/thumbs/thumb-portrait-s73-10-player-male-extra-travelling_strategist-look02-v1.webp",
+          "exists": true,
+          "bytes": 42490,
+          "sha256": "87e681d0de8086aa65629b47f760851b14bf7a120bf19424a3cd92a3cbef8600",
+          "dimensions": {
+            "width": 384,
+            "height": 576,
+            "alpha": false
+          }
+        },
+        "lowResPlaceholder": {
+          "path": "/assets/ui/portraits/placeholders/placeholder-portrait-s73-10-player-male-extra-travelling_strategist-look02-v1.webp",
+          "exists": true,
+          "bytes": 1560,
+          "sha256": "78b3bef7b2754462b8645d183880d723aa66a4e2a622e615602c114efc70fb03",
+          "dimensions": {
+            "width": 64,
+            "height": 96,
+            "alpha": false
+          }
+        }
+      },
+      "transparentQa": {
+        "required": false,
+        "backgrounds": [],
+        "sidecar": null,
+        "pixel": null
+      },
+      "issues": []
+    },
+    {
+      "id": "portrait-s73-10-player-male-extra-travelling_strategist-look03-v1",
+      "phase": "S73.10.2",
+      "category": "portrait",
+      "subcategory": "player_male_style_pool",
+      "usage": [
+        "player_identity",
+        "people_page",
+        "game_main"
+      ],
+      "path": "/assets/ui/portraits/s73-10/portrait-s73-10-player-male-extra-travelling_strategist-look03-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-portrait-s73-10-player-male-extra-travelling_strategist-look03-v1.webp",
+      "fallbackRef": "fallback-role-silhouette-v1",
+      "reviewStatus": "approved",
+      "runtimeUsable": true,
+      "dimensions": {
+        "width": 1024,
+        "height": 1536
+      },
+      "transparent": false,
+      "files": {
+        "image": {
+          "path": "/assets/ui/portraits/s73-10/portrait-s73-10-player-male-extra-travelling_strategist-look03-v1.webp",
+          "exists": true,
+          "bytes": 176594,
+          "sha256": "00b8229166ca3ba548cb9e27e3782d7681a486775bf69caaae7c6434545725ea",
+          "dimensions": {
+            "width": 1024,
+            "height": 1536
+          },
+          "alpha": false
+        },
+        "thumbnail": {
+          "path": "/assets/ui/thumbs/thumb-portrait-s73-10-player-male-extra-travelling_strategist-look03-v1.webp",
+          "exists": true,
+          "bytes": 42380,
+          "sha256": "ff87dcd751d07d9be13ded2e194944ef50c60f9a9fcacd99e914829253ca758b",
+          "dimensions": {
+            "width": 384,
+            "height": 576,
+            "alpha": false
+          }
+        },
+        "lowResPlaceholder": {
+          "path": "/assets/ui/portraits/placeholders/placeholder-portrait-s73-10-player-male-extra-travelling_strategist-look03-v1.webp",
+          "exists": true,
+          "bytes": 1412,
+          "sha256": "fd9396460ef33912b5f96a92cae3990105cf6abee4ede7a621ec90b53eea0eec",
+          "dimensions": {
+            "width": 64,
+            "height": 96,
+            "alpha": false
+          }
+        }
+      },
+      "transparentQa": {
+        "required": false,
+        "backgrounds": [],
+        "sidecar": null,
+        "pixel": null
+      },
+      "issues": []
+    },
+    {
+      "id": "portrait-s73-10-player-male-extra-travelling_strategist-look04-v1",
+      "phase": "S73.10.2",
+      "category": "portrait",
+      "subcategory": "player_male_style_pool",
+      "usage": [
+        "player_identity",
+        "people_page",
+        "game_main"
+      ],
+      "path": "/assets/ui/portraits/s73-10/portrait-s73-10-player-male-extra-travelling_strategist-look04-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-portrait-s73-10-player-male-extra-travelling_strategist-look04-v1.webp",
+      "fallbackRef": "fallback-role-silhouette-v1",
+      "reviewStatus": "approved",
+      "runtimeUsable": true,
+      "dimensions": {
+        "width": 1024,
+        "height": 1536
+      },
+      "transparent": false,
+      "files": {
+        "image": {
+          "path": "/assets/ui/portraits/s73-10/portrait-s73-10-player-male-extra-travelling_strategist-look04-v1.webp",
+          "exists": true,
+          "bytes": 170706,
+          "sha256": "1823adb4aacf20dd4007d506388da72525e2ee4d62810c8d09b32ae8cb97192f",
+          "dimensions": {
+            "width": 1024,
+            "height": 1536
+          },
+          "alpha": false
+        },
+        "thumbnail": {
+          "path": "/assets/ui/thumbs/thumb-portrait-s73-10-player-male-extra-travelling_strategist-look04-v1.webp",
+          "exists": true,
+          "bytes": 40648,
+          "sha256": "a3f18a9953c02af611802a2654b21da415bf88043be54c6d550a2b215c0ac7df",
+          "dimensions": {
+            "width": 384,
+            "height": 576,
+            "alpha": false
+          }
+        },
+        "lowResPlaceholder": {
+          "path": "/assets/ui/portraits/placeholders/placeholder-portrait-s73-10-player-male-extra-travelling_strategist-look04-v1.webp",
+          "exists": true,
+          "bytes": 1386,
+          "sha256": "d8685a5145454147561f988638aa052f8263a44d8101e29ac5e6e4b5ba0ecf03",
+          "dimensions": {
+            "width": 64,
+            "height": 96,
+            "alpha": false
+          }
+        }
+      },
+      "transparentQa": {
+        "required": false,
+        "backgrounds": [],
+        "sidecar": null,
+        "pixel": null
+      },
+      "issues": []
+    },
+    {
+      "id": "portrait-s73-10-player-male-extra-travelling_strategist-look05-v1",
+      "phase": "S73.10.2",
+      "category": "portrait",
+      "subcategory": "player_male_style_pool",
+      "usage": [
+        "player_identity",
+        "people_page",
+        "game_main"
+      ],
+      "path": "/assets/ui/portraits/s73-10/portrait-s73-10-player-male-extra-travelling_strategist-look05-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-portrait-s73-10-player-male-extra-travelling_strategist-look05-v1.webp",
+      "fallbackRef": "fallback-role-silhouette-v1",
+      "reviewStatus": "approved",
+      "runtimeUsable": true,
+      "dimensions": {
+        "width": 1024,
+        "height": 1536
+      },
+      "transparent": false,
+      "files": {
+        "image": {
+          "path": "/assets/ui/portraits/s73-10/portrait-s73-10-player-male-extra-travelling_strategist-look05-v1.webp",
+          "exists": true,
+          "bytes": 166742,
+          "sha256": "c315ab144016b3014ec50f4636b05e5d6ce729c212b7ddb343f3cc1e901d12dd",
+          "dimensions": {
+            "width": 1024,
+            "height": 1536
+          },
+          "alpha": false
+        },
+        "thumbnail": {
+          "path": "/assets/ui/thumbs/thumb-portrait-s73-10-player-male-extra-travelling_strategist-look05-v1.webp",
+          "exists": true,
+          "bytes": 39362,
+          "sha256": "f6128700bba2801b889e326f19f8ca1cab6bce38c9b11ba784c5d00e88443ded",
+          "dimensions": {
+            "width": 384,
+            "height": 576,
+            "alpha": false
+          }
+        },
+        "lowResPlaceholder": {
+          "path": "/assets/ui/portraits/placeholders/placeholder-portrait-s73-10-player-male-extra-travelling_strategist-look05-v1.webp",
+          "exists": true,
+          "bytes": 1478,
+          "sha256": "4689c8263b05490a6ff8ebbc643c29a43bdaf7bbd30a4819d484abaee3dff433",
+          "dimensions": {
+            "width": 64,
+            "height": 96,
+            "alpha": false
+          }
+        }
+      },
+      "transparentQa": {
+        "required": false,
+        "backgrounds": [],
+        "sidecar": null,
+        "pixel": null
+      },
+      "issues": []
+    },
+    {
+      "id": "portrait-s73-10-player-male-extra-travelling_strategist-look06-v1",
+      "phase": "S73.10.2",
+      "category": "portrait",
+      "subcategory": "player_male_style_pool",
+      "usage": [
+        "player_identity",
+        "people_page",
+        "game_main"
+      ],
+      "path": "/assets/ui/portraits/s73-10/portrait-s73-10-player-male-extra-travelling_strategist-look06-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-portrait-s73-10-player-male-extra-travelling_strategist-look06-v1.webp",
+      "fallbackRef": "fallback-role-silhouette-v1",
+      "reviewStatus": "approved",
+      "runtimeUsable": true,
+      "dimensions": {
+        "width": 1024,
+        "height": 1536
+      },
+      "transparent": false,
+      "files": {
+        "image": {
+          "path": "/assets/ui/portraits/s73-10/portrait-s73-10-player-male-extra-travelling_strategist-look06-v1.webp",
+          "exists": true,
+          "bytes": 166422,
+          "sha256": "8417cbc09c77a49a2c07d97d8eb958b650be671c63a2d6a12e54a9a62a4f6441",
+          "dimensions": {
+            "width": 1024,
+            "height": 1536
+          },
+          "alpha": false
+        },
+        "thumbnail": {
+          "path": "/assets/ui/thumbs/thumb-portrait-s73-10-player-male-extra-travelling_strategist-look06-v1.webp",
+          "exists": true,
+          "bytes": 39238,
+          "sha256": "a858d2d23416f06f0c80928b248d045ef64b025dd5a5aaa6b85e6e79cb049651",
+          "dimensions": {
+            "width": 384,
+            "height": 576,
+            "alpha": false
+          }
+        },
+        "lowResPlaceholder": {
+          "path": "/assets/ui/portraits/placeholders/placeholder-portrait-s73-10-player-male-extra-travelling_strategist-look06-v1.webp",
+          "exists": true,
+          "bytes": 1416,
+          "sha256": "2e4cd84416f55815a153dbbce00e781c074847565bf1331a2e2b9d1834db0775",
           "dimensions": {
             "width": 64,
             "height": 96,

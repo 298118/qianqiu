@@ -196,7 +196,14 @@
     "tang_scholar_poet",
     "gentry_lady",
     "merchant_owner",
-    "frontier_general"
+    "frontier_general",
+    "academy_scholar",
+    "tang_round_collar",
+    "court_official",
+    "high_minister",
+    "imperial_guard",
+    "gentry_heir",
+    "travelling_strategist"
   ],
   "fallbackCatalog": [
     {
@@ -37956,6 +37963,5886 @@
         "lowResPlaceholderBytes": 1424
       },
       "ledgerId": "portrait-s73-10-player-female-extra-frontier_general-look06-v1"
+    },
+    {
+      "id": "portrait-s73-10-player-male-extra-academy_scholar-look01-v1",
+      "version": 1,
+      "phase": "S73.10.2",
+      "category": "portrait",
+      "subcategory": "player_male_style_pool",
+      "usage": [
+        "player_identity",
+        "people_page",
+        "game_main"
+      ],
+      "role": "academy_scholar",
+      "roleLabel": "书院文士",
+      "roleStage": "player_male_style",
+      "scene": null,
+      "portraitRef": "portrait-s73-10-player-male-extra-academy_scholar-look01-v1",
+      "genderPresentation": "masculine",
+      "ageBand": "adult_young_to_mature",
+      "statusVariant": "baseline",
+      "emotionVariant": "composed",
+      "posture": "正身肃立",
+      "identityTags": [
+        "player",
+        "male_style",
+        "academy_scholar",
+        "baseline"
+      ],
+      "emotionTags": [
+        "composed",
+        "baseline"
+      ],
+      "path": "/assets/ui/portraits/s73-10/portrait-s73-10-player-male-extra-academy_scholar-look01-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-portrait-s73-10-player-male-extra-academy_scholar-look01-v1.webp",
+      "lowResPlaceholderPath": "/assets/ui/portraits/placeholders/placeholder-portrait-s73-10-player-male-extra-academy_scholar-look01-v1.webp",
+      "fallbackRef": "fallback-role-silhouette-v1",
+      "dimensions": {
+        "width": 1024,
+        "height": 1536
+      },
+      "aspectRatio": "1024:1536",
+      "format": "webp",
+      "transparent": false,
+      "safeArea": {
+        "x": 0.2,
+        "y": 0.05,
+        "width": 0.6,
+        "height": 0.88
+      },
+      "focalPoint": {
+        "x": 0.5,
+        "y": 0.25
+      },
+      "mobileCrop": {
+        "mode": "center_crop_or_contain",
+        "keepSafeArea": true,
+        "notes": "玩家男性选角和身份卡窄屏保留面部、冠帽、肩颈轮廓、腰带和身份服饰；不得显示未审核候选图。"
+      },
+      "lazyLoad": {
+        "group": "portrait_pool_player_male_extra_s73_10",
+        "allowEagerLoad": false,
+        "thumbnailFirst": true,
+        "lowResPlaceholder": true,
+        "maxInitialPortraits": 8
+      },
+      "source": {
+        "type": "ai_generated",
+        "tool": "Codex imagegen",
+        "model": "gpt-image-2",
+        "generatedAt": "2026-05-15",
+        "promptSummary": "书院文士玩家扩展：书斋、空白卷册、冠巾与青蓝文士服，清朗而明确男性化。 正身款，肩颈和上身轮廓清楚，端庄不夸张。"
+      },
+      "license": {
+        "type": "ai_generated_project_asset",
+        "commercialUseConfirmed": false,
+        "summary": "原创 AI 生成素材，当前仅个人游玩/开发使用；未做公开商用确认。"
+      },
+      "reviewStatus": "approved",
+      "visualReview": {
+        "reviewedBy": "Codex",
+        "reviewedAt": "2026-05-15",
+        "status": "approved",
+        "summary": "通过：成年男性特征明确，肩颈与上身轮廓、冠服层次、身份姿态差异清楚；画面高对比、色彩更丰富、噪点较少，仍保持端庄历史立绘气质。"
+      },
+      "safetyReview": {
+        "reviewedBy": "Codex",
+        "reviewedAt": "2026-05-15",
+        "status": "approved",
+        "summary": "通过：全套衣着完整，无裸露、挑逗、幼态、现代物、水印、徽标、可读文字、本地路径、key、raw/hidden 内容或未公开剧情事实。"
+      },
+      "performance": {
+        "bytes": 147458,
+        "targetMaxBytes": 614400,
+        "thumbnailBytes": 34744,
+        "thumbnailTargetMaxBytes": 256000,
+        "lowResPlaceholderBytes": 1546
+      },
+      "ledgerId": "portrait-s73-10-player-male-extra-academy_scholar-look01-v1"
+    },
+    {
+      "id": "portrait-s73-10-player-male-extra-academy_scholar-look02-v1",
+      "version": 1,
+      "phase": "S73.10.2",
+      "category": "portrait",
+      "subcategory": "player_male_style_pool",
+      "usage": [
+        "player_identity",
+        "people_page",
+        "game_main"
+      ],
+      "role": "academy_scholar",
+      "roleLabel": "书院文士",
+      "roleStage": "player_male_style",
+      "scene": null,
+      "portraitRef": "portrait-s73-10-player-male-extra-academy_scholar-look02-v1",
+      "genderPresentation": "masculine",
+      "ageBand": "adult_young_to_mature",
+      "statusVariant": "formal",
+      "emotionVariant": "reserved",
+      "posture": "侧立持物",
+      "identityTags": [
+        "player",
+        "male_style",
+        "academy_scholar",
+        "formal"
+      ],
+      "emotionTags": [
+        "reserved",
+        "formal"
+      ],
+      "path": "/assets/ui/portraits/s73-10/portrait-s73-10-player-male-extra-academy_scholar-look02-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-portrait-s73-10-player-male-extra-academy_scholar-look02-v1.webp",
+      "lowResPlaceholderPath": "/assets/ui/portraits/placeholders/placeholder-portrait-s73-10-player-male-extra-academy_scholar-look02-v1.webp",
+      "fallbackRef": "fallback-role-silhouette-v1",
+      "dimensions": {
+        "width": 1024,
+        "height": 1536
+      },
+      "aspectRatio": "1024:1536",
+      "format": "webp",
+      "transparent": false,
+      "safeArea": {
+        "x": 0.2,
+        "y": 0.05,
+        "width": 0.6,
+        "height": 0.88
+      },
+      "focalPoint": {
+        "x": 0.5,
+        "y": 0.25
+      },
+      "mobileCrop": {
+        "mode": "center_crop_or_contain",
+        "keepSafeArea": true,
+        "notes": "玩家男性选角和身份卡窄屏保留面部、冠帽、肩颈轮廓、腰带和身份服饰；不得显示未审核候选图。"
+      },
+      "lazyLoad": {
+        "group": "portrait_pool_player_male_extra_s73_10",
+        "allowEagerLoad": false,
+        "thumbnailFirst": true,
+        "lowResPlaceholder": true,
+        "maxInitialPortraits": 8
+      },
+      "source": {
+        "type": "ai_generated",
+        "tool": "Codex imagegen",
+        "model": "gpt-image-2",
+        "generatedAt": "2026-05-15",
+        "promptSummary": "书院文士玩家扩展：书斋、空白卷册、冠巾与青蓝文士服，清朗而明确男性化。 礼服款，冠服、腰带和持物细节更明显。"
+      },
+      "license": {
+        "type": "ai_generated_project_asset",
+        "commercialUseConfirmed": false,
+        "summary": "原创 AI 生成素材，当前仅个人游玩/开发使用；未做公开商用确认。"
+      },
+      "reviewStatus": "approved",
+      "visualReview": {
+        "reviewedBy": "Codex",
+        "reviewedAt": "2026-05-15",
+        "status": "approved",
+        "summary": "通过：成年男性特征明确，肩颈与上身轮廓、冠服层次、身份姿态差异清楚；画面高对比、色彩更丰富、噪点较少，仍保持端庄历史立绘气质。"
+      },
+      "safetyReview": {
+        "reviewedBy": "Codex",
+        "reviewedAt": "2026-05-15",
+        "status": "approved",
+        "summary": "通过：全套衣着完整，无裸露、挑逗、幼态、现代物、水印、徽标、可读文字、本地路径、key、raw/hidden 内容或未公开剧情事实。"
+      },
+      "performance": {
+        "bytes": 143998,
+        "targetMaxBytes": 614400,
+        "thumbnailBytes": 33790,
+        "thumbnailTargetMaxBytes": 256000,
+        "lowResPlaceholderBytes": 1560
+      },
+      "ledgerId": "portrait-s73-10-player-male-extra-academy_scholar-look02-v1"
+    },
+    {
+      "id": "portrait-s73-10-player-male-extra-academy_scholar-look03-v1",
+      "version": 1,
+      "phase": "S73.10.2",
+      "category": "portrait",
+      "subcategory": "player_male_style_pool",
+      "usage": [
+        "player_identity",
+        "people_page",
+        "game_main"
+      ],
+      "role": "academy_scholar",
+      "roleLabel": "书院文士",
+      "roleStage": "player_male_style",
+      "scene": null,
+      "portraitRef": "portrait-s73-10-player-male-extra-academy_scholar-look03-v1",
+      "genderPresentation": "masculine",
+      "ageBand": "adult_young_to_mature",
+      "statusVariant": "working",
+      "emotionVariant": "focused",
+      "posture": "执卷处理事务",
+      "identityTags": [
+        "player",
+        "male_style",
+        "academy_scholar",
+        "working"
+      ],
+      "emotionTags": [
+        "focused",
+        "working"
+      ],
+      "path": "/assets/ui/portraits/s73-10/portrait-s73-10-player-male-extra-academy_scholar-look03-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-portrait-s73-10-player-male-extra-academy_scholar-look03-v1.webp",
+      "lowResPlaceholderPath": "/assets/ui/portraits/placeholders/placeholder-portrait-s73-10-player-male-extra-academy_scholar-look03-v1.webp",
+      "fallbackRef": "fallback-role-silhouette-v1",
+      "dimensions": {
+        "width": 1024,
+        "height": 1536
+      },
+      "aspectRatio": "1024:1536",
+      "format": "webp",
+      "transparent": false,
+      "safeArea": {
+        "x": 0.2,
+        "y": 0.05,
+        "width": 0.6,
+        "height": 0.88
+      },
+      "focalPoint": {
+        "x": 0.5,
+        "y": 0.25
+      },
+      "mobileCrop": {
+        "mode": "center_crop_or_contain",
+        "keepSafeArea": true,
+        "notes": "玩家男性选角和身份卡窄屏保留面部、冠帽、肩颈轮廓、腰带和身份服饰；不得显示未审核候选图。"
+      },
+      "lazyLoad": {
+        "group": "portrait_pool_player_male_extra_s73_10",
+        "allowEagerLoad": false,
+        "thumbnailFirst": true,
+        "lowResPlaceholder": true,
+        "maxInitialPortraits": 8
+      },
+      "source": {
+        "type": "ai_generated",
+        "tool": "Codex imagegen",
+        "model": "gpt-image-2",
+        "generatedAt": "2026-05-15",
+        "promptSummary": "书院文士玩家扩展：书斋、空白卷册、冠巾与青蓝文士服，清朗而明确男性化。 工作款，持卷或持笏，表现读书、理政或经营状态。"
+      },
+      "license": {
+        "type": "ai_generated_project_asset",
+        "commercialUseConfirmed": false,
+        "summary": "原创 AI 生成素材，当前仅个人游玩/开发使用；未做公开商用确认。"
+      },
+      "reviewStatus": "approved",
+      "visualReview": {
+        "reviewedBy": "Codex",
+        "reviewedAt": "2026-05-15",
+        "status": "approved",
+        "summary": "通过：成年男性特征明确，肩颈与上身轮廓、冠服层次、身份姿态差异清楚；画面高对比、色彩更丰富、噪点较少，仍保持端庄历史立绘气质。"
+      },
+      "safetyReview": {
+        "reviewedBy": "Codex",
+        "reviewedAt": "2026-05-15",
+        "status": "approved",
+        "summary": "通过：全套衣着完整，无裸露、挑逗、幼态、现代物、水印、徽标、可读文字、本地路径、key、raw/hidden 内容或未公开剧情事实。"
+      },
+      "performance": {
+        "bytes": 139288,
+        "targetMaxBytes": 614400,
+        "thumbnailBytes": 31658,
+        "thumbnailTargetMaxBytes": 256000,
+        "lowResPlaceholderBytes": 1546
+      },
+      "ledgerId": "portrait-s73-10-player-male-extra-academy_scholar-look03-v1"
+    },
+    {
+      "id": "portrait-s73-10-player-male-extra-academy_scholar-look04-v1",
+      "version": 1,
+      "phase": "S73.10.2",
+      "category": "portrait",
+      "subcategory": "player_male_style_pool",
+      "usage": [
+        "player_identity",
+        "people_page",
+        "game_main"
+      ],
+      "role": "academy_scholar",
+      "roleLabel": "书院文士",
+      "roleStage": "player_male_style",
+      "scene": null,
+      "portraitRef": "portrait-s73-10-player-male-extra-academy_scholar-look04-v1",
+      "genderPresentation": "masculine",
+      "ageBand": "adult_young_to_mature",
+      "statusVariant": "travel_or_motion",
+      "emotionVariant": "alert",
+      "posture": "披风行旅",
+      "identityTags": [
+        "player",
+        "male_style",
+        "academy_scholar",
+        "travel_or_motion"
+      ],
+      "emotionTags": [
+        "alert",
+        "travel_or_motion"
+      ],
+      "path": "/assets/ui/portraits/s73-10/portrait-s73-10-player-male-extra-academy_scholar-look04-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-portrait-s73-10-player-male-extra-academy_scholar-look04-v1.webp",
+      "lowResPlaceholderPath": "/assets/ui/portraits/placeholders/placeholder-portrait-s73-10-player-male-extra-academy_scholar-look04-v1.webp",
+      "fallbackRef": "fallback-role-silhouette-v1",
+      "dimensions": {
+        "width": 1024,
+        "height": 1536
+      },
+      "aspectRatio": "1024:1536",
+      "format": "webp",
+      "transparent": false,
+      "safeArea": {
+        "x": 0.2,
+        "y": 0.05,
+        "width": 0.6,
+        "height": 0.88
+      },
+      "focalPoint": {
+        "x": 0.5,
+        "y": 0.25
+      },
+      "mobileCrop": {
+        "mode": "center_crop_or_contain",
+        "keepSafeArea": true,
+        "notes": "玩家男性选角和身份卡窄屏保留面部、冠帽、肩颈轮廓、腰带和身份服饰；不得显示未审核候选图。"
+      },
+      "lazyLoad": {
+        "group": "portrait_pool_player_male_extra_s73_10",
+        "allowEagerLoad": false,
+        "thumbnailFirst": true,
+        "lowResPlaceholder": true,
+        "maxInitialPortraits": 8
+      },
+      "source": {
+        "type": "ai_generated",
+        "tool": "Codex imagegen",
+        "model": "gpt-image-2",
+        "generatedAt": "2026-05-15",
+        "promptSummary": "书院文士玩家扩展：书斋、空白卷册、冠巾与青蓝文士服，清朗而明确男性化。 动态款，披风、甲衣或外袍拉开轮廓，行动感更强。"
+      },
+      "license": {
+        "type": "ai_generated_project_asset",
+        "commercialUseConfirmed": false,
+        "summary": "原创 AI 生成素材，当前仅个人游玩/开发使用；未做公开商用确认。"
+      },
+      "reviewStatus": "approved",
+      "visualReview": {
+        "reviewedBy": "Codex",
+        "reviewedAt": "2026-05-15",
+        "status": "approved",
+        "summary": "通过：成年男性特征明确，肩颈与上身轮廓、冠服层次、身份姿态差异清楚；画面高对比、色彩更丰富、噪点较少，仍保持端庄历史立绘气质。"
+      },
+      "safetyReview": {
+        "reviewedBy": "Codex",
+        "reviewedAt": "2026-05-15",
+        "status": "approved",
+        "summary": "通过：全套衣着完整，无裸露、挑逗、幼态、现代物、水印、徽标、可读文字、本地路径、key、raw/hidden 内容或未公开剧情事实。"
+      },
+      "performance": {
+        "bytes": 138500,
+        "targetMaxBytes": 614400,
+        "thumbnailBytes": 31808,
+        "thumbnailTargetMaxBytes": 256000,
+        "lowResPlaceholderBytes": 1466
+      },
+      "ledgerId": "portrait-s73-10-player-male-extra-academy_scholar-look04-v1"
+    },
+    {
+      "id": "portrait-s73-10-player-male-extra-academy_scholar-look05-v1",
+      "version": 1,
+      "phase": "S73.10.2",
+      "category": "portrait",
+      "subcategory": "player_male_style_pool",
+      "usage": [
+        "player_identity",
+        "people_page",
+        "game_main"
+      ],
+      "role": "academy_scholar",
+      "roleLabel": "书院文士",
+      "roleStage": "player_male_style",
+      "scene": null,
+      "portraitRef": "portrait-s73-10-player-male-extra-academy_scholar-look05-v1",
+      "genderPresentation": "masculine",
+      "ageBand": "adult_young_to_mature",
+      "statusVariant": "quiet_authority",
+      "emotionVariant": "stern",
+      "posture": "拢袖端坐",
+      "identityTags": [
+        "player",
+        "male_style",
+        "academy_scholar",
+        "quiet_authority"
+      ],
+      "emotionTags": [
+        "stern",
+        "quiet_authority"
+      ],
+      "path": "/assets/ui/portraits/s73-10/portrait-s73-10-player-male-extra-academy_scholar-look05-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-portrait-s73-10-player-male-extra-academy_scholar-look05-v1.webp",
+      "lowResPlaceholderPath": "/assets/ui/portraits/placeholders/placeholder-portrait-s73-10-player-male-extra-academy_scholar-look05-v1.webp",
+      "fallbackRef": "fallback-role-silhouette-v1",
+      "dimensions": {
+        "width": 1024,
+        "height": 1536
+      },
+      "aspectRatio": "1024:1536",
+      "format": "webp",
+      "transparent": false,
+      "safeArea": {
+        "x": 0.2,
+        "y": 0.05,
+        "width": 0.6,
+        "height": 0.88
+      },
+      "focalPoint": {
+        "x": 0.5,
+        "y": 0.25
+      },
+      "mobileCrop": {
+        "mode": "center_crop_or_contain",
+        "keepSafeArea": true,
+        "notes": "玩家男性选角和身份卡窄屏保留面部、冠帽、肩颈轮廓、腰带和身份服饰；不得显示未审核候选图。"
+      },
+      "lazyLoad": {
+        "group": "portrait_pool_player_male_extra_s73_10",
+        "allowEagerLoad": false,
+        "thumbnailFirst": true,
+        "lowResPlaceholder": true,
+        "maxInitialPortraits": 8
+      },
+      "source": {
+        "type": "ai_generated",
+        "tool": "Codex imagegen",
+        "model": "gpt-image-2",
+        "generatedAt": "2026-05-15",
+        "promptSummary": "书院文士玩家扩展：书斋、空白卷册、冠巾与青蓝文士服，清朗而明确男性化。 威仪款，表情沉稳，适合高位身份或慎重决策。"
+      },
+      "license": {
+        "type": "ai_generated_project_asset",
+        "commercialUseConfirmed": false,
+        "summary": "原创 AI 生成素材，当前仅个人游玩/开发使用；未做公开商用确认。"
+      },
+      "reviewStatus": "approved",
+      "visualReview": {
+        "reviewedBy": "Codex",
+        "reviewedAt": "2026-05-15",
+        "status": "approved",
+        "summary": "通过：成年男性特征明确，肩颈与上身轮廓、冠服层次、身份姿态差异清楚；画面高对比、色彩更丰富、噪点较少，仍保持端庄历史立绘气质。"
+      },
+      "safetyReview": {
+        "reviewedBy": "Codex",
+        "reviewedAt": "2026-05-15",
+        "status": "approved",
+        "summary": "通过：全套衣着完整，无裸露、挑逗、幼态、现代物、水印、徽标、可读文字、本地路径、key、raw/hidden 内容或未公开剧情事实。"
+      },
+      "performance": {
+        "bytes": 137994,
+        "targetMaxBytes": 614400,
+        "thumbnailBytes": 30034,
+        "thumbnailTargetMaxBytes": 256000,
+        "lowResPlaceholderBytes": 1472
+      },
+      "ledgerId": "portrait-s73-10-player-male-extra-academy_scholar-look05-v1"
+    },
+    {
+      "id": "portrait-s73-10-player-male-extra-academy_scholar-look06-v1",
+      "version": 1,
+      "phase": "S73.10.2",
+      "category": "portrait",
+      "subcategory": "player_male_style_pool",
+      "usage": [
+        "player_identity",
+        "people_page",
+        "game_main"
+      ],
+      "role": "academy_scholar",
+      "roleLabel": "书院文士",
+      "roleStage": "player_male_style",
+      "scene": null,
+      "portraitRef": "portrait-s73-10-player-male-extra-academy_scholar-look06-v1",
+      "genderPresentation": "masculine",
+      "ageBand": "adult_young_to_mature",
+      "statusVariant": "poised",
+      "emotionVariant": "determined",
+      "posture": "持物正立",
+      "identityTags": [
+        "player",
+        "male_style",
+        "academy_scholar",
+        "poised"
+      ],
+      "emotionTags": [
+        "determined",
+        "poised"
+      ],
+      "path": "/assets/ui/portraits/s73-10/portrait-s73-10-player-male-extra-academy_scholar-look06-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-portrait-s73-10-player-male-extra-academy_scholar-look06-v1.webp",
+      "lowResPlaceholderPath": "/assets/ui/portraits/placeholders/placeholder-portrait-s73-10-player-male-extra-academy_scholar-look06-v1.webp",
+      "fallbackRef": "fallback-role-silhouette-v1",
+      "dimensions": {
+        "width": 1024,
+        "height": 1536
+      },
+      "aspectRatio": "1024:1536",
+      "format": "webp",
+      "transparent": false,
+      "safeArea": {
+        "x": 0.2,
+        "y": 0.05,
+        "width": 0.6,
+        "height": 0.88
+      },
+      "focalPoint": {
+        "x": 0.5,
+        "y": 0.25
+      },
+      "mobileCrop": {
+        "mode": "center_crop_or_contain",
+        "keepSafeArea": true,
+        "notes": "玩家男性选角和身份卡窄屏保留面部、冠帽、肩颈轮廓、腰带和身份服饰；不得显示未审核候选图。"
+      },
+      "lazyLoad": {
+        "group": "portrait_pool_player_male_extra_s73_10",
+        "allowEagerLoad": false,
+        "thumbnailFirst": true,
+        "lowResPlaceholder": true,
+        "maxInitialPortraits": 8
+      },
+      "source": {
+        "type": "ai_generated",
+        "tool": "Codex imagegen",
+        "model": "gpt-image-2",
+        "generatedAt": "2026-05-15",
+        "promptSummary": "书院文士玩家扩展：书斋、空白卷册、冠巾与青蓝文士服，清朗而明确男性化。 选角款，面向玩家形象选择，色彩更丰富、对比更高。"
+      },
+      "license": {
+        "type": "ai_generated_project_asset",
+        "commercialUseConfirmed": false,
+        "summary": "原创 AI 生成素材，当前仅个人游玩/开发使用；未做公开商用确认。"
+      },
+      "reviewStatus": "approved",
+      "visualReview": {
+        "reviewedBy": "Codex",
+        "reviewedAt": "2026-05-15",
+        "status": "approved",
+        "summary": "通过：成年男性特征明确，肩颈与上身轮廓、冠服层次、身份姿态差异清楚；画面高对比、色彩更丰富、噪点较少，仍保持端庄历史立绘气质。"
+      },
+      "safetyReview": {
+        "reviewedBy": "Codex",
+        "reviewedAt": "2026-05-15",
+        "status": "approved",
+        "summary": "通过：全套衣着完整，无裸露、挑逗、幼态、现代物、水印、徽标、可读文字、本地路径、key、raw/hidden 内容或未公开剧情事实。"
+      },
+      "performance": {
+        "bytes": 151216,
+        "targetMaxBytes": 614400,
+        "thumbnailBytes": 35994,
+        "thumbnailTargetMaxBytes": 256000,
+        "lowResPlaceholderBytes": 1494
+      },
+      "ledgerId": "portrait-s73-10-player-male-extra-academy_scholar-look06-v1"
+    },
+    {
+      "id": "portrait-s73-10-player-male-extra-tang_round_collar-look01-v1",
+      "version": 1,
+      "phase": "S73.10.2",
+      "category": "portrait",
+      "subcategory": "player_male_style_pool",
+      "usage": [
+        "player_identity",
+        "people_page",
+        "game_main"
+      ],
+      "role": "tang_round_collar",
+      "roleLabel": "唐风圆领袍",
+      "roleStage": "player_male_style",
+      "scene": null,
+      "portraitRef": "portrait-s73-10-player-male-extra-tang_round_collar-look01-v1",
+      "genderPresentation": "masculine",
+      "ageBand": "adult_young_to_mature",
+      "statusVariant": "baseline",
+      "emotionVariant": "composed",
+      "posture": "正身肃立",
+      "identityTags": [
+        "player",
+        "male_style",
+        "tang_round_collar",
+        "baseline"
+      ],
+      "emotionTags": [
+        "composed",
+        "baseline"
+      ],
+      "path": "/assets/ui/portraits/s73-10/portrait-s73-10-player-male-extra-tang_round_collar-look01-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-portrait-s73-10-player-male-extra-tang_round_collar-look01-v1.webp",
+      "lowResPlaceholderPath": "/assets/ui/portraits/placeholders/placeholder-portrait-s73-10-player-male-extra-tang_round_collar-look01-v1.webp",
+      "fallbackRef": "fallback-role-silhouette-v1",
+      "dimensions": {
+        "width": 1024,
+        "height": 1536
+      },
+      "aspectRatio": "1024:1536",
+      "format": "webp",
+      "transparent": false,
+      "safeArea": {
+        "x": 0.2,
+        "y": 0.05,
+        "width": 0.6,
+        "height": 0.88
+      },
+      "focalPoint": {
+        "x": 0.5,
+        "y": 0.25
+      },
+      "mobileCrop": {
+        "mode": "center_crop_or_contain",
+        "keepSafeArea": true,
+        "notes": "玩家男性选角和身份卡窄屏保留面部、冠帽、肩颈轮廓、腰带和身份服饰；不得显示未审核候选图。"
+      },
+      "lazyLoad": {
+        "group": "portrait_pool_player_male_extra_s73_10",
+        "allowEagerLoad": false,
+        "thumbnailFirst": true,
+        "lowResPlaceholder": true,
+        "maxInitialPortraits": 8
+      },
+      "source": {
+        "type": "ai_generated",
+        "tool": "Codex imagegen",
+        "model": "gpt-image-2",
+        "generatedAt": "2026-05-15",
+        "promptSummary": "唐风圆领袍玩家扩展：圆领袍、腰带、披风和唐风庭院，色彩明快。 正身款，肩颈和上身轮廓清楚，端庄不夸张。"
+      },
+      "license": {
+        "type": "ai_generated_project_asset",
+        "commercialUseConfirmed": false,
+        "summary": "原创 AI 生成素材，当前仅个人游玩/开发使用；未做公开商用确认。"
+      },
+      "reviewStatus": "approved",
+      "visualReview": {
+        "reviewedBy": "Codex",
+        "reviewedAt": "2026-05-15",
+        "status": "approved",
+        "summary": "通过：成年男性特征明确，肩颈与上身轮廓、冠服层次、身份姿态差异清楚；画面高对比、色彩更丰富、噪点较少，仍保持端庄历史立绘气质。"
+      },
+      "safetyReview": {
+        "reviewedBy": "Codex",
+        "reviewedAt": "2026-05-15",
+        "status": "approved",
+        "summary": "通过：全套衣着完整，无裸露、挑逗、幼态、现代物、水印、徽标、可读文字、本地路径、key、raw/hidden 内容或未公开剧情事实。"
+      },
+      "performance": {
+        "bytes": 199470,
+        "targetMaxBytes": 614400,
+        "thumbnailBytes": 45084,
+        "thumbnailTargetMaxBytes": 256000,
+        "lowResPlaceholderBytes": 1542
+      },
+      "ledgerId": "portrait-s73-10-player-male-extra-tang_round_collar-look01-v1"
+    },
+    {
+      "id": "portrait-s73-10-player-male-extra-tang_round_collar-look02-v1",
+      "version": 1,
+      "phase": "S73.10.2",
+      "category": "portrait",
+      "subcategory": "player_male_style_pool",
+      "usage": [
+        "player_identity",
+        "people_page",
+        "game_main"
+      ],
+      "role": "tang_round_collar",
+      "roleLabel": "唐风圆领袍",
+      "roleStage": "player_male_style",
+      "scene": null,
+      "portraitRef": "portrait-s73-10-player-male-extra-tang_round_collar-look02-v1",
+      "genderPresentation": "masculine",
+      "ageBand": "adult_young_to_mature",
+      "statusVariant": "formal",
+      "emotionVariant": "reserved",
+      "posture": "侧立持物",
+      "identityTags": [
+        "player",
+        "male_style",
+        "tang_round_collar",
+        "formal"
+      ],
+      "emotionTags": [
+        "reserved",
+        "formal"
+      ],
+      "path": "/assets/ui/portraits/s73-10/portrait-s73-10-player-male-extra-tang_round_collar-look02-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-portrait-s73-10-player-male-extra-tang_round_collar-look02-v1.webp",
+      "lowResPlaceholderPath": "/assets/ui/portraits/placeholders/placeholder-portrait-s73-10-player-male-extra-tang_round_collar-look02-v1.webp",
+      "fallbackRef": "fallback-role-silhouette-v1",
+      "dimensions": {
+        "width": 1024,
+        "height": 1536
+      },
+      "aspectRatio": "1024:1536",
+      "format": "webp",
+      "transparent": false,
+      "safeArea": {
+        "x": 0.2,
+        "y": 0.05,
+        "width": 0.6,
+        "height": 0.88
+      },
+      "focalPoint": {
+        "x": 0.5,
+        "y": 0.25
+      },
+      "mobileCrop": {
+        "mode": "center_crop_or_contain",
+        "keepSafeArea": true,
+        "notes": "玩家男性选角和身份卡窄屏保留面部、冠帽、肩颈轮廓、腰带和身份服饰；不得显示未审核候选图。"
+      },
+      "lazyLoad": {
+        "group": "portrait_pool_player_male_extra_s73_10",
+        "allowEagerLoad": false,
+        "thumbnailFirst": true,
+        "lowResPlaceholder": true,
+        "maxInitialPortraits": 8
+      },
+      "source": {
+        "type": "ai_generated",
+        "tool": "Codex imagegen",
+        "model": "gpt-image-2",
+        "generatedAt": "2026-05-15",
+        "promptSummary": "唐风圆领袍玩家扩展：圆领袍、腰带、披风和唐风庭院，色彩明快。 礼服款，冠服、腰带和持物细节更明显。"
+      },
+      "license": {
+        "type": "ai_generated_project_asset",
+        "commercialUseConfirmed": false,
+        "summary": "原创 AI 生成素材，当前仅个人游玩/开发使用；未做公开商用确认。"
+      },
+      "reviewStatus": "approved",
+      "visualReview": {
+        "reviewedBy": "Codex",
+        "reviewedAt": "2026-05-15",
+        "status": "approved",
+        "summary": "通过：成年男性特征明确，肩颈与上身轮廓、冠服层次、身份姿态差异清楚；画面高对比、色彩更丰富、噪点较少，仍保持端庄历史立绘气质。"
+      },
+      "safetyReview": {
+        "reviewedBy": "Codex",
+        "reviewedAt": "2026-05-15",
+        "status": "approved",
+        "summary": "通过：全套衣着完整，无裸露、挑逗、幼态、现代物、水印、徽标、可读文字、本地路径、key、raw/hidden 内容或未公开剧情事实。"
+      },
+      "performance": {
+        "bytes": 190062,
+        "targetMaxBytes": 614400,
+        "thumbnailBytes": 44688,
+        "thumbnailTargetMaxBytes": 256000,
+        "lowResPlaceholderBytes": 1588
+      },
+      "ledgerId": "portrait-s73-10-player-male-extra-tang_round_collar-look02-v1"
+    },
+    {
+      "id": "portrait-s73-10-player-male-extra-tang_round_collar-look03-v1",
+      "version": 1,
+      "phase": "S73.10.2",
+      "category": "portrait",
+      "subcategory": "player_male_style_pool",
+      "usage": [
+        "player_identity",
+        "people_page",
+        "game_main"
+      ],
+      "role": "tang_round_collar",
+      "roleLabel": "唐风圆领袍",
+      "roleStage": "player_male_style",
+      "scene": null,
+      "portraitRef": "portrait-s73-10-player-male-extra-tang_round_collar-look03-v1",
+      "genderPresentation": "masculine",
+      "ageBand": "adult_young_to_mature",
+      "statusVariant": "working",
+      "emotionVariant": "focused",
+      "posture": "执卷处理事务",
+      "identityTags": [
+        "player",
+        "male_style",
+        "tang_round_collar",
+        "working"
+      ],
+      "emotionTags": [
+        "focused",
+        "working"
+      ],
+      "path": "/assets/ui/portraits/s73-10/portrait-s73-10-player-male-extra-tang_round_collar-look03-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-portrait-s73-10-player-male-extra-tang_round_collar-look03-v1.webp",
+      "lowResPlaceholderPath": "/assets/ui/portraits/placeholders/placeholder-portrait-s73-10-player-male-extra-tang_round_collar-look03-v1.webp",
+      "fallbackRef": "fallback-role-silhouette-v1",
+      "dimensions": {
+        "width": 1024,
+        "height": 1536
+      },
+      "aspectRatio": "1024:1536",
+      "format": "webp",
+      "transparent": false,
+      "safeArea": {
+        "x": 0.2,
+        "y": 0.05,
+        "width": 0.6,
+        "height": 0.88
+      },
+      "focalPoint": {
+        "x": 0.5,
+        "y": 0.25
+      },
+      "mobileCrop": {
+        "mode": "center_crop_or_contain",
+        "keepSafeArea": true,
+        "notes": "玩家男性选角和身份卡窄屏保留面部、冠帽、肩颈轮廓、腰带和身份服饰；不得显示未审核候选图。"
+      },
+      "lazyLoad": {
+        "group": "portrait_pool_player_male_extra_s73_10",
+        "allowEagerLoad": false,
+        "thumbnailFirst": true,
+        "lowResPlaceholder": true,
+        "maxInitialPortraits": 8
+      },
+      "source": {
+        "type": "ai_generated",
+        "tool": "Codex imagegen",
+        "model": "gpt-image-2",
+        "generatedAt": "2026-05-15",
+        "promptSummary": "唐风圆领袍玩家扩展：圆领袍、腰带、披风和唐风庭院，色彩明快。 工作款，持卷或持笏，表现读书、理政或经营状态。"
+      },
+      "license": {
+        "type": "ai_generated_project_asset",
+        "commercialUseConfirmed": false,
+        "summary": "原创 AI 生成素材，当前仅个人游玩/开发使用；未做公开商用确认。"
+      },
+      "reviewStatus": "approved",
+      "visualReview": {
+        "reviewedBy": "Codex",
+        "reviewedAt": "2026-05-15",
+        "status": "approved",
+        "summary": "通过：成年男性特征明确，肩颈与上身轮廓、冠服层次、身份姿态差异清楚；画面高对比、色彩更丰富、噪点较少，仍保持端庄历史立绘气质。"
+      },
+      "safetyReview": {
+        "reviewedBy": "Codex",
+        "reviewedAt": "2026-05-15",
+        "status": "approved",
+        "summary": "通过：全套衣着完整，无裸露、挑逗、幼态、现代物、水印、徽标、可读文字、本地路径、key、raw/hidden 内容或未公开剧情事实。"
+      },
+      "performance": {
+        "bytes": 195834,
+        "targetMaxBytes": 614400,
+        "thumbnailBytes": 44896,
+        "thumbnailTargetMaxBytes": 256000,
+        "lowResPlaceholderBytes": 1430
+      },
+      "ledgerId": "portrait-s73-10-player-male-extra-tang_round_collar-look03-v1"
+    },
+    {
+      "id": "portrait-s73-10-player-male-extra-tang_round_collar-look04-v1",
+      "version": 1,
+      "phase": "S73.10.2",
+      "category": "portrait",
+      "subcategory": "player_male_style_pool",
+      "usage": [
+        "player_identity",
+        "people_page",
+        "game_main"
+      ],
+      "role": "tang_round_collar",
+      "roleLabel": "唐风圆领袍",
+      "roleStage": "player_male_style",
+      "scene": null,
+      "portraitRef": "portrait-s73-10-player-male-extra-tang_round_collar-look04-v1",
+      "genderPresentation": "masculine",
+      "ageBand": "adult_young_to_mature",
+      "statusVariant": "travel_or_motion",
+      "emotionVariant": "alert",
+      "posture": "披风行旅",
+      "identityTags": [
+        "player",
+        "male_style",
+        "tang_round_collar",
+        "travel_or_motion"
+      ],
+      "emotionTags": [
+        "alert",
+        "travel_or_motion"
+      ],
+      "path": "/assets/ui/portraits/s73-10/portrait-s73-10-player-male-extra-tang_round_collar-look04-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-portrait-s73-10-player-male-extra-tang_round_collar-look04-v1.webp",
+      "lowResPlaceholderPath": "/assets/ui/portraits/placeholders/placeholder-portrait-s73-10-player-male-extra-tang_round_collar-look04-v1.webp",
+      "fallbackRef": "fallback-role-silhouette-v1",
+      "dimensions": {
+        "width": 1024,
+        "height": 1536
+      },
+      "aspectRatio": "1024:1536",
+      "format": "webp",
+      "transparent": false,
+      "safeArea": {
+        "x": 0.2,
+        "y": 0.05,
+        "width": 0.6,
+        "height": 0.88
+      },
+      "focalPoint": {
+        "x": 0.5,
+        "y": 0.25
+      },
+      "mobileCrop": {
+        "mode": "center_crop_or_contain",
+        "keepSafeArea": true,
+        "notes": "玩家男性选角和身份卡窄屏保留面部、冠帽、肩颈轮廓、腰带和身份服饰；不得显示未审核候选图。"
+      },
+      "lazyLoad": {
+        "group": "portrait_pool_player_male_extra_s73_10",
+        "allowEagerLoad": false,
+        "thumbnailFirst": true,
+        "lowResPlaceholder": true,
+        "maxInitialPortraits": 8
+      },
+      "source": {
+        "type": "ai_generated",
+        "tool": "Codex imagegen",
+        "model": "gpt-image-2",
+        "generatedAt": "2026-05-15",
+        "promptSummary": "唐风圆领袍玩家扩展：圆领袍、腰带、披风和唐风庭院，色彩明快。 动态款，披风、甲衣或外袍拉开轮廓，行动感更强。"
+      },
+      "license": {
+        "type": "ai_generated_project_asset",
+        "commercialUseConfirmed": false,
+        "summary": "原创 AI 生成素材，当前仅个人游玩/开发使用；未做公开商用确认。"
+      },
+      "reviewStatus": "approved",
+      "visualReview": {
+        "reviewedBy": "Codex",
+        "reviewedAt": "2026-05-15",
+        "status": "approved",
+        "summary": "通过：成年男性特征明确，肩颈与上身轮廓、冠服层次、身份姿态差异清楚；画面高对比、色彩更丰富、噪点较少，仍保持端庄历史立绘气质。"
+      },
+      "safetyReview": {
+        "reviewedBy": "Codex",
+        "reviewedAt": "2026-05-15",
+        "status": "approved",
+        "summary": "通过：全套衣着完整，无裸露、挑逗、幼态、现代物、水印、徽标、可读文字、本地路径、key、raw/hidden 内容或未公开剧情事实。"
+      },
+      "performance": {
+        "bytes": 175484,
+        "targetMaxBytes": 614400,
+        "thumbnailBytes": 39530,
+        "thumbnailTargetMaxBytes": 256000,
+        "lowResPlaceholderBytes": 1370
+      },
+      "ledgerId": "portrait-s73-10-player-male-extra-tang_round_collar-look04-v1"
+    },
+    {
+      "id": "portrait-s73-10-player-male-extra-tang_round_collar-look05-v1",
+      "version": 1,
+      "phase": "S73.10.2",
+      "category": "portrait",
+      "subcategory": "player_male_style_pool",
+      "usage": [
+        "player_identity",
+        "people_page",
+        "game_main"
+      ],
+      "role": "tang_round_collar",
+      "roleLabel": "唐风圆领袍",
+      "roleStage": "player_male_style",
+      "scene": null,
+      "portraitRef": "portrait-s73-10-player-male-extra-tang_round_collar-look05-v1",
+      "genderPresentation": "masculine",
+      "ageBand": "adult_young_to_mature",
+      "statusVariant": "quiet_authority",
+      "emotionVariant": "stern",
+      "posture": "拢袖端坐",
+      "identityTags": [
+        "player",
+        "male_style",
+        "tang_round_collar",
+        "quiet_authority"
+      ],
+      "emotionTags": [
+        "stern",
+        "quiet_authority"
+      ],
+      "path": "/assets/ui/portraits/s73-10/portrait-s73-10-player-male-extra-tang_round_collar-look05-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-portrait-s73-10-player-male-extra-tang_round_collar-look05-v1.webp",
+      "lowResPlaceholderPath": "/assets/ui/portraits/placeholders/placeholder-portrait-s73-10-player-male-extra-tang_round_collar-look05-v1.webp",
+      "fallbackRef": "fallback-role-silhouette-v1",
+      "dimensions": {
+        "width": 1024,
+        "height": 1536
+      },
+      "aspectRatio": "1024:1536",
+      "format": "webp",
+      "transparent": false,
+      "safeArea": {
+        "x": 0.2,
+        "y": 0.05,
+        "width": 0.6,
+        "height": 0.88
+      },
+      "focalPoint": {
+        "x": 0.5,
+        "y": 0.25
+      },
+      "mobileCrop": {
+        "mode": "center_crop_or_contain",
+        "keepSafeArea": true,
+        "notes": "玩家男性选角和身份卡窄屏保留面部、冠帽、肩颈轮廓、腰带和身份服饰；不得显示未审核候选图。"
+      },
+      "lazyLoad": {
+        "group": "portrait_pool_player_male_extra_s73_10",
+        "allowEagerLoad": false,
+        "thumbnailFirst": true,
+        "lowResPlaceholder": true,
+        "maxInitialPortraits": 8
+      },
+      "source": {
+        "type": "ai_generated",
+        "tool": "Codex imagegen",
+        "model": "gpt-image-2",
+        "generatedAt": "2026-05-15",
+        "promptSummary": "唐风圆领袍玩家扩展：圆领袍、腰带、披风和唐风庭院，色彩明快。 威仪款，表情沉稳，适合高位身份或慎重决策。"
+      },
+      "license": {
+        "type": "ai_generated_project_asset",
+        "commercialUseConfirmed": false,
+        "summary": "原创 AI 生成素材，当前仅个人游玩/开发使用；未做公开商用确认。"
+      },
+      "reviewStatus": "approved",
+      "visualReview": {
+        "reviewedBy": "Codex",
+        "reviewedAt": "2026-05-15",
+        "status": "approved",
+        "summary": "通过：成年男性特征明确，肩颈与上身轮廓、冠服层次、身份姿态差异清楚；画面高对比、色彩更丰富、噪点较少，仍保持端庄历史立绘气质。"
+      },
+      "safetyReview": {
+        "reviewedBy": "Codex",
+        "reviewedAt": "2026-05-15",
+        "status": "approved",
+        "summary": "通过：全套衣着完整，无裸露、挑逗、幼态、现代物、水印、徽标、可读文字、本地路径、key、raw/hidden 内容或未公开剧情事实。"
+      },
+      "performance": {
+        "bytes": 178778,
+        "targetMaxBytes": 614400,
+        "thumbnailBytes": 42496,
+        "thumbnailTargetMaxBytes": 256000,
+        "lowResPlaceholderBytes": 1534
+      },
+      "ledgerId": "portrait-s73-10-player-male-extra-tang_round_collar-look05-v1"
+    },
+    {
+      "id": "portrait-s73-10-player-male-extra-tang_round_collar-look06-v1",
+      "version": 1,
+      "phase": "S73.10.2",
+      "category": "portrait",
+      "subcategory": "player_male_style_pool",
+      "usage": [
+        "player_identity",
+        "people_page",
+        "game_main"
+      ],
+      "role": "tang_round_collar",
+      "roleLabel": "唐风圆领袍",
+      "roleStage": "player_male_style",
+      "scene": null,
+      "portraitRef": "portrait-s73-10-player-male-extra-tang_round_collar-look06-v1",
+      "genderPresentation": "masculine",
+      "ageBand": "adult_young_to_mature",
+      "statusVariant": "poised",
+      "emotionVariant": "determined",
+      "posture": "持物正立",
+      "identityTags": [
+        "player",
+        "male_style",
+        "tang_round_collar",
+        "poised"
+      ],
+      "emotionTags": [
+        "determined",
+        "poised"
+      ],
+      "path": "/assets/ui/portraits/s73-10/portrait-s73-10-player-male-extra-tang_round_collar-look06-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-portrait-s73-10-player-male-extra-tang_round_collar-look06-v1.webp",
+      "lowResPlaceholderPath": "/assets/ui/portraits/placeholders/placeholder-portrait-s73-10-player-male-extra-tang_round_collar-look06-v1.webp",
+      "fallbackRef": "fallback-role-silhouette-v1",
+      "dimensions": {
+        "width": 1024,
+        "height": 1536
+      },
+      "aspectRatio": "1024:1536",
+      "format": "webp",
+      "transparent": false,
+      "safeArea": {
+        "x": 0.2,
+        "y": 0.05,
+        "width": 0.6,
+        "height": 0.88
+      },
+      "focalPoint": {
+        "x": 0.5,
+        "y": 0.25
+      },
+      "mobileCrop": {
+        "mode": "center_crop_or_contain",
+        "keepSafeArea": true,
+        "notes": "玩家男性选角和身份卡窄屏保留面部、冠帽、肩颈轮廓、腰带和身份服饰；不得显示未审核候选图。"
+      },
+      "lazyLoad": {
+        "group": "portrait_pool_player_male_extra_s73_10",
+        "allowEagerLoad": false,
+        "thumbnailFirst": true,
+        "lowResPlaceholder": true,
+        "maxInitialPortraits": 8
+      },
+      "source": {
+        "type": "ai_generated",
+        "tool": "Codex imagegen",
+        "model": "gpt-image-2",
+        "generatedAt": "2026-05-15",
+        "promptSummary": "唐风圆领袍玩家扩展：圆领袍、腰带、披风和唐风庭院，色彩明快。 选角款，面向玩家形象选择，色彩更丰富、对比更高。"
+      },
+      "license": {
+        "type": "ai_generated_project_asset",
+        "commercialUseConfirmed": false,
+        "summary": "原创 AI 生成素材，当前仅个人游玩/开发使用；未做公开商用确认。"
+      },
+      "reviewStatus": "approved",
+      "visualReview": {
+        "reviewedBy": "Codex",
+        "reviewedAt": "2026-05-15",
+        "status": "approved",
+        "summary": "通过：成年男性特征明确，肩颈与上身轮廓、冠服层次、身份姿态差异清楚；画面高对比、色彩更丰富、噪点较少，仍保持端庄历史立绘气质。"
+      },
+      "safetyReview": {
+        "reviewedBy": "Codex",
+        "reviewedAt": "2026-05-15",
+        "status": "approved",
+        "summary": "通过：全套衣着完整，无裸露、挑逗、幼态、现代物、水印、徽标、可读文字、本地路径、key、raw/hidden 内容或未公开剧情事实。"
+      },
+      "performance": {
+        "bytes": 184608,
+        "targetMaxBytes": 614400,
+        "thumbnailBytes": 42068,
+        "thumbnailTargetMaxBytes": 256000,
+        "lowResPlaceholderBytes": 1468
+      },
+      "ledgerId": "portrait-s73-10-player-male-extra-tang_round_collar-look06-v1"
+    },
+    {
+      "id": "portrait-s73-10-player-male-extra-court_official-look01-v1",
+      "version": 1,
+      "phase": "S73.10.2",
+      "category": "portrait",
+      "subcategory": "player_male_style_pool",
+      "usage": [
+        "player_identity",
+        "people_page",
+        "game_main"
+      ],
+      "role": "court_official",
+      "roleLabel": "朝堂文官",
+      "roleStage": "player_male_style",
+      "scene": null,
+      "portraitRef": "portrait-s73-10-player-male-extra-court_official-look01-v1",
+      "genderPresentation": "masculine",
+      "ageBand": "adult_young_to_mature",
+      "statusVariant": "baseline",
+      "emotionVariant": "composed",
+      "posture": "正身肃立",
+      "identityTags": [
+        "player",
+        "male_style",
+        "court_official",
+        "baseline"
+      ],
+      "emotionTags": [
+        "composed",
+        "baseline"
+      ],
+      "path": "/assets/ui/portraits/s73-10/portrait-s73-10-player-male-extra-court_official-look01-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-portrait-s73-10-player-male-extra-court_official-look01-v1.webp",
+      "lowResPlaceholderPath": "/assets/ui/portraits/placeholders/placeholder-portrait-s73-10-player-male-extra-court_official-look01-v1.webp",
+      "fallbackRef": "fallback-role-silhouette-v1",
+      "dimensions": {
+        "width": 1024,
+        "height": 1536
+      },
+      "aspectRatio": "1024:1536",
+      "format": "webp",
+      "transparent": false,
+      "safeArea": {
+        "x": 0.2,
+        "y": 0.05,
+        "width": 0.6,
+        "height": 0.88
+      },
+      "focalPoint": {
+        "x": 0.5,
+        "y": 0.25
+      },
+      "mobileCrop": {
+        "mode": "center_crop_or_contain",
+        "keepSafeArea": true,
+        "notes": "玩家男性选角和身份卡窄屏保留面部、冠帽、肩颈轮廓、腰带和身份服饰；不得显示未审核候选图。"
+      },
+      "lazyLoad": {
+        "group": "portrait_pool_player_male_extra_s73_10",
+        "allowEagerLoad": false,
+        "thumbnailFirst": true,
+        "lowResPlaceholder": true,
+        "maxInitialPortraits": 8
+      },
+      "source": {
+        "type": "ai_generated",
+        "tool": "Codex imagegen",
+        "model": "gpt-image-2",
+        "generatedAt": "2026-05-15",
+        "promptSummary": "朝堂文官玩家扩展：正式官服、笏板、宫廊与朝堂气，端肃有权柄。 正身款，肩颈和上身轮廓清楚，端庄不夸张。"
+      },
+      "license": {
+        "type": "ai_generated_project_asset",
+        "commercialUseConfirmed": false,
+        "summary": "原创 AI 生成素材，当前仅个人游玩/开发使用；未做公开商用确认。"
+      },
+      "reviewStatus": "approved",
+      "visualReview": {
+        "reviewedBy": "Codex",
+        "reviewedAt": "2026-05-15",
+        "status": "approved",
+        "summary": "通过：成年男性特征明确，肩颈与上身轮廓、冠服层次、身份姿态差异清楚；画面高对比、色彩更丰富、噪点较少，仍保持端庄历史立绘气质。"
+      },
+      "safetyReview": {
+        "reviewedBy": "Codex",
+        "reviewedAt": "2026-05-15",
+        "status": "approved",
+        "summary": "通过：全套衣着完整，无裸露、挑逗、幼态、现代物、水印、徽标、可读文字、本地路径、key、raw/hidden 内容或未公开剧情事实。"
+      },
+      "performance": {
+        "bytes": 150878,
+        "targetMaxBytes": 614400,
+        "thumbnailBytes": 32948,
+        "thumbnailTargetMaxBytes": 256000,
+        "lowResPlaceholderBytes": 1354
+      },
+      "ledgerId": "portrait-s73-10-player-male-extra-court_official-look01-v1"
+    },
+    {
+      "id": "portrait-s73-10-player-male-extra-court_official-look02-v1",
+      "version": 1,
+      "phase": "S73.10.2",
+      "category": "portrait",
+      "subcategory": "player_male_style_pool",
+      "usage": [
+        "player_identity",
+        "people_page",
+        "game_main"
+      ],
+      "role": "court_official",
+      "roleLabel": "朝堂文官",
+      "roleStage": "player_male_style",
+      "scene": null,
+      "portraitRef": "portrait-s73-10-player-male-extra-court_official-look02-v1",
+      "genderPresentation": "masculine",
+      "ageBand": "adult_young_to_mature",
+      "statusVariant": "formal",
+      "emotionVariant": "reserved",
+      "posture": "侧立持物",
+      "identityTags": [
+        "player",
+        "male_style",
+        "court_official",
+        "formal"
+      ],
+      "emotionTags": [
+        "reserved",
+        "formal"
+      ],
+      "path": "/assets/ui/portraits/s73-10/portrait-s73-10-player-male-extra-court_official-look02-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-portrait-s73-10-player-male-extra-court_official-look02-v1.webp",
+      "lowResPlaceholderPath": "/assets/ui/portraits/placeholders/placeholder-portrait-s73-10-player-male-extra-court_official-look02-v1.webp",
+      "fallbackRef": "fallback-role-silhouette-v1",
+      "dimensions": {
+        "width": 1024,
+        "height": 1536
+      },
+      "aspectRatio": "1024:1536",
+      "format": "webp",
+      "transparent": false,
+      "safeArea": {
+        "x": 0.2,
+        "y": 0.05,
+        "width": 0.6,
+        "height": 0.88
+      },
+      "focalPoint": {
+        "x": 0.5,
+        "y": 0.25
+      },
+      "mobileCrop": {
+        "mode": "center_crop_or_contain",
+        "keepSafeArea": true,
+        "notes": "玩家男性选角和身份卡窄屏保留面部、冠帽、肩颈轮廓、腰带和身份服饰；不得显示未审核候选图。"
+      },
+      "lazyLoad": {
+        "group": "portrait_pool_player_male_extra_s73_10",
+        "allowEagerLoad": false,
+        "thumbnailFirst": true,
+        "lowResPlaceholder": true,
+        "maxInitialPortraits": 8
+      },
+      "source": {
+        "type": "ai_generated",
+        "tool": "Codex imagegen",
+        "model": "gpt-image-2",
+        "generatedAt": "2026-05-15",
+        "promptSummary": "朝堂文官玩家扩展：正式官服、笏板、宫廊与朝堂气，端肃有权柄。 礼服款，冠服、腰带和持物细节更明显。"
+      },
+      "license": {
+        "type": "ai_generated_project_asset",
+        "commercialUseConfirmed": false,
+        "summary": "原创 AI 生成素材，当前仅个人游玩/开发使用；未做公开商用确认。"
+      },
+      "reviewStatus": "approved",
+      "visualReview": {
+        "reviewedBy": "Codex",
+        "reviewedAt": "2026-05-15",
+        "status": "approved",
+        "summary": "通过：成年男性特征明确，肩颈与上身轮廓、冠服层次、身份姿态差异清楚；画面高对比、色彩更丰富、噪点较少，仍保持端庄历史立绘气质。"
+      },
+      "safetyReview": {
+        "reviewedBy": "Codex",
+        "reviewedAt": "2026-05-15",
+        "status": "approved",
+        "summary": "通过：全套衣着完整，无裸露、挑逗、幼态、现代物、水印、徽标、可读文字、本地路径、key、raw/hidden 内容或未公开剧情事实。"
+      },
+      "performance": {
+        "bytes": 160196,
+        "targetMaxBytes": 614400,
+        "thumbnailBytes": 35458,
+        "thumbnailTargetMaxBytes": 256000,
+        "lowResPlaceholderBytes": 1392
+      },
+      "ledgerId": "portrait-s73-10-player-male-extra-court_official-look02-v1"
+    },
+    {
+      "id": "portrait-s73-10-player-male-extra-court_official-look03-v1",
+      "version": 1,
+      "phase": "S73.10.2",
+      "category": "portrait",
+      "subcategory": "player_male_style_pool",
+      "usage": [
+        "player_identity",
+        "people_page",
+        "game_main"
+      ],
+      "role": "court_official",
+      "roleLabel": "朝堂文官",
+      "roleStage": "player_male_style",
+      "scene": null,
+      "portraitRef": "portrait-s73-10-player-male-extra-court_official-look03-v1",
+      "genderPresentation": "masculine",
+      "ageBand": "adult_young_to_mature",
+      "statusVariant": "working",
+      "emotionVariant": "focused",
+      "posture": "执卷处理事务",
+      "identityTags": [
+        "player",
+        "male_style",
+        "court_official",
+        "working"
+      ],
+      "emotionTags": [
+        "focused",
+        "working"
+      ],
+      "path": "/assets/ui/portraits/s73-10/portrait-s73-10-player-male-extra-court_official-look03-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-portrait-s73-10-player-male-extra-court_official-look03-v1.webp",
+      "lowResPlaceholderPath": "/assets/ui/portraits/placeholders/placeholder-portrait-s73-10-player-male-extra-court_official-look03-v1.webp",
+      "fallbackRef": "fallback-role-silhouette-v1",
+      "dimensions": {
+        "width": 1024,
+        "height": 1536
+      },
+      "aspectRatio": "1024:1536",
+      "format": "webp",
+      "transparent": false,
+      "safeArea": {
+        "x": 0.2,
+        "y": 0.05,
+        "width": 0.6,
+        "height": 0.88
+      },
+      "focalPoint": {
+        "x": 0.5,
+        "y": 0.25
+      },
+      "mobileCrop": {
+        "mode": "center_crop_or_contain",
+        "keepSafeArea": true,
+        "notes": "玩家男性选角和身份卡窄屏保留面部、冠帽、肩颈轮廓、腰带和身份服饰；不得显示未审核候选图。"
+      },
+      "lazyLoad": {
+        "group": "portrait_pool_player_male_extra_s73_10",
+        "allowEagerLoad": false,
+        "thumbnailFirst": true,
+        "lowResPlaceholder": true,
+        "maxInitialPortraits": 8
+      },
+      "source": {
+        "type": "ai_generated",
+        "tool": "Codex imagegen",
+        "model": "gpt-image-2",
+        "generatedAt": "2026-05-15",
+        "promptSummary": "朝堂文官玩家扩展：正式官服、笏板、宫廊与朝堂气，端肃有权柄。 工作款，持卷或持笏，表现读书、理政或经营状态。"
+      },
+      "license": {
+        "type": "ai_generated_project_asset",
+        "commercialUseConfirmed": false,
+        "summary": "原创 AI 生成素材，当前仅个人游玩/开发使用；未做公开商用确认。"
+      },
+      "reviewStatus": "approved",
+      "visualReview": {
+        "reviewedBy": "Codex",
+        "reviewedAt": "2026-05-15",
+        "status": "approved",
+        "summary": "通过：成年男性特征明确，肩颈与上身轮廓、冠服层次、身份姿态差异清楚；画面高对比、色彩更丰富、噪点较少，仍保持端庄历史立绘气质。"
+      },
+      "safetyReview": {
+        "reviewedBy": "Codex",
+        "reviewedAt": "2026-05-15",
+        "status": "approved",
+        "summary": "通过：全套衣着完整，无裸露、挑逗、幼态、现代物、水印、徽标、可读文字、本地路径、key、raw/hidden 内容或未公开剧情事实。"
+      },
+      "performance": {
+        "bytes": 166284,
+        "targetMaxBytes": 614400,
+        "thumbnailBytes": 35182,
+        "thumbnailTargetMaxBytes": 256000,
+        "lowResPlaceholderBytes": 1360
+      },
+      "ledgerId": "portrait-s73-10-player-male-extra-court_official-look03-v1"
+    },
+    {
+      "id": "portrait-s73-10-player-male-extra-court_official-look04-v1",
+      "version": 1,
+      "phase": "S73.10.2",
+      "category": "portrait",
+      "subcategory": "player_male_style_pool",
+      "usage": [
+        "player_identity",
+        "people_page",
+        "game_main"
+      ],
+      "role": "court_official",
+      "roleLabel": "朝堂文官",
+      "roleStage": "player_male_style",
+      "scene": null,
+      "portraitRef": "portrait-s73-10-player-male-extra-court_official-look04-v1",
+      "genderPresentation": "masculine",
+      "ageBand": "adult_young_to_mature",
+      "statusVariant": "travel_or_motion",
+      "emotionVariant": "alert",
+      "posture": "披风行旅",
+      "identityTags": [
+        "player",
+        "male_style",
+        "court_official",
+        "travel_or_motion"
+      ],
+      "emotionTags": [
+        "alert",
+        "travel_or_motion"
+      ],
+      "path": "/assets/ui/portraits/s73-10/portrait-s73-10-player-male-extra-court_official-look04-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-portrait-s73-10-player-male-extra-court_official-look04-v1.webp",
+      "lowResPlaceholderPath": "/assets/ui/portraits/placeholders/placeholder-portrait-s73-10-player-male-extra-court_official-look04-v1.webp",
+      "fallbackRef": "fallback-role-silhouette-v1",
+      "dimensions": {
+        "width": 1024,
+        "height": 1536
+      },
+      "aspectRatio": "1024:1536",
+      "format": "webp",
+      "transparent": false,
+      "safeArea": {
+        "x": 0.2,
+        "y": 0.05,
+        "width": 0.6,
+        "height": 0.88
+      },
+      "focalPoint": {
+        "x": 0.5,
+        "y": 0.25
+      },
+      "mobileCrop": {
+        "mode": "center_crop_or_contain",
+        "keepSafeArea": true,
+        "notes": "玩家男性选角和身份卡窄屏保留面部、冠帽、肩颈轮廓、腰带和身份服饰；不得显示未审核候选图。"
+      },
+      "lazyLoad": {
+        "group": "portrait_pool_player_male_extra_s73_10",
+        "allowEagerLoad": false,
+        "thumbnailFirst": true,
+        "lowResPlaceholder": true,
+        "maxInitialPortraits": 8
+      },
+      "source": {
+        "type": "ai_generated",
+        "tool": "Codex imagegen",
+        "model": "gpt-image-2",
+        "generatedAt": "2026-05-15",
+        "promptSummary": "朝堂文官玩家扩展：正式官服、笏板、宫廊与朝堂气，端肃有权柄。 动态款，披风、甲衣或外袍拉开轮廓，行动感更强。"
+      },
+      "license": {
+        "type": "ai_generated_project_asset",
+        "commercialUseConfirmed": false,
+        "summary": "原创 AI 生成素材，当前仅个人游玩/开发使用；未做公开商用确认。"
+      },
+      "reviewStatus": "approved",
+      "visualReview": {
+        "reviewedBy": "Codex",
+        "reviewedAt": "2026-05-15",
+        "status": "approved",
+        "summary": "通过：成年男性特征明确，肩颈与上身轮廓、冠服层次、身份姿态差异清楚；画面高对比、色彩更丰富、噪点较少，仍保持端庄历史立绘气质。"
+      },
+      "safetyReview": {
+        "reviewedBy": "Codex",
+        "reviewedAt": "2026-05-15",
+        "status": "approved",
+        "summary": "通过：全套衣着完整，无裸露、挑逗、幼态、现代物、水印、徽标、可读文字、本地路径、key、raw/hidden 内容或未公开剧情事实。"
+      },
+      "performance": {
+        "bytes": 176706,
+        "targetMaxBytes": 614400,
+        "thumbnailBytes": 39062,
+        "thumbnailTargetMaxBytes": 256000,
+        "lowResPlaceholderBytes": 1358
+      },
+      "ledgerId": "portrait-s73-10-player-male-extra-court_official-look04-v1"
+    },
+    {
+      "id": "portrait-s73-10-player-male-extra-court_official-look05-v1",
+      "version": 1,
+      "phase": "S73.10.2",
+      "category": "portrait",
+      "subcategory": "player_male_style_pool",
+      "usage": [
+        "player_identity",
+        "people_page",
+        "game_main"
+      ],
+      "role": "court_official",
+      "roleLabel": "朝堂文官",
+      "roleStage": "player_male_style",
+      "scene": null,
+      "portraitRef": "portrait-s73-10-player-male-extra-court_official-look05-v1",
+      "genderPresentation": "masculine",
+      "ageBand": "adult_young_to_mature",
+      "statusVariant": "quiet_authority",
+      "emotionVariant": "stern",
+      "posture": "拢袖端坐",
+      "identityTags": [
+        "player",
+        "male_style",
+        "court_official",
+        "quiet_authority"
+      ],
+      "emotionTags": [
+        "stern",
+        "quiet_authority"
+      ],
+      "path": "/assets/ui/portraits/s73-10/portrait-s73-10-player-male-extra-court_official-look05-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-portrait-s73-10-player-male-extra-court_official-look05-v1.webp",
+      "lowResPlaceholderPath": "/assets/ui/portraits/placeholders/placeholder-portrait-s73-10-player-male-extra-court_official-look05-v1.webp",
+      "fallbackRef": "fallback-role-silhouette-v1",
+      "dimensions": {
+        "width": 1024,
+        "height": 1536
+      },
+      "aspectRatio": "1024:1536",
+      "format": "webp",
+      "transparent": false,
+      "safeArea": {
+        "x": 0.2,
+        "y": 0.05,
+        "width": 0.6,
+        "height": 0.88
+      },
+      "focalPoint": {
+        "x": 0.5,
+        "y": 0.25
+      },
+      "mobileCrop": {
+        "mode": "center_crop_or_contain",
+        "keepSafeArea": true,
+        "notes": "玩家男性选角和身份卡窄屏保留面部、冠帽、肩颈轮廓、腰带和身份服饰；不得显示未审核候选图。"
+      },
+      "lazyLoad": {
+        "group": "portrait_pool_player_male_extra_s73_10",
+        "allowEagerLoad": false,
+        "thumbnailFirst": true,
+        "lowResPlaceholder": true,
+        "maxInitialPortraits": 8
+      },
+      "source": {
+        "type": "ai_generated",
+        "tool": "Codex imagegen",
+        "model": "gpt-image-2",
+        "generatedAt": "2026-05-15",
+        "promptSummary": "朝堂文官玩家扩展：正式官服、笏板、宫廊与朝堂气，端肃有权柄。 威仪款，表情沉稳，适合高位身份或慎重决策。"
+      },
+      "license": {
+        "type": "ai_generated_project_asset",
+        "commercialUseConfirmed": false,
+        "summary": "原创 AI 生成素材，当前仅个人游玩/开发使用；未做公开商用确认。"
+      },
+      "reviewStatus": "approved",
+      "visualReview": {
+        "reviewedBy": "Codex",
+        "reviewedAt": "2026-05-15",
+        "status": "approved",
+        "summary": "通过：成年男性特征明确，肩颈与上身轮廓、冠服层次、身份姿态差异清楚；画面高对比、色彩更丰富、噪点较少，仍保持端庄历史立绘气质。"
+      },
+      "safetyReview": {
+        "reviewedBy": "Codex",
+        "reviewedAt": "2026-05-15",
+        "status": "approved",
+        "summary": "通过：全套衣着完整，无裸露、挑逗、幼态、现代物、水印、徽标、可读文字、本地路径、key、raw/hidden 内容或未公开剧情事实。"
+      },
+      "performance": {
+        "bytes": 148328,
+        "targetMaxBytes": 614400,
+        "thumbnailBytes": 31764,
+        "thumbnailTargetMaxBytes": 256000,
+        "lowResPlaceholderBytes": 1300
+      },
+      "ledgerId": "portrait-s73-10-player-male-extra-court_official-look05-v1"
+    },
+    {
+      "id": "portrait-s73-10-player-male-extra-court_official-look06-v1",
+      "version": 1,
+      "phase": "S73.10.2",
+      "category": "portrait",
+      "subcategory": "player_male_style_pool",
+      "usage": [
+        "player_identity",
+        "people_page",
+        "game_main"
+      ],
+      "role": "court_official",
+      "roleLabel": "朝堂文官",
+      "roleStage": "player_male_style",
+      "scene": null,
+      "portraitRef": "portrait-s73-10-player-male-extra-court_official-look06-v1",
+      "genderPresentation": "masculine",
+      "ageBand": "adult_young_to_mature",
+      "statusVariant": "poised",
+      "emotionVariant": "determined",
+      "posture": "持物正立",
+      "identityTags": [
+        "player",
+        "male_style",
+        "court_official",
+        "poised"
+      ],
+      "emotionTags": [
+        "determined",
+        "poised"
+      ],
+      "path": "/assets/ui/portraits/s73-10/portrait-s73-10-player-male-extra-court_official-look06-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-portrait-s73-10-player-male-extra-court_official-look06-v1.webp",
+      "lowResPlaceholderPath": "/assets/ui/portraits/placeholders/placeholder-portrait-s73-10-player-male-extra-court_official-look06-v1.webp",
+      "fallbackRef": "fallback-role-silhouette-v1",
+      "dimensions": {
+        "width": 1024,
+        "height": 1536
+      },
+      "aspectRatio": "1024:1536",
+      "format": "webp",
+      "transparent": false,
+      "safeArea": {
+        "x": 0.2,
+        "y": 0.05,
+        "width": 0.6,
+        "height": 0.88
+      },
+      "focalPoint": {
+        "x": 0.5,
+        "y": 0.25
+      },
+      "mobileCrop": {
+        "mode": "center_crop_or_contain",
+        "keepSafeArea": true,
+        "notes": "玩家男性选角和身份卡窄屏保留面部、冠帽、肩颈轮廓、腰带和身份服饰；不得显示未审核候选图。"
+      },
+      "lazyLoad": {
+        "group": "portrait_pool_player_male_extra_s73_10",
+        "allowEagerLoad": false,
+        "thumbnailFirst": true,
+        "lowResPlaceholder": true,
+        "maxInitialPortraits": 8
+      },
+      "source": {
+        "type": "ai_generated",
+        "tool": "Codex imagegen",
+        "model": "gpt-image-2",
+        "generatedAt": "2026-05-15",
+        "promptSummary": "朝堂文官玩家扩展：正式官服、笏板、宫廊与朝堂气，端肃有权柄。 选角款，面向玩家形象选择，色彩更丰富、对比更高。"
+      },
+      "license": {
+        "type": "ai_generated_project_asset",
+        "commercialUseConfirmed": false,
+        "summary": "原创 AI 生成素材，当前仅个人游玩/开发使用；未做公开商用确认。"
+      },
+      "reviewStatus": "approved",
+      "visualReview": {
+        "reviewedBy": "Codex",
+        "reviewedAt": "2026-05-15",
+        "status": "approved",
+        "summary": "通过：成年男性特征明确，肩颈与上身轮廓、冠服层次、身份姿态差异清楚；画面高对比、色彩更丰富、噪点较少，仍保持端庄历史立绘气质。"
+      },
+      "safetyReview": {
+        "reviewedBy": "Codex",
+        "reviewedAt": "2026-05-15",
+        "status": "approved",
+        "summary": "通过：全套衣着完整，无裸露、挑逗、幼态、现代物、水印、徽标、可读文字、本地路径、key、raw/hidden 内容或未公开剧情事实。"
+      },
+      "performance": {
+        "bytes": 169272,
+        "targetMaxBytes": 614400,
+        "thumbnailBytes": 38300,
+        "thumbnailTargetMaxBytes": 256000,
+        "lowResPlaceholderBytes": 1300
+      },
+      "ledgerId": "portrait-s73-10-player-male-extra-court_official-look06-v1"
+    },
+    {
+      "id": "portrait-s73-10-player-male-extra-palace_noble-look01-v1",
+      "version": 1,
+      "phase": "S73.10.2",
+      "category": "portrait",
+      "subcategory": "player_male_style_pool",
+      "usage": [
+        "player_identity",
+        "people_page",
+        "game_main"
+      ],
+      "role": "palace_noble",
+      "roleLabel": "宫廷贵胄",
+      "roleStage": "player_male_style",
+      "scene": null,
+      "portraitRef": "portrait-s73-10-player-male-extra-palace_noble-look01-v1",
+      "genderPresentation": "masculine",
+      "ageBand": "adult_young_to_mature",
+      "statusVariant": "baseline",
+      "emotionVariant": "composed",
+      "posture": "正身肃立",
+      "identityTags": [
+        "player",
+        "male_style",
+        "palace_noble",
+        "baseline"
+      ],
+      "emotionTags": [
+        "composed",
+        "baseline"
+      ],
+      "path": "/assets/ui/portraits/s73-10/portrait-s73-10-player-male-extra-palace_noble-look01-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-portrait-s73-10-player-male-extra-palace_noble-look01-v1.webp",
+      "lowResPlaceholderPath": "/assets/ui/portraits/placeholders/placeholder-portrait-s73-10-player-male-extra-palace_noble-look01-v1.webp",
+      "fallbackRef": "fallback-role-silhouette-v1",
+      "dimensions": {
+        "width": 1024,
+        "height": 1536
+      },
+      "aspectRatio": "1024:1536",
+      "format": "webp",
+      "transparent": false,
+      "safeArea": {
+        "x": 0.2,
+        "y": 0.05,
+        "width": 0.6,
+        "height": 0.88
+      },
+      "focalPoint": {
+        "x": 0.5,
+        "y": 0.25
+      },
+      "mobileCrop": {
+        "mode": "center_crop_or_contain",
+        "keepSafeArea": true,
+        "notes": "玩家男性选角和身份卡窄屏保留面部、冠帽、肩颈轮廓、腰带和身份服饰；不得显示未审核候选图。"
+      },
+      "lazyLoad": {
+        "group": "portrait_pool_player_male_extra_s73_10",
+        "allowEagerLoad": false,
+        "thumbnailFirst": true,
+        "lowResPlaceholder": true,
+        "maxInitialPortraits": 8
+      },
+      "source": {
+        "type": "ai_generated",
+        "tool": "Codex imagegen",
+        "model": "gpt-image-2",
+        "generatedAt": "2026-05-15",
+        "promptSummary": "宫廷贵胄玩家扩展：礼服、冠饰、宫灯与玉带，华贵克制。 正身款，肩颈和上身轮廓清楚，端庄不夸张。"
+      },
+      "license": {
+        "type": "ai_generated_project_asset",
+        "commercialUseConfirmed": false,
+        "summary": "原创 AI 生成素材，当前仅个人游玩/开发使用；未做公开商用确认。"
+      },
+      "reviewStatus": "approved",
+      "visualReview": {
+        "reviewedBy": "Codex",
+        "reviewedAt": "2026-05-15",
+        "status": "approved",
+        "summary": "通过：成年男性特征明确，肩颈与上身轮廓、冠服层次、身份姿态差异清楚；画面高对比、色彩更丰富、噪点较少，仍保持端庄历史立绘气质。"
+      },
+      "safetyReview": {
+        "reviewedBy": "Codex",
+        "reviewedAt": "2026-05-15",
+        "status": "approved",
+        "summary": "通过：全套衣着完整，无裸露、挑逗、幼态、现代物、水印、徽标、可读文字、本地路径、key、raw/hidden 内容或未公开剧情事实。"
+      },
+      "performance": {
+        "bytes": 217488,
+        "targetMaxBytes": 614400,
+        "thumbnailBytes": 53098,
+        "thumbnailTargetMaxBytes": 256000,
+        "lowResPlaceholderBytes": 1864
+      },
+      "ledgerId": "portrait-s73-10-player-male-extra-palace_noble-look01-v1"
+    },
+    {
+      "id": "portrait-s73-10-player-male-extra-palace_noble-look02-v1",
+      "version": 1,
+      "phase": "S73.10.2",
+      "category": "portrait",
+      "subcategory": "player_male_style_pool",
+      "usage": [
+        "player_identity",
+        "people_page",
+        "game_main"
+      ],
+      "role": "palace_noble",
+      "roleLabel": "宫廷贵胄",
+      "roleStage": "player_male_style",
+      "scene": null,
+      "portraitRef": "portrait-s73-10-player-male-extra-palace_noble-look02-v1",
+      "genderPresentation": "masculine",
+      "ageBand": "adult_young_to_mature",
+      "statusVariant": "formal",
+      "emotionVariant": "reserved",
+      "posture": "侧立持物",
+      "identityTags": [
+        "player",
+        "male_style",
+        "palace_noble",
+        "formal"
+      ],
+      "emotionTags": [
+        "reserved",
+        "formal"
+      ],
+      "path": "/assets/ui/portraits/s73-10/portrait-s73-10-player-male-extra-palace_noble-look02-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-portrait-s73-10-player-male-extra-palace_noble-look02-v1.webp",
+      "lowResPlaceholderPath": "/assets/ui/portraits/placeholders/placeholder-portrait-s73-10-player-male-extra-palace_noble-look02-v1.webp",
+      "fallbackRef": "fallback-role-silhouette-v1",
+      "dimensions": {
+        "width": 1024,
+        "height": 1536
+      },
+      "aspectRatio": "1024:1536",
+      "format": "webp",
+      "transparent": false,
+      "safeArea": {
+        "x": 0.2,
+        "y": 0.05,
+        "width": 0.6,
+        "height": 0.88
+      },
+      "focalPoint": {
+        "x": 0.5,
+        "y": 0.25
+      },
+      "mobileCrop": {
+        "mode": "center_crop_or_contain",
+        "keepSafeArea": true,
+        "notes": "玩家男性选角和身份卡窄屏保留面部、冠帽、肩颈轮廓、腰带和身份服饰；不得显示未审核候选图。"
+      },
+      "lazyLoad": {
+        "group": "portrait_pool_player_male_extra_s73_10",
+        "allowEagerLoad": false,
+        "thumbnailFirst": true,
+        "lowResPlaceholder": true,
+        "maxInitialPortraits": 8
+      },
+      "source": {
+        "type": "ai_generated",
+        "tool": "Codex imagegen",
+        "model": "gpt-image-2",
+        "generatedAt": "2026-05-15",
+        "promptSummary": "宫廷贵胄玩家扩展：礼服、冠饰、宫灯与玉带，华贵克制。 礼服款，冠服、腰带和持物细节更明显。"
+      },
+      "license": {
+        "type": "ai_generated_project_asset",
+        "commercialUseConfirmed": false,
+        "summary": "原创 AI 生成素材，当前仅个人游玩/开发使用；未做公开商用确认。"
+      },
+      "reviewStatus": "approved",
+      "visualReview": {
+        "reviewedBy": "Codex",
+        "reviewedAt": "2026-05-15",
+        "status": "approved",
+        "summary": "通过：成年男性特征明确，肩颈与上身轮廓、冠服层次、身份姿态差异清楚；画面高对比、色彩更丰富、噪点较少，仍保持端庄历史立绘气质。"
+      },
+      "safetyReview": {
+        "reviewedBy": "Codex",
+        "reviewedAt": "2026-05-15",
+        "status": "approved",
+        "summary": "通过：全套衣着完整，无裸露、挑逗、幼态、现代物、水印、徽标、可读文字、本地路径、key、raw/hidden 内容或未公开剧情事实。"
+      },
+      "performance": {
+        "bytes": 213212,
+        "targetMaxBytes": 614400,
+        "thumbnailBytes": 51648,
+        "thumbnailTargetMaxBytes": 256000,
+        "lowResPlaceholderBytes": 1874
+      },
+      "ledgerId": "portrait-s73-10-player-male-extra-palace_noble-look02-v1"
+    },
+    {
+      "id": "portrait-s73-10-player-male-extra-palace_noble-look03-v1",
+      "version": 1,
+      "phase": "S73.10.2",
+      "category": "portrait",
+      "subcategory": "player_male_style_pool",
+      "usage": [
+        "player_identity",
+        "people_page",
+        "game_main"
+      ],
+      "role": "palace_noble",
+      "roleLabel": "宫廷贵胄",
+      "roleStage": "player_male_style",
+      "scene": null,
+      "portraitRef": "portrait-s73-10-player-male-extra-palace_noble-look03-v1",
+      "genderPresentation": "masculine",
+      "ageBand": "adult_young_to_mature",
+      "statusVariant": "working",
+      "emotionVariant": "focused",
+      "posture": "执卷处理事务",
+      "identityTags": [
+        "player",
+        "male_style",
+        "palace_noble",
+        "working"
+      ],
+      "emotionTags": [
+        "focused",
+        "working"
+      ],
+      "path": "/assets/ui/portraits/s73-10/portrait-s73-10-player-male-extra-palace_noble-look03-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-portrait-s73-10-player-male-extra-palace_noble-look03-v1.webp",
+      "lowResPlaceholderPath": "/assets/ui/portraits/placeholders/placeholder-portrait-s73-10-player-male-extra-palace_noble-look03-v1.webp",
+      "fallbackRef": "fallback-role-silhouette-v1",
+      "dimensions": {
+        "width": 1024,
+        "height": 1536
+      },
+      "aspectRatio": "1024:1536",
+      "format": "webp",
+      "transparent": false,
+      "safeArea": {
+        "x": 0.2,
+        "y": 0.05,
+        "width": 0.6,
+        "height": 0.88
+      },
+      "focalPoint": {
+        "x": 0.5,
+        "y": 0.25
+      },
+      "mobileCrop": {
+        "mode": "center_crop_or_contain",
+        "keepSafeArea": true,
+        "notes": "玩家男性选角和身份卡窄屏保留面部、冠帽、肩颈轮廓、腰带和身份服饰；不得显示未审核候选图。"
+      },
+      "lazyLoad": {
+        "group": "portrait_pool_player_male_extra_s73_10",
+        "allowEagerLoad": false,
+        "thumbnailFirst": true,
+        "lowResPlaceholder": true,
+        "maxInitialPortraits": 8
+      },
+      "source": {
+        "type": "ai_generated",
+        "tool": "Codex imagegen",
+        "model": "gpt-image-2",
+        "generatedAt": "2026-05-15",
+        "promptSummary": "宫廷贵胄玩家扩展：礼服、冠饰、宫灯与玉带，华贵克制。 工作款，持卷或持笏，表现读书、理政或经营状态。"
+      },
+      "license": {
+        "type": "ai_generated_project_asset",
+        "commercialUseConfirmed": false,
+        "summary": "原创 AI 生成素材，当前仅个人游玩/开发使用；未做公开商用确认。"
+      },
+      "reviewStatus": "approved",
+      "visualReview": {
+        "reviewedBy": "Codex",
+        "reviewedAt": "2026-05-15",
+        "status": "approved",
+        "summary": "通过：成年男性特征明确，肩颈与上身轮廓、冠服层次、身份姿态差异清楚；画面高对比、色彩更丰富、噪点较少，仍保持端庄历史立绘气质。"
+      },
+      "safetyReview": {
+        "reviewedBy": "Codex",
+        "reviewedAt": "2026-05-15",
+        "status": "approved",
+        "summary": "通过：全套衣着完整，无裸露、挑逗、幼态、现代物、水印、徽标、可读文字、本地路径、key、raw/hidden 内容或未公开剧情事实。"
+      },
+      "performance": {
+        "bytes": 204518,
+        "targetMaxBytes": 614400,
+        "thumbnailBytes": 48122,
+        "thumbnailTargetMaxBytes": 256000,
+        "lowResPlaceholderBytes": 1722
+      },
+      "ledgerId": "portrait-s73-10-player-male-extra-palace_noble-look03-v1"
+    },
+    {
+      "id": "portrait-s73-10-player-male-extra-palace_noble-look04-v1",
+      "version": 1,
+      "phase": "S73.10.2",
+      "category": "portrait",
+      "subcategory": "player_male_style_pool",
+      "usage": [
+        "player_identity",
+        "people_page",
+        "game_main"
+      ],
+      "role": "palace_noble",
+      "roleLabel": "宫廷贵胄",
+      "roleStage": "player_male_style",
+      "scene": null,
+      "portraitRef": "portrait-s73-10-player-male-extra-palace_noble-look04-v1",
+      "genderPresentation": "masculine",
+      "ageBand": "adult_young_to_mature",
+      "statusVariant": "travel_or_motion",
+      "emotionVariant": "alert",
+      "posture": "披风行旅",
+      "identityTags": [
+        "player",
+        "male_style",
+        "palace_noble",
+        "travel_or_motion"
+      ],
+      "emotionTags": [
+        "alert",
+        "travel_or_motion"
+      ],
+      "path": "/assets/ui/portraits/s73-10/portrait-s73-10-player-male-extra-palace_noble-look04-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-portrait-s73-10-player-male-extra-palace_noble-look04-v1.webp",
+      "lowResPlaceholderPath": "/assets/ui/portraits/placeholders/placeholder-portrait-s73-10-player-male-extra-palace_noble-look04-v1.webp",
+      "fallbackRef": "fallback-role-silhouette-v1",
+      "dimensions": {
+        "width": 1024,
+        "height": 1536
+      },
+      "aspectRatio": "1024:1536",
+      "format": "webp",
+      "transparent": false,
+      "safeArea": {
+        "x": 0.2,
+        "y": 0.05,
+        "width": 0.6,
+        "height": 0.88
+      },
+      "focalPoint": {
+        "x": 0.5,
+        "y": 0.25
+      },
+      "mobileCrop": {
+        "mode": "center_crop_or_contain",
+        "keepSafeArea": true,
+        "notes": "玩家男性选角和身份卡窄屏保留面部、冠帽、肩颈轮廓、腰带和身份服饰；不得显示未审核候选图。"
+      },
+      "lazyLoad": {
+        "group": "portrait_pool_player_male_extra_s73_10",
+        "allowEagerLoad": false,
+        "thumbnailFirst": true,
+        "lowResPlaceholder": true,
+        "maxInitialPortraits": 8
+      },
+      "source": {
+        "type": "ai_generated",
+        "tool": "Codex imagegen",
+        "model": "gpt-image-2",
+        "generatedAt": "2026-05-15",
+        "promptSummary": "宫廷贵胄玩家扩展：礼服、冠饰、宫灯与玉带，华贵克制。 动态款，披风、甲衣或外袍拉开轮廓，行动感更强。"
+      },
+      "license": {
+        "type": "ai_generated_project_asset",
+        "commercialUseConfirmed": false,
+        "summary": "原创 AI 生成素材，当前仅个人游玩/开发使用；未做公开商用确认。"
+      },
+      "reviewStatus": "approved",
+      "visualReview": {
+        "reviewedBy": "Codex",
+        "reviewedAt": "2026-05-15",
+        "status": "approved",
+        "summary": "通过：成年男性特征明确，肩颈与上身轮廓、冠服层次、身份姿态差异清楚；画面高对比、色彩更丰富、噪点较少，仍保持端庄历史立绘气质。"
+      },
+      "safetyReview": {
+        "reviewedBy": "Codex",
+        "reviewedAt": "2026-05-15",
+        "status": "approved",
+        "summary": "通过：全套衣着完整，无裸露、挑逗、幼态、现代物、水印、徽标、可读文字、本地路径、key、raw/hidden 内容或未公开剧情事实。"
+      },
+      "performance": {
+        "bytes": 192294,
+        "targetMaxBytes": 614400,
+        "thumbnailBytes": 46096,
+        "thumbnailTargetMaxBytes": 256000,
+        "lowResPlaceholderBytes": 1630
+      },
+      "ledgerId": "portrait-s73-10-player-male-extra-palace_noble-look04-v1"
+    },
+    {
+      "id": "portrait-s73-10-player-male-extra-palace_noble-look05-v1",
+      "version": 1,
+      "phase": "S73.10.2",
+      "category": "portrait",
+      "subcategory": "player_male_style_pool",
+      "usage": [
+        "player_identity",
+        "people_page",
+        "game_main"
+      ],
+      "role": "palace_noble",
+      "roleLabel": "宫廷贵胄",
+      "roleStage": "player_male_style",
+      "scene": null,
+      "portraitRef": "portrait-s73-10-player-male-extra-palace_noble-look05-v1",
+      "genderPresentation": "masculine",
+      "ageBand": "adult_young_to_mature",
+      "statusVariant": "quiet_authority",
+      "emotionVariant": "stern",
+      "posture": "拢袖端坐",
+      "identityTags": [
+        "player",
+        "male_style",
+        "palace_noble",
+        "quiet_authority"
+      ],
+      "emotionTags": [
+        "stern",
+        "quiet_authority"
+      ],
+      "path": "/assets/ui/portraits/s73-10/portrait-s73-10-player-male-extra-palace_noble-look05-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-portrait-s73-10-player-male-extra-palace_noble-look05-v1.webp",
+      "lowResPlaceholderPath": "/assets/ui/portraits/placeholders/placeholder-portrait-s73-10-player-male-extra-palace_noble-look05-v1.webp",
+      "fallbackRef": "fallback-role-silhouette-v1",
+      "dimensions": {
+        "width": 1024,
+        "height": 1536
+      },
+      "aspectRatio": "1024:1536",
+      "format": "webp",
+      "transparent": false,
+      "safeArea": {
+        "x": 0.2,
+        "y": 0.05,
+        "width": 0.6,
+        "height": 0.88
+      },
+      "focalPoint": {
+        "x": 0.5,
+        "y": 0.25
+      },
+      "mobileCrop": {
+        "mode": "center_crop_or_contain",
+        "keepSafeArea": true,
+        "notes": "玩家男性选角和身份卡窄屏保留面部、冠帽、肩颈轮廓、腰带和身份服饰；不得显示未审核候选图。"
+      },
+      "lazyLoad": {
+        "group": "portrait_pool_player_male_extra_s73_10",
+        "allowEagerLoad": false,
+        "thumbnailFirst": true,
+        "lowResPlaceholder": true,
+        "maxInitialPortraits": 8
+      },
+      "source": {
+        "type": "ai_generated",
+        "tool": "Codex imagegen",
+        "model": "gpt-image-2",
+        "generatedAt": "2026-05-15",
+        "promptSummary": "宫廷贵胄玩家扩展：礼服、冠饰、宫灯与玉带，华贵克制。 威仪款，表情沉稳，适合高位身份或慎重决策。"
+      },
+      "license": {
+        "type": "ai_generated_project_asset",
+        "commercialUseConfirmed": false,
+        "summary": "原创 AI 生成素材，当前仅个人游玩/开发使用；未做公开商用确认。"
+      },
+      "reviewStatus": "approved",
+      "visualReview": {
+        "reviewedBy": "Codex",
+        "reviewedAt": "2026-05-15",
+        "status": "approved",
+        "summary": "通过：成年男性特征明确，肩颈与上身轮廓、冠服层次、身份姿态差异清楚；画面高对比、色彩更丰富、噪点较少，仍保持端庄历史立绘气质。"
+      },
+      "safetyReview": {
+        "reviewedBy": "Codex",
+        "reviewedAt": "2026-05-15",
+        "status": "approved",
+        "summary": "通过：全套衣着完整，无裸露、挑逗、幼态、现代物、水印、徽标、可读文字、本地路径、key、raw/hidden 内容或未公开剧情事实。"
+      },
+      "performance": {
+        "bytes": 227628,
+        "targetMaxBytes": 614400,
+        "thumbnailBytes": 57278,
+        "thumbnailTargetMaxBytes": 256000,
+        "lowResPlaceholderBytes": 1858
+      },
+      "ledgerId": "portrait-s73-10-player-male-extra-palace_noble-look05-v1"
+    },
+    {
+      "id": "portrait-s73-10-player-male-extra-palace_noble-look06-v1",
+      "version": 1,
+      "phase": "S73.10.2",
+      "category": "portrait",
+      "subcategory": "player_male_style_pool",
+      "usage": [
+        "player_identity",
+        "people_page",
+        "game_main"
+      ],
+      "role": "palace_noble",
+      "roleLabel": "宫廷贵胄",
+      "roleStage": "player_male_style",
+      "scene": null,
+      "portraitRef": "portrait-s73-10-player-male-extra-palace_noble-look06-v1",
+      "genderPresentation": "masculine",
+      "ageBand": "adult_young_to_mature",
+      "statusVariant": "poised",
+      "emotionVariant": "determined",
+      "posture": "持物正立",
+      "identityTags": [
+        "player",
+        "male_style",
+        "palace_noble",
+        "poised"
+      ],
+      "emotionTags": [
+        "determined",
+        "poised"
+      ],
+      "path": "/assets/ui/portraits/s73-10/portrait-s73-10-player-male-extra-palace_noble-look06-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-portrait-s73-10-player-male-extra-palace_noble-look06-v1.webp",
+      "lowResPlaceholderPath": "/assets/ui/portraits/placeholders/placeholder-portrait-s73-10-player-male-extra-palace_noble-look06-v1.webp",
+      "fallbackRef": "fallback-role-silhouette-v1",
+      "dimensions": {
+        "width": 1024,
+        "height": 1536
+      },
+      "aspectRatio": "1024:1536",
+      "format": "webp",
+      "transparent": false,
+      "safeArea": {
+        "x": 0.2,
+        "y": 0.05,
+        "width": 0.6,
+        "height": 0.88
+      },
+      "focalPoint": {
+        "x": 0.5,
+        "y": 0.25
+      },
+      "mobileCrop": {
+        "mode": "center_crop_or_contain",
+        "keepSafeArea": true,
+        "notes": "玩家男性选角和身份卡窄屏保留面部、冠帽、肩颈轮廓、腰带和身份服饰；不得显示未审核候选图。"
+      },
+      "lazyLoad": {
+        "group": "portrait_pool_player_male_extra_s73_10",
+        "allowEagerLoad": false,
+        "thumbnailFirst": true,
+        "lowResPlaceholder": true,
+        "maxInitialPortraits": 8
+      },
+      "source": {
+        "type": "ai_generated",
+        "tool": "Codex imagegen",
+        "model": "gpt-image-2",
+        "generatedAt": "2026-05-15",
+        "promptSummary": "宫廷贵胄玩家扩展：礼服、冠饰、宫灯与玉带，华贵克制。 选角款，面向玩家形象选择，色彩更丰富、对比更高。"
+      },
+      "license": {
+        "type": "ai_generated_project_asset",
+        "commercialUseConfirmed": false,
+        "summary": "原创 AI 生成素材，当前仅个人游玩/开发使用；未做公开商用确认。"
+      },
+      "reviewStatus": "approved",
+      "visualReview": {
+        "reviewedBy": "Codex",
+        "reviewedAt": "2026-05-15",
+        "status": "approved",
+        "summary": "通过：成年男性特征明确，肩颈与上身轮廓、冠服层次、身份姿态差异清楚；画面高对比、色彩更丰富、噪点较少，仍保持端庄历史立绘气质。"
+      },
+      "safetyReview": {
+        "reviewedBy": "Codex",
+        "reviewedAt": "2026-05-15",
+        "status": "approved",
+        "summary": "通过：全套衣着完整，无裸露、挑逗、幼态、现代物、水印、徽标、可读文字、本地路径、key、raw/hidden 内容或未公开剧情事实。"
+      },
+      "performance": {
+        "bytes": 188524,
+        "targetMaxBytes": 614400,
+        "thumbnailBytes": 45808,
+        "thumbnailTargetMaxBytes": 256000,
+        "lowResPlaceholderBytes": 1670
+      },
+      "ledgerId": "portrait-s73-10-player-male-extra-palace_noble-look06-v1"
+    },
+    {
+      "id": "portrait-s73-10-player-male-extra-high_minister-look01-v1",
+      "version": 1,
+      "phase": "S73.10.2",
+      "category": "portrait",
+      "subcategory": "player_male_style_pool",
+      "usage": [
+        "player_identity",
+        "people_page",
+        "game_main"
+      ],
+      "role": "high_minister",
+      "roleLabel": "中枢重臣",
+      "roleStage": "player_male_style",
+      "scene": null,
+      "portraitRef": "portrait-s73-10-player-male-extra-high_minister-look01-v1",
+      "genderPresentation": "masculine",
+      "ageBand": "adult_young_to_mature",
+      "statusVariant": "baseline",
+      "emotionVariant": "composed",
+      "posture": "正身肃立",
+      "identityTags": [
+        "player",
+        "male_style",
+        "high_minister",
+        "baseline"
+      ],
+      "emotionTags": [
+        "composed",
+        "baseline"
+      ],
+      "path": "/assets/ui/portraits/s73-10/portrait-s73-10-player-male-extra-high_minister-look01-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-portrait-s73-10-player-male-extra-high_minister-look01-v1.webp",
+      "lowResPlaceholderPath": "/assets/ui/portraits/placeholders/placeholder-portrait-s73-10-player-male-extra-high_minister-look01-v1.webp",
+      "fallbackRef": "fallback-role-silhouette-v1",
+      "dimensions": {
+        "width": 1024,
+        "height": 1536
+      },
+      "aspectRatio": "1024:1536",
+      "format": "webp",
+      "transparent": false,
+      "safeArea": {
+        "x": 0.2,
+        "y": 0.05,
+        "width": 0.6,
+        "height": 0.88
+      },
+      "focalPoint": {
+        "x": 0.5,
+        "y": 0.25
+      },
+      "mobileCrop": {
+        "mode": "center_crop_or_contain",
+        "keepSafeArea": true,
+        "notes": "玩家男性选角和身份卡窄屏保留面部、冠帽、肩颈轮廓、腰带和身份服饰；不得显示未审核候选图。"
+      },
+      "lazyLoad": {
+        "group": "portrait_pool_player_male_extra_s73_10",
+        "allowEagerLoad": false,
+        "thumbnailFirst": true,
+        "lowResPlaceholder": true,
+        "maxInitialPortraits": 8
+      },
+      "source": {
+        "type": "ai_generated",
+        "tool": "Codex imagegen",
+        "model": "gpt-image-2",
+        "generatedAt": "2026-05-15",
+        "promptSummary": "中枢重臣玩家扩展：厚重官服、拢袖持笏、沉稳威仪和朝堂屏风。 正身款，肩颈和上身轮廓清楚，端庄不夸张。"
+      },
+      "license": {
+        "type": "ai_generated_project_asset",
+        "commercialUseConfirmed": false,
+        "summary": "原创 AI 生成素材，当前仅个人游玩/开发使用；未做公开商用确认。"
+      },
+      "reviewStatus": "approved",
+      "visualReview": {
+        "reviewedBy": "Codex",
+        "reviewedAt": "2026-05-15",
+        "status": "approved",
+        "summary": "通过：成年男性特征明确，肩颈与上身轮廓、冠服层次、身份姿态差异清楚；画面高对比、色彩更丰富、噪点较少，仍保持端庄历史立绘气质。"
+      },
+      "safetyReview": {
+        "reviewedBy": "Codex",
+        "reviewedAt": "2026-05-15",
+        "status": "approved",
+        "summary": "通过：全套衣着完整，无裸露、挑逗、幼态、现代物、水印、徽标、可读文字、本地路径、key、raw/hidden 内容或未公开剧情事实。"
+      },
+      "performance": {
+        "bytes": 164566,
+        "targetMaxBytes": 614400,
+        "thumbnailBytes": 36862,
+        "thumbnailTargetMaxBytes": 256000,
+        "lowResPlaceholderBytes": 1302
+      },
+      "ledgerId": "portrait-s73-10-player-male-extra-high_minister-look01-v1"
+    },
+    {
+      "id": "portrait-s73-10-player-male-extra-high_minister-look02-v1",
+      "version": 1,
+      "phase": "S73.10.2",
+      "category": "portrait",
+      "subcategory": "player_male_style_pool",
+      "usage": [
+        "player_identity",
+        "people_page",
+        "game_main"
+      ],
+      "role": "high_minister",
+      "roleLabel": "中枢重臣",
+      "roleStage": "player_male_style",
+      "scene": null,
+      "portraitRef": "portrait-s73-10-player-male-extra-high_minister-look02-v1",
+      "genderPresentation": "masculine",
+      "ageBand": "adult_young_to_mature",
+      "statusVariant": "formal",
+      "emotionVariant": "reserved",
+      "posture": "侧立持物",
+      "identityTags": [
+        "player",
+        "male_style",
+        "high_minister",
+        "formal"
+      ],
+      "emotionTags": [
+        "reserved",
+        "formal"
+      ],
+      "path": "/assets/ui/portraits/s73-10/portrait-s73-10-player-male-extra-high_minister-look02-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-portrait-s73-10-player-male-extra-high_minister-look02-v1.webp",
+      "lowResPlaceholderPath": "/assets/ui/portraits/placeholders/placeholder-portrait-s73-10-player-male-extra-high_minister-look02-v1.webp",
+      "fallbackRef": "fallback-role-silhouette-v1",
+      "dimensions": {
+        "width": 1024,
+        "height": 1536
+      },
+      "aspectRatio": "1024:1536",
+      "format": "webp",
+      "transparent": false,
+      "safeArea": {
+        "x": 0.2,
+        "y": 0.05,
+        "width": 0.6,
+        "height": 0.88
+      },
+      "focalPoint": {
+        "x": 0.5,
+        "y": 0.25
+      },
+      "mobileCrop": {
+        "mode": "center_crop_or_contain",
+        "keepSafeArea": true,
+        "notes": "玩家男性选角和身份卡窄屏保留面部、冠帽、肩颈轮廓、腰带和身份服饰；不得显示未审核候选图。"
+      },
+      "lazyLoad": {
+        "group": "portrait_pool_player_male_extra_s73_10",
+        "allowEagerLoad": false,
+        "thumbnailFirst": true,
+        "lowResPlaceholder": true,
+        "maxInitialPortraits": 8
+      },
+      "source": {
+        "type": "ai_generated",
+        "tool": "Codex imagegen",
+        "model": "gpt-image-2",
+        "generatedAt": "2026-05-15",
+        "promptSummary": "中枢重臣玩家扩展：厚重官服、拢袖持笏、沉稳威仪和朝堂屏风。 礼服款，冠服、腰带和持物细节更明显。"
+      },
+      "license": {
+        "type": "ai_generated_project_asset",
+        "commercialUseConfirmed": false,
+        "summary": "原创 AI 生成素材，当前仅个人游玩/开发使用；未做公开商用确认。"
+      },
+      "reviewStatus": "approved",
+      "visualReview": {
+        "reviewedBy": "Codex",
+        "reviewedAt": "2026-05-15",
+        "status": "approved",
+        "summary": "通过：成年男性特征明确，肩颈与上身轮廓、冠服层次、身份姿态差异清楚；画面高对比、色彩更丰富、噪点较少，仍保持端庄历史立绘气质。"
+      },
+      "safetyReview": {
+        "reviewedBy": "Codex",
+        "reviewedAt": "2026-05-15",
+        "status": "approved",
+        "summary": "通过：全套衣着完整，无裸露、挑逗、幼态、现代物、水印、徽标、可读文字、本地路径、key、raw/hidden 内容或未公开剧情事实。"
+      },
+      "performance": {
+        "bytes": 172166,
+        "targetMaxBytes": 614400,
+        "thumbnailBytes": 39928,
+        "thumbnailTargetMaxBytes": 256000,
+        "lowResPlaceholderBytes": 1478
+      },
+      "ledgerId": "portrait-s73-10-player-male-extra-high_minister-look02-v1"
+    },
+    {
+      "id": "portrait-s73-10-player-male-extra-high_minister-look03-v1",
+      "version": 1,
+      "phase": "S73.10.2",
+      "category": "portrait",
+      "subcategory": "player_male_style_pool",
+      "usage": [
+        "player_identity",
+        "people_page",
+        "game_main"
+      ],
+      "role": "high_minister",
+      "roleLabel": "中枢重臣",
+      "roleStage": "player_male_style",
+      "scene": null,
+      "portraitRef": "portrait-s73-10-player-male-extra-high_minister-look03-v1",
+      "genderPresentation": "masculine",
+      "ageBand": "adult_young_to_mature",
+      "statusVariant": "working",
+      "emotionVariant": "focused",
+      "posture": "执卷处理事务",
+      "identityTags": [
+        "player",
+        "male_style",
+        "high_minister",
+        "working"
+      ],
+      "emotionTags": [
+        "focused",
+        "working"
+      ],
+      "path": "/assets/ui/portraits/s73-10/portrait-s73-10-player-male-extra-high_minister-look03-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-portrait-s73-10-player-male-extra-high_minister-look03-v1.webp",
+      "lowResPlaceholderPath": "/assets/ui/portraits/placeholders/placeholder-portrait-s73-10-player-male-extra-high_minister-look03-v1.webp",
+      "fallbackRef": "fallback-role-silhouette-v1",
+      "dimensions": {
+        "width": 1024,
+        "height": 1536
+      },
+      "aspectRatio": "1024:1536",
+      "format": "webp",
+      "transparent": false,
+      "safeArea": {
+        "x": 0.2,
+        "y": 0.05,
+        "width": 0.6,
+        "height": 0.88
+      },
+      "focalPoint": {
+        "x": 0.5,
+        "y": 0.25
+      },
+      "mobileCrop": {
+        "mode": "center_crop_or_contain",
+        "keepSafeArea": true,
+        "notes": "玩家男性选角和身份卡窄屏保留面部、冠帽、肩颈轮廓、腰带和身份服饰；不得显示未审核候选图。"
+      },
+      "lazyLoad": {
+        "group": "portrait_pool_player_male_extra_s73_10",
+        "allowEagerLoad": false,
+        "thumbnailFirst": true,
+        "lowResPlaceholder": true,
+        "maxInitialPortraits": 8
+      },
+      "source": {
+        "type": "ai_generated",
+        "tool": "Codex imagegen",
+        "model": "gpt-image-2",
+        "generatedAt": "2026-05-15",
+        "promptSummary": "中枢重臣玩家扩展：厚重官服、拢袖持笏、沉稳威仪和朝堂屏风。 工作款，持卷或持笏，表现读书、理政或经营状态。"
+      },
+      "license": {
+        "type": "ai_generated_project_asset",
+        "commercialUseConfirmed": false,
+        "summary": "原创 AI 生成素材，当前仅个人游玩/开发使用；未做公开商用确认。"
+      },
+      "reviewStatus": "approved",
+      "visualReview": {
+        "reviewedBy": "Codex",
+        "reviewedAt": "2026-05-15",
+        "status": "approved",
+        "summary": "通过：成年男性特征明确，肩颈与上身轮廓、冠服层次、身份姿态差异清楚；画面高对比、色彩更丰富、噪点较少，仍保持端庄历史立绘气质。"
+      },
+      "safetyReview": {
+        "reviewedBy": "Codex",
+        "reviewedAt": "2026-05-15",
+        "status": "approved",
+        "summary": "通过：全套衣着完整，无裸露、挑逗、幼态、现代物、水印、徽标、可读文字、本地路径、key、raw/hidden 内容或未公开剧情事实。"
+      },
+      "performance": {
+        "bytes": 174560,
+        "targetMaxBytes": 614400,
+        "thumbnailBytes": 40596,
+        "thumbnailTargetMaxBytes": 256000,
+        "lowResPlaceholderBytes": 1384
+      },
+      "ledgerId": "portrait-s73-10-player-male-extra-high_minister-look03-v1"
+    },
+    {
+      "id": "portrait-s73-10-player-male-extra-high_minister-look04-v1",
+      "version": 1,
+      "phase": "S73.10.2",
+      "category": "portrait",
+      "subcategory": "player_male_style_pool",
+      "usage": [
+        "player_identity",
+        "people_page",
+        "game_main"
+      ],
+      "role": "high_minister",
+      "roleLabel": "中枢重臣",
+      "roleStage": "player_male_style",
+      "scene": null,
+      "portraitRef": "portrait-s73-10-player-male-extra-high_minister-look04-v1",
+      "genderPresentation": "masculine",
+      "ageBand": "adult_young_to_mature",
+      "statusVariant": "travel_or_motion",
+      "emotionVariant": "alert",
+      "posture": "披风行旅",
+      "identityTags": [
+        "player",
+        "male_style",
+        "high_minister",
+        "travel_or_motion"
+      ],
+      "emotionTags": [
+        "alert",
+        "travel_or_motion"
+      ],
+      "path": "/assets/ui/portraits/s73-10/portrait-s73-10-player-male-extra-high_minister-look04-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-portrait-s73-10-player-male-extra-high_minister-look04-v1.webp",
+      "lowResPlaceholderPath": "/assets/ui/portraits/placeholders/placeholder-portrait-s73-10-player-male-extra-high_minister-look04-v1.webp",
+      "fallbackRef": "fallback-role-silhouette-v1",
+      "dimensions": {
+        "width": 1024,
+        "height": 1536
+      },
+      "aspectRatio": "1024:1536",
+      "format": "webp",
+      "transparent": false,
+      "safeArea": {
+        "x": 0.2,
+        "y": 0.05,
+        "width": 0.6,
+        "height": 0.88
+      },
+      "focalPoint": {
+        "x": 0.5,
+        "y": 0.25
+      },
+      "mobileCrop": {
+        "mode": "center_crop_or_contain",
+        "keepSafeArea": true,
+        "notes": "玩家男性选角和身份卡窄屏保留面部、冠帽、肩颈轮廓、腰带和身份服饰；不得显示未审核候选图。"
+      },
+      "lazyLoad": {
+        "group": "portrait_pool_player_male_extra_s73_10",
+        "allowEagerLoad": false,
+        "thumbnailFirst": true,
+        "lowResPlaceholder": true,
+        "maxInitialPortraits": 8
+      },
+      "source": {
+        "type": "ai_generated",
+        "tool": "Codex imagegen",
+        "model": "gpt-image-2",
+        "generatedAt": "2026-05-15",
+        "promptSummary": "中枢重臣玩家扩展：厚重官服、拢袖持笏、沉稳威仪和朝堂屏风。 动态款，披风、甲衣或外袍拉开轮廓，行动感更强。"
+      },
+      "license": {
+        "type": "ai_generated_project_asset",
+        "commercialUseConfirmed": false,
+        "summary": "原创 AI 生成素材，当前仅个人游玩/开发使用；未做公开商用确认。"
+      },
+      "reviewStatus": "approved",
+      "visualReview": {
+        "reviewedBy": "Codex",
+        "reviewedAt": "2026-05-15",
+        "status": "approved",
+        "summary": "通过：成年男性特征明确，肩颈与上身轮廓、冠服层次、身份姿态差异清楚；画面高对比、色彩更丰富、噪点较少，仍保持端庄历史立绘气质。"
+      },
+      "safetyReview": {
+        "reviewedBy": "Codex",
+        "reviewedAt": "2026-05-15",
+        "status": "approved",
+        "summary": "通过：全套衣着完整，无裸露、挑逗、幼态、现代物、水印、徽标、可读文字、本地路径、key、raw/hidden 内容或未公开剧情事实。"
+      },
+      "performance": {
+        "bytes": 176664,
+        "targetMaxBytes": 614400,
+        "thumbnailBytes": 39538,
+        "thumbnailTargetMaxBytes": 256000,
+        "lowResPlaceholderBytes": 1344
+      },
+      "ledgerId": "portrait-s73-10-player-male-extra-high_minister-look04-v1"
+    },
+    {
+      "id": "portrait-s73-10-player-male-extra-high_minister-look05-v1",
+      "version": 1,
+      "phase": "S73.10.2",
+      "category": "portrait",
+      "subcategory": "player_male_style_pool",
+      "usage": [
+        "player_identity",
+        "people_page",
+        "game_main"
+      ],
+      "role": "high_minister",
+      "roleLabel": "中枢重臣",
+      "roleStage": "player_male_style",
+      "scene": null,
+      "portraitRef": "portrait-s73-10-player-male-extra-high_minister-look05-v1",
+      "genderPresentation": "masculine",
+      "ageBand": "adult_young_to_mature",
+      "statusVariant": "quiet_authority",
+      "emotionVariant": "stern",
+      "posture": "拢袖端坐",
+      "identityTags": [
+        "player",
+        "male_style",
+        "high_minister",
+        "quiet_authority"
+      ],
+      "emotionTags": [
+        "stern",
+        "quiet_authority"
+      ],
+      "path": "/assets/ui/portraits/s73-10/portrait-s73-10-player-male-extra-high_minister-look05-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-portrait-s73-10-player-male-extra-high_minister-look05-v1.webp",
+      "lowResPlaceholderPath": "/assets/ui/portraits/placeholders/placeholder-portrait-s73-10-player-male-extra-high_minister-look05-v1.webp",
+      "fallbackRef": "fallback-role-silhouette-v1",
+      "dimensions": {
+        "width": 1024,
+        "height": 1536
+      },
+      "aspectRatio": "1024:1536",
+      "format": "webp",
+      "transparent": false,
+      "safeArea": {
+        "x": 0.2,
+        "y": 0.05,
+        "width": 0.6,
+        "height": 0.88
+      },
+      "focalPoint": {
+        "x": 0.5,
+        "y": 0.25
+      },
+      "mobileCrop": {
+        "mode": "center_crop_or_contain",
+        "keepSafeArea": true,
+        "notes": "玩家男性选角和身份卡窄屏保留面部、冠帽、肩颈轮廓、腰带和身份服饰；不得显示未审核候选图。"
+      },
+      "lazyLoad": {
+        "group": "portrait_pool_player_male_extra_s73_10",
+        "allowEagerLoad": false,
+        "thumbnailFirst": true,
+        "lowResPlaceholder": true,
+        "maxInitialPortraits": 8
+      },
+      "source": {
+        "type": "ai_generated",
+        "tool": "Codex imagegen",
+        "model": "gpt-image-2",
+        "generatedAt": "2026-05-15",
+        "promptSummary": "中枢重臣玩家扩展：厚重官服、拢袖持笏、沉稳威仪和朝堂屏风。 威仪款，表情沉稳，适合高位身份或慎重决策。"
+      },
+      "license": {
+        "type": "ai_generated_project_asset",
+        "commercialUseConfirmed": false,
+        "summary": "原创 AI 生成素材，当前仅个人游玩/开发使用；未做公开商用确认。"
+      },
+      "reviewStatus": "approved",
+      "visualReview": {
+        "reviewedBy": "Codex",
+        "reviewedAt": "2026-05-15",
+        "status": "approved",
+        "summary": "通过：成年男性特征明确，肩颈与上身轮廓、冠服层次、身份姿态差异清楚；画面高对比、色彩更丰富、噪点较少，仍保持端庄历史立绘气质。"
+      },
+      "safetyReview": {
+        "reviewedBy": "Codex",
+        "reviewedAt": "2026-05-15",
+        "status": "approved",
+        "summary": "通过：全套衣着完整，无裸露、挑逗、幼态、现代物、水印、徽标、可读文字、本地路径、key、raw/hidden 内容或未公开剧情事实。"
+      },
+      "performance": {
+        "bytes": 164906,
+        "targetMaxBytes": 614400,
+        "thumbnailBytes": 37146,
+        "thumbnailTargetMaxBytes": 256000,
+        "lowResPlaceholderBytes": 1392
+      },
+      "ledgerId": "portrait-s73-10-player-male-extra-high_minister-look05-v1"
+    },
+    {
+      "id": "portrait-s73-10-player-male-extra-high_minister-look06-v1",
+      "version": 1,
+      "phase": "S73.10.2",
+      "category": "portrait",
+      "subcategory": "player_male_style_pool",
+      "usage": [
+        "player_identity",
+        "people_page",
+        "game_main"
+      ],
+      "role": "high_minister",
+      "roleLabel": "中枢重臣",
+      "roleStage": "player_male_style",
+      "scene": null,
+      "portraitRef": "portrait-s73-10-player-male-extra-high_minister-look06-v1",
+      "genderPresentation": "masculine",
+      "ageBand": "adult_young_to_mature",
+      "statusVariant": "poised",
+      "emotionVariant": "determined",
+      "posture": "持物正立",
+      "identityTags": [
+        "player",
+        "male_style",
+        "high_minister",
+        "poised"
+      ],
+      "emotionTags": [
+        "determined",
+        "poised"
+      ],
+      "path": "/assets/ui/portraits/s73-10/portrait-s73-10-player-male-extra-high_minister-look06-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-portrait-s73-10-player-male-extra-high_minister-look06-v1.webp",
+      "lowResPlaceholderPath": "/assets/ui/portraits/placeholders/placeholder-portrait-s73-10-player-male-extra-high_minister-look06-v1.webp",
+      "fallbackRef": "fallback-role-silhouette-v1",
+      "dimensions": {
+        "width": 1024,
+        "height": 1536
+      },
+      "aspectRatio": "1024:1536",
+      "format": "webp",
+      "transparent": false,
+      "safeArea": {
+        "x": 0.2,
+        "y": 0.05,
+        "width": 0.6,
+        "height": 0.88
+      },
+      "focalPoint": {
+        "x": 0.5,
+        "y": 0.25
+      },
+      "mobileCrop": {
+        "mode": "center_crop_or_contain",
+        "keepSafeArea": true,
+        "notes": "玩家男性选角和身份卡窄屏保留面部、冠帽、肩颈轮廓、腰带和身份服饰；不得显示未审核候选图。"
+      },
+      "lazyLoad": {
+        "group": "portrait_pool_player_male_extra_s73_10",
+        "allowEagerLoad": false,
+        "thumbnailFirst": true,
+        "lowResPlaceholder": true,
+        "maxInitialPortraits": 8
+      },
+      "source": {
+        "type": "ai_generated",
+        "tool": "Codex imagegen",
+        "model": "gpt-image-2",
+        "generatedAt": "2026-05-15",
+        "promptSummary": "中枢重臣玩家扩展：厚重官服、拢袖持笏、沉稳威仪和朝堂屏风。 选角款，面向玩家形象选择，色彩更丰富、对比更高。"
+      },
+      "license": {
+        "type": "ai_generated_project_asset",
+        "commercialUseConfirmed": false,
+        "summary": "原创 AI 生成素材，当前仅个人游玩/开发使用；未做公开商用确认。"
+      },
+      "reviewStatus": "approved",
+      "visualReview": {
+        "reviewedBy": "Codex",
+        "reviewedAt": "2026-05-15",
+        "status": "approved",
+        "summary": "通过：成年男性特征明确，肩颈与上身轮廓、冠服层次、身份姿态差异清楚；画面高对比、色彩更丰富、噪点较少，仍保持端庄历史立绘气质。"
+      },
+      "safetyReview": {
+        "reviewedBy": "Codex",
+        "reviewedAt": "2026-05-15",
+        "status": "approved",
+        "summary": "通过：全套衣着完整，无裸露、挑逗、幼态、现代物、水印、徽标、可读文字、本地路径、key、raw/hidden 内容或未公开剧情事实。"
+      },
+      "performance": {
+        "bytes": 176826,
+        "targetMaxBytes": 614400,
+        "thumbnailBytes": 39540,
+        "thumbnailTargetMaxBytes": 256000,
+        "lowResPlaceholderBytes": 1306
+      },
+      "ledgerId": "portrait-s73-10-player-male-extra-high_minister-look06-v1"
+    },
+    {
+      "id": "portrait-s73-10-player-male-extra-frontier_general-look01-v1",
+      "version": 1,
+      "phase": "S73.10.2",
+      "category": "portrait",
+      "subcategory": "player_male_style_pool",
+      "usage": [
+        "player_identity",
+        "people_page",
+        "game_main"
+      ],
+      "role": "frontier_general",
+      "roleLabel": "边塞将领",
+      "roleStage": "player_male_style",
+      "scene": null,
+      "portraitRef": "portrait-s73-10-player-male-extra-frontier_general-look01-v1",
+      "genderPresentation": "masculine",
+      "ageBand": "adult_young_to_mature",
+      "statusVariant": "baseline",
+      "emotionVariant": "composed",
+      "posture": "正身肃立",
+      "identityTags": [
+        "player",
+        "male_style",
+        "frontier_general",
+        "baseline"
+      ],
+      "emotionTags": [
+        "composed",
+        "baseline"
+      ],
+      "path": "/assets/ui/portraits/s73-10/portrait-s73-10-player-male-extra-frontier_general-look01-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-portrait-s73-10-player-male-extra-frontier_general-look01-v1.webp",
+      "lowResPlaceholderPath": "/assets/ui/portraits/placeholders/placeholder-portrait-s73-10-player-male-extra-frontier_general-look01-v1.webp",
+      "fallbackRef": "fallback-role-silhouette-v1",
+      "dimensions": {
+        "width": 1024,
+        "height": 1536
+      },
+      "aspectRatio": "1024:1536",
+      "format": "webp",
+      "transparent": false,
+      "safeArea": {
+        "x": 0.2,
+        "y": 0.05,
+        "width": 0.6,
+        "height": 0.88
+      },
+      "focalPoint": {
+        "x": 0.5,
+        "y": 0.25
+      },
+      "mobileCrop": {
+        "mode": "center_crop_or_contain",
+        "keepSafeArea": true,
+        "notes": "玩家男性选角和身份卡窄屏保留面部、冠帽、肩颈轮廓、腰带和身份服饰；不得显示未审核候选图。"
+      },
+      "lazyLoad": {
+        "group": "portrait_pool_player_male_extra_s73_10",
+        "allowEagerLoad": false,
+        "thumbnailFirst": true,
+        "lowResPlaceholder": true,
+        "maxInitialPortraits": 8
+      },
+      "source": {
+        "type": "ai_generated",
+        "tool": "Codex imagegen",
+        "model": "gpt-image-2",
+        "generatedAt": "2026-05-15",
+        "promptSummary": "边塞将领玩家扩展：完整甲衣、披风、军帐与边关山势，英武端正。 正身款，肩颈和上身轮廓清楚，端庄不夸张。"
+      },
+      "license": {
+        "type": "ai_generated_project_asset",
+        "commercialUseConfirmed": false,
+        "summary": "原创 AI 生成素材，当前仅个人游玩/开发使用；未做公开商用确认。"
+      },
+      "reviewStatus": "approved",
+      "visualReview": {
+        "reviewedBy": "Codex",
+        "reviewedAt": "2026-05-15",
+        "status": "approved",
+        "summary": "通过：成年男性特征明确，肩颈与上身轮廓、冠服层次、身份姿态差异清楚；画面高对比、色彩更丰富、噪点较少，仍保持端庄历史立绘气质。"
+      },
+      "safetyReview": {
+        "reviewedBy": "Codex",
+        "reviewedAt": "2026-05-15",
+        "status": "approved",
+        "summary": "通过：全套衣着完整，无裸露、挑逗、幼态、现代物、水印、徽标、可读文字、本地路径、key、raw/hidden 内容或未公开剧情事实。"
+      },
+      "performance": {
+        "bytes": 194766,
+        "targetMaxBytes": 614400,
+        "thumbnailBytes": 46736,
+        "thumbnailTargetMaxBytes": 256000,
+        "lowResPlaceholderBytes": 1468
+      },
+      "ledgerId": "portrait-s73-10-player-male-extra-frontier_general-look01-v1"
+    },
+    {
+      "id": "portrait-s73-10-player-male-extra-frontier_general-look02-v1",
+      "version": 1,
+      "phase": "S73.10.2",
+      "category": "portrait",
+      "subcategory": "player_male_style_pool",
+      "usage": [
+        "player_identity",
+        "people_page",
+        "game_main"
+      ],
+      "role": "frontier_general",
+      "roleLabel": "边塞将领",
+      "roleStage": "player_male_style",
+      "scene": null,
+      "portraitRef": "portrait-s73-10-player-male-extra-frontier_general-look02-v1",
+      "genderPresentation": "masculine",
+      "ageBand": "adult_young_to_mature",
+      "statusVariant": "formal",
+      "emotionVariant": "reserved",
+      "posture": "侧立持物",
+      "identityTags": [
+        "player",
+        "male_style",
+        "frontier_general",
+        "formal"
+      ],
+      "emotionTags": [
+        "reserved",
+        "formal"
+      ],
+      "path": "/assets/ui/portraits/s73-10/portrait-s73-10-player-male-extra-frontier_general-look02-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-portrait-s73-10-player-male-extra-frontier_general-look02-v1.webp",
+      "lowResPlaceholderPath": "/assets/ui/portraits/placeholders/placeholder-portrait-s73-10-player-male-extra-frontier_general-look02-v1.webp",
+      "fallbackRef": "fallback-role-silhouette-v1",
+      "dimensions": {
+        "width": 1024,
+        "height": 1536
+      },
+      "aspectRatio": "1024:1536",
+      "format": "webp",
+      "transparent": false,
+      "safeArea": {
+        "x": 0.2,
+        "y": 0.05,
+        "width": 0.6,
+        "height": 0.88
+      },
+      "focalPoint": {
+        "x": 0.5,
+        "y": 0.25
+      },
+      "mobileCrop": {
+        "mode": "center_crop_or_contain",
+        "keepSafeArea": true,
+        "notes": "玩家男性选角和身份卡窄屏保留面部、冠帽、肩颈轮廓、腰带和身份服饰；不得显示未审核候选图。"
+      },
+      "lazyLoad": {
+        "group": "portrait_pool_player_male_extra_s73_10",
+        "allowEagerLoad": false,
+        "thumbnailFirst": true,
+        "lowResPlaceholder": true,
+        "maxInitialPortraits": 8
+      },
+      "source": {
+        "type": "ai_generated",
+        "tool": "Codex imagegen",
+        "model": "gpt-image-2",
+        "generatedAt": "2026-05-15",
+        "promptSummary": "边塞将领玩家扩展：完整甲衣、披风、军帐与边关山势，英武端正。 礼服款，冠服、腰带和持物细节更明显。"
+      },
+      "license": {
+        "type": "ai_generated_project_asset",
+        "commercialUseConfirmed": false,
+        "summary": "原创 AI 生成素材，当前仅个人游玩/开发使用；未做公开商用确认。"
+      },
+      "reviewStatus": "approved",
+      "visualReview": {
+        "reviewedBy": "Codex",
+        "reviewedAt": "2026-05-15",
+        "status": "approved",
+        "summary": "通过：成年男性特征明确，肩颈与上身轮廓、冠服层次、身份姿态差异清楚；画面高对比、色彩更丰富、噪点较少，仍保持端庄历史立绘气质。"
+      },
+      "safetyReview": {
+        "reviewedBy": "Codex",
+        "reviewedAt": "2026-05-15",
+        "status": "approved",
+        "summary": "通过：全套衣着完整，无裸露、挑逗、幼态、现代物、水印、徽标、可读文字、本地路径、key、raw/hidden 内容或未公开剧情事实。"
+      },
+      "performance": {
+        "bytes": 184478,
+        "targetMaxBytes": 614400,
+        "thumbnailBytes": 44266,
+        "thumbnailTargetMaxBytes": 256000,
+        "lowResPlaceholderBytes": 1456
+      },
+      "ledgerId": "portrait-s73-10-player-male-extra-frontier_general-look02-v1"
+    },
+    {
+      "id": "portrait-s73-10-player-male-extra-frontier_general-look03-v1",
+      "version": 1,
+      "phase": "S73.10.2",
+      "category": "portrait",
+      "subcategory": "player_male_style_pool",
+      "usage": [
+        "player_identity",
+        "people_page",
+        "game_main"
+      ],
+      "role": "frontier_general",
+      "roleLabel": "边塞将领",
+      "roleStage": "player_male_style",
+      "scene": null,
+      "portraitRef": "portrait-s73-10-player-male-extra-frontier_general-look03-v1",
+      "genderPresentation": "masculine",
+      "ageBand": "adult_young_to_mature",
+      "statusVariant": "working",
+      "emotionVariant": "focused",
+      "posture": "执卷处理事务",
+      "identityTags": [
+        "player",
+        "male_style",
+        "frontier_general",
+        "working"
+      ],
+      "emotionTags": [
+        "focused",
+        "working"
+      ],
+      "path": "/assets/ui/portraits/s73-10/portrait-s73-10-player-male-extra-frontier_general-look03-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-portrait-s73-10-player-male-extra-frontier_general-look03-v1.webp",
+      "lowResPlaceholderPath": "/assets/ui/portraits/placeholders/placeholder-portrait-s73-10-player-male-extra-frontier_general-look03-v1.webp",
+      "fallbackRef": "fallback-role-silhouette-v1",
+      "dimensions": {
+        "width": 1024,
+        "height": 1536
+      },
+      "aspectRatio": "1024:1536",
+      "format": "webp",
+      "transparent": false,
+      "safeArea": {
+        "x": 0.2,
+        "y": 0.05,
+        "width": 0.6,
+        "height": 0.88
+      },
+      "focalPoint": {
+        "x": 0.5,
+        "y": 0.25
+      },
+      "mobileCrop": {
+        "mode": "center_crop_or_contain",
+        "keepSafeArea": true,
+        "notes": "玩家男性选角和身份卡窄屏保留面部、冠帽、肩颈轮廓、腰带和身份服饰；不得显示未审核候选图。"
+      },
+      "lazyLoad": {
+        "group": "portrait_pool_player_male_extra_s73_10",
+        "allowEagerLoad": false,
+        "thumbnailFirst": true,
+        "lowResPlaceholder": true,
+        "maxInitialPortraits": 8
+      },
+      "source": {
+        "type": "ai_generated",
+        "tool": "Codex imagegen",
+        "model": "gpt-image-2",
+        "generatedAt": "2026-05-15",
+        "promptSummary": "边塞将领玩家扩展：完整甲衣、披风、军帐与边关山势，英武端正。 工作款，持卷或持笏，表现读书、理政或经营状态。"
+      },
+      "license": {
+        "type": "ai_generated_project_asset",
+        "commercialUseConfirmed": false,
+        "summary": "原创 AI 生成素材，当前仅个人游玩/开发使用；未做公开商用确认。"
+      },
+      "reviewStatus": "approved",
+      "visualReview": {
+        "reviewedBy": "Codex",
+        "reviewedAt": "2026-05-15",
+        "status": "approved",
+        "summary": "通过：成年男性特征明确，肩颈与上身轮廓、冠服层次、身份姿态差异清楚；画面高对比、色彩更丰富、噪点较少，仍保持端庄历史立绘气质。"
+      },
+      "safetyReview": {
+        "reviewedBy": "Codex",
+        "reviewedAt": "2026-05-15",
+        "status": "approved",
+        "summary": "通过：全套衣着完整，无裸露、挑逗、幼态、现代物、水印、徽标、可读文字、本地路径、key、raw/hidden 内容或未公开剧情事实。"
+      },
+      "performance": {
+        "bytes": 198694,
+        "targetMaxBytes": 614400,
+        "thumbnailBytes": 46258,
+        "thumbnailTargetMaxBytes": 256000,
+        "lowResPlaceholderBytes": 1396
+      },
+      "ledgerId": "portrait-s73-10-player-male-extra-frontier_general-look03-v1"
+    },
+    {
+      "id": "portrait-s73-10-player-male-extra-frontier_general-look04-v1",
+      "version": 1,
+      "phase": "S73.10.2",
+      "category": "portrait",
+      "subcategory": "player_male_style_pool",
+      "usage": [
+        "player_identity",
+        "people_page",
+        "game_main"
+      ],
+      "role": "frontier_general",
+      "roleLabel": "边塞将领",
+      "roleStage": "player_male_style",
+      "scene": null,
+      "portraitRef": "portrait-s73-10-player-male-extra-frontier_general-look04-v1",
+      "genderPresentation": "masculine",
+      "ageBand": "adult_young_to_mature",
+      "statusVariant": "travel_or_motion",
+      "emotionVariant": "alert",
+      "posture": "披风行旅",
+      "identityTags": [
+        "player",
+        "male_style",
+        "frontier_general",
+        "travel_or_motion"
+      ],
+      "emotionTags": [
+        "alert",
+        "travel_or_motion"
+      ],
+      "path": "/assets/ui/portraits/s73-10/portrait-s73-10-player-male-extra-frontier_general-look04-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-portrait-s73-10-player-male-extra-frontier_general-look04-v1.webp",
+      "lowResPlaceholderPath": "/assets/ui/portraits/placeholders/placeholder-portrait-s73-10-player-male-extra-frontier_general-look04-v1.webp",
+      "fallbackRef": "fallback-role-silhouette-v1",
+      "dimensions": {
+        "width": 1024,
+        "height": 1536
+      },
+      "aspectRatio": "1024:1536",
+      "format": "webp",
+      "transparent": false,
+      "safeArea": {
+        "x": 0.2,
+        "y": 0.05,
+        "width": 0.6,
+        "height": 0.88
+      },
+      "focalPoint": {
+        "x": 0.5,
+        "y": 0.25
+      },
+      "mobileCrop": {
+        "mode": "center_crop_or_contain",
+        "keepSafeArea": true,
+        "notes": "玩家男性选角和身份卡窄屏保留面部、冠帽、肩颈轮廓、腰带和身份服饰；不得显示未审核候选图。"
+      },
+      "lazyLoad": {
+        "group": "portrait_pool_player_male_extra_s73_10",
+        "allowEagerLoad": false,
+        "thumbnailFirst": true,
+        "lowResPlaceholder": true,
+        "maxInitialPortraits": 8
+      },
+      "source": {
+        "type": "ai_generated",
+        "tool": "Codex imagegen",
+        "model": "gpt-image-2",
+        "generatedAt": "2026-05-15",
+        "promptSummary": "边塞将领玩家扩展：完整甲衣、披风、军帐与边关山势，英武端正。 动态款，披风、甲衣或外袍拉开轮廓，行动感更强。"
+      },
+      "license": {
+        "type": "ai_generated_project_asset",
+        "commercialUseConfirmed": false,
+        "summary": "原创 AI 生成素材，当前仅个人游玩/开发使用；未做公开商用确认。"
+      },
+      "reviewStatus": "approved",
+      "visualReview": {
+        "reviewedBy": "Codex",
+        "reviewedAt": "2026-05-15",
+        "status": "approved",
+        "summary": "通过：成年男性特征明确，肩颈与上身轮廓、冠服层次、身份姿态差异清楚；画面高对比、色彩更丰富、噪点较少，仍保持端庄历史立绘气质。"
+      },
+      "safetyReview": {
+        "reviewedBy": "Codex",
+        "reviewedAt": "2026-05-15",
+        "status": "approved",
+        "summary": "通过：全套衣着完整，无裸露、挑逗、幼态、现代物、水印、徽标、可读文字、本地路径、key、raw/hidden 内容或未公开剧情事实。"
+      },
+      "performance": {
+        "bytes": 197716,
+        "targetMaxBytes": 614400,
+        "thumbnailBytes": 46824,
+        "thumbnailTargetMaxBytes": 256000,
+        "lowResPlaceholderBytes": 1418
+      },
+      "ledgerId": "portrait-s73-10-player-male-extra-frontier_general-look04-v1"
+    },
+    {
+      "id": "portrait-s73-10-player-male-extra-frontier_general-look05-v1",
+      "version": 1,
+      "phase": "S73.10.2",
+      "category": "portrait",
+      "subcategory": "player_male_style_pool",
+      "usage": [
+        "player_identity",
+        "people_page",
+        "game_main"
+      ],
+      "role": "frontier_general",
+      "roleLabel": "边塞将领",
+      "roleStage": "player_male_style",
+      "scene": null,
+      "portraitRef": "portrait-s73-10-player-male-extra-frontier_general-look05-v1",
+      "genderPresentation": "masculine",
+      "ageBand": "adult_young_to_mature",
+      "statusVariant": "quiet_authority",
+      "emotionVariant": "stern",
+      "posture": "拢袖端坐",
+      "identityTags": [
+        "player",
+        "male_style",
+        "frontier_general",
+        "quiet_authority"
+      ],
+      "emotionTags": [
+        "stern",
+        "quiet_authority"
+      ],
+      "path": "/assets/ui/portraits/s73-10/portrait-s73-10-player-male-extra-frontier_general-look05-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-portrait-s73-10-player-male-extra-frontier_general-look05-v1.webp",
+      "lowResPlaceholderPath": "/assets/ui/portraits/placeholders/placeholder-portrait-s73-10-player-male-extra-frontier_general-look05-v1.webp",
+      "fallbackRef": "fallback-role-silhouette-v1",
+      "dimensions": {
+        "width": 1024,
+        "height": 1536
+      },
+      "aspectRatio": "1024:1536",
+      "format": "webp",
+      "transparent": false,
+      "safeArea": {
+        "x": 0.2,
+        "y": 0.05,
+        "width": 0.6,
+        "height": 0.88
+      },
+      "focalPoint": {
+        "x": 0.5,
+        "y": 0.25
+      },
+      "mobileCrop": {
+        "mode": "center_crop_or_contain",
+        "keepSafeArea": true,
+        "notes": "玩家男性选角和身份卡窄屏保留面部、冠帽、肩颈轮廓、腰带和身份服饰；不得显示未审核候选图。"
+      },
+      "lazyLoad": {
+        "group": "portrait_pool_player_male_extra_s73_10",
+        "allowEagerLoad": false,
+        "thumbnailFirst": true,
+        "lowResPlaceholder": true,
+        "maxInitialPortraits": 8
+      },
+      "source": {
+        "type": "ai_generated",
+        "tool": "Codex imagegen",
+        "model": "gpt-image-2",
+        "generatedAt": "2026-05-15",
+        "promptSummary": "边塞将领玩家扩展：完整甲衣、披风、军帐与边关山势，英武端正。 威仪款，表情沉稳，适合高位身份或慎重决策。"
+      },
+      "license": {
+        "type": "ai_generated_project_asset",
+        "commercialUseConfirmed": false,
+        "summary": "原创 AI 生成素材，当前仅个人游玩/开发使用；未做公开商用确认。"
+      },
+      "reviewStatus": "approved",
+      "visualReview": {
+        "reviewedBy": "Codex",
+        "reviewedAt": "2026-05-15",
+        "status": "approved",
+        "summary": "通过：成年男性特征明确，肩颈与上身轮廓、冠服层次、身份姿态差异清楚；画面高对比、色彩更丰富、噪点较少，仍保持端庄历史立绘气质。"
+      },
+      "safetyReview": {
+        "reviewedBy": "Codex",
+        "reviewedAt": "2026-05-15",
+        "status": "approved",
+        "summary": "通过：全套衣着完整，无裸露、挑逗、幼态、现代物、水印、徽标、可读文字、本地路径、key、raw/hidden 内容或未公开剧情事实。"
+      },
+      "performance": {
+        "bytes": 189970,
+        "targetMaxBytes": 614400,
+        "thumbnailBytes": 44862,
+        "thumbnailTargetMaxBytes": 256000,
+        "lowResPlaceholderBytes": 1432
+      },
+      "ledgerId": "portrait-s73-10-player-male-extra-frontier_general-look05-v1"
+    },
+    {
+      "id": "portrait-s73-10-player-male-extra-frontier_general-look06-v1",
+      "version": 1,
+      "phase": "S73.10.2",
+      "category": "portrait",
+      "subcategory": "player_male_style_pool",
+      "usage": [
+        "player_identity",
+        "people_page",
+        "game_main"
+      ],
+      "role": "frontier_general",
+      "roleLabel": "边塞将领",
+      "roleStage": "player_male_style",
+      "scene": null,
+      "portraitRef": "portrait-s73-10-player-male-extra-frontier_general-look06-v1",
+      "genderPresentation": "masculine",
+      "ageBand": "adult_young_to_mature",
+      "statusVariant": "poised",
+      "emotionVariant": "determined",
+      "posture": "持物正立",
+      "identityTags": [
+        "player",
+        "male_style",
+        "frontier_general",
+        "poised"
+      ],
+      "emotionTags": [
+        "determined",
+        "poised"
+      ],
+      "path": "/assets/ui/portraits/s73-10/portrait-s73-10-player-male-extra-frontier_general-look06-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-portrait-s73-10-player-male-extra-frontier_general-look06-v1.webp",
+      "lowResPlaceholderPath": "/assets/ui/portraits/placeholders/placeholder-portrait-s73-10-player-male-extra-frontier_general-look06-v1.webp",
+      "fallbackRef": "fallback-role-silhouette-v1",
+      "dimensions": {
+        "width": 1024,
+        "height": 1536
+      },
+      "aspectRatio": "1024:1536",
+      "format": "webp",
+      "transparent": false,
+      "safeArea": {
+        "x": 0.2,
+        "y": 0.05,
+        "width": 0.6,
+        "height": 0.88
+      },
+      "focalPoint": {
+        "x": 0.5,
+        "y": 0.25
+      },
+      "mobileCrop": {
+        "mode": "center_crop_or_contain",
+        "keepSafeArea": true,
+        "notes": "玩家男性选角和身份卡窄屏保留面部、冠帽、肩颈轮廓、腰带和身份服饰；不得显示未审核候选图。"
+      },
+      "lazyLoad": {
+        "group": "portrait_pool_player_male_extra_s73_10",
+        "allowEagerLoad": false,
+        "thumbnailFirst": true,
+        "lowResPlaceholder": true,
+        "maxInitialPortraits": 8
+      },
+      "source": {
+        "type": "ai_generated",
+        "tool": "Codex imagegen",
+        "model": "gpt-image-2",
+        "generatedAt": "2026-05-15",
+        "promptSummary": "边塞将领玩家扩展：完整甲衣、披风、军帐与边关山势，英武端正。 选角款，面向玩家形象选择，色彩更丰富、对比更高。"
+      },
+      "license": {
+        "type": "ai_generated_project_asset",
+        "commercialUseConfirmed": false,
+        "summary": "原创 AI 生成素材，当前仅个人游玩/开发使用；未做公开商用确认。"
+      },
+      "reviewStatus": "approved",
+      "visualReview": {
+        "reviewedBy": "Codex",
+        "reviewedAt": "2026-05-15",
+        "status": "approved",
+        "summary": "通过：成年男性特征明确，肩颈与上身轮廓、冠服层次、身份姿态差异清楚；画面高对比、色彩更丰富、噪点较少，仍保持端庄历史立绘气质。"
+      },
+      "safetyReview": {
+        "reviewedBy": "Codex",
+        "reviewedAt": "2026-05-15",
+        "status": "approved",
+        "summary": "通过：全套衣着完整，无裸露、挑逗、幼态、现代物、水印、徽标、可读文字、本地路径、key、raw/hidden 内容或未公开剧情事实。"
+      },
+      "performance": {
+        "bytes": 184896,
+        "targetMaxBytes": 614400,
+        "thumbnailBytes": 43250,
+        "thumbnailTargetMaxBytes": 256000,
+        "lowResPlaceholderBytes": 1364
+      },
+      "ledgerId": "portrait-s73-10-player-male-extra-frontier_general-look06-v1"
+    },
+    {
+      "id": "portrait-s73-10-player-male-extra-imperial_guard-look01-v1",
+      "version": 1,
+      "phase": "S73.10.2",
+      "category": "portrait",
+      "subcategory": "player_male_style_pool",
+      "usage": [
+        "player_identity",
+        "people_page",
+        "game_main"
+      ],
+      "role": "imperial_guard",
+      "roleLabel": "禁军武官",
+      "roleStage": "player_male_style",
+      "scene": null,
+      "portraitRef": "portrait-s73-10-player-male-extra-imperial_guard-look01-v1",
+      "genderPresentation": "masculine",
+      "ageBand": "adult_young_to_mature",
+      "statusVariant": "baseline",
+      "emotionVariant": "composed",
+      "posture": "正身肃立",
+      "identityTags": [
+        "player",
+        "male_style",
+        "imperial_guard",
+        "baseline"
+      ],
+      "emotionTags": [
+        "composed",
+        "baseline"
+      ],
+      "path": "/assets/ui/portraits/s73-10/portrait-s73-10-player-male-extra-imperial_guard-look01-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-portrait-s73-10-player-male-extra-imperial_guard-look01-v1.webp",
+      "lowResPlaceholderPath": "/assets/ui/portraits/placeholders/placeholder-portrait-s73-10-player-male-extra-imperial_guard-look01-v1.webp",
+      "fallbackRef": "fallback-role-silhouette-v1",
+      "dimensions": {
+        "width": 1024,
+        "height": 1536
+      },
+      "aspectRatio": "1024:1536",
+      "format": "webp",
+      "transparent": false,
+      "safeArea": {
+        "x": 0.2,
+        "y": 0.05,
+        "width": 0.6,
+        "height": 0.88
+      },
+      "focalPoint": {
+        "x": 0.5,
+        "y": 0.25
+      },
+      "mobileCrop": {
+        "mode": "center_crop_or_contain",
+        "keepSafeArea": true,
+        "notes": "玩家男性选角和身份卡窄屏保留面部、冠帽、肩颈轮廓、腰带和身份服饰；不得显示未审核候选图。"
+      },
+      "lazyLoad": {
+        "group": "portrait_pool_player_male_extra_s73_10",
+        "allowEagerLoad": false,
+        "thumbnailFirst": true,
+        "lowResPlaceholder": true,
+        "maxInitialPortraits": 8
+      },
+      "source": {
+        "type": "ai_generated",
+        "tool": "Codex imagegen",
+        "model": "gpt-image-2",
+        "generatedAt": "2026-05-15",
+        "promptSummary": "禁军武官玩家扩展：禁军甲衣、宫门、旌旗和纪律森严的武官气。 正身款，肩颈和上身轮廓清楚，端庄不夸张。"
+      },
+      "license": {
+        "type": "ai_generated_project_asset",
+        "commercialUseConfirmed": false,
+        "summary": "原创 AI 生成素材，当前仅个人游玩/开发使用；未做公开商用确认。"
+      },
+      "reviewStatus": "approved",
+      "visualReview": {
+        "reviewedBy": "Codex",
+        "reviewedAt": "2026-05-15",
+        "status": "approved",
+        "summary": "通过：成年男性特征明确，肩颈与上身轮廓、冠服层次、身份姿态差异清楚；画面高对比、色彩更丰富、噪点较少，仍保持端庄历史立绘气质。"
+      },
+      "safetyReview": {
+        "reviewedBy": "Codex",
+        "reviewedAt": "2026-05-15",
+        "status": "approved",
+        "summary": "通过：全套衣着完整，无裸露、挑逗、幼态、现代物、水印、徽标、可读文字、本地路径、key、raw/hidden 内容或未公开剧情事实。"
+      },
+      "performance": {
+        "bytes": 198320,
+        "targetMaxBytes": 614400,
+        "thumbnailBytes": 45888,
+        "thumbnailTargetMaxBytes": 256000,
+        "lowResPlaceholderBytes": 1482
+      },
+      "ledgerId": "portrait-s73-10-player-male-extra-imperial_guard-look01-v1"
+    },
+    {
+      "id": "portrait-s73-10-player-male-extra-imperial_guard-look02-v1",
+      "version": 1,
+      "phase": "S73.10.2",
+      "category": "portrait",
+      "subcategory": "player_male_style_pool",
+      "usage": [
+        "player_identity",
+        "people_page",
+        "game_main"
+      ],
+      "role": "imperial_guard",
+      "roleLabel": "禁军武官",
+      "roleStage": "player_male_style",
+      "scene": null,
+      "portraitRef": "portrait-s73-10-player-male-extra-imperial_guard-look02-v1",
+      "genderPresentation": "masculine",
+      "ageBand": "adult_young_to_mature",
+      "statusVariant": "formal",
+      "emotionVariant": "reserved",
+      "posture": "侧立持物",
+      "identityTags": [
+        "player",
+        "male_style",
+        "imperial_guard",
+        "formal"
+      ],
+      "emotionTags": [
+        "reserved",
+        "formal"
+      ],
+      "path": "/assets/ui/portraits/s73-10/portrait-s73-10-player-male-extra-imperial_guard-look02-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-portrait-s73-10-player-male-extra-imperial_guard-look02-v1.webp",
+      "lowResPlaceholderPath": "/assets/ui/portraits/placeholders/placeholder-portrait-s73-10-player-male-extra-imperial_guard-look02-v1.webp",
+      "fallbackRef": "fallback-role-silhouette-v1",
+      "dimensions": {
+        "width": 1024,
+        "height": 1536
+      },
+      "aspectRatio": "1024:1536",
+      "format": "webp",
+      "transparent": false,
+      "safeArea": {
+        "x": 0.2,
+        "y": 0.05,
+        "width": 0.6,
+        "height": 0.88
+      },
+      "focalPoint": {
+        "x": 0.5,
+        "y": 0.25
+      },
+      "mobileCrop": {
+        "mode": "center_crop_or_contain",
+        "keepSafeArea": true,
+        "notes": "玩家男性选角和身份卡窄屏保留面部、冠帽、肩颈轮廓、腰带和身份服饰；不得显示未审核候选图。"
+      },
+      "lazyLoad": {
+        "group": "portrait_pool_player_male_extra_s73_10",
+        "allowEagerLoad": false,
+        "thumbnailFirst": true,
+        "lowResPlaceholder": true,
+        "maxInitialPortraits": 8
+      },
+      "source": {
+        "type": "ai_generated",
+        "tool": "Codex imagegen",
+        "model": "gpt-image-2",
+        "generatedAt": "2026-05-15",
+        "promptSummary": "禁军武官玩家扩展：禁军甲衣、宫门、旌旗和纪律森严的武官气。 礼服款，冠服、腰带和持物细节更明显。"
+      },
+      "license": {
+        "type": "ai_generated_project_asset",
+        "commercialUseConfirmed": false,
+        "summary": "原创 AI 生成素材，当前仅个人游玩/开发使用；未做公开商用确认。"
+      },
+      "reviewStatus": "approved",
+      "visualReview": {
+        "reviewedBy": "Codex",
+        "reviewedAt": "2026-05-15",
+        "status": "approved",
+        "summary": "通过：成年男性特征明确，肩颈与上身轮廓、冠服层次、身份姿态差异清楚；画面高对比、色彩更丰富、噪点较少，仍保持端庄历史立绘气质。"
+      },
+      "safetyReview": {
+        "reviewedBy": "Codex",
+        "reviewedAt": "2026-05-15",
+        "status": "approved",
+        "summary": "通过：全套衣着完整，无裸露、挑逗、幼态、现代物、水印、徽标、可读文字、本地路径、key、raw/hidden 内容或未公开剧情事实。"
+      },
+      "performance": {
+        "bytes": 188748,
+        "targetMaxBytes": 614400,
+        "thumbnailBytes": 42720,
+        "thumbnailTargetMaxBytes": 256000,
+        "lowResPlaceholderBytes": 1468
+      },
+      "ledgerId": "portrait-s73-10-player-male-extra-imperial_guard-look02-v1"
+    },
+    {
+      "id": "portrait-s73-10-player-male-extra-imperial_guard-look03-v1",
+      "version": 1,
+      "phase": "S73.10.2",
+      "category": "portrait",
+      "subcategory": "player_male_style_pool",
+      "usage": [
+        "player_identity",
+        "people_page",
+        "game_main"
+      ],
+      "role": "imperial_guard",
+      "roleLabel": "禁军武官",
+      "roleStage": "player_male_style",
+      "scene": null,
+      "portraitRef": "portrait-s73-10-player-male-extra-imperial_guard-look03-v1",
+      "genderPresentation": "masculine",
+      "ageBand": "adult_young_to_mature",
+      "statusVariant": "working",
+      "emotionVariant": "focused",
+      "posture": "执卷处理事务",
+      "identityTags": [
+        "player",
+        "male_style",
+        "imperial_guard",
+        "working"
+      ],
+      "emotionTags": [
+        "focused",
+        "working"
+      ],
+      "path": "/assets/ui/portraits/s73-10/portrait-s73-10-player-male-extra-imperial_guard-look03-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-portrait-s73-10-player-male-extra-imperial_guard-look03-v1.webp",
+      "lowResPlaceholderPath": "/assets/ui/portraits/placeholders/placeholder-portrait-s73-10-player-male-extra-imperial_guard-look03-v1.webp",
+      "fallbackRef": "fallback-role-silhouette-v1",
+      "dimensions": {
+        "width": 1024,
+        "height": 1536
+      },
+      "aspectRatio": "1024:1536",
+      "format": "webp",
+      "transparent": false,
+      "safeArea": {
+        "x": 0.2,
+        "y": 0.05,
+        "width": 0.6,
+        "height": 0.88
+      },
+      "focalPoint": {
+        "x": 0.5,
+        "y": 0.25
+      },
+      "mobileCrop": {
+        "mode": "center_crop_or_contain",
+        "keepSafeArea": true,
+        "notes": "玩家男性选角和身份卡窄屏保留面部、冠帽、肩颈轮廓、腰带和身份服饰；不得显示未审核候选图。"
+      },
+      "lazyLoad": {
+        "group": "portrait_pool_player_male_extra_s73_10",
+        "allowEagerLoad": false,
+        "thumbnailFirst": true,
+        "lowResPlaceholder": true,
+        "maxInitialPortraits": 8
+      },
+      "source": {
+        "type": "ai_generated",
+        "tool": "Codex imagegen",
+        "model": "gpt-image-2",
+        "generatedAt": "2026-05-15",
+        "promptSummary": "禁军武官玩家扩展：禁军甲衣、宫门、旌旗和纪律森严的武官气。 工作款，持卷或持笏，表现读书、理政或经营状态。"
+      },
+      "license": {
+        "type": "ai_generated_project_asset",
+        "commercialUseConfirmed": false,
+        "summary": "原创 AI 生成素材，当前仅个人游玩/开发使用；未做公开商用确认。"
+      },
+      "reviewStatus": "approved",
+      "visualReview": {
+        "reviewedBy": "Codex",
+        "reviewedAt": "2026-05-15",
+        "status": "approved",
+        "summary": "通过：成年男性特征明确，肩颈与上身轮廓、冠服层次、身份姿态差异清楚；画面高对比、色彩更丰富、噪点较少，仍保持端庄历史立绘气质。"
+      },
+      "safetyReview": {
+        "reviewedBy": "Codex",
+        "reviewedAt": "2026-05-15",
+        "status": "approved",
+        "summary": "通过：全套衣着完整，无裸露、挑逗、幼态、现代物、水印、徽标、可读文字、本地路径、key、raw/hidden 内容或未公开剧情事实。"
+      },
+      "performance": {
+        "bytes": 182672,
+        "targetMaxBytes": 614400,
+        "thumbnailBytes": 42024,
+        "thumbnailTargetMaxBytes": 256000,
+        "lowResPlaceholderBytes": 1404
+      },
+      "ledgerId": "portrait-s73-10-player-male-extra-imperial_guard-look03-v1"
+    },
+    {
+      "id": "portrait-s73-10-player-male-extra-imperial_guard-look04-v1",
+      "version": 1,
+      "phase": "S73.10.2",
+      "category": "portrait",
+      "subcategory": "player_male_style_pool",
+      "usage": [
+        "player_identity",
+        "people_page",
+        "game_main"
+      ],
+      "role": "imperial_guard",
+      "roleLabel": "禁军武官",
+      "roleStage": "player_male_style",
+      "scene": null,
+      "portraitRef": "portrait-s73-10-player-male-extra-imperial_guard-look04-v1",
+      "genderPresentation": "masculine",
+      "ageBand": "adult_young_to_mature",
+      "statusVariant": "travel_or_motion",
+      "emotionVariant": "alert",
+      "posture": "披风行旅",
+      "identityTags": [
+        "player",
+        "male_style",
+        "imperial_guard",
+        "travel_or_motion"
+      ],
+      "emotionTags": [
+        "alert",
+        "travel_or_motion"
+      ],
+      "path": "/assets/ui/portraits/s73-10/portrait-s73-10-player-male-extra-imperial_guard-look04-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-portrait-s73-10-player-male-extra-imperial_guard-look04-v1.webp",
+      "lowResPlaceholderPath": "/assets/ui/portraits/placeholders/placeholder-portrait-s73-10-player-male-extra-imperial_guard-look04-v1.webp",
+      "fallbackRef": "fallback-role-silhouette-v1",
+      "dimensions": {
+        "width": 1024,
+        "height": 1536
+      },
+      "aspectRatio": "1024:1536",
+      "format": "webp",
+      "transparent": false,
+      "safeArea": {
+        "x": 0.2,
+        "y": 0.05,
+        "width": 0.6,
+        "height": 0.88
+      },
+      "focalPoint": {
+        "x": 0.5,
+        "y": 0.25
+      },
+      "mobileCrop": {
+        "mode": "center_crop_or_contain",
+        "keepSafeArea": true,
+        "notes": "玩家男性选角和身份卡窄屏保留面部、冠帽、肩颈轮廓、腰带和身份服饰；不得显示未审核候选图。"
+      },
+      "lazyLoad": {
+        "group": "portrait_pool_player_male_extra_s73_10",
+        "allowEagerLoad": false,
+        "thumbnailFirst": true,
+        "lowResPlaceholder": true,
+        "maxInitialPortraits": 8
+      },
+      "source": {
+        "type": "ai_generated",
+        "tool": "Codex imagegen",
+        "model": "gpt-image-2",
+        "generatedAt": "2026-05-15",
+        "promptSummary": "禁军武官玩家扩展：禁军甲衣、宫门、旌旗和纪律森严的武官气。 动态款，披风、甲衣或外袍拉开轮廓，行动感更强。"
+      },
+      "license": {
+        "type": "ai_generated_project_asset",
+        "commercialUseConfirmed": false,
+        "summary": "原创 AI 生成素材，当前仅个人游玩/开发使用；未做公开商用确认。"
+      },
+      "reviewStatus": "approved",
+      "visualReview": {
+        "reviewedBy": "Codex",
+        "reviewedAt": "2026-05-15",
+        "status": "approved",
+        "summary": "通过：成年男性特征明确，肩颈与上身轮廓、冠服层次、身份姿态差异清楚；画面高对比、色彩更丰富、噪点较少，仍保持端庄历史立绘气质。"
+      },
+      "safetyReview": {
+        "reviewedBy": "Codex",
+        "reviewedAt": "2026-05-15",
+        "status": "approved",
+        "summary": "通过：全套衣着完整，无裸露、挑逗、幼态、现代物、水印、徽标、可读文字、本地路径、key、raw/hidden 内容或未公开剧情事实。"
+      },
+      "performance": {
+        "bytes": 167160,
+        "targetMaxBytes": 614400,
+        "thumbnailBytes": 39532,
+        "thumbnailTargetMaxBytes": 256000,
+        "lowResPlaceholderBytes": 1374
+      },
+      "ledgerId": "portrait-s73-10-player-male-extra-imperial_guard-look04-v1"
+    },
+    {
+      "id": "portrait-s73-10-player-male-extra-imperial_guard-look05-v1",
+      "version": 1,
+      "phase": "S73.10.2",
+      "category": "portrait",
+      "subcategory": "player_male_style_pool",
+      "usage": [
+        "player_identity",
+        "people_page",
+        "game_main"
+      ],
+      "role": "imperial_guard",
+      "roleLabel": "禁军武官",
+      "roleStage": "player_male_style",
+      "scene": null,
+      "portraitRef": "portrait-s73-10-player-male-extra-imperial_guard-look05-v1",
+      "genderPresentation": "masculine",
+      "ageBand": "adult_young_to_mature",
+      "statusVariant": "quiet_authority",
+      "emotionVariant": "stern",
+      "posture": "拢袖端坐",
+      "identityTags": [
+        "player",
+        "male_style",
+        "imperial_guard",
+        "quiet_authority"
+      ],
+      "emotionTags": [
+        "stern",
+        "quiet_authority"
+      ],
+      "path": "/assets/ui/portraits/s73-10/portrait-s73-10-player-male-extra-imperial_guard-look05-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-portrait-s73-10-player-male-extra-imperial_guard-look05-v1.webp",
+      "lowResPlaceholderPath": "/assets/ui/portraits/placeholders/placeholder-portrait-s73-10-player-male-extra-imperial_guard-look05-v1.webp",
+      "fallbackRef": "fallback-role-silhouette-v1",
+      "dimensions": {
+        "width": 1024,
+        "height": 1536
+      },
+      "aspectRatio": "1024:1536",
+      "format": "webp",
+      "transparent": false,
+      "safeArea": {
+        "x": 0.2,
+        "y": 0.05,
+        "width": 0.6,
+        "height": 0.88
+      },
+      "focalPoint": {
+        "x": 0.5,
+        "y": 0.25
+      },
+      "mobileCrop": {
+        "mode": "center_crop_or_contain",
+        "keepSafeArea": true,
+        "notes": "玩家男性选角和身份卡窄屏保留面部、冠帽、肩颈轮廓、腰带和身份服饰；不得显示未审核候选图。"
+      },
+      "lazyLoad": {
+        "group": "portrait_pool_player_male_extra_s73_10",
+        "allowEagerLoad": false,
+        "thumbnailFirst": true,
+        "lowResPlaceholder": true,
+        "maxInitialPortraits": 8
+      },
+      "source": {
+        "type": "ai_generated",
+        "tool": "Codex imagegen",
+        "model": "gpt-image-2",
+        "generatedAt": "2026-05-15",
+        "promptSummary": "禁军武官玩家扩展：禁军甲衣、宫门、旌旗和纪律森严的武官气。 威仪款，表情沉稳，适合高位身份或慎重决策。"
+      },
+      "license": {
+        "type": "ai_generated_project_asset",
+        "commercialUseConfirmed": false,
+        "summary": "原创 AI 生成素材，当前仅个人游玩/开发使用；未做公开商用确认。"
+      },
+      "reviewStatus": "approved",
+      "visualReview": {
+        "reviewedBy": "Codex",
+        "reviewedAt": "2026-05-15",
+        "status": "approved",
+        "summary": "通过：成年男性特征明确，肩颈与上身轮廓、冠服层次、身份姿态差异清楚；画面高对比、色彩更丰富、噪点较少，仍保持端庄历史立绘气质。"
+      },
+      "safetyReview": {
+        "reviewedBy": "Codex",
+        "reviewedAt": "2026-05-15",
+        "status": "approved",
+        "summary": "通过：全套衣着完整，无裸露、挑逗、幼态、现代物、水印、徽标、可读文字、本地路径、key、raw/hidden 内容或未公开剧情事实。"
+      },
+      "performance": {
+        "bytes": 174848,
+        "targetMaxBytes": 614400,
+        "thumbnailBytes": 41182,
+        "thumbnailTargetMaxBytes": 256000,
+        "lowResPlaceholderBytes": 1386
+      },
+      "ledgerId": "portrait-s73-10-player-male-extra-imperial_guard-look05-v1"
+    },
+    {
+      "id": "portrait-s73-10-player-male-extra-imperial_guard-look06-v1",
+      "version": 1,
+      "phase": "S73.10.2",
+      "category": "portrait",
+      "subcategory": "player_male_style_pool",
+      "usage": [
+        "player_identity",
+        "people_page",
+        "game_main"
+      ],
+      "role": "imperial_guard",
+      "roleLabel": "禁军武官",
+      "roleStage": "player_male_style",
+      "scene": null,
+      "portraitRef": "portrait-s73-10-player-male-extra-imperial_guard-look06-v1",
+      "genderPresentation": "masculine",
+      "ageBand": "adult_young_to_mature",
+      "statusVariant": "poised",
+      "emotionVariant": "determined",
+      "posture": "持物正立",
+      "identityTags": [
+        "player",
+        "male_style",
+        "imperial_guard",
+        "poised"
+      ],
+      "emotionTags": [
+        "determined",
+        "poised"
+      ],
+      "path": "/assets/ui/portraits/s73-10/portrait-s73-10-player-male-extra-imperial_guard-look06-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-portrait-s73-10-player-male-extra-imperial_guard-look06-v1.webp",
+      "lowResPlaceholderPath": "/assets/ui/portraits/placeholders/placeholder-portrait-s73-10-player-male-extra-imperial_guard-look06-v1.webp",
+      "fallbackRef": "fallback-role-silhouette-v1",
+      "dimensions": {
+        "width": 1024,
+        "height": 1536
+      },
+      "aspectRatio": "1024:1536",
+      "format": "webp",
+      "transparent": false,
+      "safeArea": {
+        "x": 0.2,
+        "y": 0.05,
+        "width": 0.6,
+        "height": 0.88
+      },
+      "focalPoint": {
+        "x": 0.5,
+        "y": 0.25
+      },
+      "mobileCrop": {
+        "mode": "center_crop_or_contain",
+        "keepSafeArea": true,
+        "notes": "玩家男性选角和身份卡窄屏保留面部、冠帽、肩颈轮廓、腰带和身份服饰；不得显示未审核候选图。"
+      },
+      "lazyLoad": {
+        "group": "portrait_pool_player_male_extra_s73_10",
+        "allowEagerLoad": false,
+        "thumbnailFirst": true,
+        "lowResPlaceholder": true,
+        "maxInitialPortraits": 8
+      },
+      "source": {
+        "type": "ai_generated",
+        "tool": "Codex imagegen",
+        "model": "gpt-image-2",
+        "generatedAt": "2026-05-15",
+        "promptSummary": "禁军武官玩家扩展：禁军甲衣、宫门、旌旗和纪律森严的武官气。 选角款，面向玩家形象选择，色彩更丰富、对比更高。"
+      },
+      "license": {
+        "type": "ai_generated_project_asset",
+        "commercialUseConfirmed": false,
+        "summary": "原创 AI 生成素材，当前仅个人游玩/开发使用；未做公开商用确认。"
+      },
+      "reviewStatus": "approved",
+      "visualReview": {
+        "reviewedBy": "Codex",
+        "reviewedAt": "2026-05-15",
+        "status": "approved",
+        "summary": "通过：成年男性特征明确，肩颈与上身轮廓、冠服层次、身份姿态差异清楚；画面高对比、色彩更丰富、噪点较少，仍保持端庄历史立绘气质。"
+      },
+      "safetyReview": {
+        "reviewedBy": "Codex",
+        "reviewedAt": "2026-05-15",
+        "status": "approved",
+        "summary": "通过：全套衣着完整，无裸露、挑逗、幼态、现代物、水印、徽标、可读文字、本地路径、key、raw/hidden 内容或未公开剧情事实。"
+      },
+      "performance": {
+        "bytes": 168250,
+        "targetMaxBytes": 614400,
+        "thumbnailBytes": 38818,
+        "thumbnailTargetMaxBytes": 256000,
+        "lowResPlaceholderBytes": 1316
+      },
+      "ledgerId": "portrait-s73-10-player-male-extra-imperial_guard-look06-v1"
+    },
+    {
+      "id": "portrait-s73-10-player-male-extra-gentry_heir-look01-v1",
+      "version": 1,
+      "phase": "S73.10.2",
+      "category": "portrait",
+      "subcategory": "player_male_style_pool",
+      "usage": [
+        "player_identity",
+        "people_page",
+        "game_main"
+      ],
+      "role": "gentry_heir",
+      "roleLabel": "士族公子",
+      "roleStage": "player_male_style",
+      "scene": null,
+      "portraitRef": "portrait-s73-10-player-male-extra-gentry_heir-look01-v1",
+      "genderPresentation": "masculine",
+      "ageBand": "adult_young_to_mature",
+      "statusVariant": "baseline",
+      "emotionVariant": "composed",
+      "posture": "正身肃立",
+      "identityTags": [
+        "player",
+        "male_style",
+        "gentry_heir",
+        "baseline"
+      ],
+      "emotionTags": [
+        "composed",
+        "baseline"
+      ],
+      "path": "/assets/ui/portraits/s73-10/portrait-s73-10-player-male-extra-gentry_heir-look01-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-portrait-s73-10-player-male-extra-gentry_heir-look01-v1.webp",
+      "lowResPlaceholderPath": "/assets/ui/portraits/placeholders/placeholder-portrait-s73-10-player-male-extra-gentry_heir-look01-v1.webp",
+      "fallbackRef": "fallback-role-silhouette-v1",
+      "dimensions": {
+        "width": 1024,
+        "height": 1536
+      },
+      "aspectRatio": "1024:1536",
+      "format": "webp",
+      "transparent": false,
+      "safeArea": {
+        "x": 0.2,
+        "y": 0.05,
+        "width": 0.6,
+        "height": 0.88
+      },
+      "focalPoint": {
+        "x": 0.5,
+        "y": 0.25
+      },
+      "mobileCrop": {
+        "mode": "center_crop_or_contain",
+        "keepSafeArea": true,
+        "notes": "玩家男性选角和身份卡窄屏保留面部、冠帽、肩颈轮廓、腰带和身份服饰；不得显示未审核候选图。"
+      },
+      "lazyLoad": {
+        "group": "portrait_pool_player_male_extra_s73_10",
+        "allowEagerLoad": false,
+        "thumbnailFirst": true,
+        "lowResPlaceholder": true,
+        "maxInitialPortraits": 8
+      },
+      "source": {
+        "type": "ai_generated",
+        "tool": "Codex imagegen",
+        "model": "gpt-image-2",
+        "generatedAt": "2026-05-15",
+        "promptSummary": "士族公子玩家扩展：士族礼服、玉佩、园林与家族气度，俊雅但不女性化。 正身款，肩颈和上身轮廓清楚，端庄不夸张。"
+      },
+      "license": {
+        "type": "ai_generated_project_asset",
+        "commercialUseConfirmed": false,
+        "summary": "原创 AI 生成素材，当前仅个人游玩/开发使用；未做公开商用确认。"
+      },
+      "reviewStatus": "approved",
+      "visualReview": {
+        "reviewedBy": "Codex",
+        "reviewedAt": "2026-05-15",
+        "status": "approved",
+        "summary": "通过：成年男性特征明确，肩颈与上身轮廓、冠服层次、身份姿态差异清楚；画面高对比、色彩更丰富、噪点较少，仍保持端庄历史立绘气质。"
+      },
+      "safetyReview": {
+        "reviewedBy": "Codex",
+        "reviewedAt": "2026-05-15",
+        "status": "approved",
+        "summary": "通过：全套衣着完整，无裸露、挑逗、幼态、现代物、水印、徽标、可读文字、本地路径、key、raw/hidden 内容或未公开剧情事实。"
+      },
+      "performance": {
+        "bytes": 190052,
+        "targetMaxBytes": 614400,
+        "thumbnailBytes": 47090,
+        "thumbnailTargetMaxBytes": 256000,
+        "lowResPlaceholderBytes": 1586
+      },
+      "ledgerId": "portrait-s73-10-player-male-extra-gentry_heir-look01-v1"
+    },
+    {
+      "id": "portrait-s73-10-player-male-extra-gentry_heir-look02-v1",
+      "version": 1,
+      "phase": "S73.10.2",
+      "category": "portrait",
+      "subcategory": "player_male_style_pool",
+      "usage": [
+        "player_identity",
+        "people_page",
+        "game_main"
+      ],
+      "role": "gentry_heir",
+      "roleLabel": "士族公子",
+      "roleStage": "player_male_style",
+      "scene": null,
+      "portraitRef": "portrait-s73-10-player-male-extra-gentry_heir-look02-v1",
+      "genderPresentation": "masculine",
+      "ageBand": "adult_young_to_mature",
+      "statusVariant": "formal",
+      "emotionVariant": "reserved",
+      "posture": "侧立持物",
+      "identityTags": [
+        "player",
+        "male_style",
+        "gentry_heir",
+        "formal"
+      ],
+      "emotionTags": [
+        "reserved",
+        "formal"
+      ],
+      "path": "/assets/ui/portraits/s73-10/portrait-s73-10-player-male-extra-gentry_heir-look02-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-portrait-s73-10-player-male-extra-gentry_heir-look02-v1.webp",
+      "lowResPlaceholderPath": "/assets/ui/portraits/placeholders/placeholder-portrait-s73-10-player-male-extra-gentry_heir-look02-v1.webp",
+      "fallbackRef": "fallback-role-silhouette-v1",
+      "dimensions": {
+        "width": 1024,
+        "height": 1536
+      },
+      "aspectRatio": "1024:1536",
+      "format": "webp",
+      "transparent": false,
+      "safeArea": {
+        "x": 0.2,
+        "y": 0.05,
+        "width": 0.6,
+        "height": 0.88
+      },
+      "focalPoint": {
+        "x": 0.5,
+        "y": 0.25
+      },
+      "mobileCrop": {
+        "mode": "center_crop_or_contain",
+        "keepSafeArea": true,
+        "notes": "玩家男性选角和身份卡窄屏保留面部、冠帽、肩颈轮廓、腰带和身份服饰；不得显示未审核候选图。"
+      },
+      "lazyLoad": {
+        "group": "portrait_pool_player_male_extra_s73_10",
+        "allowEagerLoad": false,
+        "thumbnailFirst": true,
+        "lowResPlaceholder": true,
+        "maxInitialPortraits": 8
+      },
+      "source": {
+        "type": "ai_generated",
+        "tool": "Codex imagegen",
+        "model": "gpt-image-2",
+        "generatedAt": "2026-05-15",
+        "promptSummary": "士族公子玩家扩展：士族礼服、玉佩、园林与家族气度，俊雅但不女性化。 礼服款，冠服、腰带和持物细节更明显。"
+      },
+      "license": {
+        "type": "ai_generated_project_asset",
+        "commercialUseConfirmed": false,
+        "summary": "原创 AI 生成素材，当前仅个人游玩/开发使用；未做公开商用确认。"
+      },
+      "reviewStatus": "approved",
+      "visualReview": {
+        "reviewedBy": "Codex",
+        "reviewedAt": "2026-05-15",
+        "status": "approved",
+        "summary": "通过：成年男性特征明确，肩颈与上身轮廓、冠服层次、身份姿态差异清楚；画面高对比、色彩更丰富、噪点较少，仍保持端庄历史立绘气质。"
+      },
+      "safetyReview": {
+        "reviewedBy": "Codex",
+        "reviewedAt": "2026-05-15",
+        "status": "approved",
+        "summary": "通过：全套衣着完整，无裸露、挑逗、幼态、现代物、水印、徽标、可读文字、本地路径、key、raw/hidden 内容或未公开剧情事实。"
+      },
+      "performance": {
+        "bytes": 162654,
+        "targetMaxBytes": 614400,
+        "thumbnailBytes": 38642,
+        "thumbnailTargetMaxBytes": 256000,
+        "lowResPlaceholderBytes": 1356
+      },
+      "ledgerId": "portrait-s73-10-player-male-extra-gentry_heir-look02-v1"
+    },
+    {
+      "id": "portrait-s73-10-player-male-extra-gentry_heir-look03-v1",
+      "version": 1,
+      "phase": "S73.10.2",
+      "category": "portrait",
+      "subcategory": "player_male_style_pool",
+      "usage": [
+        "player_identity",
+        "people_page",
+        "game_main"
+      ],
+      "role": "gentry_heir",
+      "roleLabel": "士族公子",
+      "roleStage": "player_male_style",
+      "scene": null,
+      "portraitRef": "portrait-s73-10-player-male-extra-gentry_heir-look03-v1",
+      "genderPresentation": "masculine",
+      "ageBand": "adult_young_to_mature",
+      "statusVariant": "working",
+      "emotionVariant": "focused",
+      "posture": "执卷处理事务",
+      "identityTags": [
+        "player",
+        "male_style",
+        "gentry_heir",
+        "working"
+      ],
+      "emotionTags": [
+        "focused",
+        "working"
+      ],
+      "path": "/assets/ui/portraits/s73-10/portrait-s73-10-player-male-extra-gentry_heir-look03-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-portrait-s73-10-player-male-extra-gentry_heir-look03-v1.webp",
+      "lowResPlaceholderPath": "/assets/ui/portraits/placeholders/placeholder-portrait-s73-10-player-male-extra-gentry_heir-look03-v1.webp",
+      "fallbackRef": "fallback-role-silhouette-v1",
+      "dimensions": {
+        "width": 1024,
+        "height": 1536
+      },
+      "aspectRatio": "1024:1536",
+      "format": "webp",
+      "transparent": false,
+      "safeArea": {
+        "x": 0.2,
+        "y": 0.05,
+        "width": 0.6,
+        "height": 0.88
+      },
+      "focalPoint": {
+        "x": 0.5,
+        "y": 0.25
+      },
+      "mobileCrop": {
+        "mode": "center_crop_or_contain",
+        "keepSafeArea": true,
+        "notes": "玩家男性选角和身份卡窄屏保留面部、冠帽、肩颈轮廓、腰带和身份服饰；不得显示未审核候选图。"
+      },
+      "lazyLoad": {
+        "group": "portrait_pool_player_male_extra_s73_10",
+        "allowEagerLoad": false,
+        "thumbnailFirst": true,
+        "lowResPlaceholder": true,
+        "maxInitialPortraits": 8
+      },
+      "source": {
+        "type": "ai_generated",
+        "tool": "Codex imagegen",
+        "model": "gpt-image-2",
+        "generatedAt": "2026-05-15",
+        "promptSummary": "士族公子玩家扩展：士族礼服、玉佩、园林与家族气度，俊雅但不女性化。 工作款，持卷或持笏，表现读书、理政或经营状态。"
+      },
+      "license": {
+        "type": "ai_generated_project_asset",
+        "commercialUseConfirmed": false,
+        "summary": "原创 AI 生成素材，当前仅个人游玩/开发使用；未做公开商用确认。"
+      },
+      "reviewStatus": "approved",
+      "visualReview": {
+        "reviewedBy": "Codex",
+        "reviewedAt": "2026-05-15",
+        "status": "approved",
+        "summary": "通过：成年男性特征明确，肩颈与上身轮廓、冠服层次、身份姿态差异清楚；画面高对比、色彩更丰富、噪点较少，仍保持端庄历史立绘气质。"
+      },
+      "safetyReview": {
+        "reviewedBy": "Codex",
+        "reviewedAt": "2026-05-15",
+        "status": "approved",
+        "summary": "通过：全套衣着完整，无裸露、挑逗、幼态、现代物、水印、徽标、可读文字、本地路径、key、raw/hidden 内容或未公开剧情事实。"
+      },
+      "performance": {
+        "bytes": 171686,
+        "targetMaxBytes": 614400,
+        "thumbnailBytes": 41906,
+        "thumbnailTargetMaxBytes": 256000,
+        "lowResPlaceholderBytes": 1540
+      },
+      "ledgerId": "portrait-s73-10-player-male-extra-gentry_heir-look03-v1"
+    },
+    {
+      "id": "portrait-s73-10-player-male-extra-gentry_heir-look04-v1",
+      "version": 1,
+      "phase": "S73.10.2",
+      "category": "portrait",
+      "subcategory": "player_male_style_pool",
+      "usage": [
+        "player_identity",
+        "people_page",
+        "game_main"
+      ],
+      "role": "gentry_heir",
+      "roleLabel": "士族公子",
+      "roleStage": "player_male_style",
+      "scene": null,
+      "portraitRef": "portrait-s73-10-player-male-extra-gentry_heir-look04-v1",
+      "genderPresentation": "masculine",
+      "ageBand": "adult_young_to_mature",
+      "statusVariant": "travel_or_motion",
+      "emotionVariant": "alert",
+      "posture": "披风行旅",
+      "identityTags": [
+        "player",
+        "male_style",
+        "gentry_heir",
+        "travel_or_motion"
+      ],
+      "emotionTags": [
+        "alert",
+        "travel_or_motion"
+      ],
+      "path": "/assets/ui/portraits/s73-10/portrait-s73-10-player-male-extra-gentry_heir-look04-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-portrait-s73-10-player-male-extra-gentry_heir-look04-v1.webp",
+      "lowResPlaceholderPath": "/assets/ui/portraits/placeholders/placeholder-portrait-s73-10-player-male-extra-gentry_heir-look04-v1.webp",
+      "fallbackRef": "fallback-role-silhouette-v1",
+      "dimensions": {
+        "width": 1024,
+        "height": 1536
+      },
+      "aspectRatio": "1024:1536",
+      "format": "webp",
+      "transparent": false,
+      "safeArea": {
+        "x": 0.2,
+        "y": 0.05,
+        "width": 0.6,
+        "height": 0.88
+      },
+      "focalPoint": {
+        "x": 0.5,
+        "y": 0.25
+      },
+      "mobileCrop": {
+        "mode": "center_crop_or_contain",
+        "keepSafeArea": true,
+        "notes": "玩家男性选角和身份卡窄屏保留面部、冠帽、肩颈轮廓、腰带和身份服饰；不得显示未审核候选图。"
+      },
+      "lazyLoad": {
+        "group": "portrait_pool_player_male_extra_s73_10",
+        "allowEagerLoad": false,
+        "thumbnailFirst": true,
+        "lowResPlaceholder": true,
+        "maxInitialPortraits": 8
+      },
+      "source": {
+        "type": "ai_generated",
+        "tool": "Codex imagegen",
+        "model": "gpt-image-2",
+        "generatedAt": "2026-05-15",
+        "promptSummary": "士族公子玩家扩展：士族礼服、玉佩、园林与家族气度，俊雅但不女性化。 动态款，披风、甲衣或外袍拉开轮廓，行动感更强。"
+      },
+      "license": {
+        "type": "ai_generated_project_asset",
+        "commercialUseConfirmed": false,
+        "summary": "原创 AI 生成素材，当前仅个人游玩/开发使用；未做公开商用确认。"
+      },
+      "reviewStatus": "approved",
+      "visualReview": {
+        "reviewedBy": "Codex",
+        "reviewedAt": "2026-05-15",
+        "status": "approved",
+        "summary": "通过：成年男性特征明确，肩颈与上身轮廓、冠服层次、身份姿态差异清楚；画面高对比、色彩更丰富、噪点较少，仍保持端庄历史立绘气质。"
+      },
+      "safetyReview": {
+        "reviewedBy": "Codex",
+        "reviewedAt": "2026-05-15",
+        "status": "approved",
+        "summary": "通过：全套衣着完整，无裸露、挑逗、幼态、现代物、水印、徽标、可读文字、本地路径、key、raw/hidden 内容或未公开剧情事实。"
+      },
+      "performance": {
+        "bytes": 177108,
+        "targetMaxBytes": 614400,
+        "thumbnailBytes": 43420,
+        "thumbnailTargetMaxBytes": 256000,
+        "lowResPlaceholderBytes": 1554
+      },
+      "ledgerId": "portrait-s73-10-player-male-extra-gentry_heir-look04-v1"
+    },
+    {
+      "id": "portrait-s73-10-player-male-extra-gentry_heir-look05-v1",
+      "version": 1,
+      "phase": "S73.10.2",
+      "category": "portrait",
+      "subcategory": "player_male_style_pool",
+      "usage": [
+        "player_identity",
+        "people_page",
+        "game_main"
+      ],
+      "role": "gentry_heir",
+      "roleLabel": "士族公子",
+      "roleStage": "player_male_style",
+      "scene": null,
+      "portraitRef": "portrait-s73-10-player-male-extra-gentry_heir-look05-v1",
+      "genderPresentation": "masculine",
+      "ageBand": "adult_young_to_mature",
+      "statusVariant": "quiet_authority",
+      "emotionVariant": "stern",
+      "posture": "拢袖端坐",
+      "identityTags": [
+        "player",
+        "male_style",
+        "gentry_heir",
+        "quiet_authority"
+      ],
+      "emotionTags": [
+        "stern",
+        "quiet_authority"
+      ],
+      "path": "/assets/ui/portraits/s73-10/portrait-s73-10-player-male-extra-gentry_heir-look05-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-portrait-s73-10-player-male-extra-gentry_heir-look05-v1.webp",
+      "lowResPlaceholderPath": "/assets/ui/portraits/placeholders/placeholder-portrait-s73-10-player-male-extra-gentry_heir-look05-v1.webp",
+      "fallbackRef": "fallback-role-silhouette-v1",
+      "dimensions": {
+        "width": 1024,
+        "height": 1536
+      },
+      "aspectRatio": "1024:1536",
+      "format": "webp",
+      "transparent": false,
+      "safeArea": {
+        "x": 0.2,
+        "y": 0.05,
+        "width": 0.6,
+        "height": 0.88
+      },
+      "focalPoint": {
+        "x": 0.5,
+        "y": 0.25
+      },
+      "mobileCrop": {
+        "mode": "center_crop_or_contain",
+        "keepSafeArea": true,
+        "notes": "玩家男性选角和身份卡窄屏保留面部、冠帽、肩颈轮廓、腰带和身份服饰；不得显示未审核候选图。"
+      },
+      "lazyLoad": {
+        "group": "portrait_pool_player_male_extra_s73_10",
+        "allowEagerLoad": false,
+        "thumbnailFirst": true,
+        "lowResPlaceholder": true,
+        "maxInitialPortraits": 8
+      },
+      "source": {
+        "type": "ai_generated",
+        "tool": "Codex imagegen",
+        "model": "gpt-image-2",
+        "generatedAt": "2026-05-15",
+        "promptSummary": "士族公子玩家扩展：士族礼服、玉佩、园林与家族气度，俊雅但不女性化。 威仪款，表情沉稳，适合高位身份或慎重决策。"
+      },
+      "license": {
+        "type": "ai_generated_project_asset",
+        "commercialUseConfirmed": false,
+        "summary": "原创 AI 生成素材，当前仅个人游玩/开发使用；未做公开商用确认。"
+      },
+      "reviewStatus": "approved",
+      "visualReview": {
+        "reviewedBy": "Codex",
+        "reviewedAt": "2026-05-15",
+        "status": "approved",
+        "summary": "通过：成年男性特征明确，肩颈与上身轮廓、冠服层次、身份姿态差异清楚；画面高对比、色彩更丰富、噪点较少，仍保持端庄历史立绘气质。"
+      },
+      "safetyReview": {
+        "reviewedBy": "Codex",
+        "reviewedAt": "2026-05-15",
+        "status": "approved",
+        "summary": "通过：全套衣着完整，无裸露、挑逗、幼态、现代物、水印、徽标、可读文字、本地路径、key、raw/hidden 内容或未公开剧情事实。"
+      },
+      "performance": {
+        "bytes": 163140,
+        "targetMaxBytes": 614400,
+        "thumbnailBytes": 40836,
+        "thumbnailTargetMaxBytes": 256000,
+        "lowResPlaceholderBytes": 1448
+      },
+      "ledgerId": "portrait-s73-10-player-male-extra-gentry_heir-look05-v1"
+    },
+    {
+      "id": "portrait-s73-10-player-male-extra-gentry_heir-look06-v1",
+      "version": 1,
+      "phase": "S73.10.2",
+      "category": "portrait",
+      "subcategory": "player_male_style_pool",
+      "usage": [
+        "player_identity",
+        "people_page",
+        "game_main"
+      ],
+      "role": "gentry_heir",
+      "roleLabel": "士族公子",
+      "roleStage": "player_male_style",
+      "scene": null,
+      "portraitRef": "portrait-s73-10-player-male-extra-gentry_heir-look06-v1",
+      "genderPresentation": "masculine",
+      "ageBand": "adult_young_to_mature",
+      "statusVariant": "poised",
+      "emotionVariant": "determined",
+      "posture": "持物正立",
+      "identityTags": [
+        "player",
+        "male_style",
+        "gentry_heir",
+        "poised"
+      ],
+      "emotionTags": [
+        "determined",
+        "poised"
+      ],
+      "path": "/assets/ui/portraits/s73-10/portrait-s73-10-player-male-extra-gentry_heir-look06-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-portrait-s73-10-player-male-extra-gentry_heir-look06-v1.webp",
+      "lowResPlaceholderPath": "/assets/ui/portraits/placeholders/placeholder-portrait-s73-10-player-male-extra-gentry_heir-look06-v1.webp",
+      "fallbackRef": "fallback-role-silhouette-v1",
+      "dimensions": {
+        "width": 1024,
+        "height": 1536
+      },
+      "aspectRatio": "1024:1536",
+      "format": "webp",
+      "transparent": false,
+      "safeArea": {
+        "x": 0.2,
+        "y": 0.05,
+        "width": 0.6,
+        "height": 0.88
+      },
+      "focalPoint": {
+        "x": 0.5,
+        "y": 0.25
+      },
+      "mobileCrop": {
+        "mode": "center_crop_or_contain",
+        "keepSafeArea": true,
+        "notes": "玩家男性选角和身份卡窄屏保留面部、冠帽、肩颈轮廓、腰带和身份服饰；不得显示未审核候选图。"
+      },
+      "lazyLoad": {
+        "group": "portrait_pool_player_male_extra_s73_10",
+        "allowEagerLoad": false,
+        "thumbnailFirst": true,
+        "lowResPlaceholder": true,
+        "maxInitialPortraits": 8
+      },
+      "source": {
+        "type": "ai_generated",
+        "tool": "Codex imagegen",
+        "model": "gpt-image-2",
+        "generatedAt": "2026-05-15",
+        "promptSummary": "士族公子玩家扩展：士族礼服、玉佩、园林与家族气度，俊雅但不女性化。 选角款，面向玩家形象选择，色彩更丰富、对比更高。"
+      },
+      "license": {
+        "type": "ai_generated_project_asset",
+        "commercialUseConfirmed": false,
+        "summary": "原创 AI 生成素材，当前仅个人游玩/开发使用；未做公开商用确认。"
+      },
+      "reviewStatus": "approved",
+      "visualReview": {
+        "reviewedBy": "Codex",
+        "reviewedAt": "2026-05-15",
+        "status": "approved",
+        "summary": "通过：成年男性特征明确，肩颈与上身轮廓、冠服层次、身份姿态差异清楚；画面高对比、色彩更丰富、噪点较少，仍保持端庄历史立绘气质。"
+      },
+      "safetyReview": {
+        "reviewedBy": "Codex",
+        "reviewedAt": "2026-05-15",
+        "status": "approved",
+        "summary": "通过：全套衣着完整，无裸露、挑逗、幼态、现代物、水印、徽标、可读文字、本地路径、key、raw/hidden 内容或未公开剧情事实。"
+      },
+      "performance": {
+        "bytes": 175874,
+        "targetMaxBytes": 614400,
+        "thumbnailBytes": 43080,
+        "thumbnailTargetMaxBytes": 256000,
+        "lowResPlaceholderBytes": 1544
+      },
+      "ledgerId": "portrait-s73-10-player-male-extra-gentry_heir-look06-v1"
+    },
+    {
+      "id": "portrait-s73-10-player-male-extra-merchant_owner-look01-v1",
+      "version": 1,
+      "phase": "S73.10.2",
+      "category": "portrait",
+      "subcategory": "player_male_style_pool",
+      "usage": [
+        "player_identity",
+        "people_page",
+        "game_main"
+      ],
+      "role": "merchant_owner",
+      "roleLabel": "商贾东家",
+      "roleStage": "player_male_style",
+      "scene": null,
+      "portraitRef": "portrait-s73-10-player-male-extra-merchant_owner-look01-v1",
+      "genderPresentation": "masculine",
+      "ageBand": "adult_young_to_mature",
+      "statusVariant": "baseline",
+      "emotionVariant": "composed",
+      "posture": "正身肃立",
+      "identityTags": [
+        "player",
+        "male_style",
+        "merchant_owner",
+        "baseline"
+      ],
+      "emotionTags": [
+        "composed",
+        "baseline"
+      ],
+      "path": "/assets/ui/portraits/s73-10/portrait-s73-10-player-male-extra-merchant_owner-look01-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-portrait-s73-10-player-male-extra-merchant_owner-look01-v1.webp",
+      "lowResPlaceholderPath": "/assets/ui/portraits/placeholders/placeholder-portrait-s73-10-player-male-extra-merchant_owner-look01-v1.webp",
+      "fallbackRef": "fallback-role-silhouette-v1",
+      "dimensions": {
+        "width": 1024,
+        "height": 1536
+      },
+      "aspectRatio": "1024:1536",
+      "format": "webp",
+      "transparent": false,
+      "safeArea": {
+        "x": 0.2,
+        "y": 0.05,
+        "width": 0.6,
+        "height": 0.88
+      },
+      "focalPoint": {
+        "x": 0.5,
+        "y": 0.25
+      },
+      "mobileCrop": {
+        "mode": "center_crop_or_contain",
+        "keepSafeArea": true,
+        "notes": "玩家男性选角和身份卡窄屏保留面部、冠帽、肩颈轮廓、腰带和身份服饰；不得显示未审核候选图。"
+      },
+      "lazyLoad": {
+        "group": "portrait_pool_player_male_extra_s73_10",
+        "allowEagerLoad": false,
+        "thumbnailFirst": true,
+        "lowResPlaceholder": true,
+        "maxInitialPortraits": 8
+      },
+      "source": {
+        "type": "ai_generated",
+        "tool": "Codex imagegen",
+        "model": "gpt-image-2",
+        "generatedAt": "2026-05-15",
+        "promptSummary": "商贾东家玩家扩展：市廛、布货、空白账册与经营气，沉稳有财力。 正身款，肩颈和上身轮廓清楚，端庄不夸张。"
+      },
+      "license": {
+        "type": "ai_generated_project_asset",
+        "commercialUseConfirmed": false,
+        "summary": "原创 AI 生成素材，当前仅个人游玩/开发使用；未做公开商用确认。"
+      },
+      "reviewStatus": "approved",
+      "visualReview": {
+        "reviewedBy": "Codex",
+        "reviewedAt": "2026-05-15",
+        "status": "approved",
+        "summary": "通过：成年男性特征明确，肩颈与上身轮廓、冠服层次、身份姿态差异清楚；画面高对比、色彩更丰富、噪点较少，仍保持端庄历史立绘气质。"
+      },
+      "safetyReview": {
+        "reviewedBy": "Codex",
+        "reviewedAt": "2026-05-15",
+        "status": "approved",
+        "summary": "通过：全套衣着完整，无裸露、挑逗、幼态、现代物、水印、徽标、可读文字、本地路径、key、raw/hidden 内容或未公开剧情事实。"
+      },
+      "performance": {
+        "bytes": 178992,
+        "targetMaxBytes": 614400,
+        "thumbnailBytes": 39302,
+        "thumbnailTargetMaxBytes": 256000,
+        "lowResPlaceholderBytes": 1396
+      },
+      "ledgerId": "portrait-s73-10-player-male-extra-merchant_owner-look01-v1"
+    },
+    {
+      "id": "portrait-s73-10-player-male-extra-merchant_owner-look02-v1",
+      "version": 1,
+      "phase": "S73.10.2",
+      "category": "portrait",
+      "subcategory": "player_male_style_pool",
+      "usage": [
+        "player_identity",
+        "people_page",
+        "game_main"
+      ],
+      "role": "merchant_owner",
+      "roleLabel": "商贾东家",
+      "roleStage": "player_male_style",
+      "scene": null,
+      "portraitRef": "portrait-s73-10-player-male-extra-merchant_owner-look02-v1",
+      "genderPresentation": "masculine",
+      "ageBand": "adult_young_to_mature",
+      "statusVariant": "formal",
+      "emotionVariant": "reserved",
+      "posture": "侧立持物",
+      "identityTags": [
+        "player",
+        "male_style",
+        "merchant_owner",
+        "formal"
+      ],
+      "emotionTags": [
+        "reserved",
+        "formal"
+      ],
+      "path": "/assets/ui/portraits/s73-10/portrait-s73-10-player-male-extra-merchant_owner-look02-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-portrait-s73-10-player-male-extra-merchant_owner-look02-v1.webp",
+      "lowResPlaceholderPath": "/assets/ui/portraits/placeholders/placeholder-portrait-s73-10-player-male-extra-merchant_owner-look02-v1.webp",
+      "fallbackRef": "fallback-role-silhouette-v1",
+      "dimensions": {
+        "width": 1024,
+        "height": 1536
+      },
+      "aspectRatio": "1024:1536",
+      "format": "webp",
+      "transparent": false,
+      "safeArea": {
+        "x": 0.2,
+        "y": 0.05,
+        "width": 0.6,
+        "height": 0.88
+      },
+      "focalPoint": {
+        "x": 0.5,
+        "y": 0.25
+      },
+      "mobileCrop": {
+        "mode": "center_crop_or_contain",
+        "keepSafeArea": true,
+        "notes": "玩家男性选角和身份卡窄屏保留面部、冠帽、肩颈轮廓、腰带和身份服饰；不得显示未审核候选图。"
+      },
+      "lazyLoad": {
+        "group": "portrait_pool_player_male_extra_s73_10",
+        "allowEagerLoad": false,
+        "thumbnailFirst": true,
+        "lowResPlaceholder": true,
+        "maxInitialPortraits": 8
+      },
+      "source": {
+        "type": "ai_generated",
+        "tool": "Codex imagegen",
+        "model": "gpt-image-2",
+        "generatedAt": "2026-05-15",
+        "promptSummary": "商贾东家玩家扩展：市廛、布货、空白账册与经营气，沉稳有财力。 礼服款，冠服、腰带和持物细节更明显。"
+      },
+      "license": {
+        "type": "ai_generated_project_asset",
+        "commercialUseConfirmed": false,
+        "summary": "原创 AI 生成素材，当前仅个人游玩/开发使用；未做公开商用确认。"
+      },
+      "reviewStatus": "approved",
+      "visualReview": {
+        "reviewedBy": "Codex",
+        "reviewedAt": "2026-05-15",
+        "status": "approved",
+        "summary": "通过：成年男性特征明确，肩颈与上身轮廓、冠服层次、身份姿态差异清楚；画面高对比、色彩更丰富、噪点较少，仍保持端庄历史立绘气质。"
+      },
+      "safetyReview": {
+        "reviewedBy": "Codex",
+        "reviewedAt": "2026-05-15",
+        "status": "approved",
+        "summary": "通过：全套衣着完整，无裸露、挑逗、幼态、现代物、水印、徽标、可读文字、本地路径、key、raw/hidden 内容或未公开剧情事实。"
+      },
+      "performance": {
+        "bytes": 180168,
+        "targetMaxBytes": 614400,
+        "thumbnailBytes": 42362,
+        "thumbnailTargetMaxBytes": 256000,
+        "lowResPlaceholderBytes": 1490
+      },
+      "ledgerId": "portrait-s73-10-player-male-extra-merchant_owner-look02-v1"
+    },
+    {
+      "id": "portrait-s73-10-player-male-extra-merchant_owner-look03-v1",
+      "version": 1,
+      "phase": "S73.10.2",
+      "category": "portrait",
+      "subcategory": "player_male_style_pool",
+      "usage": [
+        "player_identity",
+        "people_page",
+        "game_main"
+      ],
+      "role": "merchant_owner",
+      "roleLabel": "商贾东家",
+      "roleStage": "player_male_style",
+      "scene": null,
+      "portraitRef": "portrait-s73-10-player-male-extra-merchant_owner-look03-v1",
+      "genderPresentation": "masculine",
+      "ageBand": "adult_young_to_mature",
+      "statusVariant": "working",
+      "emotionVariant": "focused",
+      "posture": "执卷处理事务",
+      "identityTags": [
+        "player",
+        "male_style",
+        "merchant_owner",
+        "working"
+      ],
+      "emotionTags": [
+        "focused",
+        "working"
+      ],
+      "path": "/assets/ui/portraits/s73-10/portrait-s73-10-player-male-extra-merchant_owner-look03-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-portrait-s73-10-player-male-extra-merchant_owner-look03-v1.webp",
+      "lowResPlaceholderPath": "/assets/ui/portraits/placeholders/placeholder-portrait-s73-10-player-male-extra-merchant_owner-look03-v1.webp",
+      "fallbackRef": "fallback-role-silhouette-v1",
+      "dimensions": {
+        "width": 1024,
+        "height": 1536
+      },
+      "aspectRatio": "1024:1536",
+      "format": "webp",
+      "transparent": false,
+      "safeArea": {
+        "x": 0.2,
+        "y": 0.05,
+        "width": 0.6,
+        "height": 0.88
+      },
+      "focalPoint": {
+        "x": 0.5,
+        "y": 0.25
+      },
+      "mobileCrop": {
+        "mode": "center_crop_or_contain",
+        "keepSafeArea": true,
+        "notes": "玩家男性选角和身份卡窄屏保留面部、冠帽、肩颈轮廓、腰带和身份服饰；不得显示未审核候选图。"
+      },
+      "lazyLoad": {
+        "group": "portrait_pool_player_male_extra_s73_10",
+        "allowEagerLoad": false,
+        "thumbnailFirst": true,
+        "lowResPlaceholder": true,
+        "maxInitialPortraits": 8
+      },
+      "source": {
+        "type": "ai_generated",
+        "tool": "Codex imagegen",
+        "model": "gpt-image-2",
+        "generatedAt": "2026-05-15",
+        "promptSummary": "商贾东家玩家扩展：市廛、布货、空白账册与经营气，沉稳有财力。 工作款，持卷或持笏，表现读书、理政或经营状态。"
+      },
+      "license": {
+        "type": "ai_generated_project_asset",
+        "commercialUseConfirmed": false,
+        "summary": "原创 AI 生成素材，当前仅个人游玩/开发使用；未做公开商用确认。"
+      },
+      "reviewStatus": "approved",
+      "visualReview": {
+        "reviewedBy": "Codex",
+        "reviewedAt": "2026-05-15",
+        "status": "approved",
+        "summary": "通过：成年男性特征明确，肩颈与上身轮廓、冠服层次、身份姿态差异清楚；画面高对比、色彩更丰富、噪点较少，仍保持端庄历史立绘气质。"
+      },
+      "safetyReview": {
+        "reviewedBy": "Codex",
+        "reviewedAt": "2026-05-15",
+        "status": "approved",
+        "summary": "通过：全套衣着完整，无裸露、挑逗、幼态、现代物、水印、徽标、可读文字、本地路径、key、raw/hidden 内容或未公开剧情事实。"
+      },
+      "performance": {
+        "bytes": 211914,
+        "targetMaxBytes": 614400,
+        "thumbnailBytes": 51256,
+        "thumbnailTargetMaxBytes": 256000,
+        "lowResPlaceholderBytes": 1584
+      },
+      "ledgerId": "portrait-s73-10-player-male-extra-merchant_owner-look03-v1"
+    },
+    {
+      "id": "portrait-s73-10-player-male-extra-merchant_owner-look04-v1",
+      "version": 1,
+      "phase": "S73.10.2",
+      "category": "portrait",
+      "subcategory": "player_male_style_pool",
+      "usage": [
+        "player_identity",
+        "people_page",
+        "game_main"
+      ],
+      "role": "merchant_owner",
+      "roleLabel": "商贾东家",
+      "roleStage": "player_male_style",
+      "scene": null,
+      "portraitRef": "portrait-s73-10-player-male-extra-merchant_owner-look04-v1",
+      "genderPresentation": "masculine",
+      "ageBand": "adult_young_to_mature",
+      "statusVariant": "travel_or_motion",
+      "emotionVariant": "alert",
+      "posture": "披风行旅",
+      "identityTags": [
+        "player",
+        "male_style",
+        "merchant_owner",
+        "travel_or_motion"
+      ],
+      "emotionTags": [
+        "alert",
+        "travel_or_motion"
+      ],
+      "path": "/assets/ui/portraits/s73-10/portrait-s73-10-player-male-extra-merchant_owner-look04-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-portrait-s73-10-player-male-extra-merchant_owner-look04-v1.webp",
+      "lowResPlaceholderPath": "/assets/ui/portraits/placeholders/placeholder-portrait-s73-10-player-male-extra-merchant_owner-look04-v1.webp",
+      "fallbackRef": "fallback-role-silhouette-v1",
+      "dimensions": {
+        "width": 1024,
+        "height": 1536
+      },
+      "aspectRatio": "1024:1536",
+      "format": "webp",
+      "transparent": false,
+      "safeArea": {
+        "x": 0.2,
+        "y": 0.05,
+        "width": 0.6,
+        "height": 0.88
+      },
+      "focalPoint": {
+        "x": 0.5,
+        "y": 0.25
+      },
+      "mobileCrop": {
+        "mode": "center_crop_or_contain",
+        "keepSafeArea": true,
+        "notes": "玩家男性选角和身份卡窄屏保留面部、冠帽、肩颈轮廓、腰带和身份服饰；不得显示未审核候选图。"
+      },
+      "lazyLoad": {
+        "group": "portrait_pool_player_male_extra_s73_10",
+        "allowEagerLoad": false,
+        "thumbnailFirst": true,
+        "lowResPlaceholder": true,
+        "maxInitialPortraits": 8
+      },
+      "source": {
+        "type": "ai_generated",
+        "tool": "Codex imagegen",
+        "model": "gpt-image-2",
+        "generatedAt": "2026-05-15",
+        "promptSummary": "商贾东家玩家扩展：市廛、布货、空白账册与经营气，沉稳有财力。 动态款，披风、甲衣或外袍拉开轮廓，行动感更强。"
+      },
+      "license": {
+        "type": "ai_generated_project_asset",
+        "commercialUseConfirmed": false,
+        "summary": "原创 AI 生成素材，当前仅个人游玩/开发使用；未做公开商用确认。"
+      },
+      "reviewStatus": "approved",
+      "visualReview": {
+        "reviewedBy": "Codex",
+        "reviewedAt": "2026-05-15",
+        "status": "approved",
+        "summary": "通过：成年男性特征明确，肩颈与上身轮廓、冠服层次、身份姿态差异清楚；画面高对比、色彩更丰富、噪点较少，仍保持端庄历史立绘气质。"
+      },
+      "safetyReview": {
+        "reviewedBy": "Codex",
+        "reviewedAt": "2026-05-15",
+        "status": "approved",
+        "summary": "通过：全套衣着完整，无裸露、挑逗、幼态、现代物、水印、徽标、可读文字、本地路径、key、raw/hidden 内容或未公开剧情事实。"
+      },
+      "performance": {
+        "bytes": 195976,
+        "targetMaxBytes": 614400,
+        "thumbnailBytes": 45760,
+        "thumbnailTargetMaxBytes": 256000,
+        "lowResPlaceholderBytes": 1490
+      },
+      "ledgerId": "portrait-s73-10-player-male-extra-merchant_owner-look04-v1"
+    },
+    {
+      "id": "portrait-s73-10-player-male-extra-merchant_owner-look05-v1",
+      "version": 1,
+      "phase": "S73.10.2",
+      "category": "portrait",
+      "subcategory": "player_male_style_pool",
+      "usage": [
+        "player_identity",
+        "people_page",
+        "game_main"
+      ],
+      "role": "merchant_owner",
+      "roleLabel": "商贾东家",
+      "roleStage": "player_male_style",
+      "scene": null,
+      "portraitRef": "portrait-s73-10-player-male-extra-merchant_owner-look05-v1",
+      "genderPresentation": "masculine",
+      "ageBand": "adult_young_to_mature",
+      "statusVariant": "quiet_authority",
+      "emotionVariant": "stern",
+      "posture": "拢袖端坐",
+      "identityTags": [
+        "player",
+        "male_style",
+        "merchant_owner",
+        "quiet_authority"
+      ],
+      "emotionTags": [
+        "stern",
+        "quiet_authority"
+      ],
+      "path": "/assets/ui/portraits/s73-10/portrait-s73-10-player-male-extra-merchant_owner-look05-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-portrait-s73-10-player-male-extra-merchant_owner-look05-v1.webp",
+      "lowResPlaceholderPath": "/assets/ui/portraits/placeholders/placeholder-portrait-s73-10-player-male-extra-merchant_owner-look05-v1.webp",
+      "fallbackRef": "fallback-role-silhouette-v1",
+      "dimensions": {
+        "width": 1024,
+        "height": 1536
+      },
+      "aspectRatio": "1024:1536",
+      "format": "webp",
+      "transparent": false,
+      "safeArea": {
+        "x": 0.2,
+        "y": 0.05,
+        "width": 0.6,
+        "height": 0.88
+      },
+      "focalPoint": {
+        "x": 0.5,
+        "y": 0.25
+      },
+      "mobileCrop": {
+        "mode": "center_crop_or_contain",
+        "keepSafeArea": true,
+        "notes": "玩家男性选角和身份卡窄屏保留面部、冠帽、肩颈轮廓、腰带和身份服饰；不得显示未审核候选图。"
+      },
+      "lazyLoad": {
+        "group": "portrait_pool_player_male_extra_s73_10",
+        "allowEagerLoad": false,
+        "thumbnailFirst": true,
+        "lowResPlaceholder": true,
+        "maxInitialPortraits": 8
+      },
+      "source": {
+        "type": "ai_generated",
+        "tool": "Codex imagegen",
+        "model": "gpt-image-2",
+        "generatedAt": "2026-05-15",
+        "promptSummary": "商贾东家玩家扩展：市廛、布货、空白账册与经营气，沉稳有财力。 威仪款，表情沉稳，适合高位身份或慎重决策。"
+      },
+      "license": {
+        "type": "ai_generated_project_asset",
+        "commercialUseConfirmed": false,
+        "summary": "原创 AI 生成素材，当前仅个人游玩/开发使用；未做公开商用确认。"
+      },
+      "reviewStatus": "approved",
+      "visualReview": {
+        "reviewedBy": "Codex",
+        "reviewedAt": "2026-05-15",
+        "status": "approved",
+        "summary": "通过：成年男性特征明确，肩颈与上身轮廓、冠服层次、身份姿态差异清楚；画面高对比、色彩更丰富、噪点较少，仍保持端庄历史立绘气质。"
+      },
+      "safetyReview": {
+        "reviewedBy": "Codex",
+        "reviewedAt": "2026-05-15",
+        "status": "approved",
+        "summary": "通过：全套衣着完整，无裸露、挑逗、幼态、现代物、水印、徽标、可读文字、本地路径、key、raw/hidden 内容或未公开剧情事实。"
+      },
+      "performance": {
+        "bytes": 183506,
+        "targetMaxBytes": 614400,
+        "thumbnailBytes": 42064,
+        "thumbnailTargetMaxBytes": 256000,
+        "lowResPlaceholderBytes": 1454
+      },
+      "ledgerId": "portrait-s73-10-player-male-extra-merchant_owner-look05-v1"
+    },
+    {
+      "id": "portrait-s73-10-player-male-extra-merchant_owner-look06-v1",
+      "version": 1,
+      "phase": "S73.10.2",
+      "category": "portrait",
+      "subcategory": "player_male_style_pool",
+      "usage": [
+        "player_identity",
+        "people_page",
+        "game_main"
+      ],
+      "role": "merchant_owner",
+      "roleLabel": "商贾东家",
+      "roleStage": "player_male_style",
+      "scene": null,
+      "portraitRef": "portrait-s73-10-player-male-extra-merchant_owner-look06-v1",
+      "genderPresentation": "masculine",
+      "ageBand": "adult_young_to_mature",
+      "statusVariant": "poised",
+      "emotionVariant": "determined",
+      "posture": "持物正立",
+      "identityTags": [
+        "player",
+        "male_style",
+        "merchant_owner",
+        "poised"
+      ],
+      "emotionTags": [
+        "determined",
+        "poised"
+      ],
+      "path": "/assets/ui/portraits/s73-10/portrait-s73-10-player-male-extra-merchant_owner-look06-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-portrait-s73-10-player-male-extra-merchant_owner-look06-v1.webp",
+      "lowResPlaceholderPath": "/assets/ui/portraits/placeholders/placeholder-portrait-s73-10-player-male-extra-merchant_owner-look06-v1.webp",
+      "fallbackRef": "fallback-role-silhouette-v1",
+      "dimensions": {
+        "width": 1024,
+        "height": 1536
+      },
+      "aspectRatio": "1024:1536",
+      "format": "webp",
+      "transparent": false,
+      "safeArea": {
+        "x": 0.2,
+        "y": 0.05,
+        "width": 0.6,
+        "height": 0.88
+      },
+      "focalPoint": {
+        "x": 0.5,
+        "y": 0.25
+      },
+      "mobileCrop": {
+        "mode": "center_crop_or_contain",
+        "keepSafeArea": true,
+        "notes": "玩家男性选角和身份卡窄屏保留面部、冠帽、肩颈轮廓、腰带和身份服饰；不得显示未审核候选图。"
+      },
+      "lazyLoad": {
+        "group": "portrait_pool_player_male_extra_s73_10",
+        "allowEagerLoad": false,
+        "thumbnailFirst": true,
+        "lowResPlaceholder": true,
+        "maxInitialPortraits": 8
+      },
+      "source": {
+        "type": "ai_generated",
+        "tool": "Codex imagegen",
+        "model": "gpt-image-2",
+        "generatedAt": "2026-05-15",
+        "promptSummary": "商贾东家玩家扩展：市廛、布货、空白账册与经营气，沉稳有财力。 选角款，面向玩家形象选择，色彩更丰富、对比更高。"
+      },
+      "license": {
+        "type": "ai_generated_project_asset",
+        "commercialUseConfirmed": false,
+        "summary": "原创 AI 生成素材，当前仅个人游玩/开发使用；未做公开商用确认。"
+      },
+      "reviewStatus": "approved",
+      "visualReview": {
+        "reviewedBy": "Codex",
+        "reviewedAt": "2026-05-15",
+        "status": "approved",
+        "summary": "通过：成年男性特征明确，肩颈与上身轮廓、冠服层次、身份姿态差异清楚；画面高对比、色彩更丰富、噪点较少，仍保持端庄历史立绘气质。"
+      },
+      "safetyReview": {
+        "reviewedBy": "Codex",
+        "reviewedAt": "2026-05-15",
+        "status": "approved",
+        "summary": "通过：全套衣着完整，无裸露、挑逗、幼态、现代物、水印、徽标、可读文字、本地路径、key、raw/hidden 内容或未公开剧情事实。"
+      },
+      "performance": {
+        "bytes": 202552,
+        "targetMaxBytes": 614400,
+        "thumbnailBytes": 47946,
+        "thumbnailTargetMaxBytes": 256000,
+        "lowResPlaceholderBytes": 1478
+      },
+      "ledgerId": "portrait-s73-10-player-male-extra-merchant_owner-look06-v1"
+    },
+    {
+      "id": "portrait-s73-10-player-male-extra-travelling_strategist-look01-v1",
+      "version": 1,
+      "phase": "S73.10.2",
+      "category": "portrait",
+      "subcategory": "player_male_style_pool",
+      "usage": [
+        "player_identity",
+        "people_page",
+        "game_main"
+      ],
+      "role": "travelling_strategist",
+      "roleLabel": "行旅策士",
+      "roleStage": "player_male_style",
+      "scene": null,
+      "portraitRef": "portrait-s73-10-player-male-extra-travelling_strategist-look01-v1",
+      "genderPresentation": "masculine",
+      "ageBand": "adult_young_to_mature",
+      "statusVariant": "baseline",
+      "emotionVariant": "composed",
+      "posture": "正身肃立",
+      "identityTags": [
+        "player",
+        "male_style",
+        "travelling_strategist",
+        "baseline"
+      ],
+      "emotionTags": [
+        "composed",
+        "baseline"
+      ],
+      "path": "/assets/ui/portraits/s73-10/portrait-s73-10-player-male-extra-travelling_strategist-look01-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-portrait-s73-10-player-male-extra-travelling_strategist-look01-v1.webp",
+      "lowResPlaceholderPath": "/assets/ui/portraits/placeholders/placeholder-portrait-s73-10-player-male-extra-travelling_strategist-look01-v1.webp",
+      "fallbackRef": "fallback-role-silhouette-v1",
+      "dimensions": {
+        "width": 1024,
+        "height": 1536
+      },
+      "aspectRatio": "1024:1536",
+      "format": "webp",
+      "transparent": false,
+      "safeArea": {
+        "x": 0.2,
+        "y": 0.05,
+        "width": 0.6,
+        "height": 0.88
+      },
+      "focalPoint": {
+        "x": 0.5,
+        "y": 0.25
+      },
+      "mobileCrop": {
+        "mode": "center_crop_or_contain",
+        "keepSafeArea": true,
+        "notes": "玩家男性选角和身份卡窄屏保留面部、冠帽、肩颈轮廓、腰带和身份服饰；不得显示未审核候选图。"
+      },
+      "lazyLoad": {
+        "group": "portrait_pool_player_male_extra_s73_10",
+        "allowEagerLoad": false,
+        "thumbnailFirst": true,
+        "lowResPlaceholder": true,
+        "maxInitialPortraits": 8
+      },
+      "source": {
+        "type": "ai_generated",
+        "tool": "Codex imagegen",
+        "model": "gpt-image-2",
+        "generatedAt": "2026-05-15",
+        "promptSummary": "行旅策士玩家扩展：行旅披风、空白卷轴、驿亭与谋略气。 正身款，肩颈和上身轮廓清楚，端庄不夸张。"
+      },
+      "license": {
+        "type": "ai_generated_project_asset",
+        "commercialUseConfirmed": false,
+        "summary": "原创 AI 生成素材，当前仅个人游玩/开发使用；未做公开商用确认。"
+      },
+      "reviewStatus": "approved",
+      "visualReview": {
+        "reviewedBy": "Codex",
+        "reviewedAt": "2026-05-15",
+        "status": "approved",
+        "summary": "通过：成年男性特征明确，肩颈与上身轮廓、冠服层次、身份姿态差异清楚；画面高对比、色彩更丰富、噪点较少，仍保持端庄历史立绘气质。"
+      },
+      "safetyReview": {
+        "reviewedBy": "Codex",
+        "reviewedAt": "2026-05-15",
+        "status": "approved",
+        "summary": "通过：全套衣着完整，无裸露、挑逗、幼态、现代物、水印、徽标、可读文字、本地路径、key、raw/hidden 内容或未公开剧情事实。"
+      },
+      "performance": {
+        "bytes": 177910,
+        "targetMaxBytes": 614400,
+        "thumbnailBytes": 43938,
+        "thumbnailTargetMaxBytes": 256000,
+        "lowResPlaceholderBytes": 1562
+      },
+      "ledgerId": "portrait-s73-10-player-male-extra-travelling_strategist-look01-v1"
+    },
+    {
+      "id": "portrait-s73-10-player-male-extra-travelling_strategist-look02-v1",
+      "version": 1,
+      "phase": "S73.10.2",
+      "category": "portrait",
+      "subcategory": "player_male_style_pool",
+      "usage": [
+        "player_identity",
+        "people_page",
+        "game_main"
+      ],
+      "role": "travelling_strategist",
+      "roleLabel": "行旅策士",
+      "roleStage": "player_male_style",
+      "scene": null,
+      "portraitRef": "portrait-s73-10-player-male-extra-travelling_strategist-look02-v1",
+      "genderPresentation": "masculine",
+      "ageBand": "adult_young_to_mature",
+      "statusVariant": "formal",
+      "emotionVariant": "reserved",
+      "posture": "侧立持物",
+      "identityTags": [
+        "player",
+        "male_style",
+        "travelling_strategist",
+        "formal"
+      ],
+      "emotionTags": [
+        "reserved",
+        "formal"
+      ],
+      "path": "/assets/ui/portraits/s73-10/portrait-s73-10-player-male-extra-travelling_strategist-look02-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-portrait-s73-10-player-male-extra-travelling_strategist-look02-v1.webp",
+      "lowResPlaceholderPath": "/assets/ui/portraits/placeholders/placeholder-portrait-s73-10-player-male-extra-travelling_strategist-look02-v1.webp",
+      "fallbackRef": "fallback-role-silhouette-v1",
+      "dimensions": {
+        "width": 1024,
+        "height": 1536
+      },
+      "aspectRatio": "1024:1536",
+      "format": "webp",
+      "transparent": false,
+      "safeArea": {
+        "x": 0.2,
+        "y": 0.05,
+        "width": 0.6,
+        "height": 0.88
+      },
+      "focalPoint": {
+        "x": 0.5,
+        "y": 0.25
+      },
+      "mobileCrop": {
+        "mode": "center_crop_or_contain",
+        "keepSafeArea": true,
+        "notes": "玩家男性选角和身份卡窄屏保留面部、冠帽、肩颈轮廓、腰带和身份服饰；不得显示未审核候选图。"
+      },
+      "lazyLoad": {
+        "group": "portrait_pool_player_male_extra_s73_10",
+        "allowEagerLoad": false,
+        "thumbnailFirst": true,
+        "lowResPlaceholder": true,
+        "maxInitialPortraits": 8
+      },
+      "source": {
+        "type": "ai_generated",
+        "tool": "Codex imagegen",
+        "model": "gpt-image-2",
+        "generatedAt": "2026-05-15",
+        "promptSummary": "行旅策士玩家扩展：行旅披风、空白卷轴、驿亭与谋略气。 礼服款，冠服、腰带和持物细节更明显。"
+      },
+      "license": {
+        "type": "ai_generated_project_asset",
+        "commercialUseConfirmed": false,
+        "summary": "原创 AI 生成素材，当前仅个人游玩/开发使用；未做公开商用确认。"
+      },
+      "reviewStatus": "approved",
+      "visualReview": {
+        "reviewedBy": "Codex",
+        "reviewedAt": "2026-05-15",
+        "status": "approved",
+        "summary": "通过：成年男性特征明确，肩颈与上身轮廓、冠服层次、身份姿态差异清楚；画面高对比、色彩更丰富、噪点较少，仍保持端庄历史立绘气质。"
+      },
+      "safetyReview": {
+        "reviewedBy": "Codex",
+        "reviewedAt": "2026-05-15",
+        "status": "approved",
+        "summary": "通过：全套衣着完整，无裸露、挑逗、幼态、现代物、水印、徽标、可读文字、本地路径、key、raw/hidden 内容或未公开剧情事实。"
+      },
+      "performance": {
+        "bytes": 174892,
+        "targetMaxBytes": 614400,
+        "thumbnailBytes": 42490,
+        "thumbnailTargetMaxBytes": 256000,
+        "lowResPlaceholderBytes": 1560
+      },
+      "ledgerId": "portrait-s73-10-player-male-extra-travelling_strategist-look02-v1"
+    },
+    {
+      "id": "portrait-s73-10-player-male-extra-travelling_strategist-look03-v1",
+      "version": 1,
+      "phase": "S73.10.2",
+      "category": "portrait",
+      "subcategory": "player_male_style_pool",
+      "usage": [
+        "player_identity",
+        "people_page",
+        "game_main"
+      ],
+      "role": "travelling_strategist",
+      "roleLabel": "行旅策士",
+      "roleStage": "player_male_style",
+      "scene": null,
+      "portraitRef": "portrait-s73-10-player-male-extra-travelling_strategist-look03-v1",
+      "genderPresentation": "masculine",
+      "ageBand": "adult_young_to_mature",
+      "statusVariant": "working",
+      "emotionVariant": "focused",
+      "posture": "执卷处理事务",
+      "identityTags": [
+        "player",
+        "male_style",
+        "travelling_strategist",
+        "working"
+      ],
+      "emotionTags": [
+        "focused",
+        "working"
+      ],
+      "path": "/assets/ui/portraits/s73-10/portrait-s73-10-player-male-extra-travelling_strategist-look03-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-portrait-s73-10-player-male-extra-travelling_strategist-look03-v1.webp",
+      "lowResPlaceholderPath": "/assets/ui/portraits/placeholders/placeholder-portrait-s73-10-player-male-extra-travelling_strategist-look03-v1.webp",
+      "fallbackRef": "fallback-role-silhouette-v1",
+      "dimensions": {
+        "width": 1024,
+        "height": 1536
+      },
+      "aspectRatio": "1024:1536",
+      "format": "webp",
+      "transparent": false,
+      "safeArea": {
+        "x": 0.2,
+        "y": 0.05,
+        "width": 0.6,
+        "height": 0.88
+      },
+      "focalPoint": {
+        "x": 0.5,
+        "y": 0.25
+      },
+      "mobileCrop": {
+        "mode": "center_crop_or_contain",
+        "keepSafeArea": true,
+        "notes": "玩家男性选角和身份卡窄屏保留面部、冠帽、肩颈轮廓、腰带和身份服饰；不得显示未审核候选图。"
+      },
+      "lazyLoad": {
+        "group": "portrait_pool_player_male_extra_s73_10",
+        "allowEagerLoad": false,
+        "thumbnailFirst": true,
+        "lowResPlaceholder": true,
+        "maxInitialPortraits": 8
+      },
+      "source": {
+        "type": "ai_generated",
+        "tool": "Codex imagegen",
+        "model": "gpt-image-2",
+        "generatedAt": "2026-05-15",
+        "promptSummary": "行旅策士玩家扩展：行旅披风、空白卷轴、驿亭与谋略气。 工作款，持卷或持笏，表现读书、理政或经营状态。"
+      },
+      "license": {
+        "type": "ai_generated_project_asset",
+        "commercialUseConfirmed": false,
+        "summary": "原创 AI 生成素材，当前仅个人游玩/开发使用；未做公开商用确认。"
+      },
+      "reviewStatus": "approved",
+      "visualReview": {
+        "reviewedBy": "Codex",
+        "reviewedAt": "2026-05-15",
+        "status": "approved",
+        "summary": "通过：成年男性特征明确，肩颈与上身轮廓、冠服层次、身份姿态差异清楚；画面高对比、色彩更丰富、噪点较少，仍保持端庄历史立绘气质。"
+      },
+      "safetyReview": {
+        "reviewedBy": "Codex",
+        "reviewedAt": "2026-05-15",
+        "status": "approved",
+        "summary": "通过：全套衣着完整，无裸露、挑逗、幼态、现代物、水印、徽标、可读文字、本地路径、key、raw/hidden 内容或未公开剧情事实。"
+      },
+      "performance": {
+        "bytes": 176594,
+        "targetMaxBytes": 614400,
+        "thumbnailBytes": 42380,
+        "thumbnailTargetMaxBytes": 256000,
+        "lowResPlaceholderBytes": 1412
+      },
+      "ledgerId": "portrait-s73-10-player-male-extra-travelling_strategist-look03-v1"
+    },
+    {
+      "id": "portrait-s73-10-player-male-extra-travelling_strategist-look04-v1",
+      "version": 1,
+      "phase": "S73.10.2",
+      "category": "portrait",
+      "subcategory": "player_male_style_pool",
+      "usage": [
+        "player_identity",
+        "people_page",
+        "game_main"
+      ],
+      "role": "travelling_strategist",
+      "roleLabel": "行旅策士",
+      "roleStage": "player_male_style",
+      "scene": null,
+      "portraitRef": "portrait-s73-10-player-male-extra-travelling_strategist-look04-v1",
+      "genderPresentation": "masculine",
+      "ageBand": "adult_young_to_mature",
+      "statusVariant": "travel_or_motion",
+      "emotionVariant": "alert",
+      "posture": "披风行旅",
+      "identityTags": [
+        "player",
+        "male_style",
+        "travelling_strategist",
+        "travel_or_motion"
+      ],
+      "emotionTags": [
+        "alert",
+        "travel_or_motion"
+      ],
+      "path": "/assets/ui/portraits/s73-10/portrait-s73-10-player-male-extra-travelling_strategist-look04-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-portrait-s73-10-player-male-extra-travelling_strategist-look04-v1.webp",
+      "lowResPlaceholderPath": "/assets/ui/portraits/placeholders/placeholder-portrait-s73-10-player-male-extra-travelling_strategist-look04-v1.webp",
+      "fallbackRef": "fallback-role-silhouette-v1",
+      "dimensions": {
+        "width": 1024,
+        "height": 1536
+      },
+      "aspectRatio": "1024:1536",
+      "format": "webp",
+      "transparent": false,
+      "safeArea": {
+        "x": 0.2,
+        "y": 0.05,
+        "width": 0.6,
+        "height": 0.88
+      },
+      "focalPoint": {
+        "x": 0.5,
+        "y": 0.25
+      },
+      "mobileCrop": {
+        "mode": "center_crop_or_contain",
+        "keepSafeArea": true,
+        "notes": "玩家男性选角和身份卡窄屏保留面部、冠帽、肩颈轮廓、腰带和身份服饰；不得显示未审核候选图。"
+      },
+      "lazyLoad": {
+        "group": "portrait_pool_player_male_extra_s73_10",
+        "allowEagerLoad": false,
+        "thumbnailFirst": true,
+        "lowResPlaceholder": true,
+        "maxInitialPortraits": 8
+      },
+      "source": {
+        "type": "ai_generated",
+        "tool": "Codex imagegen",
+        "model": "gpt-image-2",
+        "generatedAt": "2026-05-15",
+        "promptSummary": "行旅策士玩家扩展：行旅披风、空白卷轴、驿亭与谋略气。 动态款，披风、甲衣或外袍拉开轮廓，行动感更强。"
+      },
+      "license": {
+        "type": "ai_generated_project_asset",
+        "commercialUseConfirmed": false,
+        "summary": "原创 AI 生成素材，当前仅个人游玩/开发使用；未做公开商用确认。"
+      },
+      "reviewStatus": "approved",
+      "visualReview": {
+        "reviewedBy": "Codex",
+        "reviewedAt": "2026-05-15",
+        "status": "approved",
+        "summary": "通过：成年男性特征明确，肩颈与上身轮廓、冠服层次、身份姿态差异清楚；画面高对比、色彩更丰富、噪点较少，仍保持端庄历史立绘气质。"
+      },
+      "safetyReview": {
+        "reviewedBy": "Codex",
+        "reviewedAt": "2026-05-15",
+        "status": "approved",
+        "summary": "通过：全套衣着完整，无裸露、挑逗、幼态、现代物、水印、徽标、可读文字、本地路径、key、raw/hidden 内容或未公开剧情事实。"
+      },
+      "performance": {
+        "bytes": 170706,
+        "targetMaxBytes": 614400,
+        "thumbnailBytes": 40648,
+        "thumbnailTargetMaxBytes": 256000,
+        "lowResPlaceholderBytes": 1386
+      },
+      "ledgerId": "portrait-s73-10-player-male-extra-travelling_strategist-look04-v1"
+    },
+    {
+      "id": "portrait-s73-10-player-male-extra-travelling_strategist-look05-v1",
+      "version": 1,
+      "phase": "S73.10.2",
+      "category": "portrait",
+      "subcategory": "player_male_style_pool",
+      "usage": [
+        "player_identity",
+        "people_page",
+        "game_main"
+      ],
+      "role": "travelling_strategist",
+      "roleLabel": "行旅策士",
+      "roleStage": "player_male_style",
+      "scene": null,
+      "portraitRef": "portrait-s73-10-player-male-extra-travelling_strategist-look05-v1",
+      "genderPresentation": "masculine",
+      "ageBand": "adult_young_to_mature",
+      "statusVariant": "quiet_authority",
+      "emotionVariant": "stern",
+      "posture": "拢袖端坐",
+      "identityTags": [
+        "player",
+        "male_style",
+        "travelling_strategist",
+        "quiet_authority"
+      ],
+      "emotionTags": [
+        "stern",
+        "quiet_authority"
+      ],
+      "path": "/assets/ui/portraits/s73-10/portrait-s73-10-player-male-extra-travelling_strategist-look05-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-portrait-s73-10-player-male-extra-travelling_strategist-look05-v1.webp",
+      "lowResPlaceholderPath": "/assets/ui/portraits/placeholders/placeholder-portrait-s73-10-player-male-extra-travelling_strategist-look05-v1.webp",
+      "fallbackRef": "fallback-role-silhouette-v1",
+      "dimensions": {
+        "width": 1024,
+        "height": 1536
+      },
+      "aspectRatio": "1024:1536",
+      "format": "webp",
+      "transparent": false,
+      "safeArea": {
+        "x": 0.2,
+        "y": 0.05,
+        "width": 0.6,
+        "height": 0.88
+      },
+      "focalPoint": {
+        "x": 0.5,
+        "y": 0.25
+      },
+      "mobileCrop": {
+        "mode": "center_crop_or_contain",
+        "keepSafeArea": true,
+        "notes": "玩家男性选角和身份卡窄屏保留面部、冠帽、肩颈轮廓、腰带和身份服饰；不得显示未审核候选图。"
+      },
+      "lazyLoad": {
+        "group": "portrait_pool_player_male_extra_s73_10",
+        "allowEagerLoad": false,
+        "thumbnailFirst": true,
+        "lowResPlaceholder": true,
+        "maxInitialPortraits": 8
+      },
+      "source": {
+        "type": "ai_generated",
+        "tool": "Codex imagegen",
+        "model": "gpt-image-2",
+        "generatedAt": "2026-05-15",
+        "promptSummary": "行旅策士玩家扩展：行旅披风、空白卷轴、驿亭与谋略气。 威仪款，表情沉稳，适合高位身份或慎重决策。"
+      },
+      "license": {
+        "type": "ai_generated_project_asset",
+        "commercialUseConfirmed": false,
+        "summary": "原创 AI 生成素材，当前仅个人游玩/开发使用；未做公开商用确认。"
+      },
+      "reviewStatus": "approved",
+      "visualReview": {
+        "reviewedBy": "Codex",
+        "reviewedAt": "2026-05-15",
+        "status": "approved",
+        "summary": "通过：成年男性特征明确，肩颈与上身轮廓、冠服层次、身份姿态差异清楚；画面高对比、色彩更丰富、噪点较少，仍保持端庄历史立绘气质。"
+      },
+      "safetyReview": {
+        "reviewedBy": "Codex",
+        "reviewedAt": "2026-05-15",
+        "status": "approved",
+        "summary": "通过：全套衣着完整，无裸露、挑逗、幼态、现代物、水印、徽标、可读文字、本地路径、key、raw/hidden 内容或未公开剧情事实。"
+      },
+      "performance": {
+        "bytes": 166742,
+        "targetMaxBytes": 614400,
+        "thumbnailBytes": 39362,
+        "thumbnailTargetMaxBytes": 256000,
+        "lowResPlaceholderBytes": 1478
+      },
+      "ledgerId": "portrait-s73-10-player-male-extra-travelling_strategist-look05-v1"
+    },
+    {
+      "id": "portrait-s73-10-player-male-extra-travelling_strategist-look06-v1",
+      "version": 1,
+      "phase": "S73.10.2",
+      "category": "portrait",
+      "subcategory": "player_male_style_pool",
+      "usage": [
+        "player_identity",
+        "people_page",
+        "game_main"
+      ],
+      "role": "travelling_strategist",
+      "roleLabel": "行旅策士",
+      "roleStage": "player_male_style",
+      "scene": null,
+      "portraitRef": "portrait-s73-10-player-male-extra-travelling_strategist-look06-v1",
+      "genderPresentation": "masculine",
+      "ageBand": "adult_young_to_mature",
+      "statusVariant": "poised",
+      "emotionVariant": "determined",
+      "posture": "持物正立",
+      "identityTags": [
+        "player",
+        "male_style",
+        "travelling_strategist",
+        "poised"
+      ],
+      "emotionTags": [
+        "determined",
+        "poised"
+      ],
+      "path": "/assets/ui/portraits/s73-10/portrait-s73-10-player-male-extra-travelling_strategist-look06-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-portrait-s73-10-player-male-extra-travelling_strategist-look06-v1.webp",
+      "lowResPlaceholderPath": "/assets/ui/portraits/placeholders/placeholder-portrait-s73-10-player-male-extra-travelling_strategist-look06-v1.webp",
+      "fallbackRef": "fallback-role-silhouette-v1",
+      "dimensions": {
+        "width": 1024,
+        "height": 1536
+      },
+      "aspectRatio": "1024:1536",
+      "format": "webp",
+      "transparent": false,
+      "safeArea": {
+        "x": 0.2,
+        "y": 0.05,
+        "width": 0.6,
+        "height": 0.88
+      },
+      "focalPoint": {
+        "x": 0.5,
+        "y": 0.25
+      },
+      "mobileCrop": {
+        "mode": "center_crop_or_contain",
+        "keepSafeArea": true,
+        "notes": "玩家男性选角和身份卡窄屏保留面部、冠帽、肩颈轮廓、腰带和身份服饰；不得显示未审核候选图。"
+      },
+      "lazyLoad": {
+        "group": "portrait_pool_player_male_extra_s73_10",
+        "allowEagerLoad": false,
+        "thumbnailFirst": true,
+        "lowResPlaceholder": true,
+        "maxInitialPortraits": 8
+      },
+      "source": {
+        "type": "ai_generated",
+        "tool": "Codex imagegen",
+        "model": "gpt-image-2",
+        "generatedAt": "2026-05-15",
+        "promptSummary": "行旅策士玩家扩展：行旅披风、空白卷轴、驿亭与谋略气。 选角款，面向玩家形象选择，色彩更丰富、对比更高。"
+      },
+      "license": {
+        "type": "ai_generated_project_asset",
+        "commercialUseConfirmed": false,
+        "summary": "原创 AI 生成素材，当前仅个人游玩/开发使用；未做公开商用确认。"
+      },
+      "reviewStatus": "approved",
+      "visualReview": {
+        "reviewedBy": "Codex",
+        "reviewedAt": "2026-05-15",
+        "status": "approved",
+        "summary": "通过：成年男性特征明确，肩颈与上身轮廓、冠服层次、身份姿态差异清楚；画面高对比、色彩更丰富、噪点较少，仍保持端庄历史立绘气质。"
+      },
+      "safetyReview": {
+        "reviewedBy": "Codex",
+        "reviewedAt": "2026-05-15",
+        "status": "approved",
+        "summary": "通过：全套衣着完整，无裸露、挑逗、幼态、现代物、水印、徽标、可读文字、本地路径、key、raw/hidden 内容或未公开剧情事实。"
+      },
+      "performance": {
+        "bytes": 166422,
+        "targetMaxBytes": 614400,
+        "thumbnailBytes": 39238,
+        "thumbnailTargetMaxBytes": 256000,
+        "lowResPlaceholderBytes": 1416
+      },
+      "ledgerId": "portrait-s73-10-player-male-extra-travelling_strategist-look06-v1"
     }
   ],
   "updatedAt": "2026-05-15"

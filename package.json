@@ -16,6 +16,8 @@
     "qa:player-portraits:write": "node scripts/frontendPlayerPortraitAssets.js --write",
     "qa:player-female-portraits": "node scripts/frontendPlayerFemalePortraitAssets.js --check",
     "qa:player-female-portraits:write": "node scripts/frontendPlayerFemalePortraitAssets.js --write",
+    "qa:player-male-portraits": "node scripts/frontendPlayerMalePortraitAssets.js --check",
+    "qa:player-male-portraits:write": "node scripts/frontendPlayerMalePortraitAssets.js --write",
     "qa:generic-npc-portraits": "node scripts/frontendGenericNpcPortraitAssets.js --check",
     "qa:generic-npc-portraits:write": "node scripts/frontendGenericNpcPortraitAssets.js --write",
     "eval:ai": "node scripts/aiEvaluationRunner.js && node --test test/aiEvalFixtures.test.js",
