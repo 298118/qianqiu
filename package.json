@@ -22,6 +22,8 @@
     "qa:generic-npc-portraits:write": "node scripts/frontendGenericNpcPortraitAssets.js --write",
     "qa:signature-npc-portraits": "node scripts/frontendSignatureNpcPortraitAssets.js --check",
     "qa:signature-npc-portraits:write": "node scripts/frontendSignatureNpcPortraitAssets.js --write",
+    "qa:state-scene-portraits": "node scripts/frontendStateScenePortraitAssets.js --check",
+    "qa:state-scene-portraits:write": "node scripts/frontendStateScenePortraitAssets.js --write",
     "eval:ai": "node scripts/aiEvaluationRunner.js && node --test test/aiEvalFixtures.test.js",
     "smoke:browser": "node scripts/browserSmoke.js",
     "smoke:dual-mode": "node scripts/dualModeAcceptance.js",

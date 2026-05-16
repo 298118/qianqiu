@@ -21,6 +21,7 @@ const portraitPlayerFemaleResetQaPath = path.join(
 const portraitPlayerMaleExtraQaPath = path.join(repoRoot, "public", "assets", "ui", "portraits", "portrait-player-male-extra-qa-v1.json");
 const portraitGenericNpcPoolQaPath = path.join(repoRoot, "public", "assets", "ui", "portraits", "portrait-generic-npc-pool-qa-v1.json");
 const portraitSignatureNpcPoolQaPath = path.join(repoRoot, "public", "assets", "ui", "portraits", "portrait-signature-npc-pool-qa-v1.json");
+const portraitStateScenePoolQaPath = path.join(repoRoot, "public", "assets", "ui", "portraits", "portrait-state-scene-pool-qa-v1.json");
 const effectMotionQaPath = path.join(repoRoot, "public", "assets", "ui", "effects", "effect-motion-qa-v1.json");
 const assetQaReportPath = path.join(repoRoot, "public", "assets", "ui", "asset-qa-report-v1.json");
 const assetQaPreviewPath = path.join(repoRoot, "public", "assets", "ui", "asset-qa-preview.html");
@@ -222,7 +223,7 @@ test("S73.2 ink UI manifest fixes schema, safety, fallback, and portrait policie
   });
 
   assert.equal(Array.isArray(manifest.assets), true);
-  assert.equal(manifest.assets.length, 522, "S73.3-S73.10.4 UI assets are active");
+  assert.equal(manifest.assets.length, 594, "S73.3-S73.10.5 UI assets are active");
 
   const phaseCounts = manifest.assets.reduce((counts, asset) => {
     counts[asset.phase] = (counts[asset.phase] || 0) + 1;
@@ -237,9 +238,10 @@ test("S73.2 ink UI manifest fixes schema, safety, fallback, and portrait policie
   assert.equal(phaseCounts["S73.10.2"], 192);
   assert.equal(phaseCounts["S73.10.3"], 188);
   assert.equal(phaseCounts["S73.10.4"], 72);
+  assert.equal(phaseCounts["S73.10.5"], 72);
 
   for (const asset of manifest.assets) {
-    assert.equal(["S73.3", "S73.4", "S73.5", "S73.6", "S73.7", "S73.8", "S73.10.2", "S73.10.3", "S73.10.4"].includes(asset.phase), true, asset.id);
+    assert.equal(["S73.3", "S73.4", "S73.5", "S73.6", "S73.7", "S73.8", "S73.10.2", "S73.10.3", "S73.10.4", "S73.10.5"].includes(asset.phase), true, asset.id);
     assert.equal(manifest.allowedCategories.includes(asset.category), true, asset.id);
     if (asset.phase === "S73.3") assert.equal(asset.category, "material", asset.id);
     if (asset.phase === "S73.4") assert.equal(asset.usage.includes("home"), true, asset.id);
@@ -903,6 +905,83 @@ test("S73.10.4 signature NPC portrait pool QA records isolated important NPC por
   assert.deepEqual([...feminineRoles].sort(), ["beloved-confidant", "empress", "empress-dowager"]);
 });
 
+test("S73.10.5 state and scene portrait pool QA records approved pose anchors", () => {
+  const qaText = fs.readFileSync(portraitStateScenePoolQaPath, "utf8");
+  assert.doesNotMatch(qaText, FORBIDDEN_MANIFEST_REMOTE_OR_LOCAL_PATH);
+  assert.doesNotMatch(qaText, FORBIDDEN_ASSET_VALUE);
+  const qa = JSON.parse(qaText);
+
+  assert.equal(qa.schemaVersion, 1);
+  assert.equal(qa.phase, "S73.10.5");
+  assert.equal(qa.reviewedBy, "Codex");
+  assert.equal(qa.assets.length, 72);
+  assert.equal(qa.sourceSheets.length, 12);
+  assert.deepEqual(qa.counts, { stateVariant: 48, sceneAnchor: 24 });
+  assert.equal(qa.visualReviewSummary.includes("女性角色具备明确成熟女性服饰和身形特征"), true);
+  assert.equal(qa.safetyReviewSummary.includes("provider 原始响应"), true);
+
+  const manifest = readJson(manifestPath);
+  const poolAssets = new Map(manifest.assets.filter((asset) => asset.phase === "S73.10.5").map((asset) => [asset.id, asset]));
+  const subcategoryCounts = new Map();
+  const stateStatusCounts = new Map();
+  const sceneStatusCounts = new Map();
+  const sceneRoles = new Set();
+  for (const entry of qa.assets) {
+    const asset = poolAssets.get(entry.id);
+    assert.ok(asset, entry.id);
+    assert.equal(entry.path, asset.path, entry.id);
+    assert.equal(entry.thumbnailPath, asset.thumbnailPath, entry.id);
+    assert.equal(entry.lowResPlaceholderPath, asset.lowResPlaceholderPath, entry.id);
+    assert.equal(asset.category, "portrait", entry.id);
+    assert.equal(["state_variant_pool", "scene_anchor_pool"].includes(asset.subcategory), true, entry.id);
+    assert.equal(asset.lazyLoad.group, asset.subcategory === "state_variant_pool" ? "portrait_pool_state_variant_s73_10" : "portrait_pool_scene_anchor_s73_10", entry.id);
+    assert.equal(asset.identityTags.includes("generic_npc"), false, entry.id);
+    assert.equal(asset.source.promptSummary.includes("女性"), true, entry.id);
+    subcategoryCounts.set(asset.subcategory, (subcategoryCounts.get(asset.subcategory) || 0) + 1);
+    if (asset.subcategory === "state_variant_pool") {
+      stateStatusCounts.set(entry.statusVariant, (stateStatusCounts.get(entry.statusVariant) || 0) + 1);
+    } else {
+      sceneStatusCounts.set(entry.statusVariant, (sceneStatusCounts.get(entry.statusVariant) || 0) + 1);
+      sceneRoles.add(entry.role);
+    }
+    for (const field of ["path", "thumbnailPath", "lowResPlaceholderPath"]) {
+      assertSafeUiAssetPath(entry[field], `${entry.id}.${field}`);
+      assert.equal(fs.existsSync(resolveUiAssetPath(entry[field])), true, `${entry.id}.${field}`);
+    }
+    assert.equal(entry.bytes, fs.statSync(resolveUiAssetPath(entry.path)).size, entry.id);
+    assert.equal(entry.thumbnailBytes, fs.statSync(resolveUiAssetPath(entry.thumbnailPath)).size, entry.id);
+    assert.equal(entry.lowResPlaceholderBytes, fs.statSync(resolveUiAssetPath(entry.lowResPlaceholderPath)).size, entry.id);
+    assert.equal(entry.sha256, sha256File(resolveUiAssetPath(entry.path)), entry.id);
+    assert.equal(entry.thumbnailSha256, sha256File(resolveUiAssetPath(entry.thumbnailPath)), entry.id);
+    assert.equal(entry.lowResPlaceholderSha256, sha256File(resolveUiAssetPath(entry.lowResPlaceholderPath)), entry.id);
+    assert.equal(entry.visualReviewStatus, "approved", entry.id);
+    assert.equal(entry.safetyReviewStatus, "approved", entry.id);
+  }
+  assert.deepEqual(Object.fromEntries([...subcategoryCounts.entries()].sort()), {
+    scene_anchor_pool: 24,
+    state_variant_pool: 48
+  });
+  assert.equal(stateStatusCounts.size, 16);
+  for (const [statusVariant, count] of stateStatusCounts) {
+    assert.equal(count, 3, statusVariant);
+  }
+  assert.deepEqual(Object.fromEntries([...sceneStatusCounts.entries()].sort()), {
+    baseline: 8,
+    conflict: 8,
+    resolved: 8
+  });
+  assert.deepEqual([...sceneRoles].sort(), [
+    "county-trial",
+    "court-memorial",
+    "exam-list-meeting",
+    "exam-writing",
+    "market-talk",
+    "night-study",
+    "palace-summons",
+    "war-council"
+  ]);
+});
+
 test("S73.8 effect motion QA records approved reduced-motion fallbacks", () => {
   const qaText = fs.readFileSync(effectMotionQaPath, "utf8");
   assert.doesNotMatch(qaText, FORBIDDEN_MANIFEST_REMOTE_OR_LOCAL_PATH);
@@ -1059,7 +1138,9 @@ test("S73.10 portrait pool matrix locks planned counts and player pool handoff",
     const isGeneratedMatrixEntry =
       (entry.matrixGroup === "player" && entry.productionStep === "S73.10.2") ||
       (entry.matrixGroup === "generic_npc" && entry.productionStep === "S73.10.3") ||
-      (entry.matrixGroup === "signature_npc" && entry.productionStep === "S73.10.4");
+      (entry.matrixGroup === "signature_npc" && entry.productionStep === "S73.10.4") ||
+      (entry.matrixGroup === "state_variant" && entry.productionStep === "S73.10.5") ||
+      (entry.matrixGroup === "scene_anchor" && entry.productionStep === "S73.10.5");
     assert.equal(manifestPortraitRefs.has(entry.portraitRef), isGeneratedMatrixEntry, entry.portraitRef);
     assert.equal(String(entry.ageBand).startsWith("adult"), true, entry.portraitRef);
     assert.equal(templateIds.has(entry.promptTemplateRef), true, entry.portraitRef);
@@ -1164,16 +1245,22 @@ test("S73.2 frontend asset ledger records manifest, fallback, portrait, and sour
     "portrait-player-male-extra-qa-v1.json",
     "portrait-generic-npc-pool-qa-v1.json",
     "portrait-signature-npc-pool-qa-v1.json",
+    "portrait-state-scene-pool-qa-v1.json",
     "portrait_baseline_s73_7",
     "portrait_pool_player_s73_10",
     "portrait_pool_player_female_extra_s73_10",
     "portrait_pool_player_male_extra_s73_10",
     "portrait_pool_generic_npc_s73_10",
     "portrait_pool_signature_npc_s73_10",
+    "portrait_pool_state_variant_s73_10",
+    "portrait_pool_scene_anchor_s73_10",
     "玩家女性风格补充池",
     "玩家男性风格补充池",
     "女性风格扩展池",
     "重要 NPC 专属池",
+    "状态/姿态与场景锚点池",
+    "state_variant_pool",
+    "scene_anchor_pool",
     "signature_npc_pool",
     "palace-lady",
     "tang-lady",

@@ -1,9 +1,9 @@
 {
   "schemaVersion": 1,
   "phase": "S73.9",
-  "generatedAt": "2026-05-16T05:58:17.291Z",
+  "generatedAt": "2026-05-16T06:55:21.478Z",
   "manifestRef": "public/assets/ui/ink-ui-manifest.json",
-  "manifestSha256": "29f2869efde8c7cf1bbfb188a8b5374027f376162289f089377054fd9b000bae",
+  "manifestSha256": "3d426c78d533723e79ce520efa9367c545c4b9b78bb5ecc05363727f017523ef",
   "previewRef": "public/assets/ui/asset-qa-preview.html",
   "compositeBackgrounds": [
     {
@@ -29,7 +29,7 @@
     "reason": null
   },
   "summary": {
-    "totalAssets": 522,
+    "totalAssets": 594,
     "transparentAssets": 19,
     "byPhase": {
       "S73.3": 16,
@@ -40,7 +40,8 @@
       "S73.8": 8,
       "S73.10.2": 192,
       "S73.10.3": 188,
-      "S73.10.4": 72
+      "S73.10.4": 72,
+      "S73.10.5": 72
     },
     "byCategory": {
       "material": 19,
@@ -48,10 +49,10 @@
       "effect": 9,
       "scene": 10,
       "role_background": 6,
-      "portrait": 476
+      "portrait": 548
     },
     "byReviewStatus": {
-      "approved": 518,
+      "approved": 590,
       "approved_with_limits": 4
     },
     "errorCount": 0,
@@ -33047,6 +33048,4542 @@
           "exists": true,
           "bytes": 1172,
           "sha256": "dd33d0fe68055ae78e1767a22f68399df1ee306e2ad4eb97dd2cbf1135c6d0ca",
+          "dimensions": {
+            "width": 64,
+            "height": 96,
+            "alpha": false
+          }
+        }
+      },
+      "transparentQa": {
+        "required": false,
+        "backgrounds": [],
+        "sidecar": null,
+        "pixel": null
+      },
+      "issues": []
+    },
+    {
+      "id": "portrait-s73-10-state_variant-scholar-thinking-scholar-v1",
+      "phase": "S73.10.5",
+      "category": "portrait",
+      "subcategory": "state_variant_pool",
+      "usage": [
+        "emotion_or_state_variant",
+        "dialogue_panel",
+        "exam_or_court_scene"
+      ],
+      "path": "/assets/ui/portraits/s73-10/portrait-s73-10-state_variant-scholar-thinking-scholar-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-portrait-s73-10-state_variant-scholar-thinking-scholar-v1.webp",
+      "fallbackRef": "fallback-role-silhouette-v1",
+      "reviewStatus": "approved",
+      "runtimeUsable": true,
+      "dimensions": {
+        "width": 1024,
+        "height": 1536
+      },
+      "transparent": false,
+      "files": {
+        "image": {
+          "path": "/assets/ui/portraits/s73-10/portrait-s73-10-state_variant-scholar-thinking-scholar-v1.webp",
+          "exists": true,
+          "bytes": 138930,
+          "sha256": "14c813434716c1e59c3ceb8b0dabd9621b01aef424cbbb9ec4c2539f733ea4f8",
+          "dimensions": {
+            "width": 1024,
+            "height": 1536
+          },
+          "alpha": false
+        },
+        "thumbnail": {
+          "path": "/assets/ui/thumbs/thumb-portrait-s73-10-state_variant-scholar-thinking-scholar-v1.webp",
+          "exists": true,
+          "bytes": 29822,
+          "sha256": "d128eebe85c48611b373a601f97b60e2f532f13357d1994c20d40c58e157624f",
+          "dimensions": {
+            "width": 384,
+            "height": 576,
+            "alpha": false
+          }
+        },
+        "lowResPlaceholder": {
+          "path": "/assets/ui/portraits/placeholders/placeholder-portrait-s73-10-state_variant-scholar-thinking-scholar-v1.webp",
+          "exists": true,
+          "bytes": 1212,
+          "sha256": "096a728d5bb635b8dd00c30037113ab5fe5ae7d5a48ea1b10b30de75da4903ed",
+          "dimensions": {
+            "width": 64,
+            "height": 96,
+            "alpha": false
+          }
+        }
+      },
+      "transparentQa": {
+        "required": false,
+        "backgrounds": [],
+        "sidecar": null,
+        "pixel": null
+      },
+      "issues": []
+    },
+    {
+      "id": "portrait-s73-10-state_variant-official-thinking-official-v1",
+      "phase": "S73.10.5",
+      "category": "portrait",
+      "subcategory": "state_variant_pool",
+      "usage": [
+        "emotion_or_state_variant",
+        "dialogue_panel",
+        "exam_or_court_scene"
+      ],
+      "path": "/assets/ui/portraits/s73-10/portrait-s73-10-state_variant-official-thinking-official-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-portrait-s73-10-state_variant-official-thinking-official-v1.webp",
+      "fallbackRef": "fallback-role-silhouette-v1",
+      "reviewStatus": "approved",
+      "runtimeUsable": true,
+      "dimensions": {
+        "width": 1024,
+        "height": 1536
+      },
+      "transparent": false,
+      "files": {
+        "image": {
+          "path": "/assets/ui/portraits/s73-10/portrait-s73-10-state_variant-official-thinking-official-v1.webp",
+          "exists": true,
+          "bytes": 140556,
+          "sha256": "9c692efa464a184a6679ec722f82bbf31cb47d9b5235f9fe1cdaed86eb665d8e",
+          "dimensions": {
+            "width": 1024,
+            "height": 1536
+          },
+          "alpha": false
+        },
+        "thumbnail": {
+          "path": "/assets/ui/thumbs/thumb-portrait-s73-10-state_variant-official-thinking-official-v1.webp",
+          "exists": true,
+          "bytes": 27972,
+          "sha256": "708c24ff00a9c3ea513370d77eaaea710f86aeecddf29c9ecfaab2a50c7495a5",
+          "dimensions": {
+            "width": 384,
+            "height": 576,
+            "alpha": false
+          }
+        },
+        "lowResPlaceholder": {
+          "path": "/assets/ui/portraits/placeholders/placeholder-portrait-s73-10-state_variant-official-thinking-official-v1.webp",
+          "exists": true,
+          "bytes": 1082,
+          "sha256": "9d14b02f3d3cf2fd82b7c25e2bbd8bcd22f6d9a2d39528e85045aeeea989eae7",
+          "dimensions": {
+            "width": 64,
+            "height": 96,
+            "alpha": false
+          }
+        }
+      },
+      "transparentQa": {
+        "required": false,
+        "backgrounds": [],
+        "sidecar": null,
+        "pixel": null
+      },
+      "issues": []
+    },
+    {
+      "id": "portrait-s73-10-state_variant-military-thinking-military-v1",
+      "phase": "S73.10.5",
+      "category": "portrait",
+      "subcategory": "state_variant_pool",
+      "usage": [
+        "emotion_or_state_variant",
+        "dialogue_panel",
+        "exam_or_court_scene"
+      ],
+      "path": "/assets/ui/portraits/s73-10/portrait-s73-10-state_variant-military-thinking-military-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-portrait-s73-10-state_variant-military-thinking-military-v1.webp",
+      "fallbackRef": "fallback-role-silhouette-v1",
+      "reviewStatus": "approved",
+      "runtimeUsable": true,
+      "dimensions": {
+        "width": 1024,
+        "height": 1536
+      },
+      "transparent": false,
+      "files": {
+        "image": {
+          "path": "/assets/ui/portraits/s73-10/portrait-s73-10-state_variant-military-thinking-military-v1.webp",
+          "exists": true,
+          "bytes": 141002,
+          "sha256": "84c1a71d8e8ddbacbe9f680131318eb0db29a6b04dddbeb0552881c75092ef25",
+          "dimensions": {
+            "width": 1024,
+            "height": 1536
+          },
+          "alpha": false
+        },
+        "thumbnail": {
+          "path": "/assets/ui/thumbs/thumb-portrait-s73-10-state_variant-military-thinking-military-v1.webp",
+          "exists": true,
+          "bytes": 30256,
+          "sha256": "8e200b5a47ecccd8fd4beeab0e95aa51e845eb3dfab4814db1e8f1dad4da65b0",
+          "dimensions": {
+            "width": 384,
+            "height": 576,
+            "alpha": false
+          }
+        },
+        "lowResPlaceholder": {
+          "path": "/assets/ui/portraits/placeholders/placeholder-portrait-s73-10-state_variant-military-thinking-military-v1.webp",
+          "exists": true,
+          "bytes": 1152,
+          "sha256": "192b8361526a47f96ea895c16f6e235f322f0876eb270a7e7e20243558d5d58f",
+          "dimensions": {
+            "width": 64,
+            "height": 96,
+            "alpha": false
+          }
+        }
+      },
+      "transparentQa": {
+        "required": false,
+        "backgrounds": [],
+        "sidecar": null,
+        "pixel": null
+      },
+      "issues": []
+    },
+    {
+      "id": "portrait-s73-10-state_variant-scholar-salute-scholar-v1",
+      "phase": "S73.10.5",
+      "category": "portrait",
+      "subcategory": "state_variant_pool",
+      "usage": [
+        "emotion_or_state_variant",
+        "dialogue_panel",
+        "exam_or_court_scene"
+      ],
+      "path": "/assets/ui/portraits/s73-10/portrait-s73-10-state_variant-scholar-salute-scholar-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-portrait-s73-10-state_variant-scholar-salute-scholar-v1.webp",
+      "fallbackRef": "fallback-role-silhouette-v1",
+      "reviewStatus": "approved",
+      "runtimeUsable": true,
+      "dimensions": {
+        "width": 1024,
+        "height": 1536
+      },
+      "transparent": false,
+      "files": {
+        "image": {
+          "path": "/assets/ui/portraits/s73-10/portrait-s73-10-state_variant-scholar-salute-scholar-v1.webp",
+          "exists": true,
+          "bytes": 143086,
+          "sha256": "e10f48261b7c27d47d8b7cce66ac0d1d17be50f79a004e754638a1975cbed64c",
+          "dimensions": {
+            "width": 1024,
+            "height": 1536
+          },
+          "alpha": false
+        },
+        "thumbnail": {
+          "path": "/assets/ui/thumbs/thumb-portrait-s73-10-state_variant-scholar-salute-scholar-v1.webp",
+          "exists": true,
+          "bytes": 31958,
+          "sha256": "22ffe02174673e8e356cf2603fb665caf60d119164b528a1dc20e20d351f37c8",
+          "dimensions": {
+            "width": 384,
+            "height": 576,
+            "alpha": false
+          }
+        },
+        "lowResPlaceholder": {
+          "path": "/assets/ui/portraits/placeholders/placeholder-portrait-s73-10-state_variant-scholar-salute-scholar-v1.webp",
+          "exists": true,
+          "bytes": 1236,
+          "sha256": "5cb4ea1aed68429276abd9d73205fa2fb8be27bb921dd9f832702250a51cf72a",
+          "dimensions": {
+            "width": 64,
+            "height": 96,
+            "alpha": false
+          }
+        }
+      },
+      "transparentQa": {
+        "required": false,
+        "backgrounds": [],
+        "sidecar": null,
+        "pixel": null
+      },
+      "issues": []
+    },
+    {
+      "id": "portrait-s73-10-state_variant-official-salute-official-v1",
+      "phase": "S73.10.5",
+      "category": "portrait",
+      "subcategory": "state_variant_pool",
+      "usage": [
+        "emotion_or_state_variant",
+        "dialogue_panel",
+        "exam_or_court_scene"
+      ],
+      "path": "/assets/ui/portraits/s73-10/portrait-s73-10-state_variant-official-salute-official-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-portrait-s73-10-state_variant-official-salute-official-v1.webp",
+      "fallbackRef": "fallback-role-silhouette-v1",
+      "reviewStatus": "approved",
+      "runtimeUsable": true,
+      "dimensions": {
+        "width": 1024,
+        "height": 1536
+      },
+      "transparent": false,
+      "files": {
+        "image": {
+          "path": "/assets/ui/portraits/s73-10/portrait-s73-10-state_variant-official-salute-official-v1.webp",
+          "exists": true,
+          "bytes": 146680,
+          "sha256": "a54d04422d04cf8a51577822d727e6dcc5dc34844c2eb429fa4cf2449c8aa8e1",
+          "dimensions": {
+            "width": 1024,
+            "height": 1536
+          },
+          "alpha": false
+        },
+        "thumbnail": {
+          "path": "/assets/ui/thumbs/thumb-portrait-s73-10-state_variant-official-salute-official-v1.webp",
+          "exists": true,
+          "bytes": 31032,
+          "sha256": "a18a894e968308301561e1a56456c236930d49fb43f1914ccee5ec5897e972ec",
+          "dimensions": {
+            "width": 384,
+            "height": 576,
+            "alpha": false
+          }
+        },
+        "lowResPlaceholder": {
+          "path": "/assets/ui/portraits/placeholders/placeholder-portrait-s73-10-state_variant-official-salute-official-v1.webp",
+          "exists": true,
+          "bytes": 1174,
+          "sha256": "a4350e767fbc1bebb13755f0f2288e925a1383ac4390620314114400de513891",
+          "dimensions": {
+            "width": 64,
+            "height": 96,
+            "alpha": false
+          }
+        }
+      },
+      "transparentQa": {
+        "required": false,
+        "backgrounds": [],
+        "sidecar": null,
+        "pixel": null
+      },
+      "issues": []
+    },
+    {
+      "id": "portrait-s73-10-state_variant-military-salute-military-v1",
+      "phase": "S73.10.5",
+      "category": "portrait",
+      "subcategory": "state_variant_pool",
+      "usage": [
+        "emotion_or_state_variant",
+        "dialogue_panel",
+        "exam_or_court_scene"
+      ],
+      "path": "/assets/ui/portraits/s73-10/portrait-s73-10-state_variant-military-salute-military-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-portrait-s73-10-state_variant-military-salute-military-v1.webp",
+      "fallbackRef": "fallback-role-silhouette-v1",
+      "reviewStatus": "approved",
+      "runtimeUsable": true,
+      "dimensions": {
+        "width": 1024,
+        "height": 1536
+      },
+      "transparent": false,
+      "files": {
+        "image": {
+          "path": "/assets/ui/portraits/s73-10/portrait-s73-10-state_variant-military-salute-military-v1.webp",
+          "exists": true,
+          "bytes": 148292,
+          "sha256": "9a2561d7ca32f5ea3df41ee16c48580fbd38f68506b9e97dad842fce528dc1c2",
+          "dimensions": {
+            "width": 1024,
+            "height": 1536
+          },
+          "alpha": false
+        },
+        "thumbnail": {
+          "path": "/assets/ui/thumbs/thumb-portrait-s73-10-state_variant-military-salute-military-v1.webp",
+          "exists": true,
+          "bytes": 33030,
+          "sha256": "c0b5551866ac848c599376979dd484fb1c74aa223f6d1ebb0462cca32d446e0b",
+          "dimensions": {
+            "width": 384,
+            "height": 576,
+            "alpha": false
+          }
+        },
+        "lowResPlaceholder": {
+          "path": "/assets/ui/portraits/placeholders/placeholder-portrait-s73-10-state_variant-military-salute-military-v1.webp",
+          "exists": true,
+          "bytes": 1172,
+          "sha256": "06304c9d74b53c6d7f84e26e5c1f3ab5d837ea858b31bf111a7f218514bce99e",
+          "dimensions": {
+            "width": 64,
+            "height": 96,
+            "alpha": false
+          }
+        }
+      },
+      "transparentQa": {
+        "required": false,
+        "backgrounds": [],
+        "sidecar": null,
+        "pixel": null
+      },
+      "issues": []
+    },
+    {
+      "id": "portrait-s73-10-state_variant-scholar-holding-scroll-scholar-v1",
+      "phase": "S73.10.5",
+      "category": "portrait",
+      "subcategory": "state_variant_pool",
+      "usage": [
+        "emotion_or_state_variant",
+        "dialogue_panel",
+        "exam_or_court_scene"
+      ],
+      "path": "/assets/ui/portraits/s73-10/portrait-s73-10-state_variant-scholar-holding-scroll-scholar-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-portrait-s73-10-state_variant-scholar-holding-scroll-scholar-v1.webp",
+      "fallbackRef": "fallback-role-silhouette-v1",
+      "reviewStatus": "approved",
+      "runtimeUsable": true,
+      "dimensions": {
+        "width": 1024,
+        "height": 1536
+      },
+      "transparent": false,
+      "files": {
+        "image": {
+          "path": "/assets/ui/portraits/s73-10/portrait-s73-10-state_variant-scholar-holding-scroll-scholar-v1.webp",
+          "exists": true,
+          "bytes": 164282,
+          "sha256": "b27ddf8cb7e7a8456f6b84d8a37c6f439824fe9187a592123e87d21cac239994",
+          "dimensions": {
+            "width": 1024,
+            "height": 1536
+          },
+          "alpha": false
+        },
+        "thumbnail": {
+          "path": "/assets/ui/thumbs/thumb-portrait-s73-10-state_variant-scholar-holding-scroll-scholar-v1.webp",
+          "exists": true,
+          "bytes": 37276,
+          "sha256": "0a49c9fb8910f69e0f84ecb45cac6a840a7becc00ea696d83d7ea9503076e957",
+          "dimensions": {
+            "width": 384,
+            "height": 576,
+            "alpha": false
+          }
+        },
+        "lowResPlaceholder": {
+          "path": "/assets/ui/portraits/placeholders/placeholder-portrait-s73-10-state_variant-scholar-holding-scroll-scholar-v1.webp",
+          "exists": true,
+          "bytes": 1366,
+          "sha256": "2b6398dd9336133649175fd52252576897ba22fde7c9b110f507cc386c1142cd",
+          "dimensions": {
+            "width": 64,
+            "height": 96,
+            "alpha": false
+          }
+        }
+      },
+      "transparentQa": {
+        "required": false,
+        "backgrounds": [],
+        "sidecar": null,
+        "pixel": null
+      },
+      "issues": []
+    },
+    {
+      "id": "portrait-s73-10-state_variant-official-holding-scroll-official-v1",
+      "phase": "S73.10.5",
+      "category": "portrait",
+      "subcategory": "state_variant_pool",
+      "usage": [
+        "emotion_or_state_variant",
+        "dialogue_panel",
+        "exam_or_court_scene"
+      ],
+      "path": "/assets/ui/portraits/s73-10/portrait-s73-10-state_variant-official-holding-scroll-official-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-portrait-s73-10-state_variant-official-holding-scroll-official-v1.webp",
+      "fallbackRef": "fallback-role-silhouette-v1",
+      "reviewStatus": "approved",
+      "runtimeUsable": true,
+      "dimensions": {
+        "width": 1024,
+        "height": 1536
+      },
+      "transparent": false,
+      "files": {
+        "image": {
+          "path": "/assets/ui/portraits/s73-10/portrait-s73-10-state_variant-official-holding-scroll-official-v1.webp",
+          "exists": true,
+          "bytes": 159186,
+          "sha256": "2a881b82b0464ad5d7769a1b317411205134fceb569f31b81f06fa95e49e44da",
+          "dimensions": {
+            "width": 1024,
+            "height": 1536
+          },
+          "alpha": false
+        },
+        "thumbnail": {
+          "path": "/assets/ui/thumbs/thumb-portrait-s73-10-state_variant-official-holding-scroll-official-v1.webp",
+          "exists": true,
+          "bytes": 33384,
+          "sha256": "fba661734ac2e62eb13b4231f85f37ee714074e85780e625d8173b4dfee990ea",
+          "dimensions": {
+            "width": 384,
+            "height": 576,
+            "alpha": false
+          }
+        },
+        "lowResPlaceholder": {
+          "path": "/assets/ui/portraits/placeholders/placeholder-portrait-s73-10-state_variant-official-holding-scroll-official-v1.webp",
+          "exists": true,
+          "bytes": 1180,
+          "sha256": "ee9b50b821248d5d535e14fe1eabb2184dfcb55bc03d98c34a7165cae0c1ea87",
+          "dimensions": {
+            "width": 64,
+            "height": 96,
+            "alpha": false
+          }
+        }
+      },
+      "transparentQa": {
+        "required": false,
+        "backgrounds": [],
+        "sidecar": null,
+        "pixel": null
+      },
+      "issues": []
+    },
+    {
+      "id": "portrait-s73-10-state_variant-military-holding-scroll-military-v1",
+      "phase": "S73.10.5",
+      "category": "portrait",
+      "subcategory": "state_variant_pool",
+      "usage": [
+        "emotion_or_state_variant",
+        "dialogue_panel",
+        "exam_or_court_scene"
+      ],
+      "path": "/assets/ui/portraits/s73-10/portrait-s73-10-state_variant-military-holding-scroll-military-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-portrait-s73-10-state_variant-military-holding-scroll-military-v1.webp",
+      "fallbackRef": "fallback-role-silhouette-v1",
+      "reviewStatus": "approved",
+      "runtimeUsable": true,
+      "dimensions": {
+        "width": 1024,
+        "height": 1536
+      },
+      "transparent": false,
+      "files": {
+        "image": {
+          "path": "/assets/ui/portraits/s73-10/portrait-s73-10-state_variant-military-holding-scroll-military-v1.webp",
+          "exists": true,
+          "bytes": 175868,
+          "sha256": "8035c8e75ed8fe338a188dc362081b577efcff2a15310265c03e53a574716330",
+          "dimensions": {
+            "width": 1024,
+            "height": 1536
+          },
+          "alpha": false
+        },
+        "thumbnail": {
+          "path": "/assets/ui/thumbs/thumb-portrait-s73-10-state_variant-military-holding-scroll-military-v1.webp",
+          "exists": true,
+          "bytes": 40594,
+          "sha256": "30755ff7342ededd53524d98483ea98858cb953d10d53da64ba47a437bbb5c1c",
+          "dimensions": {
+            "width": 384,
+            "height": 576,
+            "alpha": false
+          }
+        },
+        "lowResPlaceholder": {
+          "path": "/assets/ui/portraits/placeholders/placeholder-portrait-s73-10-state_variant-military-holding-scroll-military-v1.webp",
+          "exists": true,
+          "bytes": 1328,
+          "sha256": "ae75fdf98542c55c5913735ec7eed994c41096f97bc5b499b0585fd116ddf5c1",
+          "dimensions": {
+            "width": 64,
+            "height": 96,
+            "alpha": false
+          }
+        }
+      },
+      "transparentQa": {
+        "required": false,
+        "backgrounds": [],
+        "sidecar": null,
+        "pixel": null
+      },
+      "issues": []
+    },
+    {
+      "id": "portrait-s73-10-state_variant-scholar-reviewing-paper-scholar-v1",
+      "phase": "S73.10.5",
+      "category": "portrait",
+      "subcategory": "state_variant_pool",
+      "usage": [
+        "emotion_or_state_variant",
+        "dialogue_panel",
+        "exam_or_court_scene"
+      ],
+      "path": "/assets/ui/portraits/s73-10/portrait-s73-10-state_variant-scholar-reviewing-paper-scholar-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-portrait-s73-10-state_variant-scholar-reviewing-paper-scholar-v1.webp",
+      "fallbackRef": "fallback-role-silhouette-v1",
+      "reviewStatus": "approved",
+      "runtimeUsable": true,
+      "dimensions": {
+        "width": 1024,
+        "height": 1536
+      },
+      "transparent": false,
+      "files": {
+        "image": {
+          "path": "/assets/ui/portraits/s73-10/portrait-s73-10-state_variant-scholar-reviewing-paper-scholar-v1.webp",
+          "exists": true,
+          "bytes": 186688,
+          "sha256": "1f6b6c096524a6ec62e7b10bdf90ed48336386185a8b9e1e46a976eec135aea2",
+          "dimensions": {
+            "width": 1024,
+            "height": 1536
+          },
+          "alpha": false
+        },
+        "thumbnail": {
+          "path": "/assets/ui/thumbs/thumb-portrait-s73-10-state_variant-scholar-reviewing-paper-scholar-v1.webp",
+          "exists": true,
+          "bytes": 42426,
+          "sha256": "e23c9392ac3ae642803e82da33cb8ccdfbbe4d521eb1d32066081d703856b13e",
+          "dimensions": {
+            "width": 384,
+            "height": 576,
+            "alpha": false
+          }
+        },
+        "lowResPlaceholder": {
+          "path": "/assets/ui/portraits/placeholders/placeholder-portrait-s73-10-state_variant-scholar-reviewing-paper-scholar-v1.webp",
+          "exists": true,
+          "bytes": 1438,
+          "sha256": "9daa1b643f4fa662c37cf7aed784c736981c3a428553d9487e7a1389e63731d9",
+          "dimensions": {
+            "width": 64,
+            "height": 96,
+            "alpha": false
+          }
+        }
+      },
+      "transparentQa": {
+        "required": false,
+        "backgrounds": [],
+        "sidecar": null,
+        "pixel": null
+      },
+      "issues": []
+    },
+    {
+      "id": "portrait-s73-10-state_variant-official-reviewing-paper-official-v1",
+      "phase": "S73.10.5",
+      "category": "portrait",
+      "subcategory": "state_variant_pool",
+      "usage": [
+        "emotion_or_state_variant",
+        "dialogue_panel",
+        "exam_or_court_scene"
+      ],
+      "path": "/assets/ui/portraits/s73-10/portrait-s73-10-state_variant-official-reviewing-paper-official-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-portrait-s73-10-state_variant-official-reviewing-paper-official-v1.webp",
+      "fallbackRef": "fallback-role-silhouette-v1",
+      "reviewStatus": "approved",
+      "runtimeUsable": true,
+      "dimensions": {
+        "width": 1024,
+        "height": 1536
+      },
+      "transparent": false,
+      "files": {
+        "image": {
+          "path": "/assets/ui/portraits/s73-10/portrait-s73-10-state_variant-official-reviewing-paper-official-v1.webp",
+          "exists": true,
+          "bytes": 186902,
+          "sha256": "8fb4d970c050ec21eb864d4797e7b47be39142df9ff70290929a4befa929617c",
+          "dimensions": {
+            "width": 1024,
+            "height": 1536
+          },
+          "alpha": false
+        },
+        "thumbnail": {
+          "path": "/assets/ui/thumbs/thumb-portrait-s73-10-state_variant-official-reviewing-paper-official-v1.webp",
+          "exists": true,
+          "bytes": 42118,
+          "sha256": "30571e0ff4a85a56a34516d4672f7eb95db227ef6c59efd54770a18956e31ad2",
+          "dimensions": {
+            "width": 384,
+            "height": 576,
+            "alpha": false
+          }
+        },
+        "lowResPlaceholder": {
+          "path": "/assets/ui/portraits/placeholders/placeholder-portrait-s73-10-state_variant-official-reviewing-paper-official-v1.webp",
+          "exists": true,
+          "bytes": 1278,
+          "sha256": "478896d16061ce2d119eb2097823cddeb89119c25b00bb7c7751f1957661425f",
+          "dimensions": {
+            "width": 64,
+            "height": 96,
+            "alpha": false
+          }
+        }
+      },
+      "transparentQa": {
+        "required": false,
+        "backgrounds": [],
+        "sidecar": null,
+        "pixel": null
+      },
+      "issues": []
+    },
+    {
+      "id": "portrait-s73-10-state_variant-military-reviewing-paper-military-v1",
+      "phase": "S73.10.5",
+      "category": "portrait",
+      "subcategory": "state_variant_pool",
+      "usage": [
+        "emotion_or_state_variant",
+        "dialogue_panel",
+        "exam_or_court_scene"
+      ],
+      "path": "/assets/ui/portraits/s73-10/portrait-s73-10-state_variant-military-reviewing-paper-military-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-portrait-s73-10-state_variant-military-reviewing-paper-military-v1.webp",
+      "fallbackRef": "fallback-role-silhouette-v1",
+      "reviewStatus": "approved",
+      "runtimeUsable": true,
+      "dimensions": {
+        "width": 1024,
+        "height": 1536
+      },
+      "transparent": false,
+      "files": {
+        "image": {
+          "path": "/assets/ui/portraits/s73-10/portrait-s73-10-state_variant-military-reviewing-paper-military-v1.webp",
+          "exists": true,
+          "bytes": 188962,
+          "sha256": "edbf5e81ac4df02e92d3aaeb3b1e47d87f907ddf746e7a0bf9439ffbf665ec1b",
+          "dimensions": {
+            "width": 1024,
+            "height": 1536
+          },
+          "alpha": false
+        },
+        "thumbnail": {
+          "path": "/assets/ui/thumbs/thumb-portrait-s73-10-state_variant-military-reviewing-paper-military-v1.webp",
+          "exists": true,
+          "bytes": 42950,
+          "sha256": "9e6d7e2acab5224f7a2565ad2a25162171cbb7cd906b6aba74374a0e52786217",
+          "dimensions": {
+            "width": 384,
+            "height": 576,
+            "alpha": false
+          }
+        },
+        "lowResPlaceholder": {
+          "path": "/assets/ui/portraits/placeholders/placeholder-portrait-s73-10-state_variant-military-reviewing-paper-military-v1.webp",
+          "exists": true,
+          "bytes": 1280,
+          "sha256": "164a5db7b27fa7427270777e512ba869e6503a76757cf195e56a05199f3bec2d",
+          "dimensions": {
+            "width": 64,
+            "height": 96,
+            "alpha": false
+          }
+        }
+      },
+      "transparentQa": {
+        "required": false,
+        "backgrounds": [],
+        "sidecar": null,
+        "pixel": null
+      },
+      "issues": []
+    },
+    {
+      "id": "portrait-s73-10-state_variant-scholar-holding-tablet-scholar-v1",
+      "phase": "S73.10.5",
+      "category": "portrait",
+      "subcategory": "state_variant_pool",
+      "usage": [
+        "emotion_or_state_variant",
+        "dialogue_panel",
+        "exam_or_court_scene"
+      ],
+      "path": "/assets/ui/portraits/s73-10/portrait-s73-10-state_variant-scholar-holding-tablet-scholar-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-portrait-s73-10-state_variant-scholar-holding-tablet-scholar-v1.webp",
+      "fallbackRef": "fallback-role-silhouette-v1",
+      "reviewStatus": "approved",
+      "runtimeUsable": true,
+      "dimensions": {
+        "width": 1024,
+        "height": 1536
+      },
+      "transparent": false,
+      "files": {
+        "image": {
+          "path": "/assets/ui/portraits/s73-10/portrait-s73-10-state_variant-scholar-holding-tablet-scholar-v1.webp",
+          "exists": true,
+          "bytes": 161248,
+          "sha256": "62ec7581a62e9c4409ff3f1285e561c1a709577bd0eabae858ddbdec8360a794",
+          "dimensions": {
+            "width": 1024,
+            "height": 1536
+          },
+          "alpha": false
+        },
+        "thumbnail": {
+          "path": "/assets/ui/thumbs/thumb-portrait-s73-10-state_variant-scholar-holding-tablet-scholar-v1.webp",
+          "exists": true,
+          "bytes": 35228,
+          "sha256": "2feec795578b57a1e5a79455820a985820dffc3996cf25d3326e7d92ad9509ad",
+          "dimensions": {
+            "width": 384,
+            "height": 576,
+            "alpha": false
+          }
+        },
+        "lowResPlaceholder": {
+          "path": "/assets/ui/portraits/placeholders/placeholder-portrait-s73-10-state_variant-scholar-holding-tablet-scholar-v1.webp",
+          "exists": true,
+          "bytes": 1346,
+          "sha256": "b6af1230a0e49630f46730a40cdd68baf98c5465d802561999c24d398ba65ec1",
+          "dimensions": {
+            "width": 64,
+            "height": 96,
+            "alpha": false
+          }
+        }
+      },
+      "transparentQa": {
+        "required": false,
+        "backgrounds": [],
+        "sidecar": null,
+        "pixel": null
+      },
+      "issues": []
+    },
+    {
+      "id": "portrait-s73-10-state_variant-official-holding-tablet-official-v1",
+      "phase": "S73.10.5",
+      "category": "portrait",
+      "subcategory": "state_variant_pool",
+      "usage": [
+        "emotion_or_state_variant",
+        "dialogue_panel",
+        "exam_or_court_scene"
+      ],
+      "path": "/assets/ui/portraits/s73-10/portrait-s73-10-state_variant-official-holding-tablet-official-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-portrait-s73-10-state_variant-official-holding-tablet-official-v1.webp",
+      "fallbackRef": "fallback-role-silhouette-v1",
+      "reviewStatus": "approved",
+      "runtimeUsable": true,
+      "dimensions": {
+        "width": 1024,
+        "height": 1536
+      },
+      "transparent": false,
+      "files": {
+        "image": {
+          "path": "/assets/ui/portraits/s73-10/portrait-s73-10-state_variant-official-holding-tablet-official-v1.webp",
+          "exists": true,
+          "bytes": 164262,
+          "sha256": "3853c3039fcfc541c0aafa4192bc24c8b3e4d439041c84e6f504e51828d48eee",
+          "dimensions": {
+            "width": 1024,
+            "height": 1536
+          },
+          "alpha": false
+        },
+        "thumbnail": {
+          "path": "/assets/ui/thumbs/thumb-portrait-s73-10-state_variant-official-holding-tablet-official-v1.webp",
+          "exists": true,
+          "bytes": 36148,
+          "sha256": "8e8c5add11ac8d12790a424820efd410f7338168c4af6938976aa27a8a7ef08c",
+          "dimensions": {
+            "width": 384,
+            "height": 576,
+            "alpha": false
+          }
+        },
+        "lowResPlaceholder": {
+          "path": "/assets/ui/portraits/placeholders/placeholder-portrait-s73-10-state_variant-official-holding-tablet-official-v1.webp",
+          "exists": true,
+          "bytes": 1346,
+          "sha256": "2f86c7e2304126960fc6c419458ce1db73170417ddc5e34da18b9a274ca661cc",
+          "dimensions": {
+            "width": 64,
+            "height": 96,
+            "alpha": false
+          }
+        }
+      },
+      "transparentQa": {
+        "required": false,
+        "backgrounds": [],
+        "sidecar": null,
+        "pixel": null
+      },
+      "issues": []
+    },
+    {
+      "id": "portrait-s73-10-state_variant-military-holding-tablet-military-v1",
+      "phase": "S73.10.5",
+      "category": "portrait",
+      "subcategory": "state_variant_pool",
+      "usage": [
+        "emotion_or_state_variant",
+        "dialogue_panel",
+        "exam_or_court_scene"
+      ],
+      "path": "/assets/ui/portraits/s73-10/portrait-s73-10-state_variant-military-holding-tablet-military-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-portrait-s73-10-state_variant-military-holding-tablet-military-v1.webp",
+      "fallbackRef": "fallback-role-silhouette-v1",
+      "reviewStatus": "approved",
+      "runtimeUsable": true,
+      "dimensions": {
+        "width": 1024,
+        "height": 1536
+      },
+      "transparent": false,
+      "files": {
+        "image": {
+          "path": "/assets/ui/portraits/s73-10/portrait-s73-10-state_variant-military-holding-tablet-military-v1.webp",
+          "exists": true,
+          "bytes": 178916,
+          "sha256": "16412b7e93f123ab76bf0f6df04ee4603d7095d0bb9b1e8f1bb064b90d09c063",
+          "dimensions": {
+            "width": 1024,
+            "height": 1536
+          },
+          "alpha": false
+        },
+        "thumbnail": {
+          "path": "/assets/ui/thumbs/thumb-portrait-s73-10-state_variant-military-holding-tablet-military-v1.webp",
+          "exists": true,
+          "bytes": 38286,
+          "sha256": "804770653a630a388c5f4c493f2e889bf7de1b4e8d33041a382795ab17cc2ebd",
+          "dimensions": {
+            "width": 384,
+            "height": 576,
+            "alpha": false
+          }
+        },
+        "lowResPlaceholder": {
+          "path": "/assets/ui/portraits/placeholders/placeholder-portrait-s73-10-state_variant-military-holding-tablet-military-v1.webp",
+          "exists": true,
+          "bytes": 1302,
+          "sha256": "99e74010bd290ec33a0f30ae68f5bd496eb49ff150821503e03d038f68dc89cb",
+          "dimensions": {
+            "width": 64,
+            "height": 96,
+            "alpha": false
+          }
+        }
+      },
+      "transparentQa": {
+        "required": false,
+        "backgrounds": [],
+        "sidecar": null,
+        "pixel": null
+      },
+      "issues": []
+    },
+    {
+      "id": "portrait-s73-10-state_variant-scholar-writing-scholar-v1",
+      "phase": "S73.10.5",
+      "category": "portrait",
+      "subcategory": "state_variant_pool",
+      "usage": [
+        "emotion_or_state_variant",
+        "dialogue_panel",
+        "exam_or_court_scene"
+      ],
+      "path": "/assets/ui/portraits/s73-10/portrait-s73-10-state_variant-scholar-writing-scholar-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-portrait-s73-10-state_variant-scholar-writing-scholar-v1.webp",
+      "fallbackRef": "fallback-role-silhouette-v1",
+      "reviewStatus": "approved",
+      "runtimeUsable": true,
+      "dimensions": {
+        "width": 1024,
+        "height": 1536
+      },
+      "transparent": false,
+      "files": {
+        "image": {
+          "path": "/assets/ui/portraits/s73-10/portrait-s73-10-state_variant-scholar-writing-scholar-v1.webp",
+          "exists": true,
+          "bytes": 179578,
+          "sha256": "aa01e89c7b23fe512b6355403e94473b00a593d18dc467aa01653c8fc0e04f40",
+          "dimensions": {
+            "width": 1024,
+            "height": 1536
+          },
+          "alpha": false
+        },
+        "thumbnail": {
+          "path": "/assets/ui/thumbs/thumb-portrait-s73-10-state_variant-scholar-writing-scholar-v1.webp",
+          "exists": true,
+          "bytes": 40114,
+          "sha256": "1e7231044b26616817fce13d7dbb9abb23577523e8ed21c091e199143c658437",
+          "dimensions": {
+            "width": 384,
+            "height": 576,
+            "alpha": false
+          }
+        },
+        "lowResPlaceholder": {
+          "path": "/assets/ui/portraits/placeholders/placeholder-portrait-s73-10-state_variant-scholar-writing-scholar-v1.webp",
+          "exists": true,
+          "bytes": 1474,
+          "sha256": "7e57cc5395ca23ed209cd27ba510cd3e7b6222f6a16593fc75b44d7ac5780fea",
+          "dimensions": {
+            "width": 64,
+            "height": 96,
+            "alpha": false
+          }
+        }
+      },
+      "transparentQa": {
+        "required": false,
+        "backgrounds": [],
+        "sidecar": null,
+        "pixel": null
+      },
+      "issues": []
+    },
+    {
+      "id": "portrait-s73-10-state_variant-official-writing-official-v1",
+      "phase": "S73.10.5",
+      "category": "portrait",
+      "subcategory": "state_variant_pool",
+      "usage": [
+        "emotion_or_state_variant",
+        "dialogue_panel",
+        "exam_or_court_scene"
+      ],
+      "path": "/assets/ui/portraits/s73-10/portrait-s73-10-state_variant-official-writing-official-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-portrait-s73-10-state_variant-official-writing-official-v1.webp",
+      "fallbackRef": "fallback-role-silhouette-v1",
+      "reviewStatus": "approved",
+      "runtimeUsable": true,
+      "dimensions": {
+        "width": 1024,
+        "height": 1536
+      },
+      "transparent": false,
+      "files": {
+        "image": {
+          "path": "/assets/ui/portraits/s73-10/portrait-s73-10-state_variant-official-writing-official-v1.webp",
+          "exists": true,
+          "bytes": 179524,
+          "sha256": "b9376ae9e7d90a9dd615b6f303354ebaf50070f8f1339dc405b29340b46201e2",
+          "dimensions": {
+            "width": 1024,
+            "height": 1536
+          },
+          "alpha": false
+        },
+        "thumbnail": {
+          "path": "/assets/ui/thumbs/thumb-portrait-s73-10-state_variant-official-writing-official-v1.webp",
+          "exists": true,
+          "bytes": 38764,
+          "sha256": "a1dbd83c191e34de950704451ce3c348e15c9a89135dedfbfb5c7bfd71499d82",
+          "dimensions": {
+            "width": 384,
+            "height": 576,
+            "alpha": false
+          }
+        },
+        "lowResPlaceholder": {
+          "path": "/assets/ui/portraits/placeholders/placeholder-portrait-s73-10-state_variant-official-writing-official-v1.webp",
+          "exists": true,
+          "bytes": 1410,
+          "sha256": "4fdf148d1c29e3526d2fdb2728326299645242fb30d4871b95cabd0099cc2e4d",
+          "dimensions": {
+            "width": 64,
+            "height": 96,
+            "alpha": false
+          }
+        }
+      },
+      "transparentQa": {
+        "required": false,
+        "backgrounds": [],
+        "sidecar": null,
+        "pixel": null
+      },
+      "issues": []
+    },
+    {
+      "id": "portrait-s73-10-state_variant-military-writing-military-v1",
+      "phase": "S73.10.5",
+      "category": "portrait",
+      "subcategory": "state_variant_pool",
+      "usage": [
+        "emotion_or_state_variant",
+        "dialogue_panel",
+        "exam_or_court_scene"
+      ],
+      "path": "/assets/ui/portraits/s73-10/portrait-s73-10-state_variant-military-writing-military-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-portrait-s73-10-state_variant-military-writing-military-v1.webp",
+      "fallbackRef": "fallback-role-silhouette-v1",
+      "reviewStatus": "approved",
+      "runtimeUsable": true,
+      "dimensions": {
+        "width": 1024,
+        "height": 1536
+      },
+      "transparent": false,
+      "files": {
+        "image": {
+          "path": "/assets/ui/portraits/s73-10/portrait-s73-10-state_variant-military-writing-military-v1.webp",
+          "exists": true,
+          "bytes": 191006,
+          "sha256": "990a7890c37616960c382115fe7afb93d114a855471ad2c70cbb950a451505dd",
+          "dimensions": {
+            "width": 1024,
+            "height": 1536
+          },
+          "alpha": false
+        },
+        "thumbnail": {
+          "path": "/assets/ui/thumbs/thumb-portrait-s73-10-state_variant-military-writing-military-v1.webp",
+          "exists": true,
+          "bytes": 42320,
+          "sha256": "c94a4a8f9d3ba687e1db31ca0382075f44eb3231565091419a3a185e2848748d",
+          "dimensions": {
+            "width": 384,
+            "height": 576,
+            "alpha": false
+          }
+        },
+        "lowResPlaceholder": {
+          "path": "/assets/ui/portraits/placeholders/placeholder-portrait-s73-10-state_variant-military-writing-military-v1.webp",
+          "exists": true,
+          "bytes": 1384,
+          "sha256": "1d7d003c955466170bf4da34b4dde0964a465aedd29d713c884a097546b85b49",
+          "dimensions": {
+            "width": 64,
+            "height": 96,
+            "alpha": false
+          }
+        }
+      },
+      "transparentQa": {
+        "required": false,
+        "backgrounds": [],
+        "sidecar": null,
+        "pixel": null
+      },
+      "issues": []
+    },
+    {
+      "id": "portrait-s73-10-state_variant-scholar-hand-on-sword-scholar-v1",
+      "phase": "S73.10.5",
+      "category": "portrait",
+      "subcategory": "state_variant_pool",
+      "usage": [
+        "emotion_or_state_variant",
+        "dialogue_panel",
+        "exam_or_court_scene"
+      ],
+      "path": "/assets/ui/portraits/s73-10/portrait-s73-10-state_variant-scholar-hand-on-sword-scholar-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-portrait-s73-10-state_variant-scholar-hand-on-sword-scholar-v1.webp",
+      "fallbackRef": "fallback-role-silhouette-v1",
+      "reviewStatus": "approved",
+      "runtimeUsable": true,
+      "dimensions": {
+        "width": 1024,
+        "height": 1536
+      },
+      "transparent": false,
+      "files": {
+        "image": {
+          "path": "/assets/ui/portraits/s73-10/portrait-s73-10-state_variant-scholar-hand-on-sword-scholar-v1.webp",
+          "exists": true,
+          "bytes": 197856,
+          "sha256": "fa34e5224b46dbd450c299533ec8366a6668282959f6e4487ee8e926b2be712b",
+          "dimensions": {
+            "width": 1024,
+            "height": 1536
+          },
+          "alpha": false
+        },
+        "thumbnail": {
+          "path": "/assets/ui/thumbs/thumb-portrait-s73-10-state_variant-scholar-hand-on-sword-scholar-v1.webp",
+          "exists": true,
+          "bytes": 45184,
+          "sha256": "84730c4cc9a121b41a99e77a4790a0cb3b8c9ee448d014b100d2861b3612c46b",
+          "dimensions": {
+            "width": 384,
+            "height": 576,
+            "alpha": false
+          }
+        },
+        "lowResPlaceholder": {
+          "path": "/assets/ui/portraits/placeholders/placeholder-portrait-s73-10-state_variant-scholar-hand-on-sword-scholar-v1.webp",
+          "exists": true,
+          "bytes": 1362,
+          "sha256": "29c04637785b3b8b68a2655fa5bc088ee47228ffadb97f5f9dabf885f04c43ff",
+          "dimensions": {
+            "width": 64,
+            "height": 96,
+            "alpha": false
+          }
+        }
+      },
+      "transparentQa": {
+        "required": false,
+        "backgrounds": [],
+        "sidecar": null,
+        "pixel": null
+      },
+      "issues": []
+    },
+    {
+      "id": "portrait-s73-10-state_variant-official-hand-on-sword-official-v1",
+      "phase": "S73.10.5",
+      "category": "portrait",
+      "subcategory": "state_variant_pool",
+      "usage": [
+        "emotion_or_state_variant",
+        "dialogue_panel",
+        "exam_or_court_scene"
+      ],
+      "path": "/assets/ui/portraits/s73-10/portrait-s73-10-state_variant-official-hand-on-sword-official-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-portrait-s73-10-state_variant-official-hand-on-sword-official-v1.webp",
+      "fallbackRef": "fallback-role-silhouette-v1",
+      "reviewStatus": "approved",
+      "runtimeUsable": true,
+      "dimensions": {
+        "width": 1024,
+        "height": 1536
+      },
+      "transparent": false,
+      "files": {
+        "image": {
+          "path": "/assets/ui/portraits/s73-10/portrait-s73-10-state_variant-official-hand-on-sword-official-v1.webp",
+          "exists": true,
+          "bytes": 193922,
+          "sha256": "f4f9eca0228007d874597484f58abed832b091ef7bf7576ecea56746d23998fc",
+          "dimensions": {
+            "width": 1024,
+            "height": 1536
+          },
+          "alpha": false
+        },
+        "thumbnail": {
+          "path": "/assets/ui/thumbs/thumb-portrait-s73-10-state_variant-official-hand-on-sword-official-v1.webp",
+          "exists": true,
+          "bytes": 43984,
+          "sha256": "80259fa178ff828b4ba9d3fd2a440a2c12824dd42be42eb36ab00b3afddc4c9a",
+          "dimensions": {
+            "width": 384,
+            "height": 576,
+            "alpha": false
+          }
+        },
+        "lowResPlaceholder": {
+          "path": "/assets/ui/portraits/placeholders/placeholder-portrait-s73-10-state_variant-official-hand-on-sword-official-v1.webp",
+          "exists": true,
+          "bytes": 1368,
+          "sha256": "aa9969f2847ef2b9eb8a4511779583c212ef502692ba5b1bc1cd683de4ae3807",
+          "dimensions": {
+            "width": 64,
+            "height": 96,
+            "alpha": false
+          }
+        }
+      },
+      "transparentQa": {
+        "required": false,
+        "backgrounds": [],
+        "sidecar": null,
+        "pixel": null
+      },
+      "issues": []
+    },
+    {
+      "id": "portrait-s73-10-state_variant-military-hand-on-sword-military-v1",
+      "phase": "S73.10.5",
+      "category": "portrait",
+      "subcategory": "state_variant_pool",
+      "usage": [
+        "emotion_or_state_variant",
+        "dialogue_panel",
+        "exam_or_court_scene"
+      ],
+      "path": "/assets/ui/portraits/s73-10/portrait-s73-10-state_variant-military-hand-on-sword-military-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-portrait-s73-10-state_variant-military-hand-on-sword-military-v1.webp",
+      "fallbackRef": "fallback-role-silhouette-v1",
+      "reviewStatus": "approved",
+      "runtimeUsable": true,
+      "dimensions": {
+        "width": 1024,
+        "height": 1536
+      },
+      "transparent": false,
+      "files": {
+        "image": {
+          "path": "/assets/ui/portraits/s73-10/portrait-s73-10-state_variant-military-hand-on-sword-military-v1.webp",
+          "exists": true,
+          "bytes": 197334,
+          "sha256": "1f73b226edf080e9dcaadf574ad8493cd1ad3091d73e92125dd94b6327f37dbd",
+          "dimensions": {
+            "width": 1024,
+            "height": 1536
+          },
+          "alpha": false
+        },
+        "thumbnail": {
+          "path": "/assets/ui/thumbs/thumb-portrait-s73-10-state_variant-military-hand-on-sword-military-v1.webp",
+          "exists": true,
+          "bytes": 45032,
+          "sha256": "4b7f84cc0d36bfebb99f82a39b35601743abb34c6721ed0a170c9326bdf9bbc8",
+          "dimensions": {
+            "width": 384,
+            "height": 576,
+            "alpha": false
+          }
+        },
+        "lowResPlaceholder": {
+          "path": "/assets/ui/portraits/placeholders/placeholder-portrait-s73-10-state_variant-military-hand-on-sword-military-v1.webp",
+          "exists": true,
+          "bytes": 1322,
+          "sha256": "690e97e1ce33e3c1da170fe98d1d5fa79ee3bf5d5f4b5d8b25c264520d1f250c",
+          "dimensions": {
+            "width": 64,
+            "height": 96,
+            "alpha": false
+          }
+        }
+      },
+      "transparentQa": {
+        "required": false,
+        "backgrounds": [],
+        "sidecar": null,
+        "pixel": null
+      },
+      "issues": []
+    },
+    {
+      "id": "portrait-s73-10-state_variant-scholar-tired-scholar-v1",
+      "phase": "S73.10.5",
+      "category": "portrait",
+      "subcategory": "state_variant_pool",
+      "usage": [
+        "emotion_or_state_variant",
+        "dialogue_panel",
+        "exam_or_court_scene"
+      ],
+      "path": "/assets/ui/portraits/s73-10/portrait-s73-10-state_variant-scholar-tired-scholar-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-portrait-s73-10-state_variant-scholar-tired-scholar-v1.webp",
+      "fallbackRef": "fallback-role-silhouette-v1",
+      "reviewStatus": "approved",
+      "runtimeUsable": true,
+      "dimensions": {
+        "width": 1024,
+        "height": 1536
+      },
+      "transparent": false,
+      "files": {
+        "image": {
+          "path": "/assets/ui/portraits/s73-10/portrait-s73-10-state_variant-scholar-tired-scholar-v1.webp",
+          "exists": true,
+          "bytes": 195258,
+          "sha256": "a22e59e007e65a28b4c4e95e605b35da7383a4847250817fdf00cb5877a533e6",
+          "dimensions": {
+            "width": 1024,
+            "height": 1536
+          },
+          "alpha": false
+        },
+        "thumbnail": {
+          "path": "/assets/ui/thumbs/thumb-portrait-s73-10-state_variant-scholar-tired-scholar-v1.webp",
+          "exists": true,
+          "bytes": 45258,
+          "sha256": "3c812b94744d117087f92c1c363ca347ab71f1ff5ae094aba7c0f6b5a9875a39",
+          "dimensions": {
+            "width": 384,
+            "height": 576,
+            "alpha": false
+          }
+        },
+        "lowResPlaceholder": {
+          "path": "/assets/ui/portraits/placeholders/placeholder-portrait-s73-10-state_variant-scholar-tired-scholar-v1.webp",
+          "exists": true,
+          "bytes": 1342,
+          "sha256": "b046b7744d953b380e5ddff59d467cd4069ad98561009f55facb097a0742d5ec",
+          "dimensions": {
+            "width": 64,
+            "height": 96,
+            "alpha": false
+          }
+        }
+      },
+      "transparentQa": {
+        "required": false,
+        "backgrounds": [],
+        "sidecar": null,
+        "pixel": null
+      },
+      "issues": []
+    },
+    {
+      "id": "portrait-s73-10-state_variant-official-tired-official-v1",
+      "phase": "S73.10.5",
+      "category": "portrait",
+      "subcategory": "state_variant_pool",
+      "usage": [
+        "emotion_or_state_variant",
+        "dialogue_panel",
+        "exam_or_court_scene"
+      ],
+      "path": "/assets/ui/portraits/s73-10/portrait-s73-10-state_variant-official-tired-official-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-portrait-s73-10-state_variant-official-tired-official-v1.webp",
+      "fallbackRef": "fallback-role-silhouette-v1",
+      "reviewStatus": "approved",
+      "runtimeUsable": true,
+      "dimensions": {
+        "width": 1024,
+        "height": 1536
+      },
+      "transparent": false,
+      "files": {
+        "image": {
+          "path": "/assets/ui/portraits/s73-10/portrait-s73-10-state_variant-official-tired-official-v1.webp",
+          "exists": true,
+          "bytes": 193870,
+          "sha256": "c8cd207e90e7cb0a55671d6ba3a1585e04982f767dd5f4b94cdd7ae5873dae44",
+          "dimensions": {
+            "width": 1024,
+            "height": 1536
+          },
+          "alpha": false
+        },
+        "thumbnail": {
+          "path": "/assets/ui/thumbs/thumb-portrait-s73-10-state_variant-official-tired-official-v1.webp",
+          "exists": true,
+          "bytes": 44248,
+          "sha256": "8d86969721925d3e2e33758e6897d68910b38da67e35e236612826e891b2cd7f",
+          "dimensions": {
+            "width": 384,
+            "height": 576,
+            "alpha": false
+          }
+        },
+        "lowResPlaceholder": {
+          "path": "/assets/ui/portraits/placeholders/placeholder-portrait-s73-10-state_variant-official-tired-official-v1.webp",
+          "exists": true,
+          "bytes": 1346,
+          "sha256": "b952c752faa0e6be501be1f4bd52096be39d695eccb9e4e4b858f69e78ef90d0",
+          "dimensions": {
+            "width": 64,
+            "height": 96,
+            "alpha": false
+          }
+        }
+      },
+      "transparentQa": {
+        "required": false,
+        "backgrounds": [],
+        "sidecar": null,
+        "pixel": null
+      },
+      "issues": []
+    },
+    {
+      "id": "portrait-s73-10-state_variant-military-tired-military-v1",
+      "phase": "S73.10.5",
+      "category": "portrait",
+      "subcategory": "state_variant_pool",
+      "usage": [
+        "emotion_or_state_variant",
+        "dialogue_panel",
+        "exam_or_court_scene"
+      ],
+      "path": "/assets/ui/portraits/s73-10/portrait-s73-10-state_variant-military-tired-military-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-portrait-s73-10-state_variant-military-tired-military-v1.webp",
+      "fallbackRef": "fallback-role-silhouette-v1",
+      "reviewStatus": "approved",
+      "runtimeUsable": true,
+      "dimensions": {
+        "width": 1024,
+        "height": 1536
+      },
+      "transparent": false,
+      "files": {
+        "image": {
+          "path": "/assets/ui/portraits/s73-10/portrait-s73-10-state_variant-military-tired-military-v1.webp",
+          "exists": true,
+          "bytes": 193008,
+          "sha256": "af25983322bf7ecbbe9099918bfb322cbf39aff74239424a14a59b6ddbb368b8",
+          "dimensions": {
+            "width": 1024,
+            "height": 1536
+          },
+          "alpha": false
+        },
+        "thumbnail": {
+          "path": "/assets/ui/thumbs/thumb-portrait-s73-10-state_variant-military-tired-military-v1.webp",
+          "exists": true,
+          "bytes": 42738,
+          "sha256": "ff3eb2eecfea57eafafdf0b8159e40250546a7d340773dd818fac336c2a65b3f",
+          "dimensions": {
+            "width": 384,
+            "height": 576,
+            "alpha": false
+          }
+        },
+        "lowResPlaceholder": {
+          "path": "/assets/ui/portraits/placeholders/placeholder-portrait-s73-10-state_variant-military-tired-military-v1.webp",
+          "exists": true,
+          "bytes": 1272,
+          "sha256": "d2ac49794b7d2be8a435d25c0d44b688d91f34dac3250c6fa0f834421207aa99",
+          "dimensions": {
+            "width": 64,
+            "height": 96,
+            "alpha": false
+          }
+        }
+      },
+      "transparentQa": {
+        "required": false,
+        "backgrounds": [],
+        "sidecar": null,
+        "pixel": null
+      },
+      "issues": []
+    },
+    {
+      "id": "portrait-s73-10-state_variant-scholar-ill-scholar-v1",
+      "phase": "S73.10.5",
+      "category": "portrait",
+      "subcategory": "state_variant_pool",
+      "usage": [
+        "emotion_or_state_variant",
+        "dialogue_panel",
+        "exam_or_court_scene"
+      ],
+      "path": "/assets/ui/portraits/s73-10/portrait-s73-10-state_variant-scholar-ill-scholar-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-portrait-s73-10-state_variant-scholar-ill-scholar-v1.webp",
+      "fallbackRef": "fallback-role-silhouette-v1",
+      "reviewStatus": "approved",
+      "runtimeUsable": true,
+      "dimensions": {
+        "width": 1024,
+        "height": 1536
+      },
+      "transparent": false,
+      "files": {
+        "image": {
+          "path": "/assets/ui/portraits/s73-10/portrait-s73-10-state_variant-scholar-ill-scholar-v1.webp",
+          "exists": true,
+          "bytes": 170754,
+          "sha256": "9f11ae9a38b0d20b57e097e14b51e929172d09ef148e1a84122587d08cec637c",
+          "dimensions": {
+            "width": 1024,
+            "height": 1536
+          },
+          "alpha": false
+        },
+        "thumbnail": {
+          "path": "/assets/ui/thumbs/thumb-portrait-s73-10-state_variant-scholar-ill-scholar-v1.webp",
+          "exists": true,
+          "bytes": 36442,
+          "sha256": "acd6bb04036a2e36cf15a0af0e8c6f713ae6775f461dfa1ee1f6272a52b752c4",
+          "dimensions": {
+            "width": 384,
+            "height": 576,
+            "alpha": false
+          }
+        },
+        "lowResPlaceholder": {
+          "path": "/assets/ui/portraits/placeholders/placeholder-portrait-s73-10-state_variant-scholar-ill-scholar-v1.webp",
+          "exists": true,
+          "bytes": 1244,
+          "sha256": "9501b84cb885b0be649dcc04b3fa35fd7630ec9d97c311a554e7f11ba38c704a",
+          "dimensions": {
+            "width": 64,
+            "height": 96,
+            "alpha": false
+          }
+        }
+      },
+      "transparentQa": {
+        "required": false,
+        "backgrounds": [],
+        "sidecar": null,
+        "pixel": null
+      },
+      "issues": []
+    },
+    {
+      "id": "portrait-s73-10-state_variant-official-ill-official-v1",
+      "phase": "S73.10.5",
+      "category": "portrait",
+      "subcategory": "state_variant_pool",
+      "usage": [
+        "emotion_or_state_variant",
+        "dialogue_panel",
+        "exam_or_court_scene"
+      ],
+      "path": "/assets/ui/portraits/s73-10/portrait-s73-10-state_variant-official-ill-official-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-portrait-s73-10-state_variant-official-ill-official-v1.webp",
+      "fallbackRef": "fallback-role-silhouette-v1",
+      "reviewStatus": "approved",
+      "runtimeUsable": true,
+      "dimensions": {
+        "width": 1024,
+        "height": 1536
+      },
+      "transparent": false,
+      "files": {
+        "image": {
+          "path": "/assets/ui/portraits/s73-10/portrait-s73-10-state_variant-official-ill-official-v1.webp",
+          "exists": true,
+          "bytes": 170004,
+          "sha256": "298c6a4a4470dd406b1010b951ff7c0cf94b167cf9f5b1297f9924f68f002f99",
+          "dimensions": {
+            "width": 1024,
+            "height": 1536
+          },
+          "alpha": false
+        },
+        "thumbnail": {
+          "path": "/assets/ui/thumbs/thumb-portrait-s73-10-state_variant-official-ill-official-v1.webp",
+          "exists": true,
+          "bytes": 38334,
+          "sha256": "81ff812014c8319fd12cced83a99b239fb0caae6318985fa7b4722d679cd45e4",
+          "dimensions": {
+            "width": 384,
+            "height": 576,
+            "alpha": false
+          }
+        },
+        "lowResPlaceholder": {
+          "path": "/assets/ui/portraits/placeholders/placeholder-portrait-s73-10-state_variant-official-ill-official-v1.webp",
+          "exists": true,
+          "bytes": 1238,
+          "sha256": "6e150b827edaedf35382614ee151d122c897589c7138eb54fb68517d5f1e3fdf",
+          "dimensions": {
+            "width": 64,
+            "height": 96,
+            "alpha": false
+          }
+        }
+      },
+      "transparentQa": {
+        "required": false,
+        "backgrounds": [],
+        "sidecar": null,
+        "pixel": null
+      },
+      "issues": []
+    },
+    {
+      "id": "portrait-s73-10-state_variant-military-ill-military-v1",
+      "phase": "S73.10.5",
+      "category": "portrait",
+      "subcategory": "state_variant_pool",
+      "usage": [
+        "emotion_or_state_variant",
+        "dialogue_panel",
+        "exam_or_court_scene"
+      ],
+      "path": "/assets/ui/portraits/s73-10/portrait-s73-10-state_variant-military-ill-military-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-portrait-s73-10-state_variant-military-ill-military-v1.webp",
+      "fallbackRef": "fallback-role-silhouette-v1",
+      "reviewStatus": "approved",
+      "runtimeUsable": true,
+      "dimensions": {
+        "width": 1024,
+        "height": 1536
+      },
+      "transparent": false,
+      "files": {
+        "image": {
+          "path": "/assets/ui/portraits/s73-10/portrait-s73-10-state_variant-military-ill-military-v1.webp",
+          "exists": true,
+          "bytes": 174818,
+          "sha256": "14cd7b9b895f5a12e9cd3b69129ad0d099f52442d393fe0031736c224efc9ad8",
+          "dimensions": {
+            "width": 1024,
+            "height": 1536
+          },
+          "alpha": false
+        },
+        "thumbnail": {
+          "path": "/assets/ui/thumbs/thumb-portrait-s73-10-state_variant-military-ill-military-v1.webp",
+          "exists": true,
+          "bytes": 39062,
+          "sha256": "08eab1468c4f7ce95c4bbb5f4e29a6997ff43a056d57cc2367448c562f925ab0",
+          "dimensions": {
+            "width": 384,
+            "height": 576,
+            "alpha": false
+          }
+        },
+        "lowResPlaceholder": {
+          "path": "/assets/ui/portraits/placeholders/placeholder-portrait-s73-10-state_variant-military-ill-military-v1.webp",
+          "exists": true,
+          "bytes": 1208,
+          "sha256": "06505f93bbaf10682f08e34cd12b4d30723109bd12a4a3cf430bfe2cfe2bf75d",
+          "dimensions": {
+            "width": 64,
+            "height": 96,
+            "alpha": false
+          }
+        }
+      },
+      "transparentQa": {
+        "required": false,
+        "backgrounds": [],
+        "sidecar": null,
+        "pixel": null
+      },
+      "issues": []
+    },
+    {
+      "id": "portrait-s73-10-state_variant-scholar-standing-scholar-v1",
+      "phase": "S73.10.5",
+      "category": "portrait",
+      "subcategory": "state_variant_pool",
+      "usage": [
+        "emotion_or_state_variant",
+        "dialogue_panel",
+        "exam_or_court_scene"
+      ],
+      "path": "/assets/ui/portraits/s73-10/portrait-s73-10-state_variant-scholar-standing-scholar-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-portrait-s73-10-state_variant-scholar-standing-scholar-v1.webp",
+      "fallbackRef": "fallback-role-silhouette-v1",
+      "reviewStatus": "approved",
+      "runtimeUsable": true,
+      "dimensions": {
+        "width": 1024,
+        "height": 1536
+      },
+      "transparent": false,
+      "files": {
+        "image": {
+          "path": "/assets/ui/portraits/s73-10/portrait-s73-10-state_variant-scholar-standing-scholar-v1.webp",
+          "exists": true,
+          "bytes": 153806,
+          "sha256": "a501a12be04c46448e05b47dea25a8976166a863f23dc8aadbf348098ac0f754",
+          "dimensions": {
+            "width": 1024,
+            "height": 1536
+          },
+          "alpha": false
+        },
+        "thumbnail": {
+          "path": "/assets/ui/thumbs/thumb-portrait-s73-10-state_variant-scholar-standing-scholar-v1.webp",
+          "exists": true,
+          "bytes": 33292,
+          "sha256": "ac0b9e1844f65da27d3c31106ed59a517a64a25c4b78025af6dda30e0a52ca06",
+          "dimensions": {
+            "width": 384,
+            "height": 576,
+            "alpha": false
+          }
+        },
+        "lowResPlaceholder": {
+          "path": "/assets/ui/portraits/placeholders/placeholder-portrait-s73-10-state_variant-scholar-standing-scholar-v1.webp",
+          "exists": true,
+          "bytes": 1126,
+          "sha256": "37b00fa15cbc069819ba4ef4ea1192b55af3d83fb16d0c1811195ce19d37a113",
+          "dimensions": {
+            "width": 64,
+            "height": 96,
+            "alpha": false
+          }
+        }
+      },
+      "transparentQa": {
+        "required": false,
+        "backgrounds": [],
+        "sidecar": null,
+        "pixel": null
+      },
+      "issues": []
+    },
+    {
+      "id": "portrait-s73-10-state_variant-official-standing-official-v1",
+      "phase": "S73.10.5",
+      "category": "portrait",
+      "subcategory": "state_variant_pool",
+      "usage": [
+        "emotion_or_state_variant",
+        "dialogue_panel",
+        "exam_or_court_scene"
+      ],
+      "path": "/assets/ui/portraits/s73-10/portrait-s73-10-state_variant-official-standing-official-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-portrait-s73-10-state_variant-official-standing-official-v1.webp",
+      "fallbackRef": "fallback-role-silhouette-v1",
+      "reviewStatus": "approved",
+      "runtimeUsable": true,
+      "dimensions": {
+        "width": 1024,
+        "height": 1536
+      },
+      "transparent": false,
+      "files": {
+        "image": {
+          "path": "/assets/ui/portraits/s73-10/portrait-s73-10-state_variant-official-standing-official-v1.webp",
+          "exists": true,
+          "bytes": 152674,
+          "sha256": "22c583cf2b10ae6db7bc488944583a3f84f9208bfe192fbc7bfc90b4d240e5a3",
+          "dimensions": {
+            "width": 1024,
+            "height": 1536
+          },
+          "alpha": false
+        },
+        "thumbnail": {
+          "path": "/assets/ui/thumbs/thumb-portrait-s73-10-state_variant-official-standing-official-v1.webp",
+          "exists": true,
+          "bytes": 33134,
+          "sha256": "7c904ec0e7e51edb743af280b9d34f8c735979d8a79dabac690b6385ee5b9d31",
+          "dimensions": {
+            "width": 384,
+            "height": 576,
+            "alpha": false
+          }
+        },
+        "lowResPlaceholder": {
+          "path": "/assets/ui/portraits/placeholders/placeholder-portrait-s73-10-state_variant-official-standing-official-v1.webp",
+          "exists": true,
+          "bytes": 1130,
+          "sha256": "ed68c2ade9c82b84d0dcf67356537e02c6cd2268077ba4e397b656171d02663f",
+          "dimensions": {
+            "width": 64,
+            "height": 96,
+            "alpha": false
+          }
+        }
+      },
+      "transparentQa": {
+        "required": false,
+        "backgrounds": [],
+        "sidecar": null,
+        "pixel": null
+      },
+      "issues": []
+    },
+    {
+      "id": "portrait-s73-10-state_variant-military-standing-military-v1",
+      "phase": "S73.10.5",
+      "category": "portrait",
+      "subcategory": "state_variant_pool",
+      "usage": [
+        "emotion_or_state_variant",
+        "dialogue_panel",
+        "exam_or_court_scene"
+      ],
+      "path": "/assets/ui/portraits/s73-10/portrait-s73-10-state_variant-military-standing-military-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-portrait-s73-10-state_variant-military-standing-military-v1.webp",
+      "fallbackRef": "fallback-role-silhouette-v1",
+      "reviewStatus": "approved",
+      "runtimeUsable": true,
+      "dimensions": {
+        "width": 1024,
+        "height": 1536
+      },
+      "transparent": false,
+      "files": {
+        "image": {
+          "path": "/assets/ui/portraits/s73-10/portrait-s73-10-state_variant-military-standing-military-v1.webp",
+          "exists": true,
+          "bytes": 169970,
+          "sha256": "e8223b8975103c92c7a6e1fa0b954349b4b8a0e7322cc3a4e4edc4ff6dd15e02",
+          "dimensions": {
+            "width": 1024,
+            "height": 1536
+          },
+          "alpha": false
+        },
+        "thumbnail": {
+          "path": "/assets/ui/thumbs/thumb-portrait-s73-10-state_variant-military-standing-military-v1.webp",
+          "exists": true,
+          "bytes": 36556,
+          "sha256": "489d5709ad5add1d9b1aaaf49237b7f10974588397fe5659708beca2e48b7bbb",
+          "dimensions": {
+            "width": 384,
+            "height": 576,
+            "alpha": false
+          }
+        },
+        "lowResPlaceholder": {
+          "path": "/assets/ui/portraits/placeholders/placeholder-portrait-s73-10-state_variant-military-standing-military-v1.webp",
+          "exists": true,
+          "bytes": 1140,
+          "sha256": "dd74cabc3104a6f2ccb4dc819c6e0141dd36105c00dcd77c926f01e9406b5923",
+          "dimensions": {
+            "width": 64,
+            "height": 96,
+            "alpha": false
+          }
+        }
+      },
+      "transparentQa": {
+        "required": false,
+        "backgrounds": [],
+        "sidecar": null,
+        "pixel": null
+      },
+      "issues": []
+    },
+    {
+      "id": "portrait-s73-10-state_variant-scholar-anger-scholar-v1",
+      "phase": "S73.10.5",
+      "category": "portrait",
+      "subcategory": "state_variant_pool",
+      "usage": [
+        "emotion_or_state_variant",
+        "dialogue_panel",
+        "exam_or_court_scene"
+      ],
+      "path": "/assets/ui/portraits/s73-10/portrait-s73-10-state_variant-scholar-anger-scholar-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-portrait-s73-10-state_variant-scholar-anger-scholar-v1.webp",
+      "fallbackRef": "fallback-role-silhouette-v1",
+      "reviewStatus": "approved",
+      "runtimeUsable": true,
+      "dimensions": {
+        "width": 1024,
+        "height": 1536
+      },
+      "transparent": false,
+      "files": {
+        "image": {
+          "path": "/assets/ui/portraits/s73-10/portrait-s73-10-state_variant-scholar-anger-scholar-v1.webp",
+          "exists": true,
+          "bytes": 179004,
+          "sha256": "b303c7f311415e1c36ef0dde741fc30b8e516123b9322b9ac425822bc3803b85",
+          "dimensions": {
+            "width": 1024,
+            "height": 1536
+          },
+          "alpha": false
+        },
+        "thumbnail": {
+          "path": "/assets/ui/thumbs/thumb-portrait-s73-10-state_variant-scholar-anger-scholar-v1.webp",
+          "exists": true,
+          "bytes": 38468,
+          "sha256": "fa709762b4f7e3cd1fe50d230a8aab18e1725e9f75f0da762ddc471f35432218",
+          "dimensions": {
+            "width": 384,
+            "height": 576,
+            "alpha": false
+          }
+        },
+        "lowResPlaceholder": {
+          "path": "/assets/ui/portraits/placeholders/placeholder-portrait-s73-10-state_variant-scholar-anger-scholar-v1.webp",
+          "exists": true,
+          "bytes": 1224,
+          "sha256": "1ba12df86ea53431f4bf9462fd1331ab5b26a5b996c8900dfb60ec29796e555a",
+          "dimensions": {
+            "width": 64,
+            "height": 96,
+            "alpha": false
+          }
+        }
+      },
+      "transparentQa": {
+        "required": false,
+        "backgrounds": [],
+        "sidecar": null,
+        "pixel": null
+      },
+      "issues": []
+    },
+    {
+      "id": "portrait-s73-10-state_variant-official-anger-official-v1",
+      "phase": "S73.10.5",
+      "category": "portrait",
+      "subcategory": "state_variant_pool",
+      "usage": [
+        "emotion_or_state_variant",
+        "dialogue_panel",
+        "exam_or_court_scene"
+      ],
+      "path": "/assets/ui/portraits/s73-10/portrait-s73-10-state_variant-official-anger-official-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-portrait-s73-10-state_variant-official-anger-official-v1.webp",
+      "fallbackRef": "fallback-role-silhouette-v1",
+      "reviewStatus": "approved",
+      "runtimeUsable": true,
+      "dimensions": {
+        "width": 1024,
+        "height": 1536
+      },
+      "transparent": false,
+      "files": {
+        "image": {
+          "path": "/assets/ui/portraits/s73-10/portrait-s73-10-state_variant-official-anger-official-v1.webp",
+          "exists": true,
+          "bytes": 183962,
+          "sha256": "5f10f04d999bc3fbae629d324f9264f1cd43e7d7f0884ecef2241aae9830525f",
+          "dimensions": {
+            "width": 1024,
+            "height": 1536
+          },
+          "alpha": false
+        },
+        "thumbnail": {
+          "path": "/assets/ui/thumbs/thumb-portrait-s73-10-state_variant-official-anger-official-v1.webp",
+          "exists": true,
+          "bytes": 41004,
+          "sha256": "38eab37a1a9a2af6e616e9711e7ff0517e0a93bbb484314abea63ff0954e6205",
+          "dimensions": {
+            "width": 384,
+            "height": 576,
+            "alpha": false
+          }
+        },
+        "lowResPlaceholder": {
+          "path": "/assets/ui/portraits/placeholders/placeholder-portrait-s73-10-state_variant-official-anger-official-v1.webp",
+          "exists": true,
+          "bytes": 1226,
+          "sha256": "99e6de41306e8d37e3ecf43adee520c9fbf0ab2061f577ae252746e031d8e003",
+          "dimensions": {
+            "width": 64,
+            "height": 96,
+            "alpha": false
+          }
+        }
+      },
+      "transparentQa": {
+        "required": false,
+        "backgrounds": [],
+        "sidecar": null,
+        "pixel": null
+      },
+      "issues": []
+    },
+    {
+      "id": "portrait-s73-10-state_variant-military-anger-military-v1",
+      "phase": "S73.10.5",
+      "category": "portrait",
+      "subcategory": "state_variant_pool",
+      "usage": [
+        "emotion_or_state_variant",
+        "dialogue_panel",
+        "exam_or_court_scene"
+      ],
+      "path": "/assets/ui/portraits/s73-10/portrait-s73-10-state_variant-military-anger-military-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-portrait-s73-10-state_variant-military-anger-military-v1.webp",
+      "fallbackRef": "fallback-role-silhouette-v1",
+      "reviewStatus": "approved",
+      "runtimeUsable": true,
+      "dimensions": {
+        "width": 1024,
+        "height": 1536
+      },
+      "transparent": false,
+      "files": {
+        "image": {
+          "path": "/assets/ui/portraits/s73-10/portrait-s73-10-state_variant-military-anger-military-v1.webp",
+          "exists": true,
+          "bytes": 187188,
+          "sha256": "56d9e26f5454f00f506a307a340565ecfee8258e9fb31f4e11e25524499d542c",
+          "dimensions": {
+            "width": 1024,
+            "height": 1536
+          },
+          "alpha": false
+        },
+        "thumbnail": {
+          "path": "/assets/ui/thumbs/thumb-portrait-s73-10-state_variant-military-anger-military-v1.webp",
+          "exists": true,
+          "bytes": 39196,
+          "sha256": "39e6208b62b054b0c5f7c7c6b1ef2a015ed86db34c3bed5d0ee6e0540c73f416",
+          "dimensions": {
+            "width": 384,
+            "height": 576,
+            "alpha": false
+          }
+        },
+        "lowResPlaceholder": {
+          "path": "/assets/ui/portraits/placeholders/placeholder-portrait-s73-10-state_variant-military-anger-military-v1.webp",
+          "exists": true,
+          "bytes": 1152,
+          "sha256": "97b09db32fee501032f04b3d7fba072189f38fbf05ec6c74225ed45f5a7b4fe1",
+          "dimensions": {
+            "width": 64,
+            "height": 96,
+            "alpha": false
+          }
+        }
+      },
+      "transparentQa": {
+        "required": false,
+        "backgrounds": [],
+        "sidecar": null,
+        "pixel": null
+      },
+      "issues": []
+    },
+    {
+      "id": "portrait-s73-10-state_variant-scholar-smile-scholar-v1",
+      "phase": "S73.10.5",
+      "category": "portrait",
+      "subcategory": "state_variant_pool",
+      "usage": [
+        "emotion_or_state_variant",
+        "dialogue_panel",
+        "exam_or_court_scene"
+      ],
+      "path": "/assets/ui/portraits/s73-10/portrait-s73-10-state_variant-scholar-smile-scholar-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-portrait-s73-10-state_variant-scholar-smile-scholar-v1.webp",
+      "fallbackRef": "fallback-role-silhouette-v1",
+      "reviewStatus": "approved",
+      "runtimeUsable": true,
+      "dimensions": {
+        "width": 1024,
+        "height": 1536
+      },
+      "transparent": false,
+      "files": {
+        "image": {
+          "path": "/assets/ui/portraits/s73-10/portrait-s73-10-state_variant-scholar-smile-scholar-v1.webp",
+          "exists": true,
+          "bytes": 167772,
+          "sha256": "06d55fb8784cd49871152a379b83c8279194afd0d8675de0fe12fb7d43019dac",
+          "dimensions": {
+            "width": 1024,
+            "height": 1536
+          },
+          "alpha": false
+        },
+        "thumbnail": {
+          "path": "/assets/ui/thumbs/thumb-portrait-s73-10-state_variant-scholar-smile-scholar-v1.webp",
+          "exists": true,
+          "bytes": 38006,
+          "sha256": "cb273309b1b9f3cb9d1ce5701c19f1377d927ab619ddb64a31217dd5a55eff28",
+          "dimensions": {
+            "width": 384,
+            "height": 576,
+            "alpha": false
+          }
+        },
+        "lowResPlaceholder": {
+          "path": "/assets/ui/portraits/placeholders/placeholder-portrait-s73-10-state_variant-scholar-smile-scholar-v1.webp",
+          "exists": true,
+          "bytes": 1214,
+          "sha256": "86e2f9d5bfc1e43bb497fbec7563db0af81264faf03c5549e3c97949f5246ebb",
+          "dimensions": {
+            "width": 64,
+            "height": 96,
+            "alpha": false
+          }
+        }
+      },
+      "transparentQa": {
+        "required": false,
+        "backgrounds": [],
+        "sidecar": null,
+        "pixel": null
+      },
+      "issues": []
+    },
+    {
+      "id": "portrait-s73-10-state_variant-official-smile-official-v1",
+      "phase": "S73.10.5",
+      "category": "portrait",
+      "subcategory": "state_variant_pool",
+      "usage": [
+        "emotion_or_state_variant",
+        "dialogue_panel",
+        "exam_or_court_scene"
+      ],
+      "path": "/assets/ui/portraits/s73-10/portrait-s73-10-state_variant-official-smile-official-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-portrait-s73-10-state_variant-official-smile-official-v1.webp",
+      "fallbackRef": "fallback-role-silhouette-v1",
+      "reviewStatus": "approved",
+      "runtimeUsable": true,
+      "dimensions": {
+        "width": 1024,
+        "height": 1536
+      },
+      "transparent": false,
+      "files": {
+        "image": {
+          "path": "/assets/ui/portraits/s73-10/portrait-s73-10-state_variant-official-smile-official-v1.webp",
+          "exists": true,
+          "bytes": 173836,
+          "sha256": "78e62029c3ee9db99a53b6e5d9c74d65d02f974bf733047ddaf61c6c7934c055",
+          "dimensions": {
+            "width": 1024,
+            "height": 1536
+          },
+          "alpha": false
+        },
+        "thumbnail": {
+          "path": "/assets/ui/thumbs/thumb-portrait-s73-10-state_variant-official-smile-official-v1.webp",
+          "exists": true,
+          "bytes": 37516,
+          "sha256": "e3c5ec769e577843a942a47a7c2a2c2c644bc16c2fe62f23b65c74c5641ae37c",
+          "dimensions": {
+            "width": 384,
+            "height": 576,
+            "alpha": false
+          }
+        },
+        "lowResPlaceholder": {
+          "path": "/assets/ui/portraits/placeholders/placeholder-portrait-s73-10-state_variant-official-smile-official-v1.webp",
+          "exists": true,
+          "bytes": 1162,
+          "sha256": "af997706cb1dcacaf16e248ccbd7c3b9e77c28ea0c9d1f95d6050e8626cff5e3",
+          "dimensions": {
+            "width": 64,
+            "height": 96,
+            "alpha": false
+          }
+        }
+      },
+      "transparentQa": {
+        "required": false,
+        "backgrounds": [],
+        "sidecar": null,
+        "pixel": null
+      },
+      "issues": []
+    },
+    {
+      "id": "portrait-s73-10-state_variant-military-smile-military-v1",
+      "phase": "S73.10.5",
+      "category": "portrait",
+      "subcategory": "state_variant_pool",
+      "usage": [
+        "emotion_or_state_variant",
+        "dialogue_panel",
+        "exam_or_court_scene"
+      ],
+      "path": "/assets/ui/portraits/s73-10/portrait-s73-10-state_variant-military-smile-military-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-portrait-s73-10-state_variant-military-smile-military-v1.webp",
+      "fallbackRef": "fallback-role-silhouette-v1",
+      "reviewStatus": "approved",
+      "runtimeUsable": true,
+      "dimensions": {
+        "width": 1024,
+        "height": 1536
+      },
+      "transparent": false,
+      "files": {
+        "image": {
+          "path": "/assets/ui/portraits/s73-10/portrait-s73-10-state_variant-military-smile-military-v1.webp",
+          "exists": true,
+          "bytes": 193652,
+          "sha256": "00ec42f262c6c240c499171dd4c58fa680d86c806f502651e9f0d19d4bcf79d5",
+          "dimensions": {
+            "width": 1024,
+            "height": 1536
+          },
+          "alpha": false
+        },
+        "thumbnail": {
+          "path": "/assets/ui/thumbs/thumb-portrait-s73-10-state_variant-military-smile-military-v1.webp",
+          "exists": true,
+          "bytes": 42350,
+          "sha256": "f3d8ca9bec57d4ea97a6eae3ef718d88180a042ce502a129fa9b4e5ec7651f81",
+          "dimensions": {
+            "width": 384,
+            "height": 576,
+            "alpha": false
+          }
+        },
+        "lowResPlaceholder": {
+          "path": "/assets/ui/portraits/placeholders/placeholder-portrait-s73-10-state_variant-military-smile-military-v1.webp",
+          "exists": true,
+          "bytes": 1164,
+          "sha256": "e4bfcf8d0fb8dc82f671915b634210d95ae1a39761b0250cb3765414579a4037",
+          "dimensions": {
+            "width": 64,
+            "height": 96,
+            "alpha": false
+          }
+        }
+      },
+      "transparentQa": {
+        "required": false,
+        "backgrounds": [],
+        "sidecar": null,
+        "pixel": null
+      },
+      "issues": []
+    },
+    {
+      "id": "portrait-s73-10-state_variant-scholar-surprised-scholar-v1",
+      "phase": "S73.10.5",
+      "category": "portrait",
+      "subcategory": "state_variant_pool",
+      "usage": [
+        "emotion_or_state_variant",
+        "dialogue_panel",
+        "exam_or_court_scene"
+      ],
+      "path": "/assets/ui/portraits/s73-10/portrait-s73-10-state_variant-scholar-surprised-scholar-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-portrait-s73-10-state_variant-scholar-surprised-scholar-v1.webp",
+      "fallbackRef": "fallback-role-silhouette-v1",
+      "reviewStatus": "approved",
+      "runtimeUsable": true,
+      "dimensions": {
+        "width": 1024,
+        "height": 1536
+      },
+      "transparent": false,
+      "files": {
+        "image": {
+          "path": "/assets/ui/portraits/s73-10/portrait-s73-10-state_variant-scholar-surprised-scholar-v1.webp",
+          "exists": true,
+          "bytes": 180288,
+          "sha256": "f886cc9337cb0053f04b8f86cd7828df967b15b30ff717b4233f2754ebd2e988",
+          "dimensions": {
+            "width": 1024,
+            "height": 1536
+          },
+          "alpha": false
+        },
+        "thumbnail": {
+          "path": "/assets/ui/thumbs/thumb-portrait-s73-10-state_variant-scholar-surprised-scholar-v1.webp",
+          "exists": true,
+          "bytes": 39850,
+          "sha256": "956d68e4b651ff382fc1629608d7582e19ff3f0bc6a58bb4cb85e4effe0a4cad",
+          "dimensions": {
+            "width": 384,
+            "height": 576,
+            "alpha": false
+          }
+        },
+        "lowResPlaceholder": {
+          "path": "/assets/ui/portraits/placeholders/placeholder-portrait-s73-10-state_variant-scholar-surprised-scholar-v1.webp",
+          "exists": true,
+          "bytes": 1276,
+          "sha256": "b5b15baad2abb6d1fd9388a8e0c1e22a7924b30186027f52a36200542ea51b64",
+          "dimensions": {
+            "width": 64,
+            "height": 96,
+            "alpha": false
+          }
+        }
+      },
+      "transparentQa": {
+        "required": false,
+        "backgrounds": [],
+        "sidecar": null,
+        "pixel": null
+      },
+      "issues": []
+    },
+    {
+      "id": "portrait-s73-10-state_variant-official-surprised-official-v1",
+      "phase": "S73.10.5",
+      "category": "portrait",
+      "subcategory": "state_variant_pool",
+      "usage": [
+        "emotion_or_state_variant",
+        "dialogue_panel",
+        "exam_or_court_scene"
+      ],
+      "path": "/assets/ui/portraits/s73-10/portrait-s73-10-state_variant-official-surprised-official-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-portrait-s73-10-state_variant-official-surprised-official-v1.webp",
+      "fallbackRef": "fallback-role-silhouette-v1",
+      "reviewStatus": "approved",
+      "runtimeUsable": true,
+      "dimensions": {
+        "width": 1024,
+        "height": 1536
+      },
+      "transparent": false,
+      "files": {
+        "image": {
+          "path": "/assets/ui/portraits/s73-10/portrait-s73-10-state_variant-official-surprised-official-v1.webp",
+          "exists": true,
+          "bytes": 182370,
+          "sha256": "5349cac8c737bc3ebcfa58770d8811029b6a4d7451fca50793d662701888ab2e",
+          "dimensions": {
+            "width": 1024,
+            "height": 1536
+          },
+          "alpha": false
+        },
+        "thumbnail": {
+          "path": "/assets/ui/thumbs/thumb-portrait-s73-10-state_variant-official-surprised-official-v1.webp",
+          "exists": true,
+          "bytes": 40530,
+          "sha256": "a15b531d86b95403a22131652431351cf708ca7035166b203177ff4472e7d89b",
+          "dimensions": {
+            "width": 384,
+            "height": 576,
+            "alpha": false
+          }
+        },
+        "lowResPlaceholder": {
+          "path": "/assets/ui/portraits/placeholders/placeholder-portrait-s73-10-state_variant-official-surprised-official-v1.webp",
+          "exists": true,
+          "bytes": 1316,
+          "sha256": "cc0cdfd71c5372f3ac3ca66d3b90876603ce72933d5f607f6c9bda6ca58e5436",
+          "dimensions": {
+            "width": 64,
+            "height": 96,
+            "alpha": false
+          }
+        }
+      },
+      "transparentQa": {
+        "required": false,
+        "backgrounds": [],
+        "sidecar": null,
+        "pixel": null
+      },
+      "issues": []
+    },
+    {
+      "id": "portrait-s73-10-state_variant-military-surprised-military-v1",
+      "phase": "S73.10.5",
+      "category": "portrait",
+      "subcategory": "state_variant_pool",
+      "usage": [
+        "emotion_or_state_variant",
+        "dialogue_panel",
+        "exam_or_court_scene"
+      ],
+      "path": "/assets/ui/portraits/s73-10/portrait-s73-10-state_variant-military-surprised-military-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-portrait-s73-10-state_variant-military-surprised-military-v1.webp",
+      "fallbackRef": "fallback-role-silhouette-v1",
+      "reviewStatus": "approved",
+      "runtimeUsable": true,
+      "dimensions": {
+        "width": 1024,
+        "height": 1536
+      },
+      "transparent": false,
+      "files": {
+        "image": {
+          "path": "/assets/ui/portraits/s73-10/portrait-s73-10-state_variant-military-surprised-military-v1.webp",
+          "exists": true,
+          "bytes": 190308,
+          "sha256": "3ca50c06b8d30e73f18acd321cb8a3eb381bb902ead1bdee99b0d283849b7487",
+          "dimensions": {
+            "width": 1024,
+            "height": 1536
+          },
+          "alpha": false
+        },
+        "thumbnail": {
+          "path": "/assets/ui/thumbs/thumb-portrait-s73-10-state_variant-military-surprised-military-v1.webp",
+          "exists": true,
+          "bytes": 42726,
+          "sha256": "f77f7274c70549a25adc4bdf5c17b49cdba81d114c0436a4d575b202cdf098cb",
+          "dimensions": {
+            "width": 384,
+            "height": 576,
+            "alpha": false
+          }
+        },
+        "lowResPlaceholder": {
+          "path": "/assets/ui/portraits/placeholders/placeholder-portrait-s73-10-state_variant-military-surprised-military-v1.webp",
+          "exists": true,
+          "bytes": 1180,
+          "sha256": "1166da05d72358dc80b61e616e6a9b0c522e7dd12ef7221befa90bcb44f043d7",
+          "dimensions": {
+            "width": 64,
+            "height": 96,
+            "alpha": false
+          }
+        }
+      },
+      "transparentQa": {
+        "required": false,
+        "backgrounds": [],
+        "sidecar": null,
+        "pixel": null
+      },
+      "issues": []
+    },
+    {
+      "id": "portrait-s73-10-state_variant-scholar-decision-scholar-v1",
+      "phase": "S73.10.5",
+      "category": "portrait",
+      "subcategory": "state_variant_pool",
+      "usage": [
+        "emotion_or_state_variant",
+        "dialogue_panel",
+        "exam_or_court_scene"
+      ],
+      "path": "/assets/ui/portraits/s73-10/portrait-s73-10-state_variant-scholar-decision-scholar-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-portrait-s73-10-state_variant-scholar-decision-scholar-v1.webp",
+      "fallbackRef": "fallback-role-silhouette-v1",
+      "reviewStatus": "approved",
+      "runtimeUsable": true,
+      "dimensions": {
+        "width": 1024,
+        "height": 1536
+      },
+      "transparent": false,
+      "files": {
+        "image": {
+          "path": "/assets/ui/portraits/s73-10/portrait-s73-10-state_variant-scholar-decision-scholar-v1.webp",
+          "exists": true,
+          "bytes": 188216,
+          "sha256": "1dc2629811039b78cba44725c6b21fc20bcb9ea18f32dad651092b4d193e429a",
+          "dimensions": {
+            "width": 1024,
+            "height": 1536
+          },
+          "alpha": false
+        },
+        "thumbnail": {
+          "path": "/assets/ui/thumbs/thumb-portrait-s73-10-state_variant-scholar-decision-scholar-v1.webp",
+          "exists": true,
+          "bytes": 41000,
+          "sha256": "5eabac2e296199c41a1f752aa8e717bb4b94dfd115bb5fc1084ed7563f509e47",
+          "dimensions": {
+            "width": 384,
+            "height": 576,
+            "alpha": false
+          }
+        },
+        "lowResPlaceholder": {
+          "path": "/assets/ui/portraits/placeholders/placeholder-portrait-s73-10-state_variant-scholar-decision-scholar-v1.webp",
+          "exists": true,
+          "bytes": 1238,
+          "sha256": "19a9042e3d1a2955c3a71d5f3e9dbd3923de8367c457f0ff97f978d91cda8f77",
+          "dimensions": {
+            "width": 64,
+            "height": 96,
+            "alpha": false
+          }
+        }
+      },
+      "transparentQa": {
+        "required": false,
+        "backgrounds": [],
+        "sidecar": null,
+        "pixel": null
+      },
+      "issues": []
+    },
+    {
+      "id": "portrait-s73-10-state_variant-official-decision-official-v1",
+      "phase": "S73.10.5",
+      "category": "portrait",
+      "subcategory": "state_variant_pool",
+      "usage": [
+        "emotion_or_state_variant",
+        "dialogue_panel",
+        "exam_or_court_scene"
+      ],
+      "path": "/assets/ui/portraits/s73-10/portrait-s73-10-state_variant-official-decision-official-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-portrait-s73-10-state_variant-official-decision-official-v1.webp",
+      "fallbackRef": "fallback-role-silhouette-v1",
+      "reviewStatus": "approved",
+      "runtimeUsable": true,
+      "dimensions": {
+        "width": 1024,
+        "height": 1536
+      },
+      "transparent": false,
+      "files": {
+        "image": {
+          "path": "/assets/ui/portraits/s73-10/portrait-s73-10-state_variant-official-decision-official-v1.webp",
+          "exists": true,
+          "bytes": 190242,
+          "sha256": "4b1bc681fb9df49ee31476568fa4cf56c8c97c9694966b2a7e413fd451ac6ad2",
+          "dimensions": {
+            "width": 1024,
+            "height": 1536
+          },
+          "alpha": false
+        },
+        "thumbnail": {
+          "path": "/assets/ui/thumbs/thumb-portrait-s73-10-state_variant-official-decision-official-v1.webp",
+          "exists": true,
+          "bytes": 42566,
+          "sha256": "1904770a11e30c21f6ac6b0ddde797dce88c3a5fa6ba0d85fa018571863b6a29",
+          "dimensions": {
+            "width": 384,
+            "height": 576,
+            "alpha": false
+          }
+        },
+        "lowResPlaceholder": {
+          "path": "/assets/ui/portraits/placeholders/placeholder-portrait-s73-10-state_variant-official-decision-official-v1.webp",
+          "exists": true,
+          "bytes": 1312,
+          "sha256": "214b265f8499aae7e069f4ffca1ec6fd899d71f8a61bb2824204e7dc6638d088",
+          "dimensions": {
+            "width": 64,
+            "height": 96,
+            "alpha": false
+          }
+        }
+      },
+      "transparentQa": {
+        "required": false,
+        "backgrounds": [],
+        "sidecar": null,
+        "pixel": null
+      },
+      "issues": []
+    },
+    {
+      "id": "portrait-s73-10-state_variant-military-decision-military-v1",
+      "phase": "S73.10.5",
+      "category": "portrait",
+      "subcategory": "state_variant_pool",
+      "usage": [
+        "emotion_or_state_variant",
+        "dialogue_panel",
+        "exam_or_court_scene"
+      ],
+      "path": "/assets/ui/portraits/s73-10/portrait-s73-10-state_variant-military-decision-military-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-portrait-s73-10-state_variant-military-decision-military-v1.webp",
+      "fallbackRef": "fallback-role-silhouette-v1",
+      "reviewStatus": "approved",
+      "runtimeUsable": true,
+      "dimensions": {
+        "width": 1024,
+        "height": 1536
+      },
+      "transparent": false,
+      "files": {
+        "image": {
+          "path": "/assets/ui/portraits/s73-10/portrait-s73-10-state_variant-military-decision-military-v1.webp",
+          "exists": true,
+          "bytes": 202798,
+          "sha256": "8dbd91d8e2f8e8d2951c5022ee1099fb9cb158ecab296b033fd1e1d503dbc3d6",
+          "dimensions": {
+            "width": 1024,
+            "height": 1536
+          },
+          "alpha": false
+        },
+        "thumbnail": {
+          "path": "/assets/ui/thumbs/thumb-portrait-s73-10-state_variant-military-decision-military-v1.webp",
+          "exists": true,
+          "bytes": 45644,
+          "sha256": "3011c12241843f4c63501edeee01871ee5be4a8c07c61e0b42c368dbdb05be53",
+          "dimensions": {
+            "width": 384,
+            "height": 576,
+            "alpha": false
+          }
+        },
+        "lowResPlaceholder": {
+          "path": "/assets/ui/portraits/placeholders/placeholder-portrait-s73-10-state_variant-military-decision-military-v1.webp",
+          "exists": true,
+          "bytes": 1214,
+          "sha256": "5c8375138f14aea66551f8341d33116704fe17a4568bf087ec6bfc8ccde64409",
+          "dimensions": {
+            "width": 64,
+            "height": 96,
+            "alpha": false
+          }
+        }
+      },
+      "transparentQa": {
+        "required": false,
+        "backgrounds": [],
+        "sidecar": null,
+        "pixel": null
+      },
+      "issues": []
+    },
+    {
+      "id": "portrait-s73-10-state_variant-scholar-trial-scholar-v1",
+      "phase": "S73.10.5",
+      "category": "portrait",
+      "subcategory": "state_variant_pool",
+      "usage": [
+        "emotion_or_state_variant",
+        "dialogue_panel",
+        "exam_or_court_scene"
+      ],
+      "path": "/assets/ui/portraits/s73-10/portrait-s73-10-state_variant-scholar-trial-scholar-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-portrait-s73-10-state_variant-scholar-trial-scholar-v1.webp",
+      "fallbackRef": "fallback-role-silhouette-v1",
+      "reviewStatus": "approved",
+      "runtimeUsable": true,
+      "dimensions": {
+        "width": 1024,
+        "height": 1536
+      },
+      "transparent": false,
+      "files": {
+        "image": {
+          "path": "/assets/ui/portraits/s73-10/portrait-s73-10-state_variant-scholar-trial-scholar-v1.webp",
+          "exists": true,
+          "bytes": 193632,
+          "sha256": "8a13e1b03781f85ce2c12771c1e2a0ee15ec4078481ece2e68ab7030bb5c13e0",
+          "dimensions": {
+            "width": 1024,
+            "height": 1536
+          },
+          "alpha": false
+        },
+        "thumbnail": {
+          "path": "/assets/ui/thumbs/thumb-portrait-s73-10-state_variant-scholar-trial-scholar-v1.webp",
+          "exists": true,
+          "bytes": 43332,
+          "sha256": "6f362945e5b9d9475d92b9dc92ce5f5700bf3c3f0158d8bf53e11326db3710d1",
+          "dimensions": {
+            "width": 384,
+            "height": 576,
+            "alpha": false
+          }
+        },
+        "lowResPlaceholder": {
+          "path": "/assets/ui/portraits/placeholders/placeholder-portrait-s73-10-state_variant-scholar-trial-scholar-v1.webp",
+          "exists": true,
+          "bytes": 1294,
+          "sha256": "a4b3f5fae8468d099de8a96a9f53aaeb36164d413afa2830f7a98a3f59757abc",
+          "dimensions": {
+            "width": 64,
+            "height": 96,
+            "alpha": false
+          }
+        }
+      },
+      "transparentQa": {
+        "required": false,
+        "backgrounds": [],
+        "sidecar": null,
+        "pixel": null
+      },
+      "issues": []
+    },
+    {
+      "id": "portrait-s73-10-state_variant-official-trial-official-v1",
+      "phase": "S73.10.5",
+      "category": "portrait",
+      "subcategory": "state_variant_pool",
+      "usage": [
+        "emotion_or_state_variant",
+        "dialogue_panel",
+        "exam_or_court_scene"
+      ],
+      "path": "/assets/ui/portraits/s73-10/portrait-s73-10-state_variant-official-trial-official-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-portrait-s73-10-state_variant-official-trial-official-v1.webp",
+      "fallbackRef": "fallback-role-silhouette-v1",
+      "reviewStatus": "approved",
+      "runtimeUsable": true,
+      "dimensions": {
+        "width": 1024,
+        "height": 1536
+      },
+      "transparent": false,
+      "files": {
+        "image": {
+          "path": "/assets/ui/portraits/s73-10/portrait-s73-10-state_variant-official-trial-official-v1.webp",
+          "exists": true,
+          "bytes": 196050,
+          "sha256": "25b22cc8b959643c0b3c6d743f7dc8809937eebbca8e9a197d4fd520ffa427ef",
+          "dimensions": {
+            "width": 1024,
+            "height": 1536
+          },
+          "alpha": false
+        },
+        "thumbnail": {
+          "path": "/assets/ui/thumbs/thumb-portrait-s73-10-state_variant-official-trial-official-v1.webp",
+          "exists": true,
+          "bytes": 43154,
+          "sha256": "842cd4a684e710fd054a02932951131eae00ff06aae0a045d250ee3cda5cfc7d",
+          "dimensions": {
+            "width": 384,
+            "height": 576,
+            "alpha": false
+          }
+        },
+        "lowResPlaceholder": {
+          "path": "/assets/ui/portraits/placeholders/placeholder-portrait-s73-10-state_variant-official-trial-official-v1.webp",
+          "exists": true,
+          "bytes": 1284,
+          "sha256": "5507b5fb18eb35c418dc39be8c73abc383598b6d66672d6d60a8642393778be0",
+          "dimensions": {
+            "width": 64,
+            "height": 96,
+            "alpha": false
+          }
+        }
+      },
+      "transparentQa": {
+        "required": false,
+        "backgrounds": [],
+        "sidecar": null,
+        "pixel": null
+      },
+      "issues": []
+    },
+    {
+      "id": "portrait-s73-10-state_variant-military-trial-military-v1",
+      "phase": "S73.10.5",
+      "category": "portrait",
+      "subcategory": "state_variant_pool",
+      "usage": [
+        "emotion_or_state_variant",
+        "dialogue_panel",
+        "exam_or_court_scene"
+      ],
+      "path": "/assets/ui/portraits/s73-10/portrait-s73-10-state_variant-military-trial-military-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-portrait-s73-10-state_variant-military-trial-military-v1.webp",
+      "fallbackRef": "fallback-role-silhouette-v1",
+      "reviewStatus": "approved",
+      "runtimeUsable": true,
+      "dimensions": {
+        "width": 1024,
+        "height": 1536
+      },
+      "transparent": false,
+      "files": {
+        "image": {
+          "path": "/assets/ui/portraits/s73-10/portrait-s73-10-state_variant-military-trial-military-v1.webp",
+          "exists": true,
+          "bytes": 198672,
+          "sha256": "45c0a4c881c2af3312a03f935cde8a7dee12b1dbc5df5c07ed78b71f26b0cb80",
+          "dimensions": {
+            "width": 1024,
+            "height": 1536
+          },
+          "alpha": false
+        },
+        "thumbnail": {
+          "path": "/assets/ui/thumbs/thumb-portrait-s73-10-state_variant-military-trial-military-v1.webp",
+          "exists": true,
+          "bytes": 43562,
+          "sha256": "b3717f3b2b45ec4ba44d5cedf1d2f820f679fd6f2a1ccd13ac6aab8c00d3b0df",
+          "dimensions": {
+            "width": 384,
+            "height": 576,
+            "alpha": false
+          }
+        },
+        "lowResPlaceholder": {
+          "path": "/assets/ui/portraits/placeholders/placeholder-portrait-s73-10-state_variant-military-trial-military-v1.webp",
+          "exists": true,
+          "bytes": 1244,
+          "sha256": "27b3364677f36c1061759e79606537d19240aed459c604fc4f480b3b6c4758d6",
+          "dimensions": {
+            "width": 64,
+            "height": 96,
+            "alpha": false
+          }
+        }
+      },
+      "transparentQa": {
+        "required": false,
+        "backgrounds": [],
+        "sidecar": null,
+        "pixel": null
+      },
+      "issues": []
+    },
+    {
+      "id": "portrait-s73-10-state_variant-scholar-apology-scholar-v1",
+      "phase": "S73.10.5",
+      "category": "portrait",
+      "subcategory": "state_variant_pool",
+      "usage": [
+        "emotion_or_state_variant",
+        "dialogue_panel",
+        "exam_or_court_scene"
+      ],
+      "path": "/assets/ui/portraits/s73-10/portrait-s73-10-state_variant-scholar-apology-scholar-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-portrait-s73-10-state_variant-scholar-apology-scholar-v1.webp",
+      "fallbackRef": "fallback-role-silhouette-v1",
+      "reviewStatus": "approved",
+      "runtimeUsable": true,
+      "dimensions": {
+        "width": 1024,
+        "height": 1536
+      },
+      "transparent": false,
+      "files": {
+        "image": {
+          "path": "/assets/ui/portraits/s73-10/portrait-s73-10-state_variant-scholar-apology-scholar-v1.webp",
+          "exists": true,
+          "bytes": 195642,
+          "sha256": "0e8c78556d8ef6c0a71ef1a23c88cae5cdc3bcf7729e6fb7e8cdc9be94e77607",
+          "dimensions": {
+            "width": 1024,
+            "height": 1536
+          },
+          "alpha": false
+        },
+        "thumbnail": {
+          "path": "/assets/ui/thumbs/thumb-portrait-s73-10-state_variant-scholar-apology-scholar-v1.webp",
+          "exists": true,
+          "bytes": 43894,
+          "sha256": "fdcf7522d061e30de8ed1bfbc9cb597d3514231bbdcbebaea8bbfa7697c604da",
+          "dimensions": {
+            "width": 384,
+            "height": 576,
+            "alpha": false
+          }
+        },
+        "lowResPlaceholder": {
+          "path": "/assets/ui/portraits/placeholders/placeholder-portrait-s73-10-state_variant-scholar-apology-scholar-v1.webp",
+          "exists": true,
+          "bytes": 1226,
+          "sha256": "be3f4d7eef0259f5eeb003c4e779fd270aa73be1366665ebf3621bb4bd087718",
+          "dimensions": {
+            "width": 64,
+            "height": 96,
+            "alpha": false
+          }
+        }
+      },
+      "transparentQa": {
+        "required": false,
+        "backgrounds": [],
+        "sidecar": null,
+        "pixel": null
+      },
+      "issues": []
+    },
+    {
+      "id": "portrait-s73-10-state_variant-official-apology-official-v1",
+      "phase": "S73.10.5",
+      "category": "portrait",
+      "subcategory": "state_variant_pool",
+      "usage": [
+        "emotion_or_state_variant",
+        "dialogue_panel",
+        "exam_or_court_scene"
+      ],
+      "path": "/assets/ui/portraits/s73-10/portrait-s73-10-state_variant-official-apology-official-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-portrait-s73-10-state_variant-official-apology-official-v1.webp",
+      "fallbackRef": "fallback-role-silhouette-v1",
+      "reviewStatus": "approved",
+      "runtimeUsable": true,
+      "dimensions": {
+        "width": 1024,
+        "height": 1536
+      },
+      "transparent": false,
+      "files": {
+        "image": {
+          "path": "/assets/ui/portraits/s73-10/portrait-s73-10-state_variant-official-apology-official-v1.webp",
+          "exists": true,
+          "bytes": 193204,
+          "sha256": "e3236e153436932bfd773c3646ff8b0047afa158c0c1f80750c42291ba70baf5",
+          "dimensions": {
+            "width": 1024,
+            "height": 1536
+          },
+          "alpha": false
+        },
+        "thumbnail": {
+          "path": "/assets/ui/thumbs/thumb-portrait-s73-10-state_variant-official-apology-official-v1.webp",
+          "exists": true,
+          "bytes": 41732,
+          "sha256": "9ace3af4b444ece4a80f77dc860a7705035a20b6fbbdd4cf828b64f0a235b3f0",
+          "dimensions": {
+            "width": 384,
+            "height": 576,
+            "alpha": false
+          }
+        },
+        "lowResPlaceholder": {
+          "path": "/assets/ui/portraits/placeholders/placeholder-portrait-s73-10-state_variant-official-apology-official-v1.webp",
+          "exists": true,
+          "bytes": 1216,
+          "sha256": "fca40ea373001a20e733b5484aba536a2c875bd017b63bc9a4876e71783af5da",
+          "dimensions": {
+            "width": 64,
+            "height": 96,
+            "alpha": false
+          }
+        }
+      },
+      "transparentQa": {
+        "required": false,
+        "backgrounds": [],
+        "sidecar": null,
+        "pixel": null
+      },
+      "issues": []
+    },
+    {
+      "id": "portrait-s73-10-state_variant-military-apology-military-v1",
+      "phase": "S73.10.5",
+      "category": "portrait",
+      "subcategory": "state_variant_pool",
+      "usage": [
+        "emotion_or_state_variant",
+        "dialogue_panel",
+        "exam_or_court_scene"
+      ],
+      "path": "/assets/ui/portraits/s73-10/portrait-s73-10-state_variant-military-apology-military-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-portrait-s73-10-state_variant-military-apology-military-v1.webp",
+      "fallbackRef": "fallback-role-silhouette-v1",
+      "reviewStatus": "approved",
+      "runtimeUsable": true,
+      "dimensions": {
+        "width": 1024,
+        "height": 1536
+      },
+      "transparent": false,
+      "files": {
+        "image": {
+          "path": "/assets/ui/portraits/s73-10/portrait-s73-10-state_variant-military-apology-military-v1.webp",
+          "exists": true,
+          "bytes": 198274,
+          "sha256": "1d2869ae1616606228121f1eda5b9012cd9a7a5c165757c3233ec563d3e3a20e",
+          "dimensions": {
+            "width": 1024,
+            "height": 1536
+          },
+          "alpha": false
+        },
+        "thumbnail": {
+          "path": "/assets/ui/thumbs/thumb-portrait-s73-10-state_variant-military-apology-military-v1.webp",
+          "exists": true,
+          "bytes": 45830,
+          "sha256": "9d1c6ec4b2ddaf2d4b969085a0fc5ae268e3ad8725e6b05f8b38aee6d17cdd25",
+          "dimensions": {
+            "width": 384,
+            "height": 576,
+            "alpha": false
+          }
+        },
+        "lowResPlaceholder": {
+          "path": "/assets/ui/portraits/placeholders/placeholder-portrait-s73-10-state_variant-military-apology-military-v1.webp",
+          "exists": true,
+          "bytes": 1216,
+          "sha256": "9278d23245efafd6d903df7cd72fdee67ed07a95bd42ba717c3d257c123b8e87",
+          "dimensions": {
+            "width": 64,
+            "height": 96,
+            "alpha": false
+          }
+        }
+      },
+      "transparentQa": {
+        "required": false,
+        "backgrounds": [],
+        "sidecar": null,
+        "pixel": null
+      },
+      "issues": []
+    },
+    {
+      "id": "portrait-s73-10-scene_anchor-exam-writing-lead-v1",
+      "phase": "S73.10.5",
+      "category": "portrait",
+      "subcategory": "scene_anchor_pool",
+      "usage": [
+        "scene_anchor",
+        "exam_page",
+        "story_surface"
+      ],
+      "path": "/assets/ui/portraits/s73-10/portrait-s73-10-scene_anchor-exam-writing-lead-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-portrait-s73-10-scene_anchor-exam-writing-lead-v1.webp",
+      "fallbackRef": "fallback-role-silhouette-v1",
+      "reviewStatus": "approved",
+      "runtimeUsable": true,
+      "dimensions": {
+        "width": 1024,
+        "height": 1536
+      },
+      "transparent": false,
+      "files": {
+        "image": {
+          "path": "/assets/ui/portraits/s73-10/portrait-s73-10-scene_anchor-exam-writing-lead-v1.webp",
+          "exists": true,
+          "bytes": 177564,
+          "sha256": "475729d0da2d32e6dce7f9a9903b1c72594de65ec9ba8d71cc59fdd9cd00e91c",
+          "dimensions": {
+            "width": 1024,
+            "height": 1536
+          },
+          "alpha": false
+        },
+        "thumbnail": {
+          "path": "/assets/ui/thumbs/thumb-portrait-s73-10-scene_anchor-exam-writing-lead-v1.webp",
+          "exists": true,
+          "bytes": 39770,
+          "sha256": "5d3469abf240213bbb8899b6a2b20e2d0f27bb4a45686c2c5d647106ce416660",
+          "dimensions": {
+            "width": 384,
+            "height": 576,
+            "alpha": false
+          }
+        },
+        "lowResPlaceholder": {
+          "path": "/assets/ui/portraits/placeholders/placeholder-portrait-s73-10-scene_anchor-exam-writing-lead-v1.webp",
+          "exists": true,
+          "bytes": 1274,
+          "sha256": "f4b4222b6315f378e2a01aadf73de4b0ab0055bc5fc3233ff4af2f8c594094f1",
+          "dimensions": {
+            "width": 64,
+            "height": 96,
+            "alpha": false
+          }
+        }
+      },
+      "transparentQa": {
+        "required": false,
+        "backgrounds": [],
+        "sidecar": null,
+        "pixel": null
+      },
+      "issues": []
+    },
+    {
+      "id": "portrait-s73-10-scene_anchor-exam-writing-tension-v1",
+      "phase": "S73.10.5",
+      "category": "portrait",
+      "subcategory": "scene_anchor_pool",
+      "usage": [
+        "scene_anchor",
+        "exam_page",
+        "story_surface"
+      ],
+      "path": "/assets/ui/portraits/s73-10/portrait-s73-10-scene_anchor-exam-writing-tension-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-portrait-s73-10-scene_anchor-exam-writing-tension-v1.webp",
+      "fallbackRef": "fallback-role-silhouette-v1",
+      "reviewStatus": "approved",
+      "runtimeUsable": true,
+      "dimensions": {
+        "width": 1024,
+        "height": 1536
+      },
+      "transparent": false,
+      "files": {
+        "image": {
+          "path": "/assets/ui/portraits/s73-10/portrait-s73-10-scene_anchor-exam-writing-tension-v1.webp",
+          "exists": true,
+          "bytes": 173026,
+          "sha256": "5a5fcb59451dea04601c289a7d61d61c98fe4c099577f02ef260f65bd68d3489",
+          "dimensions": {
+            "width": 1024,
+            "height": 1536
+          },
+          "alpha": false
+        },
+        "thumbnail": {
+          "path": "/assets/ui/thumbs/thumb-portrait-s73-10-scene_anchor-exam-writing-tension-v1.webp",
+          "exists": true,
+          "bytes": 38800,
+          "sha256": "9adc5b38021423d3d5e9fe0c54534707f7095e1abde5afb9c80f3f8b5b71dc20",
+          "dimensions": {
+            "width": 384,
+            "height": 576,
+            "alpha": false
+          }
+        },
+        "lowResPlaceholder": {
+          "path": "/assets/ui/portraits/placeholders/placeholder-portrait-s73-10-scene_anchor-exam-writing-tension-v1.webp",
+          "exists": true,
+          "bytes": 1338,
+          "sha256": "b5f527e9390a543a6552a9a54effaa845c338405ba63980e88092b231028e82a",
+          "dimensions": {
+            "width": 64,
+            "height": 96,
+            "alpha": false
+          }
+        }
+      },
+      "transparentQa": {
+        "required": false,
+        "backgrounds": [],
+        "sidecar": null,
+        "pixel": null
+      },
+      "issues": []
+    },
+    {
+      "id": "portrait-s73-10-scene_anchor-exam-writing-resolution-v1",
+      "phase": "S73.10.5",
+      "category": "portrait",
+      "subcategory": "scene_anchor_pool",
+      "usage": [
+        "scene_anchor",
+        "exam_page",
+        "story_surface"
+      ],
+      "path": "/assets/ui/portraits/s73-10/portrait-s73-10-scene_anchor-exam-writing-resolution-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-portrait-s73-10-scene_anchor-exam-writing-resolution-v1.webp",
+      "fallbackRef": "fallback-role-silhouette-v1",
+      "reviewStatus": "approved",
+      "runtimeUsable": true,
+      "dimensions": {
+        "width": 1024,
+        "height": 1536
+      },
+      "transparent": false,
+      "files": {
+        "image": {
+          "path": "/assets/ui/portraits/s73-10/portrait-s73-10-scene_anchor-exam-writing-resolution-v1.webp",
+          "exists": true,
+          "bytes": 171398,
+          "sha256": "77fc4c2ee935d0f3d408d43e172837e29af767723c538794927937a3cc72a3f7",
+          "dimensions": {
+            "width": 1024,
+            "height": 1536
+          },
+          "alpha": false
+        },
+        "thumbnail": {
+          "path": "/assets/ui/thumbs/thumb-portrait-s73-10-scene_anchor-exam-writing-resolution-v1.webp",
+          "exists": true,
+          "bytes": 37278,
+          "sha256": "11b0abb966ddbab8dc5c8fcdb4c9198149ea52a2269e913c30915371692b7506",
+          "dimensions": {
+            "width": 384,
+            "height": 576,
+            "alpha": false
+          }
+        },
+        "lowResPlaceholder": {
+          "path": "/assets/ui/portraits/placeholders/placeholder-portrait-s73-10-scene_anchor-exam-writing-resolution-v1.webp",
+          "exists": true,
+          "bytes": 1272,
+          "sha256": "482e6d9b74870bd15ee121155800be863043b32e5e8027df79cc225f484e0da1",
+          "dimensions": {
+            "width": 64,
+            "height": 96,
+            "alpha": false
+          }
+        }
+      },
+      "transparentQa": {
+        "required": false,
+        "backgrounds": [],
+        "sidecar": null,
+        "pixel": null
+      },
+      "issues": []
+    },
+    {
+      "id": "portrait-s73-10-scene_anchor-exam-list-meeting-lead-v1",
+      "phase": "S73.10.5",
+      "category": "portrait",
+      "subcategory": "scene_anchor_pool",
+      "usage": [
+        "scene_anchor",
+        "exam_list_page",
+        "story_surface"
+      ],
+      "path": "/assets/ui/portraits/s73-10/portrait-s73-10-scene_anchor-exam-list-meeting-lead-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-portrait-s73-10-scene_anchor-exam-list-meeting-lead-v1.webp",
+      "fallbackRef": "fallback-role-silhouette-v1",
+      "reviewStatus": "approved",
+      "runtimeUsable": true,
+      "dimensions": {
+        "width": 1024,
+        "height": 1536
+      },
+      "transparent": false,
+      "files": {
+        "image": {
+          "path": "/assets/ui/portraits/s73-10/portrait-s73-10-scene_anchor-exam-list-meeting-lead-v1.webp",
+          "exists": true,
+          "bytes": 168974,
+          "sha256": "c4a6351799f1ddbf5d8be14e6ebb15b47b30132d9c07608c39a6470702f82f05",
+          "dimensions": {
+            "width": 1024,
+            "height": 1536
+          },
+          "alpha": false
+        },
+        "thumbnail": {
+          "path": "/assets/ui/thumbs/thumb-portrait-s73-10-scene_anchor-exam-list-meeting-lead-v1.webp",
+          "exists": true,
+          "bytes": 35504,
+          "sha256": "21676922242d860611b751c72fd02f0458a26dfe420cd6898b7de8d993639c14",
+          "dimensions": {
+            "width": 384,
+            "height": 576,
+            "alpha": false
+          }
+        },
+        "lowResPlaceholder": {
+          "path": "/assets/ui/portraits/placeholders/placeholder-portrait-s73-10-scene_anchor-exam-list-meeting-lead-v1.webp",
+          "exists": true,
+          "bytes": 1196,
+          "sha256": "1b118e580df883f602a7995437315384006b70989765baf9ea58cc672f9b54de",
+          "dimensions": {
+            "width": 64,
+            "height": 96,
+            "alpha": false
+          }
+        }
+      },
+      "transparentQa": {
+        "required": false,
+        "backgrounds": [],
+        "sidecar": null,
+        "pixel": null
+      },
+      "issues": []
+    },
+    {
+      "id": "portrait-s73-10-scene_anchor-exam-list-meeting-tension-v1",
+      "phase": "S73.10.5",
+      "category": "portrait",
+      "subcategory": "scene_anchor_pool",
+      "usage": [
+        "scene_anchor",
+        "exam_list_page",
+        "story_surface"
+      ],
+      "path": "/assets/ui/portraits/s73-10/portrait-s73-10-scene_anchor-exam-list-meeting-tension-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-portrait-s73-10-scene_anchor-exam-list-meeting-tension-v1.webp",
+      "fallbackRef": "fallback-role-silhouette-v1",
+      "reviewStatus": "approved",
+      "runtimeUsable": true,
+      "dimensions": {
+        "width": 1024,
+        "height": 1536
+      },
+      "transparent": false,
+      "files": {
+        "image": {
+          "path": "/assets/ui/portraits/s73-10/portrait-s73-10-scene_anchor-exam-list-meeting-tension-v1.webp",
+          "exists": true,
+          "bytes": 179572,
+          "sha256": "aee3199d61dfc9d63e46bfa0ca6f7bcd729ea5cf2782b2e18be3abf9d88be475",
+          "dimensions": {
+            "width": 1024,
+            "height": 1536
+          },
+          "alpha": false
+        },
+        "thumbnail": {
+          "path": "/assets/ui/thumbs/thumb-portrait-s73-10-scene_anchor-exam-list-meeting-tension-v1.webp",
+          "exists": true,
+          "bytes": 37874,
+          "sha256": "35506606735f04347b22c0b0b7e21eb0b2ec47b9c021df69096c28cc1d59c603",
+          "dimensions": {
+            "width": 384,
+            "height": 576,
+            "alpha": false
+          }
+        },
+        "lowResPlaceholder": {
+          "path": "/assets/ui/portraits/placeholders/placeholder-portrait-s73-10-scene_anchor-exam-list-meeting-tension-v1.webp",
+          "exists": true,
+          "bytes": 1216,
+          "sha256": "924c5b5b4a28ce31b177ff530c11eaebabd77fa77fff280ce6600071ca4a4a6e",
+          "dimensions": {
+            "width": 64,
+            "height": 96,
+            "alpha": false
+          }
+        }
+      },
+      "transparentQa": {
+        "required": false,
+        "backgrounds": [],
+        "sidecar": null,
+        "pixel": null
+      },
+      "issues": []
+    },
+    {
+      "id": "portrait-s73-10-scene_anchor-exam-list-meeting-resolution-v1",
+      "phase": "S73.10.5",
+      "category": "portrait",
+      "subcategory": "scene_anchor_pool",
+      "usage": [
+        "scene_anchor",
+        "exam_list_page",
+        "story_surface"
+      ],
+      "path": "/assets/ui/portraits/s73-10/portrait-s73-10-scene_anchor-exam-list-meeting-resolution-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-portrait-s73-10-scene_anchor-exam-list-meeting-resolution-v1.webp",
+      "fallbackRef": "fallback-role-silhouette-v1",
+      "reviewStatus": "approved",
+      "runtimeUsable": true,
+      "dimensions": {
+        "width": 1024,
+        "height": 1536
+      },
+      "transparent": false,
+      "files": {
+        "image": {
+          "path": "/assets/ui/portraits/s73-10/portrait-s73-10-scene_anchor-exam-list-meeting-resolution-v1.webp",
+          "exists": true,
+          "bytes": 186976,
+          "sha256": "816f95fe14148a73cc50b494b304ac1e70aa3b07e27db0f06bda819b206db3db",
+          "dimensions": {
+            "width": 1024,
+            "height": 1536
+          },
+          "alpha": false
+        },
+        "thumbnail": {
+          "path": "/assets/ui/thumbs/thumb-portrait-s73-10-scene_anchor-exam-list-meeting-resolution-v1.webp",
+          "exists": true,
+          "bytes": 41036,
+          "sha256": "08d2c2b2e22ea71bdfc730779bee73e69f232b43c79ba55eb4c6fda43380f486",
+          "dimensions": {
+            "width": 384,
+            "height": 576,
+            "alpha": false
+          }
+        },
+        "lowResPlaceholder": {
+          "path": "/assets/ui/portraits/placeholders/placeholder-portrait-s73-10-scene_anchor-exam-list-meeting-resolution-v1.webp",
+          "exists": true,
+          "bytes": 1230,
+          "sha256": "7a50bdd4361ed720c144486488567cfd65bc95b9c285fbc667e97d5420e95282",
+          "dimensions": {
+            "width": 64,
+            "height": 96,
+            "alpha": false
+          }
+        }
+      },
+      "transparentQa": {
+        "required": false,
+        "backgrounds": [],
+        "sidecar": null,
+        "pixel": null
+      },
+      "issues": []
+    },
+    {
+      "id": "portrait-s73-10-scene_anchor-county-trial-lead-v1",
+      "phase": "S73.10.5",
+      "category": "portrait",
+      "subcategory": "scene_anchor_pool",
+      "usage": [
+        "scene_anchor",
+        "judicial_page",
+        "story_surface"
+      ],
+      "path": "/assets/ui/portraits/s73-10/portrait-s73-10-scene_anchor-county-trial-lead-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-portrait-s73-10-scene_anchor-county-trial-lead-v1.webp",
+      "fallbackRef": "fallback-role-silhouette-v1",
+      "reviewStatus": "approved",
+      "runtimeUsable": true,
+      "dimensions": {
+        "width": 1024,
+        "height": 1536
+      },
+      "transparent": false,
+      "files": {
+        "image": {
+          "path": "/assets/ui/portraits/s73-10/portrait-s73-10-scene_anchor-county-trial-lead-v1.webp",
+          "exists": true,
+          "bytes": 205962,
+          "sha256": "c9fd6129cbfc27579de6eee959b9aa5b7213f2c0234f3b8958a7e8b6ce379144",
+          "dimensions": {
+            "width": 1024,
+            "height": 1536
+          },
+          "alpha": false
+        },
+        "thumbnail": {
+          "path": "/assets/ui/thumbs/thumb-portrait-s73-10-scene_anchor-county-trial-lead-v1.webp",
+          "exists": true,
+          "bytes": 43048,
+          "sha256": "db8b4ff4b50a257530b1e92b65c2ee7da3b3290bd77fa7b54f755d62b77349d1",
+          "dimensions": {
+            "width": 384,
+            "height": 576,
+            "alpha": false
+          }
+        },
+        "lowResPlaceholder": {
+          "path": "/assets/ui/portraits/placeholders/placeholder-portrait-s73-10-scene_anchor-county-trial-lead-v1.webp",
+          "exists": true,
+          "bytes": 1350,
+          "sha256": "74cf5f0beae86b8f047f6fb310347ba0ec0cd931d75ee71e101614ff0c14eaa8",
+          "dimensions": {
+            "width": 64,
+            "height": 96,
+            "alpha": false
+          }
+        }
+      },
+      "transparentQa": {
+        "required": false,
+        "backgrounds": [],
+        "sidecar": null,
+        "pixel": null
+      },
+      "issues": []
+    },
+    {
+      "id": "portrait-s73-10-scene_anchor-county-trial-tension-v1",
+      "phase": "S73.10.5",
+      "category": "portrait",
+      "subcategory": "scene_anchor_pool",
+      "usage": [
+        "scene_anchor",
+        "judicial_page",
+        "story_surface"
+      ],
+      "path": "/assets/ui/portraits/s73-10/portrait-s73-10-scene_anchor-county-trial-tension-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-portrait-s73-10-scene_anchor-county-trial-tension-v1.webp",
+      "fallbackRef": "fallback-role-silhouette-v1",
+      "reviewStatus": "approved",
+      "runtimeUsable": true,
+      "dimensions": {
+        "width": 1024,
+        "height": 1536
+      },
+      "transparent": false,
+      "files": {
+        "image": {
+          "path": "/assets/ui/portraits/s73-10/portrait-s73-10-scene_anchor-county-trial-tension-v1.webp",
+          "exists": true,
+          "bytes": 192440,
+          "sha256": "21a9ee2b9bca6931268c28e1709828f94970606b967adae0e2aa7138105e209a",
+          "dimensions": {
+            "width": 1024,
+            "height": 1536
+          },
+          "alpha": false
+        },
+        "thumbnail": {
+          "path": "/assets/ui/thumbs/thumb-portrait-s73-10-scene_anchor-county-trial-tension-v1.webp",
+          "exists": true,
+          "bytes": 41864,
+          "sha256": "ba19973c9c9d8453c25028b0a733477dda42686625d36816e0ba5417c87f7316",
+          "dimensions": {
+            "width": 384,
+            "height": 576,
+            "alpha": false
+          }
+        },
+        "lowResPlaceholder": {
+          "path": "/assets/ui/portraits/placeholders/placeholder-portrait-s73-10-scene_anchor-county-trial-tension-v1.webp",
+          "exists": true,
+          "bytes": 1274,
+          "sha256": "04526eefb3f19bc791186ecbe31d0aca4e487b77f47f1aab734e5bad266304b9",
+          "dimensions": {
+            "width": 64,
+            "height": 96,
+            "alpha": false
+          }
+        }
+      },
+      "transparentQa": {
+        "required": false,
+        "backgrounds": [],
+        "sidecar": null,
+        "pixel": null
+      },
+      "issues": []
+    },
+    {
+      "id": "portrait-s73-10-scene_anchor-county-trial-resolution-v1",
+      "phase": "S73.10.5",
+      "category": "portrait",
+      "subcategory": "scene_anchor_pool",
+      "usage": [
+        "scene_anchor",
+        "judicial_page",
+        "story_surface"
+      ],
+      "path": "/assets/ui/portraits/s73-10/portrait-s73-10-scene_anchor-county-trial-resolution-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-portrait-s73-10-scene_anchor-county-trial-resolution-v1.webp",
+      "fallbackRef": "fallback-role-silhouette-v1",
+      "reviewStatus": "approved",
+      "runtimeUsable": true,
+      "dimensions": {
+        "width": 1024,
+        "height": 1536
+      },
+      "transparent": false,
+      "files": {
+        "image": {
+          "path": "/assets/ui/portraits/s73-10/portrait-s73-10-scene_anchor-county-trial-resolution-v1.webp",
+          "exists": true,
+          "bytes": 204972,
+          "sha256": "6a35c844a57c55fe100ff16782df420f6d0d0d7f659a9f2c47d4866c060afcc1",
+          "dimensions": {
+            "width": 1024,
+            "height": 1536
+          },
+          "alpha": false
+        },
+        "thumbnail": {
+          "path": "/assets/ui/thumbs/thumb-portrait-s73-10-scene_anchor-county-trial-resolution-v1.webp",
+          "exists": true,
+          "bytes": 44894,
+          "sha256": "bb94ff74e6da4ae10a684be90ea48dbb6d6573c5ec9f2e184c6b22aaa4d8d528",
+          "dimensions": {
+            "width": 384,
+            "height": 576,
+            "alpha": false
+          }
+        },
+        "lowResPlaceholder": {
+          "path": "/assets/ui/portraits/placeholders/placeholder-portrait-s73-10-scene_anchor-county-trial-resolution-v1.webp",
+          "exists": true,
+          "bytes": 1356,
+          "sha256": "0cd29808e2fe5ede465cfd2cc8a8d2d8e207e6713cf23bfbba3bd3d6b0eb007b",
+          "dimensions": {
+            "width": 64,
+            "height": 96,
+            "alpha": false
+          }
+        }
+      },
+      "transparentQa": {
+        "required": false,
+        "backgrounds": [],
+        "sidecar": null,
+        "pixel": null
+      },
+      "issues": []
+    },
+    {
+      "id": "portrait-s73-10-scene_anchor-court-memorial-lead-v1",
+      "phase": "S73.10.5",
+      "category": "portrait",
+      "subcategory": "scene_anchor_pool",
+      "usage": [
+        "scene_anchor",
+        "court_page",
+        "story_surface"
+      ],
+      "path": "/assets/ui/portraits/s73-10/portrait-s73-10-scene_anchor-court-memorial-lead-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-portrait-s73-10-scene_anchor-court-memorial-lead-v1.webp",
+      "fallbackRef": "fallback-role-silhouette-v1",
+      "reviewStatus": "approved",
+      "runtimeUsable": true,
+      "dimensions": {
+        "width": 1024,
+        "height": 1536
+      },
+      "transparent": false,
+      "files": {
+        "image": {
+          "path": "/assets/ui/portraits/s73-10/portrait-s73-10-scene_anchor-court-memorial-lead-v1.webp",
+          "exists": true,
+          "bytes": 208816,
+          "sha256": "7050a3f66ec3ccb047cffdcf1435163599075f04477e4f2d9582a6785f58d686",
+          "dimensions": {
+            "width": 1024,
+            "height": 1536
+          },
+          "alpha": false
+        },
+        "thumbnail": {
+          "path": "/assets/ui/thumbs/thumb-portrait-s73-10-scene_anchor-court-memorial-lead-v1.webp",
+          "exists": true,
+          "bytes": 46964,
+          "sha256": "18e03c22d1977b77fad651d1699daaa077907df2e26449eaa211aa7e9770582a",
+          "dimensions": {
+            "width": 384,
+            "height": 576,
+            "alpha": false
+          }
+        },
+        "lowResPlaceholder": {
+          "path": "/assets/ui/portraits/placeholders/placeholder-portrait-s73-10-scene_anchor-court-memorial-lead-v1.webp",
+          "exists": true,
+          "bytes": 1254,
+          "sha256": "680dd0dc0905793a7c605e467d88a575967cfb8e099e8824172e7267d9cd9fe5",
+          "dimensions": {
+            "width": 64,
+            "height": 96,
+            "alpha": false
+          }
+        }
+      },
+      "transparentQa": {
+        "required": false,
+        "backgrounds": [],
+        "sidecar": null,
+        "pixel": null
+      },
+      "issues": []
+    },
+    {
+      "id": "portrait-s73-10-scene_anchor-court-memorial-tension-v1",
+      "phase": "S73.10.5",
+      "category": "portrait",
+      "subcategory": "scene_anchor_pool",
+      "usage": [
+        "scene_anchor",
+        "court_page",
+        "story_surface"
+      ],
+      "path": "/assets/ui/portraits/s73-10/portrait-s73-10-scene_anchor-court-memorial-tension-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-portrait-s73-10-scene_anchor-court-memorial-tension-v1.webp",
+      "fallbackRef": "fallback-role-silhouette-v1",
+      "reviewStatus": "approved",
+      "runtimeUsable": true,
+      "dimensions": {
+        "width": 1024,
+        "height": 1536
+      },
+      "transparent": false,
+      "files": {
+        "image": {
+          "path": "/assets/ui/portraits/s73-10/portrait-s73-10-scene_anchor-court-memorial-tension-v1.webp",
+          "exists": true,
+          "bytes": 210032,
+          "sha256": "7ffb165cc25fb61d4197174263b8bcc0bca8247a54d9456eb0d199fde79f5bd3",
+          "dimensions": {
+            "width": 1024,
+            "height": 1536
+          },
+          "alpha": false
+        },
+        "thumbnail": {
+          "path": "/assets/ui/thumbs/thumb-portrait-s73-10-scene_anchor-court-memorial-tension-v1.webp",
+          "exists": true,
+          "bytes": 46852,
+          "sha256": "45f62405b1a1b885c60d3c22a8ac984ef6d7cf364939f2d9957560bd70949450",
+          "dimensions": {
+            "width": 384,
+            "height": 576,
+            "alpha": false
+          }
+        },
+        "lowResPlaceholder": {
+          "path": "/assets/ui/portraits/placeholders/placeholder-portrait-s73-10-scene_anchor-court-memorial-tension-v1.webp",
+          "exists": true,
+          "bytes": 1320,
+          "sha256": "9ef6de8b3a2095a42a08fdfe55703845303f5254a0965a281bdeee15df838d8d",
+          "dimensions": {
+            "width": 64,
+            "height": 96,
+            "alpha": false
+          }
+        }
+      },
+      "transparentQa": {
+        "required": false,
+        "backgrounds": [],
+        "sidecar": null,
+        "pixel": null
+      },
+      "issues": []
+    },
+    {
+      "id": "portrait-s73-10-scene_anchor-court-memorial-resolution-v1",
+      "phase": "S73.10.5",
+      "category": "portrait",
+      "subcategory": "scene_anchor_pool",
+      "usage": [
+        "scene_anchor",
+        "court_page",
+        "story_surface"
+      ],
+      "path": "/assets/ui/portraits/s73-10/portrait-s73-10-scene_anchor-court-memorial-resolution-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-portrait-s73-10-scene_anchor-court-memorial-resolution-v1.webp",
+      "fallbackRef": "fallback-role-silhouette-v1",
+      "reviewStatus": "approved",
+      "runtimeUsable": true,
+      "dimensions": {
+        "width": 1024,
+        "height": 1536
+      },
+      "transparent": false,
+      "files": {
+        "image": {
+          "path": "/assets/ui/portraits/s73-10/portrait-s73-10-scene_anchor-court-memorial-resolution-v1.webp",
+          "exists": true,
+          "bytes": 207658,
+          "sha256": "d9bb1a3f6a9a8f149ce82917c893fa37c3a29fc9bab6b409f61243d0b645da08",
+          "dimensions": {
+            "width": 1024,
+            "height": 1536
+          },
+          "alpha": false
+        },
+        "thumbnail": {
+          "path": "/assets/ui/thumbs/thumb-portrait-s73-10-scene_anchor-court-memorial-resolution-v1.webp",
+          "exists": true,
+          "bytes": 43166,
+          "sha256": "ae4a9a836da6176863c61be1482a54c349486a19c4d8039aef12f94a19d9ad84",
+          "dimensions": {
+            "width": 384,
+            "height": 576,
+            "alpha": false
+          }
+        },
+        "lowResPlaceholder": {
+          "path": "/assets/ui/portraits/placeholders/placeholder-portrait-s73-10-scene_anchor-court-memorial-resolution-v1.webp",
+          "exists": true,
+          "bytes": 1186,
+          "sha256": "57ffdb1e16617e0d2314d7597ca1ecb535c99f5e4a93ce795ca3612112297d04",
+          "dimensions": {
+            "width": 64,
+            "height": 96,
+            "alpha": false
+          }
+        }
+      },
+      "transparentQa": {
+        "required": false,
+        "backgrounds": [],
+        "sidecar": null,
+        "pixel": null
+      },
+      "issues": []
+    },
+    {
+      "id": "portrait-s73-10-scene_anchor-war-council-lead-v1",
+      "phase": "S73.10.5",
+      "category": "portrait",
+      "subcategory": "scene_anchor_pool",
+      "usage": [
+        "scene_anchor",
+        "military_page",
+        "story_surface"
+      ],
+      "path": "/assets/ui/portraits/s73-10/portrait-s73-10-scene_anchor-war-council-lead-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-portrait-s73-10-scene_anchor-war-council-lead-v1.webp",
+      "fallbackRef": "fallback-role-silhouette-v1",
+      "reviewStatus": "approved",
+      "runtimeUsable": true,
+      "dimensions": {
+        "width": 1024,
+        "height": 1536
+      },
+      "transparent": false,
+      "files": {
+        "image": {
+          "path": "/assets/ui/portraits/s73-10/portrait-s73-10-scene_anchor-war-council-lead-v1.webp",
+          "exists": true,
+          "bytes": 204504,
+          "sha256": "46ed68fc07077b6c28c1fbf4e0e46b3d62e404740b52df744fd804c3fa82276f",
+          "dimensions": {
+            "width": 1024,
+            "height": 1536
+          },
+          "alpha": false
+        },
+        "thumbnail": {
+          "path": "/assets/ui/thumbs/thumb-portrait-s73-10-scene_anchor-war-council-lead-v1.webp",
+          "exists": true,
+          "bytes": 43990,
+          "sha256": "854d446a8648d96761baf2b8422f42c86e2c96c18c8d60dd10ec567f32dcaada",
+          "dimensions": {
+            "width": 384,
+            "height": 576,
+            "alpha": false
+          }
+        },
+        "lowResPlaceholder": {
+          "path": "/assets/ui/portraits/placeholders/placeholder-portrait-s73-10-scene_anchor-war-council-lead-v1.webp",
+          "exists": true,
+          "bytes": 1242,
+          "sha256": "548dafeade717d1ddc69e61ad46fb1190e84528821a3474320769f2c5f5a3d1b",
+          "dimensions": {
+            "width": 64,
+            "height": 96,
+            "alpha": false
+          }
+        }
+      },
+      "transparentQa": {
+        "required": false,
+        "backgrounds": [],
+        "sidecar": null,
+        "pixel": null
+      },
+      "issues": []
+    },
+    {
+      "id": "portrait-s73-10-scene_anchor-war-council-tension-v1",
+      "phase": "S73.10.5",
+      "category": "portrait",
+      "subcategory": "scene_anchor_pool",
+      "usage": [
+        "scene_anchor",
+        "military_page",
+        "story_surface"
+      ],
+      "path": "/assets/ui/portraits/s73-10/portrait-s73-10-scene_anchor-war-council-tension-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-portrait-s73-10-scene_anchor-war-council-tension-v1.webp",
+      "fallbackRef": "fallback-role-silhouette-v1",
+      "reviewStatus": "approved",
+      "runtimeUsable": true,
+      "dimensions": {
+        "width": 1024,
+        "height": 1536
+      },
+      "transparent": false,
+      "files": {
+        "image": {
+          "path": "/assets/ui/portraits/s73-10/portrait-s73-10-scene_anchor-war-council-tension-v1.webp",
+          "exists": true,
+          "bytes": 199912,
+          "sha256": "a73eff1d7ec4da59ca41a26dade873f5e1fe9d93044586abc753b83bc2ef1ee8",
+          "dimensions": {
+            "width": 1024,
+            "height": 1536
+          },
+          "alpha": false
+        },
+        "thumbnail": {
+          "path": "/assets/ui/thumbs/thumb-portrait-s73-10-scene_anchor-war-council-tension-v1.webp",
+          "exists": true,
+          "bytes": 42224,
+          "sha256": "5e749784360511f5ba929aa0679691e82f59fbc015baef9c4b410c6812f8de78",
+          "dimensions": {
+            "width": 384,
+            "height": 576,
+            "alpha": false
+          }
+        },
+        "lowResPlaceholder": {
+          "path": "/assets/ui/portraits/placeholders/placeholder-portrait-s73-10-scene_anchor-war-council-tension-v1.webp",
+          "exists": true,
+          "bytes": 1214,
+          "sha256": "4a5db5083b7484979083cd1b901908fdd3d30abddc52f8855034e31ba44ac10c",
+          "dimensions": {
+            "width": 64,
+            "height": 96,
+            "alpha": false
+          }
+        }
+      },
+      "transparentQa": {
+        "required": false,
+        "backgrounds": [],
+        "sidecar": null,
+        "pixel": null
+      },
+      "issues": []
+    },
+    {
+      "id": "portrait-s73-10-scene_anchor-war-council-resolution-v1",
+      "phase": "S73.10.5",
+      "category": "portrait",
+      "subcategory": "scene_anchor_pool",
+      "usage": [
+        "scene_anchor",
+        "military_page",
+        "story_surface"
+      ],
+      "path": "/assets/ui/portraits/s73-10/portrait-s73-10-scene_anchor-war-council-resolution-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-portrait-s73-10-scene_anchor-war-council-resolution-v1.webp",
+      "fallbackRef": "fallback-role-silhouette-v1",
+      "reviewStatus": "approved",
+      "runtimeUsable": true,
+      "dimensions": {
+        "width": 1024,
+        "height": 1536
+      },
+      "transparent": false,
+      "files": {
+        "image": {
+          "path": "/assets/ui/portraits/s73-10/portrait-s73-10-scene_anchor-war-council-resolution-v1.webp",
+          "exists": true,
+          "bytes": 202472,
+          "sha256": "6d3ae39bae222cacb40cb446bd3affab88832bfdf02dd35fb52cd71c1b871da6",
+          "dimensions": {
+            "width": 1024,
+            "height": 1536
+          },
+          "alpha": false
+        },
+        "thumbnail": {
+          "path": "/assets/ui/thumbs/thumb-portrait-s73-10-scene_anchor-war-council-resolution-v1.webp",
+          "exists": true,
+          "bytes": 43914,
+          "sha256": "5e063eba44da31e1a2ee9474bd8e1307dd201f0ca1bed75734e86e08729908c2",
+          "dimensions": {
+            "width": 384,
+            "height": 576,
+            "alpha": false
+          }
+        },
+        "lowResPlaceholder": {
+          "path": "/assets/ui/portraits/placeholders/placeholder-portrait-s73-10-scene_anchor-war-council-resolution-v1.webp",
+          "exists": true,
+          "bytes": 1242,
+          "sha256": "8286aa0d0c35c6683620e6a18c310206b99edb42f2238a431d9764fe35f08c88",
+          "dimensions": {
+            "width": 64,
+            "height": 96,
+            "alpha": false
+          }
+        }
+      },
+      "transparentQa": {
+        "required": false,
+        "backgrounds": [],
+        "sidecar": null,
+        "pixel": null
+      },
+      "issues": []
+    },
+    {
+      "id": "portrait-s73-10-scene_anchor-night-study-lead-v1",
+      "phase": "S73.10.5",
+      "category": "portrait",
+      "subcategory": "scene_anchor_pool",
+      "usage": [
+        "scene_anchor",
+        "study_page",
+        "story_surface"
+      ],
+      "path": "/assets/ui/portraits/s73-10/portrait-s73-10-scene_anchor-night-study-lead-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-portrait-s73-10-scene_anchor-night-study-lead-v1.webp",
+      "fallbackRef": "fallback-role-silhouette-v1",
+      "reviewStatus": "approved",
+      "runtimeUsable": true,
+      "dimensions": {
+        "width": 1024,
+        "height": 1536
+      },
+      "transparent": false,
+      "files": {
+        "image": {
+          "path": "/assets/ui/portraits/s73-10/portrait-s73-10-scene_anchor-night-study-lead-v1.webp",
+          "exists": true,
+          "bytes": 181220,
+          "sha256": "17f3d2e11c0318384923ede515cd3bba2e4c2edaaf64f27423eca20e6a91dc2a",
+          "dimensions": {
+            "width": 1024,
+            "height": 1536
+          },
+          "alpha": false
+        },
+        "thumbnail": {
+          "path": "/assets/ui/thumbs/thumb-portrait-s73-10-scene_anchor-night-study-lead-v1.webp",
+          "exists": true,
+          "bytes": 38548,
+          "sha256": "93dc9a1dd5688e73cb494d18b2e8203efe89d10656752561f3874276fdbed309",
+          "dimensions": {
+            "width": 384,
+            "height": 576,
+            "alpha": false
+          }
+        },
+        "lowResPlaceholder": {
+          "path": "/assets/ui/portraits/placeholders/placeholder-portrait-s73-10-scene_anchor-night-study-lead-v1.webp",
+          "exists": true,
+          "bytes": 1186,
+          "sha256": "47a6cfda4bb3d084fcefd691f70730ea2c326fcbb87f5455d2aedd2025743333",
+          "dimensions": {
+            "width": 64,
+            "height": 96,
+            "alpha": false
+          }
+        }
+      },
+      "transparentQa": {
+        "required": false,
+        "backgrounds": [],
+        "sidecar": null,
+        "pixel": null
+      },
+      "issues": []
+    },
+    {
+      "id": "portrait-s73-10-scene_anchor-night-study-tension-v1",
+      "phase": "S73.10.5",
+      "category": "portrait",
+      "subcategory": "scene_anchor_pool",
+      "usage": [
+        "scene_anchor",
+        "study_page",
+        "story_surface"
+      ],
+      "path": "/assets/ui/portraits/s73-10/portrait-s73-10-scene_anchor-night-study-tension-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-portrait-s73-10-scene_anchor-night-study-tension-v1.webp",
+      "fallbackRef": "fallback-role-silhouette-v1",
+      "reviewStatus": "approved",
+      "runtimeUsable": true,
+      "dimensions": {
+        "width": 1024,
+        "height": 1536
+      },
+      "transparent": false,
+      "files": {
+        "image": {
+          "path": "/assets/ui/portraits/s73-10/portrait-s73-10-scene_anchor-night-study-tension-v1.webp",
+          "exists": true,
+          "bytes": 183764,
+          "sha256": "ae75e39c8c7606d4ba6d0cc59a03e1aaee7a3db603183758b04113a245ddb67f",
+          "dimensions": {
+            "width": 1024,
+            "height": 1536
+          },
+          "alpha": false
+        },
+        "thumbnail": {
+          "path": "/assets/ui/thumbs/thumb-portrait-s73-10-scene_anchor-night-study-tension-v1.webp",
+          "exists": true,
+          "bytes": 39616,
+          "sha256": "1432f18b1a0796734ed1a8b85adfd842c9ad67a62d95ad2dafab3c87ada294c7",
+          "dimensions": {
+            "width": 384,
+            "height": 576,
+            "alpha": false
+          }
+        },
+        "lowResPlaceholder": {
+          "path": "/assets/ui/portraits/placeholders/placeholder-portrait-s73-10-scene_anchor-night-study-tension-v1.webp",
+          "exists": true,
+          "bytes": 1278,
+          "sha256": "07880eec3c1746f151d713133ebefb12abba7f9fc0d377b152bf18c570af6cc1",
+          "dimensions": {
+            "width": 64,
+            "height": 96,
+            "alpha": false
+          }
+        }
+      },
+      "transparentQa": {
+        "required": false,
+        "backgrounds": [],
+        "sidecar": null,
+        "pixel": null
+      },
+      "issues": []
+    },
+    {
+      "id": "portrait-s73-10-scene_anchor-night-study-resolution-v1",
+      "phase": "S73.10.5",
+      "category": "portrait",
+      "subcategory": "scene_anchor_pool",
+      "usage": [
+        "scene_anchor",
+        "study_page",
+        "story_surface"
+      ],
+      "path": "/assets/ui/portraits/s73-10/portrait-s73-10-scene_anchor-night-study-resolution-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-portrait-s73-10-scene_anchor-night-study-resolution-v1.webp",
+      "fallbackRef": "fallback-role-silhouette-v1",
+      "reviewStatus": "approved",
+      "runtimeUsable": true,
+      "dimensions": {
+        "width": 1024,
+        "height": 1536
+      },
+      "transparent": false,
+      "files": {
+        "image": {
+          "path": "/assets/ui/portraits/s73-10/portrait-s73-10-scene_anchor-night-study-resolution-v1.webp",
+          "exists": true,
+          "bytes": 190652,
+          "sha256": "e5b671f414d9a70a86e821a032459b7fe57a811eb6006aafba4cdf97dbca9225",
+          "dimensions": {
+            "width": 1024,
+            "height": 1536
+          },
+          "alpha": false
+        },
+        "thumbnail": {
+          "path": "/assets/ui/thumbs/thumb-portrait-s73-10-scene_anchor-night-study-resolution-v1.webp",
+          "exists": true,
+          "bytes": 41062,
+          "sha256": "02215deb1087b7cb86c7d1a6289fd22382f9b54d87cd1c609ff4e6bc828db616",
+          "dimensions": {
+            "width": 384,
+            "height": 576,
+            "alpha": false
+          }
+        },
+        "lowResPlaceholder": {
+          "path": "/assets/ui/portraits/placeholders/placeholder-portrait-s73-10-scene_anchor-night-study-resolution-v1.webp",
+          "exists": true,
+          "bytes": 1134,
+          "sha256": "f1cd15dd014317882eb68aae51eb3125eb6701e6c4258eadf94f73c3c9483665",
+          "dimensions": {
+            "width": 64,
+            "height": 96,
+            "alpha": false
+          }
+        }
+      },
+      "transparentQa": {
+        "required": false,
+        "backgrounds": [],
+        "sidecar": null,
+        "pixel": null
+      },
+      "issues": []
+    },
+    {
+      "id": "portrait-s73-10-scene_anchor-market-talk-lead-v1",
+      "phase": "S73.10.5",
+      "category": "portrait",
+      "subcategory": "scene_anchor_pool",
+      "usage": [
+        "scene_anchor",
+        "market_page",
+        "story_surface"
+      ],
+      "path": "/assets/ui/portraits/s73-10/portrait-s73-10-scene_anchor-market-talk-lead-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-portrait-s73-10-scene_anchor-market-talk-lead-v1.webp",
+      "fallbackRef": "fallback-role-silhouette-v1",
+      "reviewStatus": "approved",
+      "runtimeUsable": true,
+      "dimensions": {
+        "width": 1024,
+        "height": 1536
+      },
+      "transparent": false,
+      "files": {
+        "image": {
+          "path": "/assets/ui/portraits/s73-10/portrait-s73-10-scene_anchor-market-talk-lead-v1.webp",
+          "exists": true,
+          "bytes": 193242,
+          "sha256": "80dbf52f0bdf0b5d114a386763663f098ad4de595df7cf9c5b2cb90fd18eb17a",
+          "dimensions": {
+            "width": 1024,
+            "height": 1536
+          },
+          "alpha": false
+        },
+        "thumbnail": {
+          "path": "/assets/ui/thumbs/thumb-portrait-s73-10-scene_anchor-market-talk-lead-v1.webp",
+          "exists": true,
+          "bytes": 42874,
+          "sha256": "9dddc5306612c6aa36d383da1cf2aac94265b7e19ed4df0f1b8568891a8bd698",
+          "dimensions": {
+            "width": 384,
+            "height": 576,
+            "alpha": false
+          }
+        },
+        "lowResPlaceholder": {
+          "path": "/assets/ui/portraits/placeholders/placeholder-portrait-s73-10-scene_anchor-market-talk-lead-v1.webp",
+          "exists": true,
+          "bytes": 1340,
+          "sha256": "1ca16bb4914abb96a8ce75e93e4ceb42ca881fd5a75507da2cbe4dd3e6f0df29",
+          "dimensions": {
+            "width": 64,
+            "height": 96,
+            "alpha": false
+          }
+        }
+      },
+      "transparentQa": {
+        "required": false,
+        "backgrounds": [],
+        "sidecar": null,
+        "pixel": null
+      },
+      "issues": []
+    },
+    {
+      "id": "portrait-s73-10-scene_anchor-market-talk-tension-v1",
+      "phase": "S73.10.5",
+      "category": "portrait",
+      "subcategory": "scene_anchor_pool",
+      "usage": [
+        "scene_anchor",
+        "market_page",
+        "story_surface"
+      ],
+      "path": "/assets/ui/portraits/s73-10/portrait-s73-10-scene_anchor-market-talk-tension-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-portrait-s73-10-scene_anchor-market-talk-tension-v1.webp",
+      "fallbackRef": "fallback-role-silhouette-v1",
+      "reviewStatus": "approved",
+      "runtimeUsable": true,
+      "dimensions": {
+        "width": 1024,
+        "height": 1536
+      },
+      "transparent": false,
+      "files": {
+        "image": {
+          "path": "/assets/ui/portraits/s73-10/portrait-s73-10-scene_anchor-market-talk-tension-v1.webp",
+          "exists": true,
+          "bytes": 206812,
+          "sha256": "1e75e5dcbaad5522826687b53c88a557f7ee25d49f2cb0ca580bf68b81531101",
+          "dimensions": {
+            "width": 1024,
+            "height": 1536
+          },
+          "alpha": false
+        },
+        "thumbnail": {
+          "path": "/assets/ui/thumbs/thumb-portrait-s73-10-scene_anchor-market-talk-tension-v1.webp",
+          "exists": true,
+          "bytes": 46304,
+          "sha256": "e17c6471f6025b09ba54cb5ef7f4872408ee99d72e8b1af3f1f219578c1b187f",
+          "dimensions": {
+            "width": 384,
+            "height": 576,
+            "alpha": false
+          }
+        },
+        "lowResPlaceholder": {
+          "path": "/assets/ui/portraits/placeholders/placeholder-portrait-s73-10-scene_anchor-market-talk-tension-v1.webp",
+          "exists": true,
+          "bytes": 1310,
+          "sha256": "b1ab97ca493d8855bca62624089dec947929d1b8484cd29bb10e320173b282b6",
+          "dimensions": {
+            "width": 64,
+            "height": 96,
+            "alpha": false
+          }
+        }
+      },
+      "transparentQa": {
+        "required": false,
+        "backgrounds": [],
+        "sidecar": null,
+        "pixel": null
+      },
+      "issues": []
+    },
+    {
+      "id": "portrait-s73-10-scene_anchor-market-talk-resolution-v1",
+      "phase": "S73.10.5",
+      "category": "portrait",
+      "subcategory": "scene_anchor_pool",
+      "usage": [
+        "scene_anchor",
+        "market_page",
+        "story_surface"
+      ],
+      "path": "/assets/ui/portraits/s73-10/portrait-s73-10-scene_anchor-market-talk-resolution-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-portrait-s73-10-scene_anchor-market-talk-resolution-v1.webp",
+      "fallbackRef": "fallback-role-silhouette-v1",
+      "reviewStatus": "approved",
+      "runtimeUsable": true,
+      "dimensions": {
+        "width": 1024,
+        "height": 1536
+      },
+      "transparent": false,
+      "files": {
+        "image": {
+          "path": "/assets/ui/portraits/s73-10/portrait-s73-10-scene_anchor-market-talk-resolution-v1.webp",
+          "exists": true,
+          "bytes": 206396,
+          "sha256": "d6d5c167676ae974a6fcf3a40b00101bcea30d8162a53a735396933fc437aa46",
+          "dimensions": {
+            "width": 1024,
+            "height": 1536
+          },
+          "alpha": false
+        },
+        "thumbnail": {
+          "path": "/assets/ui/thumbs/thumb-portrait-s73-10-scene_anchor-market-talk-resolution-v1.webp",
+          "exists": true,
+          "bytes": 44488,
+          "sha256": "c265cebd839f479b6d95ed89d56570703717de7477a9314342276dde54d1ae50",
+          "dimensions": {
+            "width": 384,
+            "height": 576,
+            "alpha": false
+          }
+        },
+        "lowResPlaceholder": {
+          "path": "/assets/ui/portraits/placeholders/placeholder-portrait-s73-10-scene_anchor-market-talk-resolution-v1.webp",
+          "exists": true,
+          "bytes": 1250,
+          "sha256": "687df5c7b51235b1f5d0c6696d97bf6c0e60e261a91ac07bc9f4b04d1af47444",
+          "dimensions": {
+            "width": 64,
+            "height": 96,
+            "alpha": false
+          }
+        }
+      },
+      "transparentQa": {
+        "required": false,
+        "backgrounds": [],
+        "sidecar": null,
+        "pixel": null
+      },
+      "issues": []
+    },
+    {
+      "id": "portrait-s73-10-scene_anchor-palace-summons-lead-v1",
+      "phase": "S73.10.5",
+      "category": "portrait",
+      "subcategory": "scene_anchor_pool",
+      "usage": [
+        "scene_anchor",
+        "palace_page",
+        "story_surface"
+      ],
+      "path": "/assets/ui/portraits/s73-10/portrait-s73-10-scene_anchor-palace-summons-lead-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-portrait-s73-10-scene_anchor-palace-summons-lead-v1.webp",
+      "fallbackRef": "fallback-role-silhouette-v1",
+      "reviewStatus": "approved",
+      "runtimeUsable": true,
+      "dimensions": {
+        "width": 1024,
+        "height": 1536
+      },
+      "transparent": false,
+      "files": {
+        "image": {
+          "path": "/assets/ui/portraits/s73-10/portrait-s73-10-scene_anchor-palace-summons-lead-v1.webp",
+          "exists": true,
+          "bytes": 188966,
+          "sha256": "f2fe71f8d2a3e5ffec104a8336d9780404484a28c8304e0efdae73be4562b6fb",
+          "dimensions": {
+            "width": 1024,
+            "height": 1536
+          },
+          "alpha": false
+        },
+        "thumbnail": {
+          "path": "/assets/ui/thumbs/thumb-portrait-s73-10-scene_anchor-palace-summons-lead-v1.webp",
+          "exists": true,
+          "bytes": 41960,
+          "sha256": "57ec7eb9f48d0fd8ae5e2c7f176366e54eae72b6658d007408575e44cc62eb78",
+          "dimensions": {
+            "width": 384,
+            "height": 576,
+            "alpha": false
+          }
+        },
+        "lowResPlaceholder": {
+          "path": "/assets/ui/portraits/placeholders/placeholder-portrait-s73-10-scene_anchor-palace-summons-lead-v1.webp",
+          "exists": true,
+          "bytes": 1180,
+          "sha256": "fc29dd894dc60e170ceed091ce4e45c2bc300126bc401822363c4d101a023b06",
+          "dimensions": {
+            "width": 64,
+            "height": 96,
+            "alpha": false
+          }
+        }
+      },
+      "transparentQa": {
+        "required": false,
+        "backgrounds": [],
+        "sidecar": null,
+        "pixel": null
+      },
+      "issues": []
+    },
+    {
+      "id": "portrait-s73-10-scene_anchor-palace-summons-tension-v1",
+      "phase": "S73.10.5",
+      "category": "portrait",
+      "subcategory": "scene_anchor_pool",
+      "usage": [
+        "scene_anchor",
+        "palace_page",
+        "story_surface"
+      ],
+      "path": "/assets/ui/portraits/s73-10/portrait-s73-10-scene_anchor-palace-summons-tension-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-portrait-s73-10-scene_anchor-palace-summons-tension-v1.webp",
+      "fallbackRef": "fallback-role-silhouette-v1",
+      "reviewStatus": "approved",
+      "runtimeUsable": true,
+      "dimensions": {
+        "width": 1024,
+        "height": 1536
+      },
+      "transparent": false,
+      "files": {
+        "image": {
+          "path": "/assets/ui/portraits/s73-10/portrait-s73-10-scene_anchor-palace-summons-tension-v1.webp",
+          "exists": true,
+          "bytes": 208844,
+          "sha256": "97f46566cf4b4998001a954e016232f2267dabc4383e345da01e3bf3ca63ee4d",
+          "dimensions": {
+            "width": 1024,
+            "height": 1536
+          },
+          "alpha": false
+        },
+        "thumbnail": {
+          "path": "/assets/ui/thumbs/thumb-portrait-s73-10-scene_anchor-palace-summons-tension-v1.webp",
+          "exists": true,
+          "bytes": 45076,
+          "sha256": "552151ed0ddc7014052ebe06c4dca20015c67d130b418b6789c8fb5dc37a3c9a",
+          "dimensions": {
+            "width": 384,
+            "height": 576,
+            "alpha": false
+          }
+        },
+        "lowResPlaceholder": {
+          "path": "/assets/ui/portraits/placeholders/placeholder-portrait-s73-10-scene_anchor-palace-summons-tension-v1.webp",
+          "exists": true,
+          "bytes": 1208,
+          "sha256": "8f0566af4cd19528317d46927aa12a5d14489dba67185b93b0d46e79b9fd493a",
+          "dimensions": {
+            "width": 64,
+            "height": 96,
+            "alpha": false
+          }
+        }
+      },
+      "transparentQa": {
+        "required": false,
+        "backgrounds": [],
+        "sidecar": null,
+        "pixel": null
+      },
+      "issues": []
+    },
+    {
+      "id": "portrait-s73-10-scene_anchor-palace-summons-resolution-v1",
+      "phase": "S73.10.5",
+      "category": "portrait",
+      "subcategory": "scene_anchor_pool",
+      "usage": [
+        "scene_anchor",
+        "palace_page",
+        "story_surface"
+      ],
+      "path": "/assets/ui/portraits/s73-10/portrait-s73-10-scene_anchor-palace-summons-resolution-v1.webp",
+      "thumbnailPath": "/assets/ui/thumbs/thumb-portrait-s73-10-scene_anchor-palace-summons-resolution-v1.webp",
+      "fallbackRef": "fallback-role-silhouette-v1",
+      "reviewStatus": "approved",
+      "runtimeUsable": true,
+      "dimensions": {
+        "width": 1024,
+        "height": 1536
+      },
+      "transparent": false,
+      "files": {
+        "image": {
+          "path": "/assets/ui/portraits/s73-10/portrait-s73-10-scene_anchor-palace-summons-resolution-v1.webp",
+          "exists": true,
+          "bytes": 206596,
+          "sha256": "39d97e6e8d2ff69275374c0f4c4bab694a4a3d85c74edd58a8afb6411717400d",
+          "dimensions": {
+            "width": 1024,
+            "height": 1536
+          },
+          "alpha": false
+        },
+        "thumbnail": {
+          "path": "/assets/ui/thumbs/thumb-portrait-s73-10-scene_anchor-palace-summons-resolution-v1.webp",
+          "exists": true,
+          "bytes": 44410,
+          "sha256": "c544c5acd92a4bd79bd6df59dd994857da6ff76bec380ac14ad36aa301d32858",
+          "dimensions": {
+            "width": 384,
+            "height": 576,
+            "alpha": false
+          }
+        },
+        "lowResPlaceholder": {
+          "path": "/assets/ui/portraits/placeholders/placeholder-portrait-s73-10-scene_anchor-palace-summons-resolution-v1.webp",
+          "exists": true,
+          "bytes": 1122,
+          "sha256": "0a7f502f28a57b2eb0d143544077ec7f209521bb786785078ee6a9815b8c3b4d",
           "dimensions": {
             "width": 64,
             "height": 96,
