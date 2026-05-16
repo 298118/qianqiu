@@ -1,3 +1,2 @@
-export const safeApiBasePath = "/api";
-
-export type SafeApiBasePath = typeof safeApiBasePath;
+export * from "./qianqiuClient";
+export * from "./types";

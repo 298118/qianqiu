@@ -161,6 +161,104 @@ h2 {
   font-weight: 700;
 }
 
+.startDesk,
+.saveShelf,
+.inlineForm,
+.examSubmit,
+.actionPanel {
+  display: grid;
+  gap: 12px;
+}
+
+.startDesk {
+  grid-template-columns: minmax(150px, 1fr) minmax(128px, 0.55fr) auto;
+  align-items: end;
+  max-width: 720px;
+  margin-top: 22px;
+  padding: 16px;
+  border: 1px solid rgba(84, 60, 43, 0.28);
+  background: rgba(255, 248, 230, 0.72);
+}
+
+.saveShelf {
+  max-width: 720px;
+  margin-top: 16px;
+  padding: 16px;
+  border: 1px solid rgba(84, 60, 43, 0.22);
+  background: rgba(238, 223, 195, 0.68);
+}
+
+.saveShelf h2,
+.examDesk h3 {
+  margin: 0;
+  font-size: 1.05rem;
+}
+
+.saveList {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(168px, 1fr));
+  gap: 10px;
+}
+
+.saveItem {
+  display: grid;
+  gap: 4px;
+  min-height: 74px;
+  border: 1px solid rgba(84, 60, 43, 0.24);
+  background: rgba(255, 248, 230, 0.68);
+  padding: 10px;
+}
+
+.saveItem span {
+  color: #6d5844;
+  font-size: 0.9rem;
+}
+
+label {
+  display: grid;
+  gap: 6px;
+  color: #3a2b21;
+  font-size: 0.88rem;
+}
+
+input,
+select,
+textarea {
+  width: 100%;
+  border: 1px solid rgba(84, 60, 43, 0.34);
+  border-radius: 0;
+  background: rgba(255, 252, 238, 0.9);
+  color: #241b16;
+  font: inherit;
+  padding: 9px 10px;
+}
+
+textarea {
+  resize: vertical;
+}
+
+.paperButton {
+  min-height: 40px;
+  border: 1px solid rgba(142, 47, 39, 0.58);
+  background: rgba(255, 248, 230, 0.78);
+  color: #7b241f;
+  font: inherit;
+  font-weight: 700;
+  padding: 8px 12px;
+}
+
+button:disabled {
+  cursor: not-allowed;
+  opacity: 0.58;
+}
+
+.statusLine {
+  max-width: 720px;
+  margin-top: 12px;
+  color: #7b241f;
+  font-weight: 700;
+}
+
 .gameSurface,
 .plainPage {
   width: min(1120px, calc(100% - 32px));
@@ -206,6 +304,20 @@ h2 {
   border-color: rgba(142, 47, 39, 0.28);
 }
 
+.inlineForm {
+  grid-template-columns: minmax(160px, 1fr) auto;
+  align-items: end;
+  margin-top: 14px;
+}
+
+.examDesk {
+  display: grid;
+  gap: 12px;
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid rgba(84, 60, 43, 0.22);
+}
+
 @media (max-width: 760px) {
   .topBar {
     align-items: flex-start;
@@ -231,6 +343,11 @@ h2 {
   }
 
   .gameGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .startDesk,
+  .inlineForm {
     grid-template-columns: 1fr;
   }
 }

@@ -84,3 +84,17 @@ test("S74.1 client smoke parser keeps the focused React smoke options", () => {
   });
   assert.throws(() => parseClientSmokeArgs(["node", "scripts/clientSmoke.js", "--bad"]), /Unknown client smoke/);
 });
+
+test("S74.2 React API client only exposes safe player-facing endpoints", () => {
+  const apiSource = readText("client/src/api/qianqiuClient.ts");
+  const stateSource = readText("client/src/state/gameSessionState.ts");
+  const combined = `${apiSource}\n${stateSource}`;
+
+  assert.match(combined, /\/api\/game\/player-state\/\$\{encodePathSegment\(sessionId\)\}/);
+  assert.match(combined, /\/api\/game\/saves/);
+  assert.match(combined, /\/api\/exam\/submit/);
+  assert.match(combined, /\/api\/ai\/settings/);
+  assert.doesNotMatch(combined, /requestJson<[^>]+>\(`?\/api\/game\/state/);
+  assert.doesNotMatch(combined, /\/api\/dev\/session-diagnostics/);
+  assert.doesNotMatch(combined, /data\/sessions|raw audit|provider payload|OPENAI_API_KEY|DEEPSEEK_API_KEY|MIMO_API_KEY|ANTHROPIC_API_KEY/);
+});
