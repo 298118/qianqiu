@@ -22,6 +22,7 @@ const portraitPlayerMaleExtraQaPath = path.join(repoRoot, "public", "assets", "u
 const portraitGenericNpcPoolQaPath = path.join(repoRoot, "public", "assets", "ui", "portraits", "portrait-generic-npc-pool-qa-v1.json");
 const portraitSignatureNpcPoolQaPath = path.join(repoRoot, "public", "assets", "ui", "portraits", "portrait-signature-npc-pool-qa-v1.json");
 const portraitStateScenePoolQaPath = path.join(repoRoot, "public", "assets", "ui", "portraits", "portrait-state-scene-pool-qa-v1.json");
+const portraitCompressionQaPath = path.join(repoRoot, "public", "assets", "ui", "portraits", "portrait-compression-qa-v1.json");
 const effectMotionQaPath = path.join(repoRoot, "public", "assets", "ui", "effects", "effect-motion-qa-v1.json");
 const assetQaReportPath = path.join(repoRoot, "public", "assets", "ui", "asset-qa-report-v1.json");
 const assetQaPreviewPath = path.join(repoRoot, "public", "assets", "ui", "asset-qa-preview.html");
@@ -29,6 +30,7 @@ const assetQaScriptPath = path.join(repoRoot, "scripts", "frontendAssetQa.js");
 const portraitPoolMatrixPath = path.join(repoRoot, "public", "assets", "ui", "portraits", "portrait-pool-matrix-v1.json");
 const portraitMatrixDocPath = path.join(repoRoot, "docs", "FRONTEND_PORTRAIT_MATRIX.md");
 const portraitMatrixScriptPath = path.join(repoRoot, "scripts", "frontendPortraitMatrix.js");
+const portraitCompressionQaScriptPath = path.join(repoRoot, "scripts", "frontendPortraitCompressionQa.js");
 
 const FORBIDDEN_SECRET_OR_LOCAL_PATH =
   /(OPENAI_API_KEY|DEEPSEEK_API_KEY|MIMO_API_KEY|ANTHROPIC_API_KEY|sk-[A-Za-z0-9_-]{6,}|tp-[A-Za-z0-9_-]{6,}|[A-Za-z]:[\\/]|file:\/\/|data:|data[\\/](?:sessions|audit))/i;
@@ -1095,6 +1097,104 @@ test("S73.9 frontend asset QA script and preview expose the reusable QA workflow
   }
 });
 
+test("S73.10.6 portrait compression QA pins thumbnails, placeholders, crop metadata, and lazy loading", () => {
+  const reportText = fs.readFileSync(portraitCompressionQaPath, "utf8");
+  assert.doesNotMatch(reportText, FORBIDDEN_MANIFEST_REMOTE_OR_LOCAL_PATH);
+  assert.doesNotMatch(reportText, FORBIDDEN_ASSET_VALUE);
+  const report = JSON.parse(reportText);
+  const manifestText = fs.readFileSync(manifestPath, "utf8");
+  const manifest = JSON.parse(manifestText);
+  const scriptText = fs.readFileSync(portraitCompressionQaScriptPath, "utf8");
+
+  assert.equal(report.schemaVersion, 1);
+  assert.equal(report.phase, "S73.10.6");
+  assert.equal(report.reportId, "portrait-compression-qa-v1");
+  assert.equal(report.manifestSha256, crypto.createHash("sha256").update(manifestText).digest("hex"));
+  assert.deepEqual(report.policy.imageSize, { width: 1024, height: 1536 });
+  assert.deepEqual(report.policy.thumbnailSize, { width: 384, height: 576 });
+  assert.deepEqual(report.policy.lowResPlaceholderSize, { width: 64, height: 96 });
+  assert.equal(report.policy.requireSafeArea, true);
+  assert.equal(report.policy.requireFocalPoint, true);
+  assert.equal(report.policy.requireMobileCropKeepSafeArea, true);
+  assert.equal(report.policy.requireThumbnailFirst, true);
+  assert.equal(report.policy.requireLowResPlaceholder, true);
+  assert.equal(report.policy.allowEagerLoad, false);
+  assert.equal(report.policy.maxInitialPortraits, 8);
+  assert.equal(report.summary.portraitAssets, 548);
+  assert.equal(report.summary.s7310PortraitAssets, 524);
+  assert.equal(report.summary.baselinePortraitAssets, 24);
+  assert.equal(report.summary.errorCount, 0);
+  assert.equal(report.summary.warningCount, 0);
+  assert.equal(report.summary.allowEagerLoadViolations, 0);
+  assert.deepEqual(report.summary.byPhase, {
+    "S73.7": 24,
+    "S73.10.2": 192,
+    "S73.10.3": 188,
+    "S73.10.4": 72,
+    "S73.10.5": 72
+  });
+  assert.deepEqual(report.summary.byLazyLoadGroup, {
+    portrait_baseline_s73_7: 24,
+    portrait_pool_player_s73_10: 72,
+    portrait_pool_generic_npc_s73_10: 188,
+    portrait_pool_player_female_extra_s73_10: 60,
+    portrait_pool_player_male_extra_s73_10: 60,
+    portrait_pool_signature_npc_s73_10: 72,
+    portrait_pool_state_variant_s73_10: 48,
+    portrait_pool_scene_anchor_s73_10: 24
+  });
+
+  const manifestPortraits = manifest.assets.filter((asset) => asset.category === "portrait");
+  assert.equal(report.assets.length, manifestPortraits.length);
+  const reportById = new Map(report.assets.map((entry) => [entry.id, entry]));
+  assert.equal(reportById.size, report.assets.length);
+  for (const asset of manifestPortraits) {
+    const entry = reportById.get(asset.id);
+    assert.ok(entry, asset.id);
+    assert.equal(entry.portraitRef, asset.portraitRef, asset.id);
+    assert.equal(entry.path, asset.path, asset.id);
+    assert.equal(entry.thumbnailPath, asset.thumbnailPath, asset.id);
+    assert.equal(entry.lowResPlaceholderPath, asset.lowResPlaceholderPath, asset.id);
+    assert.deepEqual(entry.safeArea, asset.safeArea, asset.id);
+    assert.deepEqual(entry.focalPoint, asset.focalPoint, asset.id);
+    assert.equal(entry.mobileCrop.keepSafeArea, true, asset.id);
+    assert.equal(entry.lazyLoad.allowEagerLoad, false, asset.id);
+    assert.equal(entry.lazyLoad.thumbnailFirst, true, asset.id);
+    assert.equal(entry.lazyLoad.lowResPlaceholder, true, asset.id);
+    assert.equal(entry.lazyLoad.maxInitialPortraits, 8, asset.id);
+    assert.equal(entry.issues.length, 0, asset.id);
+
+    const imagePath = resolveUiAssetPath(asset.path);
+    const thumbnailPath = resolveUiAssetPath(asset.thumbnailPath);
+    const placeholderPath = resolveUiAssetPath(asset.lowResPlaceholderPath);
+    assert.equal(entry.files.image.sha256, sha256File(imagePath), asset.id);
+    assert.equal(entry.files.image.bytes, fs.statSync(imagePath).size, asset.id);
+    assert.deepEqual(entry.files.image.dimensions, { width: 1024, height: 1536, alpha: false }, asset.id);
+    assert.equal(entry.files.thumbnail.sha256, sha256File(thumbnailPath), asset.id);
+    assert.equal(entry.files.thumbnail.bytes, fs.statSync(thumbnailPath).size, asset.id);
+    assert.deepEqual(entry.files.thumbnail.dimensions, { width: 384, height: 576, alpha: false }, asset.id);
+    assert.equal(entry.files.lowResPlaceholder.sha256, sha256File(placeholderPath), asset.id);
+    assert.equal(entry.files.lowResPlaceholder.bytes, fs.statSync(placeholderPath).size, asset.id);
+    assert.deepEqual(entry.files.lowResPlaceholder.dimensions, { width: 64, height: 96, alpha: false }, asset.id);
+    assert.equal(entry.performance.bytes <= entry.performance.targetMaxBytes, true, asset.id);
+    assert.equal(entry.performance.thumbnailBytes <= entry.performance.thumbnailTargetMaxBytes, true, asset.id);
+    assert.equal(entry.performance.lowResPlaceholderBytes <= entry.performance.lowResPlaceholderTargetMaxBytes, true, asset.id);
+  }
+
+  for (const requiredText of [
+    "--write",
+    "portrait-compression-qa-v1.json",
+    "allowEagerLoad",
+    "thumbnailFirst",
+    "lowResPlaceholder",
+    "safeArea",
+    "focalPoint",
+    "mobileCrop"
+  ]) {
+    assert.equal(scriptText.includes(requiredText), true, requiredText);
+  }
+});
+
 test("S73.10 portrait pool matrix locks planned counts and player pool handoff", () => {
   const matrixText = fs.readFileSync(portraitPoolMatrixPath, "utf8");
   assert.doesNotMatch(matrixText, FORBIDDEN_MANIFEST_REMOTE_OR_LOCAL_PATH);
@@ -1246,6 +1346,8 @@ test("S73.2 frontend asset ledger records manifest, fallback, portrait, and sour
     "portrait-generic-npc-pool-qa-v1.json",
     "portrait-signature-npc-pool-qa-v1.json",
     "portrait-state-scene-pool-qa-v1.json",
+    "portrait-compression-qa-v1.json",
+    "qa:portrait-compression",
     "portrait_baseline_s73_7",
     "portrait_pool_player_s73_10",
     "portrait_pool_player_female_extra_s73_10",
