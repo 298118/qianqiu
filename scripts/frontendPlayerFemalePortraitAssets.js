@@ -19,6 +19,7 @@ const PLACEHOLDER_WIDTH = 64;
 const PLACEHOLDER_HEIGHT = 96;
 const TARGET_MAX_BYTES = 614400;
 const THUMBNAIL_TARGET_MAX_BYTES = 256000;
+const localSourceCellsDir = path.join(repoRoot, "artifacts", "s73-10-player-female-source-cells");
 
 const resetSheetPairs = Object.freeze([
   ["scholar-child-exam-candidate", ["scholar", "child-exam-candidate"]],
@@ -106,6 +107,22 @@ function resolveUiAssetPath(assetPath) {
 
 function ensureDir(filePath) {
   fs.mkdirSync(path.dirname(filePath), { recursive: true });
+}
+
+function sleepSync(ms) {
+  Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, ms);
+}
+
+function writeFileWithRetry(filePath, buffer) {
+  for (let attempt = 0; attempt < 6; attempt += 1) {
+    try {
+      fs.writeFileSync(filePath, buffer);
+      return;
+    } catch (error) {
+      if (attempt === 5) throw error;
+      sleepSync(120 + attempt * 80);
+    }
+  }
 }
 
 function readUInt24LE(buffer, offset) {
@@ -231,13 +248,42 @@ async function renderWebp(page, sourcePath, crop, outputPath, width, height, qua
       context.fillRect(0, 0, width, height);
       context.imageSmoothingEnabled = true;
       context.imageSmoothingQuality = "high";
-      context.drawImage(image, crop.x, crop.y, crop.width, crop.height, 0, 0, width, height);
+      const scale = Math.min(width / crop.width, height / crop.height);
+      const drawWidth = crop.width * scale;
+      const drawHeight = crop.height * scale;
+      const dx = (width - drawWidth) / 2;
+      const dy = (height - drawHeight) / 2;
+      context.drawImage(image, crop.x, crop.y, crop.width, crop.height, dx, dy, drawWidth, drawHeight);
       return canvas.toDataURL("image/webp", quality);
     },
     { sourceUrl: imageDataUrl(sourcePath), crop, width, height, quality }
   );
   ensureDir(outputPath);
-  fs.writeFileSync(outputPath, Buffer.from(dataUrl.replace(/^data:image\/webp;base64,/, ""), "base64"));
+  writeFileWithRetry(outputPath, Buffer.from(dataUrl.replace(/^data:image\/webp;base64,/, ""), "base64"));
+}
+
+async function renderPng(page, sourcePath, crop, outputPath, width, height) {
+  const dataUrl = await page.evaluate(
+    async ({ sourceUrl, crop, width, height }) => {
+      const image = new Image();
+      image.decoding = "async";
+      image.src = sourceUrl;
+      await image.decode();
+      const canvas = document.createElement("canvas");
+      canvas.width = width;
+      canvas.height = height;
+      const context = canvas.getContext("2d", { alpha: false });
+      context.fillStyle = "#f3ead9";
+      context.fillRect(0, 0, width, height);
+      context.imageSmoothingEnabled = true;
+      context.imageSmoothingQuality = "high";
+      context.drawImage(image, crop.x, crop.y, crop.width, crop.height, 0, 0, width, height);
+      return canvas.toDataURL("image/png");
+    },
+    { sourceUrl: imageDataUrl(sourcePath), crop, width, height }
+  );
+  ensureDir(outputPath);
+  writeFileWithRetry(outputPath, Buffer.from(dataUrl.replace(/^data:image\/png;base64,/, ""), "base64"));
 }
 
 function getPlayerMatrixEntries() {
@@ -352,6 +398,9 @@ async function writePortraitFiles(options, entries) {
       await renderWebp(page, sheetPath, crop, resolveUiAssetPath(entry.plannedPath), PORTRAIT_WIDTH, PORTRAIT_HEIGHT, 0.9);
       await renderWebp(page, sheetPath, crop, resolveUiAssetPath(entry.thumbnailPath), THUMB_WIDTH, THUMB_HEIGHT, 0.84);
       await renderWebp(page, sheetPath, crop, resolveUiAssetPath(entry.lowResPlaceholderPath), PLACEHOLDER_WIDTH, PLACEHOLDER_HEIGHT, 0.46);
+      const sourceCellWidth = 1536;
+      const sourceCellHeight = Math.round(sourceCellWidth * (crop.height / crop.width));
+      await renderPng(page, sheetPath, crop, path.join(localSourceCellsDir, `${entry.portraitRef}.png`), sourceCellWidth, sourceCellHeight);
     }
   } finally {
     await browser.close();
@@ -475,6 +524,7 @@ function makeQaAsset(asset) {
     bytes: asset.performance.bytes,
     thumbnailBytes: asset.performance.thumbnailBytes,
     lowResPlaceholderBytes: asset.performance.lowResPlaceholderBytes,
+    localSourceCellPath: toProjectPath(path.join(localSourceCellsDir, `${asset.id}.png`)),
     sha256: sha256File(resolveUiAssetPath(asset.path)),
     thumbnailSha256: sha256File(resolveUiAssetPath(asset.thumbnailPath)),
     lowResPlaceholderSha256: sha256File(resolveUiAssetPath(asset.lowResPlaceholderPath)),
@@ -550,6 +600,8 @@ function checkAssets() {
   const playerQa = readJson(playerQaPath);
   const femaleQa = readJson(femaleQaPath);
   const manifestById = new Map(manifest.assets.map((asset) => [asset.id, asset]));
+  const isSingleOverride = (asset) =>
+    asset?.source?.localHighResSourcePath?.startsWith("artifacts/s73-10-single-portrait-overrides/");
   if (playerQa.assets.length !== 72) throw new Error(`Expected 72 player QA assets, got ${playerQa.assets.length}`);
   if (femaleQa.assets.length !== 96) throw new Error(`Expected 96 female QA assets, got ${femaleQa.assets.length}`);
   const playerSourceKindCounts = playerQa.sourceSheets.reduce((counts, sheet) => {
@@ -568,6 +620,19 @@ function checkAssets() {
     for (const field of ["path", "thumbnailPath", "lowResPlaceholderPath"]) {
       const filePath = resolveUiAssetPath(entry[field]);
       if (!fs.existsSync(filePath)) throw new Error(`Missing ${field}: ${entry[field]}`);
+    }
+    if (isSingleOverride(asset)) {
+      const bytes = fs.statSync(resolveUiAssetPath(asset.path)).size;
+      const thumbnailBytes = fs.statSync(resolveUiAssetPath(asset.thumbnailPath)).size;
+      const lowResPlaceholderBytes = fs.statSync(resolveUiAssetPath(asset.lowResPlaceholderPath)).size;
+      if (asset.performance.bytes !== bytes) throw new Error(`Stale override manifest bytes: ${asset.id}`);
+      if (asset.performance.thumbnailBytes !== thumbnailBytes) {
+        throw new Error(`Stale override manifest thumbnail bytes: ${asset.id}`);
+      }
+      if (asset.performance.lowResPlaceholderBytes !== lowResPlaceholderBytes) {
+        throw new Error(`Stale override manifest placeholder bytes: ${asset.id}`);
+      }
+      continue;
     }
     if (entry.bytes !== fs.statSync(resolveUiAssetPath(entry.path)).size) throw new Error(`Stale bytes: ${entry.id}`);
     if (entry.thumbnailBytes !== fs.statSync(resolveUiAssetPath(entry.thumbnailPath)).size) {

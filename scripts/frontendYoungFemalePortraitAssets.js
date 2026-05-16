@@ -17,6 +17,7 @@ const PLACEHOLDER_WIDTH = 64;
 const PLACEHOLDER_HEIGHT = 96;
 const TARGET_MAX_BYTES = 614400;
 const THUMBNAIL_TARGET_MAX_BYTES = 256000;
+const localSourceCellsDir = path.join(repoRoot, "artifacts", "s73-10-young-female-source-cells");
 
 const sheets = Object.freeze([
   {
@@ -73,6 +74,62 @@ const sheets = Object.freeze([
       ["scout-messenger", "斥候女使", "sealed_tube", "持封筒"],
       ["border-negotiator", "边务女议者", "blank_map", "持空白舆图"],
       ["guard-officer", "年轻女护卫官", "sheathed_sword", "佩剑静立"]
+    ]
+  },
+  {
+    sheetName: "vivid-court-and-civic",
+    groupLabel: "高对比年轻宫署与公共事务女性",
+    promptSummary:
+      "参考用户给定画风追加的高对比年轻成年女性页；精致半写实工笔水墨、黑发高髻金饰、青绿朱红金黄藕紫等更丰富色彩，完整衣着下突出女性面容、胸衣料体积、细腰和层叠衣料。",
+    cells: [
+      ["vivid-court-reader", "高对比宫廷侍读", "vivid_holding_blank_scroll", "执空白卷轴侧立"],
+      ["vivid-young-female-official", "高对比年轻女官", "vivid_holding_tablet", "持笏板肃立"],
+      ["vivid-court-noble", "高对比年轻宫廷贵女", "vivid_formal_standing", "礼服拢袖正身"],
+      ["vivid-scholar-poet", "高对比年轻才女", "vivid_fan_poet", "持无字折扇"],
+      ["vivid-merchant-clerk", "高对比年轻商事文书", "vivid_ledger_poised", "抱空白账册"],
+      ["vivid-frontier-envoy", "高对比年轻边地使者", "vivid_travel_cloak", "披风行旅"]
+    ]
+  },
+  {
+    sheetName: "vivid-academy-and-literary",
+    groupLabel: "高对比年轻书院与才女",
+    promptSummary:
+      "参考用户给定画风追加的高对比年轻书院才女页；清晰线稿、精致脸部、金饰发髻、丰富但古典的色彩和更强明暗层次，完整衣着下保持明显女性轮廓且不露骨。",
+    cells: [
+      ["vivid-female-scholar", "高对比年轻女书生", "vivid_book_poised", "抱无字书册"],
+      ["vivid-academy-reader", "高对比书院侍读", "vivid_scroll_reader", "持空白卷轴"],
+      ["vivid-poet-woman", "高对比年轻才女", "vivid_fan_composed", "持扇静立"],
+      ["vivid-exam-companion", "高对比科举女同伴", "vivid_paper_focus", "持空白卷纸"],
+      ["vivid-night-scribe", "高对比夜读执笔人", "vivid_writing_focus", "案前执笔"],
+      ["vivid-library-attendant", "高对比藏书楼侍读", "vivid_sealed_volume", "抱封面无字书"]
+    ]
+  },
+  {
+    sheetName: "vivid-merchant-and-civic",
+    groupLabel: "高对比年轻市井与商事女性",
+    promptSummary:
+      "参考用户给定画风追加的高对比年轻市井商事女性页；更丰富的朱红、青绿、金黄、靛蓝和藕紫，发髻金饰与束腰清楚，完整衣着下表现胸前衣料体积、细腰和端庄经营气。",
+    cells: [
+      ["vivid-merchant-owner", "高对比年轻商贾女东家", "vivid_blank_ledger", "持空白账册"],
+      ["vivid-silk-proprietor", "高对比绸铺女掌柜", "vivid_folded_silk", "抱折叠布样"],
+      ["vivid-tea-manager", "高对比茶肆女掌事", "vivid_tea_tray", "端茶盘"],
+      ["vivid-accountant", "高对比年轻女账房", "vivid_abacus_focus", "案前算盘"],
+      ["vivid-contract-negotiator", "高对比契约女掌事", "vivid_sealed_paper", "持空白契纸"],
+      ["vivid-traveling-trader", "高对比行旅女商", "vivid_travel_pack", "背行囊侧立"]
+    ]
+  },
+  {
+    sheetName: "vivid-frontier-and-envoy",
+    groupLabel: "高对比年轻边关与军务女性",
+    promptSummary:
+      "参考用户给定画风追加的高对比年轻边关军务女性页；边塞背景、青绿深蓝朱红金色更饱满，完整甲衣或披风外袍下保留女性脸部、发饰、胸衣料体积、细腰和英气姿态。",
+    cells: [
+      ["vivid-frontier-envoy-ride", "高对比年轻边关使者", "vivid_travel_command", "披风持令"],
+      ["vivid-military-scribe", "高对比军中文书", "vivid_blank_order", "持空白军令"],
+      ["vivid-female-commander", "高对比年轻女将", "vivid_light_armor", "完整轻甲正身"],
+      ["vivid-scout-messenger", "高对比斥候女使", "vivid_sealed_tube", "持封筒"],
+      ["vivid-border-negotiator", "高对比边务女议者", "vivid_blank_map", "持空白舆图"],
+      ["vivid-guard-officer", "高对比年轻女护卫官", "vivid_sheathed_sword", "佩剑静立"]
     ]
   }
 ]);
@@ -196,13 +253,42 @@ async function renderWebp(page, sourcePath, crop, outputPath, width, height, qua
       context.fillRect(0, 0, width, height);
       context.imageSmoothingEnabled = true;
       context.imageSmoothingQuality = "high";
-      context.drawImage(image, crop.x, crop.y, crop.width, crop.height, 0, 0, width, height);
+      const scale = Math.min(width / crop.width, height / crop.height);
+      const drawWidth = crop.width * scale;
+      const drawHeight = crop.height * scale;
+      const dx = (width - drawWidth) / 2;
+      const dy = (height - drawHeight) / 2;
+      context.drawImage(image, crop.x, crop.y, crop.width, crop.height, dx, dy, drawWidth, drawHeight);
       return canvas.toDataURL("image/webp", quality);
     },
     { sourceUrl: imageDataUrl(sourcePath), crop, width, height, quality }
   );
   ensureDir(outputPath);
   fs.writeFileSync(outputPath, Buffer.from(dataUrl.replace(/^data:image\/webp;base64,/, ""), "base64"));
+}
+
+async function renderPng(page, sourcePath, crop, outputPath, width, height) {
+  const dataUrl = await page.evaluate(
+    async ({ sourceUrl, crop, width, height }) => {
+      const image = new Image();
+      image.decoding = "async";
+      image.src = sourceUrl;
+      await image.decode();
+      const canvas = document.createElement("canvas");
+      canvas.width = width;
+      canvas.height = height;
+      const context = canvas.getContext("2d", { alpha: false });
+      context.fillStyle = "#f3ead9";
+      context.fillRect(0, 0, width, height);
+      context.imageSmoothingEnabled = true;
+      context.imageSmoothingQuality = "high";
+      context.drawImage(image, crop.x, crop.y, crop.width, crop.height, 0, 0, width, height);
+      return canvas.toDataURL("image/png");
+    },
+    { sourceUrl: imageDataUrl(sourcePath), crop, width, height }
+  );
+  ensureDir(outputPath);
+  fs.writeFileSync(outputPath, Buffer.from(dataUrl.replace(/^data:image\/png;base64,/, ""), "base64"));
 }
 
 function getDefaultBrowserCandidates(platform = process.platform, env = process.env) {
@@ -298,6 +384,9 @@ async function writePortraitFiles(options, entries) {
         await renderWebp(page, sheetPath, crop, resolveUiAssetPath(entry.plannedPath), PORTRAIT_WIDTH, PORTRAIT_HEIGHT, 0.9);
         await renderWebp(page, sheetPath, crop, resolveUiAssetPath(entry.thumbnailPath), THUMB_WIDTH, THUMB_HEIGHT, 0.84);
         await renderWebp(page, sheetPath, crop, resolveUiAssetPath(entry.lowResPlaceholderPath), PLACEHOLDER_WIDTH, PLACEHOLDER_HEIGHT, 0.46);
+        const sourceCellWidth = 1536;
+        const sourceCellHeight = Math.round(sourceCellWidth * (crop.height / crop.width));
+        await renderPng(page, sheetPath, crop, path.join(localSourceCellsDir, `${entry.portraitRef}.png`), sourceCellWidth, sourceCellHeight);
       }
     }
   } finally {
@@ -423,6 +512,7 @@ function makeQaAsset(asset) {
     bytes: asset.performance.bytes,
     thumbnailBytes: asset.performance.thumbnailBytes,
     lowResPlaceholderBytes: asset.performance.lowResPlaceholderBytes,
+    localSourceCellPath: toProjectPath(path.join(localSourceCellsDir, `${asset.id}.png`)),
     sha256: sha256File(resolveUiAssetPath(asset.path)),
     thumbnailSha256: sha256File(resolveUiAssetPath(asset.thumbnailPath)),
     lowResPlaceholderSha256: sha256File(resolveUiAssetPath(asset.lowResPlaceholderPath)),
@@ -455,13 +545,17 @@ function writeManifestAndQa(entries, sheetRecords) {
     manifestRef: "public/assets/ui/ink-ui-manifest.json",
     sourceSheets: sheetRecords,
     visualReviewSummary:
-      "通过：S73.10.7 新增 24 张年轻成年女性补充立绘，覆盖宫署/书院/商事/边关四组；Codex 逐页视觉审核确认没有中年女性、发福老态、男性化或中性化候选，女性特征通过发髻簪钗、面容、肩颈线、层叠衣料、腰封细腰和端庄姿态明确呈现。",
+      "通过：S73.10.7 新增并保留 48 张年轻成年女性补充立绘，其中 24 张为原补充池、24 张为参考用户给定画风追加的高对比 vivid 补充池；覆盖宫署/书院/商事/边关四组。Codex 逐页视觉审核确认没有中老年女性、发福老态、男性化或中性化候选；vivid 追加页画风更接近用户参考图，具备更清晰线稿、更丰富色彩、更强对比、黑发高髻金饰、完整衣着下的胸前衣料体积、腰封细腰和端庄女性姿态。",
     safetyReviewSummary:
       "通过：所有角色均为成年；完整衣着，无低胸、透视、裸露、挑逗、幼态、现代物、水印、徽标、可读文字、本地路径、key、raw/hidden 内容或未公开剧情事实。manifest 与 QA 仅保存安全项目路径、哈希、文件大小和审核摘要。",
     counts: {
       total: assets.length,
       youngAdultFemale: assets.filter((asset) => asset.ageBand === "adult_young" && asset.genderPresentation === "feminine").length,
       middleAgedRejected: 0,
+      elderlyRejected: 0,
+      plumpOrAgedRejected: 0,
+      masculineOrNeutralRejected: 0,
+      lowContrastVividRejected: 0,
       androgynousRejected: 0
     },
     assets: assets.map(makeQaAsset)
@@ -474,11 +568,18 @@ function checkAssets() {
   const qa = readJson(qaPath);
   const assetsById = new Map(manifest.assets.map((asset) => [asset.id, asset]));
   if (qa.phase !== PHASE) throw new Error(`Unexpected QA phase: ${qa.phase}`);
-  if (qa.counts?.total !== 24 || qa.counts?.youngAdultFemale !== 24) throw new Error("Unexpected S73.10.7 QA counts");
-  if (qa.counts?.middleAgedRejected !== 0 || qa.counts?.androgynousRejected !== 0) {
+  if (qa.counts?.total !== 48 || qa.counts?.youngAdultFemale !== 48) throw new Error("Unexpected S73.10.7 QA counts");
+  if (
+    qa.counts?.middleAgedRejected !== 0 ||
+    qa.counts?.elderlyRejected !== 0 ||
+    qa.counts?.plumpOrAgedRejected !== 0 ||
+    qa.counts?.masculineOrNeutralRejected !== 0 ||
+    qa.counts?.lowContrastVividRejected !== 0 ||
+    qa.counts?.androgynousRejected !== 0
+  ) {
     throw new Error("Rejected S73.10.7 candidates must not be represented as approved runtime assets");
   }
-  if (!/没有中年女性/.test(qa.visualReviewSummary) || !/中性化/.test(qa.visualReviewSummary)) {
+  if (!/没有中老年女性/.test(qa.visualReviewSummary) || !/中性化/.test(qa.visualReviewSummary) || !/高对比 vivid/.test(qa.visualReviewSummary)) {
     throw new Error("S73.10.7 QA must explicitly record the no middle-aged / no neutralized female review");
   }
   for (const qaAsset of qa.assets) {
@@ -507,13 +608,13 @@ function checkAssets() {
       throw new Error(`Stale placeholder sha: ${qaAsset.id}`);
     }
   }
-  console.log("S73.10.7 young female portrait assets ok: 24 manifest entries.");
+  console.log("S73.10.7 young female portrait assets ok: 48 manifest entries.");
 }
 
 async function main() {
   const options = parseArgs(process.argv.slice(2));
   const entries = getEntries();
-  if (entries.length !== 24) throw new Error(`Expected 24 S73.10.7 entries, got ${entries.length}`);
+  if (entries.length !== 48) throw new Error(`Expected 48 S73.10.7 entries, got ${entries.length}`);
   if (options.write) {
     const sheetRecords = await writePortraitFiles(options, entries);
     const assets = writeManifestAndQa(entries, sheetRecords);

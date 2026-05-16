@@ -32,6 +32,8 @@
     "qa:state-scene-portraits:write": "node scripts/frontendStateScenePortraitAssets.js --write",
     "qa:young-female-portraits": "node scripts/frontendYoungFemalePortraitAssets.js --check",
     "qa:young-female-portraits:write": "node scripts/frontendYoungFemalePortraitAssets.js --write",
+    "qa:single-portrait-overrides": "node scripts/frontendSinglePortraitOverrides.js --check",
+    "qa:single-portrait-overrides:write": "node scripts/frontendSinglePortraitOverrides.js --write",
     "qa:portrait-compression": "node scripts/frontendPortraitCompressionQa.js --check",
     "qa:portrait-compression:write": "node scripts/frontendPortraitCompressionQa.js --write",
     "eval:ai": "node scripts/aiEvaluationRunner.js && node --test test/aiEvalFixtures.test.js",

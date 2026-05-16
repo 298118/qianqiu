@@ -24,6 +24,7 @@ const portraitSignatureNpcPoolQaPath = path.join(repoRoot, "public", "assets", "
 const portraitStateScenePoolQaPath = path.join(repoRoot, "public", "assets", "ui", "portraits", "portrait-state-scene-pool-qa-v1.json");
 const portraitYoungFemalePoolQaPath = path.join(repoRoot, "public", "assets", "ui", "portraits", "portrait-young-female-pool-qa-v1.json");
 const portraitCompressionQaPath = path.join(repoRoot, "public", "assets", "ui", "portraits", "portrait-compression-qa-v1.json");
+const portraitSingleOverrideQaPath = path.join(repoRoot, "public", "assets", "ui", "portraits", "portrait-single-override-qa-v1.json");
 const effectMotionQaPath = path.join(repoRoot, "public", "assets", "ui", "effects", "effect-motion-qa-v1.json");
 const assetQaReportPath = path.join(repoRoot, "public", "assets", "ui", "asset-qa-report-v1.json");
 const assetQaPreviewPath = path.join(repoRoot, "public", "assets", "ui", "asset-qa-preview.html");
@@ -227,7 +228,7 @@ test("S73.2 ink UI manifest fixes schema, safety, fallback, and portrait policie
   });
 
   assert.equal(Array.isArray(manifest.assets), true);
-  assert.equal(manifest.assets.length, 618, "S73.3-S73.10.7 UI assets are active");
+  assert.equal(manifest.assets.length, 642, "S73.3-S73.10.7 UI assets are active");
 
   const phaseCounts = manifest.assets.reduce((counts, asset) => {
     counts[asset.phase] = (counts[asset.phase] || 0) + 1;
@@ -243,7 +244,7 @@ test("S73.2 ink UI manifest fixes schema, safety, fallback, and portrait policie
   assert.equal(phaseCounts["S73.10.3"], 188);
   assert.equal(phaseCounts["S73.10.4"], 72);
   assert.equal(phaseCounts["S73.10.5"], 72);
-  assert.equal(phaseCounts["S73.10.7"], 24);
+  assert.equal(phaseCounts["S73.10.7"], 48);
 
   for (const asset of manifest.assets) {
     assert.equal(
@@ -754,6 +755,8 @@ test("S73.10.2 player portrait pool QA records approved staged player portraits"
   assert.equal(playerPhaseAssets.filter((asset) => asset.genderPresentation === "feminine").length, 96);
   const poolAssets = new Map(playerPhaseAssets.map((asset) => [asset.id, asset]));
   const femaleQaAssetsById = new Map(femaleQa.assets.map((entry) => [entry.id, entry]));
+  const isSingleOverride = (asset) =>
+    asset.source?.localHighResSourcePath?.startsWith("artifacts/s73-10-single-portrait-overrides/");
   const roles = new Set();
   const variantsByRole = new Map();
   for (const entry of qa.assets) {
@@ -767,6 +770,19 @@ test("S73.10.2 player portrait pool QA records approved staged player portraits"
     for (const field of ["path", "thumbnailPath", "lowResPlaceholderPath"]) {
       assertSafeUiAssetPath(entry[field], `${entry.id}.${field}`);
       assert.equal(fs.existsSync(resolveUiAssetPath(entry[field])), true, `${entry.id}.${field}`);
+    }
+    if (isSingleOverride(asset)) {
+      assert.equal(asset.performance.bytes, fs.statSync(resolveUiAssetPath(asset.path)).size, entry.id);
+      assert.equal(asset.performance.thumbnailBytes, fs.statSync(resolveUiAssetPath(asset.thumbnailPath)).size, entry.id);
+      assert.equal(
+        asset.performance.lowResPlaceholderBytes,
+        fs.statSync(resolveUiAssetPath(asset.lowResPlaceholderPath)).size,
+        entry.id
+      );
+      if (entry.genderPresentation === "feminine") {
+        assert.ok(femaleQaAssetsById.has(entry.id), entry.id);
+      }
+      continue;
     }
     assert.equal(entry.bytes, fs.statSync(resolveUiAssetPath(entry.path)).size, entry.id);
     assert.equal(entry.thumbnailBytes, fs.statSync(resolveUiAssetPath(entry.thumbnailPath)).size, entry.id);
@@ -1042,15 +1058,19 @@ test("S73.10.7 young female portrait patch rejects middle-aged or neutralized ca
   assert.equal(qa.schemaVersion, 1);
   assert.equal(qa.phase, "S73.10.7");
   assert.equal(qa.reviewedBy, "Codex");
-  assert.equal(qa.assets.length, 24);
-  assert.equal(qa.sourceSheets.length, 4);
+  assert.equal(qa.assets.length, 48);
+  assert.equal(qa.sourceSheets.length, 8);
   assert.deepEqual(qa.counts, {
-    total: 24,
-    youngAdultFemale: 24,
+    total: 48,
+    youngAdultFemale: 48,
     middleAgedRejected: 0,
+    elderlyRejected: 0,
+    plumpOrAgedRejected: 0,
+    masculineOrNeutralRejected: 0,
+    lowContrastVividRejected: 0,
     androgynousRejected: 0
   });
-  assert.match(qa.visualReviewSummary, /没有中年女性/);
+  assert.match(qa.visualReviewSummary, /没有中老年女性|没有中年女性/);
   assert.match(qa.visualReviewSummary, /中性化/);
   assert.match(qa.visualReviewSummary, /腰封细腰/);
   assert.equal(qa.safetyReviewSummary.includes("完整衣着"), true);
@@ -1085,7 +1105,45 @@ test("S73.10.7 young female portrait patch rejects middle-aged or neutralized ca
     assert.equal(entry.visualReviewStatus, "approved", entry.id);
     assert.equal(entry.safetyReviewStatus, "approved", entry.id);
   }
-  assert.equal(roleSet.size, 24);
+  assert.equal(roleSet.size, 48);
+});
+
+test("S73.10 single portrait overrides replace selected female player portraits without reusing grid hashes", () => {
+  const qaText = fs.readFileSync(portraitSingleOverrideQaPath, "utf8");
+  assert.doesNotMatch(qaText, FORBIDDEN_MANIFEST_REMOTE_OR_LOCAL_PATH);
+  assert.doesNotMatch(qaText, FORBIDDEN_ASSET_VALUE);
+  const qa = JSON.parse(qaText);
+  const manifest = readJson(manifestPath);
+  const manifestById = new Map(manifest.assets.map((asset) => [asset.id, asset]));
+
+  assert.equal(qa.schemaVersion, 1);
+  assert.equal(qa.phase, "S73.10.single-overrides");
+  assert.equal(qa.reviewedBy, "Codex");
+  assert.equal(qa.counts.total, 12);
+  assert.equal(qa.assets.length, 12);
+  assert.match(qa.visualReviewSummary, /单张高质量重制覆盖/);
+
+  for (const entry of qa.assets) {
+    const asset = manifestById.get(entry.id);
+    assert.ok(asset, entry.id);
+    assert.equal(asset.category, "portrait", entry.id);
+    assert.equal(asset.genderPresentation, "feminine", entry.id);
+    assert.equal(asset.source.localHighResSourcePath, entry.localHighResSourcePath, entry.id);
+    assert.equal(entry.localHighResSourcePath.startsWith("artifacts/s73-10-single-portrait-overrides/"), true, entry.id);
+    assert.equal(asset.source.promptSummary.includes("单张竖版高质量重制"), true, entry.id);
+    for (const field of ["path", "thumbnailPath", "lowResPlaceholderPath"]) {
+      assertSafeUiAssetPath(entry[field], `${entry.id}.${field}`);
+      assert.equal(fs.existsSync(resolveUiAssetPath(entry[field])), true, `${entry.id}.${field}`);
+    }
+    assert.equal(entry.bytes, fs.statSync(resolveUiAssetPath(entry.path)).size, entry.id);
+    assert.equal(entry.thumbnailBytes, fs.statSync(resolveUiAssetPath(entry.thumbnailPath)).size, entry.id);
+    assert.equal(entry.lowResPlaceholderBytes, fs.statSync(resolveUiAssetPath(entry.lowResPlaceholderPath)).size, entry.id);
+    assert.equal(entry.sha256, sha256File(resolveUiAssetPath(entry.path)), entry.id);
+    assert.equal(entry.thumbnailSha256, sha256File(resolveUiAssetPath(entry.thumbnailPath)), entry.id);
+    assert.equal(entry.lowResPlaceholderSha256, sha256File(resolveUiAssetPath(entry.lowResPlaceholderPath)), entry.id);
+    assert.equal(entry.visualReviewStatus, "approved", entry.id);
+    assert.equal(entry.safetyReviewStatus, "approved", entry.id);
+  }
 });
 
 test("S73.8 effect motion QA records approved reduced-motion fallbacks", () => {
@@ -1224,8 +1282,8 @@ test("S73.10.6 portrait compression QA pins thumbnails, placeholders, crop metad
   assert.equal(report.policy.requireLowResPlaceholder, true);
   assert.equal(report.policy.allowEagerLoad, false);
   assert.equal(report.policy.maxInitialPortraits, 8);
-  assert.equal(report.summary.portraitAssets, 572);
-  assert.equal(report.summary.s7310PortraitAssets, 548);
+  assert.equal(report.summary.portraitAssets, 596);
+  assert.equal(report.summary.s7310PortraitAssets, 572);
   assert.equal(report.summary.baselinePortraitAssets, 24);
   assert.equal(report.summary.errorCount, 0);
   assert.equal(report.summary.warningCount, 0);
@@ -1236,7 +1294,7 @@ test("S73.10.6 portrait compression QA pins thumbnails, placeholders, crop metad
     "S73.10.3": 188,
     "S73.10.4": 72,
     "S73.10.5": 72,
-    "S73.10.7": 24
+    "S73.10.7": 48
   });
   assert.deepEqual(report.summary.byLazyLoadGroup, {
     portrait_baseline_s73_7: 24,
@@ -1247,7 +1305,7 @@ test("S73.10.6 portrait compression QA pins thumbnails, placeholders, crop metad
     portrait_pool_signature_npc_s73_10: 72,
     portrait_pool_state_variant_s73_10: 48,
     portrait_pool_scene_anchor_s73_10: 24,
-    portrait_pool_young_female_s73_10_7: 24
+    portrait_pool_young_female_s73_10_7: 48
   });
 
   const manifestPortraits = manifest.assets.filter((asset) => asset.category === "portrait");
@@ -1453,7 +1511,9 @@ test("S73.2 frontend asset ledger records manifest, fallback, portrait, and sour
     "portrait-signature-npc-pool-qa-v1.json",
     "portrait-state-scene-pool-qa-v1.json",
     "portrait-young-female-pool-qa-v1.json",
+    "portrait-single-override-qa-v1.json",
     "portrait-compression-qa-v1.json",
+    "qa:single-portrait-overrides",
     "qa:portrait-compression",
     "portrait_baseline_s73_7",
     "portrait_pool_player_s73_10",
