@@ -640,6 +640,8 @@ Manifest 示例：
 
 ### S74.4 Shell 与 surface registry
 
+状态：已完成。S74.4 已拆出 `AppShell`、`SurfaceHost`、overlay focus helper 和 `surfaceRegistry`；`SurfaceHost` 通过 drawer/modal/surface registry 管理显示偏好、设置、存档、安全摘要以及 `npc-profile`、`edict-draft`、`memorial-review`、`map-filter` 局部专题层。所有 overlay 支持 Esc 关闭、焦点回收和页面滚动锁定；路由切换会滚动归零并把焦点恢复到页面主体。专题层当前只显示安全占位与行动草稿入口，不读取 raw state、内部审计原文、模型原文、完整 prompt、本地路径或 key，不接入未审核素材或全量立绘池。
+
 实现功能：
 
 - 建立 `AppShell`、`HomeScreen`、`GameScreen`、`SettingsDrawer`、`SurfaceHost`。

@@ -1,6 +1,6 @@
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { RouterProvider, createMemoryRouter } from "react-router";
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { routes } from "../router";
 import { useGameSessionStore } from "../state/gameSessionState";
 import { useUiStateStore } from "../state/uiState";
@@ -34,6 +34,7 @@ describe("S74.1 React client shell", () => {
     expect(screen.getByRole("button", { name: "新开一卷" })).toBeTruthy();
     expect(document.querySelector("[data-client-entry='react']")).toBeTruthy();
     expect(document.querySelector("[data-router-mode='data']")).toBeTruthy();
+    expect(document.querySelector("[data-shell-version='s74-4']")).toBeTruthy();
   });
 
   it("keeps the session routes inside the React Router tree", () => {
@@ -44,21 +45,61 @@ describe("S74.1 React client shell", () => {
     expect(document.body.textContent || "").not.toMatch(/OPENAI_API_KEY|hiddenNotes|data\/sessions|provider payload/i);
   });
 
-  it("tracks route-derived UI page state and opens safe drawers", async () => {
+  it("tracks route-derived UI page state and closes safe drawers with Esc while restoring focus", async () => {
     renderRoute("/game/smoke-session/map");
 
     await waitFor(() => expect(useUiStateStore.getState().currentPage).toBe("map"));
     expect(useUiStateStore.getState().currentSessionId).toBe("smoke-session");
 
-    fireEvent.click(screen.getByRole("button", { name: "打开显示偏好" }));
+    const trigger = screen.getByRole("button", { name: "打开显示偏好" });
+    trigger.focus();
+    fireEvent.click(trigger);
     expect(screen.getByRole("complementary", { name: "显示偏好" })).toBeTruthy();
     expect(useUiStateStore.getState().activeDrawer).toBe("display-preferences");
+    expect(screen.getByRole("button", { name: "关闭抽屉" })).toBe(document.activeElement);
 
     fireEvent.change(screen.getByLabelText("动效"), { target: { value: "reduced" } });
     expect(document.querySelector(".appShell")?.getAttribute("data-motion")).toBe("reduced");
 
-    fireEvent.click(screen.getByRole("button", { name: "关闭抽屉" }));
-    expect(useUiStateStore.getState().activeDrawer).toBeNull();
+    fireEvent.keyDown(document, { key: "Escape" });
+    await waitFor(() => expect(useUiStateStore.getState().activeDrawer).toBeNull());
+    expect(document.activeElement).toBe(trigger);
+  });
+
+  it("opens registry-backed local surfaces, writes safe drafts, and restores focus on Esc", async () => {
+    renderRoute("/game/smoke-session/court");
+
+    const trigger = screen.getByRole("button", { name: "拟圣旨" });
+    trigger.focus();
+    fireEvent.click(trigger);
+
+    const dialog = screen.getByRole("dialog", { name: "拟圣旨" });
+    expect(dialog.textContent || "").toContain("服务器裁决");
+    expect(dialog.textContent || "").not.toMatch(/raw audit|provider payload|hiddenNotes|data\/sessions|OPENAI_API_KEY/i);
+    expect(screen.getByRole("button", { name: "关闭专题" })).toBe(document.activeElement);
+
+    fireEvent.click(screen.getByRole("button", { name: "写入奏折草稿" }));
+    expect(useUiStateStore.getState().actionDraft).toMatchObject({
+      source: "role-surface",
+      targetPage: "game"
+    });
+
+    fireEvent.keyDown(document, { key: "Escape" });
+    await waitFor(() => expect(screen.queryByRole("dialog", { name: "拟圣旨" })).toBeNull());
+    expect(document.activeElement).toBe(trigger);
+  });
+
+  it("restores scroll position and route focus when navigating between pages", async () => {
+    const scrollTo = vi.fn();
+    window.scrollTo = scrollTo;
+    renderRoute("/");
+    scrollTo.mockClear();
+
+    fireEvent.click(screen.getByRole("link", { name: "舆图" }));
+
+    await waitFor(() => expect(useUiStateStore.getState().currentPage).toBe("map"));
+    expect(scrollTo).toHaveBeenCalledWith({ left: 0, top: 0, behavior: "auto" });
+    expect(document.querySelector(".pageFrame")).toBe(document.activeElement);
   });
 
   it("renders the S74.2 safe API forms without raw route wording", () => {

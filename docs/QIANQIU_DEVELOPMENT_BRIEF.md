@@ -40,6 +40,8 @@ S74.2 更新：已新增 React 安全 API client、宽松 response 类型、Zust
 
 S74.3 更新：已新增 React UI 状态层，`client/src/state/uiState.ts` 管理当前 route page、`sessionId`、安全玩家摘要、drawer/modal/surface、tab、action draft 和 display preferences；`gameSessionState` 在开局、读档、普通回合和交卷成功后同步安全摘要，普通回合成功清空行动草稿。该 store 不保存完整 `worldState`、raw provider payload、hidden ledger、完整 prompt、本地路径或 key；显示偏好当前为运行时 UI 状态，S75.7 再做本地安全持久化。
 
+S74.4 更新：已新增 `AppShell`、`SurfaceHost`、overlay focus helper 和 `surfaceRegistry`，统一管理设置/存档/显示偏好抽屉、安全 modal、人物档案、拟圣旨、阅奏折和舆图筛选专题层；支持 Esc 关闭、焦点回收、页面滚动锁定和路由切换滚动恢复。专题层当前只显示安全占位与行动草稿入口，不读取内部审计原文、模型原文、完整 prompt、本地路径或 key，不导入未审核素材或全量立绘池。
+
 S73.10.6 已把分散在各立绘批次中的缩略图与压缩验收收束为独立 QA：`scripts/frontendPortraitCompressionQa.js`、`qa:portrait-compression` 和 `public/assets/ui/portraits/portrait-compression-qa-v1.json` 当前校验 572 张 active 立绘、其中 548 张 S73.10 立绘的 1024x1536 主图、384x576 缩略图、64x96 低清占位、safeArea、focalPoint、移动裁切、文件预算和禁止 eager load。S74-S77 接线时仍必须按 `portraitRef`、缩略图和低清占位懒加载，不能因为素材池已齐就一次性加载全量大图。
 
 S68-S69 科举、读书、评卷与授官深化规划见 [IMPERIAL_EXAM_DEEPENING_ROADMAP.md](IMPERIAL_EXAM_DEEPENING_ROADMAP.md)，S68.1 制度契约见 [IMPERIAL_EXAM_SYSTEM_CONTRACT.md](IMPERIAL_EXAM_SYSTEM_CONTRACT.md)，完成归档见 [IMPERIAL_EXAM_DEEPENING_ARCHIVE.md](IMPERIAL_EXAM_DEEPENING_ARCHIVE.md)。该专项要求外层 `child_exam -> provincial_exam -> metropolitan_exam -> palace_exam` API 保持兼容，内部把童试拆为县试/府试/院试，把乡试/会试扩为三场、多日、多卷、号舍、弥封、誊录、对读、磨勘、复核、房官/同考官/主考官阅卷、canonical 榜单荣誉和授官轨迹，并把 AI 老师、同年、考官、吏部、皇帝和授官 proposal 全部限制在服务器裁决之下。弥封身份映射、考官 hidden intent、保结 hidden notes 和 raw provider proposal 不得回填普通 route `worldState` 或浏览器/prompt view。
@@ -458,6 +460,7 @@ chore: update env example
 - S74.1：Vite/TypeScript 默认前端已完成，新增 `client/`、Vite/TS/Vitest 配置、最小 React Router Data Mode 多页壳、Express history fallback、S74.1 focused browser smoke 和 `prestart` 构建入口；`dist/client/` 接管默认 `/`。
 - S74.2：安全 API client 已完成，新增 `qianqiuApi`、安全 response 类型、会话 store、UUID 会话守卫和首页/主卷/科举/印匣最小接线；普通读档只走 `player-state`。
 - S74.3：前端 UI 状态层已完成，新增安全 UI store、route page bridge、显示偏好抽屉、安全摘要 modal 和全局 action draft；只保存安全玩家摘要和 UI 状态，不保存完整 `worldState` 或模型/审计原文。
+- S74.4：多页 shell 与 surface registry 已完成，新增 `AppShell`、`SurfaceHost`、overlay focus helper 和局部专题 registry；设置/存档/显示偏好抽屉、安全 modal、人物/圣旨/奏折/舆图专题层支持 Esc 关闭、焦点回收和滚动恢复，专题层只显示安全占位与草稿入口。
 
 - S73.10.1：全量玩家/NPC 立绘生产矩阵已定稿，机器可读矩阵为 `public/assets/ui/portraits/portrait-pool-matrix-v1.json`，中文说明为 [FRONTEND_PORTRAIT_MATRIX.md](FRONTEND_PORTRAIT_MATRIX.md)。矩阵锁定 336 张 planned 立绘，但不代表素材可用；S74-S77 runtime 仍只能读取 `ink-ui-manifest.json` 中已审核、已入库、`runtimeUsable=true` 的立绘。
 - S73.10.2：玩家身份阶段立绘池已入库，`public/assets/ui/portraits/s73-10/` 下有 72 张玩家身份阶段主图，另有 60 张玩家女性风格补充立绘和 60 张玩家男性风格补充立绘作为选角可用池；`public/assets/ui/thumbs/` 和 `public/assets/ui/portraits/placeholders/` 分别提供缩略图与低清占位，QA sidecar 为 `public/assets/ui/portraits/portrait-player-pool-qa-v1.json`、`public/assets/ui/portraits/portrait-player-female-reset-qa-v1.json` 与 `public/assets/ui/portraits/portrait-player-male-extra-qa-v1.json`，校验入口为 `npm run qa:player-portraits`、`npm run qa:player-female-portraits` 和 `npm run qa:player-male-portraits`。

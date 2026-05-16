@@ -114,3 +114,25 @@ test("S74.3 UI state store keeps only safe UI summaries and preferences", () => 
   assert.match(gamePageSource, /clearActionDraft/);
   assert.doesNotMatch(combined, /localStorage|sessionStorage|data\/sessions|raw audit|provider payload|OPENAI_API_KEY|DEEPSEEK_API_KEY|MIMO_API_KEY|ANTHROPIC_API_KEY/);
 });
+
+test("S74.4 shell uses registry-backed overlays without widening data sources", () => {
+  const appShellSource = readText("client/src/components/AppShell.tsx");
+  const surfaceHostSource = readText("client/src/components/SurfaceHost.tsx");
+  const surfaceRegistrySource = readText("client/src/surfaces/surfaceRegistry.tsx");
+  const routeCatalogSource = readText("client/src/routes/routeCatalog.ts");
+  const combined = `${appShellSource}\n${surfaceHostSource}\n${surfaceRegistrySource}\n${routeCatalogSource}`;
+
+  assert.match(appShellSource, /data-shell-version="s74-4"/);
+  assert.match(appShellSource, /ScrollRestoration/);
+  assert.match(appShellSource, /window\.scrollTo/);
+  assert.match(surfaceHostSource, /drawerRegistry/);
+  assert.match(surfaceHostSource, /modalRegistry/);
+  assert.match(surfaceHostSource, /surfaceRegistry/);
+  assert.match(surfaceHostSource, /event\.key !== "Escape"/);
+  assert.match(surfaceHostSource, /previousFocusRef/);
+  assert.match(surfaceRegistrySource, /"npc-profile"/);
+  assert.match(surfaceRegistrySource, /"edict-draft"/);
+  assert.match(surfaceRegistrySource, /"memorial-review"/);
+  assert.match(surfaceRegistrySource, /"map-filter"/);
+  assert.doesNotMatch(combined, /localStorage|sessionStorage|public\/assets\/ui\/portraits|ink-ui-manifest|data\/sessions|raw audit|provider payload|OPENAI_API_KEY|DEEPSEEK_API_KEY|MIMO_API_KEY|ANTHROPIC_API_KEY/);
+});
