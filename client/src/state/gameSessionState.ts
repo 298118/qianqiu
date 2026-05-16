@@ -1,5 +1,6 @@
 import { create } from "zustand";
 import { qianqiuApi } from "../api";
+import { useUiStateStore } from "./uiState";
 import type {
   AiConnectionTestResponse,
   AiSettingsResponse,
@@ -88,6 +89,8 @@ export const useGameSessionStore = create<GameSessionState>((set) => ({
         lastExamResult: null,
         status: "ready"
       });
+      useUiStateStore.getState().syncSessionPayload(payload, "start");
+      useUiStateStore.getState().clearActionDraft();
       return payload;
     } catch (error) {
       set({ error: toErrorMessage(error), status: "error" });
@@ -106,6 +109,7 @@ export const useGameSessionStore = create<GameSessionState>((set) => ({
         lastExamResult: null,
         status: "ready"
       });
+      useUiStateStore.getState().syncSessionPayload(payload, "player-state");
       return payload;
     } catch (error) {
       set({ currentSessionId: sessionId, error: toErrorMessage(error), status: "error" });
@@ -124,6 +128,8 @@ export const useGameSessionStore = create<GameSessionState>((set) => ({
         activeExam: null,
         status: "ready"
       });
+      useUiStateStore.getState().syncSessionPayload(payload, "turn");
+      useUiStateStore.getState().clearActionDraft();
       return payload;
     } catch (error) {
       set({ error: toErrorMessage(error), status: "error" });
@@ -166,6 +172,7 @@ export const useGameSessionStore = create<GameSessionState>((set) => ({
         currentSession: payload,
         status: "ready"
       });
+      useUiStateStore.getState().syncSessionPayload(payload, "exam-submit");
       return payload;
     } catch (error) {
       set({ error: toErrorMessage(error), status: "error" });

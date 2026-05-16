@@ -71,7 +71,9 @@ a {
 
 .topNav,
 .sessionNav,
-.homeActions {
+.homeActions,
+.topTools,
+.buttonRow {
   display: flex;
   align-items: center;
   flex-wrap: wrap;
@@ -93,8 +95,46 @@ a {
   color: #8e2f27;
 }
 
+.topTools {
+  margin-left: auto;
+}
+
+.iconButton {
+  display: inline-grid;
+  width: 40px;
+  height: 40px;
+  place-items: center;
+  border: 1px solid rgba(142, 47, 39, 0.48);
+  background: rgba(255, 248, 230, 0.76);
+  color: #7b241f;
+}
+
+.iconButton:hover,
+.iconButton:focus-visible {
+  border-color: #7b241f;
+  outline: 2px solid rgba(123, 36, 31, 0.24);
+  outline-offset: 2px;
+}
+
 .pageFrame {
   min-height: calc(100vh - 66px);
+}
+
+.appShell[data-text-size="large"] {
+  font-size: 1.08rem;
+}
+
+.appShell[data-contrast="high"] {
+  color: #17100c;
+}
+
+.appShell[data-motion="reduced"] *,
+.appShell[data-motion="reduced"] *::before,
+.appShell[data-motion="reduced"] *::after {
+  scroll-behavior: auto !important;
+  transition-duration: 0.01ms !important;
+  animation-duration: 0.01ms !important;
+  animation-iteration-count: 1 !important;
 }
 
 .homeScene {
@@ -318,10 +358,76 @@ button:disabled {
   border-top: 1px solid rgba(84, 60, 43, 0.22);
 }
 
+.drawerHost {
+  position: fixed;
+  top: 0;
+  right: 0;
+  z-index: 30;
+  width: min(380px, 100%);
+  min-height: 100vh;
+  padding: 58px 22px 22px;
+  border-left: 1px solid rgba(84, 60, 43, 0.28);
+  background:
+    linear-gradient(180deg, rgba(255, 248, 230, 0.95), rgba(231, 211, 180, 0.94)),
+    url("/assets/ui/materials/seal-box-texture-v1.webp") center / cover no-repeat;
+  box-shadow: -18px 0 42px rgba(39, 29, 21, 0.18);
+}
+
+.drawerClose {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+}
+
+.drawerContent {
+  display: grid;
+  gap: 14px;
+}
+
+.drawerContent h2,
+.modalPanel h2 {
+  margin-bottom: 0;
+}
+
+.checkRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.checkRow input {
+  width: 18px;
+  height: 18px;
+}
+
+.modalScrim {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  background: rgba(36, 27, 22, 0.34);
+}
+
+.modalPanel {
+  position: relative;
+  width: min(520px, 100%);
+  border: 1px solid rgba(84, 60, 43, 0.32);
+  background:
+    linear-gradient(135deg, rgba(255, 248, 230, 0.96), rgba(231, 211, 180, 0.94)),
+    url("/assets/ui/materials/memorial-folded-paper-v1.webp") center / cover no-repeat;
+  padding: 28px;
+}
+
 @media (max-width: 760px) {
   .topBar {
     align-items: flex-start;
     flex-direction: column;
+  }
+
+  .topTools {
+    margin-left: 0;
   }
 
   .topNav a,

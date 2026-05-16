@@ -619,6 +619,8 @@ Manifest 示例：
 
 ### S74.3 前端状态层
 
+状态：已完成。S74.3 已把 `client/src/state/uiState.ts` 从静态入口标记扩展为 Zustand UI store，管理当前页面、会话号、安全玩家摘要、drawer/modal/surface、tab、action draft 和显示偏好；`gameSessionState` 在开局、读档、普通回合和交卷成功后同步安全摘要，主卷行动输入改由全局 action draft 驱动。顶部已提供轻量显示偏好抽屉与安全摘要 modal，作为 S74.4/S75 完整 shell 的状态基础。
+
 实现功能：
 
 - 用 Zustand 管理：

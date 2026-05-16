@@ -1,6 +1,6 @@
 # 前端 React 迁移契约
 
-本文档是 S74 的迁移契约。S74.0 批准并记录 React/Vite 前端工具链的引入方式；S74.1 已创建 `client/`、Vite 配置、TypeScript 配置、React Router Data Mode 路由和 Express history fallback，让 `dist/client/` 构建产物接管默认 `/`。后续 S74.2-S74.7 继续补安全 API client、状态层、surface registry、素材加载、S72 地图桥和默认入口验收。
+本文档是 S74 的迁移契约。S74.0 批准并记录 React/Vite 前端工具链的引入方式；S74.1 已创建 `client/`、Vite 配置、TypeScript 配置、React Router Data Mode 路由和 Express history fallback，让 `dist/client/` 构建产物接管默认 `/`；S74.2 已补安全 API client；S74.3 已补 UI 状态层。后续 S74.4-S74.7 继续补 surface registry、素材加载、S72 地图桥和默认入口验收。
 
 ## 1. S74.0 决策
 
@@ -17,6 +17,13 @@
 - `server.js` 已改为 API 优先，随后服务 `dist/client` 与 `public` 静态资源，最后只对 HTML 导航请求返回 `dist/client/index.html`。带扩展名的缺失资源、`/api/*` 请求和非 GET/HEAD 请求不会 fallback 成 HTML。
 - `package.json` 已新增 `dev:client`、`build:client`、`typecheck:client`、`test:client`、`preview:client`、`smoke:browser:legacy`；`smoke:browser` 现在运行 S74.1 focused React smoke。`prestart` 会先运行 `build:client`，以保持 `npm install && npm start` 后默认 `/` 可打开新前端。
 - S74.1 只建立最小多页前端与静态入口，不接入真实开局、读档、普通行动、考试提交、AI 设置或地图桥；这些仍归 S74.2-S76 小步。
+
+## 1.2 S74.2-S74.3 更新
+
+- S74.2 已新增 `client/src/api/qianqiuClient.ts`、`client/src/api/types.ts`、`client/src/state/gameSessionState.ts` 和 `client/src/routes/sessionId.ts`。React client 只调用 start/saves/player-state/turn/exam/AI settings/connection-test 安全接口；普通读档不调用 raw state route。
+- S74.3 已将 `client/src/state/uiState.ts` 扩展为 Zustand UI store，保存当前 route page、`sessionId`、安全玩家摘要、drawer/modal/surface、tab、action draft 和 display preferences。
+- `gameSessionState` 会在开局、读档、普通回合和交卷成功后同步安全玩家摘要；普通回合成功会清空 action draft。
+- UI store 的安全摘要只抽取玩家公开摘要、叙事预览和 route view 存在标记，不保存完整 `worldState`、模型原文、内部审计原文、hidden ledger、完整 prompt、本地路径或 key。
 
 ## 2. 依赖用途与边界
 

@@ -98,3 +98,19 @@ test("S74.2 React API client only exposes safe player-facing endpoints", () => {
   assert.doesNotMatch(combined, /\/api\/dev\/session-diagnostics/);
   assert.doesNotMatch(combined, /data\/sessions|raw audit|provider payload|OPENAI_API_KEY|DEEPSEEK_API_KEY|MIMO_API_KEY|ANTHROPIC_API_KEY/);
 });
+
+test("S74.3 UI state store keeps only safe UI summaries and preferences", () => {
+  const uiStateSource = readText("client/src/state/uiState.ts");
+  const appSource = readText("client/src/App.tsx");
+  const gamePageSource = readText("client/src/pages/GamePage.tsx");
+  const combined = `${uiStateSource}\n${appSource}\n${gamePageSource}`;
+
+  assert.match(uiStateSource, /create<UiState>/);
+  assert.match(uiStateSource, /activeDrawer/);
+  assert.match(uiStateSource, /activeModal/);
+  assert.match(uiStateSource, /actionDraft/);
+  assert.match(uiStateSource, /displayPreferences/);
+  assert.match(uiStateSource, /extractSafePlayerPayload/);
+  assert.match(gamePageSource, /clearActionDraft/);
+  assert.doesNotMatch(combined, /localStorage|sessionStorage|data\/sessions|raw audit|provider payload|OPENAI_API_KEY|DEEPSEEK_API_KEY|MIMO_API_KEY|ANTHROPIC_API_KEY/);
+});

@@ -1,8 +1,9 @@
-import { cleanup, render, screen } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { RouterProvider, createMemoryRouter } from "react-router";
 import { afterEach, describe, expect, it } from "vitest";
 import { routes } from "../router";
 import { useGameSessionStore } from "../state/gameSessionState";
+import { useUiStateStore } from "../state/uiState";
 
 function renderRoute(initialEntry: string) {
   const router = createMemoryRouter(routes, { initialEntries: [initialEntry] });
@@ -22,6 +23,7 @@ describe("S74.1 React client shell", () => {
       saves: [],
       status: "idle"
     });
+    useUiStateStore.getState().resetUiState();
   });
 
   it("renders the new default home surface", () => {
@@ -40,6 +42,23 @@ describe("S74.1 React client shell", () => {
     expect(screen.getByRole("heading", { name: "主卷" })).toBeTruthy();
     expect(screen.getByRole("heading", { name: "舆图" })).toBeTruthy();
     expect(document.body.textContent || "").not.toMatch(/OPENAI_API_KEY|hiddenNotes|data\/sessions|provider payload/i);
+  });
+
+  it("tracks route-derived UI page state and opens safe drawers", async () => {
+    renderRoute("/game/smoke-session/map");
+
+    await waitFor(() => expect(useUiStateStore.getState().currentPage).toBe("map"));
+    expect(useUiStateStore.getState().currentSessionId).toBe("smoke-session");
+
+    fireEvent.click(screen.getByRole("button", { name: "打开显示偏好" }));
+    expect(screen.getByRole("complementary", { name: "显示偏好" })).toBeTruthy();
+    expect(useUiStateStore.getState().activeDrawer).toBe("display-preferences");
+
+    fireEvent.change(screen.getByLabelText("动效"), { target: { value: "reduced" } });
+    expect(document.querySelector(".appShell")?.getAttribute("data-motion")).toBe("reduced");
+
+    fireEvent.click(screen.getByRole("button", { name: "关闭抽屉" }));
+    expect(useUiStateStore.getState().activeDrawer).toBeNull();
   });
 
   it("renders the S74.2 safe API forms without raw route wording", () => {
@@ -65,5 +84,22 @@ describe("S74.1 React client shell", () => {
     expect(screen.getByRole("button", { name: "取题" })).toHaveProperty("disabled", true);
     expect(screen.queryByRole("button", { name: "推进考场" })).toBeNull();
     expect(screen.queryByRole("button", { name: "交卷" })).toBeNull();
+  });
+
+  it("keeps the main action draft in the UI store and clears it from the form", () => {
+    renderRoute("/game/s74-preview");
+
+    const input = screen.getByLabelText("本回合行动");
+    fireEvent.change(input, { target: { value: "拜访座师，请教经义。" } });
+
+    expect(useUiStateStore.getState().actionDraft).toMatchObject({
+      source: "manual",
+      targetPage: "game",
+      text: "拜访座师，请教经义。"
+    });
+
+    fireEvent.click(screen.getByRole("button", { name: "清空草稿" }));
+    expect(useUiStateStore.getState().actionDraft).toBeNull();
+    expect(screen.getByLabelText("本回合行动")).toHaveProperty("value", "赴书院温习经义，打听近日考期。");
   });
 });

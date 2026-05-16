@@ -1,23 +1,28 @@
 import type { FormEvent } from "react";
 import { NavLink, Outlet, useParams } from "react-router";
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { routeCatalog } from "../routes/routeCatalog";
 import { isRunnableSessionId } from "../routes/sessionId";
 import { useGameSessionStore } from "../state/gameSessionState";
+import { useUiStateStore } from "../state/uiState";
 
 const sessionRoutes = routeCatalog.filter((route) => route.surface === "session");
+const defaultActionDraft = "赴书院温习经义，打听近日考期。";
 
 export function GamePage() {
   const { sessionId = "s74-preview" } = useParams();
-  const [actionText, setActionText] = useState("赴书院温习经义，打听近日考期。");
   const loadSession = useGameSessionStore((state) => state.loadSession);
   const submitTurn = useGameSessionStore((state) => state.submitTurn);
   const session = useGameSessionStore((state) => state.currentSession);
   const lastTurn = useGameSessionStore((state) => state.lastTurn);
   const status = useGameSessionStore((state) => state.status);
   const error = useGameSessionStore((state) => state.error);
+  const actionDraft = useUiStateStore((state) => state.actionDraft);
+  const setActionDraft = useUiStateStore((state) => state.setActionDraft);
+  const clearActionDraft = useUiStateStore((state) => state.clearActionDraft);
   const sessionHref = (path: string) => path.replace("s74-preview", sessionId);
   const player = session?.worldState?.player;
+  const actionText = actionDraft?.text ?? defaultActionDraft;
 
   useEffect(() => {
     if (!isRunnableSessionId(sessionId)) return;
@@ -53,11 +58,20 @@ export function GamePage() {
           <h2>奏折</h2>
           <label>
             本回合行动
-            <textarea value={actionText} onChange={(event) => setActionText(event.target.value)} rows={5} />
+            <textarea
+              value={actionText}
+              onChange={(event) => setActionDraft({ source: "manual", targetPage: "game", text: event.target.value })}
+              rows={5}
+            />
           </label>
-          <button className="paperButton" type="submit" disabled={status === "loading" || !isRunnableSessionId(sessionId)}>
-            {status === "loading" ? "递送中" : "递送奏折"}
-          </button>
+          <div className="buttonRow">
+            <button className="paperButton" type="submit" disabled={status === "loading" || !isRunnableSessionId(sessionId)}>
+              {status === "loading" ? "递送中" : "递送奏折"}
+            </button>
+            <button className="paperButton" type="button" onClick={clearActionDraft} disabled={!actionDraft}>
+              清空草稿
+            </button>
+          </div>
           {!isRunnableSessionId(sessionId) ? <p>预览案卷不提交行动；从首页新开一卷后即可落笔。</p> : null}
         </form>
       </div>
