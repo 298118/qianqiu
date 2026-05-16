@@ -16,11 +16,12 @@
 
 | Manifest ID | 状态 | 路径 | 作用 | 安全边界 | 备注 |
 | --- | --- | --- | --- | --- | --- |
-| ink-ui-v1 | assets_active | `public/assets/ui/ink-ui-manifest.json` | S73-S77 前端 UI 素材 manifest，已登记 S73.3 首批 UI 材质、S73.4 首页资产、S73.5 场景插画、S73.6 身份背景、S73.7 立绘风格基准、S73.8 动效/fallback 素材、S73.10.2 玩家身份阶段立绘/女性风格补充/男性风格补充和 S73.10.3 通用 NPC 立绘池，并继续保留 fallback token、审核状态、usage、立绘字段、动效字段和懒加载策略 | 只保存安全路径、尺寸、用途、fallback、reduced-motion fallback、审核状态和台账 id；立绘资产必须同时满足基础素材字段与立绘扩展字段；不保存完整 prompt、provider 原始响应、本地路径、key、raw audit 或 hidden 真值 | S73.3 已填入 16 个已审核 UI 材质，S73.4 已填入 6 个已审核/限用首页素材，S73.5 已填入 10 个已审核场景插画，S73.6 已填入 6 个已审核身份背景，S73.7 已填入 24 张已审核立绘风格基准，S73.8 已填入 8 个已审核动效/fallback 素材，S73.10.2 已填入 192 张已审核玩家池立绘（72 张身份阶段 + 60 张女性风格补充 + 60 张男性风格补充），S73.10.3 已填入 188 张已审核通用 NPC 立绘；S73.9 QA 报告当前覆盖 450 个 active 素材；S73.10.1 已锁定 336 张 planned 立绘矩阵，后续重要 NPC/状态姿态/场景锚点生成并审核后再逐项进入 manifest |
+| ink-ui-v1 | assets_active | `public/assets/ui/ink-ui-manifest.json` | S73-S77 前端 UI 素材 manifest，已登记 S73.3 首批 UI 材质、S73.4 首页资产、S73.5 场景插画、S73.6 身份背景、S73.7 立绘风格基准、S73.8 动效/fallback 素材、S73.10.2 玩家身份阶段立绘/女性风格补充/男性风格补充、S73.10.3 通用 NPC 立绘池和 S73.10.4 重要 NPC 专属池，并继续保留 fallback token、审核状态、usage、立绘字段、动效字段和懒加载策略 | 只保存安全路径、尺寸、用途、fallback、reduced-motion fallback、审核状态和台账 id；立绘资产必须同时满足基础素材字段与立绘扩展字段；不保存完整 prompt、provider 原始响应、本地路径、key、raw audit 或 hidden 真值 | S73.3 已填入 16 个已审核 UI 材质，S73.4 已填入 6 个已审核/限用首页素材，S73.5 已填入 10 个已审核场景插画，S73.6 已填入 6 个已审核身份背景，S73.7 已填入 24 张已审核立绘风格基准，S73.8 已填入 8 个已审核动效/fallback 素材，S73.10.2 已填入 192 张已审核玩家池立绘（72 张身份阶段 + 60 张女性风格补充 + 60 张男性风格补充），S73.10.3 已填入 188 张已审核通用 NPC 立绘，S73.10.4 已填入 72 张已审核重要 NPC 专属立绘；S73.9 QA 报告当前覆盖 522 个 active 素材；S73.10.1 已锁定 336 张 planned 立绘矩阵，后续状态姿态/场景锚点生成并审核后再逐项进入 manifest |
 | portrait-pool-matrix-v1 | matrix_locked | `public/assets/ui/portraits/portrait-pool-matrix-v1.json` | S73.10.1 全量立绘生产矩阵，预置 336 张 planned 立绘的 `portraitRef`、usage、role、genderPresentation、ageBand、statusVariant、promptTemplateRef、生成目标路径、fallback、懒加载分组和审核字段 | 矩阵不是可用素材 manifest；`runtimeUsable` 全部为 false，不保存 provider 原始响应、本地绝对路径、key、raw audit、hidden 私档或未公开剧情事实；重要 NPC 不混入通用头像池 | 机器校验入口为 `npm run qa:portrait-matrix`；中文说明见 `docs/FRONTEND_PORTRAIT_MATRIX.md`；S73.10.2 玩家池已按矩阵生成并入库，后续继续按矩阵分批生成、缩略图、压缩、视觉/安全审核和入库 |
 | portrait-player-pool-qa-v1 | approved | `public/assets/ui/portraits/portrait-player-pool-qa-v1.json` | S73.10.2 玩家身份阶段立绘 QA sidecar，记录 72 张玩家身份阶段立绘的安全路径、主图/缩略图/低清占位 bytes、SHA-256、身份阶段、性别呈现、状态变体和审核结论；同阶段另有 60 张已审核女性玩家风格补充和 60 张已审核男性玩家风格补充由各自 QA sidecar、manifest 和统一 QA 报告追踪 | 只保存安全项目路径、哈希、文件大小、审核摘要和 prompt summary；不保存 provider 原始响应、本地绝对路径、key、raw audit、hidden 私档或未公开剧情事实 | 机器校验入口为 `npm run qa:player-portraits`；源图页保存在开发产物目录 `artifacts/s73-10-player-sheets/`，不作为 runtime manifest |
 | portrait-player-male-extra-qa-v1 | approved | `public/assets/ui/portraits/portrait-player-male-extra-qa-v1.json` | S73.10.2b 玩家男性风格补充 QA sidecar，记录 60 张玩家可选男性风格立绘的安全路径、主图/缩略图/低清占位 bytes、SHA-256、角色风格、状态变体和审核结论 | 只保存安全项目路径、哈希、文件大小和审核摘要；不保存 provider 原始响应、本地绝对路径、key、raw audit、hidden 私档或未公开剧情事实 | 机器校验入口为 `npm run qa:player-male-portraits`；源图页保存在开发产物目录 `artifacts/s73-10-player-male-extra-sheets/`，不作为 runtime manifest |
 | portrait-generic-npc-pool-qa-v1 | approved | `public/assets/ui/portraits/portrait-generic-npc-pool-qa-v1.json` | S73.10.3 通用 NPC 立绘 QA sidecar，记录 188 张通用立绘的安全路径、主图/缩略图/低清占位 bytes、SHA-256、角色、性别呈现、状态变体、bonus/female style 标记和审核结论 | 只保存安全项目路径、哈希、文件大小、审核摘要和 prompt summary；不保存 provider 原始响应、本地绝对路径、key、raw audit、hidden 私档或未公开剧情事实；候选或拒绝源页不得进入 runtime manifest | 机器校验入口为 `npm run qa:generic-npc-portraits`；188 张包含一开始按矩阵保留的 120 张、旧版源页 bonus 20 张和宫装/唐装女性风格扩展 48 张 |
+| portrait-signature-npc-pool-qa-v1 | approved | `public/assets/ui/portraits/portrait-signature-npc-pool-qa-v1.json` | S73.10.4 重要 NPC 专属立绘 QA sidecar，记录 72 张专属立绘的安全路径、主图/缩略图/低清占位 bytes、SHA-256、角色、性别呈现、状态变体和审核结论 | 使用 `signature_npc_pool` 与 `portrait_pool_signature_npc_s73_10` 单独隔离，不混入 `generic_npc`；只保存安全项目路径、哈希、文件大小和审核摘要；不保存 provider 原始响应、本地绝对路径、key、raw audit、hidden 私档、隐藏动机、未公开任免或未公开关系 | 机器校验入口为 `npm run qa:signature-npc-portraits`；源图页保存在开发产物目录 `artifacts/s73-10-signature-npc-sheets/`，不作为 runtime manifest |
 
 ## 素材记录
 
@@ -70,7 +71,7 @@
 
 ## 立绘矩阵
 
-S73.2 只固定字段；S73.7 已写入 24 张基准立绘，S73.10.1 已锁定 336 张 planned 立绘矩阵，S73.10.2 已写入 192 张玩家池立绘，S73.10.3 已写入 188 张通用 NPC 立绘。S73.7 的压缩与视觉审核 sidecar 为 `public/assets/ui/portraits/portrait-baseline-qa-v1.json`，懒加载分组为 `portrait_baseline_s73_7`；S73.10.1 的矩阵文件为 `public/assets/ui/portraits/portrait-pool-matrix-v1.json`，矩阵条目仍不是 runtime manifest；S73.10.2 的玩家身份阶段 QA sidecar 为 `public/assets/ui/portraits/portrait-player-pool-qa-v1.json`，懒加载分组为 `portrait_pool_player_s73_10`，同阶段 60 张女性玩家风格补充使用 `portrait_pool_player_female_extra_s73_10`，60 张男性玩家风格补充使用 `portrait_pool_player_male_extra_s73_10`；S73.10.3 的通用 NPC QA sidecar 为 `public/assets/ui/portraits/portrait-generic-npc-pool-qa-v1.json`，懒加载分组为 `portrait_pool_generic_npc_s73_10`。
+S73.2 只固定字段；S73.7 已写入 24 张基准立绘，S73.10.1 已锁定 336 张 planned 立绘矩阵，S73.10.2 已写入 192 张玩家池立绘，S73.10.3 已写入 188 张通用 NPC 立绘，S73.10.4 已写入 72 张重要 NPC 专属立绘。S73.7 的压缩与视觉审核 sidecar 为 `public/assets/ui/portraits/portrait-baseline-qa-v1.json`，懒加载分组为 `portrait_baseline_s73_7`；S73.10.1 的矩阵文件为 `public/assets/ui/portraits/portrait-pool-matrix-v1.json`，矩阵条目仍不是 runtime manifest；S73.10.2 的玩家身份阶段 QA sidecar 为 `public/assets/ui/portraits/portrait-player-pool-qa-v1.json`，懒加载分组为 `portrait_pool_player_s73_10`，同阶段 60 张女性玩家风格补充使用 `portrait_pool_player_female_extra_s73_10`，60 张男性玩家风格补充使用 `portrait_pool_player_male_extra_s73_10`；S73.10.3 的通用 NPC QA sidecar 为 `public/assets/ui/portraits/portrait-generic-npc-pool-qa-v1.json`，懒加载分组为 `portrait_pool_generic_npc_s73_10`；S73.10.4 的重要 NPC QA sidecar 为 `public/assets/ui/portraits/portrait-signature-npc-pool-qa-v1.json`，懒加载分组为 `portrait_pool_signature_npc_s73_10`，不得被随机通用头像池抽取。
 
 | portraitRef | 状态 | 人物范围 | 专属人物安全 ref | 身份/职业 | genderPresentation | ageBand | roleStage | statusVariant | emotionVariant | 源图路径 | 缩略图路径 | 低清占位路径 | fallbackRef | 小尺寸可读性 | 成年端庄审核 | 现代/水印/乱码审核 | manifest ledgerId | 懒加载分组 | 备注 |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -116,6 +117,12 @@ S73.2 只固定字段；S73.7 已写入 24 张基准立绘，S73.10.1 已锁定 
 | 旧版 bonus 通用池 | approved | 20 | `assets/ui/portraits/s73-10/portrait-s73-10-generic_npc-bonus-*-v1.webp` | `assets/ui/thumbs/thumb-portrait-s73-10-generic_npc-bonus-*-v1.webp` | `assets/ui/portraits/placeholders/placeholder-portrait-s73-10-generic_npc-bonus-*-v1.webp` | `public/assets/ui/portraits/portrait-generic-npc-pool-qa-v1.json` | `portrait_pool_generic_npc_s73_10` | 通过：旧版源页中可用立绘未浪费，作为额外通用立绘继续使用；标记 `bonus_generic_npc`，不计入矩阵 120 张主体。 | 覆盖老师、同年、房考官和主考官四类，每类五个变体。 |
 | 宫装/唐装女性风格扩展池 | approved | 48 | `assets/ui/portraits/s73-10/portrait-s73-10-generic_npc-female-style-*-v1.webp` | `assets/ui/thumbs/thumb-portrait-s73-10-generic_npc-female-style-*-v1.webp` | `assets/ui/portraits/placeholders/placeholder-portrait-s73-10-generic_npc-female-style-*-v1.webp` | `public/assets/ui/portraits/portrait-generic-npc-pool-qa-v1.json` | `portrait_pool_generic_npc_s73_10` | 通过：重点补宫装与唐装，年轻至轻熟成人、苗条、上身服饰层次清楚、腰身收束，服饰与姿势变化清楚；无露胸、暴露、挑逗、幼态、发福化或中年化。 | 角色 token 为 `palace-lady` 与 `tang-lady`，标签包含 `female_style_pack`、`palace` 或 `tang`；S74-S77 可作为已审核通用女性立绘按需使用。 |
 
+## S73.10.4 重要 NPC 专属立绘池简表
+
+| 范围 | 状态 | 数量 | 项目路径 | 缩略图路径 | 低清占位路径 | QA sidecar | 懒加载组 | 审核结论 | 备注 |
+| --- | --- | ---: | --- | --- | --- | --- | --- | --- | --- |
+| 重要 NPC 专属池 | approved | 72 | `assets/ui/portraits/s73-10/portrait-s73-10-signature_npc-*-v1.webp` | `assets/ui/thumbs/thumb-portrait-s73-10-signature_npc-*-v1.webp` | `assets/ui/portraits/placeholders/placeholder-portrait-s73-10-signature_npc-*-v1.webp` | `public/assets/ui/portraits/portrait-signature-npc-pool-qa-v1.json` | `portrait_pool_signature_npc_s73_10` | 通过：覆盖皇帝、太后、皇后、摄政、首辅、大司马、礼部/兵部重臣、都御史、总督、名将、名臣、清流领袖、权宦、权臣、豪商、地方望族、名师、名主考、宿敌、知己、红颜/蓝颜知交、宫廷谋主和边地使者；成人端庄、公开身份气质清楚。女性角色不做中性化处理，通过高髻、簪钗、层叠礼服、腰封细腰、肩颈线和端庄仪态体现成年女性特征，无低胸、透视、裸露、挑逗、幼态或现代化。 | 重要 NPC 不混入 `generic_npc` 通用头像池；未进入公开剧情视野的人物只暴露安全 `portraitRef`，不泄漏 hidden 私档、隐藏动机、未公开任免或未公开关系。 |
+
 ## S73.8 动效与 fallback 简表
 
 S73.8 已完成 8 个动效/fallback 素材。创意发散 prompt 草案由 medium 子代理完成，Codex 定稿 prompt、使用 `gpt-image-2` 生成、后处理为 WebP、生成缩略图并完成视觉/安全审核。完整 QA sidecar 见 `assets/ui/effects/effect-motion-qa-v1.json`；manifest 只登记安全项目路径、动效建议、fallback、reduced-motion fallback、性能预算和审核摘要。
@@ -137,9 +144,9 @@ S73.9 新增统一素材 QA 流程，入口为 `scripts/frontendAssetQa.js`：
 
 - `npm run qa:frontend-assets`：校验已提交的 `public/assets/ui/asset-qa-report-v1.json` 与当前 `ink-ui-manifest.json`、真实文件 SHA-256、bytes 和审核状态同步。
 - `npm run qa:frontend-assets:write`：复用现有 `playwright-core` 与本机 Chrome/Edge，刷新 19 个透明素材的像素 QA 指标，并重写 `asset-qa-report-v1.json`。
-- `public/assets/ui/asset-qa-preview.html`：本地预览入口，按阶段、分类和搜索筛选 450 个 active 素材；透明素材同时显示宣纸底和深色底合成，用于人工复查色边、横线、矩形切口和遮挡风险。
+- `public/assets/ui/asset-qa-preview.html`：本地预览入口，按阶段、分类和搜索筛选 522 个 active 素材；透明素材同时显示宣纸底和深色底合成，用于人工复查色边、横线、矩形切口和遮挡风险。
 
-当前 `asset-qa-report-v1.json` 覆盖 450 个 active 素材、19 个透明素材，结果为 0 errors、0 warnings。报告不保存完整 prompt、provider 原始响应、本地绝对路径、key、raw audit、hidden notes 或 hidden intent；只保存 manifest 安全路径、文件 hash、尺寸、alpha、性能、fallback、审核状态和像素统计。
+当前 `asset-qa-report-v1.json` 覆盖 522 个 active 素材、19 个透明素材，结果为 0 errors、0 warnings。报告不保存完整 prompt、provider 原始响应、本地绝对路径、key、raw audit、hidden notes 或 hidden intent；只保存 manifest 安全路径、文件 hash、尺寸、alpha、性能、fallback、审核状态和像素统计。
 
 ## 参考素材记录
 

@@ -20,6 +20,8 @@
     "qa:player-male-portraits:write": "node scripts/frontendPlayerMalePortraitAssets.js --write",
     "qa:generic-npc-portraits": "node scripts/frontendGenericNpcPortraitAssets.js --check",
     "qa:generic-npc-portraits:write": "node scripts/frontendGenericNpcPortraitAssets.js --write",
+    "qa:signature-npc-portraits": "node scripts/frontendSignatureNpcPortraitAssets.js --check",
+    "qa:signature-npc-portraits:write": "node scripts/frontendSignatureNpcPortraitAssets.js --write",
     "eval:ai": "node scripts/aiEvaluationRunner.js && node --test test/aiEvalFixtures.test.js",
     "smoke:browser": "node scripts/browserSmoke.js",
     "smoke:dual-mode": "node scripts/dualModeAcceptance.js",

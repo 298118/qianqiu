@@ -20,6 +20,7 @@ const portraitPlayerFemaleResetQaPath = path.join(
 );
 const portraitPlayerMaleExtraQaPath = path.join(repoRoot, "public", "assets", "ui", "portraits", "portrait-player-male-extra-qa-v1.json");
 const portraitGenericNpcPoolQaPath = path.join(repoRoot, "public", "assets", "ui", "portraits", "portrait-generic-npc-pool-qa-v1.json");
+const portraitSignatureNpcPoolQaPath = path.join(repoRoot, "public", "assets", "ui", "portraits", "portrait-signature-npc-pool-qa-v1.json");
 const effectMotionQaPath = path.join(repoRoot, "public", "assets", "ui", "effects", "effect-motion-qa-v1.json");
 const assetQaReportPath = path.join(repoRoot, "public", "assets", "ui", "asset-qa-report-v1.json");
 const assetQaPreviewPath = path.join(repoRoot, "public", "assets", "ui", "asset-qa-preview.html");
@@ -221,7 +222,7 @@ test("S73.2 ink UI manifest fixes schema, safety, fallback, and portrait policie
   });
 
   assert.equal(Array.isArray(manifest.assets), true);
-  assert.equal(manifest.assets.length, 450, "S73.3-S73.10.3 UI assets are active");
+  assert.equal(manifest.assets.length, 522, "S73.3-S73.10.4 UI assets are active");
 
   const phaseCounts = manifest.assets.reduce((counts, asset) => {
     counts[asset.phase] = (counts[asset.phase] || 0) + 1;
@@ -235,9 +236,10 @@ test("S73.2 ink UI manifest fixes schema, safety, fallback, and portrait policie
   assert.equal(phaseCounts["S73.8"], 8);
   assert.equal(phaseCounts["S73.10.2"], 192);
   assert.equal(phaseCounts["S73.10.3"], 188);
+  assert.equal(phaseCounts["S73.10.4"], 72);
 
   for (const asset of manifest.assets) {
-    assert.equal(["S73.3", "S73.4", "S73.5", "S73.6", "S73.7", "S73.8", "S73.10.2", "S73.10.3"].includes(asset.phase), true, asset.id);
+    assert.equal(["S73.3", "S73.4", "S73.5", "S73.6", "S73.7", "S73.8", "S73.10.2", "S73.10.3", "S73.10.4"].includes(asset.phase), true, asset.id);
     assert.equal(manifest.allowedCategories.includes(asset.category), true, asset.id);
     if (asset.phase === "S73.3") assert.equal(asset.category, "material", asset.id);
     if (asset.phase === "S73.4") assert.equal(asset.usage.includes("home"), true, asset.id);
@@ -375,6 +377,40 @@ test("S73.2 ink UI manifest fixes schema, safety, fallback, and portrait policie
       assert.equal(asset.performance.lowResPlaceholderBytes, fs.statSync(placeholderPath).size, asset.id);
       assert.equal(asset.performance.thumbnailBytes <= asset.performance.thumbnailTargetMaxBytes, true, asset.id);
     }
+    if (asset.phase === "S73.10.4") {
+      assert.equal(asset.category, "portrait", asset.id);
+      assert.equal(asset.subcategory, "signature_npc_pool", asset.id);
+      assert.equal(asset.dimensions.width, 1024, asset.id);
+      assert.equal(asset.dimensions.height, 1536, asset.id);
+      assert.equal(asset.transparent, false, asset.id);
+      assert.equal(asset.portraitRef, asset.id, asset.id);
+      assert.equal(asset.portraitRef.startsWith("portrait-s73-10-signature_npc-"), true, asset.id);
+      assert.equal(manifest.roleCatalog.includes(asset.role), true, asset.id);
+      assert.equal(["feminine", "mixed"].includes(asset.genderPresentation), true, asset.id);
+      assert.equal(asset.ageBand.startsWith("adult"), true, asset.id);
+      assert.equal(["baseline", "formal", "private_scene"].includes(asset.statusVariant), true, asset.id);
+      assert.equal(Array.isArray(asset.identityTags), true, asset.id);
+      assert.equal(asset.identityTags.includes("signature_npc"), true, asset.id);
+      assert.equal(asset.identityTags.includes("important_npc"), true, asset.id);
+      assert.equal(asset.identityTags.includes("generic_npc"), false, asset.id);
+      assert.equal(Array.isArray(asset.emotionTags), true, asset.id);
+      assertSafeUiAssetPath(asset.lowResPlaceholderPath, `${asset.id}.lowResPlaceholderPath`);
+      assert.equal(asset.fallbackRef, "fallback-role-silhouette-v1", asset.id);
+      assert.deepEqual(asset.lazyLoad, {
+        group: "portrait_pool_signature_npc_s73_10",
+        allowEagerLoad: false,
+        thumbnailFirst: true,
+        lowResPlaceholder: true,
+        maxInitialPortraits: 8
+      });
+      const placeholderPath = resolveUiAssetPath(asset.lowResPlaceholderPath);
+      assert.equal(fs.existsSync(placeholderPath), true, asset.lowResPlaceholderPath);
+      const placeholderInfo = readImageInfo(placeholderPath);
+      assert.equal(placeholderInfo.width, 64, asset.id);
+      assert.equal(placeholderInfo.height, 96, asset.id);
+      assert.equal(asset.performance.lowResPlaceholderBytes, fs.statSync(placeholderPath).size, asset.id);
+      assert.equal(asset.performance.thumbnailBytes <= asset.performance.thumbnailTargetMaxBytes, true, asset.id);
+    }
     if (asset.phase === "S73.8") {
       assert.equal(asset.category, "effect", asset.id);
       assert.equal(asset.reducedMotionFallback, "fallback-ink-motion-static-v1", asset.id);
@@ -485,6 +521,10 @@ test("S73.2 ink UI manifest fixes schema, safety, fallback, and portrait policie
     "portrait-s73-10-generic_npc-bonus-teacher-f01-v1",
     "portrait-s73-10-generic_npc-female-style-palace-01-look01-v1",
     "portrait-s73-10-generic_npc-female-style-tang-04-look06-v1",
+    "portrait-s73-10-signature_npc-emperor-normal-v1",
+    "portrait-s73-10-signature_npc-empress-dowager-court-v1",
+    "portrait-s73-10-signature_npc-beloved-confidant-private-v1",
+    "portrait-s73-10-signature_npc-frontier-envoy-court-v1",
     "ui-effect-mist-wash-v1",
     "ui-effect-ink-spread-v1",
     "ui-effect-cinnabar-seal-imprint-v1",
@@ -804,6 +844,65 @@ test("S73.10.3 generic NPC portrait pool QA records matrix, bonus, and female st
   });
 });
 
+test("S73.10.4 signature NPC portrait pool QA records isolated important NPC portraits", () => {
+  const qaText = fs.readFileSync(portraitSignatureNpcPoolQaPath, "utf8");
+  assert.doesNotMatch(qaText, FORBIDDEN_MANIFEST_REMOTE_OR_LOCAL_PATH);
+  assert.doesNotMatch(qaText, FORBIDDEN_ASSET_VALUE);
+  const qa = JSON.parse(qaText);
+
+  assert.equal(qa.schemaVersion, 1);
+  assert.equal(qa.phase, "S73.10.4");
+  assert.equal(qa.reviewedBy, "Codex");
+  assert.equal(qa.assets.length, 72);
+  assert.equal(qa.sourceSheets.length, 12);
+  assert.equal(qa.visualReviewSummary.includes("72 张重要 NPC 专属立绘"), true);
+  assert.equal(qa.visualReviewSummary.includes("女性角色不做中性化处理"), true);
+  assert.equal(qa.visualReviewSummary.includes("腰封细腰"), true);
+  assert.equal(qa.safetyReviewSummary.includes("不混入 generic_npc"), true);
+  assert.equal(qa.safetyReviewSummary.includes("隐藏动机"), true);
+
+  const manifest = readJson(manifestPath);
+  const poolAssets = new Map(manifest.assets.filter((asset) => asset.phase === "S73.10.4").map((asset) => [asset.id, asset]));
+  const roles = new Map();
+  const statusCounts = new Map();
+  const feminineRoles = new Set();
+  for (const entry of qa.assets) {
+    const asset = poolAssets.get(entry.id);
+    assert.ok(asset, entry.id);
+    assert.equal(entry.path, asset.path, entry.id);
+    assert.equal(entry.thumbnailPath, asset.thumbnailPath, entry.id);
+    assert.equal(entry.lowResPlaceholderPath, asset.lowResPlaceholderPath, entry.id);
+    assert.equal(asset.subcategory, "signature_npc_pool", entry.id);
+    assert.equal(asset.lazyLoad.group, "portrait_pool_signature_npc_s73_10", entry.id);
+    assert.equal(asset.identityTags.includes("signature_npc"), true, entry.id);
+    assert.equal(asset.identityTags.includes("important_npc"), true, entry.id);
+    assert.equal(asset.identityTags.includes("generic_npc"), false, entry.id);
+    if (entry.genderPresentation === "feminine") feminineRoles.add(entry.role);
+    roles.set(entry.role, (roles.get(entry.role) || 0) + 1);
+    statusCounts.set(entry.statusVariant, (statusCounts.get(entry.statusVariant) || 0) + 1);
+    for (const field of ["path", "thumbnailPath", "lowResPlaceholderPath"]) {
+      assertSafeUiAssetPath(entry[field], `${entry.id}.${field}`);
+      assert.equal(fs.existsSync(resolveUiAssetPath(entry[field])), true, `${entry.id}.${field}`);
+    }
+    assert.equal(entry.bytes, fs.statSync(resolveUiAssetPath(entry.path)).size, entry.id);
+    assert.equal(entry.thumbnailBytes, fs.statSync(resolveUiAssetPath(entry.thumbnailPath)).size, entry.id);
+    assert.equal(entry.lowResPlaceholderBytes, fs.statSync(resolveUiAssetPath(entry.lowResPlaceholderPath)).size, entry.id);
+    assert.equal(entry.sha256, sha256File(resolveUiAssetPath(entry.path)), entry.id);
+    assert.equal(entry.thumbnailSha256, sha256File(resolveUiAssetPath(entry.thumbnailPath)), entry.id);
+    assert.equal(entry.lowResPlaceholderSha256, sha256File(resolveUiAssetPath(entry.lowResPlaceholderPath)), entry.id);
+    assert.equal(entry.visualReviewStatus, "approved", entry.id);
+    assert.equal(entry.safetyReviewStatus, "approved", entry.id);
+  }
+  assert.equal(roles.size, 24);
+  for (const [role, count] of roles) assert.equal(count, 3, role);
+  assert.deepEqual(Object.fromEntries([...statusCounts.entries()].sort()), {
+    baseline: 24,
+    formal: 24,
+    private_scene: 24
+  });
+  assert.deepEqual([...feminineRoles].sort(), ["beloved-confidant", "empress", "empress-dowager"]);
+});
+
 test("S73.8 effect motion QA records approved reduced-motion fallbacks", () => {
   const qaText = fs.readFileSync(effectMotionQaPath, "utf8");
   assert.doesNotMatch(qaText, FORBIDDEN_MANIFEST_REMOTE_OR_LOCAL_PATH);
@@ -959,7 +1058,8 @@ test("S73.10 portrait pool matrix locks planned counts and player pool handoff",
     assert.equal(entry.portraitRef.startsWith("portrait-s73-10-"), true, entry.portraitRef);
     const isGeneratedMatrixEntry =
       (entry.matrixGroup === "player" && entry.productionStep === "S73.10.2") ||
-      (entry.matrixGroup === "generic_npc" && entry.productionStep === "S73.10.3");
+      (entry.matrixGroup === "generic_npc" && entry.productionStep === "S73.10.3") ||
+      (entry.matrixGroup === "signature_npc" && entry.productionStep === "S73.10.4");
     assert.equal(manifestPortraitRefs.has(entry.portraitRef), isGeneratedMatrixEntry, entry.portraitRef);
     assert.equal(String(entry.ageBand).startsWith("adult"), true, entry.portraitRef);
     assert.equal(templateIds.has(entry.promptTemplateRef), true, entry.portraitRef);
@@ -1063,14 +1163,18 @@ test("S73.2 frontend asset ledger records manifest, fallback, portrait, and sour
     "portrait-player-female-reset-qa-v1.json",
     "portrait-player-male-extra-qa-v1.json",
     "portrait-generic-npc-pool-qa-v1.json",
+    "portrait-signature-npc-pool-qa-v1.json",
     "portrait_baseline_s73_7",
     "portrait_pool_player_s73_10",
     "portrait_pool_player_female_extra_s73_10",
     "portrait_pool_player_male_extra_s73_10",
     "portrait_pool_generic_npc_s73_10",
+    "portrait_pool_signature_npc_s73_10",
     "玩家女性风格补充池",
     "玩家男性风格补充池",
     "女性风格扩展池",
+    "重要 NPC 专属池",
+    "signature_npc_pool",
     "palace-lady",
     "tang-lady",
     "fallback-ink-motion-static-v1"
