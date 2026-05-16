@@ -67,7 +67,7 @@
 当前项目：
 
 - 后端：Node.js + Express，plain JavaScript。
-- 前端：当前运行入口仍是 `public/index.html`、`public/app.js`、`public/styles.css`；S74.0 已安装 React/Vite 工具链但未创建 `client/` 或改变默认入口，S74.1 起接管默认 `/`。
+- 前端：默认运行入口已由 S74.1 React/Vite 构建产物接管；源码在 `client/`，构建输出在 `dist/client/`。旧 `public/index.html`、`public/app.js`、`public/styles.css` 暂留作迁移参考；`public/assets/`、`public/vendor/` 和 S72 地图脚本继续作为静态资源路径。
 - 地图：S72 已使用本地 `pixi.js@7.4.3` UMD vendor 和 `public/mapRenderer.js` / `public/mapPanel.js`。
 - 本机已确认 Node.js `v24.13.1`、npm `11.8.0`，满足当前 Vite 官方 Node 要求。
 
@@ -565,6 +565,8 @@ Manifest 示例：
 
 ### S74.1 Vite/TypeScript 默认前端
 
+状态：已完成。S74.1 已创建 `client/`、Vite/TypeScript/Vitest 配置、最小 React Router Data Mode 多页壳、Express history fallback 和 focused React browser smoke；默认 `/` 由 `dist/client/` 构建产物接管，`public/assets/`、`public/vendor/`、`public/mapRenderer.js` 和 `public/mapPanel.js` 继续保留为素材与 S72 地图资源路径。
+
 实现功能：
 
 - 新增：
@@ -582,6 +584,9 @@ Manifest 示例：
   - `tsconfig.client.json`
   - `vitest.config.mjs`
 - Express 默认入口改为服务新 React 构建产物。React Router Data Mode 在 `/` base 下管理多页 SPA 路由，并要求 Express 为 `/game/:sessionId/*` 等前端路由提供 history fallback。
+- `vite.config.mjs` 使用 `publicDir=false`、`outDir="../dist/client"` 和 `assetsDir="client-assets"`，避免 Vite 构建清空或抢占 S72/S73 的 `public/assets/`。
+- `npm start` 通过 `prestart` 先构建 React client，再启动 Express；直接 `node server.js` 可服务已有构建产物。
+- `npm run smoke:browser` 改为 S74.1 focused React smoke；旧原生前端 smoke 暂存为 `npm run smoke:browser:legacy` 供迁移参考。
 
 验收：
 
@@ -589,6 +594,7 @@ Manifest 示例：
 - `npm run test:client`
 - `npm run build:client`
 - `npm run smoke:browser` 更新为验证新默认前端。
+- `node --test test/reactClientScaffold.test.js`
 
 ### S74.2 安全 API client
 

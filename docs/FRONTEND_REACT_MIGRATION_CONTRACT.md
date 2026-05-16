@@ -1,6 +1,6 @@
 # 前端 React 迁移契约
 
-本文档是 S74.0 的迁移契约。它批准并记录 React/Vite 前端工具链的引入方式，但不把半成品前端接到默认入口；真正创建 `client/`、Vite 配置、TypeScript 配置、React Router 路由和 Express history fallback 留给 S74.1-S74.7 逐步完成。
+本文档是 S74 的迁移契约。S74.0 批准并记录 React/Vite 前端工具链的引入方式；S74.1 已创建 `client/`、Vite 配置、TypeScript 配置、React Router Data Mode 路由和 Express history fallback，让 `dist/client/` 构建产物接管默认 `/`。后续 S74.2-S74.7 继续补安全 API client、状态层、surface registry、素材加载、S72 地图桥和默认入口验收。
 
 ## 1. S74.0 决策
 
@@ -8,7 +8,15 @@
 - 已安装精确版本开发依赖：`typescript@6.0.3`、`vite@8.0.13`、`@vitejs/plugin-react@6.0.2`、`vitest@4.1.6`、`@testing-library/react@16.3.2`、`@testing-library/user-event@14.6.1`、`jsdom@29.1.1`、`@types/react@19.2.14`、`@types/react-dom@19.2.3`、`@types/node@25.8.0`。
 - 当前本机验证 Node.js `v24.13.1`、npm `11.8.0`。S74 前端工具链要求 Node.js `20.19+`、`22.13+` 或 `24.0+`；不再以 Node.js 18 作为开发基线。
 - S74.0 不新增 `client/`，不改 `server.js` 静态入口，不替换 `public/index.html` / `public/app.js` / `public/styles.css`，不运行素材 `--write` 脚本，不刷新 S73 manifest、立绘或 QA 报告。
-- S74.1 起新 React/Vite 前端直接接管默认 `/`。产品内不保留 `/ink-client/` 双入口或 `/legacy.html` 作为交付要求；回退方式是 Git revert 或恢复上一提交。
+- S74.1 已让新 React/Vite 前端直接接管默认 `/`。产品内不保留 `/ink-client/` 双入口或 `/legacy.html` 作为交付要求；回退方式是 Git revert 或恢复上一提交。
+
+## 1.1 S74.1 更新
+
+- 已新增 `client/index.html`、`client/src/main.tsx`、`client/src/App.tsx`、`client/src/router.tsx`、`client/src/pages/`、`client/src/routes/`、`client/src/api/`、`client/src/state/`、`client/src/types/` 和 `client/src/styles/`。
+- 已新增 `vite.config.mjs`、`tsconfig.client.json` 和 `vitest.config.mjs`；Vite `root` 为 `client`，`publicDir=false`，生产输出为 `dist/client/`，bundle 资源目录为 `/client-assets/`，避免覆盖或抢占 `public/assets/`。
+- `server.js` 已改为 API 优先，随后服务 `dist/client` 与 `public` 静态资源，最后只对 HTML 导航请求返回 `dist/client/index.html`。带扩展名的缺失资源、`/api/*` 请求和非 GET/HEAD 请求不会 fallback 成 HTML。
+- `package.json` 已新增 `dev:client`、`build:client`、`typecheck:client`、`test:client`、`preview:client`、`smoke:browser:legacy`；`smoke:browser` 现在运行 S74.1 focused React smoke。`prestart` 会先运行 `build:client`，以保持 `npm install && npm start` 后默认 `/` 可打开新前端。
+- S74.1 只建立最小多页前端与静态入口，不接入真实开局、读档、普通行动、考试提交、AI 设置或地图桥；这些仍归 S74.2-S76 小步。
 
 ## 2. 依赖用途与边界
 
@@ -54,22 +62,25 @@ S74 使用 React Router Data Mode：
 ## 4. 构建与静态资源契约
 
 - S74.1 新增 `client/`、`vite.config.mjs`、`tsconfig.client.json` 和 `vitest.config.mjs`。
-- Vite 构建产物应进入 `dist/client/` 或等价隔离目录，再由 Express 优先服务 React 构建产物并对前端路由提供 history fallback。
+- Vite 构建产物进入 `dist/client/`，由 Express 优先服务 React 构建产物并对前端路由提供 history fallback。
+- Vite bundle 资源使用 `/client-assets/`，避免和 S72/S73 运行时素材路径 `/assets/...` 冲突。
 - `public/assets/` 继续保存 S72/S73 已审核素材；`public/vendor/`、`public/mapRenderer.js` 和 `public/mapPanel.js` 继续作为 S72 地图运行时资源来源，直到 S76.9 以安全桥接方式包装。
 - Vite `publicDir` 不得指向现有 `public/` 并在 build 时清空该目录；任何 build 清理只能作用于 React 构建输出目录。
 - 默认 `npm start` 必须保持可运行。S74.1-S74.7 每步若引入构建前置条件，必须提供清楚的本地启动路径或自动构建/降级策略。
 
-## 5. 预留 npm 脚本
+## 5. npm 脚本
 
-S74.0 只固定脚本名称和语义；实际脚本在 S74.1 创建配置文件时写入 `package.json`，避免当前阶段出现无配置的失败命令。
+S74.1 已把脚本写入 `package.json`：
 
-| 脚本 | S74.1 预期命令 | 语义 |
+| 脚本 | 命令 | 语义 |
 | --- | --- | --- |
 | `dev:client` | `vite --config vite.config.mjs` | 本地 React dev server |
 | `build:client` | `vite build --config vite.config.mjs` | 生产构建 |
 | `typecheck:client` | `tsc --project tsconfig.client.json --noEmit` | `client/` 类型检查 |
 | `test:client` | `vitest --config vitest.config.mjs run` | React 单元/交互测试 |
 | `preview:client` | `vite preview --config vite.config.mjs` | 本地预览构建产物 |
+| `smoke:browser` | `npm run build:client && node scripts/clientSmoke.js` | S74.1 React 默认入口、history fallback、移动端和 hidden/raw 防线 smoke |
+| `smoke:browser:legacy` | `node scripts/browserSmoke.js` | 旧原生前端浏览器 smoke 保留为迁移参考 |
 
 ## 6. 安全与素材边界
 
@@ -97,6 +108,15 @@ S74.1 及后续新增 client 文件后追加：
 - `npm run test:client`
 - `npm run build:client`
 - `npm run smoke:browser`
+
+S74.1 已验证：
+
+- `npm run typecheck:client`
+- `npm run test:client`
+- `node --test test/reactClientScaffold.test.js`
+- `npm run build:client`
+- `npm run smoke:browser -- --screenshots artifacts/s74-frontend-smoke`
+- Browser 插件手动打开 `http://127.0.0.1:3200/` 与 `/game/s74-browser/map`，确认 React entry、history fallback、无横向溢出和无 hidden token 泄漏。
 
 回滚策略：
 
