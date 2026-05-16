@@ -3,7 +3,7 @@
 本文档是《千秋》前端大重构的活动任务书。2026-05-14 用户进一步要求把原规划细化到可执行开发粒度，并允许为了更好的前端开发引入外部依赖和框架。因此本版不再把“无构建前端”视为 S74-S77 的固定技术上限，而是改为：
 
 - S73 先完成素材体系、视觉规范、manifest、台账、审核流程和全量玩家/NPC 立绘池，不引入运行时框架。
-- S74.0 先走依赖治理，若验证通过，采用 React + TypeScript + Vite + React Router 直接重构默认前端；旧 `public/index.html`、`public/app.js` 和 `public/styles.css` 不再作为必须保留的回滚路径。
+- S74.0 已走依赖治理并安装 React + TypeScript + Vite + React Router 工具链，新增 [FRONTEND_REACT_MIGRATION_CONTRACT.md](FRONTEND_REACT_MIGRATION_CONTRACT.md)；真正创建 `client/`、配置构建和让新前端接管默认 `/` 从 S74.1 开始。
 - 新前端按多页 SPA 路由设计，不再把首页、主叙事、地图、人物、史册、考试、放榜和设置全部塞进一个单页壳。
 - S75 让新前端接管首页、全局 shell 和基础路由。
 - S76 接管主叙事页、身份面板、考试/放榜专题和独立舆图页。
@@ -19,7 +19,7 @@
 - 将“素材生成必须全面”落成素材矩阵：UI 材质、首页、场景、身份背景、考试/放榜、NPC/玩家立绘、动效、fallback、缩略图和 manifest。
 - 把 300-400 张玩家/NPC 立绘目标正式纳入 S73.10 完成，不再作为 S77 之后的长期分期；后续 S74-S77 必须通过 manifest `portraitRef` 使用已审核立绘。
 - 明确女性立绘边界：全部为成年角色，端庄、服饰严整、高颜值、身份感强，可用剪裁、腰封、衣料层次和站姿表现优雅成熟女性身形比例；不得露骨、挑逗、幼态化或把身体部位当作卖点。
-- 允许 S74 之后通过治理引入 React/TypeScript/Vite/React Router，但不在本规划提交里安装依赖；真正安装依赖必须单独执行 S74.0。
+- S74.0 已通过治理安装 React/TypeScript/Vite/React Router；后续依赖升级、替换或新增 UI/数据层库仍必须单独走依赖治理。
 - 当前旧前端本质是单页游戏壳，已经不适合承载地图、科举、NPC、史册、存档和多身份专属玩法；新前端采用多页 SPA 路由，主页面只放当下最重要的信息。
 - 按用户最新确认，重构不需要继续保持旧前端可用；S74 起新 React/Vite 前端直接接管默认 `/`，旧原生前端文件可在实施步骤中替换或删除，回退依赖 Git，不在产品内保留 `/legacy.html` 或双入口。
 - 明确 `@pixi/react` 暂缓，S72 已落地的 `public/mapRenderer.js` / `public/mapPanel.js` 继续作为 imperative PixiJS island。
@@ -67,24 +67,25 @@
 当前项目：
 
 - 后端：Node.js + Express，plain JavaScript。
-- 前端：`public/index.html`、`public/app.js`、`public/styles.css`，无构建步骤。
+- 前端：当前运行入口仍是 `public/index.html`、`public/app.js`、`public/styles.css`；S74.0 已安装 React/Vite 工具链但未创建 `client/` 或改变默认入口，S74.1 起接管默认 `/`。
 - 地图：S72 已使用本地 `pixi.js@7.4.3` UMD vendor 和 `public/mapRenderer.js` / `public/mapPanel.js`。
 - 本机已确认 Node.js `v24.13.1`、npm `11.8.0`，满足当前 Vite 官方 Node 要求。
 
-### 4.2 S74.0 建议引入的依赖
+### 4.2 S74.0 已引入的依赖
 
-以下是候选方案，真正安装必须在 S74.0 单独修改 `package.json` / lockfile，并按 [DEPENDENCY_PLUGIN_GOVERNANCE.md](DEPENDENCY_PLUGIN_GOVERNANCE.md) 记录用途、许可证、维护状态、安全影响、Mock/no-key 影响、验证和回滚。
+S74.0 已单独修改 `package.json` / lockfile，并按 [DEPENDENCY_PLUGIN_GOVERNANCE.md](DEPENDENCY_PLUGIN_GOVERNANCE.md) 与 [FRONTEND_REACT_MIGRATION_CONTRACT.md](FRONTEND_REACT_MIGRATION_CONTRACT.md) 记录用途、许可证、维护状态、安全影响、Mock/no-key 影响、验证和回滚。所有版本使用精确版本，不使用 `latest`。
 
 | 依赖 | 建议 | 用途 | 说明 |
 | --- | --- | --- | --- |
-| `react` / `react-dom` | 引入 | 首页、shell、抽屉、考试全屏、身份面板、底部奏折 | 复杂 UI 状态和组件复用明显多于旧原生脚本能舒适承担的范围。 |
-| `typescript` | 引入 dev | 只用于 `client/` 类型 | 不把后端 CJS 转 ESM，不在根级加 `"type": "module"`。 |
-| `vite` | 引入 dev | React 默认前端 dev/build | 构建输出接管默认浏览器入口；保留 `public/assets/`、S72 地图运行时和后端静态资源约束。 |
-| `react-router` | 引入 | 多页 SPA 路由、页面过场、深链接、loader、pending/error/focus/scroll 边界 | 采用 Data Mode，不启用 React Router Framework Mode；Express 仍是后端 API 与静态资源服务器。 |
-| `zustand` | 引入 | 前端视图缓存与 UI 状态 | 仅保存 `sessionId`、当前安全 payload、tab/drawer/modal 状态；不能当 canonical state。 |
-| `lucide-react` | 引入 | 设置、存档、发送、返回、关闭等图标 | 图标再用 CSS 做朱印/淡墨样式，避免手画一堆不可维护 SVG。 |
-| `vitest` | 引入 dev | client 纯函数、store、组件测试 | 后端继续保留 `node --test`。 |
-| `@testing-library/react`、`@testing-library/user-event`、`jsdom` | 引入 dev | React 交互测试 | 覆盖设置抽屉、存档列表、行动 dock、考试写作区、键盘行为。 |
+| `react@19.2.6` / `react-dom@19.2.6` | 已引入 | 首页、shell、抽屉、考试全屏、身份面板、底部奏折 | 复杂 UI 状态和组件复用明显多于旧原生脚本能舒适承担的范围。 |
+| `typescript@6.0.3` | 已引入 dev | 只用于 `client/` 类型 | 不把后端 CJS 转 ESM，不在根级加 `"type": "module"`。 |
+| `vite@8.0.13` / `@vitejs/plugin-react@6.0.2` | 已引入 dev | React 默认前端 dev/build | 构建输出接管默认浏览器入口；保留 `public/assets/`、S72 地图运行时和后端静态资源约束。 |
+| `react-router@7.15.1` | 已引入 | 多页 SPA 路由、页面过场、深链接、loader、pending/error/focus/scroll 边界 | 采用 Data Mode，不启用 React Router Framework Mode；Express 仍是后端 API 与静态资源服务器。 |
+| `zustand@5.0.13` | 已引入 | 前端视图缓存与 UI 状态 | 仅保存 `sessionId`、当前安全 payload、tab/drawer/modal 状态；不能当 canonical state。 |
+| `lucide-react@1.16.0` | 已引入 | 设置、存档、发送、返回、关闭等图标 | 图标再用 CSS 做朱印/淡墨样式，避免手画一堆不可维护 SVG。 |
+| `vitest@4.1.6` | 已引入 dev | client 纯函数、store、组件测试 | 后端继续保留 `node --test`。 |
+| `@testing-library/react@16.3.2`、`@testing-library/user-event@14.6.1`、`jsdom@29.1.1` | 已引入 dev | React 交互测试 | 覆盖设置抽屉、存档列表、行动 dock、考试写作区、键盘行为。 |
+| `@types/react@19.2.14`、`@types/react-dom@19.2.3`、`@types/node@25.8.0` | 已引入 dev | TypeScript 类型声明 | 只辅助 `client/` 和配置文件类型检查。 |
 
 ### 4.3 明确暂缓的依赖
 
@@ -114,7 +115,7 @@
 
 - `npm install && npm start` 必须一直可运行，默认打开 `http://localhost:3000`。
 - S73 不安装新运行时依赖，不改运行时代码，专注素材/契约/审核。
-- S74.0 只有在依赖治理记录和验证通过后，才允许安装 React/TypeScript/Vite/React Router 等依赖。
+- S74.0 已完成依赖治理记录并安装 React/TypeScript/Vite/React Router 等依赖；S74.1 前不得改默认 `/` 入口或 Express fallback。
 - S74 起新 React/Vite 前端直接接管默认 `/`；旧原生前端不再作为必须保留的交付入口。
 - 新前端可以使用 URL 路由表达游戏页面，但路由参数只能保存 `sessionId` 或公开页面状态；不得把 hidden refs、raw query、prompt、provider payload 或本地路径写入 URL。
 - S74-S76 每一步都必须保持 `npm install && npm start` 后默认 `/` 可玩；若重构失败，回退方式是 Git revert 或恢复上一提交，不在运行时保留 `/legacy.html` 双入口。
@@ -533,6 +534,8 @@ Manifest 示例：
 
 ### S74.0 依赖治理与迁移契约
 
+状态：已完成。S74.0 只完成依赖安装、lockfile、治理记录和迁移契约；默认 `/` 仍由旧前端提供，直到 S74.1 创建 `client/` 与 Express fallback。
+
 需要资料：
 
 - 本文档第 4 节依赖路线。
@@ -541,24 +544,24 @@ Manifest 示例：
 
 实现功能：
 
-- 按治理模板记录 React、React DOM、TypeScript、Vite、React Router、Zustand、Lucide、Vitest、Testing Library、jsdom。
-- 新增 `docs/FRONTEND_REACT_MIGRATION_CONTRACT.md`。
+- 按治理模板记录 React、React DOM、TypeScript、Vite、`@vitejs/plugin-react`、React Router、Zustand、Lucide、Vitest、Testing Library、jsdom 和类型声明包。
+- 新增 [FRONTEND_REACT_MIGRATION_CONTRACT.md](FRONTEND_REACT_MIGRATION_CONTRACT.md)。
 - 在迁移契约里固定 React Router 模式：采用 Data Mode，使用 `createBrowserRouter` / `RouterProvider`、默认 basename `/`、route loader、pending UI、error boundary 和滚动/焦点恢复；不采用 Framework Mode，不让 React Router 接管 Express 后端。
 - 安装依赖并更新 lockfile。
-- 新增 npm scripts 草案：
+- 在迁移契约中预留 npm scripts 草案，实际写入 `package.json` 留给 S74.1 创建配置文件时完成，避免 S74.0 产生无配置的失败命令：
   - `dev:client`
   - `build:client`
   - `typecheck:client`
   - `test:client`
   - `preview:client`
-- 明确 React 前端构建接管默认浏览器入口，实施时可以替换或删除旧 `public/index.html`、`public/app.js` 和 `public/styles.css`；`public/assets/`、S72 地图运行时和 vendor 资源按需保留。
+- 明确 React 前端构建从 S74.1 起接管默认浏览器入口，实施时可以替换或删除旧 `public/index.html`、`public/app.js` 和 `public/styles.css`；`public/assets/`、S72 地图运行时和 vendor 资源按需保留。
 
 验收：
 
 - `npm install` 通过。
 - `npm audit --omit=dev` 结果记录。
 - `npm run check:docs-governance`、`node --test test/documentationGovernance.test.js`、`git diff --check` 通过。
-- `npm start` 启动后默认 `/` 即为新前端，并能 Mock 开局。
+- `npm start` 仍可启动当前默认 `/` 并能 Mock 开局；新 React 默认入口验收从 S74.1-S74.7 执行。
 
 ### S74.1 Vite/TypeScript 默认前端
 

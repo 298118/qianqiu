@@ -28,7 +28,22 @@
 | `ajv` | runtime | `^8.20.0` | AI JSON schema 校验 | 变更需复核 schema 与 red-team/eval。 |
 | `openai` | runtime | `^6.36.0` | OpenAI 与 DeepSeek compatible adapter | 变更需复核真实 provider smoke 和错误脱敏。 |
 | `@anthropic-ai/sdk` | runtime | `^0.93.0` | Anthropic/Claude adapter | 变更需复核真实 provider smoke 和 streaming。 |
+| `react` | runtime | `19.2.6` | S74+ 默认前端组件运行时 | S74.0 批准；只渲染安全 projection，不接触 raw/provider/hidden 数据。 |
+| `react-dom` | runtime | `19.2.6` | S74+ React 浏览器挂载 | S74.0 批准；默认入口接管在 S74.1+ 实施。 |
+| `react-router` | runtime | `7.15.1` | S74+ 多页 SPA Data Mode 路由 | 只用 `createBrowserRouter` / `RouterProvider`；不采用 Framework Mode，不接管 Express 后端。 |
+| `zustand` | runtime | `5.0.13` | S74+ 前端 UI 状态与安全 payload 缓存 | 不保存 canonical state、raw session、raw audit、prompt、provider payload、key 或 hidden ledger。 |
+| `lucide-react` | runtime | `1.16.0` | S74+ 图标按钮 | 只按需 import，视觉样式仍由本地水墨/朱印 CSS 控制。 |
 | `playwright-core` | dev | `^1.59.1` | 浏览器 smoke 驱动本机 Chrome/Edge | 不打包浏览器；变更需复核 `npm run smoke:browser`。 |
+| `typescript` | dev | `6.0.3` | S74+ `client/` 类型检查 | 不把后端 CJS 改为 ESM，不在根级加 `"type": "module"`。 |
+| `vite` | dev | `8.0.13` | S74+ React dev/build 工具 | 构建输出必须隔离，不能清空 `public/assets/`、S72 地图运行时或 vendor 资源。 |
+| `@vitejs/plugin-react` | dev | `6.0.2` | S74+ Vite React 集成 | 仅用于 client 构建与 React Fast Refresh。 |
+| `vitest` | dev | `4.1.6` | S74+ client 单元/交互测试 | 后端测试仍使用 Node.js `node --test`。 |
+| `@testing-library/react` | dev | `16.3.2` | S74+ React 组件测试 | 仅 dev 依赖，不新增玩家运行时服务或密钥要求。 |
+| `@testing-library/user-event` | dev | `14.6.1` | S74+ 用户交互测试 | 用于键盘、表单、焦点、抽屉和行动输入测试。 |
+| `jsdom` | dev | `29.1.1` | S74+ Vitest DOM 环境 | 仅 dev 依赖；要求 Node.js `20.19+`、`22.13+` 或 `24.0+`。 |
+| `@types/react` | dev | `19.2.14` | S74+ React 类型声明 | 仅辅助 TypeScript 检查。 |
+| `@types/react-dom` | dev | `19.2.3` | S74+ React DOM 类型声明 | 仅辅助 TypeScript 检查。 |
+| `@types/node` | dev | `25.8.0` | S74+ Vite/Vitest/Node 配置类型 | 仅辅助 TypeScript 检查。 |
 
 此表只是直接依赖说明，不替代未来新增依赖时的许可证、安全和维护状态检查。
 
