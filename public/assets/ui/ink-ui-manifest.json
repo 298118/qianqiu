@@ -53738,7 +53738,7 @@
         "model": "gpt-image-2",
         "generatedAt": "2026-05-16",
         "promptSummary": "单张竖版高质量重制：参考用户给定干净画风，清晰线稿、干净色块、强对比、丰富古典色彩，避免纸纹噪点、灰脏水洗、模糊、拉伸、可读文字和水印。",
-        "localHighResSourcePath": "artifacts/s73-10-single-portrait-overrides/portrait-s73-10-player-scholar-f01-v1.png"
+        "localHighResSource": "kept_outside_public_manifest"
       },
       "license": {
         "type": "ai_generated_project_asset",
@@ -53839,7 +53839,7 @@
         "model": "gpt-image-2",
         "generatedAt": "2026-05-16",
         "promptSummary": "单张竖版高质量重制：参考用户给定干净画风，清晰线稿、干净色块、强对比、丰富古典色彩，避免纸纹噪点、灰脏水洗、模糊、拉伸、可读文字和水印。",
-        "localHighResSourcePath": "artifacts/s73-10-single-portrait-overrides/portrait-s73-10-player-scholar-f02-v1.png"
+        "localHighResSource": "kept_outside_public_manifest"
       },
       "license": {
         "type": "ai_generated_project_asset",
@@ -53938,8 +53938,9 @@
         "type": "ai_generated",
         "tool": "Codex imagegen",
         "model": "gpt-image-2",
-        "generatedAt": "2026-05-15",
-        "promptSummary": "书生玩家女性重置：成年端庄、女性体态更明确，上身衣料层次、束腰细腰、发饰和服饰层次更清楚；高对比、色彩更丰富、少噪点。"
+        "generatedAt": "2026-05-16",
+        "promptSummary": "单张竖版高质量重制：参考用户给定干净画风，清晰线稿、干净色块、强对比、丰富古典色彩，避免纸纹噪点、灰脏水洗、模糊、拉伸、可读文字和水印。",
+        "localHighResSource": "kept_outside_public_manifest"
       },
       "license": {
         "type": "ai_generated_project_asset",
@@ -53949,22 +53950,22 @@
       "reviewStatus": "approved",
       "visualReview": {
         "reviewedBy": "Codex",
-        "reviewedAt": "2026-05-15",
+        "reviewedAt": "2026-05-16",
         "status": "approved",
-        "summary": "通过：成年女性特征更明确，上身服饰层次、腰封收出细腰、服饰姿态差异清楚；画面高对比、色彩更丰富、噪点较少，仍保持端庄历史立绘气质。"
+        "summary": "通过：单张竖版高质量重制，构图未拉伸，人物比例自然，画面更干净清晰；女性角色无中老年化、发福老态、男性化或中性化问题。"
       },
       "safetyReview": {
         "reviewedBy": "Codex",
-        "reviewedAt": "2026-05-15",
+        "reviewedAt": "2026-05-16",
         "status": "approved",
-        "summary": "通过：全套衣着完整，无低胸、透视、裸露、挑逗、幼态、现代物、水印、徽标、可读文字、本地路径、key、raw/hidden 内容或未公开剧情事实。"
+        "summary": "通过：完整衣着，无低胸、透视、裸露、挑逗、幼态、现代物、水印、徽标、可读文字、本地路径、key、raw/hidden 内容或未公开剧情事实。"
       },
       "performance": {
-        "bytes": 171000,
+        "bytes": 538104,
         "targetMaxBytes": 614400,
-        "thumbnailBytes": 42622,
+        "thumbnailBytes": 74050,
         "thumbnailTargetMaxBytes": 256000,
-        "lowResPlaceholderBytes": 1504
+        "lowResPlaceholderBytes": 2024
       },
       "ledgerId": "portrait-s73-10-player-scholar-f03-v1"
     },
@@ -54040,7 +54041,7 @@
         "model": "gpt-image-2",
         "generatedAt": "2026-05-16",
         "promptSummary": "单张竖版高质量重制：参考用户给定干净画风，清晰线稿、干净色块、强对比、丰富古典色彩，避免纸纹噪点、灰脏水洗、模糊、拉伸、可读文字和水印。",
-        "localHighResSourcePath": "artifacts/s73-10-single-portrait-overrides/portrait-s73-10-player-child-exam-candidate-f01-v1.png"
+        "localHighResSource": "kept_outside_public_manifest"
       },
       "license": {
         "type": "ai_generated_project_asset",
@@ -54141,7 +54142,7 @@
         "model": "gpt-image-2",
         "generatedAt": "2026-05-16",
         "promptSummary": "单张竖版高质量重制：参考用户给定干净画风，清晰线稿、干净色块、强对比、丰富古典色彩，避免纸纹噪点、灰脏水洗、模糊、拉伸、可读文字和水印。",
-        "localHighResSourcePath": "artifacts/s73-10-single-portrait-overrides/portrait-s73-10-player-child-exam-candidate-f02-v1.png"
+        "localHighResSource": "kept_outside_public_manifest"
       },
       "license": {
         "type": "ai_generated_project_asset",
@@ -54240,8 +54241,9 @@
         "type": "ai_generated",
         "tool": "Codex imagegen",
         "model": "gpt-image-2",
-        "generatedAt": "2026-05-15",
-        "promptSummary": "童试考生玩家女性重置：成年端庄、女性体态更明确，上身衣料层次、束腰细腰、发饰和服饰层次更清楚；高对比、色彩更丰富、少噪点。"
+        "generatedAt": "2026-05-16",
+        "promptSummary": "单张竖版高质量重制：参考用户给定干净画风，清晰线稿、干净色块、强对比、丰富古典色彩，避免纸纹噪点、灰脏水洗、模糊、拉伸、可读文字和水印。",
+        "localHighResSource": "kept_outside_public_manifest"
       },
       "license": {
         "type": "ai_generated_project_asset",
@@ -54251,22 +54253,22 @@
       "reviewStatus": "approved",
       "visualReview": {
         "reviewedBy": "Codex",
-        "reviewedAt": "2026-05-15",
+        "reviewedAt": "2026-05-16",
         "status": "approved",
-        "summary": "通过：成年女性特征更明确，上身服饰层次、腰封收出细腰、服饰姿态差异清楚；画面高对比、色彩更丰富、噪点较少，仍保持端庄历史立绘气质。"
+        "summary": "通过：单张竖版高质量重制，构图未拉伸，人物比例自然，画面更干净清晰；女性角色无中老年化、发福老态、男性化或中性化问题。"
       },
       "safetyReview": {
         "reviewedBy": "Codex",
-        "reviewedAt": "2026-05-15",
+        "reviewedAt": "2026-05-16",
         "status": "approved",
-        "summary": "通过：全套衣着完整，无低胸、透视、裸露、挑逗、幼态、现代物、水印、徽标、可读文字、本地路径、key、raw/hidden 内容或未公开剧情事实。"
+        "summary": "通过：完整衣着，无低胸、透视、裸露、挑逗、幼态、现代物、水印、徽标、可读文字、本地路径、key、raw/hidden 内容或未公开剧情事实。"
       },
       "performance": {
-        "bytes": 142442,
+        "bytes": 467734,
         "targetMaxBytes": 614400,
-        "thumbnailBytes": 34324,
+        "thumbnailBytes": 64330,
         "thumbnailTargetMaxBytes": 256000,
-        "lowResPlaceholderBytes": 1296
+        "lowResPlaceholderBytes": 1708
       },
       "ledgerId": "portrait-s73-10-player-child-exam-candidate-f03-v1"
     },
@@ -54342,7 +54344,7 @@
         "model": "gpt-image-2",
         "generatedAt": "2026-05-16",
         "promptSummary": "单张竖版高质量重制：参考用户给定干净画风，清晰线稿、干净色块、强对比、丰富古典色彩，避免纸纹噪点、灰脏水洗、模糊、拉伸、可读文字和水印。",
-        "localHighResSourcePath": "artifacts/s73-10-single-portrait-overrides/portrait-s73-10-player-xiucai-f01-v1.png"
+        "localHighResSource": "kept_outside_public_manifest"
       },
       "license": {
         "type": "ai_generated_project_asset",
@@ -54443,7 +54445,7 @@
         "model": "gpt-image-2",
         "generatedAt": "2026-05-16",
         "promptSummary": "单张竖版高质量重制：参考用户给定干净画风，清晰线稿、干净色块、强对比、丰富古典色彩，避免纸纹噪点、灰脏水洗、模糊、拉伸、可读文字和水印。",
-        "localHighResSourcePath": "artifacts/s73-10-single-portrait-overrides/portrait-s73-10-player-xiucai-f02-v1.png"
+        "localHighResSource": "kept_outside_public_manifest"
       },
       "license": {
         "type": "ai_generated_project_asset",
@@ -54542,8 +54544,9 @@
         "type": "ai_generated",
         "tool": "Codex imagegen",
         "model": "gpt-image-2",
-        "generatedAt": "2026-05-15",
-        "promptSummary": "秀才玩家女性重置：成年端庄、女性体态更明确，上身衣料层次、束腰细腰、发饰和服饰层次更清楚；高对比、色彩更丰富、少噪点。"
+        "generatedAt": "2026-05-16",
+        "promptSummary": "单张竖版高质量重制：参考用户给定干净画风，清晰线稿、干净色块、强对比、丰富古典色彩，避免纸纹噪点、灰脏水洗、模糊、拉伸、可读文字和水印。",
+        "localHighResSource": "kept_outside_public_manifest"
       },
       "license": {
         "type": "ai_generated_project_asset",
@@ -54553,22 +54556,22 @@
       "reviewStatus": "approved",
       "visualReview": {
         "reviewedBy": "Codex",
-        "reviewedAt": "2026-05-15",
+        "reviewedAt": "2026-05-16",
         "status": "approved",
-        "summary": "通过：成年女性特征更明确，上身服饰层次、腰封收出细腰、服饰姿态差异清楚；画面高对比、色彩更丰富、噪点较少，仍保持端庄历史立绘气质。"
+        "summary": "通过：单张竖版高质量重制，构图未拉伸，人物比例自然，画面更干净清晰；女性角色无中老年化、发福老态、男性化或中性化问题。"
       },
       "safetyReview": {
         "reviewedBy": "Codex",
-        "reviewedAt": "2026-05-15",
+        "reviewedAt": "2026-05-16",
         "status": "approved",
-        "summary": "通过：全套衣着完整，无低胸、透视、裸露、挑逗、幼态、现代物、水印、徽标、可读文字、本地路径、key、raw/hidden 内容或未公开剧情事实。"
+        "summary": "通过：完整衣着，无低胸、透视、裸露、挑逗、幼态、现代物、水印、徽标、可读文字、本地路径、key、raw/hidden 内容或未公开剧情事实。"
       },
       "performance": {
-        "bytes": 162332,
+        "bytes": 488060,
         "targetMaxBytes": 614400,
-        "thumbnailBytes": 40130,
+        "thumbnailBytes": 69764,
         "thumbnailTargetMaxBytes": 256000,
-        "lowResPlaceholderBytes": 1388
+        "lowResPlaceholderBytes": 1892
       },
       "ledgerId": "portrait-s73-10-player-xiucai-f03-v1"
     },
@@ -54644,7 +54647,7 @@
         "model": "gpt-image-2",
         "generatedAt": "2026-05-16",
         "promptSummary": "单张竖版高质量重制：参考用户给定干净画风，清晰线稿、干净色块、强对比、丰富古典色彩，避免纸纹噪点、灰脏水洗、模糊、拉伸、可读文字和水印。",
-        "localHighResSourcePath": "artifacts/s73-10-single-portrait-overrides/portrait-s73-10-player-juren-f01-v1.png"
+        "localHighResSource": "kept_outside_public_manifest"
       },
       "license": {
         "type": "ai_generated_project_asset",
@@ -54745,7 +54748,7 @@
         "model": "gpt-image-2",
         "generatedAt": "2026-05-16",
         "promptSummary": "单张竖版高质量重制：参考用户给定干净画风，清晰线稿、干净色块、强对比、丰富古典色彩，避免纸纹噪点、灰脏水洗、模糊、拉伸、可读文字和水印。",
-        "localHighResSourcePath": "artifacts/s73-10-single-portrait-overrides/portrait-s73-10-player-juren-f02-v1.png"
+        "localHighResSource": "kept_outside_public_manifest"
       },
       "license": {
         "type": "ai_generated_project_asset",
@@ -54844,8 +54847,9 @@
         "type": "ai_generated",
         "tool": "Codex imagegen",
         "model": "gpt-image-2",
-        "generatedAt": "2026-05-15",
-        "promptSummary": "举人玩家女性重置：成年端庄、女性体态更明确，上身衣料层次、束腰细腰、发饰和服饰层次更清楚；高对比、色彩更丰富、少噪点。"
+        "generatedAt": "2026-05-16",
+        "promptSummary": "单张竖版高质量重制：参考用户给定干净画风，清晰线稿、干净色块、强对比、丰富古典色彩，避免纸纹噪点、灰脏水洗、模糊、拉伸、可读文字和水印。",
+        "localHighResSource": "kept_outside_public_manifest"
       },
       "license": {
         "type": "ai_generated_project_asset",
@@ -54855,22 +54859,22 @@
       "reviewStatus": "approved",
       "visualReview": {
         "reviewedBy": "Codex",
-        "reviewedAt": "2026-05-15",
+        "reviewedAt": "2026-05-16",
         "status": "approved",
-        "summary": "通过：成年女性特征更明确，上身服饰层次、腰封收出细腰、服饰姿态差异清楚；画面高对比、色彩更丰富、噪点较少，仍保持端庄历史立绘气质。"
+        "summary": "通过：单张竖版高质量重制，构图未拉伸，人物比例自然，画面更干净清晰；女性角色无中老年化、发福老态、男性化或中性化问题。"
       },
       "safetyReview": {
         "reviewedBy": "Codex",
-        "reviewedAt": "2026-05-15",
+        "reviewedAt": "2026-05-16",
         "status": "approved",
-        "summary": "通过：全套衣着完整，无低胸、透视、裸露、挑逗、幼态、现代物、水印、徽标、可读文字、本地路径、key、raw/hidden 内容或未公开剧情事实。"
+        "summary": "通过：完整衣着，无低胸、透视、裸露、挑逗、幼态、现代物、水印、徽标、可读文字、本地路径、key、raw/hidden 内容或未公开剧情事实。"
       },
       "performance": {
-        "bytes": 171090,
+        "bytes": 590904,
         "targetMaxBytes": 614400,
-        "thumbnailBytes": 41458,
+        "thumbnailBytes": 80128,
         "thumbnailTargetMaxBytes": 256000,
-        "lowResPlaceholderBytes": 1414
+        "lowResPlaceholderBytes": 1920
       },
       "ledgerId": "portrait-s73-10-player-juren-f03-v1"
     },
@@ -54946,7 +54950,7 @@
         "model": "gpt-image-2",
         "generatedAt": "2026-05-16",
         "promptSummary": "单张竖版高质量重制：参考用户给定干净画风，清晰线稿、干净色块、强对比、丰富古典色彩，避免纸纹噪点、灰脏水洗、模糊、拉伸、可读文字和水印。",
-        "localHighResSourcePath": "artifacts/s73-10-single-portrait-overrides/portrait-s73-10-player-gongshi-f01-v1.png"
+        "localHighResSource": "kept_outside_public_manifest"
       },
       "license": {
         "type": "ai_generated_project_asset",
@@ -55047,7 +55051,7 @@
         "model": "gpt-image-2",
         "generatedAt": "2026-05-16",
         "promptSummary": "单张竖版高质量重制：参考用户给定干净画风，清晰线稿、干净色块、强对比、丰富古典色彩，避免纸纹噪点、灰脏水洗、模糊、拉伸、可读文字和水印。",
-        "localHighResSourcePath": "artifacts/s73-10-single-portrait-overrides/portrait-s73-10-player-gongshi-f02-v1.png"
+        "localHighResSource": "kept_outside_public_manifest"
       },
       "license": {
         "type": "ai_generated_project_asset",
@@ -55146,8 +55150,9 @@
         "type": "ai_generated",
         "tool": "Codex imagegen",
         "model": "gpt-image-2",
-        "generatedAt": "2026-05-15",
-        "promptSummary": "贡士玩家女性重置：成年端庄、女性体态更明确，上身衣料层次、束腰细腰、发饰和服饰层次更清楚；高对比、色彩更丰富、少噪点。"
+        "generatedAt": "2026-05-16",
+        "promptSummary": "单张竖版高质量重制：参考用户给定干净画风，清晰线稿、干净色块、强对比、丰富古典色彩，避免纸纹噪点、灰脏水洗、模糊、拉伸、可读文字和水印。",
+        "localHighResSource": "kept_outside_public_manifest"
       },
       "license": {
         "type": "ai_generated_project_asset",
@@ -55157,22 +55162,22 @@
       "reviewStatus": "approved",
       "visualReview": {
         "reviewedBy": "Codex",
-        "reviewedAt": "2026-05-15",
+        "reviewedAt": "2026-05-16",
         "status": "approved",
-        "summary": "通过：成年女性特征更明确，上身服饰层次、腰封收出细腰、服饰姿态差异清楚；画面高对比、色彩更丰富、噪点较少，仍保持端庄历史立绘气质。"
+        "summary": "通过：单张竖版高质量重制，构图未拉伸，人物比例自然，画面更干净清晰；女性角色无中老年化、发福老态、男性化或中性化问题。"
       },
       "safetyReview": {
         "reviewedBy": "Codex",
-        "reviewedAt": "2026-05-15",
+        "reviewedAt": "2026-05-16",
         "status": "approved",
-        "summary": "通过：全套衣着完整，无低胸、透视、裸露、挑逗、幼态、现代物、水印、徽标、可读文字、本地路径、key、raw/hidden 内容或未公开剧情事实。"
+        "summary": "通过：完整衣着，无低胸、透视、裸露、挑逗、幼态、现代物、水印、徽标、可读文字、本地路径、key、raw/hidden 内容或未公开剧情事实。"
       },
       "performance": {
-        "bytes": 146372,
+        "bytes": 481544,
         "targetMaxBytes": 614400,
-        "thumbnailBytes": 36458,
+        "thumbnailBytes": 68578,
         "thumbnailTargetMaxBytes": 256000,
-        "lowResPlaceholderBytes": 1424
+        "lowResPlaceholderBytes": 1934
       },
       "ledgerId": "portrait-s73-10-player-gongshi-f03-v1"
     },
@@ -55248,7 +55253,7 @@
         "model": "gpt-image-2",
         "generatedAt": "2026-05-16",
         "promptSummary": "单张竖版高质量重制：参考用户给定干净画风，清晰线稿、干净色块、强对比、丰富古典色彩，避免纸纹噪点、灰脏水洗、模糊、拉伸、可读文字和水印。",
-        "localHighResSourcePath": "artifacts/s73-10-single-portrait-overrides/portrait-s73-10-player-jinshi-f01-v1.png"
+        "localHighResSource": "kept_outside_public_manifest"
       },
       "license": {
         "type": "ai_generated_project_asset",
@@ -55349,7 +55354,7 @@
         "model": "gpt-image-2",
         "generatedAt": "2026-05-16",
         "promptSummary": "单张竖版高质量重制：参考用户给定干净画风，清晰线稿、干净色块、强对比、丰富古典色彩，避免纸纹噪点、灰脏水洗、模糊、拉伸、可读文字和水印。",
-        "localHighResSourcePath": "artifacts/s73-10-single-portrait-overrides/portrait-s73-10-player-jinshi-f02-v1.png"
+        "localHighResSource": "kept_outside_public_manifest"
       },
       "license": {
         "type": "ai_generated_project_asset",
@@ -55448,8 +55453,9 @@
         "type": "ai_generated",
         "tool": "Codex imagegen",
         "model": "gpt-image-2",
-        "generatedAt": "2026-05-15",
-        "promptSummary": "进士玩家女性重置：成年端庄、女性体态更明确，上身衣料层次、束腰细腰、发饰和服饰层次更清楚；高对比、色彩更丰富、少噪点。"
+        "generatedAt": "2026-05-16",
+        "promptSummary": "单张竖版高质量重制：参考用户给定干净画风，清晰线稿、干净色块、强对比、丰富古典色彩，避免纸纹噪点、灰脏水洗、模糊、拉伸、可读文字和水印。",
+        "localHighResSource": "kept_outside_public_manifest"
       },
       "license": {
         "type": "ai_generated_project_asset",
@@ -55459,22 +55465,22 @@
       "reviewStatus": "approved",
       "visualReview": {
         "reviewedBy": "Codex",
-        "reviewedAt": "2026-05-15",
+        "reviewedAt": "2026-05-16",
         "status": "approved",
-        "summary": "通过：成年女性特征更明确，上身服饰层次、腰封收出细腰、服饰姿态差异清楚；画面高对比、色彩更丰富、噪点较少，仍保持端庄历史立绘气质。"
+        "summary": "通过：单张竖版高质量重制，构图未拉伸，人物比例自然，画面更干净清晰；女性角色无中老年化、发福老态、男性化或中性化问题。"
       },
       "safetyReview": {
         "reviewedBy": "Codex",
-        "reviewedAt": "2026-05-15",
+        "reviewedAt": "2026-05-16",
         "status": "approved",
-        "summary": "通过：全套衣着完整，无低胸、透视、裸露、挑逗、幼态、现代物、水印、徽标、可读文字、本地路径、key、raw/hidden 内容或未公开剧情事实。"
+        "summary": "通过：完整衣着，无低胸、透视、裸露、挑逗、幼态、现代物、水印、徽标、可读文字、本地路径、key、raw/hidden 内容或未公开剧情事实。"
       },
       "performance": {
-        "bytes": 163188,
+        "bytes": 556032,
         "targetMaxBytes": 614400,
-        "thumbnailBytes": 39218,
+        "thumbnailBytes": 78856,
         "thumbnailTargetMaxBytes": 256000,
-        "lowResPlaceholderBytes": 1300
+        "lowResPlaceholderBytes": 2074
       },
       "ledgerId": "portrait-s73-10-player-jinshi-f03-v1"
     },
@@ -55548,8 +55554,9 @@
         "type": "ai_generated",
         "tool": "Codex imagegen",
         "model": "gpt-image-2",
-        "generatedAt": "2026-05-15",
-        "promptSummary": "初任官员玩家女性重置：成年端庄、女性体态更明确，上身衣料层次、束腰细腰、发饰和服饰层次更清楚；高对比、色彩更丰富、少噪点。"
+        "generatedAt": "2026-05-16",
+        "promptSummary": "单张竖版高质量重制：参考用户给定干净画风，清晰线稿、干净色块、强对比、丰富古典色彩，避免纸纹噪点、灰脏水洗、模糊、拉伸、可读文字和水印。",
+        "localHighResSource": "kept_outside_public_manifest"
       },
       "license": {
         "type": "ai_generated_project_asset",
@@ -55559,22 +55566,22 @@
       "reviewStatus": "approved",
       "visualReview": {
         "reviewedBy": "Codex",
-        "reviewedAt": "2026-05-15",
+        "reviewedAt": "2026-05-16",
         "status": "approved",
-        "summary": "通过：成年女性特征更明确，上身服饰层次、腰封收出细腰、服饰姿态差异清楚；画面高对比、色彩更丰富、噪点较少，仍保持端庄历史立绘气质。"
+        "summary": "通过：单张竖版高质量重制，构图未拉伸，人物比例自然，画面更干净清晰；女性角色无中老年化、发福老态、男性化或中性化问题。"
       },
       "safetyReview": {
         "reviewedBy": "Codex",
-        "reviewedAt": "2026-05-15",
+        "reviewedAt": "2026-05-16",
         "status": "approved",
-        "summary": "通过：全套衣着完整，无低胸、透视、裸露、挑逗、幼态、现代物、水印、徽标、可读文字、本地路径、key、raw/hidden 内容或未公开剧情事实。"
+        "summary": "通过：完整衣着，无低胸、透视、裸露、挑逗、幼态、现代物、水印、徽标、可读文字、本地路径、key、raw/hidden 内容或未公开剧情事实。"
       },
       "performance": {
-        "bytes": 145506,
+        "bytes": 433772,
         "targetMaxBytes": 614400,
-        "thumbnailBytes": 33846,
+        "thumbnailBytes": 64940,
         "thumbnailTargetMaxBytes": 256000,
-        "lowResPlaceholderBytes": 1294
+        "lowResPlaceholderBytes": 1918
       },
       "ledgerId": "portrait-s73-10-player-junior-official-f01-v1"
     },
@@ -55648,8 +55655,9 @@
         "type": "ai_generated",
         "tool": "Codex imagegen",
         "model": "gpt-image-2",
-        "generatedAt": "2026-05-15",
-        "promptSummary": "初任官员玩家女性重置：成年端庄、女性体态更明确，上身衣料层次、束腰细腰、发饰和服饰层次更清楚；高对比、色彩更丰富、少噪点。"
+        "generatedAt": "2026-05-16",
+        "promptSummary": "单张竖版高质量重制：参考用户给定干净画风，清晰线稿、干净色块、强对比、丰富古典色彩，避免纸纹噪点、灰脏水洗、模糊、拉伸、可读文字和水印。",
+        "localHighResSource": "kept_outside_public_manifest"
       },
       "license": {
         "type": "ai_generated_project_asset",
@@ -55659,22 +55667,22 @@
       "reviewStatus": "approved",
       "visualReview": {
         "reviewedBy": "Codex",
-        "reviewedAt": "2026-05-15",
+        "reviewedAt": "2026-05-16",
         "status": "approved",
-        "summary": "通过：成年女性特征更明确，上身服饰层次、腰封收出细腰、服饰姿态差异清楚；画面高对比、色彩更丰富、噪点较少，仍保持端庄历史立绘气质。"
+        "summary": "通过：单张竖版高质量重制，构图未拉伸，人物比例自然，画面更干净清晰；女性角色无中老年化、发福老态、男性化或中性化问题。"
       },
       "safetyReview": {
         "reviewedBy": "Codex",
-        "reviewedAt": "2026-05-15",
+        "reviewedAt": "2026-05-16",
         "status": "approved",
-        "summary": "通过：全套衣着完整，无低胸、透视、裸露、挑逗、幼态、现代物、水印、徽标、可读文字、本地路径、key、raw/hidden 内容或未公开剧情事实。"
+        "summary": "通过：完整衣着，无低胸、透视、裸露、挑逗、幼态、现代物、水印、徽标、可读文字、本地路径、key、raw/hidden 内容或未公开剧情事实。"
       },
       "performance": {
-        "bytes": 145890,
+        "bytes": 411406,
         "targetMaxBytes": 614400,
-        "thumbnailBytes": 34362,
+        "thumbnailBytes": 62156,
         "thumbnailTargetMaxBytes": 256000,
-        "lowResPlaceholderBytes": 1260
+        "lowResPlaceholderBytes": 1780
       },
       "ledgerId": "portrait-s73-10-player-junior-official-f02-v1"
     },
@@ -55748,8 +55756,9 @@
         "type": "ai_generated",
         "tool": "Codex imagegen",
         "model": "gpt-image-2",
-        "generatedAt": "2026-05-15",
-        "promptSummary": "初任官员玩家女性重置：成年端庄、女性体态更明确，上身衣料层次、束腰细腰、发饰和服饰层次更清楚；高对比、色彩更丰富、少噪点。"
+        "generatedAt": "2026-05-16",
+        "promptSummary": "单张竖版高质量重制：参考用户给定干净画风，清晰线稿、干净色块、强对比、丰富古典色彩，避免纸纹噪点、灰脏水洗、模糊、拉伸、可读文字和水印。",
+        "localHighResSource": "kept_outside_public_manifest"
       },
       "license": {
         "type": "ai_generated_project_asset",
@@ -55759,22 +55768,22 @@
       "reviewStatus": "approved",
       "visualReview": {
         "reviewedBy": "Codex",
-        "reviewedAt": "2026-05-15",
+        "reviewedAt": "2026-05-16",
         "status": "approved",
-        "summary": "通过：成年女性特征更明确，上身服饰层次、腰封收出细腰、服饰姿态差异清楚；画面高对比、色彩更丰富、噪点较少，仍保持端庄历史立绘气质。"
+        "summary": "通过：单张竖版高质量重制，构图未拉伸，人物比例自然，画面更干净清晰；女性角色无中老年化、发福老态、男性化或中性化问题。"
       },
       "safetyReview": {
         "reviewedBy": "Codex",
-        "reviewedAt": "2026-05-15",
+        "reviewedAt": "2026-05-16",
         "status": "approved",
-        "summary": "通过：全套衣着完整，无低胸、透视、裸露、挑逗、幼态、现代物、水印、徽标、可读文字、本地路径、key、raw/hidden 内容或未公开剧情事实。"
+        "summary": "通过：完整衣着，无低胸、透视、裸露、挑逗、幼态、现代物、水印、徽标、可读文字、本地路径、key、raw/hidden 内容或未公开剧情事实。"
       },
       "performance": {
-        "bytes": 152374,
+        "bytes": 515014,
         "targetMaxBytes": 614400,
-        "thumbnailBytes": 37036,
+        "thumbnailBytes": 75236,
         "thumbnailTargetMaxBytes": 256000,
-        "lowResPlaceholderBytes": 1418
+        "lowResPlaceholderBytes": 1980
       },
       "ledgerId": "portrait-s73-10-player-junior-official-f03-v1"
     },
@@ -55848,8 +55857,9 @@
         "type": "ai_generated",
         "tool": "Codex imagegen",
         "model": "gpt-image-2",
-        "generatedAt": "2026-05-15",
-        "promptSummary": "地方官玩家女性重置：成年端庄、女性体态更明确，上身衣料层次、束腰细腰、发饰和服饰层次更清楚；高对比、色彩更丰富、少噪点。"
+        "generatedAt": "2026-05-16",
+        "promptSummary": "单张竖版高质量重制：参考用户给定干净画风，清晰线稿、干净色块、强对比、丰富古典色彩，避免纸纹噪点、灰脏水洗、模糊、拉伸、可读文字和水印。",
+        "localHighResSource": "kept_outside_public_manifest"
       },
       "license": {
         "type": "ai_generated_project_asset",
@@ -55859,22 +55869,22 @@
       "reviewStatus": "approved",
       "visualReview": {
         "reviewedBy": "Codex",
-        "reviewedAt": "2026-05-15",
+        "reviewedAt": "2026-05-16",
         "status": "approved",
-        "summary": "通过：成年女性特征更明确，上身服饰层次、腰封收出细腰、服饰姿态差异清楚；画面高对比、色彩更丰富、噪点较少，仍保持端庄历史立绘气质。"
+        "summary": "通过：单张竖版高质量重制，构图未拉伸，人物比例自然，画面更干净清晰；女性角色无中老年化、发福老态、男性化或中性化问题。"
       },
       "safetyReview": {
         "reviewedBy": "Codex",
-        "reviewedAt": "2026-05-15",
+        "reviewedAt": "2026-05-16",
         "status": "approved",
-        "summary": "通过：全套衣着完整，无低胸、透视、裸露、挑逗、幼态、现代物、水印、徽标、可读文字、本地路径、key、raw/hidden 内容或未公开剧情事实。"
+        "summary": "通过：完整衣着，无低胸、透视、裸露、挑逗、幼态、现代物、水印、徽标、可读文字、本地路径、key、raw/hidden 内容或未公开剧情事实。"
       },
       "performance": {
-        "bytes": 153820,
+        "bytes": 487208,
         "targetMaxBytes": 614400,
-        "thumbnailBytes": 36830,
+        "thumbnailBytes": 72182,
         "thumbnailTargetMaxBytes": 256000,
-        "lowResPlaceholderBytes": 1388
+        "lowResPlaceholderBytes": 1910
       },
       "ledgerId": "portrait-s73-10-player-local-official-f01-v1"
     },
@@ -55948,8 +55958,9 @@
         "type": "ai_generated",
         "tool": "Codex imagegen",
         "model": "gpt-image-2",
-        "generatedAt": "2026-05-15",
-        "promptSummary": "地方官玩家女性重置：成年端庄、女性体态更明确，上身衣料层次、束腰细腰、发饰和服饰层次更清楚；高对比、色彩更丰富、少噪点。"
+        "generatedAt": "2026-05-16",
+        "promptSummary": "单张竖版高质量重制：参考用户给定干净画风，清晰线稿、干净色块、强对比、丰富古典色彩，避免纸纹噪点、灰脏水洗、模糊、拉伸、可读文字和水印。",
+        "localHighResSource": "kept_outside_public_manifest"
       },
       "license": {
         "type": "ai_generated_project_asset",
@@ -55959,22 +55970,22 @@
       "reviewStatus": "approved",
       "visualReview": {
         "reviewedBy": "Codex",
-        "reviewedAt": "2026-05-15",
+        "reviewedAt": "2026-05-16",
         "status": "approved",
-        "summary": "通过：成年女性特征更明确，上身服饰层次、腰封收出细腰、服饰姿态差异清楚；画面高对比、色彩更丰富、噪点较少，仍保持端庄历史立绘气质。"
+        "summary": "通过：单张竖版高质量重制，构图未拉伸，人物比例自然，画面更干净清晰；女性角色无中老年化、发福老态、男性化或中性化问题。"
       },
       "safetyReview": {
         "reviewedBy": "Codex",
-        "reviewedAt": "2026-05-15",
+        "reviewedAt": "2026-05-16",
         "status": "approved",
-        "summary": "通过：全套衣着完整，无低胸、透视、裸露、挑逗、幼态、现代物、水印、徽标、可读文字、本地路径、key、raw/hidden 内容或未公开剧情事实。"
+        "summary": "通过：完整衣着，无低胸、透视、裸露、挑逗、幼态、现代物、水印、徽标、可读文字、本地路径、key、raw/hidden 内容或未公开剧情事实。"
       },
       "performance": {
-        "bytes": 144718,
+        "bytes": 535398,
         "targetMaxBytes": 614400,
-        "thumbnailBytes": 34228,
+        "thumbnailBytes": 70270,
         "thumbnailTargetMaxBytes": 256000,
-        "lowResPlaceholderBytes": 1310
+        "lowResPlaceholderBytes": 1790
       },
       "ledgerId": "portrait-s73-10-player-local-official-f02-v1"
     },
@@ -56048,8 +56059,9 @@
         "type": "ai_generated",
         "tool": "Codex imagegen",
         "model": "gpt-image-2",
-        "generatedAt": "2026-05-15",
-        "promptSummary": "地方官玩家女性重置：成年端庄、女性体态更明确，上身衣料层次、束腰细腰、发饰和服饰层次更清楚；高对比、色彩更丰富、少噪点。"
+        "generatedAt": "2026-05-16",
+        "promptSummary": "单张竖版高质量重制：参考用户给定干净画风，清晰线稿、干净色块、强对比、丰富古典色彩，避免纸纹噪点、灰脏水洗、模糊、拉伸、可读文字和水印。",
+        "localHighResSource": "kept_outside_public_manifest"
       },
       "license": {
         "type": "ai_generated_project_asset",
@@ -56059,22 +56071,22 @@
       "reviewStatus": "approved",
       "visualReview": {
         "reviewedBy": "Codex",
-        "reviewedAt": "2026-05-15",
+        "reviewedAt": "2026-05-16",
         "status": "approved",
-        "summary": "通过：成年女性特征更明确，上身服饰层次、腰封收出细腰、服饰姿态差异清楚；画面高对比、色彩更丰富、噪点较少，仍保持端庄历史立绘气质。"
+        "summary": "通过：单张竖版高质量重制，构图未拉伸，人物比例自然，画面更干净清晰；女性角色无中老年化、发福老态、男性化或中性化问题。"
       },
       "safetyReview": {
         "reviewedBy": "Codex",
-        "reviewedAt": "2026-05-15",
+        "reviewedAt": "2026-05-16",
         "status": "approved",
-        "summary": "通过：全套衣着完整，无低胸、透视、裸露、挑逗、幼态、现代物、水印、徽标、可读文字、本地路径、key、raw/hidden 内容或未公开剧情事实。"
+        "summary": "通过：完整衣着，无低胸、透视、裸露、挑逗、幼态、现代物、水印、徽标、可读文字、本地路径、key、raw/hidden 内容或未公开剧情事实。"
       },
       "performance": {
-        "bytes": 144544,
+        "bytes": 504586,
         "targetMaxBytes": 614400,
-        "thumbnailBytes": 34400,
+        "thumbnailBytes": 73028,
         "thumbnailTargetMaxBytes": 256000,
-        "lowResPlaceholderBytes": 1294
+        "lowResPlaceholderBytes": 1876
       },
       "ledgerId": "portrait-s73-10-player-local-official-f03-v1"
     },
@@ -56148,8 +56160,9 @@
         "type": "ai_generated",
         "tool": "Codex imagegen",
         "model": "gpt-image-2",
-        "generatedAt": "2026-05-15",
-        "promptSummary": "京官玩家女性重置：成年端庄、女性体态更明确，上身衣料层次、束腰细腰、发饰和服饰层次更清楚；高对比、色彩更丰富、少噪点。"
+        "generatedAt": "2026-05-16",
+        "promptSummary": "单张竖版高质量重制：参考用户给定干净画风，清晰线稿、干净色块、强对比、丰富古典色彩，避免纸纹噪点、灰脏水洗、模糊、拉伸、可读文字和水印。",
+        "localHighResSource": "kept_outside_public_manifest"
       },
       "license": {
         "type": "ai_generated_project_asset",
@@ -56159,22 +56172,22 @@
       "reviewStatus": "approved",
       "visualReview": {
         "reviewedBy": "Codex",
-        "reviewedAt": "2026-05-15",
+        "reviewedAt": "2026-05-16",
         "status": "approved",
-        "summary": "通过：成年女性特征更明确，上身服饰层次、腰封收出细腰、服饰姿态差异清楚；画面高对比、色彩更丰富、噪点较少，仍保持端庄历史立绘气质。"
+        "summary": "通过：单张竖版高质量重制，构图未拉伸，人物比例自然，画面更干净清晰；女性角色无中老年化、发福老态、男性化或中性化问题。"
       },
       "safetyReview": {
         "reviewedBy": "Codex",
-        "reviewedAt": "2026-05-15",
+        "reviewedAt": "2026-05-16",
         "status": "approved",
-        "summary": "通过：全套衣着完整，无低胸、透视、裸露、挑逗、幼态、现代物、水印、徽标、可读文字、本地路径、key、raw/hidden 内容或未公开剧情事实。"
+        "summary": "通过：完整衣着，无低胸、透视、裸露、挑逗、幼态、现代物、水印、徽标、可读文字、本地路径、key、raw/hidden 内容或未公开剧情事实。"
       },
       "performance": {
-        "bytes": 167792,
+        "bytes": 510986,
         "targetMaxBytes": 614400,
-        "thumbnailBytes": 40344,
+        "thumbnailBytes": 71506,
         "thumbnailTargetMaxBytes": 256000,
-        "lowResPlaceholderBytes": 1416
+        "lowResPlaceholderBytes": 1938
       },
       "ledgerId": "portrait-s73-10-player-capital-official-f01-v1"
     },
@@ -56248,8 +56261,9 @@
         "type": "ai_generated",
         "tool": "Codex imagegen",
         "model": "gpt-image-2",
-        "generatedAt": "2026-05-15",
-        "promptSummary": "京官玩家女性重置：成年端庄、女性体态更明确，上身衣料层次、束腰细腰、发饰和服饰层次更清楚；高对比、色彩更丰富、少噪点。"
+        "generatedAt": "2026-05-16",
+        "promptSummary": "单张竖版高质量重制：参考用户给定干净画风，清晰线稿、干净色块、强对比、丰富古典色彩，避免纸纹噪点、灰脏水洗、模糊、拉伸、可读文字和水印。",
+        "localHighResSource": "kept_outside_public_manifest"
       },
       "license": {
         "type": "ai_generated_project_asset",
@@ -56259,22 +56273,22 @@
       "reviewStatus": "approved",
       "visualReview": {
         "reviewedBy": "Codex",
-        "reviewedAt": "2026-05-15",
+        "reviewedAt": "2026-05-16",
         "status": "approved",
-        "summary": "通过：成年女性特征更明确，上身服饰层次、腰封收出细腰、服饰姿态差异清楚；画面高对比、色彩更丰富、噪点较少，仍保持端庄历史立绘气质。"
+        "summary": "通过：单张竖版高质量重制，构图未拉伸，人物比例自然，画面更干净清晰；女性角色无中老年化、发福老态、男性化或中性化问题。"
       },
       "safetyReview": {
         "reviewedBy": "Codex",
-        "reviewedAt": "2026-05-15",
+        "reviewedAt": "2026-05-16",
         "status": "approved",
-        "summary": "通过：全套衣着完整，无低胸、透视、裸露、挑逗、幼态、现代物、水印、徽标、可读文字、本地路径、key、raw/hidden 内容或未公开剧情事实。"
+        "summary": "通过：完整衣着，无低胸、透视、裸露、挑逗、幼态、现代物、水印、徽标、可读文字、本地路径、key、raw/hidden 内容或未公开剧情事实。"
       },
       "performance": {
-        "bytes": 164246,
+        "bytes": 471870,
         "targetMaxBytes": 614400,
-        "thumbnailBytes": 37896,
+        "thumbnailBytes": 67282,
         "thumbnailTargetMaxBytes": 256000,
-        "lowResPlaceholderBytes": 1242
+        "lowResPlaceholderBytes": 1794
       },
       "ledgerId": "portrait-s73-10-player-capital-official-f02-v1"
     },
@@ -56348,8 +56362,9 @@
         "type": "ai_generated",
         "tool": "Codex imagegen",
         "model": "gpt-image-2",
-        "generatedAt": "2026-05-15",
-        "promptSummary": "京官玩家女性重置：成年端庄、女性体态更明确，上身衣料层次、束腰细腰、发饰和服饰层次更清楚；高对比、色彩更丰富、少噪点。"
+        "generatedAt": "2026-05-16",
+        "promptSummary": "单张竖版高质量重制：参考用户给定干净画风，清晰线稿、干净色块、强对比、丰富古典色彩，避免纸纹噪点、灰脏水洗、模糊、拉伸、可读文字和水印。",
+        "localHighResSource": "kept_outside_public_manifest"
       },
       "license": {
         "type": "ai_generated_project_asset",
@@ -56359,22 +56374,22 @@
       "reviewStatus": "approved",
       "visualReview": {
         "reviewedBy": "Codex",
-        "reviewedAt": "2026-05-15",
+        "reviewedAt": "2026-05-16",
         "status": "approved",
-        "summary": "通过：成年女性特征更明确，上身服饰层次、腰封收出细腰、服饰姿态差异清楚；画面高对比、色彩更丰富、噪点较少，仍保持端庄历史立绘气质。"
+        "summary": "通过：单张竖版高质量重制，构图未拉伸，人物比例自然，画面更干净清晰；女性角色无中老年化、发福老态、男性化或中性化问题。"
       },
       "safetyReview": {
         "reviewedBy": "Codex",
-        "reviewedAt": "2026-05-15",
+        "reviewedAt": "2026-05-16",
         "status": "approved",
-        "summary": "通过：全套衣着完整，无低胸、透视、裸露、挑逗、幼态、现代物、水印、徽标、可读文字、本地路径、key、raw/hidden 内容或未公开剧情事实。"
+        "summary": "通过：完整衣着，无低胸、透视、裸露、挑逗、幼态、现代物、水印、徽标、可读文字、本地路径、key、raw/hidden 内容或未公开剧情事实。"
       },
       "performance": {
-        "bytes": 161844,
+        "bytes": 497224,
         "targetMaxBytes": 614400,
-        "thumbnailBytes": 39368,
+        "thumbnailBytes": 71772,
         "thumbnailTargetMaxBytes": 256000,
-        "lowResPlaceholderBytes": 1358
+        "lowResPlaceholderBytes": 1806
       },
       "ledgerId": "portrait-s73-10-player-capital-official-f03-v1"
     },
@@ -56448,8 +56463,9 @@
         "type": "ai_generated",
         "tool": "Codex imagegen",
         "model": "gpt-image-2",
-        "generatedAt": "2026-05-15",
-        "promptSummary": "大臣玩家女性重置：成年端庄、女性体态更明确，上身衣料层次、束腰细腰、发饰和服饰层次更清楚；高对比、色彩更丰富、少噪点。"
+        "generatedAt": "2026-05-16",
+        "promptSummary": "单张竖版高质量重制：参考用户给定干净画风，清晰线稿、干净色块、强对比、丰富古典色彩，避免纸纹噪点、灰脏水洗、模糊、拉伸、可读文字和水印。",
+        "localHighResSource": "kept_outside_public_manifest"
       },
       "license": {
         "type": "ai_generated_project_asset",
@@ -56459,22 +56475,22 @@
       "reviewStatus": "approved",
       "visualReview": {
         "reviewedBy": "Codex",
-        "reviewedAt": "2026-05-15",
+        "reviewedAt": "2026-05-16",
         "status": "approved",
-        "summary": "通过：成年女性特征更明确，上身服饰层次、腰封收出细腰、服饰姿态差异清楚；画面高对比、色彩更丰富、噪点较少，仍保持端庄历史立绘气质。"
+        "summary": "通过：单张竖版高质量重制，构图未拉伸，人物比例自然，画面更干净清晰；女性角色无中老年化、发福老态、男性化或中性化问题。"
       },
       "safetyReview": {
         "reviewedBy": "Codex",
-        "reviewedAt": "2026-05-15",
+        "reviewedAt": "2026-05-16",
         "status": "approved",
-        "summary": "通过：全套衣着完整，无低胸、透视、裸露、挑逗、幼态、现代物、水印、徽标、可读文字、本地路径、key、raw/hidden 内容或未公开剧情事实。"
+        "summary": "通过：完整衣着，无低胸、透视、裸露、挑逗、幼态、现代物、水印、徽标、可读文字、本地路径、key、raw/hidden 内容或未公开剧情事实。"
       },
       "performance": {
-        "bytes": 167374,
+        "bytes": 567936,
         "targetMaxBytes": 614400,
-        "thumbnailBytes": 40626,
+        "thumbnailBytes": 76810,
         "thumbnailTargetMaxBytes": 256000,
-        "lowResPlaceholderBytes": 1348
+        "lowResPlaceholderBytes": 1938
       },
       "ledgerId": "portrait-s73-10-player-grand-minister-f01-v1"
     },
@@ -56548,8 +56564,9 @@
         "type": "ai_generated",
         "tool": "Codex imagegen",
         "model": "gpt-image-2",
-        "generatedAt": "2026-05-15",
-        "promptSummary": "大臣玩家女性重置：成年端庄、女性体态更明确，上身衣料层次、束腰细腰、发饰和服饰层次更清楚；高对比、色彩更丰富、少噪点。"
+        "generatedAt": "2026-05-16",
+        "promptSummary": "单张竖版高质量重制：参考用户给定干净画风，清晰线稿、干净色块、强对比、丰富古典色彩，避免纸纹噪点、灰脏水洗、模糊、拉伸、可读文字和水印。",
+        "localHighResSource": "kept_outside_public_manifest"
       },
       "license": {
         "type": "ai_generated_project_asset",
@@ -56559,22 +56576,22 @@
       "reviewStatus": "approved",
       "visualReview": {
         "reviewedBy": "Codex",
-        "reviewedAt": "2026-05-15",
+        "reviewedAt": "2026-05-16",
         "status": "approved",
-        "summary": "通过：成年女性特征更明确，上身服饰层次、腰封收出细腰、服饰姿态差异清楚；画面高对比、色彩更丰富、噪点较少，仍保持端庄历史立绘气质。"
+        "summary": "通过：单张竖版高质量重制，构图未拉伸，人物比例自然，画面更干净清晰；女性角色无中老年化、发福老态、男性化或中性化问题。"
       },
       "safetyReview": {
         "reviewedBy": "Codex",
-        "reviewedAt": "2026-05-15",
+        "reviewedAt": "2026-05-16",
         "status": "approved",
-        "summary": "通过：全套衣着完整，无低胸、透视、裸露、挑逗、幼态、现代物、水印、徽标、可读文字、本地路径、key、raw/hidden 内容或未公开剧情事实。"
+        "summary": "通过：完整衣着，无低胸、透视、裸露、挑逗、幼态、现代物、水印、徽标、可读文字、本地路径、key、raw/hidden 内容或未公开剧情事实。"
       },
       "performance": {
-        "bytes": 166452,
+        "bytes": 525572,
         "targetMaxBytes": 614400,
-        "thumbnailBytes": 39586,
+        "thumbnailBytes": 69380,
         "thumbnailTargetMaxBytes": 256000,
-        "lowResPlaceholderBytes": 1246
+        "lowResPlaceholderBytes": 1830
       },
       "ledgerId": "portrait-s73-10-player-grand-minister-f02-v1"
     },
@@ -56648,8 +56665,9 @@
         "type": "ai_generated",
         "tool": "Codex imagegen",
         "model": "gpt-image-2",
-        "generatedAt": "2026-05-15",
-        "promptSummary": "大臣玩家女性重置：成年端庄、女性体态更明确，上身衣料层次、束腰细腰、发饰和服饰层次更清楚；高对比、色彩更丰富、少噪点。"
+        "generatedAt": "2026-05-16",
+        "promptSummary": "单张竖版高质量重制：参考用户给定干净画风，清晰线稿、干净色块、强对比、丰富古典色彩，避免纸纹噪点、灰脏水洗、模糊、拉伸、可读文字和水印。",
+        "localHighResSource": "kept_outside_public_manifest"
       },
       "license": {
         "type": "ai_generated_project_asset",
@@ -56659,22 +56677,22 @@
       "reviewStatus": "approved",
       "visualReview": {
         "reviewedBy": "Codex",
-        "reviewedAt": "2026-05-15",
+        "reviewedAt": "2026-05-16",
         "status": "approved",
-        "summary": "通过：成年女性特征更明确，上身服饰层次、腰封收出细腰、服饰姿态差异清楚；画面高对比、色彩更丰富、噪点较少，仍保持端庄历史立绘气质。"
+        "summary": "通过：单张竖版高质量重制，构图未拉伸，人物比例自然，画面更干净清晰；女性角色无中老年化、发福老态、男性化或中性化问题。"
       },
       "safetyReview": {
         "reviewedBy": "Codex",
-        "reviewedAt": "2026-05-15",
+        "reviewedAt": "2026-05-16",
         "status": "approved",
-        "summary": "通过：全套衣着完整，无低胸、透视、裸露、挑逗、幼态、现代物、水印、徽标、可读文字、本地路径、key、raw/hidden 内容或未公开剧情事实。"
+        "summary": "通过：完整衣着，无低胸、透视、裸露、挑逗、幼态、现代物、水印、徽标、可读文字、本地路径、key、raw/hidden 内容或未公开剧情事实。"
       },
       "performance": {
-        "bytes": 167226,
+        "bytes": 533110,
         "targetMaxBytes": 614400,
-        "thumbnailBytes": 40032,
+        "thumbnailBytes": 73052,
         "thumbnailTargetMaxBytes": 256000,
-        "lowResPlaceholderBytes": 1324
+        "lowResPlaceholderBytes": 1884
       },
       "ledgerId": "portrait-s73-10-player-grand-minister-f03-v1"
     },
@@ -56748,8 +56766,9 @@
         "type": "ai_generated",
         "tool": "Codex imagegen",
         "model": "gpt-image-2",
-        "generatedAt": "2026-05-15",
-        "promptSummary": "将领玩家女性重置：成年端庄、女性体态更明确，上身衣料层次、束腰细腰、发饰和服饰层次更清楚；高对比、色彩更丰富、少噪点。"
+        "generatedAt": "2026-05-16",
+        "promptSummary": "单张竖版高质量重制：参考用户给定干净画风，清晰线稿、干净色块、强对比、丰富古典色彩，避免纸纹噪点、灰脏水洗、模糊、拉伸、可读文字和水印。",
+        "localHighResSource": "kept_outside_public_manifest"
       },
       "license": {
         "type": "ai_generated_project_asset",
@@ -56759,22 +56778,22 @@
       "reviewStatus": "approved",
       "visualReview": {
         "reviewedBy": "Codex",
-        "reviewedAt": "2026-05-15",
+        "reviewedAt": "2026-05-16",
         "status": "approved",
-        "summary": "通过：成年女性特征更明确，上身服饰层次、腰封收出细腰、服饰姿态差异清楚；画面高对比、色彩更丰富、噪点较少，仍保持端庄历史立绘气质。"
+        "summary": "通过：单张竖版高质量重制，构图未拉伸，人物比例自然，画面更干净清晰；女性角色无中老年化、发福老态、男性化或中性化问题。"
       },
       "safetyReview": {
         "reviewedBy": "Codex",
-        "reviewedAt": "2026-05-15",
+        "reviewedAt": "2026-05-16",
         "status": "approved",
-        "summary": "通过：全套衣着完整，无低胸、透视、裸露、挑逗、幼态、现代物、水印、徽标、可读文字、本地路径、key、raw/hidden 内容或未公开剧情事实。"
+        "summary": "通过：完整衣着，无低胸、透视、裸露、挑逗、幼态、现代物、水印、徽标、可读文字、本地路径、key、raw/hidden 内容或未公开剧情事实。"
       },
       "performance": {
-        "bytes": 166306,
+        "bytes": 455876,
         "targetMaxBytes": 614400,
-        "thumbnailBytes": 41250,
+        "thumbnailBytes": 64958,
         "thumbnailTargetMaxBytes": 256000,
-        "lowResPlaceholderBytes": 1432
+        "lowResPlaceholderBytes": 1858
       },
       "ledgerId": "portrait-s73-10-player-general-f01-v1"
     },
@@ -56848,8 +56867,9 @@
         "type": "ai_generated",
         "tool": "Codex imagegen",
         "model": "gpt-image-2",
-        "generatedAt": "2026-05-15",
-        "promptSummary": "将领玩家女性重置：成年端庄、女性体态更明确，上身衣料层次、束腰细腰、发饰和服饰层次更清楚；高对比、色彩更丰富、少噪点。"
+        "generatedAt": "2026-05-16",
+        "promptSummary": "单张竖版高质量重制：参考用户给定干净画风，清晰线稿、干净色块、强对比、丰富古典色彩，避免纸纹噪点、灰脏水洗、模糊、拉伸、可读文字和水印。",
+        "localHighResSource": "kept_outside_public_manifest"
       },
       "license": {
         "type": "ai_generated_project_asset",
@@ -56859,22 +56879,22 @@
       "reviewStatus": "approved",
       "visualReview": {
         "reviewedBy": "Codex",
-        "reviewedAt": "2026-05-15",
+        "reviewedAt": "2026-05-16",
         "status": "approved",
-        "summary": "通过：成年女性特征更明确，上身服饰层次、腰封收出细腰、服饰姿态差异清楚；画面高对比、色彩更丰富、噪点较少，仍保持端庄历史立绘气质。"
+        "summary": "通过：单张竖版高质量重制，构图未拉伸，人物比例自然，画面更干净清晰；女性角色无中老年化、发福老态、男性化或中性化问题。"
       },
       "safetyReview": {
         "reviewedBy": "Codex",
-        "reviewedAt": "2026-05-15",
+        "reviewedAt": "2026-05-16",
         "status": "approved",
-        "summary": "通过：全套衣着完整，无低胸、透视、裸露、挑逗、幼态、现代物、水印、徽标、可读文字、本地路径、key、raw/hidden 内容或未公开剧情事实。"
+        "summary": "通过：完整衣着，无低胸、透视、裸露、挑逗、幼态、现代物、水印、徽标、可读文字、本地路径、key、raw/hidden 内容或未公开剧情事实。"
       },
       "performance": {
-        "bytes": 174516,
+        "bytes": 553128,
         "targetMaxBytes": 614400,
-        "thumbnailBytes": 42070,
+        "thumbnailBytes": 73660,
         "thumbnailTargetMaxBytes": 256000,
-        "lowResPlaceholderBytes": 1394
+        "lowResPlaceholderBytes": 1730
       },
       "ledgerId": "portrait-s73-10-player-general-f02-v1"
     },
@@ -56948,8 +56968,9 @@
         "type": "ai_generated",
         "tool": "Codex imagegen",
         "model": "gpt-image-2",
-        "generatedAt": "2026-05-15",
-        "promptSummary": "将领玩家女性重置：成年端庄、女性体态更明确，上身衣料层次、束腰细腰、发饰和服饰层次更清楚；高对比、色彩更丰富、少噪点。"
+        "generatedAt": "2026-05-16",
+        "promptSummary": "单张竖版高质量重制：参考用户给定干净画风，清晰线稿、干净色块、强对比、丰富古典色彩，避免纸纹噪点、灰脏水洗、模糊、拉伸、可读文字和水印。",
+        "localHighResSource": "kept_outside_public_manifest"
       },
       "license": {
         "type": "ai_generated_project_asset",
@@ -56959,22 +56980,22 @@
       "reviewStatus": "approved",
       "visualReview": {
         "reviewedBy": "Codex",
-        "reviewedAt": "2026-05-15",
+        "reviewedAt": "2026-05-16",
         "status": "approved",
-        "summary": "通过：成年女性特征更明确，上身服饰层次、腰封收出细腰、服饰姿态差异清楚；画面高对比、色彩更丰富、噪点较少，仍保持端庄历史立绘气质。"
+        "summary": "通过：单张竖版高质量重制，构图未拉伸，人物比例自然，画面更干净清晰；女性角色无中老年化、发福老态、男性化或中性化问题。"
       },
       "safetyReview": {
         "reviewedBy": "Codex",
-        "reviewedAt": "2026-05-15",
+        "reviewedAt": "2026-05-16",
         "status": "approved",
-        "summary": "通过：全套衣着完整，无低胸、透视、裸露、挑逗、幼态、现代物、水印、徽标、可读文字、本地路径、key、raw/hidden 内容或未公开剧情事实。"
+        "summary": "通过：完整衣着，无低胸、透视、裸露、挑逗、幼态、现代物、水印、徽标、可读文字、本地路径、key、raw/hidden 内容或未公开剧情事实。"
       },
       "performance": {
-        "bytes": 169334,
+        "bytes": 468338,
         "targetMaxBytes": 614400,
-        "thumbnailBytes": 41066,
+        "thumbnailBytes": 66876,
         "thumbnailTargetMaxBytes": 256000,
-        "lowResPlaceholderBytes": 1356
+        "lowResPlaceholderBytes": 1788
       },
       "ledgerId": "portrait-s73-10-player-general-f03-v1"
     },
@@ -57048,8 +57069,9 @@
         "type": "ai_generated",
         "tool": "Codex imagegen",
         "model": "gpt-image-2",
-        "generatedAt": "2026-05-15",
-        "promptSummary": "皇帝/摄政玩家女性重置：成年端庄、女性体态更明确，上身衣料层次、束腰细腰、发饰和服饰层次更清楚；高对比、色彩更丰富、少噪点。"
+        "generatedAt": "2026-05-16",
+        "promptSummary": "单张竖版高质量重制：参考用户给定干净画风，清晰线稿、干净色块、强对比、丰富古典色彩，避免纸纹噪点、灰脏水洗、模糊、拉伸、可读文字和水印。",
+        "localHighResSource": "kept_outside_public_manifest"
       },
       "license": {
         "type": "ai_generated_project_asset",
@@ -57059,22 +57081,22 @@
       "reviewStatus": "approved",
       "visualReview": {
         "reviewedBy": "Codex",
-        "reviewedAt": "2026-05-15",
+        "reviewedAt": "2026-05-16",
         "status": "approved",
-        "summary": "通过：成年女性特征更明确，上身服饰层次、腰封收出细腰、服饰姿态差异清楚；画面高对比、色彩更丰富、噪点较少，仍保持端庄历史立绘气质。"
+        "summary": "通过：单张竖版高质量重制，构图未拉伸，人物比例自然，画面更干净清晰；女性角色无中老年化、发福老态、男性化或中性化问题。"
       },
       "safetyReview": {
         "reviewedBy": "Codex",
-        "reviewedAt": "2026-05-15",
+        "reviewedAt": "2026-05-16",
         "status": "approved",
-        "summary": "通过：全套衣着完整，无低胸、透视、裸露、挑逗、幼态、现代物、水印、徽标、可读文字、本地路径、key、raw/hidden 内容或未公开剧情事实。"
+        "summary": "通过：完整衣着，无低胸、透视、裸露、挑逗、幼态、现代物、水印、徽标、可读文字、本地路径、key、raw/hidden 内容或未公开剧情事实。"
       },
       "performance": {
-        "bytes": 175364,
+        "bytes": 580470,
         "targetMaxBytes": 614400,
-        "thumbnailBytes": 42520,
+        "thumbnailBytes": 81128,
         "thumbnailTargetMaxBytes": 256000,
-        "lowResPlaceholderBytes": 1326
+        "lowResPlaceholderBytes": 1894
       },
       "ledgerId": "portrait-s73-10-player-emperor-regent-f01-v1"
     },
@@ -57148,8 +57170,9 @@
         "type": "ai_generated",
         "tool": "Codex imagegen",
         "model": "gpt-image-2",
-        "generatedAt": "2026-05-15",
-        "promptSummary": "皇帝/摄政玩家女性重置：成年端庄、女性体态更明确，上身衣料层次、束腰细腰、发饰和服饰层次更清楚；高对比、色彩更丰富、少噪点。"
+        "generatedAt": "2026-05-16",
+        "promptSummary": "单张竖版高质量重制：参考用户给定干净画风，清晰线稿、干净色块、强对比、丰富古典色彩，避免纸纹噪点、灰脏水洗、模糊、拉伸、可读文字和水印。",
+        "localHighResSource": "kept_outside_public_manifest"
       },
       "license": {
         "type": "ai_generated_project_asset",
@@ -57159,22 +57182,22 @@
       "reviewStatus": "approved",
       "visualReview": {
         "reviewedBy": "Codex",
-        "reviewedAt": "2026-05-15",
+        "reviewedAt": "2026-05-16",
         "status": "approved",
-        "summary": "通过：成年女性特征更明确，上身服饰层次、腰封收出细腰、服饰姿态差异清楚；画面高对比、色彩更丰富、噪点较少，仍保持端庄历史立绘气质。"
+        "summary": "通过：单张竖版高质量重制，构图未拉伸，人物比例自然，画面更干净清晰；女性角色无中老年化、发福老态、男性化或中性化问题。"
       },
       "safetyReview": {
         "reviewedBy": "Codex",
-        "reviewedAt": "2026-05-15",
+        "reviewedAt": "2026-05-16",
         "status": "approved",
-        "summary": "通过：全套衣着完整，无低胸、透视、裸露、挑逗、幼态、现代物、水印、徽标、可读文字、本地路径、key、raw/hidden 内容或未公开剧情事实。"
+        "summary": "通过：完整衣着，无低胸、透视、裸露、挑逗、幼态、现代物、水印、徽标、可读文字、本地路径、key、raw/hidden 内容或未公开剧情事实。"
       },
       "performance": {
-        "bytes": 188280,
+        "bytes": 608200,
         "targetMaxBytes": 614400,
-        "thumbnailBytes": 46160,
+        "thumbnailBytes": 82380,
         "thumbnailTargetMaxBytes": 256000,
-        "lowResPlaceholderBytes": 1408
+        "lowResPlaceholderBytes": 1970
       },
       "ledgerId": "portrait-s73-10-player-emperor-regent-f02-v1"
     },
@@ -57248,8 +57271,9 @@
         "type": "ai_generated",
         "tool": "Codex imagegen",
         "model": "gpt-image-2",
-        "generatedAt": "2026-05-15",
-        "promptSummary": "皇帝/摄政玩家女性重置：成年端庄、女性体态更明确，上身衣料层次、束腰细腰、发饰和服饰层次更清楚；高对比、色彩更丰富、少噪点。"
+        "generatedAt": "2026-05-16",
+        "promptSummary": "单张竖版高质量重制：参考用户给定干净画风，清晰线稿、干净色块、强对比、丰富古典色彩，避免纸纹噪点、灰脏水洗、模糊、拉伸、可读文字和水印。",
+        "localHighResSource": "kept_outside_public_manifest"
       },
       "license": {
         "type": "ai_generated_project_asset",
@@ -57259,22 +57283,22 @@
       "reviewStatus": "approved",
       "visualReview": {
         "reviewedBy": "Codex",
-        "reviewedAt": "2026-05-15",
+        "reviewedAt": "2026-05-16",
         "status": "approved",
-        "summary": "通过：成年女性特征更明确，上身服饰层次、腰封收出细腰、服饰姿态差异清楚；画面高对比、色彩更丰富、噪点较少，仍保持端庄历史立绘气质。"
+        "summary": "通过：单张竖版高质量重制，构图未拉伸，人物比例自然，画面更干净清晰；女性角色无中老年化、发福老态、男性化或中性化问题。"
       },
       "safetyReview": {
         "reviewedBy": "Codex",
-        "reviewedAt": "2026-05-15",
+        "reviewedAt": "2026-05-16",
         "status": "approved",
-        "summary": "通过：全套衣着完整，无低胸、透视、裸露、挑逗、幼态、现代物、水印、徽标、可读文字、本地路径、key、raw/hidden 内容或未公开剧情事实。"
+        "summary": "通过：完整衣着，无低胸、透视、裸露、挑逗、幼态、现代物、水印、徽标、可读文字、本地路径、key、raw/hidden 内容或未公开剧情事实。"
       },
       "performance": {
-        "bytes": 171012,
+        "bytes": 555418,
         "targetMaxBytes": 614400,
-        "thumbnailBytes": 42114,
+        "thumbnailBytes": 82756,
         "thumbnailTargetMaxBytes": 256000,
-        "lowResPlaceholderBytes": 1324
+        "lowResPlaceholderBytes": 1950
       },
       "ledgerId": "portrait-s73-10-player-emperor-regent-f03-v1"
     },

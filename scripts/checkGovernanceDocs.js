@@ -44,8 +44,12 @@ function defaultTestScriptIncludesGovernance(testScript) {
     return true;
   }
 
+  if (explicitTestFiles.some((entry) => entry.trim().replaceAll("\\", "/") === "test/*.test.js")) {
+    return true;
+  }
+
   return explicitTestFiles.some((entry) =>
-    entry.replaceAll("\\", "/").includes("test/documentationGovernance.test.js")
+    entry.trim().replaceAll("\\", "/").includes("test/documentationGovernance.test.js")
   );
 }
 

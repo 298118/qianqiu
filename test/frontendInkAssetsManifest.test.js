@@ -1119,17 +1119,50 @@ test("S73.10 single portrait overrides replace selected female player portraits 
   assert.equal(qa.schemaVersion, 1);
   assert.equal(qa.phase, "S73.10.single-overrides");
   assert.equal(qa.reviewedBy, "Codex");
-  assert.equal(qa.counts.total, 12);
-  assert.equal(qa.assets.length, 12);
+  assert.equal(qa.counts.total, 36);
+  assert.equal(qa.assets.length, 36);
   assert.match(qa.visualReviewSummary, /单张高质量重制覆盖/);
+
+  const expectedStages = [
+    "capital-official",
+    "child-exam-candidate",
+    "emperor-regent",
+    "general",
+    "gongshi",
+    "grand-minister",
+    "jinshi",
+    "junior-official",
+    "juren",
+    "local-official",
+    "scholar",
+    "xiucai"
+  ];
+  const expectedVariants = ["f01", "f02", "f03"];
+  const actualByStage = new Map();
+  const seenOverrideIds = new Set();
+  for (const entry of qa.assets) {
+    assert.equal(seenOverrideIds.has(entry.id), false, `duplicate override id: ${entry.id}`);
+    seenOverrideIds.add(entry.id);
+    const match = /^portrait-s73-10-player-(.+)-(f0[123])-v1$/.exec(entry.id);
+    assert.ok(match, entry.id);
+    const [, stage, variant] = match;
+    if (!actualByStage.has(stage)) actualByStage.set(stage, []);
+    actualByStage.get(stage).push(variant);
+  }
+  assert.deepEqual([...actualByStage.keys()].sort(), expectedStages);
+  for (const stage of expectedStages) {
+    assert.deepEqual(actualByStage.get(stage).sort(), expectedVariants, stage);
+  }
 
   for (const entry of qa.assets) {
     const asset = manifestById.get(entry.id);
     assert.ok(asset, entry.id);
     assert.equal(asset.category, "portrait", entry.id);
     assert.equal(asset.genderPresentation, "feminine", entry.id);
-    assert.equal(asset.source.localHighResSourcePath, entry.localHighResSourcePath, entry.id);
-    assert.equal(entry.localHighResSourcePath.startsWith("artifacts/s73-10-single-portrait-overrides/"), true, entry.id);
+    assert.equal(asset.source.localHighResSourcePath, undefined, entry.id);
+    assert.equal(entry.localHighResSourcePath, undefined, entry.id);
+    assert.equal(asset.source.localHighResSource, "kept_outside_public_manifest", entry.id);
+    assert.equal(entry.sourceHandling, "local_artifact_not_public", entry.id);
     assert.equal(asset.source.promptSummary.includes("单张竖版高质量重制"), true, entry.id);
     for (const field of ["path", "thumbnailPath", "lowResPlaceholderPath"]) {
       assertSafeUiAssetPath(entry[field], `${entry.id}.${field}`);

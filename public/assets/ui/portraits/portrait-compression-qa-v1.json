@@ -2,9 +2,9 @@
   "schemaVersion": 1,
   "phase": "S73.10.6",
   "reportId": "portrait-compression-qa-v1",
-  "generatedAt": "2026-05-16T16:46:27.132Z",
+  "generatedAt": "2026-05-17T03:25:15.853Z",
   "manifestRef": "public/assets/ui/ink-ui-manifest.json",
-  "manifestSha256": "9615d91ac86d7e4fc4f8092c2933c2ce5bcadce5362b04a91ed309302eadf6ea",
+  "manifestSha256": "3efeaf3e641a81c1d9ce871a5982b4d1a527d9850ecc841ac6e75e45258adfad",
   "policy": {
     "imageSize": {
       "width": 1024,
@@ -77,11 +77,11 @@
     "maxInitialPortraits": 8,
     "allowEagerLoadViolations": 0,
     "files": {
-      "imageBytes": 112943718,
-      "thumbnailBytes": 24810380,
-      "lowResPlaceholderBytes": 782748,
-      "maxImageBytes": 535128,
-      "maxThumbnailBytes": 79480,
+      "imageBytes": 121398586,
+      "thumbnailBytes": 25607514,
+      "lowResPlaceholderBytes": 795470,
+      "maxImageBytes": 608200,
+      "maxThumbnailBytes": 82756,
       "maxLowResPlaceholderBytes": 2128
     },
     "errorCount": 0,
@@ -40277,19 +40277,19 @@
         "notes": "玩家女性选角和身份卡窄屏保留面部、发饰、上身服饰轮廓、束腰腰封和身份服饰；不得显示未审核候选图。"
       },
       "performance": {
-        "bytes": 171000,
+        "bytes": 538104,
         "targetMaxBytes": 614400,
-        "thumbnailBytes": 42622,
+        "thumbnailBytes": 74050,
         "thumbnailTargetMaxBytes": 256000,
-        "lowResPlaceholderBytes": 1504,
+        "lowResPlaceholderBytes": 2024,
         "lowResPlaceholderTargetMaxBytes": 8192
       },
       "files": {
         "image": {
           "path": "/assets/ui/portraits/s73-10/portrait-s73-10-player-scholar-f03-v1.webp",
           "exists": true,
-          "bytes": 171000,
-          "sha256": "1a56a38279ab84fa4311011c48e7901d4050df39934cc963f812e1977623fed0",
+          "bytes": 538104,
+          "sha256": "39361772b4d27d1dc9f009da708ea7fcc2ebdeb3190964476f97c4418dc4aad3",
           "dimensions": {
             "width": 1024,
             "height": 1536,
@@ -40299,8 +40299,8 @@
         "thumbnail": {
           "path": "/assets/ui/thumbs/thumb-portrait-s73-10-player-scholar-f03-v1.webp",
           "exists": true,
-          "bytes": 42622,
-          "sha256": "13280fc6726310e920ffad4561d866a080b7c49747205b2db45590a79e961ce5",
+          "bytes": 74050,
+          "sha256": "559cbe93fa5c58bb4b8005b3e3aa11782a5bb226ac781fe80e8225326ba71bd2",
           "dimensions": {
             "width": 384,
             "height": 576,
@@ -40310,8 +40310,8 @@
         "lowResPlaceholder": {
           "path": "/assets/ui/portraits/placeholders/placeholder-portrait-s73-10-player-scholar-f03-v1.webp",
           "exists": true,
-          "bytes": 1504,
-          "sha256": "292a3e3a6bd5a2d3715a1b1f1dd09170e5c0e25d11b1c2c9b0e76454b5860455",
+          "bytes": 2024,
+          "sha256": "001dbc32d2915810b68b4ee15a5bb7123c15f93946271e34606896887145af84",
           "dimensions": {
             "width": 64,
             "height": 96,
@@ -40517,19 +40517,19 @@
         "notes": "玩家女性选角和身份卡窄屏保留面部、发饰、上身服饰轮廓、束腰腰封和身份服饰；不得显示未审核候选图。"
       },
       "performance": {
-        "bytes": 142442,
+        "bytes": 467734,
         "targetMaxBytes": 614400,
-        "thumbnailBytes": 34324,
+        "thumbnailBytes": 64330,
         "thumbnailTargetMaxBytes": 256000,
-        "lowResPlaceholderBytes": 1296,
+        "lowResPlaceholderBytes": 1708,
         "lowResPlaceholderTargetMaxBytes": 8192
       },
       "files": {
         "image": {
           "path": "/assets/ui/portraits/s73-10/portrait-s73-10-player-child-exam-candidate-f03-v1.webp",
           "exists": true,
-          "bytes": 142442,
-          "sha256": "1dad078a56e3e59a55fed1b8f6611fd48cbcdff42598163a4e6c3436a984ad70",
+          "bytes": 467734,
+          "sha256": "7eadb599dd000a213851ac32e194784dd23db7cf78a48c5c6a743cd7b96a7659",
           "dimensions": {
             "width": 1024,
             "height": 1536,
@@ -40539,8 +40539,8 @@
         "thumbnail": {
           "path": "/assets/ui/thumbs/thumb-portrait-s73-10-player-child-exam-candidate-f03-v1.webp",
           "exists": true,
-          "bytes": 34324,
-          "sha256": "1620f006924638e9d9b885fce031b4d4b08d63f2bcff27f19602cb5b707a447b",
+          "bytes": 64330,
+          "sha256": "2a3721f7e2659b3166ace2e4d0fab173e206314f4b46d88bdee70858fea6e907",
           "dimensions": {
             "width": 384,
             "height": 576,
@@ -40550,8 +40550,8 @@
         "lowResPlaceholder": {
           "path": "/assets/ui/portraits/placeholders/placeholder-portrait-s73-10-player-child-exam-candidate-f03-v1.webp",
           "exists": true,
-          "bytes": 1296,
-          "sha256": "93b6680983aa5784ab6854c7860d219e86a3cd5c351c4099196c8ec7ecef6bf4",
+          "bytes": 1708,
+          "sha256": "2bc13f09be4942f5c70a8861b0d38a81e3f431b25d76791f4f015c620a093425",
           "dimensions": {
             "width": 64,
             "height": 96,
@@ -40757,19 +40757,19 @@
         "notes": "玩家女性选角和身份卡窄屏保留面部、发饰、上身服饰轮廓、束腰腰封和身份服饰；不得显示未审核候选图。"
       },
       "performance": {
-        "bytes": 162332,
+        "bytes": 488060,
         "targetMaxBytes": 614400,
-        "thumbnailBytes": 40130,
+        "thumbnailBytes": 69764,
         "thumbnailTargetMaxBytes": 256000,
-        "lowResPlaceholderBytes": 1388,
+        "lowResPlaceholderBytes": 1892,
         "lowResPlaceholderTargetMaxBytes": 8192
       },
       "files": {
         "image": {
           "path": "/assets/ui/portraits/s73-10/portrait-s73-10-player-xiucai-f03-v1.webp",
           "exists": true,
-          "bytes": 162332,
-          "sha256": "90b8c06da12667cdd2a14346e0f07d2f54e9c1cdbd42cf36a0fc38869dd35fca",
+          "bytes": 488060,
+          "sha256": "accd9b4a2817386db637f198c755c6866571e3b2b3fcc749f4ca9e54686b37f8",
           "dimensions": {
             "width": 1024,
             "height": 1536,
@@ -40779,8 +40779,8 @@
         "thumbnail": {
           "path": "/assets/ui/thumbs/thumb-portrait-s73-10-player-xiucai-f03-v1.webp",
           "exists": true,
-          "bytes": 40130,
-          "sha256": "bae86287f00ca441a6e686bffacb43ef0b010908eb267938a809082b90954345",
+          "bytes": 69764,
+          "sha256": "d9618102f7877b996fb61d9fae089aef36dedb4c95229b12a0f57e97132833c0",
           "dimensions": {
             "width": 384,
             "height": 576,
@@ -40790,8 +40790,8 @@
         "lowResPlaceholder": {
           "path": "/assets/ui/portraits/placeholders/placeholder-portrait-s73-10-player-xiucai-f03-v1.webp",
           "exists": true,
-          "bytes": 1388,
-          "sha256": "eb2bc0767cf387d53b65caa3e3117d01d282c18ea42bb6a46c1481e514534ea2",
+          "bytes": 1892,
+          "sha256": "a248d9ef12994169c1642fcd303dd8e3a2a76cf8c951466826b7c6c840ded58d",
           "dimensions": {
             "width": 64,
             "height": 96,
@@ -40997,19 +40997,19 @@
         "notes": "玩家女性选角和身份卡窄屏保留面部、发饰、上身服饰轮廓、束腰腰封和身份服饰；不得显示未审核候选图。"
       },
       "performance": {
-        "bytes": 171090,
+        "bytes": 590904,
         "targetMaxBytes": 614400,
-        "thumbnailBytes": 41458,
+        "thumbnailBytes": 80128,
         "thumbnailTargetMaxBytes": 256000,
-        "lowResPlaceholderBytes": 1414,
+        "lowResPlaceholderBytes": 1920,
         "lowResPlaceholderTargetMaxBytes": 8192
       },
       "files": {
         "image": {
           "path": "/assets/ui/portraits/s73-10/portrait-s73-10-player-juren-f03-v1.webp",
           "exists": true,
-          "bytes": 171090,
-          "sha256": "2ab58a0e682d8dea5d0174d21082a9dccf78fa6a1addc224666316fa24c8e3c8",
+          "bytes": 590904,
+          "sha256": "1f8f9aa872db980a9ec798f42736cf76b1cf6ada16134b2c5d62c2f87f2b7cc6",
           "dimensions": {
             "width": 1024,
             "height": 1536,
@@ -41019,8 +41019,8 @@
         "thumbnail": {
           "path": "/assets/ui/thumbs/thumb-portrait-s73-10-player-juren-f03-v1.webp",
           "exists": true,
-          "bytes": 41458,
-          "sha256": "bbaf7c168eae38b1dc0065d8908b3dc400b0226424e766d01f32e37e4dfd1446",
+          "bytes": 80128,
+          "sha256": "469c8fc962a60ab74547c5d8d5f8d2e92e865e22b5e225d55b414086d6d6383d",
           "dimensions": {
             "width": 384,
             "height": 576,
@@ -41030,8 +41030,8 @@
         "lowResPlaceholder": {
           "path": "/assets/ui/portraits/placeholders/placeholder-portrait-s73-10-player-juren-f03-v1.webp",
           "exists": true,
-          "bytes": 1414,
-          "sha256": "fd5febd340d5e19e6a99a5ce26e73c3c06df725ce9c063e39fbf44f69502df53",
+          "bytes": 1920,
+          "sha256": "b1943b05ef9130de8689a1a7123bc5b43207bc87a0e82d7d222e6a30b174c7f8",
           "dimensions": {
             "width": 64,
             "height": 96,
@@ -41237,19 +41237,19 @@
         "notes": "玩家女性选角和身份卡窄屏保留面部、发饰、上身服饰轮廓、束腰腰封和身份服饰；不得显示未审核候选图。"
       },
       "performance": {
-        "bytes": 146372,
+        "bytes": 481544,
         "targetMaxBytes": 614400,
-        "thumbnailBytes": 36458,
+        "thumbnailBytes": 68578,
         "thumbnailTargetMaxBytes": 256000,
-        "lowResPlaceholderBytes": 1424,
+        "lowResPlaceholderBytes": 1934,
         "lowResPlaceholderTargetMaxBytes": 8192
       },
       "files": {
         "image": {
           "path": "/assets/ui/portraits/s73-10/portrait-s73-10-player-gongshi-f03-v1.webp",
           "exists": true,
-          "bytes": 146372,
-          "sha256": "2fa8494bcad56450669331f69a1948cd8a11903fad536171606e6ea07cb4f741",
+          "bytes": 481544,
+          "sha256": "e2e08acb565755d0a281b70f77267d781fc76a7da77d34b245b6851c1c2a221a",
           "dimensions": {
             "width": 1024,
             "height": 1536,
@@ -41259,8 +41259,8 @@
         "thumbnail": {
           "path": "/assets/ui/thumbs/thumb-portrait-s73-10-player-gongshi-f03-v1.webp",
           "exists": true,
-          "bytes": 36458,
-          "sha256": "21b420325d2d3c31e3dab85f3f358fe9f55f590bd7fc174b221b8984eb2db141",
+          "bytes": 68578,
+          "sha256": "1c18064b26f56b89413846c95f8bba2c3ec5b854a8094acd9cd8bf5077ae1504",
           "dimensions": {
             "width": 384,
             "height": 576,
@@ -41270,8 +41270,8 @@
         "lowResPlaceholder": {
           "path": "/assets/ui/portraits/placeholders/placeholder-portrait-s73-10-player-gongshi-f03-v1.webp",
           "exists": true,
-          "bytes": 1424,
-          "sha256": "a436dc0afd04945946d6a4d56d2ba211f599d7dd9b7f26fbaa5d71a6a4db4cc9",
+          "bytes": 1934,
+          "sha256": "a46f732a3c0da10e445c99d37780814ea8c85438a9771b996b91b43d9075e38c",
           "dimensions": {
             "width": 64,
             "height": 96,
@@ -41477,19 +41477,19 @@
         "notes": "玩家女性选角和身份卡窄屏保留面部、发饰、上身服饰轮廓、束腰腰封和身份服饰；不得显示未审核候选图。"
       },
       "performance": {
-        "bytes": 163188,
+        "bytes": 556032,
         "targetMaxBytes": 614400,
-        "thumbnailBytes": 39218,
+        "thumbnailBytes": 78856,
         "thumbnailTargetMaxBytes": 256000,
-        "lowResPlaceholderBytes": 1300,
+        "lowResPlaceholderBytes": 2074,
         "lowResPlaceholderTargetMaxBytes": 8192
       },
       "files": {
         "image": {
           "path": "/assets/ui/portraits/s73-10/portrait-s73-10-player-jinshi-f03-v1.webp",
           "exists": true,
-          "bytes": 163188,
-          "sha256": "09d0c0842d3e73b8abab143eedc6bd54542db97dd7a9f22f376aff0c012cfcfb",
+          "bytes": 556032,
+          "sha256": "f63fcf0df09d9c56488a0ce4f8330385a12d22305325b82d6f2312199f8aa561",
           "dimensions": {
             "width": 1024,
             "height": 1536,
@@ -41499,8 +41499,8 @@
         "thumbnail": {
           "path": "/assets/ui/thumbs/thumb-portrait-s73-10-player-jinshi-f03-v1.webp",
           "exists": true,
-          "bytes": 39218,
-          "sha256": "36c32965ff4a653025e9bbc00676e813bbf69599c3112b8a7b64d29a7c180e73",
+          "bytes": 78856,
+          "sha256": "98272dc52ec472ca139b7d6c7dd05a61e5c22a5977936e503d6083c263e59b62",
           "dimensions": {
             "width": 384,
             "height": 576,
@@ -41510,8 +41510,8 @@
         "lowResPlaceholder": {
           "path": "/assets/ui/portraits/placeholders/placeholder-portrait-s73-10-player-jinshi-f03-v1.webp",
           "exists": true,
-          "bytes": 1300,
-          "sha256": "3ab5a0ca28f836d632e77fcb74d9a350ead4f906dc696a3b3a6fa72cb4f1ede6",
+          "bytes": 2074,
+          "sha256": "9207b94fccc041ff3d51cc2d9f9548a0258dff9f4343a85ec69a63a016193a24",
           "dimensions": {
             "width": 64,
             "height": 96,
@@ -41557,19 +41557,19 @@
         "notes": "玩家女性选角和身份卡窄屏保留面部、发饰、上身服饰轮廓、束腰腰封和身份服饰；不得显示未审核候选图。"
       },
       "performance": {
-        "bytes": 145506,
+        "bytes": 433772,
         "targetMaxBytes": 614400,
-        "thumbnailBytes": 33846,
+        "thumbnailBytes": 64940,
         "thumbnailTargetMaxBytes": 256000,
-        "lowResPlaceholderBytes": 1294,
+        "lowResPlaceholderBytes": 1918,
         "lowResPlaceholderTargetMaxBytes": 8192
       },
       "files": {
         "image": {
           "path": "/assets/ui/portraits/s73-10/portrait-s73-10-player-junior-official-f01-v1.webp",
           "exists": true,
-          "bytes": 145506,
-          "sha256": "1dc418b0f5451f60563c3b289c1462744b2e08cb3f9e7ffacbda82023d11748e",
+          "bytes": 433772,
+          "sha256": "5cc74dd51e8509852b33ca0187f15e9f895ed3d7fbce6756c891141d2cbd8424",
           "dimensions": {
             "width": 1024,
             "height": 1536,
@@ -41579,8 +41579,8 @@
         "thumbnail": {
           "path": "/assets/ui/thumbs/thumb-portrait-s73-10-player-junior-official-f01-v1.webp",
           "exists": true,
-          "bytes": 33846,
-          "sha256": "68d002b60fdf16a329207d1bba9db277d78149fc35ddf19bc7466868af6d9156",
+          "bytes": 64940,
+          "sha256": "1eebf0601d56766854e4fa5ceb552ec9ed30178f0de56059ba77ace8c769ea4f",
           "dimensions": {
             "width": 384,
             "height": 576,
@@ -41590,8 +41590,8 @@
         "lowResPlaceholder": {
           "path": "/assets/ui/portraits/placeholders/placeholder-portrait-s73-10-player-junior-official-f01-v1.webp",
           "exists": true,
-          "bytes": 1294,
-          "sha256": "056e76e4a9daa49a968249e723f99d2d8f9fe9d2d6bc6ff29255876f8cd420df",
+          "bytes": 1918,
+          "sha256": "271d62b307b9a8a9f975a8d4008441800487ac5dd359e397ecc6acdd0149ef7c",
           "dimensions": {
             "width": 64,
             "height": 96,
@@ -41637,19 +41637,19 @@
         "notes": "玩家女性选角和身份卡窄屏保留面部、发饰、上身服饰轮廓、束腰腰封和身份服饰；不得显示未审核候选图。"
       },
       "performance": {
-        "bytes": 145890,
+        "bytes": 411406,
         "targetMaxBytes": 614400,
-        "thumbnailBytes": 34362,
+        "thumbnailBytes": 62156,
         "thumbnailTargetMaxBytes": 256000,
-        "lowResPlaceholderBytes": 1260,
+        "lowResPlaceholderBytes": 1780,
         "lowResPlaceholderTargetMaxBytes": 8192
       },
       "files": {
         "image": {
           "path": "/assets/ui/portraits/s73-10/portrait-s73-10-player-junior-official-f02-v1.webp",
           "exists": true,
-          "bytes": 145890,
-          "sha256": "361a7af2723a60d636918546099ffdc8cae7639a19d3570b733c175ccbc23382",
+          "bytes": 411406,
+          "sha256": "ae335f479b15a3f7864673efd6edfaeb9776ded0bd6ff60de502dea8e6f81aba",
           "dimensions": {
             "width": 1024,
             "height": 1536,
@@ -41659,8 +41659,8 @@
         "thumbnail": {
           "path": "/assets/ui/thumbs/thumb-portrait-s73-10-player-junior-official-f02-v1.webp",
           "exists": true,
-          "bytes": 34362,
-          "sha256": "9627bcef0539cb62abe2d27c638abdd26f6779d9b20ba715af612350dc8b0a63",
+          "bytes": 62156,
+          "sha256": "4babc9f44f0b7e9eb7b6925cc227781b1d071bcf82529844e6212810e990cbaa",
           "dimensions": {
             "width": 384,
             "height": 576,
@@ -41670,8 +41670,8 @@
         "lowResPlaceholder": {
           "path": "/assets/ui/portraits/placeholders/placeholder-portrait-s73-10-player-junior-official-f02-v1.webp",
           "exists": true,
-          "bytes": 1260,
-          "sha256": "92a6baca2bb6710ddc9a670be770eaa131626826d2c74a380d10c390db14ee2c",
+          "bytes": 1780,
+          "sha256": "f6191f5dbd9ecce6112d5b6367f9a26448de3733f070014f73674667578b419a",
           "dimensions": {
             "width": 64,
             "height": 96,
@@ -41717,19 +41717,19 @@
         "notes": "玩家女性选角和身份卡窄屏保留面部、发饰、上身服饰轮廓、束腰腰封和身份服饰；不得显示未审核候选图。"
       },
       "performance": {
-        "bytes": 152374,
+        "bytes": 515014,
         "targetMaxBytes": 614400,
-        "thumbnailBytes": 37036,
+        "thumbnailBytes": 75236,
         "thumbnailTargetMaxBytes": 256000,
-        "lowResPlaceholderBytes": 1418,
+        "lowResPlaceholderBytes": 1980,
         "lowResPlaceholderTargetMaxBytes": 8192
       },
       "files": {
         "image": {
           "path": "/assets/ui/portraits/s73-10/portrait-s73-10-player-junior-official-f03-v1.webp",
           "exists": true,
-          "bytes": 152374,
-          "sha256": "0da9542429f9b0cd80fbfedaa7169d251223fd56de2c50fb487c4c07521bc79f",
+          "bytes": 515014,
+          "sha256": "bf235068285b845022ebe1c0a11fae8ce32d204b907c83dbffe179d2eb4e02ce",
           "dimensions": {
             "width": 1024,
             "height": 1536,
@@ -41739,8 +41739,8 @@
         "thumbnail": {
           "path": "/assets/ui/thumbs/thumb-portrait-s73-10-player-junior-official-f03-v1.webp",
           "exists": true,
-          "bytes": 37036,
-          "sha256": "5cb1069f433d5f11abf8490847ced9be7736402a7f7ed142ab9a85c6a3a0d3b5",
+          "bytes": 75236,
+          "sha256": "131bca48be7d2d238c63133ec42e524236ec275090863ddcde0d301872161880",
           "dimensions": {
             "width": 384,
             "height": 576,
@@ -41750,8 +41750,8 @@
         "lowResPlaceholder": {
           "path": "/assets/ui/portraits/placeholders/placeholder-portrait-s73-10-player-junior-official-f03-v1.webp",
           "exists": true,
-          "bytes": 1418,
-          "sha256": "c0e2ac0756dea4c8fc24603a487e80572e26017b33e40c2c475409b74e06cab9",
+          "bytes": 1980,
+          "sha256": "9ecdbb69179c63f7e0ee93915c8e6b3a34b616b23330ea9b1efe2b2185833398",
           "dimensions": {
             "width": 64,
             "height": 96,
@@ -41797,19 +41797,19 @@
         "notes": "玩家女性选角和身份卡窄屏保留面部、发饰、上身服饰轮廓、束腰腰封和身份服饰；不得显示未审核候选图。"
       },
       "performance": {
-        "bytes": 153820,
+        "bytes": 487208,
         "targetMaxBytes": 614400,
-        "thumbnailBytes": 36830,
+        "thumbnailBytes": 72182,
         "thumbnailTargetMaxBytes": 256000,
-        "lowResPlaceholderBytes": 1388,
+        "lowResPlaceholderBytes": 1910,
         "lowResPlaceholderTargetMaxBytes": 8192
       },
       "files": {
         "image": {
           "path": "/assets/ui/portraits/s73-10/portrait-s73-10-player-local-official-f01-v1.webp",
           "exists": true,
-          "bytes": 153820,
-          "sha256": "746a4fc18c08b0d1aa89f76ea6b5b78d384578cacb7ace4e27877ea397ed39aa",
+          "bytes": 487208,
+          "sha256": "2fd1088f3aeddced78f30058cfd28672f7998f200177f66df30518e168e129ba",
           "dimensions": {
             "width": 1024,
             "height": 1536,
@@ -41819,8 +41819,8 @@
         "thumbnail": {
           "path": "/assets/ui/thumbs/thumb-portrait-s73-10-player-local-official-f01-v1.webp",
           "exists": true,
-          "bytes": 36830,
-          "sha256": "74e50ead927b96d534aa55bea2378def80f148968641482913ba9dd17746e8d0",
+          "bytes": 72182,
+          "sha256": "7d17a93b5ad75030a854c4b3647b561474cfb3be4afa0a7493e8a307c7494d21",
           "dimensions": {
             "width": 384,
             "height": 576,
@@ -41830,8 +41830,8 @@
         "lowResPlaceholder": {
           "path": "/assets/ui/portraits/placeholders/placeholder-portrait-s73-10-player-local-official-f01-v1.webp",
           "exists": true,
-          "bytes": 1388,
-          "sha256": "cc17a59bf25a39c5116a09d079528543e2d33027ce450e0e684d35832c982d14",
+          "bytes": 1910,
+          "sha256": "35ff37a13002f90e2c07bcf8bf05939dc92cda078d20e80640ff7b494cb5a6c2",
           "dimensions": {
             "width": 64,
             "height": 96,
@@ -41877,19 +41877,19 @@
         "notes": "玩家女性选角和身份卡窄屏保留面部、发饰、上身服饰轮廓、束腰腰封和身份服饰；不得显示未审核候选图。"
       },
       "performance": {
-        "bytes": 144718,
+        "bytes": 535398,
         "targetMaxBytes": 614400,
-        "thumbnailBytes": 34228,
+        "thumbnailBytes": 70270,
         "thumbnailTargetMaxBytes": 256000,
-        "lowResPlaceholderBytes": 1310,
+        "lowResPlaceholderBytes": 1790,
         "lowResPlaceholderTargetMaxBytes": 8192
       },
       "files": {
         "image": {
           "path": "/assets/ui/portraits/s73-10/portrait-s73-10-player-local-official-f02-v1.webp",
           "exists": true,
-          "bytes": 144718,
-          "sha256": "1c32cb1b7121ddfb4d7e93ffdc54272ecec2dc4b5241dc2da053db5216034240",
+          "bytes": 535398,
+          "sha256": "4ea34cdc0fae7175e3d8487bc2a7fff01792f3303e279a58422b936a0b9be05d",
           "dimensions": {
             "width": 1024,
             "height": 1536,
@@ -41899,8 +41899,8 @@
         "thumbnail": {
           "path": "/assets/ui/thumbs/thumb-portrait-s73-10-player-local-official-f02-v1.webp",
           "exists": true,
-          "bytes": 34228,
-          "sha256": "108f8671abf4a8d9fa66c85bc0ff738a9fecebe0ab06aa38b111b76091f2c1ef",
+          "bytes": 70270,
+          "sha256": "63537bbb703d7a9722046147941195824e606f8f923e318d62eefc19ac9b00c1",
           "dimensions": {
             "width": 384,
             "height": 576,
@@ -41910,8 +41910,8 @@
         "lowResPlaceholder": {
           "path": "/assets/ui/portraits/placeholders/placeholder-portrait-s73-10-player-local-official-f02-v1.webp",
           "exists": true,
-          "bytes": 1310,
-          "sha256": "4b574dacd6a454482b56d556cb8869a6ed744b3b80a3e26887af25b6cc2e4d15",
+          "bytes": 1790,
+          "sha256": "fe3b56437dfa30a1434e2da330e68f4b84df11e63f4f6e8c070971fccb90c219",
           "dimensions": {
             "width": 64,
             "height": 96,
@@ -41957,19 +41957,19 @@
         "notes": "玩家女性选角和身份卡窄屏保留面部、发饰、上身服饰轮廓、束腰腰封和身份服饰；不得显示未审核候选图。"
       },
       "performance": {
-        "bytes": 144544,
+        "bytes": 504586,
         "targetMaxBytes": 614400,
-        "thumbnailBytes": 34400,
+        "thumbnailBytes": 73028,
         "thumbnailTargetMaxBytes": 256000,
-        "lowResPlaceholderBytes": 1294,
+        "lowResPlaceholderBytes": 1876,
         "lowResPlaceholderTargetMaxBytes": 8192
       },
       "files": {
         "image": {
           "path": "/assets/ui/portraits/s73-10/portrait-s73-10-player-local-official-f03-v1.webp",
           "exists": true,
-          "bytes": 144544,
-          "sha256": "0a1ad8ade08083344af1fec69ff3c19ce1a0388cb3954ac8fe5fa24f0e4a815e",
+          "bytes": 504586,
+          "sha256": "5433d52bdbbbb8d6e9ebfff5c38f3a142823c85826a63ee4e222b97e66e465c7",
           "dimensions": {
             "width": 1024,
             "height": 1536,
@@ -41979,8 +41979,8 @@
         "thumbnail": {
           "path": "/assets/ui/thumbs/thumb-portrait-s73-10-player-local-official-f03-v1.webp",
           "exists": true,
-          "bytes": 34400,
-          "sha256": "34cefa13ecd4b035d6bd68ea938e3c612875e7382c4fc0f913d5bef1eab9036d",
+          "bytes": 73028,
+          "sha256": "4612db4465cfaf1420a46616a74266679df6f1f513ca2c94c73bf16a8ea0028f",
           "dimensions": {
             "width": 384,
             "height": 576,
@@ -41990,8 +41990,8 @@
         "lowResPlaceholder": {
           "path": "/assets/ui/portraits/placeholders/placeholder-portrait-s73-10-player-local-official-f03-v1.webp",
           "exists": true,
-          "bytes": 1294,
-          "sha256": "333d16be3bc3a5f23320e92905601031aa2afac580bed6c94e8274cb25e28c00",
+          "bytes": 1876,
+          "sha256": "5c9d678fbf4bf61edfd5c07d1cef919ee9d6eb12ab2f9d855b22bcaad6a36d44",
           "dimensions": {
             "width": 64,
             "height": 96,
@@ -42037,19 +42037,19 @@
         "notes": "玩家女性选角和身份卡窄屏保留面部、发饰、上身服饰轮廓、束腰腰封和身份服饰；不得显示未审核候选图。"
       },
       "performance": {
-        "bytes": 167792,
+        "bytes": 510986,
         "targetMaxBytes": 614400,
-        "thumbnailBytes": 40344,
+        "thumbnailBytes": 71506,
         "thumbnailTargetMaxBytes": 256000,
-        "lowResPlaceholderBytes": 1416,
+        "lowResPlaceholderBytes": 1938,
         "lowResPlaceholderTargetMaxBytes": 8192
       },
       "files": {
         "image": {
           "path": "/assets/ui/portraits/s73-10/portrait-s73-10-player-capital-official-f01-v1.webp",
           "exists": true,
-          "bytes": 167792,
-          "sha256": "4af653459b71d0a8caa285375f1f7a2dd03356ca7ee2d446916befda30ac3a7c",
+          "bytes": 510986,
+          "sha256": "c30838000eb470a655d93221b266aceecbd780fd9511415c3fdfed4892f27500",
           "dimensions": {
             "width": 1024,
             "height": 1536,
@@ -42059,8 +42059,8 @@
         "thumbnail": {
           "path": "/assets/ui/thumbs/thumb-portrait-s73-10-player-capital-official-f01-v1.webp",
           "exists": true,
-          "bytes": 40344,
-          "sha256": "a6e1843491ff31fdaa1a323319bd3d63670ff4e194d2658857effb56fd5520dc",
+          "bytes": 71506,
+          "sha256": "cd6665b177a0283cc40b90fbe7036562987cbda4671e261dd0a77486333c3fb4",
           "dimensions": {
             "width": 384,
             "height": 576,
@@ -42070,8 +42070,8 @@
         "lowResPlaceholder": {
           "path": "/assets/ui/portraits/placeholders/placeholder-portrait-s73-10-player-capital-official-f01-v1.webp",
           "exists": true,
-          "bytes": 1416,
-          "sha256": "f6b8202e33b3caf65aadadf38e4dcb7f028766e6f3d930a29d95d07113df909c",
+          "bytes": 1938,
+          "sha256": "8301826864f4f80adec544245427b3745d56737e779aa69d57d9135e52627a69",
           "dimensions": {
             "width": 64,
             "height": 96,
@@ -42117,19 +42117,19 @@
         "notes": "玩家女性选角和身份卡窄屏保留面部、发饰、上身服饰轮廓、束腰腰封和身份服饰；不得显示未审核候选图。"
       },
       "performance": {
-        "bytes": 164246,
+        "bytes": 471870,
         "targetMaxBytes": 614400,
-        "thumbnailBytes": 37896,
+        "thumbnailBytes": 67282,
         "thumbnailTargetMaxBytes": 256000,
-        "lowResPlaceholderBytes": 1242,
+        "lowResPlaceholderBytes": 1794,
         "lowResPlaceholderTargetMaxBytes": 8192
       },
       "files": {
         "image": {
           "path": "/assets/ui/portraits/s73-10/portrait-s73-10-player-capital-official-f02-v1.webp",
           "exists": true,
-          "bytes": 164246,
-          "sha256": "82258d3ee0f2f30272e7b0d196f7c1aa01e116956e05b075d723e3f91daecc9b",
+          "bytes": 471870,
+          "sha256": "a72c2b0493ec4fffd6d221abf415beb15abd414f73f210c7b949ef7c5d6d314a",
           "dimensions": {
             "width": 1024,
             "height": 1536,
@@ -42139,8 +42139,8 @@
         "thumbnail": {
           "path": "/assets/ui/thumbs/thumb-portrait-s73-10-player-capital-official-f02-v1.webp",
           "exists": true,
-          "bytes": 37896,
-          "sha256": "73aff1e94cd4aafc5081cbe6dd89e80d89da36b30a9009def5738c3c3178d5ad",
+          "bytes": 67282,
+          "sha256": "c7dd3546906a29f724ed1347eba0067fd9f3c23b7eb97956070e0f959db0f22d",
           "dimensions": {
             "width": 384,
             "height": 576,
@@ -42150,8 +42150,8 @@
         "lowResPlaceholder": {
           "path": "/assets/ui/portraits/placeholders/placeholder-portrait-s73-10-player-capital-official-f02-v1.webp",
           "exists": true,
-          "bytes": 1242,
-          "sha256": "7b284f4d51dd6f9ac4562f4e3bd0a5981d829aadae34e9656fd84fa760843a5c",
+          "bytes": 1794,
+          "sha256": "23fb4e359a2f123e4b6bfed4d1332262e14d3361b7e1f501a8fbee6b1f50328e",
           "dimensions": {
             "width": 64,
             "height": 96,
@@ -42197,19 +42197,19 @@
         "notes": "玩家女性选角和身份卡窄屏保留面部、发饰、上身服饰轮廓、束腰腰封和身份服饰；不得显示未审核候选图。"
       },
       "performance": {
-        "bytes": 161844,
+        "bytes": 497224,
         "targetMaxBytes": 614400,
-        "thumbnailBytes": 39368,
+        "thumbnailBytes": 71772,
         "thumbnailTargetMaxBytes": 256000,
-        "lowResPlaceholderBytes": 1358,
+        "lowResPlaceholderBytes": 1806,
         "lowResPlaceholderTargetMaxBytes": 8192
       },
       "files": {
         "image": {
           "path": "/assets/ui/portraits/s73-10/portrait-s73-10-player-capital-official-f03-v1.webp",
           "exists": true,
-          "bytes": 161844,
-          "sha256": "b9755298b4606a8cd59d5dbe454dc9f2d314e920b1c7f5a8cae1c5bebec22981",
+          "bytes": 497224,
+          "sha256": "b6f245dac10afacbb4b585951dc69bca916a08974b38b8d1a3e0e2f6afe5dd64",
           "dimensions": {
             "width": 1024,
             "height": 1536,
@@ -42219,8 +42219,8 @@
         "thumbnail": {
           "path": "/assets/ui/thumbs/thumb-portrait-s73-10-player-capital-official-f03-v1.webp",
           "exists": true,
-          "bytes": 39368,
-          "sha256": "9593137f8c1aed213775b28dd140900c6c04c10643a757021ef09bc4020ba9ab",
+          "bytes": 71772,
+          "sha256": "e6ba44e9f5d3b7fbb9b02df02b7e758137bc9324cb08a6002a50e6723c0166ad",
           "dimensions": {
             "width": 384,
             "height": 576,
@@ -42230,8 +42230,8 @@
         "lowResPlaceholder": {
           "path": "/assets/ui/portraits/placeholders/placeholder-portrait-s73-10-player-capital-official-f03-v1.webp",
           "exists": true,
-          "bytes": 1358,
-          "sha256": "c09990b40b5ae2adffb9de17b26755366a5987541a83d97889ede2f62be666ee",
+          "bytes": 1806,
+          "sha256": "57c18a26787792ed604fddb66d0a9d584f5314edbe14bdf5371ba1d59b6a8acd",
           "dimensions": {
             "width": 64,
             "height": 96,
@@ -42277,19 +42277,19 @@
         "notes": "玩家女性选角和身份卡窄屏保留面部、发饰、上身服饰轮廓、束腰腰封和身份服饰；不得显示未审核候选图。"
       },
       "performance": {
-        "bytes": 167374,
+        "bytes": 567936,
         "targetMaxBytes": 614400,
-        "thumbnailBytes": 40626,
+        "thumbnailBytes": 76810,
         "thumbnailTargetMaxBytes": 256000,
-        "lowResPlaceholderBytes": 1348,
+        "lowResPlaceholderBytes": 1938,
         "lowResPlaceholderTargetMaxBytes": 8192
       },
       "files": {
         "image": {
           "path": "/assets/ui/portraits/s73-10/portrait-s73-10-player-grand-minister-f01-v1.webp",
           "exists": true,
-          "bytes": 167374,
-          "sha256": "5d4015590cc7b9580b8280efc2c715a37b25d3e9dd83aa712c3d61c47c4e193a",
+          "bytes": 567936,
+          "sha256": "4ffc98d938fe057a6a5674cf6e9d612e7130cd880bd47ff349d44d93a07a0702",
           "dimensions": {
             "width": 1024,
             "height": 1536,
@@ -42299,8 +42299,8 @@
         "thumbnail": {
           "path": "/assets/ui/thumbs/thumb-portrait-s73-10-player-grand-minister-f01-v1.webp",
           "exists": true,
-          "bytes": 40626,
-          "sha256": "304b06e5b37a40289dc5560ab7c1d74178633ae720d25dadc39a35f1e2998bf4",
+          "bytes": 76810,
+          "sha256": "8f97c3f6033931970f97b015ceae683a535e91feb49f0a653684802dd8d1de38",
           "dimensions": {
             "width": 384,
             "height": 576,
@@ -42310,8 +42310,8 @@
         "lowResPlaceholder": {
           "path": "/assets/ui/portraits/placeholders/placeholder-portrait-s73-10-player-grand-minister-f01-v1.webp",
           "exists": true,
-          "bytes": 1348,
-          "sha256": "85f52623a4c5df54e784eb854741efe6e8d311954b2661729ab12004c645c8ab",
+          "bytes": 1938,
+          "sha256": "d6ee13f674ebd886375fc4fc0970cf4c2a9c77a4a7b96ed35a4d1993bad26ffb",
           "dimensions": {
             "width": 64,
             "height": 96,
@@ -42357,19 +42357,19 @@
         "notes": "玩家女性选角和身份卡窄屏保留面部、发饰、上身服饰轮廓、束腰腰封和身份服饰；不得显示未审核候选图。"
       },
       "performance": {
-        "bytes": 166452,
+        "bytes": 525572,
         "targetMaxBytes": 614400,
-        "thumbnailBytes": 39586,
+        "thumbnailBytes": 69380,
         "thumbnailTargetMaxBytes": 256000,
-        "lowResPlaceholderBytes": 1246,
+        "lowResPlaceholderBytes": 1830,
         "lowResPlaceholderTargetMaxBytes": 8192
       },
       "files": {
         "image": {
           "path": "/assets/ui/portraits/s73-10/portrait-s73-10-player-grand-minister-f02-v1.webp",
           "exists": true,
-          "bytes": 166452,
-          "sha256": "b888e1c69daef3e561d9177871c8dc1f155a3dcbb5d48ec01dea4bf740b7a6d2",
+          "bytes": 525572,
+          "sha256": "57426333e52b9a09ae8e33c45464d2e73fa8ce04b3f8e19db8586d9d24259c99",
           "dimensions": {
             "width": 1024,
             "height": 1536,
@@ -42379,8 +42379,8 @@
         "thumbnail": {
           "path": "/assets/ui/thumbs/thumb-portrait-s73-10-player-grand-minister-f02-v1.webp",
           "exists": true,
-          "bytes": 39586,
-          "sha256": "50fcf07501216d45615a0126cef581f3fba02211ae0e1f6b31555b6903d95765",
+          "bytes": 69380,
+          "sha256": "9639aa5452e595115095262e40277d5cc9f859b22d411adf253882f9986ee7e6",
           "dimensions": {
             "width": 384,
             "height": 576,
@@ -42390,8 +42390,8 @@
         "lowResPlaceholder": {
           "path": "/assets/ui/portraits/placeholders/placeholder-portrait-s73-10-player-grand-minister-f02-v1.webp",
           "exists": true,
-          "bytes": 1246,
-          "sha256": "92d29f22b57e6bae88d7e0bf490b1bffca19bd28998a3a12ab5c49fb10215c4e",
+          "bytes": 1830,
+          "sha256": "8f1452a311cdc681f880cc49fada87a7883cf53a67ecd00be43f8595a047ee8c",
           "dimensions": {
             "width": 64,
             "height": 96,
@@ -42437,19 +42437,19 @@
         "notes": "玩家女性选角和身份卡窄屏保留面部、发饰、上身服饰轮廓、束腰腰封和身份服饰；不得显示未审核候选图。"
       },
       "performance": {
-        "bytes": 167226,
+        "bytes": 533110,
         "targetMaxBytes": 614400,
-        "thumbnailBytes": 40032,
+        "thumbnailBytes": 73052,
         "thumbnailTargetMaxBytes": 256000,
-        "lowResPlaceholderBytes": 1324,
+        "lowResPlaceholderBytes": 1884,
         "lowResPlaceholderTargetMaxBytes": 8192
       },
       "files": {
         "image": {
           "path": "/assets/ui/portraits/s73-10/portrait-s73-10-player-grand-minister-f03-v1.webp",
           "exists": true,
-          "bytes": 167226,
-          "sha256": "d9bc97949265543ca71a54e4a30b4d5dfe487ddb0e669f4b61750e9a54cba9e8",
+          "bytes": 533110,
+          "sha256": "a15169f0ec4094215756348abcb6cfbf43b14df3f6f106e55a58753343fcff5b",
           "dimensions": {
             "width": 1024,
             "height": 1536,
@@ -42459,8 +42459,8 @@
         "thumbnail": {
           "path": "/assets/ui/thumbs/thumb-portrait-s73-10-player-grand-minister-f03-v1.webp",
           "exists": true,
-          "bytes": 40032,
-          "sha256": "bf0c61d77ad2ff6b8db886748c308da62bcd86539f82c421d14fa7fb5b00eced",
+          "bytes": 73052,
+          "sha256": "30a2fa6f1aee1a91ab9bc98a198893214ffcba54a877b0d9bf6f88e2dae1b94e",
           "dimensions": {
             "width": 384,
             "height": 576,
@@ -42470,8 +42470,8 @@
         "lowResPlaceholder": {
           "path": "/assets/ui/portraits/placeholders/placeholder-portrait-s73-10-player-grand-minister-f03-v1.webp",
           "exists": true,
-          "bytes": 1324,
-          "sha256": "aac598afa2cfb75c77fba57b4b02bb16acc36db1ce1cb33d9ecfb79d1454be5c",
+          "bytes": 1884,
+          "sha256": "4d590105421f4ad468605f16ff1a6b8733a60b30b2debfe32a824aa0fc8a209b",
           "dimensions": {
             "width": 64,
             "height": 96,
@@ -42517,19 +42517,19 @@
         "notes": "玩家女性选角和身份卡窄屏保留面部、发饰、上身服饰轮廓、束腰腰封和身份服饰；不得显示未审核候选图。"
       },
       "performance": {
-        "bytes": 166306,
+        "bytes": 455876,
         "targetMaxBytes": 614400,
-        "thumbnailBytes": 41250,
+        "thumbnailBytes": 64958,
         "thumbnailTargetMaxBytes": 256000,
-        "lowResPlaceholderBytes": 1432,
+        "lowResPlaceholderBytes": 1858,
         "lowResPlaceholderTargetMaxBytes": 8192
       },
       "files": {
         "image": {
           "path": "/assets/ui/portraits/s73-10/portrait-s73-10-player-general-f01-v1.webp",
           "exists": true,
-          "bytes": 166306,
-          "sha256": "cf2a296e1ecee97c8cde27b5b070941499d9d0e90cb8e1b23a231ec45c02a63a",
+          "bytes": 455876,
+          "sha256": "7b16822f6a6ee6bde16bce7380b417648e2ed3da2998177211a84c97d365571e",
           "dimensions": {
             "width": 1024,
             "height": 1536,
@@ -42539,8 +42539,8 @@
         "thumbnail": {
           "path": "/assets/ui/thumbs/thumb-portrait-s73-10-player-general-f01-v1.webp",
           "exists": true,
-          "bytes": 41250,
-          "sha256": "bc1bf45448f27b901fd02b770f8420d7058763c4da98144f3631048275011d0f",
+          "bytes": 64958,
+          "sha256": "d9e1b798f30564b2983a533a0fa4425f078ce18488e7dd5752d10aa77024cec0",
           "dimensions": {
             "width": 384,
             "height": 576,
@@ -42550,8 +42550,8 @@
         "lowResPlaceholder": {
           "path": "/assets/ui/portraits/placeholders/placeholder-portrait-s73-10-player-general-f01-v1.webp",
           "exists": true,
-          "bytes": 1432,
-          "sha256": "c9ec4045b329795b1b52c22e667df455050d1a3f420eb02dc1e05d97696c51c4",
+          "bytes": 1858,
+          "sha256": "73231f9ed069b76f8b083421f875b61dbf4e4e281921eed45c5d869c70dbe217",
           "dimensions": {
             "width": 64,
             "height": 96,
@@ -42597,19 +42597,19 @@
         "notes": "玩家女性选角和身份卡窄屏保留面部、发饰、上身服饰轮廓、束腰腰封和身份服饰；不得显示未审核候选图。"
       },
       "performance": {
-        "bytes": 174516,
+        "bytes": 553128,
         "targetMaxBytes": 614400,
-        "thumbnailBytes": 42070,
+        "thumbnailBytes": 73660,
         "thumbnailTargetMaxBytes": 256000,
-        "lowResPlaceholderBytes": 1394,
+        "lowResPlaceholderBytes": 1730,
         "lowResPlaceholderTargetMaxBytes": 8192
       },
       "files": {
         "image": {
           "path": "/assets/ui/portraits/s73-10/portrait-s73-10-player-general-f02-v1.webp",
           "exists": true,
-          "bytes": 174516,
-          "sha256": "89713bc48ce194e0191329dae367900003e02c6a830526e42605a3410754c01a",
+          "bytes": 553128,
+          "sha256": "301c880043db7c20ae199ed51f7e5f9ff9da95c084788924c5bb27051b2b0f0b",
           "dimensions": {
             "width": 1024,
             "height": 1536,
@@ -42619,8 +42619,8 @@
         "thumbnail": {
           "path": "/assets/ui/thumbs/thumb-portrait-s73-10-player-general-f02-v1.webp",
           "exists": true,
-          "bytes": 42070,
-          "sha256": "82d7c0c18ca1344b592e95168254b61e3d386545cff037352a8b192baa94fcf0",
+          "bytes": 73660,
+          "sha256": "8ca4944ceadbaf5dea571844f00b735eb929a5c015abcb0157c3156eb522b7fe",
           "dimensions": {
             "width": 384,
             "height": 576,
@@ -42630,8 +42630,8 @@
         "lowResPlaceholder": {
           "path": "/assets/ui/portraits/placeholders/placeholder-portrait-s73-10-player-general-f02-v1.webp",
           "exists": true,
-          "bytes": 1394,
-          "sha256": "273a871315ab899958b0dd2903a46ae9ea014f4a426d7cca7fbcab2b6dd3ff3c",
+          "bytes": 1730,
+          "sha256": "6ba3a832d749188ad5f0077ba2d601958a3540fd36a48b8ddc91a9779196ab8a",
           "dimensions": {
             "width": 64,
             "height": 96,
@@ -42677,19 +42677,19 @@
         "notes": "玩家女性选角和身份卡窄屏保留面部、发饰、上身服饰轮廓、束腰腰封和身份服饰；不得显示未审核候选图。"
       },
       "performance": {
-        "bytes": 169334,
+        "bytes": 468338,
         "targetMaxBytes": 614400,
-        "thumbnailBytes": 41066,
+        "thumbnailBytes": 66876,
         "thumbnailTargetMaxBytes": 256000,
-        "lowResPlaceholderBytes": 1356,
+        "lowResPlaceholderBytes": 1788,
         "lowResPlaceholderTargetMaxBytes": 8192
       },
       "files": {
         "image": {
           "path": "/assets/ui/portraits/s73-10/portrait-s73-10-player-general-f03-v1.webp",
           "exists": true,
-          "bytes": 169334,
-          "sha256": "6a28025063b94d97e521737c564a9fe5a8e698f44ce9bcedb5896135993334f1",
+          "bytes": 468338,
+          "sha256": "d24e8d88c892c447f0a07df150b8fdea129c0e2b50d8297adf58bacb8bbfcafc",
           "dimensions": {
             "width": 1024,
             "height": 1536,
@@ -42699,8 +42699,8 @@
         "thumbnail": {
           "path": "/assets/ui/thumbs/thumb-portrait-s73-10-player-general-f03-v1.webp",
           "exists": true,
-          "bytes": 41066,
-          "sha256": "30d31971ebf72cbcd5fcdfe30bec8739cf46802779b34e4f79bd2a2f843ad22e",
+          "bytes": 66876,
+          "sha256": "4b7be4aa95c9b6bfb693fbe2a15e5990e4cdd6d19617f8fb58e35ff23ebe840a",
           "dimensions": {
             "width": 384,
             "height": 576,
@@ -42710,8 +42710,8 @@
         "lowResPlaceholder": {
           "path": "/assets/ui/portraits/placeholders/placeholder-portrait-s73-10-player-general-f03-v1.webp",
           "exists": true,
-          "bytes": 1356,
-          "sha256": "f4152e5c731cb7238d764794dab8ce7ff18dfdb11e1523f236e34feacdd09eff",
+          "bytes": 1788,
+          "sha256": "6d2ac53f33c384b8a7d276397aa845de3af685fd240ef029310f9020d2bcab1e",
           "dimensions": {
             "width": 64,
             "height": 96,
@@ -42757,19 +42757,19 @@
         "notes": "玩家女性选角和身份卡窄屏保留面部、发饰、上身服饰轮廓、束腰腰封和身份服饰；不得显示未审核候选图。"
       },
       "performance": {
-        "bytes": 175364,
+        "bytes": 580470,
         "targetMaxBytes": 614400,
-        "thumbnailBytes": 42520,
+        "thumbnailBytes": 81128,
         "thumbnailTargetMaxBytes": 256000,
-        "lowResPlaceholderBytes": 1326,
+        "lowResPlaceholderBytes": 1894,
         "lowResPlaceholderTargetMaxBytes": 8192
       },
       "files": {
         "image": {
           "path": "/assets/ui/portraits/s73-10/portrait-s73-10-player-emperor-regent-f01-v1.webp",
           "exists": true,
-          "bytes": 175364,
-          "sha256": "e582f382201d3f78a4292e7b4d1204bfae266b739d3d1171c547ee3ebb69d232",
+          "bytes": 580470,
+          "sha256": "d6bc7760f30ad05e831e9cb3ee8590cfaaae83b315ed726a2f019a70b92ff4c6",
           "dimensions": {
             "width": 1024,
             "height": 1536,
@@ -42779,8 +42779,8 @@
         "thumbnail": {
           "path": "/assets/ui/thumbs/thumb-portrait-s73-10-player-emperor-regent-f01-v1.webp",
           "exists": true,
-          "bytes": 42520,
-          "sha256": "5fe41752a56b33affd4616c5a5e067d8d702934c39ba54ac67cc6be1452b967f",
+          "bytes": 81128,
+          "sha256": "8a59b5961253ff67cd6fa0e612f906903d8de921b4005a43ae54f4c6775f1d4c",
           "dimensions": {
             "width": 384,
             "height": 576,
@@ -42790,8 +42790,8 @@
         "lowResPlaceholder": {
           "path": "/assets/ui/portraits/placeholders/placeholder-portrait-s73-10-player-emperor-regent-f01-v1.webp",
           "exists": true,
-          "bytes": 1326,
-          "sha256": "1c0bb77f89fad5af727cee4d068971eee85e60cc6d757205edc70b336f6d6d37",
+          "bytes": 1894,
+          "sha256": "1aa487fcff4def3de3ca4a8c4b24f32bcb3e690665ddf5abb7fc829513974ce9",
           "dimensions": {
             "width": 64,
             "height": 96,
@@ -42837,19 +42837,19 @@
         "notes": "玩家女性选角和身份卡窄屏保留面部、发饰、上身服饰轮廓、束腰腰封和身份服饰；不得显示未审核候选图。"
       },
       "performance": {
-        "bytes": 188280,
+        "bytes": 608200,
         "targetMaxBytes": 614400,
-        "thumbnailBytes": 46160,
+        "thumbnailBytes": 82380,
         "thumbnailTargetMaxBytes": 256000,
-        "lowResPlaceholderBytes": 1408,
+        "lowResPlaceholderBytes": 1970,
         "lowResPlaceholderTargetMaxBytes": 8192
       },
       "files": {
         "image": {
           "path": "/assets/ui/portraits/s73-10/portrait-s73-10-player-emperor-regent-f02-v1.webp",
           "exists": true,
-          "bytes": 188280,
-          "sha256": "a7fe0a78867c29b17ee2f393f26632116569c7b82464957267e1916150126492",
+          "bytes": 608200,
+          "sha256": "ee14b242d1f84b510908b199d4bbe882c6029e86d9fd9a83c194b8337aa0ac11",
           "dimensions": {
             "width": 1024,
             "height": 1536,
@@ -42859,8 +42859,8 @@
         "thumbnail": {
           "path": "/assets/ui/thumbs/thumb-portrait-s73-10-player-emperor-regent-f02-v1.webp",
           "exists": true,
-          "bytes": 46160,
-          "sha256": "2b4a29f096b33170ca9bf98a25ce9a3a091e561f16aa0db41da3acb8dc358513",
+          "bytes": 82380,
+          "sha256": "22c22f94595072835eb16424efa10fcc8a4bb007949c5dad472be4b826a68c6e",
           "dimensions": {
             "width": 384,
             "height": 576,
@@ -42870,8 +42870,8 @@
         "lowResPlaceholder": {
           "path": "/assets/ui/portraits/placeholders/placeholder-portrait-s73-10-player-emperor-regent-f02-v1.webp",
           "exists": true,
-          "bytes": 1408,
-          "sha256": "63afe2f53f67b1340ef2878e8ae9daaf06b1ef49ee8aec1eb685a9522191a200",
+          "bytes": 1970,
+          "sha256": "31b0e520eaa2ebd6aad3ea9df6e3125573be2ec326cf36ce7c2ab1bb1b029d5a",
           "dimensions": {
             "width": 64,
             "height": 96,
@@ -42917,19 +42917,19 @@
         "notes": "玩家女性选角和身份卡窄屏保留面部、发饰、上身服饰轮廓、束腰腰封和身份服饰；不得显示未审核候选图。"
       },
       "performance": {
-        "bytes": 171012,
+        "bytes": 555418,
         "targetMaxBytes": 614400,
-        "thumbnailBytes": 42114,
+        "thumbnailBytes": 82756,
         "thumbnailTargetMaxBytes": 256000,
-        "lowResPlaceholderBytes": 1324,
+        "lowResPlaceholderBytes": 1950,
         "lowResPlaceholderTargetMaxBytes": 8192
       },
       "files": {
         "image": {
           "path": "/assets/ui/portraits/s73-10/portrait-s73-10-player-emperor-regent-f03-v1.webp",
           "exists": true,
-          "bytes": 171012,
-          "sha256": "f891bae01f369540191f35e5b31f6742146764435b9a470a38e3d06aef22f042",
+          "bytes": 555418,
+          "sha256": "42a9e480ee41ccab6fcf2bc3cd1723f5400bf3750169794a21143eb650495e9b",
           "dimensions": {
             "width": 1024,
             "height": 1536,
@@ -42939,8 +42939,8 @@
         "thumbnail": {
           "path": "/assets/ui/thumbs/thumb-portrait-s73-10-player-emperor-regent-f03-v1.webp",
           "exists": true,
-          "bytes": 42114,
-          "sha256": "4f279ed9c4df5636a27e7d2aa9683ab31ad5343c0fe2f43f00e0b30f8f9bcc0a",
+          "bytes": 82756,
+          "sha256": "06d36e3c63ba9ee6cf6d5f14826fb604615531cb276c36f3eb0318bdab1e773e",
           "dimensions": {
             "width": 384,
             "height": 576,
@@ -42950,8 +42950,8 @@
         "lowResPlaceholder": {
           "path": "/assets/ui/portraits/placeholders/placeholder-portrait-s73-10-player-emperor-regent-f03-v1.webp",
           "exists": true,
-          "bytes": 1324,
-          "sha256": "24e2b585099f7c5405c09d2d2c66114a180ea4ace10c56c4e786c4bda096abad",
+          "bytes": 1950,
+          "sha256": "35662cf51650399abb3ace3f5eaa9e1f777b2de5d3a097d728eeb1e25dbaa1b4",
           "dimensions": {
             "width": 64,
             "height": 96,

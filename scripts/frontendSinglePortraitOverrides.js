@@ -186,6 +186,16 @@ async function renderWebp(page, sourcePath, outputPath, width, height, quality) 
   writeFileWithRetry(outputPath, Buffer.from(dataUrl.replace(/^data:image\/webp;base64,/, ""), "base64"));
 }
 
+async function renderBudgetedWebp(page, sourcePath, outputPath, width, height, quality, maxBytes) {
+  const qualitySteps = [quality, 0.9, 0.88, 0.86, 0.84];
+  for (const step of qualitySteps) {
+    await renderWebp(page, sourcePath, outputPath, width, height, step);
+    if (!maxBytes || fs.statSync(outputPath).size <= maxBytes) return;
+  }
+  const finalBytes = fs.statSync(outputPath).size;
+  throw new Error(`Budgeted WebP exceeds ${maxBytes} bytes after fallback: ${toProjectPath(outputPath)} (${finalBytes} bytes)`);
+}
+
 async function writeOverrides(options, sources) {
   const manifest = readJson(manifestPath);
   const assetsById = new Map(manifest.assets.map((asset) => [asset.id, asset]));
@@ -198,16 +208,18 @@ async function writeOverrides(options, sources) {
       const asset = assetsById.get(source.id);
       if (!asset) throw new Error(`No manifest portrait asset for single override: ${source.id}`);
       if (asset.category !== "portrait") throw new Error(`Single override only supports portraits: ${source.id}`);
-      await renderWebp(page, source.path, resolveUiAssetPath(asset.path), PORTRAIT_WIDTH, PORTRAIT_HEIGHT, 0.92);
+      await renderBudgetedWebp(page, source.path, resolveUiAssetPath(asset.path), PORTRAIT_WIDTH, PORTRAIT_HEIGHT, 0.92, TARGET_MAX_BYTES);
       await renderWebp(page, source.path, resolveUiAssetPath(asset.thumbnailPath), THUMB_WIDTH, THUMB_HEIGHT, 0.88);
       await renderWebp(page, source.path, resolveUiAssetPath(asset.lowResPlaceholderPath), PLACEHOLDER_WIDTH, PLACEHOLDER_HEIGHT, 0.5);
+      const sourceMetadata = { ...(asset.source || {}) };
+      delete sourceMetadata.localHighResSourcePath;
       asset.source = {
-        ...(asset.source || {}),
+        ...sourceMetadata,
         type: "ai_generated",
         tool: "Codex imagegen",
         model: "gpt-image-2",
         generatedAt: REVIEW_DATE,
-        localHighResSourcePath: toProjectPath(source.path),
+        localHighResSource: "kept_outside_public_manifest",
         promptSummary:
           "单张竖版高质量重制：参考用户给定干净画风，清晰线稿、干净色块、强对比、丰富古典色彩，避免纸纹噪点、灰脏水洗、模糊、拉伸、可读文字和水印。"
       };
@@ -246,7 +258,7 @@ async function writeOverrides(options, sources) {
     reviewedBy: "Codex",
     reviewedAt: REVIEW_DATE,
     manifestRef: "public/assets/ui/ink-ui-manifest.json",
-    sourceDir: toProjectPath(options.sourceDir),
+    sourceHandling: "本地 PNG 母版保留在 artifacts 工作目录，不写入公开 manifest/QA 路径字段；运行时只登记 /assets/ui/ WebP、缩略图和低清占位。",
     visualReviewSummary:
       "单张高质量重制覆盖：直接使用竖版 PNG 母版派生 runtime WebP、缩略图和低清占位，避免网格裁切导致的人物过小、比例拉伸、灰脏噪点和模糊。",
     counts: { total: updated.length },
@@ -256,7 +268,7 @@ async function writeOverrides(options, sources) {
       subcategory: asset.subcategory,
       genderPresentation: asset.genderPresentation,
       ageBand: asset.ageBand,
-      localHighResSourcePath: toProjectPath(source.path),
+      sourceHandling: "local_artifact_not_public",
       path: asset.path,
       thumbnailPath: asset.thumbnailPath,
       lowResPlaceholderPath: asset.lowResPlaceholderPath,
@@ -285,9 +297,8 @@ function checkOverrides() {
   for (const entry of qa.assets) {
     const asset = assetsById.get(entry.id);
     if (!asset) throw new Error(`Missing manifest override asset: ${entry.id}`);
-    if (asset.source?.localHighResSourcePath !== entry.localHighResSourcePath) {
-      throw new Error(`Stale override source path: ${entry.id}`);
-    }
+    if (asset.source?.localHighResSourcePath || entry.localHighResSourcePath) throw new Error(`Public source path leak: ${entry.id}`);
+    if (asset.source?.localHighResSource !== "kept_outside_public_manifest") throw new Error(`Missing private source marker: ${entry.id}`);
     if (asset.visualReview?.status !== entry.visualReviewStatus) throw new Error(`Stale visual review: ${entry.id}`);
     if (asset.safetyReview?.status !== entry.safetyReviewStatus) throw new Error(`Stale safety review: ${entry.id}`);
     for (const [field, width, height] of [
