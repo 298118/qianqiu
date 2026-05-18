@@ -840,6 +840,8 @@ Manifest 示例：
 - localStorage 不保存 key、prompt、raw state。
 - 低动效真实关闭云雾、墨晕、朱印、地图新增动效。
 
+状态：已完成。S75.7 新增 `displayPreferenceStorage` 白名单存储层，显示偏好只以 `qianqiu.displayPreferences.v1` 写入 `motion`、`textSize`、`contrast`、`autoScroll`、`mapMotion` 五个字段，带 `display-preferences-v1` schema 版本；读取时旧 schema、损坏 JSON、未知字段、非法值和 raw/provider/prompt/path/key 污染文本都会被丢弃或回落默认值。`useUiStateStore` 启动、reset 和运行时修改均走该清洗层，不把 session payload、raw state、完整 prompt、provider payload、本地路径或 key 写入 localStorage/sessionStorage。browser smoke 已覆盖印匣显示 tab 调整、reload 后恢复和舆图动效降级。
+
 ### S75.8 底部奏折输入雏形
 
 实现功能：

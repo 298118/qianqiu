@@ -91,6 +91,7 @@ function mockAssetManifestFetch(manifest = buildMockAssetManifest()) {
 describe("S74.1 React client shell", () => {
   afterEach(() => {
     cleanup();
+    window.localStorage.clear();
     resetAssetRegistryCache();
     vi.unstubAllGlobals();
     useGameSessionStore.setState({
@@ -126,7 +127,7 @@ describe("S74.1 React client shell", () => {
     expect(document.querySelector("#start-form")).toBeNull();
     expect(document.querySelector("[data-client-entry='react']")).toBeTruthy();
     expect(document.querySelector("[data-router-mode='data']")).toBeTruthy();
-    expect(document.querySelector("[data-shell-version='s75-6']")).toBeTruthy();
+    expect(document.querySelector("[data-shell-version='s75-7']")).toBeTruthy();
   });
 
   it("posts the S75.2 opening form through the safe start endpoint", async () => {

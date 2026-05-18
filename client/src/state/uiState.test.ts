@@ -1,4 +1,11 @@
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import {
+  defaultDisplayPreferences,
+  displayPreferenceSchemaVersion,
+  displayPreferenceStorageKey,
+  loadDisplayPreferences,
+  saveDisplayPreferences
+} from "./displayPreferenceStorage";
 import { extractSafePlayerPayload, useUiStateStore } from "./uiState";
 import { useGameSessionStore } from "./gameSessionState";
 import type { ExamSubmitResponse, PlayerStateResponse, StartGameResponse, TurnResponse } from "../api";
@@ -73,7 +80,13 @@ function installFetchResponses(...payloads: unknown[]) {
   return fetchMock;
 }
 
+beforeEach(() => {
+  window.localStorage.clear();
+  useUiStateStore.getState().resetUiState();
+});
+
 afterEach(() => {
+  window.localStorage.clear();
   useUiStateStore.getState().resetUiState();
   useGameSessionStore.setState({
     activeExam: null,
@@ -229,6 +242,106 @@ describe("S74.3 UI state store", () => {
       mapMotion: false
     });
     expect(JSON.stringify(useUiStateStore.getState().displayPreferences)).not.toMatch(/sessionId|worldState|provider|prompt|key/i);
+
+    const stored = JSON.parse(window.localStorage.getItem(displayPreferenceStorageKey) ?? "{}");
+    expect(stored).toEqual({
+      schemaVersion: displayPreferenceSchemaVersion,
+      preferences: {
+        motion: "reduced",
+        textSize: "large",
+        contrast: "high",
+        autoScroll: false,
+        mapMotion: false
+      }
+    });
+    expect(JSON.stringify(stored)).not.toMatch(/sessionId|worldState|provider|prompt|key|data\/sessions|C:\\/i);
+  });
+
+  it("loads only versioned display preference fields and drops polluted values", () => {
+    window.localStorage.setItem(
+      displayPreferenceStorageKey,
+      JSON.stringify({
+        schemaVersion: displayPreferenceSchemaVersion,
+        preferences: {
+          motion: "reduced",
+          textSize: "oversized",
+          contrast: "high",
+          autoScroll: "yes",
+          mapMotion: false,
+          sessionId: "11111111-1111-4111-8111-111111111111",
+          worldState: { raw: true },
+          prompt: "完整提示词",
+          providerPayload: { key: "OPENAI_API_KEY" },
+          localPath: "E:\\LSMNQ\\data\\sessions\\raw.json"
+        }
+      })
+    );
+
+    expect(loadDisplayPreferences()).toEqual({
+      motion: "reduced",
+      textSize: "standard",
+      contrast: "high",
+      autoScroll: true,
+      mapMotion: false
+    });
+  });
+
+  it("falls back when display preference schema is missing, stale, or invalid", () => {
+    window.localStorage.setItem(displayPreferenceStorageKey, JSON.stringify({ preferences: { motion: "reduced" } }));
+    expect(loadDisplayPreferences()).toEqual(defaultDisplayPreferences);
+
+    window.localStorage.setItem(
+      displayPreferenceStorageKey,
+      JSON.stringify({ schemaVersion: "display-preferences-v0", preferences: { motion: "reduced" } })
+    );
+    expect(loadDisplayPreferences()).toEqual(defaultDisplayPreferences);
+
+    window.localStorage.setItem(displayPreferenceStorageKey, "{not-json");
+    expect(loadDisplayPreferences()).toEqual(defaultDisplayPreferences);
+  });
+
+  it("saves a whitelist-only display preference payload", () => {
+    saveDisplayPreferences({
+      motion: "reduced",
+      textSize: "large",
+      contrast: "high",
+      autoScroll: false,
+      mapMotion: false,
+      sessionId: "11111111-1111-4111-8111-111111111111",
+      rawState: { hidden: true },
+      prompt: "完整提示词",
+      providerPayload: { token: "key" },
+      localPath: "E:\\LSMNQ\\data\\sessions\\raw.json"
+    } as never);
+
+    const stored = JSON.parse(window.localStorage.getItem(displayPreferenceStorageKey) ?? "{}");
+    expect(Object.keys(stored.preferences).sort()).toEqual(["autoScroll", "contrast", "mapMotion", "motion", "textSize"]);
+    expect(stored.preferences).toEqual({
+      motion: "reduced",
+      textSize: "large",
+      contrast: "high",
+      autoScroll: false,
+      mapMotion: false
+    });
+    expect(JSON.stringify(stored)).not.toMatch(/sessionId|rawState|worldState|provider|prompt|key|data\/sessions|E:\\/i);
+  });
+
+  it("ignores invalid runtime display preference writes", () => {
+    const store = useUiStateStore.getState();
+
+    store.setDisplayPreference("motion", "reduced");
+    store.setDisplayPreference("motion", "raw" as never);
+    store.setDisplayPreference("autoScroll", "yes" as never);
+
+    expect(useUiStateStore.getState().displayPreferences).toMatchObject({
+      motion: "reduced",
+      autoScroll: true
+    });
+    const stored = JSON.parse(window.localStorage.getItem(displayPreferenceStorageKey) ?? "{}");
+    expect(stored.preferences).toMatchObject({
+      motion: "reduced",
+      autoScroll: true
+    });
   });
 
   it("extracts only the player-facing payload summary", () => {

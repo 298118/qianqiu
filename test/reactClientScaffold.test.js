@@ -19,6 +19,7 @@ function stripSafeGuardPatterns(source) {
   return source
     .replace(/const unsafeHomeSummaryPattern = .*?;\r?\n/, "")
     .replace(/const unsafeSaveTextPattern = .*?;\r?\n/, "")
+    .replace(/const unsafePreferenceTextPattern = .*?;\r?\n/, "")
     .replace(/const unsafeClientApiPathPatterns = Object\.freeze\(\[[\s\S]*?\]\);\r?\n/, "");
 }
 
@@ -129,7 +130,7 @@ test("S74.4 shell uses registry-backed overlays without widening data sources", 
   const routeCatalogSource = readText("client/src/routes/routeCatalog.ts");
   const combined = `${appShellSource}\n${surfaceHostSource}\n${surfaceRegistrySource}\n${routeCatalogSource}`;
 
-  assert.match(appShellSource, /data-shell-version="s75-6"/);
+  assert.match(appShellSource, /data-shell-version="s75-7"/);
   assert.match(appShellSource, /resolvePrimaryHref/);
   assert.match(appShellSource, /isRunnableSessionId/);
   assert.match(appShellSource, /ScrollRestoration/);
@@ -199,7 +200,6 @@ test("S75.5 save cases show redacted metadata and load through player-state", ()
     runtimeSourcesWithoutSanitizerPattern,
     /\/api\/game\/state|\/api\/dev\/session-diagnostics|localStorage|sessionStorage|data\/sessions|raw audit|provider payload|OPENAI_API_KEY|DEEPSEEK_API_KEY|MIMO_API_KEY|ANTHROPIC_API_KEY/
   );
-  assert.doesNotMatch(combined, /localStorage|sessionStorage/);
 });
 
 test("S75.6 return home keeps the current session and exposes a safe continue entry", () => {
@@ -211,7 +211,7 @@ test("S75.6 return home keeps the current session and exposes a safe continue en
   const combined = `${appShellSource}\n${homePageSource}\n${uiStateSource}\n${clientSmokeSource}\n${styleSource}`;
   const runtimeSourcesWithoutSanitizerPattern = stripSafeGuardPatterns(`${appShellSource}\n${uiStateSource}\n${styleSource}`);
 
-  assert.match(appShellSource, /data-shell-version="s75-6"/);
+  assert.match(appShellSource, /data-shell-version="s75-7"/);
   assert.match(appShellSource, /aria-label="返回千秋首页"/);
   assert.match(appShellSource, /onClick=\{returnHome\}/);
   assert.match(uiStateSource, /page === "home" && sessionId === null/);
@@ -230,7 +230,42 @@ test("S75.6 return home keeps the current session and exposes a safe continue en
     runtimeSourcesWithoutSanitizerPattern,
     /\/api\/game\/state|\/api\/dev\/session-diagnostics|localStorage|sessionStorage|data\/sessions|raw audit|provider payload|OPENAI_API_KEY|DEEPSEEK_API_KEY|MIMO_API_KEY|ANTHROPIC_API_KEY/
   );
-  assert.doesNotMatch(combined, /localStorage|sessionStorage/);
+});
+
+test("S75.7 display preferences persist only local safe whitelist fields", () => {
+  const storageSource = readText("client/src/state/displayPreferenceStorage.ts");
+  const uiStateSource = readText("client/src/state/uiState.ts");
+  const surfaceHostSource = readText("client/src/components/SurfaceHost.tsx");
+  const appShellSource = readText("client/src/components/AppShell.tsx");
+  const mapPageSource = readText("client/src/pages/MapPage.tsx");
+  const clientSmokeSource = readText("scripts/clientSmoke.js");
+  const appTestSource = readText("client/src/state/uiState.test.ts");
+  const combined = `${storageSource}\n${uiStateSource}\n${surfaceHostSource}\n${appShellSource}\n${mapPageSource}\n${appTestSource}\n${clientSmokeSource}`;
+  const storageSourceWithoutGuard = stripSafeGuardPatterns(storageSource);
+
+  assert.match(storageSource, /displayPreferenceStorageKey = "qianqiu\.displayPreferences\.v1"/);
+  assert.match(storageSource, /schemaVersion: displayPreferenceSchemaVersion/);
+  assert.match(storageSource, /window\.localStorage/);
+  assert.match(storageSource, /sanitizeDisplayPreferences/);
+  assert.match(storageSource, /isDisplayPreferenceValue/);
+  assert.match(appTestSource, /Object\.keys\(stored\.preferences\)\.sort\(\)/);
+  assert.match(uiStateSource, /loadDisplayPreferences\(\)/);
+  assert.match(uiStateSource, /saveDisplayPreferences\(\{/);
+  assert.match(surfaceHostSource, /setDisplayPreference\("mapMotion"/);
+  assert.match(appShellSource, /data-motion=\{displayPreferences\.motion\}/);
+  assert.match(appShellSource, /data-shell-version="s75-7"/);
+  assert.match(appShellSource, /data-text-size=\{displayPreferences\.textSize\}/);
+  assert.match(appShellSource, /data-contrast=\{displayPreferences\.contrast\}/);
+  assert.match(mapPageSource, /displayPreferences\.mapMotion && displayPreferences\.motion === "full"/);
+  assert.match(clientSmokeSource, /assertDisplayPreferencesPersistence/);
+  assert.match(clientSmokeSource, /qianqiu\.displayPreferences\.v1/);
+  assert.match(clientSmokeSource, /mapRuntime\.motion !== "reduced"/);
+  assert.match(combined, /loads only versioned display preference fields and drops polluted values/);
+  assert.match(combined, /saves a whitelist-only display preference payload/);
+  assert.doesNotMatch(
+    storageSourceWithoutGuard,
+    /\/api\/game\/state|\/api\/dev\/session-diagnostics|sessionId|worldState|data\/sessions|raw audit|provider payload|OPENAI_API_KEY|DEEPSEEK_API_KEY|MIMO_API_KEY|ANTHROPIC_API_KEY/
+  );
 });
 
 test("S74.5 asset registry gates manifest assets before React components render portraits", () => {

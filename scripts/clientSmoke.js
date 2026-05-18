@@ -261,6 +261,61 @@ async function assertReturnHomeContinueAndTurn(page, sessionId, screenshotsDir) 
   };
 }
 
+async function assertDisplayPreferencesPersistence(page, gamePath) {
+  await page.getByRole("button", { name: "打开印匣" }).click();
+  await page.getByRole("tab", { name: "显示" }).click();
+  await page.getByRole("combobox", { name: "动效" }).selectOption("reduced");
+  await page.getByRole("combobox", { name: "字号" }).selectOption("large");
+  await page.getByRole("combobox", { name: "对比度" }).selectOption("high");
+  await page.getByRole("checkbox", { name: "自动滚动新回合" }).uncheck();
+  await page.getByRole("checkbox", { name: "舆图动效" }).uncheck();
+  await page.getByRole("button", { name: "关闭抽屉" }).click();
+
+  const storedBeforeReload = await page.evaluate(() => {
+    const storageEntries = [];
+    for (let index = 0; index < window.localStorage.length; index += 1) {
+      const key = window.localStorage.key(index);
+      storageEntries.push([key, key ? window.localStorage.getItem(key) : null]);
+    }
+    return {
+      shellMotion: document.querySelector(".appShell")?.getAttribute("data-motion"),
+      shellTextSize: document.querySelector(".appShell")?.getAttribute("data-text-size"),
+      shellContrast: document.querySelector(".appShell")?.getAttribute("data-contrast"),
+      displayPreferences: JSON.parse(window.localStorage.getItem("qianqiu.displayPreferences.v1") || "{}"),
+      storageEntries
+    };
+  });
+
+  const expectedPreferences = {
+    motion: "reduced",
+    textSize: "large",
+    contrast: "high",
+    autoScroll: false,
+    mapMotion: false
+  };
+  const serializedStorage = JSON.stringify(storedBeforeReload.storageEntries);
+  if (storedBeforeReload.shellMotion !== "reduced" || storedBeforeReload.shellTextSize !== "large" || storedBeforeReload.shellContrast !== "high") {
+    throw new Error(`Display preference data attributes did not update: ${JSON.stringify(storedBeforeReload)}`);
+  }
+  if (JSON.stringify(storedBeforeReload.displayPreferences?.preferences) !== JSON.stringify(expectedPreferences)) {
+    throw new Error(`Display preferences were not saved as the safe whitelist payload: ${JSON.stringify(storedBeforeReload)}`);
+  }
+  if (/\/api\/game\/state|\/api\/dev\/session-diagnostics|worldState|raw\b|provider\b|prompt\b|hidden\b|data\/sessions|OPENAI_API_KEY|DEEPSEEK_API_KEY|MIMO_API_KEY|ANTHROPIC_API_KEY/i.test(serializedStorage)) {
+    throw new Error(`Display preference localStorage contained forbidden text: ${serializedStorage}`);
+  }
+
+  await page.reload({ waitUntil: "networkidle" });
+  await assertCurrentReactClientPage(page, gamePath, "s75-display-preferences-reload-desktop", null);
+  const restored = await page.evaluate(() => ({
+    shellMotion: document.querySelector(".appShell")?.getAttribute("data-motion"),
+    shellTextSize: document.querySelector(".appShell")?.getAttribute("data-text-size"),
+    shellContrast: document.querySelector(".appShell")?.getAttribute("data-contrast")
+  }));
+  if (restored.shellMotion !== "reduced" || restored.shellTextSize !== "large" || restored.shellContrast !== "high") {
+    throw new Error(`Display preferences did not survive reload: ${JSON.stringify(restored)}`);
+  }
+}
+
 async function clickTopNavRoute(page, label, expectedPath) {
   const link = page.locator(".topNav a", { hasText: label }).first();
   await link.waitFor({ timeout: 10000 });
@@ -340,6 +395,7 @@ async function runClientSmoke(options = {}) {
     const continueFlow = await assertReturnHomeContinueAndTurn(page, startedSessionId, options.screenshotsDir);
     screenshots.push(continueFlow.homeScreenshot);
     screenshots.push(continueFlow.gameScreenshot);
+    await assertDisplayPreferencesPersistence(page, `/game/${startedSessionId}`);
     const runtimeMapPath = `/game/${startedSessionId}/map`;
     await clickTopNavRoute(page, "舆图", runtimeMapPath);
     screenshots.push(
@@ -361,6 +417,9 @@ async function runClientSmoke(options = {}) {
         forbiddenText: (document.body.innerText || "").match(/public\/app\.js|#action-input|#information-panel|provider payload|raw audit|hiddenNotes|OPENAI_API_KEY/gi) || []
       };
     });
+    if (mapRuntime.motion !== "reduced") {
+      throw new Error(`React map runtime ignored reduced display preference: ${JSON.stringify(mapRuntime)}`);
+    }
     if (mapRuntime.canvasWidth <= 0 || mapRuntime.canvasHeight <= 0) {
       throw new Error(`React map runtime canvas is empty: ${JSON.stringify(mapRuntime)}`);
     }
@@ -469,6 +528,7 @@ async function runClientSmoke(options = {}) {
         "desktop-mock-start",
         "desktop-return-home-continue",
         "desktop-continue-turn",
+        "desktop-display-preferences-reload",
         "desktop-map-runtime",
         "desktop-map-refresh",
         "desktop-people-assets",

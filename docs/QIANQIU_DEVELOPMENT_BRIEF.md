@@ -38,7 +38,7 @@ S74.1 更新：已新增 `client/`、Vite/TypeScript/Vitest 配置、最小 Reac
 
 S74.2 更新：已新增 React 安全 API client、宽松 response 类型、Zustand 会话 store 和页面最小接线。新前端现在只通过 `POST /api/game/start`、`GET /api/game/saves`、`GET /api/game/player-state/:sessionId`、`POST /api/game/turn`、`POST /api/exam/question|progress|submit`、`GET/POST /api/ai/settings/:sessionId` 和 `POST /api/ai/connection-test` 工作；普通读档明确不使用 `GET /api/game/state/:sessionId`，也不接开发诊断、raw audit、provider payload、完整 prompt、本地路径或 key。非 UUID 预览/烟测案卷不会自动请求后端。
 
-S74.3 更新：已新增 React UI 状态层，`client/src/state/uiState.ts` 管理当前 route page、`sessionId`、安全玩家摘要、drawer/modal/surface、tab、action draft 和 display preferences；`gameSessionState` 在开局、读档、普通回合和交卷成功后同步安全摘要，普通回合成功清空行动草稿。该 store 不保存完整 `worldState`、raw provider payload、hidden ledger、完整 prompt、本地路径或 key；显示偏好当前为运行时 UI 状态，S75.7 再做本地安全持久化。
+S74.3 更新：已新增 React UI 状态层，`client/src/state/uiState.ts` 管理当前 route page、`sessionId`、安全玩家摘要、drawer/modal/surface、tab、action draft 和 display preferences；`gameSessionState` 在开局、读档、普通回合和交卷成功后同步安全摘要，普通回合成功清空行动草稿。该 store 不保存完整 `worldState`、raw provider payload、hidden ledger、完整 prompt、本地路径或 key；S75.7 起显示偏好通过独立白名单存储层本地持久化，不进入服务器 canonical state。
 
 S74.4 更新：已新增 `AppShell`、`SurfaceHost`、overlay focus helper 和 `surfaceRegistry`，统一管理设置/存档/显示偏好抽屉、安全 modal、人物档案、拟圣旨、阅奏折和舆图筛选专题层；支持 Esc 关闭、焦点回收、页面滚动锁定和路由切换滚动恢复。专题层当前只显示安全占位与行动草稿入口，不读取内部审计原文、模型原文、完整 prompt、本地路径或 key，不导入未审核素材或全量立绘池。
 
@@ -59,6 +59,8 @@ S75.4 更新：右上角印匣入口已完成。React `AppShell` 顶部工具收
 S75.5 更新：案卷式存档/读档已完成。React 新增 `SaveCaseList`，首页旧案卷和印匣“旧案”tab 复用同一套安全 metadata 卡片，显示 sessionId 短码、玩家名、身份/功名/官职、朝代年月旬、回合数、公开摘要和最近更新时间；字段缺失或命中 raw/path/key/prompt/provider 污染词时显示中文 fallback。首页读档进入 `/game/:sessionId` 后由 `GamePage` 自动走 `loadSession` / `GET /api/game/player-state/:sessionId`，印匣读档按钮也继续只调用 `loadSession` 后跳转主卷；不读取 raw state、开发诊断、provider payload、完整 prompt、本地路径或 key。此步不改后端 API/schema、provider schema、SQLite schema、存档格式、AI 权限、科举晋级、官职裁决或显示偏好持久化。
 
 S75.6 更新：返回首页与继续本局已完成。React `AppShell` 的返回首页路径会保留当前安全 session 指针，`returnHome` 只关闭抽屉、弹窗、专题层并清空临时行动草稿，不调用 start/turn/raw state/dev diagnostics，不删除或重写服务器状态；首页在 UI store 的安全玩家投影与当前可运行 `sessionId` 匹配时显示“当前本局”和“继续本局”，摘要只使用安全玩家名、身份/功名/官职和来源，并在命中 raw/path/key/prompt/provider 污染词时回落中文 fallback。`npm run smoke:browser` 现在覆盖真实 Mock 开局 -> 返回首页 -> 继续本局 -> 递送一回合，并继续拦截 unsafe API。此步不改后端 API/schema、provider schema、SQLite schema、存档格式、AI 权限、科举晋级或官职裁决规则。
+
+S75.7 更新：显示偏好本地安全持久化已完成。新增 `client/src/state/displayPreferenceStorage.ts`，只把 `motion`、`textSize`、`contrast`、`autoScroll` 和 `mapMotion` 五个字段写入 `qianqiu.displayPreferences.v1`，payload 带 `display-preferences-v1` schema 版本；读取时旧 schema、损坏 JSON、未知字段、非法值和 raw/provider/prompt/path/key 污染文本都会被丢弃或回落默认值。`useUiStateStore` 只接收清洗后的偏好，`AppShell` 继续通过 data attributes 驱动低动效、大字和高对比度，舆图页继续以 `mapMotion && motion === "full"` 关闭 S72 地图新增动效。此步不把 session payload、raw state、完整 prompt、provider payload、本地路径或 key 写入 localStorage/sessionStorage，也不改服务器 canonical state。
 
 S73.10.6 已把分散在各立绘批次中的缩略图与压缩验收收束为独立 QA：`scripts/frontendPortraitCompressionQa.js`、`qa:portrait-compression` 和 `public/assets/ui/portraits/portrait-compression-qa-v1.json` 当前校验 596 张 active 立绘、其中 572 张 S73.10 立绘的 1024x1536 主图、384x576 缩略图、64x96 低清占位、safeArea、focalPoint、移动裁切、文件预算和禁止 eager load。S73.10 单张覆盖新增 `scripts/frontendSinglePortraitOverrides.js`、`qa:single-portrait-overrides` 和 `public/assets/ui/portraits/portrait-single-override-qa-v1.json`，当前替换 60 张女性/偏女性画像为单张高清重制；S74-S77 接线时仍必须按 `portraitRef`、缩略图和低清占位懒加载，不能因为素材池已齐就一次性加载全量大图。
 

@@ -6,6 +6,12 @@ import type {
   StartGameResponse,
   TurnResponse
 } from "../api";
+import {
+  isDisplayPreferenceValue,
+  loadDisplayPreferences,
+  saveDisplayPreferences,
+  type DisplayPreferences
+} from "./displayPreferenceStorage";
 
 export type ClientEntryState = {
   readonly clientEntry: "react";
@@ -44,14 +50,6 @@ export type ActionDraft = {
   readonly source: ActionDraftSource;
   readonly text: string;
   readonly targetPage?: PageSurface;
-};
-
-export type DisplayPreferences = {
-  readonly motion: "full" | "reduced";
-  readonly textSize: "standard" | "large";
-  readonly contrast: "standard" | "high";
-  readonly autoScroll: boolean;
-  readonly mapMotion: boolean;
 };
 
 type SetActionDraftInput = {
@@ -93,26 +91,20 @@ type UiState = {
   readonly resetUiState: () => void;
 };
 
-export const defaultDisplayPreferences: DisplayPreferences = {
-  motion: "full",
-  textSize: "standard",
-  contrast: "standard",
-  autoScroll: true,
-  mapMotion: true
-};
-
-const initialUiState = {
-  currentPage: "home" as PageSurface,
-  currentSessionId: null,
-  currentPlayerPayload: null,
-  activeDrawer: null,
-  activeModal: null,
-  activeSurface: null,
-  activeInkboxTab: "ai-settings" as InkboxTab,
-  selectedTabs: {},
-  actionDraft: null,
-  displayPreferences: defaultDisplayPreferences
-};
+function buildInitialUiState() {
+  return {
+    currentPage: "home" as PageSurface,
+    currentSessionId: null,
+    currentPlayerPayload: null,
+    activeDrawer: null,
+    activeModal: null,
+    activeSurface: null,
+    activeInkboxTab: "ai-settings" as InkboxTab,
+    selectedTabs: {},
+    actionDraft: null,
+    displayPreferences: loadDisplayPreferences()
+  };
+}
 
 function toActionDraftId(text: string, source: ActionDraftSource) {
   const normalized = text.trim().toLowerCase().replace(/[^a-z0-9\u4e00-\u9fa5]+/gi, "-").replace(/^-|-$/g, "");
@@ -156,7 +148,7 @@ export function extractSafePlayerPayload(
 }
 
 export const useUiStateStore = create<UiState>((set) => ({
-  ...initialUiState,
+  ...buildInitialUiState(),
 
   setCurrentPage(page, sessionId = undefined) {
     set((state) => ({
@@ -247,15 +239,16 @@ export const useUiStateStore = create<UiState>((set) => ({
   },
 
   setDisplayPreference(key, value) {
+    if (!isDisplayPreferenceValue(key, value)) return;
     set((state) => ({
-      displayPreferences: {
+      displayPreferences: saveDisplayPreferences({
         ...state.displayPreferences,
         [key]: value
-      }
+      })
     }));
   },
 
   resetUiState() {
-    set(initialUiState);
+    set(buildInitialUiState());
   }
 }));
