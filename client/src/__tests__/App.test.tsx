@@ -127,7 +127,7 @@ describe("S74.1 React client shell", () => {
     expect(document.querySelector("#start-form")).toBeNull();
     expect(document.querySelector("[data-client-entry='react']")).toBeTruthy();
     expect(document.querySelector("[data-router-mode='data']")).toBeTruthy();
-    expect(document.querySelector("[data-shell-version='s75-7']")).toBeTruthy();
+    expect(document.querySelector("[data-shell-version='s75-8']")).toBeTruthy();
   });
 
   it("posts the S75.2 opening form through the safe start endpoint", async () => {
@@ -634,7 +634,7 @@ describe("S74.1 React client shell", () => {
     expect(screen.queryByRole("button", { name: "交卷" })).toBeNull();
   });
 
-  it("keeps the main action draft in the UI store and clears it from the form", () => {
+  it("keeps the main action draft in the UI store and clears it from the composer", () => {
     renderRoute("/game/s74-preview");
 
     const input = screen.getByLabelText("本回合行动");
@@ -646,9 +646,61 @@ describe("S74.1 React client shell", () => {
       text: "拜访座师，请教经义。"
     });
 
-    fireEvent.click(screen.getByRole("button", { name: "清空草稿" }));
+    fireEvent.click(screen.getByRole("button", { name: "清稿" }));
     expect(useUiStateStore.getState().actionDraft).toBeNull();
-    expect(screen.getByLabelText("本回合行动")).toHaveProperty("value", "赴书院温习经义，打听近日考期。");
+    expect(screen.getByLabelText("本回合行动")).toHaveProperty("value", "");
+    expect(screen.getByRole("button", { name: "呈上" })).toHaveProperty("disabled", true);
+  });
+
+  it("keeps S75.8 local quick actions draft-only and submits with Enter", async () => {
+    const sessionId = "66666666-6666-4666-8666-666666666666";
+    const fetchMock = vi.fn(async (url: string, options?: RequestInit) => {
+      if (url === `/api/game/player-state/${sessionId}`) {
+        return new Response(JSON.stringify({
+          source: "server_player_visible_state_projection",
+          sessionId,
+          worldState: { player: { name: "顾衡", role: "scholar" } }
+        }), {
+          status: 200,
+          headers: { "Content-Type": "application/json" }
+        });
+      }
+      if (url === "/api/game/turn") {
+        return new Response(JSON.stringify({
+          sessionId,
+          narrative: "经义稍明。",
+          worldState: { player: { name: "顾衡", role: "scholar" } }
+        }), {
+          status: 200,
+          headers: { "Content-Type": "application/json" }
+        });
+      }
+      throw new Error(`unexpected url: ${url} ${options?.method ?? "GET"}`);
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    renderRoute(`/game/${sessionId}`);
+
+    await waitFor(() => expect(useUiStateStore.getState().currentSessionId).toBe(sessionId));
+    expect(screen.getByRole("button", { name: "可行事" }).getAttribute("aria-expanded")).toBe("true");
+    fireEvent.click(screen.getByRole("button", { name: /研读 local-rule 写入草稿/ }));
+    expect(useUiStateStore.getState().actionDraft).toMatchObject({
+      source: "role-surface",
+      targetPage: "game",
+      text: "闭门研读经义，整理近日所得，准备下一场考试。"
+    });
+    expect(fetchMock.mock.calls.filter(([url]) => url === "/api/game/turn")).toHaveLength(0);
+
+    fireEvent.keyDown(screen.getByLabelText("本回合行动"), { key: "Enter" });
+
+    await waitFor(() => expect(fetchMock.mock.calls.filter(([url]) => url === "/api/game/turn")).toHaveLength(1));
+    const turnCall = fetchMock.mock.calls.find(([url]) => url === "/api/game/turn") as [string, RequestInit] | undefined;
+    expect(JSON.parse(String(turnCall?.[1].body))).toMatchObject({
+      sessionId,
+      input: "闭门研读经义，整理近日所得，准备下一场考试。"
+    });
+    await waitFor(() => expect(useUiStateStore.getState().actionDraft).toBeNull());
+    expect(document.body.textContent || "").not.toMatch(/provider payload|raw state|raw audit|完整 prompt|data\/sessions|OPENAI_API_KEY/i);
   });
 
   it("wraps the S72 map renderer with safe React action drafts", async () => {

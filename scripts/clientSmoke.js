@@ -232,7 +232,11 @@ async function assertReturnHomeContinueAndTurn(page, sessionId, screenshotsDir) 
 
   await page.getByRole("link", { name: "继续本局" }).click();
   await page.waitForURL((url) => url.pathname === gamePath, { timeout: 10000 });
-  await page.getByLabel("本回合行动").fill("回到案前，整理本旬见闻，再写一封请益短札。");
+  await page.getByRole("button", { name: /研读 local-rule 写入草稿/ }).click();
+  const quickDraft = await page.getByLabel("本回合行动").inputValue();
+  if (!quickDraft.includes("研读经义")) {
+    throw new Error(`S75.8 quick action did not write a local-rule draft: ${quickDraft}`);
+  }
   const turnResponse = page.waitForResponse((response) => {
     try {
       const url = new URL(response.url());
@@ -241,15 +245,19 @@ async function assertReturnHomeContinueAndTurn(page, sessionId, screenshotsDir) 
       return false;
     }
   }, { timeout: 20000 });
-  await page.getByRole("button", { name: "递送奏折" }).click();
+  await page.getByLabel("本回合行动").press("Enter");
   await turnResponse;
-  await page.getByRole("button", { name: "递送奏折" }).waitFor({ timeout: 20000 });
+  await page.getByRole("button", { name: "呈上" }).waitFor({ timeout: 20000 });
   const continuedState = await page.evaluate(() => ({
     actionText: document.querySelector("textarea")?.value || "",
+    localRuleMarker: document.querySelector("[data-source='local-rule']")?.textContent || "",
     forbiddenText: (document.body.innerText || "").match(/\/api\/game\/state|\/api\/dev\/session-diagnostics|provider\b|prompt\b|hidden\b|key\b|path\b|[a-z]:[\\/]|file:\/{2}|raw audit|hiddenNotes|OPENAI_API_KEY|data\/sessions/gi) || []
   }));
-  if (continuedState.actionText.includes("回到案前")) {
+  if (continuedState.actionText.includes("研读经义")) {
     throw new Error(`Action draft was not cleared after continued-session turn: ${JSON.stringify(continuedState)}`);
+  }
+  if (!continuedState.localRuleMarker.includes("local-rule")) {
+    throw new Error(`S75.8 quick action source marker was not visible: ${JSON.stringify(continuedState)}`);
   }
   if (continuedState.forbiddenText.length) {
     throw new Error(`Continued-session turn leaked forbidden text: ${continuedState.forbiddenText.join(", ")}`);
@@ -510,6 +518,33 @@ async function runClientSmoke(options = {}) {
     }
 
     await page.setViewportSize(VIEWPORTS.mobile);
+    screenshots.push(
+      await assertReactClientPage(page, baseUrl, `/game/${startedSessionId}`, "s75-memorial-composer-mobile", options.screenshotsDir, {
+        readySelector: ".memorialComposer"
+      })
+    );
+    const mobileComposer = await page.evaluate(() => {
+      const composer = document.querySelector(".memorialComposer")?.getBoundingClientRect();
+      const textarea = document.querySelector(".memorialComposer textarea")?.getBoundingClientRect();
+      const html = document.documentElement;
+      return {
+        composerBottom: composer?.bottom || 0,
+        composerTop: composer?.top || 0,
+        textareaHeight: textarea?.height || 0,
+        viewportHeight: window.innerHeight,
+        horizontalOverflow: html.scrollWidth > html.clientWidth + 4,
+        forbiddenText: (document.body.innerText || "").match(/provider payload|raw audit|hiddenNotes|OPENAI_API_KEY|data\/sessions/gi) || []
+      };
+    });
+    if (mobileComposer.composerBottom > mobileComposer.viewportHeight + 2 || mobileComposer.composerTop < 0 || mobileComposer.textareaHeight < 56) {
+      throw new Error(`S75.8 mobile memorial composer is mispositioned: ${JSON.stringify(mobileComposer)}`);
+    }
+    if (mobileComposer.horizontalOverflow) {
+      throw new Error(`S75.8 mobile memorial composer caused horizontal overflow: ${JSON.stringify(mobileComposer)}`);
+    }
+    if (mobileComposer.forbiddenText.length) {
+      throw new Error(`S75.8 mobile memorial composer leaked forbidden text: ${mobileComposer.forbiddenText.join(", ")}`);
+    }
     screenshots.push(await assertReactClientPage(page, baseUrl, "/", "s74-react-home-mobile", options.screenshotsDir));
     await context.close();
 
@@ -538,6 +573,7 @@ async function runClientSmoke(options = {}) {
         "desktop-ranking-refresh",
         "desktop-court-refresh",
         "desktop-settings-refresh",
+        "mobile-memorial-composer",
         "mobile-home"
       ]
     };

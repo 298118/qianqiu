@@ -862,6 +862,8 @@ Manifest 示例：
 - 提交失败保留草稿。
 - 不允许空提交。
 
+状态：已完成。S75.8 已新增 `client/src/components/MemorialComposer.tsx` 和 `quickActionSuggestions.ts`，主卷行动入口改为固定底部奏折/竹简 composer，使用本地输入态承载草稿，placeholder 只作提示，不再回填为可提交 value；Enter 呈上、Shift+Enter 换行，空白行动禁用，失败时输入保留，成功后仍由现有 `submitTurn` 清空 UI 草稿。快捷功能区首个入口为“可行事”，根据当前安全玩家身份与 route view flags 生成 2-3 条 `local-rule` 建议；点击只写入 `role-surface` 草稿，不调用 provider、不提交普通回合、不改服务器状态。`QuickActionSource` 已预留 `local-rule`、`mock-ai`、`provider-ai`、`map-runtime`、`surface`，AI/Mock 推荐、安全 endpoint、schema 校验、降级和污染防线完善留给 S75.9。
+
 ### S75.9 快捷功能 AI 接入与完善
 
 实现功能：
