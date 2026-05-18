@@ -862,7 +862,23 @@ Manifest 示例：
 - 提交失败保留草稿。
 - 不允许空提交。
 
-### S75.9 S75 验收
+### S75.9 快捷功能 AI 接入与完善
+
+实现功能：
+
+- 在 S75.8 本地规则“可行事”快捷区基础上接入 AI/Mock 推荐，但 AI 只生成可点击草稿建议，不提交行动、不裁决结果、不写 canonical state。
+- 设计安全 endpoint 或等价安全调用层，只允许发送 redacted player summary、route view flags、当前页、短草稿预览和必要 session 标识。
+- 无 key、provider 失败、JSON 不合规或安全校验不通过时，回退 S75.8 本地规则建议。
+- 对 AI 返回建议做 schema 校验、长度 cap、敏感词过滤和身份 allowlist；禁止 raw state、provider payload、完整 prompt、本地路径、key、hidden 信息进入 UI。
+- 完善快捷区扩展位，保留 `local-rule`、`mock-ai`、`provider-ai`、`map-runtime`、`surface` 等来源标记，并补加载、失败、过期、已写入草稿状态。
+
+验收：
+
+- Mock/no-key 下仍可获得确定性建议或本地规则降级。
+- AI 推荐只写入行动草稿，不自动调用普通回合、不直写状态、不伪造已发生事实。
+- DOM、localStorage/sessionStorage 和错误文案不暴露 raw state、provider payload、完整 prompt、本地路径、key 或 hidden 信息。
+
+### S75.10 S75 验收
 
 命令：
 
