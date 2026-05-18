@@ -974,6 +974,8 @@ Manifest 示例：
 
 ### S76.6 皇帝面板
 
+状态：已完成。S76.6 已新增 React `EmperorPanel`，在皇帝身份主卷接入已审核御案 `role_background`、安全 `officialPostingsView`、`eventArchiveView`、`actorMemoryView`、`aiControlAuditView`、`worldEntityView`、`worldThreadView`、`mapRuntimeView` 和玩家公开摘要，展示御案、奏折队列、朱批拟稿、圣旨草稿、朝议、任免候选、赏罚预留和御案边界。所有按钮只写底部奏折草稿，不提交回合、不调用 resolver、不推进时间、不把朱批、圣旨、任免、赏罚或处分写成已生效事实。
+
 实现功能：
 
 - 御案背景。

@@ -45,6 +45,8 @@ export type SafeRouteViews = {
   readonly militaryDiplomacyView?: JsonObject;
   readonly economicFiscalView?: JsonObject;
   readonly actorMemoryView?: JsonObject;
+  readonly worldEntityView?: JsonObject;
+  readonly worldThreadView?: JsonObject;
   readonly [key: string]: unknown;
 };
 

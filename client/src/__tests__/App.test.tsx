@@ -989,6 +989,135 @@ describe("S74.1 React client shell", () => {
     expect(document.body.textContent || "").not.toMatch(/provider payload|sk-test-secret|prompt|raw audit|path=|C:\\|data\/sessions|OPENAI_API_KEY/i);
   });
 
+  it("renders the S76.6 emperor panel from safe court views as draft-only edicts", async () => {
+    const sessionId = "52345678-1111-4111-8111-111111111111";
+    const fetchMock = vi.fn(async (url: string) => {
+      if (url === "/assets/ui/ink-ui-manifest.json") {
+        return new Response(JSON.stringify({
+          ...buildMockAssetManifest(0),
+          assets: [
+            {
+              id: "ui-role-emperor-imperial-desk-v1",
+              category: "role_background",
+              usage: ["game_main"],
+              role: "emperor",
+              path: "/assets/ui/roles/role-emperor-imperial-desk-v1.webp",
+              thumbnailPath: "/assets/ui/thumbs/thumb-role-emperor-imperial-desk-v1.webp",
+              fallbackRef: "fallback-paper-panel-v1",
+              reviewStatus: "approved",
+              visualReview: { status: "approved" },
+              safetyReview: { status: "approved" }
+            }
+          ]
+        }), {
+          status: 200,
+          headers: { "Content-Type": "application/json" }
+        });
+      }
+      if (url === `/api/game/player-state/${sessionId}`) {
+        return new Response(JSON.stringify({
+          source: "server_player_visible_state_projection",
+          sessionId,
+          worldState: { player: { name: "赵御案", role: "emperor", officeTitle: "御案临朝" } },
+          officialPostingsView: {
+            dateLabel: "明1644年正月下旬",
+            courtSummary: {
+              officeTitle: "御案临朝",
+              publicSummary: "朝廷案牍只读公开投影，拟旨和朱批仍候服务器裁决。"
+            },
+            appointmentCandidates: [{
+              id: "candidate-1",
+              title: "吏部侍郎候补",
+              statusLabel: "待议",
+              publicSummary: "资历可查，任免未定。"
+            }, {
+              id: "bad-candidate",
+              title: "provider payload sk-test-secret",
+              publicSummary: "path=C:\\secret\\office.json"
+            }]
+          },
+          eventArchiveView: {
+            dateLabel: "明1644年正月下旬",
+            counts: { memorials: 2, fiscalScore: 57, militaryScore: 63, personnelScore: 48, localScore: 52 },
+            memorials: [{
+              id: "memorial-1",
+              kind: "memorial",
+              title: "户部钱粮奏折",
+              statusLabel: "急奏",
+              publicSummary: "钱粮吃紧，请求朝议。"
+            }, {
+              id: "bad-memorial",
+              title: "raw audit OPENAI_API_KEY",
+              publicSummary: "data/sessions/secret"
+            }],
+            events: [{
+              id: "reward-1",
+              kind: "reward",
+              title: "边镇功过待核",
+              publicSummary: "赏罚须待证据。"
+            }]
+          },
+          actorMemoryView: {
+            actors: [{ id: "actor-1", title: "内阁首辅", statusLabel: "候旨", publicSummary: "请先集议。" }]
+          },
+          aiControlAuditView: {
+            publicPanel: {
+              publicResults: [{ id: "audit-1", title: "处分复核", publicSummary: "仅为公开审计摘要。" }]
+            }
+          },
+          worldThreadView: {
+            threads: [{ id: "thread-1", title: "朝议钱粮", followUp: "待内阁具奏。" }]
+          },
+          worldEntityView: {
+            entities: [{ id: "entity-1", kind: "personnel", title: "吏部铨选", publicSummary: "缺额待核。" }]
+          },
+          mapRuntimeView: {
+            eventEffects: [{ id: "map-1", label: "边防警势", severity: 64, summary: "只作舆图公开警讯。" }]
+          }
+        }), {
+          status: 200,
+          headers: { "Content-Type": "application/json" }
+        });
+      }
+      if (url === `/api/ai/quick-actions/${sessionId}`) {
+        return new Response(JSON.stringify({
+          schemaVersion: "s75.9-quick-actions.v1",
+          sessionId,
+          source: "mock-ai",
+          status: "ready",
+          quickActionSuggestions: []
+        }), {
+          status: 200,
+          headers: { "Content-Type": "application/json" }
+        });
+      }
+      throw new Error(`unexpected url: ${url}`);
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    renderRoute(`/game/${sessionId}`);
+
+    await screen.findByRole("heading", { name: "御案朝仪" });
+    expect(screen.getByText("奏折队列")).toBeTruthy();
+    expect(screen.getByText("朱批拟稿")).toBeTruthy();
+    expect(screen.getAllByText("圣旨草稿").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("朝议").length).toBeGreaterThan(0);
+    expect(screen.getByText("任免候选")).toBeTruthy();
+    expect(screen.getByText("赏罚预留")).toBeTruthy();
+    expect(screen.getByRole("link", { name: "入朝议页" }).getAttribute("href")).toBe(`/game/${sessionId}/court`);
+    expect(screen.getByRole("link", { name: "查史册" }).getAttribute("href")).toBe(`/game/${sessionId}/archive`);
+    expect(screen.getByText("任免、赏罚、处分、朱批成案、圣旨生效、时间推进和持久化都由服务器裁决。")).toBeTruthy();
+
+    fireEvent.click(screen.getByRole("button", { name: "拟旨" }));
+    expect(useUiStateStore.getState().actionDraft).toMatchObject({
+      source: "role-surface",
+      targetPage: "game",
+      text: "草拟一道明发谕旨，请内阁先核证据、适用官制与可行后果；此稿未生效。"
+    });
+    expect(fetchMock.mock.calls.filter(([url]) => url === "/api/game/turn")).toHaveLength(0);
+    expect(document.body.textContent || "").not.toMatch(/provider payload|sk-test-secret|prompt|raw audit|path=|C:\\|data\/sessions|OPENAI_API_KEY/i);
+  });
+
   it("tracks route-derived UI page state and closes safe drawers with Esc while restoring focus", async () => {
     renderRoute("/game/smoke-session/map");
 

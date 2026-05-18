@@ -2,6 +2,7 @@ import { NavLink, Outlet, useParams } from "react-router";
 import { BookOpen, FileText, Landmark, Map, ScrollText, Settings, Users } from "lucide-react";
 import { useEffect, useMemo, type CSSProperties } from "react";
 import { useAssetRegistry } from "../assets/useAssetRegistry";
+import { EmperorPanel } from "../components/EmperorPanel";
 import { GeneralPanel } from "../components/GeneralPanel";
 import { MagistratePanel } from "../components/MagistratePanel";
 import { MemorialComposer } from "../components/MemorialComposer";
@@ -82,7 +83,7 @@ const sceneByRole: Record<string, { readonly title: string; readonly assetPath: 
     title: "御案临朝",
     assetPath: "/assets/ui/scenes/scene-imperial-desk-v1.webp",
     sceneKey: "imperial_desk",
-    note: "圣旨、朝议与任免仍是 proposal 入口，不直接生效。"
+    note: "圣旨、朝议与任免仍是提案入口，不直接生效。"
   }
 };
 
@@ -307,6 +308,23 @@ export function GamePage() {
           actorMemoryView={session?.actorMemoryView ?? null}
           roleBackgroundPath={roleBackgroundAsset?.path}
           mapHref={sessionHref(routeCatalog.find((entry) => entry.id === "map")?.href ?? "/game/s74-preview/map")}
+          archiveHref={sessionHref(routeCatalog.find((entry) => entry.id === "archive")?.href ?? "/game/s74-preview/archive")}
+          runnable={runnable}
+          onDraft={(text) => setActionDraft({ source: "role-surface", targetPage: "game", text })}
+        />
+      ) : null}
+      {player?.role === "emperor" ? (
+        <EmperorPanel
+          player={player}
+          officialPostingsView={session?.officialPostingsView ?? null}
+          eventArchiveView={session?.eventArchiveView ?? null}
+          actorMemoryView={session?.actorMemoryView ?? null}
+          aiControlAuditView={session?.aiControlAuditView ?? null}
+          worldEntityView={session?.worldEntityView ?? null}
+          worldThreadView={session?.worldThreadView ?? null}
+          mapRuntimeView={session?.mapRuntimeView ?? null}
+          roleBackgroundPath={roleBackgroundAsset?.path}
+          courtHref={sessionHref(routeCatalog.find((entry) => entry.id === "court")?.href ?? "/game/s74-preview/court")}
           archiveHref={sessionHref(routeCatalog.find((entry) => entry.id === "archive")?.href ?? "/game/s74-preview/archive")}
           runnable={runnable}
           onDraft={(text) => setActionDraft({ source: "role-surface", targetPage: "game", text })}

@@ -1024,6 +1024,46 @@ button:disabled {
   font-weight: 800;
 }
 
+.emperorPanel {
+  border-color: rgba(123, 45, 38, 0.36);
+  background:
+    linear-gradient(115deg, rgba(255, 248, 230, 0.92), rgba(228, 214, 180, 0.82) 41%, rgba(121, 52, 45, 0.22)),
+    var(--scholar-panel-bg, url("/assets/ui/roles/role-emperor-imperial-desk-v1.webp")) left center / cover no-repeat,
+    #e6d6b5;
+}
+
+.scholarPanel.emperorPanel::before {
+  background:
+    linear-gradient(90deg, rgba(255, 252, 238, 0.76), rgba(255, 252, 238, 0.9) 42%, rgba(255, 252, 238, 0.76)),
+    radial-gradient(circle at 13% 14%, rgba(137, 42, 35, 0.15), transparent 30%),
+    radial-gradient(circle at 82% 18%, rgba(72, 82, 88, 0.12), transparent 30%);
+}
+
+.emperorPanel .scholarPanelEyebrow,
+.emperorPanel .scholarPanelMetrics strong {
+  color: #872f28;
+}
+
+.emperorPanel .scholarPanelMetrics li {
+  display: grid;
+  grid-template-columns: minmax(62px, 1fr) auto;
+}
+
+.emperorPanel .scholarPanelMetrics em {
+  grid-column: 1 / -1;
+  color: #67543c;
+  font-size: 0.76rem;
+  font-style: normal;
+  font-weight: 800;
+}
+
+.emperorPanelBoundary .scholarPanelBoundary {
+  display: grid;
+  gap: 7px;
+  margin: 0;
+  padding-left: 18px;
+}
+
 .scholarPanel::before {
   position: absolute;
   inset: 0;

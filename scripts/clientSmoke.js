@@ -550,6 +550,101 @@ async function assertGeneralPanel(page, sessionId, screenshotsDir) {
   return captureScreenshot(page, screenshotsDir, "s76-general-panel-desktop");
 }
 
+async function startMockEmperorThroughHome(page, baseUrl) {
+  await page.goto(`${baseUrl}/`, { waitUntil: "networkidle" });
+  await page.getByLabel("姓名").fill("烟测御案");
+  await page.getByLabel("身份").selectOption("emperor");
+  await page.getByRole("button", { name: "新开一卷" }).click();
+  return waitForSafeSessionPath(page, "emperor home start");
+}
+
+async function assertEmperorPanel(page, sessionId, screenshotsDir) {
+  await page.getByRole("heading", { name: "御案朝仪" }).waitFor({ timeout: 10000 });
+  const panelSnapshot = await page.evaluate((id) => {
+    const panel = document.querySelector(".emperorPanel");
+    const text = panel?.textContent || "";
+    const courtLink = [...document.querySelectorAll(".emperorPanel a")].find((link) => (link.textContent || "").includes("入朝议页"));
+    const archiveLink = [...document.querySelectorAll(".emperorPanel a")].find((link) => (link.textContent || "").includes("查史册"));
+    const buttons = [...document.querySelectorAll(".emperorPanel button")].map((button) => ({
+      text: (button.textContent || "").trim(),
+      disabled: button.disabled
+    }));
+    const computedBackground = panel
+      ? `${panel.getAttribute("data-role-background") || ""} ${getComputedStyle(panel).getPropertyValue("--scholar-panel-bg")}`
+      : "";
+    return {
+      text,
+      metricCount: panel?.querySelectorAll(".scholarPanelMetrics li").length || 0,
+      hasMemorials: text.includes("奏折队列"),
+      hasVermilion: text.includes("朱批拟稿"),
+      hasEdict: text.includes("圣旨草稿"),
+      hasCourt: text.includes("朝议"),
+      hasAppointments: text.includes("任免候选"),
+      hasRewards: text.includes("赏罚预留"),
+      hasBoundary: text.includes("任免、赏罚、处分、朱批成案、圣旨生效、时间推进和持久化都由服务器裁决"),
+      buttons,
+      background: computedBackground,
+      courtPath: courtLink ? new URL(courtLink.href).pathname : "",
+      archivePath: archiveLink ? new URL(archiveLink.href).pathname : "",
+      expectedCourtPath: `/game/${id}/court`,
+      expectedArchivePath: `/game/${id}/archive`,
+      path: window.location.pathname,
+      expectedPath: `/game/${id}`,
+      forbiddenText: (document.body.innerText || "").match(/\/api\/game\/state|\/api\/dev\/session-diagnostics|provider payload|raw audit|hiddenNotes|OPENAI_API_KEY|data\/sessions|完整提示词|本地路径|密钥|sk-[a-z0-9_-]{6,}|[a-z]:[\\/]/gi) || []
+    };
+  }, sessionId);
+
+  const failures = [];
+  if (panelSnapshot.path !== panelSnapshot.expectedPath) failures.push(`path was ${panelSnapshot.path}`);
+  if (!panelSnapshot.hasMemorials) failures.push("missing memorial queue block");
+  if (!panelSnapshot.hasVermilion) failures.push("missing vermilion draft block");
+  if (!panelSnapshot.hasEdict) failures.push("missing edict draft block");
+  if (!panelSnapshot.hasCourt) failures.push("missing court debate block");
+  if (!panelSnapshot.hasAppointments) failures.push("missing appointment candidate block");
+  if (!panelSnapshot.hasRewards) failures.push("missing reward punishment block");
+  if (!panelSnapshot.hasBoundary) failures.push("missing emperor server boundary");
+  if (panelSnapshot.metricCount < 4) failures.push(`expected emperor metrics, saw ${panelSnapshot.metricCount}`);
+  if (!panelSnapshot.buttons.some((button) => button.text === "拟旨" && !button.disabled)) failures.push("edict draft button missing or disabled");
+  if (!panelSnapshot.buttons.some((button) => button.text === "朱批奏折" && !button.disabled)) failures.push("vermilion draft button missing or disabled");
+  if (panelSnapshot.courtPath !== panelSnapshot.expectedCourtPath) failures.push(`court link was ${panelSnapshot.courtPath}`);
+  if (panelSnapshot.archivePath !== panelSnapshot.expectedArchivePath) failures.push(`archive link was ${panelSnapshot.archivePath}`);
+  if (!panelSnapshot.background.includes("/assets/ui/")) failures.push("role background asset was not applied through the manifest registry");
+  if (panelSnapshot.forbiddenText.length) failures.push(`unsafe text leaked: ${panelSnapshot.forbiddenText.join(", ")}`);
+  if (failures.length) {
+    throw new Error(`S76.6 emperor panel smoke failed: ${failures.join("; ")}`);
+  }
+
+  const turnRequests = [];
+  const onRequest = (request) => {
+    try {
+      const url = new URL(request.url());
+      if (url.pathname === "/api/game/turn" && request.method() === "POST") {
+        turnRequests.push(url.pathname);
+      }
+    } catch {
+    }
+  };
+  page.on("request", onRequest);
+  await page.getByRole("button", { name: "拟旨" }).click();
+  await page.waitForFunction(() => {
+    const value = document.querySelector("textarea")?.value || "";
+    return value.includes("草拟一道明发谕旨") && value.includes("此稿未生效");
+  }, null, { timeout: 10000 });
+  await page.waitForTimeout(250);
+  page.off("request", onRequest);
+  if (turnRequests.length) {
+    throw new Error(`S76.6 emperor draft button submitted a turn instead of writing a draft: ${turnRequests.join(", ")}`);
+  }
+
+  const draft = await page.getByLabel("本回合行动").inputValue();
+  if (!draft.includes("草拟一道明发谕旨")) {
+    throw new Error(`S76.6 emperor draft did not enter the memorial composer: ${draft}`);
+  }
+  await page.getByLabel("本回合行动").fill("");
+
+  return captureScreenshot(page, screenshotsDir, "s76-emperor-panel-desktop");
+}
+
 async function assertReturnHomeContinueAndTurn(page, sessionId, screenshotsDir) {
   const gamePath = `/game/${sessionId}`;
 
@@ -1032,6 +1127,8 @@ async function runClientSmoke(options = {}) {
     screenshots.push(await assertOfficialMinisterPanel(page, officialSessionId, options.screenshotsDir));
     const generalSessionId = await startMockGeneralThroughHome(page, baseUrl);
     screenshots.push(await assertGeneralPanel(page, generalSessionId, options.screenshotsDir));
+    const emperorSessionId = await startMockEmperorThroughHome(page, baseUrl);
+    screenshots.push(await assertEmperorPanel(page, emperorSessionId, options.screenshotsDir));
 
     const health = await page.evaluate(async () => {
       const response = await fetch("/api/health");
@@ -1104,6 +1201,7 @@ async function runClientSmoke(options = {}) {
         "desktop-magistrate-panel",
         "desktop-official-minister-panel",
         "desktop-general-panel",
+        "desktop-emperor-panel",
         "mobile-memorial-composer",
         "mobile-inkbox-tabs",
         "mobile-home"

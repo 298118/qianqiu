@@ -455,6 +455,40 @@ test("S76.5 general panel uses safe military projections as draft-only UI", () =
   );
 });
 
+test("S76.6 emperor panel uses safe court projections as draft-only edict UI", () => {
+  const gamePageSource = readText("client/src/pages/GamePage.tsx");
+  const emperorPanelSource = readText("client/src/components/EmperorPanel.tsx");
+  const appTestSource = readText("client/src/__tests__/App.test.tsx");
+  const styleSource = readText("client/src/styles/global.css");
+  const typeSource = readText("client/src/api/types.ts");
+  const emperorPanelWithoutGuard = emperorPanelSource.replace(/const unsafeEmperorFragments[\s\S]*?\] as const;\r?\n/, "");
+  const runtimeCombined = `${gamePageSource}\n${emperorPanelWithoutGuard}\n${styleSource}`;
+
+  assert.match(gamePageSource, /<EmperorPanel/);
+  assert.match(gamePageSource, /officialPostingsView=\{session\?\.officialPostingsView/);
+  assert.match(gamePageSource, /eventArchiveView=\{session\?\.eventArchiveView/);
+  assert.match(gamePageSource, /actorMemoryView=\{session\?\.actorMemoryView/);
+  assert.match(gamePageSource, /aiControlAuditView=\{session\?\.aiControlAuditView/);
+  assert.match(gamePageSource, /worldEntityView=\{session\?\.worldEntityView/);
+  assert.match(gamePageSource, /worldThreadView=\{session\?\.worldThreadView/);
+  assert.match(emperorPanelSource, /export function EmperorPanel/);
+  assert.match(emperorPanelSource, /奏折队列/);
+  assert.match(emperorPanelSource, /朱批拟稿/);
+  assert.match(emperorPanelSource, /圣旨草稿/);
+  assert.match(emperorPanelSource, /朝议/);
+  assert.match(emperorPanelSource, /任免候选/);
+  assert.match(emperorPanelSource, /赏罚预留/);
+  assert.match(emperorPanelSource, /任免、赏罚、处分、朱批成案、圣旨生效、时间推进和持久化都由服务器裁决/);
+  assert.match(styleSource, /emperorPanel/);
+  assert.match(typeSource, /worldEntityView\?: JsonObject/);
+  assert.match(typeSource, /worldThreadView\?: JsonObject/);
+  assert.match(appTestSource, /renders the S76\.6 emperor panel from safe court views as draft-only edicts/);
+  assert.doesNotMatch(
+    runtimeCombined,
+    /\/api\/game\/state|\/api\/dev\/session-diagnostics|\/api\/exam\/question|\/api\/exam\/submit|dangerouslySetInnerHTML|localStorage|sessionStorage|data\/sessions|raw audit|provider payload|OPENAI_API_KEY|DEEPSEEK_API_KEY|MIMO_API_KEY|ANTHROPIC_API_KEY/
+  );
+});
+
 test("S74.5 asset registry gates manifest assets before React components render portraits", () => {
   const assetRegistrySource = readText("client/src/assets/assetRegistry.ts");
   const portraitSource = readText("client/src/components/Portrait.tsx");
