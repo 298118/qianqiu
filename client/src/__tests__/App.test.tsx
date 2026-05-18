@@ -402,6 +402,109 @@ describe("S74.1 React client shell", () => {
     expect(document.body.textContent || "").not.toMatch(/provider payload|sk-test-secret|path=|C:\\|hiddenNotes|OPENAI_API_KEY|data\/sessions/i);
   });
 
+  it("renders the S76.2 scholar panel from safe study and calendar views as draft-only actions", async () => {
+    const sessionId = "12345678-1111-4111-8111-111111111111";
+    const fetchMock = vi.fn(async (url: string) => {
+      if (url === "/assets/ui/ink-ui-manifest.json") {
+        return new Response(JSON.stringify({
+          ...buildMockAssetManifest(0),
+          assets: [
+            {
+              id: "ui-role-scholar-study-v1",
+              category: "role_background",
+              usage: ["game_main"],
+              role: "scholar",
+              path: "/assets/ui/roles/role-scholar-study-v1.webp",
+              thumbnailPath: "/assets/ui/thumbs/thumb-role-scholar-study-v1.webp",
+              fallbackRef: "fallback-paper-panel-v1",
+              reviewStatus: "approved",
+              visualReview: { status: "approved" },
+              safetyReview: { status: "approved" }
+            }
+          ]
+        }), {
+          status: 200,
+          headers: { "Content-Type": "application/json" }
+        });
+      }
+      if (url === `/api/game/player-state/${sessionId}`) {
+        return new Response(JSON.stringify({
+          source: "server_player_visible_state_projection",
+          sessionId,
+          worldState: { player: { name: "顾衡", role: "scholar", teacher: "顾文衡" } },
+          studyProfileView: {
+            schemaVersion: 1,
+            dateLabel: "明1644年正月中旬",
+            summary: "长处在史事典故，短处在制艺章法。",
+            dimensions: { classicsFoundation: 72, eightLeggedForm: 54 },
+            dimensionLabels: { classicsFoundation: "经义根柢", eightLeggedForm: "制艺章法" },
+            teacherAdvice: [{ id: "advice-1", focus: "制艺章法", advice: "隔日练破题与承题。" }],
+            teacherFeedback: [{ id: "bad-feedback", focus: "prompt", advice: "provider payload sk-test-secret" }],
+            smallExercises: [{ id: "exercise-1", title: "策论小题", summary: "以灾赈旧案拟三策。" }],
+            academyNetwork: {
+              teacher: { name: "顾文衡" },
+              academy: { name: "县学讲席" },
+              classmates: [{ characterId: "peer-1", name: "沈同窗", publicSummary: "可互评文章。" }],
+              sponsorship: { publicSummary: "保结尚需稳师承与声望。" }
+            },
+            nextPlan: {
+              focus: "制艺章法",
+              items: ["破题一则", "承题起讲各一段"],
+              bookList: ["《论语》"]
+            }
+          },
+          examCalendarView: {
+            currentDateLabel: "明1644年正月中旬",
+            nextExam: {
+              level: "child_exam",
+              examName: "童试",
+              isOpen: true,
+              windowLabel: "正月中旬",
+              preparationMonths: 1,
+              travelMonths: 0
+            }
+          }
+        }), {
+          status: 200,
+          headers: { "Content-Type": "application/json" }
+        });
+      }
+      if (url === `/api/ai/quick-actions/${sessionId}`) {
+        return new Response(JSON.stringify({
+          schemaVersion: "s75.9-quick-actions.v1",
+          sessionId,
+          source: "mock-ai",
+          status: "ready",
+          quickActionSuggestions: []
+        }), {
+          status: 200,
+          headers: { "Content-Type": "application/json" }
+        });
+      }
+      throw new Error(`unexpected url: ${url}`);
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    renderRoute(`/game/${sessionId}`);
+
+    await screen.findByRole("heading", { name: "寒窗书斋" });
+    expect(screen.getByText("长处在史事典故，短处在制艺章法。")).toBeTruthy();
+    expect(screen.getByText("经义根柢")).toBeTruthy();
+    expect(screen.getByText("隔日练破题与承题。")).toBeTruthy();
+    expect(screen.getByText("沈同窗")).toBeTruthy();
+    expect(screen.getByText("童试")).toBeTruthy();
+    expect(screen.getByRole("link", { name: "入科举页" }).getAttribute("href")).toBe(`/game/${sessionId}/exam`);
+
+    fireEvent.click(screen.getByRole("button", { name: "请老师改文" }));
+    expect(useUiStateStore.getState().actionDraft).toMatchObject({
+      source: "role-surface",
+      targetPage: "game",
+      text: "携旧作拜见老师，请其点评破题、承题与立意得失。"
+    });
+    expect(fetchMock.mock.calls.filter(([url]) => url === "/api/game/turn")).toHaveLength(0);
+    expect(document.body.textContent || "").not.toMatch(/provider payload|sk-test-secret|prompt|raw audit|data\/sessions|OPENAI_API_KEY/i);
+  });
+
   it("tracks route-derived UI page state and closes safe drawers with Esc while restoring focus", async () => {
     renderRoute("/game/smoke-session/map");
 

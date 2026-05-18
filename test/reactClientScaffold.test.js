@@ -343,6 +343,31 @@ test("S75.10 client smoke exercises the inkbox browser acceptance path", () => {
   assert.match(clientSmokeSource, /aria-selected/);
 });
 
+test("S76.2 scholar panel uses safe study and exam projections as draft-only UI", () => {
+  const gamePageSource = readText("client/src/pages/GamePage.tsx");
+  const scholarPanelSource = readText("client/src/components/ScholarPanel.tsx");
+  const appTestSource = readText("client/src/__tests__/App.test.tsx");
+  const styleSource = readText("client/src/styles/global.css");
+  const scholarPanelWithoutGuard = scholarPanelSource.replace(/const unsafeScholarFragments[\s\S]*?\] as const;\r?\n/, "");
+  const runtimeCombined = `${gamePageSource}\n${scholarPanelWithoutGuard}\n${styleSource}`;
+
+  assert.match(gamePageSource, /<ScholarPanel/);
+  assert.match(gamePageSource, /studyProfileView=\{session\?\.studyProfileView/);
+  assert.match(gamePageSource, /examCalendarView=\{session\?\.examCalendarView/);
+  assert.match(gamePageSource, /category: "role_background", usage: "game_main", role: knownRole/);
+  assert.match(scholarPanelSource, /export function ScholarPanel/);
+  assert.match(scholarPanelSource, /studyProfileView/);
+  assert.match(scholarPanelSource, /examCalendarView/);
+  assert.match(scholarPanelSource, /只写草稿，结果由服务器裁决/);
+  assert.match(scholarPanelSource, /赶考、入场、评卷、放榜、晋级和授官都由服务器按规则裁决/);
+  assert.match(styleSource, /scholarPanel/);
+  assert.match(appTestSource, /renders the S76\.2 scholar panel from safe study and calendar views as draft-only actions/);
+  assert.doesNotMatch(
+    runtimeCombined,
+    /\/api\/game\/state|\/api\/dev\/session-diagnostics|\/api\/exam\/question|\/api\/exam\/submit|dangerouslySetInnerHTML|localStorage|sessionStorage|data\/sessions|raw audit|provider payload|OPENAI_API_KEY|DEEPSEEK_API_KEY|MIMO_API_KEY|ANTHROPIC_API_KEY/
+  );
+});
+
 test("S74.5 asset registry gates manifest assets before React components render portraits", () => {
   const assetRegistrySource = readText("client/src/assets/assetRegistry.ts");
   const portraitSource = readText("client/src/components/Portrait.tsx");

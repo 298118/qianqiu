@@ -200,6 +200,86 @@ async function startMockGameThroughHome(page, screenshotsDir) {
   return { sessionId, screenshot };
 }
 
+async function assertScholarPanel(page, sessionId, screenshotsDir) {
+  await page.getByRole("heading", { name: "寒窗书斋" }).waitFor({ timeout: 10000 });
+  const panelSnapshot = await page.evaluate((id) => {
+    const panel = document.querySelector(".scholarPanel");
+    const text = panel?.textContent || "";
+    const examLink = [...document.querySelectorAll(".scholarPanel a")].find((link) => (link.textContent || "").includes("入科举页"));
+    const rankingLink = [...document.querySelectorAll(".scholarPanel a")].find((link) => (link.textContent || "").includes("看皇榜"));
+    const buttons = [...document.querySelectorAll(".scholarPanel button")].map((button) => ({
+      text: (button.textContent || "").trim(),
+      disabled: button.disabled
+    }));
+    const computedBackground = panel ? getComputedStyle(panel).getPropertyValue("--scholar-panel-bg") : "";
+    return {
+      text,
+      dimensionCount: panel?.querySelectorAll(".scholarPanelMetrics li").length || 0,
+      hasStudyLedger: text.includes("读书簿"),
+      hasTeacher: text.includes("老师点评"),
+      hasNetwork: text.includes("师友"),
+      hasCalendar: text.includes("科期"),
+      hasPractice: text.includes("文章练习"),
+      hasBoundary: text.includes("只写草稿，结果由服务器裁决"),
+      examPath: examLink ? new URL(examLink.href).pathname : "",
+      rankingPath: rankingLink ? new URL(rankingLink.href).pathname : "",
+      buttons,
+      background: computedBackground,
+      expectedExamPath: `/game/${id}/exam`,
+      expectedRankingPath: `/game/${id}/ranking`,
+      forbiddenText: (document.body.innerText || "").match(/\/api\/game\/state|\/api\/dev\/session-diagnostics|provider payload|raw audit|hiddenNotes|OPENAI_API_KEY|data\/sessions|完整提示词|本地路径|密钥/gi) || []
+    };
+  }, sessionId);
+
+  const failures = [];
+  if (!panelSnapshot.hasStudyLedger) failures.push("missing study ledger");
+  if (!panelSnapshot.hasTeacher) failures.push("missing teacher feedback");
+  if (!panelSnapshot.hasNetwork) failures.push("missing academy network");
+  if (!panelSnapshot.hasCalendar) failures.push("missing exam calendar");
+  if (!panelSnapshot.hasPractice) failures.push("missing practice block");
+  if (!panelSnapshot.hasBoundary) failures.push("missing server boundary");
+  if (panelSnapshot.dimensionCount < 7) failures.push(`expected seven study dimensions, saw ${panelSnapshot.dimensionCount}`);
+  if (panelSnapshot.examPath !== panelSnapshot.expectedExamPath) failures.push(`exam link was ${panelSnapshot.examPath}`);
+  if (panelSnapshot.rankingPath !== panelSnapshot.expectedRankingPath) failures.push(`ranking link was ${panelSnapshot.rankingPath}`);
+  if (!panelSnapshot.buttons.some((button) => button.text === "请老师改文" && !button.disabled)) failures.push("teacher draft button missing or disabled");
+  if (!panelSnapshot.buttons.some((button) => button.text === "整备赴考" && !button.disabled)) failures.push("exam prep draft button missing or disabled");
+  if (!panelSnapshot.background.includes("/assets/ui/")) failures.push("role background asset was not applied through the manifest registry");
+  if (panelSnapshot.forbiddenText.length) failures.push(`unsafe text leaked: ${panelSnapshot.forbiddenText.join(", ")}`);
+  if (failures.length) {
+    throw new Error(`S76.2 scholar panel smoke failed: ${failures.join("; ")}`);
+  }
+
+  const turnRequests = [];
+  const onRequest = (request) => {
+    try {
+      const url = new URL(request.url());
+      if (url.pathname === "/api/game/turn" && request.method() === "POST") {
+        turnRequests.push(url.pathname);
+      }
+    } catch {
+    }
+  };
+  page.on("request", onRequest);
+  await page.getByRole("button", { name: "请老师改文" }).click();
+  await page.waitForFunction(() => {
+    const value = document.querySelector("textarea")?.value || "";
+    return value.includes("携旧作拜见老师") && value.includes("破题");
+  }, null, { timeout: 10000 });
+  await page.waitForTimeout(250);
+  page.off("request", onRequest);
+  if (turnRequests.length) {
+    throw new Error(`S76.2 scholar draft button submitted a turn instead of writing a draft: ${turnRequests.join(", ")}`);
+  }
+
+  const draft = await page.getByLabel("本回合行动").inputValue();
+  if (!draft.includes("携旧作拜见老师")) {
+    throw new Error(`S76.2 scholar draft did not enter the memorial composer: ${draft}`);
+  }
+  await page.getByLabel("本回合行动").fill("");
+
+  return captureScreenshot(page, screenshotsDir, "s76-scholar-panel-desktop");
+}
+
 async function assertReturnHomeContinueAndTurn(page, sessionId, screenshotsDir) {
   const gamePath = `/game/${sessionId}`;
 
@@ -563,6 +643,7 @@ async function runClientSmoke(options = {}) {
     const mockStart = await startMockGameThroughHome(page, options.screenshotsDir);
     const startedSessionId = mockStart.sessionId;
     screenshots.push(mockStart.screenshot);
+    screenshots.push(await assertScholarPanel(page, startedSessionId, options.screenshotsDir));
     const continueFlow = await assertReturnHomeContinueAndTurn(page, startedSessionId, options.screenshotsDir);
     screenshots.push(continueFlow.homeScreenshot);
     screenshots.push(continueFlow.gameScreenshot);
@@ -728,6 +809,7 @@ async function runClientSmoke(options = {}) {
       viewports: [
         "desktop-home",
         "desktop-mock-start",
+        "desktop-scholar-panel",
         "desktop-return-home-continue",
         "desktop-continue-turn",
         "desktop-inkbox-tabs",

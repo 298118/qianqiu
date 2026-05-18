@@ -3,6 +3,7 @@ import { BookOpen, FileText, Landmark, Map, ScrollText, Settings, Users } from "
 import { useEffect, useMemo, type CSSProperties } from "react";
 import { useAssetRegistry } from "../assets/useAssetRegistry";
 import { MemorialComposer } from "../components/MemorialComposer";
+import { ScholarPanel } from "../components/ScholarPanel";
 import { routeCatalog } from "../routes/routeCatalog";
 import { isRunnableSessionId } from "../routes/sessionId";
 import { useGameSessionStore } from "../state/gameSessionState";
@@ -145,6 +146,10 @@ export function GamePage() {
     () => registry?.getAssets({ category: "scene", usage: "game_main", scene: scene.sceneKey }).at(0),
     [registry, scene.sceneKey]
   );
+  const roleBackgroundAsset = useMemo(
+    () => registry?.getAssets({ category: "role_background", usage: "game_main", role: knownRole || "scholar" }).at(0),
+    [knownRole, registry]
+  );
   const sceneImagePath = sceneAsset?.path ?? scene.assetPath;
   const playerName = safeGameShellText(player?.name, "无名");
   const identityLine = getIdentityLine(player);
@@ -252,6 +257,18 @@ export function GamePage() {
           <p>主卷只读服务器清洗后的公开视图；行动、移动、任免、审案与考试后果仍由普通回合接口裁决。</p>
         </aside>
       </div>
+      {player?.role === "scholar" ? (
+        <ScholarPanel
+          player={player}
+          studyProfileView={session?.studyProfileView ?? null}
+          examCalendarView={session?.examCalendarView ?? null}
+          roleBackgroundPath={roleBackgroundAsset?.path}
+          examHref={sessionHref(routeCatalog.find((entry) => entry.id === "exam")?.href ?? "/game/s74-preview/exam")}
+          rankingHref={sessionHref(routeCatalog.find((entry) => entry.id === "ranking")?.href ?? "/game/s74-preview/ranking")}
+          runnable={runnable}
+          onDraft={(text) => setActionDraft({ source: "role-surface", targetPage: "game", text })}
+        />
+      ) : null}
       {error ? <p className="statusLine" role="alert">{error}</p> : null}
       <Outlet />
       <MemorialComposer

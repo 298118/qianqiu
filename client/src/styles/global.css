@@ -903,6 +903,416 @@ button:disabled {
   margin: 4px 0 18px;
 }
 
+.scholarPanel {
+  position: relative;
+  display: grid;
+  gap: 16px;
+  margin: 0 0 18px;
+  overflow: hidden;
+  border: 1px solid rgba(78, 82, 56, 0.3);
+  background:
+    linear-gradient(115deg, rgba(255, 248, 230, 0.9), rgba(233, 223, 193, 0.78) 46%, rgba(192, 205, 180, 0.38)),
+    var(--scholar-panel-bg, url("/assets/ui/roles/role-scholar-study-v1.webp")) left center / cover no-repeat,
+    #eadcc4;
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 252, 238, 0.5),
+    0 18px 44px rgba(43, 32, 22, 0.12);
+  padding: clamp(16px, 3vw, 24px);
+}
+
+.scholarPanel::before {
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(90deg, rgba(255, 252, 238, 0.7), rgba(255, 252, 238, 0.86) 42%, rgba(255, 252, 238, 0.76)),
+    radial-gradient(circle at 8% 16%, rgba(56, 92, 73, 0.16), transparent 28%);
+  content: "";
+  pointer-events: none;
+}
+
+.scholarPanel > * {
+  position: relative;
+  z-index: 1;
+}
+
+.scholarPanelHeader,
+.scholarPanelHero {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.scholarPanelHeader {
+  border-bottom: 1px solid rgba(84, 60, 43, 0.16);
+  padding-bottom: 14px;
+}
+
+.scholarPanelEyebrow,
+.scholarPanelHero .eyebrow {
+  margin: 0 0 10px;
+  color: #5f6b45;
+  font-size: 0.84rem;
+  font-weight: 800;
+}
+
+.scholarPanelHeader h2,
+.scholarPanelHero h2 {
+  margin-bottom: 8px;
+  font-size: clamp(1.7rem, 3vw, 2.3rem);
+}
+
+.scholarPanelHeader p,
+.scholarPanelHero p {
+  max-width: 720px;
+  margin: 0;
+  color: #473a2e;
+  line-height: 1.75;
+}
+
+.scholarPanelHero > span,
+.scholarPanelCardHeader span {
+  flex: 0 0 auto;
+  border: 1px solid rgba(78, 82, 56, 0.28);
+  background: rgba(246, 251, 224, 0.66);
+  color: #405640;
+  font-size: 0.8rem;
+  font-weight: 800;
+  padding: 6px 8px;
+}
+
+.scholarPanelStatus {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  min-width: min(460px, 100%);
+  margin: 0;
+}
+
+.scholarPanelStatus div {
+  min-width: 0;
+  border: 1px solid rgba(78, 82, 56, 0.22);
+  background: rgba(246, 251, 224, 0.58);
+  padding: 8px;
+}
+
+.scholarPanelStatus dt,
+.scholarPanelCompactDl dt {
+  color: #697052;
+  font-size: 0.72rem;
+  font-weight: 800;
+}
+
+.scholarPanelStatus dd,
+.scholarPanelCompactDl dd {
+  margin: 2px 0 0;
+  color: #2f251d;
+  font-weight: 800;
+  overflow-wrap: anywhere;
+}
+
+.scholarPanelGrid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr);
+  gap: 12px;
+}
+
+.scholarPanelCard {
+  display: grid;
+  align-content: start;
+  gap: 12px;
+  min-width: 0;
+  border: 1px solid rgba(84, 60, 43, 0.24);
+  background:
+    linear-gradient(135deg, rgba(255, 252, 238, 0.82), rgba(229, 215, 184, 0.66)),
+    url("/assets/ui/materials/torn-paper-card-v1.webp") center / cover no-repeat;
+  padding: 16px;
+}
+
+.scholarPanelLedger,
+.scholarPracticeCard {
+  grid-row: span 2;
+}
+
+.scholarPanelCardHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.scholarPanelCard h3 {
+  margin: 0;
+  font-size: 1.08rem;
+}
+
+.scholarPanelCard h4 {
+  margin: 0;
+  color: #5e382d;
+  font-size: 0.96rem;
+}
+
+.scholarPanelCard p {
+  margin: 0;
+  color: #514232;
+  line-height: 1.68;
+}
+
+.scholarPanelMetrics {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.scholarPanelMetrics li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  border: 1px solid rgba(84, 60, 43, 0.18);
+  background: rgba(255, 252, 238, 0.52);
+  padding: 8px;
+}
+
+.scholarDimensionList {
+  display: grid;
+  gap: 8px;
+}
+
+.scholarDimensionList div {
+  display: grid;
+  grid-template-columns: minmax(72px, 0.8fr) minmax(120px, 1fr) 34px;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.scholarDimensionList span,
+.scholarExamMeta dt,
+.scholarPanelNote strong,
+.scholarPanelList strong,
+.scholarPracticeGrid strong,
+.scholarPanelMetrics span,
+.scholarPanelPeopleList strong {
+  color: #5e382d;
+  font-weight: 800;
+}
+
+.scholarPanelMetrics strong {
+  color: #405640;
+}
+
+.scholarDimensionList meter {
+  width: 100%;
+  height: 12px;
+}
+
+.scholarDimensionList strong {
+  color: #405640;
+  font-size: 0.82rem;
+  text-align: right;
+}
+
+.scholarPanelList {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.scholarPanelList li {
+  display: grid;
+  gap: 3px;
+  border-left: 3px solid rgba(64, 86, 64, 0.42);
+  background: rgba(255, 252, 238, 0.56);
+  color: #514232;
+  line-height: 1.55;
+  padding: 7px 9px;
+}
+
+.scholarPanelList p {
+  margin: 0;
+}
+
+.scholarPanelList span,
+.scholarPanelPeopleList span {
+  color: #6d5844;
+  font-size: 0.82rem;
+  font-weight: 800;
+}
+
+.scholarPanelSubsection {
+  display: grid;
+  gap: 8px;
+  border-top: 1px solid rgba(84, 60, 43, 0.16);
+  padding-top: 10px;
+}
+
+.scholarPanelSubsection ul {
+  display: grid;
+  gap: 6px;
+  margin: 0;
+  padding-left: 18px;
+  color: #514232;
+}
+
+.scholarPanelCompactDl {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  margin: 0;
+}
+
+.scholarPanelCompactDl div {
+  min-width: 0;
+  border: 1px solid rgba(84, 60, 43, 0.18);
+  background: rgba(255, 252, 238, 0.52);
+  padding: 7px 8px;
+}
+
+.scholarPanelPeopleList {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.scholarPanelPeopleList li {
+  display: grid;
+  gap: 4px;
+  border-left: 3px solid rgba(64, 86, 64, 0.42);
+  background: rgba(255, 252, 238, 0.54);
+  padding: 8px 9px;
+}
+
+.scholarPanelNote {
+  display: grid;
+  gap: 4px;
+  border: 1px solid rgba(84, 60, 43, 0.18);
+  background: rgba(255, 252, 238, 0.54);
+  padding: 9px 10px;
+}
+
+.scholarPanelDraft {
+  justify-self: start;
+  min-height: 38px;
+  border: 1px solid rgba(64, 86, 64, 0.42);
+  background: rgba(246, 251, 224, 0.68);
+  color: #405640;
+  font: inherit;
+  font-weight: 800;
+  padding: 7px 11px;
+}
+
+.scholarPanelDraft:hover,
+.scholarPanelDraft:focus-visible,
+.scholarPanelCard button:hover,
+.scholarPanelCard button:focus-visible,
+.scholarPracticeGrid button:hover,
+.scholarPracticeGrid button:focus-visible {
+  border-color: #405640;
+  outline: 2px solid rgba(64, 86, 64, 0.2);
+  outline-offset: 2px;
+}
+
+.scholarPanelCard button {
+  justify-self: start;
+  min-height: 38px;
+  border: 1px solid rgba(64, 86, 64, 0.42);
+  background: rgba(246, 251, 224, 0.68);
+  color: #405640;
+  font: inherit;
+  font-weight: 800;
+  padding: 7px 11px;
+}
+
+.scholarExamMeta {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  margin: 0;
+}
+
+.scholarExamMeta div {
+  min-width: 0;
+  border: 1px solid rgba(84, 60, 43, 0.18);
+  background: rgba(255, 252, 238, 0.52);
+  padding: 8px;
+}
+
+.scholarExamMeta dd {
+  margin: 2px 0 0;
+  color: #2f251d;
+  font-weight: 800;
+  overflow-wrap: anywhere;
+}
+
+.scholarPanelActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.scholarPanelActions a {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 38px;
+  border: 1px solid rgba(142, 47, 39, 0.46);
+  background: rgba(255, 248, 230, 0.68);
+  color: #7b241f;
+  font-weight: 800;
+  padding: 7px 11px;
+}
+
+.scholarPracticeGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.scholarPracticeGrid button {
+  display: grid;
+  gap: 4px;
+  min-height: 88px;
+  border: 1px solid rgba(84, 60, 43, 0.22);
+  background: rgba(255, 252, 238, 0.58);
+  color: #514232;
+  font: inherit;
+  line-height: 1.5;
+  padding: 9px;
+  text-align: left;
+}
+
+.scholarPanelBoundary {
+  margin: 0;
+  border: 1px dashed rgba(142, 47, 39, 0.32);
+  background: rgba(255, 248, 230, 0.58);
+  color: #6d5844;
+  font-size: 0.86rem;
+  line-height: 1.65;
+  padding: 10px 12px;
+}
+
+.scholarPanelBoundary ul {
+  display: grid;
+  gap: 7px;
+  margin: 0;
+  padding-left: 18px;
+  color: #514232;
+}
+
+.scholarPanelEmpty {
+  border: 1px dashed rgba(84, 60, 43, 0.2);
+  background: rgba(255, 252, 238, 0.48);
+  padding: 8px 9px;
+}
+
 .memorialComposer {
   position: fixed;
   left: 50%;
@@ -1709,6 +2119,30 @@ button:disabled {
 
   .gameFeatureTabs {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .scholarPanelHeader,
+  .scholarPanelHero,
+  .scholarPanelCardHeader {
+    flex-direction: column;
+  }
+
+  .scholarPanelGrid,
+  .scholarPanelStatus,
+  .scholarPanelMetrics,
+  .scholarPanelCompactDl,
+  .scholarPracticeGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .scholarPanelLedger,
+  .scholarPracticeCard {
+    grid-row: auto;
+  }
+
+  .scholarDimensionList div,
+  .scholarExamMeta {
+    grid-template-columns: 1fr;
   }
 
   .gameSurface.hasMemorialComposer {
