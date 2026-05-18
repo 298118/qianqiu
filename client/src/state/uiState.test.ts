@@ -157,10 +157,23 @@ describe("S74.3 UI state store", () => {
 
     expect(useUiStateStore.getState()).toMatchObject({
       currentPage: "home",
+      currentSessionId: startPayload.sessionId,
       activeDrawer: null,
       activeModal: null,
       activeSurface: null,
       actionDraft: null
+    });
+  });
+
+  it("keeps the current session pointer when route state returns to home", () => {
+    const store = useUiStateStore.getState();
+
+    store.setCurrentPage("game", startPayload.sessionId);
+    store.setCurrentPage("home", null);
+
+    expect(useUiStateStore.getState()).toMatchObject({
+      currentPage: "home",
+      currentSessionId: startPayload.sessionId
     });
   });
 

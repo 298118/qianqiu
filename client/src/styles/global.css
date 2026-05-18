@@ -372,6 +372,7 @@ h2 {
 
 .startDesk,
 .saveShelf,
+.continueShelf,
 .inlineForm,
 .examSubmit,
 .actionPanel {
@@ -480,6 +481,50 @@ h2 {
     linear-gradient(135deg, rgba(255, 248, 230, 0.72), rgba(222, 205, 174, 0.56)),
     url("/assets/ui/home/home-archive-casefile-v1.webp") right bottom / 180px auto no-repeat;
   box-shadow: 0 14px 36px rgba(42, 29, 20, 0.12);
+}
+
+.continueShelf {
+  grid-column: 1 / -1;
+  justify-self: center;
+  width: min(880px, 100%);
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: 16px;
+  padding: 14px 16px;
+  border: 1px solid rgba(142, 47, 39, 0.32);
+  background: rgba(255, 248, 230, 0.78);
+  box-shadow: 0 12px 28px rgba(42, 29, 20, 0.1);
+}
+
+.continueShelf h2,
+.continueShelf p {
+  margin: 0;
+}
+
+.continueMeta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin: 0;
+}
+
+.continueMeta div {
+  min-width: 88px;
+}
+
+.continueMeta dt {
+  color: #7a6048;
+  font-size: 0.72rem;
+}
+
+.continueMeta dd {
+  margin: 0;
+  color: #2f261f;
+  font-weight: 800;
+}
+
+.continueButton {
+  white-space: nowrap;
 }
 
 .saveShelf h2,
@@ -1197,6 +1242,15 @@ button:disabled {
 
   .saveShelf {
     background-size: 128px auto;
+  }
+
+  .continueShelf {
+    grid-template-columns: 1fr;
+  }
+
+  .continueButton {
+    width: 100%;
+    text-align: center;
   }
 
   .gameGrid {

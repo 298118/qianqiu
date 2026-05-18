@@ -126,7 +126,7 @@ describe("S74.1 React client shell", () => {
     expect(document.querySelector("#start-form")).toBeNull();
     expect(document.querySelector("[data-client-entry='react']")).toBeTruthy();
     expect(document.querySelector("[data-router-mode='data']")).toBeTruthy();
-    expect(document.querySelector("[data-shell-version='s75-5']")).toBeTruthy();
+    expect(document.querySelector("[data-shell-version='s75-6']")).toBeTruthy();
   });
 
   it("posts the S75.2 opening form through the safe start endpoint", async () => {
@@ -470,6 +470,88 @@ describe("S74.1 React client shell", () => {
     expect(screen.getByText("身份未题")).toBeTruthy();
     expect(screen.getByText("此卷暂无公开摘要。")).toBeTruthy();
     expect(document.body.textContent || "").not.toMatch(/data\/sessions|raw audit|provider payload|sk-test-secret/i);
+  });
+
+  it("keeps the current session pointer after returning home and continues the runnable session", async () => {
+    const sessionId = "77777777-7777-4777-8777-777777777777";
+    const fetchMock = vi.fn(async (url: string) => {
+      if (url === `/api/game/player-state/${sessionId}`) {
+        return new Response(JSON.stringify({
+          source: "server_player_visible_state_projection",
+          sessionId,
+          worldState: { player: { name: "韩知远", role: "official", examRank: "进士", officeTitle: "翰林编修" } }
+        }), {
+          status: 200,
+          headers: { "Content-Type": "application/json" }
+        });
+      }
+      if (url === "/api/game/saves") {
+        return new Response(JSON.stringify({ saves: [], skipped: [] }), {
+          status: 200,
+          headers: { "Content-Type": "application/json" }
+        });
+      }
+      throw new Error(`unexpected url: ${url}`);
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    renderRoute(`/game/${sessionId}`);
+
+    await waitFor(() => expect(useUiStateStore.getState().currentSessionId).toBe(sessionId));
+    fireEvent.click(screen.getByLabelText("返回千秋首页"));
+
+    await screen.findByRole("heading", { name: "千秋" });
+    expect(useUiStateStore.getState().currentPage).toBe("home");
+    expect(useUiStateStore.getState().currentSessionId).toBe(sessionId);
+    expect(screen.getByRole("heading", { name: "韩知远" })).toBeTruthy();
+    expect(screen.getByText("翰林编修")).toBeTruthy();
+    expect(screen.getByText("案 77777777")).toBeTruthy();
+    expect(screen.getByRole("link", { name: "继续本局" }).getAttribute("href")).toBe(`/game/${sessionId}`);
+    expect(screen.getByText("读档")).toBeTruthy();
+
+    fireEvent.click(screen.getByRole("link", { name: "继续本局" }));
+
+    await waitFor(() => expect(useUiStateStore.getState().currentPage).toBe("game"));
+    const requestedUrls = fetchMock.mock.calls.map(([url]) => String(url));
+    expect(requestedUrls).not.toEqual(expect.arrayContaining([
+      "/api/game/start",
+      "/api/game/turn",
+      `/api/game/state/${sessionId}`,
+      "/api/dev/session-diagnostics"
+    ]));
+    expect(requestedUrls.some((url) => /\/api\/dev|\/api\/game\/state/.test(url))).toBe(false);
+  });
+
+  it("falls back when the S75.6 continue summary receives polluted safe payload text", async () => {
+    const sessionId = "88888888-8888-4888-8888-888888888888";
+    vi.stubGlobal("fetch", vi.fn(async (url: string) => {
+      if (url === "/api/game/saves") {
+        return new Response(JSON.stringify({ saves: [], skipped: [] }), {
+          status: 200,
+          headers: { "Content-Type": "application/json" }
+        });
+      }
+      throw new Error(`unexpected url: ${url}`);
+    }));
+    useUiStateStore.getState().syncSessionPayload({
+      sessionId,
+      narrative: "公开叙事。",
+      worldState: {
+        player: {
+          name: "provider: openai",
+          role: "official",
+          examRank: "prompt: leaked",
+          officeTitle: "path=C:\\secret\\case.json"
+        }
+      }
+    }, "player-state");
+
+    renderRoute("/");
+
+    expect(await screen.findByRole("link", { name: "继续本局" })).toBeTruthy();
+    expect(screen.getByRole("heading", { name: "无名" })).toBeTruthy();
+    expect(screen.getByText("身份未题")).toBeTruthy();
+    expect(document.body.textContent || "").not.toMatch(/provider|prompt|hidden|key|path=|C:\\|data\/sessions|raw audit|OPENAI_API_KEY/i);
   });
 
   it("opens registry-backed local surfaces, writes safe drafts, and restores focus on Esc", async () => {

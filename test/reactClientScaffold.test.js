@@ -15,6 +15,13 @@ function readText(relativePath) {
   return fs.readFileSync(path.join(rootDir, relativePath), "utf8");
 }
 
+function stripSafeGuardPatterns(source) {
+  return source
+    .replace(/const unsafeHomeSummaryPattern = .*?;\r?\n/, "")
+    .replace(/const unsafeSaveTextPattern = .*?;\r?\n/, "")
+    .replace(/const unsafeClientApiPathPatterns = Object\.freeze\(\[[\s\S]*?\]\);\r?\n/, "");
+}
+
 function mockRequest({ method = "GET", requestPath = "/", accept = "text/html" } = {}) {
   return {
     method,
@@ -122,7 +129,7 @@ test("S74.4 shell uses registry-backed overlays without widening data sources", 
   const routeCatalogSource = readText("client/src/routes/routeCatalog.ts");
   const combined = `${appShellSource}\n${surfaceHostSource}\n${surfaceRegistrySource}\n${routeCatalogSource}`;
 
-  assert.match(appShellSource, /data-shell-version="s75-5"/);
+  assert.match(appShellSource, /data-shell-version="s75-6"/);
   assert.match(appShellSource, /resolvePrimaryHref/);
   assert.match(appShellSource, /isRunnableSessionId/);
   assert.match(appShellSource, /ScrollRestoration/);
@@ -173,7 +180,7 @@ test("S75.5 save cases show redacted metadata and load through player-state", ()
   const apiTypesSource = readText("client/src/api/types.ts");
   const styleSource = readText("client/src/styles/global.css");
   const combined = `${homePageSource}\n${surfaceHostSource}\n${saveCaseSource}\n${apiTypesSource}\n${styleSource}`;
-  const runtimeSourcesWithoutSanitizerPattern = `${homePageSource}\n${surfaceHostSource}\n${apiTypesSource}\n${styleSource}`;
+  const runtimeSourcesWithoutSanitizerPattern = stripSafeGuardPatterns(`${homePageSource}\n${surfaceHostSource}\n${apiTypesSource}\n${styleSource}`);
 
   assert.match(homePageSource, /<SaveCaseList saves=\{saves\} maxItems=\{5\}/);
   assert.match(surfaceHostSource, /<SaveCaseList saves=\{saves\} maxItems=\{6\}/);
@@ -188,6 +195,37 @@ test("S75.5 save cases show redacted metadata and load through player-state", ()
   assert.match(apiTypesSource, /readonly turnCount\?: number/);
   assert.match(apiTypesSource, /readonly summary\?: string \| null/);
   assert.match(styleSource, /saveCaseItem/);
+  assert.doesNotMatch(
+    runtimeSourcesWithoutSanitizerPattern,
+    /\/api\/game\/state|\/api\/dev\/session-diagnostics|localStorage|sessionStorage|data\/sessions|raw audit|provider payload|OPENAI_API_KEY|DEEPSEEK_API_KEY|MIMO_API_KEY|ANTHROPIC_API_KEY/
+  );
+  assert.doesNotMatch(combined, /localStorage|sessionStorage/);
+});
+
+test("S75.6 return home keeps the current session and exposes a safe continue entry", () => {
+  const appShellSource = readText("client/src/components/AppShell.tsx");
+  const homePageSource = readText("client/src/pages/HomePage.tsx");
+  const uiStateSource = readText("client/src/state/uiState.ts");
+  const clientSmokeSource = readText("scripts/clientSmoke.js");
+  const styleSource = readText("client/src/styles/global.css");
+  const combined = `${appShellSource}\n${homePageSource}\n${uiStateSource}\n${clientSmokeSource}\n${styleSource}`;
+  const runtimeSourcesWithoutSanitizerPattern = stripSafeGuardPatterns(`${appShellSource}\n${uiStateSource}\n${styleSource}`);
+
+  assert.match(appShellSource, /data-shell-version="s75-6"/);
+  assert.match(appShellSource, /aria-label="返回千秋首页"/);
+  assert.match(appShellSource, /onClick=\{returnHome\}/);
+  assert.match(uiStateSource, /page === "home" && sessionId === null/);
+  assert.match(uiStateSource, /actionDraft: null/);
+  assert.match(homePageSource, /isRunnableSessionId\(currentSessionId\)/);
+  assert.match(homePageSource, /currentPlayerPayload\.sessionId === currentSessionId/);
+  assert.match(homePageSource, /aria-label="当前本局"/);
+  assert.match(homePageSource, /to=\{`\/game\/\$\{currentSessionId\}`\}/);
+  assert.match(homePageSource, /safeHomeSummaryText/);
+  assert.match(styleSource, /continueShelf/);
+  assert.match(styleSource, /continueButton/);
+  assert.match(clientSmokeSource, /assertReturnHomeContinueAndTurn/);
+  assert.match(clientSmokeSource, /getByRole\("link", \{ name: "继续本局" \}\)/);
+  assert.match(clientSmokeSource, /\/api\/game\/turn/);
   assert.doesNotMatch(
     runtimeSourcesWithoutSanitizerPattern,
     /\/api\/game\/state|\/api\/dev\/session-diagnostics|localStorage|sessionStorage|data\/sessions|raw audit|provider payload|OPENAI_API_KEY|DEEPSEEK_API_KEY|MIMO_API_KEY|ANTHROPIC_API_KEY/
@@ -269,7 +307,7 @@ test("S74.7 client smoke verifies default UI start and safe route recovery", () 
 test("S75.3 home start seal guards repeated submits and reduced motion", () => {
   const homePageSource = readText("client/src/pages/HomePage.tsx");
   const styleSource = readText("client/src/styles/global.css");
-  const combined = `${homePageSource}\n${styleSource}`;
+  const combined = stripSafeGuardPatterns(`${homePageSource}\n${styleSource}`);
 
   assert.match(homePageSource, /usePrefersReducedMotion/);
   assert.match(homePageSource, /submitLockRef/);

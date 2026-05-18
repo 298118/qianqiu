@@ -161,7 +161,7 @@ export const useUiStateStore = create<UiState>((set) => ({
   setCurrentPage(page, sessionId = undefined) {
     set((state) => ({
       currentPage: page,
-      currentSessionId: sessionId === undefined ? state.currentSessionId : sessionId
+      currentSessionId: sessionId === undefined || (page === "home" && sessionId === null) ? state.currentSessionId : sessionId
     }));
   },
 

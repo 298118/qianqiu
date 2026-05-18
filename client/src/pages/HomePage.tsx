@@ -5,6 +5,7 @@ import { useEffect, useRef, useState } from "react";
 import { useUiStateStore } from "../state/uiState";
 import type { GameRole } from "../api";
 import { SaveCaseList } from "../components/SaveCaseList";
+import { isRunnableSessionId } from "../routes/sessionId";
 
 type ScholarFamilyBackground = "poor" | "modest" | "gentry";
 
@@ -31,12 +32,42 @@ const scholarFamilyOptions: readonly { value: ScholarFamilyBackground; label: st
   { value: "gentry", label: "世家", text: "出身地方世家，族中旧望既是助力亦是牵累。" }
 ] as const;
 
+const roleLabels: Record<string, string> = {
+  scholar: "书生",
+  official: "入仕官员",
+  emperor: "皇帝",
+  minister: "大臣",
+  general: "将领",
+  magistrate: "县令"
+};
+
+const sourceLabels: Record<string, string> = {
+  start: "新卷",
+  "player-state": "读档",
+  turn: "回合",
+  "exam-submit": "科举"
+};
+
+const unsafeHomeSummaryPattern = /\/api\/game\/state|\/api\/dev\/session-diagnostics|data[\\/]+sessions|[a-z]:[\\/]|file:\/{2}|raw\b|provider\b|prompt\b|hidden\b|key\b|path\b|hiddenNotes|OPENAI_API_KEY|DEEPSEEK_API_KEY|MIMO_API_KEY|ANTHROPIC_API_KEY|sk-[a-z0-9_-]+|完整提示词|提示词|本地路径|密钥|隐藏|私档|模型原始/i;
+
 function getRoleNote(role: GameRole) {
   return roleOptions.find((option) => option.value === role)?.note || "";
 }
 
 function getScholarFamilyText(value: ScholarFamilyBackground) {
   return scholarFamilyOptions.find((option) => option.value === value)?.text || scholarFamilyOptions[1].text;
+}
+
+function safeHomeSummaryText(value: unknown, fallback: string) {
+  const text = typeof value === "string" && value.trim() ? value.trim() : fallback;
+  return unsafeHomeSummaryPattern.test(text) ? fallback : text;
+}
+
+type CurrentPlayerPayload = NonNullable<ReturnType<typeof useUiStateStore.getState>["currentPlayerPayload"]>;
+
+function getContinueIdentity(payload: CurrentPlayerPayload) {
+  const player = payload.player;
+  return safeHomeSummaryText(player?.officeTitle || player?.examRank || (player?.role ? roleLabels[player.role] || player.role : ""), "身份未题");
 }
 
 function usePrefersReducedMotion() {
@@ -66,6 +97,8 @@ export function HomePage() {
   const savesStatus = useGameSessionStore((state) => state.savesStatus);
   const error = useGameSessionStore((state) => state.error);
   const displayMotion = useUiStateStore((state) => state.displayPreferences.motion);
+  const currentSessionId = useUiStateStore((state) => state.currentSessionId);
+  const currentPlayerPayload = useUiStateStore((state) => state.currentPlayerPayload);
   const prefersReducedMotion = usePrefersReducedMotion();
   const [playerName, setPlayerName] = useState("沈知微");
   const [role, setRole] = useState<GameRole>("scholar");
@@ -81,6 +114,12 @@ export function HomePage() {
   const isStarting = status === "loading" || submitLockRef.current;
   const parsedYear = Number(year);
   const yearIsValid = Number.isInteger(parsedYear) && parsedYear >= 1 && parsedYear <= 9999;
+  const canContinueCurrentSession = Boolean(
+    currentSessionId &&
+    currentPlayerPayload &&
+    currentPlayerPayload.sessionId === currentSessionId &&
+    isRunnableSessionId(currentSessionId)
+  );
 
   useEffect(() => {
     void refreshSaves();
@@ -253,6 +292,28 @@ export function HomePage() {
           {formError ? <p className="statusLine" role="alert">{formError}</p> : null}
           {error ? <p className="statusLine" role="alert">{error}</p> : null}
         </div>
+        {canContinueCurrentSession && currentSessionId && currentPlayerPayload ? (
+          <section className="continueShelf" aria-label="当前本局">
+            <div>
+              <p className="eyebrow">当前本局</p>
+              <h2>{safeHomeSummaryText(currentPlayerPayload.player?.name, "无名")}</h2>
+              <p>{getContinueIdentity(currentPlayerPayload)}</p>
+            </div>
+            <dl className="continueMeta" aria-label="本局摘要">
+              <div>
+                <dt>案卷</dt>
+                <dd>案 {currentSessionId.slice(0, 8)}</dd>
+              </div>
+              <div>
+                <dt>来源</dt>
+                <dd>{sourceLabels[currentPlayerPayload.source] || "安全视图"}</dd>
+              </div>
+            </dl>
+            <Link className="paperButton continueButton" to={`/game/${currentSessionId}`}>
+              继续本局
+            </Link>
+          </section>
+        ) : null}
         <section className="saveShelf" aria-label="旧案卷">
           <h2>旧案卷</h2>
           {savesStatus === "loading" ? <p>正在翻检案卷。</p> : null}

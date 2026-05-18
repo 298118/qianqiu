@@ -194,6 +194,73 @@ async function startMockGameThroughHome(page, screenshotsDir) {
   return { sessionId, screenshot };
 }
 
+async function assertReturnHomeContinueAndTurn(page, sessionId, screenshotsDir) {
+  const gamePath = `/game/${sessionId}`;
+
+  await page.getByLabel("返回千秋首页").click();
+  await page.waitForURL((url) => url.pathname === "/", { timeout: 10000 });
+  await page.getByRole("link", { name: "继续本局" }).waitFor({ timeout: 10000 });
+  const homeState = await page.evaluate((id) => {
+    const continueLink = document.querySelector("a.continueButton");
+    return {
+      continueHref: continueLink ? new URL(continueLink.href).pathname : null,
+      continueText: document.querySelector("[aria-label='当前本局']")?.textContent || "",
+      emptyActionForm: Boolean(document.querySelector("form.actionPanel")),
+      forbiddenText: (document.body.innerText || "").match(/\/api\/game\/state|\/api\/dev\/session-diagnostics|provider\b|prompt\b|hidden\b|key\b|path\b|[a-z]:[\\/]|file:\/{2}|raw audit|hiddenNotes|OPENAI_API_KEY|data\/sessions/gi) || [],
+      expected: gamePathFor(id)
+    };
+
+    function gamePathFor(value) {
+      return `/game/${value}`;
+    }
+  }, sessionId);
+  if (homeState.continueHref !== gamePath) {
+    throw new Error(`Continue link did not preserve current session: ${JSON.stringify(homeState)}`);
+  }
+  if (!homeState.continueText.includes("当前本局") || !homeState.continueText.includes("案 ")) {
+    throw new Error(`Home continue shelf did not render a safe current-session summary: ${JSON.stringify(homeState)}`);
+  }
+  if (homeState.emptyActionForm) {
+    throw new Error("Return home kept the game action form mounted.");
+  }
+  if (homeState.forbiddenText.length) {
+    throw new Error(`Return-home continue shelf leaked forbidden text: ${homeState.forbiddenText.join(", ")}`);
+  }
+  const homeScreenshot = await assertCurrentReactClientPage(page, "/", "s75-return-home-continue-desktop", screenshotsDir, {
+    readySelector: ".continueShelf"
+  });
+
+  await page.getByRole("link", { name: "继续本局" }).click();
+  await page.waitForURL((url) => url.pathname === gamePath, { timeout: 10000 });
+  await page.getByLabel("本回合行动").fill("回到案前，整理本旬见闻，再写一封请益短札。");
+  const turnResponse = page.waitForResponse((response) => {
+    try {
+      const url = new URL(response.url());
+      return url.pathname === "/api/game/turn" && response.request().method() === "POST";
+    } catch {
+      return false;
+    }
+  }, { timeout: 20000 });
+  await page.getByRole("button", { name: "递送奏折" }).click();
+  await turnResponse;
+  await page.getByRole("button", { name: "递送奏折" }).waitFor({ timeout: 20000 });
+  const continuedState = await page.evaluate(() => ({
+    actionText: document.querySelector("textarea")?.value || "",
+    forbiddenText: (document.body.innerText || "").match(/\/api\/game\/state|\/api\/dev\/session-diagnostics|provider\b|prompt\b|hidden\b|key\b|path\b|[a-z]:[\\/]|file:\/{2}|raw audit|hiddenNotes|OPENAI_API_KEY|data\/sessions/gi) || []
+  }));
+  if (continuedState.actionText.includes("回到案前")) {
+    throw new Error(`Action draft was not cleared after continued-session turn: ${JSON.stringify(continuedState)}`);
+  }
+  if (continuedState.forbiddenText.length) {
+    throw new Error(`Continued-session turn leaked forbidden text: ${continuedState.forbiddenText.join(", ")}`);
+  }
+
+  return {
+    homeScreenshot,
+    gameScreenshot: await assertCurrentReactClientPage(page, gamePath, "s75-continue-turn-desktop", screenshotsDir)
+  };
+}
+
 async function clickTopNavRoute(page, label, expectedPath) {
   const link = page.locator(".topNav a", { hasText: label }).first();
   await link.waitFor({ timeout: 10000 });
@@ -270,6 +337,9 @@ async function runClientSmoke(options = {}) {
     const mockStart = await startMockGameThroughHome(page, options.screenshotsDir);
     const startedSessionId = mockStart.sessionId;
     screenshots.push(mockStart.screenshot);
+    const continueFlow = await assertReturnHomeContinueAndTurn(page, startedSessionId, options.screenshotsDir);
+    screenshots.push(continueFlow.homeScreenshot);
+    screenshots.push(continueFlow.gameScreenshot);
     const runtimeMapPath = `/game/${startedSessionId}/map`;
     await clickTopNavRoute(page, "舆图", runtimeMapPath);
     screenshots.push(
@@ -397,6 +467,8 @@ async function runClientSmoke(options = {}) {
       viewports: [
         "desktop-home",
         "desktop-mock-start",
+        "desktop-return-home-continue",
+        "desktop-continue-turn",
         "desktop-map-runtime",
         "desktop-map-refresh",
         "desktop-people-assets",

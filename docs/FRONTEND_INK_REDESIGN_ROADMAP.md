@@ -822,6 +822,8 @@ Manifest 示例：
 
 - browser smoke 覆盖开局 -> 返回首页 -> 继续本局 -> 行动。
 
+状态：已完成。S75.6 已让 `AppShell` 返回首页保留当前安全 session 指针，`returnHome` 只关闭抽屉/弹窗/专题层并清空临时行动草稿，不调用 start/turn/raw state/dev diagnostics，也不删除或重写服务器存档；首页在当前 `currentPlayerPayload.sessionId` 与可运行 `currentSessionId` 匹配时显示“当前本局”和“继续本局”，摘要只来自 UI store 的安全玩家投影并带污染词 fallback，点击后回到 `/game/:sessionId`。`scripts/clientSmoke.js` 已覆盖真实 Mock 开局 -> 返回首页 -> 继续本局 -> 递送一回合，并继续拦截 unsafe API。
+
 ### S75.7 显示偏好
 
 实现功能：
