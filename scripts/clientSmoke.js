@@ -148,6 +148,51 @@ async function runClientSmoke(options = {}) {
     screenshots.push(
       await assertReactClientPage(page, baseUrl, "/game/s74-smoke/map", "s74-react-map-route-desktop", options.screenshotsDir)
     );
+    const startedSession = await page.evaluate(async () => {
+      const response = await fetch("/api/game/start", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          playerName: "烟测书生",
+          role: "scholar",
+          dynasty: "明",
+          year: 1465
+        })
+      });
+      return response.ok ? response.json() : { error: await response.text(), status: response.status };
+    });
+    if (!startedSession.sessionId || !startedSession.mapRuntimeView) {
+      throw new Error(`Mock start did not return a safe mapRuntimeView: ${JSON.stringify(startedSession).slice(0, 240)}`);
+    }
+    const runtimeMapPath = `/game/${startedSession.sessionId}/map`;
+    screenshots.push(
+      await assertReactClientPage(page, baseUrl, runtimeMapPath, "s74-react-map-runtime-desktop", options.screenshotsDir, {
+        readySelector: ".inkMapRuntimeBridge"
+      })
+    );
+    await page.locator(".inkMapRuntimeBridge canvas").first().waitFor({ timeout: 15000 });
+    const mapRuntime = await page.evaluate(() => {
+      const bridge = document.querySelector(".inkMapRuntimeBridge");
+      const canvas = bridge?.querySelector("canvas");
+      const labels = [...document.querySelectorAll(".inkMapLabel")];
+      return {
+        status: bridge?.getAttribute("data-map-status"),
+        motion: bridge?.getAttribute("data-map-motion"),
+        canvasWidth: canvas?.clientWidth || 0,
+        canvasHeight: canvas?.clientHeight || 0,
+        labelCount: labels.length,
+        forbiddenText: (document.body.innerText || "").match(/public\/app\.js|#action-input|#information-panel|provider payload|raw audit|hiddenNotes|OPENAI_API_KEY/gi) || []
+      };
+    });
+    if (mapRuntime.canvasWidth <= 0 || mapRuntime.canvasHeight <= 0) {
+      throw new Error(`React map runtime canvas is empty: ${JSON.stringify(mapRuntime)}`);
+    }
+    if (mapRuntime.labelCount <= 0) {
+      throw new Error(`React map runtime rendered no safe labels: ${JSON.stringify(mapRuntime)}`);
+    }
+    if (mapRuntime.forbiddenText.length) {
+      throw new Error(`React map runtime leaked forbidden text: ${mapRuntime.forbiddenText.join(", ")}`);
+    }
     screenshots.push(
       await assertReactClientPage(page, baseUrl, "/game/s74-smoke/people", "s74-react-people-assets-desktop", options.screenshotsDir, {
         readySelector: ".portraitGrid"
@@ -195,7 +240,7 @@ async function runClientSmoke(options = {}) {
     return {
       baseUrl,
       screenshots,
-      viewports: ["desktop-home", "desktop-map-route", "desktop-people-assets", "mobile-home"]
+      viewports: ["desktop-home", "desktop-map-route", "desktop-map-runtime", "desktop-people-assets", "mobile-home"]
     };
   } finally {
     await browser.close();

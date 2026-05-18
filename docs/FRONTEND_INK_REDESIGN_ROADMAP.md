@@ -674,16 +674,20 @@ Manifest 示例：
 
 ### S74.6 S72 地图运行时桥
 
+状态：已完成。S74.6 新增 React `InkMapRuntimeBridge`，直接复用 S72 `public/mapRenderer.js` / 本地 PixiJS vendor 作为 imperative map island；React 自己管理容器、label、tooltip 和行动草稿，不调用旧 `public/mapPanel.js` 的 DOM 单例，也不依赖旧 `public/app.js` 全局状态。既有 `ink-map-v1` 底图已复看，水墨案头基调可继续使用，本步不重做地图素材。
+
 实现功能：
 
 - 旧 `public/app.js` 可删除或替换；新前端不依赖旧全局变量。
-- 地图桥只通过 `window.QianqiuMapRenderer` / `window.QianqiuMapPanel` 或等价包装挂载到 React 容器。
+- 地图桥只通过 `window.MapRenderer` 等价包装挂载到 React 容器，隔离旧 `#action-input`、旧局势簿 DOM 和旧 tab 假设。
+- `mapRuntimeView` 只从安全 API response 进入 `MapPage`；显示坐标只供 PixiJS 布局，不进入 prompt、AI 工具或服务器 resolver。
+- 地图行动按钮只写入 React/Zustand 行动草稿，玩家仍需在主卷提交普通回合，服务器继续拥有移动、案件、军务、财政、外交和任免裁决。
 
 验收：
 
-- `/` 新版能启动 Mock 开局。
+- `/` 新版能启动 Mock 开局，并在 `/game/:sessionId/map` 看到 S72 PixiJS canvas、公开 label 和安全降级提示。
 - `/game/:sessionId/map`、`/people`、`/archive` 等路由刷新后能通过安全 API 恢复。
-- 无双重提交、无重复读档、无隐藏字段进入 DOM。
+- 无双重提交、无重复读档、无隐藏字段进入 DOM；React 桥不调用 `public/app.js`、不写旧 `#action-input`、不依赖旧 `#information-panel`。
 
 ### S74.7 S74 默认入口验收
 

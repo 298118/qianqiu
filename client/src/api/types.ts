@@ -29,7 +29,7 @@ export type SafeRouteViews = {
   readonly aiSettingsView?: AiSettingsView;
   readonly aiInvocationSummaryView?: JsonObject;
   readonly aiControlAuditView?: JsonObject;
-  readonly mapRuntimeView?: JsonObject;
+  readonly mapRuntimeView?: MapRuntimeView;
   readonly eventArchiveView?: JsonObject;
   readonly informationPanelPageView?: JsonObject;
   readonly examCalendarView?: JsonObject;
@@ -164,4 +164,63 @@ export type AiConnectionTestResponse = JsonObject & {
 export type SafeApiErrorPayload = {
   readonly error?: string;
   readonly message?: string;
+};
+
+export type MapRuntimePosition = {
+  readonly x: number;
+  readonly y: number;
+};
+
+export type MapRuntimeStyle = {
+  readonly token?: string;
+  readonly layer?: string;
+  readonly [key: string]: unknown;
+};
+
+export type MapRuntimeRef = {
+  readonly mapEntityRef?: string;
+  readonly sourceRef?: string;
+  readonly sourceRefs?: string[];
+  readonly label?: string;
+  readonly summary?: string;
+  readonly layout?: MapRuntimePosition;
+  readonly style?: MapRuntimeStyle;
+  readonly actionDraftRefs?: string[];
+  readonly [key: string]: unknown;
+};
+
+export type MapRuntimeRoute = {
+  readonly mapEntityRef?: string;
+  readonly sourceRef?: string;
+  readonly label?: string;
+  readonly summary?: string;
+  readonly layoutPath?: readonly (readonly [number, number])[];
+  readonly actionDraftRefs?: string[];
+  readonly [key: string]: unknown;
+};
+
+export type MapRuntimeEventEffect = {
+  readonly targetRef?: string;
+  readonly sourceRefs?: string[];
+  readonly label?: string;
+  readonly kind?: string;
+  readonly severity?: number;
+  readonly animationToken?: string;
+  readonly [key: string]: unknown;
+};
+
+export type MapRuntimeActionDraft = {
+  readonly label?: string;
+  readonly actionText?: string;
+  readonly [key: string]: unknown;
+};
+
+export type MapRuntimeView = {
+  readonly schemaVersion?: number | string;
+  readonly refs?: MapRuntimeRef[];
+  readonly routes?: MapRuntimeRoute[];
+  readonly eventEffects?: MapRuntimeEventEffect[];
+  readonly actionDrafts?: Record<string, MapRuntimeActionDraft>;
+  readonly hiddenNotice?: string;
+  readonly [key: string]: unknown;
 };

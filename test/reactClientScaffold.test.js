@@ -122,7 +122,7 @@ test("S74.4 shell uses registry-backed overlays without widening data sources", 
   const routeCatalogSource = readText("client/src/routes/routeCatalog.ts");
   const combined = `${appShellSource}\n${surfaceHostSource}\n${surfaceRegistrySource}\n${routeCatalogSource}`;
 
-  assert.match(appShellSource, /data-shell-version="s74-5"/);
+  assert.match(appShellSource, /data-shell-version="s74-6"/);
   assert.match(appShellSource, /ScrollRestoration/);
   assert.match(appShellSource, /window\.scrollTo/);
   assert.match(surfaceHostSource, /drawerRegistry/);
@@ -157,5 +157,26 @@ test("S74.5 asset registry gates manifest assets before React components render 
   assert.doesNotMatch(
     combined,
     /portrait-pool-matrix-v1|public\/assets\/ui\/portraits|localStorage|sessionStorage|data\/sessions|raw audit|provider payload/
+  );
+});
+
+test("S74.6 React map bridge wraps S72 renderer without old frontend globals", () => {
+  const bridgeSource = readText("client/src/components/InkMapRuntimeBridge.tsx");
+  const mapPageSource = readText("client/src/pages/MapPage.tsx");
+  const apiTypesSource = readText("client/src/api/types.ts");
+  const mapRendererSource = readText("public/mapRenderer.js");
+  const combined = `${bridgeSource}\n${mapPageSource}\n${apiTypesSource}\n${mapRendererSource}`;
+
+  assert.match(bridgeSource, /pixiScriptSrc = "\/vendor\/pixi\.min\.js"/);
+  assert.match(bridgeSource, /mapRendererScriptSrc = "\/mapRenderer\.js"/);
+  assert.match(bridgeSource, /new window\.MapRenderer/);
+  assert.match(bridgeSource, /setActionDraft|onActionDraft/);
+  assert.match(bridgeSource, /map-runtime/);
+  assert.match(mapPageSource, /currentSession\?\.sessionId === sessionId/);
+  assert.match(apiTypesSource, /export type MapRuntimeView/);
+  assert.match(mapRendererSource, /motionEnabled/);
+  assert.doesNotMatch(
+    combined,
+    /window\.QianqiuMapRenderer|public\/app\.js|#action-input|#information-panel|dangerouslySetInnerHTML|localStorage|sessionStorage|data\/sessions|raw audit|provider payload|OPENAI_API_KEY|DEEPSEEK_API_KEY|MIMO_API_KEY|ANTHROPIC_API_KEY/
   );
 });

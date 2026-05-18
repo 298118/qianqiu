@@ -114,7 +114,7 @@ describe("S74.1 React client shell", () => {
     expect(screen.getByRole("button", { name: "新开一卷" })).toBeTruthy();
     expect(document.querySelector("[data-client-entry='react']")).toBeTruthy();
     expect(document.querySelector("[data-router-mode='data']")).toBeTruthy();
-    expect(document.querySelector("[data-shell-version='s74-5']")).toBeTruthy();
+    expect(document.querySelector("[data-shell-version='s74-6']")).toBeTruthy();
   });
 
   it("keeps the session routes inside the React Router tree", () => {
@@ -240,5 +240,75 @@ describe("S74.1 React client shell", () => {
     fireEvent.click(screen.getByRole("button", { name: "清空草稿" }));
     expect(useUiStateStore.getState().actionDraft).toBeNull();
     expect(screen.getByLabelText("本回合行动")).toHaveProperty("value", "赴书院温习经义，打听近日考期。");
+  });
+
+  it("wraps the S72 map renderer with safe React action drafts", async () => {
+    class MockMapRenderer {
+      options: { onRenderLabel?: (ref: unknown, position: { x: number; y: number }) => void; onClickRef?: (ref: unknown, position: { x: number; y: number }) => void };
+
+      constructor(
+        _container: HTMLElement,
+        options: { onRenderLabel?: (ref: unknown, position: { x: number; y: number }) => void; onClickRef?: (ref: unknown, position: { x: number; y: number }) => void } = {}
+      ) {
+        this.options = options;
+      }
+
+      update(view: { refs?: unknown[] }) {
+        view.refs?.forEach((ref, index) => this.options.onRenderLabel?.(ref, { x: 180 + index * 32, y: 140 }));
+      }
+
+      destroy() {
+      }
+
+      setMotionEnabled() {
+      }
+    }
+
+    vi.stubGlobal("PIXI", {});
+    vi.stubGlobal("MapRenderer", MockMapRenderer);
+    useGameSessionStore.setState({
+      currentSessionId: "s74-map-session",
+      currentSession: {
+        sessionId: "s74-map-session",
+        narrative: "风过贡院。",
+        worldState: { player: { name: "顾衡", role: "scholar" } },
+        mapRuntimeView: {
+          schemaVersion: 1,
+          refs: [
+            {
+              mapEntityRef: "geo:exam-hall",
+              label: "贡院",
+              summary: "号舍灯火未歇。",
+              layout: { x: 0.5, y: 0.5 },
+              actionDraftRefs: ["draft-exam-road"]
+            }
+          ],
+          routes: [],
+          eventEffects: [],
+          actionDrafts: {
+            "draft-exam-road": {
+              label: "写入赴试草稿",
+              actionText: "沿驿路赴贡院，查问近日考期。"
+            }
+          },
+          hiddenNotice: "mapRuntimeView 只含服务器安全投影。"
+        }
+      },
+      status: "ready"
+    });
+
+    renderRoute("/game/s74-map-session/map");
+
+    await screen.findByRole("button", { name: "贡院" });
+    fireEvent.click(screen.getByRole("button", { name: "贡院" }));
+    expect(screen.getByText("号舍灯火未歇。")).toBeTruthy();
+
+    fireEvent.click(screen.getByRole("button", { name: "写入赴试草稿" }));
+    expect(useUiStateStore.getState().actionDraft).toMatchObject({
+      source: "map-runtime",
+      targetPage: "game",
+      text: "沿驿路赴贡院，查问近日考期。"
+    });
+    expect(document.body.textContent || "").not.toMatch(/raw audit|provider payload|hiddenNotes|OPENAI_API_KEY|data\/sessions/i);
   });
 });

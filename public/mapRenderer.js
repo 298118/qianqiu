@@ -49,14 +49,15 @@
       this.assetsLoading = false;
       this.isPanelVisible = true;
       this.isDocumentVisible = document.visibilityState !== "hidden";
+      this.motionEnabled = options.motionEnabled !== false;
 
       this.resizeObserver = new ResizeObserver(() => this.onResize());
       this.resizeObserver.observe(container);
       
       this.motionMediaQuery = window.matchMedia(MOTION_QUERY);
-      this.reducedMotion = this.motionMediaQuery.matches;
+      this.reducedMotion = !this.motionEnabled || this.motionMediaQuery.matches;
       this.handleMotionPreferenceChange = (e) => {
-        this.reducedMotion = e.matches;
+        this.reducedMotion = !this.motionEnabled || e.matches;
       };
       if (this.motionMediaQuery.addEventListener) {
         this.motionMediaQuery.addEventListener("change", this.handleMotionPreferenceChange);
@@ -337,6 +338,11 @@
 
     countAnimatedEffects(type) {
       return this.animatedEffects.filter(effect => effect.type === type).length;
+    }
+
+    setMotionEnabled(enabled) {
+      this.motionEnabled = enabled !== false;
+      this.reducedMotion = !this.motionEnabled || this.motionMediaQuery.matches;
     }
 
     onTick() {

@@ -349,6 +349,112 @@ button:disabled {
   border-color: rgba(142, 47, 39, 0.28);
 }
 
+.inkMapRuntimeBridge {
+  display: grid;
+  gap: 12px;
+  margin: 18px 0;
+}
+
+.inkMapStage {
+  position: relative;
+  min-height: clamp(340px, 54vw, 620px);
+  overflow: hidden;
+  border: 1px solid rgba(84, 60, 43, 0.34);
+  background:
+    radial-gradient(circle at 16% 18%, rgba(255, 248, 230, 0.42), transparent 28%),
+    linear-gradient(135deg, rgba(226, 209, 174, 0.76), rgba(174, 147, 109, 0.18)),
+    #efe1c7;
+  box-shadow: inset 0 0 0 1px rgba(255, 248, 230, 0.48), 0 18px 48px rgba(47, 34, 24, 0.16);
+}
+
+.inkMapCanvasHost,
+.inkMapUiLayer {
+  position: absolute;
+  inset: 0;
+}
+
+.inkMapCanvasHost canvas {
+  display: block;
+  width: 100% !important;
+  height: 100% !important;
+}
+
+.inkMapUiLayer {
+  pointer-events: none;
+}
+
+.inkMapLabel {
+  position: absolute;
+  pointer-events: auto;
+  transform: translate(-50%, -135%);
+  max-width: 9rem;
+  border: 1px solid rgba(92, 55, 38, 0.38);
+  background: rgba(255, 248, 230, 0.82);
+  color: #493526;
+  font: inherit;
+  font-size: 0.78rem;
+  padding: 4px 7px;
+  white-space: nowrap;
+  box-shadow: 0 4px 14px rgba(44, 31, 22, 0.16);
+}
+
+.inkMapLabel:hover,
+.inkMapLabel:focus-visible {
+  border-color: #8e2f27;
+  color: #7b241f;
+  outline: 2px solid rgba(142, 47, 39, 0.22);
+  outline-offset: 2px;
+}
+
+.inkMapTooltip {
+  position: absolute;
+  pointer-events: auto;
+  width: min(320px, calc(100% - 28px));
+  transform: translate(-50%, calc(-100% - 18px));
+  border: 1px solid rgba(142, 47, 39, 0.42);
+  background:
+    linear-gradient(135deg, rgba(255, 248, 230, 0.96), rgba(231, 211, 180, 0.94)),
+    url("/assets/ui/materials/memorial-folded-paper-v1.webp") center / cover no-repeat;
+  color: #2d251d;
+  padding: 14px;
+  box-shadow: 0 18px 42px rgba(37, 26, 18, 0.22);
+}
+
+.inkMapTooltip p {
+  margin: 8px 0 0;
+}
+
+.inkMapRuntimeFallback {
+  position: absolute;
+  inset: 16px;
+  display: grid;
+  place-items: center;
+  border: 1px dashed rgba(142, 47, 39, 0.38);
+  background: rgba(255, 248, 230, 0.62);
+  color: #6c4f39;
+  text-align: center;
+  padding: 18px;
+}
+
+.inkMapMeta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  color: #735844;
+  font-size: 0.82rem;
+}
+
+.inkMapMeta span,
+.mapRuntimeNote {
+  border: 1px solid rgba(84, 60, 43, 0.2);
+  background: rgba(255, 248, 230, 0.54);
+  padding: 6px 8px;
+}
+
+.mapRuntimeNote {
+  margin: 0 0 14px;
+}
+
 .portraitLedger {
   display: grid;
   gap: 14px;
@@ -561,6 +667,15 @@ button:disabled {
 
   .gameGrid {
     grid-template-columns: 1fr;
+  }
+
+  .inkMapStage {
+    min-height: 380px;
+  }
+
+  .inkMapTooltip {
+    left: 50% !important;
+    width: calc(100% - 24px);
   }
 
   .startDesk,

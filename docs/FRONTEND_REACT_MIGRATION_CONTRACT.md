@@ -1,6 +1,6 @@
 # 前端 React 迁移契约
 
-本文档是 S74 的迁移契约。S74.0 批准并记录 React/Vite 前端工具链的引入方式；S74.1 已创建 `client/`、Vite 配置、TypeScript 配置、React Router Data Mode 路由和 Express history fallback，让 `dist/client/` 构建产物接管默认 `/`；S74.2 已补安全 API client；S74.3 已补 UI 状态层；S74.4 已补 shell 与 surface registry；S74.5 已补 manifest 驱动资产加载层和 `Portrait` 组件。后续 S74.6-S74.7 继续补 S72 地图桥和默认入口验收。
+本文档是 S74 的迁移契约。S74.0 批准并记录 React/Vite 前端工具链的引入方式；S74.1 已创建 `client/`、Vite 配置、TypeScript 配置、React Router Data Mode 路由和 Express history fallback，让 `dist/client/` 构建产物接管默认 `/`；S74.2 已补安全 API client；S74.3 已补 UI 状态层；S74.4 已补 shell 与 surface registry；S74.5 已补 manifest 驱动资产加载层和 `Portrait` 组件；S74.6 已补 S72 地图运行时桥。后续 S74.7 继续做默认入口验收。
 
 ## 1. S74.0 决策
 
@@ -18,7 +18,7 @@
 - `package.json` 已新增 `dev:client`、`build:client`、`typecheck:client`、`test:client`、`preview:client`、`smoke:browser:legacy`；`smoke:browser` 现在运行 S74.1 focused React smoke。`prestart` 会先运行 `build:client`，以保持 `npm install && npm start` 后默认 `/` 可打开新前端。
 - S74.1 只建立最小多页前端与静态入口，不接入真实开局、读档、普通行动、考试提交、AI 设置或地图桥；这些仍归 S74.2-S76 小步。
 
-## 1.2 S74.2-S74.5 更新
+## 1.2 S74.2-S74.6 更新
 
 - S74.2 已新增 `client/src/api/qianqiuClient.ts`、`client/src/api/types.ts`、`client/src/state/gameSessionState.ts` 和 `client/src/routes/sessionId.ts`。React client 只调用 start/saves/player-state/turn/exam/AI settings/connection-test 安全接口；普通读档不调用 raw state route。
 - S74.3 已将 `client/src/state/uiState.ts` 扩展为 Zustand UI store，保存当前 route page、`sessionId`、安全玩家摘要、drawer/modal/surface、tab、action draft 和 display preferences。
@@ -28,6 +28,8 @@
 - S74.4 的 `npc-profile`、`edict-draft`、`memorial-review`、`map-filter` 仍是安全占位与草稿入口；没有后端安全 projection 时不伪造人物、奏折、圣旨或舆图事实，也不导入 S73 全量立绘资产。
 - S74.5 已新增 `client/src/assets/assetRegistry.ts`、`useAssetRegistry.ts` 和 `client/src/components/Portrait.tsx`。React runtime 通过 `/assets/ui/ink-ui-manifest.json` 读取 active manifest，按 `runtimeUsableReviewStatuses`、安全路径、fallback、缩略图、低清占位和 `allowEagerLoad=false` 建立 registry；组件只接收 `portraitRef`，不硬编码图片路径，不读取 planned 矩阵或本地 artifacts。
 - S74.5 人物页只做安全谱牒预览：按 `usage="people_page"` 分页接入全部人物页可用立绘，每页渲染 8 张缩略图；女性高清重制覆盖优先列前，未重制女性立绘继续使用 manifest 原图。registry 不把 manifest 或图片路径写入 Zustand、URL、localStorage 或 sessionStorage。
+- S74.6 已新增 `client/src/components/InkMapRuntimeBridge.tsx`。React 路由动态加载 `/vendor/pixi.min.js` 和 `/mapRenderer.js`，复用 S72 `window.MapRenderer`，但不调用旧 `public/mapPanel.js` 的全局 DOM 单例，不依赖旧 `public/app.js`、旧 `#action-input` 或旧 `#information-panel`。
+- S74.6 地图桥只读取当前安全 response 的 `mapRuntimeView`；`MapPage` 要求 `currentSession.sessionId` 与路由 `sessionId` 一致才渲染地图。地图点击只写入 React/Zustand 行动草稿，仍由玩家提交普通回合，服务器继续拥有裁决。
 
 ## 2. 依赖用途与边界
 
@@ -75,7 +77,7 @@ S74 使用 React Router Data Mode：
 - S74.1 新增 `client/`、`vite.config.mjs`、`tsconfig.client.json` 和 `vitest.config.mjs`。
 - Vite 构建产物进入 `dist/client/`，由 Express 优先服务 React 构建产物并对前端路由提供 history fallback。
 - Vite bundle 资源使用 `/client-assets/`，避免和 S72/S73 运行时素材路径 `/assets/...` 冲突。
-- `public/assets/` 继续保存 S72/S73 已审核素材；`public/vendor/`、`public/mapRenderer.js` 和 `public/mapPanel.js` 继续作为 S72 地图运行时资源来源，直到 S76.9 以安全桥接方式包装。
+- `public/assets/` 继续保存 S72/S73 已审核素材；`public/vendor/` 和 `public/mapRenderer.js` 继续作为 S74.6 React 地图桥的 S72 运行时资源来源。`public/mapPanel.js` 暂留为历史 S72/旧前端参考，React 新前端不调用它。
 - Vite `publicDir` 不得指向现有 `public/` 并在 build 时清空该目录；任何 build 清理只能作用于 React 构建输出目录。
 - 默认 `npm start` 必须保持可运行。S74.1-S74.7 每步若引入构建前置条件，必须提供清楚的本地启动路径或自动构建/降级策略。
 
@@ -90,7 +92,7 @@ S74.1 已把脚本写入 `package.json`：
 | `typecheck:client` | `tsc --project tsconfig.client.json --noEmit` | `client/` 类型检查 |
 | `test:client` | `vitest --config vitest.config.mjs run` | React 单元/交互测试 |
 | `preview:client` | `vite preview --config vite.config.mjs` | 本地预览构建产物 |
-| `smoke:browser` | `npm run build:client && node scripts/clientSmoke.js` | S74.1 React 默认入口、history fallback、移动端和 hidden/raw 防线 smoke |
+| `smoke:browser` | `npm run build:client && node scripts/clientSmoke.js` | S74 React 默认入口、history fallback、S72 地图桥、人物立绘分页、移动端和 hidden/raw 防线 smoke |
 | `smoke:browser:legacy` | `node scripts/browserSmoke.js` | 旧原生前端浏览器 smoke 保留为迁移参考 |
 
 ## 6. 安全与素材边界
@@ -99,6 +101,7 @@ S74.1 已把脚本写入 `package.json`：
 - 普通读档使用 `GET /api/game/player-state/:sessionId`，不得为了方便改回 raw `GET /api/game/state/:sessionId`。
 - S73.10 立绘只能通过 manifest 中已审核的 `portraitRef`、缩略图、低清占位和 fallback 懒加载使用。不得硬编码图片路径、显示未审核素材或一次性加载全量立绘池。
 - S72 地图继续只读 `mapRuntimeView`；地图按钮只能生成或回填行动草稿，玩家仍需提交普通回合，服务器仍拥有移动、案件、军务、财政、外交和任免裁决。
+- S74.6 的地图桥只复用 S72 `MapRenderer`，不继承旧 `mapPanel.js` 的 DOM 查询、旧行动输入框或旧局势簿联动；S76.9 再扩展独立舆图页的更大画布、图层筛选和专题联动。
 - 前端本地存储不得写入 key、base URL、完整 prompt、provider 原始输出、raw audit、hidden notes、hidden intent、未公开关系或未公开任所。
 
 ## 7. 验证与回滚
