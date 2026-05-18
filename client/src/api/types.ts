@@ -70,12 +70,17 @@ export type SaveMetadata = {
   readonly sessionId: string;
   readonly playerName?: string;
   readonly role?: string;
+  readonly roleLabel?: string;
   readonly examRank?: string;
+  readonly palaceRank?: string | null;
   readonly officeTitle?: string;
   readonly dynasty?: string;
   readonly year?: number;
   readonly month?: number;
   readonly tenDayPeriod?: number;
+  readonly turnCount?: number;
+  readonly summary?: string | null;
+  readonly createdAt?: string;
   readonly updatedAt?: string;
 };
 

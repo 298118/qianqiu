@@ -808,6 +808,8 @@ Manifest 示例：
 - 存档 metadata 缺字段时显示 fallback。
 - 无 raw `worldState` 泄漏。
 
+状态：已完成。S75.5 已新增 React `SaveCaseList` 案卷卡片组件，首页旧案卷和印匣“旧案”tab 复用同一套安全 metadata 展示：sessionId 短码、玩家名、身份/功名/官职、朝代年月旬、回合数、公开摘要和最近更新时间；字段缺失或命中 raw/path/key/prompt/provider 污染词时显示中文 fallback。首页读档通过 `/game/:sessionId` 进入主卷并由 `GamePage` 走 `loadSession` / `GET /api/game/player-state/:sessionId`，印匣读档按钮也继续只调用 `loadSession` 后跳转主卷；前端不读取 raw state、开发诊断、provider payload、完整 prompt、本地路径或 key。
+
 ### S75.6 返回首页与继续本局
 
 实现功能：

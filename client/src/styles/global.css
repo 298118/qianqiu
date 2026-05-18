@@ -488,26 +488,6 @@ h2 {
   font-size: 1.05rem;
 }
 
-.saveList {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(168px, 1fr));
-  gap: 10px;
-}
-
-.saveItem {
-  display: grid;
-  gap: 4px;
-  min-height: 74px;
-  border: 1px solid rgba(84, 60, 43, 0.24);
-  background: rgba(255, 248, 230, 0.68);
-  padding: 10px;
-}
-
-.saveItem span {
-  color: #6d5844;
-  font-size: 0.9rem;
-}
-
 label {
   display: grid;
   gap: 6px;
@@ -970,9 +950,7 @@ button:disabled {
   padding-top: 14px;
 }
 
-.inkboxTabBody,
-.inkboxSaveList,
-.inkboxSaveItem {
+.inkboxTabBody {
   display: grid;
   gap: 12px;
 }
@@ -980,17 +958,6 @@ button:disabled {
 .inkboxTabBody h3 {
   margin: 0;
   font-size: 1.02rem;
-}
-
-.inkboxSaveItem {
-  border: 1px solid rgba(84, 60, 43, 0.22);
-  background: rgba(255, 248, 230, 0.56);
-  padding: 10px;
-}
-
-.inkboxSaveItem span {
-  color: #6d5844;
-  font-size: 0.86rem;
 }
 
 .safeSummaryList {
@@ -1017,6 +984,98 @@ button:disabled {
   margin: 0;
   color: #2d251d;
   overflow-wrap: anywhere;
+}
+
+.saveCaseList {
+  display: grid;
+  gap: 12px;
+}
+
+.homeSaveCases {
+  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+}
+
+.saveCaseItem {
+  display: grid;
+  gap: 10px;
+  position: relative;
+  border: 1px solid rgba(84, 60, 43, 0.25);
+  background:
+    linear-gradient(135deg, rgba(255, 248, 230, 0.82), rgba(231, 211, 180, 0.7)),
+    url("/assets/ui/home/home-archive-casefile-v1.webp") right bottom / 170px auto no-repeat;
+  padding: 12px;
+  box-shadow: inset 0 0 0 1px rgba(255, 252, 238, 0.44);
+}
+
+.saveCaseTopline,
+.saveCaseTitleRow,
+.saveCaseMeta {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.saveCaseTopline {
+  color: #7a6048;
+  font-size: 0.76rem;
+  font-weight: 800;
+}
+
+.saveCaseCode {
+  color: #7b241f;
+  letter-spacing: 0;
+}
+
+.saveCaseTitleRow h3 {
+  margin: 0;
+  font-size: 1.03rem;
+}
+
+.saveCaseTitleRow strong {
+  flex: 0 0 auto;
+  max-width: 42%;
+  color: #7b241f;
+  font-size: 0.84rem;
+  overflow-wrap: anywhere;
+  text-align: right;
+}
+
+.saveCaseSummary {
+  margin: 0;
+  color: #514232;
+  font-size: 0.88rem;
+  line-height: 1.55;
+}
+
+.saveCaseMeta {
+  display: grid;
+  grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr);
+}
+
+.saveCaseMeta div {
+  min-width: 0;
+  border: 1px solid rgba(84, 60, 43, 0.18);
+  background: rgba(255, 252, 238, 0.5);
+  padding: 7px 8px;
+}
+
+.saveCaseMeta dt {
+  color: #7a6048;
+  font-size: 0.72rem;
+  font-weight: 800;
+}
+
+.saveCaseMeta dd {
+  margin: 2px 0 0;
+  color: #2d251d;
+  font-size: 0.82rem;
+  overflow-wrap: anywhere;
+}
+
+.saveCaseAction {
+  justify-self: end;
+  text-decoration: none;
 }
 
 .drawerContent h2,

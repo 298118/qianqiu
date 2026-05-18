@@ -6,6 +6,7 @@ import { surfaceRegistry } from "../surfaces/surfaceRegistry";
 import { useGameSessionStore } from "../state/gameSessionState";
 import type { DrawerSurface, InkboxTab, LocalSurface, ModalSurface } from "../state/uiState";
 import { useUiStateStore } from "../state/uiState";
+import { SaveCaseList } from "./SaveCaseList";
 import { consumeOverlayTrigger } from "./overlayFocus";
 
 type OverlayKind = "drawer" | "modal" | "surface";
@@ -333,18 +334,7 @@ function SavePanel() {
         </button>
       </div>
       {saves.length ? (
-        <div className="inkboxSaveList">
-          {saves.slice(0, 6).map((save) => (
-            <article className="inkboxSaveItem" key={save.sessionId}>
-              <strong>{save.playerName || "无名"}</strong>
-              <span>{save.officeTitle || save.examRank || save.role || "未题身份"}</span>
-              <span>{save.sessionId.slice(0, 8)}</span>
-              <button className="paperButton" type="button" onClick={() => void handleLoad(save.sessionId)}>
-                载入
-              </button>
-            </article>
-          ))}
-        </div>
+        <SaveCaseList saves={saves} maxItems={6} actionLabel="载入" onLoad={(sessionId) => void handleLoad(sessionId)} />
       ) : <p>{savesStatus === "loading" ? "正在检点旧案。" : "暂无可读旧卷。"}</p>}
     </div>
   );

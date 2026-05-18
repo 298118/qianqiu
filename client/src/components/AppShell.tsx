@@ -22,7 +22,7 @@ export function AppShell() {
       className="appShell"
       data-client-entry="react"
       data-router-mode="data"
-      data-shell-version="s75-4"
+      data-shell-version="s75-5"
       data-motion={displayPreferences.motion}
       data-text-size={displayPreferences.textSize}
       data-contrast={displayPreferences.contrast}

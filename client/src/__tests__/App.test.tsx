@@ -126,7 +126,7 @@ describe("S74.1 React client shell", () => {
     expect(document.querySelector("#start-form")).toBeNull();
     expect(document.querySelector("[data-client-entry='react']")).toBeTruthy();
     expect(document.querySelector("[data-router-mode='data']")).toBeTruthy();
-    expect(document.querySelector("[data-shell-version='s75-4']")).toBeTruthy();
+    expect(document.querySelector("[data-shell-version='s75-5']")).toBeTruthy();
   });
 
   it("posts the S75.2 opening form through the safe start endpoint", async () => {
@@ -357,6 +357,13 @@ describe("S74.1 React client shell", () => {
               sessionId,
               playerName: "顾衡",
               role: "scholar",
+              roleLabel: "书生",
+              dynasty: "明",
+              year: 1600,
+              month: 5,
+              tenDayPeriod: 2,
+              turnCount: 7,
+              summary: "贡院春寒，案上仍有未竟策问。",
               updatedAt: "2026-05-18T10:00:00.000Z"
             }
           ],
@@ -388,11 +395,81 @@ describe("S74.1 React client shell", () => {
 
     fireEvent.click(screen.getByRole("tab", { name: "旧案" }));
     await screen.findByText("顾衡");
+    expect(screen.getByText("案 55555555")).toBeTruthy();
+    expect(screen.getByText("明1600年5月中旬")).toBeTruthy();
+    expect(screen.getByText("第 7 回合")).toBeTruthy();
+    expect(screen.getByText("贡院春寒，案上仍有未竟策问。")).toBeTruthy();
     expect(screen.getByRole("button", { name: "刷新" })).toBeTruthy();
 
     fireEvent.click(screen.getByRole("tab", { name: "安全" }));
     expect(screen.getByText(/安全视图/)).toBeTruthy();
     expect(document.body.textContent || "").not.toMatch(/OPENAI_API_KEY|base URL|raw prompt|raw audit|provider payload|data\/sessions/i);
+
+    fireEvent.click(screen.getByRole("tab", { name: "旧案" }));
+    fireEvent.click(screen.getByRole("button", { name: "载入" }));
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledWith(`/api/game/player-state/${sessionId}`, expect.anything()));
+    await waitFor(() => expect(useGameSessionStore.getState().currentSessionId).toBe(sessionId));
+  });
+
+  it("renders S75.5 home save cases with metadata fallbacks", async () => {
+    vi.stubGlobal("fetch", vi.fn(async (url: string) => {
+      if (url === "/api/game/saves") {
+        return new Response(JSON.stringify({
+          saves: [
+            {
+              sessionId: "99999999-9999-4999-8999-999999999999"
+            }
+          ],
+          skipped: []
+        }), {
+          status: 200,
+          headers: { "Content-Type": "application/json" }
+        });
+      }
+      throw new Error(`unexpected url: ${url}`);
+    }));
+
+    renderRoute("/");
+
+    await screen.findByText("案 99999999");
+    expect(screen.getByText("无名")).toBeTruthy();
+    expect(screen.getByText("身份未题")).toBeTruthy();
+    expect(screen.getByText("年月未详")).toBeTruthy();
+    expect(screen.getByText("回合未记")).toBeTruthy();
+    expect(screen.getByText("此卷暂无公开摘要。")).toBeTruthy();
+    expect(screen.getByText("更新时间未记")).toBeTruthy();
+    expect(screen.getByRole("link", { name: "读档" }).getAttribute("href")).toBe("/game/99999999-9999-4999-8999-999999999999");
+    expect(document.body.textContent || "").not.toMatch(/worldState|raw audit|provider payload|data\/sessions|OPENAI_API_KEY/i);
+  });
+
+  it("drops polluted S75.5 save metadata before rendering", async () => {
+    vi.stubGlobal("fetch", vi.fn(async (url: string) => {
+      if (url === "/api/game/saves") {
+        return new Response(JSON.stringify({
+          saves: [
+            {
+              sessionId: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+              playerName: "data/sessions/secret.json",
+              roleLabel: "raw audit",
+              summary: "provider payload sk-test-secret"
+            }
+          ],
+          skipped: []
+        }), {
+          status: 200,
+          headers: { "Content-Type": "application/json" }
+        });
+      }
+      throw new Error(`unexpected url: ${url}`);
+    }));
+
+    renderRoute("/");
+
+    await screen.findByText("案 aaaaaaaa");
+    expect(screen.getByText("无名")).toBeTruthy();
+    expect(screen.getByText("身份未题")).toBeTruthy();
+    expect(screen.getByText("此卷暂无公开摘要。")).toBeTruthy();
+    expect(document.body.textContent || "").not.toMatch(/data\/sessions|raw audit|provider payload|sk-test-secret/i);
   });
 
   it("opens registry-backed local surfaces, writes safe drafts, and restores focus on Esc", async () => {

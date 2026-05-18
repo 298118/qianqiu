@@ -122,7 +122,7 @@ test("S74.4 shell uses registry-backed overlays without widening data sources", 
   const routeCatalogSource = readText("client/src/routes/routeCatalog.ts");
   const combined = `${appShellSource}\n${surfaceHostSource}\n${surfaceRegistrySource}\n${routeCatalogSource}`;
 
-  assert.match(appShellSource, /data-shell-version="s75-4"/);
+  assert.match(appShellSource, /data-shell-version="s75-5"/);
   assert.match(appShellSource, /resolvePrimaryHref/);
   assert.match(appShellSource, /isRunnableSessionId/);
   assert.match(appShellSource, /ScrollRestoration/);
@@ -164,6 +164,35 @@ test("S75.4 top-right inkbox unifies safe tools without widening data sources", 
     combined,
     /\/api\/game\/state|\/api\/dev\/session-diagnostics|localStorage|sessionStorage|data\/sessions|raw audit|provider payload|OPENAI_API_KEY|DEEPSEEK_API_KEY|MIMO_API_KEY|ANTHROPIC_API_KEY/
   );
+});
+
+test("S75.5 save cases show redacted metadata and load through player-state", () => {
+  const homePageSource = readText("client/src/pages/HomePage.tsx");
+  const surfaceHostSource = readText("client/src/components/SurfaceHost.tsx");
+  const saveCaseSource = readText("client/src/components/SaveCaseList.tsx");
+  const apiTypesSource = readText("client/src/api/types.ts");
+  const styleSource = readText("client/src/styles/global.css");
+  const combined = `${homePageSource}\n${surfaceHostSource}\n${saveCaseSource}\n${apiTypesSource}\n${styleSource}`;
+  const runtimeSourcesWithoutSanitizerPattern = `${homePageSource}\n${surfaceHostSource}\n${apiTypesSource}\n${styleSource}`;
+
+  assert.match(homePageSource, /<SaveCaseList saves=\{saves\} maxItems=\{5\}/);
+  assert.match(surfaceHostSource, /<SaveCaseList saves=\{saves\} maxItems=\{6\}/);
+  assert.match(surfaceHostSource, /loadSession\(sessionId\)/);
+  assert.match(saveCaseSource, /getSaveShortCode/);
+  assert.match(saveCaseSource, /getSaveDateLabel/);
+  assert.match(saveCaseSource, /getSaveTurnLabel/);
+  assert.match(saveCaseSource, /getSaveUpdatedLabel/);
+  assert.match(saveCaseSource, /unsafeSaveTextPattern/);
+  assert.match(saveCaseSource, /safeTextOrFallback/);
+  assert.match(saveCaseSource, /此卷暂无公开摘要/);
+  assert.match(apiTypesSource, /readonly turnCount\?: number/);
+  assert.match(apiTypesSource, /readonly summary\?: string \| null/);
+  assert.match(styleSource, /saveCaseItem/);
+  assert.doesNotMatch(
+    runtimeSourcesWithoutSanitizerPattern,
+    /\/api\/game\/state|\/api\/dev\/session-diagnostics|localStorage|sessionStorage|data\/sessions|raw audit|provider payload|OPENAI_API_KEY|DEEPSEEK_API_KEY|MIMO_API_KEY|ANTHROPIC_API_KEY/
+  );
+  assert.doesNotMatch(combined, /localStorage|sessionStorage/);
 });
 
 test("S74.5 asset registry gates manifest assets before React components render portraits", () => {

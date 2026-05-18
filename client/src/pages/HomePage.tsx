@@ -4,6 +4,7 @@ import { useGameSessionStore } from "../state/gameSessionState";
 import { useEffect, useRef, useState } from "react";
 import { useUiStateStore } from "../state/uiState";
 import type { GameRole } from "../api";
+import { SaveCaseList } from "../components/SaveCaseList";
 
 type ScholarFamilyBackground = "poor" | "modest" | "gentry";
 
@@ -256,14 +257,7 @@ export function HomePage() {
           <h2>旧案卷</h2>
           {savesStatus === "loading" ? <p>正在翻检案卷。</p> : null}
           {saves.length ? (
-            <div className="saveList">
-              {saves.slice(0, 5).map((save) => (
-                <Link className="saveItem" key={save.sessionId} to={`/game/${save.sessionId}`}>
-                  <strong>{save.playerName || "无名"}</strong>
-                  <span>{save.officeTitle || save.examRank || save.role || "未题"}</span>
-                </Link>
-              ))}
-            </div>
+            <SaveCaseList saves={saves} maxItems={5} className="homeSaveCases" />
           ) : (
             <p>暂无可读旧卷。</p>
           )}
