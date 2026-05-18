@@ -209,3 +209,25 @@ test("S74.7 client smoke verifies default UI start and safe route recovery", () 
     /localStorage|sessionStorage|data\/sessions|raw audit|provider payload|OPENAI_API_KEY|DEEPSEEK_API_KEY|MIMO_API_KEY|ANTHROPIC_API_KEY/
   );
 });
+
+test("S75.3 home start seal guards repeated submits and reduced motion", () => {
+  const homePageSource = readText("client/src/pages/HomePage.tsx");
+  const styleSource = readText("client/src/styles/global.css");
+  const combined = `${homePageSource}\n${styleSource}`;
+
+  assert.match(homePageSource, /usePrefersReducedMotion/);
+  assert.match(homePageSource, /submitLockRef/);
+  assert.match(homePageSource, /status === "loading"/);
+  assert.match(homePageSource, /motionAllowed/);
+  assert.match(homePageSource, /aria-busy=\{isStarting\}/);
+  assert.match(homePageSource, /data-state=\{error \|\| formError \? "error" : isStarting \? "loading" : "idle"\}/);
+  assert.match(homePageSource, /aria-live="polite"/);
+  assert.match(styleSource, /homeSealStamp/);
+  assert.match(styleSource, /sealLoadingSweep/);
+  assert.match(styleSource, /prefers-reduced-motion: reduce/);
+  assert.match(styleSource, /\.appShell\[data-motion="reduced"\] \.homeStartSeal/);
+  assert.doesNotMatch(
+    combined,
+    /\/api\/game\/state|\/api\/dev\/session-diagnostics|localStorage|sessionStorage|data\/sessions|raw audit|provider payload|OPENAI_API_KEY|DEEPSEEK_API_KEY|MIMO_API_KEY|ANTHROPIC_API_KEY/
+  );
+});

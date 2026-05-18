@@ -173,6 +173,91 @@ describe("S74.1 React client shell", () => {
     expect(document.body.textContent || "").not.toMatch(/\/api\/game\/state|\/api\/dev|provider payload|hiddenNotes|OPENAI_API_KEY|data\/sessions/i);
   });
 
+  it("locks the S75.3 seal submit path against repeated Enter submits", async () => {
+    let resolveStart: ((response: Response) => void) | undefined;
+    const startResponse = new Promise<Response>((resolve) => {
+      resolveStart = resolve;
+    });
+    const fetchMock = vi.fn(async (url: string) => {
+      if (url === "/api/game/saves") {
+        return new Response(JSON.stringify({ saves: [], skipped: [] }), {
+          status: 200,
+          headers: { "Content-Type": "application/json" }
+        });
+      }
+      if (url === "/api/game/start") {
+        return startResponse;
+      }
+      throw new Error(`unexpected url: ${url}`);
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    renderRoute("/");
+
+    const startForm = screen.getByRole("form", { name: "新开案卷" });
+    fireEvent.submit(startForm);
+    fireEvent.submit(startForm);
+
+    await waitFor(() => {
+      expect(fetchMock.mock.calls.filter(([url]) => url === "/api/game/start")).toHaveLength(1);
+    });
+    expect(screen.getByRole("button", { name: "开卷中" })).toHaveProperty("disabled", true);
+    expect(document.querySelector(".homeStartSeal")?.className).toContain("isStamping");
+    expect(screen.getByText("朱印已落，正在开卷。")).toBeTruthy();
+
+    resolveStart?.(new Response(JSON.stringify({
+      sessionId: "33333333-3333-4333-8333-333333333333",
+      narrative: "新卷已启。",
+      worldState: { player: { name: "沈知微", role: "scholar" } }
+    }), {
+      status: 201,
+      headers: { "Content-Type": "application/json" }
+    }));
+    await waitFor(() => expect(useGameSessionStore.getState().currentSessionId).toBe("33333333-3333-4333-8333-333333333333"));
+  });
+
+  it("keeps S75.3 seal feedback static when motion is reduced", async () => {
+    useUiStateStore.getState().setDisplayPreference("motion", "reduced");
+    let resolveStart: ((response: Response) => void) | undefined;
+    const startResponse = new Promise<Response>((resolve) => {
+      resolveStart = resolve;
+    });
+    const fetchMock = vi.fn(async (url: string) => {
+      if (url === "/api/game/saves") {
+        return new Response(JSON.stringify({ saves: [], skipped: [] }), {
+          status: 200,
+          headers: { "Content-Type": "application/json" }
+        });
+      }
+      if (url === "/api/game/start") {
+        return startResponse;
+      }
+      throw new Error(`unexpected url: ${url}`);
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    renderRoute("/");
+
+    fireEvent.submit(screen.getByRole("form", { name: "新开案卷" }));
+
+    await waitFor(() => {
+      expect(fetchMock.mock.calls.filter(([url]) => url === "/api/game/start")).toHaveLength(1);
+    });
+    expect(document.querySelector(".appShell")?.getAttribute("data-motion")).toBe("reduced");
+    expect(document.querySelector(".homeStartSeal")?.className).not.toContain("isStamping");
+    expect(screen.getByRole("button", { name: "开卷中" }).getAttribute("data-state")).toBe("loading");
+
+    resolveStart?.(new Response(JSON.stringify({
+      sessionId: "44444444-4444-4444-8444-444444444444",
+      narrative: "新卷已启。",
+      worldState: { player: { name: "沈知微", role: "scholar" } }
+    }), {
+      status: 201,
+      headers: { "Content-Type": "application/json" }
+    }));
+    await waitFor(() => expect(useGameSessionStore.getState().currentSessionId).toBe("44444444-4444-4444-8444-444444444444"));
+  });
+
   it("hides scholar family choices for non-scholar starts and validates year locally", async () => {
     const fetchMock = vi.fn(async () => new Response(JSON.stringify({ saves: [], skipped: [] }), {
       status: 200,

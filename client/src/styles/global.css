@@ -142,6 +142,13 @@ a {
   animation-iteration-count: 1 !important;
 }
 
+.appShell[data-motion="reduced"] .homeStartSeal,
+.appShell[data-motion="reduced"] .homeStartSeal::after,
+.appShell[data-motion="reduced"] .homeStartSeal[data-state="loading"]::before {
+  animation: none !important;
+  transition: none;
+}
+
 .homeScene {
   position: relative;
   display: grid;
@@ -290,6 +297,11 @@ h2 {
   font-weight: 700;
 }
 
+.sealButton span {
+  position: relative;
+  z-index: 1;
+}
+
 .homeDesk {
   position: relative;
   display: grid;
@@ -358,11 +370,84 @@ h2 {
   background: transparent;
 }
 
+.startDeskError input[aria-invalid="true"],
+.startDeskError select:focus,
+.startDeskError textarea:focus {
+  border-color: rgba(142, 47, 39, 0.78);
+  box-shadow: 0 0 0 2px rgba(142, 47, 39, 0.12);
+}
+
 .homeStartSeal {
   position: relative;
   z-index: 1;
   grid-column: 1 / -1;
+  justify-self: center;
   min-width: 108px;
+  overflow: hidden;
+  padding: 10px 20px;
+  box-shadow:
+    inset 0 0 0 3px rgba(255, 236, 211, 0.18),
+    0 8px 18px rgba(101, 31, 27, 0.2);
+  transition:
+    border-color 160ms ease,
+    box-shadow 160ms ease,
+    filter 160ms ease,
+    transform 160ms ease;
+}
+
+.homeStartSeal::after {
+  position: absolute;
+  inset: 4px;
+  border: 1px solid rgba(255, 238, 215, 0.46);
+  content: "";
+  pointer-events: none;
+}
+
+.homeStartSeal:hover:not(:disabled),
+.homeStartSeal:focus-visible {
+  border-color: #5f1815;
+  box-shadow:
+    inset 0 0 0 3px rgba(255, 236, 211, 0.22),
+    0 10px 24px rgba(101, 31, 27, 0.26);
+}
+
+.homeStartSeal:focus-visible {
+  outline: 2px solid rgba(123, 36, 31, 0.26);
+  outline-offset: 3px;
+}
+
+.homeStartSeal[data-state="loading"] {
+  filter: saturate(0.86);
+  transform: translateY(1px);
+}
+
+.homeStartSeal[data-state="loading"]::before {
+  position: absolute;
+  inset: -20% auto -20% -42%;
+  width: 38%;
+  background: linear-gradient(90deg, transparent, rgba(255, 236, 211, 0.34), transparent);
+  content: "";
+  animation: sealLoadingSweep 900ms ease-in-out infinite;
+}
+
+.homeStartSeal[data-state="error"] {
+  border-color: #6f1f1a;
+  box-shadow:
+    inset 0 0 0 3px rgba(255, 236, 211, 0.18),
+    0 0 0 3px rgba(142, 47, 39, 0.16),
+    0 8px 18px rgba(101, 31, 27, 0.18);
+}
+
+.homeStartSeal.isStamping {
+  animation: homeSealStamp 360ms cubic-bezier(0.2, 0.82, 0.22, 1);
+}
+
+.homeStartSeal.isStamping::after {
+  animation: homeSealFlash 360ms ease-out;
+}
+
+.homeStartSeal.isSealError {
+  animation: homeSealError 220ms ease-out;
 }
 
 .saveShelf {
@@ -510,6 +595,14 @@ button:disabled {
   margin: 0;
   color: #7b241f;
   font-weight: 700;
+}
+
+.sealStatus {
+  margin: -2px 0 0;
+  color: #7a6048;
+  font-size: 0.86rem;
+  font-weight: 700;
+  text-align: center;
 }
 
 .gameSurface,
@@ -947,6 +1040,72 @@ button:disabled {
   .homeMist {
     animation: none;
     opacity: 0.16;
+  }
+
+  .homeStartSeal,
+  .homeStartSeal::after,
+  .homeStartSeal[data-state="loading"]::before {
+    animation: none !important;
+    transition: none;
+  }
+}
+
+@keyframes homeSealStamp {
+  0% {
+    transform: translateY(0) scale(1);
+  }
+
+  42% {
+    transform: translateY(4px) scale(0.94);
+    filter: saturate(1.15);
+  }
+
+  100% {
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes homeSealFlash {
+  0% {
+    box-shadow: inset 0 0 0 1px rgba(255, 238, 215, 0.42);
+    opacity: 0.86;
+  }
+
+  52% {
+    box-shadow:
+      inset 0 0 0 1px rgba(255, 238, 215, 0.5),
+      0 0 0 10px rgba(142, 47, 39, 0.18);
+    opacity: 1;
+  }
+
+  100% {
+    box-shadow: inset 0 0 0 1px rgba(255, 238, 215, 0.42);
+    opacity: 0.86;
+  }
+}
+
+@keyframes homeSealError {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+
+  30% {
+    transform: translateX(-3px);
+  }
+
+  65% {
+    transform: translateX(3px);
+  }
+}
+
+@keyframes sealLoadingSweep {
+  from {
+    transform: translateX(0);
+  }
+
+  to {
+    transform: translateX(390%);
   }
 }
 

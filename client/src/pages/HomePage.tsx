@@ -1,7 +1,8 @@
 import type { FormEvent } from "react";
 import { Link, useNavigate } from "react-router";
 import { useGameSessionStore } from "../state/gameSessionState";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { useUiStateStore } from "../state/uiState";
 import type { GameRole } from "../api";
 
 type ScholarFamilyBackground = "poor" | "modest" | "gentry";
@@ -37,6 +38,24 @@ function getScholarFamilyText(value: ScholarFamilyBackground) {
   return scholarFamilyOptions.find((option) => option.value === value)?.text || scholarFamilyOptions[1].text;
 }
 
+function usePrefersReducedMotion() {
+  const [prefersReducedMotion, setPrefersReducedMotion] = useState(() => {
+    if (typeof window === "undefined" || !window.matchMedia) return false;
+    return window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  });
+
+  useEffect(() => {
+    if (typeof window === "undefined" || !window.matchMedia) return undefined;
+    const query = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const handleChange = () => setPrefersReducedMotion(query.matches);
+    handleChange();
+    query.addEventListener?.("change", handleChange);
+    return () => query.removeEventListener?.("change", handleChange);
+  }, []);
+
+  return prefersReducedMotion;
+}
+
 export function HomePage() {
   const navigate = useNavigate();
   const refreshSaves = useGameSessionStore((state) => state.refreshSaves);
@@ -45,6 +64,8 @@ export function HomePage() {
   const status = useGameSessionStore((state) => state.status);
   const savesStatus = useGameSessionStore((state) => state.savesStatus);
   const error = useGameSessionStore((state) => state.error);
+  const displayMotion = useUiStateStore((state) => state.displayPreferences.motion);
+  const prefersReducedMotion = usePrefersReducedMotion();
   const [playerName, setPlayerName] = useState("沈知微");
   const [role, setRole] = useState<GameRole>("scholar");
   const [dynasty, setDynasty] = useState("明");
@@ -52,7 +73,11 @@ export function HomePage() {
   const [scholarFamily, setScholarFamily] = useState<ScholarFamilyBackground>("modest");
   const [customBackground, setCustomBackground] = useState("");
   const [formError, setFormError] = useState<string | null>(null);
-  const isStarting = status === "loading";
+  const [sealFeedback, setSealFeedback] = useState<"idle" | "stamping" | "error">("idle");
+  const submitLockRef = useRef(false);
+  const stampTimerRef = useRef<number | null>(null);
+  const motionAllowed = displayMotion !== "reduced" && !prefersReducedMotion;
+  const isStarting = status === "loading" || submitLockRef.current;
   const parsedYear = Number(year);
   const yearIsValid = Number.isInteger(parsedYear) && parsedYear >= 1 && parsedYear <= 9999;
 
@@ -60,18 +85,45 @@ export function HomePage() {
     void refreshSaves();
   }, [refreshSaves]);
 
+  useEffect(() => () => {
+    if (stampTimerRef.current !== null) {
+      window.clearTimeout(stampTimerRef.current);
+    }
+  }, []);
+
+  function markSealFeedback(state: "idle" | "stamping" | "error") {
+    if (stampTimerRef.current !== null) {
+      window.clearTimeout(stampTimerRef.current);
+      stampTimerRef.current = null;
+    }
+    setSealFeedback(state);
+    if (state !== "idle") {
+      stampTimerRef.current = window.setTimeout(() => {
+        setSealFeedback("idle");
+        stampTimerRef.current = null;
+      }, state === "stamping" ? 420 : 1200);
+    }
+  }
+
   async function handleStart(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (isStarting) {
+    if (submitLockRef.current || status === "loading") {
       return;
     }
 
     if (!yearIsValid) {
       setFormError("年份需为 1 至 9999 之间的整数。");
+      markSealFeedback("error");
       return;
     }
 
     setFormError(null);
+    submitLockRef.current = true;
+    if (motionAllowed) {
+      markSealFeedback("stamping");
+    } else {
+      setSealFeedback("idle");
+    }
     try {
       const payload = await startNewGame({
         dynasty,
@@ -83,6 +135,8 @@ export function HomePage() {
       });
       navigate(`/game/${payload.sessionId}`);
     } catch {
+      submitLockRef.current = false;
+      markSealFeedback("error");
     }
   }
 
@@ -110,7 +164,12 @@ export function HomePage() {
               </Link>
             </div>
           </div>
-          <form className="startDesk" onSubmit={handleStart} aria-label="新开案卷">
+          <form
+            className={`startDesk${error || formError ? " startDeskError" : ""}`}
+            onSubmit={handleStart}
+            aria-label="新开案卷"
+            aria-busy={isStarting}
+          >
             <label>
               朝代
               <select value={dynasty} onChange={(event) => setDynasty(event.target.value)} disabled={isStarting}>
@@ -177,10 +236,19 @@ export function HomePage() {
                 placeholder="如：幼承庭训，曾随父游学江南。"
               />
             </label>
-            <button className="sealButton homeStartSeal" type="submit" disabled={isStarting}>
-              {isStarting ? "开卷中" : "新开一卷"}
+            <button
+              className={`sealButton homeStartSeal${sealFeedback === "stamping" ? " isStamping" : ""}${sealFeedback === "error" ? " isSealError" : ""}`}
+              type="submit"
+              disabled={isStarting}
+              aria-describedby="start-seal-status"
+              data-state={error || formError ? "error" : isStarting ? "loading" : "idle"}
+            >
+              <span>{isStarting ? "开卷中" : error || formError ? "重整朱印" : "新开一卷"}</span>
             </button>
           </form>
+          <p className="sealStatus" id="start-seal-status" aria-live="polite">
+            {isStarting ? "朱印已落，正在开卷。" : error || formError ? "朱印未成，请校正案头信息。" : "按下朱印，新卷即启。"}
+          </p>
           {formError ? <p className="statusLine" role="alert">{formError}</p> : null}
           {error ? <p className="statusLine" role="alert">{error}</p> : null}
         </div>

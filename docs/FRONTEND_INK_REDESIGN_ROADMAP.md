@@ -765,6 +765,8 @@ Manifest 示例：
 
 ### S75.3 朱印开始按钮
 
+状态：已完成。默认 `/` 首页朱印开始按钮已接入短促落章反馈、loading 扫光、disabled/error 视觉和 `aria-live` 状态说明；提交路径仍只调用现有安全 `startNewGame` / `POST /api/game/start`，不读取 raw state、开发诊断、provider payload、完整 prompt、本地路径或 key。前端新增同步提交锁，连续 Enter、双击或同一提交周期重复 submit 只触发一次 start；应用显示偏好为低动效或系统 `prefers-reduced-motion: reduce` 时不播放落章动画。
+
 实现功能：
 
 - 按钮如玉玺/印章，红底白字或墨色描边。
