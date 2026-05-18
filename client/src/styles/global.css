@@ -920,6 +920,45 @@ button:disabled {
   padding: clamp(16px, 3vw, 24px);
 }
 
+.magistratePanel {
+  border-color: rgba(112, 55, 36, 0.32);
+  background:
+    linear-gradient(115deg, rgba(255, 248, 230, 0.92), rgba(226, 208, 174, 0.8) 44%, rgba(116, 73, 48, 0.24)),
+    var(--scholar-panel-bg, url("/assets/ui/roles/role-magistrate-yamen-desk-v1.webp")) left center / cover no-repeat,
+    #e8d7b7;
+}
+
+.scholarPanel.magistratePanel::before {
+  background:
+    linear-gradient(90deg, rgba(255, 252, 238, 0.74), rgba(255, 252, 238, 0.88) 42%, rgba(255, 252, 238, 0.78)),
+    radial-gradient(circle at 10% 12%, rgba(122, 36, 31, 0.14), transparent 30%);
+}
+
+.magistratePanel .scholarPanelEyebrow,
+.magistratePanel .scholarPanelMetrics strong {
+  color: #7b241f;
+}
+
+.magistratePanel .scholarPanelMetrics li {
+  display: grid;
+  grid-template-columns: minmax(68px, 1fr) auto;
+}
+
+.magistratePanel .scholarPanelMetrics em {
+  grid-column: 1 / -1;
+  color: #6d5844;
+  font-size: 0.76rem;
+  font-style: normal;
+  font-weight: 800;
+}
+
+.magistratePanelBoundary .scholarPanelBoundary {
+  display: grid;
+  gap: 7px;
+  margin: 0;
+  padding-left: 18px;
+}
+
 .scholarPanel::before {
   position: absolute;
   inset: 0;

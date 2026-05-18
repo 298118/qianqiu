@@ -2,6 +2,7 @@ import { NavLink, Outlet, useParams } from "react-router";
 import { BookOpen, FileText, Landmark, Map, ScrollText, Settings, Users } from "lucide-react";
 import { useEffect, useMemo, type CSSProperties } from "react";
 import { useAssetRegistry } from "../assets/useAssetRegistry";
+import { MagistratePanel } from "../components/MagistratePanel";
 import { MemorialComposer } from "../components/MemorialComposer";
 import { ScholarPanel } from "../components/ScholarPanel";
 import { routeCatalog } from "../routes/routeCatalog";
@@ -265,6 +266,17 @@ export function GamePage() {
           roleBackgroundPath={roleBackgroundAsset?.path}
           examHref={sessionHref(routeCatalog.find((entry) => entry.id === "exam")?.href ?? "/game/s74-preview/exam")}
           rankingHref={sessionHref(routeCatalog.find((entry) => entry.id === "ranking")?.href ?? "/game/s74-preview/ranking")}
+          runnable={runnable}
+          onDraft={(text) => setActionDraft({ source: "role-surface", targetPage: "game", text })}
+        />
+      ) : null}
+      {player?.role === "magistrate" ? (
+        <MagistratePanel
+          player={player}
+          localAffairsDocketView={session?.localAffairsDocketView ?? null}
+          officialPostingsView={session?.officialPostingsView ?? null}
+          economicFiscalView={session?.economicFiscalView ?? null}
+          roleBackgroundPath={roleBackgroundAsset?.path}
           runnable={runnable}
           onDraft={(text) => setActionDraft({ source: "role-surface", targetPage: "game", text })}
         />

@@ -368,6 +368,32 @@ test("S76.2 scholar panel uses safe study and exam projections as draft-only UI"
   );
 });
 
+test("S76.3 magistrate panel uses safe local affairs projections as draft-only UI", () => {
+  const gamePageSource = readText("client/src/pages/GamePage.tsx");
+  const magistratePanelSource = readText("client/src/components/MagistratePanel.tsx");
+  const appTestSource = readText("client/src/__tests__/App.test.tsx");
+  const styleSource = readText("client/src/styles/global.css");
+  const magistratePanelWithoutGuard = magistratePanelSource.replace(/const unsafeMagistrateFragments[\s\S]*?\] as const;\r?\n/, "");
+  const runtimeCombined = `${gamePageSource}\n${magistratePanelWithoutGuard}\n${styleSource}`;
+
+  assert.match(gamePageSource, /<MagistratePanel/);
+  assert.match(gamePageSource, /localAffairsDocketView=\{session\?\.localAffairsDocketView/);
+  assert.match(gamePageSource, /officialPostingsView=\{session\?\.officialPostingsView/);
+  assert.match(gamePageSource, /economicFiscalView=\{session\?\.economicFiscalView/);
+  assert.match(magistratePanelSource, /export function MagistratePanel/);
+  assert.match(magistratePanelSource, /localAffairsDocketView/);
+  assert.match(magistratePanelSource, /officialPostingsView/);
+  assert.match(magistratePanelSource, /economicFiscalView/);
+  assert.match(magistratePanelSource, /只写草稿，结果由服务器裁决/);
+  assert.match(magistratePanelSource, /审案、征税、开仓、水利、缉捕、任免、考成和持久化都由服务器裁决/);
+  assert.match(styleSource, /magistratePanel/);
+  assert.match(appTestSource, /renders the S76\.3 magistrate panel from safe local affairs and fiscal views as draft-only actions/);
+  assert.doesNotMatch(
+    runtimeCombined,
+    /\/api\/game\/state|\/api\/dev\/session-diagnostics|\/api\/exam\/question|\/api\/exam\/submit|dangerouslySetInnerHTML|localStorage|sessionStorage|data\/sessions|raw audit|provider payload|OPENAI_API_KEY|DEEPSEEK_API_KEY|MIMO_API_KEY|ANTHROPIC_API_KEY/
+  );
+});
+
 test("S74.5 asset registry gates manifest assets before React components render portraits", () => {
   const assetRegistrySource = readText("client/src/assets/assetRegistry.ts");
   const portraitSource = readText("client/src/components/Portrait.tsx");

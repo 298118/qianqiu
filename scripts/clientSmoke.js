@@ -211,7 +211,10 @@ async function assertScholarPanel(page, sessionId, screenshotsDir) {
       text: (button.textContent || "").trim(),
       disabled: button.disabled
     }));
-    const computedBackground = panel ? getComputedStyle(panel).getPropertyValue("--scholar-panel-bg") : "";
+    const computedStyle = panel ? getComputedStyle(panel) : null;
+    const computedBackground = computedStyle
+      ? `${panel?.getAttribute("data-role-background") || ""} ${computedStyle.getPropertyValue("--scholar-panel-bg")} ${computedStyle.backgroundImage}`
+      : "";
     return {
       text,
       dimensionCount: panel?.querySelectorAll(".scholarPanelMetrics li").length || 0,
@@ -278,6 +281,89 @@ async function assertScholarPanel(page, sessionId, screenshotsDir) {
   await page.getByLabel("本回合行动").fill("");
 
   return captureScreenshot(page, screenshotsDir, "s76-scholar-panel-desktop");
+}
+
+async function startMockMagistrateThroughHome(page, baseUrl) {
+  await page.goto(`${baseUrl}/`, { waitUntil: "networkidle" });
+  await page.getByLabel("姓名").fill("烟测知县");
+  await page.getByLabel("身份").selectOption("magistrate");
+  await page.getByRole("button", { name: "新开一卷" }).click();
+  return waitForSafeSessionPath(page, "magistrate home start");
+}
+
+async function assertMagistratePanel(page, sessionId, screenshotsDir) {
+  await page.getByRole("heading", { name: "地方官署" }).waitFor({ timeout: 10000 });
+  const panelSnapshot = await page.evaluate((id) => {
+    const panel = document.querySelector(".magistratePanel");
+    const text = panel?.textContent || "";
+    const buttons = [...document.querySelectorAll(".magistratePanel button")].map((button) => ({
+      text: (button.textContent || "").trim(),
+      disabled: button.disabled
+    }));
+    const computedBackground = panel ? getComputedStyle(panel).getPropertyValue("--scholar-panel-bg") : "";
+    return {
+      text,
+      metricCount: panel?.querySelectorAll(".scholarPanelMetrics li").length || 0,
+      hasDocket: text.includes("案牍总览"),
+      hasTrial: text.includes("公堂词讼"),
+      hasFiscal: text.includes("钱粮仓储"),
+      hasPatrol: text.includes("水利盗警"),
+      hasGentry: text.includes("士绅乡约"),
+      hasBoundary: text.includes("审案、征税、开仓、水利、缉捕、任免、考成和持久化都由服务器裁决"),
+      buttons,
+      background: computedBackground,
+      path: window.location.pathname,
+      expectedPath: `/game/${id}`,
+      forbiddenText: (document.body.innerText || "").match(/\/api\/game\/state|\/api\/dev\/session-diagnostics|provider payload|raw audit|hiddenNotes|OPENAI_API_KEY|data\/sessions|完整提示词|本地路径|密钥|sk-[a-z0-9_-]{6,}|[a-z]:[\\/]/gi) || []
+    };
+  }, sessionId);
+
+  const failures = [];
+  if (panelSnapshot.path !== panelSnapshot.expectedPath) failures.push(`path was ${panelSnapshot.path}`);
+  if (!panelSnapshot.hasDocket) failures.push("missing docket overview");
+  if (!panelSnapshot.hasTrial) failures.push("missing courtroom block");
+  if (!panelSnapshot.hasFiscal) failures.push("missing fiscal block");
+  if (!panelSnapshot.hasPatrol) failures.push("missing waterworks and patrol block");
+  if (!panelSnapshot.hasGentry) failures.push("missing gentry block");
+  if (!panelSnapshot.hasBoundary) failures.push("missing server boundary");
+  if (panelSnapshot.metricCount < 8) failures.push(`expected local docket metrics, saw ${panelSnapshot.metricCount}`);
+  if (!panelSnapshot.buttons.some((button) => button.text === "升堂核案" && !button.disabled)) failures.push("trial draft button missing or disabled");
+  if (!panelSnapshot.buttons.some((button) => button.text === "清厘钱粮" && !button.disabled)) failures.push("fiscal draft button missing or disabled");
+  if (!panelSnapshot.buttons.some((button) => button.text === "调停乡约" && !button.disabled)) failures.push("gentry draft button missing or disabled");
+  if (panelSnapshot.forbiddenText.length) failures.push(`unsafe text leaked: ${panelSnapshot.forbiddenText.join(", ")}`);
+  if (failures.length) {
+    throw new Error(`S76.3 magistrate panel smoke failed: ${failures.join("; ")}`);
+  }
+
+  const turnRequests = [];
+  const onRequest = (request) => {
+    try {
+      const url = new URL(request.url());
+      if (url.pathname === "/api/game/turn" && request.method() === "POST") {
+        turnRequests.push(url.pathname);
+      }
+    } catch {
+    }
+  };
+  page.on("request", onRequest);
+  await page.getByRole("button", { name: "升堂核案" }).click();
+  await page.waitForFunction(() => {
+    const value = document.querySelector("textarea")?.value || "";
+    return value.includes("升堂核问积案") && value.includes("不自行结案");
+  }, null, { timeout: 10000 });
+  await page.waitForTimeout(250);
+  page.off("request", onRequest);
+  if (turnRequests.length) {
+    throw new Error(`S76.3 magistrate draft button submitted a turn instead of writing a draft: ${turnRequests.join(", ")}`);
+  }
+
+  const draft = await page.getByLabel("本回合行动").inputValue();
+  if (!draft.includes("升堂核问积案")) {
+    throw new Error(`S76.3 magistrate draft did not enter the memorial composer: ${draft}`);
+  }
+  await page.getByLabel("本回合行动").fill("");
+
+  return captureScreenshot(page, screenshotsDir, "s76-magistrate-panel-desktop");
 }
 
 async function assertReturnHomeContinueAndTurn(page, sessionId, screenshotsDir) {
@@ -756,6 +842,9 @@ async function runClientSmoke(options = {}) {
       );
     }
 
+    const magistrateSessionId = await startMockMagistrateThroughHome(page, baseUrl);
+    screenshots.push(await assertMagistratePanel(page, magistrateSessionId, options.screenshotsDir));
+
     const health = await page.evaluate(async () => {
       const response = await fetch("/api/health");
       return { ok: response.ok, payload: await response.json() };
@@ -824,6 +913,7 @@ async function runClientSmoke(options = {}) {
         "desktop-ranking-refresh",
         "desktop-court-refresh",
         "desktop-settings-refresh",
+        "desktop-magistrate-panel",
         "mobile-memorial-composer",
         "mobile-inkbox-tabs",
         "mobile-home"

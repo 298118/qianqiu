@@ -38,6 +38,9 @@ export type SafeRouteViews = {
   readonly informationPanelPageView?: JsonObject;
   readonly examCalendarView?: JsonObject;
   readonly studyProfileView?: JsonObject;
+  readonly officialPostingsView?: JsonObject;
+  readonly localAffairsDocketView?: JsonObject;
+  readonly economicFiscalView?: JsonObject;
   readonly [key: string]: unknown;
 };
 

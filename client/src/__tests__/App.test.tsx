@@ -505,6 +505,173 @@ describe("S74.1 React client shell", () => {
     expect(document.body.textContent || "").not.toMatch(/provider payload|sk-test-secret|prompt|raw audit|data\/sessions|OPENAI_API_KEY/i);
   });
 
+  it("renders the S76.3 magistrate panel from safe local affairs and fiscal views as draft-only actions", async () => {
+    const sessionId = "22345678-1111-4111-8111-111111111111";
+    const fetchMock = vi.fn(async (url: string) => {
+      if (url === "/assets/ui/ink-ui-manifest.json") {
+        return new Response(JSON.stringify({
+          ...buildMockAssetManifest(0),
+          assets: [
+            {
+              id: "ui-role-magistrate-yamen-desk-v1",
+              category: "role_background",
+              usage: ["game_main"],
+              role: "magistrate",
+              path: "/assets/ui/roles/role-magistrate-yamen-desk-v1.webp",
+              thumbnailPath: "/assets/ui/thumbs/thumb-role-magistrate-yamen-desk-v1.webp",
+              fallbackRef: "fallback-paper-panel-v1",
+              reviewStatus: "approved",
+              visualReview: { status: "approved" },
+              safetyReview: { status: "approved" }
+            }
+          ]
+        }), {
+          status: 200,
+          headers: { "Content-Type": "application/json" }
+        });
+      }
+      if (url === `/api/game/player-state/${sessionId}`) {
+        return new Response(JSON.stringify({
+          source: "server_player_visible_state_projection",
+          sessionId,
+          worldState: { player: { name: "杜明府", role: "magistrate", officeTitle: "清河县知县" } },
+          officialPostingsView: {
+            postings: [{
+              id: "posting-player-current",
+              holderType: "player",
+              officeTitle: "清河县知县",
+              cityId: "city-qinghe",
+              performanceScore: 62,
+              impeachmentRisk: 18,
+              publicReputation: 57,
+              publicSummary: "本任正在清结案牍与钱粮。"
+            }]
+          },
+          localAffairsDocketView: {
+            dateLabel: "明1644年正月中旬",
+            counts: { total: 5, judicial: 1, revenue: 1, waterworks: 1, banditry: 1, gentry: 1 },
+            dockets: [
+              {
+                id: "docket-judicial",
+                domain: "judicial",
+                domainLabel: "刑名",
+                title: "清河县刑名词讼",
+                statusLabel: "急办",
+                pressureScore: 82,
+                publicSummary: "词讼积压，须核证词与案卷。"
+              },
+              {
+                id: "docket-revenue",
+                domain: "revenue",
+                domainLabel: "钱粮",
+                title: "清河县钱粮奏销",
+                statusLabel: "留察",
+                pressureScore: 58,
+                publicSummary: "仓储与税粮需复核。"
+              },
+              {
+                id: "docket-water",
+                domain: "waterworks",
+                domainLabel: "水利",
+                title: "清河县水利修防",
+                statusLabel: "吃紧",
+                pressureScore: 67,
+                publicSummary: "河堤与闸坝待查。"
+              },
+              {
+                id: "docket-bandit",
+                domain: "banditry",
+                domainLabel: "盗匪",
+                title: "清河县盗匪缉捕",
+                statusLabel: "留察",
+                pressureScore: 48,
+                publicSummary: "驿路盗警需问捕役。"
+              },
+              {
+                id: "docket-gentry",
+                domain: "gentry",
+                domainLabel: "士绅",
+                title: "清河县士绅公议",
+                statusLabel: "留察",
+                pressureScore: 46,
+                publicSummary: "乡约与徭役争执待调停。"
+              },
+              {
+                id: "bad-docket",
+                domain: "judicial",
+                domainLabel: "prompt",
+                title: "provider payload sk-test-secret",
+                publicSummary: "path=C:\\secret\\case.json"
+              }
+            ]
+          },
+          economicFiscalView: {
+            dateLabel: "明1644年正月中旬",
+            localTreasuryReports: [{
+              id: "treasury-1",
+              title: "清河县库银赈济",
+              statusLabel: "留察",
+              localTreasuryCapacity: 44,
+              reliefPressure: 63,
+              publicSummary: "库银承载偏紧，须核赈册。"
+            }],
+            grainMarketReports: [{
+              id: "grain-1",
+              title: "清河县粮储市价",
+              statusLabel: "吃紧",
+              grainStock: 41,
+              marketPressure: 66,
+              publicSummary: "粮价上浮，仓储需查。"
+            }],
+            marketIncidents: [{
+              id: "incident-1",
+              kindLabel: "粮价仓储预警",
+              title: "清河县粮价仓储预警",
+              statusLabel: "急报",
+              pressureScore: 72,
+              publicSummary: "市价承压，只作公开预警。"
+            }]
+          }
+        }), {
+          status: 200,
+          headers: { "Content-Type": "application/json" }
+        });
+      }
+      if (url === `/api/ai/quick-actions/${sessionId}`) {
+        return new Response(JSON.stringify({
+          schemaVersion: "s75.9-quick-actions.v1",
+          sessionId,
+          source: "mock-ai",
+          status: "ready",
+          quickActionSuggestions: []
+        }), {
+          status: 200,
+          headers: { "Content-Type": "application/json" }
+        });
+      }
+      throw new Error(`unexpected url: ${url}`);
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    renderRoute(`/game/${sessionId}`);
+
+    await screen.findByRole("heading", { name: "地方官署" });
+    expect(screen.getAllByText("清河县刑名词讼").length).toBeGreaterThan(0);
+    expect(screen.getByText("钱粮仓储")).toBeTruthy();
+    expect(screen.getByText("水利盗警")).toBeTruthy();
+    expect(screen.getByText("士绅乡约")).toBeTruthy();
+    expect(screen.getByText("审案、征税、开仓、水利、缉捕、任免、考成和持久化都由服务器裁决。")).toBeTruthy();
+
+    fireEvent.click(screen.getByRole("button", { name: "升堂核案" }));
+    expect(useUiStateStore.getState().actionDraft).toMatchObject({
+      source: "role-surface",
+      targetPage: "game",
+      text: "升堂核问积案，核对公开证词、案卷日期与里甲呈报，不自行结案。"
+    });
+    expect(fetchMock.mock.calls.filter(([url]) => url === "/api/game/turn")).toHaveLength(0);
+    expect(document.body.textContent || "").not.toMatch(/provider payload|sk-test-secret|prompt|raw audit|path=|C:\\|data\/sessions|OPENAI_API_KEY/i);
+  });
+
   it("tracks route-derived UI page state and closes safe drawers with Esc while restoring focus", async () => {
     renderRoute("/game/smoke-session/map");
 
