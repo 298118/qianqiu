@@ -19,6 +19,7 @@ export const clientEntryState: ClientEntryState = {
 
 export type PageSurface = "home" | "game" | "map" | "people" | "archive" | "exam" | "ranking" | "court" | "settings";
 export type DrawerSurface = "settings" | "saves" | "display-preferences";
+export type InkboxTab = "ai-settings" | "saves" | "display" | "safe-summary";
 export type ModalSurface = "safe-summary" | "exam-result" | "confirm-navigation";
 export type LocalSurface = "npc-profile" | "edict-draft" | "memorial-review" | "map-filter";
 export type ActionDraftSource = "manual" | "map-runtime" | "role-surface" | "exam";
@@ -67,6 +68,7 @@ type UiState = {
   readonly activeDrawer: DrawerSurface | null;
   readonly activeModal: ModalSurface | null;
   readonly activeSurface: LocalSurface | null;
+  readonly activeInkboxTab: InkboxTab;
   readonly selectedTabs: Partial<Record<PageSurface, string>>;
   readonly actionDraft: ActionDraft | null;
   readonly displayPreferences: DisplayPreferences;
@@ -76,6 +78,8 @@ type UiState = {
     sourceOverride?: SafePlayerPayload["source"]
   ) => void;
   readonly returnHome: () => void;
+  readonly openInkbox: (tab?: InkboxTab) => void;
+  readonly selectInkboxTab: (tab: InkboxTab) => void;
   readonly openDrawer: (drawer: DrawerSurface) => void;
   readonly closeDrawer: () => void;
   readonly openModal: (modal: ModalSurface) => void;
@@ -104,6 +108,7 @@ const initialUiState = {
   activeDrawer: null,
   activeModal: null,
   activeSurface: null,
+  activeInkboxTab: "ai-settings" as InkboxTab,
   selectedTabs: {},
   actionDraft: null,
   displayPreferences: defaultDisplayPreferences
@@ -178,8 +183,17 @@ export const useUiStateStore = create<UiState>((set) => ({
     });
   },
 
+  openInkbox(tab = "ai-settings") {
+    set({ activeDrawer: "settings", activeModal: null, activeSurface: null, activeInkboxTab: tab });
+  },
+
+  selectInkboxTab(tab) {
+    set({ activeInkboxTab: tab });
+  },
+
   openDrawer(drawer) {
-    set({ activeDrawer: drawer, activeModal: null });
+    const activeInkboxTab: InkboxTab = drawer === "saves" ? "saves" : drawer === "display-preferences" ? "display" : "ai-settings";
+    set({ activeDrawer: "settings", activeModal: null, activeSurface: null, activeInkboxTab });
   },
 
   closeDrawer() {

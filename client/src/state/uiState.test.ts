@@ -102,6 +102,7 @@ describe("S74.3 UI state store", () => {
     expect(state.activeDrawer).toBeNull();
     expect(state.activeModal).toBeNull();
     expect(state.activeSurface).toBeNull();
+    expect(state.activeInkboxTab).toBe("ai-settings");
     expect(state.actionDraft).toBeNull();
     expect(state.displayPreferences).toEqual({
       motion: "full",
@@ -167,9 +168,16 @@ describe("S74.3 UI state store", () => {
     const store = useUiStateStore.getState();
 
     store.openDrawer("display-preferences");
-    expect(useUiStateStore.getState().activeDrawer).toBe("display-preferences");
+    expect(useUiStateStore.getState().activeDrawer).toBe("settings");
+    expect(useUiStateStore.getState().activeInkboxTab).toBe("display");
     store.closeDrawer();
     expect(useUiStateStore.getState().activeDrawer).toBeNull();
+
+    store.openInkbox("saves");
+    expect(useUiStateStore.getState().activeDrawer).toBe("settings");
+    expect(useUiStateStore.getState().activeInkboxTab).toBe("saves");
+    store.selectInkboxTab("safe-summary");
+    expect(useUiStateStore.getState().activeInkboxTab).toBe("safe-summary");
 
     store.openModal("safe-summary");
     expect(useUiStateStore.getState().activeModal).toBe("safe-summary");

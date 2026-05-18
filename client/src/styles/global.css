@@ -113,8 +113,27 @@ a {
   color: #7b241f;
 }
 
+.inkboxButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-width: 82px;
+  min-height: 40px;
+  border: 1px solid rgba(142, 47, 39, 0.54);
+  background:
+    linear-gradient(135deg, rgba(255, 248, 230, 0.86), rgba(225, 202, 166, 0.72)),
+    url("/assets/ui/materials/seal-box-texture-v1.webp") center / cover no-repeat;
+  color: #7b241f;
+  font: inherit;
+  font-weight: 800;
+  padding: 8px 12px;
+}
+
 .iconButton:hover,
-.iconButton:focus-visible {
+.iconButton:focus-visible,
+.inkboxButton:hover,
+.inkboxButton:focus-visible {
   border-color: #7b241f;
   outline: 2px solid rgba(123, 36, 31, 0.24);
   outline-offset: 2px;
@@ -869,8 +888,10 @@ button:disabled {
   top: 0;
   right: 0;
   z-index: 30;
-  width: min(380px, 100%);
+  width: min(440px, 100%);
   min-height: 100vh;
+  max-height: 100vh;
+  overflow: auto;
   padding: 58px 22px 22px;
   border-left: 1px solid rgba(84, 60, 43, 0.28);
   background:
@@ -888,6 +909,114 @@ button:disabled {
 .drawerContent {
   display: grid;
   gap: 14px;
+}
+
+.inkboxDrawer {
+  gap: 16px;
+}
+
+.inkboxHeader,
+.inkboxPanelHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.inkboxHomeButton {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  white-space: nowrap;
+}
+
+.inkboxTabs {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 6px;
+}
+
+.inkboxTab {
+  display: inline-flex;
+  min-width: 0;
+  min-height: 38px;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  border: 1px solid rgba(84, 60, 43, 0.24);
+  background: rgba(255, 248, 230, 0.62);
+  color: #5b4030;
+  font: inherit;
+  font-size: 0.82rem;
+  padding: 7px 6px;
+}
+
+.inkboxTab[aria-selected="true"] {
+  border-color: rgba(142, 47, 39, 0.68);
+  background: rgba(165, 58, 47, 0.12);
+  color: #7b241f;
+  font-weight: 800;
+}
+
+.inkboxTab:hover,
+.inkboxTab:focus-visible {
+  border-color: #7b241f;
+  outline: 2px solid rgba(123, 36, 31, 0.2);
+  outline-offset: 2px;
+}
+
+.inkboxPanel {
+  border-top: 1px solid rgba(84, 60, 43, 0.2);
+  padding-top: 14px;
+}
+
+.inkboxTabBody,
+.inkboxSaveList,
+.inkboxSaveItem {
+  display: grid;
+  gap: 12px;
+}
+
+.inkboxTabBody h3 {
+  margin: 0;
+  font-size: 1.02rem;
+}
+
+.inkboxSaveItem {
+  border: 1px solid rgba(84, 60, 43, 0.22);
+  background: rgba(255, 248, 230, 0.56);
+  padding: 10px;
+}
+
+.inkboxSaveItem span {
+  color: #6d5844;
+  font-size: 0.86rem;
+}
+
+.safeSummaryList {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+}
+
+.safeSummaryList div {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  border: 1px solid rgba(84, 60, 43, 0.2);
+  background: rgba(255, 248, 230, 0.52);
+  padding: 8px 10px;
+}
+
+.safeSummaryList dt {
+  color: #6d5844;
+  font-weight: 800;
+}
+
+.safeSummaryList dd {
+  margin: 0;
+  color: #2d251d;
+  overflow-wrap: anywhere;
 }
 
 .drawerContent h2,
@@ -946,6 +1075,10 @@ button:disabled {
 
   .topTools {
     margin-left: 0;
+  }
+
+  .inkboxTabs {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .topNav a,

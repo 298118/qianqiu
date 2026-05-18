@@ -1,4 +1,4 @@
-import { Info, Save, Settings, SlidersHorizontal } from "lucide-react";
+import { Archive } from "lucide-react";
 import { useEffect, useRef, type RefObject } from "react";
 import { Link, NavLink, Outlet, ScrollRestoration, useLocation } from "react-router";
 import { routeCatalog } from "../routes/routeCatalog";
@@ -13,8 +13,7 @@ const primaryNav = routeCatalog.filter((route) => route.surface === "primary");
 export function AppShell() {
   const displayPreferences = useUiStateStore((state) => state.displayPreferences);
   const currentSessionId = useUiStateStore((state) => state.currentSessionId);
-  const openDrawer = useUiStateStore((state) => state.openDrawer);
-  const openModal = useUiStateStore((state) => state.openModal);
+  const openInkbox = useUiStateStore((state) => state.openInkbox);
   const returnHome = useUiStateStore((state) => state.returnHome);
   const pageFrameRef = useRef<HTMLElement | null>(null);
 
@@ -23,7 +22,7 @@ export function AppShell() {
       className="appShell"
       data-client-entry="react"
       data-router-mode="data"
-      data-shell-version="s74-7"
+      data-shell-version="s75-4"
       data-motion={displayPreferences.motion}
       data-text-size={displayPreferences.textSize}
       data-contrast={displayPreferences.contrast}
@@ -45,17 +44,9 @@ export function AppShell() {
           ))}
         </nav>
         <div className="topTools" aria-label="案头工具">
-          <button className="iconButton" type="button" title="存档" aria-label="打开存档抽屉" onClick={(event) => { markOverlayTrigger(event.currentTarget); openDrawer("saves"); }}>
-            <Save size={18} aria-hidden="true" />
-          </button>
-          <button className="iconButton" type="button" title="显示偏好" aria-label="打开显示偏好" onClick={(event) => { markOverlayTrigger(event.currentTarget); openDrawer("display-preferences"); }}>
-            <SlidersHorizontal size={18} aria-hidden="true" />
-          </button>
-          <button className="iconButton" type="button" title="安全摘要" aria-label="打开安全摘要" onClick={(event) => { markOverlayTrigger(event.currentTarget); openModal("safe-summary"); }}>
-            <Info size={18} aria-hidden="true" />
-          </button>
-          <button className="iconButton" type="button" title="设置" aria-label="打开设置抽屉" onClick={(event) => { markOverlayTrigger(event.currentTarget); openDrawer("settings"); }}>
-            <Settings size={18} aria-hidden="true" />
+          <button className="inkboxButton" type="button" title="印匣" aria-label="打开印匣" onClick={(event) => { markOverlayTrigger(event.currentTarget); openInkbox(); }}>
+            <Archive size={18} aria-hidden="true" />
+            <span>印匣</span>
           </button>
         </div>
       </header>

@@ -122,7 +122,7 @@ test("S74.4 shell uses registry-backed overlays without widening data sources", 
   const routeCatalogSource = readText("client/src/routes/routeCatalog.ts");
   const combined = `${appShellSource}\n${surfaceHostSource}\n${surfaceRegistrySource}\n${routeCatalogSource}`;
 
-  assert.match(appShellSource, /data-shell-version="s74-7"/);
+  assert.match(appShellSource, /data-shell-version="s75-4"/);
   assert.match(appShellSource, /resolvePrimaryHref/);
   assert.match(appShellSource, /isRunnableSessionId/);
   assert.match(appShellSource, /ScrollRestoration/);
@@ -137,6 +137,33 @@ test("S74.4 shell uses registry-backed overlays without widening data sources", 
   assert.match(surfaceRegistrySource, /"memorial-review"/);
   assert.match(surfaceRegistrySource, /"map-filter"/);
   assert.doesNotMatch(combined, /localStorage|sessionStorage|public\/assets\/ui\/portraits|ink-ui-manifest|data\/sessions|raw audit|provider payload|OPENAI_API_KEY|DEEPSEEK_API_KEY|MIMO_API_KEY|ANTHROPIC_API_KEY/);
+});
+
+test("S75.4 top-right inkbox unifies safe tools without widening data sources", () => {
+  const appShellSource = readText("client/src/components/AppShell.tsx");
+  const surfaceHostSource = readText("client/src/components/SurfaceHost.tsx");
+  const uiStateSource = readText("client/src/state/uiState.ts");
+  const styleSource = readText("client/src/styles/global.css");
+  const combined = `${appShellSource}\n${surfaceHostSource}\n${uiStateSource}\n${styleSource}`;
+
+  assert.match(appShellSource, /aria-label="打开印匣"/);
+  assert.match(appShellSource, /openInkbox/);
+  assert.doesNotMatch(appShellSource, /打开存档抽屉|打开显示偏好|打开安全摘要|打开设置抽屉/);
+  assert.match(uiStateSource, /export type InkboxTab = "ai-settings" \| "saves" \| "display" \| "safe-summary"/);
+  assert.match(uiStateSource, /activeInkboxTab/);
+  assert.match(surfaceHostSource, /role="tablist"/);
+  assert.match(surfaceHostSource, /AI 设置/);
+  assert.match(surfaceHostSource, /旧案/);
+  assert.match(surfaceHostSource, /显示/);
+  assert.match(surfaceHostSource, /安全/);
+  assert.match(surfaceHostSource, /loadSession\(sessionId\)/);
+  assert.match(surfaceHostSource, /navigate\("\/"\)/);
+  assert.match(styleSource, /inkboxButton/);
+  assert.match(styleSource, /inkboxTabs/);
+  assert.doesNotMatch(
+    combined,
+    /\/api\/game\/state|\/api\/dev\/session-diagnostics|localStorage|sessionStorage|data\/sessions|raw audit|provider payload|OPENAI_API_KEY|DEEPSEEK_API_KEY|MIMO_API_KEY|ANTHROPIC_API_KEY/
+  );
 });
 
 test("S74.5 asset registry gates manifest assets before React components render portraits", () => {

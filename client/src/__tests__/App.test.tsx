@@ -101,6 +101,10 @@ describe("S74.1 React client shell", () => {
       lastExamResult: null,
       lastTurn: null,
       saves: [],
+      savesStatus: "idle",
+      settingsStatus: "idle",
+      aiSettings: null,
+      aiConnection: null,
       status: "idle"
     });
     useUiStateStore.getState().resetUiState();
@@ -122,7 +126,7 @@ describe("S74.1 React client shell", () => {
     expect(document.querySelector("#start-form")).toBeNull();
     expect(document.querySelector("[data-client-entry='react']")).toBeTruthy();
     expect(document.querySelector("[data-router-mode='data']")).toBeTruthy();
-    expect(document.querySelector("[data-shell-version='s74-7']")).toBeTruthy();
+    expect(document.querySelector("[data-shell-version='s75-4']")).toBeTruthy();
   });
 
   it("posts the S75.2 opening form through the safe start endpoint", async () => {
@@ -318,19 +322,77 @@ describe("S74.1 React client shell", () => {
     await waitFor(() => expect(useUiStateStore.getState().currentPage).toBe("map"));
     expect(useUiStateStore.getState().currentSessionId).toBe("smoke-session");
 
-    const trigger = screen.getByRole("button", { name: "打开显示偏好" });
+    const trigger = screen.getByRole("button", { name: "打开印匣" });
     trigger.focus();
     fireEvent.click(trigger);
-    expect(screen.getByRole("complementary", { name: "显示偏好" })).toBeTruthy();
-    expect(useUiStateStore.getState().activeDrawer).toBe("display-preferences");
+    expect(screen.getByRole("complementary", { name: "印匣" })).toBeTruthy();
+    expect(useUiStateStore.getState().activeDrawer).toBe("settings");
     expect(screen.getByRole("button", { name: "关闭抽屉" })).toBe(document.activeElement);
 
+    fireEvent.click(screen.getByRole("tab", { name: "显示" }));
     fireEvent.change(screen.getByLabelText("动效"), { target: { value: "reduced" } });
     expect(document.querySelector(".appShell")?.getAttribute("data-motion")).toBe("reduced");
 
     fireEvent.keyDown(document, { key: "Escape" });
     await waitFor(() => expect(useUiStateStore.getState().activeDrawer).toBeNull());
     expect(document.activeElement).toBe(trigger);
+  });
+
+  it("opens the S75.4 inkbox tabs without exposing unsafe settings details", async () => {
+    const sessionId = "55555555-5555-4555-8555-555555555555";
+    const fetchMock = vi.fn(async (url: string) => {
+      if (url === `/api/ai/settings/${sessionId}`) {
+        return new Response(JSON.stringify({
+          aiSettingsView: { preset: "balanced" },
+          aiInvocationSummaryView: { safe: true }
+        }), {
+          status: 200,
+          headers: { "Content-Type": "application/json" }
+        });
+      }
+      if (url === "/api/game/saves") {
+        return new Response(JSON.stringify({
+          saves: [
+            {
+              sessionId,
+              playerName: "顾衡",
+              role: "scholar",
+              updatedAt: "2026-05-18T10:00:00.000Z"
+            }
+          ],
+          skipped: []
+        }), {
+          status: 200,
+          headers: { "Content-Type": "application/json" }
+        });
+      }
+      return new Response(JSON.stringify({
+        source: "server_player_visible_state_projection",
+        sessionId,
+        worldState: { player: { name: "顾衡", role: "scholar" } },
+        aiSettingsView: { preset: "balanced" },
+        aiControlAuditView: { summary: "bounded" }
+      }), {
+        status: 200,
+        headers: { "Content-Type": "application/json" }
+      });
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    renderRoute(`/game/${sessionId}`);
+
+    await waitFor(() => expect(useUiStateStore.getState().currentSessionId).toBe(sessionId));
+    fireEvent.click(screen.getByRole("button", { name: "打开印匣" }));
+    expect(screen.getByRole("tab", { name: "AI 设置" }).getAttribute("aria-selected")).toBe("true");
+    await screen.findByText("当前策略：balanced");
+
+    fireEvent.click(screen.getByRole("tab", { name: "旧案" }));
+    await screen.findByText("顾衡");
+    expect(screen.getByRole("button", { name: "刷新" })).toBeTruthy();
+
+    fireEvent.click(screen.getByRole("tab", { name: "安全" }));
+    expect(screen.getByText(/安全视图/)).toBeTruthy();
+    expect(document.body.textContent || "").not.toMatch(/OPENAI_API_KEY|base URL|raw prompt|raw audit|provider payload|data\/sessions/i);
   });
 
   it("opens registry-backed local surfaces, writes safe drafts, and restores focus on Esc", async () => {
