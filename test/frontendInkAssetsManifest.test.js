@@ -134,6 +134,13 @@ function sha256File(filePath) {
   return crypto.createHash("sha256").update(fs.readFileSync(filePath)).digest("hex");
 }
 
+function isSinglePortraitOverride(asset) {
+  return (
+    asset?.source?.localHighResSource === "kept_outside_public_manifest" ||
+    asset?.source?.localHighResSourcePath?.startsWith("artifacts/s73-10-single-portrait-overrides/")
+  );
+}
+
 test("S73.2 ink UI manifest fixes schema, safety, fallback, and portrait policies", () => {
   const manifestText = fs.readFileSync(manifestPath, "utf8");
   assert.doesNotMatch(manifestText, FORBIDDEN_MANIFEST_REMOTE_OR_LOCAL_PATH);
@@ -755,8 +762,6 @@ test("S73.10.2 player portrait pool QA records approved staged player portraits"
   assert.equal(playerPhaseAssets.filter((asset) => asset.genderPresentation === "feminine").length, 96);
   const poolAssets = new Map(playerPhaseAssets.map((asset) => [asset.id, asset]));
   const femaleQaAssetsById = new Map(femaleQa.assets.map((entry) => [entry.id, entry]));
-  const isSingleOverride = (asset) =>
-    asset.source?.localHighResSourcePath?.startsWith("artifacts/s73-10-single-portrait-overrides/");
   const roles = new Set();
   const variantsByRole = new Map();
   for (const entry of qa.assets) {
@@ -771,7 +776,7 @@ test("S73.10.2 player portrait pool QA records approved staged player portraits"
       assertSafeUiAssetPath(entry[field], `${entry.id}.${field}`);
       assert.equal(fs.existsSync(resolveUiAssetPath(entry[field])), true, `${entry.id}.${field}`);
     }
-    if (isSingleOverride(asset)) {
+    if (isSinglePortraitOverride(asset)) {
       assert.equal(asset.performance.bytes, fs.statSync(resolveUiAssetPath(asset.path)).size, entry.id);
       assert.equal(asset.performance.thumbnailBytes, fs.statSync(resolveUiAssetPath(asset.thumbnailPath)).size, entry.id);
       assert.equal(
@@ -861,6 +866,8 @@ test("S73.10.3 generic NPC portrait pool QA records matrix, bonus, and female st
   assert.equal(qa.safetyReviewSummary.includes("provider 原始响应"), true);
 
   const manifest = readJson(manifestPath);
+  const singleOverrideQa = readJson(portraitSingleOverrideQaPath);
+  const singleOverrideIds = new Set(singleOverrideQa.assets.map((entry) => entry.id));
   const poolAssets = new Map(manifest.assets.filter((asset) => asset.phase === "S73.10.3").map((asset) => [asset.id, asset]));
   const counts = { matrix: 0, bonus: 0, femaleStyle: 0, palace: 0, tang: 0 };
   const matrixRoles = new Map();
@@ -889,6 +896,19 @@ test("S73.10.3 generic NPC portrait pool QA records matrix, bonus, and female st
     for (const field of ["path", "thumbnailPath", "lowResPlaceholderPath"]) {
       assertSafeUiAssetPath(entry[field], `${entry.id}.${field}`);
       assert.equal(fs.existsSync(resolveUiAssetPath(entry[field])), true, `${entry.id}.${field}`);
+    }
+    if (isSinglePortraitOverride(asset)) {
+      assert.equal(singleOverrideIds.has(entry.id), true, entry.id);
+      assert.equal(asset.source.localHighResSourcePath, undefined, entry.id);
+      assert.equal(asset.source.localHighResSource, "kept_outside_public_manifest", entry.id);
+      assert.equal(asset.performance.bytes, fs.statSync(resolveUiAssetPath(asset.path)).size, entry.id);
+      assert.equal(asset.performance.thumbnailBytes, fs.statSync(resolveUiAssetPath(asset.thumbnailPath)).size, entry.id);
+      assert.equal(
+        asset.performance.lowResPlaceholderBytes,
+        fs.statSync(resolveUiAssetPath(asset.lowResPlaceholderPath)).size,
+        entry.id
+      );
+      continue;
     }
     assert.equal(entry.bytes, fs.statSync(resolveUiAssetPath(entry.path)).size, entry.id);
     assert.equal(entry.thumbnailBytes, fs.statSync(resolveUiAssetPath(entry.thumbnailPath)).size, entry.id);
@@ -1119,8 +1139,8 @@ test("S73.10 single portrait overrides replace selected female player portraits 
   assert.equal(qa.schemaVersion, 1);
   assert.equal(qa.phase, "S73.10.single-overrides");
   assert.equal(qa.reviewedBy, "Codex");
-  assert.equal(qa.counts.total, 36);
-  assert.equal(qa.assets.length, 36);
+  assert.equal(qa.counts.total, 60);
+  assert.equal(qa.assets.length, 60);
   assert.match(qa.visualReviewSummary, /单张高质量重制覆盖/);
 
   const expectedStages = [
@@ -1139,20 +1159,43 @@ test("S73.10 single portrait overrides replace selected female player portraits 
   ];
   const expectedVariants = ["f01", "f02", "f03"];
   const actualByStage = new Map();
+  const bySubcategory = new Map();
+  const expectedExtraRoles = {
+    frontier_general: 6,
+    gentry_lady: 6,
+    high_court_lady: 6,
+    merchant_owner: 5
+  };
+  const extraRoles = new Map();
   const seenOverrideIds = new Set();
   for (const entry of qa.assets) {
     assert.equal(seenOverrideIds.has(entry.id), false, `duplicate override id: ${entry.id}`);
     seenOverrideIds.add(entry.id);
-    const match = /^portrait-s73-10-player-(.+)-(f0[123])-v1$/.exec(entry.id);
-    assert.ok(match, entry.id);
-    const [, stage, variant] = match;
-    if (!actualByStage.has(stage)) actualByStage.set(stage, []);
-    actualByStage.get(stage).push(variant);
+    bySubcategory.set(entry.subcategory, (bySubcategory.get(entry.subcategory) || 0) + 1);
+    if (entry.subcategory === "player_identity_stage_pool") {
+      const match = /^portrait-s73-10-player-(.+)-(f0[123])-v1$/.exec(entry.id);
+      assert.ok(match, entry.id);
+      const [, stage, variant] = match;
+      if (!actualByStage.has(stage)) actualByStage.set(stage, []);
+      actualByStage.get(stage).push(variant);
+    } else if (entry.subcategory === "player_female_style_pool") {
+      const match = /^portrait-s73-10-player-female-extra-(.+)-look\d\d-v1$/.exec(entry.id);
+      assert.ok(match, entry.id);
+      extraRoles.set(match[1], (extraRoles.get(match[1]) || 0) + 1);
+    } else {
+      assert.equal(entry.id, "portrait-s73-10-generic_npc-female-style-palace-03-look03-v1", entry.id);
+    }
   }
+  assert.deepEqual(Object.fromEntries([...bySubcategory.entries()].sort()), {
+    generic_npc_pool: 1,
+    player_female_style_pool: 23,
+    player_identity_stage_pool: 36
+  });
   assert.deepEqual([...actualByStage.keys()].sort(), expectedStages);
   for (const stage of expectedStages) {
     assert.deepEqual(actualByStage.get(stage).sort(), expectedVariants, stage);
   }
+  assert.deepEqual(Object.fromEntries([...extraRoles.entries()].sort()), expectedExtraRoles);
 
   for (const entry of qa.assets) {
     const asset = manifestById.get(entry.id);

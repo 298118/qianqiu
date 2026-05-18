@@ -7,7 +7,7 @@ const manifestPath = path.join(repoRoot, "public", "assets", "ui", "ink-ui-manif
 const qaPath = path.join(repoRoot, "public", "assets", "ui", "portraits", "portrait-single-override-qa-v1.json");
 const defaultSourceDir = path.join(repoRoot, "artifacts", "s73-10-single-portrait-overrides");
 
-const REVIEW_DATE = "2026-05-16";
+const REVIEW_DATE = "2026-05-17";
 const PORTRAIT_WIDTH = 1024;
 const PORTRAIT_HEIGHT = 1536;
 const THUMB_WIDTH = 384;
@@ -198,6 +198,7 @@ async function renderBudgetedWebp(page, sourcePath, outputPath, width, height, q
 
 async function writeOverrides(options, sources) {
   const manifest = readJson(manifestPath);
+  const existingQa = fs.existsSync(qaPath) ? readJson(qaPath) : null;
   const assetsById = new Map(manifest.assets.map((asset) => [asset.id, asset]));
   const { chromium } = require("playwright-core");
   const browser = await chromium.launch({ executablePath: resolveBrowserExecutable(options), headless: true });
@@ -252,17 +253,9 @@ async function writeOverrides(options, sources) {
   }
   manifest.updatedAt = REVIEW_DATE;
   writeJson(manifestPath, manifest);
-  writeJson(qaPath, {
-    schemaVersion: 1,
-    phase: "S73.10.single-overrides",
-    reviewedBy: "Codex",
-    reviewedAt: REVIEW_DATE,
-    manifestRef: "public/assets/ui/ink-ui-manifest.json",
-    sourceHandling: "本地 PNG 母版保留在 artifacts 工作目录，不写入公开 manifest/QA 路径字段；运行时只登记 /assets/ui/ WebP、缩略图和低清占位。",
-    visualReviewSummary:
-      "单张高质量重制覆盖：直接使用竖版 PNG 母版派生 runtime WebP、缩略图和低清占位，避免网格裁切导致的人物过小、比例拉伸、灰脏噪点和模糊。",
-    counts: { total: updated.length },
-    assets: updated.map(({ source, asset }) => ({
+  const existingEntries = new Map((existingQa?.assets || []).map((entry) => [entry.id, entry]));
+  for (const { source, asset } of updated) {
+    existingEntries.set(asset.id, {
       id: asset.id,
       phase: asset.phase,
       subcategory: asset.subcategory,
@@ -280,7 +273,20 @@ async function writeOverrides(options, sources) {
       lowResPlaceholderSha256: sha256File(resolveUiAssetPath(asset.lowResPlaceholderPath)),
       visualReviewStatus: "approved",
       safetyReviewStatus: "approved"
-    }))
+    });
+  }
+  const qaAssets = [...existingEntries.values()].sort((a, b) => a.id.localeCompare(b.id));
+  writeJson(qaPath, {
+    schemaVersion: 1,
+    phase: "S73.10.single-overrides",
+    reviewedBy: "Codex",
+    reviewedAt: REVIEW_DATE,
+    manifestRef: "public/assets/ui/ink-ui-manifest.json",
+    sourceHandling: "本地 PNG 母版保留在 artifacts 工作目录，不写入公开 manifest/QA 路径字段；运行时只登记 /assets/ui/ WebP、缩略图和低清占位。",
+    visualReviewSummary:
+      "单张高质量重制覆盖：直接使用竖版 PNG 母版派生 runtime WebP、缩略图和低清占位，避免网格裁切导致的人物过小、比例拉伸、灰脏噪点和模糊。",
+    counts: { total: qaAssets.length, updatedThisRun: updated.length },
+    assets: qaAssets
   });
 }
 

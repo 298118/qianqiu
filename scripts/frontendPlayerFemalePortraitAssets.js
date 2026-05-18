@@ -601,6 +601,7 @@ function checkAssets() {
   const femaleQa = readJson(femaleQaPath);
   const manifestById = new Map(manifest.assets.map((asset) => [asset.id, asset]));
   const isSingleOverride = (asset) =>
+    asset?.source?.localHighResSource === "kept_outside_public_manifest" ||
     asset?.source?.localHighResSourcePath?.startsWith("artifacts/s73-10-single-portrait-overrides/");
   if (playerQa.assets.length !== 72) throw new Error(`Expected 72 player QA assets, got ${playerQa.assets.length}`);
   if (femaleQa.assets.length !== 96) throw new Error(`Expected 96 female QA assets, got ${femaleQa.assets.length}`);

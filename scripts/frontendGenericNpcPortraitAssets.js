@@ -591,6 +591,7 @@ function checkAssets(entries) {
   const qa = readJson(qaPath);
   const assetsById = new Map(manifest.assets.map((asset) => [asset.id, asset]));
   const qaById = new Map(qa.assets.map((asset) => [asset.id, asset]));
+  const isSingleOverride = (asset) => asset?.source?.localHighResSource === "kept_outside_public_manifest";
   if (qa.assets.length !== entries.length) throw new Error(`Expected ${entries.length} QA assets, got ${qa.assets.length}`);
   for (const entry of entries) {
     const asset = assetsById.get(entry.portraitRef);
@@ -612,6 +613,9 @@ function checkAssets(entries) {
     }
     if (asset.performance.lowResPlaceholderBytes !== fs.statSync(resolveUiAssetPath(asset.lowResPlaceholderPath)).size) {
       throw new Error(`Stale placeholder byte count: ${entry.portraitRef}`);
+    }
+    if (isSingleOverride(asset)) {
+      continue;
     }
     if (qaEntry.sha256 !== sha256File(resolveUiAssetPath(asset.path))) {
       throw new Error(`Stale image sha: ${entry.portraitRef}`);
