@@ -56,7 +56,15 @@ describe("S74.2 qianqiuApi", () => {
   it("posts start, turn, exam, and AI settings payloads as JSON", async () => {
     const fetchMock = installFetchMock({ sessionId: "s1", worldState: {}, narrative: "起卷" });
 
-    await qianqiuApi.startGame({ playerName: "沈知微", role: "scholar", dynasty: "明", year: 1600 });
+    await qianqiuApi.startGame({
+      playerName: "沈知微",
+      role: "scholar",
+      dynasty: "明",
+      year: 1600,
+      familyBackground: "poor",
+      background: "县学附读",
+      customSetting: "公开自述"
+    });
     await qianqiuApi.submitTurn({ sessionId: "s1", input: "读书" });
     await qianqiuApi.requestExamQuestion({ sessionId: "s1", level: "child_exam" });
     await qianqiuApi.progressExam({ sessionId: "s1", examId: "e1", action: "审题" });
@@ -79,6 +87,11 @@ describe("S74.2 qianqiuApi", () => {
       { url: "/api/ai/settings/s1", method: "POST", contentType: "application/json" },
       { url: "/api/ai/connection-test", method: "POST", contentType: "application/json" }
     ]);
+    expect(JSON.parse(fetchMock.mock.calls[0][1]?.body as string)).toMatchObject({
+      familyBackground: "poor",
+      background: "县学附读",
+      customSetting: "公开自述"
+    });
   });
 
   it("blocks raw state and unknown endpoints at the client boundary", () => {

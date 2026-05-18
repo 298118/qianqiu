@@ -9,6 +9,10 @@ export type StartGameRequest = {
   readonly year?: number;
   readonly role?: GameRole;
   readonly playerName?: string;
+  readonly familyBackground?: "poor" | "modest" | "gentry" | "贫寒" | "普通" | "世家";
+  readonly background?: string;
+  readonly customSetting?: string;
+  readonly nativePlace?: string;
   readonly aiSettings?: JsonObject;
 };
 

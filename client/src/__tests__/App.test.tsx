@@ -112,11 +112,85 @@ describe("S74.1 React client shell", () => {
     expect(screen.getByRole("heading", { name: "千秋" })).toBeTruthy();
     expect(screen.getByRole("link", { name: "预览" }).getAttribute("href")).toBe("/game/s74-preview");
     expect(screen.getByRole("button", { name: "新开一卷" })).toBeTruthy();
+    expect(screen.getByLabelText("朝代")).toBeTruthy();
+    expect(screen.getByLabelText("年份")).toBeTruthy();
+    expect(screen.getByLabelText("身份")).toBeTruthy();
+    expect(screen.getByLabelText("姓名")).toBeTruthy();
+    expect(screen.getByRole("group", { name: "书生家境" })).toBeTruthy();
+    expect(screen.getByLabelText("自定背景")).toBeTruthy();
     expect(document.querySelector(".homeDesk .startDesk")).toBeTruthy();
     expect(document.querySelector("#start-form")).toBeNull();
     expect(document.querySelector("[data-client-entry='react']")).toBeTruthy();
     expect(document.querySelector("[data-router-mode='data']")).toBeTruthy();
     expect(document.querySelector("[data-shell-version='s74-7']")).toBeTruthy();
+  });
+
+  it("posts the S75.2 opening form through the safe start endpoint", async () => {
+    const fetchMock = vi.fn(async (url: string, _options?: RequestInit) => {
+      if (url === "/api/game/saves") {
+        return new Response(JSON.stringify({ saves: [], skipped: [] }), {
+          status: 200,
+          headers: { "Content-Type": "application/json" }
+        });
+      }
+
+      return new Response(JSON.stringify({
+        sessionId: "22222222-2222-4222-8222-222222222222",
+        narrative: "起卷",
+        worldState: { player: { name: "陆清远", role: "scholar" } }
+      }), {
+        status: 201,
+        headers: { "Content-Type": "application/json" }
+      });
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    renderRoute("/");
+
+    fireEvent.change(screen.getByLabelText("朝代"), { target: { value: "宋" } });
+    fireEvent.change(screen.getByLabelText("年份"), { target: { value: "1086" } });
+    fireEvent.change(screen.getByLabelText("姓名"), { target: { value: "陆清远" } });
+    fireEvent.click(screen.getByLabelText("贫寒"));
+    fireEvent.change(screen.getByLabelText("自定背景"), { target: { value: "少时寄居书院，熟读经义。" } });
+    fireEvent.click(screen.getByRole("button", { name: "新开一卷" }));
+
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledWith(
+      "/api/game/start",
+      expect.objectContaining({ method: "POST", headers: { "Content-Type": "application/json" } })
+    ));
+
+    const startCall = fetchMock.mock.calls.find(([url]) => url === "/api/game/start") as
+      | [string, RequestInit]
+      | undefined;
+    expect(JSON.parse(String(startCall?.[1].body))).toMatchObject({
+      dynasty: "宋",
+      year: 1086,
+      role: "scholar",
+      playerName: "陆清远",
+      familyBackground: "poor",
+      customSetting: "少时寄居书院，熟读经义。"
+    });
+    expect(document.body.textContent || "").not.toMatch(/\/api\/game\/state|\/api\/dev|provider payload|hiddenNotes|OPENAI_API_KEY|data\/sessions/i);
+  });
+
+  it("hides scholar family choices for non-scholar starts and validates year locally", async () => {
+    const fetchMock = vi.fn(async () => new Response(JSON.stringify({ saves: [], skipped: [] }), {
+      status: 200,
+      headers: { "Content-Type": "application/json" }
+    }));
+    vi.stubGlobal("fetch", fetchMock);
+
+    renderRoute("/");
+
+    fireEvent.change(screen.getByLabelText("身份"), { target: { value: "general" } });
+    expect(screen.queryByRole("group", { name: "书生家境" })).toBeNull();
+    expect(screen.getByText(/边镇统军/)).toBeTruthy();
+
+    fireEvent.change(screen.getByLabelText("年份"), { target: { value: "abc" } });
+    fireEvent.click(screen.getByRole("button", { name: "新开一卷" }));
+
+    expect((await screen.findByRole("alert")).textContent).toBe("年份需为 1 至 9999 之间的整数。");
+    expect(fetchMock).not.toHaveBeenCalledWith("/api/game/start", expect.anything());
   });
 
   it("binds primary route links to the active runnable session after Mock start or refresh", async () => {

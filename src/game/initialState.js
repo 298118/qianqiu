@@ -23,6 +23,14 @@ const ROLE_LABELS = {
   official: "入仕官员"
 };
 const ALLOWED_ROLES = Object.freeze(Object.keys(ROLE_LABELS));
+const FAMILY_BACKGROUND_LABELS = Object.freeze({
+  poor: "贫寒",
+  modest: "普通",
+  gentry: "世家",
+  "贫寒": "贫寒",
+  "普通": "普通",
+  "世家": "世家"
+});
 
 const BASE_ROLE_STATS = {
   personalPower: 0,
@@ -119,6 +127,13 @@ function cleanInitialPublicText(value, maxLength = 80) {
   return value.trim().replace(/\s+/g, " ").slice(0, maxLength);
 }
 
+function normalizeInitialFamilyBackground(value, role = "scholar") {
+  if (role !== "scholar") return "";
+  if (value === undefined || value === null || value === "") return "";
+  const normalized = FAMILY_BACKGROUND_LABELS[String(value).trim()];
+  return normalized || "";
+}
+
 function createUnsupportedRoleError(role) {
   const err = new Error(`Unsupported role. Allowed roles: ${ALLOWED_ROLES.join(", ")}`);
   err.statusCode = 400;
@@ -199,6 +214,16 @@ function createInitialState(input = {}) {
   const dynasty = (input.dynasty || "明").trim() || "明";
   const year = clampInitialYear(input.year);
   const nativePlace = cleanInitialPublicText(input.nativePlace || input.hometown || input.origin);
+  const familyBackground = normalizeInitialFamilyBackground(
+    input.familyBackground || input.familyStatus || input.familyOrigin,
+    role
+  );
+  const publicBackground = cleanInitialPublicText(input.background, 120);
+  const background = [
+    familyBackground ? `书生家境：${familyBackground}` : "",
+    publicBackground
+  ].filter(Boolean).join("；");
+  const customSetting = cleanInitialPublicText(input.customSetting, 180);
 
   const worldState = {
     sessionId: randomUUID(),
@@ -280,8 +305,9 @@ function createInitialState(input = {}) {
       }
     },
     setup: {
-      background: input.background || "",
-      customSetting: input.customSetting || "",
+      background,
+      customSetting,
+      familyBackground,
       nativePlace
     },
     player: {
@@ -323,6 +349,8 @@ function createInitialState(input = {}) {
 
 module.exports = {
   ALLOWED_ROLES,
+  FAMILY_BACKGROUND_LABELS,
+  normalizeInitialFamilyBackground,
   normalizeInitialRole,
   createInitialState
 };

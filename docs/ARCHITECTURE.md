@@ -128,10 +128,11 @@ Request fields:
 - `year`
 - `role`
 - `playerName`
+- `familyBackground`（仅书生使用，允许 `poor`/`modest`/`gentry` 或中文“贫寒/普通/世家”）
 - `background`
 - `customSetting`
 
-As of S31.3, `role` is normalized and validated in `src/game/initialState.js`. Missing or blank role values default to `scholar`; unsupported roles return `400`. The accepted enum is `scholar`, `emperor`, `minister`, `general`, `magistrate`, and `official`, and the browser start form exposes all six values.
+As of S31.3, `role` is normalized and validated in `src/game/initialState.js`. Missing or blank role values default to `scholar`; unsupported roles return `400`. The accepted enum is `scholar`, `emperor`, `minister`, `general`, `magistrate`, and `official`, and the browser start form exposes all six values. S75.2 adds `familyBackground` as a public scholar-only setup enum; non-scholar starts ignore it, and custom start text remains public `customSetting` rather than a hidden dossier.
 
 Returns `201` with `sessionId`, client-safe `worldState`, `examCalendarView`, `examRivalView`, `examProcedureView`, `examinerPanelView`, `examHonorView`, `appointmentTrackView`, `studyProfileView`, `relationshipView`, `activeNpcRequestView`, `roleWorldCouplingView`, `worldGeographyView`, `mapContextView`, `mapRuntimeView`, `worldEntityView`, `worldPeopleView`, `worldThreadView`, `longTermEventView`, `officialCareerView`, `officialPostingsView`, `localAffairsDocketView`, `militaryDiplomacyView`, `economicFiscalView`, `historicalEventArchiveView`, `intelligenceRumorView`, `actorMemoryView`, `sessionSummaryView`, `eventArchiveView`, `informationPanelPageView`, and opening `narrative`. S70.12's client-safe `worldState` omits raw `actorMemoryLedger` and `sessionSummary`; S72.2 map payloads use top-level `mapContextView` plus display-only `mapRuntimeView` rather than raw coordinate tables.
 

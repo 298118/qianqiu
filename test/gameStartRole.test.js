@@ -7,7 +7,12 @@ const path = require("node:path");
 process.env.AI_PROVIDER = "mock";
 
 const gameRoutes = require("../src/routes/game");
-const { ALLOWED_ROLES, createInitialState, normalizeInitialRole } = require("../src/game/initialState");
+const {
+  ALLOWED_ROLES,
+  createInitialState,
+  normalizeInitialFamilyBackground,
+  normalizeInitialRole
+} = require("../src/game/initialState");
 const { createFetchSafeServer } = require("../test-helpers/fetchSafeServer");
 
 const sessionsDir = path.join(__dirname, "..", "data", "sessions");
@@ -67,6 +72,35 @@ test("createInitialState stores public native place for appointment avoidance", 
 
   assert.equal(worldState.player.nativePlace, "苏州府");
   assert.equal(worldState.setup.nativePlace, "苏州府");
+});
+
+test("createInitialState stores scholar family background as public setup text only", () => {
+  assert.equal(normalizeInitialFamilyBackground("poor", "scholar"), "贫寒");
+  assert.equal(normalizeInitialFamilyBackground("世家", "scholar"), "世家");
+  assert.equal(normalizeInitialFamilyBackground("豪门", "scholar"), "");
+  assert.equal(normalizeInitialFamilyBackground("gentry", "official"), "");
+
+  const scholar = createInitialState({
+    playerName: "家境测试",
+    role: "scholar",
+    familyBackground: "poor",
+    background: "县学附读，父兄供纸笔。",
+    customSetting: "只作为公开自述，不作密档。"
+  });
+
+  assert.equal(scholar.setup.familyBackground, "贫寒");
+  assert.equal(scholar.setup.background, "书生家境：贫寒；县学附读，父兄供纸笔。");
+  assert.equal(scholar.setup.customSetting, "只作为公开自述，不作密档。");
+  assert.equal(scholar.player.examRank, null);
+
+  const official = createInitialState({
+    playerName: "官员家境测试",
+    role: "official",
+    familyBackground: "gentry"
+  });
+  assert.equal(official.setup.familyBackground, "");
+  assert.equal(official.setup.background, "");
+  assert.equal(official.player.role, "official");
 });
 
 test("POST /api/game/start rejects unsupported role input with a 400 response", async (t) => {

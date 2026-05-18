@@ -746,6 +746,8 @@ Manifest 示例：
 
 ### S75.2 开局表单
 
+状态：已完成。默认 `/` 首页册页表单已接入朝代、年份、六类身份、姓名、书生家境和自定背景；提交仍只调用现有安全 `POST /api/game/start`。服务器把书生家境归一化为公开 `familyBackground`，非书生忽略该字段；自定背景写入公开 `customSetting`，不作为 hidden 私档，不绕过身份校验、科举晋级、官职任免或 Mock/no-key fallback。
+
 实现功能：
 
 - 朝代下拉。

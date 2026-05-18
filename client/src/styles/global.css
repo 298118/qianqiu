@@ -349,7 +349,7 @@ h2 {
 }
 
 .startDesk {
-  grid-template-columns: minmax(150px, 1fr) minmax(128px, 0.55fr) auto;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   align-items: end;
   min-width: 0;
   margin-top: 0;
@@ -361,6 +361,7 @@ h2 {
 .homeStartSeal {
   position: relative;
   z-index: 1;
+  grid-column: 1 / -1;
   min-width: 108px;
 }
 
@@ -408,6 +409,70 @@ label {
   gap: 6px;
   color: #3a2b21;
   font-size: 0.88rem;
+}
+
+fieldset {
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+legend {
+  margin-bottom: 6px;
+  color: #3a2b21;
+  font-size: 0.88rem;
+}
+
+.familyField,
+.backgroundField,
+.roleNote {
+  grid-column: 1 / -1;
+}
+
+.segmentedChoices {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.choicePill {
+  position: relative;
+  display: grid;
+  min-height: 40px;
+  place-items: center;
+  border: 1px solid rgba(84, 60, 43, 0.3);
+  background: rgba(255, 252, 238, 0.78);
+  color: #3a2b21;
+  cursor: pointer;
+}
+
+.choicePill input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+}
+
+.choicePill:has(input:checked) {
+  border-color: rgba(142, 47, 39, 0.78);
+  background: rgba(165, 58, 47, 0.12);
+  color: #7b241f;
+  font-weight: 800;
+}
+
+.choicePill:has(input:focus-visible) {
+  outline: 2px solid rgba(142, 47, 39, 0.24);
+  outline-offset: 2px;
+}
+
+.roleNote {
+  margin: 0;
+  border: 1px solid rgba(84, 60, 43, 0.22);
+  background: rgba(255, 248, 230, 0.54);
+  color: #6d5844;
+  line-height: 1.65;
+  padding: 10px;
 }
 
 input,
@@ -864,6 +929,10 @@ button:disabled {
 
   .startDesk,
   .inlineForm {
+    grid-template-columns: 1fr;
+  }
+
+  .segmentedChoices {
     grid-template-columns: 1fr;
   }
 }
