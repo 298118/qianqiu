@@ -656,17 +656,21 @@ Manifest 示例：
 
 ### S74.5 资产加载层
 
+状态：已完成。S74.5 新增 `client/src/assets/assetRegistry.ts`、`client/src/assets/useAssetRegistry.ts` 和 `client/src/components/Portrait.tsx`；React runtime 通过 `/assets/ui/ink-ui-manifest.json` 读取 active manifest，按已审核状态、安全路径、fallback、缩略图、低清占位和懒加载字段建立 registry。人物页已接入 manifest 驱动的立绘谱牒，每页只渲染 8 张缩略图；`usage="people_page"` 下的全部已审核立绘都可分页浏览，女性高清重制覆盖优先列前，未重制女性立绘继续使用 manifest 原图。
+
 实现功能：
 
-- `assetRegistry.ts` 读取 `ink-ui-manifest.json`。
-- 支持按 usage/role/scene 获取素材、缩略图和 fallback。
-- 未审核素材默认不可用。
-- 支持 lazy loading 与 preload hints。
+- `assetRegistry.ts` 读取 `ink-ui-manifest.json`，只暴露 runtime 所需安全字段，不向组件输出 prompt summary、provider 原文、本地 artifacts 路径、key、raw audit 或 hidden 内容。
+- 支持按 usage/role/scene/subcategory/lazyLoad group 获取素材、缩略图、低清占位和 fallback。
+- 未审核素材默认不可用；`planned` 矩阵条目、`review_pending`、`rejected`、`replaced` 不进入 registry。
+- 支持 lazy loading、8 张初始立绘上限与 preload/prefetch hints。
+- `Portrait` 组件只接收 `portraitRef`，未知 ref 或图片加载失败时显示纸底剪影 fallback。
 
 验收：
 
-- manifest 引用错误会测试失败。
+- manifest 引用错误、越界路径、无效 fallback、立绘 eager load、缺失缩略图/低清占位会测试失败。
 - 组件渲染缺图时显示纸底 fallback。
+- 已提交测试确认 596 张 active 立绘全部可寻址，人物页首屏只渲染 8 张缩略图，60 张女性/偏女性高清重制优先使用，未重制项继续使用原图。
 
 ### S74.6 S72 地图运行时桥
 

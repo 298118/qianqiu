@@ -122,7 +122,7 @@ test("S74.4 shell uses registry-backed overlays without widening data sources", 
   const routeCatalogSource = readText("client/src/routes/routeCatalog.ts");
   const combined = `${appShellSource}\n${surfaceHostSource}\n${surfaceRegistrySource}\n${routeCatalogSource}`;
 
-  assert.match(appShellSource, /data-shell-version="s74-4"/);
+  assert.match(appShellSource, /data-shell-version="s74-5"/);
   assert.match(appShellSource, /ScrollRestoration/);
   assert.match(appShellSource, /window\.scrollTo/);
   assert.match(surfaceHostSource, /drawerRegistry/);
@@ -135,4 +135,27 @@ test("S74.4 shell uses registry-backed overlays without widening data sources", 
   assert.match(surfaceRegistrySource, /"memorial-review"/);
   assert.match(surfaceRegistrySource, /"map-filter"/);
   assert.doesNotMatch(combined, /localStorage|sessionStorage|public\/assets\/ui\/portraits|ink-ui-manifest|data\/sessions|raw audit|provider payload|OPENAI_API_KEY|DEEPSEEK_API_KEY|MIMO_API_KEY|ANTHROPIC_API_KEY/);
+});
+
+test("S74.5 asset registry gates manifest assets before React components render portraits", () => {
+  const assetRegistrySource = readText("client/src/assets/assetRegistry.ts");
+  const portraitSource = readText("client/src/components/Portrait.tsx");
+  const peoplePageSource = readText("client/src/pages/PeoplePage.tsx");
+  const combined = `${assetRegistrySource}\n${portraitSource}\n${peoplePageSource}`;
+
+  assert.match(assetRegistrySource, /ASSET_MANIFEST_URL = "\/assets\/ui\/ink-ui-manifest\.json"/);
+  assert.match(assetRegistrySource, /runtimeUsableReviewStatuses/);
+  assert.match(assetRegistrySource, /reviewStatus/);
+  assert.match(assetRegistrySource, /allowEagerLoad !== false/);
+  assert.match(assetRegistrySource, /lowResPlaceholderPath/);
+  assert.match(assetRegistrySource, /getPreloadHints/);
+  assert.match(assetRegistrySource, /kept_outside_public_manifest/);
+  assert.match(peoplePageSource, /getPortraits\(\{ usage: "people_page", preferHighResOverridesForFeminine: true \}\)/);
+  assert.match(peoplePageSource, /portraitPageSize = 8/);
+  assert.match(portraitSource, /loading="lazy"/);
+  assert.doesNotMatch(portraitSource, /variant\?:|priority\?:|loading=\{priority/);
+  assert.doesNotMatch(
+    combined,
+    /portrait-pool-matrix-v1|public\/assets\/ui\/portraits|localStorage|sessionStorage|data\/sessions|raw audit|provider payload/
+  );
 });

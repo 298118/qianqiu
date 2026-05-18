@@ -349,6 +349,100 @@ button:disabled {
   border-color: rgba(142, 47, 39, 0.28);
 }
 
+.portraitLedger {
+  display: grid;
+  gap: 14px;
+  margin: 18px 0;
+}
+
+.portraitLedgerHeader {
+  display: flex;
+  align-items: start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.portraitLedgerHeader h3 {
+  margin: 0 0 6px;
+  font-size: 1.05rem;
+}
+
+.portraitLedgerHeader p {
+  margin: 0;
+}
+
+.portraitLedgerHeader span {
+  min-width: 64px;
+  border: 1px solid rgba(142, 47, 39, 0.38);
+  background: rgba(255, 248, 230, 0.68);
+  color: #7b241f;
+  padding: 6px 8px;
+  text-align: center;
+}
+
+.portraitGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(118px, 1fr));
+  gap: 12px;
+}
+
+.portraitCard {
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+  border: 1px solid rgba(84, 60, 43, 0.22);
+  background: rgba(255, 248, 230, 0.62);
+  padding: 10px;
+}
+
+.portraitCard strong,
+.portraitCard span {
+  overflow-wrap: anywhere;
+}
+
+.portraitCard strong {
+  color: #2f251d;
+  font-size: 0.9rem;
+}
+
+.portraitCard span {
+  color: #7a6048;
+  font-size: 0.78rem;
+}
+
+.portraitFrame {
+  position: relative;
+  display: grid;
+  aspect-ratio: 2 / 3;
+  width: 100%;
+  min-height: 144px;
+  margin: 0;
+  place-items: center;
+  overflow: hidden;
+  border: 1px solid var(--portrait-fallback-border, rgba(142, 47, 39, 0.38));
+  background-color: var(--portrait-fallback-bg, #e8dcc8);
+  background-position: center;
+  background-size: cover;
+  color: var(--portrait-fallback-text, #241f18);
+}
+
+.portraitFrame img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.portraitFrameFallback span {
+  display: grid;
+  width: 48px;
+  height: 48px;
+  place-items: center;
+  border: 1px solid rgba(142, 47, 39, 0.42);
+  color: #7b241f;
+  font-weight: 800;
+}
+
 .inlineForm {
   grid-template-columns: minmax(160px, 1fr) auto;
   align-items: end;

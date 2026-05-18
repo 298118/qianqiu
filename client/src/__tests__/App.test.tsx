@@ -1,6 +1,7 @@
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { RouterProvider, createMemoryRouter } from "react-router";
 import { afterEach, describe, expect, it, vi } from "vitest";
+import { resetAssetRegistryCache, type InkUiManifest } from "../assets/assetRegistry";
 import { routes } from "../router";
 import { useGameSessionStore } from "../state/gameSessionState";
 import { useUiStateStore } from "../state/uiState";
@@ -10,9 +11,88 @@ function renderRoute(initialEntry: string) {
   return render(<RouterProvider router={router} />);
 }
 
+function buildMockAssetManifest(count = 9): InkUiManifest {
+  return {
+    schemaVersion: 1,
+    assetSetId: "ink-ui-v1",
+    assetRoot: "/assets/ui/",
+    runtimeUsableReviewStatuses: ["approved", "approved_with_limits"],
+    runtimeBlockedReviewStatuses: ["planned", "draft", "review_pending", "rejected", "replaced"],
+    fallbackCatalog: [
+      {
+        id: "fallback-paper-panel-v1",
+        category: "fallback",
+        type: "css_token",
+        usage: ["global_fallback"],
+        cssTokens: { backgroundColor: "#f5f0e6", borderColor: "#c9b898", textColor: "#241f18" },
+        reviewStatus: "approved",
+        ledgerId: "ui-fallback-paper-panel-v1"
+      },
+      {
+        id: "fallback-role-silhouette-v1",
+        category: "fallback",
+        type: "css_token",
+        usage: ["people_page"],
+        cssTokens: { backgroundColor: "#e8dcc8", accentColor: "#a53a2a", textColor: "#241f18" },
+        reviewStatus: "approved",
+        ledgerId: "ui-fallback-role-silhouette-v1"
+      }
+    ],
+    assets: Array.from({ length: count }, (_, index) => {
+      const number = index + 1;
+      const feminine = index < 3;
+      const id = `portrait-test-${feminine ? "female" : "male"}-${number}-v1`;
+      return {
+        id,
+        category: "portrait",
+        subcategory: feminine ? "player_female_style_pool" : "player_male_style_pool",
+        usage: ["people_page", "game_main"],
+        role: feminine ? "female_official" : "scholar",
+        roleLabel: feminine ? `女官 ${number}` : `书生 ${number}`,
+        scene: null,
+        path: `/assets/ui/portraits/${id}.webp`,
+        thumbnailPath: `/assets/ui/thumbs/thumb-${id}.webp`,
+        lowResPlaceholderPath: `/assets/ui/portraits/placeholders/placeholder-${id}.webp`,
+        fallbackRef: "fallback-role-silhouette-v1",
+        reviewStatus: "approved",
+        visualReview: { status: "approved" },
+        safetyReview: { status: "approved" },
+        portraitRef: id,
+        genderPresentation: feminine ? "feminine" : "masculine",
+        ageBand: "adult_young",
+        statusVariant: "baseline",
+        emotionVariant: "neutral",
+        identityTags: [feminine ? "female_style" : "male_style"],
+        emotionTags: ["neutral"],
+        lazyLoad: {
+          group: feminine ? "portrait_pool_player_female_extra_s73_10" : "portrait_pool_player_male_extra_s73_10",
+          allowEagerLoad: false,
+          thumbnailFirst: true,
+          lowResPlaceholder: true,
+          maxInitialPortraits: 8
+        },
+        source: index < 2 ? { localHighResSource: "kept_outside_public_manifest" } : undefined
+      };
+    })
+  };
+}
+
+function mockAssetManifestFetch(manifest = buildMockAssetManifest()) {
+  const fetchMock = vi.fn(async () => ({
+    ok: true,
+    status: 200,
+    statusText: "OK",
+    json: async () => manifest
+  }));
+  vi.stubGlobal("fetch", fetchMock);
+  return fetchMock;
+}
+
 describe("S74.1 React client shell", () => {
   afterEach(() => {
     cleanup();
+    resetAssetRegistryCache();
+    vi.unstubAllGlobals();
     useGameSessionStore.setState({
       activeExam: null,
       currentSession: null,
@@ -34,7 +114,7 @@ describe("S74.1 React client shell", () => {
     expect(screen.getByRole("button", { name: "新开一卷" })).toBeTruthy();
     expect(document.querySelector("[data-client-entry='react']")).toBeTruthy();
     expect(document.querySelector("[data-router-mode='data']")).toBeTruthy();
-    expect(document.querySelector("[data-shell-version='s74-4']")).toBeTruthy();
+    expect(document.querySelector("[data-shell-version='s74-5']")).toBeTruthy();
   });
 
   it("keeps the session routes inside the React Router tree", () => {
@@ -108,6 +188,24 @@ describe("S74.1 React client shell", () => {
     expect(screen.getByRole("heading", { name: "科举" })).toBeTruthy();
     expect(screen.getByRole("button", { name: "取题" })).toBeTruthy();
     expect(document.body.textContent || "").not.toMatch(/\/api\/game\/state|raw audit|provider payload/i);
+  });
+
+  it("loads the S74.5 manifest-backed portrait ledger in small lazy pages", async () => {
+    const fetchMock = mockAssetManifestFetch();
+    renderRoute("/game/smoke-session/people");
+
+    expect(screen.getByRole("heading", { name: "人物" })).toBeTruthy();
+    await screen.findByText(/已接入 9 张人物页可用立绘；女性高清重制 2 张优先列前/);
+    expect(fetchMock).toHaveBeenCalledWith("/assets/ui/ink-ui-manifest.json", expect.objectContaining({ headers: { Accept: "application/json" } }));
+
+    const firstPageImages = screen.getAllByRole("img");
+    expect(firstPageImages).toHaveLength(8);
+    expect(firstPageImages.every((image) => image.getAttribute("loading") === "lazy")).toBe(true);
+    expect(document.querySelector(".portraitGrid")?.getAttribute("data-total-portraits")).toBe("9");
+    expect(document.body.textContent || "").not.toMatch(/prompt|provider payload|hiddenNotes|OPENAI_API_KEY|artifacts/i);
+
+    fireEvent.click(screen.getByRole("button", { name: "下一组" }));
+    expect(screen.getAllByRole("img")).toHaveLength(1);
   });
 
   it("does not show stale exam actions on preview routes", () => {

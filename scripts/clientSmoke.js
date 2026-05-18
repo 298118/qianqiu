@@ -83,10 +83,13 @@ async function captureScreenshot(page, screenshotsDir, label) {
   return { label, bytes: buffer.length, filePath };
 }
 
-async function assertReactClientPage(page, baseUrl, pathname, label, screenshotsDir) {
+async function assertReactClientPage(page, baseUrl, pathname, label, screenshotsDir, options = {}) {
   await page.goto(`${baseUrl}${pathname}`, { waitUntil: "networkidle" });
   await page.locator("[data-client-entry='react'][data-router-mode='data']").waitFor({ timeout: 10000 });
   await page.locator("h1").first().waitFor({ timeout: 10000 });
+  if (options.readySelector) {
+    await page.locator(options.readySelector).first().waitFor({ timeout: 10000 });
+  }
 
   const snapshot = await page.evaluate((tokens) => {
     const text = document.body.innerText || "";
@@ -145,6 +148,33 @@ async function runClientSmoke(options = {}) {
     screenshots.push(
       await assertReactClientPage(page, baseUrl, "/game/s74-smoke/map", "s74-react-map-route-desktop", options.screenshotsDir)
     );
+    screenshots.push(
+      await assertReactClientPage(page, baseUrl, "/game/s74-smoke/people", "s74-react-people-assets-desktop", options.screenshotsDir, {
+        readySelector: ".portraitGrid"
+      })
+    );
+    const portraitLedger = await page.evaluate(() => {
+      const grid = document.querySelector(".portraitGrid");
+      const images = [...document.querySelectorAll(".portraitGrid img")];
+      return {
+        visible: Number(grid?.getAttribute("data-visible-portraits") || 0),
+        total: Number(grid?.getAttribute("data-total-portraits") || 0),
+        eagerImages: images.filter((image) => image.getAttribute("loading") !== "lazy").length,
+        localOrRawLeaks: (document.body.innerText || "").match(/artifacts|provider payload|raw audit|hiddenNotes|OPENAI_API_KEY/gi) || []
+      };
+    });
+    if (portraitLedger.visible > 8 || portraitLedger.visible <= 0) {
+      throw new Error(`People portrait page loaded an unsafe initial portrait count: ${portraitLedger.visible}`);
+    }
+    if (portraitLedger.total < 500) {
+      throw new Error(`People portrait page did not expose the full manifest-backed pool: ${portraitLedger.total}`);
+    }
+    if (portraitLedger.eagerImages > 0) {
+      throw new Error(`People portrait page rendered non-lazy portrait image(s): ${portraitLedger.eagerImages}`);
+    }
+    if (portraitLedger.localOrRawLeaks.length) {
+      throw new Error(`People portrait page leaked forbidden text: ${portraitLedger.localOrRawLeaks.join(", ")}`);
+    }
 
     const health = await page.evaluate(async () => {
       const response = await fetch("/api/health");
@@ -165,7 +195,7 @@ async function runClientSmoke(options = {}) {
     return {
       baseUrl,
       screenshots,
-      viewports: ["desktop-home", "desktop-map-route", "mobile-home"]
+      viewports: ["desktop-home", "desktop-map-route", "desktop-people-assets", "mobile-home"]
     };
   } finally {
     await browser.close();
