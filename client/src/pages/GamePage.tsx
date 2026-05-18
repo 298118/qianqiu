@@ -4,6 +4,7 @@ import { useEffect, useMemo, type CSSProperties } from "react";
 import { useAssetRegistry } from "../assets/useAssetRegistry";
 import { MagistratePanel } from "../components/MagistratePanel";
 import { MemorialComposer } from "../components/MemorialComposer";
+import { OfficialMinisterPanel } from "../components/OfficialMinisterPanel";
 import { ScholarPanel } from "../components/ScholarPanel";
 import { routeCatalog } from "../routes/routeCatalog";
 import { isRunnableSessionId } from "../routes/sessionId";
@@ -277,6 +278,20 @@ export function GamePage() {
           officialPostingsView={session?.officialPostingsView ?? null}
           economicFiscalView={session?.economicFiscalView ?? null}
           roleBackgroundPath={roleBackgroundAsset?.path}
+          runnable={runnable}
+          onDraft={(text) => setActionDraft({ source: "role-surface", targetPage: "game", text })}
+        />
+      ) : null}
+      {player?.role === "official" || player?.role === "minister" ? (
+        <OfficialMinisterPanel
+          player={player}
+          officialCareerView={session?.officialCareerView ?? null}
+          appointmentTrackView={session?.appointmentTrackView ?? null}
+          officialPostingsView={session?.officialPostingsView ?? null}
+          actorMemoryView={session?.actorMemoryView ?? null}
+          aiControlAuditView={session?.aiControlAuditView ?? null}
+          roleBackgroundPath={roleBackgroundAsset?.path}
+          courtHref={sessionHref(routeCatalog.find((entry) => entry.id === "court")?.href ?? "/game/s74-preview/court")}
           runnable={runnable}
           onDraft={(text) => setActionDraft({ source: "role-surface", targetPage: "game", text })}
         />

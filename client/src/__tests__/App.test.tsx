@@ -672,6 +672,168 @@ describe("S74.1 React client shell", () => {
     expect(document.body.textContent || "").not.toMatch(/provider payload|sk-test-secret|prompt|raw audit|path=|C:\\|data\/sessions|OPENAI_API_KEY/i);
   });
 
+  it("renders the S76.4 official minister panel from safe career views as draft-only actions", async () => {
+    const sessionId = "32345678-1111-4111-8111-111111111111";
+    const fetchMock = vi.fn(async (url: string) => {
+      if (url === "/assets/ui/ink-ui-manifest.json") {
+        return new Response(JSON.stringify({
+          ...buildMockAssetManifest(0),
+          assets: [
+            {
+              id: "ui-role-official-bureau-desk-v1",
+              category: "role_background",
+              usage: ["game_main"],
+              role: "official",
+              path: "/assets/ui/roles/role-official-bureau-desk-v1.webp",
+              thumbnailPath: "/assets/ui/thumbs/thumb-role-official-bureau-desk-v1.webp",
+              fallbackRef: "fallback-paper-panel-v1",
+              reviewStatus: "approved",
+              visualReview: { status: "approved" },
+              safetyReview: { status: "approved" }
+            }
+          ]
+        }), {
+          status: 200,
+          headers: { "Content-Type": "application/json" }
+        });
+      }
+      if (url === `/api/game/player-state/${sessionId}`) {
+        return new Response(JSON.stringify({
+          source: "server_player_visible_state_projection",
+          sessionId,
+          worldState: { player: { name: "韩知远", role: "official", examRank: "进士", officeTitle: "翰林院编修" } },
+          officialCareerView: {
+            active: true,
+            generatedAtTurn: 9,
+            currentPosting: "翰林院编修",
+            tenureMonths: 8,
+            careerScore: 64,
+            riskScore: 22,
+            bureau: {
+              id: "hanlin_academy",
+              name: "翰林院",
+              officeTitle: "翰林院编修",
+              duties: ["修史", "起草诰敕", "侍读"],
+              summary: "翰林院差遣清贵，章奏与考成仍由服务器裁决。"
+            },
+            assignmentSummary: { activeCount: 2, urgentCount: 1, latestTitle: "撰修起居注" },
+            assignments: [
+              {
+                id: "assignment-1",
+                title: "撰修起居注",
+                kind: "memorial_drafting",
+                status: "active",
+                deadlineLabel: "尚余一旬",
+                progress: 35,
+                risk: 18,
+                visibleSummary: "须核对公开诏令与朝会记录。"
+              },
+              {
+                id: "bad-assignment",
+                title: "provider payload sk-test-secret",
+                kind: "audit",
+                visibleSummary: "path=C:\\secret\\memo.json"
+              }
+            ],
+            assessment: {
+              meritScore: 61,
+              riskScore: 24,
+              pendingRecommendation: "候考成",
+              nextReviewInMonths: 4,
+              notes: ["文章清谨，差遣尚需按期。", "prompt provider payload"]
+            },
+            networkSummary: {
+              publicSummary: "同年与座师只显示公开往来。",
+              sameYearPeers: [{ id: "same-year-1", title: "沈同年", publicSummary: "可询问翰林院近例。" }]
+            },
+            procedureSummary: {
+              impeachmentStage: "risk_watch",
+              visibleNotice: "台谏尚未成案，只能先辨明公开事实。",
+              risk: 26,
+              deadlineLabel: "未定"
+            },
+            lastOutcome: { id: "outcome-1", label: "初授翰林", type: "appointment" },
+            recentOutcomes: [{ id: "outcome-1", label: "初授翰林", reason: "殿试后入馆。" }]
+          },
+          appointmentTrackView: {
+            publicSummary: "殿试后由服务器定翰林院编修。",
+            latestTrack: { honorTitle: "二甲进士", trackLabel: "馆选", officeTitle: "翰林院编修" },
+            latestDecision: { trackLabel: "馆选", officeTitle: "翰林院编修" },
+            records: [{ id: "appointment-1", honorTitle: "二甲进士", publicSummary: "服务器定初授。" }]
+          },
+          officialPostingsView: {
+            bureaus: [{ id: "hanlin_academy", name: "翰林院", duties: ["修史", "起草诰敕"] }],
+            postings: [{
+              id: "posting-player-current",
+              holderType: "player",
+              officeTitle: "翰林院编修",
+              bureauId: "hanlin_academy",
+              performanceScore: 62,
+              impeachmentRisk: 21,
+              publicReputation: 66
+            }],
+            assessmentRecords: [{
+              id: "assessment-player",
+              postingId: "posting-player-current",
+              meritScore: 61,
+              riskScore: 24,
+              recommendation: "候考成",
+              publicFinding: "差遣尚稳，须谨慎应对台谏风声。"
+            }]
+          },
+          actorMemoryView: {
+            actors: [{ actorId: "same-year-1", actorLabel: "沈同年", summary: "同年公开相助。" }],
+            recentUpdates: [{ id: "memory-1", title: "座师来帖", summary: "提醒谨守本职。" }]
+          },
+          aiControlAuditView: {
+            publicPanel: {
+              summary: "AI 调动审计仅展示公开摘要。",
+              rejectedToolCallCount: 0,
+              publicResults: [{ id: "audit-1", title: "快捷建议", summary: "只生成草稿。" }]
+            }
+          }
+        }), {
+          status: 200,
+          headers: { "Content-Type": "application/json" }
+        });
+      }
+      if (url === `/api/ai/quick-actions/${sessionId}`) {
+        return new Response(JSON.stringify({
+          schemaVersion: "s75.9-quick-actions.v1",
+          sessionId,
+          source: "mock-ai",
+          status: "ready",
+          quickActionSuggestions: []
+        }), {
+          status: 200,
+          headers: { "Content-Type": "application/json" }
+        });
+      }
+      throw new Error(`unexpected url: ${url}`);
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    renderRoute(`/game/${sessionId}`);
+
+    await screen.findByRole("heading", { name: "部院官署" });
+    expect(screen.getByText("官职履历")).toBeTruthy();
+    expect(screen.getAllByText("部院公文").length).toBeGreaterThan(0);
+    expect(screen.getByText("同年座师与人脉")).toBeTruthy();
+    expect(screen.getByText("派系与朝局风险")).toBeTruthy();
+    expect(screen.getByText("考成与弹劾")).toBeTruthy();
+    expect(screen.getByRole("link", { name: "入朝议页" }).getAttribute("href")).toBe(`/game/${sessionId}/court`);
+    expect(screen.getByText("不得在前端直接任免、奖惩、处分、弹劾成案或改写考成。")).toBeTruthy();
+
+    fireEvent.click(screen.getByRole("button", { name: "回应弹劾" }));
+    expect(useUiStateStore.getState().actionDraft).toMatchObject({
+      source: "role-surface",
+      targetPage: "game",
+      text: "若有弹劾风声，先拟辨疏，说明事实、证据和请核事项，不自行成案。"
+    });
+    expect(fetchMock.mock.calls.filter(([url]) => url === "/api/game/turn")).toHaveLength(0);
+    expect(document.body.textContent || "").not.toMatch(/provider payload|sk-test-secret|prompt|raw audit|path=|C:\\|data\/sessions|OPENAI_API_KEY/i);
+  });
+
   it("tracks route-derived UI page state and closes safe drawers with Esc while restoring focus", async () => {
     renderRoute("/game/smoke-session/map");
 

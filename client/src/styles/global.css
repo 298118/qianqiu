@@ -959,6 +959,38 @@ button:disabled {
   padding-left: 18px;
 }
 
+.officialMinisterPanel {
+  border-color: rgba(60, 64, 82, 0.32);
+  background:
+    linear-gradient(115deg, rgba(255, 248, 230, 0.92), rgba(226, 217, 190, 0.82) 42%, rgba(74, 80, 99, 0.22)),
+    var(--scholar-panel-bg, url("/assets/ui/roles/role-official-bureau-desk-v1.webp")) left center / cover no-repeat,
+    #e7dbc0;
+}
+
+.scholarPanel.officialMinisterPanel::before {
+  background:
+    linear-gradient(90deg, rgba(255, 252, 238, 0.74), rgba(255, 252, 238, 0.88) 42%, rgba(255, 252, 238, 0.78)),
+    radial-gradient(circle at 12% 14%, rgba(60, 64, 82, 0.16), transparent 32%);
+}
+
+.officialMinisterPanel .scholarPanelEyebrow,
+.officialMinisterPanel .scholarPanelMetrics strong {
+  color: #3d4868;
+}
+
+.officialMinisterPanel .scholarPanelMetrics li {
+  display: grid;
+  grid-template-columns: minmax(68px, 1fr) auto;
+}
+
+.officialMinisterPanel .scholarPanelMetrics em {
+  grid-column: 1 / -1;
+  color: #665a47;
+  font-size: 0.76rem;
+  font-style: normal;
+  font-weight: 800;
+}
+
 .scholarPanel::before {
   position: absolute;
   inset: 0;

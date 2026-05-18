@@ -394,6 +394,37 @@ test("S76.3 magistrate panel uses safe local affairs projections as draft-only U
   );
 });
 
+test("S76.4 official and minister panel uses safe career projections as draft-only UI", () => {
+  const gamePageSource = readText("client/src/pages/GamePage.tsx");
+  const officialPanelSource = readText("client/src/components/OfficialMinisterPanel.tsx");
+  const appTestSource = readText("client/src/__tests__/App.test.tsx");
+  const styleSource = readText("client/src/styles/global.css");
+  const typeSource = readText("client/src/api/types.ts");
+  const officialPanelWithoutGuard = officialPanelSource.replace(/const unsafeOfficialMinisterFragments[\s\S]*?\] as const;\r?\n/, "");
+  const runtimeCombined = `${gamePageSource}\n${officialPanelWithoutGuard}\n${styleSource}`;
+
+  assert.match(gamePageSource, /<OfficialMinisterPanel/);
+  assert.match(gamePageSource, /officialCareerView=\{session\?\.officialCareerView/);
+  assert.match(gamePageSource, /appointmentTrackView=\{session\?\.appointmentTrackView/);
+  assert.match(gamePageSource, /actorMemoryView=\{session\?\.actorMemoryView/);
+  assert.match(gamePageSource, /aiControlAuditView=\{session\?\.aiControlAuditView/);
+  assert.match(officialPanelSource, /export function OfficialMinisterPanel/);
+  assert.match(officialPanelSource, /官职履历/);
+  assert.match(officialPanelSource, /部院公文/);
+  assert.match(officialPanelSource, /同年座师/);
+  assert.match(officialPanelSource, /派系与朝局风险/);
+  assert.match(officialPanelSource, /不得在前端直接任免、奖惩、处分、弹劾成案或改写考成/);
+  assert.match(styleSource, /officialMinisterPanel/);
+  assert.match(typeSource, /officialCareerView\?: JsonObject/);
+  assert.match(typeSource, /appointmentTrackView\?: JsonObject/);
+  assert.match(typeSource, /actorMemoryView\?: JsonObject/);
+  assert.match(appTestSource, /renders the S76\.4 official minister panel from safe career views as draft-only actions/);
+  assert.doesNotMatch(
+    runtimeCombined,
+    /\/api\/game\/state|\/api\/dev\/session-diagnostics|\/api\/exam\/question|\/api\/exam\/submit|dangerouslySetInnerHTML|localStorage|sessionStorage|data\/sessions|raw audit|provider payload|OPENAI_API_KEY|DEEPSEEK_API_KEY|MIMO_API_KEY|ANTHROPIC_API_KEY/
+  );
+});
+
 test("S74.5 asset registry gates manifest assets before React components render portraits", () => {
   const assetRegistrySource = readText("client/src/assets/assetRegistry.ts");
   const portraitSource = readText("client/src/components/Portrait.tsx");

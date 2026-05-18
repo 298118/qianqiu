@@ -366,6 +366,97 @@ async function assertMagistratePanel(page, sessionId, screenshotsDir) {
   return captureScreenshot(page, screenshotsDir, "s76-magistrate-panel-desktop");
 }
 
+async function startMockOfficialThroughHome(page, baseUrl) {
+  await page.goto(`${baseUrl}/`, { waitUntil: "networkidle" });
+  await page.getByLabel("姓名").fill("烟测翰林");
+  await page.getByLabel("身份").selectOption("official");
+  await page.getByRole("button", { name: "新开一卷" }).click();
+  return waitForSafeSessionPath(page, "official home start");
+}
+
+async function assertOfficialMinisterPanel(page, sessionId, screenshotsDir) {
+  await page.getByRole("heading", { name: "部院官署" }).waitFor({ timeout: 10000 });
+  const panelSnapshot = await page.evaluate((id) => {
+    const panel = document.querySelector(".officialMinisterPanel");
+    const text = panel?.textContent || "";
+    const courtLink = [...document.querySelectorAll(".officialMinisterPanel a")].find((link) => (link.textContent || "").includes("入朝议页"));
+    const buttons = [...document.querySelectorAll(".officialMinisterPanel button")].map((button) => ({
+      text: (button.textContent || "").trim(),
+      disabled: button.disabled
+    }));
+    const computedBackground = panel
+      ? `${panel.getAttribute("data-role-background") || ""} ${getComputedStyle(panel).getPropertyValue("--scholar-panel-bg")}`
+      : "";
+    return {
+      text,
+      metricCount: panel?.querySelectorAll(".scholarPanelMetrics li").length || 0,
+      hasCareer: text.includes("官职履历"),
+      hasAssignments: text.includes("部院公文"),
+      hasNetwork: text.includes("同年座师与人脉"),
+      hasFaction: text.includes("派系与朝局风险"),
+      hasAssessment: text.includes("考成与弹劾"),
+      hasMemorial: text.includes("奏疏入口"),
+      hasBoundary: text.includes("不得在前端直接任免、奖惩、处分、弹劾成案或改写考成"),
+      buttons,
+      background: computedBackground,
+      courtPath: courtLink ? new URL(courtLink.href).pathname : "",
+      expectedCourtPath: `/game/${id}/court`,
+      path: window.location.pathname,
+      expectedPath: `/game/${id}`,
+      forbiddenText: (document.body.innerText || "").match(/\/api\/game\/state|\/api\/dev\/session-diagnostics|provider payload|raw audit|hiddenNotes|OPENAI_API_KEY|data\/sessions|完整提示词|本地路径|密钥|sk-[a-z0-9_-]{6,}|[a-z]:[\\/]/gi) || []
+    };
+  }, sessionId);
+
+  const failures = [];
+  if (panelSnapshot.path !== panelSnapshot.expectedPath) failures.push(`path was ${panelSnapshot.path}`);
+  if (!panelSnapshot.hasCareer) failures.push("missing career ledger");
+  if (!panelSnapshot.hasAssignments) failures.push("missing bureau assignment block");
+  if (!panelSnapshot.hasNetwork) failures.push("missing official network block");
+  if (!panelSnapshot.hasFaction) failures.push("missing faction risk block");
+  if (!panelSnapshot.hasAssessment) failures.push("missing assessment block");
+  if (!panelSnapshot.hasMemorial) failures.push("missing memorial block");
+  if (!panelSnapshot.hasBoundary) failures.push("missing server boundary");
+  if (panelSnapshot.metricCount < 4) failures.push(`expected career metrics, saw ${panelSnapshot.metricCount}`);
+  if (!panelSnapshot.buttons.some((button) => button.text === "查办公文" && !button.disabled)) failures.push("assignment draft button missing or disabled");
+  if (!panelSnapshot.buttons.some((button) => button.text === "回应弹劾" && !button.disabled)) failures.push("impeachment draft button missing or disabled");
+  if (panelSnapshot.courtPath !== panelSnapshot.expectedCourtPath) failures.push(`court link was ${panelSnapshot.courtPath}`);
+  if (!panelSnapshot.background.includes("/assets/ui/")) failures.push("role background asset was not applied through the manifest registry");
+  if (panelSnapshot.forbiddenText.length) failures.push(`unsafe text leaked: ${panelSnapshot.forbiddenText.join(", ")}`);
+  if (failures.length) {
+    throw new Error(`S76.4 official minister panel smoke failed: ${failures.join("; ")}`);
+  }
+
+  const turnRequests = [];
+  const onRequest = (request) => {
+    try {
+      const url = new URL(request.url());
+      if (url.pathname === "/api/game/turn" && request.method() === "POST") {
+        turnRequests.push(url.pathname);
+      }
+    } catch {
+    }
+  };
+  page.on("request", onRequest);
+  await page.getByRole("button", { name: "回应弹劾" }).click();
+  await page.waitForFunction(() => {
+    const value = document.querySelector("textarea")?.value || "";
+    return value.includes("若有弹劾风声") && value.includes("不自行成案");
+  }, null, { timeout: 10000 });
+  await page.waitForTimeout(250);
+  page.off("request", onRequest);
+  if (turnRequests.length) {
+    throw new Error(`S76.4 official minister draft button submitted a turn instead of writing a draft: ${turnRequests.join(", ")}`);
+  }
+
+  const draft = await page.getByLabel("本回合行动").inputValue();
+  if (!draft.includes("若有弹劾风声")) {
+    throw new Error(`S76.4 official minister draft did not enter the memorial composer: ${draft}`);
+  }
+  await page.getByLabel("本回合行动").fill("");
+
+  return captureScreenshot(page, screenshotsDir, "s76-official-minister-panel-desktop");
+}
+
 async function assertReturnHomeContinueAndTurn(page, sessionId, screenshotsDir) {
   const gamePath = `/game/${sessionId}`;
 
@@ -844,6 +935,8 @@ async function runClientSmoke(options = {}) {
 
     const magistrateSessionId = await startMockMagistrateThroughHome(page, baseUrl);
     screenshots.push(await assertMagistratePanel(page, magistrateSessionId, options.screenshotsDir));
+    const officialSessionId = await startMockOfficialThroughHome(page, baseUrl);
+    screenshots.push(await assertOfficialMinisterPanel(page, officialSessionId, options.screenshotsDir));
 
     const health = await page.evaluate(async () => {
       const response = await fetch("/api/health");
@@ -914,6 +1007,7 @@ async function runClientSmoke(options = {}) {
         "desktop-court-refresh",
         "desktop-settings-refresh",
         "desktop-magistrate-panel",
+        "desktop-official-minister-panel",
         "mobile-memorial-composer",
         "mobile-inkbox-tabs",
         "mobile-home"

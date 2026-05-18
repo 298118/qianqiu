@@ -943,6 +943,8 @@ Manifest 示例：
 
 ### S76.4 入仕官员/大臣面板
 
+状态：已完成。S76.4 已新增 React `OfficialMinisterPanel`，在入仕官员和大臣身份主卷中接入已审核部院/大臣 `role_background`、安全 `officialCareerView`、`appointmentTrackView`、`officialPostingsView`、`actorMemoryView`、`aiControlAuditView` 和玩家公开摘要，展示官职履历、部院公文、同年座师、人脉、派系/朝局风险、考成、弹劾和奏疏入口。所有按钮只写底部奏折草稿，任免、奖惩、处分、弹劾成案、考成变化、时间推进和持久化继续由服务器裁决。
+
 实现功能：
 
 - 部院/内阁背景。
@@ -951,7 +953,9 @@ Manifest 示例：
 
 验收：
 
-- 只读 `officialCareerView`、`appointmentTrackView`、`relationshipView`、`aiControlAuditView`。
+- 只读 `officialCareerView`、`appointmentTrackView`、`officialPostingsView`、`actorMemoryView`、`aiControlAuditView`。
+- 不读取 raw audit、provider proposal、完整 prompt、本地路径、key、hidden notes 或 hidden intent。
+- 按钮只写行动草稿，不提交回合、不调用 resolver、不直接任免/奖惩/处分/弹劾成案/改考成。
 
 ### S76.5 将领面板
 
