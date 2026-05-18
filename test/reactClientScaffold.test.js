@@ -425,6 +425,36 @@ test("S76.4 official and minister panel uses safe career projections as draft-on
   );
 });
 
+test("S76.5 general panel uses safe military projections as draft-only UI", () => {
+  const gamePageSource = readText("client/src/pages/GamePage.tsx");
+  const generalPanelSource = readText("client/src/components/GeneralPanel.tsx");
+  const appTestSource = readText("client/src/__tests__/App.test.tsx");
+  const styleSource = readText("client/src/styles/global.css");
+  const typeSource = readText("client/src/api/types.ts");
+  const generalPanelWithoutGuard = generalPanelSource.replace(/const unsafeGeneralFragments[\s\S]*?\] as const;\r?\n/, "");
+  const runtimeCombined = `${gamePageSource}\n${generalPanelWithoutGuard}\n${styleSource}`;
+
+  assert.match(gamePageSource, /<GeneralPanel/);
+  assert.match(gamePageSource, /militaryDiplomacyView=\{session\?\.militaryDiplomacyView/);
+  assert.match(gamePageSource, /mapRuntimeView=\{session\?\.mapRuntimeView/);
+  assert.match(gamePageSource, /eventArchiveView=\{session\?\.eventArchiveView/);
+  assert.match(gamePageSource, /actorMemoryView=\{session\?\.actorMemoryView/);
+  assert.match(generalPanelSource, /export function GeneralPanel/);
+  assert.match(generalPanelSource, /军帐总览/);
+  assert.match(generalPanelSource, /粮饷与军心/);
+  assert.match(generalPanelSource, /斥候与情报/);
+  assert.match(generalPanelSource, /边患与舆图/);
+  assert.match(generalPanelSource, /战报与边议/);
+  assert.match(generalPanelSource, /战役胜负、调兵遣将、外交和战、统帅任免、粮饷拨付、赏罚与持久化都由服务器裁决/);
+  assert.match(styleSource, /generalPanel/);
+  assert.match(typeSource, /militaryDiplomacyView\?: JsonObject/);
+  assert.match(appTestSource, /renders the S76\.5 general panel from safe military views as draft-only actions/);
+  assert.doesNotMatch(
+    runtimeCombined,
+    /\/api\/game\/state|\/api\/dev\/session-diagnostics|\/api\/exam\/question|\/api\/exam\/submit|dangerouslySetInnerHTML|localStorage|sessionStorage|data\/sessions|raw audit|provider payload|OPENAI_API_KEY|DEEPSEEK_API_KEY|MIMO_API_KEY|ANTHROPIC_API_KEY/
+  );
+});
+
 test("S74.5 asset registry gates manifest assets before React components render portraits", () => {
   const assetRegistrySource = readText("client/src/assets/assetRegistry.ts");
   const portraitSource = readText("client/src/components/Portrait.tsx");

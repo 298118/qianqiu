@@ -991,6 +991,39 @@ button:disabled {
   font-weight: 800;
 }
 
+.generalPanel {
+  border-color: rgba(83, 62, 45, 0.34);
+  background:
+    linear-gradient(115deg, rgba(255, 248, 230, 0.92), rgba(225, 214, 184, 0.82) 40%, rgba(87, 76, 64, 0.26)),
+    var(--scholar-panel-bg, url("/assets/ui/roles/role-general-frontier-tent-v1.webp")) left center / cover no-repeat,
+    #e3d2b1;
+}
+
+.scholarPanel.generalPanel::before {
+  background:
+    linear-gradient(90deg, rgba(255, 252, 238, 0.74), rgba(255, 252, 238, 0.88) 42%, rgba(255, 252, 238, 0.76)),
+    radial-gradient(circle at 12% 16%, rgba(105, 40, 30, 0.14), transparent 30%),
+    radial-gradient(circle at 82% 18%, rgba(39, 65, 78, 0.12), transparent 28%);
+}
+
+.generalPanel .scholarPanelEyebrow,
+.generalPanel .scholarPanelMetrics strong {
+  color: #6b2f24;
+}
+
+.generalPanel .scholarPanelMetrics li {
+  display: grid;
+  grid-template-columns: minmax(62px, 1fr) auto;
+}
+
+.generalPanel .scholarPanelMetrics em {
+  grid-column: 1 / -1;
+  color: #61523f;
+  font-size: 0.76rem;
+  font-style: normal;
+  font-weight: 800;
+}
+
 .scholarPanel::before {
   position: absolute;
   inset: 0;

@@ -457,6 +457,99 @@ async function assertOfficialMinisterPanel(page, sessionId, screenshotsDir) {
   return captureScreenshot(page, screenshotsDir, "s76-official-minister-panel-desktop");
 }
 
+async function startMockGeneralThroughHome(page, baseUrl) {
+  await page.goto(`${baseUrl}/`, { waitUntil: "networkidle" });
+  await page.getByLabel("姓名").fill("烟测总兵");
+  await page.getByLabel("身份").selectOption("general");
+  await page.getByRole("button", { name: "新开一卷" }).click();
+  return waitForSafeSessionPath(page, "general home start");
+}
+
+async function assertGeneralPanel(page, sessionId, screenshotsDir) {
+  await page.getByRole("heading", { name: "将领军务" }).waitFor({ timeout: 10000 });
+  const panelSnapshot = await page.evaluate((id) => {
+    const panel = document.querySelector(".generalPanel");
+    const text = panel?.textContent || "";
+    const mapLink = [...document.querySelectorAll(".generalPanel a")].find((link) => (link.textContent || "").includes("入舆图页"));
+    const archiveLink = [...document.querySelectorAll(".generalPanel a")].find((link) => (link.textContent || "").includes("查史册"));
+    const buttons = [...document.querySelectorAll(".generalPanel button")].map((button) => ({
+      text: (button.textContent || "").trim(),
+      disabled: button.disabled
+    }));
+    const computedBackground = panel
+      ? `${panel.getAttribute("data-role-background") || ""} ${getComputedStyle(panel).getPropertyValue("--scholar-panel-bg")}`
+      : "";
+    return {
+      text,
+      metricCount: panel?.querySelectorAll(".scholarPanelMetrics li").length || 0,
+      hasCommand: text.includes("军帐总览"),
+      hasSupply: text.includes("粮饷与军心"),
+      hasScouts: text.includes("斥候与情报"),
+      hasFrontier: text.includes("边患与舆图"),
+      hasReports: text.includes("战报与边议"),
+      hasBoundary: text.includes("战役胜负、调兵遣将、外交和战、统帅任免、粮饷拨付、赏罚与持久化都由服务器裁决"),
+      buttons,
+      background: computedBackground,
+      mapPath: mapLink ? new URL(mapLink.href).pathname : "",
+      archivePath: archiveLink ? new URL(archiveLink.href).pathname : "",
+      expectedMapPath: `/game/${id}/map`,
+      expectedArchivePath: `/game/${id}/archive`,
+      path: window.location.pathname,
+      expectedPath: `/game/${id}`,
+      forbiddenText: (document.body.innerText || "").match(/\/api\/game\/state|\/api\/dev\/session-diagnostics|provider payload|raw audit|hiddenNotes|OPENAI_API_KEY|data\/sessions|完整提示词|本地路径|密钥|sk-[a-z0-9_-]{6,}|[a-z]:[\\/]/gi) || []
+    };
+  }, sessionId);
+
+  const failures = [];
+  if (panelSnapshot.path !== panelSnapshot.expectedPath) failures.push(`path was ${panelSnapshot.path}`);
+  if (!panelSnapshot.hasCommand) failures.push("missing command block");
+  if (!panelSnapshot.hasSupply) failures.push("missing supply block");
+  if (!panelSnapshot.hasScouts) failures.push("missing scout block");
+  if (!panelSnapshot.hasFrontier) failures.push("missing frontier map block");
+  if (!panelSnapshot.hasReports) failures.push("missing war report block");
+  if (!panelSnapshot.hasBoundary) failures.push("missing server military boundary");
+  if (panelSnapshot.metricCount < 4) failures.push(`expected military metrics, saw ${panelSnapshot.metricCount}`);
+  if (!panelSnapshot.buttons.some((button) => button.text === "遣出斥候" && !button.disabled)) failures.push("scout draft button missing or disabled");
+  if (!panelSnapshot.buttons.some((button) => button.text === "草拟战报" && !button.disabled)) failures.push("war report draft button missing or disabled");
+  if (panelSnapshot.mapPath !== panelSnapshot.expectedMapPath) failures.push(`map link was ${panelSnapshot.mapPath}`);
+  if (panelSnapshot.archivePath !== panelSnapshot.expectedArchivePath) failures.push(`archive link was ${panelSnapshot.archivePath}`);
+  if (!panelSnapshot.background.includes("/assets/ui/")) failures.push("role background asset was not applied through the manifest registry");
+  if (panelSnapshot.forbiddenText.length) failures.push(`unsafe text leaked: ${panelSnapshot.forbiddenText.join(", ")}`);
+  if (failures.length) {
+    throw new Error(`S76.5 general panel smoke failed: ${failures.join("; ")}`);
+  }
+
+  const turnRequests = [];
+  const onRequest = (request) => {
+    try {
+      const url = new URL(request.url());
+      if (url.pathname === "/api/game/turn" && request.method() === "POST") {
+        turnRequests.push(url.pathname);
+      }
+    } catch {
+    }
+  };
+  page.on("request", onRequest);
+  await page.getByRole("button", { name: "遣出斥候" }).click();
+  await page.waitForFunction(() => {
+    const value = document.querySelector("textarea")?.value || "";
+    return value.includes("遣斥候") && value.includes("不自行判定隐藏军情");
+  }, null, { timeout: 10000 });
+  await page.waitForTimeout(250);
+  page.off("request", onRequest);
+  if (turnRequests.length) {
+    throw new Error(`S76.5 general draft button submitted a turn instead of writing a draft: ${turnRequests.join(", ")}`);
+  }
+
+  const draft = await page.getByLabel("本回合行动").inputValue();
+  if (!draft.includes("遣斥候")) {
+    throw new Error(`S76.5 general draft did not enter the memorial composer: ${draft}`);
+  }
+  await page.getByLabel("本回合行动").fill("");
+
+  return captureScreenshot(page, screenshotsDir, "s76-general-panel-desktop");
+}
+
 async function assertReturnHomeContinueAndTurn(page, sessionId, screenshotsDir) {
   const gamePath = `/game/${sessionId}`;
 
@@ -937,6 +1030,8 @@ async function runClientSmoke(options = {}) {
     screenshots.push(await assertMagistratePanel(page, magistrateSessionId, options.screenshotsDir));
     const officialSessionId = await startMockOfficialThroughHome(page, baseUrl);
     screenshots.push(await assertOfficialMinisterPanel(page, officialSessionId, options.screenshotsDir));
+    const generalSessionId = await startMockGeneralThroughHome(page, baseUrl);
+    screenshots.push(await assertGeneralPanel(page, generalSessionId, options.screenshotsDir));
 
     const health = await page.evaluate(async () => {
       const response = await fetch("/api/health");
@@ -1008,6 +1103,7 @@ async function runClientSmoke(options = {}) {
         "desktop-settings-refresh",
         "desktop-magistrate-panel",
         "desktop-official-minister-panel",
+        "desktop-general-panel",
         "mobile-memorial-composer",
         "mobile-inkbox-tabs",
         "mobile-home"

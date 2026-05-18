@@ -834,6 +834,161 @@ describe("S74.1 React client shell", () => {
     expect(document.body.textContent || "").not.toMatch(/provider payload|sk-test-secret|prompt|raw audit|path=|C:\\|data\/sessions|OPENAI_API_KEY/i);
   });
 
+  it("renders the S76.5 general panel from safe military views as draft-only actions", async () => {
+    const sessionId = "42345678-1111-4111-8111-111111111111";
+    const fetchMock = vi.fn(async (url: string) => {
+      if (url === "/assets/ui/ink-ui-manifest.json") {
+        return new Response(JSON.stringify({
+          ...buildMockAssetManifest(0),
+          assets: [
+            {
+              id: "ui-role-general-frontier-tent-v1",
+              category: "role_background",
+              usage: ["game_main"],
+              role: "general",
+              path: "/assets/ui/roles/role-general-frontier-tent-v1.webp",
+              thumbnailPath: "/assets/ui/thumbs/thumb-role-general-frontier-tent-v1.webp",
+              fallbackRef: "fallback-paper-panel-v1",
+              reviewStatus: "approved",
+              visualReview: { status: "approved" },
+              safetyReview: { status: "approved" }
+            }
+          ]
+        }), {
+          status: 200,
+          headers: { "Content-Type": "application/json" }
+        });
+      }
+      if (url === `/api/game/player-state/${sessionId}`) {
+        return new Response(JSON.stringify({
+          source: "server_player_visible_state_projection",
+          sessionId,
+          worldState: { player: { name: "赵都督", role: "general", officeTitle: "辽东总兵" } },
+          militaryDiplomacyView: {
+            schemaVersion: 1,
+            dateLabel: "明1644年正月下旬",
+            counts: { theaters: 1, garrisons: 1, supplyLines: 1, diplomaticContacts: 1, frontierIncidents: 1 },
+            commandSummary: {
+              officeTitle: "辽东总兵",
+              theater: "山海关军帐",
+              publicSummary: "边镇军务只读公开投影，战役与调兵仍由服务器裁决。"
+            },
+            supplySummary: {
+              grainScore: 54,
+              payScore: 47,
+              routeSecurity: 42,
+              moraleScore: 59,
+              publicSummary: "粮道吃紧，军心尚稳。"
+            },
+            theaters: [{
+              id: "theater-1",
+              title: "山海关边防战区",
+              statusLabel: "吃紧",
+              threatScore: 78,
+              publicSummary: "关外斥候见敌骑游弋，只作公开警讯。"
+            }],
+            garrisons: [{
+              id: "garrison-1",
+              title: "宁远驻军",
+              statusLabel: "留察",
+              readinessScore: 61,
+              publicSummary: "兵额可守，器械待修。"
+            }],
+            supplyLines: [{
+              id: "supply-1",
+              title: "辽西粮道",
+              statusLabel: "急报",
+              supplyRisk: 70,
+              publicSummary: "转运受阻，须核仓储。"
+            }],
+            diplomaticContacts: [{
+              id: "envoy-1",
+              title: "边外使节试探",
+              statusLabel: "留察",
+              diplomaticTension: 64,
+              publicSummary: "互市与边议只作公开摘录。"
+            }],
+            frontierIncidents: [{
+              id: "incident-1",
+              kind: "scout",
+              title: "关口斥候急报",
+              statusLabel: "急报",
+              threatScore: 82,
+              publicSummary: "斥候回报敌骑近关，不判定隐藏军情。"
+            }, {
+              id: "bad-incident",
+              title: "provider payload sk-test-secret",
+              publicSummary: "path=C:\\secret\\war.json"
+            }]
+          },
+          officialPostingsView: {
+            postings: [{
+              id: "posting-player-current",
+              holderType: "player",
+              officeTitle: "辽东总兵",
+              cityName: "山海关",
+              publicSummary: "统兵驻关。"
+            }]
+          },
+          mapRuntimeView: {
+            refs: [{ sourceRef: "frontier-1", label: "山海关", summary: "边镇节点" }],
+            routes: [{ sourceRef: "route-1", label: "辽西粮道", summary: "军需路线" }],
+            eventEffects: [{ targetRef: "frontier-1", label: "边患预警", kind: "border", severity: 72, summary: "公开舆图警势。" }]
+          },
+          eventArchiveView: {
+            events: [{
+              id: "archive-1",
+              kind: "military_diplomacy",
+              title: "山海关塘报",
+              publicSummary: "旧战报可查，不作胜负事实。"
+            }]
+          },
+          actorMemoryView: {
+            recentUpdates: [{ id: "memory-1", title: "副将来报", summary: "请先核军心。" }]
+          }
+        }), {
+          status: 200,
+          headers: { "Content-Type": "application/json" }
+        });
+      }
+      if (url === `/api/ai/quick-actions/${sessionId}`) {
+        return new Response(JSON.stringify({
+          schemaVersion: "s75.9-quick-actions.v1",
+          sessionId,
+          source: "mock-ai",
+          status: "ready",
+          quickActionSuggestions: []
+        }), {
+          status: 200,
+          headers: { "Content-Type": "application/json" }
+        });
+      }
+      throw new Error(`unexpected url: ${url}`);
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    renderRoute(`/game/${sessionId}`);
+
+    await screen.findByRole("heading", { name: "将领军务" });
+    expect(screen.getByText("军帐总览")).toBeTruthy();
+    expect(screen.getByText("粮饷与军心")).toBeTruthy();
+    expect(screen.getByText("斥候与情报")).toBeTruthy();
+    expect(screen.getByText("边患与舆图")).toBeTruthy();
+    expect(screen.getByText("战报与边议")).toBeTruthy();
+    expect(screen.getByRole("link", { name: "入舆图页" }).getAttribute("href")).toBe(`/game/${sessionId}/map`);
+    expect(screen.getByRole("link", { name: "查史册" }).getAttribute("href")).toBe(`/game/${sessionId}/archive`);
+    expect(screen.getByText("战役胜负、调兵遣将、外交和战、统帅任免、粮饷拨付、赏罚与持久化都由服务器裁决。")).toBeTruthy();
+
+    fireEvent.click(screen.getByRole("button", { name: "遣出斥候" }));
+    expect(useUiStateStore.getState().actionDraft).toMatchObject({
+      source: "role-surface",
+      targetPage: "game",
+      text: "遣斥候分赴关隘、驿路与敌营外缘，回报公开线索，不自行判定隐藏军情。"
+    });
+    expect(fetchMock.mock.calls.filter(([url]) => url === "/api/game/turn")).toHaveLength(0);
+    expect(document.body.textContent || "").not.toMatch(/provider payload|sk-test-secret|prompt|raw audit|path=|C:\\|data\/sessions|OPENAI_API_KEY/i);
+  });
+
   it("tracks route-derived UI page state and closes safe drawers with Esc while restoring focus", async () => {
     renderRoute("/game/smoke-session/map");
 

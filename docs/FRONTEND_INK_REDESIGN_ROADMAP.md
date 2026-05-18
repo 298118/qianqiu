@@ -959,6 +959,8 @@ Manifest 示例：
 
 ### S76.5 将领面板
 
+状态：已完成。S76.5 已新增 React `GeneralPanel`，在将领身份主卷接入已审核边塞军帐 `role_background`、安全 `militaryDiplomacyView`、`officialPostingsView`、`mapRuntimeView`、`eventArchiveView`、`actorMemoryView` 和玩家公开摘要，展示军帐总览、粮饷与军心、斥候与情报、边患与舆图、战报与边议和军令边界。所有按钮只写底部奏折草稿，战役胜负、调兵遣将、外交和战、统帅任免、粮饷拨付、赏罚、时间推进和持久化继续由服务器裁决。
+
 实现功能：
 
 - 军帐/边塞背景。

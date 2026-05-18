@@ -2,6 +2,7 @@ import { NavLink, Outlet, useParams } from "react-router";
 import { BookOpen, FileText, Landmark, Map, ScrollText, Settings, Users } from "lucide-react";
 import { useEffect, useMemo, type CSSProperties } from "react";
 import { useAssetRegistry } from "../assets/useAssetRegistry";
+import { GeneralPanel } from "../components/GeneralPanel";
 import { MagistratePanel } from "../components/MagistratePanel";
 import { MemorialComposer } from "../components/MemorialComposer";
 import { OfficialMinisterPanel } from "../components/OfficialMinisterPanel";
@@ -292,6 +293,21 @@ export function GamePage() {
           aiControlAuditView={session?.aiControlAuditView ?? null}
           roleBackgroundPath={roleBackgroundAsset?.path}
           courtHref={sessionHref(routeCatalog.find((entry) => entry.id === "court")?.href ?? "/game/s74-preview/court")}
+          runnable={runnable}
+          onDraft={(text) => setActionDraft({ source: "role-surface", targetPage: "game", text })}
+        />
+      ) : null}
+      {player?.role === "general" ? (
+        <GeneralPanel
+          player={player}
+          militaryDiplomacyView={session?.militaryDiplomacyView ?? null}
+          officialPostingsView={session?.officialPostingsView ?? null}
+          mapRuntimeView={session?.mapRuntimeView ?? null}
+          eventArchiveView={session?.eventArchiveView ?? null}
+          actorMemoryView={session?.actorMemoryView ?? null}
+          roleBackgroundPath={roleBackgroundAsset?.path}
+          mapHref={sessionHref(routeCatalog.find((entry) => entry.id === "map")?.href ?? "/game/s74-preview/map")}
+          archiveHref={sessionHref(routeCatalog.find((entry) => entry.id === "archive")?.href ?? "/game/s74-preview/archive")}
           runnable={runnable}
           onDraft={(text) => setActionDraft({ source: "role-surface", targetPage: "game", text })}
         />
