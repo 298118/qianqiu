@@ -10,6 +10,7 @@ import type {
   ExamSubmitResponse,
   GameRole,
   PlayerStateResponse,
+  QuickActionResponse,
   SaveMetadata,
   StartGameResponse,
   TurnResponse
@@ -32,6 +33,7 @@ type GameSessionState = {
   readonly status: LoadingState;
   readonly savesStatus: LoadingState;
   readonly settingsStatus: LoadingState;
+  readonly quickActionStatus: LoadingState;
   readonly currentSessionId: string | null;
   readonly currentSession: PlayerStateResponse | StartGameResponse | TurnResponse | ExamSubmitResponse | null;
   readonly lastTurn: TurnResponse | null;
@@ -40,6 +42,7 @@ type GameSessionState = {
   readonly saves: SaveMetadata[];
   readonly aiSettings: AiSettingsResponse | null;
   readonly aiConnection: AiConnectionTestResponse | null;
+  readonly quickActions: QuickActionResponse | null;
   readonly error: string | null;
   readonly refreshSaves: () => Promise<void>;
   readonly startNewGame: (input: StartGameInput) => Promise<StartGameResponse>;
@@ -50,7 +53,9 @@ type GameSessionState = {
   readonly submitExam: (sessionId: string, examId: string, essay: string) => Promise<ExamSubmitResponse>;
   readonly loadAiSettings: (sessionId: string) => Promise<AiSettingsResponse>;
   readonly updateAiPreset: (sessionId: string, preset: string) => Promise<AiSettingsResponse>;
+  readonly updateAiTaskRoute: (sessionId: string, taskType: string, routePatch: Record<string, string | number>) => Promise<AiSettingsResponse>;
   readonly testAiConnection: (provider?: string) => Promise<AiConnectionTestResponse>;
+  readonly refreshQuickActions: (sessionId: string, input?: { readonly page?: string; readonly draftPreview?: string; readonly count?: number }) => Promise<QuickActionResponse>;
 };
 
 function toErrorMessage(error: unknown) {
@@ -61,6 +66,7 @@ export const useGameSessionStore = create<GameSessionState>((set) => ({
   status: "idle",
   savesStatus: "idle",
   settingsStatus: "idle",
+  quickActionStatus: "idle",
   currentSessionId: null,
   currentSession: null,
   lastTurn: null,
@@ -69,6 +75,7 @@ export const useGameSessionStore = create<GameSessionState>((set) => ({
   saves: [],
   aiSettings: null,
   aiConnection: null,
+  quickActions: null,
   error: null,
 
   async refreshSaves() {
@@ -91,6 +98,8 @@ export const useGameSessionStore = create<GameSessionState>((set) => ({
         lastTurn: null,
         activeExam: null,
         lastExamResult: null,
+        quickActions: null,
+        quickActionStatus: "idle",
         status: "ready"
       });
       useUiStateStore.getState().syncSessionPayload(payload, "start");
@@ -111,6 +120,8 @@ export const useGameSessionStore = create<GameSessionState>((set) => ({
         currentSession: payload,
         activeExam: null,
         lastExamResult: null,
+        quickActions: null,
+        quickActionStatus: "idle",
         status: "ready"
       });
       useUiStateStore.getState().syncSessionPayload(payload, "player-state");
@@ -130,6 +141,8 @@ export const useGameSessionStore = create<GameSessionState>((set) => ({
         currentSession: payload,
         lastTurn: payload,
         activeExam: null,
+        quickActions: null,
+        quickActionStatus: "idle",
         status: "ready"
       });
       useUiStateStore.getState().syncSessionPayload(payload, "turn");
@@ -174,6 +187,8 @@ export const useGameSessionStore = create<GameSessionState>((set) => ({
         lastExamResult: payload,
         currentSessionId: payload.sessionId,
         currentSession: payload,
+        quickActions: null,
+        quickActionStatus: "idle",
         status: "ready"
       });
       useUiStateStore.getState().syncSessionPayload(payload, "exam-submit");
@@ -208,6 +223,24 @@ export const useGameSessionStore = create<GameSessionState>((set) => ({
     }
   },
 
+  async updateAiTaskRoute(sessionId, taskType, routePatch) {
+    set({ settingsStatus: "loading", error: null });
+    try {
+      const payload = await qianqiuApi.updateAiSettings(sessionId, {
+        settings: {
+          taskRoutes: {
+            [taskType]: routePatch
+          }
+        }
+      });
+      set({ aiSettings: payload, settingsStatus: "ready" });
+      return payload;
+    } catch (error) {
+      set({ error: toErrorMessage(error), settingsStatus: "error" });
+      throw error;
+    }
+  },
+
   async testAiConnection(provider) {
     set({ settingsStatus: "loading", error: null });
     try {
@@ -216,6 +249,22 @@ export const useGameSessionStore = create<GameSessionState>((set) => ({
       return payload;
     } catch (error) {
       set({ error: toErrorMessage(error), settingsStatus: "error" });
+      throw error;
+    }
+  },
+
+  async refreshQuickActions(sessionId, input = {}) {
+    set({ quickActionStatus: "loading" });
+    try {
+      const payload = await qianqiuApi.requestQuickActions(sessionId, {
+        page: input.page || "game",
+        draftPreview: input.draftPreview?.slice(0, 80),
+        count: input.count ?? 3
+      });
+      set({ quickActions: payload, quickActionStatus: payload.status === "fallback" ? "error" : "ready" });
+      return payload;
+    } catch (error) {
+      set({ quickActionStatus: "error" });
       throw error;
     }
   }

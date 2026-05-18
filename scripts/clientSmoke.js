@@ -232,10 +232,10 @@ async function assertReturnHomeContinueAndTurn(page, sessionId, screenshotsDir) 
 
   await page.getByRole("link", { name: "继续本局" }).click();
   await page.waitForURL((url) => url.pathname === gamePath, { timeout: 10000 });
-  await page.getByRole("button", { name: /研读 local-rule 写入草稿/ }).click();
+  await page.getByRole("button", { name: /温书 mock-ai 写入草稿/ }).click();
   const quickDraft = await page.getByLabel("本回合行动").inputValue();
-  if (!quickDraft.includes("研读经义")) {
-    throw new Error(`S75.8 quick action did not write a local-rule draft: ${quickDraft}`);
+  if (!quickDraft.includes("温习经义")) {
+    throw new Error(`S75.9 quick action did not write a mock-ai draft: ${quickDraft}`);
   }
   const turnResponse = page.waitForResponse((response) => {
     try {
@@ -248,16 +248,17 @@ async function assertReturnHomeContinueAndTurn(page, sessionId, screenshotsDir) 
   await page.getByLabel("本回合行动").press("Enter");
   await turnResponse;
   await page.getByRole("button", { name: "呈上" }).waitFor({ timeout: 20000 });
+  await page.waitForFunction(() => !(document.querySelector("textarea")?.value || "").trim(), null, { timeout: 10000 });
   const continuedState = await page.evaluate(() => ({
     actionText: document.querySelector("textarea")?.value || "",
-    localRuleMarker: document.querySelector("[data-source='local-rule']")?.textContent || "",
+    quickActionSource: document.querySelector("[data-source='mock-ai'], [data-source='local-rule']")?.getAttribute("data-source") || "",
     forbiddenText: (document.body.innerText || "").match(/\/api\/game\/state|\/api\/dev\/session-diagnostics|provider\b|prompt\b|hidden\b|key\b|path\b|[a-z]:[\\/]|file:\/{2}|raw audit|hiddenNotes|OPENAI_API_KEY|data\/sessions/gi) || []
   }));
-  if (continuedState.actionText.includes("研读经义")) {
+  if (continuedState.actionText.includes("温习经义")) {
     throw new Error(`Action draft was not cleared after continued-session turn: ${JSON.stringify(continuedState)}`);
   }
-  if (!continuedState.localRuleMarker.includes("local-rule")) {
-    throw new Error(`S75.8 quick action source marker was not visible: ${JSON.stringify(continuedState)}`);
+  if (!/mock-ai|local-rule/.test(continuedState.quickActionSource)) {
+    throw new Error(`S75.9 quick action source marker was not visible: ${JSON.stringify(continuedState)}`);
   }
   if (continuedState.forbiddenText.length) {
     throw new Error(`Continued-session turn leaked forbidden text: ${continuedState.forbiddenText.join(", ")}`);

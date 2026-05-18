@@ -10,6 +10,8 @@ import type {
   ExamSubmitResponse,
   JsonObject,
   PlayerStateResponse,
+  QuickActionRequest,
+  QuickActionResponse,
   SafeApiErrorPayload,
   SavesResponse,
   StartGameRequest,
@@ -41,7 +43,8 @@ const allowedSafeEndpointPatterns = Object.freeze([
   /^\/api\/exam\/progress$/,
   /^\/api\/exam\/submit$/,
   /^\/api\/ai\/connection-test$/,
-  /^\/api\/ai\/settings\/[^/?#]+$/
+  /^\/api\/ai\/settings\/[^/?#]+$/,
+  /^\/api\/ai\/quick-actions\/[^/?#]+$/
 ]);
 
 export class QianqiuApiError extends Error {
@@ -145,6 +148,14 @@ export const qianqiuApi = {
 
   submitTurn(input: TurnRequest, signal?: AbortSignal) {
     return requestJson<TurnResponse>("/api/game/turn", {
+      method: "POST",
+      body: input as unknown as JsonObject,
+      signal
+    });
+  },
+
+  requestQuickActions(sessionId: string, input: QuickActionRequest, signal?: AbortSignal) {
+    return requestJson<QuickActionResponse>(`/api/ai/quick-actions/${encodePathSegment(sessionId)}`, {
       method: "POST",
       body: input as unknown as JsonObject,
       signal

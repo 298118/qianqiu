@@ -24,10 +24,12 @@ const MODEL_TASK_TYPES = Object.freeze([
   "safety_gate",
   "memory_summarizer",
   "monthly_briefing",
-  "time_skip_planner"
+  "time_skip_planner",
+  "quick_action"
 ]);
 
 const REVIEW_ONLY_TASK_TYPES = Object.freeze(["critic", "safety_gate"]);
+const TOOL_DISABLED_TASK_TYPES = Object.freeze(["critic", "safety_gate", "quick_action"]);
 
 const TASK_DEFAULTS = Object.freeze({
   narrator: {
@@ -110,6 +112,15 @@ const TASK_DEFAULTS = Object.freeze({
     mayUseTools: false,
     mayRequestAdjudication: false,
     reviewerOnly: false
+  },
+  quick_action: {
+    purpose: "根据玩家当前身份、公开情报和可用工具边界生成快捷行动草稿建议。",
+    temperature: 0.35,
+    maxOutputTokens: 900,
+    toolBudget: 0,
+    mayUseTools: false,
+    mayRequestAdjudication: false,
+    reviewerOnly: false
   }
 });
 
@@ -122,7 +133,8 @@ const ROUTE_ENV_KEYS = Object.freeze({
   safety_gate: ["AI_SAFETY_PROVIDER", "AI_SAFETY_MODEL"],
   memory_summarizer: ["AI_MEMORY_PROVIDER", "AI_MEMORY_MODEL"],
   monthly_briefing: ["AI_MONTHLY_BRIEFING_PROVIDER", "AI_MONTHLY_BRIEFING_MODEL"],
-  time_skip_planner: ["AI_TIME_SKIP_PROVIDER", "AI_TIME_SKIP_MODEL"]
+  time_skip_planner: ["AI_TIME_SKIP_PROVIDER", "AI_TIME_SKIP_MODEL"],
+  quick_action: ["AI_QUICK_ACTION_PROVIDER", "AI_QUICK_ACTION_MODEL"]
 });
 
 const PROVIDER_DEFAULT_MODELS = Object.freeze({
@@ -211,6 +223,7 @@ function buildRoute(taskType, env, options = {}) {
   const tokenEnv = `AI_${taskType.toUpperCase()}_MAX_OUTPUT_TOKENS`;
   const toolBudgetEnv = `AI_${taskType.toUpperCase()}_TOOL_BUDGET`;
   const timeoutEnv = `AI_${taskType.toUpperCase()}_TIMEOUT_MS`;
+  const toolDisabled = TOOL_DISABLED_TASK_TYPES.includes(taskType);
 
   return {
     taskType,
@@ -220,9 +233,9 @@ function buildRoute(taskType, env, options = {}) {
     temperature: defaults.temperature,
     maxOutputTokens: readPositiveInt(readEnv(env, tokenEnv, ""), defaults.maxOutputTokens, { min: 128, max: 16000 }),
     timeoutMs: readPositiveInt(readEnv(env, timeoutEnv, ""), options.timeoutMs || 30000, { min: 1000, max: 180000 }),
-    toolBudget: readPositiveInt(readEnv(env, toolBudgetEnv, ""), defaults.toolBudget, { min: 0, max: 20 }),
-    mayUseTools: Boolean(defaults.mayUseTools),
-    mayRequestAdjudication: Boolean(defaults.mayRequestAdjudication),
+    toolBudget: toolDisabled ? 0 : readPositiveInt(readEnv(env, toolBudgetEnv, ""), defaults.toolBudget, { min: 0, max: 20 }),
+    mayUseTools: toolDisabled ? false : Boolean(defaults.mayUseTools),
+    mayRequestAdjudication: toolDisabled ? false : Boolean(defaults.mayRequestAdjudication),
     mayWriteState: false,
     mayCallServerResolvers: false,
     reviewerOnly: Boolean(defaults.reviewerOnly),
@@ -283,6 +296,10 @@ function validateRoute(taskType, route) {
     if (route.mayUseTools || route.toolBudget !== 0 || route.mayRequestAdjudication || !route.reviewerOnly) {
       throw new Error(`Review-only route ${taskType} cannot use tools or request adjudication.`);
     }
+  } else if (TOOL_DISABLED_TASK_TYPES.includes(taskType)) {
+    if (route.mayUseTools || route.toolBudget !== 0 || route.mayRequestAdjudication) {
+      throw new Error(`No-tool route ${taskType} cannot use tools or request adjudication.`);
+    }
   }
 }
 
@@ -337,6 +354,7 @@ function summarizeModelRoutePolicy(policy) {
 module.exports = {
   MODEL_TASK_TYPES,
   REVIEW_ONLY_TASK_TYPES,
+  TOOL_DISABLED_TASK_TYPES,
   SUPPORTED_PROVIDERS,
   buildDefaultModelRoutePolicy,
   normalizeProviderName,

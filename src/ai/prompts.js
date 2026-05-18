@@ -84,6 +84,25 @@ function compactRecentEvents(worldState = {}) {
     }));
 }
 
+function compactQuickActionContext(context = {}) {
+  return {
+    page: context.page || "game",
+    requestedCount: context.requestedCount || 3,
+    draftPreview: context.draftPreview || "",
+    player: context.player || {},
+    date: context.date || {},
+    routeViewFlags: context.routeViewFlags || {},
+    toolCapabilities: Array.isArray(context.toolCapabilities) ? context.toolCapabilities : [],
+    evidenceRefs: Array.isArray(context.evidenceRefs) ? context.evidenceRefs : [],
+    safety: {
+      draftOnly: true,
+      noStateWrites: true,
+      noToolExecution: true,
+      citeSuppliedEvidenceOnly: true
+    }
+  };
+}
+
 function compactWorldState(worldState = {}, options = {}) {
   return {
     year: worldState.year,
@@ -157,6 +176,24 @@ function buildTurnTask(worldState, input) {
   };
 }
 
+function buildQuickActionTask(quickActionContext = {}) {
+  return {
+    promptPack: "quick_action",
+    schemaName: "quickAction",
+    instructions: buildPromptInstructions("quick_action"),
+    input: [
+      "Generate draft-only quick action suggestions for the player.",
+      "The browser will only copy one suggestion into the action textarea; it will not submit or resolve it.",
+      "Use only the supplied redacted player summary, route flags, tool capabilities, and public evidence refs.",
+      "Do not mention provider, prompt, hidden, raw, local path, key, server resolver, or internal state.",
+      "If evidenceRefs is empty, return generic role-appropriate actions with empty evidenceRefs.",
+      "Quick action context:",
+      JSON.stringify(compactQuickActionContext(quickActionContext), null, 2)
+    ].join("\n"),
+    maxOutputTokens: 900
+  };
+}
+
 function buildExamQuestionTask(worldState, exam) {
   return {
     promptPack: "exam_question",
@@ -202,5 +239,6 @@ module.exports = {
   buildExamQuestionTask,
   buildGradeTask,
   buildOpeningTask,
+  buildQuickActionTask,
   buildTurnTask
 };

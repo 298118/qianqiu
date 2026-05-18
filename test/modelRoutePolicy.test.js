@@ -9,6 +9,7 @@ const {
   validateModelRoutePolicy
 } = require("../src/ai/modelRoutePolicy");
 const { getProviderForTask } = require("../src/ai");
+const { createMimoDeepSeekProvider } = require("../src/ai/providers/mimoDeepseek");
 const { createInitialState } = require("../src/game/initialState");
 
 function withEnv(overrides, fn) {
@@ -106,6 +107,63 @@ test("S70.8 mock provider remains fully local even when real keys exist", () => 
   assert.equal(resolveModelForTask("domain_specialist", policy).provider, "mock");
   assert.equal(resolveModelForTask("critic", policy).provider, "mock");
   assert.equal(resolveModelForTask("safety_gate", policy).provider, "mock");
+});
+
+test("S75.9 quick_action route honors env overrides while keeping tool budget locked", () => {
+  const policy = buildDefaultModelRoutePolicy({
+    AI_PROVIDER: "mimo",
+    AI_QUICK_ACTION_PROVIDER: "deepseek",
+    AI_QUICK_ACTION_MODEL: "deepseek-quick-scribe",
+    AI_QUICK_ACTION_MAX_OUTPUT_TOKENS: "777",
+    AI_QUICK_ACTION_TOOL_BUDGET: "9",
+    AI_QUICK_ACTION_TIMEOUT_MS: "4567",
+    DEEPSEEK_API_KEY: "test-key"
+  });
+  const route = resolveModelForTask("quick_action", policy);
+
+  assert.equal(route.provider, "deepseek");
+  assert.equal(route.model, "deepseek-quick-scribe");
+  assert.equal(route.maxOutputTokens, 777);
+  assert.equal(route.toolBudget, 0);
+  assert.equal(route.timeoutMs, 4567);
+  assert.equal(route.mayUseTools, false);
+  assert.equal(route.mayRequestAdjudication, false);
+  assert.equal(route.mayWriteState, false);
+  assert.equal(route.mayCallServerResolvers, false);
+  assert.equal(route.reviewerOnly, false);
+});
+
+test("S75.9 mimo-deepseek provider routes quick actions through MiMo side", async () => {
+  const calls = [];
+  const provider = createMimoDeepSeekProvider({
+    mimoProvider: {
+      supportsStreaming: false,
+      suggestQuickActions: async (context) => {
+        calls.push(["mimo-quick", context.player?.role]);
+        return {
+          quickActionSuggestions: [{
+            source: "provider-ai",
+            title: "温书",
+            label: "温书",
+            text: "温习经义并整理一页策论提纲，准备下一步请教师友。",
+            roleTags: ["scholar", "study"],
+            toolIntent: "study",
+            evidenceRefs: []
+          }]
+        };
+      }
+    },
+    deepSeekProvider: {
+      gradeExamEssay: async () => {
+        calls.push(["deepseek-grade"]);
+        return { overallScore: 80 };
+      }
+    }
+  });
+
+  const payload = await provider.suggestQuickActions({ player: { role: "scholar" } });
+  assert.equal(payload.quickActionSuggestions[0].title, "温书");
+  assert.deepEqual(calls, [["mimo-quick", "scholar"]]);
 });
 
 test("S70.8 policy validation keeps critic and safety review-only", () => {

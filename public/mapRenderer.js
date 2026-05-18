@@ -374,7 +374,13 @@
     onResize() {
       if (this._resizeDebounce) clearTimeout(this._resizeDebounce);
       this._resizeDebounce = setTimeout(() => {
-        this.app.resize();
+        if (typeof this.app.resize === "function") {
+          this.app.resize();
+        } else if (this.app.renderer && typeof this.app.renderer.resize === "function") {
+          const width = Math.max(1, Math.round(this.container.clientWidth || this.container.offsetWidth || 1));
+          const height = Math.max(1, Math.round(this.container.clientHeight || this.container.offsetHeight || 1));
+          this.app.renderer.resize(width, height);
+        }
         if (this.options.onNeedsUpdate) {
           this.options.onNeedsUpdate();
         }
@@ -382,6 +388,10 @@
     }
 
     destroy() {
+      if (this._resizeDebounce) {
+        clearTimeout(this._resizeDebounce);
+        this._resizeDebounce = null;
+      }
       this.resizeObserver.disconnect();
       if (this.intersectionObserver) {
         this.intersectionObserver.disconnect();

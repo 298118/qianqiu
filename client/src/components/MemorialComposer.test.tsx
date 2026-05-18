@@ -16,13 +16,13 @@ const defaultProps = {
   onSubmit: vi.fn()
 };
 
-describe("S75.8 MemorialComposer", () => {
+describe("S75.9 MemorialComposer", () => {
   afterEach(() => {
     cleanup();
     vi.clearAllMocks();
   });
 
-  it("builds only deterministic local-rule quick actions by role", () => {
+  it("falls back to deterministic local-rule quick actions by role", () => {
     expect(getMemorialPlaceholder("emperor")).toBe("宣旨、朱批、召见群臣...");
     expect(getMemorialPlaceholder("scholar")).toBe("研读、作文、拜师、赴考...");
     expect(getMemorialPlaceholder("general")).toBe("遣将、巡营、上战报...");
@@ -34,6 +34,84 @@ describe("S75.8 MemorialComposer", () => {
     expect(suggestions.every((suggestion) => suggestion.source === "local-rule")).toBe(true);
     expect(suggestions.map((suggestion) => suggestion.label)).toEqual(["研读", "作文", "赴考"]);
     expect(JSON.stringify(suggestions)).not.toMatch(/provider|prompt|raw|hidden|data\/sessions|OPENAI_API_KEY/i);
+
+    const mapSuggestions = buildQuickActionSuggestions({
+      role: "scholar",
+      routeViews: {
+        hasAiSettingsView: false,
+        hasAuditSummaryView: false,
+        hasEventArchiveView: false,
+        hasExamCalendarView: false,
+        hasInformationPanelView: false,
+        hasMapRuntimeView: true
+      }
+    });
+    expect(mapSuggestions[1].source).toBe("map-runtime");
+    expect(mapSuggestions[1].label).toBe("先看舆图");
+
+    const surfaceSuggestions = buildQuickActionSuggestions({ role: "official", page: "archive" });
+    expect(surfaceSuggestions[0].source).toBe("surface");
+    expect(surfaceSuggestions[0].label).toBe("拟草稿");
+  });
+
+  it("renders AI quick action statuses and refresh controls", () => {
+    const onRefreshQuickActions = vi.fn();
+    const aiSuggestion = {
+      id: "mock-study",
+      source: "mock-ai" as const,
+      sourceLabel: "mock-ai",
+      title: "温书",
+      label: "温书",
+      text: "温习经义，择一篇旧文重加点窜。",
+      roleTags: ["scholar"],
+      toolIntent: "study",
+      evidenceRefs: []
+    };
+
+    const { rerender } = render(
+      <MemorialComposer
+        {...defaultProps}
+        aiSuggestions={[aiSuggestion]}
+        quickActionStatus="ready"
+        onRefreshQuickActions={onRefreshQuickActions}
+      />
+    );
+
+    const aiButton = screen.getByRole("button", { name: /温书 mock-ai 写入草稿/ });
+    expect(aiButton.getAttribute("data-source")).toBe("mock-ai");
+    fireEvent.click(screen.getByRole("button", { name: "刷新快捷建议" }));
+    expect(onRefreshQuickActions).toHaveBeenCalledTimes(1);
+
+    rerender(
+      <MemorialComposer
+        {...defaultProps}
+        aiSuggestions={[{ ...aiSuggestion, id: "provider-study", source: "provider-ai", sourceLabel: "provider-ai" }]}
+        quickActionStatus="loading"
+        onRefreshQuickActions={onRefreshQuickActions}
+      />
+    );
+    expect(screen.getByRole("button", { name: "快捷建议生成中" })).toHaveProperty("disabled", true);
+    expect(screen.getByRole("button", { name: /温书 provider-ai 旧建议/ }).getAttribute("data-state")).toBe("stale");
+
+    rerender(
+      <MemorialComposer
+        {...defaultProps}
+        aiSuggestions={null}
+        quickActionStatus="error"
+        onRefreshQuickActions={onRefreshQuickActions}
+      />
+    );
+    expect(screen.getByRole("button", { name: /研读 local-rule 降级建议/ }).getAttribute("data-state")).toBe("failed");
+
+    rerender(
+      <MemorialComposer
+        {...defaultProps}
+        aiSuggestions={[{ ...aiSuggestion, id: "fallback-study", source: "local-rule" as const, sourceLabel: "local-rule" }]}
+        quickActionStatus="error"
+        onRefreshQuickActions={onRefreshQuickActions}
+      />
+    );
+    expect(screen.getByRole("button", { name: /温书 local-rule 降级建议/ }).getAttribute("data-state")).toBe("failed");
   });
 
   it("writes quick actions to a draft callback without submitting a turn", () => {

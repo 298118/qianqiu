@@ -62,7 +62,8 @@ const AI_TASK_LABELS = Object.freeze({
   safety_gate: "安全门",
   memory_summarizer: "记忆提要",
   monthly_briefing: "月报",
-  time_skip_planner: "跳时"
+  time_skip_planner: "跳时",
+  quick_action: "快捷建议"
 });
 
 const AI_SAFETY_STRICTNESS = Object.freeze(["standard", "strict", "maximum"]);

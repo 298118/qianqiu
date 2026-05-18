@@ -8,6 +8,7 @@ const {
   buildExamQuestionTask,
   buildGradeTask,
   buildOpeningTask,
+  buildQuickActionTask,
   buildTurnTask
 } = require("../src/ai/prompts");
 const {
@@ -40,9 +41,31 @@ test("S41 prompt pack registry covers fourth-phase pack names", () => {
       "minister_faction",
       "official_career",
       "opening",
+      "quick_action",
       "world_turn"
     ].sort()
   );
+});
+
+test("S75.9 quick action prompt is draft-only and hidden-safe", () => {
+  const task = buildQuickActionTask({
+    schemaVersion: "s75.9-quick-actions.v1",
+    page: "game",
+    requestedCount: 3,
+    draftPreview: "",
+    player: { name: "顾澄", role: "scholar", examRank: "童生" },
+    routeViewFlags: { hasPublicEvidence: false, hasExamContext: true },
+    toolCapabilities: [{ group: "exam", toolIntent: "exam", boundary: "只可生成行动草稿；工具执行由服务器处理。" }],
+    evidenceRefs: []
+  });
+
+  assert.equal(task.promptPack, "quick_action");
+  assert.equal(task.schemaName, "quickAction");
+  assert.match(task.instructions, /Prompt pack: quick_action/);
+  assert.match(task.instructions, /May propose draft text only/);
+  assert.doesNotMatch(task.instructions, /Allowed top-level patch keys/);
+  assert.match(task.input, /The browser will only copy one suggestion into the action textarea/);
+  assert.doesNotMatch(task.input, /statePatch|canonical state/);
 });
 
 test("turn prompt selects role-specific prompt packs", () => {

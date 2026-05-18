@@ -191,8 +191,13 @@ function AiSettingsPanel() {
   const currentSessionId = useUiStateStore((state) => state.currentSessionId);
   const [preset, setPreset] = useState("balanced");
   const [provider, setProvider] = useState("mock");
+  const [quickProvider, setQuickProvider] = useState("mock");
+  const [quickModel, setQuickModel] = useState("mock");
+  const [quickTokens, setQuickTokens] = useState(900);
+  const [quickTemperature, setQuickTemperature] = useState(0.35);
   const loadAiSettings = useGameSessionStore((state) => state.loadAiSettings);
   const updateAiPreset = useGameSessionStore((state) => state.updateAiPreset);
+  const updateAiTaskRoute = useGameSessionStore((state) => state.updateAiTaskRoute);
   const testAiConnection = useGameSessionStore((state) => state.testAiConnection);
   const aiSettings = useGameSessionStore((state) => state.aiSettings);
   const aiConnection = useGameSessionStore((state) => state.aiConnection);
@@ -204,6 +209,12 @@ function AiSettingsPanel() {
     if (!canUseSessionSettings || !currentSessionId) return;
     void loadAiSettings(currentSessionId).then((payload) => {
       if (payload.aiSettingsView.preset) setPreset(String(payload.aiSettingsView.preset));
+      syncQuickActionRoute(payload.aiSettingsView, {
+        setQuickProvider,
+        setQuickModel,
+        setQuickTokens,
+        setQuickTemperature
+      });
     }).catch(() => undefined);
   }, [canUseSessionSettings, currentSessionId, loadAiSettings]);
 
@@ -220,6 +231,21 @@ function AiSettingsPanel() {
     event.preventDefault();
     try {
       await testAiConnection(provider);
+    } catch {
+    }
+  }
+
+  async function handleQuickActionRoute(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!currentSessionId || !canUseSessionSettings) return;
+    try {
+      await updateAiTaskRoute(currentSessionId, "quick_action", {
+        provider: quickProvider,
+        model: quickModel || "mock",
+        maxOutputTokens: quickTokens,
+        toolBudget: 0,
+        temperature: quickTemperature
+      });
     } catch {
     }
   }
@@ -256,12 +282,64 @@ function AiSettingsPanel() {
           试连
         </button>
       </form>
+      <form className="inlineForm quickActionSettings" onSubmit={handleQuickActionRoute}>
+        <label>
+          快捷建议 Provider
+          <select value={quickProvider} onChange={(event) => setQuickProvider(event.target.value)}>
+            <option value="mock">Mock</option>
+            <option value="openai">OpenAI</option>
+            <option value="deepseek">DeepSeek</option>
+            <option value="mimo">MiMo</option>
+            <option value="anthropic">Anthropic</option>
+          </select>
+        </label>
+        <label>
+          模型
+          <input value={quickModel} onChange={(event) => setQuickModel(event.target.value.slice(0, 96))} />
+        </label>
+        <label>
+          输出
+          <input type="number" min={128} max={16000} value={quickTokens} onChange={(event) => setQuickTokens(Number(event.target.value) || 900)} />
+        </label>
+        <label>
+          工具预算
+          <input type="number" value={0} disabled aria-label="快捷建议工具预算固定为零" />
+        </label>
+        <label>
+          温度
+          <input type="number" min={0} max={1} step={0.05} value={quickTemperature} onChange={(event) => setQuickTemperature(Number(event.target.value) || 0)} />
+        </label>
+        <button className="paperButton" type="submit" disabled={settingsStatus === "loading" || !canUseSessionSettings}>
+          保存快捷建议
+        </button>
+      </form>
       {aiSettings?.aiSettingsView.preset ? <p className="statusLine">当前策略：{aiSettings.aiSettingsView.preset}</p> : null}
+      {aiSettings?.aiSettingsView.taskRoutes ? <p className="statusLine">快捷建议：{quickProvider} / {quickModel || "mock"}</p> : null}
       {aiConnection ? <p className="statusLine">连接结果：{aiConnection.ok ? "可用" : "不可用"}</p> : null}
       {!canUseSessionSettings ? <p>预览案卷不保存 AI 设置；请先从首页新开一卷。</p> : null}
       {error ? <p className="statusLine" role="alert">{error}</p> : null}
     </div>
   );
+}
+
+function syncQuickActionRoute(
+  aiSettingsView: { readonly taskRoutes?: unknown },
+  setters: {
+    readonly setQuickProvider: (value: string) => void;
+    readonly setQuickModel: (value: string) => void;
+    readonly setQuickTokens: (value: number) => void;
+    readonly setQuickTemperature: (value: number) => void;
+  }
+) {
+  const routes = Array.isArray(aiSettingsView.taskRoutes) ? aiSettingsView.taskRoutes : [];
+  const quickRoute = routes.find((route): route is Record<string, unknown> => (
+    Boolean(route && typeof route === "object" && (route as Record<string, unknown>).taskType === "quick_action")
+  ));
+  if (!quickRoute) return;
+  if (typeof quickRoute.provider === "string") setters.setQuickProvider(quickRoute.provider);
+  if (typeof quickRoute.model === "string") setters.setQuickModel(quickRoute.model);
+  if (typeof quickRoute.maxOutputTokens === "number") setters.setQuickTokens(quickRoute.maxOutputTokens);
+  if (typeof quickRoute.temperature === "number") setters.setQuickTemperature(quickRoute.temperature);
 }
 
 function DisplayPreferencesPanel() {

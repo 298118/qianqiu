@@ -66,6 +66,38 @@ export type TurnResponse = SafeRouteViews & {
   readonly examScene?: JsonObject | null;
 };
 
+export type QuickActionSource = "local-rule" | "mock-ai" | "provider-ai" | "map-runtime" | "surface";
+
+export type QuickActionSuggestionPayload = {
+  readonly id: string;
+  readonly source: QuickActionSource;
+  readonly sourceLabel?: string;
+  readonly title: string;
+  readonly label: string;
+  readonly text: string;
+  readonly roleTags: readonly string[];
+  readonly toolIntent?: string;
+  readonly evidenceRefs?: readonly string[];
+  readonly status?: "ready" | "loading" | "failed" | "stale" | "applied";
+};
+
+export type QuickActionRequest = {
+  readonly page: string;
+  readonly draftPreview?: string;
+  readonly count?: number;
+};
+
+export type QuickActionResponse = {
+  readonly schemaVersion: string;
+  readonly sessionId: string;
+  readonly generatedAtTurn?: number;
+  readonly source: QuickActionSource;
+  readonly status: "ready" | "fallback";
+  readonly stale?: boolean;
+  readonly fallbackReason?: string;
+  readonly quickActionSuggestions: readonly QuickActionSuggestionPayload[];
+};
+
 export type SaveMetadata = {
   readonly sessionId: string;
   readonly playerName?: string;

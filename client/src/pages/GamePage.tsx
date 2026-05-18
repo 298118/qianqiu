@@ -12,9 +12,12 @@ export function GamePage() {
   const { sessionId = "s74-preview" } = useParams();
   const loadSession = useGameSessionStore((state) => state.loadSession);
   const submitTurn = useGameSessionStore((state) => state.submitTurn);
+  const refreshQuickActions = useGameSessionStore((state) => state.refreshQuickActions);
   const session = useGameSessionStore((state) => state.currentSession);
   const lastTurn = useGameSessionStore((state) => state.lastTurn);
   const status = useGameSessionStore((state) => state.status);
+  const quickActionStatus = useGameSessionStore((state) => state.quickActionStatus);
+  const quickActions = useGameSessionStore((state) => state.quickActions);
   const error = useGameSessionStore((state) => state.error);
   const actionDraft = useUiStateStore((state) => state.actionDraft);
   const setActionDraft = useUiStateStore((state) => state.setActionDraft);
@@ -28,6 +31,15 @@ export function GamePage() {
     if (!isRunnableSessionId(sessionId)) return;
     void loadSession(sessionId).catch(() => undefined);
   }, [loadSession, sessionId]);
+
+  useEffect(() => {
+    if (!runnable || !currentPlayerPayload?.sessionId || currentPlayerPayload.sessionId !== sessionId) return;
+    void refreshQuickActions(sessionId, {
+      page: "game",
+      draftPreview: actionDraft?.text.slice(0, 80) || "",
+      count: 3
+    }).catch(() => undefined);
+  }, [currentPlayerPayload?.sessionId, lastTurn, refreshQuickActions, runnable, sessionId]);
 
   async function handleTurn(text: string) {
     if (!text.trim() || !runnable) return;
@@ -67,11 +79,20 @@ export function GamePage() {
         actionDraft={actionDraft}
         player={currentPlayerPayload?.player ?? player}
         routeViews={currentPlayerPayload?.routeViews}
+        aiSuggestions={quickActions?.sessionId === sessionId ? quickActions.quickActionSuggestions : null}
+        quickActionStatus={quickActionStatus}
         runnable={runnable}
         loading={status === "loading"}
         onDraftChange={(text) => setActionDraft({ source: "manual", targetPage: "game", text })}
         onSuggestionDraft={(text) => setActionDraft({ source: "role-surface", targetPage: "game", text })}
         onClearDraft={clearActionDraft}
+        onRefreshQuickActions={() => {
+          void refreshQuickActions(sessionId, {
+            page: "game",
+            draftPreview: actionDraft?.text.slice(0, 80) || "",
+            count: 3
+          }).catch(() => undefined);
+        }}
         onSubmit={handleTurn}
       />
     </section>

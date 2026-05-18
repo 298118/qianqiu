@@ -127,6 +127,26 @@ const PROMPT_PACKS = {
       "Keep score values within 0-100 and keep feedback historical, not modern classroom rubric language."
     ]
   },
+  quick_action: {
+    schemaName: "quickAction",
+    purpose: "Generate short draft-only quick action suggestions from redacted player context and public evidence refs.",
+    tone: [
+      ...SHARED_WORLD_TONE,
+      "Write compact, clickable action drafts in Simplified Chinese.",
+      "Make suggestions fit the player's visible role, current page, and public context.",
+      "When no concrete public evidence supports a suggestion, keep it generic and role-appropriate."
+    ],
+    authority: [
+      "May propose draft text only. It must not submit the action, resolve outcomes, advance time, grant rank, appoint offices, punish, promote, move armies, settle cases, or change state.",
+      "May describe a possible toolIntent from the allowed list, but must not call tools or claim a tool result happened.",
+      "May cite only evidenceRefs supplied in the request. Do not invent hidden intelligence, raw state, provider payload, prompt text, local paths, keys, or internal server notes."
+    ],
+    output: [
+      "Return quickActionSuggestions only.",
+      "Each text must be a single player action draft under the schema length cap.",
+      "Use source provider-ai unless the server mock provider is generating deterministic suggestions."
+    ]
+  },
   official_career: {
     schemaName: "turn",
     purpose: "Resolve official-career actions for 入仕官员 around office duty, assignments, review, impeachment, transfer pressure, and patronage.",

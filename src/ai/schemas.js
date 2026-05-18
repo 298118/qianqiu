@@ -295,6 +295,46 @@ const turnSchema = {
   }
 };
 
+const quickActionSuggestionSchema = {
+  type: "object",
+  required: ["title", "label", "text", "roleTags", "toolIntent", "evidenceRefs", "source"],
+  additionalProperties: false,
+  properties: {
+    title: { type: "string", minLength: 1, maxLength: 16 },
+    label: { type: "string", minLength: 1, maxLength: 16 },
+    text: { type: "string", minLength: 1, maxLength: 120 },
+    roleTags: {
+      type: "array",
+      maxItems: 6,
+      items: { type: "string", minLength: 1, maxLength: 32 }
+    },
+    toolIntent: {
+      type: "string",
+      enum: ["study", "exam", "patrol", "case", "memorial", "march", "court", "travel", "office", "generic"]
+    },
+    evidenceRefs: {
+      type: "array",
+      maxItems: 4,
+      items: { type: "string", minLength: 1, maxLength: 120 }
+    },
+    source: { type: "string", enum: ["mock-ai", "provider-ai"] }
+  }
+};
+
+const quickActionSchema = {
+  type: "object",
+  required: ["quickActionSuggestions"],
+  additionalProperties: false,
+  properties: {
+    quickActionSuggestions: {
+      type: "array",
+      minItems: 1,
+      maxItems: 5,
+      items: quickActionSuggestionSchema
+    }
+  }
+};
+
 const examQuestionSchema = {
   type: "object",
   required: [
@@ -415,6 +455,7 @@ const gradeSchema = {
 const SCHEMAS = {
   opening: openingSchema,
   turn: turnSchema,
+  quickAction: quickActionSchema,
   examQuestion: examQuestionSchema,
   grade: gradeSchema
 };
@@ -636,6 +677,7 @@ const MODEL_SCHEMAS = {
       examTrigger: modelExamTriggerSchema
     }
   },
+  quickAction: quickActionSchema,
   examQuestion: modelExamQuestionSchema,
   grade: modelGradeSchema
 };

@@ -100,6 +100,8 @@ afterEach(() => {
     saves: [],
     savesStatus: "idle",
     settingsStatus: "idle",
+    quickActionStatus: "idle",
+    quickActions: null,
     status: "idle"
   });
   vi.unstubAllGlobals();
@@ -365,6 +367,38 @@ describe("S74.3 UI state store", () => {
         hasInformationPanelView: false,
         hasMapRuntimeView: true
       }
+    });
+  });
+
+  it("marks server fallback quick actions as degraded suggestions", async () => {
+    installFetchResponses({
+      schemaVersion: "s75.9-quick-actions.v1",
+      sessionId: startPayload.sessionId,
+      source: "local-rule",
+      status: "fallback",
+      fallbackReason: "quick_action_provider_failed",
+      quickActionSuggestions: [
+        {
+          id: "fallback-study",
+          source: "local-rule",
+          sourceLabel: "local-rule",
+          title: "研读",
+          label: "研读",
+          text: "闭门研读经义，整理近日所得，准备下一场考试。",
+          roleTags: ["scholar"],
+          toolIntent: "study",
+          evidenceRefs: []
+        }
+      ]
+    });
+
+    await useGameSessionStore.getState().refreshQuickActions(startPayload.sessionId, { page: "game", count: 1 });
+
+    expect(useGameSessionStore.getState().quickActionStatus).toBe("error");
+    expect(useGameSessionStore.getState().quickActions).toMatchObject({
+      status: "fallback",
+      fallbackReason: "quick_action_provider_failed",
+      quickActionSuggestions: [{ source: "local-rule" }]
     });
   });
 

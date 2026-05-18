@@ -130,7 +130,7 @@ test("S74.4 shell uses registry-backed overlays without widening data sources", 
   const routeCatalogSource = readText("client/src/routes/routeCatalog.ts");
   const combined = `${appShellSource}\n${surfaceHostSource}\n${surfaceRegistrySource}\n${routeCatalogSource}`;
 
-  assert.match(appShellSource, /data-shell-version="s75-8"/);
+  assert.match(appShellSource, /data-shell-version="s75-9"/);
   assert.match(appShellSource, /resolvePrimaryHref/);
   assert.match(appShellSource, /isRunnableSessionId/);
   assert.match(appShellSource, /ScrollRestoration/);
@@ -211,7 +211,7 @@ test("S75.6 return home keeps the current session and exposes a safe continue en
   const combined = `${appShellSource}\n${homePageSource}\n${uiStateSource}\n${clientSmokeSource}\n${styleSource}`;
   const runtimeSourcesWithoutSanitizerPattern = stripSafeGuardPatterns(`${appShellSource}\n${uiStateSource}\n${styleSource}`);
 
-  assert.match(appShellSource, /data-shell-version="s75-8"/);
+  assert.match(appShellSource, /data-shell-version="s75-9"/);
   assert.match(appShellSource, /aria-label="返回千秋首页"/);
   assert.match(appShellSource, /onClick=\{returnHome\}/);
   assert.match(uiStateSource, /page === "home" && sessionId === null/);
@@ -253,7 +253,7 @@ test("S75.7 display preferences persist only local safe whitelist fields", () =>
   assert.match(uiStateSource, /saveDisplayPreferences\(\{/);
   assert.match(surfaceHostSource, /setDisplayPreference\("mapMotion"/);
   assert.match(appShellSource, /data-motion=\{displayPreferences\.motion\}/);
-  assert.match(appShellSource, /data-shell-version="s75-8"/);
+  assert.match(appShellSource, /data-shell-version="s75-9"/);
   assert.match(appShellSource, /data-text-size=\{displayPreferences\.textSize\}/);
   assert.match(appShellSource, /data-contrast=\{displayPreferences\.contrast\}/);
   assert.match(mapPageSource, /displayPreferences\.mapMotion && displayPreferences\.motion === "full"/);
@@ -268,36 +268,50 @@ test("S75.7 display preferences persist only local safe whitelist fields", () =>
   );
 });
 
-test("S75.8 memorial composer stays draft-only with local-rule quick actions", () => {
+test("S75.9 memorial composer uses safe AI quick actions as draft-only suggestions", () => {
   const appShellSource = readText("client/src/components/AppShell.tsx");
   const gamePageSource = readText("client/src/pages/GamePage.tsx");
   const composerSource = readText("client/src/components/MemorialComposer.tsx");
   const quickActionSource = readText("client/src/components/quickActionSuggestions.ts");
+  const apiSource = readText("client/src/api/qianqiuClient.ts");
+  const stateSource = readText("client/src/state/gameSessionState.ts");
+  const surfaceHostSource = readText("client/src/components/SurfaceHost.tsx");
   const appTestSource = readText("client/src/__tests__/App.test.tsx");
   const componentTestSource = readText("client/src/components/MemorialComposer.test.tsx");
   const styleSource = readText("client/src/styles/global.css");
-  const runtimeCombined = `${appShellSource}\n${gamePageSource}\n${composerSource}\n${quickActionSource}\n${styleSource}`;
+  const runtimeCombined = `${appShellSource}\n${gamePageSource}\n${composerSource}\n${stateSource}\n${surfaceHostSource}\n${styleSource}`;
 
-  assert.match(appShellSource, /data-shell-version="s75-8"/);
+  assert.match(appShellSource, /data-shell-version="s75-9"/);
   assert.match(gamePageSource, /<MemorialComposer/);
   assert.match(gamePageSource, /currentPlayerPayload\?\.routeViews/);
+  assert.match(gamePageSource, /refreshQuickActions\(sessionId/);
   assert.match(gamePageSource, /source: "role-surface", targetPage: "game"/);
+  assert.match(apiSource, /\/api\/ai\/quick-actions\/\$\{encodePathSegment\(sessionId\)\}/);
+  assert.match(stateSource, /quickActionStatus/);
+  assert.match(stateSource, /requestQuickActions\(sessionId/);
   assert.match(composerSource, /aria-label="底部奏折"/);
   assert.match(composerSource, /Enter 呈上，Shift\+Enter 换行/);
   assert.match(composerSource, /event\.key !== "Enter" \|\| event\.shiftKey/);
   assert.match(composerSource, /data-source=\{suggestion\.source\}/);
   assert.match(composerSource, /data-draft-state=\{applied \? "written" : "idle"\}/);
+  assert.match(composerSource, /aria-label=\{quickActionStatus === "loading" \? "快捷建议生成中" : "刷新快捷建议"\}/);
   assert.match(quickActionSource, /export type QuickActionSource = "local-rule" \| "mock-ai" \| "provider-ai" \| "map-runtime" \| "surface"/);
   assert.match(quickActionSource, /sourceLabel: "local-rule"/);
+  assert.match(quickActionSource, /normalizeAiSuggestions/);
+  assert.match(quickActionSource, /quickActionStatus === "error" \? "failed"/);
+  assert.match(surfaceHostSource, /快捷建议 Provider/);
+  assert.match(surfaceHostSource, /updateAiTaskRoute\(currentSessionId, "quick_action"/);
+  assert.match(surfaceHostSource, /快捷建议工具预算固定为零/);
   assert.match(quickActionSource, /getMemorialPlaceholder/);
   assert.match(quickActionSource, /buildQuickActionSuggestions/);
   assert.match(styleSource, /memorialComposer/);
   assert.match(styleSource, /quickActionDock/);
-  assert.match(appTestSource, /keeps S75\.8 local quick actions draft-only and submits with Enter/);
+  assert.match(appTestSource, /keeps S75\.9 AI quick actions draft-only and submits only with Enter/);
   assert.match(componentTestSource, /without submitting a turn/);
+  assert.match(componentTestSource, /renders AI quick action statuses and refresh controls/);
   assert.doesNotMatch(
     runtimeCombined,
-    /\/api\/quick|\/api\/ai\/quick|\/api\/game\/state|\/api\/dev\/session-diagnostics|dangerouslySetInnerHTML|localStorage|sessionStorage|data\/sessions|raw audit|provider payload|OPENAI_API_KEY|DEEPSEEK_API_KEY|MIMO_API_KEY|ANTHROPIC_API_KEY/
+    /\/api\/quick(?!-actions)|\/api\/game\/state|\/api\/dev\/session-diagnostics|dangerouslySetInnerHTML|localStorage|sessionStorage|data\/sessions|raw audit|provider payload|OPENAI_API_KEY|DEEPSEEK_API_KEY|MIMO_API_KEY|ANTHROPIC_API_KEY/
   );
 });
 

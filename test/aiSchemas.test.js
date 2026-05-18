@@ -269,6 +269,74 @@ test("turn schema rejects model attempts to patch ordinary-turn server-owned fie
   }
 });
 
+test("S75.9 quick action schema accepts draft-only suggestions", () => {
+  const payload = {
+    quickActionSuggestions: [
+      {
+        title: "温书",
+        label: "温书",
+        text: "温习经义，择一篇旧文重加点窜。",
+        roleTags: ["scholar", "study"],
+        toolIntent: "study",
+        evidenceRefs: [],
+        source: "mock-ai"
+      },
+      {
+        title: "上疏",
+        label: "上疏",
+        text: "上疏陈明任内见闻，请朝廷裁量。",
+        roleTags: ["official"],
+        toolIntent: "memorial",
+        evidenceRefs: ["event:public-1"],
+        source: "provider-ai"
+      }
+    ]
+  };
+
+  assert.equal(validatePayload("quickAction", payload), payload);
+});
+
+test("S75.9 quick action schema rejects state writes and hidden/internal fields", () => {
+  const baseSuggestion = {
+    title: "温书",
+    label: "温书",
+    text: "温习经义，择一篇旧文重加点窜。",
+    roleTags: ["scholar"],
+    toolIntent: "study",
+    evidenceRefs: [],
+    source: "provider-ai"
+  };
+
+  for (const payload of [
+    {
+      quickActionSuggestions: [{
+        ...baseSuggestion,
+        statePatch: { player: { examRank: "秀才" } }
+      }]
+    },
+    {
+      quickActionSuggestions: [{
+        ...baseSuggestion,
+        hiddenIntent: "密档"
+      }]
+    },
+    {
+      quickActionSuggestions: [{
+        ...baseSuggestion,
+        source: "local-rule"
+      }]
+    },
+    {
+      quickActionSuggestions: [{
+        ...baseSuggestion,
+        toolIntent: "server.resolve_case"
+      }]
+    }
+  ]) {
+    assert.throws(() => validatePayload("quickAction", payload), /schema validation/);
+  }
+});
+
 test("exam question and grade schemas accept valid provider payloads", () => {
   const question = {
     level: "child_exam",

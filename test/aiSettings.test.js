@@ -23,7 +23,8 @@ test("S70.9 default AI settings expose hidden-safe task route views", () => {
   const serialized = JSON.stringify(view);
 
   assert.equal(view.schemaVersion, "s70.9-ai-settings.v1");
-  assert.equal(view.taskRoutes.length, 9);
+  assert.equal(view.taskRoutes.length, 10);
+  assert.ok(view.taskRoutes.some((route) => route.taskType === "quick_action" && route.label === "快捷建议"));
   assert.equal(view.safeguards.serverOwnsState, true);
   assert.equal(view.safeguards.noHiddenRawAccess, true);
   assert.ok(!serialized.includes("MIMO_API_KEY"));
@@ -53,6 +54,13 @@ test("S70.9 AI settings patch can adjust route quality but not review-only autho
         provider: "deepseek",
         model: "deepseek-v4-pro",
         toolBudget: 9
+      },
+      quick_action: {
+        provider: "mock",
+        model: "mock",
+        maxOutputTokens: 700,
+        toolBudget: 8,
+        temperature: 0.2
       }
     }
   }, {
@@ -63,6 +71,7 @@ test("S70.9 AI settings patch can adjust route quality but not review-only autho
 
   const narrator = resolveModelForTask("narrator", result.routePolicy);
   const critic = resolveModelForTask("critic", result.routePolicy);
+  const quickAction = resolveModelForTask("quick_action", result.routePolicy);
 
   assert.equal(narrator.provider, "mimo");
   assert.equal(narrator.maxOutputTokens, 2400);
@@ -73,6 +82,11 @@ test("S70.9 AI settings patch can adjust route quality but not review-only autho
   assert.equal(critic.mayUseTools, false);
   assert.equal(critic.mayRequestAdjudication, false);
   assert.equal(critic.reviewerOnly, true);
+  assert.equal(quickAction.maxOutputTokens, 700);
+  assert.equal(quickAction.toolBudget, 0);
+  assert.equal(quickAction.mayUseTools, false);
+  assert.equal(quickAction.mayRequestAdjudication, false);
+  assert.equal(quickAction.temperature, 0.2);
   assert.equal(result.aiSettingsView.controls.maxConcurrency, 3);
 });
 

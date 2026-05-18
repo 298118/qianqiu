@@ -730,6 +730,7 @@ button:disabled {
 }
 
 .quickActionToggle,
+.quickActionRefresh,
 .quickActionSlip {
   border: 1px solid rgba(84, 60, 43, 0.26);
   background: rgba(255, 252, 238, 0.72);
@@ -745,6 +746,17 @@ button:disabled {
   min-height: 36px;
   padding: 7px 9px;
   font-weight: 800;
+}
+
+.quickActionRefresh {
+  display: inline-grid;
+  place-items: center;
+  justify-self: end;
+  width: 32px;
+  min-height: 30px;
+  color: #7b241f;
+  font-size: 0.82rem;
+  font-weight: 900;
 }
 
 .quickActionToggle svg {
@@ -801,6 +813,17 @@ button:disabled {
   border-color: rgba(142, 47, 39, 0.62);
   background: rgba(165, 58, 47, 0.12);
   color: #7b241f;
+}
+
+.quickActionSlip[data-state="failed"],
+.quickActionSlip[data-state="stale"] {
+  border-style: dashed;
+  background: rgba(255, 248, 230, 0.62);
+}
+
+.quickActionSlip[data-source="mock-ai"],
+.quickActionSlip[data-source="provider-ai"] {
+  border-color: rgba(142, 47, 39, 0.42);
 }
 
 .quickActionEmpty {
@@ -873,6 +896,8 @@ button:disabled {
 
 .quickActionToggle:hover,
 .quickActionToggle:focus-visible,
+.quickActionRefresh:hover,
+.quickActionRefresh:focus-visible,
 .quickActionSlip:hover,
 .quickActionSlip:focus-visible,
 .memorialInputField textarea:focus,

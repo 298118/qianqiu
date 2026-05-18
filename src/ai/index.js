@@ -35,7 +35,7 @@ function wrapWithMockFallback(providerName, provider) {
     supportsStreaming: Boolean(provider.supportsStreaming && typeof provider.streamTurn === "function")
   };
 
-  for (const method of ["startGame", "runTurn", "streamTurn", "generateExamQuestion", "gradeExamEssay"]) {
+  for (const method of ["startGame", "runTurn", "streamTurn", "generateExamQuestion", "suggestQuickActions", "gradeExamEssay"]) {
     wrapped[method] = async (...args) => {
       if (method === "streamTurn") {
         if (!wrapped.supportsStreaming) {
@@ -110,6 +110,7 @@ function createReviewOnlyProvider(route) {
     runTurn: throwReviewOnly,
     streamTurn: throwReviewOnly,
     generateExamQuestion: throwReviewOnly,
+    suggestQuickActions: throwReviewOnly,
     gradeExamEssay: throwReviewOnly
   };
 }
@@ -132,6 +133,7 @@ const METHOD_TASK_TYPES = Object.freeze({
   runTurn: "narrator",
   streamTurn: "narrator",
   generateExamQuestion: "narrator",
+  suggestQuickActions: "quick_action",
   gradeExamEssay: "domain_specialist"
 });
 

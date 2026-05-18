@@ -53,7 +53,7 @@ describe("S74.2 qianqiuApi", () => {
     );
   });
 
-  it("posts start, turn, exam, and AI settings payloads as JSON", async () => {
+  it("posts start, turn, exam, AI settings, and quick actions payloads as JSON", async () => {
     const fetchMock = installFetchMock({ sessionId: "s1", worldState: {}, narrative: "起卷" });
 
     await qianqiuApi.startGame({
@@ -70,6 +70,7 @@ describe("S74.2 qianqiuApi", () => {
     await qianqiuApi.progressExam({ sessionId: "s1", examId: "e1", action: "审题" });
     await qianqiuApi.submitExam({ sessionId: "s1", examId: "e1", essay: "文章" });
     await qianqiuApi.updateAiSettings("s1", { settings: { preset: "fast" } });
+    await qianqiuApi.requestQuickActions("s1", { page: "game", draftPreview: "温书", count: 2 });
     await qianqiuApi.testAiConnection({ provider: "mock" });
 
     const calls = fetchMock.mock.calls.map(([url, options]) => ({
@@ -85,6 +86,7 @@ describe("S74.2 qianqiuApi", () => {
       { url: "/api/exam/progress", method: "POST", contentType: "application/json" },
       { url: "/api/exam/submit", method: "POST", contentType: "application/json" },
       { url: "/api/ai/settings/s1", method: "POST", contentType: "application/json" },
+      { url: "/api/ai/quick-actions/s1", method: "POST", contentType: "application/json" },
       { url: "/api/ai/connection-test", method: "POST", contentType: "application/json" }
     ]);
     expect(JSON.parse(fetchMock.mock.calls[0][1]?.body as string)).toMatchObject({
@@ -92,12 +94,18 @@ describe("S74.2 qianqiuApi", () => {
       background: "县学附读",
       customSetting: "公开自述"
     });
+    expect(JSON.parse(fetchMock.mock.calls[6][1]?.body as string)).toEqual({
+      page: "game",
+      draftPreview: "温书",
+      count: 2
+    });
   });
 
   it("blocks raw state and unknown endpoints at the client boundary", () => {
     expect(() => assertSafeApiEndpoint("/api/game/state/s1")).toThrow(/player-state/);
     expect(() => assertSafeApiEndpoint("/api/dev/session-diagnostics/s1")).toThrow(/Unsafe/);
     expect(() => assertSafeApiEndpoint("/api/game/search/s1")).toThrow(/Unsafe/);
+    expect(() => assertSafeApiEndpoint("/api/ai/quick-actions/s1")).not.toThrow();
   });
 
   it("wraps non-2xx responses in QianqiuApiError", async () => {

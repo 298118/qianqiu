@@ -25,6 +25,10 @@ function createMimoDeepSeekProvider(options = {}) {
       return mimoProvider.generateExamQuestion(...args);
     },
 
+    suggestQuickActions(...args) {
+      return mimoProvider.suggestQuickActions(...args);
+    },
+
     gradeExamEssay(...args) {
       return deepSeekProvider.gradeExamEssay(...args);
     }

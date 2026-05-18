@@ -2191,9 +2191,63 @@ async function gradeExamEssay(worldState, exam, essay, authenticityCheck) {
   };
 }
 
+async function suggestQuickActions(quickActionContext = {}) {
+  const role = quickActionContext.player?.role || "official";
+  const evidenceRefs = Array.isArray(quickActionContext.evidenceRefs)
+    ? quickActionContext.evidenceRefs
+    : [];
+  const firstRef = evidenceRefs[0]?.refId;
+  const common = {
+    source: "mock-ai",
+    evidenceRefs: firstRef ? [firstRef] : []
+  };
+
+  const byRole = {
+    scholar: [
+      { title: "温书", label: "温书", text: "温习经义并整理一页策论提纲，准备下一步请教师友。", roleTags: ["scholar", "study"], toolIntent: "study" },
+      { title: "问考期", label: "问考期", text: "打听近期科期、保结与贡院规矩，先备赴考所需。", roleTags: ["scholar", "exam"], toolIntent: "exam" },
+      { title: "访师友", label: "访师友", text: "拜访师友，请其评点近日文章的破题与立意。", roleTags: ["scholar", "study"], toolIntent: "study" }
+    ],
+    magistrate: [
+      { title: "核案", label: "核案", text: "升堂核问积案，先对公开证词与案牍异同。", roleTags: ["magistrate", "case"], toolIntent: "case" },
+      { title: "巡城", label: "巡城", text: "带吏役巡查街市、仓储与盗匪传闻，记下急需处置之事。", roleTags: ["magistrate", "patrol"], toolIntent: "patrol" },
+      { title: "具禀", label: "具禀", text: "整理县中钱粮与民情，具禀上司请求裁示。", roleTags: ["magistrate", "memorial"], toolIntent: "memorial" }
+    ],
+    general: [
+      { title: "遣哨", label: "遣哨", text: "遣斥候探查前哨与粮道，回报军情虚实。", roleTags: ["general", "patrol"], toolIntent: "patrol" },
+      { title: "巡营", label: "巡营", text: "亲自巡营，查点甲仗粮草并安抚将士。", roleTags: ["general", "camp"], toolIntent: "patrol" },
+      { title: "上战报", label: "上战报", text: "汇总边情、粮饷与军心，上战报请朝廷裁示。", roleTags: ["general", "memorial"], toolIntent: "memorial" }
+    ],
+    emperor: [
+      { title: "召议", label: "召议", text: "召集群臣廷议，先问钱粮、边防与吏治三端。", roleTags: ["emperor", "court"], toolIntent: "court" },
+      { title: "朱批", label: "朱批", text: "朱批近日奏折，令各部据公开案牍限期回奏。", roleTags: ["emperor", "memorial"], toolIntent: "memorial" },
+      { title: "宣旨", label: "宣旨", text: "宣旨申饬中外官员，要求先清积弊再议赏罚。", roleTags: ["emperor", "office"], toolIntent: "office" }
+    ],
+    minister: [
+      { title: "上疏", label: "上疏", text: "上疏陈明时弊，列出可由朝廷裁量的三条办法。", roleTags: ["minister", "memorial"], toolIntent: "memorial" },
+      { title: "会商", label: "会商", text: "约同僚会商部务轻重，先拟稳妥章程。", roleTags: ["minister", "court"], toolIntent: "court" },
+      { title: "阅牍", label: "阅牍", text: "查阅近日案牍，摘出关涉民生与官声的要点。", roleTags: ["minister", "office"], toolIntent: "office" }
+    ],
+    official: [
+      { title: "阅牍", label: "阅牍", text: "查阅案牍与考成记录，整理本旬施政重点。", roleTags: ["official", "office"], toolIntent: "office" },
+      { title: "拜会", label: "拜会", text: "拜会同僚会商公事，先求稳妥可行之策。", roleTags: ["official", "court"], toolIntent: "court" },
+      { title: "上疏", label: "上疏", text: "上疏陈明任内见闻，请求朝廷明示处置章程。", roleTags: ["official", "memorial"], toolIntent: "memorial" }
+    ]
+  };
+
+  const suggestions = byRole[role] || byRole.official;
+  return {
+    quickActionSuggestions: suggestions.map((suggestion) => ({
+      ...common,
+      ...suggestion
+    }))
+  };
+}
+
 module.exports = {
   startGame,
   runTurn,
   generateExamQuestion,
+  suggestQuickActions,
   gradeExamEssay
 };

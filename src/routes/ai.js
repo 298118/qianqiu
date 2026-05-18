@@ -1,4 +1,5 @@
 const express = require("express");
+const { getProvider } = require("../ai");
 const { runAiConnectionTest } = require("../ai/diagnostics");
 const {
   buildAiInvocationSummaryView,
@@ -7,7 +8,13 @@ const {
   updateAiSettings
 } = require("../game/aiSettings");
 const { buildAiControlAuditView } = require("../game/aiControlAudit");
-const { mutateSession, readSession } = require("../storage/sessionStore");
+const {
+  buildLocalQuickActionResponse,
+  buildQuickActionContext,
+  buildQuickActionResponse,
+  normalizeQuickActionRequest
+} = require("../game/quickActionSuggestions");
+const { readSession, mutateSession } = require("../storage/sessionStore");
 
 const router = express.Router();
 
@@ -21,6 +28,34 @@ router.post("/connection-test", async (req, res, next) => {
   try {
     const payload = await runAiConnectionTest({ provider: req.body?.provider });
     res.status(payload.ok ? 200 : 503).json(payload);
+  } catch (error) {
+    next(error);
+  }
+});
+
+router.post("/quick-actions/:sessionId", async (req, res, next) => {
+  try {
+    const worldState = await readSession(req.params.sessionId);
+    const request = normalizeQuickActionRequest(req.body);
+    const context = buildQuickActionContext(worldState, request);
+    const { routePolicy } = resolveAiSettingsForSession(worldState);
+
+    try {
+      const provider = getProvider({ taskType: "quick_action", routePolicy });
+      const rawPayload = await provider.suggestQuickActions(context);
+      const providerSource = provider.modelRoute?.provider === "mock" ? "mock-ai" : "provider-ai";
+      res.json(buildQuickActionResponse(worldState, rawPayload, context, {
+        source: providerSource,
+        expectedSource: providerSource,
+        count: request.count
+      }));
+    } catch (error) {
+      res.json(buildLocalQuickActionResponse(worldState, request, {
+        context,
+        status: "fallback",
+        fallbackReason: "quick_action_provider_failed"
+      }));
+    }
   } catch (error) {
     next(error);
   }

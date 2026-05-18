@@ -104,6 +104,8 @@ describe("S74.1 React client shell", () => {
       saves: [],
       savesStatus: "idle",
       settingsStatus: "idle",
+      quickActionStatus: "idle",
+      quickActions: null,
       aiSettings: null,
       aiConnection: null,
       status: "idle"
@@ -127,7 +129,7 @@ describe("S74.1 React client shell", () => {
     expect(document.querySelector("#start-form")).toBeNull();
     expect(document.querySelector("[data-client-entry='react']")).toBeTruthy();
     expect(document.querySelector("[data-router-mode='data']")).toBeTruthy();
-    expect(document.querySelector("[data-shell-version='s75-8']")).toBeTruthy();
+    expect(document.querySelector("[data-shell-version='s75-9']")).toBeTruthy();
   });
 
   it("posts the S75.2 opening form through the safe start endpoint", async () => {
@@ -652,7 +654,7 @@ describe("S74.1 React client shell", () => {
     expect(screen.getByRole("button", { name: "呈上" })).toHaveProperty("disabled", true);
   });
 
-  it("keeps S75.8 local quick actions draft-only and submits with Enter", async () => {
+  it("keeps S75.9 AI quick actions draft-only and submits only with Enter", async () => {
     const sessionId = "66666666-6666-4666-8666-666666666666";
     const fetchMock = vi.fn(async (url: string, options?: RequestInit) => {
       if (url === `/api/game/player-state/${sessionId}`) {
@@ -660,6 +662,30 @@ describe("S74.1 React client shell", () => {
           source: "server_player_visible_state_projection",
           sessionId,
           worldState: { player: { name: "顾衡", role: "scholar" } }
+        }), {
+          status: 200,
+          headers: { "Content-Type": "application/json" }
+        });
+      }
+      if (url === `/api/ai/quick-actions/${sessionId}`) {
+        return new Response(JSON.stringify({
+          schemaVersion: "s75.9-quick-actions.v1",
+          sessionId,
+          source: "mock-ai",
+          status: "ready",
+          quickActionSuggestions: [
+            {
+              id: "mock-study",
+              source: "mock-ai",
+              sourceLabel: "mock-ai",
+              title: "温书",
+              label: "温书",
+              text: "温习经义，择一篇旧文重加点窜。",
+              roleTags: ["scholar"],
+              toolIntent: "study",
+              evidenceRefs: []
+            }
+          ]
         }), {
           status: 200,
           headers: { "Content-Type": "application/json" }
@@ -683,11 +709,12 @@ describe("S74.1 React client shell", () => {
 
     await waitFor(() => expect(useUiStateStore.getState().currentSessionId).toBe(sessionId));
     expect(screen.getByRole("button", { name: "可行事" }).getAttribute("aria-expanded")).toBe("true");
-    fireEvent.click(screen.getByRole("button", { name: /研读 local-rule 写入草稿/ }));
+    await screen.findByRole("button", { name: /温书 mock-ai 写入草稿/ });
+    fireEvent.click(screen.getByRole("button", { name: /温书 mock-ai 写入草稿/ }));
     expect(useUiStateStore.getState().actionDraft).toMatchObject({
       source: "role-surface",
       targetPage: "game",
-      text: "闭门研读经义，整理近日所得，准备下一场考试。"
+      text: "温习经义，择一篇旧文重加点窜。"
     });
     expect(fetchMock.mock.calls.filter(([url]) => url === "/api/game/turn")).toHaveLength(0);
 
@@ -697,7 +724,13 @@ describe("S74.1 React client shell", () => {
     const turnCall = fetchMock.mock.calls.find(([url]) => url === "/api/game/turn") as [string, RequestInit] | undefined;
     expect(JSON.parse(String(turnCall?.[1].body))).toMatchObject({
       sessionId,
-      input: "闭门研读经义，整理近日所得，准备下一场考试。"
+      input: "温习经义，择一篇旧文重加点窜。"
+    });
+    const quickCall = fetchMock.mock.calls.find(([url]) => url === `/api/ai/quick-actions/${sessionId}`) as [string, RequestInit] | undefined;
+    expect(JSON.parse(String(quickCall?.[1].body))).toEqual({
+      page: "game",
+      draftPreview: "",
+      count: 3
     });
     await waitFor(() => expect(useUiStateStore.getState().actionDraft).toBeNull());
     expect(document.body.textContent || "").not.toMatch(/provider payload|raw state|raw audit|完整 prompt|data\/sessions|OPENAI_API_KEY/i);

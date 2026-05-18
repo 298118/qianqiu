@@ -880,6 +880,8 @@ Manifest 示例：
 - AI 推荐只写入行动草稿，不自动调用普通回合、不直写状态、不伪造已发生事实。
 - DOM、localStorage/sessionStorage 和错误文案不暴露 raw state、provider payload、完整 prompt、本地路径、key 或 hidden 信息。
 
+状态：已完成。S75.9 新增 `quick_action` AI task、只读 `POST /api/ai/quick-actions/:sessionId`、Mock/provider 接线和前端 `refreshQuickActions` 状态。浏览器仅发送当前页、短草稿预览和建议数量，服务器自行从 session 派生 redacted player summary、route view flags、公开 evidence refs 与 actor 工具能力说明；返回建议经 schema、身份/工具意图 allowlist、公开 evidence ref 白名单、数量/长度 cap、source 归一化和污染清洗后才进入 UI。`quick_action` 工具预算硬锁为 0，不调用 server resolver，不提交普通回合，不推进时间，不写 canonical state，也不持久写 session；provider 失败、坏 JSON、越权工具意图、伪造 evidence 或污染文本会降级为本地规则建议。`MemorialComposer` 已显示 `mock-ai`、`provider-ai`、`local-rule`、`map-runtime`、`surface` 来源和 loading/stale/failed/applied 状态，点击仍只写草稿。响应级 `source/status/fallbackReason/generatedAtTurn` 是当前安全审计边界；持久 quick action 调动审计留待后续单独设计。
+
 ### S75.10 S75 验收
 
 命令：

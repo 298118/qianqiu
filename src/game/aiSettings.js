@@ -2,6 +2,7 @@ const {
   MODEL_TASK_TYPES,
   REVIEW_ONLY_TASK_TYPES,
   SUPPORTED_PROVIDERS,
+  TOOL_DISABLED_TASK_TYPES,
   buildDefaultModelRoutePolicy,
   normalizeProviderName,
   resolveModelForTask,
@@ -172,7 +173,7 @@ function normalizeRoutePatch(taskType, patch = {}) {
   if (patch.temperature !== undefined) {
     normalized.temperature = Number(clampNumber(patch.temperature, 0.35, 0, 1).toFixed(2));
   }
-  if (REVIEW_ONLY_TASK_TYPES.includes(taskType) && normalized.toolBudget && normalized.toolBudget > 0) {
+  if (TOOL_DISABLED_TASK_TYPES.includes(taskType) && normalized.toolBudget && normalized.toolBudget > 0) {
     normalized.toolBudget = 0;
   }
 
@@ -298,24 +299,26 @@ function applyPresetToRoute(route, settings) {
   const scale = Number(controls.outputScale || 1);
   const toolScale = Number(controls.toolBudgetScale ?? 1);
   const reviewOnly = REVIEW_ONLY_TASK_TYPES.includes(route.taskType);
+  const toolDisabled = TOOL_DISABLED_TASK_TYPES.includes(route.taskType);
   return {
     ...route,
     maxOutputTokens: clampInt(route.maxOutputTokens * scale, route.maxOutputTokens, 128, 16000),
-    toolBudget: reviewOnly ? 0 : clampInt(route.toolBudget * toolScale, route.toolBudget, 0, 20),
-    mayUseTools: reviewOnly ? false : route.mayUseTools,
-    mayRequestAdjudication: reviewOnly ? false : route.mayRequestAdjudication,
+    toolBudget: toolDisabled ? 0 : clampInt(route.toolBudget * toolScale, route.toolBudget, 0, 20),
+    mayUseTools: toolDisabled ? false : route.mayUseTools,
+    mayRequestAdjudication: toolDisabled ? false : route.mayRequestAdjudication,
     reviewerOnly: reviewOnly ? true : route.reviewerOnly
   };
 }
 
 function applyTaskRoutePatch(route, routePatch = {}) {
   const reviewOnly = REVIEW_ONLY_TASK_TYPES.includes(route.taskType);
+  const toolDisabled = TOOL_DISABLED_TASK_TYPES.includes(route.taskType);
   const next = {
     ...route,
     ...routePatch,
-    toolBudget: reviewOnly ? 0 : routePatch.toolBudget ?? route.toolBudget,
-    mayUseTools: reviewOnly ? false : route.mayUseTools,
-    mayRequestAdjudication: reviewOnly ? false : route.mayRequestAdjudication,
+    toolBudget: toolDisabled ? 0 : routePatch.toolBudget ?? route.toolBudget,
+    mayUseTools: toolDisabled ? false : route.mayUseTools,
+    mayRequestAdjudication: toolDisabled ? false : route.mayRequestAdjudication,
     mayWriteState: false,
     mayCallServerResolvers: false,
     reviewerOnly: reviewOnly ? true : route.reviewerOnly
