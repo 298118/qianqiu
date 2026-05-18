@@ -306,9 +306,9 @@ describe("S74.1 React client shell", () => {
 
     await waitFor(() => expect(useUiStateStore.getState().currentSessionId).toBe(sessionId));
     expect(screen.getByRole("link", { name: "主卷" }).getAttribute("href")).toBe(`/game/${sessionId}`);
-    expect(screen.getByRole("link", { name: "舆图" }).getAttribute("href")).toBe(`/game/${sessionId}/map`);
-    expect(screen.getByRole("link", { name: "人物" }).getAttribute("href")).toBe(`/game/${sessionId}/people`);
-    expect(screen.getByRole("link", { name: "史册" }).getAttribute("href")).toBe(`/game/${sessionId}/archive`);
+    expect(screen.getAllByRole("link", { name: "舆图" }).some((link) => link.getAttribute("href") === `/game/${sessionId}/map`)).toBe(true);
+    expect(screen.getAllByRole("link", { name: "人物" }).some((link) => link.getAttribute("href") === `/game/${sessionId}/people`)).toBe(true);
+    expect(screen.getAllByRole("link", { name: "史册" }).some((link) => link.getAttribute("href") === `/game/${sessionId}/archive`)).toBe(true);
   });
 
   it("keeps the session routes inside the React Router tree", () => {
@@ -317,6 +317,89 @@ describe("S74.1 React client shell", () => {
     expect(screen.getByRole("heading", { name: "主卷" })).toBeTruthy();
     expect(screen.getByRole("heading", { name: "舆图" })).toBeTruthy();
     expect(document.body.textContent || "").not.toMatch(/OPENAI_API_KEY|hiddenNotes|data\/sessions|provider payload/i);
+  });
+
+  it("renders the S76.1 main game shell from safe player-state without leaking polluted text", async () => {
+    const sessionId = "99999999-1111-4111-8111-111111111111";
+    const manifest = buildMockAssetManifest(0);
+    const fetchMock = vi.fn(async (url: string) => {
+      if (url === "/assets/ui/ink-ui-manifest.json") {
+        return new Response(JSON.stringify({
+          ...manifest,
+          assets: [
+            {
+              id: "ui-scene-military-tent-v1",
+              category: "scene",
+              usage: ["game_main"],
+              scene: "military_tent",
+              path: "/assets/ui/scenes/scene-military-tent-v1.webp",
+              thumbnailPath: "/assets/ui/thumbs/thumb-scene-military-tent-v1.webp",
+              fallbackRef: "fallback-paper-panel-v1",
+              reviewStatus: "approved",
+              visualReview: { status: "approved" },
+              safetyReview: { status: "approved" }
+            }
+          ]
+        }), {
+          status: 200,
+          headers: { "Content-Type": "application/json" }
+        });
+      }
+      if (url === `/api/game/player-state/${sessionId}`) {
+        return new Response(JSON.stringify({
+          source: "server_player_visible_state_projection",
+          sessionId,
+          worldState: {
+            player: {
+              name: "provider payload sk-test-secret",
+              role: "general",
+              officeTitle: "path=C:\\secret\\case.json"
+            }
+          },
+          mapRuntimeView: { schemaVersion: 1 },
+          eventArchiveView: { schemaVersion: 1 }
+        }), {
+          status: 200,
+          headers: { "Content-Type": "application/json" }
+        });
+      }
+      throw new Error(`unexpected url: ${url}`);
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    renderRoute(`/game/${sessionId}`);
+
+    await screen.findByRole("heading", { name: "主卷" });
+    await screen.findByText("军帐筹谋");
+    expect(screen.getByText("无名")).toBeTruthy();
+    expect(screen.getAllByText("身份未题").length).toBeGreaterThan(0);
+    expect(screen.getByText("2 / 5")).toBeTruthy();
+    expect(screen.getAllByRole("link", { name: /舆图/ }).length).toBeGreaterThan(0);
+    expect(screen.getAllByRole("link", { name: /人物/ }).length).toBeGreaterThan(0);
+    expect(screen.getAllByRole("link", { name: /朝议/ }).length).toBeGreaterThan(0);
+    expect(document.body.textContent || "").not.toMatch(/provider payload|sk-test-secret|path=|C:\\|raw audit|OPENAI_API_KEY|data\/sessions/i);
+  });
+
+  it("keeps polluted S76.1 turn narrative out of the main scroll", async () => {
+    mockAssetManifestFetch(buildMockAssetManifest(0));
+    useGameSessionStore.setState({
+      currentSessionId: "s76-preview",
+      currentSession: {
+        sessionId: "s76-preview",
+        worldState: { player: { name: "顾衡", role: "scholar" } },
+        source: "server_player_visible_state_projection"
+      },
+      lastTurn: {
+        sessionId: "s76-preview",
+        narrative: "provider payload sk-test-secret path=C:\\secret\\case.json hiddenNotes",
+        worldState: { player: { name: "顾衡", role: "scholar" } }
+      }
+    });
+
+    renderRoute("/game/s76-preview");
+
+    expect(screen.getByText("风声入座，旧卷重开。堂案、舆图与人物谱牒各归其卷。")).toBeTruthy();
+    expect(document.body.textContent || "").not.toMatch(/provider payload|sk-test-secret|path=|C:\\|hiddenNotes|OPENAI_API_KEY|data\/sessions/i);
   });
 
   it("tracks route-derived UI page state and closes safe drawers with Esc while restoring focus", async () => {
@@ -405,7 +488,7 @@ describe("S74.1 React client shell", () => {
     expect(screen.getByRole("button", { name: "刷新" })).toBeTruthy();
 
     fireEvent.click(screen.getByRole("tab", { name: "安全" }));
-    expect(screen.getByText(/安全视图/)).toBeTruthy();
+    expect(screen.getAllByText(/安全视图/).length).toBeGreaterThan(0);
     expect(document.body.textContent || "").not.toMatch(/OPENAI_API_KEY|base URL|raw prompt|raw audit|provider payload|data\/sessions/i);
 
     fireEvent.click(screen.getByRole("tab", { name: "旧案" }));
@@ -710,6 +793,11 @@ describe("S74.1 React client shell", () => {
     await waitFor(() => expect(useUiStateStore.getState().currentSessionId).toBe(sessionId));
     expect(screen.getByRole("button", { name: "可行事" }).getAttribute("aria-expanded")).toBe("true");
     await screen.findByRole("button", { name: /温书 mock-ai 写入草稿/ });
+    const quickCallsAfterLoad = fetchMock.mock.calls.filter(([url]) => url === `/api/ai/quick-actions/${sessionId}`).length;
+    fireEvent.change(screen.getByLabelText("本回合行动"), { target: { value: "先自拟一段行动，不刷新快捷建议。" } });
+    await new Promise((resolve) => window.setTimeout(resolve, 0));
+    expect(fetchMock.mock.calls.filter(([url]) => url === `/api/ai/quick-actions/${sessionId}`)).toHaveLength(quickCallsAfterLoad);
+
     fireEvent.click(screen.getByRole("button", { name: /温书 mock-ai 写入草稿/ }));
     expect(useUiStateStore.getState().actionDraft).toMatchObject({
       source: "role-surface",
