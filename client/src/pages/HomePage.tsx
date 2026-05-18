@@ -35,34 +35,45 @@ export function HomePage() {
   return (
     <section className="homeScene" aria-labelledby="home-title">
       <div className="homeBackdrop" aria-hidden="true" />
+      <div className="homeMist homeMistA" aria-hidden="true" />
+      <div className="homeMist homeMistB" aria-hidden="true" />
+      <div className="homeScrollCaps" aria-hidden="true" />
       <div className="homeCopy">
-        <p className="eyebrow">明月照案  墨色未干</p>
-        <h1 id="home-title">千秋</h1>
-        <p className="lede">一卷入世，万事由心。朝堂、贡院、边关与市井皆在纸上起伏。</p>
-        <div className="homeActions" aria-label="案卷入口">
-          <Link className="sealButton" to="/game/s74-preview">
-            预览
-          </Link>
-          <Link className="paperLink" to="/game/s74-preview/map">
-            观舆图
-          </Link>
+        <div className="homeTitleBlock">
+          <p className="eyebrow">明月照案 墨色未干</p>
+          <h1 id="home-title">千秋</h1>
+          <p className="lede">一卷入世，万事由心。朝堂、贡院、边关与市井皆在纸上起伏。</p>
         </div>
-        <form className="startDesk" onSubmit={handleStart} aria-label="新开案卷">
-          <label>
-            姓名
-            <input value={playerName} onChange={(event) => setPlayerName(event.target.value)} maxLength={24} />
-          </label>
-          <label>
-            身份
-            <select value={role} onChange={(event) => setRole(event.target.value)}>
-              <option value="scholar">书生</option>
-              <option value="official">入仕官员</option>
-            </select>
-          </label>
-          <button className="sealButton" type="submit" disabled={status === "loading"}>
-            {status === "loading" ? "开卷中" : "新开一卷"}
-          </button>
-        </form>
+        <div className="homeDesk">
+          <div className="homeDeskHeader">
+            <span>题名入册</span>
+            <div className="homeActions" aria-label="案卷入口">
+              <Link className="paperLink" to="/game/s74-preview">
+                预览
+              </Link>
+              <Link className="paperLink" to="/game/s74-preview/map">
+                观舆图
+              </Link>
+            </div>
+          </div>
+          <form className="startDesk" onSubmit={handleStart} aria-label="新开案卷">
+            <label>
+              姓名
+              <input value={playerName} onChange={(event) => setPlayerName(event.target.value)} maxLength={24} />
+            </label>
+            <label>
+              身份
+              <select value={role} onChange={(event) => setRole(event.target.value)}>
+                <option value="scholar">书生</option>
+                <option value="official">入仕官员</option>
+              </select>
+            </label>
+            <button className="sealButton homeStartSeal" type="submit" disabled={status === "loading"}>
+              {status === "loading" ? "开卷中" : "新开一卷"}
+            </button>
+          </form>
+          {error ? <p className="statusLine" role="alert">{error}</p> : null}
+        </div>
         <section className="saveShelf" aria-label="旧案卷">
           <h2>旧案卷</h2>
           {savesStatus === "loading" ? <p>正在翻检案卷。</p> : null}
@@ -79,7 +90,6 @@ export function HomePage() {
             <p>暂无可读旧卷。</p>
           )}
         </section>
-        {error ? <p className="statusLine" role="alert">{error}</p> : null}
       </div>
     </section>
   );

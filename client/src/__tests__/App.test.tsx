@@ -112,6 +112,8 @@ describe("S74.1 React client shell", () => {
     expect(screen.getByRole("heading", { name: "千秋" })).toBeTruthy();
     expect(screen.getByRole("link", { name: "预览" }).getAttribute("href")).toBe("/game/s74-preview");
     expect(screen.getByRole("button", { name: "新开一卷" })).toBeTruthy();
+    expect(document.querySelector(".homeDesk .startDesk")).toBeTruthy();
+    expect(document.querySelector("#start-form")).toBeNull();
     expect(document.querySelector("[data-client-entry='react']")).toBeTruthy();
     expect(document.querySelector("[data-router-mode='data']")).toBeTruthy();
     expect(document.querySelector("[data-shell-version='s74-7']")).toBeTruthy();
