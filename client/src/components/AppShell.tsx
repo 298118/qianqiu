@@ -2,6 +2,7 @@ import { Info, Save, Settings, SlidersHorizontal } from "lucide-react";
 import { useEffect, useRef, type RefObject } from "react";
 import { Link, NavLink, Outlet, ScrollRestoration, useLocation } from "react-router";
 import { routeCatalog } from "../routes/routeCatalog";
+import { isRunnableSessionId } from "../routes/sessionId";
 import type { PageSurface } from "../state/uiState";
 import { useUiStateStore } from "../state/uiState";
 import { markOverlayTrigger } from "./overlayFocus";
@@ -11,6 +12,7 @@ const primaryNav = routeCatalog.filter((route) => route.surface === "primary");
 
 export function AppShell() {
   const displayPreferences = useUiStateStore((state) => state.displayPreferences);
+  const currentSessionId = useUiStateStore((state) => state.currentSessionId);
   const openDrawer = useUiStateStore((state) => state.openDrawer);
   const openModal = useUiStateStore((state) => state.openModal);
   const returnHome = useUiStateStore((state) => state.returnHome);
@@ -21,7 +23,7 @@ export function AppShell() {
       className="appShell"
       data-client-entry="react"
       data-router-mode="data"
-      data-shell-version="s74-6"
+      data-shell-version="s74-7"
       data-motion={displayPreferences.motion}
       data-text-size={displayPreferences.textSize}
       data-contrast={displayPreferences.contrast}
@@ -37,7 +39,7 @@ export function AppShell() {
         </Link>
         <nav className="topNav" aria-label="页面">
           {primaryNav.map((route) => (
-            <NavLink key={route.id} to={route.href}>
+            <NavLink key={route.id} to={resolvePrimaryHref(route.href, currentSessionId)}>
               {route.label}
             </NavLink>
           ))}
@@ -64,6 +66,11 @@ export function AppShell() {
       <ScrollRestoration />
     </div>
   );
+}
+
+function resolvePrimaryHref(href: string, currentSessionId: string | null) {
+  if (!currentSessionId || !isRunnableSessionId(currentSessionId)) return href;
+  return href.replace("s74-preview", currentSessionId);
 }
 
 function UiRouteStateBridge({ pageFrameRef }: { readonly pageFrameRef: RefObject<HTMLElement | null> }) {

@@ -1,6 +1,6 @@
 # 前端 React 迁移契约
 
-本文档是 S74 的迁移契约。S74.0 批准并记录 React/Vite 前端工具链的引入方式；S74.1 已创建 `client/`、Vite 配置、TypeScript 配置、React Router Data Mode 路由和 Express history fallback，让 `dist/client/` 构建产物接管默认 `/`；S74.2 已补安全 API client；S74.3 已补 UI 状态层；S74.4 已补 shell 与 surface registry；S74.5 已补 manifest 驱动资产加载层和 `Portrait` 组件；S74.6 已补 S72 地图运行时桥。后续 S74.7 继续做默认入口验收。
+本文档是 S74 的迁移契约。S74.0 批准并记录 React/Vite 前端工具链的引入方式；S74.1 已创建 `client/`、Vite 配置、TypeScript 配置、React Router Data Mode 路由和 Express history fallback，让 `dist/client/` 构建产物接管默认 `/`；S74.2 已补安全 API client；S74.3 已补 UI 状态层；S74.4 已补 shell 与 surface registry；S74.5 已补 manifest 驱动资产加载层和 `Portrait` 组件；S74.6 已补 S72 地图运行时桥；S74.7 已完成默认入口验收与回退说明收口。
 
 ## 1. S74.0 决策
 
@@ -30,6 +30,8 @@
 - S74.5 人物页只做安全谱牒预览：按 `usage="people_page"` 分页接入全部人物页可用立绘，每页渲染 8 张缩略图；女性高清重制覆盖优先列前，未重制女性立绘继续使用 manifest 原图。registry 不把 manifest 或图片路径写入 Zustand、URL、localStorage 或 sessionStorage。
 - S74.6 已新增 `client/src/components/InkMapRuntimeBridge.tsx`。React 路由动态加载 `/vendor/pixi.min.js` 和 `/mapRenderer.js`，复用 S72 `window.MapRenderer`，但不调用旧 `public/mapPanel.js` 的全局 DOM 单例，不依赖旧 `public/app.js`、旧 `#action-input` 或旧 `#information-panel`。
 - S74.6 地图桥只读取当前安全 response 的 `mapRuntimeView`；`MapPage` 要求 `currentSession.sessionId` 与路由 `sessionId` 一致才渲染地图。地图点击只写入 React/Zustand 行动草稿，仍由玩家提交普通回合，服务器继续拥有裁决。
+- S74.7 已让 `AppShell` 的顶部“主卷/舆图/人物/史册”导航在真实案卷中绑定当前安全 `sessionId`，预览案卷仍保留 `s74-preview` 链接。
+- S74.7 已扩展 `scripts/clientSmoke.js`：无 `--url` 时临时服务器显式固定 `AI_PROVIDER=mock`，从默认 `/` 首页表单真实 Mock 开局，确认当前 session 导航、舆图 canvas、人物懒加载分页、史册/科举/皇榜/朝议/印匣刷新恢复、移动端首页和 unsafe `/api/game/state/*` / `/api/dev/*` 请求防线。
 
 ## 2. 依赖用途与边界
 
@@ -92,7 +94,7 @@ S74.1 已把脚本写入 `package.json`：
 | `typecheck:client` | `tsc --project tsconfig.client.json --noEmit` | `client/` 类型检查 |
 | `test:client` | `vitest --config vitest.config.mjs run` | React 单元/交互测试 |
 | `preview:client` | `vite preview --config vite.config.mjs` | 本地预览构建产物 |
-| `smoke:browser` | `npm run build:client && node scripts/clientSmoke.js` | S74 React 默认入口、history fallback、S72 地图桥、人物立绘分页、移动端和 hidden/raw 防线 smoke |
+| `smoke:browser` | `npm run build:client && node scripts/clientSmoke.js` | S74 React 默认入口、Mock 表单开局、当前 session 导航、主要路由刷新、S72 地图桥、人物立绘分页、移动端和 hidden/raw/unsafe API 防线 smoke |
 | `smoke:browser:legacy` | `node scripts/browserSmoke.js` | 旧原生前端浏览器 smoke 保留为迁移参考 |
 
 ## 6. 安全与素材边界
@@ -123,6 +125,17 @@ S74.1 及后续新增 client 文件后追加：
 - `npm run build:client`
 - `npm run smoke:browser`
 
+S74.7 默认入口验收固定为：
+
+- `npm run typecheck:client`
+- `npm run test:client`
+- `node --test test/reactClientScaffold.test.js`
+- `npm run build:client`
+- `npm run smoke:browser -- --screenshots artifacts/s74-7-default-entry`
+- `npm run check:docs-governance`
+- `node --test test/documentationGovernance.test.js`
+- `git diff --check`
+
 S74.1 已验证：
 
 - `npm run typecheck:client`
@@ -137,6 +150,7 @@ S74.1 已验证：
 - Git revert S74.0 提交，恢复 `package.json`、`package-lock.json` 和本契约/文档变更。
 - 重新执行 `npm install` 让 lockfile 和 `node_modules` 回到上一提交解析。
 - 若 S74.1+ 已创建 `client/` 或 Express fallback，按对应提交一并 revert。
+- 若只需要撤销 S74.7 默认入口验收补丁，revert 本步提交即可恢复上一提交的导航、smoke 和文档口径。
 - 回滚不需要迁移存档，不影响 JSON session、SQLite session、AI provider 配置或 S73 素材。
 
 ## 8. 官方资料

@@ -8,18 +8,25 @@ Use Mock mode unless the task is specifically about a real provider:
 
 ```powershell
 npm run smoke:browser
-npm run smoke:browser -- --check-ai-connection
 npm run smoke:browser -- --url http://localhost:3000
 npm run smoke:browser -- --screenshots artifacts/browser-smoke
-npm run smoke:browser -- --information-parity
 npm run smoke:dual-mode -- --storage-only
 ```
 
-The smoke uses `playwright-core` with an installed Chrome or Edge executable. If the browser is not in a standard location, set `BROWSER_EXECUTABLE_PATH` or pass `--browser <path>`. S38.1 deterministic exam setup expects `--url` targets to be local Qianqiu servers sharing this repository's `data/sessions/` directory. Screenshots are validated in memory by default; `--screenshots <dir>` also writes the checked PNG files. `artifacts/` is ignored by Git. `--check-ai-connection` clicks the start-page `AI 连接` button before creating a session; the auto-started smoke server uses Mock, while `--url` targets should enable this flag only when the target provider is intentionally configured for that route check. `--information-parity` starts isolated Mock JSON and SQLite servers, runs a focused official-assignment 局势簿 journey in both, compares normalized DOM/route-view snapshots, and cannot be combined with `--url` or `--storage-adapter`. `smoke:dual-mode` is the S59.1 integration wrapper; default mode chains JSON and SQLite full browser journeys plus information parity, while `--storage-only` skips browser startup and runs the import/repair/export/audit/derived-table hidden-token checks.
+S74 起 `npm run smoke:browser` 指向 React 默认入口 smoke，参数只覆盖 client 验收：`--url`、`--browser`、`--screenshots`、`--headed`。无 `--url` 时脚本会显式固定 `AI_PROVIDER=mock`，不继承本机 `.env` 的真实 provider。The smoke uses `playwright-core` with an installed Chrome or Edge executable. If the browser is not in a standard location, set `BROWSER_EXECUTABLE_PATH` or pass `--browser <path>`. Screenshots are validated in memory by default; `--screenshots <dir>` also writes the checked PNG files. `artifacts/` is ignored by Git. JSON/SQLite parity and no-browser storage checks now belong to `npm run smoke:dual-mode` / `npm run smoke:dual-mode -- --storage-only`; the old `scripts/browserSmoke.js` remains as migration reference under `npm run smoke:browser:legacy` and is not the default frontend acceptance path.
 
 ## Automated Coverage
 
-`scripts/browserSmoke.js` currently verifies:
+`scripts/clientSmoke.js` currently verifies the S74 React default entry:
+
+| Area | Automated checks |
+| --- | --- |
+| React default boot | Builds/serves `dist/client`, loads `/`, confirms the React Data Router entry, Vite client assets, no legacy start form, no hidden/raw text, and no horizontal overflow. |
+| Mock opening flow | Uses the real home form to start a Mock scholar session, verifies the URL carries a runnable UUID session id, and checks top/session navigation points to the current session rather than `s74-preview`. |
+| Route recovery | Opens and reloads `/game/:sessionId/map`, `/people`, `/archive`, `/exam`, `/ranking`, `/court`, and `/settings`; map recovery requires a non-empty PixiJS canvas and safe labels. |
+| Asset and safety checks | Verifies people page portrait pagination remains manifest-backed and lazy, monitors requests for unsafe `/api/game/state/*` or `/api/dev/*`, checks `/api/health`, mobile home layout, screenshots, and hidden/raw/key/path non-leakage. |
+
+`scripts/browserSmoke.js` is the legacy pre-React smoke reference and historically verified:
 
 | Area | Automated checks |
 | --- | --- |
@@ -67,32 +74,33 @@ S53.6 closes the former future-content guard for `#event-archive-panel`: event a
 
 ## Latest Automated Result
 
-Date: 2026-05-08
+Date: 2026-05-18
 
-Relevant implementation commit: current S59.1 implementation commit
+Relevant implementation: S74.7 React 默认入口验收。
 
-Commands verified during S59.1:
+Commands verified during S74.7:
 
 ```powershell
-node --check scripts\dualModeAcceptance.js test\dualModeAcceptanceScript.test.js scripts\importJsonSessionsToSqlite.js
-node --test test\dualModeAcceptanceScript.test.js test\browserSmokeScript.test.js test\sqliteGeographyTool.test.js test\auditEventArchiveTool.test.js test\sqlitePromptRetrieval.test.js
-$env:AI_PROVIDER='mock'; npm run smoke:dual-mode
+node --check scripts/clientSmoke.js
+npm run typecheck:client
+npm run test:client
+node --test test/reactClientScaffold.test.js
+npm run build:client
+npm run smoke:browser -- --screenshots artifacts/s74-7-default-entry
 npm run check:docs-governance
+node --test test/documentationGovernance.test.js
 git diff --check
 npm test
 ```
 
 Observed result:
 
-- S59.1 dual-mode acceptance passed: `smoke:dual-mode` ran JSON full Mock browser journey, SQLite full Mock browser journey, information-panel parity, and storage maintenance acceptance in one command.
-- Focused browser-smoke/helper/storage coverage now includes event archive pagination metadata, raw table/index/audit/prompt hidden-token leak checks, normalized JSON/SQLite information-panel parity comparison, explicit SQLite DB ownership checks, event archive grid overflow, JSON -> SQLite derived-table import reporting, geography repair/export, audit projection, and storage-only hidden-token checks. Focused S59.1 suite passed with 54 tests; `npm test` passed with 443 tests.
-- Within `smoke:dual-mode`, the information-parity phase ran the same official-assignment 局势簿 flow against isolated JSON and SQLite Mock servers, compared normalized desktop/paged/mobile DOM snapshots, route view counts, and paged event archive metadata.
-- The full browser journey remains the broader end-to-end path for scholar -> official progression and representative identities; S59.1 now runs it once in JSON mode and once in SQLite mode through the dual-mode wrapper.
-- Real-provider browser behavior still requires an explicitly configured `--url` target and is not part of default Mock smoke.
-- The browser start path still clears stale `qianqiu.sessionId` localStorage only when an old restored game hides the initial start form. Later reload/fresh-page restoration checks continue to validate the newly created session.
-- Desktop smoke still fails if the game panel regresses to the old narrow-column width, if the role panel, relationship panel, active-request panel, official-career panel, information panel, exam-calendar panel, exam-rival panel, or save-list surfaces are horizontally clipped, if S35 calendar/rival details disappear from the modal/archive/candidate profiles, if any supported start role is missing from the browser form, if hidden scholar-invisible factions leak into relationship/active-request/information-panel text, if save-list rows leak raw storage tokens, if 年月旬 labels disappear from date-bearing player surfaces, if the four-exam path stops before official promotion, if copied-passage punishment disappears, or if S36 role-world feedback/API metric deltas disappear from representative role journeys.
+- `npm run smoke:browser` passed as the React default-entry smoke. It built `dist/client`, forced Mock provider for the temporary server, opened `/`, started a scholar session through the real home form, verified active session navigation, reloaded map/people/archive/exam/ranking/court/settings routes, checked the PixiJS map canvas and portrait pagination, and saved screenshots under `artifacts/s74-7-default-entry`.
+- The smoke monitors React requests and fails if the default frontend touches unsafe `/api/game/state/*` or `/api/dev/*` paths. Ordinary browser restore remains on `GET /api/game/player-state/:sessionId`.
+- `npm test` passed with 872 tests. `git diff --check` passed with only LF/CRLF warnings from existing Windows line-ending behavior.
+- JSON/SQLite parity and legacy pre-React browser journeys are no longer part of default `smoke:browser`; use `npm run smoke:dual-mode` / `npm run smoke:dual-mode -- --storage-only` for database parity, and treat `npm run smoke:browser:legacy` as migration reference.
 
-Earlier S26.2 screenshot review caught and fixed a real result-modal bug: `.exam-requirements { display: grid; }` overrode the `hidden` attribute and left the old requirements visible behind the result view. The fix is `.exam-requirements[hidden] { display: none; }`.
+Historical note: S59.1 previously used the old `scripts/browserSmoke.js` journey for JSON/SQLite full browser parity. That record remains valid historically but no longer describes the current default browser smoke.
 
 ## Manual Fallback
 

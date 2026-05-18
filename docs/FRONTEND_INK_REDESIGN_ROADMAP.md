@@ -695,13 +695,16 @@ Manifest 示例：
 
 - 文档写明 Git revert 或恢复上一提交的回退方式，不保留产品内旧前端入口。
 - 清理旧前端残留引用，确认 README、brief 和 smoke 都以新默认前端为准。
+- `AppShell` 在真实案卷中把顶部主卷、舆图、人物和史册入口绑定到当前安全 `sessionId`；预览卷继续使用 `s74-preview`。
+- `scripts/clientSmoke.js` 无 `--url` 时显式固定 `AI_PROVIDER=mock`，从默认 `/` 首页表单真实 Mock 开局，验证当前 session 导航、舆图/人物/史册/科举/皇榜/朝议/印匣路由刷新、unsafe API 防线和移动端首页。
 
 验收：
 
 - S74 完成后默认 `/` 可用新前端玩 Mock 开局和完整书生路径关键入口。
+- `npm run smoke:browser` 是 React 默认入口 smoke；JSON/SQLite parity 与 no-browser 存储验收继续走 `npm run smoke:dual-mode`。
 - 仓库不要求 `/legacy.html`、`/ink-client/` 或旧单页壳继续可用。
 
-### S74.8 S74 验收
+### S74 验收命令
 
 命令：
 

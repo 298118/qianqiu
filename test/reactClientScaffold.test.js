@@ -122,7 +122,9 @@ test("S74.4 shell uses registry-backed overlays without widening data sources", 
   const routeCatalogSource = readText("client/src/routes/routeCatalog.ts");
   const combined = `${appShellSource}\n${surfaceHostSource}\n${surfaceRegistrySource}\n${routeCatalogSource}`;
 
-  assert.match(appShellSource, /data-shell-version="s74-6"/);
+  assert.match(appShellSource, /data-shell-version="s74-7"/);
+  assert.match(appShellSource, /resolvePrimaryHref/);
+  assert.match(appShellSource, /isRunnableSessionId/);
   assert.match(appShellSource, /ScrollRestoration/);
   assert.match(appShellSource, /window\.scrollTo/);
   assert.match(surfaceHostSource, /drawerRegistry/);
@@ -178,5 +180,32 @@ test("S74.6 React map bridge wraps S72 renderer without old frontend globals", (
   assert.doesNotMatch(
     combined,
     /window\.QianqiuMapRenderer|public\/app\.js|#action-input|#information-panel|dangerouslySetInnerHTML|localStorage|sessionStorage|data\/sessions|raw audit|provider payload|OPENAI_API_KEY|DEEPSEEK_API_KEY|MIMO_API_KEY|ANTHROPIC_API_KEY/
+  );
+});
+
+test("S74.7 client smoke verifies default UI start and safe route recovery", () => {
+  const clientSmokeSource = readText("scripts/clientSmoke.js");
+  const appShellSource = readText("client/src/components/AppShell.tsx");
+
+  assert.match(clientSmokeSource, /startMockGameThroughHome/);
+  assert.match(clientSmokeSource, /getByLabel\("姓名"\)/);
+  assert.match(clientSmokeSource, /getByRole\("button", \{ name: "新开一卷" \}\)/);
+  assert.match(clientSmokeSource, /clickTopNavRoute\(page, "舆图"/);
+  assert.match(clientSmokeSource, /assertRouteRefresh\(page, runtimeMapPath/);
+  assert.match(clientSmokeSource, /assertRouteRefresh\(page, peoplePath/);
+  assert.match(clientSmokeSource, /assertRouteRefresh\(page, archivePath/);
+  assert.match(clientSmokeSource, /clickSessionNavRoute/);
+  assert.match(clientSmokeSource, /label: "科举"/);
+  assert.match(clientSmokeSource, /label: "皇榜"/);
+  assert.match(clientSmokeSource, /label: "朝议"/);
+  assert.match(clientSmokeSource, /label: "印匣"/);
+  assert.match(clientSmokeSource, /unsafeClientApiPathPatterns/);
+  assert.match(clientSmokeSource, /process\.env\.AI_PROVIDER = "mock"/);
+  assert.match(clientSmokeSource, /previousAiProvider/);
+  assert.match(appShellSource, /href\.replace\("s74-preview", currentSessionId\)/);
+  assert.doesNotMatch(clientSmokeSource, /\/legacy\.html|\/ink-client|\/api\/game\/state\/\$\{|\/api\/dev\/session-diagnostics/);
+  assert.doesNotMatch(
+    appShellSource,
+    /localStorage|sessionStorage|data\/sessions|raw audit|provider payload|OPENAI_API_KEY|DEEPSEEK_API_KEY|MIMO_API_KEY|ANTHROPIC_API_KEY/
   );
 });

@@ -29,6 +29,12 @@ const hiddenTextTokens = Object.freeze([
   "prompt_retrieval_index"
 ]);
 
+const runnableSessionIdPattern = /^[a-f0-9-]{36}$/i;
+const unsafeClientApiPathPatterns = Object.freeze([
+  /^\/api\/game\/state\//,
+  /^\/api\/dev\//
+]);
+
 function parseClientSmokeArgs(argv = process.argv) {
   const args = {
     browserPath: null,
@@ -83,8 +89,7 @@ async function captureScreenshot(page, screenshotsDir, label) {
   return { label, bytes: buffer.length, filePath };
 }
 
-async function assertReactClientPage(page, baseUrl, pathname, label, screenshotsDir, options = {}) {
-  await page.goto(`${baseUrl}${pathname}`, { waitUntil: "networkidle" });
+async function assertCurrentReactClientPage(page, pathname, label, screenshotsDir, options = {}) {
   await page.locator("[data-client-entry='react'][data-router-mode='data']").waitFor({ timeout: 10000 });
   await page.locator("h1").first().waitFor({ timeout: 10000 });
   if (options.readySelector) {
@@ -124,9 +129,116 @@ async function assertReactClientPage(page, baseUrl, pathname, label, screenshots
   return captureScreenshot(page, screenshotsDir, label);
 }
 
+async function assertReactClientPage(page, baseUrl, pathname, label, screenshotsDir, options = {}) {
+  await page.goto(`${baseUrl}${pathname}`, { waitUntil: "networkidle" });
+  return assertCurrentReactClientPage(page, pathname, label, screenshotsDir, options);
+}
+
+async function waitForSafeSessionPath(page, label) {
+  await page.waitForURL((url) => /^\/game\/[a-f0-9-]{36}$/i.test(url.pathname), { timeout: 15000 });
+  const sessionId = new URL(page.url()).pathname.split("/")[2];
+  if (!runnableSessionIdPattern.test(sessionId)) {
+    throw new Error(`${label} did not navigate to a runnable session id: ${page.url()}`);
+  }
+  return sessionId;
+}
+
+async function startMockGameThroughHome(page, screenshotsDir) {
+  await page.getByLabel("姓名").fill("烟测书生");
+  await page.getByLabel("身份").selectOption("scholar");
+  await page.getByRole("button", { name: "新开一卷" }).click();
+  const sessionId = await waitForSafeSessionPath(page, "default home start");
+  const gamePath = `/game/${sessionId}`;
+  const screenshot = await assertCurrentReactClientPage(page, gamePath, "s74-react-mock-start-desktop", screenshotsDir);
+
+  const entrypoints = await page.evaluate((id) => {
+    const allLinks = [...document.querySelectorAll("a")].map((link) => ({
+      text: (link.textContent || "").trim(),
+      path: new URL(link.href).pathname
+    }));
+    const byText = new Map(allLinks.map((link) => [link.text, link.path]));
+    return {
+      topMap: byText.get("舆图"),
+      topPeople: byText.get("人物"),
+      topArchive: byText.get("史册"),
+      exam: byText.get("科举"),
+      ranking: byText.get("皇榜"),
+      court: byText.get("朝议"),
+      settings: byText.get("印匣"),
+      previewLinks: allLinks.filter((link) => link.path.includes("s74-preview")).map((link) => link.text),
+      expected: {
+        map: `/game/${id}/map`,
+        people: `/game/${id}/people`,
+        archive: `/game/${id}/archive`,
+        exam: `/game/${id}/exam`,
+        ranking: `/game/${id}/ranking`,
+        court: `/game/${id}/court`,
+        settings: `/game/${id}/settings`
+      }
+    };
+  }, sessionId);
+
+  const failures = [];
+  if (entrypoints.topMap !== entrypoints.expected.map) failures.push(`top map link was ${entrypoints.topMap}`);
+  if (entrypoints.topPeople !== entrypoints.expected.people) failures.push(`top people link was ${entrypoints.topPeople}`);
+  if (entrypoints.topArchive !== entrypoints.expected.archive) failures.push(`top archive link was ${entrypoints.topArchive}`);
+  if (entrypoints.exam !== entrypoints.expected.exam) failures.push(`exam link was ${entrypoints.exam}`);
+  if (entrypoints.ranking !== entrypoints.expected.ranking) failures.push(`ranking link was ${entrypoints.ranking}`);
+  if (entrypoints.court !== entrypoints.expected.court) failures.push(`court link was ${entrypoints.court}`);
+  if (entrypoints.settings !== entrypoints.expected.settings) failures.push(`settings link was ${entrypoints.settings}`);
+  if (entrypoints.previewLinks.length) failures.push(`runnable game shell still linked preview routes: ${entrypoints.previewLinks.join(", ")}`);
+  if (failures.length) {
+    throw new Error(`Default entry session links are not bound to the started Mock session: ${failures.join("; ")}`);
+  }
+
+  return { sessionId, screenshot };
+}
+
+async function clickTopNavRoute(page, label, expectedPath) {
+  const link = page.locator(".topNav a", { hasText: label }).first();
+  await link.waitFor({ timeout: 10000 });
+  await page.waitForFunction(
+    ({ text, path }) => {
+      return [...document.querySelectorAll(".topNav a")].some((anchor) => {
+        return (anchor.textContent || "").trim() === text && new URL(anchor.href).pathname === path;
+      });
+    },
+    { text: label, path: expectedPath },
+    { timeout: 10000 }
+  );
+  await link.click();
+  await page.waitForURL((url) => url.pathname === expectedPath, { timeout: 10000 });
+}
+
+async function clickSessionNavRoute(page, label, expectedPath) {
+  const link = page.locator(".sessionNav a", { hasText: label }).first();
+  await link.waitFor({ timeout: 10000 });
+  await page.waitForFunction(
+    ({ text, path }) => {
+      return [...document.querySelectorAll(".sessionNav a")].some((anchor) => {
+        return (anchor.textContent || "").trim() === text && new URL(anchor.href).pathname === path;
+      });
+    },
+    { text: label, path: expectedPath },
+    { timeout: 10000 }
+  );
+  await link.click();
+  await page.waitForURL((url) => url.pathname === expectedPath, { timeout: 10000 });
+}
+
+async function assertRouteRefresh(page, pathname, label, screenshotsDir, options = {}) {
+  await page.reload({ waitUntil: "networkidle" });
+  return assertCurrentReactClientPage(page, pathname, label, screenshotsDir, options);
+}
+
 async function runClientSmoke(options = {}) {
   if (!options.url && !hasReactClientBuild()) {
     throw new Error("React client build not found. Run npm run build:client before client smoke.");
+  }
+
+  const previousAiProvider = process.env.AI_PROVIDER;
+  if (!options.url) {
+    process.env.AI_PROVIDER = "mock";
   }
 
   const browserPath = resolveBrowserExecutable({ browserPath: options.browserPath });
@@ -137,37 +249,32 @@ async function runClientSmoke(options = {}) {
     headless: !options.headed
   });
   const pageErrors = [];
+  const unsafeApiRequests = [];
   const screenshots = [];
 
   try {
     const context = await browser.newContext({ viewport: VIEWPORTS.desktop });
     const page = await context.newPage();
     page.on("pageerror", (error) => pageErrors.push(error.message));
+    page.on("request", (request) => {
+      try {
+        const { pathname } = new URL(request.url());
+        if (unsafeClientApiPathPatterns.some((pattern) => pattern.test(pathname))) {
+          unsafeApiRequests.push(pathname);
+        }
+      } catch {
+      }
+    });
 
     screenshots.push(await assertReactClientPage(page, baseUrl, "/", "s74-react-home-desktop", options.screenshotsDir));
+    const mockStart = await startMockGameThroughHome(page, options.screenshotsDir);
+    const startedSessionId = mockStart.sessionId;
+    screenshots.push(mockStart.screenshot);
+    const runtimeMapPath = `/game/${startedSessionId}/map`;
+    await clickTopNavRoute(page, "舆图", runtimeMapPath);
     screenshots.push(
-      await assertReactClientPage(page, baseUrl, "/game/s74-smoke/map", "s74-react-map-route-desktop", options.screenshotsDir)
-    );
-    const startedSession = await page.evaluate(async () => {
-      const response = await fetch("/api/game/start", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          playerName: "烟测书生",
-          role: "scholar",
-          dynasty: "明",
-          year: 1465
-        })
-      });
-      return response.ok ? response.json() : { error: await response.text(), status: response.status };
-    });
-    if (!startedSession.sessionId || !startedSession.mapRuntimeView) {
-      throw new Error(`Mock start did not return a safe mapRuntimeView: ${JSON.stringify(startedSession).slice(0, 240)}`);
-    }
-    const runtimeMapPath = `/game/${startedSession.sessionId}/map`;
-    screenshots.push(
-      await assertReactClientPage(page, baseUrl, runtimeMapPath, "s74-react-map-runtime-desktop", options.screenshotsDir, {
-        readySelector: ".inkMapRuntimeBridge"
+      await assertCurrentReactClientPage(page, runtimeMapPath, "s74-react-map-runtime-desktop", options.screenshotsDir, {
+        readySelector: ".inkMapRuntimeBridge canvas"
       })
     );
     await page.locator(".inkMapRuntimeBridge canvas").first().waitFor({ timeout: 15000 });
@@ -194,7 +301,15 @@ async function runClientSmoke(options = {}) {
       throw new Error(`React map runtime leaked forbidden text: ${mapRuntime.forbiddenText.join(", ")}`);
     }
     screenshots.push(
-      await assertReactClientPage(page, baseUrl, "/game/s74-smoke/people", "s74-react-people-assets-desktop", options.screenshotsDir, {
+      await assertRouteRefresh(page, runtimeMapPath, "s74-react-map-runtime-refresh-desktop", options.screenshotsDir, {
+        readySelector: ".inkMapRuntimeBridge canvas"
+      })
+    );
+
+    const peoplePath = `/game/${startedSessionId}/people`;
+    await clickTopNavRoute(page, "人物", peoplePath);
+    screenshots.push(
+      await assertCurrentReactClientPage(page, peoplePath, "s74-react-people-assets-desktop", options.screenshotsDir, {
         readySelector: ".portraitGrid"
       })
     );
@@ -220,6 +335,42 @@ async function runClientSmoke(options = {}) {
     if (portraitLedger.localOrRawLeaks.length) {
       throw new Error(`People portrait page leaked forbidden text: ${portraitLedger.localOrRawLeaks.join(", ")}`);
     }
+    screenshots.push(
+      await assertRouteRefresh(page, peoplePath, "s74-react-people-refresh-desktop", options.screenshotsDir, {
+        readySelector: ".portraitGrid"
+      })
+    );
+
+    const archivePath = `/game/${startedSessionId}/archive`;
+    await clickTopNavRoute(page, "史册", archivePath);
+    screenshots.push(
+      await assertCurrentReactClientPage(page, archivePath, "s74-react-archive-desktop", options.screenshotsDir, {
+        readySelector: "#archive-title"
+      })
+    );
+    screenshots.push(
+      await assertRouteRefresh(page, archivePath, "s74-react-archive-refresh-desktop", options.screenshotsDir, {
+        readySelector: "#archive-title"
+      })
+    );
+
+    const sessionRouteChecks = [
+      { label: "科举", path: `/game/${startedSessionId}/exam`, selector: "#exam-title", screenshot: "s74-react-exam-refresh-desktop" },
+      { label: "皇榜", path: `/game/${startedSessionId}/ranking`, selector: "#ranking-title", screenshot: "s74-react-ranking-refresh-desktop" },
+      { label: "朝议", path: `/game/${startedSessionId}/court`, selector: "#court-title", screenshot: "s74-react-court-refresh-desktop" },
+      { label: "印匣", path: `/game/${startedSessionId}/settings`, selector: "#settings-title", screenshot: "s74-react-settings-refresh-desktop" }
+    ];
+    for (const route of sessionRouteChecks) {
+      await clickSessionNavRoute(page, route.label, route.path);
+      await assertCurrentReactClientPage(page, route.path, route.screenshot.replace("-refresh", ""), null, {
+        readySelector: route.selector
+      });
+      screenshots.push(
+        await assertRouteRefresh(page, route.path, route.screenshot, options.screenshotsDir, {
+          readySelector: route.selector
+        })
+      );
+    }
 
     const health = await page.evaluate(async () => {
       const response = await fetch("/api/health");
@@ -236,15 +387,38 @@ async function runClientSmoke(options = {}) {
     if (pageErrors.length) {
       throw new Error(`Client smoke page errors detected: ${pageErrors.join("; ")}`);
     }
+    if (unsafeApiRequests.length) {
+      throw new Error(`React client smoke touched unsafe API path(s): ${[...new Set(unsafeApiRequests)].join(", ")}`);
+    }
 
     return {
       baseUrl,
       screenshots,
-      viewports: ["desktop-home", "desktop-map-route", "desktop-map-runtime", "desktop-people-assets", "mobile-home"]
+      viewports: [
+        "desktop-home",
+        "desktop-mock-start",
+        "desktop-map-runtime",
+        "desktop-map-refresh",
+        "desktop-people-assets",
+        "desktop-people-refresh",
+        "desktop-archive-refresh",
+        "desktop-exam-refresh",
+        "desktop-ranking-refresh",
+        "desktop-court-refresh",
+        "desktop-settings-refresh",
+        "mobile-home"
+      ]
     };
   } finally {
     await browser.close();
     if (server) await server.close();
+    if (!options.url) {
+      if (previousAiProvider === undefined) {
+        delete process.env.AI_PROVIDER;
+      } else {
+        process.env.AI_PROVIDER = previousAiProvider;
+      }
+    }
   }
 }
 

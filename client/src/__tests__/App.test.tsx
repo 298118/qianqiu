@@ -114,7 +114,33 @@ describe("S74.1 React client shell", () => {
     expect(screen.getByRole("button", { name: "新开一卷" })).toBeTruthy();
     expect(document.querySelector("[data-client-entry='react']")).toBeTruthy();
     expect(document.querySelector("[data-router-mode='data']")).toBeTruthy();
-    expect(document.querySelector("[data-shell-version='s74-6']")).toBeTruthy();
+    expect(document.querySelector("[data-shell-version='s74-7']")).toBeTruthy();
+  });
+
+  it("binds primary route links to the active runnable session after Mock start or refresh", async () => {
+    const sessionId = "11111111-1111-4111-8111-111111111111";
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () => ({
+        ok: true,
+        status: 200,
+        statusText: "OK",
+        headers: { get: () => "application/json" },
+        json: async () => ({
+          source: "server_player_visible_state_projection",
+          sessionId,
+          worldState: { player: { name: "沈知微", role: "scholar" } }
+        })
+      }))
+    );
+
+    renderRoute(`/game/${sessionId}`);
+
+    await waitFor(() => expect(useUiStateStore.getState().currentSessionId).toBe(sessionId));
+    expect(screen.getByRole("link", { name: "主卷" }).getAttribute("href")).toBe(`/game/${sessionId}`);
+    expect(screen.getByRole("link", { name: "舆图" }).getAttribute("href")).toBe(`/game/${sessionId}/map`);
+    expect(screen.getByRole("link", { name: "人物" }).getAttribute("href")).toBe(`/game/${sessionId}/people`);
+    expect(screen.getByRole("link", { name: "史册" }).getAttribute("href")).toBe(`/game/${sessionId}/archive`);
   });
 
   it("keeps the session routes inside the React Router tree", () => {
