@@ -56,6 +56,12 @@ function parseClientSmokeArgs(argv = process.argv) {
     } else if (arg === "--browser") {
       args.browserPath = readArgValue(argv, index, "--browser");
       index += 1;
+    } else if (arg === "--client") {
+      const client = readArgValue(argv, index, "--client");
+      if (client !== "react") {
+        throw new Error(`Unsupported client smoke target: ${client}`);
+      }
+      index += 1;
     } else if (arg === "--screenshots") {
       args.screenshotsDir = readArgValue(argv, index, "--screenshots");
       index += 1;
@@ -197,7 +203,10 @@ async function startMockGameThroughHome(page, screenshotsDir) {
 async function assertReturnHomeContinueAndTurn(page, sessionId, screenshotsDir) {
   const gamePath = `/game/${sessionId}`;
 
-  await page.getByLabel("返回千秋首页").click();
+  await page.getByRole("button", { name: "打开印匣" }).click();
+  const drawer = page.locator("aside.drawerHost[aria-label='印匣']");
+  await drawer.waitFor({ timeout: 10000 });
+  await drawer.getByRole("button", { name: "返回首页" }).click();
   await page.waitForURL((url) => url.pathname === "/", { timeout: 10000 });
   await page.getByRole("link", { name: "继续本局" }).waitFor({ timeout: 10000 });
   const homeState = await page.evaluate((id) => {
@@ -233,6 +242,10 @@ async function assertReturnHomeContinueAndTurn(page, sessionId, screenshotsDir) 
   await page.getByRole("link", { name: "继续本局" }).click();
   await page.waitForURL((url) => url.pathname === gamePath, { timeout: 10000 });
   await page.getByRole("button", { name: /温书 mock-ai 写入草稿/ }).click();
+  await page.waitForFunction(() => {
+    const value = document.querySelector("textarea")?.value || "";
+    return value.includes("温习经义");
+  }, null, { timeout: 10000 });
   const quickDraft = await page.getByLabel("本回合行动").inputValue();
   if (!quickDraft.includes("温习经义")) {
     throw new Error(`S75.9 quick action did not write a mock-ai draft: ${quickDraft}`);
@@ -268,6 +281,155 @@ async function assertReturnHomeContinueAndTurn(page, sessionId, screenshotsDir) 
     homeScreenshot,
     gameScreenshot: await assertCurrentReactClientPage(page, gamePath, "s75-continue-turn-desktop", screenshotsDir)
   };
+}
+
+async function assertInkboxTab(page, drawer, tabName, expectedText) {
+  await drawer.getByRole("tab", { name: tabName }).click();
+  await page.waitForFunction(
+    (name) => {
+      return [...document.querySelectorAll("aside.drawerHost [role='tab']")].some((tab) => {
+        return (tab.textContent || "").includes(name) && tab.getAttribute("aria-selected") === "true";
+      });
+    },
+    tabName,
+    { timeout: 10000 }
+  );
+
+  const snapshot = await drawer.evaluate((element, input) => {
+    const { text, tokens } = input;
+    const panel = element.querySelector(".inkboxPanel");
+    const bodyText = document.body.innerText || "";
+    return {
+      panelText: panel?.textContent || "",
+      hiddenLeaks: tokens.filter((token) => bodyText.includes(token)),
+      hasExpectedText: Boolean(panel?.textContent?.includes(text))
+    };
+  }, { text: expectedText, tokens: hiddenTextTokens });
+
+  if (!snapshot.hasExpectedText) {
+    throw new Error(`Inkbox tab ${tabName} did not render expected panel text: ${JSON.stringify(snapshot)}`);
+  }
+  if (snapshot.hiddenLeaks.length) {
+    throw new Error(`Inkbox tab ${tabName} leaked hidden text: ${snapshot.hiddenLeaks.join(", ")}`);
+  }
+}
+
+async function assertInkboxTabsAndSaveLoad(page, sessionId, screenshotsDir) {
+  const gamePath = `/game/${sessionId}`;
+  const sessionShortCode = sessionId.slice(0, 8);
+
+  await page.getByRole("button", { name: "打开印匣" }).click();
+  const drawer = page.locator("aside.drawerHost[aria-label='印匣']");
+  await drawer.waitFor({ timeout: 10000 });
+
+  await assertInkboxTab(page, drawer, "AI 设置", "快捷建议 Provider");
+  const quickBudget = await drawer.getByLabel("快捷建议工具预算固定为零").evaluate((input) => ({
+    value: input instanceof HTMLInputElement ? input.value : "",
+    disabled: input instanceof HTMLInputElement ? input.disabled : false
+  }));
+  if (quickBudget.value !== "0" || !quickBudget.disabled) {
+    throw new Error(`Inkbox quick-action tool budget was not locked to zero: ${JSON.stringify(quickBudget)}`);
+  }
+
+  await assertInkboxTab(page, drawer, "显示", "显示偏好");
+  await assertInkboxTab(page, drawer, "安全", "安全摘要");
+  await drawer.getByRole("button", { name: "关闭抽屉" }).click();
+  await drawer.waitFor({ state: "detached", timeout: 10000 });
+  await page.waitForFunction(() => document.activeElement?.getAttribute("aria-label") === "打开印匣", null, { timeout: 5000 });
+
+  await page.getByRole("button", { name: "打开印匣" }).click();
+  await drawer.waitFor({ timeout: 10000 });
+  await assertInkboxTab(page, drawer, "旧案", "旧案");
+  const refreshButton = drawer.getByRole("button", { name: "刷新" });
+  await refreshButton.waitFor({ timeout: 10000 });
+  if (!(await refreshButton.isDisabled())) {
+    const savesResponse = page.waitForResponse((response) => {
+      try {
+        const url = new URL(response.url());
+        return url.pathname === "/api/game/saves" && response.request().method() === "GET";
+      } catch {
+        return false;
+      }
+    }, { timeout: 15000 });
+    await refreshButton.click();
+    await savesResponse;
+  }
+
+  const currentCase = drawer.locator(".saveCaseItem", { hasText: `案 ${sessionShortCode}` }).first();
+  await currentCase.waitFor({ timeout: 10000 });
+  const saveSnapshot = await currentCase.evaluate((element, tokens) => {
+    const text = document.body.innerText || "";
+    return {
+      cardText: (element.textContent || "").slice(0, 500),
+      hiddenLeaks: tokens.filter((token) => text.includes(token)),
+      unsafeText: (document.body.innerText || "").match(/\/api\/game\/state|\/api\/dev\/session-diagnostics|data\/sessions|provider payload|raw audit|hiddenNotes|OPENAI_API_KEY/gi) || []
+    };
+  }, hiddenTextTokens);
+  if (saveSnapshot.hiddenLeaks.length || saveSnapshot.unsafeText.length) {
+    throw new Error(`Inkbox save list leaked unsafe text: ${JSON.stringify(saveSnapshot)}`);
+  }
+
+  const savesScreenshot = await captureScreenshot(page, screenshotsDir, "s75-inkbox-saves-tab-desktop");
+  const playerStateResponse = page.waitForResponse((response) => {
+    try {
+      const url = new URL(response.url());
+      return url.pathname === `/api/game/player-state/${sessionId}` && response.request().method() === "GET";
+    } catch {
+      return false;
+    }
+  }, { timeout: 15000 });
+  await currentCase.getByRole("button", { name: "载入" }).click();
+  await playerStateResponse;
+  await page.waitForURL((url) => url.pathname === gamePath, { timeout: 10000 });
+  await drawer.waitFor({ state: "detached", timeout: 10000 });
+
+  return {
+    savesScreenshot,
+    loadedScreenshot: await assertCurrentReactClientPage(page, gamePath, "s75-inkbox-load-session-desktop", screenshotsDir)
+  };
+}
+
+async function assertMobileInkbox(page, screenshotsDir) {
+  await page.getByRole("button", { name: "打开印匣" }).click();
+  const drawer = page.locator("aside.drawerHost[aria-label='印匣']");
+  await drawer.waitFor({ timeout: 10000 });
+
+  await assertInkboxTab(page, drawer, "AI 设置", "快捷建议 Provider");
+  await assertInkboxTab(page, drawer, "旧案", "旧案");
+  await assertInkboxTab(page, drawer, "显示", "显示偏好");
+  await assertInkboxTab(page, drawer, "安全", "安全摘要");
+
+  const metrics = await page.evaluate((tokens) => {
+    const drawerElement = document.querySelector("aside.drawerHost[aria-label='印匣']");
+    const rect = drawerElement?.getBoundingClientRect();
+    const html = document.documentElement;
+    return {
+      drawerLeft: rect?.left ?? 0,
+      drawerRight: rect?.right ?? 0,
+      drawerWidth: rect?.width ?? 0,
+      viewportWidth: window.innerWidth,
+      tabCount: document.querySelectorAll("aside.drawerHost [role='tab']").length,
+      horizontalOverflow: html.scrollWidth > html.clientWidth + 4,
+      hiddenLeaks: tokens.filter((token) => (document.body.innerText || "").includes(token))
+    };
+  }, hiddenTextTokens);
+  if (metrics.drawerWidth <= 0 || metrics.drawerLeft < -2 || metrics.drawerRight > metrics.viewportWidth + 2) {
+    throw new Error(`Mobile inkbox drawer is outside the viewport: ${JSON.stringify(metrics)}`);
+  }
+  if (metrics.tabCount !== 4) {
+    throw new Error(`Mobile inkbox did not render all tabs: ${JSON.stringify(metrics)}`);
+  }
+  if (metrics.horizontalOverflow) {
+    throw new Error(`Mobile inkbox caused horizontal overflow: ${JSON.stringify(metrics)}`);
+  }
+  if (metrics.hiddenLeaks.length) {
+    throw new Error(`Mobile inkbox leaked hidden text: ${metrics.hiddenLeaks.join(", ")}`);
+  }
+
+  const screenshot = await captureScreenshot(page, screenshotsDir, "s75-inkbox-mobile");
+  await drawer.getByRole("button", { name: "关闭抽屉" }).click();
+  await drawer.waitFor({ state: "detached", timeout: 10000 });
+  return screenshot;
 }
 
 async function assertDisplayPreferencesPersistence(page, gamePath) {
@@ -404,6 +566,9 @@ async function runClientSmoke(options = {}) {
     const continueFlow = await assertReturnHomeContinueAndTurn(page, startedSessionId, options.screenshotsDir);
     screenshots.push(continueFlow.homeScreenshot);
     screenshots.push(continueFlow.gameScreenshot);
+    const inkboxFlow = await assertInkboxTabsAndSaveLoad(page, startedSessionId, options.screenshotsDir);
+    screenshots.push(inkboxFlow.savesScreenshot);
+    screenshots.push(inkboxFlow.loadedScreenshot);
     await assertDisplayPreferencesPersistence(page, `/game/${startedSessionId}`);
     const runtimeMapPath = `/game/${startedSessionId}/map`;
     await clickTopNavRoute(page, "舆图", runtimeMapPath);
@@ -546,6 +711,7 @@ async function runClientSmoke(options = {}) {
     if (mobileComposer.forbiddenText.length) {
       throw new Error(`S75.8 mobile memorial composer leaked forbidden text: ${mobileComposer.forbiddenText.join(", ")}`);
     }
+    screenshots.push(await assertMobileInkbox(page, options.screenshotsDir));
     screenshots.push(await assertReactClientPage(page, baseUrl, "/", "s74-react-home-mobile", options.screenshotsDir));
     await context.close();
 
@@ -564,6 +730,8 @@ async function runClientSmoke(options = {}) {
         "desktop-mock-start",
         "desktop-return-home-continue",
         "desktop-continue-turn",
+        "desktop-inkbox-tabs",
+        "desktop-inkbox-load-session",
         "desktop-display-preferences-reload",
         "desktop-map-runtime",
         "desktop-map-refresh",
@@ -575,6 +743,7 @@ async function runClientSmoke(options = {}) {
         "desktop-court-refresh",
         "desktop-settings-refresh",
         "mobile-memorial-composer",
+        "mobile-inkbox-tabs",
         "mobile-home"
       ]
     };
@@ -596,6 +765,7 @@ function printHelp() {
 
 Options:
   --url <url>          Test an already running Qianqiu server.
+  --client react       Explicitly select the current React client smoke target.
   --browser <path>     Browser executable path. Defaults to BROWSER_EXECUTABLE_PATH or local Chrome/Edge.
   --screenshots <dir>  Save S74.1 React client smoke screenshots to this directory.
   --headed             Show the browser window while running.

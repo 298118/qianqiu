@@ -90,7 +90,18 @@ test("S74.1 client smoke parser keeps the focused React smoke options", () => {
     screenshotsDir: "artifacts/s74",
     url: "http://localhost:3000"
   });
+  assert.deepEqual(
+    parseClientSmokeArgs(["node", "scripts/clientSmoke.js", "--client", "react"]),
+    {
+      browserPath: null,
+      headed: false,
+      help: false,
+      screenshotsDir: null,
+      url: null
+    }
+  );
   assert.throws(() => parseClientSmokeArgs(["node", "scripts/clientSmoke.js", "--bad"]), /Unknown client smoke/);
+  assert.throws(() => parseClientSmokeArgs(["node", "scripts/clientSmoke.js", "--client", "legacy"]), /Unsupported client smoke target/);
 });
 
 test("S74.2 React API client only exposes safe player-facing endpoints", () => {
@@ -313,6 +324,23 @@ test("S75.9 memorial composer uses safe AI quick actions as draft-only suggestio
     runtimeCombined,
     /\/api\/quick(?!-actions)|\/api\/game\/state|\/api\/dev\/session-diagnostics|dangerouslySetInnerHTML|localStorage|sessionStorage|data\/sessions|raw audit|provider payload|OPENAI_API_KEY|DEEPSEEK_API_KEY|MIMO_API_KEY|ANTHROPIC_API_KEY/
   );
+});
+
+test("S75.10 client smoke exercises the inkbox browser acceptance path", () => {
+  const clientSmokeSource = readText("scripts/clientSmoke.js");
+
+  assert.match(clientSmokeSource, /--client react/);
+  assert.match(clientSmokeSource, /Unsupported client smoke target/);
+  assert.match(clientSmokeSource, /assertInkboxTabsAndSaveLoad/);
+  assert.match(clientSmokeSource, /assertMobileInkbox/);
+  assert.match(clientSmokeSource, /getByRole\("button", \{ name: "打开印匣" \}\)/);
+  assert.match(clientSmokeSource, /getByRole\("button", \{ name: "返回首页" \}\)/);
+  assert.match(clientSmokeSource, /getByRole\("button", \{ name: "关闭抽屉" \}\)/);
+  assert.match(clientSmokeSource, /快捷建议工具预算固定为零/);
+  assert.match(clientSmokeSource, /\/api\/game\/player-state\/\$\{sessionId\}/);
+  assert.match(clientSmokeSource, /desktop-inkbox-tabs/);
+  assert.match(clientSmokeSource, /mobile-inkbox-tabs/);
+  assert.match(clientSmokeSource, /aria-selected/);
 });
 
 test("S74.5 asset registry gates manifest assets before React components render portraits", () => {

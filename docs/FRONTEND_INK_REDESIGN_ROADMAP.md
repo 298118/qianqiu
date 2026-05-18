@@ -892,6 +892,8 @@ Manifest 示例：
 - `npm run check:docs-governance`
 - `git diff --check`
 
+状态：已完成。S75.10 已把 `scripts/clientSmoke.js` 扩展为 S75 综合浏览器验收，并兼容 `npm run smoke:browser -- --client react`。新 smoke 从默认 `/` 首页真实 Mock 开局，覆盖右上角印匣真实点击、`AI 设置` / `显示` / `安全` / `旧案` tab 遍历、快捷建议工具预算固定为 0、关闭后焦点回收、印匣内返回首页、继续本局、AI/Mock 快捷建议只写草稿、旧案 tab 按当前案卷短码通过 `GET /api/game/player-state/:sessionId` 读档、显示偏好 reload、舆图低动效、人物懒加载分页、主要 session 路由刷新、移动端底部奏折和移动端印匣无横向溢出。全局 request 监听继续拦截 `/api/game/state/*` 和 `/api/dev/*`，DOM/localStorage/移动端抽屉继续检查 hidden/raw/key/path/provider payload 泄漏。浏览器级 `prefers-reduced-motion` context 与真实专题 `surface` 来源玩家可见验收留给 S77/S76 后续总验收。
+
 ## 11. S76 身份、场景与专题界面
 
 目标：把主游戏从“所有面板堆在侧栏”升级为身份和场景驱动的清爽多页体验。
