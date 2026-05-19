@@ -379,7 +379,8 @@ test("S74.4 shell uses registry-backed overlays without widening data sources", 
   assert.match(surfaceHostSource, /modalRegistry/);
   assert.match(surfaceHostSource, /surfaceRegistry/);
   assert.match(surfaceHostSource, /event\.key !== "Escape"/);
-  assert.match(surfaceHostSource, /previousFocusRef/);
+  assert.match(surfaceHostSource, /focusReturnTargetsRef/);
+  assert.match(surfaceHostSource, /returningFromPortrait/);
   assert.match(surfaceRegistrySource, /"npc-profile"/);
   assert.match(surfaceRegistrySource, /"edict-draft"/);
   assert.match(surfaceRegistrySource, /"memorial-review"/);
@@ -837,6 +838,34 @@ test("S74.5 asset registry gates manifest assets before React components render 
   assert.doesNotMatch(
     combined,
     /portrait-pool-matrix-v1|public\/assets\/ui\/portraits|localStorage|sessionStorage|data\/sessions|raw audit|provider payload/
+  );
+});
+
+test("S79.3 portrait viewer stays read-only and uses audited runtime portrait paths", () => {
+  const uiStateSource = readText("client/src/state/uiState.ts");
+  const portraitSource = readText("client/src/components/Portrait.tsx");
+  const surfaceHostSource = readText("client/src/components/SurfaceHost.tsx");
+  const styleSource = readText("client/src/styles/global.css");
+  const runtimeCombined = stripSafeGuardPatterns(`${uiStateSource}\n${portraitSource}\n${surfaceHostSource}\n${styleSource}`);
+
+  assert.match(uiStateSource, /activePortraitViewer/);
+  assert.match(uiStateSource, /openPortraitViewer/);
+  assert.match(uiStateSource, /closePortraitViewer/);
+  assert.match(portraitSource, /portraitZoomButton/);
+  assert.match(portraitSource, /Maximize2/);
+  assert.match(portraitSource, /markOverlayTrigger/);
+  assert.match(surfaceHostSource, /PortraitViewerHost/);
+  assert.match(surfaceHostSource, /registry\.getPortrait\(viewer\.portraitRef\)/);
+  assert.match(surfaceHostSource, /portrait\?\.path/);
+  assert.match(surfaceHostSource, /data-portrait-viewer="true"/);
+  assert.match(surfaceHostSource, /NpcProfilePortraitStrip/);
+  assert.match(surfaceHostSource, /safeSurfacePortraitRef/);
+  assert.match(styleSource, /portraitViewerPanel/);
+  assert.match(styleSource, /npcProfilePortraitStrip/);
+  assert.match(styleSource, /object-fit: contain/);
+  assert.doesNotMatch(
+    runtimeCombined,
+    /\/api\/game\/state|\/api\/dev\/session-diagnostics|public\/assets\/ui\/portraits|ink-ui-manifest|localStorage|sessionStorage|data\/sessions|raw audit|provider payload|OPENAI_API_KEY|DEEPSEEK_API_KEY|MIMO_API_KEY|ANTHROPIC_API_KEY/
   );
 });
 

@@ -2273,6 +2273,30 @@ button:disabled {
   object-fit: cover;
 }
 
+.portraitZoomButton {
+  position: absolute;
+  top: 7px;
+  right: 7px;
+  z-index: 2;
+  display: inline-grid;
+  width: 30px;
+  height: 30px;
+  place-items: center;
+  border: 1px solid rgba(255, 248, 230, 0.76);
+  background: rgba(36, 27, 22, 0.62);
+  color: #fff7e8;
+  padding: 0;
+  box-shadow: 0 4px 12px rgba(28, 20, 15, 0.24);
+}
+
+.portraitZoomButton:hover,
+.portraitZoomButton:focus-visible {
+  border-color: #fff7e8;
+  background: rgba(123, 36, 31, 0.86);
+  outline: 2px solid rgba(255, 248, 230, 0.44);
+  outline-offset: 2px;
+}
+
 .portraitFrameFallback span {
   display: grid;
   width: 48px;
@@ -3254,6 +3278,110 @@ button:disabled {
   padding: 28px;
 }
 
+.portraitViewerScrim {
+  padding: max(18px, env(safe-area-inset-top)) max(14px, env(safe-area-inset-right)) max(18px, env(safe-area-inset-bottom)) max(14px, env(safe-area-inset-left));
+}
+
+.portraitViewerPanel {
+  display: grid;
+  width: min(980px, 100%);
+  max-height: calc(100vh - 36px);
+  grid-template-columns: minmax(260px, 0.76fr) minmax(300px, 1.1fr);
+  align-items: center;
+  gap: clamp(16px, 3vw, 28px);
+  overflow: auto;
+  padding: clamp(20px, 3vw, 30px);
+}
+
+.portraitViewerHeader {
+  display: grid;
+  align-content: center;
+  gap: 8px;
+}
+
+.portraitViewerHeader h2,
+.portraitViewerHeader p {
+  margin: 0;
+}
+
+.portraitViewerHeader h2 {
+  color: #2c2219;
+  font-size: clamp(1.6rem, 3vw, 2.6rem);
+}
+
+.portraitViewerHeader p {
+  color: #5d4937;
+  line-height: 1.75;
+}
+
+.portraitViewerFigure {
+  display: grid;
+  width: min(480px, 100%);
+  max-height: min(76vh, 760px);
+  aspect-ratio: 2 / 3;
+  justify-self: center;
+  margin: 0;
+  overflow: hidden;
+  border: 1px solid rgba(84, 60, 43, 0.28);
+  background: rgba(232, 220, 200, 0.88);
+  box-shadow: 0 18px 42px rgba(36, 27, 22, 0.22);
+}
+
+.portraitViewerFigure img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  background: rgba(33, 25, 19, 0.08);
+}
+
+.portraitViewerFallback {
+  place-items: center;
+  gap: 10px;
+  color: #7b241f;
+  text-align: center;
+}
+
+.portraitViewerFallback span {
+  display: grid;
+  width: 64px;
+  height: 64px;
+  place-items: center;
+  border: 1px solid rgba(142, 47, 39, 0.42);
+  font-weight: 900;
+}
+
+.portraitViewerFallback figcaption {
+  color: #6a5540;
+  font-weight: 800;
+}
+
+.portraitViewerMeta {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  margin: 0;
+}
+
+.portraitViewerMeta div {
+  border: 1px solid rgba(84, 60, 43, 0.2);
+  background: rgba(255, 252, 238, 0.54);
+  padding: 9px 10px;
+}
+
+.portraitViewerMeta dt {
+  color: #7a6048;
+  font-size: 0.76rem;
+  font-weight: 800;
+}
+
+.portraitViewerMeta dd {
+  margin: 2px 0 0;
+  color: #2d251d;
+  font-weight: 800;
+}
+
 .surfaceScrim {
   place-items: stretch;
 }
@@ -3287,6 +3415,52 @@ button:disabled {
   margin: 4px 0 0;
   color: #514232;
   line-height: 1.65;
+}
+
+.npcProfilePortraitStrip {
+  display: grid;
+  gap: 12px;
+  margin: 16px 0;
+  border: 1px solid rgba(84, 60, 43, 0.2);
+  background: rgba(255, 252, 238, 0.5);
+  padding: 14px;
+}
+
+.npcProfilePortraitGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(132px, 1fr));
+  gap: 10px;
+}
+
+.npcProfilePortraitCard {
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+}
+
+.npcProfilePortrait {
+  min-height: 168px;
+}
+
+.npcProfilePortraitCard div {
+  display: grid;
+  gap: 2px;
+}
+
+.npcProfilePortraitCard strong,
+.npcProfilePortraitCard span {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.npcProfilePortraitCard strong {
+  color: #2c2219;
+}
+
+.npcProfilePortraitCard span {
+  color: #715941;
+  font-size: 0.82rem;
+  font-weight: 800;
 }
 
 .topicSurfaceLayout {
@@ -3457,6 +3631,20 @@ button:disabled {
 
   .inkboxTabs {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .portraitViewerPanel {
+    max-height: calc(100vh - 24px);
+    grid-template-columns: 1fr;
+  }
+
+  .portraitViewerFigure {
+    width: min(360px, 100%);
+    max-height: 62vh;
+  }
+
+  .portraitViewerMeta {
+    grid-template-columns: 1fr;
   }
 
   .courtSurfaceGrid {

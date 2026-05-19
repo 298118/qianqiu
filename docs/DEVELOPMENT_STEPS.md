@@ -115,11 +115,11 @@ S79 已进入前端打磨与高清女性立绘入库阶段。范围由用户于 
 
 | ID | 状态 | Owner | 目标 | 说明 |
 | --- | --- | --- | --- | --- |
-| S79 | IN_PROGRESS | Codex | 前端打磨与高清女性立绘入库 | 父阶段；保持 Mock/JSON 默认可玩、书生科举链不破坏、安全 projection 与服务器裁决边界不变。 |
+| S79 | DONE | Codex | 前端打磨与高清女性立绘入库 | 已完成前端正确性修复、194 张 recovered 女性高清母版入库、游戏内立绘放大查看器与验证收束；保持 Mock/JSON 默认可玩、书生科举链不破坏、安全 projection 与服务器裁决边界不变。 |
 | S79.1 | DONE | Codex | 前端正确性、路由壳与 smoke 缺口修复 | 已修复 `ExamPage` 对 `wordCount` `{min,max}` 的渲染崩溃，补强考试 smoke 真实断言；`/exam`、`/ranking`、`/court`、`/settings` 改走轻量 `sessionRouteShell`，不再被主卷/身份栏压到页面下方。 |
 | S79.2 | DONE | Codex | 194 张 recovered 女性高清母版入库管线 | 已为 `likely-portrait-masters` 的 194 张唯一 PNG 建立稳定 ID、来源记录、视觉/安全审核、高清运行时 WebP、缩略图、低清占位、manifest、QA sidecar 和脚本；原始 `artifacts/` 母版仍不直接提交或暴露给前端。 |
-| S79.3 | TODO | Codex | 游戏内高清立绘使用与放大查看 | 在首页选角、人物谱牒、人物档案和其他游戏内立绘位使用高清主图口径；缩略图只作列表预览/占位/QA，不作为主要欣赏图。每个可欣赏立绘右上角增加放大图标，打开只读大图查看器，支持 Esc、遮罩关闭、焦点回收和移动端适配。 |
-| S79.4 | TODO | Codex | 验证、文档同步与提交 | 更新 brief/README/素材台账/共享上下文等必要文档；运行 client typecheck/test、React smoke、素材 QA、manifest 测试、docs governance、documentation governance 和 diff check。若包含代码、脚本、素材或验证工具改动，提交前必须做只读子代理复审。 |
+| S79.3 | DONE | Codex | 游戏内高清立绘使用与放大查看 | 已在 `Portrait` 可欣赏立绘右上角加入放大标志；首页选角、人物谱牒和人物档案专题公开立绘均通过已审核 `portraitRef` 与 runtime manifest 读取高清主图。只读高清查看器由 `SurfaceHost` 托管，支持 Esc、遮罩关闭、焦点回收、移动端适配和滚动锁定，不写 canonical state、URL、localStorage/sessionStorage、行动草稿或 AI prompt。 |
+| S79.4 | DONE | Codex | 验证、文档同步与提交 | 已同步 brief、素材台账、共享上下文和本台账；已运行 client typecheck/test、React smoke、素材 QA、manifest 测试、docs governance、documentation governance、diff check 和完整 `npm test`。提交 hash 随本次 coherent change 见 Git 历史。 |
 
 ## 5. 当前最新完成节点
 
@@ -153,6 +153,16 @@ S77.8 最新验收口径：
 - 结构化污染扫描由 `npm run smoke:browser` 覆盖 DOM、storage、runtime manifest、安全字段和截图产物名；完整素材 manifest 仍由 `qa:frontend-assets` 与 manifest 测试守门。
 
 ## 7. 本轮台账归档记录
+
+### 2026-05-19：完成 S79.3 游戏内高清立绘放大查看
+
+- 范围：为游戏内可欣赏立绘增加右上角放大标志，并实现只读高清大图查看器；覆盖首页选角、人物谱牒和人物档案专题中的公开立绘位。
+- 实现：`Portrait` 继续优先使用已审核 runtime 主图 `portrait.path`，新增 `Maximize2` 放大按钮；`uiState` 新增瞬时 `activePortraitViewer`，只保存 `portraitRef` 与 label；`SurfaceHost` 新增 `PortraitViewerHost`，统一处理 Esc、遮罩关闭、焦点回收、滚动锁定、移动端尺寸和 fallback。`npc-profile` 人物档案专题新增公开立绘条，只展示当前安全案卷中已有且命中 runtime registry 的 `portraitRef`，不从全量素材池补人、不推断 hidden 人物。
+- 安全边界：查看器只读 `/assets/ui/` 运行时主图路径，不引用 artifacts 母版，不写 canonical state、URL、localStorage/sessionStorage、行动草稿或 AI prompt，不展示 raw audit、provider payload、完整 prompt、本地路径、key、hidden notes 或 hidden intent。点击人物档案专题内的放大按钮时，查看器覆盖在专题层上，关闭后仍回到原专题语境。
+- 验证：已通过 `npm run typecheck:client`、`npm run test:client -- --run client/src/components/Portrait.test.tsx client/src/state/uiState.test.ts client/src/__tests__/App.test.tsx`（51 项）、`node --test test/reactClientScaffold.test.js`（37 项）、`node --check scripts/clientSmoke.js`、`npm run test:client`（67 项）、`npm test`（936 项）、`npm run qa:runtime-manifest`、`npm run qa:portrait-compression`、`npm run qa:frontend-assets`、`node --test test/frontendInkAssetsManifest.test.js`、`npm run build:client` 和 `npm run smoke:browser -- --screenshots artifacts/s79-3-portrait-viewer-smoke`。首次 browser smoke 因新增断言把既有 `qianqiu.displayPreferences.v1` key 误判为 viewer 写入而失败，已收窄断言并重跑通过。
+- 子代理：只读 explorer Singer 勘察 `Portrait`、人物页、专题 surface、CSS 和测试接入点，建议由 `Portrait` 触发、`SurfaceHost` 统一托管查看器，并提醒首页选角按钮需 `stopPropagation()`、查看器不得写 storage/URL/prompt；未编辑文件、未运行 Git 写操作。提交前只读复审 Hegel 未发现 P0/P1 安全问题，指出人物档案专题上方关闭高清查看器后焦点可能不回到放大按钮的 P2；已改为按 overlay 层保存焦点返回目标，并补嵌套专题查看器焦点回收测试后重跑通过。
+- 提交：随本轮 coherent change 提交，最终 hash 见 Git 历史和本次回复。
+- 下一步：S79 已收束；后续可进入新的小步骤，继续从安全 projection 与已审核资产层扩展前端玩法。
 
 ### 2026-05-19：完成 S79.2 Recovered 女性高清母版入库管线
 

@@ -1,21 +1,37 @@
-import type { CSSProperties } from "react";
+import type { CSSProperties, MouseEvent } from "react";
 import { useMemo, useState } from "react";
+import { Maximize2 } from "lucide-react";
 import type { AssetFallback, AssetRegistry, RuntimePortraitAsset } from "../assets/assetRegistry";
+import { useUiStateStore } from "../state/uiState";
+import { markOverlayTrigger } from "./overlayFocus";
 
 type PortraitProps = {
   readonly registry: AssetRegistry;
   readonly portraitRef: string;
   readonly label?: string;
   readonly className?: string;
+  readonly viewerEnabled?: boolean;
 };
 
-export function Portrait({ registry, portraitRef, label, className = "" }: PortraitProps) {
+export function Portrait({ registry, portraitRef, label, className = "", viewerEnabled = true }: PortraitProps) {
   const [imageFailed, setImageFailed] = useState(false);
+  const openPortraitViewer = useUiStateStore((state) => state.openPortraitViewer);
   const portrait = registry.getPortrait(portraitRef);
   const fallback = registry.getFallback(portrait?.fallbackRef);
   const resolvedLabel = label ?? portrait?.roleLabel ?? portrait?.role ?? "人物立绘";
   const imageSource = portrait?.path ?? portrait?.thumbnailPath ?? portrait?.lowResPlaceholderPath ?? null;
   const fallbackStyle = useMemo(() => buildFallbackStyle(fallback, portrait), [fallback, portrait]);
+
+  function handleOpenViewer(event: MouseEvent<HTMLButtonElement>) {
+    event.preventDefault();
+    event.stopPropagation();
+    if (!portrait) return;
+    markOverlayTrigger(event.currentTarget);
+    openPortraitViewer({
+      portraitRef: portrait.portraitRef,
+      label: resolvedLabel
+    });
+  }
 
   if (!portrait || imageFailed || !imageSource) {
     return (
@@ -46,6 +62,17 @@ export function Portrait({ registry, portraitRef, label, className = "" }: Portr
         decoding="async"
         onError={() => setImageFailed(true)}
       />
+      {viewerEnabled ? (
+        <button
+          className="portraitZoomButton"
+          type="button"
+          title="查看高清立绘"
+          aria-label={`查看${resolvedLabel}高清立绘`}
+          onClick={handleOpenViewer}
+        >
+          <Maximize2 size={15} aria-hidden="true" />
+        </button>
+      ) : null}
     </figure>
   );
 }

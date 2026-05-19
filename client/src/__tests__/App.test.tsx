@@ -1,5 +1,6 @@
 ﻿import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { RouterProvider, createMemoryRouter } from "react-router";
+import { act, within } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { resetAssetRegistryCache, type InkUiManifest } from "../assets/assetRegistry";
 import { routes } from "../router";
@@ -2152,6 +2153,32 @@ describe("S74.1 React client shell", () => {
     expect(document.querySelector(".peopleLedgerList")?.getAttribute("data-total-people")).toBe("3");
     expect(document.querySelector(".peopleLedgerList")?.getAttribute("data-total-portraits")).toBeNull();
     expect(document.querySelector("[data-portrait-remastered='true']")).toBeTruthy();
+
+    const zoomButton = screen.getAllByRole("button", { name: /查看.*高清立绘/ })[0];
+    fireEvent.click(zoomButton);
+    const viewer = await screen.findByRole("dialog", { name: "陆清远立绘" });
+    expect(viewer.getAttribute("data-portrait-viewer")).toBe("true");
+    expect(screen.getByRole("img", { name: "陆清远立绘高清主图" }).getAttribute("src")).toBe("/assets/ui/portraits/portrait-test-female-1-v1.webp");
+    expect(JSON.stringify(useUiStateStore.getState().activePortraitViewer)).toBe(JSON.stringify({
+      portraitRef: "portrait-test-female-1-v1",
+      label: "陆清远立绘"
+    }));
+    expect(window.localStorage.length).toBe(0);
+    expect(window.sessionStorage.length).toBe(0);
+    fireEvent.keyDown(document, { key: "Escape" });
+    await waitFor(() => expect(screen.queryByRole("dialog", { name: "陆清远立绘" })).toBeNull());
+    expect(document.activeElement).toBe(zoomButton);
+
+    act(() => useUiStateStore.getState().openSurface("npc-profile"));
+    const npcProfileDialog = await screen.findByRole("dialog", { name: "人物档案" });
+    const profileZoomButton = within(npcProfileDialog).getByRole("button", { name: "查看陆清远立绘高清立绘" });
+    fireEvent.click(profileZoomButton);
+    await screen.findByRole("dialog", { name: "陆清远立绘" });
+    fireEvent.keyDown(document, { key: "Escape" });
+    await waitFor(() => expect(screen.queryByRole("dialog", { name: "陆清远立绘" })).toBeNull());
+    expect(screen.getByRole("dialog", { name: "人物档案" })).toBeTruthy();
+    expect(document.activeElement).toBe(profileZoomButton);
+
     expect(document.body.textContent || "").not.toMatch(/prompt|provider payload|hiddenNotes|OPENAI_API_KEY|artifacts|data\/sessions|C:\\bad/i);
   });
 

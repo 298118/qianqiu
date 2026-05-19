@@ -117,6 +117,7 @@ describe("S74.3 UI state store", () => {
     expect(state.activeDrawer).toBeNull();
     expect(state.activeModal).toBeNull();
     expect(state.activeSurface).toBeNull();
+    expect(state.activePortraitViewer).toBeNull();
     expect(state.activeInkboxTab).toBe("ai-settings");
     expect(state.actionDraft).toBeNull();
     expect(state.displayPreferences).toEqual({
@@ -165,6 +166,7 @@ describe("S74.3 UI state store", () => {
       currentPage: "map",
       currentSessionId: startPayload.sessionId,
       activeModal: "safe-summary",
+      activePortraitViewer: null,
       actionDraft: { source: "map-runtime" },
       selectedTabs: { archive: "events" }
     });
@@ -177,6 +179,7 @@ describe("S74.3 UI state store", () => {
       activeDrawer: null,
       activeModal: null,
       activeSurface: null,
+      activePortraitViewer: null,
       actionDraft: null
     });
   });
@@ -217,6 +220,14 @@ describe("S74.3 UI state store", () => {
     expect(useUiStateStore.getState().activeSurface).toBe("npc-profile");
     store.closeSurface();
     expect(useUiStateStore.getState().activeSurface).toBeNull();
+
+    store.openPortraitViewer({ portraitRef: "portrait-test-female-v1", label: "女官" });
+    expect(useUiStateStore.getState().activePortraitViewer).toEqual({
+      portraitRef: "portrait-test-female-v1",
+      label: "女官"
+    });
+    store.closePortraitViewer();
+    expect(useUiStateStore.getState().activePortraitViewer).toBeNull();
 
     store.setActionDraft({ text: "拜访座师，请教经义。", targetPage: "game" });
     expect(useUiStateStore.getState().actionDraft).toMatchObject({

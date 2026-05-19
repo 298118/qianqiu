@@ -1,6 +1,7 @@
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it } from "vitest";
 import { createAssetRegistry, type InkUiManifest } from "../assets/assetRegistry";
+import { useUiStateStore } from "../state/uiState";
 import { Portrait } from "./Portrait";
 
 const manifest: InkUiManifest = {
@@ -64,7 +65,10 @@ const manifest: InkUiManifest = {
 };
 
 describe("S74.5 Portrait component", () => {
-  afterEach(() => cleanup());
+  afterEach(() => {
+    cleanup();
+    useUiStateStore.getState().resetUiState();
+  });
 
   it("renders an audited full portrait lazily and never asks for a hard-coded public path prop", () => {
     const registry = createAssetRegistry(manifest);
@@ -74,7 +78,22 @@ describe("S74.5 Portrait component", () => {
     expect(image.getAttribute("src")).toBe("/assets/ui/portraits/portrait-test-female-v1.webp");
     expect(image.getAttribute("loading")).toBe("lazy");
     expect(image.closest("[data-portrait-ref='portrait-test-female-v1']")?.getAttribute("data-portrait-remastered")).toBe("true");
+    expect(screen.getByRole("button", { name: "查看女官高清立绘" })).toBeTruthy();
     expect(document.body.textContent || "").not.toMatch(/prompt|provider payload|hiddenNotes|OPENAI_API_KEY|artifacts/i);
+  });
+
+  it("opens a read-only portrait viewer payload without writing browser storage", () => {
+    const registry = createAssetRegistry(manifest);
+    render(<Portrait registry={registry} portraitRef="portrait-test-female-v1" label="女官" />);
+
+    fireEvent.click(screen.getByRole("button", { name: "查看女官高清立绘" }));
+
+    expect(useUiStateStore.getState().activePortraitViewer).toEqual({
+      portraitRef: "portrait-test-female-v1",
+      label: "女官"
+    });
+    expect(window.localStorage.length).toBe(0);
+    expect(window.sessionStorage.length).toBe(0);
   });
 
   it("falls back to a paper silhouette when the portrait ref or image is missing", () => {
@@ -82,6 +101,7 @@ describe("S74.5 Portrait component", () => {
     const { rerender } = render(<Portrait registry={registry} portraitRef="portrait-missing-v1" label="未见其人" />);
 
     expect(screen.getByLabelText("未见其人，纸底占位").getAttribute("data-asset-fallback")).toBe("fallback-role-silhouette-v1");
+    expect(screen.queryByRole("button", { name: "查看未见其人高清立绘" })).toBeNull();
 
     rerender(<Portrait registry={registry} portraitRef="portrait-test-female-v1" label="女官" />);
     fireEvent.error(screen.getByRole("img", { name: "女官" }));

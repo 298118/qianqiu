@@ -2145,6 +2145,30 @@ async function runClientSmoke(options = {}) {
       throw new Error(`People ledger leaked forbidden text: ${portraitLedger.localOrRawLeaks.join(", ")}`);
     }
     await assertPortraitImagesLoaded(page, ".peopleLedgerList", "S77.3 desktop people ledger");
+    await page.getByRole("button", { name: /查看.*高清立绘/ }).first().click();
+    await page.locator("[data-portrait-viewer='true']").waitFor({ timeout: 10000 });
+    const portraitViewer = await page.evaluate(() => {
+      const viewer = document.querySelector("[data-portrait-viewer='true']");
+      const image = viewer?.querySelector("img");
+      return {
+        portraitRef: viewer?.querySelector("[data-portrait-ref]")?.getAttribute("data-portrait-ref") || "",
+        imageSrc: image?.getAttribute("src") || "",
+        storageKeys: [
+          ...Array.from({ length: localStorage.length }, (_, index) => localStorage.key(index) || ""),
+          ...Array.from({ length: sessionStorage.length }, (_, index) => sessionStorage.key(index) || "")
+        ],
+        unsafeText: (viewer?.textContent || "").match(/artifacts|provider payload|raw audit|hiddenNotes|OPENAI_API_KEY|data\/sessions|localStorage|sessionStorage/gi) || []
+      };
+    });
+    if (!portraitViewer.portraitRef || !portraitViewer.imageSrc.startsWith("/assets/ui/portraits/")) {
+      throw new Error(`S79.3 portrait viewer did not use an audited runtime portrait path: ${JSON.stringify(portraitViewer)}`);
+    }
+    if (portraitViewer.storageKeys.some((key) => /portrait|viewer|image/i.test(key)) || portraitViewer.unsafeText.length) {
+      throw new Error(`S79.3 portrait viewer widened storage or text safety: ${JSON.stringify(portraitViewer)}`);
+    }
+    screenshots.push(await captureScreenshot(page, options.screenshotsDir, "s79-3-portrait-viewer-desktop"));
+    await page.keyboard.press("Escape");
+    await page.locator("[data-portrait-viewer='true']").waitFor({ state: "detached", timeout: 10000 });
     screenshots.push(
       ...(await assertHistoryBackForward(
         page,

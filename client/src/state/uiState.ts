@@ -27,6 +27,10 @@ export type PageSurface = "home" | "game" | "map" | "people" | "archive" | "exam
 export type DrawerSurface = "settings" | "saves" | "display-preferences";
 export type InkboxTab = "ai-settings" | "saves" | "display" | "safe-summary";
 export type ModalSurface = "safe-summary" | "exam-result" | "confirm-navigation";
+export type PortraitViewerState = {
+  readonly portraitRef: string;
+  readonly label?: string;
+};
 export type LocalSurface =
   | "memorial-review"
   | "edict-draft"
@@ -73,6 +77,7 @@ type UiState = {
   readonly activeDrawer: DrawerSurface | null;
   readonly activeModal: ModalSurface | null;
   readonly activeSurface: LocalSurface | null;
+  readonly activePortraitViewer: PortraitViewerState | null;
   readonly activeInkboxTab: InkboxTab;
   readonly selectedTabs: Partial<Record<PageSurface, string>>;
   readonly actionDraft: ActionDraft | null;
@@ -91,6 +96,8 @@ type UiState = {
   readonly closeModal: () => void;
   readonly openSurface: (surface: LocalSurface) => void;
   readonly closeSurface: () => void;
+  readonly openPortraitViewer: (viewer: PortraitViewerState) => void;
+  readonly closePortraitViewer: () => void;
   readonly selectTab: (page: PageSurface, tabId: string) => void;
   readonly setActionDraft: (draft: SetActionDraftInput) => void;
   readonly clearActionDraft: () => void;
@@ -106,6 +113,7 @@ function buildInitialUiState() {
     activeDrawer: null,
     activeModal: null,
     activeSurface: null,
+    activePortraitViewer: null,
     activeInkboxTab: "ai-settings" as InkboxTab,
     selectedTabs: {},
     actionDraft: null,
@@ -179,12 +187,13 @@ export const useUiStateStore = create<UiState>((set) => ({
       activeDrawer: null,
       activeModal: null,
       activeSurface: null,
+      activePortraitViewer: null,
       actionDraft: null
     });
   },
 
   openInkbox(tab = "ai-settings") {
-    set({ activeDrawer: "settings", activeModal: null, activeSurface: null, activeInkboxTab: tab });
+    set({ activeDrawer: "settings", activeModal: null, activeSurface: null, activePortraitViewer: null, activeInkboxTab: tab });
   },
 
   selectInkboxTab(tab) {
@@ -193,7 +202,7 @@ export const useUiStateStore = create<UiState>((set) => ({
 
   openDrawer(drawer) {
     const activeInkboxTab: InkboxTab = drawer === "saves" ? "saves" : drawer === "display-preferences" ? "display" : "ai-settings";
-    set({ activeDrawer: "settings", activeModal: null, activeSurface: null, activeInkboxTab });
+    set({ activeDrawer: "settings", activeModal: null, activeSurface: null, activePortraitViewer: null, activeInkboxTab });
   },
 
   closeDrawer() {
@@ -201,7 +210,7 @@ export const useUiStateStore = create<UiState>((set) => ({
   },
 
   openModal(modal) {
-    set({ activeModal: modal, activeDrawer: null });
+    set({ activeModal: modal, activeDrawer: null, activePortraitViewer: null });
   },
 
   closeModal() {
@@ -209,11 +218,19 @@ export const useUiStateStore = create<UiState>((set) => ({
   },
 
   openSurface(surface) {
-    set({ activeSurface: surface });
+    set({ activeSurface: surface, activePortraitViewer: null });
   },
 
   closeSurface() {
     set({ activeSurface: null });
+  },
+
+  openPortraitViewer(viewer) {
+    set({ activePortraitViewer: viewer });
+  },
+
+  closePortraitViewer() {
+    set({ activePortraitViewer: null });
   },
 
   selectTab(page, tabId) {

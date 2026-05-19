@@ -1,16 +1,19 @@
 import { BrainCircuit, Home, Save, ShieldCheck, SlidersHorizontal, Sparkles, X } from "lucide-react";
-import { useEffect, useRef, useState, type FormEvent, type ReactNode } from "react";
+import { useEffect, useRef, useState, type FormEvent, type MouseEvent, type ReactNode } from "react";
 import { useNavigate } from "react-router";
 import type { TopicSurfaceId, TopicSurfaceView } from "../api";
+import { useAssetRegistry } from "../assets/useAssetRegistry";
+import type { AssetRegistry } from "../assets/assetRegistry";
 import { isRunnableSessionId } from "../routes/sessionId";
 import { surfaceRegistry } from "../surfaces/surfaceRegistry";
 import { useGameSessionStore } from "../state/gameSessionState";
 import type { DrawerSurface, InkboxTab, LocalSurface, ModalSurface } from "../state/uiState";
 import { useUiStateStore } from "../state/uiState";
+import { Portrait } from "./Portrait";
 import { SaveCaseList } from "./SaveCaseList";
 import { consumeOverlayTrigger } from "./overlayFocus";
 
-type OverlayKind = "drawer" | "modal" | "surface";
+type OverlayKind = "drawer" | "modal" | "surface" | "portrait";
 
 const focusableSelector = [
   "button:not([disabled])",
@@ -47,26 +50,31 @@ export function SurfaceHost() {
   const activeDrawer = useUiStateStore((state) => state.activeDrawer);
   const activeModal = useUiStateStore((state) => state.activeModal);
   const activeSurface = useUiStateStore((state) => state.activeSurface);
+  const activePortraitViewer = useUiStateStore((state) => state.activePortraitViewer);
   const closeDrawer = useUiStateStore((state) => state.closeDrawer);
   const closeModal = useUiStateStore((state) => state.closeModal);
   const closeSurface = useUiStateStore((state) => state.closeSurface);
-  const previousFocusRef = useRef<HTMLElement | null>(null);
+  const closePortraitViewer = useUiStateStore((state) => state.closePortraitViewer);
+  const focusReturnTargetsRef = useRef<Partial<Record<OverlayKind, HTMLElement | null>>>({});
   const lastOverlayRef = useRef<OverlayKind | null>(null);
-  const overlayKind: OverlayKind | null = activeSurface ? "surface" : activeModal ? "modal" : activeDrawer ? "drawer" : null;
+  const overlayKind: OverlayKind | null = activePortraitViewer ? "portrait" : activeSurface ? "surface" : activeModal ? "modal" : activeDrawer ? "drawer" : null;
 
   useEffect(() => {
-    if (!overlayKind) return;
-    previousFocusRef.current = consumeOverlayTrigger() ?? (document.activeElement instanceof HTMLElement ? document.activeElement : null);
+    const previousOverlayKind = lastOverlayRef.current;
+    if (previousOverlayKind && previousOverlayKind !== overlayKind) {
+      const target = focusReturnTargetsRef.current[previousOverlayKind];
+      delete focusReturnTargetsRef.current[previousOverlayKind];
+      if (!overlayKind || previousOverlayKind === "portrait") {
+        if (target?.isConnected) target.focus();
+      }
+    }
+
+    const returningFromPortrait = previousOverlayKind === "portrait" && Boolean(overlayKind);
+    if (overlayKind && overlayKind !== previousOverlayKind && !returningFromPortrait) {
+      focusReturnTargetsRef.current[overlayKind] = consumeOverlayTrigger() ?? (document.activeElement instanceof HTMLElement ? document.activeElement : null);
+    }
+    if (!overlayKind) focusReturnTargetsRef.current = {};
     lastOverlayRef.current = overlayKind;
-  }, [overlayKind]);
-
-  useEffect(() => {
-    if (overlayKind) return;
-    if (!lastOverlayRef.current) return;
-    lastOverlayRef.current = null;
-    const target = previousFocusRef.current;
-    previousFocusRef.current = null;
-    if (target?.isConnected) target.focus();
   }, [overlayKind]);
 
   useEffect(() => {
@@ -74,6 +82,10 @@ export function SurfaceHost() {
     function handleKeyDown(event: KeyboardEvent) {
       if (event.key !== "Escape") return;
       event.preventDefault();
+      if (activePortraitViewer) {
+        closePortraitViewer();
+        return;
+      }
       if (activeSurface) {
         closeSurface();
         return;
@@ -87,7 +99,7 @@ export function SurfaceHost() {
 
     document.addEventListener("keydown", handleKeyDown);
     return () => document.removeEventListener("keydown", handleKeyDown);
-  }, [activeDrawer, activeModal, activeSurface, closeDrawer, closeModal, closeSurface, overlayKind]);
+  }, [activeDrawer, activeModal, activePortraitViewer, activeSurface, closeDrawer, closeModal, closePortraitViewer, closeSurface, overlayKind]);
 
   useEffect(() => {
     document.body.toggleAttribute("data-overlay-open", Boolean(overlayKind));
@@ -99,6 +111,7 @@ export function SurfaceHost() {
       {activeDrawer ? <DrawerHost activeDrawer={activeDrawer} /> : null}
       {activeModal ? <ModalHost activeModal={activeModal} /> : null}
       {activeSurface ? <LocalSurfaceHost activeSurface={activeSurface} /> : null}
+      {activePortraitViewer ? <PortraitViewerHost /> : null}
     </>
   );
 }
@@ -490,6 +503,85 @@ function ModalHost({ activeModal }: { readonly activeModal: ModalSurface }) {
   );
 }
 
+function PortraitViewerHost() {
+  const viewer = useUiStateStore((state) => state.activePortraitViewer);
+  const closePortraitViewer = useUiStateStore((state) => state.closePortraitViewer);
+  const { registry, status } = useAssetRegistry();
+  const viewerRef = useRef<HTMLElement | null>(null);
+  const [imageFailed, setImageFailed] = useState(false);
+  const portrait = viewer && registry ? registry.getPortrait(viewer.portraitRef) : null;
+  const fallback = registry?.getFallback(portrait?.fallbackRef);
+  const label = viewer?.label || portrait?.roleLabel || portrait?.role || "人物立绘";
+  const imageSource = portrait?.path ?? null;
+
+  useEffect(() => {
+    focusFirstControl(viewerRef.current);
+    setImageFailed(false);
+  }, [viewer?.portraitRef]);
+
+  if (!viewer) return null;
+
+  function handleScrimMouseDown(event: MouseEvent<HTMLDivElement>) {
+    if (event.target === event.currentTarget) closePortraitViewer();
+  }
+
+  return (
+    <div className="modalScrim portraitViewerScrim" role="presentation" onMouseDown={handleScrimMouseDown}>
+      <section
+        ref={viewerRef}
+        className="modalPanel portraitViewerPanel"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="portrait-viewer-title"
+        tabIndex={-1}
+        data-portrait-viewer="true"
+      >
+        <button className="iconButton drawerClose" type="button" title="关闭" aria-label="关闭高清立绘" onClick={closePortraitViewer}>
+          <X size={18} aria-hidden="true" />
+        </button>
+        <div className="portraitViewerHeader">
+          <p className="eyebrow">高清立绘</p>
+          <h2 id="portrait-viewer-title">{label}</h2>
+          <p>只读查看已审核运行时主图，不写入案卷、网址、浏览器存储或 AI 上下文。</p>
+        </div>
+        {portrait && imageSource && !imageFailed ? (
+          <figure
+            className="portraitViewerFigure"
+            aria-label={`${label}高清主图`}
+            data-portrait-ref={portrait.portraitRef}
+            data-portrait-remastered={portrait.hasHighResOverride ? "true" : "false"}
+          >
+            <img src={imageSource} alt={`${label}高清主图`} decoding="async" onError={() => setImageFailed(true)} />
+          </figure>
+        ) : (
+          <figure
+            className="portraitViewerFigure portraitViewerFallback"
+            aria-label={`${label}高清主图暂不可用`}
+            data-asset-fallback={fallback?.id ?? "fallback-role-silhouette-v1"}
+          >
+            <span aria-hidden="true">人</span>
+            <figcaption>{status === "loading" ? "正在读取立绘索引。" : "高清主图暂不可用。"}</figcaption>
+          </figure>
+        )}
+        <dl className="portraitViewerMeta" aria-label="立绘运行时信息">
+          <div>
+            <dt>图源</dt>
+            <dd>已审核运行时索引</dd>
+          </div>
+          <div>
+            <dt>口径</dt>
+            <dd>{portrait?.hasHighResOverride ? "高清重制" : "原图主图"}</dd>
+          </div>
+          <div>
+            <dt>用途</dt>
+            <dd>只读欣赏</dd>
+          </div>
+        </dl>
+      </section>
+    </div>
+  );
+}
+
 const topicSurfaceIds: readonly TopicSurfaceId[] = [
   "memorial-review",
   "edict-draft",
@@ -507,6 +599,7 @@ function LocalSurfaceHost({ activeSurface }: { readonly activeSurface: LocalSurf
   const closeSurface = useUiStateStore((state) => state.closeSurface);
   const setActionDraft = useUiStateStore((state) => state.setActionDraft);
   const currentSessionId = useUiStateStore((state) => state.currentSessionId);
+  const currentSession = useGameSessionStore((state) => state.currentSession);
   const loadTopicSurface = useGameSessionStore((state) => state.loadTopicSurface);
   const requestTopicDraft = useGameSessionStore((state) => state.requestTopicDraft);
   const topicSurface = useGameSessionStore((state) => state.topicSurface);
@@ -514,6 +607,7 @@ function LocalSurfaceHost({ activeSurface }: { readonly activeSurface: LocalSurf
   const topicDraft = useGameSessionStore((state) => state.topicDraft);
   const topicDraftStatus = useGameSessionStore((state) => state.topicDraftStatus);
   const error = useGameSessionStore((state) => state.error);
+  const { registry } = useAssetRegistry();
   const entry = surfaceRegistry[activeSurface];
   const surfaceRef = useRef<HTMLElement | null>(null);
   const canLoadTopicSurface = Boolean(currentSessionId && isRunnableSessionId(currentSessionId) && isTopicSurface(activeSurface));
@@ -524,6 +618,9 @@ function LocalSurfaceHost({ activeSurface }: { readonly activeSurface: LocalSurf
   const [draftKind, setDraftKind] = useState("");
   const [playerNote, setPlayerNote] = useState("");
   const [draftText, setDraftText] = useState(entry.draftText || "");
+  const npcProfilePortraits = activeSurface === "npc-profile"
+    ? buildNpcProfilePortraits(registry, currentSession, currentSessionId)
+    : [];
 
   useEffect(() => {
     focusFirstControl(surfaceRef.current);
@@ -608,6 +705,9 @@ function LocalSurfaceHost({ activeSurface }: { readonly activeSurface: LocalSurf
             <dd>{topicView?.authorityBoundary || entry.safetyNote}</dd>
           </div>
         </dl>
+        {activeSurface === "npc-profile" && registry && npcProfilePortraits.length ? (
+          <NpcProfilePortraitStrip registry={registry} portraits={npcProfilePortraits} />
+        ) : null}
         {isTopicSurface(activeSurface) ? (
           <TopicSurfaceWorkbench
             activeSurface={activeSurface}
@@ -637,6 +737,115 @@ function LocalSurfaceHost({ activeSurface }: { readonly activeSurface: LocalSurf
         )}
       </section>
     </div>
+  );
+}
+
+type NpcProfilePortraitRow = {
+  readonly id: string;
+  readonly name: string;
+  readonly identity: string;
+  readonly portraitRef: string;
+};
+
+const unsafeSurfaceTextFragments = [
+  "/api/game/" + "state",
+  "/api/dev/" + "session-diagnostics",
+  "data" + "/" + "sessions",
+  "data" + "\\" + "sessions",
+  "file" + "://",
+  "raw",
+  "prov" + "ider",
+  "pro" + "mpt",
+  "hid" + "den",
+  "key",
+  "path",
+  "OPENAI" + "_API" + "_KEY",
+  "DEEPSEEK" + "_API" + "_KEY",
+  "MIMO" + "_API" + "_KEY",
+  "ANTHROPIC" + "_API" + "_KEY"
+] as const;
+const safeSurfacePortraitRefPattern = /^portrait-[a-z0-9][a-z0-9_-]{0,140}$/i;
+const unsafeSurfacePortraitRefTokenPattern = /(?:^|[-_])(raw|provider|prompt|hidden|private|key|path|secret|token|api|file|data|http)(?:$|[-_])/i;
+
+function safeSurfaceText(value: unknown, fallback: string, maxLength = 48) {
+  const text = typeof value === "string" && value.trim() ? value.trim().replace(/\s+/g, " ") : fallback;
+  const normalized = text.toLowerCase();
+  if (/[a-z]:[\\/]/i.test(text) || /sk-[a-z0-9_-]{6,}/i.test(text)) return fallback;
+  if (unsafeSurfaceTextFragments.some((fragment) => normalized.includes(fragment.toLowerCase()))) return fallback;
+  return text.length > maxLength ? `${text.slice(0, maxLength)}...` : text;
+}
+
+function safeSurfacePortraitRef(registry: AssetRegistry, value: unknown) {
+  const text = typeof value === "string" ? value.trim() : "";
+  if (!text || !safeSurfacePortraitRefPattern.test(text)) return "";
+  if (unsafeSurfacePortraitRefTokenPattern.test(text)) return "";
+  return registry.getPortrait(text) ? text : "";
+}
+
+function buildNpcProfilePortraits(
+  registry: AssetRegistry | null,
+  session: ReturnType<typeof useGameSessionStore.getState>["currentSession"],
+  currentSessionId: string | null
+): readonly NpcProfilePortraitRow[] {
+  if (!registry || !session || !currentSessionId || session.sessionId !== currentSessionId) return [];
+  const rows: NpcProfilePortraitRow[] = [];
+  const player = session.worldState?.player;
+  const playerPortraitRef = safeSurfacePortraitRef(registry, player?.portraitRef);
+  if (player && playerPortraitRef) {
+    rows.push({
+      id: "player",
+      name: safeSurfaceText(player.name, "案主", 32),
+      identity: safeSurfaceText(player.officeTitle || player.examRank || player.role, "案主", 36),
+      portraitRef: playerPortraitRef
+    });
+  }
+
+  for (const npc of session.worldPeopleView?.npcs ?? []) {
+    if (rows.length >= 4) break;
+    if (!npc?.id || !npc.name || npc.visibility === "hidden") continue;
+    if ((npc.visibility === "relationship_visible" || npc.visibility === "role_visible") && npc.knownToPlayer === false) continue;
+    const portraitRef = safeSurfacePortraitRef(registry, npc.portraitRef);
+    if (!portraitRef) continue;
+    rows.push({
+      id: npc.id,
+      name: safeSurfaceText(npc.name, "公开人物", 32),
+      identity: safeSurfaceText(npc.rankLabel || npc.genderLabel, "公开人物", 36),
+      portraitRef
+    });
+  }
+  return rows;
+}
+
+function NpcProfilePortraitStrip({
+  portraits,
+  registry
+}: {
+  readonly portraits: readonly NpcProfilePortraitRow[];
+  readonly registry: AssetRegistry;
+}) {
+  return (
+    <section className="npcProfilePortraitStrip" aria-label="人物档案公开立绘">
+      <div className="topicSurfaceColumnHeader">
+        <h3>公开立绘</h3>
+        <span>{portraits.length} 张</span>
+      </div>
+      <div className="npcProfilePortraitGrid">
+        {portraits.map((portrait) => (
+          <article className="npcProfilePortraitCard" key={portrait.id}>
+            <Portrait
+              registry={registry}
+              portraitRef={portrait.portraitRef}
+              label={`${portrait.name}立绘`}
+              className="npcProfilePortrait"
+            />
+            <div>
+              <strong>{portrait.name}</strong>
+              <span>{portrait.identity}</span>
+            </div>
+          </article>
+        ))}
+      </div>
+    </section>
   );
 }
 
