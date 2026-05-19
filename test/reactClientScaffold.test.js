@@ -9,11 +9,20 @@ const {
 } = require("../server");
 const { resolveClientBuildStatus } = require("../scripts/ensureClientBuild");
 const {
+  CLIENT_RESOURCE_BUDGETS,
+  getResourceBudgetFailures,
+  getResourceBudgetSnapshot,
   getPlayerFacingCopyLeakFailures,
   getSafetyPollutionFailures,
   getTextOverlapFailures,
   parseClientSmokeArgs
 } = require("../scripts/clientSmoke");
+const {
+  buildRuntimeManifest,
+  checkRuntimeManifest,
+  runtimeManifestPath,
+  sourceManifestPath
+} = require("../scripts/frontendRuntimeManifest");
 
 const rootDir = path.join(__dirname, "..");
 
@@ -46,7 +55,10 @@ test("S74.1 package scripts expose the React client workflow", () => {
   assert.equal(packageJson.scripts["typecheck:client"], "tsc --project tsconfig.client.json --noEmit");
   assert.equal(packageJson.scripts["test:client"], "vitest --config vitest.config.mjs run");
   assert.equal(packageJson.scripts["preview:client"], "vite preview --config vite.config.mjs");
-  assert.equal(packageJson.scripts["smoke:browser"], "npm run build:client && node scripts/clientSmoke.js");
+  assert.equal(packageJson.scripts["qa:runtime-manifest"], "node scripts/frontendRuntimeManifest.js");
+  assert.equal(packageJson.scripts["qa:runtime-manifest:write"], "node scripts/frontendRuntimeManifest.js --write");
+  assert.equal(packageJson.scripts["budget:client"], "node scripts/clientBuildBudget.js");
+  assert.equal(packageJson.scripts["smoke:browser"], "npm run qa:runtime-manifest && npm run build:client && npm run budget:client && node scripts/clientSmoke.js");
   assert.equal(packageJson.scripts["smoke:browser:legacy"], "node scripts/browserSmoke.js");
 });
 
@@ -207,6 +219,7 @@ test("S77.4 client smoke has unified safety pollution guards", () => {
   assert.match(smokeSource, /runtimeEnvelope/);
   assert.match(smokeSource, /path\.basename\(screenshot\.filePath\)/);
   assert.match(smokeSource, /弥封身份映射\|考官隐藏意图/);
+  assert.match(smokeSource, /ink-ui-runtime-manifest\.json/);
 
   assert.deepEqual(getSafetyPollutionFailures("raw prompt 写入 E:\\LSMNQ\\data\\sessions\\x sk-test-secret-123456 /home/user/.env", "fixture"), [
     "fixture exposed safety pollution: raw prompt",
@@ -225,6 +238,54 @@ test("S77.4 client smoke has unified safety pollution guards", () => {
   assert.match(examPageSource, /只呈现已公开的考试快照/);
   assert.doesNotMatch(rankingPageSource, /不显示弥封身份映射|未采纳评语|模型原始提案/);
   assert.match(rankingPageSource, /只呈现已公开的榜文/);
+});
+
+test("S77.5 runtime manifest is compact and strips authoring-only fields", () => {
+  const sourceManifest = JSON.parse(fs.readFileSync(sourceManifestPath, "utf8"));
+  const runtimeManifest = buildRuntimeManifest(sourceManifest);
+  const runtimeText = fs.readFileSync(runtimeManifestPath, "utf8");
+  const checked = checkRuntimeManifest();
+
+  assert.equal(runtimeManifest.assets.length, sourceManifest.assets.length);
+  assert.ok(checked.runtimeBytes < checked.sourceBytes * 0.35);
+  assert.ok(checked.runtimeBytes < 900_000);
+  assert.doesNotMatch(runtimeText, /localHighResSourcePath|promptSummary|postProcessing|performance|visualReview[^]*notes|safetyReview[^]*notes/);
+  assert.doesNotMatch(runtimeText, /artifacts[\\/]|[A-Za-z]:[\\/]|file:\/\//);
+  assert.equal(runtimeManifest.assets.some((asset) => asset.thumbnailPath), true);
+  assert.equal(runtimeManifest.assets.some((asset) => asset.lowResPlaceholderPath), true);
+});
+
+test("S77.5 client smoke resource budget classifies first-screen and lazy resources", () => {
+  const snapshot = getResourceBudgetSnapshot([
+    { name: "http://local/client-assets/index.js", encodedBodySize: 450_000, transferSize: 0 },
+    { name: "http://local/client-assets/index.css", encodedBodySize: 50_000, transferSize: 0 },
+    { name: "http://local/client-assets/noto-serif-sc.woff2", encodedBodySize: 1_500_000, transferSize: 0 },
+    { name: "http://local/assets/ui/ink-ui-runtime-manifest.json", encodedBodySize: 680_000, transferSize: 0 },
+    { name: "http://local/assets/ui/home/home-scroll-landscape-v1.webp", encodedBodySize: 280_000, transferSize: 0 },
+    { name: "http://local/assets/ui/portraits/portrait-player-scholar-f01-v1.webp", encodedBodySize: 120_000, transferSize: 0 },
+    { name: "http://local/assets/ui/thumbs/thumb-portrait-a.webp", encodedBodySize: 50_000, transferSize: 0 },
+    { name: "http://local/assets/ui/portraits/placeholders/placeholder-portrait-a.webp", encodedBodySize: 2_000, transferSize: 0 }
+  ]);
+
+  assert.equal(snapshot.runtimeManifestBytes, 680_000);
+  assert.equal(snapshot.fontWoff2Requests, 1);
+  assert.equal(snapshot.portraitThumbRequests, 1);
+  assert.equal(snapshot.portraitPlaceholderRequests, 1);
+  assert.equal(snapshot.portraitMainRequests, 1);
+  assert.deepEqual(getResourceBudgetFailures(snapshot, CLIENT_RESOURCE_BUDGETS.home, "fixture"), []);
+
+  const failingSnapshot = getResourceBudgetSnapshot([
+    { name: "http://local/assets/ui/ink-ui-manifest.json", encodedBodySize: 2_300_000, transferSize: 0 },
+    { name: "http://local/assets/ui/portraits/s73-10/portrait-player-1.webp", encodedBodySize: 350_000, transferSize: 0 },
+    { name: "http://local/assets/ui/portraits/s73-10/portrait-player-2.webp", encodedBodySize: 350_000, transferSize: 0 },
+    { name: "http://local/assets/ui/portraits/s73-10/portrait-player-3.webp", encodedBodySize: 350_000, transferSize: 0 },
+    { name: "http://local/assets/ui/portraits/s73-10/portrait-player-4.webp", encodedBodySize: 350_000, transferSize: 0 },
+    { name: "http://local/assets/ui/portraits/s73-10/portrait-player-5.webp", encodedBodySize: 350_000, transferSize: 0 },
+    { name: "http://local/assets/ui/portraits/s73-10/portrait-player-6.webp", encodedBodySize: 350_000, transferSize: 0 },
+    { name: "http://local/assets/ui/portraits/s73-10/portrait-player-7.webp", encodedBodySize: 350_000, transferSize: 0 },
+    { name: "http://local/vendor/pixi.min.js", encodedBodySize: 600_000, transferSize: 0 }
+  ]);
+  assert.match(getResourceBudgetFailures(failingSnapshot, CLIENT_RESOURCE_BUDGETS.home, "fixture").join("\n"), /full source manifest|map runtime|portrait main/);
 });
 
 test("S74.2 React API client only exposes safe player-facing endpoints", () => {
@@ -686,7 +747,7 @@ test("S74.5 asset registry gates manifest assets before React components render 
   const peoplePageSource = readText("client/src/pages/PeoplePage.tsx");
   const combined = `${assetRegistrySource}\n${portraitSource}\n${peoplePageSource}`;
 
-  assert.match(assetRegistrySource, /ASSET_MANIFEST_URL = "\/assets\/ui\/ink-ui-manifest\.json"/);
+  assert.match(assetRegistrySource, /ASSET_MANIFEST_URL = "\/assets\/ui\/ink-ui-runtime-manifest\.json"/);
   assert.match(assetRegistrySource, /runtimeUsableReviewStatuses/);
   assert.match(assetRegistrySource, /reviewStatus/);
   assert.match(assetRegistrySource, /allowEagerLoad !== false/);

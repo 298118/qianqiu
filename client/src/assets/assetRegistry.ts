@@ -1,4 +1,4 @@
-export const ASSET_MANIFEST_URL = "/assets/ui/ink-ui-manifest.json";
+export const ASSET_MANIFEST_URL = "/assets/ui/ink-ui-runtime-manifest.json";
 
 const DEFAULT_PORTRAIT_FALLBACK_REF = "fallback-role-silhouette-v1";
 const DEFAULT_PANEL_FALLBACK_REF = "fallback-paper-panel-v1";

@@ -66,12 +66,12 @@ const manifest: InkUiManifest = {
 describe("S74.5 Portrait component", () => {
   afterEach(() => cleanup());
 
-  it("renders a manifest thumbnail lazily and never asks for a hard-coded public path prop", () => {
+  it("renders an audited full portrait lazily and never asks for a hard-coded public path prop", () => {
     const registry = createAssetRegistry(manifest);
     render(<Portrait registry={registry} portraitRef="portrait-test-female-v1" label="女官" />);
 
     const image = screen.getByRole("img", { name: "女官" }) as HTMLImageElement;
-    expect(image.getAttribute("src")).toBe("/assets/ui/thumbs/thumb-portrait-test-female-v1.webp");
+    expect(image.getAttribute("src")).toBe("/assets/ui/portraits/portrait-test-female-v1.webp");
     expect(image.getAttribute("loading")).toBe("lazy");
     expect(image.closest("[data-portrait-ref='portrait-test-female-v1']")?.getAttribute("data-portrait-remastered")).toBe("true");
     expect(document.body.textContent || "").not.toMatch(/prompt|provider payload|hiddenNotes|OPENAI_API_KEY|artifacts/i);

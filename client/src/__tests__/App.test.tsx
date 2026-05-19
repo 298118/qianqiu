@@ -1,4 +1,4 @@
-import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
+﻿import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { RouterProvider, createMemoryRouter } from "react-router";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { resetAssetRegistryCache, type InkUiManifest } from "../assets/assetRegistry";
@@ -186,7 +186,7 @@ describe("S74.1 React client shell", () => {
 
   it("posts the S76.10 selected player portraitRef from the audited registry", async () => {
     const fetchMock = vi.fn(async (url: string, _options?: RequestInit) => {
-      if (url === "/assets/ui/ink-ui-manifest.json") {
+      if (url === "/assets/ui/ink-ui-runtime-manifest.json") {
         return new Response(JSON.stringify(buildMockAssetManifest()), {
           status: 200,
           headers: { "Content-Type": "application/json" }
@@ -223,6 +223,7 @@ describe("S74.1 React client shell", () => {
 
     const portraitInputs = [...document.querySelectorAll<HTMLInputElement>("input[name='player-portrait']")];
     fireEvent.click(portraitInputs[1]);
+    await waitFor(() => expect(portraitInputs[1].checked).toBe(true));
     fireEvent.click(screen.getByRole("button", { name: "新开一卷" }));
 
     await waitFor(() => expect(fetchMock.mock.calls.filter(([url]) => url === "/api/game/start")).toHaveLength(1));
@@ -379,7 +380,7 @@ describe("S74.1 React client shell", () => {
     const sessionId = "99999999-1111-4111-8111-111111111111";
     const manifest = buildMockAssetManifest(0);
     const fetchMock = vi.fn(async (url: string) => {
-      if (url === "/assets/ui/ink-ui-manifest.json") {
+      if (url === "/assets/ui/ink-ui-runtime-manifest.json") {
         return new Response(JSON.stringify({
           ...manifest,
           assets: [
@@ -461,7 +462,7 @@ describe("S74.1 React client shell", () => {
   it("renders the S76.2 scholar panel from safe study and calendar views as draft-only actions", async () => {
     const sessionId = "12345678-1111-4111-8111-111111111111";
     const fetchMock = vi.fn(async (url: string) => {
-      if (url === "/assets/ui/ink-ui-manifest.json") {
+      if (url === "/assets/ui/ink-ui-runtime-manifest.json") {
         return new Response(JSON.stringify({
           ...buildMockAssetManifest(0),
           assets: [
@@ -564,7 +565,7 @@ describe("S74.1 React client shell", () => {
   it("renders the S76.3 magistrate panel from safe local affairs and fiscal views as draft-only actions", async () => {
     const sessionId = "22345678-1111-4111-8111-111111111111";
     const fetchMock = vi.fn(async (url: string) => {
-      if (url === "/assets/ui/ink-ui-manifest.json") {
+      if (url === "/assets/ui/ink-ui-runtime-manifest.json") {
         return new Response(JSON.stringify({
           ...buildMockAssetManifest(0),
           assets: [
@@ -731,7 +732,7 @@ describe("S74.1 React client shell", () => {
   it("renders the S76.4 official minister panel from safe career views as draft-only actions", async () => {
     const sessionId = "32345678-1111-4111-8111-111111111111";
     const fetchMock = vi.fn(async (url: string) => {
-      if (url === "/assets/ui/ink-ui-manifest.json") {
+      if (url === "/assets/ui/ink-ui-runtime-manifest.json") {
         return new Response(JSON.stringify({
           ...buildMockAssetManifest(0),
           assets: [
@@ -893,7 +894,7 @@ describe("S74.1 React client shell", () => {
   it("renders the S76.5 general panel from safe military views as draft-only actions", async () => {
     const sessionId = "42345678-1111-4111-8111-111111111111";
     const fetchMock = vi.fn(async (url: string) => {
-      if (url === "/assets/ui/ink-ui-manifest.json") {
+      if (url === "/assets/ui/ink-ui-runtime-manifest.json") {
         return new Response(JSON.stringify({
           ...buildMockAssetManifest(0),
           assets: [
@@ -1048,7 +1049,7 @@ describe("S74.1 React client shell", () => {
   it("renders the S76.6 emperor panel from safe court views as draft-only edicts", async () => {
     const sessionId = "52345678-1111-4111-8111-111111111111";
     const fetchMock = vi.fn(async (url: string) => {
-      if (url === "/assets/ui/ink-ui-manifest.json") {
+      if (url === "/assets/ui/ink-ui-runtime-manifest.json") {
         return new Response(JSON.stringify({
           ...buildMockAssetManifest(0),
           assets: [
@@ -1453,7 +1454,7 @@ describe("S74.1 React client shell", () => {
   it("loads S78 topic surface materials, requests AI draft, and writes only to the composer", async () => {
     const sessionId = "78787878-7878-4878-8878-787878787878";
     const fetchMock = vi.fn(async (url: string, options?: RequestInit) => {
-      if (url === "/assets/ui/ink-ui-manifest.json") {
+      if (url === "/assets/ui/ink-ui-runtime-manifest.json") {
         return new Response(JSON.stringify(buildMockAssetManifest(0)), {
           status: 200,
           headers: { "Content-Type": "application/json" }
@@ -1630,7 +1631,7 @@ describe("S74.1 React client shell", () => {
   it("renders the S76.7 immersive exam page and keeps exam API authority server-owned", async () => {
     const sessionId = "abababab-abab-4bab-8bab-abababababab";
     const fetchMock = vi.fn(async (url: string, options?: RequestInit) => {
-      if (url === "/assets/ui/ink-ui-manifest.json") {
+      if (url === "/assets/ui/ink-ui-runtime-manifest.json") {
         return new Response(JSON.stringify({
           ...buildMockAssetManifest(0),
           assets: [
@@ -1800,7 +1801,7 @@ describe("S74.1 React client shell", () => {
       }
     };
     const fetchMock = vi.fn(async (url: string, options?: RequestInit) => {
-      if (url === "/assets/ui/ink-ui-manifest.json") {
+      if (url === "/assets/ui/ink-ui-runtime-manifest.json") {
         return new Response(JSON.stringify({
           ...buildMockAssetManifest(0),
           assets: [
@@ -1926,7 +1927,7 @@ describe("S74.1 React client shell", () => {
       examinerPanelView: {}
     };
     const fetchMock = vi.fn(async (url: string) => {
-      if (url === "/assets/ui/ink-ui-manifest.json") {
+      if (url === "/assets/ui/ink-ui-runtime-manifest.json") {
         return new Response(JSON.stringify(buildMockAssetManifest(0)), {
           status: 200,
           headers: { "Content-Type": "application/json" }
@@ -2023,7 +2024,7 @@ describe("S74.1 React client shell", () => {
       }
     };
     const fetchMock = vi.fn(async (url: string) => {
-      if (url === "/assets/ui/ink-ui-manifest.json") {
+      if (url === "/assets/ui/ink-ui-runtime-manifest.json") {
         return new Response(JSON.stringify(buildMockAssetManifest()), {
           status: 200,
           headers: { "Content-Type": "application/json" }
@@ -2058,7 +2059,7 @@ describe("S74.1 React client shell", () => {
     await waitFor(() => expect(screen.getAllByText("陆清远").length).toBeGreaterThan(0));
     expect(screen.getByText("顾文衡")).toBeTruthy();
     expect(screen.getByText("王氏")).toBeTruthy();
-    expect(fetchMock).toHaveBeenCalledWith("/assets/ui/ink-ui-manifest.json", expect.objectContaining({ headers: { Accept: "application/json" } }));
+    expect(fetchMock).toHaveBeenCalledWith("/assets/ui/ink-ui-runtime-manifest.json", expect.objectContaining({ headers: { Accept: "application/json" } }));
 
     const firstPageImages = screen.getAllByRole("img");
     expect(firstPageImages.every((image) => image.getAttribute("loading") === "lazy")).toBe(true);
@@ -2096,7 +2097,7 @@ describe("S74.1 React client shell", () => {
       }
     };
     const fetchMock = vi.fn(async (url: string) => {
-      if (url === "/assets/ui/ink-ui-manifest.json") {
+      if (url === "/assets/ui/ink-ui-runtime-manifest.json") {
         return new Response(JSON.stringify(buildMockAssetManifest()), {
           status: 200,
           headers: { "Content-Type": "application/json" }

@@ -14,7 +14,7 @@ export function Portrait({ registry, portraitRef, label, className = "" }: Portr
   const portrait = registry.getPortrait(portraitRef);
   const fallback = registry.getFallback(portrait?.fallbackRef);
   const resolvedLabel = label ?? portrait?.roleLabel ?? portrait?.role ?? "人物立绘";
-  const imageSource = portrait?.thumbnailPath ?? portrait?.lowResPlaceholderPath ?? null;
+  const imageSource = portrait?.path ?? portrait?.thumbnailPath ?? portrait?.lowResPlaceholderPath ?? null;
   const fallbackStyle = useMemo(() => buildFallbackStyle(fallback, portrait), [fallback, portrait]);
 
   if (!portrait || imageFailed || !imageSource) {

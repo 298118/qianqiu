@@ -56,10 +56,39 @@ const visualOverlapIgnoreSelectors = Object.freeze([
 ]);
 
 const runnableSessionIdPattern = /^[a-f0-9-]{36}$/i;
+const runtimeAssetManifestPath = "/assets/ui/ink-ui-runtime-manifest.json";
 const unsafeClientApiPathPatterns = Object.freeze([
   /^\/api\/game\/state\//,
   /^\/api\/dev\//
 ]);
+const CLIENT_RESOURCE_BUDGETS = Object.freeze({
+  home: {
+    maxStaticBytes: 10_000_000,
+    maxRuntimeManifestBytes: 900_000,
+    maxFullManifestRequests: 0,
+    maxMapRuntimeRequests: 0,
+    maxPortraitMainRequests: 6,
+    maxPortraitThumbRequests: 8,
+    maxPortraitPlaceholderRequests: 8,
+    maxFontWoff2Requests: 3,
+    maxUiImageBytes: 4_500_000
+  },
+  map: {
+    maxStaticBytes: 4_000_000,
+    minMapRuntimeRequests: 2,
+    maxMapRuntimeRequests: 2,
+    maxPortraitMainRequests: 0,
+    maxFullManifestRequests: 0
+  },
+  people: {
+    maxStaticBytes: 4_000_000,
+    maxMapRuntimeRequests: 0,
+    maxPortraitMainRequests: 8,
+    maxPortraitThumbRequests: 8,
+    maxPortraitPlaceholderRequests: 8,
+    maxFullManifestRequests: 0
+  }
+});
 
 function parseClientSmokeArgs(argv = process.argv) {
   const args = {
@@ -208,7 +237,7 @@ async function assertBrowserStorageSafety(page, label) {
 
 async function assertManifestRuntimeSafety(page, baseUrl) {
   const snapshot = await page.evaluate(async (url) => {
-    const response = await fetch(`${url}/assets/ui/ink-ui-manifest.json`, { cache: "no-store" });
+    const response = await fetch(`${url}/assets/ui/ink-ui-runtime-manifest.json`, { cache: "no-store" });
     const manifest = await response.json();
     const localSourcePathCount = (manifest.assets || []).filter((asset) => Boolean(asset.source?.localHighResSourcePath)).length;
     const runtimeEnvelope = {
@@ -273,6 +302,100 @@ async function assertManifestRuntimeSafety(page, baseUrl) {
   if (failures.length) {
     throw new Error(`S77.4 manifest pollution smoke failed: ${failures.join("; ")}`);
   }
+}
+
+function getResourceBudgetSnapshot(entries) {
+  const summary = {
+    staticBytes: 0,
+    uiImageBytes: 0,
+    runtimeManifestBytes: 0,
+    fullManifestRequests: 0,
+    mapRuntimeRequests: 0,
+    portraitMainRequests: 0,
+    portraitThumbRequests: 0,
+    portraitPlaceholderRequests: 0,
+    fontWoff2Requests: 0,
+    resourcePaths: []
+  };
+
+  for (const entry of entries) {
+    let pathname = "";
+    try {
+      pathname = new URL(entry.name, "http://qianqiu.local").pathname;
+    } catch {
+      continue;
+    }
+    const bytes = Number(entry.encodedBodySize || entry.transferSize || 0);
+    const isStaticResource =
+      pathname.startsWith("/client-assets/") ||
+      pathname.startsWith("/assets/ui/") ||
+      pathname === "/mapRenderer.js" ||
+      pathname.startsWith("/vendor/");
+    if (!isStaticResource) continue;
+
+    summary.staticBytes += bytes;
+    summary.resourcePaths.push(pathname);
+
+    if (pathname === runtimeAssetManifestPath) summary.runtimeManifestBytes += bytes;
+    if (pathname === "/assets/ui/ink-ui-manifest.json") summary.fullManifestRequests += 1;
+    if (pathname === "/mapRenderer.js" || pathname === "/vendor/pixi.min.js") summary.mapRuntimeRequests += 1;
+    if (pathname.endsWith(".woff2")) summary.fontWoff2Requests += 1;
+    if (pathname.startsWith("/assets/ui/") && /\.(?:webp|png|jpg|jpeg)$/i.test(pathname)) summary.uiImageBytes += bytes;
+    if (pathname.startsWith("/assets/ui/portraits/") && !pathname.startsWith("/assets/ui/portraits/placeholders/")) {
+      summary.portraitMainRequests += 1;
+    }
+    if (pathname.startsWith("/assets/ui/thumbs/thumb-portrait")) summary.portraitThumbRequests += 1;
+    if (pathname.startsWith("/assets/ui/portraits/placeholders/")) summary.portraitPlaceholderRequests += 1;
+  }
+
+  summary.resourcePaths = [...new Set(summary.resourcePaths)].sort();
+  return summary;
+}
+
+function getResourceBudgetFailures(snapshot, budget, label = "page") {
+  const failures = [];
+  const checks = [
+    ["staticBytes", "static resource bytes"],
+    ["runtimeManifestBytes", "runtime manifest bytes"],
+    ["fullManifestRequests", "full source manifest requests"],
+    ["mapRuntimeRequests", "map runtime requests"],
+    ["portraitMainRequests", "portrait main image requests"],
+    ["portraitThumbRequests", "portrait thumbnail requests"],
+    ["portraitPlaceholderRequests", "portrait placeholder requests"],
+    ["fontWoff2Requests", "woff2 font requests"],
+    ["uiImageBytes", "reviewed UI image bytes"]
+  ];
+
+  for (const [key, message] of checks) {
+    const maxKey = `max${key[0].toUpperCase()}${key.slice(1)}`;
+    if (typeof budget[maxKey] === "number" && snapshot[key] > budget[maxKey]) {
+      failures.push(`${label} exceeded ${message}: ${snapshot[key]} > ${budget[maxKey]}`);
+    }
+  }
+  if (typeof budget.minMapRuntimeRequests === "number" && snapshot.mapRuntimeRequests < budget.minMapRuntimeRequests) {
+    failures.push(`${label} did not lazy-load map runtime scripts: ${snapshot.mapRuntimeRequests} < ${budget.minMapRuntimeRequests}`);
+  }
+  return failures;
+}
+
+async function clearResourceTimings(page) {
+  await page.evaluate(() => performance.clearResourceTimings());
+}
+
+async function assertClientResourceBudget(page, label, budget) {
+  const entries = await page.evaluate(() => performance.getEntriesByType("resource").map((entry) => ({
+    name: entry.name,
+    initiatorType: entry.initiatorType,
+    transferSize: entry.transferSize,
+    encodedBodySize: entry.encodedBodySize,
+    decodedBodySize: entry.decodedBodySize
+  })));
+  const snapshot = getResourceBudgetSnapshot(entries);
+  const failures = getResourceBudgetFailures(snapshot, budget, label);
+  if (failures.length) {
+    throw new Error(`S77.5 resource budget failed: ${failures.join("; ")}; resources=${snapshot.resourcePaths.join(", ")}`);
+  }
+  return snapshot;
 }
 
 async function assertScreenshotArtifactsSafety(screenshots) {
@@ -455,6 +578,33 @@ async function assertPortraitImagesLoaded(page, selector, label) {
   if (badResources.length) {
     throw new Error(`${label} has unavailable portrait thumbnail resource(s): ${JSON.stringify(badResources)}`);
   }
+}
+
+async function waitForVisiblePortraitImages(page, selector, label) {
+  const snapshot = await page.waitForFunction((targetSelector) => {
+    const images = [...document.querySelectorAll(`${targetSelector} img`)];
+    const visibleImages = images.filter((image) => {
+      const rect = image.getBoundingClientRect();
+      const style = window.getComputedStyle(image);
+      return rect.width > 0 && rect.height > 0 && style.display !== "none" && style.visibility !== "hidden";
+    });
+    const entries = visibleImages.map((image) => ({
+        src: image.currentSrc || image.src || "",
+        complete: image.complete,
+        naturalWidth: image.naturalWidth,
+        naturalHeight: image.naturalHeight
+      }));
+    const ready = visibleImages.length > 0 && visibleImages.every((image) => {
+      const src = image.currentSrc || image.src || "";
+      return src.length > 0 && (image.complete || image.naturalWidth > 0);
+    });
+    return ready ? { ready, entries } : false;
+  }, selector, { timeout: 10000 });
+  const result = await snapshot.jsonValue();
+  if (!result.ready) {
+    throw new Error(`${label} portrait images did not settle before budget check: ${JSON.stringify(result.entries.slice(0, 3))}`);
+  }
+  return result;
 }
 
 async function assertCurrentReactClientPage(page, pathname, label, screenshotsDir, options = {}) {
@@ -1773,6 +1923,7 @@ async function runClientSmoke(options = {}) {
 
     screenshots.push(await assertReactClientPage(page, baseUrl, "/", "s74-react-home-desktop", options.screenshotsDir));
     await assertReviewedBackgroundVisual(page, ".homeBackdrop", "S77.3 desktop home backdrop");
+    await assertClientResourceBudget(page, "S77.5 desktop home", CLIENT_RESOURCE_BUDGETS.home);
     await assertManifestRuntimeSafety(page, baseUrl);
     const mockStart = await startMockGameThroughHome(page, options.screenshotsDir);
     const startedSessionId = mockStart.sessionId;
@@ -1787,12 +1938,14 @@ async function runClientSmoke(options = {}) {
     await assertDisplayPreferencesPersistence(page, `/game/${startedSessionId}`);
     await assertBrowserStorageSafety(page, "S77.4 after display preferences");
     const runtimeMapPath = `/game/${startedSessionId}/map`;
+    await clearResourceTimings(page);
     await clickTopNavRoute(page, "舆图", runtimeMapPath);
     screenshots.push(
       await assertCurrentReactClientPage(page, runtimeMapPath, "s74-react-map-runtime-desktop", options.screenshotsDir, {
         readySelector: ".inkMapRuntimeBridge canvas"
       })
     );
+    await assertClientResourceBudget(page, "S77.5 desktop map", CLIENT_RESOURCE_BUDGETS.map);
     await page.locator(".inkMapRuntimeBridge canvas").first().waitFor({ timeout: 15000 });
     const mapRuntime = await page.evaluate(() => {
       const bridge = document.querySelector(".inkMapRuntimeBridge");
@@ -1843,12 +1996,15 @@ async function runClientSmoke(options = {}) {
     );
 
     const peoplePath = `/game/${startedSessionId}/people`;
+    await clearResourceTimings(page);
     await clickTopNavRoute(page, "人物", peoplePath);
     screenshots.push(
       await assertCurrentReactClientPage(page, peoplePath, "s76-people-ledger-desktop", options.screenshotsDir, {
         readySelector: ".peopleLedgerList"
       })
     );
+    await waitForVisiblePortraitImages(page, ".peopleLedgerList", "S77.5 desktop people ledger");
+    await assertClientResourceBudget(page, "S77.5 desktop people", CLIENT_RESOURCE_BUDGETS.people);
     const portraitLedger = await page.evaluate(() => {
       const grid = document.querySelector(".peopleLedgerList");
       const images = [...document.querySelectorAll(".peopleLedgerList img")];
@@ -2141,6 +2297,9 @@ if (require.main === module) {
 }
 
 module.exports = {
+  CLIENT_RESOURCE_BUDGETS,
+  getResourceBudgetFailures,
+  getResourceBudgetSnapshot,
   getPlayerFacingCopyLeakFailures,
   getSafetyPollutionFailures,
   getTextOverlapFailures,

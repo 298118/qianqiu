@@ -656,7 +656,7 @@ Manifest 示例：
 
 ### S74.5 资产加载层
 
-状态：已完成。S74.5 新增 `client/src/assets/assetRegistry.ts`、`client/src/assets/useAssetRegistry.ts` 和 `client/src/components/Portrait.tsx`；React runtime 通过 `/assets/ui/ink-ui-manifest.json` 读取 active manifest，按已审核状态、安全路径、fallback、缩略图、低清占位和懒加载字段建立 registry。人物页已接入 manifest 驱动的立绘谱牒，每页只渲染 8 张缩略图；`usage="people_page"` 下的全部已审核立绘都可分页浏览，女性高清重制覆盖优先列前，未重制女性立绘继续使用 manifest 原图。
+状态：已完成。S74.5 新增 `client/src/assets/assetRegistry.ts`、`client/src/assets/useAssetRegistry.ts` 和 `client/src/components/Portrait.tsx`；S77.5 后 React runtime 通过 `/assets/ui/ink-ui-runtime-manifest.json` 读取精简运行时 manifest，完整 `/assets/ui/ink-ui-manifest.json` 只作为素材生产与 QA 源头。registry 按已审核状态、安全路径、fallback、缩略图、低清占位和懒加载字段建立查询层。人物页已接入 manifest 驱动的立绘谱牒，每页只渲染 8 张当前公开人物；`usage="people_page"` 下的全部已审核立绘都可分页浏览，女性高清重制覆盖优先列前，可见人物优先使用已审核主图以保证清晰。
 
 实现功能：
 
@@ -1158,6 +1158,8 @@ Manifest 示例：
 - 考试不暴露弥封映射和考官 hidden intent。
 
 ### S77.5 性能与资源预算
+
+状态：已完成。S77.5 新增精简 `public/assets/ui/ink-ui-runtime-manifest.json` 作为 React 运行时读取源，完整 `ink-ui-manifest.json` 继续作为素材生产与 QA 源头；`npm run smoke:browser` 现在会先执行 client 构建预算，并在真实浏览器中检查首屏、舆图和人物页资源边界。按用户最新体验偏好，当前可见人物立绘使用已审核主图以保证清晰；性能预算保护的是不一次性拉取全量立绘池、不把地图运行时或 public UI 大图打进首屏 bundle。
 
 验收：
 

@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import committedManifest from "../../../public/assets/ui/ink-ui-manifest.json";
+import runtimeManifest from "../../../public/assets/ui/ink-ui-runtime-manifest.json";
 import {
   AssetRegistryError,
   createAssetRegistry,
@@ -162,5 +163,17 @@ describe("S74.5 asset registry", () => {
     expect(initialPeoplePortraits).toHaveLength(8);
     expect(preloadHints).toHaveLength(8);
     expect(preloadHints.every((hint) => hint.href.includes("/assets/ui/thumbs/"))).toBe(true);
+  });
+
+  it("loads the compact runtime manifest with the same portrait addressability", () => {
+    const sourceRegistry = createAssetRegistry(committedManifest as unknown as InkUiManifest);
+    const runtimeRegistry = createAssetRegistry(runtimeManifest as unknown as InkUiManifest);
+
+    expect(runtimeRegistry.summary.manifestAssetCount).toBe(sourceRegistry.summary.manifestAssetCount);
+    expect(runtimeRegistry.summary.runtimeAssetCount).toBe(sourceRegistry.summary.runtimeAssetCount);
+    expect(runtimeRegistry.summary.portraitCount).toBe(sourceRegistry.summary.portraitCount);
+    expect(runtimeRegistry.getInitialPortraits({ usage: "people_page" })).toHaveLength(8);
+    expect(runtimeRegistry.getAsset("ui-home-scroll-landscape-v1")?.path).toBe("/assets/ui/home/home-scroll-landscape-v1.webp");
+    expect(runtimeRegistry.getPortrait("portrait-player-scholar-f01-v1")?.path).toBe("/assets/ui/portraits/portrait-player-scholar-f01-v1.webp");
   });
 });

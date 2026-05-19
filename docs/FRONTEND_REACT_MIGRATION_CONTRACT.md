@@ -26,8 +26,8 @@
 - UI store 的安全摘要只抽取玩家公开摘要、叙事预览和 route view 存在标记，不保存完整 `worldState`、模型原文、内部审计原文、hidden ledger、完整 prompt、本地路径或 key。
 - S74.4 已新增 `AppShell`、`SurfaceHost`、overlay focus helper 和局部 `surfaceRegistry`。抽屉、modal 和专题 surface 通过 registry 渲染，Esc 关闭后焦点回到触发按钮；路由切换执行滚动归零和页面主体焦点恢复。
 - S74.4 的 `npc-profile`、`edict-draft`、`memorial-review`、`map-filter` 仍是安全占位与草稿入口；没有后端安全 projection 时不伪造人物、奏折、圣旨或舆图事实，也不导入 S73 全量立绘资产。
-- S74.5 已新增 `client/src/assets/assetRegistry.ts`、`useAssetRegistry.ts` 和 `client/src/components/Portrait.tsx`。React runtime 通过 `/assets/ui/ink-ui-manifest.json` 读取 active manifest，按 `runtimeUsableReviewStatuses`、安全路径、fallback、缩略图、低清占位和 `allowEagerLoad=false` 建立 registry；组件只接收 `portraitRef`，不硬编码图片路径，不读取 planned 矩阵或本地 artifacts。
-- S74.5 人物页只做安全谱牒预览：按 `usage="people_page"` 分页接入全部人物页可用立绘，每页渲染 8 张缩略图；女性高清重制覆盖优先列前，未重制女性立绘继续使用 manifest 原图。registry 不把 manifest 或图片路径写入 Zustand、URL、localStorage 或 sessionStorage。
+- S74.5 已新增 `client/src/assets/assetRegistry.ts`、`useAssetRegistry.ts` 和 `client/src/components/Portrait.tsx`。S77.5 后 React runtime 通过 `/assets/ui/ink-ui-runtime-manifest.json` 读取精简运行时 manifest，完整 `/assets/ui/ink-ui-manifest.json` 只作为素材生产与 QA 源头；registry 按 `runtimeUsableReviewStatuses`、安全路径、fallback、缩略图、低清占位和 `allowEagerLoad=false` 建立 registry；组件只接收 `portraitRef`，不硬编码图片路径，不读取 planned 矩阵或本地 artifacts。
+- S74.5 人物页只做安全谱牒预览：按 `usage="people_page"` 分页接入全部人物页可用立绘，每页渲染 8 张当前公开人物；S77.5 后可见人物优先使用已审核主图以保证清晰，女性高清重制覆盖优先列前。registry 不把 manifest 或图片路径写入 Zustand、URL、localStorage 或 sessionStorage。
 - S74.6 已新增 `client/src/components/InkMapRuntimeBridge.tsx`。React 路由动态加载 `/vendor/pixi.min.js` 和 `/mapRenderer.js`，复用 S72 `window.MapRenderer`，但不调用旧 `public/mapPanel.js` 的全局 DOM 单例，不依赖旧 `public/app.js`、旧 `#action-input` 或旧 `#information-panel`。
 - S74.6 地图桥只读取当前安全 response 的 `mapRuntimeView`；`MapPage` 要求 `currentSession.sessionId` 与路由 `sessionId` 一致才渲染地图。地图点击只写入 React/Zustand 行动草稿，仍由玩家提交普通回合，服务器继续拥有裁决。
 - S74.7 已让 `AppShell` 的顶部“主卷/舆图/人物/史册”导航在真实案卷中绑定当前安全 `sessionId`，预览案卷仍保留 `s74-preview` 链接。
