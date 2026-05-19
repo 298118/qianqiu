@@ -10,6 +10,7 @@ const {
 const { resolveClientBuildStatus } = require("../scripts/ensureClientBuild");
 const {
   getPlayerFacingCopyLeakFailures,
+  getSafetyPollutionFailures,
   getTextOverlapFailures,
   parseClientSmokeArgs
 } = require("../scripts/clientSmoke");
@@ -187,6 +188,43 @@ test("S77.3 client smoke has visual pixel and player-facing copy guards", () => 
     { id: "parent", text: "父级按钮", rect: { x: 0, y: 0, width: 120, height: 36 }, ancestorIds: [] },
     { id: "child", text: "子级文字", rect: { x: 8, y: 6, width: 90, height: 24 }, ancestorIds: ["parent"] }
   ], "fixture"), []);
+});
+
+test("S77.4 client smoke has unified safety pollution guards", () => {
+  const smokeSource = readText("scripts/clientSmoke.js");
+  const examPageSource = readText("client/src/pages/ExamPage.tsx");
+  const rankingPageSource = readText("client/src/pages/RankingPage.tsx");
+
+  assert.match(smokeSource, /getSafetyPollutionFailures/);
+  assert.match(smokeSource, /assertNoSafetyPollutionOnPage/);
+  assert.match(smokeSource, /assertBrowserStorageSafety/);
+  assert.match(smokeSource, /assertManifestRuntimeSafety/);
+  assert.match(smokeSource, /assertScreenshotArtifactsSafety/);
+  assert.match(smokeSource, /S77\.4 \$\{screenshotName\}/);
+  assert.match(smokeSource, /localStorage/);
+  assert.match(smokeSource, /sessionStorage/);
+  assert.match(smokeSource, /localHighResSourcePath/);
+  assert.match(smokeSource, /runtimeEnvelope/);
+  assert.match(smokeSource, /path\.basename\(screenshot\.filePath\)/);
+  assert.match(smokeSource, /弥封身份映射\|考官隐藏意图/);
+
+  assert.deepEqual(getSafetyPollutionFailures("raw prompt 写入 E:\\LSMNQ\\data\\sessions\\x sk-test-secret-123456 /home/user/.env", "fixture"), [
+    "fixture exposed safety pollution: raw prompt",
+    "fixture exposed safety pollution: E:\\",
+    "fixture exposed safety pollution: data\\sessions",
+    "fixture exposed safety pollution: sk-test-secret-123456",
+    "fixture exposed safety pollution: /home/user/.env"
+  ]);
+  assert.deepEqual(getSafetyPollutionFailures("弥封身份映射 与 考官隐藏意图 不应出现在玩家 DOM", "fixture"), [
+    "fixture exposed safety pollution: 弥封身份映射",
+    "fixture exposed safety pollution: 考官隐藏意图"
+  ]);
+  assert.deepEqual(getSafetyPollutionFailures("服务器公开投影与安全摘要。", "fixture"), []);
+
+  assert.doesNotMatch(examPageSource, /本页不显示弥封身份映射|考官隐藏意图|模型原始提案/);
+  assert.match(examPageSource, /只呈现已公开的考试快照/);
+  assert.doesNotMatch(rankingPageSource, /不显示弥封身份映射|未采纳评语|模型原始提案/);
+  assert.match(rankingPageSource, /只呈现已公开的榜文/);
 });
 
 test("S74.2 React API client only exposes safe player-facing endpoints", () => {

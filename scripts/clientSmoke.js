@@ -29,6 +29,7 @@ const hiddenTextTokens = Object.freeze([
   "prompt_retrieval_index"
 ]);
 
+const safetyPollutionPattern = /\/api\/game\/state|\/api\/dev\/session-diagnostics|OPENAI_API_KEY|DEEPSEEK_API_KEY|MIMO_API_KEY|ANTHROPIC_API_KEY|sk-[a-z0-9_-]{6,}|tp-[a-z0-9_-]{6,}|data[\\/]+sessions|world_sessions|prompt_retrieval_index|event_log|ai_change_proposals|provider\s+payload|raw\s+(?:audit|state|prompt|provider|payload)|hiddenNotes|hiddenIntent|hidden\s+(?:notes|intent|ledger|truth)|完整\s*(?:prompt|提示词)|本地\s*路径|密\s*钥|模型\s*原始|内部审计原文|弥封身份映射|考官隐藏意图|未采纳评语|[a-z]:[\\/]|file:\/{2}|(?<![A-Za-z0-9_-])\/(?:home|Users|tmp|var|mnt|etc)\/[^\s"'<>)]*/gi;
 const playerFacingCopyLeakPattern = /\bTODO\b|\bFIXME\b|\bsmoke\b|\bartifacts?\b|\bS7[0-9](?:\.\d+)?\b|\bdebug\b|\bstub\b|\bplaceholder\b|验收|测试截图|开发注释|实现说明|fallback token|data-client-entry|React Router|Vite/gi;
 const visualTextSelectors = Object.freeze([
   "h1",
@@ -120,6 +121,11 @@ async function captureScreenshot(page, screenshotsDir, label) {
   return { label, bytes: buffer.length, filePath };
 }
 
+function getSafetyPollutionFailures(text, label = "page") {
+  const matches = String(text || "").match(safetyPollutionPattern) || [];
+  return [...new Set(matches)].map((match) => `${label} exposed safety pollution: ${match}`);
+}
+
 function getPlayerFacingCopyLeakFailures(text, label = "page") {
   const matches = String(text || "").match(playerFacingCopyLeakPattern) || [];
   return [...new Set(matches)].map((match) => `${label} exposed player-facing development copy: ${match}`);
@@ -155,6 +161,125 @@ function getTextOverlapFailures(rects, label = "page") {
 async function assertNoPlayerFacingCopyLeaks(page, label) {
   const text = await page.evaluate(() => document.body.innerText || "");
   const failures = getPlayerFacingCopyLeakFailures(text, label);
+  if (failures.length) {
+    throw new Error(failures.join("; "));
+  }
+}
+
+async function assertNoSafetyPollutionOnPage(page, label) {
+  const snapshot = await page.evaluate(() => {
+    const values = [...document.querySelectorAll("input, textarea, select")]
+      .map((element) => {
+        if (element instanceof HTMLInputElement || element instanceof HTMLTextAreaElement || element instanceof HTMLSelectElement) {
+          return `${element.name || element.getAttribute("aria-label") || element.id || "field"}=${element.value || ""}`;
+        }
+        return "";
+      })
+      .filter(Boolean);
+    const dataAttributes = [...document.querySelectorAll("[data-map-status], [data-motion], [data-text-size], [data-contrast], [data-client-entry]")]
+      .flatMap((element) => [...element.attributes]
+        .filter((attribute) => attribute.name.startsWith("data-"))
+        .map((attribute) => `${attribute.name}=${attribute.value}`));
+    return [document.body.innerText || "", ...values, ...dataAttributes].join("\n");
+  });
+  const failures = getSafetyPollutionFailures(snapshot, label);
+  if (failures.length) {
+    throw new Error(failures.join("; "));
+  }
+}
+
+async function assertBrowserStorageSafety(page, label) {
+  const snapshot = await page.evaluate(() => {
+    const entries = [];
+    for (const storageName of ["localStorage", "sessionStorage"]) {
+      const storage = window[storageName];
+      for (let index = 0; index < storage.length; index += 1) {
+        const key = storage.key(index);
+        entries.push(`${storageName}:${key}=${key ? storage.getItem(key) : ""}`);
+      }
+    }
+    return entries.join("\n");
+  });
+  const failures = getSafetyPollutionFailures(snapshot, `${label} browser storage`);
+  if (failures.length) {
+    throw new Error(failures.join("; "));
+  }
+}
+
+async function assertManifestRuntimeSafety(page, baseUrl) {
+  const snapshot = await page.evaluate(async (url) => {
+    const response = await fetch(`${url}/assets/ui/ink-ui-manifest.json`, { cache: "no-store" });
+    const manifest = await response.json();
+    const localSourcePathCount = (manifest.assets || []).filter((asset) => Boolean(asset.source?.localHighResSourcePath)).length;
+    const runtimeEnvelope = {
+      schemaVersion: manifest?.schemaVersion,
+      assetSetId: manifest?.assetSetId,
+      assetRoot: manifest?.assetRoot,
+      runtimeUsableReviewStatuses: manifest?.runtimeUsableReviewStatuses,
+      runtimeBlockedReviewStatuses: manifest?.runtimeBlockedReviewStatuses,
+      fallbackCatalog: (manifest?.fallbackCatalog || []).map((fallback) => ({
+        id: fallback.id,
+        category: fallback.category,
+        type: fallback.type,
+        usage: fallback.usage,
+        cssTokens: fallback.cssTokens,
+        reviewStatus: fallback.reviewStatus,
+        ledgerId: fallback.ledgerId
+      })),
+      assets: (manifest?.assets || []).map((asset) => ({
+        id: asset.id,
+        category: asset.category,
+        subcategory: asset.subcategory,
+        usage: asset.usage,
+        role: asset.role,
+        roleLabel: asset.roleLabel,
+        scene: asset.scene,
+        path: asset.path,
+        thumbnailPath: asset.thumbnailPath,
+        lowResPlaceholderPath: asset.lowResPlaceholderPath,
+        fallbackRef: asset.fallbackRef,
+        reviewStatus: asset.reviewStatus,
+        visualReviewStatus: asset.visualReview?.status,
+        safetyReviewStatus: asset.safetyReview?.status,
+        dimensions: asset.dimensions,
+        safeArea: asset.safeArea,
+        focalPoint: asset.focalPoint,
+        mobileCrop: asset.mobileCrop,
+        portraitRef: asset.portraitRef,
+        genderPresentation: asset.genderPresentation,
+        ageBand: asset.ageBand,
+        roleStage: asset.roleStage,
+        statusVariant: asset.statusVariant,
+        emotionVariant: asset.emotionVariant,
+        identityTags: asset.identityTags,
+        emotionTags: asset.emotionTags,
+        lazyLoad: asset.lazyLoad,
+        sourceRuntimeFlag: asset.source?.localHighResSource
+      }))
+    };
+    return {
+      ok: response.ok,
+      assetCount: manifest.assets?.length || 0,
+      localSourcePathCount,
+      runtimeEnvelope
+    };
+  }, baseUrl);
+
+  const failures = [];
+  if (!snapshot.ok) failures.push("manifest request failed");
+  if (snapshot.assetCount < 1) failures.push("manifest had no assets");
+  if (snapshot.localSourcePathCount > 0) failures.push(`manifest exposed localHighResSourcePath ${snapshot.localSourcePathCount} time(s)`);
+  failures.push(...getSafetyPollutionFailures(JSON.stringify(snapshot.runtimeEnvelope), "runtime manifest"));
+  if (failures.length) {
+    throw new Error(`S77.4 manifest pollution smoke failed: ${failures.join("; ")}`);
+  }
+}
+
+async function assertScreenshotArtifactsSafety(screenshots) {
+  const artifactText = screenshots
+    .map((screenshot) => [screenshot.label, screenshot.filePath ? path.basename(screenshot.filePath) : ""].filter(Boolean).join("\n"))
+    .join("\n");
+  const failures = getSafetyPollutionFailures(artifactText, "screenshot artifact names");
   if (failures.length) {
     throw new Error(failures.join("; "));
   }
@@ -371,6 +496,7 @@ async function assertCurrentReactClientPage(page, pathname, label, screenshotsDi
   }
 
   await assertNoVisibleTextOverlap(page, label);
+  await assertNoSafetyPollutionOnPage(page, label);
   return captureScreenshot(page, screenshotsDir, label);
 }
 
@@ -558,6 +684,7 @@ async function assertExamFullScreen(page, sessionId, screenshotsDir, screenshotN
   }
   await assertReviewedBackgroundVisual(page, ".examHero", `S77.3 ${screenshotName} hero`);
   if (options.clickQuestion === false) {
+    await assertNoSafetyPollutionOnPage(page, `S77.4 ${screenshotName}`);
     return captureScreenshot(page, screenshotsDir, screenshotName);
   }
 
@@ -613,6 +740,7 @@ async function assertExamFullScreen(page, sessionId, screenshotsDir, screenshotN
     throw new Error(`S76.7 exam page active smoke failed: ${afterFailures.join("; ")}`);
   }
 
+  await assertNoSafetyPollutionOnPage(page, `S77.4 ${screenshotName}`);
   return captureScreenshot(page, screenshotsDir, screenshotName);
 }
 
@@ -658,6 +786,7 @@ async function assertRankingFullScreen(page, sessionId, screenshotsDir, screensh
     throw new Error(`S76.8 ranking page smoke failed: ${failures.join("; ")}`);
   }
 
+  await assertNoSafetyPollutionOnPage(page, `S77.4 ${screenshotName}`);
   return captureScreenshot(page, screenshotsDir, screenshotName);
 }
 
@@ -1644,6 +1773,7 @@ async function runClientSmoke(options = {}) {
 
     screenshots.push(await assertReactClientPage(page, baseUrl, "/", "s74-react-home-desktop", options.screenshotsDir));
     await assertReviewedBackgroundVisual(page, ".homeBackdrop", "S77.3 desktop home backdrop");
+    await assertManifestRuntimeSafety(page, baseUrl);
     const mockStart = await startMockGameThroughHome(page, options.screenshotsDir);
     const startedSessionId = mockStart.sessionId;
     screenshots.push(mockStart.screenshot);
@@ -1655,6 +1785,7 @@ async function runClientSmoke(options = {}) {
     screenshots.push(inkboxFlow.savesScreenshot);
     screenshots.push(inkboxFlow.loadedScreenshot);
     await assertDisplayPreferencesPersistence(page, `/game/${startedSessionId}`);
+    await assertBrowserStorageSafety(page, "S77.4 after display preferences");
     const runtimeMapPath = `/game/${startedSessionId}/map`;
     await clickTopNavRoute(page, "舆图", runtimeMapPath);
     screenshots.push(
@@ -1911,6 +2042,7 @@ async function runClientSmoke(options = {}) {
     screenshots.push(await assertMobileInkbox(page, options.screenshotsDir));
     screenshots.push(await assertReactClientPage(page, baseUrl, "/", "s74-react-home-mobile", options.screenshotsDir));
     await assertReviewedBackgroundVisual(page, ".homeBackdrop", "S77.3 mobile home backdrop");
+    await assertBrowserStorageSafety(page, "S77.4 final mobile context");
     await context.close();
 
     if (pageErrors.length) {
@@ -1919,6 +2051,7 @@ async function runClientSmoke(options = {}) {
     if (unsafeApiRequests.length) {
       throw new Error(`React client smoke touched unsafe API path(s): ${[...new Set(unsafeApiRequests)].join(", ")}`);
     }
+    await assertScreenshotArtifactsSafety(screenshots);
 
     return {
       baseUrl,
@@ -2009,6 +2142,7 @@ if (require.main === module) {
 
 module.exports = {
   getPlayerFacingCopyLeakFailures,
+  getSafetyPollutionFailures,
   getTextOverlapFailures,
   parseClientSmokeArgs,
   runClientSmoke

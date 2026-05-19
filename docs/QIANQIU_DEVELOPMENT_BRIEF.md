@@ -6,7 +6,7 @@
 
 本项目第一阶段必须交付并持续保护一个可运行的浏览器游戏：
 
-- 前端：S74.1 已创建 `client/` React + TypeScript + Vite 默认前端，生产构建输出 `dist/client/` 接管默认 `/`；React Router Data Mode 管理多页 SPA 路由。S77.3 起 React 入口自托管 Noto Serif SC 简体中文 400/700/900 字重，避免 Linux/CI 或无中文系统字体环境出现方框字。旧原生 `public/index.html` / `app.js` / `styles.css` 暂留作迁移参考，不再是交付入口。
+- 前端：S74.1 已创建 `client/` React + TypeScript + Vite 默认前端，生产构建输出 `dist/client/` 接管默认 `/`；React Router Data Mode 管理多页 SPA 路由。S77.3 起 React 入口自托管 Noto Serif SC 简体中文 400/700/900 字重，避免 Linux/CI 或无中文系统字体环境出现方框字；S77.4 起 browser smoke 统一扫描 DOM、浏览器存储、运行时 manifest 安全字段和截图产物名，阻断 key、本地路径、raw prompt/provider 与 hidden/raw 词样。旧原生 `public/index.html` / `app.js` / `styles.css` 暂留作迁移参考，不再是交付入口。
 - 后端：Node.js + Express，plain JavaScript。
 - AI：适配器模式，支持 Mock、OpenAI、DeepSeek、Claude/Anthropic。
 - 存储：默认本地 JSON session 文件；可选本地 SQLite session row adapter、本地审计日志、`schema_migrations` 与维护命令。
@@ -90,7 +90,7 @@ S76.10 更新：NPC 与玩家立绘接线已完成。React 首页开局表单新
 
 S78 更新：官署专题玩法化已完成。新增统一 `topicSurfaceView` 安全投影，六类专题 surface（奏折队列、拟圣旨、朝议、堂审、军议、人物公开档案）现在都通过 `GET /api/game/topic-surface/:sessionId/:surfaceId` 读取玩家可见材料、证据 ref、人物公开摘要、可选草稿模板和上一轮公开结果。新增只读 `POST /api/ai/topic-draft/:sessionId`、`topic_draft` AI task、prompt pack、schema、模型路由和 Mock/no-key fallback；AI 只生成标题、草稿正文、引用 evidenceRefs、风险提示和建议下一步，不提交普通回合、不推进时间、不调用 resolver、不写 canonical state。服务端会校验证据白名单、结构化 JSON、污染词、伪造“已裁决/已结案/已任命/已获胜”等成案话术，并在 provider 异常、坏 JSON、越权证据或污染文本时降级本地草稿。React `SurfaceHost` 将六类专题升级为材料/筹议/草稿三栏工作台，玩家可勾选证据、选择批红/拟旨/廷议/问案/军议/拜访等草稿模板，请 AI 拟稿、手动改稿并写入底部奏折；真正后果仍只由 `/api/game/turn` 以及 `cityPolicyResolver`、`judicialCaseResolver`、`militaryDiplomacyResolver`、`sceneRuntime` 等服务器裁决链处理。
 
-S76.12 更新：S76 总验收已完成。React browser smoke 现在从默认首页 Mock 开局后覆盖书生、地方官、入仕官员、大臣、将领、皇帝六类身份代表草稿行动，逐项打开奏折队列、拟圣旨、朝议、堂审、军议、人物档案六类专题 surface，并继续覆盖考试/放榜、独立舆图、人物谱牒、移动端、unsafe API 防线和截图产物。完整 `scholar -> child_exam -> provincial_exam -> metropolitan_exam -> palace_exam -> official` 晋级链仍由 `npm run smoke:exam-s69` 验证，不塞入 UI smoke。公开 UI manifest 顶层说明改为普通中文安全描述，不在浏览器可读 manifest 中保留敏感词样；S77 下一步从默认入口确认、安全污染防线、性能资源预算、可访问性、视觉像素检查和前端水墨重构归档开始。
+S76.12 更新：S76 总验收已完成。React browser smoke 现在从默认首页 Mock 开局后覆盖书生、地方官、入仕官员、大臣、将领、皇帝六类身份代表草稿行动，逐项打开奏折队列、拟圣旨、朝议、堂审、军议、人物档案六类专题 surface，并继续覆盖考试/放榜、独立舆图、人物谱牒、移动端、unsafe API 防线和截图产物。完整 `scholar -> child_exam -> provincial_exam -> metropolitan_exam -> palace_exam -> official` 晋级链仍由 `npm run smoke:exam-s69` 验证，不塞入 UI smoke。公开 UI manifest 顶层说明改为普通中文安全描述，不在浏览器可读 manifest 中保留敏感词样；S77.1-S77.4 已完成默认入口确认、浏览器 smoke 扩展、视觉像素检查和安全污染防线，下一步从性能资源预算、可访问性和前端水墨重构归档继续。
 
 S77.2 更新：浏览器 smoke 扩展已完成。`scripts/clientSmoke.js` 在既有首页、设置、存档/读档、返回首页/继续本局、普通回合、独立舆图、人物谱牒、史册、科举考试、放榜、六类身份代表草稿行动、专题 surface、应用低动效偏好和移动端覆盖基础上，新增浏览器 `goBack()` / `goForward()` 历史栈验收，并新增拦截 `/vendor/pixi.min.js` 与 `/mapRenderer.js` 的地图运行时资源失败 fallback 验收。资源失败时前端只显示安全中文降级文案，不渲染坏 canvas，不触碰 unsafe API，不扩大后端 API、AI 权限、存档格式、SQLite schema 或 canonical state 写入边界；浏览器级 `prefers-reduced-motion` 深测留给 S77.6 可访问性步骤。
 

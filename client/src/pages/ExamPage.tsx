@@ -276,7 +276,7 @@ export function ExamPage() {
 
       <section className="examSafetyBoundary" aria-label="科举安全边界">
         <p>
-          交卷、评分、舞弊、放榜、晋级和授官都由服务器裁决；本页不显示弥封身份映射、考官隐藏意图或模型原始提案。
+          交卷、评分、舞弊、放榜、晋级和授官都由服务器裁决；本页只呈现已公开的考试快照与考场记录。
         </p>
       </section>
 

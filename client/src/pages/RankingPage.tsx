@@ -339,7 +339,7 @@ export function RankingPage() {
 
       <section className="rankingBoundary" aria-label="皇榜安全边界">
         <p>{serverDecision}</p>
-        <p>本榜只录服务器定榜结果；前端不改名次、不补评分、不推断授官，不显示弥封身份映射、未采纳评语或模型原始提案。</p>
+        <p>本榜只录服务器定榜结果；前端不改名次、不补评分、不推断授官，只呈现已公开的榜文、评语与授官提示。</p>
       </section>
     </article>
   );

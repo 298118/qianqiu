@@ -299,6 +299,9 @@ function sanitizeRuntimeAsset(
 ): RuntimeAsset {
   assertSafeAssetPath(asset.path, `${asset.id}.path`);
   if (asset.thumbnailPath) assertSafeAssetPath(asset.thumbnailPath, `${asset.id}.thumbnailPath`);
+  if (asset.source?.localHighResSourcePath) {
+    throw new AssetRegistryError(`${asset.id} 不得在运行时 manifest 暴露本地高清母版路径。`);
+  }
 
   const fallbackRef = asset.fallbackRef ?? DEFAULT_PANEL_FALLBACK_REF;
   if (!fallbackByRef.has(fallbackRef)) {

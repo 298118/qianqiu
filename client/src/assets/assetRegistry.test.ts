@@ -102,6 +102,17 @@ describe("S74.5 asset registry", () => {
     expect(() => createAssetRegistry(manifestFixture([unsafe]))).toThrow(AssetRegistryError);
   });
 
+  it("rejects active manifest entries that expose local high resolution source paths", () => {
+    const unsafe = portraitFixture({
+      source: {
+        localHighResSource: "kept_outside_public_manifest",
+        localHighResSourcePath: "E:\\LSMNQ\\artifacts\\portrait-source.png"
+      }
+    });
+
+    expect(() => createAssetRegistry(manifestFixture([unsafe]))).toThrow(AssetRegistryError);
+  });
+
   it("prefers remastered feminine portraits while keeping original feminine portraits available", () => {
     const remastered = portraitFixture({
       id: "portrait-test-female-remastered-v1",
