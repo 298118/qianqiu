@@ -744,6 +744,13 @@ test("S74.7 client smoke verifies default UI start and safe route recovery", () 
   assert.match(clientSmokeSource, /assertRankingFullScreen\(page, startedSessionId/);
   assert.match(clientSmokeSource, /label: "朝议"/);
   assert.match(clientSmokeSource, /label: "印匣"/);
+  assert.match(clientSmokeSource, /startMockMagistrateThroughHome/);
+  assert.match(clientSmokeSource, /startMockOfficialThroughHome/);
+  assert.match(clientSmokeSource, /startMockMinisterThroughHome/);
+  assert.match(clientSmokeSource, /roleLabel: "大臣"/);
+  assert.match(clientSmokeSource, /startMockGeneralThroughHome/);
+  assert.match(clientSmokeSource, /startMockEmperorThroughHome/);
+  assert.match(clientSmokeSource, /desktop-minister-panel/);
   assert.match(clientSmokeSource, /unsafeClientApiPathPatterns/);
   assert.match(clientSmokeSource, /process\.env\.AI_PROVIDER = "mock"/);
   assert.match(clientSmokeSource, /previousAiProvider/);

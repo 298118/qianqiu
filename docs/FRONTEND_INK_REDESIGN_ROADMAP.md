@@ -1083,6 +1083,8 @@ Manifest 示例：
 
 ### S76.12 S76 验收
 
+状态：已完成。S76.12 将 React browser smoke 补强为 S76 总验收入口：从默认首页 Mock 开局后覆盖书生主卷、返回首页/继续本局、印匣、显示偏好、独立舆图、人物谱牒、史册、考试/放榜、六类官署专题 surface、地方官/入仕官员/大臣/将领/皇帝直启身份面板和移动端首页/印匣/奏折/考试/放榜/舆图。完整 `scholar -> child_exam -> provincial_exam -> metropolitan_exam -> palace_exam -> official` 晋级链仍由 `npm run smoke:exam-s69` 验证，不塞入 React UI smoke。公开 UI manifest 顶层说明已改为普通中文安全描述，避免在浏览器可读 manifest 里保留敏感词样；S76 结构化污染扫描覆盖截图文件名和 UI manifest。
+
 命令：
 
 - `npm run test:client`

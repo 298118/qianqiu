@@ -512,9 +512,19 @@ async function startMockOfficialThroughHome(page, baseUrl) {
   return waitForSafeSessionPath(page, "official home start");
 }
 
-async function assertOfficialMinisterPanel(page, sessionId, screenshotsDir) {
+async function startMockMinisterThroughHome(page, baseUrl) {
+  await page.goto(`${baseUrl}/`, { waitUntil: "networkidle" });
+  await page.getByLabel("姓名").fill("烟测堂官");
+  await page.getByLabel("身份").selectOption("minister");
+  await page.getByRole("button", { name: "新开一卷" }).click();
+  return waitForSafeSessionPath(page, "minister home start");
+}
+
+async function assertOfficialMinisterPanel(page, sessionId, screenshotsDir, options = {}) {
+  const roleLabel = options.roleLabel || "入仕官员";
+  const screenshotName = options.screenshotName || "s76-official-panel-desktop";
   await page.getByRole("heading", { name: "部院官署" }).waitFor({ timeout: 10000 });
-  const panelSnapshot = await page.evaluate((id) => {
+  const panelSnapshot = await page.evaluate(({ id, expectedRoleLabel }) => {
     const panel = document.querySelector(".officialMinisterPanel");
     const text = panel?.textContent || "";
     const courtLink = [...document.querySelectorAll(".officialMinisterPanel a")].find((link) => (link.textContent || "").includes("入朝议页"));
@@ -534,6 +544,7 @@ async function assertOfficialMinisterPanel(page, sessionId, screenshotsDir) {
       hasFaction: text.includes("派系与朝局风险"),
       hasAssessment: text.includes("考成与弹劾"),
       hasMemorial: text.includes("奏疏入口"),
+      hasExpectedRole: text.includes(expectedRoleLabel),
       hasBoundary: text.includes("不得在前端直接任免、奖惩、处分、弹劾成案或改写考成"),
       buttons,
       background: computedBackground,
@@ -543,7 +554,7 @@ async function assertOfficialMinisterPanel(page, sessionId, screenshotsDir) {
       expectedPath: `/game/${id}`,
       forbiddenText: (document.body.innerText || "").match(/\/api\/game\/state|\/api\/dev\/session-diagnostics|provider payload|raw audit|hiddenNotes|OPENAI_API_KEY|data\/sessions|完整提示词|本地路径|密钥|sk-[a-z0-9_-]{6,}|[a-z]:[\\/]/gi) || []
     };
-  }, sessionId);
+  }, { id: sessionId, expectedRoleLabel: roleLabel });
 
   const failures = [];
   if (panelSnapshot.path !== panelSnapshot.expectedPath) failures.push(`path was ${panelSnapshot.path}`);
@@ -553,6 +564,7 @@ async function assertOfficialMinisterPanel(page, sessionId, screenshotsDir) {
   if (!panelSnapshot.hasFaction) failures.push("missing faction risk block");
   if (!panelSnapshot.hasAssessment) failures.push("missing assessment block");
   if (!panelSnapshot.hasMemorial) failures.push("missing memorial block");
+  if (!panelSnapshot.hasExpectedRole) failures.push(`missing role label ${roleLabel}`);
   if (!panelSnapshot.hasBoundary) failures.push("missing server boundary");
   if (panelSnapshot.metricCount < 4) failures.push(`expected career metrics, saw ${panelSnapshot.metricCount}`);
   if (!panelSnapshot.buttons.some((button) => button.text === "查办公文" && !button.disabled)) failures.push("assignment draft button missing or disabled");
@@ -592,7 +604,7 @@ async function assertOfficialMinisterPanel(page, sessionId, screenshotsDir) {
   }
   await page.getByLabel("本回合行动").fill("");
 
-  return captureScreenshot(page, screenshotsDir, "s76-official-minister-panel-desktop");
+  return captureScreenshot(page, screenshotsDir, screenshotName);
 }
 
 async function startMockGeneralThroughHome(page, baseUrl) {
@@ -783,6 +795,22 @@ async function assertEmperorPanel(page, sessionId, screenshotsDir) {
   return captureScreenshot(page, screenshotsDir, "s76-emperor-panel-desktop");
 }
 
+async function clickStableButton(page, buttonOptions, label) {
+  let lastError = null;
+  for (let attempt = 0; attempt < 4; attempt += 1) {
+    const locator = page.getByRole("button", buttonOptions).first();
+    try {
+      await locator.waitFor({ state: "visible", timeout: 10000 });
+      await locator.click({ timeout: 10000 });
+      return;
+    } catch (error) {
+      lastError = error;
+      await page.waitForTimeout(350);
+    }
+  }
+  throw new Error(`${label} could not be clicked before it refreshed: ${lastError?.message || lastError}`);
+}
+
 async function assertReturnHomeContinueAndTurn(page, sessionId, screenshotsDir) {
   const gamePath = `/game/${sessionId}`;
 
@@ -824,7 +852,7 @@ async function assertReturnHomeContinueAndTurn(page, sessionId, screenshotsDir) 
 
   await page.getByRole("link", { name: "继续本局" }).click();
   await page.waitForURL((url) => url.pathname === gamePath, { timeout: 10000 });
-  await page.getByRole("button", { name: /温书 mock-ai 写入草稿/ }).click();
+  await clickStableButton(page, { name: /温书 mock-ai 写入草稿/ }, "S75.9 quick action");
   await page.waitForFunction(() => {
     const value = document.querySelector("textarea")?.value || "";
     return value.includes("温习经义");
@@ -1133,6 +1161,7 @@ async function assertTopicSurfaces(page, sessionId, screenshotsDir) {
     throw new Error(`S76.11 topic surface initial smoke failed: ${failures.join("; ")}`);
   }
 
+  const topicLabels = ["奏折队列", "拟圣旨", "朝议", "堂审", "军议", "人物档案"];
   const unsafeRequests = [];
   const onRequest = (request) => {
     try {
@@ -1144,9 +1173,52 @@ async function assertTopicSurfaces(page, sessionId, screenshotsDir) {
     }
   };
   page.on("request", onRequest);
-  await page.getByRole("button", { name: "朝议" }).click();
-  const topicDialog = page.getByRole("dialog", { name: "朝议" });
-  await topicDialog.waitFor({ timeout: 10000 });
+  for (const label of topicLabels) {
+    await page.locator(".courtSurfacePage button", { hasText: new RegExp(`^${label}$`) }).click();
+    await page.getByRole("dialog", { name: label }).waitFor({ timeout: 10000 });
+    const dialogSnapshot = await page.evaluate(({ expectedLabel, tokens }) => {
+      const dialog = document.querySelector(".localSurfacePanel");
+      const bodyText = document.body.innerText || "";
+      const dialogText = dialog?.textContent || "";
+      return {
+        dialogText,
+        hasTitle: dialogText.includes(expectedLabel),
+        hasDataSource: dialogText.includes("数据来源"),
+        hasMaterials: dialogText.includes("材料"),
+        hasDeliberation: dialogText.includes("筹议"),
+        hasDraft: dialogText.includes("草稿"),
+        hasResolverBoundary:
+          dialogText.includes("服务器裁决") ||
+          dialogText.includes("归服务器") ||
+          dialogText.includes("裁决权") ||
+          dialogText.includes("不写 canonical") ||
+          dialogText.includes("裁决") ||
+          dialogText.includes("不直接") ||
+          dialogText.includes("不能调用"),
+        hiddenLeaks: tokens.filter((token) => bodyText.includes(token)),
+        forbiddenText: bodyText.match(/\/api\/game\/state|\/api\/dev\/session-diagnostics|provider payload|raw audit|hiddenNotes|OPENAI_API_KEY|data\/sessions|完整提示词|本地路径|密钥|sk-[a-z0-9_-]{6,}|[a-z]:[\\/]/gi) || []
+      };
+    }, { expectedLabel: label, tokens: hiddenTextTokens });
+
+    const perSurfaceFailures = [];
+    if (!dialogSnapshot.hasTitle) perSurfaceFailures.push("missing title");
+    if (!dialogSnapshot.hasDataSource) perSurfaceFailures.push("missing data source note");
+    if (!dialogSnapshot.hasMaterials) perSurfaceFailures.push("missing materials column");
+    if (!dialogSnapshot.hasDeliberation) perSurfaceFailures.push("missing deliberation column");
+    if (!dialogSnapshot.hasDraft) perSurfaceFailures.push("missing draft column");
+    if (!dialogSnapshot.hasResolverBoundary) perSurfaceFailures.push("missing resolver boundary");
+    if (dialogSnapshot.hiddenLeaks.length) perSurfaceFailures.push(`hidden text leaked: ${dialogSnapshot.hiddenLeaks.join(", ")}`);
+    if (dialogSnapshot.forbiddenText.length) perSurfaceFailures.push(`unsafe text leaked: ${dialogSnapshot.forbiddenText.join(", ")}`);
+    if (perSurfaceFailures.length) {
+      throw new Error(`S76.12 topic surface ${label} smoke failed: ${perSurfaceFailures.join("; ")}`);
+    }
+
+    await page.getByRole("button", { name: "关闭专题" }).click();
+    await page.getByRole("dialog", { name: label }).waitFor({ state: "detached", timeout: 10000 });
+  }
+
+  await page.locator(".courtSurfacePage button", { hasText: /^朝议$/ }).click();
+  await page.getByRole("dialog", { name: "朝议" }).waitFor({ timeout: 10000 });
   await page.getByRole("button", { name: "AI 拟稿" }).waitFor({ timeout: 10000 });
   await page.getByRole("button", { name: "AI 拟稿" }).click();
   await page.waitForFunction(() => {
@@ -1172,16 +1244,6 @@ async function assertTopicSurfaces(page, sessionId, screenshotsDir) {
   }, hiddenTextTokens);
 
   const dialogFailures = [];
-  if (!surfaceSnapshot.dialogText.includes("数据来源")) dialogFailures.push("missing data source note");
-  if (!surfaceSnapshot.dialogText.includes("材料")) dialogFailures.push("missing materials column");
-  if (!surfaceSnapshot.dialogText.includes("筹议")) dialogFailures.push("missing deliberation column");
-  if (!surfaceSnapshot.dialogText.includes("草稿")) dialogFailures.push("missing draft column");
-  const hasResolverBoundary =
-    surfaceSnapshot.dialogText.includes("服务器裁决") ||
-    surfaceSnapshot.dialogText.includes("归服务器") ||
-    surfaceSnapshot.dialogText.includes("裁决权") ||
-    surfaceSnapshot.dialogText.includes("不写 canonical");
-  if (!hasResolverBoundary) dialogFailures.push("missing resolver boundary");
   if (!surfaceSnapshot.draft.includes("廷议")) dialogFailures.push(`draft did not enter memorial composer: ${surfaceSnapshot.draft}`);
   if (surfaceSnapshot.hiddenLeaks.length) dialogFailures.push(`hidden text leaked: ${surfaceSnapshot.hiddenLeaks.join(", ")}`);
   if (surfaceSnapshot.forbiddenText.length) dialogFailures.push(`unsafe text leaked: ${surfaceSnapshot.forbiddenText.join(", ")}`);
@@ -1386,7 +1448,15 @@ async function runClientSmoke(options = {}) {
     const magistrateSessionId = await startMockMagistrateThroughHome(page, baseUrl);
     screenshots.push(await assertMagistratePanel(page, magistrateSessionId, options.screenshotsDir));
     const officialSessionId = await startMockOfficialThroughHome(page, baseUrl);
-    screenshots.push(await assertOfficialMinisterPanel(page, officialSessionId, options.screenshotsDir));
+    screenshots.push(await assertOfficialMinisterPanel(page, officialSessionId, options.screenshotsDir, {
+      roleLabel: "入仕官员",
+      screenshotName: "s76-official-panel-desktop"
+    }));
+    const ministerSessionId = await startMockMinisterThroughHome(page, baseUrl);
+    screenshots.push(await assertOfficialMinisterPanel(page, ministerSessionId, options.screenshotsDir, {
+      roleLabel: "大臣",
+      screenshotName: "s76-minister-panel-desktop"
+    }));
     const generalSessionId = await startMockGeneralThroughHome(page, baseUrl);
     screenshots.push(await assertGeneralPanel(page, generalSessionId, options.screenshotsDir));
     const emperorSessionId = await startMockEmperorThroughHome(page, baseUrl);
@@ -1496,7 +1566,8 @@ async function runClientSmoke(options = {}) {
         "desktop-court-refresh",
         "desktop-settings-refresh",
         "desktop-magistrate-panel",
-        "desktop-official-minister-panel",
+        "desktop-official-panel",
+        "desktop-minister-panel",
         "desktop-general-panel",
         "desktop-emperor-panel",
         "mobile-memorial-composer",

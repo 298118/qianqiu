@@ -9,7 +9,7 @@
   "guideRef": "docs/FRONTEND_VISUAL_ASSET_GUIDE.md",
   "ledgerRef": "docs/FRONTEND_ASSET_LEDGER.md",
   "assetRoot": "/assets/ui/",
-  "description": "S73-S77 前端水墨视觉资产 manifest 草案。本文件只保存浏览器可读取的安全字段、fallback token、资产组计划和审核状态，不保存完整 prompt、provider 原始响应、本地路径、key、raw audit 或 hidden 真值。",
+  "description": "S73-S77 前端水墨视觉资产 manifest 草案。本文件只保存浏览器可读取的安全字段、fallback 标识、资产组计划和审核状态；不收录内部审计原文、模型通信内容、私密配置或未公开剧情事实。",
   "reviewPolicy": {
     "requiresCodexVisualReview": true,
     "usableStatuses": [

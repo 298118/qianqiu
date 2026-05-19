@@ -1,9 +1,9 @@
 {
   "schemaVersion": 1,
   "phase": "S73.9",
-  "generatedAt": "2026-05-18T03:34:48.920Z",
+  "generatedAt": "2026-05-19T08:24:46.137Z",
   "manifestRef": "public/assets/ui/ink-ui-manifest.json",
-  "manifestSha256": "daf440e2fb6fcb00063f819d97820f605bc0a7551ddfd1d5ceb2bc706740bc58",
+  "manifestSha256": "84123c0eec96ca04c3a2e99225ae9120a0630f3b82e3a3282ea4cfd32e84ac28",
   "previewRef": "public/assets/ui/asset-qa-preview.html",
   "compositeBackgrounds": [
     {
