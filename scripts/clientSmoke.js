@@ -1135,6 +1135,103 @@ async function assertRouteRefresh(page, pathname, label, screenshotsDir, options
   return assertCurrentReactClientPage(page, pathname, label, screenshotsDir, options);
 }
 
+async function assertHistoryBackForward(page, routes, screenshotsDir) {
+  const [backRoute, forwardRoute] = routes;
+  if (!backRoute || !forwardRoute) {
+    throw new Error("S77.2 history smoke requires back and forward routes.");
+  }
+
+  await Promise.all([
+    page.waitForURL((url) => url.pathname === backRoute.path, { timeout: 10000 }),
+    page.goBack()
+  ]);
+  const backScreenshot = await assertCurrentReactClientPage(
+    page,
+    backRoute.path,
+    backRoute.screenshot,
+    screenshotsDir,
+    { readySelector: backRoute.readySelector }
+  );
+
+  await Promise.all([
+    page.waitForURL((url) => url.pathname === forwardRoute.path, { timeout: 10000 }),
+    page.goForward()
+  ]);
+  const forwardScreenshot = await assertCurrentReactClientPage(
+    page,
+    forwardRoute.path,
+    forwardRoute.screenshot,
+    screenshotsDir,
+    { readySelector: forwardRoute.readySelector }
+  );
+
+  return [backScreenshot, forwardScreenshot];
+}
+
+async function assertMapResourceFailureFallback(context, baseUrl, pathname, screenshotsDir) {
+  const fallbackPage = await context.newPage();
+  const blockedResources = [];
+  const unsafeRequests = [];
+  try {
+    fallbackPage.on("request", (request) => {
+      try {
+        const url = new URL(request.url());
+        if (unsafeClientApiPathPatterns.some((pattern) => pattern.test(url.pathname))) {
+          unsafeRequests.push(url.pathname);
+        }
+      } catch {
+      }
+    });
+    const abortMapRuntimeResource = async (route) => {
+      blockedResources.push(new URL(route.request().url()).pathname);
+      await route.abort();
+    };
+    await fallbackPage.route("**/vendor/pixi.min.js", abortMapRuntimeResource);
+    await fallbackPage.route("**/mapRenderer.js", abortMapRuntimeResource);
+    await fallbackPage.goto(`${baseUrl}${pathname}`, { waitUntil: "networkidle" });
+    await fallbackPage.locator(".inkMapRuntimeBridge").waitFor({ timeout: 10000 });
+    await fallbackPage.waitForFunction(
+      () => ["error", "fallback"].includes(document.querySelector(".inkMapRuntimeBridge")?.getAttribute("data-map-status") || ""),
+      null,
+      { timeout: 10000 }
+    );
+
+    const snapshot = await fallbackPage.evaluate((tokens) => {
+      const bridge = document.querySelector(".inkMapRuntimeBridge");
+      const text = bridge?.textContent || "";
+      const bodyText = document.body.innerText || "";
+      const html = document.documentElement;
+      return {
+        status: bridge?.getAttribute("data-map-status"),
+        text,
+        hasCanvas: Boolean(bridge?.querySelector("canvas")),
+        hiddenLeaks: tokens.filter((token) => bodyText.includes(token)),
+        forbiddenText: bodyText.match(/\/api\/game\/state|\/api\/dev\/session-diagnostics|provider payload|raw audit|hiddenNotes|OPENAI_API_KEY|data\/sessions|完整提示词|本地路径|密钥|sk-[a-z0-9_-]{6,}|[a-z]:[\\/]/gi) || [],
+        horizontalOverflow: html.scrollWidth > html.clientWidth + 4
+      };
+    }, hiddenTextTokens);
+
+    const failures = [];
+    if (!blockedResources.some((resource) => resource.endsWith("/vendor/pixi.min.js") || resource.endsWith("/mapRenderer.js"))) {
+      failures.push(`map runtime resource was not blocked: ${blockedResources.join(", ")}`);
+    }
+    if (!["error", "fallback"].includes(snapshot.status || "")) failures.push(`unexpected map fallback status: ${snapshot.status}`);
+    if (!/舆图运行时暂不可用|地图素材未完全载入/.test(snapshot.text)) failures.push(`missing player-safe fallback copy: ${snapshot.text}`);
+    if (snapshot.hasCanvas) failures.push("resource failure fallback still rendered a canvas");
+    if (snapshot.horizontalOverflow) failures.push("resource failure fallback caused horizontal overflow");
+    if (snapshot.hiddenLeaks.length) failures.push(`hidden text leaked: ${snapshot.hiddenLeaks.join(", ")}`);
+    if (snapshot.forbiddenText.length) failures.push(`unsafe text leaked: ${snapshot.forbiddenText.join(", ")}`);
+    if (unsafeRequests.length) failures.push(`fallback page touched unsafe API: ${unsafeRequests.join(", ")}`);
+    if (failures.length) {
+      throw new Error(`S77.2 map resource fallback smoke failed: ${failures.join("; ")}`);
+    }
+
+    return await captureScreenshot(fallbackPage, screenshotsDir, "s77-map-resource-fallback-desktop");
+  } finally {
+    await fallbackPage.close();
+  }
+}
+
 async function assertTopicSurfaces(page, sessionId, screenshotsDir) {
   await page.locator(".courtSurfacePage").waitFor({ timeout: 10000 });
   const initialSnapshot = await page.evaluate((tokens) => {
@@ -1390,10 +1487,29 @@ async function runClientSmoke(options = {}) {
       throw new Error(`People ledger leaked forbidden text: ${portraitLedger.localOrRawLeaks.join(", ")}`);
     }
     screenshots.push(
+      ...(await assertHistoryBackForward(
+        page,
+        [
+          {
+            path: runtimeMapPath,
+            readySelector: ".mapFullScreen .inkMapRuntimeBridge canvas",
+            screenshot: "s77-history-back-map-desktop"
+          },
+          {
+            path: peoplePath,
+            readySelector: ".peopleLedgerList",
+            screenshot: "s77-history-forward-people-desktop"
+          }
+        ],
+        options.screenshotsDir
+      ))
+    );
+    screenshots.push(
       await assertRouteRefresh(page, peoplePath, "s76-people-ledger-refresh-desktop", options.screenshotsDir, {
         readySelector: ".peopleLedgerList"
       })
     );
+    screenshots.push(await assertMapResourceFailureFallback(context, baseUrl, runtimeMapPath, options.screenshotsDir));
 
     const archivePath = `/game/${startedSessionId}/archive`;
     await clickTopNavRoute(page, "史册", archivePath);
@@ -1555,6 +1671,9 @@ async function runClientSmoke(options = {}) {
         "desktop-display-preferences-reload",
         "desktop-map-runtime",
         "desktop-map-refresh",
+        "desktop-history-back-map",
+        "desktop-history-forward-people",
+        "desktop-map-resource-fallback",
         "desktop-people-assets",
         "desktop-people-refresh",
         "desktop-archive-refresh",

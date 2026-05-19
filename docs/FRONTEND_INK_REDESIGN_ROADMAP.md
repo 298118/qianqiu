@@ -1116,6 +1116,8 @@ Manifest 示例：
 
 ### S77.2 浏览器 smoke 扩展
 
+状态：已完成。S77.2 在既有 React browser smoke 基础上新增浏览器历史栈与资源失败降级验收：从当前 Mock session 的舆图页进入人物页后执行 `page.goBack()` / `page.goForward()`，断言 URL、React entry、ready selector、当前 session 路径和 unsafe API 防线仍稳定；另开临时浏览器页拦截 `/vendor/pixi.min.js` 与 `/mapRenderer.js`，验证舆图运行时脚本失败时进入安全中文 fallback、不渲染坏 canvas、不横向溢出、不触碰 `/api/game/state/*` 或 `/api/dev/*`。`test/reactClientScaffold.test.js` 已新增 S77.2 源码守护测试锁住 history 与 map resource fallback smoke 入口。
+
 覆盖：
 
 - 首页。
@@ -1142,6 +1144,7 @@ Manifest 示例：
 - 考试/放榜背景加载。
 - 桌面和移动没有明显文本重叠。
 - 大图失败不阻断文字主流程。
+- 玩家可见 UI 文案没有误展示开发注释、实现说明或验收说明。
 - 立绘没有现代物件、水印、乱码、露骨或幼态问题。
 
 ### S77.4 安全与污染防线

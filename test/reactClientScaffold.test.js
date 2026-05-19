@@ -807,6 +807,26 @@ test("S74.7 client smoke verifies default UI start and safe route recovery", () 
   );
 });
 
+test("S77.2 client smoke covers history navigation and map resource fallback", () => {
+  const clientSmokeSource = readText("scripts/clientSmoke.js");
+
+  assert.match(clientSmokeSource, /assertHistoryBackForward/);
+  assert.match(clientSmokeSource, /page\.goBack\(\)/);
+  assert.match(clientSmokeSource, /page\.goForward\(\)/);
+  assert.match(clientSmokeSource, /s77-history-back-map-desktop/);
+  assert.match(clientSmokeSource, /s77-history-forward-people-desktop/);
+  assert.match(clientSmokeSource, /assertMapResourceFailureFallback/);
+  assert.match(clientSmokeSource, /fallbackPage\.route\(".*\/vendor\/pixi\.min\.js"/);
+  assert.match(clientSmokeSource, /fallbackPage\.route\(".*\/mapRenderer\.js"/);
+  assert.match(clientSmokeSource, /route\.abort\(\)/);
+  assert.match(clientSmokeSource, /data-map-status/);
+  assert.match(clientSmokeSource, /s77-map-resource-fallback-desktop/);
+  assert.match(clientSmokeSource, /desktop-history-back-map/);
+  assert.match(clientSmokeSource, /desktop-history-forward-people/);
+  assert.match(clientSmokeSource, /desktop-map-resource-fallback/);
+  assert.doesNotMatch(clientSmokeSource, /\/legacy\.html|\/ink-client|\/api\/game\/state\/\$\{|\/api\/dev\/session-diagnostics/);
+});
+
 test("S75.3 home start seal guards repeated submits and reduced motion", () => {
   const homePageSource = readText("client/src/pages/HomePage.tsx");
   const styleSource = readText("client/src/styles/global.css");
