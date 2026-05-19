@@ -1107,6 +1107,77 @@ async function assertRouteRefresh(page, pathname, label, screenshotsDir, options
   return assertCurrentReactClientPage(page, pathname, label, screenshotsDir, options);
 }
 
+async function assertTopicSurfaces(page, sessionId, screenshotsDir) {
+  await page.locator(".courtSurfacePage").waitFor({ timeout: 10000 });
+  const initialSnapshot = await page.evaluate((tokens) => {
+    const labels = ["奏折队列", "拟圣旨", "朝议", "堂审", "军议", "人物档案"];
+    const bodyText = document.body.innerText || "";
+    return {
+      path: window.location.pathname,
+      hasSurfacePage: Boolean(document.querySelector(".courtSurfacePage")),
+      labels: labels.filter((label) => [...document.querySelectorAll(".courtSurfacePage button")].some((button) => (button.textContent || "").trim() === label)),
+      hasBoundary: bodyText.includes("按钮只写草稿，不提交回合、不调用 resolver、不写 canonical state"),
+      hiddenLeaks: tokens.filter((token) => bodyText.includes(token)),
+      forbiddenText: bodyText.match(/\/api\/game\/state|\/api\/dev\/session-diagnostics|provider payload|raw audit|hiddenNotes|OPENAI_API_KEY|data\/sessions|完整提示词|本地路径|密钥|sk-[a-z0-9_-]{6,}|[a-z]:[\\/]/gi) || []
+    };
+  }, hiddenTextTokens);
+
+  const failures = [];
+  if (initialSnapshot.path !== `/game/${sessionId}/court`) failures.push(`path was ${initialSnapshot.path}`);
+  if (!initialSnapshot.hasSurfacePage) failures.push("missing court surface page");
+  if (initialSnapshot.labels.length !== 6) failures.push(`missing topic surface labels: ${initialSnapshot.labels.join(", ")}`);
+  if (!initialSnapshot.hasBoundary) failures.push("missing draft-only surface boundary");
+  if (initialSnapshot.hiddenLeaks.length) failures.push(`hidden text leaked: ${initialSnapshot.hiddenLeaks.join(", ")}`);
+  if (initialSnapshot.forbiddenText.length) failures.push(`unsafe text leaked: ${initialSnapshot.forbiddenText.join(", ")}`);
+  if (failures.length) {
+    throw new Error(`S76.11 topic surface initial smoke failed: ${failures.join("; ")}`);
+  }
+
+  const unsafeRequests = [];
+  const onRequest = (request) => {
+    try {
+      const url = new URL(request.url());
+      if ((url.pathname === "/api/game/turn" && request.method() === "POST") || unsafeClientApiPathPatterns.some((pattern) => pattern.test(url.pathname))) {
+        unsafeRequests.push(`${request.method()} ${url.pathname}`);
+      }
+    } catch {
+    }
+  };
+  page.on("request", onRequest);
+  await page.getByRole("button", { name: "朝议" }).click();
+  await page.getByRole("dialog", { name: "朝议" }).waitFor({ timeout: 10000 });
+  await page.getByRole("button", { name: "写入奏折草稿" }).click();
+  await page.waitForTimeout(250);
+  page.off("request", onRequest);
+  if (unsafeRequests.length) {
+    throw new Error(`S76.11 topic surface touched unsafe or turn API: ${unsafeRequests.join(", ")}`);
+  }
+
+  const surfaceSnapshot = await page.evaluate((tokens) => {
+    const dialog = document.querySelector(".localSurfacePanel");
+    const bodyText = document.body.innerText || "";
+    return {
+      dialogText: dialog?.textContent || "",
+      draft: document.querySelector("textarea")?.value || "",
+      hiddenLeaks: tokens.filter((token) => bodyText.includes(token)),
+      forbiddenText: bodyText.match(/\/api\/game\/state|\/api\/dev\/session-diagnostics|provider payload|raw audit|hiddenNotes|OPENAI_API_KEY|data\/sessions|完整提示词|本地路径|密钥|sk-[a-z0-9_-]{6,}|[a-z]:[\\/]/gi) || []
+    };
+  }, hiddenTextTokens);
+
+  const dialogFailures = [];
+  if (!surfaceSnapshot.dialogText.includes("数据来源")) dialogFailures.push("missing data source note");
+  if (!surfaceSnapshot.dialogText.includes("占位状态")) dialogFailures.push("missing empty state note");
+  if (!surfaceSnapshot.dialogText.includes("不能调用 resolver")) dialogFailures.push("missing resolver boundary");
+  if (!surfaceSnapshot.draft.includes("召集廷议")) dialogFailures.push(`draft did not enter memorial composer: ${surfaceSnapshot.draft}`);
+  if (surfaceSnapshot.hiddenLeaks.length) dialogFailures.push(`hidden text leaked: ${surfaceSnapshot.hiddenLeaks.join(", ")}`);
+  if (surfaceSnapshot.forbiddenText.length) dialogFailures.push(`unsafe text leaked: ${surfaceSnapshot.forbiddenText.join(", ")}`);
+  if (dialogFailures.length) {
+    throw new Error(`S76.11 topic surface dialog smoke failed: ${dialogFailures.join("; ")}`);
+  }
+
+  return captureScreenshot(page, screenshotsDir, "s76-topic-surfaces-desktop");
+}
+
 async function runClientSmoke(options = {}) {
   if (!options.url && !hasReactClientBuild()) {
     throw new Error("React client build not found. Run npm run build:client before client smoke.");
@@ -1288,6 +1359,9 @@ async function runClientSmoke(options = {}) {
       await assertCurrentReactClientPage(page, route.path, route.screenshot.replace("-refresh", ""), null, {
         readySelector: route.selector
       });
+      if (route.label === "朝议") {
+        screenshots.push(await assertTopicSurfaces(page, startedSessionId, options.screenshotsDir));
+      }
       screenshots.push(
         await assertRouteRefresh(page, route.path, route.screenshot, options.screenshotsDir, {
           readySelector: route.selector
@@ -1404,6 +1478,7 @@ async function runClientSmoke(options = {}) {
         "desktop-exam-fullscreen-refresh",
         "desktop-ranking-fullscreen",
         "desktop-ranking-fullscreen-refresh",
+        "desktop-topic-surfaces",
         "desktop-court-refresh",
         "desktop-settings-refresh",
         "desktop-magistrate-panel",

@@ -490,7 +490,20 @@ function LocalSurfaceHost({ activeSurface }: { readonly activeSurface: LocalSurf
         <p className="eyebrow">{entry.eyebrow}</p>
         <h2 id={`${entry.id}-title`}>{entry.title}</h2>
         <p>{entry.description}</p>
-        <p>{entry.safetyNote}</p>
+        <dl className="surfaceSafetyList" aria-label={`${entry.title}安全边界`}>
+          <div>
+            <dt>数据来源</dt>
+            <dd>{entry.dataSource}</dd>
+          </div>
+          <div>
+            <dt>占位状态</dt>
+            <dd>{entry.emptyState}</dd>
+          </div>
+          <div>
+            <dt>裁决边界</dt>
+            <dd>{entry.safetyNote}</dd>
+          </div>
+        </dl>
         {entry.draftText ? (
           <button
             className="paperButton"

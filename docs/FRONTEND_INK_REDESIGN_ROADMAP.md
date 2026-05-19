@@ -1065,6 +1065,8 @@ Manifest 示例：
 
 ### S76.11 专题 surface 扩展位
 
+状态：已完成。S76.11 已扩展 React `LocalSurface` 与 `surfaceRegistry`，补齐奏折队列、拟圣旨、朝议、堂审、军议、人物档案和舆图筛选的安全数据来源、占位状态、裁决边界与草稿模板；`SurfaceHost` 统一展示这些说明，`CourtPage` 升级为“朝议与官署”专题入口页。所有专题按钮只打开本地 surface 或写入底部奏折草稿，不提交回合、不调用 resolver、不推进时间、不写 canonical state；没有安全 projection 时只显示占位，不伪造奏折、诏令、朝议结论、判词、敌情或人物 hidden 真值。
+
 预留但不一定首轮做深：
 
 - `MemorialReviewSurface`：奏折队列。

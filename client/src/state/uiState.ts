@@ -27,7 +27,14 @@ export type PageSurface = "home" | "game" | "map" | "people" | "archive" | "exam
 export type DrawerSurface = "settings" | "saves" | "display-preferences";
 export type InkboxTab = "ai-settings" | "saves" | "display" | "safe-summary";
 export type ModalSurface = "safe-summary" | "exam-result" | "confirm-navigation";
-export type LocalSurface = "npc-profile" | "edict-draft" | "memorial-review" | "map-filter";
+export type LocalSurface =
+  | "memorial-review"
+  | "edict-draft"
+  | "court-debate"
+  | "trial"
+  | "war-council"
+  | "npc-profile"
+  | "map-filter";
 export type ActionDraftSource = "manual" | "map-runtime" | "role-surface" | "exam";
 
 export type SafePlayerPayload = {

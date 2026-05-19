@@ -1411,11 +1411,18 @@ describe("S74.1 React client shell", () => {
   it("opens registry-backed local surfaces, writes safe drafts, and restores focus on Esc", async () => {
     renderRoute("/game/smoke-session/court");
 
+    expect(screen.getByRole("heading", { name: "朝议与官署" })).toBeTruthy();
+    for (const label of ["奏折队列", "拟圣旨", "朝议", "堂审", "军议", "人物档案"]) {
+      expect(screen.getByRole("button", { name: label })).toBeTruthy();
+    }
+
     const trigger = screen.getByRole("button", { name: "拟圣旨" });
     trigger.focus();
     fireEvent.click(trigger);
 
     const dialog = screen.getByRole("dialog", { name: "拟圣旨" });
+    expect(dialog.textContent || "").toContain("数据来源");
+    expect(dialog.textContent || "").toContain("占位状态");
     expect(dialog.textContent || "").toContain("服务器裁决");
     expect(dialog.textContent || "").not.toMatch(/raw audit|provider payload|hiddenNotes|data\/sessions|OPENAI_API_KEY/i);
     expect(screen.getByRole("button", { name: "关闭专题" })).toBe(document.activeElement);
@@ -1429,6 +1436,14 @@ describe("S74.1 React client shell", () => {
     fireEvent.keyDown(document, { key: "Escape" });
     await waitFor(() => expect(screen.queryByRole("dialog", { name: "拟圣旨" })).toBeNull());
     expect(document.activeElement).toBe(trigger);
+
+    const trialTrigger = screen.getByRole("button", { name: "堂审" });
+    fireEvent.click(trialTrigger);
+    const trialDialog = screen.getByRole("dialog", { name: "堂审" });
+    expect(trialDialog.textContent || "").toContain("localAffairsDocketView");
+    expect(trialDialog.textContent || "").toContain("不补造犯供");
+    fireEvent.click(screen.getByRole("button", { name: "写入奏折草稿" }));
+    expect(useUiStateStore.getState().actionDraft?.text).toContain("公开案牍");
   });
 
   it("restores scroll position and route focus when navigating between pages", async () => {

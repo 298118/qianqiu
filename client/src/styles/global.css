@@ -951,6 +951,36 @@ button:disabled {
   line-height: 1.75;
 }
 
+.courtSurfacePage {
+  display: grid;
+  gap: 18px;
+}
+
+.courtSurfaceGrid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.courtSurfaceGroup {
+  display: grid;
+  align-content: space-between;
+  gap: 16px;
+  min-height: 240px;
+  border: 1px solid rgba(84, 60, 43, 0.24);
+  background: rgba(255, 252, 238, 0.58);
+  padding: 16px;
+}
+
+.courtSurfaceGroup h3 {
+  margin: 0 0 8px;
+}
+
+.courtSurfaceActions {
+  display: grid;
+  gap: 10px;
+}
+
 .sessionNav {
   margin: 4px 0 18px;
 }
@@ -3049,6 +3079,29 @@ button:disabled {
   overflow: auto;
 }
 
+.surfaceSafetyList {
+  display: grid;
+  gap: 10px;
+  margin: 18px 0;
+}
+
+.surfaceSafetyList div {
+  border-left: 3px solid rgba(142, 47, 39, 0.42);
+  background: rgba(255, 252, 238, 0.54);
+  padding: 10px 12px;
+}
+
+.surfaceSafetyList dt {
+  color: #7b241f;
+  font-weight: 800;
+}
+
+.surfaceSafetyList dd {
+  margin: 4px 0 0;
+  color: #514232;
+  line-height: 1.65;
+}
+
 @media (max-width: 760px) {
   .topBar {
     align-items: flex-start;
@@ -3061,6 +3114,10 @@ button:disabled {
 
   .inkboxTabs {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .courtSurfaceGrid {
+    grid-template-columns: 1fr;
   }
 
   .topNav a,
