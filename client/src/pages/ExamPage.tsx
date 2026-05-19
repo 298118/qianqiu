@@ -81,6 +81,52 @@ function formatRequirement(value: unknown) {
   return "依题作答，毋涉场外私情。";
 }
 
+function readPositiveInteger(value: unknown) {
+  const number = Number(value);
+  return Number.isFinite(number) && number > 0 ? Math.round(number) : null;
+}
+
+function formatWordCountLabel(value: unknown) {
+  const direct = readPositiveInteger(value);
+  if (direct !== null) {
+    return {
+      label: `${direct}`
+    };
+  }
+  if (!value || typeof value !== "object" || Array.isArray(value)) {
+    return {
+      label: "800"
+    };
+  }
+  const record = value as Record<string, unknown>;
+  const min = readPositiveInteger(record.min);
+  const max = readPositiveInteger(record.max);
+  const target = readPositiveInteger(record.target) ?? readPositiveInteger(record.recommended);
+  if (min !== null && max !== null) {
+    return {
+      label: `${min}-${max}`
+    };
+  }
+  if (target !== null) {
+    return {
+      label: `${target}`
+    };
+  }
+  if (min !== null) {
+    return {
+      label: `${min}以上`
+    };
+  }
+  if (max !== null) {
+    return {
+      label: `${max}以内`
+    };
+  }
+  return {
+    label: "800"
+  };
+}
+
 export function ExamPage() {
   const { sessionId = "s74-preview" } = useParams();
   const { registry } = useAssetRegistry();
@@ -109,7 +155,7 @@ export function ExamPage() {
     ? "/assets/ui/scenes/scene-palace-exam-hall-v1.webp"
     : "/assets/ui/scenes/scene-exam-cell-v1.webp");
   const essayWordCount = countCjkAwareWords(essay);
-  const targetWordCount = activeExamForSession?.wordCount || 800;
+  const wordCount = formatWordCountLabel(activeExamForSession?.wordCount);
   const draftState = essay.trim() ? "草稿已入卷，尚未交服务器裁决。" : "草稿未成篇。";
   const latestSubmitForSession = lastExamResult?.sessionId === sessionId ? lastExamResult : null;
   const safeRecentExamName = safeExamText(latestSubmitForSession?.examName, getExamLabel(latestSubmitForSession?.level), 64);
@@ -201,7 +247,7 @@ export function ExamPage() {
               <div className="examPaperHeader">
                 <p className="eyebrow">考题</p>
                 <p className="examPaperMeta">
-                  {safeDifficulty} · 目标约 {targetWordCount} 字
+                  {safeDifficulty} · 目标约 {wordCount.label} 字
                 </p>
               </div>
               <blockquote className="examQuestionText">
@@ -225,7 +271,7 @@ export function ExamPage() {
                   <textarea value={essay} onChange={(event) => setEssay(event.target.value)} rows={10} />
                 </label>
                 <div className="examDraftBar" aria-label="写作区字数与草稿状态">
-                  <span>{essayWordCount} / {targetWordCount} 字</span>
+                  <span>{essayWordCount} / {wordCount.label} 字</span>
                   <span>{draftState}</span>
                 </div>
                 <button className="paperButton examSealSubmitButton" type="submit" disabled={status === "loading" || !canCallSessionApi}>

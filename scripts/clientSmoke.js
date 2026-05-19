@@ -886,6 +886,7 @@ async function assertExamFullScreen(page, sessionId, screenshotsDir, screenshotN
       hasRail: Boolean(rail),
       hasQuestionPanel: Boolean(document.querySelector(".examQuestionPanel")),
       hasSafetyBoundary: text.includes("交卷、评分、舞弊、放榜、晋级和授官都由服务器裁决"),
+      hasMainGameShell: Boolean(document.querySelector(".gameCommandBar") || document.querySelector(".gameMainDeck") || document.querySelector(".memorialComposer")),
       background,
       horizontalOverflow: html.scrollWidth > html.clientWidth + 4,
       hiddenLeaks: tokens.filter((token) => (document.body.innerText || "").includes(token))
@@ -898,6 +899,7 @@ async function assertExamFullScreen(page, sessionId, screenshotsDir, screenshotN
   if (!initialSnapshot.hasRail) failures.push("missing exam stage rail");
   if (!initialSnapshot.hasQuestionPanel) failures.push("missing question panel");
   if (!initialSnapshot.hasSafetyBoundary) failures.push("missing server-owned exam boundary");
+  if (initialSnapshot.hasMainGameShell) failures.push("exam route was still nested inside the main game shell");
   if (!initialSnapshot.background.includes("/assets/ui/")) failures.push("exam hero did not use a reviewed UI asset");
   if (initialSnapshot.horizontalOverflow) failures.push("exam page has horizontal overflow");
   if (initialSnapshot.hiddenLeaks.length) failures.push(`hidden text leaked: ${initialSnapshot.hiddenLeaks.join(", ")}`);
@@ -937,6 +939,8 @@ async function assertExamFullScreen(page, sessionId, screenshotsDir, screenshotN
     const textarea = document.querySelector(".examSubmit textarea");
     return {
       text,
+      hasShell: Boolean(shell),
+      hasErrorPage: Boolean(document.querySelector("#error-title")),
       hasQuestion: Boolean(document.querySelector(".examQuestionText")),
       hasEssay: Boolean(textarea),
       hasDraftBar: Boolean(document.querySelector(".examDraftBar")),
@@ -950,13 +954,13 @@ async function assertExamFullScreen(page, sessionId, screenshotsDir, screenshotN
   const afterFailures = [];
   if (!examRequests.includes("/api/exam/question")) afterFailures.push(`missing /api/exam/question request: ${examRequests.join(", ")}`);
   if (turnRequests.length) afterFailures.push(`取题 submitted game turn: ${turnRequests.join(", ")}`);
-  if (examSnapshot.hasQuestion || examSnapshot.hasSubmit) {
-    if (!examSnapshot.hasQuestion) afterFailures.push("missing rendered question");
-    if (!examSnapshot.hasEssay) afterFailures.push("missing essay textarea");
-    if (!examSnapshot.hasDraftBar) afterFailures.push("missing draft status bar");
-    if (!examSnapshot.hasPeerPanel) afterFailures.push("missing safe virtual candidate panel");
-    if (!examSnapshot.hasSubmit) afterFailures.push("missing enabled submit button");
-  }
+  if (!examSnapshot.hasShell) afterFailures.push("exam route left the exam shell after requesting a question");
+  if (examSnapshot.hasErrorPage) afterFailures.push("exam route rendered the error page after requesting a question");
+  if (!examSnapshot.hasQuestion) afterFailures.push("missing rendered question");
+  if (!examSnapshot.hasEssay) afterFailures.push("missing essay textarea");
+  if (!examSnapshot.hasDraftBar) afterFailures.push("missing draft status bar");
+  if (!examSnapshot.hasPeerPanel) afterFailures.push("missing safe virtual candidate panel");
+  if (!examSnapshot.hasSubmit) afterFailures.push("missing enabled submit button");
   if (examSnapshot.forbiddenText.length) afterFailures.push(`unsafe text leaked: ${examSnapshot.forbiddenText.join(", ")}`);
   if (examSnapshot.hiddenLeaks.length) afterFailures.push(`hidden text leaked: ${examSnapshot.hiddenLeaks.join(", ")}`);
   if (afterFailures.length) {
@@ -989,6 +993,7 @@ async function assertRankingFullScreen(page, sessionId, screenshotsDir, screensh
       hasListOrEmpty: Boolean(document.querySelector(".rankingList")) || text.includes("榜文尚未张挂"),
       hasPlayerRow: Boolean(document.querySelector(".rankingList li.isPlayer")),
       hasGoldenNotice: Boolean(document.querySelector(".rankingGoldenNotice")),
+      hasMainGameShell: Boolean(document.querySelector(".gameCommandBar") || document.querySelector(".gameMainDeck") || document.querySelector(".memorialComposer")),
       background,
       horizontalOverflow: html.scrollWidth > html.clientWidth + 4,
       forbiddenText: bodyText.match(/\/api\/game\/state|\/api\/dev\/session-diagnostics|provider payload|raw audit|hiddenNotes|OPENAI_API_KEY|data\/sessions|完整提示词|本地路径|密钥|sk-[a-z0-9_-]{6,}|[a-z]:[\\/]/gi) || [],
@@ -1005,6 +1010,7 @@ async function assertRankingFullScreen(page, sessionId, screenshotsDir, screensh
   if (!snapshot.hasServerList) failures.push("missing server-owned ranking list heading");
   if (!snapshot.hasListOrEmpty) failures.push("missing ranking list or empty state");
   if (snapshot.hasPlayerRow && !snapshot.hasGoldenNotice) failures.push("missing player golden ranking notice");
+  if (snapshot.hasMainGameShell) failures.push("ranking route was still nested inside the main game shell");
   if (!snapshot.background.includes("/assets/ui/")) failures.push("ranking hero did not use a reviewed UI asset");
   if (snapshot.horizontalOverflow) failures.push("ranking page has horizontal overflow");
   if (snapshot.forbiddenText.length) failures.push(`unsafe text leaked: ${snapshot.forbiddenText.join(", ")}`);
@@ -1752,6 +1758,25 @@ async function clickSessionNavRoute(page, label, expectedPath) {
   await page.waitForURL((url) => url.pathname === expectedPath, { timeout: 10000 });
 }
 
+async function assertIndependentSessionRouteShell(page, label) {
+  const snapshot = await page.evaluate(() => ({
+    hasRouteShell: Boolean(document.querySelector(".sessionRouteShell")),
+    hasGameCommandBar: Boolean(document.querySelector(".gameCommandBar")),
+    hasGameMainDeck: Boolean(document.querySelector(".gameMainDeck")),
+    hasMemorialComposer: Boolean(document.querySelector(".memorialComposer")),
+    horizontalOverflow: document.documentElement.scrollWidth > document.documentElement.clientWidth + 4
+  }));
+  const failures = [];
+  if (!snapshot.hasRouteShell) failures.push("missing lightweight session route shell");
+  if (snapshot.hasGameCommandBar) failures.push("rendered main game command bar");
+  if (snapshot.hasGameMainDeck) failures.push("rendered main game deck");
+  if (snapshot.hasMemorialComposer) failures.push("rendered bottom memorial composer");
+  if (snapshot.horizontalOverflow) failures.push("caused horizontal overflow");
+  if (failures.length) {
+    throw new Error(`${label} independent route shell failed: ${failures.join("; ")}`);
+  }
+}
+
 async function assertRouteRefresh(page, pathname, label, screenshotsDir, options = {}) {
   await page.reload({ waitUntil: "networkidle" });
   return assertCurrentReactClientPage(page, pathname, label, screenshotsDir, options);
@@ -2186,6 +2211,7 @@ async function runClientSmoke(options = {}) {
       await assertCurrentReactClientPage(page, route.path, route.screenshot.replace("-refresh", ""), null, {
         readySelector: route.selector
       });
+      await assertIndependentSessionRouteShell(page, `S79.1 ${route.label}`);
       if (route.label === "朝议") {
         screenshots.push(await assertTopicSurfaces(page, startedSessionId, options.screenshotsDir));
       }

@@ -738,6 +738,7 @@ test("S76.7 exam page renders immersive safe exam flow without widening authorit
   assert.match(examPageSource, /useAssetRegistry/);
   assert.match(examPageSource, /category: "scene", usage: "exam_page"/);
   assert.match(examPageSource, /safeExamText/);
+  assert.match(examPageSource, /formatWordCountLabel/);
   assert.match(examPageSource, /贡院号舍/);
   assert.match(examPageSource, /examStageRail/);
   assert.match(examPageSource, /examImmersiveLayout/);
@@ -755,11 +756,29 @@ test("S76.7 exam page renders immersive safe exam flow without widening authorit
   assert.match(apiTypesSource, /examinerPanelView\?: JsonObject/);
   assert.match(apiTypesSource, /examRivalView\?: JsonObject/);
   assert.match(apiTypesSource, /examHonorView\?: JsonObject/);
+  assert.match(apiTypesSource, /export type ExamWordCount/);
   assert.match(clientSmokeSource, /assertExamFullScreen/);
+  assert.match(clientSmokeSource, /exam route left the exam shell after requesting a question/);
   assert.doesNotMatch(
     runtimeCombined,
     /\/api\/game\/state|\/api\/dev\/session-diagnostics|dangerouslySetInnerHTML|localStorage|sessionStorage|data\/sessions|raw audit|provider payload|OPENAI_API_KEY|DEEPSEEK_API_KEY|MIMO_API_KEY|ANTHROPIC_API_KEY/
   );
+});
+
+test("S79.1 session feature routes use a lightweight shell outside the main卷", () => {
+  const gamePageSource = readText("client/src/pages/GamePage.tsx");
+  const appTestSource = readText("client/src/__tests__/App.test.tsx");
+  const clientSmokeSource = readText("scripts/clientSmoke.js");
+  const styleSource = readText("client/src/styles/global.css");
+
+  assert.match(gamePageSource, /independentSessionRouteIds/);
+  assert.match(gamePageSource, /"exam", "ranking", "court", "settings"/);
+  assert.match(gamePageSource, /sessionRouteShell/);
+  assert.match(gamePageSource, /SessionRouteNav/);
+  assert.match(styleSource, /sessionRouteShell/);
+  assert.match(clientSmokeSource, /assertIndependentSessionRouteShell/);
+  assert.match(clientSmokeSource, /rendered bottom memorial composer/);
+  assert.match(appTestSource, /document\.querySelector\("\.gameCommandBar"\)\)\.toBeFalsy/);
 });
 
 test("S76.8 ranking page renders server-owned ranking views without widening authority", () => {

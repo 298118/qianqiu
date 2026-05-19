@@ -104,6 +104,8 @@ const gameTabs = [
   { id: "settings", label: "印匣", icon: Settings }
 ] as const;
 
+const independentSessionRouteIds = new Set(["exam", "ranking", "court", "settings"]);
+
 function safeGameShellText(value: unknown, fallback: string) {
   const text = typeof value === "string" && value.trim() ? value.trim() : fallback;
   const normalized = text.toLowerCase();
@@ -140,7 +142,6 @@ export function GamePage() {
   const setActionDraft = useUiStateStore((state) => state.setActionDraft);
   const clearActionDraft = useUiStateStore((state) => state.clearActionDraft);
   const currentPlayerPayload = useUiStateStore((state) => state.currentPlayerPayload);
-  const selectedGameTab = useUiStateStore((state) => state.selectedTabs.game ?? "brief");
   const selectTab = useUiStateStore((state) => state.selectTab);
   const sessionHref = (path: string) => path.replace("s74-preview", sessionId);
   const player = session?.worldState?.player;
@@ -169,6 +170,7 @@ export function GamePage() {
   ];
   const activeSafeViewCount = safeViewItems.filter((item) => item.ready).length;
   const isIndependentMapRoute = location.pathname.endsWith("/map");
+  const independentRouteId = gameTabs.find((tab) => location.pathname.endsWith(`/${tab.id}`) && independentSessionRouteIds.has(tab.id))?.id ?? "";
 
   useEffect(() => {
     if (!isRunnableSessionId(sessionId)) return;
@@ -194,6 +196,18 @@ export function GamePage() {
 
   if (isIndependentMapRoute) {
     return <Outlet />;
+  }
+
+  if (independentRouteId) {
+    return (
+      <section className="sessionRouteShell" aria-label="案卷专题页">
+        <SessionRouteNav
+          selectTab={selectTab}
+          sessionHref={sessionHref}
+        />
+        <Outlet />
+      </section>
+    );
   }
 
   return (
@@ -227,22 +241,10 @@ export function GamePage() {
         </div>
       </div>
       <nav className="sessionNav gameFeatureTabs" aria-label="案卷功能页签">
-        {gameTabs.map((tab) => {
-          const route = routeCatalog.find((entry) => entry.id === tab.id);
-          const Icon = tab.icon;
-          if (!route) return null;
-          return (
-            <NavLink
-              key={tab.id}
-              to={sessionHref(route.href)}
-              onClick={() => selectTab("game", tab.id)}
-              className={selectedGameTab === tab.id ? "isSelected" : undefined}
-            >
-              <Icon size={16} aria-hidden="true" />
-              <span>{tab.label}</span>
-            </NavLink>
-          );
-        })}
+        <SessionRouteNavItems
+          selectTab={selectTab}
+          sessionHref={sessionHref}
+        />
       </nav>
       <div className="gameMainDeck">
         <article className="narrativeScroll" aria-labelledby="narrative-title">
@@ -359,5 +361,48 @@ export function GamePage() {
         onSubmit={handleTurn}
       />
     </section>
+  );
+}
+
+function SessionRouteNav({
+  selectTab,
+  sessionHref
+}: {
+  readonly selectTab: (scope: "game", tab: string) => void;
+  readonly sessionHref: (path: string) => string;
+}) {
+  return (
+    <nav className="sessionNav gameFeatureTabs" aria-label="案卷功能页签">
+      <SessionRouteNavItems selectTab={selectTab} sessionHref={sessionHref} />
+    </nav>
+  );
+}
+
+function SessionRouteNavItems({
+  selectTab,
+  sessionHref
+}: {
+  readonly selectTab: (scope: "game", tab: string) => void;
+  readonly sessionHref: (path: string) => string;
+}) {
+  return (
+    <>
+      {gameTabs.map((tab) => {
+        const route = routeCatalog.find((entry) => entry.id === tab.id);
+        const Icon = tab.icon;
+        if (!route) return null;
+        return (
+          <NavLink
+            key={tab.id}
+            to={sessionHref(route.href)}
+            onClick={() => selectTab("game", tab.id)}
+            className={({ isActive }) => (isActive ? "isSelected" : undefined)}
+          >
+            <Icon size={16} aria-hidden="true" />
+            <span>{tab.label}</span>
+          </NavLink>
+        );
+      })}
+    </>
   );
 }

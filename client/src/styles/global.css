@@ -757,6 +757,24 @@ button:disabled {
   padding-bottom: clamp(230px, 28vh, 300px);
 }
 
+.sessionRouteShell {
+  display: grid;
+  gap: 14px;
+  padding: 18px 0 44px;
+}
+
+.sessionRouteShell > .sessionNav {
+  width: min(1120px, calc(100% - 32px));
+  margin: 0 auto;
+}
+
+.sessionRouteShell > .examFullScreen,
+.sessionRouteShell > .courtSurfacePage,
+.sessionRouteShell > .surfacePanel {
+  width: min(1120px, calc(100% - 32px));
+  margin: 0 auto;
+}
+
 .surfaceHeader,
 .gameCommandBar {
   margin-bottom: 24px;

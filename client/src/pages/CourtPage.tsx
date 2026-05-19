@@ -32,7 +32,7 @@ export function CourtPage() {
     <article className="surfacePanel routePanel courtSurfacePage" aria-labelledby="court-title">
       <div className="surfaceHeader">
         <p className="eyebrow">官署专题</p>
-        <h2 id="court-title">朝议与官署</h2>
+        <h1 id="court-title">朝议与官署</h1>
         <p>百官班列，章奏如潮。奏折、圣旨、朝议、堂审、军议与人物档案现在会从安全专题投影里整理材料、筹议证据并生成可编辑草稿。</p>
       </div>
       <div className="courtSurfaceGrid" aria-label="专题 surface 扩展位">

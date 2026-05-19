@@ -320,12 +320,21 @@ export type ExamQuestionRequest = {
   readonly level?: ExamLevel;
 };
 
+export type ExamWordCount =
+  | number
+  | {
+    readonly min?: number;
+    readonly max?: number;
+    readonly target?: number;
+    readonly recommended?: number;
+  };
+
 export type ExamQuestionResponse = SafeRouteViews & ExamState & {
   readonly sessionId: string;
   readonly questionType?: string;
   readonly difficulty?: string;
   readonly requirements?: JsonValue;
-  readonly wordCount?: number;
+  readonly wordCount?: ExamWordCount;
   readonly passScore?: number;
 };
 

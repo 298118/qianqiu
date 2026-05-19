@@ -1419,6 +1419,10 @@ describe("S74.1 React client shell", () => {
     renderRoute("/game/smoke-session/court");
 
     expect(screen.getByRole("heading", { name: "朝议与官署" })).toBeTruthy();
+    expect(document.querySelector(".sessionRouteShell")).toBeTruthy();
+    expect(document.querySelector(".gameCommandBar")).toBeFalsy();
+    expect(document.querySelector(".gameMainDeck")).toBeFalsy();
+    expect(document.querySelector(".memorialComposer")).toBeFalsy();
     for (const label of ["奏折队列", "拟圣旨", "朝议", "堂审", "军议", "人物档案"]) {
       expect(screen.getByRole("button", { name: label })).toBeTruthy();
     }
@@ -1687,7 +1691,7 @@ describe("S74.1 React client shell", () => {
           examQuestion: "试论荒政与教化并行之道。",
           difficulty: "中",
           requirements: ["务陈经义", "兼论民生"],
-          wordCount: 900
+          wordCount: { min: 600, max: 900 }
         }), {
           status: 200,
           headers: { "Content-Type": "application/json" }
@@ -1702,7 +1706,7 @@ describe("S74.1 React client shell", () => {
           examQuestion: "试论荒政与教化并行之道。",
           difficulty: "中",
           requirements: ["务陈经义", "兼论民生"],
-          wordCount: 900,
+          wordCount: { min: 600, max: 900 },
           narrative: "号舍风紧，仍可落笔。"
         }), {
           status: 200,
@@ -1732,6 +1736,10 @@ describe("S74.1 React client shell", () => {
     expect(screen.getByText("贡院号舍")).toBeTruthy();
     expect(document.querySelector(".examFullScreen")).toBeTruthy();
     expect(document.querySelector(".examStageRail")).toBeTruthy();
+    expect(document.querySelector(".sessionRouteShell")).toBeTruthy();
+    expect(document.querySelector(".gameCommandBar")).toBeFalsy();
+    expect(document.querySelector(".gameMainDeck")).toBeFalsy();
+    expect(document.querySelector(".memorialComposer")).toBeFalsy();
     expect(screen.getByLabelText("试别")).toBeTruthy();
     expect(screen.getByText(/交卷、评分、舞弊、放榜、晋级和授官都由服务器裁决/)).toBeTruthy();
 
@@ -1741,7 +1749,7 @@ describe("S74.1 React client shell", () => {
     await screen.findByText("试论荒政与教化并行之道。");
     expect(screen.getByLabelText("场内行动")).toBeTruthy();
     expect(screen.getByLabelText("文章")).toBeTruthy();
-    expect(screen.getAllByText(/900 字/).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/600-900 字/).length).toBeGreaterThan(0);
     expect(screen.getByText(/虚拟考生、阅卷官与榜单只显示安全占位/)).toBeTruthy();
 
     fireEvent.change(screen.getByLabelText("场内行动"), { target: { value: "誊清卷面，仍不伪称评卷。" } });
@@ -1891,6 +1899,10 @@ describe("S74.1 React client shell", () => {
 
     await screen.findByRole("heading", { name: "皇榜" });
     expect(document.querySelector(".rankingFullScreen")).toBeTruthy();
+    expect(document.querySelector(".sessionRouteShell")).toBeTruthy();
+    expect(document.querySelector(".gameCommandBar")).toBeFalsy();
+    expect(document.querySelector(".gameMainDeck")).toBeFalsy();
+    expect(document.querySelector(".memorialComposer")).toBeFalsy();
     expect(document.querySelector(".rankingTopThree")).toBeTruthy();
     expect(screen.getByText("服务器定榜名单")).toBeTruthy();
     expect(screen.getByText("金榜题名")).toBeTruthy();
