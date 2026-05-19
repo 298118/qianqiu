@@ -31,6 +31,8 @@ const FAMILY_BACKGROUND_LABELS = Object.freeze({
   "普通": "普通",
   "世家": "世家"
 });
+const PORTRAIT_REF_PATTERN = /^portrait-[a-z0-9][a-z0-9_-]{0,140}$/i;
+const UNSAFE_PORTRAIT_REF_PATTERN = /(?:^|[-_])(raw|provider|prompt|hidden|private|key|path|secret|token|api|file|data|http)(?:$|[-_])/i;
 
 const BASE_ROLE_STATS = {
   personalPower: 0,
@@ -134,6 +136,13 @@ function normalizeInitialFamilyBackground(value, role = "scholar") {
   return normalized || "";
 }
 
+function normalizeInitialPortraitRef(value) {
+  if (typeof value !== "string") return "";
+  const text = value.trim();
+  if (!text || !PORTRAIT_REF_PATTERN.test(text) || UNSAFE_PORTRAIT_REF_PATTERN.test(text)) return "";
+  return text;
+}
+
 function createUnsupportedRoleError(role) {
   const err = new Error(`Unsupported role. Allowed roles: ${ALLOWED_ROLES.join(", ")}`);
   err.statusCode = 400;
@@ -218,6 +227,7 @@ function createInitialState(input = {}) {
     input.familyBackground || input.familyStatus || input.familyOrigin,
     role
   );
+  const portraitRef = normalizeInitialPortraitRef(input.portraitRef);
   const publicBackground = cleanInitialPublicText(input.background, 120);
   const background = [
     familyBackground ? `书生家境：${familyBackground}` : "",
@@ -315,6 +325,7 @@ function createInitialState(input = {}) {
       role,
       roleLabel: ROLE_LABELS[role] || role,
       name: playerName,
+      portraitRef: portraitRef || null,
       nativePlace,
       health: 100,
       gold: 10,
@@ -351,6 +362,7 @@ module.exports = {
   ALLOWED_ROLES,
   FAMILY_BACKGROUND_LABELS,
   normalizeInitialFamilyBackground,
+  normalizeInitialPortraitRef,
   normalizeInitialRole,
   createInitialState
 };

@@ -38,6 +38,7 @@ const PLAYER_STATE_PLAYER_KEYS = Object.freeze([
   "role",
   "roleLabel",
   "name",
+  "portraitRef",
   "health",
   "gold",
   "examRank",
@@ -130,6 +131,8 @@ const FORBIDDEN_PUBLIC_KEYS_LOWER = new Set(
 
 const SENSITIVE_KEY_PATTERN =
   /(SEALED_[A-Z0-9_]+|hidden[_ -]?(?:notes?|intent)|hidden\s+(?:notes?|intent)|密档|私档|密札|密信|隐藏(?:意图|动机|事实|札记)|隐秘(?:意图|动机|事实)|\b(?:relationshipLedger|actorMemoryLedger|sessionSummary|retrievalContext|sealedMapping|sealed_mapping)\b|raw[_ -]?(?:provider|audit|table|ledger|prompt|proposal|row)|\b(?:statePatch|rawSql)\b|api[_ -]?key|OPENAI_API_KEY|DEEPSEEK_API_KEY|MIMO_API_KEY|ANTHROPIC_API_KEY|data[\\/](?:sessions|audit)|ai_change_proposals|event_log|world_sessions|world_state_json|prompt_retrieval_index|event_archive_index|safe_search_(?:index|fts)|(?:geo|people|office)_[A-Za-z0-9_]+)/i;
+const PORTRAIT_REF_PATTERN = /^portrait-[a-z0-9][a-z0-9_-]{0,140}$/i;
+const UNSAFE_PORTRAIT_REF_PATTERN = /(?:^|[-_])(raw|provider|prompt|hidden|private|key|path|secret|token|api|file|data|http)(?:$|[-_])/i;
 
 function isPlainObject(value) {
   return value !== null && typeof value === "object" && !Array.isArray(value);
@@ -172,6 +175,14 @@ function sanitizeKeyName(value, fallback = "", maxLength = 80) {
   return text.length > maxLength ? text.slice(0, maxLength) : text;
 }
 
+function sanitizeVisiblePortraitRef(value) {
+  if (value === null) return null;
+  if (typeof value !== "string") return null;
+  const text = value.trim();
+  if (!text || !PORTRAIT_REF_PATTERN.test(text) || UNSAFE_PORTRAIT_REF_PATTERN.test(text)) return null;
+  return text;
+}
+
 function sanitizeVisibleValue(value, options = {}, path = "value") {
   const maxTextLength = options.maxTextLength || PLAYER_STATE_MAX_TEXT_LENGTH;
   const maxArrayItems = options.maxArrayItems || PLAYER_STATE_MAX_ARRAY_ITEMS;
@@ -205,6 +216,10 @@ function pickSanitizedObject(source = {}, keys = [], options = {}) {
   const output = {};
   for (const key of keys) {
     if (source[key] === undefined || isForbiddenKey(key)) continue;
+    if (key === "portraitRef") {
+      output[key] = sanitizeVisiblePortraitRef(source[key]);
+      continue;
+    }
     const cleanValue = sanitizeVisibleValue(source[key], options, key);
     if (cleanValue === "" || cleanValue === undefined) continue;
     output[key] = cleanValue;

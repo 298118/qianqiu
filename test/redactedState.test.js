@@ -29,6 +29,7 @@ function createPollutedWorldState() {
     rawProviderPayload: "provider prompt world_state_json"
   });
   worldState.player.officeTitle = "巡按御史";
+  worldState.player.portraitRef = "portrait-s76-10-player-scholar-f01-v1";
   worldState.player.hiddenIntent = "SEALED_PLAYER_INTENT";
   worldState.player.examHistory.push({
     level: "provincial",
@@ -63,12 +64,26 @@ test("S71.4 buildPlayerVisibleState keeps only allowlisted player-visible fields
   assert.equal(state.sessionId, worldState.sessionId);
   assert.equal(state.player.name, "脱敏巡按");
   assert.equal(state.player.officeTitle, "巡按御史");
+  assert.equal(state.player.portraitRef, "portrait-s76-10-player-scholar-f01-v1");
   assert.equal(state.characters, undefined);
   assert.equal(state.relationshipLedger, undefined);
   assert.equal(state.actorMemoryLedger, undefined);
   assert.equal(state.sessionSummary, undefined);
   assert.equal(state.hiddenNotes, undefined);
   assert.doesNotMatch(serialized, /SEALED_|event_log|ai_change_proposals|world_state_json|sk-redacted-route-secret|hiddenIntent|rawProviderPayload/);
+});
+
+test("S76.10 buildPlayerVisibleState applies portraitRef-specific redaction", () => {
+  const worldState = createInitialState({ playerName: "立绘脱敏", role: "scholar" });
+  worldState.player.portraitRef = "portrait-s73-10-player-capital-official-f01-v1";
+  assert.equal(buildPlayerVisibleState(worldState).player.portraitRef, "portrait-s73-10-player-capital-official-f01-v1");
+
+  worldState.player.portraitRef = "portrait-http-v1";
+  const state = buildPlayerVisibleState(worldState);
+  const envelope = buildPlayerStateEnvelope(worldState);
+  assert.equal(state.player.portraitRef, null);
+  assert.equal(envelope.worldState.player.portraitRef, null);
+  assert.doesNotMatch(JSON.stringify(envelope), /portrait-http-v1|http\[redacted-path\]/);
 });
 
 test("S71.4 buildPlayerStateEnvelope returns safe metadata and redaction boundary", () => {

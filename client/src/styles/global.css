@@ -554,6 +554,7 @@ legend {
 }
 
 .familyField,
+.portraitChoiceField,
 .backgroundField,
 .roleNote {
   grid-column: 1 / -1;
@@ -602,6 +603,57 @@ legend {
   color: #6d5844;
   line-height: 1.65;
   padding: 10px;
+}
+
+.portraitChoiceField {
+  display: grid;
+  gap: 8px;
+}
+
+.portraitChoiceGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(84px, 1fr));
+  gap: 8px;
+}
+
+.portraitChoiceCard {
+  position: relative;
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+  padding: 7px;
+  border: 1px solid rgba(84, 60, 43, 0.26);
+  background: rgba(255, 252, 238, 0.74);
+  cursor: pointer;
+}
+
+.portraitChoiceCard input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+}
+
+.portraitChoiceCard .portraitFrame {
+  min-height: 104px;
+}
+
+.portraitChoiceCard span {
+  color: #7a6048;
+  font-size: 0.72rem;
+  line-height: 1.25;
+  text-align: center;
+}
+
+.portraitChoiceCard:has(input:checked) {
+  border-color: rgba(142, 47, 39, 0.78);
+  background: rgba(165, 58, 47, 0.12);
+  box-shadow: inset 0 0 0 1px rgba(142, 47, 39, 0.18);
+}
+
+.portraitChoiceCard:has(input:focus-visible) {
+  outline: 2px solid rgba(142, 47, 39, 0.24);
+  outline-offset: 2px;
 }
 
 input,
@@ -2014,6 +2066,73 @@ button:disabled {
   gap: 12px;
 }
 
+.peopleLedgerList {
+  display: grid;
+  gap: 12px;
+}
+
+.peopleCard {
+  display: grid;
+  grid-template-columns: minmax(86px, 118px) minmax(0, 1fr);
+  gap: 12px;
+  align-items: stretch;
+  min-width: 0;
+  border: 1px solid rgba(84, 60, 43, 0.22);
+  background: rgba(255, 248, 230, 0.62);
+  padding: 10px;
+}
+
+.peoplePortrait {
+  min-height: 132px;
+}
+
+.peopleInfo {
+  display: grid;
+  align-content: start;
+  gap: 8px;
+  min-width: 0;
+}
+
+.peopleInfo h4,
+.peopleInfo p {
+  margin: 0;
+}
+
+.peopleInfo h4 {
+  color: #2f251d;
+  font-size: 1rem;
+}
+
+.peopleIdentity {
+  color: #6d5844;
+  font-weight: 700;
+}
+
+.peopleMeta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.peopleMeta span,
+.peopleRelationship {
+  border: 1px solid rgba(84, 60, 43, 0.2);
+  background: rgba(255, 248, 230, 0.56);
+  color: #735844;
+  padding: 4px 7px;
+  font-size: 0.74rem;
+  line-height: 1.35;
+}
+
+.peopleSummary {
+  color: #3f3328;
+  line-height: 1.65;
+}
+
+.peopleRelationship {
+  color: #6d372c;
+}
+
 .portraitCard {
   display: grid;
   gap: 8px;
@@ -3176,6 +3295,18 @@ button:disabled {
   .startDesk,
   .inlineForm {
     grid-template-columns: 1fr;
+  }
+
+  .portraitChoiceGrid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .peopleCard {
+    grid-template-columns: 76px minmax(0, 1fr);
+  }
+
+  .peoplePortrait {
+    min-height: 108px;
   }
 
   .examHero {

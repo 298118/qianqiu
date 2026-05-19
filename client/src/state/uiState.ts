@@ -131,6 +131,7 @@ export function extractSafePlayerPayload(
       ? {
           name: payload.worldState.player.name,
           role: payload.worldState.player.role,
+          portraitRef: payload.worldState.player.portraitRef,
           examRank: payload.worldState.player.examRank,
           officeTitle: payload.worldState.player.officeTitle
         }

@@ -570,13 +570,54 @@ test("S74.5 asset registry gates manifest assets before React components render 
   assert.match(assetRegistrySource, /lowResPlaceholderPath/);
   assert.match(assetRegistrySource, /getPreloadHints/);
   assert.match(assetRegistrySource, /kept_outside_public_manifest/);
-  assert.match(peoplePageSource, /getPortraits\(\{ usage: "people_page", preferHighResOverridesForFeminine: true \}\)/);
+  assert.match(peoplePageSource, /worldPeopleView/);
+  assert.match(peoplePageSource, /getExistingPortraitRef/);
   assert.match(peoplePageSource, /portraitPageSize = 8/);
+  assert.match(peoplePageSource, /fallbackPortraitRef/);
   assert.match(portraitSource, /loading="lazy"/);
   assert.doesNotMatch(portraitSource, /variant\?:|priority\?:|loading=\{priority/);
   assert.doesNotMatch(
     combined,
     /portrait-pool-matrix-v1|public\/assets\/ui\/portraits|localStorage|sessionStorage|data\/sessions|raw audit|provider payload/
+  );
+});
+
+test("S76.10 people portraits stay on public session people and safe portrait refs", () => {
+  const homePageSource = readText("client/src/pages/HomePage.tsx");
+  const peoplePageSource = readText("client/src/pages/PeoplePage.tsx");
+  const apiTypesSource = readText("client/src/api/types.ts");
+  const uiStateSource = readText("client/src/state/uiState.ts");
+  const initialStateSource = readText("src/game/initialState.js");
+  const redactedStateSource = readText("src/game/redactedState.js");
+  const worldPeopleSchemasSource = readText("src/game/worldPeopleSchemas.js");
+  const clientSmokeSource = readText("scripts/clientSmoke.js");
+  const styleSource = readText("client/src/styles/global.css");
+  const runtimeCombined = stripSafeGuardPatterns(`${homePageSource}\n${peoplePageSource}\n${apiTypesSource}\n${uiStateSource}\n${styleSource}`);
+
+  assert.match(apiTypesSource, /readonly portraitRef\?: string \| null/);
+  assert.match(apiTypesSource, /export type WorldPeopleView/);
+  assert.match(apiTypesSource, /readonly worldPeopleView\?: WorldPeopleView/);
+  assert.match(uiStateSource, /portraitRef: payload\.worldState\.player\.portraitRef/);
+  assert.match(initialStateSource, /normalizeInitialPortraitRef/);
+  assert.match(redactedStateSource, /"portraitRef"/);
+  assert.match(worldPeopleSchemasSource, /portraitRef: cleanPortraitRef/);
+  assert.match(worldPeopleSchemasSource, /portraitRef: npc\.portraitRef \|\| null/);
+  assert.match(homePageSource, /portraitChoiceGrid/);
+  assert.match(homePageSource, /preferHighResOverridesForFeminine: true/);
+  assert.match(homePageSource, /portrait_pool_player_s73_10/);
+  assert.match(peoplePageSource, /peopleLedgerList/);
+  assert.match(peoplePageSource, /maxPeopleRows = 80/);
+  assert.match(peoplePageSource, /resolvePlayerPortraitRef/);
+  assert.match(peoplePageSource, /resolveNpcPortraitRef/);
+  assert.match(peoplePageSource, /portrait_pool_generic_npc_s73_10/);
+  assert.doesNotMatch(peoplePageSource, /portrait_pool_signature_npc_s73_10/);
+  assert.match(clientSmokeSource, /data-visible-people/);
+  assert.match(clientSmokeSource, /s76-people-ledger-desktop/);
+  assert.match(styleSource, /portraitChoiceGrid/);
+  assert.match(styleSource, /peopleLedgerList/);
+  assert.doesNotMatch(
+    runtimeCombined,
+    /\/api\/game\/state|\/api\/dev\/session-diagnostics|dangerouslySetInnerHTML|localStorage|sessionStorage|data\/sessions|raw audit|provider payload|OPENAI_API_KEY|DEEPSEEK_API_KEY|MIMO_API_KEY|ANTHROPIC_API_KEY|public\/assets\/ui\/portraits/
   );
 });
 

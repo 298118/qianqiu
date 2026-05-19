@@ -24,6 +24,8 @@ const RELATION_ENTITY_TYPES = new Set([
 ]);
 const ASSET_KINDS = new Set(["cash", "shop", "mine", "granary", "debt", "stipend", "business", "other"]);
 const ESTATE_STATUS_VALUES = new Set(["held", "leased", "disputed", "mortgaged", "lost", "unknown"]);
+const PORTRAIT_REF_PATTERN = /^portrait-[a-z0-9][a-z0-9_-]{0,140}$/i;
+const UNSAFE_PORTRAIT_REF_PATTERN = /(?:^|[-_])(raw|provider|prompt|hidden|private|key|path|secret|token|api|file|data|http)(?:$|[-_])/i;
 
 function isPlainObject(value) {
   return value !== null && typeof value === "object" && !Array.isArray(value);
@@ -39,6 +41,12 @@ function cleanText(value, fallback = "", maxLength = MAX_TEXT_LENGTH) {
 function cleanId(value, fallback = "") {
   const text = cleanText(value, fallback, 96);
   return /^[a-z0-9][a-z0-9_-]*$/i.test(text) ? text : fallback;
+}
+
+function cleanPortraitRef(value) {
+  const text = cleanText(value, "", 160);
+  if (!text || !PORTRAIT_REF_PATTERN.test(text) || UNSAFE_PORTRAIT_REF_PATTERN.test(text)) return "";
+  return text;
 }
 
 function clampNumber(value, min, max, fallback) {
@@ -126,6 +134,7 @@ function normalizeNpc(raw, worldState = {}) {
   return {
     id,
     name,
+    portraitRef: cleanPortraitRef(source.portraitRef) || null,
     courtesyName: cleanText(source.courtesyName, "", 40),
     genderLabel: cleanText(source.genderLabel, "未详", 24),
     age: clampNumber(source.age, 0, 120, 30),
@@ -368,6 +377,7 @@ function viewNpc(npc, visibleIds) {
   return {
     id: npc.id,
     name: npc.name,
+    portraitRef: npc.portraitRef || null,
     courtesyName: npc.courtesyName,
     genderLabel: npc.genderLabel,
     age: npc.age,

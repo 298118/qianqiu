@@ -16,6 +16,7 @@ function samplePeopleBundle() {
     npcs: [{
       id: "npc-gu-mentor",
       name: "顾文衡",
+      portraitRef: "portrait-s76-10-generic-teacher-v1",
       courtesyName: "衡之",
       age: 156,
       homeCityId: "city-suzhou",
@@ -42,6 +43,7 @@ function samplePeopleBundle() {
     }, {
       id: "npc-hidden-patron",
       name: "密札贵人",
+      portraitRef: "C:\\bad\\OPENAI_API_KEY",
       visibility: "hidden",
       hiddenNotes: ["SEALED_HIDDEN_PATRON"]
     }, {
@@ -143,6 +145,7 @@ test("world people schema bundle normalizes NPC, household, asset, estate, and r
 
   const mentor = bundle.npcs.find((npc) => npc.id === "npc-gu-mentor");
   assert.equal(mentor.age, 120);
+  assert.equal(mentor.portraitRef, "portrait-s76-10-generic-teacher-v1");
   assert.equal(mentor.wealthCash, 0);
   assert.equal(mentor.landMu, 10000000);
   assert.equal(mentor.debts, 0);
@@ -171,6 +174,7 @@ test("world people schema view filters hidden rows, hidden notes, and hidden nes
   assert.ok(view.relationships.some((relationship) => relationship.id === "rel-player-gu"));
 
   const mentor = view.npcs.find((npc) => npc.id === "npc-gu-mentor");
+  assert.equal(mentor.portraitRef, "portrait-s76-10-generic-teacher-v1");
   assert.equal(mentor.family.fatherId, null);
   assert.deepEqual(mentor.family.spouseIds, []);
   assert.deepEqual(mentor.family.childrenIds, ["npc-visible-child"]);
@@ -189,6 +193,7 @@ test("world people schema view filters hidden rows, hidden notes, and hidden nes
   assert.equal(serialized.includes("SEALED_HOUSEHOLD_NOTE"), false);
   assert.equal(serialized.includes("SEALED_RELATIONSHIP_SUMMARY"), false);
   assert.equal(serialized.includes("SEALED_RECENT_NOTE"), false);
+  assert.equal(serialized.includes("OPENAI_API_KEY"), false);
   assert.ok(view.hiddenNotice);
 });
 

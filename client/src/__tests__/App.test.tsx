@@ -62,7 +62,7 @@ function buildMockAssetManifest(count = 9): InkUiManifest {
         ageBand: "adult_young",
         statusVariant: "baseline",
         emotionVariant: "neutral",
-        identityTags: [feminine ? "female_style" : "male_style"],
+        identityTags: ["player", feminine ? "female_style" : "male_style"],
         emotionTags: ["neutral"],
         lazyLoad: {
           group: feminine ? "portrait_pool_player_female_extra_s73_10" : "portrait_pool_player_male_extra_s73_10",
@@ -178,6 +178,58 @@ describe("S74.1 React client shell", () => {
       customSetting: "少时寄居书院，熟读经义。"
     });
     expect(document.body.textContent || "").not.toMatch(/\/api\/game\/state|\/api\/dev|provider payload|hiddenNotes|OPENAI_API_KEY|data\/sessions/i);
+  });
+
+  it("posts the S76.10 selected player portraitRef from the audited registry", async () => {
+    const fetchMock = vi.fn(async (url: string, _options?: RequestInit) => {
+      if (url === "/assets/ui/ink-ui-manifest.json") {
+        return new Response(JSON.stringify(buildMockAssetManifest()), {
+          status: 200,
+          headers: { "Content-Type": "application/json" }
+        });
+      }
+      if (url === "/api/game/saves") {
+        return new Response(JSON.stringify({ saves: [], skipped: [] }), {
+          status: 200,
+          headers: { "Content-Type": "application/json" }
+        });
+      }
+
+      return new Response(JSON.stringify({
+        sessionId: "22222222-2222-4222-8222-222222222222",
+        narrative: "起卷",
+        worldState: {
+          player: {
+            name: "陆清远",
+            role: "scholar",
+            portraitRef: "portrait-test-female-2-v1"
+          }
+        }
+      }), {
+        status: 201,
+        headers: { "Content-Type": "application/json" }
+      });
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    renderRoute("/");
+    await waitFor(() => {
+      expect(document.querySelectorAll("input[name='player-portrait']").length).toBeGreaterThan(0);
+    });
+
+    const portraitInputs = [...document.querySelectorAll<HTMLInputElement>("input[name='player-portrait']")];
+    fireEvent.click(portraitInputs[1]);
+    fireEvent.click(screen.getByRole("button", { name: "新开一卷" }));
+
+    await waitFor(() => expect(fetchMock.mock.calls.filter(([url]) => url === "/api/game/start")).toHaveLength(1));
+    const startCall = fetchMock.mock.calls.find(([url]) => url === "/api/game/start") as
+      | [string, RequestInit]
+      | undefined;
+    expect(JSON.parse(String(startCall?.[1].body))).toMatchObject({
+      portraitRef: "portrait-test-female-2-v1"
+    });
+    expect(document.querySelector(".portraitChoiceGrid")?.getAttribute("data-visible-portraits")).toBe("6");
+    expect(document.body.textContent || "").not.toMatch(/provider payload|hiddenNotes|OPENAI_API_KEY|artifacts|data\/sessions/i);
   });
 
   it("locks the S75.3 seal submit path against repeated Enter submits", async () => {
@@ -1743,22 +1795,167 @@ describe("S74.1 React client shell", () => {
     expect(document.body.textContent || "").not.toMatch(/会元|第一名|防弊检测通过|未见公开扣罚事项/);
   });
 
-  it("loads the S74.5 manifest-backed portrait ledger in small lazy pages", async () => {
-    const fetchMock = mockAssetManifestFetch();
-    renderRoute("/game/smoke-session/people");
+  it("loads the S76.10 current people ledger without exposing the full portrait pool", async () => {
+    const sessionId = "55555555-5555-4555-8555-555555555555";
+    const payload = {
+      source: "server_player_visible_state_projection",
+      sessionId,
+      worldState: {
+        player: {
+          name: "陆清远",
+          role: "scholar",
+          portraitRef: "portrait-test-female-1-v1"
+        }
+      },
+      worldPeopleView: {
+        schemaVersion: 1,
+        generatedAtTurn: 1,
+        npcs: [
+          {
+            id: "C01",
+            name: "顾文衡",
+            rankLabel: "乡中塾师",
+            genderLabel: "男",
+            portraitRef: "portrait-test-male-4-v1",
+            visibility: "relationship_visible",
+            knownToPlayer: true,
+            intelConfidence: 75,
+            influence: 18,
+            publicSummary: "顾文衡为乡中塾师，与玩家情分亲近。"
+          },
+          {
+            id: "C02",
+            name: "王氏",
+            rankLabel: "商家女眷",
+            genderLabel: "女",
+            portraitRef: "C:\\bad\\OPENAI_API_KEY",
+            visibility: "public",
+            knownToPlayer: true,
+            intelConfidence: 60,
+            publicSummary: "OPENAI_API_KEY hiddenNotes data/sessions"
+          }
+        ],
+        relationships: [
+          {
+            id: "rel-player-npc-C01",
+            sourceType: "player",
+            sourceId: "P1",
+            targetType: "npc",
+            targetId: "C01",
+            publicSummary: "顾文衡对玩家情分亲近。"
+          }
+        ]
+      }
+    };
+    const fetchMock = vi.fn(async (url: string) => {
+      if (url === "/assets/ui/ink-ui-manifest.json") {
+        return new Response(JSON.stringify(buildMockAssetManifest()), {
+          status: 200,
+          headers: { "Content-Type": "application/json" }
+        });
+      }
+      if (url === `/api/game/player-state/${sessionId}`) {
+        return new Response(JSON.stringify(payload), {
+          status: 200,
+          headers: { "Content-Type": "application/json" }
+        });
+      }
+      if (url === `/api/ai/quick-actions/${sessionId}`) {
+        return new Response(JSON.stringify({
+          schemaVersion: "s75.9-quick-actions.v1",
+          sessionId,
+          source: "mock-ai",
+          status: "ready",
+          quickActionSuggestions: []
+        }), {
+          status: 200,
+          headers: { "Content-Type": "application/json" }
+        });
+      }
+      throw new Error(`unexpected url: ${url}`);
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    renderRoute(`/game/${sessionId}/people`);
 
     expect(screen.getByRole("heading", { name: "人物" })).toBeTruthy();
-    await screen.findByText(/已接入 9 张人物页可用立绘；女性高清重制 2 张优先列前/);
+    await screen.findByText("人物谱牒");
+    await waitFor(() => expect(screen.getAllByText("陆清远").length).toBeGreaterThan(0));
+    expect(screen.getByText("顾文衡")).toBeTruthy();
+    expect(screen.getByText("王氏")).toBeTruthy();
     expect(fetchMock).toHaveBeenCalledWith("/assets/ui/ink-ui-manifest.json", expect.objectContaining({ headers: { Accept: "application/json" } }));
 
     const firstPageImages = screen.getAllByRole("img");
-    expect(firstPageImages).toHaveLength(8);
     expect(firstPageImages.every((image) => image.getAttribute("loading") === "lazy")).toBe(true);
-    expect(document.querySelector(".portraitGrid")?.getAttribute("data-total-portraits")).toBe("9");
-    expect(document.body.textContent || "").not.toMatch(/prompt|provider payload|hiddenNotes|OPENAI_API_KEY|artifacts/i);
+    expect(document.querySelector(".peopleLedgerList")?.getAttribute("data-total-people")).toBe("3");
+    expect(document.querySelector(".peopleLedgerList")?.getAttribute("data-total-portraits")).toBeNull();
+    expect(document.querySelector("[data-portrait-remastered='true']")).toBeTruthy();
+    expect(document.body.textContent || "").not.toMatch(/prompt|provider payload|hiddenNotes|OPENAI_API_KEY|artifacts|data\/sessions|C:\\bad/i);
+  });
 
-    fireEvent.click(screen.getByRole("button", { name: "下一组" }));
-    expect(screen.getAllByRole("img")).toHaveLength(1);
+  it("caps the S76.10 people ledger at eighty public rows with the player first", async () => {
+    const sessionId = "55555555-5555-4555-8555-555555555556";
+    const payload = {
+      source: "server_player_visible_state_projection",
+      sessionId,
+      worldState: {
+        player: {
+          name: "陆清远",
+          role: "scholar",
+          portraitRef: "portrait-test-female-1-v1"
+        }
+      },
+      worldPeopleView: {
+        schemaVersion: 1,
+        generatedAtTurn: 1,
+        npcs: Array.from({ length: 80 }, (_, index) => ({
+          id: `C${String(index + 1).padStart(2, "0")}`,
+          name: `同窗${index + 1}`,
+          rankLabel: "同年士子",
+          genderLabel: index % 2 === 0 ? "男" : "女",
+          visibility: "public",
+          knownToPlayer: true,
+          publicSummary: `同窗${index + 1}为公开相识人物。`
+        })),
+        relationships: []
+      }
+    };
+    const fetchMock = vi.fn(async (url: string) => {
+      if (url === "/assets/ui/ink-ui-manifest.json") {
+        return new Response(JSON.stringify(buildMockAssetManifest()), {
+          status: 200,
+          headers: { "Content-Type": "application/json" }
+        });
+      }
+      if (url === `/api/game/player-state/${sessionId}`) {
+        return new Response(JSON.stringify(payload), {
+          status: 200,
+          headers: { "Content-Type": "application/json" }
+        });
+      }
+      if (url === `/api/ai/quick-actions/${sessionId}`) {
+        return new Response(JSON.stringify({
+          schemaVersion: "s75.9-quick-actions.v1",
+          sessionId,
+          source: "mock-ai",
+          status: "ready",
+          quickActionSuggestions: []
+        }), {
+          status: 200,
+          headers: { "Content-Type": "application/json" }
+        });
+      }
+      throw new Error(`unexpected url: ${url}`);
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    renderRoute(`/game/${sessionId}/people`);
+
+    await screen.findByText("人物谱牒");
+    await waitFor(() => expect(document.querySelector(".peopleLedgerList")?.getAttribute("data-total-people")).toBe("80"));
+    expect(document.querySelector(".peopleLedgerList")?.getAttribute("data-visible-people")).toBe("8");
+    expect(document.querySelector("[data-person-kind='player']")).toBeTruthy();
+    expect(screen.queryByText("同窗80")).toBeNull();
   });
 
   it("does not show stale exam actions on preview routes", () => {

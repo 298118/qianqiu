@@ -1212,35 +1212,39 @@ async function runClientSmoke(options = {}) {
     const peoplePath = `/game/${startedSessionId}/people`;
     await clickTopNavRoute(page, "人物", peoplePath);
     screenshots.push(
-      await assertCurrentReactClientPage(page, peoplePath, "s74-react-people-assets-desktop", options.screenshotsDir, {
-        readySelector: ".portraitGrid"
+      await assertCurrentReactClientPage(page, peoplePath, "s76-people-ledger-desktop", options.screenshotsDir, {
+        readySelector: ".peopleLedgerList"
       })
     );
     const portraitLedger = await page.evaluate(() => {
-      const grid = document.querySelector(".portraitGrid");
-      const images = [...document.querySelectorAll(".portraitGrid img")];
+      const grid = document.querySelector(".peopleLedgerList");
+      const images = [...document.querySelectorAll(".peopleLedgerList img")];
       return {
-        visible: Number(grid?.getAttribute("data-visible-portraits") || 0),
-        total: Number(grid?.getAttribute("data-total-portraits") || 0),
+        visible: Number(grid?.getAttribute("data-visible-people") || 0),
+        total: Number(grid?.getAttribute("data-total-people") || 0),
         eagerImages: images.filter((image) => image.getAttribute("loading") !== "lazy").length,
-        localOrRawLeaks: (document.body.innerText || "").match(/artifacts|provider payload|raw audit|hiddenNotes|OPENAI_API_KEY/gi) || []
+        fullPoolCount: Number(grid?.getAttribute("data-total-portraits") || 0),
+        localOrRawLeaks: (document.body.innerText || "").match(/artifacts|provider payload|raw audit|hiddenNotes|OPENAI_API_KEY|data\/sessions/gi) || []
       };
     });
     if (portraitLedger.visible > 8 || portraitLedger.visible <= 0) {
-      throw new Error(`People portrait page loaded an unsafe initial portrait count: ${portraitLedger.visible}`);
+      throw new Error(`People ledger loaded an unsafe initial person count: ${portraitLedger.visible}`);
     }
-    if (portraitLedger.total < 500) {
-      throw new Error(`People portrait page did not expose the full manifest-backed pool: ${portraitLedger.total}`);
+    if (portraitLedger.total <= 0 || portraitLedger.total > 80) {
+      throw new Error(`People ledger did not stay on the current public person view: ${portraitLedger.total}`);
+    }
+    if (portraitLedger.fullPoolCount > 0) {
+      throw new Error(`People ledger exposed a manifest pool count instead of current people: ${portraitLedger.fullPoolCount}`);
     }
     if (portraitLedger.eagerImages > 0) {
-      throw new Error(`People portrait page rendered non-lazy portrait image(s): ${portraitLedger.eagerImages}`);
+      throw new Error(`People ledger rendered non-lazy portrait image(s): ${portraitLedger.eagerImages}`);
     }
     if (portraitLedger.localOrRawLeaks.length) {
-      throw new Error(`People portrait page leaked forbidden text: ${portraitLedger.localOrRawLeaks.join(", ")}`);
+      throw new Error(`People ledger leaked forbidden text: ${portraitLedger.localOrRawLeaks.join(", ")}`);
     }
     screenshots.push(
-      await assertRouteRefresh(page, peoplePath, "s74-react-people-refresh-desktop", options.screenshotsDir, {
-        readySelector: ".portraitGrid"
+      await assertRouteRefresh(page, peoplePath, "s76-people-ledger-refresh-desktop", options.screenshotsDir, {
+        readySelector: ".peopleLedgerList"
       })
     );
 

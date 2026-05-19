@@ -9,6 +9,7 @@ export type StartGameRequest = {
   readonly year?: number;
   readonly role?: GameRole;
   readonly playerName?: string;
+  readonly portraitRef?: string;
   readonly familyBackground?: "poor" | "modest" | "gentry" | "贫寒" | "普通" | "世家";
   readonly background?: string;
   readonly customSetting?: string;
@@ -19,8 +20,66 @@ export type StartGameRequest = {
 export type PlayerSummary = {
   readonly name?: string;
   readonly role?: string;
+  readonly portraitRef?: string | null;
   readonly examRank?: string;
   readonly officeTitle?: string;
+};
+
+export type WorldPeopleNpc = {
+  readonly id: string;
+  readonly name?: string;
+  readonly portraitRef?: string | null;
+  readonly courtesyName?: string;
+  readonly genderLabel?: string;
+  readonly age?: number;
+  readonly alive?: boolean;
+  readonly homeCityId?: string;
+  readonly currentCityId?: string;
+  readonly householdId?: string | null;
+  readonly currentOfficeId?: string;
+  readonly currentPostingId?: string;
+  readonly rankLabel?: string;
+  readonly bureauId?: string;
+  readonly factionId?: string;
+  readonly currentGoal?: string;
+  readonly reputation?: number;
+  readonly influence?: number;
+  readonly visibility?: string;
+  readonly knownToPlayer?: boolean;
+  readonly intelConfidence?: number;
+  readonly publicSummary?: string;
+  readonly lastUpdatedTurn?: number;
+  readonly [key: string]: unknown;
+};
+
+export type WorldPeopleRelationship = {
+  readonly id: string;
+  readonly sourceType?: string;
+  readonly sourceId?: string;
+  readonly targetType?: string;
+  readonly targetId?: string;
+  readonly relationship?: number;
+  readonly trust?: number;
+  readonly resentment?: number;
+  readonly stance?: string;
+  readonly recentIntent?: string;
+  readonly recentNotes?: readonly string[];
+  readonly visibility?: string;
+  readonly knownToPlayer?: boolean;
+  readonly publicSummary?: string;
+  readonly [key: string]: unknown;
+};
+
+export type WorldPeopleView = {
+  readonly schemaVersion?: number | string;
+  readonly generatedAtTurn?: number;
+  readonly npcs?: readonly WorldPeopleNpc[];
+  readonly relationships?: readonly WorldPeopleRelationship[];
+  readonly households?: readonly JsonObject[];
+  readonly assets?: readonly JsonObject[];
+  readonly estates?: readonly JsonObject[];
+  readonly hiddenNotice?: string;
+  readonly [key: string]: unknown;
 };
 
 export type SafeWorldState = {
@@ -51,6 +110,10 @@ export type SafeRouteViews = {
   readonly actorMemoryView?: JsonObject;
   readonly worldEntityView?: JsonObject;
   readonly worldThreadView?: JsonObject;
+  readonly activeNpcRequestView?: JsonObject;
+  readonly playerMonthlyBriefingView?: JsonObject;
+  readonly relationshipView?: JsonObject;
+  readonly worldPeopleView?: WorldPeopleView;
   readonly [key: string]: unknown;
 };
 

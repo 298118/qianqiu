@@ -1,9 +1,12 @@
 import type { FormEvent } from "react";
 import { Link, useNavigate } from "react-router";
 import { useGameSessionStore } from "../state/gameSessionState";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useUiStateStore } from "../state/uiState";
 import type { GameRole } from "../api";
+import { useAssetRegistry } from "../assets/useAssetRegistry";
+import type { AssetRegistry, RuntimePortraitAsset } from "../assets/assetRegistry";
+import { Portrait } from "../components/Portrait";
 import { SaveCaseList } from "../components/SaveCaseList";
 import { isRunnableSessionId } from "../routes/sessionId";
 
@@ -49,6 +52,17 @@ const sourceLabels: Record<string, string> = {
 };
 
 const unsafeHomeSummaryPattern = /\/api\/game\/state|\/api\/dev\/session-diagnostics|data[\\/]+sessions|[a-z]:[\\/]|file:\/{2}|raw\b|provider\b|prompt\b|hidden\b|key\b|path\b|hiddenNotes|OPENAI_API_KEY|DEEPSEEK_API_KEY|MIMO_API_KEY|ANTHROPIC_API_KEY|sk-[a-z0-9_-]+|完整提示词|提示词|本地路径|密钥|隐藏|私档|模型原始/i;
+const safePortraitRefPattern = /^portrait-[a-z0-9][a-z0-9_-]{0,140}$/i;
+const unsafePortraitRefTokenPattern = /(?:^|[-_])(raw|provider|prompt|hidden|private|key|path|secret|token|api|file|data|http)(?:$|[-_])/i;
+
+const playerPortraitRoleByGameRole: Record<GameRole, string> = {
+  scholar: "scholar",
+  official: "junior-official",
+  magistrate: "local-official",
+  minister: "grand-minister",
+  general: "general",
+  emperor: "emperor-regent"
+};
 
 function getRoleNote(role: GameRole) {
   return roleOptions.find((option) => option.value === role)?.note || "";
@@ -61,6 +75,29 @@ function getScholarFamilyText(value: ScholarFamilyBackground) {
 function safeHomeSummaryText(value: unknown, fallback: string) {
   const text = typeof value === "string" && value.trim() ? value.trim() : fallback;
   return unsafeHomeSummaryPattern.test(text) ? fallback : text;
+}
+
+function safePortraitRef(value: unknown) {
+  const text = typeof value === "string" ? value.trim() : "";
+  if (!text || !safePortraitRefPattern.test(text)) return "";
+  return unsafePortraitRefTokenPattern.test(text) ? "" : text;
+}
+
+function getPlayerPortraitChoices(registry: AssetRegistry | null, role: GameRole) {
+  if (!registry) return [];
+  const rolePortraits = registry.getInitialPortraits({
+    usage: "people_page",
+    lazyLoadGroup: "portrait_pool_player_s73_10",
+    role: playerPortraitRoleByGameRole[role],
+    identityTags: ["player"],
+    preferHighResOverridesForFeminine: true
+  }, { limit: 6 });
+  if (rolePortraits.length) return rolePortraits;
+  return registry.getInitialPortraits({
+    usage: "people_page",
+    identityTags: ["player"],
+    preferHighResOverridesForFeminine: true
+  }, { limit: 6 });
 }
 
 type CurrentPlayerPayload = NonNullable<ReturnType<typeof useUiStateStore.getState>["currentPlayerPayload"]>;
@@ -96,6 +133,7 @@ export function HomePage() {
   const status = useGameSessionStore((state) => state.status);
   const savesStatus = useGameSessionStore((state) => state.savesStatus);
   const error = useGameSessionStore((state) => state.error);
+  const { registry: assetRegistry } = useAssetRegistry();
   const displayMotion = useUiStateStore((state) => state.displayPreferences.motion);
   const currentSessionId = useUiStateStore((state) => state.currentSessionId);
   const currentPlayerPayload = useUiStateStore((state) => state.currentPlayerPayload);
@@ -105,6 +143,7 @@ export function HomePage() {
   const [dynasty, setDynasty] = useState("明");
   const [year, setYear] = useState("1600");
   const [scholarFamily, setScholarFamily] = useState<ScholarFamilyBackground>("modest");
+  const [selectedPortraitRef, setSelectedPortraitRef] = useState("");
   const [customBackground, setCustomBackground] = useState("");
   const [formError, setFormError] = useState<string | null>(null);
   const [sealFeedback, setSealFeedback] = useState<"idle" | "stamping" | "error">("idle");
@@ -120,10 +159,28 @@ export function HomePage() {
     currentPlayerPayload.sessionId === currentSessionId &&
     isRunnableSessionId(currentSessionId)
   );
+  const portraitChoices = useMemo(
+    () => getPlayerPortraitChoices(assetRegistry, role),
+    [assetRegistry, role]
+  );
+  const selectedPortrait = useMemo(
+    () => portraitChoices.find((portrait) => portrait.portraitRef === selectedPortraitRef) ?? null,
+    [portraitChoices, selectedPortraitRef]
+  );
 
   useEffect(() => {
     void refreshSaves();
   }, [refreshSaves]);
+
+  useEffect(() => {
+    if (!portraitChoices.length) {
+      if (selectedPortraitRef) setSelectedPortraitRef("");
+      return;
+    }
+    if (!selectedPortrait) {
+      setSelectedPortraitRef(portraitChoices[0].portraitRef);
+    }
+  }, [portraitChoices, selectedPortrait, selectedPortraitRef]);
 
   useEffect(() => () => {
     if (stampTimerRef.current !== null) {
@@ -170,6 +227,7 @@ export function HomePage() {
         year: parsedYear,
         role,
         playerName: playerName.trim() || "无名书生",
+        ...(safePortraitRef(selectedPortraitRef) ? { portraitRef: safePortraitRef(selectedPortraitRef) } : {}),
         ...(role === "scholar" ? { familyBackground: scholarFamily } : {}),
         customSetting: customBackground.trim()
       });
@@ -265,6 +323,31 @@ export function HomePage() {
               <p className="roleNote">{getRoleNote(role)}</p>
             )}
             {role === "scholar" ? <p className="roleNote">{getScholarFamilyText(scholarFamily)}</p> : null}
+            {assetRegistry && portraitChoices.length ? (
+              <fieldset className="portraitChoiceField">
+                <legend>案主立绘</legend>
+                <div className="portraitChoiceGrid" data-visible-portraits={portraitChoices.length}>
+                  {portraitChoices.map((portrait: RuntimePortraitAsset) => (
+                    <label className="portraitChoiceCard" key={portrait.portraitRef}>
+                      <input
+                        type="radio"
+                        name="player-portrait"
+                        value={portrait.portraitRef}
+                        checked={selectedPortraitRef === portrait.portraitRef}
+                        onChange={() => setSelectedPortraitRef(portrait.portraitRef)}
+                        disabled={isStarting}
+                      />
+                      <Portrait
+                        registry={assetRegistry}
+                        portraitRef={portrait.portraitRef}
+                        label={portrait.roleLabel ?? portrait.role ?? "案主立绘"}
+                      />
+                      <span>{portrait.hasHighResOverride ? "高清重制" : "原图入谱"}</span>
+                    </label>
+                  ))}
+                </div>
+              </fieldset>
+            ) : null}
             <label className="backgroundField">
               自定背景
               <textarea

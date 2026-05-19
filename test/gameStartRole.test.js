@@ -11,6 +11,7 @@ const {
   ALLOWED_ROLES,
   createInitialState,
   normalizeInitialFamilyBackground,
+  normalizeInitialPortraitRef,
   normalizeInitialRole
 } = require("../src/game/initialState");
 const { createFetchSafeServer } = require("../test-helpers/fetchSafeServer");
@@ -72,6 +73,31 @@ test("createInitialState stores public native place for appointment avoidance", 
 
   assert.equal(worldState.player.nativePlace, "苏州府");
   assert.equal(worldState.setup.nativePlace, "苏州府");
+});
+
+test("createInitialState stores only safe audited portrait refs", () => {
+  const safeRef = "portrait-s76-10-player-scholar-f01-v1";
+  assert.equal(normalizeInitialPortraitRef(safeRef), safeRef);
+  assert.equal(
+    normalizeInitialPortraitRef("portrait-s73-10-player-capital-official-f01-v1"),
+    "portrait-s73-10-player-capital-official-f01-v1"
+  );
+  assert.equal(normalizeInitialPortraitRef("C:\\bad\\OPENAI_API_KEY"), "");
+  assert.equal(normalizeInitialPortraitRef("portrait-hidden-provider-key-v1"), "");
+
+  const worldState = createInitialState({
+    playerName: "立绘测试",
+    role: "scholar",
+    portraitRef: safeRef
+  });
+  const polluted = createInitialState({
+    playerName: "污染立绘",
+    role: "scholar",
+    portraitRef: "C:\\bad\\OPENAI_API_KEY"
+  });
+
+  assert.equal(worldState.player.portraitRef, safeRef);
+  assert.equal(polluted.player.portraitRef, null);
 });
 
 test("createInitialState stores scholar family background as public setup text only", () => {

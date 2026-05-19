@@ -20,6 +20,7 @@ type LoadingState = "idle" | "loading" | "ready" | "error";
 
 type StartGameInput = {
   readonly playerName: string;
+  readonly portraitRef?: string;
   readonly role: GameRole;
   readonly dynasty: string;
   readonly year: number;
