@@ -525,6 +525,38 @@ test("S76.7 exam page renders immersive safe exam flow without widening authorit
   );
 });
 
+test("S76.8 ranking page renders server-owned ranking views without widening authority", () => {
+  const rankingPageSource = readText("client/src/pages/RankingPage.tsx");
+  const styleSource = readText("client/src/styles/global.css");
+  const clientSmokeSource = readText("scripts/clientSmoke.js");
+  const rankingPageWithoutGuard = rankingPageSource.replace(/const unsafeRankingFragments[\s\S]*?\] as const;\r?\n/, "");
+  const runtimeCombined = `${rankingPageWithoutGuard}\n${styleSource}`;
+
+  assert.match(rankingPageSource, /export function RankingPage/);
+  assert.match(rankingPageSource, /useAssetRegistry/);
+  assert.match(rankingPageSource, /currentSession\?\.sessionId === sessionId/);
+  assert.match(rankingPageSource, /lastExamResult\?\.sessionId === sessionId/);
+  assert.match(rankingPageSource, /category: "scene", usage: "ranking_page", scene: "ranking_wall"/);
+  assert.match(rankingPageSource, /subcategory: "imperial_notice"/);
+  assert.match(rankingPageSource, /subcategory: "red_ink_smudge"/);
+  assert.match(rankingPageSource, /getRankingSource\(resultRecord, latestHistory\)/);
+  assert.doesNotMatch(rankingPageSource, /buildHonorFallbackRows|index \+ 1/);
+  assert.match(rankingPageSource, /rankingTopThree/);
+  assert.match(rankingPageSource, /服务器定榜名单/);
+  assert.match(rankingPageSource, /暂无公开防弊复核结果/);
+  assert.match(rankingPageSource, /本榜只录服务器定榜结果/);
+  assert.match(rankingPageSource, /前端不改名次、不补评分、不推断授官/);
+  assert.match(styleSource, /rankingFullScreen/);
+  assert.match(styleSource, /rankingTopThree/);
+  assert.match(styleSource, /rankingDetailPanel/);
+  assert.match(clientSmokeSource, /assertRankingFullScreen/);
+  assert.match(clientSmokeSource, /s76-ranking-fullscreen-mobile/);
+  assert.doesNotMatch(
+    runtimeCombined,
+    /\/api\/game\/state|\/api\/dev\/session-diagnostics|dangerouslySetInnerHTML|localStorage|sessionStorage|data\/sessions|raw audit|provider payload|OPENAI_API_KEY|DEEPSEEK_API_KEY|MIMO_API_KEY|ANTHROPIC_API_KEY/
+  );
+});
+
 test("S74.5 asset registry gates manifest assets before React components render portraits", () => {
   const assetRegistrySource = readText("client/src/assets/assetRegistry.ts");
   const portraitSource = readText("client/src/components/Portrait.tsx");
@@ -583,7 +615,8 @@ test("S74.7 client smoke verifies default UI start and safe route recovery", () 
   assert.match(clientSmokeSource, /clickSessionNavRoute/);
   assert.match(clientSmokeSource, /clickSessionNavRoute\(page, "科举"/);
   assert.match(clientSmokeSource, /assertExamFullScreen\(page, startedSessionId/);
-  assert.match(clientSmokeSource, /label: "皇榜"/);
+  assert.match(clientSmokeSource, /clickSessionNavRoute\(page, "皇榜"/);
+  assert.match(clientSmokeSource, /assertRankingFullScreen\(page, startedSessionId/);
   assert.match(clientSmokeSource, /label: "朝议"/);
   assert.match(clientSmokeSource, /label: "印匣"/);
   assert.match(clientSmokeSource, /unsafeClientApiPathPatterns/);

@@ -1529,6 +1529,220 @@ describe("S74.1 React client shell", () => {
     expect(document.body.textContent || "").not.toMatch(/provider payload|raw audit|hiddenNotes|OPENAI_API_KEY|data\/sessions|sk-[a-z0-9_-]{6,}|[a-z]:[\\/]/i);
   });
 
+  it("renders the S76.8 ranking page from server-owned exam views", async () => {
+    const sessionId = "16161616-1616-4616-8616-161616161616";
+    const rankingPayload = {
+      sessionId,
+      source: "server_player_visible_state_projection",
+      worldState: {
+        player: {
+          name: "顾衡",
+          role: "scholar",
+          examRank: "进士",
+          examHistory: [{
+            examName: "殿试",
+            ranking: [
+              { id: "player", place: 1, name: "顾衡", origin: "苏州府", score: 96, rankLabel: "一甲第一名", honorTitle: "状元", isPlayer: true, examinerComment: "对策明切，识见可任。", strengths: ["议论宏阔"], weaknesses: ["辞气可更凝练"] },
+              { id: "bad", place: 2, name: "provider payload sk-test-secret path=C:\\secret\\ranking.json", origin: "raw audit", score: 88, rankLabel: "一甲第二名", honorTitle: "榜眼", examinerComment: "hiddenNotes" }
+            ],
+            score: {
+              content_quality: { score: 95, comment: "切中时务。" },
+              argument_strength: { score: 94, comment: "层次分明。" },
+              literary_style: { score: 92, comment: "文气端雅。" },
+              classical_format: { score: 93, comment: "格式稳妥。" },
+              historical_appropriateness: { score: 96, comment: "不涉时错。" },
+              detailed_feedback: "服务器公开评语。"
+            },
+            authenticityCheck: {
+              flags: [{ label: "防弊检测通过", severity: "clear", detail: "未见公开扣罚事项。" }]
+            }
+          }]
+        }
+      },
+      examHonorView: {
+        publicSummary: "殿试放榜，服务器定顾衡为状元。",
+        latestHonor: { title: "状元", examName: "殿试", rankLabel: "一甲第一名", publicSummary: "服务器定榜。" },
+        authorityBoundary: "科名荣誉只读服务器定榜顺序。"
+      },
+      examinerPanelView: {
+        serverDecision: "服务器综合初评、复核和名额后定分定榜。"
+      },
+      appointmentTrackView: {
+        latestDecision: { officeTitle: "翰林院修撰", trackLabel: "馆选" },
+        publicSummary: "服务器定初授翰林院修撰。"
+      }
+    };
+    const fetchMock = vi.fn(async (url: string, options?: RequestInit) => {
+      if (url === "/assets/ui/ink-ui-manifest.json") {
+        return new Response(JSON.stringify({
+          ...buildMockAssetManifest(0),
+          assets: [
+            {
+              id: "ui-scene-ranking-wall-v1",
+              category: "scene",
+              subcategory: "ranking_wall",
+              usage: ["ranking_page"],
+              scene: "ranking_wall",
+              path: "/assets/ui/scenes/scene-ranking-wall-v1.webp",
+              thumbnailPath: "/assets/ui/thumbs/thumb-scene-ranking-wall-v1.webp",
+              fallbackRef: "fallback-paper-panel-v1",
+              reviewStatus: "approved",
+              visualReview: { status: "approved" },
+              safetyReview: { status: "approved" }
+            },
+            {
+              id: "ui-imperial-notice-paper-v1",
+              category: "material",
+              subcategory: "imperial_notice",
+              usage: ["ranking_page"],
+              path: "/assets/ui/materials/imperial-notice-paper-v1.webp",
+              thumbnailPath: "/assets/ui/thumbs/thumb-imperial-notice-paper-v1.webp",
+              fallbackRef: "fallback-paper-panel-v1",
+              reviewStatus: "approved",
+              visualReview: { status: "approved" },
+              safetyReview: { status: "approved" }
+            },
+            {
+              id: "ui-red-ink-smudge-v1",
+              category: "material",
+              subcategory: "red_ink_smudge",
+              usage: ["ranking_page"],
+              path: "/assets/ui/materials/red-ink-smudge-v1.webp",
+              thumbnailPath: "/assets/ui/thumbs/thumb-red-ink-smudge-v1.webp",
+              fallbackRef: "fallback-paper-panel-v1",
+              reviewStatus: "approved",
+              visualReview: { status: "approved" },
+              safetyReview: { status: "approved" }
+            }
+          ]
+        }), {
+          status: 200,
+          headers: { "Content-Type": "application/json" }
+        });
+      }
+      if (url === `/api/game/player-state/${sessionId}`) {
+        return new Response(JSON.stringify(rankingPayload), {
+          status: 200,
+          headers: { "Content-Type": "application/json" }
+        });
+      }
+      if (url === `/api/ai/quick-actions/${sessionId}`) {
+        return new Response(JSON.stringify({
+          schemaVersion: "s75.9-quick-actions.v1",
+          sessionId,
+          source: "mock-ai",
+          status: "ready",
+          quickActionSuggestions: []
+        }), {
+          status: 200,
+          headers: { "Content-Type": "application/json" }
+        });
+      }
+      throw new Error(`unexpected url: ${url} ${options?.method ?? "GET"}`);
+    });
+    vi.stubGlobal("fetch", fetchMock);
+    useGameSessionStore.setState({
+      currentSessionId: sessionId,
+      currentSession: rankingPayload,
+      lastExamResult: {
+        ...rankingPayload,
+        examId: "exam-ranking",
+        level: "palace_exam",
+        examName: "殿试",
+        ranking: rankingPayload.worldState.player.examHistory[0].ranking,
+        score: rankingPayload.worldState.player.examHistory[0].score,
+        promotionResult: { passed: true, officeTitle: "翰林院修撰" },
+        authenticityCheck: rankingPayload.worldState.player.examHistory[0].authenticityCheck
+      } as never,
+      status: "ready"
+    });
+
+    renderRoute(`/game/${sessionId}/ranking`);
+
+    await screen.findByRole("heading", { name: "皇榜" });
+    expect(document.querySelector(".rankingFullScreen")).toBeTruthy();
+    expect(document.querySelector(".rankingTopThree")).toBeTruthy();
+    expect(screen.getByText("服务器定榜名单")).toBeTruthy();
+    expect(screen.getAllByText("顾衡").length).toBeGreaterThan(0);
+    expect(document.querySelector(".rankingList li.isPlayer")).toBeTruthy();
+    expect(screen.getByText("翰林院修撰")).toBeTruthy();
+    expect(screen.getByText("切中时务。")).toBeTruthy();
+    expect(screen.getByText(/本榜只录服务器定榜结果/)).toBeTruthy();
+    expect(fetchMock.mock.calls.map(([url]) => String(url))).not.toContain("/api/game/turn");
+    expect(fetchMock.mock.calls.map(([url]) => String(url)).some((url) => /\/api\/game\/state|\/api\/dev/.test(url))).toBe(false);
+    expect(document.body.textContent || "").not.toMatch(/provider payload|raw audit|hiddenNotes|sk-test-secret|path=|C:\\|OPENAI_API_KEY|data\/sessions/i);
+  });
+
+  it("keeps S76.8 ranking empty when the server has not returned a ranking", async () => {
+    const sessionId = "17171717-1717-4717-8717-171717171717";
+    const payload = {
+      sessionId,
+      source: "server_player_visible_state_projection",
+      worldState: {
+        player: {
+          name: "沈修",
+          role: "scholar",
+          examHistory: [{
+            examName: "会试",
+            score: {
+              content_quality: { score: 88, comment: "文义清楚。" }
+            }
+          }]
+        }
+      },
+      examHonorView: {
+        honors: [{ title: "会元", rankLabel: "第一名", publicSummary: "荣誉摘要只作科名归档。" }],
+        publicSummary: "服务器尚未公开本场正榜。",
+        authorityBoundary: "科名荣誉不能补成榜单。"
+      },
+      appointmentTrackView: {},
+      examinerPanelView: {}
+    };
+    const fetchMock = vi.fn(async (url: string) => {
+      if (url === "/assets/ui/ink-ui-manifest.json") {
+        return new Response(JSON.stringify(buildMockAssetManifest(0)), {
+          status: 200,
+          headers: { "Content-Type": "application/json" }
+        });
+      }
+      if (url === `/api/game/player-state/${sessionId}`) {
+        return new Response(JSON.stringify(payload), {
+          status: 200,
+          headers: { "Content-Type": "application/json" }
+        });
+      }
+      if (url === `/api/ai/quick-actions/${sessionId}`) {
+        return new Response(JSON.stringify({
+          schemaVersion: "s75.9-quick-actions.v1",
+          sessionId,
+          source: "mock-ai",
+          status: "ready",
+          quickActionSuggestions: []
+        }), {
+          status: 200,
+          headers: { "Content-Type": "application/json" }
+        });
+      }
+      throw new Error(`unexpected url: ${url}`);
+    });
+    vi.stubGlobal("fetch", fetchMock);
+    useGameSessionStore.setState({
+      currentSessionId: sessionId,
+      currentSession: payload,
+      lastExamResult: null,
+      status: "ready"
+    });
+
+    renderRoute(`/game/${sessionId}/ranking`);
+
+    await screen.findByRole("heading", { name: "皇榜" });
+    expect(screen.getByText(/榜文尚未张挂/)).toBeTruthy();
+    expect(screen.getByText(/暂无公开防弊复核结果/)).toBeTruthy();
+    expect(document.querySelector(".rankingList")).toBeFalsy();
+    expect(document.querySelectorAll(".rankingList li").length).toBe(0);
+    expect(document.body.textContent || "").not.toMatch(/会元|第一名|防弊检测通过|未见公开扣罚事项/);
+  });
+
   it("loads the S74.5 manifest-backed portrait ledger in small lazy pages", async () => {
     const fetchMock = mockAssetManifestFetch();
     renderRoute("/game/smoke-session/people");

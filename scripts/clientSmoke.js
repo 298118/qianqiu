@@ -376,6 +376,51 @@ async function assertExamFullScreen(page, sessionId, screenshotsDir, screenshotN
   return captureScreenshot(page, screenshotsDir, screenshotName);
 }
 
+async function assertRankingFullScreen(page, sessionId, screenshotsDir, screenshotName = "s76-ranking-fullscreen-desktop") {
+  await page.locator(".rankingFullScreen").waitFor({ timeout: 10000 });
+  const snapshot = await page.evaluate(({ id, tokens }) => {
+    const shell = document.querySelector(".rankingFullScreen");
+    const hero = document.querySelector(".rankingHero");
+    const board = document.querySelector(".rankingNoticeBoard");
+    const text = shell?.textContent || "";
+    const bodyText = document.body.innerText || "";
+    const background = hero ? getComputedStyle(hero).backgroundImage : "";
+    const html = document.documentElement;
+    return {
+      path: window.location.pathname,
+      expectedPath: `/game/${id}/ranking`,
+      hasHero: Boolean(hero),
+      hasTopThree: Boolean(document.querySelector(".rankingTopThree")),
+      hasBoard: Boolean(board),
+      hasBoundary: text.includes("本榜只录服务器定榜结果"),
+      hasServerList: text.includes("服务器定榜名单"),
+      hasListOrEmpty: Boolean(document.querySelector(".rankingList")) || text.includes("榜文尚未张挂"),
+      background,
+      horizontalOverflow: html.scrollWidth > html.clientWidth + 4,
+      forbiddenText: bodyText.match(/\/api\/game\/state|\/api\/dev\/session-diagnostics|provider payload|raw audit|hiddenNotes|OPENAI_API_KEY|data\/sessions|完整提示词|本地路径|密钥|sk-[a-z0-9_-]{6,}|[a-z]:[\\/]/gi) || [],
+      hiddenLeaks: tokens.filter((token) => bodyText.includes(token))
+    };
+  }, { id: sessionId, tokens: hiddenTextTokens });
+
+  const failures = [];
+  if (snapshot.path !== snapshot.expectedPath) failures.push(`path was ${snapshot.path}`);
+  if (!snapshot.hasHero) failures.push("missing ranking hero");
+  if (!snapshot.hasTopThree) failures.push("missing top-three ranking seals");
+  if (!snapshot.hasBoard) failures.push("missing ranking notice board");
+  if (!snapshot.hasBoundary) failures.push("missing server-owned ranking boundary");
+  if (!snapshot.hasServerList) failures.push("missing server-owned ranking list heading");
+  if (!snapshot.hasListOrEmpty) failures.push("missing ranking list or empty state");
+  if (!snapshot.background.includes("/assets/ui/")) failures.push("ranking hero did not use a reviewed UI asset");
+  if (snapshot.horizontalOverflow) failures.push("ranking page has horizontal overflow");
+  if (snapshot.forbiddenText.length) failures.push(`unsafe text leaked: ${snapshot.forbiddenText.join(", ")}`);
+  if (snapshot.hiddenLeaks.length) failures.push(`hidden text leaked: ${snapshot.hiddenLeaks.join(", ")}`);
+  if (failures.length) {
+    throw new Error(`S76.8 ranking page smoke failed: ${failures.join("; ")}`);
+  }
+
+  return captureScreenshot(page, screenshotsDir, screenshotName);
+}
+
 async function startMockMagistrateThroughHome(page, baseUrl) {
   await page.goto(`${baseUrl}/`, { waitUntil: "networkidle" });
   await page.getByLabel("姓名").fill("烟测知县");
@@ -1205,8 +1250,16 @@ async function runClientSmoke(options = {}) {
       })
     );
 
+    const rankingPath = `/game/${startedSessionId}/ranking`;
+    await clickSessionNavRoute(page, "皇榜", rankingPath);
+    screenshots.push(await assertRankingFullScreen(page, startedSessionId, options.screenshotsDir));
+    screenshots.push(
+      await assertRouteRefresh(page, rankingPath, "s76-ranking-fullscreen-refresh-desktop", options.screenshotsDir, {
+        readySelector: ".rankingFullScreen"
+      })
+    );
+
     const sessionRouteChecks = [
-      { label: "皇榜", path: `/game/${startedSessionId}/ranking`, selector: "#ranking-title", screenshot: "s74-react-ranking-refresh-desktop" },
       { label: "朝议", path: `/game/${startedSessionId}/court`, selector: "#court-title", screenshot: "s74-react-court-refresh-desktop" },
       { label: "印匣", path: `/game/${startedSessionId}/settings`, selector: "#settings-title", screenshot: "s74-react-settings-refresh-desktop" }
     ];
@@ -1269,6 +1322,8 @@ async function runClientSmoke(options = {}) {
     }
     await page.goto(`${baseUrl}${examPath}`, { waitUntil: "networkidle" });
     screenshots.push(await assertExamFullScreen(page, startedSessionId, options.screenshotsDir, "s76-exam-fullscreen-mobile", { clickQuestion: false }));
+    await page.goto(`${baseUrl}${rankingPath}`, { waitUntil: "networkidle" });
+    screenshots.push(await assertRankingFullScreen(page, startedSessionId, options.screenshotsDir, "s76-ranking-fullscreen-mobile"));
     screenshots.push(await assertMobileInkbox(page, options.screenshotsDir));
     screenshots.push(await assertReactClientPage(page, baseUrl, "/", "s74-react-home-mobile", options.screenshotsDir));
     await context.close();
@@ -1299,7 +1354,8 @@ async function runClientSmoke(options = {}) {
         "desktop-archive-refresh",
         "desktop-exam-fullscreen",
         "desktop-exam-fullscreen-refresh",
-        "desktop-ranking-refresh",
+        "desktop-ranking-fullscreen",
+        "desktop-ranking-fullscreen-refresh",
         "desktop-court-refresh",
         "desktop-settings-refresh",
         "desktop-magistrate-panel",
@@ -1308,6 +1364,7 @@ async function runClientSmoke(options = {}) {
         "desktop-emperor-panel",
         "mobile-memorial-composer",
         "mobile-exam-fullscreen",
+        "mobile-ranking-fullscreen",
         "mobile-inkbox-tabs",
         "mobile-home"
       ]
