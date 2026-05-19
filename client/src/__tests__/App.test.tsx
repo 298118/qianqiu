@@ -314,8 +314,8 @@ describe("S74.1 React client shell", () => {
   it("keeps the session routes inside the React Router tree", () => {
     renderRoute("/game/smoke-session/map");
 
-    expect(screen.getByRole("heading", { name: "主卷" })).toBeTruthy();
-    expect(screen.getByRole("heading", { name: "舆图" })).toBeTruthy();
+    expect(screen.getByRole("heading", { name: "山河舆图" })).toBeTruthy();
+    expect(screen.queryByRole("heading", { name: "主卷" })).toBeNull();
     expect(document.body.textContent || "").not.toMatch(/OPENAI_API_KEY|hiddenNotes|data\/sessions|provider payload/i);
   });
 
@@ -1922,14 +1922,25 @@ describe("S74.1 React client shell", () => {
               summary: "号舍灯火未歇。",
               layout: { x: 0.5, y: 0.5 },
               actionDraftRefs: ["draft-exam-road"]
+            },
+            {
+              mapEntityRef: "geo:polluted",
+              label: "provider payload sk-test-secret path=C:\\secret\\map.json",
+              summary: "hiddenNotes raw audit",
+              layout: { x: 0.45, y: 0.48 },
+              actionDraftRefs: ["draft-polluted"]
             }
           ],
           routes: [],
-          eventEffects: [],
+          eventEffects: [{ targetRef: "geo:exam-hall", label: "科场近讯", kind: "exam", severity: 0.78 }],
           actionDrafts: {
             "draft-exam-road": {
               label: "写入赴试草稿",
               actionText: "沿驿路赴贡院，查问近日考期。"
+            },
+            "draft-polluted": {
+              label: "provider payload",
+              actionText: "path=C:\\secret\\map.json hiddenNotes"
             }
           },
           hiddenNotice: "mapRuntimeView 只含服务器安全投影。"
@@ -1940,9 +1951,13 @@ describe("S74.1 React client shell", () => {
 
     renderRoute("/game/s74-map-session/map");
 
+    await screen.findByRole("heading", { name: "山河舆图" });
     await screen.findByRole("button", { name: "贡院" });
+    expect(screen.getByText("公开近事")).toBeTruthy();
+    expect(screen.getByText("科场近讯")).toBeTruthy();
+    expect(screen.getByText(/已接入 2 处地点、0 条路线、1 项近事/)).toBeTruthy();
     fireEvent.click(screen.getByRole("button", { name: "贡院" }));
-    expect(screen.getByText("号舍灯火未歇。")).toBeTruthy();
+    expect(screen.getAllByText("号舍灯火未歇。").length).toBeGreaterThan(0);
 
     fireEvent.click(screen.getByRole("button", { name: "写入赴试草稿" }));
     expect(useUiStateStore.getState().actionDraft).toMatchObject({
@@ -1950,6 +1965,20 @@ describe("S74.1 React client shell", () => {
       targetPage: "game",
       text: "沿驿路赴贡院，查问近日考期。"
     });
-    expect(document.body.textContent || "").not.toMatch(/raw audit|provider payload|hiddenNotes|OPENAI_API_KEY|data\/sessions/i);
+
+    fireEvent.click(screen.getByRole("button", { name: "据此拟稿" }));
+    expect(useUiStateStore.getState().actionDraft).toMatchObject({
+      source: "map-runtime",
+      targetPage: "game",
+      text: expect.stringContaining("科场近讯")
+    });
+
+    fireEvent.click(screen.getByLabelText("地点"));
+    await waitFor(() => expect(screen.queryByRole("button", { name: "贡院" })).toBeNull());
+    fireEvent.click(screen.getByLabelText("地点"));
+    await screen.findByRole("button", { name: "贡院" });
+
+    expect(screen.getByRole("link", { name: "入局势簿" }).getAttribute("href")).toBe("/game/s74-map-session/archive");
+    expect(document.body.textContent || "").not.toMatch(/raw audit|provider payload|hiddenNotes|OPENAI_API_KEY|data\/sessions|sk-test-secret|C:\\|path=/i);
   });
 });

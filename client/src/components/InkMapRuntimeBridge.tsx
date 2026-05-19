@@ -22,6 +22,12 @@ type ActiveTooltip = {
   readonly position: ScreenPosition;
 };
 
+export type VisibleMapLayers = {
+  readonly places?: boolean;
+  readonly routes?: boolean;
+  readonly events?: boolean;
+};
+
 type MapRendererOptions = {
   readonly onRenderLabel?: (ref: MapRuntimeRef, position: ScreenPosition) => void;
   readonly onClickRef?: (ref: MapRuntimeRef, position: ScreenPosition) => void;
@@ -45,6 +51,32 @@ declare global {
 }
 
 const scriptPromises = new Map<string, Promise<void>>();
+
+const unsafeMapRuntimeTextFragments = [
+  "/api/game/" + "state",
+  "/api/dev/" + "session-diagnostics",
+  "data" + "/" + "sessions",
+  "data" + "\\" + "sessions",
+  "file" + "://",
+  "raw",
+  "prov" + "ider",
+  "pro" + "mpt",
+  "hid" + "den",
+  "key",
+  "path",
+  "hidden" + "Notes",
+  "OPENAI" + "_API" + "_KEY",
+  "DEEPSEEK" + "_API" + "_KEY",
+  "MIMO" + "_API" + "_KEY",
+  "ANTHROPIC" + "_API" + "_KEY",
+  "完整" + "提示词",
+  "提示" + "词",
+  "本地" + "路径",
+  "密" + "钥",
+  "隐" + "藏",
+  "私" + "档",
+  "模型" + "原始"
+] as const;
 
 function isBrowserRuntime() {
   return typeof window !== "undefined" && typeof document !== "undefined";
@@ -101,7 +133,7 @@ function isUsableMapRuntimeView(view: MapRuntimeView | null | undefined): view i
 }
 
 function toLabelId(ref: MapRuntimeRef, index: number) {
-  return ref.mapEntityRef || ref.sourceRef || `map-label-${index}`;
+  return `${ref.mapEntityRef || ref.sourceRef || "map-label"}-${index}`;
 }
 
 function clampTooltipPosition(value: number) {
@@ -110,19 +142,39 @@ function clampTooltipPosition(value: number) {
 }
 
 function isSafeActionDraft(draft: MapRuntimeActionDraft | undefined): draft is MapRuntimeActionDraft & { readonly actionText: string } {
-  return typeof draft?.actionText === "string" && draft.actionText.trim().length > 0;
+  return typeof draft?.actionText === "string" && safeMapRuntimeText(draft.actionText, "", 140).length > 0;
+}
+
+function safeMapRuntimeText(value: unknown, fallback: string, maxLength = 80) {
+  const text = typeof value === "string" && value.trim() ? value.trim() : fallback;
+  const normalized = text.toLowerCase();
+  if (/[a-z]:[\\/]/i.test(text) || /sk-[a-z0-9_-]{6,}/i.test(text)) return fallback;
+  if (unsafeMapRuntimeTextFragments.some((fragment) => normalized.includes(fragment.toLowerCase()))) return fallback;
+  return text.slice(0, maxLength);
+}
+
+function filterMapRuntimeView(view: MapRuntimeView | null | undefined, visibleLayers: VisibleMapLayers): MapRuntimeView | null | undefined {
+  if (!isUsableMapRuntimeView(view)) return view;
+  return {
+    ...view,
+    refs: visibleLayers.places === false ? [] : view.refs,
+    routes: visibleLayers.routes === false ? [] : view.routes,
+    eventEffects: visibleLayers.events === false ? [] : view.eventEffects
+  };
 }
 
 type InkMapRuntimeBridgeProps = {
   readonly mapRuntimeView?: MapRuntimeView | null;
   readonly mapMotionEnabled: boolean;
+  readonly visibleLayers?: VisibleMapLayers;
   readonly onActionDraft: (text: string) => void;
 };
 
-export function InkMapRuntimeBridge({ mapRuntimeView, mapMotionEnabled, onActionDraft }: InkMapRuntimeBridgeProps) {
+export function InkMapRuntimeBridge({ mapRuntimeView, mapMotionEnabled, visibleLayers = {}, onActionDraft }: InkMapRuntimeBridgeProps) {
   const canvasHostRef = useRef<HTMLDivElement | null>(null);
   const rendererRef = useRef<MapRendererInstance | null>(null);
-  const currentViewRef = useRef<MapRuntimeView | null>(mapRuntimeView ?? null);
+  const filteredMapRuntimeView = useMemo(() => filterMapRuntimeView(mapRuntimeView, visibleLayers), [mapRuntimeView, visibleLayers]);
+  const currentViewRef = useRef<MapRuntimeView | null>(filteredMapRuntimeView ?? null);
   const [status, setStatus] = useState<"waiting" | "loading" | "ready" | "fallback" | "error">("waiting");
   const [labels, setLabels] = useState<LabelMarker[]>([]);
   const [activeTooltip, setActiveTooltip] = useState<ActiveTooltip | null>(null);
@@ -142,14 +194,15 @@ export function InkMapRuntimeBridge({ mapRuntimeView, mapMotionEnabled, onAction
   }, [destroyRenderer]);
 
   useEffect(() => {
-    currentViewRef.current = mapRuntimeView ?? null;
-  }, [mapRuntimeView]);
+    currentViewRef.current = filteredMapRuntimeView ?? null;
+    setActiveTooltip(null);
+  }, [filteredMapRuntimeView]);
 
   useEffect(() => {
     let cancelled = false;
 
     async function mountRenderer() {
-      if (!isUsableMapRuntimeView(mapRuntimeView)) {
+      if (!isUsableMapRuntimeView(filteredMapRuntimeView)) {
         destroyRenderer();
         setLabels([]);
         setActiveTooltip(null);
@@ -171,7 +224,7 @@ export function InkMapRuntimeBridge({ mapRuntimeView, mapMotionEnabled, onAction
                 ...currentLabels,
                 {
                   id: toLabelId(ref, currentLabels.length),
-                  label: ref.label || "舆图节点",
+                  label: safeMapRuntimeText(ref.label, "舆图节点", 36),
                   position,
                   ref
                 }
@@ -195,7 +248,7 @@ export function InkMapRuntimeBridge({ mapRuntimeView, mapMotionEnabled, onAction
         }
 
         setLabels([]);
-        rendererRef.current.update(mapRuntimeView);
+        rendererRef.current.update(filteredMapRuntimeView);
         if (!cancelled) setStatus("ready");
       } catch {
         if (!cancelled) {
@@ -210,7 +263,7 @@ export function InkMapRuntimeBridge({ mapRuntimeView, mapMotionEnabled, onAction
     return () => {
       cancelled = true;
     };
-  }, [destroyRenderer, mapMotionEnabled, mapRuntimeView]);
+  }, [destroyRenderer, filteredMapRuntimeView, mapMotionEnabled]);
 
   const activeDrafts = useMemo(() => {
     const refs = activeTooltip?.ref.actionDraftRefs ?? [];
@@ -221,6 +274,9 @@ export function InkMapRuntimeBridge({ mapRuntimeView, mapMotionEnabled, onAction
         isSafeActionDraft(entry.draft)
       );
   }, [activeTooltip, mapRuntimeView]);
+
+  const activeTooltipTitle = safeMapRuntimeText(activeTooltip?.ref.label, "地图近事", 40);
+  const activeTooltipSummary = safeMapRuntimeText(activeTooltip?.ref.summary, "暂无更多公开摘要。", 120);
 
   const fallbackText = useMemo(() => {
     if (status === "loading") return "正在铺开安全舆图投影...";
@@ -259,13 +315,18 @@ export function InkMapRuntimeBridge({ mapRuntimeView, mapMotionEnabled, onAction
                 top: `${clampTooltipPosition(activeTooltip.position.y)}px`
               }}
             >
-              <strong>{activeTooltip.ref.label || "地图近事"}</strong>
-              {activeTooltip.ref.summary ? <p>{activeTooltip.ref.summary}</p> : null}
+              <div className="inkMapTooltipHeader">
+                <strong>{activeTooltipTitle}</strong>
+                <button className="inkMapTooltipClose" type="button" aria-label="收起地图近事" onClick={() => setActiveTooltip(null)}>
+                  收
+                </button>
+              </div>
+              <p>{activeTooltipSummary}</p>
               {activeDrafts.length ? (
                 <div className="buttonRow">
                   {activeDrafts.map(({ draftId, draft }) => (
-                    <button className="paperButton" key={draftId} type="button" onClick={() => onActionDraft(draft.actionText)}>
-                      {draft.label || "写入行动草稿"}
+                    <button className="paperButton" key={draftId} type="button" onClick={() => onActionDraft(safeMapRuntimeText(draft.actionText, "", 140))}>
+                      {safeMapRuntimeText(draft.label, "写入行动草稿", 32)}
                     </button>
                   ))}
                 </div>

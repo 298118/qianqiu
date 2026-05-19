@@ -1027,6 +1027,8 @@ Manifest 示例：
 
 ### S76.9 独立舆图页与地图重构
 
+状态：已完成。`/game/:sessionId/map` 已直接渲染“山河舆图”独立页面，不再先铺主卷案台；React 页面复用 S72 `InkMapRuntimeBridge` / `public/mapRenderer.js` / PixiJS 运行时，提供大画布、地点/驿路/近事图层筛选、公开近事局势簿摘录、入局势簿/回主卷跳转、tooltip 关闭、资源失败 fallback 和公开近事“据此拟稿”。坐标和 `layoutPath` 仍只用于浏览器布局，不进入 prompt、AI 工具、resolver、URL、本地存储或行动事实；图层筛选只影响前端显示，行动按钮只写草稿或导航。
+
 实现功能：
 
 - 将 S72 地图从主界面小面板升级为 `/game/:sessionId/map` 独立“舆图”页。

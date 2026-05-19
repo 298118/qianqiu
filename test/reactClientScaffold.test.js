@@ -601,6 +601,35 @@ test("S74.6 React map bridge wraps S72 renderer without old frontend globals", (
   );
 });
 
+test("S76.9 map page is an independent safe map surface", () => {
+  const bridgeSource = readText("client/src/components/InkMapRuntimeBridge.tsx");
+  const gamePageSource = readText("client/src/pages/GamePage.tsx");
+  const mapPageSource = readText("client/src/pages/MapPage.tsx");
+  const styleSource = readText("client/src/styles/global.css");
+  const clientSmokeSource = readText("scripts/clientSmoke.js");
+  const combined = `${bridgeSource}\n${gamePageSource}\n${mapPageSource}\n${styleSource}`;
+
+  assert.match(gamePageSource, /isIndependentMapRoute/);
+  assert.match(gamePageSource, /return <Outlet \/>/);
+  assert.match(mapPageSource, /mapFullScreen/);
+  assert.match(mapPageSource, /山河舆图/);
+  assert.match(mapPageSource, /visibleLayers/);
+  assert.match(mapPageSource, /入局势簿/);
+  assert.match(mapPageSource, /据此拟稿/);
+  assert.match(mapPageSource, /显示坐标只用于浏览器布局/);
+  assert.match(bridgeSource, /filterMapRuntimeView/);
+  assert.match(bridgeSource, /visibleLayers\.places/);
+  assert.match(bridgeSource, /safeMapRuntimeText/);
+  assert.match(styleSource, /\.mapImmersiveLayout/);
+  assert.match(styleSource, /\.mapSituationLedger/);
+  assert.match(styleSource, /\.inkMapTooltipClose/);
+  assert.match(clientSmokeSource, /s74-react-map-runtime-desktop/);
+  assert.doesNotMatch(
+    combined,
+    /dangerouslySetInnerHTML|\/api\/game\/state|\/api\/dev\/session-diagnostics|public\/app\.js|#action-input|#information-panel|localStorage|sessionStorage|data\/sessions|raw audit|provider payload|OPENAI_API_KEY|DEEPSEEK_API_KEY|MIMO_API_KEY|ANTHROPIC_API_KEY/
+  );
+});
+
 test("S74.7 client smoke verifies default UI start and safe route recovery", () => {
   const clientSmokeSource = readText("scripts/clientSmoke.js");
   const appShellSource = readText("client/src/components/AppShell.tsx");

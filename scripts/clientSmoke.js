@@ -1167,6 +1167,11 @@ async function runClientSmoke(options = {}) {
       const canvas = bridge?.querySelector("canvas");
       const labels = [...document.querySelectorAll(".inkMapLabel")];
       return {
+        hasFullScreen: Boolean(document.querySelector(".mapFullScreen")),
+        hasLayerControls: document.querySelectorAll(".mapLayerToggle").length >= 3,
+        hasSituationLedger: Boolean(document.querySelector(".mapSituationLedger")),
+        hasArchiveJump: [...document.querySelectorAll(".mapFullScreen a")].some((link) => (link.textContent || "").includes("入局势簿")),
+        hasBoundary: (document.body.innerText || "").includes("地图显示坐标只用于浏览器布局"),
         status: bridge?.getAttribute("data-map-status"),
         motion: bridge?.getAttribute("data-map-motion"),
         canvasWidth: canvas?.clientWidth || 0,
@@ -1175,6 +1180,9 @@ async function runClientSmoke(options = {}) {
         forbiddenText: (document.body.innerText || "").match(/public\/app\.js|#action-input|#information-panel|provider payload|raw audit|hiddenNotes|OPENAI_API_KEY/gi) || []
       };
     });
+    if (!mapRuntime.hasFullScreen || !mapRuntime.hasLayerControls || !mapRuntime.hasSituationLedger || !mapRuntime.hasArchiveJump || !mapRuntime.hasBoundary) {
+      throw new Error(`React map runtime missing S76.9 independent map shell: ${JSON.stringify(mapRuntime)}`);
+    }
     if (mapRuntime.motion !== "reduced") {
       throw new Error(`React map runtime ignored reduced display preference: ${JSON.stringify(mapRuntime)}`);
     }
@@ -1187,6 +1195,14 @@ async function runClientSmoke(options = {}) {
     if (mapRuntime.forbiddenText.length) {
       throw new Error(`React map runtime leaked forbidden text: ${mapRuntime.forbiddenText.join(", ")}`);
     }
+    await page.getByLabel("地点").uncheck();
+    await page.waitForFunction(() => document.querySelectorAll(".inkMapLabel").length === 0);
+    await page.getByLabel("地点").check();
+    await page.locator(".inkMapLabel").first().waitFor({ timeout: 10000 });
+    await page.locator(".inkMapLabel").first().click();
+    await page.locator(".inkMapTooltip").waitFor({ timeout: 10000 });
+    await page.getByRole("button", { name: "收起地图近事" }).click();
+    await page.locator(".inkMapTooltip").waitFor({ state: "detached", timeout: 10000 });
     screenshots.push(
       await assertRouteRefresh(page, runtimeMapPath, "s74-react-map-runtime-refresh-desktop", options.screenshotsDir, {
         readySelector: ".inkMapRuntimeBridge canvas"
@@ -1324,6 +1340,34 @@ async function runClientSmoke(options = {}) {
     screenshots.push(await assertExamFullScreen(page, startedSessionId, options.screenshotsDir, "s76-exam-fullscreen-mobile", { clickQuestion: false }));
     await page.goto(`${baseUrl}${rankingPath}`, { waitUntil: "networkidle" });
     screenshots.push(await assertRankingFullScreen(page, startedSessionId, options.screenshotsDir, "s76-ranking-fullscreen-mobile"));
+    await page.goto(`${baseUrl}${runtimeMapPath}`, { waitUntil: "networkidle" });
+    screenshots.push(
+      await assertCurrentReactClientPage(page, runtimeMapPath, "s76-map-fullscreen-mobile", options.screenshotsDir, {
+        readySelector: ".mapFullScreen .inkMapRuntimeBridge canvas"
+      })
+    );
+    const mobileMap = await page.evaluate(() => {
+      const html = document.documentElement;
+      const stage = document.querySelector(".mapFullScreen .inkMapStage")?.getBoundingClientRect();
+      return {
+        hasFullScreen: Boolean(document.querySelector(".mapFullScreen")),
+        hasLayerControls: document.querySelectorAll(".mapLayerToggle").length >= 3,
+        hasSituationLedger: Boolean(document.querySelector(".mapSituationLedger")),
+        stageHeight: stage?.height || 0,
+        viewportHeight: window.innerHeight,
+        horizontalOverflow: html.scrollWidth > html.clientWidth + 2,
+        forbiddenText: (document.body.innerText || "").match(/public\/app\.js|#action-input|#information-panel|provider payload|raw audit|hiddenNotes|OPENAI_API_KEY/gi) || []
+      };
+    });
+    if (!mobileMap.hasFullScreen || !mobileMap.hasLayerControls || !mobileMap.hasSituationLedger || mobileMap.stageHeight < mobileMap.viewportHeight * 0.45) {
+      throw new Error(`S76.9 mobile map is missing the independent map layout: ${JSON.stringify(mobileMap)}`);
+    }
+    if (mobileMap.horizontalOverflow) {
+      throw new Error(`S76.9 mobile map caused horizontal overflow: ${JSON.stringify(mobileMap)}`);
+    }
+    if (mobileMap.forbiddenText.length) {
+      throw new Error(`S76.9 mobile map leaked forbidden text: ${mobileMap.forbiddenText.join(", ")}`);
+    }
     screenshots.push(await assertMobileInkbox(page, options.screenshotsDir));
     screenshots.push(await assertReactClientPage(page, baseUrl, "/", "s74-react-home-mobile", options.screenshotsDir));
     await context.close();
@@ -1365,6 +1409,7 @@ async function runClientSmoke(options = {}) {
         "mobile-memorial-composer",
         "mobile-exam-fullscreen",
         "mobile-ranking-fullscreen",
+        "mobile-map-fullscreen",
         "mobile-inkbox-tabs",
         "mobile-home"
       ]

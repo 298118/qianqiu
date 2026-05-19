@@ -1,4 +1,4 @@
-import { NavLink, Outlet, useParams } from "react-router";
+import { NavLink, Outlet, useLocation, useParams } from "react-router";
 import { BookOpen, FileText, Landmark, Map, ScrollText, Settings, Users } from "lucide-react";
 import { useEffect, useMemo, type CSSProperties } from "react";
 import { useAssetRegistry } from "../assets/useAssetRegistry";
@@ -125,6 +125,7 @@ function getKnownRole(role: unknown) {
 
 export function GamePage() {
   const { sessionId = "s74-preview" } = useParams();
+  const location = useLocation();
   const { registry } = useAssetRegistry();
   const loadSession = useGameSessionStore((state) => state.loadSession);
   const submitTurn = useGameSessionStore((state) => state.submitTurn);
@@ -167,6 +168,7 @@ export function GamePage() {
     { label: "审计", ready: Boolean(routeViews?.hasAuditSummaryView) }
   ];
   const activeSafeViewCount = safeViewItems.filter((item) => item.ready).length;
+  const isIndependentMapRoute = location.pathname.endsWith("/map");
 
   useEffect(() => {
     if (!isRunnableSessionId(sessionId)) return;
@@ -188,6 +190,10 @@ export function GamePage() {
       await submitTurn(sessionId, text.trim());
     } catch {
     }
+  }
+
+  if (isIndependentMapRoute) {
+    return <Outlet />;
   }
 
   return (

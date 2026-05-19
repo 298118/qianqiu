@@ -1675,6 +1675,185 @@ button:disabled {
   border-color: rgba(142, 47, 39, 0.28);
 }
 
+.mapFullScreen {
+  display: grid;
+  gap: 16px;
+  min-height: calc(100vh - 66px);
+  padding: clamp(16px, 3vw, 34px);
+  background:
+    linear-gradient(180deg, rgba(235, 221, 195, 0.76), rgba(231, 213, 179, 0.34)),
+    url("/assets/ui/materials/paper-xuan-base-v1.webp") center / 720px repeat;
+}
+
+.mapHero {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(260px, 0.48fr);
+  align-items: end;
+  gap: 18px;
+}
+
+.mapHero h1 {
+  margin: 0 0 8px;
+  color: #6f2d26;
+  font-size: clamp(3rem, 8vw, 6.4rem);
+  line-height: 0.96;
+}
+
+.mapHero p:last-child {
+  max-width: 760px;
+  margin: 0;
+  color: #3d2d22;
+  line-height: 1.8;
+}
+
+.mapHeroStats,
+.mapStatusRail {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  margin: 0;
+}
+
+.mapHeroStats div {
+  border: 1px solid rgba(84, 60, 43, 0.24);
+  background: rgba(255, 248, 230, 0.62);
+  padding: 10px;
+}
+
+.mapHeroStats dt {
+  color: #7a6048;
+  font-size: 0.76rem;
+  font-weight: 800;
+}
+
+.mapHeroStats dd {
+  margin: 4px 0 0;
+  color: #7b241f;
+  font-size: 1.5rem;
+  font-weight: 900;
+}
+
+.mapCommandDeck {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  border-block: 1px solid rgba(84, 60, 43, 0.18);
+  padding-block: 10px;
+}
+
+.mapLayerControls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.mapLayerToggle {
+  display: inline-flex;
+  min-height: 40px;
+  align-items: center;
+  gap: 8px;
+  border: 1px solid rgba(84, 60, 43, 0.28);
+  background: rgba(255, 248, 230, 0.62);
+  color: #4c392b;
+  font-weight: 800;
+  padding: 8px 10px;
+}
+
+.mapLayerToggle input {
+  width: 16px;
+  height: 16px;
+}
+
+.mapLayerToggle:has(input:checked) {
+  border-color: rgba(142, 47, 39, 0.68);
+  background: rgba(165, 58, 47, 0.1);
+  color: #7b241f;
+}
+
+.mapImmersiveLayout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(300px, 0.34fr);
+  gap: 16px;
+  align-items: stretch;
+}
+
+.mapFullScreen .inkMapRuntimeBridge {
+  min-width: 0;
+  margin: 0;
+}
+
+.mapFullScreen .inkMapStage {
+  min-height: clamp(520px, 72vh, 860px);
+}
+
+.mapSituationLedger {
+  display: grid;
+  align-content: start;
+  gap: 14px;
+  min-width: 0;
+  border: 1px solid rgba(84, 60, 43, 0.25);
+  background:
+    linear-gradient(135deg, rgba(255, 248, 230, 0.86), rgba(229, 211, 178, 0.72)),
+    url("/assets/ui/materials/torn-paper-card-v1.webp") center / cover no-repeat;
+  padding: clamp(14px, 2vw, 20px);
+}
+
+.mapSituationLedger h2 {
+  margin: 0;
+}
+
+.mapEventList {
+  display: grid;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.mapEventList li {
+  display: grid;
+  gap: 7px;
+  border: 1px solid rgba(84, 60, 43, 0.22);
+  background: rgba(255, 252, 238, 0.62);
+  padding: 12px;
+}
+
+.mapEventList strong {
+  color: #7b241f;
+}
+
+.mapEventList span,
+.mapEventList p,
+.mapEmptyLedger {
+  margin: 0;
+  color: #604b38;
+  line-height: 1.6;
+}
+
+.mapEventList span {
+  font-size: 0.82rem;
+  font-weight: 800;
+}
+
+.mapEventList .paperButton {
+  justify-self: start;
+  min-height: 36px;
+}
+
+.mapSafetyBoundary {
+  border: 1px dashed rgba(142, 47, 39, 0.34);
+  background: rgba(255, 248, 230, 0.58);
+  padding: 12px 14px;
+}
+
+.mapSafetyBoundary p {
+  margin: 0;
+  color: #6f352b;
+  font-weight: 800;
+  line-height: 1.7;
+}
+
 .inkMapRuntimeBridge {
   display: grid;
   gap: 12px;
@@ -1748,6 +1927,23 @@ button:disabled {
 
 .inkMapTooltip p {
   margin: 8px 0 0;
+}
+
+.inkMapTooltipHeader {
+  display: flex;
+  align-items: start;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.inkMapTooltipClose {
+  min-width: 34px;
+  min-height: 30px;
+  border: 1px solid rgba(142, 47, 39, 0.4);
+  background: rgba(255, 248, 230, 0.72);
+  color: #7b241f;
+  font: inherit;
+  font-weight: 800;
 }
 
 .inkMapRuntimeFallback {
@@ -2845,6 +3041,52 @@ button:disabled {
 
   .gameFeatureTabs {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .mapFullScreen {
+    padding: 16px 12px 28px;
+  }
+
+  .mapHero,
+  .mapImmersiveLayout {
+    grid-template-columns: 1fr;
+  }
+
+  .mapHero {
+    padding-top: 10px;
+  }
+
+  .mapHero h1 {
+    font-size: clamp(2.4rem, 12vw, 3.4rem);
+    line-height: 1.05;
+  }
+
+  .mapHeroStats {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .mapCommandDeck {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .mapLayerControls,
+  .mapCommandDeck .buttonRow {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    width: 100%;
+  }
+
+  .mapLayerToggle,
+  .mapCommandDeck .paperButton,
+  .mapCommandDeck .paperLink {
+    justify-content: center;
+    min-height: 44px;
+    text-align: center;
+  }
+
+  .mapFullScreen .inkMapStage {
+    min-height: 62vh;
   }
 
   .scholarPanelHeader,
