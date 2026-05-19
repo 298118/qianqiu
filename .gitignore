@@ -2,6 +2,7 @@ node_modules/
 dist/
 .env
 data/sessions/*.json
+data/settings/*.json
 data/audit/*.jsonl
 data/*.sqlite
 data/*.sqlite-*

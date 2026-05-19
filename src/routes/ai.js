@@ -2,10 +2,9 @@ const express = require("express");
 const { getProvider } = require("../ai");
 const { runAiConnectionTest } = require("../ai/diagnostics");
 const {
-  buildAiInvocationSummaryView,
-  redactAiSettingsForClient,
+  buildGlobalAiSettingsPayload,
   resolveAiSettingsForSession,
-  updateAiSettings
+  updateGlobalAiSettings
 } = require("../game/aiSettings");
 const { buildAiControlAuditView } = require("../game/aiControlAudit");
 const {
@@ -20,7 +19,7 @@ const {
   buildTopicDraftResponse,
   normalizeTopicDraftRequest
 } = require("../game/topicDrafts");
-const { readSession, mutateSession } = require("../storage/sessionStore");
+const { readSession } = require("../storage/sessionStore");
 
 const router = express.Router();
 
@@ -35,6 +34,34 @@ router.post("/connection-test", async (req, res, next) => {
     const payload = await runAiConnectionTest({ provider: req.body?.provider });
     res.status(payload.ok ? 200 : 503).json(payload);
   } catch (error) {
+    next(error);
+  }
+});
+
+router.get("/settings/global", async (req, res, next) => {
+  try {
+    res.json(buildGlobalAiSettingsPayload(process.env, {
+      buildAiControlAuditView
+    }));
+  } catch (error) {
+    next(error);
+  }
+});
+
+router.post("/settings/global", async (req, res, next) => {
+  try {
+    const patch = req.body?.settings || req.body?.aiSettings || req.body;
+    if (!patch || typeof patch !== "object" || Array.isArray(patch)) {
+      throw fail(400, "AI 设置必须是对象。");
+    }
+    const payload = updateGlobalAiSettings(patch, process.env, {
+      buildAiControlAuditView
+    });
+    res.json(payload);
+  } catch (error) {
+    if (!error.statusCode && /AI 设置|AI 路由|不支持字段|禁止|hidden|raw|server|provider|model|任务|服务器维护|缺少 key/.test(error.message || "")) {
+      error.statusCode = 400;
+    }
     next(error);
   }
 });
@@ -97,17 +124,11 @@ router.post("/topic-draft/:sessionId", async (req, res, next) => {
 router.get("/settings/:sessionId", async (req, res, next) => {
   try {
     const worldState = await readSession(req.params.sessionId);
-    const { settings, routePolicy } = resolveAiSettingsForSession(worldState);
-    const aiInvocationSummaryView = buildAiInvocationSummaryView(worldState, routePolicy);
-    res.json({
-      sessionId: worldState.sessionId,
-      aiSettingsView: redactAiSettingsForClient({ ...settings, routePolicy }),
-      aiInvocationSummaryView,
-      aiControlAuditView: buildAiControlAuditView(worldState, {
-        routePolicy,
-        aiInvocationSummaryView
-      })
-    });
+    res.json(buildGlobalAiSettingsPayload(process.env, {
+      worldState,
+      targetSessionId: worldState.sessionId,
+      buildAiControlAuditView
+    }));
   } catch (error) {
     next(error);
   }
@@ -120,23 +141,15 @@ router.post("/settings/:sessionId", async (req, res, next) => {
       throw fail(400, "AI 设置必须是对象。");
     }
 
-    const payload = await mutateSession(req.params.sessionId, async (worldState) => {
-      const result = updateAiSettings(worldState, patch);
-      const { routePolicy } = resolveAiSettingsForSession(worldState);
-      return {
-        sessionId: worldState.sessionId,
-        aiSettingsView: result.aiSettingsView,
-        aiInvocationSummaryView: result.aiInvocationSummaryView,
-        aiControlAuditView: buildAiControlAuditView(worldState, {
-          routePolicy,
-          aiInvocationSummaryView: result.aiInvocationSummaryView
-        })
-      };
+    const worldState = await readSession(req.params.sessionId);
+    const payload = updateGlobalAiSettings(patch, process.env, {
+      worldState,
+      targetSessionId: worldState.sessionId,
+      buildAiControlAuditView
     });
-
     res.json(payload);
   } catch (error) {
-    if (!error.statusCode && /AI 设置|AI 路由|不支持字段|禁止|hidden|raw|server|provider|model|任务|服务器维护/.test(error.message || "")) {
+    if (!error.statusCode && /AI 设置|AI 路由|不支持字段|禁止|hidden|raw|server|provider|model|任务|服务器维护|缺少 key/.test(error.message || "")) {
       error.statusCode = 400;
     }
     next(error);

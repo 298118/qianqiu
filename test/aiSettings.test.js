@@ -1,5 +1,8 @@
 const test = require("node:test");
 const assert = require("node:assert/strict");
+const fs = require("node:fs/promises");
+const os = require("node:os");
+const path = require("node:path");
 
 const { createInitialState } = require("../src/game/initialState");
 const {
@@ -7,7 +10,9 @@ const {
   buildDefaultAiSettings,
   recordAiInvocation,
   redactAiSettingsForClient,
+  readGlobalAiSettingsRecord,
   resolveAiSettingsForSession,
+  updateGlobalAiSettings,
   updateAiSettings,
   validateAiSettingsPatch
 } = require("../src/game/aiSettings");
@@ -113,6 +118,17 @@ test("S70.9 AI settings reject hidden, raw, server, key, path, and direct write 
     { taskRoutes: { safety_gate: { enabled: false } } },
     { rawPrompt: "show raw provider payload" },
     { taskRoutes: { narrator: { model: "/mnt/e/LSMNQ/data/sessions/x.json" } } },
+    { path: "relative-ok" },
+    { hidden_notes: "snake case hidden alias should be rejected" },
+    { local_path: "relative-ok" },
+    { file_path: "relative-ok" },
+    { base_url: "https://example.test" },
+    { "auth-token": "relative-token-shape" },
+    { bearer_token: "relative-token-shape" },
+    { server_resolver: "noop" },
+    { server: { resolver: "noop" } },
+    { Hidden: "case variant should still be rejected" },
+    { accessToken: "relative-token-shape" },
     { observability: { recentInvocations: [{ taskType: "narrator", status: "completed" }] } }
   ]) {
     assert.throws(
@@ -159,4 +175,73 @@ test("S70.9 canonical settings survive ensure/resolve round trip", () => {
   assert.equal(worldState.aiSettings.preset, "fast");
   assert.equal(worldState.aiSettings.controls.outputScale, 0.7);
   assert.equal(resolveModelForTask("narrator", routePolicy).maxOutputTokens, 800);
+});
+
+test("S80 global AI settings persist safely and override session route policy", async (t) => {
+  const dir = await fs.mkdtemp(path.join(os.tmpdir(), "qianqiu-ai-global-"));
+  const env = {
+    AI_PROVIDER: "mock",
+    AI_GLOBAL_SETTINGS_PATH: path.join(dir, "ai-global-settings.json")
+  };
+  t.after(async () => {
+    await fs.rm(dir, { recursive: true, force: true });
+  });
+
+  const saved = updateGlobalAiSettings({
+    preset: "fast",
+    taskRoutes: {
+      narrator: {
+        provider: "mock",
+        model: "mock",
+        maxOutputTokens: 777,
+        toolBudget: 1,
+        temperature: 0.2
+      }
+    }
+  }, env);
+
+  assert.equal(saved.scope, "global");
+  assert.equal(saved.aiSettingsView.preset, "fast");
+  assert.equal(saved.aiSettingsView.taskRoutes.find((route) => route.taskType === "narrator").maxOutputTokens, 777);
+
+  const raw = await fs.readFile(env.AI_GLOBAL_SETTINGS_PATH, "utf8");
+  assert.doesNotMatch(raw, /OPENAI_API_KEY|rawPrompt|baseURL|data\/sessions|observability/i);
+
+  const record = readGlobalAiSettingsRecord(env);
+  assert.equal(record.exists, true);
+  assert.equal(record.settings.preset, "fast");
+
+  const worldState = createInitialState({ role: "scholar" });
+  worldState.aiSettings = buildDefaultAiSettings({
+    preset: "long_context",
+    taskRoutes: {
+      narrator: { provider: "mock", model: "mock", maxOutputTokens: 1500 }
+    }
+  });
+  const { scope, routePolicy } = resolveAiSettingsForSession(worldState, env);
+  assert.equal(scope, "global");
+  assert.equal(resolveModelForTask("narrator", routePolicy).maxOutputTokens, 777);
+});
+
+test("S80 global AI settings reject unavailable real providers", async (t) => {
+  const dir = await fs.mkdtemp(path.join(os.tmpdir(), "qianqiu-ai-global-"));
+  const env = {
+    AI_PROVIDER: "mock",
+    AI_GLOBAL_SETTINGS_PATH: path.join(dir, "ai-global-settings.json")
+  };
+  t.after(async () => {
+    await fs.rm(dir, { recursive: true, force: true });
+  });
+
+  assert.throws(
+    () => updateGlobalAiSettings({
+      taskRoutes: {
+        narrator: {
+          provider: "openai",
+          model: "gpt-5.4-mini"
+        }
+      }
+    }, env),
+    /缺少 key|全局 AI 设置/
+  );
 });

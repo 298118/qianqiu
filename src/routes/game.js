@@ -113,7 +113,8 @@ const {
   recordAiInvocation,
   redactAiSettingsForClient,
   resolveAiSettingsForSession,
-  updateAiSettings
+  updateAiSettings,
+  validateAiSettingsPatch
 } = require("../game/aiSettings");
 const { buildAiControlAuditView } = require("../game/aiControlAudit");
 const {
@@ -1118,9 +1119,13 @@ router.post("/start", async (req, res, next) => {
   try {
     const worldState = createInitialState(req.body);
     const aiSettingsPatch = req.body?.aiSettings;
-    const aiRuntime = aiSettingsPatch && typeof aiSettingsPatch === "object"
+    if (aiSettingsPatch && typeof aiSettingsPatch === "object") {
+      validateAiSettingsPatch(aiSettingsPatch);
+    }
+    const resolvedRuntime = resolveAiSettingsForSession(worldState);
+    const aiRuntime = aiSettingsPatch && typeof aiSettingsPatch === "object" && !resolvedRuntime.globalSettingsExists
       ? updateAiSettings(worldState, aiSettingsPatch)
-      : resolveAiSettingsForSession(worldState);
+      : resolvedRuntime;
     const route = resolveModelForTask("narrator", aiRuntime.routePolicy);
     const provider = getProvider({ routePolicy: aiRuntime.routePolicy });
     const startedAt = Date.now();

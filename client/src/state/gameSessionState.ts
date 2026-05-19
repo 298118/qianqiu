@@ -9,6 +9,7 @@ import type {
   ExamQuestionResponse,
   ExamSubmitResponse,
   GameRole,
+  JsonObject,
   PlayerStateResponse,
   QuickActionResponse,
   SaveMetadata,
@@ -63,6 +64,8 @@ type GameSessionState = {
   readonly loadAiSettings: (sessionId: string) => Promise<AiSettingsResponse>;
   readonly updateAiPreset: (sessionId: string, preset: string) => Promise<AiSettingsResponse>;
   readonly updateAiTaskRoute: (sessionId: string, taskType: string, routePatch: Record<string, string | number>) => Promise<AiSettingsResponse>;
+  readonly loadGlobalAiSettings: () => Promise<AiSettingsResponse>;
+  readonly updateGlobalAiSettings: (settings: JsonObject) => Promise<AiSettingsResponse>;
   readonly testAiConnection: (provider?: string) => Promise<AiConnectionTestResponse>;
   readonly refreshQuickActions: (sessionId: string, input?: { readonly page?: string; readonly draftPreview?: string; readonly count?: number }) => Promise<QuickActionResponse>;
   readonly loadTopicSurface: (sessionId: string, surfaceId: TopicSurfaceId) => Promise<TopicSurfaceResponse>;
@@ -264,6 +267,30 @@ export const useGameSessionStore = create<GameSessionState>((set) => ({
           }
         }
       });
+      set({ aiSettings: payload, settingsStatus: "ready" });
+      return payload;
+    } catch (error) {
+      set({ error: toErrorMessage(error), settingsStatus: "error" });
+      throw error;
+    }
+  },
+
+  async loadGlobalAiSettings() {
+    set({ settingsStatus: "loading", error: null });
+    try {
+      const payload = await qianqiuApi.getGlobalAiSettings();
+      set({ aiSettings: payload, settingsStatus: "ready" });
+      return payload;
+    } catch (error) {
+      set({ error: toErrorMessage(error), settingsStatus: "error" });
+      throw error;
+    }
+  },
+
+  async updateGlobalAiSettings(settings) {
+    set({ settingsStatus: "loading", error: null });
+    try {
+      const payload = await qianqiuApi.updateGlobalAiSettings({ settings });
       set({ aiSettings: payload, settingsStatus: "ready" });
       return payload;
     } catch (error) {

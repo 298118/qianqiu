@@ -527,10 +527,11 @@ test("S75.9 memorial composer uses safe AI quick actions as draft-only suggestio
   const apiSource = readText("client/src/api/qianqiuClient.ts");
   const stateSource = readText("client/src/state/gameSessionState.ts");
   const surfaceHostSource = readText("client/src/components/SurfaceHost.tsx");
+  const aiSettingsPanelSource = readText("client/src/components/AiSettingsPanel.tsx");
   const appTestSource = readText("client/src/__tests__/App.test.tsx");
   const componentTestSource = readText("client/src/components/MemorialComposer.test.tsx");
   const styleSource = readText("client/src/styles/global.css");
-  const runtimeCombined = `${appShellSource}\n${gamePageSource}\n${composerSource}\n${stateSource}\n${surfaceHostSource}\n${styleSource}`;
+  const runtimeCombined = `${appShellSource}\n${gamePageSource}\n${composerSource}\n${stateSource}\n${surfaceHostSource}\n${aiSettingsPanelSource}\n${styleSource}`;
 
   assert.match(appShellSource, /data-shell-version="s75-9"/);
   assert.match(gamePageSource, /<MemorialComposer/);
@@ -550,9 +551,11 @@ test("S75.9 memorial composer uses safe AI quick actions as draft-only suggestio
   assert.match(quickActionSource, /sourceLabel: "local-rule"/);
   assert.match(quickActionSource, /normalizeAiSuggestions/);
   assert.match(quickActionSource, /quickActionStatus === "error" \? "failed"/);
-  assert.match(surfaceHostSource, /快捷建议 Provider/);
-  assert.match(surfaceHostSource, /updateAiTaskRoute\(currentSessionId, "quick_action"/);
-  assert.match(surfaceHostSource, /快捷建议工具预算固定为零/);
+  assert.match(surfaceHostSource, /<AiSettingsPanel \/>/);
+  assert.match(aiSettingsPanelSource, /服务端全局/);
+  assert.match(aiSettingsPanelSource, /updateGlobalAiSettings\(formSnapshot\(form\)\)/);
+  assert.match(aiSettingsPanelSource, /taskType: stringValue\(record\.taskType/);
+  assert.match(aiSettingsPanelSource, /\$\{route\.label\}工具预算/);
   assert.match(quickActionSource, /getMemorialPlaceholder/);
   assert.match(quickActionSource, /buildQuickActionSuggestions/);
   assert.match(styleSource, /memorialComposer/);
@@ -576,7 +579,9 @@ test("S75.10 client smoke exercises the inkbox browser acceptance path", () => {
   assert.match(clientSmokeSource, /getByRole\("button", \{ name: "打开印匣" \}\)/);
   assert.match(clientSmokeSource, /getByRole\("button", \{ name: "返回首页" \}\)/);
   assert.match(clientSmokeSource, /getByRole\("button", \{ name: "关闭抽屉" \}\)/);
-  assert.match(clientSmokeSource, /快捷建议工具预算固定为零/);
+  assert.match(clientSmokeSource, /AI_GLOBAL_SETTINGS_PATH/);
+  assert.match(clientSmokeSource, /\/api\/ai\/settings\/global/);
+  assert.match(clientSmokeSource, /快捷建议工具预算/);
   assert.match(clientSmokeSource, /\/api\/game\/player-state\/\$\{sessionId\}/);
   assert.match(clientSmokeSource, /desktop-inkbox-tabs/);
   assert.match(clientSmokeSource, /mobile-inkbox-tabs/);

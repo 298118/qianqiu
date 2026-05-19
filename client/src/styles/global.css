@@ -3124,6 +3124,123 @@ button:disabled {
   font-size: 1.02rem;
 }
 
+.settingsRoutePanel,
+.aiSettingsPanel {
+  display: grid;
+  gap: 16px;
+}
+
+.routePanelHeader {
+  display: grid;
+  gap: 6px;
+}
+
+.routePanelHeader h1 {
+  margin: 0;
+}
+
+.aiSettingsToolbar {
+  position: sticky;
+  top: 8px;
+  z-index: 3;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 12px;
+  border: 1px solid rgba(84, 60, 43, 0.24);
+  background: rgba(255, 248, 230, 0.94);
+  box-shadow: 0 12px 24px rgba(43, 32, 22, 0.08);
+}
+
+.aiSettingsToolbar h3 {
+  margin: 0;
+  font-size: 1.08rem;
+}
+
+.aiSettingsToolbar p {
+  margin: 0;
+}
+
+.aiSettingsActions,
+.aiSettingsSummary {
+  display: flex;
+  align-items: end;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.aiSettingsSummary {
+  padding: 12px;
+  border: 1px solid rgba(84, 60, 43, 0.2);
+  background: rgba(255, 248, 230, 0.5);
+}
+
+.aiTaskMatrix {
+  display: grid;
+  gap: 12px;
+}
+
+.aiTaskRoute {
+  display: grid;
+  gap: 12px;
+  padding: 12px;
+  border: 1px solid rgba(84, 60, 43, 0.22);
+  background: rgba(255, 248, 230, 0.58);
+}
+
+.aiTaskRouteHeader {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.aiTaskRouteHeader div {
+  display: grid;
+  gap: 4px;
+}
+
+.aiTaskRouteHeader strong {
+  color: #2d251d;
+  font-size: 1rem;
+}
+
+.aiTaskRouteHeader span,
+.aiTaskRoute p {
+  color: #5f4f3d;
+  font-size: 0.88rem;
+  line-height: 1.6;
+}
+
+.aiTaskRouteHeader em {
+  align-self: start;
+  min-width: 64px;
+  border: 1px solid rgba(123, 36, 31, 0.26);
+  padding: 3px 7px;
+  color: #7b241f;
+  font-style: normal;
+  font-weight: 800;
+  text-align: center;
+}
+
+.aiTaskRouteControls {
+  display: grid;
+  grid-template-columns: minmax(120px, 0.9fr) minmax(160px, 1.4fr) repeat(3, minmax(84px, 0.7fr));
+  gap: 10px;
+  align-items: end;
+}
+
+.aiTaskRouteControls label,
+.aiSettingsSummary label {
+  min-width: 0;
+}
+
+.aiTaskRouteControls input,
+.aiTaskRouteControls select,
+.aiSettingsSummary select {
+  width: 100%;
+}
+
 .safeSummaryList {
   display: grid;
   gap: 8px;
@@ -3631,6 +3748,22 @@ button:disabled {
 
   .inkboxTabs {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .aiSettingsToolbar,
+  .aiTaskRouteHeader {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .aiSettingsActions,
+  .aiSettingsSummary {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .aiTaskRouteControls {
+    grid-template-columns: 1fr;
   }
 
   .portraitViewerPanel {

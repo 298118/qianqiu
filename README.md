@@ -17,6 +17,7 @@
 - 完成 S72 PixiJS 水墨地图归档：`docs/PIXIJS_INK_MAP_ARCHIVE.md` 汇总了 S72.0-S72.8 的完成范围、步骤索引、验证入口和后续方向；`docs/DEVELOPMENT_STEPS.md`、`docs/SHARED_CONTEXT.md` 和 `docs/QIANQIU_DEVELOPMENT_BRIEF.md` 已改为“已完成归档”口径。`src/game/mapRuntimeView.js` 从安全 `mapContextView` 派生 `mapRuntimeView`，`public/assets/maps/ink-map-manifest.json` 登记 `ink-map-v1` 底图、纸纹、路线笔触、事件涟漪和地图图标，`public/mapRenderer.js` / `public/mapPanel.js` 通过本地 `pixi.js@7.4.3` vendor 渲染水墨地图、tooltip、朱砂双圈选中态、局势簿跳转、行动草稿、路线墨线呼吸和事件涟漪。S74 React 默认前端通过 `InkMapRuntimeBridge` 复用 `public/mapRenderer.js`；当前 `npm run smoke:browser` 验证 React 默认入口里的地图 canvas、公开 label、路由刷新和 hidden/raw 防线。显示坐标与图片素材只用于 PixiJS 前端布局，不进入 prompt、AI 工具、移动裁决、任免、财政、战争或商路收益；地图按钮只回填行动草稿，仍由玩家提交普通回合。
 - 完成 S73-S77 前端水墨重构归档：[docs/FRONTEND_INK_REDESIGN_ARCHIVE.md](docs/FRONTEND_INK_REDESIGN_ARCHIVE.md) 汇总了 S73 素材与立绘管线、S74 React/Vite 默认入口迁移、S75 首页与全局 shell、S76 身份/考试/放榜/舆图/人物页面和 S77 默认入口、浏览器、视觉、安全、性能、可访问性与总验证口径。当前 `npm run smoke:browser` 是 React 默认入口 smoke；首页不请求完整素材 manifest、不加载地图运行时、不一次性拉取全量立绘池，舆图页才按需加载 Pixi/mapRenderer，人物页只加载当前可见公开人物。
 - 完成 S73.1 前端视觉资产指南：[docs/FRONTEND_VISUAL_ASSET_GUIDE.md](docs/FRONTEND_VISUAL_ASSET_GUIDE.md) 固定了水墨/宣纸/奏折/身份/场景/立绘/动效/fallback 的阅读优先原则、目录命名、页面 usage、颜色材质、文件规格、移动裁切、缩略图、fallback、审核状态和 manifest 前置安全字段。S73-S77 正式 AI 生成素材统一由 Codex 使用 `gpt-image-2` 并视觉审核；立绘边界为成年、端庄、高颜值、身份明确但不露骨，女性角色可通过服饰剪裁和姿态体现优雅成熟女性身形比例，但不得幼态、挑逗或过度暴露。
+- 完成 S80 服务端全局 AI 设置与保存反馈：新增 `GET/POST /api/ai/settings/global`、本地运行时文件 `data/settings/ai-global-settings.json` 和共享 React `AiSettingsPanel`。设置页与印匣 AI 设置现在使用同一套 11 类任务矩阵，显示“未保存 / 保存中 / 已保存 / 保存失败”、保存时间、provider key 可用性和每类任务的生效状态；保存后服务端返回值会立即回填表单，并覆盖所有当前和未来案卷的 AI 路由。旧 `GET/POST /api/ai/settings/:sessionId` 仍保留兼容，但读写同一份全局设置并返回 `scope: "global"` 与 `targetSessionId`。全局设置只保存校验后的 provider/model/预算/温度/安全控制，不保存 key、base URL、prompt、raw provider payload 或本地路径；缺 key 的真实 provider 不能作为可生效全局路由保存。
 - 完成 S78 官署专题玩法化：新增 `topicSurfaceView` 安全投影、`GET /api/game/topic-surface/:sessionId/:surfaceId`、只读 `POST /api/ai/topic-draft/:sessionId` 和 `topic_draft` AI task。奏折队列、拟圣旨、朝议、堂审、军议和人物档案六类 surface 现在都有材料/筹议/草稿三栏工作台，可勾选证据、请 Mock/provider 拟稿、玩家改稿并写入底部奏折；AI 只拟草稿，不提交回合、不推进时间、不调用 resolver、不写 canonical state，真实后果继续由 `/api/game/turn` 与服务器裁决链处理。
 - 完成 S76.12 S76 验收：React browser smoke 现在覆盖书生、地方官、入仕官员、大臣、将领、皇帝六类身份直启与代表草稿行动，逐个打开六类官署专题 surface，并继续覆盖考试/放榜、独立舆图、人物谱牒、移动端、unsafe API 防线和截图产物；完整书生科举路径仍由 `npm run smoke:exam-s69` 验证到 `official`。本轮还把公开 UI manifest 顶层说明改为普通中文安全描述，避免在浏览器可读 manifest 里出现敏感词样。
 - 完成 S77.2 浏览器 smoke 扩展：`npm run smoke:browser -- --client react` 现在额外验证多页浏览器 `goBack()` / `goForward()` 历史栈，并通过拦截 `/vendor/pixi.min.js` 与 `/mapRenderer.js` 模拟舆图运行时资源失败，确认前端进入安全中文 fallback、不触碰 unsafe API、不泄漏 hidden/raw/provider/path/key 形状。
@@ -169,6 +170,9 @@ MIMO_AUTH_HEADER=api-key
 
 ANTHROPIC_API_KEY=
 ANTHROPIC_MODEL=claude-sonnet-4-5
+
+# 可选：覆盖服务端全局 AI 设置运行时文件位置，测试和 smoke 会指向临时文件
+AI_GLOBAL_SETTINGS_PATH=data/settings/ai-global-settings.json
 ```
 
 `AI_PROVIDER` 可选：
@@ -181,6 +185,8 @@ ANTHROPIC_MODEL=claude-sonnet-4-5
 - `claude` 或 `anthropic`：使用 Anthropic Messages API。
 
 MiMo Token Plan 的 `tp-...` key 必须配套订阅页给出的 token-plan Base URL，不能与普通 `sk-...` key 或按量 Base URL 混用。公开部署或非 Coding 自定义后端使用前，请先确认订阅条款或改用普通 API key。
+
+服务端全局 AI 设置默认保存在 `data/settings/ai-global-settings.json`，该路径被 Git 忽略。设置页与印匣会调用 `GET/POST /api/ai/settings/global`；保存后所有案卷立即使用同一套 route policy。旧的 `GET/POST /api/ai/settings/:sessionId` 只作为兼容入口，响应会标明 `scope: "global"` 和 `targetSessionId`。
 
 ## 存储模式
 
@@ -266,6 +272,8 @@ GET  /api/game/state/:sessionId
 GET  /api/game/search/:sessionId
 POST /api/game/turn
 POST /api/ai/connection-test
+GET  /api/ai/settings/global
+POST /api/ai/settings/global
 GET  /api/ai/settings/:sessionId
 POST /api/ai/settings/:sessionId
 POST /api/ai/quick-actions/:sessionId
@@ -283,7 +291,8 @@ POST /api/exam/submit
 - `GET /api/game/player-state/:sessionId` 是普通浏览器读档优先入口，返回 redacted player state 和清洗后的 route views；支持与 state route 相同的局势簿分页查询参数。
 - `POST /api/game/turn` 支持普通 JSON 与 SSE。SSE 事件包括 `state_preview`、`narrative_chunk`、`final_state`、`error`。
 - `POST /api/ai/connection-test` 不创建 session、不写存档、不用 Mock fallback 掩盖真实 provider 问题。
-- `GET/POST /api/ai/settings/:sessionId` 读取或更新 session 级 AI 设置；服务端只接受 provider/model、输出长度、预算、并发、安全严格度等质量/路由设置，拒绝 hidden/raw/server/path/key、直写状态/数据库和观测日志伪造。
+- `GET/POST /api/ai/settings/global` 读取或更新服务端全局 AI 设置，返回 `scope: "global"`、`updatedAt`、`aiSettingsView`、`aiInvocationSummaryView` 和 `aiControlAuditView`；全局设置存在时，开局、普通回合、流式回合、考试出题、考试评卷、快捷建议和专题拟稿都会优先使用同一份全局 route policy。
+- `GET/POST /api/ai/settings/:sessionId` 是兼容入口，仍校验案卷存在，但读写同一份服务端全局 AI 设置，并在响应中返回 `targetSessionId`；服务端只接受 provider/model、输出长度、工具预算、温度和安全控制等质量/路由设置，拒绝 hidden/raw/server/path/key、直写状态/数据库和观测日志伪造。
 - `GET /api/game/state/:sessionId` 可用 `informationTab`、`informationQuery`、`informationFilter`、`informationSort`、`informationPage`、`informationPageSize` 查询局势簿分页；兼容别名 `informationPanelTab` / `informationCollection` 和 `informationSearch`。S70.12 起响应 `worldState` 不携带 raw `actorMemoryLedger` / `sessionSummary`，S71.4 后该 route 保留为开发兼容快照，普通浏览器读档请用 player-state。
 - `GET /api/game/search/:sessionId` 可用 `q` / `query`、`domain`、`page`、`pageSize` 查询安全世界索引；`domain` 支持 `geography`、`people`、`offices`、`events`、`reports`、`rumors`，`pageSize` 最大 25。返回 `safeWorldSearchView`，结果只含摘要片段、来源视图和可跳转 ref；敏感查询会 `queryRejected`，不会暴露内部表名、审计原文、提示全文、本地路径、密钥或隐藏私档。
 - `GET /api/dev/session-diagnostics/:sessionId` 是本机开发诊断入口，不属于普通玩家 API；默认关闭，production 关闭，仅 `ENABLE_DEV_DIAGNOSTICS=true`、远端地址为 loopback，且 Origin 为空或本机 loopback Origin 门禁通过后返回脱敏统计。

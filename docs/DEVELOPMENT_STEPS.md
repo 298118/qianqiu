@@ -111,7 +111,7 @@ S49-S67 本地数据库与大世界内容、S68-S69 科举深化、S70 AI 编排
 
 ## 4. 活动路线图总览
 
-S79 已进入前端打磨与高清女性立绘入库阶段。范围由用户于 2026-05-19 确认：先修本轮 UI 复查暴露的前端正确性、路由壳和烟测缺口，再把 `artifacts/codex-generated-female-portrait-png-recovery/likely-portrait-masters/` 中 194 张高清女性 PNG 母版全部纳入游戏，不因性能顾虑浪费素材；游戏内立绘右上角必须提供放大标志，允许玩家查看高清大图。
+S80 已进入服务端全局 AI 设置与保存反馈收束阶段。范围由用户于 2026-05-19 确认：建立服务端全局 AI 设置，保存后覆盖所有当前和未来案卷的 AI 路由；设置页与印匣共用全任务矩阵面板，明确显示保存状态与 provider 是否真正可用；修复前端提交 `deep` preset 而后端只认 `quality_first` / `long_context` 等 preset 导致不生效的问题。S79 前端打磨与高清女性立绘入库已完成。
 
 | ID | 状态 | Owner | 目标 | 说明 |
 | --- | --- | --- | --- | --- |
@@ -120,15 +120,31 @@ S79 已进入前端打磨与高清女性立绘入库阶段。范围由用户于 
 | S79.2 | DONE | Codex | 194 张 recovered 女性高清母版入库管线 | 已为 `likely-portrait-masters` 的 194 张唯一 PNG 建立稳定 ID、来源记录、视觉/安全审核、高清运行时 WebP、缩略图、低清占位、manifest、QA sidecar 和脚本；原始 `artifacts/` 母版仍不直接提交或暴露给前端。 |
 | S79.3 | DONE | Codex | 游戏内高清立绘使用与放大查看 | 已在 `Portrait` 可欣赏立绘右上角加入放大标志；首页选角、人物谱牒和人物档案专题公开立绘均通过已审核 `portraitRef` 与 runtime manifest 读取高清主图。只读高清查看器由 `SurfaceHost` 托管，支持 Esc、遮罩关闭、焦点回收、移动端适配和滚动锁定，不写 canonical state、URL、localStorage/sessionStorage、行动草稿或 AI prompt。 |
 | S79.4 | DONE | Codex | 验证、文档同步与提交 | 已同步 brief、素材台账、共享上下文和本台账；已运行 client typecheck/test、React smoke、素材 QA、manifest 测试、docs governance、documentation governance、diff check 和完整 `npm test`。提交 hash 随本次 coherent change 见 Git 历史。 |
+| S80 | DONE | Codex | 服务端全局 AI 设置与保存反馈 | 已新增 `GET/POST /api/ai/settings/global`、本地运行时文件 `data/settings/ai-global-settings.json`、全局优先 AI route policy 和共享 React 全任务矩阵面板；旧 session 设置入口保留兼容但读写全局设置。 |
+| S80.1 | DONE | Codex | 全局设置后端与兼容 API | `resolveAiSettingsForSession` 全局优先；全局保存复用并加强 AI 设置校验，拒绝 hidden/raw/server/path/key、观测日志伪造和缺 key 的真实 provider；落盘只保存安全路由/预算/温度/控制字段。 |
+| S80.2 | DONE | Codex | 设置页与印匣矩阵面板 | `SettingsPage` 与 `SurfaceHost` 共用 `AiSettingsPanel`，渲染 11 类任务矩阵、服务端 presets、保存状态、保存时间、失败原因、重新载入和 provider 可用性提示，保存成功后以服务端返回值回填。 |
+| S80.3 | DONE | Codex | 验证、smoke 与文档同步 | 已补 Node/client/static/smoke 测试覆盖全局设置读写、全局优先、缺 key provider 拒绝、敏感字段拒绝、旧 session route 兼容、客户端安全 endpoint、矩阵 dirty/save/error 状态和浏览器 smoke 临时 `AI_GLOBAL_SETTINGS_PATH`。提交 hash 随本次 coherent change 见 Git 历史。 |
 
 ## 5. 当前最新完成节点
 
+- S80 已完成服务端全局 AI 设置与保存反馈。`GET/POST /api/ai/settings/global` 读写 `data/settings/ai-global-settings.json`；旧 `GET/POST /api/ai/settings/:sessionId` 只做兼容，仍校验案卷存在但读写同一份全局设置。全局设置存在时，开局、普通/流式回合、考试出题/评卷、快捷建议和专题拟稿统一使用全局 route policy。React 设置页和印匣共用 11 类任务矩阵，预设来自服务端 `presets`，并明确显示未保存/保存中/已保存/保存失败、provider key 可用性和每类任务生效状态。
 - S78 已完成官署专题玩法化。`/game/:sessionId/court` 的奏折队列、拟圣旨、朝议、堂审、军议和人物档案六类入口现在读取 `topicSurfaceView` 安全投影，显示真实玩家可见材料、证据 ref、人物公开摘要、可选草稿模板和上一轮公开结果；`topic_draft` 只读 AI/Mock 草稿可生成标题、正文、引用证据、风险和下一步建议，并允许玩家改稿后写入底部奏折。专题草稿不提交回合、不调用 resolver、不推进时间、不写 canonical state，普通后果继续由 `/api/game/turn` 和服务器裁决链处理。
 - S73-S77 已完成归档与总验证。归档见 [FRONTEND_INK_REDESIGN_ARCHIVE.md](FRONTEND_INK_REDESIGN_ARCHIVE.md)，历史完成台账流水见 [ACTIVITY_LEDGER_COMPLETED_ARCHIVE.md](ACTIVITY_LEDGER_COMPLETED_ARCHIVE.md)。
 - S77.8 最新验收通过 `npm test`、client typecheck/test/build、React browser smoke、Mock 科举链、JSON/SQLite storage-only 双模式、docs governance、documentation governance 和 diff check。
 - S72 及更早阶段均已迁入专题归档。活动台账不再展开完成流水；需要追溯时使用本文件顶部归档索引。
 
 ## 6. 最近完整验证口径
+
+S80 当前验证口径：
+
+- `npm run typecheck:client`
+- `npm run test:client`
+- `node --test test/aiSettings.test.js test/aiSettingsRoute.test.js test/reactClientScaffold.test.js`
+- `npm run build:client`
+- `npm run smoke:browser`
+- `npm run check:docs-governance`
+- `node --test test/documentationGovernance.test.js`
+- `npm test`
 
 S77.8 最新验收口径：
 
@@ -153,6 +169,17 @@ S77.8 最新验收口径：
 - 结构化污染扫描由 `npm run smoke:browser` 覆盖 DOM、storage、runtime manifest、安全字段和截图产物名；完整素材 manifest 仍由 `qa:frontend-assets` 与 manifest 测试守门。
 
 ## 7. 本轮台账归档记录
+
+### 2026-05-19：完成 S80 服务端全局 AI 设置与保存反馈
+
+- 范围：建立服务端全局 AI 设置，保存后覆盖所有当前和未来案卷的 AI 路由；设置页与印匣共用全任务矩阵面板，明确显示保存状态、保存时间、失败原因和 provider 是否真正可用；修复旧前端 `deep` preset 不被后端识别导致设置不生效的问题。
+- 实现：新增 `GET/POST /api/ai/settings/global`，旧 `GET/POST /api/ai/settings/:sessionId` 仍校验案卷存在但读写同一份全局设置，并返回 `scope: "global"` 与 `targetSessionId`。`resolveAiSettingsForSession` 在全局设置存在时全局优先，开局、普通回合、流式回合、考试出题、考试评卷、快捷建议和专题拟稿都会使用同一份 route policy。新增运行时文件 `data/settings/ai-global-settings.json`，并以 `.gitignore` 排除；测试和 smoke 通过 `AI_GLOBAL_SETTINGS_PATH` 指向临时文件。
+- 前端：新增共享 `client/src/components/AiSettingsPanel.tsx`，`SettingsPage` 与 `SurfaceHost` 共用。面板渲染叙事、人物心智、筹划、制度专题、复核、安全门、记忆提要、月报、跳时、快捷建议和专题拟稿 11 类任务矩阵；每行可调 provider、model、输出长度、温度和工具预算，按任务权限禁用不可生效字段。预设完全来自服务端 `presets`，保存成功后用服务端返回值回填表单。
+- 安全边界：全局保存复用并加强既有 AI 设置校验，拒绝 hidden/raw/server/path/key、直写状态/数据库、server resolver、raw audit 和观测日志伪造；缺 key 的真实 provider 不能作为可生效全局路由保存。落盘只保存校验后的 provider/model/预算/温度/安全控制，不保存 key、base URL、prompt、raw provider payload 或本地路径；review-only / no-tool 任务继续由服务器裁剪工具和裁决权限。
+- 验证：已通过 `npm run typecheck:client`、`npm run test:client`（68 项）、`node --test test/aiSettings.test.js test/aiSettingsRoute.test.js test/reactClientScaffold.test.js`（50 项）、`npm run build:client`、`npm run smoke:browser`、`npm run check:docs-governance`、`node --test test/documentationGovernance.test.js`、`git diff --check`（仅既有 LF/CRLF 提示）和完整 `npm test`（940 项）。
+- 子代理：本轮实现中已使用只读 explorer Turing 勘察设置路由、任务类型、前端表单和测试缺口，未编辑文件、未运行 Git 写操作；提交前只读复审 Huygens 与 Volta 先后发现禁用字段 root key 和 snake/kebab alias 会被静默忽略的 P2，已改为按小写且去除空格/下划线/点/短横线后的 key 匹配 denylist，并补 `path`、`server`、`Hidden`、`accessToken`、`hidden_notes`、`local_path`、`file_path`、`base_url`、`auth-token`、`bearer_token`、`server_resolver` 测试；Volta 最终复审未发现 P0/P1/P2。
+- 提交：随本轮 coherent change 提交，最终 hash 见 Git 历史和本次回复。
+- 下一步：若继续 AI 方向，优先把全局任务矩阵与 provider smoke/真实 key 体验进一步合流；不要恢复案卷级设置作为优先运行来源。
 
 ### 2026-05-19：完成 S79.3 游戏内高清立绘放大查看
 

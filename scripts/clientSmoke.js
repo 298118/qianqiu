@@ -1552,8 +1552,35 @@ async function assertInkboxTabsAndSaveLoad(page, sessionId, screenshotsDir) {
   const drawer = page.locator("aside.drawerHost[aria-label='印匣']");
   await drawer.waitFor({ timeout: 10000 });
 
-  await assertInkboxTab(page, drawer, "AI 设置", "快捷建议 Provider");
-  const quickBudget = await drawer.getByLabel("快捷建议工具预算固定为零").evaluate((input) => ({
+  await assertInkboxTab(page, drawer, "AI 设置", "服务端全局");
+  const narratorRoute = drawer.locator(".aiTaskRoute").filter({ hasText: "叙事" }).first();
+  await narratorRoute.waitFor({ timeout: 10000 });
+  const narratorOutput = narratorRoute.getByLabel("输出");
+  const originalNarratorTokens = Number(await narratorOutput.inputValue());
+  const savedNarratorTokens = originalNarratorTokens === 1801 ? 1802 : 1801;
+  await narratorOutput.fill(String(savedNarratorTokens));
+  await drawer.getByText("未保存").waitFor({ timeout: 5000 });
+  const saveGlobalResponse = page.waitForResponse((response) => {
+    try {
+      const url = new URL(response.url());
+      return url.pathname === "/api/ai/settings/global" && response.request().method() === "POST";
+    } catch {
+      return false;
+    }
+  }, { timeout: 15000 });
+  await drawer.getByRole("button", { name: /保存全局设置/ }).click();
+  await saveGlobalResponse;
+  await drawer.getByText(/已保存/).waitFor({ timeout: 10000 });
+  await drawer.getByRole("button", { name: "关闭抽屉" }).click();
+  await drawer.waitFor({ state: "detached", timeout: 10000 });
+  await page.getByRole("button", { name: "打开印匣" }).click();
+  await drawer.waitFor({ timeout: 10000 });
+  await assertInkboxTab(page, drawer, "AI 设置", "服务端全局");
+  const reloadedNarratorValue = await drawer.locator(".aiTaskRoute").filter({ hasText: "叙事" }).first().getByLabel("输出").inputValue();
+  if (reloadedNarratorValue !== String(savedNarratorTokens)) {
+    throw new Error(`Global AI settings did not persist after drawer reload: ${reloadedNarratorValue}`);
+  }
+  const quickBudget = await drawer.getByLabel("快捷建议工具预算").evaluate((input) => ({
     value: input instanceof HTMLInputElement ? input.value : "",
     disabled: input instanceof HTMLInputElement ? input.disabled : false
   }));
@@ -1624,7 +1651,7 @@ async function assertMobileInkbox(page, screenshotsDir) {
   const drawer = page.locator("aside.drawerHost[aria-label='印匣']");
   await drawer.waitFor({ timeout: 10000 });
 
-  await assertInkboxTab(page, drawer, "AI 设置", "快捷建议 Provider");
+  await assertInkboxTab(page, drawer, "AI 设置", "服务端全局");
   await assertInkboxTab(page, drawer, "旧案", "旧案");
   await assertInkboxTab(page, drawer, "显示", "显示偏好");
   await assertInkboxTab(page, drawer, "安全", "安全摘要");
@@ -2004,8 +2031,14 @@ async function runClientSmoke(options = {}) {
   }
 
   const previousAiProvider = process.env.AI_PROVIDER;
+  const previousGlobalAiSettingsPath = process.env.AI_GLOBAL_SETTINGS_PATH;
+  const smokeGlobalAiSettingsPath = options.url
+    ? null
+    : path.join(__dirname, "..", "tmp", `client-smoke-ai-settings-${Date.now()}.json`);
   if (!options.url) {
     process.env.AI_PROVIDER = "mock";
+    process.env.AI_GLOBAL_SETTINGS_PATH = smokeGlobalAiSettingsPath;
+    await fs.mkdir(path.dirname(smokeGlobalAiSettingsPath), { recursive: true });
   }
 
   const browserPath = resolveBrowserExecutable({ browserPath: options.browserPath });
@@ -2397,6 +2430,14 @@ async function runClientSmoke(options = {}) {
         delete process.env.AI_PROVIDER;
       } else {
         process.env.AI_PROVIDER = previousAiProvider;
+      }
+      if (previousGlobalAiSettingsPath === undefined) {
+        delete process.env.AI_GLOBAL_SETTINGS_PATH;
+      } else {
+        process.env.AI_GLOBAL_SETTINGS_PATH = previousGlobalAiSettingsPath;
+      }
+      if (smokeGlobalAiSettingsPath) {
+        await fs.rm(smokeGlobalAiSettingsPath, { force: true }).catch(() => {});
       }
     }
   }

@@ -1203,9 +1203,56 @@ describe("S74.1 React client shell", () => {
   it("opens the S75.4 inkbox tabs without exposing unsafe settings details", async () => {
     const sessionId = "55555555-5555-4555-8555-555555555555";
     const fetchMock = vi.fn(async (url: string) => {
-      if (url === `/api/ai/settings/${sessionId}`) {
+      if (url === "/api/ai/settings/global") {
         return new Response(JSON.stringify({
-          aiSettingsView: { preset: "balanced" },
+          scope: "global",
+          updatedAt: "2026-05-19T12:00:00.000Z",
+          aiSettingsView: {
+            preset: "balanced",
+            presets: [
+              { id: "balanced", label: "均衡" },
+              { id: "quality_first", label: "审慎" },
+              { id: "fast", label: "迅捷" }
+            ],
+            providerOptions: [
+              { provider: "mock", available: true, requiresKey: false },
+              { provider: "openai", available: false, requiresKey: true }
+            ],
+            taskRoutes: [
+              {
+                taskType: "narrator",
+                label: "叙事",
+                purpose: "普通叙事、玩家自由行动和流式文本。",
+                provider: "mock",
+                providerAvailable: true,
+                requiresKey: false,
+                effectiveStatus: "active",
+                model: "mock",
+                maxOutputTokens: 900,
+                toolBudget: 1,
+                temperature: 0.35,
+                reviewerOnly: false,
+                mayUseTools: true,
+                mayRequestAdjudication: false
+              },
+              {
+                taskType: "quick_action",
+                label: "快捷建议",
+                purpose: "生成快捷行动草稿建议。",
+                provider: "mock",
+                providerAvailable: true,
+                requiresKey: false,
+                effectiveStatus: "no_tool",
+                model: "mock",
+                maxOutputTokens: 700,
+                toolBudget: 0,
+                temperature: 0.2,
+                reviewerOnly: false,
+                mayUseTools: false,
+                mayRequestAdjudication: false
+              }
+            ]
+          },
           aiInvocationSummaryView: { safe: true }
         }), {
           status: 200,
@@ -1253,7 +1300,10 @@ describe("S74.1 React client shell", () => {
     await waitFor(() => expect(useUiStateStore.getState().currentSessionId).toBe(sessionId));
     fireEvent.click(screen.getByRole("button", { name: "打开印匣" }));
     expect(screen.getByRole("tab", { name: "AI 设置" }).getAttribute("aria-selected")).toBe("true");
-    await screen.findByText("当前策略：balanced");
+    await screen.findByText(/已保存/);
+    expect(screen.getByText("叙事")).toBeTruthy();
+    expect(screen.getByText("快捷建议")).toBeTruthy();
+    expect(screen.queryByDisplayValue("deep")).toBeNull();
 
     fireEvent.click(screen.getByRole("tab", { name: "旧案" }));
     await screen.findByText("顾衡");
@@ -1271,6 +1321,93 @@ describe("S74.1 React client shell", () => {
     fireEvent.click(screen.getByRole("button", { name: "载入" }));
     await waitFor(() => expect(fetchMock).toHaveBeenCalledWith(`/api/game/player-state/${sessionId}`, expect.anything()));
     await waitFor(() => expect(useGameSessionStore.getState().currentSessionId).toBe(sessionId));
+  });
+
+  it("renders S80 global AI matrix and saves dirty task route changes", async () => {
+    const sessionId = "56565656-5656-4565-8565-565656565656";
+    const aiPayload = (tokens: number, preset = "balanced") => ({
+      sessionId: "global",
+      scope: "global",
+      updatedAt: "2026-05-19T12:00:00.000Z",
+      aiSettingsView: {
+        preset,
+        presets: [
+          { id: "balanced", label: "均衡" },
+          { id: "fast", label: "迅捷" },
+          { id: "long_context", label: "长卷" }
+        ],
+        providerOptions: [
+          { provider: "mock", available: true, requiresKey: false },
+          { provider: "openai", available: false, requiresKey: true }
+        ],
+        taskRoutes: [
+          {
+            taskType: "narrator",
+            label: "叙事",
+            purpose: "普通叙事。",
+            provider: "mock",
+            providerAvailable: true,
+            requiresKey: false,
+            effectiveStatus: "active",
+            model: "mock",
+            maxOutputTokens: tokens,
+            toolBudget: 1,
+            temperature: 0.35,
+            reviewerOnly: false,
+            mayUseTools: true,
+            mayRequestAdjudication: false
+          }
+        ]
+      },
+      aiInvocationSummaryView: { safe: true }
+    });
+    const fetchMock = vi.fn(async (url: string, options?: RequestInit) => {
+      if (url === "/api/ai/settings/global" && options?.method === "POST") {
+        expect(JSON.parse(String(options.body))).toMatchObject({
+          settings: {
+            taskRoutes: {
+              narrator: {
+                maxOutputTokens: 1200,
+                provider: "mock"
+              }
+            }
+          }
+        });
+        return new Response(JSON.stringify(aiPayload(1200, "fast")), {
+          status: 200,
+          headers: { "Content-Type": "application/json" }
+        });
+      }
+      if (url === "/api/ai/settings/global") {
+        return new Response(JSON.stringify(aiPayload(900)), {
+          status: 200,
+          headers: { "Content-Type": "application/json" }
+        });
+      }
+      return new Response(JSON.stringify({
+        source: "server_player_visible_state_projection",
+        sessionId,
+        worldState: { player: { name: "许慎", role: "scholar" } }
+      }), {
+        status: 200,
+        headers: { "Content-Type": "application/json" }
+      });
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    renderRoute(`/game/${sessionId}/settings`);
+
+    await screen.findByDisplayValue("900");
+    expect(screen.getByRole("button", { name: /保存全局设置/ })).toHaveProperty("disabled", true);
+    fireEvent.change(screen.getByDisplayValue("900"), { target: { value: "1200" } });
+    expect(screen.getByText("未保存")).toBeTruthy();
+    fireEvent.change(screen.getByLabelText("推演预设"), { target: { value: "fast" } });
+    fireEvent.click(screen.getByRole("button", { name: /保存全局设置/ }));
+
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledWith("/api/ai/settings/global", expect.objectContaining({ method: "POST" })));
+    await screen.findByDisplayValue("1200");
+    expect(screen.getByText(/已保存/)).toBeTruthy();
+    expect(document.body.textContent || "").not.toMatch(/OPENAI_API_KEY|raw prompt|data\/sessions|base URL/i);
   });
 
   it("renders S75.5 home save cases with metadata fallbacks", async () => {

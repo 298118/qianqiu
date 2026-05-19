@@ -1,3 +1,6 @@
+const fs = require("fs");
+const path = require("path");
+
 const {
   MODEL_TASK_TYPES,
   REVIEW_ONLY_TASK_TYPES,
@@ -16,13 +19,21 @@ const {
   AI_TASK_LABELS
 } = require("./aiSettingsConfig");
 
+const GLOBAL_AI_SETTINGS_SCHEMA_VERSION = "s80-ai-global-settings.v1";
+const DEFAULT_GLOBAL_AI_SETTINGS_PATH = path.join(__dirname, "..", "..", "data", "settings", "ai-global-settings.json");
+
 const SENSITIVE_AI_SETTINGS_PATTERN =
-  /(hiddenNotes|hiddenIntent|raw[_ -]?(?:provider|audit|table|ledger|prompt)|\b(?:statePatch|worldState|rawSql|server\.)\b|retrievalContext|prompt_retrieval_index|event_archive_index|world_sessions|ai_change_proposals|event_log|api[_ -]?key|OPENAI_API_KEY|DEEPSEEK_API_KEY|MIMO_API_KEY|ANTHROPIC_API_KEY|sk-[A-Za-z0-9_-]{6,}|tp-[A-Za-z0-9_-]{6,}|data[\\/](?:sessions|audit)|[A-Za-z]:\\[^\s"'<>]+|(?:file:\/\/)?(?:\/Users|\/home|\/tmp|\/var|\/mnt|\/opt)\/[^\s"'<>]+)/i;
+  /(hiddenNotes|hiddenIntent|raw[_ -]?(?:provider|audit|table|ledger|prompt)|\b(?:statePatch|worldState|rawSql|server\.)\b|retrievalContext|prompt_retrieval_index|event_archive_index|world_sessions|ai_change_proposals|event_log|api[_ -]?key|OPENAI_API_KEY|DEEPSEEK_API_KEY|MIMO_API_KEY|ANTHROPIC_API_KEY|sk-[A-Za-z0-9_-]{6,}|tp-[A-Za-z0-9_-]{6,}|data[\\/](?:sessions|audit)|[A-Za-z]:[\\/][^\s"'<>]+|\\\\[^\\/\s"'<>]+[\\/][^\s"'<>]+|(?:file:\/\/)?(?:\/Users|\/home|\/tmp|\/var|\/mnt|\/opt)\/[^\s"'<>]+)/i;
+
+function normalizeSettingKeyForSafety(key) {
+  return String(key).toLowerCase().replace(/[\s_.-]+/g, "");
+}
 
 const FORBIDDEN_SETTING_KEYS = new Set([
   "hidden",
   "hiddenNotes",
   "hiddenIntent",
+  "private",
   "raw",
   "rawAudit",
   "rawLedger",
@@ -37,18 +48,27 @@ const FORBIDDEN_SETTING_KEYS = new Set([
   "directStateWrite",
   "mayWriteState",
   "mayCallServerResolvers",
+  "server",
   "serverResolver",
   "serverResolvers",
+  "resolver",
   "readHidden",
   "writeDatabase",
   "writeSql",
+  "path",
+  "localPath",
+  "filePath",
+  "basePath",
   "baseURL",
   "baseUrl",
   "apiKey",
+  "accessToken",
+  "authToken",
+  "bearerToken",
   "key",
   "secret",
   "token"
-]);
+].map((key) => normalizeSettingKeyForSafety(key)));
 
 const ROUTE_PATCH_KEYS = new Set([
   "provider",
@@ -75,6 +95,26 @@ function cleanVisibleText(value, fallback = "", maxLength = 120) {
   return text.slice(0, maxLength);
 }
 
+function shouldUseDefaultGlobalSettingsPath(env = process.env) {
+  if (env !== process.env) return false;
+  return !process.argv.includes("--test");
+}
+
+function resolveGlobalAiSettingsPath(env = process.env, options = {}) {
+  const explicitPath = env && Object.prototype.hasOwnProperty.call(env, "AI_GLOBAL_SETTINGS_PATH")
+    ? env.AI_GLOBAL_SETTINGS_PATH
+    : undefined;
+  if (explicitPath) return path.resolve(String(explicitPath));
+  if (shouldUseDefaultGlobalSettingsPath(env)) return DEFAULT_GLOBAL_AI_SETTINGS_PATH;
+  return null;
+}
+
+function createGlobalSettingsError(message) {
+  const error = new Error(message);
+  error.statusCode = 500;
+  return error;
+}
+
 function assertSettingsSafe(value, path = "aiSettings") {
   if (typeof value === "string") {
     if (SENSITIVE_AI_SETTINGS_PATTERN.test(value)) {
@@ -85,8 +125,10 @@ function assertSettingsSafe(value, path = "aiSettings") {
   if (!value || typeof value !== "object") return;
 
   for (const [key, child] of Object.entries(value)) {
-    if (FORBIDDEN_SETTING_KEYS.has(key) || SENSITIVE_AI_SETTINGS_PATTERN.test(key)) {
-      throw new Error(`${path}.${key} 是 AI 设置禁止字段。`);
+    const normalizedKey = normalizeSettingKeyForSafety(key);
+    if (FORBIDDEN_SETTING_KEYS.has(normalizedKey) || SENSITIVE_AI_SETTINGS_PATTERN.test(key)) {
+      const safeKey = cleanVisibleText(key, "[blocked]", 40);
+      throw new Error(`${path}.${safeKey} 是 AI 设置禁止字段。`);
     }
     assertSettingsSafe(child, `${path}.${key}`);
   }
@@ -338,12 +380,155 @@ function buildRoutePolicyFromSettings(settings, env = process.env, options = {})
   return validateModelRoutePolicy(routePolicy);
 }
 
+function normalizeGlobalSettingsRecordPayload(payload) {
+  if (!payload || typeof payload !== "object" || Array.isArray(payload)) {
+    throw createGlobalSettingsError("全局 AI 设置文件格式错误。");
+  }
+  const rawSettings = payload.settings || payload.aiSettings || payload;
+  if (!rawSettings || typeof rawSettings !== "object" || Array.isArray(rawSettings)) {
+    throw createGlobalSettingsError("全局 AI 设置文件缺少 settings。");
+  }
+  const settings = mergeAiSettings(buildDefaultAiSettings(), rawSettings);
+  return {
+    schemaVersion: cleanVisibleText(payload.schemaVersion, GLOBAL_AI_SETTINGS_SCHEMA_VERSION, 64),
+    settings,
+    updatedAt: cleanVisibleText(payload.updatedAt, "", 64) || null
+  };
+}
+
+function readGlobalAiSettingsRecord(env = process.env, options = {}) {
+  const filePath = resolveGlobalAiSettingsPath(env, options);
+  if (!filePath) {
+    return {
+      exists: false,
+      settings: null,
+      updatedAt: null
+    };
+  }
+
+  try {
+    const raw = fs.readFileSync(filePath, "utf8");
+    const parsed = JSON.parse(raw);
+    return {
+      exists: true,
+      ...normalizeGlobalSettingsRecordPayload(parsed)
+    };
+  } catch (error) {
+    if (error.code === "ENOENT") {
+      return {
+        exists: false,
+        settings: null,
+        updatedAt: null
+      };
+    }
+    if (error.statusCode) throw error;
+    throw createGlobalSettingsError("全局 AI 设置文件无法读取或格式错误。");
+  }
+}
+
+function globalSettingsState(settings, worldState = {}) {
+  return {
+    ...worldState,
+    sessionId: worldState.sessionId || "global-ai-settings",
+    turnCount: worldState.turnCount || 0,
+    aiSettings: {
+      ...settings,
+      observability: worldState.aiSettings?.observability || settings.observability
+    }
+  };
+}
+
+function writeGlobalAiSettingsRecord(settings, env = process.env) {
+  assertSettingsSafe(settings);
+  const filePath = resolveGlobalAiSettingsPath(env, { forWrite: true });
+  if (!filePath) throw createGlobalSettingsError("全局 AI 设置路径不可用。");
+  const updatedAt = new Date().toISOString();
+  const record = {
+    schemaVersion: GLOBAL_AI_SETTINGS_SCHEMA_VERSION,
+    settingsSchemaVersion: settings.schemaVersion,
+    updatedAt,
+    settings: {
+      schemaVersion: settings.schemaVersion,
+      preset: settings.preset,
+      controls: { ...settings.controls },
+      taskRoutes: { ...(settings.taskRoutes || {}) }
+    }
+  };
+  fs.mkdirSync(path.dirname(filePath), { recursive: true });
+  const tempPath = `${filePath}.${process.pid}.${Date.now()}.tmp`;
+  try {
+    fs.writeFileSync(tempPath, `${JSON.stringify(record, null, 2)}\n`, "utf8");
+    fs.renameSync(tempPath, filePath);
+  } catch (error) {
+    try {
+      fs.rmSync(tempPath, { force: true });
+    } catch (cleanupError) {
+      // best effort
+    }
+    throw error;
+  }
+  return record;
+}
+
+function buildGlobalAiSettingsPayload(env = process.env, options = {}) {
+  const record = readGlobalAiSettingsRecord(env, options);
+  const settings = record.exists ? record.settings : buildDefaultAiSettings();
+  const routePolicy = buildRoutePolicyFromSettings(settings, env);
+  const worldState = globalSettingsState(settings, options.worldState);
+  const aiInvocationSummaryView = buildAiInvocationSummaryView(worldState, routePolicy, env);
+  return {
+    sessionId: options.worldState?.sessionId || "global",
+    targetSessionId: options.targetSessionId || options.worldState?.sessionId || null,
+    scope: "global",
+    updatedAt: record.updatedAt,
+    globalSettingsExists: record.exists,
+    aiSettingsView: redactAiSettingsForClient({ ...settings, routePolicy }, env),
+    aiInvocationSummaryView,
+    aiControlAuditView: options.buildAiControlAuditView
+      ? options.buildAiControlAuditView(worldState, { routePolicy, aiInvocationSummaryView })
+      : undefined
+  };
+}
+
+function updateGlobalAiSettings(patch = {}, env = process.env, options = {}) {
+  if (!patch || typeof patch !== "object" || Array.isArray(patch)) {
+    throw new Error("AI 设置 patch 必须是对象。");
+  }
+  const record = readGlobalAiSettingsRecord(env, { forWrite: true });
+  const worldState = globalSettingsState(record.exists ? record.settings : buildDefaultAiSettings(), options.worldState);
+  const result = updateAiSettings(worldState, patch, env);
+  assertRouteProvidersAvailable(result.routePolicy, env);
+  const saved = writeGlobalAiSettingsRecord(result.settings, env);
+  const aiInvocationSummaryView = buildAiInvocationSummaryView(worldState, result.routePolicy, env);
+  return {
+    sessionId: options.worldState?.sessionId || "global",
+    targetSessionId: options.targetSessionId || options.worldState?.sessionId || null,
+    scope: "global",
+    updatedAt: saved.updatedAt,
+    globalSettingsExists: true,
+    settings: result.settings,
+    routePolicy: result.routePolicy,
+    aiSettingsView: redactAiSettingsForClient({ ...result.settings, routePolicy: result.routePolicy }, env),
+    aiInvocationSummaryView,
+    aiControlAuditView: options.buildAiControlAuditView
+      ? options.buildAiControlAuditView(worldState, {
+        routePolicy: result.routePolicy,
+        aiInvocationSummaryView
+      })
+      : undefined
+  };
+}
+
 function resolveAiSettingsForSession(worldState = {}, env = process.env, options = {}) {
-  const settings = ensureAiSettingsState(worldState);
+  const globalRecord = readGlobalAiSettingsRecord(env, options);
+  const settings = globalRecord.exists ? globalRecord.settings : ensureAiSettingsState(worldState);
   const routePolicy = buildRoutePolicyFromSettings(settings, env, options);
   return {
     settings,
-    routePolicy
+    routePolicy,
+    scope: globalRecord.exists ? "global" : "session",
+    updatedAt: globalRecord.updatedAt,
+    globalSettingsExists: globalRecord.exists
   };
 }
 
@@ -358,8 +543,26 @@ function providerHasRequiredKeys(provider, env = process.env) {
   return false;
 }
 
+function assertRouteProvidersAvailable(routePolicy, env = process.env) {
+  const unavailable = MODEL_TASK_TYPES
+    .map((taskType) => resolveModelForTask(taskType, routePolicy))
+    .filter((route) => !providerHasRequiredKeys(route.provider, env));
+  if (!unavailable.length) return;
+  const summary = unavailable
+    .map((route) => `${AI_TASK_LABELS[route.taskType] || route.taskType}:${route.provider}`)
+    .join("，");
+  throw new Error(`全局 AI 设置不能保存缺少 key 的 provider：${summary}。`);
+}
+
 function redactModelName(model) {
   return cleanVisibleText(model, "[redacted-model]", 96);
+}
+
+function routeEffectiveStatus(route, env = process.env) {
+  if (!providerHasRequiredKeys(route.provider, env)) return "missing_provider_key";
+  if (route.reviewerOnly) return "review_only";
+  if (!route.mayUseTools && route.toolBudget === 0) return "no_tool";
+  return "active";
 }
 
 function redactAiSettingsForClient(settings, env = process.env) {
@@ -385,11 +588,15 @@ function redactAiSettingsForClient(settings, env = process.env) {
     controls: { ...resolved.controls },
     taskRoutes: MODEL_TASK_TYPES.map((taskType) => {
       const route = resolveModelForTask(taskType, routePolicy);
+      const providerAvailable = providerHasRequiredKeys(route.provider, env);
       return {
         taskType,
         label: AI_TASK_LABELS[taskType] || taskType,
+        purpose: cleanVisibleText(route.purpose, AI_TASK_LABELS[taskType] || taskType, 160),
         provider: route.provider,
-        providerAvailable: providerHasRequiredKeys(route.provider, env),
+        providerAvailable,
+        requiresKey: route.provider !== "mock",
+        effectiveStatus: routeEffectiveStatus(route, env),
         model: redactModelName(route.model),
         maxOutputTokens: route.maxOutputTokens,
         toolBudget: route.toolBudget,
@@ -495,12 +702,18 @@ function updateAiSettings(worldState = {}, patch = {}, env = process.env) {
 
 module.exports = {
   AI_SETTINGS_SCHEMA_VERSION,
+  DEFAULT_GLOBAL_AI_SETTINGS_PATH,
+  GLOBAL_AI_SETTINGS_SCHEMA_VERSION,
   buildAiInvocationSummaryView,
   buildDefaultAiSettings,
+  buildGlobalAiSettingsPayload,
   ensureAiSettingsState,
+  providerHasRequiredKeys,
   recordAiInvocation,
   redactAiSettingsForClient,
+  readGlobalAiSettingsRecord,
   resolveAiSettingsForSession,
+  updateGlobalAiSettings,
   updateAiSettings,
   validateAiSettingsPatch
 };

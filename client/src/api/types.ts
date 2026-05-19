@@ -370,12 +370,20 @@ export type ExamSubmitResponse = SafeRouteViews & {
 export type AiSettingsView = JsonObject & {
   readonly schemaVersion?: string;
   readonly preset?: string;
+  readonly presetLabel?: string;
+  readonly presets?: JsonObject[];
   readonly providerOptions?: JsonObject[];
   readonly taskRoutes?: JsonObject[];
+  readonly controls?: JsonObject;
+  readonly safeguards?: JsonObject;
 };
 
 export type AiSettingsResponse = {
   readonly sessionId: string;
+  readonly targetSessionId?: string | null;
+  readonly scope?: "global" | "session" | string;
+  readonly updatedAt?: string | null;
+  readonly globalSettingsExists?: boolean;
   readonly aiSettingsView: AiSettingsView;
   readonly aiInvocationSummaryView?: JsonObject;
   readonly aiControlAuditView?: JsonObject;

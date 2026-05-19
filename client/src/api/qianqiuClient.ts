@@ -48,6 +48,7 @@ const allowedSafeEndpointPatterns = Object.freeze([
   /^\/api\/exam\/progress$/,
   /^\/api\/exam\/submit$/,
   /^\/api\/ai\/connection-test$/,
+  /^\/api\/ai\/settings\/global$/,
   /^\/api\/ai\/settings\/[^/?#]+$/,
   /^\/api\/ai\/quick-actions\/[^/?#]+$/,
   /^\/api\/ai\/topic-draft\/[^/?#]+$/
@@ -213,6 +214,18 @@ export const qianqiuApi = {
 
   updateAiSettings(sessionId: string, input: UpdateAiSettingsRequest, signal?: AbortSignal) {
     return requestJson<AiSettingsResponse>(`/api/ai/settings/${encodePathSegment(sessionId)}`, {
+      method: "POST",
+      body: input as unknown as JsonObject,
+      signal
+    });
+  },
+
+  getGlobalAiSettings(signal?: AbortSignal) {
+    return requestJson<AiSettingsResponse>("/api/ai/settings/global", { signal });
+  },
+
+  updateGlobalAiSettings(input: UpdateAiSettingsRequest, signal?: AbortSignal) {
+    return requestJson<AiSettingsResponse>("/api/ai/settings/global", {
       method: "POST",
       body: input as unknown as JsonObject,
       signal

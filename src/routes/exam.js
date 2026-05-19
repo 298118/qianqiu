@@ -431,7 +431,7 @@ router.post("/submit", async (req, res, next) => {
         throw fail(400, "Unknown exam level");
       }
 
-      const { routePolicy } = resolveAiSettingsForSession(worldState);
+      const { settings, routePolicy } = resolveAiSettingsForSession(worldState);
       const route = resolveModelForTask("domain_specialist", routePolicy);
       const provider = getProvider({ routePolicy });
       const startedAt = Date.now();
@@ -588,7 +588,7 @@ router.post("/submit", async (req, res, next) => {
       const aiInvocationSummaryView = buildAiInvocationSummaryView(worldState, routePolicy);
       return {
         sessionId: worldState.sessionId,
-        aiSettingsView: redactAiSettingsForClient({ ...worldState.aiSettings, routePolicy }),
+        aiSettingsView: redactAiSettingsForClient({ ...settings, routePolicy }),
         aiInvocationSummaryView,
         aiControlAuditView: buildAiControlAuditView(worldState, {
           routePolicy,

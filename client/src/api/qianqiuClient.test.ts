@@ -70,6 +70,8 @@ describe("S74.2 qianqiuApi", () => {
     await qianqiuApi.progressExam({ sessionId: "s1", examId: "e1", action: "审题" });
     await qianqiuApi.submitExam({ sessionId: "s1", examId: "e1", essay: "文章" });
     await qianqiuApi.updateAiSettings("s1", { settings: { preset: "fast" } });
+    await qianqiuApi.getGlobalAiSettings();
+    await qianqiuApi.updateGlobalAiSettings({ settings: { preset: "quality_first" } });
     await qianqiuApi.requestQuickActions("s1", { page: "game", draftPreview: "温书", count: 2 });
     await qianqiuApi.testAiConnection({ provider: "mock" });
 
@@ -86,6 +88,8 @@ describe("S74.2 qianqiuApi", () => {
       { url: "/api/exam/progress", method: "POST", contentType: "application/json" },
       { url: "/api/exam/submit", method: "POST", contentType: "application/json" },
       { url: "/api/ai/settings/s1", method: "POST", contentType: "application/json" },
+      { url: "/api/ai/settings/global", method: "GET", contentType: undefined },
+      { url: "/api/ai/settings/global", method: "POST", contentType: "application/json" },
       { url: "/api/ai/quick-actions/s1", method: "POST", contentType: "application/json" },
       { url: "/api/ai/connection-test", method: "POST", contentType: "application/json" }
     ]);
@@ -94,7 +98,7 @@ describe("S74.2 qianqiuApi", () => {
       background: "县学附读",
       customSetting: "公开自述"
     });
-    expect(JSON.parse(fetchMock.mock.calls[6][1]?.body as string)).toEqual({
+    expect(JSON.parse(fetchMock.mock.calls[8][1]?.body as string)).toEqual({
       page: "game",
       draftPreview: "温书",
       count: 2
@@ -106,6 +110,7 @@ describe("S74.2 qianqiuApi", () => {
     expect(() => assertSafeApiEndpoint("/api/dev/session-diagnostics/s1")).toThrow(/Unsafe/);
     expect(() => assertSafeApiEndpoint("/api/game/search/s1")).toThrow(/Unsafe/);
     expect(() => assertSafeApiEndpoint("/api/ai/quick-actions/s1")).not.toThrow();
+    expect(() => assertSafeApiEndpoint("/api/ai/settings/global")).not.toThrow();
   });
 
   it("wraps non-2xx responses in QianqiuApiError", async () => {
