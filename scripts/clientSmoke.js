@@ -64,7 +64,7 @@ const unsafeClientApiPathPatterns = Object.freeze([
 const CLIENT_RESOURCE_BUDGETS = Object.freeze({
   home: {
     maxStaticBytes: 16_500_000,
-    maxRuntimeManifestBytes: 900_000,
+    maxRuntimeManifestBytes: 1_050_000,
     maxFullManifestRequests: 0,
     maxMapRuntimeRequests: 0,
     maxPortraitMainRequests: 6,

@@ -249,7 +249,9 @@ test("S77.5 runtime manifest is compact and strips authoring-only fields", () =>
 
   assert.equal(runtimeManifest.assets.length, sourceManifest.assets.length);
   assert.ok(checked.runtimeBytes < checked.sourceBytes * 0.35);
-  assert.ok(checked.runtimeBytes < 900_000);
+  // S79.2 imports 194 high-res portrait records; the runtime manifest still
+  // strips authoring-only fields and stays near the 1 MB lazy-load budget.
+  assert.ok(checked.runtimeBytes < 1_050_000);
   assert.doesNotMatch(runtimeText, /localHighResSourcePath|promptSummary|postProcessing|performance|visualReview[^]*notes|safetyReview[^]*notes/);
   assert.doesNotMatch(runtimeText, /artifacts[\\/]|[A-Za-z]:[\\/]|file:\/\//);
   assert.equal(runtimeManifest.assets.some((asset) => asset.thumbnailPath), true);

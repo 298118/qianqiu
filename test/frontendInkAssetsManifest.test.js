@@ -23,6 +23,14 @@ const portraitGenericNpcPoolQaPath = path.join(repoRoot, "public", "assets", "ui
 const portraitSignatureNpcPoolQaPath = path.join(repoRoot, "public", "assets", "ui", "portraits", "portrait-signature-npc-pool-qa-v1.json");
 const portraitStateScenePoolQaPath = path.join(repoRoot, "public", "assets", "ui", "portraits", "portrait-state-scene-pool-qa-v1.json");
 const portraitYoungFemalePoolQaPath = path.join(repoRoot, "public", "assets", "ui", "portraits", "portrait-young-female-pool-qa-v1.json");
+const portraitRecoveredFemalePoolQaPath = path.join(
+  repoRoot,
+  "public",
+  "assets",
+  "ui",
+  "portraits",
+  "portrait-recovered-female-pool-qa-v1.json"
+);
 const portraitCompressionQaPath = path.join(repoRoot, "public", "assets", "ui", "portraits", "portrait-compression-qa-v1.json");
 const portraitSingleOverrideQaPath = path.join(repoRoot, "public", "assets", "ui", "portraits", "portrait-single-override-qa-v1.json");
 const effectMotionQaPath = path.join(repoRoot, "public", "assets", "ui", "effects", "effect-motion-qa-v1.json");
@@ -235,7 +243,7 @@ test("S73.2 ink UI manifest fixes schema, safety, fallback, and portrait policie
   });
 
   assert.equal(Array.isArray(manifest.assets), true);
-  assert.equal(manifest.assets.length, 642, "S73.3-S73.10.7 UI assets are active");
+  assert.equal(manifest.assets.length, 836, "S73.3-S79.2 UI assets are active");
 
   const phaseCounts = manifest.assets.reduce((counts, asset) => {
     counts[asset.phase] = (counts[asset.phase] || 0) + 1;
@@ -252,10 +260,24 @@ test("S73.2 ink UI manifest fixes schema, safety, fallback, and portrait policie
   assert.equal(phaseCounts["S73.10.4"], 72);
   assert.equal(phaseCounts["S73.10.5"], 72);
   assert.equal(phaseCounts["S73.10.7"], 48);
+  assert.equal(phaseCounts["S79.2"], 194);
 
   for (const asset of manifest.assets) {
     assert.equal(
-      ["S73.3", "S73.4", "S73.5", "S73.6", "S73.7", "S73.8", "S73.10.2", "S73.10.3", "S73.10.4", "S73.10.5", "S73.10.7"].includes(
+      [
+        "S73.3",
+        "S73.4",
+        "S73.5",
+        "S73.6",
+        "S73.7",
+        "S73.8",
+        "S73.10.2",
+        "S73.10.3",
+        "S73.10.4",
+        "S73.10.5",
+        "S73.10.7",
+        "S79.2"
+      ].includes(
         asset.phase
       ),
       true,
@@ -454,6 +476,41 @@ test("S73.2 ink UI manifest fixes schema, safety, fallback, and portrait policie
       assert.equal(asset.fallbackRef, "fallback-role-silhouette-v1", asset.id);
       assert.deepEqual(asset.lazyLoad, {
         group: "portrait_pool_young_female_s73_10_7",
+        allowEagerLoad: false,
+        thumbnailFirst: true,
+        lowResPlaceholder: true,
+        maxInitialPortraits: 8
+      });
+      const placeholderPath = resolveUiAssetPath(asset.lowResPlaceholderPath);
+      assert.equal(fs.existsSync(placeholderPath), true, asset.lowResPlaceholderPath);
+      const placeholderInfo = readImageInfo(placeholderPath);
+      assert.equal(placeholderInfo.width, 64, asset.id);
+      assert.equal(placeholderInfo.height, 96, asset.id);
+      assert.equal(asset.performance.lowResPlaceholderBytes, fs.statSync(placeholderPath).size, asset.id);
+      assert.equal(asset.performance.thumbnailBytes <= asset.performance.thumbnailTargetMaxBytes, true, asset.id);
+    }
+    if (asset.phase === "S79.2") {
+      assert.equal(asset.category, "portrait", asset.id);
+      assert.equal(asset.subcategory, "recovered_female_highres_pool", asset.id);
+      assert.equal(asset.dimensions.width, 1024, asset.id);
+      assert.equal(asset.dimensions.height, 1536, asset.id);
+      assert.equal(asset.transparent, false, asset.id);
+      assert.equal(asset.portraitRef, asset.id, asset.id);
+      assert.equal(asset.portraitRef.startsWith("portrait-s79-2-recovered-female-"), true, asset.id);
+      assert.equal(manifest.roleCatalog.includes(asset.role), true, asset.id);
+      assert.equal(asset.role, "recovered_female_highres", asset.id);
+      assert.equal(asset.genderPresentation, "feminine", asset.id);
+      assert.equal(String(asset.ageBand).startsWith("adult"), true, asset.id);
+      assert.equal(asset.identityTags.includes("recovered_female_highres"), true, asset.id);
+      assert.equal(asset.identityTags.includes("high_resolution_master"), true, asset.id);
+      assert.equal(asset.source.localHighResSource, "kept_outside_public_manifest", asset.id);
+      assert.equal(asset.source.localHighResSourcePath, undefined, asset.id);
+      assert.match(asset.visualReview.summary, /194 张 recovered 女性高清母版/, asset.id);
+      assert.match(asset.safetyReview.summary, /artifacts PNG 不进入 manifest|\/assets\/ui\//, asset.id);
+      assertSafeUiAssetPath(asset.lowResPlaceholderPath, `${asset.id}.lowResPlaceholderPath`);
+      assert.equal(asset.fallbackRef, "fallback-role-silhouette-v1", asset.id);
+      assert.deepEqual(asset.lazyLoad, {
+        group: "portrait_pool_recovered_female_s79_2",
         allowEagerLoad: false,
         thumbnailFirst: true,
         lowResPlaceholder: true,
@@ -1128,6 +1185,72 @@ test("S73.10.7 young female portrait patch rejects middle-aged or neutralized ca
   assert.equal(roleSet.size, 48);
 });
 
+test("S79.2 recovered female portrait pool records all high-res PNG masters safely", () => {
+  const qaText = fs.readFileSync(portraitRecoveredFemalePoolQaPath, "utf8");
+  assert.doesNotMatch(qaText, FORBIDDEN_MANIFEST_REMOTE_OR_LOCAL_PATH);
+  assert.doesNotMatch(qaText, FORBIDDEN_ASSET_VALUE);
+  const qa = JSON.parse(qaText);
+  const manifest = readJson(manifestPath);
+  const poolAssets = new Map(manifest.assets.filter((asset) => asset.phase === "S79.2").map((asset) => [asset.id, asset]));
+
+  assert.equal(qa.schemaVersion, 1);
+  assert.equal(qa.phase, "S79.2");
+  assert.equal(qa.reviewedBy, "Codex");
+  assert.equal(qa.reviewedAt, "2026-05-19");
+  assert.equal(qa.assets.length, 194);
+  assert.deepEqual(qa.counts, {
+    total: 194,
+    recoveredFemaleHighres: 194,
+    uniqueSourceSha256: 194,
+    sourceThreads: 8,
+    exact1024x1536Sources: 185,
+    containedResizedSources: 9,
+    rejected: 0
+  });
+  assert.match(qa.visualReviewSummary, /高清主图/);
+  assert.match(qa.safetyReviewSummary, /artifacts 路径/);
+  assert.match(qa.sourceHandling, /源 SHA-256/);
+  assert.equal(poolAssets.size, 194);
+
+  const sourceNames = new Set();
+  const sourceShas = new Set();
+  for (const entry of qa.assets) {
+    const asset = poolAssets.get(entry.id);
+    assert.ok(asset, entry.id);
+    assert.equal(asset.subcategory, "recovered_female_highres_pool", entry.id);
+    assert.equal(asset.genderPresentation, "feminine", entry.id);
+    assert.equal(String(asset.ageBand).startsWith("adult"), true, entry.id);
+    assert.equal(asset.lazyLoad.group, "portrait_pool_recovered_female_s79_2", entry.id);
+    assert.equal(asset.source.localHighResSource, "kept_outside_public_manifest", entry.id);
+    assert.equal(asset.source.localHighResSourcePath, undefined, entry.id);
+    assert.equal(entry.sourceHandling, "local_artifact_not_public", entry.id);
+    assert.equal(typeof entry.sourceFileName, "string", entry.id);
+    assert.match(entry.sourceFileName, /^[0-9a-f]{8}--ig_[0-9a-f]{50}\.png$/);
+    assert.equal(typeof entry.sourceThreadId, "string", entry.id);
+    assert.equal(typeof entry.sourceThreadName, "string", entry.id);
+    assert.equal(typeof entry.sourceSha256, "string", entry.id);
+    assert.equal(entry.sourceSha256.length, 64, entry.id);
+    assert.equal(typeof entry.sourceDimensions.width, "number", entry.id);
+    assert.equal(typeof entry.sourceDimensions.height, "number", entry.id);
+    sourceNames.add(entry.sourceFileName);
+    sourceShas.add(entry.sourceSha256);
+    for (const field of ["path", "thumbnailPath", "lowResPlaceholderPath"]) {
+      assertSafeUiAssetPath(entry[field], `${entry.id}.${field}`);
+      assert.equal(fs.existsSync(resolveUiAssetPath(entry[field])), true, `${entry.id}.${field}`);
+    }
+    assert.equal(entry.bytes, fs.statSync(resolveUiAssetPath(entry.path)).size, entry.id);
+    assert.equal(entry.thumbnailBytes, fs.statSync(resolveUiAssetPath(entry.thumbnailPath)).size, entry.id);
+    assert.equal(entry.lowResPlaceholderBytes, fs.statSync(resolveUiAssetPath(entry.lowResPlaceholderPath)).size, entry.id);
+    assert.equal(entry.sha256, sha256File(resolveUiAssetPath(entry.path)), entry.id);
+    assert.equal(entry.thumbnailSha256, sha256File(resolveUiAssetPath(entry.thumbnailPath)), entry.id);
+    assert.equal(entry.lowResPlaceholderSha256, sha256File(resolveUiAssetPath(entry.lowResPlaceholderPath)), entry.id);
+    assert.equal(entry.visualReviewStatus, "approved", entry.id);
+    assert.equal(entry.safetyReviewStatus, "approved", entry.id);
+  }
+  assert.equal(sourceNames.size, 194);
+  assert.equal(sourceShas.size, 194);
+});
+
 test("S73.10 single portrait overrides replace selected female player portraits without reusing grid hashes", () => {
   const qaText = fs.readFileSync(portraitSingleOverrideQaPath, "utf8");
   assert.doesNotMatch(qaText, FORBIDDEN_MANIFEST_REMOTE_OR_LOCAL_PATH);
@@ -1358,7 +1481,7 @@ test("S73.10.6 portrait compression QA pins thumbnails, placeholders, crop metad
   assert.equal(report.policy.requireLowResPlaceholder, true);
   assert.equal(report.policy.allowEagerLoad, false);
   assert.equal(report.policy.maxInitialPortraits, 8);
-  assert.equal(report.summary.portraitAssets, 596);
+  assert.equal(report.summary.portraitAssets, 790);
   assert.equal(report.summary.s7310PortraitAssets, 572);
   assert.equal(report.summary.baselinePortraitAssets, 24);
   assert.equal(report.summary.errorCount, 0);
@@ -1370,7 +1493,8 @@ test("S73.10.6 portrait compression QA pins thumbnails, placeholders, crop metad
     "S73.10.3": 188,
     "S73.10.4": 72,
     "S73.10.5": 72,
-    "S73.10.7": 48
+    "S73.10.7": 48,
+    "S79.2": 194
   });
   assert.deepEqual(report.summary.byLazyLoadGroup, {
     portrait_baseline_s73_7: 24,
@@ -1381,7 +1505,8 @@ test("S73.10.6 portrait compression QA pins thumbnails, placeholders, crop metad
     portrait_pool_signature_npc_s73_10: 72,
     portrait_pool_state_variant_s73_10: 48,
     portrait_pool_scene_anchor_s73_10: 24,
-    portrait_pool_young_female_s73_10_7: 48
+    portrait_pool_young_female_s73_10_7: 48,
+    portrait_pool_recovered_female_s79_2: 194
   });
 
   const manifestPortraits = manifest.assets.filter((asset) => asset.category === "portrait");
@@ -1587,8 +1712,10 @@ test("S73.2 frontend asset ledger records manifest, fallback, portrait, and sour
     "portrait-signature-npc-pool-qa-v1.json",
     "portrait-state-scene-pool-qa-v1.json",
     "portrait-young-female-pool-qa-v1.json",
+    "portrait-recovered-female-pool-qa-v1.json",
     "portrait-single-override-qa-v1.json",
     "portrait-compression-qa-v1.json",
+    "qa:recovered-female-portraits",
     "qa:single-portrait-overrides",
     "qa:portrait-compression",
     "portrait_baseline_s73_7",
@@ -1600,12 +1727,14 @@ test("S73.2 frontend asset ledger records manifest, fallback, portrait, and sour
     "portrait_pool_state_variant_s73_10",
     "portrait_pool_scene_anchor_s73_10",
     "portrait_pool_young_female_s73_10_7",
+    "portrait_pool_recovered_female_s79_2",
     "玩家女性风格补充池",
     "玩家男性风格补充池",
     "女性风格扩展池",
     "重要 NPC 专属池",
     "状态/姿态与场景锚点池",
     "年轻女性补充池",
+    "Recovered 女性高清母版池",
     "state_variant_pool",
     "scene_anchor_pool",
     "signature_npc_pool",

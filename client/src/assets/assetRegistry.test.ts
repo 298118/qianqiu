@@ -147,15 +147,16 @@ describe("S74.5 asset registry", () => {
     const initialPeoplePortraits = registry.getInitialPortraits({ usage: "people_page", preferHighResOverridesForFeminine: true });
     const preloadHints = registry.getPreloadHints({ usage: "people_page", preferHighResOverridesForFeminine: true });
 
-    expect(registry.summary.manifestAssetCount).toBe(642);
-    expect(registry.summary.portraitCount).toBe(596);
-    expect(registry.summary.highResOverrideFeminineCount).toBe(60);
+    expect(registry.summary.manifestAssetCount).toBe(836);
+    expect(registry.summary.portraitCount).toBe(790);
+    expect(registry.summary.highResOverrideFeminineCount).toBe(254);
     expect(registry.summary.portraitLazyLoadGroups).toMatchObject({
       portrait_pool_player_s73_10: 72,
       portrait_pool_generic_npc_s73_10: 188,
-      portrait_pool_young_female_s73_10_7: 48
+      portrait_pool_young_female_s73_10_7: 48,
+      portrait_pool_recovered_female_s79_2: 194
     });
-    expect(allPortraits).toHaveLength(596);
+    expect(allPortraits).toHaveLength(790);
     expect(allPortraits.every((portrait) => portrait.path.startsWith("/assets/ui/"))).toBe(true);
     expect(allPortraits.every((portrait) => !/artifacts|portrait-pool-matrix/i.test(portrait.path))).toBe(true);
     expect(feminine[0].hasHighResOverride).toBe(true);

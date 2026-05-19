@@ -111,13 +111,13 @@ S49-S67 本地数据库与大世界内容、S68-S69 科举深化、S70 AI 编排
 
 ## 4. 活动路线图总览
 
-S79 已登记为下一项 `TODO` 阶段，尚未开始实施。范围由用户于 2026-05-19 确认：先修本轮 UI 复查暴露的前端正确性、路由壳和烟测缺口，再把 `artifacts/codex-generated-female-portrait-png-recovery/likely-portrait-masters/` 中 194 张高清女性 PNG 母版全部纳入游戏，不因性能顾虑浪费素材；游戏内立绘右上角必须提供放大标志，允许玩家查看高清大图。
+S79 已进入前端打磨与高清女性立绘入库阶段。范围由用户于 2026-05-19 确认：先修本轮 UI 复查暴露的前端正确性、路由壳和烟测缺口，再把 `artifacts/codex-generated-female-portrait-png-recovery/likely-portrait-masters/` 中 194 张高清女性 PNG 母版全部纳入游戏，不因性能顾虑浪费素材；游戏内立绘右上角必须提供放大标志，允许玩家查看高清大图。
 
 | ID | 状态 | Owner | 目标 | 说明 |
 | --- | --- | --- | --- | --- |
 | S79 | IN_PROGRESS | Codex | 前端打磨与高清女性立绘入库 | 父阶段；保持 Mock/JSON 默认可玩、书生科举链不破坏、安全 projection 与服务器裁决边界不变。 |
 | S79.1 | DONE | Codex | 前端正确性、路由壳与 smoke 缺口修复 | 已修复 `ExamPage` 对 `wordCount` `{min,max}` 的渲染崩溃，补强考试 smoke 真实断言；`/exam`、`/ranking`、`/court`、`/settings` 改走轻量 `sessionRouteShell`，不再被主卷/身份栏压到页面下方。 |
-| S79.2 | TODO | Codex | 194 张 recovered 女性高清母版入库管线 | 为 `likely-portrait-masters` 的 194 张唯一 PNG 建立稳定 ID、来源记录、视觉/安全审核、高清运行时 WebP、缩略图、低清占位、manifest、QA sidecar 和脚本；原始 `artifacts/` 母版仍不直接提交或暴露给前端。 |
+| S79.2 | DONE | Codex | 194 张 recovered 女性高清母版入库管线 | 已为 `likely-portrait-masters` 的 194 张唯一 PNG 建立稳定 ID、来源记录、视觉/安全审核、高清运行时 WebP、缩略图、低清占位、manifest、QA sidecar 和脚本；原始 `artifacts/` 母版仍不直接提交或暴露给前端。 |
 | S79.3 | TODO | Codex | 游戏内高清立绘使用与放大查看 | 在首页选角、人物谱牒、人物档案和其他游戏内立绘位使用高清主图口径；缩略图只作列表预览/占位/QA，不作为主要欣赏图。每个可欣赏立绘右上角增加放大图标，打开只读大图查看器，支持 Esc、遮罩关闭、焦点回收和移动端适配。 |
 | S79.4 | TODO | Codex | 验证、文档同步与提交 | 更新 brief/README/素材台账/共享上下文等必要文档；运行 client typecheck/test、React smoke、素材 QA、manifest 测试、docs governance、documentation governance 和 diff check。若包含代码、脚本、素材或验证工具改动，提交前必须做只读子代理复审。 |
 
@@ -153,6 +153,17 @@ S77.8 最新验收口径：
 - 结构化污染扫描由 `npm run smoke:browser` 覆盖 DOM、storage、runtime manifest、安全字段和截图产物名；完整素材 manifest 仍由 `qa:frontend-assets` 与 manifest 测试守门。
 
 ## 7. 本轮台账归档记录
+
+### 2026-05-19：完成 S79.2 Recovered 女性高清母版入库管线
+
+- 范围：把 `artifacts/codex-generated-female-portrait-png-recovery/likely-portrait-masters/` 中 194 张唯一 PNG 母版全部按稳定 `portrait-s79-2-recovered-female-###-v1` ID 入库，派生公开 1024x1536 高清 WebP、384x576 缩略图和 64x96 低清占位。
+- 实现：新增 `scripts/frontendRecoveredFemalePortraitAssets.js`、`qa:recovered-female-portraits` / `qa:recovered-female-portraits:write` 和 `public/assets/ui/portraits/portrait-recovered-female-pool-qa-v1.json`；新增 `public/assets/ui/portraits/s79-2/` 主图、对应 `thumbs` 与 `placeholders`，并刷新 `ink-ui-manifest.json`、`ink-ui-runtime-manifest.json`、`asset-qa-report-v1.json` 与 `portrait-compression-qa-v1.json`。
+- 资产事实：S79.2 新增 `recovered_female_highres_pool` / `portrait_pool_recovered_female_s79_2` 共 194 张；185 张源图原尺寸为 1024x1536，9 张相近竖版源图等比置入 1024x1536。当前 manifest 为 836 个 active 素材，其中 active 立绘 790 张；portrait compression QA 覆盖 790 张 active 立绘，S73.10 仍为 572 张。
+- 视觉与安全：Codex 生成 4 张 contact sheet 并用视觉理解复看 194 张，确认整体为成年女性古风竖版立绘，服饰完整，脸部、发髻、衣料层次、腰封和姿态清楚，与现有 S73.10 女性池兼容；未见明显水印、现代 UI、大面积可读文字、露骨、挑逗或幼态问题。公开 manifest/runtime manifest 只记录 `/assets/ui/` 派生产物和 `localHighResSource=kept_outside_public_manifest` 标记，QA sidecar 只记录源文件名、源 SHA-256 和源尺寸，不暴露 artifacts 路径。
+- 边界：本轮不改后端 API、provider schema、SQLite schema、存档格式、AI 权限、服务器 resolver、canonical state、prompt 或游戏规则；S79.3 才接游戏内放大标志和只读高清查看器。
+- 子代理：只读 explorer Schrodinger 检查现有立绘管线并建议新增独立 S79.2 脚本、sidecar 与 QA 命令；只读 explorer Beauvoir 盘点 194 张源图的数量、SHA、尺寸分布和 recovery manifest 顺序。两者均未编辑文件、未运行 Git 写操作。提交前只读复审 Archimedes 查看最终 diff、manifest/QA/test/doc 计数和验证证据，未发现 P0/P1/P2/P3。
+- 验证：已通过 `node --check scripts/frontendRecoveredFemalePortraitAssets.js`、`npm run qa:recovered-female-portraits`、`npm run qa:runtime-manifest`、`npm run qa:portrait-compression`、`npm run qa:frontend-assets`、`node --test test/frontendInkAssetsManifest.test.js`、`node --test test/reactClientScaffold.test.js`、`npm run typecheck:client`、`npm run test:client`（66 项）、`npm run build:client`、`npm run smoke:browser -- --screenshots artifacts/s79-2-recovered-female-smoke`、`npm run check:docs-governance`、`node --test test/documentationGovernance.test.js`、`git diff --check`（仅 LF/CRLF 提示）和完整 `npm test`（935 项通过、0 失败）。S79.2 后 runtime manifest 为 937342 bytes，仍剥离 authoring-only 字段；React scaffold 与 browser smoke 的 runtime manifest 预算已按高清池索引调整为 1,050,000 bytes。
+- 下一步：进入 S79.3，在游戏内可欣赏立绘右上角增加放大标志，并实现不写 canonical state、URL、localStorage/sessionStorage 或 AI prompt 的只读高清大图查看器。
 
 ### 2026-05-19：完成 S79.1 前端正确性、路由壳与 smoke 缺口修复
 
