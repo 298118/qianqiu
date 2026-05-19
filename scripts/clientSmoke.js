@@ -63,14 +63,14 @@ const unsafeClientApiPathPatterns = Object.freeze([
 ]);
 const CLIENT_RESOURCE_BUDGETS = Object.freeze({
   home: {
-    maxStaticBytes: 10_000_000,
+    maxStaticBytes: 16_500_000,
     maxRuntimeManifestBytes: 900_000,
     maxFullManifestRequests: 0,
     maxMapRuntimeRequests: 0,
     maxPortraitMainRequests: 6,
     maxPortraitThumbRequests: 8,
     maxPortraitPlaceholderRequests: 8,
-    maxFontWoff2Requests: 3,
+    maxFontWoff2Requests: 6,
     maxUiImageBytes: 4_500_000
   },
   map: {
@@ -187,6 +187,17 @@ function getTextOverlapFailures(rects, label = "page") {
   return failures;
 }
 
+function getTextOverflowFailures(items, label = "page") {
+  const failures = [];
+  for (const item of items) {
+    const horizontalOverflow = Number(item.scrollWidth || 0) > Number(item.clientWidth || 0) + 2;
+    const verticalOverflow = Number(item.scrollHeight || 0) > Number(item.clientHeight || 0) + 2;
+    if (!horizontalOverflow && !verticalOverflow) continue;
+    failures.push(`${label} visible text/control internal overflow: "${item.text}"`);
+  }
+  return failures;
+}
+
 async function assertNoPlayerFacingCopyLeaks(page, label) {
   const text = await page.evaluate(() => document.body.innerText || "");
   const failures = getPlayerFacingCopyLeakFailures(text, label);
@@ -205,7 +216,7 @@ async function assertNoSafetyPollutionOnPage(page, label) {
         return "";
       })
       .filter(Boolean);
-    const dataAttributes = [...document.querySelectorAll("[data-map-status], [data-motion], [data-text-size], [data-contrast], [data-client-entry]")]
+    const dataAttributes = [...document.querySelectorAll("[data-map-status], [data-motion], [data-text-size], [data-contrast], [data-body-font], [data-client-entry]")]
       .flatMap((element) => [...element.attributes]
         .filter((attribute) => attribute.name.startsWith("data-"))
         .map((attribute) => `${attribute.name}=${attribute.value}`));
@@ -441,6 +452,35 @@ async function assertNoVisibleTextOverlap(page, label) {
   }
 }
 
+async function assertNoVisibleTextOverflow(page, label) {
+  const items = await page.evaluate(({ ignoreSelectors }) => {
+    const elements = [...document.querySelectorAll("button, a[href], [role='button']")];
+    const viewport = { width: window.innerWidth, height: window.innerHeight };
+    return elements
+      .filter((element) => {
+        if (ignoreSelectors.some((selector) => element.matches(selector) || element.closest(selector))) return false;
+        const style = window.getComputedStyle(element);
+        if (style.visibility === "hidden" || style.display === "none" || Number(style.opacity) === 0) return false;
+        const rect = element.getBoundingClientRect();
+        if (rect.width < 8 || rect.height < 8) return false;
+        if (rect.bottom <= 0 || rect.right <= 0 || rect.left >= viewport.width || rect.top >= viewport.height) return false;
+        const text = (element.innerText || element.getAttribute("aria-label") || "").trim();
+        return text.length > 0;
+      })
+      .map((element) => ({
+        text: (element.innerText || element.getAttribute("aria-label") || "").trim().slice(0, 36),
+        clientWidth: element.clientWidth,
+        clientHeight: element.clientHeight,
+        scrollWidth: element.scrollWidth,
+        scrollHeight: element.scrollHeight
+      }));
+  }, { ignoreSelectors: visualOverlapIgnoreSelectors });
+  const failures = getTextOverflowFailures(items, label);
+  if (failures.length) {
+    throw new Error(failures.slice(0, 4).join("; "));
+  }
+}
+
 async function assertReviewedBackgroundVisual(page, selector, label) {
   const snapshot = await page.evaluate(async ({ selector: targetSelector }) => {
     const element = document.querySelector(targetSelector);
@@ -586,7 +626,8 @@ async function waitForVisiblePortraitImages(page, selector, label) {
     const visibleImages = images.filter((image) => {
       const rect = image.getBoundingClientRect();
       const style = window.getComputedStyle(image);
-      return rect.width > 0 && rect.height > 0 && style.display !== "none" && style.visibility !== "hidden";
+      const inViewport = rect.bottom > 0 && rect.top < window.innerHeight && rect.right > 0 && rect.left < window.innerWidth;
+      return inViewport && rect.width > 0 && rect.height > 0 && style.display !== "none" && style.visibility !== "hidden";
     });
     const entries = visibleImages.map((image) => ({
         src: image.currentSrc || image.src || "",
@@ -646,6 +687,7 @@ async function assertCurrentReactClientPage(page, pathname, label, screenshotsDi
   }
 
   await assertNoVisibleTextOverlap(page, label);
+  await assertNoVisibleTextOverflow(page, label);
   await assertNoSafetyPollutionOnPage(page, label);
   return captureScreenshot(page, screenshotsDir, label);
 }
@@ -653,6 +695,36 @@ async function assertCurrentReactClientPage(page, pathname, label, screenshotsDi
 async function assertReactClientPage(page, baseUrl, pathname, label, screenshotsDir, options = {}) {
   await page.goto(`${baseUrl}${pathname}`, { waitUntil: "networkidle" });
   return assertCurrentReactClientPage(page, pathname, label, screenshotsDir, options);
+}
+
+async function assertBrowserLevelReducedMotion(browser, baseUrl, screenshotsDir) {
+  const context = await browser.newContext({ viewport: VIEWPORTS.desktop, reducedMotion: "reduce" });
+  try {
+    const page = await context.newPage();
+    const screenshot = await assertReactClientPage(page, baseUrl, "/", "s77-browser-reduced-motion-home", screenshotsDir);
+    const snapshot = await page.evaluate(() => {
+      const mist = document.querySelector(".homeMist");
+      const seal = document.querySelector(".homeStartSeal");
+      const mistStyle = mist ? window.getComputedStyle(mist) : null;
+      const sealStyle = seal ? window.getComputedStyle(seal) : null;
+      return {
+        mediaMatches: window.matchMedia("(prefers-reduced-motion: reduce)").matches,
+        shellMotion: document.querySelector(".appShell")?.getAttribute("data-motion"),
+        mistAnimationName: mistStyle?.animationName || "",
+        mistAnimationDuration: mistStyle?.animationDuration || "",
+        sealTransitionDuration: sealStyle?.transitionDuration || ""
+      };
+    });
+    if (!snapshot.mediaMatches) {
+      throw new Error(`S77.6 browser-level reduced motion media query did not match: ${JSON.stringify(snapshot)}`);
+    }
+    if (snapshot.mistAnimationName !== "none" && snapshot.mistAnimationDuration !== "0.01ms") {
+      throw new Error(`S77.6 browser-level reduced motion did not calm home motion: ${JSON.stringify(snapshot)}`);
+    }
+    return screenshot;
+  } finally {
+    await context.close();
+  }
 }
 
 async function waitForSafeSessionPath(page, label) {
@@ -835,6 +907,7 @@ async function assertExamFullScreen(page, sessionId, screenshotsDir, screenshotN
   await assertReviewedBackgroundVisual(page, ".examHero", `S77.3 ${screenshotName} hero`);
   if (options.clickQuestion === false) {
     await assertNoSafetyPollutionOnPage(page, `S77.4 ${screenshotName}`);
+    await assertNoVisibleTextOverflow(page, `S77.6 ${screenshotName}`);
     return captureScreenshot(page, screenshotsDir, screenshotName);
   }
 
@@ -891,6 +964,7 @@ async function assertExamFullScreen(page, sessionId, screenshotsDir, screenshotN
   }
 
   await assertNoSafetyPollutionOnPage(page, `S77.4 ${screenshotName}`);
+  await assertNoVisibleTextOverflow(page, `S77.6 ${screenshotName}`);
   return captureScreenshot(page, screenshotsDir, screenshotName);
 }
 
@@ -913,6 +987,8 @@ async function assertRankingFullScreen(page, sessionId, screenshotsDir, screensh
       hasBoundary: text.includes("本榜只录服务器定榜结果"),
       hasServerList: text.includes("服务器定榜名单"),
       hasListOrEmpty: Boolean(document.querySelector(".rankingList")) || text.includes("榜文尚未张挂"),
+      hasPlayerRow: Boolean(document.querySelector(".rankingList li.isPlayer")),
+      hasGoldenNotice: Boolean(document.querySelector(".rankingGoldenNotice")),
       background,
       horizontalOverflow: html.scrollWidth > html.clientWidth + 4,
       forbiddenText: bodyText.match(/\/api\/game\/state|\/api\/dev\/session-diagnostics|provider payload|raw audit|hiddenNotes|OPENAI_API_KEY|data\/sessions|完整提示词|本地路径|密钥|sk-[a-z0-9_-]{6,}|[a-z]:[\\/]/gi) || [],
@@ -928,6 +1004,7 @@ async function assertRankingFullScreen(page, sessionId, screenshotsDir, screensh
   if (!snapshot.hasBoundary) failures.push("missing server-owned ranking boundary");
   if (!snapshot.hasServerList) failures.push("missing server-owned ranking list heading");
   if (!snapshot.hasListOrEmpty) failures.push("missing ranking list or empty state");
+  if (snapshot.hasPlayerRow && !snapshot.hasGoldenNotice) failures.push("missing player golden ranking notice");
   if (!snapshot.background.includes("/assets/ui/")) failures.push("ranking hero did not use a reviewed UI asset");
   if (snapshot.horizontalOverflow) failures.push("ranking page has horizontal overflow");
   if (snapshot.forbiddenText.length) failures.push(`unsafe text leaked: ${snapshot.forbiddenText.join(", ")}`);
@@ -937,6 +1014,7 @@ async function assertRankingFullScreen(page, sessionId, screenshotsDir, screensh
   }
 
   await assertNoSafetyPollutionOnPage(page, `S77.4 ${screenshotName}`);
+  await assertNoVisibleTextOverflow(page, `S77.6 ${screenshotName}`);
   return captureScreenshot(page, screenshotsDir, screenshotName);
 }
 
@@ -1584,6 +1662,7 @@ async function assertDisplayPreferencesPersistence(page, gamePath) {
   await page.getByRole("combobox", { name: "动效" }).selectOption("reduced");
   await page.getByRole("combobox", { name: "字号" }).selectOption("large");
   await page.getByRole("combobox", { name: "对比度" }).selectOption("high");
+  await page.getByRole("combobox", { name: "正文字体" }).selectOption("kai-longcang");
   await page.getByRole("checkbox", { name: "自动滚动新回合" }).uncheck();
   await page.getByRole("checkbox", { name: "舆图动效" }).uncheck();
   await page.getByRole("button", { name: "关闭抽屉" }).click();
@@ -1598,6 +1677,7 @@ async function assertDisplayPreferencesPersistence(page, gamePath) {
       shellMotion: document.querySelector(".appShell")?.getAttribute("data-motion"),
       shellTextSize: document.querySelector(".appShell")?.getAttribute("data-text-size"),
       shellContrast: document.querySelector(".appShell")?.getAttribute("data-contrast"),
+      shellBodyFont: document.querySelector(".appShell")?.getAttribute("data-body-font"),
       displayPreferences: JSON.parse(window.localStorage.getItem("qianqiu.displayPreferences.v1") || "{}"),
       storageEntries
     };
@@ -1607,11 +1687,17 @@ async function assertDisplayPreferencesPersistence(page, gamePath) {
     motion: "reduced",
     textSize: "large",
     contrast: "high",
+    bodyFont: "kai-longcang",
     autoScroll: false,
     mapMotion: false
   };
   const serializedStorage = JSON.stringify(storedBeforeReload.storageEntries);
-  if (storedBeforeReload.shellMotion !== "reduced" || storedBeforeReload.shellTextSize !== "large" || storedBeforeReload.shellContrast !== "high") {
+  if (
+    storedBeforeReload.shellMotion !== "reduced" ||
+    storedBeforeReload.shellTextSize !== "large" ||
+    storedBeforeReload.shellContrast !== "high" ||
+    storedBeforeReload.shellBodyFont !== "kai-longcang"
+  ) {
     throw new Error(`Display preference data attributes did not update: ${JSON.stringify(storedBeforeReload)}`);
   }
   if (JSON.stringify(storedBeforeReload.displayPreferences?.preferences) !== JSON.stringify(expectedPreferences)) {
@@ -1626,9 +1712,10 @@ async function assertDisplayPreferencesPersistence(page, gamePath) {
   const restored = await page.evaluate(() => ({
     shellMotion: document.querySelector(".appShell")?.getAttribute("data-motion"),
     shellTextSize: document.querySelector(".appShell")?.getAttribute("data-text-size"),
-    shellContrast: document.querySelector(".appShell")?.getAttribute("data-contrast")
+    shellContrast: document.querySelector(".appShell")?.getAttribute("data-contrast"),
+    shellBodyFont: document.querySelector(".appShell")?.getAttribute("data-body-font")
   }));
-  if (restored.shellMotion !== "reduced" || restored.shellTextSize !== "large" || restored.shellContrast !== "high") {
+  if (restored.shellMotion !== "reduced" || restored.shellTextSize !== "large" || restored.shellContrast !== "high" || restored.shellBodyFont !== "kai-longcang") {
     throw new Error(`Display preferences did not survive reload: ${JSON.stringify(restored)}`);
   }
 }
@@ -2003,6 +2090,7 @@ async function runClientSmoke(options = {}) {
         readySelector: ".peopleLedgerList"
       })
     );
+    await page.locator(".peopleLedgerList").scrollIntoViewIfNeeded();
     await waitForVisiblePortraitImages(page, ".peopleLedgerList", "S77.5 desktop people ledger");
     await assertClientResourceBudget(page, "S77.5 desktop people", CLIENT_RESOURCE_BUDGETS.people);
     const portraitLedger = await page.evaluate(() => {
@@ -2199,6 +2287,7 @@ async function runClientSmoke(options = {}) {
     screenshots.push(await assertReactClientPage(page, baseUrl, "/", "s74-react-home-mobile", options.screenshotsDir));
     await assertReviewedBackgroundVisual(page, ".homeBackdrop", "S77.3 mobile home backdrop");
     await assertBrowserStorageSafety(page, "S77.4 final mobile context");
+    screenshots.push(await assertBrowserLevelReducedMotion(browser, baseUrl, options.screenshotsDir));
     await context.close();
 
     if (pageErrors.length) {
@@ -2246,7 +2335,8 @@ async function runClientSmoke(options = {}) {
         "mobile-ranking-fullscreen",
         "mobile-map-fullscreen",
         "mobile-inkbox-tabs",
-        "mobile-home"
+        "mobile-home",
+        "browser-reduced-motion-home"
       ]
     };
   } finally {
@@ -2303,6 +2393,7 @@ module.exports = {
   getPlayerFacingCopyLeakFailures,
   getSafetyPollutionFailures,
   getTextOverlapFailures,
+  getTextOverflowFailures,
   parseClientSmokeArgs,
   runClientSmoke
 };

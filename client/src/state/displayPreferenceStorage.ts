@@ -5,6 +5,7 @@ export type DisplayPreferences = {
   readonly motion: "full" | "reduced";
   readonly textSize: "standard" | "large";
   readonly contrast: "standard" | "high";
+  readonly bodyFont: "serif-classic" | "song-xiaowei" | "kai-longcang" | "brush-mashan";
   readonly autoScroll: boolean;
   readonly mapMotion: boolean;
 };
@@ -15,6 +16,7 @@ export const defaultDisplayPreferences: DisplayPreferences = {
   motion: "full",
   textSize: "standard",
   contrast: "standard",
+  bodyFont: "serif-classic",
   autoScroll: true,
   mapMotion: true
 };
@@ -25,7 +27,7 @@ type StoredDisplayPreferences = {
 };
 
 const unsafePreferenceTextPattern = /\/api\/game\/state|\/api\/dev\/session-diagnostics|data[\\/]+sessions|[a-z]:[\\/]|file:\/{2}|raw\b|provider\b|prompt\b|hidden\b|key\b|path\b|OPENAI_API_KEY|DEEPSEEK_API_KEY|MIMO_API_KEY|ANTHROPIC_API_KEY|sk-[a-z0-9_-]+|完整提示词|提示词|本地路径|密钥|隐藏|私档|模型原始/i;
-const displayPreferenceKeys: readonly DisplayPreferenceKey[] = ["motion", "textSize", "contrast", "autoScroll", "mapMotion"];
+const displayPreferenceKeys: readonly DisplayPreferenceKey[] = ["motion", "textSize", "contrast", "bodyFont", "autoScroll", "mapMotion"];
 
 function getBrowserLocalStorage(): Storage | null {
   if (typeof window === "undefined") return null;
@@ -49,6 +51,7 @@ export function isDisplayPreferenceValue<K extends keyof DisplayPreferences>(key
   if (key === "motion") return value === "full" || value === "reduced";
   if (key === "textSize") return value === "standard" || value === "large";
   if (key === "contrast") return value === "standard" || value === "high";
+  if (key === "bodyFont") return value === "serif-classic" || value === "song-xiaowei" || value === "kai-longcang" || value === "brush-mashan";
   if (key === "autoScroll" || key === "mapMotion") return typeof value === "boolean";
   return false;
 }

@@ -371,6 +371,24 @@ function DisplayPreferencesPanel() {
           <option value="high">浓墨</option>
         </select>
       </label>
+      <label>
+        正文字体
+        <select
+          value={preferences.bodyFont}
+          onChange={(event) => {
+            const value = event.target.value;
+            setDisplayPreference(
+              "bodyFont",
+              value === "song-xiaowei" || value === "kai-longcang" || value === "brush-mashan" ? value : "serif-classic"
+            );
+          }}
+        >
+          <option value="serif-classic">典籍明晰</option>
+          <option value="song-xiaowei">案卷宋刻</option>
+          <option value="kai-longcang">山房行楷</option>
+          <option value="brush-mashan">榜书墨笔</option>
+        </select>
+      </label>
       <label className="checkRow">
         <input type="checkbox" checked={preferences.autoScroll} onChange={(event) => setDisplayPreference("autoScroll", event.target.checked)} />
         自动滚动新回合

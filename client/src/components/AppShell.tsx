@@ -26,6 +26,7 @@ export function AppShell() {
       data-motion={displayPreferences.motion}
       data-text-size={displayPreferences.textSize}
       data-contrast={displayPreferences.contrast}
+      data-body-font={displayPreferences.bodyFont}
     >
       <UiRouteStateBridge pageFrameRef={pageFrameRef} />
       <header className="topBar" aria-label="千秋主导航">

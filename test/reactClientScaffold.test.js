@@ -15,6 +15,7 @@ const {
   getPlayerFacingCopyLeakFailures,
   getSafetyPollutionFailures,
   getTextOverlapFailures,
+  getTextOverflowFailures,
   parseClientSmokeArgs
 } = require("../scripts/clientSmoke");
 const {
@@ -288,6 +289,48 @@ test("S77.5 client smoke resource budget classifies first-screen and lazy resour
   assert.match(getResourceBudgetFailures(failingSnapshot, CLIENT_RESOURCE_BUDGETS.home, "fixture").join("\n"), /full source manifest|map runtime|portrait main/);
 });
 
+test("S77.6 display fonts and accessibility smoke guard text-heavy routes", () => {
+  const packageJson = JSON.parse(readText("package.json"));
+  const mainSource = readText("client/src/main.tsx");
+  const storageSource = readText("client/src/state/displayPreferenceStorage.ts");
+  const surfaceHostSource = readText("client/src/components/SurfaceHost.tsx");
+  const appShellSource = readText("client/src/components/AppShell.tsx");
+  const rankingPageSource = readText("client/src/pages/RankingPage.tsx");
+  const styleSource = readText("client/src/styles/global.css");
+  const clientSmokeSource = readText("scripts/clientSmoke.js");
+  const buildBudgetSource = readText("scripts/clientBuildBudget.js");
+
+  assert.equal(packageJson.dependencies["@fontsource/zcool-xiaowei"], "^5.2.8");
+  assert.equal(packageJson.dependencies["@fontsource/long-cang"], "^5.2.8");
+  assert.equal(packageJson.dependencies["@fontsource/ma-shan-zheng"], "^5.2.9");
+  assert.match(mainSource, /@fontsource\/zcool-xiaowei\/chinese-simplified-400\.css/);
+  assert.match(mainSource, /@fontsource\/long-cang\/chinese-simplified-400\.css/);
+  assert.match(mainSource, /@fontsource\/ma-shan-zheng\/chinese-simplified-400\.css/);
+  assert.match(storageSource, /bodyFont: "serif-classic"/);
+  assert.match(surfaceHostSource, /正文字体/);
+  assert.match(appShellSource, /data-body-font=\{displayPreferences\.bodyFont\}/);
+  assert.match(styleSource, /--qq-font-song-xiaowei/);
+  assert.match(styleSource, /\.appShell\[data-body-font="kai-longcang"\]/);
+  assert.match(styleSource, /rankingGoldenNotice/);
+  assert.match(styleSource, /rankingGoldDust/);
+  assert.match(styleSource, /prefers-reduced-motion: reduce/);
+  assert.match(rankingPageSource, /showGoldenNotice/);
+  assert.match(rankingPageSource, /金榜题名/);
+  assert.match(clientSmokeSource, /getTextOverflowFailures/);
+  assert.match(clientSmokeSource, /assertNoVisibleTextOverflow/);
+  assert.match(clientSmokeSource, /assertBrowserLevelReducedMotion/);
+  assert.match(clientSmokeSource, /maxFontWoff2Requests: 6/);
+  assert.match(buildBudgetSource, /maxWoff2FontBytes: 14_500_000/);
+  assert.deepEqual(getTextOverflowFailures([
+    { text: "过长按钮", clientWidth: 80, clientHeight: 32, scrollWidth: 126, scrollHeight: 32 }
+  ], "fixture"), [
+    "fixture visible text/control internal overflow: \"过长按钮\""
+  ]);
+  assert.deepEqual(getTextOverflowFailures([
+    { text: "合格按钮", clientWidth: 120, clientHeight: 36, scrollWidth: 120, scrollHeight: 36 }
+  ], "fixture"), []);
+});
+
 test("S74.2 React API client only exposes safe player-facing endpoints", () => {
   const apiSource = readText("client/src/api/qianqiuClient.ts");
   const stateSource = readText("client/src/state/gameSessionState.ts");
@@ -446,14 +489,24 @@ test("S75.7 display preferences persist only local safe whitelist fields", () =>
   assert.match(appTestSource, /Object\.keys\(stored\.preferences\)\.sort\(\)/);
   assert.match(uiStateSource, /loadDisplayPreferences\(\)/);
   assert.match(uiStateSource, /saveDisplayPreferences\(\{/);
+  assert.match(storageSource, /bodyFont: "serif-classic"/);
+  assert.match(storageSource, /"song-xiaowei" \|\| value === "kai-longcang" \|\| value === "brush-mashan"/);
+  assert.match(surfaceHostSource, /正文字体/);
+  assert.match(surfaceHostSource, /典籍明晰/);
+  assert.match(surfaceHostSource, /案卷宋刻/);
+  assert.match(surfaceHostSource, /山房行楷/);
+  assert.match(surfaceHostSource, /榜书墨笔/);
   assert.match(surfaceHostSource, /setDisplayPreference\("mapMotion"/);
   assert.match(appShellSource, /data-motion=\{displayPreferences\.motion\}/);
   assert.match(appShellSource, /data-shell-version="s75-9"/);
   assert.match(appShellSource, /data-text-size=\{displayPreferences\.textSize\}/);
   assert.match(appShellSource, /data-contrast=\{displayPreferences\.contrast\}/);
+  assert.match(appShellSource, /data-body-font=\{displayPreferences\.bodyFont\}/);
   assert.match(mapPageSource, /displayPreferences\.mapMotion && displayPreferences\.motion === "full"/);
   assert.match(clientSmokeSource, /assertDisplayPreferencesPersistence/);
   assert.match(clientSmokeSource, /qianqiu\.displayPreferences\.v1/);
+  assert.match(clientSmokeSource, /data-body-font/);
+  assert.match(clientSmokeSource, /selectOption\("kai-longcang"\)/);
   assert.match(clientSmokeSource, /mapRuntime\.motion !== "reduced"/);
   assert.match(combined, /loads only versioned display preference fields and drops polluted values/);
   assert.match(combined, /saves a whitelist-only display preference payload/);

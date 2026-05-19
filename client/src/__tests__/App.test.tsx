@@ -1190,7 +1190,9 @@ describe("S74.1 React client shell", () => {
 
     fireEvent.click(screen.getByRole("tab", { name: "显示" }));
     fireEvent.change(screen.getByLabelText("动效"), { target: { value: "reduced" } });
+    fireEvent.change(screen.getByLabelText("正文字体"), { target: { value: "brush-mashan" } });
     expect(document.querySelector(".appShell")?.getAttribute("data-motion")).toBe("reduced");
+    expect(document.querySelector(".appShell")?.getAttribute("data-body-font")).toBe("brush-mashan");
 
     fireEvent.keyDown(document, { key: "Escape" });
     await waitFor(() => expect(useUiStateStore.getState().activeDrawer).toBeNull());
@@ -1891,7 +1893,9 @@ describe("S74.1 React client shell", () => {
     expect(document.querySelector(".rankingFullScreen")).toBeTruthy();
     expect(document.querySelector(".rankingTopThree")).toBeTruthy();
     expect(screen.getByText("服务器定榜名单")).toBeTruthy();
+    expect(screen.getByText("金榜题名")).toBeTruthy();
     expect(screen.getAllByText("顾衡").length).toBeGreaterThan(0);
+    expect(document.querySelector(".rankingGoldenNotice")).toBeTruthy();
     expect(document.querySelector(".rankingList li.isPlayer")).toBeTruthy();
     expect(screen.getByText("翰林院修撰")).toBeTruthy();
     expect(screen.getByText("切中时务。")).toBeTruthy();
@@ -1966,9 +1970,79 @@ describe("S74.1 React client shell", () => {
     await screen.findByRole("heading", { name: "皇榜" });
     expect(screen.getByText(/榜文尚未张挂/)).toBeTruthy();
     expect(screen.getByText(/暂无公开防弊复核结果/)).toBeTruthy();
+    expect(document.querySelector(".rankingGoldenNotice")).toBeFalsy();
     expect(document.querySelector(".rankingList")).toBeFalsy();
     expect(document.querySelectorAll(".rankingList li").length).toBe(0);
     expect(document.body.textContent || "").not.toMatch(/会元|第一名|防弊检测通过|未见公开扣罚事项/);
+  });
+
+  it("does not mark same-name ranking rows as the player without server flag", async () => {
+    const sessionId = "18181818-1818-4818-8818-181818181818";
+    const payload = {
+      sessionId,
+      source: "server_player_visible_state_projection",
+      worldState: {
+        player: {
+          name: "顾衡",
+          role: "scholar",
+          examHistory: [{
+            examName: "乡试",
+            ranking: [
+              { id: "same-name", place: 1, name: "顾衡", origin: "苏州府", score: 91, rankLabel: "第一名", examinerComment: "服务器只公开同名榜行。" }
+            ]
+          }]
+        }
+      },
+      examHonorView: {
+        publicSummary: "服务器尚未标记案主榜行。",
+        authorityBoundary: "前端不得按同名补成玩家榜行。"
+      },
+      appointmentTrackView: {},
+      examinerPanelView: {}
+    };
+    const fetchMock = vi.fn(async (url: string) => {
+      if (url === "/assets/ui/ink-ui-runtime-manifest.json") {
+        return new Response(JSON.stringify(buildMockAssetManifest(0)), {
+          status: 200,
+          headers: { "Content-Type": "application/json" }
+        });
+      }
+      if (url === `/api/game/player-state/${sessionId}`) {
+        return new Response(JSON.stringify(payload), {
+          status: 200,
+          headers: { "Content-Type": "application/json" }
+        });
+      }
+      if (url === `/api/ai/quick-actions/${sessionId}`) {
+        return new Response(JSON.stringify({
+          schemaVersion: "s75.9-quick-actions.v1",
+          sessionId,
+          source: "mock-ai",
+          status: "ready",
+          quickActionSuggestions: []
+        }), {
+          status: 200,
+          headers: { "Content-Type": "application/json" }
+        });
+      }
+      throw new Error(`unexpected url: ${url}`);
+    });
+    vi.stubGlobal("fetch", fetchMock);
+    useGameSessionStore.setState({
+      currentSessionId: sessionId,
+      currentSession: payload,
+      lastExamResult: null,
+      status: "ready"
+    });
+
+    renderRoute(`/game/${sessionId}/ranking`);
+
+    await screen.findByRole("heading", { name: "皇榜" });
+    expect(screen.getByText("服务器定榜名单")).toBeTruthy();
+    expect(screen.getByText("服务器只公开同名榜行。")).toBeTruthy();
+    expect(document.querySelector(".rankingGoldenNotice")).toBeFalsy();
+    expect(document.querySelector(".rankingList li.isPlayer")).toBeFalsy();
+    expect(screen.queryByText("我名在此")).toBeNull();
   });
 
   it("loads the S76.10 current people ledger without exposing the full portrait pool", async () => {

@@ -10,9 +10,9 @@ const CLIENT_BUILD_BUDGETS = Object.freeze({
   maxSingleJsBytes: 650_000,
   maxCssBytes: 140_000,
   maxSingleCssBytes: 100_000,
-  maxFontBytes: 12_000_000,
-  maxWoff2FontBytes: 5_000_000,
-  maxTotalClientAssetBytes: 13_000_000
+  maxFontBytes: 28_500_000,
+  maxWoff2FontBytes: 14_500_000,
+  maxTotalClientAssetBytes: 29_500_000
 });
 
 function listFiles(rootDir) {

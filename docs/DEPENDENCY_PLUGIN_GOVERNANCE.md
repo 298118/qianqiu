@@ -34,6 +34,9 @@
 | `zustand` | runtime | `5.0.13` | S74+ 前端 UI 状态与安全 payload 缓存 | 不保存 canonical state、raw session、raw audit、prompt、provider payload、key 或 hidden ledger。 |
 | `lucide-react` | runtime | `1.16.0` | S74+ 图标按钮 | 只按需 import，视觉样式仍由本地水墨/朱印 CSS 控制。 |
 | `@fontsource/noto-serif-sc` | runtime | `^5.2.9` | S77.3 React 前端自托管简体中文字体 | OFL-1.1；只导入 400/700/900 简体子集，避免 Linux/CI/无中文系统字体环境出现方框字。 |
+| `@fontsource/zcool-xiaowei` | runtime | `^5.2.8` | S77.6 案卷宋刻正文字体与场景艺术字 | OFL-1.1；只导入简体中文 400 子集，自托管，不走 CDN，不写入存档或服务器状态。 |
+| `@fontsource/long-cang` | runtime | `^5.2.8` | S77.6 山房行楷正文字体与考试/榜文艺术字 | OFL-1.1；只导入简体中文 400 子集，自托管，不走 CDN，不写入存档或服务器状态。 |
+| `@fontsource/ma-shan-zheng` | runtime | `^5.2.9` | S77.6 榜书墨笔正文字体与金榜/朱印艺术字 | OFL-1.1；只导入简体中文 400 子集，自托管，不走 CDN，不写入存档或服务器状态。 |
 | `playwright-core` | dev | `^1.59.1` | 浏览器 smoke 驱动本机 Chrome/Edge | 不打包浏览器；变更需复核 `npm run smoke:browser`。 |
 | `typescript` | dev | `6.0.3` | S74+ `client/` 类型检查 | 不把后端 CJS 改为 ESM，不在根级加 `"type": "module"`。 |
 | `vite` | dev | `8.0.13` | S74+ React dev/build 工具 | 构建输出必须隔离，不能清空 `public/assets/`、S72 地图运行时或 vendor 资源。 |

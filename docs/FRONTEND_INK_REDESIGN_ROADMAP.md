@@ -202,7 +202,7 @@ S74.0 已单独修改 `package.json` / lockfile，并按 [DEPENDENCY_PLUGIN_GOVE
 - AI 设置：复用 `aiSettingsView`，展示 provider/model/输出长度/安全严格度/critic/safety，不暴露 key。
 - 存档/读档：复用存档 metadata 列表，显示当前存档、最近更新时间、身份、回合、摘要。
 - 返回首页：回到首页但保留当前 session；提供“继续本局”入口。
-- 显示偏好：动效开关、字体大小、对比度、地图动效、自动滚动叙事。
+- 显示偏好：动效开关、字体大小、正文字体、对比度、地图动效、自动滚动叙事。
 - 本地安全摘要：仅显示脱敏诊断，不连接 raw dev diagnostics。
 
 ### 专属界面
@@ -840,7 +840,7 @@ Manifest 示例：
 - localStorage 不保存 key、prompt、raw state。
 - 低动效真实关闭云雾、墨晕、朱印、地图新增动效。
 
-状态：已完成。S75.7 新增 `displayPreferenceStorage` 白名单存储层，显示偏好只以 `qianqiu.displayPreferences.v1` 写入 `motion`、`textSize`、`contrast`、`autoScroll`、`mapMotion` 五个字段，带 `display-preferences-v1` schema 版本；读取时旧 schema、损坏 JSON、未知字段、非法值和 raw/provider/prompt/path/key 污染文本都会被丢弃或回落默认值。`useUiStateStore` 启动、reset 和运行时修改均走该清洗层，不把 session payload、raw state、完整 prompt、provider payload、本地路径或 key 写入 localStorage/sessionStorage。browser smoke 已覆盖印匣显示 tab 调整、reload 后恢复和舆图动效降级。
+状态：已完成。S75.7 新增 `displayPreferenceStorage` 白名单存储层，S77.6 后显示偏好只以 `qianqiu.displayPreferences.v1` 写入 `motion`、`textSize`、`contrast`、`autoScroll`、`mapMotion`、`bodyFont` 六个字段，带 `display-preferences-v1` schema 版本；读取时旧 schema、损坏 JSON、未知字段、非法值和 raw/provider/prompt/path/key 污染文本都会被丢弃或回落默认值。`useUiStateStore` 启动、reset 和运行时修改均走该清洗层，不把 session payload、raw state、完整 prompt、provider payload、本地路径或 key 写入 localStorage/sessionStorage。browser smoke 已覆盖印匣显示 tab 调整、正文字体选择 reload 后恢复和舆图动效降级。
 
 ### S75.8 底部奏折输入雏形
 
@@ -1171,14 +1171,16 @@ Manifest 示例：
 
 ### S77.6 可访问性
 
+状态：已完成。S77.6 新增自托管字体选择和场景艺术字：显示偏好白名单加入 `bodyFont`，玩家可在印匣“显示”tab 选择“典籍明晰 / 案卷宋刻 / 山房行楷 / 榜书墨笔”；该偏好只写入 `qianqiu.displayPreferences.v1` 本地设置，不进入存档、服务器 canonical state、AI prompt 或 provider schema。考试、皇榜和金榜题名场景固定使用艺术字体与 CSS 墨晕、朱砂圈名、淡金题字；特效同时尊重应用 `data-motion="reduced"` 与浏览器 `prefers-reduced-motion: reduce`。
+
 验收：
 
 - Enter 提交、Shift+Enter 换行。
 - Esc 关闭抽屉/模态。
 - 焦点回收。
-- 字体大小和对比度偏好生效。
-- reduced-motion 生效。
-- 按钮文字不溢出。
+- 字体大小、正文字体和对比度偏好生效。
+- 应用低动效和浏览器级 reduced-motion 均生效。
+- 按钮、链接和可点击控件内部文字不溢出。
 
 ### S77.7 文档与归档
 

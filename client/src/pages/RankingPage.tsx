@@ -102,7 +102,7 @@ function getRankingSource(result: AnyRecord, latestHistory: AnyRecord) {
   return historyRanking.length ? historyRanking : [];
 }
 
-function normalizeRankingEntry(entry: unknown, index: number, playerName: string): RankingEntry {
+function normalizeRankingEntry(entry: unknown, index: number): RankingEntry {
   const record = asRecord(entry);
   const place = readNumber(record.place);
   const name = safeRankingText(record.name, "榜名未公开", 48);
@@ -116,7 +116,7 @@ function normalizeRankingEntry(entry: unknown, index: number, playerName: string
     rankLabel,
     honorTitle,
     score: readNumber(record.score),
-    isPlayer: record.isPlayer === true || (Boolean(playerName) && name === playerName),
+    isPlayer: record.isPlayer === true,
     examinerComment: safeRankingText(record.examinerComment, "本名暂无公开评语。", 120),
     strengths: asArray(record.strengths).map((item) => safeRankingText(item, "", 48)).filter(Boolean).slice(0, 2),
     weaknesses: asArray(record.weaknesses).map((item) => safeRankingText(item, "", 48)).filter(Boolean).slice(0, 2)
@@ -172,10 +172,11 @@ export function RankingPage() {
   const promotionResult = asRecord(resultRecord.promotionResult || latestHistory.promotionResult);
   const authenticityCheck = asRecord(resultRecord.authenticityCheck || latestHistory.authenticityCheck);
   const ranking = getRankingSource(resultRecord, latestHistory)
-    .map((entry, index) => normalizeRankingEntry(entry, index, playerName))
+    .map((entry, index) => normalizeRankingEntry(entry, index))
     .slice(0, 18);
   const rows = ranking;
-  const playerEntry = rows.find((entry) => entry.isPlayer) || rows[0] || null;
+  const playerRankingEntry = rows.find((entry) => entry.isPlayer) || null;
+  const playerEntry = playerRankingEntry || rows[0] || null;
   const selectedEntry = rows.find((entry) => entry.id === selectedId) || playerEntry;
   const topEntries = rows.filter((entry) => entry.place !== null && entry.place <= 3).slice(0, 3);
   const scoreDetails = readScoreDimensions(score);
@@ -203,6 +204,13 @@ export function RankingPage() {
     64
   );
   const passedText = promotionResult.passed === true ? "已取中" : promotionResult.passed === false ? "未取中" : "候服务器定档";
+  const showGoldenNotice = Boolean(playerRankingEntry || promotionResult.passed === true);
+  const goldenNoticeRank = playerRankingEntry?.honorTitle || playerRankingEntry?.rankLabel || passedText;
+  const goldenNoticeSummary = safeRankingText(
+    latestHonor.publicSummary || latestDecision.publicSummary || publicSummary,
+    `${playerName}已由服务器公开定榜。`,
+    96
+  );
   const sceneAsset = useMemo(
     () => registry?.getAssets({ category: "scene", usage: "ranking_page", scene: "ranking_wall" }).at(0),
     [registry]
@@ -240,6 +248,17 @@ export function RankingPage() {
       </section>
 
       <section className="rankingNoticeBoard" aria-label="服务器定榜皇榜">
+        {showGoldenNotice ? (
+          <section className="rankingGoldenNotice" aria-label="金榜题名">
+            <div className="rankingGoldenTitle">
+              <span aria-hidden="true">金榜题名</span>
+              <strong>{playerRankingEntry?.name || playerName}</strong>
+            </div>
+            <p>{examName} · {goldenNoticeRank} · {goldenNoticeSummary}</p>
+            <span className="rankingVermilionCircle" aria-hidden="true" />
+          </section>
+        ) : null}
+
         <div className="rankingTopThree" aria-label="三鼎甲">
           {[1, 2, 3].map((place) => {
             const entry = topEntries.find((item) => item.place === place);

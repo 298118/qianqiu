@@ -123,6 +123,7 @@ describe("S74.3 UI state store", () => {
       motion: "full",
       textSize: "standard",
       contrast: "standard",
+      bodyFont: "serif-classic",
       autoScroll: true,
       mapMotion: true
     });
@@ -233,6 +234,7 @@ describe("S74.3 UI state store", () => {
     store.setDisplayPreference("motion", "reduced");
     store.setDisplayPreference("textSize", "large");
     store.setDisplayPreference("contrast", "high");
+    store.setDisplayPreference("bodyFont", "kai-longcang");
     store.setDisplayPreference("autoScroll", false);
     store.setDisplayPreference("mapMotion", false);
 
@@ -240,6 +242,7 @@ describe("S74.3 UI state store", () => {
       motion: "reduced",
       textSize: "large",
       contrast: "high",
+      bodyFont: "kai-longcang",
       autoScroll: false,
       mapMotion: false
     });
@@ -252,6 +255,7 @@ describe("S74.3 UI state store", () => {
         motion: "reduced",
         textSize: "large",
         contrast: "high",
+        bodyFont: "kai-longcang",
         autoScroll: false,
         mapMotion: false
       }
@@ -268,6 +272,7 @@ describe("S74.3 UI state store", () => {
           motion: "reduced",
           textSize: "oversized",
           contrast: "high",
+          bodyFont: "brush-mashan",
           autoScroll: "yes",
           mapMotion: false,
           sessionId: "11111111-1111-4111-8111-111111111111",
@@ -283,6 +288,7 @@ describe("S74.3 UI state store", () => {
       motion: "reduced",
       textSize: "standard",
       contrast: "high",
+      bodyFont: "brush-mashan",
       autoScroll: true,
       mapMotion: false
     });
@@ -307,6 +313,7 @@ describe("S74.3 UI state store", () => {
       motion: "reduced",
       textSize: "large",
       contrast: "high",
+      bodyFont: "song-xiaowei",
       autoScroll: false,
       mapMotion: false,
       sessionId: "11111111-1111-4111-8111-111111111111",
@@ -317,11 +324,12 @@ describe("S74.3 UI state store", () => {
     } as never);
 
     const stored = JSON.parse(window.localStorage.getItem(displayPreferenceStorageKey) ?? "{}");
-    expect(Object.keys(stored.preferences).sort()).toEqual(["autoScroll", "contrast", "mapMotion", "motion", "textSize"]);
+    expect(Object.keys(stored.preferences).sort()).toEqual(["autoScroll", "bodyFont", "contrast", "mapMotion", "motion", "textSize"]);
     expect(stored.preferences).toEqual({
       motion: "reduced",
       textSize: "large",
       contrast: "high",
+      bodyFont: "song-xiaowei",
       autoScroll: false,
       mapMotion: false
     });
@@ -333,15 +341,18 @@ describe("S74.3 UI state store", () => {
 
     store.setDisplayPreference("motion", "reduced");
     store.setDisplayPreference("motion", "raw" as never);
+    store.setDisplayPreference("bodyFont", "unsafe-font" as never);
     store.setDisplayPreference("autoScroll", "yes" as never);
 
     expect(useUiStateStore.getState().displayPreferences).toMatchObject({
       motion: "reduced",
+      bodyFont: "serif-classic",
       autoScroll: true
     });
     const stored = JSON.parse(window.localStorage.getItem(displayPreferenceStorageKey) ?? "{}");
     expect(stored.preferences).toMatchObject({
       motion: "reduced",
+      bodyFont: "serif-classic",
       autoScroll: true
     });
   });

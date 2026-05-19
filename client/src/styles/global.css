@@ -1,7 +1,15 @@
 :root {
   color: #241b16;
   background: #eadcc4;
-  font-family: "Noto Serif SC", "Songti SC", "Microsoft YaHei", serif;
+  --qq-font-serif-classic: "Noto Serif SC", "Songti SC", "Microsoft YaHei", serif;
+  --qq-font-song-xiaowei: "ZCOOL XiaoWei", "Noto Serif SC", "Songti SC", "Microsoft YaHei", serif;
+  --qq-font-kai-longcang: "Long Cang", "Noto Serif SC", "Songti SC", "Microsoft YaHei", serif;
+  --qq-font-brush-mashan: "Ma Shan Zheng", "Noto Serif SC", "Songti SC", "Microsoft YaHei", serif;
+  --qq-font-body: var(--qq-font-serif-classic);
+  --qq-font-art-heading: "ZCOOL XiaoWei", "Noto Serif SC", "Songti SC", serif;
+  --qq-font-art-flow: "Long Cang", "Noto Serif SC", "Songti SC", serif;
+  --qq-font-art-seal: "Ma Shan Zheng", "Noto Serif SC", "Songti SC", serif;
+  font-family: var(--qq-font-body);
   font-synthesis: none;
   text-rendering: optimizeLegibility;
 }
@@ -30,6 +38,23 @@ a {
 
 .appShell {
   min-height: 100vh;
+  font-family: var(--qq-font-body);
+}
+
+.appShell[data-body-font="serif-classic"] {
+  --qq-font-body: var(--qq-font-serif-classic);
+}
+
+.appShell[data-body-font="song-xiaowei"] {
+  --qq-font-body: var(--qq-font-song-xiaowei);
+}
+
+.appShell[data-body-font="kai-longcang"] {
+  --qq-font-body: var(--qq-font-kai-longcang);
+}
+
+.appShell[data-body-font="brush-mashan"] {
+  --qq-font-body: var(--qq-font-brush-mashan);
 }
 
 .topBar {
@@ -166,6 +191,26 @@ a {
 .appShell[data-motion="reduced"] .homeStartSeal[data-state="loading"]::before {
   animation: none !important;
   transition: none;
+}
+
+button,
+a,
+input,
+select,
+textarea {
+  min-width: 0;
+}
+
+button,
+.paperButton,
+.paperLink,
+.inkboxButton {
+  overflow-wrap: anywhere;
+}
+
+button > span,
+a > span {
+  min-width: 0;
 }
 
 .homeScene {
@@ -2269,13 +2314,21 @@ button:disabled {
 
 .examHeroCopy h1 {
   margin-bottom: 2px;
+  font-family: var(--qq-font-art-seal);
   font-size: clamp(3rem, 8vw, 6rem);
+  font-weight: 400;
+  letter-spacing: 0;
+  text-shadow:
+    0 1px 1px rgba(31, 22, 16, 0.62),
+    0 0 18px rgba(255, 231, 170, 0.22);
 }
 
 .examHeroCopy h2 {
   margin-bottom: 10px;
   color: #f4d8a8;
+  font-family: var(--qq-font-art-heading);
   font-size: clamp(1.35rem, 3vw, 2.1rem);
+  font-weight: 400;
 }
 
 .examHeroCopy p {
@@ -2358,7 +2411,9 @@ button:disabled {
 .examQuestionPanel h2,
 .examDesk h2 {
   margin: 0;
+  font-family: var(--qq-font-art-heading);
   font-size: clamp(1.35rem, 2.4vw, 1.9rem);
+  font-weight: 400;
 }
 
 .examQuestionForm {
@@ -2459,6 +2514,9 @@ button:disabled {
   min-width: 118px;
   min-height: 48px;
   border-width: 2px;
+  font-family: var(--qq-font-art-seal);
+  font-size: 1.18rem;
+  font-weight: 400;
   box-shadow: inset 0 0 0 3px rgba(255, 236, 211, 0.16);
 }
 
@@ -2540,8 +2598,14 @@ button:disabled {
 .rankingHeroCopy h1 {
   margin: 4px 0 8px;
   color: #7b241f;
+  font-family: var(--qq-font-art-seal);
   font-size: clamp(3rem, 9vw, 7.5rem);
+  font-weight: 400;
+  letter-spacing: 0;
   line-height: 0.95;
+  text-shadow:
+    0 1px 0 rgba(255, 248, 230, 0.52),
+    0 0 20px rgba(210, 154, 57, 0.24);
 }
 
 .rankingHeroCopy p:last-child {
@@ -2582,6 +2646,108 @@ button:disabled {
   content: "";
 }
 
+.rankingGoldenNotice {
+  position: relative;
+  display: grid;
+  gap: 8px;
+  min-height: 132px;
+  align-items: center;
+  margin-bottom: 18px;
+  overflow: hidden;
+  border: 1px solid rgba(142, 47, 39, 0.48);
+  background:
+    radial-gradient(circle at 88% 26%, rgba(214, 164, 70, 0.28), transparent 22%),
+    linear-gradient(100deg, rgba(255, 248, 230, 0.9), rgba(232, 202, 143, 0.72) 58%, rgba(165, 58, 47, 0.12)),
+    var(--ranking-smudge-image, url("/assets/ui/materials/red-ink-smudge-v1.webp")) right center / 176px 176px no-repeat;
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 252, 238, 0.52),
+    0 16px 34px rgba(91, 54, 24, 0.12);
+  padding: clamp(18px, 3vw, 28px) clamp(96px, 14vw, 150px) clamp(18px, 3vw, 28px) clamp(18px, 3vw, 30px);
+}
+
+.rankingGoldenNotice::before,
+.rankingGoldenNotice::after {
+  position: absolute;
+  pointer-events: none;
+  content: "";
+}
+
+.rankingGoldenNotice::before {
+  inset: 0;
+  background:
+    radial-gradient(circle at 18% 26%, rgba(215, 164, 69, 0.2) 0 2px, transparent 3px),
+    radial-gradient(circle at 32% 58%, rgba(215, 164, 69, 0.18) 0 1px, transparent 3px),
+    radial-gradient(circle at 72% 38%, rgba(215, 164, 69, 0.2) 0 2px, transparent 4px);
+  opacity: 0.9;
+  animation: rankingGoldDust 3200ms ease-in-out infinite alternate;
+}
+
+.rankingGoldenNotice::after {
+  right: clamp(28px, 5vw, 54px);
+  top: 50%;
+  width: clamp(80px, 11vw, 128px);
+  aspect-ratio: 1;
+  border: 5px solid rgba(142, 47, 39, 0.52);
+  border-radius: 50%;
+  transform: translateY(-50%) rotate(-12deg);
+  box-shadow:
+    inset 0 0 0 2px rgba(255, 248, 230, 0.34),
+    0 0 0 8px rgba(142, 47, 39, 0.06);
+  opacity: 0.82;
+}
+
+.rankingGoldenTitle {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 12px 18px;
+}
+
+.rankingGoldenTitle span {
+  color: #9b2d22;
+  font-family: var(--qq-font-art-seal);
+  font-size: clamp(2rem, 6vw, 4.8rem);
+  font-weight: 400;
+  line-height: 1;
+  text-shadow:
+    0 1px 0 rgba(255, 248, 230, 0.72),
+    0 0 24px rgba(210, 154, 57, 0.32);
+  animation: rankingInkBloom 900ms ease-out both;
+}
+
+.rankingGoldenTitle strong {
+  color: #2a2118;
+  font-family: var(--qq-font-art-heading);
+  font-size: clamp(1.3rem, 3vw, 2.1rem);
+  font-weight: 400;
+}
+
+.rankingGoldenNotice p {
+  position: relative;
+  z-index: 1;
+  max-width: 720px;
+  margin: 0;
+  color: #5b3d27;
+  font-weight: 800;
+  line-height: 1.7;
+}
+
+.rankingVermilionCircle {
+  position: absolute;
+  right: clamp(44px, 6vw, 74px);
+  top: 50%;
+  z-index: 1;
+  width: clamp(44px, 7vw, 72px);
+  aspect-ratio: 1;
+  border: 2px solid rgba(142, 47, 39, 0.68);
+  border-radius: 50%;
+  transform: translateY(-50%) rotate(-12deg);
+  box-shadow: inset 0 0 0 4px rgba(142, 47, 39, 0.08);
+  opacity: 0.76;
+}
+
 .rankingTopThree {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -2610,6 +2776,7 @@ button:disabled {
 
 .rankingTopSeal span {
   color: #8e2f27;
+  font-family: var(--qq-font-art-heading);
   font-size: 0.88rem;
   font-weight: 900;
   letter-spacing: 0;
@@ -2618,7 +2785,9 @@ button:disabled {
 .rankingTopSeal strong {
   min-width: 0;
   color: #2a2118;
+  font-family: var(--qq-font-art-seal);
   font-size: clamp(1.3rem, 3vw, 2rem);
+  font-weight: 400;
 }
 
 .rankingTopSeal em {
@@ -3596,6 +3765,32 @@ button:disabled {
     padding: 14px;
   }
 
+  .rankingGoldenNotice {
+    min-height: 0;
+    padding: 18px 16px 94px;
+  }
+
+  .rankingGoldenTitle {
+    align-items: start;
+    flex-direction: column;
+  }
+
+  .rankingGoldenNotice::after {
+    top: auto;
+    right: 18px;
+    bottom: 18px;
+    width: 72px;
+    transform: rotate(-12deg);
+  }
+
+  .rankingVermilionCircle {
+    top: auto;
+    right: 30px;
+    bottom: 31px;
+    width: 42px;
+    transform: rotate(-12deg);
+  }
+
   .rankingTopThree,
   .rankingBoardGrid,
   .rankingDetailRail,
@@ -3618,6 +3813,15 @@ button:disabled {
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .appShell *,
+  .appShell *::before,
+  .appShell *::after {
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+  }
+
   .homeBackdrop {
     background:
       linear-gradient(180deg, rgba(32, 26, 20, 0.08), rgba(238, 224, 197, 0.24) 56%, rgba(31, 26, 21, 0.28)),
@@ -3634,6 +3838,32 @@ button:disabled {
   .homeStartSeal[data-state="loading"]::before {
     animation: none !important;
     transition: none;
+  }
+}
+
+@keyframes rankingGoldDust {
+  from {
+    transform: translate3d(-6px, -4px, 0);
+    opacity: 0.58;
+  }
+
+  to {
+    transform: translate3d(8px, 6px, 0);
+    opacity: 0.92;
+  }
+}
+
+@keyframes rankingInkBloom {
+  from {
+    filter: blur(2px);
+    opacity: 0;
+    transform: translateY(4px) scale(0.98);
+  }
+
+  to {
+    filter: blur(0);
+    opacity: 1;
+    transform: translateY(0) scale(1);
   }
 }
 
