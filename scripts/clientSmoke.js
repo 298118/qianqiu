@@ -1116,7 +1116,7 @@ async function assertTopicSurfaces(page, sessionId, screenshotsDir) {
       path: window.location.pathname,
       hasSurfacePage: Boolean(document.querySelector(".courtSurfacePage")),
       labels: labels.filter((label) => [...document.querySelectorAll(".courtSurfacePage button")].some((button) => (button.textContent || "").trim() === label)),
-      hasBoundary: bodyText.includes("按钮只写草稿，不提交回合、不调用 resolver、不写 canonical state"),
+      hasBoundary: bodyText.includes("AI 只拟草稿，不提交回合、不调用 resolver、不写 canonical state"),
       hiddenLeaks: tokens.filter((token) => bodyText.includes(token)),
       forbiddenText: bodyText.match(/\/api\/game\/state|\/api\/dev\/session-diagnostics|provider payload|raw audit|hiddenNotes|OPENAI_API_KEY|data\/sessions|完整提示词|本地路径|密钥|sk-[a-z0-9_-]{6,}|[a-z]:[\\/]/gi) || []
     };
@@ -1145,8 +1145,15 @@ async function assertTopicSurfaces(page, sessionId, screenshotsDir) {
   };
   page.on("request", onRequest);
   await page.getByRole("button", { name: "朝议" }).click();
-  await page.getByRole("dialog", { name: "朝议" }).waitFor({ timeout: 10000 });
-  await page.getByRole("button", { name: "写入奏折草稿" }).click();
+  const topicDialog = page.getByRole("dialog", { name: "朝议" });
+  await topicDialog.waitFor({ timeout: 10000 });
+  await page.getByRole("button", { name: "AI 拟稿" }).waitFor({ timeout: 10000 });
+  await page.getByRole("button", { name: "AI 拟稿" }).click();
+  await page.waitForFunction(() => {
+    const textarea = document.querySelector('textarea[aria-label="专题草稿正文"]');
+    return Boolean(textarea && textarea.value.includes("廷议"));
+  }, null, { timeout: 10000 });
+  await page.getByRole("button", { name: "写入底部奏折" }).click();
   await page.waitForTimeout(250);
   page.off("request", onRequest);
   if (unsafeRequests.length) {
@@ -1166,16 +1173,23 @@ async function assertTopicSurfaces(page, sessionId, screenshotsDir) {
 
   const dialogFailures = [];
   if (!surfaceSnapshot.dialogText.includes("数据来源")) dialogFailures.push("missing data source note");
-  if (!surfaceSnapshot.dialogText.includes("占位状态")) dialogFailures.push("missing empty state note");
-  if (!surfaceSnapshot.dialogText.includes("不能调用 resolver")) dialogFailures.push("missing resolver boundary");
-  if (!surfaceSnapshot.draft.includes("召集廷议")) dialogFailures.push(`draft did not enter memorial composer: ${surfaceSnapshot.draft}`);
+  if (!surfaceSnapshot.dialogText.includes("材料")) dialogFailures.push("missing materials column");
+  if (!surfaceSnapshot.dialogText.includes("筹议")) dialogFailures.push("missing deliberation column");
+  if (!surfaceSnapshot.dialogText.includes("草稿")) dialogFailures.push("missing draft column");
+  const hasResolverBoundary =
+    surfaceSnapshot.dialogText.includes("服务器裁决") ||
+    surfaceSnapshot.dialogText.includes("归服务器") ||
+    surfaceSnapshot.dialogText.includes("裁决权") ||
+    surfaceSnapshot.dialogText.includes("不写 canonical");
+  if (!hasResolverBoundary) dialogFailures.push("missing resolver boundary");
+  if (!surfaceSnapshot.draft.includes("廷议")) dialogFailures.push(`draft did not enter memorial composer: ${surfaceSnapshot.draft}`);
   if (surfaceSnapshot.hiddenLeaks.length) dialogFailures.push(`hidden text leaked: ${surfaceSnapshot.hiddenLeaks.join(", ")}`);
   if (surfaceSnapshot.forbiddenText.length) dialogFailures.push(`unsafe text leaked: ${surfaceSnapshot.forbiddenText.join(", ")}`);
   if (dialogFailures.length) {
     throw new Error(`S76.11 topic surface dialog smoke failed: ${dialogFailures.join("; ")}`);
   }
 
-  return captureScreenshot(page, screenshotsDir, "s76-topic-surfaces-desktop");
+  return captureScreenshot(page, screenshotsDir, "s78-topic-surfaces-desktop");
 }
 
 async function runClientSmoke(options = {}) {

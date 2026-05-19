@@ -31,8 +31,8 @@ export const surfaceRegistry: Record<LocalSurface, SurfaceRegistryEntry> = {
     title: "人物档案",
     description: "此处预留师友、同年、官长与故人的公开谱牒，只展示服务器已经投影给玩家的摘要。",
     dataSource: "安全数据来源：worldPeopleView、actorMemoryView、examNetwork 和当前案卷玩家可见关系摘要。",
-    emptyState: "若没有公开人物 projection，只显示人物档案占位，不推断隐藏关系、未公开任所、hidden 私档或重要 NPC 真值。",
-    safetyNote: "未公开关系、隐藏动机、hidden 私档和内部审计原文不会进入人物专题层。"
+    emptyState: "若没有公开人物 projection，只显示人物档案占位，不推断未公开关系、未公开任所或重要 NPC 真值。",
+    safetyNote: "未公开关系、未公开动机和内部审计原文不会进入人物专题层。"
   },
   "edict-draft": {
     id: "edict-draft",

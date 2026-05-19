@@ -16,6 +16,10 @@ import type {
   SavesResponse,
   StartGameRequest,
   StartGameResponse,
+  TopicDraftRequest,
+  TopicDraftResponse,
+  TopicSurfaceId,
+  TopicSurfaceResponse,
   TurnRequest,
   TurnResponse,
   UpdateAiSettingsRequest
@@ -38,13 +42,15 @@ const allowedSafeEndpointPatterns = Object.freeze([
   /^\/api\/game\/start$/,
   /^\/api\/game\/saves$/,
   /^\/api\/game\/player-state\/[^/?#]+$/,
+  /^\/api\/game\/topic-surface\/[^/?#]+\/[^/?#]+$/,
   /^\/api\/game\/turn$/,
   /^\/api\/exam\/question$/,
   /^\/api\/exam\/progress$/,
   /^\/api\/exam\/submit$/,
   /^\/api\/ai\/connection-test$/,
   /^\/api\/ai\/settings\/[^/?#]+$/,
-  /^\/api\/ai\/quick-actions\/[^/?#]+$/
+  /^\/api\/ai\/quick-actions\/[^/?#]+$/,
+  /^\/api\/ai\/topic-draft\/[^/?#]+$/
 ]);
 
 export class QianqiuApiError extends Error {
@@ -156,6 +162,21 @@ export const qianqiuApi = {
 
   requestQuickActions(sessionId: string, input: QuickActionRequest, signal?: AbortSignal) {
     return requestJson<QuickActionResponse>(`/api/ai/quick-actions/${encodePathSegment(sessionId)}`, {
+      method: "POST",
+      body: input as unknown as JsonObject,
+      signal
+    });
+  },
+
+  loadTopicSurface(sessionId: string, surfaceId: TopicSurfaceId, signal?: AbortSignal) {
+    return requestJson<TopicSurfaceResponse>(
+      `/api/game/topic-surface/${encodePathSegment(sessionId)}/${encodePathSegment(surfaceId)}`,
+      { signal }
+    );
+  },
+
+  requestTopicDraft(sessionId: string, input: TopicDraftRequest, signal?: AbortSignal) {
+    return requestJson<TopicDraftResponse>(`/api/ai/topic-draft/${encodePathSegment(sessionId)}`, {
       method: "POST",
       body: input as unknown as JsonObject,
       signal

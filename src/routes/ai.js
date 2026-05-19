@@ -14,6 +14,12 @@ const {
   buildQuickActionResponse,
   normalizeQuickActionRequest
 } = require("../game/quickActionSuggestions");
+const {
+  buildLocalTopicDraftResponse,
+  buildTopicDraftContext,
+  buildTopicDraftResponse,
+  normalizeTopicDraftRequest
+} = require("../game/topicDrafts");
 const { readSession, mutateSession } = require("../storage/sessionStore");
 
 const router = express.Router();
@@ -54,6 +60,33 @@ router.post("/quick-actions/:sessionId", async (req, res, next) => {
         context,
         status: "fallback",
         fallbackReason: "quick_action_provider_failed"
+      }));
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+
+router.post("/topic-draft/:sessionId", async (req, res, next) => {
+  try {
+    const worldState = await readSession(req.params.sessionId);
+    const request = normalizeTopicDraftRequest(req.body);
+    const context = buildTopicDraftContext(worldState, request);
+    const { routePolicy } = resolveAiSettingsForSession(worldState);
+
+    try {
+      const provider = getProvider({ taskType: "topic_draft", routePolicy });
+      const rawPayload = await provider.draftTopicSurface(context);
+      const providerSource = provider.modelRoute?.provider === "mock" ? "mock-ai" : "provider-ai";
+      res.json(buildTopicDraftResponse(worldState, rawPayload, context, {
+        source: providerSource,
+        expectedSource: providerSource
+      }));
+    } catch (error) {
+      res.json(buildLocalTopicDraftResponse(worldState, request, {
+        context,
+        status: "fallback",
+        fallbackReason: "topic_draft_provider_failed"
       }));
     }
   } catch (error) {

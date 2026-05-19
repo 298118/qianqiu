@@ -65,7 +65,7 @@ test("S70.9 game start and state return AI settings and observability views", as
 
   assert.equal(started.response.status, 201);
   assert.equal(started.payload.aiSettingsView.schemaVersion, "s70.9-ai-settings.v1");
-  assert.equal(started.payload.aiInvocationSummaryView.routeCostSummary.taskCount, 10);
+  assert.equal(started.payload.aiInvocationSummaryView.routeCostSummary.taskCount, 11);
   assert.equal(started.payload.aiControlAuditView.schemaVersion, "s71.11-ai-control-audit.v1");
   assert.equal(started.payload.aiControlAuditView.publicPanel.rejectedToolCallCount, 0);
   assert.ok(started.payload.aiInvocationSummaryView.recentInvocations.length >= 1);
@@ -76,8 +76,8 @@ test("S70.9 game start and state return AI settings and observability views", as
   const statePayload = await stateResponse.json();
   assert.equal(stateResponse.status, 200);
   assert.equal(statePayload.aiSettingsView.preset, "balanced");
-  assert.equal(statePayload.aiInvocationSummaryView.routeCostSummary.taskCount, 10);
-  assert.equal(statePayload.aiControlAuditView.developerPanel.routeCostSummary.taskCount, 10);
+  assert.equal(statePayload.aiInvocationSummaryView.routeCostSummary.taskCount, 11);
+  assert.equal(statePayload.aiControlAuditView.developerPanel.routeCostSummary.taskCount, 11);
   assertHiddenSafe(statePayload.aiInvocationSummaryView);
   assertHiddenSafe(statePayload.aiControlAuditView);
 
@@ -214,7 +214,7 @@ test("S70.9 turn payload includes updated AI settings and invocation summary", a
   });
 
   assert.equal(turned.response.status, 200);
-  assert.equal(turned.payload.aiSettingsView.taskRoutes.length, 10);
+  assert.equal(turned.payload.aiSettingsView.taskRoutes.length, 11);
   assert.ok(turned.payload.aiInvocationSummaryView.recentInvocations.length >= 2);
   assert.ok(turned.payload.aiInvocationSummaryView.routeCostSummary.maxOutputTokens > 0);
   assert.equal(turned.payload.aiControlAuditView.publicPanel.title, "AI 调动审计");

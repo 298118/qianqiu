@@ -133,6 +133,30 @@ test("S75.9 quick_action route honors env overrides while keeping tool budget lo
   assert.equal(route.reviewerOnly, false);
 });
 
+test("S78 topic_draft route honors env overrides while keeping tool budget locked", () => {
+  const policy = buildDefaultModelRoutePolicy({
+    AI_PROVIDER: "mimo",
+    AI_TOPIC_DRAFT_PROVIDER: "openai",
+    AI_TOPIC_DRAFT_MODEL: "gpt-topic-scribe",
+    AI_TOPIC_DRAFT_MAX_OUTPUT_TOKENS: "888",
+    AI_TOPIC_DRAFT_TOOL_BUDGET: "6",
+    AI_TOPIC_DRAFT_TIMEOUT_MS: "3456",
+    OPENAI_API_KEY: "test-key"
+  });
+  const route = resolveModelForTask("topic_draft", policy);
+
+  assert.equal(route.provider, "openai");
+  assert.equal(route.model, "gpt-topic-scribe");
+  assert.equal(route.maxOutputTokens, 888);
+  assert.equal(route.toolBudget, 0);
+  assert.equal(route.timeoutMs, 3456);
+  assert.equal(route.mayUseTools, false);
+  assert.equal(route.mayRequestAdjudication, false);
+  assert.equal(route.mayWriteState, false);
+  assert.equal(route.mayCallServerResolvers, false);
+  assert.equal(route.reviewerOnly, false);
+});
+
 test("S75.9 mimo-deepseek provider routes quick actions through MiMo side", async () => {
   const calls = [];
   const provider = createMimoDeepSeekProvider({
@@ -164,6 +188,36 @@ test("S75.9 mimo-deepseek provider routes quick actions through MiMo side", asyn
   const payload = await provider.suggestQuickActions({ player: { role: "scholar" } });
   assert.equal(payload.quickActionSuggestions[0].title, "温书");
   assert.deepEqual(calls, [["mimo-quick", "scholar"]]);
+});
+
+test("S78 mimo-deepseek provider routes topic drafts through MiMo side", async () => {
+  const calls = [];
+  const provider = createMimoDeepSeekProvider({
+    mimoProvider: {
+      supportsStreaming: false,
+      draftTopicSurface: async (context) => {
+        calls.push(["mimo-topic", context.surfaceId]);
+        return {
+          source: "provider-ai",
+          surfaceId: context.surfaceId,
+          draftKind: context.draftKind,
+          draftTitle: "折中议",
+          draftText: "请召诸臣廷议，只就公开材料陈明利害，后果仍候主卷裁决。",
+          evidenceRefs: []
+        };
+      }
+    },
+    deepSeekProvider: {
+      gradeExamEssay: async () => {
+        calls.push(["deepseek-grade"]);
+        return { overallScore: 80 };
+      }
+    }
+  });
+
+  const payload = await provider.draftTopicSurface({ surfaceId: "court-debate", draftKind: "balanced_debate" });
+  assert.equal(payload.draftTitle, "折中议");
+  assert.deepEqual(calls, [["mimo-topic", "court-debate"]]);
 });
 
 test("S70.8 policy validation keeps critic and safety review-only", () => {

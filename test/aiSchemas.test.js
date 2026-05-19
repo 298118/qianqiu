@@ -78,6 +78,21 @@ test("turn schema accepts whitelisted state patches", () => {
   assert.equal(validatePayload("turn", payload), payload);
 });
 
+test("S78 topicDraft schema accepts draft-only structured payloads", () => {
+  const payload = {
+    source: "provider-ai",
+    surfaceId: "court-debate",
+    draftKind: "balanced_debate",
+    draftTitle: "折中议",
+    draftText: "请召诸臣廷议，只就公开材料陈明利害，后果仍候主卷裁决。",
+    evidenceRefs: ["eventArchiveView:event-1"],
+    riskNote: "若证据不足，宜先交部议。",
+    nextStep: "写入草稿后由玩家修改并呈上。"
+  };
+
+  assert.equal(validatePayload("topicDraft", payload), payload);
+});
+
 test("turn schema rejects teacher proposal attempts to include unknown authority fields", () => {
   const payload = {
     narrative: "A teacher gives advice.",

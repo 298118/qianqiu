@@ -25,11 +25,12 @@ const MODEL_TASK_TYPES = Object.freeze([
   "memory_summarizer",
   "monthly_briefing",
   "time_skip_planner",
-  "quick_action"
+  "quick_action",
+  "topic_draft"
 ]);
 
 const REVIEW_ONLY_TASK_TYPES = Object.freeze(["critic", "safety_gate"]);
-const TOOL_DISABLED_TASK_TYPES = Object.freeze(["critic", "safety_gate", "quick_action"]);
+const TOOL_DISABLED_TASK_TYPES = Object.freeze(["critic", "safety_gate", "quick_action", "topic_draft"]);
 
 const TASK_DEFAULTS = Object.freeze({
   narrator: {
@@ -121,6 +122,15 @@ const TASK_DEFAULTS = Object.freeze({
     mayUseTools: false,
     mayRequestAdjudication: false,
     reviewerOnly: false
+  },
+  topic_draft: {
+    purpose: "根据专题 surface 的公开材料和文体要求生成只读草稿，不裁决后果。",
+    temperature: 0.35,
+    maxOutputTokens: 1000,
+    toolBudget: 0,
+    mayUseTools: false,
+    mayRequestAdjudication: false,
+    reviewerOnly: false
   }
 });
 
@@ -134,7 +144,8 @@ const ROUTE_ENV_KEYS = Object.freeze({
   memory_summarizer: ["AI_MEMORY_PROVIDER", "AI_MEMORY_MODEL"],
   monthly_briefing: ["AI_MONTHLY_BRIEFING_PROVIDER", "AI_MONTHLY_BRIEFING_MODEL"],
   time_skip_planner: ["AI_TIME_SKIP_PROVIDER", "AI_TIME_SKIP_MODEL"],
-  quick_action: ["AI_QUICK_ACTION_PROVIDER", "AI_QUICK_ACTION_MODEL"]
+  quick_action: ["AI_QUICK_ACTION_PROVIDER", "AI_QUICK_ACTION_MODEL"],
+  topic_draft: ["AI_TOPIC_DRAFT_PROVIDER", "AI_TOPIC_DRAFT_MODEL"]
 });
 
 const PROVIDER_DEFAULT_MODELS = Object.freeze({

@@ -1,6 +1,7 @@
-import { BrainCircuit, Home, Save, ShieldCheck, SlidersHorizontal, X } from "lucide-react";
+import { BrainCircuit, Home, Save, ShieldCheck, SlidersHorizontal, Sparkles, X } from "lucide-react";
 import { useEffect, useRef, useState, type FormEvent, type ReactNode } from "react";
 import { useNavigate } from "react-router";
+import type { TopicSurfaceId, TopicSurfaceView } from "../api";
 import { isRunnableSessionId } from "../routes/sessionId";
 import { surfaceRegistry } from "../surfaces/surfaceRegistry";
 import { useGameSessionStore } from "../state/gameSessionState";
@@ -471,15 +472,100 @@ function ModalHost({ activeModal }: { readonly activeModal: ModalSurface }) {
   );
 }
 
+const topicSurfaceIds: readonly TopicSurfaceId[] = [
+  "memorial-review",
+  "edict-draft",
+  "court-debate",
+  "trial",
+  "war-council",
+  "npc-profile"
+];
+
+function isTopicSurface(surface: LocalSurface): surface is TopicSurfaceId {
+  return topicSurfaceIds.includes(surface as TopicSurfaceId);
+}
+
 function LocalSurfaceHost({ activeSurface }: { readonly activeSurface: LocalSurface }) {
   const closeSurface = useUiStateStore((state) => state.closeSurface);
   const setActionDraft = useUiStateStore((state) => state.setActionDraft);
+  const currentSessionId = useUiStateStore((state) => state.currentSessionId);
+  const loadTopicSurface = useGameSessionStore((state) => state.loadTopicSurface);
+  const requestTopicDraft = useGameSessionStore((state) => state.requestTopicDraft);
+  const topicSurface = useGameSessionStore((state) => state.topicSurface);
+  const topicSurfaceStatus = useGameSessionStore((state) => state.topicSurfaceStatus);
+  const topicDraft = useGameSessionStore((state) => state.topicDraft);
+  const topicDraftStatus = useGameSessionStore((state) => state.topicDraftStatus);
+  const error = useGameSessionStore((state) => state.error);
   const entry = surfaceRegistry[activeSurface];
   const surfaceRef = useRef<HTMLElement | null>(null);
+  const canLoadTopicSurface = Boolean(currentSessionId && isRunnableSessionId(currentSessionId) && isTopicSurface(activeSurface));
+  const topicView = isTopicSurface(activeSurface) && topicSurface?.topicSurfaceView.surfaceId === activeSurface
+    ? topicSurface.topicSurfaceView
+    : null;
+  const [selectedEvidenceRefs, setSelectedEvidenceRefs] = useState<readonly string[]>([]);
+  const [draftKind, setDraftKind] = useState("");
+  const [playerNote, setPlayerNote] = useState("");
+  const [draftText, setDraftText] = useState(entry.draftText || "");
 
   useEffect(() => {
     focusFirstControl(surfaceRef.current);
   }, [activeSurface]);
+
+  useEffect(() => {
+    setDraftText(entry.draftText || "");
+    setPlayerNote("");
+    setSelectedEvidenceRefs([]);
+    setDraftKind("");
+  }, [activeSurface, entry.draftText]);
+
+  useEffect(() => {
+    if (!canLoadTopicSurface || !currentSessionId || !isTopicSurface(activeSurface)) return;
+    void loadTopicSurface(currentSessionId, activeSurface).catch(() => undefined);
+  }, [activeSurface, canLoadTopicSurface, currentSessionId, loadTopicSurface]);
+
+  useEffect(() => {
+    if (!topicView) return;
+    const firstItemRefs = topicView.items[0]?.evidenceRefs || [];
+    const fallbackRefs = topicView.evidenceRefs.slice(0, 2).map((ref) => ref.refId);
+    setSelectedEvidenceRefs(firstItemRefs.length ? firstItemRefs : fallbackRefs);
+    setDraftKind(topicView.draftSlots[0]?.draftKind || "topic_draft");
+  }, [topicView?.surfaceId, topicView?.generatedAtTurn]);
+
+  useEffect(() => {
+    if (!topicDraft || topicDraft.surfaceId !== activeSurface) return;
+    setDraftText(topicDraft.topicDraft.draftText);
+  }, [activeSurface, topicDraft]);
+
+  function toggleEvidenceRef(refId: string) {
+    setSelectedEvidenceRefs((current) => {
+      if (current.includes(refId)) return current.filter((candidate) => candidate !== refId);
+      return [...current.slice(-4), refId];
+    });
+  }
+
+  async function handleTopicDraft() {
+    if (!currentSessionId || !isTopicSurface(activeSurface)) return;
+    try {
+      const payload = await requestTopicDraft(currentSessionId, {
+        surfaceId: activeSurface,
+        draftKind: draftKind || topicView?.draftSlots[0]?.draftKind,
+        selectedEvidenceRefs,
+        playerNote
+      });
+      setDraftText(payload.topicDraft.draftText);
+    } catch {
+    }
+  }
+
+  function handleWriteDraft() {
+    const text = draftText.trim() || entry.draftText || "";
+    if (!text) return;
+    setActionDraft({
+      source: activeSurface === "map-filter" ? "map-runtime" : "role-surface",
+      targetPage: activeSurface === "map-filter" ? "map" : "game",
+      text
+    });
+  }
 
   return (
     <div className="modalScrim surfaceScrim" role="presentation">
@@ -493,26 +579,214 @@ function LocalSurfaceHost({ activeSurface }: { readonly activeSurface: LocalSurf
         <dl className="surfaceSafetyList" aria-label={`${entry.title}安全边界`}>
           <div>
             <dt>数据来源</dt>
-            <dd>{entry.dataSource}</dd>
+            <dd>{topicView ? topicSourceSummary(topicView) : entry.dataSource}</dd>
           </div>
           <div>
-            <dt>占位状态</dt>
-            <dd>{entry.emptyState}</dd>
+            <dt>{topicView ? "材料状态" : "占位状态"}</dt>
+            <dd>{topicView ? topicMaterialSummary(topicView) : entry.emptyState}</dd>
           </div>
           <div>
             <dt>裁决边界</dt>
-            <dd>{entry.safetyNote}</dd>
+            <dd>{topicView?.authorityBoundary || entry.safetyNote}</dd>
           </div>
         </dl>
-        {entry.draftText ? (
-          <button
-            className="paperButton"
-            type="button"
-            onClick={() => setActionDraft({ source: activeSurface === "map-filter" ? "map-runtime" : "role-surface", targetPage: activeSurface === "map-filter" ? "map" : "game", text: entry.draftText ?? "" })}
-          >
+        {isTopicSurface(activeSurface) ? (
+          <TopicSurfaceWorkbench
+            activeSurface={activeSurface}
+            canLoad={canLoadTopicSurface}
+            entryDraft={entry.draftText || ""}
+            error={error}
+            draftKind={draftKind}
+            draftText={draftText}
+            playerNote={playerNote}
+            selectedEvidenceRefs={selectedEvidenceRefs}
+            status={topicSurfaceStatus}
+            draftStatus={topicDraftStatus}
+            topicView={topicView}
+            onDraftKindChange={setDraftKind}
+            onDraftTextChange={setDraftText}
+            onPlayerNoteChange={setPlayerNote}
+            onToggleEvidenceRef={toggleEvidenceRef}
+            onRequestDraft={() => void handleTopicDraft()}
+            onWriteDraft={handleWriteDraft}
+          />
+        ) : (
+          entry.draftText ? (
+            <button className="paperButton" type="button" onClick={handleWriteDraft}>
+              写入奏折草稿
+            </button>
+          ) : null
+        )}
+      </section>
+    </div>
+  );
+}
+
+function topicSourceSummary(topicView: TopicSurfaceView) {
+  const sources = (topicView.sourceViews || [])
+    .map((source) => `${String(source.sourceView || "公开投影")} ${String(source.count || 0)} 条`)
+    .slice(0, 4);
+  return sources.length ? sources.join("；") : "当前专题由服务器安全投影生成。";
+}
+
+function topicMaterialSummary(topicView: TopicSurfaceView) {
+  if (!topicView.items.length) return topicView.emptyState;
+  return `${topicView.items.length} 条材料，${topicView.evidenceRefs.length} 枚可引用证据。`;
+}
+
+function TopicSurfaceWorkbench({
+  activeSurface,
+  canLoad,
+  draftKind,
+  draftStatus,
+  draftText,
+  entryDraft,
+  error,
+  playerNote,
+  selectedEvidenceRefs,
+  status,
+  topicView,
+  onDraftKindChange,
+  onDraftTextChange,
+  onPlayerNoteChange,
+  onRequestDraft,
+  onToggleEvidenceRef,
+  onWriteDraft
+}: {
+  readonly activeSurface: TopicSurfaceId;
+  readonly canLoad: boolean;
+  readonly draftKind: string;
+  readonly draftStatus: "idle" | "loading" | "ready" | "error";
+  readonly draftText: string;
+  readonly entryDraft: string;
+  readonly error: string | null;
+  readonly playerNote: string;
+  readonly selectedEvidenceRefs: readonly string[];
+  readonly status: "idle" | "loading" | "ready" | "error";
+  readonly topicView: TopicSurfaceView | null;
+  readonly onDraftKindChange: (value: string) => void;
+  readonly onDraftTextChange: (value: string) => void;
+  readonly onPlayerNoteChange: (value: string) => void;
+  readonly onRequestDraft: () => void;
+  readonly onToggleEvidenceRef: (refId: string) => void;
+  readonly onWriteDraft: () => void;
+}) {
+  const evidenceByRef = new Map((topicView?.evidenceRefs || []).map((ref) => [ref.refId, ref]));
+  const selectedLabels = selectedEvidenceRefs.map((refId) => evidenceByRef.get(refId)?.label || refId);
+  const hasMaterials = Boolean(topicView && (topicView.items.length || topicView.evidenceRefs.length));
+  const draftSource = topicView ? "AI 拟稿" : "本地草稿";
+  const finalDraftText = draftText;
+
+  if (!canLoad) {
+    return (
+      <div className="topicSurfaceFallback">
+        <p>预览案卷只显示专题模板；真实案卷会载入公开材料、证据引用和 AI 草稿。</p>
+        {entryDraft ? (
+          <button className="paperButton" type="button" onClick={onWriteDraft}>
             写入奏折草稿
           </button>
         ) : null}
+      </div>
+    );
+  }
+
+  return (
+    <div className="topicSurfaceLayout" data-surface-id={activeSurface}>
+      <section className="topicSurfaceColumn" aria-label="材料栏">
+        <div className="topicSurfaceColumnHeader">
+          <h3>材料</h3>
+          <span>{status === "loading" ? "检索中" : hasMaterials ? "可阅" : "暂无"}</span>
+        </div>
+        {topicView?.items.length ? (
+          <div className="topicSurfaceItems">
+            {topicView.items.map((item) => (
+              <article className="topicSurfaceItem" key={item.id}>
+                <div>
+                  <strong>{item.title}</strong>
+                  <span>{item.statusLabel || "可阅"}</span>
+                </div>
+                <p>{item.summary}</p>
+                <small>{item.sourceView || "公开投影"}</small>
+              </article>
+            ))}
+          </div>
+        ) : (
+          <p>{status === "loading" ? "正在整理公开材料。" : topicView?.emptyState || "尚未载入专题材料。"}</p>
+        )}
+      </section>
+
+      <section className="topicSurfaceColumn" aria-label="筹议栏">
+        <div className="topicSurfaceColumnHeader">
+          <h3>筹议</h3>
+          <span>{selectedEvidenceRefs.length} 引</span>
+        </div>
+        {topicView?.draftSlots.length ? (
+          <div className="topicDraftSlots" role="group" aria-label="草稿类型">
+            {topicView.draftSlots.map((slot) => (
+              <button
+                key={slot.id}
+                className="topicDraftSlot"
+                type="button"
+                aria-pressed={(draftKind || topicView.draftSlots[0]?.draftKind) === slot.draftKind}
+                onClick={() => onDraftKindChange(slot.draftKind)}
+              >
+                {slot.label}
+              </button>
+            ))}
+          </div>
+        ) : null}
+        <div className="topicEvidenceList" aria-label="证据勾选">
+          {(topicView?.evidenceRefs || []).slice(0, 8).map((ref) => (
+            <label className="topicEvidenceRow" key={ref.refId}>
+              <input
+                type="checkbox"
+                checked={selectedEvidenceRefs.includes(ref.refId)}
+                onChange={() => onToggleEvidenceRef(ref.refId)}
+              />
+              <span>
+                <strong>{ref.label}</strong>
+                <small>{ref.domain || ref.sourceView || "公开材料"}</small>
+              </span>
+            </label>
+          ))}
+        </div>
+        <label className="topicNoteField">
+          按语
+          <input value={playerNote} maxLength={120} onChange={(event) => onPlayerNoteChange(event.target.value)} />
+        </label>
+        {topicView?.scenePreview ? (
+          <p className="topicSurfaceMeta">
+            参议：{topicView.scenePreview.participantLabels?.length ? topicView.scenePreview.participantLabels.join("、") : "候公开角色入席"}
+          </p>
+        ) : null}
+        <p className="topicSurfaceMeta">{selectedLabels.length ? `已引：${selectedLabels.join("、")}` : "未勾选证据时，将由服务器选取公开材料。"}</p>
+      </section>
+
+      <section className="topicSurfaceColumn topicDraftColumn" aria-label="草稿栏">
+        <div className="topicSurfaceColumnHeader">
+          <h3>草稿</h3>
+          <span>{draftStatus === "loading" ? "拟稿中" : draftSource}</span>
+        </div>
+        <button
+          className="paperButton topicAiButton"
+          type="button"
+          disabled={!topicView || draftStatus === "loading"}
+          onClick={onRequestDraft}
+        >
+          <Sparkles size={16} aria-hidden="true" />
+          <span>{draftStatus === "loading" ? "拟稿中" : "AI 拟稿"}</span>
+        </button>
+        <textarea
+          className="topicDraftTextarea"
+          value={finalDraftText}
+          onChange={(event) => onDraftTextChange(event.target.value)}
+          rows={8}
+          aria-label="专题草稿正文"
+        />
+        {draftStatus === "error" ? <p className="statusLine">{error || "专题拟稿已降级为本地草稿。"}</p> : null}
+        <button className="paperButton" type="button" disabled={!finalDraftText.trim()} onClick={onWriteDraft}>
+          写入底部奏折
+        </button>
       </section>
     </div>
   );

@@ -4,6 +4,7 @@ const {
   buildGradeTask,
   buildOpeningTask,
   buildQuickActionTask,
+  buildTopicDraftTask,
   buildTurnTask
 } = require("../prompts");
 const { parseJsonFromText } = require("../../utils/json");
@@ -392,6 +393,10 @@ function createRemoteProvider(requestJson, requestJsonStream) {
 
     suggestQuickActions(quickActionContext) {
       return runTask(buildQuickActionTask(quickActionContext), requestJson);
+    },
+
+    draftTopicSurface(topicDraftContext) {
+      return runTask(buildTopicDraftTask(topicDraftContext), requestJson);
     },
 
     gradeExamEssay(worldState, exam, essay, authenticityCheck) {

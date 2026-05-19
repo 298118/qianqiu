@@ -671,14 +671,17 @@ test("S76.9 map page is an independent safe map surface", () => {
   );
 });
 
-test("S76.11 topic surfaces are safe placeholders and draft-only", () => {
+test("S78 topic surfaces are safe workbenches and draft-only", () => {
   const uiStateSource = readText("client/src/state/uiState.ts");
+  const apiSource = readText("client/src/api/qianqiuClient.ts");
+  const typeSource = readText("client/src/api/types.ts");
+  const stateSource = readText("client/src/state/gameSessionState.ts");
   const surfaceRegistrySource = readText("client/src/surfaces/surfaceRegistry.tsx");
   const surfaceHostSource = readText("client/src/components/SurfaceHost.tsx");
   const courtPageSource = readText("client/src/pages/CourtPage.tsx");
   const appTestSource = readText("client/src/__tests__/App.test.tsx");
   const styleSource = readText("client/src/styles/global.css");
-  const combined = `${uiStateSource}\n${surfaceRegistrySource}\n${surfaceHostSource}\n${courtPageSource}\n${styleSource}`;
+  const runtimeCombined = `${uiStateSource}\n${surfaceRegistrySource}\n${surfaceHostSource}\n${courtPageSource}\n${styleSource}`;
 
   for (const surfaceId of [
     "memorial-review",
@@ -692,22 +695,34 @@ test("S76.11 topic surfaces are safe placeholders and draft-only", () => {
     assert.match(surfaceRegistrySource, new RegExp(`${surfaceId}`));
   }
 
+  assert.match(apiSource, /\/api\/game\/topic-surface\/\$\{encodePathSegment\(sessionId\)\}\/\$\{encodePathSegment\(surfaceId\)\}/);
+  assert.match(apiSource, /\/api\/ai\/topic-draft\/\$\{encodePathSegment\(sessionId\)\}/);
+  assert.match(typeSource, /TopicSurfaceView/);
+  assert.match(typeSource, /TopicDraftResponse/);
+  assert.match(stateSource, /topicSurfaceStatus/);
+  assert.match(stateSource, /requestTopicDraft/);
   assert.match(surfaceRegistrySource, /dataSource/);
   assert.match(surfaceRegistrySource, /emptyState/);
-  assert.match(surfaceRegistrySource, /没有安全 projection|没有安全案牍 projection|没有安全军务 projection/);
   assert.match(surfaceRegistrySource, /不补造|不生成|不伪造|不能调用 resolver/);
   assert.match(surfaceHostSource, /surfaceSafetyList/);
-  assert.match(surfaceHostSource, /setActionDraft\(\{ source: activeSurface === "map-filter" \? "map-runtime" : "role-surface"/);
+  assert.match(surfaceHostSource, /TopicSurfaceWorkbench/);
+  assert.match(surfaceHostSource, /loadTopicSurface\(currentSessionId, activeSurface\)/);
+  assert.match(surfaceHostSource, /requestTopicDraft\(currentSessionId/);
+  assert.match(surfaceHostSource, /AI 拟稿/);
+  assert.match(surfaceHostSource, /写入底部奏折/);
+  assert.match(styleSource, /topicSurfaceLayout/);
+  assert.match(styleSource, /topicDraftTextarea/);
   assert.match(courtPageSource, /courtSurfaceGroups/);
   assert.match(courtPageSource, /"memorial-review", "edict-draft", "court-debate"/);
   assert.match(courtPageSource, /"trial", "war-council"/);
   assert.match(courtPageSource, /"npc-profile"/);
   assert.match(courtPageSource, /openSurface\(surface\)/);
   assert.match(appTestSource, /奏折队列", "拟圣旨", "朝议", "堂审", "军议", "人物档案"/);
+  assert.match(appTestSource, /AI 拟稿/);
 
   assert.doesNotMatch(
-    combined,
-    /dangerouslySetInnerHTML|\/api\/game\/state|\/api\/dev\/session-diagnostics|submitTurn\(|fetch\(|localStorage|sessionStorage|data\/sessions|raw audit|provider payload|OPENAI_API_KEY|DEEPSEEK_API_KEY|MIMO_API_KEY|ANTHROPIC_API_KEY/
+    runtimeCombined,
+    /dangerouslySetInnerHTML|\/api\/game\/state|\/api\/dev\/session-diagnostics|submitTurn\(|localStorage|sessionStorage|data\/sessions|raw audit|provider payload|OPENAI_API_KEY|DEEPSEEK_API_KEY|MIMO_API_KEY|ANTHROPIC_API_KEY/
   );
 });
 

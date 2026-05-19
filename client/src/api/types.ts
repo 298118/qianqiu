@@ -114,6 +114,7 @@ export type SafeRouteViews = {
   readonly playerMonthlyBriefingView?: JsonObject;
   readonly relationshipView?: JsonObject;
   readonly worldPeopleView?: WorldPeopleView;
+  readonly topicSurfaceView?: TopicSurfaceView;
   readonly [key: string]: unknown;
 };
 
@@ -172,6 +173,109 @@ export type QuickActionResponse = {
   readonly stale?: boolean;
   readonly fallbackReason?: string;
   readonly quickActionSuggestions: readonly QuickActionSuggestionPayload[];
+};
+
+export type TopicSurfaceId =
+  | "memorial-review"
+  | "edict-draft"
+  | "court-debate"
+  | "trial"
+  | "war-council"
+  | "npc-profile";
+
+export type TopicSurfaceEvidenceRef = {
+  readonly refId: string;
+  readonly sourceView?: string;
+  readonly sourceId?: string;
+  readonly domain?: string;
+  readonly label: string;
+  readonly summary: string;
+  readonly visibility?: string;
+  readonly confidence?: number;
+  readonly freshness?: string;
+  readonly scopeRefs?: readonly string[];
+};
+
+export type TopicSurfaceItem = {
+  readonly id: string;
+  readonly kind?: string;
+  readonly title: string;
+  readonly summary: string;
+  readonly sourceView?: string;
+  readonly statusLabel?: string;
+  readonly evidenceRefs?: readonly string[];
+  readonly urgency?: string;
+};
+
+export type TopicSurfaceDraftSlot = {
+  readonly id: string;
+  readonly label: string;
+  readonly draftKind: string;
+  readonly template?: string;
+};
+
+export type TopicSurfaceScenePreview = {
+  readonly sceneType?: string;
+  readonly title?: string;
+  readonly participantLabels?: readonly string[];
+  readonly proposalBudget?: JsonObject;
+  readonly authorityBoundary?: string;
+};
+
+export type TopicSurfaceView = {
+  readonly schemaVersion: string;
+  readonly sessionId?: string;
+  readonly generatedAtTurn?: number;
+  readonly surfaceId: TopicSurfaceId;
+  readonly surfaceType?: string;
+  readonly label: string;
+  readonly title: string;
+  readonly summary: string;
+  readonly sourceViews?: readonly JsonObject[];
+  readonly filters?: readonly JsonObject[];
+  readonly items: readonly TopicSurfaceItem[];
+  readonly evidenceRefs: readonly TopicSurfaceEvidenceRef[];
+  readonly draftSlots: readonly TopicSurfaceDraftSlot[];
+  readonly scenePreview?: TopicSurfaceScenePreview | null;
+  readonly lastPublicResults?: readonly JsonObject[];
+  readonly authorityBoundary: string;
+  readonly emptyState: string;
+  readonly safety?: JsonObject;
+};
+
+export type TopicSurfaceResponse = {
+  readonly sessionId: string;
+  readonly topicSurfaceView: TopicSurfaceView;
+};
+
+export type TopicDraftRequest = {
+  readonly surfaceId: TopicSurfaceId;
+  readonly draftKind?: string;
+  readonly selectedEvidenceRefs?: readonly string[];
+  readonly evidenceRefs?: readonly string[];
+  readonly playerNote?: string;
+};
+
+export type TopicDraftPayload = {
+  readonly surfaceId: TopicSurfaceId;
+  readonly draftKind: string;
+  readonly draftTitle: string;
+  readonly draftText: string;
+  readonly evidenceRefs: readonly string[];
+  readonly riskNote?: string;
+  readonly nextStep?: string;
+  readonly source: "local-rule" | "mock-ai" | "provider-ai";
+};
+
+export type TopicDraftResponse = {
+  readonly schemaVersion: string;
+  readonly sessionId: string;
+  readonly generatedAtTurn?: number;
+  readonly surfaceId: TopicSurfaceId;
+  readonly source: "local-rule" | "mock-ai" | "provider-ai";
+  readonly status: "ready" | "fallback";
+  readonly fallbackReason?: string;
+  readonly topicDraft: TopicDraftPayload;
 };
 
 export type SaveMetadata = {

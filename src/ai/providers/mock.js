@@ -2244,10 +2244,46 @@ async function suggestQuickActions(quickActionContext = {}) {
   };
 }
 
+async function draftTopicSurface(topicDraftContext = {}) {
+  const evidenceRefs = Array.isArray(topicDraftContext.selectedEvidenceRefs)
+    ? topicDraftContext.selectedEvidenceRefs
+    : [];
+  const fallbackRefs = Array.isArray(topicDraftContext.evidenceRefs)
+    ? topicDraftContext.evidenceRefs.map((ref) => ref?.refId).filter(Boolean)
+    : [];
+  const citedRefs = evidenceRefs.length ? evidenceRefs : fallbackRefs.slice(0, 3);
+  const surfaceId = topicDraftContext.surfaceId || "memorial-review";
+  const draftKind = topicDraftContext.draftKind || "topic_draft";
+  const draftLabel = topicDraftContext.draftLabel || "专题草稿";
+  const evidenceLabel = Array.isArray(topicDraftContext.evidenceRefs) && topicDraftContext.evidenceRefs.length
+    ? topicDraftContext.evidenceRefs.slice(0, 3).map((ref) => ref.label).filter(Boolean).join("、")
+    : "当前公开材料";
+  const leadBySurface = {
+    "memorial-review": "臣谨就所阅奏报拟批",
+    "edict-draft": "拟谕中外有司",
+    "court-debate": "请召诸臣廷议",
+    trial: "本官拟升堂复核",
+    "war-council": "本营拟集军议",
+    "npc-profile": "拟据公开履历先行拜访"
+  };
+
+  return {
+    surfaceId,
+    draftKind,
+    draftTitle: draftLabel,
+    draftText: `${leadBySurface[surfaceId] || "据此拟稿"}：所据为${evidenceLabel || "当前公开材料"}。先列事实，再请有司核验，凡任免、赏罚、战和、结案与钱粮处置，仍候主卷呈上后由服务器裁决。`,
+    evidenceRefs: citedRefs,
+    riskNote: "Mock 草稿只供编辑，不推进时间、不调用裁决器、不写入案卷状态。",
+    nextStep: "写入底部奏折后，玩家可删改措辞再呈上普通回合。",
+    source: "mock-ai"
+  };
+}
+
 module.exports = {
   startGame,
   runTurn,
   generateExamQuestion,
   suggestQuickActions,
+  draftTopicSurface,
   gradeExamEssay
 };

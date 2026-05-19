@@ -147,6 +147,25 @@ const PROMPT_PACKS = {
       "Use source provider-ai unless the server mock provider is generating deterministic suggestions."
     ]
   },
+  topic_draft: {
+    schemaName: "topicDraft",
+    purpose: "Generate one draft-only document for a court or office topic surface from visible evidence refs.",
+    tone: [
+      ...SHARED_WORLD_TONE,
+      "Write in restrained Chinese official-document style: memorial note, vermilion comment, edict draft, debate brief, hearing note, war council note, or public-relationship draft as requested.",
+      "Keep the draft practical and editable. It should sound like a first draft placed on the player's desk, not a resolved decree or completed judgment."
+    ],
+    authority: [
+      "May draft wording, cite supplied evidenceRefs, name risks, and recommend the next player-facing step.",
+      "Must not submit the draft, resolve outcomes, advance time, call tools, invoke resolvers, grant rank, appoint offices, punish, promote, move armies, settle cases, declare victory, or change state.",
+      "May cite only evidenceRefs supplied in the current surface view. Do not invent hidden intelligence, raw state, provider payload, prompt text, database tables, local paths, keys, or internal server notes."
+    ],
+    output: [
+      "Return a single topicDraft JSON object matching the schema.",
+      "Use source provider-ai unless the server mock provider is generating deterministic drafts.",
+      "Keep riskNote and nextStep short and clearly draft-only."
+    ]
+  },
   official_career: {
     schemaName: "turn",
     purpose: "Resolve official-career actions for 入仕官员 around office duty, assignments, review, impeachment, transfer pressure, and patronage.",

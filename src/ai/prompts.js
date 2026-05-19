@@ -103,6 +103,29 @@ function compactQuickActionContext(context = {}) {
   };
 }
 
+function compactTopicDraftContext(context = {}) {
+  return {
+    surfaceId: context.surfaceId,
+    surfaceType: context.surfaceType,
+    surfaceTitle: context.surfaceTitle,
+    draftKind: context.draftKind,
+    draftLabel: context.draftLabel,
+    draftTemplate: context.draftTemplate,
+    playerNote: context.playerNote || "",
+    player: context.player || {},
+    selectedEvidenceRefs: Array.isArray(context.selectedEvidenceRefs) ? context.selectedEvidenceRefs : [],
+    evidenceRefs: Array.isArray(context.evidenceRefs) ? context.evidenceRefs : [],
+    allowedDraftKinds: Array.isArray(context.allowedDraftKinds) ? context.allowedDraftKinds : [],
+    safety: {
+      draftOnly: true,
+      noStateWrites: true,
+      noToolExecution: true,
+      noResolverExecution: true,
+      citeSuppliedEvidenceOnly: true
+    }
+  };
+}
+
 function compactWorldState(worldState = {}, options = {}) {
   return {
     year: worldState.year,
@@ -194,6 +217,25 @@ function buildQuickActionTask(quickActionContext = {}) {
   };
 }
 
+function buildTopicDraftTask(topicDraftContext = {}) {
+  return {
+    promptPack: "topic_draft",
+    schemaName: "topicDraft",
+    instructions: buildPromptInstructions("topic_draft"),
+    input: [
+      "Generate one draft-only Chinese topic surface document for the player.",
+      "The browser will only copy this draft into the memorial textarea; it will not submit or resolve it.",
+      "Use only the supplied surface context and evidence refs. evidenceRefs in your JSON must be drawn from supplied evidenceRefs.",
+      "Do not mention provider, prompt, hidden, raw, local path, key, server resolver, internal state, or database tables.",
+      "Do not claim that an edict, judgment, appointment, military order, battle, trial, censure, relief policy, or diplomacy result has already happened.",
+      "Return only the requested JSON fields. Keep draftText suitable for the player to edit before submitting a normal turn.",
+      "Topic draft context:",
+      JSON.stringify(compactTopicDraftContext(topicDraftContext), null, 2)
+    ].join("\n"),
+    maxOutputTokens: 1000
+  };
+}
+
 function buildExamQuestionTask(worldState, exam) {
   return {
     promptPack: "exam_question",
@@ -240,5 +282,6 @@ module.exports = {
   buildGradeTask,
   buildOpeningTask,
   buildQuickActionTask,
+  buildTopicDraftTask,
   buildTurnTask
 };

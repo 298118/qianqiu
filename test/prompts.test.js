@@ -9,6 +9,7 @@ const {
   buildGradeTask,
   buildOpeningTask,
   buildQuickActionTask,
+  buildTopicDraftTask,
   buildTurnTask
 } = require("../src/ai/prompts");
 const {
@@ -42,6 +43,7 @@ test("S41 prompt pack registry covers fourth-phase pack names", () => {
       "official_career",
       "opening",
       "quick_action",
+      "topic_draft",
       "world_turn"
     ].sort()
   );
@@ -65,6 +67,32 @@ test("S75.9 quick action prompt is draft-only and hidden-safe", () => {
   assert.match(task.instructions, /May propose draft text only/);
   assert.doesNotMatch(task.instructions, /Allowed top-level patch keys/);
   assert.match(task.input, /The browser will only copy one suggestion into the action textarea/);
+  assert.doesNotMatch(task.input, /statePatch|canonical state/);
+});
+
+test("S78 topic draft prompt is draft-only and evidence-bound", () => {
+  const task = buildTopicDraftTask({
+    surfaceId: "court-debate",
+    surfaceTitle: "朝议筹议",
+    draftKind: "balanced_debate",
+    draftLabel: "折中议",
+    player: { name: "顾澄", role: "official", officeTitle: "户部主事" },
+    selectedEvidenceRefs: ["eventArchiveView:event-1"],
+    evidenceRefs: [{
+      refId: "eventArchiveView:event-1",
+      label: "边饷催报",
+      summary: "兵部催核粮饷。",
+      sourceView: "eventArchiveView"
+    }]
+  });
+
+  assert.equal(task.promptPack, "topic_draft");
+  assert.equal(task.schemaName, "topicDraft");
+  assert.match(task.instructions, /Prompt pack: topic_draft/);
+  assert.match(task.instructions, /Must not submit the draft/);
+  assert.match(task.input, /The browser will only copy this draft into the memorial textarea/);
+  assert.match(task.input, /eventArchiveView:event-1/);
+  assert.doesNotMatch(task.instructions, /Allowed top-level patch keys/);
   assert.doesNotMatch(task.input, /statePatch|canonical state/);
 });
 

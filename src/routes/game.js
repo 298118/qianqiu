@@ -145,6 +145,7 @@ const {
   validateTimeSkipPlan
 } = require("../game/timeSkip");
 const { TIME_SKIP_ACTIONS } = require("../game/timeSkipConfig");
+const { buildTopicSurfaceView } = require("../game/topicSurfaceView");
 const { redactSecrets } = require("../ai/diagnostics");
 const {
   getSessionStorageAdapter,
@@ -1178,6 +1179,19 @@ router.get("/player-state/:sessionId", async (req, res, next) => {
     res.json({
       ...buildPlayerStateEnvelope(record),
       ...routeViews
+    });
+  } catch (error) {
+    next(error);
+  }
+});
+
+router.get("/topic-surface/:sessionId/:surfaceId", async (req, res, next) => {
+  try {
+    const worldState = await readSession(req.params.sessionId);
+    ensureRouteProjectionState(worldState);
+    res.json({
+      sessionId: worldState.sessionId,
+      topicSurfaceView: buildTopicSurfaceView(worldState, { surfaceId: req.params.surfaceId })
     });
   } catch (error) {
     next(error);

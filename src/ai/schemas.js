@@ -335,6 +335,29 @@ const quickActionSchema = {
   }
 };
 
+const topicDraftSchema = {
+  type: "object",
+  required: ["surfaceId", "draftTitle", "draftText", "draftKind", "evidenceRefs", "riskNote", "nextStep", "source"],
+  additionalProperties: false,
+  properties: {
+    surfaceId: {
+      type: "string",
+      enum: ["memorial-review", "edict-draft", "court-debate", "trial", "war-council", "npc-profile"]
+    },
+    draftTitle: { type: "string", minLength: 1, maxLength: 48 },
+    draftText: { type: "string", minLength: 1, maxLength: 460 },
+    draftKind: { type: "string", minLength: 1, maxLength: 64 },
+    evidenceRefs: {
+      type: "array",
+      maxItems: 5,
+      items: { type: "string", minLength: 1, maxLength: 140 }
+    },
+    riskNote: { type: "string", minLength: 1, maxLength: 160 },
+    nextStep: { type: "string", minLength: 1, maxLength: 160 },
+    source: { type: "string", enum: ["mock-ai", "provider-ai"] }
+  }
+};
+
 const examQuestionSchema = {
   type: "object",
   required: [
@@ -456,6 +479,7 @@ const SCHEMAS = {
   opening: openingSchema,
   turn: turnSchema,
   quickAction: quickActionSchema,
+  topicDraft: topicDraftSchema,
   examQuestion: examQuestionSchema,
   grade: gradeSchema
 };
@@ -678,6 +702,7 @@ const MODEL_SCHEMAS = {
     }
   },
   quickAction: quickActionSchema,
+  topicDraft: topicDraftSchema,
   examQuestion: modelExamQuestionSchema,
   grade: modelGradeSchema
 };

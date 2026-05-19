@@ -106,6 +106,10 @@ describe("S74.1 React client shell", () => {
       settingsStatus: "idle",
       quickActionStatus: "idle",
       quickActions: null,
+      topicSurfaceStatus: "idle",
+      topicDraftStatus: "idle",
+      topicSurface: null,
+      topicDraft: null,
       aiSettings: null,
       aiConnection: null,
       status: "idle"
@@ -1444,6 +1448,162 @@ describe("S74.1 React client shell", () => {
     expect(trialDialog.textContent || "").toContain("不补造犯供");
     fireEvent.click(screen.getByRole("button", { name: "写入奏折草稿" }));
     expect(useUiStateStore.getState().actionDraft?.text).toContain("公开案牍");
+  });
+
+  it("loads S78 topic surface materials, requests AI draft, and writes only to the composer", async () => {
+    const sessionId = "78787878-7878-4878-8878-787878787878";
+    const fetchMock = vi.fn(async (url: string, options?: RequestInit) => {
+      if (url === "/assets/ui/ink-ui-manifest.json") {
+        return new Response(JSON.stringify(buildMockAssetManifest(0)), {
+          status: 200,
+          headers: { "Content-Type": "application/json" }
+        });
+      }
+      if (url === `/api/game/player-state/${sessionId}`) {
+        return new Response(JSON.stringify({
+          source: "server_player_visible_state_projection",
+          sessionId,
+          worldState: { player: { name: "顾澄", role: "official", officeTitle: "户部主事" } },
+          eventArchiveView: { items: [] }
+        }), {
+          status: 200,
+          headers: { "Content-Type": "application/json" }
+        });
+      }
+      if (url === `/api/ai/quick-actions/${sessionId}`) {
+        return new Response(JSON.stringify({
+          schemaVersion: "s75.9-quick-actions.v1",
+          sessionId,
+          source: "mock-ai",
+          status: "ready",
+          quickActionSuggestions: []
+        }), {
+          status: 200,
+          headers: { "Content-Type": "application/json" }
+        });
+      }
+      if (url === `/api/game/topic-surface/${sessionId}/court-debate`) {
+        return new Response(JSON.stringify({
+          sessionId,
+          topicSurfaceView: {
+            schemaVersion: "s78.topicSurfaceView.v1",
+            sessionId,
+            generatedAtTurn: 3,
+            surfaceId: "court-debate",
+            surfaceType: "court_debate",
+            label: "朝议",
+            title: "朝议筹议",
+            summary: "围绕公开议题形成意见。",
+            sourceViews: [{ sourceView: "eventArchiveView", domain: "events", count: 1 }],
+            filters: [],
+            items: [{
+              id: "topic-item:court-debate:1",
+              kind: "debate_issue",
+              title: "边饷催报",
+              summary: "兵部催核粮饷。",
+              sourceView: "eventArchiveView",
+              statusLabel: "急需筹议",
+              evidenceRefs: ["eventArchiveView:event-1"],
+              urgency: "urgent"
+            }],
+            evidenceRefs: [{
+              refId: "eventArchiveView:event-1",
+              sourceView: "eventArchiveView",
+              sourceId: "event-1",
+              domain: "events",
+              label: "边饷催报",
+              summary: "兵部催核粮饷。",
+              visibility: "public",
+              confidence: 0.8,
+              freshness: "current"
+            }],
+            draftSlots: [
+              { id: "balanced", label: "折中议", draftKind: "balanced_debate", template: "召集廷议，令诸臣陈明利害。" },
+              { id: "ministry", label: "部议", draftKind: "ministry_debate", template: "交部院会商。" }
+            ],
+            scenePreview: {
+              sceneType: "court_debate",
+              title: "边饷催报",
+              participantLabels: ["户部", "兵部"],
+              proposalBudget: { maxRounds: 3, maxActors: 2 },
+              authorityBoundary: "朝议只生成草稿。"
+            },
+            lastPublicResults: [],
+            authorityBoundary: "朝议只收集公开意见和草稿；任免、诏令、战和、财政结算和时间推进仍归服务器。",
+            emptyState: "暂无议题。",
+            safety: {
+              readOnly: true,
+              actorVisibleContextOnly: true,
+              draftOnly: true,
+              noResolverExecution: true,
+              noStateWrites: true,
+              noGlobalTimeAdvance: true
+            }
+          }
+        }), {
+          status: 200,
+          headers: { "Content-Type": "application/json" }
+        });
+      }
+      if (url === `/api/ai/topic-draft/${sessionId}`) {
+        const body = JSON.parse(String(options?.body || "{}"));
+        expect(body).toMatchObject({
+          surfaceId: "court-debate",
+          draftKind: "balanced_debate",
+          selectedEvidenceRefs: ["eventArchiveView:event-1"]
+        });
+        return new Response(JSON.stringify({
+          schemaVersion: "s78.topicDraft.v1",
+          sessionId,
+          generatedAtTurn: 3,
+          surfaceId: "court-debate",
+          source: "mock-ai",
+          status: "ready",
+          topicDraft: {
+            surfaceId: "court-debate",
+            draftKind: "balanced_debate",
+            draftTitle: "折中议",
+            draftText: "请召诸臣廷议，先核边饷催报，再拟稳妥章程。",
+            evidenceRefs: ["eventArchiveView:event-1"],
+            riskNote: "粮饷不足时宜先复核。",
+            nextStep: "写入底部奏折后呈上。",
+            source: "mock-ai"
+          }
+        }), {
+          status: 200,
+          headers: { "Content-Type": "application/json" }
+        });
+      }
+      throw new Error(`unexpected url: ${url}`);
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    renderRoute(`/game/${sessionId}/court`);
+
+    await screen.findByRole("heading", { name: "朝议与官署" });
+    fireEvent.click(screen.getByRole("button", { name: "朝议" }));
+
+    const dialog = await screen.findByRole("dialog", { name: "朝议" });
+    await waitFor(() => expect(screen.getAllByText("边饷催报").length).toBeGreaterThan(0));
+    expect(dialog.textContent || "").toContain("材料");
+    expect(dialog.textContent || "").toContain("筹议");
+    expect(dialog.textContent || "").toContain("草稿");
+    expect(dialog.textContent || "").toContain("户部、兵部");
+
+    fireEvent.click(screen.getByRole("button", { name: "AI 拟稿" }));
+    await waitFor(() => expect((screen.getByLabelText("专题草稿正文") as HTMLTextAreaElement).value).toBe("请召诸臣廷议，先核边饷催报，再拟稳妥章程。"));
+    fireEvent.click(screen.getByRole("button", { name: "写入底部奏折" }));
+
+    expect(useUiStateStore.getState().actionDraft).toMatchObject({
+      source: "role-surface",
+      targetPage: "game",
+      text: "请召诸臣廷议，先核边饷催报，再拟稳妥章程。"
+    });
+    const requestedUrls = fetchMock.mock.calls.map(([url]) => String(url));
+    expect(requestedUrls).toContain(`/api/game/topic-surface/${sessionId}/court-debate`);
+    expect(requestedUrls).toContain(`/api/ai/topic-draft/${sessionId}`);
+    expect(requestedUrls).not.toContain("/api/game/turn");
+    expect(requestedUrls.some((url) => /\/api\/game\/state|\/api\/dev/.test(url))).toBe(false);
   });
 
   it("restores scroll position and route focus when navigating between pages", async () => {

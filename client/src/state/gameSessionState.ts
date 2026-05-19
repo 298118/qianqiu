@@ -13,6 +13,10 @@ import type {
   QuickActionResponse,
   SaveMetadata,
   StartGameResponse,
+  TopicDraftRequest,
+  TopicDraftResponse,
+  TopicSurfaceId,
+  TopicSurfaceResponse,
   TurnResponse
 } from "../api";
 
@@ -35,6 +39,8 @@ type GameSessionState = {
   readonly savesStatus: LoadingState;
   readonly settingsStatus: LoadingState;
   readonly quickActionStatus: LoadingState;
+  readonly topicSurfaceStatus: LoadingState;
+  readonly topicDraftStatus: LoadingState;
   readonly currentSessionId: string | null;
   readonly currentSession: PlayerStateResponse | StartGameResponse | TurnResponse | ExamSubmitResponse | null;
   readonly lastTurn: TurnResponse | null;
@@ -44,6 +50,8 @@ type GameSessionState = {
   readonly aiSettings: AiSettingsResponse | null;
   readonly aiConnection: AiConnectionTestResponse | null;
   readonly quickActions: QuickActionResponse | null;
+  readonly topicSurface: TopicSurfaceResponse | null;
+  readonly topicDraft: TopicDraftResponse | null;
   readonly error: string | null;
   readonly refreshSaves: () => Promise<void>;
   readonly startNewGame: (input: StartGameInput) => Promise<StartGameResponse>;
@@ -57,6 +65,8 @@ type GameSessionState = {
   readonly updateAiTaskRoute: (sessionId: string, taskType: string, routePatch: Record<string, string | number>) => Promise<AiSettingsResponse>;
   readonly testAiConnection: (provider?: string) => Promise<AiConnectionTestResponse>;
   readonly refreshQuickActions: (sessionId: string, input?: { readonly page?: string; readonly draftPreview?: string; readonly count?: number }) => Promise<QuickActionResponse>;
+  readonly loadTopicSurface: (sessionId: string, surfaceId: TopicSurfaceId) => Promise<TopicSurfaceResponse>;
+  readonly requestTopicDraft: (sessionId: string, input: TopicDraftRequest) => Promise<TopicDraftResponse>;
 };
 
 function toErrorMessage(error: unknown) {
@@ -68,6 +78,8 @@ export const useGameSessionStore = create<GameSessionState>((set) => ({
   savesStatus: "idle",
   settingsStatus: "idle",
   quickActionStatus: "idle",
+  topicSurfaceStatus: "idle",
+  topicDraftStatus: "idle",
   currentSessionId: null,
   currentSession: null,
   lastTurn: null,
@@ -77,6 +89,8 @@ export const useGameSessionStore = create<GameSessionState>((set) => ({
   aiSettings: null,
   aiConnection: null,
   quickActions: null,
+  topicSurface: null,
+  topicDraft: null,
   error: null,
 
   async refreshSaves() {
@@ -101,6 +115,10 @@ export const useGameSessionStore = create<GameSessionState>((set) => ({
         lastExamResult: null,
         quickActions: null,
         quickActionStatus: "idle",
+        topicSurface: null,
+        topicDraft: null,
+        topicSurfaceStatus: "idle",
+        topicDraftStatus: "idle",
         status: "ready"
       });
       useUiStateStore.getState().syncSessionPayload(payload, "start");
@@ -123,6 +141,10 @@ export const useGameSessionStore = create<GameSessionState>((set) => ({
         lastExamResult: null,
         quickActions: null,
         quickActionStatus: "idle",
+        topicSurface: null,
+        topicDraft: null,
+        topicSurfaceStatus: "idle",
+        topicDraftStatus: "idle",
         status: "ready"
       });
       useUiStateStore.getState().syncSessionPayload(payload, "player-state");
@@ -144,6 +166,10 @@ export const useGameSessionStore = create<GameSessionState>((set) => ({
         activeExam: null,
         quickActions: null,
         quickActionStatus: "idle",
+        topicSurface: null,
+        topicDraft: null,
+        topicSurfaceStatus: "idle",
+        topicDraftStatus: "idle",
         status: "ready"
       });
       useUiStateStore.getState().syncSessionPayload(payload, "turn");
@@ -190,6 +216,10 @@ export const useGameSessionStore = create<GameSessionState>((set) => ({
         currentSession: payload,
         quickActions: null,
         quickActionStatus: "idle",
+        topicSurface: null,
+        topicDraft: null,
+        topicSurfaceStatus: "idle",
+        topicDraftStatus: "idle",
         status: "ready"
       });
       useUiStateStore.getState().syncSessionPayload(payload, "exam-submit");
@@ -266,6 +296,30 @@ export const useGameSessionStore = create<GameSessionState>((set) => ({
       return payload;
     } catch (error) {
       set({ quickActionStatus: "error" });
+      throw error;
+    }
+  },
+
+  async loadTopicSurface(sessionId, surfaceId) {
+    set({ topicSurfaceStatus: "loading", topicDraft: null, topicDraftStatus: "idle" });
+    try {
+      const payload = await qianqiuApi.loadTopicSurface(sessionId, surfaceId);
+      set({ topicSurface: payload, topicSurfaceStatus: "ready" });
+      return payload;
+    } catch (error) {
+      set({ error: toErrorMessage(error), topicSurfaceStatus: "error" });
+      throw error;
+    }
+  },
+
+  async requestTopicDraft(sessionId, input) {
+    set({ topicDraftStatus: "loading" });
+    try {
+      const payload = await qianqiuApi.requestTopicDraft(sessionId, input);
+      set({ topicDraft: payload, topicDraftStatus: payload.status === "fallback" ? "error" : "ready" });
+      return payload;
+    } catch (error) {
+      set({ error: toErrorMessage(error), topicDraftStatus: "error" });
       throw error;
     }
   }

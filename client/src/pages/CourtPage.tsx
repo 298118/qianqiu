@@ -15,7 +15,7 @@ const courtSurfaceGroups: readonly {
   },
   {
     title: "官署与军帐",
-    note: "堂审和军议没有安全 projection 时只显示占位。",
+    note: "堂审和军议会列公开证据、风险与可提交草稿。",
     surfaces: ["trial", "war-council"]
   },
   {
@@ -31,9 +31,9 @@ export function CourtPage() {
   return (
     <article className="surfacePanel routePanel courtSurfacePage" aria-labelledby="court-title">
       <div className="surfaceHeader">
-        <p className="eyebrow">专题预留</p>
+        <p className="eyebrow">官署专题</p>
         <h2 id="court-title">朝议与官署</h2>
-        <p>百官班列，章奏如潮。S76.11 先把奏折、圣旨、朝议、堂审、军议与人物档案收束为安全专题入口。</p>
+        <p>百官班列，章奏如潮。奏折、圣旨、朝议、堂审、军议与人物档案现在会从安全专题投影里整理材料、筹议证据并生成可编辑草稿。</p>
       </div>
       <div className="courtSurfaceGrid" aria-label="专题 surface 扩展位">
         {courtSurfaceGroups.map((group) => (
@@ -63,7 +63,7 @@ export function CourtPage() {
           </section>
         ))}
       </div>
-      <p className="statusLine">这些专题层只读安全 projection 或显示占位；按钮只写草稿，不提交回合、不调用 resolver、不写 canonical state。</p>
+      <p className="statusLine">这些专题层只读安全 projection；AI 只拟草稿，不提交回合、不调用 resolver、不写 canonical state。</p>
     </article>
   );
 }
