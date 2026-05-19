@@ -111,11 +111,15 @@ S49-S67 本地数据库与大世界内容、S68-S69 科举深化、S70 AI 编排
 
 ## 4. 活动路线图总览
 
-当前没有 `TODO` 或 `IN_PROGRESS` 小步骤。S73-S77 前端水墨重构已完成归档，S78 官署专题玩法化已完成；后续官署专题、地图、长期档案、多 actor 朝议、素材补丁或视觉改动应从 S79 或新的明确小步骤开题。
+S79 已登记为下一项 `TODO` 阶段，尚未开始实施。范围由用户于 2026-05-19 确认：先修本轮 UI 复查暴露的前端正确性、路由壳和烟测缺口，再把 `artifacts/codex-generated-female-portrait-png-recovery/likely-portrait-masters/` 中 194 张高清女性 PNG 母版全部纳入游戏，不因性能顾虑浪费素材；游戏内立绘右上角必须提供放大标志，允许玩家查看高清大图。
 
 | ID | 状态 | Owner | 目标 | 说明 |
 | --- | --- | --- | --- | --- |
-| 待定 | TODO | Codex | 新小步骤待定 | 请在用户确认下一项范围后新增 S79 或新的明确小步骤；开始时同步更新本表和“进度记录”。 |
+| S79 | TODO | Codex | 前端打磨与高清女性立绘入库 | 父阶段；保持 Mock/JSON 默认可玩、书生科举链不破坏、安全 projection 与服务器裁决边界不变。 |
+| S79.1 | TODO | Codex | 前端正确性、路由壳与 smoke 缺口修复 | 修复 `ExamPage` 对 `wordCount` `{min,max}` 的渲染崩溃，补强考试 smoke 真实断言；评估 `/exam`、`/ranking`、`/court`、`/settings` 等子路由是否应像 `/map` 一样脱离主卷内容埋入，保证移动端不被主卷/身份栏压到页面下方。 |
+| S79.2 | TODO | Codex | 194 张 recovered 女性高清母版入库管线 | 为 `likely-portrait-masters` 的 194 张唯一 PNG 建立稳定 ID、来源记录、视觉/安全审核、高清运行时 WebP、缩略图、低清占位、manifest、QA sidecar 和脚本；原始 `artifacts/` 母版仍不直接提交或暴露给前端。 |
+| S79.3 | TODO | Codex | 游戏内高清立绘使用与放大查看 | 在首页选角、人物谱牒、人物档案和其他游戏内立绘位使用高清主图口径；缩略图只作列表预览/占位/QA，不作为主要欣赏图。每个可欣赏立绘右上角增加放大图标，打开只读大图查看器，支持 Esc、遮罩关闭、焦点回收和移动端适配。 |
+| S79.4 | TODO | Codex | 验证、文档同步与提交 | 更新 brief/README/素材台账/共享上下文等必要文档；运行 client typecheck/test、React smoke、素材 QA、manifest 测试、docs governance、documentation governance 和 diff check。若包含代码、脚本、素材或验证工具改动，提交前必须做只读子代理复审。 |
 
 ## 5. 当前最新完成节点
 
@@ -149,6 +153,17 @@ S77.8 最新验收口径：
 - 结构化污染扫描由 `npm run smoke:browser` 覆盖 DOM、storage、runtime manifest、安全字段和截图产物名；完整素材 manifest 仍由 `qa:frontend-assets` 与 manifest 测试守门。
 
 ## 7. 本轮台账归档记录
+
+### 2026-05-19：登记 S79 前端打磨与高清女性立绘入库计划
+
+- 范围：把本轮 UI 复查与用户新增要求登记为 S79。已知前端打磨点包括考试页 `wordCount` 对象渲染崩溃、考试 smoke 对错误页的漏报、若干子路由被主卷/身份栏压在下方、AI 设置表单重复，以及后续可进一步收束的资源预算口径。
+- 资产事实：`artifacts/codex-generated-female-portrait-png-recovery/likely-portrait-masters/` 当前有 194 张 `.png`，总量约 572MB，SHA 均唯一；其中 185 张为 `1024x1536`，其余 9 张为相近竖版高清尺寸。S79.2 必须全部入库使用，不得只挑一部分，也不得只生成缩略图后闲置高清母版。
+- 关键决策：用户明确要求“务必要高清使用，不要在乎性能”。因此 S79 的立绘主展示以高清运行时主图为准，缩略图和低清占位只服务列表预览、占位、QA 或渐进加载；涉及人物/选角/档案等可欣赏场景时，应优先呈现高清图。既有首屏资源预算仍保护首页初始化，但 portrait-heavy 页面与大图查看器的预算需按回合制游戏和高清欣赏口径重新定义。
+- 交互要求：游戏内可欣赏立绘右上角新增放大标志，建议使用既有 `lucide-react` 图标；点击后打开只读大图查看器，展示高清图、人物/池来源标签和必要的关闭控件，支持 Esc、遮罩关闭、焦点回收、滚动锁定、移动端安全区域和无障碍标签。查看器不得写 canonical state、URL、localStorage/sessionStorage 或 AI prompt。
+- 边界：本次仅登记规划文档，不新增运行时代码、后端 API、provider schema、SQLite schema、存档格式、AI 权限、服务器 resolver、canonical state 写入或 runtime 素材；后续真正入库仍必须走 manifest、视觉/安全审核、QA sidecar 和 `/assets/ui/` 安全路径。
+- 子代理：本轮是低风险纯规划文档登记，按规则跳过子代理复审并记录；S79 后续只要包含代码、测试、脚本、素材、manifest、QA 或验证工具改动，暂存和提交前必须委派只读子代理复审最终 diff 与验证证据。
+- 验证：已通过 `npm run check:docs-governance`、`node --test test/documentationGovernance.test.js` 和 `git diff --check`。
+- 下一步：从 S79.1 开始，先修考试页与 smoke 漏报，再进入 S79.2 的 194 张高清女性母版入库，最后接 S79.3 的高清使用与放大查看体验。
 
 ### 2026-05-19：已完成活动台账归档
 
