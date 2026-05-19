@@ -4,7 +4,7 @@
   "description": "Qianqiu / 千秋, a browser and Node.js historical simulation text game.",
   "main": "server.js",
   "scripts": {
-    "prestart": "npm run build:client",
+    "prestart": "node scripts/ensureClientBuild.js",
     "start": "node server.js",
     "dev": "node --watch server.js",
     "dev:client": "vite --config vite.config.mjs",

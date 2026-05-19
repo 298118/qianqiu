@@ -15,7 +15,7 @@
 - 已新增 `client/index.html`、`client/src/main.tsx`、`client/src/App.tsx`、`client/src/router.tsx`、`client/src/pages/`、`client/src/routes/`、`client/src/api/`、`client/src/state/`、`client/src/types/` 和 `client/src/styles/`。
 - 已新增 `vite.config.mjs`、`tsconfig.client.json` 和 `vitest.config.mjs`；Vite `root` 为 `client`，`publicDir=false`，生产输出为 `dist/client/`，bundle 资源目录为 `/client-assets/`，避免覆盖或抢占 `public/assets/`。
 - `server.js` 已改为 API 优先，随后服务 `dist/client` 与 `public` 静态资源，最后只对 HTML 导航请求返回 `dist/client/index.html`。带扩展名的缺失资源、`/api/*` 请求和非 GET/HEAD 请求不会 fallback 成 HTML。
-- `package.json` 已新增 `dev:client`、`build:client`、`typecheck:client`、`test:client`、`preview:client`、`smoke:browser:legacy`；`smoke:browser` 现在运行 S74.1 focused React smoke。`prestart` 会先运行 `build:client`，以保持 `npm install && npm start` 后默认 `/` 可打开新前端。
+- `package.json` 已新增 `dev:client`、`build:client`、`typecheck:client`、`test:client`、`preview:client`、`smoke:browser:legacy`；`smoke:browser` 现在运行 S74.1 focused React smoke。S77.1 起 `prestart` 运行 `scripts/ensureClientBuild.js`，在 `dist/client/index.html` 缺失或早于 `client/`、Vite/TS 配置、package 文件时自动执行 `build:client`，已最新时跳过，以保持 `npm install && npm start` 后默认 `/` 可打开新前端。
 - S74.1 只建立最小多页前端与静态入口，不接入真实开局、读档、普通行动、考试提交、AI 设置或地图桥；这些仍归 S74.2-S76 小步。
 
 ## 1.2 S74.2-S74.6 更新

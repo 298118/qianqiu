@@ -1100,6 +1100,8 @@ Manifest 示例：
 
 ### S77.1 默认入口确认
 
+状态：已完成。S77.1 已新增 `scripts/ensureClientBuild.js`，`npm start` 的 `prestart` 会先检查 `dist/client/index.html` 是否缺失或落后于 `client/`、Vite/TS 配置与 package 文件，必要时自动运行 `npm run build:client`，已最新时直接跳过；这让新 clone 或清理构建产物后仍能通过 README 的 `npm install && npm start` 打开 React 默认入口。`test/reactClientScaffold.test.js` 已把 `/game/:sessionId`、`map`、`people`、`archive`、`exam`、`ranking`、`court`、`settings` 的 HTML history fallback 收成显式断言，并确认产品内没有 `public/legacy.html`、`public/ink-client` 或根级 `ink-client` 旧双入口文件。旧 `public/index.html`、`public/app.js`、`public/styles.css` 仍只作迁移参考。
+
 实现功能：
 
 - 确认 `/` 已由新 React 构建产物接管，不保留旧版 `/legacy.html` 或 `/ink-client/` 双入口要求。

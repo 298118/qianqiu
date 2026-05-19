@@ -34,7 +34,7 @@
 
 S74.0 更新：依赖治理已通过，`package.json` / lockfile 已加入 React、React DOM、React Router、Zustand、Lucide、TypeScript、Vite、`@vitejs/plugin-react`、Vitest、Testing Library、jsdom 和类型声明包，迁移契约见 [FRONTEND_REACT_MIGRATION_CONTRACT.md](FRONTEND_REACT_MIGRATION_CONTRACT.md)。
 
-S74.1 更新：已新增 `client/`、Vite/TypeScript/Vitest 配置、最小 React Router Data Mode 多页壳、Express history fallback、S74.1 focused browser smoke 和 `prestart` 构建入口。`dist/client/` 生产构建接管默认 `/`；`public/assets/`、`public/vendor/`、`public/mapRenderer.js` 和 `public/mapPanel.js` 继续作为已审核素材与 S72 地图资源路径。旧原生前端保留为迁移参考，不再作为默认交付入口。S74.1 仍未接入真实 start/load/turn/exam/AI settings API client，S74.2 继续补安全 API client。
+S74.1 更新：已新增 `client/`、Vite/TypeScript/Vitest 配置、最小 React Router Data Mode 多页壳、Express history fallback、S74.1 focused browser smoke 和 `prestart` 构建入口。`dist/client/` 生产构建接管默认 `/`；`public/assets/`、`public/vendor/`、`public/mapRenderer.js` 和 `public/mapPanel.js` 继续作为已审核素材与 S72 地图资源路径。旧原生前端保留为迁移参考，不再作为默认交付入口。S77.1 起 `prestart` 通过 `scripts/ensureClientBuild.js` 检查缺失/陈旧 React 构建产物，必要时自动构建、已最新时跳过，保证 `npm install && npm start` 默认入口可打开。S74.1 仍未接入真实 start/load/turn/exam/AI settings API client，S74.2 继续补安全 API client。
 
 S74.2 更新：已新增 React 安全 API client、宽松 response 类型、Zustand 会话 store 和页面最小接线。新前端现在只通过 `POST /api/game/start`、`GET /api/game/saves`、`GET /api/game/player-state/:sessionId`、`POST /api/game/turn`、`POST /api/exam/question|progress|submit`、`GET/POST /api/ai/settings/:sessionId` 和 `POST /api/ai/connection-test` 工作；普通读档明确不使用 `GET /api/game/state/:sessionId`，也不接开发诊断、raw audit、provider payload、完整 prompt、本地路径或 key。非 UUID 预览/烟测案卷不会自动请求后端。
 

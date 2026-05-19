@@ -7,6 +7,7 @@ const {
   buildReactClientBuildPaths,
   shouldServeReactHistoryFallback
 } = require("../server");
+const { resolveClientBuildStatus } = require("../scripts/ensureClientBuild");
 const { parseClientSmokeArgs } = require("../scripts/clientSmoke");
 
 const rootDir = path.join(__dirname, "..");
@@ -34,6 +35,7 @@ function mockRequest({ method = "GET", requestPath = "/", accept = "text/html" }
 test("S74.1 package scripts expose the React client workflow", () => {
   const packageJson = JSON.parse(readText("package.json"));
 
+  assert.equal(packageJson.scripts.prestart, "node scripts/ensureClientBuild.js");
   assert.equal(packageJson.scripts["dev:client"], "vite --config vite.config.mjs");
   assert.equal(packageJson.scripts["build:client"], "vite build --config vite.config.mjs");
   assert.equal(packageJson.scripts["typecheck:client"], "tsc --project tsconfig.client.json --noEmit");
@@ -54,8 +56,19 @@ test("S74.1 Vite config isolates build output from public assets", () => {
 });
 
 test("S74.1 Express history fallback only catches HTML frontend routes", () => {
-  assert.equal(shouldServeReactHistoryFallback(mockRequest({ requestPath: "/" })), true);
-  assert.equal(shouldServeReactHistoryFallback(mockRequest({ requestPath: "/game/session-1/map" })), true);
+  for (const route of [
+    "/",
+    "/game/session-1",
+    "/game/session-1/map",
+    "/game/session-1/people",
+    "/game/session-1/archive",
+    "/game/session-1/exam",
+    "/game/session-1/ranking",
+    "/game/session-1/court",
+    "/game/session-1/settings"
+  ]) {
+    assert.equal(shouldServeReactHistoryFallback(mockRequest({ requestPath: route })), true);
+  }
   assert.equal(shouldServeReactHistoryFallback(mockRequest({ requestPath: "/api/health" })), false);
   assert.equal(shouldServeReactHistoryFallback(mockRequest({ requestPath: "/assets/ui/missing" })), false);
   assert.equal(shouldServeReactHistoryFallback(mockRequest({ requestPath: "/vendor/pixi" })), false);
@@ -68,6 +81,38 @@ test("S74.1 Express history fallback only catches HTML frontend routes", () => {
 
   const buildPaths = buildReactClientBuildPaths("E:\\LSMNQ");
   assert.equal(buildPaths.indexHtml, path.join("E:\\LSMNQ", "dist", "client", "index.html"));
+});
+
+test("S77.1 prestart helper rebuilds missing or stale React client output", () => {
+  const tempRoot = fs.mkdtempSync(path.join(require("node:os").tmpdir(), "qianqiu-client-build-"));
+  try {
+    fs.mkdirSync(path.join(tempRoot, "client"), { recursive: true });
+    fs.mkdirSync(path.join(tempRoot, "dist", "client"), { recursive: true });
+    fs.writeFileSync(path.join(tempRoot, "client", "App.tsx"), "export const app = true;\n");
+    fs.writeFileSync(path.join(tempRoot, "package.json"), "{}\n");
+    fs.utimesSync(path.join(tempRoot, "package.json"), new Date("2026-01-01T00:00:00.000Z"), new Date("2026-01-01T00:00:00.000Z"));
+
+    assert.equal(resolveClientBuildStatus({ repoRoot: tempRoot, inputs: ["client", "package.json"] }).reason, "missing");
+
+    const indexHtml = path.join(tempRoot, "dist", "client", "index.html");
+    fs.writeFileSync(indexHtml, "<div data-client-entry=\"react\"></div>\n");
+    const oldTime = new Date("2026-01-01T00:00:00.000Z");
+    const newTime = new Date("2026-01-02T00:00:00.000Z");
+    fs.utimesSync(indexHtml, oldTime, oldTime);
+    fs.utimesSync(path.join(tempRoot, "client", "App.tsx"), newTime, newTime);
+    assert.equal(resolveClientBuildStatus({ repoRoot: tempRoot, inputs: ["client", "package.json"] }).reason, "stale");
+
+    fs.utimesSync(indexHtml, new Date("2026-01-03T00:00:00.000Z"), new Date("2026-01-03T00:00:00.000Z"));
+    assert.equal(resolveClientBuildStatus({ repoRoot: tempRoot, inputs: ["client", "package.json"] }).reason, "current");
+  } finally {
+    fs.rmSync(tempRoot, { recursive: true, force: true });
+  }
+});
+
+test("S77.1 default entry does not keep old product entry files", () => {
+  assert.equal(fs.existsSync(path.join(rootDir, "public", "legacy.html")), false);
+  assert.equal(fs.existsSync(path.join(rootDir, "public", "ink-client")), false);
+  assert.equal(fs.existsSync(path.join(rootDir, "ink-client")), false);
 });
 
 test("S74.1 client smoke parser keeps the focused React smoke options", () => {

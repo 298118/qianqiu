@@ -108,7 +108,7 @@
 
 ## 快速启动
 
-需要 Node.js `20.19+`、`22.13+` 或 `24.0+`。S74.1 前端工具链本机验证环境为 Node.js `v24.13.1`、npm `11.8.0`。`npm start` 会先构建 React 前端，再启动 Express。
+需要 Node.js `20.19+`、`22.13+` 或 `24.0+`。S74.1 前端工具链本机验证环境为 Node.js `v24.13.1`、npm `11.8.0`。`npm start` 会先确认 React 前端构建存在且未陈旧，必要时自动构建，再启动 Express。
 
 ```bash
 npm install
