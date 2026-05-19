@@ -1881,12 +1881,281 @@ button:disabled {
   margin-top: 14px;
 }
 
+.examFullScreen {
+  display: grid;
+  gap: 16px;
+  margin: 6px 0 18px;
+  color: #241b16;
+}
+
+.examHero {
+  position: relative;
+  display: grid;
+  min-height: clamp(250px, 34vw, 430px);
+  overflow: hidden;
+  border: 1px solid rgba(84, 60, 43, 0.34);
+  background:
+    linear-gradient(90deg, rgba(31, 25, 20, 0.7), rgba(31, 25, 20, 0.2) 52%, rgba(234, 220, 196, 0.18)),
+    var(--exam-hero-image) center / cover no-repeat,
+    #e7d7bb;
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 248, 230, 0.36),
+    0 18px 44px rgba(43, 32, 22, 0.14);
+}
+
+.examHeroBackdrop {
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(180deg, rgba(32, 24, 19, 0.06), rgba(32, 24, 19, 0.34)),
+    radial-gradient(circle at 72% 18%, rgba(178, 67, 47, 0.18), transparent 26%);
+  pointer-events: none;
+}
+
+.examHeroCopy {
+  position: relative;
+  z-index: 1;
+  align-self: end;
+  width: min(680px, 92%);
+  padding: clamp(18px, 4vw, 34px);
+  color: #fff7e8;
+  text-shadow: 0 1px 1px rgba(31, 22, 16, 0.62);
+}
+
+.examHeroCopy h1 {
+  margin-bottom: 2px;
+  font-size: clamp(3rem, 8vw, 6rem);
+}
+
+.examHeroCopy h2 {
+  margin-bottom: 10px;
+  color: #f4d8a8;
+  font-size: clamp(1.35rem, 3vw, 2.1rem);
+}
+
+.examHeroCopy p {
+  max-width: 620px;
+  margin: 0;
+  line-height: 1.75;
+}
+
+.examHeroCopy .eyebrow {
+  color: #f4d8a8;
+}
+
+.examStageRail {
+  position: absolute;
+  right: clamp(14px, 3vw, 24px);
+  bottom: clamp(14px, 3vw, 24px);
+  z-index: 1;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(96px, 1fr));
+  gap: 8px;
+  width: min(520px, calc(100% - 28px));
+  margin: 0;
+}
+
+.examStageRail div {
+  min-width: 0;
+  border: 1px solid rgba(255, 238, 215, 0.34);
+  background: rgba(48, 34, 25, 0.62);
+  color: #fff7e8;
+  padding: 8px 9px;
+}
+
+.examStageRail dt {
+  color: #f4d8a8;
+  font-size: 0.72rem;
+  font-weight: 800;
+}
+
+.examStageRail dd {
+  margin: 2px 0 0;
+  font-weight: 800;
+  overflow-wrap: anywhere;
+}
+
+.examImmersiveLayout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.65fr) minmax(270px, 0.62fr);
+  gap: 16px;
+  align-items: start;
+}
+
+.examPaperColumn,
+.examSideColumn {
+  display: grid;
+  gap: 14px;
+  min-width: 0;
+}
+
+.examQuestionPanel,
+.examDesk,
+.examRecordPanel,
+.examPeerPanel,
+.examPreviewPanel,
+.examRecentSubmitPanel,
+.examSafetyBoundary {
+  border: 1px solid rgba(84, 60, 43, 0.28);
+  background:
+    linear-gradient(135deg, rgba(255, 248, 230, 0.88), rgba(231, 211, 180, 0.72)),
+    url("/assets/ui/materials/memorial-folded-paper-v1.webp") center / cover no-repeat;
+  padding: 18px;
+}
+
+.examQuestionPanel {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(260px, 0.78fr);
+  align-items: end;
+  gap: 14px;
+}
+
+.examQuestionPanel h2,
+.examDesk h2 {
+  margin: 0;
+  font-size: clamp(1.35rem, 2.4vw, 1.9rem);
+}
+
+.examQuestionForm {
+  margin: 0;
+}
+
+.examFetchButton,
+.examSealSubmitButton {
+  background:
+    linear-gradient(180deg, rgba(165, 58, 47, 0.88), rgba(123, 36, 31, 0.94)),
+    url("/assets/ui/materials/vermilion-seal-button-v1.webp") center / cover no-repeat;
+  color: #fff3e3;
+}
+
 .examDesk {
   display: grid;
+  gap: 14px;
+  min-height: clamp(520px, 68vh, 780px);
+  background:
+    linear-gradient(180deg, rgba(255, 252, 238, 0.9), rgba(234, 220, 196, 0.82)),
+    url("/assets/ui/materials/exam-grid-paper-v1.webp") center top / cover no-repeat;
+}
+
+.examEmptyPaper {
+  align-content: center;
+  min-height: 360px;
+}
+
+.examPaperHeader,
+.examDraftBar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
   gap: 12px;
-  margin-top: 16px;
-  padding-top: 16px;
-  border-top: 1px solid rgba(84, 60, 43, 0.22);
+}
+
+.examPaperMeta,
+.examRequirementText,
+.examDraftBar,
+.examRecordList,
+.examPeerPanel p,
+.examPreviewPanel p,
+.examRecentSubmitPanel p,
+.examSafetyBoundary p {
+  color: #514232;
+  line-height: 1.65;
+}
+
+.examQuestionText {
+  margin: 0;
+  border-left: 4px solid rgba(142, 47, 39, 0.42);
+  background: rgba(255, 252, 238, 0.58);
+  color: #2d251d;
+  font-size: clamp(1.08rem, 2.2vw, 1.45rem);
+  font-weight: 800;
+  line-height: 1.75;
+  padding: 14px 16px;
+}
+
+.examRequirementText {
+  margin: 0;
+  border: 1px dashed rgba(84, 60, 43, 0.24);
+  background: rgba(255, 248, 230, 0.58);
+  padding: 9px 10px;
+}
+
+.examActionForm {
+  margin-top: 0;
+}
+
+.examSubmit {
+  align-content: start;
+  margin-top: 2px;
+}
+
+.examSubmit textarea {
+  min-height: clamp(260px, 42vh, 460px);
+  border-color: rgba(96, 59, 39, 0.4);
+  background:
+    linear-gradient(90deg, rgba(96, 59, 39, 0.05) 1px, transparent 1px) 0 0 / 24px 100%,
+    rgba(255, 252, 238, 0.86);
+  line-height: 1.8;
+}
+
+.examDraftBar {
+  flex-wrap: wrap;
+  margin-top: -2px;
+  font-size: 0.86rem;
+}
+
+.examDraftBar span:first-child {
+  color: #7b241f;
+  font-weight: 800;
+}
+
+.examSealSubmitButton {
+  justify-self: end;
+  min-width: 118px;
+  min-height: 48px;
+  border-width: 2px;
+  box-shadow: inset 0 0 0 3px rgba(255, 236, 211, 0.16);
+}
+
+.examSideColumn {
+  position: sticky;
+  top: 84px;
+}
+
+.examRecordList {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding-left: 18px;
+}
+
+.examPeerGrid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  margin: 8px 0 10px;
+}
+
+.examPeerGrid span {
+  aspect-ratio: 2 / 3;
+  border: 1px solid rgba(84, 60, 43, 0.24);
+  background:
+    linear-gradient(180deg, rgba(255, 248, 230, 0.58), rgba(121, 141, 116, 0.22)),
+    url("/assets/ui/materials/torn-paper-card-v1.webp") center / cover no-repeat;
+}
+
+.examSafetyBoundary {
+  border-style: dashed;
+  background:
+    linear-gradient(135deg, rgba(255, 248, 230, 0.78), rgba(231, 211, 180, 0.58)),
+    url("/assets/ui/effects/effect-exam-seal-v1.webp") right center / 156px auto no-repeat;
+}
+
+.examSafetyBoundary p {
+  max-width: 840px;
+  margin: 0;
+  color: #6d372c;
+  font-weight: 800;
 }
 
 .drawerHost {
@@ -2352,6 +2621,48 @@ button:disabled {
   .startDesk,
   .inlineForm {
     grid-template-columns: 1fr;
+  }
+
+  .examHero {
+    min-height: 360px;
+  }
+
+  .examHeroCopy {
+    align-self: start;
+    width: 100%;
+    padding: 18px 16px;
+  }
+
+  .examStageRail {
+    position: relative;
+    right: auto;
+    bottom: auto;
+    align-self: end;
+    grid-template-columns: 1fr;
+    width: auto;
+    margin: 0 14px 14px;
+  }
+
+  .examImmersiveLayout,
+  .examQuestionPanel,
+  .examPaperHeader {
+    grid-template-columns: 1fr;
+  }
+
+  .examSideColumn {
+    position: static;
+  }
+
+  .examDesk {
+    min-height: auto;
+  }
+
+  .examSubmit textarea {
+    min-height: 46vh;
+  }
+
+  .examSealSubmitButton {
+    justify-self: stretch;
   }
 
   .segmentedChoices {

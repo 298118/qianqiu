@@ -37,6 +37,10 @@ export type SafeRouteViews = {
   readonly eventArchiveView?: JsonObject;
   readonly informationPanelPageView?: JsonObject;
   readonly examCalendarView?: JsonObject;
+  readonly examProcedureView?: JsonObject;
+  readonly examinerPanelView?: JsonObject;
+  readonly examRivalView?: JsonObject;
+  readonly examHonorView?: JsonObject;
   readonly studyProfileView?: JsonObject;
   readonly officialCareerView?: JsonObject;
   readonly appointmentTrackView?: JsonObject;
@@ -138,6 +142,10 @@ export type ExamState = {
   readonly examName?: string;
   readonly examQuestion?: string;
   readonly status?: string;
+  readonly readiness?: JsonObject;
+  readonly entryPreparation?: JsonObject;
+  readonly examCalendar?: JsonObject;
+  readonly sceneTime?: JsonObject;
 };
 
 export type ExamQuestionRequest = {

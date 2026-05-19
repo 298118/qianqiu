@@ -283,6 +283,99 @@ async function assertScholarPanel(page, sessionId, screenshotsDir) {
   return captureScreenshot(page, screenshotsDir, "s76-scholar-panel-desktop");
 }
 
+async function assertExamFullScreen(page, sessionId, screenshotsDir, screenshotName = "s76-exam-fullscreen-desktop", options = {}) {
+  await page.locator(".examFullScreen").waitFor({ timeout: 10000 });
+  const initialSnapshot = await page.evaluate(({ id, tokens }) => {
+    const shell = document.querySelector(".examFullScreen");
+    const hero = document.querySelector(".examHero");
+    const rail = document.querySelector(".examStageRail");
+    const text = shell?.textContent || "";
+    const background = hero ? getComputedStyle(hero).backgroundImage : "";
+    const html = document.documentElement;
+    return {
+      path: window.location.pathname,
+      expectedPath: `/game/${id}/exam`,
+      hasHero: Boolean(hero),
+      hasRail: Boolean(rail),
+      hasQuestionPanel: Boolean(document.querySelector(".examQuestionPanel")),
+      hasSafetyBoundary: text.includes("交卷、评分、舞弊、放榜、晋级和授官都由服务器裁决"),
+      background,
+      horizontalOverflow: html.scrollWidth > html.clientWidth + 4,
+      hiddenLeaks: tokens.filter((token) => (document.body.innerText || "").includes(token))
+    };
+  }, { id: sessionId, tokens: hiddenTextTokens });
+
+  const failures = [];
+  if (initialSnapshot.path !== initialSnapshot.expectedPath) failures.push(`path was ${initialSnapshot.path}`);
+  if (!initialSnapshot.hasHero) failures.push("missing exam hero");
+  if (!initialSnapshot.hasRail) failures.push("missing exam stage rail");
+  if (!initialSnapshot.hasQuestionPanel) failures.push("missing question panel");
+  if (!initialSnapshot.hasSafetyBoundary) failures.push("missing server-owned exam boundary");
+  if (!initialSnapshot.background.includes("/assets/ui/")) failures.push("exam hero did not use a reviewed UI asset");
+  if (initialSnapshot.horizontalOverflow) failures.push("exam page has horizontal overflow");
+  if (initialSnapshot.hiddenLeaks.length) failures.push(`hidden text leaked: ${initialSnapshot.hiddenLeaks.join(", ")}`);
+  if (failures.length) {
+    throw new Error(`S76.7 exam page initial smoke failed: ${failures.join("; ")}`);
+  }
+  if (options.clickQuestion === false) {
+    return captureScreenshot(page, screenshotsDir, screenshotName);
+  }
+
+  const examRequests = [];
+  const turnRequests = [];
+  const onRequest = (request) => {
+    try {
+      const url = new URL(request.url());
+      if (url.pathname.startsWith("/api/exam/")) {
+        examRequests.push(url.pathname);
+      }
+      if (url.pathname === "/api/game/turn" && request.method() === "POST") {
+        turnRequests.push(url.pathname);
+      }
+    } catch {
+    }
+  };
+  page.on("request", onRequest);
+  await page.getByRole("button", { name: "取题" }).click();
+  await page.locator("[aria-label='当前试卷']").waitFor({ timeout: 15000 });
+  await page.waitForTimeout(250);
+  page.off("request", onRequest);
+
+  const examSnapshot = await page.evaluate((tokens) => {
+    const shell = document.querySelector(".examFullScreen");
+    const text = shell?.textContent || "";
+    const textarea = document.querySelector(".examSubmit textarea");
+    return {
+      text,
+      hasQuestion: Boolean(document.querySelector(".examQuestionText")),
+      hasEssay: Boolean(textarea),
+      hasDraftBar: Boolean(document.querySelector(".examDraftBar")),
+      hasPeerPanel: text.includes("虚拟考生、阅卷官与榜单只显示安全占位"),
+      hasSubmit: [...document.querySelectorAll("button")].some((button) => (button.textContent || "").trim() === "交卷" && !button.disabled),
+      forbiddenText: (document.body.innerText || "").match(/\/api\/game\/state|\/api\/dev\/session-diagnostics|provider payload|raw audit|hiddenNotes|OPENAI_API_KEY|data\/sessions|完整提示词|本地路径|密钥|sk-[a-z0-9_-]{6,}|[a-z]:[\\/]/gi) || [],
+      hiddenLeaks: tokens.filter((token) => (document.body.innerText || "").includes(token))
+    };
+  }, hiddenTextTokens);
+
+  const afterFailures = [];
+  if (!examRequests.includes("/api/exam/question")) afterFailures.push(`missing /api/exam/question request: ${examRequests.join(", ")}`);
+  if (turnRequests.length) afterFailures.push(`取题 submitted game turn: ${turnRequests.join(", ")}`);
+  if (examSnapshot.hasQuestion || examSnapshot.hasSubmit) {
+    if (!examSnapshot.hasQuestion) afterFailures.push("missing rendered question");
+    if (!examSnapshot.hasEssay) afterFailures.push("missing essay textarea");
+    if (!examSnapshot.hasDraftBar) afterFailures.push("missing draft status bar");
+    if (!examSnapshot.hasPeerPanel) afterFailures.push("missing safe virtual candidate panel");
+    if (!examSnapshot.hasSubmit) afterFailures.push("missing enabled submit button");
+  }
+  if (examSnapshot.forbiddenText.length) afterFailures.push(`unsafe text leaked: ${examSnapshot.forbiddenText.join(", ")}`);
+  if (examSnapshot.hiddenLeaks.length) afterFailures.push(`hidden text leaked: ${examSnapshot.hiddenLeaks.join(", ")}`);
+  if (afterFailures.length) {
+    throw new Error(`S76.7 exam page active smoke failed: ${afterFailures.join("; ")}`);
+  }
+
+  return captureScreenshot(page, screenshotsDir, screenshotName);
+}
+
 async function startMockMagistrateThroughHome(page, baseUrl) {
   await page.goto(`${baseUrl}/`, { waitUntil: "networkidle" });
   await page.getByLabel("姓名").fill("烟测知县");
@@ -1103,8 +1196,16 @@ async function runClientSmoke(options = {}) {
       })
     );
 
+    const examPath = `/game/${startedSessionId}/exam`;
+    await clickSessionNavRoute(page, "科举", examPath);
+    screenshots.push(await assertExamFullScreen(page, startedSessionId, options.screenshotsDir));
+    screenshots.push(
+      await assertRouteRefresh(page, examPath, "s76-exam-fullscreen-refresh-desktop", options.screenshotsDir, {
+        readySelector: ".examFullScreen"
+      })
+    );
+
     const sessionRouteChecks = [
-      { label: "科举", path: `/game/${startedSessionId}/exam`, selector: "#exam-title", screenshot: "s74-react-exam-refresh-desktop" },
       { label: "皇榜", path: `/game/${startedSessionId}/ranking`, selector: "#ranking-title", screenshot: "s74-react-ranking-refresh-desktop" },
       { label: "朝议", path: `/game/${startedSessionId}/court`, selector: "#court-title", screenshot: "s74-react-court-refresh-desktop" },
       { label: "印匣", path: `/game/${startedSessionId}/settings`, selector: "#settings-title", screenshot: "s74-react-settings-refresh-desktop" }
@@ -1166,6 +1267,8 @@ async function runClientSmoke(options = {}) {
     if (mobileComposer.forbiddenText.length) {
       throw new Error(`S75.8 mobile memorial composer leaked forbidden text: ${mobileComposer.forbiddenText.join(", ")}`);
     }
+    await page.goto(`${baseUrl}${examPath}`, { waitUntil: "networkidle" });
+    screenshots.push(await assertExamFullScreen(page, startedSessionId, options.screenshotsDir, "s76-exam-fullscreen-mobile", { clickQuestion: false }));
     screenshots.push(await assertMobileInkbox(page, options.screenshotsDir));
     screenshots.push(await assertReactClientPage(page, baseUrl, "/", "s74-react-home-mobile", options.screenshotsDir));
     await context.close();
@@ -1194,7 +1297,8 @@ async function runClientSmoke(options = {}) {
         "desktop-people-assets",
         "desktop-people-refresh",
         "desktop-archive-refresh",
-        "desktop-exam-refresh",
+        "desktop-exam-fullscreen",
+        "desktop-exam-fullscreen-refresh",
         "desktop-ranking-refresh",
         "desktop-court-refresh",
         "desktop-settings-refresh",
@@ -1203,6 +1307,7 @@ async function runClientSmoke(options = {}) {
         "desktop-general-panel",
         "desktop-emperor-panel",
         "mobile-memorial-composer",
+        "mobile-exam-fullscreen",
         "mobile-inkbox-tabs",
         "mobile-home"
       ]

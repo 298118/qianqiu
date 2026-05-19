@@ -1400,6 +1400,135 @@ describe("S74.1 React client shell", () => {
     expect(document.body.textContent || "").not.toMatch(/\/api\/game\/state|raw audit|provider payload/i);
   });
 
+  it("renders the S76.7 immersive exam page and keeps exam API authority server-owned", async () => {
+    const sessionId = "abababab-abab-4bab-8bab-abababababab";
+    const fetchMock = vi.fn(async (url: string, options?: RequestInit) => {
+      if (url === "/assets/ui/ink-ui-manifest.json") {
+        return new Response(JSON.stringify({
+          ...buildMockAssetManifest(0),
+          assets: [
+            {
+              id: "ui-scene-exam-cell-v1",
+              category: "scene",
+              usage: ["exam_page"],
+              scene: "exam_cell",
+              path: "/assets/ui/scenes/scene-exam-cell-v1.webp",
+              thumbnailPath: "/assets/ui/thumbs/thumb-scene-exam-cell-v1.webp",
+              fallbackRef: "fallback-paper-panel-v1",
+              reviewStatus: "approved",
+              visualReview: { status: "approved" },
+              safetyReview: { status: "approved" }
+            }
+          ]
+        }), {
+          status: 200,
+          headers: { "Content-Type": "application/json" }
+        });
+      }
+      if (url === `/api/game/player-state/${sessionId}`) {
+        return new Response(JSON.stringify({
+          source: "server_player_visible_state_projection",
+          sessionId,
+          worldState: { player: { name: "顾衡", role: "scholar" } },
+          examCalendarView: { currentDateLabel: "明1644年二月上旬" }
+        }), {
+          status: 200,
+          headers: { "Content-Type": "application/json" }
+        });
+      }
+      if (url === `/api/ai/quick-actions/${sessionId}`) {
+        return new Response(JSON.stringify({
+          schemaVersion: "s75.9-quick-actions.v1",
+          sessionId,
+          source: "mock-ai",
+          status: "ready",
+          quickActionSuggestions: []
+        }), {
+          status: 200,
+          headers: { "Content-Type": "application/json" }
+        });
+      }
+      if (url === "/api/exam/question") {
+        return new Response(JSON.stringify({
+          sessionId,
+          examId: "exam-s76-7",
+          level: "provincial_exam",
+          examName: "乡试",
+          examQuestion: "试论荒政与教化并行之道。",
+          difficulty: "中",
+          requirements: ["务陈经义", "兼论民生"],
+          wordCount: 900
+        }), {
+          status: 200,
+          headers: { "Content-Type": "application/json" }
+        });
+      }
+      if (url === "/api/exam/progress") {
+        return new Response(JSON.stringify({
+          sessionId,
+          examId: "exam-s76-7",
+          level: "provincial_exam",
+          examName: "乡试",
+          examQuestion: "试论荒政与教化并行之道。",
+          difficulty: "中",
+          requirements: ["务陈经义", "兼论民生"],
+          wordCount: 900,
+          narrative: "号舍风紧，仍可落笔。"
+        }), {
+          status: 200,
+          headers: { "Content-Type": "application/json" }
+        });
+      }
+      if (url === "/api/exam/submit") {
+        return new Response(JSON.stringify({
+          sessionId,
+          examId: "exam-s76-7",
+          level: "provincial_exam",
+          examName: "provider payload sk-test-secret path=C:\\secret\\exam.json",
+          score: { total: 82 },
+          worldState: { player: { name: "顾衡", role: "scholar", examRank: "秀才" } }
+        }), {
+          status: 200,
+          headers: { "Content-Type": "application/json" }
+        });
+      }
+      throw new Error(`unexpected url: ${url} ${options?.method ?? "GET"}`);
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    renderRoute(`/game/${sessionId}/exam`);
+
+    await screen.findByRole("heading", { name: "科举" });
+    expect(screen.getByText("贡院号舍")).toBeTruthy();
+    expect(document.querySelector(".examFullScreen")).toBeTruthy();
+    expect(document.querySelector(".examStageRail")).toBeTruthy();
+    expect(screen.getByLabelText("试别")).toBeTruthy();
+    expect(screen.getByText(/交卷、评分、舞弊、放榜、晋级和授官都由服务器裁决/)).toBeTruthy();
+
+    fireEvent.change(screen.getByLabelText("试别"), { target: { value: "provincial_exam" } });
+    fireEvent.click(screen.getByRole("button", { name: "取题" }));
+
+    await screen.findByText("试论荒政与教化并行之道。");
+    expect(screen.getByLabelText("场内行动")).toBeTruthy();
+    expect(screen.getByLabelText("文章")).toBeTruthy();
+    expect(screen.getAllByText(/900 字/).length).toBeGreaterThan(0);
+    expect(screen.getByText(/虚拟考生、阅卷官与榜单只显示安全占位/)).toBeTruthy();
+
+    fireEvent.change(screen.getByLabelText("场内行动"), { target: { value: "誊清卷面，仍不伪称评卷。" } });
+    fireEvent.click(screen.getByRole("button", { name: "推进考场" }));
+    await waitFor(() => expect(fetchMock.mock.calls.filter(([url]) => url === "/api/exam/progress")).toHaveLength(1));
+
+    fireEvent.change(screen.getByLabelText("文章"), { target: { value: "夫荒政者，先安民食，继明教化。" } });
+    fireEvent.click(screen.getByRole("button", { name: "交卷" }));
+    await waitFor(() => expect(fetchMock.mock.calls.filter(([url]) => url === "/api/exam/submit")).toHaveLength(1));
+    await screen.findByText(/乡试 已有评定，可入皇榜细看。/);
+
+    const requestedUrls = fetchMock.mock.calls.map(([url]) => String(url));
+    expect(requestedUrls).not.toContain("/api/game/turn");
+    expect(requestedUrls.some((url) => /\/api\/game\/state|\/api\/dev/.test(url))).toBe(false);
+    expect(document.body.textContent || "").not.toMatch(/provider payload|raw audit|hiddenNotes|OPENAI_API_KEY|data\/sessions|sk-[a-z0-9_-]{6,}|[a-z]:[\\/]/i);
+  });
+
   it("loads the S74.5 manifest-backed portrait ledger in small lazy pages", async () => {
     const fetchMock = mockAssetManifestFetch();
     renderRoute("/game/smoke-session/people");

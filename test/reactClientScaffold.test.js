@@ -489,6 +489,42 @@ test("S76.6 emperor panel uses safe court projections as draft-only edict UI", (
   );
 });
 
+test("S76.7 exam page renders immersive safe exam flow without widening authority", () => {
+  const examPageSource = readText("client/src/pages/ExamPage.tsx");
+  const styleSource = readText("client/src/styles/global.css");
+  const apiTypesSource = readText("client/src/api/types.ts");
+  const clientSmokeSource = readText("scripts/clientSmoke.js");
+  const examPageWithoutGuard = examPageSource.replace(/const unsafeExamFragments[\s\S]*?\] as const;\r?\n/, "");
+  const runtimeCombined = `${examPageWithoutGuard}\n${styleSource}`;
+
+  assert.match(examPageSource, /export function ExamPage/);
+  assert.match(examPageSource, /useAssetRegistry/);
+  assert.match(examPageSource, /category: "scene", usage: "exam_page"/);
+  assert.match(examPageSource, /safeExamText/);
+  assert.match(examPageSource, /贡院号舍/);
+  assert.match(examPageSource, /examStageRail/);
+  assert.match(examPageSource, /examImmersiveLayout/);
+  assert.match(examPageSource, /examQuestionText/);
+  assert.match(examPageSource, /写作区字数与草稿状态/);
+  assert.match(examPageSource, /虚拟考生、阅卷官与榜单只显示安全占位/);
+  assert.match(examPageSource, /交卷、评分、舞弊、放榜、晋级和授官都由服务器裁决/);
+  assert.match(examPageSource, /requestExamQuestion\(sessionId, level\)/);
+  assert.match(examPageSource, /progressExam\(sessionId, examId, sceneAction\.trim\(\)\)/);
+  assert.match(examPageSource, /submitExam\(sessionId, examId, essay\.trim\(\)\)/);
+  assert.match(styleSource, /examFullScreen/);
+  assert.match(styleSource, /examHero/);
+  assert.match(styleSource, /examSealSubmitButton/);
+  assert.match(apiTypesSource, /examProcedureView\?: JsonObject/);
+  assert.match(apiTypesSource, /examinerPanelView\?: JsonObject/);
+  assert.match(apiTypesSource, /examRivalView\?: JsonObject/);
+  assert.match(apiTypesSource, /examHonorView\?: JsonObject/);
+  assert.match(clientSmokeSource, /assertExamFullScreen/);
+  assert.doesNotMatch(
+    runtimeCombined,
+    /\/api\/game\/state|\/api\/dev\/session-diagnostics|dangerouslySetInnerHTML|localStorage|sessionStorage|data\/sessions|raw audit|provider payload|OPENAI_API_KEY|DEEPSEEK_API_KEY|MIMO_API_KEY|ANTHROPIC_API_KEY/
+  );
+});
+
 test("S74.5 asset registry gates manifest assets before React components render portraits", () => {
   const assetRegistrySource = readText("client/src/assets/assetRegistry.ts");
   const portraitSource = readText("client/src/components/Portrait.tsx");
@@ -545,7 +581,8 @@ test("S74.7 client smoke verifies default UI start and safe route recovery", () 
   assert.match(clientSmokeSource, /assertRouteRefresh\(page, peoplePath/);
   assert.match(clientSmokeSource, /assertRouteRefresh\(page, archivePath/);
   assert.match(clientSmokeSource, /clickSessionNavRoute/);
-  assert.match(clientSmokeSource, /label: "科举"/);
+  assert.match(clientSmokeSource, /clickSessionNavRoute\(page, "科举"/);
+  assert.match(clientSmokeSource, /assertExamFullScreen\(page, startedSessionId/);
   assert.match(clientSmokeSource, /label: "皇榜"/);
   assert.match(clientSmokeSource, /label: "朝议"/);
   assert.match(clientSmokeSource, /label: "印匣"/);
