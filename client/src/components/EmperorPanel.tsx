@@ -388,7 +388,7 @@ export function EmperorPanel({
         <article className="scholarPanelCard emperorPanelBoundary" aria-labelledby="emperor-boundary-title">
           <h3 id="emperor-boundary-title">御案边界</h3>
           <ul className="scholarPanelBoundary">
-            <li>本面板只读服务器清洗后的公开视图，不读取原始状态、内部提示内容、开发机位置、凭据或隐藏账本。</li>
+            <li>本面板只读服务器清洗后的公开朝廷视图，不展示内部推演细节、连接凭据或私密宫档。</li>
             <li>按钮只把朱批、拟旨、朝议、任免审看和赏罚预留写入底部行动草稿。</li>
             <li>任免、赏罚、处分、朱批成案、圣旨生效、时间推进和持久化都由服务器裁决。</li>
           </ul>

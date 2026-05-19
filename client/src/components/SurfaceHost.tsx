@@ -254,7 +254,7 @@ function AiSettingsPanel() {
   return (
     <div className="inkboxTabBody">
       <h3>AI 设置</h3>
-      <p>只调整当前案卷的推演策略和连接检查；密钥、连接地址、模型原文和提示词不会显示在前端。</p>
+      <p>只调整当前案卷的推演策略和连接检查；连接凭据、内部推演细节和私密记录不会展示给玩家。</p>
       <form className="inlineForm" onSubmit={handlePreset}>
         <label>
           AI 策略
@@ -442,7 +442,7 @@ function SafeSummaryPanel() {
           </div>
         </dl>
       ) : null}
-      <p>印匣只读取安全玩家投影和前端 UI 状态，不读取内部审计原文、模型原文、完整提示词、本地路径、密钥或模型原始返回。</p>
+      <p>印匣只读取安全玩家投影和前端 UI 状态，不展示内部推演细节、连接凭据或私密材料。</p>
     </div>
   );
 }
@@ -466,7 +466,7 @@ function ModalHost({ activeModal }: { readonly activeModal: ModalSurface }) {
         <p className="eyebrow">只读投影</p>
         <h2 id={`${activeModal}-title`}>{entry.title}</h2>
         <p>{payload ? `当前案卷 ${payload.sessionId} 已载入安全玩家投影。` : "尚未载入安全玩家投影。"}</p>
-        <p>此处只显示前端 UI 摘要，不读取内部审计原文、模型原文、完整提示词、本地路径或密钥。</p>
+        <p>此处只显示前端 UI 摘要，不展示内部推演细节、连接凭据或私密材料。</p>
       </section>
     </div>
   );

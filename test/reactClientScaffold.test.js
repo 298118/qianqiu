@@ -8,7 +8,11 @@ const {
   shouldServeReactHistoryFallback
 } = require("../server");
 const { resolveClientBuildStatus } = require("../scripts/ensureClientBuild");
-const { parseClientSmokeArgs } = require("../scripts/clientSmoke");
+const {
+  getPlayerFacingCopyLeakFailures,
+  getTextOverlapFailures,
+  parseClientSmokeArgs
+} = require("../scripts/clientSmoke");
 
 const rootDir = path.join(__dirname, "..");
 
@@ -147,6 +151,42 @@ test("S74.1 client smoke parser keeps the focused React smoke options", () => {
   );
   assert.throws(() => parseClientSmokeArgs(["node", "scripts/clientSmoke.js", "--bad"]), /Unknown client smoke/);
   assert.throws(() => parseClientSmokeArgs(["node", "scripts/clientSmoke.js", "--client", "legacy"]), /Unsupported client smoke target/);
+});
+
+test("S77.3 client smoke has visual pixel and player-facing copy guards", () => {
+  const smokeSource = readText("scripts/clientSmoke.js");
+
+  assert.match(smokeSource, /assertReviewedBackgroundVisual/);
+  assert.match(smokeSource, /assertCanvasHasInkPixels/);
+  assert.match(smokeSource, /assertPortraitImagesLoaded/);
+  assert.match(smokeSource, /assertNoVisibleTextOverlap/);
+  assert.match(smokeSource, /getPlayerFacingCopyLeakFailures/);
+  assert.match(smokeSource, /\.homeBackdrop/);
+  assert.match(smokeSource, /\.examHero/);
+  assert.match(smokeSource, /\.rankingHero/);
+  assert.match(smokeSource, /\.inkMapRuntimeBridge canvas/);
+  assert.match(smokeSource, /\.peopleLedgerList/);
+
+  assert.deepEqual(getPlayerFacingCopyLeakFailures("此处显示 smoke S77.3 验收", "fixture"), [
+    "fixture exposed player-facing development copy: smoke",
+    "fixture exposed player-facing development copy: S77.3",
+    "fixture exposed player-facing development copy: 验收"
+  ]);
+  assert.deepEqual(getPlayerFacingCopyLeakFailures("服务器裁决与安全投影为玩家可见说明。", "fixture"), []);
+
+  const overlapFailures = getTextOverlapFailures([
+    { id: "a", text: "按钮甲", rect: { x: 0, y: 0, width: 120, height: 36 }, ancestorIds: [] },
+    { id: "b", text: "按钮乙", rect: { x: 40, y: 8, width: 120, height: 36 }, ancestorIds: [] }
+  ], "fixture");
+  assert.match(overlapFailures.join("\n"), /visible text\/control overlap/);
+  assert.deepEqual(getTextOverlapFailures([
+    { id: "a", text: "按钮甲", rect: { x: 0, y: 0, width: 120, height: 36 }, ancestorIds: [] },
+    { id: "b", text: "按钮乙", rect: { x: 140, y: 0, width: 120, height: 36 }, ancestorIds: [] }
+  ], "fixture"), []);
+  assert.deepEqual(getTextOverlapFailures([
+    { id: "parent", text: "父级按钮", rect: { x: 0, y: 0, width: 120, height: 36 }, ancestorIds: [] },
+    { id: "child", text: "子级文字", rect: { x: 8, y: 6, width: 90, height: 24 }, ancestorIds: ["parent"] }
+  ], "fixture"), []);
 });
 
 test("S74.2 React API client only exposes safe player-facing endpoints", () => {

@@ -21,7 +21,7 @@ export const surfaceRegistry: Record<LocalSurface, SurfaceRegistryEntry> = {
     description: "预留奏折、案牍和朝报复核；有安全事件、官职月报或公开案牍投影时才摘录要点。",
     dataSource: "安全数据来源：eventArchiveView、playerMonthlyBriefingView、localAffairsDocketView、officialPostingsView 等服务器公开投影。",
     emptyState: "若当前案卷没有这些投影，只显示本占位与草稿入口，不补造奏折条目、署名、罪名、银数或紧急军情。",
-    safetyNote: "专题层不读取模型原文、完整提示词、本地路径、密钥、模型原始返回或内部审计原文。",
+    safetyNote: "专题层只显示玩家已知材料和草稿结果，不展示内部推演细节、连接凭据或私密记录。",
     draftText: "检阅近旬奏折与朝报，只择服务器已公开的案牍、钱粮、军务与科场风声拟成奏稿。"
   },
   "npc-profile": {
@@ -32,7 +32,7 @@ export const surfaceRegistry: Record<LocalSurface, SurfaceRegistryEntry> = {
     description: "此处预留师友、同年、官长与故人的公开谱牒，只展示服务器已经投影给玩家的摘要。",
     dataSource: "安全数据来源：worldPeopleView、actorMemoryView、examNetwork 和当前案卷玩家可见关系摘要。",
     emptyState: "若没有公开人物 projection，只显示人物档案占位，不推断未公开关系、未公开任所或重要 NPC 真值。",
-    safetyNote: "未公开关系、未公开动机和内部审计原文不会进入人物专题层。"
+    safetyNote: "人物专题层只显示玩家已见的人物材料，不推断私下关系、动机或未公开任所。"
   },
   "edict-draft": {
     id: "edict-draft",

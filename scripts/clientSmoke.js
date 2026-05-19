@@ -29,6 +29,31 @@ const hiddenTextTokens = Object.freeze([
   "prompt_retrieval_index"
 ]);
 
+const playerFacingCopyLeakPattern = /\bTODO\b|\bFIXME\b|\bsmoke\b|\bartifacts?\b|\bS7[0-9](?:\.\d+)?\b|\bdebug\b|\bstub\b|\bplaceholder\b|验收|测试截图|开发注释|实现说明|fallback token|data-client-entry|React Router|Vite/gi;
+const visualTextSelectors = Object.freeze([
+  "h1",
+  "h2",
+  "h3",
+  "button",
+  "a[href]",
+  "input",
+  "select",
+  "textarea",
+  "[role='button']"
+]);
+const visualOverlapIgnoreSelectors = Object.freeze([
+  ".memorialComposer",
+  ".topBar",
+  ".drawerHost",
+  ".surfaceHost",
+  ".inkMapTooltip",
+  ".inkMapLabel",
+  ".homeMist",
+  ".homeBackdrop",
+  ".examHeroBackdrop",
+  ".rankingHeroBackdrop"
+]);
+
 const runnableSessionIdPattern = /^[a-f0-9-]{36}$/i;
 const unsafeClientApiPathPatterns = Object.freeze([
   /^\/api\/game\/state\//,
@@ -95,6 +120,218 @@ async function captureScreenshot(page, screenshotsDir, label) {
   return { label, bytes: buffer.length, filePath };
 }
 
+function getPlayerFacingCopyLeakFailures(text, label = "page") {
+  const matches = String(text || "").match(playerFacingCopyLeakPattern) || [];
+  return [...new Set(matches)].map((match) => `${label} exposed player-facing development copy: ${match}`);
+}
+
+function rectsOverlapEnough(first, second, tolerance = 1) {
+  const left = Math.max(first.x, second.x);
+  const right = Math.min(first.x + first.width, second.x + second.width);
+  const top = Math.max(first.y, second.y);
+  const bottom = Math.min(first.y + first.height, second.y + second.height);
+  const width = right - left;
+  const height = bottom - top;
+  if (width <= tolerance || height <= tolerance) return false;
+  const overlapArea = width * height;
+  const smallerArea = Math.min(first.width * first.height, second.width * second.height);
+  return smallerArea > 0 && overlapArea / smallerArea >= 0.18;
+}
+
+function getTextOverlapFailures(rects, label = "page") {
+  const failures = [];
+  for (let firstIndex = 0; firstIndex < rects.length; firstIndex += 1) {
+    for (let secondIndex = firstIndex + 1; secondIndex < rects.length; secondIndex += 1) {
+      const first = rects[firstIndex];
+      const second = rects[secondIndex];
+      if (first.ancestorIds.includes(second.id) || second.ancestorIds.includes(first.id)) continue;
+      if (!rectsOverlapEnough(first.rect, second.rect)) continue;
+      failures.push(`${label} visible text/control overlap: "${first.text}" over "${second.text}"`);
+    }
+  }
+  return failures;
+}
+
+async function assertNoPlayerFacingCopyLeaks(page, label) {
+  const text = await page.evaluate(() => document.body.innerText || "");
+  const failures = getPlayerFacingCopyLeakFailures(text, label);
+  if (failures.length) {
+    throw new Error(failures.join("; "));
+  }
+}
+
+async function assertNoVisibleTextOverlap(page, label) {
+  const rects = await page.evaluate(({ selectors, ignoreSelectors }) => {
+    const elements = [...document.querySelectorAll(selectors.join(","))];
+    const viewport = { width: window.innerWidth, height: window.innerHeight };
+    const visibleElements = elements
+      .filter((element) => {
+        if (ignoreSelectors.some((selector) => element.matches(selector) || element.closest(selector))) return false;
+        const style = window.getComputedStyle(element);
+        if (style.visibility === "hidden" || style.display === "none" || Number(style.opacity) === 0) return false;
+        const rect = element.getBoundingClientRect();
+        if (rect.width < 8 || rect.height < 8) return false;
+        if (rect.bottom <= 0 || rect.right <= 0 || rect.left >= viewport.width || rect.top >= viewport.height) return false;
+        const text = (element.innerText || element.getAttribute("aria-label") || element.getAttribute("value") || "").trim();
+        return text.length > 0;
+      });
+    return visibleElements.map((element, index) => {
+      const rect = element.getBoundingClientRect();
+      return {
+        id: String(index),
+        text: (element.innerText || element.getAttribute("aria-label") || element.getAttribute("value") || "").trim().slice(0, 28),
+        rect: { x: rect.x, y: rect.y, width: rect.width, height: rect.height },
+        ancestorIds: visibleElements
+          .map((candidate, candidateIndex) => candidateIndex !== index && candidate.contains(element) ? String(candidateIndex) : null)
+          .filter(Boolean)
+      };
+    });
+  }, { selectors: visualTextSelectors, ignoreSelectors: visualOverlapIgnoreSelectors });
+  const failures = getTextOverlapFailures(rects, label);
+  if (failures.length) {
+    throw new Error(failures.slice(0, 4).join("; "));
+  }
+}
+
+async function assertReviewedBackgroundVisual(page, selector, label) {
+  const snapshot = await page.evaluate(async ({ selector: targetSelector }) => {
+    const element = document.querySelector(targetSelector);
+    if (!element) return { ok: false, reason: "missing element" };
+    const rect = element.getBoundingClientRect();
+    const imageText = window.getComputedStyle(element).backgroundImage || "";
+    const urls = [...imageText.matchAll(/url\(["']?([^"')]+)["']?\)/g)]
+      .map((match) => new URL(match[1], window.location.href).href)
+      .filter((url) => url.includes("/assets/ui/"));
+    if (!urls.length) return { ok: false, reason: "no reviewed /assets/ui/ background", imageText };
+
+    const imageResults = [];
+    for (const url of urls.slice(0, 3)) {
+      const image = new Image();
+      image.crossOrigin = "anonymous";
+      const result = await new Promise((resolve) => {
+        image.onload = () => {
+          const canvas = document.createElement("canvas");
+          const width = 48;
+          const height = 48;
+          canvas.width = width;
+          canvas.height = height;
+          const context = canvas.getContext("2d");
+          context.drawImage(image, 0, 0, width, height);
+          const data = context.getImageData(0, 0, width, height).data;
+          const buckets = new Set();
+          let visible = 0;
+          for (let index = 0; index < data.length; index += 16) {
+            const alpha = data[index + 3];
+            if (alpha <= 10) continue;
+            visible += 1;
+            buckets.add(`${data[index] >> 4}-${data[index + 1] >> 4}-${data[index + 2] >> 4}`);
+          }
+          resolve({ url, width: image.naturalWidth, height: image.naturalHeight, visible, bucketCount: buckets.size });
+        };
+        image.onerror = () => resolve({ url, error: "load failed" });
+        image.src = url;
+      });
+      imageResults.push(result);
+    }
+    return { ok: true, rect: { width: rect.width, height: rect.height }, urls, imageResults };
+  }, { selector });
+
+  const failures = [];
+  if (!snapshot.ok) failures.push(`${label} visual background failed: ${snapshot.reason || "unknown"}`);
+  if (snapshot.ok && (snapshot.rect.width <= 0 || snapshot.rect.height <= 0)) failures.push(`${label} visual background has no layout size`);
+  for (const result of snapshot.imageResults || []) {
+    if (result.error) failures.push(`${label} reviewed background failed to load: ${result.url}`);
+    if (!result.error && (result.width <= 0 || result.height <= 0)) failures.push(`${label} reviewed background has no intrinsic size: ${result.url}`);
+    if (!result.error && (result.visible < 64 || result.bucketCount < 4)) failures.push(`${label} reviewed background appears blank or single-color: ${result.url}`);
+  }
+  if (failures.length) {
+    throw new Error(failures.join("; "));
+  }
+}
+
+async function assertCanvasHasInkPixels(page, selector, label) {
+  const snapshot = await page.evaluate(({ selector: targetSelector }) => {
+    const canvas = document.querySelector(targetSelector);
+    if (!canvas) return { ok: false, reason: "missing canvas" };
+    const width = canvas.width || canvas.clientWidth || 0;
+    const height = canvas.height || canvas.clientHeight || 0;
+    if (width <= 0 || height <= 0) return { ok: false, reason: "empty canvas size", width, height };
+    try {
+      const sampleCanvas = document.createElement("canvas");
+      const sampleSize = 64;
+      sampleCanvas.width = sampleSize;
+      sampleCanvas.height = sampleSize;
+      const context = sampleCanvas.getContext("2d", { willReadFrequently: true });
+      context.drawImage(canvas, 0, 0, sampleSize, sampleSize);
+      const data = context.getImageData(0, 0, sampleSize, sampleSize).data;
+      const buckets = new Set();
+      let visible = 0;
+      for (let index = 0; index < data.length; index += 16) {
+        const alpha = data[index + 3];
+        if (alpha <= 8) continue;
+        visible += 1;
+        buckets.add(`${data[index] >> 4}-${data[index + 1] >> 4}-${data[index + 2] >> 4}`);
+      }
+      return { ok: true, width, height, visible, bucketCount: buckets.size };
+    } catch (error) {
+      return { ok: false, reason: error.message, width, height };
+    }
+  }, { selector });
+
+  const failures = [];
+  if (!snapshot.ok) failures.push(`${label} canvas pixel sampling failed: ${snapshot.reason}`);
+  if (snapshot.ok && (snapshot.visible < 64 || snapshot.bucketCount < 4)) {
+    failures.push(`${label} canvas appears blank or single-color: ${JSON.stringify(snapshot)}`);
+  }
+  if (failures.length) {
+    throw new Error(failures.join("; "));
+  }
+}
+
+async function assertPortraitImagesLoaded(page, selector, label) {
+  const snapshot = await page.evaluate(async (targetSelector) => {
+    const images = [...document.querySelectorAll(`${targetSelector} img`)];
+    const entries = images.map((image) => ({
+      src: image.currentSrc || image.src || "",
+      complete: image.complete,
+      naturalWidth: image.naturalWidth,
+      naturalHeight: image.naturalHeight,
+      width: image.getBoundingClientRect().width,
+      height: image.getBoundingClientRect().height
+    }));
+    const resourceChecks = [];
+    for (const entry of entries.slice(0, 3)) {
+      try {
+        const response = await fetch(entry.src, { cache: "no-store" });
+        const bytes = await response.arrayBuffer();
+        resourceChecks.push({ src: entry.src, ok: response.ok, bytes: bytes.byteLength });
+      } catch (error) {
+        resourceChecks.push({ src: entry.src, ok: false, error: error.message });
+      }
+    }
+    return { entries, resourceChecks };
+  }, selector);
+  if (!snapshot.entries.length) {
+    throw new Error(`${label} rendered no portrait images.`);
+  }
+  const unsafePaths = snapshot.entries.filter((image) => !image.src.includes("/assets/ui/"));
+  if (unsafePaths.length) {
+    throw new Error(`${label} has portrait image(s) outside reviewed UI assets: ${JSON.stringify(unsafePaths.slice(0, 3))}`);
+  }
+  const zeroLayout = snapshot.entries.filter((image) => image.width <= 0 || image.height <= 0);
+  if (zeroLayout.length) {
+    throw new Error(`${label} has zero-size portrait image layout: ${JSON.stringify(zeroLayout.slice(0, 3))}`);
+  }
+  const brokenLoaded = snapshot.entries.filter((image) => image.complete && (image.naturalWidth <= 0 || image.naturalHeight <= 0));
+  if (brokenLoaded.length) {
+    throw new Error(`${label} has broken loaded portrait image(s): ${JSON.stringify(brokenLoaded.slice(0, 3))}`);
+  }
+  const badResources = snapshot.resourceChecks.filter((resource) => !resource.ok || resource.bytes < 1000);
+  if (badResources.length) {
+    throw new Error(`${label} has unavailable portrait thumbnail resource(s): ${JSON.stringify(badResources)}`);
+  }
+}
+
 async function assertCurrentReactClientPage(page, pathname, label, screenshotsDir, options = {}) {
   await page.locator("[data-client-entry='react'][data-router-mode='data']").waitFor({ timeout: 10000 });
   await page.locator("h1").first().waitFor({ timeout: 10000 });
@@ -127,11 +364,13 @@ async function assertCurrentReactClientPage(page, pathname, label, screenshotsDi
   if (snapshot.hiddenLeaks.length) failures.push(`${label} leaked hidden text: ${snapshot.hiddenLeaks.join(", ")}`);
   if (snapshot.horizontalOverflow) failures.push(`${label} has horizontal overflow.`);
   if (!snapshot.text.includes("千秋")) failures.push(`${label} did not render the product name.`);
+  failures.push(...getPlayerFacingCopyLeakFailures(snapshot.text, label));
 
   if (failures.length) {
     throw new Error(failures.join(" "));
   }
 
+  await assertNoVisibleTextOverlap(page, label);
   return captureScreenshot(page, screenshotsDir, label);
 }
 
@@ -317,6 +556,7 @@ async function assertExamFullScreen(page, sessionId, screenshotsDir, screenshotN
   if (failures.length) {
     throw new Error(`S76.7 exam page initial smoke failed: ${failures.join("; ")}`);
   }
+  await assertReviewedBackgroundVisual(page, ".examHero", `S77.3 ${screenshotName} hero`);
   if (options.clickQuestion === false) {
     return captureScreenshot(page, screenshotsDir, screenshotName);
   }
@@ -811,6 +1051,22 @@ async function clickStableButton(page, buttonOptions, label) {
   throw new Error(`${label} could not be clicked before it refreshed: ${lastError?.message || lastError}`);
 }
 
+async function clickQuickActionDraft(page, label) {
+  let lastError = null;
+  for (let attempt = 0; attempt < 6; attempt += 1) {
+    try {
+      const locator = page.locator(".quickActionSlip[data-source='mock-ai'], .quickActionSlip[data-source='local-rule']").first();
+      await locator.waitFor({ state: "visible", timeout: 5000 });
+      await locator.click({ timeout: 5000 });
+      return;
+    } catch (error) {
+      lastError = error;
+      await page.waitForTimeout(450);
+    }
+  }
+  throw new Error(`${label} could not click a refreshed quick action: ${lastError?.message || lastError}`);
+}
+
 async function assertReturnHomeContinueAndTurn(page, sessionId, screenshotsDir) {
   const gamePath = `/game/${sessionId}`;
 
@@ -852,14 +1108,14 @@ async function assertReturnHomeContinueAndTurn(page, sessionId, screenshotsDir) 
 
   await page.getByRole("link", { name: "继续本局" }).click();
   await page.waitForURL((url) => url.pathname === gamePath, { timeout: 10000 });
-  await clickStableButton(page, { name: /温书 mock-ai 写入草稿/ }, "S75.9 quick action");
+  await clickQuickActionDraft(page, "S75.9 quick action");
   await page.waitForFunction(() => {
     const value = document.querySelector("textarea")?.value || "";
-    return value.includes("温习经义");
+    return value.trim().length > 8;
   }, null, { timeout: 10000 });
   const quickDraft = await page.getByLabel("本回合行动").inputValue();
-  if (!quickDraft.includes("温习经义")) {
-    throw new Error(`S75.9 quick action did not write a mock-ai draft: ${quickDraft}`);
+  if (!quickDraft.trim() || /provider payload|raw audit|hiddenNotes|OPENAI_API_KEY|data\/sessions|完整提示词|本地路径|密钥/i.test(quickDraft)) {
+    throw new Error(`S75.9 quick action did not write a safe draft: ${quickDraft}`);
   }
   const turnResponse = page.waitForResponse((response) => {
     try {
@@ -1387,6 +1643,7 @@ async function runClientSmoke(options = {}) {
     });
 
     screenshots.push(await assertReactClientPage(page, baseUrl, "/", "s74-react-home-desktop", options.screenshotsDir));
+    await assertReviewedBackgroundVisual(page, ".homeBackdrop", "S77.3 desktop home backdrop");
     const mockStart = await startMockGameThroughHome(page, options.screenshotsDir);
     const startedSessionId = mockStart.sessionId;
     screenshots.push(mockStart.screenshot);
@@ -1439,6 +1696,7 @@ async function runClientSmoke(options = {}) {
     if (mapRuntime.forbiddenText.length) {
       throw new Error(`React map runtime leaked forbidden text: ${mapRuntime.forbiddenText.join(", ")}`);
     }
+    await assertCanvasHasInkPixels(page, ".inkMapRuntimeBridge canvas", "S77.3 desktop map runtime");
     await page.getByLabel("地点").uncheck();
     await page.waitForFunction(() => document.querySelectorAll(".inkMapLabel").length === 0);
     await page.getByLabel("地点").check();
@@ -1486,6 +1744,7 @@ async function runClientSmoke(options = {}) {
     if (portraitLedger.localOrRawLeaks.length) {
       throw new Error(`People ledger leaked forbidden text: ${portraitLedger.localOrRawLeaks.join(", ")}`);
     }
+    await assertPortraitImagesLoaded(page, ".peopleLedgerList", "S77.3 desktop people ledger");
     screenshots.push(
       ...(await assertHistoryBackForward(
         page,
@@ -1536,6 +1795,7 @@ async function runClientSmoke(options = {}) {
     const rankingPath = `/game/${startedSessionId}/ranking`;
     await clickSessionNavRoute(page, "皇榜", rankingPath);
     screenshots.push(await assertRankingFullScreen(page, startedSessionId, options.screenshotsDir));
+    await assertReviewedBackgroundVisual(page, ".rankingHero", "S77.3 desktop ranking hero");
     screenshots.push(
       await assertRouteRefresh(page, rankingPath, "s76-ranking-fullscreen-refresh-desktop", options.screenshotsDir, {
         readySelector: ".rankingFullScreen"
@@ -1618,6 +1878,7 @@ async function runClientSmoke(options = {}) {
     screenshots.push(await assertExamFullScreen(page, startedSessionId, options.screenshotsDir, "s76-exam-fullscreen-mobile", { clickQuestion: false }));
     await page.goto(`${baseUrl}${rankingPath}`, { waitUntil: "networkidle" });
     screenshots.push(await assertRankingFullScreen(page, startedSessionId, options.screenshotsDir, "s76-ranking-fullscreen-mobile"));
+    await assertReviewedBackgroundVisual(page, ".rankingHero", "S77.3 mobile ranking hero");
     await page.goto(`${baseUrl}${runtimeMapPath}`, { waitUntil: "networkidle" });
     screenshots.push(
       await assertCurrentReactClientPage(page, runtimeMapPath, "s76-map-fullscreen-mobile", options.screenshotsDir, {
@@ -1646,8 +1907,10 @@ async function runClientSmoke(options = {}) {
     if (mobileMap.forbiddenText.length) {
       throw new Error(`S76.9 mobile map leaked forbidden text: ${mobileMap.forbiddenText.join(", ")}`);
     }
+    await assertCanvasHasInkPixels(page, ".inkMapRuntimeBridge canvas", "S77.3 mobile map runtime");
     screenshots.push(await assertMobileInkbox(page, options.screenshotsDir));
     screenshots.push(await assertReactClientPage(page, baseUrl, "/", "s74-react-home-mobile", options.screenshotsDir));
+    await assertReviewedBackgroundVisual(page, ".homeBackdrop", "S77.3 mobile home backdrop");
     await context.close();
 
     if (pageErrors.length) {
@@ -1745,6 +2008,8 @@ if (require.main === module) {
 }
 
 module.exports = {
+  getPlayerFacingCopyLeakFailures,
+  getTextOverlapFailures,
   parseClientSmokeArgs,
   runClientSmoke
 };

@@ -400,7 +400,7 @@ export function GeneralPanel({
         <article className="scholarPanelCard generalPanelBoundary" aria-labelledby="general-boundary-title">
           <h3 id="general-boundary-title">军令边界</h3>
           <ul className="scholarPanelBoundary">
-            <li>本面板只读安全 route views，不读取原始状态、模型原文、内部提示内容、开发机位置、凭据或隐藏账本。</li>
+            <li>本面板只读服务器整理后的公开军务视图，不展示内部推演细节、连接凭据或私密军情。</li>
             <li>按钮只把军议、战报、斥候、巡边和粮饷安排写入底部行动草稿。</li>
             <li>战役胜负、调兵遣将、外交和战、统帅任免、粮饷拨付、赏罚与持久化都由服务器裁决。</li>
           </ul>

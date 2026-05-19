@@ -63,6 +63,7 @@
   "license": "UNLICENSED",
   "dependencies": {
     "@anthropic-ai/sdk": "^0.93.0",
+    "@fontsource/noto-serif-sc": "^5.2.9",
     "ajv": "^8.20.0",
     "cors": "latest",
     "dotenv": "latest",
