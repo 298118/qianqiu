@@ -16,6 +16,7 @@
 - S72 PixiJS 水墨地图：[PIXIJS_INK_MAP_ARCHIVE.md](PIXIJS_INK_MAP_ARCHIVE.md)，运行时契约见 [PIXIJS_INK_MAP_RUNTIME_CONTRACT.md](PIXIJS_INK_MAP_RUNTIME_CONTRACT.md)，素材台账见 [MAP_ASSET_LEDGER.md](MAP_ASSET_LEDGER.md)。
 - S73-S77 前端水墨重构、React/Vite 默认入口、首页/全局 shell、身份/考试/放榜/舆图/人物页面、立绘管线、安全/性能/可访问性和总验证：[FRONTEND_INK_REDESIGN_ARCHIVE.md](FRONTEND_INK_REDESIGN_ARCHIVE.md)，素材台账见 [FRONTEND_ASSET_LEDGER.md](FRONTEND_ASSET_LEDGER.md)。
 - S81-S85 NPC、资产、储物、交易、委派、经济、NPC 主动性和礼法扩展位：[NPC_INVENTORY_SYSTEM_ARCHIVE.md](NPC_INVENTORY_SYSTEM_ARCHIVE.md)，规划见 [NPC_INVENTORY_SYSTEM_ROADMAP.md](NPC_INVENTORY_SYSTEM_ROADMAP.md)，契约见 [NPC_INVENTORY_SYSTEM_CONTRACT.md](NPC_INVENTORY_SYSTEM_CONTRACT.md)。
+- S86 后端 TypeScript 渐进迁移与 Rust 使用边界：规划见 [TYPESCRIPT_BACKEND_MIGRATION_ROADMAP.md](TYPESCRIPT_BACKEND_MIGRATION_ROADMAP.md)。
 
 2026-05-14 起，按用户要求停止与 Gemini CLI 共同开发；后续开发全部由 Codex 负责。远程存档、账号体系、多人同步、云端冲突解决和托管数据库不进入当前规划。
 
@@ -31,6 +32,7 @@
 - 完整书生路径不得破坏：`scholar -> child_exam -> provincial_exam -> metropolitan_exam -> palace_exam -> official`。
 - 后续开发和维护不以“最小实现点”或“最小改动点”为目标；在安全边界、默认可运行、内容保护和可审查粒度不受损的前提下，优先交付完整、丰富、功能强大的游戏实现，并把必要的系统、交互、AI、数据、验证和文档一次设计到位。
 - 复杂功能必须坚持前后端分离和大步骤拆分：后端/API/数据契约、AI 权限与服务器裁决、前端体验、验证与文档应按可审查阶段分步交付；前端不得代替服务器裁决资源、身份、交易、NPC 行动、经济结果或隐藏信息。
+- 后端契约、API/view 类型、安全 projection、AI schema/provider facade、storage adapter 和核心 resolver 新增或重构时，应优先使用 TypeScript 或纳入 TypeScript 检查；既有 JavaScript 允许渐进迁移，不得为语言迁移一次性重写大量稳定模块，TS 类型也不能替代 Ajv 与服务器 runtime 校验。
 - AI 是《千秋》的核心世界引擎，不是可替换装饰；新增玩法、数据域、角色、官署、事件、面板或 prompt 检索时，必须设计 AI 的读取范围、角色智能、工具权限、proposal 边界、服务器裁决、审计记录和 Mock/no-key 降级。
 - AI 可以生成叙事、题目、评分建议、关系建议、受限 `statePatch`，或通过身份受限的领域工具提交 structured proposal / tool call；AI 不得执行 SQL，不得直接写 canonical 状态、业务表或审计表。服务器继续拥有时间推进、状态边界、科举晋级、作弊处罚、官场任免、长期事件、世界实体、世界议程、数据库写入和持久化裁决。
 - 游戏规则、数值阈值、时间间隔、概率、UI 限制、fixture 规模和 prompt budget 等可调参数不得散落为魔法数字；新增或调整时优先集中到具名配置模块，例如 `src/config/GameConfig.js` 或更贴近领域的 `src/game/*Config.js`，并写清单位、范围和默认值意图。
@@ -102,12 +104,22 @@
 
 ## 4. 活动路线图总览
 
-当前没有 `TODO` 或 `IN_PROGRESS` 的活动专项。S81-S85 NPC、资产与储物系统已完成并归档，规划源头见 [NPC_INVENTORY_SYSTEM_ROADMAP.md](NPC_INVENTORY_SYSTEM_ROADMAP.md)，归档入口见 [NPC_INVENTORY_SYSTEM_ARCHIVE.md](NPC_INVENTORY_SYSTEM_ARCHIVE.md)。
+当前活动专项为 S86 后端 TypeScript 渐进迁移与 Rust 使用边界，规划源头见 [TYPESCRIPT_BACKEND_MIGRATION_ROADMAP.md](TYPESCRIPT_BACKEND_MIGRATION_ROADMAP.md)。本专项先建立类型检查和共享契约，再逐步覆盖安全 view、AI schema、storage/session 和少量低副作用 `.ts` 试点；不做全仓重写，也不把 Rust 引入核心玩法。
 
-下一步应由用户或新路线图指定。新专项启动时，本节只记录未开始、进行中或阻塞的小步骤；完成后应迁入“近期进度记录”和专题归档，不再把 DONE 长表留在活动路线图里。
+| ID | 状态 | Owner | 目标 | 说明 |
+| --- | --- | --- | --- | --- |
+| S86 | TODO | Codex | 后端 TypeScript 渐进迁移与 Rust 评估 | 建立后端类型检查、共享契约、安全边界类型化、AI/storage 类型化和小范围 `.ts` 试点；Rust 只作为可选性能工具候选。 |
+| S86.1 | TODO | Codex | 后端 TS 检查地基 | 新增 `tsconfig.server-check.json` 与 `npm run typecheck:server`，先用 `allowJs` / `checkJs` 覆盖入口、契约和高风险模块，不改变 `npm start`。 |
+| S86.2 | TODO | Codex | 契约清点与共享类型骨架 | 清点 API response、安全 view、AI task、session record、storage row 和前端 API 类型，建立 type-only contract 目录与命名规范。 |
+| S86.3 | TODO | Codex | 安全 view 与状态边界纳入类型检查 | 覆盖 `clientWorldState`、`redactedState`、route view builder、`stateRules` 和 raw ledger 剥离清单。 |
+| S86.4 | TODO | Codex | AI schema 与 provider facade 类型化 | 类型化 AI tasks、tool envelope、provider response、Mock fallback 和 route policy，同时保留 Ajv/runtime schema 门禁。 |
+| S86.5 | TODO | Codex | Storage/session 类型化 | 为 JSON envelope、SQLite session row、派生表 row、安全 repair/sync helper 建类型，验证 JSON/SQLite parity 不变。 |
+| S86.6 | TODO | Codex | 小范围 `.ts` 试点 | 选择低副作用纯模块转 TS，确认 CommonJS 输出、source map、dev/watch 与 Node test 接线，不切换全后端。 |
+| S86.7 | TODO | Codex | 后端 TS 验收和迁移规范固化 | 将 `typecheck:server` 纳入相关验证口径，归档允许保留 JS、必须迁移 TS 和允许 Rust 评估的边界。 |
 
 ## 5. 最新状态
 
+- S86 当前规划：后端 TypeScript 迁移已确定采用渐进路线。当前仓库前端已经是 React + TypeScript + Vite，后端仍以 Node.js + Express + CommonJS JavaScript 为主；S86 将先补 `typecheck:server`、共享 contract 和高风险安全 view/AI/storage 类型检查，再做少量 `.ts` 试点。Rust 不进入核心玩法重写，只在有性能证据时作为可选 CLI/WASM/离线工具评估。
 - S81-S84 当前基线：NPC、资产、储物、交易与委派首轮闭环已完成。后端已有 `assetLedger`、`inventoryLedger`、`npcRoster`、`npcInteractionLedger`、`tradeLedger`、`delegatedTaskLedger`、开局背景裁决、AI task/schema/prompt/provider fallback、JSON/SQLite 同步和 player-state 安全 view；React 已有“囊箧” route、人物 NPC 工作台、对话/交易/委派面板和开局裁决摘要。前端只消费安全 API/view，不裁决资源、价格、关系或任务结果。
 - S85 当前基线：`npcEconomy` 已在普通回合和跳时共享的旬/月 tick 后运行，非月末刷新基础市价，月末再结算资产维护/收益、库存损耗、委派到期回禀、逾期交易承诺、人情债与 NPC 关系记忆；考试入场/场内场景不跑全局经济；委派预算由服务器校验不得超过地方库银，月结旧任务也按有效预算参与成功率和扣款；`marketPriceView` / `npcEconomyView` 进入 turn、SSE、player-state 和县令主卷，raw `marketPriceLedger` / `npcEconomyLedger` 与内部 ledger path 已从兼容 `worldState`、玩家 API 和 S85 反馈中剥离。`npcActiveRequestLedger` / `npcActiveRequestView` 已让 NPC 主动来函进入普通回合、SSE、考试和 player-state；`npcRelationshipActions` 已让论道、切磋、求爱和婚姻扩展位具备服务器 schema、权限、NPC eligibility view、UI“礼法”tab 和红队测试。
 - S85 当前规划：S81-S85 已归档。下一步由用户或新路线图决定；建议在新专项中把礼法扩展位继续深化为婚姻/比武/论道专门 resolver，并补真实 provider 长循环与 browser smoke 深度路径。
@@ -116,6 +128,21 @@
 - S78 及更早阶段均已迁入专题归档。活动台账不再展开完成流水；需要追溯时使用本文件顶部归档索引。
 
 ## 6. 最近完整验证口径
+
+本轮 PLAN-S86 后端 TypeScript 渐进迁移规划与治理规范改动验证口径：
+
+- `npm run check:docs-governance`
+- `node --test test/documentationGovernance.test.js`
+- `npm test`
+- `git diff --check`
+- 提交前只读子代理复审最终 diff 与验证证据
+
+S86 后续实现验证入口：
+
+- `npm run typecheck:server`，S86.1 建立后纳入相关后端迁移验证。
+- `npm run typecheck:client`，涉及共享 API/view 契约或前端类型引用时运行。
+- 与迁移模块对应的 focused Node tests，例如 redaction、AI schema、storage parity、route contract 或 resolver tests。
+- 涉及运行时、API/schema、提示词、storage 或验证工具时继续运行 `npm test` 与提交前只读复审。
 
 S80 最新完整口径：
 
@@ -204,6 +231,16 @@ S84 前端专项额外验收入口：
 - `npm test`
 
 ## 7. 近期进度记录
+
+### 2026-05-20：新增 S86 后端 TypeScript 渐进迁移规划
+
+- 范围：按用户要求新增 [TYPESCRIPT_BACKEND_MIGRATION_ROADMAP.md](TYPESCRIPT_BACKEND_MIGRATION_ROADMAP.md)，规划 S86 后端 TypeScript 渐进迁移与 Rust 使用边界；活动路线图第 4 节新增 S86.1-S86.7 TODO 小步骤。
+- 决策：后端需要进入 TypeScript 迁移，但不做全仓重写；优先覆盖契约、API/view 类型、安全 projection、AI schema/provider facade、storage adapter 和核心 resolver。既有 JavaScript 允许渐进迁移，新增或重构高风险后端边界应优先使用 TypeScript 或纳入 TypeScript 检查。
+- Rust：当前不重写核心玩法、Express routes、AI 编排、resolver 或存档系统；只有在有 profiling 证据、可隔离为可选 CLI/WASM/离线工具且不破坏 `npm install && npm start` 时再评估。
+- 开发规范：已把 TypeScript 渐进迁移原则写入 [DEVELOPMENT_GOVERNANCE.md](DEVELOPMENT_GOVERNANCE.md) 受保护段落，并同步本文件受保护段落、brief、README、AGENTS/CLAUDE 和共享上下文；因修改治理检查脚本，本轮按非纯低风险文档处理，提交前执行只读复审。
+- 验证：本轮已通过 `npm run check:docs-governance`、`node --test test/documentationGovernance.test.js`、`npm test`（983 项）和 `git diff --check`。
+- 子代理：Dalton 提交前只读复审未发现 P0/P1；唯一 P2 是本地未跟踪 `npm-start.log` / `npm-start.err.log` 不属于本轮范围，提交时需排除。
+- 提交：随本轮 coherent change 提交，最终 hash 见 Git 历史和本次回复。
 
 ### 2026-05-20：清理活动路线图 DONE 长表
 

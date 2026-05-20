@@ -18,9 +18,9 @@
 - Product: browser + Node.js historical simulation text game **Qianqiu / 千秋**。
 - Runtime target: `npm install && npm start`，默认 `AI_PROVIDER=mock`，打开 `http://localhost:3000` 即可本地游玩。
 - Frontend: S74.1 起 React + TypeScript + Vite 构建产物接管默认 `/`；源码在 `client/`，生产构建在 `dist/client/`。React Router Data Mode 管理首页、主卷、舆图、人物、史册、科举、皇榜、朝议和设置等路由。旧 `public/index.html`、`public/app.js`、`public/styles.css`、`public/mapPanel.js` 只作迁移参考；`public/assets/`、`public/vendor/`、`public/mapRenderer.js` 继续提供已审核素材和 S72 地图 runtime。
-- Backend: Node.js + Express，plain JavaScript。AI provider 为 adapter-based Mock/OpenAI/DeepSeek/MiMo/MiMo+DeepSeek/Anthropic；真实 provider 只作为可选配置，不能成为启动门槛。
+- Backend: Node.js + Express，当前以 CommonJS JavaScript 为主；S86 起规划渐进 TypeScript 迁移，优先覆盖契约、API/view 类型、安全 projection、AI schema/provider facade、storage adapter 和核心 resolver，不做全仓重写。AI provider 为 adapter-based Mock/OpenAI/DeepSeek/MiMo/MiMo+DeepSeek/Anthropic；真实 provider 只作为可选配置，不能成为启动门槛。
 - Storage: 默认 JSON session files under `data/sessions/`；可选 `STORAGE_ADAPTER=sqlite` 使用本地 `schema_migrations`、`world_sessions`、audit tables、`geo_*`、`people_*`、`office_*`、`event_archive_index`、`prompt_retrieval_index` 和 `safe_search_index`。SQLite 派生行只从 `world_sessions.world_state_json` 单向修复，不是玩家 API、prompt 或服务器裁决的 raw truth source。
-- Roadmap status: S49-S67 本地数据库与大世界内容、S68-S69 科举深化、S70 AI 编排、S71 数据库玩法化、S72 PixiJS 水墨地图、S73-S77 前端水墨重构、S78 官署专题玩法化、S79 前端修复与高清立绘使用、S80 服务端全局 AI 设置均已完成并归档或压缩记录。S81-S85 NPC、资产、储物、交易、委派、经济、NPC 主动性和礼法扩展位已完成首轮闭环并归档。规划源头见 `docs/NPC_INVENTORY_SYSTEM_ROADMAP.md`，执行契约见 `docs/NPC_INVENTORY_SYSTEM_CONTRACT.md`，完成归档见 `docs/NPC_INVENTORY_SYSTEM_ARCHIVE.md`。
+- Roadmap status: S49-S67 本地数据库与大世界内容、S68-S69 科举深化、S70 AI 编排、S71 数据库玩法化、S72 PixiJS 水墨地图、S73-S77 前端水墨重构、S78 官署专题玩法化、S79 前端修复与高清立绘使用、S80 服务端全局 AI 设置均已完成并归档或压缩记录。S81-S85 NPC、资产、储物、交易、委派、经济、NPC 主动性和礼法扩展位已完成首轮闭环并归档。当前活动专项为 S86 后端 TypeScript 渐进迁移与 Rust 使用边界，规划见 `docs/TYPESCRIPT_BACKEND_MIGRATION_ROADMAP.md`。
 - Current collaboration: 2026-05-14 起停止 Gemini CLI 协作。后续开发、素材生成/审核、验证、文档同步和 Git 提交由 Codex 负责；用户已授权本仓库使用 Codex 子代理，实施子代理不得提交，提交前复审子代理必须只读。
 - Current local `.env`: 可能含用户 provider keys。`.env` 被 Git 忽略，不能打印、复制到文档或提交。
 
@@ -28,6 +28,7 @@
 
 - 后续开发和维护不以“最小实现点”或“最小改动点”为目标；在安全边界、默认可运行、内容保护和可审查粒度不受损的前提下，优先交付完整、丰富、功能强大的游戏实现，并把必要的系统、交互、AI、数据、验证和文档一次设计到位。
 - 复杂功能必须坚持前后端分离和大步骤拆分：后端/API/数据契约、AI 权限与服务器裁决、前端体验、验证与文档按可审查阶段分步交付；前端不得代替服务器裁决资源、身份、交易、NPC 行动、经济结果或隐藏信息。
+- 后端契约、API/view 类型、安全 projection、AI schema/provider facade、storage adapter 和核心 resolver 新增或重构时，应优先使用 TypeScript 或纳入 TypeScript 检查；既有 JavaScript 允许渐进迁移，不得为语言迁移一次性重写大量稳定模块，TS 类型不能替代 Ajv 与服务器 runtime 校验。
 - 完整书生路径必须继续可用：`scholar -> child_exam -> provincial_exam -> metropolitan_exam -> palace_exam -> official`。
 - AI 是《千秋》的核心世界引擎，不是可替换装饰。新增玩法、数据域、角色、官署、事件、面板或 prompt 检索时，必须定义 AI read scope、actor intelligence、tool permissions、proposal boundaries、server adjudication、audit records 和 Mock/no-key fallback。
 - Provider 只能建议叙事、受限 `statePatch`、关系变化、评分 JSON、考试触发或身份受限领域工具 proposal；服务器拥有晋级、考试资格、作弊处罚、持久化、保护字段、官职任免、长期事件、时间推进、数据库写入和可见性过滤。
@@ -64,6 +65,7 @@
 - `docs/NPC_INVENTORY_SYSTEM_ROADMAP.md`
 - `docs/NPC_INVENTORY_SYSTEM_CONTRACT.md`
 - `docs/NPC_INVENTORY_SYSTEM_ARCHIVE.md`
+- `docs/TYPESCRIPT_BACKEND_MIGRATION_ROADMAP.md`
 - `docs/ACTIVITY_LEDGER_COMPLETED_ARCHIVE.md`
 - `docs/ARCHITECTURE.md`
 - `docs/AI_CONTROL_AUDIT_MATRIX.md`
@@ -80,6 +82,7 @@
 
 ## Current Work Note
 
+- 2026-05-20：按用户要求新增 S86 后端 TypeScript 渐进迁移与 Rust 使用边界规划。`docs/TYPESCRIPT_BACKEND_MIGRATION_ROADMAP.md` 已记录当前判断、总原则、非目标、S86.1-S86.7 小步骤、验证口径、Rust 候选和回滚策略；`docs/DEVELOPMENT_STEPS.md` 已恢复活动专项表，当前只列 S86 TODO 小步骤。开发治理已写入“新增或重构后端契约、API/view 类型、安全 projection、AI schema/provider facade、storage adapter 和核心 resolver 时优先使用 TypeScript 或纳入 TypeScript 检查；TS 不能替代 Ajv/runtime 校验”；已同步 brief、README、AGENTS/CLAUDE 和检查脚本。本轮修改治理检查脚本，按非纯低风险文档处理。验证已通过：`npm run check:docs-governance`、`node --test test/documentationGovernance.test.js`、`npm test`（983 项）、`git diff --check`。提交前只读复审 Dalton 未发现 P0/P1；唯一 P2 是本地未跟踪 `npm-start.log` / `npm-start.err.log` 不属于本轮范围，提交时需排除。
 - 2026-05-20：用户指出活动路线图仍保留已完成 DONE 项，已修正 `docs/DEVELOPMENT_STEPS.md` 第 4 节。活动路线图总览现在只说明当前没有 `TODO` / `IN_PROGRESS` 专项、S81-S85 已归档、下一步由用户或新路线图指定；已完成步骤只留在归档索引、近期进度记录和专题归档，不再以 DONE 长表占据活动路线图。本轮为低风险纯文档维护，不改代码、API/schema、AI 权限、素材 manifest、存档格式或运行时行为；按项目规则跳过提交前子代理复审。验证：`npm run check:docs-governance`、`node --test test/documentationGovernance.test.js`、`git diff --check`。
 - 2026-05-20：按用户要求再压缩已完成活动台账归档。`docs/ACTIVITY_LEDGER_COMPLETED_ARCHIVE.md` 已从旧活动台账复制件改为压缩索引，只保留完成阶段入口、S73-S78 关键锚点、验证锚点、稳定边界和后续维护规则；`docs/DEVELOPMENT_STEPS.md` 顶部追溯口径已改为“压缩索引”，并新增 `DOCS-LEDGER-ARCHIVE-COMPRESSION` 完成项和近期记录。本轮为低风险纯文档维护，不改代码、API/schema、AI 权限、素材 manifest、存档格式或运行时行为；按项目规则跳过提交前子代理复审。验证：`npm run check:docs-governance`、`node --test test/documentationGovernance.test.js`、`git diff --check`。
 - 2026-05-20：S85.3-S85.6 NPC 主动性、礼法扩展位、总验收与归档已完成实现、验证、文档同步和提交前只读复审，实现提交 `f984ebc5`。新增 `src/game/npcActiveRequestsConfig.js` / `npcActiveRequests.js`，普通回合在经济 tick 后运行 NPC 私人 planner 与主动请求 step，支持求助、索债、献策、请托、行贿、弹劾、引荐、求婚和背叛；玩家回应只进入服务器裁决，不即时写资源、婚姻、弹劾、背叛或隐藏任务结果。新增 `src/game/npcRelationshipActionsConfig.js` / `npcRelationshipActions.js`，为论道、切磋、求爱和婚姻提供 schema、NPC eligibility、服务器 outcome 与伪造客户端结果字段忽略；人物页新增主动来函 inbox 和“礼法”tab，主卷安全视图索引扩展到 `10 / 10`。SQLite 新增 `npc_active_requests` 安全派生表。Poincare 只读复审发现 NPC 主动来函公开 view 回显 `privateSignalTags` 值的 P1，已修复为私档软信号仅作内部选择，不进入公开 intent/risk/evidence；Poincare 复核发现旧存档污染 `evidenceRefs`、`outcome` 和 `recentEvents` 的 P2，已补 view 层过滤与 SQLite 派生表回归测试；最终复审未发现 P0/P1/P2。
@@ -91,4 +94,4 @@
 
 ## Next Recommended Step
 
-S81-S85 已归档。下一步由用户或新路线图指定；建议新专项继续深化婚姻、比武、论道和 NPC 主动来函来源，并补真实 provider 长循环、browser smoke 深度路径与 SQLite 市价/月账派生策略评估。继续保持前端只消费安全 API/view，所有资源、价格、关系、任务、婚姻、弹劾和背叛结果由服务器裁决。
+下一步建议执行 S86.1：新增后端 TypeScript 检查地基和 `typecheck:server`，先覆盖入口、契约和高风险模块，不改变 `npm start` 运行方式。继续保持前端只消费安全 API/view，所有资源、价格、关系、任务、婚姻、弹劾和背叛结果由服务器裁决；Rust 暂不进入核心玩法重写，只作为未来有性能证据后的可选工具评估。
