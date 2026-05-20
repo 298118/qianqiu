@@ -1,20 +1,20 @@
 # 《千秋》活动路线图与进度台账
 
-本文件是 Codex 当前维护的活动路线图与进度台账。活动台账只保留接手下一步所必需的边界、最新状态和验证入口；已完成路线不再在本文件展开长表或逐日实现记录。
+本文件是 Codex 当前维护的压缩活动路线图与进度台账。它只保留接手下一步所必需的治理规则、当前状态、最新验证口径和近期完成节点；已完成流水不在这里展开。
 
-需要追溯已完成流水时阅读 [ACTIVITY_LEDGER_COMPLETED_ARCHIVE.md](ACTIVITY_LEDGER_COMPLETED_ARCHIVE.md)。需要追溯专题实现时优先阅读对应归档：
+需要追溯完整完成流水时阅读 [ACTIVITY_LEDGER_COMPLETED_ARCHIVE.md](ACTIVITY_LEDGER_COMPLETED_ARCHIVE.md)。需要追溯专题实现时优先阅读对应归档：
 
 - 第一阶段：[PHASE_ONE_ROADMAP_ARCHIVE.md](PHASE_ONE_ROADMAP_ARCHIVE.md)，验收见 [PHASE_ONE_ACCEPTANCE.md](PHASE_ONE_ACCEPTANCE.md)。
 - 第二阶段：[PHASE_TWO_ROADMAP_ARCHIVE.md](PHASE_TWO_ROADMAP_ARCHIVE.md)，验收见 [PHASE_TWO_ACCEPTANCE.md](PHASE_TWO_ACCEPTANCE.md)。
 - 第三阶段：[PHASE_THREE_ROADMAP_ARCHIVE.md](PHASE_THREE_ROADMAP_ARCHIVE.md)。
 - 第四阶段：[PHASE_FOUR_ROADMAP_ARCHIVE.md](PHASE_FOUR_ROADMAP_ARCHIVE.md)，早期详细进度见 [FOURTH_PHASE_PROGRESS_ARCHIVE.md](FOURTH_PHASE_PROGRESS_ARCHIVE.md)。
 - S48 时间专项：[TIME_SPECIALTY_ROADMAP_ARCHIVE.md](TIME_SPECIALTY_ROADMAP_ARCHIVE.md)。
-- S49-S67 本地数据库基础、SQLite 业务表、双模式验收、超大动态世界内容与 S60 内容契约：[LOCAL_DATABASE_AND_WORLD_CONTENT_ARCHIVE.md](LOCAL_DATABASE_AND_WORLD_CONTENT_ARCHIVE.md)。旧分卷归档和 S60 契约文件保留为跳转页。
-- S68-S69 科举、读书、评卷、榜单、同年座师、授官和 Provider/Mock 验收：[IMPERIAL_EXAM_DEEPENING_ARCHIVE.md](IMPERIAL_EXAM_DEEPENING_ARCHIVE.md)。规划源头仍见 [IMPERIAL_EXAM_DEEPENING_ROADMAP.md](IMPERIAL_EXAM_DEEPENING_ROADMAP.md)，制度契约见 [IMPERIAL_EXAM_SYSTEM_CONTRACT.md](IMPERIAL_EXAM_SYSTEM_CONTRACT.md)。
-- S70 AI prompt/tool/actor/多模型路由、AI 设置、官职月报、跳时、记忆、地图接口、provider AI-first smoke 和 JSON/SQLite parity：[AI_ORCHESTRATION_ARCHIVE.md](AI_ORCHESTRATION_ARCHIVE.md)。规划源头仍见 [AI_ORCHESTRATION_ROADMAP.md](AI_ORCHESTRATION_ROADMAP.md)。
-- S71 数据库玩法化、维护、安全检索、redacted player API、财政/刑名/军务外交服务器 resolver、压力事件、多 actor 场景、NPC 记忆账本、AI 调动审计和验收：[DATABASE_GAMEPLAY_RESOLVER_ARCHIVE.md](DATABASE_GAMEPLAY_RESOLVER_ARCHIVE.md)。规划源头仍见 [DATABASE_GAMEPLAY_RESOLVER_ROADMAP.md](DATABASE_GAMEPLAY_RESOLVER_ROADMAP.md)，resolver 输入契约见 [DATABASE_RESOLVER_INPUT_CONTRACT.md](DATABASE_RESOLVER_INPUT_CONTRACT.md)。
-- S72 PixiJS 水墨地图：[PIXIJS_INK_MAP_ARCHIVE.md](PIXIJS_INK_MAP_ARCHIVE.md)。规划源头见 [PIXIJS_INK_MAP_ROADMAP.md](PIXIJS_INK_MAP_ROADMAP.md)，运行时契约见 [PIXIJS_INK_MAP_RUNTIME_CONTRACT.md](PIXIJS_INK_MAP_RUNTIME_CONTRACT.md)，素材指南见 [MAP_ASSET_GUIDE.md](MAP_ASSET_GUIDE.md)，素材台账见 [MAP_ASSET_LEDGER.md](MAP_ASSET_LEDGER.md)。
-- S73-S77 前端水墨重构、React/Vite 默认入口、首页/全局 shell、身份/考试/放榜/舆图/人物页面、立绘管线、安全/性能/可访问性和总验证：[FRONTEND_INK_REDESIGN_ARCHIVE.md](FRONTEND_INK_REDESIGN_ARCHIVE.md)。规划源头仍见 [FRONTEND_INK_REDESIGN_ROADMAP.md](FRONTEND_INK_REDESIGN_ROADMAP.md)。
+- S49-S67 本地数据库基础、SQLite 业务表、双模式验收、超大动态世界内容与 S60 内容契约：[LOCAL_DATABASE_AND_WORLD_CONTENT_ARCHIVE.md](LOCAL_DATABASE_AND_WORLD_CONTENT_ARCHIVE.md)。
+- S68-S69 科举、读书、评卷、榜单、同年座师、授官和 Provider/Mock 验收：[IMPERIAL_EXAM_DEEPENING_ARCHIVE.md](IMPERIAL_EXAM_DEEPENING_ARCHIVE.md)，制度契约见 [IMPERIAL_EXAM_SYSTEM_CONTRACT.md](IMPERIAL_EXAM_SYSTEM_CONTRACT.md)。
+- S70 AI prompt/tool/actor/多模型路由、AI 设置、官职月报、跳时、记忆、地图接口、provider AI-first smoke 和 JSON/SQLite parity：[AI_ORCHESTRATION_ARCHIVE.md](AI_ORCHESTRATION_ARCHIVE.md)。
+- S71 数据库玩法化、维护、安全检索、redacted player API、财政/刑名/军务外交服务器 resolver、压力事件、多 actor 场景、NPC 记忆账本、AI 调动审计和验收：[DATABASE_GAMEPLAY_RESOLVER_ARCHIVE.md](DATABASE_GAMEPLAY_RESOLVER_ARCHIVE.md)，resolver 输入契约见 [DATABASE_RESOLVER_INPUT_CONTRACT.md](DATABASE_RESOLVER_INPUT_CONTRACT.md)。
+- S72 PixiJS 水墨地图：[PIXIJS_INK_MAP_ARCHIVE.md](PIXIJS_INK_MAP_ARCHIVE.md)，运行时契约见 [PIXIJS_INK_MAP_RUNTIME_CONTRACT.md](PIXIJS_INK_MAP_RUNTIME_CONTRACT.md)，素材台账见 [MAP_ASSET_LEDGER.md](MAP_ASSET_LEDGER.md)。
+- S73-S77 前端水墨重构、React/Vite 默认入口、首页/全局 shell、身份/考试/放榜/舆图/人物页面、立绘管线、安全/性能/可访问性和总验证：[FRONTEND_INK_REDESIGN_ARCHIVE.md](FRONTEND_INK_REDESIGN_ARCHIVE.md)，素材台账见 [FRONTEND_ASSET_LEDGER.md](FRONTEND_ASSET_LEDGER.md)。
 
 2026-05-14 起，按用户要求停止与 Gemini CLI 共同开发；后续开发全部由 Codex 负责。远程存档、账号体系、多人同步、云端冲突解决和托管数据库不进入当前规划。
 
@@ -28,6 +28,7 @@
 - `npm install && npm start` 可运行，默认打开 `http://localhost:3000`。
 - Mock AI 默认完整可玩，真实 provider 只作为可选配置。
 - 完整书生路径不得破坏：`scholar -> child_exam -> provincial_exam -> metropolitan_exam -> palace_exam -> official`。
+- 后续开发和维护不以“最小实现点”或“最小改动点”为目标；在安全边界、默认可运行、内容保护和可审查粒度不受损的前提下，优先交付完整、丰富、功能强大的游戏实现，并把必要的系统、交互、AI、数据、验证和文档一次设计到位。
 - AI 是《千秋》的核心世界引擎，不是可替换装饰；新增玩法、数据域、角色、官署、事件、面板或 prompt 检索时，必须设计 AI 的读取范围、角色智能、工具权限、proposal 边界、服务器裁决、审计记录和 Mock/no-key 降级。
 - AI 可以生成叙事、题目、评分建议、关系建议、受限 `statePatch`，或通过身份受限的领域工具提交 structured proposal / tool call；AI 不得执行 SQL，不得直接写 canonical 状态、业务表或审计表。服务器继续拥有时间推进、状态边界、科举晋级、作弊处罚、官场任免、长期事件、世界实体、世界议程、数据库写入和持久化裁决。
 - 游戏规则、数值阈值、时间间隔、概率、UI 限制、fixture 规模和 prompt budget 等可调参数不得散落为魔法数字；新增或调整时优先集中到具名配置模块，例如 `src/config/GameConfig.js` 或更贴近领域的 `src/game/*Config.js`，并写清单位、范围和默认值意图。
@@ -88,54 +89,34 @@
 
 ## 3. 当前边界与归档索引
 
-S49-S67 本地数据库与大世界内容、S68-S69 科举深化、S70 AI 编排、S71 数据库玩法化、S72 PixiJS 水墨地图和 S73-S77 前端水墨重构都已迁入专题归档。S78 官署专题玩法化已完成并记录在本文件和共享上下文中；后续若扩展为更大的专题阶段，可拆出专门归档。
-
-| 范围 | 状态 | 摘要 | 归档 |
-| --- | --- | --- | --- |
-| S49-S67 | DONE | 本地数据库基础、SQLite 业务表、双模式验收、大世界内容契约、规模 fixture、国家/城市/NPC/官职/案牍/军务/财赋/事件链/情报/prompt/UI 分页和规模验收 | [LOCAL_DATABASE_AND_WORLD_CONTENT_ARCHIVE.md](LOCAL_DATABASE_AND_WORLD_CONTENT_ARCHIVE.md) |
-| S68-S69 | DONE | 科举制度、读书账本、老师点评、科场流程、多考官阅卷、榜单荣誉、同年座师网络、授官轨迹、浏览器面板和 Provider/Mock 验收 | [IMPERIAL_EXAM_DEEPENING_ARCHIVE.md](IMPERIAL_EXAM_DEEPENING_ARCHIVE.md) |
-| S70 | DONE | AI prompt/tool/actor/领域工具、多模型路由、AI 设置、月报、跳时、记忆、地图接口、MiMo AI-first smoke、JSON/SQLite parity 和 S70 归档 | [AI_ORCHESTRATION_ARCHIVE.md](AI_ORCHESTRATION_ARCHIVE.md) |
-| S71 | DONE | 数据库 resolver 输入、SQLite 维护、安全搜索、redacted API、财政/刑名/军务外交 resolver、压力事件、场景运行时、NPC 记忆、AI 调动审计和验收归档 | [DATABASE_GAMEPLAY_RESOLVER_ARCHIVE.md](DATABASE_GAMEPLAY_RESOLVER_ARCHIVE.md) |
-| S72 | DONE | PixiJS 水墨地图、首批地图素材、局势簿联动、水墨动效、浏览器验收、安全回归和归档 | [PIXIJS_INK_MAP_ARCHIVE.md](PIXIJS_INK_MAP_ARCHIVE.md) |
-| S73-S77 | DONE | 前端水墨重构：素材体系、React/Vite/React Router 多页迁移、首页/全局 shell、身份/场景专题、考试/放榜、独立舆图页、立绘管线、安全/性能/可访问性和验收归档 | [FRONTEND_INK_REDESIGN_ARCHIVE.md](FRONTEND_INK_REDESIGN_ARCHIVE.md) |
-| S78 | DONE | 官署专题玩法化：六类专题读取安全 `topicSurfaceView`，支持 `topic_draft` 只读 AI/Mock 草稿、证据引用和底部奏折闭环；普通后果仍由 `/api/game/turn` 与服务器裁决链处理 | [ACTIVITY_LEDGER_COMPLETED_ARCHIVE.md](ACTIVITY_LEDGER_COMPLETED_ARCHIVE.md) |
-
 必须继续保护的边界：
 
 - JSON adapter 继续是默认路径，Mock 模式继续完整可玩。
 - SQLite 模式只表示本机不同存档，不引入远程、账号、多人或云端语义。
-- `worldState` snapshot 继续可读、可导入、可导出；SQLite 派生表继续可从 `world_sessions.world_state_json` 单向修复。S70.12 起玩家 route response 内的兼容 `worldState` 会剥离 raw `actorMemoryLedger` / `sessionSummary`，记忆与经历摘要只能通过安全 view 暴露。
-- AI 可以通过身份受限的领域工具提交 proposal 或 request-adjudication，但不能执行 SQL，不能直接写 canonical 状态、业务表或审计表，也不能把 tool call 伪装成已经发生的世界事实。
+- AI 可以通过身份受限领域工具提交 proposal 或 request-adjudication，但不能执行 SQL，不能直接写 canonical 状态、业务表或审计表，也不能把 tool call 伪装成已经发生的世界事实。
 - API、prompt 和浏览器只读服务器整理后的 projection；不得暴露 raw audit、provider proposal、完整 prompt、本地路径、密钥、隐藏 notes、hidden intent、未公开任所、未公开关系或 hidden raw rows。
 - S60-S67 的 hidden 私档、资产真数、密档事件链和隐藏情报真值没有回填当前 raw route `worldState`；后续若保存真正 hidden 私档，必须先设计玩家 API redaction 和 prompt role-visibility 分层。
+- S73-S79 人物与素材显示必须通过已审核 `portraitRef`、缩略图、低清占位、精简 runtime manifest 和 fallback 使用；不得显示未审核素材、不得硬编码本地路径、不得一次性拉取全量立绘池。
 
 ## 4. 活动路线图总览
 
-S80 已进入服务端全局 AI 设置与保存反馈收束阶段。范围由用户于 2026-05-19 确认：建立服务端全局 AI 设置，保存后覆盖所有当前和未来案卷的 AI 路由；设置页与印匣共用全任务矩阵面板，明确显示保存状态与 provider 是否真正可用；修复前端提交 `deep` preset 而后端只认 `quality_first` / `long_context` 等 preset 导致不生效的问题。S79 前端打磨与高清女性立绘入库已完成。
+当前没有 `TODO` 或 `IN_PROGRESS` 的功能步骤。S80 已完成服务端全局 AI 设置；后续新步骤应先定义完整玩家体验、AI 权限、服务器裁决、Mock/no-key fallback、验证和文档落点，再拆成可审查的 coherent changes。
 
 | ID | 状态 | Owner | 目标 | 说明 |
 | --- | --- | --- | --- | --- |
-| S79 | DONE | Codex | 前端打磨与高清女性立绘入库 | 已完成前端正确性修复、194 张 recovered 女性高清母版入库、游戏内立绘放大查看器与验证收束；保持 Mock/JSON 默认可玩、书生科举链不破坏、安全 projection 与服务器裁决边界不变。 |
-| S79.1 | DONE | Codex | 前端正确性、路由壳与 smoke 缺口修复 | 已修复 `ExamPage` 对 `wordCount` `{min,max}` 的渲染崩溃，补强考试 smoke 真实断言；`/exam`、`/ranking`、`/court`、`/settings` 改走轻量 `sessionRouteShell`，不再被主卷/身份栏压到页面下方。 |
-| S79.2 | DONE | Codex | 194 张 recovered 女性高清母版入库管线 | 已为 `likely-portrait-masters` 的 194 张唯一 PNG 建立稳定 ID、来源记录、视觉/安全审核、高清运行时 WebP、缩略图、低清占位、manifest、QA sidecar 和脚本；原始 `artifacts/` 母版仍不直接提交或暴露给前端。 |
-| S79.3 | DONE | Codex | 游戏内高清立绘使用与放大查看 | 已在 `Portrait` 可欣赏立绘右上角加入放大标志；首页选角、人物谱牒和人物档案专题公开立绘均通过已审核 `portraitRef` 与 runtime manifest 读取高清主图。只读高清查看器由 `SurfaceHost` 托管，支持 Esc、遮罩关闭、焦点回收、移动端适配和滚动锁定，不写 canonical state、URL、localStorage/sessionStorage、行动草稿或 AI prompt。 |
-| S79.4 | DONE | Codex | 验证、文档同步与提交 | 已同步 brief、素材台账、共享上下文和本台账；已运行 client typecheck/test、React smoke、素材 QA、manifest 测试、docs governance、documentation governance、diff check 和完整 `npm test`。提交 hash 随本次 coherent change 见 Git 历史。 |
-| S80 | DONE | Codex | 服务端全局 AI 设置与保存反馈 | 已新增 `GET/POST /api/ai/settings/global`、本地运行时文件 `data/settings/ai-global-settings.json`、全局优先 AI route policy 和共享 React 全任务矩阵面板；旧 session 设置入口保留兼容但读写全局设置。 |
-| S80.1 | DONE | Codex | 全局设置后端与兼容 API | `resolveAiSettingsForSession` 全局优先；全局保存复用并加强 AI 设置校验，拒绝 hidden/raw/server/path/key、观测日志伪造和缺 key 的真实 provider；落盘只保存安全路由/预算/温度/控制字段。 |
-| S80.2 | DONE | Codex | 设置页与印匣矩阵面板 | `SettingsPage` 与 `SurfaceHost` 共用 `AiSettingsPanel`，渲染 11 类任务矩阵、服务端 presets、保存状态、保存时间、失败原因、重新载入和 provider 可用性提示，保存成功后以服务端返回值回填。 |
-| S80.3 | DONE | Codex | 验证、smoke 与文档同步 | 已补 Node/client/static/smoke 测试覆盖全局设置读写、全局优先、缺 key provider 拒绝、敏感字段拒绝、旧 session route 兼容、客户端安全 endpoint、矩阵 dirty/save/error 状态和浏览器 smoke 临时 `AI_GLOBAL_SETTINGS_PATH`。提交 hash 随本次 coherent change 见 Git 历史。 |
+| S79 | DONE | Codex | 前端打磨与高清女性立绘入库 | 已完成前端正确性修复、194 张 recovered 女性高清母版入库、游戏内只读高清立绘放大查看器与安全/素材验证。 |
+| S80 | DONE | Codex | 服务端全局 AI 设置与保存反馈 | 已完成 `GET/POST /api/ai/settings/global`、本地运行时设置文件、全局优先 AI route policy、共享 11 类任务矩阵面板和旧 session 设置入口兼容。 |
+| DOCS-2026-05-20 | DONE | Codex | 压缩上下文与台账，强化完整实现规范 | 本轮压缩 `docs/SHARED_CONTEXT.md` 与本文件，新增“不要最小实现点/最小改动点，追求完整丰富实现”的受保护开发规范，并同步 brief、AGENTS 与治理检查脚本。 |
 
-## 5. 当前最新完成节点
+## 5. 最新状态
 
-- S80 已完成服务端全局 AI 设置与保存反馈。`GET/POST /api/ai/settings/global` 读写 `data/settings/ai-global-settings.json`；旧 `GET/POST /api/ai/settings/:sessionId` 只做兼容，仍校验案卷存在但读写同一份全局设置。全局设置存在时，开局、普通/流式回合、考试出题/评卷、快捷建议和专题拟稿统一使用全局 route policy。React 设置页和印匣共用 11 类任务矩阵，预设来自服务端 `presets`，并明确显示未保存/保存中/已保存/保存失败、provider key 可用性和每类任务生效状态。
-- S78 已完成官署专题玩法化。`/game/:sessionId/court` 的奏折队列、拟圣旨、朝议、堂审、军议和人物档案六类入口现在读取 `topicSurfaceView` 安全投影，显示真实玩家可见材料、证据 ref、人物公开摘要、可选草稿模板和上一轮公开结果；`topic_draft` 只读 AI/Mock 草稿可生成标题、正文、引用证据、风险和下一步建议，并允许玩家改稿后写入底部奏折。专题草稿不提交回合、不调用 resolver、不推进时间、不写 canonical state，普通后果继续由 `/api/game/turn` 和服务器裁决链处理。
-- S73-S77 已完成归档与总验证。归档见 [FRONTEND_INK_REDESIGN_ARCHIVE.md](FRONTEND_INK_REDESIGN_ARCHIVE.md)，历史完成台账流水见 [ACTIVITY_LEDGER_COMPLETED_ARCHIVE.md](ACTIVITY_LEDGER_COMPLETED_ARCHIVE.md)。
-- S77.8 最新验收通过 `npm test`、client typecheck/test/build、React browser smoke、Mock 科举链、JSON/SQLite storage-only 双模式、docs governance、documentation governance 和 diff check。
-- S72 及更早阶段均已迁入专题归档。活动台账不再展开完成流水；需要追溯时使用本文件顶部归档索引。
+- S80 当前基线：全局 AI 设置覆盖所有当前和未来案卷的 AI 路由；设置页和印匣共用 11 类任务矩阵，服务端 presets 为唯一来源，保存成功后以前端收到的服务端返回值回填表单。全局设置只保存 provider/model/预算/温度/安全控制，不保存 key、base URL、prompt、raw provider payload 或本地路径；缺 key 的真实 provider 不能作为可生效全局路由保存。
+- S79 当前基线：React 子路由壳、考试 smoke、recovered 女性高清立绘入库、runtime manifest、压缩 QA 和只读高清查看器已收束。查看器只读 `/assets/ui/` runtime 主图，不写 canonical state、URL、localStorage/sessionStorage、行动草稿或 AI prompt。
+- S78 及更早阶段均已迁入专题归档。活动台账不再展开完成流水；需要追溯时使用本文件顶部归档索引。
 
 ## 6. 最近完整验证口径
 
-S80 当前验证口径：
+S80 最新完整口径：
 
 - `npm run typecheck:client`
 - `npm run test:client`
@@ -146,87 +127,47 @@ S80 当前验证口径：
 - `node --test test/documentationGovernance.test.js`
 - `npm test`
 
-S77.8 最新验收口径：
+本轮 DOCS-2026-05-20 文档压缩与治理守门改动验证口径：
 
-- `node --check scripts/clientSmoke.js`
-- `node --check scripts/clientBuildBudget.js`
-- `npm test`（933 项通过，包含 `test/reactClientScaffold.test.js` 与 `test/browserSmokeScript.test.js`）
-- `npm run typecheck:client`
-- `npm run test:client`（66 项通过）
-- `npm run build:client`
-- `npm run smoke:browser -- --screenshots artifacts/s77-frontend-ink`
-- `npm run smoke:exam-s69`
-- `npm run smoke:dual-mode -- --storage-only`
 - `npm run check:docs-governance`
 - `node --test test/documentationGovernance.test.js`
+- `npm test`
 - `git diff --check`
+- 提交前只读子代理复审最终 diff 与验证证据
 
-补充素材/manifest 回归入口：
+补充素材/manifest 回归入口仍保留：
 
 - `npm run qa:frontend-assets`
 - `npm run qa:portrait-compression`
 - `node --test test/frontendInkAssetsManifest.test.js`
-- 结构化污染扫描由 `npm run smoke:browser` 覆盖 DOM、storage、runtime manifest、安全字段和截图产物名；完整素材 manifest 仍由 `qa:frontend-assets` 与 manifest 测试守门。
+- `npm run smoke:browser` 覆盖 DOM、storage、runtime manifest、安全字段和截图产物名污染扫描。
 
-## 7. 本轮台账归档记录
+## 7. 近期进度记录
+
+### 2026-05-20：完成 DOCS-2026-05-20 上下文压缩与完整实现规范
+
+- 范围：压缩 `docs/SHARED_CONTEXT.md` 与 `docs/DEVELOPMENT_STEPS.md`，只保留接手下一步必要的状态、边界、归档索引、验证入口和当前建议；新增用户要求的开发规范，明确后续开发和维护不追求“最小实现点”或“最小改动点”，而追求完整、丰富、功能强大的游戏实现。
+- 保护：稳定治理锚点、子代理纪律、Mock 默认可玩、完整书生路径、AI proposal-only、服务器裁决、magic numbers/配置集中、中文协作输出和本地-only 内容边界均保留；新增规范同时写入 `docs/DEVELOPMENT_GOVERNANCE.md` 的受保护段落和本文件受保护段落。
+- 同步：已同步 `docs/QIANQIU_DEVELOPMENT_BRIEF.md`、`docs/SHARED_CONTEXT.md`、`AGENTS.md` 与 `scripts/checkGovernanceDocs.js`。由于检查脚本属于验证工具，本轮按非纯低风险文档处理，提交前执行只读子代理复审。
+- 验证：已通过 `npm run check:docs-governance`、`node --test test/documentationGovernance.test.js`、`npm test`（940 项）和 `git diff --check`；提交前只读复审 Anscombe 未发现 P0/P1/P2。
+- 提交：随本轮 coherent change 提交，最终 hash 见 Git 历史和本次回复。
+- 下一步：新功能步骤应以完整玩家体验和完整系统闭环为目标，再拆成可审查的 coherent changes；不要只做临时占位或“最小能跑”的半成品。
 
 ### 2026-05-19：完成 S80 服务端全局 AI 设置与保存反馈
 
-- 范围：建立服务端全局 AI 设置，保存后覆盖所有当前和未来案卷的 AI 路由；设置页与印匣共用全任务矩阵面板，明确显示保存状态、保存时间、失败原因和 provider 是否真正可用；修复旧前端 `deep` preset 不被后端识别导致设置不生效的问题。
-- 实现：新增 `GET/POST /api/ai/settings/global`，旧 `GET/POST /api/ai/settings/:sessionId` 仍校验案卷存在但读写同一份全局设置，并返回 `scope: "global"` 与 `targetSessionId`。`resolveAiSettingsForSession` 在全局设置存在时全局优先，开局、普通回合、流式回合、考试出题、考试评卷、快捷建议和专题拟稿都会使用同一份 route policy。新增运行时文件 `data/settings/ai-global-settings.json`，并以 `.gitignore` 排除；测试和 smoke 通过 `AI_GLOBAL_SETTINGS_PATH` 指向临时文件。
-- 前端：新增共享 `client/src/components/AiSettingsPanel.tsx`，`SettingsPage` 与 `SurfaceHost` 共用。面板渲染叙事、人物心智、筹划、制度专题、复核、安全门、记忆提要、月报、跳时、快捷建议和专题拟稿 11 类任务矩阵；每行可调 provider、model、输出长度、温度和工具预算，按任务权限禁用不可生效字段。预设完全来自服务端 `presets`，保存成功后用服务端返回值回填表单。
-- 安全边界：全局保存复用并加强既有 AI 设置校验，拒绝 hidden/raw/server/path/key、直写状态/数据库、server resolver、raw audit 和观测日志伪造；缺 key 的真实 provider 不能作为可生效全局路由保存。落盘只保存校验后的 provider/model/预算/温度/安全控制，不保存 key、base URL、prompt、raw provider payload 或本地路径；review-only / no-tool 任务继续由服务器裁剪工具和裁决权限。
-- 验证：已通过 `npm run typecheck:client`、`npm run test:client`（68 项）、`node --test test/aiSettings.test.js test/aiSettingsRoute.test.js test/reactClientScaffold.test.js`（50 项）、`npm run build:client`、`npm run smoke:browser`、`npm run check:docs-governance`、`node --test test/documentationGovernance.test.js`、`git diff --check`（仅既有 LF/CRLF 提示）和完整 `npm test`（940 项）。
-- 子代理：本轮实现中已使用只读 explorer Turing 勘察设置路由、任务类型、前端表单和测试缺口，未编辑文件、未运行 Git 写操作；提交前只读复审 Huygens 与 Volta 先后发现禁用字段 root key 和 snake/kebab alias 会被静默忽略的 P2，已改为按小写且去除空格/下划线/点/短横线后的 key 匹配 denylist，并补 `path`、`server`、`Hidden`、`accessToken`、`hidden_notes`、`local_path`、`file_path`、`base_url`、`auth-token`、`bearer_token`、`server_resolver` 测试；Volta 最终复审未发现 P0/P1/P2。
-- 提交：随本轮 coherent change 提交，最终 hash 见 Git 历史和本次回复。
-- 下一步：若继续 AI 方向，优先把全局任务矩阵与 provider smoke/真实 key 体验进一步合流；不要恢复案卷级设置作为优先运行来源。
+- 范围：建立服务端全局 AI 设置，保存后覆盖所有当前和未来案卷的 AI 路由；设置页与印匣共用 11 类任务矩阵，显示保存状态、保存时间、失败原因、provider key 可用性和每类任务生效状态。
+- 实现：新增 `GET/POST /api/ai/settings/global` 与运行时文件 `data/settings/ai-global-settings.json`；旧 `GET/POST /api/ai/settings/:sessionId` 只保留兼容，仍校验案卷存在但读写同一份全局设置。`resolveAiSettingsForSession` 全局优先，开局、普通/流式回合、考试出题/评卷、快捷建议和专题拟稿共用 route policy。
+- 安全：全局保存拒绝 hidden/raw/server/path/key、观测日志伪造和缺 key 的真实 provider；落盘只保存安全路由/预算/温度/控制字段。
+- 验证：通过 client typecheck/test、focused Node tests、client build、React browser smoke、docs governance、documentation governance、diff check 和完整 `npm test`。提交前只读复审发现的禁用字段别名静默忽略问题已修复并补测。
 
-### 2026-05-19：完成 S79.3 游戏内高清立绘放大查看
+### 2026-05-19：完成 S79 前端打磨与高清女性立绘使用
 
-- 范围：为游戏内可欣赏立绘增加右上角放大标志，并实现只读高清大图查看器；覆盖首页选角、人物谱牒和人物档案专题中的公开立绘位。
-- 实现：`Portrait` 继续优先使用已审核 runtime 主图 `portrait.path`，新增 `Maximize2` 放大按钮；`uiState` 新增瞬时 `activePortraitViewer`，只保存 `portraitRef` 与 label；`SurfaceHost` 新增 `PortraitViewerHost`，统一处理 Esc、遮罩关闭、焦点回收、滚动锁定、移动端尺寸和 fallback。`npc-profile` 人物档案专题新增公开立绘条，只展示当前安全案卷中已有且命中 runtime registry 的 `portraitRef`，不从全量素材池补人、不推断 hidden 人物。
-- 安全边界：查看器只读 `/assets/ui/` 运行时主图路径，不引用 artifacts 母版，不写 canonical state、URL、localStorage/sessionStorage、行动草稿或 AI prompt，不展示 raw audit、provider payload、完整 prompt、本地路径、key、hidden notes 或 hidden intent。点击人物档案专题内的放大按钮时，查看器覆盖在专题层上，关闭后仍回到原专题语境。
-- 验证：已通过 `npm run typecheck:client`、`npm run test:client -- --run client/src/components/Portrait.test.tsx client/src/state/uiState.test.ts client/src/__tests__/App.test.tsx`（51 项）、`node --test test/reactClientScaffold.test.js`（37 项）、`node --check scripts/clientSmoke.js`、`npm run test:client`（67 项）、`npm test`（936 项）、`npm run qa:runtime-manifest`、`npm run qa:portrait-compression`、`npm run qa:frontend-assets`、`node --test test/frontendInkAssetsManifest.test.js`、`npm run build:client` 和 `npm run smoke:browser -- --screenshots artifacts/s79-3-portrait-viewer-smoke`。首次 browser smoke 因新增断言把既有 `qianqiu.displayPreferences.v1` key 误判为 viewer 写入而失败，已收窄断言并重跑通过。
-- 子代理：只读 explorer Singer 勘察 `Portrait`、人物页、专题 surface、CSS 和测试接入点，建议由 `Portrait` 触发、`SurfaceHost` 统一托管查看器，并提醒首页选角按钮需 `stopPropagation()`、查看器不得写 storage/URL/prompt；未编辑文件、未运行 Git 写操作。提交前只读复审 Hegel 未发现 P0/P1 安全问题，指出人物档案专题上方关闭高清查看器后焦点可能不回到放大按钮的 P2；已改为按 overlay 层保存焦点返回目标，并补嵌套专题查看器焦点回收测试后重跑通过。
-- 提交：随本轮 coherent change 提交，最终 hash 见 Git 历史和本次回复。
-- 下一步：S79 已收束；后续可进入新的小步骤，继续从安全 projection 与已审核资产层扩展前端玩法。
+- 范围：修复考试页 `wordCount` 对象显示与 smoke 漏报，收束子路由壳；将 194 张 recovered 女性高清母版入库为公开 runtime WebP、缩略图和低清占位；新增游戏内只读高清立绘查看器。
+- 边界：不改后端 API、provider schema、SQLite schema、存档格式、AI 权限、服务器 resolver、canonical state 或游戏规则。公开 manifest/runtime manifest 只登记 `/assets/ui/` 派生产物，不暴露 artifacts 母版路径。
+- 验证：通过 client typecheck/test、React scaffold、browser smoke、素材 QA、runtime manifest、portrait compression、frontend asset QA、manifest tests、docs governance、documentation governance、diff check 和完整 `npm test`。
 
-### 2026-05-19：完成 S79.2 Recovered 女性高清母版入库管线
-
-- 范围：把 `artifacts/codex-generated-female-portrait-png-recovery/likely-portrait-masters/` 中 194 张唯一 PNG 母版全部按稳定 `portrait-s79-2-recovered-female-###-v1` ID 入库，派生公开 1024x1536 高清 WebP、384x576 缩略图和 64x96 低清占位。
-- 实现：新增 `scripts/frontendRecoveredFemalePortraitAssets.js`、`qa:recovered-female-portraits` / `qa:recovered-female-portraits:write` 和 `public/assets/ui/portraits/portrait-recovered-female-pool-qa-v1.json`；新增 `public/assets/ui/portraits/s79-2/` 主图、对应 `thumbs` 与 `placeholders`，并刷新 `ink-ui-manifest.json`、`ink-ui-runtime-manifest.json`、`asset-qa-report-v1.json` 与 `portrait-compression-qa-v1.json`。
-- 资产事实：S79.2 新增 `recovered_female_highres_pool` / `portrait_pool_recovered_female_s79_2` 共 194 张；185 张源图原尺寸为 1024x1536，9 张相近竖版源图等比置入 1024x1536。当前 manifest 为 836 个 active 素材，其中 active 立绘 790 张；portrait compression QA 覆盖 790 张 active 立绘，S73.10 仍为 572 张。
-- 视觉与安全：Codex 生成 4 张 contact sheet 并用视觉理解复看 194 张，确认整体为成年女性古风竖版立绘，服饰完整，脸部、发髻、衣料层次、腰封和姿态清楚，与现有 S73.10 女性池兼容；未见明显水印、现代 UI、大面积可读文字、露骨、挑逗或幼态问题。公开 manifest/runtime manifest 只记录 `/assets/ui/` 派生产物和 `localHighResSource=kept_outside_public_manifest` 标记，QA sidecar 只记录源文件名、源 SHA-256 和源尺寸，不暴露 artifacts 路径。
-- 边界：本轮不改后端 API、provider schema、SQLite schema、存档格式、AI 权限、服务器 resolver、canonical state、prompt 或游戏规则；S79.3 才接游戏内放大标志和只读高清查看器。
-- 子代理：只读 explorer Schrodinger 检查现有立绘管线并建议新增独立 S79.2 脚本、sidecar 与 QA 命令；只读 explorer Beauvoir 盘点 194 张源图的数量、SHA、尺寸分布和 recovery manifest 顺序。两者均未编辑文件、未运行 Git 写操作。提交前只读复审 Archimedes 查看最终 diff、manifest/QA/test/doc 计数和验证证据，未发现 P0/P1/P2/P3。
-- 验证：已通过 `node --check scripts/frontendRecoveredFemalePortraitAssets.js`、`npm run qa:recovered-female-portraits`、`npm run qa:runtime-manifest`、`npm run qa:portrait-compression`、`npm run qa:frontend-assets`、`node --test test/frontendInkAssetsManifest.test.js`、`node --test test/reactClientScaffold.test.js`、`npm run typecheck:client`、`npm run test:client`（66 项）、`npm run build:client`、`npm run smoke:browser -- --screenshots artifacts/s79-2-recovered-female-smoke`、`npm run check:docs-governance`、`node --test test/documentationGovernance.test.js`、`git diff --check`（仅 LF/CRLF 提示）和完整 `npm test`（935 项通过、0 失败）。S79.2 后 runtime manifest 为 937342 bytes，仍剥离 authoring-only 字段；React scaffold 与 browser smoke 的 runtime manifest 预算已按高清池索引调整为 1,050,000 bytes。
-- 下一步：进入 S79.3，在游戏内可欣赏立绘右上角增加放大标志，并实现不写 canonical state、URL、localStorage/sessionStorage 或 AI prompt 的只读高清大图查看器。
-
-### 2026-05-19：完成 S79.1 前端正确性、路由壳与 smoke 缺口修复
-
-- 范围：完成 `ExamPage` 对考试 `wordCount` 数字或 `{min,max,target,recommended}` 对象的安全显示，补强 `scripts/clientSmoke.js` 的取题后真实页面断言，并把 `/game/:sessionId/exam|ranking|court|settings` 从主卷叙事、身份面板和底部奏折壳下方移到轻量子路由壳中。
-- 实现：新增 `ExamWordCount` 前端类型和 `formatWordCountLabel`；取题后必须继续显示 `.examFullScreen`、考题、文章输入、字数栏和交卷按钮，错误页不再被 smoke 漏报。`GamePage` 新增 `sessionRouteShell` 和复用页签组件，`CourtPage`/`SettingsPage` 独立标题改为 `h1`；`/map` 仍保留既有独立地图壳，`/people` 与 `/archive` 暂不变。
-- 边界：不改后端 API、provider schema、SQLite schema、存档格式、AI 权限、服务器 resolver 或 canonical state；本轮只处理 React 前端、smoke、聚焦测试和文档同步。
-- 子代理：只读 explorer Mendel 检查了 route/AppShell/GamePage 嵌套与最小修改建议，未编辑文件、未运行 Git 写操作；代码完成后还需按规则做提交前只读复审最终 diff。
-- 验证：已通过 `npm run typecheck:client`、`npm run test:client`（66 项）、`node --check scripts/clientSmoke.js`、`node --test test/reactClientScaffold.test.js`（36 项）、`npm run smoke:browser -- --screenshots artifacts/s79-1-route-shell-smoke`、`npm test`（934 项）、`npm run smoke:exam-s69`、`npm run check:docs-governance` 和 `node --test test/documentationGovernance.test.js`。一次 `npm run test:client -- --runInBand` 因 Vitest 不支持该参数失败，已用项目原生命令重跑通过。
-- 提交：随本轮 coherent change 提交，最终 hash 见 Git 历史和本次回复。
-- 下一步：进入 S79.2，建立 194 张 recovered 女性高清 PNG 母版的入库、审核、manifest 与 QA 管线。
-
-### 2026-05-19：登记 S79 前端打磨与高清女性立绘入库计划
-
-- 范围：把本轮 UI 复查与用户新增要求登记为 S79。已知前端打磨点包括考试页 `wordCount` 对象渲染崩溃、考试 smoke 对错误页的漏报、若干子路由被主卷/身份栏压在下方、AI 设置表单重复，以及后续可进一步收束的资源预算口径。
-- 资产事实：`artifacts/codex-generated-female-portrait-png-recovery/likely-portrait-masters/` 当前有 194 张 `.png`，总量约 572MB，SHA 均唯一；其中 185 张为 `1024x1536`，其余 9 张为相近竖版高清尺寸。S79.2 必须全部入库使用，不得只挑一部分，也不得只生成缩略图后闲置高清母版。
-- 关键决策：用户明确要求“务必要高清使用，不要在乎性能”。因此 S79 的立绘主展示以高清运行时主图为准，缩略图和低清占位只服务列表预览、占位、QA 或渐进加载；涉及人物/选角/档案等可欣赏场景时，应优先呈现高清图。既有首屏资源预算仍保护首页初始化，但 portrait-heavy 页面与大图查看器的预算需按回合制游戏和高清欣赏口径重新定义。
-- 交互要求：游戏内可欣赏立绘右上角新增放大标志，建议使用既有 `lucide-react` 图标；点击后打开只读大图查看器，展示高清图、人物/池来源标签和必要的关闭控件，支持 Esc、遮罩关闭、焦点回收、滚动锁定、移动端安全区域和无障碍标签。查看器不得写 canonical state、URL、localStorage/sessionStorage 或 AI prompt。
-- 边界：本次仅登记规划文档，不新增运行时代码、后端 API、provider schema、SQLite schema、存档格式、AI 权限、服务器 resolver、canonical state 写入或 runtime 素材；后续真正入库仍必须走 manifest、视觉/安全审核、QA sidecar 和 `/assets/ui/` 安全路径。
-- 子代理：本轮是低风险纯规划文档登记，按规则跳过子代理复审并记录；S79 后续只要包含代码、测试、脚本、素材、manifest、QA 或验证工具改动，暂存和提交前必须委派只读子代理复审最终 diff 与验证证据。
-- 验证：已通过 `npm run check:docs-governance`、`node --test test/documentationGovernance.test.js` 和 `git diff --check`。
-- 下一步：从 S79.1 开始，先修考试页与 smoke 漏报，再进入 S79.2 的 194 张高清女性母版入库，最后接 S79.3 的高清使用与放大查看体验。
-
-### 2026-05-19：已完成活动台账归档
+### 2026-05-19：完成活动台账归档
 
 - 范围：新增 [ACTIVITY_LEDGER_COMPLETED_ARCHIVE.md](ACTIVITY_LEDGER_COMPLETED_ARCHIVE.md)，保存本次整理前 `docs/DEVELOPMENT_STEPS.md` 的完整完成流水；本文件瘦身为当前边界、归档索引、最新完成节点、最近验证口径和下一步入口。
 - 边界：纯文档整理，不新增运行时代码、后端 API、provider schema、SQLite schema、存档格式、AI 权限、服务器 resolver、canonical state 写入、素材或资源预算。
-- 子代理：低风险纯文档整理，跳过子代理复审；本说明与 `docs/SHARED_CONTEXT.md` 均记录该决定。
-- 验证：运行 `npm run check:docs-governance` 与 `node --test test/documentationGovernance.test.js`。
-- 下一步：后续工作从 S79 或新的明确小步骤开题，并继续沿用安全 projection、proposal-only、服务器裁决、Mock/no-key fallback、资源预算和可访问性守门。
+- 验证：通过 `npm run check:docs-governance` 与 `node --test test/documentationGovernance.test.js`。
