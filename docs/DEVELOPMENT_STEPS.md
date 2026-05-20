@@ -2,7 +2,7 @@
 
 本文件是 Codex 当前维护的压缩活动路线图与进度台账。它只保留接手下一步所必需的治理规则、当前状态、最新验证口径和近期完成节点；已完成流水不在这里展开。
 
-需要追溯完整完成流水时阅读 [ACTIVITY_LEDGER_COMPLETED_ARCHIVE.md](ACTIVITY_LEDGER_COMPLETED_ARCHIVE.md)。需要追溯专题实现时优先阅读对应归档：
+需要追溯已迁出的完成流水时阅读 [ACTIVITY_LEDGER_COMPLETED_ARCHIVE.md](ACTIVITY_LEDGER_COMPLETED_ARCHIVE.md) 的压缩索引；该文件不再保存完整逐日长流水，专题细节优先阅读对应归档和 Git history：
 
 - 第一阶段：[PHASE_ONE_ROADMAP_ARCHIVE.md](PHASE_ONE_ROADMAP_ARCHIVE.md)，验收见 [PHASE_ONE_ACCEPTANCE.md](PHASE_ONE_ACCEPTANCE.md)。
 - 第二阶段：[PHASE_TWO_ROADMAP_ARCHIVE.md](PHASE_TWO_ROADMAP_ARCHIVE.md)，验收见 [PHASE_TWO_ACCEPTANCE.md](PHASE_TWO_ACCEPTANCE.md)。
@@ -144,6 +144,7 @@
 | S80 | DONE | Codex | 服务端全局 AI 设置与保存反馈 | 已完成 `GET/POST /api/ai/settings/global`、本地运行时设置文件、全局优先 AI route policy、共享 11 类任务矩阵面板和旧 session 设置入口兼容。 |
 | PLAN-S81-S85 | DONE | Codex | NPC 与储物系统规划 | 新增 [NPC_INVENTORY_SYSTEM_ROADMAP.md](NPC_INVENTORY_SYSTEM_ROADMAP.md)，把用户需求和 Codex 建议固化为 S81-S85 可施工路线图，并把前后端分离/大步骤拆分写入治理规范。 |
 | DOCS-2026-05-20 | DONE | Codex | 压缩上下文与台账，强化完整实现规范 | 本轮压缩 `docs/SHARED_CONTEXT.md` 与本文件，新增“不要最小实现点/最小改动点，追求完整丰富实现”的受保护开发规范，并同步 brief、AGENTS 与治理检查脚本。 |
+| DOCS-LEDGER-ARCHIVE-COMPRESSION | DONE | Codex | 再压缩已完成活动台账归档 | 已把 [ACTIVITY_LEDGER_COMPLETED_ARCHIVE.md](ACTIVITY_LEDGER_COMPLETED_ARCHIVE.md) 从旧长流水压缩为完成阶段索引、S73-S78 锚点、验证锚点和维护规则；专题细节回到专题归档与 Git history。 |
 
 ## 5. 最新状态
 
@@ -243,6 +244,15 @@ S84 前端专项额外验收入口：
 - `npm test`
 
 ## 7. 近期进度记录
+
+### 2026-05-20：再压缩已完成活动台账归档
+
+- 范围：按用户要求把 [ACTIVITY_LEDGER_COMPLETED_ARCHIVE.md](ACTIVITY_LEDGER_COMPLETED_ARCHIVE.md) 从约 98 KB 的旧活动台账复制件压缩为短索引，移除重复治理段落、S73-S77 长表和逐日实现流水，只保留完成阶段索引、S73-S78 压缩锚点、验证锚点、稳定边界和后续维护规则。
+- 同步：本文件顶部追溯口径改为“压缩索引”，路线图表新增 `DOCS-LEDGER-ARCHIVE-COMPRESSION` 完成项；`docs/SHARED_CONTEXT.md` 记录本次纯文档维护、跳过子代理复审和验证结果。
+- 边界：纯文档维护，不改运行时代码、后端 API、provider schema、SQLite schema、存档格式、AI 权限、素材 manifest、服务器 resolver、canonical state、README 或产品行为。
+- 子代理：低风险纯文档改动，按项目规则跳过提交前子代理复审；已在共享上下文记录。
+- 验证：本轮通过 `npm run check:docs-governance`、`node --test test/documentationGovernance.test.js` 和 `git diff --check`。
+- 提交：随本轮 coherent docs change 提交，最终 hash 见 Git 历史和本次回复。
 
 ### 2026-05-20：完成 S85.3-S85.6 NPC 主动性、礼法扩展位、总验收与归档
 
