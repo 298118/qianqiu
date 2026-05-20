@@ -2890,6 +2890,41 @@ button:disabled {
   padding: 9px 10px;
 }
 
+.examPhaseFeedback {
+  display: grid;
+  gap: 10px;
+}
+
+.examPhaseFeedback p {
+  margin: 0;
+}
+
+.examFeedbackActions {
+  display: grid;
+  gap: 8px;
+}
+
+.examFeedbackActionItem {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 8px;
+  border-top: 1px solid rgba(84, 60, 43, 0.16);
+  padding-top: 8px;
+}
+
+.examFeedbackActionItem span {
+  min-width: 0;
+  color: #44372a;
+  font-size: 0.92rem;
+  line-height: 1.45;
+}
+
+.examFeedbackBoundary {
+  border-left: 3px solid rgba(142, 47, 39, 0.36);
+  padding-left: 9px;
+}
+
 .examActionForm {
   margin-top: 0;
 }

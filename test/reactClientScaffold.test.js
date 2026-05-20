@@ -761,6 +761,10 @@ test("S76.7 exam page renders immersive safe exam flow without widening authorit
   assert.match(examPageSource, /examQuestionText/);
   assert.match(examPageSource, /写作区字数与草稿状态/);
   assert.match(examPageSource, /虚拟考生、阅卷官与榜单只显示安全占位/);
+  assert.match(examPageSource, /入场后反馈/);
+  assert.match(examPageSource, /phaseFeedback/);
+  assert.match(examPageSource, /setActionDraft/);
+  assert.match(examPageSource, /source: "exam", targetPage: "game"/);
   assert.match(examPageSource, /交卷、评分、舞弊、放榜、晋级和授官都由服务器裁决/);
   assert.match(examPageSource, /requestExamQuestion\(sessionId, level\)/);
   assert.match(examPageSource, /progressExam\(sessionId, examId, sceneAction\.trim\(\)\)/);
@@ -768,7 +772,9 @@ test("S76.7 exam page renders immersive safe exam flow without widening authorit
   assert.match(styleSource, /examFullScreen/);
   assert.match(styleSource, /examHero/);
   assert.match(styleSource, /examSealSubmitButton/);
-  assert.match(apiTypesSource, /examProcedureView\?: JsonObject/);
+  assert.match(apiTypesSource, /examProcedureView\?: ExamProcedureView/);
+  assert.match(apiTypesSource, /export type ExamPhaseFeedbackView/);
+  assert.match(apiTypesSource, /phaseFeedback\?: ExamPhaseFeedbackView/);
   assert.match(apiTypesSource, /examinerPanelView\?: JsonObject/);
   assert.match(apiTypesSource, /examRivalView\?: JsonObject/);
   assert.match(apiTypesSource, /examHonorView\?: JsonObject/);

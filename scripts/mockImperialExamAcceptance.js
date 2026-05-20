@@ -210,6 +210,26 @@ async function runExamLevel(baseUrl, sessionId, level) {
   if (!question.payload.studyProfileView?.examPreparation?.label) {
     throw new Error(`${level} question missing study profile exam preparation.`);
   }
+  if (!question.payload.examProcedureView?.phaseFeedback?.publicSummary) {
+    throw new Error(`${level} question missing exam phase feedback.`);
+  }
+
+  const progress = await postJson(`${baseUrl}/api/exam/progress`, {
+    sessionId,
+    examId: question.payload.examId,
+    action: "审题拟纲，先稳题眼。"
+  });
+  assertOk(progress.response, `${level} progress`);
+  if (!progress.payload.examProcedureView?.phaseFeedback?.publicSummary) {
+    throw new Error(`${level} progress missing exam phase feedback.`);
+  }
+  if (!progress.payload.examProcedureView?.phaseFeedback?.visibleNextActions?.length) {
+    throw new Error(`${level} progress missing phase feedback actions.`);
+  }
+  assertNoUnsafeVisibleText(`${level} progress S88.3 phase feedback`, {
+    examProcedureView: progress.payload.examProcedureView,
+    worldTick: progress.payload.worldTick
+  });
 
   const submit = await postJson(`${baseUrl}/api/exam/submit`, {
     sessionId,

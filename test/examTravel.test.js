@@ -228,6 +228,30 @@ test("exam entry preparation public payload sanitizes polluted legacy preparatio
     promotionRank: "秀才",
     readiness: { ready: true, missing: [] },
     status: "writing",
+    sceneTime: {
+      type: "exam",
+      phase: "outline",
+      phaseLabel: "拟纲",
+      turnCount: 1,
+      elapsedHours: 2,
+      lastInput: "statePatch data/sessions/legacy.json",
+      startedAt: {
+        year: 1644,
+        month: 1,
+        tenDayPeriod: 1,
+        turnCount: 0,
+        label: "rawProvider /home/scene",
+        rawProviderPayload: "forged"
+      },
+      updatedAt: {
+        year: 1644,
+        month: 1,
+        tenDayPeriod: 1,
+        turnCount: 1,
+        label: "data/sessions/scene.json"
+      }
+    },
+    scenePhase: "outline",
     examCalendar: {
       isOpen: true,
       providerResponse: { accepted: true },
@@ -276,6 +300,25 @@ test("exam entry preparation public payload sanitizes polluted legacy preparatio
         cellSummary: "号舍已定。",
         visibleNextActions: ["data/sessions/legacy.json", "先审题。"]
       }
+    },
+    procedure: {
+      level: "child_exam",
+      examName: "童试",
+      phase: "drafting",
+      phaseLabel: "草稿成文",
+      preparationPressure: {
+        score: 70,
+        label: "吃紧",
+        summary: "rawProvider sk-procedure-secret"
+      },
+      phaseFeedback: {
+        phase: "drafting",
+        publicSummary: "rawProvider sk-procedure-secret /home/procedure prompt",
+        environmentSummary: "hiddenNotes C:\\secret\\exam.json",
+        actionEcho: "statePatch data/sessions/legacy.json",
+        riskNotes: ["OPENAI_API_KEY /mnt/e/secret", "先稳题眼。"],
+        visibleNextActions: ["provider payload", "补足经义依据"]
+      }
     }
   };
   t.after(() => removeSessionFile(worldState.sessionId));
@@ -297,14 +340,23 @@ test("exam entry preparation public payload sanitizes polluted legacy preparatio
   assert.equal(payload.examCalendar.raw_provider_payload, undefined);
   assert.equal(payload.examCalendar.note, "");
   assert.equal(payload.entryPreparation.preparationPressure.rawProviderPayload, undefined);
+  assert.equal(payload.sceneTime.lastInput, undefined);
+  assert.equal(payload.sceneTime.startedAt.label, "");
+  assert.equal(payload.sceneTime.updatedAt.label, "");
+  assert.doesNotMatch(JSON.stringify(payload.sceneTime), /rawProvider|raw_provider|providerResponse|hiddenNotes|data\/sessions|\/home\//);
   assert.match(payload.entryPreparation.preparationPressure.summary, /服务器整理/);
   assert.match(payload.entryPreparation.entryFeedback.publicSummary, /服务器整理/);
   assert.doesNotMatch(JSON.stringify(payload.entryPreparation), /rawProvider|raw_provider|providerResponse|hiddenNotes|sk-legacy-secret|data\/sessions|\/mnt\/|\/home\//);
   assert.doesNotMatch(JSON.stringify(payload.examCalendar), /rawProvider|raw_provider|providerResponse|hiddenNotes|sk-legacy-secret|data\/sessions|\/mnt\/|\/home\//);
-  assert.doesNotMatch(JSON.stringify(payload.examProcedureView), /rawProvider|raw_provider|providerResponse|hiddenNotes|sk-legacy-secret|data\/sessions|\/mnt\/|\/home\//);
+  assert.doesNotMatch(JSON.stringify(payload.examProcedureView), /rawProvider|raw_provider|providerResponse|hiddenNotes|sk-(?:legacy|procedure)-secret|data\/sessions|\/mnt\/|\/home\/|C:\\/);
+  assert.equal(payload.examProcedureView.phaseFeedback.publicSummary, "提纲已入草稿，宜把首段题眼、承转和用典次序稳定下来。");
+  assert.equal(payload.examProcedureView.phaseFeedback.actionEcho, "");
+  assert.deepEqual(payload.examProcedureView.phaseFeedback.visibleNextActions, ["补足经义依据", "检查是否偏题", "保留誊清时间"]);
   assert.equal(payload.worldState.examCalendar.providerResponse, undefined);
   assert.equal(payload.worldState.examCalendar.raw_provider_payload, undefined);
-  assert.doesNotMatch(JSON.stringify(payload.worldState.activeExam), /rawProvider|raw_provider|providerResponse|hiddenNotes|sk-legacy-secret|data\/sessions|\/mnt\/|\/home\//);
+  assert.equal(payload.worldState.activeExam.procedure.phaseFeedback.publicSummary, "提纲已入草稿，宜把首段题眼、承转和用典次序稳定下来。");
+  assert.equal(payload.worldState.activeExam.procedure.phaseFeedback.actionEcho, "");
+  assert.doesNotMatch(JSON.stringify(payload.worldState.activeExam), /rawProvider|raw_provider|providerResponse|hiddenNotes|sk-(?:legacy|procedure)-secret|data\/sessions|\/mnt\/|\/home\/|C:\\/);
   assert.doesNotMatch(JSON.stringify(payload.worldState.examCalendar), /rawProvider|raw_provider|providerResponse|hiddenNotes|sk-test|data\/sessions|\/mnt\/|\/home\//);
 });
 
@@ -447,6 +499,9 @@ test("exam progress advances only the local exam scene phase", async (t) => {
   assert.equal(progress.payload.sceneTime.phase, "outline");
   assert.equal(progress.payload.examScene.phase, "outline");
   assert.equal(progress.payload.examProcedureView.phase, "drafting");
+  assert.equal(progress.payload.examProcedureView.phaseFeedback.phase, "drafting");
+  assert.match(progress.payload.examProcedureView.phaseFeedback.publicSummary, /提纲已入草稿/);
+  assert.match(progress.payload.examProcedureView.phaseFeedback.actionEcho, /拟纲定章法/);
   assert.equal(progress.payload.examProcedureView.rollLifecycle.draftRoll, true);
   assert.equal(progress.payload.worldTick.cadence, "scene");
   assert.equal(progress.payload.worldTick.completedMonth, false);
@@ -455,6 +510,8 @@ test("exam progress advances only the local exam scene phase", async (t) => {
   assert.equal(progress.payload.worldState.tenDayPeriod, 3);
   assert.equal(progress.payload.worldState.turnCount, 5);
   assert.equal(progress.payload.worldState.activeExam.sceneTime.turnCount, 1);
+  assert.equal(progress.payload.worldState.activeExam.procedure.phaseFeedback.phase, "drafting");
+  assert.doesNotMatch(JSON.stringify(progress.payload.worldState.activeExam.procedure.phaseFeedback), /rawProvider|provider payload|hiddenNotes|OPENAI_API_KEY|data\/sessions|\/mnt\/|\/home\//);
   assert.equal(progress.payload.worldGeographyView.schemaVersion, 1);
 
   const saved = await readSession(worldState.sessionId);

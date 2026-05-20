@@ -948,6 +948,8 @@ async function assertExamFullScreen(page, sessionId, screenshotsDir, screenshotN
       hasEssay: Boolean(textarea),
       hasDraftBar: Boolean(document.querySelector(".examDraftBar")),
       hasPeerPanel: text.includes("虚拟考生、阅卷官与榜单只显示安全占位"),
+      hasPhaseFeedback: text.includes("入场后反馈"),
+      hasFeedbackDraftButton: [...document.querySelectorAll("button")].some((button) => (button.textContent || "").trim() === "拟行动"),
       hasSubmit: [...document.querySelectorAll("button")].some((button) => (button.textContent || "").trim() === "交卷" && !button.disabled),
       forbiddenText: (document.body.innerText || "").match(/\/api\/game\/state|\/api\/dev\/session-diagnostics|provider payload|raw audit|hiddenNotes|OPENAI_API_KEY|data\/sessions|完整提示词|本地路径|密钥|sk-[a-z0-9_-]{6,}|[a-z]:[\\/]/gi) || [],
       hiddenLeaks: tokens.filter((token) => (document.body.innerText || "").includes(token))
@@ -963,11 +965,25 @@ async function assertExamFullScreen(page, sessionId, screenshotsDir, screenshotN
   if (!examSnapshot.hasEssay) afterFailures.push("missing essay textarea");
   if (!examSnapshot.hasDraftBar) afterFailures.push("missing draft status bar");
   if (!examSnapshot.hasPeerPanel) afterFailures.push("missing safe virtual candidate panel");
+  if (!examSnapshot.hasPhaseFeedback) afterFailures.push("missing server-owned phase feedback");
+  if (!examSnapshot.hasFeedbackDraftButton) afterFailures.push("missing phase feedback draft button");
   if (!examSnapshot.hasSubmit) afterFailures.push("missing enabled submit button");
   if (examSnapshot.forbiddenText.length) afterFailures.push(`unsafe text leaked: ${examSnapshot.forbiddenText.join(", ")}`);
   if (examSnapshot.hiddenLeaks.length) afterFailures.push(`hidden text leaked: ${examSnapshot.hiddenLeaks.join(", ")}`);
   if (afterFailures.length) {
     throw new Error(`S76.7 exam page active smoke failed: ${afterFailures.join("; ")}`);
+  }
+
+  const examRequestCountBeforeDraft = examRequests.length;
+  page.on("request", onRequest);
+  await page.getByRole("button", { name: /拟行动：/ }).first().click();
+  await page.waitForTimeout(250);
+  page.off("request", onRequest);
+  if (turnRequests.length) {
+    throw new Error(`S76.7 phase feedback draft submitted a game turn: ${turnRequests.join(", ")}`);
+  }
+  if (examRequests.length !== examRequestCountBeforeDraft) {
+    throw new Error(`S76.7 phase feedback draft called exam API: ${examRequests.join(", ")}`);
   }
 
   await assertNoSafetyPollutionOnPage(page, `S77.4 ${screenshotName}`);

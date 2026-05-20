@@ -72,6 +72,9 @@ test("exam procedure view maps active exam into public procedure phases", () => 
   assert.equal(view.sponsorship.status, "ready");
   assert.equal(view.preparationPressure.label, "吃紧");
   assert.equal(view.entryFeedback.pressureLabel, "吃紧");
+  assert.equal(view.phaseFeedback.phase, "question_release");
+  assert.match(view.phaseFeedback.publicSummary, /题纸既发/);
+  assert.ok(view.phaseFeedback.visibleNextActions.some((action) => /审题|先审题/.test(action)));
   assert.match(view.entrySearch.publicSummary, /备考压力/);
   assert.equal(view.rollLifecycle.sealed, false);
 
@@ -80,6 +83,9 @@ test("exam procedure view maps active exam into public procedure phases", () => 
   view = buildExamProcedureView(worldState);
 
   assert.equal(view.phase, "drafting");
+  assert.equal(view.phaseFeedback.phase, "drafting");
+  assert.match(view.phaseFeedback.actionEcho, /作答成文/);
+  assert.ok(view.phaseFeedback.riskNotes.some((note) => /吃紧|心神|压力/.test(note)));
   assert.equal(view.rollLifecycle.draftRoll, true);
   assert.equal(view.rollLifecycle.sealed, false);
   assert.equal(worldState.turnCount, 0);
@@ -152,6 +158,46 @@ test("completed exam procedure archives roll lifecycle and redacts hidden tokens
   assert.doesNotMatch(JSON.stringify(view), /hiddenNotes|raw provider|rawProvider|prompt|sk-procedure-secret|data\/sessions|OPENAI_API_KEY|\/mnt\/|\/home\/|\/tmp\//);
   assert.equal(promptSummary.rollLifecycle.sealed, true);
   assert.equal(promptSummary.preparationPressure.label, "吃紧");
+  assert.equal(promptSummary.phaseFeedback.phase, "closed");
+  assert.match(promptSummary.phaseFeedback.publicSummary, /归档/);
   assert.doesNotMatch(JSON.stringify(promptSummary), /hiddenNotes|raw provider|rawProvider|sk-procedure-secret|data\/sessions|OPENAI_API_KEY|\/mnt\/|\/home\/|\/tmp\//);
   assert.match(promptSummary.authorityBoundary, /不得要求或推断弥封身份映射/);
+});
+
+test("exam procedure phase feedback sanitizes legacy polluted snapshots", () => {
+  const view = buildExamProcedureView({}, {
+    procedure: {
+      level: "provincial_exam",
+      examName: "乡试",
+      phase: "drafting",
+      phaseFeedback: {
+        phase: "closed",
+        phaseLabel: "归档",
+        pressureScore: 99,
+        pressureLabel: "危急",
+        publicSummary: "rawProvider sk-procedure-secret /home/procedure prompt",
+        environmentSummary: "hiddenNotes C:\\secret\\exam.json",
+        actionEcho: "statePatch data/sessions/legacy.json",
+        riskNotes: ["OPENAI_API_KEY /mnt/e/secret", "先稳题眼。"],
+        visibleNextActions: ["provider payload", "补足经义依据"]
+      },
+      preparationPressure: {
+        score: 76,
+        label: "危急",
+        summary: "临场压力由服务器整理。"
+      },
+      visibleNextActions: ["校读草稿"]
+    }
+  });
+  const promptSummary = summarizeExamProcedureForPrompt({ activeExam: { procedure: view } });
+
+  assert.equal(view.phaseFeedback.phase, "drafting");
+  assert.equal(view.phaseFeedback.publicSummary, "提纲已入草稿，宜把首段题眼、承转和用典次序稳定下来。");
+  assert.equal(view.phaseFeedback.environmentSummary, "号舍疲劳与备考压力会影响文气，但只形成公开风险提示，不即时改分。");
+  assert.equal(view.phaseFeedback.actionEcho, "");
+  assert.ok(view.phaseFeedback.riskNotes.some((note) => /危急/.test(note)));
+  assert.deepEqual(view.phaseFeedback.visibleNextActions, ["补足经义依据", "检查是否偏题", "保留誊清时间"]);
+  assert.doesNotMatch(JSON.stringify(view), /hiddenNotes|rawProvider|provider payload|prompt|sk-procedure-secret|data\/sessions|OPENAI_API_KEY|\/mnt\/|\/home\/|C:\\/);
+  assert.equal(promptSummary.phaseFeedback.phase, "drafting");
+  assert.doesNotMatch(JSON.stringify(promptSummary), /hiddenNotes|rawProvider|provider payload|sk-procedure-secret|data\/sessions|OPENAI_API_KEY|\/mnt\/|\/home\/|C:\\/);
 });

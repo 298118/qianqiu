@@ -5,6 +5,8 @@ const {
   sanitizeEntryPreparationForView
 } = require("./examTravel");
 const { sanitizeExamAftermathView } = require("./examAftermath");
+const { buildExamProcedureView } = require("./examProcedure");
+const { sanitizeExamSceneTimeForView } = require("./examSceneTime");
 
 function cloneJson(value) {
   return JSON.parse(JSON.stringify(value ?? null));
@@ -99,6 +101,16 @@ function stripInternalClientWorldStateFields(value) {
   return output;
 }
 
+function sanitizeExamProcedureSnapshot(procedure = null, activeExam = {}) {
+  if (!isPlainObject(procedure)) return procedure;
+  return buildExamProcedureView({
+    activeExam: {
+      ...activeExam,
+      procedure
+    }
+  }, { procedure });
+}
+
 function sanitizeExamPreparationSnapshots(clientState) {
   if (clientState.examCalendar) {
     clientState.examCalendar = sanitizeExamPreparationCalendarForView(clientState.examCalendar);
@@ -109,6 +121,21 @@ function sanitizeExamPreparationSnapshots(clientState) {
     }
     if (clientState.activeExam.examCalendar) {
       clientState.activeExam.examCalendar = sanitizeExamPreparationCalendarForView(clientState.activeExam.examCalendar);
+    }
+    if (clientState.activeExam.sceneTime) {
+      clientState.activeExam.sceneTime = sanitizeExamSceneTimeForView(clientState.activeExam.sceneTime);
+    }
+    if (clientState.activeExam.procedure) {
+      clientState.activeExam.procedure = sanitizeExamProcedureSnapshot(
+        clientState.activeExam.procedure,
+        clientState.activeExam
+      );
+    }
+    if (clientState.activeExam.examProcedureView) {
+      clientState.activeExam.examProcedureView = sanitizeExamProcedureSnapshot(
+        clientState.activeExam.examProcedureView,
+        clientState.activeExam
+      );
     }
   }
   if (isPlainObject(clientState.player) && Array.isArray(clientState.player.examHistory)) {
@@ -123,6 +150,22 @@ function sanitizeExamPreparationSnapshots(clientState) {
       }
       if (entry.examAftermath) {
         output.examAftermath = sanitizeExamAftermathView(entry.examAftermath);
+      }
+      if (entry.sceneTime) {
+        output.sceneTime = sanitizeExamSceneTimeForView(entry.sceneTime);
+      }
+      if (entry.examStartedAt) {
+        output.examStartedAt = sanitizeExamSceneTimeForView({ startedAt: entry.examStartedAt }).startedAt;
+      }
+      if (entry.examSubmittedAt) {
+        output.examSubmittedAt = sanitizeExamSceneTimeForView({ updatedAt: entry.examSubmittedAt }).updatedAt;
+      }
+      if (entry.examProcedure) {
+        output.examProcedure = sanitizeExamProcedureSnapshot(entry.examProcedure, {
+          level: entry.level,
+          examName: entry.examName,
+          sceneTime: entry.sceneTime
+        });
       }
       return output;
     });

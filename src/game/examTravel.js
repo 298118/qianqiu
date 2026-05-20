@@ -39,7 +39,7 @@ const TRAVEL_PLANS = {
 const PLAYER_PATCH_KEYS = ["gold", "health", "mentality", "adaptability", "reputation"];
 
 const UNSAFE_PREPARATION_TEXT_PATTERN =
-  /(SEALED_[A-Z0-9_]+|sealed[_ -]?mapping|hiddenNotes|hidden_notes|hiddenIntent|hidden_intent|raw[_ -]?(?:provider|prompt|audit|ledger|table)|provider proposal|prompt(?:Text|_text)?|prompt_retrieval_index|event_log|world_sessions|OPENAI_API_KEY|DEEPSEEK_API_KEY|MIMO_API_KEY|ANTHROPIC_API_KEY|api[_ -]?key|sk-[A-Za-z0-9_-]{4,}|tp-[A-Za-z0-9_-]{4,}|data[\\/](?:sessions|audit)|[A-Za-z]:[\\/]|\/mnt\/|\/home\/|\/tmp\/)/i;
+  /(SEALED_[A-Z0-9_]+|sealed[_ -]?mapping|hiddenNotes|hidden_notes|hiddenIntent|hidden_intent|raw[_ -]?(?:provider|prompt|audit|ledger|table)|provider[_ -]?(?:payload|response|request|raw|proposal)|provider proposal|prompt(?:Text|_text)?|prompt_retrieval_index|event_log|world_sessions|statePatch|state_patch|worldState|world_state|OPENAI_API_KEY|DEEPSEEK_API_KEY|MIMO_API_KEY|ANTHROPIC_API_KEY|api[_ -]?key|sk-[A-Za-z0-9_-]{4,}|tp-[A-Za-z0-9_-]{4,}|data[\\/](?:sessions|audit)|[A-Za-z]:[\\/]|\/mnt\/|\/home\/|\/tmp\/)/i;
 function isUnsafePreparationKey(key) {
   const normalized = String(key || "").replace(/[^a-zA-Z0-9]/g, "").toLowerCase();
   if (!normalized) return false;

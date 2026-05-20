@@ -1,4 +1,5 @@
 const { formatYearMonthPeriod, normalizeCalendar } = require("./time");
+const { cleanPreparationText } = require("./examTravel");
 
 const EXAM_SCENE_PHASES = Object.freeze([
   { key: "entry", label: "入场", elapsedHours: 0 },
@@ -170,11 +171,48 @@ function buildExamSceneFeedback(worldState, sceneTime, event) {
   };
 }
 
+function clampPublicNumber(value, min, max, fallback) {
+  const number = Number(value);
+  if (!Number.isFinite(number)) return fallback;
+  return Math.max(min, Math.min(max, Math.round(number)));
+}
+
+function sanitizeSceneDateStampForView(stamp = null) {
+  if (!isPlainObject(stamp)) return null;
+  return {
+    dynasty: cleanPreparationText(stamp.dynasty, "明", 24),
+    year: clampPublicNumber(stamp.year, 0, 10000, 1644),
+    month: clampPublicNumber(stamp.month, 1, 12, 1),
+    tenDayPeriod: clampPublicNumber(stamp.tenDayPeriod, 1, 3, 1),
+    turnCount: clampPublicNumber(stamp.turnCount, 0, 1000000, 0),
+    label: cleanPreparationText(stamp.label, "", 80)
+  };
+}
+
+function sanitizeExamSceneTimeForView(sceneTime = null) {
+  if (!isPlainObject(sceneTime)) return null;
+  const output = {
+    type: "exam",
+    phase: cleanPreparationText(sceneTime.phase, "entry", 40),
+    phaseLabel: cleanPreparationText(sceneTime.phaseLabel, "入场", 40),
+    turnCount: clampPublicNumber(sceneTime.turnCount, 0, 1000000, 0),
+    elapsedHours: clampPublicNumber(sceneTime.elapsedHours, 0, 240, 0),
+    startedAt: sanitizeSceneDateStampForView(sceneTime.startedAt),
+    updatedAt: sanitizeSceneDateStampForView(sceneTime.updatedAt)
+  };
+  const safeInput = cleanPreparationText(sceneTime.lastInput, "", 120);
+  if (safeInput) {
+    output.lastInput = safeInput;
+  }
+  return output;
+}
+
 module.exports = {
   EXAM_SCENE_PHASES,
   advanceExamScenePhase,
   attachExamSceneTime,
   buildExamSceneFeedback,
   createGlobalDateStamp,
-  markExamSceneSubmitted
+  markExamSceneSubmitted,
+  sanitizeExamSceneTimeForView
 };

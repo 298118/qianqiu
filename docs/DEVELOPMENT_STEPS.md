@@ -114,7 +114,7 @@
 | S88.0 | DONE | 系统打磨路线图与边界复核 | 已新增 `docs/QIANQIU_POLISHING_ROADMAP.md`，把用户要求的全面打磨拆为 S88.1-S88.12 小步骤，并确认当前工作树仅有未跟踪 `npm-start.log` / `npm-start.err.log`，不纳入本轮提交。 |
 | S88.1 | DONE | AI remote helper/provider public-safe envelope | 已把 `remoteHelpers` 的 prompt task、provider requester、validated payload 纳入 `npm run typecheck:server`，并为 AI connection public response、provider fallback 日志、诊断错误和玩家/审计安全出口增加 raw provider/prompt/key/path 脱敏与 forbidden field contract。 |
 | S88.2 | DONE | SQLite derived row builder 类型边界 | 已覆盖 `SqliteWorldSessionRow`、`SqlitePromptRetrievalRow`、`SqliteSafeSearchIndexRow`、prompt/safe repair status、maintenance safe diagnostics 和首批 row builder JSDoc/TS contract；派生表继续只从 `world_sessions.world_state_json` 单向修复。 |
-| S88.3 | IN_PROGRESS | 书生主线补强一轮 | 已完成入仕首月差事、备考压力/入场反馈、阅卷放榜同年座师过渡、读书计划深化四个切片；后续继续补考试入场后反馈。 |
+| S88.3 | DONE | 书生主线补强一轮 | 已完成入仕首月差事、备考压力/入场反馈、阅卷放榜同年座师过渡、读书计划深化、考试入场后反馈五个切片；完整书生路径继续作为后续验收入口。 |
 | S88.4 | TODO | 入仕官员首轮官场体验 | 补官方履历、差遣、考成、上官同僚、奏折回执和首月月报闭环。 |
 | S88.5 | TODO | 六身份循环矩阵 | 为皇帝、大臣、将领、地方官、书生、入仕官员补差异化事务、风险、待办和身份面板。 |
 | S88.6 | TODO | 官场与世界后果追踪 | 奏折、政令、军务、刑名、财政、外交、地方事务、任免、朝议、月报和长期事件统一增加可追踪后果 refs。 |
@@ -127,7 +127,7 @@
 
 ## 5. 最新状态
 
-- S88 当前基线：全面系统打磨专项已启动，规划见 [QIANQIU_POLISHING_ROADMAP.md](QIANQIU_POLISHING_ROADMAP.md)。S88.1 已完成 AI remote helper/provider public-safe envelope。S88.2 已完成 SQLite derived row builder 类型边界：`src/contracts/serverContracts.ts` 固定 world session、prompt retrieval、safe search、repair status 和 safe diagnostics 类型，`sqlitePromptRetrievalTables.js`、`sqliteSafeSearchTables.js`、`sqliteMaintenance.js` 纳入 `npm run typecheck:server`，继续保持派生表只从 `world_sessions.world_state_json` 单向修复。S88.3 已推进四个切片：殿试授官后会按服务器授官轨迹生成首月官场差事；考试取题后会按盘费、路途、保结、准考缺口、学业维度、体力心态和读书计划派生安全备考压力与入场反馈，并进入 public `entryPreparation`、`examProcedureView`、`studyProfileView`、书生面板和科举页；放榜后会由 `examAftermathView` 从服务器定榜、科名荣誉、公开同年座师网络和授官轨迹整理公开过渡摘要与草稿建议，皇榜页只读展示；读书计划现在由 `studyProfileView.nextPlan` 暴露服务器生成的三旬窗口、补弱强度、晨午暮日课、复盘节点、风险提示、首课草稿和权限边界，React 书生面板只读展示并只写行动草稿。下一步继续补考试入场后反馈。
+- S88 当前基线：全面系统打磨专项已启动，规划见 [QIANQIU_POLISHING_ROADMAP.md](QIANQIU_POLISHING_ROADMAP.md)。S88.1 已完成 AI remote helper/provider public-safe envelope。S88.2 已完成 SQLite derived row builder 类型边界：`src/contracts/serverContracts.ts` 固定 world session、prompt retrieval、safe search、repair status 和 safe diagnostics 类型，`sqlitePromptRetrievalTables.js`、`sqliteSafeSearchTables.js`、`sqliteMaintenance.js` 纳入 `npm run typecheck:server`，继续保持派生表只从 `world_sessions.world_state_json` 单向修复。S88.3 已完成五个切片：殿试授官后会按服务器授官轨迹生成首月官场差事；考试取题后会按盘费、路途、保结、准考缺口、学业维度、体力心态和读书计划派生安全备考压力与入场反馈，并进入 public `entryPreparation`、`examProcedureView`、`studyProfileView`、书生面板和科举页；放榜后会由 `examAftermathView` 从服务器定榜、科名荣誉、公开同年座师网络和授官轨迹整理公开过渡摘要与草稿建议，皇榜页只读展示；读书计划现在由 `studyProfileView.nextPlan` 暴露服务器生成的三旬窗口、补弱强度、晨午暮日课、复盘节点、风险提示、首课草稿和权限边界，React 书生面板只读展示并只写行动草稿；场内推进后 `examProcedureView.phaseFeedback` 会按 `sceneTime`、科场阶段、备考压力和公开行动摘要生成入场后反馈、风险提示和下一步草稿建议，兼容 `worldState` 会同步清洗旧流程快照和科场局部时间，React 科举页只读展示并只把“拟行动”写入本地行动草稿。下一步进入 S88.4 入仕官员首轮官场体验。
 - S87 当前基线：后端 route/API 响应类型覆盖已完成。`src/contracts/serverContracts.ts` 已覆盖 game/exam/AI/inventory/NPC/trade/delegation public response；`src/routes/routeResponses.js` 以局部 `@ts-check` helper 接入 `src/routes/game.js`、`src/routes/exam.js` 和 `src/routes/ai.js`，并在运行时拒绝 public `worldState` raw ledger key；大型 route 文件仍未 whole-file `@ts-check`，CommonJS 运行方式不变。
 - S86 当前基线：后端 TypeScript 渐进迁移首轮已完成。新增 `npm run typecheck:server`、`npm run build:server:probe`、`tsconfig.server-check.json`、`tsconfig.server-probe.json`、`src/contracts/serverContracts.ts` 和 `src/contracts/runtimeGuards.ts`；安全 projection、AI facade/route policy、session/storage 高风险模块已选择性 `@ts-check`。后端仍以 CommonJS JavaScript 运行，`.ts` 试点不改变 `npm start`，Rust 仍只作为未来有性能证据后的可选 CLI/WASM/离线工具评估。
 - S81-S84 当前基线：NPC、资产、储物、交易与委派首轮闭环已完成。后端已有 `assetLedger`、`inventoryLedger`、`npcRoster`、`npcInteractionLedger`、`tradeLedger`、`delegatedTaskLedger`、开局背景裁决、AI task/schema/prompt/provider fallback、JSON/SQLite 同步和 player-state 安全 view；React 已有“囊箧” route、人物 NPC 工作台、对话/交易/委派面板和开局裁决摘要。前端只消费安全 API/view，不裁决资源、价格、关系或任务结果。
@@ -139,10 +139,10 @@
 
 ## 6. 最近完整验证口径
 
-本轮 S88.3 读书计划深化切片验证口径：
+本轮 S88.3 考试入场后反馈切片验证口径：
 
-- `node --check src/game/studyProfileConfig.js && node --check src/game/studyProfile.js && node --check scripts/clientSmoke.js`
-- `node --test test/studyProfile.test.js test/examTravel.test.js`
+- `node --check src/game/examProcedureConfig.js && node --check src/game/examProcedure.js && node --check src/game/examSceneTime.js && node --check src/game/clientWorldState.js && node --check src/game/examTravel.js && node --check src/routes/exam.js && node --check scripts/mockImperialExamAcceptance.js && node --check scripts/clientSmoke.js`
+- `node --test test/examProcedure.test.js test/examTravel.test.js`
 - `node --test test/reactClientScaffold.test.js`
 - `npm run typecheck:server`
 - `npm run typecheck:client`
@@ -337,6 +337,16 @@ S84 前端专项额外验收入口：
 - 子代理：Sartre 只读梳理后端/API 接线，建议保持 `nextPlan` 为当前切片的 server-owned safe shape 并补污染回归；Jason 只读梳理前端和验证入口，建议在 `ScholarPanel` 接入日课/复盘/首课草稿并扩展 App fixture、client smoke 和 scaffold 断言。本轮实现已采纳。Sagan 提交前只读初审发现两个 P2：复审状态文档未回填、未跟踪 `npm-start.log` / `npm-start.err.log` 需要明确排除；本轮已回填文档并排除本地日志，Sagan 复核未发现新的 P0/P1/P2。
 - 提交：实现提交 `10e4e79f`；本次 hash 回填为低风险纯文档维护。
 - 下一步：继续 S88.3 的考试入场后反馈；保持完整 `scholar -> child_exam -> provincial_exam -> metropolitan_exam -> palace_exam -> official` smoke 为第一验收入口。
+
+### 2026-05-20：完成 S88.3 考试入场后反馈切片
+
+- 范围：延续 S88.3 书生主线补强的第五个 coherent slice。聚焦考试取题后的场内推进反馈：入场后不再只显示静态搜检/号舍摘要，而是由服务器随局部科场阶段生成玩家可读的审题、拟纲、草稿、誊清和归档反馈。
+- 实现：`src/game/examProcedureConfig.js` 新增 `EXAM_PROCEDURE_PHASE_FEEDBACK` 模板、风险 note cap 和权限边界；`src/game/examProcedure.js` 在 `initialize/advance/complete` 流程中派生 `phaseFeedback`，并把公开摘要、压力标签、行动回声、风险提示和下一步建议纳入 `examProcedureView` 与 prompt capped summary。`src/game/examSceneTime.js` 新增 `sanitizeExamSceneTimeForView()`，`src/routes/exam.js`、`src/game/clientWorldState.js` 会清洗直接 payload、`examScene`、兼容 `worldState.activeExam` 和考试历史里的科场局部时间 / 流程快照。React `ExamPage` 新增“入场后反馈”展示和“拟行动”按钮，按钮只写 `useUiStateStore` 行动草稿，不调用考试推进、交卷或普通回合接口。
+- 边界：`phaseFeedback` 只由服务器按 `sceneTime`、流程阶段、备考压力和公开行动摘要派生；AI、前端和 provider 不能写分数、处罚、榜次、晋级、弥封映射、官职或场内 canonical 结果。兼容 `worldState` 递归剥离 hidden/raw/provider/prompt/statePatch 字段，并对旧 `procedure.phaseFeedback`、`sceneTime.lastInput` 的 key/path/provider 污染回落到服务器默认文本。
+- 验证：按本文件“本轮 S88.3 考试入场后反馈切片验证口径”执行。
+- 子代理：Descartes 只读梳理后端/API 接线，建议把动态反馈放入 server-owned `examProcedureView.phaseFeedback` 而非 `entryPreparation.entryFeedback` 或 `worldTick`；Curie 只读梳理前端与验证入口，建议复用科举页右栏反馈区，并把建议按钮限制为 draft-only。本轮实现已采纳。Descartes 提交前只读复审发现两个 P2：`sceneTime` direct payload 清洗不是白名单重建、`sanitizePhaseFeedback()` 仍信任旧快照干净伪反馈；主代理已改为白名单重建 scene time/date stamp，并让 phase feedback 摘要、风险和建议从 `procedure.phase` 与服务器压力重算。复核又发现旧 `phaseFeedback.phase` 仍可选模板的 P2，已改为只从 `procedure.phase` 派生并补伪造 `closed` 回归；Descartes 最终复核未发现新的 P0/P1/P2。
+- 提交：待本轮提交后回填。
+- 下一步：进入 S88.4 入仕官员首轮官场体验；保持完整 `scholar -> child_exam -> provincial_exam -> metropolitan_exam -> palace_exam -> official` smoke 为第一验收入口。
 
 ### 2026-05-20：完成 S87.1-S87.7 route/API 响应类型覆盖
 

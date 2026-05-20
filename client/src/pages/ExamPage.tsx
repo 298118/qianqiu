@@ -5,6 +5,7 @@ import type { ExamLevel, JsonObject, JsonValue } from "../api";
 import { useAssetRegistry } from "../assets/useAssetRegistry";
 import { isRunnableSessionId } from "../routes/sessionId";
 import { useGameSessionStore } from "../state/gameSessionState";
+import { useUiStateStore } from "../state/uiState";
 
 const examLevels: { value: ExamLevel; label: string }[] = [
   { value: "child_exam", label: "童试" },
@@ -161,10 +162,25 @@ function getPreparationPressure(activeExam: unknown) {
 function getExamProcedure(activeExam: unknown) {
   const activeExamRecord = asRecord(activeExam);
   const procedure = asRecord(activeExamRecord.examProcedureView || activeExamRecord.examProcedure);
+  const phaseFeedback = asRecord(procedure.phaseFeedback);
   return {
     phaseLabel: safeExamText(procedure.phaseLabel, "候场", 32),
     entrySearch: asRecord(procedure.entrySearch),
     cell: asRecord(procedure.cell),
+    phaseFeedback: Object.keys(phaseFeedback).length ? {
+      phaseLabel: safeExamText(phaseFeedback.phaseLabel, safeExamText(procedure.phaseLabel, "候场", 32), 32),
+      pressureLabel: safeExamText(phaseFeedback.pressureLabel, "从容", 24),
+      publicSummary: safeExamText(phaseFeedback.publicSummary, "入场后反馈由服务器整理。", 132),
+      environmentSummary: safeExamText(phaseFeedback.environmentSummary, "场内反馈不替代服务器裁决。", 132),
+      actionEcho: safeExamText(phaseFeedback.actionEcho, "", 72),
+      riskNotes: asArray(phaseFeedback.riskNotes).slice(0, 3).map((item) => safeExamText(item, "", 88)).filter(Boolean),
+      visibleNextActions: asArray(phaseFeedback.visibleNextActions).slice(0, 3).map((item) => safeExamText(item, "", 72)).filter(Boolean),
+      authorityBoundary: safeExamText(
+        phaseFeedback.authorityBoundary,
+        "入场后反馈由服务器派生；前端只读展示或写草稿。",
+        132
+      )
+    } : null,
     incidents: asArray(procedure.incidents).slice(-4).map((item, index) => {
       const incident = asRecord(item);
       return {
@@ -185,6 +201,7 @@ export function ExamPage() {
   const requestExamQuestion = useGameSessionStore((state) => state.requestExamQuestion);
   const progressExam = useGameSessionStore((state) => state.progressExam);
   const submitExam = useGameSessionStore((state) => state.submitExam);
+  const setActionDraft = useUiStateStore((state) => state.setActionDraft);
   const activeExam = useGameSessionStore((state) => state.activeExam);
   const lastExamResult = useGameSessionStore((state) => state.lastExamResult);
   const status = useGameSessionStore((state) => state.status);
@@ -241,6 +258,10 @@ export function ExamPage() {
       await submitExam(sessionId, examId, essay.trim());
     } catch {
     }
+  }
+
+  function handleFeedbackDraft(action: string) {
+    setActionDraft({ source: "exam", targetPage: "game", text: action });
   }
 
   return (
@@ -353,6 +374,9 @@ export function ExamPage() {
               {activeExamForSession ? (
                 <li>{safeExamText(procedure.cell.publicSummary, "号舍已定，按题拟纲。", 112)}</li>
               ) : null}
+              {activeExamForSession && procedure.phaseFeedback ? (
+                <li>入场后反馈：{procedure.phaseFeedback.publicSummary}</li>
+              ) : null}
               <li>近次行动：{safeSceneActionPreview}</li>
               <li>{draftState}</li>
             </ul>
@@ -395,14 +419,50 @@ export function ExamPage() {
             <p>{latestSubmitForSession?.score ? `${safeRecentExamName} 已有评定，可入皇榜细看。` : "尚无本案卷交卷评定。"}</p>
           </section>
 
-          {procedure.incidents.length ? (
-            <section className="examRecordPanel" aria-label="科场事故摘要">
-              <p className="eyebrow">科场反馈</p>
-              <ul className="examRecordList">
-                {procedure.incidents.map((incident) => (
-                  <li key={incident.id}>{incident.label}：{incident.summary}</li>
-                ))}
-              </ul>
+          {procedure.phaseFeedback || procedure.incidents.length ? (
+            <section className="examRecordPanel" aria-label="入场后反馈">
+              <p className="eyebrow">入场后反馈</p>
+              {procedure.phaseFeedback ? (
+                <div className="examPhaseFeedback">
+                  <p>{procedure.phaseFeedback.phaseLabel}：{procedure.phaseFeedback.publicSummary}</p>
+                  <p>{procedure.phaseFeedback.environmentSummary}</p>
+                  {procedure.phaseFeedback.actionEcho ? (
+                    <p>本步行动：{procedure.phaseFeedback.actionEcho}</p>
+                  ) : null}
+                  {procedure.phaseFeedback.riskNotes.length ? (
+                    <ul className="examRecordList">
+                      {procedure.phaseFeedback.riskNotes.map((note) => (
+                        <li key={note}>{note}</li>
+                      ))}
+                    </ul>
+                  ) : null}
+                  {procedure.phaseFeedback.visibleNextActions.length ? (
+                    <div className="examFeedbackActions" aria-label="入场后反馈行动草稿">
+                      {procedure.phaseFeedback.visibleNextActions.map((action) => (
+                        <div className="examFeedbackActionItem" key={action}>
+                          <span>{action}</span>
+                          <button
+                            type="button"
+                            className="paperLink"
+                            aria-label={`拟行动：${action}`}
+                            onClick={() => handleFeedbackDraft(action)}
+                          >
+                            拟行动
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  ) : null}
+                  <p className="examFeedbackBoundary">{procedure.phaseFeedback.authorityBoundary}</p>
+                </div>
+              ) : null}
+              {procedure.incidents.length ? (
+                <ul className="examRecordList">
+                  {procedure.incidents.map((incident) => (
+                    <li key={incident.id}>{incident.label}：{incident.summary}</li>
+                  ))}
+                </ul>
+              ) : null}
             </section>
           ) : null}
         </aside>

@@ -88,7 +88,8 @@ const {
   advanceExamScenePhase,
   attachExamSceneTime,
   buildExamSceneFeedback,
-  markExamSceneSubmitted
+  markExamSceneSubmitted,
+  sanitizeExamSceneTimeForView
 } = require("../game/examSceneTime");
 const {
   advanceExamProcedurePhase,
@@ -159,7 +160,7 @@ function toExamPayload(worldState) {
     readiness: activeExam.readiness,
     entryPreparation: entryPreparationView,
     examCalendar,
-    sceneTime: activeExam.sceneTime || null,
+    sceneTime: sanitizeExamSceneTimeForView(activeExam.sceneTime) || null,
     examCalendarView: buildExamCalendarView(worldState),
     examRivalView: buildExamRivalView(worldState),
     examProcedureView: buildExamProcedureView(worldState),
@@ -410,7 +411,7 @@ router.post("/progress", async (req, res, next) => {
       return defineExamProgressResponse({
         ...toExamPayload(worldState),
         narrative: scene.narrative,
-        examScene: scene.sceneTime,
+        examScene: sanitizeExamSceneTimeForView(scene.sceneTime),
         worldTick: buildExamSceneFeedback(worldState, scene.sceneTime, scene.event)
       });
     });
@@ -538,6 +539,7 @@ router.post("/submit", async (req, res, next) => {
         officialPostingsView: buildOfficialPostingsView(worldState)
       });
       const sceneTime = markExamSceneSubmitted(activeExam, worldState);
+      const sceneTimeView = sanitizeExamSceneTimeForView(sceneTime);
       const examProcedure = completeExamProcedure(activeExam, {
         score,
         authenticityCheck,
@@ -565,10 +567,10 @@ router.post("/submit", async (req, res, next) => {
         examQuestion: activeExam.examQuestion,
         entryPreparation: entryPreparationView,
         examCalendar,
-        sceneTime,
+        sceneTime: sceneTimeView,
         examProcedure: buildExamProcedureView(worldState, { procedure: examProcedure }),
-        examStartedAt: sceneTime.startedAt,
-        examSubmittedAt: sceneTime.updatedAt,
+        examStartedAt: sceneTimeView.startedAt,
+        examSubmittedAt: sceneTimeView.updatedAt,
         essay: trimmedEssay,
         score,
         scoreBeforeExaminerReview,
@@ -637,9 +639,9 @@ router.post("/submit", async (req, res, next) => {
         essay: trimmedEssay,
         entryPreparation: entryPreparationView,
         examCalendar,
-        sceneTime,
-        examStartedAt: sceneTime.startedAt,
-        examSubmittedAt: sceneTime.updatedAt,
+        sceneTime: sceneTimeView,
+        examStartedAt: sceneTimeView.startedAt,
+        examSubmittedAt: sceneTimeView.updatedAt,
         score,
         scoreBeforeExaminerReview,
         authenticityCheck,

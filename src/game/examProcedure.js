@@ -10,6 +10,8 @@ const {
 } = require("./examTravel");
 const {
   EXAM_PROCEDURE_LIMITS,
+  EXAM_PROCEDURE_PHASE_FEEDBACK,
+  EXAM_PROCEDURE_PHASE_FEEDBACK_BOUNDARY,
   EXAM_PROCEDURE_PHASES,
   EXAM_PROCEDURE_PROFILE,
   EXAM_PROCEDURE_SCHEMA_VERSION,
@@ -164,6 +166,80 @@ function buildInitialIncidents(activeExam = {}) {
   return incidents;
 }
 
+function getPhaseFeedbackTemplate(phaseKey) {
+  return EXAM_PROCEDURE_PHASE_FEEDBACK[phaseKey] || EXAM_PROCEDURE_PHASE_FEEDBACK.default;
+}
+
+function collectPhaseRiskNotes(procedure = {}) {
+  const notes = [];
+  const pressure = sanitizePreparationPressure(procedure.preparationPressure);
+  const pressureScore = clampNumber(pressure?.score, 0, 100, 0);
+  if (pressureScore >= EXAM_PREPARATION_PRESSURE.bands[3].min) {
+    notes.push(`备考${pressure.label || "危急"}，先收束题眼与作答节奏，勿急改大段。`);
+  } else if (pressureScore >= EXAM_PREPARATION_PRESSURE.bands[2].min) {
+    notes.push(`备考${pressure.label || "吃紧"}，场内先稳心神，再按提纲推进。`);
+  } else if (pressureScore >= EXAM_PREPARATION_PRESSURE.bands[1].min) {
+    notes.push(`备考${pressure.label || "留意"}，留心盘费、保结或身心牵挂影响卷面。`);
+  }
+
+  if (procedure.sponsorship && procedure.sponsorship.ready === false) {
+    notes.push("保结未稳只作公开准备提示，不替代服务器准考与评卷裁决。");
+  }
+  if (procedure.entrySearch?.status === "cautioned") {
+    notes.push("入场搜检未见夹带，但本场仍需把压力收束到审题和章法。");
+  }
+  if (procedure.phase === "fair_copy") {
+    notes.push("誊清阶段宜少作结构性大改，保留交卷时间。");
+  }
+  if (procedure.phase === "closed" && procedure.resultSummary) {
+    notes.push(cleanText(procedure.resultSummary, "本场结果已归档。", 96));
+  }
+
+  return notes
+    .map((note) => cleanText(note, "", 96))
+    .filter(Boolean)
+    .slice(0, EXAM_PROCEDURE_LIMITS.maxPhaseFeedbackNotes);
+}
+
+function buildPhaseFeedback(activeExam = {}, procedure = {}) {
+  const phase = getPhase(procedure.phase);
+  const template = getPhaseFeedbackTemplate(phase.key);
+  const pressure = sanitizePreparationPressure(procedure.preparationPressure);
+  const actionEcho = cleanText(activeExam.sceneTime?.lastInput, "", 96);
+  const riskNotes = collectPhaseRiskNotes(procedure);
+  const visibleNextActions = (Array.isArray(procedure.visibleNextActions) && procedure.visibleNextActions.length
+    ? procedure.visibleNextActions
+    : template.focusNotes)
+    .map((action) => cleanText(action, "", 72))
+    .filter(Boolean)
+    .slice(0, EXAM_PROCEDURE_LIMITS.maxVisibleActions);
+
+  return {
+    schemaVersion: EXAM_PROCEDURE_SCHEMA_VERSION,
+    phase: phase.key,
+    phaseLabel: phase.label,
+    pressureScore: clampNumber(pressure?.score, 0, 100, 0),
+    pressureLabel: cleanText(pressure?.label, "从容", 24),
+    publicSummary: cleanText(template.publicSummary, "科场流程按服务器阶段推进。"),
+    environmentSummary: cleanText(template.environmentSummary, "场内反馈不替代服务器裁决。"),
+    actionEcho,
+    riskNotes: riskNotes.length
+      ? riskNotes
+      : (template.focusNotes || [])
+        .map((note) => cleanText(note, "", 96))
+        .filter(Boolean)
+        .slice(0, EXAM_PROCEDURE_LIMITS.maxPhaseFeedbackNotes),
+    visibleNextActions,
+    authorityBoundary: EXAM_PROCEDURE_PHASE_FEEDBACK_BOUNDARY
+  };
+}
+
+function pressureLabelFromScore(score) {
+  return EXAM_PREPARATION_PRESSURE.bands
+    .filter((band) => score >= band.min)
+    .at(-1)?.label || "从容";
+}
+
 function summarizePreparationPressure(activeExam = {}) {
   const pressure = activeExam.entryPreparation?.preparationPressure;
   return sanitizePreparationPressureForView(pressure);
@@ -210,6 +286,7 @@ function normalizeProcedure(procedure = {}, activeExam = {}) {
     examinerPanel: isPlainObject(procedure.examinerPanel) ? procedure.examinerPanel : null,
     resultSummary: cleanText(procedure.resultSummary, "", 160),
     visibleNextActions: Array.isArray(procedure.visibleNextActions) ? procedure.visibleNextActions : [],
+    phaseFeedback: isPlainObject(procedure.phaseFeedback) ? procedure.phaseFeedback : null,
     authorityBoundary: "examProcedureView 由服务器从 activeExam、sceneTime、入场准备和交卷复核派生；AI 不得写准考、弥封映射、榜单、名次或官职。"
   };
 }
@@ -243,6 +320,7 @@ function syncProcedureToScene(activeExam = {}, targetPhase = null) {
     return { ...paper, status };
   });
   procedure.visibleNextActions = buildVisibleNextActions(procedure);
+  procedure.phaseFeedback = buildPhaseFeedback(activeExam, procedure);
   activeExam.procedure = procedure;
   return procedure;
 }
@@ -341,6 +419,7 @@ function completeExamProcedure(activeExam = {}, options = {}) {
     options.promotionResult?.passed ? `取中${options.promotionResult.rank}` : options.promotionResult?.consequence?.label
   ].filter(Boolean).join("，") || "本场结果已归档。";
   procedure.visibleNextActions = ["查阅榜单", "听取老师复盘", "整理下场准备"];
+  procedure.phaseFeedback = buildPhaseFeedback(activeExam, procedure);
   activeExam.procedure = procedure;
   return procedure;
 }
@@ -373,6 +452,7 @@ function sanitizeProcedureForView(procedure = {}) {
     cell: sanitizeStatusBlock(procedure.cell, "待入号舍"),
     preparationPressure: sanitizePreparationPressure(procedure.preparationPressure),
     entryFeedback: sanitizeEntryFeedback(procedure.entryFeedback),
+    phaseFeedback: sanitizePhaseFeedback(procedure.phaseFeedback, procedure),
     rollLifecycle: sanitizeRollLifecycle(procedure.rollLifecycle),
     papers: sanitizePapers(procedure.papers),
     incidents: incidents.slice(-EXAM_PROCEDURE_LIMITS.maxVisibleIncidents).map((incident) => ({
@@ -406,6 +486,37 @@ function sanitizePreparationPressure(pressure = null) {
 
 function sanitizeEntryFeedback(feedback = null) {
   return sanitizeEntryFeedbackForView(feedback);
+}
+
+function sanitizePhaseFeedback(feedback = null, procedure = {}) {
+  const phase = getPhase(procedure.phase);
+  const template = getPhaseFeedbackTemplate(phase.key);
+  const pressure = sanitizePreparationPressure(procedure.preparationPressure);
+  const pressureScore = clampNumber(pressure?.score, 0, 100, 0);
+  const riskNotes = collectPhaseRiskNotes({
+    ...procedure,
+    phase: phase.key
+  });
+
+  return {
+    schemaVersion: EXAM_PROCEDURE_SCHEMA_VERSION,
+    phase: phase.key,
+    phaseLabel: phase.label,
+    pressureScore,
+    pressureLabel: pressureLabelFromScore(pressureScore),
+    publicSummary: cleanText(template.publicSummary, "科场流程按服务器阶段推进。"),
+    environmentSummary: cleanText(template.environmentSummary, "场内反馈不替代服务器裁决。"),
+    actionEcho: cleanText(feedback?.actionEcho, "", 96),
+    riskNotes: (riskNotes.length ? riskNotes : template.focusNotes)
+      .map((note) => cleanText(note, "", 96))
+      .filter(Boolean)
+      .slice(0, EXAM_PROCEDURE_LIMITS.maxPhaseFeedbackNotes),
+    visibleNextActions: (template.focusNotes || [])
+      .map((action) => cleanText(action, "", 72))
+      .filter(Boolean)
+      .slice(0, EXAM_PROCEDURE_LIMITS.maxVisibleActions),
+    authorityBoundary: EXAM_PROCEDURE_PHASE_FEEDBACK_BOUNDARY
+  };
 }
 
 function sanitizeSponsorship(sponsorship = {}) {
@@ -472,6 +583,15 @@ function summarizeExamProcedureForPrompt(worldState = {}) {
       summary: view.preparationPressure.summary,
       causes: view.preparationPressure.causes,
       suggestedActions: view.preparationPressure.suggestedActions
+    } : null,
+    phaseFeedback: view.phaseFeedback ? {
+      phase: view.phaseFeedback.phase,
+      phaseLabel: view.phaseFeedback.phaseLabel,
+      pressureLabel: view.phaseFeedback.pressureLabel,
+      publicSummary: view.phaseFeedback.publicSummary,
+      environmentSummary: view.phaseFeedback.environmentSummary,
+      riskNotes: view.phaseFeedback.riskNotes,
+      visibleNextActions: view.phaseFeedback.visibleNextActions.slice(0, 2)
     } : null,
     rollLifecycle: view.rollLifecycle,
     incidents: view.incidents.slice(-EXAM_PROCEDURE_LIMITS.maxPromptIncidents),

@@ -1984,6 +1984,16 @@ describe("S74.1 React client shell", () => {
             phaseLabel: "发题审题",
             entrySearch: { publicSummary: "入场搜检未见夹带，但备考压力偏高。" },
             cell: { publicSummary: "号舍已定，先审题再动笔。" },
+            phaseFeedback: {
+              phase: "question_release",
+              phaseLabel: "发题审题",
+              pressureLabel: "吃紧",
+              publicSummary: "题纸既发，先辨题眼、限定破题，不急于下笔。",
+              environmentSummary: "入号舍后的声息只作公开场内摘要。",
+              riskNotes: ["备考吃紧，场内先稳心神。"],
+              visibleNextActions: ["审题立意", "拟定提纲"],
+              authorityBoundary: "入场后反馈由服务器派生；前端只读展示或写草稿。"
+            },
             incidents: [{ type: "preparation_pressure", label: "备考吃紧", publicSummary: "盘费与旅途压力偏高。" }]
           }
         }), {
@@ -2016,6 +2026,17 @@ describe("S74.1 React client shell", () => {
             phaseLabel: "草稿成文",
             entrySearch: { publicSummary: "入场搜检未见夹带，但备考压力偏高。" },
             cell: { publicSummary: "号舍已定，先审题再动笔。" },
+            phaseFeedback: {
+              phase: "drafting",
+              phaseLabel: "草稿成文",
+              pressureLabel: "吃紧",
+              publicSummary: "提纲已入草稿，宜把首段题眼、承转和用典次序稳定下来。",
+              environmentSummary: "号舍疲劳与备考压力会影响文气，但只形成公开风险提示。",
+              actionEcho: "誊清卷面，仍不伪称评卷。",
+              riskNotes: ["保留誊清时间。"],
+              visibleNextActions: ["补足经义依据", "转入誊清"],
+              authorityBoundary: "入场后反馈由服务器派生；前端只读展示或写草稿。"
+            },
             incidents: [{ type: "preparation_pressure", label: "备考吃紧", publicSummary: "盘费与旅途压力偏高。" }]
           }
         }), {
@@ -2062,11 +2083,24 @@ describe("S74.1 React client shell", () => {
     expect(screen.getAllByText(/600-900 字/).length).toBeGreaterThan(0);
     expect(screen.getByText(/备考压力：吃紧 66\/100/)).toBeTruthy();
     expect(screen.getByText("备考吃紧：盘费与旅途压力偏高。")).toBeTruthy();
+    expect(screen.getByText(/入场后反馈：题纸既发/)).toBeTruthy();
+    expect(screen.getByText(/发题审题：题纸既发/)).toBeTruthy();
     expect(screen.getByText(/虚拟考生、阅卷官与榜单只显示安全占位/)).toBeTruthy();
+
+    const fetchCountBeforeFeedbackDraft = fetchMock.mock.calls.length;
+    fireEvent.click(screen.getByRole("button", { name: "拟行动：审题立意" }));
+    expect(useUiStateStore.getState().actionDraft).toMatchObject({
+      source: "exam",
+      targetPage: "game",
+      text: "审题立意"
+    });
+    expect(fetchMock.mock.calls).toHaveLength(fetchCountBeforeFeedbackDraft);
 
     fireEvent.change(screen.getByLabelText("场内行动"), { target: { value: "誊清卷面，仍不伪称评卷。" } });
     fireEvent.click(screen.getByRole("button", { name: "推进考场" }));
     await waitFor(() => expect(fetchMock.mock.calls.filter(([url]) => url === "/api/exam/progress")).toHaveLength(1));
+    await screen.findByText(/草稿成文：提纲已入草稿/);
+    expect(screen.getByText(/本步行动：誊清卷面/)).toBeTruthy();
 
     fireEvent.change(screen.getByLabelText("文章"), { target: { value: "夫荒政者，先安民食，继明教化。" } });
     fireEvent.click(screen.getByRole("button", { name: "交卷" }));

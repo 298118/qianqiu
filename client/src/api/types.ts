@@ -107,7 +107,7 @@ export type SafeRouteViews = {
   readonly eventArchiveView?: JsonObject;
   readonly informationPanelPageView?: JsonObject;
   readonly examCalendarView?: JsonObject;
-  readonly examProcedureView?: JsonObject;
+  readonly examProcedureView?: ExamProcedureView;
   readonly examinerPanelView?: JsonObject;
   readonly examRivalView?: JsonObject;
   readonly examHonorView?: JsonObject;
@@ -799,6 +799,26 @@ export type ExamWordCount =
     readonly target?: number;
     readonly recommended?: number;
   };
+
+export type ExamPhaseFeedbackView = JsonObject & {
+  readonly schemaVersion?: number;
+  readonly phase?: string;
+  readonly phaseLabel?: string;
+  readonly pressureScore?: number;
+  readonly pressureLabel?: string;
+  readonly publicSummary?: string;
+  readonly environmentSummary?: string;
+  readonly actionEcho?: string;
+  readonly riskNotes?: readonly string[];
+  readonly visibleNextActions?: readonly string[];
+  readonly authorityBoundary?: string;
+};
+
+export type ExamProcedureView = JsonObject & {
+  readonly phase?: string;
+  readonly phaseLabel?: string;
+  readonly phaseFeedback?: ExamPhaseFeedbackView;
+};
 
 export type ExamQuestionResponse = SafeRouteViews & ExamState & {
   readonly sessionId: string;

@@ -74,14 +74,53 @@ const EXAM_PROCEDURE_LIMITS = Object.freeze({
   maxVisibleAuditFlags: 6,
   maxVisibleExaminerReviews: 6,
   maxVisibleActions: 4,
+  maxPhaseFeedbackNotes: 3,
   maxPromptAuditFlags: 3,
   maxPromptIncidents: 3,
   maxPromptExaminerReviews: 3,
   textPreviewLength: 160
 });
 
+const EXAM_PROCEDURE_PHASE_FEEDBACK = Object.freeze({
+  question_release: Object.freeze({
+    publicSummary: "题纸既发，先辨题眼、限定破题，不急于下笔。",
+    environmentSummary: "入号舍后的声息、搜检和压力只作公开场内摘要；卷面成败仍由交卷后服务器评分裁决。",
+    focusNotes: Object.freeze(["先审题立意", "按经义根柢拟纲", "不把场内行动当作评卷结果"])
+  }),
+  drafting: Object.freeze({
+    publicSummary: "提纲已入草稿，宜把首段题眼、承转和用典次序稳定下来。",
+    environmentSummary: "号舍疲劳与备考压力会影响文气，但只形成公开风险提示，不即时改分。",
+    focusNotes: Object.freeze(["补足经义依据", "检查是否偏题", "保留誊清时间"])
+  }),
+  fair_copy: Object.freeze({
+    publicSummary: "墨卷将成，宜校读句读、避开涂改，准备誊清交卷。",
+    environmentSummary: "誊清阶段只显示公开收束提示；弥封、誊录、对读和磨勘仍在交卷后服务器流程。",
+    focusNotes: Object.freeze(["校定句读", "少改大段", "准备交卷"])
+  }),
+  submission: Object.freeze({
+    publicSummary: "卷件已送交场内流程，等待弥封与誊录公开摘要。",
+    environmentSummary: "交卷后不再由前端推进场内成果；评分、复核、榜次和晋级全部由服务器裁决。",
+    focusNotes: Object.freeze(["等待弥封", "等待誊录", "等待放榜"])
+  }),
+  closed: Object.freeze({
+    publicSummary: "本场已归档，科场反馈转为放榜、复盘与下场准备。",
+    environmentSummary: "归档摘要只保留公开流程、评分与关系过渡，不含弥封映射、考官私意或模型原文。",
+    focusNotes: Object.freeze(["查阅榜单", "听取老师复盘", "整理下场准备"])
+  }),
+  default: Object.freeze({
+    publicSummary: "科场流程按服务器阶段推进，当前只显示公开反馈。",
+    environmentSummary: "场内反馈不替代准考、评分、晋级、榜单或授官裁决。",
+    focusNotes: Object.freeze(["按科场规程推进"])
+  })
+});
+
+const EXAM_PROCEDURE_PHASE_FEEDBACK_BOUNDARY =
+  "入场后反馈由服务器按 sceneTime、科场阶段、备考压力和公开行动摘要派生；AI 与前端只能读取或写草稿，不能改分、处罚、榜次、晋级、弥封映射或官职。";
+
 module.exports = {
   EXAM_PROCEDURE_LIMITS,
+  EXAM_PROCEDURE_PHASE_FEEDBACK,
+  EXAM_PROCEDURE_PHASE_FEEDBACK_BOUNDARY,
   EXAM_PROCEDURE_PHASES,
   EXAM_PROCEDURE_PROFILE,
   EXAM_PROCEDURE_SCHEMA_VERSION,
