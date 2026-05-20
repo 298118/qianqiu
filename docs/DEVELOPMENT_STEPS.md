@@ -227,7 +227,7 @@ S84 前端专项额外验收入口：
 - 边界：新增 raw ledgers 已从 `clientWorldState`、`redactedState` 和玩家 API 兼容 `worldState` 剥离；浏览器、prompt、SQLite 派生表和 AI 调动摘要均不暴露 hiddenDossier、privateSignalTags、交易底价、raw provider payload、完整 prompt、本地路径或 key。资源扣减、资产授予、价格、任务结果、关系影响、科举和官职仍由服务器裁决；交易 AI `accepted` 只记录议价，不直接写银钱/物品，NPC/交易/委派 AI 文本若命中 hidden/raw/path/key 形状会在服务端拒绝；委派创建 API 只回传安全 task view，SQLite 交易派生行带双方 actor refs。
 - 验证：已通过本文件“本轮 S81-S84 NPC、资产、储物、交易与委派系统验证口径”列出的 focused Node tests、client typecheck、Vitest VM pool、client build、完整 `npm test`、docs governance、documentation governance 和 diff check；第一次只读复审 Epicurus 发现的交易结算和 AI 文本泄漏 P1 已修复并补测，第二次复审 Hegel 未发现 P0/P1，非阻断项已收口；最终只读复审 Russell 未发现 P0/P1。
 - 子代理：Bacon 负责资产/背包账本小步，Linnaeus 负责 NPC/委派账本小步，Pasteur 负责 SQLite 派生表小步，Turing 负责 S84 React 前端小步；主代理完成整合、补缺、验证、文档同步和最终提交。子代理均未提交。
-- 提交：随本轮 coherent change 提交，最终 hash 见 Git 历史和本次回复。
+- 提交：实现提交 `4c007f00`（`Complete S81-S84 NPC inventory systems`）；本条提交哈希补记为低风险文档同步。
 - 下一步：进入 S85，优先补长期 tick、基础市场价格、NPC 主动性和预留玩法正式扩展位，再做 S81-S85 总验收与归档。
 
 ### 2026-05-20：完成 PLAN-S81-S85 NPC、资产与储物系统规划
