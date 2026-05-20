@@ -133,6 +133,50 @@ const {
   ensureSessionSummaryState,
   updateMonthlySessionSummary
 } = require("../game/sessionSummary");
+const {
+  buildAssetLedgerView,
+  buildResourceLedgerView,
+  ensureAssetLedgerState
+} = require("../game/assetLedger");
+const {
+  buildInventoryView,
+  ensureInventoryLedgerState,
+  transferItem,
+  writeInventoryLedgerState
+} = require("../game/inventoryLedger");
+const {
+  buildNpcDetailView,
+  buildNpcRosterView,
+  ensureNpcRoster
+} = require("../game/npcRoster");
+const {
+  buildDelegatedTaskLedgerView,
+  createDelegatedTask,
+  createLandSurveyDelegatedTask,
+  ensureDelegatedTaskLedger,
+  sanitizeDelegatedTaskPlan,
+  validateDelegatedTaskRequest
+} = require("../game/delegatedTasks");
+const {
+  buildBackgroundClaimParserContext,
+  adjudicateOpeningBackgroundClaims,
+  buildOpeningBackgroundClaimsView,
+  ensureOpeningBackgroundClaimsState
+} = require("../game/openingBackgroundClaims");
+const {
+  buildNpcDialogueContext,
+  buildNpcInteractionLedgerView,
+  ensureNpcInteractionLedger,
+  recordNpcInteraction,
+  validateNpcInteractionRequest
+} = require("../game/npcInteractions");
+const {
+  buildTradeLedgerView,
+  buildTradeNegotiationContext,
+  ensureTradeLedger,
+  resolveTradeRequest,
+  validateTradeRequest
+} = require("../game/tradeLedger");
 const { buildClientWorldState } = require("../game/clientWorldState");
 const {
   buildPlayerStateEnvelope,
@@ -162,6 +206,13 @@ const router = express.Router();
 
 function isAiSettingsValidationError(error) {
   return /AI 设置|AI 路由|不支持字段|禁止|hidden|raw|server|provider|model|任务|服务器维护/.test(error.message || "");
+}
+
+function createRouteError(statusCode, message, details = null) {
+  const error = new Error(message);
+  error.statusCode = statusCode;
+  if (details) error.details = details;
+  return error;
 }
 
 function validateTurnInput(body) {
@@ -203,6 +254,13 @@ async function processTurn(sessionId, input) {
     ensurePlayerMonthlyBriefingState(worldState);
     ensureActorMemoryLedgerState(worldState);
     ensureSessionSummaryState(worldState);
+    ensureAssetLedgerState(worldState);
+    ensureInventoryLedgerState(worldState);
+    ensureNpcRoster(worldState);
+    ensureDelegatedTaskLedger(worldState);
+    ensureNpcInteractionLedger(worldState);
+    ensureTradeLedger(worldState);
+    ensureOpeningBackgroundClaimsState(worldState);
     if (isWritingExam(worldState.activeExam)) {
       return finalizeExamSceneTurn(worldState, input, context);
     }
@@ -244,6 +302,13 @@ async function processStreamingTurn(sessionId, input, streamHandlers = {}) {
     ensurePlayerMonthlyBriefingState(worldState);
     ensureActorMemoryLedgerState(worldState);
     ensureSessionSummaryState(worldState);
+    ensureAssetLedgerState(worldState);
+    ensureInventoryLedgerState(worldState);
+    ensureNpcRoster(worldState);
+    ensureDelegatedTaskLedger(worldState);
+    ensureNpcInteractionLedger(worldState);
+    ensureTradeLedger(worldState);
+    ensureOpeningBackgroundClaimsState(worldState);
     if (isWritingExam(worldState.activeExam)) {
       return finalizeExamSceneTurn(worldState, input, context);
     }
@@ -377,6 +442,13 @@ function ensureRouteProjectionState(worldState) {
   ensurePlayerMonthlyBriefingState(worldState);
   ensureActorMemoryLedgerState(worldState);
   ensureSessionSummaryState(worldState);
+  ensureAssetLedgerState(worldState);
+  ensureInventoryLedgerState(worldState);
+  ensureNpcRoster(worldState);
+  ensureDelegatedTaskLedger(worldState);
+  ensureNpcInteractionLedger(worldState);
+  ensureTradeLedger(worldState);
+  ensureOpeningBackgroundClaimsState(worldState);
 }
 
 function buildCommonTurnViews(worldState, options = {}) {
@@ -420,6 +492,22 @@ function buildCommonTurnViews(worldState, options = {}) {
     playerMonthlyBriefingView: buildPlayerMonthlyBriefingView(worldState),
     actorMemoryView: buildActorMemoryView(worldState),
     sessionSummaryView: buildSessionSummaryView(worldState),
+    openingBackgroundClaimsView: buildOpeningBackgroundClaimsView(worldState),
+    assetLedgerView: buildAssetLedgerView(worldState, {
+      viewerActorId: worldState.player?.id || "player",
+      includeRoleLimited: true
+    }),
+    resourceLedgerView: buildResourceLedgerView(worldState, {
+      viewerActorId: worldState.player?.id || "player"
+    }),
+    inventoryView: buildInventoryView(worldState, {
+      viewerActorId: worldState.player?.id || "player",
+      includeRoleLimited: true
+    }),
+    npcRosterView: buildNpcRosterView(worldState),
+    npcInteractionView: buildNpcInteractionLedgerView(worldState),
+    tradeLedgerView: buildTradeLedgerView(worldState),
+    delegatedTaskView: buildDelegatedTaskLedgerView(worldState),
     eventArchiveView: buildEventArchiveView(worldState, options.eventArchive),
     informationPanelPageView: buildInformationPanelPageViews(worldState, options.informationPanel || {}, {
       worldGeographyView,
@@ -696,6 +784,13 @@ async function finalizeExamSceneTurn(worldState, input, context = null) {
   ensurePlayerMonthlyBriefingState(worldState);
   ensureActorMemoryLedgerState(worldState);
   ensureSessionSummaryState(worldState);
+  ensureAssetLedgerState(worldState);
+  ensureInventoryLedgerState(worldState);
+  ensureNpcRoster(worldState);
+  ensureDelegatedTaskLedger(worldState);
+  ensureNpcInteractionLedger(worldState);
+  ensureTradeLedger(worldState);
+  ensureOpeningBackgroundClaimsState(worldState);
   const worldTick = buildExamSceneFeedback(worldState, scene.sceneTime, scene.event);
   enqueueAuditRecords(context, createExamProgressAuditRecords(worldState, scene));
 
@@ -898,6 +993,13 @@ async function finalizeTurn(worldState, result, input, auditOptions = {}) {
   ensurePlayerMonthlyBriefingState(worldState);
   ensureActorMemoryLedgerState(worldState);
   ensureSessionSummaryState(worldState);
+  ensureAssetLedgerState(worldState);
+  ensureInventoryLedgerState(worldState);
+  ensureNpcRoster(worldState);
+  ensureDelegatedTaskLedger(worldState);
+  ensureNpcInteractionLedger(worldState);
+  ensureTradeLedger(worldState);
+  ensureOpeningBackgroundClaimsState(worldState);
 
   const worldTickFeedback = {
     cadence: worldTick.cadence,
@@ -1093,6 +1195,14 @@ async function streamTurn(res, sessionId, input) {
       playerMonthlyBriefingView: payload.playerMonthlyBriefingView,
       actorMemoryView: payload.actorMemoryView,
       sessionSummaryView: payload.sessionSummaryView,
+      openingBackgroundClaimsView: payload.openingBackgroundClaimsView,
+      assetLedgerView: payload.assetLedgerView,
+      resourceLedgerView: payload.resourceLedgerView,
+      inventoryView: payload.inventoryView,
+      npcRosterView: payload.npcRosterView,
+      npcInteractionView: payload.npcInteractionView,
+      tradeLedgerView: payload.tradeLedgerView,
+      delegatedTaskView: payload.delegatedTaskView,
       eventArchiveView: payload.eventArchiveView,
       informationPanelPageView: payload.informationPanelPageView,
       officialCareer: payload.officialCareer,
@@ -1126,8 +1236,28 @@ router.post("/start", async (req, res, next) => {
     const aiRuntime = aiSettingsPatch && typeof aiSettingsPatch === "object" && !resolvedRuntime.globalSettingsExists
       ? updateAiSettings(worldState, aiSettingsPatch)
       : resolvedRuntime;
-    const route = resolveModelForTask("narrator", aiRuntime.routePolicy);
+    const backgroundRoute = resolveModelForTask("background_claim_parser", aiRuntime.routePolicy);
     const provider = getProvider({ routePolicy: aiRuntime.routePolicy });
+    const backgroundStartedAt = Date.now();
+    const backgroundParserPayload = await provider.parseBackgroundClaims(
+      buildBackgroundClaimParserContext(req.body, worldState)
+    );
+    recordAiInvocation(worldState, {
+      taskType: "background_claim_parser",
+      route: backgroundRoute,
+      status: "completed",
+      durationMs: Date.now() - backgroundStartedAt,
+      maxOutputTokens: backgroundRoute.maxOutputTokens
+    });
+    const backgroundClaims = adjudicateOpeningBackgroundClaims(worldState, backgroundParserPayload, {
+      input: req.body,
+      providerName: provider.auditName || provider.name || process.env.AI_PROVIDER || "mock"
+    });
+    if (backgroundClaims.events.length) {
+      worldState.eventHistory.push(...backgroundClaims.events);
+    }
+
+    const route = resolveModelForTask("narrator", aiRuntime.routePolicy);
     const startedAt = Date.now();
     const opening = await provider.startGame(worldState);
     recordAiInvocation(worldState, {
@@ -1139,7 +1269,17 @@ router.post("/start", async (req, res, next) => {
     });
 
     worldState.eventHistory.push(...opening.events);
-    await writeSession(worldState, createOpeningAuditRecords(worldState, opening, provider));
+    const openingAuditRecords = createOpeningAuditRecords(worldState, opening, provider);
+    await writeSession(worldState, {
+      auditEvents: [
+        ...(backgroundClaims.auditRecords.auditEvents || []),
+        ...(openingAuditRecords.auditEvents || [])
+      ],
+      aiProposals: [
+        ...(backgroundClaims.auditRecords.aiProposals || []),
+        ...(openingAuditRecords.aiProposals || [])
+      ]
+    });
 
     res.status(201).json({
       sessionId: worldState.sessionId,
@@ -1221,6 +1361,294 @@ router.get("/search/:sessionId", async (req, res, next) => {
       sessionId: worldState.sessionId,
       safeWorldSearchView: searchSafeWorldIndex(worldState, options)
     });
+  } catch (error) {
+    next(error);
+  }
+});
+
+router.get("/inventory/:sessionId", async (req, res, next) => {
+  try {
+    const worldState = await readSession(req.params.sessionId);
+    ensureRouteProjectionState(worldState);
+    res.json({
+      sessionId: worldState.sessionId,
+      resourceLedgerView: buildResourceLedgerView(worldState, {
+        viewerActorId: worldState.player?.id || "player"
+      }),
+      assetLedgerView: buildAssetLedgerView(worldState, {
+        viewerActorId: worldState.player?.id || "player",
+        includeRoleLimited: true
+      }),
+      inventoryView: buildInventoryView(worldState, {
+        viewerActorId: worldState.player?.id || "player",
+        includeRoleLimited: true
+      })
+    });
+  } catch (error) {
+    next(error);
+  }
+});
+
+router.post("/inventory-transfer/:sessionId", async (req, res, next) => {
+  try {
+    const payload = await mutateSession(req.params.sessionId, async (worldState) => {
+      ensureRouteProjectionState(worldState);
+      const transfer = transferItem(worldState, {
+        ...req.body,
+        actorId: worldState.player?.id || "player",
+        ownerActorId: worldState.player?.id || "player",
+        turn: worldState.turnCount || 0
+      });
+      if (transfer.accepted) {
+        writeInventoryLedgerState(worldState, transfer.ledger, {
+          ownerActorId: worldState.player?.id || "player"
+        });
+      }
+      return {
+        sessionId: worldState.sessionId,
+        accepted: transfer.accepted,
+        reason: transfer.reason,
+        fromContainerId: transfer.fromContainerId || null,
+        toContainerId: transfer.toContainerId || null,
+        inventoryView: buildInventoryView(worldState, {
+          viewerActorId: worldState.player?.id || "player",
+          includeRoleLimited: true
+        })
+      };
+    });
+    res.status(payload.accepted ? 200 : 400).json(payload);
+  } catch (error) {
+    next(error);
+  }
+});
+
+router.get("/npcs/:sessionId", async (req, res, next) => {
+  try {
+    const worldState = await readSession(req.params.sessionId);
+    ensureRouteProjectionState(worldState);
+    res.json({
+      sessionId: worldState.sessionId,
+      npcRosterView: buildNpcRosterView(worldState, {
+        page: req.query.page,
+        pageSize: req.query.pageSize,
+        roleTag: req.query.roleTag || req.query.group,
+        interaction: req.query.interaction
+      }),
+      npcInteractionView: buildNpcInteractionLedgerView(worldState),
+      delegatedTaskView: buildDelegatedTaskLedgerView(worldState)
+    });
+  } catch (error) {
+    next(error);
+  }
+});
+
+router.get("/npc/:sessionId/:npcId", async (req, res, next) => {
+  try {
+    const worldState = await readSession(req.params.sessionId);
+    ensureRouteProjectionState(worldState);
+    const npcDetailView = buildNpcDetailView(worldState, req.params.npcId);
+    if (!npcDetailView) {
+      throw createRouteError(404, "NPC not found");
+    }
+    res.json({
+      sessionId: worldState.sessionId,
+      npcDetailView,
+      npcInteractionView: buildNpcInteractionLedgerView(worldState, { npcId: req.params.npcId }),
+      tradeLedgerView: buildTradeLedgerView(worldState, { npcId: req.params.npcId }),
+      delegatedTaskView: buildDelegatedTaskLedgerView(worldState)
+    });
+  } catch (error) {
+    next(error);
+  }
+});
+
+router.post("/npc-interaction/:sessionId", async (req, res, next) => {
+  try {
+    const payload = await mutateSession(req.params.sessionId, async (worldState) => {
+      ensureRouteProjectionState(worldState);
+      const validation = validateNpcInteractionRequest(worldState, req.body);
+      if (!validation.ok) {
+        const recorded = recordNpcInteraction(worldState, req.body, {});
+        return {
+          sessionId: worldState.sessionId,
+          accepted: false,
+          errors: validation.errors,
+          npcInteractionView: recorded.npcInteractionView
+        };
+      }
+
+      const { routePolicy } = resolveAiSettingsForSession(worldState);
+      const route = resolveModelForTask("npc_dialogue", routePolicy);
+      const provider = getProvider({ routePolicy });
+      const startedAt = Date.now();
+      const dialogue = await provider.runNpcDialogue(buildNpcDialogueContext(worldState, req.body));
+      recordAiInvocation(worldState, {
+        taskType: "npc_dialogue",
+        route,
+        status: "completed",
+        durationMs: Date.now() - startedAt,
+        maxOutputTokens: route.maxOutputTokens
+      });
+      const recorded = recordNpcInteraction(worldState, req.body, dialogue);
+      return {
+        sessionId: worldState.sessionId,
+        accepted: recorded.ok,
+        errors: recorded.errors,
+        npcDialogueView: {
+          npcId: recorded.record.npcId,
+          dialogueText: recorded.record.dialogueText,
+          mood: recorded.record.mood,
+          followUpSuggestions: recorded.record.followUpSuggestions || []
+        },
+        npcInteractionView: recorded.npcInteractionView,
+        npcDetailView: buildNpcDetailView(worldState, validation.normalized.npcId)
+      };
+    });
+    res.status(payload.accepted ? 200 : 400).json(payload);
+  } catch (error) {
+    next(error);
+  }
+});
+
+router.post("/trade/:sessionId", async (req, res, next) => {
+  try {
+    const payload = await mutateSession(req.params.sessionId, async (worldState) => {
+      ensureRouteProjectionState(worldState);
+      const validation = validateTradeRequest(worldState, req.body);
+      if (!validation.ok) {
+        const resolved = resolveTradeRequest(worldState, req.body, {
+          npcResponse: "",
+          proposal: {
+            status: "rejected",
+            publicSummary: "交易被服务器规则挡下。",
+            riskTags: []
+          }
+        });
+        return {
+          sessionId: worldState.sessionId,
+          accepted: false,
+          errors: resolved.errors,
+          tradeRecord: resolved.record,
+          tradeLedgerView: resolved.tradeLedgerView,
+          resourceLedgerView: buildResourceLedgerView(worldState, {
+            viewerActorId: worldState.player?.id || "player"
+          }),
+          inventoryView: buildInventoryView(worldState, {
+            viewerActorId: worldState.player?.id || "player",
+            includeRoleLimited: true
+          })
+        };
+      }
+      const { routePolicy } = resolveAiSettingsForSession(worldState);
+      const route = resolveModelForTask("trade_negotiator", routePolicy);
+      const provider = getProvider({ routePolicy });
+      const startedAt = Date.now();
+      const negotiation = await provider.negotiateTrade(buildTradeNegotiationContext(worldState, req.body));
+      recordAiInvocation(worldState, {
+        taskType: "trade_negotiator",
+        route,
+        status: "completed",
+        durationMs: Date.now() - startedAt,
+        maxOutputTokens: route.maxOutputTokens
+      });
+      const resolved = resolveTradeRequest(worldState, req.body, negotiation);
+      return {
+        sessionId: worldState.sessionId,
+        accepted: resolved.ok,
+        errors: resolved.errors,
+        tradeRecord: resolved.record,
+        tradeLedgerView: resolved.tradeLedgerView,
+        resourceLedgerView: buildResourceLedgerView(worldState, {
+          viewerActorId: worldState.player?.id || "player"
+        }),
+        inventoryView: buildInventoryView(worldState, {
+          viewerActorId: worldState.player?.id || "player",
+          includeRoleLimited: true
+        })
+      };
+    });
+    res.status(payload.accepted ? 200 : 400).json(payload);
+  } catch (error) {
+    next(error);
+  }
+});
+
+router.post("/npc-command/:sessionId", async (req, res, next) => {
+  try {
+    const payload = await mutateSession(req.params.sessionId, async (worldState) => {
+      ensureRouteProjectionState(worldState);
+      const validation = validateDelegatedTaskRequest(worldState, {
+        ...req.body,
+        issuerActorId: worldState.player?.id || "player"
+      });
+      if (!validation.ok) {
+        return {
+          sessionId: worldState.sessionId,
+          accepted: false,
+          errors: validation.errors,
+          delegatedTaskView: buildDelegatedTaskLedgerView(worldState)
+        };
+      }
+
+      const { routePolicy } = resolveAiSettingsForSession(worldState);
+      const route = resolveModelForTask("delegated_task_planner", routePolicy);
+      const provider = getProvider({ routePolicy });
+      const startedAt = Date.now();
+      const plan = await provider.planDelegatedTask({
+        taskType: validation.normalized.taskType,
+        npcId: validation.normalized.assigneeActorId,
+        commandText: validation.normalized.commandText,
+        targetRef: validation.normalized.targetRef,
+        budget: validation.normalized.budget,
+        npcDetailView: buildNpcDetailView(worldState, validation.normalized.assigneeActorId),
+        serverBoundaries: [
+          "AI 只给出委派计划建议，资源、权限、期限和任务结果由服务器裁决。",
+          "不得读取或输出 hiddenDossier、raw prompt、provider payload、本地路径或密钥。"
+        ]
+      });
+      recordAiInvocation(worldState, {
+        taskType: "delegated_task_planner",
+        route,
+        status: "completed",
+        durationMs: Date.now() - startedAt,
+        maxOutputTokens: route.maxOutputTokens
+      });
+      const safePlan = sanitizeDelegatedTaskPlan(plan);
+      if (!safePlan.ok) {
+        return {
+          sessionId: worldState.sessionId,
+          accepted: false,
+          errors: safePlan.errors,
+          delegatedTaskView: buildDelegatedTaskLedgerView(worldState)
+        };
+      }
+
+      const request = {
+        ...req.body,
+        issuerActorId: worldState.player?.id || "player",
+        riskFactors: safePlan.riskTags,
+        successFactors: safePlan.successFactors
+      };
+      const created = validation.normalized.taskType === "land_survey"
+        ? createLandSurveyDelegatedTask(worldState, request)
+        : createDelegatedTask(worldState, request);
+      const safeTask = created.delegatedTaskView.items.find((task) => task.taskId === created.task?.taskId) || null;
+      return {
+        sessionId: worldState.sessionId,
+        accepted: created.ok,
+        errors: created.errors,
+        delegatedTaskPlanView: {
+          taskType: safePlan.taskType,
+          planSummary: safePlan.planSummary,
+          riskTags: safePlan.riskTags,
+          successFactors: safePlan.successFactors,
+          suggestedDueTurns: safePlan.suggestedDueTurns
+        },
+        delegatedTask: safeTask,
+        delegatedTaskView: created.delegatedTaskView
+      };
+    });
+    res.status(payload.accepted ? 200 : 400).json(payload);
   } catch (error) {
     next(error);
   }

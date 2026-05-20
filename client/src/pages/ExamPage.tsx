@@ -280,7 +280,7 @@ export function ExamPage() {
               </form>
             </section>
           ) : (
-            <section className="examDesk examEmptyPaper" aria-label="当前试卷">
+            <section className="examDesk examEmptyPaper" aria-label="中央试卷预览">
               <p className="eyebrow">中央试卷</p>
               <h2>案卷未启</h2>
               <p>先择试别取题；预览案卷只展示界面，不向服务器请求考题。</p>

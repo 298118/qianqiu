@@ -1,10 +1,11 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useParams } from "react-router";
 import type { AssetRegistry, RuntimePortraitAsset } from "../assets/assetRegistry";
 import { useAssetRegistry } from "../assets/useAssetRegistry";
-import type { PlayerSummary, WorldPeopleNpc, WorldPeopleRelationship } from "../api";
+import type { DelegatedTaskRecordView, NpcDetailView, NpcRosterItem, PlayerSummary, TradeRecordView, WorldPeopleNpc, WorldPeopleRelationship } from "../api";
 import { Portrait } from "../components/Portrait";
 import { markOverlayTrigger } from "../components/overlayFocus";
+import { isRunnableSessionId } from "../routes/sessionId";
 import { useGameSessionStore } from "../state/gameSessionState";
 import { useUiStateStore } from "../state/uiState";
 
@@ -57,6 +58,16 @@ const playerPortraitRoleByGameRole: Record<string, string> = {
   emperor: "emperor-regent"
 };
 
+const npcWorkbenchTabs = [
+  { id: "profile", label: "档案" },
+  { id: "dialogue", label: "对话" },
+  { id: "trade", label: "交易" },
+  { id: "command", label: "委派" },
+  { id: "records", label: "记录" }
+] as const;
+
+type NpcWorkbenchTab = typeof npcWorkbenchTabs[number]["id"];
+
 type PersonRow = {
   readonly id: string;
   readonly kind: "player" | "npc";
@@ -67,6 +78,19 @@ type PersonRow = {
   readonly meta: readonly string[];
   readonly relationshipNote?: string;
   readonly remastered: boolean;
+};
+
+type WorkbenchNpc = {
+  readonly npcId: string;
+  readonly displayName: string;
+  readonly title: string;
+  readonly summary: string;
+  readonly roleTags: readonly string[];
+  readonly stageTags: readonly string[];
+  readonly portraitRef: string;
+  readonly tier: string;
+  readonly availableInteractions: readonly string[];
+  readonly relationshipLabels: readonly string[];
 };
 
 function safePeopleText(value: unknown, fallback: string, maxLength = 120) {
@@ -235,6 +259,63 @@ function isNpcPublicForLedger(npc: WorldPeopleNpc) {
   return true;
 }
 
+function getRosterPortraitRef(registry: AssetRegistry | null, npc: NpcRosterItem) {
+  const explicitRef = getExistingPortraitRef(registry, npc.portraitRef);
+  return explicitRef || fallbackPortraitRef;
+}
+
+function toWorkbenchNpc(registry: AssetRegistry | null, npc: NpcRosterItem): WorkbenchNpc {
+  return {
+    npcId: npc.npcId,
+    displayName: safePeopleText(npc.displayName, "无名人物", 40),
+    title: safePeopleText(npc.publicProfile?.title || npc.publicProfile?.posting, "可见人物", 48),
+    summary: safePeopleText(npc.publicProfile?.summary, "暂无公开小传。", 140),
+    roleTags: (npc.roleTags ?? []).map((tag) => safePeopleText(tag, "", 32)).filter(Boolean),
+    stageTags: (npc.stageTags ?? []).map((tag) => safePeopleText(tag, "", 32)).filter(Boolean),
+    portraitRef: getRosterPortraitRef(registry, npc),
+    tier: safePeopleText(npc.tier, "ambient", 24),
+    availableInteractions: (npc.availableInteractions ?? []).map((item) => safePeopleText(item, "", 32)).filter(Boolean),
+    relationshipLabels: (npc.relationshipSummary?.labels ?? []).map((item) => safePeopleText(item, "", 32)).filter(Boolean)
+  };
+}
+
+function groupNpcLabel(npc: WorkbenchNpc) {
+  const tags = [...npc.stageTags, ...npc.roleTags].join(" ");
+  if (/family|家族|亲族/.test(tags)) return "家族";
+  if (/academy|study|书院|师友/.test(tags)) return "书院";
+  if (/exam|科场|同年/.test(tags)) return "科场";
+  if (/yamen|office|官署|属员/.test(tags)) return "官署";
+  if (/military|army|军|边/.test(tags)) return "军营";
+  if (/court|朝|宫/.test(tags)) return "朝堂";
+  if (/market|merchant|市|商/.test(tags)) return "市井";
+  return "身边人";
+}
+
+function groupNpcs(npcs: readonly WorkbenchNpc[]) {
+  const groups = new Map<string, WorkbenchNpc[]>();
+  for (const npc of npcs) {
+    const label = groupNpcLabel(npc);
+    groups.set(label, [...(groups.get(label) ?? []), npc]);
+  }
+  return Array.from(groups.entries()).map(([label, items]) => ({ label, items }));
+}
+
+function statusLabel(status: unknown) {
+  const text = safePeopleText(status, "待裁", 32);
+  const labels: Record<string, string> = {
+    accepted: "已准",
+    proposed: "已议",
+    countered: "还价",
+    rejected: "未准",
+    active: "执行中",
+    overdue: "逾期",
+    completed: "已成",
+    failed: "未成",
+    server_blocked: "服务器挡下"
+  };
+  return labels[text] || text;
+}
+
 function buildPersonRows(
   registry: AssetRegistry | null,
   session: ReturnType<typeof useGameSessionStore.getState>["currentSession"],
@@ -287,9 +368,60 @@ function buildPersonRows(
 export function PeoplePage() {
   const { sessionId = "s74-preview" } = useParams();
   const openSurface = useUiStateStore((state) => state.openSurface);
+  const setActionDraft = useUiStateStore((state) => state.setActionDraft);
   const session = useGameSessionStore((state) => state.currentSession);
+  const loadNpcs = useGameSessionStore((state) => state.loadNpcs);
+  const loadNpcDetail = useGameSessionStore((state) => state.loadNpcDetail);
+  const interactWithNpc = useGameSessionStore((state) => state.interactWithNpc);
+  const submitTrade = useGameSessionStore((state) => state.submitTrade);
+  const submitNpcCommand = useGameSessionStore((state) => state.submitNpcCommand);
+  const npcRosterPayload = useGameSessionStore((state) => state.npcRoster);
+  const npcDetailPayload = useGameSessionStore((state) => state.npcDetail);
+  const lastNpcInteraction = useGameSessionStore((state) => state.lastNpcInteraction);
+  const lastTrade = useGameSessionStore((state) => state.lastTrade);
+  const lastNpcCommand = useGameSessionStore((state) => state.lastNpcCommand);
+  const npcRosterStatus = useGameSessionStore((state) => state.npcRosterStatus);
+  const npcDetailStatus = useGameSessionStore((state) => state.npcDetailStatus);
+  const npcMutationStatus = useGameSessionStore((state) => state.npcMutationStatus);
+  const error = useGameSessionStore((state) => state.error);
   const { registry, status } = useAssetRegistry();
   const [portraitPage, setPortraitPage] = useState(0);
+  const [selectedNpcId, setSelectedNpcId] = useState("");
+  const [activeTab, setActiveTab] = useState<NpcWorkbenchTab>("profile");
+  const [dialogueDraft, setDialogueDraft] = useState("");
+  const [tradeOffer, setTradeOffer] = useState("");
+  const [tradeSilverDelta, setTradeSilverDelta] = useState("0");
+  const [commandText, setCommandText] = useState("");
+  const [commandTargetRef, setCommandTargetRef] = useState("");
+  const [commandBudget, setCommandBudget] = useState("24");
+  const runnable = isRunnableSessionId(sessionId);
+
+  useEffect(() => {
+    if (!runnable) return;
+    void loadNpcs(sessionId, { pageSize: 50 }).catch(() => undefined);
+  }, [loadNpcs, runnable, sessionId]);
+
+  const rosterView = npcRosterPayload?.sessionId === sessionId
+    ? npcRosterPayload.npcRosterView
+    : session?.sessionId === sessionId
+      ? session.npcRosterView
+      : null;
+  const rosterNpcs = useMemo(
+    () => (rosterView?.items ?? []).map((npc) => toWorkbenchNpc(registry, npc)),
+    [registry, rosterView]
+  );
+  const npcGroups = useMemo(() => groupNpcs(rosterNpcs), [rosterNpcs]);
+  const selectedNpc = rosterNpcs.find((npc) => npc.npcId === selectedNpcId) ?? rosterNpcs[0] ?? null;
+
+  useEffect(() => {
+    if (!selectedNpcId && rosterNpcs[0]) setSelectedNpcId(rosterNpcs[0].npcId);
+  }, [rosterNpcs, selectedNpcId]);
+
+  useEffect(() => {
+    if (!runnable || !selectedNpc?.npcId) return;
+    void loadNpcDetail(sessionId, selectedNpc.npcId).catch(() => undefined);
+  }, [loadNpcDetail, runnable, selectedNpc?.npcId, sessionId]);
+
   const peopleRows = useMemo(
     () => buildPersonRows(registry, session, sessionId),
     [registry, session, sessionId]
@@ -299,11 +431,172 @@ export function PeoplePage() {
   const visiblePeople = peopleRows.slice(safePortraitPage * portraitPageSize, safePortraitPage * portraitPageSize + portraitPageSize);
   const npcCount = peopleRows.filter((row) => row.kind === "npc").length;
   const remasteredCount = visiblePeople.filter((row) => row.remastered).length;
+  const npcDetail = npcDetailPayload?.sessionId === sessionId && npcDetailPayload.npcDetailView.npcId === selectedNpc?.npcId
+    ? npcDetailPayload.npcDetailView
+    : null;
+  const interactionRecords = npcDetailPayload?.sessionId === sessionId
+    ? npcDetailPayload.npcInteractionView?.items ?? npcRosterPayload?.npcInteractionView?.items ?? session?.npcInteractionView?.items ?? []
+    : session?.npcInteractionView?.items ?? [];
+  const tradeRecords = npcDetailPayload?.sessionId === sessionId
+    ? npcDetailPayload.tradeLedgerView?.items ?? session?.tradeLedgerView?.items ?? []
+    : session?.tradeLedgerView?.items ?? [];
+  const delegatedTasks = npcDetailPayload?.sessionId === sessionId
+    ? npcDetailPayload.delegatedTaskView?.items ?? npcRosterPayload?.delegatedTaskView?.items ?? session?.delegatedTaskView?.items ?? []
+    : session?.delegatedTaskView?.items ?? [];
+
+  async function handleDialogueSubmit() {
+    if (!selectedNpc || !dialogueDraft.trim() || !runnable) return;
+    await interactWithNpc(sessionId, {
+      npcId: selectedNpc.npcId,
+      actionType: "talk",
+      utterance: dialogueDraft.trim()
+    }).then(() => setDialogueDraft("")).catch(() => undefined);
+  }
+
+  async function handleTradeSubmit() {
+    if (!selectedNpc || !tradeOffer.trim() || !runnable) return;
+    await submitTrade(sessionId, {
+      npcId: selectedNpc.npcId,
+      tradeId: `trade:${selectedNpc.npcId}:${Date.now()}`,
+      silverDelta: Number.parseInt(tradeSilverDelta, 10) || 0,
+      offerSummary: tradeOffer.trim()
+    }).then(() => setTradeOffer("")).catch(() => undefined);
+  }
+
+  async function handleCommandSubmit() {
+    if (!selectedNpc || !commandText.trim() || !runnable) return;
+    await submitNpcCommand(sessionId, {
+      assigneeActorId: selectedNpc.npcId,
+      taskType: "land_survey",
+      authoritySource: "yamen_authority",
+      targetRef: commandTargetRef.trim() || "geo:county:current",
+      commandText: commandText.trim(),
+      budget: Number.parseInt(commandBudget, 10) || 0
+    }).then(() => setCommandText("")).catch(() => undefined);
+  }
 
   return (
-    <article className="surfacePanel routePanel" aria-labelledby="people-title">
-      <h2 id="people-title">人物</h2>
-      <p>谱牒只录本局公开可见的案主与相识人物；未有可信立绘时，以纸底剪影暂代。</p>
+    <article className="surfacePanel routePanel peopleWorkbenchPanel" aria-labelledby="people-title">
+      <div className="routePanelHeader">
+        <div>
+          <p className="eyebrow">NPC 工作台</p>
+          <h1 id="people-title">人物</h1>
+          <p>名册、详情、对话、交易和委派均来自服务器安全视图；本页不读取私档、底价、模型上下文或内部账本。</p>
+        </div>
+        <span>{npcRosterStatus === "loading" ? "候谱" : `${rosterNpcs.length || npcCount} 人`}</span>
+      </div>
+      <section className="npcWorkbench" aria-label="NPC 名册工作台">
+        <aside className="npcGroupList" aria-label="NPC 分组">
+          {npcGroups.length ? npcGroups.map((group) => (
+            <section key={group.label}>
+              <h2>{group.label}</h2>
+              {group.items.map((npc) => (
+                <button
+                  key={npc.npcId}
+                  className="npcListButton"
+                  type="button"
+                  aria-pressed={selectedNpc?.npcId === npc.npcId}
+                  onClick={() => {
+                    setSelectedNpcId(npc.npcId);
+                    setActiveTab("profile");
+                  }}
+                >
+                  {registry ? (
+                    <Portrait registry={registry} portraitRef={npc.portraitRef} label={`${npc.displayName}立绘`} className="npcListPortrait" />
+                  ) : <span className="npcListPortraitFallback" aria-hidden="true">人</span>}
+                  <span>
+                    <strong>{npc.displayName}</strong>
+                    <small>{npc.title}</small>
+                  </span>
+                </button>
+              ))}
+            </section>
+          )) : <p className="statusLine">等待服务器 NPC 名册安全视图。</p>}
+        </aside>
+        <section className="npcDetailWorkbench" aria-label="NPC 详情">
+          {selectedNpc ? (
+            <>
+              <div className="npcDetailHeader">
+                {registry ? (
+                  <Portrait registry={registry} portraitRef={selectedNpc.portraitRef} label={`${selectedNpc.displayName}立绘`} className="peoplePortrait" />
+                ) : null}
+                <div>
+                  <p className="eyebrow">{selectedNpc.tier}</p>
+                  <h2>{selectedNpc.displayName}</h2>
+                  <p>{selectedNpc.title}</p>
+                  <div className="peopleMeta">
+                    {[...selectedNpc.stageTags, ...selectedNpc.roleTags, ...selectedNpc.relationshipLabels].slice(0, 8).map((tag) => <span key={tag}>{tag}</span>)}
+                  </div>
+                </div>
+              </div>
+              <nav className="inkboxTabs npcTabs" aria-label={`${selectedNpc.displayName}工作台页签`}>
+                {npcWorkbenchTabs.map((tab) => (
+                  <button
+                    key={tab.id}
+                    className="inkboxTab"
+                    type="button"
+                    aria-selected={activeTab === tab.id}
+                    onClick={() => setActiveTab(tab.id)}
+                  >
+                    {tab.label}
+                  </button>
+                ))}
+              </nav>
+              {activeTab === "profile" ? (
+                <NpcProfileTab
+                  selectedNpc={selectedNpc}
+                  detail={npcDetail}
+                  loading={npcDetailStatus === "loading"}
+                  onDraft={() => setActionDraft({
+                    source: "role-surface",
+                    targetPage: "game",
+                    text: `拜访${selectedNpc.displayName}，询问${selectedNpc.title}近况。`
+                  })}
+                />
+              ) : null}
+              {activeTab === "dialogue" ? (
+                <NpcDialogueTab
+                  dialogueDraft={dialogueDraft}
+                  latestDialogue={lastNpcInteraction?.npcDialogueView}
+                  records={interactionRecords}
+                  busy={npcMutationStatus === "loading"}
+                  onDraftChange={setDialogueDraft}
+                  onSubmit={handleDialogueSubmit}
+                />
+              ) : null}
+              {activeTab === "trade" ? (
+                <NpcTradeTab
+                  offer={tradeOffer}
+                  silverDelta={tradeSilverDelta}
+                  records={tradeRecords}
+                  latestTrade={lastTrade?.tradeRecord}
+                  busy={npcMutationStatus === "loading"}
+                  onOfferChange={setTradeOffer}
+                  onSilverDeltaChange={setTradeSilverDelta}
+                  onSubmit={handleTradeSubmit}
+                />
+              ) : null}
+              {activeTab === "command" ? (
+                <NpcCommandTab
+                  commandText={commandText}
+                  targetRef={commandTargetRef}
+                  budget={commandBudget}
+                  tasks={delegatedTasks}
+                  latestPlan={lastNpcCommand?.delegatedTaskPlanView}
+                  busy={npcMutationStatus === "loading"}
+                  onCommandTextChange={setCommandText}
+                  onTargetRefChange={setCommandTargetRef}
+                  onBudgetChange={setCommandBudget}
+                  onSubmit={handleCommandSubmit}
+                />
+              ) : null}
+              {activeTab === "records" ? (
+                <NpcRecordsTab interactions={interactionRecords} trades={tradeRecords} tasks={delegatedTasks} />
+              ) : null}
+            </>
+          ) : <p className="statusLine">请选择一名可见 NPC。</p>}
+        </section>
+      </section>
       <section className="portraitLedger" aria-label="本局人物谱牒">
         <div className="portraitLedgerHeader">
           <div>
@@ -371,6 +664,229 @@ export function PeoplePage() {
       <button className="paperButton" type="button" onClick={(event) => { markOverlayTrigger(event.currentTarget); openSurface("npc-profile"); }}>
         打开人物档案
       </button>
+      {error ? <p className="statusLine" role="alert">{error}</p> : null}
     </article>
+  );
+}
+
+function NpcProfileTab({
+  selectedNpc,
+  detail,
+  loading,
+  onDraft
+}: {
+  readonly selectedNpc: WorkbenchNpc;
+  readonly detail: NpcDetailView | null;
+  readonly loading: boolean;
+  readonly onDraft: () => void;
+}) {
+  const profile = detail?.publicProfile;
+  const relationship = detail?.relationship;
+  return (
+    <section className="npcTabPanel">
+      <p>{safePeopleText(profile?.summary || selectedNpc.summary, "暂无公开小传。", 220)}</p>
+      <dl className="npcFactGrid">
+        <div><dt>籍贯</dt><dd>{safePeopleText(profile?.origin, "未题", 48)}</dd></div>
+        <div><dt>任所</dt><dd>{safePeopleText(profile?.posting, "未题", 48)}</dd></div>
+        <div><dt>亲疏</dt><dd>{relationship?.closeness ?? "未题"}</dd></div>
+        <div><dt>信任</dt><dd>{relationship?.trust ?? "未题"}</dd></div>
+      </dl>
+      {profile?.visibleAbilities?.length ? (
+        <div className="peopleMeta">{profile.visibleAbilities.map((item) => <span key={item}>{safePeopleText(item, "", 40)}</span>)}</div>
+      ) : null}
+      <div className="buttonRow">
+        <button className="paperButton" type="button" onClick={onDraft}>写入主卷草稿</button>
+        {loading ? <span className="statusLine">正在取详情</span> : null}
+      </div>
+    </section>
+  );
+}
+
+function NpcDialogueTab({
+  dialogueDraft,
+  latestDialogue,
+  records,
+  busy,
+  onDraftChange,
+  onSubmit
+}: {
+  readonly dialogueDraft: string;
+  readonly latestDialogue: { readonly dialogueText?: string; readonly mood?: string; readonly followUpSuggestions?: readonly string[] } | undefined;
+  readonly records: readonly { readonly recordId?: string; readonly dialogueText?: string; readonly mood?: string; readonly actionType?: string; readonly serverStatus?: string }[];
+  readonly busy: boolean;
+  readonly onDraftChange: (value: string) => void;
+  readonly onSubmit: () => void;
+}) {
+  return (
+    <section className="npcTabPanel">
+      <label>
+        对话
+        <textarea value={dialogueDraft} rows={4} maxLength={220} onChange={(event) => onDraftChange(event.target.value)} placeholder="写下要问的话。" />
+      </label>
+      <button className="paperButton" type="button" disabled={!dialogueDraft.trim() || busy} onClick={onSubmit}>问话</button>
+      {latestDialogue?.dialogueText ? (
+        <article className="npcResultCard">
+          <strong>{safePeopleText(latestDialogue.mood, "回应", 32)}</strong>
+          <p>{safePeopleText(latestDialogue.dialogueText, "对方未作长答。", 260)}</p>
+        </article>
+      ) : null}
+      <RecordList title="近事" items={records.slice(0, 4).map((record) => ({
+        id: record.recordId || `${record.actionType}-${record.dialogueText}`,
+        title: `${safePeopleText(record.actionType, "对话", 24)} · ${statusLabel(record.serverStatus)}`,
+        body: safePeopleText(record.dialogueText, "无公开对话。", 140)
+      }))} />
+    </section>
+  );
+}
+
+function NpcTradeTab({
+  offer,
+  silverDelta,
+  records,
+  latestTrade,
+  busy,
+  onOfferChange,
+  onSilverDeltaChange,
+  onSubmit
+}: {
+  readonly offer: string;
+  readonly silverDelta: string;
+  readonly records: readonly TradeRecordView[];
+  readonly latestTrade?: TradeRecordView;
+  readonly busy: boolean;
+  readonly onOfferChange: (value: string) => void;
+  readonly onSilverDeltaChange: (value: string) => void;
+  readonly onSubmit: () => void;
+}) {
+  return (
+    <section className="npcTabPanel">
+      <div className="npcTradeForm">
+        <label>
+          报价摘要
+          <textarea value={offer} rows={3} maxLength={160} onChange={(event) => onOfferChange(event.target.value)} placeholder="如：议买纸张，愿补银二两。" />
+        </label>
+        <label>
+          银两变动
+          <input value={silverDelta} inputMode="numeric" onChange={(event) => onSilverDeltaChange(event.target.value)} />
+        </label>
+        <button className="paperButton" type="button" disabled={!offer.trim() || busy} onClick={onSubmit}>呈请交易</button>
+      </div>
+      {latestTrade ? (
+        <article className="npcResultCard">
+          <strong>{statusLabel(latestTrade.status)}</strong>
+          <p>{safePeopleText(latestTrade.publicSummary || latestTrade.npcResponse, "交易已回传服务器裁决。", 180)}</p>
+        </article>
+      ) : null}
+      <RecordList title="交易簿" items={records.slice(0, 5).map((record) => ({
+        id: record.tradeId || record.offerSummary || "trade",
+        title: `${statusLabel(record.status)} · ${record.requestedSilverDelta ?? 0} 两`,
+        body: safePeopleText(record.publicSummary || record.offerSummary, "无公开摘要。", 140)
+      }))} />
+    </section>
+  );
+}
+
+function NpcCommandTab({
+  commandText,
+  targetRef,
+  budget,
+  tasks,
+  latestPlan,
+  busy,
+  onCommandTextChange,
+  onTargetRefChange,
+  onBudgetChange,
+  onSubmit
+}: {
+  readonly commandText: string;
+  readonly targetRef: string;
+  readonly budget: string;
+  readonly tasks: readonly DelegatedTaskRecordView[];
+  readonly latestPlan?: { readonly planSummary?: string; readonly riskTags?: readonly string[]; readonly successFactors?: readonly string[] };
+  readonly busy: boolean;
+  readonly onCommandTextChange: (value: string) => void;
+  readonly onTargetRefChange: (value: string) => void;
+  readonly onBudgetChange: (value: string) => void;
+  readonly onSubmit: () => void;
+}) {
+  return (
+    <section className="npcTabPanel">
+      <div className="npcCommandForm">
+        <label>
+          命令
+          <textarea value={commandText} rows={4} maxLength={220} onChange={(event) => onCommandTextChange(event.target.value)} placeholder="如：丈量东乡田亩，核对鱼鳞册。" />
+        </label>
+        <label>
+          目标 ref
+          <input value={targetRef} onChange={(event) => onTargetRefChange(event.target.value)} placeholder="geo:county:current" />
+        </label>
+        <label>
+          经费
+          <input value={budget} inputMode="numeric" onChange={(event) => onBudgetChange(event.target.value)} />
+        </label>
+        <button className="paperButton" type="button" disabled={!commandText.trim() || busy} onClick={onSubmit}>呈请委派</button>
+      </div>
+      {latestPlan?.planSummary ? (
+        <article className="npcResultCard">
+          <strong>计划</strong>
+          <p>{safePeopleText(latestPlan.planSummary, "委派计划已回传。", 180)}</p>
+        </article>
+      ) : null}
+      <RecordList title="委派簿" items={tasks.slice(0, 5).map((task) => ({
+        id: task.taskId || task.title || "task",
+        title: `${safePeopleText(task.title, "委派任务", 40)} · ${statusLabel(task.status)}`,
+        body: [...(task.riskFactors ?? []), ...(task.successFactors ?? [])].map((item) => safePeopleText(item, "", 40)).filter(Boolean).join("；") || "无公开风险摘要。"
+      }))} />
+    </section>
+  );
+}
+
+function NpcRecordsTab({
+  interactions,
+  trades,
+  tasks
+}: {
+  readonly interactions: readonly { readonly recordId?: string; readonly dialogueText?: string; readonly actionType?: string; readonly serverStatus?: string }[];
+  readonly trades: readonly TradeRecordView[];
+  readonly tasks: readonly DelegatedTaskRecordView[];
+}) {
+  return (
+    <section className="npcTabPanel npcRecordsGrid">
+      <RecordList title="对话" items={interactions.slice(0, 4).map((record) => ({
+        id: record.recordId || record.dialogueText || "dialogue",
+        title: `${safePeopleText(record.actionType, "对话", 24)} · ${statusLabel(record.serverStatus)}`,
+        body: safePeopleText(record.dialogueText, "无公开摘要。", 140)
+      }))} />
+      <RecordList title="交易" items={trades.slice(0, 4).map((record) => ({
+        id: record.tradeId || record.offerSummary || "trade",
+        title: statusLabel(record.status),
+        body: safePeopleText(record.publicSummary || record.offerSummary, "无公开摘要。", 140)
+      }))} />
+      <RecordList title="委派" items={tasks.slice(0, 4).map((task) => ({
+        id: task.taskId || task.title || "task",
+        title: `${safePeopleText(task.title, "委派任务", 40)} · ${statusLabel(task.status)}`,
+        body: task.assignee?.displayName ? `执行人：${safePeopleText(task.assignee.displayName, "未知", 32)}` : "执行人未题"
+      }))} />
+    </section>
+  );
+}
+
+function RecordList({
+  title,
+  items
+}: {
+  readonly title: string;
+  readonly items: readonly { readonly id: string; readonly title: string; readonly body: string }[];
+}) {
+  return (
+    <section className="npcRecordList">
+      <h3>{title}</h3>
+      {items.length ? items.map((item) => (
+        <article className="inventoryMiniCard" key={item.id}>
+          <strong>{item.title}</strong>
+          <span>{item.body}</span>
+        </article>
+      )) : <p className="statusLine">暂无记录。</p>}
+    </section>
   );
 }

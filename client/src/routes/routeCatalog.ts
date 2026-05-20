@@ -14,6 +14,7 @@ export const routeCatalog: RouteCatalogEntry[] = [
   { id: "game", href: `/game/${demoSessionId}`, label: "主卷", surface: "primary" },
   { id: "map", href: `/game/${demoSessionId}/map`, label: "舆图", surface: "primary" },
   { id: "people", href: `/game/${demoSessionId}/people`, label: "人物", surface: "primary" },
+  { id: "inventory", href: `/game/${demoSessionId}/inventory`, label: "囊箧", surface: "primary" },
   { id: "archive", href: `/game/${demoSessionId}/archive`, label: "史册", surface: "primary" },
   { id: "exam", href: `/game/${demoSessionId}/exam`, label: "科举", surface: "session" },
   { id: "ranking", href: `/game/${demoSessionId}/ranking`, label: "皇榜", surface: "session" },

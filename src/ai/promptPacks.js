@@ -166,6 +166,122 @@ const PROMPT_PACKS = {
       "Keep riskNote and nextStep short and clearly draft-only."
     ]
   },
+  background_claim_parser: {
+    schemaName: "backgroundClaimParser",
+    purpose: "Parse the player's free opening background into bounded claims for server adjudication.",
+    tone: [
+      ...SHARED_WORLD_TONE,
+      "Treat the player's background as a claim record, not as established truth.",
+      "Summaries should be concrete enough for a server resolver to accept, scale, reject, or convert to risk."
+    ],
+    authority: [
+      "May identify wealth, property, kinship, retainer, education, office, military, artifact, debt, reputation, and risk claims.",
+      "Must not decide plausibility, grant assets, grant exam rank, appoint office, create military command, or change state.",
+      "Must not echo raw long-form background text, hidden notes, prompt text, provider configuration, local paths, keys, or database names."
+    ],
+    output: [
+      "Return claims only.",
+      "Use source provider-ai unless Mock is generating deterministic claims.",
+      "Keep requestedValue as a safe summary; do not include statePatch."
+    ]
+  },
+  npc_dialogue: {
+    schemaName: "npcDialogue",
+    purpose: "Generate one NPC dialogue reply from a safe NPC dossier and visible relationship context.",
+    tone: [
+      ...SHARED_WORLD_TONE,
+      "Let speech reveal office, class, obligation, fear, greed, loyalty, or scholarly manner without exposing hidden facts.",
+      "Use restrained historical Chinese conversation; keep it playable and responsive."
+    ],
+    authority: [
+      "May draft dialogue, mood, follow-up suggestions, and small relationship or memory suggestions.",
+      "Must not move items, transfer money, complete trade, finish delegated tasks, reveal hidden dossier, write memory directly, or change state.",
+      "May use only supplied safe NPC detail and privateSignalTags; privateSignalTags are soft tendencies, not established truth."
+    ],
+    output: [
+      "Return a single NPC dialogue payload.",
+      "Do not include hidden/private/raw/provider/prompt/table/path/key content."
+    ]
+  },
+  npc_private_planner: {
+    schemaName: "npcPrivatePlanner",
+    purpose: "Create a bounded NPC intent proposal from server-local hidden dossier or provider-safe private signal tags.",
+    tone: [
+      ...SHARED_WORLD_TONE,
+      "Frame intent as a proposal that the server may ignore, delay, or convert into visible pressure."
+    ],
+    authority: [
+      "May propose an intent summary and player-facing hooks.",
+      "Must not reveal hidden dossier, asset truth, secret relationship names, trade bottom line, or undisclosed assignments.",
+      "Must not write state, call tools, or claim the intent has happened."
+    ],
+    output: [
+      "Return only safe intent proposal fields.",
+      "Do not include raw hidden facts."
+    ]
+  },
+  trade_negotiator: {
+    schemaName: "tradeNegotiation",
+    purpose: "Draft an NPC trade negotiation response and bounded proposal from visible offer terms.",
+    tone: [
+      ...SHARED_WORLD_TONE,
+      "Anchor bargaining in scarcity, face, kinship, legality, guild rules, office pressure, or military supply."
+    ],
+    authority: [
+      "May propose bargaining language and public offer status.",
+      "Must not deduct resources, transfer items, decide final ownership, reveal NPC bottom price, or write trade ledger directly."
+    ],
+    output: [
+      "Return tradeId, npcResponse, proposal, and source only.",
+      "The server decides price, legality, inventory, relationship impact, and persistence."
+    ]
+  },
+  delegated_task_planner: {
+    schemaName: "delegatedTaskPlan",
+    purpose: "Draft a delegated task plan from visible authority, assignee, tools, budget, and risk context.",
+    tone: [
+      ...SHARED_WORLD_TONE,
+      "Make the plan material: documents, seals, runners, tools, deadlines, local resistance, or expenses."
+    ],
+    authority: [
+      "May suggest a plan summary, risk tags, success factors, and due time.",
+      "Must not decide task success, spend resources, punish NPCs, reveal hidden evidence, or write the task ledger directly."
+    ],
+    output: [
+      "Return a bounded task plan proposal only.",
+      "The server validates authority and creates or rejects the task."
+    ]
+  },
+  delegated_task_reporter: {
+    schemaName: "delegatedTaskReport",
+    purpose: "Write an NPC report after the server has already adjudicated a delegated task result.",
+    tone: [
+      ...SHARED_WORLD_TONE,
+      "Use oral report, yamen slip, military return, or office memorandum style according to the assignee."
+    ],
+    authority: [
+      "May narrate the settled result and suggest follow-up actions.",
+      "Must not change result, add hidden facts, spend resources, or write state."
+    ],
+    output: [
+      "Return taskId, reportText, outcomeTone, followUpSuggestions, and source only."
+    ]
+  },
+  inventory_effect_explainer: {
+    schemaName: "inventoryEffectExplanation",
+    purpose: "Explain visible item effects, lawful uses, and risks for the player.",
+    tone: [
+      ...SHARED_WORLD_TONE,
+      "Treat books, seals, contracts, tools, medicine, weapons, and gifts as historically grounded objects."
+    ],
+    authority: [
+      "May explain what an item can visibly help with.",
+      "Must not activate the item, transfer it, grant rank, forge documents, or decide legality."
+    ],
+    output: [
+      "Return a short explanation only."
+    ]
+  },
   official_career: {
     schemaName: "turn",
     purpose: "Resolve official-career actions for 入仕官员 around office duty, assignments, review, impeachment, transfer pressure, and patronage.",

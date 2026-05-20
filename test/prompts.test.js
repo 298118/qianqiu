@@ -34,16 +34,23 @@ test("S41 prompt pack registry covers fourth-phase pack names", () => {
   assert.deepEqual(
     listPromptPackNames().sort(),
     [
+      "background_claim_parser",
+      "delegated_task_planner",
+      "delegated_task_reporter",
       "emperor_court",
       "exam_grading",
       "exam_question",
       "general_frontier",
+      "inventory_effect_explainer",
       "local_magistrate",
       "minister_faction",
+      "npc_dialogue",
+      "npc_private_planner",
       "official_career",
       "opening",
       "quick_action",
       "topic_draft",
+      "trade_negotiator",
       "world_turn"
     ].sort()
   );

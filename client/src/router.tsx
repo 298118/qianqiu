@@ -6,6 +6,7 @@ import { ErrorPage } from "./pages/ErrorPage";
 import { ExamPage } from "./pages/ExamPage";
 import { GamePage } from "./pages/GamePage";
 import { HomePage } from "./pages/HomePage";
+import { InventoryPage } from "./pages/InventoryPage";
 import { MapPage } from "./pages/MapPage";
 import { PeoplePage } from "./pages/PeoplePage";
 import { RankingPage } from "./pages/RankingPage";
@@ -25,6 +26,7 @@ export const routes: RouteObject[] = [
         children: [
           { path: "map", element: <MapPage /> },
           { path: "people", element: <PeoplePage /> },
+          { path: "inventory", element: <InventoryPage /> },
           { path: "archive", element: <ArchivePage /> },
           { path: "exam", element: <ExamPage /> },
           { path: "ranking", element: <RankingPage /> },

@@ -61,6 +61,24 @@ const {
   syncSafeSearchTables
 } = require("./sqliteSafeSearchTables");
 const {
+  deleteAssetRows,
+  ensureAssetTablesForRecord,
+  initializeAssetTables,
+  syncAssetTables
+} = require("./sqliteAssetTables");
+const {
+  deleteInventoryRows,
+  ensureInventoryTablesForRecord,
+  initializeInventoryTables,
+  syncInventoryTables
+} = require("./sqliteInventoryTables");
+const {
+  deleteNpcInteractionRows,
+  ensureNpcInteractionTablesForRecord,
+  initializeNpcInteractionTables,
+  syncNpcInteractionTables
+} = require("./sqliteNpcInteractionTables");
+const {
   initializeSchemaMigrationsTable
 } = require("./sqliteMigrations");
 
@@ -240,6 +258,9 @@ function createSqliteSessionAdapter(options = {}) {
     initializeEventArchiveTables(database);
     initializePromptRetrievalTables(database);
     initializeSafeSearchTables(database);
+    initializeAssetTables(database);
+    initializeInventoryTables(database);
+    initializeNpcInteractionTables(database);
 
     if (databasePath !== ":memory:") {
       database.exec("PRAGMA journal_mode = WAL");
@@ -331,6 +352,9 @@ function createSqliteSessionAdapter(options = {}) {
     syncEventArchiveTables(getDatabase(), record);
     syncPromptRetrievalTables(getDatabase(), record);
     syncSafeSearchTables(getDatabase(), record);
+    syncAssetTables(getDatabase(), record);
+    syncInventoryTables(getDatabase(), record);
+    syncNpcInteractionTables(getDatabase(), record);
   }
 
   function attachSqlitePromptRetrieval(record) {
@@ -550,7 +574,16 @@ function createSqliteSessionAdapter(options = {}) {
       ensureEventArchiveTablesForRecord(getDatabase(), migrated.record);
       ensurePromptRetrievalTablesForRecord(getDatabase(), migrated.record);
       ensureSafeSearchTablesForRecord(getDatabase(), migrated.record);
-      if (repaired || repairedOfficialPostings) updateSessionRecordPayload(migrated.record);
+      const repairedAssets = ensureAssetTablesForRecord(getDatabase(), migrated.record);
+      const repairedInventory = ensureInventoryTablesForRecord(getDatabase(), migrated.record);
+      const repairedNpcInteractions = ensureNpcInteractionTablesForRecord(getDatabase(), migrated.record);
+      if (
+        repaired ||
+        repairedOfficialPostings ||
+        repairedAssets ||
+        repairedInventory ||
+        repairedNpcInteractions
+      ) updateSessionRecordPayload(migrated.record);
       attachSqlitePromptRetrieval(migrated.record);
       return migrated;
     });
@@ -665,6 +698,9 @@ function createSqliteSessionAdapter(options = {}) {
       deleteEventArchiveRows(getDatabase(), sessionId);
       deletePromptRetrievalRows(getDatabase(), sessionId);
       deleteSafeSearchRows(getDatabase(), sessionId);
+      deleteAssetRows(getDatabase(), sessionId);
+      deleteInventoryRows(getDatabase(), sessionId);
+      deleteNpcInteractionRows(getDatabase(), sessionId);
       getDatabase().prepare("DELETE FROM world_sessions WHERE session_id = ?").run(sessionId);
     });
   }

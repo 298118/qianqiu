@@ -73,6 +73,18 @@ describe("S74.2 qianqiuApi", () => {
     await qianqiuApi.getGlobalAiSettings();
     await qianqiuApi.updateGlobalAiSettings({ settings: { preset: "quality_first" } });
     await qianqiuApi.requestQuickActions("s1", { page: "game", draftPreview: "温书", count: 2 });
+    await qianqiuApi.loadInventory("s1");
+    await qianqiuApi.transferInventoryItem("s1", { itemId: "item:1", toContainerId: "container:2" });
+    await qianqiuApi.loadNpcs("s1", { pageSize: 10, interaction: "trade" });
+    await qianqiuApi.loadNpcDetail("s1", "npc:one/two");
+    await qianqiuApi.interactWithNpc("s1", { npcId: "npc:one/two", actionType: "talk", utterance: "近况如何？" });
+    await qianqiuApi.submitTrade("s1", { npcId: "npc:one/two", silverDelta: 1, offerSummary: "议买纸张。" });
+    await qianqiuApi.submitNpcCommand("s1", {
+      assigneeActorId: "npc:one/two",
+      taskType: "land_survey",
+      authoritySource: "yamen_authority",
+      commandText: "清丈田亩。"
+    });
     await qianqiuApi.testAiConnection({ provider: "mock" });
 
     const calls = fetchMock.mock.calls.map(([url, options]) => ({
@@ -91,6 +103,13 @@ describe("S74.2 qianqiuApi", () => {
       { url: "/api/ai/settings/global", method: "GET", contentType: undefined },
       { url: "/api/ai/settings/global", method: "POST", contentType: "application/json" },
       { url: "/api/ai/quick-actions/s1", method: "POST", contentType: "application/json" },
+      { url: "/api/game/inventory/s1", method: "GET", contentType: undefined },
+      { url: "/api/game/inventory-transfer/s1", method: "POST", contentType: "application/json" },
+      { url: "/api/game/npcs/s1?pageSize=10&interaction=trade", method: "GET", contentType: undefined },
+      { url: "/api/game/npc/s1/npc%3Aone%2Ftwo", method: "GET", contentType: undefined },
+      { url: "/api/game/npc-interaction/s1", method: "POST", contentType: "application/json" },
+      { url: "/api/game/trade/s1", method: "POST", contentType: "application/json" },
+      { url: "/api/game/npc-command/s1", method: "POST", contentType: "application/json" },
       { url: "/api/ai/connection-test", method: "POST", contentType: "application/json" }
     ]);
     expect(JSON.parse(fetchMock.mock.calls[0][1]?.body as string)).toMatchObject({
@@ -103,12 +122,22 @@ describe("S74.2 qianqiuApi", () => {
       draftPreview: "温书",
       count: 2
     });
+    const npcInteractionCall = fetchMock.mock.calls.find(([url]) => url === "/api/game/npc-interaction/s1");
+    expect(JSON.parse(npcInteractionCall?.[1]?.body as string)).toEqual({
+      npcId: "npc:one/two",
+      actionType: "talk",
+      utterance: "近况如何？"
+    });
   });
 
   it("blocks raw state and unknown endpoints at the client boundary", () => {
     expect(() => assertSafeApiEndpoint("/api/game/state/s1")).toThrow(/player-state/);
     expect(() => assertSafeApiEndpoint("/api/dev/session-diagnostics/s1")).toThrow(/Unsafe/);
     expect(() => assertSafeApiEndpoint("/api/game/search/s1")).toThrow(/Unsafe/);
+    expect(() => assertSafeApiEndpoint("/api/game/inventory/s1")).not.toThrow();
+    expect(() => assertSafeApiEndpoint("/api/game/npcs/s1")).not.toThrow();
+    expect(() => assertSafeApiEndpoint("/api/game/npc/s1/npc%3Aone")).not.toThrow();
+    expect(() => assertSafeApiEndpoint("/api/game/trade/s1")).not.toThrow();
     expect(() => assertSafeApiEndpoint("/api/ai/quick-actions/s1")).not.toThrow();
     expect(() => assertSafeApiEndpoint("/api/ai/settings/global")).not.toThrow();
   });

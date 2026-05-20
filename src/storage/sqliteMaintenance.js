@@ -25,6 +25,15 @@ const {
   getSafeSearchRepairStatus
 } = require("./sqliteSafeSearchTables");
 const {
+  getAssetRepairStatus
+} = require("./sqliteAssetTables");
+const {
+  getInventoryRepairStatus
+} = require("./sqliteInventoryTables");
+const {
+  getNpcInteractionRepairStatus
+} = require("./sqliteNpcInteractionTables");
+const {
   assertMigrationIntegrity,
   listAppliedMigrations,
   schemaMigrationsTableExists
@@ -54,7 +63,15 @@ const EXPECTED_SQLITE_TABLES = Object.freeze([
   "office_transfers",
   "event_archive_index",
   "prompt_retrieval_index",
-  "safe_search_index"
+  "safe_search_index",
+  "asset_resource_accounts",
+  "asset_long_term_assets",
+  "inventory_containers",
+  "inventory_items",
+  "npc_roster_profiles",
+  "npc_interaction_events",
+  "delegated_tasks",
+  "trade_ledger_records"
 ]);
 
 const EXPECTED_SQLITE_INDEXES = Object.freeze([
@@ -96,7 +113,15 @@ const EXPECTED_SQLITE_INDEXES = Object.freeze([
   "idx_prompt_retrieval_session_domain",
   "idx_prompt_retrieval_session_revision",
   "idx_safe_search_session_domain",
-  "idx_safe_search_session_revision"
+  "idx_safe_search_session_revision",
+  "idx_asset_resource_accounts_session_owner",
+  "idx_asset_long_term_assets_session_owner",
+  "idx_inventory_containers_session_owner",
+  "idx_inventory_items_session_container",
+  "idx_npc_roster_profiles_session_npc",
+  "idx_npc_interaction_events_session_npc",
+  "idx_delegated_tasks_session_status",
+  "idx_trade_ledger_records_session_status"
 ]);
 
 const DERIVED_TABLE_GROUPS = Object.freeze({
@@ -125,7 +150,15 @@ const DERIVED_TABLE_GROUPS = Object.freeze({
   ],
   eventArchive: ["event_archive_index"],
   promptRetrieval: ["prompt_retrieval_index"],
-  safeSearch: ["safe_search_index"]
+  safeSearch: ["safe_search_index"],
+  assetLedger: ["asset_resource_accounts", "asset_long_term_assets"],
+  inventoryLedger: ["inventory_containers", "inventory_items"],
+  npcInteractions: [
+    "npc_roster_profiles",
+    "npc_interaction_events",
+    "delegated_tasks",
+    "trade_ledger_records"
+  ]
 });
 
 function loadDatabaseSync() {
@@ -332,7 +365,10 @@ function getSessionDerivedDriftStatus(database, record) {
     officialPostings: getDomainDriftStatus(database, record, "officialPostings", getOfficialPostingRepairStatus),
     eventArchive: getDomainDriftStatus(database, record, "eventArchive", getEventArchiveRepairStatus),
     promptRetrieval: getDomainDriftStatus(database, record, "promptRetrieval", getPromptRetrievalRepairStatus),
-    safeSearch: getDomainDriftStatus(database, record, "safeSearch", getSafeSearchRepairStatus)
+    safeSearch: getDomainDriftStatus(database, record, "safeSearch", getSafeSearchRepairStatus),
+    assetLedger: getDomainDriftStatus(database, record, "assetLedger", getAssetRepairStatus),
+    inventoryLedger: getDomainDriftStatus(database, record, "inventoryLedger", getInventoryRepairStatus),
+    npcInteractions: getDomainDriftStatus(database, record, "npcInteractions", getNpcInteractionRepairStatus)
   };
 
   return {

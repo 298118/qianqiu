@@ -126,6 +126,126 @@ function compactTopicDraftContext(context = {}) {
   };
 }
 
+function compactBackgroundClaimContext(context = {}) {
+  const form = context.startForm || {};
+  return {
+    player: {
+      role: form.role,
+      roleLabel: form.roleLabel,
+      name: form.playerName,
+      familyBackground: form.familyBackground,
+      nativePlace: form.nativePlace
+    },
+    dynasty: form.dynasty,
+    year: form.year,
+    publicBackground: context.publicBackground || "",
+    customSetting: context.customSetting || "",
+    safety: {
+      claimsOnly: true,
+      serverAdjudicates: true,
+      noStateWrites: true,
+      noRankOrOfficeGrant: true,
+      doNotEchoRawBackground: true
+    }
+  };
+}
+
+function compactNpcDialogueContext(context = {}) {
+  return {
+    npcId: context.npcId,
+    interactionType: context.interactionType || context.actionType || "talk",
+    playerUtterance: context.playerUtterance || "",
+    player: context.player || {
+      role: context.playerRole,
+      name: context.playerName
+    },
+    npcDetailView: context.npcDetailView || {},
+    relationshipSummary: context.relationshipSummary || {},
+    privateSignalTags: Array.isArray(context.privateSignalTags) ? context.privateSignalTags.slice(0, 6) : [],
+    safety: {
+      dialogueOnly: true,
+      serverAdjudicatesConsequences: true,
+      noInventoryTransfer: true,
+      noHiddenDossierDisclosure: true
+    }
+  };
+}
+
+function compactTradeNegotiationContext(context = {}) {
+  return {
+    tradeId: context.tradeId,
+    action: context.action || "propose",
+    playerOffer: context.playerOffer || {
+      offerSummary: context.offerSummary || "",
+      requestedSilverDelta: context.requestedSilverDelta || 0,
+      requestedItemRefs: Array.isArray(context.requestedItemRefs) ? context.requestedItemRefs.slice(0, 8) : []
+    },
+    npcCounterparty: context.npcCounterparty || {
+      npcId: context.npcId,
+      npcName: context.npcName
+    },
+    visiblePriceBounds: context.visiblePriceBounds || {},
+    relationshipSummary: context.relationshipSummary || {},
+    serverBoundaries: Array.isArray(context.serverBoundaries) ? context.serverBoundaries.slice(0, 4) : [],
+    safety: {
+      proposalOnly: true,
+      serverValidatesPriceInventoryLegality: true,
+      noResourceDeduction: true,
+      noOwnershipTransfer: true
+    }
+  };
+}
+
+function compactDelegatedTaskContext(context = {}) {
+  return {
+    taskType: context.taskType || "generic",
+    commandText: context.commandText || "",
+    issuer: context.issuer || { actorId: "player" },
+    assignee: context.assignee || context.npcDetailView || { npcId: context.npcId },
+    targetRef: context.targetRef || "",
+    visibleResources: context.visibleResources || {
+      budget: context.budget || 0
+    },
+    visibleRisks: Array.isArray(context.visibleRisks) ? context.visibleRisks.slice(0, 8) : [],
+    serverBoundaries: Array.isArray(context.serverBoundaries) ? context.serverBoundaries.slice(0, 4) : [],
+    safety: {
+      proposalOnly: true,
+      serverValidatesAuthorityResourcesTime: true,
+      noTaskResultDecision: true
+    }
+  };
+}
+
+function compactDelegatedTaskReportContext(context = {}) {
+  return {
+    taskId: context.taskId,
+    taskType: context.taskType,
+    assignee: context.assignee || {},
+    adjudicatedResult: context.adjudicatedResult || {},
+    publicOutcomeSummary: context.publicOutcomeSummary || "",
+    safety: {
+      reportAfterServerResult: true,
+      noResultOverride: true,
+      noHiddenFactExpansion: true
+    }
+  };
+}
+
+function compactInventoryEffectContext(context = {}) {
+  return {
+    itemId: context.itemId,
+    itemView: context.itemView || {},
+    player: context.player || {},
+    visibleUseContext: context.visibleUseContext || "",
+    safety: {
+      explanationOnly: true,
+      noActivation: true,
+      noTransfer: true,
+      noStateWrites: true
+    }
+  };
+}
+
 function compactWorldState(worldState = {}, options = {}) {
   return {
     year: worldState.year,
@@ -149,6 +269,107 @@ function compactWorldState(worldState = {}, options = {}) {
     recentEvents: compactRecentEvents(worldState),
     setup: worldState.setup || {},
     player: compactPlayer(worldState.player)
+  };
+}
+
+function buildBackgroundClaimParserTask(context = {}) {
+  return {
+    promptPack: "background_claim_parser",
+    schemaName: "backgroundClaimParser",
+    instructions: buildPromptInstructions("background_claim_parser"),
+    input: [
+      "Parse the player's opening background into bounded claims for server adjudication.",
+      "Do not decide whether any claim is true or granted.",
+      "Do not include statePatch, rank grants, office grants, raw prompt text, provider data, keys, paths, hidden notes, or database names.",
+      "Opening background context:",
+      JSON.stringify(compactBackgroundClaimContext(context), null, 2)
+    ].join("\n"),
+    maxOutputTokens: 1000
+  };
+}
+
+function buildNpcDialogueTask(context = {}) {
+  return {
+    promptPack: "npc_dialogue",
+    schemaName: "npcDialogue",
+    instructions: buildPromptInstructions("npc_dialogue"),
+    input: [
+      "Generate one NPC dialogue reply. Consequences remain server-adjudicated.",
+      "Use only the supplied safe NPC dossier, relationship summary, and privateSignalTags.",
+      "NPC dialogue context:",
+      JSON.stringify(compactNpcDialogueContext(context), null, 2)
+    ].join("\n"),
+    maxOutputTokens: 1100
+  };
+}
+
+function buildNpcPrivatePlannerTask(context = {}) {
+  return {
+    promptPack: "npc_private_planner",
+    schemaName: "npcPrivatePlanner",
+    instructions: buildPromptInstructions("npc_private_planner"),
+    input: [
+      "Create a bounded NPC intent proposal. Do not reveal hidden dossier or claim the proposal has happened.",
+      "NPC private planner context:",
+      JSON.stringify(compactNpcDialogueContext(context), null, 2)
+    ].join("\n"),
+    maxOutputTokens: 900
+  };
+}
+
+function buildTradeNegotiationTask(context = {}) {
+  return {
+    promptPack: "trade_negotiator",
+    schemaName: "tradeNegotiation",
+    instructions: buildPromptInstructions("trade_negotiator"),
+    input: [
+      "Draft a trade negotiation response. The server decides final price, legality, inventory, and ownership.",
+      "Trade context:",
+      JSON.stringify(compactTradeNegotiationContext(context), null, 2)
+    ].join("\n"),
+    maxOutputTokens: 1000
+  };
+}
+
+function buildDelegatedTaskPlanTask(context = {}) {
+  return {
+    promptPack: "delegated_task_planner",
+    schemaName: "delegatedTaskPlan",
+    instructions: buildPromptInstructions("delegated_task_planner"),
+    input: [
+      "Draft a delegated task plan proposal. The server validates authority, resources, and time.",
+      "Delegated task context:",
+      JSON.stringify(compactDelegatedTaskContext(context), null, 2)
+    ].join("\n"),
+    maxOutputTokens: 1000
+  };
+}
+
+function buildDelegatedTaskReportTask(context = {}) {
+  return {
+    promptPack: "delegated_task_reporter",
+    schemaName: "delegatedTaskReport",
+    instructions: buildPromptInstructions("delegated_task_reporter"),
+    input: [
+      "Write a report for an already adjudicated delegated task result.",
+      "Delegated task report context:",
+      JSON.stringify(compactDelegatedTaskReportContext(context), null, 2)
+    ].join("\n"),
+    maxOutputTokens: 1000
+  };
+}
+
+function buildInventoryEffectExplanationTask(context = {}) {
+  return {
+    promptPack: "inventory_effect_explainer",
+    schemaName: "inventoryEffectExplanation",
+    instructions: buildPromptInstructions("inventory_effect_explainer"),
+    input: [
+      "Explain visible item effects and lawful use. Do not activate, transfer, or change state.",
+      "Inventory item context:",
+      JSON.stringify(compactInventoryEffectContext(context), null, 2)
+    ].join("\n"),
+    maxOutputTokens: 800
   };
 }
 
@@ -279,6 +500,13 @@ function buildGradeTask(worldState, exam, essay, authenticityCheck) {
 
 module.exports = {
   buildExamQuestionTask,
+  buildBackgroundClaimParserTask,
+  buildDelegatedTaskPlanTask,
+  buildDelegatedTaskReportTask,
+  buildInventoryEffectExplanationTask,
+  buildNpcDialogueTask,
+  buildNpcPrivatePlannerTask,
+  buildTradeNegotiationTask,
   buildGradeTask,
   buildOpeningTask,
   buildQuickActionTask,

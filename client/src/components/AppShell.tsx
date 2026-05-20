@@ -88,6 +88,7 @@ function resolvePageSurface(pathname: string): PageSurface {
   if (pathname === "/") return "home";
   if (pathname.endsWith("/map")) return "map";
   if (pathname.endsWith("/people")) return "people";
+  if (pathname.endsWith("/inventory")) return "inventory";
   if (pathname.endsWith("/archive")) return "archive";
   if (pathname.endsWith("/exam")) return "exam";
   if (pathname.endsWith("/ranking")) return "ranking";

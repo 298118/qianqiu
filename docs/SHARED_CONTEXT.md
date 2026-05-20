@@ -20,7 +20,7 @@
 - Frontend: S74.1 起 React + TypeScript + Vite 构建产物接管默认 `/`；源码在 `client/`，生产构建在 `dist/client/`。React Router Data Mode 管理首页、主卷、舆图、人物、史册、科举、皇榜、朝议和设置等路由。旧 `public/index.html`、`public/app.js`、`public/styles.css`、`public/mapPanel.js` 只作迁移参考；`public/assets/`、`public/vendor/`、`public/mapRenderer.js` 继续提供已审核素材和 S72 地图 runtime。
 - Backend: Node.js + Express，plain JavaScript。AI provider 为 adapter-based Mock/OpenAI/DeepSeek/MiMo/MiMo+DeepSeek/Anthropic；真实 provider 只作为可选配置，不能成为启动门槛。
 - Storage: 默认 JSON session files under `data/sessions/`；可选 `STORAGE_ADAPTER=sqlite` 使用本地 `schema_migrations`、`world_sessions`、audit tables、`geo_*`、`people_*`、`office_*`、`event_archive_index`、`prompt_retrieval_index` 和 `safe_search_index`。SQLite 派生行只从 `world_sessions.world_state_json` 单向修复，不是玩家 API、prompt 或服务器裁决的 raw truth source。
-- Roadmap status: S49-S67 本地数据库与大世界内容、S68-S69 科举深化、S70 AI 编排、S71 数据库玩法化、S72 PixiJS 水墨地图、S73-S77 前端水墨重构、S78 官署专题玩法化、S79 前端修复与高清立绘使用、S80 服务端全局 AI 设置均已完成并归档或压缩记录。S81-S85 NPC、资产与储物系统已规划，源头见 `docs/NPC_INVENTORY_SYSTEM_ROADMAP.md`。
+- Roadmap status: S49-S67 本地数据库与大世界内容、S68-S69 科举深化、S70 AI 编排、S71 数据库玩法化、S72 PixiJS 水墨地图、S73-S77 前端水墨重构、S78 官署专题玩法化、S79 前端修复与高清立绘使用、S80 服务端全局 AI 设置均已完成并归档或压缩记录。S81-S84 NPC、资产、储物、交易与委派首轮闭环已完成；S85 经济长期关系、预留玩法、总验收与归档仍待施工。规划源头见 `docs/NPC_INVENTORY_SYSTEM_ROADMAP.md`，执行契约见 `docs/NPC_INVENTORY_SYSTEM_CONTRACT.md`。
 - Current collaboration: 2026-05-14 起停止 Gemini CLI 协作。后续开发、素材生成/审核、验证、文档同步和 Git 提交由 Codex 负责；用户已授权本仓库使用 Codex 子代理，实施子代理不得提交，提交前复审子代理必须只读。
 - Current local `.env`: 可能含用户 provider keys。`.env` 被 Git 忽略，不能打印、复制到文档或提交。
 
@@ -49,10 +49,10 @@
 
 ## Implemented Surface
 
-- Core APIs: `GET /api/health`、`POST /api/game/start`、`GET /api/game/saves`、`GET /api/game/player-state/:sessionId`、兼容 `GET /api/game/state/:sessionId`、`GET /api/game/search/:sessionId`、`GET /api/game/topic-surface/:sessionId/:surfaceId`、`POST /api/game/turn`、`POST /api/exam/question|progress|submit`。
-- AI APIs: `POST /api/ai/connection-test`、`GET/POST /api/ai/settings/global`、兼容 `GET/POST /api/ai/settings/:sessionId`、`POST /api/ai/quick-actions/:sessionId`、`POST /api/ai/topic-draft/:sessionId`。
+- Core APIs: `GET /api/health`、`POST /api/game/start`、`GET /api/game/saves`、`GET /api/game/player-state/:sessionId`、兼容 `GET /api/game/state/:sessionId`、`GET /api/game/search/:sessionId`、`GET /api/game/topic-surface/:sessionId/:surfaceId`、`GET /api/game/inventory/:sessionId`、`POST /api/game/inventory-transfer/:sessionId`、`GET /api/game/npcs/:sessionId`、`GET /api/game/npc/:sessionId/:npcId`、`POST /api/game/npc-interaction/:sessionId`、`POST /api/game/trade/:sessionId`、`POST /api/game/npc-command/:sessionId`、`POST /api/game/turn`、`POST /api/exam/question|progress|submit`。
+- AI APIs: `POST /api/ai/connection-test`、`GET/POST /api/ai/settings/global`、兼容 `GET/POST /api/ai/settings/:sessionId`、`POST /api/ai/quick-actions/:sessionId`、`POST /api/ai/topic-draft/:sessionId`。AI 设置矩阵当前覆盖 18 类任务，新增 `background_claim_parser`、`npc_dialogue`、`npc_private_planner`、`trade_negotiator`、`delegated_task_planner`、`delegated_task_reporter`、`inventory_effect_explainer`。
 - Main code areas: AI adapters/prompts/schemas/tools in `src/ai/`; server-owned game rules, exams, official career, resolver input, redacted state, memory, settings, audit and topic surfaces in `src/game/`; storage adapters and migrations in `src/storage/`; React app in `client/`; reviewed visual assets and runtime manifests in `public/assets/`.
-- Recent validation baseline: S80 通过 `npm run typecheck:client`、`npm run test:client`、focused Node tests、`npm run build:client`、`npm run smoke:browser`、`npm run check:docs-governance`、`node --test test/documentationGovernance.test.js` 和完整 `npm test`。当前 S81-S85 规划/治理改动需至少通过 docs governance、documentation governance、diff check；因更新治理检查脚本，提交前执行只读子代理复审。
+- Recent validation baseline: S81-S84 已通过 focused Node tests（资产/背包/NPC/委派、交易结算边界、NPC/交易/委派 AI 文本安全、SQLite 派生表与 adapter、NPC/背包 routes、AI settings/schema/prompt/provider、player-state redaction、SQLite maintenance、session adapter contract）、`npm run typecheck:client`、`npm run test:client -- --pool=vmForks --maxWorkers=2`、`npm run build:client`、`AI_PROVIDER=mock npm run smoke:browser`、完整 `npm test`、`npm run check:docs-governance`、`node --test test/documentationGovernance.test.js` 和 `git diff --check`；提交前需完成只读子代理复审。
 
 ## Archives And Contracts
 
@@ -62,6 +62,7 @@
 - `docs/QIANQIU_DEVELOPMENT_BRIEF.md`
 - `docs/DEVELOPMENT_STEPS.md`
 - `docs/NPC_INVENTORY_SYSTEM_ROADMAP.md`
+- `docs/NPC_INVENTORY_SYSTEM_CONTRACT.md`
 - `docs/ACTIVITY_LEDGER_COMPLETED_ARCHIVE.md`
 - `docs/ARCHITECTURE.md`
 - `docs/AI_CONTROL_AUDIT_MATRIX.md`
@@ -78,10 +79,11 @@
 
 ## Current Work Note
 
+- 2026-05-20：推进完成 S81-S84 NPC、资产、储物、交易与委派首轮闭环。新增 S81-S84 执行契约、资产/资源/背包/NPC/交互/交易/委派/开局背景裁决领域模块，`POST /api/game/start` 接入 `background_claim_parser` 并由服务器兑现或折算宣称；新增 inventory、NPC list/detail、NPC interaction、trade、npc-command 安全 API；SQLite 新增安全派生表并接入 adapter/maintenance；React 新增“囊箧” route、人物 NPC 工作台、对话/交易/委派 tabs 与主卷开局裁决摘要。交易 API 现在把 AI `accepted` 视为议价文本，不直接写银钱/物品；NPC/交易/委派 AI 文本在即时响应前也会被服务端清洗和拒绝；委派创建响应只返回安全 task view，SQLite legacy 交易派生行也补了 actor fallback。Bacon、Linnaeus、Pasteur、Turing 分别完成小步 patches，均未提交；主代理整合验证和文档同步。第一次只读复审 Epicurus 发现的交易结算和 AI 文本泄漏 P1 已修复并补测，第二次复审 Hegel 未发现 P0/P1，指出的非阻断项已收口；最终只读复审 Russell 未发现 P0/P1，记录 S85 可继续收紧全局错误脱敏和畸形 legacy trade actor fallback。
 - 2026-05-20：按用户追问补充 S81-S85 全量小步骤台账，已把 S81.1-S81.5、S82.1-S82.5、S83.1-S83.5、S84.1-S84.8、S85.1-S85.6 全部写入 `docs/DEVELOPMENT_STEPS.md`。用户明确本轮不用子代理审核；本轮为低风险文档台账补充，跳过子代理复审，已通过 docs governance、documentation governance 和 diff check。
 - 2026-05-20：按用户要求新增 S81-S85 NPC、资产与储物系统规划，详见 `docs/NPC_INVENTORY_SYSTEM_ROADMAP.md`；活动台账已加入 S81-S85 TODO，开发治理新增“前后端分离和大步骤拆分”受保护规则，并同步 `scripts/checkGovernanceDocs.js`、brief 与 `AGENTS.md`。本轮为规划/治理改动，需通过 docs governance、documentation governance、diff check，并因修改检查脚本执行只读复审。
 - 2026-05-20：按用户要求压缩 `docs/SHARED_CONTEXT.md` 和 `docs/DEVELOPMENT_STEPS.md`，只保留接手下一步必要的状态、边界、验证入口和归档索引；新增“不要最小实现点/最小改动点，追求完整丰富实现”的开发规范，并写入 `docs/DEVELOPMENT_GOVERNANCE.md`、本文件、活动台账、brief 与 `AGENTS.md`。已通过 `npm run check:docs-governance`、`node --test test/documentationGovernance.test.js`、`npm test`（940 项）和 `git diff --check`；提交前只读复审 Anscombe 未发现 P0/P1/P2。
 
 ## Next Recommended Step
 
-从 S81.1 开始施工 NPC、资产与储物系统：先写可执行契约和测试骨架，再实现 `assetLedger`、`inventoryLedger`、`npcRoster`、`delegatedTasks` 与 SQLite 派生表。台账已列出全部小步骤；不要先做前端假状态，S84.1-S84.8 等稳定安全 API 后再集中接入 React NPC、背包、交易和委派体验。
+进入 S85：先补长期 tick 与基础市场价格，让 NPC 资产、库存、债务、人情债、交易承诺和委派任务随旬/月演化；再补 NPC 私人目标与主动请求、论道/切磋/求爱/婚姻正式扩展位，最后做 S81-S85 JSON/SQLite/Mock/browser/docs 总验收与归档。继续保持前端只消费安全 API/view，所有资源、价格、关系和任务结果由服务器裁决。

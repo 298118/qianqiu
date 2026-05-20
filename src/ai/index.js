@@ -35,7 +35,22 @@ function wrapWithMockFallback(providerName, provider) {
     supportsStreaming: Boolean(provider.supportsStreaming && typeof provider.streamTurn === "function")
   };
 
-  for (const method of ["startGame", "runTurn", "streamTurn", "generateExamQuestion", "suggestQuickActions", "draftTopicSurface", "gradeExamEssay"]) {
+  for (const method of [
+    "startGame",
+    "runTurn",
+    "streamTurn",
+    "generateExamQuestion",
+    "suggestQuickActions",
+    "draftTopicSurface",
+    "parseBackgroundClaims",
+    "runNpcDialogue",
+    "planNpcPrivateIntent",
+    "negotiateTrade",
+    "planDelegatedTask",
+    "reportDelegatedTask",
+    "explainInventoryEffect",
+    "gradeExamEssay"
+  ]) {
     wrapped[method] = async (...args) => {
       if (method === "streamTurn") {
         if (!wrapped.supportsStreaming) {
@@ -112,6 +127,13 @@ function createReviewOnlyProvider(route) {
     generateExamQuestion: throwReviewOnly,
     suggestQuickActions: throwReviewOnly,
     draftTopicSurface: throwReviewOnly,
+    parseBackgroundClaims: throwReviewOnly,
+    runNpcDialogue: throwReviewOnly,
+    planNpcPrivateIntent: throwReviewOnly,
+    negotiateTrade: throwReviewOnly,
+    planDelegatedTask: throwReviewOnly,
+    reportDelegatedTask: throwReviewOnly,
+    explainInventoryEffect: throwReviewOnly,
     gradeExamEssay: throwReviewOnly
   };
 }
@@ -136,6 +158,13 @@ const METHOD_TASK_TYPES = Object.freeze({
   generateExamQuestion: "narrator",
   suggestQuickActions: "quick_action",
   draftTopicSurface: "topic_draft",
+  parseBackgroundClaims: "background_claim_parser",
+  runNpcDialogue: "npc_dialogue",
+  planNpcPrivateIntent: "npc_private_planner",
+  negotiateTrade: "trade_negotiator",
+  planDelegatedTask: "delegated_task_planner",
+  reportDelegatedTask: "delegated_task_reporter",
+  explainInventoryEffect: "inventory_effect_explainer",
   gradeExamEssay: "domain_specialist"
 });
 

@@ -1,5 +1,5 @@
 import { NavLink, Outlet, useLocation, useParams } from "react-router";
-import { BookOpen, FileText, Landmark, Map, ScrollText, Settings, Users } from "lucide-react";
+import { BookOpen, FileText, Landmark, Map, Package, ScrollText, Settings, Users } from "lucide-react";
 import { useEffect, useMemo, type CSSProperties } from "react";
 import { useAssetRegistry } from "../assets/useAssetRegistry";
 import { EmperorPanel } from "../components/EmperorPanel";
@@ -97,6 +97,7 @@ const fallbackScene = {
 const gameTabs = [
   { id: "map", label: "舆图", icon: Map },
   { id: "people", label: "人物", icon: Users },
+  { id: "inventory", label: "囊箧", icon: Package },
   { id: "archive", label: "史册", icon: ScrollText },
   { id: "exam", label: "科举", icon: BookOpen },
   { id: "ranking", label: "皇榜", icon: FileText },
@@ -123,6 +124,11 @@ function getIdentityLine(player: { readonly role?: string; readonly examRank?: s
 
 function getKnownRole(role: unknown) {
   return typeof role === "string" && role in sceneByRole ? role : "";
+}
+
+function numberFromCount(value: unknown) {
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : 0;
 }
 
 export function GamePage() {
@@ -160,9 +166,14 @@ export function GamePage() {
   const playerName = safeGameShellText(player?.name, "无名");
   const identityLine = getIdentityLine(player);
   const narrativeText = safeGameShellText(lastTurn?.narrative || currentPlayerPayload?.narrativePreview, "风声入座，旧卷重开。堂案、舆图与人物谱牒各归其卷。");
+  const openingClaimsView = session?.openingBackgroundClaimsView;
+  const openingClaimCounts = openingClaimsView?.counts;
+  const openingClaimDecisions = openingClaimsView?.status === "processed" ? openingClaimsView.decisions ?? [] : [];
   const routeViews = currentPlayerPayload?.routeViews;
   const safeViewItems = [
     { label: "舆图", ready: Boolean(routeViews?.hasMapRuntimeView) },
+    { label: "囊箧", ready: Boolean(routeViews?.hasInventoryView) },
+    { label: "人物", ready: Boolean(routeViews?.hasNpcRosterView) },
     { label: "史册", ready: Boolean(routeViews?.hasEventArchiveView) },
     { label: "局势", ready: Boolean(routeViews?.hasInformationPanelView) },
     { label: "科期", ready: Boolean(routeViews?.hasExamCalendarView) },
@@ -269,6 +280,39 @@ export function GamePage() {
           <p>主卷只读服务器清洗后的公开视图；行动、移动、任免、审案与考试后果仍由普通回合接口裁决。</p>
         </aside>
       </div>
+      {openingClaimsView?.status === "processed" ? (
+        <section className="openingClaimPanel" aria-labelledby="opening-claim-title">
+          <div>
+            <p className="eyebrow">开局裁决</p>
+            <h2 id="opening-claim-title">身世与家计已入案</h2>
+            <p>{safeGameShellText(openingClaimsView.publicSummary, "开局背景已由服务器裁决。")}</p>
+          </div>
+          <dl className="openingClaimCounts" aria-label="开局背景裁决统计">
+            <div>
+              <dt>采纳</dt>
+              <dd>{numberFromCount(openingClaimCounts?.accepted)}</dd>
+            </div>
+            <div>
+              <dt>折算</dt>
+              <dd>{numberFromCount(openingClaimCounts?.scaled)}</dd>
+            </div>
+            <div>
+              <dt>风险</dt>
+              <dd>{numberFromCount(openingClaimCounts?.risk)}</dd>
+            </div>
+          </dl>
+          {openingClaimDecisions.length ? (
+            <div className="openingClaimList" aria-label="开局背景裁决条目">
+              {openingClaimDecisions.slice(0, 3).map((decision) => (
+                <article key={decision.claimId || decision.publicSummary} className="openingClaimItem">
+                  <strong>{safeGameShellText(decision.publicSummary, "背景宣称已裁决。")}</strong>
+                  <span>{safeGameShellText(decision.serverReason, "资源、名位与凭证以后端裁决为准。")}</span>
+                </article>
+              ))}
+            </div>
+          ) : null}
+        </section>
+      ) : null}
       {player?.role === "scholar" ? (
         <ScholarPanel
           player={player}

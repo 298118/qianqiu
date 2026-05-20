@@ -12,6 +12,13 @@ const { createInitialExamHonorLedger } = require("./examHonors");
 const { createInitialAppointmentTrackLedger } = require("./appointmentTracks");
 const { createInitialActorMemoryLedger } = require("./actorMemoryLedger");
 const { createInitialSessionSummaryState } = require("./sessionSummary");
+const { createDeterministicInitialAssetLedger } = require("./assetLedger");
+const { createDeterministicInitialInventoryLedger } = require("./inventoryLedger");
+const { buildDeterministicNpcRoster } = require("./npcRoster");
+const { createInitialDelegatedTaskLedger } = require("./delegatedTasks");
+const { createInitialNpcInteractionLedger } = require("./npcInteractions");
+const { createInitialTradeLedger } = require("./tradeLedger");
+const { createInitialOpeningBackgroundClaimsState } = require("./openingBackgroundClaims");
 const { NUMERIC_RANGES, clamp } = require("./stateRules");
 
 const ROLE_LABELS = {
@@ -265,6 +272,14 @@ function createInitialState(input = {}) {
     playerMonthlyBriefing: null,
     actorMemoryLedger: null,
     sessionSummary: null,
+    assetLedger: null,
+    resourceLedger: null,
+    inventoryLedger: null,
+    npcRoster: null,
+    delegatedTaskLedger: null,
+    npcInteractionLedger: null,
+    tradeLedger: null,
+    openingBackgroundClaims: null,
     examCalendar: createInitialExamCalendar(),
     activeNpcRequest: null,
     longTermEvents: {
@@ -355,6 +370,31 @@ function createInitialState(input = {}) {
   worldState.appointmentTrack = createInitialAppointmentTrackLedger(worldState);
   worldState.actorMemoryLedger = createInitialActorMemoryLedger(worldState);
   worldState.sessionSummary = createInitialSessionSummaryState(worldState);
+  const assetLedger = createDeterministicInitialAssetLedger({
+    role,
+    ownerActorId: worldState.player.id,
+    player: worldState.player
+  });
+  worldState.assetLedger = {
+    schemaVersion: assetLedger.schemaVersion,
+    ownerActorId: assetLedger.ownerActorId,
+    assets: assetLedger.assets
+  };
+  worldState.resourceLedger = {
+    schemaVersion: assetLedger.schemaVersion,
+    ownerActorId: assetLedger.ownerActorId,
+    accounts: assetLedger.resourceAccounts
+  };
+  worldState.inventoryLedger = createDeterministicInitialInventoryLedger({
+    role,
+    ownerActorId: worldState.player.id,
+    player: worldState.player
+  });
+  worldState.npcRoster = buildDeterministicNpcRoster(worldState);
+  worldState.delegatedTaskLedger = createInitialDelegatedTaskLedger(worldState);
+  worldState.npcInteractionLedger = createInitialNpcInteractionLedger(worldState);
+  worldState.tradeLedger = createInitialTradeLedger(worldState);
+  worldState.openingBackgroundClaims = createInitialOpeningBackgroundClaimsState(input, worldState);
   return worldState;
 }
 

@@ -109,8 +109,18 @@ describe("S74.1 React client shell", () => {
       quickActions: null,
       topicSurfaceStatus: "idle",
       topicDraftStatus: "idle",
+      inventoryStatus: "idle",
+      npcRosterStatus: "idle",
+      npcDetailStatus: "idle",
+      npcMutationStatus: "idle",
       topicSurface: null,
       topicDraft: null,
+      inventory: null,
+      npcRoster: null,
+      npcDetail: null,
+      lastNpcInteraction: null,
+      lastTrade: null,
+      lastNpcCommand: null,
       aiSettings: null,
       aiConnection: null,
       status: "idle"
@@ -366,6 +376,7 @@ describe("S74.1 React client shell", () => {
     expect(screen.getByRole("link", { name: "主卷" }).getAttribute("href")).toBe(`/game/${sessionId}`);
     expect(screen.getAllByRole("link", { name: "舆图" }).some((link) => link.getAttribute("href") === `/game/${sessionId}/map`)).toBe(true);
     expect(screen.getAllByRole("link", { name: "人物" }).some((link) => link.getAttribute("href") === `/game/${sessionId}/people`)).toBe(true);
+    expect(screen.getAllByRole("link", { name: "囊箧" }).some((link) => link.getAttribute("href") === `/game/${sessionId}/inventory`)).toBe(true);
     expect(screen.getAllByRole("link", { name: "史册" }).some((link) => link.getAttribute("href") === `/game/${sessionId}/archive`)).toBe(true);
   });
 
@@ -421,6 +432,51 @@ describe("S74.1 React client shell", () => {
           headers: { "Content-Type": "application/json" }
         });
       }
+      if (url === `/api/game/npcs/${sessionId}?pageSize=50`) {
+        return new Response(JSON.stringify({
+          sessionId,
+          npcRosterView: {
+            items: [
+              {
+                npcId: "npc:teacher-gu",
+                displayName: "顾文衡",
+                tier: "active",
+                roleTags: ["teacher"],
+                stageTags: ["academy"],
+                publicProfile: { title: "乡中塾师", summary: "顾文衡为乡中塾师，与玩家情分亲近。" },
+                relationshipSummary: { labels: ["师友"] },
+                availableInteractions: ["talk", "trade"]
+              }
+            ]
+          },
+          npcInteractionView: { items: [] },
+          delegatedTaskView: { items: [] }
+        }), {
+          status: 200,
+          headers: { "Content-Type": "application/json" }
+        });
+      }
+      if (url === `/api/game/npc/${sessionId}/npc%3Ateacher-gu`) {
+        return new Response(JSON.stringify({
+          sessionId,
+          npcDetailView: {
+            npcId: "npc:teacher-gu",
+            displayName: "顾文衡",
+            tier: "active",
+            roleTags: ["teacher"],
+            stageTags: ["academy"],
+            publicProfile: { title: "乡中塾师", origin: "清河县", summary: "顾文衡为乡中塾师。" },
+            relationship: { closeness: 18, trust: 60, labels: ["师友"] },
+            availableInteractions: ["talk", "trade"]
+          },
+          npcInteractionView: { items: [] },
+          tradeLedgerView: { items: [] },
+          delegatedTaskView: { items: [] }
+        }), {
+          status: 200,
+          headers: { "Content-Type": "application/json" }
+        });
+      }
       throw new Error(`unexpected url: ${url}`);
     });
     vi.stubGlobal("fetch", fetchMock);
@@ -431,7 +487,7 @@ describe("S74.1 React client shell", () => {
     await screen.findByText("军帐筹谋");
     expect(screen.getByText("无名")).toBeTruthy();
     expect(screen.getAllByText("身份未题").length).toBeGreaterThan(0);
-    expect(screen.getByText("2 / 5")).toBeTruthy();
+    expect(screen.getByText("2 / 7")).toBeTruthy();
     expect(screen.getAllByRole("link", { name: /舆图/ }).length).toBeGreaterThan(0);
     expect(screen.getAllByRole("link", { name: /人物/ }).length).toBeGreaterThan(0);
     expect(screen.getAllByRole("link", { name: /朝议/ }).length).toBeGreaterThan(0);
@@ -522,6 +578,17 @@ describe("S74.1 React client shell", () => {
               travelMonths: 0
             }
           }
+        }), {
+          status: 200,
+          headers: { "Content-Type": "application/json" }
+        });
+      }
+      if (url === `/api/game/npcs/${sessionId}?pageSize=50`) {
+        return new Response(JSON.stringify({
+          sessionId,
+          npcRosterView: { items: [] },
+          npcInteractionView: { items: [] },
+          delegatedTaskView: { items: [] }
         }), {
           status: 200,
           headers: { "Content-Type": "application/json" }

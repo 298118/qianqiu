@@ -64,7 +64,14 @@ const AI_TASK_LABELS = Object.freeze({
   monthly_briefing: "月报",
   time_skip_planner: "跳时",
   quick_action: "快捷建议",
-  topic_draft: "专题拟稿"
+  topic_draft: "专题拟稿",
+  background_claim_parser: "背景解析",
+  npc_dialogue: "人物对话",
+  npc_private_planner: "人物私策",
+  trade_negotiator: "交易议价",
+  delegated_task_planner: "委派筹划",
+  delegated_task_reporter: "委派回禀",
+  inventory_effect_explainer: "物品释义"
 });
 
 const AI_SAFETY_STRICTNESS = Object.freeze(["standard", "strict", "maximum"]);

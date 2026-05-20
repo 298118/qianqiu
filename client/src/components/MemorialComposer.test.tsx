@@ -43,7 +43,11 @@ describe("S75.9 MemorialComposer", () => {
         hasEventArchiveView: false,
         hasExamCalendarView: false,
         hasInformationPanelView: false,
-        hasMapRuntimeView: true
+        hasInventoryView: false,
+        hasMapRuntimeView: true,
+        hasNpcRosterView: false,
+        hasTradeLedgerView: false,
+        hasDelegatedTaskView: false
       }
     });
     expect(mapSuggestions[1].source).toBe("map-runtime");

@@ -358,6 +358,171 @@ const topicDraftSchema = {
   }
 };
 
+const backgroundClaimParserSchema = {
+  type: "object",
+  required: ["claims"],
+  additionalProperties: false,
+  properties: {
+    claims: {
+      type: "array",
+      minItems: 0,
+      maxItems: 12,
+      items: {
+        type: "object",
+        required: ["claimType", "claimSummary", "requestedValue", "source"],
+        additionalProperties: false,
+        properties: {
+          claimId: { type: "string", minLength: 1, maxLength: 80 },
+          claimType: {
+            type: "string",
+            enum: ["wealth", "property", "kinship", "retainer", "education", "office", "military", "artifact", "debt", "reputation", "risk"]
+          },
+          claimSummary: { type: "string", minLength: 1, maxLength: 160 },
+          requestedValue: {
+            type: "object",
+            additionalProperties: false,
+            properties: {
+              label: { type: "string", maxLength: 80 },
+              amount: { type: "number" },
+              unit: { type: "string", maxLength: 24 },
+              itemName: { type: "string", maxLength: 80 },
+              count: { type: "number" }
+            }
+          },
+          confidence: { type: "number", minimum: 0, maximum: 1 },
+          evidenceText: { type: "string", maxLength: 120 },
+          source: { type: "string", enum: ["mock-ai", "provider-ai"] }
+        }
+      }
+    }
+  }
+};
+
+const npcDialogueSchema = {
+  type: "object",
+  required: ["npcId", "dialogueText", "mood", "relationshipSuggestions", "source"],
+  additionalProperties: false,
+  properties: {
+    npcId: { type: "string", minLength: 1, maxLength: 96 },
+    dialogueText: { type: "string", minLength: 1, maxLength: 520 },
+    mood: { type: "string", minLength: 1, maxLength: 40 },
+    relationshipSuggestions: {
+      type: "array",
+      maxItems: 3,
+      items: relationshipChangeSchema
+    },
+    memoryProposals: memoryProposalsSchema,
+    followUpSuggestions: {
+      type: "array",
+      maxItems: 4,
+      items: { type: "string", minLength: 1, maxLength: 80 }
+    },
+    source: { type: "string", enum: ["mock-ai", "provider-ai"] }
+  }
+};
+
+const npcPrivatePlannerSchema = {
+  type: "object",
+  required: ["npcId", "intentSummary", "proposalBoundary", "riskTags", "source"],
+  additionalProperties: false,
+  properties: {
+    npcId: { type: "string", minLength: 1, maxLength: 96 },
+    intentSummary: { type: "string", minLength: 1, maxLength: 180 },
+    proposalBoundary: { type: "string", minLength: 1, maxLength: 180 },
+    riskTags: {
+      type: "array",
+      maxItems: 6,
+      items: { type: "string", minLength: 1, maxLength: 32 }
+    },
+    suggestedInteractionHooks: {
+      type: "array",
+      maxItems: 4,
+      items: { type: "string", minLength: 1, maxLength: 80 }
+    },
+    source: { type: "string", enum: ["mock-ai", "provider-ai"] }
+  }
+};
+
+const tradeNegotiationSchema = {
+  type: "object",
+  required: ["tradeId", "npcResponse", "proposal", "source"],
+  additionalProperties: false,
+  properties: {
+    tradeId: { type: "string", minLength: 1, maxLength: 96 },
+    npcResponse: { type: "string", minLength: 1, maxLength: 360 },
+    proposal: {
+      type: "object",
+      required: ["status", "publicSummary"],
+      additionalProperties: false,
+      properties: {
+        status: { type: "string", enum: ["proposed", "countered", "accepted", "rejected"] },
+        publicSummary: { type: "string", minLength: 1, maxLength: 160 },
+        requestedSilverDelta: { type: "number", minimum: -100000, maximum: 100000 },
+        relationDeltaHint: { type: "number", minimum: -8, maximum: 8 },
+        riskTags: {
+          type: "array",
+          maxItems: 6,
+          items: { type: "string", minLength: 1, maxLength: 32 }
+        }
+      }
+    },
+    source: { type: "string", enum: ["mock-ai", "provider-ai"] }
+  }
+};
+
+const delegatedTaskPlanSchema = {
+  type: "object",
+  required: ["taskType", "planSummary", "riskTags", "successFactors", "source"],
+  additionalProperties: false,
+  properties: {
+    taskType: { type: "string", minLength: 1, maxLength: 48 },
+    planSummary: { type: "string", minLength: 1, maxLength: 260 },
+    riskTags: {
+      type: "array",
+      maxItems: 6,
+      items: { type: "string", minLength: 1, maxLength: 32 }
+    },
+    successFactors: {
+      type: "array",
+      maxItems: 6,
+      items: { type: "string", minLength: 1, maxLength: 48 }
+    },
+    suggestedDueTurns: { type: "number", minimum: 1, maximum: 12 },
+    source: { type: "string", enum: ["mock-ai", "provider-ai"] }
+  }
+};
+
+const delegatedTaskReportSchema = {
+  type: "object",
+  required: ["taskId", "reportText", "outcomeTone", "followUpSuggestions", "source"],
+  additionalProperties: false,
+  properties: {
+    taskId: { type: "string", minLength: 1, maxLength: 96 },
+    reportText: { type: "string", minLength: 1, maxLength: 420 },
+    outcomeTone: { type: "string", minLength: 1, maxLength: 40 },
+    followUpSuggestions: {
+      type: "array",
+      maxItems: 4,
+      items: { type: "string", minLength: 1, maxLength: 90 }
+    },
+    source: { type: "string", enum: ["mock-ai", "provider-ai"] }
+  }
+};
+
+const inventoryEffectExplanationSchema = {
+  type: "object",
+  required: ["itemId", "title", "effectSummary", "riskNote", "lawfulUse", "source"],
+  additionalProperties: false,
+  properties: {
+    itemId: { type: "string", minLength: 1, maxLength: 96 },
+    title: { type: "string", minLength: 1, maxLength: 60 },
+    effectSummary: { type: "string", minLength: 1, maxLength: 240 },
+    riskNote: { type: "string", minLength: 1, maxLength: 160 },
+    lawfulUse: { type: "string", minLength: 1, maxLength: 160 },
+    source: { type: "string", enum: ["mock-ai", "provider-ai"] }
+  }
+};
+
 const examQuestionSchema = {
   type: "object",
   required: [
@@ -480,6 +645,13 @@ const SCHEMAS = {
   turn: turnSchema,
   quickAction: quickActionSchema,
   topicDraft: topicDraftSchema,
+  backgroundClaimParser: backgroundClaimParserSchema,
+  npcDialogue: npcDialogueSchema,
+  npcPrivatePlanner: npcPrivatePlannerSchema,
+  tradeNegotiation: tradeNegotiationSchema,
+  delegatedTaskPlan: delegatedTaskPlanSchema,
+  delegatedTaskReport: delegatedTaskReportSchema,
+  inventoryEffectExplanation: inventoryEffectExplanationSchema,
   examQuestion: examQuestionSchema,
   grade: gradeSchema
 };
@@ -703,6 +875,13 @@ const MODEL_SCHEMAS = {
   },
   quickAction: quickActionSchema,
   topicDraft: topicDraftSchema,
+  backgroundClaimParser: backgroundClaimParserSchema,
+  npcDialogue: npcDialogueSchema,
+  npcPrivatePlanner: npcPrivatePlannerSchema,
+  tradeNegotiation: tradeNegotiationSchema,
+  delegatedTaskPlan: delegatedTaskPlanSchema,
+  delegatedTaskReport: delegatedTaskReportSchema,
+  inventoryEffectExplanation: inventoryEffectExplanationSchema,
   examQuestion: modelExamQuestionSchema,
   grade: modelGradeSchema
 };

@@ -23,7 +23,7 @@ export const clientEntryState: ClientEntryState = {
   routerMode: "data"
 };
 
-export type PageSurface = "home" | "game" | "map" | "people" | "archive" | "exam" | "ranking" | "court" | "settings";
+export type PageSurface = "home" | "game" | "map" | "people" | "inventory" | "archive" | "exam" | "ranking" | "court" | "settings";
 export type DrawerSurface = "settings" | "saves" | "display-preferences";
 export type InkboxTab = "ai-settings" | "saves" | "display" | "safe-summary";
 export type ModalSurface = "safe-summary" | "exam-result" | "confirm-navigation";
@@ -52,7 +52,11 @@ export type SafePlayerPayload = {
     readonly hasEventArchiveView: boolean;
     readonly hasExamCalendarView: boolean;
     readonly hasInformationPanelView: boolean;
+    readonly hasInventoryView: boolean;
     readonly hasMapRuntimeView: boolean;
+    readonly hasNpcRosterView: boolean;
+    readonly hasTradeLedgerView: boolean;
+    readonly hasDelegatedTaskView: boolean;
   };
 };
 
@@ -158,7 +162,11 @@ export function extractSafePlayerPayload(
       hasEventArchiveView: Boolean(payload.eventArchiveView),
       hasExamCalendarView: Boolean(payload.examCalendarView),
       hasInformationPanelView: Boolean(payload.informationPanelPageView),
-      hasMapRuntimeView: Boolean(payload.mapRuntimeView)
+      hasInventoryView: Boolean(payload.inventoryView),
+      hasMapRuntimeView: Boolean(payload.mapRuntimeView),
+      hasNpcRosterView: Boolean(payload.npcRosterView),
+      hasTradeLedgerView: Boolean(payload.tradeLedgerView),
+      hasDelegatedTaskView: Boolean(payload.delegatedTaskView)
     }
   };
 }

@@ -28,9 +28,12 @@ test("S70.9 default AI settings expose hidden-safe task route views", () => {
   const serialized = JSON.stringify(view);
 
   assert.equal(view.schemaVersion, "s70.9-ai-settings.v1");
-  assert.equal(view.taskRoutes.length, 11);
+  assert.equal(view.taskRoutes.length, 18);
   assert.ok(view.taskRoutes.some((route) => route.taskType === "quick_action" && route.label === "快捷建议"));
   assert.ok(view.taskRoutes.some((route) => route.taskType === "topic_draft" && route.label === "专题拟稿"));
+  assert.ok(view.taskRoutes.some((route) => route.taskType === "background_claim_parser" && route.label === "背景解析"));
+  assert.ok(view.taskRoutes.some((route) => route.taskType === "npc_dialogue" && route.label === "人物对话"));
+  assert.ok(view.taskRoutes.some((route) => route.taskType === "trade_negotiator" && route.label === "交易议价"));
   assert.equal(view.safeguards.serverOwnsState, true);
   assert.equal(view.safeguards.noHiddenRawAccess, true);
   assert.ok(!serialized.includes("MIMO_API_KEY"));

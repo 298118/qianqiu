@@ -2,6 +2,15 @@ import type {
   AiConnectionTestRequest,
   AiConnectionTestResponse,
   AiSettingsResponse,
+  InventoryResponse,
+  InventoryTransferRequest,
+  InventoryTransferResponse,
+  NpcCommandRequest,
+  NpcCommandResponse,
+  NpcDetailResponse,
+  NpcInteractionRequest,
+  NpcInteractionResponse,
+  NpcListResponse,
   ExamProgressRequest,
   ExamProgressResponse,
   ExamQuestionRequest,
@@ -20,6 +29,8 @@ import type {
   TopicDraftResponse,
   TopicSurfaceId,
   TopicSurfaceResponse,
+  TradeRequest,
+  TradeResponse,
   TurnRequest,
   TurnResponse,
   UpdateAiSettingsRequest
@@ -43,6 +54,13 @@ const allowedSafeEndpointPatterns = Object.freeze([
   /^\/api\/game\/saves$/,
   /^\/api\/game\/player-state\/[^/?#]+$/,
   /^\/api\/game\/topic-surface\/[^/?#]+\/[^/?#]+$/,
+  /^\/api\/game\/inventory\/[^/?#]+$/,
+  /^\/api\/game\/inventory-transfer\/[^/?#]+$/,
+  /^\/api\/game\/npcs\/[^/?#]+$/,
+  /^\/api\/game\/npc\/[^/?#]+\/[^/?#]+$/,
+  /^\/api\/game\/npc-interaction\/[^/?#]+$/,
+  /^\/api\/game\/trade\/[^/?#]+$/,
+  /^\/api\/game\/npc-command\/[^/?#]+$/,
   /^\/api\/game\/turn$/,
   /^\/api\/exam\/question$/,
   /^\/api\/exam\/progress$/,
@@ -174,6 +192,60 @@ export const qianqiuApi = {
       `/api/game/topic-surface/${encodePathSegment(sessionId)}/${encodePathSegment(surfaceId)}`,
       { signal }
     );
+  },
+
+  loadInventory(sessionId: string, signal?: AbortSignal) {
+    return requestJson<InventoryResponse>(`/api/game/inventory/${encodePathSegment(sessionId)}`, { signal });
+  },
+
+  transferInventoryItem(sessionId: string, input: InventoryTransferRequest, signal?: AbortSignal) {
+    return requestJson<InventoryTransferResponse>(`/api/game/inventory-transfer/${encodePathSegment(sessionId)}`, {
+      method: "POST",
+      body: input as unknown as JsonObject,
+      signal
+    });
+  },
+
+  loadNpcs(
+    sessionId: string,
+    query?: RequestOptions["query"],
+    signal?: AbortSignal
+  ) {
+    return requestJson<NpcListResponse>(`/api/game/npcs/${encodePathSegment(sessionId)}`, {
+      query,
+      signal
+    });
+  },
+
+  loadNpcDetail(sessionId: string, npcId: string, signal?: AbortSignal) {
+    return requestJson<NpcDetailResponse>(
+      `/api/game/npc/${encodePathSegment(sessionId)}/${encodePathSegment(npcId)}`,
+      { signal }
+    );
+  },
+
+  interactWithNpc(sessionId: string, input: NpcInteractionRequest, signal?: AbortSignal) {
+    return requestJson<NpcInteractionResponse>(`/api/game/npc-interaction/${encodePathSegment(sessionId)}`, {
+      method: "POST",
+      body: input as unknown as JsonObject,
+      signal
+    });
+  },
+
+  submitTrade(sessionId: string, input: TradeRequest, signal?: AbortSignal) {
+    return requestJson<TradeResponse>(`/api/game/trade/${encodePathSegment(sessionId)}`, {
+      method: "POST",
+      body: input as unknown as JsonObject,
+      signal
+    });
+  },
+
+  submitNpcCommand(sessionId: string, input: NpcCommandRequest, signal?: AbortSignal) {
+    return requestJson<NpcCommandResponse>(`/api/game/npc-command/${encodePathSegment(sessionId)}`, {
+      method: "POST",
+      body: input as unknown as JsonObject,
+      signal
+    });
   },
 
   requestTopicDraft(sessionId: string, input: TopicDraftRequest, signal?: AbortSignal) {

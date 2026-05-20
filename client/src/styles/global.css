@@ -956,9 +956,88 @@ button:disabled {
   color: #7b241f;
 }
 
+.openingClaimPanel {
+  display: grid;
+  grid-template-columns: minmax(0, 1.3fr) minmax(220px, 0.7fr);
+  gap: 16px;
+  align-items: start;
+  margin-bottom: 16px;
+  padding: 18px;
+  border: 1px solid rgba(84, 60, 43, 0.22);
+  background: rgba(255, 252, 238, 0.72);
+  box-shadow: 0 18px 40px rgba(53, 37, 25, 0.08);
+}
+
+.openingClaimPanel h2 {
+  margin: 0 0 8px;
+  font-size: 1.1rem;
+}
+
+.openingClaimPanel p {
+  margin: 0;
+  color: #514232;
+  line-height: 1.7;
+}
+
+.openingClaimCounts {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  margin: 0;
+}
+
+.openingClaimCounts div {
+  min-width: 0;
+  padding: 10px;
+  border: 1px solid rgba(84, 60, 43, 0.18);
+  background: rgba(255, 248, 230, 0.66);
+}
+
+.openingClaimCounts dt {
+  font-size: 0.75rem;
+  color: #765b43;
+}
+
+.openingClaimCounts dd {
+  margin: 2px 0 0;
+  color: #7b241f;
+  font-size: 1.15rem;
+  font-weight: 800;
+}
+
+.openingClaimList {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.openingClaimItem {
+  min-width: 0;
+  padding: 12px;
+  border: 1px solid rgba(84, 60, 43, 0.18);
+  background: rgba(251, 246, 232, 0.74);
+}
+
+.openingClaimItem strong,
+.openingClaimItem span {
+  display: block;
+}
+
+.openingClaimItem strong {
+  margin-bottom: 6px;
+  font-size: 0.95rem;
+}
+
+.openingClaimItem span {
+  color: #66513c;
+  font-size: 0.85rem;
+  line-height: 1.55;
+}
+
 .gameFeatureTabs {
   display: grid;
-  grid-template-columns: repeat(7, minmax(0, 1fr));
+  grid-template-columns: repeat(8, minmax(0, 1fr));
   gap: 8px;
   margin: 6px 0 18px;
 }
@@ -2224,6 +2303,226 @@ button:disabled {
 
 .peopleRelationship {
   color: #6d372c;
+}
+
+.peopleWorkbenchPanel {
+  display: grid;
+  gap: 18px;
+}
+
+.npcWorkbench,
+.inventoryWorkbench {
+  display: grid;
+  grid-template-columns: minmax(220px, 0.34fr) minmax(0, 1fr);
+  gap: 14px;
+  align-items: start;
+}
+
+.npcGroupList,
+.npcDetailWorkbench,
+.inventoryContainerList,
+.inventoryItemList,
+.inventoryLedgerBlock,
+.inventoryTransferPanel {
+  display: grid;
+  gap: 10px;
+  border: 1px solid rgba(84, 60, 43, 0.22);
+  background: rgba(255, 248, 230, 0.62);
+  padding: 12px;
+}
+
+.npcGroupList h2,
+.inventoryContainerList h2,
+.inventoryItemList h2,
+.inventoryLedgerBlock h2,
+.npcRecordList h3 {
+  margin: 0;
+  color: #3d2d22;
+  font-size: 0.98rem;
+}
+
+.npcGroupList section {
+  display: grid;
+  gap: 8px;
+}
+
+.npcListButton,
+.inventoryContainerButton {
+  display: grid;
+  grid-template-columns: 44px minmax(0, 1fr);
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  min-height: 58px;
+  border: 1px solid rgba(84, 60, 43, 0.22);
+  background: rgba(255, 252, 238, 0.72);
+  color: inherit;
+  font: inherit;
+  padding: 8px;
+  text-align: left;
+}
+
+.inventoryContainerButton {
+  grid-template-columns: 20px minmax(0, 1fr) auto;
+}
+
+.npcListButton[aria-pressed="true"],
+.inventoryContainerButton[aria-pressed="true"] {
+  border-color: rgba(142, 47, 39, 0.72);
+  background: rgba(244, 226, 194, 0.82);
+}
+
+.npcListButton strong,
+.npcListButton small,
+.inventoryContainerButton span {
+  display: block;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.npcListButton small,
+.inventoryContainerButton small {
+  color: #735844;
+  font-size: 0.76rem;
+  font-weight: 800;
+}
+
+.npcListPortrait {
+  min-height: 48px;
+  aspect-ratio: 1;
+}
+
+.npcListPortraitFallback {
+  display: grid;
+  min-height: 42px;
+  place-items: center;
+  border: 1px solid rgba(84, 60, 43, 0.18);
+  background: rgba(231, 214, 184, 0.7);
+  color: #7b241f;
+  font-weight: 900;
+}
+
+.npcDetailHeader {
+  display: grid;
+  grid-template-columns: minmax(92px, 132px) minmax(0, 1fr);
+  gap: 12px;
+  align-items: center;
+}
+
+.npcDetailHeader h2 {
+  margin: 0;
+}
+
+.npcTabs {
+  margin: 0;
+}
+
+.npcTabPanel,
+.npcRecordList {
+  display: grid;
+  gap: 10px;
+}
+
+.npcTabPanel textarea,
+.npcTabPanel input,
+.npcTabPanel select,
+.inventoryTransferPanel select,
+.inventoryTransferPanel input {
+  width: 100%;
+}
+
+.npcFactGrid,
+.inventoryItemStats {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+  margin: 0;
+}
+
+.npcFactGrid div,
+.inventoryItemStats div,
+.compactLedgerRow,
+.inventoryMiniCard,
+.inventoryItemCard,
+.npcResultCard {
+  border: 1px solid rgba(84, 60, 43, 0.2);
+  background: rgba(255, 252, 238, 0.62);
+  padding: 10px;
+}
+
+.npcFactGrid dt,
+.inventoryItemStats dt,
+.compactLedgerRow dt {
+  color: #80664a;
+  font-size: 0.76rem;
+  font-weight: 800;
+}
+
+.npcFactGrid dd,
+.inventoryItemStats dd,
+.compactLedgerRow dd {
+  margin: 4px 0 0;
+  color: #3d2d22;
+  font-weight: 900;
+}
+
+.npcTradeForm,
+.npcCommandForm,
+.inventoryTransferPanel {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(120px, 0.2fr) auto;
+  gap: 10px;
+  align-items: end;
+}
+
+.npcCommandForm {
+  grid-template-columns: minmax(0, 1fr) minmax(150px, 0.28fr) minmax(90px, 0.18fr) auto;
+}
+
+.npcResultCard,
+.inventoryMiniCard {
+  display: grid;
+  gap: 6px;
+}
+
+.npcResultCard p,
+.inventoryMiniCard span,
+.inventoryItemCard p {
+  margin: 0;
+  color: #5b4937;
+  line-height: 1.65;
+}
+
+.npcRecordsGrid,
+.inventorySummaryGrid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.inventoryLedgerBlock h2 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.compactLedgerRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin: 0 0 8px;
+}
+
+.inventoryItemList,
+.inventoryItemCard {
+  display: grid;
+  gap: 10px;
+}
+
+.inventoryItemCard h3 {
+  margin: 0;
+  font-size: 1rem;
 }
 
 .portraitCard {
@@ -3865,7 +4164,9 @@ button:disabled {
   }
 
   .gameCommandBar,
-  .gameMainDeck {
+  .gameMainDeck,
+  .openingClaimPanel,
+  .openingClaimList {
     grid-template-columns: 1fr;
   }
 

@@ -101,37 +101,37 @@
 
 ## 4. 活动路线图总览
 
-当前活动专项为 S81-S85 NPC、资产与储物系统，规划源头见 [NPC_INVENTORY_SYSTEM_ROADMAP.md](NPC_INVENTORY_SYSTEM_ROADMAP.md)。本专项必须坚持前后端分离：S81-S83 以后端数据契约、存储、AI schema、Mock fallback 和安全 API 为主；S84 集中做 React 前端体验；S85 做经济、长期关系、预留玩法和总验收整合。
+当前活动专项为 S81-S85 NPC、资产与储物系统，规划源头见 [NPC_INVENTORY_SYSTEM_ROADMAP.md](NPC_INVENTORY_SYSTEM_ROADMAP.md)。S81-S84 已完成首轮后端/API/SQLite/AI/React 闭环；剩余 S85 聚焦经济长期演化、NPC 主动性、预留玩法正式扩展位、总验收与归档。
 
 | ID | 状态 | Owner | 目标 | 说明 |
 | --- | --- | --- | --- | --- |
-| S81 | TODO | Codex | 后端数据契约与存储地基 | 建立开局背景、资产、资源、物品、NPC、委派任务 canonical schema、配置、JSON/SQLite 存储、派生表和安全 view；不做前端大界面。 |
-| S81.1 | TODO | Codex | NPC 与储物系统契约 | 拆出或完善可执行契约，固定 state 字段、API response、AI schema、SQLite 表、Mock fallback、安全 view 和验收矩阵。 |
-| S81.2 | TODO | Codex | 资产与物品账本后端 | 新增 `assetLedger`、`inventoryLedger` 领域配置与 helper，定义资源账本、容器、物品模板、重要凭证和效果引用。 |
-| S81.3 | TODO | Codex | NPC 名册与委派任务后端 | 新增 `npcRoster`、`delegatedTasks` 领域配置与 helper，提供 deterministic fixture、分层 NPC 名册和委派任务 view builder。 |
-| S81.4 | TODO | Codex | SQLite 派生表地基 | 新增资产、资源、背包、NPC、交互、委派和交易派生表模块，接入 adapter 同步、删除、读档修复和 JSON/SQLite parity。 |
-| S81.5 | TODO | Codex | S81 后端契约测试 | 覆盖非法物品、绑定凭证、资源 clamp、hidden 私档过滤、SQLite repair、防泄漏、Mock 默认和完整书生路径不变。 |
-| S82 | TODO | Codex | 开局背景兑现与资产落账 | 新增 `background_claim_parser` AI/Mock 解析、服务器裁决、资源/房产/书籍/仆役/债务/风险落账，以及 `openingBackgroundClaimsView`。 |
-| S82.1 | TODO | Codex | 背景解析 AI task | 新增 `background_claim_parser` schema、prompt pack、Mock provider 输出、红队 fixture 和全局 AI 设置矩阵入口。 |
-| S82.2 | TODO | Codex | 开局接口接入背景解析 | 改造 `POST /api/game/start`，保留兼容字段，把 `customSetting` 送入背景解析并由服务器按身份配置裁决。 |
-| S82.3 | TODO | Codex | 背景宣称裁决规则 | 实现房屋、田产、银两、书籍、仆役、亲族、债务、禁物和虚假身份的接受、缩放、拒绝或转风险规则。 |
-| S82.4 | TODO | Codex | 背景兑现安全 view 与审计 | 写入 `openingBackgroundClaimsView`、事件档案和安全审计；原始背景文本不进入玩家 API、prompt 回显或 SQLite 派生表。 |
-| S82.5 | TODO | Codex | 背景兑现前端摘要 | 开局成功后展示服务器裁决后的资产、人脉、风险、缩放和拒绝摘要；不提前制作完整背包页。 |
-| S83 | TODO | Codex | NPC 名册、阶段人口与 AI 对话后端 | 将世界人物、科举同窗、官署属员、军营人物、家族亲属和立绘池整合为可交互 NPC 名册，提供 NPC 列表/详情/交互安全 API。 |
-| S83.1 | TODO | Codex | 阶段 NPC 名册生成 | 按书院/科场、地方官署、部院朝堂、军营边塞、宫廷内廷、市井商贸和家族亲属生成当前可见 NPC。 |
-| S83.2 | TODO | Codex | NPC 立绘分配规则 | 接入已审核 `portraitRef`：重要 NPC 用 signature pool，普通 NPC 用 generic pool，状态/场景用 variant，不暴露未审核素材。 |
-| S83.3 | TODO | Codex | NPC 列表与详情 API | 实现 `GET /api/game/npcs/:sessionId` 与 `GET /api/game/npc/:sessionId/:npcId`，返回分页、筛选、关系摘要和安全档案。 |
-| S83.4 | TODO | Codex | NPC 交互后端基础 | 实现 `POST /api/game/npc-interaction/:sessionId` 的交谈、询问、赠礼基础；AI 只扮演和建议，后果由服务器裁决。 |
-| S83.5 | TODO | Codex | NPC 交互记忆与审计 | 将 NPC 交互写入 actor memory、session summary、event archive 和 AI control audit 的安全摘要，不泄露 hidden 私档。 |
-| S84 | TODO | Codex | 前端 NPC、背包仓库、交易与委派体验 | 在稳定 API 之上实现 React 背包仓库页、NPC 详情 surface、交易面板、委派任务面板和浏览器 smoke；前端不裁决资源或任务结果。 |
-| S84.1 | TODO | Codex | 前端 API 与类型层 | 扩展 `client/src/api/qianqiuApi.ts`、session store 类型和安全 response types，接入 inventory、NPC list/detail、interaction、trade、command API。 |
-| S84.2 | TODO | Codex | 前端导航与信息架构 | 明确背包仓库与 NPC 工作台入口，决定独立 route / 主卷页签 / `SurfaceHost` 大型 surface 的边界，只读安全 view。 |
-| S84.3 | TODO | Codex | 人物谱牒升级 | 将人物页升级为按身边人、书院、科场、官署、军营、朝堂、市井、家族分组的可交互 NPC 名册。 |
-| S84.4 | TODO | Codex | NPC 详情工作台 | 新增 NPC 详情 surface，包含档案、对话、赠礼、交易、委派、关系和预留玩法 tabs，所有后果以后端返回为准。 |
-| S84.5 | TODO | Codex | 背包与仓库界面 | 显示资源账本、重要凭证、随身背包、家宅仓库、官署库房、军中辎重、物品详情、来源、效果和合法性提醒。 |
-| S84.6 | TODO | Codex | 交易与赠礼面板 | 新增双方账本、报价、议价、赠礼、借贷、典当、接受/拒绝流程；价格、库存、关系影响和结果只取服务器裁决。 |
-| S84.7 | TODO | Codex | 委派任务面板 | 支持选择 NPC、填写命令、查看资源/工具/期限/风险、执行中/逾期/完成状态、NPC 回禀和后续行动草稿。 |
-| S84.8 | TODO | Codex | 前端验收与体验打磨 | 扩展 Vitest/browser smoke，覆盖桌面/移动、懒加载、污染扫描、交易/委派不越权、低动效、焦点、Esc 与文本溢出。 |
+| S81 | DONE | Codex | 后端数据契约与存储地基 | 已建立 S81-S84 执行契约、资产/资源/物品/NPC/委派 canonical schema、配置、JSON/SQLite 存储接线、派生表和安全 view。 |
+| S81.1 | DONE | Codex | NPC 与储物系统契约 | 已新增 [NPC_INVENTORY_SYSTEM_CONTRACT.md](NPC_INVENTORY_SYSTEM_CONTRACT.md)，固定 state 字段、API response、AI schema、SQLite 表、Mock fallback、安全 view 和验收矩阵。 |
+| S81.2 | DONE | Codex | 资产与物品账本后端 | 已新增 `assetLedger`、`inventoryLedger` 领域配置与 helper，覆盖资源账本、长期资产、容器、物品模板、重要凭证和效果引用。 |
+| S81.3 | DONE | Codex | NPC 名册与委派任务后端 | 已新增 `npcRoster`、`delegatedTasks` 领域配置与 helper，提供 deterministic fixture、分层 NPC 名册、详情 view 和委派任务 view builder。 |
+| S81.4 | DONE | Codex | SQLite 派生表地基 | 已新增资产、资源、背包、NPC、交互、委派和交易派生表模块，接入 adapter 同步、删除、读档修复和 maintenance drift 检查。 |
+| S81.5 | DONE | Codex | S81 后端契约测试 | 已覆盖非法物品、绑定凭证、资源 clamp、hidden 私档过滤、SQLite repair、防泄漏、Mock 默认和完整书生路径不变。 |
+| S82 | DONE | Codex | 开局背景兑现与资产落账 | 已新增 `background_claim_parser` AI/Mock 解析、服务器裁决、资源/房产/书籍/债务/风险落账、审计和 `openingBackgroundClaimsView`。 |
+| S82.1 | DONE | Codex | 背景解析 AI task | 已新增 `background_claim_parser` schema、prompt pack、Mock/remote provider 方法和全局 AI 设置矩阵入口。 |
+| S82.2 | DONE | Codex | 开局接口接入背景解析 | 已改造 `POST /api/game/start`，保留兼容字段，把 `customSetting` 送入背景解析并由服务器按身份配置裁决。 |
+| S82.3 | DONE | Codex | 背景宣称裁决规则 | 已实现宅产、银两/粮金、书籍声望、债务、禁物、军权、官职和虚假身份的接受、缩放、拒绝或转风险规则。 |
+| S82.4 | DONE | Codex | 背景兑现安全 view 与审计 | 已写入 `openingBackgroundClaimsView`、事件档案和 AI 调动摘要；原始背景文本不进入玩家 API、prompt 回显或 SQLite 派生表。 |
+| S82.5 | DONE | Codex | 背景兑现前端摘要 | 主卷已展示服务器裁决后的采纳、折算、风险和安全条目摘要；背包页展示实际落账资产、资源和凭证。 |
+| S83 | DONE | Codex | NPC 名册、阶段人口与 AI 对话后端 | 已将阶段人物、官署属员、军营人物、家族/市井人物和立绘池安全整合为 NPC 名册，并提供列表/详情/交互 API。 |
+| S83.1 | DONE | Codex | 阶段 NPC 名册生成 | 已按书院/科场、地方官署、部院朝堂、军营边塞、宫廷内廷、市井商贸和家族亲属生成当前可见 NPC。 |
+| S83.2 | DONE | Codex | NPC 立绘分配规则 | 已接入已审核 `portraitRef`，重要 NPC/普通 NPC/状态锚点继续通过 runtime manifest 与 registry 校验，不暴露未审核素材。 |
+| S83.3 | DONE | Codex | NPC 列表与详情 API | 已实现 `GET /api/game/npcs/:sessionId` 与 `GET /api/game/npc/:sessionId/:npcId`，返回分页、筛选、关系摘要和安全档案。 |
+| S83.4 | DONE | Codex | NPC 交互后端基础 | 已实现 `POST /api/game/npc-interaction/:sessionId` 的交谈/询问/赠礼入口；AI 只扮演和建议，后果由服务器裁决。 |
+| S83.5 | DONE | Codex | NPC 交互记忆与审计 | NPC 交互、交易和委派会写入安全 ledger、AI 调动摘要与 player-state 安全 view，不泄露 hidden 私档。 |
+| S84 | DONE | Codex | 前端 NPC、背包仓库、交易与委派体验 | React 已接入囊箧 route、NPC 工作台、详情/对话/交易/委派 tabs、背包转移和前端验证；前端不裁决资源或任务结果。 |
+| S84.1 | DONE | Codex | 前端 API 与类型层 | 已扩展 `client/src/api/qianqiuClient.ts`、session store 类型和安全 response types，接入 inventory、NPC list/detail、interaction、trade、command API。 |
+| S84.2 | DONE | Codex | 前端导航与信息架构 | 已新增独立 `/game/:sessionId/inventory` “囊箧” route，并在主卷页签/路由壳中接入。 |
+| S84.3 | DONE | Codex | 人物谱牒升级 | 人物页已升级为可交互 NPC 名册，按书院/科场/官署/军营/朝堂/市井/家族等标签分组。 |
+| S84.4 | DONE | Codex | NPC 详情工作台 | 已新增 NPC 详情工作台，包含档案、对话、交易、委派和记录 tabs，所有后果以后端返回为准。 |
+| S84.5 | DONE | Codex | 背包与仓库界面 | 已显示资源账本、长期资产、重要凭证、随身背包、家宅仓库、官署库房、物品详情、来源、效果和合法性提醒。 |
+| S84.6 | DONE | Codex | 交易与赠礼面板 | 已新增报价/议价/赠礼入口和交易结果摘要；价格、库存、关系影响和结果只取服务器裁决。 |
+| S84.7 | DONE | Codex | 委派任务面板 | 已支持选择 NPC、填写命令、查看风险/资源/期限、执行状态、NPC 回禀和后续行动草稿。 |
+| S84.8 | DONE | Codex | 前端验收与体验打磨 | 已扩展 Vitest、typecheck、build 和 browser smoke 入口；覆盖安全 API、路由、交易/委派不越权、焦点和响应式布局基线。 |
 | S85 | TODO | Codex | 经济、长期关系与总验收 | 接入月末 tick、市场价格、NPC 私人目标、长期任务、论道/切磋/求爱/婚姻扩展位，并完成 JSON/SQLite/Mock/browser/docs 总验收与归档。 |
 | S85.1 | TODO | Codex | 长期 tick 接入 | 扩展月末 tick，让 NPC 资产、库存、价格、债务、人情债、委派任务、交易承诺和关系记忆随旬/月演化。 |
 | S85.2 | TODO | Codex | 基础市场价格 | 实现书籍、粮食、药材、马匹、兵器、文书、礼物、房产维护和官署经费的基础价格与身份差异。 |
@@ -146,8 +146,9 @@
 
 ## 5. 最新状态
 
-- S80 当前基线：全局 AI 设置覆盖所有当前和未来案卷的 AI 路由；设置页和印匣共用 11 类任务矩阵，服务端 presets 为唯一来源，保存成功后以前端收到的服务端返回值回填表单。全局设置只保存 provider/model/预算/温度/安全控制，不保存 key、base URL、prompt、raw provider payload 或本地路径；缺 key 的真实 provider 不能作为可生效全局路由保存。
-- S81-S85 当前规划：NPC、资产、储物和交易委派专项已经进入活动路线图；所有小步骤已写入台账表。S81.1-S81.5 覆盖后端契约与存储地基，S82.1-S82.5 覆盖开局背景兑现，S83.1-S83.5 覆盖 NPC 名册与对话后端，S84.1-S84.8 覆盖前端 NPC/背包/交易/委派体验，S85.1-S85.6 覆盖经济长期关系与总验收；下一步仍从 S81.1 后端契约开始。
+- S81-S84 当前基线：NPC、资产、储物、交易与委派首轮闭环已完成。后端已有 `assetLedger`、`inventoryLedger`、`npcRoster`、`npcInteractionLedger`、`tradeLedger`、`delegatedTaskLedger`、开局背景裁决、AI task/schema/prompt/provider fallback、JSON/SQLite 同步和 player-state 安全 view；React 已有“囊箧” route、人物 NPC 工作台、对话/交易/委派面板和开局裁决摘要。前端只消费安全 API/view，不裁决资源、价格、关系或任务结果。
+- S85 当前规划：下一步进入经济长期演化和总验收，重点补月末 tick、市场价格、NPC 私人目标与主动性、论道/切磋/求爱/婚姻正式扩展位、JSON/SQLite/Mock/browser 总验收和归档。
+- S80 当前基线：全局 AI 设置覆盖所有当前和未来案卷的 AI 路由；设置页和印匣共用 18 类任务矩阵，服务端 presets 为唯一来源，保存成功后以前端收到的服务端返回值回填表单。全局设置只保存 provider/model/预算/温度/安全控制，不保存 key、base URL、prompt、raw provider payload 或本地路径；缺 key 的真实 provider 不能作为可生效全局路由保存。
 - S79 当前基线：React 子路由壳、考试 smoke、recovered 女性高清立绘入库、runtime manifest、压缩 QA 和只读高清查看器已收束。查看器只读 `/assets/ui/` runtime 主图，不写 canonical state、URL、localStorage/sessionStorage、行动草稿或 AI prompt。
 - S78 及更早阶段均已迁入专题归档。活动台账不再展开完成流水；需要追溯时使用本文件顶部归档索引。
 
@@ -179,6 +180,26 @@ S80 最新完整口径：
 - `git diff --check`
 - 提交前只读子代理复审最终 diff 与验证证据
 
+本轮 S81-S84 NPC、资产、储物、交易与委派系统验证口径：
+
+- `node --test test/assetLedger.test.js test/inventoryLedger.test.js test/npcRoster.test.js test/delegatedTasks.test.js`
+- `node --test test/sqliteNpcInventoryTables.test.js test/sqliteNpcInventoryAdapterIntegration.test.js`
+- `node --test test/npcInventoryRoutes.test.js`
+- `node --test test/tradeLedger.test.js test/npcAiSafety.test.js`
+- `node --test test/aiSettings.test.js test/aiSettingsRoute.test.js test/modelRoutePolicy.test.js`
+- `node --test test/aiSchemas.test.js test/prompts.test.js test/remoteHelpers.test.js`
+- `node --test test/gameStartRole.test.js test/gamePlayerStateRoute.test.js test/stateRules.test.js test/sqliteMaintenanceTool.test.js`
+- `node --test test/sessionStoreAdapterContract.test.js`
+- `npm run typecheck:client`
+- `npm run test:client -- --pool=vmForks --maxWorkers=2`
+- `npm run build:client`
+- `AI_PROVIDER=mock npm run smoke:browser`
+- `npm test`
+- `npm run check:docs-governance`
+- `node --test test/documentationGovernance.test.js`
+- `git diff --check`
+- 提交前只读子代理复审最终 diff 与验证证据。
+
 补充素材/manifest 回归入口仍保留：
 
 - `npm run qa:frontend-assets`
@@ -196,6 +217,18 @@ S84 前端专项额外验收入口：
 - 前端不得调用 unsafe `/api/game/state/*`、`/api/dev/*`，不得在 localStorage/sessionStorage 保存完整背包、NPC 私档、交易明细、provider payload 或 prompt。
 
 ## 7. 近期进度记录
+
+### 2026-05-20：完成 S81-S84 NPC、资产、储物、交易与委派首轮闭环
+
+- 范围：完成 S81 后端契约与存储地基、S82 开局背景兑现、S83 NPC 名册与 AI 对话后端、S84 React NPC/背包/交易/委派体验。新增 [NPC_INVENTORY_SYSTEM_CONTRACT.md](NPC_INVENTORY_SYSTEM_CONTRACT.md)，并把资产、资源、物品、NPC、交互、交易、委派和开局背景裁决纳入安全 view 与文档口径。
+- 后端：新增 `assetLedger`、`inventoryLedger`、`npcRoster`、`npcInteractions`、`tradeLedger`、`delegatedTasks`、`openingBackgroundClaims` 领域模块；`POST /api/game/start` 先调用 `background_claim_parser`，服务器裁决房产、银两、书籍、债务、禁物、军权、官职和虚假身份宣称后再落账。新增 `GET /api/game/inventory/:sessionId`、`POST /api/game/inventory-transfer/:sessionId`、`GET /api/game/npcs/:sessionId`、`GET /api/game/npc/:sessionId/:npcId`、`POST /api/game/npc-interaction/:sessionId`、`POST /api/game/trade/:sessionId`、`POST /api/game/npc-command/:sessionId`。
+- AI 与存储：新增 `background_claim_parser`、`npc_dialogue`、`npc_private_planner`、`trade_negotiator`、`delegated_task_planner`、`delegated_task_reporter`、`inventory_effect_explainer` 七类任务的 route policy、设置矩阵、prompt pack、schema、Mock 和 remote adapter 方法；SQLite 新增 `asset_resource_accounts`、`asset_long_term_assets`、`inventory_containers`、`inventory_items`、`npc_roster_profiles`、`npc_interaction_events`、`delegated_tasks`、`trade_ledger_records` 安全派生表，并接入 adapter sync/repair/delete/maintenance drift。
+- 前端：React 新增“囊箧” route，人物页升级为 NPC 工作台，提供档案、对话、交易、委派、记录 tabs；主卷展示开局背景服务器裁决摘要；API client 与 Zustand store 只缓存服务器安全 view 和临时草稿，不写 localStorage/sessionStorage，不读取 unsafe `/api/game/state/*` 或 `/api/dev/*`。
+- 边界：新增 raw ledgers 已从 `clientWorldState`、`redactedState` 和玩家 API 兼容 `worldState` 剥离；浏览器、prompt、SQLite 派生表和 AI 调动摘要均不暴露 hiddenDossier、privateSignalTags、交易底价、raw provider payload、完整 prompt、本地路径或 key。资源扣减、资产授予、价格、任务结果、关系影响、科举和官职仍由服务器裁决；交易 AI `accepted` 只记录议价，不直接写银钱/物品，NPC/交易/委派 AI 文本若命中 hidden/raw/path/key 形状会在服务端拒绝；委派创建 API 只回传安全 task view，SQLite 交易派生行带双方 actor refs。
+- 验证：已通过本文件“本轮 S81-S84 NPC、资产、储物、交易与委派系统验证口径”列出的 focused Node tests、client typecheck、Vitest VM pool、client build、完整 `npm test`、docs governance、documentation governance 和 diff check；第一次只读复审 Epicurus 发现的交易结算和 AI 文本泄漏 P1 已修复并补测，第二次复审 Hegel 未发现 P0/P1，非阻断项已收口；最终只读复审 Russell 未发现 P0/P1。
+- 子代理：Bacon 负责资产/背包账本小步，Linnaeus 负责 NPC/委派账本小步，Pasteur 负责 SQLite 派生表小步，Turing 负责 S84 React 前端小步；主代理完成整合、补缺、验证、文档同步和最终提交。子代理均未提交。
+- 提交：随本轮 coherent change 提交，最终 hash 见 Git 历史和本次回复。
+- 下一步：进入 S85，优先补长期 tick、基础市场价格、NPC 主动性和预留玩法正式扩展位，再做 S81-S85 总验收与归档。
 
 ### 2026-05-20：完成 PLAN-S81-S85 NPC、资产与储物系统规划
 

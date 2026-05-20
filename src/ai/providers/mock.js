@@ -2279,11 +2279,169 @@ async function draftTopicSurface(topicDraftContext = {}) {
   };
 }
 
+async function parseBackgroundClaims(backgroundContext = {}) {
+  const text = `${backgroundContext.publicBackground || ""} ${backgroundContext.customSetting || ""}`;
+  const claims = [];
+  const push = (claimType, claimSummary, requestedValue) => {
+    claims.push({
+      claimId: `mock-claim-${claims.length + 1}`,
+      claimType,
+      claimSummary,
+      requestedValue,
+      confidence: 0.82,
+      evidenceText: claimSummary,
+      source: "mock-ai"
+    });
+  };
+
+  const silverMatch = text.match(/(?:白银|银(?:两|子)?|家资|现银)[^\d一二三四五六七八九十百千万]*(\d+|一万|万|千|百)/);
+  if (silverMatch) {
+    const amountText = silverMatch[1];
+    const amount = amountText === "一万" || amountText === "万"
+      ? 10000
+      : amountText === "千"
+        ? 1000
+        : amountText === "百"
+          ? 100
+          : Number(amountText);
+    push("wealth", `宣称家有白银${Number.isFinite(amount) ? amount : 0}两`, {
+      label: "白银",
+      amount: Number.isFinite(amount) ? amount : 0,
+      unit: "两"
+    });
+  }
+  const houseMatch = text.match(/(?:房屋|宅|宅院|屋)[^\d一二三四五六七八九十]*(\d+|一|二|两|三|四|五)?(?:座|处|间)/);
+  if (houseMatch) {
+    const numerals = { 一: 1, 二: 2, 两: 2, 三: 3, 四: 4, 五: 5 };
+    const count = Number(houseMatch[1]) || numerals[houseMatch[1]] || 1;
+    push("property", `宣称家有宅院${count}处`, {
+      label: "宅院",
+      count,
+      unit: "处"
+    });
+  }
+  if (/玉玺|传国玺|皇印/.test(text)) {
+    push("artifact", "宣称持有玉玺或皇权重器", {
+      label: "玉玺传闻",
+      count: 1,
+      unit: "件"
+    });
+  }
+  if (/进士|状元|榜眼|探花|会元|举人|秀才/.test(text)) {
+    push("education", "宣称已有功名或科场名次", {
+      label: "功名宣称"
+    });
+  }
+  if (/统兵|兵马|十万|万军|兵符/.test(text)) {
+    push("military", "宣称拥有军权或大规模兵马", {
+      label: "军权宣称"
+    });
+  }
+  if (/债|欠|借/.test(text)) {
+    push("debt", "背景提及债务或借贷牵连", {
+      label: "债务"
+    });
+  }
+  if (!claims.length && text.trim()) {
+    push("reputation", "背景含有乡里名声或家世自述", {
+      label: "家世自述"
+    });
+  }
+
+  return { claims: claims.slice(0, 12) };
+}
+
+async function runNpcDialogue(npcDialogueContext = {}) {
+  const npcId = npcDialogueContext.npcId || npcDialogueContext.npcDetailView?.npcId || "npc:unknown";
+  const name = npcDialogueContext.npcDetailView?.displayName || "此人";
+  const utterance = npcDialogueContext.playerUtterance || "寒暄问候";
+  return {
+    npcId,
+    dialogueText: `${name}听罢“${utterance}”，先拱手称是，又谨慎补上一句：此事还须按公文、账册与人情轻重细核，不可只凭口头一诺。`,
+    mood: "谨慎",
+    relationshipSuggestions: [],
+    memoryProposals: [],
+    followUpSuggestions: ["追问细节", "改以礼物试探", "暂且记下"],
+    source: "mock-ai"
+  };
+}
+
+async function planNpcPrivateIntent(npcPrivateContext = {}) {
+  const npcId = npcPrivateContext.npcId || npcPrivateContext.npcDetailView?.npcId || "npc:unknown";
+  const tags = Array.isArray(npcPrivateContext.privateSignalTags) ? npcPrivateContext.privateSignalTags : [];
+  return {
+    npcId,
+    intentSummary: tags.length ? `此人近期显出${tags.slice(0, 3).join("、")}的软倾向。` : "此人暂以观望为主。",
+    proposalBoundary: "本意图只作服务器内部 proposal，不代表事实已经发生。",
+    riskTags: tags.slice(0, 4),
+    suggestedInteractionHooks: ["以公事试探", "观察回避之处"],
+    source: "mock-ai"
+  };
+}
+
+async function negotiateTrade(tradeContext = {}) {
+  const tradeId = tradeContext.tradeId || "trade:mock";
+  return {
+    tradeId,
+    npcResponse: "对方略作盘算，愿先按市价与交情折中议一回，但仍要看货色、契约与公私名分。",
+    proposal: {
+      status: "countered",
+      publicSummary: "Mock 议价只生成公开还价文案，成交仍候服务器校验。",
+      requestedSilverDelta: 0,
+      relationDeltaHint: 1,
+      riskTags: ["需验货", "需核价"]
+    },
+    source: "mock-ai"
+  };
+}
+
+async function planDelegatedTask(delegatedTaskContext = {}) {
+  return {
+    taskType: delegatedTaskContext.taskType || "generic",
+    planSummary: "先点明文书、人员、经费与期限，再分头核实，不以口头承诺代替公文回执。",
+    riskTags: ["人情阻力", "账册不齐"],
+    successFactors: ["执行人熟悉本地", "经费足额", "文书齐备"],
+    suggestedDueTurns: 3,
+    source: "mock-ai"
+  };
+}
+
+async function reportDelegatedTask(delegatedTaskReportContext = {}) {
+  const taskId = delegatedTaskReportContext.taskId || "delegated-task:mock";
+  return {
+    taskId,
+    reportText: "属员回禀：已按命核对，仍有数处须复验。若要深查，可再给票帖、经费与期限。",
+    outcomeTone: "谨慎",
+    followUpSuggestions: ["复核账册", "传唤相关人", "暂缓奖惩"],
+    source: "mock-ai"
+  };
+}
+
+async function explainInventoryEffect(inventoryEffectContext = {}) {
+  const itemId = inventoryEffectContext.itemId || inventoryEffectContext.itemView?.itemId || "item:unknown";
+  const title = inventoryEffectContext.itemView?.name || "物品";
+  return {
+    itemId,
+    title,
+    effectSummary: "此物只能作为可见行动凭据或叙事材料，具体效果由服务器按身份、地点与权限裁决。",
+    riskNote: "若属官印、兵符、禁物或契约，误用可能引发案卷、弹劾或刑名风险。",
+    lawfulUse: "请在普通行动、交易、委派或背包转移中提交，由服务器校验。",
+    source: "mock-ai"
+  };
+}
+
 module.exports = {
   startGame,
   runTurn,
   generateExamQuestion,
   suggestQuickActions,
   draftTopicSurface,
+  parseBackgroundClaims,
+  runNpcDialogue,
+  planNpcPrivateIntent,
+  negotiateTrade,
+  planDelegatedTask,
+  reportDelegatedTask,
+  explainInventoryEffect,
   gradeExamEssay
 };

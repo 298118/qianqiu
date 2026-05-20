@@ -1,10 +1,17 @@
 const { getModelSchema, validatePayload } = require("../schemas");
 const {
+  buildBackgroundClaimParserTask,
+  buildDelegatedTaskPlanTask,
+  buildDelegatedTaskReportTask,
   buildExamQuestionTask,
   buildGradeTask,
+  buildInventoryEffectExplanationTask,
+  buildNpcDialogueTask,
+  buildNpcPrivatePlannerTask,
   buildOpeningTask,
   buildQuickActionTask,
   buildTopicDraftTask,
+  buildTradeNegotiationTask,
   buildTurnTask
 } = require("../prompts");
 const { parseJsonFromText } = require("../../utils/json");
@@ -397,6 +404,34 @@ function createRemoteProvider(requestJson, requestJsonStream) {
 
     draftTopicSurface(topicDraftContext) {
       return runTask(buildTopicDraftTask(topicDraftContext), requestJson);
+    },
+
+    parseBackgroundClaims(backgroundContext) {
+      return runTask(buildBackgroundClaimParserTask(backgroundContext), requestJson);
+    },
+
+    runNpcDialogue(npcDialogueContext) {
+      return runTask(buildNpcDialogueTask(npcDialogueContext), requestJson);
+    },
+
+    planNpcPrivateIntent(npcPrivateContext) {
+      return runTask(buildNpcPrivatePlannerTask(npcPrivateContext), requestJson);
+    },
+
+    negotiateTrade(tradeContext) {
+      return runTask(buildTradeNegotiationTask(tradeContext), requestJson);
+    },
+
+    planDelegatedTask(delegatedTaskContext) {
+      return runTask(buildDelegatedTaskPlanTask(delegatedTaskContext), requestJson);
+    },
+
+    reportDelegatedTask(delegatedTaskReportContext) {
+      return runTask(buildDelegatedTaskReportTask(delegatedTaskReportContext), requestJson);
+    },
+
+    explainInventoryEffect(inventoryEffectContext) {
+      return runTask(buildInventoryEffectExplanationTask(inventoryEffectContext), requestJson);
     },
 
     gradeExamEssay(worldState, exam, essay, authenticityCheck) {

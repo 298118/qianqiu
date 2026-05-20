@@ -4,6 +4,15 @@ import { useUiStateStore } from "./uiState";
 import type {
   AiConnectionTestResponse,
   AiSettingsResponse,
+  InventoryResponse,
+  InventoryTransferRequest,
+  InventoryTransferResponse,
+  NpcCommandRequest,
+  NpcCommandResponse,
+  NpcDetailResponse,
+  NpcInteractionRequest,
+  NpcInteractionResponse,
+  NpcListResponse,
   ExamLevel,
   ExamProgressResponse,
   ExamQuestionResponse,
@@ -18,6 +27,8 @@ import type {
   TopicDraftResponse,
   TopicSurfaceId,
   TopicSurfaceResponse,
+  TradeRequest,
+  TradeResponse,
   TurnResponse
 } from "../api";
 
@@ -42,6 +53,10 @@ type GameSessionState = {
   readonly quickActionStatus: LoadingState;
   readonly topicSurfaceStatus: LoadingState;
   readonly topicDraftStatus: LoadingState;
+  readonly inventoryStatus: LoadingState;
+  readonly npcRosterStatus: LoadingState;
+  readonly npcDetailStatus: LoadingState;
+  readonly npcMutationStatus: LoadingState;
   readonly currentSessionId: string | null;
   readonly currentSession: PlayerStateResponse | StartGameResponse | TurnResponse | ExamSubmitResponse | null;
   readonly lastTurn: TurnResponse | null;
@@ -53,6 +68,12 @@ type GameSessionState = {
   readonly quickActions: QuickActionResponse | null;
   readonly topicSurface: TopicSurfaceResponse | null;
   readonly topicDraft: TopicDraftResponse | null;
+  readonly inventory: InventoryResponse | null;
+  readonly npcRoster: NpcListResponse | null;
+  readonly npcDetail: NpcDetailResponse | null;
+  readonly lastNpcInteraction: NpcInteractionResponse | null;
+  readonly lastTrade: TradeResponse | null;
+  readonly lastNpcCommand: NpcCommandResponse | null;
   readonly error: string | null;
   readonly refreshSaves: () => Promise<void>;
   readonly startNewGame: (input: StartGameInput) => Promise<StartGameResponse>;
@@ -70,6 +91,13 @@ type GameSessionState = {
   readonly refreshQuickActions: (sessionId: string, input?: { readonly page?: string; readonly draftPreview?: string; readonly count?: number }) => Promise<QuickActionResponse>;
   readonly loadTopicSurface: (sessionId: string, surfaceId: TopicSurfaceId) => Promise<TopicSurfaceResponse>;
   readonly requestTopicDraft: (sessionId: string, input: TopicDraftRequest) => Promise<TopicDraftResponse>;
+  readonly loadInventory: (sessionId: string) => Promise<InventoryResponse>;
+  readonly transferInventoryItem: (sessionId: string, input: InventoryTransferRequest) => Promise<InventoryTransferResponse>;
+  readonly loadNpcs: (sessionId: string, input?: { readonly page?: number; readonly pageSize?: number; readonly group?: string; readonly interaction?: string }) => Promise<NpcListResponse>;
+  readonly loadNpcDetail: (sessionId: string, npcId: string) => Promise<NpcDetailResponse>;
+  readonly interactWithNpc: (sessionId: string, input: NpcInteractionRequest) => Promise<NpcInteractionResponse>;
+  readonly submitTrade: (sessionId: string, input: TradeRequest) => Promise<TradeResponse>;
+  readonly submitNpcCommand: (sessionId: string, input: NpcCommandRequest) => Promise<NpcCommandResponse>;
 };
 
 function toErrorMessage(error: unknown) {
@@ -83,6 +111,10 @@ export const useGameSessionStore = create<GameSessionState>((set) => ({
   quickActionStatus: "idle",
   topicSurfaceStatus: "idle",
   topicDraftStatus: "idle",
+  inventoryStatus: "idle",
+  npcRosterStatus: "idle",
+  npcDetailStatus: "idle",
+  npcMutationStatus: "idle",
   currentSessionId: null,
   currentSession: null,
   lastTurn: null,
@@ -94,6 +126,12 @@ export const useGameSessionStore = create<GameSessionState>((set) => ({
   quickActions: null,
   topicSurface: null,
   topicDraft: null,
+  inventory: null,
+  npcRoster: null,
+  npcDetail: null,
+  lastNpcInteraction: null,
+  lastTrade: null,
+  lastNpcCommand: null,
   error: null,
 
   async refreshSaves() {
@@ -122,6 +160,16 @@ export const useGameSessionStore = create<GameSessionState>((set) => ({
         topicDraft: null,
         topicSurfaceStatus: "idle",
         topicDraftStatus: "idle",
+        inventory: null,
+        npcRoster: null,
+        npcDetail: null,
+        lastNpcInteraction: null,
+        lastTrade: null,
+        lastNpcCommand: null,
+        inventoryStatus: "idle",
+        npcRosterStatus: "idle",
+        npcDetailStatus: "idle",
+        npcMutationStatus: "idle",
         status: "ready"
       });
       useUiStateStore.getState().syncSessionPayload(payload, "start");
@@ -137,19 +185,43 @@ export const useGameSessionStore = create<GameSessionState>((set) => ({
     set({ status: "loading", error: null });
     try {
       const payload = await qianqiuApi.loadPlayerState(sessionId);
-      set({
+      set((state) => ({
         currentSessionId: payload.sessionId,
         currentSession: payload,
-        activeExam: null,
-        lastExamResult: null,
+        activeExam: state.activeExam?.sessionId === payload.sessionId ? state.activeExam : null,
+        lastExamResult: state.lastExamResult?.sessionId === payload.sessionId ? state.lastExamResult : null,
         quickActions: null,
         quickActionStatus: "idle",
         topicSurface: null,
         topicDraft: null,
         topicSurfaceStatus: "idle",
         topicDraftStatus: "idle",
+        inventory: payload.inventoryView
+          ? {
+              sessionId: payload.sessionId,
+              inventoryView: payload.inventoryView,
+              resourceLedgerView: payload.resourceLedgerView,
+              assetLedgerView: payload.assetLedgerView
+            }
+          : null,
+        npcRoster: payload.npcRosterView
+          ? {
+              sessionId: payload.sessionId,
+              npcRosterView: payload.npcRosterView,
+              npcInteractionView: payload.npcInteractionView,
+              delegatedTaskView: payload.delegatedTaskView
+            }
+          : null,
+        npcDetail: null,
+        lastNpcInteraction: null,
+        lastTrade: null,
+        lastNpcCommand: null,
+        inventoryStatus: payload.inventoryView ? "ready" : "idle",
+        npcRosterStatus: payload.npcRosterView ? "ready" : "idle",
+        npcDetailStatus: "idle",
+        npcMutationStatus: "idle",
         status: "ready"
-      });
+      }));
       useUiStateStore.getState().syncSessionPayload(payload, "player-state");
       return payload;
     } catch (error) {
@@ -173,6 +245,30 @@ export const useGameSessionStore = create<GameSessionState>((set) => ({
         topicDraft: null,
         topicSurfaceStatus: "idle",
         topicDraftStatus: "idle",
+        inventory: payload.inventoryView
+          ? {
+              sessionId: payload.sessionId,
+              inventoryView: payload.inventoryView,
+              resourceLedgerView: payload.resourceLedgerView,
+              assetLedgerView: payload.assetLedgerView
+            }
+          : null,
+        npcRoster: payload.npcRosterView
+          ? {
+              sessionId: payload.sessionId,
+              npcRosterView: payload.npcRosterView,
+              npcInteractionView: payload.npcInteractionView,
+              delegatedTaskView: payload.delegatedTaskView
+            }
+          : null,
+        npcDetail: null,
+        lastNpcInteraction: null,
+        lastTrade: null,
+        lastNpcCommand: null,
+        inventoryStatus: payload.inventoryView ? "ready" : "idle",
+        npcRosterStatus: payload.npcRosterView ? "ready" : "idle",
+        npcDetailStatus: "idle",
+        npcMutationStatus: "idle",
         status: "ready"
       });
       useUiStateStore.getState().syncSessionPayload(payload, "turn");
@@ -347,6 +443,136 @@ export const useGameSessionStore = create<GameSessionState>((set) => ({
       return payload;
     } catch (error) {
       set({ error: toErrorMessage(error), topicDraftStatus: "error" });
+      throw error;
+    }
+  },
+
+  async loadInventory(sessionId) {
+    set({ inventoryStatus: "loading", error: null });
+    try {
+      const payload = await qianqiuApi.loadInventory(sessionId);
+      set({ inventory: payload, currentSessionId: payload.sessionId, inventoryStatus: "ready" });
+      return payload;
+    } catch (error) {
+      set({ error: toErrorMessage(error), inventoryStatus: "error" });
+      throw error;
+    }
+  },
+
+  async transferInventoryItem(sessionId, input) {
+    set({ inventoryStatus: "loading", error: null });
+    try {
+      const payload = await qianqiuApi.transferInventoryItem(sessionId, input);
+      set((state) => ({
+        inventory: state.inventory
+          ? { ...state.inventory, inventoryView: payload.inventoryView }
+          : { sessionId, inventoryView: payload.inventoryView },
+        inventoryStatus: "ready"
+      }));
+      return payload;
+    } catch (error) {
+      set({ error: toErrorMessage(error), inventoryStatus: "error" });
+      throw error;
+    }
+  },
+
+  async loadNpcs(sessionId, input = {}) {
+    set({ npcRosterStatus: "loading", error: null });
+    try {
+      const payload = await qianqiuApi.loadNpcs(sessionId, {
+        page: input.page,
+        pageSize: input.pageSize,
+        group: input.group,
+        interaction: input.interaction
+      });
+      set({ npcRoster: payload, currentSessionId: payload.sessionId, npcRosterStatus: "ready" });
+      return payload;
+    } catch (error) {
+      set({ error: toErrorMessage(error), npcRosterStatus: "error" });
+      throw error;
+    }
+  },
+
+  async loadNpcDetail(sessionId, npcId) {
+    set({ npcDetailStatus: "loading", error: null });
+    try {
+      const payload = await qianqiuApi.loadNpcDetail(sessionId, npcId);
+      set({ npcDetail: payload, currentSessionId: payload.sessionId, npcDetailStatus: "ready" });
+      return payload;
+    } catch (error) {
+      set({ error: toErrorMessage(error), npcDetailStatus: "error" });
+      throw error;
+    }
+  },
+
+  async interactWithNpc(sessionId, input) {
+    set({ npcMutationStatus: "loading", error: null });
+    try {
+      const payload = await qianqiuApi.interactWithNpc(sessionId, input);
+      set((state) => ({
+        lastNpcInteraction: payload,
+        npcDetail: payload.npcDetailView && state.npcDetail
+          ? {
+              ...state.npcDetail,
+              npcDetailView: payload.npcDetailView,
+              npcInteractionView: payload.npcInteractionView
+            }
+          : state.npcDetail,
+        npcRoster: state.npcRoster
+          ? { ...state.npcRoster, npcInteractionView: payload.npcInteractionView }
+          : state.npcRoster,
+        npcMutationStatus: payload.accepted ? "ready" : "error"
+      }));
+      return payload;
+    } catch (error) {
+      set({ error: toErrorMessage(error), npcMutationStatus: "error" });
+      throw error;
+    }
+  },
+
+  async submitTrade(sessionId, input) {
+    set({ npcMutationStatus: "loading", error: null });
+    try {
+      const payload = await qianqiuApi.submitTrade(sessionId, input);
+      set((state) => ({
+        lastTrade: payload,
+        inventory: payload.inventoryView
+          ? {
+              sessionId: payload.sessionId,
+              inventoryView: payload.inventoryView,
+              resourceLedgerView: payload.resourceLedgerView ?? state.inventory?.resourceLedgerView,
+              assetLedgerView: state.inventory?.assetLedgerView
+            }
+          : state.inventory,
+        npcDetail: state.npcDetail
+          ? { ...state.npcDetail, tradeLedgerView: payload.tradeLedgerView }
+          : state.npcDetail,
+        npcMutationStatus: payload.accepted ? "ready" : "error"
+      }));
+      return payload;
+    } catch (error) {
+      set({ error: toErrorMessage(error), npcMutationStatus: "error" });
+      throw error;
+    }
+  },
+
+  async submitNpcCommand(sessionId, input) {
+    set({ npcMutationStatus: "loading", error: null });
+    try {
+      const payload = await qianqiuApi.submitNpcCommand(sessionId, input);
+      set((state) => ({
+        lastNpcCommand: payload,
+        npcRoster: state.npcRoster
+          ? { ...state.npcRoster, delegatedTaskView: payload.delegatedTaskView }
+          : state.npcRoster,
+        npcDetail: state.npcDetail
+          ? { ...state.npcDetail, delegatedTaskView: payload.delegatedTaskView }
+          : state.npcDetail,
+        npcMutationStatus: payload.accepted ? "ready" : "error"
+      }));
+      return payload;
+    } catch (error) {
+      set({ error: toErrorMessage(error), npcMutationStatus: "error" });
       throw error;
     }
   }

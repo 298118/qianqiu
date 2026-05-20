@@ -50,6 +50,23 @@ async function useTempGlobalAiSettings(t) {
   return process.env.AI_GLOBAL_SETTINGS_PATH;
 }
 
+function withoutRealProviderKeys(t) {
+  const keys = [
+    "OPENAI_API_KEY",
+    "DEEPSEEK_API_KEY",
+    "MIMO_API_KEY",
+    "ANTHROPIC_API_KEY"
+  ];
+  const previous = Object.fromEntries(keys.map((key) => [key, process.env[key]]));
+  for (const key of keys) delete process.env[key];
+  t.after(() => {
+    for (const key of keys) {
+      if (previous[key] === undefined) delete process.env[key];
+      else process.env[key] = previous[key];
+    }
+  });
+}
+
 function assertHiddenSafe(payload) {
   const serialized = JSON.stringify(payload);
   assert.ok(!serialized.includes("OPENAI_API_KEY"));
@@ -79,7 +96,7 @@ test("S70.9 game start and state return AI settings and observability views", as
 
   assert.equal(started.response.status, 201);
   assert.equal(started.payload.aiSettingsView.schemaVersion, "s70.9-ai-settings.v1");
-  assert.equal(started.payload.aiInvocationSummaryView.routeCostSummary.taskCount, 11);
+  assert.equal(started.payload.aiInvocationSummaryView.routeCostSummary.taskCount, 18);
   assert.equal(started.payload.aiControlAuditView.schemaVersion, "s71.11-ai-control-audit.v1");
   assert.equal(started.payload.aiControlAuditView.publicPanel.rejectedToolCallCount, 0);
   assert.ok(started.payload.aiInvocationSummaryView.recentInvocations.length >= 1);
@@ -90,8 +107,8 @@ test("S70.9 game start and state return AI settings and observability views", as
   const statePayload = await stateResponse.json();
   assert.equal(stateResponse.status, 200);
   assert.equal(statePayload.aiSettingsView.preset, "balanced");
-  assert.equal(statePayload.aiInvocationSummaryView.routeCostSummary.taskCount, 11);
-  assert.equal(statePayload.aiControlAuditView.developerPanel.routeCostSummary.taskCount, 11);
+  assert.equal(statePayload.aiInvocationSummaryView.routeCostSummary.taskCount, 18);
+  assert.equal(statePayload.aiControlAuditView.developerPanel.routeCostSummary.taskCount, 18);
   assertHiddenSafe(statePayload.aiInvocationSummaryView);
   assertHiddenSafe(statePayload.aiControlAuditView);
 
@@ -233,7 +250,7 @@ test("S70.9 turn payload includes updated AI settings and invocation summary", a
   });
 
   assert.equal(turned.response.status, 200);
-  assert.equal(turned.payload.aiSettingsView.taskRoutes.length, 11);
+  assert.equal(turned.payload.aiSettingsView.taskRoutes.length, 18);
   assert.ok(turned.payload.aiInvocationSummaryView.recentInvocations.length >= 2);
   assert.ok(turned.payload.aiInvocationSummaryView.routeCostSummary.maxOutputTokens > 0);
   assert.equal(turned.payload.aiControlAuditView.publicPanel.title, "AI 调动审计");
@@ -320,6 +337,7 @@ test("S80 global settings route persists and affects new and existing sessions",
 
 test("S80 global settings reject unavailable provider and sensitive fields", async (t) => {
   await useTempGlobalAiSettings(t);
+  withoutRealProviderKeys(t);
   const server = createTestServer();
   t.after(async () => {
     await server.close();

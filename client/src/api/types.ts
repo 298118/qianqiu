@@ -92,6 +92,14 @@ export type SafeRouteViews = {
   readonly aiSettingsView?: AiSettingsView;
   readonly aiInvocationSummaryView?: JsonObject;
   readonly aiControlAuditView?: JsonObject;
+  readonly openingBackgroundClaimsView?: OpeningBackgroundClaimsView;
+  readonly assetLedgerView?: AssetLedgerView;
+  readonly resourceLedgerView?: ResourceLedgerView;
+  readonly inventoryView?: InventoryView;
+  readonly npcRosterView?: NpcRosterView;
+  readonly npcInteractionView?: NpcInteractionView;
+  readonly tradeLedgerView?: TradeLedgerView;
+  readonly delegatedTaskView?: DelegatedTaskView;
   readonly mapRuntimeView?: MapRuntimeView;
   readonly eventArchiveView?: JsonObject;
   readonly informationPanelPageView?: JsonObject;
@@ -116,6 +124,365 @@ export type SafeRouteViews = {
   readonly worldPeopleView?: WorldPeopleView;
   readonly topicSurfaceView?: TopicSurfaceView;
   readonly [key: string]: unknown;
+};
+
+export type OpeningBackgroundClaimsView = JsonObject & {
+  readonly schemaVersion?: string;
+  readonly status?: string;
+  readonly publicSummary?: string;
+  readonly counts?: JsonObject;
+  readonly decisions?: readonly {
+    readonly claimId?: string;
+    readonly claimType?: string;
+    readonly claimSummary?: string;
+    readonly decision?: string;
+    readonly publicSummary?: string;
+    readonly acceptedRefs?: readonly string[];
+    readonly riskTags?: readonly string[];
+    readonly serverReason?: string;
+  }[];
+};
+
+export type ResourceAccountView = {
+  readonly accountId: string;
+  readonly resourceId?: string;
+  readonly label: string;
+  readonly amount: number;
+  readonly unit?: string;
+  readonly ownerActorId?: string;
+  readonly updatedTurn?: number;
+};
+
+export type ResourceLedgerView = {
+  readonly schemaVersion?: string;
+  readonly viewerActorId?: string;
+  readonly accounts: readonly ResourceAccountView[];
+  readonly counts?: JsonObject;
+  readonly authorityBoundary?: string;
+  readonly [key: string]: unknown;
+};
+
+export type AssetView = {
+  readonly assetId: string;
+  readonly assetType?: string;
+  readonly typeLabel?: string;
+  readonly name: string;
+  readonly ownerActorId?: string;
+  readonly locationRef?: string;
+  readonly condition?: string;
+  readonly productivity?: number;
+  readonly upkeepSilver?: number;
+  readonly legalStatus?: string;
+  readonly visibility?: string;
+  readonly effectRefs?: readonly string[];
+  readonly provenance?: readonly JsonObject[];
+};
+
+export type AssetLedgerView = {
+  readonly schemaVersion?: string;
+  readonly viewerActorId?: string;
+  readonly assets: readonly AssetView[];
+  readonly counts?: JsonObject;
+  readonly resourceLedgerView?: ResourceLedgerView;
+  readonly authorityBoundary?: string;
+  readonly [key: string]: unknown;
+};
+
+export type InventoryContainerView = {
+  readonly containerId: string;
+  readonly type?: string;
+  readonly label: string;
+  readonly ownerActorId?: string;
+  readonly custodianActorId?: string;
+  readonly locationRef?: string;
+  readonly capacityWeight?: number;
+  readonly currentWeight?: number;
+  readonly visibility?: string;
+  readonly locked?: boolean;
+};
+
+export type InventoryItemView = {
+  readonly itemId: string;
+  readonly templateId?: string;
+  readonly name: string;
+  readonly category?: string;
+  readonly subtype?: string;
+  readonly ownerActorId?: string;
+  readonly custodianActorId?: string;
+  readonly containerId?: string;
+  readonly quantity?: number;
+  readonly unit?: string;
+  readonly quality?: number;
+  readonly rarity?: string;
+  readonly durability?: number;
+  readonly condition?: string;
+  readonly legalStatus?: string;
+  readonly transferPolicy?: string;
+  readonly effects?: readonly string[];
+  readonly important?: boolean;
+  readonly credential?: boolean;
+  readonly provenance?: readonly JsonObject[];
+};
+
+export type ImportantCredentialView = {
+  readonly itemId: string;
+  readonly name: string;
+  readonly legalStatus?: string;
+  readonly transferPolicy?: string;
+  readonly containerId?: string;
+  readonly authorityBoundary?: string;
+};
+
+export type InventoryView = {
+  readonly schemaVersion?: string;
+  readonly viewerActorId?: string;
+  readonly containers: readonly InventoryContainerView[];
+  readonly items: readonly InventoryItemView[];
+  readonly importantCredentials: readonly ImportantCredentialView[];
+  readonly counts?: JsonObject;
+  readonly authorityBoundary?: string;
+  readonly [key: string]: unknown;
+};
+
+export type InventoryResponse = {
+  readonly sessionId: string;
+  readonly resourceLedgerView?: ResourceLedgerView;
+  readonly assetLedgerView?: AssetLedgerView;
+  readonly inventoryView: InventoryView;
+};
+
+export type InventoryTransferRequest = {
+  readonly itemId: string;
+  readonly toContainerId: string;
+  readonly locationRef?: string;
+};
+
+export type InventoryTransferResponse = {
+  readonly sessionId?: string;
+  readonly accepted: boolean;
+  readonly reason?: string;
+  readonly inventoryView: InventoryView;
+};
+
+export type NpcRosterItem = {
+  readonly npcId: string;
+  readonly displayName: string;
+  readonly tier?: string;
+  readonly roleTags?: readonly string[];
+  readonly stageTags?: readonly string[];
+  readonly portraitRef?: string | null;
+  readonly publicProfile?: {
+    readonly title?: string;
+    readonly origin?: string;
+    readonly posting?: string;
+    readonly summary?: string;
+    readonly visibleAbilities?: readonly string[];
+    readonly [key: string]: unknown;
+  };
+  readonly relationshipSummary?: {
+    readonly closeness?: number;
+    readonly trust?: number;
+    readonly awe?: number;
+    readonly hostility?: number;
+    readonly favorsOwed?: number;
+    readonly labels?: readonly string[];
+    readonly [key: string]: unknown;
+  };
+  readonly availableInteractions?: readonly string[];
+};
+
+export type NpcRosterView = {
+  readonly schemaVersion?: string;
+  readonly generatedFor?: JsonObject;
+  readonly page?: number;
+  readonly pageSize?: number;
+  readonly totalItems?: number;
+  readonly items: readonly NpcRosterItem[];
+  readonly safeguards?: JsonObject;
+  readonly [key: string]: unknown;
+};
+
+export type NpcDetailView = Omit<NpcRosterItem, "relationshipSummary"> & {
+  readonly sourceRef?: string;
+  readonly relationship?: NpcRosterItem["relationshipSummary"];
+  readonly inventoryRefs?: readonly string[];
+  readonly assetRefs?: readonly string[];
+  readonly resourceAccountRefs?: readonly string[];
+  readonly safeguards?: JsonObject;
+};
+
+export type NpcInteractionRecordView = {
+  readonly recordId?: string;
+  readonly turn?: number;
+  readonly date?: JsonObject;
+  readonly npcId?: string;
+  readonly npcName?: string;
+  readonly actionType?: string;
+  readonly serverStatus?: string;
+  readonly serverReasons?: readonly string[];
+  readonly dialogueText?: string;
+  readonly mood?: string;
+  readonly followUpSuggestions?: readonly string[];
+};
+
+export type NpcInteractionView = {
+  readonly schemaVersion?: string;
+  readonly ownerActorId?: string;
+  readonly totalItems?: number;
+  readonly items: readonly NpcInteractionRecordView[];
+  readonly safeguards?: JsonObject;
+  readonly [key: string]: unknown;
+};
+
+export type NpcDialogueView = {
+  readonly npcId?: string;
+  readonly dialogueText?: string;
+  readonly mood?: string;
+  readonly followUpSuggestions?: readonly string[];
+};
+
+export type NpcListResponse = {
+  readonly sessionId: string;
+  readonly npcRosterView: NpcRosterView;
+  readonly npcInteractionView?: NpcInteractionView;
+  readonly delegatedTaskView?: DelegatedTaskView;
+};
+
+export type NpcDetailResponse = {
+  readonly sessionId: string;
+  readonly npcDetailView: NpcDetailView;
+  readonly npcInteractionView?: NpcInteractionView;
+  readonly tradeLedgerView?: TradeLedgerView;
+  readonly delegatedTaskView?: DelegatedTaskView;
+};
+
+export type NpcInteractionRequest = {
+  readonly npcId: string;
+  readonly actionType?: "talk" | "ask" | "gift" | "trade" | "command" | "request" | "debate" | "duel" | "courtship" | "marriage" | string;
+  readonly utterance?: string;
+  readonly itemId?: string;
+  readonly offerSummary?: string;
+};
+
+export type NpcInteractionResponse = {
+  readonly sessionId: string;
+  readonly accepted: boolean;
+  readonly errors?: readonly string[];
+  readonly npcDialogueView?: NpcDialogueView;
+  readonly npcInteractionView: NpcInteractionView;
+  readonly npcDetailView?: NpcDetailView;
+};
+
+export type TradeRecordView = {
+  readonly tradeId?: string;
+  readonly turn?: number;
+  readonly actorAId?: string;
+  readonly actorBId?: string;
+  readonly npcId?: string;
+  readonly npcName?: string;
+  readonly status?: string;
+  readonly offerSummary?: string;
+  readonly itemRefs?: readonly string[];
+  readonly requestedSilverDelta?: number;
+  readonly npcResponse?: string;
+  readonly publicSummary?: string;
+  readonly serverReasons?: readonly string[];
+  readonly settlementApplied?: boolean;
+  readonly serverSettlement?: JsonObject;
+  readonly riskTags?: readonly string[];
+};
+
+export type TradeLedgerView = {
+  readonly schemaVersion?: string;
+  readonly ownerActorId?: string;
+  readonly totalItems?: number;
+  readonly items: readonly TradeRecordView[];
+  readonly safeguards?: JsonObject;
+  readonly [key: string]: unknown;
+};
+
+export type TradeRequest = {
+  readonly npcId: string;
+  readonly tradeId?: string;
+  readonly silverDelta?: number;
+  readonly offerSummary?: string;
+  readonly itemRefs?: readonly string[];
+};
+
+export type TradeResponse = {
+  readonly sessionId: string;
+  readonly accepted: boolean;
+  readonly errors?: readonly string[];
+  readonly tradeRecord?: TradeRecordView;
+  readonly tradeLedgerView: TradeLedgerView;
+  readonly resourceLedgerView?: ResourceLedgerView;
+  readonly inventoryView?: InventoryView;
+};
+
+export type DelegatedTaskAssigneeView = {
+  readonly npcId?: string;
+  readonly displayName?: string;
+  readonly title?: string;
+  readonly portraitRef?: string | null;
+};
+
+export type DelegatedTaskRecordView = {
+  readonly taskId?: string;
+  readonly taskType?: string;
+  readonly title?: string;
+  readonly status?: string;
+  readonly issuerActorId?: string;
+  readonly assignee?: DelegatedTaskAssigneeView;
+  readonly authoritySource?: string;
+  readonly startTime?: JsonObject;
+  readonly dueTime?: JsonObject;
+  readonly cadence?: string;
+  readonly requiredItems?: readonly string[];
+  readonly budgetAccountRefs?: readonly string[];
+  readonly budget?: number;
+  readonly riskFactors?: readonly string[];
+  readonly successFactors?: readonly string[];
+  readonly result?: JsonObject | null;
+  readonly auditRefs?: readonly string[];
+  readonly safeguards?: JsonObject;
+};
+
+export type DelegatedTaskView = {
+  readonly schemaVersion?: string;
+  readonly ownerActorId?: string;
+  readonly totalItems?: number;
+  readonly items: readonly DelegatedTaskRecordView[];
+  readonly allowedTaskTypes?: readonly string[];
+  readonly allowedStatuses?: readonly string[];
+  readonly safeguards?: JsonObject;
+  readonly [key: string]: unknown;
+};
+
+export type DelegatedTaskPlanView = {
+  readonly taskType?: string;
+  readonly planSummary?: string;
+  readonly riskTags?: readonly string[];
+  readonly successFactors?: readonly string[];
+  readonly suggestedDueTurns?: number;
+};
+
+export type NpcCommandRequest = {
+  readonly assigneeActorId: string;
+  readonly taskType: string;
+  readonly authoritySource: string;
+  readonly targetRef?: string;
+  readonly commandText: string;
+  readonly budget?: number;
+  readonly title?: string;
+};
+
+export type NpcCommandResponse = {
+  readonly sessionId: string;
+  readonly accepted: boolean;
+  readonly errors?: readonly string[];
+  readonly delegatedTaskPlanView?: DelegatedTaskPlanView;
+  readonly delegatedTask?: JsonObject | null;
+  readonly delegatedTaskView: DelegatedTaskView;
 };
 
 export type StartGameResponse = SafeRouteViews & {

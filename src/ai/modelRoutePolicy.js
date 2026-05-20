@@ -26,11 +26,30 @@ const MODEL_TASK_TYPES = Object.freeze([
   "monthly_briefing",
   "time_skip_planner",
   "quick_action",
-  "topic_draft"
+  "topic_draft",
+  "background_claim_parser",
+  "npc_dialogue",
+  "npc_private_planner",
+  "trade_negotiator",
+  "delegated_task_planner",
+  "delegated_task_reporter",
+  "inventory_effect_explainer"
 ]);
 
 const REVIEW_ONLY_TASK_TYPES = Object.freeze(["critic", "safety_gate"]);
-const TOOL_DISABLED_TASK_TYPES = Object.freeze(["critic", "safety_gate", "quick_action", "topic_draft"]);
+const TOOL_DISABLED_TASK_TYPES = Object.freeze([
+  "critic",
+  "safety_gate",
+  "quick_action",
+  "topic_draft",
+  "background_claim_parser",
+  "npc_dialogue",
+  "npc_private_planner",
+  "trade_negotiator",
+  "delegated_task_planner",
+  "delegated_task_reporter",
+  "inventory_effect_explainer"
+]);
 
 const TASK_DEFAULTS = Object.freeze({
   narrator: {
@@ -131,6 +150,69 @@ const TASK_DEFAULTS = Object.freeze({
     mayUseTools: false,
     mayRequestAdjudication: false,
     reviewerOnly: false
+  },
+  background_claim_parser: {
+    purpose: "把开局自由背景解析为服务器可裁决的资产、人脉、债务和风险 claims。",
+    temperature: 0.2,
+    maxOutputTokens: 1000,
+    toolBudget: 0,
+    mayUseTools: false,
+    mayRequestAdjudication: false,
+    reviewerOnly: false
+  },
+  npc_dialogue: {
+    purpose: "按 NPC 安全档案、关系摘要和场景契约生成对话，不裁决后果。",
+    temperature: 0.55,
+    maxOutputTokens: 1100,
+    toolBudget: 0,
+    mayUseTools: false,
+    mayRequestAdjudication: false,
+    reviewerOnly: false
+  },
+  npc_private_planner: {
+    purpose: "根据服务器裁剪后的私档信号或本地 Mock 私档生成 NPC 下一步意图 proposal。",
+    temperature: 0.25,
+    maxOutputTokens: 900,
+    toolBudget: 0,
+    mayUseTools: false,
+    mayRequestAdjudication: false,
+    reviewerOnly: false
+  },
+  trade_negotiator: {
+    purpose: "根据双方可见账本、价格边界和关系摘要生成交易议价文案与 proposal。",
+    temperature: 0.35,
+    maxOutputTokens: 1000,
+    toolBudget: 0,
+    mayUseTools: false,
+    mayRequestAdjudication: false,
+    reviewerOnly: false
+  },
+  delegated_task_planner: {
+    purpose: "根据委派命令、执行人、工具、预算和公开风险生成任务计划 proposal。",
+    temperature: 0.25,
+    maxOutputTokens: 1000,
+    toolBudget: 0,
+    mayUseTools: false,
+    mayRequestAdjudication: false,
+    reviewerOnly: false
+  },
+  delegated_task_reporter: {
+    purpose: "在服务器裁决任务结果后生成 NPC 回禀或公文回报。",
+    temperature: 0.45,
+    maxOutputTokens: 1000,
+    toolBudget: 0,
+    mayUseTools: false,
+    mayRequestAdjudication: false,
+    reviewerOnly: false
+  },
+  inventory_effect_explainer: {
+    purpose: "解释书籍、文书、凭证、药物、兵器和礼物的可见效果与风险。",
+    temperature: 0.25,
+    maxOutputTokens: 800,
+    toolBudget: 0,
+    mayUseTools: false,
+    mayRequestAdjudication: false,
+    reviewerOnly: false
   }
 });
 
@@ -145,7 +227,14 @@ const ROUTE_ENV_KEYS = Object.freeze({
   monthly_briefing: ["AI_MONTHLY_BRIEFING_PROVIDER", "AI_MONTHLY_BRIEFING_MODEL"],
   time_skip_planner: ["AI_TIME_SKIP_PROVIDER", "AI_TIME_SKIP_MODEL"],
   quick_action: ["AI_QUICK_ACTION_PROVIDER", "AI_QUICK_ACTION_MODEL"],
-  topic_draft: ["AI_TOPIC_DRAFT_PROVIDER", "AI_TOPIC_DRAFT_MODEL"]
+  topic_draft: ["AI_TOPIC_DRAFT_PROVIDER", "AI_TOPIC_DRAFT_MODEL"],
+  background_claim_parser: ["AI_BACKGROUND_CLAIM_PROVIDER", "AI_BACKGROUND_CLAIM_MODEL"],
+  npc_dialogue: ["AI_NPC_DIALOGUE_PROVIDER", "AI_NPC_DIALOGUE_MODEL"],
+  npc_private_planner: ["AI_NPC_PRIVATE_PLANNER_PROVIDER", "AI_NPC_PRIVATE_PLANNER_MODEL"],
+  trade_negotiator: ["AI_TRADE_NEGOTIATOR_PROVIDER", "AI_TRADE_NEGOTIATOR_MODEL"],
+  delegated_task_planner: ["AI_DELEGATED_TASK_PLANNER_PROVIDER", "AI_DELEGATED_TASK_PLANNER_MODEL"],
+  delegated_task_reporter: ["AI_DELEGATED_TASK_REPORTER_PROVIDER", "AI_DELEGATED_TASK_REPORTER_MODEL"],
+  inventory_effect_explainer: ["AI_INVENTORY_EFFECT_PROVIDER", "AI_INVENTORY_EFFECT_MODEL"]
 });
 
 const PROVIDER_DEFAULT_MODELS = Object.freeze({

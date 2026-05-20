@@ -377,6 +377,7 @@ describe("S74.3 UI state store", () => {
       player: {
         name: "沈知微",
         role: "scholar",
+        portraitRef: undefined,
         examRank: "童生",
         officeTitle: undefined
       },
@@ -384,10 +385,14 @@ describe("S74.3 UI state store", () => {
       routeViews: {
         hasAiSettingsView: false,
         hasAuditSummaryView: false,
+        hasDelegatedTaskView: false,
         hasEventArchiveView: false,
         hasExamCalendarView: false,
         hasInformationPanelView: false,
-        hasMapRuntimeView: true
+        hasInventoryView: false,
+        hasMapRuntimeView: true,
+        hasNpcRosterView: false,
+        hasTradeLedgerView: false
       }
     });
   });
