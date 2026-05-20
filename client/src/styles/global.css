@@ -3319,6 +3319,31 @@ button:disabled {
   background: rgba(214, 230, 203, 0.42);
 }
 
+.rankingActionRow {
+  display: grid;
+  gap: 8px;
+}
+
+.rankingActionItem {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  border: 1px solid rgba(142, 47, 39, 0.18);
+  background: rgba(255, 250, 238, 0.72);
+  padding: 8px 10px;
+  color: #5b4532;
+  line-height: 1.55;
+}
+
+.rankingActionItem span {
+  min-width: 0;
+}
+
+.rankingActionRow .paperLink {
+  flex: 0 0 auto;
+}
+
 .rankingBoundary {
   max-width: 1180px;
   margin: 18px auto clamp(28px, 4vw, 46px);

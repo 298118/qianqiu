@@ -804,6 +804,9 @@ test("S76.8 ranking page renders server-owned ranking views without widening aut
   assert.match(rankingPageSource, /subcategory: "imperial_notice"/);
   assert.match(rankingPageSource, /subcategory: "red_ink_smudge"/);
   assert.match(rankingPageSource, /getRankingSource\(resultRecord, latestHistory\)/);
+  assert.match(rankingPageSource, /examAftermathView/);
+  assert.match(rankingPageSource, /同年座师/);
+  assert.match(rankingPageSource, /setActionDraft/);
   assert.doesNotMatch(rankingPageSource, /buildHonorFallbackRows|index \+ 1/);
   assert.match(rankingPageSource, /rankingTopThree/);
   assert.match(rankingPageSource, /服务器定榜名单/);
@@ -813,6 +816,7 @@ test("S76.8 ranking page renders server-owned ranking views without widening aut
   assert.match(styleSource, /rankingFullScreen/);
   assert.match(styleSource, /rankingTopThree/);
   assert.match(styleSource, /rankingDetailPanel/);
+  assert.match(styleSource, /rankingActionRow/);
   assert.match(clientSmokeSource, /assertRankingFullScreen/);
   assert.match(clientSmokeSource, /s76-ranking-fullscreen-mobile/);
   assert.doesNotMatch(

@@ -993,6 +993,7 @@ async function assertRankingFullScreen(page, sessionId, screenshotsDir, screensh
       hasListOrEmpty: Boolean(document.querySelector(".rankingList")) || text.includes("榜文尚未张挂"),
       hasPlayerRow: Boolean(document.querySelector(".rankingList li.isPlayer")),
       hasGoldenNotice: Boolean(document.querySelector(".rankingGoldenNotice")),
+      hasAftermath: text.includes("同年座师"),
       hasMainGameShell: Boolean(document.querySelector(".gameCommandBar") || document.querySelector(".gameMainDeck") || document.querySelector(".memorialComposer")),
       background,
       horizontalOverflow: html.scrollWidth > html.clientWidth + 4,
@@ -1010,6 +1011,7 @@ async function assertRankingFullScreen(page, sessionId, screenshotsDir, screensh
   if (!snapshot.hasServerList) failures.push("missing server-owned ranking list heading");
   if (!snapshot.hasListOrEmpty) failures.push("missing ranking list or empty state");
   if (snapshot.hasPlayerRow && !snapshot.hasGoldenNotice) failures.push("missing player golden ranking notice");
+  if (snapshot.hasPlayerRow && !snapshot.hasAftermath) failures.push("missing exam aftermath network block");
   if (snapshot.hasMainGameShell) failures.push("ranking route was still nested inside the main game shell");
   if (!snapshot.background.includes("/assets/ui/")) failures.push("ranking hero did not use a reviewed UI asset");
   if (snapshot.horizontalOverflow) failures.push("ranking page has horizontal overflow");

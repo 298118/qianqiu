@@ -162,6 +162,12 @@ function assertS69Views(payload, level) {
   if (!payload.examHonorView?.schemaVersion) {
     throw new Error(`${level} missing examHonorView.`);
   }
+  if (!payload.examAftermathView?.schemaVersion) {
+    throw new Error(`${level} missing examAftermathView.`);
+  }
+  if (payload.promotionResult?.passed && !payload.examAftermathView?.nextActions?.length) {
+    throw new Error(`${level} missing examAftermathView next actions.`);
+  }
   if (!payload.relationshipView?.contacts || !payload.worldPeopleView?.npcs) {
     throw new Error(`${level} missing relationship/worldPeople S69 network views.`);
   }
@@ -180,6 +186,7 @@ function summarizeExamResult(payload, level) {
     rank: payload.promotionResult.rank,
     score: payload.score.overall_score,
     honorTitle: payload.examHonorView.latestHonor?.title || null,
+    aftermathAction: payload.examAftermathView?.nextActions?.[0] || null,
     networkContacts: (latestHistory.examNetwork?.sameYearContacts || []).length +
       (latestHistory.examNetwork?.examinerContacts || []).length,
     appointment: payload.appointmentTrackView?.latestDecision?.officeTitle || null,
@@ -220,6 +227,7 @@ async function runExamLevel(baseUrl, sessionId, level) {
     examProcedureView: submit.payload.examProcedureView,
     examinerPanelView: submit.payload.examinerPanelView,
     examHonorView: submit.payload.examHonorView,
+    examAftermathView: submit.payload.examAftermathView,
     appointmentTrackView: submit.payload.appointmentTrackView,
     officialCareerView: submit.payload.officialCareerView,
     relationshipView: submit.payload.relationshipView,
@@ -268,7 +276,7 @@ async function runMockImperialExamAcceptance() {
       throw new Error("final exam history is missing completed levels.");
     }
     if (!finalState.player.examHistory.every((entry) =>
-      entry.examProcedure && entry.examinerPanel && entry.examHonor && entry.examNetwork
+      entry.examProcedure && entry.examinerPanel && entry.examHonor && entry.examNetwork && entry.examAftermath
     )) {
       throw new Error("one or more exam history entries are missing S69 snapshots.");
     }
@@ -308,7 +316,7 @@ if (require.main === module) {
       console.log(`Final role: ${result.finalRole}; office: ${result.finalOfficeTitle}`);
       for (const item of result.results) {
         console.log(
-          `[${item.level}] score=${item.score}, rank=${item.rank}, honor=${item.honorTitle || "none"}, networkContacts=${item.networkContacts}, appointment=${item.appointment || "none"}, firstAssignment=${item.firstAssignment || "none"}`
+          `[${item.level}] score=${item.score}, rank=${item.rank}, honor=${item.honorTitle || "none"}, networkContacts=${item.networkContacts}, aftermath="${item.aftermathAction || "none"}", appointment=${item.appointment || "none"}, firstAssignment=${item.firstAssignment || "none"}`
         );
       }
     })

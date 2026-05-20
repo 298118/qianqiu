@@ -157,9 +157,14 @@ test("exam submit returns server-owned examHonorView and ignores provider rankin
 
   assert.equal(response.status, 200);
   assert.equal(payload.examHonorView.latestHonor.title, "解元");
+  assert.equal(payload.examAftermathView.honorTitle, "解元");
+  assert.equal(payload.examAftermathView.sameYearCount > 0, true);
+  assert.ok(payload.examAftermathView.examinerContacts.some((contact) => contact.relationKind === "seat_teacher"));
+  assert.ok(payload.examAftermathView.nextActions.some((action) => /座师|同年|会试/.test(action)));
   assert.equal(payload.examHonorView.honors.at(-1).rankLabel, "乡试第一名");
   assert.equal(payload.worldState.examHonorLedger.honors.at(-1).title, "解元");
   assert.equal(saved.player.examHistory.at(-1).examHonor.currentHonor.title, "解元");
+  assert.equal(saved.player.examHistory.at(-1).examAftermath.honorTitle, "解元");
   assert.equal(saved.player.examHistory.at(-1).examNetwork.sameYearContacts.length > 0, true);
   assert.ok(saved.player.examHistory.at(-1).examNetwork.examinerContacts.some((contact) =>
     contact.relationKind === "seat_teacher"
@@ -173,4 +178,5 @@ test("exam submit returns server-owned examHonorView and ignores provider rankin
   assert.equal(payload.ranking.find((entry) => entry.isPlayer).honorTitle, "解元");
   assert.doesNotMatch(serialized, /provider-crowned/);
   assert.doesNotMatch(JSON.stringify(payload.examHonorView), /状元/);
+  assert.doesNotMatch(JSON.stringify(payload.examAftermathView), /provider-crowned|raw provider|hiddenNotes|OPENAI_API_KEY|data\/sessions|\/mnt\//);
 });

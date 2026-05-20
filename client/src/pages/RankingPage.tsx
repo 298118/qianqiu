@@ -3,6 +3,7 @@ import { useMemo, useState } from "react";
 import { useParams } from "react-router";
 import { useAssetRegistry } from "../assets/useAssetRegistry";
 import { useGameSessionStore } from "../state/gameSessionState";
+import { useUiStateStore } from "../state/uiState";
 
 type AnyRecord = Record<string, unknown>;
 
@@ -18,6 +19,14 @@ type RankingEntry = {
   readonly examinerComment: string;
   readonly strengths: readonly string[];
   readonly weaknesses: readonly string[];
+};
+
+type AftermathContact = {
+  readonly id: string;
+  readonly name: string;
+  readonly role: string;
+  readonly stance: string;
+  readonly summary: string;
 };
 
 const unsafeRankingFragments = [
@@ -147,6 +156,23 @@ function readAntiCheat(authenticityCheck: AnyRecord) {
   return flags;
 }
 
+function readAftermathContacts(items: unknown, fallbackRole: string): readonly AftermathContact[] {
+  return asArray(items).map((item, index) => {
+    const contact = asRecord(item);
+    return {
+      id: safeRankingText(contact.id, `${fallbackRole}-${index}`, 64),
+      name: safeRankingText(contact.name, fallbackRole, 48),
+      role: safeRankingText(contact.role, fallbackRole, 48),
+      stance: safeRankingText(contact.stance, "公开往来", 72),
+      summary: safeRankingText(contact.publicSummary || contact.summary, "只显示服务器公开关系摘要。", 120)
+    };
+  }).filter((contact) => contact.name !== fallbackRole || contact.summary !== "只显示服务器公开关系摘要。").slice(0, 4);
+}
+
+function readAftermathActions(items: unknown) {
+  return asArray(items).map((item) => safeRankingText(item, "", 96)).filter(Boolean).slice(0, 3);
+}
+
 function readTopSealLabel(place: number, entry: RankingEntry | undefined, examName: string) {
   if (entry?.honorTitle) return entry.honorTitle;
   if (/殿试|palace/i.test(examName)) return topLabels[place];
@@ -159,6 +185,7 @@ export function RankingPage() {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const currentSession = useGameSessionStore((state) => state.currentSession);
   const lastExamResult = useGameSessionStore((state) => state.lastExamResult);
+  const setActionDraft = useUiStateStore((state) => state.setActionDraft);
   const sessionRecord = asRecord(currentSession?.sessionId === sessionId ? currentSession : null);
   const resultRecord = lastExamResult?.sessionId === sessionId ? asRecord(lastExamResult) : {};
   const payload = Object.keys(resultRecord).length ? resultRecord : sessionRecord;
@@ -166,6 +193,7 @@ export function RankingPage() {
   const player = asRecord(asRecord(sessionRecord.worldState).player);
   const playerName = safeRankingText(player.name, "案主", 48);
   const examHonorView = asRecord(payload.examHonorView || sessionRecord.examHonorView || latestHistory.examHonor);
+  const examAftermathView = asRecord(payload.examAftermathView || sessionRecord.examAftermathView || latestHistory.examAftermath);
   const examinerPanelView = asRecord(payload.examinerPanelView || sessionRecord.examinerPanelView || latestHistory.examinerPanel);
   const appointmentTrackView = asRecord(payload.appointmentTrackView || sessionRecord.appointmentTrackView || latestHistory.appointmentTrack);
   const score = asRecord(resultRecord.score || latestHistory.score);
@@ -181,6 +209,9 @@ export function RankingPage() {
   const topEntries = rows.filter((entry) => entry.place !== null && entry.place <= 3).slice(0, 3);
   const scoreDetails = readScoreDimensions(score);
   const antiCheatFlags = readAntiCheat(authenticityCheck);
+  const sameYearContacts = readAftermathContacts(examAftermathView.sameYearContacts, "同年");
+  const examinerContacts = readAftermathContacts(examAftermathView.examinerContacts, "座师");
+  const aftermathActions = readAftermathActions(examAftermathView.nextActions);
   const latestHonor = asRecord(examHonorView.latestHonor || examHonorView.currentHonor || latestHistory.examHonor);
   const latestDecision = asRecord(appointmentTrackView.latestDecision || asRecord(appointmentTrackView.latestTrack).latestDecision);
   const examName = safeRankingText(
@@ -202,6 +233,13 @@ export function RankingPage() {
     latestDecision.officeTitle || asRecord(appointmentTrackView.latestTrack).officeTitle || promotionResult.officeTitle,
     "暂无授官提示；后续铨选仍由服务器裁决。",
     64
+  );
+  const aftermathSummary = safeRankingText(
+    examAftermathView.publicSummary,
+    sameYearContacts.length || examinerContacts.length
+      ? "同年座师关系已由服务器公开整理。"
+      : "同年座师关系待服务器放榜后公开整理。",
+    150
   );
   const passedText = promotionResult.passed === true ? "已取中" : promotionResult.passed === false ? "未取中" : "候服务器定档";
   const showGoldenNotice = Boolean(playerRankingEntry || promotionResult.passed === true);
@@ -347,6 +385,39 @@ export function RankingPage() {
               ) : (
                 <p>暂无公开防弊复核结果；待服务器公开后显示。</p>
               )}
+            </section>
+            <section>
+              <h3>同年座师</h3>
+              <p>{aftermathSummary}</p>
+              {sameYearContacts.length || examinerContacts.length ? (
+                <ul className="rankingAuditList">
+                  {[...sameYearContacts, ...examinerContacts].map((contact) => (
+                    <li key={contact.id}>
+                      <strong>{contact.name} · {contact.role}</strong>
+                      <span>{contact.stance}：{contact.summary}</span>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <p>暂无公开同年或座师；前端不从姓名、名次或评语自行推断关系。</p>
+              )}
+              {aftermathActions.length ? (
+                <div className="rankingActionRow" aria-label="放榜后行动草稿">
+                  {aftermathActions.slice(0, 2).map((action) => (
+                    <div className="rankingActionItem" key={action}>
+                      <span>{action}</span>
+                      <button
+                        type="button"
+                        className="paperLink"
+                        aria-label={`拟行动：${action}`}
+                        onClick={() => setActionDraft({ source: "exam", targetPage: "game", text: action })}
+                      >
+                        拟行动
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              ) : null}
             </section>
             <section>
               <h3>授官提示</h3>

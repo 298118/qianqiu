@@ -42,6 +42,10 @@ const {
 } = require("../game/examHonors");
 const { resolveExamNetwork } = require("../game/examNetworks");
 const {
+  buildExamAftermathView,
+  buildLatestExamAftermathView
+} = require("../game/examAftermath");
+const {
   buildAppointmentTrackView,
   ensureAppointmentTrackState,
   resolveInitialAppointmentTrack
@@ -161,6 +165,7 @@ function toExamPayload(worldState) {
     examProcedureView: buildExamProcedureView(worldState),
     examinerPanelView: buildExaminerPanelView(activeExam.procedure?.examinerPanel),
     examHonorView: buildExamHonorView(worldState),
+    examAftermathView: buildLatestExamAftermathView(worldState),
     appointmentTrackView: buildAppointmentTrackView(worldState),
     studyProfileView: buildStudyProfileView(worldState),
     relationshipView: buildRelationshipInspectionView(worldState),
@@ -542,6 +547,16 @@ router.post("/submit", async (req, res, next) => {
       });
       const entryPreparationView = sanitizeEntryPreparationForView(activeExam.entryPreparation);
       const examCalendar = sanitizeExamPreparationCalendarForView(activeExam.examCalendar || entryPreparationView?.examCalendar);
+      const examAftermath = buildExamAftermathView(worldState, {
+        activeExam,
+        exam,
+        ranking,
+        promotionResult,
+        examHonor,
+        examNetwork,
+        appointmentTrack,
+        score
+      });
       const submittedAt = new Date().toISOString();
       const historyEntry = {
         examId,
@@ -561,6 +576,7 @@ router.post("/submit", async (req, res, next) => {
         examinerPanel: reviewResult.examinerPanel,
         examHonor,
         examNetwork,
+        examAftermath,
         appointmentTrack,
         virtualCandidates,
         ranking,
@@ -634,6 +650,7 @@ router.post("/submit", async (req, res, next) => {
         examProcedureView: buildExamProcedureView(worldState, { procedure: examProcedure }),
         examinerPanelView: reviewResult.examinerPanel,
         examHonorView: honorResult.examHonorView,
+        examAftermathView: examAftermath,
         appointmentTrackView: buildAppointmentTrackView(worldState),
         studyProfileView: buildStudyProfileView(worldState),
         examCalendarView: buildExamCalendarView(worldState),

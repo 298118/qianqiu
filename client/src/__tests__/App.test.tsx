@@ -2075,6 +2075,12 @@ describe("S74.1 React client shell", () => {
             },
             authenticityCheck: {
               flags: [{ label: "防弊检测通过", severity: "clear", detail: "未见公开扣罚事项。" }]
+            },
+            examAftermath: {
+              publicSummary: "殿试放榜后，同年座师只显示公开往来。",
+              sameYearContacts: [{ id: "peer-1", name: "沈同年", role: "同年进士", stance: "同年声援", publicSummary: "沈同年可公开往来。" }],
+              examinerContacts: [{ id: "reader-1", name: "许读卷官", role: "殿试读卷官", relationKind: "palace_reader", stance: "读卷赏识", publicSummary: "许读卷官公开赏识。" }],
+              nextActions: ["具帖拜谢许读卷官，只问公开赴任规矩。"]
             }
           }]
         }
@@ -2086,6 +2092,14 @@ describe("S74.1 React client shell", () => {
       },
       examinerPanelView: {
         serverDecision: "服务器综合初评、复核和名额后定分定榜。"
+      },
+      examAftermathView: {
+        schemaVersion: 1,
+        publicSummary: "殿试放榜后，服务器整理同年1人、座师/考官1人，并接入翰林院修撰。",
+        sameYearContacts: [{ id: "peer-1", name: "沈同年", role: "同年进士", stance: "同年声援", publicSummary: "沈同年可公开往来。" }],
+        examinerContacts: [{ id: "reader-1", name: "许读卷官", role: "殿试读卷官", relationKind: "palace_reader", stance: "读卷赏识", publicSummary: "许读卷官公开赏识。" }],
+        nextActions: ["具帖拜谢许读卷官，只问公开赴任规矩。"],
+        authorityBoundary: "AI 与前端不能补名次、造关系、定官职或写 hidden 私档。"
       },
       appointmentTrackView: {
         latestDecision: { officeTitle: "翰林院修撰", trackLabel: "馆选" },
@@ -2172,7 +2186,8 @@ describe("S74.1 React client shell", () => {
         ranking: rankingPayload.worldState.player.examHistory[0].ranking,
         score: rankingPayload.worldState.player.examHistory[0].score,
         promotionResult: { passed: true, officeTitle: "翰林院修撰" },
-        authenticityCheck: rankingPayload.worldState.player.examHistory[0].authenticityCheck
+        authenticityCheck: rankingPayload.worldState.player.examHistory[0].authenticityCheck,
+        examAftermathView: rankingPayload.examAftermathView
       } as never,
       status: "ready"
     });
@@ -2193,6 +2208,12 @@ describe("S74.1 React client shell", () => {
     expect(document.querySelector(".rankingList li.isPlayer")).toBeTruthy();
     expect(screen.getByText("翰林院修撰")).toBeTruthy();
     expect(screen.getByText("切中时务。")).toBeTruthy();
+    expect(screen.getByText("同年座师")).toBeTruthy();
+    expect(screen.getAllByText(/沈同年/).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/许读卷官/).length).toBeGreaterThan(0);
+    expect(screen.getByText(/具帖拜谢许读卷官/)).toBeTruthy();
+    fireEvent.click(screen.getAllByRole("button", { name: /拟行动/ })[0]);
+    expect(useUiStateStore.getState().actionDraft?.text).toContain("许读卷官");
     expect(screen.getByText(/本榜只录服务器定榜结果/)).toBeTruthy();
     expect(fetchMock.mock.calls.map(([url]) => String(url))).not.toContain("/api/game/turn");
     expect(fetchMock.mock.calls.map(([url]) => String(url)).some((url) => /\/api\/game\/state|\/api\/dev/.test(url))).toBe(false);

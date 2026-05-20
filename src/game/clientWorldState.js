@@ -4,6 +4,7 @@ const {
   sanitizeExamPreparationCalendarForView,
   sanitizeEntryPreparationForView
 } = require("./examTravel");
+const { sanitizeExamAftermathView } = require("./examAftermath");
 
 function cloneJson(value) {
   return JSON.parse(JSON.stringify(value ?? null));
@@ -119,6 +120,9 @@ function sanitizeExamPreparationSnapshots(clientState) {
       }
       if (entry.examCalendar) {
         output.examCalendar = sanitizeExamPreparationCalendarForView(entry.examCalendar);
+      }
+      if (entry.examAftermath) {
+        output.examAftermath = sanitizeExamAftermathView(entry.examAftermath);
       }
       return output;
     });

@@ -100,6 +100,7 @@ const {
   buildExamHonorView,
   ensureExamHonorLedgerState
 } = require("../game/examHonors");
+const { buildLatestExamAftermathView } = require("../game/examAftermath");
 const {
   buildAppointmentTrackView,
   ensureAppointmentTrackState
@@ -515,6 +516,7 @@ function buildCommonTurnViews(worldState, options = {}) {
     examProcedureView: buildExamProcedureView(worldState),
     examinerPanelView: buildExaminerPanelView(worldState.player?.examHistory?.at?.(-1)?.examinerPanel),
     examHonorView: buildExamHonorView(worldState),
+    examAftermathView: buildLatestExamAftermathView(worldState),
     appointmentTrackView: buildAppointmentTrackView(worldState),
     studyProfileView: buildStudyProfileView(worldState),
     relationshipView: buildRelationshipInspectionView(worldState),

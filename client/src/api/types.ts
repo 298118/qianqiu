@@ -111,6 +111,7 @@ export type SafeRouteViews = {
   readonly examinerPanelView?: JsonObject;
   readonly examRivalView?: JsonObject;
   readonly examHonorView?: JsonObject;
+  readonly examAftermathView?: JsonObject;
   readonly studyProfileView?: JsonObject;
   readonly officialCareerView?: JsonObject;
   readonly appointmentTrackView?: JsonObject;
