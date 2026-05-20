@@ -1,6 +1,7 @@
 // @ts-check
 
 const mockProvider = require("./providers/mock");
+const { describeAiProviderError } = require("./providerSafety");
 const { createAnthropicProvider } = require("./providers/anthropic");
 const { createDeepSeekProvider } = require("./providers/deepseek");
 const { createMimoProvider } = require("./providers/mimo");
@@ -29,7 +30,7 @@ const PROVIDER_ALIASES = {
 };
 
 function describeError(error) {
-  return error && error.message ? error.message : String(error);
+  return describeAiProviderError(error);
 }
 
 function wrapWithMockFallback(providerName, provider) {

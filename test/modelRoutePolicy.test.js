@@ -323,6 +323,49 @@ test("S70.8 routed provider passes model and budget into actual adapter requests
   });
 });
 
+test("S88.1 provider fallback warning redacts raw provider details", async (t) => {
+  const warnings = [];
+  const originalWarn = console.warn;
+  console.warn = (message) => {
+    warnings.push(String(message));
+  };
+  t.after(() => {
+    console.warn = originalWarn;
+  });
+
+  await withEnv({
+    MIMO_API_KEY: "tp-test-token-plan-key",
+    MIMO_BASE_URL: "https://token-plan-sgp.xiaomimimo.com/v1",
+    MIMO_MODEL: "env-model-should-not-win"
+  }, async () => {
+    const routePolicy = buildDefaultModelRoutePolicy({ AI_PROVIDER: "mimo" });
+    routePolicy.routes.narrator = {
+      ...routePolicy.routes.narrator,
+      provider: "mimo",
+      model: "route-model"
+    };
+
+    const provider = getProviderForTask("narrator", {
+      routePolicy,
+      fetchImpl: async () => ({
+        ok: false,
+        status: 500,
+        text: async () => "raw provider payload baseURL=https://api.example.test/v1 data/sessions/private.json /mnt/e/secret tp-test-token-plan-key sk-log-secret"
+      })
+    });
+
+    const opening = await provider.startGame(createInitialState({ role: "scholar" }));
+    assert.ok(opening.narrative);
+  });
+
+  const serialized = warnings.join("\n");
+  assert.match(serialized, /fell back to mock/);
+  assert.doesNotMatch(
+    serialized,
+    /raw provider payload|baseURL=https|data\/sessions|\/mnt\/e|tp-test-token-plan-key|sk-log-secret/i
+  );
+});
+
 test("S70.8 OpenAI route passes model, temperature, timeout, and token budget into requests", async () => {
   const calls = [];
 

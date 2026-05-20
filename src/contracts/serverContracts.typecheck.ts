@@ -1,4 +1,6 @@
 import type {
+  AiConnectionTestResponse,
+  AiRemoteTaskEnvelope,
   ExamQuestionResponse,
   GameStartResponse,
   GameStateResponse,
@@ -118,3 +120,49 @@ void forgedStart;
 void forgedState;
 void forgedExam;
 void forgedPlayerState;
+
+const remoteTask: AiRemoteTaskEnvelope = {
+  schemaName: "turn",
+  schema: { type: "object" },
+  instructions: "内部 system prompt 只能交给 provider requester。",
+  input: "内部 user prompt 只能交给 provider requester。",
+  maxOutputTokens: 800
+};
+
+remoteTask.instructions;
+
+const aiConnection: AiConnectionTestResponse = {
+  ok: true,
+  provider: "mock",
+  configuredProvider: "mock",
+  models: { default: "mock" },
+  openingEventCount: 1,
+  narrativePreview: "连接正常。"
+};
+
+aiConnection.provider;
+
+const forgedAiConnectionRawPayload: AiConnectionTestResponse = {
+  ok: false,
+  provider: "openai",
+  // @ts-expect-error Public AI connection response must not expose raw provider payloads.
+  rawProviderPayload: { response: "raw" }
+};
+
+const forgedAiConnectionPrompt: AiConnectionTestResponse = {
+  ok: false,
+  provider: "deepseek",
+  // @ts-expect-error Public AI connection response must not expose prompt text.
+  prompt: "full prompt"
+};
+
+const forgedAiConnectionStatePatch: AiConnectionTestResponse = {
+  ok: false,
+  provider: "mimo",
+  // @ts-expect-error Public AI connection response must not expose provider state patches.
+  statePatch: { player: { gold: 999 } }
+};
+
+void forgedAiConnectionRawPayload;
+void forgedAiConnectionPrompt;
+void forgedAiConnectionStatePatch;

@@ -159,7 +159,9 @@ function isForbiddenKey(key) {
 }
 
 function sanitizeText(value, fallback = "", maxLength = PLAYER_STATE_MAX_TEXT_LENGTH) {
-  const text = redactSecrets(String(value ?? ""))
+  const source = String(value ?? "");
+  if (!source || SENSITIVE_REDACTION_PATTERN.test(source)) return fallback;
+  const text = redactSecrets(source)
     .replace(/\bsk-[A-Za-z0-9_-]{6,}\b/g, "[redacted]")
     .replace(/\btp-[A-Za-z0-9_-]{6,}\b/g, "[redacted]")
     .replace(/\bfile:\/\/\/?(?:[A-Za-z]:[\\/]|(?:\/Users|\/home|\/tmp|\/var|\/mnt|\/opt|\/workspace)\/)[^\s"'<>]+/gi, "[redacted-path]")

@@ -3,6 +3,7 @@ const assert = require("node:assert/strict");
 
 const {
   RAW_LEDGER_KEYS,
+  defineAiConnectionTestResponse,
   defineExamQuestionResponse,
   defineGameStartResponse,
   defineGameStateResponse,
@@ -25,6 +26,30 @@ test("S87 route response helpers reject raw ledger keys in public worldState", (
       new RegExp(key)
     );
   }
+});
+
+test("S88.1 AI connection response helper rejects raw provider fields", () => {
+  for (const key of ["rawProviderPayload", "rawPrompt", "requestBody", "baseURL", "statePatch", "worldState"]) {
+    assert.throws(
+      () => defineAiConnectionTestResponse({
+        ok: false,
+        provider: "mock",
+        [key]: "forged"
+      }),
+      new RegExp(key)
+    );
+  }
+
+  assert.throws(
+    () => defineAiConnectionTestResponse({
+      ok: false,
+      provider: "mock",
+      diagnostics: {
+        rawProviderPayload: "forged"
+      }
+    }),
+    /diagnostics\.rawProviderPayload/
+  );
 });
 
 test("S87 route response helpers accept safe public envelopes", () => {

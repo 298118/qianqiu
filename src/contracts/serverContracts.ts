@@ -506,7 +506,7 @@ export type AiSettingsRouteResponse = RouteEnvelope & {
   readonly aiControlAuditView?: JsonObject;
 };
 
-export type AiConnectionTestResponse = {
+export type AiConnectionTestResponse = AiPublicForbiddenFields & {
   readonly ok: boolean;
   readonly provider: string;
   readonly configuredProvider?: string;
@@ -584,6 +584,57 @@ export type AiModelRoutePolicy = {
     readonly consensusDoesNotBypassResolver: true;
   };
 };
+
+export type AiPublicForbiddenField =
+  | "rawPayload"
+  | "rawProviderPayload"
+  | "providerPayload"
+  | "rawPrompt"
+  | "fullPrompt"
+  | "prompt"
+  | "instructions"
+  | "input"
+  | "request"
+  | "requestBody"
+  | "response"
+  | "responseBody"
+  | "headers"
+  | "apiKey"
+  | "key"
+  | "token"
+  | "baseURL"
+  | "baseUrl"
+  | "localPath"
+  | "statePatch"
+  | "worldState";
+
+export type AiPublicForbiddenFields = {
+  readonly [K in AiPublicForbiddenField]?: never;
+};
+
+export type AiRemoteTaskEnvelope = {
+  readonly promptPack?: string;
+  readonly schemaName: string;
+  readonly schema: JsonObject;
+  readonly instructions: string;
+  readonly input: string;
+  readonly maxOutputTokens?: number;
+  readonly onTextDelta?: (delta: string) => void;
+};
+
+export type AiPromptTaskEnvelope = Omit<AiRemoteTaskEnvelope, "schema" | "onTextDelta"> & {
+  readonly schema?: never;
+};
+
+export type AiRemoteRawModelResult = string | JsonObject;
+
+export type AiRemoteTextRequester = (
+  task: AiRemoteTaskEnvelope
+) => Promise<AiRemoteRawModelResult>;
+
+export type AiRemoteStreamRequester = (
+  task: AiRemoteTaskEnvelope & { readonly onTextDelta: (delta: string) => void }
+) => Promise<AiRemoteRawModelResult | null | undefined | void>;
 
 export type AiProviderResponse = {
   readonly narrative?: string;

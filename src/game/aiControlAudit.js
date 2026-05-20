@@ -33,7 +33,9 @@ function clampInteger(value, min, max, fallback) {
 }
 
 function cleanText(value, fallback = "", maxLength = AI_CONTROL_AUDIT_LIMITS.maxTextLength) {
-  const text = redactSecrets(String(value ?? ""))
+  const source = String(value ?? "");
+  if (!source || SENSITIVE_AI_AUDIT_PATTERN.test(source)) return fallback;
+  const text = redactSecrets(source)
     .replace(/\bsk-[A-Za-z0-9_-]{6,}\b/g, "[redacted]")
     .replace(/\btp-[A-Za-z0-9_-]{6,}\b/g, "[redacted]")
     .replace(/\bfile:\/\/\/?[^\s"'<>]+/gi, "[redacted-path]")
@@ -51,9 +53,9 @@ function cleanToken(value, fallback = "", maxLength = 80) {
 }
 
 function cleanStrictToken(value, fallback = "", maxLength = 80) {
-  const source = redactSecrets(String(value ?? ""));
+  const source = String(value ?? "");
   if (!source || SENSITIVE_AI_AUDIT_PATTERN.test(source)) return fallback;
-  return cleanToken(source, fallback, maxLength);
+  return cleanToken(redactSecrets(source), fallback, maxLength);
 }
 
 function summarizePublicResult(source, fallbackKind = "public_result") {

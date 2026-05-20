@@ -1,3 +1,5 @@
+// @ts-check
+
 const { getModelSchema, validatePayload } = require("../schemas");
 const {
   buildBackgroundClaimParserTask,
@@ -20,11 +22,24 @@ const {
   PROVIDER_TOP_LEVEL_PATCH_KEYS
 } = require("../../game/stateRules");
 
+/**
+ * @typedef {import("../../contracts/serverContracts").AiProviderFacade} AiProviderFacade
+ * @typedef {import("../../contracts/serverContracts").AiPromptTaskEnvelope} AiPromptTaskEnvelope
+ * @typedef {import("../../contracts/serverContracts").AiRemoteStreamRequester} AiRemoteStreamRequester
+ * @typedef {import("../../contracts/serverContracts").AiRemoteTaskEnvelope} AiRemoteTaskEnvelope
+ * @typedef {import("../../contracts/serverContracts").AiRemoteTextRequester} AiRemoteTextRequester
+ */
+
 function readTimeoutMs() {
   const timeout = Number(process.env.AI_PROVIDER_TIMEOUT_MS);
   return Number.isFinite(timeout) && timeout > 0 ? timeout : 30000;
 }
 
+/**
+ * @param {AiPromptTaskEnvelope} task
+ * @param {AiRemoteTextRequester} requestJson
+ * @returns {Promise<any>}
+ */
 async function runTask(task, requestJson) {
   const schema = getModelSchema(task.schemaName);
   const raw = await requestJson({
@@ -35,6 +50,12 @@ async function runTask(task, requestJson) {
   return validatePayload(task.schemaName, payload);
 }
 
+/**
+ * @param {AiPromptTaskEnvelope} task
+ * @param {AiRemoteStreamRequester} requestJsonStream
+ * @param {{ onTextDelta?: (delta: string) => void }} [streamHandlers]
+ * @returns {Promise<any>}
+ */
 async function runStreamingTask(task, requestJsonStream, streamHandlers = {}) {
   const schema = getModelSchema(task.schemaName);
   let raw = "";
@@ -252,14 +273,17 @@ function normalizeExaminerReview(review) {
     return null;
   }
 
+  /** @type {Record<string, any>} */
   const normalized = {};
-  for (const [key, limit] of [
+  /** @type {Array<[string, number]>} */
+  const textFields = [
     ["actor", 40],
     ["label", 48],
     ["recommendation", 48],
     ["comment", 240],
     ["concern", 120]
-  ]) {
+  ];
+  for (const [key, limit] of textFields) {
     if (key in review) {
       const text = normalizeLooseText(review[key], limit);
       if (text) normalized[key] = text;
@@ -276,6 +300,10 @@ function normalizeExaminerReview(review) {
   return Object.keys(normalized).length ? normalized : null;
 }
 
+/**
+ * @param {any} payload
+ * @returns {any}
+ */
 function normalizeGradePayload(payload) {
   if (!payload || typeof payload !== "object") return payload;
 
@@ -291,6 +319,14 @@ function normalizeGradePayload(payload) {
   return payload;
 }
 
+/**
+ * Remote helper 只把模型原始文本规范化为 schema payload；公开 API 仍必须通过
+ * route response helper 和各领域 server-owned resolver，再决定哪些字段可见。
+ *
+ * @param {string} schemaName
+ * @param {any} payload
+ * @returns {any}
+ */
 function normalizeModelPayload(schemaName, payload) {
   if (schemaName === "grade") {
     return normalizeGradePayload(payload);
@@ -346,6 +382,7 @@ function normalizeModelPayload(schemaName, payload) {
 }
 
 function normalizeProviderStatePatch(statePatch) {
+  /** @type {Record<string, any>} */
   const nextPatch = {};
 
   for (const key of PROVIDER_TOP_LEVEL_PATCH_KEYS) {
@@ -362,6 +399,7 @@ function normalizeProviderStatePatch(statePatch) {
   }
 
   if (statePatch.player && typeof statePatch.player === "object" && !Array.isArray(statePatch.player)) {
+    /** @type {Record<string, any>} */
     const playerPatch = {};
     for (const key of PROVIDER_PLAYER_PATCH_KEYS) {
       if (key in statePatch.player) {
@@ -374,6 +412,11 @@ function normalizeProviderStatePatch(statePatch) {
   return nextPatch;
 }
 
+/**
+ * @param {AiRemoteTextRequester} requestJson
+ * @param {AiRemoteStreamRequester} [requestJsonStream]
+ * @returns {AiProviderFacade}
+ */
 function createRemoteProvider(requestJson, requestJsonStream) {
   return {
     supportsStreaming: Boolean(requestJsonStream),

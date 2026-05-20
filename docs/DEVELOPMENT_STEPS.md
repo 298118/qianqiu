@@ -18,6 +18,7 @@
 - S81-S85 NPC、资产、储物、交易、委派、经济、NPC 主动性和礼法扩展位：[NPC_INVENTORY_SYSTEM_ARCHIVE.md](NPC_INVENTORY_SYSTEM_ARCHIVE.md)，规划见 [NPC_INVENTORY_SYSTEM_ROADMAP.md](NPC_INVENTORY_SYSTEM_ROADMAP.md)，契约见 [NPC_INVENTORY_SYSTEM_CONTRACT.md](NPC_INVENTORY_SYSTEM_CONTRACT.md)。
 - S86 后端 TypeScript 渐进迁移与 Rust 使用边界：规划见 [TYPESCRIPT_BACKEND_MIGRATION_ROADMAP.md](TYPESCRIPT_BACKEND_MIGRATION_ROADMAP.md)，完成归档见 [TYPESCRIPT_BACKEND_MIGRATION_ARCHIVE.md](TYPESCRIPT_BACKEND_MIGRATION_ARCHIVE.md)。
 - S87 后端 route/API 响应类型覆盖：规划见 [TYPESCRIPT_ROUTE_RESPONSE_COVERAGE_ROADMAP.md](TYPESCRIPT_ROUTE_RESPONSE_COVERAGE_ROADMAP.md)，完成归档见 [TYPESCRIPT_ROUTE_RESPONSE_COVERAGE_ARCHIVE.md](TYPESCRIPT_ROUTE_RESPONSE_COVERAGE_ARCHIVE.md)。
+- S88 全面系统打磨路线图：规划见 [QIANQIU_POLISHING_ROADMAP.md](QIANQIU_POLISHING_ROADMAP.md)。
 
 2026-05-14 起，按用户要求停止与 Gemini CLI 共同开发；后续开发全部由 Codex 负责。远程存档、账号体系、多人同步、云端冲突解决和托管数据库不进入当前规划。
 
@@ -106,25 +107,32 @@
 
 ## 4. 活动路线图总览
 
-S87 后端 route/API 响应类型覆盖已完成并归档，目标是在不一次性重写大型 route 文件的前提下，把 `buildCommonTurnViews`、game route、exam route 和 AI route 的 public response shape 纳入 TypeScript/JSDoc 检查。S86.1-S86.7 已完成并归档到 [TYPESCRIPT_BACKEND_MIGRATION_ARCHIVE.md](TYPESCRIPT_BACKEND_MIGRATION_ARCHIVE.md)，S87 完成范围见 [TYPESCRIPT_ROUTE_RESPONSE_COVERAGE_ARCHIVE.md](TYPESCRIPT_ROUTE_RESPONSE_COVERAGE_ARCHIVE.md)。
+当前进入 S88 全面系统打磨专项。总路线图见 [QIANQIU_POLISHING_ROADMAP.md](QIANQIU_POLISHING_ROADMAP.md)，覆盖完整书生主线、多身份循环、官场与世界后果、AI 世界引擎、NPC/关系、资产经济、React 前端、PixiJS 地图、视觉立绘、后端类型安全和 Mock/真实 provider 验收。S88 继续沿用 S86/S87 的渐进 TypeScript 路线，不做全仓重写，不对大型 route 文件 whole-file `@ts-check`。
 
 | ID | 状态 | 目标 | 范围 / 下一步 |
 | --- | --- | --- | --- |
-| S87.1 | DONE | Route response contract 扩展 | 已扩展 `src/contracts/serverContracts.ts`，补 common route envelope、turn response、安全 route views、inventory/NPC/trade/delegation/exam/AI route 的 public response 轮廓，并补 typecheck fixture 断言 raw ledger 不可进入玩家 response。 |
-| S87.2 | DONE | `buildCommonTurnViews` 局部类型边界 | 已新增 `src/routes/routeResponses.js` 局部 `@ts-check` response helper，`buildCommonTurnViews` 返回 `CommonTurnViews`；未对大型 route 文件整文件 `@ts-check`。 |
-| S87.3 | DONE | start/state/player-state/turn response 对齐 | 已对齐 start、player-state、兼容 state、turn 和 SSE 完整 JSON payload，保护 metadata、redaction、SSE preview 和兼容 `worldState` raw ledger 剥离口径。 |
-| S87.4 | DONE | Inventory/NPC/trade/delegation route payload 类型 | 已覆盖 inventory、NPC、interaction、trade 和 npc-command response shape，固定服务器裁决字段和公开 view。 |
-| S87.5 | DONE | Exam route payload 类型 | 已覆盖 exam question/progress/submit 与 `toExamPayload` 输出，确保 examProcedure/examinerPanel/examHonor/appointmentTrack 等 view 与前端消费一致。 |
-| S87.6 | DONE | AI route response 类型 | 已覆盖 global/session settings、connection-test、quick-actions 和 topic-draft response shape，固定 provider/key 脱敏、scope、route policy view 和草稿建议边界。 |
-| S87.7 | DONE | S87 验收与归档 | 已汇总 typecheck、focused route tests、docs governance、完整测试和只读复审证据；已更新 brief、README、共享上下文和台账，并将下一轮建议定为 AI remote helper payload / SQLite build row 类型覆盖。 |
+| S88.0 | DONE | 系统打磨路线图与边界复核 | 已新增 `docs/QIANQIU_POLISHING_ROADMAP.md`，把用户要求的全面打磨拆为 S88.1-S88.12 小步骤，并确认当前工作树仅有未跟踪 `npm-start.log` / `npm-start.err.log`，不纳入本轮提交。 |
+| S88.1 | DONE | AI remote helper/provider public-safe envelope | 已把 `remoteHelpers` 的 prompt task、provider requester、validated payload 纳入 `npm run typecheck:server`，并为 AI connection public response、provider fallback 日志、诊断错误和玩家/审计安全出口增加 raw provider/prompt/key/path 脱敏与 forbidden field contract。 |
+| S88.2 | TODO | SQLite derived row builder 类型边界 | 下一步覆盖 `SqliteWorldSessionRow`、prompt retrieval、safe search、repair status 和首批 row builder JSDoc/TS contract；继续保持派生表只从 `world_sessions.world_state_json` 单向修复。 |
+| S88.3 | TODO | 书生主线补强一轮 | 深化读书、备考、科场反馈、授官与入仕首月差事；运行 `npm run smoke:exam-s69` 和科举/官场 focused tests。 |
+| S88.4 | TODO | 入仕官员首轮官场体验 | 补官方履历、差遣、考成、上官同僚、奏折回执和首月月报闭环。 |
+| S88.5 | TODO | 六身份循环矩阵 | 为皇帝、大臣、将领、地方官、书生、入仕官员补差异化事务、风险、待办和身份面板。 |
+| S88.6 | TODO | 官场与世界后果追踪 | 奏折、政令、军务、刑名、财政、外交、地方事务、任免、朝议、月报和长期事件统一增加可追踪后果 refs。 |
+| S88.7 | TODO | NPC 与关系深化 | 将主动来函、论道、切磋、求爱、婚姻、引荐、请托、弹劾、背叛、行贿、人情债推进到专门 resolver。 |
+| S88.8 | TODO | 资产、囊箧、交易、委派与经济解释性 | 为资源扣减、交易成交、委派回禀、经济月结和关系变化增加可解释 trace。 |
+| S88.9 | TODO | React 前端操作与状态打磨 | 逐页补 loading、empty、error、低动效、移动端、文本溢出和操作效率。 |
+| S88.10 | TODO | PixiJS 水墨地图行动入口 | 复用 `mapRuntimeView` 与已审核素材，把地图打磨为局势、移动、事件、地方事务、军务外交、NPC 活动和行动草稿入口。 |
+| S88.11 | TODO | 视觉、立绘与氛围一致性 | 继续只用已审核 runtime manifest 与 `portraitRef`，不显示未审核素材、不硬编码本地路径、不一次性加载全量立绘池。 |
+| S88.12 | TODO | Mock/真实 provider 长循环验收与归档 | 以 Mock 默认完整可玩为基线，真实 provider 只作为可选增强，补 provider 长循环 smoke 与 S88 归档。 |
 
 ## 5. 最新状态
 
+- S88 当前基线：全面系统打磨专项已启动，规划见 [QIANQIU_POLISHING_ROADMAP.md](QIANQIU_POLISHING_ROADMAP.md)。S88.1 已完成 AI remote helper/provider public-safe envelope：`src/ai/providerSafety.js` 统一 provider 错误和诊断文本脱敏，`src/ai/providers/remoteHelpers.js` 已进入 `npm run typecheck:server`，`src/contracts/serverContracts.ts` / `src/routes/routeResponses.js` 共同约束 AI connection public response 不得带 raw provider payload、完整 prompt、请求/响应体、base URL、key、本地路径、`statePatch` 或 `worldState`。下一步进入 S88.2 SQLite derived row builder 类型边界。
 - S87 当前基线：后端 route/API 响应类型覆盖已完成。`src/contracts/serverContracts.ts` 已覆盖 game/exam/AI/inventory/NPC/trade/delegation public response；`src/routes/routeResponses.js` 以局部 `@ts-check` helper 接入 `src/routes/game.js`、`src/routes/exam.js` 和 `src/routes/ai.js`，并在运行时拒绝 public `worldState` raw ledger key；大型 route 文件仍未 whole-file `@ts-check`，CommonJS 运行方式不变。
 - S86 当前基线：后端 TypeScript 渐进迁移首轮已完成。新增 `npm run typecheck:server`、`npm run build:server:probe`、`tsconfig.server-check.json`、`tsconfig.server-probe.json`、`src/contracts/serverContracts.ts` 和 `src/contracts/runtimeGuards.ts`；安全 projection、AI facade/route policy、session/storage 高风险模块已选择性 `@ts-check`。后端仍以 CommonJS JavaScript 运行，`.ts` 试点不改变 `npm start`，Rust 仍只作为未来有性能证据后的可选 CLI/WASM/离线工具评估。
 - S81-S84 当前基线：NPC、资产、储物、交易与委派首轮闭环已完成。后端已有 `assetLedger`、`inventoryLedger`、`npcRoster`、`npcInteractionLedger`、`tradeLedger`、`delegatedTaskLedger`、开局背景裁决、AI task/schema/prompt/provider fallback、JSON/SQLite 同步和 player-state 安全 view；React 已有“囊箧” route、人物 NPC 工作台、对话/交易/委派面板和开局裁决摘要。前端只消费安全 API/view，不裁决资源、价格、关系或任务结果。
 - S85 当前基线：`npcEconomy` 已在普通回合和跳时共享的旬/月 tick 后运行，非月末刷新基础市价，月末再结算资产维护/收益、库存损耗、委派到期回禀、逾期交易承诺、人情债与 NPC 关系记忆；考试入场/场内场景不跑全局经济；委派预算由服务器校验不得超过地方库银，月结旧任务也按有效预算参与成功率和扣款；`marketPriceView` / `npcEconomyView` 进入 turn、SSE、player-state 和县令主卷，raw `marketPriceLedger` / `npcEconomyLedger` 与内部 ledger path 已从兼容 `worldState`、玩家 API 和 S85 反馈中剥离。`npcActiveRequestLedger` / `npcActiveRequestView` 已让 NPC 主动来函进入普通回合、SSE、考试和 player-state；`npcRelationshipActions` 已让论道、切磋、求爱和婚姻扩展位具备服务器 schema、权限、NPC eligibility view、UI“礼法”tab 和红队测试。
-- S85 当前规划：S81-S85 已归档。下一步由用户或新路线图决定；建议在新专项中把礼法扩展位继续深化为婚姻/比武/论道专门 resolver，并补真实 provider 长循环与 browser smoke 深度路径。
+- S85 当前规划：S81-S85 已归档。后续深化已并入 S88，尤其是 S88.7 NPC/关系深化、S88.8 资产经济解释性和 S88.12 Mock/真实 provider 长循环验收。
 - S80 当前基线：全局 AI 设置覆盖所有当前和未来案卷的 AI 路由；设置页和印匣共用 18 类任务矩阵，服务端 presets 为唯一来源，保存成功后以前端收到的服务端返回值回填表单。全局设置只保存 provider/model/预算/温度/安全控制，不保存 key、base URL、prompt、raw provider payload 或本地路径；缺 key 的真实 provider 不能作为可生效全局路由保存。
 - S79 当前基线：React 子路由壳、考试 smoke、recovered 女性高清立绘入库、runtime manifest、压缩 QA 和只读高清查看器已收束。查看器只读 `/assets/ui/` runtime 主图，不写 canonical state、URL、localStorage/sessionStorage、行动草稿或 AI prompt。
 - S78 及更早阶段均已迁入专题归档。活动台账不再展开完成流水；需要追溯时使用本文件顶部归档索引。
@@ -251,6 +259,16 @@ S84 前端专项额外验收入口：
 - `npm test`
 
 ## 7. 近期进度记录
+
+### 2026-05-20：完成 S88.0-S88.1 全面打磨规划与 AI provider 安全 envelope
+
+- 范围：新增 [QIANQIU_POLISHING_ROADMAP.md](QIANQIU_POLISHING_ROADMAP.md)，把完整书生主线、多身份循环、官场世界后果、AI 世界引擎、NPC/关系、资产经济、React 前端、PixiJS 地图、视觉立绘、后端类型安全和 Mock/真实 provider 验收拆成 S88.1-S88.12；首个实现切片完成 AI remote helper/provider public-safe envelope。
+- 实现：新增 `src/ai/providerSafety.js`，统一 provider 错误摘要、诊断文本、connection-test 叙事 preview 和 fallback warning 的脱敏；`src/ai/providers/remoteHelpers.js` 增加 prompt task / requester / task envelope JSDoc 并纳入 `npm run typecheck:server`；`src/contracts/serverContracts.ts` 增加 AI remote task/requester 与 public forbidden field contract，`src/routes/routeResponses.js` 运行时拒绝 AI connection public response 携带 raw provider payload、完整 prompt、请求/响应体、base URL、key、本地路径、`statePatch` 或 `worldState`。
+- 安全边界：真实 provider 失败仍只进入 Mock fallback 或安全失败 envelope；服务器继续负责 JSON 校验、proposal boundary、状态裁决和 persistence。为避免通用路径脱敏把敏感本地路径转成可公开占位，`aiControlAudit` 与 `redactedState` 会先按原始文本判定敏感项，命中即丢弃。
+- 验证：已通过 `node --test test/routeResponseContracts.test.js test/remoteHelpers.test.js test/modelRoutePolicy.test.js test/aiDiagnostics.test.js test/aiConnectionRoute.test.js test/aiSettingsRoute.test.js test/aiControlAudit.test.js`、`node --test test/redactedState.test.js`、`npm run typecheck:server`、`npm run build:server:probe`、`npm run check:docs-governance`、`node --test test/documentationGovernance.test.js`、`npm test`（991 项）和 `git diff --check`。
+- 子代理：Locke 只读探查了 AI remote helper/provider envelope 边界，Hooke 只读探查了 S88.2 SQLite row builder 类型边界；Confucius 提交前只读复审先发现 raw provider segment、嵌套 forbidden field 和 provider HTTP body 脱敏 P1/P2，主代理已补整段 provider body 脱敏、递归 public envelope guard 与回归测试。最终复审未发现 P0/P1/P2。
+- 提交：随本轮 coherent change 提交，最终 hash 见 Git 历史和本次回复。
+- 下一步：进入 S88.2，优先固定 `SqliteWorldSessionRow`、prompt retrieval、safe search、repair status 和首批 row builder JSDoc/TS contract，继续保持 SQLite 派生表只从 `world_sessions.world_state_json` 单向修复。
 
 ### 2026-05-20：完成 S87.1-S87.7 route/API 响应类型覆盖
 

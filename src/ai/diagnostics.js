@@ -4,6 +4,7 @@ const { createDeepSeekProvider, readTaskModel } = require("./providers/deepseek"
 const { createMimoProvider, readMimoModel } = require("./providers/mimo");
 const { createMimoDeepSeekProvider } = require("./providers/mimoDeepseek");
 const { createOpenAiProvider } = require("./providers/openai");
+const { describeAiProviderError, redactAiProviderText } = require("./providerSafety");
 const { createInitialState } = require("../game/initialState");
 
 const PROVIDER_DIAGNOSTICS = {
@@ -54,13 +55,6 @@ const PROVIDER_DIAGNOSTICS = {
   }
 };
 
-const SECRET_ENV_NAMES = [
-  "OPENAI_API_KEY",
-  "DEEPSEEK_API_KEY",
-  "MIMO_API_KEY",
-  "ANTHROPIC_API_KEY"
-];
-
 const PROVIDER_ALIASES = {
   hybrid: "mimo-deepseek",
   "mimo_deepseek": "mimo-deepseek",
@@ -81,23 +75,7 @@ function getProviderKeyEnvs(config) {
 }
 
 function redactSecrets(text) {
-  let message = String(text || "");
-  for (const envName of SECRET_ENV_NAMES) {
-    const secret = process.env[envName];
-    if (secret) {
-      const variants = new Set([secret]);
-      if (secret.length >= 8) {
-        variants.add(secret.slice(0, 8));
-        variants.add(secret.slice(0, 12));
-        variants.add(secret.slice(-8));
-        variants.add(secret.slice(-12));
-      }
-      for (const variant of [...variants].filter((value) => value && value.length >= 8)) {
-        message = message.split(variant).join("[redacted]");
-      }
-    }
-  }
-  return message;
+  return redactAiProviderText(text, { maxLength: 1000 });
 }
 
 function truncate(value, maxLength = 120) {
@@ -160,7 +138,7 @@ async function runAiConnectionTest(options = {}) {
       supportsStreaming: Boolean(provider.supportsStreaming),
       models: config.models(),
       openingEventCount: Array.isArray(opening.events) ? opening.events.length : 0,
-      narrativePreview: truncate(opening.narrative)
+      narrativePreview: truncate(redactSecrets(opening.narrative))
     };
   } catch (error) {
     return {
@@ -170,7 +148,7 @@ async function runAiConnectionTest(options = {}) {
       checkedAt,
       latencyMs: Date.now() - startedAt,
       models: config.models(),
-      error: redactSecrets(error.message || error)
+      error: describeAiProviderError(error)
     };
   }
 }

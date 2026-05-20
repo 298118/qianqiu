@@ -228,3 +228,31 @@ test("remote provider state patch normalization drops server-owned and unknown f
     }
   );
 });
+
+test("remote turn payload validation rejects raw provider fields after normalization", () => {
+  const payload = {
+    narrative: "你在书斋温读。",
+    statePatch: {
+      player: { academia: 13 },
+      inventoryLedger: { forged: true },
+      npcActiveRequestLedger: { forged: true }
+    },
+    attributeChanges: [],
+    relationshipChanges: [],
+    rawProviderPayload: {
+      prompt: "完整提示词",
+      key: "sk-remote-helper-secret",
+      path: "/mnt/e/secret"
+    },
+    events: ["温读。"],
+    examTrigger: { shouldStart: false, level: null, reason: "" }
+  };
+
+  const normalized = normalizeModelPayload("turn", payload);
+
+  assert.deepEqual(normalized.statePatch, { player: { academia: 13 } });
+  assert.throws(
+    () => validatePayload("turn", normalized),
+    /additional properties|must NOT have additional properties/
+  );
+});

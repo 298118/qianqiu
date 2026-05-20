@@ -2,6 +2,7 @@ const assert = require("assert/strict");
 const test = require("node:test");
 
 const {
+  PROVIDER_DIAGNOSTICS,
   normalizeProviderName,
   redactSecrets,
   runAiConnectionTest
@@ -61,6 +62,55 @@ test("AI diagnostics redacts long secret fragments from errors", () => {
     assert.equal(redacted.includes("34567890"), false);
     assert.equal(redacted.includes("abcdef1234567890"), false);
     assert.match(redacted, /\[redacted\]/);
+  });
+});
+
+test("AI diagnostics redacts generic provider payload, prompt, path, URL, and token shapes", () => {
+  const redacted = redactSecrets(
+    "raw provider payload: {\"hidden\":\"SEALED_PROVIDER_FACT\",\"prompt\":\"完整密札\"}; request body baseURL=https://api.example.test/v1 data/sessions/private.json /mnt/e/secret sk-live-secret-token 完整提示词"
+  );
+
+  assert.doesNotMatch(
+    redacted,
+    /raw provider payload|request body|baseURL=https|data\/sessions|\/mnt\/e|sk-live-secret|完整提示词|SEALED_PROVIDER_FACT|完整密札/i
+  );
+  assert.match(redacted, /\[redacted/);
+});
+
+test("AI diagnostics redacts unmarked provider HTTP response bodies", () => {
+  const redacted = redactSecrets(
+    "MiMo API request failed with 500: {\"hidden\":\"SEALED_PROVIDER_FACT\",\"prompt\":\"完整密札\",\"path\":\"/mnt/e/secret\"}"
+  );
+  const semicolonRedacted = redactSecrets(
+    "OpenAI API stream failed with 429: {\"message\":\"SEALED; 完整密札 /mnt/e/secret\"}"
+  );
+
+  assert.match(redacted, /MiMo API request failed with 500: \[redacted-provider-body\]/);
+  assert.doesNotMatch(redacted, /SEALED_PROVIDER_FACT|完整密札|\/mnt\/e\/secret/);
+  assert.match(semicolonRedacted, /OpenAI API stream failed with 429: \[redacted-provider-body\]/);
+  assert.doesNotMatch(semicolonRedacted, /SEALED|完整密札|\/mnt\/e\/secret/);
+});
+
+test("AI connection test sanitizes provider narrative preview before returning public envelope", async (t) => {
+  await withEnv({ AI_PROVIDER: "mock" }, async () => {
+    const originalCreate = PROVIDER_DIAGNOSTICS.mock.create;
+    PROVIDER_DIAGNOSTICS.mock.create = () => ({
+      supportsStreaming: false,
+      startGame: async () => ({
+        narrative: "raw provider payload data/sessions/private.json /mnt/e/secret sk-preview-secret 完整提示词",
+        events: ["诊断事件"]
+      })
+    });
+    t.after(() => {
+      PROVIDER_DIAGNOSTICS.mock.create = originalCreate;
+    });
+
+    const result = await runAiConnectionTest();
+    assert.equal(result.ok, true);
+    assert.doesNotMatch(
+      JSON.stringify(result),
+      /raw provider payload|data\/sessions|\/mnt\/e|sk-preview-secret|完整提示词/i
+    );
   });
 });
 

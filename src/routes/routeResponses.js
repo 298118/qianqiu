@@ -7,6 +7,8 @@
  * 开启 whole-file `@ts-check`。
  */
 
+const { assertPublicAiProviderEnvelope } = require("../ai/providerSafety");
+
 const RAW_LEDGER_KEYS = Object.freeze([
   "actorMemoryLedger",
   "sessionSummary",
@@ -202,6 +204,7 @@ function defineExamSubmitResponse(payload) {
  * @returns {import("../contracts/serverContracts").AiConnectionTestResponse}
  */
 function defineAiConnectionTestResponse(payload) {
+  assertPublicAiProviderEnvelope(payload);
   return payload;
 }
 
