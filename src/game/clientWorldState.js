@@ -1,5 +1,10 @@
 // @ts-check
 
+const {
+  sanitizeExamPreparationCalendarForView,
+  sanitizeEntryPreparationForView
+} = require("./examTravel");
+
 function cloneJson(value) {
   return JSON.parse(JSON.stringify(value ?? null));
 }
@@ -23,6 +28,12 @@ const FORBIDDEN_CLIENT_WORLD_STATE_KEYS = Object.freeze([
   "raw_provider",
   "rawProviderPayload",
   "raw_provider_payload",
+  "providerResponse",
+  "provider_response",
+  "providerRequest",
+  "provider_request",
+  "providerRaw",
+  "provider_raw",
   "rawPrompt",
   "raw_prompt",
   "rawSql",
@@ -87,8 +98,36 @@ function stripInternalClientWorldStateFields(value) {
   return output;
 }
 
+function sanitizeExamPreparationSnapshots(clientState) {
+  if (clientState.examCalendar) {
+    clientState.examCalendar = sanitizeExamPreparationCalendarForView(clientState.examCalendar);
+  }
+  if (isPlainObject(clientState.activeExam)) {
+    if (clientState.activeExam.entryPreparation) {
+      clientState.activeExam.entryPreparation = sanitizeEntryPreparationForView(clientState.activeExam.entryPreparation);
+    }
+    if (clientState.activeExam.examCalendar) {
+      clientState.activeExam.examCalendar = sanitizeExamPreparationCalendarForView(clientState.activeExam.examCalendar);
+    }
+  }
+  if (isPlainObject(clientState.player) && Array.isArray(clientState.player.examHistory)) {
+    clientState.player.examHistory = clientState.player.examHistory.map((entry) => {
+      if (!isPlainObject(entry)) return entry;
+      const output = { ...entry };
+      if (entry.entryPreparation) {
+        output.entryPreparation = sanitizeEntryPreparationForView(entry.entryPreparation);
+      }
+      if (entry.examCalendar) {
+        output.examCalendar = sanitizeExamPreparationCalendarForView(entry.examCalendar);
+      }
+      return output;
+    });
+  }
+}
+
 function buildClientWorldState(worldState = {}) {
   const clientState = stripInternalClientWorldStateFields(cloneJson(worldState)) || {};
+  sanitizeExamPreparationSnapshots(clientState);
   delete clientState.actorMemoryLedger;
   delete clientState.sessionSummary;
   delete clientState.assetLedger;

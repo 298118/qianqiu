@@ -26,6 +26,26 @@ function createActiveExam(level = "provincial_exam") {
     readiness: { ready: true, missing: [] },
     entryPreparation: {
       fullyFunded: true,
+      preparationPressure: {
+        source: "server_entry_preparation",
+        level,
+        examName: level === "provincial_exam" ? "乡试" : "童试",
+        score: 64,
+        band: "strained",
+        label: "吃紧",
+        summary: "盘费与旅途压力偏高。",
+        studyFocus: "制艺章法",
+        causes: ["盘费缺口仍须补。"],
+        suggestedActions: ["先审题立意。"]
+      },
+      entryFeedback: {
+        pressureScore: 64,
+        pressureLabel: "吃紧",
+        publicSummary: "盘费压力偏高，入场先稳心神。",
+        entrySearchSummary: "入场搜检未见夹带，但备考压力偏高。",
+        cellSummary: "号舍已定，先审题再动笔。",
+        visibleNextActions: ["先审题立意。"]
+      },
       sponsorship: {
         status: "ready",
         ready: true,
@@ -50,6 +70,9 @@ test("exam procedure view maps active exam into public procedure phases", () => 
   assert.equal(view.sessionCount, 3);
   assert.equal(view.paperType, "经义制艺");
   assert.equal(view.sponsorship.status, "ready");
+  assert.equal(view.preparationPressure.label, "吃紧");
+  assert.equal(view.entryFeedback.pressureLabel, "吃紧");
+  assert.match(view.entrySearch.publicSummary, /备考压力/);
   assert.equal(view.rollLifecycle.sealed, false);
 
   advanceExamScenePhase(activeExam, worldState, "作答成文");
@@ -93,7 +116,12 @@ test("completed exam procedure archives roll lifecycle and redacts hidden tokens
       type: "sealed_mapping",
       label: "SEALED_INTERNAL_MAPPING",
       publicSummary: "SEALED_INTERNAL_MAPPING should be clipped but remains only as supplied public text"
-    }]
+    }, {
+      type: "rawProvider",
+      label: "prompt leak",
+      publicSummary: "sk-procedure-secret /home/procedure rawProvider"
+    }],
+    visibleNextActions: ["查看 /tmp/procedure prompt"]
   };
   worldState.activeExam = activeExam;
   attachExamSceneTime(activeExam, worldState, "fair_copy");
@@ -102,10 +130,14 @@ test("completed exam procedure archives roll lifecycle and redacts hidden tokens
   const procedure = completeExamProcedure(activeExam, {
     score: { overall_score: 76 },
     authenticityCheck: {
-      flags: [{ type: "anachronism", label: "时代错语", severity: "major", penalty: 8, detail: "出现不合时宜词语。" }]
+      flags: [{ type: "anachronism", label: "时代错语", severity: "major", penalty: 8, detail: "出现不合时宜词语 sk-procedure-secret。" }]
     },
     promotionResult: { passed: true, rank: "举人" },
-    ranking: [{ isPlayer: true, place: 5 }]
+    ranking: [{ isPlayer: true, place: 5 }],
+    reviewResult: {
+      incidents: [{ type: "review_raw", label: "rawProvider", publicSummary: "/tmp/review raw provider prompt" }],
+      auditFlags: [{ type: "review_prompt", label: "复核", severity: "notice", publicSummary: "OPENAI_API_KEY /mnt/review", penalty: 1 }]
+    }
   });
   const view = buildExamProcedureView(worldState, { procedure });
   const promptSummary = summarizeExamProcedureForPrompt(worldState);
@@ -117,7 +149,9 @@ test("completed exam procedure archives roll lifecycle and redacts hidden tokens
   assert.equal(view.rollLifecycle.audited, true);
   assert.match(view.resultSummary, /总评76分/);
   assert.equal(view.auditFlags[0].label, "时代错语");
-  assert.doesNotMatch(JSON.stringify(view), /hiddenNotes|raw provider|data\/sessions|OPENAI_API_KEY/);
+  assert.doesNotMatch(JSON.stringify(view), /hiddenNotes|raw provider|rawProvider|prompt|sk-procedure-secret|data\/sessions|OPENAI_API_KEY|\/mnt\/|\/home\/|\/tmp\//);
   assert.equal(promptSummary.rollLifecycle.sealed, true);
+  assert.equal(promptSummary.preparationPressure.label, "吃紧");
+  assert.doesNotMatch(JSON.stringify(promptSummary), /hiddenNotes|raw provider|rawProvider|sk-procedure-secret|data\/sessions|OPENAI_API_KEY|\/mnt\/|\/home\/|\/tmp\//);
   assert.match(promptSummary.authorityBoundary, /不得要求或推断弥封身份映射/);
 });

@@ -7,6 +7,7 @@ const path = require("node:path");
 process.env.AI_PROVIDER = "mock";
 
 const examRoutes = require("../src/routes/exam");
+const { buildClientWorldState } = require("../src/game/clientWorldState");
 const { EXAMS } = require("../src/game/exams");
 const { createInitialState } = require("../src/game/initialState");
 const { readSession, writeSession } = require("../src/storage/sessionStore");
@@ -76,6 +77,11 @@ async function completeExam(baseUrl, sessionId, level) {
   });
   assert.equal(submit.response.status, 200);
   assert.equal(submit.payload.promotionResult.passed, true);
+  assert.ok(submit.payload.entryPreparation.preparationPressure.score >= 0);
+  assert.equal(
+    submit.payload.examProcedureView.preparationPressure.label,
+    submit.payload.entryPreparation.preparationPressure.label
+  );
   assert.equal(submit.payload.studyProfileView.schemaVersion, 1);
   assert.ok(submit.payload.studyProfileView.recentExercises.some((entry) => entry.source === "exam_history"));
   assert.ok(submit.payload.worldState.player.examHistory.at(-1).entryPreparation);
@@ -112,6 +118,10 @@ test("exam question entry applies funded travel cost without advancing time", as
   assert.equal(payload.entryPreparation.fullyFunded, true);
   assert.equal(payload.entryPreparation.requiredGold, 2);
   assert.equal(payload.entryPreparation.paidGold, 2);
+  assert.equal(payload.entryPreparation.preparationPressure.label, "留意");
+  assert.ok(payload.entryPreparation.preparationPressure.score >= 30);
+  assert.equal(payload.examProcedureView.preparationPressure.label, payload.entryPreparation.preparationPressure.label);
+  assert.equal(payload.studyProfileView.examPreparation.label, payload.entryPreparation.preparationPressure.label);
   assert.equal(payload.worldState.player.gold, 48);
   assert.deepEqual(payload.worldState.activeExam.entryPreparation, payload.entryPreparation);
   assert.equal(payload.studyProfileView.schemaVersion, 1);
@@ -151,12 +161,176 @@ test("exam question allows shortfall and converts it into preparation risk", asy
   assert.equal(payload.entryPreparation.requiredGold, 8);
   assert.equal(payload.entryPreparation.paidGold, 1);
   assert.equal(payload.entryPreparation.shortfall, 7);
+  assert.equal(payload.entryPreparation.preparationPressure.label, "危急");
+  assert.ok(payload.entryPreparation.preparationPressure.score >= 55);
+  assert.ok(payload.entryPreparation.preparationPressure.causes.some((cause) => /盘费缺/.test(cause)));
+  assert.match(payload.entryPreparation.entryFeedback.publicSummary, /盘费不足/);
+  assert.equal(payload.examProcedureView.preparationPressure.label, "危急");
+  assert.ok(payload.examProcedureView.incidents.some((incident) => incident.type === "preparation_pressure"));
+  assert.match(payload.examProcedureView.entrySearch.publicSummary, /备考压力/);
   assert.equal(payload.worldState.player.gold, 0);
   assert.equal(payload.worldState.player.health, 77);
   assert.equal(payload.worldState.player.mentality, 76);
   assert.equal(payload.worldState.player.adaptability, 79);
   assert.equal(payload.worldState.turnCount, 3);
   assert.equal(payload.worldState.month, 9);
+});
+
+test("exam preparation pressure accounts for readiness gaps on the real question route", async (t) => {
+  const server = createTestServer();
+  t.after(server.close);
+
+  const worldState = makeReadyScholar({
+    gold: 50,
+    academia: 0,
+    literaryTalent: 0,
+    mentality: 0
+  });
+  worldState.month = 1;
+  t.after(() => removeSessionFile(worldState.sessionId));
+  await writeSession(worldState);
+
+  const { response, payload } = await postJson(`${server.baseUrl}/api/exam/question`, {
+    sessionId: worldState.sessionId,
+    level: "child_exam"
+  });
+
+  assert.equal(response.status, 201);
+  assert.equal(payload.readiness.ready, false);
+  assert.equal(payload.readiness.missing.length, 3);
+  assert.ok(payload.entryPreparation.preparationPressure.score >= 60);
+  assert.ok(payload.entryPreparation.preparationPressure.causes.some((cause) => /准考准备仍有3项缺口/.test(cause)));
+  assert.equal(payload.examProcedureView.preparationPressure.label, payload.entryPreparation.preparationPressure.label);
+});
+
+test("exam entry preparation public payload sanitizes polluted legacy preparation snapshots", async (t) => {
+  const server = createTestServer();
+  t.after(server.close);
+
+  const worldState = makeReadyScholar({ gold: 20 });
+  worldState.examCalendar = {
+    isOpen: true,
+    providerResponse: { accepted: true },
+    raw_provider_payload: { ok: true },
+    note: "data/sessions/root-calendar.json",
+    publicNote: "/mnt/e/key sk-test"
+  };
+  worldState.activeExam = {
+    examId: "child_exam-polluted",
+    level: "child_exam",
+    examName: "童试",
+    examQuestion: "论治学之道。",
+    questionType: "经义简答",
+    difficulty: "入门",
+    requirements: ["依题作答"],
+    wordCount: { min: 200, max: 400 },
+    passScore: 60,
+    promotionRank: "秀才",
+    readiness: { ready: true, missing: [] },
+    status: "writing",
+    examCalendar: {
+      isOpen: true,
+      providerResponse: { accepted: true },
+      raw_provider_payload: { ok: true },
+      note: "root calendar /home/root rawProvider"
+    },
+    entryPreparation: {
+      requiredGold: 2,
+      paidGold: 2,
+      shortfall: 0,
+      fullyFunded: true,
+      distance: "local",
+      travelMonths: 0,
+      event: "rawProvider sk-legacy-secret",
+      effects: { mentality: 1, rawProvider: 100 },
+      hiddenNotes: "SEALED_PREP_NOTE",
+      sponsorship: {
+        status: "ready",
+        score: 80,
+        guarantorName: "顾文衡",
+        publicSummary: "hiddenNotes rawProvider prompt"
+      },
+      examCalendar: {
+        isOpen: true,
+        hiddenNotes: "SEALED_CALENDAR_NOTE",
+        rawProviderPayload: "forged",
+        raw_provider_payload: "forged",
+        providerResponse: "forged",
+        note: "data/sessions/legacy.json"
+      },
+      preparationPressure: {
+        score: 70,
+        band: "strained",
+        label: "吃紧",
+        summary: "rawProvider sk-legacy-secret",
+        studyFocus: "制艺章法",
+        causes: ["hiddenNotes", "盘费已足"],
+        suggestedActions: ["/mnt/e/secret", "先审题立意。"],
+        rawProviderPayload: "forged"
+      },
+      entryFeedback: {
+        pressureScore: 70,
+        pressureLabel: "吃紧",
+        publicSummary: "prompt sk-legacy-secret",
+        entrySearchSummary: "rawProvider should not render",
+        cellSummary: "号舍已定。",
+        visibleNextActions: ["data/sessions/legacy.json", "先审题。"]
+      }
+    }
+  };
+  t.after(() => removeSessionFile(worldState.sessionId));
+  await writeSession(worldState);
+
+  const { response, payload } = await postJson(`${server.baseUrl}/api/exam/question`, {
+    sessionId: worldState.sessionId,
+    level: "child_exam"
+  });
+
+  assert.equal(response.status, 200);
+  assert.equal(payload.entryPreparation.hiddenNotes, undefined);
+  assert.equal(payload.entryPreparation.effects.rawProvider, undefined);
+  assert.equal(payload.entryPreparation.examCalendar.hiddenNotes, undefined);
+  assert.equal(payload.entryPreparation.examCalendar.rawProviderPayload, undefined);
+  assert.equal(payload.entryPreparation.examCalendar.raw_provider_payload, undefined);
+  assert.equal(payload.entryPreparation.examCalendar.providerResponse, undefined);
+  assert.equal(payload.examCalendar.providerResponse, undefined);
+  assert.equal(payload.examCalendar.raw_provider_payload, undefined);
+  assert.equal(payload.examCalendar.note, "");
+  assert.equal(payload.entryPreparation.preparationPressure.rawProviderPayload, undefined);
+  assert.match(payload.entryPreparation.preparationPressure.summary, /服务器整理/);
+  assert.match(payload.entryPreparation.entryFeedback.publicSummary, /服务器整理/);
+  assert.doesNotMatch(JSON.stringify(payload.entryPreparation), /rawProvider|raw_provider|providerResponse|hiddenNotes|sk-legacy-secret|data\/sessions|\/mnt\/|\/home\//);
+  assert.doesNotMatch(JSON.stringify(payload.examCalendar), /rawProvider|raw_provider|providerResponse|hiddenNotes|sk-legacy-secret|data\/sessions|\/mnt\/|\/home\//);
+  assert.doesNotMatch(JSON.stringify(payload.examProcedureView), /rawProvider|raw_provider|providerResponse|hiddenNotes|sk-legacy-secret|data\/sessions|\/mnt\/|\/home\//);
+  assert.equal(payload.worldState.examCalendar.providerResponse, undefined);
+  assert.equal(payload.worldState.examCalendar.raw_provider_payload, undefined);
+  assert.doesNotMatch(JSON.stringify(payload.worldState.activeExam), /rawProvider|raw_provider|providerResponse|hiddenNotes|sk-legacy-secret|data\/sessions|\/mnt\/|\/home\//);
+  assert.doesNotMatch(JSON.stringify(payload.worldState.examCalendar), /rawProvider|raw_provider|providerResponse|hiddenNotes|sk-test|data\/sessions|\/mnt\/|\/home\//);
+});
+
+test("client world state sanitizes root exam calendar pollution", () => {
+  const worldState = makeReadyScholar({ gold: 20 });
+  worldState.examCalendar = {
+    isOpen: true,
+    note: "data/sessions/root-calendar.json",
+    publicNote: "/mnt/e/key sk-root",
+    rawProviderPayload: "forged",
+    providerResponse: { accepted: true },
+    nested: {
+      prompt: "raw provider prompt",
+      visible: "今科照常开场"
+    }
+  };
+
+  const clientState = buildClientWorldState(worldState);
+
+  assert.equal(clientState.examCalendar.rawProviderPayload, undefined);
+  assert.equal(clientState.examCalendar.providerResponse, undefined);
+  assert.equal(clientState.examCalendar.note, "");
+  assert.equal(clientState.examCalendar.publicNote, "");
+  assert.equal(clientState.examCalendar.nested.prompt, undefined);
+  assert.equal(clientState.examCalendar.nested.visible, "今科照常开场");
+  assert.doesNotMatch(JSON.stringify(clientState.examCalendar), /rawProvider|providerResponse|prompt|sk-root|data\/sessions|\/mnt\//);
 });
 
 test("exam entry preparation carries server-owned study sponsorship snapshot", async (t) => {

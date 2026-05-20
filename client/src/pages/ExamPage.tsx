@@ -1,7 +1,7 @@
 import type { CSSProperties, FormEvent } from "react";
 import { useMemo, useState } from "react";
 import { useParams } from "react-router";
-import type { ExamLevel } from "../api";
+import type { ExamLevel, JsonObject, JsonValue } from "../api";
 import { useAssetRegistry } from "../assets/useAssetRegistry";
 import { isRunnableSessionId } from "../routes/sessionId";
 import { useGameSessionStore } from "../state/gameSessionState";
@@ -127,6 +127,55 @@ function formatWordCountLabel(value: unknown) {
   };
 }
 
+function isRecord(value: JsonValue | unknown): value is JsonObject {
+  return Boolean(value) && typeof value === "object" && !Array.isArray(value);
+}
+
+function asRecord(value: JsonValue | unknown): JsonObject {
+  return isRecord(value) ? value : {};
+}
+
+function asArray(value: JsonValue | unknown): readonly JsonValue[] {
+  return Array.isArray(value) ? value : [];
+}
+
+function cleanNumber(value: unknown, fallback = 0) {
+  const number = Number(value);
+  return Number.isFinite(number) ? Math.max(0, Math.min(100, Math.round(number))) : fallback;
+}
+
+function getPreparationPressure(activeExam: unknown) {
+  const activeExamRecord = asRecord(activeExam);
+  const pressure = asRecord(asRecord(activeExamRecord.entryPreparation).preparationPressure);
+  if (!Object.keys(pressure).length) return null;
+  return {
+    label: safeExamText(pressure.label, "从容", 24),
+    score: cleanNumber(pressure.score, 0),
+    summary: safeExamText(pressure.summary, "备考压力由服务器整理。", 132),
+    studyFocus: safeExamText(pressure.studyFocus, "经义根柢", 48),
+    causes: asArray(pressure.causes).slice(0, 4).map((item) => safeExamText(item, "", 88)).filter(Boolean),
+    suggestedActions: asArray(pressure.suggestedActions).slice(0, 4).map((item) => safeExamText(item, "", 88)).filter(Boolean)
+  };
+}
+
+function getExamProcedure(activeExam: unknown) {
+  const activeExamRecord = asRecord(activeExam);
+  const procedure = asRecord(activeExamRecord.examProcedureView || activeExamRecord.examProcedure);
+  return {
+    phaseLabel: safeExamText(procedure.phaseLabel, "候场", 32),
+    entrySearch: asRecord(procedure.entrySearch),
+    cell: asRecord(procedure.cell),
+    incidents: asArray(procedure.incidents).slice(-4).map((item, index) => {
+      const incident = asRecord(item);
+      return {
+        id: safeExamText(incident.type || `incident-${index}`, `incident-${index}`, 48),
+        label: safeExamText(incident.label, "科场记录", 36),
+        summary: safeExamText(incident.publicSummary, "科场记录已脱敏。", 112)
+      };
+    })
+  };
+}
+
 export function ExamPage() {
   const { sessionId = "s74-preview" } = useParams();
   const { registry } = useAssetRegistry();
@@ -164,6 +213,8 @@ export function ExamPage() {
   const safeDifficulty = safeExamText(activeExamForSession?.difficulty, "难度未署", 32);
   const safeSceneActionPreview = safeExamText(sceneAction, "尚无场内行动。", 80);
   const safeError = safeExamText(error, "科举接口暂不可用。", 160);
+  const preparationPressure = getPreparationPressure(activeExamForSession);
+  const procedure = getExamProcedure(activeExamForSession);
 
   async function handleQuestion(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -292,11 +343,37 @@ export function ExamPage() {
           <section className="examRecordPanel">
             <p className="eyebrow">场内记录</p>
             <ul className="examRecordList">
-              <li>{activeExamForSession ? "监临点卷，题纸已揭。" : "监临未点名，题纸尚封。"}</li>
+              <li>{activeExamForSession ? `流程：${procedure.phaseLabel}` : "监临未点名，题纸尚封。"}</li>
+              {preparationPressure ? (
+                <li>备考压力：{preparationPressure.label} {preparationPressure.score}/100，{preparationPressure.summary}</li>
+              ) : null}
+              {activeExamForSession ? (
+                <li>{safeExamText(procedure.entrySearch.publicSummary, "监临点卷，题纸已揭。", 112)}</li>
+              ) : null}
+              {activeExamForSession ? (
+                <li>{safeExamText(procedure.cell.publicSummary, "号舍已定，按题拟纲。", 112)}</li>
+              ) : null}
               <li>近次行动：{safeSceneActionPreview}</li>
               <li>{draftState}</li>
             </ul>
           </section>
+
+          {preparationPressure ? (
+            <section className="examPreviewPanel" aria-label="备考压力">
+              <p className="eyebrow">备考压力</p>
+              <p>{preparationPressure.studyFocus}：{preparationPressure.summary}</p>
+              {preparationPressure.causes.length ? (
+                <ul className="examRecordList">
+                  {preparationPressure.causes.map((cause) => (
+                    <li key={cause}>{cause}</li>
+                  ))}
+                </ul>
+              ) : null}
+              {preparationPressure.suggestedActions.length ? (
+                <p>{preparationPressure.suggestedActions[0]}</p>
+              ) : null}
+            </section>
+          ) : null}
 
           <section className="examPeerPanel" aria-label="虚拟考生占位">
             <p className="eyebrow">同场诸生</p>
@@ -317,6 +394,17 @@ export function ExamPage() {
             <p className="eyebrow">最近交卷</p>
             <p>{latestSubmitForSession?.score ? `${safeRecentExamName} 已有评定，可入皇榜细看。` : "尚无本案卷交卷评定。"}</p>
           </section>
+
+          {procedure.incidents.length ? (
+            <section className="examRecordPanel" aria-label="科场事故摘要">
+              <p className="eyebrow">科场反馈</p>
+              <ul className="examRecordList">
+                {procedure.incidents.map((incident) => (
+                  <li key={incident.id}>{incident.label}：{incident.summary}</li>
+                ))}
+              </ul>
+            </section>
+          ) : null}
         </aside>
       </div>
 

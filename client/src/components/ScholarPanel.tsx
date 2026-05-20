@@ -230,6 +230,20 @@ function getNextPlan(studyProfile: JsonObject) {
   };
 }
 
+function getExamPreparation(studyProfile: JsonObject) {
+  const preparation = getObjectField(studyProfile, "examPreparation");
+  if (!Object.keys(preparation).length) return null;
+  return {
+    examName: cleanScholarText(preparation.examName, "当前考试", 36),
+    label: cleanScholarText(preparation.label, "从容", 24),
+    score: cleanNumber(preparation.score, 0),
+    summary: cleanScholarText(preparation.summary, "备考压力由服务器整理。", 128),
+    studyFocus: cleanScholarText(preparation.studyFocus, "经义根柢", 40),
+    causes: asArray(preparation.causes).slice(0, 4).map((item) => cleanScholarText(item, "", 88)).filter(Boolean),
+    actions: asArray(preparation.suggestedActions).slice(0, 4).map((item) => cleanScholarText(item, "", 88)).filter(Boolean)
+  };
+}
+
 function getNextExam(examCalendar: JsonObject) {
   const nextExam = getObjectField(examCalendar, "nextExam");
   if (!Object.keys(nextExam).length) {
@@ -281,6 +295,7 @@ export function ScholarPanel({
   const academyNetwork = getAcademyNetwork(studyProfile);
   const nextPlan = getNextPlan(studyProfile);
   const nextExam = getNextExam(examCalendar);
+  const examPreparation = getExamPreparation(studyProfile);
   const teacherFeedback = listFromView(studyProfile, "teacherFeedback", 3, "老师点评");
   const teacherAdvice = listFromView(studyProfile, "teacherAdvice", 3, "老师建议");
   const recentExercises = listFromView(studyProfile, "recentExercises", 3, "近课");
@@ -414,6 +429,28 @@ export function ScholarPanel({
           ) : (
             <p>眼下暂无下一科安全快照；若已入仕，皇榜与履历仍由服务器定档。</p>
           )}
+          {examPreparation ? (
+            <section className="scholarPanelSubsection" aria-labelledby="scholar-preparation-title">
+              <h4 id="scholar-preparation-title">备考压力</h4>
+              <p>{examPreparation.examName} · {examPreparation.label} {examPreparation.score}/100：{examPreparation.summary}</p>
+              {examPreparation.causes.length ? (
+                <ul>
+                  {examPreparation.causes.map((cause) => (
+                    <li key={cause}>{cause}</li>
+                  ))}
+                </ul>
+              ) : null}
+              {examPreparation.actions.length ? (
+                <p>先办：{examPreparation.actions[0]}</p>
+              ) : null}
+              {draftButtonText(
+                "稳住临考",
+                `按服务器备考摘要处理${examPreparation.examName}入场压力：先守${examPreparation.studyFocus}，并${examPreparation.actions[0] || "整理盘费、保结与心神"}。`,
+                canDraft,
+                onDraft
+              )}
+            </section>
+          ) : null}
           <ScholarPanelList items={missedWindows.length ? missedWindows : recentSessions} emptyText="暂无误期或近科记录。" />
           <div className="scholarPanelActions">
             {draftButtonText("整备赴考", "整理盘费、行李、保结与温书计划，候服务器复核赶考时机。", canDraft, onDraft)}

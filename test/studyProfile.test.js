@@ -53,6 +53,45 @@ test("initial study profile is a server-built visible projection", () => {
   assert.match(view.aiReadScope, /只.*读取/);
 });
 
+test("study profile view exposes safe exam preparation pressure while active exam is open", () => {
+  const worldState = createInitialState({ playerName: "许衡" });
+  worldState.activeExam = {
+    examId: "exam-preparation-study",
+    level: "provincial_exam",
+    examName: "乡试",
+    entryPreparation: {
+      preparationPressure: {
+        source: "server_entry_preparation",
+        level: "provincial_exam",
+        examName: "乡试",
+        score: 68,
+        band: "strained",
+        label: "吃紧",
+        summary: "/mnt/study raw_provider",
+        studyFocus: "制艺章法",
+        causes: ["盘费缺7/8两。", "hiddenNotes sk-study-secret", "/home/study/raw_provider"],
+        suggestedActions: ["先筹措盘费。", "prompt rawProvider", "/tmp/study path"]
+      },
+      entryFeedback: {
+        pressureLabel: "吃紧",
+        publicSummary: "盘费不足 sk-study-secret。",
+        entrySearchSummary: "raw provider should not render",
+        cellSummary: "/tmp/study-cell"
+      }
+    }
+  };
+
+  const view = buildStudyProfileView(worldState);
+  const promptSummary = summarizeStudyProfileForPrompt(worldState);
+  const serialized = JSON.stringify({ view, promptSummary });
+
+  assert.equal(view.examPreparation.label, "吃紧");
+  assert.equal(view.examPreparation.score, 68);
+  assert.match(view.examPreparation.summary, /服务器/);
+  assert.equal(promptSummary.examPreparation.studyFocus, "制艺章法");
+  assert.doesNotMatch(serialized, /hiddenNotes|sk-study-secret|rawProvider|raw_provider|raw provider|\/mnt\/|\/home\/|\/tmp\//);
+});
+
 test("study action updates only server-owned studyProfile ledger", () => {
   const worldState = createInitialState({ playerName: "许衡" });
   ensureStudyProfileState(worldState);

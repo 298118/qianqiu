@@ -10,7 +10,11 @@ const {
 } = require("../game/exams");
 const { applyAuthenticityPenalties, checkEssayAuthenticity } = require("../game/essayChecks");
 const { buildRanking, generateVirtualCandidates } = require("../game/candidates");
-const { createEntryPreparation } = require("../game/examTravel");
+const {
+  createEntryPreparation,
+  sanitizeExamPreparationCalendarForView,
+  sanitizeEntryPreparationForView
+} = require("../game/examTravel");
 const {
   buildExamCalendarView,
   buildExamRivalView,
@@ -122,6 +126,8 @@ const router = express.Router();
 
 function toExamPayload(worldState) {
   const activeExam = worldState.activeExam;
+  const entryPreparationView = sanitizeEntryPreparationForView(activeExam.entryPreparation);
+  const examCalendar = sanitizeExamPreparationCalendarForView(activeExam.examCalendar || entryPreparationView?.examCalendar);
   const worldGeographyView = buildWorldGeographyView(worldState);
   const worldPeopleView = buildWorldPeopleView(worldState);
   const officialPostingsView = buildOfficialPostingsView(worldState);
@@ -147,8 +153,8 @@ function toExamPayload(worldState) {
     passScore: activeExam.passScore,
     promotionRank: activeExam.promotionRank,
     readiness: activeExam.readiness,
-    entryPreparation: activeExam.entryPreparation || null,
-    examCalendar: activeExam.examCalendar || activeExam.entryPreparation?.examCalendar || null,
+    entryPreparation: entryPreparationView,
+    examCalendar,
     sceneTime: activeExam.sceneTime || null,
     examCalendarView: buildExamCalendarView(worldState),
     examRivalView: buildExamRivalView(worldState),
@@ -294,9 +300,10 @@ router.post("/question", async (req, res, next) => {
         throw fail(409, "已有未完成考试，请先完成当前考试。");
       }
 
+      const readiness = summarizeReadiness(worldState.player, exam);
       const preparationResult = previousExam.entryPreparation
         ? null
-        : createEntryPreparation(worldState, exam, calendarGate.snapshot);
+        : createEntryPreparation(worldState, exam, calendarGate.snapshot, { readiness });
 
       if (preparationResult) {
         applyStatePatch(worldState, preparationResult.statePatch, { incrementTurnCount: false });
@@ -329,7 +336,7 @@ router.post("/question", async (req, res, next) => {
         wordCount: question.wordCount || exam.wordCount,
         passScore: question.passScore ?? exam.passScore,
         promotionRank: question.promotionRank || exam.promotionRank,
-        readiness: summarizeReadiness(worldState.player, exam),
+        readiness,
         entryPreparation: previousExam.entryPreparation || preparationResult.entryPreparation,
         examCalendar: previousExam.examCalendar || calendarGate.snapshot,
         sceneTime: previousExam.sceneTime || null,
@@ -533,14 +540,16 @@ router.post("/submit", async (req, res, next) => {
         ranking,
         reviewResult
       });
+      const entryPreparationView = sanitizeEntryPreparationForView(activeExam.entryPreparation);
+      const examCalendar = sanitizeExamPreparationCalendarForView(activeExam.examCalendar || entryPreparationView?.examCalendar);
       const submittedAt = new Date().toISOString();
       const historyEntry = {
         examId,
         level: activeExam.level,
         examName: activeExam.examName,
         examQuestion: activeExam.examQuestion,
-        entryPreparation: activeExam.entryPreparation || null,
-        examCalendar: activeExam.examCalendar || activeExam.entryPreparation?.examCalendar || null,
+        entryPreparation: entryPreparationView,
+        examCalendar,
         sceneTime,
         examProcedure: buildExamProcedureView(worldState, { procedure: examProcedure }),
         examStartedAt: sceneTime.startedAt,
@@ -610,8 +619,8 @@ router.post("/submit", async (req, res, next) => {
         examName: activeExam.examName,
         examQuestion: activeExam.examQuestion,
         essay: trimmedEssay,
-        entryPreparation: activeExam.entryPreparation || null,
-        examCalendar: activeExam.examCalendar || activeExam.entryPreparation?.examCalendar || null,
+        entryPreparation: entryPreparationView,
+        examCalendar,
         sceneTime,
         examStartedAt: sceneTime.startedAt,
         examSubmittedAt: sceneTime.updatedAt,

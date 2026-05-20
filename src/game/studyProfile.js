@@ -1,4 +1,9 @@
 const {
+  EXAM_PREPARATION_LIMITS,
+  EXAM_PREPARATION_SCHEMA_VERSION
+} = require("./examPreparationConfig");
+const { sanitizeEntryPreparationForView } = require("./examTravel");
+const {
   STUDY_ACTION_PATTERNS,
   STUDY_DIMENSIONS,
   STUDY_INTERACTION_PATTERNS,
@@ -1053,6 +1058,41 @@ function buildStudySummary(profile = {}) {
   return `长处在${strong.config.label}（${dimensionTrendLabel(strong.value)}），短处在${weak.config.label}（${dimensionTrendLabel(weak.value)}）。`;
 }
 
+function buildExamPreparationForStudyView(worldState = {}) {
+  const activeExam = worldState.activeExam;
+  const entryPreparation = sanitizeEntryPreparationForView(activeExam?.entryPreparation);
+  const pressure = entryPreparation?.preparationPressure;
+  const feedback = entryPreparation?.entryFeedback;
+  if (!pressure || typeof pressure !== "object" || Array.isArray(pressure)) return null;
+  return {
+    schemaVersion: EXAM_PREPARATION_SCHEMA_VERSION,
+    level: cleanVisibleText(pressure.level || activeExam.level, "child_exam", 40),
+    examName: cleanVisibleText(pressure.examName || activeExam.examName, "考试", 48),
+    score: clampMetric(pressure.score),
+    band: cleanVisibleText(pressure.band, "steady", 24),
+    label: cleanVisibleText(pressure.label, "从容", 24),
+    summary: cleanVisibleText(pressure.summary, "备考压力由服务器按公开准备摘要整理。", 140),
+    studyFocus: cleanVisibleText(pressure.studyFocus, "经义根柢", 48),
+    causes: (Array.isArray(pressure.causes) ? pressure.causes : [])
+      .map((cause) => cleanVisibleText(cause, "", 96))
+      .filter(Boolean)
+      .slice(0, EXAM_PREPARATION_LIMITS.maxCauses),
+    suggestedActions: (Array.isArray(pressure.suggestedActions) ? pressure.suggestedActions : [])
+      .map((action) => cleanVisibleText(action, "", 96))
+      .filter(Boolean)
+      .slice(0, EXAM_PREPARATION_LIMITS.maxSuggestedActions),
+    entryFeedback: feedback && typeof feedback === "object" && !Array.isArray(feedback)
+      ? {
+        pressureLabel: cleanVisibleText(feedback.pressureLabel, "从容", 24),
+        publicSummary: cleanVisibleText(feedback.publicSummary, "入场准备由服务器整理。", 140),
+        entrySearchSummary: cleanVisibleText(feedback.entrySearchSummary, "入场搜检只显示公开摘要。", 140),
+        cellSummary: cleanVisibleText(feedback.cellSummary, "号舍记录只显示公开摘要。", 140)
+      }
+      : null,
+    authorityBoundary: "书生面板只读备考压力摘要；取题、入场、评卷、放榜、晋级和授官仍由服务器裁决。"
+  };
+}
+
 function buildStudyProfileView(worldState = {}) {
   const profile = ensureStudyProfileState(worldState);
   const view = cloneJson(profile);
@@ -1070,6 +1110,7 @@ function buildStudyProfileView(worldState = {}) {
   view.smallExercises = (view.smallExercises || []).slice(-STUDY_PROFILE_LIMITS.maxSmallExercises);
   view.recommendedBooks = (view.recommendedBooks || []).slice(-STUDY_PROFILE_LIMITS.maxRecommendedBooks);
   view.nextPlan = view.nextPlan ? normalizeStudyPlan(view.nextPlan, worldState) : null;
+  view.examPreparation = buildExamPreparationForStudyView(worldState);
   view.aiReadScope = "AI 老师、出题与评卷只能读取本 view 的可见摘要；不得读取原始审计、模型原始建议、隐藏札记、完整提示词、本地路径或密钥。";
   return view;
 }
@@ -1124,6 +1165,17 @@ function summarizeStudyProfileForPrompt(worldState = {}) {
       items: view.nextPlan.items,
       bookList: view.nextPlan.bookList,
       serverDecision: view.nextPlan.serverDecision
+    } : null,
+    examPreparation: view.examPreparation ? {
+      level: view.examPreparation.level,
+      examName: view.examPreparation.examName,
+      score: view.examPreparation.score,
+      band: view.examPreparation.band,
+      label: view.examPreparation.label,
+      summary: view.examPreparation.summary,
+      studyFocus: view.examPreparation.studyFocus,
+      causes: view.examPreparation.causes,
+      suggestedActions: view.examPreparation.suggestedActions
     } : null,
     authority: "只读学业画像；AI 可据此点评或建议读书计划，属性、关系、考试资格和名位仍由服务器裁决。"
   };

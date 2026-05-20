@@ -565,6 +565,15 @@ describe("S74.1 React client shell", () => {
               focus: "制艺章法",
               items: ["破题一则", "承题起讲各一段"],
               bookList: ["《论语》"]
+            },
+            examPreparation: {
+              examName: "童试",
+              label: "吃紧",
+              score: 62,
+              summary: "保结未稳，临考须先稳章法。",
+              studyFocus: "制艺章法",
+              causes: ["保结未稳。"],
+              suggestedActions: ["请老师复核保结。"]
             }
           },
           examCalendarView: {
@@ -618,6 +627,8 @@ describe("S74.1 React client shell", () => {
     expect(screen.getByText("隔日练破题与承题。")).toBeTruthy();
     expect(screen.getByText("沈同窗")).toBeTruthy();
     expect(screen.getByText("童试")).toBeTruthy();
+    expect(screen.getByText(/备考压力/)).toBeTruthy();
+    expect(screen.getByText(/吃紧 62\/100/)).toBeTruthy();
     expect(screen.getByRole("link", { name: "入科举页" }).getAttribute("href")).toBe(`/game/${sessionId}/exam`);
 
     fireEvent.click(screen.getByRole("button", { name: "请老师改文" }));
@@ -1928,7 +1939,23 @@ describe("S74.1 React client shell", () => {
           examQuestion: "试论荒政与教化并行之道。",
           difficulty: "中",
           requirements: ["务陈经义", "兼论民生"],
-          wordCount: { min: 600, max: 900 }
+          wordCount: { min: 600, max: 900 },
+          entryPreparation: {
+            preparationPressure: {
+              label: "吃紧",
+              score: 66,
+              summary: "盘费与旅途压力偏高。",
+              studyFocus: "经义制艺",
+              causes: ["盘费缺口仍须补。"],
+              suggestedActions: ["先审题立意。"]
+            }
+          },
+          examProcedureView: {
+            phaseLabel: "发题审题",
+            entrySearch: { publicSummary: "入场搜检未见夹带，但备考压力偏高。" },
+            cell: { publicSummary: "号舍已定，先审题再动笔。" },
+            incidents: [{ type: "preparation_pressure", label: "备考吃紧", publicSummary: "盘费与旅途压力偏高。" }]
+          }
         }), {
           status: 200,
           headers: { "Content-Type": "application/json" }
@@ -1944,7 +1971,23 @@ describe("S74.1 React client shell", () => {
           difficulty: "中",
           requirements: ["务陈经义", "兼论民生"],
           wordCount: { min: 600, max: 900 },
-          narrative: "号舍风紧，仍可落笔。"
+          narrative: "号舍风紧，仍可落笔。",
+          entryPreparation: {
+            preparationPressure: {
+              label: "吃紧",
+              score: 66,
+              summary: "盘费与旅途压力偏高。",
+              studyFocus: "经义制艺",
+              causes: ["盘费缺口仍须补。"],
+              suggestedActions: ["先审题立意。"]
+            }
+          },
+          examProcedureView: {
+            phaseLabel: "草稿成文",
+            entrySearch: { publicSummary: "入场搜检未见夹带，但备考压力偏高。" },
+            cell: { publicSummary: "号舍已定，先审题再动笔。" },
+            incidents: [{ type: "preparation_pressure", label: "备考吃紧", publicSummary: "盘费与旅途压力偏高。" }]
+          }
         }), {
           status: 200,
           headers: { "Content-Type": "application/json" }
@@ -1987,6 +2030,8 @@ describe("S74.1 React client shell", () => {
     expect(screen.getByLabelText("场内行动")).toBeTruthy();
     expect(screen.getByLabelText("文章")).toBeTruthy();
     expect(screen.getAllByText(/600-900 字/).length).toBeGreaterThan(0);
+    expect(screen.getByText(/备考压力：吃紧 66\/100/)).toBeTruthy();
+    expect(screen.getByText("备考吃紧：盘费与旅途压力偏高。")).toBeTruthy();
     expect(screen.getByText(/虚拟考生、阅卷官与榜单只显示安全占位/)).toBeTruthy();
 
     fireEvent.change(screen.getByLabelText("场内行动"), { target: { value: "誊清卷面，仍不伪称评卷。" } });

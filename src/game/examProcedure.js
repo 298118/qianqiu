@@ -1,5 +1,14 @@
 const { getExam } = require("./exams");
 const {
+  EXAM_PREPARATION_PRESSURE
+} = require("./examPreparationConfig");
+const {
+  cleanPreparationText,
+  sanitizeEntryPreparationForView,
+  sanitizeEntryFeedbackForView,
+  sanitizePreparationPressureForView
+} = require("./examTravel");
+const {
   EXAM_PROCEDURE_LIMITS,
   EXAM_PROCEDURE_PHASES,
   EXAM_PROCEDURE_PROFILE,
@@ -13,26 +22,12 @@ const {
 
 const PHASE_BY_KEY = new Map(EXAM_PROCEDURE_PHASES.map((phase) => [phase.key, phase]));
 const PHASE_INDEX = new Map(EXAM_PROCEDURE_PHASES.map((phase, index) => [phase.key, index]));
-const UNSAFE_PUBLIC_TEXT_PATTERNS = Object.freeze([
-  /SEALED_[A-Z0-9_]+/gi,
-  /hiddenNotes|hidden_notes|hiddenIntent|hidden_intent/gi,
-  /raw provider|raw_provider|provider proposal|raw audit|raw_audit/gi,
-  /OPENAI_API_KEY|DEEPSEEK_API_KEY|MIMO_API_KEY|ANTHROPIC_API_KEY/gi,
-  /data\/sessions|\/mnt\/|[A-Z]:\\/gi
-]);
-
 function isPlainObject(value) {
   return value !== null && typeof value === "object" && !Array.isArray(value);
 }
 
 function cleanText(value, fallback = "", maxLength = EXAM_PROCEDURE_LIMITS.textPreviewLength) {
-  if (typeof value !== "string") return fallback;
-  let trimmed = value.trim().replace(/\s+/g, " ");
-  for (const pattern of UNSAFE_PUBLIC_TEXT_PATTERNS) {
-    trimmed = trimmed.replace(pattern, "已遮蔽");
-  }
-  if (!trimmed) return fallback;
-  return trimmed.slice(0, maxLength);
+  return cleanPreparationText(value, fallback, maxLength);
 }
 
 function clampNumber(value, min, max, fallback) {
@@ -87,7 +82,7 @@ function buildPapers(level) {
 }
 
 function summarizeSponsorship(activeExam = {}) {
-  const sponsorship = activeExam.entryPreparation?.sponsorship || {};
+  const sponsorship = sanitizeEntryPreparationForView(activeExam.entryPreparation)?.sponsorship || {};
   const status = sponsorship.status || "not_ready";
   const ready = status === "ready" || sponsorship.ready === true;
   return {
@@ -105,22 +100,26 @@ function summarizeSponsorship(activeExam = {}) {
 function buildEntrySearch(activeExam = {}) {
   const readiness = activeExam.readiness || {};
   const missing = Array.isArray(readiness.missing) ? readiness.missing.length : 0;
+  const pressure = sanitizePreparationPressureForView(activeExam.entryPreparation?.preparationPressure);
+  const pressureScore = clampNumber(pressure?.score, 0, 100, 0);
+  const entryFeedback = sanitizeEntryFeedbackForView(activeExam.entryPreparation?.entryFeedback) || {};
   return {
-    status: missing ? "cautioned" : "clear",
-    publicSummary: missing
+    status: missing || pressureScore >= EXAM_PREPARATION_PRESSURE.bands[1].min ? "cautioned" : "clear",
+    publicSummary: cleanText(entryFeedback.entrySearchSummary, "", EXAM_PROCEDURE_LIMITS.textPreviewLength) || (missing
       ? "入场搜检未见夹带，但学力准备仍有欠缺，心态须稳。"
-      : "入场搜检未见夹带，点名入席。"
+      : "入场搜检未见夹带，点名入席。")
   };
 }
 
 function buildCell(activeExam = {}) {
   const profile = getProfile(activeExam.level);
   const subStage = pickSubStage(activeExam.level, activeExam.sceneTime?.phase || activeExam.scenePhase);
+  const entryFeedback = sanitizeEntryFeedbackForView(activeExam.entryPreparation?.entryFeedback) || {};
   return {
     status: "assigned",
     subStage: subStage.key,
     subStageLabel: subStage.label,
-    publicSummary: profile.cellSummary
+    publicSummary: cleanText(entryFeedback.cellSummary, profile.cellSummary, EXAM_PROCEDURE_LIMITS.textPreviewLength)
   };
 }
 
@@ -154,7 +153,25 @@ function buildInitialIncidents(activeExam = {}) {
   if (activeExam.entryPreparation && activeExam.entryPreparation.fullyFunded === false) {
     incidents.push(createIncident("travel_shortfall", "盘费不足", "赶考盘费不足已折入健康、心态或应变风险。"));
   }
+  const pressure = sanitizePreparationPressureForView(activeExam.entryPreparation?.preparationPressure);
+  if (pressure?.score >= EXAM_PREPARATION_PRESSURE.bands[2].min) {
+    incidents.push(createIncident(
+      "preparation_pressure",
+      `备考${pressure.label || "吃紧"}`,
+      pressure.summary || "备考压力偏高，宜先稳盘费、保结、身体与心神。"
+    ));
+  }
   return incidents;
+}
+
+function summarizePreparationPressure(activeExam = {}) {
+  const pressure = activeExam.entryPreparation?.preparationPressure;
+  return sanitizePreparationPressureForView(pressure);
+}
+
+function summarizeEntryFeedback(activeExam = {}) {
+  const feedback = activeExam.entryPreparation?.entryFeedback;
+  return sanitizeEntryFeedbackForView(feedback);
 }
 
 function normalizeProcedure(procedure = {}, activeExam = {}) {
@@ -185,6 +202,8 @@ function normalizeProcedure(procedure = {}, activeExam = {}) {
     entrySearch: isPlainObject(procedure.entrySearch) ? procedure.entrySearch : buildEntrySearch(activeExam),
     cell: isPlainObject(procedure.cell) ? procedure.cell : buildCell(activeExam),
     rollLifecycle: isPlainObject(procedure.rollLifecycle) ? procedure.rollLifecycle : buildRollLifecycle(phase.key),
+    preparationPressure: isPlainObject(procedure.preparationPressure) ? procedure.preparationPressure : summarizePreparationPressure(activeExam),
+    entryFeedback: isPlainObject(procedure.entryFeedback) ? procedure.entryFeedback : summarizeEntryFeedback(activeExam),
     papers,
     incidents: Array.isArray(procedure.incidents) ? procedure.incidents : buildInitialIncidents(activeExam),
     auditFlags: Array.isArray(procedure.auditFlags) ? procedure.auditFlags : [],
@@ -237,9 +256,14 @@ function advanceExamProcedurePhase(activeExam = {}) {
 }
 
 function buildVisibleNextActions(procedure = {}) {
+  const feedbackActions = Array.isArray(procedure.entryFeedback?.visibleNextActions)
+    ? procedure.entryFeedback.visibleNextActions
+      .map((action) => cleanText(action, "", 72))
+      .filter(Boolean)
+    : [];
   const phase = procedure.phase;
   if (phase === "cell_entry" || phase === "question_release") {
-    return ["审题立意", "拟定提纲", "稳住号舍心神"].slice(0, EXAM_PROCEDURE_LIMITS.maxVisibleActions);
+    return [...feedbackActions, "审题立意", "拟定提纲", "稳住号舍心神"].slice(0, EXAM_PROCEDURE_LIMITS.maxVisibleActions);
   }
   if (phase === "drafting") {
     return ["完成草稿", "补足经义依据", "转入誊清"].slice(0, EXAM_PROCEDURE_LIMITS.maxVisibleActions);
@@ -347,6 +371,8 @@ function sanitizeProcedureForView(procedure = {}) {
     sponsorship: sanitizeSponsorship(procedure.sponsorship),
     entrySearch: sanitizeStatusBlock(procedure.entrySearch, "待搜检"),
     cell: sanitizeStatusBlock(procedure.cell, "待入号舍"),
+    preparationPressure: sanitizePreparationPressure(procedure.preparationPressure),
+    entryFeedback: sanitizeEntryFeedback(procedure.entryFeedback),
     rollLifecycle: sanitizeRollLifecycle(procedure.rollLifecycle),
     papers: sanitizePapers(procedure.papers),
     incidents: incidents.slice(-EXAM_PROCEDURE_LIMITS.maxVisibleIncidents).map((incident) => ({
@@ -372,6 +398,14 @@ function sanitizeProcedureForView(procedure = {}) {
       .slice(0, EXAM_PROCEDURE_LIMITS.maxVisibleActions),
     authorityBoundary: "只展示服务器整理的科场流程摘要；不含弥封身份映射、保结密注、考官私意、模型原始建议或内部审计。"
   };
+}
+
+function sanitizePreparationPressure(pressure = null) {
+  return sanitizePreparationPressureForView(pressure);
+}
+
+function sanitizeEntryFeedback(feedback = null) {
+  return sanitizeEntryFeedbackForView(feedback);
 }
 
 function sanitizeSponsorship(sponsorship = {}) {
@@ -431,6 +465,14 @@ function summarizeExamProcedureForPrompt(worldState = {}) {
     paperType: view.paperType,
     sponsorshipStatus: view.sponsorship.status,
     entrySearchStatus: view.entrySearch.status,
+    preparationPressure: view.preparationPressure ? {
+      score: view.preparationPressure.score,
+      band: view.preparationPressure.band,
+      label: view.preparationPressure.label,
+      summary: view.preparationPressure.summary,
+      causes: view.preparationPressure.causes,
+      suggestedActions: view.preparationPressure.suggestedActions
+    } : null,
     rollLifecycle: view.rollLifecycle,
     incidents: view.incidents.slice(-EXAM_PROCEDURE_LIMITS.maxPromptIncidents),
     auditFlags: view.auditFlags.slice(-EXAM_PROCEDURE_LIMITS.maxPromptAuditFlags),

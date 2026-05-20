@@ -150,6 +150,12 @@ function assertS69Views(payload, level) {
   if (!payload.examProcedureView?.schemaVersion) {
     throw new Error(`${level} missing examProcedureView.`);
   }
+  if (!payload.entryPreparation?.preparationPressure?.score && payload.entryPreparation?.preparationPressure?.score !== 0) {
+    throw new Error(`${level} missing entry preparation pressure.`);
+  }
+  if (!payload.examProcedureView?.preparationPressure?.label) {
+    throw new Error(`${level} missing examProcedureView preparation pressure.`);
+  }
   if (!payload.examinerPanelView?.schemaVersion) {
     throw new Error(`${level} missing examinerPanelView.`);
   }
@@ -188,8 +194,15 @@ async function runExamLevel(baseUrl, sessionId, level) {
   assertNoUnsafeVisibleText(`${level} question`, {
     examQuestion: question.payload.examQuestion,
     examProcedureView: question.payload.examProcedureView,
-    studyProfileView: question.payload.studyProfileView
+    studyProfileView: question.payload.studyProfileView,
+    entryPreparation: question.payload.entryPreparation
   });
+  if (!question.payload.entryPreparation?.preparationPressure?.label) {
+    throw new Error(`${level} question missing preparation pressure.`);
+  }
+  if (!question.payload.studyProfileView?.examPreparation?.label) {
+    throw new Error(`${level} question missing study profile exam preparation.`);
+  }
 
   const submit = await postJson(`${baseUrl}/api/exam/submit`, {
     sessionId,
