@@ -267,7 +267,7 @@ S84 前端专项额外验收入口：
 - 安全边界：真实 provider 失败仍只进入 Mock fallback 或安全失败 envelope；服务器继续负责 JSON 校验、proposal boundary、状态裁决和 persistence。为避免通用路径脱敏把敏感本地路径转成可公开占位，`aiControlAudit` 与 `redactedState` 会先按原始文本判定敏感项，命中即丢弃。
 - 验证：已通过 `node --test test/routeResponseContracts.test.js test/remoteHelpers.test.js test/modelRoutePolicy.test.js test/aiDiagnostics.test.js test/aiConnectionRoute.test.js test/aiSettingsRoute.test.js test/aiControlAudit.test.js`、`node --test test/redactedState.test.js`、`npm run typecheck:server`、`npm run build:server:probe`、`npm run check:docs-governance`、`node --test test/documentationGovernance.test.js`、`npm test`（991 项）和 `git diff --check`。
 - 子代理：Locke 只读探查了 AI remote helper/provider envelope 边界，Hooke 只读探查了 S88.2 SQLite row builder 类型边界；Confucius 提交前只读复审先发现 raw provider segment、嵌套 forbidden field 和 provider HTTP body 脱敏 P1/P2，主代理已补整段 provider body 脱敏、递归 public envelope guard 与回归测试。最终复审未发现 P0/P1/P2。
-- 提交：随本轮 coherent change 提交，最终 hash 见 Git 历史和本次回复。
+- 提交：实现提交 `5c0665ee`。
 - 下一步：进入 S88.2，优先固定 `SqliteWorldSessionRow`、prompt retrieval、safe search、repair status 和首批 row builder JSDoc/TS contract，继续保持 SQLite 派生表只从 `world_sessions.world_state_json` 单向修复。
 
 ### 2026-05-20：完成 S87.1-S87.7 route/API 响应类型覆盖
