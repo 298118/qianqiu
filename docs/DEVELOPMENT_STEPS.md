@@ -345,7 +345,7 @@ S84 前端专项额外验收入口：
 - 边界：`phaseFeedback` 只由服务器按 `sceneTime`、流程阶段、备考压力和公开行动摘要派生；AI、前端和 provider 不能写分数、处罚、榜次、晋级、弥封映射、官职或场内 canonical 结果。兼容 `worldState` 递归剥离 hidden/raw/provider/prompt/statePatch 字段，并对旧 `procedure.phaseFeedback`、`sceneTime.lastInput` 的 key/path/provider 污染回落到服务器默认文本。
 - 验证：按本文件“本轮 S88.3 考试入场后反馈切片验证口径”执行。
 - 子代理：Descartes 只读梳理后端/API 接线，建议把动态反馈放入 server-owned `examProcedureView.phaseFeedback` 而非 `entryPreparation.entryFeedback` 或 `worldTick`；Curie 只读梳理前端与验证入口，建议复用科举页右栏反馈区，并把建议按钮限制为 draft-only。本轮实现已采纳。Descartes 提交前只读复审发现两个 P2：`sceneTime` direct payload 清洗不是白名单重建、`sanitizePhaseFeedback()` 仍信任旧快照干净伪反馈；主代理已改为白名单重建 scene time/date stamp，并让 phase feedback 摘要、风险和建议从 `procedure.phase` 与服务器压力重算。复核又发现旧 `phaseFeedback.phase` 仍可选模板的 P2，已改为只从 `procedure.phase` 派生并补伪造 `closed` 回归；Descartes 最终复核未发现新的 P0/P1/P2。
-- 提交：待本轮提交后回填。
+- 提交：实现提交 `6972b923`。
 - 下一步：进入 S88.4 入仕官员首轮官场体验；保持完整 `scholar -> child_exam -> provincial_exam -> metropolitan_exam -> palace_exam -> official` smoke 为第一验收入口。
 
 ### 2026-05-20：完成 S87.1-S87.7 route/API 响应类型覆盖
