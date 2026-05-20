@@ -299,18 +299,21 @@ AI 输出必须经过 schema 校验、敏感词清洗、权限校验、数值 cl
 
 建议子步骤：
 
-- S84.1：扩展 `client/src/api/qianqiuApi.ts` 与类型，接入 inventory、npc list、npc detail、interaction、trade、command API。
-- S84.2：新增背包/仓库 route 或 surface，显示资源账本、重要物品、容器、物品详情、来源和转移入口。
-- S84.3：升级人物谱牒和 NPC 详情 surface，支持按阶段筛选、立绘、对话、赠礼、交易、委派和预留 tabs。
-- S84.4：新增交易面板，展示双方可交易物、报价、议价、赠礼、接受/拒绝，所有价格和可行性以后端返回为准。
-- S84.5：新增委派任务面板，支持选择 NPC、填写命令、查看执行中任务、下月回报和后续行动草稿。
-- S84.6：新增浏览器 smoke，覆盖桌面/移动、无横向溢出、资源懒加载、NPC 立绘可见、背包污染扫描、交易/委派不越权和低动效。
+- S84.1 前端 API 与类型层：扩展 `client/src/api/qianqiuApi.ts`、session store 类型和安全 response types，接入 inventory、npc list、npc detail、interaction、trade、command API；失败、loading、stale、empty、permission denied 和 fallback 状态必须统一，不在前端保存完整背包、NPC 私档、交易明细或 prompt。
+- S84.2 导航与信息架构：在主卷/人物/史册/印匣之间设计清晰入口，决定背包仓库是独立 route、主卷页签还是 `SurfaceHost` 大型 surface；所有入口只读安全 view，不能调用 raw state 或 dev diagnostics。
+- S84.3 人物谱牒升级：将 `/game/:sessionId/people` 从“公开人物列表”升级为“身边人/书院/科场/官署/军营/朝堂/市井/家族”分组名册，支持身份阶段筛选、关系筛选、可交互状态、近期记忆摘要和已审核 `portraitRef` 懒加载。
+- S84.4 NPC 详情工作台：新增 NPC 详情 surface，包含档案、对话、赠礼、交易、委派、关系和预留玩法 tabs；对话只调用安全交互 API，关系变化、物品扣减、记忆写入和后续任务全部以后端返回为准。
+- S84.5 背包与仓库界面：新增背包/仓库 route 或大型 surface，展示资源账本、重要凭证、随身背包、家宅仓库、官署库房、军中辎重、容器筛选、物品详情、来源、效果和合法性提醒；转移操作只提交服务器请求，不在前端自行移动物品。
+- S84.6 交易与赠礼面板：新增左右账本式交易面板，展示双方可交易物、报价、议价文本、赠礼、借贷、典当、接受/拒绝；价格、合法性、库存、关系影响和交易结果全部来自服务器裁决。
+- S84.7 委派任务面板：新增委派任务页或 surface，支持选择 NPC、填写命令、显示所需资源/工具/期限/风险、查看执行中/逾期/已完成任务、阅读 NPC 回禀，并把后续追问、奖惩、复核或立案写入行动草稿。
+- S84.8 前端验收与体验打磨：新增或扩展 React/Vitest 与 browser smoke，覆盖桌面/移动、无横向溢出、资源懒加载、NPC 立绘可见、背包污染扫描、交易/委派不越权、低动效、键盘焦点、Esc 关闭、加载失败 fallback 和按钮文本不溢出。
 
 验收建议：
 
 - 前端不调用 unsafe `/api/game/state/*` 或 dev diagnostics。
 - 前端不在 localStorage/sessionStorage 存完整背包、NPC 私档、交易明细或 prompt。
 - 点击交易、赠礼、委派后，只通过安全 API 获取服务器结果；不在浏览器自行扣银、改关系或完成任务。
+- S84 完成前必须通过 `npm run typecheck:client`、`npm run test:client`、`npm run build:client`、`npm run smoke:browser`、相关 focused Node API tests、`npm run check:docs-governance` 和 `git diff --check`。
 
 ### S85 经济、长期关系与总验收
 

@@ -78,9 +78,10 @@
 
 ## Current Work Note
 
+- 2026-05-20：按用户追问补充 S81-S85 全量小步骤台账，已把 S81.1-S81.5、S82.1-S82.5、S83.1-S83.5、S84.1-S84.8、S85.1-S85.6 全部写入 `docs/DEVELOPMENT_STEPS.md`。用户明确本轮不用子代理审核；本轮为低风险文档台账补充，跳过子代理复审，已通过 docs governance、documentation governance 和 diff check。
 - 2026-05-20：按用户要求新增 S81-S85 NPC、资产与储物系统规划，详见 `docs/NPC_INVENTORY_SYSTEM_ROADMAP.md`；活动台账已加入 S81-S85 TODO，开发治理新增“前后端分离和大步骤拆分”受保护规则，并同步 `scripts/checkGovernanceDocs.js`、brief 与 `AGENTS.md`。本轮为规划/治理改动，需通过 docs governance、documentation governance、diff check，并因修改检查脚本执行只读复审。
 - 2026-05-20：按用户要求压缩 `docs/SHARED_CONTEXT.md` 和 `docs/DEVELOPMENT_STEPS.md`，只保留接手下一步必要的状态、边界、验证入口和归档索引；新增“不要最小实现点/最小改动点，追求完整丰富实现”的开发规范，并写入 `docs/DEVELOPMENT_GOVERNANCE.md`、本文件、活动台账、brief 与 `AGENTS.md`。已通过 `npm run check:docs-governance`、`node --test test/documentationGovernance.test.js`、`npm test`（940 项）和 `git diff --check`；提交前只读复审 Anscombe 未发现 P0/P1/P2。
 
 ## Next Recommended Step
 
-从 S81.1 开始施工 NPC、资产与储物系统：先写可执行契约和测试骨架，再实现 `assetLedger`、`inventoryLedger`、`npcRoster`、`delegatedTasks` 与 SQLite 派生表。不要先做前端假状态；S81-S83 以后端/API/数据/AI 为主，S84 再集中接入 React NPC、背包、交易和委派体验。
+从 S81.1 开始施工 NPC、资产与储物系统：先写可执行契约和测试骨架，再实现 `assetLedger`、`inventoryLedger`、`npcRoster`、`delegatedTasks` 与 SQLite 派生表。台账已列出全部小步骤；不要先做前端假状态，S84.1-S84.8 等稳定安全 API 后再集中接入 React NPC、背包、交易和委派体验。
