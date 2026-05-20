@@ -22,6 +22,7 @@
     "src/game/stateRules.js",
     "src/ai/index.js",
     "src/ai/modelRoutePolicy.js",
+    "src/routes/routeResponses.js",
     "src/storage/sessionRecord.js",
     "src/storage/sessionStore.js",
     "src/storage/jsonSessionAdapter.js",

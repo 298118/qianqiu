@@ -220,6 +220,24 @@ const {
 } = require("../storage/sessionStore");
 const { chunkTextForSse, closeSse, sendSseEvent, writeSseHeaders } = require("../utils/sse");
 const { createJsonStringFieldExtractor } = require("../utils/streamingJson");
+const {
+  defineCommonTurnViews,
+  defineGameStartResponse,
+  defineGameStateResponse,
+  defineGameTurnResponse,
+  defineGameTurnSseStatePreviewResponse,
+  defineInventoryResponse,
+  defineInventoryTransferResponse,
+  defineNpcCommandResponse,
+  defineNpcDetailResponse,
+  defineNpcInteractionResponse,
+  defineNpcListResponse,
+  definePlayerStateResponse,
+  defineSafeWorldSearchResponse,
+  defineSavesResponse,
+  defineTopicSurfaceResponse,
+  defineTradeResponse
+} = require("./routeResponses");
 
 const router = express.Router();
 
@@ -485,7 +503,7 @@ function buildCommonTurnViews(worldState, options = {}) {
   const mapContextView = buildMapContextView(worldState);
   const { settings, routePolicy } = resolveAiSettingsForSession(worldState);
   const aiInvocationSummaryView = buildAiInvocationSummaryView(worldState, routePolicy);
-  return {
+  return defineCommonTurnViews({
     aiSettingsView: redactAiSettingsForClient({ ...settings, routePolicy }),
     aiInvocationSummaryView,
     aiControlAuditView: buildAiControlAuditView(worldState, {
@@ -544,7 +562,7 @@ function buildCommonTurnViews(worldState, options = {}) {
       worldPeopleView,
       officialPostingsView
     })
-  };
+  });
 }
 
 async function runNpcPrivatePlannerForTurn(worldState, routePolicy) {
@@ -727,7 +745,7 @@ function aggregatePayloadList(payloads, key, limit = 40) {
 
 function mergeTimeSkipPayloads(lastPayload, tickResults, timeSkip) {
   const payloads = tickResults.map((result) => result.payload).filter(Boolean);
-  return {
+  return defineGameTurnResponse({
     ...lastPayload,
     narrative: timeSkip.summary,
     timeSkip,
@@ -736,7 +754,7 @@ function mergeTimeSkipPayloads(lastPayload, tickResults, timeSkip) {
     activeNpcRequestEvents: aggregatePayloadList(payloads, "activeNpcRequestEvents", 20),
     npcActiveRequestEvents: aggregatePayloadList(payloads, "npcActiveRequestEvents", 20),
     worldEntityImpacts: aggregatePayloadList(payloads, "worldEntityImpacts", 30)
-  };
+  });
 }
 
 function buildTimeSkipBlockedPayload(worldState, plan, validation, route) {
@@ -749,7 +767,7 @@ function buildTimeSkipBlockedPayload(worldState, plan, validation, route) {
     completedTicks: 0,
     tickResults: []
   }, {}, { route });
-  return {
+  return defineGameTurnResponse({
     sessionId: worldState.sessionId,
     narrative: timeSkip.summary,
     attributeChanges: [],
@@ -779,7 +797,7 @@ function buildTimeSkipBlockedPayload(worldState, plan, validation, route) {
     },
     worldTick: null,
     worldState: buildClientWorldState(worldState)
-  };
+  });
 }
 
 async function processTimeSkipTurn(worldState, input, options = {}) {
@@ -861,7 +879,7 @@ async function finalizeExamSceneTurn(worldState, input, context = null) {
   const worldTick = buildExamSceneFeedback(worldState, scene.sceneTime, scene.event);
   enqueueAuditRecords(context, createExamProgressAuditRecords(worldState, scene));
 
-  return {
+  return defineGameTurnResponse({
     sessionId: worldState.sessionId,
     narrative: scene.narrative,
     attributeChanges: [],
@@ -885,7 +903,7 @@ async function finalizeExamSceneTurn(worldState, input, context = null) {
     examScene: scene.sceneTime,
     worldTick,
     worldState: buildClientWorldState(worldState)
-  };
+  });
 }
 
 async function finalizeTurn(worldState, result, input, auditOptions = {}) {
@@ -1147,7 +1165,7 @@ async function finalizeTurn(worldState, result, input, auditOptions = {}) {
   }));
   appendPeopleEventLinks(context, worldPeopleEvents.rowEventLinks);
 
-  return {
+  return defineGameTurnResponse({
     sessionId: worldState.sessionId,
     narrative: result.narrative,
     attributeChanges: [
@@ -1230,12 +1248,12 @@ async function finalizeTurn(worldState, result, input, auditOptions = {}) {
     examTrigger,
     worldTick: worldTickFeedback,
     worldState: buildClientWorldState(worldState)
-  };
+  });
 }
 
 async function streamTurn(res, sessionId, input) {
   writeSseHeaders(res);
-  sendSseEvent(res, "state_preview", { sessionId, status: "accepted" });
+  sendSseEvent(res, "state_preview", defineGameTurnSseStatePreviewResponse({ sessionId, status: "accepted" }));
   let streamedNarrative = false;
   const narrativeExtractor = createJsonStringFieldExtractor("narrative", (text) => {
     streamedNarrative = true;
@@ -1263,7 +1281,7 @@ async function streamTurn(res, sessionId, input) {
       }
     }
 
-    sendSseEvent(res, "state_preview", {
+    sendSseEvent(res, "state_preview", defineGameTurnSseStatePreviewResponse({
       sessionId: payload.sessionId,
       attributeChanges: payload.attributeChanges,
       relationshipChanges: payload.relationshipChanges,
@@ -1324,7 +1342,7 @@ async function streamTurn(res, sessionId, input) {
       examTrigger: payload.examTrigger,
       examScene: payload.examScene || null,
       worldTick: payload.worldTick
-    });
+    }));
     sendSseEvent(res, "final_state", payload);
   } catch (error) {
     sendSseEvent(res, "error", {
@@ -1392,12 +1410,12 @@ router.post("/start", async (req, res, next) => {
       ]
     });
 
-    res.status(201).json({
+    res.status(201).json(defineGameStartResponse({
       sessionId: worldState.sessionId,
       worldState: buildClientWorldState(worldState),
       ...buildCommonTurnViews(worldState),
       narrative: opening.narrative
-    });
+    }));
   } catch (error) {
     if (!error.statusCode && isAiSettingsValidationError(error)) {
       error.statusCode = 400;
@@ -1410,14 +1428,14 @@ router.get("/state/:sessionId", async (req, res, next) => {
   try {
     const worldState = await readSession(req.params.sessionId);
     ensureRouteProjectionState(worldState);
-    res.json({
+    res.json(defineGameStateResponse({
       sessionId: worldState.sessionId,
       worldState: buildClientWorldState(worldState),
       ...buildCommonTurnViews(worldState, {
         eventArchive: eventArchiveOptionsFromQuery(req.query),
         informationPanel: informationPanelOptionsFromQuery(req.query)
       })
-    });
+    }));
   } catch (error) {
     next(error);
   }
@@ -1432,10 +1450,10 @@ router.get("/player-state/:sessionId", async (req, res, next) => {
       eventArchive: eventArchiveOptionsFromQuery(req.query),
       informationPanel: informationPanelOptionsFromQuery(req.query)
     }));
-    res.json({
+    res.json(definePlayerStateResponse({
       ...buildPlayerStateEnvelope(record),
       ...routeViews
-    });
+    }));
   } catch (error) {
     next(error);
   }
@@ -1445,10 +1463,10 @@ router.get("/topic-surface/:sessionId/:surfaceId", async (req, res, next) => {
   try {
     const worldState = await readSession(req.params.sessionId);
     ensureRouteProjectionState(worldState);
-    res.json({
+    res.json(defineTopicSurfaceResponse({
       sessionId: worldState.sessionId,
       topicSurfaceView: buildTopicSurfaceView(worldState, { surfaceId: req.params.surfaceId })
-    });
+    }));
   } catch (error) {
     next(error);
   }
@@ -1459,19 +1477,19 @@ router.get("/search/:sessionId", async (req, res, next) => {
     const options = safeSearchOptionsFromQuery(req.query);
     const adapter = getSessionStorageAdapter();
     if (typeof adapter.searchSafeSearchIndex === "function") {
-      res.json({
+      res.json(defineSafeWorldSearchResponse({
         sessionId: req.params.sessionId,
         safeWorldSearchView: await adapter.searchSafeSearchIndex(req.params.sessionId, options)
-      });
+      }));
       return;
     }
 
     const worldState = await readSession(req.params.sessionId);
     ensureRouteProjectionState(worldState);
-    res.json({
+    res.json(defineSafeWorldSearchResponse({
       sessionId: worldState.sessionId,
       safeWorldSearchView: searchSafeWorldIndex(worldState, options)
-    });
+    }));
   } catch (error) {
     next(error);
   }
@@ -1481,7 +1499,7 @@ router.get("/inventory/:sessionId", async (req, res, next) => {
   try {
     const worldState = await readSession(req.params.sessionId);
     ensureRouteProjectionState(worldState);
-    res.json({
+    res.json(defineInventoryResponse({
       sessionId: worldState.sessionId,
       resourceLedgerView: buildResourceLedgerView(worldState, {
         viewerActorId: worldState.player?.id || "player"
@@ -1494,7 +1512,7 @@ router.get("/inventory/:sessionId", async (req, res, next) => {
         viewerActorId: worldState.player?.id || "player",
         includeRoleLimited: true
       })
-    });
+    }));
   } catch (error) {
     next(error);
   }
@@ -1515,7 +1533,7 @@ router.post("/inventory-transfer/:sessionId", async (req, res, next) => {
           ownerActorId: worldState.player?.id || "player"
         });
       }
-      return {
+      return defineInventoryTransferResponse({
         sessionId: worldState.sessionId,
         accepted: transfer.accepted,
         reason: transfer.reason,
@@ -1525,7 +1543,7 @@ router.post("/inventory-transfer/:sessionId", async (req, res, next) => {
           viewerActorId: worldState.player?.id || "player",
           includeRoleLimited: true
         })
-      };
+      });
     });
     res.status(payload.accepted ? 200 : 400).json(payload);
   } catch (error) {
@@ -1537,7 +1555,7 @@ router.get("/npcs/:sessionId", async (req, res, next) => {
   try {
     const worldState = await readSession(req.params.sessionId);
     ensureRouteProjectionState(worldState);
-    res.json({
+    res.json(defineNpcListResponse({
       sessionId: worldState.sessionId,
       npcRosterView: buildNpcRosterView(worldState, {
         page: req.query.page,
@@ -1547,7 +1565,7 @@ router.get("/npcs/:sessionId", async (req, res, next) => {
       }),
       npcInteractionView: buildNpcInteractionLedgerView(worldState),
       delegatedTaskView: buildDelegatedTaskLedgerView(worldState)
-    });
+    }));
   } catch (error) {
     next(error);
   }
@@ -1564,13 +1582,13 @@ router.get("/npc/:sessionId/:npcId", async (req, res, next) => {
     if (!npcDetailView) {
       throw createRouteError(404, "NPC not found");
     }
-    res.json({
+    res.json(defineNpcDetailResponse({
       sessionId: worldState.sessionId,
       npcDetailView,
       npcInteractionView: buildNpcInteractionLedgerView(worldState, { npcId: req.params.npcId }),
       tradeLedgerView: buildTradeLedgerView(worldState, { npcId: req.params.npcId }),
       delegatedTaskView: buildDelegatedTaskLedgerView(worldState)
-    });
+    }));
   } catch (error) {
     next(error);
   }
@@ -1583,12 +1601,12 @@ router.post("/npc-interaction/:sessionId", async (req, res, next) => {
       const validation = validateNpcInteractionRequest(worldState, req.body);
       if (!validation.ok) {
         const recorded = recordNpcInteraction(worldState, req.body, {});
-        return {
+        return defineNpcInteractionResponse({
           sessionId: worldState.sessionId,
           accepted: false,
           errors: validation.errors,
           npcInteractionView: recorded.npcInteractionView
-        };
+        });
       }
 
       const { routePolicy } = resolveAiSettingsForSession(worldState);
@@ -1613,7 +1631,7 @@ router.post("/npc-interaction/:sessionId", async (req, res, next) => {
         ...recorded.errors,
         ...(relationshipAction && !relationshipAction.ok ? relationshipAction.errors : [])
       ];
-      return {
+      return defineNpcInteractionResponse({
         sessionId: worldState.sessionId,
         accepted: recorded.ok && (!relationshipAction || relationshipAction.ok),
         errors: responseErrors,
@@ -1629,7 +1647,7 @@ router.post("/npc-interaction/:sessionId", async (req, res, next) => {
           worldState,
           buildNpcDetailView(worldState, validation.normalized.npcId)
         )
-      };
+      });
     });
     res.status(payload.accepted ? 200 : 400).json(payload);
   } catch (error) {
@@ -1651,7 +1669,7 @@ router.post("/trade/:sessionId", async (req, res, next) => {
             riskTags: []
           }
         });
-        return {
+        return defineTradeResponse({
           sessionId: worldState.sessionId,
           accepted: false,
           errors: resolved.errors,
@@ -1664,7 +1682,7 @@ router.post("/trade/:sessionId", async (req, res, next) => {
             viewerActorId: worldState.player?.id || "player",
             includeRoleLimited: true
           })
-        };
+        });
       }
       const { routePolicy } = resolveAiSettingsForSession(worldState);
       const route = resolveModelForTask("trade_negotiator", routePolicy);
@@ -1679,7 +1697,7 @@ router.post("/trade/:sessionId", async (req, res, next) => {
         maxOutputTokens: route.maxOutputTokens
       });
       const resolved = resolveTradeRequest(worldState, req.body, negotiation);
-      return {
+      return defineTradeResponse({
         sessionId: worldState.sessionId,
         accepted: resolved.ok,
         errors: resolved.errors,
@@ -1692,7 +1710,7 @@ router.post("/trade/:sessionId", async (req, res, next) => {
           viewerActorId: worldState.player?.id || "player",
           includeRoleLimited: true
         })
-      };
+      });
     });
     res.status(payload.accepted ? 200 : 400).json(payload);
   } catch (error) {
@@ -1709,12 +1727,12 @@ router.post("/npc-command/:sessionId", async (req, res, next) => {
         issuerActorId: worldState.player?.id || "player"
       });
       if (!validation.ok) {
-        return {
+        return defineNpcCommandResponse({
           sessionId: worldState.sessionId,
           accepted: false,
           errors: validation.errors,
           delegatedTaskView: buildDelegatedTaskLedgerView(worldState)
-        };
+        });
       }
 
       const { routePolicy } = resolveAiSettingsForSession(worldState);
@@ -1745,12 +1763,12 @@ router.post("/npc-command/:sessionId", async (req, res, next) => {
       });
       const safePlan = sanitizeDelegatedTaskPlan(plan);
       if (!safePlan.ok) {
-        return {
+        return defineNpcCommandResponse({
           sessionId: worldState.sessionId,
           accepted: false,
           errors: safePlan.errors,
           delegatedTaskView: buildDelegatedTaskLedgerView(worldState)
-        };
+        });
       }
 
       const request = {
@@ -1763,7 +1781,7 @@ router.post("/npc-command/:sessionId", async (req, res, next) => {
         ? createLandSurveyDelegatedTask(worldState, request)
         : createDelegatedTask(worldState, request);
       const safeTask = created.delegatedTaskView.items.find((task) => task.taskId === created.task?.taskId) || null;
-      return {
+      return defineNpcCommandResponse({
         sessionId: worldState.sessionId,
         accepted: created.ok,
         errors: created.errors,
@@ -1776,7 +1794,7 @@ router.post("/npc-command/:sessionId", async (req, res, next) => {
         },
         delegatedTask: safeTask,
         delegatedTaskView: created.delegatedTaskView
-      };
+      });
     });
     res.status(payload.accepted ? 200 : 400).json(payload);
   } catch (error) {
@@ -1786,7 +1804,7 @@ router.post("/npc-command/:sessionId", async (req, res, next) => {
 
 router.get("/saves", async (req, res, next) => {
   try {
-    res.json(await listSessions());
+    res.json(defineSavesResponse(await listSessions()));
   } catch (error) {
     next(error);
   }
@@ -1801,7 +1819,7 @@ router.post("/turn", async (req, res, next) => {
       return;
     }
 
-    res.json(await processTurn(sessionId, input));
+    res.json(defineGameTurnResponse(await processTurn(sessionId, input)));
   } catch (error) {
     next(error);
   }

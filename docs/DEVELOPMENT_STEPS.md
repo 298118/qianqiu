@@ -17,7 +17,7 @@
 - S73-S77 前端水墨重构、React/Vite 默认入口、首页/全局 shell、身份/考试/放榜/舆图/人物页面、立绘管线、安全/性能/可访问性和总验证：[FRONTEND_INK_REDESIGN_ARCHIVE.md](FRONTEND_INK_REDESIGN_ARCHIVE.md)，素材台账见 [FRONTEND_ASSET_LEDGER.md](FRONTEND_ASSET_LEDGER.md)。
 - S81-S85 NPC、资产、储物、交易、委派、经济、NPC 主动性和礼法扩展位：[NPC_INVENTORY_SYSTEM_ARCHIVE.md](NPC_INVENTORY_SYSTEM_ARCHIVE.md)，规划见 [NPC_INVENTORY_SYSTEM_ROADMAP.md](NPC_INVENTORY_SYSTEM_ROADMAP.md)，契约见 [NPC_INVENTORY_SYSTEM_CONTRACT.md](NPC_INVENTORY_SYSTEM_CONTRACT.md)。
 - S86 后端 TypeScript 渐进迁移与 Rust 使用边界：规划见 [TYPESCRIPT_BACKEND_MIGRATION_ROADMAP.md](TYPESCRIPT_BACKEND_MIGRATION_ROADMAP.md)，完成归档见 [TYPESCRIPT_BACKEND_MIGRATION_ARCHIVE.md](TYPESCRIPT_BACKEND_MIGRATION_ARCHIVE.md)。
-- S87 后端 route/API 响应类型覆盖：规划见 [TYPESCRIPT_ROUTE_RESPONSE_COVERAGE_ROADMAP.md](TYPESCRIPT_ROUTE_RESPONSE_COVERAGE_ROADMAP.md)。
+- S87 后端 route/API 响应类型覆盖：规划见 [TYPESCRIPT_ROUTE_RESPONSE_COVERAGE_ROADMAP.md](TYPESCRIPT_ROUTE_RESPONSE_COVERAGE_ROADMAP.md)，完成归档见 [TYPESCRIPT_ROUTE_RESPONSE_COVERAGE_ARCHIVE.md](TYPESCRIPT_ROUTE_RESPONSE_COVERAGE_ARCHIVE.md)。
 
 2026-05-14 起，按用户要求停止与 Gemini CLI 共同开发；后续开发全部由 Codex 负责。远程存档、账号体系、多人同步、云端冲突解决和托管数据库不进入当前规划。
 
@@ -106,21 +106,21 @@
 
 ## 4. 活动路线图总览
 
-S87 后端 route/API 响应类型覆盖已启动规划，目标是在不一次性重写大型 route 文件的前提下，把 `buildCommonTurnViews`、game route、exam route 和 AI route 的 public response shape 纳入 TypeScript/JSDoc 检查。S86.1-S86.7 已完成并归档到 [TYPESCRIPT_BACKEND_MIGRATION_ARCHIVE.md](TYPESCRIPT_BACKEND_MIGRATION_ARCHIVE.md)，S87 规划见 [TYPESCRIPT_ROUTE_RESPONSE_COVERAGE_ROADMAP.md](TYPESCRIPT_ROUTE_RESPONSE_COVERAGE_ROADMAP.md)。
+S87 后端 route/API 响应类型覆盖已完成并归档，目标是在不一次性重写大型 route 文件的前提下，把 `buildCommonTurnViews`、game route、exam route 和 AI route 的 public response shape 纳入 TypeScript/JSDoc 检查。S86.1-S86.7 已完成并归档到 [TYPESCRIPT_BACKEND_MIGRATION_ARCHIVE.md](TYPESCRIPT_BACKEND_MIGRATION_ARCHIVE.md)，S87 完成范围见 [TYPESCRIPT_ROUTE_RESPONSE_COVERAGE_ARCHIVE.md](TYPESCRIPT_ROUTE_RESPONSE_COVERAGE_ARCHIVE.md)。
 
 | ID | 状态 | 目标 | 范围 / 下一步 |
 | --- | --- | --- | --- |
-| S87.1 | TODO | Route response contract 扩展 | 扩展 `src/contracts/serverContracts.ts`，补 common route envelope、turn response、安全 route views、inventory/NPC/trade/delegation/exam/AI route 的 public response 轮廓，并补 typecheck fixture 断言 raw ledger 不可进入玩家 response。 |
-| S87.2 | TODO | `buildCommonTurnViews` 局部类型边界 | 给 `src/routes/game.js` 的共享 view 聚合点补局部 JSDoc typedef 或小型 response builder helper；不得整文件 `@ts-check`。 |
-| S87.3 | TODO | start/state/player-state/turn response 对齐 | 对齐 start、player-state、兼容 state、turn 和 SSE 完整 JSON payload，保护 metadata、redaction 和兼容 `worldState` 剥离口径。 |
-| S87.4 | TODO | Inventory/NPC/trade/delegation route payload 类型 | 覆盖 inventory、NPC、interaction、trade 和 npc-command response shape，固定服务器裁决字段和公开 view。 |
-| S87.5 | TODO | Exam route payload 类型 | 覆盖 exam question/progress/submit 与 `toExamPayload` 输出，确保 examProcedure/examinerPanel/examHonor/appointmentTrack 等 view 与前端消费一致。 |
-| S87.6 | TODO | AI route response 类型 | 覆盖 global/session settings、quick-actions 和 topic-draft response shape，固定 provider/key 脱敏、scope、route policy view 和草稿建议边界。 |
-| S87.7 | TODO | S87 验收与归档 | 汇总 typecheck、focused route tests、docs governance、client typecheck 或 smoke 证据；更新 brief、README、共享上下文和台账，并决定下一轮 AI remote helper payload / SQLite build row 类型覆盖。 |
+| S87.1 | DONE | Route response contract 扩展 | 已扩展 `src/contracts/serverContracts.ts`，补 common route envelope、turn response、安全 route views、inventory/NPC/trade/delegation/exam/AI route 的 public response 轮廓，并补 typecheck fixture 断言 raw ledger 不可进入玩家 response。 |
+| S87.2 | DONE | `buildCommonTurnViews` 局部类型边界 | 已新增 `src/routes/routeResponses.js` 局部 `@ts-check` response helper，`buildCommonTurnViews` 返回 `CommonTurnViews`；未对大型 route 文件整文件 `@ts-check`。 |
+| S87.3 | DONE | start/state/player-state/turn response 对齐 | 已对齐 start、player-state、兼容 state、turn 和 SSE 完整 JSON payload，保护 metadata、redaction、SSE preview 和兼容 `worldState` raw ledger 剥离口径。 |
+| S87.4 | DONE | Inventory/NPC/trade/delegation route payload 类型 | 已覆盖 inventory、NPC、interaction、trade 和 npc-command response shape，固定服务器裁决字段和公开 view。 |
+| S87.5 | DONE | Exam route payload 类型 | 已覆盖 exam question/progress/submit 与 `toExamPayload` 输出，确保 examProcedure/examinerPanel/examHonor/appointmentTrack 等 view 与前端消费一致。 |
+| S87.6 | DONE | AI route response 类型 | 已覆盖 global/session settings、connection-test、quick-actions 和 topic-draft response shape，固定 provider/key 脱敏、scope、route policy view 和草稿建议边界。 |
+| S87.7 | DONE | S87 验收与归档 | 已汇总 typecheck、focused route tests、docs governance、完整测试和只读复审证据；已更新 brief、README、共享上下文和台账，并将下一轮建议定为 AI remote helper payload / SQLite build row 类型覆盖。 |
 
 ## 5. 最新状态
 
-- S87 当前规划：新增后端 route/API 响应类型覆盖专项。下一步从 S87.1 开始，先扩展 `src/contracts/serverContracts.ts` 的 public response contract，再给 `src/routes/game.js` 的 `buildCommonTurnViews` 补局部 JSDoc typedef；不做大型 route whole-file `@ts-check`，也不改变 CommonJS 运行方式。
+- S87 当前基线：后端 route/API 响应类型覆盖已完成。`src/contracts/serverContracts.ts` 已覆盖 game/exam/AI/inventory/NPC/trade/delegation public response；`src/routes/routeResponses.js` 以局部 `@ts-check` helper 接入 `src/routes/game.js`、`src/routes/exam.js` 和 `src/routes/ai.js`，并在运行时拒绝 public `worldState` raw ledger key；大型 route 文件仍未 whole-file `@ts-check`，CommonJS 运行方式不变。
 - S86 当前基线：后端 TypeScript 渐进迁移首轮已完成。新增 `npm run typecheck:server`、`npm run build:server:probe`、`tsconfig.server-check.json`、`tsconfig.server-probe.json`、`src/contracts/serverContracts.ts` 和 `src/contracts/runtimeGuards.ts`；安全 projection、AI facade/route policy、session/storage 高风险模块已选择性 `@ts-check`。后端仍以 CommonJS JavaScript 运行，`.ts` 试点不改变 `npm start`，Rust 仍只作为未来有性能证据后的可选 CLI/WASM/离线工具评估。
 - S81-S84 当前基线：NPC、资产、储物、交易与委派首轮闭环已完成。后端已有 `assetLedger`、`inventoryLedger`、`npcRoster`、`npcInteractionLedger`、`tradeLedger`、`delegatedTaskLedger`、开局背景裁决、AI task/schema/prompt/provider fallback、JSON/SQLite 同步和 player-state 安全 view；React 已有“囊箧” route、人物 NPC 工作台、对话/交易/委派面板和开局裁决摘要。前端只消费安全 API/view，不裁决资源、价格、关系或任务结果。
 - S85 当前基线：`npcEconomy` 已在普通回合和跳时共享的旬/月 tick 后运行，非月末刷新基础市价，月末再结算资产维护/收益、库存损耗、委派到期回禀、逾期交易承诺、人情债与 NPC 关系记忆；考试入场/场内场景不跑全局经济；委派预算由服务器校验不得超过地方库银，月结旧任务也按有效预算参与成功率和扣款；`marketPriceView` / `npcEconomyView` 进入 turn、SSE、player-state 和县令主卷，raw `marketPriceLedger` / `npcEconomyLedger` 与内部 ledger path 已从兼容 `worldState`、玩家 API 和 S85 反馈中剥离。`npcActiveRequestLedger` / `npcActiveRequestView` 已让 NPC 主动来函进入普通回合、SSE、考试和 player-state；`npcRelationshipActions` 已让论道、切磋、求爱和婚姻扩展位具备服务器 schema、权限、NPC eligibility view、UI“礼法”tab 和红队测试。
@@ -251,6 +251,15 @@ S84 前端专项额外验收入口：
 - `npm test`
 
 ## 7. 近期进度记录
+
+### 2026-05-20：完成 S87.1-S87.7 route/API 响应类型覆盖
+
+- 范围：完成 S87.1-S87.7，新增 [TYPESCRIPT_ROUTE_RESPONSE_COVERAGE_ARCHIVE.md](TYPESCRIPT_ROUTE_RESPONSE_COVERAGE_ARCHIVE.md)，扩展 `src/contracts/serverContracts.ts` 的 game/exam/AI/inventory/NPC/trade/delegation public response contract，并让 `serverContracts.typecheck.ts` 断言 start/state/turn/exam response 的 `worldState` 拒绝 raw ledger key。
+- 实现：新增 `src/routes/routeResponses.js` 局部 `@ts-check` response helper，接入 `src/routes/game.js`、`src/routes/exam.js` 和 `src/routes/ai.js`；`buildCommonTurnViews`、start/saves/state/player-state/turn/SSE、inventory/NPC/trade/delegation、exam question/progress/submit、AI connection-test/settings/quick-actions/topic-draft 都有对应 public response helper。helper 运行时拒绝 public `worldState` 出现 `actorMemoryLedger`、`sessionSummary`、资产/背包/NPC/交易/委派/经济/主动来函等 raw ledger key。
+- 边界：未对 `src/routes/game.js`、`src/routes/exam.js` 或 `src/routes/ai.js` 启用 whole-file `@ts-check`，未改变 `npm start` CommonJS 运行方式，未放宽安全 projection、raw ledger 剥离、Ajv/runtime 校验或服务器裁决。AI settings POST 继续保留现有兼容 `settings` / `routePolicy` 字段，但 contract 明确为 public-safe response；前端仍应优先依赖 `aiSettingsView` / `aiInvocationSummaryView` / `aiControlAuditView`。
+- 验证：已通过 `node --check src/routes/game.js`、`node --check src/routes/exam.js`、`node --check src/routes/ai.js`、`node --check src/routes/routeResponses.js`、`npm run typecheck:server`、`npm run build:server:probe`、`npm run typecheck:client`、`npm run check:docs-governance`、`node --test test/documentationGovernance.test.js`、`node --test test/routeResponseContracts.test.js test/gamePlayerStateRoute.test.js test/gameSavesRoute.test.js test/npcInventoryRoutes.test.js test/quickActionRoute.test.js test/topicDraftRoute.test.js test/aiSettingsRoute.test.js`、`node --test test/examTravel.test.js test/mapRuntimeRoute.test.js test/streamingTurnRoute.test.js test/actorMemoryRoute.test.js`、`node --test test/aiControlRedTeam.test.js test/examHonorsRoute.test.js test/appointmentTracksRoute.test.js test/gameSavesRoute.test.js test/safeWorldSearch.test.js test/topicSurfaceView.test.js`、`npm test`（985 项）和 `git diff --check`。
+- 子代理：Einstein 提交前只读复审未发现 P0/P1；指出 1 个 P2（`GET /api/game/saves` 未接 `SavesResponse` helper）和 1 个 player-state 类型负例缺口。主代理已补 `defineSavesResponse`、接入 saves route，并让 `PlayerVisibleState` / typecheck fixture 明确拒绝 raw ledger key；修复后 focused tests、typecheck 和完整 `npm test` 已重新通过。
+- 下一步：建议开新专项覆盖 AI remote helper payload 与 SQLite derived build row 类型边界，继续使用 contract / 局部 helper / focused tests 的渐进方式，不一次性重写稳定 CommonJS 模块。
 
 ### 2026-05-20：新增 S87 route/API 响应类型覆盖规划
 

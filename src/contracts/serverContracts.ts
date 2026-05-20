@@ -1,5 +1,5 @@
 export type JsonPrimitive = string | number | boolean | null;
-export type JsonValue = JsonPrimitive | JsonObject | JsonValue[];
+export type JsonValue = JsonPrimitive | JsonObject | readonly JsonValue[];
 export type JsonObject = { readonly [key: string]: JsonValue };
 
 export type GameRole = "scholar" | "official" | "emperor" | "minister" | "general" | "magistrate";
@@ -161,6 +161,10 @@ export type SaveListEntry = SessionMetadata & {
   readonly updatedAt: string;
 };
 
+export type RawLedgerExcludedFields = {
+  readonly [K in RawLedgerKey]?: never;
+};
+
 export type PlayerVisibleState = Pick<
   WorldState,
   | "sessionId"
@@ -172,6 +176,7 @@ export type PlayerVisibleState = Pick<
   | "activeExam"
 > & {
   readonly player: WorldStatePlayer;
+} & RawLedgerExcludedFields & {
   readonly [key: string]: unknown;
 };
 
@@ -255,17 +260,298 @@ export type GameStateResponse = SafeRouteViews & {
   readonly worldState: RawLedgerExcludedWorldState;
 };
 
-export type PlayerStateResponse = PlayerStateEnvelope & {
-  readonly routeViews?: SafeRouteViews;
+export type PlayerStateResponse = PlayerStateEnvelope & SafeRouteViews;
+
+export type CommonTurnViews = SafeRouteViews;
+
+export type RouteEnvelope = {
+  readonly sessionId: string;
 };
 
-export type GameTurnResponse = SafeRouteViews & {
-  readonly sessionId: string;
+export type RouteErrorPayload = {
+  readonly error?: string;
+  readonly message?: string;
+  readonly details?: JsonValue;
+};
+
+export type TopicSurfaceResponse = RouteEnvelope & {
+  readonly topicSurfaceView: JsonObject;
+};
+
+export type SafeWorldSearchResponse = RouteEnvelope & {
+  readonly safeWorldSearchView: JsonObject;
+};
+
+export type SavesResponse = {
+  readonly saves: readonly SaveListEntry[];
+  readonly skipped: readonly JsonObject[];
+};
+
+export type InventoryResponse = RouteEnvelope & {
+  readonly resourceLedgerView?: JsonObject;
+  readonly assetLedgerView?: JsonObject;
+  readonly inventoryView: JsonObject;
+};
+
+export type InventoryTransferResponse = RouteEnvelope & {
+  readonly accepted: boolean;
+  readonly reason?: string;
+  readonly fromContainerId?: string | null;
+  readonly toContainerId?: string | null;
+  readonly inventoryView: JsonObject;
+};
+
+export type NpcListResponse = RouteEnvelope & {
+  readonly npcRosterView: JsonObject;
+  readonly npcInteractionView?: JsonObject;
+  readonly delegatedTaskView?: JsonObject;
+};
+
+export type NpcDetailResponse = RouteEnvelope & {
+  readonly npcDetailView: JsonObject;
+  readonly npcInteractionView?: JsonObject;
+  readonly tradeLedgerView?: JsonObject;
+  readonly delegatedTaskView?: JsonObject;
+};
+
+export type NpcInteractionResponse = RouteEnvelope & {
+  readonly accepted: boolean;
+  readonly errors?: readonly string[];
+  readonly npcDialogueView?: JsonObject;
+  readonly npcActionResolutionView?: JsonObject | null;
+  readonly npcInteractionView: JsonObject;
+  readonly npcDetailView?: JsonObject | null;
+};
+
+export type TradeResponse = RouteEnvelope & {
+  readonly accepted: boolean;
+  readonly errors?: readonly string[];
+  readonly tradeRecord?: JsonObject;
+  readonly tradeLedgerView: JsonObject;
+  readonly resourceLedgerView?: JsonObject;
+  readonly inventoryView?: JsonObject;
+};
+
+export type NpcCommandResponse = RouteEnvelope & {
+  readonly accepted: boolean;
+  readonly errors?: readonly string[];
+  readonly delegatedTaskPlanView?: JsonObject;
+  readonly delegatedTask?: JsonObject | null;
+  readonly delegatedTaskView: JsonObject;
+};
+
+export type RouteFeedbackView = {
+  readonly schemaVersion?: string;
+  readonly cadence?: string;
+  readonly summary?: string;
+  readonly events?: readonly JsonValue[];
+  readonly attributeChanges?: readonly JsonObject[];
+  readonly outcome?: JsonObject | null;
+  readonly [key: string]: JsonValue | undefined;
+};
+
+export type LongTermEventFeedbackView = RouteFeedbackView & {
+  readonly scheduled?: readonly JsonObject[];
+  readonly resolved?: readonly JsonObject[];
+};
+
+export type PlayerMonthlyBriefingFeedbackView = {
+  readonly generated: boolean;
+  readonly summary: string;
+  readonly events: readonly JsonValue[];
+  readonly reportId: string | null;
+};
+
+export type ActorMemoryFeedbackView = {
+  readonly appliedCount?: number;
+  readonly reinforcedCount?: number;
+  readonly rejectedCount?: number;
+  readonly rejectedReasons?: readonly string[];
+  readonly decayed?: number;
+  readonly removed?: number;
+};
+
+export type SessionSummaryFeedbackView = {
+  readonly updated?: boolean;
+  readonly reason?: string;
+  readonly summaryId?: string | null;
+  readonly publicSummary?: string;
+};
+
+export type GameTurnResponse = SafeRouteViews & RouteEnvelope & {
   readonly narrative?: string;
   readonly changes?: readonly string[];
+  readonly attributeChanges?: readonly JsonObject[];
+  readonly relationshipChanges?: readonly JsonObject[];
+  readonly activeNpcRequestEvents?: readonly JsonValue[];
+  readonly npcActiveRequestEvents?: readonly JsonValue[];
+  readonly worldEntityImpacts?: readonly JsonValue[];
   readonly worldState: RawLedgerExcludedWorldState;
-  readonly worldTick?: JsonObject;
+  readonly worldTick?: JsonObject | null;
   readonly feedback?: JsonObject;
+  readonly npcActiveRequests?: RouteFeedbackView;
+  readonly npcEconomy?: RouteFeedbackView;
+  readonly roleWorldCoupling?: RouteFeedbackView;
+  readonly longTermEvents?: LongTermEventFeedbackView;
+  readonly officialCareer?: RouteFeedbackView;
+  readonly playerMonthlyBriefing?: PlayerMonthlyBriefingFeedbackView;
+  readonly actorMemory?: ActorMemoryFeedbackView;
+  readonly sessionSummary?: SessionSummaryFeedbackView;
+  readonly timeSkip?: JsonObject | null;
+  readonly examTrigger?: JsonObject | null;
+  readonly examScene?: JsonObject | null;
+};
+
+export type GameTurnSseStatePreviewResponse = SafeRouteViews & {
+  readonly sessionId: string;
+  readonly status?: "accepted";
+  readonly attributeChanges?: readonly JsonObject[];
+  readonly relationshipChanges?: readonly JsonObject[];
+  readonly activeNpcRequestEvents?: readonly JsonValue[];
+  readonly npcActiveRequestEvents?: readonly JsonValue[];
+  readonly worldEntityImpacts?: readonly JsonValue[];
+  readonly npcActiveRequests?: RouteFeedbackView;
+  readonly npcEconomy?: RouteFeedbackView;
+  readonly roleWorldCoupling?: RouteFeedbackView;
+  readonly longTermEvents?: LongTermEventFeedbackView;
+  readonly officialCareer?: RouteFeedbackView;
+  readonly playerMonthlyBriefing?: PlayerMonthlyBriefingFeedbackView;
+  readonly actorMemory?: ActorMemoryFeedbackView;
+  readonly sessionSummary?: SessionSummaryFeedbackView;
+  readonly timeSkip?: JsonObject | null;
+  readonly examTrigger?: JsonObject | null;
+  readonly examScene?: JsonObject | null;
+  readonly worldTick?: JsonObject | null;
+  readonly worldState?: never;
+};
+
+export type ExamWordCount =
+  | number
+  | {
+      readonly min?: number;
+      readonly max?: number;
+      readonly target?: number;
+      readonly recommended?: number;
+    };
+
+export type ExamPayload = SafeRouteViews & RouteEnvelope & {
+  readonly examId: string;
+  readonly level: string;
+  readonly examName: string;
+  readonly examQuestion: string;
+  readonly questionType?: string;
+  readonly difficulty?: string;
+  readonly requirements?: JsonValue;
+  readonly wordCount?: ExamWordCount;
+  readonly passScore?: number;
+  readonly promotionRank?: string;
+  readonly readiness?: JsonObject;
+  readonly entryPreparation?: JsonObject | null;
+  readonly examCalendar?: JsonObject | null;
+  readonly sceneTime?: JsonObject | null;
+  readonly worldState: RawLedgerExcludedWorldState;
+};
+
+export type ExamQuestionResponse = ExamPayload;
+
+export type ExamProgressResponse = ExamPayload & {
+  readonly narrative?: string;
+  readonly examScene?: JsonObject | null;
+  readonly worldTick?: JsonObject | null;
+};
+
+export type ExamSubmitResponse = SafeRouteViews & RouteEnvelope & {
+  readonly examId: string;
+  readonly level: string;
+  readonly examName: string;
+  readonly examQuestion: string;
+  readonly essay?: string;
+  readonly entryPreparation?: JsonObject | null;
+  readonly examCalendar?: JsonObject | null;
+  readonly sceneTime?: JsonObject | null;
+  readonly examStartedAt?: string;
+  readonly examSubmittedAt?: string;
+  readonly score?: JsonObject;
+  readonly scoreBeforeExaminerReview?: JsonObject;
+  readonly authenticityCheck?: JsonObject;
+  readonly virtualCandidates?: readonly JsonObject[];
+  readonly ranking?: readonly JsonObject[];
+  readonly promotionResult?: JsonObject;
+  readonly cohortResult?: JsonObject;
+  readonly actorMemory?: ActorMemoryFeedbackView;
+  readonly worldState: RawLedgerExcludedWorldState;
+};
+
+export type AiSettingsView = {
+  readonly schemaVersion?: string;
+  readonly preset?: string;
+  readonly presetLabel?: string;
+  readonly presets?: readonly JsonObject[];
+  readonly providerOptions?: readonly JsonObject[];
+  readonly controls?: JsonObject;
+  readonly taskRoutes?: readonly JsonObject[];
+  readonly safeguards?: JsonObject;
+  readonly [key: string]: JsonValue | undefined;
+};
+
+export type AiSettingsRouteResponse = RouteEnvelope & {
+  readonly targetSessionId?: string | null;
+  readonly scope: "global" | "session" | string;
+  readonly updatedAt?: string | null;
+  readonly globalSettingsExists?: boolean;
+  readonly settings?: JsonObject;
+  readonly routePolicy?: AiModelRoutePolicy;
+  readonly aiSettingsView: AiSettingsView;
+  readonly aiInvocationSummaryView?: JsonObject;
+  readonly aiControlAuditView?: JsonObject;
+};
+
+export type AiConnectionTestResponse = {
+  readonly ok: boolean;
+  readonly provider: string;
+  readonly configuredProvider?: string;
+  readonly checkedAt?: string;
+  readonly latencyMs?: number;
+  readonly supportsStreaming?: boolean;
+  readonly models?: JsonObject;
+  readonly openingEventCount?: number;
+  readonly narrativePreview?: string;
+  readonly error?: string;
+};
+
+export type QuickActionSource = "local-rule" | "mock-ai" | "provider-ai";
+
+export type QuickActionSuggestionView = {
+  readonly id: string;
+  readonly source: QuickActionSource;
+  readonly sourceLabel?: string;
+  readonly title: string;
+  readonly label: string;
+  readonly text: string;
+  readonly roleTags: readonly string[];
+  readonly toolIntent?: string;
+  readonly evidenceRefs?: readonly string[];
+  readonly status?: "ready" | "loading" | "failed" | "stale" | "applied";
+};
+
+export type QuickActionResponse = RouteEnvelope & {
+  readonly schemaVersion: string;
+  readonly generatedAtTurn?: number;
+  readonly source: QuickActionSource;
+  readonly status: "ready" | "fallback";
+  readonly stale?: boolean;
+  readonly fallbackReason?: string;
+  readonly quickActionSuggestions: readonly QuickActionSuggestionView[];
+};
+
+export type TopicDraftResponse = RouteEnvelope & {
+  readonly schemaVersion: string;
+  readonly generatedAtTurn?: number;
+  readonly surfaceId: string;
+  readonly source: QuickActionSource;
+  readonly status: "ready" | "fallback";
+  readonly fallbackReason?: string;
+  readonly topicDraft: JsonObject;
 };
 
 export type AiModelRoute = {

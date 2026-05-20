@@ -2,6 +2,8 @@
 
 本文是 S86 后端 TypeScript 渐进迁移后的下一轮专项。目标不是把大型 route 文件一次性改成 TypeScript，而是先把最容易漂移、最影响前端和安全边界的 route/API response shape 纳入可检查契约。
 
+状态：S87.1-S87.7 已完成。完成范围、验证证据和后续建议见 [TYPESCRIPT_ROUTE_RESPONSE_COVERAGE_ARCHIVE.md](TYPESCRIPT_ROUTE_RESPONSE_COVERAGE_ARCHIVE.md)。
+
 ## 1. 当前判断
 
 S86 已建立 `npm run typecheck:server`、`src/contracts/serverContracts.ts`、`src/contracts/runtimeGuards.ts` 和少量高风险模块的选择性 `@ts-check`。当前后端仍以 CommonJS JavaScript 运行，`npm start` 不依赖 `dist/server`。
@@ -36,13 +38,13 @@ S86 已建立 `npm run typecheck:server`、`src/contracts/serverContracts.ts`、
 
 | ID | 状态 | 目标 | 范围 |
 | --- | --- | --- | --- |
-| S87.1 | TODO | Route response contract 扩展 | 扩展 `src/contracts/serverContracts.ts`，补 common route envelope、turn response、安全 route views、inventory/NPC/trade/delegation/exam/AI route 的 public response 轮廓；补 typecheck fixture 断言 raw ledger 不可进入玩家 response。 |
-| S87.2 | TODO | `buildCommonTurnViews` 局部类型边界 | 给 `src/routes/game.js` 内 `buildCommonTurnViews` 及其返回值增加局部 JSDoc typedef 或小型 response builder helper；先覆盖共享 view bundle，不整文件 `@ts-check`。 |
-| S87.3 | TODO | start/state/player-state/turn response 对齐 | 对齐 `POST /api/game/start`、`GET /api/game/player-state/:sessionId`、兼容 `GET /api/game/state/:sessionId`、`POST /api/game/turn` 和 SSE 完整 JSON payload 的类型边界，保护 metadata、redaction 和兼容 `worldState` 剥离口径。 |
-| S87.4 | TODO | Inventory/NPC/trade/delegation route payload 类型 | 覆盖 `inventory`、`inventory-transfer`、`npcs`、`npc`、`npc-interaction`、`trade`、`npc-command` response shape，固定服务器裁决字段和公开 view，拒绝客户端伪造 outcome、资源、关系或任务结果。 |
-| S87.5 | TODO | Exam route payload 类型 | 覆盖 `POST /api/exam/question|progress|submit` 的 payload 与 `toExamPayload` 输出，确保 examProcedure/examinerPanel/examHonor/appointmentTrack 等 view 与前端消费类型一致。 |
-| S87.6 | TODO | AI route response 类型 | 覆盖 `GET/POST /api/ai/settings/global`、兼容 session settings、`quick-actions` 和 `topic-draft` response shape，固定 provider/key 脱敏、scope、route policy view 和草稿建议边界。 |
-| S87.7 | TODO | S87 验收与归档 | 汇总 typecheck、focused route tests、docs governance、client typecheck 或 smoke 证据；更新 brief、README、共享上下文和活动台账；必要时归档 S87 并列出下一轮 AI remote helper payload / SQLite derived build row 类型覆盖。 |
+| S87.1 | DONE | Route response contract 扩展 | 已扩展 `src/contracts/serverContracts.ts`，补 common route envelope、turn response、安全 route views、inventory/NPC/trade/delegation/exam/AI route 的 public response 轮廓；`serverContracts.typecheck.ts` 已断言 raw ledger 不可进入玩家 response。 |
+| S87.2 | DONE | `buildCommonTurnViews` 局部类型边界 | 已新增 `src/routes/routeResponses.js` 局部 `@ts-check` response helper，并让 `buildCommonTurnViews` 返回 `CommonTurnViews`；大型 route 文件未整文件 `@ts-check`。 |
+| S87.3 | DONE | start/state/player-state/turn response 对齐 | 已对齐 start、saves、player-state、兼容 state、turn 和 SSE payload helper，保护 metadata、redaction、SSE preview 不含 `worldState` 和兼容 `worldState` raw ledger 剥离。 |
+| S87.4 | DONE | Inventory/NPC/trade/delegation route payload 类型 | 已覆盖 inventory、inventory-transfer、NPC list/detail、interaction、trade 和 npc-command response shape，固定服务器裁决字段和公开 view。 |
+| S87.5 | DONE | Exam route payload 类型 | 已覆盖 exam question/progress/submit 与 `toExamPayload` 输出，继续返回 examProcedure/examinerPanel/examHonor/appointmentTrack 等 safe views。 |
+| S87.6 | DONE | AI route response 类型 | 已覆盖 global/session settings、connection-test、quick-actions 和 topic-draft response shape，固定 provider/key 脱敏、scope、route policy view 和草稿建议边界。 |
+| S87.7 | DONE | S87 验收与归档 | 已新增完成归档，汇总 typecheck、focused route tests、docs governance、完整测试、只读复审和下一轮 AI remote helper payload / SQLite build row 类型覆盖建议。 |
 
 ## 5. 推荐实施顺序
 

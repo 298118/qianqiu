@@ -120,6 +120,8 @@ test("S71.4 GET /api/game/state remains available as a short-term compatibility 
   assert.equal(response.status, 200);
   assert.equal(payload.sessionId, worldState.sessionId);
   assert.ok(payload.worldState);
+  assert.equal(payload.worldState.actorMemoryLedger, undefined);
+  assert.equal(payload.worldState.sessionSummary, undefined);
   assert.equal(payload.source, undefined);
 });
 

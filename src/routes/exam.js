@@ -112,6 +112,11 @@ const {
   ensureSessionSummaryState
 } = require("../game/sessionSummary");
 const { buildClientWorldState } = require("../game/clientWorldState");
+const {
+  defineExamProgressResponse,
+  defineExamQuestionResponse,
+  defineExamSubmitResponse
+} = require("./routeResponses");
 
 const router = express.Router();
 
@@ -123,7 +128,7 @@ function toExamPayload(worldState) {
   const mapContextView = buildMapContextView(worldState);
   const { settings, routePolicy } = resolveAiSettingsForSession(worldState);
   const aiInvocationSummaryView = buildAiInvocationSummaryView(worldState, routePolicy);
-  return {
+  return defineExamQuestionResponse({
     sessionId: worldState.sessionId,
     aiSettingsView: redactAiSettingsForClient({ ...settings, routePolicy }),
     aiInvocationSummaryView,
@@ -180,7 +185,7 @@ function toExamPayload(worldState) {
       officialPostingsView
     }),
     worldState: buildClientWorldState(worldState)
-  };
+  });
 }
 
 function fail(statusCode, message) {
@@ -390,12 +395,12 @@ router.post("/progress", async (req, res, next) => {
       ensureCommonState(worldState);
       enqueueAuditRecords(context, createExamProgressAuditRecords(worldState, scene));
 
-      return {
+      return defineExamProgressResponse({
         ...toExamPayload(worldState),
         narrative: scene.narrative,
         examScene: scene.sceneTime,
         worldTick: buildExamSceneFeedback(worldState, scene.sceneTime, scene.event)
-      };
+      });
     });
 
     res.json(payload);
@@ -592,7 +597,7 @@ router.post("/submit", async (req, res, next) => {
       const officialPostingsView = buildOfficialPostingsView(worldState);
       const mapContextView = buildMapContextView(worldState);
       const aiInvocationSummaryView = buildAiInvocationSummaryView(worldState, routePolicy);
-      return {
+      return defineExamSubmitResponse({
         sessionId: worldState.sessionId,
         aiSettingsView: redactAiSettingsForClient({ ...settings, routePolicy }),
         aiInvocationSummaryView,
@@ -656,7 +661,7 @@ router.post("/submit", async (req, res, next) => {
           officialPostingsView
         }),
         worldState: buildClientWorldState(worldState)
-      };
+      });
     });
 
     res.json(payload);
