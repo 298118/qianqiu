@@ -277,7 +277,7 @@ S84 前端专项额外验收入口：
 - 边界：`world_sessions.world_state_json` 仍是 SQLite 模式事实源；prompt retrieval、safe search、maintenance drift/status 只能来自服务器安全 view 与 derived repair status，AI、浏览器、prompt、resolver 仍不得把 raw SQLite 行、audit 表或派生表当作 canonical truth。
 - 验证：已通过 `npm run typecheck:server`、`npm run build:server:probe`、`node --test test/sqlitePromptRetrieval.test.js test/sqliteSafeSearch.test.js test/sqliteMaintenanceTool.test.js test/sessionStoreAdapterContract.test.js`（70 项）、`npm run check:docs-governance`、`node --test test/documentationGovernance.test.js`、完整 `npm test`（991 项）和 `git diff --check`。
 - 子代理：Noether 只读探查 S88.2 类型边界，建议补 maintenance public drift/status contract、收紧 safe-search source literal，并确认 focused tests；本轮实现已采纳这些建议。Mendel 提交前只读复审最终 diff 与验证证据，未发现 P0/P1/P2。
-- 提交：随本轮 coherent change 提交，最终 hash 见 Git 历史和本次回复。
+- 提交：实现提交 `c4a97021`；本条 hash 记录随后一笔文档同步提交补齐。
 - 下一步：进入 S88.3 书生主线补强，深化读书、备考、科场反馈、授官与入仕首月差事，并运行 `npm run smoke:exam-s69` 与科举/官场 focused tests。
 
 ### 2026-05-20：完成 S87.1-S87.7 route/API 响应类型覆盖
