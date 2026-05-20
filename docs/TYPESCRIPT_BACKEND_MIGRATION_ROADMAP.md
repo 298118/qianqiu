@@ -47,7 +47,7 @@
 | S86.6 | DONE | 小范围 `.ts` 试点 | 已以 type-only contract 与纯 guard/helper 模块作为低副作用 `.ts` 试点，并用 `npm run build:server:probe` 验证 CommonJS 输出、declaration 和 source map。 |
 | S86.7 | DONE | 后端 TS 验收和迁移规范固化 | 已将 `typecheck:server` 纳入验证口径，归档允许保留 JS、必须迁移 TS 和允许 Rust 评估的边界；归档见 [TYPESCRIPT_BACKEND_MIGRATION_ARCHIVE.md](TYPESCRIPT_BACKEND_MIGRATION_ARCHIVE.md)。 |
 
-S86.1-S86.7 首轮已完成，归档入口见 [TYPESCRIPT_BACKEND_MIGRATION_ARCHIVE.md](TYPESCRIPT_BACKEND_MIGRATION_ARCHIVE.md)。后续若继续扩大后端 TypeScript 覆盖，应另开 S87 或新的小步骤，不在 S86 中追加隐性范围。
+S86.1-S86.7 首轮已完成，归档入口见 [TYPESCRIPT_BACKEND_MIGRATION_ARCHIVE.md](TYPESCRIPT_BACKEND_MIGRATION_ARCHIVE.md)。后续扩大后端 TypeScript 覆盖已另开 S87，规划入口见 [TYPESCRIPT_ROUTE_RESPONSE_COVERAGE_ROADMAP.md](TYPESCRIPT_ROUTE_RESPONSE_COVERAGE_ROADMAP.md)；不在 S86 中追加隐性范围。
 
 ## 5. 推荐实施顺序
 

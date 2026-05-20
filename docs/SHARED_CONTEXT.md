@@ -18,9 +18,9 @@
 - Product: browser + Node.js historical simulation text game **Qianqiu / 千秋**。
 - Runtime target: `npm install && npm start`，默认 `AI_PROVIDER=mock`，打开 `http://localhost:3000` 即可本地游玩。
 - Frontend: S74.1 起 React + TypeScript + Vite 构建产物接管默认 `/`；源码在 `client/`，生产构建在 `dist/client/`。React Router Data Mode 管理首页、主卷、舆图、人物、史册、科举、皇榜、朝议和设置等路由。旧 `public/index.html`、`public/app.js`、`public/styles.css`、`public/mapPanel.js` 只作迁移参考；`public/assets/`、`public/vendor/`、`public/mapRenderer.js` 继续提供已审核素材和 S72 地图 runtime。
-- Backend: Node.js + Express，当前以 CommonJS JavaScript 为主；S86 起已建立渐进 TypeScript 检查地基，`npm run typecheck:server` 覆盖契约、API/view 类型、安全 projection、AI schema/provider facade、storage adapter 和核心 resolver 的首批边界，不做全仓重写。AI provider 为 adapter-based Mock/OpenAI/DeepSeek/MiMo/MiMo+DeepSeek/Anthropic；真实 provider 只作为可选配置，不能成为启动门槛。
+- Backend: Node.js + Express，当前以 CommonJS JavaScript 为主；S86 起已建立渐进 TypeScript 检查地基，`npm run typecheck:server` 覆盖契约、API/view 类型、安全 projection、AI schema/provider facade、storage adapter 和核心 resolver 的首批边界，不做全仓重写；S87 已规划继续覆盖 route/API response shape，先用 contract 与局部 JSDoc typedef，不做大型 route 一次性 whole-file `@ts-check`。AI provider 为 adapter-based Mock/OpenAI/DeepSeek/MiMo/MiMo+DeepSeek/Anthropic；真实 provider 只作为可选配置，不能成为启动门槛。
 - Storage: 默认 JSON session files under `data/sessions/`；可选 `STORAGE_ADAPTER=sqlite` 使用本地 `schema_migrations`、`world_sessions`、audit tables、`geo_*`、`people_*`、`office_*`、`event_archive_index`、`prompt_retrieval_index` 和 `safe_search_index`。SQLite 派生行只从 `world_sessions.world_state_json` 单向修复，不是玩家 API、prompt 或服务器裁决的 raw truth source。
-- Roadmap status: S49-S67 本地数据库与大世界内容、S68-S69 科举深化、S70 AI 编排、S71 数据库玩法化、S72 PixiJS 水墨地图、S73-S77 前端水墨重构、S78 官署专题玩法化、S79 前端修复与高清立绘使用、S80 服务端全局 AI 设置均已完成并归档或压缩记录。S81-S85 NPC、资产、储物、交易、委派、经济、NPC 主动性和礼法扩展位已完成首轮闭环并归档。S86 后端 TypeScript 渐进迁移首轮已完成并归档，规划见 `docs/TYPESCRIPT_BACKEND_MIGRATION_ROADMAP.md`，完成归档见 `docs/TYPESCRIPT_BACKEND_MIGRATION_ARCHIVE.md`。
+- Roadmap status: S49-S67 本地数据库与大世界内容、S68-S69 科举深化、S70 AI 编排、S71 数据库玩法化、S72 PixiJS 水墨地图、S73-S77 前端水墨重构、S78 官署专题玩法化、S79 前端修复与高清立绘使用、S80 服务端全局 AI 设置均已完成并归档或压缩记录。S81-S85 NPC、资产、储物、交易、委派、经济、NPC 主动性和礼法扩展位已完成首轮闭环并归档。S86 后端 TypeScript 渐进迁移首轮已完成并归档，规划见 `docs/TYPESCRIPT_BACKEND_MIGRATION_ROADMAP.md`，完成归档见 `docs/TYPESCRIPT_BACKEND_MIGRATION_ARCHIVE.md`。S87 route/API 响应类型覆盖已启动规划，见 `docs/TYPESCRIPT_ROUTE_RESPONSE_COVERAGE_ROADMAP.md`，当前下一步为 S87.1 route response contract 扩展。
 - Current collaboration: 2026-05-14 起停止 Gemini CLI 协作。后续开发、素材生成/审核、验证、文档同步和 Git 提交由 Codex 负责；用户已授权本仓库使用 Codex 子代理，实施子代理不得提交，提交前复审子代理必须只读。
 - Current local `.env`: 可能含用户 provider keys。`.env` 被 Git 忽略，不能打印、复制到文档或提交。
 
@@ -29,6 +29,7 @@
 - 后续开发和维护不以“最小实现点”或“最小改动点”为目标；在安全边界、默认可运行、内容保护和可审查粒度不受损的前提下，优先交付完整、丰富、功能强大的游戏实现，并把必要的系统、交互、AI、数据、验证和文档一次设计到位。
 - 复杂功能必须坚持前后端分离和大步骤拆分：后端/API/数据契约、AI 权限与服务器裁决、前端体验、验证与文档按可审查阶段分步交付；前端不得代替服务器裁决资源、身份、交易、NPC 行动、经济结果或隐藏信息。
 - 后端契约、API/view 类型、安全 projection、AI schema/provider facade、storage adapter 和核心 resolver 新增或重构时，应优先使用 TypeScript 或纳入 TypeScript 检查；既有 JavaScript 允许渐进迁移，不得为语言迁移一次性重写大量稳定模块，TS 类型不能替代 Ajv 与服务器 runtime 校验。
+- 后端 route/API response shape 新增或重构时，必须对齐 `src/contracts/serverContracts.ts` 或局部 JSDoc typedef，并运行 `npm run typecheck:server`；不得为了启用类型检查一次性 whole-file `@ts-check` 大型 route 文件，也不得放宽安全 projection、raw ledger 剥离、Ajv/runtime 校验或服务器裁决。
 - 完整书生路径必须继续可用：`scholar -> child_exam -> provincial_exam -> metropolitan_exam -> palace_exam -> official`。
 - AI 是《千秋》的核心世界引擎，不是可替换装饰。新增玩法、数据域、角色、官署、事件、面板或 prompt 检索时，必须定义 AI read scope、actor intelligence、tool permissions、proposal boundaries、server adjudication、audit records 和 Mock/no-key fallback。
 - Provider 只能建议叙事、受限 `statePatch`、关系变化、评分 JSON、考试触发或身份受限领域工具 proposal；服务器拥有晋级、考试资格、作弊处罚、持久化、保护字段、官职任免、长期事件、时间推进、数据库写入和可见性过滤。
@@ -67,6 +68,7 @@
 - `docs/NPC_INVENTORY_SYSTEM_ARCHIVE.md`
 - `docs/TYPESCRIPT_BACKEND_MIGRATION_ROADMAP.md`
 - `docs/TYPESCRIPT_BACKEND_MIGRATION_ARCHIVE.md`
+- `docs/TYPESCRIPT_ROUTE_RESPONSE_COVERAGE_ROADMAP.md`
 - `docs/ACTIVITY_LEDGER_COMPLETED_ARCHIVE.md`
 - `docs/ARCHITECTURE.md`
 - `docs/AI_CONTROL_AUDIT_MATRIX.md`
@@ -83,6 +85,7 @@
 
 ## Current Work Note
 
+- 2026-05-20：按用户要求新增 S87 后端 route/API 响应类型覆盖规划。`docs/TYPESCRIPT_ROUTE_RESPONSE_COVERAGE_ROADMAP.md` 已把下一轮拆为 S87.1-S87.7：route response contract、`buildCommonTurnViews` 局部类型边界、start/state/player-state/turn、inventory/NPC/trade/delegation、exam route、AI route 和验收归档。开发规范已明确：后端 route/API response shape 新增或重构时必须对齐 `src/contracts/serverContracts.ts` 或局部 JSDoc typedef，并运行 `npm run typecheck:server`；不得为了启用类型检查一次性 whole-file `@ts-check` 大型 route 文件，也不得放宽安全 projection、raw ledger 剥离、Ajv/runtime 校验或服务器裁决。本轮同步 `docs/DEVELOPMENT_GOVERNANCE.md` 受保护段落、台账、brief、README、AGENTS/CLAUDE 和检查脚本；因修改治理检查脚本，按非纯低风险文档处理。已通过 `npm run check:docs-governance`、`node --test test/documentationGovernance.test.js`、`npm run typecheck:server`、`npm test`（983 项）和 `git diff --check`。Lagrange 提交前只读复审未发现 P0/P1；发现并已修复 2 个 P2：补 `scripts/checkGovernanceDocs.js` 的 `npm run typecheck:server` 守门 needle，并清理共享上下文/台账复审待回填占位。Lagrange 复核确认 2 个 P2 均已解决，未发现新的 P0/P1/P2。
 - 2026-05-20：完成 S86.1-S86.7 后端 TypeScript 渐进迁移首轮。新增 `tsconfig.server-check.json`、`tsconfig.server-probe.json`、`npm run typecheck:server`、`npm run build:server:probe`、`src/contracts/serverContracts.ts`、`src/contracts/runtimeGuards.ts` 和 `docs/TYPESCRIPT_BACKEND_MIGRATION_ARCHIVE.md`；`.tmp/` 已加入 Git 忽略。`clientWorldState`、`redactedState`、`stateRules`、AI provider facade/route policy、session record、session store、JSON adapter 和 SQLite adapter 已选择性 `@ts-check`。contract 固化 raw ledger 剥离、player-state envelope、安全 route views、AI task/provider/tool envelope、session/storage adapter 和 SQLite row 形状，并用 `src/contracts/serverContracts.typecheck.ts` 断言 public route worldState 拒绝 raw ledger。生产仍直接运行 CommonJS `server.js`，`.ts` 试点只用于 type-only contract、纯 guard/helper 和 probe 编译，不改变 `npm start`；Rust 继续只作为未来有性能证据后的可选 CLI/WASM/离线工具评估。已通过 `npm run typecheck:server`、`npm run build:server:probe`、redaction/stateRules focused tests、AI schema/route/tool focused tests、storage focused tests、docs governance、documentation governance、`npm test`（983 项）和本轮改动路径 `git diff --check`。提交前只读复审 Sartre/Bohr 的 P2 已全部修复，最终未发现 P0/P1/P2；实现提交 `bedea92a`。
 - 2026-05-20：按用户要求新增 S86 后端 TypeScript 渐进迁移与 Rust 使用边界规划。`docs/TYPESCRIPT_BACKEND_MIGRATION_ROADMAP.md` 已记录当前判断、总原则、非目标、S86.1-S86.7 小步骤、验证口径、Rust 候选和回滚策略；`docs/DEVELOPMENT_STEPS.md` 已恢复活动专项表，当前只列 S86 TODO 小步骤。开发治理已写入“新增或重构后端契约、API/view 类型、安全 projection、AI schema/provider facade、storage adapter 和核心 resolver 时优先使用 TypeScript 或纳入 TypeScript 检查；TS 不能替代 Ajv/runtime 校验”；已同步 brief、README、AGENTS/CLAUDE 和检查脚本。本轮修改治理检查脚本，按非纯低风险文档处理。验证已通过：`npm run check:docs-governance`、`node --test test/documentationGovernance.test.js`、`npm test`（983 项）、`git diff --check`。提交前只读复审 Dalton 未发现 P0/P1；唯一 P2 是本地未跟踪 `npm-start.log` / `npm-start.err.log` 不属于本轮范围，提交时需排除。
 - 2026-05-20：用户指出活动路线图仍保留已完成 DONE 项，已修正 `docs/DEVELOPMENT_STEPS.md` 第 4 节。活动路线图总览现在只说明当前没有 `TODO` / `IN_PROGRESS` 专项、S81-S85 已归档、下一步由用户或新路线图指定；已完成步骤只留在归档索引、近期进度记录和专题归档，不再以 DONE 长表占据活动路线图。本轮为低风险纯文档维护，不改代码、API/schema、AI 权限、素材 manifest、存档格式或运行时行为；按项目规则跳过提交前子代理复审。验证：`npm run check:docs-governance`、`node --test test/documentationGovernance.test.js`、`git diff --check`。
@@ -96,4 +99,4 @@
 
 ## Next Recommended Step
 
-下一步建议在新专项中逐步扩大后端 TypeScript 覆盖面：优先给 `src/routes/game.js` 的 `buildCommonTurnViews` / route response shape 补 JSDoc typedef，再覆盖 AI remote helper 入站 payload 和 SQLite 派生表 build rows。继续保持前端只消费安全 API/view，所有资源、价格、关系、任务、婚姻、弹劾和背叛结果由服务器裁决；Rust 暂不进入核心玩法重写，只作为未来有性能证据后的可选工具评估。
+下一步建议执行 S87.1：扩展 `src/contracts/serverContracts.ts` 的 route response contract，优先固定 common route envelope、turn response、安全 route views、inventory/NPC/trade/delegation/exam/AI route public response，并补 typecheck fixture 断言 raw ledger 不可进入玩家 response。随后再做 S87.2，为 `src/routes/game.js` 的 `buildCommonTurnViews` 补局部 JSDoc typedef；继续保持前端只消费安全 API/view，所有资源、价格、关系、任务、婚姻、弹劾和背叛结果由服务器裁决。

@@ -77,6 +77,11 @@ function runGovernanceChecks() {
       "前端不得代替服务器裁决资源、身份、交易、NPC 行动、经济结果或隐藏信息",
       "后端契约、API/view 类型、安全 projection",
       "TS 类型也不能替代 Ajv 与服务器 runtime 校验",
+      "route/API response shape",
+      "src/contracts/serverContracts.ts",
+      "npm run typecheck:server",
+      "whole-file `@ts-check` 大型 route 文件",
+      "raw ledger 剥离",
       "AI 是《千秋》的核心世界引擎",
       "工具权限、proposal 边界、服务器裁决、审计记录和 Mock/no-key 降级",
       "服务器拥有状态边界、时间推进、科举晋级、作弊处罚",
@@ -116,6 +121,11 @@ function runGovernanceChecks() {
       "前端不得代替服务器裁决资源、身份、交易、NPC 行动、经济结果或隐藏信息",
       "后端契约、API/view 类型、安全 projection",
       "TS 类型也不能替代 Ajv 与服务器 runtime 校验",
+      "route/API response shape",
+      "src/contracts/serverContracts.ts",
+      "npm run typecheck:server",
+      "whole-file `@ts-check` 大型 route 文件",
+      "raw ledger 剥离",
       "AI 是《千秋》的核心世界引擎",
       "工具权限、proposal 边界、服务器裁决、审计记录和 Mock/no-key 降级",
       "服务器继续拥有时间推进",
@@ -157,6 +167,26 @@ function runGovernanceChecks() {
   requireFileIncludes(
     "README.md",
     ["后续施工必须前后端分离", "先做后端/API/数据/AI 契约"],
+    failures
+  );
+  const routeResponseTypeNeedles = [
+    "route/API response shape",
+    "src/contracts/serverContracts.ts",
+    "npm run typecheck:server",
+    "whole-file `@ts-check` 大型 route 文件"
+  ];
+  for (const relativePath of [
+    "AGENTS.md",
+    "CLAUDE.md",
+    "docs/SHARED_CONTEXT.md",
+    "docs/QIANQIU_DEVELOPMENT_BRIEF.md",
+    "docs/DEVELOPMENT_STEPS.md"
+  ]) {
+    requireFileIncludes(relativePath, routeResponseTypeNeedles, failures);
+  }
+  requireFileIncludes(
+    "README.md",
+    ["TYPESCRIPT_ROUTE_RESPONSE_COVERAGE_ROADMAP.md", "route/API response shape"],
     failures
   );
   requireFileIncludes(
