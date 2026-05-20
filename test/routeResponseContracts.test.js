@@ -28,6 +28,23 @@ test("S87 route response helpers reject raw ledger keys in public worldState", (
   }
 });
 
+test("S88.3 route response helpers reject nested unsafe worldState keys", () => {
+  for (const key of ["hiddenNotes", "rawProviderPayload", "rawPrompt", "providerProposal", "statePatch"]) {
+    assert.throws(
+      () => defineGameTurnResponse({
+        sessionId,
+        worldState: {
+          sessionId,
+          officialCareer: {
+            assignments: [{ id: "assignment", title: "差事", [key]: "forged" }]
+          }
+        }
+      }),
+      new RegExp(`officialCareer\\.assignments\\[0\\]\\.${key}`)
+    );
+  }
+});
+
 test("S88.1 AI connection response helper rejects raw provider fields", () => {
   for (const key of ["rawProviderPayload", "rawPrompt", "requestBody", "baseURL", "statePatch", "worldState"]) {
     assert.throws(

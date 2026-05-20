@@ -114,7 +114,7 @@
 | S88.0 | DONE | 系统打磨路线图与边界复核 | 已新增 `docs/QIANQIU_POLISHING_ROADMAP.md`，把用户要求的全面打磨拆为 S88.1-S88.12 小步骤，并确认当前工作树仅有未跟踪 `npm-start.log` / `npm-start.err.log`，不纳入本轮提交。 |
 | S88.1 | DONE | AI remote helper/provider public-safe envelope | 已把 `remoteHelpers` 的 prompt task、provider requester、validated payload 纳入 `npm run typecheck:server`，并为 AI connection public response、provider fallback 日志、诊断错误和玩家/审计安全出口增加 raw provider/prompt/key/path 脱敏与 forbidden field contract。 |
 | S88.2 | DONE | SQLite derived row builder 类型边界 | 已覆盖 `SqliteWorldSessionRow`、`SqlitePromptRetrievalRow`、`SqliteSafeSearchIndexRow`、prompt/safe repair status、maintenance safe diagnostics 和首批 row builder JSDoc/TS contract；派生表继续只从 `world_sessions.world_state_json` 单向修复。 |
-| S88.3 | TODO | 书生主线补强一轮 | 深化读书、备考、科场反馈、授官与入仕首月差事；运行 `npm run smoke:exam-s69` 和科举/官场 focused tests。 |
+| S88.3 | IN_PROGRESS | 书生主线补强一轮 | 首个后端切片已让殿试授官后按授官轨迹写入服务器拥有的入仕首月差事，并由 `npm run smoke:exam-s69` 验证；后续继续深化读书、备考压力和入场前后反馈。 |
 | S88.4 | TODO | 入仕官员首轮官场体验 | 补官方履历、差遣、考成、上官同僚、奏折回执和首月月报闭环。 |
 | S88.5 | TODO | 六身份循环矩阵 | 为皇帝、大臣、将领、地方官、书生、入仕官员补差异化事务、风险、待办和身份面板。 |
 | S88.6 | TODO | 官场与世界后果追踪 | 奏折、政令、军务、刑名、财政、外交、地方事务、任免、朝议、月报和长期事件统一增加可追踪后果 refs。 |
@@ -127,7 +127,7 @@
 
 ## 5. 最新状态
 
-- S88 当前基线：全面系统打磨专项已启动，规划见 [QIANQIU_POLISHING_ROADMAP.md](QIANQIU_POLISHING_ROADMAP.md)。S88.1 已完成 AI remote helper/provider public-safe envelope。S88.2 已完成 SQLite derived row builder 类型边界：`src/contracts/serverContracts.ts` 固定 world session、prompt retrieval、safe search、repair status 和 safe diagnostics 类型，`sqlitePromptRetrievalTables.js`、`sqliteSafeSearchTables.js`、`sqliteMaintenance.js` 纳入 `npm run typecheck:server`，继续保持派生表只从 `world_sessions.world_state_json` 单向修复。下一步进入 S88.3 书生主线补强。
+- S88 当前基线：全面系统打磨专项已启动，规划见 [QIANQIU_POLISHING_ROADMAP.md](QIANQIU_POLISHING_ROADMAP.md)。S88.1 已完成 AI remote helper/provider public-safe envelope。S88.2 已完成 SQLite derived row builder 类型边界：`src/contracts/serverContracts.ts` 固定 world session、prompt retrieval、safe search、repair status 和 safe diagnostics 类型，`sqlitePromptRetrievalTables.js`、`sqliteSafeSearchTables.js`、`sqliteMaintenance.js` 纳入 `npm run typecheck:server`，继续保持派生表只从 `world_sessions.world_state_json` 单向修复。S88.3 已开始：殿试授官后会按服务器授官轨迹生成首月官场差事；下一步继续补读书计划、备考压力和考试入场反馈。
 - S87 当前基线：后端 route/API 响应类型覆盖已完成。`src/contracts/serverContracts.ts` 已覆盖 game/exam/AI/inventory/NPC/trade/delegation public response；`src/routes/routeResponses.js` 以局部 `@ts-check` helper 接入 `src/routes/game.js`、`src/routes/exam.js` 和 `src/routes/ai.js`，并在运行时拒绝 public `worldState` raw ledger key；大型 route 文件仍未 whole-file `@ts-check`，CommonJS 运行方式不变。
 - S86 当前基线：后端 TypeScript 渐进迁移首轮已完成。新增 `npm run typecheck:server`、`npm run build:server:probe`、`tsconfig.server-check.json`、`tsconfig.server-probe.json`、`src/contracts/serverContracts.ts` 和 `src/contracts/runtimeGuards.ts`；安全 projection、AI facade/route policy、session/storage 高风险模块已选择性 `@ts-check`。后端仍以 CommonJS JavaScript 运行，`.ts` 试点不改变 `npm start`，Rust 仍只作为未来有性能证据后的可选 CLI/WASM/离线工具评估。
 - S81-S84 当前基线：NPC、资产、储物、交易与委派首轮闭环已完成。后端已有 `assetLedger`、`inventoryLedger`、`npcRoster`、`npcInteractionLedger`、`tradeLedger`、`delegatedTaskLedger`、开局背景裁决、AI task/schema/prompt/provider fallback、JSON/SQLite 同步和 player-state 安全 view；React 已有“囊箧” route、人物 NPC 工作台、对话/交易/委派面板和开局裁决摘要。前端只消费安全 API/view，不裁决资源、价格、关系或任务结果。
@@ -279,6 +279,16 @@ S84 前端专项额外验收入口：
 - 子代理：Noether 只读探查 S88.2 类型边界，建议补 maintenance public drift/status contract、收紧 safe-search source literal，并确认 focused tests；本轮实现已采纳这些建议。Mendel 提交前只读复审最终 diff 与验证证据，未发现 P0/P1/P2。
 - 提交：实现提交 `c4a97021`；本条 hash 记录随后一笔文档同步提交补齐。
 - 下一步：进入 S88.3 书生主线补强，深化读书、备考、科场反馈、授官与入仕首月差事，并运行 `npm run smoke:exam-s69` 与科举/官场 focused tests。
+
+### 2026-05-20：推进 S88.3 书生主线首月差事切片
+
+- 范围：启动 S88.3 书生主线补强的第一个后端 coherent slice。聚焦 `scholar -> ... -> palace_exam -> official` 的入仕衔接：殿试服务器授官后不再只写官职与履历，还按授官轨迹生成首月官场差事。
+- 实现：`src/game/appointmentTracksConfig.js` 新增 `APPOINTMENT_FIRST_MONTH_ASSIGNMENTS`，按一甲翰林、二甲庶吉士、二甲/三甲部曹、三甲外放和候缺观政配置首月任务标题、类型、进度、风险、期限、公开摘要和关联公开关系；`src/game/appointmentTracks.js` 在 `appendOfficialCareerAppointment()` 写入初授履历时同步 seed 一条 `officialCareer.assignments`，期限为一月三旬，`hiddenNotes` 为空，并更新考成 dossier 公开 notes。既有 `officialCareerView` 与 prompt summary 自动显示该差事；兼容 `worldState` 通过 `src/game/clientWorldState.js` 递归剥离嵌套 hidden/raw/provider/prompt/statePatch 字段，`src/routes/routeResponses.js` 也递归拒绝误入 public response 的内部键。
+- 边界：首月差事只由服务器授官 resolver 派生；老师、房官、主考、吏部、皇帝或 provider 仍只能提供题目、评分、叙事或受限 proposal，不能写官职、差事、考成、官场结果或 canonical state。前端仍只消费 `officialCareerView` / `appointmentTrackView`，不能裁决首月差事。
+- 验证：已通过 `node --check src/game/clientWorldState.js && node --check src/routes/routeResponses.js && node --check src/game/appointmentTracks.js && node --check src/game/appointmentTracksConfig.js && node --check scripts/mockImperialExamAcceptance.js`、`node --test test/appointmentTracks.test.js test/appointmentTracksRoute.test.js test/mockImperialExamAcceptanceScript.test.js test/routeResponseContracts.test.js`、`node --test test/officialCareer.test.js test/gameTurnOfficialCareer.test.js test/playerMonthlyBriefingRoute.test.js`、`node --test test/examTravel.test.js`、`npm run smoke:exam-s69`、`npm run typecheck:server`、`npm run check:docs-governance`、`node --test test/documentationGovernance.test.js`、完整 `npm test`（993 项）和 `git diff --check`；提交前只读复审待最终 diff 后执行并回填。
+- 子代理：Avicenna 只读梳理 S88.3 后端接线，建议以“殿试授官后自动生成入仕首月差事”为首个 coherent slice；Nash 只读梳理现有测试和 smoke 入口，建议在 `appointmentTracks`、route 和 `smoke:exam-s69` 增加断言。本轮实现已采纳。Beauvoir 提交前只读初审发现兼容 `worldState` 会携带嵌套 `officialCareer.assignments[].hiddenNotes` 字段名的 P2；主代理已补递归清洗、递归 route guard 和回归测试。Beauvoir 最终复审未发现 P0/P1/P2，记录后续可补同一殿试 resolver 重复调用不新增第二条首月差事的专门幂等单测。
+- 提交：随本轮 coherent change 提交，最终 hash 见 Git 历史和本次回复。
+- 下一步：继续 S88.3 的读书计划、备考压力、考试入场前后反馈切片，优先把 `entryPreparation` / `examProcedureView` 的压力摘要和书生面板安全提示补强。
 
 ### 2026-05-20：完成 S87.1-S87.7 route/API 响应类型覆盖
 

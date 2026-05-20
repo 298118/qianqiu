@@ -40,4 +40,5 @@ test("S69.5 mock acceptance completes deterministic scholar path", async () => {
   assert.equal(result.results.length, 4);
   assert.ok(result.results.every((item) => item.networkContacts >= 1));
   assert.ok(result.results.at(-1).appointment);
+  assert.ok(result.results.at(-1).firstAssignment);
 });

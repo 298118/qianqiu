@@ -1,4 +1,5 @@
 const {
+  APPOINTMENT_FIRST_MONTH_ASSIGNMENTS,
   APPOINTMENT_TRACK_LIMITS,
   APPOINTMENT_TRACK_METER_DELTAS,
   APPOINTMENT_TRACK_PRIORITY,
@@ -8,6 +9,7 @@ const { inferOfficeByTitle, getOffice } = require("./officialCatalog");
 const { ensureOfficialCareerState } = require("./officialCareer");
 const { buildOfficialPostingsView } = require("./officialPostings");
 const { clamp } = require("./stateRules");
+const { monthsToTurns } = require("./time");
 
 const OFFICIAL_ROLE_LABEL = "入仕官员";
 const AUTHORITY_BOUNDARY =
@@ -554,6 +556,50 @@ function applyTrackMeterDeltas(worldState, trackKey) {
   }
 }
 
+function getFirstMonthAssignmentTemplate(trackKey) {
+  return APPOINTMENT_FIRST_MONTH_ASSIGNMENTS[trackKey] ||
+    APPOINTMENT_FIRST_MONTH_ASSIGNMENTS.pending_selection;
+}
+
+function buildFirstMonthAssignment(worldState, record) {
+  const decision = record?.serverDecision;
+  if (!decision?.trackKey) return null;
+  const template = getFirstMonthAssignmentTemplate(decision.trackKey);
+  const date = record.date || getDateStamp(worldState);
+  const office = inferOfficeByTitle(decision.officeTitle);
+  const bureauId = decision.bureauId || office?.bureauId || template.sourceId || null;
+  const dueTurn = date.turnCount + monthsToTurns(template.deadlineMonths || 1);
+  return {
+    id: cleanId(`ASG-${String(date.turnCount).padStart(4, "0")}-first-month-${decision.trackKey}`),
+    title: cleanText(template.title, "首月官场差事", 80),
+    kind: cleanText(template.kind, "routine_office", 48),
+    bureauId,
+    sourceType: cleanText(template.sourceType, "bureau", 48),
+    sourceId: cleanId(template.sourceId || bureauId || "official_office", "official_office"),
+    status: "active",
+    year: date.year,
+    month: date.month,
+    dueTurn,
+    deadlineUnit: "ten_day",
+    progress: clampNumber(template.progress, 0, 100, 12),
+    risk: clampNumber(template.risk, 0, 100, 20),
+    publicStake: clampNumber(template.publicStake, 0, 100, 45),
+    privatePressure: clampNumber(template.privatePressure, 0, 100, 20),
+    visibleSummary: cleanText(
+      template.visibleSummary,
+      "首月差事由服务器按授官轨迹派生，AI 与前端不能直接写入或改判。",
+      160
+    ),
+    hiddenNotes: [],
+    relatedContacts: Array.isArray(template.relatedContacts)
+      ? template.relatedContacts.map((entry) => cleanText(entry, "", 64)).filter(Boolean).slice(0, 5)
+      : [],
+    relatedFactions: Array.isArray(template.relatedFactions)
+      ? template.relatedFactions.map((entry) => cleanText(entry, "", 64)).filter(Boolean).slice(0, 5)
+      : []
+  };
+}
+
 function appendOfficialCareerAppointment(worldState, record) {
   if (!record?.serverDecision) return null;
   ensureOfficialCareerState(worldState);
@@ -591,7 +637,19 @@ function appendOfficialCareerAppointment(worldState, record) {
     ].slice(0, 5),
     lastUpdatedTurn: date.turnCount
   };
+  const firstMonthAssignment = buildFirstMonthAssignment(worldState, record);
+  if (
+    firstMonthAssignment &&
+    !career.assignments.some((assignment) => assignment.id === firstMonthAssignment.id)
+  ) {
+    career.assignments = [...career.assignments, firstMonthAssignment];
+    career.assessmentDossier.notes = [
+      `${firstMonthAssignment.title}已列为首月差事。`,
+      ...career.assessmentDossier.notes
+    ].slice(0, 5);
+  }
   worldState.officialCareer = career;
+  ensureOfficialCareerState(worldState);
   return historyEntry;
 }
 

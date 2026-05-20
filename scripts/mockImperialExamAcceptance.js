@@ -162,6 +162,9 @@ function assertS69Views(payload, level) {
   if (level === "palace_exam" && !payload.appointmentTrackView?.latestDecision?.officeTitle) {
     throw new Error("palace_exam missing appointmentTrackView latest decision.");
   }
+  if (level === "palace_exam" && !payload.officialCareerView?.assignmentSummary?.activeCount) {
+    throw new Error("palace_exam missing first-month official assignment.");
+  }
 }
 
 function summarizeExamResult(payload, level) {
@@ -173,7 +176,8 @@ function summarizeExamResult(payload, level) {
     honorTitle: payload.examHonorView.latestHonor?.title || null,
     networkContacts: (latestHistory.examNetwork?.sameYearContacts || []).length +
       (latestHistory.examNetwork?.examinerContacts || []).length,
-    appointment: payload.appointmentTrackView?.latestDecision?.officeTitle || null
+    appointment: payload.appointmentTrackView?.latestDecision?.officeTitle || null,
+    firstAssignment: payload.officialCareerView?.assignments?.[0]?.title || null
   };
 }
 
@@ -204,6 +208,7 @@ async function runExamLevel(baseUrl, sessionId, level) {
     examinerPanelView: submit.payload.examinerPanelView,
     examHonorView: submit.payload.examHonorView,
     appointmentTrackView: submit.payload.appointmentTrackView,
+    officialCareerView: submit.payload.officialCareerView,
     relationshipView: submit.payload.relationshipView,
     worldPeopleView: submit.payload.worldPeopleView,
     eventArchiveView: submit.payload.eventArchiveView,
@@ -257,6 +262,12 @@ async function runMockImperialExamAcceptance() {
     if (!finalState.player.examHistory.at(-1).appointmentTrack) {
       throw new Error("palace exam history is missing appointmentTrack snapshot.");
     }
+    if (!finalState.officialCareer?.assignments?.length) {
+      throw new Error("final official career is missing first-month assignment.");
+    }
+    if (!/首月|初稿|馆课|清册|民情|观政/.test(finalState.officialCareer.assignments[0].title)) {
+      throw new Error("final first-month assignment title is not a scholar-to-official onboarding task.");
+    }
 
     return {
       skipped: false,
@@ -284,7 +295,7 @@ if (require.main === module) {
       console.log(`Final role: ${result.finalRole}; office: ${result.finalOfficeTitle}`);
       for (const item of result.results) {
         console.log(
-          `[${item.level}] score=${item.score}, rank=${item.rank}, honor=${item.honorTitle || "none"}, networkContacts=${item.networkContacts}, appointment=${item.appointment || "none"}`
+          `[${item.level}] score=${item.score}, rank=${item.rank}, honor=${item.honorTitle || "none"}, networkContacts=${item.networkContacts}, appointment=${item.appointment || "none"}, firstAssignment=${item.firstAssignment || "none"}`
         );
       }
     })

@@ -17,6 +17,11 @@ const {
   resolveInitialAppointmentTrack,
   summarizeAppointmentTrackForPrompt
 } = require("../src/game/appointmentTracks");
+const {
+  buildOfficialCareerView,
+  summarizeOfficialCareerForPrompt
+} = require("../src/game/officialCareer");
+const { monthsToTurns } = require("../src/game/time");
 
 function rankingEntry(place, isPlayer = false) {
   return {
@@ -106,6 +111,9 @@ test("palace top-three appointment resolver distinguishes one-jia Hanlin posts",
   assert.equal(secondPlace.promotionResult.officeTitle, "翰林院编修");
   assert.equal(secondPlace.worldState.officialCareer.currentPosting, "翰林院编修");
   assert.equal(secondPlace.worldState.officialCareer.careerHistory.at(-1).label, "初授");
+  assert.equal(secondPlace.worldState.officialCareer.assignments.length, 1);
+  assert.equal(secondPlace.worldState.officialCareer.assignments[0].title, "馆阁讲章校订");
+  assert.equal(secondPlace.worldState.officialCareer.assignments[0].dueTurn, monthsToTurns(1));
   assert.equal(secondPlace.view.latestDecision.officeTitle, "翰林院编修");
 });
 
@@ -116,6 +124,7 @@ test("second class front rank enters shujishi track with server-owned view", () 
   assert.equal(result.appointmentTrack.classPlace, 1);
   assert.equal(result.appointmentTrack.serverDecision.trackKey, "second_shujishi");
   assert.equal(result.worldState.player.officeTitle, "翰林院庶吉士");
+  assert.equal(result.worldState.officialCareer.assignments[0].title, "馆课试艺与散馆预备");
   assert.match(result.view.publicSummary, /庶吉士|馆选/);
   assert.match(result.promptSummary.authorityBoundary, /officeTitle/);
 });
@@ -125,6 +134,7 @@ test("third class uses vacancy pool and native-place avoidance before appointmen
   assert.equal(noAvoidance.appointmentTrack.palaceRank, "三甲");
   assert.equal(noAvoidance.appointmentTrack.serverDecision.trackKey, "outpost_appointee");
   assert.equal(noAvoidance.worldState.player.officeTitle, "知县");
+  assert.equal(noAvoidance.worldState.officialCareer.assignments[0].title, "到任册籍与民情初访");
 
   const avoided = resolvePalaceAppointment(7, { nativePlace: "苏州府" });
   assert.ok(avoided.appointmentTrack.avoidanceChecks.some((check) =>
@@ -133,6 +143,31 @@ test("third class uses vacancy pool and native-place avoidance before appointmen
   ));
   assert.equal(avoided.appointmentTrack.serverDecision.trackKey, "ministry_appointee");
   assert.equal(avoided.worldState.player.officeTitle, "户部主事");
+  assert.equal(avoided.worldState.officialCareer.assignments[0].title, "部曹清册点收");
+});
+
+test("palace appointment seeds first-month official assignment in safe career views", () => {
+  const result = resolvePalaceAppointment(1);
+  const career = result.worldState.officialCareer;
+  const assignment = career.assignments[0];
+  const careerView = buildOfficialCareerView(result.worldState);
+  const promptSummary = summarizeOfficialCareerForPrompt(result.worldState);
+
+  assert.equal(result.appointmentTrack.serverDecision.trackKey, "top_hanlin_compiler");
+  assert.equal(assignment.title, "御前讲章初稿");
+  assert.equal(assignment.kind, "memorial_drafting");
+  assert.equal(assignment.status, "active");
+  assert.equal(assignment.dueTurn, monthsToTurns(1));
+  assert.equal(assignment.hiddenNotes.length, 0);
+  assert.match(career.assessmentDossier.notes.join("\n"), /首月差事/);
+  assert.equal(careerView.assignmentSummary.activeCount, 1);
+  assert.equal(careerView.assignments[0].title, "御前讲章初稿");
+  assert.match(careerView.assignments[0].deadlineLabel, /尚余3旬（约1月）/);
+  assert.equal(promptSummary.assignments[0].title, "御前讲章初稿");
+  assert.doesNotMatch(
+    JSON.stringify({ careerView, promptSafeSummary: promptSummary }),
+    /hiddenNotes|provider proposal|raw provider|raw_prompt|prompt:|sk-/i
+  );
 });
 
 test("appointment track normalization redacts unsafe public text and ignores failed exams", () => {

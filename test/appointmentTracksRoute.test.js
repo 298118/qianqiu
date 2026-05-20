@@ -154,8 +154,18 @@ test("palace submit returns server-owned appointmentTrackView and persists initi
   assert.equal(payload.worldState.player.role, "official");
   assert.equal(payload.worldState.player.officeTitle, "翰林院修撰");
   assert.equal(payload.officialCareerView.currentPosting, "翰林院修撰");
+  assert.equal(payload.officialCareerView.assignmentSummary.activeCount, 1);
+  assert.equal(payload.officialCareerView.assignments[0].title, "御前讲章初稿");
+  assert.match(payload.officialCareerView.assignments[0].visibleSummary, /首月/);
+  assert.equal(payload.worldState.officialCareer.assignments[0].hiddenNotes, undefined);
+  assert.doesNotMatch(
+    JSON.stringify(payload.worldState),
+    /hiddenNotes|rawProvider|rawPrompt|providerProposal|statePatch/
+  );
   assert.equal(saved.player.examHistory.at(-1).appointmentTrack.serverDecision.officeTitle, "翰林院修撰");
   assert.equal(saved.officialCareer.careerHistory.at(-1).type, "appointment");
+  assert.equal(saved.officialCareer.assignments[0].title, "御前讲章初稿");
+  assert.equal(saved.officialCareer.assignments[0].hiddenNotes.length, 0);
   assert.ok(payload.eventArchiveView.items.some((item) => item.sourceType === "appointment_result"));
   assert.doesNotMatch(serialized, /内阁大学士|provider-office|provider proposal/);
 });

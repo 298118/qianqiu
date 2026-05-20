@@ -8,6 +8,7 @@
  */
 
 const { assertPublicAiProviderEnvelope } = require("../ai/providerSafety");
+const { isForbiddenClientWorldStateKey } = require("../game/clientWorldState");
 
 const RAW_LEDGER_KEYS = Object.freeze([
   "actorMemoryLedger",
@@ -33,10 +34,26 @@ const RAW_LEDGER_KEYS = Object.freeze([
  */
 function assertRouteWorldStateIsPublic(worldState) {
   if (!worldState || typeof worldState !== "object") return;
-  for (const key of RAW_LEDGER_KEYS) {
-    if (Object.prototype.hasOwnProperty.call(worldState, key)) {
-      throw new Error(`Route response worldState contains raw ledger key: ${key}`);
+  assertPublicWorldStateValue(worldState, "worldState");
+}
+
+/**
+ * @param {unknown} value
+ * @param {string} path
+ */
+function assertPublicWorldStateValue(value, path) {
+  if (!value || typeof value !== "object") return;
+  if (Array.isArray(value)) {
+    value.forEach((entry, index) => assertPublicWorldStateValue(entry, `${path}[${index}]`));
+    return;
+  }
+
+  for (const [key, entry] of Object.entries(value)) {
+    const nextPath = `${path}.${key}`;
+    if (RAW_LEDGER_KEYS.includes(key) || isForbiddenClientWorldStateKey(key)) {
+      throw new Error(`Route response worldState contains forbidden key: ${nextPath}`);
     }
+    assertPublicWorldStateValue(entry, nextPath);
   }
 }
 
