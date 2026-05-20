@@ -120,6 +120,17 @@ function normalizePrivateSignalTags(values = []) {
   return uniqueCleanList(values, 6, 32).filter((tag) => allowed.has(tag));
 }
 
+function normalizeSocialProfile(profile = {}) {
+  const source = isPlainObject(profile) ? profile : {};
+  return {
+    adult: source.adult !== false,
+    marriageStatus: cleanText(source.marriageStatus, "unknown", 40),
+    ritualStatus: cleanText(source.ritualStatus, "unreviewed", 40),
+    kinshipBlocked: source.kinshipBlocked === true,
+    publicNote: cleanText(source.publicNote, "礼法、身份和亲族意见须由服务器审查。", 140)
+  };
+}
+
 function normalizeInteractions(values = []) {
   const allowed = new Set(NPC_INTERACTION_ACTIONS);
   return uniqueCleanList(values, 12, 32).filter((action) => allowed.has(action));
@@ -142,6 +153,7 @@ function normalizeNpc(npc = {}, seed = "") {
     assetRefs: uniqueCleanList(npc.assetRefs, 8, 96),
     resourceAccountRefs: uniqueCleanList(npc.resourceAccountRefs, 8, 96),
     availableInteractions: normalizeInteractions(npc.availableInteractions),
+    socialProfile: normalizeSocialProfile(npc.socialProfile),
     hiddenDossier: normalizeHiddenDossier(npc.hiddenDossier),
     privateSignalTags: normalizePrivateSignalTags(npc.privateSignalTags)
   };
@@ -241,6 +253,7 @@ function buildNpcDetailView(worldState = {}, npcId, options = {}) {
     assetRefs: npc.assetRefs,
     resourceAccountRefs: npc.resourceAccountRefs,
     availableInteractions: npc.availableInteractions,
+    socialProfile: npc.socialProfile,
     safeguards: {
       privateProfileRedacted: true,
       softSignalsRedacted: true,

@@ -150,6 +150,18 @@ const {
   ensureNpcRoster
 } = require("../game/npcRoster");
 const {
+  attachRelationshipActionEligibilityToDetail,
+  resolveNpcRelationshipAction,
+  NPC_RELATIONSHIP_ACTION_TYPES
+} = require("../game/npcRelationshipActions");
+const {
+  buildNpcActiveRequestView,
+  buildNpcPrivatePlannerContext,
+  ensureNpcActiveRequestLedgerState,
+  runNpcActiveRequestStep,
+  sanitizeNpcPrivateIntentProposal
+} = require("../game/npcActiveRequests");
+const {
   buildDelegatedTaskLedgerView,
   createDelegatedTask,
   createLandSurveyDelegatedTask,
@@ -462,6 +474,7 @@ function ensureRouteProjectionState(worldState) {
   ensureTradeLedger(worldState);
   ensureMarketPriceLedgerState(worldState);
   ensureNpcEconomyLedgerState(worldState);
+  ensureNpcActiveRequestLedgerState(worldState);
   ensureOpeningBackgroundClaimsState(worldState);
 }
 
@@ -524,6 +537,7 @@ function buildCommonTurnViews(worldState, options = {}) {
     delegatedTaskView: buildDelegatedTaskLedgerView(worldState),
     marketPriceView: buildMarketPriceView(worldState),
     npcEconomyView: buildNpcEconomyView(worldState),
+    npcActiveRequestView: buildNpcActiveRequestView(worldState),
     eventArchiveView: buildEventArchiveView(worldState, options.eventArchive),
     informationPanelPageView: buildInformationPanelPageViews(worldState, options.informationPanel || {}, {
       worldGeographyView,
@@ -531,6 +545,38 @@ function buildCommonTurnViews(worldState, options = {}) {
       officialPostingsView
     })
   };
+}
+
+async function runNpcPrivatePlannerForTurn(worldState, routePolicy) {
+  const roster = ensureNpcRoster(worldState);
+  const candidate = roster.npcs.find((npc) => npc.tier === "active") || roster.npcs[0];
+  const context = candidate ? buildNpcPrivatePlannerContext(worldState, candidate.npcId) : null;
+  if (!context) return null;
+
+  const route = resolveModelForTask("npc_private_planner", routePolicy);
+  const provider = getProvider({ routePolicy });
+  const startedAt = Date.now();
+  try {
+    const rawProposal = await provider.planNpcPrivateIntent(context);
+    recordAiInvocation(worldState, {
+      taskType: "npc_private_planner",
+      route,
+      status: "completed",
+      durationMs: Date.now() - startedAt,
+      maxOutputTokens: route.maxOutputTokens
+    });
+    const proposal = sanitizeNpcPrivateIntentProposal(rawProposal, { npcId: context.npcId });
+    return proposal.ok ? proposal : null;
+  } catch (error) {
+    recordAiInvocation(worldState, {
+      taskType: "npc_private_planner",
+      route,
+      status: "failed",
+      durationMs: Date.now() - startedAt,
+      maxOutputTokens: route.maxOutputTokens
+    });
+    return null;
+  }
 }
 
 function clampPlayerMetric(value, min = 0, max = 100) {
@@ -688,6 +734,7 @@ function mergeTimeSkipPayloads(lastPayload, tickResults, timeSkip) {
     attributeChanges: aggregatePayloadList(payloads, "attributeChanges", 40),
     relationshipChanges: aggregatePayloadList(payloads, "relationshipChanges", 40),
     activeNpcRequestEvents: aggregatePayloadList(payloads, "activeNpcRequestEvents", 20),
+    npcActiveRequestEvents: aggregatePayloadList(payloads, "npcActiveRequestEvents", 20),
     worldEntityImpacts: aggregatePayloadList(payloads, "worldEntityImpacts", 30)
   };
 }
@@ -709,6 +756,7 @@ function buildTimeSkipBlockedPayload(worldState, plan, validation, route) {
     relationshipChanges: [],
     ...buildCommonTurnViews(worldState),
     activeNpcRequestEvents: [],
+    npcActiveRequestEvents: [],
     worldEntityImpacts: [],
     roleWorldCoupling: emptySystemFeedback(),
     longTermEvents: {
@@ -808,6 +856,7 @@ async function finalizeExamSceneTurn(worldState, input, context = null) {
   ensureTradeLedger(worldState);
   ensureMarketPriceLedgerState(worldState);
   ensureNpcEconomyLedgerState(worldState);
+  ensureNpcActiveRequestLedgerState(worldState);
   ensureOpeningBackgroundClaimsState(worldState);
   const worldTick = buildExamSceneFeedback(worldState, scene.sceneTime, scene.event);
   enqueueAuditRecords(context, createExamProgressAuditRecords(worldState, scene));
@@ -819,6 +868,7 @@ async function finalizeExamSceneTurn(worldState, input, context = null) {
     relationshipChanges: [],
     ...buildCommonTurnViews(worldState),
     activeNpcRequestEvents: [],
+    npcActiveRequestEvents: [],
     worldEntityImpacts: [],
     roleWorldCoupling: emptySystemFeedback(),
     longTermEvents: {
@@ -880,6 +930,11 @@ async function finalizeTurn(worldState, result, input, auditOptions = {}) {
     previousState: beforeWorldTickState,
     input
   });
+  const { routePolicy: npcPrivateRoutePolicy } = resolveAiSettingsForSession(worldState);
+  const npcPrivateProposal = await runNpcPrivatePlannerForTurn(worldState, npcPrivateRoutePolicy);
+  const npcActiveRequests = runNpcActiveRequestStep(worldState, input, {
+    aiProposal: npcPrivateProposal
+  });
 
   const longTermEvents = worldTick.completedMonth
     ? runLongTermEventStep(worldState)
@@ -933,6 +988,7 @@ async function finalizeTurn(worldState, result, input, auditOptions = {}) {
     ...relationshipChanges,
     ...studyInteraction.relationshipChanges,
     ...activeNpcRequest.relationshipChanges,
+    ...(Array.isArray(npcActiveRequests.relationshipChanges) ? npcActiveRequests.relationshipChanges : []),
     ...roleWorldCouplingRelationshipChanges,
     ...(Array.isArray(npcEconomy.relationshipChanges) ? npcEconomy.relationshipChanges : []),
     ...longTermRelationshipChanges,
@@ -977,6 +1033,7 @@ async function finalizeTurn(worldState, result, input, auditOptions = {}) {
     }],
     relationshipChanges: allRelationshipChanges,
     activeNpcRequest,
+    npcActiveRequests,
     roleWorldCoupling,
     worldTick,
     longTermEvents,
@@ -995,6 +1052,7 @@ async function finalizeTurn(worldState, result, input, auditOptions = {}) {
   appendEvents(worldState, studyProfile.events);
   appendEvents(worldState, studyInteraction.events);
   appendEvents(worldState, activeNpcRequest.events);
+  appendEvents(worldState, npcActiveRequests.events);
   appendEvents(worldState, roleWorldCoupling.events);
   appendEvents(worldState, worldTick.events);
   appendEvents(worldState, longTermEvents.events);
@@ -1025,6 +1083,7 @@ async function finalizeTurn(worldState, result, input, auditOptions = {}) {
   ensureTradeLedger(worldState);
   ensureMarketPriceLedgerState(worldState);
   ensureNpcEconomyLedgerState(worldState);
+  ensureNpcActiveRequestLedgerState(worldState);
   ensureOpeningBackgroundClaimsState(worldState);
 
   const worldTickFeedback = {
@@ -1047,6 +1106,7 @@ async function finalizeTurn(worldState, result, input, auditOptions = {}) {
     relationshipChanges,
     examTrigger,
     activeNpcRequest,
+    npcActiveRequests,
     teacherFeedbackProposal,
     studyInteraction,
     roleWorldCoupling,
@@ -1104,13 +1164,22 @@ async function finalizeTurn(worldState, result, input, auditOptions = {}) {
       ...roleWorldCoupling.attributeChanges,
       ...worldTickFeedback.attributeChanges,
       ...(Array.isArray(npcEconomy.attributeChanges) ? npcEconomy.attributeChanges : []),
+      ...(Array.isArray(npcActiveRequests.attributeChanges) ? npcActiveRequests.attributeChanges : []),
       ...longTermEvents.attributeChanges,
       ...officialCareer.attributeChanges
     ],
     relationshipChanges: allRelationshipChanges,
     ...buildCommonTurnViews(worldState),
     activeNpcRequestEvents: activeNpcRequest.events,
+    npcActiveRequestEvents: npcActiveRequests.events,
     worldEntityImpacts,
+    npcActiveRequests: {
+      schemaVersion: npcActiveRequests.schemaVersion,
+      summary: npcActiveRequests.summary,
+      events: Array.isArray(npcActiveRequests.events) ? npcActiveRequests.events : [],
+      attributeChanges: Array.isArray(npcActiveRequests.attributeChanges) ? npcActiveRequests.attributeChanges : [],
+      outcome: npcActiveRequests.outcome
+    },
     npcEconomy: {
       schemaVersion: npcEconomy.schemaVersion,
       cadence: npcEconomy.cadence,
@@ -1210,6 +1279,8 @@ async function streamTurn(res, sessionId, input) {
       studyProfileView: payload.studyProfileView,
       activeNpcRequestView: payload.activeNpcRequestView,
       activeNpcRequestEvents: payload.activeNpcRequestEvents,
+      npcActiveRequestView: payload.npcActiveRequestView,
+      npcActiveRequestEvents: payload.npcActiveRequestEvents,
       roleWorldCouplingView: payload.roleWorldCouplingView,
       worldGeographyView: payload.worldGeographyView,
       worldEntityView: payload.worldEntityView,
@@ -1241,6 +1312,7 @@ async function streamTurn(res, sessionId, input) {
       delegatedTaskView: payload.delegatedTaskView,
       marketPriceView: payload.marketPriceView,
       npcEconomyView: payload.npcEconomyView,
+      npcActiveRequests: payload.npcActiveRequests,
       eventArchiveView: payload.eventArchiveView,
       informationPanelPageView: payload.informationPanelPageView,
       npcEconomy: payload.npcEconomy,
@@ -1485,7 +1557,10 @@ router.get("/npc/:sessionId/:npcId", async (req, res, next) => {
   try {
     const worldState = await readSession(req.params.sessionId);
     ensureRouteProjectionState(worldState);
-    const npcDetailView = buildNpcDetailView(worldState, req.params.npcId);
+    const npcDetailView = attachRelationshipActionEligibilityToDetail(
+      worldState,
+      buildNpcDetailView(worldState, req.params.npcId)
+    );
     if (!npcDetailView) {
       throw createRouteError(404, "NPC not found");
     }
@@ -1528,19 +1603,32 @@ router.post("/npc-interaction/:sessionId", async (req, res, next) => {
         durationMs: Date.now() - startedAt,
         maxOutputTokens: route.maxOutputTokens
       });
-      const recorded = recordNpcInteraction(worldState, req.body, dialogue);
+      const relationshipAction = NPC_RELATIONSHIP_ACTION_TYPES.includes(validation.normalized.actionType)
+        ? resolveNpcRelationshipAction(worldState, req.body, dialogue)
+        : null;
+      const recorded = recordNpcInteraction(worldState, req.body, dialogue, relationshipAction
+        ? { resolutionView: relationshipAction.resolutionView }
+        : {});
+      const responseErrors = [
+        ...recorded.errors,
+        ...(relationshipAction && !relationshipAction.ok ? relationshipAction.errors : [])
+      ];
       return {
         sessionId: worldState.sessionId,
-        accepted: recorded.ok,
-        errors: recorded.errors,
+        accepted: recorded.ok && (!relationshipAction || relationshipAction.ok),
+        errors: responseErrors,
         npcDialogueView: {
           npcId: recorded.record.npcId,
           dialogueText: recorded.record.dialogueText,
           mood: recorded.record.mood,
           followUpSuggestions: recorded.record.followUpSuggestions || []
         },
+        npcActionResolutionView: relationshipAction?.resolutionView || null,
         npcInteractionView: recorded.npcInteractionView,
-        npcDetailView: buildNpcDetailView(worldState, validation.normalized.npcId)
+        npcDetailView: attachRelationshipActionEligibilityToDetail(
+          worldState,
+          buildNpcDetailView(worldState, validation.normalized.npcId)
+        )
       };
     });
     res.status(payload.accepted ? 200 : 400).json(payload);
@@ -1639,7 +1727,10 @@ router.post("/npc-command/:sessionId", async (req, res, next) => {
         commandText: validation.normalized.commandText,
         targetRef: validation.normalized.targetRef,
         budget: validation.normalized.budget,
-        npcDetailView: buildNpcDetailView(worldState, validation.normalized.assigneeActorId),
+        npcDetailView: attachRelationshipActionEligibilityToDetail(
+          worldState,
+          buildNpcDetailView(worldState, validation.normalized.assigneeActorId)
+        ),
         serverBoundaries: [
           "AI 只给出委派计划建议，资源、权限、期限和任务结果由服务器裁决。",
           "不得读取或输出 hiddenDossier、raw prompt、provider payload、本地路径或密钥。"

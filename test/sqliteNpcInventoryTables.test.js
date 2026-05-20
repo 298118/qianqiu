@@ -6,6 +6,7 @@ const { createInitialState } = require("../src/game/initialState");
 const { createDeterministicInitialAssetLedger, writeAssetLedgerState } = require("../src/game/assetLedger");
 const { createItemFromTemplate, createDeterministicInitialInventoryLedger, writeInventoryLedgerState } = require("../src/game/inventoryLedger");
 const { ensureNpcRoster } = require("../src/game/npcRoster");
+const { createNpcActiveRequest } = require("../src/game/npcActiveRequests");
 const { createLandSurveyDelegatedTask, updateDelegatedTaskStatus } = require("../src/game/delegatedTasks");
 const { createSessionRecord } = require("../src/storage/sessionRecord");
 const {
@@ -53,6 +54,7 @@ function allDerivedRows(db, sessionId) {
     "inventory_items",
     "npc_roster_profiles",
     "npc_interaction_events",
+    "npc_active_requests",
     "delegated_tasks",
     "trade_ledger_records"
   ];
@@ -153,6 +155,18 @@ function createWorldState() {
       summary: "prompt provider /mnt/e/secret sk-test-sqlite-trade"
     }]
   };
+  const activeRequest = createNpcActiveRequest(worldState, "impeachment");
+  assert.equal(activeRequest.ok, true);
+  activeRequest.request.evidenceRefs = ["npcDetailView:求名", "npcDetailView:npc:magistrate:gentry-han"];
+  activeRequest.request.intentSummary = "此人近期显出亲族压力、求名的软倾向。";
+  activeRequest.request.riskTags = ["亲族压力", "求名"];
+  activeRequest.request.outcome = {
+    responseAction: "investigate",
+    publicSummary: "旧档结果含求名和亲族压力。",
+    serverDecision: "server_adjudicated",
+    resourceImpactView: { applied: false, reason: "求财旧污染" },
+    relationshipImpactView: { npcId: activeRequest.request.npcId, note: "可能欺瞒旧污染" }
+  };
 
   return worldState;
 }
@@ -180,6 +194,7 @@ test("S81.4 SQLite NPC/inventory derived table modules initialize, sync, and del
     buildInventoryRows(record).items.length +
     buildNpcInteractionRows(record).npcProfiles.length +
     buildNpcInteractionRows(record).npcInteractionEvents.length +
+    buildNpcInteractionRows(record).npcActiveRequests.length +
     buildNpcInteractionRows(record).delegatedTasks.length +
     buildNpcInteractionRows(record).tradeLedgerRecords.length;
   const rows = allDerivedRows(db, record.sessionId);
@@ -193,7 +208,7 @@ test("S81.4 SQLite NPC/inventory derived table modules initialize, sync, and del
     row.actor_a_id === "player" &&
     row.actor_b_id === "npc:magistrate:registrar-lu"
   ));
-  assert.doesNotMatch(serialized, /SEALED_SQLITE|hiddenDossier|privateSignalTags|rawProviderPayload|rawLedger|world_sessions|prompt_retrieval_index|event_archive_index|safe_search_index|ai_change_proposals|event_log|provider|proposal|prompt|\/mnt\/e|sk-test|token|api[_ -]?key/i);
+  assert.doesNotMatch(serialized, /SEALED_SQLITE|hiddenDossier|privateSignalTags|rawProviderPayload|rawLedger|world_sessions|prompt_retrieval_index|event_archive_index|safe_search_index|ai_change_proposals|event_log|provider|proposal|prompt|\/mnt\/e|sk-test|token|api[_ -]?key|求财|避祸|亲族压力|可能欺瞒|求名|护短|畏上|重义/i);
   assert.ok(rows.every((row) => JSON.parse(row.metadata_json).contentHash));
 
   assert.equal(getAssetRepairStatus(db, record).needsRepair, false);

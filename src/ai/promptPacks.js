@@ -28,7 +28,7 @@ const UNIVERSAL_STABLE_PREFIX_LINES = [
 const TURN_STATE_BOUNDARY_LINES = [
   "AI may generate narrative, bounded relationship suggestions, teacherFeedbackProposal text, memoryProposals, event clues, examTrigger requests, and statePatch suggestions for ordinary turns.",
   "Never grant palace rank, office title, or role promotion in ordinary turn statePatch. Use examTrigger for exam entry requests.",
-  "Never patch turnCount, year, month, tenDayPeriod, activeExam, examCalendar, examHonorLedger, appointmentTrack, activeNpcRequest, longTermEvents, officialCareer, officialPostings, roleWorldCoupling, worldGeography, worldEntities, worldPeople, worldThreads, actorMemoryLedger, sessionSummary, characters, eventHistory, player.examRank, player.officeTitle, or player.examHistory in ordinary turns; those fields are server-owned.",
+  "Never patch turnCount, year, month, tenDayPeriod, activeExam, examCalendar, examHonorLedger, appointmentTrack, activeNpcRequest, npcActiveRequestLedger, longTermEvents, officialCareer, officialPostings, roleWorldCoupling, worldGeography, worldEntities, worldPeople, worldThreads, actorMemoryLedger, sessionSummary, characters, eventHistory, player.examRank, player.officeTitle, or player.examHistory in ordinary turns; those fields are server-owned.",
   "Never patch mapContextView or use raw coordinate tables. Map movement can only be submitted through server-owned map proposal tools when available.",
   "Never patch studyProfile or invent durable teacher, academy, classmate, or sponsorship facts. teacherFeedbackProposal is text-only advice; the server decides whether it enters the study ledger.",
   "Keep statePatch small and only use allowed keys. Prefer modest numeric changes in the range of 1-8 unless the action clearly spends resources.",
@@ -217,6 +217,8 @@ const PROMPT_PACKS = {
     ],
     output: [
       "Return only safe intent proposal fields.",
+      "When useful, include requestType from help, debt_collection, advice, petition, bribe, impeachment, introduction, marriage_proposal, or betrayal.",
+      "requestedAction and targetRefs must be public summaries only; serverAdjudicationHint must say why server review is required.",
       "Do not include raw hidden facts."
     ]
   },

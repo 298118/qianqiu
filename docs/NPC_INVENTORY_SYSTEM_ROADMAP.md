@@ -328,6 +328,8 @@ AI 输出必须经过 schema 校验、敏感词清洗、权限校验、数值 cl
 - S85.5：做总验收：JSON/SQLite 双模式、Mock 完整开局、书生完整路径、地方官丈田委派样例、NPC 对话、交易、背包转移、重要凭证保护、前端 smoke、安全污染和 docs governance。
 - S85.6：归档 S81-S85，更新 brief、README、共享上下文、活动台账和 AI 权限矩阵。
 
+完成状态（2026-05-20）：S85.1-S85.6 已完成首轮实现与归档。长期经济 tick、基础市价、NPC 主动来函、论道/切磋/求爱/婚姻正式扩展位、聚焦验收和文档归档详见 [NPC_INVENTORY_SYSTEM_ARCHIVE.md](NPC_INVENTORY_SYSTEM_ARCHIVE.md)。
+
 验收建议：
 
 - `npm run typecheck:client`

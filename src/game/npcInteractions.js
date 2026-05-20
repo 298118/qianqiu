@@ -134,9 +134,18 @@ function validateNpcInteractionRequest(worldState = {}, request = {}) {
 function recordNpcInteraction(worldState = {}, request = {}, aiResult = {}, options = {}) {
   const validation = validateNpcInteractionRequest(worldState, request);
   const ledger = ensureNpcInteractionLedger(worldState);
-  const aiSafety = validation.ok
+  let aiSafety = validation.ok
     ? sanitizeNpcDialogueResult(aiResult)
     : { ok: true, errors: [], dialogueText: "", mood: "", followUpSuggestions: [] };
+  if (options.resolutionView && !aiSafety.ok && !aiSafety.dialogueText) {
+    aiSafety = {
+      ok: true,
+      errors: ["unsafe_ai_dialogue_replaced_by_server_resolution"],
+      dialogueText: cleanText(options.resolutionView.publicNarrative || options.resolutionView.outcomeSummary, "服务器已裁决此项交游。", 260),
+      mood: "已裁",
+      followUpSuggestions: []
+    };
+  }
   const npc = validation.normalized.npcId
     ? getNpcForServer(worldState, validation.normalized.npcId)
     : null;
@@ -157,6 +166,25 @@ function recordNpcInteraction(worldState = {}, request = {}, aiResult = {}, opti
     dialogueText: accepted ? aiSafety.dialogueText : "",
     mood: accepted ? aiSafety.mood : "",
     followUpSuggestions: accepted ? aiSafety.followUpSuggestions : [],
+    actionKind: options.resolutionView?.actionType || validation.normalized.actionType,
+    outcomeSummary: cleanText(options.resolutionView?.outcomeSummary, "", 220),
+    serverAdjudication: options.resolutionView
+      ? {
+        status: cleanText(options.resolutionView.serverStatus, accepted ? "recorded" : "rejected", 56),
+        actionLabel: cleanText(options.resolutionView.actionLabel, "", 40),
+        serverOwnsOutcome: true
+      }
+      : null,
+    riskTags: Array.isArray(options.resolutionView?.riskTags)
+      ? options.resolutionView.riskTags.map((entry) => cleanText(entry, "", 40)).filter(Boolean).slice(0, 6)
+      : [],
+    eligibilityView: options.resolutionView?.eligibilityView || null,
+    relationshipImpactView: options.resolutionView?.relationshipImpactView || null,
+    resourceImpactView: options.resolutionView?.resourceImpactView || null,
+    worldPeopleImpactView: options.resolutionView?.worldPeopleImpactView || null,
+    ignoredClientResultFields: Array.isArray(options.resolutionView?.ignoredClientResultFields)
+      ? options.resolutionView.ignoredClientResultFields.map((entry) => cleanText(entry, "", 60)).filter(Boolean).slice(0, 8)
+      : [],
     auditRefs: Array.isArray(options.auditRefs) ? options.auditRefs.map((entry) => cleanText(entry, "", 96)).filter(Boolean) : []
   };
   ledger.records.push(record);
@@ -191,7 +219,16 @@ function buildNpcInteractionLedgerView(worldState = {}, options = {}) {
       serverReasons: record.serverReasons,
       dialogueText: record.dialogueText,
       mood: record.mood,
-      followUpSuggestions: record.followUpSuggestions
+      followUpSuggestions: record.followUpSuggestions,
+      actionKind: record.actionKind,
+      outcomeSummary: record.outcomeSummary,
+      serverAdjudication: record.serverAdjudication,
+      riskTags: record.riskTags,
+      eligibilityView: record.eligibilityView,
+      relationshipImpactView: record.relationshipImpactView,
+      resourceImpactView: record.resourceImpactView,
+      worldPeopleImpactView: record.worldPeopleImpactView,
+      ignoredClientResultFields: record.ignoredClientResultFields
     }));
   return {
     schemaVersion: NPC_INTERACTION_LEDGER_SCHEMA_VERSION,

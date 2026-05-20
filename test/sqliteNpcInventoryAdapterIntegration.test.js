@@ -7,6 +7,7 @@ const { isBuiltin } = require("node:module");
 
 const { createInitialState } = require("../src/game/initialState");
 const { createLandSurveyDelegatedTask } = require("../src/game/delegatedTasks");
+const { createNpcActiveRequest } = require("../src/game/npcActiveRequests");
 const { recordNpcInteraction } = require("../src/game/npcInteractions");
 const { resolveTradeRequest } = require("../src/game/tradeLedger");
 const { createSqliteSessionAdapter } = require("../src/storage/sqliteSessionAdapter");
@@ -78,6 +79,7 @@ function buildWorldState() {
       riskTags: ["需核价"]
     }
   });
+  createNpcActiveRequest(worldState, "bribe");
   return worldState;
 }
 
@@ -101,6 +103,7 @@ test("S81.4 SQLite adapter syncs, repairs, deletes and reports NPC/inventory der
     assert.ok(countRows(database, "inventory_items", worldState.sessionId) > 0);
     assert.ok(countRows(database, "npc_roster_profiles", worldState.sessionId) > 0);
     assert.ok(countRows(database, "npc_interaction_events", worldState.sessionId) > 0);
+    assert.ok(countRows(database, "npc_active_requests", worldState.sessionId) > 0);
     assert.ok(countRows(database, "delegated_tasks", worldState.sessionId) > 0);
     assert.ok(countRows(database, "trade_ledger_records", worldState.sessionId) > 0);
     const diagnostics = exportSafeSqliteDiagnostics(database, { sessionId: worldState.sessionId });
@@ -130,6 +133,7 @@ test("S81.4 SQLite adapter syncs, repairs, deletes and reports NPC/inventory der
       "inventory_items",
       "npc_roster_profiles",
       "npc_interaction_events",
+      "npc_active_requests",
       "delegated_tasks",
       "trade_ledger_records"
     ]) {

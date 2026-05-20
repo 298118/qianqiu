@@ -101,6 +101,15 @@ S85.1-S85.2 新增两个 server-owned 账本：
 
 普通回合和自然语言跳时复用同一条旬/月结算链：世界 tick 先推进日期，`npcEconomy` 再刷新市价或执行月结。考试入场/场内场景只推进科场局部时间，不触发全局经济。两个 raw ledger 必须从 `buildClientWorldState()`、`buildPlayerStateEnvelope()` 和所有浏览器安全 payload 剥离；S85 反馈中的资产、资源和库存变化 path 只能使用公开 `economy.*` 分类，不能暴露 `assetLedger.*`、`resourceLedger.*` 或 `inventoryLedger.*` 内部路径。
 
+### 2.7 `npcActiveRequestLedger` 与关系动作扩展位
+
+S85.3-S85.4 新增 NPC 主动来函和礼法动作服务器裁决层：
+
+- `npcActiveRequestLedger`：保存 NPC 主动求助、索债、献策、请托、行贿、弹劾、引荐、求婚和背叛请求。它只记录服务器生成或采纳的安全意图，不保存 hiddenDossier、raw provider payload、完整 prompt、本地路径、key 或 SQLite 行。玩家回应只能被归类为 `accept | refuse | defer | investigate | report`，随后由服务器把状态改为待查、拒绝、上交、风险登记或待后续裁决；不得即时扣银、转物、写婚姻、定罪、弹劾成案或完成隐藏任务。
+- `npcRelationshipActions`：为 `debate | duel | courtship | marriage` 提供正式 schema、NPC 名册能力、关系/年龄/礼法/权限门槛、服务器 outcome 摘要和红线。前端可以提交论道、切磋、求爱或议婚意向，但客户端传来的胜负、伤势、资源 delta、配偶字段、关系 delta 或 state patch 一律忽略；服务器只写安全交互记录和小幅可审查关系影响，婚姻、伤亡、财物流转和制度后果仍留给后续专门 resolver。
+
+普通回合、SSE、考试 payload 和 player-state 返回 `npcActiveRequestView`；NPC 详情返回 `relationshipActionEligibilityView`。兼容 `worldState`、redacted player API、SQLite 派生表和 prompt context 必须剥离 raw `npcActiveRequestLedger` 与 NPC 私档，只暴露安全标题、请求类型、NPC 公开名、期限、风险标签、允许回应、服务器边界和公开 outcome。
+
 ## 3. 安全 API
 
 - `GET /api/game/inventory/:sessionId`：返回 `inventoryView`，包含资源账本、资产、容器、物品、重要凭证和可转移边界。
@@ -108,12 +117,13 @@ S85.1-S85.2 新增两个 server-owned 账本：
 - `GET /api/game/npcs/:sessionId`：返回分页/分组 `npcRosterView`。
 - `GET /api/game/npc/:sessionId/:npcId`：返回单个 `npcDetailView`。
 - `POST /api/game/npc-interaction/:sessionId`：交谈、询问、赠礼和预留玩法入口；AI 可扮演，服务器裁决。
+- `POST /api/game/npc-interaction/:sessionId` 同时承载 S85.4 论道、切磋、求爱和议婚动作；route 必须先用服务器 eligibility resolver 判断能否受理，再记录安全交互和服务器 outcome。
 - `POST /api/game/trade/:sessionId`：发起、议价、接受、拒绝、赠礼、借贷或典当；服务器裁决价格、库存、合法性和关系结果。
 - `POST /api/game/npc-command/:sessionId`：创建或推进委派任务；服务器校验 authority、资源、工具、期限和 NPC 可用性。
 
 所有 API 顶层至少返回 `sessionId`；各安全 view 自带 `schemaVersion`、`generatedAtTurn`、`authorityBoundary`、`safeguards` 或同等安全摘要。错误只返回安全中文摘要，不回显请求中的 raw 背景、provider payload、ledger 原文或本地路径。
 
-普通 `POST /api/game/turn`、SSE `state_preview` / `final_state`、`GET /api/game/player-state/:sessionId` 和兼容 state route 会返回 `marketPriceView` 与 `npcEconomyView`。它们是只读 projection，不新增交易/委派即时 API 写权。
+普通 `POST /api/game/turn`、SSE `state_preview` / `final_state`、`GET /api/game/player-state/:sessionId` 和兼容 state route 会返回 `marketPriceView`、`npcEconomyView` 与 `npcActiveRequestView`。它们是只读 projection，不新增交易/委派/婚姻/弹劾即时 API 写权。
 
 ## 4. AI 任务
 
@@ -121,7 +131,7 @@ S85.1-S85.2 新增两个 server-owned 账本：
 
 - `background_claim_parser`：读开局表单与自由背景，输出 claims，不授予资产。
 - `npc_dialogue`：读 NPC 安全档案、关系摘要和场景契约，输出对话和小幅关系建议。
-- `npc_private_planner`：默认本地/Mock 使用 hiddenDossier；外部 provider 只读 privateSignalTags。
+- `npc_private_planner`：默认本地/Mock 使用 hiddenDossier；外部 provider 只读严格裁剪的 privateSignalTags，只能提出 NPC 主动请求意图，不能裁决请求结果。
 - `trade_negotiator`：读双方可见账本和价格边界，输出议价文案与 proposal。
 - `delegated_task_planner`：读任务、执行人能力、公开阻力和资源，输出计划 proposal。
 - `delegated_task_reporter`：在服务器裁决后生成回禀文案。
@@ -139,6 +149,7 @@ S85.1-S85.2 新增两个 server-owned 账本：
 - `inventory_items`
 - `npc_roster_profiles`
 - `npc_interaction_events`
+- `npc_active_requests`
 - `delegated_tasks`
 - `trade_ledger_records`
 
@@ -158,6 +169,8 @@ S85 React 继续只消费安全 view：
 
 - 主卷安全视图索引把 `marketPriceView` 与 `npcEconomyView` 作为只读就绪信号。
 - 县令主卷钱粮卡片可展示基础市价、NPC 月账和服务器边界。
+- 人物页展示 NPC 主动来函 inbox；点击只把玩家回应写入底部奏折草稿，不在浏览器内处理银钱、任务、婚姻或弹劾。
+- 人物工作台新增“礼法”tab，只读取 `relationshipActionEligibilityView` 并提交 `debate | duel | courtship | marriage` 交互请求；按钮 disabled、门槛和 outcome 文案均来自服务器。
 - 前端不得用市价行自行定价、成交、扣银、扣库存、刷新 NPC 任务或推断 hidden 底价。
 
 ## 7. 验收矩阵
@@ -170,3 +183,4 @@ S85 React 继续只消费安全 view：
 - 前端：`npm run typecheck:client && npm run test:client -- --pool=vmForks --maxWorkers=2 && npm run build:client && AI_PROVIDER=mock npm run smoke:browser`
 - 回归：`npm run smoke:exam-s69 && npm run check:docs-governance && node --test test/documentationGovernance.test.js && npm test`
 - S85 经济：`node --test test/delegatedTasks.test.js test/npcEconomy.test.js test/gameTurnNpcEconomy.test.js`
+- S85 主动性与礼法扩展：`node --test test/npcActiveRequests.test.js test/npcRelationshipActions.test.js test/npcAiSafety.test.js test/npcInventoryRoutes.test.js`

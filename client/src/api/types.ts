@@ -102,6 +102,7 @@ export type SafeRouteViews = {
   readonly delegatedTaskView?: DelegatedTaskView;
   readonly marketPriceView?: MarketPriceView;
   readonly npcEconomyView?: NpcEconomyView;
+  readonly npcActiveRequestView?: NpcActiveRequestView;
   readonly mapRuntimeView?: MapRuntimeView;
   readonly eventArchiveView?: JsonObject;
   readonly informationPanelPageView?: JsonObject;
@@ -181,6 +182,34 @@ export type NpcEconomyView = JsonObject & {
   readonly lastMonthlyPeriodKey?: string;
   readonly recentEvents?: readonly string[];
   readonly lastOutcome?: JsonObject | null;
+  readonly safeguards?: JsonObject;
+};
+
+export type NpcActiveRequestItemView = JsonObject & {
+  readonly requestId?: string;
+  readonly type?: string;
+  readonly typeLabel?: string;
+  readonly status?: string;
+  readonly npc?: JsonObject;
+  readonly title?: string;
+  readonly ask?: string;
+  readonly stakes?: string;
+  readonly intentSummary?: string;
+  readonly proposalBoundary?: string;
+  readonly riskTags?: readonly string[];
+  readonly allowedResponseActions?: readonly string[];
+  readonly turnsRemaining?: number;
+  readonly outcome?: JsonObject | null;
+};
+
+export type NpcActiveRequestView = JsonObject & {
+  readonly schemaVersion?: string;
+  readonly ownerActorId?: string;
+  readonly totalItems?: number;
+  readonly items?: readonly NpcActiveRequestItemView[];
+  readonly recentEvents?: readonly string[];
+  readonly allowedRequestTypes?: readonly string[];
+  readonly allowedResponseActions?: readonly string[];
   readonly safeguards?: JsonObject;
 };
 
@@ -349,6 +378,18 @@ export type NpcDetailView = Omit<NpcRosterItem, "relationshipSummary"> & {
   readonly inventoryRefs?: readonly string[];
   readonly assetRefs?: readonly string[];
   readonly resourceAccountRefs?: readonly string[];
+  readonly socialProfile?: JsonObject;
+  readonly relationshipActionEligibilityView?: JsonObject & {
+    readonly actions?: readonly (JsonObject & {
+      readonly actionType?: string;
+      readonly label?: string;
+      readonly requestLabel?: string;
+      readonly available?: boolean;
+      readonly blockers?: readonly string[];
+      readonly riskTags?: readonly string[];
+      readonly serverBoundary?: string;
+    })[];
+  };
   readonly safeguards?: JsonObject;
 };
 
@@ -364,6 +405,15 @@ export type NpcInteractionRecordView = {
   readonly dialogueText?: string;
   readonly mood?: string;
   readonly followUpSuggestions?: readonly string[];
+  readonly actionKind?: string;
+  readonly outcomeSummary?: string;
+  readonly serverAdjudication?: JsonObject | null;
+  readonly riskTags?: readonly string[];
+  readonly eligibilityView?: JsonObject | null;
+  readonly relationshipImpactView?: JsonObject | null;
+  readonly resourceImpactView?: JsonObject | null;
+  readonly worldPeopleImpactView?: JsonObject | null;
+  readonly ignoredClientResultFields?: readonly string[];
 };
 
 export type NpcInteractionView = {
@@ -410,6 +460,7 @@ export type NpcInteractionResponse = {
   readonly accepted: boolean;
   readonly errors?: readonly string[];
   readonly npcDialogueView?: NpcDialogueView;
+  readonly npcActionResolutionView?: JsonObject | null;
   readonly npcInteractionView: NpcInteractionView;
   readonly npcDetailView?: NpcDetailView;
 };
@@ -557,6 +608,7 @@ export type TurnResponse = SafeRouteViews & {
   readonly worldState: SafeWorldState;
   readonly narrative?: string;
   readonly npcEconomy?: NpcEconomyFeedback;
+  readonly npcActiveRequests?: JsonObject;
   readonly examTrigger?: JsonObject | null;
   readonly examScene?: JsonObject | null;
 };

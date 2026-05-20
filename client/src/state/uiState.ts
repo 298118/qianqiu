@@ -59,6 +59,7 @@ export type SafePlayerPayload = {
     readonly hasDelegatedTaskView: boolean;
     readonly hasMarketPriceView: boolean;
     readonly hasNpcEconomyView: boolean;
+    readonly hasNpcActiveRequestView: boolean;
   };
 };
 
@@ -170,7 +171,8 @@ export function extractSafePlayerPayload(
       hasTradeLedgerView: Boolean(payload.tradeLedgerView),
       hasDelegatedTaskView: Boolean(payload.delegatedTaskView),
       hasMarketPriceView: Boolean(payload.marketPriceView),
-      hasNpcEconomyView: Boolean(payload.npcEconomyView)
+      hasNpcEconomyView: Boolean(payload.npcEconomyView),
+      hasNpcActiveRequestView: Boolean(payload.npcActiveRequestView)
     }
   };
 }

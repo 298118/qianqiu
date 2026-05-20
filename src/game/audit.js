@@ -305,6 +305,7 @@ function createTurnAuditRecords({
   relationshipChanges,
   examTrigger,
   activeNpcRequest,
+  npcActiveRequests,
   teacherFeedbackProposal,
   studyInteraction,
   roleWorldCoupling,
@@ -354,6 +355,7 @@ function createTurnAuditRecords({
   });
   const feedbackEvents = [
     buildFeedbackEvent(worldState, "active_npc_request", "active_request_step", activeNpcRequest),
+    buildFeedbackEvent(worldState, "npc_active_requests", "npc_active_request_step", npcActiveRequests),
     buildFeedbackEvent(worldState, "study_interaction", "study_interaction_step", studyInteraction),
     buildFeedbackEvent(worldState, "role_world_coupling", "role_world_coupling_step", roleWorldCoupling),
     buildFeedbackEvent(worldState, "world_tick", "world_tick_step", worldTick),

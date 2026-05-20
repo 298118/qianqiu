@@ -79,6 +79,12 @@ const NPC_STAGE_FIXTURES = Object.freeze({
       assetRefs: Object.freeze([]),
       resourceAccountRefs: Object.freeze([]),
       availableInteractions: Object.freeze(["talk", "inquire", "gift", "request", "debate"]),
+      socialProfile: Object.freeze({
+        adult: true,
+        marriageStatus: "married",
+        ritualStatus: "teacher_elder",
+        publicNote: "师长身份只适合论道请益，不作求爱或议婚对象。"
+      }),
       hiddenDossier: Object.freeze({
         motives: Object.freeze(["盼学生中式以振书塾声望"]),
         trueAssets: Object.freeze([]),
@@ -112,7 +118,13 @@ const NPC_STAGE_FIXTURES = Object.freeze({
       inventoryRefs: Object.freeze(["inventory:npc:peer-shen:satchel"]),
       assetRefs: Object.freeze([]),
       resourceAccountRefs: Object.freeze([]),
-      availableInteractions: Object.freeze(["talk", "inquire", "gift", "debate"]),
+      availableInteractions: Object.freeze(["talk", "inquire", "gift", "debate", "duel"]),
+      socialProfile: Object.freeze({
+        adult: true,
+        marriageStatus: "unknown",
+        ritualStatus: "peer",
+        publicNote: "成年同窗，可论道或切磋，婚姻事项仍须礼法与亲族审查。"
+      }),
       hiddenDossier: Object.freeze({
         motives: Object.freeze(["想在县试前摸清你的文章路数"]),
         trueAssets: Object.freeze([]),
@@ -120,6 +132,46 @@ const NPC_STAGE_FIXTURES = Object.freeze({
         unrevealedTasks: Object.freeze([])
       }),
       privateSignalTags: Object.freeze(["求名", "可能欺瞒"])
+    }),
+    Object.freeze({
+      npcId: "npc:scholar:matchmaker-lin",
+      sourceRef: "fixture:scholar:matchmaker",
+      displayName: "林知微",
+      tier: "active",
+      roleTags: Object.freeze(["gentry", "matchmaking", "local_elite"]),
+      stageTags: Object.freeze(["scholar", "family", "local_society"]),
+      publicProfile: Object.freeze({
+        title: "士族成年亲眷",
+        origin: "清河县",
+        posting: "林氏东宅",
+        summary: "出入书香门第，常由族中长辈托其探问婚姻与师友门路。",
+        visibleAbilities: Object.freeze(["礼法", "引荐", "议婚"])
+      }),
+      relationship: Object.freeze({
+        closeness: 34,
+        trust: 52,
+        awe: 12,
+        hostility: 0,
+        favorsOwed: 0,
+        labels: Object.freeze(["士族", "媒妁"])
+      }),
+      inventoryRefs: Object.freeze([]),
+      assetRefs: Object.freeze([]),
+      resourceAccountRefs: Object.freeze([]),
+      availableInteractions: Object.freeze(["talk", "inquire", "gift", "courtship", "marriage", "request"]),
+      socialProfile: Object.freeze({
+        adult: true,
+        marriageStatus: "unmarried",
+        ritualStatus: "family_review_required",
+        publicNote: "成年且可由媒妁议礼；本阶段只登记意向，不即时成婚。"
+      }),
+      hiddenDossier: Object.freeze({
+        motives: Object.freeze(["盼借婚姻或师友门路稳固族中声望"]),
+        trueAssets: Object.freeze([]),
+        secretRelationships: Object.freeze([]),
+        unrevealedTasks: Object.freeze([])
+      }),
+      privateSignalTags: Object.freeze(["亲族压力", "求名"])
     })
   ]),
   magistrate: Object.freeze([
@@ -148,7 +200,13 @@ const NPC_STAGE_FIXTURES = Object.freeze({
       inventoryRefs: Object.freeze(["inventory:npc:registrar-lu:desk"]),
       assetRefs: Object.freeze(["asset:npc:registrar-lu:household-visible"]),
       resourceAccountRefs: Object.freeze(["resource:yamen:clerical-expenses"]),
-      availableInteractions: Object.freeze(["talk", "inquire", "gift", "delegate", "summon", "request"]),
+      availableInteractions: Object.freeze(["talk", "inquire", "gift", "delegate", "summon", "request", "debate"]),
+      socialProfile: Object.freeze({
+        adult: true,
+        marriageStatus: "married",
+        ritualStatus: "official_staff",
+        publicNote: "官署属员可论事请托，不作求爱或议婚对象。"
+      }),
       hiddenDossier: Object.freeze({
         motives: Object.freeze(["保住县署旧例与本地人情"]),
         trueAssets: Object.freeze(["城南薄田十七亩由亲族代名"]),
@@ -182,7 +240,13 @@ const NPC_STAGE_FIXTURES = Object.freeze({
       inventoryRefs: Object.freeze(["inventory:npc:bailiff-zhou:gear"]),
       assetRefs: Object.freeze([]),
       resourceAccountRefs: Object.freeze([]),
-      availableInteractions: Object.freeze(["talk", "inquire", "gift", "delegate", "summon"]),
+      availableInteractions: Object.freeze(["talk", "inquire", "gift", "delegate", "summon", "duel"]),
+      socialProfile: Object.freeze({
+        adult: true,
+        marriageStatus: "unknown",
+        ritualStatus: "yamen_runner",
+        publicNote: "差役身份可切磋或公事差遣；胜负和伤损仍由服务器裁决。"
+      }),
       hiddenDossier: Object.freeze({
         motives: Object.freeze(["借公差捞取脚钱"]),
         trueAssets: Object.freeze(["赌债二十两"]),
@@ -216,7 +280,13 @@ const NPC_STAGE_FIXTURES = Object.freeze({
       inventoryRefs: Object.freeze(["inventory:npc:gentry-han:guest-hall"]),
       assetRefs: Object.freeze(["asset:npc:gentry-han:estate-visible"]),
       resourceAccountRefs: Object.freeze(["resource:npc:gentry-han:silver-visible"]),
-      availableInteractions: Object.freeze(["talk", "inquire", "gift", "request", "summon", "trade"]),
+      availableInteractions: Object.freeze(["talk", "inquire", "gift", "request", "summon", "trade", "marriage"]),
+      socialProfile: Object.freeze({
+        adult: true,
+        marriageStatus: "married",
+        ritualStatus: "clan_alliance_only",
+        publicNote: "本人已婚，只可代表族中提出联姻或礼法线索，不能即时成婚。"
+      }),
       hiddenDossier: Object.freeze({
         motives: Object.freeze(["阻缓清丈以护族产"]),
         trueAssets: Object.freeze(["隐田一百三十亩", "佃户债契若干"]),

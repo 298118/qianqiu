@@ -391,6 +391,9 @@ describe("S74.3 UI state store", () => {
         hasInformationPanelView: false,
         hasInventoryView: false,
         hasMapRuntimeView: true,
+        hasMarketPriceView: false,
+        hasNpcActiveRequestView: false,
+        hasNpcEconomyView: false,
         hasNpcRosterView: false,
         hasTradeLedgerView: false
       }

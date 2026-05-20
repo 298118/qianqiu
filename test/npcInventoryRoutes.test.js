@@ -160,6 +160,26 @@ test("S83/S84 safety APIs expose NPC, inventory, trade and delegated task views 
   assert.equal(tradeResponse.status, 200);
   assert.equal(tradePayload.tradeRecord.tradeId, "trade:test:paper");
 
+  const socialResponse = await fetch(`${server.baseUrl}/api/game/npc-interaction/${worldState.sessionId}`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      npcId: "npc:magistrate:bailiff-zhou",
+      actionType: "duel",
+      utterance: "只作公事切磋，不许伤人。",
+      winner: "player",
+      injury: "npc_injured",
+      resourceDelta: { silver: 1000 }
+    })
+  });
+  const socialPayload = await socialResponse.json();
+  assert.equal(socialResponse.status, 200);
+  assert.equal(socialPayload.npcActionResolutionView.serverStatus, "server_adjudicated");
+  assert.equal(socialPayload.npcActionResolutionView.resourceImpactView.applied, false);
+  assert.equal(socialPayload.npcActionResolutionView.worldPeopleImpactView.applied, false);
+  assert.ok(socialPayload.npcActionResolutionView.ignoredClientResultFields.includes("winner"));
+  assert.ok(socialPayload.npcInteractionView.items[0].outcomeSummary);
+
   const playerStateResponse = await fetch(`${server.baseUrl}/api/game/player-state/${worldState.sessionId}`);
   const playerStatePayload = await playerStateResponse.json();
   const serialized = JSON.stringify(playerStatePayload);
@@ -167,8 +187,58 @@ test("S83/S84 safety APIs expose NPC, inventory, trade and delegated task views 
   assert.ok(playerStatePayload.inventoryView.items.length > 0);
   assert.ok(playerStatePayload.npcRosterView.items.length > 0);
   assert.ok(playerStatePayload.delegatedTaskView.items.length > 0);
+  assert.ok(playerStatePayload.npcActiveRequestView);
   assert.doesNotMatch(
     serialized,
-    /"hiddenDossier":|"privateSignalTags":|"trueAssets":|"secretRelationships":|"rawProviderPayload":|"providerPayload":|"rawLedger":|sk-[A-Za-z0-9_-]{6,}/
+    /"hiddenDossier":|"privateSignalTags":|"trueAssets":|"secretRelationships":|"npcActiveRequestLedger":|"rawProviderPayload":|"providerPayload":|"rawLedger":|sk-[A-Za-z0-9_-]{6,}/
   );
+});
+
+test("S85.3 turn route schedules and resolves NPC active requests through safe views", async (t) => {
+  const worldState = createInitialState({
+    role: "magistrate",
+    playerName: "主动来函知县"
+  });
+  await writeSession(worldState);
+  t.after(() => removeSessionArtifacts(worldState.sessionId));
+
+  const server = createTestServer();
+  t.after(server.close);
+
+  const firstResponse = await fetch(`${server.baseUrl}/api/game/turn`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      sessionId: worldState.sessionId,
+      input: "照常清查县署田册。"
+    })
+  });
+  const firstPayload = await firstResponse.json();
+  assert.equal(firstResponse.status, 200);
+  assert.ok(firstPayload.npcActiveRequestView.items.length >= 1);
+  assert.ok(firstPayload.npcActiveRequestEvents.length >= 1);
+  assert.equal(firstPayload.worldState.npcActiveRequestLedger, undefined);
+  assert.doesNotMatch(
+    JSON.stringify(firstPayload),
+    /求财|避祸|亲族压力|可能欺瞒|求名|护短|畏上|重义/
+  );
+
+  const secondResponse = await fetch(`${server.baseUrl}/api/game/turn`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      sessionId: worldState.sessionId,
+      input: "先查证来意，再决定是否采纳。"
+    })
+  });
+  const secondPayload = await secondResponse.json();
+  const serialized = JSON.stringify(secondPayload);
+  assert.equal(secondResponse.status, 200);
+  assert.ok(secondPayload.npcActiveRequests.outcome.resolved >= 1);
+  assert.ok(secondPayload.npcActiveRequestView.items.some((item) => item.outcome));
+  assert.doesNotMatch(
+    serialized,
+    /"npcActiveRequestLedger":|"hiddenDossier":|"privateSignalTags":|"rawProviderPayload":|sk-[A-Za-z0-9_-]{6,}/
+  );
+  assert.doesNotMatch(serialized, /求财|避祸|亲族压力|可能欺瞒|求名|护短|畏上|重义/);
 });

@@ -429,6 +429,17 @@ const npcPrivatePlannerSchema = {
     npcId: { type: "string", minLength: 1, maxLength: 96 },
     intentSummary: { type: "string", minLength: 1, maxLength: 180 },
     proposalBoundary: { type: "string", minLength: 1, maxLength: 180 },
+    requestType: {
+      type: "string",
+      enum: ["help", "debt_collection", "advice", "petition", "bribe", "impeachment", "introduction", "marriage_proposal", "betrayal"]
+    },
+    requestedAction: { type: "string", maxLength: 140 },
+    targetRefs: {
+      type: "array",
+      maxItems: 4,
+      items: { type: "string", minLength: 1, maxLength: 96 }
+    },
+    serverAdjudicationHint: { type: "string", maxLength: 80 },
     riskTags: {
       type: "array",
       maxItems: 6,

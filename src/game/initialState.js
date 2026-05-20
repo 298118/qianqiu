@@ -23,6 +23,7 @@ const {
   createInitialMarketPriceLedger,
   createInitialNpcEconomyLedger
 } = require("./npcEconomy");
+const { createInitialNpcActiveRequestLedger } = require("./npcActiveRequests");
 const { NUMERIC_RANGES, clamp } = require("./stateRules");
 
 const ROLE_LABELS = {
@@ -286,6 +287,7 @@ function createInitialState(input = {}) {
     openingBackgroundClaims: null,
     marketPriceLedger: null,
     npcEconomyLedger: null,
+    npcActiveRequestLedger: null,
     examCalendar: createInitialExamCalendar(),
     activeNpcRequest: null,
     longTermEvents: {
@@ -403,6 +405,7 @@ function createInitialState(input = {}) {
   worldState.openingBackgroundClaims = createInitialOpeningBackgroundClaimsState(input, worldState);
   worldState.marketPriceLedger = createInitialMarketPriceLedger(worldState);
   worldState.npcEconomyLedger = createInitialNpcEconomyLedger(worldState);
+  worldState.npcActiveRequestLedger = createInitialNpcActiveRequestLedger(worldState);
   return worldState;
 }
 

@@ -15,6 +15,7 @@
 - S71 数据库玩法化、维护、安全检索、redacted player API、财政/刑名/军务外交服务器 resolver、压力事件、多 actor 场景、NPC 记忆账本、AI 调动审计和验收：[DATABASE_GAMEPLAY_RESOLVER_ARCHIVE.md](DATABASE_GAMEPLAY_RESOLVER_ARCHIVE.md)，resolver 输入契约见 [DATABASE_RESOLVER_INPUT_CONTRACT.md](DATABASE_RESOLVER_INPUT_CONTRACT.md)。
 - S72 PixiJS 水墨地图：[PIXIJS_INK_MAP_ARCHIVE.md](PIXIJS_INK_MAP_ARCHIVE.md)，运行时契约见 [PIXIJS_INK_MAP_RUNTIME_CONTRACT.md](PIXIJS_INK_MAP_RUNTIME_CONTRACT.md)，素材台账见 [MAP_ASSET_LEDGER.md](MAP_ASSET_LEDGER.md)。
 - S73-S77 前端水墨重构、React/Vite 默认入口、首页/全局 shell、身份/考试/放榜/舆图/人物页面、立绘管线、安全/性能/可访问性和总验证：[FRONTEND_INK_REDESIGN_ARCHIVE.md](FRONTEND_INK_REDESIGN_ARCHIVE.md)，素材台账见 [FRONTEND_ASSET_LEDGER.md](FRONTEND_ASSET_LEDGER.md)。
+- S81-S85 NPC、资产、储物、交易、委派、经济、NPC 主动性和礼法扩展位：[NPC_INVENTORY_SYSTEM_ARCHIVE.md](NPC_INVENTORY_SYSTEM_ARCHIVE.md)，规划见 [NPC_INVENTORY_SYSTEM_ROADMAP.md](NPC_INVENTORY_SYSTEM_ROADMAP.md)，契约见 [NPC_INVENTORY_SYSTEM_CONTRACT.md](NPC_INVENTORY_SYSTEM_CONTRACT.md)。
 
 2026-05-14 起，按用户要求停止与 Gemini CLI 共同开发；后续开发全部由 Codex 负责。远程存档、账号体系、多人同步、云端冲突解决和托管数据库不进入当前规划。
 
@@ -101,7 +102,7 @@
 
 ## 4. 活动路线图总览
 
-当前活动专项为 S81-S85 NPC、资产与储物系统，规划源头见 [NPC_INVENTORY_SYSTEM_ROADMAP.md](NPC_INVENTORY_SYSTEM_ROADMAP.md)。S81-S84 已完成首轮后端/API/SQLite/AI/React 闭环；S85.1-S85.2 已完成长期 tick 与基础市场价格首轮接入，剩余聚焦 NPC 主动性、预留玩法正式扩展位、总验收与归档。
+当前活动专项为 S81-S85 NPC、资产与储物系统，规划源头见 [NPC_INVENTORY_SYSTEM_ROADMAP.md](NPC_INVENTORY_SYSTEM_ROADMAP.md)，归档入口见 [NPC_INVENTORY_SYSTEM_ARCHIVE.md](NPC_INVENTORY_SYSTEM_ARCHIVE.md)。S81-S85 已完成首轮后端/API/SQLite/AI/React 闭环、长期经济 tick、NPC 主动来函、论道/切磋/求爱/婚姻正式扩展位和归档同步；下一步应从新的路线图或用户指定目标继续。
 
 | ID | 状态 | Owner | 目标 | 说明 |
 | --- | --- | --- | --- | --- |
@@ -132,13 +133,13 @@
 | S84.6 | DONE | Codex | 交易与赠礼面板 | 已新增报价/议价/赠礼入口和交易结果摘要；价格、库存、关系影响和结果只取服务器裁决。 |
 | S84.7 | DONE | Codex | 委派任务面板 | 已支持选择 NPC、填写命令、查看风险/资源/期限、执行状态、NPC 回禀和后续行动草稿。 |
 | S84.8 | DONE | Codex | 前端验收与体验打磨 | 已扩展 Vitest、typecheck、build 和 browser smoke 入口；覆盖安全 API、路由、交易/委派不越权、焦点和响应式布局基线。 |
-| S85 | IN_PROGRESS | Codex | 经济、长期关系与总验收 | 已接入长期 tick 和基础市场价格；下一步继续 NPC 私人目标、长期主动性、论道/切磋/求爱/婚姻扩展位，并完成 JSON/SQLite/Mock/browser/docs 总验收与归档。 |
+| S85 | DONE | Codex | 经济、长期关系与总验收 | 已接入长期 tick、基础市场价格、NPC 主动来函、论道/切磋/求爱/婚姻正式扩展位，并完成 S81-S85 聚焦验收与归档同步。 |
 | S85.1 | DONE | Codex | 长期 tick 接入 | 已在普通回合/跳时共用的月末链路接入 `npcEconomy`，让资产维护/收益、库存损耗、交易承诺、委派任务、人情债与 NPC 关系记忆随旬/月演化；考试场景不跑全局经济结算。 |
 | S85.2 | DONE | Codex | 基础市场价格 | 已实现 `marketPriceLedger`、`marketPriceView` 和身份价格差异，覆盖书籍、粮食、药材、马匹、兵器、文书、礼物、宅产维护和官署经费；React 县令主卷只读展示市价和月账。 |
-| S85.3 | TODO | Codex | NPC 私人目标与主动性 | NPC 可主动求助、索债、献策、请托、行贿、弹劾、引荐、求婚或背叛，但全部走服务器裁决。 |
-| S85.4 | TODO | Codex | 预留玩法正式扩展位 | 为论道、切磋、求爱、婚姻加入 schema、权限、UI 预留和红线；不能只是无数据支撑的假按钮。 |
-| S85.5 | TODO | Codex | S81-S85 总验收 | 验证 JSON/SQLite、Mock 开局、完整书生路径、地方官丈田委派、NPC 对话、交易、背包转移、重要凭证和安全污染。 |
-| S85.6 | TODO | Codex | S81-S85 归档 | 归档专项并更新 brief、README、共享上下文、活动台账和 AI 权限矩阵。 |
+| S85.3 | DONE | Codex | NPC 私人目标与主动性 | 已新增 `npcActiveRequestLedger` / `npcActiveRequestView`，NPC 可主动求助、索债、献策、请托、行贿、弹劾、引荐、求婚或背叛；玩家回应只进入服务器裁决，不即时写资源、婚姻、弹劾或隐藏任务结果。 |
+| S85.4 | DONE | Codex | 预留玩法正式扩展位 | 已新增 `npcRelationshipActions` schema/resolver、NPC `relationshipActionEligibilityView` 和人物页“礼法”tab；论道、切磋、求爱、婚姻均走服务器权限、礼法和安全 outcome，客户端伪造结果字段被忽略。 |
+| S85.5 | DONE | Codex | S81-S85 总验收 | 已通过 S85 主动性/礼法聚焦测试、API/SQLite 测试、前端 typecheck/Vitest/build、browser smoke、完整书生路径 smoke、docs governance、diff check 和全量 `npm test`（983 项）。 |
+| S85.6 | DONE | Codex | S81-S85 归档 | 已新增 [NPC_INVENTORY_SYSTEM_ARCHIVE.md](NPC_INVENTORY_SYSTEM_ARCHIVE.md)，并同步 brief、README、共享上下文、活动台账、契约和 AI 权限矩阵。 |
 | S79 | DONE | Codex | 前端打磨与高清女性立绘入库 | 已完成前端正确性修复、194 张 recovered 女性高清母版入库、游戏内只读高清立绘放大查看器与安全/素材验证。 |
 | S80 | DONE | Codex | 服务端全局 AI 设置与保存反馈 | 已完成 `GET/POST /api/ai/settings/global`、本地运行时设置文件、全局优先 AI route policy、共享 11 类任务矩阵面板和旧 session 设置入口兼容。 |
 | PLAN-S81-S85 | DONE | Codex | NPC 与储物系统规划 | 新增 [NPC_INVENTORY_SYSTEM_ROADMAP.md](NPC_INVENTORY_SYSTEM_ROADMAP.md)，把用户需求和 Codex 建议固化为 S81-S85 可施工路线图，并把前后端分离/大步骤拆分写入治理规范。 |
@@ -147,8 +148,8 @@
 ## 5. 最新状态
 
 - S81-S84 当前基线：NPC、资产、储物、交易与委派首轮闭环已完成。后端已有 `assetLedger`、`inventoryLedger`、`npcRoster`、`npcInteractionLedger`、`tradeLedger`、`delegatedTaskLedger`、开局背景裁决、AI task/schema/prompt/provider fallback、JSON/SQLite 同步和 player-state 安全 view；React 已有“囊箧” route、人物 NPC 工作台、对话/交易/委派面板和开局裁决摘要。前端只消费安全 API/view，不裁决资源、价格、关系或任务结果。
-- S85 当前基线：`npcEconomy` 已在普通回合和跳时共享的旬/月 tick 后运行，非月末刷新基础市价，月末再结算资产维护/收益、库存损耗、委派到期回禀、逾期交易承诺、人情债与 NPC 关系记忆；考试入场/场内场景不跑全局经济；委派预算由服务器校验不得超过地方库银，月结旧任务也按有效预算参与成功率和扣款；`marketPriceView` / `npcEconomyView` 进入 turn、SSE、player-state 和县令主卷，raw `marketPriceLedger` / `npcEconomyLedger` 与内部 ledger path 已从兼容 `worldState`、玩家 API 和 S85 反馈中剥离。
-- S85 当前规划：下一步进入 NPC 私人目标与主动性、论道/切磋/求爱/婚姻正式扩展位、JSON/SQLite/Mock/browser 总验收和归档。
+- S85 当前基线：`npcEconomy` 已在普通回合和跳时共享的旬/月 tick 后运行，非月末刷新基础市价，月末再结算资产维护/收益、库存损耗、委派到期回禀、逾期交易承诺、人情债与 NPC 关系记忆；考试入场/场内场景不跑全局经济；委派预算由服务器校验不得超过地方库银，月结旧任务也按有效预算参与成功率和扣款；`marketPriceView` / `npcEconomyView` 进入 turn、SSE、player-state 和县令主卷，raw `marketPriceLedger` / `npcEconomyLedger` 与内部 ledger path 已从兼容 `worldState`、玩家 API 和 S85 反馈中剥离。`npcActiveRequestLedger` / `npcActiveRequestView` 已让 NPC 主动来函进入普通回合、SSE、考试和 player-state；`npcRelationshipActions` 已让论道、切磋、求爱和婚姻扩展位具备服务器 schema、权限、NPC eligibility view、UI“礼法”tab 和红队测试。
+- S85 当前规划：S81-S85 已归档。下一步由用户或新路线图决定；建议在新专项中把礼法扩展位继续深化为婚姻/比武/论道专门 resolver，并补真实 provider 长循环与 browser smoke 深度路径。
 - S80 当前基线：全局 AI 设置覆盖所有当前和未来案卷的 AI 路由；设置页和印匣共用 18 类任务矩阵，服务端 presets 为唯一来源，保存成功后以前端收到的服务端返回值回填表单。全局设置只保存 provider/model/预算/温度/安全控制，不保存 key、base URL、prompt、raw provider payload 或本地路径；缺 key 的真实 provider 不能作为可生效全局路由保存。
 - S79 当前基线：React 子路由壳、考试 smoke、recovered 女性高清立绘入库、runtime manifest、压缩 QA 和只读高清查看器已收束。查看器只读 `/assets/ui/` runtime 主图，不写 canonical state、URL、localStorage/sessionStorage、行动草稿或 AI prompt。
 - S78 及更早阶段均已迁入专题归档。活动台账不再展开完成流水；需要追溯时使用本文件顶部归档索引。
@@ -227,7 +228,32 @@ S84 前端专项额外验收入口：
 - `npm run check:docs-governance`
 - 浏览器复验：临时 `PORT=3001 AI_PROVIDER=mock npm start`，开局县令案卷，确认“基础市价”“粮食一石”“NPC 月账”和安全视图 `9 / 9` 渲染；截图采集在 in-app browser CDP 层超时，DOM 验证通过。
 
+本轮 S85.3-S85.6 NPC 主动性、礼法扩展位、总验收与归档验证口径：
+
+- `node --test test/npcActiveRequests.test.js test/npcRelationshipActions.test.js test/npcAiSafety.test.js`
+- `node --test test/npcInventoryRoutes.test.js`
+- `node --test test/sqliteNpcInventoryTables.test.js test/sqliteNpcInventoryAdapterIntegration.test.js`
+- `npm run typecheck:client`
+- `npm run test:client`
+- `npm run build:client`
+- `npm run check:docs-governance`
+- `node --test test/documentationGovernance.test.js`
+- `git diff --check`
+- `AI_PROVIDER=mock npm run smoke:browser`
+- `npm test`
+
 ## 7. 近期进度记录
+
+### 2026-05-20：完成 S85.3-S85.6 NPC 主动性、礼法扩展位、总验收与归档
+
+- 范围：完成 NPC 私人目标与主动请求、论道/切磋/求爱/婚姻正式扩展位、S81-S85 聚焦总验收和专项归档。新增 [NPC_INVENTORY_SYSTEM_ARCHIVE.md](NPC_INVENTORY_SYSTEM_ARCHIVE.md)，并同步契约、brief、README、共享上下文、活动台账和 AI 权限矩阵。
+- 后端：新增 `npcActiveRequestsConfig.js`、`npcActiveRequests.js`、`npcRelationshipActionsConfig.js` 和 `npcRelationshipActions.js`。普通回合在经济 tick 后运行 NPC 私人 planner 和主动请求 step；`npcActiveRequestView` 进入 turn、SSE、考试和 player-state；raw `npcActiveRequestLedger` 被 `clientWorldState`、`redactedState` 和 stateRules 保护。NPC 交互 route 对 `debate | duel | courtship | marriage` 调用服务器 eligibility/resolver，忽略客户端伪造胜负、伤势、银钱、配偶、关系 delta 和 state patch。
+- AI 与存储：`npc_private_planner` schema、prompt pack 和 Mock provider 已输出 requestType、requestedAction、targetRefs 和 serverAdjudicationHint；AI 只提出主动请求意图，不裁决资源、婚姻、弹劾、背叛或任务结果。SQLite 新增 `npc_active_requests` 安全派生表，只保存安全摘要、refs 和 content hash。
+- 前端：人物页新增主动来函 inbox 和“礼法”tab；来函回应只写入主卷行动草稿，礼法 tab 只读取 `relationshipActionEligibilityView` 并提交服务器交互请求。主卷安全视图索引加入“来函”，route flags 从 `9 / 9` 扩展为 `10 / 10`。
+- 验证：已通过本文件“本轮 S85.3-S85.6 NPC 主动性、礼法扩展位、总验收与归档验证口径”中的聚焦 Node tests、SQLite tests、客户端 typecheck、Vitest、client build、docs governance、documentation governance、browser smoke、完整书生路径 smoke、diff check 和全量 `npm test`（983 项）。`npm install` 仅补齐本机缺失的 rolldown Linux 可选原生依赖，未改变锁文件。
+- 子代理：Heisenberg 只读梳理 S85.3 主动请求接线；Chandrasekhar 只读梳理 S85.4 礼法扩展位；Poincare 提交前只读复审发现 NPC 主动来函公开 view 回显 `privateSignalTags` 值的 P1，已修复为私档软信号仅作内部选择，不进入公开 intent/risk/evidence，并补私密 tag 值不外泄测试；Poincare 复核又发现旧存档污染 `evidenceRefs`、`outcome` 和 `recentEvents` 的 P2，已补 view 层过滤与 SQLite 派生表回归测试；最终复审未发现 P0/P1/P2。
+- 提交：随本轮 S85.3-S85.6 coherent change 提交，最终 hash 见 Git 历史和本次回复。
+- 下一步：S81-S85 已归档；建议新专项继续深化婚姻、比武、论道和 NPC 主动来函来源，并补真实 provider 长循环与浏览器深度 smoke。
 
 ### 2026-05-20：完成 S85.1-S85.2 长期经济 tick 与基础市价
 

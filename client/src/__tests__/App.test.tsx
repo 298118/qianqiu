@@ -487,7 +487,7 @@ describe("S74.1 React client shell", () => {
     await screen.findByText("军帐筹谋");
     expect(screen.getByText("无名")).toBeTruthy();
     expect(screen.getAllByText("身份未题").length).toBeGreaterThan(0);
-    expect(screen.getByText("2 / 9")).toBeTruthy();
+    expect(screen.getByText("2 / 10")).toBeTruthy();
     expect(screen.getAllByRole("link", { name: /舆图/ }).length).toBeGreaterThan(0);
     expect(screen.getAllByRole("link", { name: /人物/ }).length).toBeGreaterThan(0);
     expect(screen.getAllByRole("link", { name: /朝议/ }).length).toBeGreaterThan(0);

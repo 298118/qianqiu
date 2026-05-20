@@ -2369,12 +2369,23 @@ async function runNpcDialogue(npcDialogueContext = {}) {
 async function planNpcPrivateIntent(npcPrivateContext = {}) {
   const npcId = npcPrivateContext.npcId || npcPrivateContext.npcDetailView?.npcId || "npc:unknown";
   const tags = Array.isArray(npcPrivateContext.privateSignalTags) ? npcPrivateContext.privateSignalTags : [];
+  let requestType = "advice";
+  if (tags.includes("求财")) requestType = "debt_collection";
+  else if (tags.includes("亲族压力")) requestType = "marriage_proposal";
+  else if (tags.includes("护短")) requestType = "petition";
+  else if (tags.includes("可能欺瞒")) requestType = "betrayal";
+  else if (tags.includes("避祸")) requestType = "help";
+  else if (tags.includes("求名")) requestType = "introduction";
   return {
     npcId,
+    requestType,
     intentSummary: tags.length ? `此人近期显出${tags.slice(0, 3).join("、")}的软倾向。` : "此人暂以观望为主。",
     proposalBoundary: "本意图只作服务器内部 proposal，不代表事实已经发生。",
+    requestedAction: "请玩家先听其来意，再按服务器规则选择答应、婉拒、查证或呈报。",
+    targetRefs: [`npcDetailView:${npcId}`],
     riskTags: tags.slice(0, 4),
     suggestedInteractionHooks: ["以公事试探", "观察回避之处"],
+    serverAdjudicationHint: "资源、关系、婚姻、弹劾、背叛和任务结果都需要服务器裁决。",
     source: "mock-ai"
   };
 }

@@ -48,6 +48,10 @@ const {
 } = require("../game/examProviderSanitizer");
 const { buildRelationshipInspectionView, ensureRelationshipLedger } = require("../game/relationships");
 const { buildActiveNpcRequestView } = require("../game/activeRequests");
+const {
+  buildNpcActiveRequestView,
+  ensureNpcActiveRequestLedgerState
+} = require("../game/npcActiveRequests");
 const { buildLongTermEventView, ensureLongTermEventState } = require("../game/longTermEvents");
 const { buildOfficialCareerView, ensureOfficialCareerState } = require("../game/officialCareer");
 const { buildOfficialPostingsView, ensureOfficialPostingsState } = require("../game/officialPostings");
@@ -150,6 +154,7 @@ function toExamPayload(worldState) {
     studyProfileView: buildStudyProfileView(worldState),
     relationshipView: buildRelationshipInspectionView(worldState),
     activeNpcRequestView: buildActiveNpcRequestView(worldState),
+    npcActiveRequestView: buildNpcActiveRequestView(worldState),
     roleWorldCouplingView: buildRoleWorldCouplingView(worldState),
     worldGeographyView,
     worldEntityView: buildWorldEntityView(worldState),
@@ -211,6 +216,7 @@ function ensureCommonState(worldState) {
   ensurePlayerMonthlyBriefingState(worldState);
   ensureActorMemoryLedgerState(worldState);
   ensureSessionSummaryState(worldState);
+  ensureNpcActiveRequestLedgerState(worldState);
 }
 
 function isWritingExam(activeExam) {
@@ -620,6 +626,7 @@ router.post("/submit", async (req, res, next) => {
         examRivalView: buildExamRivalView(worldState),
         relationshipView: buildRelationshipInspectionView(worldState),
         activeNpcRequestView: buildActiveNpcRequestView(worldState),
+        npcActiveRequestView: buildNpcActiveRequestView(worldState),
         roleWorldCouplingView: buildRoleWorldCouplingView(worldState),
         worldGeographyView,
         worldEntityView: buildWorldEntityView(worldState),

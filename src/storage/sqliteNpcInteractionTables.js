@@ -1,6 +1,7 @@
 const { createHash } = require("node:crypto");
 
 const { buildDelegatedTaskLedgerView } = require("../game/delegatedTasks");
+const { buildNpcActiveRequestView } = require("../game/npcActiveRequests");
 const {
   buildNpcDetailView,
   buildNpcRosterView,
@@ -136,6 +137,27 @@ function initializeNpcInteractionTables(database) {
     ) STRICT;
     CREATE INDEX IF NOT EXISTS idx_npc_interaction_events_session_npc
       ON npc_interaction_events(session_id, npc_id, action_type);
+
+    CREATE TABLE IF NOT EXISTS npc_active_requests (
+      session_id TEXT NOT NULL,
+      row_id TEXT NOT NULL,
+      domain_schema_version INTEGER NOT NULL,
+      revision INTEGER NOT NULL,
+      row_revision INTEGER NOT NULL,
+      source TEXT NOT NULL,
+      request_id TEXT NOT NULL,
+      npc_id TEXT NOT NULL,
+      request_type TEXT NOT NULL,
+      status TEXT NOT NULL,
+      summary TEXT NOT NULL,
+      refs_json TEXT NOT NULL,
+      metadata_json TEXT NOT NULL,
+      created_at TEXT NOT NULL,
+      updated_at TEXT NOT NULL,
+      PRIMARY KEY (session_id, row_id)
+    ) STRICT;
+    CREATE INDEX IF NOT EXISTS idx_npc_active_requests_session_status
+      ON npc_active_requests(session_id, status, request_type);
 
     CREATE TABLE IF NOT EXISTS delegated_tasks (
       session_id TEXT NOT NULL,
@@ -294,6 +316,38 @@ function buildDelegatedTaskRows(record) {
   }));
 }
 
+function buildNpcActiveRequestRows(record) {
+  const view = buildNpcActiveRequestView(record.worldState || {}, { includeResolved: true });
+  const generatedAtTurn = metadataValue(record, "turnCount", 0);
+  return (view.items || []).map((request, index) => ({
+    session_id: record.sessionId,
+    row_id: idText(request.requestId, `npc-active-request:${index + 1}`),
+    domain_schema_version: NPC_INTERACTION_TABLE_DOMAIN_SCHEMA_VERSION,
+    revision: record.revision,
+    row_revision: record.revision,
+    source: NPC_INTERACTION_TABLE_SOURCE,
+    request_id: idText(request.requestId, `npc-active-request:${index + 1}`),
+    npc_id: idText(request.npc?.npcId, ""),
+    request_type: idText(request.type, "help"),
+    status: text(request.status, "active", 56),
+    summary: text(request.outcome?.publicSummary || request.ask || request.title, "NPC 主动请求摘要", 180),
+    refs_json: stringifyJson(cleanList([
+      request.requestId,
+      request.npc?.npcId,
+      ...(request.evidenceRefs || []),
+      ...(request.riskTags || [])
+    ], 16), []),
+    metadata_json: stringifyJson({
+      generatedAtTurn,
+      sourceView: "npcActiveRequestView",
+      turnsRemaining: integer(request.turnsRemaining, 0),
+      serverIntentOnly: true
+    }, {}),
+    created_at: record.createdAt,
+    updated_at: record.updatedAt
+  })).filter((row) => row.npc_id && row.summary);
+}
+
 function sourceTradeRows(worldState = {}) {
   if (Array.isArray(worldState.tradeLedger?.records)) return worldState.tradeLedger.records;
   if (Array.isArray(worldState.tradeLedgerRecords)) return worldState.tradeLedgerRecords;
@@ -338,6 +392,7 @@ function buildNpcInteractionRows(record) {
   return {
     npcProfiles: buildNpcProfileRows(record),
     npcInteractionEvents: buildNpcInteractionEventRows(record),
+    npcActiveRequests: buildNpcActiveRequestRows(record),
     delegatedTasks: buildDelegatedTaskRows(record),
     tradeLedgerRecords: buildTradeLedgerRows(record)
   };
@@ -346,6 +401,7 @@ function buildNpcInteractionRows(record) {
 function deleteNpcInteractionRows(database, sessionId) {
   database.prepare("DELETE FROM npc_roster_profiles WHERE session_id = ?").run(sessionId);
   database.prepare("DELETE FROM npc_interaction_events WHERE session_id = ?").run(sessionId);
+  database.prepare("DELETE FROM npc_active_requests WHERE session_id = ?").run(sessionId);
   database.prepare("DELETE FROM delegated_tasks WHERE session_id = ?").run(sessionId);
   database.prepare("DELETE FROM trade_ledger_records WHERE session_id = ?").run(sessionId);
 }
@@ -363,6 +419,7 @@ function syncNpcInteractionTables(database, record) {
   const rows = buildNpcInteractionRows(record);
   for (const row of rows.npcProfiles) insertRow(database, "npc_roster_profiles", row);
   for (const row of rows.npcInteractionEvents) insertRow(database, "npc_interaction_events", row);
+  for (const row of rows.npcActiveRequests) insertRow(database, "npc_active_requests", row);
   for (const row of rows.delegatedTasks) insertRow(database, "delegated_tasks", row);
   for (const row of rows.tradeLedgerRecords) insertRow(database, "trade_ledger_records", row);
 }
@@ -392,6 +449,7 @@ function getNpcInteractionRepairStatus(database, record) {
   const tables = {
     npc_roster_profiles: tableStatus(database, "npc_roster_profiles", record.sessionId, record.revision, expected.npcProfiles),
     npc_interaction_events: tableStatus(database, "npc_interaction_events", record.sessionId, record.revision, expected.npcInteractionEvents),
+    npc_active_requests: tableStatus(database, "npc_active_requests", record.sessionId, record.revision, expected.npcActiveRequests),
     delegated_tasks: tableStatus(database, "delegated_tasks", record.sessionId, record.revision, expected.delegatedTasks),
     trade_ledger_records: tableStatus(database, "trade_ledger_records", record.sessionId, record.revision, expected.tradeLedgerRecords)
   };

@@ -178,6 +178,7 @@ export function GamePage() {
     { label: "局势", ready: Boolean(routeViews?.hasInformationPanelView) },
     { label: "市价", ready: Boolean(routeViews?.hasMarketPriceView) },
     { label: "月账", ready: Boolean(routeViews?.hasNpcEconomyView) },
+    { label: "来函", ready: Boolean(routeViews?.hasNpcActiveRequestView) },
     { label: "科期", ready: Boolean(routeViews?.hasExamCalendarView) },
     { label: "审计", ready: Boolean(routeViews?.hasAuditSummaryView) }
   ];

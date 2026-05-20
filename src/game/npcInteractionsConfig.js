@@ -7,7 +7,11 @@ const NPC_INTERACTION_TYPES = Object.freeze([
   "request",
   "summon",
   "delegate",
-  "trade"
+  "trade",
+  "debate",
+  "duel",
+  "courtship",
+  "marriage"
 ]);
 
 const NPC_INTERACTION_CONFIG = Object.freeze({

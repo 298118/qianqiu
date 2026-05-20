@@ -238,12 +238,24 @@ test("POST /api/game/turn trims provider plus tick events in order", async (t) =
   assert.equal(response.status, 200);
   assert.equal(payload.worldState.eventHistory.length, MAX_EVENT_HISTORY);
   assert.equal(payload.activeNpcRequestEvents.length, 1);
-  assert.equal(payload.worldState.eventHistory[0], "old-2");
+  assert.equal(payload.npcActiveRequestEvents.length, 1);
+  const retainedOldEvents = payload.worldState.eventHistory.filter((event) => event.startsWith("old-"));
+  const firstRetainedOldIndex = Number(retainedOldEvents[0].replace("old-", ""));
+  assert.deepEqual(
+    retainedOldEvents,
+    Array.from({ length: retainedOldEvents.length }, (_, index) => `old-${firstRetainedOldIndex + index}`)
+  );
+  assert.equal(firstRetainedOldIndex, MAX_EVENT_HISTORY - retainedOldEvents.length - 1);
   assert.deepEqual(
     payload.worldState.eventHistory.slice(-payload.worldTick.events.length),
     payload.worldTick.events
   );
-  const activeRequestStart = MAX_EVENT_HISTORY - payload.worldTick.events.length - payload.activeNpcRequestEvents.length;
+  const npcActiveRequestStart = MAX_EVENT_HISTORY - payload.worldTick.events.length - payload.npcActiveRequestEvents.length;
+  assert.deepEqual(
+    payload.worldState.eventHistory.slice(npcActiveRequestStart, npcActiveRequestStart + payload.npcActiveRequestEvents.length),
+    payload.npcActiveRequestEvents
+  );
+  const activeRequestStart = npcActiveRequestStart - payload.activeNpcRequestEvents.length;
   assert.deepEqual(
     payload.worldState.eventHistory.slice(activeRequestStart, activeRequestStart + payload.activeNpcRequestEvents.length),
     payload.activeNpcRequestEvents

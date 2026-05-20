@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useParams } from "react-router";
 import type { AssetRegistry, RuntimePortraitAsset } from "../assets/assetRegistry";
 import { useAssetRegistry } from "../assets/useAssetRegistry";
-import type { DelegatedTaskRecordView, NpcDetailView, NpcRosterItem, PlayerSummary, TradeRecordView, WorldPeopleNpc, WorldPeopleRelationship } from "../api";
+import type { DelegatedTaskRecordView, NpcActiveRequestItemView, NpcDetailView, NpcRosterItem, PlayerSummary, TradeRecordView, WorldPeopleNpc, WorldPeopleRelationship } from "../api";
 import { Portrait } from "../components/Portrait";
 import { markOverlayTrigger } from "../components/overlayFocus";
 import { isRunnableSessionId } from "../routes/sessionId";
@@ -63,6 +63,7 @@ const npcWorkbenchTabs = [
   { id: "dialogue", label: "对话" },
   { id: "trade", label: "交易" },
   { id: "command", label: "委派" },
+  { id: "social", label: "礼法" },
   { id: "records", label: "记录" }
 ] as const;
 
@@ -316,6 +317,17 @@ function statusLabel(status: unknown) {
   return labels[text] || text;
 }
 
+function actionLabel(actionType: unknown) {
+  const text = safePeopleText(actionType, "", 32);
+  const labels: Record<string, string> = {
+    debate: "论道",
+    duel: "切磋",
+    courtship: "求爱",
+    marriage: "议婚"
+  };
+  return labels[text] || text || "交游";
+}
+
 function buildPersonRows(
   registry: AssetRegistry | null,
   session: ReturnType<typeof useGameSessionStore.getState>["currentSession"],
@@ -394,6 +406,7 @@ export function PeoplePage() {
   const [commandText, setCommandText] = useState("");
   const [commandTargetRef, setCommandTargetRef] = useState("");
   const [commandBudget, setCommandBudget] = useState("24");
+  const [socialDraft, setSocialDraft] = useState("");
   const runnable = isRunnableSessionId(sessionId);
 
   useEffect(() => {
@@ -475,6 +488,15 @@ export function PeoplePage() {
     }).then(() => setCommandText("")).catch(() => undefined);
   }
 
+  async function handleSocialSubmit(actionType: string) {
+    if (!selectedNpc || !runnable) return;
+    await interactWithNpc(sessionId, {
+      npcId: selectedNpc.npcId,
+      actionType,
+      utterance: socialDraft.trim() || `${actionLabel(actionType)}${selectedNpc.displayName}，请服务器按礼法与身份裁决。`
+    }).then(() => setSocialDraft("")).catch(() => undefined);
+  }
+
   return (
     <article className="surfacePanel routePanel peopleWorkbenchPanel" aria-labelledby="people-title">
       <div className="routePanelHeader">
@@ -485,6 +507,14 @@ export function PeoplePage() {
         </div>
         <span>{npcRosterStatus === "loading" ? "候谱" : `${rosterNpcs.length || npcCount} 人`}</span>
       </div>
+      <NpcActiveRequestInbox
+        requests={(session?.npcActiveRequestView?.items ?? []) as readonly NpcActiveRequestItemView[]}
+        onDraft={(request) => setActionDraft({
+          source: "role-surface",
+          targetPage: "game",
+          text: `回应${safePeopleText(request.typeLabel, "请托", 20)}：先查证${safePeopleText(request.npc?.displayName, "来人", 32)}所言，凡资源、关系、婚姻、弹劾或背叛结果均候服务器裁决。`
+        })}
+      />
       <section className="npcWorkbench" aria-label="NPC 名册工作台">
         <aside className="npcGroupList" aria-label="NPC 分组">
           {npcGroups.length ? npcGroups.map((group) => (
@@ -588,6 +618,17 @@ export function PeoplePage() {
                   onTargetRefChange={setCommandTargetRef}
                   onBudgetChange={setCommandBudget}
                   onSubmit={handleCommandSubmit}
+                />
+              ) : null}
+              {activeTab === "social" ? (
+                <NpcSocialTab
+                  selectedNpc={selectedNpc}
+                  detail={npcDetail}
+                  draft={socialDraft}
+                  latestResolution={lastNpcInteraction?.npcActionResolutionView}
+                  busy={npcMutationStatus === "loading"}
+                  onDraftChange={setSocialDraft}
+                  onSubmit={handleSocialSubmit}
                 />
               ) : null}
               {activeTab === "records" ? (
@@ -837,6 +878,82 @@ function NpcCommandTab({
         title: `${safePeopleText(task.title, "委派任务", 40)} · ${statusLabel(task.status)}`,
         body: [...(task.riskFactors ?? []), ...(task.successFactors ?? [])].map((item) => safePeopleText(item, "", 40)).filter(Boolean).join("；") || "无公开风险摘要。"
       }))} />
+    </section>
+  );
+}
+
+function NpcSocialTab({
+  selectedNpc,
+  detail,
+  draft,
+  latestResolution,
+  busy,
+  onDraftChange,
+  onSubmit
+}: {
+  readonly selectedNpc: WorkbenchNpc;
+  readonly detail: NpcDetailView | null;
+  readonly draft: string;
+  readonly latestResolution: unknown;
+  readonly busy: boolean;
+  readonly onDraftChange: (value: string) => void;
+  readonly onSubmit: (actionType: string) => void;
+}) {
+  const actions = detail?.relationshipActionEligibilityView?.actions ?? [];
+  const resolution = latestResolution && typeof latestResolution === "object" ? latestResolution as Record<string, unknown> : null;
+  return (
+    <section className="npcTabPanel">
+      <label>
+        交游呈词
+        <textarea value={draft} rows={3} maxLength={180} onChange={(event) => onDraftChange(event.target.value)} placeholder={`写下对${selectedNpc.displayName}的交游意图。`} />
+      </label>
+      <div className="npcSocialGrid">
+        {actions.length ? actions.map((action) => {
+          const actionType = safePeopleText(action.actionType, "", 32);
+          const available = action.available === true;
+          const blockers = (action.blockers ?? []).map((item) => safePeopleText(item, "", 42)).filter(Boolean);
+          return (
+            <article className="inventoryMiniCard" key={actionType || action.label}>
+              <strong>{safePeopleText(action.label, actionLabel(actionType), 32)}</strong>
+              <span>{available ? "可呈请服务器裁决" : blockers.join("；") || "暂不可用"}</span>
+              <button className="paperButton" type="button" disabled={!available || busy} onClick={() => onSubmit(actionType)}>
+                {safePeopleText(action.requestLabel, "呈请", 24)}
+              </button>
+            </article>
+          );
+        }) : <p className="statusLine">等待服务器礼法扩展位。</p>}
+      </div>
+      {resolution ? (
+        <article className="npcResultCard">
+          <strong>{safePeopleText(resolution.actionLabel, "服务器裁决", 32)}</strong>
+          <p>{safePeopleText(resolution.outcomeSummary, "交游结果已由服务器返回。", 220)}</p>
+        </article>
+      ) : null}
+    </section>
+  );
+}
+
+function NpcActiveRequestInbox({
+  requests,
+  onDraft
+}: {
+  readonly requests: readonly NpcActiveRequestItemView[];
+  readonly onDraft: (request: NpcActiveRequestItemView) => void;
+}) {
+  const visible = requests.slice(0, 3);
+  if (!visible.length) return null;
+  return (
+    <section className="npcActiveRequestInbox" aria-label="NPC 主动请求">
+      {visible.map((request) => (
+        <article className="inventoryMiniCard" key={request.requestId || request.title}>
+          <strong>{safePeopleText(request.title, "来函", 48)}</strong>
+          <span>{safePeopleText(request.ask, "请先查证来意。", 130)}</span>
+          <div className="buttonRow">
+            <button className="paperButton" type="button" onClick={() => onDraft(request)}>写入回应草稿</button>
+            <small>{safePeopleText(request.status, "active", 32)} · {request.turnsRemaining ?? 0} 旬</small>
+          </div>
+        </article>
+      ))}
     </section>
   );
 }
