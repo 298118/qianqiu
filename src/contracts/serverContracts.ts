@@ -758,7 +758,7 @@ export type SqliteWorldSessionRow = {
 export type BaseSqliteDerivedRow = {
   readonly session_id: string;
   readonly row_id: string;
-  readonly domain_schema_version?: string;
+  readonly domain_schema_version?: number;
   readonly revision?: number;
   readonly row_revision?: number;
   readonly source?: string;
@@ -768,4 +768,131 @@ export type BaseSqliteDerivedRow = {
   readonly metadata_json?: string;
   readonly created_at?: string;
   readonly updated_at?: string;
+};
+
+export type SqlitePromptRetrievalSourceName = "server_visible_prompt_projection";
+export type SqliteSafeSearchSourceName = "server_visible_safe_search_projection";
+
+export type SqlitePromptRetrievalRow = BaseSqliteDerivedRow & {
+  readonly domain_schema_version: number;
+  readonly revision: number;
+  readonly row_revision: number;
+  readonly source: SqlitePromptRetrievalSourceName;
+  readonly source_view: string;
+  readonly domain: string;
+  readonly collection: string;
+  readonly visibility: "public" | string;
+  readonly sort_priority: number;
+  readonly payload_json: string;
+  readonly search_text: string;
+  readonly metadata_json: string;
+  readonly created_at: string;
+  readonly updated_at: string;
+};
+
+export type SqliteSafeSearchIndexRow = {
+  readonly session_id: string;
+  readonly row_id: string;
+  readonly safe_search_schema_version: number;
+  readonly revision: number;
+  readonly row_revision: number;
+  readonly source: SqliteSafeSearchSourceName;
+  readonly source_view: string;
+  readonly domain: string;
+  readonly source_id: string;
+  readonly title: string;
+  readonly summary: string;
+  readonly confidence: number;
+  readonly visibility: "public" | string;
+  readonly related_refs_json: string;
+  readonly route_view_ref_json: string;
+  readonly search_text: string;
+  readonly metadata_json: string;
+  readonly created_at: string;
+  readonly updated_at: string;
+};
+
+export type SqliteSafeSearchFtsRow = Pick<
+  SqliteSafeSearchIndexRow,
+  "session_id" | "row_id" | "domain" | "title" | "summary" | "search_text"
+>;
+
+export type SqliteDerivedRepairStatus = {
+  readonly count?: number;
+  readonly counts?: JsonObject;
+  readonly contentMismatches?: boolean;
+  readonly expectedCount?: number;
+  readonly expectedCounts?: JsonObject;
+  readonly ftsAvailable?: boolean;
+  readonly ftsMismatches?: boolean;
+  readonly missingOrMismatched?: boolean;
+  readonly mismatchedRowIds?: boolean;
+  readonly needsRepair: boolean;
+  readonly staleRows?: boolean;
+  readonly tableNeedsRepair: boolean;
+  readonly worldStateChanged?: boolean;
+};
+
+export type SqlitePromptRetrievalRepairStatus = SqliteDerivedRepairStatus & {
+  readonly contentMismatches: boolean;
+  readonly count: number;
+  readonly expectedCount: number;
+  readonly missingOrMismatched: boolean;
+  readonly mismatchedRowIds: boolean;
+  readonly staleRows: boolean;
+};
+
+export type SqliteSafeSearchRepairStatus = SqlitePromptRetrievalRepairStatus & {
+  readonly ftsAvailable: boolean;
+  readonly ftsMismatches: boolean;
+};
+
+export type SqlitePromptRetrievalSource = Readonly<Record<string, Readonly<Record<string, readonly JsonObject[]>>>>;
+
+export type SqliteDerivedPublicDriftStatus = SqliteDerivedRepairStatus & {
+  readonly missingTables?: readonly string[];
+};
+
+export type SqliteSessionDerivedDriftStatus = {
+  readonly sessionId: string;
+  readonly revision: number;
+  readonly domains: Readonly<Record<string, SqliteDerivedPublicDriftStatus>>;
+  readonly needsRepair: boolean;
+};
+
+export type SqliteDerivedTableDriftStatus = {
+  readonly checked: number;
+  readonly missingWorldSessionsTable: boolean;
+  readonly needsRepair: boolean;
+  readonly sessions: readonly SqliteSessionDerivedDriftStatus[];
+  readonly skipped: readonly {
+    readonly sessionId: string;
+    readonly reason: string;
+  }[];
+};
+
+export type SqliteDatabaseStatus = {
+  readonly databasePathRedacted: true;
+  readonly journalMode: string;
+  readonly size: JsonObject;
+  readonly counts: JsonObject;
+  readonly migrations: JsonObject;
+};
+
+export type SqliteIndexHealth = {
+  readonly ok: boolean;
+  readonly checkedTables: number;
+  readonly checkedIndexes: number;
+  readonly missingTables: readonly string[];
+  readonly missingIndexes: readonly string[];
+  readonly presentTableCount: number;
+  readonly presentIndexCount: number;
+};
+
+export type SqliteSafeDiagnostics = {
+  readonly command: "export-safe";
+  readonly generatedAt: string;
+  readonly status: SqliteDatabaseStatus;
+  readonly indexHealth: SqliteIndexHealth;
+  readonly derivedTableDrift: SqliteDerivedTableDriftStatus;
 };

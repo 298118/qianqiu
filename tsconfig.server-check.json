@@ -28,6 +28,9 @@
     "src/storage/sessionRecord.js",
     "src/storage/sessionStore.js",
     "src/storage/jsonSessionAdapter.js",
-    "src/storage/sqliteSessionAdapter.js"
+    "src/storage/sqliteSessionAdapter.js",
+    "src/storage/sqlitePromptRetrievalTables.js",
+    "src/storage/sqliteSafeSearchTables.js",
+    "src/storage/sqliteMaintenance.js"
   ]
 }

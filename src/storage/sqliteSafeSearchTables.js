@@ -1,3 +1,5 @@
+// @ts-check
+
 const { createHash } = require("node:crypto");
 
 const {
@@ -10,6 +12,13 @@ const {
 } = require("../game/safeWorldSearch");
 
 const SQLITE_SAFE_SEARCH_SOURCE = SAFE_WORLD_SEARCH_SOURCE;
+
+/**
+ * @typedef {import("../contracts/serverContracts").JsonObject} JsonObject
+ * @typedef {import("../contracts/serverContracts").SessionRecord} SessionRecord
+ * @typedef {import("../contracts/serverContracts").SqliteSafeSearchIndexRow} SqliteSafeSearchIndexRow
+ * @typedef {import("../contracts/serverContracts").SqliteSafeSearchRepairStatus} SqliteSafeSearchRepairStatus
+ */
 
 function stringifyJson(value, fallback) {
   const source = value === undefined ? fallback : value;
@@ -49,6 +58,9 @@ function stableStringify(value) {
   return JSON.stringify(normalizeForStableJson(value));
 }
 
+/**
+ * @param {SqliteSafeSearchIndexRow} row
+ */
 function hashSafeSearchRow(row) {
   const comparable = {};
   for (const column of Object.keys(row).sort()) {
@@ -58,6 +70,10 @@ function hashSafeSearchRow(row) {
   return createHash("sha256").update(stableStringify(comparable)).digest("hex");
 }
 
+/**
+ * @param {SqliteSafeSearchIndexRow} row
+ * @returns {SqliteSafeSearchIndexRow}
+ */
 function attachSafeSearchRowHash(row) {
   const metadata = parseJsonObject(row.metadata_json);
   return {
@@ -150,6 +166,10 @@ function deleteSafeSearchRows(database, sessionId) {
   }
 }
 
+/**
+ * @param {SessionRecord} record
+ * @returns {SqliteSafeSearchIndexRow[]}
+ */
 function buildSafeSearchTableRows(record) {
   return buildSafeSearchRows(record.worldState).map((row, index) => ({
     session_id: record.sessionId,
@@ -178,6 +198,10 @@ function buildSafeSearchTableRows(record) {
   }));
 }
 
+/**
+ * @param {any} database
+ * @param {SqliteSafeSearchIndexRow} row
+ */
 function insertSafeSearchIndexRow(database, row) {
   const safeRow = attachSafeSearchRowHash(row);
   const columns = Object.keys(safeRow);
@@ -187,6 +211,10 @@ function insertSafeSearchIndexRow(database, row) {
     .run(...columns.map((column) => safeRow[column]));
 }
 
+/**
+ * @param {any} database
+ * @param {SqliteSafeSearchIndexRow} row
+ */
 function insertSafeSearchFtsRow(database, row) {
   if (!hasSafeSearchFtsTable(database)) return;
   database
@@ -224,11 +252,18 @@ function hasStaleSafeSearchRows(database, sessionId, revision) {
   return row.count > 0;
 }
 
+/**
+ * @param {any} database
+ * @param {string} sessionId
+ * @param {SqliteSafeSearchIndexRow[]} expectedRows
+ */
 function hasMismatchedSafeSearchRowIds(database, sessionId, expectedRows) {
   const expectedIds = new Set(expectedRows.map((row) => row.row_id));
-  const storedRows = database
-    .prepare("SELECT row_id FROM safe_search_index WHERE session_id = ?")
-    .all(sessionId);
+  const storedRows = /** @type {Array<Pick<SqliteSafeSearchIndexRow, "row_id">>} */ (
+    database
+      .prepare("SELECT row_id FROM safe_search_index WHERE session_id = ?")
+      .all(sessionId)
+  );
   if (storedRows.length !== expectedIds.size) return true;
   for (const row of storedRows) {
     if (!expectedIds.has(row.row_id)) return true;
@@ -236,11 +271,18 @@ function hasMismatchedSafeSearchRowIds(database, sessionId, expectedRows) {
   return false;
 }
 
+/**
+ * @param {any} database
+ * @param {string} sessionId
+ * @param {SqliteSafeSearchIndexRow[]} expectedRows
+ */
 function hasMismatchedSafeSearchContentHashes(database, sessionId, expectedRows) {
   const expectedRowsById = new Map(expectedRows.map((row) => [row.row_id, row]));
-  const storedRows = database
-    .prepare("SELECT * FROM safe_search_index WHERE session_id = ?")
-    .all(sessionId);
+  const storedRows = /** @type {SqliteSafeSearchIndexRow[]} */ (
+    database
+      .prepare("SELECT * FROM safe_search_index WHERE session_id = ?")
+      .all(sessionId)
+  );
   for (const row of storedRows) {
     const expected = expectedRowsById.get(row.row_id);
     const metadata = parseJsonObject(row.metadata_json);
@@ -281,6 +323,11 @@ function hasMismatchedFtsRows(database, sessionId) {
   return mismatch.count > 0;
 }
 
+/**
+ * @param {any} database
+ * @param {SessionRecord} record
+ * @returns {SqliteSafeSearchRepairStatus}
+ */
 function getSafeSearchRepairStatus(database, record) {
   const expectedRows = buildSafeSearchTableRows(record);
   const count = getSafeSearchTableCount(database, record.sessionId);
@@ -308,6 +355,10 @@ function getSafeSearchRepairStatus(database, record) {
   };
 }
 
+/**
+ * @param {any} database
+ * @param {SessionRecord} record
+ */
 function repairSafeSearchTablesForRecord(database, record) {
   const status = getSafeSearchRepairStatus(database, record);
   if (status.tableNeedsRepair) {
@@ -317,10 +368,18 @@ function repairSafeSearchTablesForRecord(database, record) {
   return { ...status, repaired: false };
 }
 
+/**
+ * @param {any} database
+ * @param {SessionRecord} record
+ */
 function ensureSafeSearchTablesForRecord(database, record) {
   return repairSafeSearchTablesForRecord(database, record).repaired;
 }
 
+/**
+ * @param {SqliteSafeSearchIndexRow} row
+ * @returns {JsonObject}
+ */
 function rowToSafeSearchRow(row) {
   return {
     rowId: row.row_id,
@@ -349,6 +408,10 @@ function domainClause(domains, params) {
   return ` AND idx.domain IN (${domains.map(() => "?").join(", ")})`;
 }
 
+/**
+ * @param {any} database
+ * @returns {SqliteSafeSearchIndexRow[]}
+ */
 function selectRowsByLike(database, sessionId, normalizedQuery, domains) {
   if (!normalizedQuery.query || normalizedQuery.rejected) return [];
   const terms = normalizedQuery.terms.map(escapedLikeTerm).filter(Boolean);
@@ -394,6 +457,10 @@ function buildFtsQuery(terms) {
   return parts.join(" OR ");
 }
 
+/**
+ * @param {any} database
+ * @returns {SqliteSafeSearchIndexRow[]}
+ */
 function selectRowsByFts(database, sessionId, normalizedQuery, domains) {
   if (!hasSafeSearchFtsTable(database) || !normalizedQuery.query || normalizedQuery.rejected) return [];
   const ftsQuery = buildFtsQuery(normalizedQuery.terms);
@@ -417,6 +484,10 @@ function selectRowsByFts(database, sessionId, normalizedQuery, domains) {
   }
 }
 
+/**
+ * @param {any} database
+ * @returns {SqliteSafeSearchIndexRow[]}
+ */
 function selectAllRowsForSession(database, sessionId, domains) {
   const params = [sessionId];
   const sql = `
@@ -429,6 +500,10 @@ function selectAllRowsForSession(database, sessionId, domains) {
   return database.prepare(sql).all(...params);
 }
 
+/**
+ * @param {...SqliteSafeSearchIndexRow[]} rowLists
+ * @returns {SqliteSafeSearchIndexRow[]}
+ */
 function mergeRows(...rowLists) {
   const rows = [];
   const seen = new Set();

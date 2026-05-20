@@ -129,6 +129,12 @@ function parseStoredAuditJson(value) {
   }
 }
 
+/**
+ * `world_sessions.world_state_json` 是 SQLite 模式的唯一事实源；派生表只能由此行修复。
+ *
+ * @param {import("../contracts/serverContracts").SqliteWorldSessionRow | null | undefined} row
+ * @returns {import("../contracts/serverContracts").SessionRecordNormalization | null}
+ */
 function rowToSessionRecord(row) {
   if (!row) return null;
   return normalizeSessionRecord(
@@ -272,9 +278,11 @@ function createSqliteSessionAdapter(options = {}) {
   }
 
   function selectSessionRecord(sessionId) {
-    const row = getDatabase()
-      .prepare("SELECT * FROM world_sessions WHERE session_id = ?")
-      .get(sessionId);
+    const row = /** @type {import("../contracts/serverContracts").SqliteWorldSessionRow | undefined} */ (
+      getDatabase()
+        .prepare("SELECT * FROM world_sessions WHERE session_id = ?")
+        .get(sessionId)
+    );
     if (!row) return null;
     return rowToSessionRecord(row);
   }
@@ -664,15 +672,17 @@ function createSqliteSessionAdapter(options = {}) {
 
   async function listSessions() {
     await ensureDatabase();
-    const rows = getDatabase()
-      .prepare(
+    const rows = /** @type {import("../contracts/serverContracts").SqliteWorldSessionRow[]} */ (
+      getDatabase()
+        .prepare(
         `
           SELECT *
           FROM world_sessions
           ORDER BY updated_at DESC, created_at DESC, session_id ASC
         `
-      )
-      .all();
+        )
+        .all()
+    );
     const saves = [];
     const skipped = [];
 

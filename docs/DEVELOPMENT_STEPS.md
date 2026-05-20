@@ -113,7 +113,7 @@
 | --- | --- | --- | --- |
 | S88.0 | DONE | 系统打磨路线图与边界复核 | 已新增 `docs/QIANQIU_POLISHING_ROADMAP.md`，把用户要求的全面打磨拆为 S88.1-S88.12 小步骤，并确认当前工作树仅有未跟踪 `npm-start.log` / `npm-start.err.log`，不纳入本轮提交。 |
 | S88.1 | DONE | AI remote helper/provider public-safe envelope | 已把 `remoteHelpers` 的 prompt task、provider requester、validated payload 纳入 `npm run typecheck:server`，并为 AI connection public response、provider fallback 日志、诊断错误和玩家/审计安全出口增加 raw provider/prompt/key/path 脱敏与 forbidden field contract。 |
-| S88.2 | TODO | SQLite derived row builder 类型边界 | 下一步覆盖 `SqliteWorldSessionRow`、prompt retrieval、safe search、repair status 和首批 row builder JSDoc/TS contract；继续保持派生表只从 `world_sessions.world_state_json` 单向修复。 |
+| S88.2 | DONE | SQLite derived row builder 类型边界 | 已覆盖 `SqliteWorldSessionRow`、`SqlitePromptRetrievalRow`、`SqliteSafeSearchIndexRow`、prompt/safe repair status、maintenance safe diagnostics 和首批 row builder JSDoc/TS contract；派生表继续只从 `world_sessions.world_state_json` 单向修复。 |
 | S88.3 | TODO | 书生主线补强一轮 | 深化读书、备考、科场反馈、授官与入仕首月差事；运行 `npm run smoke:exam-s69` 和科举/官场 focused tests。 |
 | S88.4 | TODO | 入仕官员首轮官场体验 | 补官方履历、差遣、考成、上官同僚、奏折回执和首月月报闭环。 |
 | S88.5 | TODO | 六身份循环矩阵 | 为皇帝、大臣、将领、地方官、书生、入仕官员补差异化事务、风险、待办和身份面板。 |
@@ -127,7 +127,7 @@
 
 ## 5. 最新状态
 
-- S88 当前基线：全面系统打磨专项已启动，规划见 [QIANQIU_POLISHING_ROADMAP.md](QIANQIU_POLISHING_ROADMAP.md)。S88.1 已完成 AI remote helper/provider public-safe envelope：`src/ai/providerSafety.js` 统一 provider 错误和诊断文本脱敏，`src/ai/providers/remoteHelpers.js` 已进入 `npm run typecheck:server`，`src/contracts/serverContracts.ts` / `src/routes/routeResponses.js` 共同约束 AI connection public response 不得带 raw provider payload、完整 prompt、请求/响应体、base URL、key、本地路径、`statePatch` 或 `worldState`。下一步进入 S88.2 SQLite derived row builder 类型边界。
+- S88 当前基线：全面系统打磨专项已启动，规划见 [QIANQIU_POLISHING_ROADMAP.md](QIANQIU_POLISHING_ROADMAP.md)。S88.1 已完成 AI remote helper/provider public-safe envelope。S88.2 已完成 SQLite derived row builder 类型边界：`src/contracts/serverContracts.ts` 固定 world session、prompt retrieval、safe search、repair status 和 safe diagnostics 类型，`sqlitePromptRetrievalTables.js`、`sqliteSafeSearchTables.js`、`sqliteMaintenance.js` 纳入 `npm run typecheck:server`，继续保持派生表只从 `world_sessions.world_state_json` 单向修复。下一步进入 S88.3 书生主线补强。
 - S87 当前基线：后端 route/API 响应类型覆盖已完成。`src/contracts/serverContracts.ts` 已覆盖 game/exam/AI/inventory/NPC/trade/delegation public response；`src/routes/routeResponses.js` 以局部 `@ts-check` helper 接入 `src/routes/game.js`、`src/routes/exam.js` 和 `src/routes/ai.js`，并在运行时拒绝 public `worldState` raw ledger key；大型 route 文件仍未 whole-file `@ts-check`，CommonJS 运行方式不变。
 - S86 当前基线：后端 TypeScript 渐进迁移首轮已完成。新增 `npm run typecheck:server`、`npm run build:server:probe`、`tsconfig.server-check.json`、`tsconfig.server-probe.json`、`src/contracts/serverContracts.ts` 和 `src/contracts/runtimeGuards.ts`；安全 projection、AI facade/route policy、session/storage 高风险模块已选择性 `@ts-check`。后端仍以 CommonJS JavaScript 运行，`.ts` 试点不改变 `npm start`，Rust 仍只作为未来有性能证据后的可选 CLI/WASM/离线工具评估。
 - S81-S84 当前基线：NPC、资产、储物、交易与委派首轮闭环已完成。后端已有 `assetLedger`、`inventoryLedger`、`npcRoster`、`npcInteractionLedger`、`tradeLedger`、`delegatedTaskLedger`、开局背景裁决、AI task/schema/prompt/provider fallback、JSON/SQLite 同步和 player-state 安全 view；React 已有“囊箧” route、人物 NPC 工作台、对话/交易/委派面板和开局裁决摘要。前端只消费安全 API/view，不裁决资源、价格、关系或任务结果。
@@ -269,6 +269,16 @@ S84 前端专项额外验收入口：
 - 子代理：Locke 只读探查了 AI remote helper/provider envelope 边界，Hooke 只读探查了 S88.2 SQLite row builder 类型边界；Confucius 提交前只读复审先发现 raw provider segment、嵌套 forbidden field 和 provider HTTP body 脱敏 P1/P2，主代理已补整段 provider body 脱敏、递归 public envelope guard 与回归测试。最终复审未发现 P0/P1/P2。
 - 提交：实现提交 `5c0665ee`。
 - 下一步：进入 S88.2，优先固定 `SqliteWorldSessionRow`、prompt retrieval、safe search、repair status 和首批 row builder JSDoc/TS contract，继续保持 SQLite 派生表只从 `world_sessions.world_state_json` 单向修复。
+
+### 2026-05-20：完成 S88.2 SQLite derived row builder 类型边界
+
+- 范围：延续 S86/S87 渐进 TypeScript 路线，固定 SQLite `world_sessions`、`prompt_retrieval_index`、`safe_search_index`、FTS mirror、repair status、maintenance safe diagnostics 的首批 type-only contract 与局部 JSDoc；不改 SQLite schema、不改 row content、不改 repair 事实源。
+- 实现：`src/contracts/serverContracts.ts` 新增 `SqlitePromptRetrievalRow`、`SqliteSafeSearchIndexRow`、`SqliteSafeSearchFtsRow`、`SqlitePromptRetrievalRepairStatus`、`SqliteSafeSearchRepairStatus`、`SqliteDerivedPublicDriftStatus`、`SqliteSafeDiagnostics` 等类型，并把 safe-search source literal 收紧为实际的 `server_visible_safe_search_projection`。`src/storage/sqliteSessionAdapter.js` / `sqlitePromptRetrievalTables.js` / `sqliteSafeSearchTables.js` / `sqliteMaintenance.js` 补 JSDoc 与 `@ts-check`，`tsconfig.server-check.json` 显式纳入 prompt retrieval、safe search 和 maintenance。
+- 边界：`world_sessions.world_state_json` 仍是 SQLite 模式事实源；prompt retrieval、safe search、maintenance drift/status 只能来自服务器安全 view 与 derived repair status，AI、浏览器、prompt、resolver 仍不得把 raw SQLite 行、audit 表或派生表当作 canonical truth。
+- 验证：已通过 `npm run typecheck:server`、`npm run build:server:probe`、`node --test test/sqlitePromptRetrieval.test.js test/sqliteSafeSearch.test.js test/sqliteMaintenanceTool.test.js test/sessionStoreAdapterContract.test.js`（70 项）、`npm run check:docs-governance`、`node --test test/documentationGovernance.test.js`、完整 `npm test`（991 项）和 `git diff --check`。
+- 子代理：Noether 只读探查 S88.2 类型边界，建议补 maintenance public drift/status contract、收紧 safe-search source literal，并确认 focused tests；本轮实现已采纳这些建议。Mendel 提交前只读复审最终 diff 与验证证据，未发现 P0/P1/P2。
+- 提交：随本轮 coherent change 提交，最终 hash 见 Git 历史和本次回复。
+- 下一步：进入 S88.3 书生主线补强，深化读书、备考、科场反馈、授官与入仕首月差事，并运行 `npm run smoke:exam-s69` 与科举/官场 focused tests。
 
 ### 2026-05-20：完成 S87.1-S87.7 route/API 响应类型覆盖
 

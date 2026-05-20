@@ -30,4 +30,4 @@
 
 ## 3. 当前优先切片
 
-S88.1 已完成，当前优先推进 S88.2。S88.2 的目标是把 SQLite 派生 row builder 的类型边界固定住，尤其是 `SqliteWorldSessionRow`、prompt retrieval、safe search、repair status 和首批 row builder JSDoc/TS contract；继续保持“`world_sessions.world_state_json` 是事实源，派生表只从服务器安全 view 单向修复”的边界，不让 AI、浏览器、prompt 或 resolver 把 raw SQLite 行当作事实源。
+S88.1 与 S88.2 已完成，当前优先推进 S88.3。S88.3 的目标是补强完整书生主线：深化读书计划、备考压力、考试入场前后反馈、阅卷/放榜后的同年座师网络、授官过渡和入仕后的首月差事。所有晋级、榜单、授官和官署差事成败继续由服务器裁决；老师、房官、主考、吏部和皇帝等 AI actor 只提供叙事、题目、评分建议或受限 proposal。

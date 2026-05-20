@@ -1,3 +1,5 @@
+// @ts-check
+
 const { createHash } = require("node:crypto");
 
 const { buildEventArchiveIndexItems } = require("../game/eventArchive");
@@ -12,6 +14,14 @@ const { buildWorldPeopleView } = require("../game/worldPeople");
 
 const PROMPT_RETRIEVAL_DOMAIN_SCHEMA_VERSION = 1;
 const PROMPT_RETRIEVAL_SOURCE = "server_visible_prompt_projection";
+
+/**
+ * @typedef {import("../contracts/serverContracts").JsonObject} JsonObject
+ * @typedef {import("../contracts/serverContracts").SessionRecord} SessionRecord
+ * @typedef {import("../contracts/serverContracts").SqlitePromptRetrievalRepairStatus} SqlitePromptRetrievalRepairStatus
+ * @typedef {import("../contracts/serverContracts").SqlitePromptRetrievalRow} SqlitePromptRetrievalRow
+ * @typedef {import("../contracts/serverContracts").SqlitePromptRetrievalSource} SqlitePromptRetrievalSource
+ */
 
 const COLLECTION_GROUPS = Object.freeze({
   "geography.countries": ["geography", "countries"],
@@ -63,6 +73,9 @@ function stableStringify(value) {
   return JSON.stringify(normalizeForStableJson(value));
 }
 
+/**
+ * @param {SqlitePromptRetrievalRow} row
+ */
 function hashPromptRetrievalRow(row) {
   const comparable = {};
   for (const column of Object.keys(row).sort()) {
@@ -72,6 +85,10 @@ function hashPromptRetrievalRow(row) {
   return createHash("sha256").update(stableStringify(comparable)).digest("hex");
 }
 
+/**
+ * @param {SqlitePromptRetrievalRow} row
+ * @returns {SqlitePromptRetrievalRow}
+ */
 function attachPromptRetrievalRowHash(row) {
   const metadata = parseJsonObject(row.metadata_json);
   return {
@@ -518,6 +535,14 @@ function safeRowId(collectionKey, payload, index) {
   return `${collectionKey}:${id || index}`;
 }
 
+/**
+ * @param {SqlitePromptRetrievalRow[]} rows
+ * @param {SessionRecord} record
+ * @param {string} collectionKey
+ * @param {string} sourceView
+ * @param {unknown[] | undefined} items
+ * @param {(item: any) => JsonObject} mapper
+ */
 function addRows(rows, record, collectionKey, sourceView, items, mapper) {
   const [domain, collection] = COLLECTION_GROUPS[collectionKey];
   (Array.isArray(items) ? items : []).forEach((item, index) => {
@@ -578,6 +603,10 @@ function deletePromptRetrievalRows(database, sessionId) {
   database.prepare("DELETE FROM prompt_retrieval_index WHERE session_id = ?").run(sessionId);
 }
 
+/**
+ * @param {any} database
+ * @param {SqlitePromptRetrievalRow} row
+ */
 function insertPromptRetrievalRow(database, row) {
   const safeRow = attachPromptRetrievalRowHash(row);
   const columns = Object.keys(safeRow);
@@ -587,7 +616,12 @@ function insertPromptRetrievalRow(database, row) {
     .run(...columns.map((column) => safeRow[column]));
 }
 
+/**
+ * @param {SessionRecord} record
+ * @returns {SqlitePromptRetrievalRow[]}
+ */
 function buildPromptRetrievalRows(record) {
+  /** @type {SqlitePromptRetrievalRow[]} */
   const rows = [];
   const geographyView = buildWorldGeographyView(record.worldState);
   const peopleView = buildWorldPeopleView(record.worldState);
@@ -641,11 +675,18 @@ function hasStalePromptRetrievalRows(database, sessionId, revision) {
   return row.count > 0;
 }
 
+/**
+ * @param {any} database
+ * @param {string} sessionId
+ * @param {SqlitePromptRetrievalRow[]} expectedRows
+ */
 function hasMismatchedPromptRetrievalRowIds(database, sessionId, expectedRows) {
   const expectedIds = new Set(expectedRows.map((row) => row.row_id));
-  const storedRows = database
-    .prepare("SELECT row_id FROM prompt_retrieval_index WHERE session_id = ?")
-    .all(sessionId);
+  const storedRows = /** @type {Array<Pick<SqlitePromptRetrievalRow, "row_id">>} */ (
+    database
+      .prepare("SELECT row_id FROM prompt_retrieval_index WHERE session_id = ?")
+      .all(sessionId)
+  );
 
   if (storedRows.length !== expectedIds.size) return true;
   for (const row of storedRows) {
@@ -654,11 +695,18 @@ function hasMismatchedPromptRetrievalRowIds(database, sessionId, expectedRows) {
   return false;
 }
 
+/**
+ * @param {any} database
+ * @param {string} sessionId
+ * @param {SqlitePromptRetrievalRow[]} expectedRows
+ */
 function hasMismatchedPromptRetrievalContentHashes(database, sessionId, expectedRows) {
   const expectedRowsById = new Map(expectedRows.map((row) => [row.row_id, row]));
-  const storedRows = database
-    .prepare("SELECT * FROM prompt_retrieval_index WHERE session_id = ?")
-    .all(sessionId);
+  const storedRows = /** @type {SqlitePromptRetrievalRow[]} */ (
+    database
+      .prepare("SELECT * FROM prompt_retrieval_index WHERE session_id = ?")
+      .all(sessionId)
+  );
 
   for (const row of storedRows) {
     const expected = expectedRowsById.get(row.row_id);
@@ -671,6 +719,11 @@ function hasMismatchedPromptRetrievalContentHashes(database, sessionId, expected
   return false;
 }
 
+/**
+ * @param {any} database
+ * @param {SessionRecord} record
+ * @returns {SqlitePromptRetrievalRepairStatus}
+ */
 function getPromptRetrievalRepairStatus(database, record) {
   const expectedRows = buildPromptRetrievalRows(record);
   const count = getPromptRetrievalTableCount(database, record.sessionId);
@@ -695,6 +748,10 @@ function getPromptRetrievalRepairStatus(database, record) {
   };
 }
 
+/**
+ * @param {any} database
+ * @param {SessionRecord} record
+ */
 function ensurePromptRetrievalTablesForRecord(database, record) {
   const status = getPromptRetrievalRepairStatus(database, record);
   if (status.tableNeedsRepair) {
@@ -704,6 +761,9 @@ function ensurePromptRetrievalTablesForRecord(database, record) {
   return false;
 }
 
+/**
+ * @returns {SqlitePromptRetrievalSource}
+ */
 function emptyPromptRetrievalSource() {
   return {
     geography: {
@@ -737,17 +797,24 @@ function emptyPromptRetrievalSource() {
   };
 }
 
+/**
+ * @param {any} database
+ * @param {string} sessionId
+ * @returns {SqlitePromptRetrievalSource}
+ */
 function readPromptRetrievalSource(database, sessionId) {
-  const rows = database
-    .prepare(`
+  const rows = /** @type {Array<Pick<SqlitePromptRetrievalRow, "domain" | "collection" | "payload_json">>} */ (
+    database
+      .prepare(`
       SELECT domain, collection, payload_json
       FROM prompt_retrieval_index
       WHERE session_id = ?
         AND visibility = 'public'
       ORDER BY domain, collection, sort_priority, row_id
     `)
-    .all(sessionId);
-  const source = emptyPromptRetrievalSource();
+      .all(sessionId)
+  );
+  const source = /** @type {Record<string, Record<string, JsonObject[]>>} */ (emptyPromptRetrievalSource());
 
   for (const row of rows) {
     const target = source[row.domain]?.[row.collection];

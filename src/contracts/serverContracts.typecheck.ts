@@ -8,7 +8,13 @@ import type {
   RawLedgerExcludedWorldState,
   SafeRouteViews,
   PlayerStateResponse,
-  SessionStorageAdapter
+  SessionStorageAdapter,
+  SqlitePromptRetrievalRepairStatus,
+  SqlitePromptRetrievalRow,
+  SqliteSafeDiagnostics,
+  SqliteSafeSearchIndexRow,
+  SqliteSafeSearchRepairStatus,
+  SqliteWorldSessionRow
 } from "./serverContracts";
 
 declare const safeWorldState: RawLedgerExcludedWorldState;
@@ -166,3 +172,153 @@ const forgedAiConnectionStatePatch: AiConnectionTestResponse = {
 void forgedAiConnectionRawPayload;
 void forgedAiConnectionPrompt;
 void forgedAiConnectionStatePatch;
+
+const sqliteSessionRow: SqliteWorldSessionRow = {
+  session_id: "00000000-0000-0000-0000-000000000000",
+  storage_schema_version: 1,
+  revision: 1,
+  created_at: "2026-05-20T00:00:00.000Z",
+  updated_at: "2026-05-20T00:00:00.000Z",
+  player_name: "士子",
+  role: "scholar",
+  role_label: "书生",
+  dynasty: "明",
+  year: 1644,
+  month: 1,
+  ten_day_period: 1,
+  turn_count: 0,
+  exam_rank: null,
+  palace_rank: null,
+  office_title: null,
+  summary: "案卷摘要",
+  metadata_json: "{}",
+  world_state_json: "{}"
+};
+
+sqliteSessionRow.world_state_json;
+
+const forgedSqliteSessionRow: SqliteWorldSessionRow = {
+  ...sqliteSessionRow,
+  // @ts-expect-error SQLite world session row schema version is numeric, not raw text.
+  storage_schema_version: "s88"
+};
+
+const promptRetrievalRow: SqlitePromptRetrievalRow = {
+  session_id: sqliteSessionRow.session_id,
+  row_id: "people.npcs:npc-visible",
+  domain_schema_version: 1,
+  revision: 1,
+  row_revision: 1,
+  source: "server_visible_prompt_projection",
+  source_view: "worldPeopleView",
+  domain: "people",
+  collection: "npcs",
+  visibility: "public",
+  sort_priority: 1,
+  payload_json: "{}",
+  search_text: "顾衡",
+  metadata_json: "{}",
+  created_at: sqliteSessionRow.created_at,
+  updated_at: sqliteSessionRow.updated_at
+};
+
+const forgedPromptRetrievalRow: SqlitePromptRetrievalRow = {
+  ...promptRetrievalRow,
+  // @ts-expect-error S88.2 prompt retrieval rows use numeric domain schema versions.
+  domain_schema_version: "1"
+};
+
+const safeSearchRow: SqliteSafeSearchIndexRow = {
+  session_id: sqliteSessionRow.session_id,
+  row_id: "people:npc-visible",
+  safe_search_schema_version: 1,
+  revision: 1,
+  row_revision: 1,
+  source: "server_visible_safe_search_projection",
+  source_view: "worldPeopleView",
+  domain: "people",
+  source_id: "npc-visible",
+  title: "顾衡",
+  summary: "公开人物摘要",
+  confidence: 80,
+  visibility: "public",
+  related_refs_json: "[]",
+  route_view_ref_json: "{}",
+  search_text: "顾衡 公开人物摘要",
+  metadata_json: "{}",
+  created_at: sqliteSessionRow.created_at,
+  updated_at: sqliteSessionRow.updated_at
+};
+
+const forgedSafeSearchRow: SqliteSafeSearchIndexRow = {
+  ...safeSearchRow,
+  // @ts-expect-error Safe search derived rows must not carry raw world_state_json.
+  world_state_json: "{}"
+};
+
+const forgedSafeSearchSource: SqliteSafeSearchIndexRow = {
+  ...safeSearchRow,
+  // @ts-expect-error Safe search source literal must match the server visible projection.
+  source: "server_safe_world_search_projection"
+};
+
+const promptRepairStatus: SqlitePromptRetrievalRepairStatus = {
+  contentMismatches: false,
+  count: 1,
+  expectedCount: 1,
+  missingOrMismatched: false,
+  mismatchedRowIds: false,
+  needsRepair: false,
+  staleRows: false,
+  tableNeedsRepair: false
+};
+
+const safeSearchRepairStatus: SqliteSafeSearchRepairStatus = {
+  ...promptRepairStatus,
+  ftsAvailable: true,
+  ftsMismatches: false
+};
+
+const sqliteSafeDiagnostics: SqliteSafeDiagnostics = {
+  command: "export-safe",
+  generatedAt: "2026-05-20T00:00:00.000Z",
+  status: {
+    databasePathRedacted: true,
+    journalMode: "wal",
+    size: {},
+    counts: {},
+    migrations: {}
+  },
+  indexHealth: {
+    ok: true,
+    checkedTables: 1,
+    checkedIndexes: 1,
+    missingTables: [],
+    missingIndexes: [],
+    presentTableCount: 1,
+    presentIndexCount: 1
+  },
+  derivedTableDrift: {
+    checked: 1,
+    missingWorldSessionsTable: false,
+    needsRepair: false,
+    sessions: [{
+      sessionId: sqliteSessionRow.session_id,
+      revision: 1,
+      domains: {
+        promptRetrieval: promptRepairStatus,
+        safeSearch: safeSearchRepairStatus
+      },
+      needsRepair: false
+    }],
+    skipped: []
+  }
+};
+
+void forgedSqliteSessionRow;
+void forgedPromptRetrievalRow;
+void forgedSafeSearchRow;
+void forgedSafeSearchSource;
+void promptRepairStatus;
+void safeSearchRepairStatus;
+void sqliteSafeDiagnostics;

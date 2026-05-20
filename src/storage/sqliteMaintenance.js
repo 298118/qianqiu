@@ -1,3 +1,5 @@
+// @ts-check
+
 const fs = require("node:fs/promises");
 const path = require("node:path");
 const { isBuiltin } = require("node:module");
@@ -161,6 +163,17 @@ const DERIVED_TABLE_GROUPS = Object.freeze({
   ]
 });
 
+/**
+ * @typedef {import("../contracts/serverContracts").SessionRecord} SessionRecord
+ * @typedef {import("../contracts/serverContracts").SqliteDatabaseStatus} SqliteDatabaseStatus
+ * @typedef {import("../contracts/serverContracts").SqliteDerivedPublicDriftStatus} SqliteDerivedPublicDriftStatus
+ * @typedef {import("../contracts/serverContracts").SqliteDerivedTableDriftStatus} SqliteDerivedTableDriftStatus
+ * @typedef {import("../contracts/serverContracts").SqliteIndexHealth} SqliteIndexHealth
+ * @typedef {import("../contracts/serverContracts").SqliteSafeDiagnostics} SqliteSafeDiagnostics
+ * @typedef {import("../contracts/serverContracts").SqliteSessionDerivedDriftStatus} SqliteSessionDerivedDriftStatus
+ * @typedef {import("../contracts/serverContracts").SqliteWorldSessionRow} SqliteWorldSessionRow
+ */
+
 function loadDatabaseSync() {
   if (typeof isBuiltin === "function" && !isBuiltin("node:sqlite")) {
     throw new Error("SQLite maintenance tooling requires a Node.js runtime with node:sqlite support");
@@ -223,6 +236,12 @@ function readStoredJson(value, label) {
   }
 }
 
+/**
+ * Maintenance reads `world_sessions.world_state_json` as the single repair source.
+ *
+ * @param {SqliteWorldSessionRow} row
+ * @returns {SessionRecord}
+ */
 function rowToSessionRecord(row) {
   return normalizeSessionRecord(
     {
@@ -238,24 +257,38 @@ function rowToSessionRecord(row) {
   ).record;
 }
 
+/**
+ * @param {any} database
+ * @param {string | null} [sessionId]
+ * @returns {SqliteWorldSessionRow[]}
+ */
 function selectSessionRows(database, sessionId = null) {
   if (!tableExists(database, "world_sessions")) return [];
   if (sessionId) {
     assertSafeSessionId(sessionId);
-    return database
-      .prepare("SELECT * FROM world_sessions WHERE session_id = ? ORDER BY updated_at DESC, session_id ASC")
-      .all(sessionId);
+    return /** @type {SqliteWorldSessionRow[]} */ (
+      database
+        .prepare("SELECT * FROM world_sessions WHERE session_id = ? ORDER BY updated_at DESC, session_id ASC")
+        .all(sessionId)
+    );
   }
-  return database
-    .prepare("SELECT * FROM world_sessions ORDER BY updated_at DESC, session_id ASC")
-    .all();
+  return /** @type {SqliteWorldSessionRow[]} */ (
+    database
+      .prepare("SELECT * FROM world_sessions ORDER BY updated_at DESC, session_id ASC")
+      .all()
+  );
 }
 
+/**
+ * @param {any} database
+ * @returns {SqliteDatabaseStatus}
+ */
 function getSqliteDatabaseStatus(database) {
   const pageCount = Number(readPragmaValue(database, "page_count")) || 0;
   const pageSize = Number(readPragmaValue(database, "page_size")) || 0;
   const freelistCount = Number(readPragmaValue(database, "freelist_count")) || 0;
   const appliedMigrations = listAppliedMigrations(database);
+  /** @type {{ ok: boolean, reason?: string, appliedCount?: number, highestSchemaVersion?: number }} */
   let migrationIntegrity = {
     ok: false,
     reason: "schema_migrations table is missing"
@@ -275,7 +308,7 @@ function getSqliteDatabaseStatus(database) {
   const approximateBytes = pageCount * pageSize;
   const freeBytes = freelistCount * pageSize;
 
-  return sanitizeDiagnosticValue({
+  return /** @type {SqliteDatabaseStatus} */ (sanitizeDiagnosticValue({
     databasePathRedacted: true,
     journalMode: String(readPragmaValue(database, "journal_mode") || "unknown"),
     size: {
@@ -306,14 +339,18 @@ function getSqliteDatabaseStatus(database) {
       integrity: migrationIntegrity,
       tableExists: schemaMigrationsTableExists(database)
     }
-  });
+  }));
 }
 
+/**
+ * @param {any} database
+ * @returns {SqliteIndexHealth}
+ */
 function getSqliteIndexHealth(database) {
   const missingTables = EXPECTED_SQLITE_TABLES.filter((tableName) => !tableExists(database, tableName));
   const missingIndexes = EXPECTED_SQLITE_INDEXES.filter((indexName) => !indexExists(database, indexName));
 
-  return sanitizeDiagnosticValue({
+  return /** @type {SqliteIndexHealth} */ (sanitizeDiagnosticValue({
     ok: missingTables.length === 0 && missingIndexes.length === 0,
     checkedTables: EXPECTED_SQLITE_TABLES.length,
     checkedIndexes: EXPECTED_SQLITE_INDEXES.length,
@@ -321,15 +358,19 @@ function getSqliteIndexHealth(database) {
     missingIndexes,
     presentTableCount: EXPECTED_SQLITE_TABLES.length - missingTables.length,
     presentIndexCount: EXPECTED_SQLITE_INDEXES.length - missingIndexes.length
-  });
+  }));
 }
 
 function missingTables(database, tableNames) {
   return tableNames.filter((tableName) => !tableExists(database, tableName));
 }
 
+/**
+ * @param {Record<string, any>} status
+ * @returns {SqliteDerivedPublicDriftStatus}
+ */
 function toPublicDriftStatus(status) {
-  return sanitizeDiagnosticValue({
+  return /** @type {SqliteDerivedPublicDriftStatus} */ (sanitizeDiagnosticValue({
     count: status.count,
     counts: status.counts,
     contentMismatches: Boolean(status.contentMismatches),
@@ -343,9 +384,16 @@ function toPublicDriftStatus(status) {
     staleRows: Boolean(status.staleRows),
     tableNeedsRepair: Boolean(status.tableNeedsRepair),
     worldStateChanged: Boolean(status.worldStateChanged)
-  });
+  }));
 }
 
+/**
+ * @param {any} database
+ * @param {SessionRecord} record
+ * @param {keyof typeof DERIVED_TABLE_GROUPS} domainKey
+ * @param {(database: any, record: SessionRecord) => Record<string, any>} statusBuilder
+ * @returns {SqliteDerivedPublicDriftStatus}
+ */
 function getDomainDriftStatus(database, record, domainKey, statusBuilder) {
   const missing = missingTables(database, DERIVED_TABLE_GROUPS[domainKey]);
   if (missing.length) {
@@ -358,6 +406,11 @@ function getDomainDriftStatus(database, record, domainKey, statusBuilder) {
   return toPublicDriftStatus(statusBuilder(database, record));
 }
 
+/**
+ * @param {any} database
+ * @param {SessionRecord} record
+ * @returns {SqliteSessionDerivedDriftStatus}
+ */
 function getSessionDerivedDriftStatus(database, record) {
   const domains = {
     geography: getDomainDriftStatus(database, record, "geography", getGeographyRepairStatus),
@@ -379,6 +432,11 @@ function getSessionDerivedDriftStatus(database, record) {
   };
 }
 
+/**
+ * @param {any} database
+ * @param {string | null} [sessionId]
+ * @returns {SqliteDerivedTableDriftStatus}
+ */
 function getDerivedTableDriftStatus(database, sessionId = null) {
   const rows = selectSessionRows(database, sessionId);
   const sessions = [];
@@ -395,13 +453,13 @@ function getDerivedTableDriftStatus(database, sessionId = null) {
     }
   }
 
-  return sanitizeDiagnosticValue({
+  return /** @type {SqliteDerivedTableDriftStatus} */ (sanitizeDiagnosticValue({
     checked: sessions.length,
     missingWorldSessionsTable: !tableExists(database, "world_sessions"),
     needsRepair: sessions.some((session) => session.needsRepair),
     sessions,
     skipped
-  });
+  }));
 }
 
 function quoteSqlString(value) {
@@ -531,14 +589,19 @@ async function vacuumSqliteDatabase(databasePath, options = {}) {
   });
 }
 
+/**
+ * @param {any} database
+ * @param {{ generatedAt?: string, sessionId?: string | null }} [options]
+ * @returns {SqliteSafeDiagnostics}
+ */
 function exportSafeSqliteDiagnostics(database, options = {}) {
-  return sanitizeDiagnosticValue({
+  return /** @type {SqliteSafeDiagnostics} */ (sanitizeDiagnosticValue({
     command: "export-safe",
     generatedAt: options.generatedAt || new Date().toISOString(),
     status: getSqliteDatabaseStatus(database),
     indexHealth: getSqliteIndexHealth(database),
     derivedTableDrift: getDerivedTableDriftStatus(database, options.sessionId || null)
-  });
+  }));
 }
 
 function redactUnsafeText(value) {
