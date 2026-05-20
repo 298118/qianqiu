@@ -73,6 +73,8 @@ function runGovernanceChecks() {
       "Mock AI 必须默认完整可玩",
       "scholar -> child_exam -> provincial_exam -> metropolitan_exam -> palace_exam -> official",
       "不以“最小实现点”或“最小改动点”为目标",
+      "复杂功能必须坚持前后端分离和大步骤拆分",
+      "前端不得代替服务器裁决资源、身份、交易、NPC 行动、经济结果或隐藏信息",
       "AI 是《千秋》的核心世界引擎",
       "工具权限、proposal 边界、服务器裁决、审计记录和 Mock/no-key 降级",
       "服务器拥有状态边界、时间推进、科举晋级、作弊处罚",
@@ -84,6 +86,7 @@ function runGovernanceChecks() {
       "风险、遗漏、测试缺口和建议",
       "低风险纯文档改动可跳过子代理复审",
       "依赖、插件与开源参考治理",
+      "React + TypeScript + Vite",
       "npm run check:docs-governance",
       "npm test"
     ],
@@ -107,6 +110,8 @@ function runGovernanceChecks() {
       "Mock AI 默认完整可玩",
       "scholar -> child_exam -> provincial_exam -> metropolitan_exam -> palace_exam -> official",
       "不以“最小实现点”或“最小改动点”为目标",
+      "复杂功能必须坚持前后端分离和大步骤拆分",
+      "前端不得代替服务器裁决资源、身份、交易、NPC 行动、经济结果或隐藏信息",
       "AI 是《千秋》的核心世界引擎",
       "工具权限、proposal 边界、服务器裁决、审计记录和 Mock/no-key 降级",
       "服务器继续拥有时间推进",
@@ -133,6 +138,23 @@ function runGovernanceChecks() {
   ]) {
     requireFileIncludes(relativePath, governanceReference, failures);
   }
+  const frontendBackendSeparationNeedles = [
+    "复杂功能必须坚持前后端分离和大步骤拆分",
+    "前端不得代替服务器裁决资源、身份、交易、NPC 行动、经济结果或隐藏信息"
+  ];
+  for (const relativePath of [
+    "AGENTS.md",
+    "CLAUDE.md",
+    "docs/SHARED_CONTEXT.md",
+    "docs/QIANQIU_DEVELOPMENT_BRIEF.md"
+  ]) {
+    requireFileIncludes(relativePath, frontendBackendSeparationNeedles, failures);
+  }
+  requireFileIncludes(
+    "README.md",
+    ["后续施工必须前后端分离", "先做后端/API/数据/AI 契约"],
+    failures
+  );
   requireFileIncludes(
     "docs/SHARED_CONTEXT.md",
     ["magic numbers", "src/config/GameConfig.js"],

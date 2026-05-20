@@ -27,6 +27,7 @@ Stable development governance is protected in [docs/DEVELOPMENT_GOVERNANCE.md](d
 - Default to Mock AI mode for local playability. Real model providers must remain optional through `.env`.
 - Do not break the complete scholar path: scholar -> child exam -> provincial exam -> metropolitan exam -> palace exam -> official.
 - 后续项目开发和维护不以“最小实现点”或“最小改动点”为目标；在安全边界、默认可运行、内容保护和可审查粒度不受损的前提下，优先交付最完善、功能最强大、体验最丰富的游戏实现，并把必要的系统、交互、AI、数据、验证和文档一次设计到位。
+- 复杂功能必须坚持前后端分离和大步骤拆分：后端/API/数据契约、AI 权限与服务器裁决、前端体验、验证与文档应按可审查阶段分步交付；前端不得代替服务器裁决资源、身份、交易、NPC 行动、经济结果或隐藏信息。
 - AI is the core world engine of **Qianqiu**, not a replaceable decoration. Whenever gameplay, data domains, roles, offices, events, panels, or prompt retrieval are added, define AI read scope, actor intelligence, tool permissions, proposal boundaries, server adjudication, audit records, and Mock/no-key fallback.
 - Validate AI JSON before applying it to game state. The server, not the model, is responsible for state boundaries, promotion rules, anti-cheat penalties, and persistence.
 - 项目内面向协作和玩家的输出尽量使用中文，尤其是文档、交接记录、路线图台账、解释领域行为的注释和玩家可见文案；只有代码标识符、API、第三方术语、命令输出或外部工具清晰度需要时再使用英文。
@@ -36,7 +37,7 @@ Stable development governance is protected in [docs/DEVELOPMENT_GOVERNANCE.md](d
 ## Coding Preferences
 
 - Backend: Node.js + Express, plain JavaScript, adapter-based AI providers.
-- Frontend: plain HTML/CSS/JS, no build step unless a later documented decision changes this.
+- Frontend: React + TypeScript + Vite in `client/`, with Express serving `dist/client/`; keep browser UI as a consumer of safe API/view contracts rather than a duplicate rules engine.
 - Storage: JSON files under `data/sessions/` for early development.
 - UI tone: classical Chinese historical atmosphere, readable first, ornamental second.
 - Comments: explain prompts, state transitions, anti-cheat logic, and non-obvious schema decisions.

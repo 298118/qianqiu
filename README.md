@@ -18,6 +18,7 @@
 - 完成 S73-S77 前端水墨重构归档：[docs/FRONTEND_INK_REDESIGN_ARCHIVE.md](docs/FRONTEND_INK_REDESIGN_ARCHIVE.md) 汇总了 S73 素材与立绘管线、S74 React/Vite 默认入口迁移、S75 首页与全局 shell、S76 身份/考试/放榜/舆图/人物页面和 S77 默认入口、浏览器、视觉、安全、性能、可访问性与总验证口径。当前 `npm run smoke:browser` 是 React 默认入口 smoke；首页不请求完整素材 manifest、不加载地图运行时、不一次性拉取全量立绘池，舆图页才按需加载 Pixi/mapRenderer，人物页只加载当前可见公开人物。
 - 完成 S73.1 前端视觉资产指南：[docs/FRONTEND_VISUAL_ASSET_GUIDE.md](docs/FRONTEND_VISUAL_ASSET_GUIDE.md) 固定了水墨/宣纸/奏折/身份/场景/立绘/动效/fallback 的阅读优先原则、目录命名、页面 usage、颜色材质、文件规格、移动裁切、缩略图、fallback、审核状态和 manifest 前置安全字段。S73-S77 正式 AI 生成素材统一由 Codex 使用 `gpt-image-2` 并视觉审核；立绘边界为成年、端庄、高颜值、身份明确但不露骨，女性角色可通过服饰剪裁和姿态体现优雅成熟女性身形比例，但不得幼态、挑逗或过度暴露。
 - 完成 S80 服务端全局 AI 设置与保存反馈：新增 `GET/POST /api/ai/settings/global`、本地运行时文件 `data/settings/ai-global-settings.json` 和共享 React `AiSettingsPanel`。设置页与印匣 AI 设置现在使用同一套 11 类任务矩阵，显示“未保存 / 保存中 / 已保存 / 保存失败”、保存时间、provider key 可用性和每类任务的生效状态；保存后服务端返回值会立即回填表单，并覆盖所有当前和未来案卷的 AI 路由。旧 `GET/POST /api/ai/settings/:sessionId` 仍保留兼容，但读写同一份全局设置并返回 `scope: "global"` 与 `targetSessionId`。全局设置只保存校验后的 provider/model/预算/温度/安全控制，不保存 key、base URL、prompt、raw provider payload 或本地路径；缺 key 的真实 provider 不能作为可生效全局路由保存。
+- 新增 S81-S85 NPC、资产与储物系统规划：[docs/NPC_INVENTORY_SYSTEM_ROADMAP.md](docs/NPC_INVENTORY_SYSTEM_ROADMAP.md) 把开局背景兑现、玩家/NPC 资产与资源账本、背包仓库、重要凭证、阶段 NPC 名册、AI 对话、交易、赠礼、委派任务、长期经济关系和论道/切磋/求爱/婚姻扩展位整理为可施工路线图。后续施工必须前后端分离，先做后端/API/数据/AI 契约，再集中接入 React 前端体验。
 - 完成 S78 官署专题玩法化：新增 `topicSurfaceView` 安全投影、`GET /api/game/topic-surface/:sessionId/:surfaceId`、只读 `POST /api/ai/topic-draft/:sessionId` 和 `topic_draft` AI task。奏折队列、拟圣旨、朝议、堂审、军议和人物档案六类 surface 现在都有材料/筹议/草稿三栏工作台，可勾选证据、请 Mock/provider 拟稿、玩家改稿并写入底部奏折；AI 只拟草稿，不提交回合、不推进时间、不调用 resolver、不写 canonical state，真实后果继续由 `/api/game/turn` 与服务器裁决链处理。
 - 完成 S76.12 S76 验收：React browser smoke 现在覆盖书生、地方官、入仕官员、大臣、将领、皇帝六类身份直启与代表草稿行动，逐个打开六类官署专题 surface，并继续覆盖考试/放榜、独立舆图、人物谱牒、移动端、unsafe API 防线和截图产物；完整书生科举路径仍由 `npm run smoke:exam-s69` 验证到 `official`。本轮还把公开 UI manifest 顶层说明改为普通中文安全描述，避免在浏览器可读 manifest 里出现敏感词样。
 - 完成 S77.2 浏览器 smoke 扩展：`npm run smoke:browser -- --client react` 现在额外验证多页浏览器 `goBack()` / `goForward()` 历史栈，并通过拦截 `/vendor/pixi.min.js` 与 `/mapRenderer.js` 模拟舆图运行时资源失败，确认前端进入安全中文 fallback、不触碰 unsafe API、不泄漏 hidden/raw/provider/path/key 形状。
@@ -302,10 +303,14 @@ POST /api/exam/submit
 
 ```text
 server.js
+client/
+  src/
+  public/
+dist/client/
 public/
-  index.html
-  styles.css
-  app.js
+  assets/
+  vendor/
+  mapRenderer.js
 src/
   ai/
   config/
@@ -330,6 +335,7 @@ data/sessions/
 - [docs/FRONTEND_VISUAL_ASSET_GUIDE.md](docs/FRONTEND_VISUAL_ASSET_GUIDE.md)：S73.1 前端视觉资产指南，固定 UI 材质、首页、场景、身份背景、立绘、动效、fallback、尺寸、裁切、审核和 manifest 前置安全标准。
 - [docs/FRONTEND_ASSET_LEDGER.md](docs/FRONTEND_ASSET_LEDGER.md)：S73.2 前端视觉素材台账，记录 UI manifest、fallback、素材、立绘矩阵和参考素材来源/审核字段。
 - [docs/PIXIJS_INK_MAP_ARCHIVE.md](docs/PIXIJS_INK_MAP_ARCHIVE.md)：S72 PixiJS 水墨地图专项归档，汇总完成范围、验证证据和后续方向。
+- [docs/NPC_INVENTORY_SYSTEM_ROADMAP.md](docs/NPC_INVENTORY_SYSTEM_ROADMAP.md)：S81-S85 NPC、资产、背包仓库、交易、委派、经济和长期关系专项规划源头。
 - [docs/DEVELOPMENT_GOVERNANCE.md](docs/DEVELOPMENT_GOVERNANCE.md)：稳定开发治理锚点。
 - [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)：当前架构、API、状态模型和验证要求。
 - [docs/AI_CONTROL_AUDIT_MATRIX.md](docs/AI_CONTROL_AUDIT_MATRIX.md)：AI/server 权限矩阵。

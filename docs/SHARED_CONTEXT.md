@@ -20,13 +20,14 @@
 - Frontend: S74.1 起 React + TypeScript + Vite 构建产物接管默认 `/`；源码在 `client/`，生产构建在 `dist/client/`。React Router Data Mode 管理首页、主卷、舆图、人物、史册、科举、皇榜、朝议和设置等路由。旧 `public/index.html`、`public/app.js`、`public/styles.css`、`public/mapPanel.js` 只作迁移参考；`public/assets/`、`public/vendor/`、`public/mapRenderer.js` 继续提供已审核素材和 S72 地图 runtime。
 - Backend: Node.js + Express，plain JavaScript。AI provider 为 adapter-based Mock/OpenAI/DeepSeek/MiMo/MiMo+DeepSeek/Anthropic；真实 provider 只作为可选配置，不能成为启动门槛。
 - Storage: 默认 JSON session files under `data/sessions/`；可选 `STORAGE_ADAPTER=sqlite` 使用本地 `schema_migrations`、`world_sessions`、audit tables、`geo_*`、`people_*`、`office_*`、`event_archive_index`、`prompt_retrieval_index` 和 `safe_search_index`。SQLite 派生行只从 `world_sessions.world_state_json` 单向修复，不是玩家 API、prompt 或服务器裁决的 raw truth source。
-- Roadmap status: S49-S67 本地数据库与大世界内容、S68-S69 科举深化、S70 AI 编排、S71 数据库玩法化、S72 PixiJS 水墨地图、S73-S77 前端水墨重构、S78 官署专题玩法化、S79 前端修复与高清立绘使用、S80 服务端全局 AI 设置均已完成并归档或压缩记录。
+- Roadmap status: S49-S67 本地数据库与大世界内容、S68-S69 科举深化、S70 AI 编排、S71 数据库玩法化、S72 PixiJS 水墨地图、S73-S77 前端水墨重构、S78 官署专题玩法化、S79 前端修复与高清立绘使用、S80 服务端全局 AI 设置均已完成并归档或压缩记录。S81-S85 NPC、资产与储物系统已规划，源头见 `docs/NPC_INVENTORY_SYSTEM_ROADMAP.md`。
 - Current collaboration: 2026-05-14 起停止 Gemini CLI 协作。后续开发、素材生成/审核、验证、文档同步和 Git 提交由 Codex 负责；用户已授权本仓库使用 Codex 子代理，实施子代理不得提交，提交前复审子代理必须只读。
 - Current local `.env`: 可能含用户 provider keys。`.env` 被 Git 忽略，不能打印、复制到文档或提交。
 
 ## Core Invariants
 
 - 后续开发和维护不以“最小实现点”或“最小改动点”为目标；在安全边界、默认可运行、内容保护和可审查粒度不受损的前提下，优先交付完整、丰富、功能强大的游戏实现，并把必要的系统、交互、AI、数据、验证和文档一次设计到位。
+- 复杂功能必须坚持前后端分离和大步骤拆分：后端/API/数据契约、AI 权限与服务器裁决、前端体验、验证与文档按可审查阶段分步交付；前端不得代替服务器裁决资源、身份、交易、NPC 行动、经济结果或隐藏信息。
 - 完整书生路径必须继续可用：`scholar -> child_exam -> provincial_exam -> metropolitan_exam -> palace_exam -> official`。
 - AI 是《千秋》的核心世界引擎，不是可替换装饰。新增玩法、数据域、角色、官署、事件、面板或 prompt 检索时，必须定义 AI read scope、actor intelligence、tool permissions、proposal boundaries、server adjudication、audit records 和 Mock/no-key fallback。
 - Provider 只能建议叙事、受限 `statePatch`、关系变化、评分 JSON、考试触发或身份受限领域工具 proposal；服务器拥有晋级、考试资格、作弊处罚、持久化、保护字段、官职任免、长期事件、时间推进、数据库写入和可见性过滤。
@@ -51,7 +52,7 @@
 - Core APIs: `GET /api/health`、`POST /api/game/start`、`GET /api/game/saves`、`GET /api/game/player-state/:sessionId`、兼容 `GET /api/game/state/:sessionId`、`GET /api/game/search/:sessionId`、`GET /api/game/topic-surface/:sessionId/:surfaceId`、`POST /api/game/turn`、`POST /api/exam/question|progress|submit`。
 - AI APIs: `POST /api/ai/connection-test`、`GET/POST /api/ai/settings/global`、兼容 `GET/POST /api/ai/settings/:sessionId`、`POST /api/ai/quick-actions/:sessionId`、`POST /api/ai/topic-draft/:sessionId`。
 - Main code areas: AI adapters/prompts/schemas/tools in `src/ai/`; server-owned game rules, exams, official career, resolver input, redacted state, memory, settings, audit and topic surfaces in `src/game/`; storage adapters and migrations in `src/storage/`; React app in `client/`; reviewed visual assets and runtime manifests in `public/assets/`.
-- Recent validation baseline: S80 通过 `npm run typecheck:client`、`npm run test:client`、focused Node tests、`npm run build:client`、`npm run smoke:browser`、`npm run check:docs-governance`、`node --test test/documentationGovernance.test.js` 和完整 `npm test`。当前文档压缩改动需至少通过 docs governance、documentation governance、diff check；因更新治理检查脚本，提交前执行只读子代理复审。
+- Recent validation baseline: S80 通过 `npm run typecheck:client`、`npm run test:client`、focused Node tests、`npm run build:client`、`npm run smoke:browser`、`npm run check:docs-governance`、`node --test test/documentationGovernance.test.js` 和完整 `npm test`。当前 S81-S85 规划/治理改动需至少通过 docs governance、documentation governance、diff check；因更新治理检查脚本，提交前执行只读子代理复审。
 
 ## Archives And Contracts
 
@@ -60,6 +61,7 @@
 - `docs/DEVELOPMENT_GOVERNANCE.md`
 - `docs/QIANQIU_DEVELOPMENT_BRIEF.md`
 - `docs/DEVELOPMENT_STEPS.md`
+- `docs/NPC_INVENTORY_SYSTEM_ROADMAP.md`
 - `docs/ACTIVITY_LEDGER_COMPLETED_ARCHIVE.md`
 - `docs/ARCHITECTURE.md`
 - `docs/AI_CONTROL_AUDIT_MATRIX.md`
@@ -76,8 +78,9 @@
 
 ## Current Work Note
 
+- 2026-05-20：按用户要求新增 S81-S85 NPC、资产与储物系统规划，详见 `docs/NPC_INVENTORY_SYSTEM_ROADMAP.md`；活动台账已加入 S81-S85 TODO，开发治理新增“前后端分离和大步骤拆分”受保护规则，并同步 `scripts/checkGovernanceDocs.js`、brief 与 `AGENTS.md`。本轮为规划/治理改动，需通过 docs governance、documentation governance、diff check，并因修改检查脚本执行只读复审。
 - 2026-05-20：按用户要求压缩 `docs/SHARED_CONTEXT.md` 和 `docs/DEVELOPMENT_STEPS.md`，只保留接手下一步必要的状态、边界、验证入口和归档索引；新增“不要最小实现点/最小改动点，追求完整丰富实现”的开发规范，并写入 `docs/DEVELOPMENT_GOVERNANCE.md`、本文件、活动台账、brief 与 `AGENTS.md`。已通过 `npm run check:docs-governance`、`node --test test/documentationGovernance.test.js`、`npm test`（940 项）和 `git diff --check`；提交前只读复审 Anscombe 未发现 P0/P1/P2。
 
 ## Next Recommended Step
 
-S80 已收束。下一步可开新的明确步骤，优先从安全 projection、全局 AI route policy、已审核 `portraitRef`、runtime manifest 与 `SurfaceHost` 弹层体系继续扩展前端玩法或 AI provider 验收。新步骤不要按“最小可用占位”推进；应先定义完整玩家体验、AI 权限、server resolver 边界、Mock/no-key fallback、测试和文档落点，再拆成可审查的 coherent changes。
+从 S81.1 开始施工 NPC、资产与储物系统：先写可执行契约和测试骨架，再实现 `assetLedger`、`inventoryLedger`、`npcRoster`、`delegatedTasks` 与 SQLite 派生表。不要先做前端假状态；S81-S83 以后端/API/数据/AI 为主，S84 再集中接入 React NPC、背包、交易和委派体验。
