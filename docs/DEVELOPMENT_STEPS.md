@@ -307,7 +307,7 @@ S84 前端专项额外验收入口：
 - 边界：放榜后过渡只读服务器定榜、科名荣誉、公开同年座师和授官轨迹；AI 与前端不能补名次、造关系、定官职或写 hidden 私档。`examAftermathView` 只暴露清洗文本、有限联系人、公开摘要和草稿建议，兼容 `worldState` 历史快照也走同一 sanitizer。
 - 验证：已通过语法检查、`node --test test/examAftermath.test.js test/examHonorsRoute.test.js test/examNetworks.test.js`（6 项）、`npm run typecheck:server`、`npm run typecheck:client`、全量 Vitest（68 项）、`npm run build:client`、`npm run smoke:exam-s69`、`AI_PROVIDER=mock npm run smoke:browser`、`npm run check:docs-governance`、`node --test test/documentationGovernance.test.js`、`node --test test/reactClientScaffold.test.js`（37 项）、完整 `npm test`（1000 项）和 `git diff --check`；Euclid 初审 P2 修复后已重跑语法检查、focused exam aftermath/honors/network tests（6 项）、`npm run typecheck:server`、docs governance、S69 smoke、完整 `npm test`（1000 项）和 `git diff --check`。
 - 子代理：Epicurus 只读梳理放榜后端过渡，建议用独立 server-owned aftermath view 串接榜次、科名、人脉和授官边界；Newton 只读梳理皇榜页与 smoke 接线，建议在 RankingPage 展示公开联系人和草稿按钮、在 client smoke 中断言区块存在。本轮实现已采纳。Euclid 提交前只读初审发现 `examAftermathView` 文本 sanitizer 仍会放过普通 `provider`、`provider payload` 与 `statePatch` 值的 P2；主代理已补 aftermath 专用 unsafe pattern 和污染回归。Euclid 复核确认该 P2 已修复，未发现新的 P0/P1/P2。
-- 提交：待实现提交后回填。
+- 提交：实现提交 `66153cb7`；本条 hash 由后续低风险纯文档提交回填。
 - 下一步：继续 S88.3 的读书计划深化与考试入场后反馈；保持完整 `scholar -> child_exam -> provincial_exam -> metropolitan_exam -> palace_exam -> official` smoke 为第一验收入口。
 
 ### 2026-05-20：完成 S87.1-S87.7 route/API 响应类型覆盖
