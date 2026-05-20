@@ -334,8 +334,8 @@ S84 前端专项额外验收入口：
 - 实现：`src/game/studyProfileConfig.js` 新增 `STUDY_PLAN_SCHEMA_VERSION`、三旬复盘周期、强度档位、目标增益、晨午暮日课模板和复盘模板；`src/game/studyProfile.js` 把 `nextPlan` 规范化为 `schemaVersion`、`planningWindow`、`intensity`、`dailyRhythm`、`checkpoints`、`riskNotes`、`nextActions` 和 `authorityBoundary`，并让 `summarizeStudyProfileForPrompt()` 只读取同一安全投影。React `ScholarPanel` 展示计划节奏、当前/目标分、三旬窗口、晨午暮日课、复盘节点、风险和权限边界，新增“执行首课”按钮但只写行动草稿；`scripts/clientSmoke.js`、Vitest fixture 和 React 脚手架测试均增加深度读书计划断言。
 - 边界：读书计划仍由服务器按 `studyProfile`、师友关系和科场记录生成；AI 老师只能提交文本建议或点评，不能写 `studyProfile`、属性、保结、准考、科名、榜次、官职或 canonical state。后端 visible text sanitizer 现在拒绝通用 `provider`、`statePatch`、`worldState`、raw/prompt/audit/table、key、本地路径和 SQLite 形态；若整组日课或复盘节点被污染，会回落到服务器默认计划。
 - 验证：已通过本文件“本轮 S88.3 读书计划深化切片验证口径”中的语法检查、focused Node tests、server/client typecheck、React focused/scaffold tests、全量 Vitest、client build、browser smoke、完整书生路径 smoke、docs governance、documentation governance、完整 `npm test` 和 `git diff --check`。
-- 子代理：Sartre 只读梳理后端/API 接线，建议保持 `nextPlan` 为当前切片的 server-owned safe shape 并补污染回归；Jason 只读梳理前端和验证入口，建议在 `ScholarPanel` 接入日课/复盘/首课草稿并扩展 App fixture、client smoke 和 scaffold 断言。本轮实现已采纳。Sagan 提交前只读初审发现两个 P2：复审状态文档未回填、未跟踪 `npm-start.log` / `npm-start.err.log` 需要明确排除；本轮已回填文档，提交时只暂存本轮 tracked 文件并排除本地日志。
-- 提交：随本轮 S88.3 读书计划深化 coherent change 提交，最终 hash 由后续低风险文档提交回填。
+- 子代理：Sartre 只读梳理后端/API 接线，建议保持 `nextPlan` 为当前切片的 server-owned safe shape 并补污染回归；Jason 只读梳理前端和验证入口，建议在 `ScholarPanel` 接入日课/复盘/首课草稿并扩展 App fixture、client smoke 和 scaffold 断言。本轮实现已采纳。Sagan 提交前只读初审发现两个 P2：复审状态文档未回填、未跟踪 `npm-start.log` / `npm-start.err.log` 需要明确排除；本轮已回填文档并排除本地日志，Sagan 复核未发现新的 P0/P1/P2。
+- 提交：实现提交 `10e4e79f`；本次 hash 回填为低风险纯文档维护。
 - 下一步：继续 S88.3 的考试入场后反馈；保持完整 `scholar -> child_exam -> provincial_exam -> metropolitan_exam -> palace_exam -> official` smoke 为第一验收入口。
 
 ### 2026-05-20：完成 S87.1-S87.7 route/API 响应类型覆盖
