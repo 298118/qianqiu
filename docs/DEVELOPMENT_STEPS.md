@@ -16,7 +16,7 @@
 - S72 PixiJS 水墨地图：[PIXIJS_INK_MAP_ARCHIVE.md](PIXIJS_INK_MAP_ARCHIVE.md)，运行时契约见 [PIXIJS_INK_MAP_RUNTIME_CONTRACT.md](PIXIJS_INK_MAP_RUNTIME_CONTRACT.md)，素材台账见 [MAP_ASSET_LEDGER.md](MAP_ASSET_LEDGER.md)。
 - S73-S77 前端水墨重构、React/Vite 默认入口、首页/全局 shell、身份/考试/放榜/舆图/人物页面、立绘管线、安全/性能/可访问性和总验证：[FRONTEND_INK_REDESIGN_ARCHIVE.md](FRONTEND_INK_REDESIGN_ARCHIVE.md)，素材台账见 [FRONTEND_ASSET_LEDGER.md](FRONTEND_ASSET_LEDGER.md)。
 - S81-S85 NPC、资产、储物、交易、委派、经济、NPC 主动性和礼法扩展位：[NPC_INVENTORY_SYSTEM_ARCHIVE.md](NPC_INVENTORY_SYSTEM_ARCHIVE.md)，规划见 [NPC_INVENTORY_SYSTEM_ROADMAP.md](NPC_INVENTORY_SYSTEM_ROADMAP.md)，契约见 [NPC_INVENTORY_SYSTEM_CONTRACT.md](NPC_INVENTORY_SYSTEM_CONTRACT.md)。
-- S86 后端 TypeScript 渐进迁移与 Rust 使用边界：规划见 [TYPESCRIPT_BACKEND_MIGRATION_ROADMAP.md](TYPESCRIPT_BACKEND_MIGRATION_ROADMAP.md)。
+- S86 后端 TypeScript 渐进迁移与 Rust 使用边界：规划见 [TYPESCRIPT_BACKEND_MIGRATION_ROADMAP.md](TYPESCRIPT_BACKEND_MIGRATION_ROADMAP.md)，完成归档见 [TYPESCRIPT_BACKEND_MIGRATION_ARCHIVE.md](TYPESCRIPT_BACKEND_MIGRATION_ARCHIVE.md)。
 
 2026-05-14 起，按用户要求停止与 Gemini CLI 共同开发；后续开发全部由 Codex 负责。远程存档、账号体系、多人同步、云端冲突解决和托管数据库不进入当前规划。
 
@@ -104,22 +104,11 @@
 
 ## 4. 活动路线图总览
 
-当前活动专项为 S86 后端 TypeScript 渐进迁移与 Rust 使用边界，规划源头见 [TYPESCRIPT_BACKEND_MIGRATION_ROADMAP.md](TYPESCRIPT_BACKEND_MIGRATION_ROADMAP.md)。本专项先建立类型检查和共享契约，再逐步覆盖安全 view、AI schema、storage/session 和少量低副作用 `.ts` 试点；不做全仓重写，也不把 Rust 引入核心玩法。
-
-| ID | 状态 | Owner | 目标 | 说明 |
-| --- | --- | --- | --- | --- |
-| S86 | TODO | Codex | 后端 TypeScript 渐进迁移与 Rust 评估 | 建立后端类型检查、共享契约、安全边界类型化、AI/storage 类型化和小范围 `.ts` 试点；Rust 只作为可选性能工具候选。 |
-| S86.1 | TODO | Codex | 后端 TS 检查地基 | 新增 `tsconfig.server-check.json` 与 `npm run typecheck:server`，先用 `allowJs` / `checkJs` 覆盖入口、契约和高风险模块，不改变 `npm start`。 |
-| S86.2 | TODO | Codex | 契约清点与共享类型骨架 | 清点 API response、安全 view、AI task、session record、storage row 和前端 API 类型，建立 type-only contract 目录与命名规范。 |
-| S86.3 | TODO | Codex | 安全 view 与状态边界纳入类型检查 | 覆盖 `clientWorldState`、`redactedState`、route view builder、`stateRules` 和 raw ledger 剥离清单。 |
-| S86.4 | TODO | Codex | AI schema 与 provider facade 类型化 | 类型化 AI tasks、tool envelope、provider response、Mock fallback 和 route policy，同时保留 Ajv/runtime schema 门禁。 |
-| S86.5 | TODO | Codex | Storage/session 类型化 | 为 JSON envelope、SQLite session row、派生表 row、安全 repair/sync helper 建类型，验证 JSON/SQLite parity 不变。 |
-| S86.6 | TODO | Codex | 小范围 `.ts` 试点 | 选择低副作用纯模块转 TS，确认 CommonJS 输出、source map、dev/watch 与 Node test 接线，不切换全后端。 |
-| S86.7 | TODO | Codex | 后端 TS 验收和迁移规范固化 | 将 `typecheck:server` 纳入相关验证口径，归档允许保留 JS、必须迁移 TS 和允许 Rust 评估的边界。 |
+当前没有 `TODO` / `IN_PROGRESS` 活动专项。S86.1-S86.7 已完成并归档到 [TYPESCRIPT_BACKEND_MIGRATION_ARCHIVE.md](TYPESCRIPT_BACKEND_MIGRATION_ARCHIVE.md)；后续若继续扩大后端 TypeScript 覆盖，应按新专项或新步骤启动，不在活动表保留 DONE 长表。
 
 ## 5. 最新状态
 
-- S86 当前规划：后端 TypeScript 迁移已确定采用渐进路线。当前仓库前端已经是 React + TypeScript + Vite，后端仍以 Node.js + Express + CommonJS JavaScript 为主；S86 将先补 `typecheck:server`、共享 contract 和高风险安全 view/AI/storage 类型检查，再做少量 `.ts` 试点。Rust 不进入核心玩法重写，只在有性能证据时作为可选 CLI/WASM/离线工具评估。
+- S86 当前基线：后端 TypeScript 渐进迁移首轮已完成。新增 `npm run typecheck:server`、`npm run build:server:probe`、`tsconfig.server-check.json`、`tsconfig.server-probe.json`、`src/contracts/serverContracts.ts` 和 `src/contracts/runtimeGuards.ts`；安全 projection、AI facade/route policy、session/storage 高风险模块已选择性 `@ts-check`。后端仍以 CommonJS JavaScript 运行，`.ts` 试点不改变 `npm start`，Rust 仍只作为未来有性能证据后的可选 CLI/WASM/离线工具评估。
 - S81-S84 当前基线：NPC、资产、储物、交易与委派首轮闭环已完成。后端已有 `assetLedger`、`inventoryLedger`、`npcRoster`、`npcInteractionLedger`、`tradeLedger`、`delegatedTaskLedger`、开局背景裁决、AI task/schema/prompt/provider fallback、JSON/SQLite 同步和 player-state 安全 view；React 已有“囊箧” route、人物 NPC 工作台、对话/交易/委派面板和开局裁决摘要。前端只消费安全 API/view，不裁决资源、价格、关系或任务结果。
 - S85 当前基线：`npcEconomy` 已在普通回合和跳时共享的旬/月 tick 后运行，非月末刷新基础市价，月末再结算资产维护/收益、库存损耗、委派到期回禀、逾期交易承诺、人情债与 NPC 关系记忆；考试入场/场内场景不跑全局经济；委派预算由服务器校验不得超过地方库银，月结旧任务也按有效预算参与成功率和扣款；`marketPriceView` / `npcEconomyView` 进入 turn、SSE、player-state 和县令主卷，raw `marketPriceLedger` / `npcEconomyLedger` 与内部 ledger path 已从兼容 `worldState`、玩家 API 和 S85 反馈中剥离。`npcActiveRequestLedger` / `npcActiveRequestView` 已让 NPC 主动来函进入普通回合、SSE、考试和 player-state；`npcRelationshipActions` 已让论道、切磋、求爱和婚姻扩展位具备服务器 schema、权限、NPC eligibility view、UI“礼法”tab 和红队测试。
 - S85 当前规划：S81-S85 已归档。下一步由用户或新路线图决定；建议在新专项中把礼法扩展位继续深化为婚姻/比武/论道专门 resolver，并补真实 provider 长循环与 browser smoke 深度路径。
@@ -137,9 +126,10 @@
 - `git diff --check`
 - 提交前只读子代理复审最终 diff 与验证证据
 
-S86 后续实现验证入口：
+S86 后端 TypeScript 迁移验证入口：
 
-- `npm run typecheck:server`，S86.1 建立后纳入相关后端迁移验证。
+- `npm run typecheck:server`，后端契约、API/view 类型、安全 projection、AI provider facade、storage/session 或核心 resolver 新增/重构时运行。
+- `npm run build:server:probe`，新增或调整 `src/contracts/**/*.ts` 试点时运行，确认 CommonJS/declaration/source map 输出仍可生成。
 - `npm run typecheck:client`，涉及共享 API/view 契约或前端类型引用时运行。
 - 与迁移模块对应的 focused Node tests，例如 redaction、AI schema、storage parity、route contract 或 resolver tests。
 - 涉及运行时、API/schema、提示词、storage 或验证工具时继续运行 `npm test` 与提交前只读复审。
@@ -231,6 +221,16 @@ S84 前端专项额外验收入口：
 - `npm test`
 
 ## 7. 近期进度记录
+
+### 2026-05-20：完成 S86.1-S86.7 后端 TypeScript 渐进迁移首轮
+
+- 范围：完成 S86.1-S86.7，新增 `typecheck:server`、`build:server:probe`、后端检查 tsconfig、server probe tsconfig、`src/contracts/serverContracts.ts`、`src/contracts/runtimeGuards.ts` 和 [TYPESCRIPT_BACKEND_MIGRATION_ARCHIVE.md](TYPESCRIPT_BACKEND_MIGRATION_ARCHIVE.md)。
+- 类型覆盖：`clientWorldState`、`redactedState`、`stateRules`、`src/ai/index.js`、`modelRoutePolicy`、`sessionRecord`、`sessionStore`、JSON adapter 和 SQLite adapter 已选择性 `@ts-check`；contract 固化 raw ledger 剥离、player-state envelope、安全 route views、AI task/provider/tool envelope、session record、storage adapter 和 SQLite row 形状。
+- 运行边界：`npm start` 仍直接运行 `server.js` / CommonJS；`.ts` 试点只用于 type-only contract、纯 guard/helper 和 probe 编译，不让生产 runtime 直接 require `.ts`。`.tmp/` 已加入 Git 忽略，probe 输出不入库。
+- Rust：继续不进入核心玩法、Express routes、AI 编排、resolver、科举晋级、交易/婚姻/弹劾结果或 canonical persistence；只有可选 CLI/WASM/离线工具并有 profiling 证据时再评估。
+- 验证：本轮已通过 `npm run typecheck:server`、`npm run build:server:probe`、`node --test test/redactedState.test.js test/gamePlayerStateRoute.test.js test/stateRules.test.js`、`node --test test/aiSchemas.test.js test/remoteHelpers.test.js test/modelRoutePolicy.test.js test/aiToolProtocolContract.test.js`、`node --test test/sessionStoreAdapterContract.test.js test/sqliteNpcInventoryTables.test.js test/sqliteNpcInventoryAdapterIntegration.test.js`（56 项）、`npm run check:docs-governance`、`node --test test/documentationGovernance.test.js`、`npm test`（983 项）和本轮改动路径 `git diff --check`。
+- 子代理：Hypatia、Socrates、Lorentz 已分别只读盘点 S86.3/S86.4/S86.5 风险点、推荐类型和 focused 验证命令；Sartre 提交前只读复审发现 3 个 P2，主代理已补 raw ledger 类型拒绝 fixture、SafeRouteViews 字段和 storage adapter audit surface；Bohr 复看发现 `searchSafeSearchIndex` optional 签名 P2，已修正为 `(sessionId, options?)` 并复验，最终未发现 P0/P1/P2。
+- 提交：`162bef77`。
 
 ### 2026-05-20：新增 S86 后端 TypeScript 渐进迁移规划
 

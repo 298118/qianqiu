@@ -1,3 +1,5 @@
+// @ts-check
+
 const fs = require("fs/promises");
 const path = require("path");
 const { randomUUID } = require("crypto");
@@ -342,7 +344,9 @@ async function writeSessionUnlocked(worldState, options = {}) {
 async function withSessionLock(sessionId, task) {
   assertSafeSessionId(sessionId);
   const previous = sessionQueues.get(sessionId) || Promise.resolve();
-  let settleQueue;
+  /** @type {() => void} */
+  let settleQueue = () => {};
+  /** @type {Promise<void>} */
   const queueTail = new Promise((resolve) => {
     settleQueue = resolve;
   });

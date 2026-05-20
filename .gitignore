@@ -10,6 +10,7 @@ data/*.db
 data/*.db-*
 artifacts/
 tmp/
+.tmp/
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*

@@ -1,3 +1,5 @@
+// @ts-check
+
 const {
   createJsonSessionAdapter,
   CURRENT_STORAGE_SCHEMA_VERSION,

@@ -1,0 +1,30 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "lib": ["ES2022"],
+    "module": "Node16",
+    "moduleResolution": "Node16",
+    "allowJs": true,
+    "checkJs": false,
+    "noEmit": true,
+    "strict": false,
+    "skipLibCheck": true,
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "resolveJsonModule": true,
+    "types": ["node"]
+  },
+  "include": [
+    "server.js",
+    "src/contracts/**/*.ts",
+    "src/game/clientWorldState.js",
+    "src/game/redactedState.js",
+    "src/game/stateRules.js",
+    "src/ai/index.js",
+    "src/ai/modelRoutePolicy.js",
+    "src/storage/sessionRecord.js",
+    "src/storage/sessionStore.js",
+    "src/storage/jsonSessionAdapter.js",
+    "src/storage/sqliteSessionAdapter.js"
+  ]
+}

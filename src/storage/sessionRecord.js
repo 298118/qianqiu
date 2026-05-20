@@ -1,10 +1,17 @@
+// @ts-check
+
 const { ensureWorldCalendarState, normalizeTenDayPeriod } = require("../game/time");
 
 const CURRENT_STORAGE_SCHEMA_VERSION = 1;
 const SAFE_SESSION_ID_PATTERN = /^[a-f0-9-]{36}$/i;
 
+/**
+ * @param {number} statusCode
+ * @param {string} message
+ * @returns {Error & { statusCode: number }}
+ */
 function createStoreError(statusCode, message) {
-  const error = new Error(message);
+  const error = /** @type {Error & { statusCode: number }} */ (new Error(message));
   error.statusCode = statusCode;
   return error;
 }

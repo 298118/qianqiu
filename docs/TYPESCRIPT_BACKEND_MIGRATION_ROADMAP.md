@@ -39,13 +39,15 @@
 
 | ID | 状态 | 目标 | 范围 |
 | --- | --- | --- | --- |
-| S86.1 | TODO | 后端 TS 检查地基 | 新增 `tsconfig.server-check.json` 与 `npm run typecheck:server`，优先 `allowJs` / `checkJs` 覆盖入口、契约和高风险模块，不改变 `npm start` 运行方式。 |
-| S86.2 | TODO | 契约清点与共享类型骨架 | 清点 API response、安全 view、AI task、session record、storage row 和 frontend API 类型，建立 type-only contract 目录和命名规范。 |
-| S86.3 | TODO | 安全 view 与状态边界纳入类型检查 | 先让 `clientWorldState`、`redactedState`、route view builder、`stateRules` 和近期 raw ledger 剥离清单进入 JSDoc/TS 检查。 |
-| S86.4 | TODO | AI schema 与 provider facade 类型化 | 为 AI tasks、tool envelope、provider response、Mock fallback 和 route policy 建立 TS 类型或 declaration，继续以 Ajv/runtime schema 为最终门禁。 |
-| S86.5 | TODO | Storage/session 类型化 | 为 JSON envelope、SQLite session row、派生表 row、安全 repair/sync helper 建类型，验证 JSON/SQLite parity 不变。 |
-| S86.6 | TODO | 小范围 `.ts` 试点 | 选择 1 到 3 个低副作用纯模块试点从 JS 转 TS，决定 CommonJS 输出、source map、dev/watch 和测试接线，不切换全后端。 |
-| S86.7 | TODO | 后端 TS 验收和迁移规范固化 | 将 `typecheck:server` 纳入相关验证口径，记录允许保留 JS、必须迁移 TS、允许 Rust 评估的边界，并归档 S86。 |
+| S86.1 | DONE | 后端 TS 检查地基 | 已新增 `tsconfig.server-check.json` 与 `npm run typecheck:server`，选择性 `@ts-check` 覆盖入口、契约和高风险模块，不改变 `npm start` 运行方式。 |
+| S86.2 | DONE | 契约清点与共享类型骨架 | 已新增 `src/contracts/serverContracts.ts` 与 `src/contracts/runtimeGuards.ts`，清点 API response、安全 view、AI task、session record、storage row 和 frontend API 类型。 |
+| S86.3 | DONE | 安全 view 与状态边界纳入类型检查 | 已覆盖 `clientWorldState`、`redactedState`、`stateRules` 和 raw ledger 剥离清单；route response shape 先由 contract 类型固化，后续再逐步给 route builder 加 JSDoc。 |
+| S86.4 | DONE | AI schema 与 provider facade 类型化 | 已类型化 AI tasks、tool envelope、provider response、Mock fallback 和 route policy，同时保留 Ajv/runtime schema 门禁。 |
+| S86.5 | DONE | Storage/session 类型化 | 已为 JSON envelope、SQLite session row、派生表 row 和 storage adapter contract 建类型，并让 session/storage 高风险模块进入 `@ts-check`。 |
+| S86.6 | DONE | 小范围 `.ts` 试点 | 已以 type-only contract 与纯 guard/helper 模块作为低副作用 `.ts` 试点，并用 `npm run build:server:probe` 验证 CommonJS 输出、declaration 和 source map。 |
+| S86.7 | DONE | 后端 TS 验收和迁移规范固化 | 已将 `typecheck:server` 纳入验证口径，归档允许保留 JS、必须迁移 TS 和允许 Rust 评估的边界；归档见 [TYPESCRIPT_BACKEND_MIGRATION_ARCHIVE.md](TYPESCRIPT_BACKEND_MIGRATION_ARCHIVE.md)。 |
+
+S86.1-S86.7 首轮已完成，归档入口见 [TYPESCRIPT_BACKEND_MIGRATION_ARCHIVE.md](TYPESCRIPT_BACKEND_MIGRATION_ARCHIVE.md)。后续若继续扩大后端 TypeScript 覆盖，应另开 S87 或新的小步骤，不在 S86 中追加隐性范围。
 
 ## 5. 推荐实施顺序
 

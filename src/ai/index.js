@@ -1,3 +1,5 @@
+// @ts-check
+
 const mockProvider = require("./providers/mock");
 const { createAnthropicProvider } = require("./providers/anthropic");
 const { createDeepSeekProvider } = require("./providers/deepseek");
@@ -170,17 +172,17 @@ const METHOD_TASK_TYPES = Object.freeze({
 
 function createRoutedProvider(options = {}) {
   const routePolicy = options.routePolicy || buildDefaultModelRoutePolicy(process.env, options);
-  const narratorProvider = getProviderForTask("narrator", { ...options, routePolicy });
-  const routed = {
+  const narratorProvider = /** @type {any} */ (getProviderForTask("narrator", { ...options, routePolicy }));
+  const routed = /** @type {Record<string, any>} */ ({
     routePolicy,
     supportsStreaming: Boolean(
       narratorProvider.supportsStreaming && typeof narratorProvider.streamTurn === "function"
     )
-  };
+  });
 
   for (const [method, taskType] of Object.entries(METHOD_TASK_TYPES)) {
     routed[method] = async (...args) => {
-      const provider = getProviderForTask(taskType, { ...options, routePolicy });
+      const provider = /** @type {any} */ (getProviderForTask(taskType, { ...options, routePolicy }));
       if (method === "streamTurn" && !(provider.supportsStreaming && typeof provider.streamTurn === "function")) {
         throw new Error(`AI task ${taskType} provider ${provider.modelRoute.provider} does not support turn streaming.`);
       }

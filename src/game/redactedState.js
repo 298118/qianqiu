@@ -1,3 +1,5 @@
+// @ts-check
+
 const { redactSecrets } = require("../ai/diagnostics");
 const { buildAiInvocationSummaryView, resolveAiSettingsForSession } = require("./aiSettings");
 const { buildAiControlAuditDiagnostics } = require("./aiControlAudit");
@@ -231,8 +233,8 @@ function pickSanitizedObject(source = {}, keys = [], options = {}) {
 }
 
 function buildPlayerVisibleState(worldState = {}, options = {}) {
-  const state = pickSanitizedObject(worldState, PLAYER_STATE_TOP_LEVEL_KEYS, options);
-  state.player = pickSanitizedObject(worldState.player || {}, PLAYER_STATE_PLAYER_KEYS, options);
+  const state = pickSanitizedObject(worldState, Array.from(PLAYER_STATE_TOP_LEVEL_KEYS), options);
+  state.player = pickSanitizedObject(worldState.player || {}, Array.from(PLAYER_STATE_PLAYER_KEYS), options);
   return state;
 }
 

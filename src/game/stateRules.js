@@ -1,3 +1,5 @@
+// @ts-check
+
 const MAX_EVENT_HISTORY = 20;
 const FACTION_SCORE_RANGE = [0, 100];
 

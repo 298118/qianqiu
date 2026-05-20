@@ -10,6 +10,8 @@
     "dev:client": "vite --config vite.config.mjs",
     "build:client": "vite build --config vite.config.mjs",
     "typecheck:client": "tsc --project tsconfig.client.json --noEmit",
+    "typecheck:server": "tsc --project tsconfig.server-check.json --noEmit",
+    "build:server:probe": "tsc --project tsconfig.server-probe.json",
     "test:client": "vitest --config vitest.config.mjs run",
     "preview:client": "vite preview --config vite.config.mjs",
     "test": "node --test test/*.test.js",

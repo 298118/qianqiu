@@ -1,3 +1,5 @@
+// @ts-check
+
 const PROVIDER_ALIASES = Object.freeze({
   hybrid: "mimo-deepseek",
   "mimo_deepseek": "mimo-deepseek",
