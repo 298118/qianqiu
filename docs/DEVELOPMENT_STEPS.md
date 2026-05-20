@@ -102,49 +102,9 @@
 
 ## 4. 活动路线图总览
 
-当前活动专项为 S81-S85 NPC、资产与储物系统，规划源头见 [NPC_INVENTORY_SYSTEM_ROADMAP.md](NPC_INVENTORY_SYSTEM_ROADMAP.md)，归档入口见 [NPC_INVENTORY_SYSTEM_ARCHIVE.md](NPC_INVENTORY_SYSTEM_ARCHIVE.md)。S81-S85 已完成首轮后端/API/SQLite/AI/React 闭环、长期经济 tick、NPC 主动来函、论道/切磋/求爱/婚姻正式扩展位和归档同步；下一步应从新的路线图或用户指定目标继续。
+当前没有 `TODO` 或 `IN_PROGRESS` 的活动专项。S81-S85 NPC、资产与储物系统已完成并归档，规划源头见 [NPC_INVENTORY_SYSTEM_ROADMAP.md](NPC_INVENTORY_SYSTEM_ROADMAP.md)，归档入口见 [NPC_INVENTORY_SYSTEM_ARCHIVE.md](NPC_INVENTORY_SYSTEM_ARCHIVE.md)。
 
-| ID | 状态 | Owner | 目标 | 说明 |
-| --- | --- | --- | --- | --- |
-| S81 | DONE | Codex | 后端数据契约与存储地基 | 已建立 S81-S84 执行契约、资产/资源/物品/NPC/委派 canonical schema、配置、JSON/SQLite 存储接线、派生表和安全 view。 |
-| S81.1 | DONE | Codex | NPC 与储物系统契约 | 已新增 [NPC_INVENTORY_SYSTEM_CONTRACT.md](NPC_INVENTORY_SYSTEM_CONTRACT.md)，固定 state 字段、API response、AI schema、SQLite 表、Mock fallback、安全 view 和验收矩阵。 |
-| S81.2 | DONE | Codex | 资产与物品账本后端 | 已新增 `assetLedger`、`inventoryLedger` 领域配置与 helper，覆盖资源账本、长期资产、容器、物品模板、重要凭证和效果引用。 |
-| S81.3 | DONE | Codex | NPC 名册与委派任务后端 | 已新增 `npcRoster`、`delegatedTasks` 领域配置与 helper，提供 deterministic fixture、分层 NPC 名册、详情 view 和委派任务 view builder。 |
-| S81.4 | DONE | Codex | SQLite 派生表地基 | 已新增资产、资源、背包、NPC、交互、委派和交易派生表模块，接入 adapter 同步、删除、读档修复和 maintenance drift 检查。 |
-| S81.5 | DONE | Codex | S81 后端契约测试 | 已覆盖非法物品、绑定凭证、资源 clamp、hidden 私档过滤、SQLite repair、防泄漏、Mock 默认和完整书生路径不变。 |
-| S82 | DONE | Codex | 开局背景兑现与资产落账 | 已新增 `background_claim_parser` AI/Mock 解析、服务器裁决、资源/房产/书籍/债务/风险落账、审计和 `openingBackgroundClaimsView`。 |
-| S82.1 | DONE | Codex | 背景解析 AI task | 已新增 `background_claim_parser` schema、prompt pack、Mock/remote provider 方法和全局 AI 设置矩阵入口。 |
-| S82.2 | DONE | Codex | 开局接口接入背景解析 | 已改造 `POST /api/game/start`，保留兼容字段，把 `customSetting` 送入背景解析并由服务器按身份配置裁决。 |
-| S82.3 | DONE | Codex | 背景宣称裁决规则 | 已实现宅产、银两/粮金、书籍声望、债务、禁物、军权、官职和虚假身份的接受、缩放、拒绝或转风险规则。 |
-| S82.4 | DONE | Codex | 背景兑现安全 view 与审计 | 已写入 `openingBackgroundClaimsView`、事件档案和 AI 调动摘要；原始背景文本不进入玩家 API、prompt 回显或 SQLite 派生表。 |
-| S82.5 | DONE | Codex | 背景兑现前端摘要 | 主卷已展示服务器裁决后的采纳、折算、风险和安全条目摘要；背包页展示实际落账资产、资源和凭证。 |
-| S83 | DONE | Codex | NPC 名册、阶段人口与 AI 对话后端 | 已将阶段人物、官署属员、军营人物、家族/市井人物和立绘池安全整合为 NPC 名册，并提供列表/详情/交互 API。 |
-| S83.1 | DONE | Codex | 阶段 NPC 名册生成 | 已按书院/科场、地方官署、部院朝堂、军营边塞、宫廷内廷、市井商贸和家族亲属生成当前可见 NPC。 |
-| S83.2 | DONE | Codex | NPC 立绘分配规则 | 已接入已审核 `portraitRef`，重要 NPC/普通 NPC/状态锚点继续通过 runtime manifest 与 registry 校验，不暴露未审核素材。 |
-| S83.3 | DONE | Codex | NPC 列表与详情 API | 已实现 `GET /api/game/npcs/:sessionId` 与 `GET /api/game/npc/:sessionId/:npcId`，返回分页、筛选、关系摘要和安全档案。 |
-| S83.4 | DONE | Codex | NPC 交互后端基础 | 已实现 `POST /api/game/npc-interaction/:sessionId` 的交谈/询问/赠礼入口；AI 只扮演和建议，后果由服务器裁决。 |
-| S83.5 | DONE | Codex | NPC 交互记忆与审计 | NPC 交互、交易和委派会写入安全 ledger、AI 调动摘要与 player-state 安全 view，不泄露 hidden 私档。 |
-| S84 | DONE | Codex | 前端 NPC、背包仓库、交易与委派体验 | React 已接入囊箧 route、NPC 工作台、详情/对话/交易/委派 tabs、背包转移和前端验证；前端不裁决资源或任务结果。 |
-| S84.1 | DONE | Codex | 前端 API 与类型层 | 已扩展 `client/src/api/qianqiuClient.ts`、session store 类型和安全 response types，接入 inventory、NPC list/detail、interaction、trade、command API。 |
-| S84.2 | DONE | Codex | 前端导航与信息架构 | 已新增独立 `/game/:sessionId/inventory` “囊箧” route，并在主卷页签/路由壳中接入。 |
-| S84.3 | DONE | Codex | 人物谱牒升级 | 人物页已升级为可交互 NPC 名册，按书院/科场/官署/军营/朝堂/市井/家族等标签分组。 |
-| S84.4 | DONE | Codex | NPC 详情工作台 | 已新增 NPC 详情工作台，包含档案、对话、交易、委派和记录 tabs，所有后果以后端返回为准。 |
-| S84.5 | DONE | Codex | 背包与仓库界面 | 已显示资源账本、长期资产、重要凭证、随身背包、家宅仓库、官署库房、物品详情、来源、效果和合法性提醒。 |
-| S84.6 | DONE | Codex | 交易与赠礼面板 | 已新增报价/议价/赠礼入口和交易结果摘要；价格、库存、关系影响和结果只取服务器裁决。 |
-| S84.7 | DONE | Codex | 委派任务面板 | 已支持选择 NPC、填写命令、查看风险/资源/期限、执行状态、NPC 回禀和后续行动草稿。 |
-| S84.8 | DONE | Codex | 前端验收与体验打磨 | 已扩展 Vitest、typecheck、build 和 browser smoke 入口；覆盖安全 API、路由、交易/委派不越权、焦点和响应式布局基线。 |
-| S85 | DONE | Codex | 经济、长期关系与总验收 | 已接入长期 tick、基础市场价格、NPC 主动来函、论道/切磋/求爱/婚姻正式扩展位，并完成 S81-S85 聚焦验收与归档同步。 |
-| S85.1 | DONE | Codex | 长期 tick 接入 | 已在普通回合/跳时共用的月末链路接入 `npcEconomy`，让资产维护/收益、库存损耗、交易承诺、委派任务、人情债与 NPC 关系记忆随旬/月演化；考试场景不跑全局经济结算。 |
-| S85.2 | DONE | Codex | 基础市场价格 | 已实现 `marketPriceLedger`、`marketPriceView` 和身份价格差异，覆盖书籍、粮食、药材、马匹、兵器、文书、礼物、宅产维护和官署经费；React 县令主卷只读展示市价和月账。 |
-| S85.3 | DONE | Codex | NPC 私人目标与主动性 | 已新增 `npcActiveRequestLedger` / `npcActiveRequestView`，NPC 可主动求助、索债、献策、请托、行贿、弹劾、引荐、求婚或背叛；玩家回应只进入服务器裁决，不即时写资源、婚姻、弹劾或隐藏任务结果。 |
-| S85.4 | DONE | Codex | 预留玩法正式扩展位 | 已新增 `npcRelationshipActions` schema/resolver、NPC `relationshipActionEligibilityView` 和人物页“礼法”tab；论道、切磋、求爱、婚姻均走服务器权限、礼法和安全 outcome，客户端伪造结果字段被忽略。 |
-| S85.5 | DONE | Codex | S81-S85 总验收 | 已通过 S85 主动性/礼法聚焦测试、API/SQLite 测试、前端 typecheck/Vitest/build、browser smoke、完整书生路径 smoke、docs governance、diff check 和全量 `npm test`（983 项）。 |
-| S85.6 | DONE | Codex | S81-S85 归档 | 已新增 [NPC_INVENTORY_SYSTEM_ARCHIVE.md](NPC_INVENTORY_SYSTEM_ARCHIVE.md)，并同步 brief、README、共享上下文、活动台账、契约和 AI 权限矩阵。 |
-| S79 | DONE | Codex | 前端打磨与高清女性立绘入库 | 已完成前端正确性修复、194 张 recovered 女性高清母版入库、游戏内只读高清立绘放大查看器与安全/素材验证。 |
-| S80 | DONE | Codex | 服务端全局 AI 设置与保存反馈 | 已完成 `GET/POST /api/ai/settings/global`、本地运行时设置文件、全局优先 AI route policy、共享 11 类任务矩阵面板和旧 session 设置入口兼容。 |
-| PLAN-S81-S85 | DONE | Codex | NPC 与储物系统规划 | 新增 [NPC_INVENTORY_SYSTEM_ROADMAP.md](NPC_INVENTORY_SYSTEM_ROADMAP.md)，把用户需求和 Codex 建议固化为 S81-S85 可施工路线图，并把前后端分离/大步骤拆分写入治理规范。 |
-| DOCS-2026-05-20 | DONE | Codex | 压缩上下文与台账，强化完整实现规范 | 本轮压缩 `docs/SHARED_CONTEXT.md` 与本文件，新增“不要最小实现点/最小改动点，追求完整丰富实现”的受保护开发规范，并同步 brief、AGENTS 与治理检查脚本。 |
-| DOCS-LEDGER-ARCHIVE-COMPRESSION | DONE | Codex | 再压缩已完成活动台账归档 | 已把 [ACTIVITY_LEDGER_COMPLETED_ARCHIVE.md](ACTIVITY_LEDGER_COMPLETED_ARCHIVE.md) 从旧长流水压缩为完成阶段索引、S73-S78 锚点、验证锚点和维护规则；专题细节回到专题归档与 Git history。 |
+下一步应由用户或新路线图指定。新专项启动时，本节只记录未开始、进行中或阻塞的小步骤；完成后应迁入“近期进度记录”和专题归档，不再把 DONE 长表留在活动路线图里。
 
 ## 5. 最新状态
 
@@ -244,6 +204,15 @@ S84 前端专项额外验收入口：
 - `npm test`
 
 ## 7. 近期进度记录
+
+### 2026-05-20：清理活动路线图 DONE 长表
+
+- 范围：按用户指出的问题，移除第 4 节“活动路线图总览”中 S81-S85、S79、S80 和文档维护类 DONE 长表；该节现在只记录当前没有 `TODO` / `IN_PROGRESS` 专项、S81-S85 已归档和下一步应由用户或新路线图指定。
+- 口径：已完成步骤不再保留在活动路线图表格中；追溯入口改为顶部归档索引、专题归档、近期进度记录和 Git history。新专项启动后，第 4 节只放未开始、进行中或阻塞的小步骤，完成后再迁出。
+- 边界：纯文档维护，不改运行时代码、后端 API、provider schema、SQLite schema、存档格式、AI 权限、素材 manifest、服务器 resolver、canonical state、README 或产品行为。
+- 子代理：低风险纯文档改动，按项目规则跳过提交前子代理复审；已在共享上下文记录。
+- 验证：本轮通过 `npm run check:docs-governance`、`node --test test/documentationGovernance.test.js` 和 `git diff --check`。
+- 提交：随本轮 coherent docs change 提交，最终 hash 见 Git 历史和本次回复。
 
 ### 2026-05-20：再压缩已完成活动台账归档
 
