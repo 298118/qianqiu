@@ -145,11 +145,13 @@ function validateDelegatedTaskRequest(worldState = {}, request = {}, options = {
   const npc = getNpcForServer(worldState, assigneeActorId, options);
   const template = options.template || (taskType === LAND_SURVEY_TASK_TEMPLATE.taskType ? LAND_SURVEY_TASK_TEMPLATE : null);
   const budget = clampNumber(request.budget, 0, 100000, 0);
+  const availableLocalTreasury = clampNumber(worldState.player?.localTreasury, 0, 100000, 0);
 
   if (!taskType) errors.push("task_type_invalid");
   if (!authoritySource) errors.push("authority_source_invalid");
   if (!assigneeActorId || !npc) errors.push("assignee_not_found");
   if (issuerActorId !== cleanId(worldState.player?.id || "player", "player")) errors.push("issuer_not_player");
+  if (budget > availableLocalTreasury) errors.push("budget_exceeds_local_treasury");
 
   if (taskType === "land_survey") {
     if (worldState.player?.role !== "magistrate") errors.push("authority_role_mismatch");
@@ -157,7 +159,7 @@ function validateDelegatedTaskRequest(worldState = {}, request = {}, options = {
     if (npc && !hasAny(npc.roleTags, LAND_SURVEY_TASK_TEMPLATE.requiredRoleTags)) errors.push("assignee_lacks_land_survey_role");
     if (npc && !hasAny(npc.availableInteractions, LAND_SURVEY_TASK_TEMPLATE.requiredInteractions)) errors.push("assignee_cannot_be_delegated");
     if (budget < LAND_SURVEY_TASK_TEMPLATE.minBudget) errors.push("budget_too_low");
-    if (clampNumber(worldState.player?.localTreasury, 0, 100000, 0) < LAND_SURVEY_TASK_TEMPLATE.minBudget) errors.push("local_treasury_insufficient");
+    if (availableLocalTreasury < LAND_SURVEY_TASK_TEMPLATE.minBudget) errors.push("local_treasury_insufficient");
   }
 
   return {

@@ -19,6 +19,10 @@ const { createInitialDelegatedTaskLedger } = require("./delegatedTasks");
 const { createInitialNpcInteractionLedger } = require("./npcInteractions");
 const { createInitialTradeLedger } = require("./tradeLedger");
 const { createInitialOpeningBackgroundClaimsState } = require("./openingBackgroundClaims");
+const {
+  createInitialMarketPriceLedger,
+  createInitialNpcEconomyLedger
+} = require("./npcEconomy");
 const { NUMERIC_RANGES, clamp } = require("./stateRules");
 
 const ROLE_LABELS = {
@@ -280,6 +284,8 @@ function createInitialState(input = {}) {
     npcInteractionLedger: null,
     tradeLedger: null,
     openingBackgroundClaims: null,
+    marketPriceLedger: null,
+    npcEconomyLedger: null,
     examCalendar: createInitialExamCalendar(),
     activeNpcRequest: null,
     longTermEvents: {
@@ -395,6 +401,8 @@ function createInitialState(input = {}) {
   worldState.npcInteractionLedger = createInitialNpcInteractionLedger(worldState);
   worldState.tradeLedger = createInitialTradeLedger(worldState);
   worldState.openingBackgroundClaims = createInitialOpeningBackgroundClaimsState(input, worldState);
+  worldState.marketPriceLedger = createInitialMarketPriceLedger(worldState);
+  worldState.npcEconomyLedger = createInitialNpcEconomyLedger(worldState);
   return worldState;
 }
 

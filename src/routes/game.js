@@ -177,6 +177,13 @@ const {
   resolveTradeRequest,
   validateTradeRequest
 } = require("../game/tradeLedger");
+const {
+  buildMarketPriceView,
+  buildNpcEconomyView,
+  ensureMarketPriceLedgerState,
+  ensureNpcEconomyLedgerState,
+  runNpcEconomyTickStep
+} = require("../game/npcEconomy");
 const { buildClientWorldState } = require("../game/clientWorldState");
 const {
   buildPlayerStateEnvelope,
@@ -260,13 +267,15 @@ async function processTurn(sessionId, input) {
     ensureDelegatedTaskLedger(worldState);
     ensureNpcInteractionLedger(worldState);
     ensureTradeLedger(worldState);
+    ensureMarketPriceLedgerState(worldState);
+    ensureNpcEconomyLedgerState(worldState);
     ensureOpeningBackgroundClaimsState(worldState);
-    if (isWritingExam(worldState.activeExam)) {
-      return finalizeExamSceneTurn(worldState, input, context);
-    }
     const timeSkipIntent = detectTimeSkipIntent(input, { worldState });
     if (timeSkipIntent?.detected) {
       return processTimeSkipTurn(worldState, input, { context, intent: timeSkipIntent });
+    }
+    if (isWritingExam(worldState.activeExam)) {
+      return finalizeExamSceneTurn(worldState, input, context);
     }
     const { routePolicy } = resolveAiSettingsForSession(worldState);
     const route = resolveModelForTask("narrator", routePolicy);
@@ -308,13 +317,15 @@ async function processStreamingTurn(sessionId, input, streamHandlers = {}) {
     ensureDelegatedTaskLedger(worldState);
     ensureNpcInteractionLedger(worldState);
     ensureTradeLedger(worldState);
+    ensureMarketPriceLedgerState(worldState);
+    ensureNpcEconomyLedgerState(worldState);
     ensureOpeningBackgroundClaimsState(worldState);
-    if (isWritingExam(worldState.activeExam)) {
-      return finalizeExamSceneTurn(worldState, input, context);
-    }
     const timeSkipIntent = detectTimeSkipIntent(input, { worldState });
     if (timeSkipIntent?.detected) {
       return processTimeSkipTurn(worldState, input, { context, intent: timeSkipIntent });
+    }
+    if (isWritingExam(worldState.activeExam)) {
+      return finalizeExamSceneTurn(worldState, input, context);
     }
     const { routePolicy } = resolveAiSettingsForSession(worldState);
     const route = resolveModelForTask("narrator", routePolicy);
@@ -349,7 +360,8 @@ function normalizeExamTrigger(trigger) {
 }
 
 function isWritingExam(activeExam) {
-  return Boolean(activeExam && (activeExam.examQuestion || activeExam.status === "writing"));
+  if (!activeExam || activeExam.status === "completed") return false;
+  return Boolean(activeExam.examQuestion || activeExam.sceneTime || activeExam.scenePhase || activeExam.status === "writing");
 }
 
 function rejectExamTrigger(trigger, reason) {
@@ -448,6 +460,8 @@ function ensureRouteProjectionState(worldState) {
   ensureDelegatedTaskLedger(worldState);
   ensureNpcInteractionLedger(worldState);
   ensureTradeLedger(worldState);
+  ensureMarketPriceLedgerState(worldState);
+  ensureNpcEconomyLedgerState(worldState);
   ensureOpeningBackgroundClaimsState(worldState);
 }
 
@@ -508,6 +522,8 @@ function buildCommonTurnViews(worldState, options = {}) {
     npcInteractionView: buildNpcInteractionLedgerView(worldState),
     tradeLedgerView: buildTradeLedgerView(worldState),
     delegatedTaskView: buildDelegatedTaskLedgerView(worldState),
+    marketPriceView: buildMarketPriceView(worldState),
+    npcEconomyView: buildNpcEconomyView(worldState),
     eventArchiveView: buildEventArchiveView(worldState, options.eventArchive),
     informationPanelPageView: buildInformationPanelPageViews(worldState, options.informationPanel || {}, {
       worldGeographyView,
@@ -790,6 +806,8 @@ async function finalizeExamSceneTurn(worldState, input, context = null) {
   ensureDelegatedTaskLedger(worldState);
   ensureNpcInteractionLedger(worldState);
   ensureTradeLedger(worldState);
+  ensureMarketPriceLedgerState(worldState);
+  ensureNpcEconomyLedgerState(worldState);
   ensureOpeningBackgroundClaimsState(worldState);
   const worldTick = buildExamSceneFeedback(worldState, scene.sceneTime, scene.event);
   enqueueAuditRecords(context, createExamProgressAuditRecords(worldState, scene));
@@ -857,6 +875,11 @@ async function finalizeTurn(worldState, result, input, auditOptions = {}) {
     incrementTurnCount: false,
     allowServerOwnedPatchKeys: true
   });
+  const npcEconomy = runNpcEconomyTickStep(worldState, {
+    worldTick,
+    previousState: beforeWorldTickState,
+    input
+  });
 
   const longTermEvents = worldTick.completedMonth
     ? runLongTermEventStep(worldState)
@@ -911,6 +934,7 @@ async function finalizeTurn(worldState, result, input, auditOptions = {}) {
     ...studyInteraction.relationshipChanges,
     ...activeNpcRequest.relationshipChanges,
     ...roleWorldCouplingRelationshipChanges,
+    ...(Array.isArray(npcEconomy.relationshipChanges) ? npcEconomy.relationshipChanges : []),
     ...longTermRelationshipChanges,
     ...officialCareerRelationshipChanges
   ];
@@ -999,6 +1023,8 @@ async function finalizeTurn(worldState, result, input, auditOptions = {}) {
   ensureDelegatedTaskLedger(worldState);
   ensureNpcInteractionLedger(worldState);
   ensureTradeLedger(worldState);
+  ensureMarketPriceLedgerState(worldState);
+  ensureNpcEconomyLedgerState(worldState);
   ensureOpeningBackgroundClaimsState(worldState);
 
   const worldTickFeedback = {
@@ -1025,6 +1051,7 @@ async function finalizeTurn(worldState, result, input, auditOptions = {}) {
     studyInteraction,
     roleWorldCoupling,
     worldTick,
+    npcEconomy,
     longTermEvents,
     officialCareer,
     playerMonthlyBriefing,
@@ -1076,6 +1103,7 @@ async function finalizeTurn(worldState, result, input, auditOptions = {}) {
       ...studyInteraction.attributeChanges,
       ...roleWorldCoupling.attributeChanges,
       ...worldTickFeedback.attributeChanges,
+      ...(Array.isArray(npcEconomy.attributeChanges) ? npcEconomy.attributeChanges : []),
       ...longTermEvents.attributeChanges,
       ...officialCareer.attributeChanges
     ],
@@ -1083,6 +1111,14 @@ async function finalizeTurn(worldState, result, input, auditOptions = {}) {
     ...buildCommonTurnViews(worldState),
     activeNpcRequestEvents: activeNpcRequest.events,
     worldEntityImpacts,
+    npcEconomy: {
+      schemaVersion: npcEconomy.schemaVersion,
+      cadence: npcEconomy.cadence,
+      summary: npcEconomy.summary,
+      events: Array.isArray(npcEconomy.events) ? npcEconomy.events : [],
+      attributeChanges: Array.isArray(npcEconomy.attributeChanges) ? npcEconomy.attributeChanges : [],
+      outcome: npcEconomy.outcome
+    },
     roleWorldCoupling: {
       summary: roleWorldCoupling.summary,
       events: Array.isArray(roleWorldCoupling.events) ? roleWorldCoupling.events : [],
@@ -1203,8 +1239,11 @@ async function streamTurn(res, sessionId, input) {
       npcInteractionView: payload.npcInteractionView,
       tradeLedgerView: payload.tradeLedgerView,
       delegatedTaskView: payload.delegatedTaskView,
+      marketPriceView: payload.marketPriceView,
+      npcEconomyView: payload.npcEconomyView,
       eventArchiveView: payload.eventArchiveView,
       informationPanelPageView: payload.informationPanelPageView,
+      npcEconomy: payload.npcEconomy,
       officialCareer: payload.officialCareer,
       playerMonthlyBriefing: payload.playerMonthlyBriefing,
       actorMemory: payload.actorMemory,

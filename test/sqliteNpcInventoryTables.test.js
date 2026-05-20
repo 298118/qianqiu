@@ -222,7 +222,12 @@ test("S81.4 SQLite derived table repair status detects count, stale revision, ro
   syncInventoryTables(db, record);
   syncNpcInteractionTables(db, record);
 
-  db.prepare("DELETE FROM inventory_items WHERE session_id = ? LIMIT 1").run(record.sessionId);
+  db.prepare(`
+    DELETE FROM inventory_items
+    WHERE rowid = (
+      SELECT rowid FROM inventory_items WHERE session_id = ? LIMIT 1
+    )
+  `).run(record.sessionId);
   assert.equal(getInventoryRepairStatus(db, record).missingOrMismatched, true);
   assert.equal(ensureInventoryTablesForRecord(db, record), true);
   assert.equal(getInventoryRepairStatus(db, record).needsRepair, false);

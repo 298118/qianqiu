@@ -101,7 +101,7 @@
 
 ## 4. 活动路线图总览
 
-当前活动专项为 S81-S85 NPC、资产与储物系统，规划源头见 [NPC_INVENTORY_SYSTEM_ROADMAP.md](NPC_INVENTORY_SYSTEM_ROADMAP.md)。S81-S84 已完成首轮后端/API/SQLite/AI/React 闭环；剩余 S85 聚焦经济长期演化、NPC 主动性、预留玩法正式扩展位、总验收与归档。
+当前活动专项为 S81-S85 NPC、资产与储物系统，规划源头见 [NPC_INVENTORY_SYSTEM_ROADMAP.md](NPC_INVENTORY_SYSTEM_ROADMAP.md)。S81-S84 已完成首轮后端/API/SQLite/AI/React 闭环；S85.1-S85.2 已完成长期 tick 与基础市场价格首轮接入，剩余聚焦 NPC 主动性、预留玩法正式扩展位、总验收与归档。
 
 | ID | 状态 | Owner | 目标 | 说明 |
 | --- | --- | --- | --- | --- |
@@ -132,9 +132,9 @@
 | S84.6 | DONE | Codex | 交易与赠礼面板 | 已新增报价/议价/赠礼入口和交易结果摘要；价格、库存、关系影响和结果只取服务器裁决。 |
 | S84.7 | DONE | Codex | 委派任务面板 | 已支持选择 NPC、填写命令、查看风险/资源/期限、执行状态、NPC 回禀和后续行动草稿。 |
 | S84.8 | DONE | Codex | 前端验收与体验打磨 | 已扩展 Vitest、typecheck、build 和 browser smoke 入口；覆盖安全 API、路由、交易/委派不越权、焦点和响应式布局基线。 |
-| S85 | TODO | Codex | 经济、长期关系与总验收 | 接入月末 tick、市场价格、NPC 私人目标、长期任务、论道/切磋/求爱/婚姻扩展位，并完成 JSON/SQLite/Mock/browser/docs 总验收与归档。 |
-| S85.1 | TODO | Codex | 长期 tick 接入 | 扩展月末 tick，让 NPC 资产、库存、价格、债务、人情债、委派任务、交易承诺和关系记忆随旬/月演化。 |
-| S85.2 | TODO | Codex | 基础市场价格 | 实现书籍、粮食、药材、马匹、兵器、文书、礼物、房产维护和官署经费的基础价格与身份差异。 |
+| S85 | IN_PROGRESS | Codex | 经济、长期关系与总验收 | 已接入长期 tick 和基础市场价格；下一步继续 NPC 私人目标、长期主动性、论道/切磋/求爱/婚姻扩展位，并完成 JSON/SQLite/Mock/browser/docs 总验收与归档。 |
+| S85.1 | DONE | Codex | 长期 tick 接入 | 已在普通回合/跳时共用的月末链路接入 `npcEconomy`，让资产维护/收益、库存损耗、交易承诺、委派任务、人情债与 NPC 关系记忆随旬/月演化；考试场景不跑全局经济结算。 |
+| S85.2 | DONE | Codex | 基础市场价格 | 已实现 `marketPriceLedger`、`marketPriceView` 和身份价格差异，覆盖书籍、粮食、药材、马匹、兵器、文书、礼物、宅产维护和官署经费；React 县令主卷只读展示市价和月账。 |
 | S85.3 | TODO | Codex | NPC 私人目标与主动性 | NPC 可主动求助、索债、献策、请托、行贿、弹劾、引荐、求婚或背叛，但全部走服务器裁决。 |
 | S85.4 | TODO | Codex | 预留玩法正式扩展位 | 为论道、切磋、求爱、婚姻加入 schema、权限、UI 预留和红线；不能只是无数据支撑的假按钮。 |
 | S85.5 | TODO | Codex | S81-S85 总验收 | 验证 JSON/SQLite、Mock 开局、完整书生路径、地方官丈田委派、NPC 对话、交易、背包转移、重要凭证和安全污染。 |
@@ -147,7 +147,8 @@
 ## 5. 最新状态
 
 - S81-S84 当前基线：NPC、资产、储物、交易与委派首轮闭环已完成。后端已有 `assetLedger`、`inventoryLedger`、`npcRoster`、`npcInteractionLedger`、`tradeLedger`、`delegatedTaskLedger`、开局背景裁决、AI task/schema/prompt/provider fallback、JSON/SQLite 同步和 player-state 安全 view；React 已有“囊箧” route、人物 NPC 工作台、对话/交易/委派面板和开局裁决摘要。前端只消费安全 API/view，不裁决资源、价格、关系或任务结果。
-- S85 当前规划：下一步进入经济长期演化和总验收，重点补月末 tick、市场价格、NPC 私人目标与主动性、论道/切磋/求爱/婚姻正式扩展位、JSON/SQLite/Mock/browser 总验收和归档。
+- S85 当前基线：`npcEconomy` 已在普通回合和跳时共享的旬/月 tick 后运行，非月末刷新基础市价，月末再结算资产维护/收益、库存损耗、委派到期回禀、逾期交易承诺、人情债与 NPC 关系记忆；考试入场/场内场景不跑全局经济；委派预算由服务器校验不得超过地方库银，月结旧任务也按有效预算参与成功率和扣款；`marketPriceView` / `npcEconomyView` 进入 turn、SSE、player-state 和县令主卷，raw `marketPriceLedger` / `npcEconomyLedger` 与内部 ledger path 已从兼容 `worldState`、玩家 API 和 S85 反馈中剥离。
+- S85 当前规划：下一步进入 NPC 私人目标与主动性、论道/切磋/求爱/婚姻正式扩展位、JSON/SQLite/Mock/browser 总验收和归档。
 - S80 当前基线：全局 AI 设置覆盖所有当前和未来案卷的 AI 路由；设置页和印匣共用 18 类任务矩阵，服务端 presets 为唯一来源，保存成功后以前端收到的服务端返回值回填表单。全局设置只保存 provider/model/预算/温度/安全控制，不保存 key、base URL、prompt、raw provider payload 或本地路径；缺 key 的真实 provider 不能作为可生效全局路由保存。
 - S79 当前基线：React 子路由壳、考试 smoke、recovered 女性高清立绘入库、runtime manifest、压缩 QA 和只读高清查看器已收束。查看器只读 `/assets/ui/` runtime 主图，不写 canonical state、URL、localStorage/sessionStorage、行动草稿或 AI prompt。
 - S78 及更早阶段均已迁入专题归档。活动台账不再展开完成流水；需要追溯时使用本文件顶部归档索引。
@@ -216,7 +217,27 @@ S84 前端专项额外验收入口：
 - 与 S84 API 接线对应的 focused Node route tests
 - 前端不得调用 unsafe `/api/game/state/*`、`/api/dev/*`，不得在 localStorage/sessionStorage 保存完整背包、NPC 私档、交易明细、provider payload 或 prompt。
 
+本轮 S85.1-S85.2 长期经济与基础市价验证口径：
+
+- `node --test test/delegatedTasks.test.js test/npcEconomy.test.js test/gameTurnNpcEconomy.test.js`
+- `node --test test/worldTick.test.js test/gameTurnTick.test.js test/npcInventoryRoutes.test.js test/tradeLedger.test.js test/delegatedTasks.test.js`
+- `npm run typecheck:client`
+- `npm run test:client -- --pool=vmForks --maxWorkers=2 client/src/__tests__/App.test.tsx client/src/components/MemorialComposer.test.tsx`
+- `npm run build:client`
+- `npm run check:docs-governance`
+- 浏览器复验：临时 `PORT=3001 AI_PROVIDER=mock npm start`，开局县令案卷，确认“基础市价”“粮食一石”“NPC 月账”和安全视图 `9 / 9` 渲染；截图采集在 in-app browser CDP 层超时，DOM 验证通过。
+
 ## 7. 近期进度记录
+
+### 2026-05-20：完成 S85.1-S85.2 长期经济 tick 与基础市价
+
+- 范围：新增 `npcEconomy` 与 `npcEconomyConfig`，把基础市场价格、NPC 经济月结和安全 view 接入普通回合、跳时复用链路、SSE、player-state 与县令主卷；考试场景只补安全 projection，不推进全局经济。
+- 后端：非月末刷新 `marketPriceLedger`，月末结算资产维护/收益、库存损耗、委派到期结果、逾期交易承诺、人情债和 NPC 关系记忆；考试入场/场内场景只走局部阶段推进；所有委派创建拒绝超过地方库银的预算，月结对旧任务按有效预算计算成功率和扣款；新增 `marketPriceView` 与 `npcEconomyView`，并把 `marketPriceLedger` / `npcEconomyLedger` 纳入 `clientWorldState` 与 redacted player API 剥离清单，S85 反馈中的资产/资源/库存变化只用公开 `economy.*` path。
+- 前端：`client/src/api/types.ts`、UI route flags 和 `MagistratePanel` 已显示“基础市价”“NPC 月账”和服务器裁决边界；前端只读价格与月账，不成交、不扣库存、不完成委派。
+- 验证：已通过本文件“本轮 S85.1-S85.2 长期经济与基础市价验证口径”列出的 focused Node tests（含委派预算越权、考试入场态不跑经济、内部 ledger path 不进入 S85 反馈回归）、客户端 typecheck、定点 Vitest、client build、docs governance 和浏览器 DOM 复验；`npm install` 仅补齐本机缺失的 rolldown 可选原生依赖，未改变锁文件。
+- 子代理：Lovelace 只读梳理前端安全 view 接线风险，Meitner 只读梳理回合链路接入点；Zeno 只读复审发现委派预算可超过府库并影响月结的 P1，已修复并补测；Parfit 只读复审发现考试入场态、泛委派预算和反馈 path 三个 P2，已修复并补测；最终只读复审 Franklin 未发现 P0/P1/P2。
+- 提交：随本轮 S85 coherent change 提交，最终 hash 见 Git 历史和本次回复。
+- 下一步：S85.3 实现 NPC 私人目标与主动请求，再推进 S85.4 论道/切磋/求爱/婚姻扩展位。
 
 ### 2026-05-20：完成 S81-S84 NPC、资产、储物、交易与委派首轮闭环
 

@@ -176,6 +176,8 @@ export function GamePage() {
     { label: "人物", ready: Boolean(routeViews?.hasNpcRosterView) },
     { label: "史册", ready: Boolean(routeViews?.hasEventArchiveView) },
     { label: "局势", ready: Boolean(routeViews?.hasInformationPanelView) },
+    { label: "市价", ready: Boolean(routeViews?.hasMarketPriceView) },
+    { label: "月账", ready: Boolean(routeViews?.hasNpcEconomyView) },
     { label: "科期", ready: Boolean(routeViews?.hasExamCalendarView) },
     { label: "审计", ready: Boolean(routeViews?.hasAuditSummaryView) }
   ];
@@ -331,6 +333,8 @@ export function GamePage() {
           localAffairsDocketView={session?.localAffairsDocketView ?? null}
           officialPostingsView={session?.officialPostingsView ?? null}
           economicFiscalView={session?.economicFiscalView ?? null}
+          marketPriceView={session?.marketPriceView ?? null}
+          npcEconomyView={session?.npcEconomyView ?? null}
           roleBackgroundPath={roleBackgroundAsset?.path}
           runnable={runnable}
           onDraft={(text) => setActionDraft({ source: "role-surface", targetPage: "game", text })}

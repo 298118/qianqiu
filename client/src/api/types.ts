@@ -100,6 +100,8 @@ export type SafeRouteViews = {
   readonly npcInteractionView?: NpcInteractionView;
   readonly tradeLedgerView?: TradeLedgerView;
   readonly delegatedTaskView?: DelegatedTaskView;
+  readonly marketPriceView?: MarketPriceView;
+  readonly npcEconomyView?: NpcEconomyView;
   readonly mapRuntimeView?: MapRuntimeView;
   readonly eventArchiveView?: JsonObject;
   readonly informationPanelPageView?: JsonObject;
@@ -141,6 +143,45 @@ export type OpeningBackgroundClaimsView = JsonObject & {
     readonly riskTags?: readonly string[];
     readonly serverReason?: string;
   }[];
+};
+
+export type MarketPriceRowView = {
+  readonly priceId: string;
+  readonly label: string;
+  readonly category?: string;
+  readonly baseSilverLiang?: number;
+  readonly currentSilverLiang?: number;
+  readonly currentCopperCash?: number;
+  readonly roleMultiplier?: number;
+  readonly marketPressure?: number;
+  readonly availability?: string;
+  readonly trend?: string;
+  readonly trendLabel?: string;
+  readonly drivers?: readonly string[];
+  readonly authorityBoundary?: string;
+};
+
+export type MarketPriceView = JsonObject & {
+  readonly schemaVersion?: string;
+  readonly generatedAtTurn?: number;
+  readonly date?: JsonObject;
+  readonly dateLabel?: string;
+  readonly role?: string;
+  readonly averagePriceIndex?: number;
+  readonly priceRows?: readonly MarketPriceRowView[];
+  readonly recentSignals?: readonly string[];
+  readonly history?: readonly JsonObject[];
+  readonly safeguards?: JsonObject;
+};
+
+export type NpcEconomyView = JsonObject & {
+  readonly schemaVersion?: string;
+  readonly generatedAtTurn?: number;
+  readonly lastTickTurn?: number | null;
+  readonly lastMonthlyPeriodKey?: string;
+  readonly recentEvents?: readonly string[];
+  readonly lastOutcome?: JsonObject | null;
+  readonly safeguards?: JsonObject;
 };
 
 export type ResourceAccountView = {
@@ -502,10 +543,20 @@ export type TurnRequest = {
   readonly input: string;
 };
 
+export type NpcEconomyFeedback = JsonObject & {
+  readonly schemaVersion?: string;
+  readonly cadence?: "ten_day" | "monthly" | string;
+  readonly summary?: string;
+  readonly events?: readonly string[];
+  readonly attributeChanges?: readonly JsonObject[];
+  readonly outcome?: JsonObject;
+};
+
 export type TurnResponse = SafeRouteViews & {
   readonly sessionId: string;
   readonly worldState: SafeWorldState;
   readonly narrative?: string;
+  readonly npcEconomy?: NpcEconomyFeedback;
   readonly examTrigger?: JsonObject | null;
   readonly examScene?: JsonObject | null;
 };

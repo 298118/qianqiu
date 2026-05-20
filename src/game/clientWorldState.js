@@ -14,6 +14,8 @@ function buildClientWorldState(worldState = {}) {
   delete clientState.npcInteractionLedger;
   delete clientState.tradeLedger;
   delete clientState.openingBackgroundClaims;
+  delete clientState.marketPriceLedger;
+  delete clientState.npcEconomyLedger;
   return clientState;
 }
 

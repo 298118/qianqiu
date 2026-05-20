@@ -57,6 +57,8 @@ export type SafePlayerPayload = {
     readonly hasNpcRosterView: boolean;
     readonly hasTradeLedgerView: boolean;
     readonly hasDelegatedTaskView: boolean;
+    readonly hasMarketPriceView: boolean;
+    readonly hasNpcEconomyView: boolean;
   };
 };
 
@@ -166,7 +168,9 @@ export function extractSafePlayerPayload(
       hasMapRuntimeView: Boolean(payload.mapRuntimeView),
       hasNpcRosterView: Boolean(payload.npcRosterView),
       hasTradeLedgerView: Boolean(payload.tradeLedgerView),
-      hasDelegatedTaskView: Boolean(payload.delegatedTaskView)
+      hasDelegatedTaskView: Boolean(payload.delegatedTaskView),
+      hasMarketPriceView: Boolean(payload.marketPriceView),
+      hasNpcEconomyView: Boolean(payload.npcEconomyView)
     }
   };
 }

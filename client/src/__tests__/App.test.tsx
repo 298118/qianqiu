@@ -487,7 +487,7 @@ describe("S74.1 React client shell", () => {
     await screen.findByText("军帐筹谋");
     expect(screen.getByText("无名")).toBeTruthy();
     expect(screen.getAllByText("身份未题").length).toBeGreaterThan(0);
-    expect(screen.getByText("2 / 7")).toBeTruthy();
+    expect(screen.getByText("2 / 9")).toBeTruthy();
     expect(screen.getAllByRole("link", { name: /舆图/ }).length).toBeGreaterThan(0);
     expect(screen.getAllByRole("link", { name: /人物/ }).length).toBeGreaterThan(0);
     expect(screen.getAllByRole("link", { name: /朝议/ }).length).toBeGreaterThan(0);
@@ -756,6 +756,33 @@ describe("S74.1 React client shell", () => {
               pressureScore: 72,
               publicSummary: "市价承压，只作公开预警。"
             }]
+          },
+          marketPriceView: {
+            averagePriceIndex: 112,
+            priceRows: [
+              {
+                priceId: "grain_shi",
+                label: "粮食一石",
+                currentSilverLiang: 0.9,
+                availability: "吃紧",
+                trendLabel: "上扬",
+                marketPressure: 66,
+                drivers: ["仓储", "灾赈", "秋收"]
+              },
+              {
+                priceId: "office_budget_unit",
+                label: "官署经费一档",
+                currentSilverLiang: 9,
+                availability: "平稳",
+                trendLabel: "持平",
+                marketPressure: 42,
+                drivers: ["库银", "贪腐", "差役支应"]
+              }
+            ]
+          },
+          npcEconomyView: {
+            lastMonthlyPeriodKey: "1644-01",
+            recentEvents: ["交易月账：1条未结议价已转为逾期作废。"]
           }
         }), {
           status: 200,
@@ -783,9 +810,14 @@ describe("S74.1 React client shell", () => {
     await screen.findByRole("heading", { name: "地方官署" });
     expect(screen.getAllByText("清河县刑名词讼").length).toBeGreaterThan(0);
     expect(screen.getByText("钱粮仓储")).toBeTruthy();
+    expect(screen.getByText("基础市价")).toBeTruthy();
+    expect(screen.getByText("粮食一石")).toBeTruthy();
+    expect(screen.getByText("NPC 月账")).toBeTruthy();
+    expect(screen.getByText("交易月账：1条未结议价已转为逾期作废。")).toBeTruthy();
     expect(screen.getByText("水利盗警")).toBeTruthy();
     expect(screen.getByText("士绅乡约")).toBeTruthy();
     expect(screen.getByText("审案、征税、开仓、水利、缉捕、任免、考成和持久化都由服务器裁决。")).toBeTruthy();
+    expect(screen.getByText("基础市价和 NPC 月账由后端旬更/月结；前端只显示，不成交、不改账。")).toBeTruthy();
 
     fireEvent.click(screen.getByRole("button", { name: "升堂核案" }));
     expect(useUiStateStore.getState().actionDraft).toMatchObject({

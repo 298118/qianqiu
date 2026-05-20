@@ -47,6 +47,27 @@ test("S81.3 land survey delegation validates magistrate authority, assignee, and
   });
   assert.equal(poorBudget.ok, false);
   assert.ok(poorBudget.errors.includes("budget_too_low"));
+
+  const overBudgetState = createInitialState({ role: "magistrate" });
+  overBudgetState.player.localTreasury = 20;
+  ensureNpcRoster(overBudgetState);
+  const overBudget = validateDelegatedTaskRequest(overBudgetState, {
+    taskType: "land_survey",
+    authoritySource: "yamen_authority",
+    assigneeActorId: "npc:magistrate:registrar-lu",
+    budget: 21
+  });
+  assert.equal(overBudget.ok, false);
+  assert.ok(overBudget.errors.includes("budget_exceeds_local_treasury"));
+
+  const genericOverBudget = validateDelegatedTaskRequest(overBudgetState, {
+    taskType: "purchase",
+    authoritySource: "personal_request",
+    assigneeActorId: "npc:magistrate:registrar-lu",
+    budget: 21
+  });
+  assert.equal(genericOverBudget.ok, false);
+  assert.ok(genericOverBudget.errors.includes("budget_exceeds_local_treasury"));
 });
 
 test("S81.3 magistrate land survey sample creates an active ledger task", () => {

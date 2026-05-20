@@ -1,11 +1,13 @@
 import type { CSSProperties } from "react";
-import type { JsonObject, JsonValue, PlayerSummary } from "../api";
+import type { JsonObject, JsonValue, MarketPriceView, NpcEconomyView, PlayerSummary } from "../api";
 
 type MagistratePanelProps = {
   readonly player?: PlayerSummary | null;
   readonly localAffairsDocketView?: JsonObject | null;
   readonly officialPostingsView?: JsonObject | null;
   readonly economicFiscalView?: JsonObject | null;
+  readonly marketPriceView?: MarketPriceView | null;
+  readonly npcEconomyView?: NpcEconomyView | null;
   readonly roleBackgroundPath?: string;
   readonly onDraft: (text: string) => void;
   readonly runnable?: boolean;
@@ -196,6 +198,41 @@ function getFiscalReports(economicFiscal: JsonObject) {
   };
 }
 
+function getMarketPriceRows(marketPrice: JsonObject) {
+  return asArray(marketPrice.priceRows)
+    .map(asRecord)
+    .slice(0, 4)
+    .map((row, index) => {
+      const price = Number(row.currentSilverLiang);
+      const pressure = row.marketPressure === undefined ? undefined : cleanNumber(row.marketPressure, 0);
+      const drivers = asArray(row.drivers)
+        .map((entry) => cleanOptionalText(entry, 18))
+        .filter(Boolean)
+        .slice(0, 3)
+        .join(" · ");
+      return {
+        id: cleanMagistrateText(row.priceId, `market-${index}`, 72),
+        title: cleanMagistrateText(row.label, "市价", 36),
+        meta: cleanOptionalText([
+          Number.isFinite(price) ? `${price.toFixed(price >= 10 ? 0 : 1)}两` : undefined,
+          cleanOptionalText(row.availability, 16),
+          cleanOptionalText(row.trendLabel, 16)
+        ].filter(Boolean).join(" · "), 64),
+        body: drivers || cleanOptionalText(row.authorityBoundary, 96),
+        score: pressure
+      };
+    });
+}
+
+function getEconomyEvents(npcEconomy: JsonObject) {
+  return asArray(npcEconomy.recentEvents)
+    .map((entry, index) => ({
+      id: `economy-event-${index}`,
+      title: cleanMagistrateText(entry, "NPC 月账", 72)
+    }))
+    .slice(0, 3);
+}
+
 function getPostingSummary(posting: JsonObject, player: PlayerSummary | null | undefined) {
   return {
     office: getPlayerOffice(player, posting),
@@ -220,6 +257,8 @@ export function MagistratePanel({
   localAffairsDocketView,
   officialPostingsView,
   economicFiscalView,
+  marketPriceView,
+  npcEconomyView,
   roleBackgroundPath,
   onDraft,
   runnable = true
@@ -227,9 +266,15 @@ export function MagistratePanel({
   const localAffairs = asRecord(localAffairsDocketView);
   const officialPostings = asRecord(officialPostingsView);
   const economicFiscal = asRecord(economicFiscalView);
+  const marketPrice = asRecord(marketPriceView);
+  const npcEconomy = asRecord(npcEconomyView);
   const posting = currentPostingFromView(officialPostings);
   const postingSummary = getPostingSummary(posting, player);
   const fiscalReports = getFiscalReports(economicFiscal);
+  const marketRows = getMarketPriceRows(marketPrice);
+  const economyEvents = getEconomyEvents(npcEconomy);
+  const priceIndex = cleanCount(marketPrice.averagePriceIndex, 100);
+  const monthlyPeriod = cleanMagistrateText(npcEconomy.lastMonthlyPeriodKey, "未月结", 24);
   const metrics = domainMetrics(localAffairs);
   const urgentDockets = topDockets(localAffairs);
   const judicialDockets = docketsByDomain(localAffairs, ["judicial"], 2);
@@ -313,10 +358,26 @@ export function MagistratePanel({
               <dt>赈济</dt>
               <dd>压力 {fiscalReports.localTreasury.reliefPressure}</dd>
             </div>
+            <div>
+              <dt>市价</dt>
+              <dd>指数 {priceIndex}</dd>
+            </div>
+            <div>
+              <dt>月账</dt>
+              <dd>{monthlyPeriod}</dd>
+            </div>
           </dl>
           <p>{fiscalReports.localTreasury.summary}</p>
           <p>{fiscalReports.grainMarket.summary}</p>
           <MagistratePanelList items={fiscalReports.incidents} emptyText="暂无财赋预警。" />
+          <section className="scholarPanelSubsection" aria-labelledby="magistrate-market-title">
+            <h4 id="magistrate-market-title">基础市价</h4>
+            <MagistratePanelList items={marketRows} emptyText="市价待服务器刷新。" />
+          </section>
+          <section className="scholarPanelSubsection" aria-labelledby="magistrate-economy-title">
+            <h4 id="magistrate-economy-title">NPC 月账</h4>
+            <MagistratePanelList items={economyEvents} emptyText="暂无月结事件。" />
+          </section>
           {draftButtonText("清厘钱粮", "会同典吏清厘钱粮、仓储与赈济簿册，具明疑点候服务器裁决。", canDraft, onDraft)}
         </article>
 
@@ -342,6 +403,7 @@ export function MagistratePanel({
             <li>本面板只读地方案牍、官职任所和财赋市场安全 projection。</li>
             <li>按钮只把玩家意图写入奏折草稿，不提交回合、不调用 resolver。</li>
             <li>审案、征税、开仓、水利、缉捕、任免、考成和持久化都由服务器裁决。</li>
+            <li>基础市价和 NPC 月账由后端旬更/月结；前端只显示，不成交、不改账。</li>
           </ul>
           <dl className="scholarPanelCompactDl">
             <div>

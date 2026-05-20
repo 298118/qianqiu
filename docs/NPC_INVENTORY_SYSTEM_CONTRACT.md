@@ -1,6 +1,6 @@
-# S81-S84 NPC、资产、储物、交易与委派系统执行契约
+# S81-S85 NPC、资产、储物、交易、委派与经济系统执行契约
 
-本契约把 [NPC_INVENTORY_SYSTEM_ROADMAP.md](NPC_INVENTORY_SYSTEM_ROADMAP.md) 转为 S81-S84 可执行交付标准。路线图说明“为什么做”和体验目标；本文件固定字段、API、AI 权限、安全 view、SQLite 派生表和验收矩阵。后续若扩展字段或权限，必须同步本文件、活动台账和共享上下文。
+本契约把 [NPC_INVENTORY_SYSTEM_ROADMAP.md](NPC_INVENTORY_SYSTEM_ROADMAP.md) 转为 S81-S85 可执行交付标准。路线图说明“为什么做”和体验目标；本文件固定字段、API、AI 权限、安全 view、SQLite 派生表和验收矩阵。后续若扩展字段或权限，必须同步本文件、活动台账和共享上下文。
 
 ## 1. 总体边界
 
@@ -87,10 +87,19 @@ NPC 最小字段：
 
 ### 2.5 `npcInteractionLedger`、`tradeLedger`、`delegatedTaskLedger`
 
-交互记录只存安全摘要和服务器裁决结果。交易记录包含公开报价、状态、双方 refs 和服务器裁决，不暴露 NPC 底价。委派任务包含命令、执行人、所需资源、期限、风险、状态、回禀和后续行动 refs。
+交互记录只存安全摘要和服务器裁决结果。交易记录包含公开报价、状态、双方 refs 和服务器裁决，不暴露 NPC 底价。委派任务包含命令、执行人、所需资源、期限、风险、状态、回禀和后续行动 refs。所有委派预算必须先由服务器确认，不得超过当前可用地方库银；月结结算旧任务时也只能用服务器确认的有效预算影响成功率和扣款。
 
 委派状态：`draft | pending_validation | active | blocked | overdue | completed | failed | cancelled`。
 交易状态：`proposed | countered | accepted | rejected | server_blocked`；`accepted` 只表示议价文本被记录，银钱、物品和所有权变更仍需服务器结算路径另行执行。
+
+### 2.6 `marketPriceLedger` 与 `npcEconomyLedger`
+
+S85.1-S85.2 新增两个 server-owned 账本：
+
+- `marketPriceLedger`：保存基础市价目录、身份倍率、市场压力、可得性、旬/月趋势和短历史。覆盖书籍、粮食、药材、马匹、兵器、文书、礼物、宅产维护和官署经费；每旬刷新，月末记录历史。AI 和浏览器只能读取 `marketPriceView`，不能据此自行成交、改库存或写价格。
+- `npcEconomyLedger`：保存最近 NPC 经济 tick 摘要、月结 outcome 和玩家可见事件。月末由服务器结算资产维护/收益、库存损耗、委派到期结果、逾期交易承诺、人情债和 NPC 关系记忆；不保存 hidden 私档、NPC 真正底价、交易底线或模型原文。
+
+普通回合和自然语言跳时复用同一条旬/月结算链：世界 tick 先推进日期，`npcEconomy` 再刷新市价或执行月结。考试入场/场内场景只推进科场局部时间，不触发全局经济。两个 raw ledger 必须从 `buildClientWorldState()`、`buildPlayerStateEnvelope()` 和所有浏览器安全 payload 剥离；S85 反馈中的资产、资源和库存变化 path 只能使用公开 `economy.*` 分类，不能暴露 `assetLedger.*`、`resourceLedger.*` 或 `inventoryLedger.*` 内部路径。
 
 ## 3. 安全 API
 
@@ -103,6 +112,8 @@ NPC 最小字段：
 - `POST /api/game/npc-command/:sessionId`：创建或推进委派任务；服务器校验 authority、资源、工具、期限和 NPC 可用性。
 
 所有 API 顶层至少返回 `sessionId`；各安全 view 自带 `schemaVersion`、`generatedAtTurn`、`authorityBoundary`、`safeguards` 或同等安全摘要。错误只返回安全中文摘要，不回显请求中的 raw 背景、provider payload、ledger 原文或本地路径。
+
+普通 `POST /api/game/turn`、SSE `state_preview` / `final_state`、`GET /api/game/player-state/:sessionId` 和兼容 state route 会返回 `marketPriceView` 与 `npcEconomyView`。它们是只读 projection，不新增交易/委派即时 API 写权。
 
 ## 4. AI 任务
 
@@ -143,6 +154,12 @@ S84 React 只消费上述 API：
 - 浏览器内存状态可以缓存服务器安全 view 以保持页面切换流畅，但 localStorage/sessionStorage 只保存显示偏好等白名单；不得持久化完整背包、NPC 私档、交易明细、provider payload 或 prompt。
 - 前端不得计算价格、扣库存、改关系、完成委派或判定任务结果。
 
+S85 React 继续只消费安全 view：
+
+- 主卷安全视图索引把 `marketPriceView` 与 `npcEconomyView` 作为只读就绪信号。
+- 县令主卷钱粮卡片可展示基础市价、NPC 月账和服务器边界。
+- 前端不得用市价行自行定价、成交、扣银、扣库存、刷新 NPC 任务或推断 hidden 底价。
+
 ## 7. 验收矩阵
 
 - 契约与模块：`node --test test/assetLedger.test.js test/inventoryLedger.test.js test/npcRoster.test.js test/delegatedTasks.test.js`
@@ -152,3 +169,4 @@ S84 React 只消费上述 API：
 - SQLite：`node --test test/sqliteNpcInventoryTables.test.js test/sqliteNpcInventoryAdapterIntegration.test.js test/sessionStoreAdapterContract.test.js`
 - 前端：`npm run typecheck:client && npm run test:client -- --pool=vmForks --maxWorkers=2 && npm run build:client && AI_PROVIDER=mock npm run smoke:browser`
 - 回归：`npm run smoke:exam-s69 && npm run check:docs-governance && node --test test/documentationGovernance.test.js && npm test`
+- S85 经济：`node --test test/delegatedTasks.test.js test/npcEconomy.test.js test/gameTurnNpcEconomy.test.js`
