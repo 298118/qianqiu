@@ -661,16 +661,20 @@ test("S76.4 official and minister panel uses safe career projections as draft-on
   assert.match(gamePageSource, /appointmentTrackView=\{session\?\.appointmentTrackView/);
   assert.match(gamePageSource, /actorMemoryView=\{session\?\.actorMemoryView/);
   assert.match(gamePageSource, /aiControlAuditView=\{session\?\.aiControlAuditView/);
+  assert.match(gamePageSource, /playerMonthlyBriefingView=\{session\?\.playerMonthlyBriefingView/);
   assert.match(officialPanelSource, /export function OfficialMinisterPanel/);
   assert.match(officialPanelSource, /官职履历/);
   assert.match(officialPanelSource, /部院公文/);
+  assert.match(officialPanelSource, /官署首月/);
   assert.match(officialPanelSource, /同年座师/);
   assert.match(officialPanelSource, /派系与朝局风险/);
   assert.match(officialPanelSource, /不得在前端直接任免、奖惩、处分、弹劾成案或改写考成/);
   assert.match(styleSource, /officialMinisterPanel/);
-  assert.match(typeSource, /officialCareerView\?: JsonObject/);
+  assert.match(typeSource, /OfficialFirstMonthExperienceView/);
+  assert.match(typeSource, /officialCareerView\?: OfficialCareerView/);
   assert.match(typeSource, /appointmentTrackView\?: JsonObject/);
   assert.match(typeSource, /actorMemoryView\?: JsonObject/);
+  assert.match(typeSource, /playerMonthlyBriefingView\?: JsonObject/);
   assert.match(appTestSource, /renders the S76\.4 official minister panel from safe career views as draft-only actions/);
   assert.doesNotMatch(
     runtimeCombined,

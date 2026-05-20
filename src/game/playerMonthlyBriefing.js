@@ -332,16 +332,29 @@ function generateMonthlyBriefingProposal(context = {}) {
   const official = context.officialCareerView || {};
   const localDockets = context.localAffairsDocketView?.dockets || [];
   const assignments = official.assignments || [];
+  const firstMonth = official.firstMonthExperience?.active ? official.firstMonthExperience : null;
   const activeAssignmentText = assignments.length
     ? assignments.slice(0, 3).map((assignment) => `${assignment.title}：${assignment.deadlineLabel || "限期未明"}，进度${assignment.progress ?? 0}。`)
     : [`${context.currentPosting || "本职差事"}本月以例行案牍、上官督责和公开差遣为主。`];
+  const firstMonthDutyTexts = firstMonth
+    ? cleanTextList([
+      `${firstMonth.assignment?.title || "首月差事"}：${firstMonth.assignment?.phaseLabel || "进度未明"}，${firstMonth.assignment?.riskLabel || "风险未明"}，${firstMonth.assignment?.deadlineLabel || "限期未明"}。`,
+      firstMonth.receipt?.publicSummary,
+      ...(Array.isArray(firstMonth.assessmentSignals) ? firstMonth.assessmentSignals : [])
+    ], 4)
+    : [];
   const docketTexts = topTexts(localDockets, "publicDocket", 3);
   const fiscalTexts = topTexts(context.economicReports, "publicSummary", 3);
   const militaryTexts = topTexts(context.militaryReports, "publicSummary", 2);
-  const networkItems = buildCourtNetworkItems(context.worldPeopleView, context.officialPostingsView);
+  const networkItems = cleanTextList([
+    firstMonth?.receipt?.superiorFeedback,
+    firstMonth?.receipt?.peerFeedback,
+    ...buildCourtNetworkItems(context.worldPeopleView, context.officialPostingsView)
+  ], 4);
   const careerRisk = clampNumber(official.riskScore ?? context.officialCareerView?.assessment?.riskScore, 0, 100, 0);
   const urgentAssignments = assignments.filter((assignment) => assignment.turnsRemaining !== null && assignment.turnsRemaining <= 1);
   const actionItems = cleanTextList([
+    firstMonth?.nextActions?.[0]?.text,
     urgentAssignments[0] ? `先办${urgentAssignments[0].title}，免入逾期考成。` : "",
     docketTexts[0] ? `复核案牍：${docketTexts[0]}` : "",
     fiscalTexts[0] ? `留意钱粮：${fiscalTexts[0]}` : "",
@@ -349,6 +362,7 @@ function generateMonthlyBriefingProposal(context = {}) {
     "下月行动仍须经服务器规则结算，月报建议不得直接改变状态。"
   ], MONTHLY_BRIEFING_LIMITS.maxActionItems);
   const riskItems = cleanTextList([
+    firstMonth?.assignment?.riskLabel ? `首月差事风险：${firstMonth.assignment.riskLabel}。` : "",
     careerRisk >= 70 ? `官场风险偏高，考成风险${careerRisk}。` : "",
     localDockets.find((docket) => docket.status !== "routine")?.publicSummary || "",
     context.economicReports.find((report) => (report.pressureScore || report.fiscalPressure || 0) >= 60)?.publicSummary || "",
@@ -359,7 +373,7 @@ function generateMonthlyBriefingProposal(context = {}) {
     title: `${context.period?.label || "本月"}${context.roleLabel || "官职"}月报`,
     publicSummary: `${context.currentPosting || context.roleLabel || "本职"}本月要点已按公开案牍、钱粮军务、上官同僚和下月行动整理。`,
     sections: [
-      buildSection("official_duties", `${context.currentPosting || "本职差事"}：本月差遣、考成和上官督责已汇总。`, activeAssignmentText),
+      buildSection("official_duties", `${context.currentPosting || "本职差事"}：本月差遣、考成和上官督责已汇总。`, firstMonthDutyTexts.length ? firstMonthDutyTexts : activeAssignmentText),
       buildSection("fiscal_local", "钱粮民情按当前可见案牍和财赋 projection 摘录。", [...docketTexts, ...fiscalTexts]),
       buildSection("military_diplomacy", "军务边情只列玩家身份可读的公开预警。", militaryTexts),
       buildSection("court_network", "上官、同僚和可见人物关系只按公开摘要呈现。", networkItems),

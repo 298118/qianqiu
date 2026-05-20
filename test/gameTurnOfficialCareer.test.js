@@ -325,3 +325,47 @@ test("POST /api/game/turn returns S42 assignment and bureau summaries for offici
   assert.equal(payload.officialCareerView.assessment.meritScore, payload.worldState.officialCareer.assessmentDossier.meritScore);
   assert.ok(payload.officialCareer.events.some((event) => event.includes("[官场差遣]")));
 });
+
+test("POST /api/game/turn advances S88.4 first month receipt view without trusting provider text", async (t) => {
+  const server = createTestServer();
+  t.after(server.close);
+
+  const worldState = createInitialState({ playerName: "Tester", role: "official" });
+  Object.assign(worldState.player, {
+    officeTitle: "翰林院编修",
+    position: "翰林院编修",
+    performanceMerit: 46,
+    impeachmentRisk: 18
+  });
+  worldState.officialCareer.currentPosting = "翰林院编修";
+  worldState.officialCareer.assignments = [{
+    id: "ASG-0000-first-month-top_hanlin_editor",
+    title: "馆阁讲章校订",
+    kind: "memorial_drafting",
+    dueTurn: 3,
+    deadlineUnit: "ten_day",
+    progress: 18,
+    risk: 16,
+    visibleSummary: "首月须校订馆阁讲章并试拟制诰。",
+    hiddenNotes: ["堂官私下试探"]
+  }];
+  worldState.officialCareer.assessmentDossier.notes = ["provider payload prompt raw_table"];
+  t.after(() => removeSessionFile(worldState.sessionId));
+  await writeSession(worldState);
+
+  const { response, payload } = await postJson(`${server.baseUrl}/api/game/turn`, {
+    sessionId: worldState.sessionId,
+    input: "校订馆阁讲章，拟回堂官札说明进度"
+  });
+  const firstMonth = payload.officialCareerView.firstMonthExperience;
+  const serialized = JSON.stringify(payload.officialCareerView);
+
+  assert.equal(response.status, 200);
+  assert.equal(firstMonth.active, true);
+  assert.equal(firstMonth.assignment.title, "馆阁讲章校订");
+  assert.ok(firstMonth.assignment.progress > 18);
+  assert.match(firstMonth.receipt.publicSummary, /馆阁讲章校订/);
+  assert.ok(payload.officialCareer.events.some((event) => event.includes("[官署回执]")));
+  assert.equal(serialized.includes("hiddenNotes"), false);
+  assert.equal(/provider|prompt|raw_table|堂官私下试探/i.test(serialized), false);
+});

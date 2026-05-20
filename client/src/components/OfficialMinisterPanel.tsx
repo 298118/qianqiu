@@ -9,6 +9,7 @@ type OfficialMinisterPanelProps = {
   readonly officialPostingsView?: JsonObject | null;
   readonly actorMemoryView?: JsonObject | null;
   readonly aiControlAuditView?: JsonObject | null;
+  readonly playerMonthlyBriefingView?: JsonObject | null;
   readonly roleBackgroundPath?: string;
   readonly onDraft: (text: string) => void;
   readonly courtHref?: string;
@@ -60,7 +61,16 @@ const assignmentKindLabels: Record<string, string> = {
   judicial: "刑名",
   ceremony: "礼制",
   memorial: "章奏",
-  personnel: "铨选"
+  memorial_drafting: "章奏",
+  personnel: "铨选",
+  personnel_review: "铨选",
+  routine_office: "清册",
+  land_survey: "册籍",
+  case_review: "刑名",
+  riverworks: "河工",
+  military_supply: "军务",
+  salt_transport: "盐漕",
+  exam_supervision: "科场"
 };
 
 function isRecord(value: JsonValue | unknown): value is JsonObject {
@@ -293,6 +303,47 @@ function getAssessment(officialCareer: JsonObject, assessmentRecord: JsonObject,
   };
 }
 
+function getFirstMonthExperience(officialCareer: JsonObject, monthlyBriefing: JsonObject) {
+  const firstMonth = asRecord(officialCareer.firstMonthExperience);
+  const assignment = asRecord(firstMonth.assignment);
+  const receipt = asRecord(firstMonth.receipt);
+  const latestMonthly = asRecord(monthlyBriefing.latest);
+  const active = firstMonth.active === true && Object.keys(assignment).length > 0;
+  const nextActions = asArray(firstMonth.nextActions)
+    .map(asRecord)
+    .map((action, index) => ({
+      id: cleanOfficialMinisterText(action.id, `first-month-action-${index}`, 48),
+      label: cleanOfficialMinisterText(action.label, "拟行动", 24),
+      text: cleanOfficialMinisterText(action.text, "", 160)
+    }))
+    .filter((action) => action.text);
+
+  return {
+    active,
+    title: cleanOfficialMinisterText(assignment.title, "首月差事", 52),
+    phase: cleanOfficialMinisterText(assignment.phaseLabel, "进度未明", 24),
+    risk: cleanOfficialMinisterText(assignment.riskLabel, "风险未明", 24),
+    progress: cleanNumber(assignment.progress, 0),
+    riskScore: cleanNumber(assignment.risk, 0),
+    deadline: cleanOfficialMinisterText(assignment.deadlineLabel, "限期未明", 36),
+    summary: cleanOfficialMinisterText(assignment.visibleSummary || receipt.publicSummary, "首月差事由服务器按公开官场投影派生。", 142),
+    receiptTitle: cleanOfficialMinisterText(receipt.title, "官署回执", 40),
+    receiptSummary: cleanOfficialMinisterText(receipt.publicSummary, "回执只确认公开进度与请裁事项。", 142),
+    superiorFeedback: cleanOfficialMinisterText(receipt.superiorFeedback, "上官反馈只读公开摘要。", 112),
+    peerFeedback: cleanOfficialMinisterText(receipt.peerFeedback, "同僚风向只读公开摘要。", 112),
+    bureauReply: cleanOfficialMinisterText(receipt.bureauReply, "官署回执不能直接改变官职、奖惩或弹劾结果。", 132),
+    assessmentSignals: asArray(firstMonth.assessmentSignals)
+      .slice(0, 4)
+      .map((signal) => cleanOfficialMinisterText(signal, "考成信号", 84)),
+    monthlyHint: cleanOfficialMinisterText(
+      firstMonth.monthlyBriefingHint || latestMonthly.publicSummary,
+      "月末月报会摘录首月差事进度、上官同僚反馈和下月可行事项。",
+      132
+    ),
+    nextActions
+  };
+}
+
 function draftButtonText(label: string, text: string, enabled: boolean, onDraft: (text: string) => void) {
   return (
     <button type="button" disabled={!enabled} onClick={() => onDraft(text)}>
@@ -308,6 +359,7 @@ export function OfficialMinisterPanel({
   officialPostingsView,
   actorMemoryView,
   aiControlAuditView,
+  playerMonthlyBriefingView,
   roleBackgroundPath,
   onDraft,
   courtHref,
@@ -318,11 +370,13 @@ export function OfficialMinisterPanel({
   const officialPostings = asRecord(officialPostingsView);
   const actorMemory = asRecord(actorMemoryView);
   const aiAudit = asRecord(aiControlAuditView);
+  const monthlyBriefing = asRecord(playerMonthlyBriefingView);
   const posting = currentPostingFromView(officialPostings);
   const assessmentRecord = currentAssessmentFromView(officialPostings);
   const bureau = getBureauSummary(officialCareer, officialPostings, posting);
   const careerLedger = getCareerLedger(officialCareer, appointmentTrack, posting);
   const assignments = getAssignmentItems(officialCareer);
+  const firstMonth = getFirstMonthExperience(officialCareer, monthlyBriefing);
   const network = getOfficeNetwork(officialCareer, actorMemory, officialPostings);
   const factionRisk = getFactionRisk(officialCareer, actorMemory, aiAudit);
   const assessment = getAssessment(officialCareer, assessmentRecord, posting);
@@ -399,6 +453,48 @@ export function OfficialMinisterPanel({
             {draftButtonText("拟回堂官", "就当前差遣拟一纸回堂官札，说明进度、风险与待裁事项。", canDraft, onDraft)}
           </div>
         </article>
+
+        {firstMonth.active ? (
+          <article className="scholarPanelCard officialMinisterPanelFirstMonth" aria-labelledby="official-first-month-title">
+            <h3 id="official-first-month-title">官署首月</h3>
+            <dl className="scholarPanelCompactDl">
+              <div>
+                <dt>差事</dt>
+                <dd>{firstMonth.title}</dd>
+              </div>
+              <div>
+                <dt>进度</dt>
+                <dd>{firstMonth.phase} · {firstMonth.progress}</dd>
+              </div>
+              <div>
+                <dt>风险</dt>
+                <dd>{firstMonth.risk} · {firstMonth.riskScore}</dd>
+              </div>
+              <div>
+                <dt>限期</dt>
+                <dd>{firstMonth.deadline}</dd>
+              </div>
+            </dl>
+            <p>{firstMonth.receiptTitle}：{firstMonth.receiptSummary}</p>
+            <p>上官：{firstMonth.superiorFeedback}</p>
+            <p>同僚：{firstMonth.peerFeedback}</p>
+            <OfficialMinisterPanelList
+              items={firstMonth.assessmentSignals.map((signal, index) => ({
+                id: `first-month-signal-${index}`,
+                title: signal
+              }))}
+              emptyText={firstMonth.summary}
+            />
+            <p>{firstMonth.monthlyHint}</p>
+            <div className="scholarPanelActions">
+              {firstMonth.nextActions.slice(0, 2).map((action) => (
+                <button key={action.id} type="button" disabled={!canDraft} onClick={() => onDraft(action.text)}>
+                  {action.label}
+                </button>
+              ))}
+            </div>
+          </article>
+        ) : null}
 
         <article className="scholarPanelCard officialMinisterPanelNetwork" aria-labelledby="official-network-title">
           <h3 id="official-network-title">同年座师与人脉</h3>

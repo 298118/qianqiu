@@ -1,6 +1,11 @@
 const { NUMERIC_RANGES, clamp } = require("./stateRules");
 const { normalizeRelationshipLedger } = require("./relationships");
 const {
+  buildOfficialFirstMonthExperienceView,
+  buildOfficialFirstMonthTurnEvent,
+  hasUnsafeOfficialFirstMonthText
+} = require("./officialFirstMonth");
+const {
   getOfficeLadder,
   inferOfficeByTitle,
   listOutpostCandidates,
@@ -91,6 +96,7 @@ function cleanText(value, fallback = "", maxLength = MAX_EVENT_TEXT_LENGTH) {
   if (typeof value !== "string") return fallback;
   const trimmed = value.trim();
   if (!trimmed) return fallback;
+  if (hasUnsafeOfficialFirstMonthText(trimmed)) return fallback;
   return trimmed.slice(0, maxLength);
 }
 
@@ -860,6 +866,57 @@ function classifyOfficialAction(input = "") {
     };
   }
 
+  // 官署首月面板的草稿会引用差事标题；先按标题关键词归入同一 kind，
+  // 避免通用“考成/奏疏”文案把服务器差遣推进错分。
+  if (/馆课|试艺|散馆|馆阁|制诰|修史|讲章/.test(text)) {
+    return {
+      type: "assignment",
+      kind: "memorial_drafting",
+      title: "馆阁文案",
+      bureauId: "hanlin_academy",
+      progressDelta: 18,
+      riskDelta: 3,
+      note: "馆阁文案先入回署稿，章法、避讳和上官问答都会影响清望。"
+    };
+  }
+
+  if (/候缺|观政日课|初授履历|履历|日课|补缺|缺额|部议/.test(text)) {
+    return {
+      type: "assessment",
+      kind: "personnel_review",
+      title: "观政履历",
+      bureauId: "ministry_personnel",
+      progressDelta: 20,
+      riskDelta: -1,
+      recommendation: /补缺|缺额/.test(text) ? "appointment_review" : null,
+      note: "观政履历只作为部议凭据，不能绕过吏部裁决或直接得缺。"
+    };
+  }
+
+  if (/清册|点收|部曹|文移|交接|经手吏员/.test(text)) {
+    return {
+      type: "assignment",
+      kind: "routine_office",
+      title: "清册点收",
+      bureauId: "ministry_personnel",
+      progressDelta: 20,
+      riskDelta: 2,
+      note: "清册点收重在文移、缺页和交接时限，进度只进入本职差事与考成凭据。"
+    };
+  }
+
+  if (/册籍|民情初访|访查民情|民情|户籍|士绅/.test(text)) {
+    return {
+      type: "assignment",
+      kind: "land_survey",
+      title: "册籍民情初访",
+      bureauId: "ministry_personnel",
+      progressDelta: 20,
+      riskDelta: 7,
+      note: "册籍民情只能形成公开查核线索，地方功过仍由服务器按后续差事裁决。"
+    };
+  }
+
   if (/弹劾|参劾|纠举|御史|贪官|贪墨官|劾奏|奏劾|查参|查账/.test(text)) {
     return {
       type: "impeachment",
@@ -1209,6 +1266,7 @@ function buildOfficialCareerView(worldState = {}) {
   const officeSummary = active ? summarizeOfficeForPlayer(posting) : null;
   const activeAssignments = career.assignments.filter((assignment) => assignment.status === "active" || assignment.status === "submitted");
   const urgentAssignments = activeAssignments.filter((assignment) => assignment.dueTurn <= currentTurn(worldState) + 1);
+  const firstMonthExperience = buildOfficialFirstMonthExperienceView(worldState, career);
 
   return {
     schemaVersion: OFFICIAL_CAREER_SCHEMA_VERSION,
@@ -1236,6 +1294,7 @@ function buildOfficialCareerView(worldState = {}) {
         latestTitle: activeAssignments.at(-1)?.title || null
       }
       : null,
+    firstMonthExperience,
     assignments: active
       ? activeAssignments.map((assignment) => {
         const deadline = formatTenDayDeadline(assignment.dueTurn, worldState);
@@ -1316,6 +1375,19 @@ function summarizeOfficialCareerForPrompt(worldState = {}) {
       risk: assignment.risk,
       visibleSummary: assignment.visibleSummary
     })).slice(0, 3),
+    firstMonthExperience: view.firstMonthExperience?.active
+      ? {
+        assignmentTitle: view.firstMonthExperience.assignment?.title || null,
+        phaseLabel: view.firstMonthExperience.assignment?.phaseLabel || null,
+        riskLabel: view.firstMonthExperience.assignment?.riskLabel || null,
+        receipt: view.firstMonthExperience.receipt?.publicSummary || "",
+        nextActions: (view.firstMonthExperience.nextActions || []).map((action) => ({
+          label: action.label,
+          text: action.text
+        })).slice(0, 3),
+        authorityBoundary: view.firstMonthExperience.authorityBoundary
+      }
+      : null,
     assessment: view.assessment
       ? {
         meritScore: view.assessment.meritScore,
@@ -1384,6 +1456,10 @@ function runOfficialCareerStep(worldState = {}, input = "", options = {}) {
   };
   if (assignmentUpdate.event) {
     result.events.push(assignmentUpdate.event);
+    const firstMonthEvent = buildOfficialFirstMonthTurnEvent(worldState, nextCareer, assignmentUpdate.assignment);
+    if (firstMonthEvent) {
+      result.events.push(firstMonthEvent);
+    }
   }
 
   if (reviewReason) {

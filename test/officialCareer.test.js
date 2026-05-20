@@ -5,11 +5,13 @@ const { createInitialState } = require("../src/game/initialState");
 const { applyRelationshipChanges } = require("../src/game/relationships");
 const { applyStatePatch } = require("../src/game/stateRules");
 const { monthsToTurns } = require("../src/game/time");
+const { APPOINTMENT_FIRST_MONTH_ASSIGNMENTS } = require("../src/game/appointmentTracksConfig");
 const {
   buildOfficialCareerView,
   ensureOfficialCareerState,
   normalizeOfficialCareerState,
-  runOfficialCareerStep
+  runOfficialCareerStep,
+  summarizeOfficialCareerForPrompt
 } = require("../src/game/officialCareer");
 
 function applyOfficialCareerResult(worldState, result) {
@@ -251,6 +253,129 @@ test("official career step tracks assignments, assessment dossier, and safe play
   assert.match(view.assignments[0].deadlineLabel, /尚余12旬（约4月）/);
   assert.equal(JSON.stringify(view).includes("遮掩亏空"), false);
   assert.equal(view.assessment.meritScore, worldState.officialCareer.assessmentDossier.meritScore);
+});
+
+test("S88.4 official first month experience exposes receipt without hidden or provider text", () => {
+  const worldState = createInitialState({ role: "official", playerName: "Tester" });
+  Object.assign(worldState.player, {
+    officeTitle: "翰林院编修",
+    position: "翰林院编修",
+    performanceMerit: 46,
+    impeachmentRisk: 18
+  });
+  worldState.officialCareer.currentPosting = "翰林院编修";
+  worldState.officialCareer.assignments = [{
+    id: "ASG-0000-first-month-top_hanlin_editor",
+    title: "馆阁讲章校订",
+    kind: "memorial_drafting",
+    dueTurn: 2,
+    deadlineUnit: "ten_day",
+    progress: 36,
+    risk: 18,
+    visibleSummary: "首月须校订馆阁讲章并试拟制诰。",
+    hiddenNotes: ["堂官私下试探"],
+    relatedContacts: ["署中上官", "同年进士"]
+  }, {
+    id: "ASG-provider-polluted",
+    title: "provider payload sk-test-secret",
+    kind: "audit",
+    visibleSummary: "prompt data/sessions/raw.json"
+  }];
+  worldState.officialCareer.assessmentDossier.notes = [
+    "讲章初稿可入首月考成。",
+    "provider payload prompt raw_table"
+  ];
+  ensureOfficialCareerState(worldState);
+
+  const view = buildOfficialCareerView(worldState);
+  const firstMonth = view.firstMonthExperience;
+  const prompt = summarizeOfficialCareerForPrompt(worldState);
+  const serializedView = JSON.stringify(view);
+  const serializedPrompt = JSON.stringify(prompt);
+
+  assert.equal(firstMonth.active, true);
+  assert.equal(firstMonth.assignment.title, "馆阁讲章校订");
+  assert.equal(firstMonth.assignment.phaseLabel, "正在查办");
+  assert.equal(firstMonth.assignment.riskLabel, "平稳");
+  assert.match(firstMonth.receipt.publicSummary, /馆阁讲章校订/);
+  assert.ok(firstMonth.nextActions.some((action) => action.label === "拟回堂官"));
+  assert.equal(serializedView.includes("hiddenNotes"), false);
+  assert.equal(serializedView.includes("堂官私下试探"), false);
+  assert.equal(/provider|prompt|raw_table|sk-test-secret|data\/sessions/i.test(serializedView), false);
+  assert.equal(/provider|prompt|raw_table|sk-test-secret|data\/sessions/i.test(serializedPrompt), false);
+  assert.equal(prompt.firstMonthExperience.assignmentTitle, "馆阁讲章校订");
+});
+
+test("S88.4 official first month assignment advances through server turn feedback", () => {
+  const worldState = createInitialState({ role: "official", playerName: "Tester" });
+  Object.assign(worldState.player, {
+    officeTitle: "翰林院编修",
+    position: "翰林院编修",
+    performanceMerit: 46,
+    impeachmentRisk: 18
+  });
+  worldState.officialCareer.currentPosting = "翰林院编修";
+  worldState.officialCareer.assignments = [{
+    id: "ASG-0000-first-month-top_hanlin_editor",
+    title: "馆阁讲章校订",
+    kind: "memorial_drafting",
+    dueTurn: 3,
+    deadlineUnit: "ten_day",
+    progress: 18,
+    risk: 16,
+    visibleSummary: "首月须校订馆阁讲章并试拟制诰。"
+  }];
+  ensureOfficialCareerState(worldState);
+
+  const result = runOfficialCareerStep(worldState, "校订馆阁讲章，拟回堂官札说明进度", {
+    isMonthEnd: false
+  });
+  applyOfficialCareerResult(worldState, result);
+  const view = buildOfficialCareerView(worldState);
+
+  assert.ok(worldState.officialCareer.assignments[0].progress > 18);
+  assert.ok(result.events.some((event) => event.includes("[官署回执]")));
+  assert.equal(view.firstMonthExperience.active, true);
+  assert.match(view.firstMonthExperience.receipt.publicSummary, /馆阁讲章校订/);
+  assert.ok(view.firstMonthExperience.assessmentSignals.some((signal) => signal.includes("考成")));
+});
+
+test("S88.4 official first month draft actions advance every appointment-track template", () => {
+  for (const [trackId, template] of Object.entries(APPOINTMENT_FIRST_MONTH_ASSIGNMENTS)) {
+    const worldState = createInitialState({ role: "official", playerName: "Tester" });
+    Object.assign(worldState.player, {
+      officeTitle: "新授官",
+      position: "新授官",
+      performanceMerit: 42,
+      impeachmentRisk: 16
+    });
+    worldState.officialCareer.currentPosting = "新授官";
+    worldState.officialCareer.assignments = [{
+      ...template,
+      id: `ASG-0000-first-month-${trackId}`,
+      dueTurn: 3,
+      deadlineUnit: "ten_day"
+    }];
+    ensureOfficialCareerState(worldState);
+
+    const before = worldState.officialCareer.assignments[0].progress;
+    const firstMonth = buildOfficialCareerView(worldState).firstMonthExperience;
+    const draft = firstMonth.nextActions.find((action) => action.id === "receipt") || firstMonth.nextActions[0];
+
+    const result = runOfficialCareerStep(worldState, draft.text, {
+      isMonthEnd: false
+    });
+    applyOfficialCareerResult(worldState, result);
+
+    assert.ok(
+      worldState.officialCareer.assignments[0].progress > before,
+      `${trackId} should advance through first-month draft action`
+    );
+    assert.ok(
+      result.events.some((event) => event.includes("[官署回执]")),
+      `${trackId} should emit official first-month receipt`
+    );
+  }
 });
 
 test("official career step opens impeachment procedure without exposing hidden notes", () => {

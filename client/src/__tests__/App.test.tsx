@@ -915,6 +915,31 @@ describe("S74.1 React client shell", () => {
               summary: "翰林院差遣清贵，章奏与考成仍由服务器裁决。"
             },
             assignmentSummary: { activeCount: 2, urgentCount: 1, latestTitle: "撰修起居注" },
+            firstMonthExperience: {
+              active: true,
+              assignment: {
+                id: "ASG-0009-first-month-top-hanlin-editor",
+                title: "馆阁讲章校订",
+                kind: "memorial_drafting",
+                phaseLabel: "正在查办",
+                riskLabel: "可控",
+                progress: 42,
+                risk: 18,
+                deadlineLabel: "尚余一旬",
+                visibleSummary: "首月须校订馆阁讲章并试拟制诰。"
+              },
+              receipt: {
+                title: "讲章回署",
+                publicSummary: "馆阁讲章校订正在查办，风险可控，尚余一旬。",
+                superiorFeedback: "堂官先看章法、避讳和能否切中本职。",
+                peerFeedback: "同年提醒馆阁旧例与上疏分寸。"
+              },
+              assessmentSignals: ["正在查办：进度会影响首月考成。", "可控：仍需按期回署。"],
+              nextActions: [
+                { id: "receipt", label: "拟回堂官", text: "就馆阁讲章校订拟回堂官札，说明进度、风险与请裁事项。" }
+              ],
+              monthlyBriefingHint: "月末月报会摘录馆阁讲章校订的进度、回署事项和下月可行。"
+            },
             assignments: [
               {
                 id: "assignment-1",
@@ -989,6 +1014,13 @@ describe("S74.1 React client shell", () => {
               rejectedToolCallCount: 0,
               publicResults: [{ id: "audit-1", title: "快捷建议", summary: "只生成草稿。" }]
             }
+          },
+          playerMonthlyBriefingView: {
+            active: true,
+            latest: {
+              reportId: "PMB-1644-01-0009",
+              publicSummary: "首月差事已入本月官职月报。"
+            }
           }
         }), {
           status: 200,
@@ -1016,6 +1048,8 @@ describe("S74.1 React client shell", () => {
     await screen.findByRole("heading", { name: "部院官署" });
     expect(screen.getByText("官职履历")).toBeTruthy();
     expect(screen.getAllByText("部院公文").length).toBeGreaterThan(0);
+    expect(screen.getByText("官署首月")).toBeTruthy();
+    expect(screen.getByText("馆阁讲章校订")).toBeTruthy();
     expect(screen.getByText("同年座师与人脉")).toBeTruthy();
     expect(screen.getByText("派系与朝局风险")).toBeTruthy();
     expect(screen.getByText("考成与弹劾")).toBeTruthy();
@@ -1028,6 +1062,9 @@ describe("S74.1 React client shell", () => {
       targetPage: "game",
       text: "若有弹劾风声，先拟辨疏，说明事实、证据和请核事项，不自行成案。"
     });
+    const receiptButtons = screen.getAllByRole("button", { name: "拟回堂官" });
+    fireEvent.click(receiptButtons[receiptButtons.length - 1]);
+    expect(useUiStateStore.getState().actionDraft?.text).toContain("馆阁讲章校订");
     expect(fetchMock.mock.calls.filter(([url]) => url === "/api/game/turn")).toHaveLength(0);
     expect(document.body.textContent || "").not.toMatch(/provider payload|sk-test-secret|prompt|raw audit|path=|C:\\|data\/sessions|OPENAI_API_KEY/i);
   });

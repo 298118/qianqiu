@@ -177,6 +177,9 @@ function assertS69Views(payload, level) {
   if (level === "palace_exam" && !payload.officialCareerView?.assignmentSummary?.activeCount) {
     throw new Error("palace_exam missing first-month official assignment.");
   }
+  if (level === "palace_exam" && !payload.officialCareerView?.firstMonthExperience?.active) {
+    throw new Error("palace_exam missing S88.4 first-month official experience view.");
+  }
 }
 
 function summarizeExamResult(payload, level) {
@@ -190,7 +193,8 @@ function summarizeExamResult(payload, level) {
     networkContacts: (latestHistory.examNetwork?.sameYearContacts || []).length +
       (latestHistory.examNetwork?.examinerContacts || []).length,
     appointment: payload.appointmentTrackView?.latestDecision?.officeTitle || null,
-    firstAssignment: payload.officialCareerView?.assignments?.[0]?.title || null
+    firstAssignment: payload.officialCareerView?.assignments?.[0]?.title || null,
+    firstMonthReceipt: payload.officialCareerView?.firstMonthExperience?.receipt?.title || null
   };
 }
 

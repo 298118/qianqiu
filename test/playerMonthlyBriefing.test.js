@@ -99,6 +99,46 @@ test("S70.10 official month end records one hidden-safe player briefing without 
   assertHiddenSafe(view);
 });
 
+test("S88.4 official monthly briefing includes first month receipt and next actions", () => {
+  const worldState = createInitialState({ role: "official", playerName: "首月官" });
+  Object.assign(worldState.player, {
+    officeTitle: "翰林院编修",
+    position: "翰林院编修",
+    performanceMerit: 46,
+    impeachmentRisk: 18
+  });
+  worldState.year = 1644;
+  worldState.month = 6;
+  worldState.tenDayPeriod = 3;
+  worldState.officialCareer.currentPosting = "翰林院编修";
+  worldState.officialCareer.assignments = [{
+    id: "ASG-0000-first-month-top_hanlin_editor",
+    title: "馆阁讲章校订",
+    kind: "memorial_drafting",
+    dueTurn: 3,
+    deadlineUnit: "ten_day",
+    progress: 66,
+    risk: 24,
+    visibleSummary: "首月须校订馆阁讲章并试拟制诰。",
+    hiddenNotes: ["密札不可见"]
+  }];
+  const { previousState, worldTick } = runMonthEndTick(worldState);
+
+  const result = runPlayerMonthlyBriefingStep(worldState, { previousState, worldTick });
+  const view = buildPlayerMonthlyBriefingView(worldState);
+  const officialDuties = view.latest.sections.find((section) => section.id === "official_duties");
+  const courtNetwork = view.latest.sections.find((section) => section.id === "court_network");
+  const serialized = JSON.stringify(view);
+
+  assert.equal(result.generated, true);
+  assert.ok(officialDuties.items.some((item) => item.includes("馆阁讲章校订")));
+  assert.ok(courtNetwork.items.some((item) => item.includes("堂官") || item.includes("同年")));
+  assert.ok(view.latest.actionItems.some((item) => item.includes("馆阁讲章校订")));
+  assert.equal(serialized.includes("hiddenNotes"), false);
+  assert.equal(serialized.includes("密札不可见"), false);
+  assertHiddenSafe(view);
+});
+
 test("S70.10 resolver sanitizes unsafe monthly briefing proposals before view exposure", () => {
   const worldState = createInitialState({ role: "official", playerName: "脱敏官" });
   ensurePlayerMonthlyBriefingState(worldState);

@@ -1215,6 +1215,11 @@ button:disabled {
   font-weight: 800;
 }
 
+.officialMinisterPanelFirstMonth {
+  border-color: rgba(94, 70, 35, 0.28);
+  background: rgba(255, 252, 239, 0.74);
+}
+
 .generalPanel {
   border-color: rgba(83, 62, 45, 0.34);
   background:

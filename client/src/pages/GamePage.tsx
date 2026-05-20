@@ -349,6 +349,7 @@ export function GamePage() {
           officialPostingsView={session?.officialPostingsView ?? null}
           actorMemoryView={session?.actorMemoryView ?? null}
           aiControlAuditView={session?.aiControlAuditView ?? null}
+          playerMonthlyBriefingView={session?.playerMonthlyBriefingView ?? null}
           roleBackgroundPath={roleBackgroundAsset?.path}
           courtHref={sessionHref(routeCatalog.find((entry) => entry.id === "court")?.href ?? "/game/s74-preview/court")}
           runnable={runnable}

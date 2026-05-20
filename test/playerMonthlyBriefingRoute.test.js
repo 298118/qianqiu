@@ -84,6 +84,21 @@ test("S70.10 official month-end turn returns player monthly briefing view, archi
   const worldState = await readSession(sessionId);
   worldState.month = 3;
   worldState.tenDayPeriod = 3;
+  Object.assign(worldState.player, {
+    officeTitle: "翰林院编修",
+    position: "翰林院编修"
+  });
+  worldState.officialCareer.currentPosting = "翰林院编修";
+  worldState.officialCareer.assignments = [{
+    id: "ASG-0000-first-month-top_hanlin_editor",
+    title: "馆阁讲章校订",
+    kind: "memorial_drafting",
+    dueTurn: 3,
+    deadlineUnit: "ten_day",
+    progress: 52,
+    risk: 18,
+    visibleSummary: "首月须校订馆阁讲章并试拟制诰。"
+  }];
   await writeSession(worldState);
 
   const turned = await postJson(`${server.baseUrl}/api/game/turn`, {
@@ -102,6 +117,10 @@ test("S70.10 official month-end turn returns player monthly briefing view, archi
     turned.payload.playerMonthlyBriefing.reportId
   );
   assert.ok(turned.payload.playerMonthlyBriefingView.latest.sections.length >= 3);
+  assert.ok(
+    turned.payload.playerMonthlyBriefingView.latest.sections
+      .some((section) => section.id === "official_duties" && JSON.stringify(section).includes("馆阁讲章校订"))
+  );
   assert.ok(turned.payload.worldState.playerMonthlyBriefing.reports.length >= 1);
   assert.ok(turned.payload.eventArchiveView.items.some((item) => item.sourceType === "monthly_briefing"));
   assert.ok(

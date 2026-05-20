@@ -180,6 +180,21 @@ export type PlayerVisibleState = Pick<
   readonly [key: string]: unknown;
 };
 
+export type OfficialFirstMonthExperienceView = JsonObject & {
+  readonly schemaVersion?: string;
+  readonly active?: boolean;
+  readonly assignment?: JsonObject | null;
+  readonly receipt?: JsonObject | null;
+  readonly assessmentSignals?: readonly JsonValue[];
+  readonly nextActions?: readonly JsonObject[];
+  readonly monthlyBriefingHint?: string;
+  readonly authorityBoundary?: string;
+};
+
+export type OfficialCareerView = JsonObject & {
+  readonly firstMonthExperience?: OfficialFirstMonthExperienceView;
+};
+
 export type RawLedgerExcludedWorldState = Omit<WorldState, RawLedgerKey> & {
   readonly [K in RawLedgerKey]?: never;
 };
@@ -226,7 +241,7 @@ export type SafeRouteViews = {
   readonly examHonorView?: JsonObject;
   readonly examAftermathView?: JsonObject;
   readonly studyProfileView?: JsonObject;
-  readonly officialCareerView?: JsonObject;
+  readonly officialCareerView?: OfficialCareerView;
   readonly appointmentTrackView?: JsonObject;
   readonly officialPostingsView?: JsonObject;
   readonly localAffairsDocketView?: JsonObject;
