@@ -230,7 +230,7 @@ S84 前端专项额外验收入口：
 - Rust：继续不进入核心玩法、Express routes、AI 编排、resolver、科举晋级、交易/婚姻/弹劾结果或 canonical persistence；只有可选 CLI/WASM/离线工具并有 profiling 证据时再评估。
 - 验证：本轮已通过 `npm run typecheck:server`、`npm run build:server:probe`、`node --test test/redactedState.test.js test/gamePlayerStateRoute.test.js test/stateRules.test.js`、`node --test test/aiSchemas.test.js test/remoteHelpers.test.js test/modelRoutePolicy.test.js test/aiToolProtocolContract.test.js`、`node --test test/sessionStoreAdapterContract.test.js test/sqliteNpcInventoryTables.test.js test/sqliteNpcInventoryAdapterIntegration.test.js`（56 项）、`npm run check:docs-governance`、`node --test test/documentationGovernance.test.js`、`npm test`（983 项）和本轮改动路径 `git diff --check`。
 - 子代理：Hypatia、Socrates、Lorentz 已分别只读盘点 S86.3/S86.4/S86.5 风险点、推荐类型和 focused 验证命令；Sartre 提交前只读复审发现 3 个 P2，主代理已补 raw ledger 类型拒绝 fixture、SafeRouteViews 字段和 storage adapter audit surface；Bohr 复看发现 `searchSafeSearchIndex` optional 签名 P2，已修正为 `(sessionId, options?)` 并复验，最终未发现 P0/P1/P2。
-- 提交：`162bef77`。
+- 提交：实现提交 `bedea92a`；本条 hash 记录随后一笔文档同步提交补齐。
 
 ### 2026-05-20：新增 S86 后端 TypeScript 渐进迁移规划
 
