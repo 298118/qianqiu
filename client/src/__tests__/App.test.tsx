@@ -564,7 +564,29 @@ describe("S74.1 React client shell", () => {
             nextPlan: {
               focus: "制艺章法",
               items: ["破题一则", "承题起讲各一段"],
-              bookList: ["《论语》"]
+              bookList: ["《论语》"],
+              planningWindow: {
+                startLabel: "明1644年正月中旬",
+                reviewLabel: "三旬后复盘"
+              },
+              intensity: {
+                label: "补弱",
+                currentScore: 54,
+                targetScore: 63,
+                summary: "弱项已露，三旬内先稳章法与根基。"
+              },
+              dailyRhythm: [
+                { id: "rhythm-morning", label: "晨课", detail: "读《论语》，摘制艺章法题眼一则。" },
+                { id: "rhythm-midday", label: "午课", detail: "按制艺章法作短纲，限时成段。" },
+                { id: "rhythm-evening", label: "暮课", detail: "誊清旧文，圈出一处可改处。" }
+              ],
+              checkpoints: [
+                { id: "checkpoint-first", label: "上旬复核", detail: "交一则制艺章法短答给老师圈点。" },
+                { id: "checkpoint-third", label: "下旬定稿", detail: "把制艺章法弱处写入考前札记。" }
+              ],
+              riskNotes: ["制艺章法若三旬无进，下一场备考压力会继续抬高。"],
+              nextActions: ["今日先做“破题一则”，写成短札交老师圈点。"],
+              authorityBoundary: "读书计划由服务器按学业画像、师友关系和科场记录生成；AI 老师只能建议，不能直接改属性、保结、科名、榜次或官职。"
             },
             examPreparation: {
               examName: "童试",
@@ -627,10 +649,18 @@ describe("S74.1 React client shell", () => {
     expect(screen.getByText("隔日练破题与承题。")).toBeTruthy();
     expect(screen.getByText("沈同窗")).toBeTruthy();
     expect(screen.getByText("童试")).toBeTruthy();
-    expect(screen.getByText(/备考压力/)).toBeTruthy();
+    expect(screen.getByText("晨课")).toBeTruthy();
+    expect(screen.getByText(/三旬后复盘/)).toBeTruthy();
+    expect(screen.getByRole("heading", { name: "备考压力" })).toBeTruthy();
     expect(screen.getByText(/吃紧 62\/100/)).toBeTruthy();
     expect(screen.getByRole("link", { name: "入科举页" }).getAttribute("href")).toBe(`/game/${sessionId}/exam`);
 
+    fireEvent.click(screen.getByRole("button", { name: "执行首课" }));
+    expect(useUiStateStore.getState().actionDraft).toMatchObject({
+      source: "role-surface",
+      targetPage: "game",
+      text: "今日先做“破题一则”，写成短札交老师圈点。"
+    });
     fireEvent.click(screen.getByRole("button", { name: "请老师改文" }));
     expect(useUiStateStore.getState().actionDraft).toMatchObject({
       source: "role-surface",

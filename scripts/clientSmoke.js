@@ -810,6 +810,7 @@ async function assertScholarPanel(page, sessionId, screenshotsDir) {
       hasNetwork: text.includes("师友"),
       hasCalendar: text.includes("科期"),
       hasPractice: text.includes("文章练习"),
+      hasDeepPlan: text.includes("晨课") && text.includes("复盘") && text.includes("执行首课"),
       hasBoundary: text.includes("只写草稿，结果由服务器裁决"),
       examPath: examLink ? new URL(examLink.href).pathname : "",
       rankingPath: rankingLink ? new URL(rankingLink.href).pathname : "",
@@ -827,11 +828,13 @@ async function assertScholarPanel(page, sessionId, screenshotsDir) {
   if (!panelSnapshot.hasNetwork) failures.push("missing academy network");
   if (!panelSnapshot.hasCalendar) failures.push("missing exam calendar");
   if (!panelSnapshot.hasPractice) failures.push("missing practice block");
+  if (!panelSnapshot.hasDeepPlan) failures.push("missing deep study plan rhythm");
   if (!panelSnapshot.hasBoundary) failures.push("missing server boundary");
   if (panelSnapshot.dimensionCount < 7) failures.push(`expected seven study dimensions, saw ${panelSnapshot.dimensionCount}`);
   if (panelSnapshot.examPath !== panelSnapshot.expectedExamPath) failures.push(`exam link was ${panelSnapshot.examPath}`);
   if (panelSnapshot.rankingPath !== panelSnapshot.expectedRankingPath) failures.push(`ranking link was ${panelSnapshot.rankingPath}`);
   if (!panelSnapshot.buttons.some((button) => button.text === "请老师改文" && !button.disabled)) failures.push("teacher draft button missing or disabled");
+  if (!panelSnapshot.buttons.some((button) => button.text === "执行首课" && !button.disabled)) failures.push("study plan first lesson draft button missing or disabled");
   if (!panelSnapshot.buttons.some((button) => button.text === "整备赴考" && !button.disabled)) failures.push("exam prep draft button missing or disabled");
   if (!panelSnapshot.background.includes("/assets/ui/")) failures.push("role background asset was not applied through the manifest registry");
   if (panelSnapshot.forbiddenText.length) failures.push(`unsafe text leaked: ${panelSnapshot.forbiddenText.join(", ")}`);

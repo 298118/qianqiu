@@ -1528,6 +1528,68 @@ button:disabled {
   color: #514232;
 }
 
+.scholarPlanSummary {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  margin: 0;
+}
+
+.scholarPlanSummary div,
+.scholarPlanTimeline li {
+  min-width: 0;
+  border: 1px solid rgba(84, 60, 43, 0.18);
+  background: rgba(255, 252, 238, 0.52);
+  padding: 7px 8px;
+}
+
+.scholarPlanSummary dt {
+  color: #697052;
+  font-size: 0.72rem;
+  font-weight: 800;
+}
+
+.scholarPlanSummary dd {
+  margin: 2px 0 0;
+  color: #2f251d;
+  font-weight: 900;
+}
+
+.scholarPlanTimeline {
+  display: grid;
+  gap: 7px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.scholarPlanTimeline li {
+  display: grid;
+  grid-template-columns: minmax(48px, 0.22fr) minmax(0, 1fr);
+  gap: 8px;
+  align-items: start;
+  color: #514232;
+}
+
+.scholarPlanTimeline strong,
+.scholarPlanTimeline span {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.scholarPlanTimeline strong {
+  color: #5e382d;
+  font-weight: 900;
+}
+
+.scholarPlanTimeline span {
+  line-height: 1.55;
+}
+
+.scholarPlanCheckpoints li {
+  border-left: 3px solid rgba(64, 86, 64, 0.42);
+}
+
 .scholarPanelCompactDl {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -4280,6 +4342,7 @@ button:disabled {
   .scholarPanelStatus,
   .scholarPanelMetrics,
   .scholarPanelCompactDl,
+  .scholarPlanSummary,
   .scholarPracticeGrid {
     grid-template-columns: 1fr;
   }
@@ -4290,7 +4353,8 @@ button:disabled {
   }
 
   .scholarDimensionList div,
-  .scholarExamMeta {
+  .scholarExamMeta,
+  .scholarPlanTimeline li {
     grid-template-columns: 1fr;
   }
 

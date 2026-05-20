@@ -20,6 +20,12 @@ type SafeListItem = {
   readonly body?: string;
 };
 
+type StudyPlanDetail = {
+  readonly id: string;
+  readonly label: string;
+  readonly detail: string;
+};
+
 const unsafeScholarFragments = [
   "provider",
   "proposal",
@@ -221,12 +227,43 @@ function getAcademyNetwork(studyProfile: JsonObject) {
 
 function getNextPlan(studyProfile: JsonObject) {
   const plan = getObjectField(studyProfile, "nextPlan");
+  const intensity = getObjectField(plan, "intensity");
+  const planningWindow = getObjectField(plan, "planningWindow");
+  const readPlanDetails = (key: string, limit: number): readonly StudyPlanDetail[] => asArray(plan[key])
+    .slice(0, limit)
+    .map((entry, index) => {
+      const item = asRecord(entry);
+      const label = cleanScholarText(item.label, "", 32);
+      const detail = cleanScholarText(item.detail || item.summary, "", 96);
+      if (!label && !detail) return null;
+      return {
+        id: cleanScholarText(item.id || `${key}-${index}`, `${key}-${index}`, 48),
+        label: label || "读书节点",
+        detail: detail || "按服务器读书计划执行。"
+      };
+    })
+    .filter((item): item is StudyPlanDetail => item !== null);
   return {
     title: cleanScholarText(plan.title, "下旬读书日课", 44),
     focus: cleanScholarText(plan.focus, "经义根柢", 28),
     items: asArray(plan.items).slice(0, 4).map((item) => cleanScholarText(item, "温书", 64)),
     books: asArray(plan.bookList).slice(0, 4).map((item) => cleanScholarText(item, "书目未载", 32)),
-    serverDecision: cleanScholarText(plan.serverDecision, "读书计划由服务器按可见画像派生。", 96)
+    serverDecision: cleanScholarText(plan.serverDecision, "读书计划由服务器按可见画像派生。", 96),
+    intensity: {
+      label: cleanScholarText(intensity.label, "稳进", 20),
+      currentScore: cleanNumber(intensity.currentScore, 0),
+      targetScore: cleanNumber(intensity.targetScore, 0),
+      summary: cleanScholarText(intensity.summary, "按服务器读书计划稳步推进。", 96)
+    },
+    window: {
+      startLabel: cleanScholarText(planningWindow.startLabel, "本旬", 36),
+      reviewLabel: cleanScholarText(planningWindow.reviewLabel, "三旬后复盘", 36)
+    },
+    rhythm: readPlanDetails("dailyRhythm", 3),
+    checkpoints: readPlanDetails("checkpoints", 3),
+    risks: asArray(plan.riskNotes).slice(0, 3).map((item) => cleanScholarText(item, "", 88)).filter(Boolean),
+    actions: asArray(plan.nextActions).slice(0, 3).map((item) => cleanScholarText(item, "", 88)).filter(Boolean),
+    authorityBoundary: cleanScholarText(plan.authorityBoundary, "读书计划由服务器裁决，前端只写草稿。", 120)
   };
 }
 
@@ -352,6 +389,46 @@ export function ScholarPanel({
             {nextPlan.books.length ? (
               <p>荐读：{nextPlan.books.join("、")}</p>
             ) : null}
+            <dl className="scholarPlanSummary" aria-label="读书计划进度">
+              <div>
+                <dt>节奏</dt>
+                <dd>{nextPlan.intensity.label}</dd>
+              </div>
+              <div>
+                <dt>当前</dt>
+                <dd>{nextPlan.intensity.currentScore}</dd>
+              </div>
+              <div>
+                <dt>目标</dt>
+                <dd>{nextPlan.intensity.targetScore}</dd>
+              </div>
+            </dl>
+            <p>{nextPlan.window.startLabel}起，{nextPlan.window.reviewLabel}。{nextPlan.intensity.summary}</p>
+            {nextPlan.rhythm.length ? (
+              <ul className="scholarPlanTimeline" aria-label="晨午暮日课">
+                {nextPlan.rhythm.map((item) => (
+                  <li key={item.id}>
+                    <strong>{item.label}</strong>
+                    <span>{item.detail}</span>
+                  </li>
+                ))}
+              </ul>
+            ) : null}
+            {nextPlan.checkpoints.length ? (
+              <ul className="scholarPlanTimeline scholarPlanCheckpoints" aria-label="读书复盘节点">
+                {nextPlan.checkpoints.map((item) => (
+                  <li key={item.id}>
+                    <strong>{item.label}</strong>
+                    <span>{item.detail}</span>
+                  </li>
+                ))}
+              </ul>
+            ) : null}
+            {nextPlan.risks.length ? (
+              <p>风险：{nextPlan.risks[0]}</p>
+            ) : null}
+            <p>{nextPlan.authorityBoundary}</p>
+            {nextPlan.actions.length ? draftButtonText("执行首课", nextPlan.actions[0], canDraft, onDraft) : null}
             {draftButtonText("安排日课", `按读书簿安排${nextPlan.focus}日课：${nextPlan.items.join("；") || "温书作文"}。`, canDraft, onDraft)}
           </section>
         </article>

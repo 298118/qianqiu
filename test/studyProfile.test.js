@@ -49,8 +49,17 @@ test("initial study profile is a server-built visible projection", () => {
   assert.ok(view.dimensions.classicsFoundation >= 0);
   assert.ok(view.teacherAdvice.length >= 1);
   assert.equal(view.nextPlan.proposedByAi, false);
+  assert.equal(view.nextPlan.schemaVersion, 1);
+  assert.ok(view.nextPlan.dailyRhythm.some((item) => item.label === "晨课"));
+  assert.ok(view.nextPlan.checkpoints.some((item) => /复核|互评|定稿/.test(item.label)));
+  assert.ok(view.nextPlan.nextActions.some((action) => /老师|复盘|短札/.test(action)));
+  assert.ok(view.nextPlan.intensity.targetScore >= view.nextPlan.intensity.currentScore);
   assert.match(view.authorityBoundary, /服务器/);
   assert.match(view.aiReadScope, /只.*读取/);
+
+  const promptSummary = summarizeStudyProfileForPrompt(worldState);
+  assert.ok(promptSummary.nextPlan.dailyRhythm.some((item) => item.label === "晨课"));
+  assert.match(promptSummary.nextPlan.authorityBoundary || view.nextPlan.authorityBoundary, /服务器/);
 });
 
 test("study profile view exposes safe exam preparation pressure while active exam is open", () => {
@@ -191,15 +200,37 @@ test("study profile normalizer strips sensitive text from visible fields", () =>
       focus: "经义",
       items: ["hidden item"],
       bookList: ["《论语》"],
+      planningWindow: {
+        startLabel: "/mnt/e/study-plan",
+        reviewLabel: "statePatch review"
+      },
+      intensity: {
+        band: "provider",
+        label: "provider payload",
+        currentScore: 55,
+        targetScore: 70,
+        summary: "worldState plan"
+      },
+      dailyRhythm: [{ id: "rhythm-1", label: "provider", detail: "statePatch action" }],
+      checkpoints: [{ id: "checkpoint-1", label: "复盘", detail: "/home/study-check" }],
+      riskNotes: ["provider payload"],
+      nextActions: ["statePatch action", "按经义复盘。"],
+      authorityBoundary: "worldState direct write",
       serverDecision: "provider proposal"
     }
   };
 
-  const serializedView = JSON.stringify(buildStudyProfileView(worldState));
+  const view = buildStudyProfileView(worldState);
+  const serializedView = JSON.stringify(view);
   const serializedPrompt = JSON.stringify(summarizeStudyProfileForPrompt(worldState));
 
+  assert.equal(view.nextPlan.intensity.label, "补弱");
+  assert.equal(view.nextPlan.dailyRhythm[0].label, "晨课");
+  assert.equal(view.nextPlan.nextActions.some((action) => /按经义复盘/.test(action)), true);
   assert.doesNotMatch(serializedView, /hidden|sealed|provider proposal|rawProvider|prompt|sk-study-secret|data\/sessions/i);
+  assert.doesNotMatch(serializedView, /provider payload|statePatch|worldState|\/mnt\/|\/home\//i);
   assert.doesNotMatch(serializedPrompt, /hidden|sealed|provider proposal|rawProvider|prompt|sk-study-secret|data\/sessions/i);
+  assert.doesNotMatch(serializedPrompt, /provider payload|statePatch|worldState|\/mnt\/|\/home\//i);
 });
 
 test("exam result refreshes weakness profile and teacher plan", () => {
@@ -269,6 +300,10 @@ test("study profile view and prompt summary strip polluted unknown fields", () =
       focus: "经义",
       items: ["晨读"],
       bookList: ["《论语》"],
+      dailyRhythm: [{ label: "provider payload", detail: "statePatch action" }],
+      checkpoints: [{ label: "上旬复核", detail: "/mnt/e/private" }],
+      riskNotes: ["worldState direct write"],
+      nextActions: ["按经义复盘。", "provider payload"],
       hiddenNotes: "SEALED_STUDY_PLAN_NOTE",
       serverDecision: "服务器裁决"
     }
@@ -280,8 +315,12 @@ test("study profile view and prompt summary strip polluted unknown fields", () =
 
   assert.equal(view.dimensions.classicsFoundation, 65);
   assert.equal(view.teacherAdvice[0].advice, "温书");
+  assert.equal(view.nextPlan.dailyRhythm[0].label, "晨课");
+  assert.equal(view.nextPlan.nextActions.some((action) => /按经义复盘/.test(action)), true);
   assert.doesNotMatch(serializedView, /SEALED_STUDY|provider proposal|sk-study-secret|hiddenNotes|rawProviderProposal/i);
+  assert.doesNotMatch(serializedView, /provider payload|statePatch|worldState|\/mnt\//i);
   assert.doesNotMatch(serializedPrompt, /SEALED_STUDY|provider proposal|sk-study-secret|hiddenNotes|rawProviderProposal/i);
+  assert.doesNotMatch(serializedPrompt, /provider payload|statePatch|worldState|\/mnt\//i);
 });
 
 test("ordinary provider patches cannot write studyProfile", () => {

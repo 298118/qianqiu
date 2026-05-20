@@ -592,6 +592,7 @@ test("S76.2 scholar panel uses safe study and exam projections as draft-only UI"
   const gamePageSource = readText("client/src/pages/GamePage.tsx");
   const scholarPanelSource = readText("client/src/components/ScholarPanel.tsx");
   const appTestSource = readText("client/src/__tests__/App.test.tsx");
+  const clientSmokeSource = readText("scripts/clientSmoke.js");
   const styleSource = readText("client/src/styles/global.css");
   const scholarPanelWithoutGuard = scholarPanelSource.replace(/const unsafeScholarFragments[\s\S]*?\] as const;\r?\n/, "");
   const runtimeCombined = `${gamePageSource}\n${scholarPanelWithoutGuard}\n${styleSource}`;
@@ -603,10 +604,17 @@ test("S76.2 scholar panel uses safe study and exam projections as draft-only UI"
   assert.match(scholarPanelSource, /export function ScholarPanel/);
   assert.match(scholarPanelSource, /studyProfileView/);
   assert.match(scholarPanelSource, /examCalendarView/);
+  assert.match(scholarPanelSource, /dailyRhythm/);
+  assert.match(scholarPanelSource, /scholarPlanTimeline/);
+  assert.match(scholarPanelSource, /执行首课/);
   assert.match(scholarPanelSource, /只写草稿，结果由服务器裁决/);
   assert.match(scholarPanelSource, /赶考、入场、评卷、放榜、晋级和授官都由服务器按规则裁决/);
   assert.match(styleSource, /scholarPanel/);
+  assert.match(styleSource, /scholarPlanSummary/);
+  assert.match(clientSmokeSource, /hasDeepPlan/);
+  assert.match(clientSmokeSource, /missing deep study plan rhythm/);
   assert.match(appTestSource, /renders the S76\.2 scholar panel from safe study and calendar views as draft-only actions/);
+  assert.match(appTestSource, /三旬后复盘/);
   assert.doesNotMatch(
     runtimeCombined,
     /\/api\/game\/state|\/api\/dev\/session-diagnostics|\/api\/exam\/question|\/api\/exam\/submit|dangerouslySetInnerHTML|localStorage|sessionStorage|data\/sessions|raw audit|provider payload|OPENAI_API_KEY|DEEPSEEK_API_KEY|MIMO_API_KEY|ANTHROPIC_API_KEY/

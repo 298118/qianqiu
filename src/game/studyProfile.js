@@ -7,6 +7,8 @@ const {
   STUDY_ACTION_PATTERNS,
   STUDY_DIMENSIONS,
   STUDY_INTERACTION_PATTERNS,
+  STUDY_PLAN_CADENCE,
+  STUDY_PLAN_SCHEMA_VERSION,
   STUDY_PROFILE_LIMITS,
   STUDY_PROFILE_SCHEMA_VERSION,
   STUDY_SPONSORSHIP_THRESHOLDS
@@ -31,7 +33,8 @@ function cleanText(value, fallback = "", maxLength = STUDY_PROFILE_LIMITS.maxVis
   return trimmed ? trimmed.slice(0, maxLength) : fallback;
 }
 
-const SENSITIVE_STUDY_TEXT_PATTERN = /(hidden|sealed|provider proposal|rawProvider|prompt|api[_ -]?key|sk-[A-Za-z0-9_-]{4,}|tp-[A-Za-z0-9_-]{4,}|data[\\/](?:sessions|audit)|sqlite|event_log|ai_change_proposals)/i;
+const SENSITIVE_STUDY_TEXT_PATTERN =
+  /(hidden|hiddenNotes|hiddenIntent|sealed|provider(?:\s+payload|\s+proposal)?|raw[_ -]?(?:provider|prompt|audit|ledger|table)?|statePatch|state[_ -]?patch|worldState|world[_ -]?state|prompt|api[_ -]?key|sk-[A-Za-z0-9_-]{4,}|tp-[A-Za-z0-9_-]{4,}|data[\\/](?:sessions|audit)|[A-Za-z]:[\\/]|\/mnt\/|\/home\/|\/tmp\/|sqlite|event_log|ai_change_proposals)/i;
 
 function cleanVisibleText(value, fallback = "", maxLength = STUDY_PROFILE_LIMITS.maxVisibleText) {
   const text = cleanText(value, "", maxLength);
@@ -251,30 +254,183 @@ function normalizeStudyProfile(profile, worldState = {}) {
     .slice(-STUDY_PROFILE_LIMITS.maxRecommendedBooks);
 
   if (normalized.nextPlan && typeof normalized.nextPlan === "object") {
-    normalized.nextPlan = normalizeStudyPlan(normalized.nextPlan, worldState);
+    normalized.nextPlan = normalizeStudyPlan(normalized.nextPlan, worldState, normalized);
   }
   normalized.summary = cleanVisibleText(profile.summary, initial.summary, 180);
   return normalized;
 }
 
-function normalizeStudyPlan(plan = {}, worldState = {}) {
+function inferPlanDimensionKey(focus = "") {
+  const normalized = cleanText(focus, "", 80);
+  for (const [key, config] of Object.entries(STUDY_DIMENSIONS)) {
+    if (key === normalized || config.label === normalized || config.weakLabel === normalized || config.strongLabel === normalized) {
+      return key;
+    }
+  }
+  return "classicsFoundation";
+}
+
+function planIntensityForScore(score) {
+  const value = clampMetric(score);
+  return STUDY_PLAN_CADENCE.intensityBands.find((band) => value <= band.maxScore) ||
+    STUDY_PLAN_CADENCE.intensityBands.at(-1);
+}
+
+function normalizePlanDetailList(items = [], limit, fallbackItems = []) {
+  const source = Array.isArray(items) && items.length ? items : fallbackItems;
+  const cleaned = source
+    .map((item, index) => {
+      const record = item && typeof item === "object" && !Array.isArray(item) ? item : {};
+      const label = cleanVisibleText(record.label || item, "", 48);
+      const detail = cleanVisibleText(record.detail || record.summary, "", 120);
+      if (!label && !detail) return null;
+      return {
+        id: cleanVisibleText(record.id, `study-plan-detail-${index}`, 64),
+        label: label || "读书节点",
+        detail: detail || "按服务器读书计划执行。"
+      };
+    })
+    .filter(Boolean)
+    .slice(0, limit);
+  if (!cleaned.length && source !== fallbackItems && Array.isArray(fallbackItems) && fallbackItems.length) {
+    return normalizePlanDetailList([], limit, fallbackItems);
+  }
+  return cleaned;
+}
+
+function formatPlanTemplate(template = "", context = {}) {
+  return cleanVisibleText(
+    template
+      .replace(/\{focus\}/g, context.focus || "经义根柢")
+      .replace(/\{book\}/g, context.book || "四书旧注"),
+    "",
+    120
+  );
+}
+
+function buildDefaultPlanDetails({
+  worldState = {},
+  focus = "经义根柢",
+  dimensionKey = "classicsFoundation",
+  currentScore = 0,
+  targetScore = null,
+  bookList = [],
+  items = []
+} = {}) {
+  const intensity = planIntensityForScore(currentScore);
+  const gain = STUDY_PLAN_CADENCE.targetGainByIntensity[intensity.key] || 6;
+  const target = Number.isFinite(targetScore)
+    ? clampMetric(targetScore)
+    : clampMetric(currentScore + gain);
+  const primaryBook = bookList.find(Boolean) || STUDY_DIMENSIONS[dimensionKey]?.bookRecommendations?.[0] || "四书旧注";
+  const rhythmContext = { focus, book: primaryBook };
+  const dailyRhythm = STUDY_PLAN_CADENCE.rhythmSlots.map((slot) => ({
+    id: `rhythm-${slot.id}`,
+    label: slot.label,
+    detail: formatPlanTemplate(slot.template, rhythmContext)
+  }));
+  const checkpoints = STUDY_PLAN_CADENCE.checkpointSlots.map((slot) => ({
+    id: `checkpoint-${slot.id}`,
+    label: slot.label,
+    detail: formatPlanTemplate(slot.template, rhythmContext)
+  }));
+  const firstItem = items.find(Boolean) || `补${focus}短课一则`;
+  return {
+    schemaVersion: STUDY_PLAN_SCHEMA_VERSION,
+    planningWindow: {
+      startLabel: formatYearMonthPeriod(worldState),
+      reviewAfterTenDayPeriods: STUDY_PLAN_CADENCE.reviewTenDayPeriods,
+      reviewLabel: `${STUDY_PLAN_CADENCE.reviewTenDayPeriods}旬后复盘`
+    },
+    intensity: {
+      band: intensity.key,
+      label: intensity.label,
+      currentScore: clampMetric(currentScore),
+      targetScore: target,
+      summary: intensity.summary
+    },
+    dailyRhythm,
+    checkpoints,
+    riskNotes: [
+      `${focus}若三旬无进，下一场备考压力会继续抬高。`,
+      "老师建议只作读书提案，保结、入场与取中仍由服务器裁决。"
+    ],
+    nextActions: [
+      `今日先做“${firstItem}”，写成短札交老师圈点。`,
+      `按${focus}日课复盘三旬，届时再看是否调整书目。`
+    ],
+    authorityBoundary: "读书计划由服务器按学业画像、师友关系和科场记录生成；AI 老师只能建议，不能直接改属性、保结、科名、榜次或官职。"
+  };
+}
+
+function normalizePlanWindow(window = {}, fallback = {}) {
+  const source = window && typeof window === "object" && !Array.isArray(window) ? window : {};
+  return {
+    startLabel: cleanVisibleText(source.startLabel, fallback.startLabel || "本旬", 48),
+    reviewAfterTenDayPeriods: Number.isFinite(source.reviewAfterTenDayPeriods)
+      ? Math.max(1, Math.min(12, Math.round(source.reviewAfterTenDayPeriods)))
+      : fallback.reviewAfterTenDayPeriods || STUDY_PLAN_CADENCE.reviewTenDayPeriods,
+    reviewLabel: cleanVisibleText(source.reviewLabel, fallback.reviewLabel || "三旬后复盘", 48)
+  };
+}
+
+function normalizePlanIntensity(intensity = {}, fallback = {}) {
+  const source = intensity && typeof intensity === "object" && !Array.isArray(intensity) ? intensity : {};
+  const fallbackBand = fallback.band || "steady";
+  return {
+    band: cleanVisibleText(source.band, fallbackBand, 32),
+    label: cleanVisibleText(source.label, fallback.label || "稳进", 32),
+    currentScore: clampMetric(source.currentScore ?? fallback.currentScore ?? 0),
+    targetScore: clampMetric(source.targetScore ?? fallback.targetScore ?? 70),
+    summary: cleanVisibleText(source.summary, fallback.summary || "按服务器读书计划稳步推进。", 120)
+  };
+}
+
+function normalizeStudyPlan(plan = {}, worldState = {}, profile = {}) {
   const items = Array.isArray(plan.items)
     ? plan.items.map((item) => cleanVisibleText(item, "", 80)).filter(Boolean)
     : [];
   const bookList = Array.isArray(plan.bookList)
     ? plan.bookList.map((item) => cleanVisibleText(item, "", 48)).filter(Boolean)
     : [];
+  const focus = cleanVisibleText(plan.focus, "经义根柢", 48);
+  const dimensionKey = inferPlanDimensionKey(focus);
+  const profileScore = Number.isFinite(profile.dimensions?.[dimensionKey])
+    ? profile.dimensions[dimensionKey]
+    : null;
+  const score = Number.isFinite(plan.intensity?.currentScore)
+    ? plan.intensity.currentScore
+    : Number.isFinite(plan.currentScore)
+      ? plan.currentScore
+      : profileScore ?? 0;
+  const defaults = buildDefaultPlanDetails({
+    worldState,
+    focus,
+    dimensionKey,
+    currentScore: score,
+    targetScore: plan.intensity?.targetScore,
+    bookList,
+    items
+  });
   return {
+    schemaVersion: STUDY_PLAN_SCHEMA_VERSION,
     id: cleanVisibleText(plan.id, `study-plan-${worldState.turnCount || 0}`, 80),
     title: cleanVisibleText(plan.title, "下旬读书日课", 80),
-    focus: cleanVisibleText(plan.focus, "经义根柢", 48),
+    focus,
     items: items.slice(0, STUDY_PROFILE_LIMITS.maxPlanItems),
     bookList: bookList.slice(0, STUDY_PROFILE_LIMITS.maxBooks),
+    planningWindow: normalizePlanWindow(plan.planningWindow, defaults.planningWindow),
+    intensity: normalizePlanIntensity(plan.intensity, defaults.intensity),
+    dailyRhythm: normalizePlanDetailList(plan.dailyRhythm, STUDY_PROFILE_LIMITS.maxPlanRhythm, defaults.dailyRhythm),
+    checkpoints: normalizePlanDetailList(plan.checkpoints, STUDY_PROFILE_LIMITS.maxPlanCheckpoints, defaults.checkpoints),
+    riskNotes: normalizeStringList(plan.riskNotes || defaults.riskNotes, STUDY_PROFILE_LIMITS.maxPlanRiskNotes, 96),
+    nextActions: normalizeStringList(plan.nextActions || defaults.nextActions, STUDY_PROFILE_LIMITS.maxPlanNextActions, 96),
     serverDecision: cleanVisibleText(
       plan.serverDecision,
       "服务器裁决读书计划；AI 只可提出建议。",
       120
     ),
+    authorityBoundary: cleanVisibleText(plan.authorityBoundary, defaults.authorityBoundary, 160),
     proposedByAi: plan.proposedByAi === true,
     turn: Number.isFinite(plan.turn) ? Math.max(0, Math.round(plan.turn)) : worldState.turnCount || 0
   };
@@ -1039,13 +1195,24 @@ function buildNextPlan(worldState = {}, profile = {}) {
     calligraphyCopying: ["小楷临帖一页", "按朱卷格式誊文", "检查涂改与行款"],
     examEndurance: ["限时拟纲", "静坐调息", "模拟号舍半日作答"]
   };
+  const items = (itemsByKey[key] || itemsByKey.classicsFoundation).slice(0, STUDY_PROFILE_LIMITS.maxPlanItems);
+  const bookList = Array.from(new Set(config.bookRecommendations || [])).slice(0, STUDY_PROFILE_LIMITS.maxBooks);
+  const details = buildDefaultPlanDetails({
+    worldState,
+    focus: config.label,
+    dimensionKey: key,
+    currentScore: weakest?.value || 0,
+    bookList,
+    items
+  });
   return {
     id: `study-plan-${key}-${worldState.turnCount || 0}`,
     title: `${config.label}补课`,
     focus: config.label,
-    items: (itemsByKey[key] || itemsByKey.classicsFoundation).slice(0, STUDY_PROFILE_LIMITS.maxPlanItems),
-    bookList: Array.from(new Set(config.bookRecommendations || [])).slice(0, STUDY_PROFILE_LIMITS.maxBooks),
-    serverDecision: "服务器按当前弱点画像生成；真实 AI 老师后续只能提交 proposal。",
+    items,
+    bookList,
+    ...details,
+    serverDecision: "服务器按当前弱点画像生成；真实 AI 老师后续只能提交建议。",
     proposedByAi: false,
     turn: worldState.turnCount || 0
   };
@@ -1109,7 +1276,7 @@ function buildStudyProfileView(worldState = {}) {
   view.recentExercises = (view.recentExercises || []).slice(-STUDY_PROFILE_LIMITS.maxRecentExercises);
   view.smallExercises = (view.smallExercises || []).slice(-STUDY_PROFILE_LIMITS.maxSmallExercises);
   view.recommendedBooks = (view.recommendedBooks || []).slice(-STUDY_PROFILE_LIMITS.maxRecommendedBooks);
-  view.nextPlan = view.nextPlan ? normalizeStudyPlan(view.nextPlan, worldState) : null;
+  view.nextPlan = view.nextPlan ? normalizeStudyPlan(view.nextPlan, worldState, view) : null;
   view.examPreparation = buildExamPreparationForStudyView(worldState);
   view.aiReadScope = "AI 老师、出题与评卷只能读取本 view 的可见摘要；不得读取原始审计、模型原始建议、隐藏札记、完整提示词、本地路径或密钥。";
   return view;
@@ -1164,6 +1331,13 @@ function summarizeStudyProfileForPrompt(worldState = {}) {
       focus: view.nextPlan.focus,
       items: view.nextPlan.items,
       bookList: view.nextPlan.bookList,
+      planningWindow: view.nextPlan.planningWindow,
+      intensity: view.nextPlan.intensity,
+      dailyRhythm: view.nextPlan.dailyRhythm,
+      checkpoints: view.nextPlan.checkpoints,
+      riskNotes: view.nextPlan.riskNotes,
+      nextActions: view.nextPlan.nextActions,
+      authorityBoundary: view.nextPlan.authorityBoundary,
       serverDecision: view.nextPlan.serverDecision
     } : null,
     examPreparation: view.examPreparation ? {

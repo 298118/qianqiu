@@ -114,7 +114,7 @@
 | S88.0 | DONE | 系统打磨路线图与边界复核 | 已新增 `docs/QIANQIU_POLISHING_ROADMAP.md`，把用户要求的全面打磨拆为 S88.1-S88.12 小步骤，并确认当前工作树仅有未跟踪 `npm-start.log` / `npm-start.err.log`，不纳入本轮提交。 |
 | S88.1 | DONE | AI remote helper/provider public-safe envelope | 已把 `remoteHelpers` 的 prompt task、provider requester、validated payload 纳入 `npm run typecheck:server`，并为 AI connection public response、provider fallback 日志、诊断错误和玩家/审计安全出口增加 raw provider/prompt/key/path 脱敏与 forbidden field contract。 |
 | S88.2 | DONE | SQLite derived row builder 类型边界 | 已覆盖 `SqliteWorldSessionRow`、`SqlitePromptRetrievalRow`、`SqliteSafeSearchIndexRow`、prompt/safe repair status、maintenance safe diagnostics 和首批 row builder JSDoc/TS contract；派生表继续只从 `world_sessions.world_state_json` 单向修复。 |
-| S88.3 | IN_PROGRESS | 书生主线补强一轮 | 已完成入仕首月差事、备考压力/入场反馈、阅卷放榜同年座师过渡三个切片；后续继续深化读书计划与考试入场后反馈。 |
+| S88.3 | IN_PROGRESS | 书生主线补强一轮 | 已完成入仕首月差事、备考压力/入场反馈、阅卷放榜同年座师过渡、读书计划深化四个切片；后续继续补考试入场后反馈。 |
 | S88.4 | TODO | 入仕官员首轮官场体验 | 补官方履历、差遣、考成、上官同僚、奏折回执和首月月报闭环。 |
 | S88.5 | TODO | 六身份循环矩阵 | 为皇帝、大臣、将领、地方官、书生、入仕官员补差异化事务、风险、待办和身份面板。 |
 | S88.6 | TODO | 官场与世界后果追踪 | 奏折、政令、军务、刑名、财政、外交、地方事务、任免、朝议、月报和长期事件统一增加可追踪后果 refs。 |
@@ -127,7 +127,7 @@
 
 ## 5. 最新状态
 
-- S88 当前基线：全面系统打磨专项已启动，规划见 [QIANQIU_POLISHING_ROADMAP.md](QIANQIU_POLISHING_ROADMAP.md)。S88.1 已完成 AI remote helper/provider public-safe envelope。S88.2 已完成 SQLite derived row builder 类型边界：`src/contracts/serverContracts.ts` 固定 world session、prompt retrieval、safe search、repair status 和 safe diagnostics 类型，`sqlitePromptRetrievalTables.js`、`sqliteSafeSearchTables.js`、`sqliteMaintenance.js` 纳入 `npm run typecheck:server`，继续保持派生表只从 `world_sessions.world_state_json` 单向修复。S88.3 已推进三个切片：殿试授官后会按服务器授官轨迹生成首月官场差事；考试取题后会按盘费、路途、保结、准考缺口、学业维度、体力心态和读书计划派生安全备考压力与入场反馈，并进入 public `entryPreparation`、`examProcedureView`、`studyProfileView`、书生面板和科举页；放榜后会由 `examAftermathView` 从服务器定榜、科名荣誉、公开同年座师网络和授官轨迹整理公开过渡摘要与草稿建议，皇榜页只读展示。下一步继续补读书计划深化与考试入场后反馈。
+- S88 当前基线：全面系统打磨专项已启动，规划见 [QIANQIU_POLISHING_ROADMAP.md](QIANQIU_POLISHING_ROADMAP.md)。S88.1 已完成 AI remote helper/provider public-safe envelope。S88.2 已完成 SQLite derived row builder 类型边界：`src/contracts/serverContracts.ts` 固定 world session、prompt retrieval、safe search、repair status 和 safe diagnostics 类型，`sqlitePromptRetrievalTables.js`、`sqliteSafeSearchTables.js`、`sqliteMaintenance.js` 纳入 `npm run typecheck:server`，继续保持派生表只从 `world_sessions.world_state_json` 单向修复。S88.3 已推进四个切片：殿试授官后会按服务器授官轨迹生成首月官场差事；考试取题后会按盘费、路途、保结、准考缺口、学业维度、体力心态和读书计划派生安全备考压力与入场反馈，并进入 public `entryPreparation`、`examProcedureView`、`studyProfileView`、书生面板和科举页；放榜后会由 `examAftermathView` 从服务器定榜、科名荣誉、公开同年座师网络和授官轨迹整理公开过渡摘要与草稿建议，皇榜页只读展示；读书计划现在由 `studyProfileView.nextPlan` 暴露服务器生成的三旬窗口、补弱强度、晨午暮日课、复盘节点、风险提示、首课草稿和权限边界，React 书生面板只读展示并只写行动草稿。下一步继续补考试入场后反馈。
 - S87 当前基线：后端 route/API 响应类型覆盖已完成。`src/contracts/serverContracts.ts` 已覆盖 game/exam/AI/inventory/NPC/trade/delegation public response；`src/routes/routeResponses.js` 以局部 `@ts-check` helper 接入 `src/routes/game.js`、`src/routes/exam.js` 和 `src/routes/ai.js`，并在运行时拒绝 public `worldState` raw ledger key；大型 route 文件仍未 whole-file `@ts-check`，CommonJS 运行方式不变。
 - S86 当前基线：后端 TypeScript 渐进迁移首轮已完成。新增 `npm run typecheck:server`、`npm run build:server:probe`、`tsconfig.server-check.json`、`tsconfig.server-probe.json`、`src/contracts/serverContracts.ts` 和 `src/contracts/runtimeGuards.ts`；安全 projection、AI facade/route policy、session/storage 高风险模块已选择性 `@ts-check`。后端仍以 CommonJS JavaScript 运行，`.ts` 试点不改变 `npm start`，Rust 仍只作为未来有性能证据后的可选 CLI/WASM/离线工具评估。
 - S81-S84 当前基线：NPC、资产、储物、交易与委派首轮闭环已完成。后端已有 `assetLedger`、`inventoryLedger`、`npcRoster`、`npcInteractionLedger`、`tradeLedger`、`delegatedTaskLedger`、开局背景裁决、AI task/schema/prompt/provider fallback、JSON/SQLite 同步和 player-state 安全 view；React 已有“囊箧” route、人物 NPC 工作台、对话/交易/委派面板和开局裁决摘要。前端只消费安全 API/view，不裁决资源、价格、关系或任务结果。
@@ -138,6 +138,24 @@
 - S78 及更早阶段均已迁入专题归档。活动台账不再展开完成流水；需要追溯时使用本文件顶部归档索引。
 
 ## 6. 最近完整验证口径
+
+本轮 S88.3 读书计划深化切片验证口径：
+
+- `node --check src/game/studyProfileConfig.js && node --check src/game/studyProfile.js && node --check scripts/clientSmoke.js`
+- `node --test test/studyProfile.test.js test/examTravel.test.js`
+- `node --test test/reactClientScaffold.test.js`
+- `npm run typecheck:server`
+- `npm run typecheck:client`
+- `npm run test:client -- --pool=vmForks --maxWorkers=2 client/src/__tests__/App.test.tsx`
+- `npm run test:client -- --pool=vmForks --maxWorkers=2`
+- `npm run build:client`
+- `AI_PROVIDER=mock npm run smoke:browser`
+- `npm run smoke:exam-s69`
+- `npm run check:docs-governance`
+- `node --test test/documentationGovernance.test.js`
+- `npm test`
+- `git diff --check`
+- 提交前只读子代理复审最终 diff 与验证证据。
 
 本轮 PLAN-S87 route/API 响应类型覆盖规划与治理规范改动验证口径：
 
@@ -309,6 +327,16 @@ S84 前端专项额外验收入口：
 - 子代理：Epicurus 只读梳理放榜后端过渡，建议用独立 server-owned aftermath view 串接榜次、科名、人脉和授官边界；Newton 只读梳理皇榜页与 smoke 接线，建议在 RankingPage 展示公开联系人和草稿按钮、在 client smoke 中断言区块存在。本轮实现已采纳。Euclid 提交前只读初审发现 `examAftermathView` 文本 sanitizer 仍会放过普通 `provider`、`provider payload` 与 `statePatch` 值的 P2；主代理已补 aftermath 专用 unsafe pattern 和污染回归。Euclid 复核确认该 P2 已修复，未发现新的 P0/P1/P2。
 - 提交：实现提交 `66153cb7`；本条 hash 由后续低风险纯文档提交回填。
 - 下一步：继续 S88.3 的读书计划深化与考试入场后反馈；保持完整 `scholar -> child_exam -> provincial_exam -> metropolitan_exam -> palace_exam -> official` smoke 为第一验收入口。
+
+### 2026-05-20：推进 S88.3 读书计划深化切片
+
+- 范围：延续 S88.3 书生主线补强的第四个 coherent slice。聚焦书生面板与 prompt 中的读书计划：下旬计划不再只是弱项条目和书目，而是由服务器按学业画像生成三旬可执行日课、复盘节点、风险和首课行动。
+- 实现：`src/game/studyProfileConfig.js` 新增 `STUDY_PLAN_SCHEMA_VERSION`、三旬复盘周期、强度档位、目标增益、晨午暮日课模板和复盘模板；`src/game/studyProfile.js` 把 `nextPlan` 规范化为 `schemaVersion`、`planningWindow`、`intensity`、`dailyRhythm`、`checkpoints`、`riskNotes`、`nextActions` 和 `authorityBoundary`，并让 `summarizeStudyProfileForPrompt()` 只读取同一安全投影。React `ScholarPanel` 展示计划节奏、当前/目标分、三旬窗口、晨午暮日课、复盘节点、风险和权限边界，新增“执行首课”按钮但只写行动草稿；`scripts/clientSmoke.js`、Vitest fixture 和 React 脚手架测试均增加深度读书计划断言。
+- 边界：读书计划仍由服务器按 `studyProfile`、师友关系和科场记录生成；AI 老师只能提交文本建议或点评，不能写 `studyProfile`、属性、保结、准考、科名、榜次、官职或 canonical state。后端 visible text sanitizer 现在拒绝通用 `provider`、`statePatch`、`worldState`、raw/prompt/audit/table、key、本地路径和 SQLite 形态；若整组日课或复盘节点被污染，会回落到服务器默认计划。
+- 验证：已通过本文件“本轮 S88.3 读书计划深化切片验证口径”中的语法检查、focused Node tests、server/client typecheck、React focused/scaffold tests、全量 Vitest、client build、browser smoke、完整书生路径 smoke、docs governance、documentation governance、完整 `npm test` 和 `git diff --check`。
+- 子代理：Sartre 只读梳理后端/API 接线，建议保持 `nextPlan` 为当前切片的 server-owned safe shape 并补污染回归；Jason 只读梳理前端和验证入口，建议在 `ScholarPanel` 接入日课/复盘/首课草稿并扩展 App fixture、client smoke 和 scaffold 断言。本轮实现已采纳。Sagan 提交前只读初审发现两个 P2：复审状态文档未回填、未跟踪 `npm-start.log` / `npm-start.err.log` 需要明确排除；本轮已回填文档，提交时只暂存本轮 tracked 文件并排除本地日志。
+- 提交：随本轮 S88.3 读书计划深化 coherent change 提交，最终 hash 由后续低风险文档提交回填。
+- 下一步：继续 S88.3 的考试入场后反馈；保持完整 `scholar -> child_exam -> provincial_exam -> metropolitan_exam -> palace_exam -> official` smoke 为第一验收入口。
 
 ### 2026-05-20：完成 S87.1-S87.7 route/API 响应类型覆盖
 

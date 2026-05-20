@@ -1,4 +1,5 @@
 const STUDY_PROFILE_SCHEMA_VERSION = 1;
+const STUDY_PLAN_SCHEMA_VERSION = 1;
 
 const STUDY_DIMENSIONS = Object.freeze({
   classicsFoundation: {
@@ -84,7 +85,57 @@ const STUDY_PROFILE_LIMITS = Object.freeze({
   maxClassmates: 4,
   maxPlanItems: 4,
   maxBooks: 6,
+  maxPlanRhythm: 3,
+  maxPlanCheckpoints: 4,
+  maxPlanRiskNotes: 4,
+  maxPlanNextActions: 4,
   maxVisibleText: 120
+});
+
+const STUDY_PLAN_CADENCE = Object.freeze({
+  reviewTenDayPeriods: 3,
+  targetGainByIntensity: Object.freeze({
+    urgent_repair: 12,
+    repair: 9,
+    steady: 6,
+    polish: 4
+  }),
+  intensityBands: Object.freeze([
+    Object.freeze({
+      key: "urgent_repair",
+      maxScore: 54,
+      label: "补破",
+      summary: "短处明显，先用三旬把破口补住。"
+    }),
+    Object.freeze({
+      key: "repair",
+      maxScore: 64,
+      label: "补弱",
+      summary: "弱项已露，三旬内先稳章法与根基。"
+    }),
+    Object.freeze({
+      key: "steady",
+      maxScore: 79,
+      label: "稳进",
+      summary: "根基尚可，按旬推进并留一轮复盘。"
+    }),
+    Object.freeze({
+      key: "polish",
+      maxScore: 100,
+      label: "润色",
+      summary: "长处可用，重在临场章法和卷面收束。"
+    })
+  ]),
+  rhythmSlots: Object.freeze([
+    Object.freeze({ id: "morning", label: "晨课", template: "读{book}，摘{focus}题眼一则。" }),
+    Object.freeze({ id: "midday", label: "午课", template: "按{focus}作短纲，限时成段。" }),
+    Object.freeze({ id: "evening", label: "暮课", template: "誊清旧文，圈出一处可改处。" })
+  ]),
+  checkpointSlots: Object.freeze([
+    Object.freeze({ id: "first_period", label: "上旬复核", template: "交一则{focus}短答给老师圈点。" }),
+    Object.freeze({ id: "second_period", label: "中旬互评", template: "请同窗驳难一回，留下公开评语。" }),
+    Object.freeze({ id: "third_period", label: "下旬定稿", template: "把{focus}弱处写入考前札记。" })
+  ])
 });
 
 const STUDY_INTERACTION_PATTERNS = Object.freeze({
@@ -114,6 +165,8 @@ module.exports = {
   STUDY_ACTION_PATTERNS,
   STUDY_DIMENSIONS,
   STUDY_INTERACTION_PATTERNS,
+  STUDY_PLAN_CADENCE,
+  STUDY_PLAN_SCHEMA_VERSION,
   STUDY_PROFILE_LIMITS,
   STUDY_SPONSORSHIP_THRESHOLDS,
   STUDY_PROFILE_SCHEMA_VERSION
