@@ -373,7 +373,7 @@ S84 前端专项额外验收入口：
 - 边界：首月体验只由服务器从公开 `officialCareer.assignments` 与考成簿派生；AI、上官同僚叙事和前端都不能直接写官职、差遣成败、考成、弹劾、月报账本或 hidden 私档。`officialCareer` 公开文本清洗拒绝 provider/proposal/prompt/raw/statePatch/worldState/key/path/SQLite 形态污染，`hiddenNotes` 仍不得进入 route view、prompt summary、月报或浏览器。
 - 验证：已按本文件“本轮 S88.4 官署首月体验切片验证口径”完成语法检查、focused Node tests（P1 修复后 26 项）、server/client typecheck、React App focused tests（36 项）、React scaffold tests（37 项）、全量 Vitest（68 项）、client build、`npm run smoke:exam-s69`、`AI_PROVIDER=mock npm run smoke:browser`、docs governance、documentation governance、完整 `npm test`（1006 项）和 `git diff --check`；Hypatia 提交前复核未发现新的 P0/P1/P2。
 - 子代理：Hypatia 只读梳理后端接线，建议以“首月差事推进与官署回执安全 view”为 S88.4 首个切片，并指出 `officialCareer` 公开文本污染测试缺口；本轮已采纳。提交前只读复审发现非翰林首月差事草稿不能推进并生成 `[官署回执]` 的 P1，主代理已让 `classifyOfficialAction()` 在通用考成/奏疏规则前覆盖馆课、清册、观政日课、册籍民情等首月标题关键词，并补全所有 `APPOINTMENT_FIRST_MONTH_ASSIGNMENTS` 模板的推进回归测试；Hypatia 复核确认 P1 已关闭，未发现新的 P0/P1/P2。
-- 提交：实现提交待回填。
+- 提交：实现提交 `bafbdce1`。提交哈希回填为低风险纯文档记录，按项目规则跳过额外子代理复审。
 - 下一步：继续 S88.4 的奏折/朝议入口与长期考成闭环；保持完整 `scholar -> child_exam -> provincial_exam -> metropolitan_exam -> palace_exam -> official` smoke 为第一验收入口。
 
 ### 2026-05-20：完成 S87.1-S87.7 route/API 响应类型覆盖
