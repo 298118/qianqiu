@@ -161,7 +161,7 @@
 - `npm test`（1051 项）
 - `git diff --check`
 - 提交前只读复审：Lovelace 未发现 P0/P1/P2。
-- 待收口：提交。
+- 实现提交：`d5f1055b`。
 
 本轮 S88.6 公开后果 refs 首片当前验证口径：
 
@@ -499,7 +499,7 @@ S84 前端专项额外验收入口：
 - 安全：本轮只消费 `domainConsequenceView` 的公开字段，`npc-profile` 不接该 source。新增敏感词守门覆盖 `outcomeId`、`stateDelta` / `playerDelta`、资源消耗、关系信号、auditRecord、raw ledger 名称、`safe_search_index` / `safe_search_fts` 等内部 token；topic surface / topic draft 保留公开 payload 字段名 `evidenceRefs`，但测试断言 raw evidence ref 值、ledger 名称、SQL/table/path/key 不会进入 topic context、topic draft provider context、搜索结果或 SQLite safe-search row。
 - 验证：当前已通过 `node --check src/game/resolverInputConfig.js`、`node --check src/game/resolverInputContext.js`、`node --check src/game/topicSurfaceView.js`、`node --check src/game/topicDrafts.js`、`node --check src/game/safeWorldSearch.js`、`node --check test/domainConsequenceTrace.test.js`、`node --check test/sqliteSafeSearch.test.js`、`node --check test/topicDraftRoute.test.js`、`node --test test/domainConsequenceTrace.test.js`（4 项）、`node --test test/topicSurfaceView.test.js test/resolverInputContext.test.js test/safeWorldSearch.test.js`（19 项）、`node --test test/sqliteSafeSearch.test.js`（5 项）、`node --test test/topicDraftRoute.test.js`（13 项）、`npm run typecheck:server`、`npm run check:docs-governance`、`node --test test/documentationGovernance.test.js`、完整 `npm test`（1051 项）和 `git diff --check`。
 - 子代理：Gibbs 只读探查建议将 `domainConsequenceView` 作为 `events` source collection 接入 resolver input 和奏折/诏令/朝议/刑名/军议类 surface，仅暴露 `recentConsequences`，不向 `npc-profile` 或 raw ledger 扩散；本轮采纳。Lovelace 提交前只读复审未发现 P0/P1/P2，仅建议后续在高事件量/evidence cap 场景补 domain consequence 可用性优先级回归。
-- 提交：待最终验证与只读复审后提交。
+- 提交：实现提交 `d5f1055b`；本哈希回填为低风险纯文档记录，不改代码、API/schema、运行时行为、提示词或验证工具，按项目规则跳过额外子代理复审。
 - 下一步：提交本 slice 后继续补前端可见追踪、旧存档污染、重复后果去重、inactive role 泄漏和高风险军务绕过探针。
 
 ### 2026-05-21：推进 S88.6 公开领域后果 refs 首片
