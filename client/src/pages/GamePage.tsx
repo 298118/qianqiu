@@ -350,6 +350,7 @@ export function GamePage() {
           actorMemoryView={session?.actorMemoryView ?? null}
           aiControlAuditView={session?.aiControlAuditView ?? null}
           playerMonthlyBriefingView={session?.playerMonthlyBriefingView ?? null}
+          courtResponseView={session?.courtResponseView ?? null}
           roleBackgroundPath={roleBackgroundAsset?.path}
           courtHref={sessionHref(routeCatalog.find((entry) => entry.id === "court")?.href ?? "/game/s74-preview/court")}
           runnable={runnable}
@@ -380,6 +381,7 @@ export function GamePage() {
           aiControlAuditView={session?.aiControlAuditView ?? null}
           worldEntityView={session?.worldEntityView ?? null}
           worldThreadView={session?.worldThreadView ?? null}
+          courtResponseView={session?.courtResponseView ?? null}
           mapRuntimeView={session?.mapRuntimeView ?? null}
           roleBackgroundPath={roleBackgroundAsset?.path}
           courtHref={sessionHref(routeCatalog.find((entry) => entry.id === "court")?.href ?? "/game/s74-preview/court")}

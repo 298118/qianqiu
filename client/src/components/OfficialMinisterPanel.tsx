@@ -10,6 +10,7 @@ type OfficialMinisterPanelProps = {
   readonly actorMemoryView?: JsonObject | null;
   readonly aiControlAuditView?: JsonObject | null;
   readonly playerMonthlyBriefingView?: JsonObject | null;
+  readonly courtResponseView?: JsonObject | null;
   readonly roleBackgroundPath?: string;
   readonly onDraft: (text: string) => void;
   readonly courtHref?: string;
@@ -22,6 +23,12 @@ type SafeListItem = {
   readonly meta?: string;
   readonly body?: string;
   readonly score?: number;
+};
+
+type SafeDraftAction = {
+  readonly id: string;
+  readonly label: string;
+  readonly text: string;
 };
 
 const unsafeOfficialMinisterFragments = [
@@ -421,6 +428,32 @@ function getCourtEntry(officialCareer: JsonObject) {
   };
 }
 
+function getCourtResponseDocket(courtResponseView: JsonObject) {
+  const rows = [
+    ...asArray(courtResponseView.responseItems),
+    ...asArray(courtResponseView.recentResponses)
+  ];
+  const items = listFromRows(rows, "court-response", 4, "奏议回应");
+  const actions: SafeDraftAction[] = asArray(courtResponseView.nextActions)
+    .map(asRecord)
+    .map((action, index) => ({
+      id: cleanOfficialMinisterText(action.id, `court-response-action-${index}`, 48),
+      label: cleanOfficialMinisterText(action.label, "拟回应", 24),
+      text: cleanOfficialMinisterText(action.text, "", 168)
+    }))
+    .filter((action) => action.text);
+  return {
+    active: courtResponseView.active === true && items.length > 0,
+    summary: cleanOfficialMinisterText(
+      courtResponseView.summary,
+      "跨身份奏议回应只读公开材料；票拟、补据、覆奏和考成观察只先写成草稿。",
+      148
+    ),
+    items,
+    actions
+  };
+}
+
 function draftButtonText(label: string, text: string, enabled: boolean, onDraft: (text: string) => void) {
   return (
     <button type="button" disabled={!enabled} onClick={() => onDraft(text)}>
@@ -437,6 +470,7 @@ export function OfficialMinisterPanel({
   actorMemoryView,
   aiControlAuditView,
   playerMonthlyBriefingView,
+  courtResponseView,
   roleBackgroundPath,
   onDraft,
   courtHref,
@@ -448,6 +482,7 @@ export function OfficialMinisterPanel({
   const actorMemory = asRecord(actorMemoryView);
   const aiAudit = asRecord(aiControlAuditView);
   const monthlyBriefing = asRecord(playerMonthlyBriefingView);
+  const courtResponse = getCourtResponseDocket(asRecord(courtResponseView));
   const posting = currentPostingFromView(officialPostings);
   const assessmentRecord = currentAssessmentFromView(officialPostings);
   const bureau = getBureauSummary(officialCareer, officialPostings, posting);
@@ -642,6 +677,15 @@ export function OfficialMinisterPanel({
 
         <article className="scholarPanelCard officialMinisterPanelMemorial" aria-labelledby="official-memorial-title">
           <h3 id="official-memorial-title">奏折朝议入口</h3>
+          {courtResponse.active ? (
+            <>
+              <p>{courtResponse.summary}</p>
+              <OfficialMinisterPanelList
+                items={courtResponse.items}
+                emptyText="暂无可回应奏议；不得补造批旨、赏罚、处分或弹劾结果。"
+              />
+            </>
+          ) : null}
           {courtEntry.active ? (
             <>
               <dl className="scholarPanelCompactDl">
@@ -697,6 +741,11 @@ export function OfficialMinisterPanel({
               </button>
             ))}
             {courtEntry.followUpNextActions.slice(0, 3).map((action) => (
+              <button key={action.id} type="button" disabled={!canDraft} onClick={() => onDraft(action.text)}>
+                {action.label}
+              </button>
+            ))}
+            {courtResponse.actions.slice(0, 3).map((action) => (
               <button key={action.id} type="button" disabled={!canDraft} onClick={() => onDraft(action.text)}>
                 {action.label}
               </button>

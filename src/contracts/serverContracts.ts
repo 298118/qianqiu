@@ -91,7 +91,8 @@ export const RAW_LEDGER_KEYS = [
   "openingBackgroundClaims",
   "marketPriceLedger",
   "npcEconomyLedger",
-  "npcActiveRequestLedger"
+  "npcActiveRequestLedger",
+  "officialCourtResponses"
 ] as const;
 
 export type RawLedgerKey = (typeof RAW_LEDGER_KEYS)[number];
@@ -221,6 +222,20 @@ export type OfficialCareerView = JsonObject & {
   readonly courtEntries?: readonly JsonObject[];
 };
 
+export type CourtResponseView = JsonObject & {
+  readonly schemaVersion?: string;
+  readonly active?: boolean;
+  readonly role?: string;
+  readonly responseRole?: string;
+  readonly responseRoleLabel?: string;
+  readonly summary?: string;
+  readonly responseItems?: readonly JsonObject[];
+  readonly recentResponses?: readonly JsonObject[];
+  readonly nextActions?: readonly JsonObject[];
+  readonly authorityBoundary?: string;
+  readonly safety?: JsonObject;
+};
+
 export type RawLedgerExcludedWorldState = Omit<WorldState, RawLedgerKey> & {
   readonly [K in RawLedgerKey]?: never;
 };
@@ -268,6 +283,7 @@ export type SafeRouteViews = {
   readonly examAftermathView?: JsonObject;
   readonly studyProfileView?: JsonObject;
   readonly officialCareerView?: OfficialCareerView;
+  readonly courtResponseView?: CourtResponseView;
   readonly appointmentTrackView?: JsonObject;
   readonly officialPostingsView?: JsonObject;
   readonly localAffairsDocketView?: JsonObject;
@@ -433,6 +449,7 @@ export type GameTurnResponse = SafeRouteViews & RouteEnvelope & {
   readonly feedback?: JsonObject;
   readonly npcActiveRequests?: RouteFeedbackView;
   readonly npcEconomy?: RouteFeedbackView;
+  readonly officialCourtResponse?: RouteFeedbackView;
   readonly roleWorldCoupling?: RouteFeedbackView;
   readonly longTermEvents?: LongTermEventFeedbackView;
   readonly officialCareer?: RouteFeedbackView;
@@ -454,6 +471,7 @@ export type GameTurnSseStatePreviewResponse = SafeRouteViews & {
   readonly worldEntityImpacts?: readonly JsonValue[];
   readonly npcActiveRequests?: RouteFeedbackView;
   readonly npcEconomy?: RouteFeedbackView;
+  readonly officialCourtResponse?: RouteFeedbackView;
   readonly roleWorldCoupling?: RouteFeedbackView;
   readonly longTermEvents?: LongTermEventFeedbackView;
   readonly officialCareer?: RouteFeedbackView;

@@ -662,11 +662,13 @@ test("S76.4 official and minister panel uses safe career projections as draft-on
   assert.match(gamePageSource, /actorMemoryView=\{session\?\.actorMemoryView/);
   assert.match(gamePageSource, /aiControlAuditView=\{session\?\.aiControlAuditView/);
   assert.match(gamePageSource, /playerMonthlyBriefingView=\{session\?\.playerMonthlyBriefingView/);
+  assert.match(gamePageSource, /courtResponseView=\{session\?\.courtResponseView/);
   assert.match(officialPanelSource, /export function OfficialMinisterPanel/);
   assert.match(officialPanelSource, /官职履历/);
   assert.match(officialPanelSource, /部院公文/);
   assert.match(officialPanelSource, /官署首月/);
   assert.match(officialPanelSource, /奏折朝议入口/);
+  assert.match(officialPanelSource, /getCourtResponseDocket/);
   assert.match(officialPanelSource, /同年座师/);
   assert.match(officialPanelSource, /派系与朝局风险/);
   assert.match(officialPanelSource, /不得在前端直接任免、奖惩、处分、弹劾成案或改写考成/);
@@ -674,6 +676,7 @@ test("S76.4 official and minister panel uses safe career projections as draft-on
   assert.match(typeSource, /OfficialFirstMonthExperienceView/);
   assert.match(typeSource, /OfficialCourtEntryView/);
   assert.match(typeSource, /officialCareerView\?: OfficialCareerView/);
+  assert.match(typeSource, /courtResponseView\?: CourtResponseView/);
   assert.match(typeSource, /appointmentTrackView\?: JsonObject/);
   assert.match(typeSource, /actorMemoryView\?: JsonObject/);
   assert.match(typeSource, /playerMonthlyBriefingView\?: JsonObject/);
@@ -730,8 +733,10 @@ test("S76.6 emperor panel uses safe court projections as draft-only edict UI", (
   assert.match(gamePageSource, /aiControlAuditView=\{session\?\.aiControlAuditView/);
   assert.match(gamePageSource, /worldEntityView=\{session\?\.worldEntityView/);
   assert.match(gamePageSource, /worldThreadView=\{session\?\.worldThreadView/);
+  assert.match(gamePageSource, /courtResponseView=\{session\?\.courtResponseView/);
   assert.match(emperorPanelSource, /export function EmperorPanel/);
   assert.match(emperorPanelSource, /奏折队列/);
+  assert.match(emperorPanelSource, /奏议回应/);
   assert.match(emperorPanelSource, /朱批拟稿/);
   assert.match(emperorPanelSource, /圣旨草稿/);
   assert.match(emperorPanelSource, /朝议/);
@@ -741,6 +746,7 @@ test("S76.6 emperor panel uses safe court projections as draft-only edict UI", (
   assert.match(styleSource, /emperorPanel/);
   assert.match(typeSource, /worldEntityView\?: JsonObject/);
   assert.match(typeSource, /worldThreadView\?: JsonObject/);
+  assert.match(typeSource, /courtResponseView\?: CourtResponseView/);
   assert.match(appTestSource, /renders the S76\.6 emperor panel from safe court views as draft-only edicts/);
   assert.doesNotMatch(
     runtimeCombined,

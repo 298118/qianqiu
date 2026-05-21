@@ -6,6 +6,7 @@ const { createInitialWorldGeographyState } = require("./worldGeography");
 const { createInitialWorldEntityState } = require("./worldEntities");
 const { createInitialWorldPeopleState } = require("./worldPeople");
 const { createInitialWorldThreadState } = require("./worldThreads");
+const { createInitialOfficialCourtResponseState } = require("./officialCourtResponse");
 const { createInitialOfficialPostingsState } = require("./officialPostings");
 const { createInitialStudyProfile } = require("./studyProfile");
 const { createInitialExamHonorLedger } = require("./examHonors");
@@ -302,6 +303,7 @@ function createInitialState(input = {}) {
     worldEntities: null,
     worldPeople: null,
     worldThreads: createInitialWorldThreadState(),
+    officialCourtResponses: createInitialOfficialCourtResponseState(),
     officialPostings: null,
     officialCareer: {
       schemaVersion: 2,

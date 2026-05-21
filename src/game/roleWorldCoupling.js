@@ -1,6 +1,7 @@
 const { NUMERIC_RANGES, clamp } = require("./stateRules");
 const { normalizeRelationshipLedger } = require("./relationships");
 const { monthsToTurns, normalizeTenDayPeriod } = require("./time");
+const { isCourtResponseLikeInput } = require("./officialCourtResponse");
 
 const ROLE_WORLD_COUPLING_SCHEMA_VERSION = 1;
 const ROLE_IMPACT_COOLDOWN_MONTHS = 2;
@@ -207,6 +208,9 @@ function textIncludesAny(text, terms) {
 function classifyRoleWorldAction(worldState = {}, input = "") {
   const role = worldState.player?.role;
   const text = cleanText(input, "", 240);
+  if ((role === "emperor" || role === "minister" || role === "official") && isCourtResponseLikeInput(text)) {
+    return null;
+  }
 
   if (role === "magistrate" && textIncludesAny(text, ["water", "irrigation", "水利", "河", "渠", "灌", "堤"])) {
     return "magistrate_waterworks";

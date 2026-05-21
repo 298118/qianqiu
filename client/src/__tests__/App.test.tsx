@@ -1400,6 +1400,25 @@ describe("S74.1 React client shell", () => {
           worldThreadView: {
             threads: [{ id: "thread-1", title: "朝议钱粮", followUp: "待内阁具奏。" }]
           },
+          courtResponseView: {
+            active: true,
+            role: "emperor",
+            responseRole: "emperor",
+            responseRoleLabel: "御前",
+            summary: "当前有1条奏议材料可作跨身份回应；所有回应只入服务器安全账本。",
+            responseItems: [{
+              id: "court-response-item-1",
+              title: "部院覆奏：河工清册",
+              statusLabel: "部院待覆",
+              publicSummary: "河工清册承接近次准入复核，部院、台谏只形成公开中间意见。",
+              draftText: "朱批部院覆奏：河工清册，只令部院据公开凭据覆奏，仍候服务器裁决。"
+            }],
+            nextActions: [{
+              id: "vermilion-note",
+              label: "朱批留览",
+              text: "朱批留览部院覆奏：河工清册，令部院据公开凭据覆奏，此稿只候服务器裁决。"
+            }]
+          },
           worldEntityView: {
             entities: [{ id: "entity-1", kind: "personnel", title: "吏部铨选", publicSummary: "缺额待核。" }]
           },
@@ -1431,6 +1450,8 @@ describe("S74.1 React client shell", () => {
 
     await screen.findByRole("heading", { name: "御案朝仪" });
     expect(screen.getByText("奏折队列")).toBeTruthy();
+    expect(screen.getByText("奏议回应")).toBeTruthy();
+    expect(screen.getByText("部院覆奏：河工清册")).toBeTruthy();
     expect(screen.getByText("朱批拟稿")).toBeTruthy();
     expect(screen.getAllByText("圣旨草稿").length).toBeGreaterThan(0);
     expect(screen.getAllByText("朝议").length).toBeGreaterThan(0);
@@ -1445,6 +1466,12 @@ describe("S74.1 React client shell", () => {
       source: "role-surface",
       targetPage: "game",
       text: "草拟一道明发谕旨，请内阁先核证据、适用官制与可行后果；此稿未生效。"
+    });
+    fireEvent.click(screen.getByRole("button", { name: "朱批留览" }));
+    expect(useUiStateStore.getState().actionDraft).toMatchObject({
+      source: "role-surface",
+      targetPage: "game",
+      text: "朱批留览部院覆奏：河工清册，令部院据公开凭据覆奏，此稿只候服务器裁决。"
     });
     expect(fetchMock.mock.calls.filter(([url]) => url === "/api/game/turn")).toHaveLength(0);
     expect(document.body.textContent || "").not.toMatch(/provider payload|sk-test-secret|prompt|raw audit|path=|C:\\|data\/sessions|OPENAI_API_KEY/i);

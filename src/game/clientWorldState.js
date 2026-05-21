@@ -188,6 +188,7 @@ function buildClientWorldState(worldState = {}) {
   delete clientState.marketPriceLedger;
   delete clientState.npcEconomyLedger;
   delete clientState.npcActiveRequestLedger;
+  delete clientState.officialCourtResponses;
   return clientState;
 }
 

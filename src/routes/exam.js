@@ -62,6 +62,10 @@ const {
 } = require("../game/npcActiveRequests");
 const { buildLongTermEventView, ensureLongTermEventState } = require("../game/longTermEvents");
 const { buildOfficialCareerView, ensureOfficialCareerState } = require("../game/officialCareer");
+const {
+  buildOfficialCourtResponseView,
+  ensureOfficialCourtResponseState
+} = require("../game/officialCourtResponse");
 const { buildOfficialPostingsView, ensureOfficialPostingsState } = require("../game/officialPostings");
 const { buildLocalAffairsDocketView } = require("../game/localAffairsDockets");
 const { buildMilitaryDiplomacyView } = require("../game/militaryDiplomacy");
@@ -179,6 +183,7 @@ function toExamPayload(worldState) {
     worldThreadView: buildWorldThreadView(worldState),
     longTermEventView: buildLongTermEventView(worldState),
     officialCareerView: buildOfficialCareerView(worldState),
+    courtResponseView: buildOfficialCourtResponseView(worldState),
     officialPostingsView,
     localAffairsDocketView: buildLocalAffairsDocketView(worldState),
     militaryDiplomacyView: buildMilitaryDiplomacyView(worldState),
@@ -224,6 +229,7 @@ function ensureCommonState(worldState) {
   ensureAppointmentTrackState(worldState);
   ensureLongTermEventState(worldState);
   ensureOfficialCareerState(worldState);
+  ensureOfficialCourtResponseState(worldState);
   ensureRoleWorldCouplingState(worldState);
   ensureWorldGeographyState(worldState);
   ensureOfficialPostingsState(worldState);
@@ -667,6 +673,7 @@ router.post("/submit", async (req, res, next) => {
         worldThreadView: buildWorldThreadView(worldState),
         longTermEventView: buildLongTermEventView(worldState),
         officialCareerView: buildOfficialCareerView(worldState),
+        courtResponseView: buildOfficialCourtResponseView(worldState),
         officialPostingsView,
         localAffairsDocketView: buildLocalAffairsDocketView(worldState),
         militaryDiplomacyView: buildMilitaryDiplomacyView(worldState),

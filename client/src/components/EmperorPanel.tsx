@@ -10,6 +10,7 @@ type EmperorPanelProps = {
   readonly aiControlAuditView?: JsonObject | null;
   readonly worldEntityView?: JsonObject | null;
   readonly worldThreadView?: JsonObject | null;
+  readonly courtResponseView?: JsonObject | null;
   readonly mapRuntimeView?: unknown;
   readonly roleBackgroundPath?: string;
   readonly courtHref?: string;
@@ -23,6 +24,12 @@ type SafeListItem = {
   readonly title: string;
   readonly meta?: string;
   readonly body?: string;
+};
+
+type SafeDraftAction = {
+  readonly id: string;
+  readonly label: string;
+  readonly text: string;
 };
 
 const unsafeEmperorFragments = [
@@ -190,6 +197,32 @@ function getMemorialQueue(eventArchive: JsonObject, worldThread: JsonObject, map
   return items.length ? items : [{ id: "memorial-empty", title: "暂无急奏", body: "可先阅旧牍，择钱粮、边防、吏治与民生四项发问。" }];
 }
 
+function getCourtResponseAgenda(courtResponse: JsonObject) {
+  const responseRows = [
+    ...rowsFromKeys(courtResponse, ["responseItems"]),
+    ...rowsFromKeys(courtResponse, ["recentResponses"])
+  ];
+  const items = listFromRows(responseRows, "court-response", 4, "奏议回应");
+  const actions: SafeDraftAction[] = asArray(courtResponse.nextActions)
+    .map(asRecord)
+    .map((action, index) => ({
+      id: cleanEmperorText(action.id, `court-response-action-${index}`, 48),
+      label: cleanEmperorText(action.label, "拟回应", 24),
+      text: cleanEmperorText(action.text, "", 176)
+    }))
+    .filter((action) => action.text);
+  return {
+    active: courtResponse.active === true && items.length > 0,
+    summary: cleanEmperorText(
+      courtResponse.summary,
+      "奏议回应只读服务器公开投影；朱批、覆奏、补据与考成观察只先写成草稿。",
+      148
+    ),
+    items,
+    actions
+  };
+}
+
 function getCourtDebate(actorMemory: JsonObject, worldThread: JsonObject, eventArchive: JsonObject) {
   const memoryRows = rowsFromKeys(actorMemory, ["actors", "recentUpdates", "relationships"]);
   const threadRows = rowsFromKeys(worldThread, ["courtThreads", "threads", "items"]);
@@ -246,6 +279,7 @@ export function EmperorPanel({
   aiControlAuditView,
   worldEntityView,
   worldThreadView,
+  courtResponseView,
   mapRuntimeView,
   roleBackgroundPath,
   courtHref,
@@ -259,9 +293,11 @@ export function EmperorPanel({
   const aiControlAudit = asRecord(aiControlAuditView);
   const worldEntity = asRecord(worldEntityView);
   const worldThread = asRecord(worldThreadView);
+  const courtResponse = asRecord(courtResponseView);
   const mapRuntime = asRecord(mapRuntimeView);
   const desk = getEmperorDesk(player, officialPostings, eventArchive);
   const memorials = getMemorialQueue(eventArchive, worldThread, mapRuntime);
+  const responseAgenda = getCourtResponseAgenda(courtResponse);
   const courtDebate = getCourtDebate(actorMemory, worldThread, eventArchive);
   const candidates = getAppointmentCandidates(officialPostings, actorMemory, worldEntity);
   const rewardPunishments = getRewardPunishmentItems(aiControlAudit, eventArchive, worldThread);
@@ -308,6 +344,25 @@ export function EmperorPanel({
           <div className="scholarPanelActions">
             {draftButtonText("朱批奏折", "朱批近日奏折，逐条询问钱粮、边防、吏治与民生，只写成行动草稿候服务器裁决。", canDraft, onDraft)}
             {archiveHref ? <Link to={archiveHref}>查史册</Link> : null}
+          </div>
+        </article>
+
+        <article className="scholarPanelCard emperorPanelResponses" aria-labelledby="emperor-responses-title">
+          <h3 id="emperor-responses-title">奏议回应</h3>
+          <p>{responseAgenda.summary}</p>
+          <EmperorPanelList
+            items={responseAgenda.items}
+            emptyText="暂无可回应奏议；不得补造批旨、署名、赏罚或已生效结果。"
+          />
+          <div className="scholarPanelActions">
+            {responseAgenda.actions.slice(0, 3).map((action) => (
+              <button key={action.id} type="button" disabled={!canDraft} onClick={() => onDraft(action.text)}>
+                {action.label}
+              </button>
+            ))}
+            {!responseAgenda.actions.length
+              ? draftButtonText("拟奏议回应", "朱批奏议回应，令部院只据公开材料覆奏，后果仍候服务器裁决。", canDraft, onDraft)
+              : null}
           </div>
         </article>
 

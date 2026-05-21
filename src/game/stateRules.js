@@ -78,7 +78,7 @@ const PROVIDER_TOP_LEVEL_PATCH_KEYS = new Set([
 ]);
 
 const SERVER_OWNED_TOP_LEVEL_PATCH_KEYS = new Set([
-  "characters", "eventHistory", "activeExam", "examCalendar", "examProcedure", "examHonorLedger", "appointmentTrack", "studyProfile", "activeNpcRequest", "npcActiveRequestLedger", "longTermEvents", "officialCareer", "officialPostings", "roleWorldCoupling", "worldGeography", "worldEntities", "worldPeople", "worldThreads", "actorMemoryLedger", "sessionSummary", "year", "month", "tenDayPeriod"
+  "characters", "eventHistory", "activeExam", "examCalendar", "examProcedure", "examHonorLedger", "appointmentTrack", "studyProfile", "activeNpcRequest", "npcActiveRequestLedger", "longTermEvents", "officialCareer", "officialCourtResponses", "officialPostings", "roleWorldCoupling", "worldGeography", "worldEntities", "worldPeople", "worldThreads", "actorMemoryLedger", "sessionSummary", "year", "month", "tenDayPeriod"
 ]);
 
 const SERVER_TOP_LEVEL_PATCH_KEYS = new Set([

@@ -7,6 +7,7 @@ const {
 } = require("./historicalEventArchive");
 const { buildIntelligenceRumorView } = require("./intelligenceRumors");
 const { buildOfficialCareerView } = require("./officialCareer");
+const { buildOfficialCourtResponseView } = require("./officialCourtResponse");
 const { buildOfficialPostingsView } = require("./officialPostings");
 const { formatYearMonthPeriod, normalizeMonth, normalizeTenDayPeriod, normalizeYear } = require("./time");
 const { buildWorldThreadView } = require("./worldThreads");
@@ -20,6 +21,7 @@ const MAX_LONG_TERM_EVENTS = 5;
 const MAX_OFFICIAL_OUTCOMES = 5;
 const MAX_OFFICIAL_COURT_ENTRY_RESOLUTIONS = 5;
 const MAX_OFFICIAL_COURT_ENTRY_FOLLOW_UPS = 5;
+const MAX_OFFICIAL_COURT_RESPONSES = 5;
 const MAX_MONTHLY_BRIEFINGS = 4;
 const MAX_OFFICIAL_ASSESSMENTS = 4;
 const MAX_LOCAL_DOCKETS = 6;
@@ -46,6 +48,7 @@ const SOURCE_LABELS = {
   official_career: "官场",
   official_court_entry: "奏议",
   official_court_follow_up: "批复",
+  official_court_response: "回应",
   monthly_briefing: "月报",
   official_assessment: "考成",
   local_docket: "案牍",
@@ -292,6 +295,29 @@ function collectOfficialItems(worldState, items, officialCareerView) {
       relatedLabels: [
         ...(Array.isArray(followUp.sourceRefs) ? followUp.sourceRefs : []),
         ...(Array.isArray(followUp.consequenceRefs) ? followUp.consequenceRefs : [])
+      ]
+    });
+  });
+}
+
+function collectOfficialCourtResponseItems(worldState, items) {
+  const courtResponseView = buildOfficialCourtResponseView(worldState);
+  const responses = Array.isArray(courtResponseView?.recentResponses)
+    ? courtResponseView.recentResponses
+    : [];
+  responses.slice(-MAX_OFFICIAL_COURT_RESPONSES).forEach((response) => {
+    addItem(items, worldState, {
+      sourceType: "official_court_response",
+      kind: response.responseKind || "official_court_response",
+      title: response.title || response.statusLabel || "奏议回应",
+      summary: response.publicSummary,
+      date: response,
+      turn: response.generatedAtTurn,
+      status: response.status === "requested_evidence" || response.status === "held_for_deliberation" ? "watch" : "recorded",
+      riskLabel: response.statusLabel || response.responseKindLabel || "",
+      relatedLabels: [
+        ...(Array.isArray(response.sourceRefs) ? response.sourceRefs : []),
+        ...(Array.isArray(response.consequenceRefs) ? response.consequenceRefs : [])
       ]
     });
   });
@@ -659,6 +685,7 @@ function buildEventArchiveIndexItems(worldState = {}) {
   collectWorldThreadItems(worldState, items, worldThreadView);
   collectLongTermItems(worldState, items, longTermEventView);
   collectOfficialItems(worldState, items, officialCareerView);
+  collectOfficialCourtResponseItems(worldState, items);
   collectMonthlyBriefingItems(worldState, items);
   collectAppointmentTrackItems(worldState, items);
   collectOfficialAssessmentItems(worldState, items, officialPostingsView);

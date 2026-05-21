@@ -8,6 +8,7 @@ const { buildLocalAffairsDocketView } = require("./localAffairsDockets");
 const { buildMapContextView } = require("./mapContext");
 const { buildMilitaryDiplomacyView } = require("./militaryDiplomacy");
 const { buildOfficialCareerView } = require("./officialCareer");
+const { buildOfficialCourtResponseView } = require("./officialCourtResponse");
 const { buildOfficialPostingsView } = require("./officialPostings");
 const { buildPlayerMonthlyBriefingView } = require("./playerMonthlyBriefing");
 const { buildRelationshipInspectionView } = require("./relationships");
@@ -138,6 +139,7 @@ function buildSourceViews(worldState, options = {}) {
     mapContextView: buildMapContextView(worldState, options.actorProfile || null),
     militaryDiplomacyView: buildMilitaryDiplomacyView(worldState),
     officialCareerView: buildOfficialCareerView(worldState),
+    courtResponseView: buildOfficialCourtResponseView(worldState),
     officialPostingsView,
     playerMonthlyBriefingView: buildPlayerMonthlyBriefingView(worldState),
     relationshipView: buildRelationshipInspectionView(worldState),

@@ -29,6 +29,17 @@ These records may make bounded progress/assessment adjustments, but they do not
 directly appoint, punish, impeach, accept a memorial, or finalize long-term
 career outcomes.
 
+The cross-role response layer is separate from the personal official-career
+view. `worldState.officialCourtResponses` is a server-owned response ledger and
+is not exposed through compatible public `worldState`; `courtResponseView`
+derives a safe docket for emperors, ministers, officials, topic surfaces, event
+archive, and world threads from public court-entry resolutions/follow-ups plus
+recent bounded responses. Ordinary turns that submit “朱批 / 票拟覆奏 / 补据 /
+朝议回应 / 考成观察” record only `official_court_response` middle states such as
+御前留览、交部院覆奏、请补公开凭据、留待朝议 or 入考成观察. These responses
+do not directly appoint, punish, impeach, fund, accept a memorial, or expose
+provider prompts, raw storage rows, hidden notes, local paths, or keys.
+
 ## S42.1 深度官场契约
 
 目标：入仕后不再只是六项仪表变化和偶发升降，而是进入有官职、衙门、差遣、考成、人脉、政敌、弹劾、外放、处分和履历档案的长期生涯。S42.1 定义契约；S42.2 已实现字段、规则和 Mock 行动扩展；S42.3 已扩展浏览器 UI 与验收。
