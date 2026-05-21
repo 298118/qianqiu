@@ -1067,6 +1067,7 @@ async function finalizeTurn(worldState, result, input, auditOptions = {}) {
     providerMemoryProposalRejections: result.memoryProposalRejections,
     relationshipChanges: allRelationshipChanges,
     activeNpcRequest,
+    npcActiveRequests,
     playerMonthlyBriefing,
     npcMemory: { includeBackground: true }
   }, actorMemoryAuditContext);

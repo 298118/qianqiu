@@ -4,6 +4,12 @@ const assert = require("node:assert/strict");
 const { buildEventArchiveView, cleanArchiveText } = require("../src/game/eventArchive");
 const { createInitialState } = require("../src/game/initialState");
 const { attachExamSceneTime } = require("../src/game/examSceneTime");
+const {
+  createNpcActiveRequest,
+  resolveNpcActiveRequest
+} = require("../src/game/npcActiveRequests");
+const { resolveNpcRelationshipAction } = require("../src/game/npcRelationshipActions");
+const { recordNpcInteraction } = require("../src/game/npcInteractions");
 
 test("event archive view merges visible sources into capped public items", () => {
   const worldState = createInitialState({ playerName: "归档书生", role: "official" });
@@ -215,6 +221,54 @@ test("event archive view merges visible sources into capped public items", () =>
   assert.equal(serialized.includes("hiddenNotes"), false);
   assert.equal(serialized.includes("sk-proj-secret-archive"), false);
   assert.equal(serialized.includes("data/audit"), false);
+});
+
+test("S88.7 event archive records safe NPC active request and relationship resolver traces", () => {
+  const worldState = createInitialState({ playerName: "交游归档", role: "scholar" });
+  worldState.turnCount = 5;
+
+  const activeRequest = createNpcActiveRequest(worldState, "bribe");
+  const activeResolution = resolveNpcActiveRequest(worldState, activeRequest.request.requestId, "report");
+  activeResolution.request.outcome.publicSummary = "providerPayload hiddenDossier /mnt/e/secret sk-testsecret";
+
+  const relationshipAction = resolveNpcRelationshipAction(worldState, {
+    npcId: "npc:scholar:peer-shen",
+    actionType: "duel",
+    winner: "player",
+    injury: "npc_injured"
+  }, {
+    dialogueText: "沈砚秋只许作公开切磋，胜负由服务器留痕。"
+  });
+  const recorded = recordNpcInteraction(worldState, {
+    npcId: "npc:scholar:peer-shen",
+    actionType: "duel",
+    utterance: "只作切磋，不许伤人。",
+    winner: "player",
+    injury: "npc_injured"
+  }, {
+    dialogueText: "沈砚秋只许作公开切磋，胜负由服务器留痕。"
+  }, {
+    resolutionView: relationshipAction.resolutionView
+  });
+  recorded.record.outcomeSummary = "rawProvider hiddenDossier /mnt/e/secret sk-testsecret";
+
+  const archive = buildEventArchiveView(worldState, { pageSize: 50 });
+  const serialized = JSON.stringify(archive);
+
+  assert.equal(activeResolution.ok, true);
+  assert.equal(relationshipAction.ok, true);
+  assert.ok(archive.items.some((item) =>
+    item.sourceType === "npc_active_request" &&
+    item.sourceId === activeResolution.request.outcome.resolverTrace.publicResolutionRef
+  ));
+  assert.ok(archive.items.some((item) =>
+    item.sourceType === "npc_relationship_action" &&
+    item.sourceId === relationshipAction.resolutionView.resolverTrace.publicResolutionRef
+  ));
+  assert.doesNotMatch(
+    serialized,
+    /providerPayload|rawProvider|hiddenDossier|privateSignalTags|world_sessions|safe_search|sk-testsecret|\/mnt\/e/
+  );
 });
 
 test("event archive derives local docket items only for administrative views", () => {

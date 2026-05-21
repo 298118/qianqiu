@@ -15,6 +15,8 @@ const { collectDomainConsequenceEchoRefs } = require("./domainConsequenceEchoRef
 const { formatYearMonthPeriod, normalizeMonth, normalizeTenDayPeriod, normalizeYear } = require("./time");
 const { buildWorldThreadView } = require("./worldThreads");
 const { isVisibleActorId } = require("./actorMemoryLedger");
+const { buildNpcActiveRequestView } = require("./npcActiveRequests");
+const { buildNpcInteractionLedgerView } = require("./npcInteractions");
 
 const EVENT_ARCHIVE_SCHEMA_VERSION = 1;
 const MAX_ARCHIVE_ITEMS = 24;
@@ -36,6 +38,8 @@ const MAX_HISTORICAL_EVENT_CHAINS = 6;
 const MAX_INTELLIGENCE_RUMORS = 6;
 const MAX_EXAM_RECORDS = 5;
 const MAX_EXAM_NETWORK_RECORDS = 5;
+const MAX_NPC_ACTIVE_REQUEST_RECORDS = 6;
+const MAX_NPC_RELATIONSHIP_ACTION_RECORDS = 6;
 const MAX_ACTOR_MEMORY_RECORDS = 6;
 const MAX_SESSION_SUMMARIES = 4;
 const MAX_TEXT_LENGTH = 180;
@@ -66,6 +70,8 @@ const SOURCE_LABELS = {
   exam_record: "科场",
   exam_network: "科场人脉",
   appointment_result: "授官",
+  npc_active_request: "来函",
+  npc_relationship_action: "交游",
   actor_memory: "记忆",
   session_summary: "经历"
 };
@@ -667,6 +673,84 @@ function collectAppointmentTrackItems(worldState, items) {
     });
 }
 
+function collectNpcActiveRequestItems(worldState, items, npcActiveRequestView) {
+  const records = Array.isArray(npcActiveRequestView?.items) ? npcActiveRequestView.items : [];
+  records
+    .filter((record) => isPlainObject(record?.outcome?.resolverTrace))
+    .filter((record) => record.outcome.resolverTrace.resolver === "npc_active_request_resolver")
+    .slice(0, MAX_NPC_ACTIVE_REQUEST_RECORDS)
+    .forEach((record) => {
+      const trace = record.outcome.resolverTrace;
+      const npcName = cleanArchiveText(record.npc?.displayName, "来人", 60);
+      const typeLabel = cleanArchiveText(record.typeLabel || trace.typeLabel, "来函", 40);
+      const summary = cleanArchiveText(
+        record.outcome.publicSummary,
+        `${npcName}的${typeLabel}已经服务器裁决。`
+      );
+      const watchStatuses = new Set([
+        "under_review",
+        "reported",
+        "converted_to_risk",
+        "accepted_pending_server_resolution"
+      ]);
+      addItem(items, worldState, {
+        sourceType: "npc_active_request",
+        sourceId: trace.publicResolutionRef || record.requestId,
+        kind: trace.requestType || record.type || "active_request",
+        title: `来函裁决：${npcName}${typeLabel}`,
+        summary,
+        turn: record.lastUpdatedTurn,
+        status: watchStatuses.has(record.status) ? "watch" : "recorded",
+        riskLabel: trace.disposition || record.status,
+        relatedLabels: [
+          npcName,
+          typeLabel,
+          trace.responseAction,
+          ...(Array.isArray(record.riskTags) ? record.riskTags : []),
+          ...(Array.isArray(trace.riskTags) ? trace.riskTags : [])
+        ]
+      });
+    });
+}
+
+function collectNpcRelationshipActionItems(worldState, items, npcInteractionView) {
+  const records = Array.isArray(npcInteractionView?.items) ? npcInteractionView.items : [];
+  records
+    .filter((record) => isPlainObject(record?.resolverTrace))
+    .filter((record) => record.resolverTrace.resolver === "npc_relationship_action_resolver")
+    .slice(0, MAX_NPC_RELATIONSHIP_ACTION_RECORDS)
+    .forEach((record) => {
+      const trace = record.resolverTrace;
+      const npcName = cleanArchiveText(record.npcName, "此人", 60);
+      const actionLabel = cleanArchiveText(
+        trace.actionLabel || record.serverAdjudication?.actionLabel || record.actionKind || record.actionType,
+        "交游",
+        40
+      );
+      const summary = cleanArchiveText(
+        record.outcomeSummary || record.dialogueText,
+        `${npcName}的${actionLabel}已由服务器裁决。`
+      );
+      addItem(items, worldState, {
+        sourceType: "npc_relationship_action",
+        sourceId: trace.publicResolutionRef || record.recordId,
+        kind: trace.actionType || record.actionKind || record.actionType || "npc_interaction",
+        title: `交游裁决：${npcName}${actionLabel}`,
+        summary,
+        date: record.date,
+        turn: record.turn,
+        status: trace.status === "server_blocked" ? "watch" : "recorded",
+        riskLabel: trace.disposition || record.serverStatus,
+        relatedLabels: [
+          npcName,
+          actionLabel,
+          ...(Array.isArray(record.riskTags) ? record.riskTags : []),
+          ...(Array.isArray(trace.riskTags) ? trace.riskTags : [])
+        ]
+      });
+    });
+}
+
 function collectActorMemoryItems(worldState, items) {
   const ledger = worldState.actorMemoryLedger || {};
   const visible = [];
@@ -759,6 +843,8 @@ function buildEventArchiveIndexItems(worldState = {}) {
   const economicFiscalView = buildEconomicFiscalView(worldState);
   const historicalEventArchiveView = buildHistoricalEventArchiveView(worldState);
   const intelligenceRumorView = buildIntelligenceRumorView(worldState);
+  const npcActiveRequestView = buildNpcActiveRequestView(worldState, { includeResolved: true });
+  const npcInteractionView = buildNpcInteractionLedgerView(worldState);
   const items = [];
 
   collectHistoryItems(worldState, items);
@@ -778,6 +864,8 @@ function buildEventArchiveIndexItems(worldState = {}) {
   collectIntelligenceRumorItems(worldState, items, intelligenceRumorView);
   collectExamItems(worldState, items);
   collectExamNetworkItems(worldState, items);
+  collectNpcActiveRequestItems(worldState, items, npcActiveRequestView);
+  collectNpcRelationshipActionItems(worldState, items, npcInteractionView);
   collectActorMemoryItems(worldState, items);
   collectSessionSummaryItems(worldState, items);
 

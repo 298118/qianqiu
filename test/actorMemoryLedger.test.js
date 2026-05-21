@@ -4,6 +4,7 @@ const assert = require("node:assert/strict");
 const { createInitialState } = require("../src/game/initialState");
 const { createTurnAuditRecords } = require("../src/game/audit");
 const { applyRelationshipChanges } = require("../src/game/relationships");
+const { runNpcActiveRequestStep } = require("../src/game/npcActiveRequests");
 const {
   applyActorMemoryUpdate,
   applyExamNetworkMemoryUpdates,
@@ -218,6 +219,49 @@ test("S70.12 relationship changes create favor and grievance memories", () => {
   const serialized = JSON.stringify(buildActorMemoryView(worldState, "npc:C01"));
   assert.match(serialized, /favor|grievance/);
   assert.match(serialized, /修补书箱|顶撞塾师/);
+});
+
+test("S88.7 NPC active request resolver traces create visible memories through server projection", () => {
+  const worldState = createInitialState({ role: "magistrate", playerName: "来函记忆" });
+  worldState.turnCount = 1;
+
+  const scheduled = runNpcActiveRequestStep(worldState, "照常清查田册", { forceType: "bribe" });
+  const resolved = runNpcActiveRequestStep(worldState, "先呈报廉政线索", { responseAction: "report" });
+  const result = applyTurnActorMemoryUpdates(worldState, { npcActiveRequests: resolved });
+  const view = buildActorMemoryView(worldState);
+  const serialized = JSON.stringify({ result, view });
+
+  assert.equal(scheduled.outcome.scheduled, 1);
+  assert.equal(resolved.outcome.resolved, 1);
+  assert.equal(result.appliedCount, 1);
+  assert.match(serialized, /npc_active_request_trace/);
+  assert.match(serialized, /服务器裁决|NPC来函|廉政|线索/);
+  assert.doesNotMatch(
+    serialized,
+    /hiddenDossier|privateSignalTags|providerPayload|rawProvider|world_sessions|safe_search|sk-[A-Za-z0-9_-]{6,}/
+  );
+});
+
+test("S88.7 NPC active request trace memory rejects forged invisible NPC refs", () => {
+  const worldState = createInitialState({ role: "scholar", playerName: "伪造来函记忆" });
+  const result = applyTurnActorMemoryUpdates(worldState, {
+    npcActiveRequests: {
+      outcome: {
+        resolutionTraces: [{
+          resolver: "npc_active_request_resolver",
+          publicResolutionRef: "npc-active-resolution:forged:1",
+          typeLabel: "来函",
+          status: "under_review",
+          responseAction: "accept",
+          publicSourceRefs: ["npcRosterView:npc:invented-hidden-target"]
+        }]
+      }
+    }
+  });
+
+  assert.equal(result.appliedCount, 0);
+  assert.ok(result.rejectedReasons.includes("unknown_or_invisible_actor"));
+  assert.doesNotMatch(JSON.stringify(buildActorMemoryView(worldState)), /invented-hidden-target|npc_active_request_trace/);
 });
 
 test("S70.12 exam network creates durable same-year and seat-teacher memories", () => {

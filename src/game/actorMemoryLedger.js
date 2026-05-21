@@ -10,6 +10,8 @@ const {
 } = require("./actorMemoryConfig");
 const { formatYearMonthPeriod } = require("./time");
 const { buildWorldPeopleView } = require("./worldPeople");
+const { buildNpcActiveRequestView } = require("./npcActiveRequests");
+const { buildNpcRosterView } = require("./npcRoster");
 
 const SECRET_ENV_NAME_PATTERN = /(KEY|TOKEN|SECRET|PASSWORD|CREDENTIAL)/i;
 const SENSITIVE_MEMORY_TEXT_PATTERN =
@@ -103,6 +105,12 @@ function actorIdFromTarget(targetType, targetId) {
   if (targetType === "faction") return `faction:${id}`;
   if (targetType === "player") return `player:${id}`;
   return normalizeActorId(id, "");
+}
+
+function actorIdFromNpcRosterId(npcId) {
+  const id = cleanId(npcId, "");
+  if (!id) return "";
+  return normalizeActorId(id.startsWith("npc:") ? id : `npc:${id}`, "");
 }
 
 function normalizeType(value, fallback = "impression") {
@@ -527,6 +535,11 @@ function actorLabelMap(worldState = {}) {
     const id = normalizeActorId(`npc:${npc.id}`, "");
     if (id) labels.set(id, cleanText(npc.name, id, 48));
   }
+  const rosterView = buildNpcRosterView(worldState);
+  for (const npc of Array.isArray(rosterView?.items) ? rosterView.items : []) {
+    const id = actorIdFromNpcRosterId(npc.npcId);
+    if (id) labels.set(id, cleanText(npc.displayName, id, 48));
+  }
   for (const relation of people.relationships || []) {
     if (relation.targetType === "faction") {
       const id = normalizeActorId(`faction:${relation.targetId}`, "");
@@ -728,6 +741,86 @@ function memoryProposalsFromActiveRequest(activeNpcRequest = {}) {
     }],
     tags: ["请托"]
   }];
+}
+
+function npcIdFromTraceSourceRefs(trace = {}) {
+  const refs = Array.isArray(trace.publicSourceRefs) ? trace.publicSourceRefs : [];
+  for (const ref of refs) {
+    const text = cleanText(ref, "", 120);
+    if (text.startsWith("npcRosterView:")) return cleanId(text.slice("npcRosterView:".length), "");
+  }
+  return "";
+}
+
+function activeRequestTraceType(trace = {}, record = {}) {
+  const status = cleanId(record.status || trace.status, "");
+  const responseAction = cleanId(trace.responseAction, "");
+  const disposition = cleanId(trace.disposition, "");
+  if (status === "expired" || responseAction === "expire" || responseAction === "refuse") return "grievance";
+  if (/integrity|impeachment|betrayal|evidence|ritual|review|deferred/.test(disposition)) return "obligation";
+  if (responseAction === "accept" || responseAction === "report" || responseAction === "investigate") return "favor";
+  return "impression";
+}
+
+function activeRequestTraceTags(trace = {}, record = {}) {
+  return cleanList([
+    "NPC来函",
+    "服务器裁决",
+    record.typeLabel || trace.typeLabel,
+    ...(Array.isArray(record.riskTags) ? record.riskTags : []),
+    ...(Array.isArray(trace.riskTags) ? trace.riskTags : [])
+  ], ACTOR_MEMORY_LIMITS.maxTags, 40);
+}
+
+function memoryProposalsFromNpcActiveRequestTraces(worldState = {}, npcActiveRequests = {}) {
+  const traces = (Array.isArray(npcActiveRequests?.outcome?.resolutionTraces)
+    ? npcActiveRequests.outcome.resolutionTraces
+    : [])
+    .filter((trace) => isPlainObject(trace) && trace.resolver === "npc_active_request_resolver");
+  if (!traces.length) return [];
+
+  const view = buildNpcActiveRequestView(worldState, { includeResolved: true });
+  const records = Array.isArray(view?.items) ? view.items : [];
+  const recordsByTrace = new Map();
+  for (const record of records) {
+    const ref = cleanId(record?.outcome?.resolverTrace?.publicResolutionRef, "");
+    if (ref) recordsByTrace.set(ref, record);
+  }
+  const labels = actorLabelMap(worldState);
+
+  return traces
+    .map((trace) => {
+      const traceRef = cleanId(trace.publicResolutionRef, "");
+      const record = recordsByTrace.get(traceRef) || {};
+      const npcId = cleanId(record.npc?.npcId || npcIdFromTraceSourceRefs(trace), "");
+      const actorId = actorIdFromNpcRosterId(npcId);
+      const name = cleanText(record.npc?.displayName || labels.get(actorId), "此人", 48);
+      const typeLabel = cleanText(record.typeLabel || trace.typeLabel, "来函", 40);
+      const type = activeRequestTraceType(trace, record);
+      const outcomeSummary = cleanText(record.outcome?.publicSummary, "", 120);
+      const summary = outcomeSummary
+        ? `${name}记得${typeLabel}已由服务器裁决：${outcomeSummary}`
+        : `${name}记得一桩${typeLabel}已经服务器裁决，后续只按公开规则留痕。`;
+      return {
+        actorId,
+        type,
+        visibility: "player_visible",
+        subjectType: "player",
+        subjectId: "P1",
+        summary,
+        salience: type === "grievance" ? 76 : type === "obligation" ? 72 : 68,
+        confidence: 0.8,
+        sourceType: "npc_active_request_trace",
+        sourceLabel: "NPC 来函裁决",
+        sourceRefs: [
+          npcMemorySourceRef("npcActiveRequestView", record.requestId || traceRef, typeLabel),
+          npcMemorySourceRef("npcActiveRequestResolverTrace", traceRef, "服务器裁决")
+        ],
+        tags: activeRequestTraceTags(trace, record),
+        requireKnownActor: true
+      };
+    })
+    .filter((proposal) => proposal.actorId && proposal.summary);
 }
 
 function memoryProposalsFromMonthlyBriefing(playerMonthlyBriefing = {}) {
@@ -1002,6 +1095,7 @@ function collectTurnActorMemoryProposalResults(worldState = {}, context = {}) {
       .map(memoryProposalFromRelationshipChange)
       .filter(Boolean),
     ...memoryProposalsFromActiveRequest(context.activeNpcRequest),
+    ...memoryProposalsFromNpcActiveRequestTraces(worldState, context.npcActiveRequests),
     ...memoryProposalsFromMonthlyBriefing(context.playerMonthlyBriefing),
     ...npcMindProposals,
     ...npcBackgroundProposals
