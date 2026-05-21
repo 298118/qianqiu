@@ -491,7 +491,8 @@ S84 前端专项额外验收入口：
 - AI/权限：AI 只能读取 `courtResponseView.responseItems` / `recentResponses`、事件档案、`worldThreadView` 和公开官署 view，生成朱批留览、票拟覆奏、补据清单、朝议回应或考成观察草稿；不能调用任免、处分、成弹劾、财政、军事、内部查询、持久化写入或内部状态工具。`topicSurfaceView` 和浏览器按钮仍只写草稿；普通回合服务器只写 `[奏议回应记录]` 和受限 `official_court_response` 中间态。
 - 验证：已按本文件“本轮 S88.4 跨身份奏议回应切片验证口径”完成完整验证：语法检查、`test/officialCourtResponse.test.js`、topic/worldThread/official focused tests、event/topicDraft focused tests、role-world/world-thread route tests、React scaffold、server/client typecheck、React App focused test、client build、全量 Vitest（68 项）、`npm run smoke:exam-s69`、`AI_PROVIDER=mock npm run smoke:browser`、docs governance、documentation governance、完整 `npm test`（1020 项）和 `git diff --check`；diff check 退出码 0，仅打印未改动归档/QA 文件既有 CRLF 提示。自检已补 `official_court_response` 事件/议程 read scope，并避免裸“部院”误判为奏议回应导致大臣/官员 generic 身份联动被跳过。Kepler 初审 P2 已补终局污染拦截，覆盖准奏、照准、题准、奉旨准行、革职、拨给钱粮等旧账本文案；Kepler 复核确认 P2 已关闭，未发现新的 P0/P1/P2。
 - 子代理：Kepler 只读梳理后端，建议独立 `courtResponseView` / response ledger，不让 emperor/minister 直接依赖 inactive `officialCareerView`；Helmholtz 只读梳理前端与 topic surface，建议在 `EmperorPanel` 和 `OfficialMinisterPanel` 增加 draft-only 回应入口。本轮均已采纳。Kepler 提交前只读初审发现终局裁决文案过滤偏窄 P2；已扩展跨身份回应 sanitizer 并新增回归，Kepler 复核确认 P2 已关闭，未发现新的 P0/P1/P2。
-- 提交：待回填。
+- 提交：`37a0c4d5`。
+- 提交哈希回填为低风险纯文档记录，不改代码、API/schema、运行时行为、提示词或验证工具；按项目规则跳过额外子代理复审。
 - 下一步：继续 S88.4 的更长期官场世界后果、皇帝/部院长链路与长期考成/弹劾风险联动；保持完整 `scholar -> child_exam -> provincial_exam -> metropolitan_exam -> palace_exam -> official` smoke 为第一验收入口。
 
 ### 2026-05-20：完成 S87.1-S87.7 route/API 响应类型覆盖
