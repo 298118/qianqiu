@@ -400,9 +400,9 @@ S84 前端专项额外验收入口：
 - 范围：延续 S88.4 入仕官员首轮官场体验的第二个 coherent slice。聚焦首月回署回执之后的玩家下一步，让官署首月材料进入奏折队列、朝议筹议、`topic_draft` 拟稿和长期考成 trace，但暂不在本切片裁决草稿采纳、朝议结论或考成结果。
 - 实现：新增 `src/game/officialCourtEntryConfig.js` 与 `src/game/officialCourtEntry.js`，从服务器已有 `officialCareerView.firstMonthExperience`、回署回执和 `assessmentDossier` 派生 `officialCareerView.courtEntry` / `courtEntries`，包含 sourceRefs、targetSurfaces、memorial/court draft metadata、assessmentTrace、上官同僚后续回响、nextActions 和权限边界。`src/game/officialCareer.js` 将该 view 纳入玩家安全视图和 prompt summary；`src/game/resolverInputConfig.js` 与 `src/game/topicSurfaceView.js` 允许 `memorial-review`、`edict-draft`、`court-debate` 读取 `officialCareerView.courtEntries`，并增加“首月回署 / 首月筹议”草稿模板。`src/contracts/serverContracts.ts`、`client/src/api/types.ts`、React `OfficialMinisterPanel` 和 `scripts/clientSmoke.js` 已同步新字段、面板文案和 smoke 断言。
 - 边界：`courtEntry` / `courtEntries` 只从服务器安全 view 派生，文本复用官署首月强清洗；`topic_draft` 只能引用 evidence 拟标题、正文、风险和下一步，不提交回合、不调用 resolver、不推进时间、不写 `officialCareer`、考成簿、弹劾程序、SQLite 或审计表。前端按钮只写底部奏折草稿，奏折采纳、朝议结论、任免奖惩和长期考成仍留给后续普通回合服务器裁决。
-- 验证：已完成语法检查、official/topic-surface/topic-draft/monthly focused Node tests、server/client typecheck、React App focused tests（36 项）、React scaffold tests（37 项）、全量 Vitest（68 项）、client build、`npm run smoke:exam-s69`、`AI_PROVIDER=mock npm run smoke:browser`、docs governance、documentation governance、完整 `npm test`（1008 项）和 `git diff --check`。最终只读复审随本轮提交回填。
-- 子代理：Chandrasekhar 只读梳理奏折/朝议与考成追踪接线，建议把首月回署材料做成 `officialCareerView` 内的结构化 evidence，而不是让前端或 topic draft 直接拼 raw 首月文本；本轮实现已采纳。提交前最终只读复审待完成。
-- 提交：实现提交待回填。
+- 验证：已完成语法检查、official/topic-surface/topic-draft/monthly focused Node tests、server/client typecheck、React App focused tests（36 项）、React scaffold tests（37 项）、全量 Vitest（68 项）、client build、`npm run smoke:exam-s69`、`AI_PROVIDER=mock npm run smoke:browser`、docs governance、documentation governance、完整 `npm test`（1009 项）和 `git diff --check`。
+- 子代理：Chandrasekhar 只读梳理奏折/朝议与考成追踪接线，建议把首月回署材料做成 `officialCareerView` 内的结构化 evidence，而不是让前端或 topic draft 直接拼 raw 首月文本；本轮实现已采纳。提交前只读复审发现裸 SQLite/SQL/rawSql 污染与官场考成/弹劾成案话术两个 P2，主代理已补强首月文本清洗、topic draft 结果宣称拦截和回归测试；Chandrasekhar 最终复核确认 P2 已关闭，未发现新的 P0/P1/P2。
+- 提交：实现提交 `345d134d`。本次哈希与复审状态回填为低风险纯文档维护。
 - 下一步：继续 S88.4 的草稿提交后服务器裁决闭环，普通回合识别首月回署奏折/朝议行动后，写入采纳/驳回/转部/留中/补查记录、事件档案、月报和长期考成后果。
 
 ### 2026-05-20：完成 S87.1-S87.7 route/API 响应类型覆盖
