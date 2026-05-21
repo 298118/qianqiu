@@ -615,7 +615,7 @@ S84 前端专项额外验收入口：
 - 回归：`test/domainConsequenceTrace.test.js` 断言 `publicEchoRef` 稳定且不含原始 public source；`test/playerMonthlyBriefing.test.js` 覆盖同一后果跨月不再重复进入月报 sourceRefs/actionItems/riskItems；`test/worldThreads.test.js` 覆盖 domain thread 显隐反复后 `recentResolved` 不重复；`test/roleCycleView.test.js` 覆盖地方官 role-cycle 只读复核 domain consequence，按钮不调用 turn、不写终局。
 - 验证：已通过本节顶部“本轮 S88.6 长链路后果回响与公开 echo ref 验证口径”中已列语法检查、focused tests（51 项）、server/client typecheck、docs governance、documentation governance、完整 `npm test`（1079 项）和 `git diff --check`；Maxwell 提交前最终只读复核未发现 P0/P1/P2。
 - 子代理：McClintock 只读探查指出月报连续重复同一最新后果、`worldThreads.recentResolved` 可在可见性反复变化后重复归档、role-cycle 仅通过 world thread 间接消费领域后果且同一事实可能跨来源重复；本轮采纳。Maxwell 提交前只读初审发现两个 P1：role-cycle 后果复核草稿含“稳价/调粮/新处置”等执行词，可能触发普通回合 city/military 写裁决；月报标题级 label 去重会误挡同标题不同 `publicEchoRef` 的新后果。主代理已改为复核草稿不嵌入后果标题或执行词、地方官 generic 处置 action 跳过 domain item，并让月报新格式只按 stable echo/id/source 去重，补同标题新后果与 classifier 回归。Maxwell 复审又发现将领 generic 军务 action 仍可消费 domain item 并生成含标题/调粮词草稿的 P1；主代理已让将领 generic action 同样跳过 domain item，并把回归改为检查所有 `domainConsequenceView` actions；Maxwell 最终复核确认 P1 已关闭且无新的 P0/P1/P2。
-- 提交：待本轮实现提交后回填。
+- 提交：实现提交 `12fb20bf`；本哈希回填为低风险纯文档状态更新，不改代码、API/schema、运行时行为、提示词或验证工具，按项目规则跳过额外子代理复审。
 - 下一步：提交后继续补 topic draft 与下一轮服务器裁决之间的后果 echo 审计链，尤其是同一公开后果通过 domain/topic/archive/thread 多入口进入草稿时的 canonical evidence 去重。
 
 ### 2026-05-21：推进 S88.6 普通回合重复触发与跨视图 cap 压力红队
