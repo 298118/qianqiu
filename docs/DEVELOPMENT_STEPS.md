@@ -618,7 +618,7 @@ S84 前端专项额外验收入口：
 - 回归：`test/resolverInputContext.test.js` 覆盖 domain consequence / event archive / world thread evidence 的 canonical echo refs；`test/topicSurfaceView.test.js` 覆盖同一 echo 在 topic surface 中跨 direct/archive/thread 去重；`test/topicDraftRoute.test.js` 覆盖 topic draft provider context 与响应携带服务器派生 echo；`test/roleCycleDomainAdjudication.test.js` 覆盖已校验 draft echo 写入公开 outcome 与 ledger 审计；`test/gameTurnRoleCycleConsequences.test.js` 覆盖 `/api/game/turn` 重新校验 draftContext、忽略伪造 echo、accepted/duplicate 反馈保留安全 echo。
 - 验证：已通过本节顶部“本轮 S88.6 topic draft 与下一轮服务器裁决 canonical echo 审计链验证口径”中已列语法检查、focused tests、server/client typecheck、docs governance、documentation governance、client Vitest（70 项；并行首轮 180 秒超时后单独重跑通过）、client build、完整 `npm test`（1083 项）和 `git diff --check`。
 - 子代理：Franklin 只读探查指出 `topic_draft` 之前会丢失 `domainConsequenceEcho:*`，resolver input/event archive/topic surface/topic draft/turn request 需要共同保留服务器派生 canonical echo，并要求普通回合只把浏览器 draft context 当作待校验 hint；本轮采纳。Poincare 提交前只读初审发现 3 个 P2：accepted public outcome 回传 `outcomeId`、手动编辑奏折保留 stale `draftContext`、交接验证状态未回填；主代理已移除 public `outcomeId`、让手动改写清除 draftContext、补 accepted payload / UI store 回归并重跑 focused/full 验证。Poincare 最终复审确认三项 P2 均已关闭，未发现新的 P0/P1/P2。
-- 提交：实现提交待回填。
+- 提交：实现提交 `9a7a934b`；本哈希回填为低风险纯文档状态更新，不改代码、API/schema、运行时行为、提示词或验证工具，按项目规则跳过额外子代理复审。
 - 下一步：提交后优先进入 S88.7 NPC 与关系深化；若继续 S88.6 收束，可补真实 provider/streaming turn 的 `draftContext` smoke 与更长冷却周期回归。
 
 ### 2026-05-21：推进 S88.6 长链路后果回响与公开 echo ref
