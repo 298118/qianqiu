@@ -10,6 +10,7 @@ const gameRoutes = require("../src/routes/game");
 const { assemblePromptContext } = require("../src/ai/promptContextAssembler");
 const { createInitialState } = require("../src/game/initialState");
 const { buildResolverInputContext, assertResolverInputSafe } = require("../src/game/resolverInputContext");
+const { classifyRoleCycleDomainIntent } = require("../src/game/roleCycleDomainAdjudication");
 const { buildRoleCycleView, summarizeRoleCycleForPrompt } = require("../src/game/roleCycleView");
 const { ensureStudyProfileState } = require("../src/game/studyProfile");
 const { createFetchSafeServer } = require("../test-helpers/fetchSafeServer");
@@ -116,6 +117,73 @@ test("S88.5.2 magistrate cycle exposes market and NPC economy evidence refs with
   assert.ok(view.currentRole.evidenceRefs.some((ref) => ref.sourceView === "marketPriceView"));
   assert.ok(view.currentRole.evidenceRefs.some((ref) => ref.sourceView === "npcEconomyView"));
   assert.equal(view.currentRole.nextActions.every((action) => !/\/api\/game\/turn/.test(action.text)), true);
+  assertNoUnsafeRoleCycleText(view);
+});
+
+test("S88.6 magistrate role cycle exposes domain consequence review without write authority", () => {
+  const worldState = createInitialState({ role: "magistrate", playerName: "后果知县" });
+  worldState.turnCount = 18;
+  worldState.cityPolicyLedger = {
+    records: [{
+      outcomeId: "role-cycle-domain-echo",
+      policyType: "market_regulation",
+      policyLabel: "稳价余波",
+      status: "accepted",
+      publicSummary: "县中稳价后果仍牵动民心和府库。",
+      publicSourceId: "role-cycle-domain-public-source",
+      stateDelta: { publicOrder: -5, treasury: -2 },
+      appliedAtTurn: 18
+    }]
+  };
+
+  const view = buildRoleCycleView(worldState);
+  const domainItem = view.currentRole.items.find((item) => item.sourceView === "domainConsequenceView");
+  const domainActions = view.currentRole.nextActions.filter((action) => action.sourceView === "domainConsequenceView");
+
+  assert.ok(view.aiReadScope.allowedSourceViews.includes("domainConsequenceView"));
+  assert.ok(domainItem);
+  assert.match(domainItem.sourceId, /^domainConsequenceEcho:/);
+  assert.ok(domainItem.evidenceRefs.some((ref) =>
+    ref.sourceView === "domainConsequenceView" && ref.sourceId === domainItem.sourceId
+  ));
+  assert.ok(view.currentRole.entryPoints.some((entry) => entry.sourceView === "domainConsequenceView"));
+  assert.ok(domainActions.length >= 1);
+  for (const action of domainActions) {
+    assert.match(action.text, /地方后果已归档/);
+    assert.doesNotMatch(action.text, /稳价余波|\/api\/game\/turn|直接(?:调兵|拨款|结案|写入)|处置|裁决|稳价|米价|粮价|平粜/);
+    assert.equal(classifyRoleCycleDomainIntent(worldState, action.text), null);
+  }
+  assert.equal(JSON.stringify(view).includes("role-cycle-domain-public-source"), false);
+  assertNoUnsafeRoleCycleText(view);
+});
+
+test("S88.6 general domain consequence review drafts do not trigger military adjudication", () => {
+  const worldState = createInitialState({ role: "general", playerName: "后果将领" });
+  worldState.turnCount = 21;
+  worldState.militaryDiplomacyLedger = {
+    records: [{
+      outcomeId: "role-cycle-domain-military-echo",
+      actionKind: "resupply",
+      actionLabel: "调粮余波",
+      status: "accepted",
+      publicResolution: { summary: "粮道整顿后军心略稳，后续仍需观察。" },
+      publicSourceId: "role-cycle-domain-military-public-source",
+      stateDelta: { armyMorale: 4 },
+      playerDelta: { supply: 2 },
+      appliedAtTurn: 21
+    }]
+  };
+
+  const view = buildRoleCycleView(worldState);
+  const domainActions = view.currentRole.nextActions.filter((action) => action.sourceView === "domainConsequenceView");
+
+  assert.ok(domainActions.length >= 1);
+  for (const action of domainActions) {
+    assert.match(action.text, /军务后果已归档/);
+    assert.doesNotMatch(action.text, /调粮余波|开军议|战事档案|调粮|粮道|补给|侦察|遣哨|resupply|scout/i);
+    assert.equal(classifyRoleCycleDomainIntent(worldState, action.text), null);
+  }
+  assert.equal(JSON.stringify(view).includes("role-cycle-domain-military-public-source"), false);
   assertNoUnsafeRoleCycleText(view);
 });
 

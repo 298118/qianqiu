@@ -160,6 +160,7 @@ export type DomainConsequenceItemView = JsonObject & {
   readonly sourceType?: "city_policy" | "military_diplomacy" | "judicial_case" | "npc_economy" | string;
   readonly sourceLabel?: string;
   readonly sourceId?: string;
+  readonly publicEchoRef?: string;
   readonly kind?: string;
   readonly kindLabel?: string;
   readonly title?: string;

@@ -295,10 +295,12 @@ test("S88.6 domain consequence view dedupes public source replay rows and drops 
 
   assert.equal(cityConsequences.length, 1);
   assert.equal(cityConsequences[0].generatedAtTurn, 12);
+  assert.match(cityConsequences[0].publicEchoRef, /^domainConsequenceEcho:[a-z0-9]+$/);
   assert.match(cityConsequences[0].publicSummary, /仓米照牌价/);
   assert.deepEqual(cityConsequences[0].affectedMetricLabels, ["民心", "府库"]);
   assert.equal(view.counts.city_policy, 1);
   assertNoInternalConsequenceLeak(view);
+  assert.doesNotMatch(cityConsequences[0].publicEchoRef, /market|grain|legacy|public-source/i);
   assert.doesNotMatch(JSON.stringify(view), /gentryBribe|legacy-market-case-old|legacy-market-case-replayed/);
 });
 

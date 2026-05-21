@@ -8,6 +8,7 @@ const {
   buildPlayerMonthlyBriefingContext,
   buildPlayerMonthlyBriefingView,
   ensurePlayerMonthlyBriefingState,
+  generateMonthlyBriefingProposal,
   resolveMonthlyBriefing,
   runPlayerMonthlyBriefingStep
 } = require("../src/game/playerMonthlyBriefing");
@@ -294,4 +295,130 @@ test("S70.10 monthly briefing archive drops legacy file URI path pollution", () 
   const archiveView = buildEventArchiveView(worldState, { pageSize: 50 });
   assertHiddenSafe(archiveView);
   assert.ok(!archiveView.items.some((item) => item.sourceType === "monthly_briefing"));
+});
+
+test("S88.6 monthly briefing does not re-promote the same domain consequence across periods", () => {
+  const worldState = createInitialState({ role: "official", playerName: "后果月报官" });
+  worldState.year = 1644;
+  worldState.month = 8;
+  worldState.tenDayPeriod = 3;
+  worldState.turnCount = 24;
+  worldState.cityPolicyLedger = {
+    records: [{
+      outcomeId: "monthly-domain-replay-source",
+      policyType: "market_regulation",
+      policyLabel: "平抑米价复核",
+      status: "accepted",
+      publicSummary: "米价波动仍牵动民心，需在后续月报观察。",
+      publicSourceId: "monthly-domain-public-source",
+      stateDelta: { publicOrder: -5 },
+      appliedAtTurn: 24,
+      year: 1644,
+      month: 8,
+      tenDayPeriod: 3
+    }]
+  };
+
+  const firstContext = buildPlayerMonthlyBriefingContext(worldState, {
+    period: {
+      key: "1644-08",
+      label: "明1644年8月",
+      date: { year: 1644, month: 8, tenDayPeriod: 3, turn: 24 }
+    }
+  });
+  const firstProposal = generateMonthlyBriefingProposal(firstContext);
+  const firstDomainRef = firstContext.sourceRefs.find((ref) => ref.source === "domain_consequence");
+
+  assert.ok(firstDomainRef);
+  assert.match(firstDomainRef.id, /^domainConsequenceEcho:/);
+  assert.ok(firstProposal.actionItems.some((item) => item.includes("平抑米价复核")));
+  assert.ok(firstProposal.riskItems.some((item) => item.includes("米价波动仍牵动民心")));
+
+  const firstResult = resolveMonthlyBriefing(worldState, firstProposal, { context: firstContext });
+  assert.equal(firstResult.generated, true);
+
+  worldState.month = 9;
+  worldState.turnCount = 27;
+  const secondContext = buildPlayerMonthlyBriefingContext(worldState, {
+    period: {
+      key: "1644-09",
+      label: "明1644年9月",
+      date: { year: 1644, month: 9, tenDayPeriod: 3, turn: 27 }
+    }
+  });
+  const secondProposal = generateMonthlyBriefingProposal(secondContext);
+
+  assert.equal(secondContext.sourceRefs.some((ref) => ref.source === "domain_consequence"), false);
+  assert.equal(secondProposal.actionItems.some((item) => item.includes("平抑米价复核")), false);
+  assert.equal(secondProposal.riskItems.some((item) => item.includes("米价波动仍牵动民心")), false);
+  assertHiddenSafe({ firstContext, firstProposal, secondContext, secondProposal });
+});
+
+test("S88.6 monthly briefing does not block a new same-title domain consequence", () => {
+  const worldState = createInitialState({ role: "official", playerName: "同题月报官" });
+  worldState.year = 1644;
+  worldState.month = 8;
+  worldState.tenDayPeriod = 3;
+  worldState.turnCount = 30;
+  worldState.cityPolicyLedger = {
+    records: [
+      {
+        outcomeId: "monthly-domain-same-title-old",
+        policyType: "market_regulation",
+        policyLabel: "平抑米价复核",
+        status: "accepted",
+        publicSummary: "城北米铺照牌价出售，民心暂稳。",
+        publicSourceId: "monthly-domain-same-title-old-source",
+        stateDelta: { publicOrder: 2 },
+        appliedAtTurn: 27,
+        year: 1644,
+        month: 8,
+        tenDayPeriod: 1
+      },
+      {
+        outcomeId: "monthly-domain-same-title-new",
+        policyType: "market_regulation",
+        policyLabel: "平抑米价复核",
+        status: "accepted",
+        publicSummary: "城南米铺照牌价出售，库银压力上升。",
+        publicSourceId: "monthly-domain-same-title-new-source",
+        stateDelta: { treasury: -5 },
+        appliedAtTurn: 30,
+        year: 1644,
+        month: 8,
+        tenDayPeriod: 3
+      }
+    ]
+  };
+
+  const firstContext = buildPlayerMonthlyBriefingContext(worldState, {
+    period: {
+      key: "1644-08",
+      label: "明1644年8月",
+      date: { year: 1644, month: 8, tenDayPeriod: 3, turn: 30 }
+    }
+  });
+  const firstEchoRef = firstContext.monthlyDomainConsequence?.publicEchoRef;
+  const firstProposal = generateMonthlyBriefingProposal(firstContext);
+  resolveMonthlyBriefing(worldState, firstProposal, { context: firstContext });
+
+  worldState.month = 9;
+  worldState.turnCount = 33;
+  const secondContext = buildPlayerMonthlyBriefingContext(worldState, {
+    period: {
+      key: "1644-09",
+      label: "明1644年9月",
+      date: { year: 1644, month: 9, tenDayPeriod: 3, turn: 33 }
+    }
+  });
+  const secondEchoRef = secondContext.monthlyDomainConsequence?.publicEchoRef;
+
+  assert.ok(firstEchoRef);
+  assert.ok(secondEchoRef);
+  assert.notEqual(secondEchoRef, firstEchoRef);
+  assert.equal(secondContext.monthlyDomainConsequence.publicSummary.includes("城北米铺"), true);
+  assert.equal(secondContext.sourceRefs.some((ref) =>
+    ref.source === "domain_consequence" && ref.id === secondEchoRef
+  ), true);
+  assertHiddenSafe({ firstContext, secondContext });
 });

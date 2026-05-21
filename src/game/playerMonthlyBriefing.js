@@ -240,9 +240,54 @@ function normalizeSections(sections) {
 }
 
 function sourceRef(source, row = {}, fallbackLabel = "") {
-  const id = cleanId(row.id || row.reportId || row.sourceId || row.officeId || row.bureauId, "");
-  const label = cleanText(row.title || row.officeTitle || row.name || row.publicSummary, fallbackLabel || source, 60);
+  const safeRow = isPlainObject(row) ? row : {};
+  if (!Object.keys(safeRow).length) return null;
+  const id = cleanId(safeRow.publicEchoRef || safeRow.id || safeRow.reportId || safeRow.sourceId || safeRow.officeId || safeRow.bureauId, "");
+  const label = cleanText(safeRow.title || safeRow.officeTitle || safeRow.name || safeRow.publicSummary, fallbackLabel || source, 60);
   return label ? { id, label, source } : null;
+}
+
+function labelReportKey(value) {
+  const label = cleanText(value, "", 80);
+  return label ? `label:${label}` : "";
+}
+
+function domainConsequenceReportKeys(row = {}, options = {}) {
+  const stableKeys = [
+    cleanId(row.publicEchoRef, ""),
+    cleanId(row.id, ""),
+    cleanId(row.sourceId, "")
+  ].filter(Boolean);
+  if (stableKeys.length || options.includeLabelFallback !== true) return stableKeys;
+  return [labelReportKey(row.title || row.label)].filter(Boolean);
+}
+
+function collectReportedDomainConsequenceKeys(worldState = {}) {
+  const state = normalizePlayerMonthlyBriefingState(worldState.playerMonthlyBriefing, worldState);
+  const keys = new Set();
+  for (const report of state.reports) {
+    for (const ref of normalizeSourceRefs(report.sourceRefs)) {
+      if (ref.source !== "domain_consequence") continue;
+      const id = cleanId(ref.id, "");
+      if (id) {
+        keys.add(id);
+      } else {
+        const label = labelReportKey(ref.label);
+        if (label) keys.add(label);
+      }
+    }
+  }
+  return keys;
+}
+
+function selectMonthlyDomainConsequence(worldState = {}, domainConsequenceView = {}) {
+  const reportedKeys = collectReportedDomainConsequenceKeys(worldState);
+  return (Array.isArray(domainConsequenceView.recentConsequences)
+    ? domainConsequenceView.recentConsequences
+    : [])
+    .slice()
+    .reverse()
+    .find((row) => !domainConsequenceReportKeys(row, { includeLabelFallback: true }).some((key) => reportedKeys.has(key))) || null;
 }
 
 function topTexts(rows, field = "publicSummary", limit = 3) {
@@ -294,9 +339,7 @@ function buildPlayerMonthlyBriefingContext(worldState = {}, options = {}) {
   const latestCourtConsequenceSignal = Array.isArray(courtConsequenceView.recentSignals)
     ? courtConsequenceView.recentSignals.at(-1)
     : null;
-  const latestDomainConsequence = Array.isArray(domainConsequenceView.recentConsequences)
-    ? domainConsequenceView.recentConsequences.at(-1)
-    : null;
+  const latestDomainConsequence = selectMonthlyDomainConsequence(worldState, domainConsequenceView);
   const role = cleanId(worldState.player?.role, "official");
   const roleLabel = PLAYER_MONTHLY_BRIEFING_ROLE_LABELS[role] || worldState.player?.roleLabel || role;
   const sourceRefs = [
@@ -321,6 +364,7 @@ function buildPlayerMonthlyBriefingContext(worldState = {}, options = {}) {
     officialCareerView,
     courtConsequenceView,
     domainConsequenceView,
+    monthlyDomainConsequence: latestDomainConsequence,
     officialPostingsView,
     localAffairsDocketView,
     worldPeopleView,
@@ -360,11 +404,18 @@ function generateMonthlyBriefingProposal(context = {}) {
     ? courtConsequence.nextActions
     : [];
   const domainConsequence = context.domainConsequenceView || {};
-  const latestDomainConsequence = Array.isArray(domainConsequence.recentConsequences)
-    ? domainConsequence.recentConsequences.at(-1)
-    : null;
+  const hasMonthlyDomainConsequenceSelection = Object.prototype.hasOwnProperty.call(context, "monthlyDomainConsequence");
+  const latestDomainConsequence = hasMonthlyDomainConsequenceSelection
+    ? context.monthlyDomainConsequence
+    : Array.isArray(domainConsequence.recentConsequences)
+      ? domainConsequence.recentConsequences.at(-1)
+      : null;
   const domainConsequenceActions = Array.isArray(domainConsequence.nextActions)
-    ? domainConsequence.nextActions
+    ? domainConsequence.nextActions.filter((action) => {
+      if (!latestDomainConsequence) return false;
+      const actionId = cleanId(action?.id, "");
+      return actionId && actionId.includes(cleanId(latestDomainConsequence.id, ""));
+    })
     : [];
   const activeAssignmentText = assignments.length
     ? assignments.slice(0, 3).map((assignment) => `${assignment.title}：${assignment.deadlineLabel || "限期未明"}，进度${assignment.progress ?? 0}。`)

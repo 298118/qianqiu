@@ -39,7 +39,7 @@ const ROLE_CYCLE_ROLE_CONFIGS = Object.freeze({
     authorityTier: "T3",
     loopLabel: "案牍钱粮与地方治理",
     statusLabel: "署中听事",
-    sourceViews: Object.freeze(["localAffairsDocketView", "economicFiscalView", "marketPriceView", "npcEconomyView"]),
+    sourceViews: Object.freeze(["localAffairsDocketView", "economicFiscalView", "marketPriceView", "npcEconomyView", "domainConsequenceView"]),
     defaultSummary: "本旬以刑名、钱粮、水利、盗警、乡约和灾赈为主。",
     defaultAction: "升堂梳理本旬案牍，先列公开证据、经手人和限期。"
   }),
@@ -52,6 +52,7 @@ const ROLE_CYCLE_ROLE_CONFIGS = Object.freeze({
       "officialCareerView",
       "courtResponseView",
       "courtConsequenceView",
+      "domainConsequenceView",
       "playerMonthlyBriefingView"
     ]),
     defaultSummary: "本旬以本职差遣、回署材料、奏折朝议和考成风险为主。",
@@ -65,6 +66,7 @@ const ROLE_CYCLE_ROLE_CONFIGS = Object.freeze({
     sourceViews: Object.freeze([
       "courtResponseView",
       "courtConsequenceView",
+      "domainConsequenceView",
       "officialPostingsView",
       "economicFiscalView",
       "worldThreadView"
@@ -77,7 +79,7 @@ const ROLE_CYCLE_ROLE_CONFIGS = Object.freeze({
     authorityTier: "T4",
     loopLabel: "军帐粮道与边患",
     statusLabel: "军前候报",
-    sourceViews: Object.freeze(["militaryDiplomacyView", "officialPostingsView", "mapRuntimeView", "eventArchiveView"]),
+    sourceViews: Object.freeze(["militaryDiplomacyView", "officialPostingsView", "mapRuntimeView", "eventArchiveView", "domainConsequenceView"]),
     defaultSummary: "本旬以粮饷、斥候、军心、边患和战报为主。",
     defaultAction: "拟一份军前回报，先列粮道、斥候、军心和边患公开情报。"
   }),
@@ -89,6 +91,7 @@ const ROLE_CYCLE_ROLE_CONFIGS = Object.freeze({
     sourceViews: Object.freeze([
       "courtResponseView",
       "courtConsequenceView",
+      "domainConsequenceView",
       "officialPostingsView",
       "worldThreadView",
       "economicFiscalView",

@@ -4,6 +4,7 @@ const { buildStudyProfileView } = require("./studyProfile");
 const { buildLocalAffairsDocketView } = require("./localAffairsDockets");
 const { buildEconomicFiscalView } = require("./economicFiscal");
 const { buildEventArchiveView } = require("./eventArchive");
+const { buildDomainConsequenceView } = require("./domainConsequenceTrace");
 const { buildMapRuntimeView } = require("./mapRuntimeView");
 const { buildMilitaryDiplomacyView } = require("./militaryDiplomacy");
 const { buildMarketPriceView, buildNpcEconomyView } = require("./npcEconomy");
@@ -57,6 +58,7 @@ const ROLE_CYCLE_SOURCE_VIEW_BUILDERS = Object.freeze({
   officialCareerView: buildOfficialCareerView,
   courtConsequenceView: buildOfficialCourtConsequenceView,
   courtResponseView: buildOfficialCourtResponseView,
+  domainConsequenceView: buildDomainConsequenceView,
   officialPostingsView: buildOfficialPostingsView,
   playerMonthlyBriefingView: buildPlayerMonthlyBriefingView,
   worldThreadView: buildWorldThreadView
@@ -222,6 +224,7 @@ function pushEntryPoints(target, rows = [], limit = ROLE_CYCLE_LIMITS.maxEntryPo
     `${entry.kind || "reference"}:${entry.targetRouteId || entry.targetSurfaceId || ""}:${entry.label || ""}`
   )).filter((key) => !key.endsWith("::")));
   for (const row of asArray(rows)) {
+    if (!isPlainObject(row)) continue;
     const entry = makeEntryPoint(row);
     if (!entry || seen.has(entry.id)) continue;
     const visibleTargetKey = `${entry.kind}:${entry.targetRouteId || entry.targetSurfaceId || ""}:${entry.label}`;
@@ -526,6 +529,126 @@ function buildNpcEconomyCycleItems(npcEconomyView = {}) {
     .slice(0, 2);
 }
 
+function domainConsequenceTarget(row = {}) {
+  if (row.sourceType === "military_diplomacy") {
+    return {
+      domainLabel: "军务后果",
+      targetSurfaceId: "war-council",
+      entryLabel: "查军务后果",
+      actionLabel: "复核军务后果"
+    };
+  }
+  if (row.sourceType === "judicial_case") {
+    return {
+      domainLabel: "刑名后果",
+      targetSurfaceId: "trial",
+      entryLabel: "查刑名后果",
+      actionLabel: "复核刑名后果"
+    };
+  }
+  if (row.sourceType === "npc_economy") {
+    return {
+      domainLabel: "人物后果",
+      targetRouteId: "people",
+      entryLabel: "查人物后果",
+      actionLabel: "复核人物后果"
+    };
+  }
+  return {
+    domainLabel: "地方后果",
+    targetRouteId: "archive",
+    entryLabel: "查地方后果",
+    actionLabel: "复核地方后果"
+  };
+}
+
+function domainConsequenceRisk(row = {}) {
+  const severity = clampNumber(row.severity, 1, 3, 1);
+  if (severity >= 3) return 84;
+  if (severity >= 2) return 68;
+  return 42;
+}
+
+function domainConsequenceRef(row = {}, index = 0) {
+  return cleanId(row.publicEchoRef || row.id || row.sourceId, `domain-consequence-${index}`);
+}
+
+function buildDomainConsequenceCycleItems(domainConsequenceView = {}, limit = 3) {
+  return asArray(domainConsequenceView.recentConsequences)
+    .slice(-limit)
+    .reverse()
+    .map((row, index) => {
+      if (!isPlainObject(row)) return null;
+      const sourceId = domainConsequenceRef(row, index);
+      const target = domainConsequenceTarget(row);
+      return makeCycleItem({
+        id: `role-domain-consequence-${sourceId}`,
+        sourceView: "domainConsequenceView",
+        sourceId,
+        title: rowTitle(row, "领域后果"),
+        meta: [row.sourceLabel, row.statusLabel, row.affectedMetricLabels?.join("、")].filter(Boolean).join(" · "),
+        publicSummary: row.publicSummary,
+        statusLabel: row.severity >= 2 ? "有牵连" : row.statusLabel || "可观察",
+        riskScore: domainConsequenceRisk(row),
+        domainLabel: target.domainLabel,
+        targetRouteId: target.targetRouteId,
+        targetSurfaceId: target.targetSurfaceId,
+        evidenceRefs: [{
+          sourceView: "domainConsequenceView",
+          sourceId,
+          label: row.title || target.domainLabel,
+          sourceType: row.sourceType,
+          targetRouteId: target.targetRouteId,
+          targetSurfaceId: target.targetSurfaceId
+        }]
+      });
+    })
+    .filter(Boolean);
+}
+
+function buildDomainConsequenceActions(domainItems = [], limit = 2) {
+  return asArray(domainItems)
+    .slice(0, limit)
+    .map((item) => {
+      const target = {
+        targetRouteId: item.targetRouteId,
+        targetSurfaceId: item.targetSurfaceId
+      };
+      return makeNextAction({
+        id: `domain-consequence-action-${item.sourceId}`,
+        label: `复核${item.domainLabel || "后果"}`,
+        text: `${item.domainLabel || "领域后果"}已归档：只核对公开后续、月报摘录和通用案卷线索；本草稿仅供复盘，不请求服务器执行新的领域结果。`,
+        sourceView: "domainConsequenceView",
+        ...target
+      });
+    })
+    .filter(Boolean);
+}
+
+function buildDomainConsequenceEntry(domainItems = [], role = "official") {
+  const first = asArray(domainItems)[0];
+  if (!first) return null;
+  return {
+    id: `${role}-domain-consequence-current`,
+    label: first.domainLabel === "军务后果" ? "查军务后果" : first.domainLabel === "刑名后果" ? "查刑名后果" : "查后果",
+    targetRouteId: first.targetRouteId,
+    targetSurfaceId: first.targetSurfaceId,
+    sourceView: "domainConsequenceView",
+    sourceId: first.sourceId,
+    publicSummary: first.publicSummary,
+    evidenceRefs: first.evidenceRefs
+  };
+}
+
+function filterDuplicateDomainThreads(threads = [], domainItems = []) {
+  const domainRefs = new Set(asArray(domainItems).map((item) => cleanId(item.sourceId, "")).filter(Boolean));
+  if (!domainRefs.size) return threads;
+  return asArray(threads).filter((thread) => !(
+    thread?.sourceType === "domain_consequence" &&
+    domainRefs.has(cleanId(thread.sourceId, ""))
+  ));
+}
+
 function mapPressureScore(ref = {}) {
   const style = isPlainObject(ref.style) ? cleanText(ref.style.pressure, "calm", 24) : "calm";
   if (style === "urgent") return 84;
@@ -778,6 +901,7 @@ function buildMagistrateCycle(worldState, views) {
   const fiscal = isPlainObject(views.economicFiscalView) ? views.economicFiscalView : {};
   const market = isPlainObject(views.marketPriceView) ? views.marketPriceView : {};
   const npcEconomy = isPlainObject(views.npcEconomyView) ? views.npcEconomyView : {};
+  const domainConsequences = isPlainObject(views.domainConsequenceView) ? views.domainConsequenceView : {};
   const dockets = sortByRisk(buildItemsFromRows(asArray(local.dockets), "localAffairsDocketView", "local-docket", 4));
   const fiscalItems = sortByRisk(buildItemsFromRows([
     ...asArray(fiscal.localTreasuryReports),
@@ -786,8 +910,10 @@ function buildMagistrateCycle(worldState, views) {
   ], "economicFiscalView", "local-fiscal", 3));
   const marketItems = buildMarketPriceCycleItems(market);
   const npcEconomyItems = buildNpcEconomyCycleItems(npcEconomy);
+  const domainItems = buildDomainConsequenceCycleItems(domainConsequences, 2);
   const items = [];
   pushUnique(items, dockets.slice(0, 2));
+  pushUnique(items, domainItems);
   pushUnique(items, marketItems);
   pushUnique(items, npcEconomyItems);
   pushUnique(items, dockets);
@@ -808,13 +934,15 @@ function buildMagistrateCycle(worldState, views) {
     summary: item.publicSummary,
     sourceView: item.sourceView
   })).filter(Boolean);
-  const nextActions = items.slice(0, 3).map((item) => makeNextAction({
+  const adjudicableItems = items.filter((item) => item.sourceView !== "domainConsequenceView");
+  const nextActions = adjudicableItems.slice(0, 3).map((item) => makeNextAction({
     id: `magistrate-action-${item.id}`,
     label: item.domainLabel ? `处置${item.domainLabel}` : "处置案牍",
     text: `本旬先处置${item.title}：核公开材料、经手人、期限和需回报事项。`,
     sourceView: item.sourceView,
     targetSurfaceId: item.domainLabel === "刑名" ? "trial" : ""
   })).filter(Boolean);
+  nextActions.unshift(...buildDomainConsequenceActions(domainItems, 1));
   nextActions.push(...collectActions([], "localAffairsDocketView"));
 
   return {
@@ -828,6 +956,7 @@ function buildMagistrateCycle(worldState, views) {
     sourceViews: [...config.sourceViews],
     metrics,
     entryPoints: buildRoleEntryPoints(role, [
+      buildDomainConsequenceEntry(domainItems, role),
       {
         id: "magistrate-market-current",
         label: "查市价",
@@ -865,8 +994,10 @@ function buildOfficialCycle(worldState, views) {
   const career = isPlainObject(views.officialCareerView) ? views.officialCareerView : {};
   const courtResponse = isPlainObject(views.courtResponseView) ? views.courtResponseView : {};
   const consequence = isPlainObject(views.courtConsequenceView) ? views.courtConsequenceView : {};
+  const domainConsequences = isPlainObject(views.domainConsequenceView) ? views.domainConsequenceView : {};
   const firstMonth = isPlainObject(career.firstMonthExperience) ? career.firstMonthExperience : {};
   const courtEntry = isPlainObject(career.courtEntry) ? career.courtEntry : {};
+  const domainItems = buildDomainConsequenceCycleItems(domainConsequences, 2);
   const items = [];
 
   if (isPlainObject(firstMonth.assignment)) {
@@ -904,6 +1035,7 @@ function buildOfficialCycle(worldState, views) {
     ...asArray(consequence.pendingSources),
     ...asArray(consequence.recentSignals)
   ], "courtConsequenceView", "official-court-consequence", 2));
+  pushUnique(items, domainItems);
   if (!items.length) return buildFallbackCycle(role);
 
   const metrics = [
@@ -927,7 +1059,8 @@ function buildOfficialCycle(worldState, views) {
     ...collectActions(courtEntry.nextActions, "officialCareerView"),
     ...collectActions(courtEntry.followUpNextActions, "officialCareerView"),
     ...collectActions(courtResponse.nextActions, "courtResponseView"),
-    ...collectActions(consequence.nextActions, "courtConsequenceView")
+    ...collectActions(consequence.nextActions, "courtConsequenceView"),
+    ...buildDomainConsequenceActions(domainItems, 1)
   ].slice(0, ROLE_CYCLE_LIMITS.maxNextActions);
 
   return {
@@ -960,7 +1093,8 @@ function buildOfficialCycle(worldState, views) {
         sourceView: "courtResponseView",
         sourceId: "responses",
         publicSummary: courtResponse.summary || "查看公开奏议回应链。"
-      }
+      },
+      buildDomainConsequenceEntry(domainItems, role)
     ]),
     items: items.slice(0, ROLE_CYCLE_LIMITS.maxItemsPerRole),
     riskSignals,
@@ -973,8 +1107,10 @@ function buildMinisterCycle(worldState, views) {
   const config = roleConfig(role);
   const courtResponse = isPlainObject(views.courtResponseView) ? views.courtResponseView : {};
   const consequence = isPlainObject(views.courtConsequenceView) ? views.courtConsequenceView : {};
+  const domainConsequences = isPlainObject(views.domainConsequenceView) ? views.domainConsequenceView : {};
   const fiscal = isPlainObject(views.economicFiscalView) ? views.economicFiscalView : {};
   const threads = isPlainObject(views.worldThreadView) ? views.worldThreadView : {};
+  const domainItems = buildDomainConsequenceCycleItems(domainConsequences, 3);
   const items = [];
   pushUnique(items, buildItemsFromRows([
     ...asArray(courtResponse.chainItems),
@@ -989,7 +1125,13 @@ function buildMinisterCycle(worldState, views) {
     ...asArray(fiscal.fiscalLedgers),
     ...asArray(fiscal.marketIncidents)
   ], "economicFiscalView", "minister-fiscal", 2));
-  pushUnique(items, buildItemsFromRows(asArray(threads.activeThreads), "worldThreadView", "minister-thread", 2));
+  pushUnique(items, domainItems);
+  pushUnique(items, buildItemsFromRows(
+    filterDuplicateDomainThreads(threads.activeThreads, domainItems),
+    "worldThreadView",
+    "minister-thread",
+    2
+  ));
   if (!items.length) return buildFallbackCycle(role);
 
   const metrics = items.slice(0, ROLE_CYCLE_LIMITS.maxMetrics).map((item) => makeMetric({
@@ -1009,6 +1151,7 @@ function buildMinisterCycle(worldState, views) {
   const nextActions = [
     ...collectActions(courtResponse.nextActions, "courtResponseView"),
     ...collectActions(consequence.nextActions, "courtConsequenceView"),
+    ...buildDomainConsequenceActions(domainItems, 1),
     makeNextAction({
       id: "minister-bureau-draft",
       label: "拟部院票拟",
@@ -1044,7 +1187,8 @@ function buildMinisterCycle(worldState, views) {
         sourceView: "courtResponseView",
         sourceId: "debate",
         publicSummary: "围绕公开奏议拟部院意见。"
-      }
+      },
+      buildDomainConsequenceEntry(domainItems, role)
     ]),
     items: items.slice(0, ROLE_CYCLE_LIMITS.maxItemsPerRole),
     riskSignals,
@@ -1058,10 +1202,13 @@ function buildGeneralCycle(worldState, views) {
   const military = isPlainObject(views.militaryDiplomacyView) ? views.militaryDiplomacyView : {};
   const mapRuntime = isPlainObject(views.mapRuntimeView) ? views.mapRuntimeView : {};
   const archive = isPlainObject(views.eventArchiveView) ? views.eventArchiveView : {};
+  const domainConsequences = isPlainObject(views.domainConsequenceView) ? views.domainConsequenceView : {};
   const mapItems = buildMapRuntimeCycleItems(mapRuntime);
   const archiveItems = buildArchiveCycleItems(archive);
+  const domainItems = buildDomainConsequenceCycleItems(domainConsequences, 3);
   const items = [];
   pushUnique(items, buildItemsFromRows(asArray(military.frontierIncidents), "militaryDiplomacyView", "general-incident", 2));
+  pushUnique(items, domainItems);
   pushUnique(items, mapItems);
   pushUnique(items, archiveItems);
   pushUnique(items, buildItemsFromRows(asArray(military.theaters), "militaryDiplomacyView", "general-theater", 2));
@@ -1083,7 +1230,8 @@ function buildGeneralCycle(worldState, views) {
     summary: item.publicSummary,
     sourceView: item.sourceView
   })).filter(Boolean);
-  const nextActions = items.slice(0, 3).map((item) => makeNextAction({
+  const adjudicableItems = items.filter((item) => item.sourceView !== "domainConsequenceView");
+  const nextActions = adjudicableItems.slice(0, 3).map((item) => makeNextAction({
     id: `general-action-${item.id}`,
     label: /粮|供|饷/.test(`${item.title}${item.publicSummary}`) ? "核粮道" : "拟军报",
     text: `据${item.title}拟军前回报：列明公开情报、粮道、军心和需待裁决的处置。`,
@@ -1101,6 +1249,8 @@ function buildGeneralCycle(worldState, views) {
     2
   );
   const combinedNextActions = [...mapActions, ...nextActions].slice(0, ROLE_CYCLE_LIMITS.maxNextActions);
+  const domainActions = buildDomainConsequenceActions(domainItems, 1);
+  const allNextActions = [...domainActions, ...combinedNextActions].slice(0, ROLE_CYCLE_LIMITS.maxNextActions);
 
   return {
     role,
@@ -1136,11 +1286,12 @@ function buildGeneralCycle(worldState, views) {
         sourceView: "eventArchiveView",
         sourceId: archiveItems[0]?.sourceId || "archive-items",
         publicSummary: archiveItems[0]?.publicSummary || "查看服务器整理后的公开战事档案。"
-      }
+      },
+      buildDomainConsequenceEntry(domainItems, role)
     ]),
     items: items.slice(0, ROLE_CYCLE_LIMITS.maxItemsPerRole),
     riskSignals,
-    nextActions: combinedNextActions.length ? combinedNextActions : buildFallbackCycle(role).nextActions
+    nextActions: allNextActions.length ? allNextActions : buildFallbackCycle(role).nextActions
   };
 }
 
@@ -1149,10 +1300,12 @@ function buildEmperorCycle(worldState, views) {
   const config = roleConfig(role);
   const courtResponse = isPlainObject(views.courtResponseView) ? views.courtResponseView : {};
   const consequence = isPlainObject(views.courtConsequenceView) ? views.courtConsequenceView : {};
+  const domainConsequences = isPlainObject(views.domainConsequenceView) ? views.domainConsequenceView : {};
   const postings = isPlainObject(views.officialPostingsView) ? views.officialPostingsView : {};
   const threads = isPlainObject(views.worldThreadView) ? views.worldThreadView : {};
   const fiscal = isPlainObject(views.economicFiscalView) ? views.economicFiscalView : {};
   const military = isPlainObject(views.militaryDiplomacyView) ? views.militaryDiplomacyView : {};
+  const domainItems = buildDomainConsequenceCycleItems(domainConsequences, 3);
   const items = [];
   pushUnique(items, buildItemsFromRows([
     ...asArray(courtResponse.chainItems),
@@ -1167,7 +1320,13 @@ function buildEmperorCycle(worldState, views) {
     ...asArray(postings.assessmentRecords),
     ...asArray(postings.transferRecords)
   ], "officialPostingsView", "emperor-postings", 2));
-  pushUnique(items, buildItemsFromRows(asArray(threads.activeThreads), "worldThreadView", "emperor-thread", 2));
+  pushUnique(items, domainItems);
+  pushUnique(items, buildItemsFromRows(
+    filterDuplicateDomainThreads(threads.activeThreads, domainItems),
+    "worldThreadView",
+    "emperor-thread",
+    2
+  ));
   pushUnique(items, buildItemsFromRows([
     ...asArray(fiscal.fiscalLedgers),
     ...asArray(fiscal.marketIncidents),
@@ -1194,6 +1353,7 @@ function buildEmperorCycle(worldState, views) {
   const nextActions = [
     ...collectActions(courtResponse.nextActions, "courtResponseView"),
     ...collectActions(consequence.nextActions, "courtConsequenceView"),
+    ...buildDomainConsequenceActions(domainItems, 1),
     makeNextAction({
       id: "emperor-edict-review",
       label: "拟御前批示",
@@ -1229,7 +1389,8 @@ function buildEmperorCycle(worldState, views) {
         sourceView: "courtResponseView",
         sourceId: "responses",
         publicSummary: courtResponse.summary || "查看公开朝议回应。"
-      }
+      },
+      buildDomainConsequenceEntry(domainItems, role)
     ]),
     items: items.slice(0, ROLE_CYCLE_LIMITS.maxItemsPerRole),
     riskSignals,

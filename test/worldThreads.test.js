@@ -420,3 +420,49 @@ test("world thread sync does not archive hidden legacy rows into visible resolve
   assert.equal(JSON.stringify(view).includes("sealed impeachment dossier"), false);
   assert.equal(JSON.stringify(view).includes("Resolved Hidden Palace Thread"), false);
 });
+
+test("S88.6 domain consequence threads do not duplicate resolved echoes after visibility churn", () => {
+  const worldState = createInitialState({ role: "official", playerName: "后果议题官" });
+  worldState.turnCount = 30;
+  worldState.cityPolicyLedger = {
+    records: [{
+      outcomeId: "world-thread-domain-echo",
+      policyType: "market_regulation",
+      policyLabel: "平抑米价回响",
+      status: "accepted",
+      publicSummary: "米铺照牌价出售，后续仍需观察民心。",
+      publicSourceId: "world-thread-domain-public-source",
+      stateDelta: { publicOrder: -5 },
+      appliedAtTurn: 30
+    }]
+  };
+
+  ensureWorldThreadState(worldState);
+  const firstView = buildWorldThreadView(worldState);
+  const firstThread = firstView.activeThreads.find((thread) => thread.sourceType === "domain_consequence");
+  assert.ok(firstThread);
+  assert.match(firstThread.sourceId, /^domainConsequenceEcho:/);
+
+  worldState.player.role = "scholar";
+  worldState.turnCount = 31;
+  ensureWorldThreadState(worldState);
+  const firstResolved = buildWorldThreadView(worldState).recentResolved
+    .filter((thread) => thread.sourceType === "domain_consequence" && thread.sourceId === firstThread.sourceId);
+  assert.equal(firstResolved.length, 1);
+
+  worldState.player.role = "official";
+  worldState.turnCount = 32;
+  ensureWorldThreadState(worldState);
+  assert.ok(buildWorldThreadView(worldState).activeThreads.some((thread) =>
+    thread.sourceType === "domain_consequence" && thread.sourceId === firstThread.sourceId
+  ));
+
+  worldState.player.role = "scholar";
+  worldState.turnCount = 33;
+  ensureWorldThreadState(worldState);
+  const secondResolved = buildWorldThreadView(worldState).recentResolved
+    .filter((thread) => thread.sourceType === "domain_consequence" && thread.sourceId === firstThread.sourceId);
+
+  assert.equal(secondResolved.length, 1);
+  assert.equal(JSON.stringify(secondResolved).includes("world-thread-domain-public-source"), false);
+});

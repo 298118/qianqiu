@@ -260,6 +260,7 @@ function normalizeConsequenceRow(worldState, sourceType, raw = {}) {
   if (rawPublicSourceId) {
     row[INTERNAL_DEDUPE_KEY] = cleanId(`${sourceType}-public-${stablePublicSuffix(rawPublicSourceId)}`, "");
   }
+  row.publicEchoRef = publicEchoRefForConsequence(row);
   return row;
 }
 
@@ -299,6 +300,11 @@ function consequenceDedupeKey(row = {}) {
     ].filter(Boolean).join(":"),
     row.id || ""
   );
+}
+
+function publicEchoRefForConsequence(row = {}) {
+  const key = consequenceDedupeKey(row);
+  return cleanId(`domainConsequenceEcho:${stablePublicSuffix(key)}`, "domainConsequenceEcho");
 }
 
 function consequenceCompletenessScore(row = {}) {

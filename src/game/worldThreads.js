@@ -328,6 +328,28 @@ function normalizeResolvedThread(raw, worldState = {}) {
   };
 }
 
+function resolvedThreadKey(thread = {}) {
+  if (thread.sourceType === "domain_consequence") {
+    return `domain_consequence:${thread.sourceId || thread.id || ""}`;
+  }
+  return [
+    thread.sourceType || "long_term_event",
+    thread.id || thread.sourceId || ""
+  ].join(":");
+}
+
+function dedupeResolvedThreads(rows = []) {
+  const bySource = new Map();
+  for (const row of rows) {
+    if (!row) continue;
+    const key = resolvedThreadKey(row);
+    if (!key || key.endsWith(":")) continue;
+    bySource.delete(key);
+    bySource.set(key, row);
+  }
+  return [...bySource.values()].slice(-MAX_RECENT_RESOLVED);
+}
+
 function createInitialWorldThreadState() {
   return {
     schemaVersion: WORLD_THREAD_SCHEMA_VERSION,
@@ -348,10 +370,9 @@ function normalizeWorldThreadState(worldState = {}) {
         .slice(0, MAX_THREADS)
       : [],
     recentResolved: Array.isArray(source.recentResolved)
-      ? source.recentResolved
+      ? dedupeResolvedThreads(source.recentResolved
         .map((thread) => normalizeResolvedThread(thread, worldState))
-        .filter(Boolean)
-        .slice(-MAX_RECENT_RESOLVED)
+        .filter(Boolean))
       : []
   };
 }
@@ -759,25 +780,28 @@ function deriveOfficialCourtConsequenceThreads(worldState) {
 function deriveDomainConsequenceThreads(worldState) {
   const view = buildDomainConsequenceView(worldState);
   if (!view.active) return [];
-  return (view.recentConsequences || []).slice(-4).map((consequence) => makeThread(worldState, {
-    id: `WT-domain-consequence-${consequence.id}`,
-    sourceType: "domain_consequence",
-    sourceId: consequence.id,
-    kind: "domain_consequence",
-    status: consequence.severity >= 2 ? "watch" : "active",
-    title: consequence.title,
-    summary: consequence.publicSummary,
-    severity: consequence.severity,
-    createdTurn: consequence.generatedAtTurn,
-    lastUpdatedTurn: consequence.generatedAtTurn,
-    startedYear: consequence.year,
-    startedMonth: consequence.month,
-    related: {
-      metrics: Array.isArray(consequence.affectedMetricLabels)
-        ? consequence.affectedMetricLabels
-        : []
-    }
-  })).filter(Boolean);
+  return (view.recentConsequences || []).slice(-4).map((consequence) => {
+    const echoRef = cleanText(consequence.publicEchoRef || consequence.id, "", 96);
+    return makeThread(worldState, {
+      id: `WT-domain-consequence-${echoRef}`,
+      sourceType: "domain_consequence",
+      sourceId: echoRef,
+      kind: "domain_consequence",
+      status: consequence.severity >= 2 ? "watch" : "active",
+      title: consequence.title,
+      summary: consequence.publicSummary,
+      severity: consequence.severity,
+      createdTurn: consequence.generatedAtTurn,
+      lastUpdatedTurn: consequence.generatedAtTurn,
+      startedYear: consequence.year,
+      startedMonth: consequence.month,
+      related: {
+        metrics: Array.isArray(consequence.affectedMetricLabels)
+          ? consequence.affectedMetricLabels
+          : []
+      }
+    });
+  }).filter(Boolean);
 }
 
 function deriveOfficialOutcomeThreads(worldState) {
@@ -998,10 +1022,10 @@ function syncWorldThreadState(worldState) {
   worldState.worldThreads = {
     schemaVersion: WORLD_THREAD_SCHEMA_VERSION,
     threads,
-    recentResolved: [
+    recentResolved: dedupeResolvedThreads([
       ...previous.recentResolved,
       ...resolved
-    ].slice(-MAX_RECENT_RESOLVED)
+    ])
   };
   return worldState.worldThreads;
 }
