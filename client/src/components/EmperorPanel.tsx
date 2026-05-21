@@ -1,9 +1,11 @@
 import type { CSSProperties } from "react";
 import { Link } from "react-router";
 import type { JsonObject, JsonValue, PlayerSummary } from "../api";
+import { RoleCycleSection } from "./RoleCycleSection";
 
 type EmperorPanelProps = {
   readonly player?: PlayerSummary | null;
+  readonly roleCycleView?: JsonObject | null;
   readonly officialPostingsView?: JsonObject | null;
   readonly eventArchiveView?: JsonObject | null;
   readonly actorMemoryView?: JsonObject | null;
@@ -301,6 +303,7 @@ function draftButtonText(label: string, text: string, enabled: boolean, onDraft:
 
 export function EmperorPanel({
   player,
+  roleCycleView,
   officialPostingsView,
   eventArchiveView,
   actorMemoryView,
@@ -368,6 +371,12 @@ export function EmperorPanel({
       </header>
 
       <div className="scholarPanelGrid emperorPanelGrid">
+        <RoleCycleSection
+          roleCycleView={roleCycleView}
+          idPrefix="emperor-role-cycle"
+          runnable={runnable}
+          onDraft={onDraft}
+        />
         <article className="scholarPanelCard emperorPanelMemorials" aria-labelledby="emperor-memorials-title">
           <h3 id="emperor-memorials-title">奏折队列</h3>
           <p>案头奏折来自服务器公开投影，只能帮助组织询问顺序，不写成已经裁决的朝廷事实。</p>

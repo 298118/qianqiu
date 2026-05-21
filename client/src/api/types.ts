@@ -160,6 +160,23 @@ export type SafeWorldState = {
   readonly [key: string]: unknown;
 };
 
+export type RoleCycleView = JsonObject & {
+  readonly schemaVersion?: string;
+  readonly generatedAtTurn?: number;
+  readonly dateLabel?: string;
+  readonly activeRole?: string;
+  readonly activeRoleLabel?: string;
+  readonly summary?: string;
+  readonly currentRole?: JsonObject;
+  readonly roleMatrix?: readonly JsonObject[];
+  readonly aiReadScope?: JsonObject;
+  readonly toolPermissions?: string;
+  readonly proposalBoundaries?: readonly unknown[];
+  readonly serverAdjudication?: string;
+  readonly authorityBoundary?: string;
+  readonly safety?: JsonObject;
+};
+
 export type SafeRouteViews = {
   readonly aiSettingsView?: AiSettingsView;
   readonly aiInvocationSummaryView?: JsonObject;
@@ -175,6 +192,7 @@ export type SafeRouteViews = {
   readonly marketPriceView?: MarketPriceView;
   readonly npcEconomyView?: NpcEconomyView;
   readonly npcActiveRequestView?: NpcActiveRequestView;
+  readonly roleCycleView?: RoleCycleView;
   readonly mapRuntimeView?: MapRuntimeView;
   readonly eventArchiveView?: JsonObject;
   readonly informationPanelPageView?: JsonObject;

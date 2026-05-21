@@ -116,7 +116,7 @@
 | S88.2 | DONE | SQLite derived row builder 类型边界 | 已覆盖 `SqliteWorldSessionRow`、`SqlitePromptRetrievalRow`、`SqliteSafeSearchIndexRow`、prompt/safe repair status、maintenance safe diagnostics 和首批 row builder JSDoc/TS contract；派生表继续只从 `world_sessions.world_state_json` 单向修复。 |
 | S88.3 | DONE | 书生主线补强一轮 | 已完成入仕首月差事、备考压力/入场反馈、阅卷放榜同年座师过渡、读书计划深化、考试入场后反馈五个切片；完整书生路径继续作为后续验收入口。 |
 | S88.4 | DONE | 入仕官员首轮官场体验 | 已完成七个切片：首月差事派生 `officialCareerView.firstMonthExperience`、官署回执、上官同僚反馈、考成信号、月报摘录和官员面板“官署首月”；首月回署材料已整理为 `officialCareerView.courtEntry` / `courtEntries`，进入奏折/朝议 surface 与 `topic_draft` 安全 evidence；普通回合提交首月回署奏折/朝议后，服务器写入 `courtEntryResolutions`、近次裁决、事件档案和月报摘录；继续提交朝议/部院/御前/考成跟进后，服务器写入 `courtEntryFollowUps`、`latestFollowUp`、`official_court_follow_up` 事件档案、月报和 world thread 中间反馈；跨身份 `courtResponseView` / `officialCourtResponses` 已让皇帝、大臣、官员围绕公开奏议写入受限 `official_court_response` 中间态；长期 `courtConsequenceView` / `officialCourtConsequences` 已把公开奏议链路转为 `official_court_consequence` 信号、月报、world thread 和 React 官员/皇帝只读余波；皇帝/部院续办链路已把上一轮 `official_court_response` 投影为 `courtResponseView.chainItems`，普通回合可写入御前再摘、部院再覆、补据承批和考成续记的下一轮中间态。下一步进入 S88.5 六身份循环矩阵或 S88.6 跨域后果 refs。 |
-| S88.5 | TODO | 六身份循环矩阵 | 为皇帝、大臣、将领、地方官、书生、入仕官员补差异化事务、风险、待办和身份面板。 |
+| S88.5 | IN_PROGRESS | 六身份循环矩阵 | S88.5.1 已先建立服务器派生的 `roleCycleView` 与 React `RoleCycleSection` 首片，把皇帝、大臣、将领、地方官、书生、入仕官员统一为当前身份循环矩阵：只公开当前身份事务、风险、待办、AI read scope、工具权限、proposal 边界和服务器裁决说明，非当前身份只显示待任占位；后续切片再把这些事务接入更专门 resolver、长期后果 refs 或地图/NPC/经济入口。 |
 | S88.6 | TODO | 官场与世界后果追踪 | 奏折、政令、军务、刑名、财政、外交、地方事务、任免、朝议、月报和长期事件统一增加可追踪后果 refs。 |
 | S88.7 | TODO | NPC 与关系深化 | 将主动来函、论道、切磋、求爱、婚姻、引荐、请托、弹劾、背叛、行贿、人情债推进到专门 resolver。 |
 | S88.8 | TODO | 资产、囊箧、交易、委派与经济解释性 | 为资源扣减、交易成交、委派回禀、经济月结和关系变化增加可解释 trace。 |
@@ -128,6 +128,7 @@
 ## 5. 最新状态
 
 - S88 当前基线：全面系统打磨专项已启动，规划见 [QIANQIU_POLISHING_ROADMAP.md](QIANQIU_POLISHING_ROADMAP.md)。S88.1 已完成 AI remote helper/provider public-safe envelope。S88.2 已完成 SQLite derived row builder 类型边界：`src/contracts/serverContracts.ts` 固定 world session、prompt retrieval、safe search、repair status 和 safe diagnostics 类型，`sqlitePromptRetrievalTables.js`、`sqliteSafeSearchTables.js`、`sqliteMaintenance.js` 纳入 `npm run typecheck:server`，继续保持派生表只从 `world_sessions.world_state_json` 单向修复。S88.3 已完成五个切片：殿试授官后会按服务器授官轨迹生成首月官场差事；考试取题后会按盘费、路途、保结、准考缺口、学业维度、体力心态和读书计划派生安全备考压力与入场反馈，并进入 public `entryPreparation`、`examProcedureView`、`studyProfileView`、书生面板和科举页；放榜后会由 `examAftermathView` 从服务器定榜、科名荣誉、公开同年座师网络和授官轨迹整理公开过渡摘要与草稿建议，皇榜页只读展示；读书计划现在由 `studyProfileView.nextPlan` 暴露服务器生成的三旬窗口、补弱强度、晨午暮日课、复盘节点、风险提示、首课草稿和权限边界，React 书生面板只读展示并只写行动草稿；场内推进后 `examProcedureView.phaseFeedback` 会按 `sceneTime`、科场阶段、备考压力和公开行动摘要生成入场后反馈、风险提示和下一步草稿建议，兼容 `worldState` 会同步清洗旧流程快照和科场局部时间，React 科举页只读展示并只把“拟行动”写入本地行动草稿。S88.4 已完成七个官场体验切片：`officialCareerView.firstMonthExperience` 从首月差事派生官署首月进度、风险、上官同僚反馈、回署回执、考成信号、下一步草稿建议和月报摘录提示；普通回合推进首月差事会生成 `[官署回执]`，`playerMonthlyBriefingView` 月末摘录该首月体验，React 官员面板新增“官署首月”区块且按钮只写行动草稿；`officialCareerView.courtEntry` / `courtEntries` 会把首月回署材料、奏折/朝议目标 surface、长期考成 trace、上官同僚后续回响和 draft-only 下一步整理为安全 evidence，供 `memorial-review`、`court-debate` 和 `topic_draft` 引用；普通回合提交这些草稿后，服务器写 `officialCareer.courtEntryResolutions`、近次 `latestResolution`、事件档案 `official_court_entry` 条目和月报摘录，只做受限进度/考成影响；继续提交朝议/部院/御前/考成跟进后，服务器写 `officialCareer.courtEntryFollowUps`、近次 `latestFollowUp`、参与 actor 摘要、事件档案 `official_court_follow_up`、月报和 `worldThreadView` 议题线索，仍不直接任免、奖惩、处分、奏议终局或风宪定案；跨身份回应新增 `officialCourtResponses` raw ledger 与 `courtResponseView` 安全投影，皇帝/大臣/官员可围绕公开奏议写入朱批留览、票拟覆奏、补据、朝议回应或考成观察中间态，事件档案 `official_court_response`、`worldThreadView`、`memorial-review` / `court-debate` 和 React 皇帝/官员面板只读消费；长期后果新增 `officialCourtConsequences` raw ledger 与 `courtConsequenceView` 安全投影，把公开奏议裁决、跟进和回应转为证据缺口、考成压力、风宪关注、功绩留痕或朝局余波，事件档案 `official_court_consequence`、`worldThreadView`、官职月报、topic surface 和 React 官员“考成与弹劾”/皇帝“赏罚预留”只读消费；皇帝/部院续办链路会把上一轮 `official_court_response` 投影为 `courtResponseView.chainItems`，并让普通回合续写御前再摘、部院再覆、补据承批或考成续记的下一轮中间态。下一步进入 S88.5 六身份循环矩阵或 S88.6 跨域后果 refs。
+- S88.5 当前进展：S88.5.1 已建立 `roleCycleView` 首片，作为服务器即时派生的六身份循环矩阵安全 view；它只展开当前身份的事务、风险、待办、AI 读取范围、工具权限、proposal 边界和服务器裁决说明，非当前身份只显示“待任后展开”占位，避免低权限身份读取其他身份的 hidden 军务、任所、私档或 raw ledger。React 六身份主面板共用 `RoleCycleSection` 展示“本旬身份循环 / 本旬事务 / 风险 / 可拟草稿”，按钮仅写本地行动草稿，不调用 turn API，不替代服务器裁决。
 - S87 当前基线：后端 route/API 响应类型覆盖已完成。`src/contracts/serverContracts.ts` 已覆盖 game/exam/AI/inventory/NPC/trade/delegation public response；`src/routes/routeResponses.js` 以局部 `@ts-check` helper 接入 `src/routes/game.js`、`src/routes/exam.js` 和 `src/routes/ai.js`，并在运行时拒绝 public `worldState` raw ledger key；大型 route 文件仍未 whole-file `@ts-check`，CommonJS 运行方式不变。
 - S86 当前基线：后端 TypeScript 渐进迁移首轮已完成。新增 `npm run typecheck:server`、`npm run build:server:probe`、`tsconfig.server-check.json`、`tsconfig.server-probe.json`、`src/contracts/serverContracts.ts` 和 `src/contracts/runtimeGuards.ts`；安全 projection、AI facade/route policy、session/storage 高风险模块已选择性 `@ts-check`。后端仍以 CommonJS JavaScript 运行，`.ts` 试点不改变 `npm start`，Rust 仍只作为未来有性能证据后的可选 CLI/WASM/离线工具评估。
 - S81-S84 当前基线：NPC、资产、储物、交易与委派首轮闭环已完成。后端已有 `assetLedger`、`inventoryLedger`、`npcRoster`、`npcInteractionLedger`、`tradeLedger`、`delegatedTaskLedger`、开局背景裁决、AI task/schema/prompt/provider fallback、JSON/SQLite 同步和 player-state 安全 view；React 已有“囊箧” route、人物 NPC 工作台、对话/交易/委派面板和开局裁决摘要。前端只消费安全 API/view，不裁决资源、价格、关系或任务结果。
@@ -138,6 +139,29 @@
 - S78 及更早阶段均已迁入专题归档。活动台账不再展开完成流水；需要追溯时使用本文件顶部归档索引。
 
 ## 6. 最近完整验证口径
+
+本轮 S88.5.1 六身份循环矩阵首片验证口径：
+
+- `node --check src/game/roleCycleConfig.js && node --check src/game/roleCycleView.js && node --check src/routes/game.js && node --check src/routes/exam.js && node --check src/game/resolverInputContext.js && node --check src/ai/promptContextAssembler.js && node --check scripts/clientSmoke.js`
+- `node --test --test-reporter=spec test/roleCycleView.test.js`
+- `node --test --test-reporter=spec test/reactClientScaffold.test.js`
+- `node --test --test-reporter=spec test/browserSmokeScript.test.js`
+- `node --test --test-reporter=spec test/gamePlayerStateRoute.test.js test/gameStartRole.test.js`
+- `node --test --test-reporter=spec test/resolverInputContext.test.js`
+- `node --test --test-reporter=spec test/sceneRuntimeMock.test.js`
+- `node --test --test-reporter=spec test/cityPolicyAuthority.test.js test/judicialCaseAuthority.test.js test/militaryDiplomacyAuthority.test.js`
+- `npm run typecheck:server`
+- `npm run typecheck:client`
+- `npm run test:client -- --pool=vmForks --maxWorkers=2 client/src/state/uiState.test.ts client/src/components/MemorialComposer.test.tsx`
+- `npm run test:client -- --pool=vmForks --maxWorkers=2`
+- `npm run build:client`
+- `npm run smoke:exam-s69`
+- `AI_PROVIDER=mock npm run smoke:browser`
+- `npm run check:docs-governance`
+- `node --test test/documentationGovernance.test.js`
+- `npm test`（1034 项）
+- `git diff --check`（退出码 0；仅打印未改动归档/QA 文件既有 CRLF 提示）
+- 提交前只读子代理复审最终 diff 与验证证据；Mencius 初审未发现代码/API/runtime P0/P1/P2，只指出文档验证状态仍待回填的 P2，本轮已修正，Mencius 复核确认 P2 关闭且未发现新的 P0/P1/P2。
 
 本轮 S88.4 皇帝/部院续办链路切片验证口径：
 
@@ -408,6 +432,16 @@ S84 前端专项额外验收入口：
 - `npm test`
 
 ## 7. 近期进度记录
+
+### 2026-05-21：推进 S88.5.1 六身份循环矩阵首片
+
+- 范围：启动 S88.5 六身份循环矩阵的第一个 coherent slice。聚焦先把皇帝、大臣、将领、地方官、书生和入仕官员的“本旬循环”统一成一个服务器安全 view 与共享 React 区块，便于后续再接更深的 resolver、长期后果 refs、地图/NPC/经济入口。
+- 实现：新增 `src/game/roleCycleConfig.js` 与 `src/game/roleCycleView.js`，由服务器从 `studyProfileView`、`examCalendarView`、`localAffairsDocketView`、`economicFiscalView`、`officialCareerView`、`courtResponseView`、`courtConsequenceView`、`worldThreadView`、`militaryDiplomacyView` 和 `officialPostingsView` 即时派生 `roleCycleView`；`src/routes/game.js` / `src/routes/exam.js` 返回该 view，`src/contracts/serverContracts.ts` 与 `client/src/api/types.ts` 固定契约，resolver input 和 prompt context 只读取 capped 安全摘要。React 新增 `RoleCycleSection`，六身份主面板统一显示“本旬身份循环”“本旬事务”“风险”和草稿按钮，`GamePage` 和 `uiState` 同步 safe view readiness，`scripts/clientSmoke.js` 覆盖六身份 smoke；`docs/AI_CONTROL_AUDIT_MATRIX.md` 已补六身份循环矩阵 AI 权限行。
+- 边界：`roleCycleView` 不新增 persistent ledger，不暴露 raw ledger、provider payload、完整 prompt、本地路径、key、SQLite 物理表行、hidden notes、hidden intent 或其他身份 hidden 信息；非当前身份矩阵只显示待任占位。AI 只能读取当前身份安全摘要并生成 proposal 或草稿，服务器仍裁决考试晋级、官职任免、资源、军务、财赋、地方事务、NPC 行动、经济结果、长期后果和持久化。前端按钮只写本地行动草稿，不调用 turn API。
+- 验证：已通过 focused 语法检查、`test/roleCycleView.test.js`（6 项）、React scaffold（38 项）、browser smoke script（44 项）、player-state/start role route（12 项）、resolver input focused tests（9 项）、scene runtime mock（2 项）、city/judicial/military authority focused tests（13 项）、server/client typecheck、`uiState` / `MemorialComposer` focused Vitest（18 项）、完整 client Vitest（68 项）、client build、`npm run smoke:exam-s69`、`AI_PROVIDER=mock npm run smoke:browser`、docs governance、documentation governance、完整 `npm test`（1034 项）和 `git diff --check`（退出码 0；仅打印未改动归档/QA 文件既有 CRLF 提示）。
+- 子代理：Sartre 已只读梳理后端/API 接线，建议首片采用派生 `roleCycleView`，不新增 raw ledger，并保持 inactive roles 不泄露跨身份信息；Jason 已只读梳理前端接线，建议六身份面板共用“本旬循环”区块且按钮只写草稿。本轮实现已采纳。Mencius 提交前只读初审未发现代码/API/runtime P0/P1/P2，只指出本文件和共享上下文仍写完整验证待回填的 P2；本轮已修正文档状态，Mencius 复核确认 P2 关闭且未发现新的 P0/P1/P2。
+- 提交：待本轮完成后回填。
+- 下一步：继续 S88.5，把当前 `roleCycleView` 中的事务接入更专门的身份 resolver、跨域后果 refs、地图/NPC/经济入口；或转入 S88.6，把官场链路 refs 扩展到军务、财赋、地方事务、NPC 请求和地图事件入口。
 
 ### 2026-05-20：完成 S88.0-S88.1 全面打磨规划与 AI provider 安全 envelope
 

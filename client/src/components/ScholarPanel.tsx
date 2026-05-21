@@ -1,9 +1,11 @@
 import type { CSSProperties } from "react";
 import { Link } from "react-router";
 import type { JsonObject, JsonValue, PlayerSummary } from "../api";
+import { RoleCycleSection } from "./RoleCycleSection";
 
 type ScholarPanelProps = {
   readonly player?: PlayerSummary | null;
+  readonly roleCycleView?: JsonObject | null;
   readonly studyProfileView?: JsonObject | null;
   readonly examCalendarView?: JsonObject | null;
   readonly roleBackgroundPath?: string;
@@ -312,6 +314,7 @@ function draftButtonText(label: string, text: string, enabled: boolean, onDraft:
 
 export function ScholarPanel({
   player,
+  roleCycleView,
   studyProfileView,
   examCalendarView,
   roleBackgroundPath,
@@ -368,6 +371,12 @@ export function ScholarPanel({
       </header>
 
       <div className="scholarPanelGrid">
+        <RoleCycleSection
+          roleCycleView={roleCycleView}
+          idPrefix="scholar-role-cycle"
+          runnable={runnable}
+          onDraft={onDraft}
+        />
         <article className="scholarPanelCard scholarPanelStudyLedger" aria-labelledby="scholar-ledger-title">
           <h3 id="scholar-ledger-title">读书簿</h3>
           <ul className="scholarPanelMetrics" aria-label="学业七项">

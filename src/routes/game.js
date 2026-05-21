@@ -38,6 +38,7 @@ const {
   ensureRoleWorldCouplingState,
   runRoleWorldCouplingStep
 } = require("../game/roleWorldCoupling");
+const { buildRoleCycleView } = require("../game/roleCycleView");
 const {
   buildWorldGeographyView,
   ensureWorldGeographyState
@@ -572,6 +573,7 @@ function buildCommonTurnViews(worldState, options = {}) {
     marketPriceView: buildMarketPriceView(worldState),
     npcEconomyView: buildNpcEconomyView(worldState),
     npcActiveRequestView: buildNpcActiveRequestView(worldState),
+    roleCycleView: buildRoleCycleView(worldState),
     eventArchiveView: buildEventArchiveView(worldState, options.eventArchive),
     informationPanelPageView: buildInformationPanelPageViews(worldState, options.informationPanel || {}, {
       worldGeographyView,

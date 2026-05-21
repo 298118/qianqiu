@@ -1,9 +1,11 @@
 import type { CSSProperties } from "react";
 import { Link } from "react-router";
 import type { JsonObject, JsonValue, PlayerSummary } from "../api";
+import { RoleCycleSection } from "./RoleCycleSection";
 
 type GeneralPanelProps = {
   readonly player?: PlayerSummary | null;
+  readonly roleCycleView?: JsonObject | null;
   readonly militaryDiplomacyView?: JsonObject | null;
   readonly officialPostingsView?: JsonObject | null;
   readonly mapRuntimeView?: unknown;
@@ -273,6 +275,7 @@ function draftButtonText(label: string, text: string, enabled: boolean, onDraft:
 
 export function GeneralPanel({
   player,
+  roleCycleView,
   militaryDiplomacyView,
   officialPostingsView,
   mapRuntimeView,
@@ -334,6 +337,12 @@ export function GeneralPanel({
       </header>
 
       <div className="scholarPanelGrid generalPanelGrid">
+        <RoleCycleSection
+          roleCycleView={roleCycleView}
+          idPrefix="general-role-cycle"
+          runnable={runnable}
+          onDraft={onDraft}
+        />
         <article className="scholarPanelCard generalPanelCommand" aria-labelledby="general-command-title">
           <h3 id="general-command-title">军帐总览</h3>
           <ul className="scholarPanelMetrics" aria-label="军务四项">

@@ -34,6 +34,7 @@ const {
 } = require("../game/officialPostings");
 const { summarizeRelationshipLedger } = require("../game/relationships");
 const { summarizeRoleWorldCouplingForPrompt } = require("../game/roleWorldCoupling");
+const { summarizeRoleCycleForPrompt } = require("../game/roleCycleView");
 const { formatYearMonthPeriod } = require("../game/time");
 const {
   buildWorldEntityView,
@@ -1448,7 +1449,8 @@ function buildRankedRetrievalContext(worldState = {}, options = {}) {
       "worldEntityView",
       "eventArchiveView",
       "actorMemoryView",
-      "sessionSummaryView"
+      "sessionSummaryView",
+      "roleCycleView"
     ],
     query: {
       task: query.task,
@@ -1498,6 +1500,7 @@ function assemblePromptContext(worldState = {}, options = {}) {
     officialCareer: summarizeOfficialCareerForPrompt(worldState),
     officialPostings: summarizeOfficialPostingsForPrompt(worldState),
     roleWorldCoupling: summarizeRoleWorldCouplingForPrompt(worldState),
+    roleCycle: summarizeRoleCycleForPrompt(worldState),
     actorMemory: summarizeActorMemoryForPrompt(worldState, null, options),
     recentPlayerHistory: summarizeRecentPlayerHistory(worldState, options),
     retrievalContext: buildRankedRetrievalContext(worldState, options)

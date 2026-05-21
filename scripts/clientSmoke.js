@@ -810,6 +810,7 @@ async function assertScholarPanel(page, sessionId, screenshotsDir) {
       hasNetwork: text.includes("师友"),
       hasCalendar: text.includes("科期"),
       hasPractice: text.includes("文章练习"),
+      hasRoleCycle: text.includes("本旬身份循环") && text.includes("本旬事务") && text.includes("风险"),
       hasDeepPlan: text.includes("晨课") && text.includes("复盘") && text.includes("执行首课"),
       hasBoundary: text.includes("只写草稿，结果由服务器裁决"),
       examPath: examLink ? new URL(examLink.href).pathname : "",
@@ -828,6 +829,7 @@ async function assertScholarPanel(page, sessionId, screenshotsDir) {
   if (!panelSnapshot.hasNetwork) failures.push("missing academy network");
   if (!panelSnapshot.hasCalendar) failures.push("missing exam calendar");
   if (!panelSnapshot.hasPractice) failures.push("missing practice block");
+  if (!panelSnapshot.hasRoleCycle) failures.push("missing role cycle block");
   if (!panelSnapshot.hasDeepPlan) failures.push("missing deep study plan rhythm");
   if (!panelSnapshot.hasBoundary) failures.push("missing server boundary");
   if (panelSnapshot.dimensionCount < 7) failures.push(`expected seven study dimensions, saw ${panelSnapshot.dimensionCount}`);
@@ -1071,6 +1073,7 @@ async function assertMagistratePanel(page, sessionId, screenshotsDir) {
       hasFiscal: text.includes("钱粮仓储"),
       hasPatrol: text.includes("水利盗警"),
       hasGentry: text.includes("士绅乡约"),
+      hasRoleCycle: text.includes("本旬身份循环") && text.includes("本旬事务") && text.includes("风险"),
       hasBoundary: text.includes("审案、征税、开仓、水利、缉捕、任免、考成和持久化都由服务器裁决"),
       buttons,
       background: computedBackground,
@@ -1087,6 +1090,7 @@ async function assertMagistratePanel(page, sessionId, screenshotsDir) {
   if (!panelSnapshot.hasFiscal) failures.push("missing fiscal block");
   if (!panelSnapshot.hasPatrol) failures.push("missing waterworks and patrol block");
   if (!panelSnapshot.hasGentry) failures.push("missing gentry block");
+  if (!panelSnapshot.hasRoleCycle) failures.push("missing role cycle block");
   if (!panelSnapshot.hasBoundary) failures.push("missing server boundary");
   if (panelSnapshot.metricCount < 8) failures.push(`expected local docket metrics, saw ${panelSnapshot.metricCount}`);
   if (!panelSnapshot.buttons.some((button) => button.text === "升堂核案" && !button.disabled)) failures.push("trial draft button missing or disabled");
@@ -1169,6 +1173,7 @@ async function assertOfficialMinisterPanel(page, sessionId, screenshotsDir, opti
       hasAssessment: text.includes("考成与弹劾"),
       hasMemorial: text.includes("奏折朝议入口"),
       hasExpectedRole: text.includes(expectedRoleLabel),
+      hasRoleCycle: text.includes("本旬身份循环") && text.includes("本旬事务") && text.includes("风险"),
       hasBoundary: text.includes("不得在前端直接任免、奖惩、处分、弹劾成案或改写考成"),
       buttons,
       background: computedBackground,
@@ -1189,6 +1194,7 @@ async function assertOfficialMinisterPanel(page, sessionId, screenshotsDir, opti
   if (!panelSnapshot.hasAssessment) failures.push("missing assessment block");
   if (!panelSnapshot.hasMemorial) failures.push("missing memorial block");
   if (!panelSnapshot.hasExpectedRole) failures.push(`missing role label ${roleLabel}`);
+  if (!panelSnapshot.hasRoleCycle) failures.push("missing role cycle block");
   if (!panelSnapshot.hasBoundary) failures.push("missing server boundary");
   if (panelSnapshot.metricCount < 4) failures.push(`expected career metrics, saw ${panelSnapshot.metricCount}`);
   if (!panelSnapshot.buttons.some((button) => button.text === "查办公文" && !button.disabled)) failures.push("assignment draft button missing or disabled");
@@ -1261,6 +1267,7 @@ async function assertGeneralPanel(page, sessionId, screenshotsDir) {
       hasScouts: text.includes("斥候与情报"),
       hasFrontier: text.includes("边患与舆图"),
       hasReports: text.includes("战报与边议"),
+      hasRoleCycle: text.includes("本旬身份循环") && text.includes("本旬事务") && text.includes("风险"),
       hasBoundary: text.includes("战役胜负、调兵遣将、外交和战、统帅任免、粮饷拨付、赏罚与持久化都由服务器裁决"),
       buttons,
       background: computedBackground,
@@ -1281,6 +1288,7 @@ async function assertGeneralPanel(page, sessionId, screenshotsDir) {
   if (!panelSnapshot.hasScouts) failures.push("missing scout block");
   if (!panelSnapshot.hasFrontier) failures.push("missing frontier map block");
   if (!panelSnapshot.hasReports) failures.push("missing war report block");
+  if (!panelSnapshot.hasRoleCycle) failures.push("missing role cycle block");
   if (!panelSnapshot.hasBoundary) failures.push("missing server military boundary");
   if (panelSnapshot.metricCount < 4) failures.push(`expected military metrics, saw ${panelSnapshot.metricCount}`);
   if (!panelSnapshot.buttons.some((button) => button.text === "遣出斥候" && !button.disabled)) failures.push("scout draft button missing or disabled");
@@ -1355,6 +1363,7 @@ async function assertEmperorPanel(page, sessionId, screenshotsDir) {
       hasCourt: text.includes("朝议"),
       hasAppointments: text.includes("任免候选"),
       hasRewards: text.includes("赏罚预留"),
+      hasRoleCycle: text.includes("本旬身份循环") && text.includes("本旬事务") && text.includes("风险"),
       hasBoundary: text.includes("任免、赏罚、处分、朱批成案、圣旨生效、时间推进和持久化都由服务器裁决"),
       buttons,
       background: computedBackground,
@@ -1376,6 +1385,7 @@ async function assertEmperorPanel(page, sessionId, screenshotsDir) {
   if (!panelSnapshot.hasCourt) failures.push("missing court debate block");
   if (!panelSnapshot.hasAppointments) failures.push("missing appointment candidate block");
   if (!panelSnapshot.hasRewards) failures.push("missing reward punishment block");
+  if (!panelSnapshot.hasRoleCycle) failures.push("missing role cycle block");
   if (!panelSnapshot.hasBoundary) failures.push("missing emperor server boundary");
   if (panelSnapshot.metricCount < 4) failures.push(`expected emperor metrics, saw ${panelSnapshot.metricCount}`);
   if (!panelSnapshot.buttons.some((button) => button.text === "拟旨" && !button.disabled)) failures.push("edict draft button missing or disabled");

@@ -13,6 +13,7 @@ const { buildOfficialCourtResponseView } = require("./officialCourtResponse");
 const { buildOfficialPostingsView } = require("./officialPostings");
 const { buildPlayerMonthlyBriefingView } = require("./playerMonthlyBriefing");
 const { buildRelationshipInspectionView } = require("./relationships");
+const { buildRoleCycleView } = require("./roleCycleView");
 const { buildSessionSummaryView } = require("./sessionSummary");
 const { buildWorldGeographyView } = require("./worldGeography");
 const { buildWorldPeopleView } = require("./worldPeople");
@@ -145,6 +146,7 @@ function buildSourceViews(worldState, options = {}) {
     officialPostingsView,
     playerMonthlyBriefingView: buildPlayerMonthlyBriefingView(worldState),
     relationshipView: buildRelationshipInspectionView(worldState),
+    roleCycleView: buildRoleCycleView(worldState),
     sessionSummaryView: buildSessionSummaryView(worldState),
     worldGeographyView,
     worldPeopleView

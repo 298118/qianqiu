@@ -79,6 +79,7 @@ const { buildMapRuntimeView } = require("../game/mapRuntimeView");
 const { buildHistoricalEventArchiveView } = require("../game/historicalEventArchive");
 const { buildIntelligenceRumorView } = require("../game/intelligenceRumors");
 const { buildRoleWorldCouplingView, ensureRoleWorldCouplingState } = require("../game/roleWorldCoupling");
+const { buildRoleCycleView } = require("../game/roleCycleView");
 const { buildWorldGeographyView, ensureWorldGeographyState } = require("../game/worldGeography");
 const { buildWorldEntityView, ensureWorldEntityState } = require("../game/worldEntities");
 const { buildWorldPeopleView, ensureWorldPeopleState } = require("../game/worldPeople");
@@ -181,6 +182,7 @@ function toExamPayload(worldState) {
     activeNpcRequestView: buildActiveNpcRequestView(worldState),
     npcActiveRequestView: buildNpcActiveRequestView(worldState),
     roleWorldCouplingView: buildRoleWorldCouplingView(worldState),
+    roleCycleView: buildRoleCycleView(worldState),
     worldGeographyView,
     worldEntityView: buildWorldEntityView(worldState),
     worldPeopleView,
@@ -673,6 +675,7 @@ router.post("/submit", async (req, res, next) => {
         activeNpcRequestView: buildActiveNpcRequestView(worldState),
         npcActiveRequestView: buildNpcActiveRequestView(worldState),
         roleWorldCouplingView: buildRoleWorldCouplingView(worldState),
+        roleCycleView: buildRoleCycleView(worldState),
         worldGeographyView,
         worldEntityView: buildWorldEntityView(worldState),
         worldPeopleView,

@@ -119,6 +119,11 @@ const RESOLVER_INPUT_SOURCE_COLLECTIONS = Object.freeze([
     sourceView: "playerMonthlyBriefingView",
     domain: "player",
     collections: Object.freeze(["sections", "risks", "nextActions"])
+  }),
+  Object.freeze({
+    sourceView: "roleCycleView",
+    domain: "player",
+    collections: Object.freeze(["currentRole.items"])
   })
 ]);
 

@@ -254,6 +254,23 @@ export type CourtConsequenceView = JsonObject & {
   readonly safety?: JsonObject;
 };
 
+export type RoleCycleView = JsonObject & {
+  readonly schemaVersion?: string;
+  readonly generatedAtTurn?: number;
+  readonly dateLabel?: string;
+  readonly activeRole?: string;
+  readonly activeRoleLabel?: string;
+  readonly summary?: string;
+  readonly currentRole?: JsonObject;
+  readonly roleMatrix?: readonly JsonObject[];
+  readonly aiReadScope?: JsonObject;
+  readonly toolPermissions?: string;
+  readonly proposalBoundaries?: readonly JsonValue[];
+  readonly serverAdjudication?: string;
+  readonly authorityBoundary?: string;
+  readonly safety?: JsonObject;
+};
+
 export type RawLedgerExcludedWorldState = Omit<WorldState, RawLedgerKey> & {
   readonly [K in RawLedgerKey]?: never;
 };
@@ -290,6 +307,7 @@ export type SafeRouteViews = {
   readonly marketPriceView?: JsonObject;
   readonly npcEconomyView?: JsonObject;
   readonly npcActiveRequestView?: JsonObject;
+  readonly roleCycleView?: RoleCycleView;
   readonly mapRuntimeView?: JsonObject;
   readonly eventArchiveView?: JsonObject;
   readonly informationPanelPageView?: JsonObject;

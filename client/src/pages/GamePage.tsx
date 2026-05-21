@@ -179,6 +179,7 @@ export function GamePage() {
     { label: "市价", ready: Boolean(routeViews?.hasMarketPriceView) },
     { label: "月账", ready: Boolean(routeViews?.hasNpcEconomyView) },
     { label: "来函", ready: Boolean(routeViews?.hasNpcActiveRequestView) },
+    { label: "身份", ready: Boolean(routeViews?.hasRoleCycleView) },
     { label: "科期", ready: Boolean(routeViews?.hasExamCalendarView) },
     { label: "审计", ready: Boolean(routeViews?.hasAuditSummaryView) }
   ];
@@ -319,6 +320,7 @@ export function GamePage() {
       {player?.role === "scholar" ? (
         <ScholarPanel
           player={player}
+          roleCycleView={session?.roleCycleView ?? null}
           studyProfileView={session?.studyProfileView ?? null}
           examCalendarView={session?.examCalendarView ?? null}
           roleBackgroundPath={roleBackgroundAsset?.path}
@@ -331,6 +333,7 @@ export function GamePage() {
       {player?.role === "magistrate" ? (
         <MagistratePanel
           player={player}
+          roleCycleView={session?.roleCycleView ?? null}
           localAffairsDocketView={session?.localAffairsDocketView ?? null}
           officialPostingsView={session?.officialPostingsView ?? null}
           economicFiscalView={session?.economicFiscalView ?? null}
@@ -344,6 +347,7 @@ export function GamePage() {
       {player?.role === "official" || player?.role === "minister" ? (
         <OfficialMinisterPanel
           player={player}
+          roleCycleView={session?.roleCycleView ?? null}
           officialCareerView={session?.officialCareerView ?? null}
           appointmentTrackView={session?.appointmentTrackView ?? null}
           officialPostingsView={session?.officialPostingsView ?? null}
@@ -361,6 +365,7 @@ export function GamePage() {
       {player?.role === "general" ? (
         <GeneralPanel
           player={player}
+          roleCycleView={session?.roleCycleView ?? null}
           militaryDiplomacyView={session?.militaryDiplomacyView ?? null}
           officialPostingsView={session?.officialPostingsView ?? null}
           mapRuntimeView={session?.mapRuntimeView ?? null}
@@ -376,6 +381,7 @@ export function GamePage() {
       {player?.role === "emperor" ? (
         <EmperorPanel
           player={player}
+          roleCycleView={session?.roleCycleView ?? null}
           officialPostingsView={session?.officialPostingsView ?? null}
           eventArchiveView={session?.eventArchiveView ?? null}
           actorMemoryView={session?.actorMemoryView ?? null}

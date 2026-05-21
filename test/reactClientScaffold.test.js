@@ -762,6 +762,45 @@ test("S76.6 emperor panel uses safe court projections as draft-only edict UI", (
   );
 });
 
+test("S88.5 role cycle section is wired to all six identity panels as draft-only UI", () => {
+  const gamePageSource = readText("client/src/pages/GamePage.tsx");
+  const roleCycleSource = readText("client/src/components/RoleCycleSection.tsx");
+  const scholarPanelSource = readText("client/src/components/ScholarPanel.tsx");
+  const magistratePanelSource = readText("client/src/components/MagistratePanel.tsx");
+  const officialPanelSource = readText("client/src/components/OfficialMinisterPanel.tsx");
+  const generalPanelSource = readText("client/src/components/GeneralPanel.tsx");
+  const emperorPanelSource = readText("client/src/components/EmperorPanel.tsx");
+  const stateSource = readText("client/src/state/uiState.ts");
+  const typeSource = readText("client/src/api/types.ts");
+  const styleSource = readText("client/src/styles/global.css");
+  const roleCycleWithoutGuard = roleCycleSource.replace(/const unsafeRoleCycleFragments[\s\S]*?\] as const;\r?\n/, "");
+  const runtimeCombined = `${roleCycleWithoutGuard}\n${styleSource}`;
+
+  assert.match(gamePageSource, /roleCycleView=\{session\?\.roleCycleView \?\? null\}/);
+  assert.match(gamePageSource, /hasRoleCycleView/);
+  for (const source of [scholarPanelSource, magistratePanelSource, officialPanelSource, generalPanelSource, emperorPanelSource]) {
+    assert.match(source, /import \{ RoleCycleSection \}/);
+    assert.match(source, /readonly roleCycleView\?: JsonObject \| null/);
+    assert.match(source, /<RoleCycleSection/);
+    assert.match(source, /source: "role-surface", targetPage: "game"|onDraft=\{onDraft\}/);
+  }
+  assert.match(roleCycleSource, /本旬身份循环/);
+  assert.match(roleCycleSource, /本旬事务/);
+  assert.match(roleCycleSource, /风险/);
+  assert.match(roleCycleSource, /aria-label="可拟草稿"/);
+  assert.match(roleCycleSource, /onClick=\{\(\) => onDraft\(action\.text\)\}/);
+  assert.match(typeSource, /export type RoleCycleView/);
+  assert.match(typeSource, /roleCycleView\?: RoleCycleView/);
+  assert.match(stateSource, /hasRoleCycleView: Boolean\(payload\.roleCycleView\)/);
+  assert.match(styleSource, /roleCycleSection/);
+  assert.match(styleSource, /roleCycleMetrics/);
+  assert.match(styleSource, /roleCycleColumns/);
+  assert.doesNotMatch(
+    runtimeCombined,
+    /\/api\/game\/state|\/api\/dev\/session-diagnostics|dangerouslySetInnerHTML|localStorage|sessionStorage|data\/sessions|raw audit|provider payload|OPENAI_API_KEY|DEEPSEEK_API_KEY|MIMO_API_KEY|ANTHROPIC_API_KEY/
+  );
+});
+
 test("S76.7 exam page renders immersive safe exam flow without widening authority", () => {
   const examPageSource = readText("client/src/pages/ExamPage.tsx");
   const styleSource = readText("client/src/styles/global.css");

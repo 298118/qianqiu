@@ -1,8 +1,10 @@
 import type { CSSProperties } from "react";
 import type { JsonObject, JsonValue, MarketPriceView, NpcEconomyView, PlayerSummary } from "../api";
+import { RoleCycleSection } from "./RoleCycleSection";
 
 type MagistratePanelProps = {
   readonly player?: PlayerSummary | null;
+  readonly roleCycleView?: JsonObject | null;
   readonly localAffairsDocketView?: JsonObject | null;
   readonly officialPostingsView?: JsonObject | null;
   readonly economicFiscalView?: JsonObject | null;
@@ -254,6 +256,7 @@ function draftButtonText(label: string, text: string, enabled: boolean, onDraft:
 
 export function MagistratePanel({
   player,
+  roleCycleView,
   localAffairsDocketView,
   officialPostingsView,
   economicFiscalView,
@@ -318,6 +321,12 @@ export function MagistratePanel({
       </header>
 
       <div className="scholarPanelGrid magistratePanelGrid">
+        <RoleCycleSection
+          roleCycleView={roleCycleView}
+          idPrefix="magistrate-role-cycle"
+          runnable={runnable}
+          onDraft={onDraft}
+        />
         <article className="scholarPanelCard magistratePanelDocket" aria-labelledby="magistrate-ledger-title">
           <h3 id="magistrate-ledger-title">案牍总览</h3>
           <ul className="scholarPanelMetrics" aria-label="地方事务压力">

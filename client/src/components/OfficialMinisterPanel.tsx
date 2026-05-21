@@ -1,9 +1,11 @@
 import type { CSSProperties } from "react";
 import { Link } from "react-router";
 import type { JsonObject, JsonValue, PlayerSummary } from "../api";
+import { RoleCycleSection } from "./RoleCycleSection";
 
 type OfficialMinisterPanelProps = {
   readonly player?: PlayerSummary | null;
+  readonly roleCycleView?: JsonObject | null;
   readonly officialCareerView?: JsonObject | null;
   readonly appointmentTrackView?: JsonObject | null;
   readonly officialPostingsView?: JsonObject | null;
@@ -492,6 +494,7 @@ function draftButtonText(label: string, text: string, enabled: boolean, onDraft:
 
 export function OfficialMinisterPanel({
   player,
+  roleCycleView,
   officialCareerView,
   appointmentTrackView,
   officialPostingsView,
@@ -565,6 +568,12 @@ export function OfficialMinisterPanel({
       </header>
 
       <div className="scholarPanelGrid officialMinisterPanelGrid">
+        <RoleCycleSection
+          roleCycleView={roleCycleView}
+          idPrefix="official-role-cycle"
+          runnable={runnable}
+          onDraft={onDraft}
+        />
         <article className="scholarPanelCard officialMinisterPanelCareer" aria-labelledby="official-career-title">
           <h3 id="official-career-title">官职履历</h3>
           <dl className="scholarPanelCompactDl">
