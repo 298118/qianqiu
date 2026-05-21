@@ -1,6 +1,7 @@
 import type { CSSProperties } from "react";
 import { Link } from "react-router";
 import type { JsonObject, JsonValue, PlayerSummary } from "../api";
+import type { LocalSurface } from "../state/uiState";
 import { RoleCycleSection } from "./RoleCycleSection";
 
 type EmperorPanelProps = {
@@ -19,6 +20,8 @@ type EmperorPanelProps = {
   readonly courtHref?: string;
   readonly archiveHref?: string;
   readonly onDraft: (text: string) => void;
+  readonly resolveRoleCycleRouteHref?: (routeId: string) => string | null;
+  readonly onOpenRoleCycleSurface?: (surface: LocalSurface) => void;
   readonly runnable?: boolean;
 };
 
@@ -317,6 +320,8 @@ export function EmperorPanel({
   courtHref,
   archiveHref,
   onDraft,
+  resolveRoleCycleRouteHref,
+  onOpenRoleCycleSurface,
   runnable = true
 }: EmperorPanelProps) {
   const officialPostings = asRecord(officialPostingsView);
@@ -375,6 +380,8 @@ export function EmperorPanel({
           roleCycleView={roleCycleView}
           idPrefix="emperor-role-cycle"
           runnable={runnable}
+          resolveRouteHref={resolveRoleCycleRouteHref}
+          onOpenSurface={onOpenRoleCycleSurface}
           onDraft={onDraft}
         />
         <article className="scholarPanelCard emperorPanelMemorials" aria-labelledby="emperor-memorials-title">

@@ -254,6 +254,51 @@ export type CourtConsequenceView = JsonObject & {
   readonly safety?: JsonObject;
 };
 
+export type RoleCycleEvidenceRef = JsonObject & {
+  readonly id?: string;
+  readonly label?: string;
+  readonly sourceView?: string;
+  readonly sourceId?: string;
+  readonly sourceType?: string;
+  readonly targetRouteId?: string;
+  readonly targetSurfaceId?: string;
+  readonly visibility?: "player_visible";
+};
+
+export type RoleCycleEntryPoint = JsonObject & {
+  readonly id?: string;
+  readonly label?: string;
+  readonly kind?: "route" | "surface" | "reference";
+  readonly publicSummary?: string;
+  readonly sourceView?: string;
+  readonly sourceId?: string;
+  readonly targetRouteId?: string;
+  readonly targetSurfaceId?: string;
+  readonly evidenceRefs?: readonly RoleCycleEvidenceRef[];
+  readonly visibility?: "player_visible";
+};
+
+export type RoleCycleItem = JsonObject & {
+  readonly id?: string;
+  readonly title?: string;
+  readonly publicSummary?: string;
+  readonly sourceView?: string;
+  readonly sourceId?: string;
+  readonly targetRouteId?: string;
+  readonly targetSurfaceId?: string;
+  readonly evidenceRefs?: readonly RoleCycleEvidenceRef[];
+};
+
+export type RoleCycleCurrentRole = JsonObject & {
+  readonly role?: string;
+  readonly roleLabel?: string;
+  readonly entryPoints?: readonly RoleCycleEntryPoint[];
+  readonly items?: readonly RoleCycleItem[];
+  readonly evidenceRefs?: readonly RoleCycleEvidenceRef[];
+  readonly riskSignals?: readonly JsonObject[];
+  readonly nextActions?: readonly JsonObject[];
+};
+
 export type RoleCycleView = JsonObject & {
   readonly schemaVersion?: string;
   readonly generatedAtTurn?: number;
@@ -261,7 +306,7 @@ export type RoleCycleView = JsonObject & {
   readonly activeRole?: string;
   readonly activeRoleLabel?: string;
   readonly summary?: string;
-  readonly currentRole?: JsonObject;
+  readonly currentRole?: RoleCycleCurrentRole;
   readonly roleMatrix?: readonly JsonObject[];
   readonly aiReadScope?: JsonObject;
   readonly toolPermissions?: string;

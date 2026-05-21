@@ -1,6 +1,7 @@
 import type { CSSProperties } from "react";
 import { Link } from "react-router";
 import type { JsonObject, JsonValue, PlayerSummary } from "../api";
+import type { LocalSurface } from "../state/uiState";
 import { RoleCycleSection } from "./RoleCycleSection";
 
 type OfficialMinisterPanelProps = {
@@ -16,6 +17,8 @@ type OfficialMinisterPanelProps = {
   readonly courtResponseView?: JsonObject | null;
   readonly roleBackgroundPath?: string;
   readonly onDraft: (text: string) => void;
+  readonly resolveRoleCycleRouteHref?: (routeId: string) => string | null;
+  readonly onOpenRoleCycleSurface?: (surface: LocalSurface) => void;
   readonly courtHref?: string;
   readonly runnable?: boolean;
 };
@@ -505,6 +508,8 @@ export function OfficialMinisterPanel({
   courtResponseView,
   roleBackgroundPath,
   onDraft,
+  resolveRoleCycleRouteHref,
+  onOpenRoleCycleSurface,
   courtHref,
   runnable = true
 }: OfficialMinisterPanelProps) {
@@ -572,6 +577,8 @@ export function OfficialMinisterPanel({
           roleCycleView={roleCycleView}
           idPrefix="official-role-cycle"
           runnable={runnable}
+          resolveRouteHref={resolveRoleCycleRouteHref}
+          onOpenSurface={onOpenRoleCycleSurface}
           onDraft={onDraft}
         />
         <article className="scholarPanelCard officialMinisterPanelCareer" aria-labelledby="official-career-title">

@@ -1,6 +1,7 @@
 import type { CSSProperties } from "react";
 import { Link } from "react-router";
 import type { JsonObject, JsonValue, PlayerSummary } from "../api";
+import type { LocalSurface } from "../state/uiState";
 import { RoleCycleSection } from "./RoleCycleSection";
 
 type GeneralPanelProps = {
@@ -15,6 +16,8 @@ type GeneralPanelProps = {
   readonly mapHref?: string;
   readonly archiveHref?: string;
   readonly onDraft: (text: string) => void;
+  readonly resolveRoleCycleRouteHref?: (routeId: string) => string | null;
+  readonly onOpenRoleCycleSurface?: (surface: LocalSurface) => void;
   readonly runnable?: boolean;
 };
 
@@ -285,6 +288,8 @@ export function GeneralPanel({
   mapHref,
   archiveHref,
   onDraft,
+  resolveRoleCycleRouteHref,
+  onOpenRoleCycleSurface,
   runnable = true
 }: GeneralPanelProps) {
   const militaryDiplomacy = asRecord(militaryDiplomacyView);
@@ -341,6 +346,8 @@ export function GeneralPanel({
           roleCycleView={roleCycleView}
           idPrefix="general-role-cycle"
           runnable={runnable}
+          resolveRouteHref={resolveRoleCycleRouteHref}
+          onOpenSurface={onOpenRoleCycleSurface}
           onDraft={onDraft}
         />
         <article className="scholarPanelCard generalPanelCommand" aria-labelledby="general-command-title">

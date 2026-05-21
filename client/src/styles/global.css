@@ -1474,6 +1474,74 @@ button:disabled {
   min-width: 0;
 }
 
+.roleCycleEvidenceRefs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 6px;
+}
+
+.roleCycleEvidenceChip {
+  max-width: 100%;
+  border: 1px solid rgba(64, 86, 64, 0.26);
+  background: rgba(238, 246, 224, 0.54);
+  color: #405640;
+  font-size: 0.74rem;
+  font-weight: 800;
+  line-height: 1.35;
+  padding: 3px 6px;
+  overflow-wrap: anywhere;
+}
+
+.roleCycleEntryPoints {
+  display: grid;
+  gap: 8px;
+  border-top: 1px solid rgba(84, 60, 43, 0.18);
+  padding-top: 10px;
+}
+
+.roleCycleEntryPoints > span {
+  color: #5e382d;
+  font-size: 0.78rem;
+  font-weight: 900;
+}
+
+.roleCycleEntryPoints > div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.roleCycleEntryPoints a,
+.roleCycleEntryPoints button,
+.roleCycleEntryPoints [aria-disabled="true"] {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 34px;
+  max-width: 100%;
+  border: 1px solid rgba(30, 82, 98, 0.34);
+  background: rgba(230, 244, 246, 0.56);
+  color: #1f5868;
+  font: inherit;
+  font-size: 0.82rem;
+  font-weight: 900;
+  line-height: 1.25;
+  padding: 6px 9px;
+  text-decoration: none;
+  overflow-wrap: anywhere;
+}
+
+.roleCycleEntryPoints button {
+  cursor: pointer;
+}
+
+.roleCycleEntryPoints [aria-disabled="true"] {
+  border-color: rgba(104, 92, 76, 0.2);
+  background: rgba(241, 236, 221, 0.62);
+  color: #756957;
+}
+
 .roleCycleActions {
   display: flex;
   flex-wrap: wrap;

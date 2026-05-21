@@ -11,7 +11,7 @@ import { ScholarPanel } from "../components/ScholarPanel";
 import { routeCatalog } from "../routes/routeCatalog";
 import { isRunnableSessionId } from "../routes/sessionId";
 import { useGameSessionStore } from "../state/gameSessionState";
-import { useUiStateStore } from "../state/uiState";
+import { useUiStateStore, type LocalSurface } from "../state/uiState";
 
 const unsafeGameShellFragments = [
   "/api/game/" + "state",
@@ -106,6 +106,7 @@ const gameTabs = [
 ] as const;
 
 const independentSessionRouteIds = new Set(["exam", "ranking", "court", "settings"]);
+const roleCycleRouteIds = new Set(["game", ...gameTabs.map((tab) => tab.id)]);
 
 function safeGameShellText(value: unknown, fallback: string) {
   const text = typeof value === "string" && value.trim() ? value.trim() : fallback;
@@ -149,7 +150,14 @@ export function GamePage() {
   const clearActionDraft = useUiStateStore((state) => state.clearActionDraft);
   const currentPlayerPayload = useUiStateStore((state) => state.currentPlayerPayload);
   const selectTab = useUiStateStore((state) => state.selectTab);
+  const openSurface = useUiStateStore((state) => state.openSurface);
   const sessionHref = (path: string) => path.replace("s74-preview", sessionId);
+  const resolveRoleCycleRouteHref = (routeId: string) => {
+    if (!roleCycleRouteIds.has(routeId)) return null;
+    const route = routeCatalog.find((entry) => entry.id === routeId);
+    return route ? sessionHref(route.href) : null;
+  };
+  const openRoleCycleSurface = (surface: LocalSurface) => openSurface(surface);
   const player = session?.worldState?.player;
   const runnable = isRunnableSessionId(sessionId);
   const knownRole = getKnownRole(player?.role);
@@ -326,6 +334,8 @@ export function GamePage() {
           roleBackgroundPath={roleBackgroundAsset?.path}
           examHref={sessionHref(routeCatalog.find((entry) => entry.id === "exam")?.href ?? "/game/s74-preview/exam")}
           rankingHref={sessionHref(routeCatalog.find((entry) => entry.id === "ranking")?.href ?? "/game/s74-preview/ranking")}
+          resolveRoleCycleRouteHref={resolveRoleCycleRouteHref}
+          onOpenRoleCycleSurface={openRoleCycleSurface}
           runnable={runnable}
           onDraft={(text) => setActionDraft({ source: "role-surface", targetPage: "game", text })}
         />
@@ -340,6 +350,8 @@ export function GamePage() {
           marketPriceView={session?.marketPriceView ?? null}
           npcEconomyView={session?.npcEconomyView ?? null}
           roleBackgroundPath={roleBackgroundAsset?.path}
+          resolveRoleCycleRouteHref={resolveRoleCycleRouteHref}
+          onOpenRoleCycleSurface={openRoleCycleSurface}
           runnable={runnable}
           onDraft={(text) => setActionDraft({ source: "role-surface", targetPage: "game", text })}
         />
@@ -358,6 +370,8 @@ export function GamePage() {
           courtResponseView={session?.courtResponseView ?? null}
           roleBackgroundPath={roleBackgroundAsset?.path}
           courtHref={sessionHref(routeCatalog.find((entry) => entry.id === "court")?.href ?? "/game/s74-preview/court")}
+          resolveRoleCycleRouteHref={resolveRoleCycleRouteHref}
+          onOpenRoleCycleSurface={openRoleCycleSurface}
           runnable={runnable}
           onDraft={(text) => setActionDraft({ source: "role-surface", targetPage: "game", text })}
         />
@@ -374,6 +388,8 @@ export function GamePage() {
           roleBackgroundPath={roleBackgroundAsset?.path}
           mapHref={sessionHref(routeCatalog.find((entry) => entry.id === "map")?.href ?? "/game/s74-preview/map")}
           archiveHref={sessionHref(routeCatalog.find((entry) => entry.id === "archive")?.href ?? "/game/s74-preview/archive")}
+          resolveRoleCycleRouteHref={resolveRoleCycleRouteHref}
+          onOpenRoleCycleSurface={openRoleCycleSurface}
           runnable={runnable}
           onDraft={(text) => setActionDraft({ source: "role-surface", targetPage: "game", text })}
         />
@@ -394,6 +410,8 @@ export function GamePage() {
           roleBackgroundPath={roleBackgroundAsset?.path}
           courtHref={sessionHref(routeCatalog.find((entry) => entry.id === "court")?.href ?? "/game/s74-preview/court")}
           archiveHref={sessionHref(routeCatalog.find((entry) => entry.id === "archive")?.href ?? "/game/s74-preview/archive")}
+          resolveRoleCycleRouteHref={resolveRoleCycleRouteHref}
+          onOpenRoleCycleSurface={openRoleCycleSurface}
           runnable={runnable}
           onDraft={(text) => setActionDraft({ source: "role-surface", targetPage: "game", text })}
         />

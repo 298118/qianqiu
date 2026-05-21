@@ -778,26 +778,38 @@ test("S88.5 role cycle section is wired to all six identity panels as draft-only
 
   assert.match(gamePageSource, /roleCycleView=\{session\?\.roleCycleView \?\? null\}/);
   assert.match(gamePageSource, /hasRoleCycleView/);
+  assert.match(gamePageSource, /resolveRoleCycleRouteHref/);
+  assert.match(gamePageSource, /onOpenRoleCycleSurface/);
   for (const source of [scholarPanelSource, magistratePanelSource, officialPanelSource, generalPanelSource, emperorPanelSource]) {
     assert.match(source, /import \{ RoleCycleSection \}/);
     assert.match(source, /readonly roleCycleView\?: JsonObject \| null/);
+    assert.match(source, /resolveRoleCycleRouteHref/);
+    assert.match(source, /onOpenRoleCycleSurface/);
     assert.match(source, /<RoleCycleSection/);
     assert.match(source, /source: "role-surface", targetPage: "game"|onDraft=\{onDraft\}/);
   }
   assert.match(roleCycleSource, /本旬身份循环/);
   assert.match(roleCycleSource, /本旬事务/);
   assert.match(roleCycleSource, /风险/);
+  assert.match(roleCycleSource, /aria-label="可查入口"/);
   assert.match(roleCycleSource, /aria-label="可拟草稿"/);
   assert.match(roleCycleSource, /onClick=\{\(\) => onDraft\(action\.text\)\}/);
+  assert.match(roleCycleSource, /roleCycleEvidenceRefs/);
+  assert.match(roleCycleSource, /targetRouteId/);
+  assert.match(roleCycleSource, /markOverlayTrigger/);
   assert.match(typeSource, /export type RoleCycleView/);
+  assert.match(typeSource, /export type RoleCycleEvidenceRef/);
+  assert.match(typeSource, /export type RoleCycleEntryPoint/);
   assert.match(typeSource, /roleCycleView\?: RoleCycleView/);
   assert.match(stateSource, /hasRoleCycleView: Boolean\(payload\.roleCycleView\)/);
   assert.match(styleSource, /roleCycleSection/);
   assert.match(styleSource, /roleCycleMetrics/);
   assert.match(styleSource, /roleCycleColumns/);
+  assert.match(styleSource, /roleCycleEvidenceRefs/);
+  assert.match(styleSource, /roleCycleEntryPoints/);
   assert.doesNotMatch(
     runtimeCombined,
-    /\/api\/game\/state|\/api\/dev\/session-diagnostics|dangerouslySetInnerHTML|localStorage|sessionStorage|data\/sessions|raw audit|provider payload|OPENAI_API_KEY|DEEPSEEK_API_KEY|MIMO_API_KEY|ANTHROPIC_API_KEY/
+    /\/api\/game\/state|\/api\/game\/turn|\/api\/dev\/session-diagnostics|dangerouslySetInnerHTML|localStorage|sessionStorage|data\/sessions|raw audit|provider payload|OPENAI_API_KEY|DEEPSEEK_API_KEY|MIMO_API_KEY|ANTHROPIC_API_KEY/
   );
 });
 

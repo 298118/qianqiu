@@ -1,6 +1,7 @@
 import type { CSSProperties } from "react";
 import { Link } from "react-router";
 import type { JsonObject, JsonValue, PlayerSummary } from "../api";
+import type { LocalSurface } from "../state/uiState";
 import { RoleCycleSection } from "./RoleCycleSection";
 
 type ScholarPanelProps = {
@@ -10,6 +11,8 @@ type ScholarPanelProps = {
   readonly examCalendarView?: JsonObject | null;
   readonly roleBackgroundPath?: string;
   readonly onDraft: (text: string) => void;
+  readonly resolveRoleCycleRouteHref?: (routeId: string) => string | null;
+  readonly onOpenRoleCycleSurface?: (surface: LocalSurface) => void;
   readonly examHref?: string;
   readonly rankingHref?: string;
   readonly runnable?: boolean;
@@ -319,6 +322,8 @@ export function ScholarPanel({
   examCalendarView,
   roleBackgroundPath,
   onDraft,
+  resolveRoleCycleRouteHref,
+  onOpenRoleCycleSurface,
   examHref,
   rankingHref,
   runnable = true
@@ -375,6 +380,8 @@ export function ScholarPanel({
           roleCycleView={roleCycleView}
           idPrefix="scholar-role-cycle"
           runnable={runnable}
+          resolveRouteHref={resolveRoleCycleRouteHref}
+          onOpenSurface={onOpenRoleCycleSurface}
           onDraft={onDraft}
         />
         <article className="scholarPanelCard scholarPanelStudyLedger" aria-labelledby="scholar-ledger-title">

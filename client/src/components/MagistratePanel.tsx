@@ -1,5 +1,6 @@
 import type { CSSProperties } from "react";
 import type { JsonObject, JsonValue, MarketPriceView, NpcEconomyView, PlayerSummary } from "../api";
+import type { LocalSurface } from "../state/uiState";
 import { RoleCycleSection } from "./RoleCycleSection";
 
 type MagistratePanelProps = {
@@ -12,6 +13,8 @@ type MagistratePanelProps = {
   readonly npcEconomyView?: NpcEconomyView | null;
   readonly roleBackgroundPath?: string;
   readonly onDraft: (text: string) => void;
+  readonly resolveRoleCycleRouteHref?: (routeId: string) => string | null;
+  readonly onOpenRoleCycleSurface?: (surface: LocalSurface) => void;
   readonly runnable?: boolean;
 };
 
@@ -264,6 +267,8 @@ export function MagistratePanel({
   npcEconomyView,
   roleBackgroundPath,
   onDraft,
+  resolveRoleCycleRouteHref,
+  onOpenRoleCycleSurface,
   runnable = true
 }: MagistratePanelProps) {
   const localAffairs = asRecord(localAffairsDocketView);
@@ -325,6 +330,8 @@ export function MagistratePanel({
           roleCycleView={roleCycleView}
           idPrefix="magistrate-role-cycle"
           runnable={runnable}
+          resolveRouteHref={resolveRoleCycleRouteHref}
+          onOpenSurface={onOpenRoleCycleSurface}
           onDraft={onDraft}
         />
         <article className="scholarPanelCard magistratePanelDocket" aria-labelledby="magistrate-ledger-title">

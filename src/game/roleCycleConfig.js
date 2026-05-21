@@ -6,6 +6,9 @@ const ROLE_CYCLE_LIMITS = Object.freeze({
   maxRiskSignals: 4,
   maxNextActions: 4,
   maxMetrics: 4,
+  maxEntryPoints: 4,
+  maxEvidenceRefsPerItem: 3,
+  maxEvidenceRefsPerRole: 12,
   maxSourceViews: 8,
   maxTextLength: 180,
   maxShortTextLength: 80,
@@ -100,8 +103,10 @@ const ROLE_CYCLE_AI_READ_SCOPE = Object.freeze([
   "roleCycleView.currentRole",
   "roleCycleView.roleMatrix",
   "roleCycleView.currentRole.items",
+  "roleCycleView.currentRole.items.evidenceRefs",
   "roleCycleView.currentRole.riskSignals",
   "roleCycleView.currentRole.nextActions",
+  "roleCycleView.currentRole.entryPoints",
   "roleCycleView.aiReadScope.allowedSourceViews"
 ]);
 

@@ -1,10 +1,22 @@
+import { Link } from "react-router";
 import type { JsonObject, JsonValue, RoleCycleView } from "../api";
+import type { LocalSurface } from "../state/uiState";
+import { markOverlayTrigger } from "./overlayFocus";
 
 type RoleCycleSectionProps = {
   readonly roleCycleView?: RoleCycleView | JsonObject | null;
   readonly onDraft: (text: string) => void;
+  readonly resolveRouteHref?: (routeId: string) => string | null;
+  readonly onOpenSurface?: (surface: LocalSurface) => void;
   readonly runnable?: boolean;
   readonly idPrefix?: string;
+};
+
+type CycleEvidenceRef = {
+  readonly id: string;
+  readonly label: string;
+  readonly sourceView: string;
+  readonly sourceId: string;
 };
 
 type CycleItem = {
@@ -13,12 +25,22 @@ type CycleItem = {
   readonly meta?: string;
   readonly body?: string;
   readonly score?: number;
+  readonly evidenceRefs: readonly CycleEvidenceRef[];
 };
 
 type CycleAction = {
   readonly id: string;
   readonly label: string;
   readonly text: string;
+};
+
+type CycleEntryPoint = {
+  readonly id: string;
+  readonly label: string;
+  readonly summary?: string;
+  readonly kind: "route" | "surface" | "reference";
+  readonly targetRouteId?: string;
+  readonly targetSurfaceId?: LocalSurface;
 };
 
 const unsafeRoleCycleFragments = [
@@ -49,6 +71,17 @@ const unsafeRoleCycleFragments = [
   "模型原文",
   "开发诊断"
 ] as const;
+
+const roleCycleRouteIds = new Set(["game", "map", "people", "inventory", "archive", "exam", "ranking", "court", "settings"]);
+const roleCycleSurfaceIds = new Set<LocalSurface>([
+  "memorial-review",
+  "edict-draft",
+  "court-debate",
+  "trial",
+  "war-council",
+  "npc-profile",
+  "map-filter"
+]);
 
 function isRecord(value: JsonValue | unknown): value is JsonObject {
   return Boolean(value) && typeof value === "object" && !Array.isArray(value);
@@ -82,6 +115,56 @@ function cleanNumber(value: unknown, fallback = 0) {
   return Number.isFinite(number) ? Math.max(0, Math.min(100, Math.round(number))) : fallback;
 }
 
+function cleanRouteId(value: unknown) {
+  const routeId = cleanRoleCycleText(value, "", 32);
+  return roleCycleRouteIds.has(routeId) ? routeId : undefined;
+}
+
+function cleanSurfaceId(value: unknown): LocalSurface | undefined {
+  const surfaceId = cleanRoleCycleText(value, "", 32);
+  return roleCycleSurfaceIds.has(surfaceId as LocalSurface) ? surfaceId as LocalSurface : undefined;
+}
+
+function cycleEvidenceRefs(value: JsonValue | unknown): CycleEvidenceRef[] {
+  return asArray(value)
+    .slice(0, 3)
+    .map((entry, index) => {
+      const ref = asRecord(entry);
+      const sourceView = cleanRoleCycleText(ref.sourceView, "", 48);
+      const sourceId = cleanRoleCycleText(ref.sourceId || ref.id, "", 72);
+      if (!sourceView || !sourceId) return null;
+      return {
+        id: cleanRoleCycleText(ref.id || `${sourceView}:${sourceId}:${index}`, `${sourceView}:${sourceId}:${index}`, 96),
+        label: cleanRoleCycleText(ref.label || sourceView, sourceView, 40),
+        sourceView,
+        sourceId
+      };
+    })
+    .filter((item): item is CycleEvidenceRef => item !== null);
+}
+
+function cycleEntryPoints(source: JsonObject): CycleEntryPoint[] {
+  return asArray(source.entryPoints)
+    .slice(0, 4)
+    .map((entry, index): CycleEntryPoint | null => {
+      const item = asRecord(entry);
+      const label = cleanRoleCycleText(item.label || item.title, "", 40);
+      if (!label) return null;
+      const targetRouteId = cleanRouteId(item.targetRouteId);
+      const targetSurfaceId = cleanSurfaceId(item.targetSurfaceId);
+      const kind: CycleEntryPoint["kind"] = targetRouteId ? "route" : targetSurfaceId ? "surface" : "reference";
+      return {
+        id: cleanRoleCycleText(item.id || `role-cycle-entry-${index}`, `role-cycle-entry-${index}`, 72),
+        label,
+        summary: cleanOptionalText(item.publicSummary || item.summary, 96),
+        kind,
+        targetRouteId,
+        targetSurfaceId
+      };
+    })
+    .filter((item): item is CycleEntryPoint => item !== null);
+}
+
 function cycleItems(source: JsonObject, key: string, limit: number): CycleItem[] {
   return asArray(source[key])
     .slice(0, limit)
@@ -105,7 +188,8 @@ function cycleItems(source: JsonObject, key: string, limit: number): CycleItem[]
         title: title || body || "本旬事务",
         meta,
         body,
-        score
+        score,
+        evidenceRefs: cycleEvidenceRefs(item.evidenceRefs)
       };
     })
     .filter((item): item is CycleItem => item !== null);
@@ -145,9 +229,54 @@ function cycleMetrics(source: JsonObject) {
     .filter((item): item is { id: string; label: string; value: number; status: string } => item !== null);
 }
 
+function RoleCycleEntryPointButton({
+  entry,
+  resolveRouteHref,
+  onOpenSurface
+}: {
+  readonly entry: CycleEntryPoint;
+  readonly resolveRouteHref?: (routeId: string) => string | null;
+  readonly onOpenSurface?: (surface: LocalSurface) => void;
+}) {
+  if (entry.kind === "route" && entry.targetRouteId && resolveRouteHref) {
+    const href = resolveRouteHref(entry.targetRouteId);
+    if (href) {
+      return (
+        <Link to={href} title={entry.summary}>
+          {entry.label}
+        </Link>
+      );
+    }
+  }
+
+  const targetSurfaceId = entry.targetSurfaceId;
+  if (entry.kind === "surface" && targetSurfaceId && onOpenSurface) {
+    return (
+      <button
+        type="button"
+        title={entry.summary}
+        onClick={(event) => {
+          markOverlayTrigger(event.currentTarget);
+          onOpenSurface(targetSurfaceId);
+        }}
+      >
+        {entry.label}
+      </button>
+    );
+  }
+
+  return (
+    <span aria-disabled="true" title={entry.summary}>
+      {entry.label} · 入口待开放
+    </span>
+  );
+}
+
 export function RoleCycleSection({
   roleCycleView,
   onDraft,
+  resolveRouteHref,
+  onOpenSurface,
   runnable = true,
   idPrefix = "role-cycle"
 }: RoleCycleSectionProps) {
@@ -163,6 +292,7 @@ export function RoleCycleSection({
   const items = cycleItems(currentRole, "items", 5);
   const risks = cycleItems(currentRole, "riskSignals", 4);
   const metrics = cycleMetrics(currentRole);
+  const entryPoints = cycleEntryPoints(currentRole);
   const actions = cycleActions(currentRole);
 
   return (
@@ -196,6 +326,15 @@ export function RoleCycleSection({
                   <strong>{item.title}</strong>
                   {item.meta ? <span>{item.meta}</span> : null}
                   {item.body ? <p>{item.body}</p> : null}
+                  {item.evidenceRefs.length ? (
+                    <div className="roleCycleEvidenceRefs" aria-label="证据来源">
+                      {item.evidenceRefs.map((ref) => (
+                        <span key={ref.id} className="roleCycleEvidenceChip">
+                          证据：{ref.label}
+                        </span>
+                      ))}
+                    </div>
+                  ) : null}
                 </li>
               ))}
             </ul>
@@ -220,6 +359,21 @@ export function RoleCycleSection({
           )}
         </section>
       </div>
+      {entryPoints.length ? (
+        <div className="roleCycleEntryPoints" aria-label="可查入口">
+          <span>可查入口</span>
+          <div>
+            {entryPoints.map((entry) => (
+              <RoleCycleEntryPointButton
+                key={entry.id}
+                entry={entry}
+                resolveRouteHref={resolveRouteHref}
+                onOpenSurface={onOpenSurface}
+              />
+            ))}
+          </div>
+        </div>
+      ) : null}
       {actions.length ? (
         <div className="roleCycleActions" aria-label="可拟草稿">
           {actions.map((action) => (

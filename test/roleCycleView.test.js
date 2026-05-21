@@ -10,7 +10,7 @@ const gameRoutes = require("../src/routes/game");
 const { assemblePromptContext } = require("../src/ai/promptContextAssembler");
 const { createInitialState } = require("../src/game/initialState");
 const { buildResolverInputContext, assertResolverInputSafe } = require("../src/game/resolverInputContext");
-const { buildRoleCycleView } = require("../src/game/roleCycleView");
+const { buildRoleCycleView, summarizeRoleCycleForPrompt } = require("../src/game/roleCycleView");
 const { ensureStudyProfileState } = require("../src/game/studyProfile");
 const { createFetchSafeServer } = require("../test-helpers/fetchSafeServer");
 
@@ -31,7 +31,7 @@ function assertNoUnsafeRoleCycleText(value) {
   const serialized = JSON.stringify(value);
   assert.doesNotMatch(
     serialized,
-    /hidden[ _-]?(?:notes?|intent)|provider\s+payload|rawSql|SQL|sqlite|world_sessions|world_state_json|data[\\/](?:sessions|audit)|prompt_retrieval_index|event_log|sk-test-secret|OPENAI_API_KEY|statePatch|AI 不得|本视图只含|数据库|隐藏情报/i
+    /hidden[ _-]?(?:notes?|intent)|provider\s+payload|rawSql|SQL|sqlite|world_sessions|world_state_json|data[\\/](?:sessions|audit)|prompt_retrieval_index|event_log|mapBounds|layoutPath|assetSetId|viewportHint|sk-test-secret|OPENAI_API_KEY|statePatch|AI 不得|本视图只含|数据库|隐藏情报/i
   );
   assert.doesNotMatch(serialized, /已任免|已处分|已赏罚|准奏|革职|拨给钱粮|圣旨已生效/);
 }
@@ -99,6 +99,55 @@ test("S88.5 roleCycleView derives from cloned source state without mutating ledg
     assert.equal(JSON.stringify(worldState), before);
     assertNoUnsafeRoleCycleText(view);
   }
+});
+
+test("S88.5.2 magistrate cycle exposes market and NPC economy evidence refs without write authority", () => {
+  const worldState = createInitialState({ role: "magistrate", playerName: "市井案牍" });
+  const view = buildRoleCycleView(worldState);
+
+  assert.equal(view.activeRole, "magistrate");
+  assert.ok(view.currentRole.entryPoints.some((entry) => entry.sourceView === "marketPriceView" && entry.targetRouteId === "inventory"));
+  assert.ok(view.currentRole.entryPoints.some((entry) => entry.sourceView === "npcEconomyView" && entry.targetRouteId === "people"));
+  assert.equal(
+    new Set(view.currentRole.entryPoints.map((entry) => `${entry.kind}:${entry.targetRouteId || entry.targetSurfaceId}:${entry.label}`)).size,
+    view.currentRole.entryPoints.length
+  );
+  assert.ok(view.currentRole.items.some((item) => item.evidenceRefs?.some((ref) => ref.sourceView === "marketPriceView" || ref.sourceView === "npcEconomyView")));
+  assert.ok(view.currentRole.evidenceRefs.some((ref) => ref.sourceView === "marketPriceView"));
+  assert.ok(view.currentRole.evidenceRefs.some((ref) => ref.sourceView === "npcEconomyView"));
+  assert.equal(view.currentRole.nextActions.every((action) => !/\/api\/game\/turn/.test(action.text)), true);
+  assertNoUnsafeRoleCycleText(view);
+});
+
+test("S88.5.2 general cycle links map and archive evidence without leaking layout fields", () => {
+  const worldState = createInitialState({ role: "general", playerName: "军帐舆图" });
+  const view = buildRoleCycleView(worldState);
+  const serialized = JSON.stringify(view.currentRole);
+
+  assert.equal(view.activeRole, "general");
+  assert.ok(view.currentRole.entryPoints.some((entry) => entry.sourceView === "mapRuntimeView" && entry.targetRouteId === "map"));
+  assert.ok(view.currentRole.entryPoints.some((entry) => entry.sourceView === "eventArchiveView" && entry.targetRouteId === "archive"));
+  assert.ok(view.currentRole.entryPoints.some((entry) => entry.targetSurfaceId === "war-council"));
+  assert.equal(
+    new Set(view.currentRole.entryPoints.map((entry) => `${entry.kind}:${entry.targetRouteId || entry.targetSurfaceId}:${entry.label}`)).size,
+    view.currentRole.entryPoints.length
+  );
+  assert.ok(view.currentRole.evidenceRefs.some((ref) => ref.sourceView === "mapRuntimeView"));
+  assert.ok(view.currentRole.evidenceRefs.some((ref) => ref.sourceView === "eventArchiveView"));
+  assert.doesNotMatch(serialized, /mapBounds|layoutPath|assetSetId|viewportHint|"layout"|"x"|"y"/i);
+  assertNoUnsafeRoleCycleText(view);
+});
+
+test("S88.5.2 prompt role cycle summary keeps compact entry points and evidence refs only", () => {
+  const worldState = createInitialState({ role: "general", playerName: "军议摘要" });
+  const summary = summarizeRoleCycleForPrompt(worldState);
+  const serialized = JSON.stringify(summary);
+
+  assert.equal(summary.activeRole, "general");
+  assert.ok(summary.currentRole.entryPoints.some((entry) => entry.targetRouteId === "map"));
+  assert.ok(summary.currentRole.items.some((item) => item.evidenceRefs?.length));
+  assert.doesNotMatch(serialized, /mapBounds|layoutPath|assetSetId|viewportHint|"layout"|"x"|"y"/i);
+  assertNoUnsafeRoleCycleText(summary);
 });
 
 test("S88.5 resolver input includes roleCycleView as player evidence", () => {

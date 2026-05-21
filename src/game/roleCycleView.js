@@ -3,7 +3,10 @@ const { buildExamProcedureView } = require("./examProcedure");
 const { buildStudyProfileView } = require("./studyProfile");
 const { buildLocalAffairsDocketView } = require("./localAffairsDockets");
 const { buildEconomicFiscalView } = require("./economicFiscal");
+const { buildEventArchiveView } = require("./eventArchive");
+const { buildMapRuntimeView } = require("./mapRuntimeView");
 const { buildMilitaryDiplomacyView } = require("./militaryDiplomacy");
+const { buildMarketPriceView, buildNpcEconomyView } = require("./npcEconomy");
 const { buildOfficialCareerView } = require("./officialCareer");
 const { buildOfficialCourtConsequenceView } = require("./officialCourtConsequences");
 const { buildOfficialCourtResponseView } = require("./officialCourtResponse");
@@ -28,13 +31,29 @@ const ROLE_CYCLE_SENSITIVE_PATTERN =
 const ROLE_CYCLE_TERMINAL_DECISION_PATTERN =
   /(已(?:任免|处分|赏罚|采纳|拨款|拨饷)|已经(?:任免|处分|赏罚|采纳|生效)|采纳奏折|准奏|照准|题准|奉旨(?:准行|已行)|弹劾成案|已成弹劾|成弹劾|圣旨已生效|官缺已定|革职|罢黜|黜免|升迁|降调|赏银|罚俸|拨(?:给|付|发)?(?:钱粮|银两|粮饷|饷银|款项)|定罪|定赏|定罚|问罪|处分(?:成案|已定)|奖惩(?:成案|已定))/;
 
+const ROLE_CYCLE_ROUTE_IDS = Object.freeze(["game", "map", "people", "inventory", "archive", "exam", "ranking", "court", "settings"]);
+
+const ROLE_CYCLE_SURFACE_IDS = Object.freeze([
+  "memorial-review",
+  "edict-draft",
+  "court-debate",
+  "trial",
+  "war-council",
+  "npc-profile",
+  "map-filter"
+]);
+
 const ROLE_CYCLE_SOURCE_VIEW_BUILDERS = Object.freeze({
   studyProfileView: buildStudyProfileView,
   examCalendarView: buildExamCalendarView,
   examProcedureView: buildExamProcedureView,
   localAffairsDocketView: buildLocalAffairsDocketView,
   economicFiscalView: buildEconomicFiscalView,
+  eventArchiveView: (worldState) => buildEventArchiveView(worldState, { pageSize: 12 }),
+  mapRuntimeView: buildMapRuntimeView,
+  marketPriceView: buildMarketPriceView,
   militaryDiplomacyView: buildMilitaryDiplomacyView,
+  npcEconomyView: buildNpcEconomyView,
   officialCareerView: buildOfficialCareerView,
   courtConsequenceView: buildOfficialCourtConsequenceView,
   courtResponseView: buildOfficialCourtResponseView,
@@ -73,6 +92,16 @@ function cleanText(value, fallback = "", maxLength = ROLE_CYCLE_LIMITS.maxTextLe
 function cleanId(value, fallback = "") {
   const text = cleanText(value, fallback, ROLE_CYCLE_LIMITS.maxIdLength);
   return text.replace(/[^A-Za-z0-9_.:-]+/g, "-").replace(/^-+|-+$/g, "") || fallback;
+}
+
+function cleanRouteId(value, fallback = "") {
+  const routeId = cleanId(value, "");
+  return ROLE_CYCLE_ROUTE_IDS.includes(routeId) ? routeId : fallback;
+}
+
+function cleanSurfaceId(value, fallback = "") {
+  const surfaceId = cleanId(value, "");
+  return ROLE_CYCLE_SURFACE_IDS.includes(surfaceId) ? surfaceId : fallback;
 }
 
 function unique(values = [], limit = 12) {
@@ -128,6 +157,125 @@ function buildSourceViews(worldState = {}, options = {}, role = "scholar") {
   }, {});
 }
 
+function makeEvidenceRef(input = {}) {
+  const sourceView = cleanId(input.sourceView, "");
+  const sourceId = cleanId(input.sourceId || input.refId || input.id, "");
+  if (!sourceView || !sourceId) return null;
+  return {
+    id: cleanId(input.id, `${sourceView}:${sourceId}`),
+    label: cleanText(input.label || input.title || sourceView, sourceView, 48),
+    sourceView,
+    sourceId,
+    sourceType: cleanId(input.sourceType, ""),
+    targetRouteId: cleanRouteId(input.targetRouteId, ""),
+    targetSurfaceId: cleanSurfaceId(input.targetSurfaceId, ""),
+    visibility: "player_visible"
+  };
+}
+
+function makeEvidenceRefs(refs = [], fallback = null, limit = ROLE_CYCLE_LIMITS.maxEvidenceRefsPerItem) {
+  const rows = asArray(refs).slice();
+  if (!rows.length && fallback) rows.push(fallback);
+  const seen = new Set();
+  const output = [];
+  for (const row of rows) {
+    const ref = makeEvidenceRef(row);
+    if (!ref || seen.has(ref.id)) continue;
+    seen.add(ref.id);
+    output.push(ref);
+    if (output.length >= limit) break;
+  }
+  return output;
+}
+
+function makeEntryPoint(input = {}) {
+  const label = cleanText(input.label || input.title, "", 48);
+  const sourceView = cleanId(input.sourceView, "roleCycleView");
+  const sourceId = cleanId(input.sourceId || input.id, `${sourceView}:entry`);
+  if (!label || !sourceView || !sourceId) return null;
+  const targetRouteId = cleanRouteId(input.targetRouteId, "");
+  const targetSurfaceId = cleanSurfaceId(input.targetSurfaceId, "");
+  const kind = targetRouteId ? "route" : targetSurfaceId ? "surface" : "reference";
+  return {
+    id: cleanId(input.id, `role-cycle-entry:${sourceView}:${sourceId}`),
+    label,
+    kind,
+    publicSummary: cleanText(input.publicSummary || input.summary, "", ROLE_CYCLE_LIMITS.maxTextLength),
+    sourceView,
+    sourceId,
+    targetRouteId,
+    targetSurfaceId,
+    evidenceRefs: makeEvidenceRefs(input.evidenceRefs, {
+      sourceView,
+      sourceId,
+      label,
+      targetRouteId,
+      targetSurfaceId
+    }, ROLE_CYCLE_LIMITS.maxEvidenceRefsPerItem),
+    visibility: "player_visible"
+  };
+}
+
+function pushEntryPoints(target, rows = [], limit = ROLE_CYCLE_LIMITS.maxEntryPoints) {
+  const seen = new Set(target.map((entry) => entry.id).filter(Boolean));
+  const seenVisibleTargets = new Set(target.map((entry) => (
+    `${entry.kind || "reference"}:${entry.targetRouteId || entry.targetSurfaceId || ""}:${entry.label || ""}`
+  )).filter((key) => !key.endsWith("::")));
+  for (const row of asArray(rows)) {
+    const entry = makeEntryPoint(row);
+    if (!entry || seen.has(entry.id)) continue;
+    const visibleTargetKey = `${entry.kind}:${entry.targetRouteId || entry.targetSurfaceId || ""}:${entry.label}`;
+    if ((entry.targetRouteId || entry.targetSurfaceId) && seenVisibleTargets.has(visibleTargetKey)) continue;
+    seen.add(entry.id);
+    if (entry.targetRouteId || entry.targetSurfaceId) seenVisibleTargets.add(visibleTargetKey);
+    target.push(entry);
+    if (target.length >= limit) break;
+  }
+  return target;
+}
+
+function defaultEntryPointRows(role) {
+  const base = {
+    scholar: [
+      { id: "scholar-exam", label: "查科期", targetRouteId: "exam", sourceView: "examCalendarView", sourceId: "next-exam" },
+      { id: "scholar-ranking", label: "看皇榜", targetRouteId: "ranking", sourceView: "examProcedureView", sourceId: "public-ranking" }
+    ],
+    magistrate: [
+      { id: "magistrate-trial", label: "升堂审案", targetSurfaceId: "trial", sourceView: "localAffairsDocketView", sourceId: "trial-docket" },
+      { id: "magistrate-prices", label: "查市价", targetRouteId: "inventory", sourceView: "marketPriceView", sourceId: "price-rows" },
+      { id: "magistrate-people", label: "看人物账", targetRouteId: "people", sourceView: "npcEconomyView", sourceId: "recent-events" }
+    ],
+    official: [
+      { id: "official-memorial", label: "阅奏折", targetSurfaceId: "memorial-review", sourceView: "officialCareerView", sourceId: "court-entry" },
+      { id: "official-court", label: "入朝议", targetRouteId: "court", sourceView: "courtResponseView", sourceId: "responses" },
+      { id: "official-archive", label: "查档案", targetRouteId: "archive", sourceView: "courtConsequenceView", sourceId: "signals" }
+    ],
+    minister: [
+      { id: "minister-court", label: "入朝议", targetRouteId: "court", sourceView: "courtResponseView", sourceId: "responses" },
+      { id: "minister-debate", label: "开部议", targetSurfaceId: "court-debate", sourceView: "courtResponseView", sourceId: "debate" },
+      { id: "minister-archive", label: "查档案", targetRouteId: "archive", sourceView: "courtConsequenceView", sourceId: "signals" }
+    ],
+    general: [
+      { id: "general-map", label: "入舆图", targetRouteId: "map", sourceView: "mapRuntimeView", sourceId: "player-focus" },
+      { id: "general-war-council", label: "开军议", targetSurfaceId: "war-council", sourceView: "militaryDiplomacyView", sourceId: "war-council" },
+      { id: "general-archive", label: "查战事档", targetRouteId: "archive", sourceView: "eventArchiveView", sourceId: "archive-items" }
+    ],
+    emperor: [
+      { id: "emperor-edict", label: "拟朱批", targetSurfaceId: "edict-draft", sourceView: "courtResponseView", sourceId: "edict-review" },
+      { id: "emperor-court", label: "看朝议", targetRouteId: "court", sourceView: "courtResponseView", sourceId: "responses" },
+      { id: "emperor-archive", label: "查天下档", targetRouteId: "archive", sourceView: "worldThreadView", sourceId: "threads" }
+    ]
+  };
+  return base[role] || [];
+}
+
+function buildRoleEntryPoints(role, extras = []) {
+  const entryPoints = [];
+  pushEntryPoints(entryPoints, extras);
+  pushEntryPoints(entryPoints, defaultEntryPointRows(role));
+  return entryPoints.slice(0, ROLE_CYCLE_LIMITS.maxEntryPoints);
+}
+
 function makeCycleItem(input = {}) {
   const sourceView = cleanId(input.sourceView, "");
   const title = cleanText(input.title, "", ROLE_CYCLE_LIMITS.maxShortTextLength);
@@ -141,6 +289,8 @@ function makeCycleItem(input = {}) {
   );
   const status = statusFromPressure(riskScore);
   const sourceId = cleanId(input.sourceId || input.id, `${sourceView}:item`);
+  const targetRouteId = cleanRouteId(input.targetRouteId, "");
+  const targetSurfaceId = cleanSurfaceId(input.targetSurfaceId, "");
   return {
     id: cleanId(input.id, `role-cycle-item:${sourceId}`),
     title: title || publicSummary,
@@ -152,7 +302,15 @@ function makeCycleItem(input = {}) {
     statusLabel: cleanText(input.statusLabel, status.label, 32),
     riskScore,
     riskBand: status.band,
-    targetSurfaceId: cleanId(input.targetSurfaceId, ""),
+    targetRouteId,
+    targetSurfaceId,
+    evidenceRefs: makeEvidenceRefs(input.evidenceRefs, {
+      sourceView,
+      sourceId,
+      label: title || publicSummary,
+      targetRouteId,
+      targetSurfaceId
+    }),
     visibility: "player_visible"
   };
 }
@@ -195,7 +353,8 @@ function makeNextAction(input = {}) {
     label,
     text,
     sourceView: cleanId(input.sourceView, "roleCycleView"),
-    targetSurfaceId: cleanId(input.targetSurfaceId, "")
+    targetRouteId: cleanRouteId(input.targetRouteId, ""),
+    targetSurfaceId: cleanSurfaceId(input.targetSurfaceId, "")
   };
 }
 
@@ -276,7 +435,9 @@ function buildItemsFromRows(rows = [], sourceView, prefix, limit) {
         statusLabel: entry.statusLabel || entry.status,
         riskScore: entry.riskScore ?? entry.pressureScore ?? entry.risk ?? entry.threatScore ?? entry.supplyRisk ?? entry.severity,
         domainLabel: entry.domainLabel || entry.kindLabel,
-        targetSurfaceId: entry.targetSurfaceId
+        targetRouteId: entry.targetRouteId,
+        targetSurfaceId: entry.targetSurfaceId,
+        evidenceRefs: entry.evidenceRefs
       });
     })
     .filter(Boolean)
@@ -300,11 +461,146 @@ function collectActions(rows = [], sourceView, limit = ROLE_CYCLE_LIMITS.maxNext
         sourceView,
         label: entry.label || entry.title || `拟行动${index + 1}`,
         text: entry.text || entry.actionText || entry.publicSummary || entry.summary,
+        targetRouteId: entry.targetRouteId,
         targetSurfaceId: entry.targetSurfaceId
       });
     })
     .filter(Boolean)
     .slice(0, limit);
+}
+
+function buildMarketPriceCycleItems(marketPriceView = {}) {
+  return asArray(marketPriceView.priceRows)
+    .map((row, index) => {
+      if (!isPlainObject(row)) return null;
+      const priceId = cleanId(row.priceId || row.id, `price-${index}`);
+      const pressure = clampNumber(row.marketPressure, 0, 100, 0);
+      const priceLabel = Number.isFinite(Number(row.currentCopperCash))
+        ? `${row.currentCopperCash}文`
+        : `${cleanText(row.currentSilverLiang, "时价", 20)}两`;
+      return makeCycleItem({
+        id: `magistrate-market-${priceId}`,
+        sourceView: "marketPriceView",
+        sourceId: priceId,
+        title: `${cleanText(row.label, "市价", 32)}市价`,
+        meta: [priceLabel, row.trendLabel || row.trend, row.availability].filter(Boolean).join(" · "),
+        publicSummary: `${cleanText(row.label, "物价", 32)}现价${priceLabel}，市价压力${pressure}/100，${cleanText(row.trendLabel || row.availability, "需留意", 40)}。`,
+        statusLabel: row.trendLabel || row.availability,
+        riskScore: pressure,
+        domainLabel: "市价",
+        targetRouteId: "inventory",
+        evidenceRefs: [{
+          sourceView: "marketPriceView",
+          sourceId: priceId,
+          label: `${cleanText(row.label, "市价", 32)}价目`,
+          targetRouteId: "inventory"
+        }]
+      });
+    })
+    .filter(Boolean)
+    .sort((first, second) => (second.riskScore || 0) - (first.riskScore || 0))
+    .slice(0, 2);
+}
+
+function buildNpcEconomyCycleItems(npcEconomyView = {}) {
+  return asArray(npcEconomyView.recentEvents)
+    .map((event, index) => makeCycleItem({
+      id: `magistrate-npc-economy-${index}`,
+      sourceView: "npcEconomyView",
+      sourceId: `recent-event-${index}`,
+      title: "人物月账",
+      meta: "NPC 生计",
+      publicSummary: event,
+      statusLabel: "留意",
+      riskScore: 38,
+      domainLabel: "人物",
+      targetRouteId: "people",
+      evidenceRefs: [{
+        sourceView: "npcEconomyView",
+        sourceId: `recent-event-${index}`,
+        label: "人物月账",
+        targetRouteId: "people"
+      }]
+    }))
+    .filter(Boolean)
+    .slice(0, 2);
+}
+
+function mapPressureScore(ref = {}) {
+  const style = isPlainObject(ref.style) ? cleanText(ref.style.pressure, "calm", 24) : "calm";
+  if (style === "urgent") return 84;
+  if (style === "strained") return 64;
+  if (style === "watch") return 42;
+  return 24;
+}
+
+function buildMapRuntimeCycleItems(mapRuntimeView = {}) {
+  return asArray(mapRuntimeView.refs)
+    .map((ref, index) => {
+      if (!isPlainObject(ref)) return null;
+      const sourceId = cleanId(ref.mapEntityRef || ref.sourceRef, `map-ref-${index}`);
+      return makeCycleItem({
+        id: `general-map-${sourceId}`,
+        sourceView: "mapRuntimeView",
+        sourceId,
+        title: cleanText(ref.label, "舆图节点", 48),
+        meta: cleanText(ref.entityType, "舆图", 32),
+        publicSummary: ref.summary,
+        statusLabel: isPlainObject(ref.style) ? ref.style.pressure : "舆图",
+        riskScore: mapPressureScore(ref),
+        domainLabel: "舆图",
+        targetRouteId: "map",
+        evidenceRefs: [{
+          sourceView: "mapRuntimeView",
+          sourceId,
+          label: cleanText(ref.label, "舆图节点", 48),
+          targetRouteId: "map"
+        }]
+      });
+    })
+    .filter(Boolean)
+    .sort((first, second) => (second.riskScore || 0) - (first.riskScore || 0))
+    .slice(0, 2);
+}
+
+function buildArchiveCycleItems(eventArchiveView = {}) {
+  return asArray(eventArchiveView.items)
+    .filter((item) => isPlainObject(item) && ["military_diplomacy", "event_history", "world_thread"].includes(item.sourceType))
+    .map((item, index) => makeCycleItem({
+      id: `general-archive-${item.id || index}`,
+      sourceView: "eventArchiveView",
+      sourceId: item.id || `archive-${index}`,
+      title: rowTitle(item, "战事档案"),
+      meta: [item.sourceLabel, item.dateLabel, item.statusLabel].filter(Boolean).join(" · "),
+      publicSummary: item.summary,
+      statusLabel: item.riskLabel || item.statusLabel,
+      riskScore: item.status === "watch" ? 56 : 28,
+      domainLabel: item.sourceLabel || "档案",
+      targetRouteId: "archive",
+      evidenceRefs: [{
+        sourceView: "eventArchiveView",
+        sourceId: item.id || `archive-${index}`,
+        label: item.sourceLabel || "事件档案",
+        targetRouteId: "archive"
+      }]
+    }))
+    .filter(Boolean)
+    .slice(0, 2);
+}
+
+function collectRoleEvidenceRefs(items = [], entryPoints = []) {
+  const seen = new Set();
+  const output = [];
+  for (const ref of [
+    ...items.flatMap((item) => asArray(item.evidenceRefs)),
+    ...entryPoints.flatMap((entry) => asArray(entry.evidenceRefs))
+  ]) {
+    if (!isPlainObject(ref) || seen.has(ref.id)) continue;
+    seen.add(ref.id);
+    output.push(ref);
+    if (output.length >= ROLE_CYCLE_LIMITS.maxEvidenceRefsPerRole) break;
+  }
+  return output;
 }
 
 function buildFallbackCycle(role, pressureScore = 22) {
@@ -319,6 +615,7 @@ function buildFallbackCycle(role, pressureScore = 22) {
     pressureScore,
     sourceViews: [...config.sourceViews],
     metrics: [],
+    entryPoints: buildRoleEntryPoints(role),
     items: [
       makeCycleItem({
         id: `role-cycle-${role}-fallback`,
@@ -450,6 +747,24 @@ function buildScholarCycle(worldState, views) {
     pressureScore,
     sourceViews: [...config.sourceViews],
     metrics,
+    entryPoints: buildRoleEntryPoints(role, [
+      {
+        id: "scholar-current-exam",
+        label: "查本科期",
+        targetRouteId: "exam",
+        sourceView: "examCalendarView",
+        sourceId: nextExam?.level || "next-exam",
+        publicSummary: nextExam?.windowLabel || nextExam?.status || "按安全科举日历查看下一场考试。"
+      },
+      {
+        id: "scholar-study-plan",
+        label: "整读书簿",
+        targetRouteId: "exam",
+        sourceView: "studyProfileView",
+        sourceId: "next-plan",
+        publicSummary: plan.focus || config.defaultSummary
+      }
+    ]),
     items: sortByRisk(items).slice(0, ROLE_CYCLE_LIMITS.maxItemsPerRole),
     riskSignals,
     nextActions: nextActions.slice(0, ROLE_CYCLE_LIMITS.maxNextActions)
@@ -461,13 +776,20 @@ function buildMagistrateCycle(worldState, views) {
   const config = roleConfig(role);
   const local = isPlainObject(views.localAffairsDocketView) ? views.localAffairsDocketView : {};
   const fiscal = isPlainObject(views.economicFiscalView) ? views.economicFiscalView : {};
+  const market = isPlainObject(views.marketPriceView) ? views.marketPriceView : {};
+  const npcEconomy = isPlainObject(views.npcEconomyView) ? views.npcEconomyView : {};
   const dockets = sortByRisk(buildItemsFromRows(asArray(local.dockets), "localAffairsDocketView", "local-docket", 4));
   const fiscalItems = sortByRisk(buildItemsFromRows([
     ...asArray(fiscal.localTreasuryReports),
     ...asArray(fiscal.grainMarketReports),
     ...asArray(fiscal.marketIncidents)
   ], "economicFiscalView", "local-fiscal", 3));
+  const marketItems = buildMarketPriceCycleItems(market);
+  const npcEconomyItems = buildNpcEconomyCycleItems(npcEconomy);
   const items = [];
+  pushUnique(items, dockets.slice(0, 2));
+  pushUnique(items, marketItems);
+  pushUnique(items, npcEconomyItems);
   pushUnique(items, dockets);
   pushUnique(items, fiscalItems);
   if (!items.length) return buildFallbackCycle(role);
@@ -505,6 +827,32 @@ function buildMagistrateCycle(worldState, views) {
     pressureScore: averagePressure(items, 30),
     sourceViews: [...config.sourceViews],
     metrics,
+    entryPoints: buildRoleEntryPoints(role, [
+      {
+        id: "magistrate-market-current",
+        label: "查市价",
+        targetRouteId: "inventory",
+        sourceView: "marketPriceView",
+        sourceId: "price-rows",
+        publicSummary: `均价指数${clampNumber(market.averagePriceIndex, 0, 200, 100)}，只作公开行情参考。`
+      },
+      {
+        id: "magistrate-npc-economy-current",
+        label: "看人物月账",
+        targetRouteId: "people",
+        sourceView: "npcEconomyView",
+        sourceId: "recent-events",
+        publicSummary: asArray(npcEconomy.recentEvents)[0] || "查看人物生计与交易委派的公开投影。"
+      },
+      {
+        id: "magistrate-trial-current",
+        label: "升堂审案",
+        targetSurfaceId: "trial",
+        sourceView: "localAffairsDocketView",
+        sourceId: dockets[0]?.sourceId || "trial-docket",
+        publicSummary: dockets[0]?.publicSummary || config.defaultSummary
+      }
+    ]),
     items: items.slice(0, ROLE_CYCLE_LIMITS.maxItemsPerRole),
     riskSignals,
     nextActions: nextActions.length ? nextActions.slice(0, ROLE_CYCLE_LIMITS.maxNextActions) : buildFallbackCycle(role).nextActions
@@ -596,6 +944,24 @@ function buildOfficialCycle(worldState, views) {
     pressureScore: Math.max(clampNumber(career.riskScore, 0, 100, 0), averagePressure(items, 30)),
     sourceViews: [...config.sourceViews],
     metrics,
+    entryPoints: buildRoleEntryPoints(role, [
+      {
+        id: "official-current-memorial",
+        label: "阅奏折",
+        targetSurfaceId: "memorial-review",
+        sourceView: "officialCareerView",
+        sourceId: courtEntry.id || "court-entry",
+        publicSummary: courtEntry.publicSummary || config.defaultSummary
+      },
+      {
+        id: "official-current-court",
+        label: "入朝议",
+        targetRouteId: "court",
+        sourceView: "courtResponseView",
+        sourceId: "responses",
+        publicSummary: courtResponse.summary || "查看公开奏议回应链。"
+      }
+    ]),
     items: items.slice(0, ROLE_CYCLE_LIMITS.maxItemsPerRole),
     riskSignals,
     nextActions: nextActions.length ? nextActions : buildFallbackCycle(role).nextActions
@@ -662,6 +1028,24 @@ function buildMinisterCycle(worldState, views) {
     pressureScore: averagePressure(items, 36),
     sourceViews: [...config.sourceViews],
     metrics,
+    entryPoints: buildRoleEntryPoints(role, [
+      {
+        id: "minister-current-court",
+        label: "入朝议",
+        targetRouteId: "court",
+        sourceView: "courtResponseView",
+        sourceId: "responses",
+        publicSummary: courtResponse.summary || config.defaultSummary
+      },
+      {
+        id: "minister-current-debate",
+        label: "开部议",
+        targetSurfaceId: "court-debate",
+        sourceView: "courtResponseView",
+        sourceId: "debate",
+        publicSummary: "围绕公开奏议拟部院意见。"
+      }
+    ]),
     items: items.slice(0, ROLE_CYCLE_LIMITS.maxItemsPerRole),
     riskSignals,
     nextActions
@@ -672,8 +1056,14 @@ function buildGeneralCycle(worldState, views) {
   const role = "general";
   const config = roleConfig(role);
   const military = isPlainObject(views.militaryDiplomacyView) ? views.militaryDiplomacyView : {};
+  const mapRuntime = isPlainObject(views.mapRuntimeView) ? views.mapRuntimeView : {};
+  const archive = isPlainObject(views.eventArchiveView) ? views.eventArchiveView : {};
+  const mapItems = buildMapRuntimeCycleItems(mapRuntime);
+  const archiveItems = buildArchiveCycleItems(archive);
   const items = [];
-  pushUnique(items, buildItemsFromRows(asArray(military.frontierIncidents), "militaryDiplomacyView", "general-incident", 3));
+  pushUnique(items, buildItemsFromRows(asArray(military.frontierIncidents), "militaryDiplomacyView", "general-incident", 2));
+  pushUnique(items, mapItems);
+  pushUnique(items, archiveItems);
   pushUnique(items, buildItemsFromRows(asArray(military.theaters), "militaryDiplomacyView", "general-theater", 2));
   pushUnique(items, buildItemsFromRows(asArray(military.supplyLines), "militaryDiplomacyView", "general-supply", 2));
   pushUnique(items, buildItemsFromRows(asArray(military.garrisons), "militaryDiplomacyView", "general-garrison", 2));
@@ -681,7 +1071,7 @@ function buildGeneralCycle(worldState, views) {
 
   const firstTheater = asArray(military.theaters).find(isPlainObject) || {};
   const metrics = [
-    makeMetric({ id: "general-threat", label: "边患", value: firstTheater.threatScore ?? worldState.borderThreat, statusLabel: firstTheater.statusLabel, sourceView: "militaryDiplomacyView" }),
+    makeMetric({ id: "general-threat", label: "边患", value: firstTheater.threatScore ?? averagePressure(items, 40), statusLabel: firstTheater.statusLabel, sourceView: "militaryDiplomacyView" }),
     makeMetric({ id: "general-supply", label: "粮道", value: firstTheater.supplyRisk, statusLabel: "粮秣", sourceView: "militaryDiplomacyView" }),
     makeMetric({ id: "general-readiness", label: "战备", value: firstTheater.readinessScore, statusLabel: "战备", sourceView: "militaryDiplomacyView" }),
     makeMetric({ id: "general-intel", label: "情报", value: firstTheater.intelConfidence, statusLabel: "斥候", sourceView: "militaryDiplomacyView" })
@@ -700,6 +1090,17 @@ function buildGeneralCycle(worldState, views) {
     sourceView: item.sourceView,
     targetSurfaceId: "war-council"
   })).filter(Boolean);
+  const mapActions = collectActions(
+    Object.values(isPlainObject(mapRuntime.actionDrafts) ? mapRuntime.actionDrafts : {}).filter(isPlainObject).map((action) => ({
+      id: action.id,
+      label: action.label,
+      text: action.actionText,
+      targetRouteId: "map"
+    })),
+    "mapRuntimeView",
+    2
+  );
+  const combinedNextActions = [...mapActions, ...nextActions].slice(0, ROLE_CYCLE_LIMITS.maxNextActions);
 
   return {
     role,
@@ -711,9 +1112,35 @@ function buildGeneralCycle(worldState, views) {
     pressureScore: averagePressure(items, 40),
     sourceViews: [...config.sourceViews],
     metrics,
+    entryPoints: buildRoleEntryPoints(role, [
+      {
+        id: "general-current-map",
+        label: "入舆图",
+        targetRouteId: "map",
+        sourceView: "mapRuntimeView",
+        sourceId: mapRuntime.playerFocusRef || "player-focus",
+        publicSummary: "查看公开舆图节点与行动草稿入口，不暴露坐标或布局明细。"
+      },
+      {
+        id: "general-current-war-council",
+        label: "开军议",
+        targetSurfaceId: "war-council",
+        sourceView: "militaryDiplomacyView",
+        sourceId: "war-council",
+        publicSummary: config.defaultAction
+      },
+      {
+        id: "general-current-archive",
+        label: "查战事档",
+        targetRouteId: "archive",
+        sourceView: "eventArchiveView",
+        sourceId: archiveItems[0]?.sourceId || "archive-items",
+        publicSummary: archiveItems[0]?.publicSummary || "查看服务器整理后的公开战事档案。"
+      }
+    ]),
     items: items.slice(0, ROLE_CYCLE_LIMITS.maxItemsPerRole),
     riskSignals,
-    nextActions: nextActions.length ? nextActions : buildFallbackCycle(role).nextActions
+    nextActions: combinedNextActions.length ? combinedNextActions : buildFallbackCycle(role).nextActions
   };
 }
 
@@ -748,10 +1175,13 @@ function buildEmperorCycle(worldState, views) {
   ], "roleCycleView", "emperor-realm-pressure", 2));
   if (!items.length) return buildFallbackCycle(role);
 
+  const topFiscalLedger = asArray(fiscal.fiscalLedgers).find(isPlainObject) || {};
+  const topMilitaryIncident = asArray(military.frontierIncidents).find(isPlainObject) || {};
+  const realmPressure = averagePressure(items, 38);
   const metrics = [
-    makeMetric({ id: "emperor-treasury", label: "国用", value: worldState.treasury ? Math.min(100, Math.round(Number(worldState.treasury) / 10)) : fiscal.fiscalLedgers?.[0]?.deficitPressure, statusLabel: "财赋", sourceView: "economicFiscalView" }),
-    makeMetric({ id: "emperor-order", label: "民情", value: 100 - clampNumber(worldState.publicOrder, 0, 100, 60), statusLabel: "秩序风险", sourceView: "worldThreadView" }),
-    makeMetric({ id: "emperor-border", label: "边患", value: worldState.borderThreat ?? military.frontierIncidents?.[0]?.threatScore, statusLabel: "军务", sourceView: "militaryDiplomacyView" }),
+    makeMetric({ id: "emperor-treasury", label: "国用", value: topFiscalLedger.deficitPressure ?? realmPressure, statusLabel: "财赋", sourceView: "economicFiscalView" }),
+    makeMetric({ id: "emperor-order", label: "民情", value: realmPressure, statusLabel: "秩序风险", sourceView: "worldThreadView" }),
+    makeMetric({ id: "emperor-border", label: "边患", value: topMilitaryIncident.threatScore ?? realmPressure, statusLabel: "军务", sourceView: "militaryDiplomacyView" }),
     makeMetric({ id: "emperor-court", label: "朝局", value: averagePressure(items, 36), statusLabel: "议题", sourceView: "courtResponseView" })
   ].filter(Boolean);
   const riskSignals = items.slice(0, ROLE_CYCLE_LIMITS.maxRiskSignals).map((item) => makeRiskSignal({
@@ -783,20 +1213,54 @@ function buildEmperorCycle(worldState, views) {
     pressureScore: averagePressure(items, 38),
     sourceViews: [...config.sourceViews],
     metrics,
+    entryPoints: buildRoleEntryPoints(role, [
+      {
+        id: "emperor-current-edict",
+        label: "拟朱批",
+        targetSurfaceId: "edict-draft",
+        sourceView: "courtResponseView",
+        sourceId: "edict-review",
+        publicSummary: config.defaultAction
+      },
+      {
+        id: "emperor-current-court",
+        label: "看朝议",
+        targetRouteId: "court",
+        sourceView: "courtResponseView",
+        sourceId: "responses",
+        publicSummary: courtResponse.summary || "查看公开朝议回应。"
+      }
+    ]),
     items: items.slice(0, ROLE_CYCLE_LIMITS.maxItemsPerRole),
     riskSignals,
     nextActions
   };
 }
 
+function finalizeCycle(role, cycle = {}) {
+  const entryPoints = asArray(cycle.entryPoints).length ? asArray(cycle.entryPoints) : buildRoleEntryPoints(role);
+  const items = asArray(cycle.items).slice(0, ROLE_CYCLE_LIMITS.maxItemsPerRole);
+  return {
+    ...cycle,
+    role,
+    sourceViews: asArray(cycle.sourceViews).slice(0, ROLE_CYCLE_LIMITS.maxSourceViews),
+    metrics: asArray(cycle.metrics).slice(0, ROLE_CYCLE_LIMITS.maxMetrics),
+    entryPoints: entryPoints.slice(0, ROLE_CYCLE_LIMITS.maxEntryPoints),
+    items,
+    evidenceRefs: collectRoleEvidenceRefs(items, entryPoints),
+    riskSignals: asArray(cycle.riskSignals).slice(0, ROLE_CYCLE_LIMITS.maxRiskSignals),
+    nextActions: asArray(cycle.nextActions).slice(0, ROLE_CYCLE_LIMITS.maxNextActions)
+  };
+}
+
 function buildCycleForRole(role, worldState, views) {
-  if (role === "scholar") return buildScholarCycle(worldState, views);
-  if (role === "magistrate") return buildMagistrateCycle(worldState, views);
-  if (role === "official") return buildOfficialCycle(worldState, views);
-  if (role === "minister") return buildMinisterCycle(worldState, views);
-  if (role === "general") return buildGeneralCycle(worldState, views);
-  if (role === "emperor") return buildEmperorCycle(worldState, views);
-  return buildFallbackCycle(role);
+  if (role === "scholar") return finalizeCycle(role, buildScholarCycle(worldState, views));
+  if (role === "magistrate") return finalizeCycle(role, buildMagistrateCycle(worldState, views));
+  if (role === "official") return finalizeCycle(role, buildOfficialCycle(worldState, views));
+  if (role === "minister") return finalizeCycle(role, buildMinisterCycle(worldState, views));
+  if (role === "general") return finalizeCycle(role, buildGeneralCycle(worldState, views));
+  if (role === "emperor") return finalizeCycle(role, buildEmperorCycle(worldState, views));
+  return finalizeCycle(role, buildFallbackCycle(role));
 }
 
 function buildRoleMatrix(activeRole, currentRole) {
@@ -873,8 +1337,23 @@ function summarizeRoleCycleForPrompt(worldState = {}, options = {}) {
         title: item.title,
         statusLabel: item.statusLabel,
         publicSummary: item.publicSummary,
-        sourceView: item.sourceView
+        sourceView: item.sourceView,
+        evidenceRefs: asArray(item.evidenceRefs).map((ref) => ({
+          label: ref.label,
+          sourceView: ref.sourceView,
+          sourceId: ref.sourceId,
+          targetRouteId: ref.targetRouteId,
+          targetSurfaceId: ref.targetSurfaceId
+        })).slice(0, ROLE_CYCLE_LIMITS.maxEvidenceRefsPerItem)
       })).slice(0, ROLE_CYCLE_LIMITS.maxItemsPerRole),
+      entryPoints: view.currentRole.entryPoints.map((entry) => ({
+        label: entry.label,
+        kind: entry.kind,
+        sourceView: entry.sourceView,
+        sourceId: entry.sourceId,
+        targetRouteId: entry.targetRouteId,
+        targetSurfaceId: entry.targetSurfaceId
+      })).slice(0, ROLE_CYCLE_LIMITS.maxEntryPoints),
       riskSignals: view.currentRole.riskSignals.map((risk) => ({
         label: risk.label,
         value: risk.value,
@@ -885,6 +1364,7 @@ function summarizeRoleCycleForPrompt(worldState = {}, options = {}) {
       nextActions: view.currentRole.nextActions.map((action) => ({
         label: action.label,
         text: action.text,
+        targetRouteId: action.targetRouteId,
         targetSurfaceId: action.targetSurfaceId
       })).slice(0, ROLE_CYCLE_LIMITS.maxNextActions)
     },
