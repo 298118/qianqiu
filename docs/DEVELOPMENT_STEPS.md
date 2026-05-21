@@ -459,7 +459,7 @@ S84 前端专项额外验收入口：
 - 边界：跟进只从服务器已有 `courtEntry` / `courtEntryResolutions` 与公开官场 view 派生；AI read scope 只含 `officialCareerView.courtEntry`、`courtEntries`、事件档案、月报、任所和公开 actor memory。工具权限仅允许读取与 proposal，不允许内部查询、持久化写入、写状态、写任免、写处分、写弹劾或把工具调用伪装成已发生事实。跟进批复只记录中间公开反馈、参与 actor 摘要和微量进度/考成影响；长期任免、弹劾、处分、奏折采纳和世界后果仍留给后续服务器规则。
 - 验证：已按本文件“本轮 S88.4 朝议/部院/御前跟进切片验证口径”完成语法检查、official/game-turn focused tests（24 项）、monthly/event/world-thread focused tests（23 项）、topic focused tests（17 项）、React scaffold tests（37 项）、server/client typecheck、React App focused tests（36 项）、全量 Vitest（68 项）、client build、`npm run smoke:exam-s69`、`AI_PROVIDER=mock npm run smoke:browser`、docs governance、documentation governance、完整 `npm test`（1015 项）和 `git diff --check`。
 - 子代理：Helmholtz 只读梳理前端/API/test 接线，建议把 `actorFollowUps` / `bureauReplies` / 御前摘报折入 server-owned `officialCareerView.courtEntry`，前端只保留 draft-only 按钮，并避免调用 `/api/game/turn`；Ohm 只读梳理后端场景/runtime，建议不用 generic `sceneRuntime.resolveSceneOutcome()` 直接裁决官场 follow-up，而是新增官场专用 follow-up adjudicator、事件档案来源和 world thread 派生。本轮实现已采纳。Dalton 提交前只读初审发现两个问题：`bureau-reply` 文案可被 generic official action 重复推进的 P1，以及 public follow-up view 默认权限文本携带“数据库查询”的 P2。主代理已把 follow-up submission 识别提前到 generic action 分类之前，补 `bureau-reply` 不得再产生 `[官场差遣]` / `[官署回执]` 的回归断言，并把公开权限文本改为不含数据库/写库话术；Dalton 最终只读复核确认 P1/P2 已关闭，未发现新的 P0/P1/P2。
-- 提交：待本次实现提交。
+- 提交：实现提交 `2eabfcb2`。提交哈希回填为低风险纯文档记录，不改代码、API/schema、运行时行为、提示词或验证工具；按项目规则跳过额外子代理复审。
 - 下一步：继续 S88.4 的跨身份奏折回应、皇帝/部院更长链路、朝议后续世界后果与长期考成/弹劾风险联动；保持完整 `scholar -> child_exam -> provincial_exam -> metropolitan_exam -> palace_exam -> official` smoke 为第一验收入口。
 
 ### 2026-05-20：完成 S87.1-S87.7 route/API 响应类型覆盖
