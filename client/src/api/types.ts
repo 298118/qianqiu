@@ -93,8 +93,26 @@ export type OfficialFirstMonthExperienceView = JsonObject & {
   readonly authorityBoundary?: string;
 };
 
+export type OfficialCourtEntryView = JsonObject & {
+  readonly schemaVersion?: string;
+  readonly active?: boolean;
+  readonly id?: string | null;
+  readonly title?: string;
+  readonly publicSummary?: string;
+  readonly targetSurfaces?: readonly JsonObject[];
+  readonly memorialEntry?: JsonObject | null;
+  readonly courtDebateEntry?: JsonObject | null;
+  readonly assessmentTrace?: JsonObject | null;
+  readonly superiorFollowUp?: string;
+  readonly peerFollowUp?: string;
+  readonly nextActions?: readonly JsonObject[];
+  readonly authorityBoundary?: string;
+};
+
 export type OfficialCareerView = JsonObject & {
   readonly firstMonthExperience?: OfficialFirstMonthExperienceView;
+  readonly courtEntry?: OfficialCourtEntryView;
+  readonly courtEntries?: readonly JsonObject[];
 };
 
 export type SafeWorldState = {

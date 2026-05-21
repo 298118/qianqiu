@@ -216,6 +216,86 @@ test("POST /api/ai/topic-draft/:sessionId sends only safe surface context to pro
   assert.doesNotMatch(JSON.stringify(payload), /SEALED_BROWSER|sk-browser-secret|emperor/i);
 });
 
+test("S88.4 topic draft can cite official first-month court entry evidence safely", async (t) => {
+  let providerContext = null;
+  const provider = {
+    modelRoute: { provider: "openai" },
+    async draftTopicSurface(context) {
+      providerContext = context;
+      assert.equal(context.surfaceId, "memorial-review");
+      assert.equal(context.draftKind, "official_first_month_memorial");
+      assert.ok(context.evidenceRefs.some((ref) =>
+        ref.sourceView === "officialCareerView" && /馆阁讲章校订|首月回署/.test(`${ref.label}${ref.summary}`)
+      ));
+      assertNoSensitiveText(context);
+      return {
+        source: "provider-ai",
+        surfaceId: context.surfaceId,
+        draftKind: context.draftKind,
+        draftTitle: "首月回署奏稿",
+        draftText: "臣谨据公开回署材料陈明馆阁讲章校订进度、上官同僚所疑与考成风险，伏请交部院复核。",
+        evidenceRefs: context.selectedEvidenceRefs.slice(0, 1),
+        riskNote: "此稿只陈公开材料，不定奖惩。",
+        nextStep: "写入草稿后仍候主卷服务器裁决。"
+      };
+    }
+  };
+  const server = createTestServerWithProvider(provider);
+  const worldState = await createStoredSession({ role: "official", playerName: "首月拟稿" });
+  Object.assign(worldState.player, {
+    officeTitle: "翰林院编修",
+    position: "翰林院编修",
+    performanceMerit: 52,
+    impeachmentRisk: 18
+  });
+  worldState.officialCareer.currentPosting = "翰林院编修";
+  worldState.officialCareer.assignments = [{
+    id: "ASG-0000-first-month-top_hanlin_editor",
+    title: "馆阁讲章校订",
+    kind: "memorial_drafting",
+    bureauId: "hanlin_academy",
+    dueTurn: 3,
+    deadlineUnit: "ten_day",
+    progress: 48,
+    risk: 18,
+    visibleSummary: "首月须校订馆阁讲章并试拟制诰。",
+    hiddenNotes: ["堂官私下试探"]
+  }];
+  worldState.officialCareer.assessmentDossier.notes = [
+    "讲章回署可入考成。",
+    "provider payload prompt raw_table"
+  ];
+  await writeSession(worldState);
+  const view = buildTopicSurfaceView(worldState, { surfaceId: "memorial-review" });
+  const officialRef = view.evidenceRefs.find((ref) =>
+    ref.sourceView === "officialCareerView" && /馆阁讲章校订|首月回署/.test(`${ref.label}${ref.summary}`)
+  );
+  t.after(async () => {
+    await removeSessionArtifacts(worldState.sessionId);
+    await server.close();
+  });
+
+  assert.ok(officialRef);
+  const { response, payload } = await postJson(`${server.baseUrl}/api/ai/topic-draft/${worldState.sessionId}`, {
+    surfaceId: "memorial-review",
+    draftKind: "official_first_month_memorial",
+    selectedEvidenceRefs: [officialRef.refId],
+    worldState: { officialCareer: { hiddenNotes: "SEALED_BROWSER" } },
+    providerPayload: "raw provider prompt sk-browser-secret-123456"
+  });
+
+  assert.equal(response.status, 200);
+  assert.ok(providerContext);
+  assertTopicDraftEnvelope(payload, {
+    sessionId: worldState.sessionId,
+    source: "provider-ai",
+    surfaceId: "memorial-review"
+  });
+  assert.equal(payload.topicDraft.draftKind, "official_first_month_memorial");
+  assert.deepEqual(payload.topicDraft.evidenceRefs, [officialRef.refId]);
+  assert.doesNotMatch(JSON.stringify(payload), /SEALED_BROWSER|堂官私下试探|sk-browser-secret|raw_table/i);
+});
+
 test("POST /api/ai/topic-draft/:sessionId falls back for provider failure and unsafe drafts", async (t) => {
   const cases = [
     {
@@ -265,6 +345,24 @@ test("POST /api/ai/topic-draft/:sessionId falls back for provider failure and un
             draftKind: context.draftKind,
             draftTitle: "已裁决",
             draftText: "已经结案并任命官员，军令已经生效。",
+            evidenceRefs: context.selectedEvidenceRefs.slice(0, 1),
+            riskNote: "无",
+            nextStep: "无"
+          };
+        }
+      })
+    },
+    {
+      name: "official assessment outcome claim",
+      buildProvider: () => ({
+        modelRoute: { provider: "openai" },
+        async draftTopicSurface(context) {
+          return {
+            source: "provider-ai",
+            surfaceId: context.surfaceId,
+            draftKind: context.draftKind,
+            draftTitle: "考成已定",
+            draftText: "考成已定，已记功，弹劾成案，处分已定。",
             evidenceRefs: context.selectedEvidenceRefs.slice(0, 1),
             riskNote: "无",
             nextStep: "无"

@@ -344,6 +344,49 @@ function getFirstMonthExperience(officialCareer: JsonObject, monthlyBriefing: Js
   };
 }
 
+function getCourtEntry(officialCareer: JsonObject) {
+  const entry = asRecord(officialCareer.courtEntry);
+  const memorial = asRecord(entry.memorialEntry);
+  const debate = asRecord(entry.courtDebateEntry);
+  const assessmentTrace = asRecord(entry.assessmentTrace);
+  const active = entry.active === true;
+  const targetLabels = asArray(entry.targetSurfaces)
+    .map(asRecord)
+    .map((target) => cleanOfficialMinisterText(target.label, "", 28))
+    .filter(Boolean)
+    .slice(0, 3);
+  const nextActions = asArray(entry.nextActions)
+    .map(asRecord)
+    .map((action, index) => ({
+      id: cleanOfficialMinisterText(action.id, `court-entry-action-${index}`, 48),
+      label: cleanOfficialMinisterText(action.label, "拟行动", 28),
+      text: cleanOfficialMinisterText(action.text, "", 168)
+    }))
+    .filter((action) => action.text);
+  const signals = asArray(assessmentTrace.signals)
+    .slice(0, 4)
+    .map((signal) => cleanOfficialMinisterText(signal, "考成信号", 84));
+
+  return {
+    active,
+    title: cleanOfficialMinisterText(entry.title, "首月回署材料", 56),
+    summary: cleanOfficialMinisterText(entry.publicSummary, "首月回署材料可入奏折或朝议筹议。", 156),
+    statusLabel: cleanOfficialMinisterText(entry.statusLabel, "待筹议", 28),
+    targetLabel: targetLabels.length ? targetLabels.join("、") : "奏折队列、朝议筹议",
+    memorialTitle: cleanOfficialMinisterText(memorial.title, "奏折材料", 48),
+    memorialSummary: cleanOfficialMinisterText(memorial.publicSummary, "回署材料只读公开摘要。", 124),
+    debateTitle: cleanOfficialMinisterText(debate.title, "朝议题", 48),
+    debateSummary: cleanOfficialMinisterText(debate.publicSummary, "朝议只收集公开意见。", 124),
+    superiorFollowUp: cleanOfficialMinisterText(entry.superiorFollowUp, "上官后续只看公开进度与凭据。", 116),
+    peerFollowUp: cleanOfficialMinisterText(entry.peerFollowUp, "同僚后续只形成公开风向。", 116),
+    traceLabel: cleanOfficialMinisterText(assessmentTrace.traceLabel, "考成期未明", 32),
+    merit: cleanNumber(assessmentTrace.meritScore, 0),
+    risk: cleanNumber(assessmentTrace.riskScore, 0),
+    signals,
+    nextActions
+  };
+}
+
 function draftButtonText(label: string, text: string, enabled: boolean, onDraft: (text: string) => void) {
   return (
     <button type="button" disabled={!enabled} onClick={() => onDraft(text)}>
@@ -377,6 +420,7 @@ export function OfficialMinisterPanel({
   const careerLedger = getCareerLedger(officialCareer, appointmentTrack, posting);
   const assignments = getAssignmentItems(officialCareer);
   const firstMonth = getFirstMonthExperience(officialCareer, monthlyBriefing);
+  const courtEntry = getCourtEntry(officialCareer);
   const network = getOfficeNetwork(officialCareer, actorMemory, officialPostings);
   const factionRisk = getFactionRisk(officialCareer, actorMemory, aiAudit);
   const assessment = getAssessment(officialCareer, assessmentRecord, posting);
@@ -563,10 +607,52 @@ export function OfficialMinisterPanel({
         </article>
 
         <article className="scholarPanelCard officialMinisterPanelMemorial" aria-labelledby="official-memorial-title">
-          <h3 id="official-memorial-title">奏疏入口</h3>
-          <p>此处只把上疏、回堂官、请核考成或辨弹劾写入底部奏折草稿；呈上回合、时间推进、任免奖惩和处分仍走服务器裁决。</p>
+          <h3 id="official-memorial-title">奏折朝议入口</h3>
+          {courtEntry.active ? (
+            <>
+              <dl className="scholarPanelCompactDl">
+                <div>
+                  <dt>材料</dt>
+                  <dd>{courtEntry.title}</dd>
+                </div>
+                <div>
+                  <dt>流向</dt>
+                  <dd>{courtEntry.targetLabel}</dd>
+                </div>
+                <div>
+                  <dt>考成</dt>
+                  <dd>{courtEntry.traceLabel}</dd>
+                </div>
+                <div>
+                  <dt>风险</dt>
+                  <dd>{courtEntry.merit} / {courtEntry.risk}</dd>
+                </div>
+              </dl>
+              <p>{courtEntry.summary}</p>
+              <p>{courtEntry.memorialTitle}：{courtEntry.memorialSummary}</p>
+              <p>{courtEntry.debateTitle}：{courtEntry.debateSummary}</p>
+              <p>上官后续：{courtEntry.superiorFollowUp}</p>
+              <p>同僚后续：{courtEntry.peerFollowUp}</p>
+              <OfficialMinisterPanelList
+                items={courtEntry.signals.map((signal, index) => ({
+                  id: `court-entry-signal-${index}`,
+                  title: signal
+                }))}
+                emptyText="长期考成追踪只读取服务器公开功绩、风险和回署材料。"
+              />
+            </>
+          ) : (
+            <p>此处只把上疏、回堂官、请核考成或辨弹劾写入底部奏折草稿；呈上回合、时间推进、任免奖惩和处分仍走服务器裁决。</p>
+          )}
           <div className="scholarPanelActions">
-            {draftButtonText("拟具奏疏", `臣${playerName}谨就${officeTitle}本职差遣、考成风险与朝局风声拟具奏疏，请服务器裁决后果。`, canDraft, onDraft)}
+            {courtEntry.nextActions.slice(0, 2).map((action) => (
+              <button key={action.id} type="button" disabled={!canDraft} onClick={() => onDraft(action.text)}>
+                {action.label}
+              </button>
+            ))}
+            {!courtEntry.nextActions.length
+              ? draftButtonText("拟具奏疏", `臣${playerName}谨就${officeTitle}本职差遣、考成风险与朝局风声拟具奏疏，请服务器裁决后果。`, canDraft, onDraft)
+              : null}
             {courtHref ? <Link to={courtHref}>入朝议页</Link> : null}
           </div>
           <ul className="scholarPanelBoundary">

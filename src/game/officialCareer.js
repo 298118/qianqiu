@@ -6,6 +6,10 @@ const {
   hasUnsafeOfficialFirstMonthText
 } = require("./officialFirstMonth");
 const {
+  buildOfficialCourtEntryEvidenceRows,
+  buildOfficialCourtEntryView
+} = require("./officialCourtEntry");
+const {
   getOfficeLadder,
   inferOfficeByTitle,
   listOutpostCandidates,
@@ -1267,6 +1271,10 @@ function buildOfficialCareerView(worldState = {}) {
   const activeAssignments = career.assignments.filter((assignment) => assignment.status === "active" || assignment.status === "submitted");
   const urgentAssignments = activeAssignments.filter((assignment) => assignment.dueTurn <= currentTurn(worldState) + 1);
   const firstMonthExperience = buildOfficialFirstMonthExperienceView(worldState, career);
+  const normalizedNextReviewInMonths = active && nextReviewInMonths === reviewCycleMonths ? reviewCycleMonths : nextReviewInMonths;
+  const courtEntry = buildOfficialCourtEntryView(worldState, career, firstMonthExperience, {
+    nextReviewInMonths: normalizedNextReviewInMonths
+  });
 
   return {
     schemaVersion: OFFICIAL_CAREER_SCHEMA_VERSION,
@@ -1284,7 +1292,7 @@ function buildOfficialCareerView(worldState = {}) {
       : null,
     tenureMonths: active ? career.tenureMonths : 0,
     reviewCycleMonths,
-    nextReviewInMonths: active && nextReviewInMonths === reviewCycleMonths ? reviewCycleMonths : nextReviewInMonths,
+    nextReviewInMonths: normalizedNextReviewInMonths,
     careerScore: scores.careerScore,
     riskScore: scores.riskScore,
     assignmentSummary: active
@@ -1295,6 +1303,8 @@ function buildOfficialCareerView(worldState = {}) {
       }
       : null,
     firstMonthExperience,
+    courtEntry,
+    courtEntries: buildOfficialCourtEntryEvidenceRows(courtEntry),
     assignments: active
       ? activeAssignments.map((assignment) => {
         const deadline = formatTenDayDeadline(assignment.dueTurn, worldState);
@@ -1322,7 +1332,7 @@ function buildOfficialCareerView(worldState = {}) {
         meritScore: career.assessmentDossier.meritScore,
         riskScore: career.assessmentDossier.riskScore,
         pendingRecommendation: career.assessmentDossier.pendingRecommendation,
-        nextReviewInMonths: active && nextReviewInMonths === reviewCycleMonths ? reviewCycleMonths : nextReviewInMonths,
+        nextReviewInMonths: normalizedNextReviewInMonths,
         notes: career.assessmentDossier.notes
       }
       : null,
@@ -1386,6 +1396,26 @@ function summarizeOfficialCareerForPrompt(worldState = {}) {
           text: action.text
         })).slice(0, 3),
         authorityBoundary: view.firstMonthExperience.authorityBoundary
+      }
+      : null,
+    courtEntry: view.courtEntry?.active
+      ? {
+        title: view.courtEntry.title,
+        publicSummary: view.courtEntry.publicSummary,
+        targetSurfaces: (view.courtEntry.targetSurfaces || []).map((target) => target.label).slice(0, 3),
+        assessmentTrace: view.courtEntry.assessmentTrace
+          ? {
+            meritScore: view.courtEntry.assessmentTrace.meritScore,
+            riskScore: view.courtEntry.assessmentTrace.riskScore,
+            traceLabel: view.courtEntry.assessmentTrace.traceLabel
+          }
+          : null,
+        nextActions: (view.courtEntry.nextActions || []).map((action) => ({
+          label: action.label,
+          text: action.text,
+          targetSurfaceId: action.targetSurfaceId
+        })).slice(0, 3),
+        authorityBoundary: view.courtEntry.authorityBoundary
       }
       : null,
     assessment: view.assessment

@@ -124,7 +124,7 @@ const OFFICIAL_FIRST_MONTH_UNSAFE_TEXT_PATTERNS = Object.freeze([
   /\bprovider\b|\bproposal\b|\bprompt\b/gi,
   /raw[_ -]?(?:provider|audit|ledger|table)|provider payload|provider proposal|statePatch|worldState|prompt|proposal/gi,
   /OPENAI_API_KEY|DEEPSEEK_API_KEY|MIMO_API_KEY|ANTHROPIC_API_KEY|api[_ -]?key|sk-[A-Za-z0-9_-]{8,}|tp-[A-Za-z0-9_-]{8,}/gi,
-  /data[\\/](?:sessions|audit)[\\/][^\s，。；]*|(?:geo|people|office)_[A-Za-z0-9_]+|world_sessions|prompt_retrieval_index|event_archive_index/gi,
+  /data[\\/](?:sessions|audit)[\\/][^\s，。；]*|(?:geo|people|office)_[A-Za-z0-9_]+|world_sessions|prompt_retrieval_index|event_archive_index|\b(?:rawSql|SQL|sqlite)\b/gi,
   /file:\/\/\/?(?:[A-Za-z]:[\\/]|(?:\/Users|\/home|\/tmp|\/var|\/mnt|\/opt)\/)[^\s"'<>，。；]+|[A-Za-z]:[\\/][^\s"'<>，。；]+|\b(?:\/Users|\/home|\/tmp|\/var|\/mnt|\/opt)\/[^\s"'<>，。；]+/gi
 ]);
 

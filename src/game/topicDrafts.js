@@ -14,7 +14,7 @@ const TOPIC_DRAFT_SENSITIVE_PATTERN =
   /(SEALED_[A-Z0-9_]+|hidden[_ -]?(?:notes?|intent)|密档|私档|密札|密信|隐藏(?:意图|动机|事实|札记|军情)|隐秘(?:意图|动机|事实)|raw[_ -]?(?:provider|audit|table|ledger|prompt|proposal|state|row)|\b(?:provider|prompt|statePatch|worldState|provider\s+payload|provider\s+proposal|rawSql|SQL|sqlite|server\.)\b|完整\s*prompt|完整提示词|api[_ -]?key|OPENAI_API_KEY|DEEPSEEK_API_KEY|MIMO_API_KEY|ANTHROPIC_API_KEY|data[\\/](?:sessions|audit)|ai_change_proposals|event_log|world_sessions|world_state_json|prompt_retrieval_index|event_archive_index|safe_search_(?:index|fts)|\b[A-Z0-9_]*(?:KEY|TOKEN|SECRET|PASSWORD|CREDENTIAL)[A-Z0-9_]*\b|file:\/\/\/?(?:[A-Za-z]:[\\/]|(?:\/Users|\/home|\/tmp|\/var|\/mnt|\/opt|\/workspace)\/)[^\s"'<>]+|[A-Za-z]:[\\/][^\s"'<>]+|\b(?:\/Users|\/home|\/tmp|\/var|\/opt|\/workspace|\/mnt)\/[^\s"'<>]+|sk-[A-Za-z0-9_-]{6,}|tp-[A-Za-z0-9_-]{6,})/i;
 
 const TOPIC_DRAFT_RESULT_CLAIM_PATTERN =
-  /(?:已|已经)(?:审结|结案|裁决|处置|平定|破获|赈济|授官|任命|罢免|定罪|升迁|提拔|发兵|开战|获胜|议和|生效|执行完毕|推进完成)|(?:圣旨|诏令|判词|军令)(?:已|已经)(?:生效|颁行|执行)|(?:立即|直接)(?:任命|罢免|处死|定罪|结案|授官|平定|裁决|开战|调兵)/i;
+  /(?:已|已经)(?:审结|结案|裁决|处置|平定|破获|赈济|授官|任命|罢免|定罪|升迁|提拔|发兵|开战|获胜|议和|生效|执行完毕|推进完成|定考成|记功|记过|减风险|减轻风险|入考成|记入考成|录入考成|写入考成|定处分)|(?:考成|功过|功绩|风险|弹劾|处分)(?:已|已经)(?:定|写定|记定|入簿|生效|成案|减轻)|弹劾(?:已|已经)?成案|处分(?:已|已经)?定|(?:圣旨|诏令|判词|军令)(?:已|已经)(?:生效|颁行|执行)|(?:立即|直接)(?:任命|罢免|处死|定罪|结案|授官|平定|裁决|开战|调兵|定考成|记功|记过|成案|处分)/i;
 
 function isPlainObject(value) {
   return value !== null && typeof value === "object" && !Array.isArray(value);

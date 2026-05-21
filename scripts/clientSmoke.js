@@ -1167,7 +1167,7 @@ async function assertOfficialMinisterPanel(page, sessionId, screenshotsDir, opti
       hasNetwork: text.includes("同年座师与人脉"),
       hasFaction: text.includes("派系与朝局风险"),
       hasAssessment: text.includes("考成与弹劾"),
-      hasMemorial: text.includes("奏疏入口"),
+      hasMemorial: text.includes("奏折朝议入口"),
       hasExpectedRole: text.includes(expectedRoleLabel),
       hasBoundary: text.includes("不得在前端直接任免、奖惩、处分、弹劾成案或改写考成"),
       buttons,

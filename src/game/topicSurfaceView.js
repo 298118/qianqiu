@@ -21,6 +21,7 @@ const TOPIC_SURFACE_CONFIG = Object.freeze({
     summary: "汇总公开奏报、月报、案牍和军政近事，供玩家批红、转部、留中或发交廷议。",
     domains: Object.freeze(["events", "economy", "military", "offices", "player", "memory"]),
     sourceViews: Object.freeze([
+      "officialCareerView",
       "eventArchiveView",
       "playerMonthlyBriefingView",
       "localAffairsDocketView",
@@ -34,6 +35,7 @@ const TOPIC_SURFACE_CONFIG = Object.freeze({
       { id: "military", label: "军务" }
     ]),
     draftSlots: Object.freeze([
+      { id: "first-month", label: "首月回署", draftKind: "official_first_month_memorial", template: "据首月官署回执拟奏，先列公开进度、上官同僚反馈、考成风险和需部院复核之处。" },
       { id: "vermilion", label: "批红", draftKind: "vermilion_comment", template: "朱批所选奏折，令相关官署据公开材料复奏。" },
       { id: "transfer", label: "转部", draftKind: "ministry_referral", template: "将所选奏折转交部院复核，限期回奏可行章程。" },
       { id: "hold", label: "留中", draftKind: "hold_for_review", template: "暂留所选奏折，待补齐公开证据后再议。" },
@@ -49,6 +51,7 @@ const TOPIC_SURFACE_CONFIG = Object.freeze({
     summary: "基于公开议题草拟谕旨、札付或敕令文本，但不直接任免、赏罚、处分或改写世界状态。",
     domains: Object.freeze(["offices", "events", "military", "economy", "map", "player"]),
     sourceViews: Object.freeze([
+      "officialCareerView",
       "officialPostingsView",
       "eventArchiveView",
       "worldThreadView",
@@ -70,8 +73,9 @@ const TOPIC_SURFACE_CONFIG = Object.freeze({
     label: "朝议",
     title: "朝议筹议",
     summary: "组织御前、台谏和部院围绕公开议题形成意见，玩家选择采纳为奏议草稿。",
-    domains: Object.freeze(["offices", "events", "economy", "military", "people", "memory"]),
+    domains: Object.freeze(["offices", "events", "economy", "military", "people", "player", "memory"]),
     sourceViews: Object.freeze([
+      "officialCareerView",
       "officialPostingsView",
       "actorMemoryView",
       "aiControlAuditView",
@@ -79,6 +83,7 @@ const TOPIC_SURFACE_CONFIG = Object.freeze({
       "worldThreadView"
     ]),
     draftSlots: Object.freeze([
+      { id: "first-month", label: "首月筹议", draftKind: "official_first_month_debate", template: "围绕首月回署材料筹议后续章程，只列可行、不可行和待查事项。" },
       { id: "balanced", label: "折中议", draftKind: "balanced_debate", template: "召集廷议，令诸臣分别陈明利害，再择稳妥章程。" },
       { id: "censor", label: "台谏复核", draftKind: "censor_review", template: "请台谏先核法度与民生反噬，再候御前裁夺。" },
       { id: "ministry", label: "部议", draftKind: "ministry_debate", template: "交相关部院会商，列出可行、不可行与待查三项。" }

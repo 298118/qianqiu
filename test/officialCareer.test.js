@@ -283,7 +283,8 @@ test("S88.4 official first month experience exposes receipt without hidden or pr
   }];
   worldState.officialCareer.assessmentDossier.notes = [
     "讲章初稿可入首月考成。",
-    "provider payload prompt raw_table"
+    "provider payload prompt raw_table",
+    "SQLite rawSql SQL"
   ];
   ensureOfficialCareerState(worldState);
 
@@ -299,11 +300,17 @@ test("S88.4 official first month experience exposes receipt without hidden or pr
   assert.equal(firstMonth.assignment.riskLabel, "平稳");
   assert.match(firstMonth.receipt.publicSummary, /馆阁讲章校订/);
   assert.ok(firstMonth.nextActions.some((action) => action.label === "拟回堂官"));
+  assert.equal(view.courtEntry.active, true);
+  assert.match(view.courtEntry.publicSummary, /奏折队列|朝议筹议/);
+  assert.equal(view.courtEntries.length, 1);
+  assert.equal(view.courtEntries[0].visibility, "player_visible");
   assert.equal(serializedView.includes("hiddenNotes"), false);
   assert.equal(serializedView.includes("堂官私下试探"), false);
-  assert.equal(/provider|prompt|raw_table|sk-test-secret|data\/sessions/i.test(serializedView), false);
-  assert.equal(/provider|prompt|raw_table|sk-test-secret|data\/sessions/i.test(serializedPrompt), false);
+  assert.equal(/provider|prompt|raw_table|SQLite|rawSql|SQL|sk-test-secret|data\/sessions/i.test(serializedView), false);
+  assert.equal(/provider|prompt|raw_table|SQLite|rawSql|SQL|sk-test-secret|data\/sessions/i.test(serializedPrompt), false);
   assert.equal(prompt.firstMonthExperience.assignmentTitle, "馆阁讲章校订");
+  assert.match(prompt.courtEntry.publicSummary, /奏折队列|朝议筹议/);
+  assert.ok(prompt.courtEntry.nextActions.some((action) => action.targetSurfaceId === "memorial-review"));
 });
 
 test("S88.4 official first month assignment advances through server turn feedback", () => {

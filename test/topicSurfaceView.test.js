@@ -100,6 +100,50 @@ test("S78 war council surface includes safe map context evidence", () => {
   assertNoSensitiveText(view);
 });
 
+test("S88.4 memorial and court surfaces include official first-month court entry evidence", () => {
+  const worldState = createInitialState({
+    dynasty: "明",
+    year: 1644,
+    role: "official",
+    playerName: "首月奏议"
+  });
+  Object.assign(worldState.player, {
+    officeTitle: "翰林院编修",
+    position: "翰林院编修",
+    performanceMerit: 52,
+    impeachmentRisk: 18
+  });
+  worldState.officialCareer.currentPosting = "翰林院编修";
+  worldState.officialCareer.assignments = [{
+    id: "ASG-0000-first-month-top_hanlin_editor",
+    title: "馆阁讲章校订",
+    kind: "memorial_drafting",
+    bureauId: "hanlin_academy",
+    dueTurn: 3,
+    deadlineUnit: "ten_day",
+    progress: 48,
+    risk: 18,
+    visibleSummary: "首月须校订馆阁讲章并试拟制诰。",
+    hiddenNotes: ["堂官私下试探"]
+  }];
+  worldState.officialCareer.assessmentDossier.notes = [
+    "讲章回署可入考成。",
+    "provider payload prompt raw_table"
+  ];
+
+  const memorial = buildTopicSurfaceView(worldState, { surfaceId: "memorial-review" });
+  const debate = buildTopicSurfaceView(worldState, { surfaceId: "court-debate" });
+
+  for (const view of [memorial, debate]) {
+    assert.ok(view.sourceViews.some((source) => source.sourceView === "officialCareerView"));
+    assert.ok(view.evidenceRefs.some((ref) =>
+      ref.sourceView === "officialCareerView" && /首月回署|馆阁讲章校订/.test(`${ref.label}${ref.summary}`)
+    ));
+    assert.ok(view.items.some((item) => /首月回署|馆阁讲章校订/.test(`${item.title}${item.summary}`)));
+    assertNoSensitiveText(view);
+  }
+});
+
 test("GET /api/game/topic-surface/:sessionId/:surfaceId returns read-only safe projection", async (t) => {
   const server = createGameServer();
   const worldState = createInitialState({

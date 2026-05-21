@@ -940,6 +940,47 @@ describe("S74.1 React client shell", () => {
               ],
               monthlyBriefingHint: "月末月报会摘录馆阁讲章校订的进度、回署事项和下月可行。"
             },
+            courtEntry: {
+              active: true,
+              id: "official-court-entry-first-month-ASG-0009-first-month-top-hanlin-editor",
+              title: "首月回署：馆阁讲章校订",
+              publicSummary: "讲章回署已把馆阁讲章校订整理为公开回署材料，可入奏折队列或朝议筹议；尚余四月入考成。",
+              statusLabel: "正在查办 / 可控",
+              targetSurfaces: [
+                { surfaceId: "memorial-review", label: "奏折队列" },
+                { surfaceId: "court-debate", label: "朝议筹议" }
+              ],
+              memorialEntry: {
+                title: "馆阁讲章校订奏折材料",
+                publicSummary: "馆阁讲章校订正在查办，风险可控，尚余一旬。",
+                draftText: "臣谨就馆阁讲章校订具奏：据讲章回署说明公开进度、上官同僚所疑、考成风险与请裁事项。"
+              },
+              courtDebateEntry: {
+                title: "馆阁讲章校订朝议题",
+                publicSummary: "堂官先看章法、避讳和能否切中本职。同年提醒馆阁旧例与上疏分寸。",
+                draftText: "请付朝议筹议馆阁讲章校订后续章程。"
+              },
+              assessmentTrace: {
+                meritScore: 61,
+                riskScore: 24,
+                traceLabel: "尚余四月入考成",
+                signals: ["正在查办：进度会影响首月考成。", "可控：仍需按期回署。"]
+              },
+              superiorFollowUp: "堂官先看章法、避讳和能否切中本职。",
+              peerFollowUp: "同年提醒馆阁旧例与上疏分寸。",
+              nextActions: [
+                {
+                  id: "send-to-memorial-review",
+                  label: "入奏折队列",
+                  text: "臣谨就馆阁讲章校订具奏：据讲章回署说明公开进度、上官同僚所疑、考成风险与请裁事项。"
+                },
+                {
+                  id: "send-to-court-debate",
+                  label: "付朝议筹议",
+                  text: "请付朝议筹议馆阁讲章校订后续章程。"
+                }
+              ]
+            },
             assignments: [
               {
                 id: "assignment-1",
@@ -1050,6 +1091,8 @@ describe("S74.1 React client shell", () => {
     expect(screen.getAllByText("部院公文").length).toBeGreaterThan(0);
     expect(screen.getByText("官署首月")).toBeTruthy();
     expect(screen.getByText("馆阁讲章校订")).toBeTruthy();
+    expect(screen.getByText("奏折朝议入口")).toBeTruthy();
+    expect(screen.getByText("首月回署：馆阁讲章校订")).toBeTruthy();
     expect(screen.getByText("同年座师与人脉")).toBeTruthy();
     expect(screen.getByText("派系与朝局风险")).toBeTruthy();
     expect(screen.getByText("考成与弹劾")).toBeTruthy();
@@ -1065,6 +1108,8 @@ describe("S74.1 React client shell", () => {
     const receiptButtons = screen.getAllByRole("button", { name: "拟回堂官" });
     fireEvent.click(receiptButtons[receiptButtons.length - 1]);
     expect(useUiStateStore.getState().actionDraft?.text).toContain("馆阁讲章校订");
+    fireEvent.click(screen.getByRole("button", { name: "入奏折队列" }));
+    expect(useUiStateStore.getState().actionDraft?.text).toContain("讲章回署");
     expect(fetchMock.mock.calls.filter(([url]) => url === "/api/game/turn")).toHaveLength(0);
     expect(document.body.textContent || "").not.toMatch(/provider payload|sk-test-secret|prompt|raw audit|path=|C:\\|data\/sessions|OPENAI_API_KEY/i);
   });
