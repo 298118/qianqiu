@@ -162,6 +162,7 @@
 - `git diff --check -- src/game/roleCycleDomainAdjudication.js src/game/resolverInputContext.js test/roleCycleDomainAdjudication.test.js test/gameTurnRoleCycleConsequences.test.js test/domainConsequenceTrace.test.js test/sqliteSafeSearch.test.js docs/SHARED_CONTEXT.md docs/DEVELOPMENT_STEPS.md docs/QIANQIU_DEVELOPMENT_BRIEF.md docs/QIANQIU_POLISHING_ROADMAP.md docs/AI_CONTROL_AUDIT_MATRIX.md`
 - `git diff --check`（退出码 0；仅打印未改动归档/QA 文件既有 CRLF 提示）
 - 提交前只读复审：Banach 初审发现 legacy actor wildcard 与 direct consequence 空数组断言两个 P2；主代理已要求 duplicate 匹配显式 actor 身份、补 direct consequence 非空断言和 source collection priority，重跑 focused/full 验证后，Banach 最终复核未发现 P0/P1/P2。
+- 实现提交：`428a26bb`。
 
 本轮 S88.6 角色可见性与舆图运行时后果 effect 红队当前验证口径：
 
@@ -595,6 +596,7 @@ S84 前端专项额外验收入口：
 - 回归：`test/roleCycleDomainAdjudication.test.js` 与 `test/gameTurnRoleCycleConsequences.test.js` 覆盖地方官市价、将领侦察/调粮重复触发、冷却后可重新裁决、legacy row 缺 actor 身份不误挡、turn route 层不重复写 ledger/attribute changes 且不泄漏 raw outcome。`test/domainConsequenceTrace.test.js` 新增 official 跨域高量和 general 角色裁剪高量场景，显式要求 resolver/topic/safe-search 的 direct consequence 行非空且只来自 capped 可见后果；`test/sqliteSafeSearch.test.js` 覆盖 SQLite safe-search 在高量噪声下只同步 capped public consequence 行。
 - 验证：已通过本节顶部“本轮 S88.6 普通回合重复触发与跨视图 cap 压力红队当前验证口径”中已列语法检查、focused tests、`npm run typecheck:server`、docs governance、documentation governance、完整 `npm test`（1074 项）、路径级 `git diff --check` 和完整 `git diff --check`；完整 diff check 退出码 0，仅打印未改动归档/QA 文件既有 CRLF 提示。
 - 子代理：Raman 只读探查指出普通回合重复提交会重复 apply/cost/ledger，以及高量 consequence cap 需要跨 archive/resolver/topic/search/SQLite 一致验证，本轮已采纳。Banach 提交前只读初审发现两个 P2：缺 `actorRef.actorId` 的旧 ledger row 被当作 wildcard duplicate、resolver/topic direct consequence 断言因空数组而 vacuous；主代理已要求 duplicate 匹配显式 actor 身份、补 legacy 回归，并让 resolver input 尊重 source collection 顺序、补 direct consequence 非空断言。Banach 最终复核未发现 P0/P1/P2，残余风险仅是 accepted 正常裁决反馈继续沿用既有 public outcome 形状，本轮未改变该契约。
+- 提交：实现提交 `428a26bb`；本哈希回填为低风险纯文档状态更新，不改代码、API/schema、运行时行为、提示词或验证工具，按项目规则跳过额外子代理复审。
 - 下一步：提交后继续 S88.6 更长链路后果回响，尤其是连续多旬/month-end 后果如何从公开 refs 进入月报、议题线索和后续草稿，而不扩大 AI 或浏览器裁决权。
 
 ### 2026-05-21：推进 S88.6 角色可见性与舆图运行时后果 effect 红队
