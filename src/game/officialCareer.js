@@ -8,7 +8,9 @@ const {
 const {
   buildOfficialCourtEntryEvidenceRows,
   buildOfficialCourtEntryView,
+  normalizeOfficialCourtEntryFollowUps,
   normalizeOfficialCourtEntryResolutions,
+  resolveOfficialCourtEntryFollowUpSubmission,
   resolveOfficialCourtEntrySubmission
 } = require("./officialCourtEntry");
 const {
@@ -433,6 +435,7 @@ function normalizeOfficialCareerState(worldState = {}) {
     cooldownUnit: COOLDOWN_UNIT_TEN_DAY,
     assignments: normalizeAssignments(source.assignments, normalizationContext),
     courtEntryResolutions: normalizeOfficialCourtEntryResolutions(source.courtEntryResolutions, worldState),
+    courtEntryFollowUps: normalizeOfficialCourtEntryFollowUps(source.courtEntryFollowUps, worldState),
     assessmentDossier: normalizeAssessmentDossier(source.assessmentDossier, worldState),
     impeachmentProcedure: normalizeImpeachmentProcedure(source.impeachmentProcedure, worldState)
   };
@@ -846,6 +849,9 @@ function createHistoryEntry(worldState, career, outcome) {
 function classifyOfficialAction(input = "") {
   const text = cleanText(input, "", 240);
   if (!text) return null;
+  if (/朝议跟进|廷议跟进|部院覆奏|御前摘报|御前批示|考成观察/.test(text)) {
+    return null;
+  }
 
   if (/丁忧|守制|奔丧/.test(text)) {
     return {
@@ -1232,6 +1238,47 @@ function applyCourtEntryResolution(worldState, career, resolution) {
   };
 }
 
+function applyCourtEntryFollowUp(worldState, career, followUp) {
+  if (!followUp) return career;
+  const turn = currentTurn(worldState);
+  const nextAssignments = career.assignments.map((assignment) => {
+    if (assignment.id !== followUp.assignmentId) return assignment;
+    const progress = clampNumber(assignment.progress + followUp.progressDelta, 0, 100, assignment.progress);
+    const risk = clampNumber(assignment.risk + followUp.riskDelta, 0, 100, assignment.risk);
+    return {
+      ...assignment,
+      progress,
+      risk,
+      status: progress >= 88 ? "submitted" : assignment.status,
+      visibleSummary: cleanText(followUp.publicSummary, assignment.visibleSummary),
+      resolution: normalizeResolution({
+        outcome: followUp.statusLabel,
+        summary: followUp.publicSummary,
+        meritDelta: followUp.meritDelta,
+        riskDelta: followUp.riskDelta,
+        worldThreadHint: followUp.nextStep
+      })
+    };
+  });
+  const note = cleanText(`${followUp.stageLabel}：${followUp.statusLabel}，${followUp.nextStep}`);
+  const nextDossier = normalizeAssessmentDossier({
+    ...career.assessmentDossier,
+    meritScore: career.assessmentDossier.meritScore + followUp.meritDelta,
+    riskScore: career.assessmentDossier.riskScore + followUp.riskDelta,
+    lastUpdatedTurn: turn,
+    notes: [note, ...(career.assessmentDossier.notes || [])].filter(Boolean).slice(0, MAX_ASSESSMENT_NOTES)
+  }, worldState);
+  return {
+    ...career,
+    assignments: nextAssignments,
+    assessmentDossier: nextDossier,
+    courtEntryFollowUps: normalizeOfficialCourtEntryFollowUps([
+      ...(career.courtEntryFollowUps || []),
+      followUp
+    ], worldState)
+  };
+}
+
 function applyOutcomeToDomainState(worldState, career, outcome, historyEntry) {
   const office = inferOfficeByTitle(historyEntry.officeTitleAfter || outcome.officeTitleAfter || historyEntry.officeTitleBefore);
   const next = {
@@ -1352,6 +1399,7 @@ function buildOfficialCareerView(worldState = {}) {
     firstMonthExperience,
     courtEntry,
     courtEntryResolutions: active ? courtEntry.resolutionHistory : [],
+    courtEntryFollowUps: active ? courtEntry.followUpHistory : [],
     courtEntries: buildOfficialCourtEntryEvidenceRows(courtEntry),
     assignments: active
       ? activeAssignments.map((assignment) => {
@@ -1466,7 +1514,30 @@ function summarizeOfficialCareerForPrompt(worldState = {}) {
             nextStep: view.courtEntry.latestResolution.nextStep
           }
           : null,
+        latestFollowUp: view.courtEntry.latestFollowUp
+          ? {
+            stage: view.courtEntry.latestFollowUp.stage,
+            stageLabel: view.courtEntry.latestFollowUp.stageLabel,
+            status: view.courtEntry.latestFollowUp.status,
+            statusLabel: view.courtEntry.latestFollowUp.statusLabel,
+            publicSummary: view.courtEntry.latestFollowUp.publicSummary,
+            nextStep: view.courtEntry.latestFollowUp.nextStep,
+            authorityBoundary: view.courtEntry.latestFollowUp.authorityBoundary
+          }
+          : null,
+        followUpScenePreview: view.courtEntry.followUpScenePreview
+          ? {
+            sceneType: view.courtEntry.followUpScenePreview.sceneType,
+            serverAdjudicated: view.courtEntry.followUpScenePreview.serverAdjudicated,
+            participantLabels: view.courtEntry.followUpScenePreview.participantLabels
+          }
+          : null,
         nextActions: (view.courtEntry.nextActions || []).map((action) => ({
+          label: action.label,
+          text: action.text,
+          targetSurfaceId: action.targetSurfaceId
+        })).slice(0, 3),
+        followUpNextActions: (view.courtEntry.followUpNextActions || []).map((action) => ({
           label: action.label,
           text: action.text,
           targetSurfaceId: action.targetSurfaceId
@@ -1517,7 +1588,16 @@ function runOfficialCareerStep(worldState = {}, input = "", options = {}) {
 
   const isMonthEnd = options.isMonthEnd !== false;
   const nextTenureMonths = career.tenureMonths + (isMonthEnd ? 1 : 0);
-  const action = classifyOfficialAction(input);
+  const preActionFirstMonth = buildOfficialFirstMonthExperienceView(worldState, career);
+  const preActionCourtEntry = buildOfficialCourtEntryView(worldState, career, preActionFirstMonth);
+  const preActionCourtEntryFollowUp = resolveOfficialCourtEntryFollowUpSubmission(
+    worldState,
+    career,
+    preActionCourtEntry,
+    preActionFirstMonth,
+    input
+  );
+  const action = preActionCourtEntryFollowUp ? null : classifyOfficialAction(input);
   const assignmentUpdate = updateAssignments(worldState, career.assignments, action);
   const nextAssessmentDossier = updateAssessmentDossier(
     worldState,
@@ -1537,6 +1617,7 @@ function runOfficialCareerStep(worldState = {}, input = "", options = {}) {
     bureauId: inferBureauId(worldState, career),
     assignments: assignmentUpdate.assignments,
     courtEntryResolutions: career.courtEntryResolutions,
+    courtEntryFollowUps: career.courtEntryFollowUps,
     assessmentDossier: nextAssessmentDossier,
     impeachmentProcedure: nextImpeachmentProcedure,
     pendingOutcome: null
@@ -1548,18 +1629,34 @@ function runOfficialCareerStep(worldState = {}, input = "", options = {}) {
       result.events.push(firstMonthEvent);
     }
   }
-  const courtEntryFirstMonth = buildOfficialFirstMonthExperienceView(worldState, nextCareer);
-  const courtEntryView = buildOfficialCourtEntryView(worldState, nextCareer, courtEntryFirstMonth);
-  const courtEntryResolution = resolveOfficialCourtEntrySubmission(
+  const courtEntryFirstMonth = preActionCourtEntryFollowUp
+    ? preActionFirstMonth
+    : buildOfficialFirstMonthExperienceView(worldState, nextCareer);
+  const courtEntryView = preActionCourtEntryFollowUp
+    ? preActionCourtEntry
+    : buildOfficialCourtEntryView(worldState, nextCareer, courtEntryFirstMonth);
+  const courtEntryFollowUp = preActionCourtEntryFollowUp || resolveOfficialCourtEntryFollowUpSubmission(
     worldState,
     nextCareer,
     courtEntryView,
     courtEntryFirstMonth,
     input
   );
-  if (courtEntryResolution) {
-    Object.assign(nextCareer, applyCourtEntryResolution(worldState, nextCareer, courtEntryResolution));
-    result.events.push(`[奏折朝议裁决] ${courtEntryResolution.title}：${courtEntryResolution.publicSummary}`);
+  if (courtEntryFollowUp) {
+    Object.assign(nextCareer, applyCourtEntryFollowUp(worldState, nextCareer, courtEntryFollowUp));
+    result.events.push(`[奏议跟进批复] ${courtEntryFollowUp.title}：${courtEntryFollowUp.publicSummary}`);
+  } else {
+    const courtEntryResolution = resolveOfficialCourtEntrySubmission(
+      worldState,
+      nextCareer,
+      courtEntryView,
+      courtEntryFirstMonth,
+      input
+    );
+    if (courtEntryResolution) {
+      Object.assign(nextCareer, applyCourtEntryResolution(worldState, nextCareer, courtEntryResolution));
+      result.events.push(`[奏折朝议裁决] ${courtEntryResolution.title}：${courtEntryResolution.publicSummary}`);
+    }
   }
 
   if (reviewReason) {

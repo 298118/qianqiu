@@ -335,6 +335,7 @@ function generateMonthlyBriefingProposal(context = {}) {
   const firstMonth = official.firstMonthExperience?.active ? official.firstMonthExperience : null;
   const courtEntry = official.courtEntry?.active ? official.courtEntry : null;
   const courtEntryResolution = courtEntry?.latestResolution || null;
+  const courtEntryFollowUp = courtEntry?.latestFollowUp || null;
   const activeAssignmentText = assignments.length
     ? assignments.slice(0, 3).map((assignment) => `${assignment.title}：${assignment.deadlineLabel || "限期未明"}，进度${assignment.progress ?? 0}。`)
     : [`${context.currentPosting || "本职差事"}本月以例行案牍、上官督责和公开差遣为主。`];
@@ -343,6 +344,7 @@ function generateMonthlyBriefingProposal(context = {}) {
       `${firstMonth.assignment?.title || "首月差事"}：${firstMonth.assignment?.phaseLabel || "进度未明"}，${firstMonth.assignment?.riskLabel || "风险未明"}，${firstMonth.assignment?.deadlineLabel || "限期未明"}。`,
       firstMonth.receipt?.publicSummary,
       courtEntryResolution?.publicSummary,
+      courtEntryFollowUp?.publicSummary,
       ...(Array.isArray(firstMonth.assessmentSignals) ? firstMonth.assessmentSignals : [])
     ], 4)
     : [];
@@ -359,6 +361,7 @@ function generateMonthlyBriefingProposal(context = {}) {
   const actionItems = cleanTextList([
     firstMonth?.nextActions?.[0]?.text,
     courtEntryResolution?.nextStep,
+    courtEntryFollowUp?.nextStep,
     urgentAssignments[0] ? `先办${urgentAssignments[0].title}，免入逾期考成。` : "",
     docketTexts[0] ? `复核案牍：${docketTexts[0]}` : "",
     fiscalTexts[0] ? `留意钱粮：${fiscalTexts[0]}` : "",
@@ -368,6 +371,7 @@ function generateMonthlyBriefingProposal(context = {}) {
   const riskItems = cleanTextList([
     firstMonth?.assignment?.riskLabel ? `首月差事风险：${firstMonth.assignment.riskLabel}。` : "",
     courtEntryResolution?.riskDelta > 0 ? `奏折朝议裁决增加风险：${courtEntryResolution.publicSummary}` : "",
+    courtEntryFollowUp?.riskDelta > 0 ? `奏议后续批复增加风险：${courtEntryFollowUp.publicSummary}` : "",
     careerRisk >= 70 ? `官场风险偏高，考成风险${careerRisk}。` : "",
     localDockets.find((docket) => docket.status !== "routine")?.publicSummary || "",
     context.economicReports.find((report) => (report.pressureScore || report.fiscalPressure || 0) >= 60)?.publicSummary || "",

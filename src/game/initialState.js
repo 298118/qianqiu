@@ -317,6 +317,7 @@ function createInitialState(input = {}) {
       cooldownUnit: "ten_day",
       assignments: [],
       courtEntryResolutions: [],
+      courtEntryFollowUps: [],
       assessmentDossier: {
         cycleId: `${year}-career`,
         meritScore: role === "official" ? ROLE_STAT_DEFAULTS.official.performanceMerit : 0,

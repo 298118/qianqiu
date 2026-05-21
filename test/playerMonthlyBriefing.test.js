@@ -187,6 +187,30 @@ test("S88.4 official monthly briefing includes court entry adjudication outcome"
     sourceRefs: [`officialCareer.courtEntry:${entryId}`],
     nextStep: "准入奏折队列，由部院复核公开凭据后再入长期考成。"
   }];
+  worldState.officialCareer.courtEntryFollowUps = [{
+    id: "OCEF-monthly-follow-up",
+    entryId,
+    resolutionId: "OCER-monthly-court-entry",
+    assignmentId: "ASG-0000-first-month-top_hanlin_editor",
+    stage: "bureau_review",
+    stageLabel: "部院覆奏",
+    status: "referred_to_bureau",
+    statusLabel: "部院待覆",
+    title: "部院覆奏：馆阁讲章校订",
+    publicSummary: "部院待覆：馆阁讲章校订承接近次准入复核进入部院覆奏，皇帝、部院、台谏只形成公开中间意见，不直接任免、奖惩、处分或成弹劾。",
+    participantSummaries: [],
+    proposalSummaries: [],
+    meritDelta: 1,
+    riskDelta: -1,
+    progressDelta: 4,
+    generatedAtTurn: 6,
+    year: 1644,
+    month: 7,
+    tenDayPeriod: 3,
+    sourceRefs: [`officialCareer.courtEntry:${entryId}`],
+    consequenceRefs: ["worldThread:official_court_follow_up"],
+    nextStep: "相关部院待覆，下一步补齐公开凭据、限期和经手人。"
+  }];
   const { previousState, worldTick } = runMonthEndTick(worldState);
 
   const result = runPlayerMonthlyBriefingStep(worldState, { previousState, worldTick });
@@ -197,8 +221,11 @@ test("S88.4 official monthly briefing includes court entry adjudication outcome"
 
   assert.equal(result.generated, true);
   assert.ok(officialDuties.items.some((item) => item.includes("准入复核") && item.includes("馆阁讲章校订")));
+  assert.ok(officialDuties.items.some((item) => item.includes("部院待覆") && item.includes("馆阁讲章校订")));
   assert.ok(view.latest.actionItems.some((item) => item.includes("奏折队列") || item.includes("部院复核")));
+  assert.ok(view.latest.actionItems.some((item) => item.includes("部院待覆") || item.includes("公开凭据")));
   assert.ok(archiveView.items.some((item) => item.sourceType === "monthly_briefing"));
+  assert.ok(archiveView.items.some((item) => item.sourceType === "official_court_follow_up"));
   assert.equal(serialized.includes("hiddenNotes"), false);
   assert.equal(serialized.includes("密札不可见"), false);
   assertHiddenSafe(view);

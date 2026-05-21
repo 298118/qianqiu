@@ -19,6 +19,7 @@ const MAX_THREADS = 6;
 const MAX_LONG_TERM_EVENTS = 5;
 const MAX_OFFICIAL_OUTCOMES = 5;
 const MAX_OFFICIAL_COURT_ENTRY_RESOLUTIONS = 5;
+const MAX_OFFICIAL_COURT_ENTRY_FOLLOW_UPS = 5;
 const MAX_MONTHLY_BRIEFINGS = 4;
 const MAX_OFFICIAL_ASSESSMENTS = 4;
 const MAX_LOCAL_DOCKETS = 6;
@@ -44,6 +45,7 @@ const SOURCE_LABELS = {
   long_term_event: "长期",
   official_career: "官场",
   official_court_entry: "奏议",
+  official_court_follow_up: "批复",
   monthly_briefing: "月报",
   official_assessment: "考成",
   local_docket: "案牍",
@@ -269,6 +271,28 @@ function collectOfficialItems(worldState, items, officialCareerView) {
       status: resolution.status === "returned_for_evidence" || resolution.status === "held_for_inquiry" ? "watch" : "recorded",
       riskLabel: resolution.riskDelta > 0 ? "须补查" : resolution.meritDelta > 0 ? "入考成" : "",
       relatedLabels: Array.isArray(resolution.sourceRefs) ? resolution.sourceRefs : []
+    });
+  });
+
+  const followUps = Array.isArray(officialCareerView?.courtEntryFollowUps)
+    ? officialCareerView.courtEntryFollowUps
+    : Array.isArray(officialCareerView?.courtEntry?.followUpHistory)
+      ? officialCareerView.courtEntry.followUpHistory
+      : [];
+  followUps.slice(-MAX_OFFICIAL_COURT_ENTRY_FOLLOW_UPS).forEach((followUp) => {
+    addItem(items, worldState, {
+      sourceType: "official_court_follow_up",
+      kind: followUp.stage || "official_court_follow_up",
+      title: followUp.title || followUp.statusLabel || "奏议后续批复",
+      summary: followUp.publicSummary,
+      date: followUp,
+      turn: followUp.generatedAtTurn,
+      status: followUp.status === "returned_for_evidence" ? "watch" : "recorded",
+      riskLabel: followUp.riskDelta > 0 ? "须补查" : followUp.meritDelta > 0 ? "入考成" : "",
+      relatedLabels: [
+        ...(Array.isArray(followUp.sourceRefs) ? followUp.sourceRefs : []),
+        ...(Array.isArray(followUp.consequenceRefs) ? followUp.consequenceRefs : [])
+      ]
     });
   });
 }

@@ -85,6 +85,50 @@ test("event archive view merges visible sources into capped public items", () =>
     officeTitleAfter: "六部观政进士",
     reason: "吏部具题实授。"
   }];
+  worldState.officialCareer.assignments = [{
+    id: "ASG-0000-first-month-top_hanlin_editor",
+    title: "馆阁讲章校订",
+    kind: "memorial_drafting",
+    bureauId: "hanlin_academy",
+    status: "active",
+    dueTurn: 12,
+    deadlineUnit: "ten_day",
+    progress: 72,
+    risk: 24,
+    visibleSummary: "首月须校订馆阁讲章并试拟制诰。",
+    hiddenNotes: ["密札不可见"]
+  }];
+  const entryId = "official-court-entry-first-month-ASG-0000-first-month-top_hanlin_editor";
+  worldState.officialCareer.courtEntryResolutions = [{
+    id: "OCER-archive-court-entry",
+    entryId,
+    assignmentId: "ASG-0000-first-month-top_hanlin_editor",
+    surfaceId: "memorial-review",
+    submissionKind: "official_first_month_memorial",
+    status: "accepted_for_review",
+    statusLabel: "准入复核",
+    title: "准入复核：馆阁讲章校订",
+    publicSummary: "准入复核：馆阁讲章校订已入奏折队列服务器裁决，不直接任免、奖惩、处分或成弹劾。",
+    generatedAtTurn: 9,
+    sourceRefs: [`officialCareer.courtEntry:${entryId}`],
+    nextStep: "由部院复核公开凭据后再入长期考成。"
+  }];
+  worldState.officialCareer.courtEntryFollowUps = [{
+    id: "OCEF-archive-follow-up",
+    entryId,
+    resolutionId: "OCER-archive-court-entry",
+    assignmentId: "ASG-0000-first-month-top_hanlin_editor",
+    stage: "bureau_review",
+    stageLabel: "部院覆奏",
+    status: "referred_to_bureau",
+    statusLabel: "部院待覆",
+    title: "部院覆奏：馆阁讲章校订",
+    publicSummary: "部院待覆：馆阁讲章校订承接近次准入复核进入部院覆奏，皇帝、部院、台谏只形成公开中间意见，不直接任免、奖惩、处分或成弹劾。",
+    generatedAtTurn: 9,
+    sourceRefs: [`officialCareer.courtEntry:${entryId}`],
+    consequenceRefs: ["worldThread:official_court_follow_up"],
+    nextStep: "相关部院待覆，下一步补齐公开凭据、限期和经手人。"
+  }];
 
   const activeExam = {
     examId: "child-exam-archive",
@@ -143,6 +187,8 @@ test("event archive view merges visible sources into capped public items", () =>
   assert.ok(view.items.some((item) => item.sourceType === "world_thread" && item.title === "秋粮核验"));
   assert.ok(view.items.some((item) => item.sourceType === "long_term_event" && item.title === "秋粮核验"));
   assert.ok(view.items.some((item) => item.sourceType === "official_career" && item.title === "实授"));
+  assert.ok(view.items.some((item) => item.sourceType === "official_court_entry" && item.title.includes("馆阁讲章校订")));
+  assert.ok(view.items.some((item) => item.sourceType === "official_court_follow_up" && item.title.includes("馆阁讲章校订")));
   assert.ok(view.items.some((item) => item.sourceType === "intelligence_rumor" && item.sourceLabel === "情报"));
   assert.ok(view.items.some((item) =>
     item.sourceType === "official_assessment" &&

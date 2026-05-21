@@ -350,6 +350,7 @@ function getCourtEntry(officialCareer: JsonObject) {
   const debate = asRecord(entry.courtDebateEntry);
   const assessmentTrace = asRecord(entry.assessmentTrace);
   const latestResolution = asRecord(entry.latestResolution);
+  const latestFollowUp = asRecord(entry.latestFollowUp);
   const active = entry.active === true;
   const targetLabels = asArray(entry.targetSurfaces)
     .map(asRecord)
@@ -364,6 +365,21 @@ function getCourtEntry(officialCareer: JsonObject) {
       text: cleanOfficialMinisterText(action.text, "", 168)
     }))
     .filter((action) => action.text);
+  const followUpNextActions = asArray(entry.followUpNextActions)
+    .map(asRecord)
+    .map((action, index) => ({
+      id: cleanOfficialMinisterText(action.id, `court-follow-up-action-${index}`, 48),
+      label: cleanOfficialMinisterText(action.label, "拟跟进", 28),
+      text: cleanOfficialMinisterText(action.text, "", 168)
+    }))
+    .filter((action) => action.text);
+  const followUpParticipants = asArray(latestFollowUp.participantSummaries)
+    .map(asRecord)
+    .map((participant, index) => ({
+      id: cleanOfficialMinisterText(participant.actorId || `follow-up-participant-${index}`, `follow-up-participant-${index}`, 48),
+      title: cleanOfficialMinisterText(participant.roleLabel, "参议", 28),
+      body: cleanOptionalText(participant.publicPosition, 128)
+    }));
   const signals = asArray(assessmentTrace.signals)
     .slice(0, 4)
     .map((signal) => cleanOfficialMinisterText(signal, "考成信号", 84));
@@ -390,8 +406,18 @@ function getCourtEntry(officialCareer: JsonObject) {
         nextStep: cleanOfficialMinisterText(latestResolution.nextStep, "后续仍按普通回合补证、复核和考成结算。", 116)
       }
       : null,
+    latestFollowUp: latestFollowUp.id || latestFollowUp.publicSummary
+      ? {
+        stage: cleanOfficialMinisterText(latestFollowUp.stageLabel, "朝议跟进", 32),
+        status: cleanOfficialMinisterText(latestFollowUp.statusLabel, "批复", 32),
+        summary: cleanOfficialMinisterText(latestFollowUp.publicSummary, "奏议后续已由服务器记录，后续仍候普通回合。", 156),
+        nextStep: cleanOfficialMinisterText(latestFollowUp.nextStep, "后续仍按普通回合补证、复核和考成结算。", 116)
+      }
+      : null,
+    followUpParticipants,
     signals,
-    nextActions
+    nextActions,
+    followUpNextActions
   };
 }
 
@@ -642,6 +668,15 @@ export function OfficialMinisterPanel({
               {courtEntry.latestResolution ? (
                 <p>近次裁决：{courtEntry.latestResolution.summary} 后续：{courtEntry.latestResolution.nextStep}</p>
               ) : null}
+              {courtEntry.latestFollowUp ? (
+                <p>朝议跟进：{courtEntry.latestFollowUp.stage} · {courtEntry.latestFollowUp.status}：{courtEntry.latestFollowUp.summary} 后续：{courtEntry.latestFollowUp.nextStep}</p>
+              ) : null}
+              {courtEntry.followUpParticipants.length ? (
+                <OfficialMinisterPanelList
+                  items={courtEntry.followUpParticipants}
+                  emptyText="朝议、部院、台谏和御前只显示公开中间意见。"
+                />
+              ) : null}
               <p>上官后续：{courtEntry.superiorFollowUp}</p>
               <p>同僚后续：{courtEntry.peerFollowUp}</p>
               <OfficialMinisterPanelList
@@ -657,6 +692,11 @@ export function OfficialMinisterPanel({
           )}
           <div className="scholarPanelActions">
             {courtEntry.nextActions.slice(0, 3).map((action) => (
+              <button key={action.id} type="button" disabled={!canDraft} onClick={() => onDraft(action.text)}>
+                {action.label}
+              </button>
+            ))}
+            {courtEntry.followUpNextActions.slice(0, 3).map((action) => (
               <button key={action.id} type="button" disabled={!canDraft} onClick={() => onDraft(action.text)}>
                 {action.label}
               </button>

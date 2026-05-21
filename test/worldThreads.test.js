@@ -146,6 +146,22 @@ test("world threads unify active requests, long events, official assignments, an
       hiddenNotes: ["暗中有人遮掩亏空"]
     }
   ];
+  worldState.officialCareer.courtEntryFollowUps = [{
+    id: "OCEF-test-follow-up",
+    entryId: "official-court-entry-first-month-ASG-test-relief",
+    resolutionId: "OCER-test-relief",
+    assignmentId: "ASG-test-relief",
+    stage: "bureau_review",
+    stageLabel: "部院覆奏",
+    status: "referred_to_bureau",
+    statusLabel: "部院待覆",
+    title: "部院覆奏：赈银核销",
+    publicSummary: "部院待覆：赈银核销承接近次准入复核进入部院覆奏，皇帝、部院、台谏只形成公开中间意见，不直接任免、奖惩、处分或成弹劾。",
+    generatedAtTurn: 8,
+    sourceRefs: ["officialCareer.courtEntry:official-court-entry-first-month-ASG-test-relief"],
+    consequenceRefs: ["worldThread:official_court_follow_up"],
+    nextStep: "相关部院待覆，下一步补齐公开凭据、限期和经手人。"
+  }];
   worldState.roleWorldCoupling.recentImpacts = [
     {
       id: "RWC-test-campaign",
@@ -167,6 +183,7 @@ test("world threads unify active requests, long events, official assignments, an
   assert.equal(sourceTypes.has("active_npc_request"), true);
   assert.equal(sourceTypes.has("long_term_event"), true);
   assert.equal(sourceTypes.has("official_assignment"), true);
+  assert.equal(sourceTypes.has("official_court_follow_up"), true);
   assert.equal(sourceTypes.has("role_world_coupling"), true);
   const requestThread = view.activeThreads.find((thread) => thread.sourceType === "active_npc_request");
   assert.ok(requestThread);
@@ -185,6 +202,10 @@ test("world threads unify active requests, long events, official assignments, an
   assert.ok(reliefThread.relatedEntitySummaries.some((entity) => entity.id === "relief-granary-operation"));
   assert.ok(reliefThread.interventionHints.some((hint) => hint.includes("差事")));
   assert.match(reliefThread.followUpHint, /官场模块/);
+  const followUpThread = view.activeThreads.find((thread) => thread.sourceType === "official_court_follow_up");
+  assert.ok(followUpThread);
+  assert.match(followUpThread.goal, /首月奏议/);
+  assert.ok(followUpThread.interventionHints.some((hint) => hint.includes("覆奏")));
   assert.equal(JSON.stringify(view).includes("暗中有人遮掩亏空"), false);
 
   const promptSummary = summarizeWorldThreadsForPrompt(worldState);

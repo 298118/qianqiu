@@ -40,6 +40,7 @@ test("initial state carries an empty server-owned official career ledger", () =>
     cooldownUnit: "ten_day",
     assignments: [],
     courtEntryResolutions: [],
+    courtEntryFollowUps: [],
     assessmentDossier: {
       cycleId: "1644-career",
       meritScore: 0,
@@ -393,6 +394,60 @@ test("S88.4 official court entry submission receives server adjudication without
   assert.equal(serialized.includes("hiddenNotes"), false);
   assert.equal(serialized.includes("密札不可见"), false);
   assert.equal(/provider|prompt|raw_table|rawSql|SQL|sqlite|sk-test-secret|data\/sessions/i.test(serialized), false);
+});
+
+test("S88.4 official court entry follow-up records bureau and court replies without final office effects", () => {
+  const worldState = createInitialState({ role: "official", playerName: "Tester" });
+  Object.assign(worldState.player, {
+    officeTitle: "翰林院编修",
+    position: "翰林院编修",
+    performanceMerit: 50,
+    impeachmentRisk: 18
+  });
+  worldState.officialCareer.currentPosting = "翰林院编修";
+  worldState.officialCareer.assignments = [{
+    id: "ASG-0000-first-month-top_hanlin_editor",
+    title: "馆阁讲章校订",
+    kind: "memorial_drafting",
+    bureauId: "hanlin_academy",
+    dueTurn: 3,
+    deadlineUnit: "ten_day",
+    progress: 72,
+    risk: 24,
+    visibleSummary: "首月须校订馆阁讲章并试拟制诰。",
+    hiddenNotes: ["密札不可见"]
+  }];
+  ensureOfficialCareerState(worldState);
+  const entryDraft = buildOfficialCareerView(worldState).courtEntry.nextActions
+    .find((action) => action.id === "send-to-memorial-review");
+  applyOfficialCareerResult(worldState, runOfficialCareerStep(worldState, entryDraft.text, { isMonthEnd: false }));
+  const beforeOffice = worldState.player.officeTitle;
+  const beforeResolutionCount = worldState.officialCareer.courtEntryResolutions.length;
+  const followUpDraft = buildOfficialCareerView(worldState).courtEntry.followUpNextActions
+    .find((action) => action.id === "bureau-reply");
+
+  const result = runOfficialCareerStep(worldState, followUpDraft.text, { isMonthEnd: false });
+  applyOfficialCareerResult(worldState, result);
+  const view = buildOfficialCareerView(worldState);
+  const prompt = summarizeOfficialCareerForPrompt(worldState);
+  const archive = buildEventArchiveView(worldState, { pageSize: 50 });
+  const serialized = JSON.stringify({ view, summary: prompt, archive });
+
+  assert.equal(worldState.player.officeTitle, beforeOffice);
+  assert.equal(worldState.officialCareer.courtEntryResolutions.length, beforeResolutionCount);
+  assert.equal(worldState.officialCareer.courtEntryFollowUps.length, 1);
+  assert.equal(view.courtEntry.latestFollowUp.stage, "bureau_review");
+  assert.equal(view.courtEntry.latestFollowUp.status, "referred_to_bureau");
+  assert.equal(view.courtEntry.followUpScenePreview.serverAdjudicated, true);
+  assert.ok(view.courtEntry.latestFollowUp.participantSummaries.some((actor) => /部|院|翰林/.test(actor.roleLabel)));
+  assert.match(view.courtEntry.latestFollowUp.publicSummary, /皇帝、部院、台谏|不直接任免/);
+  assert.match(prompt.courtEntry.latestFollowUp.publicSummary, /部院覆奏|不直接任免/);
+  assert.ok(result.events.some((event) => event.includes("[奏议跟进批复]")));
+  assert.equal(result.events.some((event) => event.includes("[官场差遣]") || event.includes("[官署回执]")), false);
+  assert.ok(archive.items.some((item) => item.sourceType === "official_court_follow_up" && /馆阁讲章校订/.test(item.summary)));
+  assert.equal(serialized.includes("hiddenNotes"), false);
+  assert.equal(serialized.includes("密札不可见"), false);
+  assert.equal(/provider|prompt|raw_table|rawSql|SQL|sqlite|数据库|写库|sk-test-secret|data\/sessions/i.test(serialized), false);
 });
 
 test("S88.4 official court entry next actions adjudicate every appointment-track template", () => {

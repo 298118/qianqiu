@@ -21,6 +21,7 @@ const THREAD_KINDS = new Set([
   "local_case",
   "consequence",
   "official_assignment",
+  "official_court_follow_up",
   "official_outcome",
   "role_impact",
   "world_entity_pressure"
@@ -29,6 +30,7 @@ const SOURCE_TYPES = new Set([
   "active_npc_request",
   "long_term_event",
   "official_assignment",
+  "official_court_follow_up",
   "official_outcome",
   "role_world_coupling",
   "world_entity",
@@ -42,6 +44,7 @@ const SOURCE_LABELS = {
   active_npc_request: "人脉请托",
   long_term_event: "长期大势",
   official_assignment: "官场差遣",
+  official_court_follow_up: "奏议批复",
   official_outcome: "官场结果",
   role_world_coupling: "身份联动",
   world_entity: "世界实体",
@@ -119,6 +122,11 @@ const THREAD_KIND_DETAILS = {
     interventions: ["按差事名目行动", "向上官回禀进度", "先查账册或案卷"],
     followUp: "差事完成、失败和考成仍由官场模块结算。"
   },
+  official_court_follow_up: {
+    goal: "追踪首月奏议后的朝议、部院覆奏、御前摘报和考成观察。",
+    interventions: ["补公开凭据", "催部院覆奏", "整理御前摘报", "续写考成观察"],
+    followUp: "奏议后续只提示中间态，任免、奖惩、处分和弹劾仍由官场模块结算。"
+  },
   official_outcome: {
     goal: "观察任免升降后的官场余波与履历影响。",
     interventions: ["经营同年上官", "谨守清操", "顺势整理履历"],
@@ -139,6 +147,7 @@ const SOURCE_INTERVENTION_HINTS = {
   active_npc_request: ["回应或拒绝请托"],
   long_term_event: ["围绕大势连续行动"],
   official_assignment: ["把行动写成差事办理"],
+  official_court_follow_up: ["顺着批复补证或覆奏"],
   official_outcome: ["关注官场余波"],
   role_world_coupling: ["顺着身份职责补一回合"],
   world_entity: ["按实体提示介入"],
@@ -624,6 +633,36 @@ function deriveOfficialAssignmentThreads(worldState) {
   })).filter(Boolean);
 }
 
+function followUpSeverity(followUp = {}) {
+  if (followUp.status === "returned_for_evidence" || followUp.riskDelta > 0) return 2;
+  if (followUp.stage === "imperial_note") return 2;
+  return 1;
+}
+
+function deriveOfficialCourtFollowUpThreads(worldState) {
+  const view = buildOfficialCareerView(worldState);
+  if (!view.active) return [];
+  return (view.courtEntryFollowUps || []).slice(-3).map((followUp) => makeThread(worldState, {
+    id: `WT-official-court-follow-up-${followUp.id}`,
+    sourceType: "official_court_follow_up",
+    sourceId: followUp.id,
+    kind: "official_court_follow_up",
+    status: followUp.status === "returned_for_evidence" ? "active" : "watch",
+    title: followUp.title,
+    summary: followUp.publicSummary,
+    severity: followUpSeverity(followUp),
+    createdTurn: followUp.generatedAtTurn,
+    lastUpdatedTurn: followUp.generatedAtTurn,
+    startedYear: followUp.year,
+    startedMonth: followUp.month,
+    related: {
+      entities: ["court-ministry-personnel", "court-censorate"],
+      offices: followUp.participantSummaries?.map((participant) => participant.actorId).filter(Boolean) || [],
+      metrics: ["player.performanceMerit", "player.impeachmentRisk"]
+    }
+  })).filter(Boolean);
+}
+
 function deriveOfficialOutcomeThreads(worldState) {
   const view = buildOfficialCareerView(worldState);
   if (!view.active) return [];
@@ -772,6 +811,7 @@ function deriveWorldThreads(worldState = {}) {
     deriveActiveRequestThread(worldState),
     ...deriveLongTermEventThreads(worldState),
     ...deriveOfficialAssignmentThreads(worldState),
+    ...deriveOfficialCourtFollowUpThreads(worldState),
     ...deriveOfficialOutcomeThreads(worldState),
     ...deriveRoleImpactThreads(worldState),
     ...deriveWorldEntityThreads(worldState)

@@ -11,6 +11,7 @@ const {
   buildTopicSurfaceView,
   buildTopicSurfaceViewIndex
 } = require("../src/game/topicSurfaceView");
+const { buildOfficialCareerView } = require("../src/game/officialCareer");
 const { writeSession } = require("../src/storage/sessionStore");
 const { createFetchSafeServer } = require("../test-helpers/fetchSafeServer");
 
@@ -130,6 +131,36 @@ test("S88.4 memorial and court surfaces include official first-month court entry
     "讲章回署可入考成。",
     "provider payload prompt raw_table"
   ];
+  const entryId = buildOfficialCareerView(worldState).courtEntry.id;
+  worldState.officialCareer.courtEntryResolutions = [{
+    id: "OCER-topic-court-entry",
+    entryId,
+    assignmentId: "ASG-0000-first-month-top_hanlin_editor",
+    surfaceId: "memorial-review",
+    submissionKind: "official_first_month_memorial",
+    status: "accepted_for_review",
+    statusLabel: "准入复核",
+    title: "准入复核：馆阁讲章校订",
+    publicSummary: "准入复核：馆阁讲章校订已入奏折队列服务器裁决，不直接任免、奖惩、处分或成弹劾。",
+    generatedAtTurn: 2,
+    sourceRefs: [`officialCareer.courtEntry:${entryId}`],
+    nextStep: "由部院复核公开凭据后再入长期考成。"
+  }];
+  worldState.officialCareer.courtEntryFollowUps = [{
+    id: "OCEF-topic-follow-up",
+    entryId,
+    resolutionId: "OCER-topic-court-entry",
+    assignmentId: "ASG-0000-first-month-top_hanlin_editor",
+    stage: "bureau_review",
+    stageLabel: "部院覆奏",
+    status: "referred_to_bureau",
+    statusLabel: "部院待覆",
+    title: "部院覆奏：馆阁讲章校订",
+    publicSummary: "部院待覆：馆阁讲章校订承接近次准入复核进入部院覆奏，皇帝、部院、台谏只形成公开中间意见，不直接任免、奖惩、处分或成弹劾。",
+    generatedAtTurn: 3,
+    sourceRefs: [`officialCareer.courtEntry:${entryId}`],
+    nextStep: "相关部院待覆，下一步补齐公开凭据、限期和经手人。"
+  }];
 
   const memorial = buildTopicSurfaceView(worldState, { surfaceId: "memorial-review" });
   const debate = buildTopicSurfaceView(worldState, { surfaceId: "court-debate" });
@@ -138,6 +169,9 @@ test("S88.4 memorial and court surfaces include official first-month court entry
     assert.ok(view.sourceViews.some((source) => source.sourceView === "officialCareerView"));
     assert.ok(view.evidenceRefs.some((ref) =>
       ref.sourceView === "officialCareerView" && /首月回署|馆阁讲章校订/.test(`${ref.label}${ref.summary}`)
+    ));
+    assert.ok(view.evidenceRefs.some((ref) =>
+      ref.sourceView === "officialCareerView" && /部院待覆|部院覆奏/.test(ref.summary)
     ));
     assert.ok(view.items.some((item) => /首月回署|馆阁讲章校订/.test(`${item.title}${item.summary}`)));
     assertNoSensitiveText(view);

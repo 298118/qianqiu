@@ -973,6 +973,39 @@ describe("S74.1 React client shell", () => {
                 publicSummary: "准入复核：馆阁讲章校订已入奏折队列服务器裁决，不直接任免、奖惩、处分或成弹劾。",
                 nextStep: "由部院复核公开凭据后再入长期考成。"
               },
+              latestFollowUp: {
+                id: "OCEF-app-fixture",
+                stage: "bureau_review",
+                stageLabel: "部院覆奏",
+                status: "referred_to_bureau",
+                statusLabel: "部院待覆",
+                publicSummary: "部院待覆：馆阁讲章校订承接近次准入复核进入部院覆奏，皇帝、部院、台谏只形成公开中间意见，不直接任免、奖惩、处分或成弹劾。",
+                participantSummaries: [
+                  {
+                    actorId: "hanlin_academy",
+                    roleLabel: "翰林院",
+                    publicPosition: "翰林院要求补齐讲章出处、避讳和堂官问答。"
+                  },
+                  {
+                    actorId: "censorate",
+                    roleLabel: "台谏",
+                    publicPosition: "台谏只留观察，不把风险直接写成弹劾成案。"
+                  }
+                ],
+                nextStep: "相关部院待覆，下一步补齐公开凭据、限期和经手人。"
+              },
+              followUpNextActions: [
+                {
+                  id: "court-follow-up",
+                  label: "朝议跟进",
+                  text: "就馆阁讲章校订按近次裁决准入复核作朝议跟进，令诸臣只列可行、不可行和待查事项。"
+                },
+                {
+                  id: "bureau-reply",
+                  label: "部院覆奏",
+                  text: "请相关部院就馆阁讲章校订承接近次裁决准入复核覆奏，列明公开凭据、经手人、限期和仍须服务器裁决之处。"
+                }
+              ],
               superiorFollowUp: "堂官先看章法、避讳和能否切中本职。",
               peerFollowUp: "同年提醒馆阁旧例与上疏分寸。",
               nextActions: [
@@ -1106,11 +1139,14 @@ describe("S74.1 React client shell", () => {
     expect(screen.getByText("奏折朝议入口")).toBeTruthy();
     expect(screen.getByText("首月回署：馆阁讲章校订")).toBeTruthy();
     expect(screen.getByText(/近次裁决：准入复核：馆阁讲章校订已入奏折队列服务器裁决/)).toBeTruthy();
+    expect(screen.getByText(/朝议跟进：部院覆奏 · 部院待覆/)).toBeTruthy();
+    expect(screen.getAllByText("翰林院").length).toBeGreaterThan(0);
     expect(screen.getByText("同年座师与人脉")).toBeTruthy();
     expect(screen.getByText("派系与朝局风险")).toBeTruthy();
     expect(screen.getByText("考成与弹劾")).toBeTruthy();
     expect(screen.getByRole("link", { name: "入朝议页" }).getAttribute("href")).toBe(`/game/${sessionId}/court`);
     expect(screen.getByRole("button", { name: "续记考成" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "部院覆奏" })).toBeTruthy();
     expect(screen.getByText("不得在前端直接任免、奖惩、处分、弹劾成案或改写考成。")).toBeTruthy();
 
     fireEvent.click(screen.getByRole("button", { name: "回应弹劾" }));
@@ -1124,6 +1160,8 @@ describe("S74.1 React client shell", () => {
     expect(useUiStateStore.getState().actionDraft?.text).toContain("馆阁讲章校订");
     fireEvent.click(screen.getByRole("button", { name: "入奏折队列" }));
     expect(useUiStateStore.getState().actionDraft?.text).toContain("讲章回署");
+    fireEvent.click(screen.getByRole("button", { name: "部院覆奏" }));
+    expect(useUiStateStore.getState().actionDraft?.text).toContain("相关部院");
     expect(fetchMock.mock.calls.filter(([url]) => url === "/api/game/turn")).toHaveLength(0);
     expect(document.body.textContent || "").not.toMatch(/provider payload|sk-test-secret|prompt|raw audit|path=|C:\\|data\/sessions|OPENAI_API_KEY/i);
   });

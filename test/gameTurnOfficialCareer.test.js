@@ -417,3 +417,60 @@ test("POST /api/game/turn adjudicates S88.4 official court entry submissions ser
   assert.equal(serialized.includes("密札不可见"), false);
   assert.equal(/provider|prompt|raw_table|rawSql|SQL|sqlite|sk-test-secret|data\/sessions/i.test(serialized), false);
 });
+
+test("POST /api/game/turn records S88.4 official court follow-up without direct office changes", async (t) => {
+  const server = createTestServer();
+  t.after(server.close);
+
+  const worldState = createInitialState({ playerName: "批复官", role: "official" });
+  Object.assign(worldState.player, {
+    officeTitle: "翰林院编修",
+    position: "翰林院编修",
+    performanceMerit: 50,
+    impeachmentRisk: 18
+  });
+  worldState.officialCareer.currentPosting = "翰林院编修";
+  worldState.officialCareer.assignments = [{
+    id: "ASG-0000-first-month-top_hanlin_editor",
+    title: "馆阁讲章校订",
+    kind: "memorial_drafting",
+    bureauId: "hanlin_academy",
+    dueTurn: 3,
+    deadlineUnit: "ten_day",
+    progress: 72,
+    risk: 24,
+    visibleSummary: "首月须校订馆阁讲章并试拟制诰。",
+    hiddenNotes: ["密札不可见"]
+  }];
+  t.after(() => removeSessionFile(worldState.sessionId));
+  await writeSession(worldState);
+
+  await postJson(`${server.baseUrl}/api/game/turn`, {
+    sessionId: worldState.sessionId,
+    input: "臣谨就馆阁讲章校订具奏：请入奏折队列，说明公开进度、考成风险与请裁事项。"
+  });
+  const { response, payload } = await postJson(`${server.baseUrl}/api/game/turn`, {
+    sessionId: worldState.sessionId,
+    input: "请相关部院就馆阁讲章校订承接近次裁决准入复核覆奏，列明公开凭据、经手人、限期和仍须服务器裁决之处。"
+  });
+  const serialized = JSON.stringify({
+    officialCareerView: payload.officialCareerView,
+    eventArchiveView: payload.eventArchiveView,
+    worldThreadView: payload.worldThreadView,
+    officialCareerFeedback: payload.officialCareer
+  });
+
+  assert.equal(response.status, 200);
+  assert.equal(payload.worldState.officialCareer.courtEntryResolutions.length, 1);
+  assert.equal(payload.worldState.officialCareer.courtEntryFollowUps.length, 1);
+  assert.equal(payload.officialCareerView.courtEntry.latestFollowUp.stage, "bureau_review");
+  assert.equal(payload.officialCareerView.courtEntry.latestFollowUp.status, "referred_to_bureau");
+  assert.ok(payload.officialCareer.events.some((event) => event.includes("[奏议跟进批复]")));
+  assert.equal(payload.officialCareer.events.some((event) => event.includes("[官场差遣]") || event.includes("[官署回执]")), false);
+  assert.ok(payload.eventArchiveView.items.some((item) => item.sourceType === "official_court_follow_up"));
+  assert.ok(payload.worldThreadView.activeThreads.some((thread) => thread.sourceType === "official_court_follow_up"));
+  assert.equal(payload.worldState.player.officeTitle, "翰林院编修");
+  assert.equal(serialized.includes("hiddenNotes"), false);
+  assert.equal(serialized.includes("密札不可见"), false);
+  assert.equal(/provider|prompt|raw_table|rawSql|SQL|sqlite|数据库|写库|sk-test-secret|data\/sessions/i.test(serialized), false);
+});
