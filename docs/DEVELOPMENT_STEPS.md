@@ -153,7 +153,7 @@
 - `git diff --check`
 - `npm test`
 - 提交前只读复审：Ampere 初审发现无 `sourceTypes` 面板会展示未绑定可见后果 action 的 P2；本轮已改为显式 action 必须匹配当前可见 item，并补官员/皇帝 orphan action 回归。Ampere 复审确认 P2 关闭且未发现 P0/P1/P2；复审后仅回填文档状态，按低风险纯文档状态更新跳过额外子代理复审。
-- 实现提交：待生成。
+- 实现提交：`0b863158`。
 
 上一轮 S88.6 topic/source evidence 与安全检索接线验证口径：focused domain/topic/search/SQLite tests、`npm run typecheck:server`、docs governance、documentation governance、完整 `npm test`（1051 项）和 `git diff --check`；提交前只读复审 Lovelace 未发现 P0/P1/P2；实现提交 `d5f1055b`。
 
@@ -493,7 +493,7 @@ S84 前端专项额外验收入口：
 - 安全：组件二次过滤 provider/raw/prompt/path/key/hidden/SQLite、`stateDelta`、`playerDelta`、`evidenceRefs`、`outcomeId`、`auditRecord`、raw resolver ledger 名称、safe-search 表名和本地路径形态文本。后续按钮只调用既有 `onDraft` 写入 `role-surface` 行动草稿，不提交 `/api/game/turn`，不调用 resolver，不写 canonical state；显式 `nextActions` 必须绑定当前已通过清洗且实际可见的后果条目，否则不展示，并退回使用当前条目的 `nextStep` 生成草稿按钮。
 - 验证：当前已通过 `npm run typecheck:client`、`node --test --test-reporter=spec test/reactClientScaffold.test.js`（39 项）、`npm run test:client -- --pool=vmForks --maxWorkers=2 client/src/__tests__/App.test.tsx client/src/state/uiState.test.ts client/src/components/MemorialComposer.test.tsx`（54 项）、`AI_PROVIDER=mock npm run smoke:browser`、`npm run check:docs-governance`、`node --test test/documentationGovernance.test.js`、完整 `npm test`（1052 项）和 `git diff --check`。
 - 子代理：Cicero 只读探查建议以共享组件接入地方官/将领/官员/皇帝面板，并补前端二次清洗和 route readiness；本轮采纳。Ampere 提交前只读初审发现无 `sourceTypes` 面板会展示未绑定可见后果 action 的 P2；主代理已改为所有显式 action 必须匹配当前可见 item，并补官员/皇帝 orphan action 回归。Ampere 复审确认 P2 关闭且未发现 P0/P1/P2；复审后仅回填文档状态，按低风险纯文档状态更新跳过额外子代理复审。
-- 提交：待本轮验证和提交后回填。
+- 提交：实现提交 `0b863158`；本哈希回填为低风险纯文档状态更新，不改代码、API/schema、运行时行为、提示词或验证工具，按项目规则跳过额外子代理复审。
 - 下一步：提交后继续补旧存档污染、重复后果去重、inactive role 泄漏、高风险军务绕过、地图/史册追踪入口和 evidence cap 可用性回归。
 
 ### 2026-05-21：推进 S88.6 topic/source evidence 与安全检索接线
