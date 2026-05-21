@@ -155,7 +155,7 @@
 - `git diff --check`
 - `npm test`（1054 项）
 - 提交前只读复审：Zeno 未发现 P0/P1/P2，并额外确认 `publicSourceId` 原值未进入 `domainConsequenceView` JSON。
-- 实现提交：待回填。
+- 实现提交：`620d2d1f`。
 
 上一轮 S88.6 前端可见领域后果追踪验证口径：
 
@@ -507,9 +507,9 @@ S84 前端专项额外验收入口：
 - 范围：继续 S88.6 官场与世界后果追踪的后端红队 coherent slice。聚焦 `domainConsequenceView` 的旧存档污染、未应用状态外泄、重复后果重放和敏感文本别名，不新增写 API、不新增 persistent consequence ledger、不改变财政、军务、刑名或 NPC 经济裁决所有权。
 - 实现：`src/game/domainConsequenceTrace.js` 现在只从 `accepted` / `applied` / `recorded` 且带 `appliedAtTurn` / `generatedAtTurn` / `lastTickTurn` 的 resolver ledger 行派生公开后果；同一安全 `publicSourceId` 通过内部去重指纹合并，只保留较新、公开字段更完整的后果，避免旧存档 replay 生成多条重复余波；无 `publicSourceId` 的行仍按来源类型、标题和公开摘要生成安全去重键。`cleanText()` 新增已配置环境密钥片段检测，并扩展 provider/raw/evidence/private/hidden 旧别名过滤。
 - 安全：`publicSourceId` 只参与进程内 Symbol 去重，不进入 JSON、prompt、topic evidence、搜索行或浏览器；`pending`、`rejected` 和仅拟议记录即使有安全摘要也不会成为公开后果；`privateResultRefs`、`hiddenDossier`、`sealedMapping`、`retrievalContext`、`actorMemoryLedger`、`sessionSummary`、`relationshipLedger`、`providerPayload`、`rawEvidence`、配置环境密钥及其常见片段命中后都会回落并丢弃该公开行。
-- 验证：当前已通过 `node --check src/game/domainConsequenceTrace.js`、`node --check test/domainConsequenceTrace.test.js`、`node --test --test-reporter=spec test/domainConsequenceTrace.test.js`（6 项）、domain/topic/resolver/search focused tests（19 项）、SQLite safe-search/topic-draft focused tests（18 项）、route response/judicial redaction focused tests（7 项）、`npm run typecheck:server`、`npm run check:docs-governance`、`node --test test/documentationGovernance.test.js`、完整 `npm test`（1054 项）和 `git diff --check`；提交哈希待本轮提交后回填。
+- 验证：当前已通过 `node --check src/game/domainConsequenceTrace.js`、`node --check test/domainConsequenceTrace.test.js`、`node --test --test-reporter=spec test/domainConsequenceTrace.test.js`（6 项）、domain/topic/resolver/search focused tests（19 项）、SQLite safe-search/topic-draft focused tests（18 项）、route response/judicial redaction focused tests（7 项）、`npm run typecheck:server`、`npm run check:docs-governance`、`node --test test/documentationGovernance.test.js`、完整 `npm test`（1054 项）和 `git diff --check`。
 - 子代理：Zeno 只读探查指出 status 过滤、`publicSourceId` 去重、敏感别名和配置密钥片段是当前主要缺口；本轮采纳。Zeno 提交前只读复审未发现 P0/P1/P2，并额外确认 `publicSourceId` 原值未进入 `domainConsequenceView` JSON。
-- 提交：实现提交待回填。
+- 提交：实现提交 `620d2d1f`；本哈希回填为低风险纯文档状态更新，不改代码、API/schema、运行时行为、提示词或验证工具，按项目规则跳过额外子代理复审。
 - 下一步：继续 S88.6 inactive role 泄漏、高风险军务绕过、地图/史册追踪入口和 evidence cap 可用性红队。
 
 ### 2026-05-21：推进 S88.6 前端可见领域后果追踪
