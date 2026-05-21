@@ -7,6 +7,7 @@ const {
 const { sanitizeExamAftermathView } = require("./examAftermath");
 const { buildExamProcedureView } = require("./examProcedure");
 const { sanitizeExamSceneTimeForView } = require("./examSceneTime");
+const { buildWorldGeographyView } = require("./worldGeography");
 
 function cloneJson(value) {
   return JSON.parse(JSON.stringify(value ?? null));
@@ -68,7 +69,9 @@ const FORBIDDEN_CLIENT_WORLD_STATE_KEYS = Object.freeze([
   "statePatch",
   "state_patch",
   "worldState",
-  "world_state"
+  "world_state",
+  "cityPolicyLedger",
+  "militaryDiplomacyLedger"
 ]);
 
 const FORBIDDEN_CLIENT_WORLD_STATE_KEY_SET = new Set(
@@ -174,6 +177,9 @@ function sanitizeExamPreparationSnapshots(clientState) {
 
 function buildClientWorldState(worldState = {}) {
   const clientState = stripInternalClientWorldStateFields(cloneJson(worldState)) || {};
+  if (worldState.worldGeography) {
+    clientState.worldGeography = buildWorldGeographyView(worldState);
+  }
   sanitizeExamPreparationSnapshots(clientState);
   delete clientState.actorMemoryLedger;
   delete clientState.sessionSummary;
@@ -185,6 +191,8 @@ function buildClientWorldState(worldState = {}) {
   delete clientState.npcInteractionLedger;
   delete clientState.tradeLedger;
   delete clientState.openingBackgroundClaims;
+  delete clientState.cityPolicyLedger;
+  delete clientState.militaryDiplomacyLedger;
   delete clientState.marketPriceLedger;
   delete clientState.npcEconomyLedger;
   delete clientState.npcActiveRequestLedger;

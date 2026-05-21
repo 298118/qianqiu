@@ -89,6 +89,8 @@ export const RAW_LEDGER_KEYS = [
   "npcInteractionLedger",
   "tradeLedger",
   "openingBackgroundClaims",
+  "cityPolicyLedger",
+  "militaryDiplomacyLedger",
   "marketPriceLedger",
   "npcEconomyLedger",
   "npcActiveRequestLedger",
@@ -534,6 +536,7 @@ export type GameTurnResponse = SafeRouteViews & RouteEnvelope & {
   readonly officialCourtConsequence?: RouteFeedbackView;
   readonly officialCourtResponse?: RouteFeedbackView;
   readonly roleWorldCoupling?: RouteFeedbackView;
+  readonly roleCycleDomainAdjudication?: RouteFeedbackView;
   readonly longTermEvents?: LongTermEventFeedbackView;
   readonly officialCareer?: RouteFeedbackView;
   readonly playerMonthlyBriefing?: PlayerMonthlyBriefingFeedbackView;
@@ -557,6 +560,7 @@ export type GameTurnSseStatePreviewResponse = SafeRouteViews & {
   readonly officialCourtConsequence?: RouteFeedbackView;
   readonly officialCourtResponse?: RouteFeedbackView;
   readonly roleWorldCoupling?: RouteFeedbackView;
+  readonly roleCycleDomainAdjudication?: RouteFeedbackView;
   readonly longTermEvents?: LongTermEventFeedbackView;
   readonly officialCareer?: RouteFeedbackView;
   readonly playerMonthlyBriefing?: PlayerMonthlyBriefingFeedbackView;

@@ -21,6 +21,8 @@ const RAW_LEDGER_KEYS = Object.freeze([
   "npcInteractionLedger",
   "tradeLedger",
   "openingBackgroundClaims",
+  "cityPolicyLedger",
+  "militaryDiplomacyLedger",
   "marketPriceLedger",
   "npcEconomyLedger",
   "npcActiveRequestLedger",

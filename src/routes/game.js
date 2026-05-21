@@ -38,6 +38,7 @@ const {
   ensureRoleWorldCouplingState,
   runRoleWorldCouplingStep
 } = require("../game/roleWorldCoupling");
+const { runRoleCycleDomainAdjudicationStep } = require("../game/roleCycleDomainAdjudication");
 const { buildRoleCycleView } = require("../game/roleCycleView");
 const {
   buildWorldGeographyView,
@@ -959,6 +960,7 @@ async function finalizeTurn(worldState, result, input, auditOptions = {}) {
     worldState,
     roleWorldCoupling.relationshipChanges
   );
+  const roleCycleDomainAdjudication = runRoleCycleDomainAdjudicationStep(worldState, input);
 
   const beforeWorldTickState = JSON.parse(JSON.stringify(worldState));
   const worldTick = runWorldTick(worldState);
@@ -1166,6 +1168,7 @@ async function finalizeTurn(worldState, result, input, auditOptions = {}) {
     officialCourtResponse,
     officialCourtConsequence,
     roleWorldCoupling,
+    roleCycleDomainAdjudication,
     worldTick,
     npcEconomy,
     longTermEvents,
@@ -1219,6 +1222,7 @@ async function finalizeTurn(worldState, result, input, auditOptions = {}) {
       ...studyInteraction.attributeChanges,
       ...(Array.isArray(officialCourtConsequence.attributeChanges) ? officialCourtConsequence.attributeChanges : []),
       ...(Array.isArray(officialCourtResponse.attributeChanges) ? officialCourtResponse.attributeChanges : []),
+      ...(Array.isArray(roleCycleDomainAdjudication.attributeChanges) ? roleCycleDomainAdjudication.attributeChanges : []),
       ...roleWorldCoupling.attributeChanges,
       ...worldTickFeedback.attributeChanges,
       ...(Array.isArray(npcEconomy.attributeChanges) ? npcEconomy.attributeChanges : []),
@@ -1265,6 +1269,15 @@ async function finalizeTurn(worldState, result, input, auditOptions = {}) {
       events: Array.isArray(roleWorldCoupling.events) ? roleWorldCoupling.events : [],
       attributeChanges: Array.isArray(roleWorldCoupling.attributeChanges) ? roleWorldCoupling.attributeChanges : [],
       outcome: roleWorldCoupling.outcome
+    },
+    roleCycleDomainAdjudication: {
+      schemaVersion: roleCycleDomainAdjudication.schemaVersion,
+      summary: roleCycleDomainAdjudication.summary,
+      events: Array.isArray(roleCycleDomainAdjudication.events) ? roleCycleDomainAdjudication.events : [],
+      attributeChanges: Array.isArray(roleCycleDomainAdjudication.attributeChanges)
+        ? roleCycleDomainAdjudication.attributeChanges
+        : [],
+      outcome: roleCycleDomainAdjudication.outcome
     },
     longTermEvents: {
       summary: longTermEvents.summary,
@@ -1360,6 +1373,7 @@ async function streamTurn(res, sessionId, input) {
       worldPeopleView: payload.worldPeopleView,
       worldThreadView: payload.worldThreadView,
       roleWorldCoupling: payload.roleWorldCoupling,
+      roleCycleDomainAdjudication: payload.roleCycleDomainAdjudication,
       longTermEventView: payload.longTermEventView,
       longTermEvents: payload.longTermEvents,
       officialCareerView: payload.officialCareerView,
