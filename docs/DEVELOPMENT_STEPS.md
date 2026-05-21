@@ -440,7 +440,7 @@ S84 前端专项额外验收入口：
 - 边界：`roleCycleView` 不新增 persistent ledger，不暴露 raw ledger、provider payload、完整 prompt、本地路径、key、SQLite 物理表行、hidden notes、hidden intent 或其他身份 hidden 信息；非当前身份矩阵只显示待任占位。AI 只能读取当前身份安全摘要并生成 proposal 或草稿，服务器仍裁决考试晋级、官职任免、资源、军务、财赋、地方事务、NPC 行动、经济结果、长期后果和持久化。前端按钮只写本地行动草稿，不调用 turn API。
 - 验证：已通过 focused 语法检查、`test/roleCycleView.test.js`（6 项）、React scaffold（38 项）、browser smoke script（44 项）、player-state/start role route（12 项）、resolver input focused tests（9 项）、scene runtime mock（2 项）、city/judicial/military authority focused tests（13 项）、server/client typecheck、`uiState` / `MemorialComposer` focused Vitest（18 项）、完整 client Vitest（68 项）、client build、`npm run smoke:exam-s69`、`AI_PROVIDER=mock npm run smoke:browser`、docs governance、documentation governance、完整 `npm test`（1034 项）和 `git diff --check`（退出码 0；仅打印未改动归档/QA 文件既有 CRLF 提示）。
 - 子代理：Sartre 已只读梳理后端/API 接线，建议首片采用派生 `roleCycleView`，不新增 raw ledger，并保持 inactive roles 不泄露跨身份信息；Jason 已只读梳理前端接线，建议六身份面板共用“本旬循环”区块且按钮只写草稿。本轮实现已采纳。Mencius 提交前只读初审未发现代码/API/runtime P0/P1/P2，只指出本文件和共享上下文仍写完整验证待回填的 P2；本轮已修正文档状态，Mencius 复核确认 P2 关闭且未发现新的 P0/P1/P2。
-- 提交：待本轮完成后回填。
+- 提交：实现提交 `8d24534e`；本条哈希回填为低风险纯文档改动，不改代码、API/schema、运行时行为、提示词或验证工具，按项目规则跳过额外子代理复审。
 - 下一步：继续 S88.5，把当前 `roleCycleView` 中的事务接入更专门的身份 resolver、跨域后果 refs、地图/NPC/经济入口；或转入 S88.6，把官场链路 refs 扩展到军务、财赋、地方事务、NPC 请求和地图事件入口。
 
 ### 2026-05-20：完成 S88.0-S88.1 全面打磨规划与 AI provider 安全 envelope
