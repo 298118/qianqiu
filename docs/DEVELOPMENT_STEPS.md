@@ -151,7 +151,7 @@
 - `npm run typecheck:server`
 - `npm test`（1045 项）
 - `git diff --check`
-- 待收口：实现提交哈希回填。
+- 待收口：无；实现提交已回填。
 
 本轮 S88.5.1 六身份循环矩阵首片验证口径：
 
@@ -453,7 +453,7 @@ S84 前端专项额外验收入口：
 - 安全：`src/contracts/serverContracts.ts`、`src/routes/routeResponses.js`、`src/game/clientWorldState.js` 和 `src/game/redactedState.js` 把 `cityPolicyLedger` / `militaryDiplomacyLedger` 纳入 public `worldState` raw ledger 剥离；`buildClientWorldState()` 现在用 `worldGeographyView` 替换兼容 `worldState.worldGeography`，避免 hidden route/name 回流 public payload。AI 只能从公开 feedback、eventHistory 和安全 views 读取结果；服务器继续拥有资源、军务、财赋、NPC 经济、持久化和隐藏信息边界。
 - 验证：当前已通过 `node --check src/game/roleCycleDomainAdjudication.js`、`node --check src/routes/game.js`、`node --check src/game/clientWorldState.js`、`node --check src/game/audit.js`、`node --test test/roleCycleDomainAdjudication.test.js test/gameTurnRoleCycleConsequences.test.js test/worldGeography.test.js test/mapVisibility.test.js`（23 项）、`node --test test/routeResponseContracts.test.js test/cityPolicyHiddenRedaction.test.js test/militaryDiplomacyRedaction.test.js test/npcEconomy.test.js test/gameTurnNpcEconomy.test.js`（15 项）、`npm run check:docs-governance`、`node --test test/documentationGovernance.test.js`、`npm run typecheck:server`、完整 `npm test`（1045 项）和 `git diff --check`。Pauli 提交前只读初审指出只读入口泛触发写 resolver ledger 与验证状态文字陈旧两个 P2，复审又指出 read-only cue + action noun 仍可能写 ledger；本轮已收窄 classifier 并加入只读优先 suppression：`查市价`、`查看平粜旧案`、`复核稳价记录`、`据舆图开军议`、`开军议查看战事档案`、`开军议查看补给记录`、`翻看侦察案卷` 保持只读不写 ledger；Pauli 最终复核确认两个 P2 均关闭且无 P0/P1/P2。
 - 子代理：Dewey 只读调查后端接缝，建议优先复用 `cityPolicyResolver` / `militaryDiplomacyResolver`，并把人物月账保持为只读说明；本轮采纳。Pauli 初审/复审 P2 已按建议修复，最终复核无 P0/P1/P2。
-- 提交：实现提交哈希待回填。
+- 提交：实现提交 `b3a84bde`；本条哈希回填为低风险纯文档更新，未改变代码、API/schema、运行时行为、提示词或验证工具，按项目规则跳过额外子代理复审。
 - 下一步：优先进入 S88.6，把 `cityPolicyLedger`、`militaryDiplomacyLedger`、`judicialCaseLedger`、NPC 经济月账、事件档案、world thread 和官职月报之间的公开后果 refs 补齐；同时补旧存档污染、inactive role 泄漏和高风险军务绕过红队。
 
 ### 2026-05-21：推进 S88.5.2 跨域入口与证据 refs
