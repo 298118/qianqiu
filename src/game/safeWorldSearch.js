@@ -700,7 +700,19 @@ function buildSafeSearchRows(worldState = {}, options = {}) {
   buildReportSearchRows(rows, worldState);
   buildEventSearchRows(rows, worldState);
   buildRumorSearchRows(rows, worldState);
-  return rows.slice(0, SAFE_WORLD_SEARCH_MAX_ROWS);
+  return capSafeSearchRows(rows);
+}
+
+function capSafeSearchRows(rows = []) {
+  if (rows.length <= SAFE_WORLD_SEARCH_MAX_ROWS) return rows;
+  const protectedRows = rows.filter((row) => row.sourceView === "domainConsequenceView.recentConsequences");
+  if (!protectedRows.length) return rows.slice(0, SAFE_WORLD_SEARCH_MAX_ROWS);
+  const protectedRowIds = new Set(protectedRows.map((row) => row.rowId));
+  const available = Math.max(0, SAFE_WORLD_SEARCH_MAX_ROWS - protectedRows.length);
+  return [
+    ...rows.filter((row) => !protectedRowIds.has(row.rowId)).slice(0, available),
+    ...protectedRows
+  ].slice(0, SAFE_WORLD_SEARCH_MAX_ROWS);
 }
 
 function scoreRow(row, normalizedQuery) {

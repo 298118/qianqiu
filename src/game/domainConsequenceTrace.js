@@ -229,10 +229,11 @@ function normalizeConsequenceRow(worldState, sourceType, raw = {}) {
 
 function rowsFromLedger(worldState, sourceType, records = []) {
   return asArray(records)
-    .slice(-MAX_SOURCE_ROWS)
     .filter(isPublicAppliedRecord)
     .map((record) => normalizeConsequenceRow(worldState, sourceType, record))
-    .filter(Boolean);
+    .filter(Boolean)
+    .sort((left, right) => left.generatedAtTurn - right.generatedAtTurn)
+    .slice(-MAX_SOURCE_ROWS);
 }
 
 function npcEconomyConsequence(worldState = {}) {
@@ -287,7 +288,7 @@ function chooseMoreCompleteConsequence(existing, candidate) {
   return candidate.id.localeCompare(existing.id) > 0 ? candidate : existing;
 }
 
-function collectDomainConsequences(worldState = {}) {
+function collectDomainConsequenceCandidates(worldState = {}) {
   const rows = [
     ...rowsFromLedger(worldState, "city_policy", worldState.cityPolicyLedger?.records),
     ...rowsFromLedger(worldState, "military_diplomacy", worldState.militaryDiplomacyLedger?.records),
@@ -300,8 +301,11 @@ function collectDomainConsequences(worldState = {}) {
     byPublicKey.set(key, chooseMoreCompleteConsequence(byPublicKey.get(key), row));
   }
   return [...byPublicKey.values()]
-    .sort((first, second) => first.generatedAtTurn - second.generatedAtTurn || first.id.localeCompare(second.id))
-    .slice(-MAX_RECENT_CONSEQUENCES);
+    .sort((first, second) => first.generatedAtTurn - second.generatedAtTurn || first.id.localeCompare(second.id));
+}
+
+function collectDomainConsequences(worldState = {}) {
+  return collectDomainConsequenceCandidates(worldState).slice(-MAX_RECENT_CONSEQUENCES);
 }
 
 function buildCounts(rows = []) {
@@ -312,16 +316,54 @@ function buildCounts(rows = []) {
   return counts;
 }
 
+function buildCaps(candidateCount, visibleCount) {
+  return {
+    recentConsequences: MAX_RECENT_CONSEQUENCES,
+    sourceRowsPerLedger: MAX_SOURCE_ROWS,
+    nextActions: 3,
+    publicCandidates: candidateCount,
+    visibleConsequences: visibleCount,
+    capped: candidateCount > visibleCount
+  };
+}
+
+function buildTrackingEntryPoints(active) {
+  return [
+    {
+      id: "domain-consequence-map",
+      label: "入舆图追踪",
+      targetRouteId: "map",
+      sourceView: "mapRuntimeView",
+      publicSummary: active
+        ? "在舆图页并列查看公开近事与领域后果，只写行动草稿，不把显示坐标送入裁决。"
+        : "舆图页等待公开后果或近事出现后再形成追踪线索。"
+    },
+    {
+      id: "domain-consequence-archive",
+      label: "入史册归档",
+      targetRouteId: "archive",
+      sourceView: "eventArchiveView",
+      publicSummary: active
+        ? "在史册页按事件档案复核领域后果归档，仍只读安全公开条目。"
+        : "史册页只收录服务器公开归档，不从内部账本补造后果。"
+    }
+  ];
+}
+
 function buildDomainConsequenceView(worldState = {}) {
-  const recentConsequences = collectDomainConsequences(worldState);
+  const candidates = collectDomainConsequenceCandidates(worldState);
+  const recentConsequences = candidates.slice(-MAX_RECENT_CONSEQUENCES);
+  const active = recentConsequences.length > 0;
   return {
     schemaVersion: DOMAIN_CONSEQUENCE_SCHEMA_VERSION,
     generatedAtTurn: currentTurn(worldState),
-    active: recentConsequences.length > 0,
-    summary: recentConsequences.length
-      ? `当前有${recentConsequences.length}条公开领域后果可追踪，已接入事件档案、世界议程和官职月报。`
+    active,
+    summary: active
+      ? `当前有${recentConsequences.length}条公开领域后果可追踪，已接入舆图入口、事件档案、世界议程和官职月报。`
       : "当前没有可公开追踪的领域后果；不得从内部账簿、隐藏证据或模型提案补造事实。",
     counts: buildCounts(recentConsequences),
+    caps: buildCaps(candidates.length, recentConsequences.length),
+    trackingEntryPoints: buildTrackingEntryPoints(active),
     recentConsequences,
     nextActions: recentConsequences.slice(-3).map((row) => ({
       id: cleanId(`trace-${row.id}`, "trace-domain-consequence"),

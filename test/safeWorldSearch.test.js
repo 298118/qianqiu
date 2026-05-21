@@ -158,6 +158,87 @@ test("S71.3 safe world search normalizes query and pagination caps", () => {
   assert.equal(view.results.length <= SAFE_WORLD_SEARCH_MAX_PAGE_SIZE, true);
 });
 
+test("S88.6 safe world search preserves domain consequence rows under global row cap", () => {
+  const worldState = createSearchWorldState();
+  worldState.turnCount = 32;
+  worldState.cityPolicyLedger = {
+    records: [{
+      outcomeId: "safe-search-domain-consequence-cap",
+      policyType: "market_regulation",
+      policyLabel: "稳价后果",
+      status: "accepted",
+      publicSummary: "清河县稳价后果进入安全检索高量回归。",
+      stateDelta: { publicOrder: 2 },
+      appliedAtTurn: 32
+    }]
+  };
+  const noisyCities = Array.from({ length: 1300 }, (_, index) => ({
+    id: `city-safe-search-noisy-${index}`,
+    countryId: "country-ming",
+    name: `检索噪声城${index}`,
+    visibility: "public",
+    publicSummary: `普通地理噪声 ${index}`,
+    intelConfidence: 50
+  }));
+
+  const rows = buildSafeSearchRows(worldState, {
+    views: {
+      worldGeographyView: {
+        countries: [],
+        cities: noisyCities,
+        routes: [],
+        frontierZones: []
+      },
+      worldPeopleView: {
+        npcs: [],
+        households: [],
+        relationships: []
+      },
+      officialPostingsView: {
+        bureaus: [],
+        offices: [],
+        cityJurisdictions: [],
+        postings: [],
+        assessmentRecords: [],
+        transferRecords: []
+      }
+    }
+  });
+  const view = searchSafeWorldIndex(worldState, {
+    query: "稳价后果",
+    domain: "events",
+    pageSize: 5,
+    views: {
+      worldGeographyView: {
+        countries: [],
+        cities: noisyCities,
+        routes: [],
+        frontierZones: []
+      },
+      worldPeopleView: {
+        npcs: [],
+        households: [],
+        relationships: []
+      },
+      officialPostingsView: {
+        bureaus: [],
+        offices: [],
+        cityJurisdictions: [],
+        postings: [],
+        assessmentRecords: [],
+        transferRecords: []
+      }
+    }
+  });
+
+  assert.equal(rows.length, 1200);
+  assert.ok(rows.some((row) => row.sourceView === "domainConsequenceView.recentConsequences"));
+  assert.ok(view.results.some((result) =>
+    result.sourceView === "domainConsequenceView.recentConsequences" && /稳价后果/.test(`${result.title}${result.snippet}`)
+  ));
+  assert.doesNotMatch(JSON.stringify(view), /outcomeId|stateDelta|cityPolicyLedger|safe-search-domain-consequence-cap/);
+});
+
 test("GET /api/game/search/:sessionId returns safe snippets from JSON storage", async (t) => {
   const server = createTestServer();
   t.after(server.close);

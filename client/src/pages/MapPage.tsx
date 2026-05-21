@@ -1,6 +1,7 @@
 import { Link, useParams } from "react-router";
 import { useMemo, useState } from "react";
 import type { MapRuntimeEventEffect, MapRuntimeRef, MapRuntimeView } from "../api";
+import { DomainConsequenceSection } from "../components/DomainConsequenceSection";
 import { InkMapRuntimeBridge } from "../components/InkMapRuntimeBridge";
 import { markOverlayTrigger } from "../components/overlayFocus";
 import { isRunnableSessionId } from "../routes/sessionId";
@@ -14,6 +15,8 @@ const mapLayerLabels: Record<MapLayerKey, string> = {
   routes: "驿路",
   events: "近事"
 };
+
+const mapDomainConsequenceSourceTypes = ["city_policy", "military_diplomacy", "judicial_case"] as const;
 
 const unsafeMapTextFragments = [
   "/api/game/" + "state",
@@ -102,6 +105,8 @@ export function MapPage() {
   const displayPreferences = useUiStateStore((state) => state.displayPreferences);
   const setActionDraft = useUiStateStore((state) => state.setActionDraft);
   const mapRuntimeView = currentSession?.sessionId === sessionId ? currentSession.mapRuntimeView : null;
+  const domainConsequenceView = currentSession?.sessionId === sessionId ? currentSession.domainConsequenceView : null;
+  const hasCurrentSession = currentSession?.sessionId === sessionId;
   const isRunnable = isRunnableSessionId(sessionId);
   const refCount = mapRuntimeView?.refs?.length ?? 0;
   const routeCount = mapRuntimeView?.routes?.length ?? 0;
@@ -195,6 +200,16 @@ export function MapPage() {
           ) : (
             <p className="mapEmptyLedger">暂无公开近事；可保留地点与驿路图层，或回主卷推进一旬后再查看。</p>
           )}
+          <DomainConsequenceSection
+            domainConsequenceView={domainConsequenceView}
+            sourceTypes={mapDomainConsequenceSourceTypes}
+            title="舆图后果追踪"
+            summaryFallback="舆图页只并列显示公开领域后果与地图近事；坐标仍不进入 prompt、AI 工具或服务器裁决。"
+            emptyText="暂无可与舆图并列追踪的公开领域后果。"
+            maxItems={3}
+            runnable={hasCurrentSession}
+            onDraft={(text) => setActionDraft({ source: "map-runtime", targetPage: "game", text })}
+          />
         </aside>
       </div>
       <p className="mapRuntimeNote">

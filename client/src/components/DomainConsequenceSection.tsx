@@ -56,6 +56,8 @@ const unsafeDomainConsequenceFragments = [
   "militaryDiplomacyLedger",
   "judicialCaseLedger",
   "npcEconomyLedger",
+  "event_archive_index",
+  "prompt_retrieval_index",
   "safe_search_index",
   "safe_search_fts",
   "world_sessions",
@@ -184,6 +186,17 @@ function draftActions(view: JsonObject, items: readonly SafeConsequenceItem[], a
     }));
 }
 
+function capSummaryText(view: JsonObject) {
+  const caps = asRecord(view.caps);
+  const visible = cleanNumber(caps.visibleConsequences, 0);
+  const candidates = cleanNumber(caps.publicCandidates, visible);
+  if (!visible && !candidates) return undefined;
+  if (caps.capped === true && candidates > visible) {
+    return `当前显示近次 ${visible} 条，较早 ${candidates - visible} 条已由服务器按公开上限收束。`;
+  }
+  return `当前公开追踪 ${visible} 条。`;
+}
+
 export function DomainConsequenceSection({
   domainConsequenceView,
   sourceTypes,
@@ -197,12 +210,14 @@ export function DomainConsequenceSection({
   const view = asRecord(domainConsequenceView);
   const items = consequenceItems(view, sourceTypes, maxItems);
   const actions = draftActions(view, items, sourceTypes);
+  const capLine = capSummaryText(view);
   const canDraft = runnable !== false;
 
   return (
     <article className="scholarPanelCard domainConsequenceSection" aria-labelledby={`${title.replace(/\s+/g, "-")}-title`}>
       <h3 id={`${title.replace(/\s+/g, "-")}-title`}>{title}</h3>
       <p>{cleanDomainConsequenceText(view.summary, summaryFallback, 164)}</p>
+      {capLine ? <p className="domainConsequenceCapLine">{capLine}</p> : null}
       {items.length ? (
         <ul className="scholarPanelList domainConsequenceList">
           {items.map((item) => (

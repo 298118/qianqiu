@@ -39,7 +39,7 @@ export type LocalSurface =
   | "war-council"
   | "npc-profile"
   | "map-filter";
-export type ActionDraftSource = "manual" | "map-runtime" | "role-surface" | "exam";
+export type ActionDraftSource = "manual" | "map-runtime" | "role-surface" | "archive-view" | "exam";
 
 export type SafePlayerPayload = {
   readonly sessionId: string;

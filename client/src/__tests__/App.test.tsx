@@ -3157,6 +3157,29 @@ describe("S74.1 React client shell", () => {
             }
           },
           hiddenNotice: "mapRuntimeView 只含服务器安全投影。"
+        },
+        domainConsequenceView: {
+          schemaVersion: 1,
+          active: true,
+          summary: "当前有1条公开领域后果可追踪，已接入舆图入口。",
+          caps: {
+            visibleConsequences: 1,
+            publicCandidates: 3,
+            capped: true
+          },
+          recentConsequences: [{
+            id: "DC-map-consequence-1",
+            sourceType: "military_diplomacy",
+            sourceLabel: "军务外交",
+            kindLabel: "军务后果",
+            title: "边镇调粮余波",
+            publicSummary: "边镇粮道已公开归档，后续只作追踪线索。",
+            statusLabel: "已记入后果追踪",
+            generatedAtTurn: 12,
+            severity: 2,
+            affectedMetricLabels: ["军心"],
+            nextStep: "把边镇调粮余波列入军务后果追踪。"
+          }]
         }
       },
       status: "ready"
@@ -3186,6 +3209,16 @@ describe("S74.1 React client shell", () => {
       text: expect.stringContaining("科场近讯")
     });
 
+    expect(screen.getByText("舆图后果追踪")).toBeTruthy();
+    expect(screen.getByText("边镇调粮余波")).toBeTruthy();
+    expect(screen.getByText(/当前显示近次 1 条/)).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: "续记后果" }));
+    expect(useUiStateStore.getState().actionDraft).toMatchObject({
+      source: "map-runtime",
+      targetPage: "game",
+      text: "把边镇调粮余波列入军务后果追踪。"
+    });
+
     fireEvent.click(screen.getByLabelText("地点"));
     await waitFor(() => expect(screen.queryByRole("button", { name: "贡院" })).toBeNull());
     fireEvent.click(screen.getByLabelText("地点"));
@@ -3193,5 +3226,84 @@ describe("S74.1 React client shell", () => {
 
     expect(screen.getByRole("link", { name: "入局势簿" }).getAttribute("href")).toBe("/game/s74-map-session/archive");
     expect(document.body.textContent || "").not.toMatch(/raw audit|provider payload|hiddenNotes|OPENAI_API_KEY|data\/sessions|sk-test-secret|C:\\|path=/i);
+  });
+
+  it("renders archive route entries and domain consequence tracking from safe views", () => {
+    useGameSessionStore.setState({
+      currentSessionId: "s74-archive-session",
+      currentSession: {
+        sessionId: "s74-archive-session",
+        narrative: "史册已启。",
+        worldState: { player: { name: "顾衡", role: "official" } },
+        eventArchiveView: {
+          schemaVersion: 1,
+          pagination: { page: 1, pageSize: 12, totalItems: 2 },
+          counts: { total: 2, domain_consequence: 1 },
+          items: [{
+            id: "EA-domain-1",
+            sourceType: "domain_consequence",
+            sourceLabel: "后果追踪",
+            title: "平粜余波",
+            summary: "县中平粜后米价稍稳，已入公开后果追踪。",
+            dateLabel: "明1644年三月中旬",
+            statusLabel: "已记",
+            riskLabel: "民心",
+            relatedLabels: ["地方政策", "月报"]
+          }, {
+            id: "EA-polluted",
+            sourceType: "event_history",
+            sourceLabel: "近事",
+            title: "provider payload",
+            summary: "hiddenNotes raw audit C:\\secret\\archive.json",
+            dateLabel: "明1644年三月中旬",
+            statusLabel: "已记"
+          }]
+        },
+        domainConsequenceView: {
+          schemaVersion: 1,
+          active: true,
+          summary: "当前有1条公开领域后果可追踪，已接入史册。",
+          recentConsequences: [{
+            id: "DC-archive-1",
+            sourceType: "city_policy",
+            sourceLabel: "地方政策",
+            kindLabel: "政策后果",
+            title: "平粜余波",
+            publicSummary: "县中平粜后米价稍稳，已入公开后果追踪。",
+            statusLabel: "已记",
+            generatedAtTurn: 18,
+            severity: 1,
+            affectedMetricLabels: ["民心"],
+            nextStep: "把平粜余波列入月报与史册。"
+          }]
+        }
+      },
+      status: "ready"
+    });
+
+    renderRoute("/game/s74-archive-session/archive");
+
+    const archivePanel = document.querySelector(".archiveRoutePanel") as HTMLElement;
+    expect(archivePanel).toBeTruthy();
+    const archive = within(archivePanel);
+
+    expect(screen.getByRole("heading", { name: "史册" })).toBeTruthy();
+    expect(archive.getAllByText("平粜余波").length).toBeGreaterThan(0);
+    expect(archive.getByText("史册后果追踪")).toBeTruthy();
+    expect(archive.getAllByText("后果").length).toBeGreaterThan(0);
+    fireEvent.click(archive.getAllByRole("button", { name: "据此拟稿" })[0]);
+    expect(useUiStateStore.getState().actionDraft).toMatchObject({
+      source: "archive-view",
+      targetPage: "game",
+      text: expect.stringContaining("平粜余波")
+    });
+    fireEvent.click(archive.getByRole("button", { name: "续记后果" }));
+    expect(useUiStateStore.getState().actionDraft).toMatchObject({
+      source: "archive-view",
+      targetPage: "game",
+      text: "把平粜余波列入月报与史册。"
+    });
+    expect(archive.getByRole("link", { name: "入舆图" }).getAttribute("href")).toBe("/game/s74-archive-session/map");
+    expect(archivePanel.textContent || "").not.toMatch(/raw audit|provider payload|hiddenNotes|OPENAI_API_KEY|data\/sessions|C:\\|path=|stateDelta|evidenceRefs|outcomeId|cityPolicyLedger/i);
   });
 });

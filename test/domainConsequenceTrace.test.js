@@ -243,6 +243,129 @@ test("S88.6 domain consequence view rejects unapplied statuses, sensitive aliase
   }
 });
 
+test("S88.6 domain consequence high-volume cap keeps valid rows behind polluted tails", () => {
+  const worldState = createInitialState({ role: "magistrate", playerName: "高量知县" });
+  worldState.sessionId = sessionId;
+  worldState.turnCount = 80;
+  worldState.cityPolicyLedger = {
+    records: [
+      {
+        outcomeId: "city-valid-behind-tail",
+        policyType: "market_regulation",
+        policyLabel: "稳价旧案",
+        status: "accepted",
+        publicSummary: "城中稳价旧案仍有公开后果可追踪。",
+        stateDelta: { publicOrder: 2 },
+        appliedAtTurn: 70
+      },
+      ...Array.from({ length: 8 }, (_, index) => ({
+        outcomeId: `city-tail-pending-${index}`,
+        policyType: "relief",
+        policyLabel: "尾部拟议",
+        status: index % 2 ? "pending" : "rejected",
+        publicSummary: "尾部拟议尚未成为公开后果。",
+        stateDelta: { publicOrder: 1 },
+        appliedAtTurn: 71 + index
+      })),
+      {
+        outcomeId: "city-tail-polluted",
+        policyType: "relief",
+        policyLabel: "尾部污染",
+        status: "accepted",
+        publicSummary: "providerPayload rawEvidence privateResultRefs hiddenDossier",
+        stateDelta: { publicOrder: 1 },
+        appliedAtTurn: 80
+      }
+    ]
+  };
+
+  const view = buildDomainConsequenceView(worldState);
+
+  assert.equal(view.active, true);
+  assert.equal(view.counts.city_policy, 1);
+  assert.ok(view.recentConsequences.some((item) => item.title === "稳价旧案"));
+  assertNoInternalConsequenceLeak(view);
+  assert.doesNotMatch(JSON.stringify(view), /city-tail-pending|city-tail-polluted|尾部拟议|尾部污染/);
+});
+
+test("S88.6 domain consequence source cap keeps newest applied rows from out-of-order legacy ledgers", () => {
+  const worldState = createInitialState({ role: "magistrate", playerName: "乱序知县" });
+  worldState.sessionId = sessionId;
+  worldState.turnCount = 100;
+  worldState.cityPolicyLedger = {
+    records: [
+      {
+        outcomeId: "city-newest-out-of-order",
+        policyType: "market_regulation",
+        policyLabel: "乱序新案",
+        status: "accepted",
+        publicSummary: "乱序旧账中最新稳价后果仍应进入公开追踪。",
+        stateDelta: { publicOrder: 4 },
+        appliedAtTurn: 99
+      },
+      ...Array.from({ length: 5 }, (_, index) => ({
+        outcomeId: `city-older-out-of-order-${index}`,
+        policyType: "relief",
+        policyLabel: `旧案${index}`,
+        status: "accepted",
+        publicSummary: `旧账第${index}条公开后果。`,
+        stateDelta: { publicOrder: 1 },
+        appliedAtTurn: 10 + index
+      }))
+    ]
+  };
+
+  const view = buildDomainConsequenceView(worldState);
+  const cityConsequences = view.recentConsequences.filter((item) => item.sourceType === "city_policy");
+
+  assert.equal(cityConsequences.length, 4);
+  assert.ok(cityConsequences.some((item) => item.title === "乱序新案"));
+  assert.ok(cityConsequences.every((item) => item.generatedAtTurn >= 11));
+  assertNoInternalConsequenceLeak(view);
+});
+
+test("S88.6 domain consequence view exposes safe cap metadata under high volume", () => {
+  const worldState = createInitialState({ role: "general", playerName: "高量将领" });
+  worldState.sessionId = sessionId;
+  worldState.turnCount = 90;
+  const makeRecord = (source, index) => ({
+    outcomeId: `${source}-high-volume-${index}`,
+    policyType: "market_regulation",
+    policyLabel: `${source}后果${index}`,
+    actionKind: "resupply",
+    actionLabel: `${source}后果${index}`,
+    caseAction: "mediate",
+    status: "accepted",
+    publicSummary: `${source}公开后果第${index}条，供史册与舆图追踪。`,
+    stateDelta: { publicOrder: index % 3, armyMorale: index % 2 },
+    playerDelta: { performanceMerit: 1 },
+    appliedAtTurn: 70 + index
+  });
+  worldState.cityPolicyLedger = { records: Array.from({ length: 6 }, (_, index) => makeRecord("city", index + 1)) };
+  worldState.militaryDiplomacyLedger = { records: Array.from({ length: 6 }, (_, index) => makeRecord("military", index + 1)) };
+  worldState.judicialCaseLedger = { records: Array.from({ length: 6 }, (_, index) => makeRecord("judicial", index + 1)) };
+  ensureNpcEconomyLedgerState(worldState).recentEvents = [];
+
+  const view = buildDomainConsequenceView(worldState);
+  const archiveView = buildEventArchiveView(worldState, { pageSize: 50 });
+
+  assert.equal(view.recentConsequences.length, 8);
+  assert.equal(view.caps.recentConsequences, 8);
+  assert.equal(view.caps.sourceRowsPerLedger, 4);
+  assert.equal(view.caps.publicCandidates, 12);
+  assert.equal(view.caps.visibleConsequences, 8);
+  assert.equal(view.caps.capped, true);
+  assert.ok(view.trackingEntryPoints.some((entry) => entry.targetRouteId === "map"));
+  assert.ok(view.trackingEntryPoints.some((entry) => entry.targetRouteId === "archive"));
+  assert.equal(archiveView.counts.domain_consequence, 6);
+  assert.equal(
+    archiveView.items.filter((item) => item.sourceType === "domain_consequence").length,
+    6
+  );
+  assertNoInternalConsequenceLeak(view);
+  assertNoInternalConsequenceLeak(archiveView.items.filter((item) => item.sourceType === "domain_consequence"));
+});
+
 test("S88.6 public consequence refs feed archive, world thread, and monthly briefing", () => {
   const worldState = seedDomainConsequences();
   ensureWorldThreadState(worldState);
