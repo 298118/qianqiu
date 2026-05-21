@@ -519,7 +519,7 @@ S84 前端专项额外验收入口：
 - AI/权限：AI 只能读取 `courtConsequenceView.pendingSources` / `recentSignals`、事件档案、`worldThreadView`、月报和公开奏议 refs，生成补证、考成观察、风宪关注、月报摘录或世界议程草稿；不能调用任免、处分、财赋、奏议终局、风宪定案、内部查询、持久化写入或内部状态工具。浏览器按钮仍只写本地行动草稿；普通回合服务器只写受限 `official_court_consequence` 中间态和 bounded career dossier note。
 - 验证：已按本文件“本轮 S88.4 长期官场后果信号切片验证口径”完成语法检查、official/court-response/event/world-thread/monthly focused Node tests（32 项）、React scaffold tests（37 项）、server/client typecheck、全量 Vitest（68 项）、client build、`npm run smoke:exam-s69`、`AI_PROVIDER=mock npm run smoke:browser`、docs governance、documentation governance、完整 `npm test`（1024 项）和 `git diff --check`；diff check 退出码 0，仅打印未改动归档/QA 文件既有 CRLF 提示。
 - 子代理：Kepler 只读梳理后端，建议独立 `officialCourtConsequences` 账本与 `courtConsequenceView`，并提醒长期信号不得放大为终局任免/弹劾结果；Ohm 只读梳理前端，建议把长期后果放在官员“考成与弹劾”和皇帝“赏罚预留”，按钮保持 draft-only。本轮实现已采纳。Kepler 提交前只读复审未发现 P0/P1/P2，建议后续补连续月末不重复同一 source 与旧存档 raw consequence 污染全链路过滤回归。
-- 提交：实现提交待回填。
+- 提交：实现提交 `09f9f83b`。本次哈希回填为低风险纯文档维护，不改代码、API/schema、运行时行为、提示词或验证工具；按项目规则跳过额外子代理复审。
 - 下一步：继续 S88.4 皇帝/部院更长链路，随后进入 S88.5 六身份循环矩阵或 S88.6 跨域后果 refs；保持完整 `scholar -> child_exam -> provincial_exam -> metropolitan_exam -> palace_exam -> official` smoke 为第一验收入口。
 
 ### 2026-05-20：完成 S87.1-S87.7 route/API 响应类型覆盖
