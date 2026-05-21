@@ -1708,6 +1708,16 @@ router.post("/npc-interaction/:sessionId", async (req, res, next) => {
       const recorded = recordNpcInteraction(worldState, req.body, dialogue, relationshipAction
         ? { resolutionView: relationshipAction.resolutionView }
         : {});
+      const actorMemory = relationshipAction
+        ? applyTurnActorMemoryUpdates(worldState, {
+            npcInteractionRecords: [recorded.record]
+          })
+        : {
+          appliedCount: 0,
+          reinforcedCount: 0,
+          rejectedCount: 0,
+          rejectedReasons: []
+        };
       const responseErrors = [
         ...recorded.errors,
         ...(relationshipAction && !relationshipAction.ok ? relationshipAction.errors : [])
@@ -1727,7 +1737,15 @@ router.post("/npc-interaction/:sessionId", async (req, res, next) => {
         npcDetailView: attachRelationshipActionEligibilityToDetail(
           worldState,
           buildNpcDetailView(worldState, validation.normalized.npcId)
-        )
+        ),
+        actorMemory: {
+          appliedCount: actorMemory.appliedCount,
+          reinforcedCount: actorMemory.reinforcedCount,
+          rejectedCount: actorMemory.rejectedCount,
+          rejectedReasons: actorMemory.rejectedReasons
+        },
+        actorMemoryView: buildActorMemoryView(worldState),
+        eventArchiveView: buildEventArchiveView(worldState)
       });
     });
     res.status(payload.accepted ? 200 : 400).json(payload);

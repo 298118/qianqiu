@@ -465,6 +465,9 @@ export type NpcInteractionResponse = RouteEnvelope & {
   readonly npcActionResolutionView?: JsonObject | null;
   readonly npcInteractionView: JsonObject;
   readonly npcDetailView?: JsonObject | null;
+  readonly actorMemory?: JsonObject;
+  readonly actorMemoryView?: JsonObject;
+  readonly eventArchiveView?: JsonObject;
 };
 
 export type TradeResponse = RouteEnvelope & {

@@ -772,6 +772,94 @@ function activeRequestTraceTags(trace = {}, record = {}) {
   ], ACTOR_MEMORY_LIMITS.maxTags, 40);
 }
 
+function relationshipActionTraceType(trace = {}, record = {}) {
+  const status = cleanId(trace.status || record.serverAdjudication?.status, "");
+  const actionType = cleanId(trace.actionType || record.actionType || record.actionKind, "");
+  if (status === "server_blocked") return "grievance";
+  if (actionType === "courtship" || actionType === "marriage") return "obligation";
+  if (actionType === "duel") return "impression";
+  return "favor";
+}
+
+function relationshipActionTraceTags(trace = {}, record = {}) {
+  return cleanList([
+    "NPC交游",
+    "服务器裁决",
+    record.actionKind || record.actionType || trace.actionType,
+    record.serverAdjudication?.actionLabel || trace.actionLabel,
+    ...(Array.isArray(record.riskTags) ? record.riskTags : []),
+    ...(Array.isArray(trace.riskTags) ? trace.riskTags : []),
+    cleanId(trace.status || record.serverAdjudication?.status, "") === "server_blocked" ? "已挡下" : ""
+  ], ACTOR_MEMORY_LIMITS.maxTags, 40);
+}
+
+function memoryProposalsFromNpcRelationshipActionTraces(worldState = {}, npcInteractionRecords = []) {
+  const records = Array.isArray(npcInteractionRecords) ? npcInteractionRecords : [];
+  if (!records.length) return [];
+  const labels = actorLabelMap(worldState);
+  const ledgerRecords = Array.isArray(worldState.npcInteractionLedger?.records)
+    ? worldState.npcInteractionLedger.records
+    : [];
+
+  return records
+    .map((record) => {
+      if (!isPlainObject(record)) return null;
+      const trace = isPlainObject(record.resolverTrace) ? record.resolverTrace : {};
+      if (trace.resolver !== "npc_relationship_action_resolver") return null;
+      const traceRef = cleanId(trace.publicResolutionRef, "");
+      const recordId = cleanId(record.recordId, traceRef);
+      const npcId = cleanId(record.npcId, "");
+      if (!traceRef || !recordId || !npcId) return null;
+      const ledgerMatch = ledgerRecords.find((ledgerRecord) => {
+        if (!isPlainObject(ledgerRecord)) return false;
+        const ledgerTrace = isPlainObject(ledgerRecord.resolverTrace) ? ledgerRecord.resolverTrace : {};
+        return ledgerTrace.resolver === "npc_relationship_action_resolver" &&
+          cleanId(ledgerRecord.recordId, "") === recordId &&
+          cleanId(ledgerTrace.publicResolutionRef, "") === traceRef &&
+          cleanId(ledgerRecord.npcId, "") === npcId;
+      });
+      if (!ledgerMatch) return null;
+      const sourceTrace = isPlainObject(ledgerMatch.resolverTrace) ? ledgerMatch.resolverTrace : {};
+      const actorId = actorIdFromNpcRosterId(ledgerMatch.npcId);
+      const name = cleanText(ledgerMatch.npcName || labels.get(actorId), "此人", 48);
+      const actionLabel = cleanText(
+        ledgerMatch.serverAdjudication?.actionLabel ||
+          sourceTrace.actionLabel ||
+          ledgerMatch.actionKind ||
+          ledgerMatch.actionType,
+        "交游",
+        40
+      );
+      const outcomeSummary = cleanText(ledgerMatch.outcomeSummary, "", 120);
+      const traceStatus = cleanId(sourceTrace.status || ledgerMatch.serverAdjudication?.status, "");
+      const type = relationshipActionTraceType(sourceTrace, ledgerMatch);
+      const summary = traceStatus === "server_blocked"
+        ? `${name}记得${actionLabel}被服务器规则挡下，后续不能绕过礼法与资源边界。`
+        : outcomeSummary
+          ? `${name}记得与玩家的${actionLabel}已由服务器裁决：${outcomeSummary}`
+          : `${name}记得与玩家的一桩${actionLabel}已登记，后续只按公开规则留痕。`;
+      return {
+        actorId,
+        type,
+        visibility: "player_visible",
+        subjectType: "player",
+        subjectId: "P1",
+        summary,
+        salience: type === "grievance" ? 74 : type === "obligation" ? 70 : 64,
+        confidence: 0.78,
+        sourceType: "npc_relationship_action_trace",
+        sourceLabel: "NPC 交游裁决",
+        sourceRefs: [
+          npcMemorySourceRef("npcInteractionView", ledgerMatch.recordId, actionLabel),
+          npcMemorySourceRef("npcRelationshipActionResolverTrace", sourceTrace.publicResolutionRef, "服务器裁决")
+        ],
+        tags: relationshipActionTraceTags(sourceTrace, ledgerMatch),
+        requireKnownActor: true
+      };
+    })
+    .filter((proposal) => proposal?.actorId && proposal.summary);
+}
+
 function memoryProposalsFromNpcActiveRequestTraces(worldState = {}, npcActiveRequests = {}) {
   const traces = (Array.isArray(npcActiveRequests?.outcome?.resolutionTraces)
     ? npcActiveRequests.outcome.resolutionTraces
@@ -1096,6 +1184,7 @@ function collectTurnActorMemoryProposalResults(worldState = {}, context = {}) {
       .filter(Boolean),
     ...memoryProposalsFromActiveRequest(context.activeNpcRequest),
     ...memoryProposalsFromNpcActiveRequestTraces(worldState, context.npcActiveRequests),
+    ...memoryProposalsFromNpcRelationshipActionTraces(worldState, context.npcInteractionRecords),
     ...memoryProposalsFromMonthlyBriefing(context.playerMonthlyBriefing),
     ...npcMindProposals,
     ...npcBackgroundProposals

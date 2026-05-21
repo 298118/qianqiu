@@ -662,6 +662,9 @@ export type NpcInteractionResponse = {
   readonly npcActionResolutionView?: JsonObject | null;
   readonly npcInteractionView: NpcInteractionView;
   readonly npcDetailView?: NpcDetailView;
+  readonly actorMemory?: JsonObject;
+  readonly actorMemoryView?: JsonObject;
+  readonly eventArchiveView?: JsonObject;
 };
 
 export type TradeRecordView = {

@@ -5,6 +5,8 @@ const { createInitialState } = require("../src/game/initialState");
 const { createTurnAuditRecords } = require("../src/game/audit");
 const { applyRelationshipChanges } = require("../src/game/relationships");
 const { runNpcActiveRequestStep } = require("../src/game/npcActiveRequests");
+const { recordNpcInteraction } = require("../src/game/npcInteractions");
+const { resolveNpcRelationshipAction } = require("../src/game/npcRelationshipActions");
 const {
   applyActorMemoryUpdate,
   applyExamNetworkMemoryUpdates,
@@ -262,6 +264,136 @@ test("S88.7 NPC active request trace memory rejects forged invisible NPC refs", 
   assert.equal(result.appliedCount, 0);
   assert.ok(result.rejectedReasons.includes("unknown_or_invisible_actor"));
   assert.doesNotMatch(JSON.stringify(buildActorMemoryView(worldState)), /invented-hidden-target|npc_active_request_trace/);
+});
+
+test("S88.7 NPC relationship action traces create immediate visible memories from safe records", () => {
+  const worldState = createInitialState({ role: "magistrate", playerName: "交游记忆" });
+  worldState.turnCount = 3;
+  const request = {
+    npcId: "npc:magistrate:bailiff-zhou",
+    actionType: "duel",
+    utterance: "只作公事切磋，不许伤人。",
+    winner: "player",
+    resourceDelta: { silver: 9999 }
+  };
+  const relationshipAction = resolveNpcRelationshipAction(worldState, request, {
+    dialogueText: "周快手抱拳应诺。"
+  });
+  const recorded = recordNpcInteraction(worldState, request, {
+    dialogueText: "周快手抱拳应诺。",
+    mood: "谨慎"
+  }, {
+    resolutionView: relationshipAction.resolutionView
+  });
+  const result = applyTurnActorMemoryUpdates(worldState, {
+    npcInteractionRecords: [recorded.record]
+  });
+  const view = buildActorMemoryView(worldState);
+  const serialized = JSON.stringify({ result, view });
+
+  assert.equal(relationshipAction.ok, true);
+  assert.equal(recorded.record.resolverTrace.resolver, "npc_relationship_action_resolver");
+  assert.equal(result.appliedCount, 1);
+  assert.match(serialized, /npc_relationship_action_trace/);
+  assert.match(serialized, /周快手|切磋|服务器裁决/);
+  assert.match(serialized, /npcInteractionView|npcRelationshipActionResolverTrace/);
+  assert.doesNotMatch(
+    serialized,
+    /hiddenDossier|privateSignalTags|providerPayload|rawProvider|world_sessions|resourceDelta|winner|sk-[A-Za-z0-9_-]{6,}/
+  );
+});
+
+test("S88.7 NPC relationship action trace memory rejects forged invisible records", () => {
+  const worldState = createInitialState({ role: "scholar", playerName: "伪造交游记忆" });
+  const forgedRecord = {
+    recordId: "npc-interaction:forged",
+    npcId: "npc:invented-hidden-target",
+    npcName: "伪造人物",
+    actionType: "debate",
+    outcomeSummary: "伪造人物试图借交游入账。",
+    serverAdjudication: {
+      status: "server_adjudicated",
+      actionLabel: "论道"
+    },
+    resolverTrace: {
+      resolver: "npc_relationship_action_resolver",
+      publicResolutionRef: "npc-relationship-resolution:forged:debate:1",
+      actionType: "debate",
+      actionLabel: "论道",
+      status: "server_adjudicated",
+      publicSourceRefs: ["npcRosterView:npc:invented-hidden-target"]
+    }
+  };
+  worldState.npcInteractionLedger = { records: [forgedRecord] };
+  const result = applyTurnActorMemoryUpdates(worldState, {
+    npcInteractionRecords: [forgedRecord]
+  });
+
+  assert.equal(result.appliedCount, 0);
+  assert.ok(result.rejectedReasons.includes("unknown_or_invisible_actor"));
+  assert.doesNotMatch(JSON.stringify(buildActorMemoryView(worldState)), /invented-hidden-target|npc_relationship_action_trace/);
+});
+
+test("S88.7 NPC relationship action trace memory requires a matching interaction ledger record", () => {
+  const worldState = createInitialState({ role: "scholar", playerName: "伪造可见交游" });
+  const result = applyTurnActorMemoryUpdates(worldState, {
+    npcInteractionRecords: [{
+      recordId: "npc-interaction:not-in-ledger",
+      npcId: "C01",
+      npcName: "顾文衡",
+      actionType: "debate",
+      outcomeSummary: "伪造的论道记录试图直接写入记忆。",
+      serverAdjudication: {
+        status: "server_adjudicated",
+        actionLabel: "论道"
+      },
+      resolverTrace: {
+        resolver: "npc_relationship_action_resolver",
+        publicResolutionRef: "npc-relationship-resolution:C01:debate:9",
+        actionType: "debate",
+        actionLabel: "论道",
+        status: "server_adjudicated",
+        publicSourceRefs: ["npcRosterView:C01"]
+      }
+    }]
+  });
+
+  assert.equal(result.appliedCount, 0);
+  assert.doesNotMatch(JSON.stringify(buildActorMemoryView(worldState)), /npc_relationship_action_trace|伪造的论道记录/);
+});
+
+test("S88.7 NPC relationship action trace memory uses canonical ledger records after ref match", () => {
+  const worldState = createInitialState({ role: "magistrate", playerName: "交游防伪" });
+  const request = {
+    npcId: "npc:magistrate:bailiff-zhou",
+    actionType: "duel",
+    utterance: "仍作公事切磋。"
+  };
+  const relationshipAction = resolveNpcRelationshipAction(worldState, request, {
+    dialogueText: "周快手点头。"
+  });
+  const recorded = recordNpcInteraction(worldState, request, {
+    dialogueText: "周快手点头。",
+    mood: "谨慎"
+  }, {
+    resolutionView: relationshipAction.resolutionView
+  });
+  const tamperedRecord = {
+    ...recorded.record,
+    outcomeSummary: "同 ID 伪造摘要进入记忆。",
+    serverAdjudication: {
+      ...recorded.record.serverAdjudication,
+      actionLabel: "伪造交游"
+    }
+  };
+  const result = applyTurnActorMemoryUpdates(worldState, {
+    npcInteractionRecords: [tamperedRecord]
+  });
+  const serialized = JSON.stringify(buildActorMemoryView(worldState));
+
+  assert.equal(result.appliedCount, 1);
+  assert.match(serialized, /切磋只登记为待复核武艺较量/);
+  assert.doesNotMatch(serialized, /同 ID 伪造摘要进入记忆|伪造交游/);
 });
 
 test("S70.12 exam network creates durable same-year and seat-teacher memories", () => {

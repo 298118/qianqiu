@@ -181,6 +181,18 @@ test("S83/S84 safety APIs expose NPC, inventory, trade and delegated task views 
   assert.ok(socialPayload.npcActionResolutionView.ignoredClientResultFields.includes("winner"));
   assert.equal(socialPayload.npcInteractionView.items[0].resolverTrace.resolver, "npc_relationship_action_resolver");
   assert.ok(socialPayload.npcInteractionView.items[0].outcomeSummary);
+  assert.equal(socialPayload.actorMemory.appliedCount, 1);
+  assert.ok(
+    socialPayload.actorMemoryView.actors.some((actor) =>
+      actor.memories.some((memory) => memory.sourceType === "npc_relationship_action_trace")
+    )
+  );
+  assert.ok(socialPayload.eventArchiveView.counts.npc_relationship_action >= 1);
+  assert.ok(socialPayload.eventArchiveView.counts.actor_memory >= 1);
+  assert.doesNotMatch(
+    JSON.stringify(socialPayload),
+    /"hiddenDossier":|"privateSignalTags":|"trueAssets":|"secretRelationships":|"rawProviderPayload":|"providerPayload":|"rawLedger":|"resourceDelta":|sk-[A-Za-z0-9_-]{6,}/
+  );
 
   const playerStateResponse = await fetch(`${server.baseUrl}/api/game/player-state/${worldState.sessionId}`);
   const playerStatePayload = await playerStateResponse.json();

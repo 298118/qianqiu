@@ -512,20 +512,39 @@ export const useGameSessionStore = create<GameSessionState>((set) => ({
     set({ npcMutationStatus: "loading", error: null });
     try {
       const payload = await qianqiuApi.interactWithNpc(sessionId, input);
-      set((state) => ({
-        lastNpcInteraction: payload,
-        npcDetail: payload.npcDetailView && state.npcDetail
+      set((state) => {
+        const sessionMatches = state.currentSession?.sessionId === payload.sessionId;
+        const activeSessionMatches = state.currentSessionId === payload.sessionId || sessionMatches;
+        const npcDetailMatches = Boolean(
+          payload.npcDetailView &&
+          state.npcDetail?.sessionId === payload.sessionId &&
+          state.npcDetail.npcDetailView.npcId === payload.npcDetailView.npcId
+        );
+        const npcRosterMatches = state.npcRoster?.sessionId === payload.sessionId;
+        const currentSession = sessionMatches
           ? {
-              ...state.npcDetail,
-              npcDetailView: payload.npcDetailView,
-              npcInteractionView: payload.npcInteractionView
+              ...state.currentSession,
+              npcInteractionView: payload.npcInteractionView,
+              actorMemoryView: payload.actorMemoryView ?? state.currentSession.actorMemoryView,
+              eventArchiveView: payload.eventArchiveView ?? state.currentSession.eventArchiveView
             }
-          : state.npcDetail,
-        npcRoster: state.npcRoster
-          ? { ...state.npcRoster, npcInteractionView: payload.npcInteractionView }
-          : state.npcRoster,
-        npcMutationStatus: payload.accepted ? "ready" : "error"
-      }));
+          : state.currentSession;
+        return {
+          currentSession,
+          lastNpcInteraction: activeSessionMatches ? payload : state.lastNpcInteraction,
+          npcDetail: npcDetailMatches && payload.npcDetailView && state.npcDetail
+            ? {
+                ...state.npcDetail,
+                npcDetailView: payload.npcDetailView,
+                npcInteractionView: payload.npcInteractionView
+              }
+            : state.npcDetail,
+          npcRoster: npcRosterMatches
+            ? { ...state.npcRoster, npcInteractionView: payload.npcInteractionView }
+            : state.npcRoster,
+          npcMutationStatus: payload.accepted ? "ready" : "error"
+        };
+      });
       return payload;
     } catch (error) {
       set({ error: toErrorMessage(error), npcMutationStatus: "error" });

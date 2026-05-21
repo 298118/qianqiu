@@ -8,7 +8,7 @@ import {
 } from "./displayPreferenceStorage";
 import { extractSafePlayerPayload, useUiStateStore } from "./uiState";
 import { useGameSessionStore } from "./gameSessionState";
-import type { ExamSubmitResponse, PlayerStateResponse, StartGameResponse, TurnResponse } from "../api";
+import type { ExamSubmitResponse, NpcInteractionResponse, PlayerStateResponse, StartGameResponse, TurnResponse } from "../api";
 
 const startPayload: StartGameResponse = {
   sessionId: "11111111-1111-4111-8111-111111111111",
@@ -96,7 +96,13 @@ afterEach(() => {
     currentSessionId: null,
     error: null,
     lastExamResult: null,
+    lastNpcInteraction: null,
     lastTurn: null,
+    npcDetail: null,
+    npcDetailStatus: "idle",
+    npcMutationStatus: "idle",
+    npcRoster: null,
+    npcRosterStatus: "idle",
     saves: [],
     savesStatus: "idle",
     settingsStatus: "idle",
@@ -507,5 +513,128 @@ describe("S74.3 UI state store", () => {
       source: "exam-submit",
       player: { examRank: "秀才" }
     });
+  });
+
+  it("merges NPC interaction memory and archive views into the current session", async () => {
+    const currentSession: PlayerStateResponse = {
+      ...playerStatePayload,
+      npcInteractionView: { items: [] },
+      actorMemoryView: { actors: [] },
+      eventArchiveView: { items: [] }
+    };
+    const interactionPayload: NpcInteractionResponse = {
+      sessionId: playerStatePayload.sessionId,
+      accepted: true,
+      npcDialogueView: {
+        npcId: "npc:magistrate:bailiff-zhou",
+        dialogueText: "周快手抱拳应诺。",
+        mood: "谨慎",
+        followUpSuggestions: []
+      },
+      npcInteractionView: {
+        items: [{
+          recordId: "npc-interaction:1",
+          npcId: "npc:magistrate:bailiff-zhou",
+          npcName: "周快手",
+          actionType: "duel",
+          outcomeSummary: "切磋只登记为待复核武艺较量。"
+        }]
+      },
+      actorMemory: {
+        appliedCount: 1,
+        reinforcedCount: 0,
+        rejectedCount: 0,
+        rejectedReasons: []
+      },
+      actorMemoryView: {
+        actors: [{
+          actorId: "npc:magistrate:bailiff-zhou",
+          memories: [{ sourceType: "npc_relationship_action_trace", summary: "周快手记得切磋已由服务器裁决。" }]
+        }]
+      },
+      eventArchiveView: {
+        items: [{ sourceType: "actor_memory", summary: "周快手记得切磋已由服务器裁决。" }]
+      }
+    };
+    installFetchResponses(interactionPayload);
+    useGameSessionStore.setState({
+      currentSession,
+      currentSessionId: playerStatePayload.sessionId,
+      npcRoster: {
+        sessionId: playerStatePayload.sessionId,
+        npcRosterView: { items: [] },
+        npcInteractionView: { items: [] }
+      }
+    });
+
+    await useGameSessionStore.getState().interactWithNpc(playerStatePayload.sessionId, {
+      npcId: "npc:magistrate:bailiff-zhou",
+      actionType: "duel",
+      utterance: "只作公事切磋。"
+    });
+
+    const state = useGameSessionStore.getState();
+    expect(state.lastNpcInteraction?.actorMemory).toMatchObject({ appliedCount: 1 });
+    expect(state.currentSession?.actorMemoryView).toEqual(interactionPayload.actorMemoryView);
+    expect(state.currentSession?.eventArchiveView).toEqual(interactionPayload.eventArchiveView);
+    expect(state.currentSession?.npcInteractionView).toEqual(interactionPayload.npcInteractionView);
+    expect(state.npcRoster?.npcInteractionView).toEqual(interactionPayload.npcInteractionView);
+    expect(JSON.stringify(state.currentSession)).not.toMatch(/hiddenDossier|providerPayload|rawLedger|OPENAI_API_KEY/);
+  });
+
+  it("does not merge stale NPC interaction payloads into another session", async () => {
+    const activeSessionId = "55555555-5555-4555-8555-555555555555";
+    const activeSession: PlayerStateResponse = {
+      ...playerStatePayload,
+      sessionId: activeSessionId,
+      actorMemoryView: { actors: [{ actorId: "npc:active", memories: [] }] },
+      eventArchiveView: { items: [{ sourceType: "active_session" }] },
+      npcInteractionView: { items: [{ recordId: "active-record" }] }
+    };
+    const stalePayload: NpcInteractionResponse = {
+      sessionId: playerStatePayload.sessionId,
+      accepted: true,
+      npcInteractionView: { items: [{ recordId: "stale-record" }] },
+      actorMemory: { appliedCount: 1 },
+      actorMemoryView: { actors: [{ actorId: "npc:stale", memories: [] }] },
+      eventArchiveView: { items: [{ sourceType: "stale_session" }] },
+      npcDetailView: {
+        npcId: "npc:stale",
+        displayName: "旧案 NPC"
+      }
+    };
+    installFetchResponses(stalePayload);
+    useGameSessionStore.setState({
+      currentSession: activeSession,
+      currentSessionId: activeSessionId,
+      lastNpcInteraction: null,
+      npcMutationStatus: "ready",
+      npcRoster: {
+        sessionId: activeSessionId,
+        npcRosterView: { items: [] },
+        npcInteractionView: { items: [{ recordId: "active-roster-record" }] }
+      },
+      npcDetail: {
+        sessionId: activeSessionId,
+        npcDetailView: { npcId: "npc:active", displayName: "当前 NPC" },
+        npcInteractionView: { items: [{ recordId: "active-detail-record" }] }
+      }
+    });
+
+    await useGameSessionStore.getState().interactWithNpc(playerStatePayload.sessionId, {
+      npcId: "npc:stale",
+      actionType: "duel",
+      utterance: "旧案返回。"
+    });
+
+    const state = useGameSessionStore.getState();
+    expect(state.lastNpcInteraction).toBeNull();
+    expect(state.npcMutationStatus).toBe("ready");
+    expect(state.currentSession?.actorMemoryView).toEqual(activeSession.actorMemoryView);
+    expect(state.currentSession?.eventArchiveView).toEqual(activeSession.eventArchiveView);
+    expect(state.currentSession?.npcInteractionView).toEqual(activeSession.npcInteractionView);
+    expect(state.npcRoster?.npcInteractionView?.items?.[0]?.recordId).toBe("active-roster-record");
+    expect(state.npcDetail?.npcDetailView.npcId).toBe("npc:active");
+    expect(state.npcDetail?.npcInteractionView?.items?.[0]?.recordId).toBe("active-detail-record");
   });
 });
