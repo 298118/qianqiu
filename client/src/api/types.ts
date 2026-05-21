@@ -251,6 +251,7 @@ export type SafeRouteViews = {
   readonly officialCareerView?: OfficialCareerView;
   readonly courtConsequenceView?: CourtConsequenceView;
   readonly courtResponseView?: CourtResponseView;
+  readonly domainConsequenceView?: JsonObject;
   readonly appointmentTrackView?: JsonObject;
   readonly officialPostingsView?: JsonObject;
   readonly localAffairsDocketView?: JsonObject;

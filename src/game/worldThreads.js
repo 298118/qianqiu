@@ -3,6 +3,7 @@ const { buildLongTermEventView } = require("./longTermEvents");
 const { buildOfficialCareerView } = require("./officialCareer");
 const { buildOfficialCourtConsequenceView } = require("./officialCourtConsequences");
 const { buildOfficialCourtResponseView } = require("./officialCourtResponse");
+const { buildDomainConsequenceView } = require("./domainConsequenceTrace");
 const { getBureau, getOffice } = require("./officialCatalog");
 const { buildRoleWorldCouplingView } = require("./roleWorldCoupling");
 const { buildWorldEntityView } = require("./worldEntities");
@@ -26,6 +27,7 @@ const THREAD_KINDS = new Set([
   "official_court_follow_up",
   "official_court_consequence",
   "official_court_response",
+  "domain_consequence",
   "official_outcome",
   "role_impact",
   "world_entity_pressure"
@@ -37,6 +39,7 @@ const SOURCE_TYPES = new Set([
   "official_court_follow_up",
   "official_court_consequence",
   "official_court_response",
+  "domain_consequence",
   "official_outcome",
   "role_world_coupling",
   "world_entity",
@@ -53,6 +56,7 @@ const SOURCE_LABELS = {
   official_court_follow_up: "奏议批复",
   official_court_consequence: "官场后果",
   official_court_response: "奏议回应",
+  domain_consequence: "领域后果",
   official_outcome: "官场结果",
   role_world_coupling: "身份联动",
   world_entity: "世界实体",
@@ -145,6 +149,11 @@ const THREAD_KIND_DETAILS = {
     interventions: ["合入考成观察", "复核风宪风险", "补公开凭据", "摘入官职月报"],
     followUp: "官场后果信号只是公开中间态，官缺、赏罚、财赋、奏议终局和风宪成案仍由服务器规则结算。"
   },
+  domain_consequence: {
+    goal: "追踪服务器已裁决的财政、军务、刑名和人物经济后续牵连。",
+    interventions: ["查看公开后果", "补证或回禀", "顺着来源系统继续行动"],
+    followUp: "领域后果只提示余波；财政、军务、刑名、NPC 经济和关系变化仍回到原裁决器或月结规则。"
+  },
   official_outcome: {
     goal: "观察任免升降后的官场余波与履历影响。",
     interventions: ["经营同年上官", "谨守清操", "顺势整理履历"],
@@ -168,6 +177,7 @@ const SOURCE_INTERVENTION_HINTS = {
   official_court_follow_up: ["顺着批复补证或覆奏"],
   official_court_consequence: ["合入考成或月报观察"],
   official_court_response: ["只作回应草稿或补据"],
+  domain_consequence: ["按来源系统继续追踪"],
   official_outcome: ["关注官场余波"],
   role_world_coupling: ["顺着身份职责补一回合"],
   world_entity: ["按实体提示介入"],
@@ -746,6 +756,30 @@ function deriveOfficialCourtConsequenceThreads(worldState) {
   })).filter(Boolean);
 }
 
+function deriveDomainConsequenceThreads(worldState) {
+  const view = buildDomainConsequenceView(worldState);
+  if (!view.active) return [];
+  return (view.recentConsequences || []).slice(-4).map((consequence) => makeThread(worldState, {
+    id: `WT-domain-consequence-${consequence.id}`,
+    sourceType: "domain_consequence",
+    sourceId: consequence.id,
+    kind: "domain_consequence",
+    status: consequence.severity >= 2 ? "watch" : "active",
+    title: consequence.title,
+    summary: consequence.publicSummary,
+    severity: consequence.severity,
+    createdTurn: consequence.generatedAtTurn,
+    lastUpdatedTurn: consequence.generatedAtTurn,
+    startedYear: consequence.year,
+    startedMonth: consequence.month,
+    related: {
+      metrics: Array.isArray(consequence.affectedMetricLabels)
+        ? consequence.affectedMetricLabels
+        : []
+    }
+  })).filter(Boolean);
+}
+
 function deriveOfficialOutcomeThreads(worldState) {
   const view = buildOfficialCareerView(worldState);
   if (!view.active) return [];
@@ -897,6 +931,7 @@ function deriveWorldThreads(worldState = {}) {
     ...deriveOfficialCourtFollowUpThreads(worldState),
     ...deriveOfficialCourtResponseThreads(worldState),
     ...deriveOfficialCourtConsequenceThreads(worldState),
+    ...deriveDomainConsequenceThreads(worldState),
     ...deriveOfficialOutcomeThreads(worldState),
     ...deriveRoleImpactThreads(worldState),
     ...deriveWorldEntityThreads(worldState)

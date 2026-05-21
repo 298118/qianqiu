@@ -4,6 +4,7 @@ const { buildMilitaryDiplomacyRetrievalRows } = require("./militaryDiplomacy");
 const { buildOfficialCareerView } = require("./officialCareer");
 const { buildOfficialCourtConsequenceView } = require("./officialCourtConsequences");
 const { buildOfficialPostingsView } = require("./officialPostings");
+const { buildDomainConsequenceView } = require("./domainConsequenceTrace");
 const {
   MONTHLY_BRIEFING_LIMITS,
   MONTHLY_BRIEFING_SECTION_CONFIG,
@@ -270,6 +271,7 @@ function defaultAiReadScope() {
   return [
     "officialCareerView",
     "courtConsequenceView",
+    "domainConsequenceView",
     "officialPostingsView",
     "localAffairsDocketView",
     "economicFiscalView",
@@ -282,6 +284,7 @@ function buildPlayerMonthlyBriefingContext(worldState = {}, options = {}) {
   const officialCareerView = buildOfficialCareerView(worldState);
   const officialPostingsView = buildOfficialPostingsView(worldState);
   const courtConsequenceView = buildOfficialCourtConsequenceView(worldState);
+  const domainConsequenceView = buildDomainConsequenceView(worldState);
   const localAffairsDocketView = buildLocalAffairsDocketView(worldState);
   const worldPeopleView = buildWorldPeopleView(worldState);
   const economicReports = buildEconomicFiscalRetrievalRows(worldState);
@@ -291,11 +294,15 @@ function buildPlayerMonthlyBriefingContext(worldState = {}, options = {}) {
   const latestCourtConsequenceSignal = Array.isArray(courtConsequenceView.recentSignals)
     ? courtConsequenceView.recentSignals.at(-1)
     : null;
+  const latestDomainConsequence = Array.isArray(domainConsequenceView.recentConsequences)
+    ? domainConsequenceView.recentConsequences.at(-1)
+    : null;
   const role = cleanId(worldState.player?.role, "official");
   const roleLabel = PLAYER_MONTHLY_BRIEFING_ROLE_LABELS[role] || worldState.player?.roleLabel || role;
   const sourceRefs = [
     sourceRef("official_posting", playerPosting || officialCareerView, officialCareerView.currentPosting || "本职差事"),
     sourceRef("court_consequence", latestCourtConsequenceSignal, "官场后果信号"),
+    sourceRef("domain_consequence", latestDomainConsequence, "领域后果追踪"),
     ...(localAffairsDocketView.dockets || []).slice(0, 2).map((docket) => sourceRef("local_docket", docket)),
     ...economicReports.slice(0, 2).map((report) => sourceRef("economic_fiscal", report)),
     ...militaryReports.slice(0, 2).map((report) => sourceRef("military_diplomacy", report))
@@ -313,6 +320,7 @@ function buildPlayerMonthlyBriefingContext(worldState = {}, options = {}) {
     ),
     officialCareerView,
     courtConsequenceView,
+    domainConsequenceView,
     officialPostingsView,
     localAffairsDocketView,
     worldPeopleView,
@@ -351,6 +359,13 @@ function generateMonthlyBriefingProposal(context = {}) {
   const courtConsequenceActions = Array.isArray(courtConsequence.nextActions)
     ? courtConsequence.nextActions
     : [];
+  const domainConsequence = context.domainConsequenceView || {};
+  const latestDomainConsequence = Array.isArray(domainConsequence.recentConsequences)
+    ? domainConsequence.recentConsequences.at(-1)
+    : null;
+  const domainConsequenceActions = Array.isArray(domainConsequence.nextActions)
+    ? domainConsequence.nextActions
+    : [];
   const activeAssignmentText = assignments.length
     ? assignments.slice(0, 3).map((assignment) => `${assignment.title}：${assignment.deadlineLabel || "限期未明"}，进度${assignment.progress ?? 0}。`)
     : [`${context.currentPosting || "本职差事"}本月以例行案牍、上官督责和公开差遣为主。`];
@@ -361,11 +376,13 @@ function generateMonthlyBriefingProposal(context = {}) {
       courtEntryResolution?.publicSummary,
       courtEntryFollowUp?.publicSummary,
       latestCourtConsequenceSignal?.publicSummary,
+      latestDomainConsequence?.publicSummary,
       ...(Array.isArray(firstMonth.assessmentSignals) ? firstMonth.assessmentSignals : [])
     ], 4)
     : [];
   const courtConsequenceDutyTexts = cleanTextList([
-    latestCourtConsequenceSignal?.publicSummary
+    latestCourtConsequenceSignal?.publicSummary,
+    latestDomainConsequence?.publicSummary
   ], 2);
   const docketTexts = topTexts(localDockets, "publicDocket", 3);
   const fiscalTexts = topTexts(context.economicReports, "publicSummary", 3);
@@ -383,6 +400,8 @@ function generateMonthlyBriefingProposal(context = {}) {
     courtEntryFollowUp?.nextStep,
     latestCourtConsequenceSignal?.nextStep,
     courtConsequenceActions[0]?.text,
+    latestDomainConsequence?.nextStep,
+    domainConsequenceActions[0]?.text,
     urgentAssignments[0] ? `先办${urgentAssignments[0].title}，免入逾期考成。` : "",
     docketTexts[0] ? `复核案牍：${docketTexts[0]}` : "",
     fiscalTexts[0] ? `留意钱粮：${fiscalTexts[0]}` : "",
@@ -396,6 +415,7 @@ function generateMonthlyBriefingProposal(context = {}) {
     latestCourtConsequenceSignal?.riskDelta > 0 || latestCourtConsequenceSignal?.impeachmentWatch === "risk_watch"
       ? `官场后果信号提示风险：${latestCourtConsequenceSignal.publicSummary}`
       : "",
+    latestDomainConsequence?.severity >= 2 ? `领域后果提示后续风险：${latestDomainConsequence.publicSummary}` : "",
     careerRisk >= 70 ? `官场风险偏高，考成风险${careerRisk}。` : "",
     localDockets.find((docket) => docket.status !== "routine")?.publicSummary || "",
     context.economicReports.find((report) => (report.pressureScore || report.fiscalPressure || 0) >= 60)?.publicSummary || "",

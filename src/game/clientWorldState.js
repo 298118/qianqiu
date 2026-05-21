@@ -71,7 +71,8 @@ const FORBIDDEN_CLIENT_WORLD_STATE_KEYS = Object.freeze([
   "worldState",
   "world_state",
   "cityPolicyLedger",
-  "militaryDiplomacyLedger"
+  "militaryDiplomacyLedger",
+  "judicialCaseLedger"
 ]);
 
 const FORBIDDEN_CLIENT_WORLD_STATE_KEY_SET = new Set(
@@ -193,6 +194,7 @@ function buildClientWorldState(worldState = {}) {
   delete clientState.openingBackgroundClaims;
   delete clientState.cityPolicyLedger;
   delete clientState.militaryDiplomacyLedger;
+  delete clientState.judicialCaseLedger;
   delete clientState.marketPriceLedger;
   delete clientState.npcEconomyLedger;
   delete clientState.npcActiveRequestLedger;

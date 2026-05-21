@@ -29,6 +29,7 @@ const {
   ensureOfficialCourtResponseState,
   runOfficialCourtResponseStep
 } = require("../game/officialCourtResponse");
+const { buildDomainConsequenceView } = require("../game/domainConsequenceTrace");
 const {
   buildOfficialPostingsView,
   ensureOfficialPostingsState
@@ -544,6 +545,7 @@ function buildCommonTurnViews(worldState, options = {}) {
     officialCareerView: buildOfficialCareerView(worldState),
     courtConsequenceView: buildOfficialCourtConsequenceView(worldState),
     courtResponseView: buildOfficialCourtResponseView(worldState),
+    domainConsequenceView: buildDomainConsequenceView(worldState),
     officialPostingsView,
     localAffairsDocketView: buildLocalAffairsDocketView(worldState),
     militaryDiplomacyView: buildMilitaryDiplomacyView(worldState),

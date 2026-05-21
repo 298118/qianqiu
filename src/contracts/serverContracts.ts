@@ -91,6 +91,7 @@ export const RAW_LEDGER_KEYS = [
   "openingBackgroundClaims",
   "cityPolicyLedger",
   "militaryDiplomacyLedger",
+  "judicialCaseLedger",
   "marketPriceLedger",
   "npcEconomyLedger",
   "npcActiveRequestLedger",
@@ -368,6 +369,7 @@ export type SafeRouteViews = {
   readonly officialCareerView?: OfficialCareerView;
   readonly courtConsequenceView?: CourtConsequenceView;
   readonly courtResponseView?: CourtResponseView;
+  readonly domainConsequenceView?: JsonObject;
   readonly appointmentTrackView?: JsonObject;
   readonly officialPostingsView?: JsonObject;
   readonly localAffairsDocketView?: JsonObject;

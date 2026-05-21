@@ -10,6 +10,7 @@ const { buildOfficialCareerView } = require("./officialCareer");
 const { buildOfficialCourtConsequenceView } = require("./officialCourtConsequences");
 const { buildOfficialCourtResponseView } = require("./officialCourtResponse");
 const { buildOfficialPostingsView } = require("./officialPostings");
+const { buildDomainConsequenceView } = require("./domainConsequenceTrace");
 const { formatYearMonthPeriod, normalizeMonth, normalizeTenDayPeriod, normalizeYear } = require("./time");
 const { buildWorldThreadView } = require("./worldThreads");
 const { isVisibleActorId } = require("./actorMemoryLedger");
@@ -24,6 +25,7 @@ const MAX_OFFICIAL_COURT_ENTRY_RESOLUTIONS = 5;
 const MAX_OFFICIAL_COURT_ENTRY_FOLLOW_UPS = 5;
 const MAX_OFFICIAL_COURT_CONSEQUENCES = 5;
 const MAX_OFFICIAL_COURT_RESPONSES = 5;
+const MAX_DOMAIN_CONSEQUENCES = 6;
 const MAX_MONTHLY_BRIEFINGS = 4;
 const MAX_OFFICIAL_ASSESSMENTS = 4;
 const MAX_LOCAL_DOCKETS = 6;
@@ -52,6 +54,7 @@ const SOURCE_LABELS = {
   official_court_follow_up: "批复",
   official_court_consequence: "后果",
   official_court_response: "回应",
+  domain_consequence: "后果追踪",
   monthly_briefing: "月报",
   official_assessment: "考成",
   local_docket: "案牍",
@@ -344,6 +347,29 @@ function collectOfficialCourtConsequenceItems(worldState, items) {
       relatedLabels: [
         ...(Array.isArray(signal.sourceRefs) ? signal.sourceRefs : []),
         ...(Array.isArray(signal.consequenceRefs) ? signal.consequenceRefs : [])
+      ]
+    });
+  });
+}
+
+function collectDomainConsequenceItems(worldState, items) {
+  const domainConsequenceView = buildDomainConsequenceView(worldState);
+  const consequences = Array.isArray(domainConsequenceView?.recentConsequences)
+    ? domainConsequenceView.recentConsequences
+    : [];
+  consequences.slice(-MAX_DOMAIN_CONSEQUENCES).forEach((consequence) => {
+    addItem(items, worldState, {
+      sourceType: "domain_consequence",
+      kind: consequence.sourceType || "domain_consequence",
+      title: consequence.title || consequence.sourceLabel || "领域后果追踪",
+      summary: consequence.publicSummary,
+      date: consequence,
+      turn: consequence.generatedAtTurn,
+      status: consequence.severity >= 2 ? "watch" : "recorded",
+      riskLabel: consequence.kindLabel || consequence.sourceLabel || "",
+      relatedLabels: [
+        ...(Array.isArray(consequence.affectedMetricLabels) ? consequence.affectedMetricLabels : []),
+        ...(Array.isArray(consequence.consequenceRefs) ? consequence.consequenceRefs : [])
       ]
     });
   });
@@ -713,6 +739,7 @@ function buildEventArchiveIndexItems(worldState = {}) {
   collectOfficialItems(worldState, items, officialCareerView);
   collectOfficialCourtResponseItems(worldState, items);
   collectOfficialCourtConsequenceItems(worldState, items);
+  collectDomainConsequenceItems(worldState, items);
   collectMonthlyBriefingItems(worldState, items);
   collectAppointmentTrackItems(worldState, items);
   collectOfficialAssessmentItems(worldState, items, officialPostingsView);

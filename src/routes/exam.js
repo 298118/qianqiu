@@ -70,6 +70,7 @@ const {
   buildOfficialCourtResponseView,
   ensureOfficialCourtResponseState
 } = require("../game/officialCourtResponse");
+const { buildDomainConsequenceView } = require("../game/domainConsequenceTrace");
 const { buildOfficialPostingsView, ensureOfficialPostingsState } = require("../game/officialPostings");
 const { buildLocalAffairsDocketView } = require("../game/localAffairsDockets");
 const { buildMilitaryDiplomacyView } = require("../game/militaryDiplomacy");
@@ -191,6 +192,7 @@ function toExamPayload(worldState) {
     officialCareerView: buildOfficialCareerView(worldState),
     courtConsequenceView: buildOfficialCourtConsequenceView(worldState),
     courtResponseView: buildOfficialCourtResponseView(worldState),
+    domainConsequenceView: buildDomainConsequenceView(worldState),
     officialPostingsView,
     localAffairsDocketView: buildLocalAffairsDocketView(worldState),
     militaryDiplomacyView: buildMilitaryDiplomacyView(worldState),
@@ -684,6 +686,7 @@ router.post("/submit", async (req, res, next) => {
         officialCareerView: buildOfficialCareerView(worldState),
         courtConsequenceView: buildOfficialCourtConsequenceView(worldState),
         courtResponseView: buildOfficialCourtResponseView(worldState),
+        domainConsequenceView: buildDomainConsequenceView(worldState),
         officialPostingsView,
         localAffairsDocketView: buildLocalAffairsDocketView(worldState),
         militaryDiplomacyView: buildMilitaryDiplomacyView(worldState),
