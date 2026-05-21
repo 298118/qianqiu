@@ -173,7 +173,7 @@ function listFromRows(rows: readonly JsonValue[], key: string, limit: number, fa
       );
       const meta = cleanOptionalText(
         [
-          cleanOptionalText(item.statusLabel || item.status || item.recommendation || item.deadlineLabel, 24),
+          cleanOptionalText(item.chainStageLabel || item.statusLabel || item.status || item.recommendation || item.deadlineLabel, 24),
           item.risk === undefined && item.riskScore === undefined ? undefined : `风险 ${cleanNumber(item.risk ?? item.riskScore, 0)}`,
           item.progress === undefined ? undefined : `进度 ${cleanNumber(item.progress, 0)}`
         ].filter(Boolean).join(" · "),
@@ -431,6 +431,7 @@ function getCourtEntry(officialCareer: JsonObject) {
 
 function getCourtResponseDocket(courtResponseView: JsonObject) {
   const rows = [
+    ...asArray(courtResponseView.chainItems),
     ...asArray(courtResponseView.responseItems),
     ...asArray(courtResponseView.recentResponses)
   ];

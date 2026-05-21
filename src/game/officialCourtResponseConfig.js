@@ -1,4 +1,4 @@
-const OFFICIAL_COURT_RESPONSE_SCHEMA_VERSION = "s88.4-official-court-response.v1";
+const OFFICIAL_COURT_RESPONSE_SCHEMA_VERSION = "s88.4-official-court-response.v2";
 
 const OFFICIAL_COURT_RESPONSE_LIMITS = Object.freeze({
   maxTextLength: 180,
@@ -6,7 +6,8 @@ const OFFICIAL_COURT_RESPONSE_LIMITS = Object.freeze({
   maxItems: 6,
   maxResponses: 8,
   maxActions: 4,
-  maxSourceRefs: 8
+  maxSourceRefs: 8,
+  maxChainRound: 4
 });
 
 const OFFICIAL_COURT_RESPONSE_ROLES = Object.freeze([
@@ -58,9 +59,10 @@ const OFFICIAL_COURT_RESPONSE_STATUS_LABELS = Object.freeze({
 });
 
 const OFFICIAL_COURT_RESPONSE_AUTHORITY_BOUNDARY =
-  "跨身份奏议回应只记录御前、部院、本官和有司围绕公开材料形成的中间态；AI 与前端只能拟文案，服务器只写安全回应账本，不直接任免、奖惩、处分、拨钱粮、采纳奏折或成弹劾。";
+  "跨身份奏议回应只记录御前、部院、本官和有司围绕公开材料形成的中间态与续办链路；AI 与前端只能拟文案，服务器只写安全回应账本，不直接任免、奖惩、处分、拨钱粮、采纳奏折或成弹劾。";
 
 const OFFICIAL_COURT_RESPONSE_AI_READ_SCOPE = Object.freeze([
+  "courtResponseView.chainItems",
   "courtResponseView.responseItems",
   "courtResponseView.recentResponses",
   "eventArchiveView.official_court_entry",
@@ -72,10 +74,10 @@ const OFFICIAL_COURT_RESPONSE_AI_READ_SCOPE = Object.freeze([
 ]);
 
 const OFFICIAL_COURT_RESPONSE_TOOL_PERMISSIONS =
-  "AI 只能读取服务器清洗后的奏议回应 view、事件档案和公开议程，生成草稿与公开意见；不能调用任免、处分、成弹劾、财政、军事、内部查询、持久化写入或内部状态工具。";
+  "AI 只能读取服务器清洗后的奏议回应 view、续办链路、事件档案和公开议程，生成草稿与公开意见；不能调用任免、处分、成弹劾、财政、军事、内部查询、持久化写入或内部状态工具。";
 
 const OFFICIAL_COURT_RESPONSE_SERVER_ADJUDICATION =
-  "普通回合提交跨身份回应时，服务器按公开奏议、近次批复、玩家身份和关键词写入受限回应记录；长期世界后果、官缺、奖惩、处分和弹劾仍由后续规则裁决。";
+  "普通回合提交跨身份回应时，服务器按公开奏议、近次批复、上一轮回应、玩家身份和关键词写入受限回应记录；长期世界后果、官缺、奖惩、处分和弹劾仍由后续规则裁决。";
 
 module.exports = {
   OFFICIAL_COURT_RESPONSE_AI_READ_SCOPE,

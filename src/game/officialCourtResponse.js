@@ -114,6 +114,38 @@ function roleForPlayerRole(role) {
   return "bureau";
 }
 
+function nextHandlerRoleForResponse(kind = "bureau_reply", role = "bureau") {
+  if (kind === "vermilion_note") return "minister";
+  if (kind === "bureau_reply") return "emperor";
+  if (kind === "court_comment") return "minister";
+  if (kind === "evidence_request") return "official";
+  if (kind === "assessment_note") return "bureau";
+  if (role === "emperor") return "minister";
+  if (role === "minister") return "emperor";
+  if (role === "official") return "minister";
+  return "bureau";
+}
+
+function chainIdFromRaw(raw = {}, sourceType = "official_court_follow_up", sourceId = "official-court-source") {
+  return cleanId(
+    raw.chainId ||
+    raw.sourceEntryId ||
+    raw.sourceResolutionId ||
+    raw.sourceFollowUpId ||
+    (sourceType === "official_court_response" ? raw.previousResponseId || raw.sourceResponseId : "") ||
+    `${sourceType}:${sourceId}`,
+    `court-response-chain:${sourceId}`
+  );
+}
+
+function defaultChainStageLabel(chainRound, roleLabel, kindLabel) {
+  const roundLabel = chainRound <= 1 ? "首轮" : `第${chainRound}轮`;
+  const stepLabel = String(kindLabel || "").startsWith(String(roleLabel || ""))
+    ? kindLabel
+    : `${roleLabel}${kindLabel}`;
+  return `${roundLabel} · ${stepLabel}`;
+}
+
 function normalizeOfficialCourtResponse(raw = {}, worldState = {}) {
   if (!isPlainObject(raw)) return null;
   const turn = clampNumber(raw.generatedAtTurn ?? raw.turn, 0, Number.MAX_SAFE_INTEGER, currentTurn(worldState));
@@ -122,6 +154,43 @@ function normalizeOfficialCourtResponse(raw = {}, worldState = {}) {
   const status = normalizeResponseStatus(raw.status, statusForKind(responseKind));
   const sourceType = cleanText(raw.sourceType, "official_court_follow_up", 48);
   const sourceId = cleanId(raw.sourceId || raw.sourceFollowUpId || raw.sourceResolutionId, "official-court-source");
+  const sourceResponseId = cleanId(raw.sourceResponseId || (sourceType === "official_court_response" ? sourceId : ""), "");
+  const previousResponseId = cleanId(raw.previousResponseId || sourceResponseId, "");
+  const chainRound = clampNumber(
+    raw.chainRound,
+    1,
+    OFFICIAL_COURT_RESPONSE_LIMITS.maxChainRound,
+    previousResponseId ? 2 : 1
+  );
+  const responseRoleLabel = cleanText(
+    raw.responseRoleLabel,
+    OFFICIAL_COURT_RESPONSE_ROLE_LABELS[responseRole] || "有司",
+    32
+  );
+  const responseKindLabel = cleanText(
+    raw.responseKindLabel,
+    OFFICIAL_COURT_RESPONSE_KIND_LABELS[responseKind] || "奏议回应",
+    40
+  );
+  const statusLabel = cleanText(
+    raw.statusLabel,
+    OFFICIAL_COURT_RESPONSE_STATUS_LABELS[status] || "回应已记",
+    40
+  );
+  const nextHandlerRole = normalizeResponseRole(
+    raw.nextHandlerRole,
+    nextHandlerRoleForResponse(responseKind, responseRole)
+  );
+  const nextHandlerLabel = cleanText(
+    raw.nextHandlerLabel,
+    OFFICIAL_COURT_RESPONSE_ROLE_LABELS[nextHandlerRole] || "有司",
+    32
+  );
+  const chainPath = cleanList(
+    raw.chainPath || [`${responseRoleLabel}${responseKindLabel}`],
+    OFFICIAL_COURT_RESPONSE_LIMITS.maxSourceRefs,
+    80
+  );
   const title = cleanText(
     raw.title,
     `${OFFICIAL_COURT_RESPONSE_KIND_LABELS[responseKind] || "奏议回应"}：${sourceId}`,
@@ -135,28 +204,29 @@ function normalizeOfficialCourtResponse(raw = {}, worldState = {}) {
     schemaVersion: OFFICIAL_COURT_RESPONSE_SCHEMA_VERSION,
     id: cleanId(raw.id, `OCR-${String(turn).padStart(4, "0")}-${responseKind}`),
     responseRole,
-    responseRoleLabel: cleanText(
-      raw.responseRoleLabel,
-      OFFICIAL_COURT_RESPONSE_ROLE_LABELS[responseRole] || "有司",
-      32
-    ),
+    responseRoleLabel,
     responseKind,
-    responseKindLabel: cleanText(
-      raw.responseKindLabel,
-      OFFICIAL_COURT_RESPONSE_KIND_LABELS[responseKind] || "奏议回应",
-      40
-    ),
+    responseKindLabel,
     status,
-    statusLabel: cleanText(
-      raw.statusLabel,
-      OFFICIAL_COURT_RESPONSE_STATUS_LABELS[status] || "回应已记",
-      40
-    ),
+    statusLabel,
     sourceType,
     sourceId,
     sourceEntryId: cleanId(raw.sourceEntryId, ""),
     sourceResolutionId: cleanId(raw.sourceResolutionId, ""),
     sourceFollowUpId: cleanId(raw.sourceFollowUpId, ""),
+    sourceResponseId,
+    previousResponseId,
+    chainId: chainIdFromRaw(raw, sourceType, sourceId),
+    chainRound,
+    chainStage: cleanId(raw.chainStage || responseKind, responseKind),
+    chainStageLabel: cleanText(
+      raw.chainStageLabel,
+      defaultChainStageLabel(chainRound, responseRoleLabel, responseKindLabel),
+      64
+    ),
+    nextHandlerRole,
+    nextHandlerLabel,
+    chainPath,
     title,
     publicSummary,
     generatedAtTurn: turn,
@@ -232,13 +302,22 @@ function sourceDate(record = {}, worldState = {}) {
 
 function buildSourceRecordFromResolution(resolution = {}, worldState = {}) {
   const date = sourceDate(resolution, worldState);
+  const sourceId = cleanId(resolution.id, "official-court-entry");
   return {
     id: cleanId(resolution.id, `court-entry-resolution-${date.generatedAtTurn}`),
     sourceType: "official_court_entry",
-    sourceId: cleanId(resolution.id, "official-court-entry"),
+    sourceId,
     sourceEntryId: cleanId(resolution.entryId, ""),
     sourceResolutionId: cleanId(resolution.id, ""),
     sourceFollowUpId: "",
+    sourceResponseId: "",
+    previousResponseId: "",
+    chainId: cleanId(`official_court_entry:${sourceId}`, `official-court-entry:${sourceId}`),
+    chainRound: 0,
+    chainStageLabel: cleanText(resolution.statusLabel, "初入奏议", 40),
+    nextHandlerRole: "minister",
+    nextHandlerLabel: OFFICIAL_COURT_RESPONSE_ROLE_LABELS.minister,
+    chainPath: cleanList([resolution.statusLabel || "初入奏议"], OFFICIAL_COURT_RESPONSE_LIMITS.maxSourceRefs, 80),
     title: cleanText(resolution.title, "首月奏议裁决", OFFICIAL_COURT_RESPONSE_LIMITS.maxShortTextLength),
     publicSummary: cleanText(resolution.publicSummary, "首月奏议已有公开裁决，待后续回应。"),
     statusLabel: cleanText(resolution.statusLabel, "近次裁决", 40),
@@ -252,13 +331,23 @@ function buildSourceRecordFromResolution(resolution = {}, worldState = {}) {
 
 function buildSourceRecordFromFollowUp(followUp = {}, worldState = {}) {
   const date = sourceDate(followUp, worldState);
+  const sourceId = cleanId(followUp.id, "official-court-follow-up");
+  const nextHandlerRole = followUp.stage === "imperial_note" ? "emperor" : "minister";
   return {
     id: cleanId(followUp.id, `court-follow-up-${date.generatedAtTurn}`),
     sourceType: "official_court_follow_up",
-    sourceId: cleanId(followUp.id, "official-court-follow-up"),
+    sourceId,
     sourceEntryId: cleanId(followUp.entryId, ""),
     sourceResolutionId: cleanId(followUp.resolutionId, ""),
     sourceFollowUpId: cleanId(followUp.id, ""),
+    sourceResponseId: "",
+    previousResponseId: "",
+    chainId: cleanId(`official_court_follow_up:${sourceId}`, `official-court-follow-up:${sourceId}`),
+    chainRound: 0,
+    chainStageLabel: cleanText(followUp.stageLabel || followUp.statusLabel, "奏议后续", 40),
+    nextHandlerRole,
+    nextHandlerLabel: OFFICIAL_COURT_RESPONSE_ROLE_LABELS[nextHandlerRole] || "部院",
+    chainPath: cleanList([followUp.stageLabel || followUp.statusLabel || "奏议后续"], OFFICIAL_COURT_RESPONSE_LIMITS.maxSourceRefs, 80),
     title: cleanText(followUp.title, "奏议后续批复", OFFICIAL_COURT_RESPONSE_LIMITS.maxShortTextLength),
     publicSummary: cleanText(followUp.publicSummary, "奏议后续已有公开批复，待跨身份回应。"),
     statusLabel: cleanText(followUp.statusLabel, "批复", 40),
@@ -274,14 +363,79 @@ function buildSourceRecordFromFollowUp(followUp = {}, worldState = {}) {
   };
 }
 
+function buildSourceRecordFromResponse(response = {}, worldState = {}) {
+  const date = sourceDate(response, worldState);
+  const sourceId = cleanId(response.id, "official-court-response");
+  const chainRound = clampNumber(response.chainRound, 1, OFFICIAL_COURT_RESPONSE_LIMITS.maxChainRound, 1);
+  if (!sourceId || chainRound >= OFFICIAL_COURT_RESPONSE_LIMITS.maxChainRound) return null;
+  const nextHandlerRole = normalizeResponseRole(
+    response.nextHandlerRole,
+    nextHandlerRoleForResponse(response.responseKind, response.responseRole)
+  );
+  const nextHandlerLabel = OFFICIAL_COURT_RESPONSE_ROLE_LABELS[nextHandlerRole] || "有司";
+  const responseKindLabel = cleanText(response.responseKindLabel, "奏议回应", 40);
+  const statusLabel = cleanText(response.statusLabel, "回应已记", 40);
+  const chainStageLabel = cleanText(
+    response.chainStageLabel,
+    defaultChainStageLabel(chainRound, cleanText(response.responseRoleLabel, "有司", 32), responseKindLabel),
+    64
+  );
+  return {
+    id: sourceId,
+    sourceType: "official_court_response",
+    sourceId,
+    sourceEntryId: cleanId(response.sourceEntryId, ""),
+    sourceResolutionId: cleanId(response.sourceResolutionId, ""),
+    sourceFollowUpId: cleanId(response.sourceFollowUpId, ""),
+    sourceResponseId: sourceId,
+    previousResponseId: cleanId(response.previousResponseId, ""),
+    chainId: cleanId(response.chainId, `official-court-response-chain:${sourceId}`),
+    chainRound,
+    chainStageLabel,
+    nextHandlerRole,
+    nextHandlerLabel,
+    chainPath: cleanList(
+      [...asArray(response.chainPath), `${nextHandlerLabel}待续办`],
+      OFFICIAL_COURT_RESPONSE_LIMITS.maxSourceRefs,
+      80
+    ),
+    title: cleanText(`续办：${response.title || responseKindLabel}`, "奏议回应续办", OFFICIAL_COURT_RESPONSE_LIMITS.maxShortTextLength),
+    publicSummary: cleanText(
+      `承${chainStageLabel}，${response.publicSummary || statusLabel}；下一步只形成${nextHandlerLabel}公开回应或补据清单。`,
+      "奏议回应已有公开记录，待下一轮续办。"
+    ),
+    statusLabel,
+    stageLabel: `第${chainRound + 1}轮续办`,
+    targetSurfaceId: nextHandlerRole === "emperor"
+      ? "edict-draft"
+      : nextHandlerRole === "official"
+        ? "memorial-review"
+        : "court-debate",
+    sourceRefs: cleanList([
+      `courtResponseView.recentResponse:${sourceId}`,
+      ...asArray(response.sourceRefs)
+    ], OFFICIAL_COURT_RESPONSE_LIMITS.maxSourceRefs, 96),
+    consequenceRefs: cleanList(
+      ["eventArchive:official_court_response", "worldThread:official_court_response", ...asArray(response.consequenceRefs)],
+      OFFICIAL_COURT_RESPONSE_LIMITS.maxSourceRefs,
+      96
+    ),
+    ...date
+  };
+}
+
 function buildOfficialCourtResponseSources(worldState = {}) {
   const career = isPlainObject(worldState.officialCareer) ? worldState.officialCareer : {};
+  const responseState = normalizeOfficialCourtResponseState(worldState);
   const resolutions = normalizeOfficialCourtEntryResolutions(career.courtEntryResolutions, worldState)
     .map((resolution) => buildSourceRecordFromResolution(resolution, worldState));
   const followUps = normalizeOfficialCourtEntryFollowUps(career.courtEntryFollowUps, worldState)
     .map((followUp) => buildSourceRecordFromFollowUp(followUp, worldState));
+  const chainSources = responseState.responses
+    .map((response) => buildSourceRecordFromResponse(response, worldState))
+    .filter(Boolean);
   const byId = new Map();
-  for (const source of [...resolutions, ...followUps]) {
+  for (const source of [...chainSources, ...resolutions, ...followUps]) {
     if (!source.id || !source.publicSummary) continue;
     byId.set(`${source.sourceType}:${source.sourceId}`, source);
   }
@@ -291,6 +445,13 @@ function buildOfficialCourtResponseSources(worldState = {}) {
 }
 
 function responseMatchesSource(response = {}, source = {}) {
+  if (source.sourceType === "official_court_response") {
+    return response.sourceType === "official_court_response" && (
+      response.sourceId === source.sourceId ||
+      response.sourceResponseId === source.sourceId ||
+      response.previousResponseId === source.sourceId
+    );
+  }
   return response.sourceId === source.sourceId ||
     (source.sourceResolutionId && response.sourceResolutionId === source.sourceResolutionId) ||
     (source.sourceFollowUpId && response.sourceFollowUpId === source.sourceFollowUpId) ||
@@ -313,6 +474,19 @@ function responseLabelForRole(role) {
 
 function draftTextForSource(source = {}, role = "bureau") {
   const title = cleanText(source.title, "奏议材料", 72);
+  const isChainSource = source.sourceType === "official_court_response" || source.chainRound > 0;
+  if (isChainSource && role === "emperor") {
+    return cleanText(`御前再摘${title}：承前回应只问可行、不可行、待查三项，仍不写任免赏罚或钱粮成数。`);
+  }
+  if (isChainSource && role === "minister") {
+    return cleanText(`部院再覆${title}：承御前或朝议意见，列公开凭据、经手人、限期和仍须裁决之处。`);
+  }
+  if (isChainSource && role === "official") {
+    return cleanText(`补据承批${title}：呈明公开进度、上官签注和可核证据，后续仍候服务器裁决。`);
+  }
+  if (isChainSource) {
+    return cleanText(`续办${title}：只列公开证据、疑点和下一轮可办事项。`);
+  }
   if (role === "emperor") {
     return cleanText(`朱批${title}：令部院据公开凭据覆奏，可行、不可行与待查分列；此批只作草稿，后果仍候服务器裁决。`);
   }
@@ -334,9 +508,17 @@ function buildResponseItem(source = {}, responses = [], role = "bureau") {
     sourceEntryId: source.sourceEntryId,
     sourceResolutionId: source.sourceResolutionId,
     sourceFollowUpId: source.sourceFollowUpId,
+    sourceResponseId: source.sourceResponseId,
+    previousResponseId: source.previousResponseId,
+    chainId: source.chainId,
+    chainRound: source.chainRound,
+    chainStageLabel: source.chainStageLabel,
+    nextHandlerRole: source.nextHandlerRole,
+    nextHandlerLabel: source.nextHandlerLabel,
+    chainPath: source.chainPath,
     title: source.title,
     publicSummary: source.publicSummary,
-    stageLabel: source.stageLabel,
+    stageLabel: source.chainStageLabel || source.stageLabel,
     statusLabel: latestResponse?.statusLabel || source.statusLabel,
     responseLabel: responseLabelForRole(role),
     targetSurfaceId: source.targetSurfaceId,
@@ -352,6 +534,9 @@ function buildResponseItem(source = {}, responses = [], role = "bureau") {
       responseRoleLabel: latestResponse.responseRoleLabel,
       responseKindLabel: latestResponse.responseKindLabel,
       statusLabel: latestResponse.statusLabel,
+      chainRound: latestResponse.chainRound,
+      chainStageLabel: latestResponse.chainStageLabel,
+      nextHandlerLabel: latestResponse.nextHandlerLabel,
       publicSummary: latestResponse.publicSummary,
       generatedAtTurn: latestResponse.generatedAtTurn
     } : null,
@@ -364,6 +549,33 @@ function buildNextActions(responseItems = [], role = "bureau") {
   const top = responseItems[0];
   if (!top) return [];
   const title = cleanText(top.title, "奏议材料", 72);
+  const isChainSource = top.sourceType === "official_court_response" || top.chainRound > 0;
+  if (isChainSource) {
+    const roleActions = {
+      emperor: [
+        { id: "imperial-revisit", label: "御前再摘", text: `御前再摘${title}，承前回应只问可行、不可行、待查三项，不写已生效批旨。`, targetSurfaceId: "edict-draft" },
+        { id: "return-bureau-chain", label: "再交部院", text: `再交部院复核${title}，限列公开凭据、经手人和仍须服务器裁决之处。`, targetSurfaceId: "memorial-review" },
+        { id: "hold-chain-debate", label: "留待廷议", text: `留待廷议复核${title}，只形成公开意见和下一轮补据清单。`, targetSurfaceId: "court-debate" }
+      ],
+      minister: [
+        { id: "ministry-chain-reply", label: "部院再覆", text: `部院再覆${title}，承前批示分列可行、不可行、待查，不自行定赏罚处分。`, targetSurfaceId: "memorial-review" },
+        { id: "chain-evidence-request", label: "续请补据", text: `续请补齐${title}的公开凭据、上官签注和经手文移，再候普通回合裁决。`, targetSurfaceId: "memorial-review" },
+        { id: "chain-censor-review", label: "会核风宪", text: `会同台谏核${title}的风险与避嫌事项，只作公开观察。`, targetSurfaceId: "court-debate" }
+      ],
+      official: [
+        { id: "official-chain-evidence", label: "补据承批", text: `补据承批${title}，呈明公开进度、上官签注和可核证据。`, targetSurfaceId: "memorial-review" },
+        { id: "official-chain-assessment", label: "续入考成", text: `把${title}续入考成观察，只列公开功绩、风险和待核证据。`, targetSurfaceId: "assessment-trace" },
+        { id: "official-chain-superior", label: "请署签注", text: `请上官就${title}签注公开进度，再候服务器裁决。`, targetSurfaceId: "court-debate" }
+      ]
+    };
+    return (roleActions[role] || roleActions.minister)
+      .map((action) => ({
+        ...action,
+        text: cleanText(action.text, "", OFFICIAL_COURT_RESPONSE_LIMITS.maxTextLength)
+      }))
+      .filter((action) => action.text)
+      .slice(0, OFFICIAL_COURT_RESPONSE_LIMITS.maxActions);
+  }
   const roleActions = {
     emperor: [
       { id: "vermilion-note", label: "朱批留览", text: `朱批留览${title}，令部院据公开凭据覆奏，此稿只候服务器裁决。`, targetSurfaceId: "edict-draft" },
@@ -395,9 +607,12 @@ function buildOfficialCourtResponseView(worldState = {}) {
   const role = cleanId(worldState.player?.role, "scholar");
   const responseRole = roleForPlayerRole(role);
   const sources = buildOfficialCourtResponseSources(worldState);
-  const responseItems = sources.map((source) => buildResponseItem(source, state.responses, responseRole));
-  const nextActions = buildNextActions(responseItems, responseRole);
-  const active = PLAYER_RESPONSE_ROLES.has(role) && (responseItems.length > 0 || state.responses.length > 0);
+  const sourceItems = sources.map((source) => buildResponseItem(source, state.responses, responseRole));
+  const chainItems = sourceItems.filter((item) => item.sourceType === "official_court_response" || item.chainRound > 0);
+  const responseItems = sourceItems.filter((item) => item.sourceType !== "official_court_response" && !item.chainRound);
+  const actionableChainItems = chainItems.filter((item) => item.nextHandlerRole === responseRole);
+  const nextActions = buildNextActions([...actionableChainItems, ...responseItems], responseRole);
+  const active = PLAYER_RESPONSE_ROLES.has(role) && (sourceItems.length > 0 || state.responses.length > 0);
   return {
     schemaVersion: OFFICIAL_COURT_RESPONSE_SCHEMA_VERSION,
     generatedAtTurn: currentTurn(worldState),
@@ -406,12 +621,15 @@ function buildOfficialCourtResponseView(worldState = {}) {
     responseRole,
     responseRoleLabel: OFFICIAL_COURT_RESPONSE_ROLE_LABELS[responseRole] || "有司",
     summary: active
-      ? cleanText(`当前有${responseItems.length}条奏议材料可作跨身份回应，近次回应${state.responses.length}条；所有回应只入服务器安全账本。`)
+      ? cleanText(`当前有${responseItems.length}条奏议材料和${chainItems.length}条皇帝/部院续办链路可回应，近次回应${state.responses.length}条；所有回应只入服务器安全账本。`)
       : "当前没有可见奏议材料可回应；不得补造署名、罪名、钱粮数、任免结果或已生效批旨。",
     counts: {
+      chainItems: chainItems.length,
+      actionableChainItems: actionableChainItems.length,
       responseItems: responseItems.length,
       recentResponses: state.responses.length
     },
+    chainItems,
     responseItems,
     recentResponses: state.responses.slice(-OFFICIAL_COURT_RESPONSE_LIMITS.maxResponses),
     nextActions,
@@ -419,7 +637,7 @@ function buildOfficialCourtResponseView(worldState = {}) {
     toolPermissions: OFFICIAL_COURT_RESPONSE_TOOL_PERMISSIONS,
     proposalBoundaries: [
       "只能生成公开回应草稿、补据清单、覆奏要点和朝议意见。",
-      "不得写官职任免、奖惩处分、拨钱粮、奏折采纳终局、成弹劾或隐藏状态。"
+      "续办链路只能承接上一轮公开回应，不得跳写官职任免、奖惩处分、拨钱粮、奏折采纳终局、成弹劾或隐藏状态。"
     ],
     serverAdjudication: OFFICIAL_COURT_RESPONSE_SERVER_ADJUDICATION,
     authorityBoundary: OFFICIAL_COURT_RESPONSE_AUTHORITY_BOUNDARY,
@@ -438,15 +656,15 @@ function buildOfficialCourtResponseView(worldState = {}) {
 function isCourtResponseLikeInput(input = "") {
   const text = cleanText(input, "", 360);
   if (!text) return false;
-  return /奏议回应|奏议后续|近次裁决|朱批|批红|留中|票拟|覆奏|御前摘报|批复|补据|发交部院|转部|朝议跟进|廷议跟进|考成观察/.test(text);
+  return /奏议回应|奏议后续|续办|承前|续批|再批|再摘|再覆|复覆|近次裁决|朱批|批红|留中|票拟|覆奏|御前摘报|批复|补据|发交部院|转部|朝议跟进|廷议跟进|考成观察/.test(text);
 }
 
 function chooseResponseKind(input = "") {
   const text = cleanText(input, "", 360);
-  if (/朱批|批红|御前|御览|留中|摘报/.test(text)) return "vermilion_note";
-  if (/票拟|覆奏|部院|转部|发交部院|部议/.test(text)) return "bureau_reply";
+  if (/朱批|批红|御前|御览|留中|摘报|续批|再批|再摘/.test(text)) return "vermilion_note";
+  if (/票拟|覆奏|复覆|再覆|部院|转部|发交部院|部议/.test(text)) return "bureau_reply";
   if (/朝议|廷议|会同|会商|台谏/.test(text)) return "court_comment";
-  if (/补据|凭据|查证|签注|经手文移/.test(text)) return "evidence_request";
+  if (/补据|承批|凭据|查证|签注|经手文移/.test(text)) return "evidence_request";
   if (/考成|考课|观察|功绩|风险/.test(text)) return "assessment_note";
   return "bureau_reply";
 }
@@ -454,18 +672,37 @@ function chooseResponseKind(input = "") {
 function findTargetResponseItem(responseItems = [], input = "") {
   const text = cleanText(input, "", 360);
   if (!text) return responseItems[0] || null;
-  return responseItems.find((item) =>
-    [item.title, item.sourceId, item.sourceResolutionId, item.sourceFollowUpId, item.statusLabel, item.stageLabel]
+  const continuationItems = responseItems.filter((item) =>
+    item.sourceType === "official_court_response" || item.chainRound > 0
+  );
+  const orderedItems = continuationItems.length && /续办|承前|续批|再批|再摘|再覆|复覆|承批/.test(text)
+    ? continuationItems
+    : responseItems;
+  return orderedItems.find((item) =>
+    [
+      item.title,
+      typeof item.title === "string" ? item.title.replace(/^续办[:：]/, "") : "",
+      item.sourceId,
+      item.sourceResolutionId,
+      item.sourceFollowUpId,
+      item.sourceResponseId,
+      item.previousResponseId,
+      item.statusLabel,
+      item.stageLabel,
+      item.chainStageLabel
+    ]
       .filter(Boolean)
       .some((value) => text.includes(cleanText(value, "", 96)))
-  ) || responseItems[0] || null;
+  ) || orderedItems[0] || responseItems[0] || null;
 }
 
 function buildResponseSummary({ roleLabel, kindLabel, source, statusLabel }) {
   const title = cleanText(source.title, "奏议材料", 72);
   const stage = cleanText(source.stageLabel || source.statusLabel, "公开批复", 40);
+  const chainRound = clampNumber(source.chainRound, 0, OFFICIAL_COURT_RESPONSE_LIMITS.maxChainRound, 0) + 1;
+  const chainLabel = chainRound <= 1 ? "首轮" : `第${chainRound}轮`;
   return cleanText(
-    `${roleLabel}${kindLabel}${title}，承接${stage}，只记录公开回应、证据边界和后续待核事项；${statusLabel}不改变官职、奖惩、处分、钱粮或弹劾结果。`
+    `${chainLabel}${roleLabel}${kindLabel}${title}，承接${stage}，只记录公开回应、证据边界和后续待核事项；${statusLabel}不改变官职、奖惩、处分、钱粮或弹劾结果。`
   );
 }
 
@@ -473,10 +710,12 @@ function resolveOfficialCourtResponseSubmission(worldState = {}, input = "") {
   const role = cleanId(worldState.player?.role, "scholar");
   if (!PLAYER_RESPONSE_ROLES.has(role) || !isCourtResponseLikeInput(input)) return null;
   const view = buildOfficialCourtResponseView(worldState);
-  if (!view.active || !view.responseItems.length) return null;
-  const source = findTargetResponseItem(view.responseItems, input);
-  if (!source) return null;
   const responseRole = roleForPlayerRole(role);
+  const actionableChainItems = asArray(view.chainItems).filter((item) => item.nextHandlerRole === responseRole);
+  const responseItems = [...actionableChainItems, ...asArray(view.responseItems)];
+  if (!view.active || !responseItems.length) return null;
+  const source = findTargetResponseItem(responseItems, input);
+  if (!source) return null;
   const responseKind = chooseResponseKind(input);
   const status = statusForKind(responseKind);
   const turn = currentTurn(worldState);
@@ -484,6 +723,14 @@ function resolveOfficialCourtResponseSubmission(worldState = {}, input = "") {
   const responseRoleLabel = OFFICIAL_COURT_RESPONSE_ROLE_LABELS[responseRole] || "有司";
   const responseKindLabel = OFFICIAL_COURT_RESPONSE_KIND_LABELS[responseKind] || "奏议回应";
   const statusLabel = OFFICIAL_COURT_RESPONSE_STATUS_LABELS[status] || "回应已记";
+  const sourceChainRound = clampNumber(source.chainRound, 0, OFFICIAL_COURT_RESPONSE_LIMITS.maxChainRound, 0);
+  const chainRound = clampNumber(sourceChainRound + 1, 1, OFFICIAL_COURT_RESPONSE_LIMITS.maxChainRound, 1);
+  const previousResponseId = source.sourceType === "official_court_response"
+    ? cleanId(source.sourceResponseId || source.sourceId, "")
+    : "";
+  const nextHandlerRole = nextHandlerRoleForResponse(responseKind, responseRole);
+  const nextHandlerLabel = OFFICIAL_COURT_RESPONSE_ROLE_LABELS[nextHandlerRole] || "有司";
+  const chainStepLabel = `${responseRoleLabel}${responseKindLabel}`;
   return normalizeOfficialCourtResponse({
     id: `OCR-${String(turn).padStart(4, "0")}-${responseRole}-${responseKind}-${existingCount}`,
     responseRole,
@@ -497,6 +744,18 @@ function resolveOfficialCourtResponseSubmission(worldState = {}, input = "") {
     sourceEntryId: source.sourceEntryId,
     sourceResolutionId: source.sourceResolutionId,
     sourceFollowUpId: source.sourceFollowUpId,
+    sourceResponseId: source.sourceResponseId,
+    previousResponseId,
+    chainId: source.chainId || `${source.sourceType}:${source.sourceId}`,
+    chainRound,
+    chainStage: responseKind,
+    chainStageLabel: defaultChainStageLabel(chainRound, responseRoleLabel, responseKindLabel),
+    nextHandlerRole,
+    nextHandlerLabel,
+    chainPath: cleanList([
+      ...asArray(source.chainPath),
+      chainStepLabel
+    ], OFFICIAL_COURT_RESPONSE_LIMITS.maxSourceRefs, 80),
     title: `${responseKindLabel}：${source.title}`,
     publicSummary: buildResponseSummary({ roleLabel: responseRoleLabel, kindLabel: responseKindLabel, source, statusLabel }),
     generatedAtTurn: turn,
@@ -504,12 +763,14 @@ function resolveOfficialCourtResponseSubmission(worldState = {}, input = "") {
     sourceRefs: cleanList([
       `courtResponseView.responseItem:${source.id}`,
       `${source.sourceType}:${source.sourceId}`,
+      previousResponseId ? `courtResponseView.recentResponse:${previousResponseId}` : "",
       ...asArray(source.sourceRefs)
     ], OFFICIAL_COURT_RESPONSE_LIMITS.maxSourceRefs, 96),
     evidenceRefs: cleanList([
       `${source.sourceType}:${source.sourceId}`,
       source.sourceResolutionId ? `officialCareer.courtEntryResolution:${source.sourceResolutionId}` : "",
-      source.sourceFollowUpId ? `officialCareer.courtEntryFollowUp:${source.sourceFollowUpId}` : ""
+      source.sourceFollowUpId ? `officialCareer.courtEntryFollowUp:${source.sourceFollowUpId}` : "",
+      previousResponseId ? `courtResponseView.recentResponse:${previousResponseId}` : ""
     ], OFFICIAL_COURT_RESPONSE_LIMITS.maxSourceRefs, 96),
     consequenceRefs: cleanList([
       "eventArchive:official_court_response",
@@ -533,7 +794,7 @@ function buildOfficialCourtResponseAttributeChanges(beforeState = {}, response =
     label: "奏议回应",
     before: beforeCount,
     after: afterCount,
-    reason: "服务器记录跨身份奏议回应中间态，不写任免、赏罚、处分或弹劾终局。"
+    reason: "服务器记录跨身份奏议回应与续办链路中间态，不写任免、赏罚、处分或弹劾终局。"
   }];
 }
 

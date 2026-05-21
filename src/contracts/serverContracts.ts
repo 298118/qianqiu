@@ -230,9 +230,15 @@ export type CourtResponseView = JsonObject & {
   readonly responseRole?: string;
   readonly responseRoleLabel?: string;
   readonly summary?: string;
+  readonly counts?: JsonObject;
+  readonly chainItems?: readonly JsonObject[];
   readonly responseItems?: readonly JsonObject[];
   readonly recentResponses?: readonly JsonObject[];
   readonly nextActions?: readonly JsonObject[];
+  readonly aiReadScope?: readonly JsonValue[];
+  readonly toolPermissions?: string;
+  readonly proposalBoundaries?: readonly JsonValue[];
+  readonly serverAdjudication?: string;
   readonly authorityBoundary?: string;
   readonly safety?: JsonObject;
 };

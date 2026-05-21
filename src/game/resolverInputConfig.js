@@ -68,7 +68,7 @@ const RESOLVER_INPUT_SOURCE_COLLECTIONS = Object.freeze([
   Object.freeze({
     sourceView: "courtResponseView",
     domain: "events",
-    collections: Object.freeze(["responseItems", "recentResponses", "nextActions"])
+    collections: Object.freeze(["chainItems", "responseItems", "recentResponses", "nextActions"])
   }),
   Object.freeze({
     sourceView: "courtConsequenceView",

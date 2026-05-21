@@ -11,7 +11,8 @@ const { createInitialState } = require("../src/game/initialState");
 const {
   buildOfficialCourtResponseView,
   isCourtResponseLikeInput,
-  normalizeOfficialCourtResponseState
+  normalizeOfficialCourtResponseState,
+  resolveOfficialCourtResponseSubmission
 } = require("../src/game/officialCourtResponse");
 const { buildTopicSurfaceView } = require("../src/game/topicSurfaceView");
 const { writeSession } = require("../src/storage/sessionStore");
@@ -91,11 +92,43 @@ function seedCourtRecords(worldState) {
   }];
 }
 
+function seedPreviousCourtResponse(worldState) {
+  worldState.officialCourtResponses.responses = [{
+    id: "OCR-chain-ministry",
+    responseRole: "minister",
+    responseRoleLabel: "部院",
+    responseKind: "bureau_reply",
+    responseKindLabel: "部院覆奏",
+    status: "referred_to_bureau",
+    statusLabel: "交部院覆奏",
+    sourceType: "official_court_follow_up",
+    sourceId: "OCEF-cross-role",
+    sourceEntryId: "official-court-entry-first-month-ASG-cross-role",
+    sourceResolutionId: "OCER-cross-role",
+    sourceFollowUpId: "OCEF-cross-role",
+    chainId: "official_court_follow_up:OCEF-cross-role",
+    chainRound: 1,
+    chainStageLabel: "首轮 · 部院覆奏",
+    nextHandlerRole: "emperor",
+    nextHandlerLabel: "御前",
+    chainPath: ["部院覆奏"],
+    title: "部院覆奏：河工清册",
+    publicSummary: "部院覆奏河工清册，只列公开凭据、经手人、限期和仍须御前复核之处。",
+    generatedAtTurn: 6,
+    year: worldState.year,
+    month: worldState.month,
+    tenDayPeriod: worldState.tenDayPeriod,
+    sourceRefs: ["official_court_follow_up:OCEF-cross-role"],
+    consequenceRefs: ["eventArchive:official_court_response"],
+    nextStep: "下一步等待御前或朝议按公开材料复核。"
+  }];
+}
+
 function assertNoUnsafeCourtResponseText(value) {
   const serialized = JSON.stringify(value);
   assert.doesNotMatch(
     serialized,
-    /hidden[ _-]?(?:notes?|intent)|provider\s+payload|rawSql|SQL|sqlite|world_sessions|data[\\/](?:sessions|audit)|prompt_retrieval_index|sk-test-secret|tp-test-secret|api[_ -]?key/i
+    /hidden[ _-]?(?:notes?|intent)|provider\s+payload|rawSql|SQL|sqlite|world_sessions|data[\\/](?:sessions|audit)|prompt_retrieval_index|officialCourtResponses|sk-test-secret|tp-test-secret|api[_ -]?key/i
   );
   assert.doesNotMatch(serialized, /已任免|已处分|已赏罚|已采纳|圣旨已生效/);
 }
@@ -153,6 +186,67 @@ test("S88.4 court response sanitizer drops terminal adjudication pollution", () 
   assertNoUnsafeCourtResponseText(memorial);
 });
 
+test("S88.4 courtResponseView exposes imperial and ministry continuation chains", () => {
+  const worldState = createInitialState({
+    role: "emperor",
+    playerName: "续办视角"
+  });
+  seedCourtRecords(worldState);
+  seedPreviousCourtResponse(worldState);
+
+  const view = buildOfficialCourtResponseView(worldState);
+  const edict = buildTopicSurfaceView(worldState, { surfaceId: "edict-draft" });
+
+  assert.equal(view.active, true);
+  assert.equal(view.counts.chainItems, 1);
+  assert.equal(view.chainItems[0].sourceType, "official_court_response");
+  assert.equal(view.chainItems[0].sourceResponseId, "OCR-chain-ministry");
+  assert.equal(view.chainItems[0].chainRound, 1);
+  assert.equal(view.chainItems[0].nextHandlerRole, "emperor");
+  assert.ok(view.nextActions.some((action) => /御前再摘|再交部院|留待廷议/.test(action.label)));
+  assert.ok(edict.evidenceRefs.some((ref) =>
+    ref.sourceView === "courtResponseView" && /续办|部院覆奏|河工清册/.test(`${ref.label}${ref.summary}`)
+  ));
+  assertNoUnsafeCourtResponseText(view);
+  assertNoUnsafeCourtResponseText(edict);
+});
+
+test("S88.4 continuation chains are only actionable for the recorded next handler", () => {
+  const ministerState = createInitialState({
+    role: "minister",
+    playerName: "误续部院"
+  });
+  seedPreviousCourtResponse(ministerState);
+  const ministerView = buildOfficialCourtResponseView(ministerState);
+  const ministerResult = resolveOfficialCourtResponseSubmission(
+    ministerState,
+    "部院再覆续办部院覆奏：河工清册，承前只列公开凭据。"
+  );
+
+  assert.equal(ministerView.chainItems.length, 1);
+  assert.equal(ministerView.counts.actionableChainItems, 0);
+  assert.equal(ministerView.nextActions.length, 0);
+  assert.equal(ministerResult, null);
+
+  const emperorState = createInitialState({
+    role: "emperor",
+    playerName: "御前续办"
+  });
+  seedPreviousCourtResponse(emperorState);
+  const emperorView = buildOfficialCourtResponseView(emperorState);
+  const emperorResult = resolveOfficialCourtResponseSubmission(
+    emperorState,
+    "御前再摘续办部院覆奏：河工清册，只问可行、不可行、待查三项。"
+  );
+
+  assert.equal(emperorView.counts.actionableChainItems, 1);
+  assert.ok(emperorView.nextActions.some((action) => /御前再摘/.test(action.label)));
+  assert.ok(emperorResult);
+  assert.equal(emperorResult.sourceType, "official_court_response");
+  assert.equal(emperorResult.previousResponseId, "OCR-chain-ministry");
+  assertNoUnsafeCourtResponseText({ ministerView, emperorView, emperorResult });
+});
+
 test("S88.4 emperor court response turn records only a bounded response and does not trigger appointment coupling", async (t) => {
   const server = createTestServer();
   const worldState = createInitialState({
@@ -180,6 +274,43 @@ test("S88.4 emperor court response turn records only a bounded response and does
   assert.equal(Boolean(payload.worldState.officialCourtResponses), false);
   assert.equal(rawResponseState.responses.length, 1);
   assert.equal(rawResponseState.responses[0].responseKind, "vermilion_note");
+  assertNoUnsafeCourtResponseText(payload.courtResponseView);
+});
+
+test("S88.4 emperor continuation turn records previous response linkage without raw ledger exposure", async (t) => {
+  const server = createTestServer();
+  const worldState = createInitialState({
+    role: "emperor",
+    playerName: "续批回合"
+  });
+  worldState.turnCount = 7;
+  seedCourtRecords(worldState);
+  seedPreviousCourtResponse(worldState);
+  t.after(async () => {
+    await removeSessionFile(worldState.sessionId);
+    await server.close();
+  });
+  await writeSession(worldState);
+
+  const { response, payload } = await postJson(`${server.baseUrl}/api/game/turn`, {
+    sessionId: worldState.sessionId,
+    input: "御前再摘续办部院覆奏：河工清册只问可行、不可行、待查三项，不直接任免赏罚，后果仍候服务器裁决。"
+  });
+  const rawSession = JSON.parse(await fs.readFile(path.join(sessionsDir, `${worldState.sessionId}.json`), "utf8"));
+  const rawResponseState = normalizeOfficialCourtResponseState(rawSession.worldState);
+  const latest = rawResponseState.responses.at(-1);
+
+  assert.equal(response.status, 200);
+  assert.equal(Boolean(payload.worldState.officialCourtResponses), false);
+  assert.equal(rawResponseState.responses.length, 2);
+  assert.equal(latest.sourceType, "official_court_response");
+  assert.equal(latest.previousResponseId, "OCR-chain-ministry");
+  assert.equal(latest.sourceResponseId, "OCR-chain-ministry");
+  assert.equal(latest.chainRound, 2);
+  assert.equal(latest.responseKind, "vermilion_note");
+  assert.ok(payload.courtResponseView.recentResponses.some((item) => item.previousResponseId === "OCR-chain-ministry"));
+  assert.ok(payload.officialCourtResponse.events.some((event) => event.includes("[奏议回应记录]")));
+  assert.equal(payload.roleWorldCouplingView.recentImpacts.some((impact) => impact.kind === "emperor_appointments"), false);
   assertNoUnsafeCourtResponseText(payload.courtResponseView);
 });
 

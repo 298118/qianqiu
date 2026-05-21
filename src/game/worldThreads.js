@@ -692,7 +692,10 @@ function responseSeverity(item = {}) {
 function deriveOfficialCourtResponseThreads(worldState) {
   const view = buildOfficialCourtResponseView(worldState);
   if (!view.active) return [];
-  return (view.responseItems || []).slice(0, 3).map((item) => makeThread(worldState, {
+  return [
+    ...(view.chainItems || []),
+    ...(view.responseItems || [])
+  ].slice(0, 3).map((item) => makeThread(worldState, {
     id: `WT-official-court-response-${item.sourceType}-${item.sourceId}`,
     sourceType: "official_court_response",
     sourceId: item.sourceId,

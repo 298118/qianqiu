@@ -147,7 +147,7 @@ function listFromRows(rows: readonly JsonValue[], key: string, limit: number, fa
       const meta = cleanOptionalText(
         [
           kind,
-          cleanOptionalText(item.statusLabel || item.status || item.visibility || item.stage, 24),
+          cleanOptionalText(item.chainStageLabel || item.statusLabel || item.status || item.visibility || item.stage, 24),
           item.riskScore === undefined && item.pressureScore === undefined && item.severity === undefined
             ? undefined
             : `警势 ${cleanNumber(item.riskScore ?? item.pressureScore ?? item.severity, 0)}`
@@ -200,6 +200,7 @@ function getMemorialQueue(eventArchive: JsonObject, worldThread: JsonObject, map
 
 function getCourtResponseAgenda(courtResponse: JsonObject) {
   const responseRows = [
+    ...rowsFromKeys(courtResponse, ["chainItems"]),
     ...rowsFromKeys(courtResponse, ["responseItems"]),
     ...rowsFromKeys(courtResponse, ["recentResponses"])
   ];
