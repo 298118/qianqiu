@@ -11,6 +11,7 @@ const { buildOfficialCourtConsequenceView } = require("./officialCourtConsequenc
 const { buildOfficialCourtResponseView } = require("./officialCourtResponse");
 const { buildOfficialPostingsView } = require("./officialPostings");
 const { buildDomainConsequenceView } = require("./domainConsequenceTrace");
+const { collectDomainConsequenceEchoRefs } = require("./domainConsequenceEchoRefs");
 const { formatYearMonthPeriod, normalizeMonth, normalizeTenDayPeriod, normalizeYear } = require("./time");
 const { buildWorldThreadView } = require("./worldThreads");
 const { isVisibleActorId } = require("./actorMemoryLedger");
@@ -119,6 +120,11 @@ function cleanArchiveText(value, fallback = "", maxLength = MAX_TEXT_LENGTH) {
   return redacted.length > maxLength ? `${redacted.slice(0, maxLength)}...` : redacted;
 }
 
+function cleanArchiveId(value, fallback = "") {
+  const text = cleanArchiveText(value, fallback, 96);
+  return text.replace(/[^A-Za-z0-9_.:-]+/g, "-").replace(/^-+|-+$/g, "") || fallback;
+}
+
 function normalizeDateSource(worldState = {}, source = {}) {
   const candidate = isPlainObject(source) ? source : {};
   const year = normalizeYear(candidate.year ?? candidate.currentYear ?? worldState.year);
@@ -144,11 +150,18 @@ function makeArchiveItem(worldState, index, fields = {}) {
   const summary = cleanArchiveText(fields.summary, "");
   if (!summary) return null;
   const turn = clampNumber(fields.turn ?? fields.resolvedTurn ?? fields.createdTurn, 0, Number.MAX_SAFE_INTEGER, currentTurn(worldState));
+  const sourceId = cleanArchiveId(fields.sourceId, "");
+  const canonicalEchoRefs = collectDomainConsequenceEchoRefs(
+    fields.canonicalEchoRefs,
+    fields.canonicalEchoRef,
+    fields.sourceId,
+    fields.relatedLabels
+  ).slice(0, 4);
   const relatedLabels = Array.isArray(fields.relatedLabels)
     ? fields.relatedLabels.map((label) => cleanArchiveText(label, "", 60)).filter(Boolean).slice(0, 6)
     : [];
 
-  return {
+  const item = {
     id: `EA-${String(index).padStart(3, "0")}-${sourceType}`,
     sourceType,
     sourceLabel: SOURCE_LABELS[sourceType],
@@ -166,6 +179,9 @@ function makeArchiveItem(worldState, index, fields = {}) {
     riskLabel: cleanArchiveText(fields.riskLabel, "", 40),
     relatedLabels
   };
+  if (sourceId) item.sourceId = sourceId;
+  if (canonicalEchoRefs.length) item.canonicalEchoRefs = canonicalEchoRefs;
+  return item;
 }
 
 function addItem(items, worldState, fields) {
@@ -192,8 +208,13 @@ function collectHistoryItems(worldState, items) {
 function collectWorldThreadItems(worldState, items, worldThreadView) {
   const activeThreads = Array.isArray(worldThreadView?.activeThreads) ? worldThreadView.activeThreads : [];
   activeThreads.slice(0, MAX_THREADS).forEach((thread) => {
+    const canonicalEchoRefs = thread.sourceType === "domain_consequence"
+      ? collectDomainConsequenceEchoRefs(thread.sourceId, thread.id)
+      : [];
     addItem(items, worldState, {
       sourceType: "world_thread",
+      sourceId: canonicalEchoRefs.length ? thread.sourceId : undefined,
+      canonicalEchoRefs,
       kind: thread.kind,
       title: thread.title,
       summary: thread.summary || thread.goal,
@@ -206,8 +227,13 @@ function collectWorldThreadItems(worldState, items, worldThreadView) {
 
   const resolvedThreads = Array.isArray(worldThreadView?.recentResolved) ? worldThreadView.recentResolved : [];
   resolvedThreads.slice(-3).forEach((thread) => {
+    const canonicalEchoRefs = thread.sourceType === "domain_consequence"
+      ? collectDomainConsequenceEchoRefs(thread.sourceId, thread.id)
+      : [];
     addItem(items, worldState, {
       sourceType: "world_thread",
+      sourceId: canonicalEchoRefs.length ? thread.sourceId : undefined,
+      canonicalEchoRefs,
       kind: thread.kind,
       title: thread.title,
       summary: thread.outcome,
@@ -363,6 +389,8 @@ function collectDomainConsequenceItems(worldState, items) {
       kind: consequence.sourceType || "domain_consequence",
       title: consequence.title || consequence.sourceLabel || "领域后果追踪",
       summary: consequence.publicSummary,
+      sourceId: consequence.publicEchoRef,
+      canonicalEchoRefs: [consequence.publicEchoRef],
       date: consequence,
       turn: consequence.generatedAtTurn,
       status: consequence.severity >= 2 ? "watch" : "recorded",

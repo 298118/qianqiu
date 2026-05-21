@@ -2,6 +2,7 @@ const { buildActorMemoryView } = require("./actorMemoryLedger");
 const { buildPlayerAiActorProfile } = require("./aiActorProfiles");
 const { buildEconomicFiscalView } = require("./economicFiscal");
 const { buildDomainConsequenceView } = require("./domainConsequenceTrace");
+const { collectDomainConsequenceEchoRefs } = require("./domainConsequenceEchoRefs");
 const { buildEventArchiveView } = require("./eventArchive");
 const { buildHistoricalEventArchiveView } = require("./historicalEventArchive");
 const { buildIntelligenceRumorView } = require("./intelligenceRumors");
@@ -18,6 +19,7 @@ const { buildRoleCycleView } = require("./roleCycleView");
 const { buildSessionSummaryView } = require("./sessionSummary");
 const { buildWorldGeographyView } = require("./worldGeography");
 const { buildWorldPeopleView } = require("./worldPeople");
+const { buildWorldThreadView } = require("./worldThreads");
 const {
   ACTOR_READ_DOMAIN_ALIASES,
   RESOLVER_INPUT_DOMAIN_CONFIG,
@@ -164,7 +166,8 @@ function buildSourceViews(worldState, options = {}) {
     roleCycleView: buildRoleCycleView(worldState),
     sessionSummaryView: buildSessionSummaryView(worldState),
     worldGeographyView,
-    worldPeopleView
+    worldPeopleView,
+    worldThreadView: buildWorldThreadView(worldState)
   };
 }
 
@@ -277,7 +280,19 @@ function evidenceFromRow(row, meta, index, worldState) {
   if (!sourceId || !label || !summary) return null;
   const visibility = normalizeVisibility(row.visibility || (row.knownToPlayer ? "player_visible" : "public"));
   if (visibility === "hidden") return null;
-  return {
+  const canonicalEchoRefs = collectDomainConsequenceEchoRefs(
+    row.canonicalEchoRefs,
+    row.canonicalEchoRef,
+    row.publicEchoRef,
+    row.sourceId,
+    row.id,
+    row.refId,
+    row.relatedRefs,
+    row.scopeRefs,
+    row.consequenceRefs,
+    sourceId
+  );
+  const evidence = {
     refId: `evidence:${meta.domain}:${cleanId(sourceId, `${meta.sourceView}-${index}`)}`,
     sourceView: meta.sourceView,
     sourceId,
@@ -293,6 +308,8 @@ function evidenceFromRow(row, meta, index, worldState) {
       ? "current"
       : "recent"
   };
+  if (canonicalEchoRefs.length) evidence.canonicalEchoRefs = canonicalEchoRefs;
+  return evidence;
 }
 
 function buildPlayerEvidence(worldState = {}) {
@@ -428,7 +445,14 @@ function normalizeResolverEvidenceCandidate(item, index, worldState = {}) {
   const summary = cleanText(item.summary, "", domainConfig.maxCharacters);
   if (!refId || !sourceId || !label || !summary) return null;
   const freshness = ["current", "recent", "stale"].includes(item.freshness) ? item.freshness : "recent";
-  return {
+  const canonicalEchoRefs = collectDomainConsequenceEchoRefs(
+    item.canonicalEchoRefs,
+    item.canonicalEchoRef,
+    item.publicEchoRef,
+    item.sourceId,
+    item.refId
+  );
+  const evidence = {
     refId,
     sourceId,
     domain,
@@ -442,6 +466,8 @@ function normalizeResolverEvidenceCandidate(item, index, worldState = {}) {
     generatedAtTurn: clampInteger(item.generatedAtTurn, 0, Number.MAX_SAFE_INTEGER, currentTurn(worldState)),
     freshness
   };
+  if (canonicalEchoRefs.length) evidence.canonicalEchoRefs = canonicalEchoRefs;
+  return evidence;
 }
 
 function emptyDomainBuckets() {
@@ -613,17 +639,22 @@ function filterResolverInputForActor(context = {}, actorProfile = {}) {
 
 function createResolverEvidenceRefs(context = {}) {
   return RESOLVER_INPUT_DOMAINS.flatMap((domain) =>
-    asArray(context[domain]).map((item) => ({
-      refId: item.refId,
-      sourceView: item.sourceView,
-      sourceId: item.sourceId,
-      domain: item.domain,
-      visibility: item.visibility,
-      confidence: item.confidence,
-      relatedRefs: asArray(item.relatedRefs),
-      scopeRefs: asArray(item.scopeRefs),
-      generatedAtTurn: item.generatedAtTurn
-    }))
+    asArray(context[domain]).map((item) => {
+      const ref = {
+        refId: item.refId,
+        sourceView: item.sourceView,
+        sourceId: item.sourceId,
+        domain: item.domain,
+        visibility: item.visibility,
+        confidence: item.confidence,
+        relatedRefs: asArray(item.relatedRefs),
+        scopeRefs: asArray(item.scopeRefs),
+        generatedAtTurn: item.generatedAtTurn
+      };
+      const canonicalEchoRefs = collectDomainConsequenceEchoRefs(item.canonicalEchoRefs, item.sourceId, item.refId);
+      if (canonicalEchoRefs.length) ref.canonicalEchoRefs = canonicalEchoRefs;
+      return ref;
+    })
   );
 }
 

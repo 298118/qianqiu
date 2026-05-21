@@ -239,6 +239,40 @@ describe("S74.3 UI state store", () => {
     expect(useUiStateStore.getState().actionDraft).toBeNull();
   });
 
+  it("clears topic draft context when a user rewrites the memorial manually", () => {
+    const store = useUiStateStore.getState();
+
+    store.setActionDraft({
+      source: "role-surface",
+      targetPage: "game",
+      text: "据堂审材料拟稿。",
+      draftContext: {
+        surfaceId: "trial",
+        draftKind: "investigate_case",
+        evidenceRefs: ["evidence:events:domainConsequenceEcho:abc123"],
+        canonicalEchoRefs: ["domainConsequenceEcho:abc123"],
+        generatedAtTurn: 2,
+        status: "client_hint"
+      }
+    });
+    expect(useUiStateStore.getState().actionDraft?.draftContext?.canonicalEchoRefs).toEqual([
+      "domainConsequenceEcho:abc123"
+    ]);
+
+    store.setActionDraft({
+      source: "manual",
+      targetPage: "game",
+      text: "改为另写一札，不再引用原堂审草稿。"
+    });
+
+    expect(useUiStateStore.getState().actionDraft).toMatchObject({
+      source: "manual",
+      text: "改为另写一札，不再引用原堂审草稿。",
+      targetPage: "game"
+    });
+    expect(useUiStateStore.getState().actionDraft?.draftContext).toBeUndefined();
+  });
+
   it("updates display preferences without adding session payload fields", () => {
     const store = useUiStateStore.getState();
 

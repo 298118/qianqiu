@@ -29,6 +29,7 @@ import type {
   TopicSurfaceResponse,
   TradeRequest,
   TradeResponse,
+  TurnDraftContext,
   TurnResponse
 } from "../api";
 
@@ -78,7 +79,7 @@ type GameSessionState = {
   readonly refreshSaves: () => Promise<void>;
   readonly startNewGame: (input: StartGameInput) => Promise<StartGameResponse>;
   readonly loadSession: (sessionId: string) => Promise<PlayerStateResponse>;
-  readonly submitTurn: (sessionId: string, input: string) => Promise<TurnResponse>;
+  readonly submitTurn: (sessionId: string, input: string, draftContext?: TurnDraftContext) => Promise<TurnResponse>;
   readonly requestExamQuestion: (sessionId: string, level: ExamLevel) => Promise<ExamQuestionResponse>;
   readonly progressExam: (sessionId: string, examId: string, action: string) => Promise<ExamProgressResponse>;
   readonly submitExam: (sessionId: string, examId: string, essay: string) => Promise<ExamSubmitResponse>;
@@ -230,10 +231,12 @@ export const useGameSessionStore = create<GameSessionState>((set) => ({
     }
   },
 
-  async submitTurn(sessionId, input) {
+  async submitTurn(sessionId, input, draftContext) {
     set({ status: "loading", error: null });
     try {
-      const payload = await qianqiuApi.submitTurn({ sessionId, input });
+      const payload = await qianqiuApi.submitTurn(
+        draftContext ? { sessionId, input, draftContext } : { sessionId, input }
+      );
       set({
         currentSessionId: payload.sessionId,
         currentSession: payload,

@@ -20,6 +20,8 @@ const {
   createCanaryPollutedWorldState,
   createWorldContentFixture
 } = require("../src/game/worldContentFixtures");
+const { createInitialState } = require("../src/game/initialState");
+const { buildWorldThreadView, ensureWorldThreadState } = require("../src/game/worldThreads");
 const { createJsonSessionAdapter } = require("../src/storage/jsonSessionAdapter");
 const { createSqliteSessionAdapter } = require("../src/storage/sqliteSessionAdapter");
 
@@ -221,6 +223,46 @@ test("S71.1 resolver input context rejects source spoofing and drops hidden visi
     }))
   });
   assert.equal(context.intel.some((item) => item.sourceId.startsWith("hidden-extra")), false);
+});
+
+test("S88.6 resolver input preserves canonical echo refs for domain consequence evidence", () => {
+  const worldState = createInitialState({ role: "official", playerName: "后果上下文" });
+  worldState.turnCount = 19;
+  worldState.cityPolicyLedger = {
+    records: [{
+      outcomeId: "resolver-domain-echo",
+      policyType: "market_regulation",
+      policyLabel: "米价回响",
+      status: "accepted",
+      publicSummary: "米铺照牌价出售，仍需观察民情。",
+      publicSourceId: "resolver-domain-public-source",
+      stateDelta: { publicOrder: -3 },
+      appliedAtTurn: 19
+    }]
+  };
+  ensureWorldThreadState(worldState);
+
+  const context = buildResolverInputContext(worldState, {
+    generatedAt: FIXED_GENERATED_AT,
+    domainCaps: { events: 24 }
+  });
+  const direct = context.events.find((item) => item.sourceView === "domainConsequenceView");
+  const archive = context.events.find((item) => item.sourceView === "eventArchiveView" && item.canonicalEchoRefs?.length);
+  const refs = createResolverEvidenceRefs(context);
+  const threadContext = buildResolverInputContext(worldState, {
+    generatedAt: FIXED_GENERATED_AT,
+    views: { worldThreadView: buildWorldThreadView(worldState) },
+    domainCaps: { events: 8 }
+  });
+  const thread = threadContext.events.find((item) => item.sourceView === "worldThreadView" && item.canonicalEchoRefs?.length);
+
+  assert.match(direct?.canonicalEchoRefs?.[0] || "", /^domainConsequenceEcho:/);
+  assert.deepEqual(archive?.canonicalEchoRefs, direct.canonicalEchoRefs);
+  assert.deepEqual(thread?.canonicalEchoRefs, direct.canonicalEchoRefs);
+  assert.ok(refs.some((ref) =>
+    ref.refId === direct.refId && ref.canonicalEchoRefs?.[0] === direct.canonicalEchoRefs[0]
+  ));
+  assert.doesNotMatch(JSON.stringify(context), /resolver-domain-public-source|stateDelta|cityPolicyLedger|rawSql|SEALED_/);
 });
 
 test("S71.1 resolver input context strips extra evidence to the evidence contract", () => {

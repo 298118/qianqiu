@@ -3,6 +3,7 @@ const {
   buildResolverInputContext,
   filterResolverInputForActor
 } = require("./resolverInputContext");
+const { collectDomainConsequenceEchoRefs } = require("./domainConsequenceEchoRefs");
 const { RESOLVER_INPUT_DOMAINS } = require("./resolverInputConfig");
 const { createScene } = require("./sceneRuntime");
 
@@ -205,6 +206,18 @@ function getTopicSurfaceConfig(surfaceId) {
   return id ? TOPIC_SURFACE_CONFIG[id] : null;
 }
 
+function dedupeEvidenceByCanonicalEcho(rows = []) {
+  const seen = new Set();
+  return rows.filter((row) => {
+    const refs = collectDomainConsequenceEchoRefs(row.canonicalEchoRefs, row.sourceId, row.refId).sort();
+    if (!refs.length) return true;
+    const key = refs.join("|");
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+}
+
 function flattenEvidence(context = {}, config = {}) {
   const domains = new Set(config.domains || RESOLVER_INPUT_DOMAINS);
   const sourceViews = new Set(config.sourceViews || []);
@@ -215,7 +228,14 @@ function flattenEvidence(context = {}, config = {}) {
     if (!domains.has(domain)) continue;
     for (const item of asArray(context[domain])) {
       if (sourceViews.size && !sourceViews.has(item.sourceView)) continue;
-      rows.push({
+      const canonicalEchoRefs = collectDomainConsequenceEchoRefs(
+        item.canonicalEchoRefs,
+        item.canonicalEchoRef,
+        item.publicEchoRef,
+        item.sourceId,
+        item.refId
+      );
+      const row = {
         sourcePriority: sourceViewPriority.has(item.sourceView) ? sourceViewPriority.get(item.sourceView) : 999,
         originalOrder: order,
         refId: cleanId(item.refId, ""),
@@ -229,13 +249,16 @@ function flattenEvidence(context = {}, config = {}) {
         generatedAtTurn: clampNumber(item.generatedAtTurn, 0, Number.MAX_SAFE_INTEGER, context.generatedAtTurn || 0),
         freshness: cleanText(item.freshness, "recent", 24),
         scopeRefs: asArray(item.scopeRefs).map((ref) => cleanId(ref, "")).filter(Boolean).slice(0, 6)
-      });
+      };
+      if (canonicalEchoRefs.length) row.canonicalEchoRefs = canonicalEchoRefs;
+      rows.push(row);
       order += 1;
     }
   }
-  return rows
+  const sortedRows = rows
     .filter((row) => row.refId && row.label && row.summary)
-    .sort((a, b) => a.sourcePriority - b.sourcePriority || a.originalOrder - b.originalOrder)
+    .sort((a, b) => a.sourcePriority - b.sourcePriority || a.originalOrder - b.originalOrder);
+  return dedupeEvidenceByCanonicalEcho(sortedRows)
     .slice(0, TOPIC_SURFACE_EVIDENCE_LIMIT)
     .map(({ sourcePriority, originalOrder, ...row }) => row);
 }

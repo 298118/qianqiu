@@ -351,6 +351,7 @@ test("S88.6 topic draft can cite domain consequence evidence safely", async (t) 
   });
 
   assert.ok(domainRef);
+  assert.match(domainRef.canonicalEchoRefs?.[0] || "", /^domainConsequenceEcho:/);
   const { response, payload } = await postJson(`${server.baseUrl}/api/ai/topic-draft/${worldState.sessionId}`, {
     surfaceId: "trial",
     selectedEvidenceRefs: [domainRef.refId],
@@ -360,12 +361,15 @@ test("S88.6 topic draft can cite domain consequence evidence safely", async (t) 
 
   assert.equal(response.status, 200);
   assert.ok(providerContext);
+  const providerDomainRef = providerContext.evidenceRefs.find((ref) => ref.refId === domainRef.refId);
+  assert.deepEqual(providerDomainRef.canonicalEchoRefs, domainRef.canonicalEchoRefs);
   assertTopicDraftEnvelope(payload, {
     sessionId: worldState.sessionId,
     source: "provider-ai",
     surfaceId: "trial"
   });
   assert.deepEqual(payload.topicDraft.evidenceRefs, [domainRef.refId]);
+  assert.deepEqual(payload.topicDraft.canonicalEchoRefs, domainRef.canonicalEchoRefs);
   assert.doesNotMatch(
     JSON.stringify(payload),
     /SEALED_BROWSER|cityPolicyLedger|market:grain|stateDelta|playerDelta|auditRecord|rawSql|sk-browser-secret/

@@ -248,6 +248,35 @@ test("S88.5.3 magistrate market entry resolves through city policy with visible 
   assert.doesNotMatch(serialized, /auditRecord|stateDelta|playerDelta|rawSql|worldState|cityPolicyLedger/);
 });
 
+test("S88.6 role-cycle adjudication records verified topic draft echo audit refs", () => {
+  const worldState = createInitialState({ role: "magistrate", playerName: "后果审计知县" });
+  const echoRef = "domainConsequenceEcho:abc123";
+  const result = runRoleCycleDomainAdjudicationStep(
+    worldState,
+    "本旬先处置广州粮储市价：核公开材料、经手人、期限和需回报事项。",
+    {
+      draftContext: {
+        surfaceId: "trial",
+        draftKind: "investigate_case",
+        evidenceRefs: ["evidence:events:domainConsequenceEcho:abc123"],
+        canonicalEchoRefs: [echoRef, "forged-ref"],
+        generatedAtTurn: 0,
+        status: "verified"
+      }
+    }
+  );
+  const ledgerRecord = worldState.cityPolicyLedger.records[0];
+  const serialized = JSON.stringify(result);
+
+  assert.equal(result.outcome.status, "accepted");
+  assert.deepEqual(result.outcome.canonicalEchoRefs, [echoRef]);
+  assert.deepEqual(ledgerRecord.canonicalEchoRefs, [echoRef]);
+  assert.equal(ledgerRecord.topicDraftContext.surfaceId, "trial");
+  assert.equal(ledgerRecord.topicDraftContext.status, "verified");
+  assert.equal(JSON.stringify(result).includes("forged-ref"), false);
+  assert.doesNotMatch(serialized, /outcomeId|role-cycle:/);
+});
+
 test("S88.6 role-cycle city policy duplicate guard suppresses repeated ordinary-turn triggers", () => {
   const worldState = createInitialState({ role: "magistrate", playerName: "重复知县" });
   worldState.turnCount = 10;

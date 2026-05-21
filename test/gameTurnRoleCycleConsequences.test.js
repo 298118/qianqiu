@@ -8,6 +8,7 @@ process.env.AI_PROVIDER = "mock";
 
 const gameRoutes = require("../src/routes/game");
 const { createInitialState } = require("../src/game/initialState");
+const { buildTopicSurfaceView } = require("../src/game/topicSurfaceView");
 const { readSession, writeSession } = require("../src/storage/sessionStore");
 const { createFetchSafeServer } = require("../test-helpers/fetchSafeServer");
 
@@ -109,6 +110,70 @@ test("S88.6 turn-level role-cycle duplicate guard does not reapply city policy c
     serialized,
     /"cityPolicyLedger":|"militaryDiplomacyLedger":|"stateDelta":|"playerDelta":|"auditRecord":|rawSql|SEALED_|role-cycle:/
   );
+});
+
+test("S88.6 turn verifies topic draft canonical echo refs before role-cycle adjudication", async (t) => {
+  const server = createTestServer();
+  t.after(server.close);
+
+  const worldState = createInitialState({ role: "magistrate", playerName: "草稿回响知县" });
+  worldState.turnCount = 12;
+  worldState.cityPolicyLedger = {
+    records: [{
+      outcomeId: "turn-draft-domain-echo",
+      policyType: "market_regulation",
+      policyLabel: "米价回响",
+      status: "accepted",
+      publicSummary: "米铺照牌价出售，仍需观察民情。",
+      publicSourceId: "turn-route-domain-public-source",
+      stateDelta: { publicOrder: -3 },
+      evidenceRefs: ["market:legacy"],
+      appliedAtTurn: 11
+    }]
+  };
+  const topicView = buildTopicSurfaceView(worldState, { surfaceId: "trial" });
+  const domainRef = topicView.evidenceRefs.find((ref) => ref.sourceView === "domainConsequenceView");
+  const echoRef = domainRef?.canonicalEchoRefs?.[0] || "";
+  const draftContext = {
+    surfaceId: "trial",
+    draftKind: "investigate_case",
+    evidenceRefs: [domainRef?.refId],
+    canonicalEchoRefs: ["domainConsequenceEcho:forged", echoRef],
+    generatedAtTurn: topicView.generatedAtTurn,
+    status: "client_hint"
+  };
+  t.after(() => removeSessionArtifacts(worldState.sessionId));
+  await writeSession(worldState);
+
+  assert.match(echoRef, /^domainConsequenceEcho:/);
+  const first = await postJson(`${server.baseUrl}/api/game/turn`, {
+    sessionId: worldState.sessionId,
+    input: "本旬先处置广州粮储市价：核公开材料、经手人、期限和需回报事项。",
+    draftContext
+  });
+  const savedAfterFirst = await readSession(worldState.sessionId);
+  const firstLedgerRecord = savedAfterFirst.cityPolicyLedger.records.at(-1);
+
+  assert.equal(first.response.status, 200);
+  assert.equal(first.payload.roleCycleDomainAdjudication.outcome.status, "accepted");
+  assert.deepEqual(first.payload.roleCycleDomainAdjudication.outcome.canonicalEchoRefs, [echoRef]);
+  assert.equal(first.payload.roleCycleDomainAdjudication.outcome.topicDraftContext.status, "verified");
+  assert.deepEqual(firstLedgerRecord.canonicalEchoRefs, [echoRef]);
+  assert.equal(firstLedgerRecord.topicDraftContext.surfaceId, "trial");
+  assert.doesNotMatch(JSON.stringify(first.payload), /domainConsequenceEcho:forged|turn-route-domain-public-source|cityPolicyLedger|stateDelta|playerDelta|auditRecord|outcomeId|role-cycle:|SEALED_/);
+
+  const second = await postJson(`${server.baseUrl}/api/game/turn`, {
+    sessionId: worldState.sessionId,
+    input: "本旬先处置广州粮储市价：核公开材料、经手人、期限和需回报事项。",
+    draftContext
+  });
+  const savedAfterSecond = await readSession(worldState.sessionId);
+
+  assert.equal(second.response.status, 200);
+  assert.equal(second.payload.roleCycleDomainAdjudication.outcome.status, "duplicate_recent");
+  assert.deepEqual(second.payload.roleCycleDomainAdjudication.outcome.canonicalEchoRefs, [echoRef]);
+  assert.equal(savedAfterSecond.cityPolicyLedger.records.length, savedAfterFirst.cityPolicyLedger.records.length);
+  assert.doesNotMatch(JSON.stringify(second.payload), /domainConsequenceEcho:forged|cityPolicyLedger|stateDelta|playerDelta|auditRecord|outcomeId|role-cycle:|SEALED_/);
 });
 
 test("S88.5.3 turn resolves general war-council drafts and keeps military ledger private", async (t) => {

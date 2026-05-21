@@ -12,6 +12,7 @@ const {
   buildTopicSurfaceViewIndex
 } = require("../src/game/topicSurfaceView");
 const { buildOfficialCareerView } = require("../src/game/officialCareer");
+const { ensureWorldThreadState } = require("../src/game/worldThreads");
 const { writeSession } = require("../src/storage/sessionStore");
 const { createFetchSafeServer } = require("../test-helpers/fetchSafeServer");
 
@@ -176,6 +177,39 @@ test("S88.4 memorial and court surfaces include official first-month court entry
     assert.ok(view.items.some((item) => /首月回署|馆阁讲章校订/.test(`${item.title}${item.summary}`)));
     assertNoSensitiveText(view);
   }
+});
+
+test("S88.6 topic surfaces dedupe domain consequence archive and thread echoes", () => {
+  const worldState = createInitialState({
+    dynasty: "明",
+    year: 1644,
+    role: "official",
+    playerName: "后果去重"
+  });
+  worldState.turnCount = 18;
+  worldState.cityPolicyLedger = {
+    records: [{
+      outcomeId: "topic-surface-domain-echo",
+      policyType: "market_regulation",
+      policyLabel: "米价回响",
+      status: "accepted",
+      publicSummary: "米铺照牌价出售，仍需观察民情。",
+      publicSourceId: "topic-surface-domain-public-source",
+      stateDelta: { publicOrder: -3 },
+      appliedAtTurn: 18
+    }]
+  };
+  ensureWorldThreadState(worldState);
+
+  const view = buildTopicSurfaceView(worldState, { surfaceId: "edict-draft" });
+  const directRef = view.evidenceRefs.find((ref) => ref.sourceView === "domainConsequenceView");
+  const echoRef = directRef?.canonicalEchoRefs?.[0] || "";
+  const echoMatches = view.evidenceRefs.filter((ref) => ref.canonicalEchoRefs?.includes(echoRef));
+
+  assert.match(echoRef, /^domainConsequenceEcho:/);
+  assert.equal(echoMatches.length, 1);
+  assert.equal(echoMatches[0].sourceView, "domainConsequenceView");
+  assertNoSensitiveText(view);
 });
 
 test("GET /api/game/topic-surface/:sessionId/:surfaceId returns read-only safe projection", async (t) => {

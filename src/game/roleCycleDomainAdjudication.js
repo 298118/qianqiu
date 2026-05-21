@@ -1,5 +1,6 @@
 const { buildPlayerAiActorProfile } = require("./aiActorProfiles");
 const { collectVisibleDomainEvidenceRefs } = require("./domainToolResolvers");
+const { collectDomainConsequenceEchoRefs } = require("./domainConsequenceEchoRefs");
 const { resolveAndApplyCityPolicy } = require("./cityPolicyResolver");
 const { resolveAndApplyMilitaryDiplomacy } = require("./militaryDiplomacyResolver");
 
@@ -284,6 +285,49 @@ function sameEvidenceSet(left = [], right = []) {
   return leftRefs.every((ref, index) => ref === rightRefs[index]);
 }
 
+function normalizeDraftAuditContext(draftContext = {}) {
+  if (!isPlainObject(draftContext)) return null;
+  const canonicalEchoRefs = collectDomainConsequenceEchoRefs(draftContext.canonicalEchoRefs).slice(0, MAX_EVIDENCE_REFS);
+  if (!canonicalEchoRefs.length) return null;
+  return {
+    source: "topic_draft_turn_context",
+    surfaceId: cleanRef(draftContext.surfaceId, ""),
+    draftKind: cleanRef(draftContext.draftKind, ""),
+    evidenceRefs: cleanRefList(draftContext.evidenceRefs, MAX_EVIDENCE_REFS),
+    canonicalEchoRefs,
+    generatedAtTurn: Number.isFinite(Number(draftContext.generatedAtTurn))
+      ? Math.max(0, Math.round(Number(draftContext.generatedAtTurn)))
+      : 0,
+    status: cleanRef(draftContext.status, "verified")
+  };
+}
+
+function attachDraftAuditToOutcome(outcome = {}, draftAuditContext = null) {
+  if (!isPlainObject(outcome) || !draftAuditContext?.canonicalEchoRefs?.length) return outcome;
+  outcome.canonicalEchoRefs = draftAuditContext.canonicalEchoRefs;
+  outcome.topicDraftContext = draftAuditContext;
+  if (isPlainObject(outcome.auditRecord)) {
+    outcome.auditRecord.topicDraftContext = draftAuditContext;
+  }
+  return outcome;
+}
+
+function attachDraftAuditToLedgerRecord(worldState = {}, resolver = "", outcome = {}, draftAuditContext = null) {
+  if (!draftAuditContext?.canonicalEchoRefs?.length || outcome.status !== "accepted") return;
+  const records = resolver === "city_policy"
+    ? worldState.cityPolicyLedger?.records
+    : worldState.militaryDiplomacyLedger?.records;
+  if (!Array.isArray(records)) return;
+  const outcomeId = cleanRef(outcome.outcomeId, "");
+  for (let index = records.length - 1; index >= 0; index -= 1) {
+    const record = records[index];
+    if (!isPlainObject(record) || cleanRef(record.outcomeId, "") !== outcomeId) continue;
+    record.canonicalEchoRefs = draftAuditContext.canonicalEchoRefs;
+    record.topicDraftContext = draftAuditContext;
+    return;
+  }
+}
+
 function recordAppliedAtTurn(record = {}) {
   const parsed = Number(record.appliedAtTurn ?? record.generatedAtTurn ?? record.lastTickTurn);
   return Number.isFinite(parsed) ? Math.max(0, Math.round(parsed)) : null;
@@ -334,25 +378,30 @@ function findRecentMilitaryDuplicate(worldState = {}, actorProfile = {}, actionK
   ) || null;
 }
 
-function buildDuplicateFeedback({ resolver, intent, label, evidenceRefs }) {
+function buildDuplicateFeedback({ resolver, intent, label, evidenceRefs, draftAuditContext = null }) {
   const safeLabel = cleanText(label, resolver === "city_policy" ? "城市政策" : "军务处置", 80);
+  const outcome = {
+    resolver,
+    status: "duplicate_recent",
+    intent: cleanText(intent, resolver, 60),
+    label: safeLabel,
+    evidenceRefs: cleanRefList(evidenceRefs, MAX_EVIDENCE_REFS),
+    evidenceRefCount: Array.isArray(evidenceRefs) ? evidenceRefs.length : 0,
+    publicSummary: `近${ROLE_CYCLE_DOMAIN_DUPLICATE_WINDOW_TURNS}旬已有同一角色、意图与公开证据的${safeLabel}服务器裁决；如需新处置，请补充新的公开证据或等待冷却。`,
+    rejectionReasons: ["近旬已有同一角色、意图与公开证据的服务器裁决，已拦截重复触发。"],
+    affectedPaths: [],
+    duplicateWindowTurns: ROLE_CYCLE_DOMAIN_DUPLICATE_WINDOW_TURNS
+  };
+  if (draftAuditContext?.canonicalEchoRefs?.length) {
+    outcome.canonicalEchoRefs = draftAuditContext.canonicalEchoRefs;
+    outcome.topicDraftContext = draftAuditContext;
+  }
   return {
     schemaVersion: ROLE_CYCLE_DOMAIN_ADJUDICATION_SCHEMA_VERSION,
     summary: `角色循环入口发现近${ROLE_CYCLE_DOMAIN_DUPLICATE_WINDOW_TURNS}旬已有同类${safeLabel}裁决；本次只作为复核，不重复扣减资源或写入账本。`,
     events: [],
     attributeChanges: [],
-    outcome: {
-      resolver,
-      status: "duplicate_recent",
-      intent: cleanText(intent, resolver, 60),
-      label: safeLabel,
-      evidenceRefs: cleanRefList(evidenceRefs, MAX_EVIDENCE_REFS),
-      evidenceRefCount: Array.isArray(evidenceRefs) ? evidenceRefs.length : 0,
-      publicSummary: `近${ROLE_CYCLE_DOMAIN_DUPLICATE_WINDOW_TURNS}旬已有同一角色、意图与公开证据的${safeLabel}服务器裁决；如需新处置，请补充新的公开证据或等待冷却。`,
-      rejectionReasons: ["近旬已有同一角色、意图与公开证据的服务器裁决，已拦截重复触发。"],
-      affectedPaths: [],
-      duplicateWindowTurns: ROLE_CYCLE_DOMAIN_DUPLICATE_WINDOW_TURNS
-    }
+    outcome
   };
 }
 
@@ -503,7 +552,6 @@ function buildPublicOutcome(outcome = {}, resolver) {
   const base = {
     resolver,
     status: cleanText(outcome.status, "rejected", 32),
-    outcomeId: cleanRef(outcome.outcomeId, ""),
     evidenceRefs: cleanRefList(outcome.evidenceRefs, MAX_EVIDENCE_REFS),
     evidenceRefCount: Array.isArray(outcome.evidenceRefs) ? outcome.evidenceRefs.length : 0,
     publicSummary: cleanText(outcome.publicSummary, "", 160),
@@ -515,6 +563,23 @@ function buildPublicOutcome(outcome = {}, resolver) {
       ...Object.keys(outcome.playerDelta || {}).map((key) => `player.${key}`)
     ].map((path) => cleanRef(path, "")).filter(Boolean).slice(0, 10)
   };
+  const canonicalEchoRefs = collectDomainConsequenceEchoRefs(outcome.canonicalEchoRefs).slice(0, MAX_EVIDENCE_REFS);
+  if (canonicalEchoRefs.length) {
+    base.canonicalEchoRefs = canonicalEchoRefs;
+    if (isPlainObject(outcome.topicDraftContext)) {
+      base.topicDraftContext = {
+        source: cleanRef(outcome.topicDraftContext.source, "topic_draft_turn_context"),
+        surfaceId: cleanRef(outcome.topicDraftContext.surfaceId, ""),
+        draftKind: cleanRef(outcome.topicDraftContext.draftKind, ""),
+        evidenceRefs: cleanRefList(outcome.topicDraftContext.evidenceRefs, MAX_EVIDENCE_REFS),
+        canonicalEchoRefs,
+        generatedAtTurn: Number.isFinite(Number(outcome.topicDraftContext.generatedAtTurn))
+          ? Math.max(0, Math.round(Number(outcome.topicDraftContext.generatedAtTurn)))
+          : 0,
+        status: cleanRef(outcome.topicDraftContext.status, "verified")
+      };
+    }
+  }
 
   if (resolver === "city_policy") {
     return {
@@ -569,11 +634,12 @@ function buildReadOnlyNpcEconomyFeedback() {
   };
 }
 
-function runRoleCycleDomainAdjudicationStep(worldState = {}, input = "") {
+function runRoleCycleDomainAdjudicationStep(worldState = {}, input = "", options = {}) {
   const actorProfile = buildPlayerAiActorProfile(worldState);
   const intent = classifyRoleCycleDomainIntent(worldState, input, actorProfile);
   if (!intent) return createEmptyFeedback();
   if (intent === "magistrate_npc_economy_review") return buildReadOnlyNpcEconomyFeedback();
+  const draftAuditContext = normalizeDraftAuditContext(options.draftContext);
 
   const beforeState = cloneJson(worldState);
   if (intent === "magistrate_market_policy" || intent === "magistrate_grain_price_policy") {
@@ -587,7 +653,8 @@ function runRoleCycleDomainAdjudicationStep(worldState = {}, input = "") {
         resolver: "city_policy",
         intent: policyType,
         label: duplicate.policyLabel || (policyType === "grain_price_stabilization" ? "平粜稳价" : "市价整肃"),
-        evidenceRefs
+        evidenceRefs,
+        draftAuditContext
       });
     }
     const outcome = resolveAndApplyCityPolicy(worldState, {
@@ -604,6 +671,8 @@ function runRoleCycleDomainAdjudicationStep(worldState = {}, input = "") {
       actorProfile,
       auditContext: { turn: worldState.turnCount || 0, source: "role_cycle_domain_adjudication" }
     });
+    attachDraftAuditToOutcome(outcome, draftAuditContext);
+    attachDraftAuditToLedgerRecord(worldState, "city_policy", outcome, draftAuditContext);
     return buildResolverFeedback(beforeState, worldState, outcome, "city_policy");
   }
 
@@ -618,7 +687,8 @@ function runRoleCycleDomainAdjudicationStep(worldState = {}, input = "") {
         resolver: "military_diplomacy",
         intent: orderKind,
         label: duplicate.actionLabel || (orderKind === "resupply" ? "调粮" : "侦察"),
-        evidenceRefs
+        evidenceRefs,
+        draftAuditContext
       });
     }
     const outcome = resolveAndApplyMilitaryDiplomacy(worldState, {
@@ -636,6 +706,8 @@ function runRoleCycleDomainAdjudicationStep(worldState = {}, input = "") {
       actorProfile,
       auditContext: { turn: worldState.turnCount || 0, source: "role_cycle_domain_adjudication" }
     });
+    attachDraftAuditToOutcome(outcome, draftAuditContext);
+    attachDraftAuditToLedgerRecord(worldState, "military_diplomacy", outcome, draftAuditContext);
     return buildResolverFeedback(beforeState, worldState, outcome, "military_diplomacy");
   }
 

@@ -224,6 +224,7 @@ const {
 } = require("../game/timeSkip");
 const { TIME_SKIP_ACTIONS } = require("../game/timeSkipConfig");
 const { buildTopicSurfaceView } = require("../game/topicSurfaceView");
+const { normalizeTopicDraftTurnContext } = require("../game/topicDrafts");
 const { redactSecrets } = require("../ai/diagnostics");
 const {
   getSessionStorageAdapter,
@@ -267,7 +268,7 @@ function createRouteError(statusCode, message, details = null) {
 }
 
 function validateTurnInput(body) {
-  const { sessionId, input } = body;
+  const { sessionId, input, draftContext } = body;
 
   if (!sessionId || typeof sessionId !== "string") {
     const err = new Error("Missing sessionId");
@@ -280,14 +281,20 @@ function validateTurnInput(body) {
     throw err;
   }
 
-  return { sessionId, input: input.trim() };
+  return {
+    sessionId,
+    input: input.trim(),
+    draftContext: draftContext && typeof draftContext === "object" && !Array.isArray(draftContext)
+      ? draftContext
+      : null
+  };
 }
 
 function wantsSse(req) {
   return req.query.stream === "1" || (req.get("accept") || "").includes("text/event-stream");
 }
 
-async function processTurn(sessionId, input) {
+async function processTurn(sessionId, input, options = {}) {
   return mutateSession(sessionId, async (worldState, context) => {
     ensureRelationshipLedger(worldState);
     ensureExamCalendarState(worldState);
@@ -321,6 +328,7 @@ async function processTurn(sessionId, input) {
     if (isWritingExam(worldState.activeExam)) {
       return finalizeExamSceneTurn(worldState, input, context);
     }
+    const draftContext = normalizeTopicDraftTurnContext(worldState, options.draftContext);
     const { routePolicy } = resolveAiSettingsForSession(worldState);
     const route = resolveModelForTask("narrator", routePolicy);
     const provider = getProvider({ routePolicy });
@@ -333,11 +341,11 @@ async function processTurn(sessionId, input) {
       durationMs: Date.now() - startedAt,
       maxOutputTokens: route.maxOutputTokens
     });
-    return finalizeTurn(worldState, result, input, { context, provider });
+    return finalizeTurn(worldState, result, input, { context, provider, draftContext });
   });
 }
 
-async function processStreamingTurn(sessionId, input, streamHandlers = {}) {
+async function processStreamingTurn(sessionId, input, streamHandlers = {}, options = {}) {
   return mutateSession(sessionId, async (worldState, context) => {
     ensureRelationshipLedger(worldState);
     ensureExamCalendarState(worldState);
@@ -371,6 +379,7 @@ async function processStreamingTurn(sessionId, input, streamHandlers = {}) {
     if (isWritingExam(worldState.activeExam)) {
       return finalizeExamSceneTurn(worldState, input, context);
     }
+    const draftContext = normalizeTopicDraftTurnContext(worldState, options.draftContext);
     const { routePolicy } = resolveAiSettingsForSession(worldState);
     const route = resolveModelForTask("narrator", routePolicy);
     const provider = getProvider({ routePolicy });
@@ -387,7 +396,7 @@ async function processStreamingTurn(sessionId, input, streamHandlers = {}) {
       maxOutputTokens: route.maxOutputTokens
     });
 
-    return finalizeTurn(worldState, result, input, { context, provider });
+    return finalizeTurn(worldState, result, input, { context, provider, draftContext });
   });
 }
 
@@ -929,7 +938,7 @@ async function finalizeExamSceneTurn(worldState, input, context = null) {
 }
 
 async function finalizeTurn(worldState, result, input, auditOptions = {}) {
-  const { context = null, provider = null } = auditOptions;
+  const { context = null, provider = null, draftContext = null } = auditOptions;
   const providerAttributeChanges = Array.isArray(result.attributeChanges) ? result.attributeChanges : [];
 
   // All model-suggested state changes pass through server-side boundaries.
@@ -963,7 +972,7 @@ async function finalizeTurn(worldState, result, input, auditOptions = {}) {
     worldState,
     roleWorldCoupling.relationshipChanges
   );
-  const roleCycleDomainAdjudication = runRoleCycleDomainAdjudicationStep(worldState, input);
+  const roleCycleDomainAdjudication = runRoleCycleDomainAdjudicationStep(worldState, input, { draftContext });
 
   const beforeWorldTickState = JSON.parse(JSON.stringify(worldState));
   const worldTick = runWorldTick(worldState);
@@ -1321,7 +1330,7 @@ async function finalizeTurn(worldState, result, input, auditOptions = {}) {
   });
 }
 
-async function streamTurn(res, sessionId, input) {
+async function streamTurn(res, sessionId, input, draftContext = null) {
   writeSseHeaders(res);
   sendSseEvent(res, "state_preview", defineGameTurnSseStatePreviewResponse({ sessionId, status: "accepted" }));
   let streamedNarrative = false;
@@ -1337,12 +1346,12 @@ async function streamTurn(res, sessionId, input) {
         onTextDelta(delta) {
           narrativeExtractor.push(delta);
         }
-      });
+      }, { draftContext });
     } catch (error) {
       if (streamedNarrative) {
         throw error;
       }
-      payload = await processTurn(sessionId, input);
+      payload = await processTurn(sessionId, input, { draftContext });
     }
 
     if (!streamedNarrative) {
@@ -1883,14 +1892,14 @@ router.get("/saves", async (req, res, next) => {
 
 router.post("/turn", async (req, res, next) => {
   try {
-    const { sessionId, input } = validateTurnInput(req.body);
+    const { sessionId, input, draftContext } = validateTurnInput(req.body);
 
     if (wantsSse(req)) {
-      await streamTurn(res, sessionId, input);
+      await streamTurn(res, sessionId, input, draftContext);
       return;
     }
 
-    res.json(defineGameTurnResponse(await processTurn(sessionId, input)));
+    res.json(defineGameTurnResponse(await processTurn(sessionId, input, { draftContext })));
   } catch (error) {
     next(error);
   }

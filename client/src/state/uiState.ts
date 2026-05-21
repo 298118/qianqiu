@@ -4,6 +4,7 @@ import type {
   PlayerStateResponse,
   PlayerSummary,
   StartGameResponse,
+  TurnDraftContext,
   TurnResponse
 } from "../api";
 import {
@@ -70,6 +71,7 @@ export type ActionDraft = {
   readonly source: ActionDraftSource;
   readonly text: string;
   readonly targetPage?: PageSurface;
+  readonly draftContext?: TurnDraftContext;
 };
 
 type SetActionDraftInput = {
@@ -77,6 +79,7 @@ type SetActionDraftInput = {
   readonly source?: ActionDraftSource;
   readonly text: string;
   readonly targetPage?: PageSurface;
+  readonly draftContext?: TurnDraftContext;
 };
 
 type UiState = {
@@ -267,13 +270,15 @@ export const useUiStateStore = create<UiState>((set) => ({
       return;
     }
     const source = draft.source ?? "manual";
+    const nextDraft: ActionDraft = {
+      id: draft.id ?? toActionDraftId(text, source),
+      source,
+      text,
+      ...(draft.targetPage ? { targetPage: draft.targetPage } : {}),
+      ...(draft.draftContext ? { draftContext: draft.draftContext } : {})
+    };
     set({
-      actionDraft: {
-        id: draft.id ?? toActionDraftId(text, source),
-        source,
-        text,
-        targetPage: draft.targetPage
-      }
+      actionDraft: nextDraft
     });
   },
 

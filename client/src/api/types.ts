@@ -787,6 +787,16 @@ export type PlayerStateResponse = SafeRouteViews & {
 export type TurnRequest = {
   readonly sessionId: string;
   readonly input: string;
+  readonly draftContext?: TurnDraftContext;
+};
+
+export type TurnDraftContext = {
+  readonly surfaceId?: string;
+  readonly draftKind?: string;
+  readonly evidenceRefs?: readonly string[];
+  readonly canonicalEchoRefs?: readonly string[];
+  readonly generatedAtTurn?: number;
+  readonly status?: string;
 };
 
 export type NpcEconomyFeedback = JsonObject & {
@@ -854,6 +864,7 @@ export type TopicSurfaceEvidenceRef = {
   readonly refId: string;
   readonly sourceView?: string;
   readonly sourceId?: string;
+  readonly canonicalEchoRefs?: readonly string[];
   readonly domain?: string;
   readonly label: string;
   readonly summary: string;
@@ -929,6 +940,7 @@ export type TopicDraftPayload = {
   readonly draftTitle: string;
   readonly draftText: string;
   readonly evidenceRefs: readonly string[];
+  readonly canonicalEchoRefs?: readonly string[];
   readonly riskNote?: string;
   readonly nextStep?: string;
   readonly source: "local-rule" | "mock-ai" | "provider-ai";

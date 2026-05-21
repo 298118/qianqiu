@@ -1,7 +1,7 @@
 import { BrainCircuit, Home, Save, ShieldCheck, SlidersHorizontal, Sparkles, X } from "lucide-react";
 import { useEffect, useRef, useState, type MouseEvent, type ReactNode } from "react";
 import { useNavigate } from "react-router";
-import type { TopicSurfaceId, TopicSurfaceView } from "../api";
+import type { TopicDraftResponse, TopicSurfaceId, TopicSurfaceView, TurnDraftContext } from "../api";
 import { useAssetRegistry } from "../assets/useAssetRegistry";
 import type { AssetRegistry } from "../assets/assetRegistry";
 import { isRunnableSessionId } from "../routes/sessionId";
@@ -441,6 +441,49 @@ function isTopicSurface(surface: LocalSurface): surface is TopicSurfaceId {
   return topicSurfaceIds.includes(surface as TopicSurfaceId);
 }
 
+function uniqueDraftRefs(values: readonly string[] = [], limit = 5) {
+  const refs: string[] = [];
+  values.forEach((value) => {
+    const ref = String(value || "").trim();
+    if (!ref || refs.includes(ref)) return;
+    refs.push(ref);
+  });
+  return refs.slice(0, limit);
+}
+
+function buildTopicTurnDraftContext(options: {
+  readonly activeSurface: LocalSurface;
+  readonly topicView: TopicSurfaceView | null;
+  readonly topicDraft: TopicDraftResponse | null;
+  readonly selectedEvidenceRefs: readonly string[];
+  readonly draftKind: string;
+}): TurnDraftContext | undefined {
+  if (!isTopicSurface(options.activeSurface)) return undefined;
+  const draftPayload = options.topicDraft?.surfaceId === options.activeSurface
+    ? options.topicDraft.topicDraft
+    : null;
+  const evidenceRefs = uniqueDraftRefs(
+    draftPayload?.evidenceRefs?.length ? draftPayload.evidenceRefs : options.selectedEvidenceRefs
+  );
+  if (!evidenceRefs.length) return undefined;
+  const canonicalEchoRefs = uniqueDraftRefs([
+    ...(draftPayload?.canonicalEchoRefs || []),
+    ...(options.topicView?.evidenceRefs || [])
+      .filter((ref) => evidenceRefs.includes(ref.refId))
+      .flatMap((ref) => ref.canonicalEchoRefs || [])
+  ]);
+  const normalizedDraftKind = draftPayload?.draftKind || options.draftKind || options.topicView?.draftSlots[0]?.draftKind;
+  const generatedAtTurn = options.topicDraft?.generatedAtTurn ?? options.topicView?.generatedAtTurn;
+  return {
+    surfaceId: options.activeSurface,
+    evidenceRefs,
+    canonicalEchoRefs,
+    status: "client_hint",
+    ...(normalizedDraftKind ? { draftKind: normalizedDraftKind } : {}),
+    ...(generatedAtTurn !== undefined ? { generatedAtTurn } : {})
+  };
+}
+
 function LocalSurfaceHost({ activeSurface }: { readonly activeSurface: LocalSurface }) {
   const closeSurface = useUiStateStore((state) => state.closeSurface);
   const setActionDraft = useUiStateStore((state) => state.setActionDraft);
@@ -521,9 +564,17 @@ function LocalSurfaceHost({ activeSurface }: { readonly activeSurface: LocalSurf
   function handleWriteDraft() {
     const text = draftText.trim() || entry.draftText || "";
     if (!text) return;
+    const draftContext = buildTopicTurnDraftContext({
+      activeSurface,
+      topicView,
+      topicDraft,
+      selectedEvidenceRefs,
+      draftKind
+    });
     setActionDraft({
       source: activeSurface === "map-filter" ? "map-runtime" : "role-surface",
       targetPage: activeSurface === "map-filter" ? "map" : "game",
+      ...(draftContext ? { draftContext } : {}),
       text
     });
   }

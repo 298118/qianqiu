@@ -3,6 +3,7 @@ const {
   getTopicSurfaceConfig,
   normalizeSurfaceId
 } = require("./topicSurfaceView");
+const { collectDomainConsequenceEchoRefs } = require("./domainConsequenceEchoRefs");
 
 const TOPIC_DRAFT_SCHEMA_VERSION = "s78.topicDraft.v1";
 const TOPIC_DRAFT_MAX_SELECTED_REFS = 5;
@@ -60,6 +61,14 @@ function normalizeSelectedRefs(refs = [], allowedRefIds = new Set(), limit = TOP
   return result;
 }
 
+function canonicalEchoRefsForSelectedEvidence(evidenceRefs = [], context = {}) {
+  const selected = new Set(asArray(evidenceRefs).map((ref) => cleanId(ref, "")).filter(Boolean));
+  const refs = asArray(context.evidenceRefs)
+    .filter((ref) => selected.has(cleanId(ref.refId, "")))
+    .flatMap((ref) => collectDomainConsequenceEchoRefs(ref.canonicalEchoRefs, ref.sourceId, ref.refId));
+  return collectDomainConsequenceEchoRefs(refs).slice(0, TOPIC_DRAFT_MAX_SELECTED_REFS);
+}
+
 function normalizeTopicDraftRequest(body = {}) {
   const input = isPlainObject(body) ? body : {};
   const surfaceId = normalizeSurfaceId(input.surfaceId || input.surfaceType);
@@ -112,14 +121,20 @@ function buildTopicDraftContext(worldState = {}, request = {}) {
     draftTemplate: cleanText(draftSlot?.template, "", 160),
     playerNote: normalized.playerNote,
     selectedEvidenceRefs: selectedEvidence.map((ref) => ref.refId),
-    evidenceRefs: selectedEvidence.map((ref) => ({
-      refId: ref.refId,
-      label: ref.label,
-      summary: ref.summary,
-      domain: ref.domain,
-      sourceView: ref.sourceView,
-      confidence: ref.confidence
-    })),
+    selectedCanonicalEchoRefs: collectDomainConsequenceEchoRefs(selectedEvidence.map((ref) => ref.canonicalEchoRefs)).slice(0, TOPIC_DRAFT_MAX_SELECTED_REFS),
+    evidenceRefs: selectedEvidence.map((ref) => {
+      const evidence = {
+        refId: ref.refId,
+        label: ref.label,
+        summary: ref.summary,
+        domain: ref.domain,
+        sourceView: ref.sourceView,
+        confidence: ref.confidence
+      };
+      const canonicalEchoRefs = collectDomainConsequenceEchoRefs(ref.canonicalEchoRefs, ref.sourceId, ref.refId);
+      if (canonicalEchoRefs.length) evidence.canonicalEchoRefs = canonicalEchoRefs;
+      return evidence;
+    }),
     allowedDraftKinds: asArray(topicSurfaceView.draftSlots).map((slot) => slot.draftKind).filter(Boolean),
     safety: {
       draftOnly: true,
@@ -208,12 +223,45 @@ function normalizeTopicDraftPayload(payload = {}, context = {}, options = {}) {
     draftTitle: title,
     draftText: text,
     evidenceRefs,
+    canonicalEchoRefs: canonicalEchoRefsForSelectedEvidence(evidenceRefs, context),
     riskNote: cleanText(payload.riskNote, "此稿只供呈上前编辑；后果仍候服务器裁决。", 120),
     nextStep: cleanText(payload.nextStep, "写入草稿后由玩家修改并呈上。", 120),
     source
   };
   assertTopicDraftSafe(draft, { allowProviderSource: true });
   return draft;
+}
+
+function normalizeTopicDraftTurnContext(worldState = {}, draftContext = {}) {
+  if (!isPlainObject(draftContext)) return null;
+  const surfaceId = normalizeSurfaceId(draftContext.surfaceId || draftContext.surfaceType);
+  if (!surfaceId) return null;
+  const topicSurfaceView = buildTopicSurfaceView(worldState, { surfaceId });
+  const allowedRefIds = new Set(asArray(topicSurfaceView.evidenceRefs).map((ref) => ref.refId).filter(Boolean));
+  const evidenceRefs = normalizeSelectedRefs(
+    draftContext.selectedEvidenceRefs || draftContext.evidenceRefs,
+    allowedRefIds
+  );
+  if (!evidenceRefs.length) return null;
+  const selectedRows = asArray(topicSurfaceView.evidenceRefs).filter((ref) => evidenceRefs.includes(ref.refId));
+  const canonicalEchoRefs = collectDomainConsequenceEchoRefs(
+    selectedRows.map((ref) => ref.canonicalEchoRefs),
+    selectedRows.map((ref) => ref.sourceId),
+    selectedRows.map((ref) => ref.refId)
+  ).slice(0, TOPIC_DRAFT_MAX_SELECTED_REFS);
+  const config = getTopicSurfaceConfig(surfaceId);
+  const allowedDraftKinds = new Set(asArray(config?.draftSlots).map((slot) => slot.draftKind));
+  const requestedDraftKind = cleanId(draftContext.draftKind || draftContext.kind, "");
+  return {
+    surfaceId,
+    draftKind: allowedDraftKinds.has(requestedDraftKind)
+      ? requestedDraftKind
+      : config?.draftSlots?.[0]?.draftKind || "topic_draft",
+    evidenceRefs,
+    canonicalEchoRefs,
+    generatedAtTurn: clampInteger(draftContext.generatedAtTurn ?? topicSurfaceView.generatedAtTurn, 0, Number.MAX_SAFE_INTEGER, 0),
+    status: "verified"
+  };
 }
 
 function buildTopicDraftResponse(worldState = {}, payload = {}, context = {}, options = {}) {
@@ -249,5 +297,6 @@ module.exports = {
   buildTopicDraftContext,
   buildTopicDraftResponse,
   normalizeTopicDraftPayload,
-  normalizeTopicDraftRequest
+  normalizeTopicDraftRequest,
+  normalizeTopicDraftTurnContext
 };

@@ -228,7 +228,7 @@ export function GamePage() {
   async function handleTurn(text: string) {
     if (!text.trim() || !runnable) return;
     try {
-      await submitTurn(sessionId, text.trim());
+      await submitTurn(sessionId, text.trim(), actionDraft?.draftContext);
     } catch {
     }
   }
@@ -446,7 +446,11 @@ export function GamePage() {
         quickActionStatus={quickActionStatus}
         runnable={runnable}
         loading={status === "loading"}
-        onDraftChange={(text) => setActionDraft({ source: "manual", targetPage: "game", text })}
+        onDraftChange={(text) => setActionDraft({
+          source: "manual",
+          targetPage: "game",
+          text
+        })}
         onSuggestionDraft={(text) => setActionDraft({ source: "role-surface", targetPage: "game", text })}
         onClearDraft={clearActionDraft}
         onRefreshQuickActions={() => {

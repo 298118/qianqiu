@@ -116,6 +116,11 @@ const RESOLVER_INPUT_SOURCE_COLLECTIONS = Object.freeze([
     collections: Object.freeze(["items"])
   }),
   Object.freeze({
+    sourceView: "worldThreadView",
+    domain: "events",
+    collections: Object.freeze(["activeThreads", "recentResolved"])
+  }),
+  Object.freeze({
     sourceView: "mapContextView",
     domain: "map",
     collections: Object.freeze(["mapEntityRefs", "mapEventHooks"])
