@@ -105,7 +105,7 @@ function assertNoInternalConsequenceLeak(value) {
   const payload = JSON.stringify(value);
   assert.doesNotMatch(
     payload,
-    /cityPolicyLedger|militaryDiplomacyLedger|judicialCaseLedger|npcEconomyLedger|"affectedMetrics"|stateDelta|playerDelta|resourceUse|resourceCost|relationshipSignals|evidenceRefs|auditRecord|outcomeId|rawSql|SEALED_|market:grain|case-local-secret|role-cycle:|"path"|"publicOrder"|"grainReserve"|"armyMorale"|"pendingLawsuits"|"campaignRisk"|"performanceMerit"|"supply"/
+    /cityPolicyLedger|militaryDiplomacyLedger|judicialCaseLedger|npcEconomyLedger|"affectedMetrics"|stateDelta|playerDelta|resourceUse|resourceCost|relationshipSignals|privateSignalTags|private_signal_tags|privateResultRefs|hiddenDossier|sealedMapping|retrievalContext|actorMemoryLedger|sessionSummary|relationshipLedger|providerPayload|rawEvidence|evidenceRefs|auditRecord|outcomeId|rawSql|SEALED_|market:grain|case-local-secret|role-cycle:|"path"|"publicOrder"|"grainReserve"|"armyMorale"|"pendingLawsuits"|"campaignRisk"|"performanceMerit"|"supply"/
   );
 }
 
@@ -113,7 +113,7 @@ function assertNoInternalConsequenceValueLeak(value) {
   const payload = JSON.stringify(value);
   assert.doesNotMatch(
     payload,
-    /cityPolicyLedger|militaryDiplomacyLedger|judicialCaseLedger|npcEconomyLedger|"affectedMetrics"|stateDelta|playerDelta|resourceUse|resourceCost|relationshipSignals|auditRecord|outcomeId|rawSql|SEALED_|market:grain|case-local-secret|role-cycle:|"path"|"publicOrder"|"grainReserve"|"armyMorale"|"pendingLawsuits"|"campaignRisk"|"performanceMerit"|"supply"/
+    /cityPolicyLedger|militaryDiplomacyLedger|judicialCaseLedger|npcEconomyLedger|"affectedMetrics"|stateDelta|playerDelta|resourceUse|resourceCost|relationshipSignals|privateSignalTags|private_signal_tags|privateResultRefs|hiddenDossier|sealedMapping|retrievalContext|actorMemoryLedger|sessionSummary|relationshipLedger|providerPayload|rawEvidence|auditRecord|outcomeId|rawSql|SEALED_|market:grain|case-local-secret|role-cycle:|"path"|"publicOrder"|"grainReserve"|"armyMorale"|"pendingLawsuits"|"campaignRisk"|"performanceMerit"|"supply"/
   );
 }
 
@@ -132,6 +132,115 @@ test("S88.6 domain consequence view projects public traces without resolver inte
   assert.ok(view.recentConsequences.every((item) => !item.sourceId.includes("SEALED_SOURCE")));
   assert.ok(view.recentConsequences.flatMap((item) => item.affectedMetricLabels).includes("民心"));
   assertNoInternalConsequenceLeak(view);
+});
+
+test("S88.6 domain consequence view dedupes public source replay rows and drops private signal pollution", () => {
+  const worldState = createInitialState({ role: "magistrate", playerName: "去重知县" });
+  worldState.sessionId = sessionId;
+  worldState.turnCount = 12;
+  worldState.cityPolicyLedger = {
+    records: [{
+      outcomeId: "legacy-market-case-old",
+      policyType: "market_regulation",
+      policyLabel: "平抑米价",
+      status: "accepted",
+      publicSummary: "清河县平抑米价后，米铺照牌价出售。",
+      publicSourceId: "market:grain:public-source",
+      stateDelta: { publicOrder: 1 },
+      appliedAtTurn: 9
+    }, {
+      outcomeId: "legacy-market-case-replayed",
+      policyType: "market_regulation",
+      policyLabel: "平抑米价",
+      status: "accepted",
+      publicSummary: "清河县平抑米价后，仓米照牌价出售。",
+      publicSourceId: "market:grain:public-source",
+      stateDelta: { publicOrder: 2, treasury: -5 },
+      appliedAtTurn: 12
+    }, {
+      outcomeId: "legacy-private-signal",
+      policyType: "gentry_warning",
+      policyLabel: "士绅密报",
+      status: "accepted",
+      publicSummary: "privateSignalTags gentryBribe should never become public consequence",
+      stateDelta: { publicOrder: 1 },
+      appliedAtTurn: 12
+    }]
+  };
+
+  const view = buildDomainConsequenceView(worldState);
+  const cityConsequences = view.recentConsequences.filter((item) => item.sourceType === "city_policy");
+
+  assert.equal(cityConsequences.length, 1);
+  assert.equal(cityConsequences[0].generatedAtTurn, 12);
+  assert.match(cityConsequences[0].publicSummary, /仓米照牌价/);
+  assert.deepEqual(cityConsequences[0].affectedMetricLabels, ["民心", "府库"]);
+  assert.equal(view.counts.city_policy, 1);
+  assertNoInternalConsequenceLeak(view);
+  assert.doesNotMatch(JSON.stringify(view), /gentryBribe|legacy-market-case-old|legacy-market-case-replayed/);
+});
+
+test("S88.6 domain consequence view rejects unapplied statuses, sensitive aliases, and configured secrets", () => {
+  const worldState = createInitialState({ role: "magistrate", playerName: "污染知县" });
+  const previousSecret = process.env.DOMAIN_CONSEQUENCE_TEST_SECRET;
+  process.env.DOMAIN_CONSEQUENCE_TEST_SECRET = "domain-secret-value-12345";
+
+  try {
+    worldState.sessionId = sessionId;
+    worldState.turnCount = 16;
+    worldState.cityPolicyLedger = {
+      records: [{
+        outcomeId: "pending-safe-summary",
+        policyType: "relief",
+        policyLabel: "缓征仓粮",
+        status: "pending",
+        publicSummary: "县中拟缓征仓粮，尚待服务器裁决。",
+        stateDelta: { publicOrder: 2 },
+        appliedAtTurn: 16
+      }, {
+        outcomeId: "rejected-safe-summary",
+        policyType: "market_regulation",
+        policyLabel: "禁闭米铺",
+        status: "rejected",
+        publicSummary: "县中禁闭米铺被驳回，不应成为已公开后果。",
+        stateDelta: { publicOrder: -2 },
+        appliedAtTurn: 16
+      }, {
+        outcomeId: "accepted-alias-pollution",
+        policyType: "gentry_warning",
+        policyLabel: "旧存档污染",
+        status: "accepted",
+        publicSummary: "providerPayload rawEvidence privateResultRefs hiddenDossier sealedMapping retrievalContext actorMemoryLedger sessionSummary relationshipLedger",
+        stateDelta: { publicOrder: 1 },
+        appliedAtTurn: 16
+      }, {
+        outcomeId: "accepted-secret-pollution",
+        policyType: "relief",
+        policyLabel: "密钥污染",
+        status: "accepted",
+        publicSummary: "县中公示包含 domain-secret-value-12345 的旧存档污染。",
+        stateDelta: { publicOrder: 1 },
+        appliedAtTurn: 16
+      }]
+    };
+
+    const view = buildDomainConsequenceView(worldState);
+
+    assert.equal(view.active, false);
+    assert.equal(view.counts.city_policy, 0);
+    assert.equal(view.recentConsequences.length, 0);
+    assertNoInternalConsequenceLeak(view);
+    assert.doesNotMatch(
+      JSON.stringify(view),
+      /pending-safe-summary|rejected-safe-summary|accepted-alias-pollution|accepted-secret-pollution|domain-secret-value|旧存档污染/
+    );
+  } finally {
+    if (previousSecret === undefined) {
+      delete process.env.DOMAIN_CONSEQUENCE_TEST_SECRET;
+    } else {
+      process.env.DOMAIN_CONSEQUENCE_TEST_SECRET = previousSecret;
+    }
+  }
 });
 
 test("S88.6 public consequence refs feed archive, world thread, and monthly briefing", () => {

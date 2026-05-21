@@ -6,9 +6,12 @@ const MAX_SOURCE_ROWS = 4;
 const MAX_TEXT_LENGTH = 180;
 const MAX_SHORT_TEXT_LENGTH = 80;
 const MAX_AFFECTED_METRICS = 6;
+const INTERNAL_DEDUPE_KEY = Symbol("domainConsequenceDedupeKey");
+const SECRET_ENV_NAME_PATTERN = /(?:API|KEY|TOKEN|SECRET|PASSWORD|CREDENTIAL)/i;
+const PUBLIC_CONSEQUENCE_STATUSES = new Set(["accepted", "applied", "recorded"]);
 
 const SENSITIVE_TEXT_PATTERN =
-  /(SEALED_[A-Z0-9_]+|hidden[_ -]?(?:notes?|intent)|hidden\s+(?:notes?|intent)|密档|私档|密札|密信|隐藏(?:意图|动机|事实|札记|军情)|隐秘(?:意图|动机|事实)|raw[_ -]?(?:provider|audit|table|ledger|prompt|proposal|state|row)|(?:outcome[_ -]?id|evidence[_ -]?refs?|state[_ -]?delta|player[_ -]?delta|resource[_ -]?(?:use|cost)|relationship[_ -]?signals?|audit[_ -]?record)|\b(?:cityPolicyLedger|militaryDiplomacyLedger|judicialCaseLedger|npcEconomyLedger|statePatch|worldState|provider|proposal|prompt|rawSql|SQL|sqlite|server\.)\b|完整\s*prompt|完整提示词|api[_ -]?key|OPENAI_API_KEY|DEEPSEEK_API_KEY|MIMO_API_KEY|ANTHROPIC_API_KEY|data[\\/](?:sessions|audit)|ai_change_proposals|event_log|world_sessions|world_state_json|prompt_retrieval_index|event_archive_index|safe_search_(?:index|fts)|(?:geo|people|office)_[A-Za-z0-9_]+|\b[A-Z0-9_]*(?:KEY|TOKEN|SECRET|PASSWORD|CREDENTIAL)[A-Z0-9_]*\b|file:\/\/\/?[^\s"'<>]+|[A-Za-z]:[\\/][^\s"'<>]+|\b(?:\/Users|\/home|\/tmp|\/var|\/mnt|\/opt|\/workspace)\/[^\s"'<>]+|sk-[A-Za-z0-9_-]{6,}|tp-[A-Za-z0-9_-]{6,})/i;
+  /(SEALED_[A-Z0-9_]+|hidden[_ -]?(?:notes?|intent|dossier)|hidden\s+(?:notes?|intent|dossier)|hiddenDossier|sealed[_ -]?mapping|sealedMapping|retrievalContext|actorMemoryLedger|sessionSummary|relationshipLedger|private[_ -]?(?:signal[_ -]?tags?|result[_ -]?refs?|intent|notes?|ledger)|privateSignalTags|privateResultRefs|密档|私档|密札|密信|隐藏(?:意图|动机|事实|札记|军情)|隐秘(?:意图|动机|事实)|raw(?:[_ -]?|(?=[A-Z]))(?:provider|evidence|audit|table|ledger|prompt|proposal|state|row)|rawEvidence|(?:outcome[_ -]?id|evidence[_ -]?refs?|state[_ -]?delta|player[_ -]?delta|resource[_ -]?(?:use|cost)|relationship[_ -]?signals?|audit[_ -]?record)|provider(?:Payload|Proposal|Response|Request|Raw)|\b(?:cityPolicyLedger|militaryDiplomacyLedger|judicialCaseLedger|npcEconomyLedger|statePatch|worldState|provider|proposal|prompt|rawSql|SQL|sqlite|server\.)\b|完整\s*prompt|完整提示词|api[_ -]?key|OPENAI_API_KEY|DEEPSEEK_API_KEY|MIMO_API_KEY|ANTHROPIC_API_KEY|data[\\/](?:sessions|audit)|ai_change_proposals|event_log|world_sessions|world_state_json|prompt_retrieval_index|event_archive_index|safe_search_(?:index|fts)|(?:geo|people|office)_[A-Za-z0-9_]+|\b[A-Z0-9_]*(?:KEY|TOKEN|SECRET|PASSWORD|CREDENTIAL)[A-Z0-9_]*\b|file:\/\/\/?[^\s"'<>]+|[A-Za-z]:[\\/][^\s"'<>]+|\b(?:\/Users|\/home|\/tmp|\/var|\/mnt|\/opt|\/workspace)\/[^\s"'<>]+|sk-[A-Za-z0-9_-]{6,}|tp-[A-Za-z0-9_-]{6,})/i;
 
 const SOURCE_LABELS = Object.freeze({
   city_policy: "地方政策",
@@ -64,6 +67,7 @@ function clampNumber(value, min, max, fallback) {
 function cleanText(value, fallback = "", maxLength = MAX_TEXT_LENGTH) {
   if (typeof value !== "string" && typeof value !== "number" && typeof value !== "boolean") return fallback;
   const text = String(value).replace(/\s+/g, " ").trim();
+  if (containsConfiguredSecret(text)) return fallback;
   if (!text || SENSITIVE_TEXT_PATTERN.test(text)) return fallback;
   return text.length > maxLength ? `${text.slice(0, maxLength)}...` : text;
 }
@@ -80,6 +84,19 @@ function stablePublicSuffix(value) {
     hash = ((hash * 31) + text.charCodeAt(index)) >>> 0;
   }
   return hash.toString(36) || "0";
+}
+
+function containsConfiguredSecret(text) {
+  for (const [envName, secret] of Object.entries(process.env)) {
+    if (!SECRET_ENV_NAME_PATTERN.test(envName) || !secret) continue;
+    const value = String(secret);
+    if (value.length < 8) continue;
+    const variants = new Set([value, value.slice(0, 8), value.slice(0, 12), value.slice(-8), value.slice(-12)]);
+    for (const variant of variants) {
+      if (variant.length >= 8 && text.includes(variant)) return true;
+    }
+  }
+  return false;
 }
 
 function currentTurn(worldState = {}) {
@@ -158,6 +175,13 @@ function buildNextStep(sourceType, title) {
   return `把${safeTitle}列入人物经济追踪，资产、交易、委派和人情债仍由旬更或月结裁决。`;
 }
 
+function isPublicAppliedRecord(raw = {}) {
+  if (!isPlainObject(raw)) return false;
+  const status = cleanId(raw.status, "").toLowerCase();
+  const hasAppliedTurn = raw.appliedAtTurn !== undefined || raw.generatedAtTurn !== undefined || raw.lastTickTurn !== undefined;
+  return hasAppliedTurn && PUBLIC_CONSEQUENCE_STATUSES.has(status);
+}
+
 function normalizeConsequenceRow(worldState, sourceType, raw = {}) {
   if (!isPlainObject(raw)) return null;
   const generatedAtTurn = clampNumber(raw.appliedAtTurn ?? raw.generatedAtTurn ?? raw.lastTickTurn, 0, Number.MAX_SAFE_INTEGER, currentTurn(worldState));
@@ -175,7 +199,7 @@ function normalizeConsequenceRow(worldState, sourceType, raw = {}) {
   if (!sourceId || !title || !publicSummary) return null;
   const affectedMetrics = buildAffectedMetrics(raw.stateDelta, raw.playerDelta);
   const date = currentDateParts(worldState, raw);
-  return {
+  const row = {
     schemaVersion: DOMAIN_CONSEQUENCE_SCHEMA_VERSION,
     id: cleanId(`DC-${sourceType}-${sourceId}`, "domain-consequence"),
     sourceType,
@@ -196,11 +220,17 @@ function normalizeConsequenceRow(worldState, sourceType, raw = {}) {
     consequenceRefs: buildConsequenceRefs(sourceType, sourceId),
     nextStep: buildNextStep(sourceType, title)
   };
+  const rawPublicSourceId = cleanText(raw.publicSourceId, "", 128);
+  if (rawPublicSourceId) {
+    row[INTERNAL_DEDUPE_KEY] = cleanId(`${sourceType}-public-${stablePublicSuffix(rawPublicSourceId)}`, "");
+  }
+  return row;
 }
 
 function rowsFromLedger(worldState, sourceType, records = []) {
   return asArray(records)
     .slice(-MAX_SOURCE_ROWS)
+    .filter(isPublicAppliedRecord)
     .map((record) => normalizeConsequenceRow(worldState, sourceType, record))
     .filter(Boolean);
 }
@@ -223,6 +253,40 @@ function npcEconomyConsequence(worldState = {}) {
   });
 }
 
+function consequenceDedupeKey(row = {}) {
+  return row[INTERNAL_DEDUPE_KEY] || cleanId(
+    [
+      row.sourceType,
+      row.title,
+      row.publicSummary
+    ].filter(Boolean).join(":"),
+    row.id || ""
+  );
+}
+
+function consequenceCompletenessScore(row = {}) {
+  return [
+    row.publicSummary,
+    row.nextStep,
+    row.statusLabel,
+    ...(Array.isArray(row.affectedMetricLabels) ? row.affectedMetricLabels : []),
+    ...(Array.isArray(row.consequenceRefs) ? row.consequenceRefs : [])
+  ].filter(Boolean).length + clampNumber(row.severity, 0, 5, 0);
+}
+
+function chooseMoreCompleteConsequence(existing, candidate) {
+  if (!existing) return candidate;
+  if (candidate.generatedAtTurn !== existing.generatedAtTurn) {
+    return candidate.generatedAtTurn > existing.generatedAtTurn ? candidate : existing;
+  }
+  if (consequenceCompletenessScore(candidate) !== consequenceCompletenessScore(existing)) {
+    return consequenceCompletenessScore(candidate) > consequenceCompletenessScore(existing)
+      ? candidate
+      : existing;
+  }
+  return candidate.id.localeCompare(existing.id) > 0 ? candidate : existing;
+}
+
 function collectDomainConsequences(worldState = {}) {
   const rows = [
     ...rowsFromLedger(worldState, "city_policy", worldState.cityPolicyLedger?.records),
@@ -230,9 +294,12 @@ function collectDomainConsequences(worldState = {}) {
     ...rowsFromLedger(worldState, "judicial_case", worldState.judicialCaseLedger?.records),
     npcEconomyConsequence(worldState)
   ].filter(Boolean);
-  const byId = new Map();
-  for (const row of rows) byId.set(row.id, row);
-  return [...byId.values()]
+  const byPublicKey = new Map();
+  for (const row of rows) {
+    const key = consequenceDedupeKey(row);
+    byPublicKey.set(key, chooseMoreCompleteConsequence(byPublicKey.get(key), row));
+  }
+  return [...byPublicKey.values()]
     .sort((first, second) => first.generatedAtTurn - second.generatedAtTurn || first.id.localeCompare(second.id))
     .slice(-MAX_RECENT_CONSEQUENCES);
 }
