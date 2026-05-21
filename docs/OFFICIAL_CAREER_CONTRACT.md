@@ -13,6 +13,18 @@ S34 defines the server-owned official career outcome engine. It turns the post-p
 
 S52.1 adds [官职、官署、任所与迁转数据库契约](OFFICIAL_POSTING_DATABASE_CONTRACT.md) and `src/game/officialPostingSchemas.js` as the database-domain schema for `bureaus`、`offices`、`cityJurisdictions`、`postings`、`assessmentRecords` and `transferRecords`. S52.2 adds `src/game/officialPostings.js` as a visible projection bridge from the official catalog, current career state, magistrate role state, and visible city/jurisdiction data into `worldState.officialPostings`、`officialPostingsView` and prompt context. S56.1 records the future SQLite `office_*` table contract in the same document, but does not create runtime tables or change route payloads. It does not replace this runtime contract, does not change `officialCareerView`, and does not let ordinary providers write `officialPostings`; actual appointments, transfers, assessments and punishments remain server-owned here.
 
+S88.4 adds the first-month official experience loop on top of this contract.
+`officialCareerView.firstMonthExperience` and `officialCareerView.courtEntry`
+are server-derived public projections from the first-month assignment. Topic
+surfaces and `topic_draft` may cite those projections only as draft evidence.
+When the player later submits “入奏折队列 / 付朝议筹议 / 续记考成” through the
+ordinary turn flow, `runOfficialCareerStep()` records a server-owned
+`courtEntryResolutions` entry and exposes the latest public result through
+`officialCareerView.courtEntry.latestResolution`, monthly briefing, and event
+archive. These records may make bounded progress/assessment adjustments, but
+they do not directly appoint, punish, impeach, or finalize long-term career
+outcomes.
+
 ## S42.1 深度官场契约
 
 目标：入仕后不再只是六项仪表变化和偶发升降，而是进入有官职、衙门、差遣、考成、人脉、政敌、弹劾、外放、处分和履历档案的长期生涯。S42.1 定义契约；S42.2 已实现字段、规则和 Mock 行动扩展；S42.3 已扩展浏览器 UI 与验收。

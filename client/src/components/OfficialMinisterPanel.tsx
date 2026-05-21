@@ -349,6 +349,7 @@ function getCourtEntry(officialCareer: JsonObject) {
   const memorial = asRecord(entry.memorialEntry);
   const debate = asRecord(entry.courtDebateEntry);
   const assessmentTrace = asRecord(entry.assessmentTrace);
+  const latestResolution = asRecord(entry.latestResolution);
   const active = entry.active === true;
   const targetLabels = asArray(entry.targetSurfaces)
     .map(asRecord)
@@ -382,6 +383,13 @@ function getCourtEntry(officialCareer: JsonObject) {
     traceLabel: cleanOfficialMinisterText(assessmentTrace.traceLabel, "考成期未明", 32),
     merit: cleanNumber(assessmentTrace.meritScore, 0),
     risk: cleanNumber(assessmentTrace.riskScore, 0),
+    latestResolution: latestResolution.id || latestResolution.publicSummary
+      ? {
+        status: cleanOfficialMinisterText(latestResolution.statusLabel, "近次裁决", 32),
+        summary: cleanOfficialMinisterText(latestResolution.publicSummary, "近次呈上已由服务器记录，后续仍候普通回合。", 156),
+        nextStep: cleanOfficialMinisterText(latestResolution.nextStep, "后续仍按普通回合补证、复核和考成结算。", 116)
+      }
+      : null,
     signals,
     nextActions
   };
@@ -631,6 +639,9 @@ export function OfficialMinisterPanel({
               <p>{courtEntry.summary}</p>
               <p>{courtEntry.memorialTitle}：{courtEntry.memorialSummary}</p>
               <p>{courtEntry.debateTitle}：{courtEntry.debateSummary}</p>
+              {courtEntry.latestResolution ? (
+                <p>近次裁决：{courtEntry.latestResolution.summary} 后续：{courtEntry.latestResolution.nextStep}</p>
+              ) : null}
               <p>上官后续：{courtEntry.superiorFollowUp}</p>
               <p>同僚后续：{courtEntry.peerFollowUp}</p>
               <OfficialMinisterPanelList
@@ -645,7 +656,7 @@ export function OfficialMinisterPanel({
             <p>此处只把上疏、回堂官、请核考成或辨弹劾写入底部奏折草稿；呈上回合、时间推进、任免奖惩和处分仍走服务器裁决。</p>
           )}
           <div className="scholarPanelActions">
-            {courtEntry.nextActions.slice(0, 2).map((action) => (
+            {courtEntry.nextActions.slice(0, 3).map((action) => (
               <button key={action.id} type="button" disabled={!canDraft} onClick={() => onDraft(action.text)}>
                 {action.label}
               </button>

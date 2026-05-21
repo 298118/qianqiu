@@ -3,6 +3,7 @@ const assert = require("node:assert/strict");
 
 const { createInitialState } = require("../src/game/initialState");
 const { buildEventArchiveView } = require("../src/game/eventArchive");
+const { buildOfficialCareerView, ensureOfficialCareerState } = require("../src/game/officialCareer");
 const {
   buildPlayerMonthlyBriefingContext,
   buildPlayerMonthlyBriefingView,
@@ -134,6 +135,70 @@ test("S88.4 official monthly briefing includes first month receipt and next acti
   assert.ok(officialDuties.items.some((item) => item.includes("馆阁讲章校订")));
   assert.ok(courtNetwork.items.some((item) => item.includes("堂官") || item.includes("同年")));
   assert.ok(view.latest.actionItems.some((item) => item.includes("馆阁讲章校订")));
+  assert.equal(serialized.includes("hiddenNotes"), false);
+  assert.equal(serialized.includes("密札不可见"), false);
+  assertHiddenSafe(view);
+});
+
+test("S88.4 official monthly briefing includes court entry adjudication outcome", () => {
+  const worldState = createInitialState({ role: "official", playerName: "奏议官" });
+  Object.assign(worldState.player, {
+    officeTitle: "翰林院编修",
+    position: "翰林院编修",
+    performanceMerit: 50,
+    impeachmentRisk: 18
+  });
+  worldState.year = 1644;
+  worldState.month = 7;
+  worldState.tenDayPeriod = 3;
+  worldState.turnCount = 6;
+  worldState.officialCareer.currentPosting = "翰林院编修";
+  worldState.officialCareer.assignments = [{
+    id: "ASG-0000-first-month-top_hanlin_editor",
+    title: "馆阁讲章校订",
+    kind: "memorial_drafting",
+    dueTurn: 7,
+    deadlineUnit: "ten_day",
+    progress: 88,
+    risk: 22,
+    visibleSummary: "首月须校订馆阁讲章并试拟制诰。",
+    hiddenNotes: ["密札不可见"]
+  }];
+  ensureOfficialCareerState(worldState);
+  const entryId = buildOfficialCareerView(worldState).courtEntry.id;
+  worldState.officialCareer.courtEntryResolutions = [{
+    id: "OCER-monthly-court-entry",
+    entryId,
+    assignmentId: "ASG-0000-first-month-top_hanlin_editor",
+    surfaceId: "memorial-review",
+    submissionKind: "official_first_month_memorial",
+    status: "accepted_for_review",
+    statusLabel: "准入复核",
+    title: "准入复核：馆阁讲章校订",
+    publicSummary: "准入复核：馆阁讲章校订已入奏折队列服务器裁决，公开进度88、风险22；考成微调为功绩+3、风险-2，不直接任免、奖惩、处分或成弹劾。",
+    serverDecision: "服务器只记录本次呈上处理，不直接任免、处分或成弹劾。",
+    meritDelta: 3,
+    riskDelta: -2,
+    progressDelta: 7,
+    generatedAtTurn: 6,
+    year: 1644,
+    month: 7,
+    tenDayPeriod: 3,
+    sourceRefs: [`officialCareer.courtEntry:${entryId}`],
+    nextStep: "准入奏折队列，由部院复核公开凭据后再入长期考成。"
+  }];
+  const { previousState, worldTick } = runMonthEndTick(worldState);
+
+  const result = runPlayerMonthlyBriefingStep(worldState, { previousState, worldTick });
+  const view = buildPlayerMonthlyBriefingView(worldState);
+  const officialDuties = view.latest.sections.find((section) => section.id === "official_duties");
+  const archiveView = buildEventArchiveView(worldState, { pageSize: 50 });
+  const serialized = JSON.stringify({ view, archiveView });
+
+  assert.equal(result.generated, true);
+  assert.ok(officialDuties.items.some((item) => item.includes("准入复核") && item.includes("馆阁讲章校订")));
+  assert.ok(view.latest.actionItems.some((item) => item.includes("奏折队列") || item.includes("部院复核")));
+  assert.ok(archiveView.items.some((item) => item.sourceType === "monthly_briefing"));
   assert.equal(serialized.includes("hiddenNotes"), false);
   assert.equal(serialized.includes("密札不可见"), false);
   assertHiddenSafe(view);

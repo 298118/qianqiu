@@ -5,7 +5,8 @@ const OFFICIAL_COURT_ENTRY_LIMITS = Object.freeze({
   maxShortTextLength: 96,
   maxSignals: 4,
   maxActions: 4,
-  maxSourceRefs: 6
+  maxSourceRefs: 6,
+  maxResolutionHistory: 6
 });
 
 const OFFICIAL_COURT_ENTRY_AUTHORITY_BOUNDARY =
@@ -24,9 +25,27 @@ const OFFICIAL_COURT_ENTRY_TARGETS = Object.freeze([
   })
 ]);
 
+const OFFICIAL_COURT_ENTRY_RESOLUTION_STATUSES = Object.freeze([
+  "accepted_for_review",
+  "referred_to_bureau",
+  "held_for_inquiry",
+  "returned_for_evidence",
+  "recorded_for_assessment"
+]);
+
+const OFFICIAL_COURT_ENTRY_RESOLUTION_LABELS = Object.freeze({
+  accepted_for_review: "准入复核",
+  referred_to_bureau: "转部核议",
+  held_for_inquiry: "留中补查",
+  returned_for_evidence: "驳回补据",
+  recorded_for_assessment: "续入考成"
+});
+
 module.exports = {
   OFFICIAL_COURT_ENTRY_AUTHORITY_BOUNDARY,
   OFFICIAL_COURT_ENTRY_LIMITS,
+  OFFICIAL_COURT_ENTRY_RESOLUTION_LABELS,
+  OFFICIAL_COURT_ENTRY_RESOLUTION_STATUSES,
   OFFICIAL_COURT_ENTRY_SCHEMA_VERSION,
   OFFICIAL_COURT_ENTRY_TARGETS
 };

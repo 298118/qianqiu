@@ -6,6 +6,7 @@ const { applyRelationshipChanges } = require("../src/game/relationships");
 const { applyStatePatch } = require("../src/game/stateRules");
 const { monthsToTurns } = require("../src/game/time");
 const { APPOINTMENT_FIRST_MONTH_ASSIGNMENTS } = require("../src/game/appointmentTracksConfig");
+const { buildEventArchiveView } = require("../src/game/eventArchive");
 const {
   buildOfficialCareerView,
   ensureOfficialCareerState,
@@ -38,6 +39,7 @@ test("initial state carries an empty server-owned official career ledger", () =>
     cooldowns: {},
     cooldownUnit: "ten_day",
     assignments: [],
+    courtEntryResolutions: [],
     assessmentDossier: {
       cycleId: "1644-career",
       meritScore: 0,
@@ -345,6 +347,115 @@ test("S88.4 official first month assignment advances through server turn feedbac
   assert.equal(view.firstMonthExperience.active, true);
   assert.match(view.firstMonthExperience.receipt.publicSummary, /馆阁讲章校订/);
   assert.ok(view.firstMonthExperience.assessmentSignals.some((signal) => signal.includes("考成")));
+});
+
+test("S88.4 official court entry submission receives server adjudication without changing office directly", () => {
+  const worldState = createInitialState({ role: "official", playerName: "Tester" });
+  Object.assign(worldState.player, {
+    officeTitle: "翰林院编修",
+    position: "翰林院编修",
+    performanceMerit: 50,
+    impeachmentRisk: 18
+  });
+  worldState.officialCareer.currentPosting = "翰林院编修";
+  worldState.officialCareer.assignments = [{
+    id: "ASG-0000-first-month-top_hanlin_editor",
+    title: "馆阁讲章校订",
+    kind: "memorial_drafting",
+    dueTurn: 3,
+    deadlineUnit: "ten_day",
+    progress: 72,
+    risk: 24,
+    visibleSummary: "首月须校订馆阁讲章并试拟制诰。",
+    hiddenNotes: ["密札不可见"]
+  }];
+  ensureOfficialCareerState(worldState);
+  const beforeMerit = worldState.officialCareer.assessmentDossier.meritScore;
+  const beforeOffice = worldState.player.officeTitle;
+  const draft = buildOfficialCareerView(worldState).courtEntry.nextActions
+    .find((action) => action.id === "send-to-memorial-review");
+
+  const result = runOfficialCareerStep(worldState, draft.text, { isMonthEnd: false });
+  applyOfficialCareerResult(worldState, result);
+  const view = buildOfficialCareerView(worldState);
+  const prompt = summarizeOfficialCareerForPrompt(worldState);
+  const archive = buildEventArchiveView(worldState, { pageSize: 50 });
+  const serialized = JSON.stringify({ view, summary: prompt, archive });
+
+  assert.equal(worldState.player.officeTitle, beforeOffice);
+  assert.equal(worldState.officialCareer.courtEntryResolutions.length, 1);
+  assert.ok(worldState.officialCareer.assessmentDossier.meritScore > beforeMerit);
+  assert.equal(view.courtEntry.latestResolution.status, "accepted_for_review");
+  assert.match(view.courtEntry.latestResolution.publicSummary, /服务器裁决|不直接任免/);
+  assert.match(prompt.courtEntry.latestResolution.publicSummary, /准入复核|服务器裁决/);
+  assert.ok(result.events.some((event) => event.includes("[奏折朝议裁决]")));
+  assert.ok(archive.items.some((item) => item.sourceType === "official_court_entry" && /馆阁讲章校订/.test(item.summary)));
+  assert.equal(serialized.includes("hiddenNotes"), false);
+  assert.equal(serialized.includes("密札不可见"), false);
+  assert.equal(/provider|prompt|raw_table|rawSql|SQL|sqlite|sk-test-secret|data\/sessions/i.test(serialized), false);
+});
+
+test("S88.4 official court entry next actions adjudicate every appointment-track template", () => {
+  for (const [trackId, template] of Object.entries(APPOINTMENT_FIRST_MONTH_ASSIGNMENTS)) {
+    for (const actionId of ["send-to-memorial-review", "send-to-court-debate", "track-assessment"]) {
+      const worldState = createInitialState({ role: "official", playerName: "Tester" });
+      Object.assign(worldState.player, {
+        officeTitle: "新授官",
+        position: "新授官",
+        performanceMerit: 48,
+        impeachmentRisk: 18
+      });
+      worldState.officialCareer.currentPosting = "新授官";
+      worldState.officialCareer.assignments = [{
+        ...template,
+        id: `ASG-0000-first-month-${trackId}`,
+        dueTurn: 3,
+        deadlineUnit: "ten_day"
+      }];
+      ensureOfficialCareerState(worldState);
+      const action = buildOfficialCareerView(worldState).courtEntry.nextActions
+        .find((entry) => entry.id === actionId);
+
+      const result = runOfficialCareerStep(worldState, action.text, { isMonthEnd: false });
+      applyOfficialCareerResult(worldState, result);
+      const view = buildOfficialCareerView(worldState);
+
+      assert.equal(
+        worldState.officialCareer.courtEntryResolutions.length,
+        1,
+        `${trackId} ${actionId} should create one server court-entry resolution`
+      );
+      assert.equal(
+        view.courtEntry.latestResolution.surfaceId,
+        actionId === "send-to-court-debate"
+          ? "court-debate"
+          : actionId === "track-assessment"
+            ? "assessment-trace"
+            : "memorial-review",
+        `${trackId} ${actionId} should preserve the submitted surface`
+      );
+      assert.equal(
+        view.courtEntry.latestResolution.submissionKind,
+        actionId === "track-assessment"
+          ? "official_first_month_assessment"
+          : actionId === "send-to-court-debate"
+            ? "official_first_month_debate"
+            : "official_first_month_memorial",
+        `${trackId} ${actionId} should preserve the submitted kind`
+      );
+      if (actionId === "track-assessment") {
+        assert.equal(
+          view.courtEntry.latestResolution.status,
+          "recorded_for_assessment",
+          `${trackId} ${actionId} should record the assessment trace`
+        );
+      }
+      assert.ok(
+        result.events.some((event) => event.includes("[奏折朝议裁决]")),
+        `${trackId} ${actionId} should emit adjudication feedback`
+      );
+    }
+  }
 });
 
 test("S88.4 official first month draft actions advance every appointment-track template", () => {

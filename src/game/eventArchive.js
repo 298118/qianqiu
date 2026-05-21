@@ -18,6 +18,7 @@ const MAX_HISTORY_ITEMS = 8;
 const MAX_THREADS = 6;
 const MAX_LONG_TERM_EVENTS = 5;
 const MAX_OFFICIAL_OUTCOMES = 5;
+const MAX_OFFICIAL_COURT_ENTRY_RESOLUTIONS = 5;
 const MAX_MONTHLY_BRIEFINGS = 4;
 const MAX_OFFICIAL_ASSESSMENTS = 4;
 const MAX_LOCAL_DOCKETS = 6;
@@ -42,6 +43,7 @@ const SOURCE_LABELS = {
   world_thread: "议程",
   long_term_event: "长期",
   official_career: "官场",
+  official_court_entry: "奏议",
   monthly_briefing: "月报",
   official_assessment: "考成",
   local_docket: "案牍",
@@ -250,6 +252,23 @@ function collectOfficialItems(worldState, items, officialCareerView) {
       date: outcome,
       turn: outcome.turn,
       status: outcome.status === "pending" ? "watch" : "resolved"
+    });
+  });
+
+  const resolutions = Array.isArray(officialCareerView?.courtEntryResolutions)
+    ? officialCareerView.courtEntryResolutions
+    : [];
+  resolutions.slice(-MAX_OFFICIAL_COURT_ENTRY_RESOLUTIONS).forEach((resolution) => {
+    addItem(items, worldState, {
+      sourceType: "official_court_entry",
+      kind: resolution.submissionKind || "official_first_month",
+      title: resolution.title || resolution.statusLabel || "首月奏议裁决",
+      summary: resolution.publicSummary,
+      date: resolution,
+      turn: resolution.generatedAtTurn,
+      status: resolution.status === "returned_for_evidence" || resolution.status === "held_for_inquiry" ? "watch" : "recorded",
+      riskLabel: resolution.riskDelta > 0 ? "须补查" : resolution.meritDelta > 0 ? "入考成" : "",
+      relatedLabels: Array.isArray(resolution.sourceRefs) ? resolution.sourceRefs : []
     });
   });
 }

@@ -966,6 +966,13 @@ describe("S74.1 React client shell", () => {
                 traceLabel: "尚余四月入考成",
                 signals: ["正在查办：进度会影响首月考成。", "可控：仍需按期回署。"]
               },
+              latestResolution: {
+                id: "OCER-app-fixture",
+                status: "accepted_for_review",
+                statusLabel: "准入复核",
+                publicSummary: "准入复核：馆阁讲章校订已入奏折队列服务器裁决，不直接任免、奖惩、处分或成弹劾。",
+                nextStep: "由部院复核公开凭据后再入长期考成。"
+              },
               superiorFollowUp: "堂官先看章法、避讳和能否切中本职。",
               peerFollowUp: "同年提醒馆阁旧例与上疏分寸。",
               nextActions: [
@@ -978,6 +985,11 @@ describe("S74.1 React client shell", () => {
                   id: "send-to-court-debate",
                   label: "付朝议筹议",
                   text: "请付朝议筹议馆阁讲章校订后续章程。"
+                },
+                {
+                  id: "track-assessment",
+                  label: "续记考成",
+                  text: "续记馆阁讲章校订入本任考成簿，列明尚余四月入考成、功绩风险与仍须服务器裁决的后果。"
                 }
               ]
             },
@@ -1093,10 +1105,12 @@ describe("S74.1 React client shell", () => {
     expect(screen.getByText("馆阁讲章校订")).toBeTruthy();
     expect(screen.getByText("奏折朝议入口")).toBeTruthy();
     expect(screen.getByText("首月回署：馆阁讲章校订")).toBeTruthy();
+    expect(screen.getByText(/近次裁决：准入复核：馆阁讲章校订已入奏折队列服务器裁决/)).toBeTruthy();
     expect(screen.getByText("同年座师与人脉")).toBeTruthy();
     expect(screen.getByText("派系与朝局风险")).toBeTruthy();
     expect(screen.getByText("考成与弹劾")).toBeTruthy();
     expect(screen.getByRole("link", { name: "入朝议页" }).getAttribute("href")).toBe(`/game/${sessionId}/court`);
+    expect(screen.getByRole("button", { name: "续记考成" })).toBeTruthy();
     expect(screen.getByText("不得在前端直接任免、奖惩、处分、弹劾成案或改写考成。")).toBeTruthy();
 
     fireEvent.click(screen.getByRole("button", { name: "回应弹劾" }));

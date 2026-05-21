@@ -369,3 +369,51 @@ test("POST /api/game/turn advances S88.4 first month receipt view without trusti
   assert.equal(serialized.includes("hiddenNotes"), false);
   assert.equal(/provider|prompt|raw_table|堂官私下试探/i.test(serialized), false);
 });
+
+test("POST /api/game/turn adjudicates S88.4 official court entry submissions server-side", async (t) => {
+  const server = createTestServer();
+  t.after(server.close);
+
+  const worldState = createInitialState({ playerName: "Tester", role: "official" });
+  Object.assign(worldState.player, {
+    officeTitle: "翰林院编修",
+    position: "翰林院编修",
+    performanceMerit: 50,
+    impeachmentRisk: 18
+  });
+  worldState.officialCareer.currentPosting = "翰林院编修";
+  worldState.officialCareer.assignments = [{
+    id: "ASG-0000-first-month-top_hanlin_editor",
+    title: "馆阁讲章校订",
+    kind: "memorial_drafting",
+    dueTurn: 3,
+    deadlineUnit: "ten_day",
+    progress: 72,
+    risk: 24,
+    visibleSummary: "首月须校订馆阁讲章并试拟制诰。",
+    hiddenNotes: ["密札不可见"]
+  }];
+  t.after(() => removeSessionFile(worldState.sessionId));
+  await writeSession(worldState);
+
+  const { response, payload } = await postJson(`${server.baseUrl}/api/game/turn`, {
+    sessionId: worldState.sessionId,
+    input: "臣谨就馆阁讲章校订具奏：请入奏折队列，说明公开进度、考成风险与请裁事项。"
+  });
+  const serialized = JSON.stringify({
+    officialCareerView: payload.officialCareerView,
+    eventArchiveView: payload.eventArchiveView,
+    officialCareerFeedback: payload.officialCareer
+  });
+
+  assert.equal(response.status, 200);
+  assert.equal(payload.worldState.officialCareer.courtEntryResolutions.length, 1);
+  assert.equal(payload.officialCareerView.courtEntry.latestResolution.status, "accepted_for_review");
+  assert.match(payload.officialCareerView.courtEntry.latestResolution.publicSummary, /服务器裁决|不直接任免/);
+  assert.ok(payload.officialCareer.events.some((event) => event.includes("[奏折朝议裁决]")));
+  assert.ok(payload.eventArchiveView.items.some((item) => item.sourceType === "official_court_entry"));
+  assert.equal(payload.worldState.player.officeTitle, "翰林院编修");
+  assert.equal(serialized.includes("hiddenNotes"), false);
+  assert.equal(serialized.includes("密札不可见"), false);
+  assert.equal(/provider|prompt|raw_table|rawSql|SQL|sqlite|sk-test-secret|data\/sessions/i.test(serialized), false);
+});

@@ -103,6 +103,8 @@ export type OfficialCourtEntryView = JsonObject & {
   readonly memorialEntry?: JsonObject | null;
   readonly courtDebateEntry?: JsonObject | null;
   readonly assessmentTrace?: JsonObject | null;
+  readonly latestResolution?: JsonObject | null;
+  readonly resolutionHistory?: readonly JsonObject[];
   readonly superiorFollowUp?: string;
   readonly peerFollowUp?: string;
   readonly nextActions?: readonly JsonObject[];
@@ -112,6 +114,7 @@ export type OfficialCourtEntryView = JsonObject & {
 export type OfficialCareerView = JsonObject & {
   readonly firstMonthExperience?: OfficialFirstMonthExperienceView;
   readonly courtEntry?: OfficialCourtEntryView;
+  readonly courtEntryResolutions?: readonly JsonObject[];
   readonly courtEntries?: readonly JsonObject[];
 };
 
