@@ -1,0 +1,10 @@
+
+> qianqiu@0.1.0 prestart
+> node scripts/ensureClientBuild.js
+
+React client build is current: E:\LSMNQ\dist\client\index.html
+
+> qianqiu@0.1.0 start
+> node server.js
+
+Qianqiu listening at http://localhost:3000
