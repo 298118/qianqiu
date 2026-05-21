@@ -125,6 +125,153 @@ test("S72.2 map runtime view turns visible map hooks into capped event effects",
   assertSafeMapRuntimePayload(view);
 });
 
+test("S88.6 map runtime view turns visible domain consequences into safe event effects", () => {
+  const mapContextView = {
+    schemaVersion: 1,
+    generatedAtTurn: 18,
+    mapEntityRefs: [
+      {
+        refId: "map:geography:frontier_zone:frontier-liaodong",
+        domain: "geography",
+        entityType: "frontier_zone",
+        entityId: "frontier-liaodong",
+        label: "辽东边墙",
+        summary: "边墙塘报牵动粮道。",
+        visibility: "public",
+        pressure: 78
+      },
+      {
+        refId: "map:local_affairs:docket:case-field-boundary",
+        domain: "local_affairs",
+        entityType: "docket",
+        entityId: "case-field-boundary",
+        label: "田界案",
+        summary: "县中田界词讼仍待复核。",
+        visibility: "role_visible",
+        pressure: 48
+      },
+      {
+        refId: "map:economic:economic_report:grain-market",
+        domain: "economic",
+        entityType: "economic_report",
+        entityId: "grain-market",
+        label: "粮市",
+        summary: "粮市牌价已入公开观察。",
+        visibility: "market_visible",
+        pressure: 52
+      }
+    ],
+    mapEventHooks: []
+  };
+  const domainConsequenceView = {
+    active: true,
+    recentConsequences: [{
+      id: "DC-map-military",
+      sourceType: "military_diplomacy",
+      sourceLabel: "军务外交",
+      kindLabel: "军务后果",
+      title: "边镇调粮余波",
+      publicSummary: "边镇粮道公开归档。",
+      severity: 2
+    }, {
+      id: "DC-map-judicial",
+      sourceType: "judicial_case",
+      sourceLabel: "刑名案件",
+      kindLabel: "刑名后果",
+      title: "田界案余波",
+      publicSummary: "田界案公开归档。",
+      severity: 1
+    }, {
+      id: "DC-map-city",
+      sourceType: "city_policy",
+      sourceLabel: "地方政策",
+      kindLabel: "政策后果",
+      title: "粮价余波",
+      publicSummary: "粮价平抑公开归档。",
+      severity: 1
+    }]
+  };
+
+  const view = buildMapRuntimeView({ turnCount: 18 }, {
+    mapContextView,
+    domainConsequenceView,
+    maxEventEffects: 4
+  });
+  const refIds = new Set(view.refs.map((ref) => ref.mapEntityRef));
+  const domainEffects = view.eventEffects.filter((effect) =>
+    effect.sourceRefs.some((sourceRef) => sourceRef.startsWith("domainConsequenceView:"))
+  );
+
+  assert.equal(domainEffects.length, 3);
+  assert.ok(domainEffects.some((effect) => effect.kind === "domain_military_consequence" && effect.targetRef.includes("frontier-liaodong")));
+  assert.ok(domainEffects.some((effect) => effect.kind === "domain_judicial_consequence" && effect.targetRef.includes("case-field-boundary")));
+  assert.ok(domainEffects.some((effect) => effect.kind === "domain_city_policy" && effect.targetRef.includes("grain-market")));
+  assert.ok(domainEffects.every((effect) => refIds.has(effect.targetRef)));
+  assert.ok(domainEffects.every((effect) => effect.severity >= 0 && effect.severity <= 1));
+  assert.ok(domainEffects.every((effect) => effect.sourceRefs.every((sourceRef) => /^[A-Za-z0-9_.:-]+$/.test(sourceRef))));
+  assertSafeMapRuntimePayload(view);
+});
+
+test("S88.6 map runtime event cap preserves visible domain consequence effects", () => {
+  const mapContextView = {
+    schemaVersion: 1,
+    generatedAtTurn: 19,
+    mapEntityRefs: [{
+      refId: "map:economic:economic_report:grain-market",
+      domain: "economic",
+      entityType: "economic_report",
+      entityId: "grain-market",
+      label: "粮市",
+      summary: "粮市牌价已入公开观察。",
+      visibility: "market_visible",
+      pressure: 52
+    }],
+    mapEventHooks: Array.from({ length: 5 }, (_, index) => ({
+      hookId: `map-hook-market-${index}`,
+      sourceType: "market_incident",
+      sourceDomain: "economic",
+      sourceView: "economicFiscalView.marketIncidents",
+      sourceId: `market-${index}`,
+      title: `市况${index}`,
+      publicSummary: `粮市公开近事${index}。`,
+      riskLabel: "市况",
+      mapEntityRefs: [{
+        refId: "map:economic:economic_report:grain-market",
+        entityType: "economic_report",
+        label: "粮市",
+        sourceView: "economicFiscalView.marketIncidents"
+      }],
+      visibility: "market_visible"
+    }))
+  };
+  const domainConsequenceView = {
+    active: true,
+    recentConsequences: [{
+      id: "DC-map-city-cap",
+      sourceType: "city_policy",
+      sourceLabel: "地方政策",
+      kindLabel: "政策后果",
+      title: "粮价余波",
+      publicSummary: "粮价平抑公开归档。",
+      severity: 2
+    }]
+  };
+
+  const view = buildMapRuntimeView({ turnCount: 19 }, {
+    mapContextView,
+    domainConsequenceView,
+    maxEventEffects: 3
+  });
+  const domainEffects = view.eventEffects.filter((effect) =>
+    effect.sourceRefs.some((sourceRef) => sourceRef.startsWith("domainConsequenceView:"))
+  );
+
+  assert.equal(view.eventEffects.length, 3);
+  assert.equal(domainEffects.length, 1);
+  assert.equal(domainEffects[0].targetRef, "map:economic:economic_report:grain-market");
+  assertSafeMapRuntimePayload(view);
+});
+
 test("S72.2 map action drafts stay dictionary-shaped and require player confirmation", () => {
   const drafts = buildMapActionDrafts({
     refs: [

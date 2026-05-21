@@ -94,6 +94,30 @@ const MAP_RUNTIME_EVENT_EFFECTS = Object.freeze({
     label: "科期",
     animationToken: "ink_ripple_blue",
     severityFloor: 0.35
+  }),
+  domain_city_policy: Object.freeze({
+    kind: "domain_city_policy",
+    label: "政策余波",
+    animationToken: "ink_ripple_ochre",
+    severityFloor: 0.42
+  }),
+  domain_military_diplomacy: Object.freeze({
+    kind: "domain_military_consequence",
+    label: "军务余波",
+    animationToken: "ink_ripple_red",
+    severityFloor: 0.55
+  }),
+  domain_judicial_case: Object.freeze({
+    kind: "domain_judicial_consequence",
+    label: "刑名余波",
+    animationToken: "ink_ripple_black",
+    severityFloor: 0.4
+  }),
+  domain_npc_economy: Object.freeze({
+    kind: "domain_npc_economy",
+    label: "人物经济",
+    animationToken: "ink_ripple_ochre",
+    severityFloor: 0.35
   })
 });
 

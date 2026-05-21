@@ -1,4 +1,5 @@
 const { buildMapContextView } = require("./mapContext");
+const { buildDomainConsequenceView } = require("./domainConsequenceTrace");
 const {
   MAP_RUNTIME_ASSET_SET_ID,
   MAP_RUNTIME_BOUNDS,
@@ -22,6 +23,13 @@ const MAP_REF_ID_PATTERN = /^[A-Za-z0-9_.:-]+$/;
 const SAFE_SOURCE_REF_PATTERN = /^[A-Za-z0-9_.:-]+$/;
 const SENSITIVE_MAP_RUNTIME_TEXT_PATTERN =
   /(SEALED_[A-Z0-9_]+|hidden[_ -]?(?:notes?|intent)|hidden\s+(?:notes?|intent)|密档|私档|密札|密信|隐藏(?:意图|动机|事实|札记)|隐秘(?:意图|动机|事实)|raw(?:[_ -]?|(?=[A-Z]))(?:provider|audit|table|ledger|prompt|proposal|coordinate|coords?|layout|state)|coordinate[_ -]?table|coordinateTable|latitude|longitude|\b(?:statePatch|worldState|providerPayload|providerProposal|prompt|rawSql|SQL|sqlite|lat|lng)\b|api[_ -]?key|OPENAI_API_KEY|DEEPSEEK_API_KEY|MIMO_API_KEY|ANTHROPIC_API_KEY|data[\\/](?:sessions|audit)|ai_change_proposals|event_log|world_sessions|world_state_json|prompt_retrieval_index|event_archive_index|file:\/\/\/?(?:[A-Za-z]:[\\/]|(?:\/Users|\/home|\/tmp|\/var|\/mnt|\/opt|\/workspace)\/)[^\s"'<>]+|[A-Za-z]:[\\/][^\s"'<>]+|\b(?:\/Users|\/home|\/tmp|\/var|\/mnt|\/opt|\/workspace)\/[^\s"'<>]+|sk-[A-Za-z0-9_-]{6,}|tp-[A-Za-z0-9_-]{6,})/i;
+
+const DOMAIN_CONSEQUENCE_TARGET_TYPES = Object.freeze({
+  city_policy: Object.freeze(["economic_report", "jurisdiction", "posting", "city", "region"]),
+  military_diplomacy: Object.freeze(["military_report", "frontier_zone", "city", "region", "country"]),
+  judicial_case: Object.freeze(["docket", "jurisdiction", "posting", "city", "region"]),
+  npc_economy: Object.freeze(["economic_report", "city", "posting", "region"])
+});
 
 function isPlainObject(value) {
   return value !== null && typeof value === "object" && !Array.isArray(value);
@@ -533,6 +541,83 @@ function buildMapEventEffects(mapContextView = {}, runtimeRefs = [], runtimeRout
   return effects;
 }
 
+function targetTypesForDomainConsequence(sourceType = "") {
+  return DOMAIN_CONSEQUENCE_TARGET_TYPES[sourceType] || [];
+}
+
+function compareDomainConsequenceTargets(preferredTypes = []) {
+  return (first = {}, second = {}) => {
+    const firstIndex = preferredTypes.indexOf(first.entityType);
+    const secondIndex = preferredTypes.indexOf(second.entityType);
+    if (firstIndex !== secondIndex) return firstIndex - secondIndex;
+    const firstImportance = clampNumber(first.layout?.importance, 0, 1, 0);
+    const secondImportance = clampNumber(second.layout?.importance, 0, 1, 0);
+    if (secondImportance !== firstImportance) return secondImportance - firstImportance;
+    return String(first.mapEntityRef || "").localeCompare(String(second.mapEntityRef || ""));
+  };
+}
+
+function chooseDomainConsequenceTarget(consequence = {}, runtimeRefs = []) {
+  const preferredTypes = targetTypesForDomainConsequence(consequence.sourceType);
+  if (!preferredTypes.length) return null;
+  return runtimeRefs
+    .filter((ref) => preferredTypes.includes(ref.entityType))
+    .sort(compareDomainConsequenceTargets(preferredTypes))[0] || null;
+}
+
+function domainConsequenceEffectConfig(consequence = {}) {
+  return MAP_RUNTIME_EVENT_EFFECTS[`domain_${consequence.sourceType}`] || MAP_RUNTIME_EVENT_EFFECTS.local_docket;
+}
+
+function domainConsequenceSeverity(consequence = {}, config = {}) {
+  const severityRatio = clampNumber(consequence.severity, 0, 3, 1) / 3;
+  return Number(Math.max(config.severityFloor || 0.35, severityRatio).toFixed(2));
+}
+
+function buildDomainConsequenceEventEffects(domainConsequenceView = {}, runtimeRefs = [], options = {}) {
+  const effects = [];
+  for (const consequence of asArray(domainConsequenceView.recentConsequences).slice().reverse()) {
+    if (!isPlainObject(consequence)) continue;
+    const target = chooseDomainConsequenceTarget(consequence, runtimeRefs);
+    const targetRef = cleanMapRefId(target?.mapEntityRef, "");
+    if (!targetRef) continue;
+    const sourceId = cleanSourceRef(consequence.id || consequence.sourceId || consequence.sourceType, "");
+    const sourceRef = sourceId ? cleanSourceRef(`domainConsequenceView:${sourceId}`, "") : "";
+    if (!sourceRef) continue;
+    const config = domainConsequenceEffectConfig(consequence);
+    const id = cleanId(`event-domain-consequence-${sourceId}`, `event-domain-consequence-${effects.length + 1}`);
+    const label = sanitizeMapRuntimeText(
+      consequence.kindLabel || consequence.sourceLabel || config.label,
+      config.label,
+      32
+    );
+    if (!label) continue;
+    effects.push({
+      id,
+      targetRef,
+      kind: config.kind,
+      severity: domainConsequenceSeverity(consequence, config),
+      label,
+      animationToken: config.animationToken,
+      sourceRefs: [sourceRef]
+    });
+    if (effects.length >= (options.maxDomainConsequenceEventEffects || 4)) break;
+  }
+  return effects;
+}
+
+function mergeEventEffectsWithDomainConsequences(eventEffects = [], domainEffects = [], options = {}) {
+  const maxEventEffects = options.maxEventEffects || MAP_RUNTIME_LIMITS.maxEventEffects;
+  if (!domainEffects.length) return eventEffects.slice(0, maxEventEffects);
+  const reservedDomainEffects = Math.min(domainEffects.length, Math.max(1, Math.min(2, maxEventEffects - 1)));
+  const keptContextEffects = eventEffects.slice(0, Math.max(0, maxEventEffects - reservedDomainEffects));
+  return [
+    ...keptContextEffects,
+    ...domainEffects.slice(0, reservedDomainEffects),
+    ...domainEffects.slice(reservedDomainEffects)
+  ].slice(0, maxEventEffects);
+}
+
 function refById(refs = [], mapEntityRef) {
   return refs.find((ref) => ref.mapEntityRef === mapEntityRef) || null;
 }
@@ -569,6 +654,7 @@ function zoomForFocus(ref = {}) {
 
 function buildMapRuntimeView(worldState = {}, options = {}) {
   const mapContextView = options.mapContextView || buildMapContextView(worldState, options.actorProfile || null);
+  const domainConsequenceView = options.domainConsequenceView || buildDomainConsequenceView(worldState);
   const refs = mergeMapRefsWithLayout(mapContextView, options);
   const routes = buildMapRoutes(mapContextView, refs, options);
   const actionDrafts = buildMapActionDrafts({ refs, routes }, options);
@@ -576,7 +662,11 @@ function buildMapRuntimeView(worldState = {}, options = {}) {
   const finalRoutes = filterDraftRefs(routes, actionDrafts);
   const focus = chooseFocusRef(finalRefs, options);
   const focusRef = refById(finalRefs, focus.ref) || finalRefs[0] || null;
-  const eventEffects = buildMapEventEffects(mapContextView, finalRefs, finalRoutes, options);
+  const eventEffects = mergeEventEffectsWithDomainConsequences(
+    buildMapEventEffects(mapContextView, finalRefs, finalRoutes, options),
+    buildDomainConsequenceEventEffects(domainConsequenceView, finalRefs, options),
+    options
+  );
 
   return {
     schemaVersion: MAP_RUNTIME_SCHEMA_VERSION,
@@ -601,6 +691,7 @@ function buildMapRuntimeView(worldState = {}, options = {}) {
 
 module.exports = {
   buildMapActionDrafts,
+  buildDomainConsequenceEventEffects,
   buildMapEventEffects,
   buildMapRuntimeView,
   buildMapRoutes,

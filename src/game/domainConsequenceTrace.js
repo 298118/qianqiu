@@ -27,6 +27,26 @@ const SOURCE_KIND_LABELS = Object.freeze({
   npc_economy: "经济后果"
 });
 
+const DOMAIN_CONSEQUENCE_SOURCE_TYPES = Object.freeze(Object.keys(SOURCE_LABELS));
+
+const ROLE_LABELS = Object.freeze({
+  scholar: "书生",
+  magistrate: "地方官",
+  general: "将领",
+  official: "入仕官员",
+  minister: "大臣",
+  emperor: "皇帝"
+});
+
+const ROLE_VISIBLE_SOURCE_TYPES = Object.freeze({
+  scholar: Object.freeze([]),
+  magistrate: Object.freeze(["city_policy", "judicial_case", "npc_economy"]),
+  general: Object.freeze(["military_diplomacy"]),
+  official: Object.freeze(DOMAIN_CONSEQUENCE_SOURCE_TYPES),
+  minister: Object.freeze(DOMAIN_CONSEQUENCE_SOURCE_TYPES),
+  emperor: Object.freeze(DOMAIN_CONSEQUENCE_SOURCE_TYPES)
+});
+
 const METRIC_LABELS = Object.freeze({
   treasury: "府库",
   grainReserve: "粮储",
@@ -75,6 +95,21 @@ function cleanText(value, fallback = "", maxLength = MAX_TEXT_LENGTH) {
 function cleanId(value, fallback = "") {
   const text = cleanText(value, fallback, 96);
   return text.replace(/[^A-Za-z0-9_.:-]+/g, "-").replace(/^-+|-+$/g, "") || fallback;
+}
+
+function viewerRole(worldState = {}, options = {}) {
+  const role = cleanId(options.viewerRole || options.role || worldState.player?.role, "scholar");
+  return ROLE_VISIBLE_SOURCE_TYPES[role] ? role : "scholar";
+}
+
+function visibleSourceTypesForRole(role, options = {}) {
+  if (options.ignoreRoleVisibility === true) return new Set(DOMAIN_CONSEQUENCE_SOURCE_TYPES);
+  if (Array.isArray(options.visibleSourceTypes)) {
+    return new Set(options.visibleSourceTypes
+      .map((sourceType) => cleanId(sourceType, ""))
+      .filter((sourceType) => DOMAIN_CONSEQUENCE_SOURCE_TYPES.includes(sourceType)));
+  }
+  return new Set(ROLE_VISIBLE_SOURCE_TYPES[role] || ROLE_VISIBLE_SOURCE_TYPES.scholar);
 }
 
 function stablePublicSuffix(value) {
@@ -215,6 +250,7 @@ function normalizeConsequenceRow(worldState, sourceType, raw = {}) {
     year: date.year,
     month: date.month,
     tenDayPeriod: date.tenDayPeriod,
+    visibility: "player_visible",
     affectedMetricLabels: affectedMetrics.map((metric) => metric.label),
     severity: severityFromMetrics(affectedMetrics, sourceType),
     consequenceRefs: buildConsequenceRefs(sourceType, sourceId),
@@ -305,7 +341,11 @@ function collectDomainConsequenceCandidates(worldState = {}) {
 }
 
 function collectDomainConsequences(worldState = {}) {
-  return collectDomainConsequenceCandidates(worldState).slice(-MAX_RECENT_CONSEQUENCES);
+  const role = viewerRole(worldState);
+  const visibleSourceTypes = visibleSourceTypesForRole(role);
+  return collectDomainConsequenceCandidates(worldState)
+    .filter((row) => visibleSourceTypes.has(row.sourceType))
+    .slice(-MAX_RECENT_CONSEQUENCES);
 }
 
 function buildCounts(rows = []) {
@@ -316,14 +356,16 @@ function buildCounts(rows = []) {
   return counts;
 }
 
-function buildCaps(candidateCount, visibleCount) {
+function buildCaps(roleEligibleCount, visibleCount, roleLimited) {
   return {
     recentConsequences: MAX_RECENT_CONSEQUENCES,
     sourceRowsPerLedger: MAX_SOURCE_ROWS,
     nextActions: 3,
-    publicCandidates: candidateCount,
+    publicCandidates: roleEligibleCount,
+    roleEligibleCandidates: roleEligibleCount,
     visibleConsequences: visibleCount,
-    capped: candidateCount > visibleCount
+    roleLimited: roleLimited === true,
+    capped: roleEligibleCount > visibleCount
   };
 }
 
@@ -350,19 +392,38 @@ function buildTrackingEntryPoints(active) {
   ];
 }
 
-function buildDomainConsequenceView(worldState = {}) {
+function buildRoleVisibility(role, visibleSourceTypes) {
+  const visibleTypes = DOMAIN_CONSEQUENCE_SOURCE_TYPES.filter((sourceType) => visibleSourceTypes.has(sourceType));
+  return {
+    viewerRole: role,
+    viewerRoleLabel: ROLE_LABELS[role] || role,
+    visibleSourceTypes: visibleTypes,
+    omittedSourceTypes: DOMAIN_CONSEQUENCE_SOURCE_TYPES.filter((sourceType) => !visibleSourceTypes.has(sourceType))
+  };
+}
+
+function buildDomainConsequenceView(worldState = {}, options = {}) {
+  const role = viewerRole(worldState, options);
+  const visibleSourceTypes = visibleSourceTypesForRole(role, options);
   const candidates = collectDomainConsequenceCandidates(worldState);
-  const recentConsequences = candidates.slice(-MAX_RECENT_CONSEQUENCES);
+  const roleEligibleConsequences = candidates.filter((row) => visibleSourceTypes.has(row.sourceType));
+  const recentConsequences = roleEligibleConsequences.slice(-MAX_RECENT_CONSEQUENCES);
   const active = recentConsequences.length > 0;
+  const roleLabel = ROLE_LABELS[role] || role;
   return {
     schemaVersion: DOMAIN_CONSEQUENCE_SCHEMA_VERSION,
     generatedAtTurn: currentTurn(worldState),
     active,
     summary: active
-      ? `当前有${recentConsequences.length}条公开领域后果可追踪，已接入舆图入口、事件档案、世界议程和官职月报。`
-      : "当前没有可公开追踪的领域后果；不得从内部账簿、隐藏证据或模型提案补造事实。",
+      ? `${roleLabel}当前可见${recentConsequences.length}条公开领域后果，已接入舆图入口、事件档案、世界议程和官职月报。`
+      : `${roleLabel}当前没有可见的公开领域后果；不得从内部账簿、隐藏证据或模型提案补造事实。`,
     counts: buildCounts(recentConsequences),
-    caps: buildCaps(candidates.length, recentConsequences.length),
+    caps: buildCaps(
+      roleEligibleConsequences.length,
+      recentConsequences.length,
+      visibleSourceTypes.size < DOMAIN_CONSEQUENCE_SOURCE_TYPES.length
+    ),
+    roleVisibility: buildRoleVisibility(role, visibleSourceTypes),
     trackingEntryPoints: buildTrackingEntryPoints(active),
     recentConsequences,
     nextActions: recentConsequences.slice(-3).map((row) => ({
@@ -370,8 +431,8 @@ function buildDomainConsequenceView(worldState = {}) {
       label: row.sourceLabel,
       text: row.nextStep
     })),
-    aiReadScope: "AI 只能读取本 view 中的公开后果摘要、来源类型、受影响指标标签和下一步建议；不得读取内部裁决账本、证据链、审计原文、数值差额、数据库内部行、隐藏证据或模型原始提案。",
-    actorIntelligence: "领域后果追踪只解释玩家可见的服务器裁决余波；不同身份仍受原裁决器、月报和 world thread 权限限制。",
+    aiReadScope: "AI 只能读取本 view 中按当前身份裁剪后的公开后果摘要、来源类型、受影响指标标签和下一步建议；不得读取内部裁决账本、证据链、审计原文、数值差额、数据库内部行、隐藏证据或模型原始提案。",
+    actorIntelligence: "领域后果追踪只解释玩家当前身份可见的服务器裁决余波；不同身份仍受原裁决器、月报和 world thread 权限限制。",
     toolPermissions: "允许生成后续行动草稿、补证清单和月报摘录建议；禁止直接结案、调兵、拨款、定罪、成交交易、改 NPC 资产或写 canonical state。",
     proposalBoundaries: [
       "只能把已公开的服务器裁决结果整理为追踪线索。",

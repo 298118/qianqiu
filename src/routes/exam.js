@@ -147,6 +147,7 @@ function toExamPayload(worldState) {
   const worldPeopleView = buildWorldPeopleView(worldState);
   const officialPostingsView = buildOfficialPostingsView(worldState);
   const mapContextView = buildMapContextView(worldState);
+  const domainConsequenceView = buildDomainConsequenceView(worldState);
   const { settings, routePolicy } = resolveAiSettingsForSession(worldState);
   const aiInvocationSummaryView = buildAiInvocationSummaryView(worldState, routePolicy);
   return defineExamQuestionResponse({
@@ -192,13 +193,13 @@ function toExamPayload(worldState) {
     officialCareerView: buildOfficialCareerView(worldState),
     courtConsequenceView: buildOfficialCourtConsequenceView(worldState),
     courtResponseView: buildOfficialCourtResponseView(worldState),
-    domainConsequenceView: buildDomainConsequenceView(worldState),
+    domainConsequenceView,
     officialPostingsView,
     localAffairsDocketView: buildLocalAffairsDocketView(worldState),
     militaryDiplomacyView: buildMilitaryDiplomacyView(worldState),
     economicFiscalView: buildEconomicFiscalView(worldState),
     mapContextView,
-    mapRuntimeView: buildMapRuntimeView(worldState, { mapContextView }),
+    mapRuntimeView: buildMapRuntimeView(worldState, { mapContextView, domainConsequenceView }),
     historicalEventArchiveView: buildHistoricalEventArchiveView(worldState),
     intelligenceRumorView: buildIntelligenceRumorView(worldState),
     playerMonthlyBriefingView: buildPlayerMonthlyBriefingView(worldState),
@@ -639,6 +640,7 @@ router.post("/submit", async (req, res, next) => {
       const worldPeopleView = buildWorldPeopleView(worldState);
       const officialPostingsView = buildOfficialPostingsView(worldState);
       const mapContextView = buildMapContextView(worldState);
+      const domainConsequenceView = buildDomainConsequenceView(worldState);
       const aiInvocationSummaryView = buildAiInvocationSummaryView(worldState, routePolicy);
       return defineExamSubmitResponse({
         sessionId: worldState.sessionId,
@@ -686,13 +688,13 @@ router.post("/submit", async (req, res, next) => {
         officialCareerView: buildOfficialCareerView(worldState),
         courtConsequenceView: buildOfficialCourtConsequenceView(worldState),
         courtResponseView: buildOfficialCourtResponseView(worldState),
-        domainConsequenceView: buildDomainConsequenceView(worldState),
+        domainConsequenceView,
         officialPostingsView,
         localAffairsDocketView: buildLocalAffairsDocketView(worldState),
         militaryDiplomacyView: buildMilitaryDiplomacyView(worldState),
         economicFiscalView: buildEconomicFiscalView(worldState),
         mapContextView,
-        mapRuntimeView: buildMapRuntimeView(worldState, { mapContextView }),
+        mapRuntimeView: buildMapRuntimeView(worldState, { mapContextView, domainConsequenceView }),
         historicalEventArchiveView: buildHistoricalEventArchiveView(worldState),
         intelligenceRumorView: buildIntelligenceRumorView(worldState),
         playerMonthlyBriefingView: buildPlayerMonthlyBriefingView(worldState),

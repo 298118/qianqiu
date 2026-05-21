@@ -187,8 +187,16 @@ export type DomainConsequenceView = JsonObject & {
     readonly sourceRowsPerLedger?: number;
     readonly nextActions?: number;
     readonly publicCandidates?: number;
+    readonly roleEligibleCandidates?: number;
     readonly visibleConsequences?: number;
+    readonly roleLimited?: boolean;
     readonly capped?: boolean;
+  };
+  readonly roleVisibility?: JsonObject & {
+    readonly viewerRole?: string;
+    readonly viewerRoleLabel?: string;
+    readonly visibleSourceTypes?: readonly string[];
+    readonly omittedSourceTypes?: readonly string[];
   };
   readonly trackingEntryPoints?: readonly JsonObject[];
   readonly recentConsequences?: readonly DomainConsequenceItemView[];

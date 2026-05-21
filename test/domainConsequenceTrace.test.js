@@ -119,6 +119,7 @@ function assertNoInternalConsequenceValueLeak(value) {
 
 test("S88.6 domain consequence view projects public traces without resolver internals", () => {
   const worldState = seedDomainConsequences();
+  worldState.player.role = "emperor";
   const view = buildDomainConsequenceView(worldState);
 
   assert.equal(view.active, true);
@@ -132,6 +133,77 @@ test("S88.6 domain consequence view projects public traces without resolver inte
   assert.ok(view.recentConsequences.every((item) => !item.sourceId.includes("SEALED_SOURCE")));
   assert.ok(view.recentConsequences.flatMap((item) => item.affectedMetricLabels).includes("民心"));
   assertNoInternalConsequenceLeak(view);
+});
+
+test("S88.6 domain consequence view filters consequences by current role before downstream consumers", () => {
+  const expectedByRole = new Map([
+    ["scholar", []],
+    ["magistrate", ["city_policy", "judicial_case", "npc_economy"]],
+    ["general", ["military_diplomacy"]],
+    ["official", ["city_policy", "military_diplomacy", "judicial_case", "npc_economy"]],
+    ["minister", ["city_policy", "military_diplomacy", "judicial_case", "npc_economy"]],
+    ["emperor", ["city_policy", "military_diplomacy", "judicial_case", "npc_economy"]]
+  ]);
+
+  for (const [role, expectedTypes] of expectedByRole.entries()) {
+    const worldState = seedDomainConsequences();
+    worldState.player.role = role;
+    const view = buildDomainConsequenceView(worldState);
+    const visibleTypes = view.recentConsequences.map((item) => item.sourceType).sort();
+
+    assert.deepEqual(visibleTypes, expectedTypes.slice().sort(), role);
+    assert.equal(view.roleVisibility.viewerRole, role);
+    assert.deepEqual(view.roleVisibility.visibleSourceTypes, expectedTypes);
+    assert.equal(view.caps.publicCandidates, expectedTypes.length);
+    assert.equal(view.caps.roleEligibleCandidates, expectedTypes.length);
+    assert.equal(view.caps.visibleConsequences, expectedTypes.length);
+    assert.equal(view.caps.roleLimited, expectedTypes.length < 4);
+    assert.equal(view.nextActions.every((action) =>
+      view.recentConsequences.some((item) => action.id.includes(item.id))
+    ), true);
+    assertNoInternalConsequenceLeak(view);
+  }
+});
+
+test("S88.6 role-limited domain consequences do not leak through archive, resolver input, or safe search", () => {
+  const scholarState = seedDomainConsequences();
+  scholarState.player.role = "scholar";
+  const scholarView = buildDomainConsequenceView(scholarState);
+  const scholarArchive = buildEventArchiveView(scholarState, { pageSize: 50 });
+  const scholarResolverContext = buildResolverInputContext(scholarState);
+  const scholarSearchRows = buildSafeSearchRows(scholarState);
+
+  assert.equal(scholarView.active, false);
+  assert.equal(scholarView.recentConsequences.length, 0);
+  assert.equal(scholarArchive.items.some((item) => item.sourceType === "domain_consequence"), false);
+  assert.equal(scholarResolverContext.events.some((item) => item.sourceView === "domainConsequenceView"), false);
+  assert.equal(scholarSearchRows.some((row) => row.sourceView === "domainConsequenceView.recentConsequences"), false);
+
+  const generalState = seedDomainConsequences();
+  generalState.player.role = "general";
+  const generalView = buildDomainConsequenceView(generalState);
+  const generalArchive = buildEventArchiveView(generalState, { pageSize: 50 });
+  const generalResolverContext = buildResolverInputContext(generalState);
+  const generalSearchRows = buildSafeSearchRows(generalState);
+
+  assert.deepEqual(generalView.recentConsequences.map((item) => item.sourceType), ["military_diplomacy"]);
+  assert.equal(generalArchive.items.some((item) => item.sourceType === "domain_consequence" && item.kind !== "military_diplomacy"), false);
+  assert.equal(generalResolverContext.events.some((item) =>
+    item.sourceView === "domainConsequenceView" && !/军务|边镇|粮道/.test(`${item.label}${item.summary}`)
+  ), false);
+  assert.equal(generalSearchRows.some((row) =>
+    row.sourceView === "domainConsequenceView.recentConsequences" && !/军务|边镇|粮道/.test(`${row.title}${row.searchText}`)
+  ), false);
+  assertNoInternalConsequenceLeak({
+    scholarView,
+    scholarDomainArchiveItems: scholarArchive.items.filter((item) => item.sourceType === "domain_consequence"),
+    scholarDomainResolverItems: scholarResolverContext.events.filter((item) => item.sourceView === "domainConsequenceView"),
+    scholarDomainSearchRows: scholarSearchRows.filter((row) => row.sourceView === "domainConsequenceView.recentConsequences"),
+    generalView,
+    generalDomainArchiveItems: generalArchive.items.filter((item) => item.sourceType === "domain_consequence"),
+    generalDomainResolverItems: generalResolverContext.events.filter((item) => item.sourceView === "domainConsequenceView"),
+    generalDomainSearchRows: generalSearchRows.filter((row) => row.sourceView === "domainConsequenceView.recentConsequences")
+  });
 });
 
 test("S88.6 domain consequence view dedupes public source replay rows and drops private signal pollution", () => {
@@ -325,7 +397,7 @@ test("S88.6 domain consequence source cap keeps newest applied rows from out-of-
 });
 
 test("S88.6 domain consequence view exposes safe cap metadata under high volume", () => {
-  const worldState = createInitialState({ role: "general", playerName: "高量将领" });
+  const worldState = createInitialState({ role: "emperor", playerName: "高量御览" });
   worldState.sessionId = sessionId;
   worldState.turnCount = 90;
   const makeRecord = (source, index) => ({
