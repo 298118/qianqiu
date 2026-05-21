@@ -440,7 +440,7 @@ S84 前端专项额外验收入口：
 - 边界：地图证据只保留 `sourceView/sourceId/label/targetRouteId` 等公开 ref，不投影 `layout`、`layoutPath`、`mapBounds`、`assetSetId`、`viewportHint`、坐标或 runtime 布局；AI prompt 只读取 compact refs，不读取 map runtime 原始结构。`roleCycleView` 仍只展开当前身份，非当前身份矩阵不显示其他身份案源；资源、身份、交易、NPC 行动、军务、财赋、地方事务、考试、官场和长期后果仍由服务器 resolver 裁决。
 - 验证：已通过 `node --check src/game/roleCycleView.js`、`node --test test/roleCycleView.test.js`（9 项）、`node --test test/reactClientScaffold.test.js`（38 项）、`node --test test/browserSmokeScript.test.js`（44 项）、`npm run typecheck:server`、`npm run typecheck:client`、`npm run test:client`（68 项）、`npm run build:client`、`npm run check:docs-governance`、`npm run smoke:exam-s69`、`AI_PROVIDER=mock npm run smoke:browser`、完整 `npm test`（1037 项）和 `git diff --check`（退出码 0；仅打印未改动归档/QA 文件既有 CRLF 提示）。`npm run smoke` 不是当前 `package.json` 脚本，后续以现有 `smoke:*` 脚本记录。
 - 子代理：Gibbs 只读梳理后端缺口，确认 `marketPriceView`、`npcEconomyView`、`mapRuntimeView`、`eventArchiveView` 未进入 role cycle builder 并建议 evidence/entry cap；Cicero 只读梳理前端接线，建议 route/surface allowlist 与只读入口。本轮实现已采纳。Peirce 提交前只读初审未发现 P0/P1/P2，仅指出入口可见重复的低风险 polish；本轮已补 entry dedupe 与回归，并重跑 `node --check src/game/roleCycleView.js`、`node --test test/roleCycleView.test.js`、server/client typecheck、browser smoke 和完整 `npm test`。Peirce 最终只读复审确认无 P0/P1/P2 且无残留低风险 gap。
-- 提交：待回填。
+- 提交：实现提交 `871c3a47`。本条哈希回填为低风险纯文档改动，不改代码、API/schema、运行时行为、提示词或验证工具，按项目规则跳过额外子代理复审。
 - 下一步：继续把这些入口后的处置路径接入更专门 resolver 或 S88.6 跨域后果 refs，并补旧存档污染与 inactive role 泄漏红队。
 
 ### 2026-05-21：推进 S88.5.1 六身份循环矩阵首片
