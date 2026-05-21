@@ -162,7 +162,7 @@
 - `npm test`（1048 项）
 - `git diff --check`（退出码 0；仅打印未改动归档/QA 文件既有 CRLF 提示）
 - 提交前只读复审：Lovelace 复核确认 public `affectedMetrics`、内部 token 过滤和 `publicSourceId` 覆盖风险均已关闭，未发现新的 P0/P1/P2。
-- 待收口：实现提交哈希回填。
+- 实现提交：`6943c7de`。
 
 本轮 S88.5.3 角色循环入口后端接缝当前验证口径：
 
@@ -475,9 +475,9 @@ S84 前端专项额外验收入口：
 - 范围：启动 S88.6 官场与世界后果追踪的首个 coherent slice。聚焦把已经由服务器裁决的地方政策、军务外交、刑名案件和 NPC 经济月账整理为安全 public refs，并先接入 route response、事件档案、世界议程和官职月报；本轮不新增写 API、不新增 persistent consequence ledger、不让前端或 AI 直接裁决财政、军务、刑名、NPC 经济、关系或持久化。
 - 实现：新增 `src/game/domainConsequenceTrace.js`，导出 `buildDomainConsequenceView()` / `collectDomainConsequences()`；每条公开后果只保留来源类型、公开标题/摘要、状态、发生旬、受影响指标标签、风险级别、public consequence refs 和下一步建议。`eventArchiveView` 增加 `domain_consequence` 条目，`worldThreadView` 增加 `domain_consequence` 议题，`playerMonthlyBriefing` 读取近次领域后果纳入 sourceRefs、职责摘要、行动建议和风险提示。`/api/game/*` 与考试 payload 的 `SafeRouteViews` 新增 `domainConsequenceView`。
 - 安全：public sourceId 改为稳定哈希后缀，不复用可能含 evidence ref 的 resolver outcomeId；projection 会过滤 hidden/raw/provider/prompt/key/path/数据库表形态文本，不输出 `stateDelta`、`playerDelta`、资源消耗、关系信号、evidence refs 或 auditRecord。`judicialCaseLedger` 已加入 `RAW_LEDGER_KEYS`、`buildClientWorldState()` forbidden keys 和 redacted state forbidden/sensitive pattern，刑名 resolver 的 accepted ledger 不再可能通过兼容 public `worldState` 泄漏。
-- 验证：当前已通过 `node --check test/domainConsequenceTrace.test.js`、`node --check src/game/domainConsequenceTrace.js`、`node --check src/game/eventArchive.js`、`node --check src/game/worldThreads.js`、`node --check src/game/playerMonthlyBriefing.js`、`node --check src/routes/game.js`、`node --check src/routes/exam.js`、`node --check src/routes/routeResponses.js`、`node --check src/game/clientWorldState.js`、`node --check src/game/redactedState.js`、`node --test test/domainConsequenceTrace.test.js`（3 项）、`node --test test/routeResponseContracts.test.js test/judicialCaseEvidenceRedaction.test.js`（7 项）、`npm run typecheck:server`、`npm run typecheck:client`、`npm run check:docs-governance`、`node --test test/documentationGovernance.test.js`、完整 `npm test`（1048 项）和 `git diff --check`（退出码 0；仅打印未改动归档/QA 文件既有 CRLF 提示）。Lovelace 提交前只读复审未发现新的 P0/P1/P2；提交哈希待本轮提交后回填。
+- 验证：当前已通过 `node --check test/domainConsequenceTrace.test.js`、`node --check src/game/domainConsequenceTrace.js`、`node --check src/game/eventArchive.js`、`node --check src/game/worldThreads.js`、`node --check src/game/playerMonthlyBriefing.js`、`node --check src/routes/game.js`、`node --check src/routes/exam.js`、`node --check src/routes/routeResponses.js`、`node --check src/game/clientWorldState.js`、`node --check src/game/redactedState.js`、`node --test test/domainConsequenceTrace.test.js`（3 项）、`node --test test/routeResponseContracts.test.js test/judicialCaseEvidenceRedaction.test.js`（7 项）、`npm run typecheck:server`、`npm run typecheck:client`、`npm run check:docs-governance`、`node --test test/documentationGovernance.test.js`、完整 `npm test`（1048 项）和 `git diff --check`（退出码 0；仅打印未改动归档/QA 文件既有 CRLF 提示）。Lovelace 提交前只读复审未发现新的 P0/P1/P2；实现提交 `6943c7de`。
 - 子代理：Kuhn 只读梳理建议新增安全 projection 并由事件档案、world thread 和月报消费，不直接读取 raw ledger；Aristotle 只读梳理四类 ledger 字段，明确 `judicialCaseLedger` 还缺 public worldState 剥离守门。本轮采纳两者建议。Lovelace 提交前只读初审发现 public `affectedMetrics` 暴露路径/方向/幅度的 P1、内部 token 过滤不全的 P2，复审又指出 `publicSourceId` 覆盖可泄露 evidence-shaped id 的 P2；主代理已改为只公开 `affectedMetricLabels`、补敏感 token 拦截、移除 `publicSourceId` override 并补回归，Lovelace 最终复核确认均已关闭且无新的 P0/P1/P2。
-- 提交：待实现提交后回填。
+- 提交：实现提交 `6943c7de`；本哈希回填为低风险纯文档记录，不改代码、API/schema、运行时行为、提示词或验证工具，按项目规则跳过额外子代理复审。
 - 下一步：继续 S88.6 的后续切片，把 `domainConsequenceView` 接入 topic/source evidence、搜索/SQLite 安全索引和前端可见追踪，并补旧存档污染、inactive role 泄漏、重复后果去重与高风险军务绕过红队。
 
 ### 2026-05-21：推进 S88.5.3 角色循环入口后端接缝
