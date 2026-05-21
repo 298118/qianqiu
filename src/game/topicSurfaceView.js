@@ -11,7 +11,7 @@ const TOPIC_SURFACE_ITEM_LIMIT = 8;
 const TOPIC_SURFACE_EVIDENCE_LIMIT = 12;
 
 const TOPIC_SURFACE_SENSITIVE_PATTERN =
-  /(SEALED_[A-Z0-9_]+|hidden[_ -]?(?:notes?|intent)|密档|私档|密札|密信|隐藏(?:意图|动机|事实|札记|军情)|隐秘(?:意图|动机|事实)|raw[_ -]?(?:provider|audit|table|ledger|prompt|proposal|state|row)|\b(?:provider|prompt|statePatch|worldState|provider\s+payload|provider\s+proposal|rawSql|SQL|sqlite|server\.)\b|完整\s*prompt|完整提示词|api[_ -]?key|OPENAI_API_KEY|DEEPSEEK_API_KEY|MIMO_API_KEY|ANTHROPIC_API_KEY|data[\\/](?:sessions|audit)|ai_change_proposals|event_log|world_sessions|world_state_json|prompt_retrieval_index|event_archive_index|safe_search_(?:index|fts)|\b[A-Z0-9_]*(?:KEY|TOKEN|SECRET|PASSWORD|CREDENTIAL)[A-Z0-9_]*\b|file:\/\/\/?(?:[A-Za-z]:[\\/]|(?:\/Users|\/home|\/tmp|\/var|\/mnt|\/opt|\/workspace)\/)[^\s"'<>]+|[A-Za-z]:[\\/][^\s"'<>]+|\b(?:\/Users|\/home|\/tmp|\/var|\/mnt|\/opt|\/workspace)\/[^\s"'<>]+|sk-[A-Za-z0-9_-]{6,}|tp-[A-Za-z0-9_-]{6,})/i;
+  /(SEALED_[A-Z0-9_]+|hidden[_ -]?(?:notes?|intent)|密档|私档|密札|密信|隐藏(?:意图|动机|事实|札记|军情)|隐秘(?:意图|动机|事实)|raw[_ -]?(?:provider|audit|table|ledger|prompt|proposal|state|row)|(?:outcome[_ -]?id|state[_ -]?delta|player[_ -]?delta|resource[_ -]?(?:use|cost)|relationship[_ -]?signals?|audit[_ -]?record)|\b(?:cityPolicyLedger|militaryDiplomacyLedger|judicialCaseLedger|npcEconomyLedger|provider|prompt|statePatch|worldState|provider\s+payload|provider\s+proposal|rawSql|SQL|sqlite|server\.)\b|完整\s*prompt|完整提示词|api[_ -]?key|OPENAI_API_KEY|DEEPSEEK_API_KEY|MIMO_API_KEY|ANTHROPIC_API_KEY|data[\\/](?:sessions|audit)|ai_change_proposals|event_log|world_sessions|world_state_json|prompt_retrieval_index|event_archive_index|safe_search_(?:index|fts)|\b[A-Z0-9_]*(?:KEY|TOKEN|SECRET|PASSWORD|CREDENTIAL)[A-Z0-9_]*\b|file:\/\/\/?(?:[A-Za-z]:[\\/]|(?:\/Users|\/home|\/tmp|\/var|\/mnt|\/opt|\/workspace)\/)[^\s"'<>]+|[A-Za-z]:[\\/][^\s"'<>]+|\b(?:\/Users|\/home|\/tmp|\/var|\/mnt|\/opt|\/workspace)\/[^\s"'<>]+|sk-[A-Za-z0-9_-]{6,}|tp-[A-Za-z0-9_-]{6,})/i;
 
 const TOPIC_SURFACE_CONFIG = Object.freeze({
   "memorial-review": Object.freeze({
@@ -22,6 +22,7 @@ const TOPIC_SURFACE_CONFIG = Object.freeze({
     domains: Object.freeze(["events", "economy", "military", "offices", "player", "memory"]),
     sourceViews: Object.freeze([
       "courtConsequenceView",
+      "domainConsequenceView",
       "courtResponseView",
       "officialCareerView",
       "eventArchiveView",
@@ -54,6 +55,7 @@ const TOPIC_SURFACE_CONFIG = Object.freeze({
     domains: Object.freeze(["offices", "events", "military", "economy", "map", "player"]),
     sourceViews: Object.freeze([
       "courtConsequenceView",
+      "domainConsequenceView",
       "courtResponseView",
       "officialCareerView",
       "officialPostingsView",
@@ -80,6 +82,7 @@ const TOPIC_SURFACE_CONFIG = Object.freeze({
     domains: Object.freeze(["offices", "events", "economy", "military", "people", "player", "memory"]),
     sourceViews: Object.freeze([
       "courtConsequenceView",
+      "domainConsequenceView",
       "courtResponseView",
       "officialCareerView",
       "officialPostingsView",
@@ -106,6 +109,7 @@ const TOPIC_SURFACE_CONFIG = Object.freeze({
     domains: Object.freeze(["events", "people", "offices", "geography", "memory"]),
     sourceViews: Object.freeze([
       "localAffairsDocketView",
+      "domainConsequenceView",
       "eventArchiveView",
       "safeWorldSearchView",
       "worldPeopleView"
@@ -127,6 +131,7 @@ const TOPIC_SURFACE_CONFIG = Object.freeze({
     domains: Object.freeze(["military", "intel", "economy", "map", "geography", "events", "offices"]),
     sourceViews: Object.freeze([
       "militaryDiplomacyView",
+      "domainConsequenceView",
       "mapContextView",
       "eventArchiveView",
       "officialPostingsView",

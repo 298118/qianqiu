@@ -296,6 +296,82 @@ test("S88.4 topic draft can cite official first-month court entry evidence safel
   assert.doesNotMatch(JSON.stringify(payload), /SEALED_BROWSER|堂官私下试探|sk-browser-secret|raw_table/i);
 });
 
+test("S88.6 topic draft can cite domain consequence evidence safely", async (t) => {
+  let providerContext = null;
+  const provider = {
+    modelRoute: { provider: "openai" },
+    async draftTopicSurface(context) {
+      providerContext = context;
+      assert.equal(context.surfaceId, "trial");
+      assert.ok(context.evidenceRefs.some((ref) =>
+        ref.sourceView === "domainConsequenceView" && /平抑米价/.test(`${ref.label}${ref.summary}`)
+      ));
+      assertNoSensitiveText(context);
+      assert.doesNotMatch(
+        JSON.stringify(context),
+        /cityPolicyLedger|market:grain|stateDelta|playerDelta|auditRecord|rawSql|SEALED_SOURCE/
+      );
+      return {
+        source: "provider-ai",
+        surfaceId: context.surfaceId,
+        draftKind: context.draftKind,
+        draftTitle: "后果复核",
+        draftText: "本官拟据公开后果追踪升堂复核米价余波，先问粮商牌价与乡民告状，再候服务器裁决。",
+        evidenceRefs: context.selectedEvidenceRefs.slice(0, 1),
+        riskNote: "此稿只据公开后果追踪，不定罚赏。",
+        nextStep: "写入底部草稿后仍候主卷服务器裁决。"
+      };
+    }
+  };
+  const server = createTestServerWithProvider(provider);
+  const worldState = await createStoredSession({ role: "magistrate", playerName: "后果拟稿" });
+  worldState.cityPolicyLedger = {
+    records: [{
+      outcomeId: "topic-draft:market:grain:SEALED_SOURCE",
+      policyType: "market_regulation",
+      policyLabel: "平抑米价",
+      status: "accepted",
+      publicSummary: "县中平抑米价，粮商愿照牌价出售。",
+      publicSourceId: "market:grain:topic-draft-public-source",
+      stateDelta: { publicOrder: 3, treasury: -20 },
+      playerDelta: { performanceMerit: 1 },
+      evidenceRefs: ["market:grain:SEALED_SOURCE"],
+      auditRecord: { rawSql: "select * from hidden_table" },
+      appliedAtTurn: 8
+    }]
+  };
+  await writeSession(worldState);
+  const view = buildTopicSurfaceView(worldState, { surfaceId: "trial" });
+  const domainRef = view.evidenceRefs.find((ref) =>
+    ref.sourceView === "domainConsequenceView" && /平抑米价/.test(`${ref.label}${ref.summary}`)
+  );
+  t.after(async () => {
+    await removeSessionArtifacts(worldState.sessionId);
+    await server.close();
+  });
+
+  assert.ok(domainRef);
+  const { response, payload } = await postJson(`${server.baseUrl}/api/ai/topic-draft/${worldState.sessionId}`, {
+    surfaceId: "trial",
+    selectedEvidenceRefs: [domainRef.refId],
+    worldState: { cityPolicyLedger: { hiddenNotes: "SEALED_BROWSER" } },
+    providerPayload: "raw provider prompt sk-browser-secret-123456"
+  });
+
+  assert.equal(response.status, 200);
+  assert.ok(providerContext);
+  assertTopicDraftEnvelope(payload, {
+    sessionId: worldState.sessionId,
+    source: "provider-ai",
+    surfaceId: "trial"
+  });
+  assert.deepEqual(payload.topicDraft.evidenceRefs, [domainRef.refId]);
+  assert.doesNotMatch(
+    JSON.stringify(payload),
+    /SEALED_BROWSER|cityPolicyLedger|market:grain|stateDelta|playerDelta|auditRecord|rawSql|sk-browser-secret/
+  );
+});
+
 test("POST /api/ai/topic-draft/:sessionId falls back for provider failure and unsafe drafts", async (t) => {
   const cases = [
     {

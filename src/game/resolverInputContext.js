@@ -1,6 +1,7 @@
 const { buildActorMemoryView } = require("./actorMemoryLedger");
 const { buildPlayerAiActorProfile } = require("./aiActorProfiles");
 const { buildEconomicFiscalView } = require("./economicFiscal");
+const { buildDomainConsequenceView } = require("./domainConsequenceTrace");
 const { buildEventArchiveView } = require("./eventArchive");
 const { buildHistoricalEventArchiveView } = require("./historicalEventArchive");
 const { buildIntelligenceRumorView } = require("./intelligenceRumors");
@@ -142,6 +143,7 @@ function buildSourceViews(worldState, options = {}) {
     militaryDiplomacyView: buildMilitaryDiplomacyView(worldState),
     officialCareerView: buildOfficialCareerView(worldState),
     courtConsequenceView: buildOfficialCourtConsequenceView(worldState),
+    domainConsequenceView: buildDomainConsequenceView(worldState),
     courtResponseView: buildOfficialCourtResponseView(worldState),
     officialPostingsView,
     playerMonthlyBriefingView: buildPlayerMonthlyBriefingView(worldState),

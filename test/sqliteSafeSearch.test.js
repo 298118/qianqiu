@@ -96,6 +96,21 @@ function createSearchWorldState() {
     hiddenIntent: "SEALED_SQLITE_SAFE_SEARCH_INTENT",
     hiddenNotes: ["SEALED_SQLITE_SAFE_SEARCH_NOTE"]
   });
+  worldState.cityPolicyLedger = {
+    records: [{
+      outcomeId: "sqlite-safe-search:market:grain:SEALED_SOURCE",
+      policyType: "market_regulation",
+      policyLabel: "平抑米价",
+      status: "accepted",
+      publicSummary: "县中平抑米价，粮商愿照牌价出售。",
+      publicSourceId: "market:grain:sqlite-public-source",
+      stateDelta: { publicOrder: 3, treasury: -20 },
+      playerDelta: { performanceMerit: 1 },
+      evidenceRefs: ["market:grain:SEALED_SOURCE"],
+      auditRecord: { rawSql: "select * from hidden_table" },
+      appliedAtTurn: worldState.turnCount
+    }]
+  };
   return worldState;
 }
 
@@ -124,6 +139,40 @@ test("S71.3 SQLite safe search syncs searchable snippets and uses FTS5 when avai
     getSafeSearchTableCount(db, worldState.sessionId)
   );
   assert.ok(rowCount > 0);
+});
+
+test("S88.6 SQLite safe search syncs public domain consequence rows", {
+  skip: hasNodeSqlite ? false : "node:sqlite is unavailable in this Node.js runtime"
+}, async (t) => {
+  const { adapter, dbPath } = createHarness(t);
+  const worldState = createSearchWorldState();
+  await adapter.writeSession(clone(worldState));
+
+  const result = await adapter.searchSafeSearchIndex(worldState.sessionId, {
+    query: "平抑米价",
+    domain: "events",
+    pageSize: 5
+  });
+  const serialized = JSON.stringify(result);
+
+  assert.ok(result.results.some((item) =>
+    item.sourceView === "domainConsequenceView.recentConsequences" && /平抑米价/.test(`${item.title}${item.snippet}`)
+  ));
+  assert.doesNotMatch(
+    serialized,
+    /SEALED_|cityPolicyLedger|evidenceRefs|stateDelta|playerDelta|auditRecord|rawSql|market:grain|safe_search_index|safe_search_fts|world_sessions/
+  );
+
+  const storedRows = withSqliteDatabase(dbPath, (db) =>
+    db
+      .prepare("SELECT source_view, source_id, title, summary, search_text FROM safe_search_index WHERE session_id = ? AND source_view = ?")
+      .all(worldState.sessionId, "domainConsequenceView.recentConsequences")
+  );
+  assert.equal(storedRows.length >= 1, true);
+  assert.doesNotMatch(
+    JSON.stringify(storedRows),
+    /SEALED_|cityPolicyLedger|evidenceRefs|stateDelta|playerDelta|auditRecord|rawSql|market:grain|world_sessions/
+  );
 });
 
 test("S71.3 SQLite safe search fallback works when FTS5 mirror is disabled", {

@@ -6,6 +6,9 @@ const { buildDomainConsequenceView } = require("../src/game/domainConsequenceTra
 const { buildEventArchiveView } = require("../src/game/eventArchive");
 const { createInitialState } = require("../src/game/initialState");
 const { ensureNpcEconomyLedgerState } = require("../src/game/npcEconomy");
+const { buildResolverInputContext } = require("../src/game/resolverInputContext");
+const { buildSafeSearchRows, searchSafeWorldIndex } = require("../src/game/safeWorldSearch");
+const { buildTopicSurfaceView } = require("../src/game/topicSurfaceView");
 const {
   buildPlayerMonthlyBriefingContext,
   generateMonthlyBriefingProposal
@@ -106,6 +109,14 @@ function assertNoInternalConsequenceLeak(value) {
   );
 }
 
+function assertNoInternalConsequenceValueLeak(value) {
+  const payload = JSON.stringify(value);
+  assert.doesNotMatch(
+    payload,
+    /cityPolicyLedger|militaryDiplomacyLedger|judicialCaseLedger|npcEconomyLedger|"affectedMetrics"|stateDelta|playerDelta|resourceUse|resourceCost|relationshipSignals|auditRecord|outcomeId|rawSql|SEALED_|market:grain|case-local-secret|role-cycle:|"path"|"publicOrder"|"grainReserve"|"armyMorale"|"pendingLawsuits"|"campaignRisk"|"performanceMerit"|"supply"/
+  );
+}
+
 test("S88.6 domain consequence view projects public traces without resolver internals", () => {
   const worldState = seedDomainConsequences();
   const view = buildDomainConsequenceView(worldState);
@@ -144,6 +155,38 @@ test("S88.6 public consequence refs feed archive, world thread, and monthly brie
   );
   assertNoInternalConsequenceLeak(monthlyContext.domainConsequenceView);
   assertNoInternalConsequenceLeak(monthlyProposal.sourceRefs.filter((ref) => ref.source === "domain_consequence"));
+});
+
+test("S88.6 public consequence refs feed topic evidence and safe search", () => {
+  const worldState = seedDomainConsequences();
+  const resolverContext = buildResolverInputContext(worldState, {
+    generatedAt: "2026-05-21T00:00:00.000Z"
+  });
+  const trialSurface = buildTopicSurfaceView(worldState, { surfaceId: "trial" });
+  const safeSearchRows = buildSafeSearchRows(worldState);
+  const searchView = searchSafeWorldIndex(worldState, {
+    query: "平抑米价",
+    domain: "events",
+    pageSize: 5
+  });
+
+  assert.ok(resolverContext.sourceViews.some((source) => source.sourceView === "domainConsequenceView"));
+  assert.ok(resolverContext.events.some((item) =>
+    item.sourceView === "domainConsequenceView" && /平抑米价|堂上调停/.test(`${item.label}${item.summary}`)
+  ));
+  assert.ok(trialSurface.sourceViews.some((source) => source.sourceView === "domainConsequenceView"));
+  assert.ok(trialSurface.evidenceRefs.some((ref) =>
+    ref.sourceView === "domainConsequenceView" && /平抑米价|堂上调停/.test(`${ref.label}${ref.summary}`)
+  ));
+  assert.ok(safeSearchRows.some((row) =>
+    row.sourceView === "domainConsequenceView.recentConsequences" && /平抑米价/.test(`${row.title}${row.searchText}`)
+  ));
+  assert.ok(searchView.results.some((result) =>
+    result.sourceView === "domainConsequenceView.recentConsequences" && /平抑米价/.test(`${result.title}${result.snippet}`)
+  ));
+  assertNoInternalConsequenceLeak(resolverContext.events.filter((item) => item.sourceView === "domainConsequenceView"));
+  assertNoInternalConsequenceValueLeak(trialSurface);
+  assertNoInternalConsequenceLeak(searchView);
 });
 
 test("S88.6 judicial case ledger is forbidden in public worldState helpers", () => {

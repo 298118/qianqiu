@@ -1,4 +1,5 @@
 const { buildEventArchiveIndexItems } = require("./eventArchive");
+const { buildDomainConsequenceView } = require("./domainConsequenceTrace");
 const { buildEconomicFiscalRetrievalRows } = require("./economicFiscal");
 const { buildHistoricalEventRetrievalRows } = require("./historicalEventArchive");
 const { buildIntelligenceRumorRetrievalRows } = require("./intelligenceRumors");
@@ -44,6 +45,8 @@ const DOMAIN_ALIASES = Object.freeze({
   event: "events",
   events: "events",
   archive: "events",
+  consequence: "events",
+  consequences: "events",
   report: "reports",
   reports: "reports",
   docket: "reports",
@@ -66,7 +69,7 @@ const ALLOWED_VISIBILITIES = new Set([
 
 const SECRET_ENV_NAME_PATTERN = /(KEY|TOKEN|SECRET|PASSWORD|CREDENTIAL)/i;
 const SENSITIVE_SEARCH_TEXT_PATTERN =
-  /(SEALED_[A-Z0-9_]+|hidden[_ -]?(?:notes?|intent)|hidden\s+(?:notes?|intent)|密档|私档|密札|密信|隐藏(?:意图|动机|事实|札记)|隐秘(?:意图|动机|事实)|relationshipLedger|actorMemoryLedger|sessionSummary|retrievalContext|sealedMapping|sealed_mapping|raw[_ -]?(?:provider|audit|table|ledger|prompt|proposal|row)|\b(?:statePatch|worldState|provider|proposal|prompt|rawSql|SQL|sqlite)\b|api[_ -]?key|OPENAI_API_KEY|DEEPSEEK_API_KEY|MIMO_API_KEY|ANTHROPIC_API_KEY|data[\\/](?:sessions|audit)|ai_change_proposals|event_log|world_sessions|world_state_json|prompt_retrieval_index|event_archive_index|safe_search_(?:index|fts)|(?:geo|people|office)_[A-Za-z0-9_]+|\b[A-Z0-9_]*(?:KEY|TOKEN|SECRET|PASSWORD|CREDENTIAL)[A-Z0-9_]*\b|file:\/\/\/?(?:[A-Za-z]:[\\/]|(?:\/Users|\/home|\/tmp|\/var|\/mnt|\/opt|\/workspace)\/)[^\s"'<>]+|[A-Za-z]:[\\/][^\s"'<>]+|\b(?:\/Users|\/home|\/tmp|\/var|\/mnt|\/opt|\/workspace)\/[^\s"'<>]+|sk-[A-Za-z0-9_-]{6,}|tp-[A-Za-z0-9_-]{6,})/i;
+  /(SEALED_[A-Z0-9_]+|hidden[_ -]?(?:notes?|intent)|hidden\s+(?:notes?|intent)|密档|私档|密札|密信|隐藏(?:意图|动机|事实|札记)|隐秘(?:意图|动机|事实)|relationshipLedger|actorMemoryLedger|sessionSummary|retrievalContext|sealedMapping|sealed_mapping|raw[_ -]?(?:provider|audit|table|ledger|prompt|proposal|row)|(?:outcome[_ -]?id|evidence[_ -]?refs?|state[_ -]?delta|player[_ -]?delta|resource[_ -]?(?:use|cost)|relationship[_ -]?signals?|audit[_ -]?record)|\b(?:cityPolicyLedger|militaryDiplomacyLedger|judicialCaseLedger|npcEconomyLedger|statePatch|worldState|provider|proposal|prompt|rawSql|SQL|sqlite)\b|api[_ -]?key|OPENAI_API_KEY|DEEPSEEK_API_KEY|MIMO_API_KEY|ANTHROPIC_API_KEY|data[\\/](?:sessions|audit)|ai_change_proposals|event_log|world_sessions|world_state_json|prompt_retrieval_index|event_archive_index|safe_search_(?:index|fts)|(?:geo|people|office)_[A-Za-z0-9_]+|\b[A-Z0-9_]*(?:KEY|TOKEN|SECRET|PASSWORD|CREDENTIAL)[A-Z0-9_]*\b|file:\/\/\/?(?:[A-Za-z]:[\\/]|(?:\/Users|\/home|\/tmp|\/var|\/mnt|\/opt|\/workspace)\/)[^\s"'<>]+|[A-Za-z]:[\\/][^\s"'<>]+|\b(?:\/Users|\/home|\/tmp|\/var|\/mnt|\/opt|\/workspace)\/[^\s"'<>]+|sk-[A-Za-z0-9_-]{6,}|tp-[A-Za-z0-9_-]{6,})/i;
 
 function isPlainObject(value) {
   return value !== null && typeof value === "object" && !Array.isArray(value);
@@ -631,6 +634,39 @@ function buildEventSearchRows(rows, worldState = {}) {
       visibility: item.visibility,
       extra: unique(item.relatedLabels, 6).join(" "),
       relatedRefs: [relatedRef(item.sourceType || "event", item.id, item.title)]
+    });
+  }
+
+  const domainConsequenceView = buildDomainConsequenceView(worldState);
+  for (const consequence of Array.isArray(domainConsequenceView.recentConsequences)
+    ? domainConsequenceView.recentConsequences
+    : []) {
+    addSearchRow(rows, {
+      domain: "events",
+      sourceView: "domainConsequenceView.recentConsequences",
+      sourceId: consequence.id,
+      title: consequence.title,
+      meta: `${consequence.sourceLabel || "领域后果"} ${consequence.kindLabel || ""} ${consequence.statusLabel || ""}`,
+      summary: consequence.publicSummary,
+      confidence: consequence.severity >= 2 ? 82 : 72,
+      visibility: "public",
+      extra: [
+        consequence.nextStep,
+        ...(Array.isArray(consequence.affectedMetricLabels) ? consequence.affectedMetricLabels : [])
+      ].filter(Boolean).join(" "),
+      tags: [
+        consequence.sourceLabel,
+        consequence.kindLabel,
+        ...(Array.isArray(consequence.affectedMetricLabels) ? consequence.affectedMetricLabels : [])
+      ],
+      metrics: [
+        ["风险级", consequence.severity],
+        ["发生旬", `${consequence.year || ""}-${consequence.month || ""}-${consequence.tenDayPeriod || ""}`]
+      ],
+      relatedRefs: [
+        relatedRef("domain_consequence", consequence.id, consequence.title),
+        relatedRef(consequence.sourceType, consequence.sourceId, consequence.sourceLabel)
+      ]
     });
   }
 }
