@@ -114,6 +114,54 @@ function createSearchWorldState() {
   return worldState;
 }
 
+function makeHighVolumeDomainRecord(sourceType, index, turnBase) {
+  const titlePrefix = {
+    city_policy: "地方索引后果",
+    military_diplomacy: "军务索引后果",
+    judicial_case: "刑名索引后果"
+  }[sourceType];
+  const title = `${titlePrefix}${index}`;
+  return {
+    outcomeId: `${sourceType}-sqlite-cap-${index}`,
+    policyType: "market_regulation",
+    policyLabel: title,
+    resolverKind: sourceType === "military_diplomacy" ? "military" : undefined,
+    actionKind: sourceType === "military_diplomacy" ? "resupply" : undefined,
+    actionLabel: title,
+    caseAction: sourceType === "judicial_case" ? "mediate" : undefined,
+    status: "accepted",
+    publicSummary: `${title}进入安全检索 cap 回归。`,
+    stateDelta: sourceType === "military_diplomacy"
+      ? { armyMorale: index % 2, borderThreat: -1 }
+      : { publicOrder: index % 3 },
+    playerDelta: sourceType === "military_diplomacy"
+      ? { supply: 1 }
+      : { performanceMerit: 1 },
+    appliedAtTurn: turnBase + index
+  };
+}
+
+function createHighVolumeDomainSearchWorldState() {
+  const worldState = createSearchWorldState();
+  worldState.turnCount = 120;
+  worldState.cityPolicyLedger = {
+    records: Array.from({ length: 6 }, (_, index) =>
+      makeHighVolumeDomainRecord("city_policy", index + 1, 70)
+    )
+  };
+  worldState.militaryDiplomacyLedger = {
+    records: Array.from({ length: 6 }, (_, index) =>
+      makeHighVolumeDomainRecord("military_diplomacy", index + 1, 80)
+    )
+  };
+  worldState.judicialCaseLedger = {
+    records: Array.from({ length: 6 }, (_, index) =>
+      makeHighVolumeDomainRecord("judicial_case", index + 1, 90)
+    )
+  };
+  return worldState;
+}
+
 test("S71.3 SQLite safe search syncs searchable snippets and uses FTS5 when available", {
   skip: hasNodeSqlite ? false : "node:sqlite is unavailable in this Node.js runtime"
 }, async (t) => {
@@ -173,6 +221,39 @@ test("S88.6 SQLite safe search syncs public domain consequence rows", {
     JSON.stringify(storedRows),
     /SEALED_|cityPolicyLedger|evidenceRefs|stateDelta|playerDelta|auditRecord|rawSql|market:grain|world_sessions/
   );
+});
+
+test("S88.6 SQLite safe search stores only capped public domain consequence rows under high volume", {
+  skip: hasNodeSqlite ? false : "node:sqlite is unavailable in this Node.js runtime"
+}, async (t) => {
+  const { adapter, dbPath } = createHarness(t);
+  const worldState = createHighVolumeDomainSearchWorldState();
+  await adapter.writeSession(clone(worldState));
+
+  const result = await adapter.searchSafeSearchIndex(worldState.sessionId, {
+    query: "刑名索引后果6",
+    domain: "events",
+    pageSize: 5
+  });
+  const serialized = JSON.stringify(result);
+
+  assert.ok(result.results.some((item) =>
+    item.sourceView === "domainConsequenceView.recentConsequences" && /刑名索引后果6/.test(`${item.title}${item.snippet}`)
+  ));
+
+  const storedRows = withSqliteDatabase(dbPath, (db) =>
+    db
+      .prepare("SELECT source_view, source_id, title, summary, search_text FROM safe_search_index WHERE session_id = ? AND source_view = ?")
+      .all(worldState.sessionId, "domainConsequenceView.recentConsequences")
+  );
+  assert.equal(storedRows.length, 8);
+  assert.equal(storedRows.some((row) => /地方索引后果/.test(`${row.title}${row.summary}${row.search_text}`)), false);
+  assert.equal(storedRows.some((row) => /军务索引后果[12]|刑名索引后果[12]/.test(`${row.title}${row.summary}${row.search_text}`)), false);
+  assert.doesNotMatch(
+    JSON.stringify({ result, storedRows }),
+    /SEALED_|cityPolicyLedger|militaryDiplomacyLedger|judicialCaseLedger|evidenceRefs|stateDelta|playerDelta|auditRecord|rawSql|sqlite-cap|safe_search_index|safe_search_fts|world_sessions/
+  );
+  assert.doesNotMatch(serialized, /地方索引后果|军务索引后果[12]|刑名索引后果[12]/);
 });
 
 test("S71.3 SQLite safe search fallback works when FTS5 mirror is disabled", {

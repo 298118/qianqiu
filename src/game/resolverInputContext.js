@@ -47,6 +47,13 @@ RESOLVER_INPUT_SOURCE_VIEW_DOMAINS.set("actorMemoryView", new Set(["memory"]));
 RESOLVER_INPUT_SOURCE_VIEW_DOMAINS.set("playerStateSafeProjection", new Set(["player"]));
 RESOLVER_INPUT_SOURCE_VIEW_DOMAINS.set("sessionSummaryView", new Set(["memory"]));
 
+const RESOLVER_INPUT_SOURCE_VIEW_PRIORITY = new Map(
+  RESOLVER_INPUT_SOURCE_COLLECTIONS.map((source, index) => [source.sourceView, index])
+);
+RESOLVER_INPUT_SOURCE_VIEW_PRIORITY.set("actorMemoryView", RESOLVER_INPUT_SOURCE_COLLECTIONS.length);
+RESOLVER_INPUT_SOURCE_VIEW_PRIORITY.set("playerStateSafeProjection", RESOLVER_INPUT_SOURCE_COLLECTIONS.length + 1);
+RESOLVER_INPUT_SOURCE_VIEW_PRIORITY.set("sessionSummaryView", RESOLVER_INPUT_SOURCE_COLLECTIONS.length + 2);
+
 function isPlainObject(value) {
   return value !== null && typeof value === "object" && !Array.isArray(value);
 }
@@ -98,6 +105,12 @@ function unique(values = [], limit = 12) {
 
 function currentTurn(worldState = {}) {
   return clampInteger(worldState.turnCount, 0, Number.MAX_SAFE_INTEGER, 0);
+}
+
+function sourceViewPriority(sourceView = "") {
+  return RESOLVER_INPUT_SOURCE_VIEW_PRIORITY.has(sourceView)
+    ? RESOLVER_INPUT_SOURCE_VIEW_PRIORITY.get(sourceView)
+    : Number.MAX_SAFE_INTEGER;
 }
 
 function currentTimeScope(worldState = {}) {
@@ -517,6 +530,9 @@ function buildResolverInputContext(worldState = {}, options = {}) {
       const secondPriority = RESOLVER_INPUT_DOMAIN_CONFIG[second.domain]?.priority || 0;
       if (secondPriority !== firstPriority) return secondPriority - firstPriority;
       if (second.confidence !== first.confidence) return second.confidence - first.confidence;
+      const firstSourcePriority = sourceViewPriority(first.sourceView);
+      const secondSourcePriority = sourceViewPriority(second.sourceView);
+      if (firstSourcePriority !== secondSourcePriority) return firstSourcePriority - secondSourcePriority;
       return first.refId.localeCompare(second.refId);
     });
 

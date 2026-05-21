@@ -7,6 +7,7 @@ const ROLE_CYCLE_DOMAIN_ADJUDICATION_SCHEMA_VERSION = 1;
 const MAX_FEEDBACK_EVENTS = 2;
 const MAX_EVIDENCE_REFS = 4;
 const MAX_TEXT_LENGTH = 180;
+const ROLE_CYCLE_DOMAIN_DUPLICATE_WINDOW_TURNS = 3;
 
 const SENSITIVE_TEXT_PATTERN =
   /(SEALED_[A-Z0-9_]+|hidden[_ -]?(?:notes?|intent)|hidden\s+(?:notes?|intent)|密档|私档|密札|密信|隐藏(?:意图|动机|事实|札记|军情)|隐秘(?:意图|动机|事实)|raw[_ -]?(?:provider|audit|table|ledger|prompt|proposal|row)|\b(?:statePatch|worldState|provider|proposal|prompt|rawSql|SQL|sqlite)\b|server\.[A-Za-z0-9_.:-]+|api[_ -]?key|OPENAI_API_KEY|DEEPSEEK_API_KEY|MIMO_API_KEY|ANTHROPIC_API_KEY|data[\\/](?:sessions|audit)|ai_change_proposals|event_log|world_sessions|world_state_json|prompt_retrieval_index|event_archive_index|safe_search_(?:index|fts)|\b[A-Z0-9_]*(?:KEY|TOKEN|SECRET|PASSWORD|CREDENTIAL)[A-Z0-9_]*\b|file:\/\/\/?[^\s"'<>]+|[A-Za-z]:[\\/][^\s"'<>]+|\b(?:\/Users|\/home|\/tmp|\/var|\/mnt|\/opt|\/workspace)\/[^\s"'<>]+|sk-[A-Za-z0-9_-]{6,}|tp-[A-Za-z0-9_-]{6,})/i;
@@ -244,6 +245,10 @@ function cleanRefList(values = [], limit = MAX_EVIDENCE_REFS) {
   return output;
 }
 
+function asArray(value) {
+  return Array.isArray(value) ? value : [];
+}
+
 function textIncludesAny(text, terms) {
   const lower = String(text || "").toLowerCase();
   return terms.some((term) => lower.includes(String(term).toLowerCase()));
@@ -253,6 +258,11 @@ function currentPlayerRole(worldState = {}) {
   return cleanRef(worldState.player?.role || "", "");
 }
 
+function currentTurn(worldState = {}) {
+  const parsed = Number(worldState.turnCount);
+  return Number.isFinite(parsed) ? Math.max(0, Math.round(parsed)) : 0;
+}
+
 function createEmptyFeedback() {
   return {
     schemaVersion: ROLE_CYCLE_DOMAIN_ADJUDICATION_SCHEMA_VERSION,
@@ -260,6 +270,89 @@ function createEmptyFeedback() {
     events: [],
     attributeChanges: [],
     outcome: null
+  };
+}
+
+function normalizeEvidenceSet(values = []) {
+  return cleanRefList(values, 12).sort();
+}
+
+function sameEvidenceSet(left = [], right = []) {
+  const leftRefs = normalizeEvidenceSet(left);
+  const rightRefs = normalizeEvidenceSet(right);
+  if (!leftRefs.length || leftRefs.length !== rightRefs.length) return false;
+  return leftRefs.every((ref, index) => ref === rightRefs[index]);
+}
+
+function recordAppliedAtTurn(record = {}) {
+  const parsed = Number(record.appliedAtTurn ?? record.generatedAtTurn ?? record.lastTickTurn);
+  return Number.isFinite(parsed) ? Math.max(0, Math.round(parsed)) : null;
+}
+
+function isRecentDuplicateRecord(worldState = {}, record = {}) {
+  const appliedAtTurn = recordAppliedAtTurn(record);
+  if (appliedAtTurn === null) return false;
+  const turn = currentTurn(worldState);
+  return appliedAtTurn <= turn && turn - appliedAtTurn <= ROLE_CYCLE_DOMAIN_DUPLICATE_WINDOW_TURNS;
+}
+
+function recordActorMatches(record = {}, actorProfile = {}) {
+  const actorRef = isPlainObject(record.actorRef) ? record.actorRef : {};
+  const recordActorId = cleanRef(actorRef.actorId, "");
+  const recordActorType = cleanRef(actorRef.actorType, "");
+  const actorId = cleanRef(actorProfile.actorId, "");
+  const actorType = cleanRef(actorProfile.actorType, "");
+  if (!recordActorId || !actorId || recordActorId !== actorId) return false;
+  if (recordActorType && actorType && recordActorType !== actorType) return false;
+  return true;
+}
+
+function findRecentCityPolicyDuplicate(worldState = {}, actorProfile = {}, policyType = "", evidenceRefs = []) {
+  const normalizedPolicyType = cleanRef(policyType, "");
+  if (!normalizedPolicyType || !evidenceRefs.length) return null;
+  return asArray(worldState.cityPolicyLedger?.records).find((record) =>
+    isPlainObject(record) &&
+    cleanRef(record.status, "").toLowerCase() === "accepted" &&
+    cleanRef(record.policyType, "") === normalizedPolicyType &&
+    recordActorMatches(record, actorProfile) &&
+    isRecentDuplicateRecord(worldState, record) &&
+    sameEvidenceSet(record.evidenceRefs, evidenceRefs)
+  ) || null;
+}
+
+function findRecentMilitaryDuplicate(worldState = {}, actorProfile = {}, actionKind = "", evidenceRefs = []) {
+  const normalizedActionKind = cleanRef(actionKind, "");
+  if (!normalizedActionKind || !evidenceRefs.length) return null;
+  return asArray(worldState.militaryDiplomacyLedger?.records).find((record) =>
+    isPlainObject(record) &&
+    cleanRef(record.status, "").toLowerCase() === "accepted" &&
+    cleanRef(record.resolverKind, "military") === "military" &&
+    cleanRef(record.actionKind, "") === normalizedActionKind &&
+    recordActorMatches(record, actorProfile) &&
+    isRecentDuplicateRecord(worldState, record) &&
+    sameEvidenceSet(record.evidenceRefs, evidenceRefs)
+  ) || null;
+}
+
+function buildDuplicateFeedback({ resolver, intent, label, evidenceRefs }) {
+  const safeLabel = cleanText(label, resolver === "city_policy" ? "城市政策" : "军务处置", 80);
+  return {
+    schemaVersion: ROLE_CYCLE_DOMAIN_ADJUDICATION_SCHEMA_VERSION,
+    summary: `角色循环入口发现近${ROLE_CYCLE_DOMAIN_DUPLICATE_WINDOW_TURNS}旬已有同类${safeLabel}裁决；本次只作为复核，不重复扣减资源或写入账本。`,
+    events: [],
+    attributeChanges: [],
+    outcome: {
+      resolver,
+      status: "duplicate_recent",
+      intent: cleanText(intent, resolver, 60),
+      label: safeLabel,
+      evidenceRefs: cleanRefList(evidenceRefs, MAX_EVIDENCE_REFS),
+      evidenceRefCount: Array.isArray(evidenceRefs) ? evidenceRefs.length : 0,
+      publicSummary: `近${ROLE_CYCLE_DOMAIN_DUPLICATE_WINDOW_TURNS}旬已有同一角色、意图与公开证据的${safeLabel}服务器裁决；如需新处置，请补充新的公开证据或等待冷却。`,
+      rejectionReasons: ["近旬已有同一角色、意图与公开证据的服务器裁决，已拦截重复触发。"],
+      affectedPaths: [],
+      duplicateWindowTurns: ROLE_CYCLE_DOMAIN_DUPLICATE_WINDOW_TURNS
+    }
   };
 }
 
@@ -488,6 +581,15 @@ function runRoleCycleDomainAdjudicationStep(worldState = {}, input = "") {
     const policyType = intent === "magistrate_grain_price_policy"
       ? "grain_price_stabilization"
       : "market_regulation";
+    const duplicate = findRecentCityPolicyDuplicate(worldState, actorProfile, policyType, evidenceRefs);
+    if (duplicate) {
+      return buildDuplicateFeedback({
+        resolver: "city_policy",
+        intent: policyType,
+        label: duplicate.policyLabel || (policyType === "grain_price_stabilization" ? "平粜稳价" : "市价整肃"),
+        evidenceRefs
+      });
+    }
     const outcome = resolveAndApplyCityPolicy(worldState, {
       proposalId: `role-cycle:${worldState.turnCount || 0}:magistrate:${policyType}:${evidenceRefs[0] || "evidence"}`,
       policyType,
@@ -510,6 +612,15 @@ function runRoleCycleDomainAdjudicationStep(worldState = {}, input = "") {
     const evidenceRefs = orderKind === "resupply"
       ? selectEvidenceRefs(worldState, actorProfile, ["market", "military"], [], 2)
       : selectEvidenceRefs(worldState, actorProfile, ["military"], ["geography", "intel"], 2);
+    const duplicate = findRecentMilitaryDuplicate(worldState, actorProfile, orderKind, evidenceRefs);
+    if (duplicate) {
+      return buildDuplicateFeedback({
+        resolver: "military_diplomacy",
+        intent: orderKind,
+        label: duplicate.actionLabel || (orderKind === "resupply" ? "调粮" : "侦察"),
+        evidenceRefs
+      });
+    }
     const outcome = resolveAndApplyMilitaryDiplomacy(worldState, {
       proposalId: `role-cycle:${worldState.turnCount || 0}:general:${orderKind}:${evidenceRefs[0] || "evidence"}`,
       toolName: "military.propose_order",
@@ -533,6 +644,7 @@ function runRoleCycleDomainAdjudicationStep(worldState = {}, input = "") {
 
 module.exports = {
   ROLE_CYCLE_DOMAIN_ADJUDICATION_SCHEMA_VERSION,
+  ROLE_CYCLE_DOMAIN_DUPLICATE_WINDOW_TURNS,
   classifyRoleCycleDomainIntent,
   runRoleCycleDomainAdjudicationStep,
   selectEvidenceRefs

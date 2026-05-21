@@ -117,6 +117,56 @@ function assertNoInternalConsequenceValueLeak(value) {
   );
 }
 
+function makeHighVolumeConsequenceRecord(sourceType, index, turnBase) {
+  const titlePrefix = {
+    city_policy: "地方高量后果",
+    military_diplomacy: "军务高量后果",
+    judicial_case: "刑名高量后果"
+  }[sourceType] || "领域高量后果";
+  const title = `${titlePrefix}${index}`;
+  return {
+    outcomeId: `${sourceType}-cross-view-cap-${index}`,
+    policyType: "market_regulation",
+    policyLabel: title,
+    resolverKind: sourceType === "military_diplomacy" ? "military" : undefined,
+    actionKind: sourceType === "military_diplomacy" ? "resupply" : undefined,
+    actionLabel: title,
+    caseAction: sourceType === "judicial_case" ? "mediate" : undefined,
+    status: "accepted",
+    publicSummary: `${title}进入跨视图 cap 压力回归，供舆图、史册、专题和安全检索追踪。`,
+    stateDelta: sourceType === "military_diplomacy"
+      ? { armyMorale: index % 2, borderThreat: -1 }
+      : { publicOrder: index % 3 },
+    playerDelta: sourceType === "military_diplomacy"
+      ? { supply: 1 }
+      : { performanceMerit: 1 },
+    appliedAtTurn: turnBase + index
+  };
+}
+
+function seedHighVolumeDomainConsequences(role = "official") {
+  const worldState = createInitialState({ role, playerName: "跨视图高量" });
+  worldState.sessionId = sessionId;
+  worldState.turnCount = 120;
+  worldState.cityPolicyLedger = {
+    records: Array.from({ length: 6 }, (_, index) =>
+      makeHighVolumeConsequenceRecord("city_policy", index + 1, 70)
+    )
+  };
+  worldState.militaryDiplomacyLedger = {
+    records: Array.from({ length: 6 }, (_, index) =>
+      makeHighVolumeConsequenceRecord("military_diplomacy", index + 1, 80)
+    )
+  };
+  worldState.judicialCaseLedger = {
+    records: Array.from({ length: 6 }, (_, index) =>
+      makeHighVolumeConsequenceRecord("judicial_case", index + 1, 90)
+    )
+  };
+  ensureNpcEconomyLedgerState(worldState).recentEvents = [];
+  return worldState;
+}
+
 test("S88.6 domain consequence view projects public traces without resolver internals", () => {
   const worldState = seedDomainConsequences();
   worldState.player.role = "emperor";
@@ -436,6 +486,120 @@ test("S88.6 domain consequence view exposes safe cap metadata under high volume"
   );
   assertNoInternalConsequenceLeak(view);
   assertNoInternalConsequenceLeak(archiveView.items.filter((item) => item.sourceType === "domain_consequence"));
+});
+
+test("S88.6 high-volume domain consequences stay capped consistently across downstream views", () => {
+  const worldState = seedHighVolumeDomainConsequences("official");
+  const view = buildDomainConsequenceView(worldState);
+  const visibleIds = new Set(view.recentConsequences.map((item) => item.id));
+  const visibleTitles = new Set(view.recentConsequences.map((item) => item.title));
+  const noisyCities = Array.from({ length: 1300 }, (_, index) => ({
+    id: `city-domain-cap-noise-${index}`,
+    countryId: "country-ming",
+    name: `跨视图噪声城${index}`,
+    visibility: "public",
+    publicSummary: `跨视图噪声 ${index}`,
+    intelConfidence: 50
+  }));
+  const noiseViews = {
+    worldGeographyView: {
+      countries: [],
+      cities: noisyCities,
+      routes: [],
+      frontierZones: []
+    },
+    worldPeopleView: {
+      npcs: [],
+      households: [],
+      relationships: []
+    },
+    officialPostingsView: {
+      bureaus: [],
+      offices: [],
+      cityJurisdictions: [],
+      postings: [],
+      assessmentRecords: [],
+      transferRecords: []
+    }
+  };
+
+  const archiveView = buildEventArchiveView(worldState, { pageSize: 50 });
+  const resolverContext = buildResolverInputContext(worldState);
+  const topicSurface = buildTopicSurfaceView(worldState, { surfaceId: "war-council" });
+  const safeRows = buildSafeSearchRows(worldState, { views: noiseViews });
+  const searchView = searchSafeWorldIndex(worldState, {
+    query: "刑名高量后果6",
+    domain: "events",
+    pageSize: 5,
+    views: noiseViews
+  });
+  const archiveDomainItems = archiveView.items.filter((item) => item.sourceType === "domain_consequence");
+  const resolverDomainItems = resolverContext.events.filter((item) => item.sourceView === "domainConsequenceView");
+  const topicDomainItems = topicSurface.evidenceRefs.filter((item) => item.sourceView === "domainConsequenceView");
+  const safeDomainRows = safeRows.filter((row) => row.sourceView === "domainConsequenceView.recentConsequences");
+  const downstream = {
+    archiveDomainItems,
+    resolverDomainItems,
+    topicDomainItems,
+    safeDomainRows,
+    searchView
+  };
+
+  assert.equal(view.recentConsequences.length, 8);
+  assert.equal(view.caps.publicCandidates, 12);
+  assert.equal(view.caps.visibleConsequences, 8);
+  assert.equal(view.caps.capped, true);
+  assert.equal(view.recentConsequences.some((item) => item.sourceType === "city_policy"), false);
+  assert.ok(archiveDomainItems.length <= 6);
+  assert.equal(resolverDomainItems.length > 0, true);
+  assert.equal(topicDomainItems.length > 0, true);
+  assert.equal(safeDomainRows.length, 8);
+  assert.ok(archiveDomainItems.every((item) => visibleTitles.has(item.title)));
+  assert.ok(resolverDomainItems.every((item) => visibleTitles.has(item.label)));
+  assert.ok(topicDomainItems.every((item) => visibleTitles.has(item.label)));
+  assert.deepEqual(new Set(safeDomainRows.map((row) => row.sourceId)), visibleIds);
+  assert.equal(safeRows.length, 1200);
+  assert.ok(searchView.results.some((result) =>
+    result.sourceView === "domainConsequenceView.recentConsequences" && /刑名高量后果6/.test(`${result.title}${result.snippet}`)
+  ));
+  assertNoInternalConsequenceLeak(view);
+  assertNoInternalConsequenceLeak(downstream);
+  assert.doesNotMatch(
+    JSON.stringify(downstream),
+    /地方高量后果|军务高量后果[12]|刑名高量后果[12]|cross-view-cap/
+  );
+});
+
+test("S88.6 role-limited high-volume consequences keep downstream caps from exposing hidden domains", () => {
+  const generalState = seedHighVolumeDomainConsequences("general");
+  const view = buildDomainConsequenceView(generalState);
+  const archiveView = buildEventArchiveView(generalState, { pageSize: 50 });
+  const resolverContext = buildResolverInputContext(generalState);
+  const topicSurface = buildTopicSurfaceView(generalState, { surfaceId: "war-council" });
+  const safeRows = buildSafeSearchRows(generalState);
+  const downstream = {
+    archiveDomainItems: archiveView.items.filter((item) => item.sourceType === "domain_consequence"),
+    resolverDomainItems: resolverContext.events.filter((item) => item.sourceView === "domainConsequenceView"),
+    topicDomainItems: topicSurface.evidenceRefs.filter((item) => item.sourceView === "domainConsequenceView"),
+    safeDomainRows: safeRows.filter((row) => row.sourceView === "domainConsequenceView.recentConsequences")
+  };
+
+  assert.equal(view.recentConsequences.length, 4);
+  assert.equal(view.caps.publicCandidates, 4);
+  assert.equal(view.caps.roleEligibleCandidates, 4);
+  assert.equal(view.caps.visibleConsequences, 4);
+  assert.equal(view.caps.roleLimited, true);
+  assert.deepEqual([...new Set(view.recentConsequences.map((item) => item.sourceType))], ["military_diplomacy"]);
+  assert.equal(downstream.archiveDomainItems.length > 0, true);
+  assert.equal(downstream.resolverDomainItems.length > 0, true);
+  assert.equal(downstream.topicDomainItems.length > 0, true);
+  assert.equal(downstream.safeDomainRows.length, 4);
+  assert.equal(downstream.archiveDomainItems.every((item) => /军务高量后果/.test(`${item.title}${item.summary}`)), true);
+  assert.equal(downstream.resolverDomainItems.every((item) => /军务高量后果/.test(`${item.label}${item.summary}`)), true);
+  assert.equal(downstream.topicDomainItems.every((item) => /军务高量后果/.test(`${item.label}${item.summary}`)), true);
+  assert.equal(downstream.safeDomainRows.every((item) => /军务高量后果/.test(`${item.title}${item.searchText}`)), true);
+  assertNoInternalConsequenceLeak({ view, downstream });
+  assert.doesNotMatch(JSON.stringify({ view, downstream }), /地方高量后果|刑名高量后果/);
 });
 
 test("S88.6 public consequence refs feed archive, world thread, and monthly briefing", () => {

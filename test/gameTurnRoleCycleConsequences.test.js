@@ -70,6 +70,47 @@ test("S88.5.3 turn resolves magistrate market role-cycle drafts without leaking 
   assert.equal(saved.cityPolicyLedger.records[0].policyType, "market_regulation");
 });
 
+test("S88.6 turn-level role-cycle duplicate guard does not reapply city policy consequences", async (t) => {
+  const server = createTestServer();
+  t.after(server.close);
+
+  const worldState = createInitialState({ role: "magistrate", playerName: "重复市价知县" });
+  t.after(() => removeSessionArtifacts(worldState.sessionId));
+  await writeSession(worldState);
+
+  const input = "本旬先处置广州粮储市价：核公开材料、经手人、期限和需回报事项。";
+  const first = await postJson(`${server.baseUrl}/api/game/turn`, {
+    sessionId: worldState.sessionId,
+    input
+  });
+  const savedAfterFirst = await readSession(worldState.sessionId);
+  const afterFirst = {
+    ledgerCount: savedAfterFirst.cityPolicyLedger.records.length
+  };
+
+  const second = await postJson(`${server.baseUrl}/api/game/turn`, {
+    sessionId: worldState.sessionId,
+    input
+  });
+  const serialized = JSON.stringify(second.payload);
+  const savedAfterSecond = await readSession(worldState.sessionId);
+
+  assert.equal(first.response.status, 200);
+  assert.equal(first.payload.roleCycleDomainAdjudication.outcome.status, "accepted");
+  assert.equal(second.response.status, 200);
+  assert.equal(second.payload.roleCycleDomainAdjudication.outcome.status, "duplicate_recent");
+  assert.equal(second.payload.roleCycleDomainAdjudication.outcome.resolver, "city_policy");
+  assert.equal(savedAfterSecond.cityPolicyLedger.records.length, afterFirst.ledgerCount);
+  assert.equal(
+    second.payload.attributeChanges.some((change) => change.reason === "角色循环服务器裁决"),
+    false
+  );
+  assert.doesNotMatch(
+    serialized,
+    /"cityPolicyLedger":|"militaryDiplomacyLedger":|"stateDelta":|"playerDelta":|"auditRecord":|rawSql|SEALED_|role-cycle:/
+  );
+});
+
 test("S88.5.3 turn resolves general war-council drafts and keeps military ledger private", async (t) => {
   const server = createTestServer();
   t.after(server.close);
@@ -102,6 +143,48 @@ test("S88.5.3 turn resolves general war-council drafts and keeps military ledger
   const saved = await readSession(worldState.sessionId);
   assert.equal(saved.militaryDiplomacyLedger.records.length, 1);
   assert.equal(saved.militaryDiplomacyLedger.records[0].actionKind, "resupply");
+});
+
+test("S88.6 turn-level role-cycle duplicate guard does not reapply military consequences", async (t) => {
+  const server = createTestServer();
+  t.after(server.close);
+
+  const worldState = createInitialState({ role: "general", playerName: "重复筹粮将领" });
+  t.after(() => removeSessionArtifacts(worldState.sessionId));
+  await writeSession(worldState);
+
+  const input = "据战事档案开军议，先调粮道补给。";
+  const first = await postJson(`${server.baseUrl}/api/game/turn`, {
+    sessionId: worldState.sessionId,
+    input
+  });
+  const savedAfterFirst = await readSession(worldState.sessionId);
+  const afterFirst = {
+    ledgerCount: savedAfterFirst.militaryDiplomacyLedger.records.length
+  };
+
+  const second = await postJson(`${server.baseUrl}/api/game/turn`, {
+    sessionId: worldState.sessionId,
+    input
+  });
+  const serialized = JSON.stringify(second.payload);
+  const savedAfterSecond = await readSession(worldState.sessionId);
+
+  assert.equal(first.response.status, 200);
+  assert.equal(first.payload.roleCycleDomainAdjudication.outcome.status, "accepted");
+  assert.equal(second.response.status, 200);
+  assert.equal(second.payload.roleCycleDomainAdjudication.outcome.status, "duplicate_recent");
+  assert.equal(second.payload.roleCycleDomainAdjudication.outcome.resolver, "military_diplomacy");
+  assert.equal(second.payload.roleCycleDomainAdjudication.outcome.intent, "resupply");
+  assert.equal(savedAfterSecond.militaryDiplomacyLedger.records.length, afterFirst.ledgerCount);
+  assert.equal(
+    second.payload.attributeChanges.some((change) => change.reason === "角色循环服务器裁决"),
+    false
+  );
+  assert.doesNotMatch(
+    serialized,
+    /"cityPolicyLedger":|"militaryDiplomacyLedger":|"stateDelta":|"playerDelta":|"auditRecord":|rawSql|SEALED_|role-cycle:/
+  );
 });
 
 test("S88.6 turn blocks high-risk or inactive-role role-cycle resolver bypasses", async (t) => {

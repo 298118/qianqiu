@@ -3,6 +3,7 @@ const assert = require("node:assert/strict");
 
 const { createInitialState } = require("../src/game/initialState");
 const {
+  ROLE_CYCLE_DOMAIN_DUPLICATE_WINDOW_TURNS,
   classifyRoleCycleDomainIntent,
   runRoleCycleDomainAdjudicationStep,
   selectEvidenceRefs
@@ -247,6 +248,69 @@ test("S88.5.3 magistrate market entry resolves through city policy with visible 
   assert.doesNotMatch(serialized, /auditRecord|stateDelta|playerDelta|rawSql|worldState|cityPolicyLedger/);
 });
 
+test("S88.6 role-cycle city policy duplicate guard suppresses repeated ordinary-turn triggers", () => {
+  const worldState = createInitialState({ role: "magistrate", playerName: "重复知县" });
+  worldState.turnCount = 10;
+  const input = "本旬先处置广州粮储市价：核公开材料、经手人、期限和需回报事项。";
+  const first = runRoleCycleDomainAdjudicationStep(worldState, input);
+  const afterFirst = {
+    treasury: worldState.treasury,
+    publicOrder: worldState.publicOrder,
+    performanceMerit: worldState.player.performanceMerit,
+    eventCount: worldState.eventHistory.length,
+    ledgerCount: worldState.cityPolicyLedger.records.length
+  };
+
+  const duplicate = runRoleCycleDomainAdjudicationStep(worldState, input);
+  const serialized = JSON.stringify(duplicate);
+
+  assert.equal(first.outcome.status, "accepted");
+  assert.equal(duplicate.outcome.status, "duplicate_recent");
+  assert.equal(duplicate.outcome.resolver, "city_policy");
+  assert.equal(duplicate.outcome.intent, "market_regulation");
+  assert.equal(duplicate.attributeChanges.length, 0);
+  assert.equal(worldState.cityPolicyLedger.records.length, afterFirst.ledgerCount);
+  assert.equal(worldState.eventHistory.length, afterFirst.eventCount);
+  assert.equal(worldState.treasury, afterFirst.treasury);
+  assert.equal(worldState.publicOrder, afterFirst.publicOrder);
+  assert.equal(worldState.player.performanceMerit, afterFirst.performanceMerit);
+  assert.doesNotMatch(serialized, /auditRecord|stateDelta|playerDelta|rawSql|worldState|cityPolicyLedger|outcomeId|role-cycle:/);
+
+  worldState.turnCount += ROLE_CYCLE_DOMAIN_DUPLICATE_WINDOW_TURNS + 1;
+  const afterCooldown = runRoleCycleDomainAdjudicationStep(worldState, input);
+
+  assert.equal(afterCooldown.outcome.status, "accepted");
+  assert.equal(worldState.cityPolicyLedger.records.length, afterFirst.ledgerCount + 1);
+});
+
+test("S88.6 role-cycle duplicate guard ignores legacy rows without explicit actor identity", () => {
+  const worldState = createInitialState({ role: "magistrate", playerName: "旧账知县" });
+  const actorProfile = buildPlayerAiActorProfile(worldState);
+  const [marketRef] = selectEvidenceRefs(worldState, actorProfile, ["market"], [], 1);
+  worldState.turnCount = 30;
+  worldState.cityPolicyLedger = {
+    records: [{
+      outcomeId: "legacy-without-actor-ref",
+      policyType: "market_regulation",
+      policyLabel: "市价旧账",
+      status: "accepted",
+      evidenceRefs: [marketRef],
+      publicSummary: "缺 actorRef 的旧账不能阻断当前玩家首次处置。",
+      appliedAtTurn: 30
+    }]
+  };
+  const beforeCount = worldState.cityPolicyLedger.records.length;
+
+  const result = runRoleCycleDomainAdjudicationStep(
+    worldState,
+    "本旬先处置广州粮储市价：核公开材料、经手人、期限和需回报事项。"
+  );
+
+  assert.equal(result.outcome.status, "accepted");
+  assert.equal(worldState.cityPolicyLedger.records.length, beforeCount + 1);
+  assert.equal(worldState.cityPolicyLedger.records.at(-1).actorRef.actorId, actorProfile.actorId);
+});
+
 test("S88.5.3 general war-council entry resolves scout and resupply through military resolver", () => {
   const scoutState = createInitialState({ role: "general", playerName: "巡边将领" });
   const scout = runRoleCycleDomainAdjudicationStep(
@@ -271,6 +335,48 @@ test("S88.5.3 general war-council entry resolves scout and resupply through mili
   assert.ok(resupply.outcome.evidenceRefs.some((ref) => ref.startsWith("market:")));
   assert.ok(resupply.outcome.evidenceRefs.some((ref) => ref.startsWith("military:")));
   assert.equal(resupplyState.militaryDiplomacyLedger.records[0].actionKind, "resupply");
+});
+
+test("S88.6 role-cycle military duplicate guard suppresses repeated scout and resupply triggers", () => {
+  const scoutState = createInitialState({ role: "general", playerName: "重复巡边" });
+  scoutState.turnCount = 20;
+  const scoutInput = "据舆图与战事档案开军议，先遣哨核边面。";
+  const scoutFirst = runRoleCycleDomainAdjudicationStep(scoutState, scoutInput);
+  const afterScout = {
+    borderThreat: scoutState.borderThreat,
+    scouting: scoutState.player.scouting,
+    eventCount: scoutState.eventHistory.length,
+    ledgerCount: scoutState.militaryDiplomacyLedger.records.length
+  };
+  const scoutDuplicate = runRoleCycleDomainAdjudicationStep(scoutState, scoutInput);
+
+  assert.equal(scoutFirst.outcome.status, "accepted");
+  assert.equal(scoutDuplicate.outcome.status, "duplicate_recent");
+  assert.equal(scoutDuplicate.outcome.intent, "scout");
+  assert.equal(scoutState.militaryDiplomacyLedger.records.length, afterScout.ledgerCount);
+  assert.equal(scoutState.eventHistory.length, afterScout.eventCount);
+  assert.equal(scoutState.borderThreat, afterScout.borderThreat);
+  assert.equal(scoutState.player.scouting, afterScout.scouting);
+
+  const resupplyState = createInitialState({ role: "general", playerName: "重复筹粮" });
+  resupplyState.turnCount = 22;
+  const resupplyInput = "据战事档案开军议，先调粮道补给。";
+  const resupplyFirst = runRoleCycleDomainAdjudicationStep(resupplyState, resupplyInput);
+  const afterResupply = {
+    grainReserve: resupplyState.grainReserve,
+    supply: resupplyState.player.supply,
+    ledgerCount: resupplyState.militaryDiplomacyLedger.records.length
+  };
+  const resupplyDuplicate = runRoleCycleDomainAdjudicationStep(resupplyState, resupplyInput);
+  const serialized = JSON.stringify(resupplyDuplicate);
+
+  assert.equal(resupplyFirst.outcome.status, "accepted");
+  assert.equal(resupplyDuplicate.outcome.status, "duplicate_recent");
+  assert.equal(resupplyDuplicate.outcome.intent, "resupply");
+  assert.equal(resupplyState.militaryDiplomacyLedger.records.length, afterResupply.ledgerCount);
+  assert.equal(resupplyState.grainReserve, afterResupply.grainReserve);
+  assert.equal(resupplyState.player.supply, afterResupply.supply);
+  assert.doesNotMatch(serialized, /auditRecord|stateDelta|playerDelta|rawSql|worldState|militaryDiplomacyLedger|outcomeId|role-cycle:/);
 });
 
 test("S88.5.3 npc economy review stays read-only and creates no resolver ledger", () => {
