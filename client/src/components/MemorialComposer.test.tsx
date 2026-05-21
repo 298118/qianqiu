@@ -51,7 +51,8 @@ describe("S75.9 MemorialComposer", () => {
         hasMarketPriceView: false,
         hasNpcEconomyView: false,
         hasNpcActiveRequestView: false,
-        hasRoleCycleView: false
+        hasRoleCycleView: false,
+        hasDomainConsequenceView: false
       }
     });
     expect(mapSuggestions[1].source).toBe("map-runtime");

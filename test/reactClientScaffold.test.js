@@ -36,6 +36,7 @@ function stripSafeGuardPatterns(source) {
     .replace(/const unsafeHomeSummaryPattern = .*?;\r?\n/, "")
     .replace(/const unsafeSaveTextPattern = .*?;\r?\n/, "")
     .replace(/const unsafePreferenceTextPattern = .*?;\r?\n/, "")
+    .replace(/const unsafeDomainConsequenceFragments[\s\S]*?\] as const;\r?\n/, "")
     .replace(/const unsafeClientApiPathPatterns = Object\.freeze\(\[[\s\S]*?\]\);\r?\n/, "");
 }
 
@@ -807,6 +808,62 @@ test("S88.5 role cycle section is wired to all six identity panels as draft-only
   assert.match(styleSource, /roleCycleColumns/);
   assert.match(styleSource, /roleCycleEvidenceRefs/);
   assert.match(styleSource, /roleCycleEntryPoints/);
+  assert.doesNotMatch(
+    runtimeCombined,
+    /\/api\/game\/state|\/api\/game\/turn|\/api\/dev\/session-diagnostics|dangerouslySetInnerHTML|localStorage|sessionStorage|data\/sessions|raw audit|provider payload|OPENAI_API_KEY|DEEPSEEK_API_KEY|MIMO_API_KEY|ANTHROPIC_API_KEY/
+  );
+});
+
+test("S88.6 domain consequence view is wired into authority role panels as draft-only UI", () => {
+  const gamePageSource = readText("client/src/pages/GamePage.tsx");
+  const domainConsequenceSource = readText("client/src/components/DomainConsequenceSection.tsx");
+  const magistratePanelSource = readText("client/src/components/MagistratePanel.tsx");
+  const officialPanelSource = readText("client/src/components/OfficialMinisterPanel.tsx");
+  const generalPanelSource = readText("client/src/components/GeneralPanel.tsx");
+  const emperorPanelSource = readText("client/src/components/EmperorPanel.tsx");
+  const stateSource = readText("client/src/state/uiState.ts");
+  const typeSource = readText("client/src/api/types.ts");
+  const surfaceRegistrySource = readText("client/src/surfaces/surfaceRegistry.tsx");
+  const appTestSource = readText("client/src/__tests__/App.test.tsx");
+  const smokeSource = readText("scripts/clientSmoke.js");
+  const styleSource = readText("client/src/styles/global.css");
+  const domainConsequenceWithoutGuard = stripSafeGuardPatterns(domainConsequenceSource);
+  const runtimeCombined = `${gamePageSource}\n${domainConsequenceWithoutGuard}\n${styleSource}`;
+
+  assert.match(typeSource, /export type DomainConsequenceItemView/);
+  assert.match(typeSource, /export type DomainConsequenceView/);
+  assert.match(typeSource, /domainConsequenceView\?: DomainConsequenceView/);
+  assert.match(stateSource, /hasDomainConsequenceView: Boolean\(payload\.domainConsequenceView\)/);
+  assert.match(gamePageSource, /\{ label: "后果", ready: Boolean\(routeViews\?\.hasDomainConsequenceView\) \}/);
+  assert.match(gamePageSource, /domainConsequenceView=\{session\?\.domainConsequenceView \?\? null\}/);
+  for (const source of [magistratePanelSource, officialPanelSource, generalPanelSource, emperorPanelSource]) {
+    assert.match(source, /import \{ DomainConsequenceSection \}/);
+    assert.match(source, /readonly domainConsequenceView\?: JsonObject \| null/);
+    assert.match(source, /<DomainConsequenceSection/);
+    assert.match(source, /domainConsequenceView=\{domainConsequenceView\}/);
+    assert.match(source, /onDraft=\{onDraft\}/);
+  }
+  assert.match(domainConsequenceSource, /领域后果追踪/);
+  assert.match(domainConsequenceSource, /recentConsequences/);
+  assert.match(domainConsequenceSource, /nextActions/);
+  assert.match(domainConsequenceSource, /stateDelta/);
+  assert.match(domainConsequenceSource, /playerDelta/);
+  assert.match(domainConsequenceSource, /evidenceRefs/);
+  assert.match(domainConsequenceSource, /outcomeId/);
+  assert.match(domainConsequenceSource, /auditRecord/);
+  assert.match(domainConsequenceSource, /cityPolicyLedger/);
+  assert.match(domainConsequenceSource, /militaryDiplomacyLedger/);
+  assert.match(domainConsequenceSource, /judicialCaseLedger/);
+  assert.match(domainConsequenceSource, /npcEconomyLedger/);
+  assert.doesNotMatch(domainConsequenceSource, /fetch\(|submitTurn\(|\/api\/game\/turn|dangerouslySetInnerHTML/);
+  assert.match(styleSource, /domainConsequenceSection/);
+  assert.match(styleSource, /domainConsequenceList/);
+  assert.match(appTestSource, /续记地方后果/);
+  assert.match(appTestSource, /续记军务后果/);
+  assert.match(appTestSource, /续记跨域后果/);
+  assert.match(appTestSource, /御览天下余波/);
+  assert.match(surfaceRegistrySource, /domainConsequenceView/);
+  assert.match(smokeSource, /hasDomainConsequence/);
   assert.doesNotMatch(
     runtimeCombined,
     /\/api\/game\/state|\/api\/game\/turn|\/api\/dev\/session-diagnostics|dangerouslySetInnerHTML|localStorage|sessionStorage|data\/sessions|raw audit|provider payload|OPENAI_API_KEY|DEEPSEEK_API_KEY|MIMO_API_KEY|ANTHROPIC_API_KEY/

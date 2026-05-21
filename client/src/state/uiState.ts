@@ -61,6 +61,7 @@ export type SafePlayerPayload = {
     readonly hasNpcEconomyView: boolean;
     readonly hasNpcActiveRequestView: boolean;
     readonly hasRoleCycleView: boolean;
+    readonly hasDomainConsequenceView: boolean;
   };
 };
 
@@ -174,7 +175,8 @@ export function extractSafePlayerPayload(
       hasMarketPriceView: Boolean(payload.marketPriceView),
       hasNpcEconomyView: Boolean(payload.npcEconomyView),
       hasNpcActiveRequestView: Boolean(payload.npcActiveRequestView),
-      hasRoleCycleView: Boolean(payload.roleCycleView)
+      hasRoleCycleView: Boolean(payload.roleCycleView),
+      hasDomainConsequenceView: Boolean(payload.domainConsequenceView)
     }
   };
 }

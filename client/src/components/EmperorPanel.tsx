@@ -2,6 +2,7 @@ import type { CSSProperties } from "react";
 import { Link } from "react-router";
 import type { JsonObject, JsonValue, PlayerSummary } from "../api";
 import type { LocalSurface } from "../state/uiState";
+import { DomainConsequenceSection } from "./DomainConsequenceSection";
 import { RoleCycleSection } from "./RoleCycleSection";
 
 type EmperorPanelProps = {
@@ -15,6 +16,7 @@ type EmperorPanelProps = {
   readonly worldThreadView?: JsonObject | null;
   readonly courtConsequenceView?: JsonObject | null;
   readonly courtResponseView?: JsonObject | null;
+  readonly domainConsequenceView?: JsonObject | null;
   readonly mapRuntimeView?: unknown;
   readonly roleBackgroundPath?: string;
   readonly courtHref?: string;
@@ -315,6 +317,7 @@ export function EmperorPanel({
   worldThreadView,
   courtConsequenceView,
   courtResponseView,
+  domainConsequenceView,
   mapRuntimeView,
   roleBackgroundPath,
   courtHref,
@@ -500,6 +503,15 @@ export function EmperorPanel({
             {draftButtonText("预拟赏罚", "预拟赏罚清单，先列功过证据、关联奏折与待核争议，不直接生效。", canDraft, onDraft)}
           </div>
         </article>
+
+        <DomainConsequenceSection
+          domainConsequenceView={domainConsequenceView}
+          title="天下余波"
+          summaryFallback="天下余波只读服务器已裁决的地方、军务、刑名和人物经济公开后果；问责、赏罚、调兵、拨款和处分仍候普通回合裁决。"
+          emptyText="暂无公开领域后果；不得从内廷私档、隐藏证据或模型提案补造事实。"
+          runnable={runnable}
+          onDraft={onDraft}
+        />
 
         <article className="scholarPanelCard emperorPanelBoundary" aria-labelledby="emperor-boundary-title">
           <h3 id="emperor-boundary-title">御案边界</h3>

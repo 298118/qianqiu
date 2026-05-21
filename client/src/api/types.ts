@@ -154,6 +154,44 @@ export type CourtConsequenceView = JsonObject & {
   readonly safety?: JsonObject;
 };
 
+export type DomainConsequenceItemView = JsonObject & {
+  readonly schemaVersion?: number | string;
+  readonly id?: string;
+  readonly sourceType?: "city_policy" | "military_diplomacy" | "judicial_case" | "npc_economy" | string;
+  readonly sourceLabel?: string;
+  readonly sourceId?: string;
+  readonly kind?: string;
+  readonly kindLabel?: string;
+  readonly title?: string;
+  readonly publicSummary?: string;
+  readonly status?: string;
+  readonly statusLabel?: string;
+  readonly generatedAtTurn?: number;
+  readonly year?: number;
+  readonly month?: number;
+  readonly tenDayPeriod?: number;
+  readonly affectedMetricLabels?: readonly string[];
+  readonly severity?: number;
+  readonly consequenceRefs?: readonly string[];
+  readonly nextStep?: string;
+};
+
+export type DomainConsequenceView = JsonObject & {
+  readonly schemaVersion?: number | string;
+  readonly generatedAtTurn?: number;
+  readonly active?: boolean;
+  readonly summary?: string;
+  readonly counts?: JsonObject;
+  readonly recentConsequences?: readonly DomainConsequenceItemView[];
+  readonly nextActions?: readonly JsonObject[];
+  readonly aiReadScope?: string;
+  readonly actorIntelligence?: string;
+  readonly toolPermissions?: string;
+  readonly proposalBoundaries?: readonly JsonValue[];
+  readonly serverAdjudication?: string;
+  readonly safety?: JsonObject;
+};
+
 export type SafeWorldState = {
   readonly player?: PlayerSummary;
   readonly activeExam?: ExamState | null;
@@ -251,7 +289,7 @@ export type SafeRouteViews = {
   readonly officialCareerView?: OfficialCareerView;
   readonly courtConsequenceView?: CourtConsequenceView;
   readonly courtResponseView?: CourtResponseView;
-  readonly domainConsequenceView?: JsonObject;
+  readonly domainConsequenceView?: DomainConsequenceView;
   readonly appointmentTrackView?: JsonObject;
   readonly officialPostingsView?: JsonObject;
   readonly localAffairsDocketView?: JsonObject;

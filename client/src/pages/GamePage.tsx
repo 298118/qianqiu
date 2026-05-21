@@ -26,6 +26,21 @@ const unsafeGameShellFragments = [
   "key",
   "path",
   "hidden" + "Notes",
+  "state" + "Delta",
+  "player" + "Delta",
+  "evidence" + "Refs",
+  "outcome" + "Id",
+  "audit" + "Record",
+  "state" + "Patch",
+  "world" + "State",
+  "city" + "Policy" + "Ledger",
+  "military" + "Diplomacy" + "Ledger",
+  "judicial" + "Case" + "Ledger",
+  "npc" + "Economy" + "Ledger",
+  "safe" + "_search" + "_index",
+  "safe" + "_search" + "_fts",
+  "world" + "_sessions",
+  "world" + "_state" + "_json",
   "OPENAI" + "_API" + "_KEY",
   "DEEPSEEK" + "_API" + "_KEY",
   "MIMO" + "_API" + "_KEY",
@@ -188,6 +203,7 @@ export function GamePage() {
     { label: "月账", ready: Boolean(routeViews?.hasNpcEconomyView) },
     { label: "来函", ready: Boolean(routeViews?.hasNpcActiveRequestView) },
     { label: "身份", ready: Boolean(routeViews?.hasRoleCycleView) },
+    { label: "后果", ready: Boolean(routeViews?.hasDomainConsequenceView) },
     { label: "科期", ready: Boolean(routeViews?.hasExamCalendarView) },
     { label: "审计", ready: Boolean(routeViews?.hasAuditSummaryView) }
   ];
@@ -349,6 +365,7 @@ export function GamePage() {
           economicFiscalView={session?.economicFiscalView ?? null}
           marketPriceView={session?.marketPriceView ?? null}
           npcEconomyView={session?.npcEconomyView ?? null}
+          domainConsequenceView={session?.domainConsequenceView ?? null}
           roleBackgroundPath={roleBackgroundAsset?.path}
           resolveRoleCycleRouteHref={resolveRoleCycleRouteHref}
           onOpenRoleCycleSurface={openRoleCycleSurface}
@@ -368,6 +385,7 @@ export function GamePage() {
           playerMonthlyBriefingView={session?.playerMonthlyBriefingView ?? null}
           courtConsequenceView={session?.courtConsequenceView ?? null}
           courtResponseView={session?.courtResponseView ?? null}
+          domainConsequenceView={session?.domainConsequenceView ?? null}
           roleBackgroundPath={roleBackgroundAsset?.path}
           courtHref={sessionHref(routeCatalog.find((entry) => entry.id === "court")?.href ?? "/game/s74-preview/court")}
           resolveRoleCycleRouteHref={resolveRoleCycleRouteHref}
@@ -385,6 +403,7 @@ export function GamePage() {
           mapRuntimeView={session?.mapRuntimeView ?? null}
           eventArchiveView={session?.eventArchiveView ?? null}
           actorMemoryView={session?.actorMemoryView ?? null}
+          domainConsequenceView={session?.domainConsequenceView ?? null}
           roleBackgroundPath={roleBackgroundAsset?.path}
           mapHref={sessionHref(routeCatalog.find((entry) => entry.id === "map")?.href ?? "/game/s74-preview/map")}
           archiveHref={sessionHref(routeCatalog.find((entry) => entry.id === "archive")?.href ?? "/game/s74-preview/archive")}
@@ -406,6 +425,7 @@ export function GamePage() {
           worldThreadView={session?.worldThreadView ?? null}
           courtConsequenceView={session?.courtConsequenceView ?? null}
           courtResponseView={session?.courtResponseView ?? null}
+          domainConsequenceView={session?.domainConsequenceView ?? null}
           mapRuntimeView={session?.mapRuntimeView ?? null}
           roleBackgroundPath={roleBackgroundAsset?.path}
           courtHref={sessionHref(routeCatalog.find((entry) => entry.id === "court")?.href ?? "/game/s74-preview/court")}

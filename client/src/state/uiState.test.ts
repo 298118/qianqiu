@@ -395,6 +395,7 @@ describe("S74.3 UI state store", () => {
         hasNpcActiveRequestView: false,
         hasNpcEconomyView: false,
         hasNpcRosterView: false,
+        hasDomainConsequenceView: false,
         hasRoleCycleView: false,
         hasTradeLedgerView: false
       }

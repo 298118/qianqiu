@@ -2,6 +2,7 @@ import type { CSSProperties } from "react";
 import { Link } from "react-router";
 import type { JsonObject, JsonValue, PlayerSummary } from "../api";
 import type { LocalSurface } from "../state/uiState";
+import { DomainConsequenceSection } from "./DomainConsequenceSection";
 import { RoleCycleSection } from "./RoleCycleSection";
 
 type OfficialMinisterPanelProps = {
@@ -15,6 +16,7 @@ type OfficialMinisterPanelProps = {
   readonly playerMonthlyBriefingView?: JsonObject | null;
   readonly courtConsequenceView?: JsonObject | null;
   readonly courtResponseView?: JsonObject | null;
+  readonly domainConsequenceView?: JsonObject | null;
   readonly roleBackgroundPath?: string;
   readonly onDraft: (text: string) => void;
   readonly resolveRoleCycleRouteHref?: (routeId: string) => string | null;
@@ -506,6 +508,7 @@ export function OfficialMinisterPanel({
   playerMonthlyBriefingView,
   courtConsequenceView,
   courtResponseView,
+  domainConsequenceView,
   roleBackgroundPath,
   onDraft,
   resolveRoleCycleRouteHref,
@@ -734,6 +737,15 @@ export function OfficialMinisterPanel({
             ))}
           </div>
         </article>
+
+        <DomainConsequenceSection
+          domainConsequenceView={domainConsequenceView}
+          title="领域后果"
+          summaryFallback="跨域后果只读服务器已裁决的地方、军务、刑名和人物经济公开余波；考成、弹劾、财政和世界议程仍由服务器继续裁决。"
+          emptyText="暂无可公开追踪的跨域后果；不得从内部账本、隐藏证据或模型提案补造事实。"
+          runnable={runnable}
+          onDraft={onDraft}
+        />
 
         <article className="scholarPanelCard officialMinisterPanelMemorial" aria-labelledby="official-memorial-title">
           <h3 id="official-memorial-title">奏折朝议入口</h3>

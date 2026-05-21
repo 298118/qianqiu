@@ -1,6 +1,7 @@
 import type { CSSProperties } from "react";
 import type { JsonObject, JsonValue, MarketPriceView, NpcEconomyView, PlayerSummary } from "../api";
 import type { LocalSurface } from "../state/uiState";
+import { DomainConsequenceSection } from "./DomainConsequenceSection";
 import { RoleCycleSection } from "./RoleCycleSection";
 
 type MagistratePanelProps = {
@@ -11,6 +12,7 @@ type MagistratePanelProps = {
   readonly economicFiscalView?: JsonObject | null;
   readonly marketPriceView?: MarketPriceView | null;
   readonly npcEconomyView?: NpcEconomyView | null;
+  readonly domainConsequenceView?: JsonObject | null;
   readonly roleBackgroundPath?: string;
   readonly onDraft: (text: string) => void;
   readonly resolveRoleCycleRouteHref?: (routeId: string) => string | null;
@@ -265,6 +267,7 @@ export function MagistratePanel({
   economicFiscalView,
   marketPriceView,
   npcEconomyView,
+  domainConsequenceView,
   roleBackgroundPath,
   onDraft,
   resolveRoleCycleRouteHref,
@@ -412,6 +415,16 @@ export function MagistratePanel({
           <MagistratePanelList items={gentryDockets} emptyText="暂无士绅急件，可先召集乡约听取公议。" />
           {draftButtonText("调停乡约", "召集士绅、里甲与胥吏公议，调停词讼和徭役争执，先写成行动草稿。", canDraft, onDraft)}
         </article>
+
+        <DomainConsequenceSection
+          domainConsequenceView={domainConsequenceView}
+          sourceTypes={["city_policy", "judicial_case", "npc_economy"]}
+          title="领域后果追踪"
+          summaryFallback="地方后果只读服务器已裁决的政策、刑名和人物经济公开余波；库银、案牍、NPC 资产与关系变化仍由服务器逐旬或月结裁决。"
+          emptyText="暂无地方公开后果；不得从内部案卷、隐藏证据或模型提案补造事实。"
+          runnable={runnable}
+          onDraft={onDraft}
+        />
 
         <article className="scholarPanelCard magistratePanelBoundary" aria-labelledby="magistrate-boundary-title">
           <h3 id="magistrate-boundary-title">裁决边界</h3>

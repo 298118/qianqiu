@@ -2,6 +2,7 @@ import type { CSSProperties } from "react";
 import { Link } from "react-router";
 import type { JsonObject, JsonValue, PlayerSummary } from "../api";
 import type { LocalSurface } from "../state/uiState";
+import { DomainConsequenceSection } from "./DomainConsequenceSection";
 import { RoleCycleSection } from "./RoleCycleSection";
 
 type GeneralPanelProps = {
@@ -12,6 +13,7 @@ type GeneralPanelProps = {
   readonly mapRuntimeView?: unknown;
   readonly eventArchiveView?: JsonObject | null;
   readonly actorMemoryView?: JsonObject | null;
+  readonly domainConsequenceView?: JsonObject | null;
   readonly roleBackgroundPath?: string;
   readonly mapHref?: string;
   readonly archiveHref?: string;
@@ -284,6 +286,7 @@ export function GeneralPanel({
   mapRuntimeView,
   eventArchiveView,
   actorMemoryView,
+  domainConsequenceView,
   roleBackgroundPath,
   mapHref,
   archiveHref,
@@ -412,6 +415,16 @@ export function GeneralPanel({
             {archiveHref ? <Link to={archiveHref}>查史册</Link> : null}
           </div>
         </article>
+
+        <DomainConsequenceSection
+          domainConsequenceView={domainConsequenceView}
+          sourceTypes={["military_diplomacy"]}
+          title="军务后果追踪"
+          summaryFallback="军务后果只读服务器已裁决的公开余波；侦察、调粮、战险、和战与赏罚仍须普通回合裁决。"
+          emptyText="暂无公开军务后果；不得从隐藏军情、内部账簿或模型提案补造战果。"
+          runnable={runnable}
+          onDraft={onDraft}
+        />
 
         <article className="scholarPanelCard generalPanelBoundary" aria-labelledby="general-boundary-title">
           <h3 id="general-boundary-title">军令边界</h3>

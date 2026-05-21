@@ -487,7 +487,7 @@ describe("S74.1 React client shell", () => {
     await screen.findByText("军帐筹谋");
     expect(screen.getByText("无名")).toBeTruthy();
     expect(screen.getAllByText("身份未题").length).toBeGreaterThan(0);
-    expect(screen.getByText("2 / 11")).toBeTruthy();
+    expect(screen.getByText("2 / 12")).toBeTruthy();
     expect(screen.getAllByRole("link", { name: /舆图/ }).length).toBeGreaterThan(0);
     expect(screen.getAllByRole("link", { name: /人物/ }).length).toBeGreaterThan(0);
     expect(screen.getAllByRole("link", { name: /朝议/ }).length).toBeGreaterThan(0);
@@ -824,6 +824,46 @@ describe("S74.1 React client shell", () => {
           npcEconomyView: {
             lastMonthlyPeriodKey: "1644-01",
             recentEvents: ["交易月账：1条未结议价已转为逾期作废。"]
+          },
+          domainConsequenceView: {
+            active: true,
+            summary: "当前有2条地方公开后果可追踪，已接入事件档案、世界议程和官职月报。",
+            recentConsequences: [
+              {
+                id: "DC-city-policy-rice-price",
+                sourceType: "city_policy",
+                sourceLabel: "地方政策",
+                kindLabel: "政策后果",
+                title: "清河县平抑米价余波",
+                statusLabel: "已记入后果追踪",
+                publicSummary: "平抑米价暂稳民心，但库银承载继续吃紧。",
+                affectedMetricLabels: ["府库", "民心"],
+                severity: 2,
+                nextStep: "把清河县平抑米价余波列入月报，后续财政民情仍由服务器逐旬结算。"
+              },
+              {
+                id: "DC-npc-economy-monthly",
+                sourceType: "npc_economy",
+                sourceLabel: "人物经济",
+                kindLabel: "经济后果",
+                title: "人物经济月账",
+                statusLabel: "已记入后果追踪",
+                publicSummary: "交易逾期作废只作公开月账摘要，不改前端资产。",
+                nextStep: "把人物经济月账列入人物经济追踪，资产、交易、委派和人情债仍由旬更或月结裁决。"
+              },
+              {
+                id: "bad-domain-consequence",
+                sourceType: "city_policy",
+                sourceLabel: "rawSql",
+                title: "stateDelta evidenceRefs outcomeId",
+                publicSummary: "cityPolicyLedger playerDelta auditRecord"
+              }
+            ],
+            nextActions: [{
+              id: "trace-DC-city-policy-rice-price",
+              label: "续记地方后果",
+              text: "把清河县平抑米价余波列入月报，后续财政民情仍由服务器逐旬结算。"
+            }]
           }
         }), {
           status: 200,
@@ -855,6 +895,9 @@ describe("S74.1 React client shell", () => {
     expect(screen.getByText("粮食一石")).toBeTruthy();
     expect(screen.getByText("NPC 月账")).toBeTruthy();
     expect(screen.getByText("交易月账：1条未结议价已转为逾期作废。")).toBeTruthy();
+    expect(screen.getByText("领域后果追踪")).toBeTruthy();
+    expect(screen.getByText("清河县平抑米价余波")).toBeTruthy();
+    expect(screen.getByText("人物经济月账")).toBeTruthy();
     expect(screen.getByText("水利盗警")).toBeTruthy();
     expect(screen.getByText("士绅乡约")).toBeTruthy();
     expect(screen.getByText("审案、征税、开仓、水利、缉捕、任免、考成和持久化都由服务器裁决。")).toBeTruthy();
@@ -866,8 +909,14 @@ describe("S74.1 React client shell", () => {
       targetPage: "game",
       text: "升堂核问积案，核对公开证词、案卷日期与里甲呈报，不自行结案。"
     });
+    fireEvent.click(screen.getByRole("button", { name: "续记地方后果" }));
+    expect(useUiStateStore.getState().actionDraft).toMatchObject({
+      source: "role-surface",
+      targetPage: "game",
+      text: "把清河县平抑米价余波列入月报，后续财政民情仍由服务器逐旬结算。"
+    });
     expect(fetchMock.mock.calls.filter(([url]) => url === "/api/game/turn")).toHaveLength(0);
-    expect(document.body.textContent || "").not.toMatch(/provider payload|sk-test-secret|prompt|raw audit|path=|C:\\|data\/sessions|OPENAI_API_KEY/i);
+    expect(document.body.textContent || "").not.toMatch(/provider payload|sk-test-secret|prompt|raw audit|path=|C:\\|data\/sessions|OPENAI_API_KEY|stateDelta|playerDelta|evidenceRefs|outcomeId|auditRecord|cityPolicyLedger|rawSql/i);
   });
 
   it("renders the S76.4 official minister panel from safe career views as draft-only actions", async () => {
@@ -1128,6 +1177,34 @@ describe("S74.1 React client shell", () => {
               label: "合入考成观察",
               text: "将馆阁讲章校订合入本任考成观察，只列公开功过和待核凭据。"
             }]
+          },
+          domainConsequenceView: {
+            active: true,
+            summary: "当前有1条跨域公开后果可追踪。",
+            recentConsequences: [{
+              id: "DC-official-city-policy",
+              sourceType: "city_policy",
+              sourceLabel: "地方政策",
+              kindLabel: "政策后果",
+              title: "清河县粮价余波",
+              statusLabel: "已记入后果追踪",
+              publicSummary: "清河县粮价处置已入事件档案，可供部院复核财政与民情。",
+              affectedMetricLabels: ["府库", "民心"],
+              severity: 2,
+              nextStep: "把清河县粮价余波列入部院后果复核，后续考成与财政仍候服务器裁决。"
+            }],
+            nextActions: [
+              {
+                id: "trace-DC-official-city-policy",
+                label: "续记跨域后果",
+                text: "把清河县粮价余波列入部院后果复核，后续考成与财政仍候服务器裁决。"
+              },
+              {
+                id: "trace-DC-orphan-official",
+                label: "不应显示孤证后果",
+                text: "另案余波只作孤立草稿，不绑定当前公开后果条目。"
+              }
+            ]
           }
         }), {
           status: 200,
@@ -1160,6 +1237,8 @@ describe("S74.1 React client shell", () => {
     expect(screen.getByText("奏折朝议入口")).toBeTruthy();
     expect(screen.getByText(/官场后果：当前有1条奏议链路/)).toBeTruthy();
     expect(screen.getByText("考成压力：馆阁讲章校订")).toBeTruthy();
+    expect(screen.getByText("领域后果")).toBeTruthy();
+    expect(screen.getByText("清河县粮价余波")).toBeTruthy();
     expect(screen.getByText("首月回署：馆阁讲章校订")).toBeTruthy();
     expect(screen.getByText(/近次裁决：准入复核：馆阁讲章校订已入奏折队列服务器裁决/)).toBeTruthy();
     expect(screen.getByText(/朝议跟进：部院覆奏 · 部院待覆/)).toBeTruthy();
@@ -1171,6 +1250,8 @@ describe("S74.1 React client shell", () => {
     expect(screen.getByRole("button", { name: "续记考成" })).toBeTruthy();
     expect(screen.getByRole("button", { name: "部院覆奏" })).toBeTruthy();
     expect(screen.getByRole("button", { name: "合入考成观察" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "续记跨域后果" })).toBeTruthy();
+    expect(screen.queryByRole("button", { name: "不应显示孤证后果" })).toBeNull();
     expect(screen.getByText("不得在前端直接任免、奖惩、处分、弹劾成案或改写考成。")).toBeTruthy();
 
     fireEvent.click(screen.getByRole("button", { name: "回应弹劾" }));
@@ -1188,8 +1269,10 @@ describe("S74.1 React client shell", () => {
     expect(useUiStateStore.getState().actionDraft?.text).toContain("相关部院");
     fireEvent.click(screen.getByRole("button", { name: "合入考成观察" }));
     expect(useUiStateStore.getState().actionDraft?.text).toContain("本任考成观察");
+    fireEvent.click(screen.getByRole("button", { name: "续记跨域后果" }));
+    expect(useUiStateStore.getState().actionDraft?.text).toContain("清河县粮价余波");
     expect(fetchMock.mock.calls.filter(([url]) => url === "/api/game/turn")).toHaveLength(0);
-    expect(document.body.textContent || "").not.toMatch(/provider payload|sk-test-secret|prompt|raw audit|path=|C:\\|data\/sessions|OPENAI_API_KEY/i);
+    expect(document.body.textContent || "").not.toMatch(/provider payload|sk-test-secret|prompt|raw audit|path=|C:\\|data\/sessions|OPENAI_API_KEY|stateDelta|playerDelta|evidenceRefs|outcomeId|auditRecord|cityPolicyLedger|rawSql/i);
   });
 
   it("renders the S76.5 general panel from safe military views as draft-only actions", async () => {
@@ -1303,6 +1386,27 @@ describe("S74.1 React client shell", () => {
           },
           actorMemoryView: {
             recentUpdates: [{ id: "memory-1", title: "副将来报", summary: "请先核军心。" }]
+          },
+          domainConsequenceView: {
+            active: true,
+            summary: "当前有1条军务公开后果可追踪。",
+            recentConsequences: [{
+              id: "DC-military-supply-risk",
+              sourceType: "military_diplomacy",
+              sourceLabel: "军务外交",
+              kindLabel: "军务后果",
+              title: "辽西粮道受阻余波",
+              statusLabel: "已记入后果追踪",
+              publicSummary: "粮道受阻抬高军心风险，仍须普通回合核仓储与转运。",
+              affectedMetricLabels: ["本部粮饷", "军心"],
+              severity: 2,
+              nextStep: "把辽西粮道受阻余波列入军务后果追踪，后续侦察、调粮、战险仍须普通回合裁决。"
+            }],
+            nextActions: [{
+              id: "trace-DC-military-supply-risk",
+              label: "续记军务后果",
+              text: "把辽西粮道受阻余波列入军务后果追踪，后续侦察、调粮、战险仍须普通回合裁决。"
+            }]
           }
         }), {
           status: 200,
@@ -1333,6 +1437,8 @@ describe("S74.1 React client shell", () => {
     expect(screen.getByText("斥候与情报")).toBeTruthy();
     expect(screen.getByText("边患与舆图")).toBeTruthy();
     expect(screen.getByText("战报与边议")).toBeTruthy();
+    expect(screen.getByText("军务后果追踪")).toBeTruthy();
+    expect(screen.getByText("辽西粮道受阻余波")).toBeTruthy();
     expect(screen.getByRole("link", { name: "入舆图页" }).getAttribute("href")).toBe(`/game/${sessionId}/map`);
     expect(screen.getByRole("link", { name: "查史册" }).getAttribute("href")).toBe(`/game/${sessionId}/archive`);
     expect(screen.getByText("战役胜负、调兵遣将、外交和战、统帅任免、粮饷拨付、赏罚与持久化都由服务器裁决。")).toBeTruthy();
@@ -1343,8 +1449,10 @@ describe("S74.1 React client shell", () => {
       targetPage: "game",
       text: "遣斥候分赴关隘、驿路与敌营外缘，回报公开线索，不自行判定隐藏军情。"
     });
+    fireEvent.click(screen.getByRole("button", { name: "续记军务后果" }));
+    expect(useUiStateStore.getState().actionDraft?.text).toContain("辽西粮道受阻余波");
     expect(fetchMock.mock.calls.filter(([url]) => url === "/api/game/turn")).toHaveLength(0);
-    expect(document.body.textContent || "").not.toMatch(/provider payload|sk-test-secret|prompt|raw audit|path=|C:\\|data\/sessions|OPENAI_API_KEY/i);
+    expect(document.body.textContent || "").not.toMatch(/provider payload|sk-test-secret|prompt|raw audit|path=|C:\\|data\/sessions|OPENAI_API_KEY|stateDelta|playerDelta|evidenceRefs|outcomeId|auditRecord|militaryDiplomacyLedger|rawSql/i);
   });
 
   it("renders the S76.6 emperor panel from safe court views as draft-only edicts", async () => {
@@ -1466,6 +1574,42 @@ describe("S74.1 React client shell", () => {
               text: "朱批留览部院覆奏：河工清册，令部院据公开凭据覆奏，此稿只候服务器裁决。"
             }]
           },
+          domainConsequenceView: {
+            active: true,
+            summary: "当前有2条天下公开余波可追踪。",
+            recentConsequences: [
+              {
+                id: "DC-emperor-military-border",
+                sourceType: "military_diplomacy",
+                sourceLabel: "军务外交",
+                kindLabel: "军务后果",
+                title: "山海关边警余波",
+                statusLabel: "已记入后果追踪",
+                publicSummary: "边警余波已入世界议程，后续侦察、调粮和战险仍候服务器裁决。",
+                affectedMetricLabels: ["边患", "军心"],
+                severity: 2,
+                nextStep: "御览山海关边警余波，令兵部只列公开凭据、粮道缺口和待裁事项。"
+              },
+              {
+                id: "bad-emperor-domain",
+                sourceType: "judicial_case",
+                title: "outcomeId stateDelta",
+                publicSummary: "judicialCaseLedger evidenceRefs rawSql"
+              }
+            ],
+            nextActions: [
+              {
+                id: "trace-DC-emperor-military-border",
+                label: "御览天下余波",
+                text: "御览山海关边警余波，令兵部只列公开凭据、粮道缺口和待裁事项。"
+              },
+              {
+                id: "trace-bad-emperor-domain",
+                label: "不应显示污染后果",
+                text: "另查一条无可见条目绑定的安全文字。"
+              }
+            ]
+          },
           worldEntityView: {
             entities: [{ id: "entity-1", kind: "personnel", title: "吏部铨选", publicSummary: "缺额待核。" }]
           },
@@ -1501,6 +1645,8 @@ describe("S74.1 React client shell", () => {
     expect(screen.getAllByText("部院覆奏：河工清册").length).toBeGreaterThan(0);
     expect(screen.getByText(/官场后果：当前有1条奏议链路/)).toBeTruthy();
     expect(screen.getByText("风宪观察：河工清册")).toBeTruthy();
+    expect(screen.getByText("天下余波")).toBeTruthy();
+    expect(screen.getByText("山海关边警余波")).toBeTruthy();
     expect(screen.getByText("朱批拟稿")).toBeTruthy();
     expect(screen.getAllByText("圣旨草稿").length).toBeGreaterThan(0);
     expect(screen.getAllByText("朝议").length).toBeGreaterThan(0);
@@ -1508,6 +1654,7 @@ describe("S74.1 React client shell", () => {
     expect(screen.getByText("赏罚预留")).toBeTruthy();
     expect(screen.getByRole("link", { name: "入朝议页" }).getAttribute("href")).toBe(`/game/${sessionId}/court`);
     expect(screen.getByRole("link", { name: "查史册" }).getAttribute("href")).toBe(`/game/${sessionId}/archive`);
+    expect(screen.queryByRole("button", { name: "不应显示污染后果" })).toBeNull();
     expect(screen.getByText("任免、赏罚、处分、朱批成案、圣旨生效、时间推进和持久化都由服务器裁决。")).toBeTruthy();
 
     fireEvent.click(screen.getByRole("button", { name: "拟旨" }));
@@ -1524,8 +1671,10 @@ describe("S74.1 React client shell", () => {
     });
     fireEvent.click(screen.getByRole("button", { name: "月报摘录" }));
     expect(useUiStateStore.getState().actionDraft?.text).toContain("官职月报");
+    fireEvent.click(screen.getByRole("button", { name: "御览天下余波" }));
+    expect(useUiStateStore.getState().actionDraft?.text).toContain("山海关边警余波");
     expect(fetchMock.mock.calls.filter(([url]) => url === "/api/game/turn")).toHaveLength(0);
-    expect(document.body.textContent || "").not.toMatch(/provider payload|sk-test-secret|prompt|raw audit|path=|C:\\|data\/sessions|OPENAI_API_KEY/i);
+    expect(document.body.textContent || "").not.toMatch(/provider payload|sk-test-secret|prompt|raw audit|path=|C:\\|data\/sessions|OPENAI_API_KEY|stateDelta|playerDelta|evidenceRefs|outcomeId|auditRecord|judicialCaseLedger|rawSql/i);
   });
 
   it("tracks route-derived UI page state and closes safe drawers with Esc while restoring focus", async () => {
