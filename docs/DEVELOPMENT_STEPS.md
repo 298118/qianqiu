@@ -162,7 +162,7 @@
 - `npm test`（1062 项）
 - `git diff --check`
 - 提交前只读复审：Poincare 首轮未发现 P0/P1/P2；低风险建议已补前端 deny list、`caps` / `trackingEntryPoints` 类型和乱序旧账 source cap 回归。Poincare 最终复审仍未发现 P0/P1/P2，仅建议后续清理 `npcEconomyConsequence()` 重复空数组判断并可进一步收紧乱序 cap 断言。
-- 实现提交：待回填。
+- 实现提交：`eee0185a`。
 
 本轮 S88.6 inactive role 与高风险军务绕过红队当前验证口径：
 
@@ -549,7 +549,7 @@ S84 前端专项额外验收入口：
 - 安全：舆图和史册只消费 safe route view，不读取 raw `cityPolicyLedger` / `militaryDiplomacyLedger` / `judicialCaseLedger` / `npcEconomyLedger`、raw `event_archive_index`、地图 layout 坐标、provider payload、prompt、path/key、`stateDelta` / `playerDelta`、`evidenceRefs`、`outcomeId` 或 `auditRecord`。按钮只写本地 `map-runtime` / `archive-view` 行动草稿，不调用 `/api/game/turn`，不裁决财政、军务、刑名、NPC 经济、关系或持久化。
 - 验证：当前已通过语法检查、`test/domainConsequenceTrace.test.js`（9 项）、`test/safeWorldSearch.test.js`（6 项）、`test/sqliteSafeSearch.test.js`（5 项）、event/topic/resolver focused tests（24 项）、`npm run typecheck:server`、`npm run typecheck:client`、focused React App test（37 项）、完整 client Vitest（69 项）、`npm run build:client`、`AI_PROVIDER=mock npm run smoke:browser`（首轮 180s 外层超时后以 420s 超时重跑通过，最终又重跑通过）、docs governance、documentation governance、完整 `npm test`（1062 项）和 `git diff --check`。
 - 子代理：Kant 只读探查指出地图页未展示后果、史册页仍是 placeholder、`rowsFromLedger()` 先 cap 后过滤会被污染尾行遮蔽、safe search 末尾追加的后果行可能被全局 cap 截掉；本轮采纳。Poincare 首轮提交前只读复审未发现 P0/P1/P2；低风险建议已补前端 deny list、`caps`/`trackingEntryPoints` 类型和乱序旧账 source cap 回归。Poincare 最终只读复审仍未发现 P0/P1/P2，仅建议后续清理 `npcEconomyConsequence()` 重复空数组判断并可进一步收紧乱序 cap 断言。
-- 提交：实现提交待回填。
+- 提交：实现提交 `eee0185a`；本哈希回填为低风险纯文档状态更新，不改代码、API/schema、运行时行为、提示词或验证工具，按项目规则跳过额外子代理复审。
 - 下一步：提交后继续 S88.6 `domainConsequenceView` 角色可见性、map runtime 更深 hook/effect、普通回合重复触发和跨视图 cap 压力红队。
 
 ### 2026-05-21：推进 S88.6 inactive role 与高风险军务绕过红队
