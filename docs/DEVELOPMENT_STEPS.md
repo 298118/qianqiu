@@ -156,7 +156,7 @@
 - `git diff --check`
 - `npm test`（1058 项）
 - 提交前只读复审：Kierkegaard 未发现 P0/P1；发现的文档 gate 描述与复审状态 P2 已修复。
-- 实现提交：待回填。
+- 实现提交：`563c911e`。
 
 上一轮 S88.6 旧存档污染与重复后果去重红队验证口径：
 
@@ -524,9 +524,9 @@ S84 前端专项额外验收入口：
 - 范围：继续 S88.6 官场与世界后果追踪红队，聚焦普通回合 `roleCycleDomainAdjudication` 的低风险接缝是否会被非当前身份或高风险军令措辞绕过。本轮不新增 API、不新增 ledger、不改变 `militaryDiplomacyResolver` 本身的高风险战役裁决规则。
 - 实现：`src/game/roleCycleDomainAdjudication.js` 扩展 `GENERAL_HIGH_STAKES_TERMS`，把发兵、动兵、调兵、攻取、攻伐、突袭、奇袭、强攻、围城、合围、鏖战、接战、交战、动员、请战、扣使、扣留、mobilize、engage、assault、siege 等形态纳入低风险接缝阻断；将领草稿若把这些词混入“军议 / 战事档案 / 侦察 / 调粮”句，不会调用 scout/resupply resolver。分类器同时新增当前身份 gate：只有当前 `player.role` 是 `magistrate` / `general` 时才允许市价 / 军议接缝，`official` 不再因官衔推断为知县或将军而静默借用对应 resolver。
 - 安全：新增回归确认书生、大臣、皇帝和官衔像知县/将领的入仕官员，即使写出“军议调粮”或“处置市价”，也不会触发 `cityPolicyResolver` / `militaryDiplomacyResolver`，不会写 `cityPolicyLedger` / `militaryDiplomacyLedger`，普通 turn payload 仍不暴露 `stateDelta`、`playerDelta`、`auditRecord`、sealed token 或 raw ledger。
-- 验证：当前已通过语法检查、`test/roleCycleDomainAdjudication.test.js`（8 项）、`test/gameTurnRoleCycleConsequences.test.js`（4 项）、军务 resolver/权限 focused tests（18 项）、`npm run typecheck:server`、docs governance、documentation governance、完整 `npm test`（1058 项）和 `git diff --check`；提交哈希待回填。
+- 验证：当前已通过语法检查、`test/roleCycleDomainAdjudication.test.js`（8 项）、`test/gameTurnRoleCycleConsequences.test.js`（4 项）、军务 resolver/权限 focused tests（18 项）、`npm run typecheck:server`、docs governance、documentation governance、完整 `npm test`（1058 项）和 `git diff --check`。
 - 子代理：Kierkegaard 只读探查指出残余高风险词与 `official` 官衔推断绕过风险；本轮采纳。提交前只读复审未发现 P0/P1；发现的文档 gate 描述与复审状态 P2 已修复。
-- 提交：实现提交待回填。
+- 提交：实现提交 `563c911e`。本哈希回填为低风险纯文档状态更新，不改代码、API/schema、运行时行为、提示词或验证工具；按项目规则跳过额外子代理复审。
 - 下一步：继续 S88.6 地图/史册追踪入口和 evidence cap 可用性红队。
 
 ### 2026-05-21：推进 S88.6 旧存档污染与重复后果去重红队
