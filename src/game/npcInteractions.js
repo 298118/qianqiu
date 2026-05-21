@@ -12,7 +12,7 @@ const {
 } = require("./npcRoster");
 
 const UNSAFE_TEXT_PATTERN =
-  /(hiddenNotes|hiddenIntent|hiddenDossier|raw[_ -]?(?:provider|audit|table|ledger|prompt|state)|worldState|provider|proposal|prompt|api[_ -]?key|OPENAI_API_KEY|DEEPSEEK_API_KEY|MIMO_API_KEY|ANTHROPIC_API_KEY|data[\\/](?:sessions|audit)|sqlite|world_sessions|prompt_retrieval_index|event_archive_index|ai_change_proposals|event_log|sk-[A-Za-z0-9_-]{6,}|tp-[A-Za-z0-9_-]{6,}|[A-Za-z]:[\\/][^\s"'<>]+|(?:file:\/\/)?(?:\/Users|\/home|\/tmp|\/var|\/mnt|\/opt)\/[^\s"'<>]+)/i;
+  /(hidden[_ -]?(?:notes|intent|dossier)|private[_ -]?signal[_ -]?tags|true[_ -]?assets|secret[_ -]?relationships|unrevealed[_ -]?tasks|provider[_ -]?payload|raw[_ -]?(?:provider|audit|table|ledger|prompt|payload|state)|retrieval[_ -]?context|state[_ -]?patch|world[_ -]?state|provider|proposal|prompt|api[_ -]?key|OPENAI_API_KEY|DEEPSEEK_API_KEY|MIMO_API_KEY|ANTHROPIC_API_KEY|data[\\/](?:sessions|audit)|sqlite|world_sessions|prompt_retrieval_index|event_archive_index|safe_search_index|safe_search_fts|ai_change_proposals|event_log|sk-[A-Za-z0-9_-]{6,}|tp-[A-Za-z0-9_-]{6,}|[A-Za-z]:[\\/][^\s"'<>]+|(?:file:\/\/)?(?:\/Users|\/home|\/tmp|\/var|\/mnt|\/opt)\/[^\s"'<>]+)/i;
 
 function isPlainObject(value) {
   return value !== null && typeof value === "object" && !Array.isArray(value);
@@ -28,6 +28,21 @@ function cleanText(value, fallback = "", maxLength = NPC_INTERACTION_CONFIG.maxT
 function cleanId(value, fallback = "") {
   const text = cleanText(value, fallback, 120);
   return text.replace(/[^A-Za-z0-9_.:-]+/g, "-").replace(/^-+|-+$/g, "") || fallback;
+}
+
+function sanitizePublicViewValue(value, maxLength = NPC_INTERACTION_CONFIG.maxTextLength) {
+  if (typeof value === "string") return cleanText(value, "", maxLength);
+  if (Array.isArray(value)) {
+    return value
+      .map((entry) => sanitizePublicViewValue(entry, maxLength))
+      .filter((entry) => entry !== "" && entry !== null && entry !== undefined);
+  }
+  if (!isPlainObject(value)) return value;
+  return Object.entries(value).reduce((publicValue, [key, entry]) => {
+    if (UNSAFE_TEXT_PATTERN.test(key)) return publicValue;
+    publicValue[key] = sanitizePublicViewValue(entry, maxLength);
+    return publicValue;
+  }, {});
 }
 
 function clampNumber(value, min, max, fallback = min) {
@@ -178,6 +193,9 @@ function recordNpcInteraction(worldState = {}, request = {}, aiResult = {}, opti
     riskTags: Array.isArray(options.resolutionView?.riskTags)
       ? options.resolutionView.riskTags.map((entry) => cleanText(entry, "", 40)).filter(Boolean).slice(0, 6)
       : [],
+    resolverTrace: isPlainObject(options.resolutionView?.resolverTrace)
+      ? sanitizePublicViewValue(options.resolutionView.resolverTrace)
+      : null,
     eligibilityView: options.resolutionView?.eligibilityView || null,
     relationshipImpactView: options.resolutionView?.relationshipImpactView || null,
     resourceImpactView: options.resolutionView?.resourceImpactView || null,
@@ -224,6 +242,7 @@ function buildNpcInteractionLedgerView(worldState = {}, options = {}) {
       outcomeSummary: record.outcomeSummary,
       serverAdjudication: record.serverAdjudication,
       riskTags: record.riskTags,
+      resolverTrace: sanitizePublicViewValue(record.resolverTrace),
       eligibilityView: record.eligibilityView,
       relationshipImpactView: record.relationshipImpactView,
       resourceImpactView: record.resourceImpactView,

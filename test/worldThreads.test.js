@@ -3,6 +3,10 @@ const assert = require("node:assert/strict");
 
 const { createInitialState } = require("../src/game/initialState");
 const {
+  createNpcActiveRequest,
+  resolveNpcActiveRequest
+} = require("../src/game/npcActiveRequests");
+const {
   buildWorldThreadView,
   ensureWorldThreadState,
   normalizeWorldThreadState,
@@ -18,6 +22,35 @@ test("initial state carries an empty server-owned world thread ledger", () => {
     recentResolved: []
   });
   assert.deepEqual(buildWorldThreadView(worldState).activeThreads, []);
+});
+
+test("S88.7 world threads consume the dedicated NPC active request ledger safely", () => {
+  const worldState = createInitialState({ playerName: "来函议程", role: "magistrate" });
+  worldState.turnCount = 4;
+  const created = createNpcActiveRequest(worldState, "bribe");
+  assert.equal(created.ok, true);
+
+  ensureWorldThreadState(worldState);
+  const activeView = buildWorldThreadView(worldState);
+  const activeThread = activeView.activeThreads.find((thread) => thread.sourceId === created.request.requestId);
+  assert.ok(activeThread);
+  assert.equal(activeThread.sourceType, "active_npc_request");
+  assert.equal(activeThread.kind, "npc_request");
+  assert.equal(activeThread.deadlineUnit, "turn");
+  assert.match(activeThread.summary, /礼物|银钱|廉政|风险/);
+
+  const resolved = resolveNpcActiveRequest(worldState, created.request.requestId, "report");
+  assert.equal(resolved.ok, true);
+  ensureWorldThreadState(worldState);
+  const watchView = buildWorldThreadView(worldState);
+  const watchThread = watchView.activeThreads.find((thread) => thread.sourceId === created.request.requestId);
+  assert.ok(watchThread);
+  assert.equal(watchThread.status, "watch");
+  assert.match(watchThread.summary, /廉政|线索|服务器/);
+  assert.doesNotMatch(
+    JSON.stringify(watchView),
+    /npcActiveRequestLedger|hiddenDossier|privateSignalTags|求财|亲族压力|rawProvider|sk-[A-Za-z0-9_-]{6,}/
+  );
 });
 
 test("world thread view filters hidden thread notes and normalizes legacy rows", () => {

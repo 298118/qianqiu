@@ -1,4 +1,5 @@
 const { buildActiveNpcRequestView } = require("./activeRequests");
+const { buildNpcActiveRequestView: buildNpcActiveRequestLedgerView } = require("./npcActiveRequests");
 const { buildLongTermEventView } = require("./longTermEvents");
 const { buildOfficialCareerView } = require("./officialCareer");
 const { buildOfficialCourtConsequenceView } = require("./officialCourtConsequences");
@@ -13,6 +14,7 @@ const WORLD_THREAD_SCHEMA_VERSION = 1;
 const MAX_THREADS = 12;
 const MAX_RECENT_RESOLVED = 8;
 const MAX_TEXT_LENGTH = 180;
+const MAX_NPC_ACTIVE_REQUEST_THREADS = 3;
 
 const THREAD_STATUSES = new Set(["active", "watch", "resolved"]);
 const THREAD_KINDS = new Set([
@@ -184,6 +186,44 @@ const SOURCE_INTERVENTION_HINTS = {
   frontier_report: ["查边报与军饷"],
   faction_pressure: ["谨慎处理章疏和人情"],
   local_case_pressure: ["先断案或安民"]
+};
+const NPC_ACTIVE_REQUEST_RELATED = {
+  help: {
+    entities: ["local-gentry-county", "academy-same-year-circle"],
+    metrics: ["player.gentryRelations", "publicOrder"]
+  },
+  debt_collection: {
+    entities: ["local-gentry-county", "fiscal-land-merchant-tax"],
+    metrics: ["treasury", "player.gentryRelations"]
+  },
+  advice: {
+    entities: ["academy-county-school", "court-ministry-personnel"],
+    metrics: ["player.performanceMerit", "publicOrder"]
+  },
+  petition: {
+    entities: ["local-gentry-county", "local-riverworks-lawsuits"],
+    metrics: ["player.pendingLawsuits", "player.gentryRelations"]
+  },
+  bribe: {
+    entities: ["court-censorate", "fiscal-salt-canal"],
+    metrics: ["corruption", "treasury"]
+  },
+  impeachment: {
+    entities: ["court-censorate", "court-ministry-personnel"],
+    metrics: ["corruption", "player.impeachmentRisk"]
+  },
+  introduction: {
+    entities: ["academy-same-year-circle", "court-ministry-personnel"],
+    metrics: ["player.promotionProspect", "player.performanceMerit"]
+  },
+  marriage_proposal: {
+    entities: ["local-gentry-county", "academy-same-year-circle"],
+    metrics: ["player.gentryRelations"]
+  },
+  betrayal: {
+    entities: ["court-censorate", "local-gentry-county"],
+    metrics: ["corruption", "publicOrder"]
+  }
 };
 
 function isPlainObject(value) {
@@ -650,6 +690,58 @@ function deriveActiveRequestThread(worldState) {
   });
 }
 
+function npcActiveRequestStatus(status = "") {
+  if (status === "active" || status === "deferred") return "active";
+  return "watch";
+}
+
+function npcActiveRequestSeverity(request = {}) {
+  const highRiskTypes = new Set(["bribe", "impeachment", "betrayal"]);
+  if (highRiskTypes.has(request.type)) return 2;
+  if (request.status === "converted_to_risk" || request.status === "reported") return 2;
+  if (Number(request.turnsRemaining) <= 0 && request.status === "active") return 2;
+  return 1;
+}
+
+function npcActiveRequestRelated(request = {}) {
+  const related = NPC_ACTIVE_REQUEST_RELATED[request.type] || NPC_ACTIVE_REQUEST_RELATED.help;
+  return {
+    entities: related.entities,
+    metrics: related.metrics
+  };
+}
+
+function deriveNpcActiveRequestLedgerThreads(worldState) {
+  const view = buildNpcActiveRequestLedgerView(worldState);
+  return (view.items || [])
+    .filter((request) => request?.requestId)
+    .filter((request) => [
+      "active",
+      "deferred",
+      "under_review",
+      "reported",
+      "converted_to_risk",
+      "accepted_pending_server_resolution"
+    ].includes(request.status))
+    .slice(0, MAX_NPC_ACTIVE_REQUEST_THREADS)
+    .map((request) => makeThread(worldState, {
+      id: `WT-npc-active-${request.requestId}`,
+      sourceType: "active_npc_request",
+      sourceId: request.requestId,
+      kind: "npc_request",
+      status: npcActiveRequestStatus(request.status),
+      title: cleanText(request.title, "NPC 主动来函", 120),
+      summary: cleanText(`${request.ask || ""} ${request.outcome?.publicSummary || request.stakes || ""}`, "NPC 主动来函等待服务器后续裁决。", 180),
+      severity: npcActiveRequestSeverity(request),
+      dueTurn: request.dueTurn,
+      createdTurn: request.createdTurn,
+      lastUpdatedTurn: request.lastUpdatedTurn || currentTurn(worldState),
+      related: npcActiveRequestRelated(request),
+      visibility: "relationship_visible"
+    }))
+    .filter(Boolean);
+}
+
 function deriveLongTermEventThreads(worldState) {
   return buildLongTermEventView(worldState).activeEvents.map((event) => makeThread(worldState, {
     id: `WT-lte-${event.id}`,
@@ -950,6 +1042,7 @@ function deriveMetricPressureThreads(worldState, existingThreads) {
 function deriveWorldThreads(worldState = {}) {
   const threads = [
     deriveActiveRequestThread(worldState),
+    ...deriveNpcActiveRequestLedgerThreads(worldState),
     ...deriveLongTermEventThreads(worldState),
     ...deriveOfficialAssignmentThreads(worldState),
     ...deriveOfficialCourtFollowUpThreads(worldState),

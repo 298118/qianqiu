@@ -393,6 +393,9 @@ export type NpcActiveRequestItemView = JsonObject & {
   readonly proposalBoundary?: string;
   readonly riskTags?: readonly string[];
   readonly allowedResponseActions?: readonly string[];
+  readonly createdTurn?: number;
+  readonly dueTurn?: number;
+  readonly lastUpdatedTurn?: number;
   readonly turnsRemaining?: number;
   readonly outcome?: JsonObject | null;
 };
@@ -604,6 +607,7 @@ export type NpcInteractionRecordView = {
   readonly outcomeSummary?: string;
   readonly serverAdjudication?: JsonObject | null;
   readonly riskTags?: readonly string[];
+  readonly resolverTrace?: JsonObject | null;
   readonly eligibilityView?: JsonObject | null;
   readonly relationshipImpactView?: JsonObject | null;
   readonly resourceImpactView?: JsonObject | null;

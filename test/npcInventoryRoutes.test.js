@@ -175,9 +175,11 @@ test("S83/S84 safety APIs expose NPC, inventory, trade and delegated task views 
   const socialPayload = await socialResponse.json();
   assert.equal(socialResponse.status, 200);
   assert.equal(socialPayload.npcActionResolutionView.serverStatus, "server_adjudicated");
+  assert.equal(socialPayload.npcActionResolutionView.resolverTrace.resolver, "npc_relationship_action_resolver");
   assert.equal(socialPayload.npcActionResolutionView.resourceImpactView.applied, false);
   assert.equal(socialPayload.npcActionResolutionView.worldPeopleImpactView.applied, false);
   assert.ok(socialPayload.npcActionResolutionView.ignoredClientResultFields.includes("winner"));
+  assert.equal(socialPayload.npcInteractionView.items[0].resolverTrace.resolver, "npc_relationship_action_resolver");
   assert.ok(socialPayload.npcInteractionView.items[0].outcomeSummary);
 
   const playerStateResponse = await fetch(`${server.baseUrl}/api/game/player-state/${worldState.sessionId}`);
@@ -235,6 +237,7 @@ test("S85.3 turn route schedules and resolves NPC active requests through safe v
   const serialized = JSON.stringify(secondPayload);
   assert.equal(secondResponse.status, 200);
   assert.ok(secondPayload.npcActiveRequests.outcome.resolved >= 1);
+  assert.ok(secondPayload.npcActiveRequests.outcome.resolutionTraces.some((trace) => trace.resolver === "npc_active_request_resolver"));
   assert.ok(secondPayload.npcActiveRequestView.items.some((item) => item.outcome));
   assert.doesNotMatch(
     serialized,

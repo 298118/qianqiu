@@ -108,7 +108,9 @@ S85.3-S85.4 新增 NPC 主动来函和礼法动作服务器裁决层：
 - `npcActiveRequestLedger`：保存 NPC 主动求助、索债、献策、请托、行贿、弹劾、引荐、求婚和背叛请求。它只记录服务器生成或采纳的安全意图，不保存 hiddenDossier、raw provider payload、完整 prompt、本地路径、key 或 SQLite 行。玩家回应只能被归类为 `accept | refuse | defer | investigate | report`，随后由服务器把状态改为待查、拒绝、上交、风险登记或待后续裁决；不得即时扣银、转物、写婚姻、定罪、弹劾成案或完成隐藏任务。
 - `npcRelationshipActions`：为 `debate | duel | courtship | marriage` 提供正式 schema、NPC 名册能力、关系/年龄/礼法/权限门槛、服务器 outcome 摘要和红线。前端可以提交论道、切磋、求爱或议婚意向，但客户端传来的胜负、伤势、资源 delta、配偶字段、关系 delta 或 state patch 一律忽略；服务器只写安全交互记录和小幅可审查关系影响，婚姻、伤亡、财物流转和制度后果仍留给后续专门 resolver。
 
-普通回合、SSE、考试 payload 和 player-state 返回 `npcActiveRequestView`；NPC 详情返回 `relationshipActionEligibilityView`。兼容 `worldState`、redacted player API、SQLite 派生表和 prompt context 必须剥离 raw `npcActiveRequestLedger` 与 NPC 私档，只暴露安全标题、请求类型、NPC 公开名、期限、风险标签、允许回应、服务器边界和公开 outcome。
+S88.7 起，主动来函回应和逾期结果还必须生成 `npc_active_request_resolver` 安全 trace，包含 request type、回应动作、状态、处置分层、公开风险标签、安全 source refs、public resolution ref 和服务器边界；该 trace 可进入请求 `auditRefs`、普通 turn feedback、`npcActiveRequestView.outcome.resolverTrace`、`worldThreadView` 和 `worldEntities` 公开压力，但不得包含 raw ledger path、hiddenDossier、privateSignalTags、provider payload、prompt、SQLite 行、资源 delta、配偶字段、弹劾成案或背叛真相。论道、切磋、求爱和议婚结果还必须生成 `npc_relationship_action_resolver` trace，记录 eligibility、blocker count、ignored client result fields、公开 source refs 和服务器边界，并随 `npcInteractionLedger` 安全记录返回。
+
+普通回合、SSE、考试 payload 和 player-state 返回 `npcActiveRequestView`；NPC 详情返回 `relationshipActionEligibilityView`。兼容 `worldState`、redacted player API、SQLite 派生表和 prompt context 必须剥离 raw `npcActiveRequestLedger` 与 NPC 私档，只暴露安全标题、请求类型、NPC 公开名、期限、风险标签、允许回应、服务器边界、公开 outcome 和安全 resolver trace。
 
 ## 3. 安全 API
 

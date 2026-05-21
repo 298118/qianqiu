@@ -1090,6 +1090,45 @@ function activeRequestInfluences(activeNpcRequest) {
   return [];
 }
 
+function npcActiveRequestLedgerInfluences(npcActiveRequests) {
+  if (!isPlainObject(npcActiveRequests)) return [];
+  const outcome = isPlainObject(npcActiveRequests.outcome) ? npcActiveRequests.outcome : {};
+  const influences = [];
+  const scheduled = Math.max(0, Math.min(3, Number(outcome.scheduled) || 0));
+  if (scheduled) {
+    influences.push(entityInfluence("local-gentry-county", "active_npc_request", {
+      pressure: scheduled
+    }, "NPC 主动来函进入本旬人情压力"));
+  }
+
+  for (const trace of Array.isArray(outcome.resolutionTraces) ? outcome.resolutionTraces.slice(0, 4) : []) {
+    if (!isPlainObject(trace)) continue;
+    const requestType = cleanText(trace.requestType, "", 48);
+    const disposition = cleanText(trace.disposition, "", 80);
+    if (requestType === "bribe" || disposition.includes("integrity")) {
+      influences.push(entityInfluence("court-censorate", "active_npc_request", {
+        pressure: 1,
+        trust: trace.responseAction === "report" ? 1 : 0
+      }, "行贿来函已转入服务器廉政复核", trace.publicResolutionRef));
+    } else if (requestType === "impeachment" || disposition.includes("impeachment")) {
+      influences.push(entityInfluence("court-censorate", "active_npc_request", {
+        pressure: 1
+      }, "弹劾线索来函进入证据复核", trace.publicResolutionRef));
+    } else if (requestType === "betrayal") {
+      influences.push(entityInfluence("local-gentry-county", "active_npc_request", {
+        pressure: 1,
+        trust: -1
+      }, "背叛风险来函转入查证", trace.publicResolutionRef));
+    } else {
+      influences.push(entityInfluence("academy-same-year-circle", "active_npc_request", {
+        trust: trace.status === "refused" || trace.status === "expired" ? -1 : 1,
+        pressure: trace.status === "deferred" ? 1 : 0
+      }, "NPC 来函回应已进入公开人情余波", trace.publicResolutionRef));
+    }
+  }
+  return influences;
+}
+
 function longTermEventInfluences(longTermEvents) {
   if (!isPlainObject(longTermEvents)) return [];
   const events = [
@@ -1208,6 +1247,7 @@ function deriveWorldEntityInfluences(worldState = {}, context = {}) {
   }
 
   influences.push(...activeRequestInfluences(context.activeNpcRequest));
+  influences.push(...npcActiveRequestLedgerInfluences(context.npcActiveRequests));
   if (completedMonth) {
     influences.push(...longTermEventInfluences(context.longTermEvents));
   }

@@ -17,7 +17,8 @@ const {
 const { NPC_PRIVATE_SIGNAL_TAGS } = require("./npcRosterConfig");
 
 const UNSAFE_TEXT_PATTERN =
-  /(hiddenNotes|hiddenIntent|hiddenDossier|privateSignalTags|trueAssets|secretRelationships|unrevealedTasks|raw[_ -]?(?:provider|audit|table|ledger|prompt|payload|state)|\b(?:provider|prompt|proposal)\b|retrievalContext|statePatch|worldState|world_sessions|prompt_retrieval_index|event_archive_index|safe_search_index|ai_change_proposals|event_log|api[_ -]?key|OPENAI_API_KEY|DEEPSEEK_API_KEY|MIMO_API_KEY|ANTHROPIC_API_KEY|sqlite|data[\\/](?:sessions|audit)|sk-[A-Za-z0-9_-]{6,}|tp-[A-Za-z0-9_-]{6,}|[A-Za-z]:[\\/][^\s"'<>]+|(?:file:\/\/)?(?:\/Users|\/home|\/tmp|\/var|\/mnt|\/opt)\/[^\s"'<>]+)/i;
+  /(hidden[_ -]?(?:notes|intent|dossier)|private[_ -]?signal[_ -]?tags|true[_ -]?assets|secret[_ -]?relationships|unrevealed[_ -]?tasks|provider[_ -]?payload|raw[_ -]?(?:provider|audit|table|ledger|prompt|payload|state)|\b(?:provider|prompt|proposal)\b|retrieval[_ -]?context|state[_ -]?patch|world[_ -]?state|world_sessions|prompt_retrieval_index|event_archive_index|safe_search_index|safe_search_fts|ai_change_proposals|event_log|api[_ -]?key|OPENAI_API_KEY|DEEPSEEK_API_KEY|MIMO_API_KEY|ANTHROPIC_API_KEY|sqlite|data[\\/](?:sessions|audit)|sk-[A-Za-z0-9_-]{6,}|tp-[A-Za-z0-9_-]{6,}|[A-Za-z]:[\\/][^\s"'<>]+|(?:file:\/\/)?(?:\/Users|\/home|\/tmp|\/var|\/mnt|\/opt)\/[^\s"'<>]+)/i;
+const NPC_ACTIVE_REQUEST_RESOLVER_TRACE_VERSION = "s88.7-npc-active-request-resolver-trace.v1";
 
 function isPlainObject(value) {
   return value !== null && typeof value === "object" && !Array.isArray(value);
@@ -253,10 +254,12 @@ function createNpcActiveRequest(worldState = {}, requestTypeInput = "help", opti
   const number = clampNumber(ledger.nextRequestNumber, 1, Number.MAX_SAFE_INTEGER, 1);
   const turn = currentTurn(worldState);
   const dueTurns = clampNumber(typeConfig.dueTurns, 1, 12, NPC_ACTIVE_REQUEST_CONFIG.defaultDueTurns);
+  const npcName = cleanPublicText(npc.displayName, "无名人物", 80);
+  const npcTitle = cleanPublicText(npc.publicProfile?.title, "可见人物", 80);
   const ask = cleanPublicText(aiProposal.requestedAction, "", 140) || typeConfig.ask;
   const intentSummary = cleanPublicText(
     aiProposal.intentSummary,
-    `${npc.displayName}近期主动递来${typeConfig.label}，具体后果仍待服务器裁决。`,
+    `${npcName}近期主动递来${typeConfig.label}，具体后果仍待服务器裁决。`,
     180
   );
   const request = {
@@ -266,12 +269,12 @@ function createNpcActiveRequest(worldState = {}, requestTypeInput = "help", opti
     typeLabel: typeConfig.label,
     status: "active",
     npcId: npc.npcId,
-    npcName: cleanText(npc.displayName, "无名人物", 80),
-    npcTitle: cleanText(npc.publicProfile?.title, "可见人物", 80),
-    title: `${cleanText(npc.displayName, "此人", 80)}${typeConfig.titleSuffix}`,
+    npcName,
+    npcTitle,
+    title: `${npcName}${typeConfig.titleSuffix}`,
     ask,
     stakes: typeConfig.stakes,
-    proposalBoundary: cleanText(
+    proposalBoundary: cleanPublicText(
       aiProposal.proposalBoundary,
       "本请求只是 NPC 主动意图 proposal；资源、关系、弹劾、婚姻和任务结果均由服务器裁决。",
       180
@@ -298,7 +301,7 @@ function createNpcActiveRequest(worldState = {}, requestTypeInput = "help", opti
   ledger.activeRequests.push(request);
   ledger.nextRequestNumber = number + 1;
   ledger.cooldowns[requestType] = turn;
-  const event = `[NPC 主动] ${request.npcName}${typeConfig.titleSuffix}：${ask}`;
+  const event = `[NPC 主动] ${npcName}${typeConfig.titleSuffix}：${ask}`;
   ledger.events = [...(ledger.events || []), event].slice(-NPC_ACTIVE_REQUEST_CONFIG.maxRecentEvents);
   return {
     ok: true,
@@ -409,6 +412,51 @@ function outcomeForResponse(request = {}, responseAction = "") {
   };
 }
 
+function dispositionForResponse(request = {}, responseAction = "", status = "") {
+  if (request.type === "bribe") return responseAction === "report" ? "integrity_report" : "integrity_risk_review";
+  if (request.type === "impeachment") return responseAction === "report" ? "impeachment_evidence_report" : "impeachment_evidence_review";
+  if (request.type === "betrayal") return "betrayal_risk_review";
+  if (request.type === "marriage_proposal") return "ritual_family_review";
+  if (request.type === "debt_collection") return status === "refused" ? "debt_refused" : "debt_claim_review";
+  if (request.type === "introduction") return "network_introduction_review";
+  if (responseAction === "investigate") return "evidence_review";
+  if (responseAction === "report") return "reported_for_server_review";
+  if (responseAction === "defer") return "deferred_obligation";
+  if (responseAction === "refuse" || responseAction === "expire") return "relationship_risk_recorded";
+  return "accepted_pending_follow_up";
+}
+
+function buildNpcActiveRequestResolverTrace(worldState = {}, request = {}, responseAction = "", outcome = {}) {
+  const status = normalizeStatus(outcome.status || request.status, "under_review");
+  const requestId = cleanId(request.requestId, "");
+  const npcId = cleanId(request.npcId, "");
+  const publicSourceRefs = uniqueCleanList([
+    requestId ? `npcActiveRequestView:${requestId}` : "",
+    npcId ? `npcRosterView:${npcId}` : ""
+  ], NPC_ACTIVE_REQUEST_CONFIG.maxEvidenceRefs, 120).filter((ref) => !containsPrivateSignalText(ref));
+  return {
+    schemaVersion: NPC_ACTIVE_REQUEST_RESOLVER_TRACE_VERSION,
+    resolver: "npc_active_request_resolver",
+    publicResolutionRef: cleanId(`npc-active-resolution:${requestId || "request"}:${currentTurn(worldState)}`, ""),
+    requestType: normalizeRequestType(request.type, "help"),
+    typeLabel: cleanPublicText(request.typeLabel, "来函", 40),
+    responseAction: cleanPublicText(responseAction, "refuse", 48),
+    status,
+    disposition: dispositionForResponse(request, responseAction, status),
+    publicSourceRefs,
+    riskTags: uniqueCleanList(request.riskTags, NPC_ACTIVE_REQUEST_CONFIG.maxRiskTags, 40)
+      .filter((tag) => !containsPrivateSignalText(tag)),
+    boundaries: {
+      serverOwnsResources: true,
+      serverOwnsRelationships: true,
+      serverOwnsMarriageAndDiscipline: true,
+      browserCannotApplyClientOutcome: true,
+      privateIntentSignalsRedacted: true,
+      privateNpcDossierRedacted: true
+    }
+  };
+}
+
 function resolveNpcActiveRequest(worldState = {}, requestId = "", responseActionInput = "refuse") {
   const ledger = ensureNpcActiveRequestLedgerState(worldState);
   const id = cleanId(requestId, "");
@@ -419,6 +467,7 @@ function resolveNpcActiveRequest(worldState = {}, requestId = "", responseAction
   const outcome = outcomeForResponse(request, responseAction);
   const impact = relationshipImpactFor(request, responseAction);
   const relationshipUpdate = applyNpcRosterRelationshipImpact(worldState, request, impact);
+  const resolverTrace = buildNpcActiveRequestResolverTrace(worldState, request, responseAction, outcome);
   request.status = normalizeStatus(outcome.status, "under_review");
   request.responseAction = responseAction;
   request.lastUpdatedTurn = currentTurn(worldState);
@@ -426,6 +475,7 @@ function resolveNpcActiveRequest(worldState = {}, requestId = "", responseAction
     responseAction,
     publicSummary: outcome.summary,
     serverDecision: "server_adjudicated",
+    resolverTrace,
     resourceImpactView: {
       applied: false,
       reason: "NPC 主动请求不得由前端、AI 或即时按钮直接扣银、转物或写库。"
@@ -446,13 +496,18 @@ function resolveNpcActiveRequest(worldState = {}, requestId = "", responseAction
         note: "无可见 NPC 关系项可调整。"
       }
   };
-  const event = `[NPC 主动] ${request.npcName}的${request.typeLabel}已由服务器裁决：${outcome.summary}`;
+  request.auditRefs = uniqueCleanList([...(request.auditRefs || []), resolverTrace.publicResolutionRef], 6, 120);
+  const eventNpcName = cleanPublicText(request.npcName, "此人", 80);
+  const eventTypeLabel = cleanPublicText(request.typeLabel, "来函", 40);
+  const eventSummary = cleanPublicText(outcome.summary, "服务器已裁决此请求。", 180);
+  const event = `[NPC 主动] ${eventNpcName}的${eventTypeLabel}已由服务器裁决：${eventSummary}`;
   ledger.events = [...(ledger.events || []), event].slice(-NPC_ACTIVE_REQUEST_CONFIG.maxRecentEvents);
   return {
     ok: true,
     errors: [],
     request,
     events: [event],
+    resolutionTrace: resolverTrace,
     attributeChanges: [{
       path: "npcActiveRequestView",
       label: "NPC 主动请求",
@@ -469,20 +524,29 @@ function expireNpcActiveRequests(worldState = {}) {
   const turn = currentTurn(worldState);
   const events = [];
   const attributeChanges = [];
+  const resolutionTraces = [];
   for (const request of ledger.activeRequests || []) {
     if (request.status !== "active" && request.status !== "deferred") continue;
     if (turn < clampNumber(request.dueTurn, 0, Number.MAX_SAFE_INTEGER, turn + 1)) continue;
     request.status = "expired";
     request.lastUpdatedTurn = turn;
+    const resolverTrace = buildNpcActiveRequestResolverTrace(worldState, request, "expire", {
+      status: "expired"
+    });
+    resolutionTraces.push(resolverTrace);
     request.outcome = {
       responseAction: "expire",
       publicSummary: "限期已过，服务器只记录情分与风险变化，不执行隐藏后果。",
       serverDecision: "server_adjudicated",
+      resolverTrace,
       resourceImpactView: { applied: false },
       relationshipImpactView: { npcId: request.npcId, appliedBy: "server", closenessDelta: -1, hostilityDelta: 1 }
     };
+    request.auditRefs = uniqueCleanList([...(request.auditRefs || []), resolverTrace.publicResolutionRef], 6, 120);
     applyNpcRosterRelationshipImpact(worldState, request, { closenessDelta: -1, trustDelta: 0, hostilityDelta: 1, favorsOwedDelta: 0 });
-    const event = `[NPC 主动] ${request.npcName}的${request.typeLabel}逾期未答。`;
+    const eventNpcName = cleanPublicText(request.npcName, "此人", 80);
+    const eventTypeLabel = cleanPublicText(request.typeLabel, "来函", 40);
+    const event = `[NPC 主动] ${eventNpcName}的${eventTypeLabel}逾期未答。`;
     events.push(event);
     attributeChanges.push({
       path: "npcActiveRequestView",
@@ -493,7 +557,11 @@ function expireNpcActiveRequests(worldState = {}) {
     });
   }
   ledger.events = [...(ledger.events || []), ...events].slice(-NPC_ACTIVE_REQUEST_CONFIG.maxRecentEvents);
-  return { events, attributeChanges };
+  return {
+    events,
+    attributeChanges,
+    resolutionTraces
+  };
 }
 
 function runNpcActiveRequestStep(worldState = {}, input = "", options = {}) {
@@ -509,7 +577,8 @@ function runNpcActiveRequestStep(worldState = {}, input = "", options = {}) {
       scheduled: 0,
       resolved: 0,
       expired: 0,
-      activeCount: 0
+      activeCount: 0,
+      resolutionTraces: []
     }
   };
 
@@ -521,6 +590,7 @@ function runNpcActiveRequestStep(worldState = {}, input = "", options = {}) {
       result.events.push(...resolved.events);
       result.attributeChanges.push(...(resolved.attributeChanges || []));
       result.relationshipChanges.push(...(resolved.relationshipChanges || []));
+      if (resolved.resolutionTrace) result.outcome.resolutionTraces.push(resolved.resolutionTrace);
       result.outcome.resolved += 1;
     }
   }
@@ -528,6 +598,7 @@ function runNpcActiveRequestStep(worldState = {}, input = "", options = {}) {
   const expired = expireNpcActiveRequests(worldState);
   result.events.push(...expired.events);
   result.attributeChanges.push(...expired.attributeChanges);
+  result.outcome.resolutionTraces.push(...(expired.resolutionTraces || []));
   result.outcome.expired += expired.events.length;
 
   if (shouldScheduleRequest(worldState, ledger, options)) {
@@ -539,7 +610,7 @@ function runNpcActiveRequestStep(worldState = {}, input = "", options = {}) {
         path: "npcActiveRequestView",
         label: "NPC 主动请求",
         before: null,
-        after: created.request.typeLabel,
+        after: cleanPublicText(created.request.typeLabel, "来函", 40),
         reason: "服务器根据 NPC 名册、公开关系和内部信号生成主动请求。"
       });
       result.outcome.scheduled += 1;
@@ -554,8 +625,13 @@ function runNpcActiveRequestStep(worldState = {}, input = "", options = {}) {
 }
 
 function toRequestView(request = {}, worldState = {}) {
-  const npc = getNpcForServer(worldState, request.npcId);
-  const typeConfig = NPC_ACTIVE_REQUEST_TYPE_CONFIG[request.type] || NPC_ACTIVE_REQUEST_TYPE_CONFIG.help;
+  const npcId = cleanId(request.npcId, "");
+  const npc = getNpcForServer(worldState, npcId);
+  const requestType = normalizeRequestType(request.type, "help");
+  const typeConfig = NPC_ACTIVE_REQUEST_TYPE_CONFIG[requestType] || NPC_ACTIVE_REQUEST_TYPE_CONFIG.help;
+  const publicNpcName = cleanPublicText(request.npcName, cleanPublicText(npc?.displayName, "未知人物", 80), 80);
+  const publicTypeLabel = cleanPublicText(request.typeLabel, typeConfig.label, 40);
+  const publicTitle = cleanPublicText(request.title, `${publicNpcName}${typeConfig.titleSuffix}`, 120);
   const outcome = request.outcome ? {
     responseAction: cleanPublicText(request.outcome.responseAction, "", 48),
     publicSummary: cleanPublicText(
@@ -565,25 +641,26 @@ function toRequestView(request = {}, worldState = {}) {
     ),
     serverDecision: cleanPublicText(request.outcome.serverDecision, "server_adjudicated", 80),
     resourceImpactView: sanitizePublicViewValue(request.outcome.resourceImpactView),
-    relationshipImpactView: sanitizePublicViewValue(request.outcome.relationshipImpactView)
+    relationshipImpactView: sanitizePublicViewValue(request.outcome.relationshipImpactView),
+    resolverTrace: sanitizePublicViewValue(request.outcome.resolverTrace)
   } : null;
   return {
-    requestId: request.requestId,
-    type: request.type,
-    typeLabel: request.typeLabel,
-    status: request.status,
+    requestId: cleanId(request.requestId, ""),
+    type: requestType,
+    typeLabel: publicTypeLabel,
+    status: normalizeStatus(request.status, "active"),
     npc: {
-      npcId: request.npcId,
-      displayName: request.npcName,
-      title: request.npcTitle,
-      portraitRef: npc?.portraitRef || ""
+      npcId,
+      displayName: publicNpcName,
+      title: cleanPublicText(request.npcTitle, "可见人物", 80),
+      portraitRef: cleanPublicText(npc?.portraitRef, "", 120)
     },
-    title: request.title,
+    title: publicTitle,
     ask: cleanPublicText(request.ask, typeConfig.ask, 140),
     stakes: cleanPublicText(request.stakes, typeConfig.stakes, 180),
     intentSummary: cleanPublicText(
       request.intentSummary,
-      `${request.npcName || "此人"}近期主动递来${typeConfig.label}，具体后果仍待服务器裁决。`,
+      `${publicNpcName}近期主动递来${typeConfig.label}，具体后果仍待服务器裁决。`,
       180
     ),
     proposalBoundary: cleanPublicText(
@@ -598,9 +675,10 @@ function toRequestView(request = {}, worldState = {}) {
     allowedResponseActions: NPC_ACTIVE_REQUEST_RESPONSE_ACTIONS,
     createdTurn: clampNumber(request.createdTurn, 0, Number.MAX_SAFE_INTEGER, 0),
     dueTurn: clampNumber(request.dueTurn, 0, Number.MAX_SAFE_INTEGER, 0),
+    lastUpdatedTurn: clampNumber(request.lastUpdatedTurn, 0, Number.MAX_SAFE_INTEGER, clampNumber(request.createdTurn, 0, Number.MAX_SAFE_INTEGER, 0)),
     turnsRemaining: Math.max(0, clampNumber(request.dueTurn, 0, Number.MAX_SAFE_INTEGER, 0) - currentTurn(worldState)),
     serverAdjudication: {
-      status: request.serverAdjudication?.status || "pending",
+      status: cleanPublicText(request.serverAdjudication?.status, "pending", 56),
       proposalOnly: true,
       serverOwnsResources: true,
       serverOwnsRelationships: true,
@@ -628,7 +706,7 @@ function buildNpcActiveRequestView(worldState = {}, options = {}) {
     items,
     recentEvents: uniqueCleanList(ledger.events, NPC_ACTIVE_REQUEST_CONFIG.maxRecentEvents, 140)
       .map((event) => cleanPublicText(event, "", 140))
-      .filter(Boolean),
+      .filter((event) => event && !containsPrivateSignalText(event)),
     allowedRequestTypes: NPC_ACTIVE_REQUEST_TYPES,
     allowedResponseActions: NPC_ACTIVE_REQUEST_RESPONSE_ACTIONS,
     safeguards: {

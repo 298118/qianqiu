@@ -3,6 +3,10 @@ const assert = require("node:assert/strict");
 
 const { createInitialState } = require("../src/game/initialState");
 const {
+  createNpcActiveRequest,
+  runNpcActiveRequestStep
+} = require("../src/game/npcActiveRequests");
+const {
   applyWorldEntityInfluences,
   buildWorldEntityView,
   deriveWorldEntityInfluences,
@@ -205,6 +209,26 @@ test("deriveWorldEntityInfluences maps applied state, relationship, role, NPC, a
   assert.equal(entityIds.has("military-frontier-garrison"), true);
   assert.equal(entityIds.has("relief-granary-operation"), true);
   assert.equal(entityIds.has("court-ministry-personnel"), true);
+});
+
+test("S88.7 NPC active request resolver traces influence world entities without raw ledger leakage", () => {
+  const worldState = createInitialState({ playerName: "来函实体", role: "magistrate" });
+  worldState.turnCount = 5;
+  const created = createNpcActiveRequest(worldState, "bribe");
+  assert.equal(created.ok, true);
+  const npcActiveRequests = runNpcActiveRequestStep(worldState, "上交廉政线索", {
+    responseAction: "report"
+  });
+
+  const influences = deriveWorldEntityInfluences(worldState, { npcActiveRequests });
+  const serialized = JSON.stringify(influences);
+
+  assert.ok(influences.some((influence) =>
+    influence.sourceType === "active_npc_request" &&
+    influence.entityId === "court-censorate"
+  ));
+  assert.match(serialized, /npc-active-resolution/);
+  assert.doesNotMatch(serialized, /npcActiveRequestLedger|hiddenDossier|privateSignalTags|rawProvider|sk-[A-Za-z0-9_-]{6,}/);
 });
 
 test("deriveWorldEntityInfluences respects scene and month-end cadence", () => {

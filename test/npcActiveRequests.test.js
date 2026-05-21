@@ -50,6 +50,11 @@ test("S85.3 resolving bribe and marriage proposals never applies frontend resour
   const bribeResult = resolveNpcActiveRequest(worldState, bribe.request.requestId, "accept");
   assert.equal(bribeResult.ok, true);
   assert.equal(bribeResult.request.status, "converted_to_risk");
+  assert.equal(bribeResult.request.outcome.resolverTrace.schemaVersion, "s88.7-npc-active-request-resolver-trace.v1");
+  assert.equal(bribeResult.request.outcome.resolverTrace.resolver, "npc_active_request_resolver");
+  assert.equal(bribeResult.request.outcome.resolverTrace.boundaries.serverOwnsResources, true);
+  assert.equal(bribeResult.request.outcome.resolverTrace.boundaries.serverOwnsMarriageAndDiscipline, true);
+  assert.ok(bribeResult.request.auditRefs.includes(bribeResult.request.outcome.resolverTrace.publicResolutionRef));
   assert.equal(bribeResult.request.outcome.resourceImpactView.applied, false);
   assert.equal(worldState.player.gold, beforeGold);
 
@@ -57,9 +62,43 @@ test("S85.3 resolving bribe and marriage proposals never applies frontend resour
   const marriageResult = resolveNpcActiveRequest(worldState, marriage.request.requestId, "accept");
   assert.equal(marriageResult.ok, true);
   assert.equal(marriageResult.request.status, "under_review");
+  assert.equal(marriageResult.request.outcome.resolverTrace.disposition, "ritual_family_review");
   assert.match(marriageResult.request.outcome.publicSummary, /未写入 spouseIds|尚未成婚/);
   assert.doesNotMatch(JSON.stringify(worldState), /acceptedMarriage|spouseIdsWritten":true/);
   assertNoSensitiveLeak(buildNpcActiveRequestView(worldState, { includeResolved: true }));
+});
+
+test("S88.7 active request views and feedback sanitize polluted legacy identity fields", () => {
+  const worldState = createInitialState({ playerName: "来函污染", role: "magistrate" });
+  worldState.turnCount = 8;
+  const created = createNpcActiveRequest(worldState, "bribe");
+  assert.equal(created.ok, true);
+
+  created.request.npcName = "hiddenDossier providerPayload /mnt/e/secret sk-testsecret";
+  created.request.npcTitle = "privateSignalTags 亲族压力";
+  created.request.typeLabel = "raw provider safe_search_index";
+  created.request.title = "providerPayload safe_search_fts sk-testsecret";
+  created.request.ask = "provider_payload private_signal_tags hidden_dossier";
+  created.request.serverAdjudication.status = "raw providerPayload";
+  worldState.npcActiveRequestLedger.events.push("[NPC 主动] 亲族压力 providerPayload safe_search_index sk-testsecret");
+
+  const view = buildNpcActiveRequestView(worldState);
+  const resolved = resolveNpcActiveRequest(worldState, created.request.requestId, "report");
+  const publicAfterResolve = buildNpcActiveRequestView(worldState, { includeResolved: true });
+  const serialized = JSON.stringify({
+    view,
+    publicAfterResolve,
+    events: resolved.events,
+    resolutionTrace: resolved.resolutionTrace,
+    attributeChanges: resolved.attributeChanges
+  });
+
+  assert.equal(resolved.ok, true);
+  assert.equal(view.items[0].npc.displayName, "韩员外");
+  assert.doesNotMatch(
+    serialized,
+    /providerPayload|provider_payload|private_signal_tags|hidden_dossier|safe_search_index|safe_search_fts|sk-testsecret|\/mnt\/e|privateSignalTags|亲族压力|"hiddenDossier"|raw provider/
+  );
 });
 
 test("S85.3 NPC active request public view does not echo private signal tag values", () => {
@@ -119,8 +158,11 @@ test("S85.3 turn step schedules, responds and expires NPC active requests throug
 
   const resolved = runNpcActiveRequestStep(worldState, "先查证再决定", { responseAction: "investigate" });
   assert.equal(resolved.outcome.resolved, 1);
+  assert.equal(resolved.outcome.resolutionTraces.length, 1);
+  assert.equal(resolved.outcome.resolutionTraces[0].resolver, "npc_active_request_resolver");
   const investigated = buildNpcActiveRequestView(worldState).items.find((item) => item.type === "impeachment");
   assert.equal(investigated.status, "under_review");
+  assert.equal(investigated.outcome.resolverTrace.disposition, "impeachment_evidence_review");
 
   const late = createNpcActiveRequest(worldState, "debt_collection");
   late.request.dueTurn = worldState.turnCount;

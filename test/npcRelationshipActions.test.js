@@ -40,6 +40,9 @@ test("S85.4 debate, duel and marriage ignore client-forged outcome fields", () =
   });
   assert.equal(debate.ok, true);
   assert.equal(debate.resolutionView.relationshipImpactView.appliedBy, "server");
+  assert.equal(debate.resolutionView.resolverTrace.schemaVersion, "s88.7-npc-relationship-resolver-trace.v1");
+  assert.equal(debate.resolutionView.resolverTrace.resolver, "npc_relationship_action_resolver");
+  assert.equal(debate.resolutionView.resolverTrace.boundaries.resourceAndRelationshipDeltasIgnoredFromClient, true);
   assert.ok(debate.resolutionView.ignoredClientResultFields.includes("relationshipDelta"));
   assert.ok(debate.resolutionView.ignoredClientResultFields.includes("resourceDelta"));
 
@@ -68,9 +71,30 @@ test("S85.4 debate, duel and marriage ignore client-forged outcome fields", () =
   });
   assert.equal(marriage.ok, true);
   assert.equal(marriage.resolutionView.worldPeopleImpactView.spouseIdsWritten, false);
+  assert.equal(marriage.resolutionView.resolverTrace.disposition, "marriage_ritual_review");
   assert.ok(marriage.resolutionView.ignoredClientResultFields.includes("spouseIds"));
   assert.ok(marriage.resolutionView.ignoredClientResultFields.includes("acceptedMarriage"));
   assertNoSensitiveLeak({ debate, duel, marriage });
+});
+
+test("S88.7 relationship action ignored client field names are sanitized", () => {
+  const worldState = createInitialState({ role: "scholar", playerName: "字段污染" });
+  const result = resolveNpcRelationshipAction(worldState, {
+    npcId: "npc:scholar:peer-shen",
+    actionType: "duel",
+    winner: "player",
+    "spouseIds_raw provider /mnt/e/secret sk-testsecret": ["player"],
+    "spouseIds_provider_payload": ["player"],
+    "resourceDelta_providerPayload_safe_search_index": 999,
+    "relationshipDelta_private_signal_tags": 99
+  }, {
+    dialogueText: "当众切磋，输赢仍由服务器记为公开结果。"
+  });
+  const serialized = JSON.stringify(result.resolutionView);
+
+  assert.equal(result.ok, true);
+  assert.ok(result.resolutionView.ignoredClientResultFields.includes("winner"));
+  assert.doesNotMatch(serialized, /raw provider|providerPayload|provider_payload|private_signal_tags|safe_search_index|sk-testsecret|\/mnt\/e/);
 });
 
 test("S85.4 blocked courtship and marriage stay server-blocked without relationship writes", () => {
@@ -86,6 +110,8 @@ test("S85.4 blocked courtship and marriage stay server-blocked without relations
 
   assert.equal(result.ok, false);
   assert.equal(result.resolutionView.serverStatus, "server_blocked");
+  assert.equal(result.resolutionView.resolverTrace.status, "server_blocked");
+  assert.equal(result.resolutionView.resolverTrace.disposition, "blocked_by_server_eligibility");
   assert.ok(result.errors.includes("marriage_status_unavailable"));
   assert.equal(result.resolutionView.worldPeopleImpactView.spouseIdsWritten, false);
   assertNoSensitiveLeak(result);

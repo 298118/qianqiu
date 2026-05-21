@@ -11,7 +11,8 @@ const {
 } = require("./npcRoster");
 
 const UNSAFE_TEXT_PATTERN =
-  /(hiddenNotes|hiddenIntent|hiddenDossier|privateSignalTags|trueAssets|secretRelationships|unrevealedTasks|raw[_ -]?(?:provider|audit|table|ledger|prompt|payload|state)|\b(?:provider|prompt|proposal)\b|retrievalContext|statePatch|worldState|world_sessions|prompt_retrieval_index|event_archive_index|safe_search_index|ai_change_proposals|event_log|api[_ -]?key|OPENAI_API_KEY|DEEPSEEK_API_KEY|MIMO_API_KEY|ANTHROPIC_API_KEY|sqlite|data[\\/](?:sessions|audit)|sk-[A-Za-z0-9_-]{6,}|tp-[A-Za-z0-9_-]{6,}|[A-Za-z]:[\\/][^\s"'<>]+|(?:file:\/\/)?(?:\/Users|\/home|\/tmp|\/var|\/mnt|\/opt)\/[^\s"'<>]+)/i;
+  /(hidden[_ -]?(?:notes|intent|dossier)|private[_ -]?signal[_ -]?tags|true[_ -]?assets|secret[_ -]?relationships|unrevealed[_ -]?tasks|provider[_ -]?payload|raw[_ -]?(?:provider|audit|table|ledger|prompt|payload|state)|\b(?:provider|prompt|proposal)\b|retrieval[_ -]?context|state[_ -]?patch|world[_ -]?state|world_sessions|prompt_retrieval_index|event_archive_index|safe_search_index|safe_search_fts|ai_change_proposals|event_log|api[_ -]?key|OPENAI_API_KEY|DEEPSEEK_API_KEY|MIMO_API_KEY|ANTHROPIC_API_KEY|sqlite|data[\\/](?:sessions|audit)|sk-[A-Za-z0-9_-]{6,}|tp-[A-Za-z0-9_-]{6,}|[A-Za-z]:[\\/][^\s"'<>]+|(?:file:\/\/)?(?:\/Users|\/home|\/tmp|\/var|\/mnt|\/opt)\/[^\s"'<>]+)/i;
+const NPC_RELATIONSHIP_RESOLVER_TRACE_VERSION = "s88.7-npc-relationship-resolver-trace.v1";
 
 function isPlainObject(value) {
   return value !== null && typeof value === "object" && !Array.isArray(value);
@@ -151,6 +152,51 @@ function applySafeRelationshipImpact(npc = {}, config = {}) {
   };
 }
 
+function relationshipDisposition(actionType = "", accepted = false) {
+  if (!accepted) return "blocked_by_server_eligibility";
+  if (actionType === "debate") return "public_debate_recorded";
+  if (actionType === "duel") return "duel_review_recorded";
+  if (actionType === "courtship") return "courtship_intent_review";
+  if (actionType === "marriage") return "marriage_ritual_review";
+  return "relationship_action_recorded";
+}
+
+function buildNpcRelationshipResolverTrace({
+  worldState = {},
+  npc = {},
+  actionType = "",
+  config = {},
+  accepted = false,
+  errors = [],
+  ignoredClientResultFields = []
+}) {
+  const npcId = cleanId(npc.npcId, "");
+  const turn = clampNumber(worldState.turnCount, 0, Number.MAX_SAFE_INTEGER, 0);
+  return {
+    schemaVersion: NPC_RELATIONSHIP_RESOLVER_TRACE_VERSION,
+    resolver: "npc_relationship_action_resolver",
+    publicResolutionRef: cleanId(`npc-relationship-resolution:${npcId || "npc"}:${actionType || "action"}:${turn}`, ""),
+    actionType,
+    actionLabel: cleanText(config.label, "交游", 40),
+    status: accepted ? "server_adjudicated" : "server_blocked",
+    disposition: relationshipDisposition(actionType, accepted),
+    blockerCount: Array.isArray(errors) ? errors.length : 0,
+    ignoredClientResultFields: uniqueCleanList(ignoredClientResultFields, 8, 60),
+    publicSourceRefs: uniqueCleanList([
+      npcId ? `npcRosterView:${npcId}` : "",
+      npcId && actionType ? `npcRelationshipActionEligibilityView:${npcId}:${actionType}` : ""
+    ], 4, 120),
+    riskTags: uniqueCleanList(config.riskTags, NPC_RELATIONSHIP_ACTION_LIMITS.maxRiskTags, 40),
+    boundaries: {
+      serverOwnsOutcome: true,
+      browserCannotSetSpouseIds: true,
+      browserCannotSetWinnerOrInjury: true,
+      resourceAndRelationshipDeltasIgnoredFromClient: true,
+      privateNpcDossierRedacted: true
+    }
+  };
+}
+
 function resolveNpcRelationshipAction(worldState = {}, request = {}, aiResult = {}) {
   ensureNpcRoster(worldState);
   const actionType = normalizeActionType(request.actionType || request.type, "");
@@ -169,6 +215,21 @@ function resolveNpcRelationshipAction(worldState = {}, request = {}, aiResult = 
   const outcomeSummary = accepted
     ? config.outcomeSummary
     : "服务器挡下此项交游动作；前端提交的胜负、婚姻、资源或关系结果均未采纳。";
+  const ignoredClientResultFields = uniqueCleanList(
+    Object.keys(isPlainObject(request) ? request : {})
+      .filter((key) => /winner|injury|spouse|relationshipDelta|resourceDelta|acceptedMarriage|statePatch/i.test(key)),
+    8,
+    60
+  );
+  const resolverTrace = buildNpcRelationshipResolverTrace({
+    worldState,
+    npc: npc || { npcId },
+    actionType,
+    config: config || {},
+    accepted,
+    errors,
+    ignoredClientResultFields
+  });
   const result = {
     ok: accepted,
     errors,
@@ -179,6 +240,7 @@ function resolveNpcRelationshipAction(worldState = {}, request = {}, aiResult = 
       serverStatus: accepted ? "server_adjudicated" : "server_blocked",
       outcomeSummary,
       publicNarrative: dialogueText || outcomeSummary,
+      resolverTrace,
       riskTags: uniqueCleanList(config?.riskTags, NPC_RELATIONSHIP_ACTION_LIMITS.maxRiskTags, 40),
       eligibilityView: eligibility.view,
       relationshipImpactView: relationshipImpactView || {
@@ -197,9 +259,7 @@ function resolveNpcRelationshipAction(worldState = {}, request = {}, aiResult = 
           ? "本阶段只登记议婚审查，不写 worldPeople.npcs[].family.spouseIds。"
           : "本动作不写人物谱系。"
       },
-      ignoredClientResultFields: Object.keys(isPlainObject(request) ? request : {})
-        .filter((key) => /winner|injury|spouse|relationshipDelta|resourceDelta|acceptedMarriage|statePatch/i.test(key))
-        .slice(0, 8)
+      ignoredClientResultFields
     }
   };
   return result;
