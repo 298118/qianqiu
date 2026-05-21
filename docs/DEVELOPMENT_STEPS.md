@@ -163,7 +163,7 @@
 - `AI_PROVIDER=mock npm run smoke:browser`
 - `git diff --check`
 - 提交前只读复审：Ptolemy 未发现 P0/P1/P2；额外确认低权限角色没有通过 archive/resolver/topic/topic-draft/search/SQLite/mapRuntime 看到不可见后果，cap 不泄露隐藏后果数量，domain consequence effect 不进入 prompt/mapContext/AI 工具，route/exam 共用同一份裁剪 view。
-- 实现提交：待回填。
+- 实现提交：`7ee4ae6f`。
 
 本轮 S88.6 地图/史册后果追踪入口与 high-volume cap 红队当前验证口径：
 
@@ -572,8 +572,14 @@ S84 前端专项额外验收入口：
 - 实现：`src/game/domainConsequenceTrace.js` 现在按当前 `player.role` 在服务端裁剪 `recentConsequences`、`nextActions`、`counts` 和 cap 语义：书生默认不接收领域后果，地方官只接地方政策/刑名/NPC 经济，将领只接军务外交，官员/大臣/皇帝接跨域后果；`caps.publicCandidates` / `roleEligibleCandidates` 只统计当前角色可见候选，避免低权限身份通过 cap 反推被过滤后果数量。archive、resolver input、topic surface、`topic_draft`、safe search 和 SQLite safe-search 都自然消费裁剪后的 view。
 - 舆图：`src/game/mapRuntimeConfig.js` / `src/game/mapRuntimeView.js` 新增 domain consequence visual-only `eventEffects`，从同一路由已裁剪的 `domainConsequenceView` 派生，按来源类型绑定到已有可见 runtime ref（军务->军报/边面，地方政策->市况/辖区/城邑，刑名->案牍/辖区，NPC 经济->市况/城邑），`sourceRefs` 只使用 `domainConsequenceView:<safe-id>`；route 构建时复用同一份 `domainConsequenceView` 传给 `mapRuntimeView`，避免页面追踪与舆图 effect 不一致。
 - 安全：`mapRuntimeView` 后果 effect 不写状态、不进入 `mapContextView`、prompt context、AI map tool 或 resolver evidence；找不到已可见 runtime ref 就不生成 effect。cap 满时保留少量当前角色可见 domain consequence effect，仍遵守 `MAP_RUNTIME_LIMITS.maxEventEffects`。
-- 验证：已通过本节顶部“本轮 S88.6 角色可见性与舆图运行时后果 effect 红队当前验证口径”中已列命令；提交哈希待回填。
+- 验证：已通过本节顶部“本轮 S88.6 角色可见性与舆图运行时后果 effect 红队当前验证口径”中已列命令；实现提交 `7ee4ae6f`。
 - 下一步：继续 S88.6 普通回合重复触发、跨视图 cap 压力和更长链路后果回响红队。
+
+### 2026-05-21：`7ee4ae6f` 提交哈希回填
+
+- 范围：低风险纯文档回填 S88.6 角色可见性与舆图运行时后果 effect 红队实现提交哈希。
+- 验证：`npm run check:docs-governance`、`node --test test/documentationGovernance.test.js`。
+- 子代理：本轮只改文档哈希，不改代码、API/schema、运行时行为、提示词或验证工具；按项目规则跳过额外子代理复审。
 
 ### 2026-05-21：推进 S88.6 地图/史册后果追踪入口与 high-volume cap 红队
 
