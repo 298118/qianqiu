@@ -108,17 +108,64 @@ const GENERAL_HIGH_STAKES_TERMS = [
   "决战",
   "夜袭",
   "出击",
+  "接战",
+  "交战",
   "进兵",
+  "进军",
   "进剿",
+  "请战",
+  "追击",
+  "追剿",
+  "截击",
+  "截杀",
   "破敌",
   "攻击",
   "袭击",
+  "突袭",
+  "奇袭",
+  "奔袭",
+  "邀击",
+  "掩杀",
+  "冲阵",
+  "强攻",
+  "攻打",
+  "攻取",
+  "攻伐",
+  "夺城",
+  "火攻",
   "攻城",
+  "攻营",
+  "围城",
+  "合围",
+  "合战",
+  "鏖战",
+  "发兵",
+  "动兵",
+  "动员",
+  "用兵",
+  "调兵",
+  "拔营",
+  "拔寨",
+  "轻进",
+  "索战",
+  "扣使",
+  "扣留",
   "开战",
   "宣战",
+  "大举",
+  "深入",
   "campaign",
+  "mobilize",
+  "engage",
   "battle",
+  "assault",
+  "charge",
+  "flank",
+  "raid",
+  "siege",
   "attack",
+  "detain envoy",
+  "war request",
   "declare war"
 ];
 const GENERAL_SCOUT_ACTION_TERMS = [
@@ -202,6 +249,10 @@ function textIncludesAny(text, terms) {
   return terms.some((term) => lower.includes(String(term).toLowerCase()));
 }
 
+function currentPlayerRole(worldState = {}) {
+  return cleanRef(worldState.player?.role || "", "");
+}
+
 function createEmptyFeedback() {
   return {
     schemaVersion: ROLE_CYCLE_DOMAIN_ADJUDICATION_SCHEMA_VERSION,
@@ -215,11 +266,12 @@ function createEmptyFeedback() {
 function classifyRoleCycleDomainIntent(worldState = {}, input = "", actorProfile = null) {
   const profile = actorProfile || buildPlayerAiActorProfile(worldState);
   const actorType = profile.actorType;
+  const activeRole = currentPlayerRole(worldState);
   const text = cleanText(input, "", 260);
   if (!text) return null;
   const hasReadOnlyCue = textIncludesAny(text, READ_ONLY_CUES);
 
-  if (actorType === "magistrate") {
+  if (activeRole === "magistrate" && actorType === "magistrate") {
     if (
       textIncludesAny(text, MAGISTRATE_MARKET_TERMS) &&
       textIncludesAny(text, MAGISTRATE_POLICY_ACTION_CUES)
@@ -239,7 +291,7 @@ function classifyRoleCycleDomainIntent(worldState = {}, input = "", actorProfile
     }
   }
 
-  if (actorType === "general") {
+  if (activeRole === "general" && actorType === "general") {
     if (!textIncludesAny(text, GENERAL_DOMAIN_TERMS)) return null;
     if (textIncludesAny(text, GENERAL_HIGH_STAKES_TERMS)) return null;
     if (hasReadOnlyCue && !textIncludesAny(text, GENERAL_EXECUTION_CUES)) return null;

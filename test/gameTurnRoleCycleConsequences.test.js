@@ -104,6 +104,85 @@ test("S88.5.3 turn resolves general war-council drafts and keeps military ledger
   assert.equal(saved.militaryDiplomacyLedger.records[0].actionKind, "resupply");
 });
 
+test("S88.6 turn blocks high-risk or inactive-role role-cycle resolver bypasses", async (t) => {
+  const server = createTestServer();
+  t.after(server.close);
+
+  const generalState = createInitialState({ role: "general", playerName: "越界将领" });
+  t.after(() => removeSessionArtifacts(generalState.sessionId));
+  await writeSession(generalState);
+
+  const highRisk = await postJson(`${server.baseUrl}/api/game/turn`, {
+    sessionId: generalState.sessionId,
+    input: "据战事档案开军议，先调粮后发兵攻取边堡。"
+  });
+
+  assert.equal(highRisk.response.status, 200);
+  assert.equal(highRisk.payload.roleCycleDomainAdjudication.outcome, null);
+  assert.equal(highRisk.payload.worldState.militaryDiplomacyLedger, undefined);
+
+  const savedGeneral = await readSession(generalState.sessionId);
+  assert.equal(savedGeneral.militaryDiplomacyLedger, undefined);
+
+  const scholarState = createInitialState({ role: "scholar", playerName: "越界书生" });
+  t.after(() => removeSessionArtifacts(scholarState.sessionId));
+  await writeSession(scholarState);
+
+  const inactiveRole = await postJson(`${server.baseUrl}/api/game/turn`, {
+    sessionId: scholarState.sessionId,
+    input: "据舆图与战事档案开军议，先调粮道补给。"
+  });
+
+  assert.equal(inactiveRole.response.status, 200);
+  assert.equal(inactiveRole.payload.roleCycleDomainAdjudication.outcome, null);
+  assert.equal(inactiveRole.payload.worldState.militaryDiplomacyLedger, undefined);
+  assert.equal(inactiveRole.payload.worldState.cityPolicyLedger, undefined);
+  assert.doesNotMatch(
+    JSON.stringify(inactiveRole.payload),
+    /"militaryDiplomacyLedger":|"cityPolicyLedger":|"stateDelta":|"playerDelta":|"auditRecord":|SEALED_/
+  );
+
+  const savedScholar = await readSession(scholarState.sessionId);
+  assert.equal(savedScholar.militaryDiplomacyLedger, undefined);
+  assert.equal(savedScholar.cityPolicyLedger, undefined);
+
+  const countyOfficialState = createInitialState({ role: "official", playerName: "知县官员" });
+  countyOfficialState.player.officeTitle = "知县";
+  countyOfficialState.player.position = "知县";
+  t.after(() => removeSessionArtifacts(countyOfficialState.sessionId));
+  await writeSession(countyOfficialState);
+
+  const officialMarket = await postJson(`${server.baseUrl}/api/game/turn`, {
+    sessionId: countyOfficialState.sessionId,
+    input: "本旬先处置广州粮储市价，平粜稳价。"
+  });
+
+  assert.equal(officialMarket.response.status, 200);
+  assert.equal(officialMarket.payload.roleCycleDomainAdjudication.outcome, null);
+  assert.equal(officialMarket.payload.worldState.cityPolicyLedger, undefined);
+
+  const savedCountyOfficial = await readSession(countyOfficialState.sessionId);
+  assert.equal(savedCountyOfficial.cityPolicyLedger, undefined);
+
+  const militaryOfficialState = createInitialState({ role: "official", playerName: "武职官员" });
+  militaryOfficialState.player.officeTitle = "游击将军";
+  militaryOfficialState.player.position = "游击将军";
+  t.after(() => removeSessionArtifacts(militaryOfficialState.sessionId));
+  await writeSession(militaryOfficialState);
+
+  const officialMilitary = await postJson(`${server.baseUrl}/api/game/turn`, {
+    sessionId: militaryOfficialState.sessionId,
+    input: "据战事档案开军议，先调粮道补给。"
+  });
+
+  assert.equal(officialMilitary.response.status, 200);
+  assert.equal(officialMilitary.payload.roleCycleDomainAdjudication.outcome, null);
+  assert.equal(officialMilitary.payload.worldState.militaryDiplomacyLedger, undefined);
+
+  const savedMilitaryOfficial = await readSession(militaryOfficialState.sessionId);
+  assert.equal(savedMilitaryOfficial.militaryDiplomacyLedger, undefined);
+});
+
 test("S88.5.3 turn keeps npc economy role-cycle review read-only", async (t) => {
   const server = createTestServer();
   t.after(server.close);

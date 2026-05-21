@@ -9,6 +9,29 @@ const {
 } = require("../src/game/roleCycleDomainAdjudication");
 const { buildPlayerAiActorProfile } = require("../src/game/aiActorProfiles");
 
+const HIGH_RISK_MILITARY_BYPASS_TERMS = [
+  "接战",
+  "交战",
+  "动员",
+  "请战",
+  "扣使",
+  "扣留",
+  "拔寨",
+  "夺城",
+  "截杀",
+  "冲阵",
+  "邀击",
+  "掩杀",
+  "火攻",
+  "合战",
+  "索战",
+  "轻进",
+  "detain envoy",
+  "war request",
+  "flank",
+  "raid"
+];
+
 test("S88.5.3 role-cycle domain classifier recognizes low-risk follow-up intents", () => {
   assert.equal(
     classifyRoleCycleDomainIntent(
@@ -45,6 +68,120 @@ test("S88.5.3 role-cycle domain classifier recognizes low-risk follow-up intents
     ),
     null
   );
+  assert.equal(
+    classifyRoleCycleDomainIntent(
+      createInitialState({ role: "general" }),
+      "据战事档案开军议，先调粮后发兵攻取边堡。"
+    ),
+    null
+  );
+  assert.equal(
+    classifyRoleCycleDomainIntent(
+      createInitialState({ role: "general" }),
+      "据舆图与战事档案开军议，遣哨后奇袭敌营。"
+    ),
+    null
+  );
+  assert.equal(
+    classifyRoleCycleDomainIntent(
+      createInitialState({ role: "general" }),
+      "Use the war council to resupply and mobilize for battle."
+    ),
+    null
+  );
+});
+
+test("S88.6 role-cycle military classifier blocks high-risk terms mixed into scout or resupply drafts", () => {
+  for (const term of HIGH_RISK_MILITARY_BYPASS_TERMS) {
+    assert.equal(
+      classifyRoleCycleDomainIntent(
+        createInitialState({ role: "general" }),
+        `据战事档案开军议，先调粮道补给，再${term}。`
+      ),
+      null,
+      `resupply bypass term should be blocked: ${term}`
+    );
+    assert.equal(
+      classifyRoleCycleDomainIntent(
+        createInitialState({ role: "general" }),
+        `据舆图开军议，遣哨侦察后${term}。`
+      ),
+      null,
+      `scout bypass term should be blocked: ${term}`
+    );
+  }
+});
+
+test("S88.6 role-cycle domain adjudication rejects inactive-role cross-domain phrases", () => {
+  const scholarState = createInitialState({ role: "scholar", playerName: "越权书生" });
+  const scholar = runRoleCycleDomainAdjudicationStep(
+    scholarState,
+    "据舆图与战事档案开军议，先调粮道补给。"
+  );
+
+  assert.equal(scholar.outcome, null);
+  assert.equal(scholarState.militaryDiplomacyLedger, undefined);
+
+  const ministerState = createInitialState({ role: "minister", playerName: "越权大臣" });
+  const minister = runRoleCycleDomainAdjudicationStep(
+    ministerState,
+    "本旬先处置广州粮储市价，平粜稳价。"
+  );
+
+  assert.equal(minister.outcome, null);
+  assert.equal(ministerState.cityPolicyLedger, undefined);
+
+  const emperorState = createInitialState({ role: "emperor", playerName: "越权皇帝" });
+  const emperor = runRoleCycleDomainAdjudicationStep(
+    emperorState,
+    "据舆图与战事档案开军议，先遣哨核边面。"
+  );
+
+  assert.equal(emperor.outcome, null);
+  assert.equal(emperorState.militaryDiplomacyLedger, undefined);
+  assert.equal(classifyRoleCycleDomainIntent(ministerState, "据战事档案开军议，先调粮道补给。"), null);
+});
+
+test("S88.6 official postings cannot silently borrow magistrate or general role-cycle resolvers", () => {
+  const countyOfficialState = createInitialState({ role: "official", playerName: "知县官员" });
+  countyOfficialState.player.officeTitle = "知县";
+  countyOfficialState.player.position = "知县";
+  const countyProfile = buildPlayerAiActorProfile(countyOfficialState);
+
+  assert.equal(countyProfile.actorType, "magistrate");
+  assert.equal(
+    classifyRoleCycleDomainIntent(
+      countyOfficialState,
+      "本旬先处置广州粮储市价，平粜稳价。"
+    ),
+    null
+  );
+  const countyResult = runRoleCycleDomainAdjudicationStep(
+    countyOfficialState,
+    "本旬先处置广州粮储市价，平粜稳价。"
+  );
+  assert.equal(countyResult.outcome, null);
+  assert.equal(countyOfficialState.cityPolicyLedger, undefined);
+
+  const militaryOfficialState = createInitialState({ role: "official", playerName: "武职官员" });
+  militaryOfficialState.player.officeTitle = "游击将军";
+  militaryOfficialState.player.position = "游击将军";
+  const militaryProfile = buildPlayerAiActorProfile(militaryOfficialState);
+
+  assert.equal(militaryProfile.actorType, "general");
+  assert.equal(
+    classifyRoleCycleDomainIntent(
+      militaryOfficialState,
+      "据战事档案开军议，先调粮道补给。"
+    ),
+    null
+  );
+  const militaryResult = runRoleCycleDomainAdjudicationStep(
+    militaryOfficialState,
+    "据战事档案开军议，先调粮道补给。"
+  );
+  assert.equal(militaryResult.outcome, null);
+  assert.equal(militaryOfficialState.militaryDiplomacyLedger, undefined);
 });
 
 test("S88.5.3 read-only role-cycle entry phrases do not mutate resolver ledgers", () => {
