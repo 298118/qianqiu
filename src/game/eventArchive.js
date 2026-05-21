@@ -7,6 +7,7 @@ const {
 } = require("./historicalEventArchive");
 const { buildIntelligenceRumorView } = require("./intelligenceRumors");
 const { buildOfficialCareerView } = require("./officialCareer");
+const { buildOfficialCourtConsequenceView } = require("./officialCourtConsequences");
 const { buildOfficialCourtResponseView } = require("./officialCourtResponse");
 const { buildOfficialPostingsView } = require("./officialPostings");
 const { formatYearMonthPeriod, normalizeMonth, normalizeTenDayPeriod, normalizeYear } = require("./time");
@@ -21,6 +22,7 @@ const MAX_LONG_TERM_EVENTS = 5;
 const MAX_OFFICIAL_OUTCOMES = 5;
 const MAX_OFFICIAL_COURT_ENTRY_RESOLUTIONS = 5;
 const MAX_OFFICIAL_COURT_ENTRY_FOLLOW_UPS = 5;
+const MAX_OFFICIAL_COURT_CONSEQUENCES = 5;
 const MAX_OFFICIAL_COURT_RESPONSES = 5;
 const MAX_MONTHLY_BRIEFINGS = 4;
 const MAX_OFFICIAL_ASSESSMENTS = 4;
@@ -48,6 +50,7 @@ const SOURCE_LABELS = {
   official_career: "官场",
   official_court_entry: "奏议",
   official_court_follow_up: "批复",
+  official_court_consequence: "后果",
   official_court_response: "回应",
   monthly_briefing: "月报",
   official_assessment: "考成",
@@ -318,6 +321,29 @@ function collectOfficialCourtResponseItems(worldState, items) {
       relatedLabels: [
         ...(Array.isArray(response.sourceRefs) ? response.sourceRefs : []),
         ...(Array.isArray(response.consequenceRefs) ? response.consequenceRefs : [])
+      ]
+    });
+  });
+}
+
+function collectOfficialCourtConsequenceItems(worldState, items) {
+  const courtConsequenceView = buildOfficialCourtConsequenceView(worldState);
+  const signals = Array.isArray(courtConsequenceView?.recentSignals)
+    ? courtConsequenceView.recentSignals
+    : [];
+  signals.slice(-MAX_OFFICIAL_COURT_CONSEQUENCES).forEach((signal) => {
+    addItem(items, worldState, {
+      sourceType: "official_court_consequence",
+      kind: signal.signalKind || "official_court_consequence",
+      title: signal.title || signal.statusLabel || "官场后果信号",
+      summary: signal.publicSummary,
+      date: signal,
+      turn: signal.generatedAtTurn,
+      status: signal.status === "watchlist" || signal.status === "evidence_pending" ? "watch" : "recorded",
+      riskLabel: signal.statusLabel || signal.signalKindLabel || "",
+      relatedLabels: [
+        ...(Array.isArray(signal.sourceRefs) ? signal.sourceRefs : []),
+        ...(Array.isArray(signal.consequenceRefs) ? signal.consequenceRefs : [])
       ]
     });
   });
@@ -686,6 +712,7 @@ function buildEventArchiveIndexItems(worldState = {}) {
   collectLongTermItems(worldState, items, longTermEventView);
   collectOfficialItems(worldState, items, officialCareerView);
   collectOfficialCourtResponseItems(worldState, items);
+  collectOfficialCourtConsequenceItems(worldState, items);
   collectMonthlyBriefingItems(worldState, items);
   collectAppointmentTrackItems(worldState, items);
   collectOfficialAssessmentItems(worldState, items, officialPostingsView);

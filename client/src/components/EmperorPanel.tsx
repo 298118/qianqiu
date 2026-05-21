@@ -10,6 +10,7 @@ type EmperorPanelProps = {
   readonly aiControlAuditView?: JsonObject | null;
   readonly worldEntityView?: JsonObject | null;
   readonly worldThreadView?: JsonObject | null;
+  readonly courtConsequenceView?: JsonObject | null;
   readonly courtResponseView?: JsonObject | null;
   readonly mapRuntimeView?: unknown;
   readonly roleBackgroundPath?: string;
@@ -223,6 +224,32 @@ function getCourtResponseAgenda(courtResponse: JsonObject) {
   };
 }
 
+function getCourtConsequenceAgenda(courtConsequence: JsonObject) {
+  const consequenceRows = [
+    ...rowsFromKeys(courtConsequence, ["pendingSources"]),
+    ...rowsFromKeys(courtConsequence, ["recentSignals"])
+  ];
+  const items = listFromRows(consequenceRows, "court-consequence", 4, "官场后果");
+  const actions: SafeDraftAction[] = asArray(courtConsequence.nextActions)
+    .map(asRecord)
+    .map((action, index) => ({
+      id: cleanEmperorText(action.id, `court-consequence-action-${index}`, 48),
+      label: cleanEmperorText(action.label, "记后果", 24),
+      text: cleanEmperorText(action.text, "", 176)
+    }))
+    .filter((action) => action.text);
+  return {
+    active: courtConsequence.active === true && (items.length > 0 || actions.length > 0),
+    summary: cleanEmperorText(
+      courtConsequence.summary,
+      "官场长期后果只读服务器公开投影；考成、风宪、月报和世界议程只先作观察。",
+      148
+    ),
+    items,
+    actions
+  };
+}
+
 function getCourtDebate(actorMemory: JsonObject, worldThread: JsonObject, eventArchive: JsonObject) {
   const memoryRows = rowsFromKeys(actorMemory, ["actors", "recentUpdates", "relationships"]);
   const threadRows = rowsFromKeys(worldThread, ["courtThreads", "threads", "items"]);
@@ -279,6 +306,7 @@ export function EmperorPanel({
   aiControlAuditView,
   worldEntityView,
   worldThreadView,
+  courtConsequenceView,
   courtResponseView,
   mapRuntimeView,
   roleBackgroundPath,
@@ -293,10 +321,12 @@ export function EmperorPanel({
   const aiControlAudit = asRecord(aiControlAuditView);
   const worldEntity = asRecord(worldEntityView);
   const worldThread = asRecord(worldThreadView);
+  const courtConsequence = asRecord(courtConsequenceView);
   const courtResponse = asRecord(courtResponseView);
   const mapRuntime = asRecord(mapRuntimeView);
   const desk = getEmperorDesk(player, officialPostings, eventArchive);
   const memorials = getMemorialQueue(eventArchive, worldThread, mapRuntime);
+  const consequenceAgenda = getCourtConsequenceAgenda(courtConsequence);
   const responseAgenda = getCourtResponseAgenda(courtResponse);
   const courtDebate = getCourtDebate(actorMemory, worldThread, eventArchive);
   const candidates = getAppointmentCandidates(officialPostings, actorMemory, worldEntity);
@@ -434,8 +464,22 @@ export function EmperorPanel({
         <article className="scholarPanelCard emperorPanelRewards" aria-labelledby="emperor-rewards-title">
           <h3 id="emperor-rewards-title">赏罚预留</h3>
           <p>赏罚线索只作预留；功过、处分、封赏与追责不得由界面直接结算。</p>
+          {consequenceAgenda.active ? (
+            <>
+              <p>官场后果：{consequenceAgenda.summary}</p>
+              <EmperorPanelList
+                items={consequenceAgenda.items}
+                emptyText="暂无官场后果信号；考成和风宪仍候服务器规则。"
+              />
+            </>
+          ) : null}
           <EmperorPanelList items={rewardPunishments} emptyText="暂无赏罚线索，可先请都察院与吏部各具公开证据。" />
           <div className="scholarPanelActions">
+            {consequenceAgenda.actions.slice(0, 3).map((action) => (
+              <button key={action.id} type="button" disabled={!canDraft} onClick={() => onDraft(action.text)}>
+                {action.label}
+              </button>
+            ))}
             {draftButtonText("预拟赏罚", "预拟赏罚清单，先列功过证据、关联奏折与待核争议，不直接生效。", canDraft, onDraft)}
           </div>
         </article>

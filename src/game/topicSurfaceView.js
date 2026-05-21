@@ -21,6 +21,7 @@ const TOPIC_SURFACE_CONFIG = Object.freeze({
     summary: "汇总公开奏报、月报、案牍和军政近事，供玩家批红、转部、留中或发交廷议。",
     domains: Object.freeze(["events", "economy", "military", "offices", "player", "memory"]),
     sourceViews: Object.freeze([
+      "courtConsequenceView",
       "courtResponseView",
       "officialCareerView",
       "eventArchiveView",
@@ -52,6 +53,7 @@ const TOPIC_SURFACE_CONFIG = Object.freeze({
     summary: "基于公开议题草拟谕旨、札付或敕令文本，但不直接任免、赏罚、处分或改写世界状态。",
     domains: Object.freeze(["offices", "events", "military", "economy", "map", "player"]),
     sourceViews: Object.freeze([
+      "courtConsequenceView",
       "courtResponseView",
       "officialCareerView",
       "officialPostingsView",
@@ -77,6 +79,7 @@ const TOPIC_SURFACE_CONFIG = Object.freeze({
     summary: "组织御前、台谏和部院围绕公开议题形成意见，玩家选择采纳为奏议草稿。",
     domains: Object.freeze(["offices", "events", "economy", "military", "people", "player", "memory"]),
     sourceViews: Object.freeze([
+      "courtConsequenceView",
       "courtResponseView",
       "officialCareerView",
       "officialPostingsView",

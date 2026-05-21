@@ -1,6 +1,7 @@
 const { buildActiveNpcRequestView } = require("./activeRequests");
 const { buildLongTermEventView } = require("./longTermEvents");
 const { buildOfficialCareerView } = require("./officialCareer");
+const { buildOfficialCourtConsequenceView } = require("./officialCourtConsequences");
 const { buildOfficialCourtResponseView } = require("./officialCourtResponse");
 const { getBureau, getOffice } = require("./officialCatalog");
 const { buildRoleWorldCouplingView } = require("./roleWorldCoupling");
@@ -23,6 +24,7 @@ const THREAD_KINDS = new Set([
   "consequence",
   "official_assignment",
   "official_court_follow_up",
+  "official_court_consequence",
   "official_court_response",
   "official_outcome",
   "role_impact",
@@ -33,6 +35,7 @@ const SOURCE_TYPES = new Set([
   "long_term_event",
   "official_assignment",
   "official_court_follow_up",
+  "official_court_consequence",
   "official_court_response",
   "official_outcome",
   "role_world_coupling",
@@ -48,6 +51,7 @@ const SOURCE_LABELS = {
   long_term_event: "长期大势",
   official_assignment: "官场差遣",
   official_court_follow_up: "奏议批复",
+  official_court_consequence: "官场后果",
   official_court_response: "奏议回应",
   official_outcome: "官场结果",
   role_world_coupling: "身份联动",
@@ -136,6 +140,11 @@ const THREAD_KIND_DETAILS = {
     interventions: ["拟朱批留览", "票拟部院覆奏", "补公开凭据", "续入考成观察"],
     followUp: "奏议回应只提示可办方向，真实任免、奖惩、处分和弹劾仍由后续服务器规则结算。"
   },
+  official_court_consequence: {
+    goal: "追踪公开奏议链路转入考成、风宪风险、月报和世界议程后的长期影响。",
+    interventions: ["合入考成观察", "复核风宪风险", "补公开凭据", "摘入官职月报"],
+    followUp: "官场后果信号只是公开中间态，官缺、赏罚、财赋、奏议终局和风宪成案仍由服务器规则结算。"
+  },
   official_outcome: {
     goal: "观察任免升降后的官场余波与履历影响。",
     interventions: ["经营同年上官", "谨守清操", "顺势整理履历"],
@@ -157,6 +166,7 @@ const SOURCE_INTERVENTION_HINTS = {
   long_term_event: ["围绕大势连续行动"],
   official_assignment: ["把行动写成差事办理"],
   official_court_follow_up: ["顺着批复补证或覆奏"],
+  official_court_consequence: ["合入考成或月报观察"],
   official_court_response: ["只作回应草稿或补据"],
   official_outcome: ["关注官场余波"],
   role_world_coupling: ["顺着身份职责补一回合"],
@@ -703,6 +713,36 @@ function deriveOfficialCourtResponseThreads(worldState) {
   })).filter(Boolean);
 }
 
+function consequenceSignalSeverity(signal = {}) {
+  if (signal.impeachmentWatch === "risk_watch" || signal.riskDelta >= 2 || signal.status === "watchlist") return 2;
+  if (signal.status === "evidence_pending" || signal.courtAttentionDelta >= 3) return 2;
+  return 1;
+}
+
+function deriveOfficialCourtConsequenceThreads(worldState) {
+  const view = buildOfficialCourtConsequenceView(worldState);
+  if (!view.active) return [];
+  return (view.recentSignals || []).slice(-3).map((signal) => makeThread(worldState, {
+    id: `WT-official-court-consequence-${signal.id}`,
+    sourceType: "official_court_consequence",
+    sourceId: signal.id,
+    kind: "official_court_consequence",
+    status: signal.status === "watchlist" || signal.status === "evidence_pending" ? "watch" : "active",
+    title: signal.title,
+    summary: signal.publicSummary,
+    severity: consequenceSignalSeverity(signal),
+    createdTurn: signal.generatedAtTurn,
+    lastUpdatedTurn: signal.generatedAtTurn,
+    startedYear: signal.year,
+    startedMonth: signal.month,
+    related: {
+      entities: ["court-ministry-personnel", "court-censorate"],
+      offices: ["ministry_personnel", "censorate"],
+      metrics: ["player.performanceMerit", "player.impeachmentRisk"]
+    }
+  })).filter(Boolean);
+}
+
 function deriveOfficialOutcomeThreads(worldState) {
   const view = buildOfficialCareerView(worldState);
   if (!view.active) return [];
@@ -853,6 +893,7 @@ function deriveWorldThreads(worldState = {}) {
     ...deriveOfficialAssignmentThreads(worldState),
     ...deriveOfficialCourtFollowUpThreads(worldState),
     ...deriveOfficialCourtResponseThreads(worldState),
+    ...deriveOfficialCourtConsequenceThreads(worldState),
     ...deriveOfficialOutcomeThreads(worldState),
     ...deriveRoleImpactThreads(worldState),
     ...deriveWorldEntityThreads(worldState)

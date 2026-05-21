@@ -137,6 +137,17 @@ export type CourtResponseView = JsonObject & {
   readonly safety?: JsonObject;
 };
 
+export type CourtConsequenceView = JsonObject & {
+  readonly schemaVersion?: string;
+  readonly active?: boolean;
+  readonly summary?: string;
+  readonly pendingSources?: readonly JsonObject[];
+  readonly recentSignals?: readonly JsonObject[];
+  readonly nextActions?: readonly JsonObject[];
+  readonly authorityBoundary?: string;
+  readonly safety?: JsonObject;
+};
+
 export type SafeWorldState = {
   readonly player?: PlayerSummary;
   readonly activeExam?: ExamState | null;
@@ -169,6 +180,7 @@ export type SafeRouteViews = {
   readonly examAftermathView?: JsonObject;
   readonly studyProfileView?: JsonObject;
   readonly officialCareerView?: OfficialCareerView;
+  readonly courtConsequenceView?: CourtConsequenceView;
   readonly courtResponseView?: CourtResponseView;
   readonly appointmentTrackView?: JsonObject;
   readonly officialPostingsView?: JsonObject;
@@ -666,6 +678,7 @@ export type TurnResponse = SafeRouteViews & {
   readonly narrative?: string;
   readonly npcEconomy?: NpcEconomyFeedback;
   readonly npcActiveRequests?: JsonObject;
+  readonly officialCourtConsequence?: JsonObject;
   readonly officialCourtResponse?: JsonObject;
   readonly examTrigger?: JsonObject | null;
   readonly examScene?: JsonObject | null;

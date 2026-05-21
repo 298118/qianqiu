@@ -1107,6 +1107,27 @@ describe("S74.1 React client shell", () => {
               reportId: "PMB-1644-01-0009",
               publicSummary: "首月差事已入本月官职月报。"
             }
+          },
+          courtConsequenceView: {
+            active: true,
+            summary: "当前有1条奏议链路可转为长期官场后果信号，所有信号只入考成观察、月报和世界议程。",
+            pendingSources: [{
+              id: "court-consequence-source-1",
+              title: "部院覆奏：馆阁讲章校订",
+              statusLabel: "部院待覆",
+              publicSummary: "讲章校订后续可入本任考成观察，风宪风险只作公开信号。"
+            }],
+            recentSignals: [{
+              id: "OCC-app-fixture",
+              title: "考成压力：馆阁讲章校订",
+              statusLabel: "入考成观察",
+              publicSummary: "馆阁讲章校订转为官场后果信号，后续仍候服务器裁决。"
+            }],
+            nextActions: [{
+              id: "merge-assessment",
+              label: "合入考成观察",
+              text: "将馆阁讲章校订合入本任考成观察，只列公开功过和待核凭据。"
+            }]
           }
         }), {
           status: 200,
@@ -1137,6 +1158,8 @@ describe("S74.1 React client shell", () => {
     expect(screen.getByText("官署首月")).toBeTruthy();
     expect(screen.getByText("馆阁讲章校订")).toBeTruthy();
     expect(screen.getByText("奏折朝议入口")).toBeTruthy();
+    expect(screen.getByText(/官场后果：当前有1条奏议链路/)).toBeTruthy();
+    expect(screen.getByText("考成压力：馆阁讲章校订")).toBeTruthy();
     expect(screen.getByText("首月回署：馆阁讲章校订")).toBeTruthy();
     expect(screen.getByText(/近次裁决：准入复核：馆阁讲章校订已入奏折队列服务器裁决/)).toBeTruthy();
     expect(screen.getByText(/朝议跟进：部院覆奏 · 部院待覆/)).toBeTruthy();
@@ -1147,6 +1170,7 @@ describe("S74.1 React client shell", () => {
     expect(screen.getByRole("link", { name: "入朝议页" }).getAttribute("href")).toBe(`/game/${sessionId}/court`);
     expect(screen.getByRole("button", { name: "续记考成" })).toBeTruthy();
     expect(screen.getByRole("button", { name: "部院覆奏" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "合入考成观察" })).toBeTruthy();
     expect(screen.getByText("不得在前端直接任免、奖惩、处分、弹劾成案或改写考成。")).toBeTruthy();
 
     fireEvent.click(screen.getByRole("button", { name: "回应弹劾" }));
@@ -1162,6 +1186,8 @@ describe("S74.1 React client shell", () => {
     expect(useUiStateStore.getState().actionDraft?.text).toContain("讲章回署");
     fireEvent.click(screen.getByRole("button", { name: "部院覆奏" }));
     expect(useUiStateStore.getState().actionDraft?.text).toContain("相关部院");
+    fireEvent.click(screen.getByRole("button", { name: "合入考成观察" }));
+    expect(useUiStateStore.getState().actionDraft?.text).toContain("本任考成观察");
     expect(fetchMock.mock.calls.filter(([url]) => url === "/api/game/turn")).toHaveLength(0);
     expect(document.body.textContent || "").not.toMatch(/provider payload|sk-test-secret|prompt|raw audit|path=|C:\\|data\/sessions|OPENAI_API_KEY/i);
   });
@@ -1400,6 +1426,27 @@ describe("S74.1 React client shell", () => {
           worldThreadView: {
             threads: [{ id: "thread-1", title: "朝议钱粮", followUp: "待内阁具奏。" }]
           },
+          courtConsequenceView: {
+            active: true,
+            summary: "当前有1条奏议链路可转为长期官场后果信号，近次信号1条；所有信号只入考成观察、月报和世界议程。",
+            pendingSources: [{
+              id: "court-consequence-source-1",
+              title: "部院覆奏：河工清册",
+              statusLabel: "部院待覆",
+              publicSummary: "河工清册可入考成观察和风宪风险复核。"
+            }],
+            recentSignals: [{
+              id: "OCC-emperor-fixture",
+              title: "风宪观察：河工清册",
+              statusLabel: "列风宪观察",
+              publicSummary: "河工清册转为官场后果信号，只作公开观察。"
+            }],
+            nextActions: [{
+              id: "monthly-trace",
+              label: "月报摘录",
+              text: "把河工清册摘入官职月报和世界议程，后续仍候服务器裁决。"
+            }]
+          },
           courtResponseView: {
             active: true,
             role: "emperor",
@@ -1451,7 +1498,9 @@ describe("S74.1 React client shell", () => {
     await screen.findByRole("heading", { name: "御案朝仪" });
     expect(screen.getByText("奏折队列")).toBeTruthy();
     expect(screen.getByText("奏议回应")).toBeTruthy();
-    expect(screen.getByText("部院覆奏：河工清册")).toBeTruthy();
+    expect(screen.getAllByText("部院覆奏：河工清册").length).toBeGreaterThan(0);
+    expect(screen.getByText(/官场后果：当前有1条奏议链路/)).toBeTruthy();
+    expect(screen.getByText("风宪观察：河工清册")).toBeTruthy();
     expect(screen.getByText("朱批拟稿")).toBeTruthy();
     expect(screen.getAllByText("圣旨草稿").length).toBeGreaterThan(0);
     expect(screen.getAllByText("朝议").length).toBeGreaterThan(0);
@@ -1473,6 +1522,8 @@ describe("S74.1 React client shell", () => {
       targetPage: "game",
       text: "朱批留览部院覆奏：河工清册，令部院据公开凭据覆奏，此稿只候服务器裁决。"
     });
+    fireEvent.click(screen.getByRole("button", { name: "月报摘录" }));
+    expect(useUiStateStore.getState().actionDraft?.text).toContain("官职月报");
     expect(fetchMock.mock.calls.filter(([url]) => url === "/api/game/turn")).toHaveLength(0);
     expect(document.body.textContent || "").not.toMatch(/provider payload|sk-test-secret|prompt|raw audit|path=|C:\\|data\/sessions|OPENAI_API_KEY/i);
   });

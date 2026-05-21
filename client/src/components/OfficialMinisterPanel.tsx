@@ -10,6 +10,7 @@ type OfficialMinisterPanelProps = {
   readonly actorMemoryView?: JsonObject | null;
   readonly aiControlAuditView?: JsonObject | null;
   readonly playerMonthlyBriefingView?: JsonObject | null;
+  readonly courtConsequenceView?: JsonObject | null;
   readonly courtResponseView?: JsonObject | null;
   readonly roleBackgroundPath?: string;
   readonly onDraft: (text: string) => void;
@@ -454,6 +455,32 @@ function getCourtResponseDocket(courtResponseView: JsonObject) {
   };
 }
 
+function getCourtConsequenceDocket(courtConsequenceView: JsonObject) {
+  const rows = [
+    ...asArray(courtConsequenceView.pendingSources),
+    ...asArray(courtConsequenceView.recentSignals)
+  ];
+  const items = listFromRows(rows, "court-consequence", 4, "官场后果");
+  const actions: SafeDraftAction[] = asArray(courtConsequenceView.nextActions)
+    .map(asRecord)
+    .map((action, index) => ({
+      id: cleanOfficialMinisterText(action.id, `court-consequence-action-${index}`, 48),
+      label: cleanOfficialMinisterText(action.label, "记后果", 24),
+      text: cleanOfficialMinisterText(action.text, "", 168)
+    }))
+    .filter((action) => action.text);
+  return {
+    active: courtConsequenceView.active === true && (items.length > 0 || actions.length > 0),
+    summary: cleanOfficialMinisterText(
+      courtConsequenceView.summary,
+      "官场长期后果只读公开信号；考成、风宪、月报和世界议程只先写成草稿或观察。",
+      148
+    ),
+    items,
+    actions
+  };
+}
+
 function draftButtonText(label: string, text: string, enabled: boolean, onDraft: (text: string) => void) {
   return (
     <button type="button" disabled={!enabled} onClick={() => onDraft(text)}>
@@ -470,6 +497,7 @@ export function OfficialMinisterPanel({
   actorMemoryView,
   aiControlAuditView,
   playerMonthlyBriefingView,
+  courtConsequenceView,
   courtResponseView,
   roleBackgroundPath,
   onDraft,
@@ -482,6 +510,7 @@ export function OfficialMinisterPanel({
   const actorMemory = asRecord(actorMemoryView);
   const aiAudit = asRecord(aiControlAuditView);
   const monthlyBriefing = asRecord(playerMonthlyBriefingView);
+  const courtConsequence = getCourtConsequenceDocket(asRecord(courtConsequenceView));
   const courtResponse = getCourtResponseDocket(asRecord(courtResponseView));
   const posting = currentPostingFromView(officialPostings);
   const assessmentRecord = currentAssessmentFromView(officialPostings);
@@ -669,9 +698,23 @@ export function OfficialMinisterPanel({
               ))}
             </ul>
           ) : null}
+          {courtConsequence.active ? (
+            <>
+              <p>官场后果：{courtConsequence.summary}</p>
+              <OfficialMinisterPanelList
+                items={courtConsequence.items}
+                emptyText="暂无官场后果信号；不得补造考成、风宪或朝廷终局。"
+              />
+            </>
+          ) : null}
           <div className="scholarPanelActions">
             {draftButtonText("自陈考成", "据公开考成簿自陈本任功过，列明可核证事件与待裁疑点。", canDraft, onDraft)}
             {draftButtonText("回应弹劾", "若有弹劾风声，先拟辨疏，说明事实、证据和请核事项，不自行成案。", canDraft, onDraft)}
+            {courtConsequence.actions.slice(0, 3).map((action) => (
+              <button key={action.id} type="button" disabled={!canDraft} onClick={() => onDraft(action.text)}>
+                {action.label}
+              </button>
+            ))}
           </div>
         </article>
 

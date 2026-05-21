@@ -2,6 +2,7 @@ const { buildEconomicFiscalRetrievalRows } = require("./economicFiscal");
 const { buildLocalAffairsDocketView } = require("./localAffairsDockets");
 const { buildMilitaryDiplomacyRetrievalRows } = require("./militaryDiplomacy");
 const { buildOfficialCareerView } = require("./officialCareer");
+const { buildOfficialCourtConsequenceView } = require("./officialCourtConsequences");
 const { buildOfficialPostingsView } = require("./officialPostings");
 const {
   MONTHLY_BRIEFING_LIMITS,
@@ -268,6 +269,7 @@ function buildCourtNetworkItems(worldPeopleView = {}, officialPostingsView = {})
 function defaultAiReadScope() {
   return [
     "officialCareerView",
+    "courtConsequenceView",
     "officialPostingsView",
     "localAffairsDocketView",
     "economicFiscalView",
@@ -279,16 +281,21 @@ function defaultAiReadScope() {
 function buildPlayerMonthlyBriefingContext(worldState = {}, options = {}) {
   const officialCareerView = buildOfficialCareerView(worldState);
   const officialPostingsView = buildOfficialPostingsView(worldState);
+  const courtConsequenceView = buildOfficialCourtConsequenceView(worldState);
   const localAffairsDocketView = buildLocalAffairsDocketView(worldState);
   const worldPeopleView = buildWorldPeopleView(worldState);
   const economicReports = buildEconomicFiscalRetrievalRows(worldState);
   const militaryReports = buildMilitaryDiplomacyRetrievalRows(worldState);
   const period = options.period || periodFromWorldTick(worldState, options.worldTick);
   const playerPosting = findPlayerPosting(officialPostingsView);
+  const latestCourtConsequenceSignal = Array.isArray(courtConsequenceView.recentSignals)
+    ? courtConsequenceView.recentSignals.at(-1)
+    : null;
   const role = cleanId(worldState.player?.role, "official");
   const roleLabel = PLAYER_MONTHLY_BRIEFING_ROLE_LABELS[role] || worldState.player?.roleLabel || role;
   const sourceRefs = [
     sourceRef("official_posting", playerPosting || officialCareerView, officialCareerView.currentPosting || "本职差事"),
+    sourceRef("court_consequence", latestCourtConsequenceSignal, "官场后果信号"),
     ...(localAffairsDocketView.dockets || []).slice(0, 2).map((docket) => sourceRef("local_docket", docket)),
     ...economicReports.slice(0, 2).map((report) => sourceRef("economic_fiscal", report)),
     ...militaryReports.slice(0, 2).map((report) => sourceRef("military_diplomacy", report))
@@ -305,6 +312,7 @@ function buildPlayerMonthlyBriefingContext(worldState = {}, options = {}) {
       80
     ),
     officialCareerView,
+    courtConsequenceView,
     officialPostingsView,
     localAffairsDocketView,
     worldPeopleView,
@@ -336,6 +344,13 @@ function generateMonthlyBriefingProposal(context = {}) {
   const courtEntry = official.courtEntry?.active ? official.courtEntry : null;
   const courtEntryResolution = courtEntry?.latestResolution || null;
   const courtEntryFollowUp = courtEntry?.latestFollowUp || null;
+  const courtConsequence = context.courtConsequenceView || {};
+  const latestCourtConsequenceSignal = Array.isArray(courtConsequence.recentSignals)
+    ? courtConsequence.recentSignals.at(-1)
+    : null;
+  const courtConsequenceActions = Array.isArray(courtConsequence.nextActions)
+    ? courtConsequence.nextActions
+    : [];
   const activeAssignmentText = assignments.length
     ? assignments.slice(0, 3).map((assignment) => `${assignment.title}：${assignment.deadlineLabel || "限期未明"}，进度${assignment.progress ?? 0}。`)
     : [`${context.currentPosting || "本职差事"}本月以例行案牍、上官督责和公开差遣为主。`];
@@ -345,9 +360,13 @@ function generateMonthlyBriefingProposal(context = {}) {
       firstMonth.receipt?.publicSummary,
       courtEntryResolution?.publicSummary,
       courtEntryFollowUp?.publicSummary,
+      latestCourtConsequenceSignal?.publicSummary,
       ...(Array.isArray(firstMonth.assessmentSignals) ? firstMonth.assessmentSignals : [])
     ], 4)
     : [];
+  const courtConsequenceDutyTexts = cleanTextList([
+    latestCourtConsequenceSignal?.publicSummary
+  ], 2);
   const docketTexts = topTexts(localDockets, "publicDocket", 3);
   const fiscalTexts = topTexts(context.economicReports, "publicSummary", 3);
   const militaryTexts = topTexts(context.militaryReports, "publicSummary", 2);
@@ -362,6 +381,8 @@ function generateMonthlyBriefingProposal(context = {}) {
     firstMonth?.nextActions?.[0]?.text,
     courtEntryResolution?.nextStep,
     courtEntryFollowUp?.nextStep,
+    latestCourtConsequenceSignal?.nextStep,
+    courtConsequenceActions[0]?.text,
     urgentAssignments[0] ? `先办${urgentAssignments[0].title}，免入逾期考成。` : "",
     docketTexts[0] ? `复核案牍：${docketTexts[0]}` : "",
     fiscalTexts[0] ? `留意钱粮：${fiscalTexts[0]}` : "",
@@ -372,6 +393,9 @@ function generateMonthlyBriefingProposal(context = {}) {
     firstMonth?.assignment?.riskLabel ? `首月差事风险：${firstMonth.assignment.riskLabel}。` : "",
     courtEntryResolution?.riskDelta > 0 ? `奏折朝议裁决增加风险：${courtEntryResolution.publicSummary}` : "",
     courtEntryFollowUp?.riskDelta > 0 ? `奏议后续批复增加风险：${courtEntryFollowUp.publicSummary}` : "",
+    latestCourtConsequenceSignal?.riskDelta > 0 || latestCourtConsequenceSignal?.impeachmentWatch === "risk_watch"
+      ? `官场后果信号提示风险：${latestCourtConsequenceSignal.publicSummary}`
+      : "",
     careerRisk >= 70 ? `官场风险偏高，考成风险${careerRisk}。` : "",
     localDockets.find((docket) => docket.status !== "routine")?.publicSummary || "",
     context.economicReports.find((report) => (report.pressureScore || report.fiscalPressure || 0) >= 60)?.publicSummary || "",
@@ -382,7 +406,11 @@ function generateMonthlyBriefingProposal(context = {}) {
     title: `${context.period?.label || "本月"}${context.roleLabel || "官职"}月报`,
     publicSummary: `${context.currentPosting || context.roleLabel || "本职"}本月要点已按公开案牍、钱粮军务、上官同僚和下月行动整理。`,
     sections: [
-      buildSection("official_duties", `${context.currentPosting || "本职差事"}：本月差遣、考成和上官督责已汇总。`, firstMonthDutyTexts.length ? firstMonthDutyTexts : activeAssignmentText),
+      buildSection(
+        "official_duties",
+        `${context.currentPosting || "本职差事"}：本月差遣、考成和上官督责已汇总。`,
+        firstMonthDutyTexts.length ? firstMonthDutyTexts : courtConsequenceDutyTexts.length ? courtConsequenceDutyTexts : activeAssignmentText
+      ),
       buildSection("fiscal_local", "钱粮民情按当前可见案牍和财赋 projection 摘录。", [...docketTexts, ...fiscalTexts]),
       buildSection("military_diplomacy", "军务边情只列玩家身份可读的公开预警。", militaryTexts),
       buildSection("court_network", "上官、同僚和可见人物关系只按公开摘要呈现。", networkItems),

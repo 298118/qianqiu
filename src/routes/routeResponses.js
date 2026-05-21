@@ -24,6 +24,7 @@ const RAW_LEDGER_KEYS = Object.freeze([
   "marketPriceLedger",
   "npcEconomyLedger",
   "npcActiveRequestLedger",
+  "officialCourtConsequences",
   "officialCourtResponses"
 ]);
 

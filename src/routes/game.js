@@ -20,6 +20,11 @@ const {
   runOfficialCareerStep
 } = require("../game/officialCareer");
 const {
+  buildOfficialCourtConsequenceView,
+  ensureOfficialCourtConsequenceState,
+  runOfficialCourtConsequenceStep
+} = require("../game/officialCourtConsequences");
+const {
   buildOfficialCourtResponseView,
   ensureOfficialCourtResponseState,
   runOfficialCourtResponseStep
@@ -481,6 +486,7 @@ function ensureRouteProjectionState(worldState) {
   ensureAppointmentTrackState(worldState);
   ensureLongTermEventState(worldState);
   ensureOfficialCareerState(worldState);
+  ensureOfficialCourtConsequenceState(worldState);
   ensureOfficialCourtResponseState(worldState);
   ensureRoleWorldCouplingState(worldState);
   ensureWorldGeographyState(worldState);
@@ -534,6 +540,7 @@ function buildCommonTurnViews(worldState, options = {}) {
     worldThreadView: buildWorldThreadView(worldState),
     longTermEventView: buildLongTermEventView(worldState),
     officialCareerView: buildOfficialCareerView(worldState),
+    courtConsequenceView: buildOfficialCourtConsequenceView(worldState),
     courtResponseView: buildOfficialCourtResponseView(worldState),
     officialPostingsView,
     localAffairsDocketView: buildLocalAffairsDocketView(worldState),
@@ -993,6 +1000,13 @@ async function finalizeTurn(worldState, result, input, auditOptions = {}) {
     allowServerOwnedPatchKeys: true
   });
   const officialCareerRelationshipChanges = applyRelationshipChanges(worldState, officialCareer.relationshipChanges);
+  const officialCourtConsequence = runOfficialCourtConsequenceStep(worldState, input, {
+    isMonthEnd: worldTick.completedMonth
+  });
+  applyStatePatch(worldState, officialCourtConsequence.statePatch, {
+    incrementTurnCount: false,
+    allowServerOwnedPatchKeys: true
+  });
   const worldPeopleLifecycle = runWorldPeopleLifecycleStep(worldState, {
     isMonthEnd: worldTick.completedMonth,
     worldTick,
@@ -1021,6 +1035,7 @@ async function finalizeTurn(worldState, result, input, auditOptions = {}) {
     ...studyInteraction.relationshipChanges,
     ...activeNpcRequest.relationshipChanges,
     ...(Array.isArray(officialCourtResponse.relationshipChanges) ? officialCourtResponse.relationshipChanges : []),
+    ...(Array.isArray(officialCourtConsequence.relationshipChanges) ? officialCourtConsequence.relationshipChanges : []),
     ...(Array.isArray(npcActiveRequests.relationshipChanges) ? npcActiveRequests.relationshipChanges : []),
     ...roleWorldCouplingRelationshipChanges,
     ...(Array.isArray(npcEconomy.relationshipChanges) ? npcEconomy.relationshipChanges : []),
@@ -1091,6 +1106,7 @@ async function finalizeTurn(worldState, result, input, auditOptions = {}) {
   appendEvents(worldState, worldTick.events);
   appendEvents(worldState, longTermEvents.events);
   appendEvents(worldState, officialCareer.events);
+  appendEvents(worldState, officialCourtConsequence.events);
   appendEvents(worldState, worldPeopleLifecycle.events);
   appendEvents(worldState, playerMonthlyBriefing.events);
   ensureRelationshipLedger(worldState);
@@ -1100,6 +1116,7 @@ async function finalizeTurn(worldState, result, input, auditOptions = {}) {
   ensureAppointmentTrackState(worldState);
   ensureLongTermEventState(worldState);
   ensureOfficialCareerState(worldState);
+  ensureOfficialCourtConsequenceState(worldState);
   ensureOfficialCourtResponseState(worldState);
   ensureRoleWorldCouplingState(worldState);
   ensureWorldGeographyState(worldState);
@@ -1145,6 +1162,7 @@ async function finalizeTurn(worldState, result, input, auditOptions = {}) {
     teacherFeedbackProposal,
     studyInteraction,
     officialCourtResponse,
+    officialCourtConsequence,
     roleWorldCoupling,
     worldTick,
     npcEconomy,
@@ -1197,6 +1215,7 @@ async function finalizeTurn(worldState, result, input, auditOptions = {}) {
         reason: "AI 老师 proposal 经服务器采纳为文本点评"
       }] : []),
       ...studyInteraction.attributeChanges,
+      ...(Array.isArray(officialCourtConsequence.attributeChanges) ? officialCourtConsequence.attributeChanges : []),
       ...(Array.isArray(officialCourtResponse.attributeChanges) ? officialCourtResponse.attributeChanges : []),
       ...roleWorldCoupling.attributeChanges,
       ...worldTickFeedback.attributeChanges,
@@ -1214,6 +1233,13 @@ async function finalizeTurn(worldState, result, input, auditOptions = {}) {
       events: Array.isArray(officialCourtResponse.events) ? officialCourtResponse.events : [],
       attributeChanges: Array.isArray(officialCourtResponse.attributeChanges) ? officialCourtResponse.attributeChanges : [],
       outcome: officialCourtResponse.outcome
+    },
+    officialCourtConsequence: {
+      schemaVersion: officialCourtConsequence.schemaVersion,
+      summary: officialCourtConsequence.summary,
+      events: Array.isArray(officialCourtConsequence.events) ? officialCourtConsequence.events : [],
+      attributeChanges: Array.isArray(officialCourtConsequence.attributeChanges) ? officialCourtConsequence.attributeChanges : [],
+      outcome: officialCourtConsequence.outcome
     },
     npcActiveRequestEvents: npcActiveRequests.events,
     worldEntityImpacts,

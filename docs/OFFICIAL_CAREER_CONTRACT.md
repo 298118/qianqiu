@@ -40,6 +40,19 @@ recent bounded responses. Ordinary turns that submit “朱批 / 票拟覆奏 / 
 do not directly appoint, punish, impeach, fund, accept a memorial, or expose
 provider prompts, raw storage rows, hidden notes, local paths, or keys.
 
+The long-term consequence layer is also separate from direct official-career
+resolution. `worldState.officialCourtConsequences` is a server-owned signal
+ledger stripped from compatible public `worldState`; `courtConsequenceView`
+projects safe pending sources, recent signals, next draft actions, AI read
+scope, proposal boundaries, and server adjudication rules. Ordinary turns may
+convert public court-entry resolutions, follow-ups, and cross-role responses
+into bounded `official_court_consequence` signals such as evidence gaps,
+assessment pressure, merit trace, court attention, or censorate watch. These
+signals can feed event archive, world threads, monthly briefing, topic surfaces,
+and bounded career dossier notes, but they remain non-final: they do not decide
+appointments, punishments, fiscal action, memorial acceptance, or impeachment
+outcomes.
+
 ## S42.1 深度官场契约
 
 目标：入仕后不再只是六项仪表变化和偶发升降，而是进入有官职、衙门、差遣、考成、人脉、政敌、弹劾、外放、处分和履历档案的长期生涯。S42.1 定义契约；S42.2 已实现字段、规则和 Mock 行动扩展；S42.3 已扩展浏览器 UI 与验收。
