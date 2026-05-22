@@ -6,7 +6,8 @@ const { createInitialState } = require("../src/game/initialState");
 const { attachExamSceneTime } = require("../src/game/examSceneTime");
 const {
   createNpcActiveRequest,
-  resolveNpcActiveRequest
+  resolveNpcActiveRequest,
+  runNpcActiveRequestStep
 } = require("../src/game/npcActiveRequests");
 const { resolveNpcRelationshipAction } = require("../src/game/npcRelationshipActions");
 const { recordNpcInteraction } = require("../src/game/npcInteractions");
@@ -230,6 +231,11 @@ test("S88.7 event archive records safe NPC active request and relationship resol
   const activeRequest = createNpcActiveRequest(worldState, "bribe");
   const activeResolution = resolveNpcActiveRequest(worldState, activeRequest.request.requestId, "report");
   activeResolution.request.outcome.publicSummary = "providerPayload hiddenDossier /mnt/e/secret sk-testsecret";
+  worldState.turnCount = 6;
+  const followUpResolution = runNpcActiveRequestStep(
+    worldState,
+    "续办廉政线索：拒收留痕并呈报，不收财物。"
+  );
 
   const relationshipAction = resolveNpcRelationshipAction(worldState, {
     npcId: "npc:scholar:peer-shen",
@@ -262,7 +268,8 @@ test("S88.7 event archive records safe NPC active request and relationship resol
     item.sourceId === activeResolution.request.outcome.resolverTrace.publicResolutionRef
   );
   assert.ok(activeArchiveItem);
-  assert.match(activeArchiveItem.summary, /廉政|后续|服务器/);
+  assert.equal(followUpResolution.outcome.followUpResolved, 1);
+  assert.match(activeArchiveItem.summary, /廉政|watchlist|后续|服务器/);
   assert.match(activeArchiveItem.riskLabel, /integrity_risk_review/);
   assert.ok(archive.items.some((item) =>
     item.sourceType === "npc_relationship_action" &&
@@ -432,6 +439,8 @@ test("event archive sanitizer drops prompt, provider, path, key, and raw state t
   assert.equal(cleanArchiveText("MIMO_API_KEY=tp-archive-secret-123456"), "");
   assert.equal(cleanArchiveText("RAW_TABLE_geo_cities C:\\Users\\ZZZ\\secret.txt SECRET_KEY_VALUE"), "");
   assert.equal(cleanArchiveText("prompt_retrieval_index people_npcs TOKEN_VALUE"), "");
+  assert.equal(cleanArchiveText("provider_payload private_signal_tags hidden_dossier safe_search_index"), "");
+  assert.equal(cleanArchiveText("true_assets secret_relationships unrevealed_tasks state_patch"), "");
 });
 
 test("event archive drops polluted actor memory and session summary raw text variants", () => {

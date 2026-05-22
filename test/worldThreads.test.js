@@ -4,7 +4,8 @@ const assert = require("node:assert/strict");
 const { createInitialState } = require("../src/game/initialState");
 const {
   createNpcActiveRequest,
-  resolveNpcActiveRequest
+  resolveNpcActiveRequest,
+  runNpcActiveRequestStep
 } = require("../src/game/npcActiveRequests");
 const {
   buildWorldThreadView,
@@ -47,8 +48,23 @@ test("S88.7 world threads consume the dedicated NPC active request ledger safely
   assert.ok(watchThread);
   assert.equal(watchThread.status, "watch");
   assert.match(watchThread.summary, /廉政|线索|服务器/);
+
+  worldState.turnCount = 6;
+  const followUp = runNpcActiveRequestStep(
+    worldState,
+    "续办廉政线索：拒收留痕并呈报，不收财物。"
+  );
+  assert.equal(followUp.outcome.followUpResolved, 1);
+  ensureWorldThreadState(worldState);
+  const followUpView = buildWorldThreadView(worldState);
+  const followUpThread = followUpView.activeThreads.find((thread) => thread.sourceId === created.request.requestId);
+  assert.ok(followUpThread);
+  assert.equal(followUpThread.status, "watch");
+  assert.match(followUpThread.summary, /廉政|watchlist|后续|服务器/);
+  assert.equal(followUpThread.lastUpdatedTurn, 6);
+
   assert.doesNotMatch(
-    JSON.stringify(watchView),
+    JSON.stringify(followUpView),
     /npcActiveRequestLedger|hiddenDossier|privateSignalTags|求财|亲族压力|rawProvider|sk-[A-Za-z0-9_-]{6,}/
   );
 });

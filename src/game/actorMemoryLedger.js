@@ -15,7 +15,7 @@ const { buildNpcRosterView } = require("./npcRoster");
 
 const SECRET_ENV_NAME_PATTERN = /(KEY|TOKEN|SECRET|PASSWORD|CREDENTIAL)/i;
 const SENSITIVE_MEMORY_TEXT_PATTERN =
-  /(hidden[_ -]?(?:notes?|intent)|hidden\s+(?:notes?|intent)|actorMemoryLedger|sessionSummary|sealedMapping|sealed_mapping|密档|私档|密札|密信|隐藏(?:意图|动机|事实|札记)|隐秘(?:意图|动机|事实)|raw[_ -]?(?:provider|audit|table|ledger|prompt|proposal)|\b(?:provider|prompt|proposal|statePatch|worldState|rawSql)\b|api[_ -]?key|OPENAI_API_KEY|DEEPSEEK_API_KEY|MIMO_API_KEY|ANTHROPIC_API_KEY|data[\\/](?:sessions|audit)|ai_change_proposals|event_log|sqlite|world_sessions|world_state_json|prompt_retrieval_index|event_archive_index|raw[_ -]?(?:table|ledger|audit)|(?:geo|people|office)_[A-Za-z0-9_]+|\b[A-Z0-9_]*(?:KEY|TOKEN|SECRET|PASSWORD|CREDENTIAL)[A-Z0-9_]*\b|file:\/\/\/?(?:[A-Za-z]:[\\/]|(?:\/Users|\/home|\/tmp|\/var|\/mnt|\/opt)\/)[^\s"'<>]+|[A-Za-z]:[\\/][^\s"'<>]+|\b(?:\/Users|\/home|\/tmp|\/var|\/mnt|\/opt)\/[^\s"'<>]+|sk-[A-Za-z0-9_-]{8,}|tp-[A-Za-z0-9_-]{8,})/i;
+  /(hidden[_ -]?(?:notes?|intent|dossier)|hidden\s+(?:notes?|intent|dossier)|hiddenDossier|hidden_dossier|privateSignalTags|private_signal_tags|providerPayload|provider_payload|trueAssets|true_assets|secretRelationships|secret_relationships|unrevealedTasks|unrevealed_tasks|actorMemoryLedger|sessionSummary|retrievalContext|retrieval_context|sealedMapping|sealed_mapping|safe_search_index|safe_search_fts|state_patch|密档|私档|密札|密信|隐藏(?:意图|动机|事实|札记)|隐秘(?:意图|动机|事实)|raw[_ -]?(?:provider|audit|table|ledger|prompt|proposal)|\b(?:provider|prompt|proposal|statePatch|worldState|rawSql)\b|api[_ -]?key|OPENAI_API_KEY|DEEPSEEK_API_KEY|MIMO_API_KEY|ANTHROPIC_API_KEY|data[\\/](?:sessions|audit)|ai_change_proposals|event_log|sqlite|world_sessions|world_state_json|prompt_retrieval_index|event_archive_index|raw[_ -]?(?:table|ledger|audit)|(?:geo|people|office)_[A-Za-z0-9_]+|\b[A-Z0-9_]*(?:KEY|TOKEN|SECRET|PASSWORD|CREDENTIAL)[A-Z0-9_]*\b|file:\/\/\/?(?:[A-Za-z]:[\\/]|(?:\/Users|\/home|\/tmp|\/var|\/mnt|\/opt)\/)[^\s"'<>]+|[A-Za-z]:[\\/][^\s"'<>]+|\b(?:\/Users|\/home|\/tmp|\/var|\/mnt|\/opt)\/[^\s"'<>]+|sk-[A-Za-z0-9_-]{8,}|tp-[A-Za-z0-9_-]{8,})/i;
 
 function isPlainObject(value) {
   return value !== null && typeof value === "object" && !Array.isArray(value);
@@ -917,6 +917,93 @@ function memoryProposalsFromNpcActiveRequestTraces(worldState = {}, npcActiveReq
     .filter((proposal) => proposal?.actorId && proposal.summary);
 }
 
+function memoryProposalsFromNpcActiveRequestFollowUpResolutions(worldState = {}, npcActiveRequests = {}) {
+  const submittedResolutions = (Array.isArray(npcActiveRequests?.outcome?.followUpResolutions)
+    ? npcActiveRequests.outcome.followUpResolutions
+    : [])
+    .filter((resolution) => isPlainObject(resolution) && resolution.resolver === "npc_active_request_follow_up_resolver");
+  if (!submittedResolutions.length) return [];
+
+  const view = buildNpcActiveRequestView(worldState, { includeResolved: true });
+  const records = Array.isArray(view?.items) ? view.items : [];
+  const recordsByResolutionId = new Map();
+  for (const record of records) {
+    const canonicalResolutions = Array.isArray(record?.outcome?.followUpResolutions)
+      ? record.outcome.followUpResolutions
+      : [];
+    for (const resolution of canonicalResolutions) {
+      const resolutionId = cleanId(resolution?.resolutionId, "");
+      if (resolutionId && resolution?.resolver === "npc_active_request_follow_up_resolver") {
+        recordsByResolutionId.set(resolutionId, { record, resolution });
+      }
+    }
+  }
+  const labels = actorLabelMap(worldState);
+
+  return submittedResolutions
+    .map((submitted) => {
+      const submittedResolutionId = cleanId(submitted.resolutionId, "");
+      const canonical = recordsByResolutionId.get(submittedResolutionId);
+      if (!canonical) return null;
+      const { record, resolution } = canonical;
+      const canonicalResolutionRef = cleanId(resolution.publicResolutionRef, "");
+      if (
+        !canonicalResolutionRef ||
+        canonicalResolutionRef !== cleanId(submitted.publicResolutionRef, "") ||
+        resolution.resolver !== "npc_active_request_follow_up_resolver"
+      ) {
+        return null;
+      }
+      const sourceTrace = isPlainObject(record.outcome?.resolverTrace) ? record.outcome.resolverTrace : {};
+      if (
+        sourceTrace.resolver !== "npc_active_request_resolver" ||
+        cleanId(sourceTrace.publicResolutionRef, "") !== canonicalResolutionRef
+      ) {
+        return null;
+      }
+      const followUpView = isPlainObject(record.outcome?.followUpView) ? record.outcome.followUpView : {};
+      if (!followUpView.boundaries?.serverOwnsFollowUp || !resolution.boundaries?.serverOwnsFollowUp) {
+        return null;
+      }
+      const npcId = cleanId(record.npc?.npcId || resolution.npc?.npcId, "");
+      const actorId = actorIdFromNpcRosterId(npcId);
+      const name = cleanText(record.npc?.displayName || resolution.npc?.displayName || labels.get(actorId), "此人", 48);
+      const typeLabel = cleanText(resolution.requestTypeLabel || record.typeLabel || sourceTrace.typeLabel, "来函", 40);
+      const statusLabel = cleanText(resolution.statusLabel, "后续复核已记", 40);
+      const summaryText = cleanText(resolution.publicSummary || resolution.nextStep, "", 120);
+      const summary = summaryText
+        ? `${name}记得${typeLabel}后续已由服务器登记：${summaryText}`
+        : `${name}记得${typeLabel}后续已由服务器登记，真实资源、婚姻、处分和隐藏事实仍未生效。`;
+      return {
+        actorId,
+        type: activeRequestTraceType(sourceTrace, record) === "grievance" ? "grievance" : "obligation",
+        visibility: "player_visible",
+        subjectType: "player",
+        subjectId: "P1",
+        summary,
+        salience: 70,
+        confidence: 0.78,
+        sourceType: "npc_active_request_follow_up",
+        sourceLabel: "NPC 来函后续",
+        sourceRefs: [
+          npcMemorySourceRef("npcActiveRequestView", record.requestId || canonicalResolutionRef, typeLabel),
+          npcMemorySourceRef("npcActiveRequestResolverTrace", canonicalResolutionRef, "来函裁决"),
+          npcMemorySourceRef("npcActiveRequestFollowUpResolution", resolution.resolutionId, statusLabel)
+        ],
+        tags: cleanList([
+          "NPC后续",
+          "服务器登记",
+          statusLabel,
+          resolution.taskRouteLabel,
+          resolution.followUpKind,
+          ...(Array.isArray(resolution.riskTags) ? resolution.riskTags : [])
+        ], ACTOR_MEMORY_LIMITS.maxTags, 40),
+        requireKnownActor: true
+      };
+    })
+    .filter((proposal) => proposal?.actorId && proposal.summary);
+}
+
 function memoryProposalsFromMonthlyBriefing(playerMonthlyBriefing = {}) {
   if (!playerMonthlyBriefing?.generated) return [];
   const summary = cleanText(playerMonthlyBriefing.summary, "", 140);
@@ -1190,6 +1277,7 @@ function collectTurnActorMemoryProposalResults(worldState = {}, context = {}) {
       .filter(Boolean),
     ...memoryProposalsFromActiveRequest(context.activeNpcRequest),
     ...memoryProposalsFromNpcActiveRequestTraces(worldState, context.npcActiveRequests),
+    ...memoryProposalsFromNpcActiveRequestFollowUpResolutions(worldState, context.npcActiveRequests),
     ...memoryProposalsFromNpcRelationshipActionTraces(worldState, context.npcInteractionRecords),
     ...memoryProposalsFromMonthlyBriefing(context.playerMonthlyBriefing),
     ...npcMindProposals,

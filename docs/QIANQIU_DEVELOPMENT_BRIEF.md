@@ -126,6 +126,8 @@ S73.10.1 已完成全量立绘矩阵定稿：新增 [FRONTEND_PORTRAIT_MATRIX.md
 
 S88.7 主动来函后续簿补充：`npcActiveRequestView.followUpTasks` 只从已裁决的安全 `items` 派生，不读取 raw `npcActiveRequestLedger`；它把 `under_review`、`reported`、`converted_to_risk` 和 `accepted_pending_server_resolution` 的 follow-up 转成公开 taskRoute、状态、draftText、NPC 摘要、证据 refs、风险标签和 proposal-only/server-owned/browser-draft-only 边界，不收录 `active`、`deferred`、`refused` 或 `expired`。React 人物页“来函后续簿”只展示该安全 view 并写本地行动草稿。普通回合可把匹配 safe task 的“续办/后续/复核”文本登记为 `npc_active_request_follow_up_resolver`，回写 canonical request 的 `outcome.followUpResolutions` 和 `followUpView.latestResolution`；该登记只保留公开复核记录，不创建真实任务、扣资源、写婚姻、成弹劾/定罪、处置背叛或公开 hidden 私档。
 
+S88.7 后续公开回响补充：`followUpResolutions` 已进入事件档案、NPC 可见记忆和 world thread 的长期解释链。事件档案仍使用原 `npc_active_request` stable public ref，仅补近次安全后续摘要；`actorMemoryLedger` 使用 `npc_active_request_follow_up` 来源，且必须先用 safe view 命中 canonical resolutionId/public ref、原 resolver trace 和 `serverOwnsFollowUp` 边界；`worldThreadView` 只读最新安全 public summary / next step 和 `createdTurn`。这些回响仍不是资源、婚姻、弹劾、定罪、背叛、人情债或任务队列结算。
+
 ## 3. 核心体验
 
 玩家没有固定选项，主要通过自由文本行动推进游戏。AI 作为世界引擎，负责叙事、意图理解、出题、评分、角色反馈和世界变化建议；服务器负责状态存储、数值边界、晋级规则、作弊惩罚、官场任免、长期事件、可见性过滤和持久化。
@@ -372,6 +374,8 @@ S54-S59 已完成的数据库拆表必须继续保持 JSON 默认可玩，并保
 已落地的 server-owned / view-first 数据域：
 
 S88.7 补充：`npcActiveRequestView.followUpTasks` 是主动来函安全 view 的派生子视图，不是新持久账本。它只消费已清洗 `items[].outcome.followUpView` 和 public resolution ref，公开后续复核 route、状态、draftText、证据 refs、风险标签与服务器边界，供浏览器展示“来函后续簿”和写本地草稿；普通回合提交匹配 task 的续办文本时，服务器先从安全 view 重建 evidence，再把 `npc_active_request_follow_up_resolver` 公开登记写回 canonical request 的 `outcome.followUpResolutions`。真实资源、婚姻、弹劾、定罪、背叛查证、人情债和持久关系结果仍由后续服务器 resolver 或普通回合裁决。
+
+S88.7 续办回响边界：`eventArchiveView`、`actorMemoryView` 与 `worldThreadView` 可以读取最新安全 follow-up resolution 作为公开解释和历史回响，但必须通过 `npcActiveRequestView({ includeResolved: true })` 与 canonical `outcome.followUpResolutions` 匹配，不得直接信任客户端传入的 resolver payload。`npc_active_request_follow_up` 记忆只写已知 NPC 的可见记忆；事件档案不改原 sourceId；world thread 不把 follow-up 叙述升级为真实任务或领域结果。
 
 - `worldEntities` / `worldEntityView`：朝廷衙门、地方士绅、书院、军镇、盐漕、赈务等制度实体压力。
 - `worldThreads` / `worldThreadView`：主动 NPC、长期事件、官场差事、身份联动和高压实体整理成世界议程。

@@ -90,6 +90,7 @@ const ACTOR_MEMORY_SOURCE_TYPES = Object.freeze([
   "scene_runtime",
   "active_request",
   "npc_active_request_trace",
+  "npc_active_request_follow_up",
   "npc_relationship_action_trace",
   "study_interaction",
   "exam_network",

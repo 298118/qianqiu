@@ -184,7 +184,9 @@ test("S70.12 actor memory text rejects hidden note and Chinese private archive v
     "顾文衡 hidden notes 里记下一条玩家不可见私评。",
     "顾文衡 hidden intent 显示一条玩家不可见谋算。",
     "顾文衡密档里藏有一条玩家不可见记录。",
-    "顾文衡私档里藏有隐藏意图。"
+    "顾文衡私档里藏有隐藏意图。",
+    "provider_payload private_signal_tags hidden_dossier safe_search_index",
+    "true_assets secret_relationships unrevealed_tasks state_patch"
   ]) {
     const proposed = proposeActorMemoryUpdate("npc:C01", {
       type: "impression",
@@ -319,6 +321,69 @@ test("S88.7 NPC active request trace memory ignores tampered trace fields after 
   assert.match(serialized, /"type":"obligation"/);
   assert.match(serialized, /廉政线索复核|integrity_risk_review/);
   assert.doesNotMatch(serialized, /"type":"grievance"|伪改来函|伪造风险|relationship_risk_recorded/);
+});
+
+test("S88.7 NPC active request follow-up resolutions create visible memories through canonical projection", () => {
+  const worldState = createInitialState({ role: "magistrate", playerName: "后续记忆" });
+  worldState.turnCount = 1;
+
+  const scheduled = runNpcActiveRequestStep(worldState, "照常清查田册", { forceType: "bribe" });
+  const resolved = runNpcActiveRequestStep(worldState, "先呈报廉政线索", { responseAction: "report" });
+  worldState.turnCount = 4;
+  const followUp = runNpcActiveRequestStep(worldState, "续办廉政线索：拒收留痕并呈报，不收财物。");
+  const result = applyTurnActorMemoryUpdates(worldState, { npcActiveRequests: followUp });
+  const serialized = JSON.stringify({ result, view: buildActorMemoryView(worldState) });
+
+  assert.equal(scheduled.outcome.scheduled, 1);
+  assert.equal(resolved.outcome.resolved, 1);
+  assert.equal(followUp.outcome.followUpResolved, 1);
+  assert.equal(result.appliedCount, 1);
+  assert.match(serialized, /npc_active_request_follow_up/);
+  assert.match(serialized, /NPC后续|服务器登记|廉政|watchlist/);
+  assert.doesNotMatch(
+    serialized,
+    /hiddenDossier|privateSignalTags|providerPayload|rawProvider|world_sessions|safe_search|sk-[A-Za-z0-9_-]{6,}|\/mnt\/e/
+  );
+});
+
+test("S88.7 NPC active request follow-up memory rejects forged or tampered resolution payloads", () => {
+  const worldState = createInitialState({ role: "magistrate", playerName: "伪造后续记忆" });
+  worldState.turnCount = 1;
+
+  runNpcActiveRequestStep(worldState, "照常清查田册", { forceType: "bribe" });
+  runNpcActiveRequestStep(worldState, "先呈报廉政线索", { responseAction: "report" });
+  worldState.turnCount = 4;
+  const followUp = runNpcActiveRequestStep(worldState, "续办廉政线索：拒收留痕并呈报，不收财物。");
+  const canonical = followUp.outcome.followUpResolutions[0];
+  const rejected = applyTurnActorMemoryUpdates(worldState, {
+    npcActiveRequests: {
+      outcome: {
+        followUpResolutions: [{
+          ...canonical,
+          resolutionId: "npc-active-follow-up-resolution:forged-visible",
+          publicSummary: "伪造后续 hiddenDossier providerPayload /mnt/e/secret sk-testsecret"
+        }]
+      }
+    }
+  });
+  const accepted = applyTurnActorMemoryUpdates(worldState, {
+    npcActiveRequests: {
+      outcome: {
+        followUpResolutions: [{
+          ...canonical,
+          publicSummary: "伪改后续 hiddenDossier providerPayload /mnt/e/secret sk-testsecret",
+          statusLabel: "伪改状态"
+        }]
+      }
+    }
+  });
+  const serialized = JSON.stringify(buildActorMemoryView(worldState));
+
+  assert.equal(followUp.outcome.followUpResolved, 1);
+  assert.equal(rejected.appliedCount, 0);
+  assert.equal(accepted.appliedCount, 1);
+  assert.match(serialized, /npc_active_request_follow_up|廉政|watchlist/);
+  assert.doesNotMatch(serialized, /forged-visible|伪造后续|伪改后续|伪改状态|providerPayload|hiddenDossier|sk-testsecret|\/mnt\/e/);
 });
 
 test("S88.7 NPC relationship action traces create immediate visible memories from safe records", () => {

@@ -48,7 +48,7 @@ const MAX_PAGE_SIZE = 50;
 
 const SECRET_ENV_NAME_PATTERN = /(KEY|TOKEN|SECRET|PASSWORD|CREDENTIAL)/i;
 const SENSITIVE_ARCHIVE_TEXT_PATTERN =
-  /(hidden[_ -]?(?:notes?|intent)|hidden\s+(?:notes?|intent)|relationshipLedger|actorMemoryLedger|sessionSummary|retrievalContext|sealedMapping|sealed_mapping|密档|私档|密札|密信|隐藏(?:意图|动机|事实|札记)|隐秘(?:意图|动机|事实)|raw[_ -]?(?:provider|audit|table|ledger|prompt|proposal)|\b(?:statePatch|worldState|provider|proposal|prompt|rawSql)\b|api[_ -]?key|OPENAI_API_KEY|DEEPSEEK_API_KEY|MIMO_API_KEY|ANTHROPIC_API_KEY|data[\\/](?:sessions|audit)|ai_change_proposals|event_log|sqlite|world_sessions|world_state_json|prompt_retrieval_index|event_archive_index|raw[_ -]?(?:table|ledger|audit)|(?:geo|people|office)_[A-Za-z0-9_]+|\b[A-Z0-9_]*(?:KEY|TOKEN|SECRET|PASSWORD|CREDENTIAL)[A-Z0-9_]*\b|file:\/\/\/?(?:[A-Za-z]:[\\/]|(?:\/Users|\/home|\/tmp|\/var|\/mnt|\/opt)\/)[^\s"'<>]+|[A-Za-z]:[\\/][^\s"'<>]+|\b(?:\/Users|\/home|\/tmp|\/var|\/mnt|\/opt)\/[^\s"'<>]+|sk-[A-Za-z0-9_-]{8,}|tp-[A-Za-z0-9_-]{8,})/i;
+  /(hidden[_ -]?(?:notes?|intent|dossier)|hidden\s+(?:notes?|intent|dossier)|hiddenDossier|hidden_dossier|privateSignalTags|private_signal_tags|providerPayload|provider_payload|trueAssets|true_assets|secretRelationships|secret_relationships|unrevealedTasks|unrevealed_tasks|relationshipLedger|actorMemoryLedger|sessionSummary|retrievalContext|retrieval_context|sealedMapping|sealed_mapping|safe_search_index|safe_search_fts|state_patch|密档|私档|密札|密信|隐藏(?:意图|动机|事实|札记)|隐秘(?:意图|动机|事实)|raw[_ -]?(?:provider|audit|table|ledger|prompt|proposal)|\b(?:statePatch|worldState|provider|proposal|prompt|rawSql)\b|api[_ -]?key|OPENAI_API_KEY|DEEPSEEK_API_KEY|MIMO_API_KEY|ANTHROPIC_API_KEY|data[\\/](?:sessions|audit)|ai_change_proposals|event_log|sqlite|world_sessions|world_state_json|prompt_retrieval_index|event_archive_index|raw[_ -]?(?:table|ledger|audit)|(?:geo|people|office)_[A-Za-z0-9_]+|\b[A-Z0-9_]*(?:KEY|TOKEN|SECRET|PASSWORD|CREDENTIAL)[A-Z0-9_]*\b|file:\/\/\/?(?:[A-Za-z]:[\\/]|(?:\/Users|\/home|\/tmp|\/var|\/mnt|\/opt)\/)[^\s"'<>]+|[A-Za-z]:[\\/][^\s"'<>]+|\b(?:\/Users|\/home|\/tmp|\/var|\/mnt|\/opt)\/[^\s"'<>]+|sk-[A-Za-z0-9_-]{8,}|tp-[A-Za-z0-9_-]{8,})/i;
 
 const SOURCE_LABELS = {
   event_history: "近事",
@@ -682,11 +682,16 @@ function collectNpcActiveRequestItems(worldState, items, npcActiveRequestView) {
     .forEach((record) => {
       const trace = record.outcome.resolverTrace;
       const followUp = isPlainObject(record.outcome.followUpView) ? record.outcome.followUpView : {};
+      const latestResolution = isPlainObject(followUp.latestResolution)
+        ? followUp.latestResolution
+        : Array.isArray(record.outcome.followUpResolutions) && record.outcome.followUpResolutions.length
+          ? record.outcome.followUpResolutions[record.outcome.followUpResolutions.length - 1]
+          : null;
       const npcName = cleanArchiveText(record.npc?.displayName, "来人", 60);
       const typeLabel = cleanArchiveText(record.typeLabel || trace.typeLabel, "来函", 40);
       const outcomeSummary = cleanArchiveText(record.outcome.publicSummary, "", 140);
       const followUpSummary = cleanArchiveText(
-        followUp.publicSummary || followUp.nextStep,
+        latestResolution?.publicSummary || latestResolution?.nextStep || followUp.publicSummary || followUp.nextStep,
         "",
         140
       );
@@ -706,15 +711,18 @@ function collectNpcActiveRequestItems(worldState, items, npcActiveRequestView) {
         kind: trace.requestType || record.type || "active_request",
         title: `来函裁决：${npcName}${typeLabel}`,
         summary,
-        turn: record.lastUpdatedTurn,
+        turn: latestResolution?.createdTurn ?? record.lastUpdatedTurn,
         status: watchStatuses.has(record.status) ? "watch" : "recorded",
-        riskLabel: followUp.followUpKind || trace.disposition || record.status,
+        riskLabel: latestResolution?.followUpKind || latestResolution?.statusLabel || followUp.followUpKind || trace.disposition || record.status,
         relatedLabels: [
           npcName,
           typeLabel,
+          latestResolution?.statusLabel,
+          latestResolution?.taskRouteLabel,
           followUp.title,
           followUp.taskState,
           trace.responseAction,
+          ...(Array.isArray(latestResolution?.riskTags) ? latestResolution.riskTags : []),
           ...(Array.isArray(record.riskTags) ? record.riskTags : []),
           ...(Array.isArray(followUp.riskTags) ? followUp.riskTags : []),
           ...(Array.isArray(trace.riskTags) ? trace.riskTags : [])

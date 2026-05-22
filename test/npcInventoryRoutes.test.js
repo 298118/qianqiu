@@ -311,6 +311,17 @@ test("S88.7 turn route records NPC active request follow-up resolutions without 
     true
   );
   assert.ok(followUpPayload.npcActiveRequestView.followUpTasks.some((entry) => entry.latestResolution));
+  assert.ok(
+    followUpPayload.actorMemoryView.actors.some((actor) =>
+      actor.memories.some((memory) => memory.sourceType === "npc_active_request_follow_up")
+    )
+  );
+  assert.ok(followUpPayload.eventArchiveView.counts.npc_active_request >= 1);
+  assert.ok(
+    followUpPayload.worldThreadView.activeThreads.some((thread) =>
+      thread.sourceType === "active_npc_request" && /后续|服务器|廉政|watchlist/.test(thread.summary)
+    )
+  );
   assert.equal(followUpPayload.worldState.npcActiveRequestLedger, undefined);
   assert.doesNotMatch(
     serialized,

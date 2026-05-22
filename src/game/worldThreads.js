@@ -711,6 +711,17 @@ function npcActiveRequestRelated(request = {}) {
   };
 }
 
+function latestNpcFollowUpResolution(request = {}) {
+  const followUp = isPlainObject(request.outcome?.followUpView) ? request.outcome.followUpView : {};
+  if (isPlainObject(followUp.latestResolution)) return followUp.latestResolution;
+  const resolutions = Array.isArray(request.outcome?.followUpResolutions)
+    ? request.outcome.followUpResolutions
+    : [];
+  return resolutions.length && isPlainObject(resolutions[resolutions.length - 1])
+    ? resolutions[resolutions.length - 1]
+    : null;
+}
+
 function deriveNpcActiveRequestLedgerThreads(worldState) {
   const view = buildNpcActiveRequestLedgerView(worldState);
   return (view.items || [])
@@ -724,21 +735,33 @@ function deriveNpcActiveRequestLedgerThreads(worldState) {
       "accepted_pending_server_resolution"
     ].includes(request.status))
     .slice(0, MAX_NPC_ACTIVE_REQUEST_THREADS)
-    .map((request) => makeThread(worldState, {
-      id: `WT-npc-active-${request.requestId}`,
-      sourceType: "active_npc_request",
-      sourceId: request.requestId,
-      kind: "npc_request",
-      status: npcActiveRequestStatus(request.status),
-      title: cleanText(request.title, "NPC 主动来函", 120),
-      summary: cleanText(`${request.ask || ""} ${request.outcome?.publicSummary || request.stakes || ""}`, "NPC 主动来函等待服务器后续裁决。", 180),
-      severity: npcActiveRequestSeverity(request),
-      dueTurn: request.dueTurn,
-      createdTurn: request.createdTurn,
-      lastUpdatedTurn: request.lastUpdatedTurn || currentTurn(worldState),
-      related: npcActiveRequestRelated(request),
-      visibility: "relationship_visible"
-    }))
+    .map((request) => {
+      const latestResolution = latestNpcFollowUpResolution(request);
+      const resolutionSummary = cleanText(
+        `${latestResolution?.publicSummary || ""} ${latestResolution?.nextStep || ""}`.trim(),
+        "",
+        160
+      );
+      return makeThread(worldState, {
+        id: `WT-npc-active-${request.requestId}`,
+        sourceType: "active_npc_request",
+        sourceId: request.requestId,
+        kind: "npc_request",
+        status: npcActiveRequestStatus(request.status),
+        title: cleanText(request.title, "NPC 主动来函", 120),
+        summary: cleanText(
+          `${request.ask || ""} ${resolutionSummary || request.outcome?.publicSummary || request.stakes || ""}`,
+          "NPC 主动来函等待服务器后续裁决。",
+          180
+        ),
+        severity: latestResolution ? Math.max(1, npcActiveRequestSeverity(request)) : npcActiveRequestSeverity(request),
+        dueTurn: request.dueTurn,
+        createdTurn: request.createdTurn,
+        lastUpdatedTurn: latestResolution?.createdTurn || request.lastUpdatedTurn || currentTurn(worldState),
+        related: npcActiveRequestRelated(request),
+        visibility: "relationship_visible"
+      });
+    })
     .filter(Boolean);
 }
 
