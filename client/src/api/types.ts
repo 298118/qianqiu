@@ -452,12 +452,53 @@ export type NpcActiveRequestFollowUpTaskView = JsonObject & {
   };
 };
 
+export type NpcActiveRequestFollowUpEvidenceView = JsonObject & {
+  readonly schemaVersion?: string;
+  readonly evidenceId?: string;
+  readonly sourceType?: string;
+  readonly requestId?: string;
+  readonly requestType?: string;
+  readonly requestTypeLabel?: string;
+  readonly taskRoute?: string;
+  readonly taskRouteLabel?: string;
+  readonly evidenceKind?: string;
+  readonly evidenceKindLabel?: string;
+  readonly domain?: string;
+  readonly searchDomain?: string;
+  readonly topicSurfaceIds?: readonly string[];
+  readonly title?: string;
+  readonly publicSummary?: string;
+  readonly summary?: string;
+  readonly nextStep?: string;
+  readonly status?: string;
+  readonly statusLabel?: string;
+  readonly visibility?: string;
+  readonly confidence?: number;
+  readonly urgency?: string;
+  readonly npc?: JsonObject;
+  readonly riskTags?: readonly string[];
+  readonly sourceRefs?: readonly string[];
+  readonly boundaries?: JsonObject;
+};
+
+export type NpcActiveRequestFollowUpEvidenceGroupView = JsonObject & {
+  readonly schemaVersion?: string;
+  readonly generatedAtTurn?: number;
+  readonly items?: readonly NpcActiveRequestFollowUpEvidenceView[];
+  readonly people?: readonly NpcActiveRequestFollowUpEvidenceView[];
+  readonly events?: readonly NpcActiveRequestFollowUpEvidenceView[];
+  readonly economy?: readonly NpcActiveRequestFollowUpEvidenceView[];
+  readonly counts?: JsonObject;
+  readonly safeguards?: JsonObject;
+};
+
 export type NpcActiveRequestView = JsonObject & {
   readonly schemaVersion?: string;
   readonly ownerActorId?: string;
   readonly totalItems?: number;
   readonly items?: readonly NpcActiveRequestItemView[];
   readonly followUpTasks?: readonly NpcActiveRequestFollowUpTaskView[];
+  readonly followUpEvidence?: NpcActiveRequestFollowUpEvidenceGroupView;
   readonly recentEvents?: readonly string[];
   readonly allowedRequestTypes?: readonly string[];
   readonly allowedResponseActions?: readonly string[];

@@ -9,6 +9,11 @@ process.env.AI_PROVIDER = "mock";
 const gameRoutes = require("../src/routes/game");
 const { createInitialState } = require("../src/game/initialState");
 const {
+  createNpcActiveRequest,
+  resolveNpcActiveRequest,
+  runNpcActiveRequestStep
+} = require("../src/game/npcActiveRequests");
+const {
   SAFE_WORLD_SEARCH_MAX_PAGE_SIZE,
   SAFE_WORLD_SEARCH_MAX_QUERY_LENGTH,
   buildSafeSearchRows,
@@ -237,6 +242,36 @@ test("S88.6 safe world search preserves domain consequence rows under global row
     result.sourceView === "domainConsequenceView.recentConsequences" && /稳价后果/.test(`${result.title}${result.snippet}`)
   ));
   assert.doesNotMatch(JSON.stringify(view), /outcomeId|stateDelta|cityPolicyLedger|safe-search-domain-consequence-cap/);
+});
+
+test("S88.7 safe world search indexes NPC follow-up domain evidence without raw ledger leaks", () => {
+  const worldState = createSearchWorldState();
+  worldState.turnCount = 14;
+  const bribe = createNpcActiveRequest(worldState, "bribe");
+  const introduction = createNpcActiveRequest(worldState, "introduction");
+  assert.equal(bribe.ok, true);
+  assert.equal(introduction.ok, true);
+  resolveNpcActiveRequest(worldState, bribe.request.requestId, "report");
+  resolveNpcActiveRequest(worldState, introduction.request.requestId, "accept");
+  worldState.turnCount = 15;
+  runNpcActiveRequestStep(worldState, "续办廉政线索：拒收留痕并呈报，不收财物。");
+
+  const rows = buildSafeSearchRows(worldState);
+  const bribeSearch = searchSafeWorldIndex(worldState, { query: "廉政 watchlist", domain: "events", pageSize: 5 });
+  const peopleSearch = searchSafeWorldIndex(worldState, { query: "引荐 拜会", domain: "people", pageSize: 5 });
+  const serialized = JSON.stringify({ rows, bribeSearch, peopleSearch });
+
+  assert.ok(rows.some((row) => row.sourceView === "npcActiveRequestView.followUpEvidence"));
+  assert.ok(bribeSearch.results.some((result) =>
+    result.sourceView === "npcActiveRequestView.followUpEvidence" && /廉政|watchlist/.test(`${result.title}${result.snippet}`)
+  ));
+  assert.ok(peopleSearch.results.some((result) =>
+    result.sourceView === "npcActiveRequestView.followUpEvidence" && /引荐|拜会/.test(`${result.title}${result.snippet}`)
+  ));
+  assert.doesNotMatch(
+    serialized,
+    /npcActiveRequestLedger|hiddenDossier|privateSignalTags|providerPayload|provider_payload|safe_search_index|safe_search_fts|state_patch|world_sessions|sk-[A-Za-z0-9_-]{6,}|\/mnt\/e/
+  );
 });
 
 test("GET /api/game/search/:sessionId returns safe snippets from JSON storage", async (t) => {

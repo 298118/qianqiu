@@ -156,6 +156,8 @@ const NPC_ACTIVE_REQUEST_FOLLOW_UP_SCHEMA_VERSION = "s88.7-npc-active-request-fo
 const NPC_ACTIVE_REQUEST_FOLLOW_UP_TASK_SCHEMA_VERSION = "s88.7-npc-active-request-follow-up-task.v1";
 const NPC_ACTIVE_REQUEST_FOLLOW_UP_RESOLUTION_SCHEMA_VERSION =
   "s88.7-npc-active-request-follow-up-resolution.v1";
+const NPC_ACTIVE_REQUEST_FOLLOW_UP_EVIDENCE_SCHEMA_VERSION =
+  "s88.7-npc-active-request-follow-up-evidence.v1";
 
 const NPC_ACTIVE_REQUEST_FOLLOW_UP_CONFIG = Object.freeze({
   help: Object.freeze({
@@ -196,10 +198,10 @@ const NPC_ACTIVE_REQUEST_FOLLOW_UP_CONFIG = Object.freeze({
     taskRouteLabel: "献策证据",
     title: "献策证据复核",
     publicSummary: "献策只进入公开建议队列；政策、军务、案牍、科举或任免后果不因来函直接生效。",
-    nextStep: "把建议作为普通回合草稿或专题 evidence，由服务器按身份权限和公开证据裁决。",
+    nextStep: "把建议作为普通回合草稿或专题证据，由服务器按身份权限和公开证据裁决。",
     resolutionStatus: "advice_evidence_recorded",
     resolutionLabel: "献策证据已记",
-    resolutionSummary: "服务器已把献策后续整理为公开 evidence；政策、军务、案牍、科举或任免后果仍未生效。",
+    resolutionSummary: "服务器已把献策后续整理为公开证据；政策、军务、案牍、科举或任免后果仍未生效。",
     resolutionNextStep: "后续若进入奏议、案牍、军议或普通行动，须由对应 resolver 重新裁决。",
     taskDraftTemplate: "续办{npcName}的{typeLabel}：把献策改写为公开证据和可审议草稿，后果仍候服务器按身份权限裁决。",
     preferredActions: Object.freeze(["investigate", "accept", "defer"]),
@@ -216,7 +218,7 @@ const NPC_ACTIVE_REQUEST_FOLLOW_UP_CONFIG = Object.freeze({
     resolutionStatus: "petition_docket_recorded",
     resolutionLabel: "请托案牍已记",
     resolutionSummary: "服务器已把请托后续整理为公开案牍线索；官职、案件、钱粮、考试和任务仍未被绕过。",
-    resolutionNextStep: "后续若提交案牍、奏议或普通行动，仍按身份权限、公私边界和公开 evidence 裁决。",
+    resolutionNextStep: "后续若提交案牍、奏议或普通行动，仍按身份权限、公私边界和公开证据裁决。",
     taskDraftTemplate: "续办{npcName}的{typeLabel}：核对所托事项、身份权限和公开证据，必要时只转成案牍或奏议草稿。",
     preferredActions: Object.freeze(["investigate", "defer", "refuse"]),
     taskIntentKeywords: Object.freeze(["请托", "案牍", "公私边界", "奏议", "所托事项"]),
@@ -260,11 +262,11 @@ const NPC_ACTIVE_REQUEST_FOLLOW_UP_CONFIG = Object.freeze({
     taskRouteLabel: "人脉拜会",
     title: "引荐人脉复核",
     publicSummary: "引荐只成为可见人脉线索；关系落账、身份机会、座师同年与官场机会仍需服务器确认。",
-    nextStep: "核引荐对象、场合和可见关系来源，再作为拜会草稿、师友线索或官场 evidence 使用。",
+    nextStep: "核引荐对象、场合和可见关系来源，再作为拜会草稿、师友线索或官场证据使用。",
     resolutionStatus: "network_visit_lead_recorded",
     resolutionLabel: "引荐拜会已记",
     resolutionSummary: "服务器已把引荐后续登记为公开拜会线索；关系落账、身份机会和座师同年仍未确认。",
-    resolutionNextStep: "后续若拜会、投帖或进入官场/师友 evidence，仍须由服务器按公开关系裁决。",
+    resolutionNextStep: "后续若拜会、投帖或进入官场/师友证据，仍须由服务器按公开关系裁决。",
     taskDraftTemplate: "续办{npcName}的{typeLabel}：核引荐对象、场合和公开关系来源，只拟拜会或师友线索，不直接落关系。",
     preferredActions: Object.freeze(["investigate", "accept", "defer"]),
     taskIntentKeywords: Object.freeze(["引荐", "人脉", "拜会", "师友", "关系来源"]),
@@ -304,10 +306,95 @@ const NPC_ACTIVE_REQUEST_FOLLOW_UP_CONFIG = Object.freeze({
   })
 });
 
+const NPC_ACTIVE_REQUEST_FOLLOW_UP_EVIDENCE_CONFIG = Object.freeze({
+  social_help_check: Object.freeze({
+    evidenceKind: "social_help_review",
+    evidenceKindLabel: "求助核验线索",
+    domain: "people",
+    searchDomain: "people",
+    topicSurfaceIds: Object.freeze(["npc-profile", "court-debate"]),
+    title: "求助核验线索",
+    summaryPrefix: "求助后续只形成可见人情核验"
+  }),
+  economy_debt_note: Object.freeze({
+    evidenceKind: "human_debt_monthly_note",
+    evidenceKindLabel: "人情债月账线索",
+    domain: "economy",
+    searchDomain: "reports",
+    topicSurfaceIds: Object.freeze(["npc-profile", "memorial-review"]),
+    title: "人情债月账线索",
+    summaryPrefix: "钱债与人情债后续只形成月账解释线索"
+  }),
+  policy_advice_evidence: Object.freeze({
+    evidenceKind: "advice_public_evidence",
+    evidenceKindLabel: "献策公开证据",
+    domain: "events",
+    searchDomain: "reports",
+    topicSurfaceIds: Object.freeze(["memorial-review", "court-debate"]),
+    title: "献策公开证据",
+    summaryPrefix: "献策后续只作为公开审议证据"
+  }),
+  public_docket_evidence: Object.freeze({
+    evidenceKind: "petition_public_docket",
+    evidenceKindLabel: "请托案牍线索",
+    domain: "events",
+    searchDomain: "reports",
+    topicSurfaceIds: Object.freeze(["memorial-review", "court-debate", "trial"]),
+    title: "请托案牍线索",
+    summaryPrefix: "请托后续只形成公私边界案牍证据"
+  }),
+  integrity_watchlist: Object.freeze({
+    evidenceKind: "integrity_watchlist",
+    evidenceKindLabel: "廉政 watchlist",
+    domain: "events",
+    searchDomain: "events",
+    topicSurfaceIds: Object.freeze(["memorial-review", "court-debate"]),
+    title: "廉政 watchlist",
+    summaryPrefix: "行贿后续只登记为廉政 watchlist"
+  }),
+  censorate_watchlist: Object.freeze({
+    evidenceKind: "censorate_watchlist",
+    evidenceKindLabel: "风宪 watchlist",
+    domain: "events",
+    searchDomain: "events",
+    topicSurfaceIds: Object.freeze(["memorial-review", "court-debate"]),
+    title: "风宪 watchlist",
+    summaryPrefix: "弹劾后续只登记为风宪证据 watchlist"
+  }),
+  network_visit_lead: Object.freeze({
+    evidenceKind: "network_visit_lead",
+    evidenceKindLabel: "引荐拜会线索",
+    domain: "people",
+    searchDomain: "people",
+    topicSurfaceIds: Object.freeze(["npc-profile", "court-debate"]),
+    title: "引荐拜会线索",
+    summaryPrefix: "引荐后续只形成拜会/同年师友线索"
+  }),
+  ritual_family_check: Object.freeze({
+    evidenceKind: "ritual_family_review",
+    evidenceKindLabel: "礼法亲族线索",
+    domain: "people",
+    searchDomain: "people",
+    topicSurfaceIds: Object.freeze(["npc-profile"]),
+    title: "礼法亲族线索",
+    summaryPrefix: "议婚后续只形成礼法亲族审查线索"
+  }),
+  relationship_risk_watchlist: Object.freeze({
+    evidenceKind: "relationship_risk_watchlist",
+    evidenceKindLabel: "背叛风险 watchlist",
+    domain: "people",
+    searchDomain: "people",
+    topicSurfaceIds: Object.freeze(["npc-profile", "court-debate"]),
+    title: "背叛风险 watchlist",
+    summaryPrefix: "背叛后续只登记为公开关系风险观察"
+  })
+});
+
 const NPC_ACTIVE_REQUEST_CONFIG = Object.freeze({
   maxActiveRequests: 3,
   maxViewItems: 12,
   maxFollowUpTasks: 8,
+  maxFollowUpEvidence: 12,
   maxFollowUpResolutions: 6,
   maxRecentEvents: 16,
   maxEvidenceRefs: 6,
@@ -323,6 +410,8 @@ const NPC_ACTIVE_REQUEST_CONFIG = Object.freeze({
 module.exports = {
   NPC_ACTIVE_REQUEST_CONFIG,
   NPC_ACTIVE_REQUEST_FOLLOW_UP_CONFIG,
+  NPC_ACTIVE_REQUEST_FOLLOW_UP_EVIDENCE_CONFIG,
+  NPC_ACTIVE_REQUEST_FOLLOW_UP_EVIDENCE_SCHEMA_VERSION,
   NPC_ACTIVE_REQUEST_FOLLOW_UP_RESOLUTION_SCHEMA_VERSION,
   NPC_ACTIVE_REQUEST_FOLLOW_UP_SCHEMA_VERSION,
   NPC_ACTIVE_REQUEST_FOLLOW_UP_TASK_SCHEMA_VERSION,

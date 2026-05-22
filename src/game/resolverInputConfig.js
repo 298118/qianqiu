@@ -61,6 +61,21 @@ const RESOLVER_INPUT_SOURCE_COLLECTIONS = Object.freeze([
     collections: Object.freeze(["relationships", "notablePeople", "activeRequests"])
   }),
   Object.freeze({
+    sourceView: "npcActiveRequestView",
+    domain: "people",
+    collections: Object.freeze(["followUpEvidence.people"])
+  }),
+  Object.freeze({
+    sourceView: "npcActiveRequestView",
+    domain: "events",
+    collections: Object.freeze(["followUpEvidence.events"])
+  }),
+  Object.freeze({
+    sourceView: "npcActiveRequestView",
+    domain: "economy",
+    collections: Object.freeze(["followUpEvidence.economy"])
+  }),
+  Object.freeze({
     sourceView: "officialCareerView",
     domain: "player",
     collections: Object.freeze(["careerHistory", "recentAssignments", "activeDuties", "courtEntries", "courtEntryFollowUps"])

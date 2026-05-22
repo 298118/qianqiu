@@ -26,6 +26,7 @@ const TOPIC_SURFACE_CONFIG = Object.freeze({
       "domainConsequenceView",
       "courtResponseView",
       "officialCareerView",
+      "npcActiveRequestView",
       "eventArchiveView",
       "playerMonthlyBriefingView",
       "localAffairsDocketView",
@@ -87,6 +88,7 @@ const TOPIC_SURFACE_CONFIG = Object.freeze({
       "courtResponseView",
       "officialCareerView",
       "officialPostingsView",
+      "npcActiveRequestView",
       "actorMemoryView",
       "aiControlAuditView",
       "eventArchiveView",
@@ -111,6 +113,7 @@ const TOPIC_SURFACE_CONFIG = Object.freeze({
     sourceViews: Object.freeze([
       "localAffairsDocketView",
       "domainConsequenceView",
+      "npcActiveRequestView",
       "eventArchiveView",
       "safeWorldSearchView",
       "worldPeopleView"
@@ -157,6 +160,7 @@ const TOPIC_SURFACE_CONFIG = Object.freeze({
       "actorMemoryView",
       "examNetwork",
       "relationshipView",
+      "npcActiveRequestView",
       "officialPostingsView"
     ]),
     draftSlots: Object.freeze([
@@ -218,7 +222,15 @@ function dedupeEvidenceByCanonicalEcho(rows = []) {
   });
 }
 
-function flattenEvidence(context = {}, config = {}) {
+function evidenceAllowedForSurface(item = {}, surfaceId = "") {
+  const allowedSurfaceIds = asArray(item.topicSurfaceIds)
+    .map((id) => cleanId(id, ""))
+    .filter(Boolean);
+  if (!allowedSurfaceIds.length) return true;
+  return allowedSurfaceIds.includes(surfaceId);
+}
+
+function flattenEvidence(context = {}, config = {}, surfaceId = "") {
   const domains = new Set(config.domains || RESOLVER_INPUT_DOMAINS);
   const sourceViews = new Set(config.sourceViews || []);
   const sourceViewPriority = new Map(asArray(config.sourceViews).map((sourceView, index) => [sourceView, index]));
@@ -228,6 +240,7 @@ function flattenEvidence(context = {}, config = {}) {
     if (!domains.has(domain)) continue;
     for (const item of asArray(context[domain])) {
       if (sourceViews.size && !sourceViews.has(item.sourceView)) continue;
+      if (!evidenceAllowedForSurface(item, surfaceId)) continue;
       const canonicalEchoRefs = collectDomainConsequenceEchoRefs(
         item.canonicalEchoRefs,
         item.canonicalEchoRef,
@@ -364,7 +377,7 @@ function buildTopicSurfaceView(worldState = {}, options = {}) {
       memory: 4
     }
   }), actorProfile);
-  const evidenceRefs = flattenEvidence(resolverInputContext, config);
+  const evidenceRefs = flattenEvidence(resolverInputContext, config, surfaceId);
   const items = buildItems(surfaceId, evidenceRefs);
   const view = {
     schemaVersion: TOPIC_SURFACE_SCHEMA_VERSION,

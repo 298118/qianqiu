@@ -5,6 +5,7 @@ const { buildHistoricalEventRetrievalRows } = require("./historicalEventArchive"
 const { buildIntelligenceRumorRetrievalRows } = require("./intelligenceRumors");
 const { buildLocalAffairsDocketView } = require("./localAffairsDockets");
 const { buildMilitaryDiplomacyRetrievalRows } = require("./militaryDiplomacy");
+const { buildNpcActiveRequestView } = require("./npcActiveRequests");
 const { buildOfficialPostingsView } = require("./officialPostings");
 const { buildWorldGeographyView } = require("./worldGeography");
 const { buildWorldPeopleView } = require("./worldPeople");
@@ -671,6 +672,35 @@ function buildEventSearchRows(rows, worldState = {}) {
   }
 }
 
+function buildNpcActiveRequestSearchRows(rows, worldState = {}, npcActiveRequestView = null) {
+  const view = isPlainObject(npcActiveRequestView)
+    ? npcActiveRequestView
+    : buildNpcActiveRequestView(worldState, { includeResolved: true });
+  const evidenceItems = Array.isArray(view.followUpEvidence?.items) ? view.followUpEvidence.items : [];
+  for (const evidence of evidenceItems) {
+    addSearchRow(rows, {
+      domain: evidence.searchDomain || evidence.domain || "events",
+      sourceView: "npcActiveRequestView.followUpEvidence",
+      sourceId: evidence.evidenceId || evidence.sourceId,
+      title: evidence.title || evidence.evidenceKindLabel,
+      meta: `${evidence.evidenceKindLabel || "来函后续"} ${evidence.statusLabel || ""}`,
+      summary: evidence.publicSummary || evidence.summary,
+      confidence: Math.round((Number(evidence.confidence) || 0.7) * 100),
+      visibility: evidence.visibility || "player_visible",
+      extra: [
+        evidence.nextStep,
+        ...(Array.isArray(evidence.topicSurfaceIds) ? evidence.topicSurfaceIds : [])
+      ].filter(Boolean).join(" "),
+      tags: evidence.riskTags || evidence.tags,
+      relatedRefs: [
+        relatedRef("npc_active_request_follow_up", evidence.evidenceId || evidence.sourceId, evidence.title),
+        relatedRef("npc", evidence.npc?.npcId, evidence.npc?.displayName),
+        relatedRef("npc_active_request", evidence.requestId, evidence.requestTypeLabel)
+      ]
+    });
+  }
+}
+
 function buildRumorSearchRows(rows, worldState = {}) {
   for (const rumor of buildIntelligenceRumorRetrievalRows(worldState)) {
     addSearchRow(rows, {
@@ -699,6 +729,7 @@ function buildSafeSearchRows(worldState = {}, options = {}) {
   buildOfficeSearchRows(rows, views.officialPostingsView, views.worldGeographyView);
   buildReportSearchRows(rows, worldState);
   buildEventSearchRows(rows, worldState);
+  buildNpcActiveRequestSearchRows(rows, worldState, options.views?.npcActiveRequestView);
   buildRumorSearchRows(rows, worldState);
   return capSafeSearchRows(rows);
 }

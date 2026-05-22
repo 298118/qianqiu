@@ -9,6 +9,7 @@ const { buildIntelligenceRumorView } = require("./intelligenceRumors");
 const { buildLocalAffairsDocketView } = require("./localAffairsDockets");
 const { buildMapContextView } = require("./mapContext");
 const { buildMilitaryDiplomacyView } = require("./militaryDiplomacy");
+const { buildNpcActiveRequestView } = require("./npcActiveRequests");
 const { buildOfficialCareerView } = require("./officialCareer");
 const { buildOfficialCourtConsequenceView } = require("./officialCourtConsequences");
 const { buildOfficialCourtResponseView } = require("./officialCourtResponse");
@@ -156,6 +157,7 @@ function buildSourceViews(worldState, options = {}) {
     localAffairsDocketView: buildLocalAffairsDocketView(worldState),
     mapContextView: buildMapContextView(worldState, options.actorProfile || null),
     militaryDiplomacyView: buildMilitaryDiplomacyView(worldState),
+    npcActiveRequestView: buildNpcActiveRequestView(worldState, { includeResolved: true }),
     officialCareerView: buildOfficialCareerView(worldState),
     courtConsequenceView: buildOfficialCourtConsequenceView(worldState),
     domainConsequenceView: buildDomainConsequenceView(worldState),
@@ -308,6 +310,8 @@ function evidenceFromRow(row, meta, index, worldState) {
       ? "current"
       : "recent"
   };
+  const topicSurfaceIds = unique(asArray(row.topicSurfaceIds), 8);
+  if (topicSurfaceIds.length) evidence.topicSurfaceIds = topicSurfaceIds;
   if (canonicalEchoRefs.length) evidence.canonicalEchoRefs = canonicalEchoRefs;
   return evidence;
 }
@@ -466,6 +470,8 @@ function normalizeResolverEvidenceCandidate(item, index, worldState = {}) {
     generatedAtTurn: clampInteger(item.generatedAtTurn, 0, Number.MAX_SAFE_INTEGER, currentTurn(worldState)),
     freshness
   };
+  const topicSurfaceIds = unique(asArray(item.topicSurfaceIds), 8);
+  if (topicSurfaceIds.length) evidence.topicSurfaceIds = topicSurfaceIds;
   if (canonicalEchoRefs.length) evidence.canonicalEchoRefs = canonicalEchoRefs;
   return evidence;
 }

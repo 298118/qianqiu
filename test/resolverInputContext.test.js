@@ -21,6 +21,12 @@ const {
   createWorldContentFixture
 } = require("../src/game/worldContentFixtures");
 const { createInitialState } = require("../src/game/initialState");
+const {
+  buildNpcActiveRequestView,
+  createNpcActiveRequest,
+  resolveNpcActiveRequest,
+  runNpcActiveRequestStep
+} = require("../src/game/npcActiveRequests");
 const { buildWorldThreadView, ensureWorldThreadState } = require("../src/game/worldThreads");
 const { createJsonSessionAdapter } = require("../src/storage/jsonSessionAdapter");
 const { createSqliteSessionAdapter } = require("../src/storage/sqliteSessionAdapter");
@@ -223,6 +229,49 @@ test("S71.1 resolver input context rejects source spoofing and drops hidden visi
     }))
   });
   assert.equal(context.intel.some((item) => item.sourceId.startsWith("hidden-extra")), false);
+});
+
+test("S88.7 resolver input consumes NPC follow-up domain evidence from safe view only", () => {
+  const worldState = createInitialState({ role: "magistrate", playerName: "来函证据" });
+  worldState.turnCount = 12;
+  const debt = createNpcActiveRequest(worldState, "debt_collection");
+  const bribe = createNpcActiveRequest(worldState, "bribe");
+  const introduction = createNpcActiveRequest(worldState, "introduction");
+  assert.equal(debt.ok, true);
+  assert.equal(bribe.ok, true);
+  assert.equal(introduction.ok, true);
+  resolveNpcActiveRequest(worldState, debt.request.requestId, "investigate");
+  resolveNpcActiveRequest(worldState, bribe.request.requestId, "report");
+  resolveNpcActiveRequest(worldState, introduction.request.requestId, "accept");
+  worldState.turnCount = 13;
+  runNpcActiveRequestStep(worldState, "续办人情债：查验契据、见证人与旧账来源，只作月账解释。");
+
+  const view = buildNpcActiveRequestView(worldState, { includeResolved: true });
+  const context = buildResolverInputContext(worldState, {
+    generatedAt: FIXED_GENERATED_AT,
+    domainCaps: { people: 24, economy: 24, events: 24 },
+    views: { npcActiveRequestView: view }
+  });
+  const serializedPublicEvidence = JSON.stringify({
+    people: context.people,
+    economy: context.economy,
+    events: context.events,
+    sourceViews: context.sourceViews
+  });
+
+  assert.ok(context.people.some((item) =>
+    item.sourceView === "npcActiveRequestView" && /引荐|拜会|同年|师友/.test(`${item.label}${item.summary}`)
+  ));
+  assert.ok(context.economy.some((item) =>
+    item.sourceView === "npcActiveRequestView" && /人情债|月账|契据/.test(`${item.label}${item.summary}`)
+  ));
+  assert.ok(context.events.some((item) =>
+    item.sourceView === "npcActiveRequestView" && /廉政|watchlist|拒收/.test(`${item.label}${item.summary}`)
+  ));
+  assert.doesNotMatch(
+    serializedPublicEvidence,
+    /npcActiveRequestLedger|hiddenDossier|privateSignalTags|providerPayload|provider_payload|safe_search_index|state_patch|world_sessions|sk-[A-Za-z0-9_-]{6,}|\/mnt\/e/
+  );
 });
 
 test("S88.6 resolver input preserves canonical echo refs for domain consequence evidence", () => {

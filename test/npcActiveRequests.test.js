@@ -117,6 +117,18 @@ test("S88.7 NPC active request follow-up view gives type-specific safe next acti
     );
   }
 
+  const evidenceView = buildNpcActiveRequestView(worldState, { includeResolved: true }).followUpEvidence;
+  assert.equal(evidenceView.safeguards.readOnlyEvidence, true);
+  assert.equal(evidenceView.safeguards.noDirectSettlement, true);
+  assert.ok(evidenceView.people.some((item) => item.evidenceKind === "network_visit_lead" && /拜会|同年|师友/.test(item.publicSummary)));
+  assert.ok(evidenceView.people.some((item) => item.evidenceKind === "relationship_risk_watchlist" && /背叛|关系风险/.test(item.publicSummary)));
+  assert.ok(evidenceView.economy.some((item) => item.evidenceKind === "human_debt_monthly_note" && /人情债|月账/.test(item.publicSummary)));
+  assert.ok(evidenceView.events.some((item) => item.evidenceKind === "petition_public_docket" && /请托|案牍/.test(item.publicSummary)));
+  assert.ok(evidenceView.events.some((item) => item.evidenceKind === "integrity_watchlist" && /廉政|watchlist/.test(item.publicSummary)));
+  assert.ok(evidenceView.events.some((item) => item.evidenceKind === "censorate_watchlist" && /风宪|watchlist/.test(item.publicSummary)));
+  assert.ok(evidenceView.items.every((item) => item.boundaries.proposalOnly && item.boundaries.serverOwnsFollowUp));
+  assertNoSensitiveLeak(evidenceView);
+
   const deferred = createNpcActiveRequest(worldState, "help");
   assert.equal(deferred.ok, true);
   const deferredResult = resolveNpcActiveRequest(worldState, deferred.request.requestId, "defer");

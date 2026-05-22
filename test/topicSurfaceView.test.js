@@ -8,6 +8,10 @@ process.env.AI_PROVIDER = "mock";
 
 const { createInitialState } = require("../src/game/initialState");
 const {
+  createNpcActiveRequest,
+  resolveNpcActiveRequest
+} = require("../src/game/npcActiveRequests");
+const {
   buildTopicSurfaceView,
   buildTopicSurfaceViewIndex
 } = require("../src/game/topicSurfaceView");
@@ -210,6 +214,45 @@ test("S88.6 topic surfaces dedupe domain consequence archive and thread echoes",
   assert.equal(echoMatches.length, 1);
   assert.equal(echoMatches[0].sourceView, "domainConsequenceView");
   assertNoSensitiveText(view);
+});
+
+test("S88.7 topic surfaces expose NPC follow-up evidence as read-only material", () => {
+  const worldState = createInitialState({
+    dynasty: "明",
+    year: 1644,
+    role: "official",
+    playerName: "来函专题"
+  });
+  worldState.turnCount = 16;
+  const petition = createNpcActiveRequest(worldState, "petition");
+  const introduction = createNpcActiveRequest(worldState, "introduction");
+  assert.equal(petition.ok, true);
+  assert.equal(introduction.ok, true);
+  resolveNpcActiveRequest(worldState, petition.request.requestId, "investigate");
+  resolveNpcActiveRequest(worldState, introduction.request.requestId, "accept");
+
+  const memorial = buildTopicSurfaceView(worldState, { surfaceId: "memorial-review" });
+  const profile = buildTopicSurfaceView(worldState, { surfaceId: "npc-profile" });
+  const trial = buildTopicSurfaceView(worldState, { surfaceId: "trial" });
+
+  assert.ok(memorial.sourceViews.some((source) => source.sourceView === "npcActiveRequestView"));
+  assert.ok(memorial.evidenceRefs.some((ref) =>
+    ref.sourceView === "npcActiveRequestView" && /请托|案牍|公私边界/.test(`${ref.label}${ref.summary}`)
+  ));
+  assert.ok(profile.sourceViews.some((source) => source.sourceView === "npcActiveRequestView"));
+  assert.ok(profile.evidenceRefs.some((ref) =>
+    ref.sourceView === "npcActiveRequestView" && /引荐|拜会|师友|同年/.test(`${ref.label}${ref.summary}`)
+  ));
+  assert.equal(profile.evidenceRefs.some((ref) =>
+    ref.sourceView === "npcActiveRequestView" && /请托|案牍|公私边界/.test(`${ref.label}${ref.summary}`)
+  ), false);
+  assert.ok(trial.evidenceRefs.some((ref) =>
+    ref.sourceView === "npcActiveRequestView" && /请托|案牍|公私边界/.test(`${ref.label}${ref.summary}`)
+  ));
+  assert.equal(trial.evidenceRefs.some((ref) =>
+    ref.sourceView === "npcActiveRequestView" && /引荐|拜会|师友|同年/.test(`${ref.label}${ref.summary}`)
+  ), false);
+  assertNoSensitiveText({ memorial, profile, trial });
 });
 
 test("GET /api/game/topic-surface/:sessionId/:surfaceId returns read-only safe projection", async (t) => {

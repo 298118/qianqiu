@@ -6,6 +6,11 @@ const path = require("node:path");
 const { isBuiltin } = require("node:module");
 
 const { createInitialState } = require("../src/game/initialState");
+const {
+  createNpcActiveRequest,
+  resolveNpcActiveRequest,
+  runNpcActiveRequestStep
+} = require("../src/game/npcActiveRequests");
 const { SAFE_WORLD_SEARCH_SOURCE } = require("../src/game/safeWorldSearch");
 const { createSessionRecord } = require("../src/storage/sessionRecord");
 const { createSqliteSessionAdapter } = require("../src/storage/sqliteSessionAdapter");
@@ -220,6 +225,44 @@ test("S88.6 SQLite safe search syncs public domain consequence rows", {
   assert.doesNotMatch(
     JSON.stringify(storedRows),
     /SEALED_|cityPolicyLedger|evidenceRefs|stateDelta|playerDelta|auditRecord|rawSql|market:grain|world_sessions/
+  );
+});
+
+test("S88.7 SQLite safe search syncs NPC follow-up evidence rows", {
+  skip: hasNodeSqlite ? false : "node:sqlite is unavailable in this Node.js runtime"
+}, async (t) => {
+  const { adapter, dbPath } = createHarness(t);
+  const worldState = createSearchWorldState();
+  worldState.turnCount = 14;
+  const bribe = createNpcActiveRequest(worldState, "bribe");
+  const introduction = createNpcActiveRequest(worldState, "introduction");
+  assert.equal(bribe.ok, true);
+  assert.equal(introduction.ok, true);
+  resolveNpcActiveRequest(worldState, bribe.request.requestId, "report");
+  resolveNpcActiveRequest(worldState, introduction.request.requestId, "accept");
+  worldState.turnCount = 15;
+  runNpcActiveRequestStep(worldState, "续办廉政线索：拒收留痕并呈报，不收财物。");
+  await adapter.writeSession(clone(worldState));
+
+  const result = await adapter.searchSafeSearchIndex(worldState.sessionId, {
+    query: "廉政 watchlist",
+    domain: "events",
+    pageSize: 5
+  });
+  const storedRows = withSqliteDatabase(dbPath, (db) =>
+    db
+      .prepare("SELECT source_view, source_id, title, summary, search_text FROM safe_search_index WHERE session_id = ? AND source_view = ?")
+      .all(worldState.sessionId, "npcActiveRequestView.followUpEvidence")
+  );
+
+  assert.ok(result.results.some((item) =>
+    item.sourceView === "npcActiveRequestView.followUpEvidence" && /廉政|watchlist/.test(`${item.title}${item.snippet}`)
+  ));
+  assert.ok(storedRows.some((row) => /廉政|watchlist/.test(`${row.title}${row.summary}${row.search_text}`)));
+  assert.ok(storedRows.some((row) => /引荐|拜会/.test(`${row.title}${row.summary}${row.search_text}`)));
+  assert.doesNotMatch(
+    JSON.stringify({ result, storedRows }),
+    /SEALED_|npcActiveRequestLedger|hiddenDossier|privateSignalTags|providerPayload|provider_payload|safe_search_index|safe_search_fts|state_patch|world_sessions|sk-[A-Za-z0-9_-]{6,}|\/mnt\/e/
   );
 });
 

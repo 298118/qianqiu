@@ -3,6 +3,8 @@ const { randomUUID } = require("node:crypto");
 const {
   NPC_ACTIVE_REQUEST_CONFIG,
   NPC_ACTIVE_REQUEST_FOLLOW_UP_CONFIG,
+  NPC_ACTIVE_REQUEST_FOLLOW_UP_EVIDENCE_CONFIG,
+  NPC_ACTIVE_REQUEST_FOLLOW_UP_EVIDENCE_SCHEMA_VERSION,
   NPC_ACTIVE_REQUEST_FOLLOW_UP_RESOLUTION_SCHEMA_VERSION,
   NPC_ACTIVE_REQUEST_FOLLOW_UP_SCHEMA_VERSION,
   NPC_ACTIVE_REQUEST_FOLLOW_UP_TASK_SCHEMA_VERSION,
@@ -1183,6 +1185,141 @@ function buildNpcActiveRequestFollowUpTasks(items = []) {
     .slice(0, NPC_ACTIVE_REQUEST_CONFIG.maxFollowUpTasks);
 }
 
+function followUpEvidenceConfigForTaskRoute(taskRoute = "") {
+  return NPC_ACTIVE_REQUEST_FOLLOW_UP_EVIDENCE_CONFIG[taskRoute] ||
+    NPC_ACTIVE_REQUEST_FOLLOW_UP_EVIDENCE_CONFIG.public_docket_evidence;
+}
+
+function followUpEvidenceSummary(task = {}, config = {}) {
+  const latest = isPlainObject(task.latestResolution) ? task.latestResolution : null;
+  const parts = [
+    config.summaryPrefix,
+    latest?.publicSummary || task.publicSummary,
+    latest?.nextStep || task.nextStep,
+    "此条只供公开材料、搜索和草稿引用；资源、关系、婚姻、弹劾、定罪、背叛事实和真实任务仍由服务器后续裁决。"
+  ];
+  return cleanPublicText(parts.filter(Boolean).join("；"), config.summaryPrefix || "来函后续材料", 220);
+}
+
+function buildNpcActiveRequestFollowUpEvidence(followUpTasks = [], worldState = {}) {
+  const items = (Array.isArray(followUpTasks) ? followUpTasks : [])
+    .map((task) => {
+      if (!isPlainObject(task) || !task.requestId || !task.publicResolutionRef || !task.boundaries?.serverOwnsFollowUp) {
+        return null;
+      }
+      const taskRoute = cleanPublicText(task.taskRoute, "active_request_follow_up", 80);
+      const config = followUpEvidenceConfigForTaskRoute(taskRoute);
+      const evidenceId = cleanId(`npc-follow-up-evidence:${task.requestId}:${taskRoute}`, "");
+      const latest = isPlainObject(task.latestResolution) ? task.latestResolution : null;
+      const npcId = cleanId(task.npc?.npcId, "");
+      const npcLabel = cleanPublicText(task.npc?.displayName, "来人", 80);
+      const generatedAtTurn = clampNumber(
+        latest?.createdTurn ?? task.lastUpdatedTurn ?? task.createdTurn,
+        0,
+        Number.MAX_SAFE_INTEGER,
+        currentTurn(worldState)
+      );
+      const riskTags = uniqueCleanList([
+        config.evidenceKindLabel,
+        task.taskRouteLabel,
+        task.statusLabel,
+        ...(Array.isArray(task.riskTags) ? task.riskTags : [])
+      ], NPC_ACTIVE_REQUEST_CONFIG.maxRiskTags, 48).filter((tag) => !containsPrivateSignalText(tag));
+      const sourceRefs = uniqueCleanList([
+        `npcActiveRequestView:${task.requestId}`,
+        `npcActiveRequestFollowUp:${task.publicResolutionRef}`,
+        latest?.resolutionId ? `npcActiveRequestFollowUpResolution:${latest.resolutionId}` : "",
+        npcId ? `npc:${npcId}` : ""
+      ], NPC_ACTIVE_REQUEST_CONFIG.maxEvidenceRefs, 120).filter((ref) => !containsPrivateSignalText(ref));
+      const title = cleanPublicText(
+        `${config.title}：${npcLabel}`,
+        config.title || task.title || "来函后续材料",
+        96
+      );
+      const publicSummary = followUpEvidenceSummary(task, config);
+      if (!evidenceId || !title || !publicSummary) return null;
+      return {
+        schemaVersion: NPC_ACTIVE_REQUEST_FOLLOW_UP_EVIDENCE_SCHEMA_VERSION,
+        evidenceId,
+        sourceId: evidenceId,
+        sourceType: "npc_active_request_follow_up_evidence",
+        requestId: cleanId(task.requestId, ""),
+        requestType: normalizeRequestType(task.requestType, "help"),
+        requestTypeLabel: cleanPublicText(task.requestTypeLabel, "来函", 40),
+        taskRoute,
+        taskRouteLabel: cleanPublicText(task.taskRouteLabel, config.evidenceKindLabel, 48),
+        evidenceKind: cleanPublicText(config.evidenceKind, "active_request_follow_up", 80),
+        evidenceKindLabel: cleanPublicText(config.evidenceKindLabel, config.title, 64),
+        domain: cleanPublicText(config.domain, "events", 32),
+        searchDomain: cleanPublicText(config.searchDomain, "events", 32),
+        topicSurfaceIds: uniqueCleanList(config.topicSurfaceIds, 6, 48),
+        title,
+        label: title,
+        publicSummary,
+        summary: publicSummary,
+        nextStep: cleanPublicText(latest?.nextStep || task.nextStep, "", 180),
+        status: cleanPublicText(task.status, "pending_follow_up", 64),
+        statusLabel: cleanPublicText(task.statusLabel, "待复核", 48),
+        visibility: "player_visible",
+        confidence: task.urgency === "high" ? 0.78 : 0.7,
+        urgency: cleanPublicText(task.urgency, "normal", 24),
+        npc: {
+          npcId,
+          displayName: npcLabel,
+          title: cleanPublicText(task.npc?.title, "可见人物", 80)
+        },
+        riskTags,
+        tags: riskTags,
+        relatedRefs: sourceRefs,
+        scopeRefs: sourceRefs,
+        sourceRefs,
+        generatedAtTurn,
+        lastUpdatedTurn: generatedAtTurn,
+        boundaries: {
+          serverOwnsFollowUp: true,
+          proposalOnly: true,
+          readOnlyEvidence: true,
+          browserDraftOnly: true,
+          noRealTaskCreated: true,
+          resourcesNotApplied: true,
+          relationshipNotFinal: true,
+          marriageAndDisciplineNotFinal: true,
+          privateNpcDossierRedacted: true,
+          noHiddenTruthAdjudication: true
+        }
+      };
+    })
+    .filter(Boolean)
+    .slice(0, NPC_ACTIVE_REQUEST_CONFIG.maxFollowUpEvidence);
+
+  const byDomain = { people: [], events: [], economy: [] };
+  for (const item of items) {
+    if (byDomain[item.domain]) byDomain[item.domain].push(item);
+    else byDomain.events.push(item);
+  }
+  return {
+    schemaVersion: NPC_ACTIVE_REQUEST_FOLLOW_UP_EVIDENCE_SCHEMA_VERSION,
+    generatedAtTurn: currentTurn(worldState),
+    items,
+    people: byDomain.people,
+    events: byDomain.events,
+    economy: byDomain.economy,
+    counts: {
+      total: items.length,
+      people: byDomain.people.length,
+      events: byDomain.events.length,
+      economy: byDomain.economy.length
+    },
+    safeguards: {
+      readOnlyEvidence: true,
+      proposalOnly: true,
+      serverOwnsAdjudication: true,
+      privateNpcDossierRedacted: true,
+      noDirectSettlement: true
+    }
+  };
+}
+
 function buildNpcActiveRequestView(worldState = {}, options = {}) {
   const ledger = ensureNpcActiveRequestLedgerState(worldState);
   const includeResolved = options.includeResolved === true;
@@ -1195,12 +1332,14 @@ function buildNpcActiveRequestView(worldState = {}, options = {}) {
     .reverse()
     .map((request) => toRequestView(request, worldState));
   const followUpTasks = buildNpcActiveRequestFollowUpTasks(items);
+  const followUpEvidence = buildNpcActiveRequestFollowUpEvidence(followUpTasks, worldState);
   return {
     schemaVersion: NPC_ACTIVE_REQUEST_SCHEMA_VERSION,
     ownerActorId: ledger.ownerActorId,
     totalItems: items.length,
     items,
     followUpTasks,
+    followUpEvidence,
     recentEvents: uniqueCleanList(ledger.events, NPC_ACTIVE_REQUEST_CONFIG.maxRecentEvents, 140)
       .map((event) => cleanPublicText(event, "", 140))
       .filter((event) => event && !containsPrivateSignalText(event)),
