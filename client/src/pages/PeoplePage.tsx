@@ -1004,21 +1004,40 @@ function NpcActiveRequestFollowUpDocket({
   if (!visible.length) return null;
   return (
     <section className="npcActiveRequestInbox" aria-label="NPC 来函后续簿">
-      {visible.map((task) => (
-        <article className="inventoryMiniCard" key={task.taskId || task.requestId || task.title}>
-          <strong>{safePeopleText(task.title, "来函后续", 48)}</strong>
-          <span>{safePeopleText(task.publicSummary || task.nextStep, "此事只作公开后续复核。", 140)}</span>
-          <small>
-            {safePeopleText(task.taskRouteLabel, "后续复核", 24)}
-            {" · "}
-            {safePeopleText(task.statusLabel || task.status, "待服务器续办", 32)}
-          </small>
-          <div className="buttonRow">
-            <button className="paperButton" type="button" onClick={() => onDraft(task)}>拟后续</button>
-            <small>{safePeopleText(task.npc?.displayName, "来人", 32)}</small>
-          </div>
-        </article>
-      ))}
+      {visible.map((task) => {
+        const latestResolution = task.latestResolution && typeof task.latestResolution === "object"
+          ? task.latestResolution as Record<string, unknown>
+          : null;
+        return (
+          <article className="inventoryMiniCard" key={task.taskId || task.requestId || task.title}>
+            <strong>{safePeopleText(task.title, "来函后续", 48)}</strong>
+            <span>
+              {safePeopleText(
+                typeof latestResolution?.publicSummary === "string"
+                  ? latestResolution.publicSummary
+                  : task.publicSummary || task.nextStep,
+                "此事只作公开后续复核。",
+                140
+              )}
+            </span>
+            <small>
+              {safePeopleText(task.taskRouteLabel, "后续复核", 24)}
+              {" · "}
+              {safePeopleText(
+                typeof latestResolution?.statusLabel === "string"
+                  ? latestResolution.statusLabel
+                  : task.statusLabel || task.status,
+                "待服务器续办",
+                32
+              )}
+            </small>
+            <div className="buttonRow">
+              <button className="paperButton" type="button" onClick={() => onDraft(task)}>拟后续</button>
+              <small>{safePeopleText(task.npc?.displayName, "来人", 32)}</small>
+            </div>
+          </article>
+        );
+      })}
     </section>
   );
 }

@@ -145,6 +145,118 @@ test("S88.7 NPC active request follow-up view gives type-specific safe next acti
   assertNoSensitiveLeak(buildNpcActiveRequestView(worldState, { includeResolved: true }));
 });
 
+test("S88.7 NPC active request follow-up drafts record narrow server resolutions", () => {
+  const worldState = createInitialState({ role: "magistrate", playerName: "来函续办" });
+  worldState.turnCount = 6;
+  const beforeGold = worldState.player.gold;
+  const created = createNpcActiveRequest(worldState, "introduction");
+  assert.equal(created.ok, true);
+  const resolved = resolveNpcActiveRequest(worldState, created.request.requestId, "accept");
+  assert.equal(resolved.ok, true);
+  assert.equal(worldState.player.gold, beforeGold);
+
+  const beforeView = buildNpcActiveRequestView(worldState);
+  const task = beforeView.followUpTasks.find((entry) => entry.requestId === created.request.requestId);
+  assert.ok(task);
+  assert.equal(task.taskRoute, "network_visit_lead");
+  assert.equal(task.latestResolution, null);
+
+  worldState.turnCount = 8;
+  const followUp = runNpcActiveRequestStep(
+    worldState,
+    "续办引荐人脉：核引荐对象、场合和公开关系来源，只拟拜会，不直接落关系。"
+  );
+  assert.equal(followUp.outcome.followUpResolved, 1);
+  assert.equal(followUp.outcome.resolved, 0);
+  assert.equal(followUp.outcome.followUpResolutions.length, 1);
+  assert.equal(followUp.outcome.followUpResolutions[0].resolver, "npc_active_request_follow_up_resolver");
+  assert.equal(followUp.outcome.followUpResolutions[0].boundaries.serverOwnsFollowUp, true);
+  assert.equal(followUp.outcome.followUpResolutions[0].boundaries.noRealTaskCreated, true);
+  assert.equal(followUp.outcome.followUpResolutions[0].boundaries.noHiddenTruthAdjudication, true);
+  assert.equal(followUp.outcome.followUpResolutions[0].appliedEffects.resourcesApplied, false);
+  assert.equal(followUp.outcome.followUpResolutions[0].appliedEffects.marriageWritten, false);
+  assert.equal(worldState.player.gold, beforeGold);
+
+  const canonical = worldState.npcActiveRequestLedger.activeRequests.find((entry) => entry.requestId === created.request.requestId);
+  assert.equal(canonical.outcome.followUpResolutions.length, 1);
+  assert.equal(canonical.outcome.followUpView.latestResolution.resolver, "npc_active_request_follow_up_resolver");
+  assert.ok(canonical.auditRefs.includes(followUp.outcome.followUpResolutions[0].resolutionId));
+
+  const afterView = buildNpcActiveRequestView(worldState);
+  const afterTask = afterView.followUpTasks.find((entry) => entry.requestId === created.request.requestId);
+  const afterItem = afterView.items.find((entry) => entry.requestId === created.request.requestId);
+  assert.equal(afterTask.status, "server_follow_up_recorded");
+  assert.equal(afterTask.statusLabel, "已记后续复核");
+  assert.equal(afterTask.latestResolution.resolver, "npc_active_request_follow_up_resolver");
+  assert.match(afterTask.publicSummary, /引荐|拜会|关系/);
+  assert.equal(afterItem.outcome.followUpResolutions.length, 1);
+  assertNoSensitiveLeak({ followUp, afterView });
+
+  const activeBetrayal = createNpcActiveRequest(worldState, "betrayal");
+  assert.equal(activeBetrayal.ok, true);
+  const duplicate = runNpcActiveRequestStep(
+    worldState,
+    "续办引荐人脉：核引荐对象、场合和公开关系来源，只拟拜会，不直接落关系。"
+  );
+  assert.equal(duplicate.outcome.followUpResolved, 0);
+  assert.equal(duplicate.outcome.resolved, 0);
+  assert.equal(activeBetrayal.request.status, "active");
+
+  worldState.turnCount = 10;
+  const polluted = runNpcActiveRequestStep(
+    worldState,
+    "续办引荐 hiddenDossier providerPayload /mnt/e/secret sk-testsecret：核引荐对象。"
+  );
+  assert.equal(polluted.outcome.followUpResolved, 0);
+  assert.equal(polluted.outcome.resolved, 0);
+  assert.equal(activeBetrayal.request.status, "active");
+  assertNoSensitiveLeak({ polluted, publicView: buildNpcActiveRequestView(worldState) });
+
+  const pollutedReviewCue = runNpcActiveRequestStep(
+    worldState,
+    "复核引荐 hiddenDossier providerPayload /mnt/e/secret sk-testsecret：核引荐对象。"
+  );
+  assert.equal(pollutedReviewCue.outcome.followUpResolved, 0);
+  assert.equal(pollutedReviewCue.outcome.resolved, 0);
+  assert.equal(activeBetrayal.request.status, "active");
+  assertNoSensitiveLeak({ pollutedReviewCue, publicView: buildNpcActiveRequestView(worldState) });
+
+  const ordinaryResponse = runNpcActiveRequestStep(worldState, "先查证来意，再决定是否处置。");
+  assert.equal(ordinaryResponse.outcome.followUpResolved, 0);
+  assert.equal(ordinaryResponse.outcome.resolved, 1);
+  assert.equal(activeBetrayal.request.status, "under_review");
+});
+
+test("S88.7 generic review cues do not hijack ordinary active request responses", () => {
+  const worldState = createInitialState({ role: "magistrate", playerName: "查证来函" });
+  worldState.turnCount = 6;
+
+  const bribe = createNpcActiveRequest(worldState, "bribe");
+  assert.equal(bribe.ok, true);
+  const reported = resolveNpcActiveRequest(worldState, bribe.request.requestId, "report");
+  assert.equal(reported.ok, true);
+  assert.ok(
+    buildNpcActiveRequestView(worldState).followUpTasks.some((task) => task.requestId === bribe.request.requestId)
+  );
+
+  const activeBetrayal = createNpcActiveRequest(worldState, "betrayal");
+  assert.equal(activeBetrayal.ok, true);
+
+  const ordinaryResponse = runNpcActiveRequestStep(worldState, "先查证来意，再决定是否处置。");
+  assert.equal(ordinaryResponse.outcome.followUpResolved, 0);
+  assert.equal(ordinaryResponse.outcome.resolved, 1);
+  assert.equal(activeBetrayal.request.status, "under_review");
+  assert.equal(bribe.request.outcome.followUpResolutions?.length || 0, 0);
+
+  const activeHelp = createNpcActiveRequest(worldState, "help");
+  assert.equal(activeHelp.ok, true);
+  const genericSignalResponse = runNpcActiveRequestStep(worldState, "先登记线索，再查证来意。");
+  assert.equal(genericSignalResponse.outcome.followUpResolved, 0);
+  assert.equal(genericSignalResponse.outcome.resolved, 1);
+  assert.equal(activeHelp.request.status, "under_review");
+  assert.equal(bribe.request.outcome.followUpResolutions?.length || 0, 0);
+});
+
 test("S88.7 active request views and feedback sanitize polluted legacy identity fields", () => {
   const worldState = createInitialState({ playerName: "来函污染", role: "magistrate" });
   worldState.turnCount = 8;

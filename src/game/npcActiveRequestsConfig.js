@@ -154,6 +154,8 @@ const NPC_ACTIVE_REQUEST_TYPE_CONFIG = Object.freeze({
 
 const NPC_ACTIVE_REQUEST_FOLLOW_UP_SCHEMA_VERSION = "s88.7-npc-active-request-follow-up.v1";
 const NPC_ACTIVE_REQUEST_FOLLOW_UP_TASK_SCHEMA_VERSION = "s88.7-npc-active-request-follow-up-task.v1";
+const NPC_ACTIVE_REQUEST_FOLLOW_UP_RESOLUTION_SCHEMA_VERSION =
+  "s88.7-npc-active-request-follow-up-resolution.v1";
 
 const NPC_ACTIVE_REQUEST_FOLLOW_UP_CONFIG = Object.freeze({
   help: Object.freeze({
@@ -163,8 +165,13 @@ const NPC_ACTIVE_REQUEST_FOLLOW_UP_CONFIG = Object.freeze({
     title: "求助后续核验",
     publicSummary: "求助只登记为待核人情事项；身份、事实、资源和任务结果仍由服务器后续裁决。",
     nextStep: "核明来意、所需资源与可公开证据，再决定是否转入委派、案牍或普通回合行动。",
+    resolutionStatus: "help_evidence_recorded",
+    resolutionLabel: "求助核验已记",
+    resolutionSummary: "服务器已把求助后续登记为公开核验记录；身份、资源、任务和人情结果仍未结算。",
+    resolutionNextStep: "后续若转为委派、案牍或普通行动，仍须重新按公开证据和服务器规则裁决。",
     taskDraftTemplate: "续办{npcName}的{typeLabel}：先核明来意、所需资源和公开证据，只提出求助核验，不承诺任务或资源结果。",
     preferredActions: Object.freeze(["investigate", "accept", "refuse"]),
+    taskIntentKeywords: Object.freeze(["求助", "核验", "所需资源", "公开证据", "人情"]),
     riskTags: Object.freeze(["人情牵连", "需核事实"])
   }),
   debt_collection: Object.freeze({
@@ -174,8 +181,13 @@ const NPC_ACTIVE_REQUEST_FOLLOW_UP_CONFIG = Object.freeze({
     title: "钱债与人情债核验",
     publicSummary: "索债不会即时扣银；旧账、借贷、人情债和契据须先形成服务器可复核线索。",
     nextStep: "查契据、见证人与旧账来源，必要时转入囊箧、交易或人情月账的服务器结算。",
+    resolutionStatus: "debt_note_recorded",
+    resolutionLabel: "人情债线索已记",
+    resolutionSummary: "服务器已把钱债与人情债登记为公开月账线索；银钱、物品和交易仍未结算。",
+    resolutionNextStep: "后续只能通过囊箧、交易、人情月账或普通行动再由服务器核契据与证人。",
     taskDraftTemplate: "续办{npcName}的{typeLabel}：查验契据、见证人与旧账来源，只作为人情债核验线索，不直接扣银。",
     preferredActions: Object.freeze(["investigate", "defer", "refuse"]),
+    taskIntentKeywords: Object.freeze(["索债", "人情债", "契据", "旧账", "见证人"]),
     riskTags: Object.freeze(["钱债争执", "人情债"])
   }),
   advice: Object.freeze({
@@ -185,8 +197,13 @@ const NPC_ACTIVE_REQUEST_FOLLOW_UP_CONFIG = Object.freeze({
     title: "献策证据复核",
     publicSummary: "献策只进入公开建议队列；政策、军务、案牍、科举或任免后果不因来函直接生效。",
     nextStep: "把建议作为普通回合草稿或专题 evidence，由服务器按身份权限和公开证据裁决。",
+    resolutionStatus: "advice_evidence_recorded",
+    resolutionLabel: "献策证据已记",
+    resolutionSummary: "服务器已把献策后续整理为公开 evidence；政策、军务、案牍、科举或任免后果仍未生效。",
+    resolutionNextStep: "后续若进入奏议、案牍、军议或普通行动，须由对应 resolver 重新裁决。",
     taskDraftTemplate: "续办{npcName}的{typeLabel}：把献策改写为公开证据和可审议草稿，后果仍候服务器按身份权限裁决。",
     preferredActions: Object.freeze(["investigate", "accept", "defer"]),
+    taskIntentKeywords: Object.freeze(["献策", "证据", "建议", "草稿", "审议"]),
     riskTags: Object.freeze(["需核证据", "夹带私意"])
   }),
   petition: Object.freeze({
@@ -196,8 +213,13 @@ const NPC_ACTIVE_REQUEST_FOLLOW_UP_CONFIG = Object.freeze({
     title: "请托与公私边界复核",
     publicSummary: "请托只登记为待裁人情压力；官职、案件、钱粮、考试和任务不得被来函绕过。",
     nextStep: "核对所托事项是否属于当前身份权限，必要时改写为公开案牍、奏议或普通行动。",
+    resolutionStatus: "petition_docket_recorded",
+    resolutionLabel: "请托案牍已记",
+    resolutionSummary: "服务器已把请托后续整理为公开案牍线索；官职、案件、钱粮、考试和任务仍未被绕过。",
+    resolutionNextStep: "后续若提交案牍、奏议或普通行动，仍按身份权限、公私边界和公开 evidence 裁决。",
     taskDraftTemplate: "续办{npcName}的{typeLabel}：核对所托事项、身份权限和公开证据，必要时只转成案牍或奏议草稿。",
     preferredActions: Object.freeze(["investigate", "defer", "refuse"]),
+    taskIntentKeywords: Object.freeze(["请托", "案牍", "公私边界", "奏议", "所托事项"]),
     riskTags: Object.freeze(["人情压力", "公私边界"])
   }),
   bribe: Object.freeze({
@@ -207,8 +229,13 @@ const NPC_ACTIVE_REQUEST_FOLLOW_UP_CONFIG = Object.freeze({
     title: "廉政线索复核",
     publicSummary: "行贿来函不会成为已收财物；只能转为廉政风险、证据线索、拒收或呈报记录。",
     nextStep: "拒收并留痕，或把线索呈报/查证；不得让前端、AI 或按钮直接加银、转物或销案。",
+    resolutionStatus: "integrity_watch_recorded",
+    resolutionLabel: "廉政线索已记",
+    resolutionSummary: "服务器已把行贿后续登记为廉政 watchlist；财物未收、银钱未加、案件未销。",
+    resolutionNextStep: "后续只能按公开证据呈报、查证或进入风宪/案牍流程，不能由按钮结案。",
     taskDraftTemplate: "续办{npcName}的{typeLabel}：登记为廉政线索，拒收留痕并查证，不收财物、不销案。",
     preferredActions: Object.freeze(["report", "investigate", "refuse"]),
+    taskIntentKeywords: Object.freeze(["行贿", "廉政", "拒收", "线索", "查证"]),
     riskTags: Object.freeze(["廉政风险", "禁收财物"])
   }),
   impeachment: Object.freeze({
@@ -218,8 +245,13 @@ const NPC_ACTIVE_REQUEST_FOLLOW_UP_CONFIG = Object.freeze({
     title: "弹劾证据复核",
     publicSummary: "弹劾线索只形成公开证据复核；成案、处分、任免和清白结论仍由官场规则裁决。",
     nextStep: "核人证、物证与管辖权限，必要时写入奏议或官场行动，不能凭来函直接定罪。",
+    resolutionStatus: "censorate_watch_recorded",
+    resolutionLabel: "弹劾证据已记",
+    resolutionSummary: "服务器已把弹劾后续登记为风宪证据 watchlist；成案、处分、任免和清白结论仍未裁定。",
+    resolutionNextStep: "后续若上呈奏议或官场行动，仍须按人证、物证、管辖权限和官场 resolver 裁决。",
     taskDraftTemplate: "续办{npcName}的{typeLabel}：核人证、物证与管辖权限，只形成弹劾证据复核，不直接定罪处分。",
     preferredActions: Object.freeze(["investigate", "report", "refuse"]),
+    taskIntentKeywords: Object.freeze(["弹劾", "风宪", "人证", "物证", "管辖"]),
     riskTags: Object.freeze(["证据不足", "党争牵连"])
   }),
   introduction: Object.freeze({
@@ -229,8 +261,13 @@ const NPC_ACTIVE_REQUEST_FOLLOW_UP_CONFIG = Object.freeze({
     title: "引荐人脉复核",
     publicSummary: "引荐只成为可见人脉线索；关系落账、身份机会、座师同年与官场机会仍需服务器确认。",
     nextStep: "核引荐对象、场合和可见关系来源，再作为拜会草稿、师友线索或官场 evidence 使用。",
+    resolutionStatus: "network_visit_lead_recorded",
+    resolutionLabel: "引荐拜会已记",
+    resolutionSummary: "服务器已把引荐后续登记为公开拜会线索；关系落账、身份机会和座师同年仍未确认。",
+    resolutionNextStep: "后续若拜会、投帖或进入官场/师友 evidence，仍须由服务器按公开关系裁决。",
     taskDraftTemplate: "续办{npcName}的{typeLabel}：核引荐对象、场合和公开关系来源，只拟拜会或师友线索，不直接落关系。",
     preferredActions: Object.freeze(["investigate", "accept", "defer"]),
+    taskIntentKeywords: Object.freeze(["引荐", "人脉", "拜会", "师友", "关系来源"]),
     riskTags: Object.freeze(["门路待核", "名声牵连"])
   }),
   marriage_proposal: Object.freeze({
@@ -240,8 +277,13 @@ const NPC_ACTIVE_REQUEST_FOLLOW_UP_CONFIG = Object.freeze({
     title: "礼法与亲族审查",
     publicSummary: "议婚只进入礼法、身份、亲族与公开关系审查；不会即时写配偶、谱系或嫁娶事实。",
     nextStep: "核年龄、亲族、婚姻状态和礼法障碍，后续只能通过服务器议婚流程推进。",
+    resolutionStatus: "ritual_family_check_recorded",
+    resolutionLabel: "礼法亲族已记",
+    resolutionSummary: "服务器已把议婚后续登记为礼法亲族审查；配偶、谱系和嫁娶事实仍未写入。",
+    resolutionNextStep: "后续只能通过服务器议婚流程复核年龄、亲族、婚姻状态和礼法障碍。",
     taskDraftTemplate: "续办{npcName}的{typeLabel}：核年龄、亲族、婚姻状态和礼法障碍，只进入议婚审查，不写配偶事实。",
     preferredActions: Object.freeze(["investigate", "defer", "refuse"]),
+    taskIntentKeywords: Object.freeze(["议婚", "求婚", "礼法", "亲族", "婚姻状态"]),
     riskTags: Object.freeze(["礼法审查", "亲族意见"])
   }),
   betrayal: Object.freeze({
@@ -251,8 +293,13 @@ const NPC_ACTIVE_REQUEST_FOLLOW_UP_CONFIG = Object.freeze({
     title: "背叛风险查证",
     publicSummary: "背叛只作为风险线索；不得因 NPC、模型或前端输入直接定罪、抄家、处置人物或改 hidden truth。",
     nextStep: "先查证行迹、证据和公开关系，再决定呈报、调查或暂置，不把风险直接写成事实。",
+    resolutionStatus: "relationship_risk_watch_recorded",
+    resolutionLabel: "背叛风险已记",
+    resolutionSummary: "服务器已把背叛后续登记为公开关系风险观察；定罪、处置人物和 hidden truth 仍未改变。",
+    resolutionNextStep: "后续只能按公开行迹、证据和关系再呈报或调查，不能把风险直接写成事实。",
     taskDraftTemplate: "续办{npcName}的{typeLabel}：查证行迹、证据和公开关系，只列入背叛风险观察，不直接定罪。",
     preferredActions: Object.freeze(["investigate", "report", "refuse"]),
+    taskIntentKeywords: Object.freeze(["背叛", "背约", "行迹", "关系风险", "观察"]),
     riskTags: Object.freeze(["背约风险", "需查证"])
   })
 });
@@ -261,6 +308,7 @@ const NPC_ACTIVE_REQUEST_CONFIG = Object.freeze({
   maxActiveRequests: 3,
   maxViewItems: 12,
   maxFollowUpTasks: 8,
+  maxFollowUpResolutions: 6,
   maxRecentEvents: 16,
   maxEvidenceRefs: 6,
   maxRiskTags: 6,
@@ -275,6 +323,7 @@ const NPC_ACTIVE_REQUEST_CONFIG = Object.freeze({
 module.exports = {
   NPC_ACTIVE_REQUEST_CONFIG,
   NPC_ACTIVE_REQUEST_FOLLOW_UP_CONFIG,
+  NPC_ACTIVE_REQUEST_FOLLOW_UP_RESOLUTION_SCHEMA_VERSION,
   NPC_ACTIVE_REQUEST_FOLLOW_UP_SCHEMA_VERSION,
   NPC_ACTIVE_REQUEST_FOLLOW_UP_TASK_SCHEMA_VERSION,
   NPC_ACTIVE_REQUEST_RESPONSE_ACTION_CONFIG,

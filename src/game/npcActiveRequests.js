@@ -3,6 +3,7 @@ const { randomUUID } = require("node:crypto");
 const {
   NPC_ACTIVE_REQUEST_CONFIG,
   NPC_ACTIVE_REQUEST_FOLLOW_UP_CONFIG,
+  NPC_ACTIVE_REQUEST_FOLLOW_UP_RESOLUTION_SCHEMA_VERSION,
   NPC_ACTIVE_REQUEST_FOLLOW_UP_SCHEMA_VERSION,
   NPC_ACTIVE_REQUEST_FOLLOW_UP_TASK_SCHEMA_VERSION,
   NPC_ACTIVE_REQUEST_RESPONSE_ACTION_CONFIG,
@@ -327,6 +328,13 @@ function followUpTaskStatus(status = "", responseAction = "") {
   return "recorded";
 }
 
+function followUpTaskStatusLabel(status = "") {
+  if (status === "server_follow_up_recorded") return "已记后续复核";
+  if (status === "reported_for_review") return "已呈报待复核";
+  if (status === "risk_watch") return "风险观察";
+  return "待服务器续办";
+}
+
 function isFollowUpTaskOpen(status = "") {
   return [
     "under_review",
@@ -334,6 +342,95 @@ function isFollowUpTaskOpen(status = "") {
     "converted_to_risk",
     "accepted_pending_server_resolution"
   ].includes(normalizeStatus(status, ""));
+}
+
+function latestFollowUpResolution(resolutions = []) {
+  if (!Array.isArray(resolutions) || resolutions.length === 0) return null;
+  const latest = resolutions[resolutions.length - 1];
+  if (!isPlainObject(latest)) return null;
+  return sanitizePublicViewValue(latest);
+}
+
+function followUpInputText(input = "") {
+  const text = cleanPublicText(input, "", 240);
+  if (!text || containsPrivateSignalText(text) || UNSAFE_TEXT_PATTERN.test(text)) return "";
+  return text;
+}
+
+function textIncludesAny(text = "", values = []) {
+  if (!text) return false;
+  return (Array.isArray(values) ? values : []).some((value) => {
+    const cleanValue = cleanPublicText(value, "", 80);
+    return cleanValue && text.includes(cleanValue);
+  });
+}
+
+const FOLLOW_UP_PRIMARY_CUE_PATTERN = /(续办|后续|后续簿|承前)/;
+const FOLLOW_UP_REVIEW_CUE_PATTERN = /(复核|核验|查证|查验|登记)/;
+const FOLLOW_UP_ANY_CUE_PATTERN = /(续办|后续|后续簿|承前|复核|核验|查证|查验|登记)/;
+const FOLLOW_UP_GENERIC_TASK_SIGNALS = new Set([
+  "人情",
+  "公开证据",
+  "所需资源",
+  "线索",
+  "证据",
+  "建议",
+  "草稿",
+  "审议",
+  "案牍",
+  "奏议",
+  "所托事项",
+  "身份权限",
+  "公私边界",
+  "关系来源",
+  "婚姻状态",
+  "观察",
+  "管辖"
+]);
+
+function isGenericFollowUpCueSignal(value = "") {
+  const text = cleanPublicText(value, "", 20);
+  return Boolean(text && text.length <= 3 && FOLLOW_UP_ANY_CUE_PATTERN.test(text));
+}
+
+function isGenericFollowUpTaskSignal(value = "") {
+  const text = cleanPublicText(value, "", 40);
+  return !text || isGenericFollowUpCueSignal(text) || FOLLOW_UP_GENERIC_TASK_SIGNALS.has(text);
+}
+
+function followUpTaskSignals(task = {}) {
+  if (!isPlainObject(task)) return [];
+  const config = followUpConfigFor(task.requestType);
+  return [
+    task.taskRouteLabel,
+    task.title,
+    task.requestTypeLabel,
+    task.publicResolutionRef,
+    task.taskRoute,
+    task.followUpKind,
+    task.npc?.displayName,
+    ...(Array.isArray(config.taskIntentKeywords) ? config.taskIntentKeywords : [])
+  ].filter((signal) => {
+    const text = cleanPublicText(signal, "", 80);
+    return !isGenericFollowUpTaskSignal(text);
+  });
+}
+
+function matchesFollowUpTaskInput(task = {}, input = "") {
+  const text = followUpInputText(input);
+  if (!text || !isPlainObject(task)) return false;
+  const explicitCue = FOLLOW_UP_ANY_CUE_PATTERN.test(text);
+  const taskSignals = followUpTaskSignals(task);
+  if (textIncludesAny(text, taskSignals) && explicitCue) return true;
+  return FOLLOW_UP_PRIMARY_CUE_PATTERN.test(text) && textIncludesAny(text, taskSignals);
+}
+
+function hasFollowUpContinuationCue(input = "", tasks = []) {
+  if (typeof input !== "string") return false;
+  const text = cleanPublicText(input, "", 240) || input.slice(0, 240);
+  if (FOLLOW_UP_PRIMARY_CUE_PATTERN.test(text)) return true;
+  if (!FOLLOW_UP_REVIEW_CUE_PATTERN.test(text)) return false;
+  return (Array.isArray(tasks) ? tasks : []).some((task) => textIncludesAny(text, followUpTaskSignals(task)));
 }
 
 function followUpNextStep(config = {}, responseAction = "", status = "") {
@@ -344,6 +441,157 @@ function followUpNextStep(config = {}, responseAction = "", status = "") {
   if (responseAction === "investigate") return "先查证身份、证据、契据、人物关系和管辖权限，再决定是否转入后续行动。";
   if (responseAction === "defer") return "已暂缓，不承诺资源或关系结果；若再回应，仍需普通回合服务器裁决。";
   return base;
+}
+
+function buildNpcActiveRequestFollowUpResolution(worldState = {}, task = {}, input = "") {
+  const requestType = normalizeRequestType(task.requestType, "help");
+  const config = followUpConfigFor(requestType);
+  const turn = currentTurn(worldState);
+  const taskRoute = cleanPublicText(task.taskRoute, config.taskRoute || "active_request_follow_up", 80);
+  const taskRouteLabel = cleanPublicText(task.taskRouteLabel, config.taskRouteLabel || config.title, 40);
+  const requestId = cleanId(task.requestId, "");
+  const taskId = cleanId(task.taskId, "");
+  const publicResolutionRef = cleanId(task.publicResolutionRef, "");
+  const inputEcho = followUpInputText(input);
+  const resolutionId = cleanId(`npc-active-follow-up-resolution:${requestId}:${taskRoute}:${turn}`, "");
+  return {
+    schemaVersion: NPC_ACTIVE_REQUEST_FOLLOW_UP_RESOLUTION_SCHEMA_VERSION,
+    resolutionId,
+    resolver: "npc_active_request_follow_up_resolver",
+    sourceType: "npc_active_request_follow_up",
+    requestId,
+    requestType,
+    requestTypeLabel: cleanPublicText(task.requestTypeLabel, config.title, 40),
+    taskId,
+    taskRoute,
+    taskRouteLabel,
+    followUpKind: cleanPublicText(task.followUpKind, config.followUpKind, 80),
+    publicResolutionRef,
+    status: cleanPublicText(config.resolutionStatus, "server_follow_up_recorded", 80),
+    statusLabel: cleanPublicText(config.resolutionLabel, "后续复核已记", 40),
+    publicSummary: cleanPublicText(
+      config.resolutionSummary,
+      "服务器已登记此来函后续为公开复核记录；具体后果仍未直接生效。",
+      180
+    ),
+    nextStep: cleanPublicText(
+      config.resolutionNextStep,
+      "后续仍按公开证据、身份权限和服务器 resolver 再裁决。",
+      180
+    ),
+    inputEcho: inputEcho || `玩家提交了${taskRouteLabel}草稿，服务器仅登记为后续复核线索。`,
+    npc: {
+      npcId: cleanId(task.npc?.npcId, ""),
+      displayName: cleanPublicText(task.npc?.displayName, "来人", 80),
+      title: cleanPublicText(task.npc?.title, "可见人物", 80)
+    },
+    evidenceRefs: uniqueCleanList([
+      ...(Array.isArray(task.evidenceRefs) ? task.evidenceRefs : []),
+      taskId ? `npcActiveRequestFollowUpTask:${taskId}` : "",
+      publicResolutionRef ? `npcActiveRequestResolverTrace:${publicResolutionRef}` : ""
+    ], NPC_ACTIVE_REQUEST_CONFIG.maxEvidenceRefs, 120).filter((ref) => !containsPrivateSignalText(ref)),
+    riskTags: uniqueCleanList([
+      ...(Array.isArray(task.riskTags) ? task.riskTags : []),
+      ...(Array.isArray(config.riskTags) ? config.riskTags : [])
+    ], NPC_ACTIVE_REQUEST_CONFIG.maxRiskTags, 40).filter((tag) => !containsPrivateSignalText(tag)),
+    serverDecision: "server_recorded_follow_up",
+    boundaries: {
+      serverOwnsFollowUp: true,
+      proposalOnly: true,
+      browserDraftOnly: true,
+      resourcesNotApplied: true,
+      relationshipNotFinal: true,
+      marriageAndDisciplineNotFinal: true,
+      noImmediateEconomySettlement: true,
+      noRealTaskCreated: true,
+      noHiddenTruthAdjudication: true,
+      privateNpcDossierRedacted: true
+    },
+    appliedEffects: {
+      resourcesApplied: false,
+      inventoryTransferred: false,
+      marriageWritten: false,
+      impeachmentFinalized: false,
+      disciplineFinalized: false,
+      hiddenTruthChanged: false
+    },
+    createdTurn: turn,
+    date: currentDate(worldState)
+  };
+}
+
+function resolveNpcActiveRequestFollowUpTask(worldState = {}, input = "", options = {}) {
+  const ledger = ensureNpcActiveRequestLedgerState(worldState);
+  const publicView = buildNpcActiveRequestView(worldState);
+  const tasks = Array.isArray(publicView.followUpTasks) ? publicView.followUpTasks : [];
+  const requestedTaskId = cleanId(options.followUpTaskId, "");
+  const attempted = Boolean(requestedTaskId) || hasFollowUpContinuationCue(input, tasks);
+  const candidate = tasks.find((task) => {
+    if (!isPlainObject(task)) return false;
+    if (requestedTaskId && cleanId(task.taskId, "") === requestedTaskId) return true;
+    return !requestedTaskId && matchesFollowUpTaskInput(task, input);
+  });
+  if (!candidate) {
+    return { ok: false, attempted, matched: false, errors: ["follow_up_task_not_matched"], events: [] };
+  }
+
+  const requestId = cleanId(candidate.requestId, "");
+  const request = (ledger.activeRequests || []).find((entry) => cleanId(entry.requestId, "") === requestId);
+  if (!request || !isPlainObject(request.outcome) || !isPlainObject(request.outcome.followUpView)) {
+    return { ok: false, attempted: true, matched: true, errors: ["canonical_request_not_found"], events: [] };
+  }
+
+  const canonicalRef = cleanId(request.outcome.followUpView.publicResolutionRef, "");
+  if (!canonicalRef || canonicalRef !== cleanId(candidate.publicResolutionRef, "")) {
+    return { ok: false, attempted: true, matched: true, errors: ["follow_up_ref_mismatch"], events: [] };
+  }
+  if (!request.outcome.followUpView.boundaries?.serverOwnsFollowUp) {
+    return { ok: false, attempted: true, matched: true, errors: ["follow_up_boundary_missing"], events: [] };
+  }
+
+  const existing = Array.isArray(request.outcome.followUpResolutions)
+    ? request.outcome.followUpResolutions
+    : [];
+  if (existing.some((resolution) =>
+    clampNumber(resolution?.createdTurn, -1, Number.MAX_SAFE_INTEGER, -1) === currentTurn(worldState)
+  )) {
+    return { ok: false, attempted: true, matched: true, errors: ["follow_up_already_recorded_this_turn"], events: [] };
+  }
+
+  const resolution = buildNpcActiveRequestFollowUpResolution(worldState, candidate, input);
+  const resolutions = [...existing, resolution].slice(-NPC_ACTIVE_REQUEST_CONFIG.maxFollowUpResolutions);
+  request.outcome.followUpResolutions = resolutions;
+  request.outcome.followUpView.latestResolution = resolution;
+  request.outcome.followUpView.resolutionCount = resolutions.length;
+  request.lastUpdatedTurn = currentTurn(worldState);
+  request.auditRefs = uniqueCleanList([
+    ...(request.auditRefs || []),
+    resolution.resolutionId,
+    resolution.publicResolutionRef
+  ], 8, 120);
+  const event = `[NPC 后续] ${resolution.npc.displayName}的${resolution.requestTypeLabel}续办已由服务器登记：${resolution.publicSummary}`;
+  ledger.events = [...(ledger.events || []), event].slice(-NPC_ACTIVE_REQUEST_CONFIG.maxRecentEvents);
+  return {
+    ok: true,
+    attempted: true,
+    matched: true,
+    errors: [],
+    request,
+    task: candidate,
+    resolution,
+    events: [event],
+    attributeChanges: [{
+      path: "npcActiveRequestView.followUpTasks",
+      label: "NPC 来函后续",
+      before: cleanPublicText(candidate.statusLabel || candidate.status, "待服务器续办", 40),
+      after: resolution.statusLabel,
+      reason: "玩家提交来函后续草稿后，服务器只登记公开复核记录，不直接结算资源、婚姻、弹劾、背叛或隐藏事实。"
+    }],
+    outcome: {
+      followUpResolved: 1,
+      followUpResolutions: [resolution]
+    }
+  };
 }
 
 function buildNpcActiveRequestFollowUpView(worldState = {}, request = {}, responseAction = "", outcome = {}, resolverTrace = {}) {
@@ -736,15 +984,25 @@ function runNpcActiveRequestStep(worldState = {}, input = "", options = {}) {
     outcome: {
       scheduled: 0,
       resolved: 0,
+      followUpResolved: 0,
       expired: 0,
       activeCount: 0,
-      resolutionTraces: []
+      resolutionTraces: [],
+      followUpResolutions: []
     }
   };
 
+  const followUpResolution = resolveNpcActiveRequestFollowUpTask(worldState, input, options);
+  if (followUpResolution.ok) {
+    result.events.push(...followUpResolution.events);
+    result.attributeChanges.push(...(followUpResolution.attributeChanges || []));
+    result.outcome.followUpResolved += 1;
+    result.outcome.followUpResolutions.push(followUpResolution.resolution);
+  }
+
   const responseAction = normalizeResponseAction(options.responseAction, "") || classifyNpcActiveRequestResponse(input);
   const activeRequest = (ledger.activeRequests || []).find((request) => request.status === "active" || request.status === "deferred");
-  if (activeRequest && responseAction) {
+  if (!followUpResolution.attempted && activeRequest && responseAction) {
     const resolved = resolveNpcActiveRequest(worldState, activeRequest.requestId, responseAction);
     if (resolved.ok) {
       result.events.push(...resolved.events);
@@ -779,7 +1037,7 @@ function runNpcActiveRequestStep(worldState = {}, input = "", options = {}) {
 
   result.outcome.activeCount = requestCountByStatus(ledger);
   result.summary = result.events.length
-    ? `NPC 主动请求：本旬新增${result.outcome.scheduled}条，处理${result.outcome.resolved}条，逾期${result.outcome.expired}条。`
+    ? `NPC 主动请求：本旬新增${result.outcome.scheduled}条，处理${result.outcome.resolved}条，续办${result.outcome.followUpResolved}条，逾期${result.outcome.expired}条。`
     : "";
   return result;
 }
@@ -801,6 +1059,7 @@ function toRequestView(request = {}, worldState = {}) {
     ),
     serverDecision: cleanPublicText(request.outcome.serverDecision, "server_adjudicated", 80),
     followUpView: sanitizePublicViewValue(request.outcome.followUpView),
+    followUpResolutions: sanitizePublicViewValue(request.outcome.followUpResolutions || []),
     resourceImpactView: sanitizePublicViewValue(request.outcome.resourceImpactView),
     relationshipImpactView: sanitizePublicViewValue(request.outcome.relationshipImpactView),
     resolverTrace: sanitizePublicViewValue(request.outcome.resolverTrace)
@@ -860,7 +1119,12 @@ function buildNpcActiveRequestFollowUpTasks(items = []) {
       const publicResolutionRef = cleanId(followUp.publicResolutionRef, "");
       const config = followUpConfigFor(record.type);
       const taskRoute = cleanPublicText(config.taskRoute, "active_request_follow_up", 80);
-      const status = followUpTaskStatus(record.status, followUp.responseAction || record.outcome?.responseAction);
+      const latestResolution =
+        latestFollowUpResolution(record.outcome?.followUpResolutions) ||
+        (isPlainObject(followUp.latestResolution) ? sanitizePublicViewValue(followUp.latestResolution) : null);
+      const status = latestResolution
+        ? "server_follow_up_recorded"
+        : followUpTaskStatus(record.status, followUp.responseAction || record.outcome?.responseAction);
       if (!publicResolutionRef || !followUp.boundaries?.serverOwnsFollowUp) return null;
       return {
         schemaVersion: NPC_ACTIVE_REQUEST_FOLLOW_UP_TASK_SCHEMA_VERSION,
@@ -874,14 +1138,15 @@ function buildNpcActiveRequestFollowUpTasks(items = []) {
         taskRoute,
         taskRouteLabel: cleanPublicText(config.taskRouteLabel, config.title, 40),
         status,
-        statusLabel: status === "reported_for_review"
-          ? "已呈报待复核"
-          : status === "risk_watch"
-            ? "风险观察"
-            : "待服务器续办",
+        statusLabel: followUpTaskStatusLabel(status),
         title: cleanPublicText(followUp.title || config.title, "来函后续", 80),
-        publicSummary: cleanPublicText(followUp.publicSummary, config.publicSummary, 180),
-        nextStep: cleanPublicText(followUp.nextStep, config.nextStep, 180),
+        publicSummary: latestResolution
+          ? cleanPublicText(latestResolution.publicSummary, config.resolutionSummary || config.publicSummary, 180)
+          : cleanPublicText(followUp.publicSummary, config.publicSummary, 180),
+        nextStep: latestResolution
+          ? cleanPublicText(latestResolution.nextStep, config.resolutionNextStep || config.nextStep, 180)
+          : cleanPublicText(followUp.nextStep, config.nextStep, 180),
+        latestResolution,
         draftText: fillFollowUpTaskTemplate(config.taskDraftTemplate, record, followUp),
         npc: {
           npcId: cleanId(record.npc?.npcId, ""),
@@ -959,6 +1224,7 @@ module.exports = {
   createNpcActiveRequest,
   ensureNpcActiveRequestLedgerState,
   resolveNpcActiveRequest,
+  resolveNpcActiveRequestFollowUpTask,
   runNpcActiveRequestStep,
   sanitizeNpcPrivateIntentProposal
 };

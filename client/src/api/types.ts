@@ -400,6 +400,7 @@ export type NpcActiveRequestItemView = JsonObject & {
   readonly turnsRemaining?: number;
   readonly outcome?: (JsonObject & {
     readonly followUpView?: JsonObject;
+    readonly followUpResolutions?: readonly JsonObject[];
   }) | null;
 };
 
@@ -424,6 +425,7 @@ export type NpcActiveRequestFollowUpTaskView = JsonObject & {
   readonly taskRouteLabel?: string;
   readonly status?: string;
   readonly statusLabel?: string;
+  readonly latestResolution?: JsonObject | null;
   readonly title?: string;
   readonly publicSummary?: string;
   readonly nextStep?: string;

@@ -8,7 +8,7 @@ process.env.AI_PROVIDER = "mock";
 
 const gameRoutes = require("../src/routes/game");
 const { createInitialState } = require("../src/game/initialState");
-const { writeSession } = require("../src/storage/sessionStore");
+const { readSession, writeSession } = require("../src/storage/sessionStore");
 const { createFetchSafeServer } = require("../test-helpers/fetchSafeServer");
 
 const sessionsDir = path.join(__dirname, "..", "data", "sessions");
@@ -256,4 +256,74 @@ test("S85.3 turn route schedules and resolves NPC active requests through safe v
     /"npcActiveRequestLedger":|"hiddenDossier":|"privateSignalTags":|"rawProviderPayload":|sk-[A-Za-z0-9_-]{6,}/
   );
   assert.doesNotMatch(serialized, /求财|避祸|亲族压力|可能欺瞒|求名|护短|畏上|重义/);
+});
+
+test("S88.7 turn route records NPC active request follow-up resolutions without raw ledger leaks", async (t) => {
+  const worldState = createInitialState({
+    role: "magistrate",
+    playerName: "来函续办路由"
+  });
+  await writeSession(worldState);
+  t.after(() => removeSessionArtifacts(worldState.sessionId));
+
+  const server = createTestServer();
+  t.after(server.close);
+
+  await fetch(`${server.baseUrl}/api/game/turn`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      sessionId: worldState.sessionId,
+      input: "照常清查县署田册。"
+    })
+  });
+  const resolvedResponse = await fetch(`${server.baseUrl}/api/game/turn`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      sessionId: worldState.sessionId,
+      input: "先查证来意，再决定是否采纳。"
+    })
+  });
+  const resolvedPayload = await resolvedResponse.json();
+  const task = resolvedPayload.npcActiveRequestView.followUpTasks[0];
+  assert.equal(resolvedResponse.status, 200);
+  assert.ok(task);
+
+  const followUpResponse = await fetch(`${server.baseUrl}/api/game/turn`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      sessionId: worldState.sessionId,
+      input: task.draftText
+    })
+  });
+  const followUpPayload = await followUpResponse.json();
+  const serialized = JSON.stringify(followUpPayload);
+  assert.equal(followUpResponse.status, 200);
+  assert.equal(followUpPayload.npcActiveRequests.outcome.followUpResolved, 1);
+  assert.equal(
+    followUpPayload.npcActiveRequests.outcome.followUpResolutions[0].resolver,
+    "npc_active_request_follow_up_resolver"
+  );
+  assert.equal(
+    followUpPayload.npcActiveRequests.outcome.followUpResolutions[0].boundaries.noRealTaskCreated,
+    true
+  );
+  assert.ok(followUpPayload.npcActiveRequestView.followUpTasks.some((entry) => entry.latestResolution));
+  assert.equal(followUpPayload.worldState.npcActiveRequestLedger, undefined);
+  assert.doesNotMatch(
+    serialized,
+    /"npcActiveRequestLedger":|"hiddenDossier":|"privateSignalTags":|"rawProviderPayload":|"providerPayload":|"rawLedger":|"resourcesApplied":true|"marriageWritten":true|"hiddenTruthChanged":true|sk-[A-Za-z0-9_-]{6,}/
+  );
+
+  const saved = await readSession(worldState.sessionId);
+  assert.ok(
+    saved.npcActiveRequestLedger.activeRequests.some((entry) =>
+      Array.isArray(entry.outcome?.followUpResolutions) &&
+      entry.outcome.followUpResolutions.some((resolution) =>
+        resolution.resolver === "npc_active_request_follow_up_resolver"
+      )
+    )
+  );
 });
