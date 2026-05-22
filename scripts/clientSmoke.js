@@ -454,7 +454,36 @@ async function assertNoVisibleTextOverlap(page, label) {
 
 async function assertNoVisibleTextOverflow(page, label) {
   const items = await page.evaluate(({ ignoreSelectors }) => {
-    const elements = [...document.querySelectorAll("button, a[href], [role='button']")];
+    const overflowSelectors = [
+      "button",
+      "a[href]",
+      "[role='button']",
+      ".archiveItemList strong",
+      ".archiveItemList span",
+      ".archiveItemList p",
+      ".archiveBoundary",
+      ".domainConsequenceSection h3",
+      ".domainConsequenceSection p",
+      ".domainConsequenceList strong",
+      ".domainConsequenceList span",
+      ".npcFollowUpEvidenceHeader h3",
+      ".npcFollowUpEvidenceBoundary",
+      ".rankingName",
+      ".rankingPlace",
+      ".rankingMeta",
+      ".rankingScore",
+      ".rankingDetailPanel p",
+      ".rankingDetailRail dd",
+      ".rankingScoreGrid em",
+      ".rankingAuditList span",
+      ".mapEventList strong",
+      ".mapEventList span",
+      ".mapEventList p",
+      ".mapRuntimeNote",
+      ".mapSafetyBoundary p",
+      ".inkMapMeta span"
+    ];
+    const elements = [...document.querySelectorAll(overflowSelectors.join(","))];
     const viewport = { width: window.innerWidth, height: window.innerHeight };
     return elements
       .filter((element) => {
@@ -2376,6 +2405,32 @@ async function runClientSmoke(options = {}) {
     await page.goto(`${baseUrl}${rankingPath}`, { waitUntil: "networkidle" });
     screenshots.push(await assertRankingFullScreen(page, startedSessionId, options.screenshotsDir, "s76-ranking-fullscreen-mobile"));
     await assertReviewedBackgroundVisual(page, ".rankingHero", "S77.3 mobile ranking hero");
+    await page.goto(`${baseUrl}${archivePath}`, { waitUntil: "networkidle" });
+    screenshots.push(
+      await assertCurrentReactClientPage(page, archivePath, "s88-9-archive-mobile", options.screenshotsDir, {
+        readySelector: ".archiveRoutePanel"
+      })
+    );
+    const mobileArchive = await page.evaluate(() => {
+      const html = document.documentElement;
+      const text = document.body.innerText || "";
+      return {
+        hasRoutePanel: Boolean(document.querySelector(".archiveRoutePanel")),
+        hasTraceGrid: Boolean(document.querySelector(".archiveTraceGrid")),
+        hasListOrEmpty: Boolean(document.querySelector(".archiveItemList")) || text.includes("暂无可显示的公开归档"),
+        horizontalOverflow: html.scrollWidth > html.clientWidth + 2,
+        forbiddenText: text.match(/provider payload|raw audit|hiddenNotes|OPENAI_API_KEY|data\/sessions/gi) || []
+      };
+    });
+    if (!mobileArchive.hasRoutePanel || !mobileArchive.hasTraceGrid || !mobileArchive.hasListOrEmpty) {
+      throw new Error(`S88.9 mobile archive is missing safe archive layout: ${JSON.stringify(mobileArchive)}`);
+    }
+    if (mobileArchive.horizontalOverflow) {
+      throw new Error(`S88.9 mobile archive caused horizontal overflow: ${JSON.stringify(mobileArchive)}`);
+    }
+    if (mobileArchive.forbiddenText.length) {
+      throw new Error(`S88.9 mobile archive leaked forbidden text: ${mobileArchive.forbiddenText.join(", ")}`);
+    }
     await page.goto(`${baseUrl}${runtimeMapPath}`, { waitUntil: "networkidle" });
     screenshots.push(
       await assertCurrentReactClientPage(page, runtimeMapPath, "s76-map-fullscreen-mobile", options.screenshotsDir, {
@@ -2455,6 +2510,7 @@ async function runClientSmoke(options = {}) {
         "mobile-memorial-composer",
         "mobile-exam-fullscreen",
         "mobile-ranking-fullscreen",
+        "mobile-archive",
         "mobile-map-fullscreen",
         "mobile-inkbox-tabs",
         "mobile-home",

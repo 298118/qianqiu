@@ -378,6 +378,8 @@ test("S74.4 shell uses registry-backed overlays without widening data sources", 
   const archivePageSource = readText("client/src/pages/ArchivePage.tsx");
   const mapPageSource = readText("client/src/pages/MapPage.tsx");
   const routeCatalogSource = readText("client/src/routes/routeCatalog.ts");
+  const styleSource = readText("client/src/styles/global.css");
+  const clientSmokeSource = readText("scripts/clientSmoke.js");
   const combined = stripSafeGuardPatterns(`${appShellSource}\n${surfaceHostSource}\n${surfaceRegistrySource}\n${uiStateSource}\n${courtPageSource}\n${archivePageSource}\n${mapPageSource}\n${routeCatalogSource}`);
 
   assert.match(appShellSource, /data-shell-version="s75-9"/);
@@ -402,6 +404,12 @@ test("S74.4 shell uses registry-backed overlays without widening data sources", 
   assert.doesNotMatch(courtPageSource, /openSurface\(surface\)/);
   assert.doesNotMatch(archivePageSource, /openSurface\("memorial-review"\)/);
   assert.doesNotMatch(mapPageSource, /openSurface\("map-filter"\)/);
+  assert.match(styleSource, /\.archiveTraceGrid/);
+  assert.match(styleSource, /\.archiveActionRow/);
+  assert.match(styleSource, /\.archiveItemList strong/);
+  assert.match(styleSource, /\.domainConsequenceSection h3/);
+  assert.match(styleSource, /\.npcFollowUpEvidenceGrid/);
+  assert.match(clientSmokeSource, /s88-9-archive-mobile/);
   assert.match(surfaceRegistrySource, /"npc-profile"/);
   assert.match(surfaceRegistrySource, /"edict-draft"/);
   assert.match(surfaceRegistrySource, /"memorial-review"/);
@@ -1046,6 +1054,10 @@ test("S76.8 ranking page renders server-owned ranking views without widening aut
   assert.match(styleSource, /rankingDetailPanel/);
   assert.match(styleSource, /rankingDetailPanel:focus/);
   assert.match(styleSource, /rankingActionRow/);
+  assert.match(styleSource, /\.rankingList button[\s\S]*grid-template-columns: minmax\(0, 1fr\)/);
+  assert.match(styleSource, /\.rankingName[\s\S]*overflow-wrap: anywhere/);
+  assert.match(styleSource, /\.rankingPlace,[\s\S]*\.rankingMeta,[\s\S]*\.rankingScore[\s\S]*overflow-wrap: anywhere/);
+  assert.match(styleSource, /\.rankingActionItem[\s\S]*flex-direction: column/);
   assert.match(clientSmokeSource, /assertRankingFullScreen/);
   assert.match(clientSmokeSource, /s76-ranking-fullscreen-mobile/);
   assert.doesNotMatch(
@@ -1192,7 +1204,13 @@ test("S76.9 map page is an independent safe map surface", () => {
   assert.match(styleSource, /\.mapImmersiveLayout/);
   assert.match(styleSource, /\.mapSituationLedger/);
   assert.match(styleSource, /\.inkMapTooltipClose/);
+  assert.match(styleSource, /\.mapLayerControls,[\s\S]*\.mapCommandDeck \.buttonRow[\s\S]*repeat\(auto-fit, minmax\(96px, 1fr\)\)/);
+  assert.match(styleSource, /\.mapLayerToggle span[\s\S]*overflow-wrap: anywhere/);
+  assert.match(styleSource, /\.mapEventList strong[\s\S]*overflow-wrap: anywhere/);
+  assert.match(styleSource, /\.inkMapLabel[\s\S]*text-overflow: ellipsis/);
   assert.match(clientSmokeSource, /s74-react-map-runtime-desktop/);
+  assert.match(clientSmokeSource, /assertNoVisibleTextOverflow/);
+  assert.match(clientSmokeSource, /s88-9-archive-mobile/);
   assert.doesNotMatch(
     combined,
     /dangerouslySetInnerHTML|\/api\/game\/state|\/api\/dev\/session-diagnostics|public\/app\.js|#action-input|#information-panel|localStorage|sessionStorage|data\/sessions|raw audit|provider payload|OPENAI_API_KEY|DEEPSEEK_API_KEY|MIMO_API_KEY|ANTHROPIC_API_KEY/

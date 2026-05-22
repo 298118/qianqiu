@@ -1422,11 +1422,21 @@ button:disabled {
 }
 
 .domainConsequenceSection {
+  min-width: 0;
   border-color: rgba(142, 47, 39, 0.28);
 }
 
 .domainConsequenceList li {
   border-left-color: rgba(142, 47, 39, 0.42);
+}
+
+.domainConsequenceSection h3,
+.domainConsequenceSection p,
+.domainConsequenceList li,
+.domainConsequenceList strong,
+.domainConsequenceList span {
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 
 .domainConsequenceBoundary {
@@ -1444,6 +1454,7 @@ button:disabled {
 }
 
 .npcFollowUpEvidenceSection {
+  min-width: 0;
   border-color: rgba(106, 89, 55, 0.3);
 }
 
@@ -1452,23 +1463,31 @@ button:disabled {
   align-items: flex-start;
   justify-content: space-between;
   gap: 12px;
+  min-width: 0;
+}
+
+.npcFollowUpEvidenceHeader > div {
+  min-width: 0;
 }
 
 .npcFollowUpEvidenceHeader h3 {
   margin: 0;
+  overflow-wrap: anywhere;
 }
 
 .npcFollowUpEvidenceHeader > span {
+  flex: 0 1 auto;
   color: #72583f;
   font-size: 0.84rem;
   font-weight: 900;
-  white-space: nowrap;
+  overflow-wrap: anywhere;
 }
 
 .npcFollowUpEvidenceGrid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(220px, 100%), 1fr));
   gap: 10px;
+  min-width: 0;
 }
 
 .npcFollowUpEvidenceBoundary {
@@ -1476,6 +1495,7 @@ button:disabled {
   color: #765b43;
   font-size: 0.88rem;
   padding-top: 8px;
+  overflow-wrap: anywhere;
 }
 
 .roleCycleSection .scholarPanelCardHeader span {
@@ -2163,6 +2183,7 @@ button:disabled {
 .mapFullScreen {
   display: grid;
   gap: 16px;
+  min-width: 0;
   min-height: calc(100vh - 66px);
   padding: clamp(16px, 3vw, 34px);
   background:
@@ -2175,6 +2196,7 @@ button:disabled {
   grid-template-columns: minmax(0, 1fr) minmax(260px, 0.48fr);
   align-items: end;
   gap: 18px;
+  min-width: 0;
 }
 
 .mapHero h1 {
@@ -2189,6 +2211,7 @@ button:disabled {
   margin: 0;
   color: #3d2d22;
   line-height: 1.8;
+  overflow-wrap: anywhere;
 }
 
 .mapHeroStats,
@@ -2200,6 +2223,7 @@ button:disabled {
 }
 
 .mapHeroStats div {
+  min-width: 0;
   border: 1px solid rgba(84, 60, 43, 0.24);
   background: rgba(255, 248, 230, 0.62);
   padding: 10px;
@@ -2216,6 +2240,7 @@ button:disabled {
   color: #7b241f;
   font-size: 1.5rem;
   font-weight: 900;
+  overflow-wrap: anywhere;
 }
 
 .mapCommandDeck {
@@ -2223,6 +2248,7 @@ button:disabled {
   align-items: center;
   justify-content: space-between;
   gap: 14px;
+  min-width: 0;
   border-block: 1px solid rgba(84, 60, 43, 0.18);
   padding-block: 10px;
 }
@@ -2231,10 +2257,12 @@ button:disabled {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
+  min-width: 0;
 }
 
 .mapLayerToggle {
   display: inline-flex;
+  min-width: 0;
   min-height: 40px;
   align-items: center;
   gap: 8px;
@@ -2243,6 +2271,11 @@ button:disabled {
   color: #4c392b;
   font-weight: 800;
   padding: 8px 10px;
+}
+
+.mapLayerToggle span {
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 
 .mapLayerToggle input {
@@ -2299,13 +2332,16 @@ button:disabled {
 .mapEventList li {
   display: grid;
   gap: 7px;
+  min-width: 0;
   border: 1px solid rgba(84, 60, 43, 0.22);
   background: rgba(255, 252, 238, 0.62);
   padding: 12px;
 }
 
 .mapEventList strong {
+  min-width: 0;
   color: #7b241f;
+  overflow-wrap: anywhere;
 }
 
 .mapEventList span,
@@ -2314,6 +2350,7 @@ button:disabled {
   margin: 0;
   color: #604b38;
   line-height: 1.6;
+  overflow-wrap: anywhere;
 }
 
 .mapEventList span {
@@ -2337,11 +2374,13 @@ button:disabled {
   color: #6f352b;
   font-weight: 800;
   line-height: 1.7;
+  overflow-wrap: anywhere;
 }
 
 .archiveRoutePanel {
   display: grid;
   gap: 16px;
+  min-width: 0;
 }
 
 .archiveRouteHeader {
@@ -2349,10 +2388,15 @@ button:disabled {
   grid-template-columns: minmax(0, 1fr) minmax(240px, 0.42fr);
   align-items: end;
   gap: 16px;
+  min-width: 0;
 }
 
 .archiveRouteHeader h2 {
   margin: 0 0 8px;
+}
+
+.archiveRouteHeader p {
+  overflow-wrap: anywhere;
 }
 
 .archiveStats {
@@ -2380,12 +2424,20 @@ button:disabled {
   color: #7b241f;
   font-size: 1.3rem;
   font-weight: 900;
+  overflow-wrap: anywhere;
 }
 
 .archiveActionRow {
   display: flex;
   flex-wrap: wrap;
   gap: 10px;
+  min-width: 0;
+}
+
+.archiveActionRow .paperButton,
+.archiveActionRow .paperLink {
+  min-width: 0;
+  text-align: center;
 }
 
 .archiveTraceGrid {
@@ -2393,11 +2445,13 @@ button:disabled {
   grid-template-columns: minmax(0, 1.15fr) repeat(2, minmax(280px, 0.85fr));
   gap: 14px;
   align-items: start;
+  min-width: 0;
 }
 
 .archiveColumn {
   display: grid;
   gap: 12px;
+  min-width: 0;
 }
 
 .archiveColumn h3 {
@@ -2415,13 +2469,16 @@ button:disabled {
 .archiveItemList li {
   display: grid;
   gap: 8px;
+  min-width: 0;
   border-left: 3px solid rgba(142, 47, 39, 0.42);
   background: rgba(255, 252, 238, 0.54);
   padding: 12px 14px;
 }
 
 .archiveItemList strong {
+  min-width: 0;
   color: #7b241f;
+  overflow-wrap: anywhere;
 }
 
 .archiveItemList span,
@@ -2431,6 +2488,7 @@ button:disabled {
   margin: 0;
   color: #604b38;
   line-height: 1.65;
+  overflow-wrap: anywhere;
 }
 
 .archiveItemList span,
@@ -2496,6 +2554,8 @@ button:disabled {
   font-size: 0.78rem;
   padding: 4px 7px;
   white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
   box-shadow: 0 4px 14px rgba(44, 31, 22, 0.16);
 }
 
@@ -2523,6 +2583,7 @@ button:disabled {
 
 .inkMapTooltip p {
   margin: 8px 0 0;
+  overflow-wrap: anywhere;
 }
 
 .inkMapTooltipHeader {
@@ -2571,6 +2632,7 @@ button:disabled {
 
 .mapRuntimeNote {
   margin: 0 0 14px;
+  overflow-wrap: anywhere;
 }
 
 .portraitLedger {
@@ -3382,6 +3444,7 @@ button:disabled {
 }
 
 .rankingFullScreen {
+  min-width: 0;
   min-height: calc(100vh - 66px);
   padding: 0;
   color: #2b2118;
@@ -3390,6 +3453,7 @@ button:disabled {
 .rankingHero {
   position: relative;
   display: grid;
+  min-width: 0;
   min-height: 430px;
   isolation: isolate;
   overflow: hidden;
@@ -3411,6 +3475,7 @@ button:disabled {
 .rankingHeroCopy {
   align-self: end;
   max-width: 760px;
+  min-width: 0;
   padding: clamp(18px, 3vw, 30px);
   background: linear-gradient(90deg, rgba(255, 248, 230, 0.9), rgba(255, 248, 230, 0.62), transparent);
 }
@@ -3434,6 +3499,7 @@ button:disabled {
   color: #3b2b20;
   font-size: 1.04rem;
   line-height: 1.8;
+  overflow-wrap: anywhere;
 }
 
 .rankingJumpLink {
@@ -3447,6 +3513,7 @@ button:disabled {
 .rankingNoticeBoard {
   margin: clamp(-76px, -6vw, -34px) auto 0;
   max-width: 1180px;
+  min-width: 0;
   position: relative;
   z-index: 1;
   padding: clamp(18px, 3vw, 32px);
@@ -3470,6 +3537,7 @@ button:disabled {
   position: relative;
   display: grid;
   gap: 8px;
+  min-width: 0;
   min-height: 132px;
   align-items: center;
   margin-bottom: 18px;
@@ -3523,6 +3591,7 @@ button:disabled {
   align-items: baseline;
   flex-wrap: wrap;
   gap: 12px 18px;
+  min-width: 0;
 }
 
 .rankingGoldenTitle span {
@@ -3538,10 +3607,12 @@ button:disabled {
 }
 
 .rankingGoldenTitle strong {
+  min-width: 0;
   color: #2a2118;
   font-family: var(--qq-font-art-heading);
   font-size: clamp(1.3rem, 3vw, 2.1rem);
   font-weight: 400;
+  overflow-wrap: anywhere;
 }
 
 .rankingGoldenNotice p {
@@ -3552,6 +3623,7 @@ button:disabled {
   color: #5b3d27;
   font-weight: 800;
   line-height: 1.7;
+  overflow-wrap: anywhere;
 }
 
 .rankingVermilionCircle {
@@ -3577,6 +3649,7 @@ button:disabled {
 
 .rankingTopSeal {
   position: relative;
+  min-width: 0;
   min-height: 154px;
   display: grid;
   align-content: center;
@@ -3608,6 +3681,7 @@ button:disabled {
   font-family: var(--qq-font-art-seal);
   font-size: clamp(1.3rem, 3vw, 2rem);
   font-weight: 400;
+  overflow-wrap: anywhere;
 }
 
 .rankingTopSeal em {
@@ -3615,17 +3689,20 @@ button:disabled {
   font-size: 0.84rem;
   font-style: normal;
   font-weight: 800;
+  overflow-wrap: anywhere;
 }
 
 .rankingBoardGrid {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(320px, 0.72fr);
   gap: 18px;
+  min-width: 0;
 }
 
 .rankingListPanel,
 .rankingDetailPanel,
 .rankingBoundary {
+  min-width: 0;
   border: 1px solid rgba(84, 60, 43, 0.24);
   background: rgba(255, 252, 238, 0.72);
   padding: clamp(16px, 2.4vw, 24px);
@@ -3659,6 +3736,7 @@ button:disabled {
   grid-template-columns: 88px minmax(0, 1fr) minmax(86px, auto) auto;
   align-items: center;
   gap: 10px;
+  min-width: 0;
   border: 1px solid rgba(84, 60, 43, 0.22);
   background: rgba(255, 248, 230, 0.74);
   color: inherit;
@@ -3684,9 +3762,11 @@ button:disabled {
 .rankingPlace,
 .rankingMeta,
 .rankingScore {
+  min-width: 0;
   color: #795d43;
   font-size: 0.82rem;
   font-weight: 800;
+  overflow-wrap: anywhere;
 }
 
 .rankingName {
@@ -3694,6 +3774,7 @@ button:disabled {
   color: #2c2219;
   font-size: 1.06rem;
   font-weight: 900;
+  overflow-wrap: anywhere;
 }
 
 .rankingScore {
@@ -3720,6 +3801,7 @@ button:disabled {
   margin: 0;
   color: #514232;
   line-height: 1.75;
+  overflow-wrap: anywhere;
 }
 
 .rankingDetailRail {
@@ -3732,6 +3814,7 @@ button:disabled {
 .rankingDetailRail div,
 .rankingScoreGrid div,
 .rankingAuditList li {
+  min-width: 0;
   border: 1px solid rgba(84, 60, 43, 0.22);
   background: rgba(255, 248, 230, 0.62);
   padding: 10px;
@@ -3747,6 +3830,7 @@ button:disabled {
   margin: 4px 0 0;
   color: #7b241f;
   font-weight: 900;
+  overflow-wrap: anywhere;
 }
 
 .rankingScoreGrid {
@@ -3761,7 +3845,9 @@ button:disabled {
 }
 
 .rankingScoreGrid strong {
+  min-width: 0;
   color: #533d2b;
+  overflow-wrap: anywhere;
 }
 
 .rankingScoreGrid span {
@@ -3772,10 +3858,12 @@ button:disabled {
 
 .rankingScoreGrid em,
 .rankingAuditList span {
+  min-width: 0;
   color: #6a5540;
   font-size: 0.82rem;
   font-style: normal;
   line-height: 1.55;
+  overflow-wrap: anywhere;
 }
 
 .rankingAuditList {
@@ -3806,6 +3894,7 @@ button:disabled {
   align-items: center;
   justify-content: space-between;
   gap: 10px;
+  min-width: 0;
   border: 1px solid rgba(142, 47, 39, 0.18);
   background: rgba(255, 250, 238, 0.72);
   padding: 8px 10px;
@@ -3815,6 +3904,7 @@ button:disabled {
 
 .rankingActionItem span {
   min-width: 0;
+  overflow-wrap: anywhere;
 }
 
 .rankingActionRow .paperLink {
@@ -3833,6 +3923,7 @@ button:disabled {
   margin: 0;
   color: #6f352b;
   line-height: 1.7;
+  overflow-wrap: anywhere;
 }
 
 .drawerHost {
@@ -4747,7 +4838,7 @@ button:disabled {
   .mapLayerControls,
   .mapCommandDeck .buttonRow {
     display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(96px, 1fr));
     width: 100%;
   }
 
@@ -4968,12 +5059,32 @@ button:disabled {
   }
 
   .rankingList button {
-    grid-template-columns: 72px minmax(0, 1fr);
+    grid-template-columns: minmax(0, 1fr);
   }
 
   .rankingMeta,
   .rankingScore {
-    grid-column: 2;
+    grid-column: auto;
+  }
+
+  .rankingActionItem {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .rankingActionRow .paperLink {
+    align-self: start;
+  }
+
+  .archiveActionRow {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(96px, 1fr));
+  }
+
+  .archiveActionRow .paperButton,
+  .archiveActionRow .paperLink {
+    justify-content: center;
+    min-height: 44px;
   }
 
   .segmentedChoices {
