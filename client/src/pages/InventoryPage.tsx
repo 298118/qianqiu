@@ -1,5 +1,5 @@
 import { ArrowRightLeft, Briefcase, Landmark, Package, ScrollText } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import type { ReactNode } from "react";
 import { useParams } from "react-router";
 import type { InventoryContainerView, InventoryItemView } from "../api";
@@ -52,14 +52,26 @@ export function InventoryPage() {
   const transferInventoryItem = useGameSessionStore((state) => state.transferInventoryItem);
   const inventoryPayload = useGameSessionStore((state) => state.inventory);
   const session = useGameSessionStore((state) => state.currentSession);
+  const storeCurrentSessionId = useGameSessionStore((state) => state.currentSessionId);
   const inventoryStatus = useGameSessionStore((state) => state.inventoryStatus);
   const error = useGameSessionStore((state) => state.error);
   const setActionDraft = useUiStateStore((state) => state.setActionDraft);
+  const latestSessionIdRef = useRef(sessionId);
+  const [localInventorySessionId, setLocalInventorySessionId] = useState(sessionId);
   const [selectedContainerId, setSelectedContainerId] = useState("");
   const [selectedItemId, setSelectedItemId] = useState("");
   const [targetContainerId, setTargetContainerId] = useState("");
   const [transferNotice, setTransferNotice] = useState("");
   const runnable = isRunnableSessionId(sessionId);
+
+  useEffect(() => {
+    latestSessionIdRef.current = sessionId;
+    setLocalInventorySessionId(sessionId);
+    setSelectedContainerId("");
+    setSelectedItemId("");
+    setTargetContainerId("");
+    setTransferNotice("");
+  }, [sessionId]);
 
   useEffect(() => {
     if (!runnable) return;
@@ -91,40 +103,63 @@ export function InventoryPage() {
     () => new Map(containers.map((container) => [container.containerId, container])),
     [containers]
   );
-  const selectedContainer = selectedContainerId || containers[0]?.containerId || "";
+  const localStateIsCurrent = localInventorySessionId === sessionId;
+  const activeSelectedContainerId = localStateIsCurrent ? selectedContainerId : "";
+  const activeSelectedItemId = localStateIsCurrent ? selectedItemId : "";
+  const activeTargetContainerId = localStateIsCurrent ? targetContainerId : "";
+  const routeInventoryStatus = storeCurrentSessionId === sessionId ? inventoryStatus : "idle";
+  const routeError = error && storeCurrentSessionId === sessionId ? error : null;
+  const selectedContainer = activeSelectedContainerId && containersById.has(activeSelectedContainerId)
+    ? activeSelectedContainerId
+    : containers[0]?.containerId || "";
   const visibleItems = selectedContainer
     ? items.filter((item) => item.containerId === selectedContainer)
     : items;
   const transferableItems = items.filter((item) => transferAllowedPolicies.has(item.transferPolicy || ""));
-  const transferItem = transferableItems.find((item) => item.itemId === selectedItemId) ?? transferableItems[0];
+  const transferItem = transferableItems.find((item) => item.itemId === activeSelectedItemId) ?? transferableItems[0];
   const targetContainers = containers.filter((container) => container.containerId !== transferItem?.containerId && !container.locked);
+  const selectedTargetContainer = activeTargetContainerId && targetContainers.some((container) => container.containerId === activeTargetContainerId)
+    ? activeTargetContainerId
+    : targetContainers[0]?.containerId || "";
 
   useEffect(() => {
-    if (!selectedContainerId && containers[0]) setSelectedContainerId(containers[0].containerId);
-  }, [containers, selectedContainerId]);
+    if (containers[0] && (!activeSelectedContainerId || !containersById.has(activeSelectedContainerId))) {
+      setLocalInventorySessionId(sessionId);
+      setSelectedContainerId(containers[0].containerId);
+    }
+  }, [activeSelectedContainerId, containers, containersById, sessionId]);
 
   useEffect(() => {
-    if (!selectedItemId && transferableItems[0]) setSelectedItemId(transferableItems[0].itemId);
-  }, [selectedItemId, transferableItems]);
+    if (transferableItems[0] && (!activeSelectedItemId || !transferableItems.some((item) => item.itemId === activeSelectedItemId))) {
+      setLocalInventorySessionId(sessionId);
+      setSelectedItemId(transferableItems[0].itemId);
+    }
+  }, [activeSelectedItemId, sessionId, transferableItems]);
 
   useEffect(() => {
-    if ((!targetContainerId || !targetContainers.some((container) => container.containerId === targetContainerId)) && targetContainers[0]) {
+    if ((!activeTargetContainerId || !targetContainers.some((container) => container.containerId === activeTargetContainerId)) && targetContainers[0]) {
+      setLocalInventorySessionId(sessionId);
       setTargetContainerId(targetContainers[0].containerId);
     }
-  }, [targetContainerId, targetContainers]);
+  }, [activeTargetContainerId, sessionId, targetContainers]);
 
   async function handleTransfer() {
-    if (!transferItem || !targetContainerId || !runnable) return;
+    if (!transferItem || !selectedTargetContainer || !runnable) return;
+    const requestSessionId = sessionId;
     try {
-      const payload = await transferInventoryItem(sessionId, {
+      const payload = await transferInventoryItem(requestSessionId, {
         itemId: transferItem.itemId,
-        toContainerId: targetContainerId
+        toContainerId: selectedTargetContainer
       });
+      if (latestSessionIdRef.current !== requestSessionId || payload.sessionId !== requestSessionId) return;
+      setLocalInventorySessionId(requestSessionId);
       setTransferNotice(payload.accepted ? "服务器已校验并更新物件位置。" : `服务器未准：${payload.reason || "规则不许"}`);
-      setSelectedContainerId(targetContainerId);
+      setSelectedContainerId(selectedTargetContainer);
       setSelectedItemId("");
       setTargetContainerId("");
     } catch {
+      if (latestSessionIdRef.current !== requestSessionId) return;
+      setLocalInventorySessionId(requestSessionId);
       setTransferNotice("转移请求未能完成。");
     }
   }
@@ -137,7 +172,7 @@ export function InventoryPage() {
           <h1 id="inventory-title">囊箧</h1>
           <p>这里只读服务器生成的资源、资产、容器和物品视图；流转结果由服务器校验后回写。</p>
         </div>
-        <span>{inventoryStatus === "loading" ? "候账" : `${items.length} 件`}</span>
+        <span>{routeInventoryStatus === "loading" ? "候账" : `${items.length} 件`}</span>
       </div>
 
       <section className="inventorySummaryGrid" aria-label="资源与资产摘要">
@@ -182,7 +217,10 @@ export function InventoryPage() {
               className="inventoryContainerButton"
               type="button"
               aria-pressed={selectedContainer === container.containerId}
-              onClick={() => setSelectedContainerId(container.containerId)}
+              onClick={() => {
+                setLocalInventorySessionId(sessionId);
+                setSelectedContainerId(container.containerId);
+              }}
             >
               <Package size={16} aria-hidden="true" />
               <span>{containerLabel(container)}</span>
@@ -218,7 +256,10 @@ export function InventoryPage() {
         </div>
         <label>
           物件
-          <select value={transferItem?.itemId || ""} onChange={(event) => setSelectedItemId(event.target.value)} disabled={!transferableItems.length}>
+          <select value={transferItem?.itemId || ""} onChange={(event) => {
+            setLocalInventorySessionId(sessionId);
+            setSelectedItemId(event.target.value);
+          }} disabled={!transferableItems.length}>
             {transferableItems.map((item) => (
               <option key={item.itemId} value={item.itemId}>{itemLabel(item)}</option>
             ))}
@@ -227,16 +268,19 @@ export function InventoryPage() {
         <ArrowRightLeft size={18} aria-hidden="true" />
         <label>
           去处
-          <select value={targetContainerId} onChange={(event) => setTargetContainerId(event.target.value)} disabled={!targetContainers.length}>
+          <select value={selectedTargetContainer} onChange={(event) => {
+            setLocalInventorySessionId(sessionId);
+            setTargetContainerId(event.target.value);
+          }} disabled={!targetContainers.length}>
             {targetContainers.map((container) => (
               <option key={container.containerId} value={container.containerId}>{containerLabel(container)}</option>
             ))}
           </select>
         </label>
-        <button className="paperButton" type="button" disabled={!transferItem || !targetContainerId || inventoryStatus === "loading"} onClick={handleTransfer}>
+        <button className="paperButton" type="button" disabled={!transferItem || !selectedTargetContainer || routeInventoryStatus === "loading"} onClick={handleTransfer}>
           呈请移置
         </button>
-        {transferNotice ? <p className="statusLine" role="status">{transferNotice}</p> : null}
+        {localStateIsCurrent && transferNotice ? <p className="statusLine" role="status">{transferNotice}</p> : null}
       </section>
 
       <EconomyTraceSection
@@ -248,7 +292,7 @@ export function InventoryPage() {
       />
 
       {inventoryView?.authorityBoundary ? <p className="statusLine">{inventoryView.authorityBoundary}</p> : null}
-      {error ? <p className="statusLine" role="alert">{error}</p> : null}
+      {routeError ? <p className="statusLine" role="alert">{routeError}</p> : null}
     </article>
   );
 }

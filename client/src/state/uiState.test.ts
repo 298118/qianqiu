@@ -10,8 +10,10 @@ import { extractSafePlayerPayload, useUiStateStore } from "./uiState";
 import { useGameSessionStore } from "./gameSessionState";
 import type {
   ExamSubmitResponse,
+  InventoryResponse,
   NpcCommandResponse,
   NpcInteractionResponse,
+  NpcListResponse,
   PlayerStateResponse,
   StartGameResponse,
   TopicDraftResponse,
@@ -714,6 +716,61 @@ describe("S74.3 UI state store", () => {
     expect(JSON.stringify(state.inventory)).not.toMatch(/旧案清册|旧案经济解释|stale-trace/);
   });
 
+  it("ignores stale inventory transfer failures after the route moves to another session", async () => {
+    const activeSessionId = "55555555-5555-4555-8555-555555555555";
+    const staleSessionId = "66666666-6666-4666-8666-666666666666";
+    const staleInventory: InventoryResponse = {
+      sessionId: staleSessionId,
+      inventoryView: {
+        containers: [{ containerId: "stale-container", label: "旧案书箧" }],
+        items: [{ itemId: "stale-item", name: "旧案清册", containerId: "stale-container" }],
+        importantCredentials: []
+      }
+    };
+    const activeInventory: InventoryResponse = {
+      sessionId: activeSessionId,
+      inventoryView: {
+        containers: [{ containerId: "active-container", label: "当前书箧" }],
+        items: [{ itemId: "active-item", name: "当前清册", containerId: "active-container" }],
+        importantCredentials: []
+      },
+      economyTraceView: {
+        traceItems: [{ traceId: "active-trace", title: "当前账本解释" }]
+      }
+    };
+    let rejectFetch!: (error: Error) => void;
+    const response = new Promise<Response>((_resolve, reject) => {
+      rejectFetch = reject;
+    });
+    vi.stubGlobal("fetch", vi.fn(() => response));
+    useGameSessionStore.setState({
+      currentSessionId: staleSessionId,
+      inventory: staleInventory,
+      inventoryStatus: "ready",
+      error: null
+    });
+
+    const request = useGameSessionStore.getState().transferInventoryItem(staleSessionId, {
+      itemId: "stale-item",
+      toContainerId: "stale-container"
+    });
+    expect(useGameSessionStore.getState().inventoryStatus).toBe("loading");
+    useGameSessionStore.setState({
+      currentSessionId: activeSessionId,
+      inventory: activeInventory,
+      inventoryStatus: "ready",
+      error: null
+    });
+    rejectFetch(new Error("旧案移置失败不应显示"));
+
+    await expect(request).rejects.toThrow(/旧案移置失败不应显示/);
+    const state = useGameSessionStore.getState();
+    expect(state.error).toBeNull();
+    expect(state.inventoryStatus).toBe("ready");
+    expect(state.inventory).toEqual(activeInventory);
+    expect(JSON.stringify(state)).not.toMatch(/旧案移置失败不应显示|旧案清册/);
+  });
+
   it("does not merge stale trade or delegation economy traces into another session", async () => {
     const activeSessionId = "77777777-7777-4777-8777-777777777777";
     const staleSessionId = "88888888-8888-4888-8888-888888888888";
@@ -991,5 +1048,106 @@ describe("S74.3 UI state store", () => {
     expect(state.npcRoster?.npcInteractionView?.items?.[0]?.recordId).toBe("active-roster-record");
     expect(state.npcDetail?.npcDetailView.npcId).toBe("npc:active");
     expect(state.npcDetail?.npcInteractionView?.items?.[0]?.recordId).toBe("active-detail-record");
+  });
+
+  it("resets NPC mutation loading when loading another roster and ignores stale mutation failures", async () => {
+    const activeSessionId = "55555555-5555-4555-8555-555555555555";
+    const staleSessionId = "66666666-6666-4666-8666-666666666666";
+    const activeSession: PlayerStateResponse = {
+      ...playerStatePayload,
+      sessionId: activeSessionId,
+      worldState: { player: { name: "当前案主", role: "magistrate" } },
+      npcInteractionView: { items: [{ recordId: "active-record" }] }
+    };
+    const staleSession: PlayerStateResponse = {
+      ...playerStatePayload,
+      sessionId: staleSessionId,
+      worldState: { player: { name: "旧案主", role: "magistrate" } },
+      npcInteractionView: { items: [{ recordId: "stale-record" }] }
+    };
+    const activeRoster: NpcListResponse = {
+      sessionId: activeSessionId,
+      npcRosterView: {
+        items: [{ npcId: "npc:active", displayName: "当前 NPC" }]
+      },
+      npcInteractionView: { items: [{ recordId: "active-roster-record" }] }
+    };
+    installFetchResponses(activeRoster);
+    useGameSessionStore.setState({
+      currentSessionId: staleSessionId,
+      currentSession: staleSession,
+      npcMutationStatus: "loading",
+      error: "旧案人物请求仍在进行"
+    });
+
+    await useGameSessionStore.getState().loadNpcs(activeSessionId);
+
+    expect(useGameSessionStore.getState()).toMatchObject({
+      currentSessionId: activeSessionId,
+      npcRoster: activeRoster,
+      npcRosterStatus: "ready",
+      npcMutationStatus: "idle",
+      error: null
+    });
+
+    async function expectStaleNpcMutationFailureIsIgnored(
+      runMutation: () => Promise<NpcInteractionResponse | TradeResponse | NpcCommandResponse>
+    ) {
+      let rejectFetch!: (error: Error) => void;
+      const response = new Promise<Response>((_resolve, reject) => {
+        rejectFetch = reject;
+      });
+      vi.stubGlobal("fetch", vi.fn(() => response));
+      useGameSessionStore.setState({
+        currentSessionId: staleSessionId,
+        currentSession: staleSession,
+        lastNpcInteraction: null,
+        lastTrade: null,
+        lastNpcCommand: null,
+        npcMutationStatus: "ready",
+        error: null
+      });
+
+      const request = runMutation();
+      expect(useGameSessionStore.getState().npcMutationStatus).toBe("loading");
+      useGameSessionStore.setState({
+        currentSessionId: activeSessionId,
+        currentSession: activeSession,
+        lastNpcInteraction: null,
+        lastTrade: null,
+        lastNpcCommand: null,
+        npcMutationStatus: "ready",
+        error: null
+      });
+      rejectFetch(new Error("旧案人物请求失败不应显示"));
+
+      await expect(request).rejects.toThrow(/旧案人物请求失败不应显示/);
+      const state = useGameSessionStore.getState();
+      expect(state.error).toBeNull();
+      expect(state.npcMutationStatus).toBe("ready");
+      expect(state.currentSession).toEqual(activeSession);
+      expect(state.lastNpcInteraction).toBeNull();
+      expect(state.lastTrade).toBeNull();
+      expect(state.lastNpcCommand).toBeNull();
+      expect(JSON.stringify(state)).not.toMatch(/旧案人物请求失败不应显示|旧案主|stale-record/);
+    }
+
+    await expectStaleNpcMutationFailureIsIgnored(() => useGameSessionStore.getState().interactWithNpc(staleSessionId, {
+      npcId: "npc:stale",
+      actionType: "talk",
+      utterance: "旧案对话。"
+    }));
+    await expectStaleNpcMutationFailureIsIgnored(() => useGameSessionStore.getState().submitTrade(staleSessionId, {
+      npcId: "npc:stale",
+      tradeId: "trade:stale",
+      offerSummary: "旧案交易"
+    }));
+    await expectStaleNpcMutationFailureIsIgnored(() => useGameSessionStore.getState().submitNpcCommand(staleSessionId, {
+      assigneeActorId: "npc:stale",
+      taskType: "land_survey",
+      authoritySource: "yamen_authority",
+      commandText: "旧案委派",
+      budget: 12
+    }));
   });
 });

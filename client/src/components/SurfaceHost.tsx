@@ -263,14 +263,28 @@ function DisplayPreferencesPanel() {
 function SavePanel() {
   const saves = useGameSessionStore((state) => state.saves);
   const savesStatus = useGameSessionStore((state) => state.savesStatus);
+  const currentSessionId = useGameSessionStore((state) => state.currentSessionId);
   const refreshSaves = useGameSessionStore((state) => state.refreshSaves);
   const loadSession = useGameSessionStore((state) => state.loadSession);
   const closeDrawer = useUiStateStore((state) => state.closeDrawer);
   const navigate = useNavigate();
+  const refreshedMissingSessionRef = useRef<string | null>(null);
 
   useEffect(() => {
     if (savesStatus === "idle") void refreshSaves();
   }, [refreshSaves, savesStatus]);
+
+  useEffect(() => {
+    if (!currentSessionId || !isRunnableSessionId(currentSessionId)) return;
+    const currentSessionListed = saves.some((save) => save.sessionId === currentSessionId);
+    if (currentSessionListed) {
+      refreshedMissingSessionRef.current = null;
+      return;
+    }
+    if (savesStatus !== "ready" || refreshedMissingSessionRef.current === currentSessionId) return;
+    refreshedMissingSessionRef.current = currentSessionId;
+    void refreshSaves();
+  }, [currentSessionId, refreshSaves, saves, savesStatus]);
 
   async function handleLoad(sessionId: string) {
     try {

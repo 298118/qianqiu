@@ -40,8 +40,10 @@ let quickActionRequestId = 0;
 let topicSurfaceRequestId = 0;
 let topicDraftRequestId = 0;
 let inventoryRequestId = 0;
+let inventoryTransferRequestId = 0;
 let npcRosterRequestId = 0;
 let npcDetailRequestId = 0;
+let npcMutationRequestId = 0;
 
 type StartGameInput = {
   readonly playerName: string;
@@ -125,6 +127,22 @@ function staleNpcDetailResponseError() {
   return new Error("服务器返回的人物详情与当前选择不一致，已丢弃旧投影。");
 }
 
+function isCurrentRouteSession(
+  state: Pick<GameSessionState, "currentSessionId" | "currentSession">,
+  sessionId: string
+) {
+  return state.currentSessionId ? state.currentSessionId === sessionId : state.currentSession?.sessionId === sessionId;
+}
+
+function canApplyRouteSession(
+  state: Pick<GameSessionState, "currentSessionId" | "currentSession">,
+  sessionId: string
+) {
+  return !state.currentSessionId && !state.currentSession?.sessionId
+    ? true
+    : isCurrentRouteSession(state, sessionId);
+}
+
 export const useGameSessionStore = create<GameSessionState>((set) => ({
   status: "idle",
   savesStatus: "idle",
@@ -204,7 +222,14 @@ export const useGameSessionStore = create<GameSessionState>((set) => ({
 
   async loadSession(sessionId) {
     const requestId = ++loadSessionRequestId;
-    set({ currentSessionId: sessionId, status: "loading", error: null });
+    set((state) => ({
+      currentSessionId: sessionId,
+      status: "loading",
+      error: null,
+      ...(state.currentSessionId && state.currentSessionId !== sessionId
+        ? { npcMutationStatus: "idle" as LoadingState }
+        : {})
+    }));
     try {
       const payload = await qianqiuApi.loadPlayerState(sessionId);
       if (requestId !== loadSessionRequestId) throw supersededRequestError();
@@ -512,11 +537,20 @@ export const useGameSessionStore = create<GameSessionState>((set) => ({
   },
 
   async transferInventoryItem(sessionId, input) {
-    set({ inventoryStatus: "loading", error: null });
+    const requestId = ++inventoryTransferRequestId;
+    set((state) => canApplyRouteSession(state, sessionId)
+      ? { inventoryStatus: "loading", error: null }
+      : {});
     try {
       const payload = await qianqiuApi.transferInventoryItem(sessionId, input);
       set((state) => {
         const responseSessionId = payload.sessionId ?? sessionId;
+        if (requestId !== inventoryTransferRequestId || !canApplyRouteSession(state, responseSessionId)) {
+          return {
+            inventory: state.inventory,
+            inventoryStatus: state.inventoryStatus
+          };
+        }
         const inventoryMatches = state.inventory?.sessionId === responseSessionId;
         const sessionMatches = state.currentSessionId === responseSessionId || state.currentSession?.sessionId === responseSessionId;
         if ((state.inventory && !inventoryMatches) || (!state.inventory && state.currentSessionId && !sessionMatches)) {
@@ -543,14 +577,25 @@ export const useGameSessionStore = create<GameSessionState>((set) => ({
       });
       return payload;
     } catch (error) {
-      set({ error: toErrorMessage(error), inventoryStatus: "error" });
+      if (requestId === inventoryTransferRequestId) {
+        set((state) => canApplyRouteSession(state, sessionId)
+          ? { error: toErrorMessage(error), inventoryStatus: "error" }
+          : {});
+      }
       throw error;
     }
   },
 
   async loadNpcs(sessionId, input = {}) {
     const requestId = ++npcRosterRequestId;
-    set({ currentSessionId: sessionId, npcRosterStatus: "loading", error: null });
+    set((state) => ({
+      currentSessionId: sessionId,
+      npcRosterStatus: "loading",
+      error: null,
+      ...(state.currentSessionId && state.currentSessionId !== sessionId
+        ? { npcMutationStatus: "idle" as LoadingState }
+        : {})
+    }));
     try {
       const payload = await qianqiuApi.loadNpcs(sessionId, {
         page: input.page,
@@ -589,12 +634,20 @@ export const useGameSessionStore = create<GameSessionState>((set) => ({
   },
 
   async interactWithNpc(sessionId, input) {
-    set({ npcMutationStatus: "loading", error: null });
+    const requestId = ++npcMutationRequestId;
+    set((state) => canApplyRouteSession(state, sessionId)
+      ? { npcMutationStatus: "loading", error: null }
+      : {});
     try {
       const payload = await qianqiuApi.interactWithNpc(sessionId, input);
       set((state) => {
+        if (requestId !== npcMutationRequestId) {
+          return { npcMutationStatus: state.npcMutationStatus };
+        }
+        if (!canApplyRouteSession(state, payload.sessionId)) {
+          return { npcMutationStatus: "ready" };
+        }
         const sessionMatches = state.currentSession?.sessionId === payload.sessionId;
-        const activeSessionMatches = state.currentSessionId === payload.sessionId || sessionMatches;
         const npcDetailMatches = Boolean(
           payload.npcDetailView &&
           state.npcDetail?.sessionId === payload.sessionId &&
@@ -611,7 +664,7 @@ export const useGameSessionStore = create<GameSessionState>((set) => ({
           : state.currentSession;
         return {
           currentSession,
-          lastNpcInteraction: activeSessionMatches ? payload : state.lastNpcInteraction,
+          lastNpcInteraction: payload,
           npcDetail: npcDetailMatches && payload.npcDetailView && state.npcDetail
             ? {
                 ...state.npcDetail,
@@ -627,20 +680,36 @@ export const useGameSessionStore = create<GameSessionState>((set) => ({
       });
       return payload;
     } catch (error) {
-      set({ error: toErrorMessage(error), npcMutationStatus: "error" });
+      if (requestId === npcMutationRequestId) {
+        set((state) => canApplyRouteSession(state, sessionId)
+          ? { error: toErrorMessage(error), npcMutationStatus: "error" }
+          : {});
+      }
       throw error;
     }
   },
 
   async submitTrade(sessionId, input) {
-    set({ npcMutationStatus: "loading", error: null });
+    const requestId = ++npcMutationRequestId;
+    set((state) => canApplyRouteSession(state, sessionId)
+      ? { npcMutationStatus: "loading", error: null }
+      : {});
     try {
       const payload = await qianqiuApi.submitTrade(sessionId, input);
       set((state) => {
         const responseSessionId = payload.sessionId ?? sessionId;
-        const sessionMatches = state.currentSessionId === responseSessionId || state.currentSession?.sessionId === responseSessionId;
+        const sessionMatches = isCurrentRouteSession(state, responseSessionId);
         const currentSessionMatches = state.currentSession?.sessionId === responseSessionId;
         const hasSessionContext = Boolean(state.currentSessionId || state.currentSession?.sessionId);
+        if (requestId !== npcMutationRequestId) {
+          return {
+            lastTrade: state.lastTrade,
+            inventory: state.inventory,
+            npcDetail: state.npcDetail,
+            currentSession: state.currentSession,
+            npcMutationStatus: state.npcMutationStatus
+          };
+        }
         if (hasSessionContext && !sessionMatches) {
           return {
             lastTrade: state.lastTrade,
@@ -680,20 +749,36 @@ export const useGameSessionStore = create<GameSessionState>((set) => ({
       });
       return payload;
     } catch (error) {
-      set({ error: toErrorMessage(error), npcMutationStatus: "error" });
+      if (requestId === npcMutationRequestId) {
+        set((state) => canApplyRouteSession(state, sessionId)
+          ? { error: toErrorMessage(error), npcMutationStatus: "error" }
+          : {});
+      }
       throw error;
     }
   },
 
   async submitNpcCommand(sessionId, input) {
-    set({ npcMutationStatus: "loading", error: null });
+    const requestId = ++npcMutationRequestId;
+    set((state) => canApplyRouteSession(state, sessionId)
+      ? { npcMutationStatus: "loading", error: null }
+      : {});
     try {
       const payload = await qianqiuApi.submitNpcCommand(sessionId, input);
       set((state) => {
         const responseSessionId = payload.sessionId ?? sessionId;
-        const sessionMatches = state.currentSessionId === responseSessionId || state.currentSession?.sessionId === responseSessionId;
+        const sessionMatches = isCurrentRouteSession(state, responseSessionId);
         const currentSessionMatches = state.currentSession?.sessionId === responseSessionId;
         const hasSessionContext = Boolean(state.currentSessionId || state.currentSession?.sessionId);
+        if (requestId !== npcMutationRequestId) {
+          return {
+            lastNpcCommand: state.lastNpcCommand,
+            npcRoster: state.npcRoster,
+            npcDetail: state.npcDetail,
+            currentSession: state.currentSession,
+            npcMutationStatus: state.npcMutationStatus
+          };
+        }
         if (hasSessionContext && !sessionMatches) {
           return {
             lastNpcCommand: state.lastNpcCommand,
@@ -725,7 +810,11 @@ export const useGameSessionStore = create<GameSessionState>((set) => ({
       });
       return payload;
     } catch (error) {
-      set({ error: toErrorMessage(error), npcMutationStatus: "error" });
+      if (requestId === npcMutationRequestId) {
+        set((state) => canApplyRouteSession(state, sessionId)
+          ? { error: toErrorMessage(error), npcMutationStatus: "error" }
+          : {});
+      }
       throw error;
     }
   }

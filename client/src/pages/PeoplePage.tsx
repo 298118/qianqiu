@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useParams } from "react-router";
 import type { AssetRegistry, RuntimePortraitAsset } from "../assets/assetRegistry";
 import { useAssetRegistry } from "../assets/useAssetRegistry";
@@ -401,6 +401,7 @@ export function PeoplePage() {
   const interactWithNpc = useGameSessionStore((state) => state.interactWithNpc);
   const submitTrade = useGameSessionStore((state) => state.submitTrade);
   const submitNpcCommand = useGameSessionStore((state) => state.submitNpcCommand);
+  const storeCurrentSessionId = useGameSessionStore((state) => state.currentSessionId);
   const npcRosterPayload = useGameSessionStore((state) => state.npcRoster);
   const npcDetailPayload = useGameSessionStore((state) => state.npcDetail);
   const lastNpcInteraction = useGameSessionStore((state) => state.lastNpcInteraction);
@@ -412,6 +413,8 @@ export function PeoplePage() {
   const error = useGameSessionStore((state) => state.error);
   const { registry, status } = useAssetRegistry();
   const activeSession = session?.sessionId === sessionId ? session : null;
+  const latestSessionIdRef = useRef(sessionId);
+  const [localPeopleSessionId, setLocalPeopleSessionId] = useState(sessionId);
   const [portraitPage, setPortraitPage] = useState(0);
   const [selectedNpcId, setSelectedNpcId] = useState("");
   const [activeTab, setActiveTab] = useState<NpcWorkbenchTab>("profile");
@@ -423,14 +426,46 @@ export function PeoplePage() {
   const [commandBudget, setCommandBudget] = useState("24");
   const [socialDraft, setSocialDraft] = useState("");
   const runnable = isRunnableSessionId(sessionId);
+  const localStateIsCurrent = localPeopleSessionId === sessionId;
+  const routeError = error && storeCurrentSessionId === sessionId ? error : null;
+  const routeNpcRosterStatus = storeCurrentSessionId === sessionId ? npcRosterStatus : "idle";
+  const routeNpcDetailStatus = storeCurrentSessionId === sessionId ? npcDetailStatus : "idle";
+  const routeNpcMutationStatus = storeCurrentSessionId === sessionId ? npcMutationStatus : "idle";
+  const activeDialogueDraft = localStateIsCurrent ? dialogueDraft : "";
+  const activeTradeOffer = localStateIsCurrent ? tradeOffer : "";
+  const activeTradeSilverDelta = localStateIsCurrent ? tradeSilverDelta : "0";
+  const activeCommandText = localStateIsCurrent ? commandText : "";
+  const activeCommandTargetRef = localStateIsCurrent ? commandTargetRef : "";
+  const activeCommandBudget = localStateIsCurrent ? commandBudget : "24";
+  const activeSocialDraft = localStateIsCurrent ? socialDraft : "";
+  const activeLastNpcInteraction = lastNpcInteraction?.sessionId === sessionId ? lastNpcInteraction : null;
+  const activeLastTrade = lastTrade?.sessionId === sessionId ? lastTrade : null;
+  const activeLastNpcCommand = lastNpcCommand?.sessionId === sessionId ? lastNpcCommand : null;
+
+  useEffect(() => {
+    latestSessionIdRef.current = sessionId;
+    setLocalPeopleSessionId(sessionId);
+    setPortraitPage(0);
+    setSelectedNpcId("");
+    setActiveTab("profile");
+    setDialogueDraft("");
+    setTradeOffer("");
+    setTradeSilverDelta("0");
+    setCommandText("");
+    setCommandTargetRef("");
+    setCommandBudget("24");
+    setSocialDraft("");
+  }, [sessionId]);
 
   useEffect(() => {
     if (!runnable) return;
     void loadNpcs(sessionId, { pageSize: 50 }).catch(() => undefined);
   }, [loadNpcs, runnable, sessionId]);
 
-  const rosterView = npcRosterPayload?.sessionId === sessionId
-    ? npcRosterPayload.npcRosterView
+  const activeNpcRosterPayload = npcRosterPayload?.sessionId === sessionId ? npcRosterPayload : null;
+  const activeNpcDetailPayload = npcDetailPayload?.sessionId === sessionId ? npcDetailPayload : null;
+  const rosterView = activeNpcRosterPayload
+    ? activeNpcRosterPayload.npcRosterView
     : activeSession
       ? activeSession.npcRosterView
       : null;
@@ -439,11 +474,16 @@ export function PeoplePage() {
     [registry, rosterView]
   );
   const npcGroups = useMemo(() => groupNpcs(rosterNpcs), [rosterNpcs]);
-  const selectedNpc = rosterNpcs.find((npc) => npc.npcId === selectedNpcId) ?? rosterNpcs[0] ?? null;
+  const activeSelectedNpcId = localStateIsCurrent ? selectedNpcId : "";
+  const selectedNpc = rosterNpcs.find((npc) => npc.npcId === activeSelectedNpcId) ?? rosterNpcs[0] ?? null;
+  const selectedNpcIdForResults = selectedNpc?.npcId ?? "";
 
   useEffect(() => {
-    if (!selectedNpcId && rosterNpcs[0]) setSelectedNpcId(rosterNpcs[0].npcId);
-  }, [rosterNpcs, selectedNpcId]);
+    if (rosterNpcs[0] && (!activeSelectedNpcId || !rosterNpcs.some((npc) => npc.npcId === activeSelectedNpcId))) {
+      setLocalPeopleSessionId(sessionId);
+      setSelectedNpcId(rosterNpcs[0].npcId);
+    }
+  }, [activeSelectedNpcId, rosterNpcs, sessionId]);
 
   useEffect(() => {
     if (!runnable || !selectedNpc?.npcId) return;
@@ -459,61 +499,86 @@ export function PeoplePage() {
   const visiblePeople = peopleRows.slice(safePortraitPage * portraitPageSize, safePortraitPage * portraitPageSize + portraitPageSize);
   const npcCount = peopleRows.filter((row) => row.kind === "npc").length;
   const remasteredCount = visiblePeople.filter((row) => row.remastered).length;
-  const npcDetail = npcDetailPayload?.sessionId === sessionId && npcDetailPayload.npcDetailView.npcId === selectedNpc?.npcId
-    ? npcDetailPayload.npcDetailView
+  const npcDetail = activeNpcDetailPayload && selectedNpc && activeNpcDetailPayload.npcDetailView.npcId === selectedNpc.npcId
+    ? activeNpcDetailPayload.npcDetailView
     : null;
-  const interactionRecords = npcDetailPayload?.sessionId === sessionId
-    ? npcDetailPayload.npcInteractionView?.items ?? npcRosterPayload?.npcInteractionView?.items ?? activeSession?.npcInteractionView?.items ?? []
+  const interactionRecords = activeNpcDetailPayload
+    ? activeNpcDetailPayload.npcInteractionView?.items ?? activeNpcRosterPayload?.npcInteractionView?.items ?? activeSession?.npcInteractionView?.items ?? []
     : activeSession?.npcInteractionView?.items ?? [];
-  const tradeRecords = npcDetailPayload?.sessionId === sessionId
-    ? npcDetailPayload.tradeLedgerView?.items ?? activeSession?.tradeLedgerView?.items ?? []
+  const tradeRecords = activeNpcDetailPayload
+    ? activeNpcDetailPayload.tradeLedgerView?.items ?? activeSession?.tradeLedgerView?.items ?? []
     : activeSession?.tradeLedgerView?.items ?? [];
-  const delegatedTasks = npcDetailPayload?.sessionId === sessionId
-    ? npcDetailPayload.delegatedTaskView?.items ?? npcRosterPayload?.delegatedTaskView?.items ?? activeSession?.delegatedTaskView?.items ?? []
+  const delegatedTasks = activeNpcDetailPayload
+    ? activeNpcDetailPayload.delegatedTaskView?.items ?? activeNpcRosterPayload?.delegatedTaskView?.items ?? activeSession?.delegatedTaskView?.items ?? []
     : activeSession?.delegatedTaskView?.items ?? [];
   const peopleEconomyTraceView = activeSession?.economyTraceView
-    ?? (lastTrade?.sessionId === sessionId ? lastTrade.economyTraceView : null)
-    ?? (lastNpcCommand?.sessionId === sessionId ? lastNpcCommand.economyTraceView : null)
+    ?? activeLastTrade?.economyTraceView
+    ?? activeLastNpcCommand?.economyTraceView
     ?? null;
+  const activeNpcDialogueView = activeLastNpcInteraction?.npcDialogueView?.npcId === selectedNpcIdForResults
+    ? activeLastNpcInteraction.npcDialogueView
+    : undefined;
+  const activeNpcActionResolutionView = activeLastNpcInteraction?.npcDialogueView?.npcId === selectedNpcIdForResults
+    ? activeLastNpcInteraction.npcActionResolutionView
+    : undefined;
+  const activeNpcTradeRecord = activeLastTrade?.tradeRecord &&
+    (activeLastTrade.tradeRecord.npcId === selectedNpcIdForResults || activeLastTrade.tradeRecord.actorBId === selectedNpcIdForResults)
+    ? activeLastTrade.tradeRecord
+    : undefined;
+  const activeNpcCommandPlan = activeLastNpcCommand?.delegatedTaskView?.items?.some((task) => task.assignee?.npcId === selectedNpcIdForResults)
+    ? activeLastNpcCommand.delegatedTaskPlanView
+    : undefined;
 
   async function handleDialogueSubmit() {
-    if (!selectedNpc || !dialogueDraft.trim() || !runnable) return;
-    await interactWithNpc(sessionId, {
+    if (!selectedNpc || !activeDialogueDraft.trim() || !runnable) return;
+    const requestSessionId = sessionId;
+    await interactWithNpc(requestSessionId, {
       npcId: selectedNpc.npcId,
       actionType: "talk",
-      utterance: dialogueDraft.trim()
-    }).then(() => setDialogueDraft("")).catch(() => undefined);
+      utterance: activeDialogueDraft.trim()
+    }).then(() => {
+      if (latestSessionIdRef.current === requestSessionId) setDialogueDraft("");
+    }).catch(() => undefined);
   }
 
   async function handleTradeSubmit() {
-    if (!selectedNpc || !tradeOffer.trim() || !runnable) return;
-    await submitTrade(sessionId, {
+    if (!selectedNpc || !activeTradeOffer.trim() || !runnable) return;
+    const requestSessionId = sessionId;
+    await submitTrade(requestSessionId, {
       npcId: selectedNpc.npcId,
       tradeId: `trade:${selectedNpc.npcId}:${Date.now()}`,
-      silverDelta: Number.parseInt(tradeSilverDelta, 10) || 0,
-      offerSummary: tradeOffer.trim()
-    }).then(() => setTradeOffer("")).catch(() => undefined);
+      silverDelta: Number.parseInt(activeTradeSilverDelta, 10) || 0,
+      offerSummary: activeTradeOffer.trim()
+    }).then(() => {
+      if (latestSessionIdRef.current === requestSessionId) setTradeOffer("");
+    }).catch(() => undefined);
   }
 
   async function handleCommandSubmit() {
-    if (!selectedNpc || !commandText.trim() || !runnable) return;
-    await submitNpcCommand(sessionId, {
+    if (!selectedNpc || !activeCommandText.trim() || !runnable) return;
+    const requestSessionId = sessionId;
+    await submitNpcCommand(requestSessionId, {
       assigneeActorId: selectedNpc.npcId,
       taskType: "land_survey",
       authoritySource: "yamen_authority",
-      targetRef: commandTargetRef.trim() || "geo:county:current",
-      commandText: commandText.trim(),
-      budget: Number.parseInt(commandBudget, 10) || 0
-    }).then(() => setCommandText("")).catch(() => undefined);
+      targetRef: activeCommandTargetRef.trim() || "geo:county:current",
+      commandText: activeCommandText.trim(),
+      budget: Number.parseInt(activeCommandBudget, 10) || 0
+    }).then(() => {
+      if (latestSessionIdRef.current === requestSessionId) setCommandText("");
+    }).catch(() => undefined);
   }
 
   async function handleSocialSubmit(actionType: string) {
     if (!selectedNpc || !runnable) return;
-    await interactWithNpc(sessionId, {
+    const requestSessionId = sessionId;
+    await interactWithNpc(requestSessionId, {
       npcId: selectedNpc.npcId,
       actionType,
-      utterance: socialDraft.trim() || `${actionLabel(actionType)}${selectedNpc.displayName}，请服务器按礼法与身份裁决。`
-    }).then(() => setSocialDraft("")).catch(() => undefined);
+      utterance: activeSocialDraft.trim() || `${actionLabel(actionType)}${selectedNpc.displayName}，请服务器按礼法与身份裁决。`
+    }).then(() => {
+      if (latestSessionIdRef.current === requestSessionId) setSocialDraft("");
+    }).catch(() => undefined);
   }
 
   return (
@@ -524,7 +589,7 @@ export function PeoplePage() {
           <h1 id="people-title">人物</h1>
           <p>名册、详情、对话、交易和委派均来自服务器安全视图；本页不读取私档、底价、模型上下文或内部账本。</p>
         </div>
-        <span>{npcRosterStatus === "loading" ? "候谱" : `${rosterNpcs.length || npcCount} 人`}</span>
+        <span>{routeNpcRosterStatus === "loading" ? "候谱" : `${rosterNpcs.length || npcCount} 人`}</span>
       </div>
       <NpcActiveRequestInbox
         requests={(activeSession?.npcActiveRequestView?.items ?? []) as readonly NpcActiveRequestItemView[]}
@@ -586,6 +651,7 @@ export function PeoplePage() {
                   type="button"
                   aria-pressed={selectedNpc?.npcId === npc.npcId}
                   onClick={() => {
+                    setLocalPeopleSessionId(sessionId);
                     setSelectedNpcId(npc.npcId);
                     setActiveTab("profile");
                   }}
@@ -635,7 +701,7 @@ export function PeoplePage() {
                 <NpcProfileTab
                   selectedNpc={selectedNpc}
                   detail={npcDetail}
-                  loading={npcDetailStatus === "loading"}
+                  loading={routeNpcDetailStatus === "loading"}
                   onDraft={() => setActionDraft({
                     source: "role-surface",
                     targetPage: "game",
@@ -645,37 +711,55 @@ export function PeoplePage() {
               ) : null}
               {activeTab === "dialogue" ? (
                 <NpcDialogueTab
-                  dialogueDraft={dialogueDraft}
-                  latestDialogue={lastNpcInteraction?.npcDialogueView}
+                  dialogueDraft={activeDialogueDraft}
+                  latestDialogue={activeNpcDialogueView}
                   records={interactionRecords}
-                  busy={npcMutationStatus === "loading"}
-                  onDraftChange={setDialogueDraft}
+                  busy={routeNpcMutationStatus === "loading"}
+                  onDraftChange={(value) => {
+                    setLocalPeopleSessionId(sessionId);
+                    setDialogueDraft(value);
+                  }}
                   onSubmit={handleDialogueSubmit}
                 />
               ) : null}
               {activeTab === "trade" ? (
                 <NpcTradeTab
-                  offer={tradeOffer}
-                  silverDelta={tradeSilverDelta}
+                  offer={activeTradeOffer}
+                  silverDelta={activeTradeSilverDelta}
                   records={tradeRecords}
-                  latestTrade={lastTrade?.tradeRecord}
-                  busy={npcMutationStatus === "loading"}
-                  onOfferChange={setTradeOffer}
-                  onSilverDeltaChange={setTradeSilverDelta}
+                  latestTrade={activeNpcTradeRecord}
+                  busy={routeNpcMutationStatus === "loading"}
+                  onOfferChange={(value) => {
+                    setLocalPeopleSessionId(sessionId);
+                    setTradeOffer(value);
+                  }}
+                  onSilverDeltaChange={(value) => {
+                    setLocalPeopleSessionId(sessionId);
+                    setTradeSilverDelta(value);
+                  }}
                   onSubmit={handleTradeSubmit}
                 />
               ) : null}
               {activeTab === "command" ? (
                 <NpcCommandTab
-                  commandText={commandText}
-                  targetRef={commandTargetRef}
-                  budget={commandBudget}
+                  commandText={activeCommandText}
+                  targetRef={activeCommandTargetRef}
+                  budget={activeCommandBudget}
                   tasks={delegatedTasks}
-                  latestPlan={lastNpcCommand?.delegatedTaskPlanView}
-                  busy={npcMutationStatus === "loading"}
-                  onCommandTextChange={setCommandText}
-                  onTargetRefChange={setCommandTargetRef}
-                  onBudgetChange={setCommandBudget}
+                  latestPlan={activeNpcCommandPlan}
+                  busy={routeNpcMutationStatus === "loading"}
+                  onCommandTextChange={(value) => {
+                    setLocalPeopleSessionId(sessionId);
+                    setCommandText(value);
+                  }}
+                  onTargetRefChange={(value) => {
+                    setLocalPeopleSessionId(sessionId);
+                    setCommandTargetRef(value);
+                  }}
+                  onBudgetChange={(value) => {
+                    setLocalPeopleSessionId(sessionId);
+                    setCommandBudget(value);
+                  }}
                   onSubmit={handleCommandSubmit}
                 />
               ) : null}
@@ -683,10 +767,13 @@ export function PeoplePage() {
                 <NpcSocialTab
                   selectedNpc={selectedNpc}
                   detail={npcDetail}
-                  draft={socialDraft}
-                  latestResolution={lastNpcInteraction?.npcActionResolutionView}
-                  busy={npcMutationStatus === "loading"}
-                  onDraftChange={setSocialDraft}
+                  draft={activeSocialDraft}
+                  latestResolution={activeNpcActionResolutionView}
+                  busy={routeNpcMutationStatus === "loading"}
+                  onDraftChange={(value) => {
+                    setLocalPeopleSessionId(sessionId);
+                    setSocialDraft(value);
+                  }}
                   onSubmit={handleSocialSubmit}
                 />
               ) : null}
@@ -752,10 +839,16 @@ export function PeoplePage() {
         )}
         {peopleRows.length > portraitPageSize ? (
           <div className="buttonRow" aria-label="人物分页">
-            <button className="paperButton" type="button" disabled={safePortraitPage <= 0} onClick={() => setPortraitPage((page) => Math.max(0, page - 1))}>
+            <button className="paperButton" type="button" disabled={safePortraitPage <= 0} onClick={() => {
+              setLocalPeopleSessionId(sessionId);
+              setPortraitPage((page) => Math.max(0, page - 1));
+            }}>
               上一组
             </button>
-            <button className="paperButton" type="button" disabled={safePortraitPage >= totalPages - 1} onClick={() => setPortraitPage((page) => Math.min(totalPages - 1, page + 1))}>
+            <button className="paperButton" type="button" disabled={safePortraitPage >= totalPages - 1} onClick={() => {
+              setLocalPeopleSessionId(sessionId);
+              setPortraitPage((page) => Math.min(totalPages - 1, page + 1));
+            }}>
               下一组
             </button>
           </div>
@@ -764,7 +857,7 @@ export function PeoplePage() {
       <button className="paperButton" type="button" onClick={(event) => { markOverlayTrigger(event.currentTarget); openSurface("npc-profile"); }}>
         打开人物档案
       </button>
-      {error ? <p className="statusLine" role="alert">{error}</p> : null}
+      {routeError ? <p className="statusLine" role="alert">{routeError}</p> : null}
     </article>
   );
 }

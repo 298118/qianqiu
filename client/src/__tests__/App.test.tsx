@@ -1928,6 +1928,104 @@ describe("S74.1 React client shell", () => {
     await waitFor(() => expect(useGameSessionStore.getState().currentSessionId).toBe(sessionId));
   });
 
+  it("refreshes the S75.4 old-case list once when the current route session is missing", async () => {
+    const sessionId = "3c09daca-3333-4aca-8aca-3c09daca3333";
+    let saveListCalls = 0;
+    const fetchMock = vi.fn(async (url: string) => {
+      if (url === "/api/ai/settings/global") {
+        return new Response(JSON.stringify({
+          scope: "global",
+          updatedAt: "2026-05-22T12:00:00.000Z",
+          aiSettingsView: {
+            preset: "balanced",
+            presets: [{ id: "balanced", label: "均衡" }],
+            providerOptions: [{ provider: "mock", available: true, requiresKey: false }],
+            taskRoutes: []
+          },
+          aiInvocationSummaryView: { safe: true }
+        }), {
+          status: 200,
+          headers: { "Content-Type": "application/json" }
+        });
+      }
+      if (url === "/api/game/saves") {
+        saveListCalls += 1;
+        const saves = saveListCalls === 1
+          ? [{
+              sessionId: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+              playerName: "旧卷甲",
+              role: "scholar",
+              dynasty: "明",
+              year: 1600,
+              month: 1,
+              tenDayPeriod: 1,
+              turnCount: 2,
+              summary: "旧案仍在架上。",
+              updatedAt: "2026-05-21T10:00:00.000Z"
+            }]
+          : [{
+              sessionId,
+              playerName: "当前案主",
+              role: "official",
+              dynasty: "明",
+              year: 1601,
+              month: 2,
+              tenDayPeriod: 2,
+              turnCount: 9,
+              summary: "当前案卷已写入本地存档。",
+              updatedAt: "2026-05-22T10:00:00.000Z"
+            }];
+        return new Response(JSON.stringify({ saves, skipped: [] }), {
+          status: 200,
+          headers: { "Content-Type": "application/json" }
+        });
+      }
+      if (url === `/api/ai/quick-actions/${sessionId}`) {
+        return new Response(JSON.stringify({
+          schemaVersion: "s75.9-quick-actions.v1",
+          sessionId,
+          source: "mock-ai",
+          status: "ready",
+          quickActionSuggestions: []
+        }), {
+          status: 200,
+          headers: { "Content-Type": "application/json" }
+        });
+      }
+      if (url === `/api/game/player-state/${sessionId}`) {
+        return new Response(JSON.stringify({
+          source: "server_player_visible_state_projection",
+          sessionId,
+          worldState: { player: { name: "当前案主", role: "official" } },
+          aiSettingsView: { preset: "balanced" },
+          aiControlAuditView: { summary: "bounded" }
+        }), {
+          status: 200,
+          headers: { "Content-Type": "application/json" }
+        });
+      }
+      if (url === "/assets/ui/ink-ui-runtime-manifest.json") {
+        return new Response(JSON.stringify(buildMockAssetManifest(0)), {
+          status: 200,
+          headers: { "Content-Type": "application/json" }
+        });
+      }
+      throw new Error(`unexpected url: ${url}`);
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    renderRoute(`/game/${sessionId}`);
+
+    await waitFor(() => expect(useUiStateStore.getState().currentSessionId).toBe(sessionId));
+    fireEvent.click(screen.getByRole("button", { name: "打开印匣" }));
+    fireEvent.click(screen.getByRole("tab", { name: "旧案" }));
+
+    await screen.findByText("当前案主");
+    expect(screen.getByText("案 3c09daca")).toBeTruthy();
+    expect(screen.getByText("当前案卷已写入本地存档。")).toBeTruthy();
+    await waitFor(() => expect(fetchMock.mock.calls.filter(([url]) => url === "/api/game/saves")).toHaveLength(2));
+  });
+
   it("renders S80 global AI matrix and saves dirty task route changes", async () => {
     const sessionId = "56565656-5656-4565-8565-565656565656";
     const aiPayload = (tokens: number, preset = "balanced") => ({
@@ -3292,6 +3390,202 @@ describe("S74.1 React client shell", () => {
     expect(screen.queryByRole("button", { name: "拟复核" })).toBeNull();
   });
 
+  it("does not render stale S88.9 NPC workbench results on another people route", async () => {
+    const staleSessionId = "12121212-1212-4212-8212-121212121212";
+    const routeSessionId = "34343434-3434-4434-8434-343434343434";
+    const routeNpc = {
+      npcId: "npc-new-aide",
+      displayName: "新案幕友",
+      tier: "county",
+      roleTags: ["幕友"],
+      stageTags: ["县署"],
+      portraitRef: null,
+      publicProfile: { title: "县署幕友", summary: "新案可见人物。" },
+      relationshipSummary: { labels: ["同僚"] },
+      availableInteractions: ["talk", "trade", "command"]
+    };
+    const routeNpcDetail = {
+      ...routeNpc,
+      relationship: routeNpc.relationshipSummary,
+      relationshipActionEligibilityView: {
+        actions: [{
+          actionType: "request",
+          label: "请托",
+          requestLabel: "呈请礼法裁决",
+          available: true
+        }]
+      }
+    };
+    const routePayload = {
+      source: "server_player_visible_state_projection",
+      sessionId: routeSessionId,
+      worldState: { player: { name: "新案主", role: "magistrate" } },
+      worldPeopleView: { npcs: [], relationships: [] },
+      npcRosterView: { items: [routeNpc] },
+      npcInteractionView: { items: [] },
+      tradeLedgerView: { items: [] },
+      delegatedTaskView: { items: [] },
+      npcActiveRequestView: { items: [], followUpTasks: [], followUpEvidence: { counts: { total: 0 }, people: [], events: [], economy: [] } }
+    };
+    const fetchMock = vi.fn(async (url: string) => {
+      const requestUrl = String(url);
+      if (requestUrl === "/assets/ui/ink-ui-runtime-manifest.json") {
+        return new Response(JSON.stringify(buildMockAssetManifest(0)), {
+          status: 200,
+          headers: { "Content-Type": "application/json" }
+        });
+      }
+      if (requestUrl === `/api/game/player-state/${routeSessionId}`) {
+        return new Response(JSON.stringify(routePayload), {
+          status: 200,
+          headers: { "Content-Type": "application/json" }
+        });
+      }
+      if (requestUrl === `/api/game/npcs/${routeSessionId}?pageSize=50`) {
+        return new Response(JSON.stringify({
+          sessionId: routeSessionId,
+          npcRosterView: { items: [routeNpc] },
+          npcInteractionView: { items: [] },
+          delegatedTaskView: { items: [] }
+        }), {
+          status: 200,
+          headers: { "Content-Type": "application/json" }
+        });
+      }
+      if (requestUrl === `/api/game/npc/${routeSessionId}/${routeNpc.npcId}`) {
+        return new Response(JSON.stringify({
+          sessionId: routeSessionId,
+          npcDetailView: routeNpcDetail,
+          npcInteractionView: { items: [] },
+          tradeLedgerView: { items: [] },
+          delegatedTaskView: { items: [] }
+        }), {
+          status: 200,
+          headers: { "Content-Type": "application/json" }
+        });
+      }
+      if (requestUrl === `/api/ai/quick-actions/${routeSessionId}`) {
+        return new Response(JSON.stringify({
+          schemaVersion: "s75.9-quick-actions.v1",
+          sessionId: routeSessionId,
+          source: "mock-ai",
+          status: "ready",
+          quickActionSuggestions: []
+        }), {
+          status: 200,
+          headers: { "Content-Type": "application/json" }
+        });
+      }
+      throw new Error(`unexpected url: ${requestUrl}`);
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    renderRoute(`/game/${routeSessionId}/people`);
+
+    await screen.findByText("人物谱牒");
+    await waitFor(() => expect(screen.getAllByText("新案幕友").length).toBeGreaterThan(0));
+    await waitFor(() => expect(useGameSessionStore.getState().npcDetail?.sessionId).toBe(routeSessionId));
+
+    act(() => useGameSessionStore.setState({
+      currentSessionId: staleSessionId,
+      currentSession: routePayload as unknown as ReturnType<typeof useGameSessionStore.getState>["currentSession"],
+      npcRoster: {
+        sessionId: staleSessionId,
+        npcRosterView: { items: [] },
+        npcInteractionView: {
+          items: [{
+            recordId: "stale-roster-dialogue",
+            actionType: "talk",
+            serverStatus: "accepted",
+            dialogueText: "旧案名册记录"
+          }]
+        },
+        delegatedTaskView: {
+          items: [{
+            taskId: "stale-roster-task",
+            title: "旧案名册委派",
+            status: "active",
+            assignee: { displayName: "旧案差役" }
+          }]
+        }
+      } as unknown as ReturnType<typeof useGameSessionStore.getState>["npcRoster"],
+      npcDetail: {
+        sessionId: routeSessionId,
+        npcDetailView: routeNpcDetail,
+        tradeLedgerView: { items: [] }
+      } as unknown as ReturnType<typeof useGameSessionStore.getState>["npcDetail"],
+      lastNpcInteraction: {
+        sessionId: staleSessionId,
+        accepted: true,
+        npcDialogueView: { dialogueText: "旧案对话结果", mood: "旧案心绪" },
+        npcActionResolutionView: { actionLabel: "旧案礼法", outcomeSummary: "旧案礼法结果" },
+        npcInteractionView: { items: [] }
+      } as unknown as ReturnType<typeof useGameSessionStore.getState>["lastNpcInteraction"],
+      lastTrade: {
+        sessionId: staleSessionId,
+        accepted: true,
+        tradeRecord: {
+          tradeId: "stale-trade",
+          status: "accepted",
+          publicSummary: "旧案交易结果"
+        },
+        tradeLedgerView: { items: [] }
+      } as unknown as ReturnType<typeof useGameSessionStore.getState>["lastTrade"],
+      lastNpcCommand: {
+        sessionId: staleSessionId,
+        accepted: true,
+        delegatedTaskPlanView: { planSummary: "旧案委派计划" },
+        delegatedTaskView: { items: [] }
+      } as unknown as ReturnType<typeof useGameSessionStore.getState>["lastNpcCommand"],
+      error: "旧案错误不应显示",
+      npcRosterStatus: "ready",
+      npcDetailStatus: "ready",
+      npcMutationStatus: "ready",
+      status: "ready"
+    }));
+
+    for (const tab of ["对话", "交易", "委派", "礼法", "记录"]) {
+      fireEvent.click(screen.getByRole("button", { name: tab }));
+      expect(document.body.textContent || "").not.toMatch(/旧案对话结果|旧案交易结果|旧案委派计划|旧案礼法结果|旧案错误|旧案名册记录|旧案名册委派/);
+    }
+
+    act(() => useGameSessionStore.setState({
+      currentSessionId: routeSessionId,
+      lastNpcInteraction: {
+        sessionId: routeSessionId,
+        accepted: true,
+        npcDialogueView: { npcId: "npc-other-aide", dialogueText: "同案别人的对话结果", mood: "别处心绪" },
+        npcActionResolutionView: { actionLabel: "同案别人的礼法", outcomeSummary: "同案别人的礼法结果" },
+        npcInteractionView: { items: [] }
+      } as unknown as ReturnType<typeof useGameSessionStore.getState>["lastNpcInteraction"],
+      lastTrade: {
+        sessionId: routeSessionId,
+        accepted: true,
+        tradeRecord: {
+          tradeId: "other-trade",
+          npcId: "npc-other-aide",
+          actorBId: "npc-other-aide",
+          status: "accepted",
+          publicSummary: "同案别人的交易结果"
+        },
+        tradeLedgerView: { items: [] }
+      } as unknown as ReturnType<typeof useGameSessionStore.getState>["lastTrade"],
+      lastNpcCommand: {
+        sessionId: routeSessionId,
+        accepted: true,
+        delegatedTaskPlanView: { planSummary: "同案别人的委派计划" },
+        delegatedTaskView: { items: [{ assignee: { npcId: "npc-other-aide" } }] }
+      } as unknown as ReturnType<typeof useGameSessionStore.getState>["lastNpcCommand"],
+      error: null,
+      npcMutationStatus: "ready"
+    }));
+
+    for (const tab of ["对话", "交易", "委派", "礼法"]) {
+      fireEvent.click(screen.getByRole("button", { name: tab }));
+      expect(document.body.textContent || "").not.toMatch(/同案别人的对话结果|同案别人的交易结果|同案别人的委派计划|同案别人的礼法结果/);
+    }
+  });
+
   it("renders S88.8 economy trace in the people trade and delegation workspace", async () => {
     const sessionId = "77777777-7777-4777-8777-777777777777";
     const economyTraceView = {
@@ -3649,6 +3943,149 @@ describe("S74.1 React client shell", () => {
     expect(screen.queryByText("旧案经济解释")).toBeNull();
     expect(screen.queryByText("旧案账本为何变化")).toBeNull();
     expect(screen.queryByRole("button", { name: "拟复核" })).toBeNull();
+  });
+
+  it("resets S88.9 inventory local selection and transfer notices across session routes", async () => {
+    const firstSessionId = "56565656-5656-4656-8656-565656565656";
+    const secondSessionId = "78787878-7878-4787-8787-787878787878";
+    const firstInventoryView = {
+      containers: [
+        { containerId: "first-box", label: "旧案书箧", currentWeight: 1, capacityWeight: 10 },
+        { containerId: "first-target", label: "旧案库房", currentWeight: 0, capacityWeight: 20 }
+      ],
+      items: [{
+        itemId: "first-item",
+        name: "旧案清册",
+        category: "文书",
+        condition: "完整",
+        transferPolicy: "tradeable",
+        legalStatus: "ordinary",
+        containerId: "first-box",
+        quantity: 1,
+        unit: "册"
+      }],
+      importantCredentials: []
+    };
+    const firstTransferredInventoryView = {
+      ...firstInventoryView,
+      items: firstInventoryView.items.map((item) => ({ ...item, containerId: "first-target" }))
+    };
+    const secondInventoryView = {
+      containers: [
+        { containerId: "second-box", label: "新案书箧", currentWeight: 1, capacityWeight: 10 },
+        { containerId: "second-target", label: "新案库房", currentWeight: 0, capacityWeight: 20 }
+      ],
+      items: [{
+        itemId: "second-item",
+        name: "新案清册",
+        category: "文书",
+        condition: "完整",
+        transferPolicy: "tradeable",
+        legalStatus: "ordinary",
+        containerId: "second-box",
+        quantity: 1,
+        unit: "册"
+      }],
+      importantCredentials: []
+    };
+    const fetchMock = vi.fn(async (url: string, options?: RequestInit) => {
+      const requestUrl = String(url);
+      if (requestUrl === "/assets/ui/ink-ui-runtime-manifest.json") {
+        return new Response(JSON.stringify(buildMockAssetManifest(0)), {
+          status: 200,
+          headers: { "Content-Type": "application/json" }
+        });
+      }
+      if (requestUrl === `/api/game/player-state/${firstSessionId}`) {
+        return new Response(JSON.stringify({
+          source: "server_player_visible_state_projection",
+          sessionId: firstSessionId,
+          worldState: { player: { name: "旧案主", role: "magistrate" } },
+          inventoryView: firstInventoryView,
+          resourceLedgerView: { accounts: [] },
+          assetLedgerView: { assets: [] }
+        }), {
+          status: 200,
+          headers: { "Content-Type": "application/json" }
+        });
+      }
+      if (requestUrl === `/api/game/player-state/${secondSessionId}`) {
+        return new Response(JSON.stringify({
+          source: "server_player_visible_state_projection",
+          sessionId: secondSessionId,
+          worldState: { player: { name: "新案主", role: "magistrate" } },
+          inventoryView: secondInventoryView,
+          resourceLedgerView: { accounts: [] },
+          assetLedgerView: { assets: [] }
+        }), {
+          status: 200,
+          headers: { "Content-Type": "application/json" }
+        });
+      }
+      if (requestUrl === `/api/game/inventory/${firstSessionId}`) {
+        return new Response(JSON.stringify({
+          sessionId: firstSessionId,
+          inventoryView: firstInventoryView,
+          resourceLedgerView: { accounts: [] },
+          assetLedgerView: { assets: [] }
+        }), {
+          status: 200,
+          headers: { "Content-Type": "application/json" }
+        });
+      }
+      if (requestUrl === `/api/game/inventory/${secondSessionId}`) {
+        return new Response(JSON.stringify({
+          sessionId: secondSessionId,
+          inventoryView: secondInventoryView,
+          resourceLedgerView: { accounts: [] },
+          assetLedgerView: { assets: [] }
+        }), {
+          status: 200,
+          headers: { "Content-Type": "application/json" }
+        });
+      }
+      if (requestUrl === `/api/game/inventory-transfer/${firstSessionId}` && options?.method === "POST") {
+        return new Response(JSON.stringify({
+          sessionId: firstSessionId,
+          accepted: true,
+          inventoryView: firstTransferredInventoryView
+        }), {
+          status: 200,
+          headers: { "Content-Type": "application/json" }
+        });
+      }
+      if (requestUrl === `/api/ai/quick-actions/${firstSessionId}` || requestUrl === `/api/ai/quick-actions/${secondSessionId}`) {
+        const responseSessionId = requestUrl.endsWith(firstSessionId) ? firstSessionId : secondSessionId;
+        return new Response(JSON.stringify({
+          schemaVersion: "s75.9-quick-actions.v1",
+          sessionId: responseSessionId,
+          source: "mock-ai",
+          status: "ready",
+          quickActionSuggestions: []
+        }), {
+          status: 200,
+          headers: { "Content-Type": "application/json" }
+        });
+      }
+      throw new Error(`unexpected url: ${requestUrl}`);
+    });
+    vi.stubGlobal("fetch", fetchMock);
+    const router = createMemoryRouter(routes, { initialEntries: [`/game/${firstSessionId}/inventory`] });
+    render(<RouterProvider router={router} />);
+
+    await screen.findByText("旧案清册");
+    const transferButton = screen.getByRole("button", { name: "呈请移置" });
+    await waitFor(() => expect(transferButton).toHaveProperty("disabled", false));
+    fireEvent.click(transferButton);
+    await screen.findByText("服务器已校验并更新物件位置。");
+
+    await act(async () => {
+      await router.navigate(`/game/${secondSessionId}/inventory`);
+    });
+
+    await screen.findByText("新案清册");
+    await waitFor(() => expect(useGameSessionStore.getState().inventory?.sessionId).toBe(secondSessionId));
+    expect(document.body.textContent || "").not.toMatch(/旧案清册|旧案书箧|旧案库房|服务器已校验并更新物件位置。|未入容器/);
   });
 
   it("caps the S76.10 people ledger at eighty public rows with the player first", async () => {
