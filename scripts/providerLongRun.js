@@ -44,6 +44,8 @@ const {
 const { canEnterExam, getExam } = require("../src/game/exams");
 const { attachExamSceneTime } = require("../src/game/examSceneTime");
 const { createInitialState } = require("../src/game/initialState");
+const { buildEconomyTraceView } = require("../src/game/economyTraceView");
+const { runNpcEconomyTickStep } = require("../src/game/npcEconomy");
 const { NUMERIC_RANGES, applyStatePatch, appendEvents } = require("../src/game/stateRules");
 const { runWorldTick } = require("../src/game/worldTick");
 const { advanceTenDayPeriod, formatYearMonthPeriod } = require("../src/game/time");
@@ -74,6 +76,9 @@ const FORBIDDEN_MODERN_TERMS = [
   "选举",
   "宪法"
 ];
+
+const ECONOMY_TRACE_FORBIDDEN_PATTERN =
+  /"(?:assetLedger|resourceLedger|inventoryLedger|tradeLedger|delegatedTaskLedger|marketPriceLedger|npcEconomyLedger|rawLedger|evidenceRefs)"|hiddenDossier|privateSignalTags|provider payload|providerPayload|rawProvider|raw prompt|prompt_retrieval_index|safe_search_index|data[\\/](?:sessions|audit)|rawSql|SQL|sk-[A-Za-z0-9_-]{6,}|tp-[A-Za-z0-9_-]{6,}|[A-Za-z]:[\\/]|file:\/\/|\/(?:Users|home|tmp|var|mnt|opt)\//i;
 
 const PROTECTED_TOP_LEVEL_PATCH_KEYS = [
   "activeExam",
@@ -188,6 +193,51 @@ function collectProviderPatchViolations(statePatch = {}) {
   }
 
   return violations;
+}
+
+function collectEconomyTraceIssues(economyTraceView = {}) {
+  const issues = [];
+  const traceItems = Array.isArray(economyTraceView.traceItems) ? economyTraceView.traceItems : [];
+  const serialized = JSON.stringify(economyTraceView || {});
+
+  if (!economyTraceView || typeof economyTraceView !== "object" || Array.isArray(economyTraceView)) {
+    return ["missing economyTraceView"];
+  }
+  if (!economyTraceView.schemaVersion) {
+    issues.push("missing schemaVersion");
+  }
+  if (!traceItems.length) {
+    issues.push("missing traceItems");
+  }
+  if (economyTraceView.safeguards?.serverOwnsSettlement !== true) {
+    issues.push("missing serverOwnsSettlement safeguard");
+  }
+  if (economyTraceView.safeguards?.rawLedgersRedacted !== true) {
+    issues.push("missing rawLedgersRedacted safeguard");
+  }
+  if (ECONOMY_TRACE_FORBIDDEN_PATTERN.test(serialized)) {
+    issues.push("unsafe raw/provider/path/key token in economyTraceView");
+  }
+  for (const item of traceItems) {
+    if (!item.traceType || !item.sourceView || !item.publicSummary) {
+      issues.push(`trace item ${item.traceId || "unknown"} missing public fields`);
+    }
+    if (!Array.isArray(item.sourceRefs)) {
+      issues.push(`trace item ${item.traceId || "unknown"} missing sourceRefs`);
+    }
+    if (item.boundaries?.serverOwnsSettlement !== true || item.boundaries?.browserReadonly !== true) {
+      issues.push(`trace item ${item.traceId || "unknown"} missing settlement boundaries`);
+    }
+  }
+
+  return [...new Set(issues)];
+}
+
+function assertEconomyTraceSafe(label, economyTraceView) {
+  const issues = collectEconomyTraceIssues(economyTraceView);
+  if (issues.length) {
+    throw new Error(`${label} economy trace check failed: ${issues.join("; ")}`);
+  }
 }
 
 function validateExamTriggerAuthority(worldState, examTrigger = {}) {
@@ -306,10 +356,16 @@ function applyServerTurnEffects(worldState, result, input) {
     roleWorldCoupling.relationshipChanges
   );
 
+  const beforeWorldTickState = JSON.parse(JSON.stringify(worldState));
   const worldTick = runWorldTick(worldState);
   applyStatePatch(worldState, worldTick.statePatch, {
     incrementTurnCount: false,
     allowServerOwnedPatchKeys: true
+  });
+  const npcEconomy = runNpcEconomyTickStep(worldState, {
+    worldTick,
+    previousState: beforeWorldTickState,
+    input
   });
 
   const longTermEvents = worldTick.completedMonth
@@ -342,6 +398,7 @@ function applyServerTurnEffects(worldState, result, input) {
     ...relationshipChanges,
     ...activeNpcRequest.relationshipChanges,
     ...roleWorldCouplingRelationshipChanges,
+    ...(Array.isArray(npcEconomy.relationshipChanges) ? npcEconomy.relationshipChanges : []),
     ...longTermRelationshipChanges,
     ...officialCareerRelationshipChanges
   ];
@@ -367,9 +424,14 @@ function applyServerTurnEffects(worldState, result, input) {
   appendEvents(worldState, activeNpcRequest.events);
   appendEvents(worldState, roleWorldCoupling.events);
   appendEvents(worldState, worldTick.events);
+  appendEvents(worldState, npcEconomy.events);
   appendEvents(worldState, longTermEvents.events);
   appendEvents(worldState, officialCareer.events);
   ensureServerState(worldState);
+
+  const economyTraceView = buildEconomyTraceView(worldState, {
+    economyFeedback: npcEconomy
+  });
 
   return {
     relationshipChanges: allRelationshipChanges,
@@ -378,11 +440,14 @@ function applyServerTurnEffects(worldState, result, input) {
       ...activeNpcRequest.events,
       ...roleWorldCoupling.events,
       ...worldTick.events,
+      ...(Array.isArray(npcEconomy.events) ? npcEconomy.events : []),
       ...longTermEvents.events,
       ...officialCareer.events
     ],
     examTrigger,
     worldTick,
+    npcEconomy,
+    economyTraceView,
     longTermEvents,
     officialCareer,
     worldEntityImpacts
@@ -501,6 +566,7 @@ async function runProviderLongRun(providerName, options = {}) {
     const serverEffects = applyServerTurnEffects(worldState, result, input);
     assertNumericConsistency(worldState);
     assertTenDayCadence(previousCalendar, worldState, serverEffects.worldTick, index + 1);
+    assertEconomyTraceSafe(`${providerName}.turn${index + 1}`, serverEffects.economyTraceView);
 
     if (worldState.turnCount !== index + 1) {
       throw new Error(`turnCount mismatch after turn ${index + 1}: expected ${index + 1}, got ${worldState.turnCount}`);
@@ -517,6 +583,9 @@ async function runProviderLongRun(providerName, options = {}) {
       examTrigger: serverEffects.examTrigger.shouldStart === true,
       cadence: serverEffects.worldTick.cadence,
       completedMonth: serverEffects.worldTick.completedMonth,
+      npcEconomyCadence: serverEffects.npcEconomy.cadence,
+      economyTraceItems: serverEffects.economyTraceView.traceItems.length,
+      economyTraceTypes: [...new Set(serverEffects.economyTraceView.traceItems.map((item) => item.traceType))].slice(0, 8),
       dateLabel: formatYearMonthPeriod(worldState),
       worldEntityImpacts: serverEffects.worldEntityImpacts.length,
       longTermScheduled: serverEffects.longTermEvents.scheduled.length,
@@ -524,7 +593,7 @@ async function runProviderLongRun(providerName, options = {}) {
     });
 
     console.log(
-      `[${providerName}] turn ${index + 1}/${turnLimit} ok: date=${formatYearMonthPeriod(worldState)}, cadence=${serverEffects.worldTick.cadence}, entityImpacts=${serverEffects.worldEntityImpacts.length}, patch=${patchKeys.join(",") || "none"}, streamed=${streamedChars}, narrative="${truncate(result.narrative)}"`
+      `[${providerName}] turn ${index + 1}/${turnLimit} ok: date=${formatYearMonthPeriod(worldState)}, cadence=${serverEffects.worldTick.cadence}, economyTrace=${serverEffects.economyTraceView.traceItems.length}, entityImpacts=${serverEffects.worldEntityImpacts.length}, patch=${patchKeys.join(",") || "none"}, streamed=${streamedChars}, narrative="${truncate(result.narrative)}"`
     );
   }
 
@@ -603,7 +672,9 @@ module.exports = {
   MAX_TURNS,
   MIN_TURNS,
   applyServerTurnEffects,
+  assertEconomyTraceSafe,
   assertTenDayCadence,
+  collectEconomyTraceIssues,
   collectProviderPatchViolations,
   collectToneIssues,
   countChineseCharacters,

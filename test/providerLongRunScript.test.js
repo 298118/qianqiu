@@ -6,6 +6,7 @@ const {
   MAX_TURNS,
   MIN_TURNS,
   applyServerTurnEffects,
+  collectEconomyTraceIssues,
   assertTenDayCadence,
   collectProviderPatchViolations,
   collectToneIssues,
@@ -152,6 +153,37 @@ test("provider long-run in-memory server effects follow ten-day cadence and enti
   assert.equal(worldState.tenDayPeriod, 1);
 });
 
+test("provider long-run in-memory server effects include safe economy trace", () => {
+  const worldState = createLongRunWorldState("openai");
+  worldState.month = 2;
+  worldState.tenDayPeriod = 3;
+  worldState.turnCount = 10;
+  worldState.player.localTreasury = 80;
+
+  const result = {
+    narrative: "县学士子询问粟米市价，仍归斋读经。",
+    statePatch: {},
+    relationshipChanges: [],
+    events: ["县中粮价略有浮动。"],
+    examTrigger: { shouldStart: false, level: null, reason: "" }
+  };
+
+  const effects = applyServerTurnEffects(worldState, result, "询问粮价并整理札记");
+  const traceTypes = new Set(effects.economyTraceView.traceItems.map((item) => item.traceType));
+  const serialized = JSON.stringify(effects.economyTraceView);
+
+  assert.equal(effects.npcEconomy.cadence, "monthly");
+  assert.equal(effects.economyTraceView.safeguards.serverOwnsSettlement, true);
+  assert.equal(effects.economyTraceView.safeguards.rawLedgersRedacted, true);
+  assert.ok(effects.economyTraceView.traceItems.length >= 1);
+  assert.ok(traceTypes.has("market_price_signal"));
+  assert.deepEqual(collectEconomyTraceIssues(effects.economyTraceView), []);
+  assert.doesNotMatch(
+    serialized,
+    /"(?:assetLedger|resourceLedger|inventoryLedger|tradeLedger|delegatedTaskLedger|marketPriceLedger|npcEconomyLedger|rawLedger|evidenceRefs)"|hiddenDossier|privateSignalTags|provider payload|data[\\/](?:sessions|audit)|rawSql|SQL|sk-[A-Za-z0-9_-]{6,}/
+  );
+});
+
 test("provider long-run cadence helper validates one-month three-turn rhythm", () => {
   const worldState = createLongRunWorldState("openai");
   worldState.year = 1644;
@@ -249,4 +281,22 @@ test("provider long-run skips cleanly when no provider keys are configured", asy
   });
 
   assert.deepEqual(result, { skipped: true, providerNames: [] });
+});
+
+test("provider long-run requires keys when a real provider is explicit", async () => {
+  await assert.rejects(
+    () => runProviderLongRunSmoke({
+      argv: ["node", "scripts/providerLongRun.js"],
+      env: { AI_PROVIDER: "deepseek" }
+    }),
+    /DeepSeek requires DEEPSEEK_API_KEY/
+  );
+
+  await assert.rejects(
+    () => runProviderLongRunSmoke({
+      argv: ["node", "scripts/providerLongRun.js", "--provider", "deepseek"],
+      env: { AI_PROVIDER: "mock" }
+    }),
+    /DeepSeek requires DEEPSEEK_API_KEY/
+  );
 });

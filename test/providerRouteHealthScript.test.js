@@ -5,6 +5,7 @@ const {
   collectSecretFragments,
   getRouteHealthPayloadFailures,
   redactRouteHealthText,
+  runProviderRouteHealth,
   summarizeRouteHealthPayload
 } = require("../scripts/providerRouteHealth");
 
@@ -113,4 +114,22 @@ test("provider route health summarizes model and streaming details", () => {
   assert.match(summary, /streaming=yes/);
   assert.match(summary, /default=claude-sonnet-4-5/);
   assert.match(summary, /events=1/);
+});
+
+test("provider route health requires keys when a real provider is explicit", async () => {
+  await assert.rejects(
+    () => runProviderRouteHealth({
+      argv: ["node", "scripts/providerRouteHealth.js"],
+      env: { AI_PROVIDER: "deepseek" }
+    }),
+    /DeepSeek requires DEEPSEEK_API_KEY/
+  );
+
+  await assert.rejects(
+    () => runProviderRouteHealth({
+      argv: ["node", "scripts/providerRouteHealth.js", "--provider", "deepseek"],
+      env: { AI_PROVIDER: "mock" }
+    }),
+    /DeepSeek requires DEEPSEEK_API_KEY/
+  );
 });
