@@ -8,7 +8,7 @@ import {
 } from "./displayPreferenceStorage";
 import { extractSafePlayerPayload, useUiStateStore } from "./uiState";
 import { useGameSessionStore } from "./gameSessionState";
-import type { ExamSubmitResponse, NpcInteractionResponse, PlayerStateResponse, StartGameResponse, TurnResponse } from "../api";
+import type { ExamSubmitResponse, NpcCommandResponse, NpcInteractionResponse, PlayerStateResponse, StartGameResponse, TradeResponse, TurnResponse } from "../api";
 
 const startPayload: StartGameResponse = {
   sessionId: "11111111-1111-4111-8111-111111111111",
@@ -97,6 +97,8 @@ afterEach(() => {
     error: null,
     lastExamResult: null,
     lastNpcInteraction: null,
+    lastTrade: null,
+    lastNpcCommand: null,
     lastTurn: null,
     npcDetail: null,
     npcDetailStatus: "idle",
@@ -557,6 +559,162 @@ describe("S74.3 UI state store", () => {
     const state = useGameSessionStore.getState();
     expect(state.inventory).toEqual(activeInventory);
     expect(JSON.stringify(state.inventory)).not.toMatch(/旧案清册|旧案经济解释|stale-trace/);
+  });
+
+  it("does not merge stale trade or delegation economy traces into another session", async () => {
+    const activeSessionId = "77777777-7777-4777-8777-777777777777";
+    const staleSessionId = "88888888-8888-4888-8888-888888888888";
+    const activeTrace = {
+      traceItems: [{ traceId: "active-trade-trace", title: "当前交易解释" }]
+    };
+    const staleTrace = {
+      traceItems: [{ traceId: "stale-trade-trace", title: "旧案交易解释" }]
+    };
+    const staleTradePayload: TradeResponse = {
+      sessionId: staleSessionId,
+      accepted: true,
+      tradeRecord: { tradeId: "trade:stale", publicSummary: "旧案交易" },
+      tradeLedgerView: { items: [{ tradeId: "trade:stale", publicSummary: "旧案交易" }] },
+      resourceLedgerView: { accounts: [{ accountId: "resource:stale", label: "旧案银两", amount: 0 }] },
+      inventoryView: {
+        containers: [{ containerId: "stale-container", label: "旧案书箧" }],
+        items: [{ itemId: "stale-item", name: "旧案清册", containerId: "stale-container" }],
+        importantCredentials: []
+      },
+      economyTraceView: staleTrace
+    };
+    const staleCommandPayload: NpcCommandResponse = {
+      sessionId: staleSessionId,
+      accepted: true,
+      delegatedTask: { taskId: "delegated-task:stale" },
+      delegatedTaskView: { items: [{ taskId: "delegated-task:stale", title: "旧案委派" }] },
+      economyTraceView: staleTrace
+    };
+    installFetchResponses(staleTradePayload, staleCommandPayload);
+    useGameSessionStore.setState({
+      currentSessionId: activeSessionId,
+      currentSession: {
+        source: "server_player_visible_state_projection",
+        sessionId: activeSessionId,
+        worldState: { player: { name: "当前案主", role: "magistrate" } },
+        tradeLedgerView: { items: [{ tradeId: "trade:active", publicSummary: "当前交易" }] },
+        delegatedTaskView: { items: [{ taskId: "delegated-task:active", title: "当前委派" }] },
+        economyTraceView: activeTrace
+      } as unknown as ReturnType<typeof useGameSessionStore.getState>["currentSession"],
+      inventory: {
+        sessionId: activeSessionId,
+        inventoryView: {
+          containers: [{ containerId: "active-container", label: "当前书箧" }],
+          items: [{ itemId: "active-item", name: "当前清册", containerId: "active-container" }],
+          importantCredentials: []
+        },
+        economyTraceView: activeTrace
+      } as unknown as ReturnType<typeof useGameSessionStore.getState>["inventory"],
+      npcRoster: {
+        sessionId: activeSessionId,
+        npcRosterView: { items: [] },
+        delegatedTaskView: { items: [{ taskId: "delegated-task:active", title: "当前委派" }] }
+      } as unknown as ReturnType<typeof useGameSessionStore.getState>["npcRoster"],
+      npcDetail: {
+        sessionId: activeSessionId,
+        npcDetailView: { npcId: "npc:active" },
+        tradeLedgerView: { items: [{ tradeId: "trade:active", publicSummary: "当前交易" }] },
+        delegatedTaskView: { items: [{ taskId: "delegated-task:active", title: "当前委派" }] }
+      } as unknown as ReturnType<typeof useGameSessionStore.getState>["npcDetail"],
+      npcMutationStatus: "idle"
+    });
+
+    await useGameSessionStore.getState().submitTrade(staleSessionId, {
+      npcId: "npc:stale",
+      tradeId: "trade:stale",
+      offerSummary: "旧案交易"
+    });
+    await useGameSessionStore.getState().submitNpcCommand(staleSessionId, {
+      assigneeActorId: "npc:stale",
+      taskType: "land_survey",
+      authoritySource: "yamen_authority",
+      commandText: "旧案委派",
+      budget: 12
+    });
+
+    const state = useGameSessionStore.getState();
+    const serialized = JSON.stringify({
+      currentSession: state.currentSession,
+      inventory: state.inventory,
+      npcRoster: state.npcRoster,
+      npcDetail: state.npcDetail,
+      lastTrade: state.lastTrade,
+      lastNpcCommand: state.lastNpcCommand
+    });
+    expect(state.currentSession?.economyTraceView).toEqual(activeTrace);
+    expect(state.inventory?.economyTraceView).toEqual(activeTrace);
+    expect(state.lastTrade).toBeNull();
+    expect(state.lastNpcCommand).toBeNull();
+    expect(serialized).not.toMatch(/旧案交易解释|旧案委派|旧案清册|stale-trade-trace|trade:stale|delegated-task:stale/);
+    expect(state.npcMutationStatus).toBe("ready");
+  });
+
+  it("does not patch currentSession when route pointer and session payload diverge", async () => {
+    const oldSessionId = "99999999-9999-4999-8999-999999999999";
+    const responseSessionId = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa";
+    const oldCurrentSession = {
+      source: "server_player_visible_state_projection",
+      sessionId: oldSessionId,
+      worldState: { player: { name: "旧案主", role: "official" } },
+      tradeLedgerView: { items: [{ tradeId: "trade:old", publicSummary: "旧案交易" }] },
+      delegatedTaskView: { items: [{ taskId: "delegated-task:old", title: "旧案委派" }] },
+      economyTraceView: {
+        traceItems: [{ traceId: "old-trace", title: "旧案经济解释" }]
+      }
+    } as unknown as ReturnType<typeof useGameSessionStore.getState>["currentSession"];
+    const routeTrace = {
+      traceItems: [{ traceId: "route-trace", title: "新路由交易解释" }]
+    };
+    const tradePayload: TradeResponse = {
+      sessionId: responseSessionId,
+      accepted: true,
+      tradeRecord: { tradeId: "trade:route", publicSummary: "新路由交易" },
+      tradeLedgerView: { items: [{ tradeId: "trade:route", publicSummary: "新路由交易" }] },
+      resourceLedgerView: { accounts: [{ accountId: "resource:route", label: "新路由银两", amount: 10 }] },
+      inventoryView: {
+        containers: [{ containerId: "route-container", label: "新路由书箧" }],
+        items: [{ itemId: "route-item", name: "新路由清册", containerId: "route-container" }],
+        importantCredentials: []
+      },
+      economyTraceView: routeTrace
+    };
+    const commandPayload: NpcCommandResponse = {
+      sessionId: responseSessionId,
+      accepted: true,
+      delegatedTask: { taskId: "delegated-task:route" },
+      delegatedTaskView: { items: [{ taskId: "delegated-task:route", title: "新路由委派" }] },
+      economyTraceView: routeTrace
+    };
+    installFetchResponses(tradePayload, commandPayload);
+    useGameSessionStore.setState({
+      currentSessionId: responseSessionId,
+      currentSession: oldCurrentSession,
+      npcMutationStatus: "idle"
+    });
+
+    await useGameSessionStore.getState().submitTrade(responseSessionId, {
+      npcId: "npc:route",
+      tradeId: "trade:route",
+      offerSummary: "新路由交易"
+    });
+    await useGameSessionStore.getState().submitNpcCommand(responseSessionId, {
+      assigneeActorId: "npc:route",
+      taskType: "land_survey",
+      authoritySource: "yamen_authority",
+      commandText: "新路由委派",
+      budget: 12
+    });
+
+    const state = useGameSessionStore.getState();
+    expect(state.currentSession).toEqual(oldCurrentSession);
+    expect(JSON.stringify(state.currentSession)).not.toMatch(/新路由交易解释|新路由委派|route-trace|trade:route|delegated-task:route/);
+    expect(state.lastTrade?.sessionId).toBe(responseSessionId);
+    expect(state.lastNpcCommand?.sessionId).toBe(responseSessionId);
   });
 
   it("merges NPC interaction memory and archive views into the current session", async () => {

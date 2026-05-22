@@ -856,6 +856,7 @@ export type TradeResponse = {
   readonly tradeLedgerView: TradeLedgerView;
   readonly resourceLedgerView?: ResourceLedgerView;
   readonly inventoryView?: InventoryView;
+  readonly economyTraceView?: EconomyTraceView;
 };
 
 export type DelegatedTaskAssigneeView = {
@@ -922,6 +923,7 @@ export type NpcCommandResponse = {
   readonly delegatedTaskPlanView?: DelegatedTaskPlanView;
   readonly delegatedTask?: JsonObject | null;
   readonly delegatedTaskView: DelegatedTaskView;
+  readonly economyTraceView?: EconomyTraceView;
 };
 
 export type StartGameResponse = SafeRouteViews & {

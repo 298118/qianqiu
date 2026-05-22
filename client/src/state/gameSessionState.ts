@@ -578,21 +578,48 @@ export const useGameSessionStore = create<GameSessionState>((set) => ({
     set({ npcMutationStatus: "loading", error: null });
     try {
       const payload = await qianqiuApi.submitTrade(sessionId, input);
-      set((state) => ({
-        lastTrade: payload,
-        inventory: payload.inventoryView
-          ? {
-              sessionId: payload.sessionId,
-              inventoryView: payload.inventoryView,
-              resourceLedgerView: payload.resourceLedgerView ?? state.inventory?.resourceLedgerView,
-              assetLedgerView: state.inventory?.assetLedgerView
-            }
-          : state.inventory,
-        npcDetail: state.npcDetail
-          ? { ...state.npcDetail, tradeLedgerView: payload.tradeLedgerView }
-          : state.npcDetail,
-        npcMutationStatus: payload.accepted ? "ready" : "error"
-      }));
+      set((state) => {
+        const responseSessionId = payload.sessionId ?? sessionId;
+        const sessionMatches = state.currentSessionId === responseSessionId || state.currentSession?.sessionId === responseSessionId;
+        const currentSessionMatches = state.currentSession?.sessionId === responseSessionId;
+        const hasSessionContext = Boolean(state.currentSessionId || state.currentSession?.sessionId);
+        if (hasSessionContext && !sessionMatches) {
+          return {
+            lastTrade: state.lastTrade,
+            inventory: state.inventory,
+            npcDetail: state.npcDetail,
+            currentSession: state.currentSession,
+            npcMutationStatus: "ready"
+          };
+        }
+        const inventoryMatches = state.inventory?.sessionId === responseSessionId;
+        const npcDetailMatches = state.npcDetail?.sessionId === responseSessionId;
+        return {
+          lastTrade: payload,
+          currentSession: state.currentSession && currentSessionMatches
+            ? {
+                ...state.currentSession,
+                tradeLedgerView: payload.tradeLedgerView,
+                resourceLedgerView: payload.resourceLedgerView ?? state.currentSession.resourceLedgerView,
+                inventoryView: payload.inventoryView ?? state.currentSession.inventoryView,
+                economyTraceView: payload.economyTraceView ?? state.currentSession.economyTraceView
+              }
+            : state.currentSession,
+          inventory: payload.inventoryView && (!state.inventory || inventoryMatches || sessionMatches)
+            ? {
+                sessionId: responseSessionId,
+                inventoryView: payload.inventoryView,
+                resourceLedgerView: payload.resourceLedgerView ?? state.inventory?.resourceLedgerView,
+                assetLedgerView: state.inventory?.assetLedgerView,
+                economyTraceView: payload.economyTraceView ?? state.inventory?.economyTraceView
+              }
+            : state.inventory,
+          npcDetail: state.npcDetail && npcDetailMatches
+            ? { ...state.npcDetail, tradeLedgerView: payload.tradeLedgerView }
+            : state.npcDetail,
+          npcMutationStatus: payload.accepted ? "ready" : "error"
+        };
+      });
       return payload;
     } catch (error) {
       set({ error: toErrorMessage(error), npcMutationStatus: "error" });
@@ -604,16 +631,40 @@ export const useGameSessionStore = create<GameSessionState>((set) => ({
     set({ npcMutationStatus: "loading", error: null });
     try {
       const payload = await qianqiuApi.submitNpcCommand(sessionId, input);
-      set((state) => ({
-        lastNpcCommand: payload,
-        npcRoster: state.npcRoster
-          ? { ...state.npcRoster, delegatedTaskView: payload.delegatedTaskView }
-          : state.npcRoster,
-        npcDetail: state.npcDetail
-          ? { ...state.npcDetail, delegatedTaskView: payload.delegatedTaskView }
-          : state.npcDetail,
-        npcMutationStatus: payload.accepted ? "ready" : "error"
-      }));
+      set((state) => {
+        const responseSessionId = payload.sessionId ?? sessionId;
+        const sessionMatches = state.currentSessionId === responseSessionId || state.currentSession?.sessionId === responseSessionId;
+        const currentSessionMatches = state.currentSession?.sessionId === responseSessionId;
+        const hasSessionContext = Boolean(state.currentSessionId || state.currentSession?.sessionId);
+        if (hasSessionContext && !sessionMatches) {
+          return {
+            lastNpcCommand: state.lastNpcCommand,
+            npcRoster: state.npcRoster,
+            npcDetail: state.npcDetail,
+            currentSession: state.currentSession,
+            npcMutationStatus: "ready"
+          };
+        }
+        const npcRosterMatches = state.npcRoster?.sessionId === responseSessionId;
+        const npcDetailMatches = state.npcDetail?.sessionId === responseSessionId;
+        return {
+          lastNpcCommand: payload,
+          currentSession: state.currentSession && currentSessionMatches
+            ? {
+                ...state.currentSession,
+                delegatedTaskView: payload.delegatedTaskView,
+                economyTraceView: payload.economyTraceView ?? state.currentSession.economyTraceView
+              }
+            : state.currentSession,
+          npcRoster: state.npcRoster && npcRosterMatches
+            ? { ...state.npcRoster, delegatedTaskView: payload.delegatedTaskView }
+            : state.npcRoster,
+          npcDetail: state.npcDetail && npcDetailMatches
+            ? { ...state.npcDetail, delegatedTaskView: payload.delegatedTaskView }
+            : state.npcDetail,
+          npcMutationStatus: payload.accepted ? "ready" : "error"
+        };
+      });
       return payload;
     } catch (error) {
       set({ error: toErrorMessage(error), npcMutationStatus: "error" });

@@ -480,6 +480,7 @@ export type TradeResponse = RouteEnvelope & {
   readonly tradeLedgerView: JsonObject;
   readonly resourceLedgerView?: JsonObject;
   readonly inventoryView?: JsonObject;
+  readonly economyTraceView?: JsonObject;
 };
 
 export type NpcCommandResponse = RouteEnvelope & {
@@ -488,6 +489,7 @@ export type NpcCommandResponse = RouteEnvelope & {
   readonly delegatedTaskPlanView?: JsonObject;
   readonly delegatedTask?: JsonObject | null;
   readonly delegatedTaskView: JsonObject;
+  readonly economyTraceView?: JsonObject;
 };
 
 export type RouteFeedbackView = {

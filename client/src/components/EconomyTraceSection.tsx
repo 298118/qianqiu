@@ -6,6 +6,8 @@ type EconomyTraceSectionProps = {
   readonly summaryFallback?: string;
   readonly idPrefix?: string;
   readonly maxItems?: number;
+  readonly traceTypes?: readonly string[];
+  readonly groups?: readonly string[];
   readonly runnable?: boolean;
   readonly onDraft?: (text: string) => void;
 };
@@ -19,6 +21,11 @@ type SafeEconomyTraceItem = {
   readonly amountText?: string;
   readonly affectedLabels: readonly string[];
   readonly nextStep?: string;
+};
+
+type SafeItemsOptions = {
+  readonly traceTypes?: readonly string[];
+  readonly groups?: readonly string[];
 };
 
 const unsafeEconomyTraceFragments = [
@@ -116,9 +123,19 @@ function amountText(item: EconomyTraceItemView) {
   return "";
 }
 
-function safeItems(traceView: EconomyTraceView | null | undefined, maxItems: number): SafeEconomyTraceItem[] {
+function safeItems(
+  traceView: EconomyTraceView | null | undefined,
+  maxItems: number,
+  options: SafeItemsOptions = {}
+): SafeEconomyTraceItem[] {
+  const traceTypeFilter = new Set(options.traceTypes ?? []);
+  const groupFilter = new Set(options.groups ?? []);
   return ((traceView?.traceItems ?? []) as readonly EconomyTraceItemView[])
     .map((item, index) => {
+      const traceType = cleanTraceText(item.traceType, "", 64);
+      const group = cleanTraceText(item.group, "", 32);
+      if (traceTypeFilter.size && !traceTypeFilter.has(traceType)) return null;
+      if (groupFilter.size && !groupFilter.has(group)) return null;
       const title = cleanTraceText(item.title, "", 54);
       const summary = cleanTraceText(item.publicSummary, "", 150);
       const groupLabel = cleanTraceText(item.groupLabel, "经济解释", 24);
@@ -130,6 +147,8 @@ function safeItems(traceView: EconomyTraceView | null | undefined, maxItems: num
         item.title,
         item.publicSummary,
         item.groupLabel,
+        item.group,
+        item.traceType,
         item.statusLabel,
         item.status,
         item.nextStep,
@@ -163,10 +182,12 @@ export function EconomyTraceSection({
   summaryFallback = "资源、资产、囊箧、交易、委派和月账解释只来自服务器安全投影；前端不成交、不扣款、不转物。",
   idPrefix = "economy-trace",
   maxItems = 6,
+  traceTypes,
+  groups,
   runnable = true,
   onDraft
 }: EconomyTraceSectionProps) {
-  const items = safeItems(traceView, maxItems);
+  const items = safeItems(traceView, maxItems, { traceTypes, groups });
   if (!items.length) return null;
   const canDraft = runnable !== false && Boolean(onDraft);
   const titleId = `${idPrefix}-title`;

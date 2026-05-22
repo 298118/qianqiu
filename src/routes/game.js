@@ -1791,18 +1791,27 @@ router.post("/trade/:sessionId", async (req, res, next) => {
             riskTags: []
           }
         });
+        const resourceLedgerView = buildResourceLedgerView(worldState, {
+          viewerActorId: worldState.player?.id || "player"
+        });
+        const inventoryView = buildInventoryView(worldState, {
+          viewerActorId: worldState.player?.id || "player",
+          includeRoleLimited: true
+        });
         return defineTradeResponse({
           sessionId: worldState.sessionId,
           accepted: false,
           errors: resolved.errors,
           tradeRecord: resolved.record,
           tradeLedgerView: resolved.tradeLedgerView,
-          resourceLedgerView: buildResourceLedgerView(worldState, {
-            viewerActorId: worldState.player?.id || "player"
-          }),
-          inventoryView: buildInventoryView(worldState, {
-            viewerActorId: worldState.player?.id || "player",
-            includeRoleLimited: true
+          resourceLedgerView,
+          inventoryView,
+          economyTraceView: buildEconomyTraceView(worldState, {
+            views: {
+              tradeLedgerView: resolved.tradeLedgerView,
+              resourceLedgerView,
+              inventoryView
+            }
           })
         });
       }
@@ -1819,18 +1828,27 @@ router.post("/trade/:sessionId", async (req, res, next) => {
         maxOutputTokens: route.maxOutputTokens
       });
       const resolved = resolveTradeRequest(worldState, req.body, negotiation);
+      const resourceLedgerView = buildResourceLedgerView(worldState, {
+        viewerActorId: worldState.player?.id || "player"
+      });
+      const inventoryView = buildInventoryView(worldState, {
+        viewerActorId: worldState.player?.id || "player",
+        includeRoleLimited: true
+      });
       return defineTradeResponse({
         sessionId: worldState.sessionId,
         accepted: resolved.ok,
         errors: resolved.errors,
         tradeRecord: resolved.record,
         tradeLedgerView: resolved.tradeLedgerView,
-        resourceLedgerView: buildResourceLedgerView(worldState, {
-          viewerActorId: worldState.player?.id || "player"
-        }),
-        inventoryView: buildInventoryView(worldState, {
-          viewerActorId: worldState.player?.id || "player",
-          includeRoleLimited: true
+        resourceLedgerView,
+        inventoryView,
+        economyTraceView: buildEconomyTraceView(worldState, {
+          views: {
+            tradeLedgerView: resolved.tradeLedgerView,
+            resourceLedgerView,
+            inventoryView
+          }
         })
       });
     });
@@ -1849,11 +1867,15 @@ router.post("/npc-command/:sessionId", async (req, res, next) => {
         issuerActorId: worldState.player?.id || "player"
       });
       if (!validation.ok) {
+        const delegatedTaskView = buildDelegatedTaskLedgerView(worldState);
         return defineNpcCommandResponse({
           sessionId: worldState.sessionId,
           accepted: false,
           errors: validation.errors,
-          delegatedTaskView: buildDelegatedTaskLedgerView(worldState)
+          delegatedTaskView,
+          economyTraceView: buildEconomyTraceView(worldState, {
+            views: { delegatedTaskView }
+          })
         });
       }
 
@@ -1885,11 +1907,15 @@ router.post("/npc-command/:sessionId", async (req, res, next) => {
       });
       const safePlan = sanitizeDelegatedTaskPlan(plan);
       if (!safePlan.ok) {
+        const delegatedTaskView = buildDelegatedTaskLedgerView(worldState);
         return defineNpcCommandResponse({
           sessionId: worldState.sessionId,
           accepted: false,
           errors: safePlan.errors,
-          delegatedTaskView: buildDelegatedTaskLedgerView(worldState)
+          delegatedTaskView,
+          economyTraceView: buildEconomyTraceView(worldState, {
+            views: { delegatedTaskView }
+          })
         });
       }
 
@@ -1915,7 +1941,10 @@ router.post("/npc-command/:sessionId", async (req, res, next) => {
           suggestedDueTurns: safePlan.suggestedDueTurns
         },
         delegatedTask: safeTask,
-        delegatedTaskView: created.delegatedTaskView
+        delegatedTaskView: created.delegatedTaskView,
+        economyTraceView: buildEconomyTraceView(worldState, {
+          views: { delegatedTaskView: created.delegatedTaskView }
+        })
       });
     });
     res.status(payload.accepted ? 200 : 400).json(payload);

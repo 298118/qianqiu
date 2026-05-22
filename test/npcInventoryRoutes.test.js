@@ -125,6 +125,11 @@ test("S83/S84 safety APIs expose NPC, inventory, trade and delegated task views 
   assert.equal(commandPayload.delegatedTask.taskType, "land_survey");
   assert.equal(commandPayload.delegatedTask.serverPlan, undefined);
   assert.equal(commandPayload.delegatedTaskView.items.length, 1);
+  assert.ok(commandPayload.economyTraceView.traceItems.some((item) => item.traceType === "delegated_task_budget"));
+  assert.doesNotMatch(
+    JSON.stringify(commandPayload.economyTraceView),
+    /"assetLedger":|"resourceLedger":|"inventoryLedger":|"tradeLedger":|"delegatedTaskLedger":|"evidenceRefs":|"hiddenDossier":|"privateSignalTags":|"rawLedger":|sqlite|SQLite|SQL|sk-[A-Za-z0-9_-]{6,}/
+  );
 
   const inventoryResponse = await fetch(`${server.baseUrl}/api/game/inventory/${worldState.sessionId}`);
   const inventoryPayload = await inventoryResponse.json();
@@ -166,6 +171,11 @@ test("S83/S84 safety APIs expose NPC, inventory, trade and delegated task views 
   const tradePayload = await tradeResponse.json();
   assert.equal(tradeResponse.status, 200);
   assert.equal(tradePayload.tradeRecord.tradeId, "trade:test:paper");
+  assert.ok(tradePayload.economyTraceView.traceItems.some((item) => item.traceType === "trade_negotiation"));
+  assert.doesNotMatch(
+    JSON.stringify(tradePayload.economyTraceView),
+    /"assetLedger":|"resourceLedger":|"inventoryLedger":|"tradeLedger":|"delegatedTaskLedger":|"evidenceRefs":|"hiddenDossier":|"privateSignalTags":|"rawLedger":|sqlite|SQLite|SQL|sk-[A-Za-z0-9_-]{6,}/
+  );
 
   const socialResponse = await fetch(`${server.baseUrl}/api/game/npc-interaction/${worldState.sessionId}`, {
     method: "POST",

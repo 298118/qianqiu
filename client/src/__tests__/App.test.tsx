@@ -3035,6 +3035,17 @@ describe("S74.1 React client shell", () => {
               npc: { displayName: "旧案 NPC" }
             }]
           }
+        },
+        economyTraceView: {
+          schemaVersion: "s88.8-economy-trace.v1",
+          traceItems: [{
+            traceId: "stale-people-trade",
+            traceType: "trade_negotiation",
+            title: "旧案交易解释",
+            publicSummary: "此解释属于另一个案卷，不应在当前人物页出现。",
+            groupLabel: "交易议价",
+            statusLabel: "可阅"
+          }]
         }
       } as unknown as ReturnType<typeof useGameSessionStore.getState>["currentSession"],
       status: "ready"
@@ -3045,7 +3056,120 @@ describe("S74.1 React client shell", () => {
     await screen.findByRole("heading", { name: "人物" });
     await waitFor(() => expect(fetchMock.mock.calls.some(([url]) => String(url) === `/api/game/npcs/${routeSessionId}?pageSize=50`)).toBe(true));
     expect(screen.queryByText("跨案卷来函线索")).toBeNull();
+    expect(screen.queryByText("旧案交易解释")).toBeNull();
     expect(screen.queryByRole("button", { name: "拟复核" })).toBeNull();
+  });
+
+  it("renders S88.8 economy trace in the people trade and delegation workspace", async () => {
+    const sessionId = "77777777-7777-4777-8777-777777777777";
+    const economyTraceView = {
+      schemaVersion: "s88.8-economy-trace.v1",
+      summary: "已整理3条人物交易、委派与月账解释。",
+      traceItems: [
+        {
+          traceId: "people-trade:safe",
+          traceType: "trade_negotiation",
+          groupLabel: "交易议价",
+          title: "韩员外交易议价",
+          publicSummary: "议买纸张与粮价消息，尚待服务器确认。",
+          statusLabel: "待复议",
+          affectedLabels: ["韩员外"],
+          amountView: { label: "议价银两", delta: -4, unit: "两" },
+          nextStep: "交易仍需后续服务器结算路径确认，不视为已经成交。"
+        },
+        {
+          traceId: "people-task:safe",
+          traceType: "delegated_task_budget",
+          groupLabel: "委派回禀",
+          title: "东乡清丈委派",
+          publicSummary: "陆知事承办中；预算、成败和关系影响由服务器裁决。",
+          statusLabel: "待办",
+          affectedLabels: ["陆知事"],
+          nextStep: "等待到期月结；提前更改任务需另写行动草稿。"
+        },
+        {
+          traceId: "people-market:safe",
+          traceType: "market_price_signal",
+          groupLabel: "月账线索",
+          title: "纸价小涨",
+          publicSummary: "县城纸价略紧，可作为交易议价材料。",
+          statusLabel: "上涨",
+          affectedLabels: ["纸张"],
+          nextStep: "市价只作为交易、维护和叙事裁决材料；前端不得自行成交。"
+        },
+        {
+          traceId: "people-resource:not-shown",
+          traceType: "resource_snapshot",
+          groupLabel: "资源变化",
+          title: "银两账面",
+          publicSummary: "人物页本片不展示纯资源快照。"
+        },
+        {
+          traceId: "people-polluted",
+          traceType: "trade_negotiation",
+          groupLabel: "交易议价",
+          title: "污染交易解释",
+          publicSummary: "privateSignalTags provider payload data/sessions sk-test-secret",
+          statusLabel: "可阅"
+        }
+      ]
+    };
+    const fetchMock = vi.fn(async (url: string) => {
+      if (url === "/assets/ui/ink-ui-runtime-manifest.json") {
+        return new Response(JSON.stringify(buildMockAssetManifest(0)), {
+          status: 200,
+          headers: { "Content-Type": "application/json" }
+        });
+      }
+      if (url === `/api/game/player-state/${sessionId}`) {
+        return new Response(JSON.stringify({
+          source: "server_player_visible_state_projection",
+          sessionId,
+          worldState: { player: { name: "清丈知县", role: "magistrate" } },
+          worldPeopleView: { npcs: [], relationships: [] },
+          npcRosterView: { items: [] },
+          npcActiveRequestView: { items: [], followUpTasks: [], followUpEvidence: { counts: { total: 0 }, people: [], events: [], economy: [] } },
+          economyTraceView
+        }), {
+          status: 200,
+          headers: { "Content-Type": "application/json" }
+        });
+      }
+      if (url === `/api/ai/quick-actions/${sessionId}`) {
+        return new Response(JSON.stringify({
+          schemaVersion: "s75.9-quick-actions.v1",
+          sessionId,
+          source: "mock-ai",
+          status: "ready",
+          quickActionSuggestions: []
+        }), {
+          status: 200,
+          headers: { "Content-Type": "application/json" }
+        });
+      }
+      throw new Error(`unexpected url: ${url}`);
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    renderRoute(`/game/${sessionId}/people`);
+
+    await screen.findByRole("heading", { name: "人物" });
+    await screen.findByText("交易委派账本为何变化");
+    expect(screen.getByText("韩员外交易议价")).toBeTruthy();
+    expect(screen.getByText("东乡清丈委派")).toBeTruthy();
+    expect(screen.getByText("纸价小涨")).toBeTruthy();
+    expect(screen.queryByText("银两账面")).toBeNull();
+    expect(screen.queryByText("污染交易解释")).toBeNull();
+    expect(screen.queryByText(/provider payload|privateSignalTags|data\/sessions|sk-test-secret/i)).toBeNull();
+    expect(screen.getByText("3 条")).toBeTruthy();
+    expect(screen.getAllByRole("button", { name: "拟复核" })).toHaveLength(3);
+    fireEvent.click(screen.getAllByRole("button", { name: "拟复核" })[0]);
+    expect(useUiStateStore.getState().actionDraft).toMatchObject({
+      source: "role-surface",
+      targetPage: "game",
+      text: expect.stringContaining("服务器裁决")
+    });
+    expect(fetchMock.mock.calls.map(([url]) => String(url))).not.toContain("/api/game/turn");
   });
 
   it("renders S88.8 inventory economy trace from safe server projections", async () => {

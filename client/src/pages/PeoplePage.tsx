@@ -3,6 +3,7 @@ import { useParams } from "react-router";
 import type { AssetRegistry, RuntimePortraitAsset } from "../assets/assetRegistry";
 import { useAssetRegistry } from "../assets/useAssetRegistry";
 import type { DelegatedTaskRecordView, NpcActiveRequestFollowUpTaskView, NpcActiveRequestItemView, NpcActiveRequestResponseOptionView, NpcDetailView, NpcRosterItem, PlayerSummary, TradeRecordView, WorldPeopleNpc, WorldPeopleRelationship } from "../api";
+import { EconomyTraceSection } from "../components/EconomyTraceSection";
 import { NpcFollowUpEvidenceSection } from "../components/NpcFollowUpEvidenceSection";
 import { Portrait } from "../components/Portrait";
 import { markOverlayTrigger } from "../components/overlayFocus";
@@ -69,6 +70,18 @@ const npcWorkbenchTabs = [
 ] as const;
 
 type NpcWorkbenchTab = typeof npcWorkbenchTabs[number]["id"];
+
+const peopleEconomyTraceTypes = [
+  "trade_negotiation",
+  "trade_expiry",
+  "trade_blocked",
+  "delegated_task_result",
+  "delegated_task_budget",
+  "human_debt_monthly",
+  "market_price_signal",
+  "npc_relationship_monthly",
+  "monthly_economy_event"
+] as const;
 
 type PersonRow = {
   readonly id: string;
@@ -458,6 +471,10 @@ export function PeoplePage() {
   const delegatedTasks = npcDetailPayload?.sessionId === sessionId
     ? npcDetailPayload.delegatedTaskView?.items ?? npcRosterPayload?.delegatedTaskView?.items ?? activeSession?.delegatedTaskView?.items ?? []
     : activeSession?.delegatedTaskView?.items ?? [];
+  const peopleEconomyTraceView = activeSession?.economyTraceView
+    ?? (lastTrade?.sessionId === sessionId ? lastTrade.economyTraceView : null)
+    ?? (lastNpcCommand?.sessionId === sessionId ? lastNpcCommand.economyTraceView : null)
+    ?? null;
 
   async function handleDialogueSubmit() {
     if (!selectedNpc || !dialogueDraft.trim() || !runnable) return;
@@ -537,6 +554,20 @@ export function PeoplePage() {
         evidence={activeSession?.npcActiveRequestView?.followUpEvidence ?? null}
         boundaryText="这里展示的线索只来自服务器安全 view；按钮只写草稿，不结算资源、人情债、婚姻、弹劾、定罪、背叛或未公开事实。"
         idPrefix="people-follow-up-evidence"
+        onDraft={(text) => setActionDraft({
+          source: "role-surface",
+          targetPage: "game",
+          text
+        })}
+      />
+      <EconomyTraceSection
+        traceView={peopleEconomyTraceView}
+        title="交易委派账本为何变化"
+        summaryFallback="交易、委派、人情债、市价和月账解释只来自服务器安全投影；人物页不成交、不扣款、不改任务结果。"
+        idPrefix="people-economy-trace"
+        traceTypes={peopleEconomyTraceTypes}
+        maxItems={6}
+        runnable={runnable}
         onDraft={(text) => setActionDraft({
           source: "role-surface",
           targetPage: "game",
