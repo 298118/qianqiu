@@ -685,7 +685,7 @@ S84 前端专项额外验收入口：
 - 回归：`test/npcActiveRequests.test.js` 覆盖引荐拜会、背叛风险、人情债月账、请托案牍、廉政和风宪 watchlist 的 evidence 映射与边界；`test/resolverInputContext.test.js` 覆盖 resolver input 从 safe view 消费 people/economy/events evidence 且不读取 raw ledger；`test/topicSurfaceView.test.js` 覆盖奏折/人物/堂审 surface 显示只读后续 evidence，并断言人物档案不收请托案牍、堂审不收引荐拜会；`test/safeWorldSearch.test.js` 和 `test/sqliteSafeSearch.test.js` 覆盖内存搜索与 SQLite safe-search 同步这些公开行且不泄露 raw/private/provider/path/key。
 - 验证：已通过语法检查、`node --test --test-reporter=spec test/npcActiveRequests.test.js test/resolverInputContext.test.js test/safeWorldSearch.test.js test/topicSurfaceView.test.js`（34 项）、`node --test --test-reporter=spec test/sqliteSafeSearch.test.js`（7 项）、topic surface P2 修复后 focused `test/topicSurfaceView.test.js`（7 项）与 `test/resolverInputContext.test.js`（11 项）、`npm run typecheck:server`、`npm run typecheck:client`、docs governance、documentation governance、完整 `npm test`（1107 项）和 `git diff --check`。
 - 子代理：Poincare 只读建议采用独立派生 evidence view 并接 resolver/topic/search/SQLite，避免直接把 `followUpTasks` 塞入 source collections；Carver 只读建议本片暂不新增 actor memory 写入或 world entity influence，避免同一 follow-up 重复强化。两项建议均已采纳。Poincare 提交前只读初审发现 topic surface 未执行 `topicSurfaceIds` allowlist 的 P2；主代理已在 resolver input 保留 surface ids、topic surface 按 surface 过滤并补回归，Poincare 复核确认 P2 已关闭，未发现新的 P0/P1/P2。非阻断残余风险：`sourceViews` 统计仍来自原始 resolver buckets，当前不会扩大 evidence 展示或裁决。
-- 提交：实现提交待回填。
+- 提交：实现提交 `73d6540d`。本次哈希回填为低风险纯文档维护，不改代码、API/schema、运行时行为、提示词或验证工具；按项目规则跳过额外子代理复审。
 
 ### 2026-05-22：推进 S88.7 主动来函后续公开回响
 
