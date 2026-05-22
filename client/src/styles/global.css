@@ -116,6 +116,9 @@ a {
   background: rgba(255, 248, 230, 0.62);
   padding: 8px 12px;
   color: #2d251d;
+  cursor: pointer;
+  font: inherit;
+  text-decoration: none;
 }
 
 .topNav a.active,
@@ -3706,6 +3709,11 @@ button:disabled {
   display: grid;
   align-content: start;
   gap: 14px;
+}
+
+.rankingDetailPanel:focus {
+  outline: 2px solid rgba(123, 36, 31, 0.24);
+  outline-offset: 4px;
 }
 
 .rankingDetailPanel p {

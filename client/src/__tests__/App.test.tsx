@@ -2460,9 +2460,16 @@ describe("S74.1 React client shell", () => {
     expect(dialog.textContent || "").toContain("占位状态");
     expect(dialog.textContent || "").toContain("服务器裁决");
     expect(dialog.textContent || "").not.toMatch(/raw audit|provider payload|hiddenNotes|data\/sessions|OPENAI_API_KEY/i);
-    expect(screen.getByRole("button", { name: "关闭专题" })).toBe(document.activeElement);
+    const closeSurfaceButton = screen.getByRole("button", { name: "关闭专题" });
+    const writeDraftButton = screen.getByRole("button", { name: "写入奏折草稿" });
+    expect(closeSurfaceButton).toBe(document.activeElement);
 
-    fireEvent.click(screen.getByRole("button", { name: "写入奏折草稿" }));
+    fireEvent.keyDown(document, { key: "Tab", shiftKey: true });
+    expect(writeDraftButton).toBe(document.activeElement);
+    fireEvent.keyDown(document, { key: "Tab" });
+    expect(closeSurfaceButton).toBe(document.activeElement);
+
+    fireEvent.click(writeDraftButton);
     expect(useUiStateStore.getState().actionDraft).toMatchObject({
       source: "role-surface",
       targetPage: "game"
@@ -2856,13 +2863,16 @@ describe("S74.1 React client shell", () => {
     });
     const archiveRender = renderRoute(`/game/${routeSessionId}/archive`);
     await screen.findByRole("heading", { name: "史册" });
-    fireEvent.click(screen.getByRole("button", { name: "阅奏折" }));
+    const archiveTrigger = screen.getByRole("button", { name: "阅奏折" });
+    fireEvent.click(archiveTrigger);
     const memorialDialog = await screen.findByRole("dialog", { name: "奏折队列" });
     await waitFor(() => expect(memorialDialog.textContent || "").toContain("奏折队列当前案题"));
     expect(useUiStateStore.getState().currentSessionId).toBe(routeSessionId);
+    expect(screen.getByRole("button", { name: "关闭专题" })).toBe(document.activeElement);
 
     fireEvent.keyDown(document, { key: "Escape" });
     await waitFor(() => expect(screen.queryByRole("dialog", { name: "奏折队列" })).toBeNull());
+    expect(document.activeElement).toBe(archiveTrigger);
     archiveRender.unmount();
 
     useGameSessionStore.setState({
@@ -2875,10 +2885,15 @@ describe("S74.1 React client shell", () => {
     });
     renderRoute(`/game/${routeSessionId}/map`);
     await screen.findByRole("heading", { name: "山河舆图" });
-    fireEvent.click(screen.getByRole("button", { name: "筛舆图" }));
+    const mapTrigger = screen.getByRole("button", { name: "筛舆图" });
+    fireEvent.click(mapTrigger);
     const mapDialog = await screen.findByRole("dialog", { name: "舆图筛选" });
     expect(mapDialog.textContent || "").toContain("mapRuntimeView");
     expect(useUiStateStore.getState().currentSessionId).toBe(routeSessionId);
+    expect(screen.getByRole("button", { name: "关闭专题" })).toBe(document.activeElement);
+    fireEvent.keyDown(document, { key: "Escape" });
+    await waitFor(() => expect(screen.queryByRole("dialog", { name: "舆图筛选" })).toBeNull());
+    expect(document.activeElement).toBe(mapTrigger);
     expect(document.body.textContent || "").not.toMatch(/旧案题|旧案材料不应显示|\/api\/game\/state|\/api\/dev|raw audit|provider payload|OPENAI_API_KEY/i);
   });
 
@@ -3366,6 +3381,10 @@ describe("S74.1 React client shell", () => {
     expect(screen.getAllByText("顾衡").length).toBeGreaterThan(0);
     expect(document.querySelector(".rankingGoldenNotice")).toBeTruthy();
     expect(document.querySelector(".rankingList li.isPlayer")).toBeTruthy();
+    const rankingDetail = screen.getByRole("complementary", { name: "榜名详情" });
+    expect(rankingDetail.getAttribute("tabindex")).toBe("-1");
+    fireEvent.click(screen.getByRole("button", { name: "跳至我名" }));
+    expect(document.activeElement).toBe(rankingDetail);
     expect(screen.getByText("翰林院修撰")).toBeTruthy();
     expect(screen.getByText("切中时务。")).toBeTruthy();
     expect(screen.getByText("同年座师")).toBeTruthy();

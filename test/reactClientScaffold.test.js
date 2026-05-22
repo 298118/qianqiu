@@ -389,6 +389,10 @@ test("S74.4 shell uses registry-backed overlays without widening data sources", 
   assert.match(surfaceHostSource, /modalRegistry/);
   assert.match(surfaceHostSource, /surfaceRegistry/);
   assert.match(surfaceHostSource, /event\.key !== "Escape"/);
+  assert.match(surfaceHostSource, /event\.key === "Tab"/);
+  assert.match(surfaceHostSource, /trapFocusWithin/);
+  assert.match(surfaceHostSource, /data-overlay-kind="surface"/);
+  assert.match(surfaceHostSource, /data-overlay-kind="drawer"/);
   assert.match(surfaceHostSource, /focusReturnTargetsRef/);
   assert.match(surfaceHostSource, /returningFromPortrait/);
   assert.match(uiStateSource, /openSurfaceForSession/);
@@ -1026,6 +1030,10 @@ test("S76.8 ranking page renders server-owned ranking views without widening aut
   assert.match(rankingPageSource, /同年座师/);
   assert.match(rankingPageSource, /setActionDraft/);
   assert.match(rankingPageSource, /setSelectedId\(null\)/);
+  assert.match(rankingPageSource, /detailPanelRef/);
+  assert.match(rankingPageSource, /scrollIntoView/);
+  assert.match(rankingPageSource, /focus\(\{ preventScroll: true \}\)/);
+  assert.match(rankingPageSource, /tabIndex=\{-1\}/);
   assert.match(rankingPageSource, /\}, \[sessionId\]\)/);
   assert.doesNotMatch(rankingPageSource, /buildHonorFallbackRows|index \+ 1/);
   assert.match(rankingPageSource, /rankingTopThree/);
@@ -1036,6 +1044,7 @@ test("S76.8 ranking page renders server-owned ranking views without widening aut
   assert.match(styleSource, /rankingFullScreen/);
   assert.match(styleSource, /rankingTopThree/);
   assert.match(styleSource, /rankingDetailPanel/);
+  assert.match(styleSource, /rankingDetailPanel:focus/);
   assert.match(styleSource, /rankingActionRow/);
   assert.match(clientSmokeSource, /assertRankingFullScreen/);
   assert.match(clientSmokeSource, /s76-ranking-fullscreen-mobile/);

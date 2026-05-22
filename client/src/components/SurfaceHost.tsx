@@ -81,6 +81,9 @@ export function SurfaceHost() {
   useEffect(() => {
     if (!overlayKind) return;
     function handleKeyDown(event: KeyboardEvent) {
+      if (event.key === "Tab") {
+        if (trapFocusWithin(getActiveOverlayContainer(overlayKind), event)) return;
+      }
       if (event.key !== "Escape") return;
       event.preventDefault();
       if (activePortraitViewer) {
@@ -123,6 +126,50 @@ function focusFirstControl(container: HTMLElement | null) {
   target.focus();
 }
 
+function getFocusableElements(container: HTMLElement) {
+  return [...container.querySelectorAll<HTMLElement>(focusableSelector)]
+    .filter((element) => element.tabIndex >= 0 && !element.hasAttribute("disabled") && element.getAttribute("aria-hidden") !== "true");
+}
+
+function getActiveOverlayContainer(kind: OverlayKind | null) {
+  if (!kind) return null;
+  return document.querySelector<HTMLElement>(`[data-overlay-kind="${kind}"]`);
+}
+
+function trapFocusWithin(container: HTMLElement | null, event: KeyboardEvent) {
+  if (!container) return false;
+  const focusableElements = getFocusableElements(container);
+  if (!focusableElements.length) {
+    event.preventDefault();
+    container.focus();
+    return true;
+  }
+
+  const firstElement = focusableElements[0];
+  const lastElement = focusableElements[focusableElements.length - 1];
+  const activeElement = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+
+  if (!activeElement || !container.contains(activeElement)) {
+    event.preventDefault();
+    (event.shiftKey ? lastElement : firstElement).focus();
+    return true;
+  }
+
+  if (event.shiftKey && activeElement === firstElement) {
+    event.preventDefault();
+    lastElement.focus();
+    return true;
+  }
+
+  if (!event.shiftKey && activeElement === lastElement) {
+    event.preventDefault();
+    firstElement.focus();
+    return true;
+  }
+
+  return false;
+}
+
 function DrawerHost({ activeDrawer }: { readonly activeDrawer: DrawerSurface }) {
   const closeDrawer = useUiStateStore((state) => state.closeDrawer);
   const drawerRef = useRef<HTMLElement | null>(null);
@@ -132,7 +179,7 @@ function DrawerHost({ activeDrawer }: { readonly activeDrawer: DrawerSurface }) 
   }, [activeDrawer]);
 
   return (
-    <aside ref={drawerRef} className="drawerHost" aria-label={drawerRegistry[activeDrawer].label} tabIndex={-1}>
+    <aside ref={drawerRef} className="drawerHost" aria-label={drawerRegistry[activeDrawer].label} tabIndex={-1} data-overlay-kind="drawer">
       <button className="iconButton drawerClose" type="button" title="关闭" aria-label="关闭抽屉" onClick={closeDrawer}>
         <X size={18} aria-hidden="true" />
       </button>
@@ -350,7 +397,7 @@ function ModalHost({ activeModal }: { readonly activeModal: ModalSurface }) {
 
   return (
     <div className="modalScrim" role="presentation">
-      <section ref={modalRef} className="modalPanel" role="dialog" aria-modal="true" aria-labelledby={`${activeModal}-title`} tabIndex={-1}>
+      <section ref={modalRef} className="modalPanel" role="dialog" aria-modal="true" aria-labelledby={`${activeModal}-title`} tabIndex={-1} data-overlay-kind="modal">
         <button className="iconButton drawerClose" type="button" title="关闭" aria-label="关闭弹窗" onClick={closeModal}>
           <X size={18} aria-hidden="true" />
         </button>
@@ -395,6 +442,7 @@ function PortraitViewerHost() {
         aria-labelledby="portrait-viewer-title"
         tabIndex={-1}
         data-portrait-viewer="true"
+        data-overlay-kind="portrait"
       >
         <button className="iconButton drawerClose" type="button" title="关闭" aria-label="关闭高清立绘" onClick={closePortraitViewer}>
           <X size={18} aria-hidden="true" />
@@ -635,7 +683,7 @@ function LocalSurfaceHost({ activeSurface }: { readonly activeSurface: LocalSurf
 
   return (
     <div className="modalScrim surfaceScrim" role="presentation">
-      <section ref={surfaceRef} className="modalPanel localSurfacePanel" role="dialog" aria-modal="true" aria-labelledby={`${entry.id}-title`} tabIndex={-1}>
+      <section ref={surfaceRef} className="modalPanel localSurfacePanel" role="dialog" aria-modal="true" aria-labelledby={`${entry.id}-title`} tabIndex={-1} data-overlay-kind="surface">
         <button className="iconButton drawerClose" type="button" title="关闭" aria-label="关闭专题" onClick={closeSurface}>
           <X size={18} aria-hidden="true" />
         </button>

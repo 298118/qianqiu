@@ -1,5 +1,5 @@
 import type { CSSProperties } from "react";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useParams } from "react-router";
 import { useAssetRegistry } from "../assets/useAssetRegistry";
 import { useGameSessionStore } from "../state/gameSessionState";
@@ -183,6 +183,7 @@ export function RankingPage() {
   const { sessionId = "s74-preview" } = useParams();
   const { registry } = useAssetRegistry();
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const detailPanelRef = useRef<HTMLElement | null>(null);
   const currentSession = useGameSessionStore((state) => state.currentSession);
   const lastExamResult = useGameSessionStore((state) => state.lastExamResult);
   const setActionDraft = useUiStateStore((state) => state.setActionDraft);
@@ -269,6 +270,15 @@ export function RankingPage() {
     setSelectedId(null);
   }, [sessionId]);
 
+  function focusPlayerDetail() {
+    const target = detailPanelRef.current;
+    if (!target) return;
+    if (typeof target.scrollIntoView === "function") {
+      target.scrollIntoView({ block: "start" });
+    }
+    target.focus({ preventScroll: true });
+  }
+
   return (
     <article
       className="rankingFullScreen routePanel"
@@ -286,7 +296,7 @@ export function RankingPage() {
           <h1 id="ranking-title">皇榜</h1>
           <p>{examName} · {publicSummary}</p>
         </div>
-        <a className="paperLink rankingJumpLink" href="#ranking-player-detail">跳至我名</a>
+        <button className="paperLink rankingJumpLink" type="button" onClick={focusPlayerDetail}>跳至我名</button>
       </section>
 
       <section className="rankingNoticeBoard" aria-label="服务器定榜皇榜">
@@ -338,7 +348,7 @@ export function RankingPage() {
             )}
           </section>
 
-          <aside className="rankingDetailPanel" id="ranking-player-detail" aria-label="榜名详情">
+          <aside ref={detailPanelRef} className="rankingDetailPanel" id="ranking-player-detail" aria-label="榜名详情" tabIndex={-1}>
             <p className="eyebrow">{selectedEntry?.isPlayer ? "我名在此" : "榜名细读"}</p>
             <h2>{selectedEntry?.name ?? playerName}</h2>
             <dl className="rankingDetailRail">
