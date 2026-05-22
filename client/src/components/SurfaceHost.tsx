@@ -500,13 +500,22 @@ function LocalSurfaceHost({ activeSurface }: { readonly activeSurface: LocalSurf
   const entry = surfaceRegistry[activeSurface];
   const surfaceRef = useRef<HTMLElement | null>(null);
   const canLoadTopicSurface = Boolean(currentSessionId && isRunnableSessionId(currentSessionId) && isTopicSurface(activeSurface));
-  const topicView = isTopicSurface(activeSurface) && topicSurface?.topicSurfaceView.surfaceId === activeSurface
+  const topicView = isTopicSurface(activeSurface) && topicSurface?.sessionId === currentSessionId && topicSurface.topicSurfaceView.surfaceId === activeSurface
     ? topicSurface.topicSurfaceView
+    : null;
+  const activeTopicDraft = isTopicSurface(activeSurface) && topicDraft?.sessionId === currentSessionId && topicDraft.surfaceId === activeSurface
+    ? topicDraft
     : null;
   const [selectedEvidenceRefs, setSelectedEvidenceRefs] = useState<readonly string[]>([]);
   const [draftKind, setDraftKind] = useState("");
   const [playerNote, setPlayerNote] = useState("");
   const [draftText, setDraftText] = useState(entry.draftText || "");
+  const [localSurfaceSessionId, setLocalSurfaceSessionId] = useState<string | null>(currentSessionId ?? null);
+  const localSurfaceStateIsCurrent = localSurfaceSessionId === (currentSessionId ?? null);
+  const activeSelectedEvidenceRefs = localSurfaceStateIsCurrent ? selectedEvidenceRefs : [];
+  const activeDraftKind = localSurfaceStateIsCurrent ? draftKind : "";
+  const activePlayerNote = localSurfaceStateIsCurrent ? playerNote : "";
+  const activeDraftText = localSurfaceStateIsCurrent ? draftText : entry.draftText || "";
   const npcProfilePortraits = activeSurface === "npc-profile"
     ? buildNpcProfilePortraits(registry, currentSession, currentSessionId)
     : [];
@@ -516,11 +525,12 @@ function LocalSurfaceHost({ activeSurface }: { readonly activeSurface: LocalSurf
   }, [activeSurface]);
 
   useEffect(() => {
+    setLocalSurfaceSessionId(currentSessionId ?? null);
     setDraftText(entry.draftText || "");
     setPlayerNote("");
     setSelectedEvidenceRefs([]);
     setDraftKind("");
-  }, [activeSurface, entry.draftText]);
+  }, [activeSurface, currentSessionId, entry.draftText]);
 
   useEffect(() => {
     if (!canLoadTopicSurface || !currentSessionId || !isTopicSurface(activeSurface)) return;
@@ -531,16 +541,34 @@ function LocalSurfaceHost({ activeSurface }: { readonly activeSurface: LocalSurf
     if (!topicView) return;
     const firstItemRefs = topicView.items[0]?.evidenceRefs || [];
     const fallbackRefs = topicView.evidenceRefs.slice(0, 2).map((ref) => ref.refId);
+    setLocalSurfaceSessionId(currentSessionId ?? null);
     setSelectedEvidenceRefs(firstItemRefs.length ? firstItemRefs : fallbackRefs);
     setDraftKind(topicView.draftSlots[0]?.draftKind || "topic_draft");
-  }, [topicView?.surfaceId, topicView?.generatedAtTurn]);
+  }, [currentSessionId, topicView?.surfaceId, topicView?.generatedAtTurn]);
 
   useEffect(() => {
-    if (!topicDraft || topicDraft.surfaceId !== activeSurface) return;
-    setDraftText(topicDraft.topicDraft.draftText);
-  }, [activeSurface, topicDraft]);
+    if (!activeTopicDraft) return;
+    setLocalSurfaceSessionId(currentSessionId ?? null);
+    setDraftText(activeTopicDraft.topicDraft.draftText);
+  }, [activeTopicDraft, currentSessionId]);
+
+  function updateDraftKind(value: string) {
+    setLocalSurfaceSessionId(currentSessionId ?? null);
+    setDraftKind(value);
+  }
+
+  function updateDraftText(value: string) {
+    setLocalSurfaceSessionId(currentSessionId ?? null);
+    setDraftText(value);
+  }
+
+  function updatePlayerNote(value: string) {
+    setLocalSurfaceSessionId(currentSessionId ?? null);
+    setPlayerNote(value);
+  }
 
   function toggleEvidenceRef(refId: string) {
+    setLocalSurfaceSessionId(currentSessionId ?? null);
     setSelectedEvidenceRefs((current) => {
       if (current.includes(refId)) return current.filter((candidate) => candidate !== refId);
       return [...current.slice(-4), refId];
@@ -549,27 +577,39 @@ function LocalSurfaceHost({ activeSurface }: { readonly activeSurface: LocalSurf
 
   async function handleTopicDraft() {
     if (!currentSessionId || !isTopicSurface(activeSurface)) return;
+    const requestSessionId = currentSessionId;
+    const requestSurface = activeSurface;
     try {
-      const payload = await requestTopicDraft(currentSessionId, {
-        surfaceId: activeSurface,
-        draftKind: draftKind || topicView?.draftSlots[0]?.draftKind,
-        selectedEvidenceRefs,
-        playerNote
+      const payload = await requestTopicDraft(requestSessionId, {
+        surfaceId: requestSurface,
+        draftKind: activeDraftKind || topicView?.draftSlots[0]?.draftKind,
+        selectedEvidenceRefs: activeSelectedEvidenceRefs,
+        playerNote: activePlayerNote
       });
+      const latestUiState = useUiStateStore.getState();
+      if (
+        payload.sessionId !== requestSessionId ||
+        payload.sessionId !== latestUiState.currentSessionId ||
+        payload.surfaceId !== requestSurface ||
+        latestUiState.activeSurface !== requestSurface
+      ) {
+        return;
+      }
+      setLocalSurfaceSessionId(payload.sessionId);
       setDraftText(payload.topicDraft.draftText);
     } catch {
     }
   }
 
   function handleWriteDraft() {
-    const text = draftText.trim() || entry.draftText || "";
+    const text = activeDraftText.trim() || entry.draftText || "";
     if (!text) return;
     const draftContext = buildTopicTurnDraftContext({
       activeSurface,
       topicView,
-      topicDraft,
-      selectedEvidenceRefs,
-      draftKind
+      topicDraft: activeTopicDraft,
+      selectedEvidenceRefs: activeSelectedEvidenceRefs,
+      draftKind: activeDraftKind
     });
     setActionDraft({
       source: activeSurface === "map-filter" ? "map-runtime" : "role-surface",
@@ -611,16 +651,16 @@ function LocalSurfaceHost({ activeSurface }: { readonly activeSurface: LocalSurf
             canLoad={canLoadTopicSurface}
             entryDraft={entry.draftText || ""}
             error={error}
-            draftKind={draftKind}
-            draftText={draftText}
-            playerNote={playerNote}
-            selectedEvidenceRefs={selectedEvidenceRefs}
+            draftKind={activeDraftKind}
+            draftText={activeDraftText}
+            playerNote={activePlayerNote}
+            selectedEvidenceRefs={activeSelectedEvidenceRefs}
             status={topicSurfaceStatus}
             draftStatus={topicDraftStatus}
             topicView={topicView}
-            onDraftKindChange={setDraftKind}
-            onDraftTextChange={setDraftText}
-            onPlayerNoteChange={setPlayerNote}
+            onDraftKindChange={updateDraftKind}
+            onDraftTextChange={updateDraftText}
+            onPlayerNoteChange={updatePlayerNote}
             onToggleEvidenceRef={toggleEvidenceRef}
             onRequestDraft={() => void handleTopicDraft()}
             onWriteDraft={handleWriteDraft}

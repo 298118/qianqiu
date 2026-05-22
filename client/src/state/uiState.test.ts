@@ -8,7 +8,16 @@ import {
 } from "./displayPreferenceStorage";
 import { extractSafePlayerPayload, useUiStateStore } from "./uiState";
 import { useGameSessionStore } from "./gameSessionState";
-import type { ExamSubmitResponse, NpcCommandResponse, NpcInteractionResponse, PlayerStateResponse, StartGameResponse, TradeResponse, TurnResponse } from "../api";
+import type {
+  ExamSubmitResponse,
+  NpcCommandResponse,
+  NpcInteractionResponse,
+  PlayerStateResponse,
+  StartGameResponse,
+  TopicDraftResponse,
+  TradeResponse,
+  TurnResponse
+} from "../api";
 
 const startPayload: StartGameResponse = {
   sessionId: "11111111-1111-4111-8111-111111111111",
@@ -78,6 +87,21 @@ function installFetchResponses(...payloads: unknown[]) {
   }
   vi.stubGlobal("fetch", fetchMock);
   return fetchMock;
+}
+
+function deferredJsonResponse<T>() {
+  let resolvePayload!: (payload: T) => void;
+  const response = new Promise<Response>((resolve) => {
+    resolvePayload = (payload: T) => {
+      resolve(
+        new Response(JSON.stringify(payload), {
+          status: 200,
+          headers: { "Content-Type": "application/json" }
+        })
+      );
+    };
+  });
+  return { response, resolvePayload };
 }
 
 beforeEach(() => {
@@ -518,6 +542,134 @@ describe("S74.3 UI state store", () => {
       source: "exam-submit",
       player: { examRank: "秀才" }
     });
+  });
+
+  it("does not let an older player-state load overwrite the latest session", async () => {
+    const olderSessionId = "55555555-5555-4555-8555-555555555555";
+    const latestSessionId = "66666666-6666-4666-8666-666666666666";
+    const olderPayload: PlayerStateResponse = {
+      ...playerStatePayload,
+      sessionId: olderSessionId,
+      worldState: {
+        player: { name: "旧案主", role: "official", officeTitle: "旧案官职" }
+      }
+    };
+    const latestPayload: PlayerStateResponse = {
+      ...playerStatePayload,
+      sessionId: latestSessionId,
+      worldState: {
+        player: { name: "当前案主", role: "magistrate", officeTitle: "当前知县" }
+      },
+      inventoryView: {
+        containers: [{ containerId: "latest-box", label: "当前书箧" }],
+        items: [],
+        importantCredentials: []
+      }
+    };
+    const older = deferredJsonResponse<PlayerStateResponse>();
+    const latest = deferredJsonResponse<PlayerStateResponse>();
+    const fetchMock = vi.fn((url: string) => {
+      if (url === `/api/game/player-state/${olderSessionId}`) return older.response;
+      if (url === `/api/game/player-state/${latestSessionId}`) return latest.response;
+      throw new Error(`unexpected url: ${url}`);
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    const olderLoad = useGameSessionStore.getState().loadSession(olderSessionId);
+    const latestLoad = useGameSessionStore.getState().loadSession(latestSessionId);
+
+    latest.resolvePayload(latestPayload);
+    await latestLoad;
+    expect(useGameSessionStore.getState().currentSessionId).toBe(latestSessionId);
+    expect(useGameSessionStore.getState().currentSession?.worldState.player?.name).toBe("当前案主");
+    expect(useUiStateStore.getState().currentPlayerPayload).toMatchObject({
+      sessionId: latestSessionId,
+      player: { name: "当前案主" }
+    });
+
+    older.resolvePayload(olderPayload);
+    await expect(olderLoad).rejects.toThrow(/旧请求/);
+
+    const stateText = JSON.stringify({
+      game: useGameSessionStore.getState().currentSession,
+      ui: useUiStateStore.getState().currentPlayerPayload
+    });
+    expect(useGameSessionStore.getState().currentSessionId).toBe(latestSessionId);
+    expect(useGameSessionStore.getState().currentSession?.worldState.player?.name).toBe("当前案主");
+    expect(useUiStateStore.getState().currentPlayerPayload?.sessionId).toBe(latestSessionId);
+    expect(stateText).not.toMatch(/旧案主|旧案官职/);
+  });
+
+  it("rejects an older topic draft response before local draft callers can apply it", async () => {
+    const sessionId = "99999999-9999-4999-8999-999999999999";
+    const olderDraft: TopicDraftResponse = {
+      schemaVersion: "topic-draft-v1",
+      sessionId,
+      surfaceId: "memorial-review",
+      source: "mock-ai",
+      status: "ready",
+      topicDraft: {
+        surfaceId: "memorial-review",
+        draftKind: "memorial",
+        draftTitle: "旧专题草稿",
+        draftText: "旧专题草稿不应回写。",
+        evidenceRefs: [],
+        source: "mock-ai"
+      }
+    };
+    const latestDraft: TopicDraftResponse = {
+      ...olderDraft,
+      surfaceId: "court-debate",
+      topicDraft: {
+        ...olderDraft.topicDraft,
+        surfaceId: "court-debate",
+        draftTitle: "当前专题草稿",
+        draftText: "当前专题草稿。"
+      }
+    };
+    const older = deferredJsonResponse<TopicDraftResponse>();
+    const latest = deferredJsonResponse<TopicDraftResponse>();
+    const fetchMock = vi.fn((url: string) => {
+      if (url === `/api/ai/topic-draft/${sessionId}`) {
+        return fetchMock.mock.calls.length === 1 ? older.response : latest.response;
+      }
+      throw new Error(`unexpected url: ${url}`);
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    const olderRequest = useGameSessionStore.getState().requestTopicDraft(sessionId, { surfaceId: "memorial-review" });
+    const latestRequest = useGameSessionStore.getState().requestTopicDraft(sessionId, { surfaceId: "court-debate" });
+
+    latest.resolvePayload(latestDraft);
+    await latestRequest;
+    expect(useGameSessionStore.getState().topicDraft?.topicDraft.draftText).toBe("当前专题草稿。");
+
+    older.resolvePayload(olderDraft);
+    await expect(olderRequest).rejects.toThrow(/旧请求/);
+    expect(useGameSessionStore.getState().topicDraft?.surfaceId).toBe("court-debate");
+    expect(JSON.stringify(useGameSessionStore.getState().topicDraft)).not.toMatch(/旧专题草稿/);
+  });
+
+  it("rejects mismatched player-state payloads without syncing stale UI payloads", async () => {
+    const routeSessionId = "77777777-7777-4777-8777-777777777777";
+    const stalePayload: PlayerStateResponse = {
+      ...playerStatePayload,
+      sessionId: "88888888-8888-4888-8888-888888888888",
+      worldState: {
+        player: { name: "错案主", role: "official", officeTitle: "错案官职" }
+      }
+    };
+    installFetchResponses(stalePayload);
+
+    await expect(useGameSessionStore.getState().loadSession(routeSessionId)).rejects.toThrow(/案卷编号/);
+
+    expect(useGameSessionStore.getState()).toMatchObject({
+      currentSessionId: routeSessionId,
+      currentSession: null,
+      status: "error"
+    });
+    expect(useUiStateStore.getState().currentPlayerPayload).toBeNull();
+    expect(JSON.stringify(useUiStateStore.getState())).not.toMatch(/错案主|错案官职/);
   });
 
   it("does not merge stale inventory transfer payloads into another session", async () => {

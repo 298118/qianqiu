@@ -190,10 +190,16 @@ export const useUiStateStore = create<UiState>((set) => ({
   ...buildInitialUiState(),
 
   setCurrentPage(page, sessionId = undefined) {
-    set((state) => ({
-      currentPage: page,
-      currentSessionId: sessionId === undefined || (page === "home" && sessionId === null) ? state.currentSessionId : sessionId
-    }));
+    set((state) => {
+      const nextSessionId = sessionId === undefined || (page === "home" && sessionId === null) ? state.currentSessionId : sessionId;
+      return {
+        currentPage: page,
+        currentSessionId: nextSessionId,
+        currentPlayerPayload: nextSessionId && state.currentPlayerPayload?.sessionId === nextSessionId
+          ? state.currentPlayerPayload
+          : null
+      };
+    });
   },
 
   syncSessionPayload(payload, sourceOverride) {

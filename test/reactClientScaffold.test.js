@@ -539,7 +539,7 @@ test("S75.9 memorial composer uses safe AI quick actions as draft-only suggestio
 
   assert.match(appShellSource, /data-shell-version="s75-9"/);
   assert.match(gamePageSource, /<MemorialComposer/);
-  assert.match(gamePageSource, /currentPlayerPayload\?\.routeViews/);
+  assert.match(gamePageSource, /activePlayerPayload\?\.routeViews/);
   assert.match(gamePageSource, /refreshQuickActions\(sessionId/);
   assert.match(gamePageSource, /source: "role-surface", targetPage: "game"/);
   assert.match(apiSource, /\/api\/ai\/quick-actions\/\$\{encodePathSegment\(sessionId\)\}/);
@@ -602,8 +602,8 @@ test("S76.2 scholar panel uses safe study and exam projections as draft-only UI"
   const runtimeCombined = `${gamePageSource}\n${scholarPanelWithoutGuard}\n${styleSource}`;
 
   assert.match(gamePageSource, /<ScholarPanel/);
-  assert.match(gamePageSource, /studyProfileView=\{session\?\.studyProfileView/);
-  assert.match(gamePageSource, /examCalendarView=\{session\?\.examCalendarView/);
+  assert.match(gamePageSource, /studyProfileView=\{activeSession\?\.studyProfileView/);
+  assert.match(gamePageSource, /examCalendarView=\{activeSession\?\.examCalendarView/);
   assert.match(gamePageSource, /category: "role_background", usage: "game_main", role: knownRole/);
   assert.match(scholarPanelSource, /export function ScholarPanel/);
   assert.match(scholarPanelSource, /studyProfileView/);
@@ -634,9 +634,9 @@ test("S76.3 magistrate panel uses safe local affairs projections as draft-only U
   const runtimeCombined = `${gamePageSource}\n${magistratePanelWithoutGuard}\n${styleSource}`;
 
   assert.match(gamePageSource, /<MagistratePanel/);
-  assert.match(gamePageSource, /localAffairsDocketView=\{session\?\.localAffairsDocketView/);
-  assert.match(gamePageSource, /officialPostingsView=\{session\?\.officialPostingsView/);
-  assert.match(gamePageSource, /economicFiscalView=\{session\?\.economicFiscalView/);
+  assert.match(gamePageSource, /localAffairsDocketView=\{activeSession\?\.localAffairsDocketView/);
+  assert.match(gamePageSource, /officialPostingsView=\{activeSession\?\.officialPostingsView/);
+  assert.match(gamePageSource, /economicFiscalView=\{activeSession\?\.economicFiscalView/);
   assert.match(magistratePanelSource, /export function MagistratePanel/);
   assert.match(magistratePanelSource, /localAffairsDocketView/);
   assert.match(magistratePanelSource, /officialPostingsView/);
@@ -661,13 +661,13 @@ test("S76.4 official and minister panel uses safe career projections as draft-on
   const runtimeCombined = `${gamePageSource}\n${officialPanelWithoutGuard}\n${styleSource}`;
 
   assert.match(gamePageSource, /<OfficialMinisterPanel/);
-  assert.match(gamePageSource, /officialCareerView=\{session\?\.officialCareerView/);
-  assert.match(gamePageSource, /appointmentTrackView=\{session\?\.appointmentTrackView/);
-  assert.match(gamePageSource, /actorMemoryView=\{session\?\.actorMemoryView/);
-  assert.match(gamePageSource, /aiControlAuditView=\{session\?\.aiControlAuditView/);
-  assert.match(gamePageSource, /playerMonthlyBriefingView=\{session\?\.playerMonthlyBriefingView/);
-  assert.match(gamePageSource, /courtConsequenceView=\{session\?\.courtConsequenceView/);
-  assert.match(gamePageSource, /courtResponseView=\{session\?\.courtResponseView/);
+  assert.match(gamePageSource, /officialCareerView=\{activeSession\?\.officialCareerView/);
+  assert.match(gamePageSource, /appointmentTrackView=\{activeSession\?\.appointmentTrackView/);
+  assert.match(gamePageSource, /actorMemoryView=\{activeSession\?\.actorMemoryView/);
+  assert.match(gamePageSource, /aiControlAuditView=\{activeSession\?\.aiControlAuditView/);
+  assert.match(gamePageSource, /playerMonthlyBriefingView=\{activeSession\?\.playerMonthlyBriefingView/);
+  assert.match(gamePageSource, /courtConsequenceView=\{activeSession\?\.courtConsequenceView/);
+  assert.match(gamePageSource, /courtResponseView=\{activeSession\?\.courtResponseView/);
   assert.match(officialPanelSource, /export function OfficialMinisterPanel/);
   assert.match(officialPanelSource, /官职履历/);
   assert.match(officialPanelSource, /部院公文/);
@@ -705,10 +705,10 @@ test("S76.5 general panel uses safe military projections as draft-only UI", () =
   const runtimeCombined = `${gamePageSource}\n${generalPanelWithoutGuard}\n${styleSource}`;
 
   assert.match(gamePageSource, /<GeneralPanel/);
-  assert.match(gamePageSource, /militaryDiplomacyView=\{session\?\.militaryDiplomacyView/);
-  assert.match(gamePageSource, /mapRuntimeView=\{session\?\.mapRuntimeView/);
-  assert.match(gamePageSource, /eventArchiveView=\{session\?\.eventArchiveView/);
-  assert.match(gamePageSource, /actorMemoryView=\{session\?\.actorMemoryView/);
+  assert.match(gamePageSource, /militaryDiplomacyView=\{activeSession\?\.militaryDiplomacyView/);
+  assert.match(gamePageSource, /mapRuntimeView=\{activeSession\?\.mapRuntimeView/);
+  assert.match(gamePageSource, /eventArchiveView=\{activeSession\?\.eventArchiveView/);
+  assert.match(gamePageSource, /actorMemoryView=\{activeSession\?\.actorMemoryView/);
   assert.match(generalPanelSource, /export function GeneralPanel/);
   assert.match(generalPanelSource, /军帐总览/);
   assert.match(generalPanelSource, /粮饷与军心/);
@@ -735,14 +735,14 @@ test("S76.6 emperor panel uses safe court projections as draft-only edict UI", (
   const runtimeCombined = `${gamePageSource}\n${emperorPanelWithoutGuard}\n${styleSource}`;
 
   assert.match(gamePageSource, /<EmperorPanel/);
-  assert.match(gamePageSource, /officialPostingsView=\{session\?\.officialPostingsView/);
-  assert.match(gamePageSource, /eventArchiveView=\{session\?\.eventArchiveView/);
-  assert.match(gamePageSource, /actorMemoryView=\{session\?\.actorMemoryView/);
-  assert.match(gamePageSource, /aiControlAuditView=\{session\?\.aiControlAuditView/);
-  assert.match(gamePageSource, /worldEntityView=\{session\?\.worldEntityView/);
-  assert.match(gamePageSource, /worldThreadView=\{session\?\.worldThreadView/);
-  assert.match(gamePageSource, /courtConsequenceView=\{session\?\.courtConsequenceView/);
-  assert.match(gamePageSource, /courtResponseView=\{session\?\.courtResponseView/);
+  assert.match(gamePageSource, /officialPostingsView=\{activeSession\?\.officialPostingsView/);
+  assert.match(gamePageSource, /eventArchiveView=\{activeSession\?\.eventArchiveView/);
+  assert.match(gamePageSource, /actorMemoryView=\{activeSession\?\.actorMemoryView/);
+  assert.match(gamePageSource, /aiControlAuditView=\{activeSession\?\.aiControlAuditView/);
+  assert.match(gamePageSource, /worldEntityView=\{activeSession\?\.worldEntityView/);
+  assert.match(gamePageSource, /worldThreadView=\{activeSession\?\.worldThreadView/);
+  assert.match(gamePageSource, /courtConsequenceView=\{activeSession\?\.courtConsequenceView/);
+  assert.match(gamePageSource, /courtResponseView=\{activeSession\?\.courtResponseView/);
   assert.match(emperorPanelSource, /export function EmperorPanel/);
   assert.match(emperorPanelSource, /奏折队列/);
   assert.match(emperorPanelSource, /奏议回应/);
@@ -780,7 +780,7 @@ test("S88.5 role cycle section is wired to all six identity panels as draft-only
   const roleCycleWithoutGuard = roleCycleSource.replace(/const unsafeRoleCycleFragments[\s\S]*?\] as const;\r?\n/, "");
   const runtimeCombined = `${roleCycleWithoutGuard}\n${styleSource}`;
 
-  assert.match(gamePageSource, /roleCycleView=\{session\?\.roleCycleView \?\? null\}/);
+  assert.match(gamePageSource, /roleCycleView=\{activeSession\?\.roleCycleView \?\? null\}/);
   assert.match(gamePageSource, /hasRoleCycleView/);
   assert.match(gamePageSource, /resolveRoleCycleRouteHref/);
   assert.match(gamePageSource, /onOpenRoleCycleSurface/);
@@ -838,7 +838,7 @@ test("S88.6 domain consequence view is wired into authority role panels as draft
   assert.match(typeSource, /domainConsequenceView\?: DomainConsequenceView/);
   assert.match(stateSource, /hasDomainConsequenceView: Boolean\(payload\.domainConsequenceView\)/);
   assert.match(gamePageSource, /\{ label: "后果", ready: Boolean\(routeViews\?\.hasDomainConsequenceView\) \}/);
-  assert.match(gamePageSource, /domainConsequenceView=\{session\?\.domainConsequenceView \?\? null\}/);
+  assert.match(gamePageSource, /domainConsequenceView=\{activeSession\?\.domainConsequenceView \?\? null\}/);
   for (const source of [magistratePanelSource, officialPanelSource, generalPanelSource, emperorPanelSource]) {
     assert.match(source, /import \{ DomainConsequenceSection \}/);
     assert.match(source, /readonly domainConsequenceView\?: JsonObject \| null/);
@@ -893,7 +893,7 @@ test("S88.8 economy trace view is wired into magistrate and official main panels
   assert.match(typeSource, /economyTraceView\?: EconomyTraceView/);
   assert.match(stateSource, /hasEconomyTraceView: Boolean\(payload\.economyTraceView\)/);
   assert.match(gamePageSource, /\{ label: "账解", ready: Boolean\(routeViews\?\.hasEconomyTraceView\) \}/);
-  assert.match(gamePageSource, /economyTraceView=\{session\?\.economyTraceView \?\? null\}/);
+  assert.match(gamePageSource, /economyTraceView=\{activeSession\?\.economyTraceView \?\? null\}/);
   for (const source of [magistratePanelSource, officialPanelSource]) {
     assert.match(source, /import \{ EconomyTraceSection \}/);
     assert.match(source, /readonly economyTraceView\?: EconomyTraceView \| null/);
@@ -1194,7 +1194,9 @@ test("S78 topic surfaces are safe workbenches and draft-only", () => {
   assert.match(surfaceHostSource, /surfaceSafetyList/);
   assert.match(surfaceHostSource, /TopicSurfaceWorkbench/);
   assert.match(surfaceHostSource, /loadTopicSurface\(currentSessionId, activeSurface\)/);
-  assert.match(surfaceHostSource, /requestTopicDraft\(currentSessionId/);
+  assert.match(surfaceHostSource, /requestTopicDraft\(requestSessionId/);
+  assert.match(surfaceHostSource, /topicSurface\?\.sessionId === currentSessionId/);
+  assert.match(surfaceHostSource, /topicDraft\?\.sessionId === currentSessionId/);
   assert.match(surfaceHostSource, /AI 拟稿/);
   assert.match(surfaceHostSource, /写入底部奏折/);
   assert.match(styleSource, /topicSurfaceLayout/);

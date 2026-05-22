@@ -35,6 +35,14 @@ import type {
 
 type LoadingState = "idle" | "loading" | "ready" | "error";
 
+let loadSessionRequestId = 0;
+let quickActionRequestId = 0;
+let topicSurfaceRequestId = 0;
+let topicDraftRequestId = 0;
+let inventoryRequestId = 0;
+let npcRosterRequestId = 0;
+let npcDetailRequestId = 0;
+
 type StartGameInput = {
   readonly playerName: string;
   readonly portraitRef?: string;
@@ -103,6 +111,18 @@ type GameSessionState = {
 
 function toErrorMessage(error: unknown) {
   return error instanceof Error ? error.message : "请求未能完成。";
+}
+
+function staleSessionResponseError() {
+  return new Error("服务器返回的案卷编号与当前路由不一致，已丢弃旧投影。");
+}
+
+function supersededRequestError() {
+  return new Error("旧请求已被新的路由或选择取代，已丢弃旧投影。");
+}
+
+function staleNpcDetailResponseError() {
+  return new Error("服务器返回的人物详情与当前选择不一致，已丢弃旧投影。");
 }
 
 export const useGameSessionStore = create<GameSessionState>((set) => ({
@@ -183,9 +203,12 @@ export const useGameSessionStore = create<GameSessionState>((set) => ({
   },
 
   async loadSession(sessionId) {
-    set({ status: "loading", error: null });
+    const requestId = ++loadSessionRequestId;
+    set({ currentSessionId: sessionId, status: "loading", error: null });
     try {
       const payload = await qianqiuApi.loadPlayerState(sessionId);
+      if (requestId !== loadSessionRequestId) throw supersededRequestError();
+      if (payload.sessionId !== sessionId) throw staleSessionResponseError();
       set((state) => ({
         currentSessionId: payload.sessionId,
         currentSession: payload,
@@ -227,7 +250,9 @@ export const useGameSessionStore = create<GameSessionState>((set) => ({
       useUiStateStore.getState().syncSessionPayload(payload, "player-state");
       return payload;
     } catch (error) {
-      set({ currentSessionId: sessionId, error: toErrorMessage(error), status: "error" });
+      if (requestId === loadSessionRequestId) {
+        set({ currentSessionId: sessionId, error: toErrorMessage(error), status: "error" });
+      }
       throw error;
     }
   },
@@ -413,6 +438,7 @@ export const useGameSessionStore = create<GameSessionState>((set) => ({
   },
 
   async refreshQuickActions(sessionId, input = {}) {
+    const requestId = ++quickActionRequestId;
     set({ quickActionStatus: "loading" });
     try {
       const payload = await qianqiuApi.requestQuickActions(sessionId, {
@@ -420,46 +446,67 @@ export const useGameSessionStore = create<GameSessionState>((set) => ({
         draftPreview: input.draftPreview?.slice(0, 80),
         count: input.count ?? 3
       });
+      if (requestId !== quickActionRequestId) throw supersededRequestError();
+      if (payload.sessionId !== sessionId) throw staleSessionResponseError();
       set({ quickActions: payload, quickActionStatus: payload.status === "fallback" ? "error" : "ready" });
       return payload;
     } catch (error) {
-      set({ quickActionStatus: "error" });
+      if (requestId === quickActionRequestId) set({ quickActionStatus: "error" });
       throw error;
     }
   },
 
   async loadTopicSurface(sessionId, surfaceId) {
-    set({ topicSurfaceStatus: "loading", topicDraft: null, topicDraftStatus: "idle" });
+    const requestId = ++topicSurfaceRequestId;
+    set({ topicSurface: null, topicSurfaceStatus: "loading", topicDraft: null, topicDraftStatus: "idle" });
     try {
       const payload = await qianqiuApi.loadTopicSurface(sessionId, surfaceId);
+      if (requestId !== topicSurfaceRequestId) throw supersededRequestError();
+      if (payload.sessionId !== sessionId || payload.topicSurfaceView.surfaceId !== surfaceId) {
+        throw staleSessionResponseError();
+      }
       set({ topicSurface: payload, topicSurfaceStatus: "ready" });
       return payload;
     } catch (error) {
-      set({ error: toErrorMessage(error), topicSurfaceStatus: "error" });
+      if (requestId === topicSurfaceRequestId) {
+        set({ error: toErrorMessage(error), topicSurfaceStatus: "error" });
+      }
       throw error;
     }
   },
 
   async requestTopicDraft(sessionId, input) {
-    set({ topicDraftStatus: "loading" });
+    const requestId = ++topicDraftRequestId;
+    set({ topicDraft: null, topicDraftStatus: "loading" });
     try {
       const payload = await qianqiuApi.requestTopicDraft(sessionId, input);
+      if (requestId !== topicDraftRequestId) throw supersededRequestError();
+      if (payload.sessionId !== sessionId || payload.surfaceId !== input.surfaceId) {
+        throw staleSessionResponseError();
+      }
       set({ topicDraft: payload, topicDraftStatus: payload.status === "fallback" ? "error" : "ready" });
       return payload;
     } catch (error) {
-      set({ error: toErrorMessage(error), topicDraftStatus: "error" });
+      if (requestId === topicDraftRequestId) {
+        set({ error: toErrorMessage(error), topicDraftStatus: "error" });
+      }
       throw error;
     }
   },
 
   async loadInventory(sessionId) {
-    set({ inventoryStatus: "loading", error: null });
+    const requestId = ++inventoryRequestId;
+    set({ currentSessionId: sessionId, inventoryStatus: "loading", error: null });
     try {
       const payload = await qianqiuApi.loadInventory(sessionId);
+      if (requestId !== inventoryRequestId) throw supersededRequestError();
+      if (payload.sessionId !== sessionId) throw staleSessionResponseError();
       set({ inventory: payload, currentSessionId: payload.sessionId, inventoryStatus: "ready" });
       return payload;
     } catch (error) {
-      set({ error: toErrorMessage(error), inventoryStatus: "error" });
+      if (requestId === inventoryRequestId) {
+        set({ error: toErrorMessage(error), inventoryStatus: "error" });
+      }
       throw error;
     }
   },
@@ -502,7 +549,8 @@ export const useGameSessionStore = create<GameSessionState>((set) => ({
   },
 
   async loadNpcs(sessionId, input = {}) {
-    set({ npcRosterStatus: "loading", error: null });
+    const requestId = ++npcRosterRequestId;
+    set({ currentSessionId: sessionId, npcRosterStatus: "loading", error: null });
     try {
       const payload = await qianqiuApi.loadNpcs(sessionId, {
         page: input.page,
@@ -510,22 +558,32 @@ export const useGameSessionStore = create<GameSessionState>((set) => ({
         group: input.group,
         interaction: input.interaction
       });
+      if (requestId !== npcRosterRequestId) throw supersededRequestError();
+      if (payload.sessionId !== sessionId) throw staleSessionResponseError();
       set({ npcRoster: payload, currentSessionId: payload.sessionId, npcRosterStatus: "ready" });
       return payload;
     } catch (error) {
-      set({ error: toErrorMessage(error), npcRosterStatus: "error" });
+      if (requestId === npcRosterRequestId) {
+        set({ error: toErrorMessage(error), npcRosterStatus: "error" });
+      }
       throw error;
     }
   },
 
   async loadNpcDetail(sessionId, npcId) {
-    set({ npcDetailStatus: "loading", error: null });
+    const requestId = ++npcDetailRequestId;
+    set({ currentSessionId: sessionId, npcDetailStatus: "loading", error: null });
     try {
       const payload = await qianqiuApi.loadNpcDetail(sessionId, npcId);
+      if (requestId !== npcDetailRequestId) throw supersededRequestError();
+      if (payload.sessionId !== sessionId) throw staleSessionResponseError();
+      if (payload.npcDetailView.npcId !== npcId) throw staleNpcDetailResponseError();
       set({ npcDetail: payload, currentSessionId: payload.sessionId, npcDetailStatus: "ready" });
       return payload;
     } catch (error) {
-      set({ error: toErrorMessage(error), npcDetailStatus: "error" });
+      if (requestId === npcDetailRequestId) {
+        set({ error: toErrorMessage(error), npcDetailStatus: "error" });
+      }
       throw error;
     }
   },

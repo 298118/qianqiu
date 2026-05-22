@@ -3,6 +3,7 @@ import { RouterProvider, createMemoryRouter } from "react-router";
 import { act, within } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { resetAssetRegistryCache, type InkUiManifest } from "../assets/assetRegistry";
+import { SurfaceHost } from "../components/SurfaceHost";
 import { routes } from "../router";
 import { useGameSessionStore } from "../state/gameSessionState";
 import { useUiStateStore } from "../state/uiState";
@@ -2393,6 +2394,111 @@ describe("S74.1 React client shell", () => {
     expect(requestedUrls.some((url) => /\/api\/game\/state|\/api\/dev/.test(url))).toBe(false);
   });
 
+  it("does not keep stale topic surface materials when the open surface switches sessions", async () => {
+    const staleSessionId = "12121212-1212-4121-8121-121212121212";
+    const routeSessionId = "34343434-3434-4343-8343-343434343434";
+    const pendingRouteSurface = new Promise<Response>(() => undefined);
+    const staleSurfaceResponse = {
+      sessionId: staleSessionId,
+      topicSurfaceView: {
+        schemaVersion: "s78.topicSurfaceView.v1",
+        sessionId: staleSessionId,
+        generatedAtTurn: 8,
+        surfaceId: "court-debate",
+        surfaceType: "court_debate",
+        label: "朝议",
+        title: "旧案朝议",
+        summary: "旧案专题材料不应串入新案。",
+        sourceViews: [{ sourceView: "eventArchiveView", domain: "events", count: 1 }],
+        filters: [],
+        items: [{
+          id: "topic-item:old:1",
+          kind: "debate_issue",
+          title: "旧案边饷",
+          summary: "旧案兵部催报不应显示。",
+          sourceView: "eventArchiveView",
+          statusLabel: "旧案",
+          evidenceRefs: ["eventArchiveView:old-event"],
+          urgency: "urgent"
+        }],
+        evidenceRefs: [{
+          refId: "eventArchiveView:old-event",
+          sourceView: "eventArchiveView",
+          sourceId: "old-event",
+          domain: "events",
+          label: "旧案证据",
+          summary: "旧案证据不应显示。",
+          visibility: "public",
+          confidence: 0.8,
+          freshness: "current"
+        }],
+        draftSlots: [{ id: "old", label: "旧议", draftKind: "old_debate", template: "旧案模板。" }],
+        scenePreview: {
+          sceneType: "court_debate",
+          title: "旧案朝议",
+          participantLabels: ["旧案户部"],
+          proposalBudget: { maxRounds: 3, maxActors: 2 },
+          authorityBoundary: "旧案边界不应显示。"
+        },
+        lastPublicResults: [],
+        authorityBoundary: "旧案边界不应显示。",
+        emptyState: "暂无议题。",
+        safety: {
+          readOnly: true,
+          actorVisibleContextOnly: true,
+          draftOnly: true,
+          noResolverExecution: true,
+          noStateWrites: true,
+          noGlobalTimeAdvance: true
+        }
+      }
+    };
+    const fetchMock = vi.fn((url: string) => {
+      if (url === "/assets/ui/ink-ui-runtime-manifest.json") {
+        return Promise.resolve(new Response(JSON.stringify(buildMockAssetManifest(0)), {
+          status: 200,
+          headers: { "Content-Type": "application/json" }
+        }));
+      }
+      if (url === `/api/game/topic-surface/${staleSessionId}/court-debate`) {
+        return Promise.resolve(new Response(JSON.stringify(staleSurfaceResponse), {
+          status: 200,
+          headers: { "Content-Type": "application/json" }
+        }));
+      }
+      if (url === `/api/game/topic-surface/${routeSessionId}/court-debate`) {
+        return pendingRouteSurface;
+      }
+      throw new Error(`unexpected url: ${url}`);
+    });
+    vi.stubGlobal("fetch", fetchMock);
+    useUiStateStore.setState({
+      activeSurface: "court-debate",
+      currentPage: "game",
+      currentSessionId: staleSessionId
+    });
+
+    render(<SurfaceHost />);
+
+    const dialog = await screen.findByRole("dialog", { name: "朝议" });
+    await waitFor(() => expect(dialog.textContent || "").toContain("旧案边饷"));
+    const textarea = within(dialog).getByLabelText("专题草稿正文") as HTMLTextAreaElement;
+    fireEvent.change(textarea, { target: { value: "旧案草稿不应写入新案。" } });
+    expect(textarea.value).toBe("旧案草稿不应写入新案。");
+
+    act(() => {
+      useUiStateStore.setState({ currentSessionId: routeSessionId });
+    });
+
+    await waitFor(() => expect(fetchMock.mock.calls.some(([url]) => String(url) === `/api/game/topic-surface/${routeSessionId}/court-debate`)).toBe(true));
+    expect(dialog.textContent || "").not.toMatch(/旧案边饷|旧案证据|旧案边界|旧案户部/);
+    expect((within(dialog).getByLabelText("专题草稿正文") as HTMLTextAreaElement).value).not.toContain("旧案草稿");
+
+    fireEvent.click(within(dialog).getByRole("button", { name: "写入底部奏折" }));
+    expect(useUiStateStore.getState().actionDraft?.text || "").not.toContain("旧案草稿");
+    expect(useUiStateStore.getState().actionDraft?.draftContext).toBeUndefined();
+  });
+
   it("restores scroll position and route focus when navigating between pages", async () => {
     const scrollTo = vi.fn();
     window.scrollTo = scrollTo;
@@ -3625,6 +3731,72 @@ describe("S74.1 React client shell", () => {
     expect(screen.getByRole("button", { name: "取题" })).toHaveProperty("disabled", true);
     expect(screen.queryByRole("button", { name: "推进考场" })).toBeNull();
     expect(screen.queryByRole("button", { name: "交卷" })).toBeNull();
+  });
+
+  it("does not render stale main-shell session data on a different game route", async () => {
+    const staleSessionId = "77777777-7777-4777-8777-777777777777";
+    const routeSessionId = "88888888-8888-4888-8888-888888888888";
+    const stalePayload = {
+      source: "server_player_visible_state_projection",
+      sessionId: staleSessionId,
+      narrative: "旧案叙事不应出现在新路由。",
+      worldState: {
+        player: {
+          name: "旧案主",
+          role: "official",
+          officeTitle: "旧案官职"
+        }
+      },
+      roleCycleView: {
+        currentRole: {
+          roleLabel: "旧案循环",
+          items: [{ title: "旧案事务", publicSummary: "旧案材料。" }]
+        }
+      },
+      informationPanelPageView: { page: 1 },
+      inventoryView: { containers: [], items: [], importantCredentials: [] }
+    };
+    const fetchMock = vi.fn(async (url: string) => {
+      if (url === "/assets/ui/ink-ui-runtime-manifest.json") {
+        return new Response(JSON.stringify(buildMockAssetManifest(0)), {
+          status: 200,
+          headers: { "Content-Type": "application/json" }
+        });
+      }
+      if (url === `/api/game/player-state/${routeSessionId}`) {
+        return new Response(JSON.stringify(stalePayload), {
+          status: 200,
+          headers: { "Content-Type": "application/json" }
+        });
+      }
+      throw new Error(`unexpected url: ${url}`);
+    });
+    vi.stubGlobal("fetch", fetchMock);
+    useGameSessionStore.setState({
+      currentSessionId: staleSessionId,
+      currentSession: stalePayload as unknown as ReturnType<typeof useGameSessionStore.getState>["currentSession"],
+      lastTurn: {
+        sessionId: staleSessionId,
+        narrative: "旧案回合叙事",
+        worldState: { player: { name: "旧案主", role: "official" } }
+      } as unknown as ReturnType<typeof useGameSessionStore.getState>["lastTurn"],
+      error: "旧案错误不应显示",
+      status: "ready"
+    });
+    useUiStateStore.getState().syncSessionPayload(stalePayload as never, "player-state");
+
+    renderRoute(`/game/${routeSessionId}`);
+
+    expect(screen.getByRole("heading", { name: "主卷" })).toBeTruthy();
+    expect(document.body.textContent || "").not.toMatch(/旧案主|旧案官职|旧案叙事|旧案回合叙事|旧案事务|旧案错误/);
+    expect(screen.getByRole("link", { name: "主卷" }).getAttribute("href")).toBe(`/game/${routeSessionId}`);
+
+    await waitFor(() => expect(fetchMock.mock.calls.some(([url]) => String(url) === `/api/game/player-state/${routeSessionId}`)).toBe(true));
+    await waitFor(() => expect(useGameSessionStore.getState().status).toBe("error"));
+
+    expect(document.body.textContent || "").not.toMatch(/旧案主|旧案官职|旧案叙事|旧案回合叙事|旧案事务|旧案错误/);
+    expect(useUiStateStore.getState().currentPlayerPayload).toBeNull();
+    expect(fetchMock.mock.calls.map(([url]) => String(url))).not.toContain("/api/game/turn");
   });
 
   it("keeps the main action draft in the UI store and clears it from the composer", () => {

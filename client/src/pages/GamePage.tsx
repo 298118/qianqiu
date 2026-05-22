@@ -155,6 +155,7 @@ export function GamePage() {
   const submitTurn = useGameSessionStore((state) => state.submitTurn);
   const refreshQuickActions = useGameSessionStore((state) => state.refreshQuickActions);
   const session = useGameSessionStore((state) => state.currentSession);
+  const storeCurrentSessionId = useGameSessionStore((state) => state.currentSessionId);
   const lastTurn = useGameSessionStore((state) => state.lastTurn);
   const status = useGameSessionStore((state) => state.status);
   const quickActionStatus = useGameSessionStore((state) => state.quickActionStatus);
@@ -173,8 +174,13 @@ export function GamePage() {
     return route ? sessionHref(route.href) : null;
   };
   const openRoleCycleSurface = (surface: LocalSurface) => openSurface(surface);
-  const player = session?.worldState?.player;
+  const activeSession = session?.sessionId === sessionId ? session : null;
+  const activeLastTurn = lastTurn?.sessionId === sessionId ? lastTurn : null;
+  const activePlayerPayload = currentPlayerPayload?.sessionId === sessionId ? currentPlayerPayload : null;
+  const player = activeSession?.worldState?.player;
   const runnable = isRunnableSessionId(sessionId);
+  const routeIsLoading = status === "loading" || (runnable && !activeSession);
+  const routeError = error && storeCurrentSessionId === sessionId ? error : null;
   const knownRole = getKnownRole(player?.role);
   const scene = knownRole ? sceneByRole[knownRole] : fallbackScene;
   const sceneAsset = useMemo(
@@ -188,11 +194,11 @@ export function GamePage() {
   const sceneImagePath = sceneAsset?.path ?? scene.assetPath;
   const playerName = safeGameShellText(player?.name, "无名");
   const identityLine = getIdentityLine(player);
-  const narrativeText = safeGameShellText(lastTurn?.narrative || currentPlayerPayload?.narrativePreview, "风声入座，旧卷重开。堂案、舆图与人物谱牒各归其卷。");
-  const openingClaimsView = session?.openingBackgroundClaimsView;
+  const narrativeText = safeGameShellText(activeLastTurn?.narrative || activePlayerPayload?.narrativePreview, "风声入座，旧卷重开。堂案、舆图与人物谱牒各归其卷。");
+  const openingClaimsView = activeSession?.openingBackgroundClaimsView;
   const openingClaimCounts = openingClaimsView?.counts;
   const openingClaimDecisions = openingClaimsView?.status === "processed" ? openingClaimsView.decisions ?? [] : [];
-  const routeViews = currentPlayerPayload?.routeViews;
+  const routeViews = activePlayerPayload?.routeViews;
   const safeViewItems = [
     { label: "舆图", ready: Boolean(routeViews?.hasMapRuntimeView) },
     { label: "囊箧", ready: Boolean(routeViews?.hasInventoryView) },
@@ -218,13 +224,13 @@ export function GamePage() {
   }, [loadSession, sessionId]);
 
   useEffect(() => {
-    if (!runnable || !currentPlayerPayload?.sessionId || currentPlayerPayload.sessionId !== sessionId) return;
+    if (!runnable || !activePlayerPayload?.sessionId) return;
     void refreshQuickActions(sessionId, {
       page: "game",
       draftPreview: "",
       count: 3
     }).catch(() => undefined);
-  }, [currentPlayerPayload?.sessionId, lastTurn, refreshQuickActions, runnable, sessionId]);
+  }, [activePlayerPayload?.sessionId, activeLastTurn, refreshQuickActions, runnable, sessionId]);
 
   async function handleTurn(text: string) {
     if (!text.trim() || !runnable) return;
@@ -293,7 +299,7 @@ export function GamePage() {
               <p className="eyebrow">本纪</p>
               <h2 id="narrative-title">{playerName} · {identityLine}</h2>
             </div>
-            <span>{status === "loading" ? "候讯" : runnable ? "可行事" : "预览"}</span>
+            <span>{routeIsLoading ? "候讯" : runnable ? "可行事" : "预览"}</span>
           </div>
           <p>{narrativeText}</p>
         </article>
@@ -345,9 +351,9 @@ export function GamePage() {
       {player?.role === "scholar" ? (
         <ScholarPanel
           player={player}
-          roleCycleView={session?.roleCycleView ?? null}
-          studyProfileView={session?.studyProfileView ?? null}
-          examCalendarView={session?.examCalendarView ?? null}
+          roleCycleView={activeSession?.roleCycleView ?? null}
+          studyProfileView={activeSession?.studyProfileView ?? null}
+          examCalendarView={activeSession?.examCalendarView ?? null}
           roleBackgroundPath={roleBackgroundAsset?.path}
           examHref={sessionHref(routeCatalog.find((entry) => entry.id === "exam")?.href ?? "/game/s74-preview/exam")}
           rankingHref={sessionHref(routeCatalog.find((entry) => entry.id === "ranking")?.href ?? "/game/s74-preview/ranking")}
@@ -360,14 +366,14 @@ export function GamePage() {
       {player?.role === "magistrate" ? (
         <MagistratePanel
           player={player}
-          roleCycleView={session?.roleCycleView ?? null}
-          localAffairsDocketView={session?.localAffairsDocketView ?? null}
-          officialPostingsView={session?.officialPostingsView ?? null}
-          economicFiscalView={session?.economicFiscalView ?? null}
-          marketPriceView={session?.marketPriceView ?? null}
-          npcEconomyView={session?.npcEconomyView ?? null}
-          economyTraceView={session?.economyTraceView ?? null}
-          domainConsequenceView={session?.domainConsequenceView ?? null}
+          roleCycleView={activeSession?.roleCycleView ?? null}
+          localAffairsDocketView={activeSession?.localAffairsDocketView ?? null}
+          officialPostingsView={activeSession?.officialPostingsView ?? null}
+          economicFiscalView={activeSession?.economicFiscalView ?? null}
+          marketPriceView={activeSession?.marketPriceView ?? null}
+          npcEconomyView={activeSession?.npcEconomyView ?? null}
+          economyTraceView={activeSession?.economyTraceView ?? null}
+          domainConsequenceView={activeSession?.domainConsequenceView ?? null}
           roleBackgroundPath={roleBackgroundAsset?.path}
           resolveRoleCycleRouteHref={resolveRoleCycleRouteHref}
           onOpenRoleCycleSurface={openRoleCycleSurface}
@@ -378,17 +384,17 @@ export function GamePage() {
       {player?.role === "official" || player?.role === "minister" ? (
         <OfficialMinisterPanel
           player={player}
-          roleCycleView={session?.roleCycleView ?? null}
-          officialCareerView={session?.officialCareerView ?? null}
-          appointmentTrackView={session?.appointmentTrackView ?? null}
-          officialPostingsView={session?.officialPostingsView ?? null}
-          actorMemoryView={session?.actorMemoryView ?? null}
-          aiControlAuditView={session?.aiControlAuditView ?? null}
-          playerMonthlyBriefingView={session?.playerMonthlyBriefingView ?? null}
-          courtConsequenceView={session?.courtConsequenceView ?? null}
-          courtResponseView={session?.courtResponseView ?? null}
-          economyTraceView={session?.economyTraceView ?? null}
-          domainConsequenceView={session?.domainConsequenceView ?? null}
+          roleCycleView={activeSession?.roleCycleView ?? null}
+          officialCareerView={activeSession?.officialCareerView ?? null}
+          appointmentTrackView={activeSession?.appointmentTrackView ?? null}
+          officialPostingsView={activeSession?.officialPostingsView ?? null}
+          actorMemoryView={activeSession?.actorMemoryView ?? null}
+          aiControlAuditView={activeSession?.aiControlAuditView ?? null}
+          playerMonthlyBriefingView={activeSession?.playerMonthlyBriefingView ?? null}
+          courtConsequenceView={activeSession?.courtConsequenceView ?? null}
+          courtResponseView={activeSession?.courtResponseView ?? null}
+          economyTraceView={activeSession?.economyTraceView ?? null}
+          domainConsequenceView={activeSession?.domainConsequenceView ?? null}
           roleBackgroundPath={roleBackgroundAsset?.path}
           courtHref={sessionHref(routeCatalog.find((entry) => entry.id === "court")?.href ?? "/game/s74-preview/court")}
           resolveRoleCycleRouteHref={resolveRoleCycleRouteHref}
@@ -400,13 +406,13 @@ export function GamePage() {
       {player?.role === "general" ? (
         <GeneralPanel
           player={player}
-          roleCycleView={session?.roleCycleView ?? null}
-          militaryDiplomacyView={session?.militaryDiplomacyView ?? null}
-          officialPostingsView={session?.officialPostingsView ?? null}
-          mapRuntimeView={session?.mapRuntimeView ?? null}
-          eventArchiveView={session?.eventArchiveView ?? null}
-          actorMemoryView={session?.actorMemoryView ?? null}
-          domainConsequenceView={session?.domainConsequenceView ?? null}
+          roleCycleView={activeSession?.roleCycleView ?? null}
+          militaryDiplomacyView={activeSession?.militaryDiplomacyView ?? null}
+          officialPostingsView={activeSession?.officialPostingsView ?? null}
+          mapRuntimeView={activeSession?.mapRuntimeView ?? null}
+          eventArchiveView={activeSession?.eventArchiveView ?? null}
+          actorMemoryView={activeSession?.actorMemoryView ?? null}
+          domainConsequenceView={activeSession?.domainConsequenceView ?? null}
           roleBackgroundPath={roleBackgroundAsset?.path}
           mapHref={sessionHref(routeCatalog.find((entry) => entry.id === "map")?.href ?? "/game/s74-preview/map")}
           archiveHref={sessionHref(routeCatalog.find((entry) => entry.id === "archive")?.href ?? "/game/s74-preview/archive")}
@@ -419,17 +425,17 @@ export function GamePage() {
       {player?.role === "emperor" ? (
         <EmperorPanel
           player={player}
-          roleCycleView={session?.roleCycleView ?? null}
-          officialPostingsView={session?.officialPostingsView ?? null}
-          eventArchiveView={session?.eventArchiveView ?? null}
-          actorMemoryView={session?.actorMemoryView ?? null}
-          aiControlAuditView={session?.aiControlAuditView ?? null}
-          worldEntityView={session?.worldEntityView ?? null}
-          worldThreadView={session?.worldThreadView ?? null}
-          courtConsequenceView={session?.courtConsequenceView ?? null}
-          courtResponseView={session?.courtResponseView ?? null}
-          domainConsequenceView={session?.domainConsequenceView ?? null}
-          mapRuntimeView={session?.mapRuntimeView ?? null}
+          roleCycleView={activeSession?.roleCycleView ?? null}
+          officialPostingsView={activeSession?.officialPostingsView ?? null}
+          eventArchiveView={activeSession?.eventArchiveView ?? null}
+          actorMemoryView={activeSession?.actorMemoryView ?? null}
+          aiControlAuditView={activeSession?.aiControlAuditView ?? null}
+          worldEntityView={activeSession?.worldEntityView ?? null}
+          worldThreadView={activeSession?.worldThreadView ?? null}
+          courtConsequenceView={activeSession?.courtConsequenceView ?? null}
+          courtResponseView={activeSession?.courtResponseView ?? null}
+          domainConsequenceView={activeSession?.domainConsequenceView ?? null}
+          mapRuntimeView={activeSession?.mapRuntimeView ?? null}
           roleBackgroundPath={roleBackgroundAsset?.path}
           courtHref={sessionHref(routeCatalog.find((entry) => entry.id === "court")?.href ?? "/game/s74-preview/court")}
           archiveHref={sessionHref(routeCatalog.find((entry) => entry.id === "archive")?.href ?? "/game/s74-preview/archive")}
@@ -439,16 +445,16 @@ export function GamePage() {
           onDraft={(text) => setActionDraft({ source: "role-surface", targetPage: "game", text })}
         />
       ) : null}
-      {error ? <p className="statusLine" role="alert">{error}</p> : null}
+      {routeError ? <p className="statusLine" role="alert">{routeError}</p> : null}
       <Outlet />
       <MemorialComposer
         actionDraft={actionDraft}
-        player={currentPlayerPayload?.player ?? player}
-        routeViews={currentPlayerPayload?.routeViews}
+        player={activePlayerPayload?.player ?? player}
+        routeViews={activePlayerPayload?.routeViews}
         aiSuggestions={quickActions?.sessionId === sessionId ? quickActions.quickActionSuggestions : null}
         quickActionStatus={quickActionStatus}
         runnable={runnable}
-        loading={status === "loading"}
+        loading={routeIsLoading}
         onDraftChange={(text) => setActionDraft({
           source: "manual",
           targetPage: "game",
