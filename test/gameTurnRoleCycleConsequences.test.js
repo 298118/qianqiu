@@ -8,6 +8,8 @@ process.env.AI_PROVIDER = "mock";
 
 const gameRoutes = require("../src/routes/game");
 const { createInitialState } = require("../src/game/initialState");
+const { createLandSurveyDelegatedTask } = require("../src/game/delegatedTasks");
+const { resolveTradeRequest } = require("../src/game/tradeLedger");
 const { buildTopicSurfaceView } = require("../src/game/topicSurfaceView");
 const { readSession, writeSession } = require("../src/storage/sessionStore");
 const { createFetchSafeServer } = require("../test-helpers/fetchSafeServer");
@@ -17,6 +19,7 @@ const auditDir = path.join(__dirname, "..", "data", "audit");
 
 async function removeSessionArtifacts(sessionId) {
   await fs.rm(path.join(sessionsDir, `${sessionId}.json`), { force: true });
+  await fs.rm(path.join(sessionsDir, `${sessionId}.lock`), { force: true });
   await fs.rm(path.join(auditDir, `${sessionId}.event-log.jsonl`), { force: true });
   await fs.rm(path.join(auditDir, `${sessionId}.ai-proposals.jsonl`), { force: true });
 }
@@ -35,6 +38,123 @@ async function postJson(url, body, headers = { "Content-Type": "application/json
     body: JSON.stringify(body)
   });
   return { response, payload: await response.json() };
+}
+
+function parseSse(text) {
+  return text
+    .replace(/\r\n/g, "\n")
+    .split("\n\n")
+    .filter((block) => block.trim())
+    .map((block) => {
+      const lines = block.split("\n");
+      const eventLine = lines.find((line) => line.startsWith("event:"));
+      const data = lines
+        .filter((line) => line.startsWith("data:"))
+        .map((line) => line.slice(5).replace(/^ /, ""))
+        .join("\n");
+
+      return {
+        event: eventLine ? eventLine.slice(6).trim() : "message",
+        data: data ? JSON.parse(data) : null
+      };
+    });
+}
+
+async function postTurnSse(url, body) {
+  const response = await fetch(url, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Accept": "text/event-stream"
+    },
+    body: JSON.stringify(body)
+  });
+  return { response, events: parseSse(await response.text()) };
+}
+
+function seedEconomyTopicSignals(worldState = {}) {
+  worldState.year = 1644;
+  worldState.month = 4;
+  worldState.tenDayPeriod = 1;
+  worldState.turnCount = Math.max(Number(worldState.turnCount) || 0, 20);
+  worldState.player.localTreasury = 120;
+  worldState.npcEconomyLedger = {
+    ...(worldState.npcEconomyLedger || {}),
+    recentEvents: [
+      "人情债月账：韩员外为修桥垫付，公开人情债略增。",
+      "provider payload hiddenNotes data/sessions/secret.json"
+    ]
+  };
+  resolveTradeRequest(worldState, {
+    npcId: "npc:magistrate:gentry-han",
+    tradeId: "trade:turn:draft-economy",
+    silverDelta: 0,
+    offerSummary: "询问纸张与粟米行价。"
+  }, {
+    npcResponse: "可再议。",
+    proposal: {
+      status: "countered",
+      publicSummary: "韩员外交易议价：纸张与粮价消息尚待服务器确认。",
+      riskTags: ["议价"]
+    }
+  });
+  const delegated = createLandSurveyDelegatedTask(worldState, {
+    assigneeActorId: "npc:magistrate:registrar-lu",
+    targetRef: "geo:county:qinghe:east-village",
+    commandText: "丈量东乡田亩，核对鱼鳞册与实耕。",
+    budget: 24
+  });
+  assert.equal(delegated.ok, true);
+}
+
+function buildEconomyDraftContext(worldState = {}) {
+  const topicView = buildTopicSurfaceView(worldState, { surfaceId: "memorial-review" });
+  const economyRef = topicView.evidenceRefs.find((ref) => ref.sourceView === "economyTraceView");
+  assert.ok(economyRef, "expected a safe economyTraceView topic evidence ref");
+  assert.deepEqual(economyRef.canonicalEchoRefs || [], []);
+  return {
+    surfaceId: "memorial-review",
+    draftKind: topicView.draftSlots[0]?.draftKind || "vermilion_comment",
+    evidenceRefs: [economyRef.refId, "economyTraceView:forged-secret"],
+    canonicalEchoRefs: ["domainConsequenceEcho:forged"],
+    generatedAtTurn: topicView.generatedAtTurn,
+    status: "client_hint"
+  };
+}
+
+function snapshotEconomyLedgers(worldState = {}) {
+  return {
+    cityPolicyCount: worldState.cityPolicyLedger?.records?.length || 0,
+    tradeRecords: JSON.parse(JSON.stringify(worldState.tradeLedger?.records || [])),
+    delegatedTasks: JSON.parse(JSON.stringify(worldState.delegatedTaskLedger?.tasks || [])),
+    npcEconomyRecentEvents: [...(worldState.npcEconomyLedger?.recentEvents || [])],
+    localTreasury: worldState.player?.localTreasury
+  };
+}
+
+function assertEconomyDraftDidNotSettle(savedBefore = {}, savedAfter = {}) {
+  const before = snapshotEconomyLedgers(savedBefore);
+  const after = snapshotEconomyLedgers(savedAfter);
+  assert.equal(after.cityPolicyCount, before.cityPolicyCount);
+  assert.deepEqual(after.tradeRecords, before.tradeRecords);
+  assert.deepEqual(after.delegatedTasks, before.delegatedTasks);
+  assert.deepEqual(after.npcEconomyRecentEvents, before.npcEconomyRecentEvents);
+  assert.equal(after.localTreasury, before.localTreasury);
+}
+
+function assertEconomyDraftResponseSafe(payload = {}) {
+  const serialized = JSON.stringify(payload);
+  const outcome = payload.roleCycleDomainAdjudication?.outcome;
+  assert.equal(outcome?.status, "duplicate_recent");
+  assert.equal(outcome?.resolver, "city_policy");
+  assert.equal(outcome?.canonicalEchoRefs, undefined);
+  assert.equal(outcome?.topicDraftContext, undefined);
+  assert.equal(payload.worldState?.cityPolicyLedger, undefined);
+  assert.equal(payload.worldState?.militaryDiplomacyLedger, undefined);
+  assert.doesNotMatch(
+    serialized,
+    /domainConsequenceEcho:forged|economyTraceView:forged-secret|"tradeLedger":|"delegatedTaskLedger":|"marketPriceLedger":|"npcEconomyLedger":|"resourceDelta":|"relationshipSignals":|"stateDelta":|"playerDelta":|"auditRecord":|provider payload|hiddenNotes|data\/sessions|rawSql|SEALED_/
+  );
 }
 
 test("S88.5.3 turn resolves magistrate market role-cycle drafts without leaking raw resolver ledgers", async (t) => {
@@ -174,6 +294,71 @@ test("S88.6 turn verifies topic draft canonical echo refs before role-cycle adju
   assert.deepEqual(second.payload.roleCycleDomainAdjudication.outcome.canonicalEchoRefs, [echoRef]);
   assert.equal(savedAfterSecond.cityPolicyLedger.records.length, savedAfterFirst.cityPolicyLedger.records.length);
   assert.doesNotMatch(JSON.stringify(second.payload), /domainConsequenceEcho:forged|cityPolicyLedger|stateDelta|playerDelta|auditRecord|outcomeId|role-cycle:|SEALED_/);
+});
+
+test("S88.8 ordinary turn revalidates economy draftContext without settling economy ledgers", async (t) => {
+  const server = createTestServer();
+  t.after(server.close);
+
+  const worldState = createInitialState({ role: "magistrate", playerName: "账解复核知县" });
+  seedEconomyTopicSignals(worldState);
+  t.after(() => removeSessionArtifacts(worldState.sessionId));
+  await writeSession(worldState);
+
+  const input = "本旬先处置广州粮储市价：核公开材料、经手人、期限和需回报事项。";
+  const first = await postJson(`${server.baseUrl}/api/game/turn`, {
+    sessionId: worldState.sessionId,
+    input
+  });
+  const savedAfterFirst = await readSession(worldState.sessionId);
+  const draftContext = buildEconomyDraftContext(savedAfterFirst);
+
+  const second = await postJson(`${server.baseUrl}/api/game/turn`, {
+    sessionId: worldState.sessionId,
+    input,
+    draftContext
+  });
+  const savedAfterSecond = await readSession(worldState.sessionId);
+
+  assert.equal(first.response.status, 200);
+  assert.equal(first.payload.roleCycleDomainAdjudication.outcome.status, "accepted");
+  assert.equal(second.response.status, 200);
+  assertEconomyDraftResponseSafe(second.payload);
+  assertEconomyDraftDidNotSettle(savedAfterFirst, savedAfterSecond);
+});
+
+test("S88.8 SSE turn revalidates economy draftContext without settling economy ledgers", async (t) => {
+  const server = createTestServer();
+  t.after(server.close);
+
+  const worldState = createInitialState({ role: "magistrate", playerName: "账解流式知县" });
+  seedEconomyTopicSignals(worldState);
+  t.after(() => removeSessionArtifacts(worldState.sessionId));
+  await writeSession(worldState);
+
+  const input = "本旬先处置广州粮储市价：核公开材料、经手人、期限和需回报事项。";
+  const first = await postJson(`${server.baseUrl}/api/game/turn`, {
+    sessionId: worldState.sessionId,
+    input
+  });
+  const savedAfterFirst = await readSession(worldState.sessionId);
+  const draftContext = buildEconomyDraftContext(savedAfterFirst);
+
+  const second = await postTurnSse(`${server.baseUrl}/api/game/turn`, {
+    sessionId: worldState.sessionId,
+    input,
+    draftContext
+  });
+  const finalState = second.events.find((event) => event.event === "final_state");
+  const savedAfterSecond = await readSession(worldState.sessionId);
+
+  assert.equal(first.response.status, 200);
+  assert.equal(first.payload.roleCycleDomainAdjudication.outcome.status, "accepted");
+  assert.equal(second.response.status, 200);
+  assert.match(second.response.headers.get("content-type") || "", /text\/event-stream/);
+  assert.ok(finalState);
+  assertEconomyDraftResponseSafe(finalState.data);
+  assertEconomyDraftDidNotSettle(savedAfterFirst, savedAfterSecond);
 });
 
 test("S88.5.3 turn resolves general war-council drafts and keeps military ledger private", async (t) => {
