@@ -1949,9 +1949,9 @@ describe("S74.1 React client shell", () => {
           saves: [
             {
               sessionId: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
-              playerName: "data/sessions/secret.json",
-              roleLabel: "raw audit",
-              summary: "provider payload sk-test-secret"
+              playerName: "S74 smoke 验收官 data/sessions/secret.json",
+              roleLabel: "raw audit placeholder debug",
+              summary: "provider payload sk-test-secret 开发注释 fallback token"
             }
           ],
           skipped: []
@@ -1969,7 +1969,7 @@ describe("S74.1 React client shell", () => {
     expect(screen.getByText("无名")).toBeTruthy();
     expect(screen.getByText("身份未题")).toBeTruthy();
     expect(screen.getByText("此卷暂无公开摘要。")).toBeTruthy();
-    expect(document.body.textContent || "").not.toMatch(/data\/sessions|raw audit|provider payload|sk-test-secret/i);
+    expect(document.body.textContent || "").not.toMatch(/data\/sessions|raw audit|provider payload|sk-test-secret|S74|验收|placeholder|debug|开发注释|fallback token/i);
   });
 
   it("keeps the current session pointer after returning home and continues the runnable session", async () => {
@@ -2040,8 +2040,8 @@ describe("S74.1 React client shell", () => {
         player: {
           name: "provider: openai",
           role: "official",
-          examRank: "prompt: leaked",
-          officeTitle: "path=C:\\secret\\case.json"
+          examRank: "prompt: leaked debug placeholder",
+          officeTitle: "path=C:\\secret\\case.json S75 验收 实现说明"
         }
       }
     }, "player-state");
@@ -2051,7 +2051,7 @@ describe("S74.1 React client shell", () => {
     expect(await screen.findByRole("link", { name: "继续本局" })).toBeTruthy();
     expect(screen.getByRole("heading", { name: "无名" })).toBeTruthy();
     expect(screen.getByText("身份未题")).toBeTruthy();
-    expect(document.body.textContent || "").not.toMatch(/provider|prompt|hidden|key|path=|C:\\|data\/sessions|raw audit|OPENAI_API_KEY/i);
+    expect(document.body.textContent || "").not.toMatch(/provider|prompt|hidden|key|path=|C:\\|data\/sessions|raw audit|OPENAI_API_KEY|debug|placeholder|验收|实现说明/i);
   });
 
   it("opens registry-backed local surfaces, writes safe drafts, and restores focus on Esc", async () => {
@@ -2140,7 +2140,10 @@ describe("S74.1 React client shell", () => {
             label: "朝议",
             title: "朝议筹议",
             summary: "围绕公开议题形成意见。",
-            sourceViews: [{ sourceView: "eventArchiveView", domain: "events", count: 1 }],
+            sourceViews: [
+              { sourceView: "eventArchiveView", domain: "events", count: 1 },
+              { sourceView: "npcActiveRequestView", domain: "events", count: 1 }
+            ],
             filters: [],
             items: [{
               id: "topic-item:court-debate:1",
@@ -2161,6 +2164,16 @@ describe("S74.1 React client shell", () => {
               summary: "兵部催核粮饷。",
               visibility: "public",
               confidence: 0.8,
+              freshness: "current"
+            }, {
+              refId: "npcActiveRequestView:npc-follow-up-evidence:petition",
+              sourceView: "npcActiveRequestView",
+              sourceId: "npc-follow-up-evidence:petition",
+              domain: "events",
+              label: "请托案牍复核",
+              summary: "来函请托只作公开案牍线索。",
+              visibility: "public",
+              confidence: 0.7,
               freshness: "current"
             }],
             draftSlots: [
@@ -2235,6 +2248,8 @@ describe("S74.1 React client shell", () => {
     expect(dialog.textContent || "").toContain("筹议");
     expect(dialog.textContent || "").toContain("草稿");
     expect(dialog.textContent || "").toContain("户部、兵部");
+    expect(dialog.textContent || "").toContain("请托案牍复核");
+    expect(dialog.textContent || "").toContain("来函证据 · 案牍");
 
     fireEvent.click(screen.getByRole("button", { name: "AI 拟稿" }));
     await waitFor(() => expect((screen.getByLabelText("专题草稿正文") as HTMLTextAreaElement).value).toBe("请召诸臣廷议，先核边饷催报，再拟稳妥章程。"));
@@ -2835,6 +2850,50 @@ describe("S74.1 React client shell", () => {
             publicSummary: "顾文衡对玩家情分亲近。"
           }
         ]
+      },
+      npcActiveRequestView: {
+        schemaVersion: "s88.7-npc-active-request-view.v1",
+        followUpEvidence: {
+          schemaVersion: "s88.7-npc-active-request-follow-up-evidence.v1",
+          counts: { total: 3 },
+          people: [{
+            evidenceId: "npc-follow-up-evidence:intro",
+            evidenceKindLabel: "引荐拜会",
+            title: "同年师友引荐拜会",
+            publicSummary: "顾文衡可作为公开师友线索，宜先具名拜会。",
+            nextStep: "先拟拜帖并查明公开关系。",
+            statusLabel: "待复核",
+            npc: { displayName: "顾文衡" },
+            riskTags: ["引荐"]
+          }],
+          economy: [{
+            evidenceId: "npc-follow-up-evidence:debt",
+            evidenceKindLabel: "人情债月账",
+            title: "人情债月账解释",
+            publicSummary: "王氏旧账只作为公开月账解释，不直接结债。",
+            nextStep: "查验契据、见证人与旧账来源。",
+            statusLabel: "待复核",
+            npc: { displayName: "王氏" },
+            riskTags: ["人情债"]
+          }],
+          events: [{
+            evidenceId: "npc-follow-up-evidence:watch",
+            evidenceKindLabel: "廉政 watchlist",
+            title: "廉政 watchlist 留痕",
+            publicSummary: "有人试探财物往来，应只作公开风宪线索。",
+            nextStep: "拒收留痕并呈报公开线索。",
+            statusLabel: "待呈报",
+            npc: { displayName: "顾文衡" },
+            riskTags: ["廉政", "风宪"]
+          }, {
+            evidenceId: "npc-follow-up-evidence:polluted",
+            evidenceKindLabel: "provider payload",
+            title: "hiddenNotes raw prompt C:\\bad",
+            publicSummary: "OPENAI_API_KEY data/sessions provider payload",
+            npc: { displayName: "provider-forged" },
+            riskTags: ["privateSignalTags"]
+          }]
+        }
       }
     };
     const fetchMock = vi.fn(async (url: string) => {
@@ -2871,8 +2930,20 @@ describe("S74.1 React client shell", () => {
     expect(screen.getByRole("heading", { name: "人物" })).toBeTruthy();
     await screen.findByText("人物谱牒");
     await waitFor(() => expect(screen.getAllByText("陆清远").length).toBeGreaterThan(0));
-    expect(screen.getByText("顾文衡")).toBeTruthy();
-    expect(screen.getByText("王氏")).toBeTruthy();
+    expect(screen.getAllByText("顾文衡").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("王氏").length).toBeGreaterThan(0);
+    expect(screen.getByText("来函线索与风宪 watchlist")).toBeTruthy();
+    expect(screen.getByText("同年师友引荐拜会")).toBeTruthy();
+    expect(screen.getByText("人情债月账解释")).toBeTruthy();
+    expect(screen.getByText("廉政 watchlist 留痕")).toBeTruthy();
+    expect(screen.queryByText("provider-forged")).toBeNull();
+    expect(screen.getAllByRole("button", { name: "拟复核" })).toHaveLength(3);
+    fireEvent.click(screen.getAllByRole("button", { name: "拟复核" })[0]);
+    expect(useUiStateStore.getState().actionDraft).toMatchObject({
+      source: "role-surface",
+      targetPage: "game",
+      text: expect.stringContaining("服务器裁决")
+    });
     expect(fetchMock).toHaveBeenCalledWith("/assets/ui/ink-ui-runtime-manifest.json", expect.objectContaining({ headers: { Accept: "application/json" } }));
 
     const firstPageImages = screen.getAllByRole("img");
@@ -2906,7 +2977,75 @@ describe("S74.1 React client shell", () => {
     expect(screen.getByRole("dialog", { name: "人物档案" })).toBeTruthy();
     expect(document.activeElement).toBe(profileZoomButton);
 
-    expect(document.body.textContent || "").not.toMatch(/prompt|provider payload|hiddenNotes|OPENAI_API_KEY|artifacts|data\/sessions|C:\\bad/i);
+    expect(document.body.textContent || "").not.toMatch(/prompt|provider payload|hiddenNotes|privateSignalTags|OPENAI_API_KEY|artifacts|data\/sessions|C:\\bad/i);
+    expect(fetchMock.mock.calls.map(([url]) => String(url))).not.toContain("/api/game/turn");
+  });
+
+  it("does not render stale S88.7 follow-up evidence on a different people route", async () => {
+    const staleSessionId = "11111111-1111-4111-8111-111111111111";
+    const routeSessionId = "22222222-2222-4222-8222-222222222222";
+    const fetchMock = vi.fn(async (url: string) => {
+      if (url === "/assets/ui/ink-ui-runtime-manifest.json") {
+        return new Response(JSON.stringify(buildMockAssetManifest()), {
+          status: 200,
+          headers: { "Content-Type": "application/json" }
+        });
+      }
+      if (url === `/api/game/npcs/${routeSessionId}?pageSize=50`) {
+        return new Response(JSON.stringify({
+          sessionId: routeSessionId,
+          npcRosterView: { items: [] },
+          npcInteractionView: { items: [] },
+          delegatedTaskView: { items: [] }
+        }), {
+          status: 200,
+          headers: { "Content-Type": "application/json" }
+        });
+      }
+      if (url === `/api/game/player-state/${routeSessionId}`) {
+        return new Response(JSON.stringify({
+          source: "server_player_visible_state_projection",
+          sessionId: routeSessionId,
+          worldState: { player: { name: "新案主", role: "scholar" } },
+          npcRosterView: { items: [] },
+          npcActiveRequestView: { items: [], followUpTasks: [], followUpEvidence: { counts: { total: 0 }, people: [], events: [], economy: [] } }
+        }), {
+          status: 200,
+          headers: { "Content-Type": "application/json" }
+        });
+      }
+      throw new Error(`unexpected url: ${url}`);
+    });
+    vi.stubGlobal("fetch", fetchMock);
+    useGameSessionStore.setState({
+      currentSessionId: staleSessionId,
+      currentSession: {
+        sessionId: staleSessionId,
+        worldState: { player: { name: "旧案主", role: "official" } },
+        npcActiveRequestView: {
+          followUpEvidence: {
+            schemaVersion: "s88.7-npc-active-request-follow-up-evidence.v1",
+            counts: { total: 1 },
+            people: [{
+              evidenceId: "npc-follow-up-evidence:stale",
+              evidenceKindLabel: "引荐拜会",
+              title: "跨案卷来函线索",
+              publicSummary: "此线索属于另一个案卷，不应在当前人物页出现。",
+              statusLabel: "待复核",
+              npc: { displayName: "旧案 NPC" }
+            }]
+          }
+        }
+      } as unknown as ReturnType<typeof useGameSessionStore.getState>["currentSession"],
+      status: "ready"
+    });
+
+    renderRoute(`/game/${routeSessionId}/people`);
+
+    await screen.findByRole("heading", { name: "人物" });
+    await waitFor(() => expect(fetchMock.mock.calls.some(([url]) => String(url) === `/api/game/npcs/${routeSessionId}?pageSize=50`)).toBe(true));
+    expect(screen.queryByText("跨案卷来函线索")).toBeNull();
+    expect(screen.queryByRole("button", { name: "拟复核" })).toBeNull();
   });
 
   it("caps the S76.10 people ledger at eighty public rows with the player first", async () => {
@@ -3276,6 +3415,33 @@ describe("S74.1 React client shell", () => {
             affectedMetricLabels: ["民心"],
             nextStep: "把平粜余波列入月报与史册。"
           }]
+        },
+        npcActiveRequestView: {
+          schemaVersion: "s88.7-npc-active-request-view.v1",
+          followUpEvidence: {
+            schemaVersion: "s88.7-npc-active-request-follow-up-evidence.v1",
+            counts: { total: 2 },
+            people: [{
+              evidenceId: "npc-follow-up-evidence:archive-intro",
+              evidenceKindLabel: "同年拜会",
+              title: "同年拜会线索",
+              publicSummary: "史册保留同年师友的公开拜会线索。",
+              nextStep: "先拟拜会草稿，再回主卷提交。",
+              statusLabel: "待复核",
+              npc: { displayName: "顾文衡" },
+              riskTags: ["引荐"]
+            }],
+            events: [{
+              evidenceId: "npc-follow-up-evidence:archive-watch",
+              evidenceKindLabel: "风宪 watchlist",
+              title: "风宪 watchlist 留痕",
+              publicSummary: "请托案牍只作公开风宪线索。",
+              nextStep: "列入公开复核，不作定罪。",
+              statusLabel: "待复核",
+              npc: { displayName: "许书吏" },
+              riskTags: ["风宪"]
+            }]
+          }
         }
       },
       status: "ready"
@@ -3290,7 +3456,10 @@ describe("S74.1 React client shell", () => {
     expect(screen.getByRole("heading", { name: "史册" })).toBeTruthy();
     expect(archive.getAllByText("平粜余波").length).toBeGreaterThan(0);
     expect(archive.getByText("史册后果追踪")).toBeTruthy();
+    expect(archive.getByText("来函证据追踪")).toBeTruthy();
     expect(archive.getAllByText("后果").length).toBeGreaterThan(0);
+    expect(archive.getByText("同年拜会线索")).toBeTruthy();
+    expect(archive.getByText("风宪 watchlist 留痕")).toBeTruthy();
     fireEvent.click(archive.getAllByRole("button", { name: "据此拟稿" })[0]);
     expect(useUiStateStore.getState().actionDraft).toMatchObject({
       source: "archive-view",
@@ -3303,7 +3472,13 @@ describe("S74.1 React client shell", () => {
       targetPage: "game",
       text: "把平粜余波列入月报与史册。"
     });
+    fireEvent.click(archive.getAllByRole("button", { name: "拟复核" })[0]);
+    expect(useUiStateStore.getState().actionDraft).toMatchObject({
+      source: "archive-view",
+      targetPage: "game",
+      text: expect.stringContaining("服务器裁决")
+    });
     expect(archive.getByRole("link", { name: "入舆图" }).getAttribute("href")).toBe("/game/s74-archive-session/map");
-    expect(archivePanel.textContent || "").not.toMatch(/raw audit|provider payload|hiddenNotes|OPENAI_API_KEY|data\/sessions|C:\\|path=|stateDelta|evidenceRefs|outcomeId|cityPolicyLedger/i);
+    expect(archivePanel.textContent || "").not.toMatch(/raw audit|provider payload|hiddenNotes|privateSignalTags|OPENAI_API_KEY|data\/sessions|C:\\|path=|stateDelta|evidenceRefs|outcomeId|cityPolicyLedger/i);
   });
 });

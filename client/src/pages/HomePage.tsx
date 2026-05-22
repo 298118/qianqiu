@@ -51,7 +51,7 @@ const sourceLabels: Record<string, string> = {
   "exam-submit": "科举"
 };
 
-const unsafeHomeSummaryPattern = /\/api\/game\/state|\/api\/dev\/session-diagnostics|data[\\/]+sessions|[a-z]:[\\/]|file:\/{2}|raw\b|provider\b|prompt\b|hidden\b|key\b|path\b|hiddenNotes|OPENAI_API_KEY|DEEPSEEK_API_KEY|MIMO_API_KEY|ANTHROPIC_API_KEY|sk-[a-z0-9_-]+|完整提示词|提示词|本地路径|密钥|隐藏|私档|模型原始/i;
+const unsafeHomeSummaryPattern = /\/api\/game\/state|\/api\/dev\/session-diagnostics|data[\\/]+sessions|[a-z]:[\\/]|file:\/{2}|raw\b|provider\b|prompt\b|hidden\b|key\b|path\b|hiddenNotes|OPENAI_API_KEY|DEEPSEEK_API_KEY|MIMO_API_KEY|ANTHROPIC_API_KEY|sk-[a-z0-9_-]+|\bTODO\b|\bFIXME\b|\bsmoke\b|\bartifacts?\b|\bS7[0-9](?:\.\d+)?\b|\bdebug\b|\bstub\b|\bplaceholder\b|fallback token|完整提示词|提示词|本地路径|密钥|隐藏|私档|模型原始|验收|测试截图|开发注释|实现说明/i;
 const safePortraitRefPattern = /^portrait-[a-z0-9][a-z0-9_-]{0,140}$/i;
 const unsafePortraitRefTokenPattern = /(?:^|[-_])(raw|provider|prompt|hidden|private|key|path|secret|token|api|file|data|http)(?:$|[-_])/i;
 

@@ -130,6 +130,8 @@ S88.7 后续公开回响补充：`followUpResolutions` 已进入事件档案、N
 
 S88.7 后续领域 evidence 补充：`npcActiveRequestView.followUpEvidence` 只从安全 `followUpTasks` 与 `latestResolution` 派生，不读取 raw `npcActiveRequestLedger`。它把引荐拜会/同年师友、人情债月账、请托案牍、献策公开证据、廉政/风宪/背叛风险 watchlist 整理为 `items`、`people`、`events`、`economy` 分组公开材料，并带 `readOnlyEvidence`、`proposalOnly`、`serverOwnsFollowUp` 和 `noDirectSettlement` 边界。resolver input、奏折/朝议/堂审/人物 topic surface、安全搜索和 SQLite `safe_search_index` 可以只读引用这些 evidence；它们不能直接结算资源、婚姻、关系终局、弹劾/定罪、背叛真相、人情债或真实任务。
 
+S88.7 前端 evidence 体验补充：React `NpcFollowUpEvidenceSection` 只读消费 `npcActiveRequestView.followUpEvidence`，人物页展示“来函线索与风宪 watchlist”，史册页展示“来函证据追踪”；按钮只写本地草稿，不提交 turn、不调用 resolver、不结算资源/人情债/婚姻/弹劾/定罪/背叛/交易或 hidden facts。`SurfaceHost` 对 `npcActiveRequestView` 的材料标注“来函后续”，对 evidence checkbox 标注“来函证据 · 人物/月账/案牍”，这些标注仅帮助玩家识别安全来源，不扩大 topic surface 的写权限。
+
 ## 3. 核心体验
 
 玩家没有固定选项，主要通过自由文本行动推进游戏。AI 作为世界引擎，负责叙事、意图理解、出题、评分、角色反馈和世界变化建议；服务器负责状态存储、数值边界、晋级规则、作弊惩罚、官场任免、长期事件、可见性过滤和持久化。

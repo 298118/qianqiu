@@ -19,7 +19,7 @@ export const surfaceRegistry: Record<LocalSurface, SurfaceRegistryEntry> = {
     eyebrow: "奏折",
     title: "奏折队列",
     description: "预留奏折、案牍和朝报复核；有安全事件、官职月报或公开案牍投影时才摘录要点。",
-    dataSource: "安全数据来源：eventArchiveView、playerMonthlyBriefingView、domainConsequenceView、localAffairsDocketView、officialPostingsView 等服务器公开投影。",
+    dataSource: "安全数据来源：eventArchiveView、playerMonthlyBriefingView、domainConsequenceView、npcActiveRequestView、localAffairsDocketView、officialPostingsView 等服务器公开投影。",
     emptyState: "若当前案卷没有这些投影，只显示本占位与草稿入口，不补造奏折条目、署名、罪名、银数或紧急军情。",
     safetyNote: "专题层只显示玩家已知材料和草稿结果，不展示内部推演细节、连接凭据或私密记录。",
     draftText: "检阅近旬奏折与朝报，只择服务器已公开的案牍、钱粮、军务与科场风声拟成奏稿。"
@@ -30,7 +30,7 @@ export const surfaceRegistry: Record<LocalSurface, SurfaceRegistryEntry> = {
     eyebrow: "人物",
     title: "人物档案",
     description: "此处预留师友、同年、官长与故人的公开谱牒，只展示服务器已经投影给玩家的摘要。",
-    dataSource: "安全数据来源：worldPeopleView、actorMemoryView、examNetwork 和当前案卷玩家可见关系摘要。",
+    dataSource: "安全数据来源：worldPeopleView、actorMemoryView、examNetwork、npcActiveRequestView 和当前案卷玩家可见关系摘要。",
     emptyState: "若没有公开人物 projection，只显示人物档案占位，不推断未公开关系、未公开任所或重要 NPC 真值。",
     safetyNote: "人物专题层只显示玩家已见的人物材料，不推断私下关系、动机或未公开任所。"
   },
@@ -51,7 +51,7 @@ export const surfaceRegistry: Record<LocalSurface, SurfaceRegistryEntry> = {
     eyebrow: "廷议",
     title: "朝议",
     description: "预留百官议政、台阁票拟与御前问对；首轮只把议题整理成玩家可提交的行动草稿。",
-    dataSource: "安全数据来源：officialPostingsView、actorMemoryView、aiControlAuditView、eventArchiveView、domainConsequenceView、worldThreadView 的公开摘要。",
+    dataSource: "安全数据来源：officialPostingsView、actorMemoryView、aiControlAuditView、eventArchiveView、domainConsequenceView、npcActiveRequestView、worldThreadView 的公开摘要。",
     emptyState: "若没有安全朝局 projection，只显示议题占位，不伪造参议官、票拟结论、派系立场或廷争结果。",
     safetyNote: "朝议 surface 不能调用 resolver、推进时间、定夺任免、形成圣旨或把 AI proposal 伪装成既成事实。",
     draftText: "召集廷议，令诸臣只就已公开的边患、钱粮、案牍与任所缺口陈奏利害。"
@@ -62,7 +62,7 @@ export const surfaceRegistry: Record<LocalSurface, SurfaceRegistryEntry> = {
     eyebrow: "刑名",
     title: "堂审",
     description: "预留县衙、公堂和刑名案件的问案界面；当前只整理公开案情与审问方向。",
-    dataSource: "安全数据来源：localAffairsDocketView、domainConsequenceView、eventArchiveView、safeWorldSearchView 和玩家辖区公开摘要。",
+    dataSource: "安全数据来源：localAffairsDocketView、domainConsequenceView、npcActiveRequestView、eventArchiveView、safeWorldSearchView 和玩家辖区公开摘要。",
     emptyState: "若没有安全案牍 projection，只显示公堂占位，不补造犯供、证词、判词、刑罚、钱粮数或案件真相。",
     safetyNote: "堂审 surface 不直接结案、定罪、用刑、缉捕、改写治安或写入事件档案；后果仍由普通回合服务器裁决。",
     draftText: "升堂复核公开案牍，先问原告、保甲与书吏，只据已明示证据拟定下一步审理。"

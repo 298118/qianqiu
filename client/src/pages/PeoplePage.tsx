@@ -3,6 +3,7 @@ import { useParams } from "react-router";
 import type { AssetRegistry, RuntimePortraitAsset } from "../assets/assetRegistry";
 import { useAssetRegistry } from "../assets/useAssetRegistry";
 import type { DelegatedTaskRecordView, NpcActiveRequestFollowUpTaskView, NpcActiveRequestItemView, NpcActiveRequestResponseOptionView, NpcDetailView, NpcRosterItem, PlayerSummary, TradeRecordView, WorldPeopleNpc, WorldPeopleRelationship } from "../api";
+import { NpcFollowUpEvidenceSection } from "../components/NpcFollowUpEvidenceSection";
 import { Portrait } from "../components/Portrait";
 import { markOverlayTrigger } from "../components/overlayFocus";
 import { isRunnableSessionId } from "../routes/sessionId";
@@ -397,6 +398,7 @@ export function PeoplePage() {
   const npcMutationStatus = useGameSessionStore((state) => state.npcMutationStatus);
   const error = useGameSessionStore((state) => state.error);
   const { registry, status } = useAssetRegistry();
+  const activeSession = session?.sessionId === sessionId ? session : null;
   const [portraitPage, setPortraitPage] = useState(0);
   const [selectedNpcId, setSelectedNpcId] = useState("");
   const [activeTab, setActiveTab] = useState<NpcWorkbenchTab>("profile");
@@ -416,8 +418,8 @@ export function PeoplePage() {
 
   const rosterView = npcRosterPayload?.sessionId === sessionId
     ? npcRosterPayload.npcRosterView
-    : session?.sessionId === sessionId
-      ? session.npcRosterView
+    : activeSession
+      ? activeSession.npcRosterView
       : null;
   const rosterNpcs = useMemo(
     () => (rosterView?.items ?? []).map((npc) => toWorkbenchNpc(registry, npc)),
@@ -436,8 +438,8 @@ export function PeoplePage() {
   }, [loadNpcDetail, runnable, selectedNpc?.npcId, sessionId]);
 
   const peopleRows = useMemo(
-    () => buildPersonRows(registry, session, sessionId),
-    [registry, session, sessionId]
+    () => buildPersonRows(registry, activeSession, sessionId),
+    [registry, activeSession, sessionId]
   );
   const totalPages = Math.max(1, Math.ceil(peopleRows.length / portraitPageSize));
   const safePortraitPage = Math.min(portraitPage, totalPages - 1);
@@ -448,14 +450,14 @@ export function PeoplePage() {
     ? npcDetailPayload.npcDetailView
     : null;
   const interactionRecords = npcDetailPayload?.sessionId === sessionId
-    ? npcDetailPayload.npcInteractionView?.items ?? npcRosterPayload?.npcInteractionView?.items ?? session?.npcInteractionView?.items ?? []
-    : session?.npcInteractionView?.items ?? [];
+    ? npcDetailPayload.npcInteractionView?.items ?? npcRosterPayload?.npcInteractionView?.items ?? activeSession?.npcInteractionView?.items ?? []
+    : activeSession?.npcInteractionView?.items ?? [];
   const tradeRecords = npcDetailPayload?.sessionId === sessionId
-    ? npcDetailPayload.tradeLedgerView?.items ?? session?.tradeLedgerView?.items ?? []
-    : session?.tradeLedgerView?.items ?? [];
+    ? npcDetailPayload.tradeLedgerView?.items ?? activeSession?.tradeLedgerView?.items ?? []
+    : activeSession?.tradeLedgerView?.items ?? [];
   const delegatedTasks = npcDetailPayload?.sessionId === sessionId
-    ? npcDetailPayload.delegatedTaskView?.items ?? npcRosterPayload?.delegatedTaskView?.items ?? session?.delegatedTaskView?.items ?? []
-    : session?.delegatedTaskView?.items ?? [];
+    ? npcDetailPayload.delegatedTaskView?.items ?? npcRosterPayload?.delegatedTaskView?.items ?? activeSession?.delegatedTaskView?.items ?? []
+    : activeSession?.delegatedTaskView?.items ?? [];
 
   async function handleDialogueSubmit() {
     if (!selectedNpc || !dialogueDraft.trim() || !runnable) return;
@@ -508,7 +510,7 @@ export function PeoplePage() {
         <span>{npcRosterStatus === "loading" ? "候谱" : `${rosterNpcs.length || npcCount} 人`}</span>
       </div>
       <NpcActiveRequestInbox
-        requests={(session?.npcActiveRequestView?.items ?? []) as readonly NpcActiveRequestItemView[]}
+        requests={(activeSession?.npcActiveRequestView?.items ?? []) as readonly NpcActiveRequestItemView[]}
         onDraft={(request, option) => setActionDraft({
           source: "role-surface",
           targetPage: "game",
@@ -520,7 +522,7 @@ export function PeoplePage() {
         })}
       />
       <NpcActiveRequestFollowUpDocket
-        tasks={(session?.npcActiveRequestView?.followUpTasks ?? []) as readonly NpcActiveRequestFollowUpTaskView[]}
+        tasks={(activeSession?.npcActiveRequestView?.followUpTasks ?? []) as readonly NpcActiveRequestFollowUpTaskView[]}
         onDraft={(task) => setActionDraft({
           source: "role-surface",
           targetPage: "game",
@@ -529,6 +531,16 @@ export function PeoplePage() {
             `续办${safePeopleText(task.title, "来函后续", 40)}：只作公开复核草稿，资源、婚姻、弹劾、背叛和隐藏事实仍由服务器裁决。`,
             180
           )
+        })}
+      />
+      <NpcFollowUpEvidenceSection
+        evidence={activeSession?.npcActiveRequestView?.followUpEvidence ?? null}
+        boundaryText="这里展示的线索只来自服务器安全 view；按钮只写草稿，不结算资源、人情债、婚姻、弹劾、定罪、背叛或未公开事实。"
+        idPrefix="people-follow-up-evidence"
+        onDraft={(text) => setActionDraft({
+          source: "role-surface",
+          targetPage: "game",
+          text
         })}
       />
       <section className="npcWorkbench" aria-label="NPC 名册工作台">

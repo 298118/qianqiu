@@ -17,7 +17,7 @@ const roleLabels: Record<string, string> = {
   magistrate: "县令"
 };
 
-const unsafeSaveTextPattern = /\/api\/game\/state|\/api\/dev\/session-diagnostics|data[\\/]+sessions|raw\s*(audit|state|prompt)?|provider\s*payload|hiddenNotes|OPENAI_API_KEY|DEEPSEEK_API_KEY|MIMO_API_KEY|ANTHROPIC_API_KEY|sk-[a-z0-9_-]+|完整提示词|本地路径|密钥/i;
+const unsafeSaveTextPattern = /\/api\/game\/state|\/api\/dev\/session-diagnostics|data[\\/]+sessions|raw\s*(audit|state|prompt)?|provider\s*payload|hiddenNotes|OPENAI_API_KEY|DEEPSEEK_API_KEY|MIMO_API_KEY|ANTHROPIC_API_KEY|sk-[a-z0-9_-]+|\bTODO\b|\bFIXME\b|\bsmoke\b|\bartifacts?\b|\bS7[0-9](?:\.\d+)?\b|\bdebug\b|\bstub\b|\bplaceholder\b|fallback token|完整提示词|本地路径|密钥|验收|测试截图|开发注释|实现说明/i;
 
 type SaveCaseListProps = {
   readonly saves: readonly SaveMetadata[];

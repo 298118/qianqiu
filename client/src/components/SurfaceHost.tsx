@@ -1,7 +1,7 @@
 import { BrainCircuit, Home, Save, ShieldCheck, SlidersHorizontal, Sparkles, X } from "lucide-react";
 import { useEffect, useRef, useState, type MouseEvent, type ReactNode } from "react";
 import { useNavigate } from "react-router";
-import type { TopicDraftResponse, TopicSurfaceId, TopicSurfaceView, TurnDraftContext } from "../api";
+import type { TopicDraftResponse, TopicSurfaceEvidenceRef, TopicSurfaceId, TopicSurfaceView, TurnDraftContext } from "../api";
 import { useAssetRegistry } from "../assets/useAssetRegistry";
 import type { AssetRegistry } from "../assets/assetRegistry";
 import { isRunnableSessionId } from "../routes/sessionId";
@@ -758,6 +758,26 @@ function topicMaterialSummary(topicView: TopicSurfaceView) {
   return `${topicView.items.length} 条材料，${topicView.evidenceRefs.length} 枚可引用证据。`;
 }
 
+function topicDomainLabel(domain: unknown) {
+  const text = String(domain || "").trim();
+  if (text === "people") return "人物";
+  if (text === "economy") return "月账";
+  if (text === "events") return "案牍";
+  return text || "公开材料";
+}
+
+function topicSourceLabel(sourceView: unknown) {
+  const text = String(sourceView || "").trim();
+  if (text === "npcActiveRequestView") return "来函后续";
+  return text || "公开投影";
+}
+
+function topicEvidenceMeta(ref: TopicSurfaceEvidenceRef) {
+  const source = topicSourceLabel(ref.sourceView);
+  const domain = topicDomainLabel(ref.domain);
+  return source === "来函后续" ? `来函证据 · ${domain}` : domain || source;
+}
+
 function TopicSurfaceWorkbench({
   activeSurface,
   canLoad,
@@ -830,7 +850,7 @@ function TopicSurfaceWorkbench({
                   <span>{item.statusLabel || "可阅"}</span>
                 </div>
                 <p>{item.summary}</p>
-                <small>{item.sourceView || "公开投影"}</small>
+                <small>{topicSourceLabel(item.sourceView)}</small>
               </article>
             ))}
           </div>
@@ -869,7 +889,7 @@ function TopicSurfaceWorkbench({
               />
               <span>
                 <strong>{ref.label}</strong>
-                <small>{ref.domain || ref.sourceView || "公开材料"}</small>
+                <small>{topicEvidenceMeta(ref)}</small>
               </span>
             </label>
           ))}

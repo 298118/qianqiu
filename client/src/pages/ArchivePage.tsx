@@ -1,6 +1,7 @@
 import { Link, useParams } from "react-router";
 import type { JsonObject, JsonValue } from "../api";
 import { DomainConsequenceSection } from "../components/DomainConsequenceSection";
+import { NpcFollowUpEvidenceSection } from "../components/NpcFollowUpEvidenceSection";
 import { markOverlayTrigger } from "../components/overlayFocus";
 import { isRunnableSessionId } from "../routes/sessionId";
 import { useGameSessionStore } from "../state/gameSessionState";
@@ -126,6 +127,7 @@ export function ArchivePage() {
   const sessionMatches = currentSession?.sessionId === sessionId;
   const archiveView = asRecord(sessionMatches ? currentSession?.eventArchiveView : null);
   const domainConsequenceView = sessionMatches ? currentSession?.domainConsequenceView ?? null : null;
+  const npcFollowUpEvidence = sessionMatches ? currentSession?.npcActiveRequestView?.followUpEvidence ?? null : null;
   const archiveItems = buildArchiveItems(archiveView);
   const pagination = asRecord(archiveView.pagination);
   const counts = asRecord(archiveView.counts);
@@ -212,6 +214,16 @@ export function ArchivePage() {
           title="史册后果追踪"
           summaryFallback="史册页只显示服务器已裁决的公开领域后果；内部账本、证据链和审计原文不会进入玩家视图。"
           emptyText="暂无公开领域后果归档。"
+          maxItems={4}
+          runnable={canDraft}
+          onDraft={(text) => setActionDraft({ source: "archive-view", targetPage: "game", text })}
+        />
+        <NpcFollowUpEvidenceSection
+          evidence={npcFollowUpEvidence}
+          title="来函证据追踪"
+          summaryFallback="史册页只读展示主动来函后续 evidence；引荐拜会、人情债月账、请托案牍和风宪 watchlist 仍要回主卷提交，由服务器裁决。"
+          boundaryText="史册页只显示服务器安全投影中的来函线索；按钮只写草稿，不结算资源、人情债、婚姻、弹劾、定罪、背叛或未公开事实。"
+          idPrefix="archive-follow-up-evidence"
           maxItems={4}
           runnable={canDraft}
           onDraft={(text) => setActionDraft({ source: "archive-view", targetPage: "game", text })}

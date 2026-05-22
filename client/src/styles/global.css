@@ -1440,6 +1440,41 @@ button:disabled {
   font-weight: 800;
 }
 
+.npcFollowUpEvidenceSection {
+  border-color: rgba(106, 89, 55, 0.3);
+}
+
+.npcFollowUpEvidenceHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.npcFollowUpEvidenceHeader h3 {
+  margin: 0;
+}
+
+.npcFollowUpEvidenceHeader > span {
+  color: #72583f;
+  font-size: 0.84rem;
+  font-weight: 900;
+  white-space: nowrap;
+}
+
+.npcFollowUpEvidenceGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 10px;
+}
+
+.npcFollowUpEvidenceBoundary {
+  border-top: 1px solid rgba(84, 60, 43, 0.16);
+  color: #765b43;
+  font-size: 0.88rem;
+  padding-top: 8px;
+}
+
 .roleCycleSection .scholarPanelCardHeader span {
   flex: 0 0 auto;
   border: 1px solid rgba(64, 86, 64, 0.28);
@@ -2352,7 +2387,7 @@ button:disabled {
 
 .archiveTraceGrid {
   display: grid;
-  grid-template-columns: minmax(0, 1.15fr) minmax(300px, 0.85fr);
+  grid-template-columns: minmax(0, 1.15fr) repeat(2, minmax(280px, 0.85fr));
   gap: 14px;
   align-items: start;
 }
