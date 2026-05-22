@@ -38,6 +38,8 @@ function stripSafeGuardPatterns(source) {
     .replace(/const unsafePreferenceTextPattern = .*?;\r?\n/, "")
     .replace(/const unsafeDomainConsequenceFragments[\s\S]*?\] as const;\r?\n/, "")
     .replace(/const unsafeEconomyTraceFragments[\s\S]*?\] as const;\r?\n/, "")
+    .replace(/const unsafeArchiveFragments[\s\S]*?\] as const;\r?\n/, "")
+    .replace(/const unsafeMapTextFragments[\s\S]*?\] as const;\r?\n/, "")
     .replace(/const unsafeMagistrateFragments[\s\S]*?\] as const;\r?\n/, "")
     .replace(/const unsafeOfficialMinisterFragments[\s\S]*?\] as const;\r?\n/, "")
     .replace(/const unsafeClientApiPathPatterns = Object\.freeze\(\[[\s\S]*?\]\);\r?\n/, "");
@@ -371,8 +373,12 @@ test("S74.4 shell uses registry-backed overlays without widening data sources", 
   const appShellSource = readText("client/src/components/AppShell.tsx");
   const surfaceHostSource = readText("client/src/components/SurfaceHost.tsx");
   const surfaceRegistrySource = readText("client/src/surfaces/surfaceRegistry.tsx");
+  const uiStateSource = readText("client/src/state/uiState.ts");
+  const courtPageSource = readText("client/src/pages/CourtPage.tsx");
+  const archivePageSource = readText("client/src/pages/ArchivePage.tsx");
+  const mapPageSource = readText("client/src/pages/MapPage.tsx");
   const routeCatalogSource = readText("client/src/routes/routeCatalog.ts");
-  const combined = `${appShellSource}\n${surfaceHostSource}\n${surfaceRegistrySource}\n${routeCatalogSource}`;
+  const combined = stripSafeGuardPatterns(`${appShellSource}\n${surfaceHostSource}\n${surfaceRegistrySource}\n${uiStateSource}\n${courtPageSource}\n${archivePageSource}\n${mapPageSource}\n${routeCatalogSource}`);
 
   assert.match(appShellSource, /data-shell-version="s75-9"/);
   assert.match(appShellSource, /resolvePrimaryHref/);
@@ -385,6 +391,13 @@ test("S74.4 shell uses registry-backed overlays without widening data sources", 
   assert.match(surfaceHostSource, /event\.key !== "Escape"/);
   assert.match(surfaceHostSource, /focusReturnTargetsRef/);
   assert.match(surfaceHostSource, /returningFromPortrait/);
+  assert.match(uiStateSource, /openSurfaceForSession/);
+  assert.match(courtPageSource, /openSurfaceForSession\(surface, sessionId\)/);
+  assert.match(archivePageSource, /openSurfaceForSession\("memorial-review", sessionId\)/);
+  assert.match(mapPageSource, /openSurfaceForSession\("map-filter", sessionId\)/);
+  assert.doesNotMatch(courtPageSource, /openSurface\(surface\)/);
+  assert.doesNotMatch(archivePageSource, /openSurface\("memorial-review"\)/);
+  assert.doesNotMatch(mapPageSource, /openSurface\("map-filter"\)/);
   assert.match(surfaceRegistrySource, /"npc-profile"/);
   assert.match(surfaceRegistrySource, /"edict-draft"/);
   assert.match(surfaceRegistrySource, /"memorial-review"/);
@@ -1224,7 +1237,7 @@ test("S78 topic surfaces are safe workbenches and draft-only", () => {
   assert.match(courtPageSource, /"memorial-review", "edict-draft", "court-debate"/);
   assert.match(courtPageSource, /"trial", "war-council"/);
   assert.match(courtPageSource, /"npc-profile"/);
-  assert.match(courtPageSource, /openSurface\(surface\)/);
+  assert.match(courtPageSource, /openSurfaceForSession\(surface, sessionId\)/);
   assert.match(appTestSource, /奏折队列", "拟圣旨", "朝议", "堂审", "军议", "人物档案"/);
   assert.match(appTestSource, /AI 拟稿/);
 

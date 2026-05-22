@@ -108,6 +108,7 @@ type UiState = {
   readonly openModal: (modal: ModalSurface) => void;
   readonly closeModal: () => void;
   readonly openSurface: (surface: LocalSurface) => void;
+  readonly openSurfaceForSession: (surface: LocalSurface, sessionId: string) => void;
   readonly closeSurface: () => void;
   readonly openPortraitViewer: (viewer: PortraitViewerState) => void;
   readonly closePortraitViewer: () => void;
@@ -248,6 +249,17 @@ export const useUiStateStore = create<UiState>((set) => ({
 
   openSurface(surface) {
     set({ activeSurface: surface, activePortraitViewer: null });
+  },
+
+  openSurfaceForSession(surface, sessionId) {
+    set((state) => ({
+      currentSessionId: sessionId,
+      currentPlayerPayload: state.currentPlayerPayload?.sessionId === sessionId ? state.currentPlayerPayload : null,
+      activeDrawer: null,
+      activeModal: null,
+      activeSurface: surface,
+      activePortraitViewer: null
+    }));
   },
 
   closeSurface() {

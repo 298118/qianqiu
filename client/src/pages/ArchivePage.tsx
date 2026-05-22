@@ -122,7 +122,7 @@ export function ArchivePage() {
   const { sessionId = "s74-preview" } = useParams();
   const currentSession = useGameSessionStore((state) => state.currentSession);
   const status = useGameSessionStore((state) => state.status);
-  const openSurface = useUiStateStore((state) => state.openSurface);
+  const openSurfaceForSession = useUiStateStore((state) => state.openSurfaceForSession);
   const setActionDraft = useUiStateStore((state) => state.setActionDraft);
   const sessionMatches = currentSession?.sessionId === sessionId;
   const archiveView = asRecord(sessionMatches ? currentSession?.eventArchiveView : null);
@@ -170,7 +170,7 @@ export function ArchivePage() {
       </header>
 
       <div className="archiveActionRow">
-        <button className="paperButton" type="button" onClick={(event) => { markOverlayTrigger(event.currentTarget); openSurface("memorial-review"); }}>
+        <button className="paperButton" type="button" onClick={(event) => { markOverlayTrigger(event.currentTarget); openSurfaceForSession("memorial-review", sessionId); }}>
           阅奏折
         </button>
         <Link className="paperLink" to={`/game/${sessionId}/map`}>入舆图</Link>

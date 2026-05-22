@@ -2675,6 +2675,213 @@ describe("S74.1 React client shell", () => {
     expect(requestedUrls.some((url) => /\/api\/game\/state|\/api\/dev/.test(url))).toBe(false);
   });
 
+  it("opens court, archive, and map surfaces against the current route session", async () => {
+    const staleSessionId = "12121212-1212-4121-8121-121212121212";
+    const routeSessionId = "56565656-5656-4565-8565-565656565656";
+    const topicSurfaceResponse = (surfaceId: string, label: string) => ({
+      sessionId: routeSessionId,
+      topicSurfaceView: {
+        schemaVersion: "s78.topicSurfaceView.v1",
+        sessionId: routeSessionId,
+        generatedAtTurn: 6,
+        surfaceId,
+        surfaceType: surfaceId,
+        label,
+        title: `${label}当前案材料`,
+        summary: "当前 route 案卷的专题材料。",
+        sourceViews: [{ sourceView: "eventArchiveView", domain: "events", count: 1 }],
+        filters: [],
+        items: [{
+          id: `${surfaceId}:route-item`,
+          kind: "route_bound_item",
+          title: `${label}当前案题`,
+          summary: "只应显示当前 route 案卷专题材料。",
+          sourceView: "eventArchiveView",
+          statusLabel: "当前案",
+          evidenceRefs: [`eventArchiveView:${surfaceId}:route`],
+          urgency: "normal"
+        }],
+        evidenceRefs: [{
+          refId: `eventArchiveView:${surfaceId}:route`,
+          sourceView: "eventArchiveView",
+          sourceId: `${surfaceId}:route`,
+          domain: "events",
+          label: `${label}当前案证据`,
+          summary: "当前 route 案卷公开证据。",
+          visibility: "public",
+          confidence: 0.8,
+          freshness: "current"
+        }],
+        draftSlots: [{ id: "route", label: "当前案草稿", draftKind: "route_bound", template: "只取当前案材料。" }],
+        scenePreview: {
+          sceneType: surfaceId,
+          title: `${label}当前案材料`,
+          participantLabels: ["当前案有司"],
+          proposalBudget: { maxRounds: 1, maxActors: 1 },
+          authorityBoundary: "只读当前案安全投影。"
+        },
+        lastPublicResults: [],
+        authorityBoundary: "只读当前案安全投影；按钮只写草稿，不调用 resolver。",
+        emptyState: "暂无议题。",
+        safety: {
+          readOnly: true,
+          actorVisibleContextOnly: true,
+          draftOnly: true,
+          noResolverExecution: true,
+          noStateWrites: true,
+          noGlobalTimeAdvance: true
+        }
+      }
+    });
+    const staleSurfaceResponse = {
+      sessionId: staleSessionId,
+      topicSurfaceView: {
+        ...topicSurfaceResponse("court-debate", "旧案").topicSurfaceView,
+        sessionId: staleSessionId,
+        title: "旧案材料不应显示",
+        items: [{
+          id: "old-item",
+          kind: "old",
+          title: "旧案题",
+          summary: "旧案材料不应显示。",
+          sourceView: "eventArchiveView",
+          statusLabel: "旧案",
+          evidenceRefs: ["eventArchiveView:old"],
+          urgency: "normal"
+        }]
+      }
+    };
+    const playerPayload = {
+      source: "server_player_visible_state_projection",
+      sessionId: routeSessionId,
+      worldState: { player: { name: "顾澄", role: "official" } },
+      eventArchiveView: {
+        schemaVersion: 1,
+        pagination: { page: 1, pageSize: 12, totalItems: 1 },
+        counts: { total: 1 },
+        items: [{
+          id: "EA-route-1",
+          sourceType: "event_history",
+          sourceLabel: "朝报",
+          title: "当前案史册",
+          summary: "当前 route 案卷公开史册。",
+          dateLabel: "明1644年三月上旬",
+          statusLabel: "已记"
+        }]
+      },
+      mapRuntimeView: { schemaVersion: 1, refs: [], routes: [], eventEffects: [] }
+    };
+    const fetchMock = vi.fn(async (url: string) => {
+      if (url === "/assets/ui/ink-ui-runtime-manifest.json") {
+        return new Response(JSON.stringify(buildMockAssetManifest(0)), {
+          status: 200,
+          headers: { "Content-Type": "application/json" }
+        });
+      }
+      if (url === `/api/game/player-state/${routeSessionId}`) {
+        return new Response(JSON.stringify(playerPayload), {
+          status: 200,
+          headers: { "Content-Type": "application/json" }
+        });
+      }
+      if (url === `/api/ai/quick-actions/${routeSessionId}`) {
+        return new Response(JSON.stringify({
+          schemaVersion: "s75.9-quick-actions.v1",
+          sessionId: routeSessionId,
+          source: "mock-ai",
+          status: "ready",
+          quickActionSuggestions: []
+        }), {
+          status: 200,
+          headers: { "Content-Type": "application/json" }
+        });
+      }
+      if (url === `/api/game/topic-surface/${staleSessionId}/court-debate`) {
+        return new Response(JSON.stringify(staleSurfaceResponse), {
+          status: 200,
+          headers: { "Content-Type": "application/json" }
+        });
+      }
+      if (url === `/api/game/topic-surface/${routeSessionId}/court-debate`) {
+        return new Response(JSON.stringify(topicSurfaceResponse("court-debate", "朝议")), {
+          status: 200,
+          headers: { "Content-Type": "application/json" }
+        });
+      }
+      if (url === `/api/game/topic-surface/${routeSessionId}/memorial-review`) {
+        return new Response(JSON.stringify(topicSurfaceResponse("memorial-review", "奏折队列")), {
+          status: 200,
+          headers: { "Content-Type": "application/json" }
+        });
+      }
+      throw new Error(`unexpected url: ${url}`);
+    });
+    vi.stubGlobal("fetch", fetchMock);
+    useGameSessionStore.setState({
+      currentSessionId: routeSessionId,
+      currentSession: playerPayload as unknown as ReturnType<typeof useGameSessionStore.getState>["currentSession"],
+      status: "ready"
+    });
+    useUiStateStore.setState({
+      currentSessionId: staleSessionId,
+      currentPlayerPayload: null
+    });
+
+    const courtRender = renderRoute(`/game/${routeSessionId}/court`);
+    await screen.findByRole("heading", { name: "朝议与官署" });
+
+    act(() => {
+      useUiStateStore.setState({ currentSessionId: staleSessionId, currentPlayerPayload: null });
+    });
+    fireEvent.click(screen.getByRole("button", { name: "朝议" }));
+
+    const courtDialog = await screen.findByRole("dialog", { name: "朝议" });
+    await waitFor(() => expect(courtDialog.textContent || "").toContain("朝议当前案题"));
+    expect(useUiStateStore.getState().currentSessionId).toBe(routeSessionId);
+    expect(courtDialog.textContent || "").not.toContain("旧案题");
+    expect(fetchMock.mock.calls.map(([url]) => String(url))).toContain(`/api/game/topic-surface/${routeSessionId}/court-debate`);
+    expect(fetchMock.mock.calls.map(([url]) => String(url))).not.toContain(`/api/game/topic-surface/${staleSessionId}/court-debate`);
+
+    fireEvent.keyDown(document, { key: "Escape" });
+    await waitFor(() => expect(screen.queryByRole("dialog", { name: "朝议" })).toBeNull());
+    courtRender.unmount();
+
+    useGameSessionStore.setState({
+      currentSessionId: routeSessionId,
+      currentSession: playerPayload as unknown as ReturnType<typeof useGameSessionStore.getState>["currentSession"],
+      status: "ready"
+    });
+    act(() => {
+      useUiStateStore.setState({ currentSessionId: staleSessionId, currentPlayerPayload: null });
+    });
+    const archiveRender = renderRoute(`/game/${routeSessionId}/archive`);
+    await screen.findByRole("heading", { name: "史册" });
+    fireEvent.click(screen.getByRole("button", { name: "阅奏折" }));
+    const memorialDialog = await screen.findByRole("dialog", { name: "奏折队列" });
+    await waitFor(() => expect(memorialDialog.textContent || "").toContain("奏折队列当前案题"));
+    expect(useUiStateStore.getState().currentSessionId).toBe(routeSessionId);
+
+    fireEvent.keyDown(document, { key: "Escape" });
+    await waitFor(() => expect(screen.queryByRole("dialog", { name: "奏折队列" })).toBeNull());
+    archiveRender.unmount();
+
+    useGameSessionStore.setState({
+      currentSessionId: routeSessionId,
+      currentSession: playerPayload as unknown as ReturnType<typeof useGameSessionStore.getState>["currentSession"],
+      status: "ready"
+    });
+    act(() => {
+      useUiStateStore.setState({ currentSessionId: staleSessionId, currentPlayerPayload: null });
+    });
+    renderRoute(`/game/${routeSessionId}/map`);
+    await screen.findByRole("heading", { name: "山河舆图" });
+    fireEvent.click(screen.getByRole("button", { name: "筛舆图" }));
+    const mapDialog = await screen.findByRole("dialog", { name: "舆图筛选" });
+    expect(mapDialog.textContent || "").toContain("mapRuntimeView");
+    expect(useUiStateStore.getState().currentSessionId).toBe(routeSessionId);
+    expect(document.body.textContent || "").not.toMatch(/旧案题|旧案材料不应显示|\/api\/game\/state|\/api\/dev|raw audit|provider payload|OPENAI_API_KEY/i);
+  });
+
   it("does not keep stale topic surface materials when the open surface switches sessions", async () => {
     const staleSessionId = "12121212-1212-4121-8121-121212121212";
     const routeSessionId = "34343434-3434-4343-8343-343434343434";

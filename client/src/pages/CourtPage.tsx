@@ -1,3 +1,4 @@
+import { useParams } from "react-router";
 import { markOverlayTrigger } from "../components/overlayFocus";
 import { surfaceRegistry } from "../surfaces/surfaceRegistry";
 import type { LocalSurface } from "../state/uiState";
@@ -26,7 +27,8 @@ const courtSurfaceGroups: readonly {
 ];
 
 export function CourtPage() {
-  const openSurface = useUiStateStore((state) => state.openSurface);
+  const { sessionId = "s74-preview" } = useParams();
+  const openSurfaceForSession = useUiStateStore((state) => state.openSurfaceForSession);
 
   return (
     <article className="surfacePanel routePanel courtSurfacePage" aria-labelledby="court-title">
@@ -52,7 +54,7 @@ export function CourtPage() {
                     type="button"
                     onClick={(event) => {
                       markOverlayTrigger(event.currentTarget);
-                      openSurface(surface);
+                      openSurfaceForSession(surface, sessionId);
                     }}
                   >
                     {entry.label}

@@ -103,7 +103,7 @@ export function MapPage() {
   const [visibleLayers, setVisibleLayers] = useState<Record<MapLayerKey, boolean>>(defaultVisibleLayers);
   const currentSession = useGameSessionStore((state) => state.currentSession);
   const status = useGameSessionStore((state) => state.status);
-  const openSurface = useUiStateStore((state) => state.openSurface);
+  const openSurfaceForSession = useUiStateStore((state) => state.openSurfaceForSession);
   const displayPreferences = useUiStateStore((state) => state.displayPreferences);
   const setActionDraft = useUiStateStore((state) => state.setActionDraft);
   const mapRuntimeView = currentSession?.sessionId === sessionId ? currentSession.mapRuntimeView : null;
@@ -171,7 +171,7 @@ export function MapPage() {
           ))}
         </div>
         <div className="buttonRow">
-          <button className="paperButton" type="button" onClick={(event) => { markOverlayTrigger(event.currentTarget); openSurface("map-filter"); }}>
+          <button className="paperButton" type="button" onClick={(event) => { markOverlayTrigger(event.currentTarget); openSurfaceForSession("map-filter", sessionId); }}>
             筛舆图
           </button>
           <Link className="paperLink" to={archiveHref}>入局势簿</Link>

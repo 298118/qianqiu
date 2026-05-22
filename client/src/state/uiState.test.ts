@@ -317,6 +317,35 @@ describe("S74.3 UI state store", () => {
     expect(useUiStateStore.getState().actionDraft).toBeNull();
   });
 
+  it("opens local surfaces against the current route session and drops stale safe payloads", () => {
+    const store = useUiStateStore.getState();
+
+    store.syncSessionPayload(startPayload, "player-state");
+    store.openDrawer("saves");
+    store.openModal("safe-summary");
+    store.openPortraitViewer({ portraitRef: "portrait-test-female-v1", label: "女官" });
+
+    store.openSurfaceForSession("court-debate", playerStatePayload.sessionId);
+
+    expect(useUiStateStore.getState()).toMatchObject({
+      currentSessionId: playerStatePayload.sessionId,
+      currentPlayerPayload: null,
+      activeDrawer: null,
+      activeModal: null,
+      activeSurface: "court-debate",
+      activePortraitViewer: null
+    });
+
+    store.syncSessionPayload(playerStatePayload, "player-state");
+    store.openSurfaceForSession("memorial-review", playerStatePayload.sessionId);
+
+    expect(useUiStateStore.getState()).toMatchObject({
+      currentSessionId: playerStatePayload.sessionId,
+      currentPlayerPayload: { sessionId: playerStatePayload.sessionId },
+      activeSurface: "memorial-review"
+    });
+  });
+
   it("clears topic draft context when a user rewrites the memorial manually", () => {
     const store = useUiStateStore.getState();
 
