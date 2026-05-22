@@ -120,7 +120,7 @@
 | S88.6 | IN_PROGRESS | 官场与世界后果追踪 | 首片已实现安全 `domainConsequenceView`：从 `cityPolicyLedger`、`militaryDiplomacyLedger`、`judicialCaseLedger` 和 NPC 经济月账派生公开后果追踪 refs，接入 game/exam route response、事件档案、world thread 和官职月报；兼容 public `worldState` / redacted state 已补 `judicialCaseLedger` 剥离。第二片已接入 resolver/topic/source evidence、`topic_draft` 引用和搜索/SQLite 安全索引；前端片把 `domainConsequenceView` 接入地方官、将领、官员/大臣和皇帝主卷面板，按钮仅写草稿；红队片已收紧旧存档污染过滤、未应用状态外泄、重复后果去重、inactive role、高风险军务绕过、普通回合近 3 旬重复触发拦截、地图/史册追踪入口、high-volume evidence cap、角色可见性、map runtime 后果 effect 和跨视图 cap 压力。最新两片新增公开 `publicEchoRef` 与 topic draft -> turn canonical echo 审计链，让月报、world thread resolved、role-cycle 草稿、topic surface、`topic_draft` 和下一轮普通回合裁决按同一安全回响键去重/复核；浏览器 `draftContext` 只作为待校验 hint，服务器会重建当前 topic surface 反推 echo refs 后才写入公开 outcome、内部 audit 和最新 city/military ledger 审计字段，不重复写账、不接受伪造 echo、不扩大裁决权。后续可转入 S88.7 NPC/关系深化，或补真实 provider/streaming turn 的 draftContext smoke 与更长冷却周期回归。 |
 | S88.7 | IN_PROGRESS | NPC 与关系深化 | 首片已启动专门 resolver trace：NPC 主动来函回应写入 `npc_active_request_resolver` 安全 trace，论道/切磋/求爱/婚姻写入 `npc_relationship_action_resolver` 安全 trace，并把新的 `npcActiveRequestLedger` 接入 `worldThreadView` 与 `worldEntity` 压力；第二片把安全 trace 接入长期回响：事件档案新增 `npc_active_request` / `npc_relationship_action` 来源，普通 turn 会把本旬主动来函 resolver trace 写成已知 NPC 的可见 `npc_active_request_trace` 记忆，且必须命中 canonical active request safe record，伪造可见/不可见 refs 或同 ref 篡改字段不会改记忆类型、标签或摘要；第三片把 `/npc-interaction` 的论道/切磋/求爱/议婚安全记录即时写成 `npc_relationship_action_trace` 可见记忆，并随响应返回 `actorMemoryView` / `eventArchiveView` 供 React session 合并刷新；第四片新增主动来函 `responseOptions` 与 resolved `outcome.followUpView`，将行贿、弹劾、背叛、引荐、请托、索债/人情债、献策、求助和议婚拆成服务器配置的后续复核类型、公开摘要、下一步、证据 refs、风险标签和前端草稿按钮；`responseOptions` 只对 `active` / `deferred` 来函开放，已裁决 follow-up 只展示说明和状态。第五片实现提交 `18e489e5`：`npcActiveRequestView.followUpTasks` 派生“来函后续簿”，把已裁决 follow-up 收束为公开 taskRoute、状态、证据 refs、风险标签和草稿；React 人物页只读展示并写本地草稿。第六片实现提交 `a16e34df`：普通回合现在可把匹配 task 的“续办/后续/复核”文本登记为 `npc_active_request_follow_up_resolver`，回写 canonical request 的 `outcome.followUpResolutions` / `followUpView.latestResolution` 并公开近次状态；失败 follow-up attempt 不回落处理普通 active 来函，普通“查证/登记+泛词”也不劫持后续簿。第七片实现提交 `c08eb0fd`：`followUpResolutions` 已接入事件档案、NPC 记忆和 world thread 长期公开回响，均从 safe view/canonical resolution 匹配派生，不读取 raw ledger 或创建真实领域结果。第八片把 `npcActiveRequestView.followUpEvidence` 派生成 people/events/economy 只读领域 evidence，并接入 resolver input、奏折/朝议/堂审/人物 topic surface、安全搜索和 SQLite safe-search；仍不直接扣资源、写婚姻、成弹劾/定罪、处置背叛、创建真实后续任务或公开 hidden 私档。第九片前端体验实现提交 `fa105ec5`：人物页、史册页和 topic surface 只读展示来函 evidence，按钮只写本地草稿，首页旧案卷/继续本局过滤开发文案污染。 |
 | S88.8 | IN_PROGRESS | 资产、囊箧、交易、委派与经济解释性 | 第一片已新增 `economyTraceView` 公开安全解释投影，汇总资源、资产、囊箧、交易、委派、市价和 NPC 月账变化原因，并在囊箧页展示“账本为何变化”；实现提交 `50b55538`。第二片实现提交 `06c25f4c`：交易与委派响应返回即时 `economyTraceView`，人物页展示“交易委派账本为何变化”，store 只在 session 匹配时合并 trace；按钮只写行动草稿。第三片实现提交 `62c9a260`：已把 `economyTraceView.traceItems` 接入 resolver input、topic surface、safe search 和 SQLite safe-search 单向派生。第四片实现提交 `05fba067`：地方官/官员主卷已展示过滤后的经济解释，专题工作台来源标为“经济解释”。第五片实现提交 `1becde0c`：经济解释已接入 `topic_draft` provider/fallback 草稿语境和前端 `draftContext` 写入回归，经济 evidence 带中文来源、月账标签和服务器裁决边界，普通 turn 会重建当前 topic surface 后丢弃伪造或越权 refs。第六片实现提交 `ecfdc3c0`：补普通 turn 与 SSE 长链路回归，同一市价处置重复提交时，带经济 evidence 和伪造 refs 的 `draftContext` 只会被重校验为无 canonical echo 的安全 hint，不会写入 topicDraftContext、不会再次写 city/military ledger，也不会结算交易、资源、委派、人情债或关系变化。第七片实现提交 `f533d1c1`：补 true `provider.streamTurn()` 分支回归，确认可见 narrative chunks 已经发出时仍重校验经济 `draftContext`，不会接受伪造 refs/echo、不会写 `topicDraftContext`、不会再次结算经济账本；普通/SSE/true streaming 的保存态断言同步覆盖军务 ledger、资源账本、玩家金银、地方库银与经济关系信号 canary。 |
-| S88.9 | IN_PROGRESS | React 前端操作与状态打磨 | 第一片已启动案卷异步状态防线：`loadSession`、快捷建议、topic surface/draft、囊箧、NPC 名册和 NPC 详情读取都带请求序号、session/surface/NPC guard，旧请求晚到或错配回包不会覆盖当前路由或继续执行旧调用方副作用；`GamePage` 只消费当前路由匹配的 session、lastTurn 和 UI safe payload，路由切换会清空不匹配的 UI payload；`SurfaceHost` 也按当前案卷守住专题材料、本地草稿、证据选择和 draft context，避免同 surface 旧案卷材料串入新案卷。实现提交 `1e1cb7a0`。第二片本轮推进人物页/囊箧页 route-local 状态防线与印匣旧案刷新防线：人物页按当前 `sessionId` 过滤 NPC 最新对话、交易、委派、礼法结果、名册 fallback 记录和错误态；囊箧页在切换案卷时重置本地容器/物件/目标选择与移置提示，并丢弃旧案卷移置完成后的本地副作用；印匣旧案 tab 在 ready 列表缺少当前 runnable 案卷时会自动刷新一次，避免大批本地存档下 stale 列表漏显当前案卷。实现提交 `960e0336`。第三片本轮推进科举、皇榜和舆图 route-local 状态防线：考试取题/推进/交卷 mutation 带请求序号和当前案卷 guard，旧案卷成功/失败晚到不污染当前案卷或 UI safe payload；科举页切案卷重置试别、场内行动和文章草稿，皇榜页切案卷清空选中榜名，舆图页切案卷恢复地点/驿路/近事图层。实现提交 `9b32068a`。后续继续逐页补 loading、empty、error、低动效、移动端、文本溢出和操作效率，优先设置与朝议。 |
+| S88.9 | IN_PROGRESS | React 前端操作与状态打磨 | 第一片已启动案卷异步状态防线：`loadSession`、快捷建议、topic surface/draft、囊箧、NPC 名册和 NPC 详情读取都带请求序号、session/surface/NPC guard，旧请求晚到或错配回包不会覆盖当前路由或继续执行旧调用方副作用；`GamePage` 只消费当前路由匹配的 session、lastTurn 和 UI safe payload，路由切换会清空不匹配的 UI payload；`SurfaceHost` 也按当前案卷守住专题材料、本地草稿、证据选择和 draft context，避免同 surface 旧案卷材料串入新案卷。实现提交 `1e1cb7a0`。第二片推进人物页/囊箧页 route-local 状态防线与印匣旧案刷新防线，实现提交 `960e0336`。第三片推进科举、皇榜和舆图 route-local 状态防线，实现提交 `9b32068a`。第四片本轮推进设置页全局 AI 请求 race/loading/empty 防线：全局与兼容 session AI 设置读取/保存/任务路由更新带 latest-only guard，试连结果独立 latest-only，慢 GET/POST/试连不覆盖新状态；设置页保留未保存编辑，双面板挂载时从 store 最新安全设置回填，补载入中、试连中、空矩阵和文本溢出防线。实现提交待回填。后续继续逐页补 loading、empty、error、低动效、移动端、文本溢出和操作效率，优先朝议 route session gate 与史册/皇榜/舆图细节。 |
 | S88.10 | TODO | PixiJS 水墨地图行动入口 | 复用 `mapRuntimeView` 与已审核素材，把地图打磨为局势、移动、事件、地方事务、军务外交、NPC 活动和行动草稿入口。 |
 | S88.11 | TODO | 视觉、立绘与氛围一致性 | 继续只用已审核 runtime manifest 与 `portraitRef`，不显示未审核素材、不硬编码本地路径、不一次性加载全量立绘池。 |
 | S88.12 | IN_PROGRESS | Mock/真实 provider 长循环验收与归档 | 首片补真实 provider 缺 key 运行期回退与 smoke 脚本 no-key skip：普通 JSON turn 与 SSE turn 在 `AI_PROVIDER=deepseek` 但无 key 时仍通过 Mock 安全回退保持可玩；测试先建立 JSON 市价裁决基线，再用 JSON + 经济 `draftContext` 重复提交，随后从当前 topic surface 重建 `draftContext` 走 SSE 重复提交，均保持重校验、不接受伪造 refs/echo、不结算经济业务账本；`connection-test` 缺 key 仍作为诊断返回 503，不等同普通游玩回退；MiMo tool smoke 在无 key 环境先 skip，不要求运行时存在 `fetch`。第二片实现提交 `28141071`：`smoke:provider:long` 内存结算链补齐 NPC 经济 tick 与 `economyTraceView` 安全验收，并固定 `smoke:provider:long` / `smoke:provider:route` 显式真实 provider 缺 key 必须失败，不能伪装成普通游玩 Mock fallback。后续继续补真实 keyed 长跑证据与 S88 归档。 |
@@ -155,6 +155,21 @@
 - S78 及更早阶段均已迁入专题归档。活动台账不再展开完成流水；需要追溯时使用本文件顶部归档索引。
 
 ## 6. 最近完整验证口径
+
+本轮 S88.9 React 设置页全局 AI 请求 race/loading/empty 防线当前验证口径：
+
+- `npm run typecheck:client`
+- `npm run test:client -- --pool=vmForks --maxWorkers=1 client/src/state/uiState.test.ts --reporter=verbose`（32 项）
+- `npm run test:client -- --pool=vmForks --maxWorkers=1 client/src/__tests__/App.test.tsx --reporter=verbose`（48 项）
+- `node --test --test-reporter=spec test/reactClientScaffold.test.js`（40 项）
+- `npm run test:client -- --pool=vmForks --maxWorkers=2`（99 项）
+- `npm run build:client`
+- `AI_PROVIDER=mock npm run smoke:browser`
+- `npm run check:docs-governance`
+- `node --test test/documentationGovernance.test.js`
+- `npm test`（1126 项）
+- `git diff --check`
+- 提交前只读复审：Goodall 初审发现双面板后发保存会让较早面板滞留“保存中”的 P1；主代理已让被取代的本地保存回到 dirty/idle、保留编辑并提示可重新保存，补 App 回归。Goodall 最终复审确认 P1 关闭，未发现 P0/P1/P2；非阻塞缺口是双面板后发保存回归通过共享 store 触发而不是完整点击第二面板表单。
 
 本轮 S88.9 React 科举/皇榜/舆图 route-local 状态防线当前验证口径：
 
@@ -790,6 +805,16 @@ S84 前端专项额外验收入口：
 - `npm test`
 
 ## 7. 近期进度记录
+
+### 2026-05-22：推进 S88.9 设置页全局 AI 请求防线
+
+- 范围：继续 S88.9 React 前端操作与状态打磨第四片，聚焦设置页和印匣 AI 设置面板的全局 AI 设置读取、保存、重载和试连请求乱序返回，以及任务矩阵 loading/empty 文案和文本溢出。本轮不新增后端 API，不改变服务端全局 AI 设置文件格式、provider 路由策略、AI 权限、服务器裁决、考试晋级、官职任免、资源、NPC 行动、交易、委派或经济结果。
+- 实现：`client/src/state/gameSessionState.ts` 新增 `aiSettingsReadRequestId`、`aiSettingsWriteRequestId`、`aiSettingsActiveWriteRequestId`、`aiConnectionRequestId` 和 `aiConnectionStatus`。全局与兼容 session AI 设置读取、保存、preset 更新和 task route 更新都采用 latest-only guard；读取会记录当时写入序号并避开在途保存，防止稍后的 GET 抢占仍在途或刚完成的 POST 结果。兼容 session 设置回包必须为 `scope: "global"` 或匹配请求案卷，旧 GET/POST 或错配回包不会覆盖 `aiSettings`、`settingsStatus` 或全局错误。`testAiConnection()` 使用独立试连请求序号与 loading 状态，慢 provider 试连晚到不会覆盖较新的 `aiConnection`、`aiConnectionStatus` 或设置读取/保存状态。
+- 前端：`client/src/components/AiSettingsPanel.tsx` 会在已载入后保留未保存编辑，不让后台重载吞掉脏表单；保存成功仍以前端收到的服务端安全响应回填表单。设置页和印匣同时挂载时，较早面板若请求被较晚请求取代，会从 store 已采纳的最新安全 `aiSettings` 回填，避免空任务矩阵卡住；若本面板保存被另一面板或更新请求取代，会退出“保存中”、保留当前编辑并提示可重新保存。面板新增“正在载入服务端设置”“试连中”“正在整理 AI 任务矩阵”“暂无 AI 任务矩阵”“未保存编辑已保留”和“保存请求已被新的设置请求取代”提示；初始载入期间禁用预设/provider 选择，避免把空矩阵默认值误当成可保存设置；AI 任务标题、说明和状态徽记补 `overflow-wrap` 与 `min-width: 0`，降低窄屏溢出风险。
+- 回归：`client/src/state/uiState.test.ts` 新增两个全局 AI 设置 GET 乱序、保存 POST 与旧/后发重载 GET 交错、两个 provider 试连乱序，以及试连 loading 不污染设置读取 loading 的 store 回归。`client/src/__tests__/App.test.tsx` 新增设置页重载期间编辑输出 token，慢重载返回后不覆盖未保存输入，以及双面板/后发保存取代当前面板保存后当前面板不滞留“保存中”的行为回归。`test/reactClientScaffold.test.js` 新增 AI 设置读写请求序号、试连独立状态、空矩阵/loading 文案和溢出换行静态守门。
+- 验证：已通过 `npm run typecheck:client`、focused `client/src/state/uiState.test.ts`（32 项）、focused `client/src/__tests__/App.test.tsx`（48 项）、React scaffold（40 项）、完整 client Vitest（99 项）、`npm run build:client`、`AI_PROVIDER=mock npm run smoke:browser`、docs governance、documentation governance、完整 `npm test`（1126 项）和 `git diff --check`。构建和 browser smoke 仅出现既有 runtime asset 解析、chunk size 与 npm `globalignorefile` 配置警告。
+- 子代理：Pascal 只读探查确认风险集中在全局 AI 设置 GET/POST/试连乱序、脏表单被后台回包吞掉、空矩阵/loading 文案和长文本溢出；本轮已采纳并补对应 store/App/scaffold 回归。Goodall 提交前只读复审发现双面板后发保存可让较早面板滞留“保存中”的 P1，已修复并补 App 回归；Goodall 最终复审确认 P1 关闭，未发现 P0/P1/P2，非阻塞缺口是双面板后发保存回归通过共享 store 触发而不是完整点击第二面板表单。
+- 提交：待回填。
 
 ### 2026-05-22：推进 S88.9 人物与囊箧 route-local 状态防线
 

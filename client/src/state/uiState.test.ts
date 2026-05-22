@@ -9,6 +9,8 @@ import {
 import { extractSafePlayerPayload, useUiStateStore } from "./uiState";
 import { useGameSessionStore } from "./gameSessionState";
 import type {
+  AiConnectionTestResponse,
+  AiSettingsResponse,
   ExamQuestionResponse,
   ExamSubmitResponse,
   InventoryResponse,
@@ -78,6 +80,44 @@ const examSubmitPayload: ExamSubmitResponse = {
   }
 };
 
+function aiSettingsPayload(preset: string, tokens: number): AiSettingsResponse {
+  return {
+    sessionId: "global",
+    scope: "global",
+    updatedAt: `2026-05-22T12:${String(tokens).slice(-2)}:00.000Z`,
+    aiSettingsView: {
+      preset,
+      presets: [
+        { id: "balanced", label: "均衡" },
+        { id: "fast", label: "迅捷" }
+      ],
+      providerOptions: [
+        { provider: "mock", available: true, requiresKey: false },
+        { provider: "openai", available: false, requiresKey: true }
+      ],
+      taskRoutes: [
+        {
+          taskType: "narrator",
+          label: "叙事",
+          purpose: "普通叙事。",
+          provider: "mock",
+          providerAvailable: true,
+          requiresKey: false,
+          effectiveStatus: "active",
+          model: "mock",
+          maxOutputTokens: tokens,
+          toolBudget: 1,
+          temperature: 0.35,
+          reviewerOnly: false,
+          mayUseTools: true,
+          mayRequestAdjudication: false
+        }
+      ]
+    },
+    aiInvocationSummaryView: { safe: true }
+  };
+}
+
 function installFetchResponses(...payloads: unknown[]) {
   const fetchMock = vi.fn();
   for (const payload of payloads) {
@@ -137,6 +177,7 @@ afterEach(() => {
     saves: [],
     savesStatus: "idle",
     settingsStatus: "idle",
+    aiConnectionStatus: "idle",
     quickActionStatus: "idle",
     quickActions: null,
     status: "idle"
@@ -845,6 +886,175 @@ describe("S74.3 UI state store", () => {
     await expect(olderRequest).rejects.toThrow(/旧请求/);
     expect(useGameSessionStore.getState().topicDraft?.surfaceId).toBe("court-debate");
     expect(JSON.stringify(useGameSessionStore.getState().topicDraft)).not.toMatch(/旧专题草稿/);
+  });
+
+  it("does not let stale global AI settings loads overwrite the latest settings payload", async () => {
+    const older = deferredJsonResponse<AiSettingsResponse>();
+    const latest = deferredJsonResponse<AiSettingsResponse>();
+    const fetchMock = vi.fn((url: string, options?: RequestInit) => {
+      if (url === "/api/ai/settings/global" && options?.method !== "POST") {
+        return fetchMock.mock.calls.length === 1 ? older.response : latest.response;
+      }
+      throw new Error(`unexpected url: ${url}`);
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    const olderLoad = useGameSessionStore.getState().loadGlobalAiSettings();
+    const latestLoad = useGameSessionStore.getState().loadGlobalAiSettings();
+
+    latest.resolvePayload(aiSettingsPayload("fast", 1200));
+    await latestLoad;
+    expect(useGameSessionStore.getState().aiSettings?.aiSettingsView.preset).toBe("fast");
+    expect(useGameSessionStore.getState().aiSettings?.aiSettingsView.taskRoutes?.[0]).toMatchObject({
+      maxOutputTokens: 1200
+    });
+
+    older.resolvePayload(aiSettingsPayload("balanced", 900));
+    await expect(olderLoad).rejects.toThrow(/旧请求/);
+    expect(useGameSessionStore.getState().aiSettings?.aiSettingsView.preset).toBe("fast");
+    expect(useGameSessionStore.getState().aiSettings?.aiSettingsView.taskRoutes?.[0]).not.toMatchObject({
+      maxOutputTokens: 900
+    });
+    expect(useGameSessionStore.getState().settingsStatus).toBe("ready");
+  });
+
+  it("keeps saved global AI settings when an older reload returns later", async () => {
+    const olderReload = deferredJsonResponse<AiSettingsResponse>();
+    const saved = deferredJsonResponse<AiSettingsResponse>();
+    const fetchMock = vi.fn((url: string, options?: RequestInit) => {
+      if (url === "/api/ai/settings/global" && options?.method === "POST") return saved.response;
+      if (url === "/api/ai/settings/global") return olderReload.response;
+      throw new Error(`unexpected url: ${url}`);
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    const reloadRequest = useGameSessionStore.getState().loadGlobalAiSettings();
+    const saveRequest = useGameSessionStore.getState().updateGlobalAiSettings({
+      preset: "fast",
+      taskRoutes: {
+        narrator: {
+          provider: "mock",
+          model: "mock",
+          maxOutputTokens: 1500,
+          toolBudget: 1,
+          temperature: 0.35
+        }
+      }
+    });
+
+    saved.resolvePayload(aiSettingsPayload("fast", 1500));
+    await saveRequest;
+    expect(useGameSessionStore.getState().aiSettings?.aiSettingsView.taskRoutes?.[0]).toMatchObject({
+      maxOutputTokens: 1500
+    });
+
+    olderReload.resolvePayload(aiSettingsPayload("balanced", 700));
+    await expect(reloadRequest).rejects.toThrow(/旧请求/);
+    expect(useGameSessionStore.getState().aiSettings?.aiSettingsView.preset).toBe("fast");
+    expect(useGameSessionStore.getState().aiSettings?.aiSettingsView.taskRoutes?.[0]).not.toMatchObject({
+      maxOutputTokens: 700
+    });
+  });
+
+  it("keeps a pending global AI settings save authoritative over a later reload", async () => {
+    const saved = deferredJsonResponse<AiSettingsResponse>();
+    const laterReload = deferredJsonResponse<AiSettingsResponse>();
+    const fetchMock = vi.fn((url: string, options?: RequestInit) => {
+      if (url === "/api/ai/settings/global" && options?.method === "POST") return saved.response;
+      if (url === "/api/ai/settings/global") return laterReload.response;
+      throw new Error(`unexpected url: ${url}`);
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    const saveRequest = useGameSessionStore.getState().updateGlobalAiSettings({
+      preset: "fast",
+      taskRoutes: {
+        narrator: {
+          provider: "mock",
+          model: "mock",
+          maxOutputTokens: 1600,
+          toolBudget: 1,
+          temperature: 0.35
+        }
+      }
+    });
+    const reloadRequest = useGameSessionStore.getState().loadGlobalAiSettings();
+
+    saved.resolvePayload(aiSettingsPayload("fast", 1600));
+    await saveRequest;
+    expect(useGameSessionStore.getState().settingsStatus).toBe("ready");
+    expect(useGameSessionStore.getState().aiSettings?.aiSettingsView.preset).toBe("fast");
+    expect(useGameSessionStore.getState().aiSettings?.aiSettingsView.taskRoutes?.[0]).toMatchObject({
+      maxOutputTokens: 1600
+    });
+
+    laterReload.resolvePayload(aiSettingsPayload("balanced", 600));
+    await expect(reloadRequest).rejects.toThrow(/旧请求/);
+    expect(useGameSessionStore.getState().settingsStatus).toBe("ready");
+    expect(useGameSessionStore.getState().aiSettings?.aiSettingsView.preset).toBe("fast");
+    expect(useGameSessionStore.getState().aiSettings?.aiSettingsView.taskRoutes?.[0]).not.toMatchObject({
+      maxOutputTokens: 600
+    });
+  });
+
+  it("does not let stale AI connection tests overwrite the latest provider result", async () => {
+    const older = deferredJsonResponse<AiConnectionTestResponse>();
+    const latest = deferredJsonResponse<AiConnectionTestResponse>();
+    const fetchMock = vi.fn((url: string) => {
+      if (url === "/api/ai/connection-test") {
+        return fetchMock.mock.calls.length === 1 ? older.response : latest.response;
+      }
+      throw new Error(`unexpected url: ${url}`);
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    const olderTest = useGameSessionStore.getState().testAiConnection("mock");
+    const latestTest = useGameSessionStore.getState().testAiConnection("openai");
+
+    latest.resolvePayload({ ok: false, provider: "openai", status: "missing_key" });
+    await latestTest;
+    expect(useGameSessionStore.getState().aiConnection).toMatchObject({
+      provider: "openai",
+      status: "missing_key"
+    });
+
+    older.resolvePayload({ ok: true, provider: "mock", status: "ready" });
+    await expect(olderTest).rejects.toThrow(/旧请求/);
+    expect(useGameSessionStore.getState().aiConnection).toMatchObject({
+      provider: "openai",
+      status: "missing_key"
+    });
+    expect(useGameSessionStore.getState().aiConnectionStatus).toBe("ready");
+    expect(useGameSessionStore.getState().settingsStatus).toBe("idle");
+  });
+
+  it("keeps AI connection-test loading separate from settings loads", async () => {
+    const settings = deferredJsonResponse<AiSettingsResponse>();
+    const connection = deferredJsonResponse<AiConnectionTestResponse>();
+    const fetchMock = vi.fn((url: string) => {
+      if (url === "/api/ai/settings/global") return settings.response;
+      if (url === "/api/ai/connection-test") return connection.response;
+      throw new Error(`unexpected url: ${url}`);
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    const settingsRequest = useGameSessionStore.getState().loadGlobalAiSettings();
+    expect(useGameSessionStore.getState().settingsStatus).toBe("loading");
+    const connectionRequest = useGameSessionStore.getState().testAiConnection("mock");
+    expect(useGameSessionStore.getState().settingsStatus).toBe("loading");
+    expect(useGameSessionStore.getState().aiConnectionStatus).toBe("loading");
+
+    connection.resolvePayload({ ok: true, provider: "mock", status: "ready" });
+    await connectionRequest;
+    expect(useGameSessionStore.getState().aiConnectionStatus).toBe("ready");
+    expect(useGameSessionStore.getState().settingsStatus).toBe("loading");
+    expect(useGameSessionStore.getState().aiSettings).toBeNull();
+
+    settings.resolvePayload(aiSettingsPayload("balanced", 900));
+    await settingsRequest;
+    expect(useGameSessionStore.getState().settingsStatus).toBe("ready");
+    expect(useGameSessionStore.getState().aiConnectionStatus).toBe("ready");
+    expect(useGameSessionStore.getState().aiSettings?.aiSettingsView.preset).toBe("balanced");
   });
 
   it("rejects mismatched player-state payloads without syncing stale UI payloads", async () => {

@@ -1,5 +1,5 @@
 import { RefreshCw, Save, Wifi } from "lucide-react";
-import { useEffect, useMemo, useState, type FormEvent } from "react";
+import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 import type { AiSettingsResponse, JsonObject, JsonValue } from "../api";
 import { useGameSessionStore } from "../state/gameSessionState";
 
@@ -154,40 +154,74 @@ function routeStatusLabel(route: TaskRouteForm) {
   return "生效";
 }
 
+function isSupersededRequestError(error: unknown) {
+  return error instanceof Error && /旧请求/.test(error.message);
+}
+
 export function AiSettingsPanel({ compact = false }: { readonly compact?: boolean }) {
   const loadGlobalAiSettings = useGameSessionStore((state) => state.loadGlobalAiSettings);
   const updateGlobalAiSettings = useGameSessionStore((state) => state.updateGlobalAiSettings);
   const testAiConnection = useGameSessionStore((state) => state.testAiConnection);
   const aiSettings = useGameSessionStore((state) => state.aiSettings);
   const aiConnection = useGameSessionStore((state) => state.aiConnection);
+  const settingsStatus = useGameSessionStore((state) => state.settingsStatus);
+  const aiConnectionStatus = useGameSessionStore((state) => state.aiConnectionStatus);
   const storeError = useGameSessionStore((state) => state.error);
   const [form, setForm] = useState<AiSettingsFormState>(() => readFormState(null));
   const [savedSnapshot, setSavedSnapshot] = useState("");
   const [saveState, setSaveState] = useState<SaveState>("idle");
   const [localError, setLocalError] = useState("");
+  const [localNotice, setLocalNotice] = useState("");
+  const [connectionBusy, setConnectionBusy] = useState(false);
   const [connectionProvider, setConnectionProvider] = useState("mock");
   const dirty = useMemo(() => Boolean(savedSnapshot) && snapshotKey(form) !== savedSnapshot, [form, savedSnapshot]);
+  const dirtyRef = useRef(dirty);
+  const panelRequestIdRef = useRef(0);
+  const connectionRequestIdRef = useRef(0);
   const presets = useMemo(() => readPresetOptions(aiSettings), [aiSettings]);
   const providerOptions = useMemo(() => readProviderOptions(aiSettings), [aiSettings]);
+  const storeSnapshot = useMemo(() => aiSettings ? snapshotKey(readFormState(aiSettings)) : "", [aiSettings]);
   const unavailableRoutes = form.routes.filter((route) => !route.providerAvailable || route.effectiveStatus === "missing_provider_key");
+  const isSettingsLoading = settingsStatus === "loading";
+  const isSaving = saveState === "saving";
+  const hasLoadedPayload = Boolean(savedSnapshot);
+  const isSettingsRequestLoading = isSettingsLoading && !connectionBusy;
+  const isConnectionLoading = connectionBusy || aiConnectionStatus === "loading";
 
-  function applyPayload(payload: AiSettingsResponse) {
+  useEffect(() => {
+    dirtyRef.current = dirty;
+  }, [dirty]);
+
+  function applyPayload(payload: AiSettingsResponse, source: "load" | "reload" | "save") {
+    if (source !== "save" && dirtyRef.current && savedSnapshot) {
+      setLocalNotice("服务器设置已刷新，当前未保存编辑已保留；保存后仍由服务器校验。");
+      return false;
+    }
     const nextForm = readFormState(payload);
+    const nextProviderOptions = readProviderOptions(payload);
     setForm(nextForm);
     setSavedSnapshot(snapshotKey(nextForm));
-    setConnectionProvider((current) => providerOptions.some((option) => option.provider === current) ? current : nextForm.routes[0]?.provider || "mock");
+    setConnectionProvider((current) => nextProviderOptions.some((option) => option.provider === current) ? current : nextForm.routes[0]?.provider || "mock");
+    setLocalNotice("");
+    dirtyRef.current = false;
+    return true;
   }
 
   useEffect(() => {
+    if (!aiSettings || dirtyRef.current || !storeSnapshot || storeSnapshot === savedSnapshot) return;
+    applyPayload(aiSettings, "load");
+  }, [aiSettings, savedSnapshot, storeSnapshot]);
+
+  useEffect(() => {
     let cancelled = false;
+    const requestId = ++panelRequestIdRef.current;
     void loadGlobalAiSettings().then((payload) => {
-      if (cancelled) return;
-      applyPayload(payload);
-      setSaveState("idle");
+      if (cancelled || requestId !== panelRequestIdRef.current) return;
+      if (applyPayload(payload, "load")) setSaveState("idle");
       setLocalError("");
     }).catch((error) => {
-      if (cancelled) return;
-      setSaveState("error");
+      if (cancelled || requestId !== panelRequestIdRef.current || isSupersededRequestError(error)) return;
+      if (!dirtyRef.current) setSaveState("error");
       setLocalError(error instanceof Error ? error.message : "AI 设置载入失败。");
     });
     return () => {
@@ -196,6 +230,7 @@ export function AiSettingsPanel({ compact = false }: { readonly compact?: boolea
   }, [loadGlobalAiSettings]);
 
   function updateRoute(taskType: string, patch: Partial<TaskRouteForm>) {
+    dirtyRef.current = true;
     setForm((current) => ({
       ...current,
       routes: current.routes.map((route) => route.taskType === taskType ? { ...route, ...patch } : route)
@@ -204,17 +239,22 @@ export function AiSettingsPanel({ compact = false }: { readonly compact?: boolea
   }
 
   function updatePreset(value: string) {
+    dirtyRef.current = true;
     setForm((current) => ({ ...current, preset: value }));
     setSaveState("dirty");
   }
 
   async function handleReload() {
+    const requestId = ++panelRequestIdRef.current;
     try {
       setSaveState("idle");
+      setLocalNotice("");
       const payload = await loadGlobalAiSettings();
-      applyPayload(payload);
+      if (requestId !== panelRequestIdRef.current) return;
+      applyPayload(payload, "reload");
       setLocalError("");
     } catch (error) {
+      if (requestId !== panelRequestIdRef.current || isSupersededRequestError(error)) return;
       setSaveState("error");
       setLocalError(error instanceof Error ? error.message : "AI 设置重新载入失败。");
     }
@@ -222,23 +262,40 @@ export function AiSettingsPanel({ compact = false }: { readonly compact?: boolea
 
   async function handleSave(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    const requestId = ++panelRequestIdRef.current;
     try {
       setSaveState("saving");
       setLocalError("");
+      setLocalNotice("");
       const payload = await updateGlobalAiSettings(formSnapshot(form));
-      applyPayload(payload);
+      if (requestId !== panelRequestIdRef.current) return;
+      applyPayload(payload, "save");
       setSaveState("saved");
     } catch (error) {
+      if (requestId !== panelRequestIdRef.current) return;
+      if (isSupersededRequestError(error)) {
+        setSaveState(dirtyRef.current ? "dirty" : "idle");
+        setLocalError("");
+        setLocalNotice("保存请求已被新的设置请求取代，当前编辑已保留；可重新保存。");
+        return;
+      }
       setSaveState("error");
       setLocalError(error instanceof Error ? error.message : "AI 设置保存失败。");
     }
   }
 
   async function handleConnectionTest() {
+    const requestId = ++connectionRequestIdRef.current;
     try {
+      setLocalError("");
+      setConnectionBusy(true);
       await testAiConnection(connectionProvider);
     } catch {
-      // Store already exposes a redacted error line.
+      if (requestId === connectionRequestIdRef.current) {
+        // Store already exposes a redacted error line.
+      }
+    } finally {
+      if (requestId === connectionRequestIdRef.current) setConnectionBusy(false);
     }
   }
 
@@ -248,16 +305,16 @@ export function AiSettingsPanel({ compact = false }: { readonly compact?: boolea
         <div>
           <p className="eyebrow">服务端全局</p>
           <h3>AI 设置</h3>
-          <p>{statusLabel(saveState, dirty, aiSettings?.updatedAt)}</p>
+          <p>{!hasLoadedPayload && isSettingsRequestLoading ? "正在载入服务端设置" : statusLabel(saveState, dirty, aiSettings?.updatedAt)}</p>
         </div>
         <div className="aiSettingsActions">
-          <button className="paperButton" type="button" onClick={() => void handleReload()} disabled={saveState === "saving"}>
+          <button className="paperButton" type="button" onClick={() => void handleReload()} disabled={isSaving || isSettingsLoading}>
             <RefreshCw size={16} aria-hidden="true" />
-            <span>重新载入</span>
+            <span>{!isSaving && isSettingsRequestLoading ? "载入中" : "重新载入"}</span>
           </button>
-          <button className="paperButton" type="submit" disabled={!dirty || saveState === "saving" || !form.routes.length}>
+          <button className="paperButton" type="submit" disabled={!dirty || isSaving || isSettingsLoading || !form.routes.length}>
             <Save size={16} aria-hidden="true" />
-            <span>{saveState === "saving" ? "保存中" : "保存全局设置"}</span>
+            <span>{isSaving ? "保存中" : "保存全局设置"}</span>
           </button>
         </div>
       </div>
@@ -265,7 +322,11 @@ export function AiSettingsPanel({ compact = false }: { readonly compact?: boolea
       <section className="aiSettingsSummary" aria-label="AI 设置摘要">
         <label>
           推演预设
-          <select value={form.preset} onChange={(event) => updatePreset(event.target.value)}>
+          <select
+            value={form.preset}
+            disabled={!hasLoadedPayload && isSettingsRequestLoading}
+            onChange={(event) => updatePreset(event.target.value)}
+          >
             {presets.map((preset) => (
               <option key={preset.id} value={preset.id}>{preset.label}</option>
             ))}
@@ -273,7 +334,11 @@ export function AiSettingsPanel({ compact = false }: { readonly compact?: boolea
         </label>
         <label>
           试连 Provider
-          <select value={connectionProvider} onChange={(event) => setConnectionProvider(event.target.value)}>
+          <select
+            value={connectionProvider}
+            disabled={!hasLoadedPayload && isSettingsRequestLoading}
+            onChange={(event) => setConnectionProvider(event.target.value)}
+          >
             {providerOptions.map((option) => (
               <option key={option.provider} value={option.provider} disabled={!option.available}>
                 {providerLabels[option.provider] || option.provider}{option.available ? "" : "（缺 key）"}
@@ -281,9 +346,9 @@ export function AiSettingsPanel({ compact = false }: { readonly compact?: boolea
             ))}
           </select>
         </label>
-        <button className="paperButton" type="button" onClick={() => void handleConnectionTest()}>
+        <button className="paperButton" type="button" onClick={() => void handleConnectionTest()} disabled={isConnectionLoading || !providerOptions.length}>
           <Wifi size={16} aria-hidden="true" />
-          <span>试连</span>
+          <span>{isConnectionLoading ? "试连中" : "试连"}</span>
         </button>
       </section>
 
@@ -293,10 +358,11 @@ export function AiSettingsPanel({ compact = false }: { readonly compact?: boolea
         </p>
       ) : null}
       {aiConnection ? <p className="statusLine">连接结果：{aiConnection.ok ? "可用" : "不可用"}（{String(aiConnection.provider || connectionProvider)}）</p> : null}
+      {localNotice ? <p className="statusLine">{localNotice}</p> : null}
       {localError || storeError ? <p className="statusLine" role="alert">{localError || storeError}</p> : null}
 
       <section className="aiTaskMatrix" aria-label="AI 任务路由矩阵">
-        {form.routes.map((route) => (
+        {form.routes.length ? form.routes.map((route) => (
           <article className="aiTaskRoute" key={route.taskType} data-effective-status={route.effectiveStatus}>
             <div className="aiTaskRouteHeader">
               <div>
@@ -365,7 +431,11 @@ export function AiSettingsPanel({ compact = false }: { readonly compact?: boolea
               {route.reviewerOnly ? "此任务只做复核，不会执行玩法方法。" : route.mayRequestAdjudication ? "可提交待服务器裁决的 proposal。" : "不直接裁决世界状态。"}
             </p>
           </article>
-        ))}
+        )) : (
+          <p className="statusLine">
+            {isSettingsRequestLoading ? "正在整理 AI 任务矩阵。" : "暂无 AI 任务矩阵；前端不会补造 provider、模型或工具权限。"}
+          </p>
+        )}
       </section>
     </form>
   );

@@ -45,6 +45,10 @@ let npcRosterRequestId = 0;
 let npcDetailRequestId = 0;
 let npcMutationRequestId = 0;
 let examMutationRequestId = 0;
+let aiSettingsReadRequestId = 0;
+let aiSettingsWriteRequestId = 0;
+let aiSettingsActiveWriteRequestId = 0;
+let aiConnectionRequestId = 0;
 
 type StartGameInput = {
   readonly playerName: string;
@@ -62,6 +66,7 @@ type GameSessionState = {
   readonly status: LoadingState;
   readonly savesStatus: LoadingState;
   readonly settingsStatus: LoadingState;
+  readonly aiConnectionStatus: LoadingState;
   readonly quickActionStatus: LoadingState;
   readonly topicSurfaceStatus: LoadingState;
   readonly topicDraftStatus: LoadingState;
@@ -144,10 +149,42 @@ function canApplyRouteSession(
     : isCurrentRouteSession(state, sessionId);
 }
 
+type AiSettingsReadToken = {
+  readonly requestId: number;
+  readonly writeRequestId: number;
+  readonly blockedByActiveWrite: boolean;
+};
+
+function beginAiSettingsRead(): AiSettingsReadToken {
+  return {
+    requestId: ++aiSettingsReadRequestId,
+    writeRequestId: aiSettingsWriteRequestId,
+    blockedByActiveWrite: aiSettingsActiveWriteRequestId !== 0
+  };
+}
+
+function canApplyAiSettingsRead(token: AiSettingsReadToken) {
+  return token.requestId === aiSettingsReadRequestId &&
+    !token.blockedByActiveWrite &&
+    aiSettingsWriteRequestId === token.writeRequestId &&
+    aiSettingsActiveWriteRequestId === 0;
+}
+
+function beginAiSettingsWrite() {
+  const requestId = ++aiSettingsWriteRequestId;
+  aiSettingsActiveWriteRequestId = requestId;
+  return requestId;
+}
+
+function finishAiSettingsWrite(requestId: number) {
+  if (aiSettingsActiveWriteRequestId === requestId) aiSettingsActiveWriteRequestId = 0;
+}
+
 export const useGameSessionStore = create<GameSessionState>((set) => ({
   status: "idle",
   savesStatus: "idle",
   settingsStatus: "idle",
+  aiConnectionStatus: "idle",
   quickActionStatus: "idle",
   topicSurfaceStatus: "idle",
   topicDraftStatus: "idle",
@@ -427,30 +464,43 @@ export const useGameSessionStore = create<GameSessionState>((set) => ({
   },
 
   async loadAiSettings(sessionId) {
+    const readToken = beginAiSettingsRead();
     set({ settingsStatus: "loading", error: null });
     try {
       const payload = await qianqiuApi.getAiSettings(sessionId);
+      if (!canApplyAiSettingsRead(readToken)) throw supersededRequestError();
+      if (payload.scope !== "global" && payload.sessionId !== sessionId && payload.targetSessionId !== sessionId) {
+        throw staleSessionResponseError();
+      }
       set({ aiSettings: payload, settingsStatus: "ready" });
       return payload;
     } catch (error) {
-      set({ error: toErrorMessage(error), settingsStatus: "error" });
+      if (canApplyAiSettingsRead(readToken)) set({ error: toErrorMessage(error), settingsStatus: "error" });
       throw error;
     }
   },
 
   async updateAiPreset(sessionId, preset) {
+    const requestId = beginAiSettingsWrite();
     set({ settingsStatus: "loading", error: null });
     try {
       const payload = await qianqiuApi.updateAiSettings(sessionId, { settings: { preset } });
+      if (requestId !== aiSettingsWriteRequestId) throw supersededRequestError();
+      if (payload.scope !== "global" && payload.sessionId !== sessionId && payload.targetSessionId !== sessionId) {
+        throw staleSessionResponseError();
+      }
       set({ aiSettings: payload, settingsStatus: "ready" });
       return payload;
     } catch (error) {
-      set({ error: toErrorMessage(error), settingsStatus: "error" });
+      if (requestId === aiSettingsWriteRequestId) set({ error: toErrorMessage(error), settingsStatus: "error" });
       throw error;
+    } finally {
+      finishAiSettingsWrite(requestId);
     }
   },
 
   async updateAiTaskRoute(sessionId, taskType, routePatch) {
+    const requestId = beginAiSettingsWrite();
     set({ settingsStatus: "loading", error: null });
     try {
       const payload = await qianqiuApi.updateAiSettings(sessionId, {
@@ -460,46 +510,60 @@ export const useGameSessionStore = create<GameSessionState>((set) => ({
           }
         }
       });
+      if (requestId !== aiSettingsWriteRequestId) throw supersededRequestError();
+      if (payload.scope !== "global" && payload.sessionId !== sessionId && payload.targetSessionId !== sessionId) {
+        throw staleSessionResponseError();
+      }
       set({ aiSettings: payload, settingsStatus: "ready" });
       return payload;
     } catch (error) {
-      set({ error: toErrorMessage(error), settingsStatus: "error" });
+      if (requestId === aiSettingsWriteRequestId) set({ error: toErrorMessage(error), settingsStatus: "error" });
       throw error;
+    } finally {
+      finishAiSettingsWrite(requestId);
     }
   },
 
   async loadGlobalAiSettings() {
+    const readToken = beginAiSettingsRead();
     set({ settingsStatus: "loading", error: null });
     try {
       const payload = await qianqiuApi.getGlobalAiSettings();
+      if (!canApplyAiSettingsRead(readToken)) throw supersededRequestError();
       set({ aiSettings: payload, settingsStatus: "ready" });
       return payload;
     } catch (error) {
-      set({ error: toErrorMessage(error), settingsStatus: "error" });
+      if (canApplyAiSettingsRead(readToken)) set({ error: toErrorMessage(error), settingsStatus: "error" });
       throw error;
     }
   },
 
   async updateGlobalAiSettings(settings) {
+    const requestId = beginAiSettingsWrite();
     set({ settingsStatus: "loading", error: null });
     try {
       const payload = await qianqiuApi.updateGlobalAiSettings({ settings });
+      if (requestId !== aiSettingsWriteRequestId) throw supersededRequestError();
       set({ aiSettings: payload, settingsStatus: "ready" });
       return payload;
     } catch (error) {
-      set({ error: toErrorMessage(error), settingsStatus: "error" });
+      if (requestId === aiSettingsWriteRequestId) set({ error: toErrorMessage(error), settingsStatus: "error" });
       throw error;
+    } finally {
+      finishAiSettingsWrite(requestId);
     }
   },
 
   async testAiConnection(provider) {
-    set({ settingsStatus: "loading", error: null });
+    const requestId = ++aiConnectionRequestId;
+    set({ aiConnectionStatus: "loading", error: null });
     try {
       const payload = await qianqiuApi.testAiConnection(provider ? { provider } : {});
-      set({ aiConnection: payload, settingsStatus: "ready" });
+      if (requestId !== aiConnectionRequestId) throw supersededRequestError();
+      set({ aiConnection: payload, aiConnectionStatus: "ready" });
       return payload;
     } catch (error) {
-      set({ error: toErrorMessage(error), settingsStatus: "error" });
+      if (requestId === aiConnectionRequestId) set({ error: toErrorMessage(error), aiConnectionStatus: "error" });
       throw error;
     }
   },

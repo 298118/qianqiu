@@ -13,6 +13,19 @@ function renderRoute(initialEntry: string) {
   return render(<RouterProvider router={router} />);
 }
 
+function deferredResponse<T>() {
+  let resolvePayload!: (payload: T) => void;
+  const response = new Promise<Response>((resolve) => {
+    resolvePayload = (payload: T) => {
+      resolve(new Response(JSON.stringify(payload), {
+        status: 200,
+        headers: { "Content-Type": "application/json" }
+      }));
+    };
+  });
+  return { response, resolvePayload };
+}
+
 function buildMockAssetManifest(count = 9): InkUiManifest {
   return {
     schemaVersion: 1,
@@ -106,6 +119,7 @@ describe("S74.1 React client shell", () => {
       saves: [],
       savesStatus: "idle",
       settingsStatus: "idle",
+      aiConnectionStatus: "idle",
       quickActionStatus: "idle",
       quickActions: null,
       topicSurfaceStatus: "idle",
@@ -2110,6 +2124,175 @@ describe("S74.1 React client shell", () => {
     await waitFor(() => expect(fetchMock).toHaveBeenCalledWith("/api/ai/settings/global", expect.objectContaining({ method: "POST" })));
     await screen.findByDisplayValue("1200");
     expect(screen.getByText(/已保存/)).toBeTruthy();
+    expect(document.body.textContent || "").not.toMatch(/OPENAI_API_KEY|raw prompt|data\/sessions|base URL/i);
+  });
+
+  it("keeps dirty global AI settings edits when a stale reload finishes later", async () => {
+    const sessionId = "78787878-7878-4787-8787-787878787878";
+    const aiPayload = (tokens: number, preset = "balanced") => ({
+      sessionId: "global",
+      scope: "global",
+      updatedAt: "2026-05-22T12:00:00.000Z",
+      aiSettingsView: {
+        preset,
+        presets: [
+          { id: "balanced", label: "均衡" },
+          { id: "fast", label: "迅捷" }
+        ],
+        providerOptions: [{ provider: "mock", available: true, requiresKey: false }],
+        taskRoutes: [
+          {
+            taskType: "narrator",
+            label: "叙事",
+            purpose: "普通叙事。",
+            provider: "mock",
+            providerAvailable: true,
+            requiresKey: false,
+            effectiveStatus: "active",
+            model: "mock",
+            maxOutputTokens: tokens,
+            toolBudget: 1,
+            temperature: 0.35,
+            reviewerOnly: false,
+            mayUseTools: true,
+            mayRequestAdjudication: false
+          }
+        ]
+      },
+      aiInvocationSummaryView: { safe: true }
+    });
+    const reload = deferredResponse<ReturnType<typeof aiPayload>>();
+    let settingsCalls = 0;
+    const fetchMock = vi.fn((url: string) => {
+      if (url === "/api/ai/settings/global") {
+        settingsCalls += 1;
+        if (settingsCalls === 1) {
+          return Promise.resolve(new Response(JSON.stringify(aiPayload(900)), {
+            status: 200,
+            headers: { "Content-Type": "application/json" }
+          }));
+        }
+        return reload.response;
+      }
+      return Promise.resolve(new Response(JSON.stringify({
+        source: "server_player_visible_state_projection",
+        sessionId,
+        worldState: { player: { name: "许慎", role: "scholar" } }
+      }), {
+        status: 200,
+        headers: { "Content-Type": "application/json" }
+      }));
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    renderRoute(`/game/${sessionId}/settings`);
+
+    await screen.findByDisplayValue("900");
+    fireEvent.click(screen.getByRole("button", { name: /重新载入/ }));
+    await waitFor(() => expect(screen.getByRole("button", { name: /载入中/ })).toBeTruthy());
+    fireEvent.change(screen.getByDisplayValue("900"), { target: { value: "1300" } });
+    expect(screen.getByText("未保存")).toBeTruthy();
+
+    reload.resolvePayload(aiPayload(700, "fast"));
+
+    await screen.findByText(/未保存编辑已保留/);
+    expect(screen.getByDisplayValue("1300")).toBeTruthy();
+    expect(screen.queryByDisplayValue("700")).toBeNull();
+    expect(screen.getByRole("button", { name: /保存全局设置/ })).toHaveProperty("disabled", false);
+    expect(document.body.textContent || "").not.toMatch(/OPENAI_API_KEY|raw prompt|data\/sessions|base URL/i);
+  });
+
+  it("keeps a superseded settings panel save editable when another mounted panel saves later", async () => {
+    const sessionId = "89898989-8989-4898-8989-898989898989";
+    const aiPayload = (tokens: number, preset = "balanced") => ({
+      sessionId: "global",
+      scope: "global",
+      updatedAt: "2026-05-22T12:00:00.000Z",
+      aiSettingsView: {
+        preset,
+        presets: [
+          { id: "balanced", label: "均衡" },
+          { id: "fast", label: "迅捷" }
+        ],
+        providerOptions: [{ provider: "mock", available: true, requiresKey: false }],
+        taskRoutes: [
+          {
+            taskType: "narrator",
+            label: "叙事",
+            purpose: "普通叙事。",
+            provider: "mock",
+            providerAvailable: true,
+            requiresKey: false,
+            effectiveStatus: "active",
+            model: "mock",
+            maxOutputTokens: tokens,
+            toolBudget: 1,
+            temperature: 0.35,
+            reviewerOnly: false,
+            mayUseTools: true,
+            mayRequestAdjudication: false
+          }
+        ]
+      },
+      aiInvocationSummaryView: { safe: true }
+    });
+    const firstSave = deferredResponse<ReturnType<typeof aiPayload>>();
+    const secondSave = deferredResponse<ReturnType<typeof aiPayload>>();
+    let saveCalls = 0;
+    const fetchMock = vi.fn((url: string, options?: RequestInit) => {
+      if (url === "/api/ai/settings/global" && options?.method === "POST") {
+        saveCalls += 1;
+        return saveCalls === 1 ? firstSave.response : secondSave.response;
+      }
+      if (url === "/api/ai/settings/global") {
+        return Promise.resolve(new Response(JSON.stringify(aiPayload(900)), {
+          status: 200,
+          headers: { "Content-Type": "application/json" }
+        }));
+      }
+      return Promise.resolve(new Response(JSON.stringify({
+        source: "server_player_visible_state_projection",
+        sessionId,
+        worldState: { player: { name: "许慎", role: "scholar" } }
+      }), {
+        status: 200,
+        headers: { "Content-Type": "application/json" }
+      }));
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    renderRoute(`/game/${sessionId}/settings`);
+
+    await screen.findByDisplayValue("900");
+    const routePanel = screen.getByRole("article", { name: "AI 设置" });
+    const routeScope = within(routePanel);
+    fireEvent.change(routeScope.getByDisplayValue("900"), { target: { value: "1200" } });
+    fireEvent.click(routeScope.getByRole("button", { name: /保存全局设置/ }));
+    expect(routeScope.getByRole("button", { name: /保存中/ })).toHaveProperty("disabled", true);
+
+    fireEvent.click(screen.getByRole("button", { name: "打开印匣" }));
+    expect(screen.getByRole("complementary", { name: "印匣" })).toBeTruthy();
+    const supersedingSave = useGameSessionStore.getState().updateGlobalAiSettings({
+      preset: "fast",
+      taskRoutes: {
+        narrator: {
+          provider: "mock",
+          model: "mock",
+          maxOutputTokens: 1300,
+          toolBudget: 1,
+          temperature: 0.35
+        }
+      }
+    });
+    secondSave.resolvePayload(aiPayload(1300, "fast"));
+    await supersedingSave;
+
+    firstSave.resolvePayload(aiPayload(1200, "balanced"));
+    await routeScope.findByText(/保存请求已被新的设置请求取代/);
+    expect(routeScope.getByDisplayValue("1200")).toBeTruthy();
+    expect(routeScope.getByText("未保存")).toBeTruthy();
+    expect(routeScope.getByRole("button", { name: /保存全局设置/ })).toHaveProperty("disabled", false);
+    expect(routeScope.queryByText("保存中")).toBeNull();
     expect(document.body.textContent || "").not.toMatch(/OPENAI_API_KEY|raw prompt|data\/sessions|base URL/i);
   });
 

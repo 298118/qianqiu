@@ -3958,8 +3958,13 @@ button:disabled {
   font-size: 1.08rem;
 }
 
+.aiSettingsToolbar > div:first-child {
+  min-width: 0;
+}
+
 .aiSettingsToolbar p {
   margin: 0;
+  overflow-wrap: anywhere;
 }
 
 .aiSettingsActions,
@@ -3998,11 +4003,13 @@ button:disabled {
 .aiTaskRouteHeader div {
   display: grid;
   gap: 4px;
+  min-width: 0;
 }
 
 .aiTaskRouteHeader strong {
   color: #2d251d;
   font-size: 1rem;
+  overflow-wrap: anywhere;
 }
 
 .aiTaskRouteHeader span,
@@ -4010,17 +4017,20 @@ button:disabled {
   color: #5f4f3d;
   font-size: 0.88rem;
   line-height: 1.6;
+  overflow-wrap: anywhere;
 }
 
 .aiTaskRouteHeader em {
   align-self: start;
   min-width: 64px;
+  max-width: 100%;
   border: 1px solid rgba(123, 36, 31, 0.26);
   padding: 3px 7px;
   color: #7b241f;
   font-style: normal;
   font-weight: 800;
   text-align: center;
+  overflow-wrap: anywhere;
 }
 
 .aiTaskRouteControls {
