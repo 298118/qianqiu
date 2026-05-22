@@ -201,6 +201,7 @@ export function GamePage() {
     { label: "局势", ready: Boolean(routeViews?.hasInformationPanelView) },
     { label: "市价", ready: Boolean(routeViews?.hasMarketPriceView) },
     { label: "月账", ready: Boolean(routeViews?.hasNpcEconomyView) },
+    { label: "账解", ready: Boolean(routeViews?.hasEconomyTraceView) },
     { label: "来函", ready: Boolean(routeViews?.hasNpcActiveRequestView) },
     { label: "身份", ready: Boolean(routeViews?.hasRoleCycleView) },
     { label: "后果", ready: Boolean(routeViews?.hasDomainConsequenceView) },
@@ -365,6 +366,7 @@ export function GamePage() {
           economicFiscalView={session?.economicFiscalView ?? null}
           marketPriceView={session?.marketPriceView ?? null}
           npcEconomyView={session?.npcEconomyView ?? null}
+          economyTraceView={session?.economyTraceView ?? null}
           domainConsequenceView={session?.domainConsequenceView ?? null}
           roleBackgroundPath={roleBackgroundAsset?.path}
           resolveRoleCycleRouteHref={resolveRoleCycleRouteHref}
@@ -385,6 +387,7 @@ export function GamePage() {
           playerMonthlyBriefingView={session?.playerMonthlyBriefingView ?? null}
           courtConsequenceView={session?.courtConsequenceView ?? null}
           courtResponseView={session?.courtResponseView ?? null}
+          economyTraceView={session?.economyTraceView ?? null}
           domainConsequenceView={session?.domainConsequenceView ?? null}
           roleBackgroundPath={roleBackgroundAsset?.path}
           courtHref={sessionHref(routeCatalog.find((entry) => entry.id === "court")?.href ?? "/game/s74-preview/court")}

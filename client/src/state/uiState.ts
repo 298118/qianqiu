@@ -60,6 +60,7 @@ export type SafePlayerPayload = {
     readonly hasDelegatedTaskView: boolean;
     readonly hasMarketPriceView: boolean;
     readonly hasNpcEconomyView: boolean;
+    readonly hasEconomyTraceView: boolean;
     readonly hasNpcActiveRequestView: boolean;
     readonly hasRoleCycleView: boolean;
     readonly hasDomainConsequenceView: boolean;
@@ -177,6 +178,7 @@ export function extractSafePlayerPayload(
       hasDelegatedTaskView: Boolean(payload.delegatedTaskView),
       hasMarketPriceView: Boolean(payload.marketPriceView),
       hasNpcEconomyView: Boolean(payload.npcEconomyView),
+      hasEconomyTraceView: Boolean(payload.economyTraceView),
       hasNpcActiveRequestView: Boolean(payload.npcActiveRequestView),
       hasRoleCycleView: Boolean(payload.roleCycleView),
       hasDomainConsequenceView: Boolean(payload.domainConsequenceView)

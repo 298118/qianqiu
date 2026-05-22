@@ -37,6 +37,9 @@ function stripSafeGuardPatterns(source) {
     .replace(/const unsafeSaveTextPattern = .*?;\r?\n/, "")
     .replace(/const unsafePreferenceTextPattern = .*?;\r?\n/, "")
     .replace(/const unsafeDomainConsequenceFragments[\s\S]*?\] as const;\r?\n/, "")
+    .replace(/const unsafeEconomyTraceFragments[\s\S]*?\] as const;\r?\n/, "")
+    .replace(/const unsafeMagistrateFragments[\s\S]*?\] as const;\r?\n/, "")
+    .replace(/const unsafeOfficialMinisterFragments[\s\S]*?\] as const;\r?\n/, "")
     .replace(/const unsafeClientApiPathPatterns = Object\.freeze\(\[[\s\S]*?\]\);\r?\n/, "");
 }
 
@@ -867,6 +870,52 @@ test("S88.6 domain consequence view is wired into authority role panels as draft
   assert.doesNotMatch(
     runtimeCombined,
     /\/api\/game\/state|\/api\/game\/turn|\/api\/dev\/session-diagnostics|dangerouslySetInnerHTML|localStorage|sessionStorage|data\/sessions|raw audit|provider payload|OPENAI_API_KEY|DEEPSEEK_API_KEY|MIMO_API_KEY|ANTHROPIC_API_KEY/
+  );
+});
+
+test("S88.8 economy trace view is wired into magistrate and official main panels as draft-only UI", () => {
+  const gamePageSource = readText("client/src/pages/GamePage.tsx");
+  const economyTraceSource = readText("client/src/components/EconomyTraceSection.tsx");
+  const magistratePanelSource = readText("client/src/components/MagistratePanel.tsx");
+  const officialPanelSource = readText("client/src/components/OfficialMinisterPanel.tsx");
+  const surfaceHostSource = readText("client/src/components/SurfaceHost.tsx");
+  const stateSource = readText("client/src/state/uiState.ts");
+  const typeSource = readText("client/src/api/types.ts");
+  const appTestSource = readText("client/src/__tests__/App.test.tsx");
+  const economyTraceWithoutGuard = stripSafeGuardPatterns(economyTraceSource);
+  const magistrateWithoutGuard = stripSafeGuardPatterns(magistratePanelSource);
+  const officialWithoutGuard = stripSafeGuardPatterns(officialPanelSource);
+  const runtimeCombined = `${gamePageSource}\n${economyTraceWithoutGuard}\n${magistrateWithoutGuard}\n${officialWithoutGuard}\n${surfaceHostSource}`;
+
+  assert.match(typeSource, /export type EconomyTraceView/);
+  assert.match(typeSource, /readonly sourceId\?: string/);
+  assert.match(typeSource, /readonly topicSurfaceIds\?: readonly string\[\]/);
+  assert.match(typeSource, /economyTraceView\?: EconomyTraceView/);
+  assert.match(stateSource, /hasEconomyTraceView: Boolean\(payload\.economyTraceView\)/);
+  assert.match(gamePageSource, /\{ label: "账解", ready: Boolean\(routeViews\?\.hasEconomyTraceView\) \}/);
+  assert.match(gamePageSource, /economyTraceView=\{session\?\.economyTraceView \?\? null\}/);
+  for (const source of [magistratePanelSource, officialPanelSource]) {
+    assert.match(source, /import \{ EconomyTraceSection \}/);
+    assert.match(source, /readonly economyTraceView\?: EconomyTraceView \| null/);
+    assert.match(source, /<EconomyTraceSection/);
+    assert.match(source, /traceView=\{economyTraceView\}/);
+    assert.match(source, /traceTypes=\{/);
+    assert.match(source, /onDraft=\{onDraft\}/);
+  }
+  assert.match(magistratePanelSource, /钱粮与市价为何变化/);
+  assert.match(officialPanelSource, /经济线索与官署材料/);
+  assert.match(economyTraceSource, /拟复核/);
+  assert.match(surfaceHostSource, /economyTraceView/);
+  assert.match(surfaceHostSource, /经济解释/);
+  assert.match(surfaceHostSource, /topicSourceLabel\(source\.sourceView\)/);
+  assert.match(appTestSource, /钱粮与市价为何变化/);
+  assert.match(appTestSource, /经济线索与官署材料/);
+  assert.match(appTestSource, /经济解释 1 条/);
+  assert.match(appTestSource, /经济解释 · 月账/);
+  assert.doesNotMatch(economyTraceWithoutGuard, /fetch\(|submitTurn\(|\/api\/game\/turn|dangerouslySetInnerHTML/);
+  assert.doesNotMatch(
+    runtimeCombined,
+    /\/api\/game\/state|\/api\/dev\/session-diagnostics|dangerouslySetInnerHTML|localStorage|sessionStorage|data\/sessions|raw audit|provider payload|OPENAI_API_KEY|DEEPSEEK_API_KEY|MIMO_API_KEY|ANTHROPIC_API_KEY/
   );
 });
 

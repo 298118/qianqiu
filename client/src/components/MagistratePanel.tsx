@@ -1,7 +1,8 @@
 import type { CSSProperties } from "react";
-import type { JsonObject, JsonValue, MarketPriceView, NpcEconomyView, PlayerSummary } from "../api";
+import type { EconomyTraceView, JsonObject, JsonValue, MarketPriceView, NpcEconomyView, PlayerSummary } from "../api";
 import type { LocalSurface } from "../state/uiState";
 import { DomainConsequenceSection } from "./DomainConsequenceSection";
+import { EconomyTraceSection } from "./EconomyTraceSection";
 import { RoleCycleSection } from "./RoleCycleSection";
 
 type MagistratePanelProps = {
@@ -12,6 +13,7 @@ type MagistratePanelProps = {
   readonly economicFiscalView?: JsonObject | null;
   readonly marketPriceView?: MarketPriceView | null;
   readonly npcEconomyView?: NpcEconomyView | null;
+  readonly economyTraceView?: EconomyTraceView | null;
   readonly domainConsequenceView?: JsonObject | null;
   readonly roleBackgroundPath?: string;
   readonly onDraft: (text: string) => void;
@@ -58,6 +60,18 @@ const unsafeMagistrateFragments = [
 ] as const;
 
 const docketDomainOrder = ["judicial", "revenue", "waterworks", "banditry", "gentry", "relief", "corvee", "epidemic", "term_closure"] as const;
+
+const magistrateEconomyTraceTypes = [
+  "market_price_signal",
+  "trade_negotiation",
+  "trade_expiry",
+  "trade_blocked",
+  "delegated_task_budget",
+  "delegated_task_result",
+  "human_debt_monthly",
+  "npc_relationship_monthly",
+  "monthly_economy_event"
+] as const;
 
 const docketFallbackLabels: Record<string, string> = {
   judicial: "刑名",
@@ -267,6 +281,7 @@ export function MagistratePanel({
   economicFiscalView,
   marketPriceView,
   npcEconomyView,
+  economyTraceView,
   domainConsequenceView,
   roleBackgroundPath,
   onDraft,
@@ -422,6 +437,17 @@ export function MagistratePanel({
           title="领域后果追踪"
           summaryFallback="地方后果只读服务器已裁决的政策、刑名和人物经济公开余波；库银、案牍、NPC 资产与关系变化仍由服务器逐旬或月结裁决。"
           emptyText="暂无地方公开后果；不得从内部案卷、隐藏证据或模型提案补造事实。"
+          runnable={runnable}
+          onDraft={onDraft}
+        />
+
+        <EconomyTraceSection
+          traceView={economyTraceView}
+          title="钱粮与市价为何变化"
+          summaryFallback="本县经济解释只读服务器安全投影；市价、交易、委派、人情债和关系变化仍由服务器逐旬或月结裁决。"
+          idPrefix="magistrate-economy-trace"
+          maxItems={5}
+          traceTypes={magistrateEconomyTraceTypes}
           runnable={runnable}
           onDraft={onDraft}
         />

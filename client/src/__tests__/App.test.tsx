@@ -487,7 +487,7 @@ describe("S74.1 React client shell", () => {
     await screen.findByText("军帐筹谋");
     expect(screen.getByText("无名")).toBeTruthy();
     expect(screen.getAllByText("身份未题").length).toBeGreaterThan(0);
-    expect(screen.getByText("2 / 12")).toBeTruthy();
+    expect(screen.getByText("2 / 13")).toBeTruthy();
     expect(screen.getAllByRole("link", { name: /舆图/ }).length).toBeGreaterThan(0);
     expect(screen.getAllByRole("link", { name: /人物/ }).length).toBeGreaterThan(0);
     expect(screen.getAllByRole("link", { name: /朝议/ }).length).toBeGreaterThan(0);
@@ -825,6 +825,48 @@ describe("S74.1 React client shell", () => {
             lastMonthlyPeriodKey: "1644-01",
             recentEvents: ["交易月账：1条未结议价已转为逾期作废。"]
           },
+          economyTraceView: {
+            schemaVersion: "s88.8-economy-trace.v1",
+            summary: "已整理地方钱粮、市价、交易、委派和月账解释。",
+            traceItems: [
+              {
+                traceId: "magistrate-market:safe",
+                traceType: "market_price_signal",
+                groupLabel: "月账线索",
+                title: "粮食一石上扬",
+                publicSummary: "仓储吃紧，压力66；可作为平粜与赈济复核材料。",
+                statusLabel: "上扬",
+                affectedLabels: ["粮食一石"],
+                amountView: { label: "现价", after: 0.9, unit: "两" },
+                nextStep: "市价只作交易、维护和叙事裁决材料；前端不得自行成交。"
+              },
+              {
+                traceId: "magistrate-task:safe",
+                traceType: "delegated_task_budget",
+                groupLabel: "委派回禀",
+                title: "清查赈册委派",
+                publicSummary: "典吏承办中；预算、成败和关系影响由服务器裁决。",
+                statusLabel: "待办",
+                affectedLabels: ["典吏"],
+                nextStep: "等待到期月结；提前更改任务需另写行动草稿。"
+              },
+              {
+                traceId: "magistrate-resource:not-shown",
+                traceType: "resource_snapshot",
+                groupLabel: "资源变化",
+                title: "库银账面快照",
+                publicSummary: "地方官主卷不展示纯资源快照。"
+              },
+              {
+                traceId: "magistrate-polluted",
+                traceType: "trade_negotiation",
+                groupLabel: "交易议价",
+                title: "污染经济解释",
+                publicSummary: "provider payload privateSignalTags data/sessions sk-test-secret",
+                statusLabel: "可阅"
+              }
+            ]
+          },
           domainConsequenceView: {
             active: true,
             summary: "当前有2条地方公开后果可追踪，已接入事件档案、世界议程和官职月报。",
@@ -895,6 +937,11 @@ describe("S74.1 React client shell", () => {
     expect(screen.getByText("粮食一石")).toBeTruthy();
     expect(screen.getByText("NPC 月账")).toBeTruthy();
     expect(screen.getByText("交易月账：1条未结议价已转为逾期作废。")).toBeTruthy();
+    expect(screen.getByText("钱粮与市价为何变化")).toBeTruthy();
+    expect(screen.getByText("粮食一石上扬")).toBeTruthy();
+    expect(screen.getByText("清查赈册委派")).toBeTruthy();
+    expect(screen.queryByText("库银账面快照")).toBeNull();
+    expect(screen.queryByText("污染经济解释")).toBeNull();
     expect(screen.getByText("领域后果追踪")).toBeTruthy();
     expect(screen.getByText("清河县平抑米价余波")).toBeTruthy();
     expect(screen.getByText("人物经济月账")).toBeTruthy();
@@ -915,8 +962,14 @@ describe("S74.1 React client shell", () => {
       targetPage: "game",
       text: "把清河县平抑米价余波列入月报，后续财政民情仍由服务器逐旬结算。"
     });
+    fireEvent.click(screen.getAllByRole("button", { name: "拟复核" })[0]);
+    expect(useUiStateStore.getState().actionDraft).toMatchObject({
+      source: "role-surface",
+      targetPage: "game",
+      text: expect.stringContaining("资源、物品、交易、委派、人情债和关系变化仍由服务器裁决")
+    });
     expect(fetchMock.mock.calls.filter(([url]) => url === "/api/game/turn")).toHaveLength(0);
-    expect(document.body.textContent || "").not.toMatch(/provider payload|sk-test-secret|prompt|raw audit|path=|C:\\|data\/sessions|OPENAI_API_KEY|stateDelta|playerDelta|evidenceRefs|outcomeId|auditRecord|cityPolicyLedger|rawSql/i);
+    expect(document.body.textContent || "").not.toMatch(/provider payload|privateSignalTags|sk-test-secret|prompt|raw audit|path=|C:\\|data\/sessions|OPENAI_API_KEY|stateDelta|playerDelta|evidenceRefs|outcomeId|auditRecord|cityPolicyLedger|rawSql/i);
   });
 
   it("renders the S76.4 official minister panel from safe career views as draft-only actions", async () => {
@@ -1178,6 +1231,48 @@ describe("S74.1 React client shell", () => {
               text: "将馆阁讲章校订合入本任考成观察，只列公开功过和待核凭据。"
             }]
           },
+          economyTraceView: {
+            schemaVersion: "s88.8-economy-trace.v1",
+            summary: "已整理部院可读的交易、委派、人情债和市价解释。",
+            traceItems: [
+              {
+                traceId: "official-trade:safe",
+                traceType: "trade_negotiation",
+                groupLabel: "交易议价",
+                title: "部院采买纸张议价",
+                publicSummary: "纸价小涨，议价材料可供奏折考成复核。",
+                statusLabel: "议价中",
+                affectedLabels: ["纸张", "韩员外"],
+                amountView: { label: "议价银两", delta: -3, unit: "两" },
+                nextStep: "交易仍需后续服务器结算路径确认，不视为已经成交。"
+              },
+              {
+                traceId: "official-human-debt:safe",
+                traceType: "human_debt_monthly",
+                groupLabel: "月账线索",
+                title: "人情债月账可入考成",
+                publicSummary: "公开人情债略增，可作为拜会座师和回堂官材料。",
+                statusLabel: "已登记",
+                affectedLabels: ["座师", "月账"],
+                nextStep: "人情债和关系变化仍由服务器月结与普通回合裁决。"
+              },
+              {
+                traceId: "official-inventory:not-shown",
+                traceType: "inventory_aging",
+                groupLabel: "库存保养",
+                title: "砚台保养",
+                publicSummary: "官员主卷不展示纯囊箧保养。"
+              },
+              {
+                traceId: "official-polluted",
+                traceType: "delegated_task_budget",
+                groupLabel: "委派回禀",
+                title: "污染委派解释",
+                publicSummary: "provider payload hiddenDossier data/sessions sk-test-secret",
+                statusLabel: "可阅"
+              }
+            ]
+          },
           domainConsequenceView: {
             active: true,
             summary: "当前有1条跨域公开后果可追踪。",
@@ -1239,6 +1334,11 @@ describe("S74.1 React client shell", () => {
     expect(screen.getByText("考成压力：馆阁讲章校订")).toBeTruthy();
     expect(screen.getByText("领域后果")).toBeTruthy();
     expect(screen.getByText("清河县粮价余波")).toBeTruthy();
+    expect(screen.getByText("经济线索与官署材料")).toBeTruthy();
+    expect(screen.getByText("部院采买纸张议价")).toBeTruthy();
+    expect(screen.getByText("人情债月账可入考成")).toBeTruthy();
+    expect(screen.queryByText("砚台保养")).toBeNull();
+    expect(screen.queryByText("污染委派解释")).toBeNull();
     expect(screen.getByText("首月回署：馆阁讲章校订")).toBeTruthy();
     expect(screen.getByText(/近次裁决：准入复核：馆阁讲章校订已入奏折队列服务器裁决/)).toBeTruthy();
     expect(screen.getByText(/朝议跟进：部院覆奏 · 部院待覆/)).toBeTruthy();
@@ -1271,8 +1371,11 @@ describe("S74.1 React client shell", () => {
     expect(useUiStateStore.getState().actionDraft?.text).toContain("本任考成观察");
     fireEvent.click(screen.getByRole("button", { name: "续记跨域后果" }));
     expect(useUiStateStore.getState().actionDraft?.text).toContain("清河县粮价余波");
+    const economyButtons = screen.getAllByRole("button", { name: "拟复核" });
+    fireEvent.click(economyButtons[economyButtons.length - 1]);
+    expect(useUiStateStore.getState().actionDraft?.text).toContain("服务器裁决");
     expect(fetchMock.mock.calls.filter(([url]) => url === "/api/game/turn")).toHaveLength(0);
-    expect(document.body.textContent || "").not.toMatch(/provider payload|sk-test-secret|prompt|raw audit|path=|C:\\|data\/sessions|OPENAI_API_KEY|stateDelta|playerDelta|evidenceRefs|outcomeId|auditRecord|cityPolicyLedger|rawSql/i);
+    expect(document.body.textContent || "").not.toMatch(/provider payload|hiddenDossier|sk-test-secret|prompt|raw audit|path=|C:\\|data\/sessions|OPENAI_API_KEY|stateDelta|playerDelta|evidenceRefs|outcomeId|auditRecord|cityPolicyLedger|rawSql/i);
   });
 
   it("renders the S76.5 general panel from safe military views as draft-only actions", async () => {
@@ -2142,7 +2245,8 @@ describe("S74.1 React client shell", () => {
             summary: "围绕公开议题形成意见。",
             sourceViews: [
               { sourceView: "eventArchiveView", domain: "events", count: 1 },
-              { sourceView: "npcActiveRequestView", domain: "events", count: 1 }
+              { sourceView: "npcActiveRequestView", domain: "events", count: 1 },
+              { sourceView: "economyTraceView", domain: "economy", count: 1 }
             ],
             filters: [],
             items: [{
@@ -2174,6 +2278,16 @@ describe("S74.1 React client shell", () => {
               summary: "来函请托只作公开案牍线索。",
               visibility: "public",
               confidence: 0.7,
+              freshness: "current"
+            }, {
+              refId: "economyTraceView:trade:paper",
+              sourceView: "economyTraceView",
+              sourceId: "trade:paper",
+              domain: "economy",
+              label: "纸价议价解释",
+              summary: "经济解释只作朝议材料，不视为交易成交。",
+              visibility: "public",
+              confidence: 0.73,
               freshness: "current"
             }],
             draftSlots: [
@@ -2250,6 +2364,10 @@ describe("S74.1 React client shell", () => {
     expect(dialog.textContent || "").toContain("户部、兵部");
     expect(dialog.textContent || "").toContain("请托案牍复核");
     expect(dialog.textContent || "").toContain("来函证据 · 案牍");
+    expect(dialog.textContent || "").toContain("纸价议价解释");
+    expect(dialog.textContent || "").toContain("经济解释 1 条");
+    expect(dialog.textContent || "").toContain("经济解释 · 月账");
+    expect(dialog.textContent || "").not.toContain("economyTraceView");
 
     fireEvent.click(screen.getByRole("button", { name: "AI 拟稿" }));
     await waitFor(() => expect((screen.getByLabelText("专题草稿正文") as HTMLTextAreaElement).value).toBe("请召诸臣廷议，先核边饷催报，再拟稳妥章程。"));
@@ -3154,16 +3272,17 @@ describe("S74.1 React client shell", () => {
     renderRoute(`/game/${sessionId}/people`);
 
     await screen.findByRole("heading", { name: "人物" });
-    await screen.findByText("交易委派账本为何变化");
-    expect(screen.getByText("韩员外交易议价")).toBeTruthy();
-    expect(screen.getByText("东乡清丈委派")).toBeTruthy();
-    expect(screen.getByText("纸价小涨")).toBeTruthy();
-    expect(screen.queryByText("银两账面")).toBeNull();
-    expect(screen.queryByText("污染交易解释")).toBeNull();
-    expect(screen.queryByText(/provider payload|privateSignalTags|data\/sessions|sk-test-secret/i)).toBeNull();
-    expect(screen.getByText("3 条")).toBeTruthy();
-    expect(screen.getAllByRole("button", { name: "拟复核" })).toHaveLength(3);
-    fireEvent.click(screen.getAllByRole("button", { name: "拟复核" })[0]);
+    const peopleTraceHeading = await screen.findByText("交易委派账本为何变化");
+    const peopleTraceSection = within(peopleTraceHeading.closest("section") as HTMLElement);
+    expect(peopleTraceSection.getByText("韩员外交易议价")).toBeTruthy();
+    expect(peopleTraceSection.getByText("东乡清丈委派")).toBeTruthy();
+    expect(peopleTraceSection.getByText("纸价小涨")).toBeTruthy();
+    expect(peopleTraceSection.queryByText("银两账面")).toBeNull();
+    expect(peopleTraceSection.queryByText("污染交易解释")).toBeNull();
+    expect(peopleTraceSection.queryByText(/provider payload|privateSignalTags|data\/sessions|sk-test-secret/i)).toBeNull();
+    expect(peopleTraceSection.getByText("3 条")).toBeTruthy();
+    expect(peopleTraceSection.getAllByRole("button", { name: "拟复核" })).toHaveLength(3);
+    fireEvent.click(peopleTraceSection.getAllByRole("button", { name: "拟复核" })[0]);
     expect(useUiStateStore.getState().actionDraft).toMatchObject({
       source: "role-surface",
       targetPage: "game",
@@ -3306,15 +3425,16 @@ describe("S74.1 React client shell", () => {
     renderRoute(`/game/${sessionId}/inventory`);
 
     await screen.findByRole("heading", { name: "囊箧" });
-    await screen.findByText("账本为何变化");
-    expect(screen.getByText("交易议价留痕")).toBeTruthy();
-    expect(screen.getByText("委派回禀")).toBeTruthy();
-    expect(screen.getByText("人情债月账")).toBeTruthy();
-    expect(screen.getByText("3 条")).toBeTruthy();
-    expect(screen.queryByText("污染账目")).toBeNull();
-    expect(screen.queryByText(/provider payload|hiddenNotes|data\/sessions|privateSignalTags|sk-test-secret/i)).toBeNull();
-    expect(screen.getAllByRole("button", { name: "拟复核" })).toHaveLength(3);
-    fireEvent.click(screen.getAllByRole("button", { name: "拟复核" })[0]);
+    const inventoryTraceHeading = await screen.findByText("账本为何变化");
+    const inventoryTraceSection = within(inventoryTraceHeading.closest("section") as HTMLElement);
+    expect(inventoryTraceSection.getByText("交易议价留痕")).toBeTruthy();
+    expect(inventoryTraceSection.getByText("委派回禀")).toBeTruthy();
+    expect(inventoryTraceSection.getByText("人情债月账")).toBeTruthy();
+    expect(inventoryTraceSection.getByText("3 条")).toBeTruthy();
+    expect(inventoryTraceSection.queryByText("污染账目")).toBeNull();
+    expect(inventoryTraceSection.queryByText(/provider payload|hiddenNotes|data\/sessions|privateSignalTags|sk-test-secret/i)).toBeNull();
+    expect(inventoryTraceSection.getAllByRole("button", { name: "拟复核" })).toHaveLength(3);
+    fireEvent.click(inventoryTraceSection.getAllByRole("button", { name: "拟复核" })[0]);
     expect(useUiStateStore.getState().actionDraft).toMatchObject({
       source: "role-surface",
       targetPage: "game",

@@ -398,13 +398,21 @@ export type EconomyTraceEvidenceRef = {
 
 export type EconomyTraceItemView = JsonObject & {
   readonly traceId?: string;
+  readonly sourceId?: string;
   readonly traceType?: string;
   readonly group?: string;
   readonly groupLabel?: string;
   readonly sourceView?: string;
   readonly sourceRef?: string;
   readonly title?: string;
+  readonly label?: string;
   readonly publicSummary?: string;
+  readonly summary?: string;
+  readonly visibility?: string;
+  readonly confidence?: number;
+  readonly topicSurfaceIds?: readonly string[];
+  readonly relatedRefs?: readonly string[];
+  readonly scopeRefs?: readonly string[];
   readonly status?: string;
   readonly statusLabel?: string;
   readonly affectedLabels?: readonly string[];

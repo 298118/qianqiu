@@ -50,6 +50,7 @@ describe("S75.9 MemorialComposer", () => {
         hasDelegatedTaskView: false,
         hasMarketPriceView: false,
         hasNpcEconomyView: false,
+        hasEconomyTraceView: false,
         hasNpcActiveRequestView: false,
         hasRoleCycleView: false,
         hasDomainConsequenceView: false

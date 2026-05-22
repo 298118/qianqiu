@@ -1,8 +1,9 @@
 import type { CSSProperties } from "react";
 import { Link } from "react-router";
-import type { JsonObject, JsonValue, PlayerSummary } from "../api";
+import type { EconomyTraceView, JsonObject, JsonValue, PlayerSummary } from "../api";
 import type { LocalSurface } from "../state/uiState";
 import { DomainConsequenceSection } from "./DomainConsequenceSection";
+import { EconomyTraceSection } from "./EconomyTraceSection";
 import { RoleCycleSection } from "./RoleCycleSection";
 
 type OfficialMinisterPanelProps = {
@@ -16,6 +17,7 @@ type OfficialMinisterPanelProps = {
   readonly playerMonthlyBriefingView?: JsonObject | null;
   readonly courtConsequenceView?: JsonObject | null;
   readonly courtResponseView?: JsonObject | null;
+  readonly economyTraceView?: EconomyTraceView | null;
   readonly domainConsequenceView?: JsonObject | null;
   readonly roleBackgroundPath?: string;
   readonly onDraft: (text: string) => void;
@@ -66,6 +68,18 @@ const unsafeOfficialMinisterFragments = [
   "原始返回",
   "模型原文",
   "开发诊断"
+] as const;
+
+const officialEconomyTraceTypes = [
+  "market_price_signal",
+  "trade_negotiation",
+  "trade_expiry",
+  "trade_blocked",
+  "delegated_task_budget",
+  "delegated_task_result",
+  "human_debt_monthly",
+  "npc_relationship_monthly",
+  "monthly_economy_event"
 ] as const;
 
 const assignmentKindLabels: Record<string, string> = {
@@ -508,6 +522,7 @@ export function OfficialMinisterPanel({
   playerMonthlyBriefingView,
   courtConsequenceView,
   courtResponseView,
+  economyTraceView,
   domainConsequenceView,
   roleBackgroundPath,
   onDraft,
@@ -743,6 +758,17 @@ export function OfficialMinisterPanel({
           title="领域后果"
           summaryFallback="跨域后果只读服务器已裁决的地方、军务、刑名和人物经济公开余波；考成、弹劾、财政和世界议程仍由服务器继续裁决。"
           emptyText="暂无可公开追踪的跨域后果；不得从内部账本、隐藏证据或模型提案补造事实。"
+          runnable={runnable}
+          onDraft={onDraft}
+        />
+
+        <EconomyTraceSection
+          traceView={economyTraceView}
+          title="经济线索与官署材料"
+          summaryFallback="交易议价、委派预算/回禀、人情债和市价解释只作奏折、考成或朝议材料；资源、关系和成交仍由服务器裁决。"
+          idPrefix="official-economy-trace"
+          maxItems={5}
+          traceTypes={officialEconomyTraceTypes}
           runnable={runnable}
           onDraft={onDraft}
         />

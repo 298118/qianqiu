@@ -748,7 +748,7 @@ function NpcProfilePortraitStrip({
 
 function topicSourceSummary(topicView: TopicSurfaceView) {
   const sources = (topicView.sourceViews || [])
-    .map((source) => `${String(source.sourceView || "公开投影")} ${String(source.count || 0)} 条`)
+    .map((source) => `${topicSourceLabel(source.sourceView)} ${String(source.count || 0)} 条`)
     .slice(0, 4);
   return sources.length ? sources.join("；") : "当前专题由服务器安全投影生成。";
 }
@@ -769,12 +769,14 @@ function topicDomainLabel(domain: unknown) {
 function topicSourceLabel(sourceView: unknown) {
   const text = String(sourceView || "").trim();
   if (text === "npcActiveRequestView") return "来函后续";
+  if (text === "economyTraceView") return "经济解释";
   return text || "公开投影";
 }
 
 function topicEvidenceMeta(ref: TopicSurfaceEvidenceRef) {
   const source = topicSourceLabel(ref.sourceView);
   const domain = topicDomainLabel(ref.domain);
+  if (source === "经济解释") return `经济解释 · ${domain}`;
   return source === "来函后续" ? `来函证据 · ${domain}` : domain || source;
 }
 
