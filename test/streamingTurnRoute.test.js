@@ -104,6 +104,23 @@ function createTestServer(provider) {
   });
 }
 
+function createRealProviderTestServer() {
+  delete require.cache[gameRoutePath];
+  const gameRoutes = require(gameRoutePath);
+  const app = express();
+  app.use(express.json());
+  app.use("/api/game", gameRoutes);
+
+  return createFetchSafeServer(app);
+}
+
+function restoreEnv(previous = {}) {
+  for (const [key, value] of Object.entries(previous)) {
+    if (value === undefined) delete process.env[key];
+    else process.env[key] = value;
+  }
+}
+
 async function postTurnJson(baseUrl, body) {
   const response = await fetch(`${baseUrl}/api/game/turn`, {
     method: "POST",
@@ -208,6 +225,23 @@ function assertEconomyDraftDidNotSettle(savedBefore = {}, savedAfter = {}) {
   assert.deepEqual(after.delegatedTasks, before.delegatedTasks);
   assert.deepEqual(after.resourceLedger, before.resourceLedger);
   assert.deepEqual(after.npcEconomyRecentEvents, before.npcEconomyRecentEvents);
+  assert.equal(after.playerGold, before.playerGold);
+  assert.equal(after.localTreasury, before.localTreasury);
+}
+
+function assertEconomyDraftDidNotSettleBusinessLedgers(savedBefore = {}, savedAfter = {}) {
+  // 无 key Mock 回退仍会推进普通维护；这里单独隔离经济草稿可能越权结算的账本面。
+  const before = snapshotEconomyLedgers(savedBefore);
+  const after = snapshotEconomyLedgers(savedAfter);
+  assert.equal(after.cityPolicyCount, before.cityPolicyCount);
+  assert.equal(after.militaryDiplomacyCount, before.militaryDiplomacyCount);
+  assert.deepEqual(after.tradeRecords, before.tradeRecords);
+  assert.deepEqual(after.delegatedTasks, before.delegatedTasks);
+  assert.deepEqual(after.npcEconomyRecentEvents.slice(0, before.npcEconomyRecentEvents.length), before.npcEconomyRecentEvents);
+  assert.doesNotMatch(
+    JSON.stringify(after.npcEconomyRecentEvents.slice(before.npcEconomyRecentEvents.length)),
+    /economyTraceView|domainConsequenceEcho|forged|draftContext|provider payload|hiddenNotes|data\/sessions|rawSql|SEALED_/i
+  );
   assert.equal(after.playerGold, before.playerGold);
   assert.equal(after.localTreasury, before.localTreasury);
 }
@@ -392,6 +426,63 @@ test("S88.8 true provider stream revalidates economy draftContext without settli
   assert.ok(finalState);
   assertEconomyDraftResponseSafe(finalState.data);
   assertEconomyDraftDidNotSettle(savedAfterFirst, savedAfterSecond);
+});
+
+test("S88.12 no-key real provider falls back to Mock for economy draft JSON and SSE turns", async (t) => {
+  const previous = {
+    AI_PROVIDER: process.env.AI_PROVIDER,
+    DEEPSEEK_API_KEY: process.env.DEEPSEEK_API_KEY
+  };
+  process.env.AI_PROVIDER = "deepseek";
+  delete process.env.DEEPSEEK_API_KEY;
+
+  const server = createRealProviderTestServer();
+  t.after(() => {
+    restoreEnv(previous);
+    delete require.cache[gameRoutePath];
+    return server.close();
+  });
+
+  const worldState = createInitialState({ role: "magistrate", playerName: "无钥回退知县" });
+  seedEconomyTopicSignals(worldState);
+  worldState.delegatedTaskLedger = {
+    ...(worldState.delegatedTaskLedger || {}),
+    tasks: []
+  };
+  t.after(() => removeSessionFile(worldState.sessionId));
+  await writeSession(worldState);
+
+  const input = "本旬先处置广州粮储市价：核公开材料、经手人、期限和需回报事项。";
+  const first = await postTurnJson(server.baseUrl, {
+    sessionId: worldState.sessionId,
+    input
+  });
+  const savedAfterFirst = await readSession(worldState.sessionId);
+  const draftContext = buildEconomyDraftContext(savedAfterFirst);
+  const second = await postTurnJson(server.baseUrl, {
+    sessionId: worldState.sessionId,
+    input,
+    draftContext
+  });
+  const savedAfterJsonDraft = await readSession(worldState.sessionId);
+  const sseDraftContext = buildEconomyDraftContext(savedAfterJsonDraft);
+  const events = await postTurnSse(server.baseUrl, worldState.sessionId, input, sseDraftContext);
+  const narrative = events
+    .filter((event) => event.event === "narrative_chunk")
+    .map((event) => event.data.text)
+    .join("");
+  const finalState = events.find((event) => event.event === "final_state");
+  const savedAfterSseDraft = await readSession(worldState.sessionId);
+  const serialized = JSON.stringify({ first, second, finalState });
+
+  assert.equal(first.roleCycleDomainAdjudication.outcome.status, "accepted");
+  assertEconomyDraftResponseSafe(second);
+  assertEconomyDraftDidNotSettleBusinessLedgers(savedAfterFirst, savedAfterJsonDraft);
+  assert.ok(narrative.length > 0);
+  assert.ok(finalState);
+  assertEconomyDraftResponseSafe(finalState.data);
+  assertEconomyDraftDidNotSettleBusinessLedgers(savedAfterJsonDraft, savedAfterSseDraft);
+  assert.doesNotMatch(serialized, /DEEPSEEK_API_KEY|DeepSeek requires|raw provider payload|data\/sessions|sk-[A-Za-z0-9_-]{6,}/i);
 });
 
 test("POST /api/game/turn streams local exam scene actions without global time tick", async (t) => {

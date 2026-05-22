@@ -43,6 +43,35 @@ test("provider tool smoke skips MiMo when key is absent unless required", async 
   );
 });
 
+test("provider tool smoke no-key skip does not require fetch support", async () => {
+  const originalFetch = globalThis.fetch;
+  try {
+    delete globalThis.fetch;
+    const skipped = await runMimoToolSmoke({
+      argv: ["node", "scripts/providerToolSmoke.js"],
+      env: {}
+    });
+
+    assert.equal(skipped.skipped, true);
+    assert.equal(skipped.provider, "mimo");
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+
+  try {
+    delete globalThis.fetch;
+    await assert.rejects(
+      () => runMimoToolSmoke({
+        argv: ["node", "scripts/providerToolSmoke.js"],
+        env: { MIMO_API_KEY: "mimo-key" }
+      }),
+      /requires global fetch support/
+    );
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+
 test("provider tool smoke config reads model, base URL, auth and required flags", () => {
   const config = readMimoToolSmokeConfig({
     argv: ["node", "scripts/providerToolSmoke.js", "--provider", "mimo", "--model", "mimo-test", "--base-url=https://example.test/v1"],

@@ -311,11 +311,6 @@ async function runToolResultRoundtrip({ config, fetchImpl, endpoint, toolDefinit
 
 async function runMimoToolSmoke(options = {}) {
   const config = readMimoToolSmokeConfig(options);
-  const fetchImpl = options.fetchImpl || globalThis.fetch;
-  if (typeof fetchImpl !== "function") {
-    throw new Error("MiMo tool smoke requires global fetch support.");
-  }
-
   if (!config.apiKey) {
     const message = "No MIMO_API_KEY found; skipping MiMo tool smoke. Set MIMO_API_KEY or MIMO_REQUIRED=1 for required validation.";
     if (config.required) {
@@ -323,6 +318,11 @@ async function runMimoToolSmoke(options = {}) {
     }
     console.log(message);
     return { skipped: true, provider: "mimo", cases: [] };
+  }
+
+  const fetchImpl = options.fetchImpl || globalThis.fetch;
+  if (typeof fetchImpl !== "function") {
+    throw new Error("MiMo tool smoke requires global fetch support.");
   }
 
   const endpoint = buildChatCompletionsUrl(config.baseUrl);
