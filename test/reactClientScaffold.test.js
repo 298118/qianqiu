@@ -1288,6 +1288,10 @@ test("S78 topic surfaces are safe workbenches and draft-only", () => {
 test("S74.7 client smoke verifies default UI start and safe route recovery", () => {
   const clientSmokeSource = readText("scripts/clientSmoke.js");
   const appShellSource = readText("client/src/components/AppShell.tsx");
+  const errorPageSource = readText("client/src/pages/ErrorPage.tsx");
+  const notFoundPageSource = readText("client/src/pages/NotFoundPage.tsx");
+  const routeRecoverySource = readText("client/src/routes/routeRecovery.ts");
+  const combinedRouteRecoverySource = `${errorPageSource}\n${notFoundPageSource}\n${routeRecoverySource}`;
 
   assert.match(clientSmokeSource, /startMockGameThroughHome/);
   assert.match(clientSmokeSource, /getByLabel\("姓名"\)/);
@@ -1314,10 +1318,20 @@ test("S74.7 client smoke verifies default UI start and safe route recovery", () 
   assert.match(clientSmokeSource, /process\.env\.AI_PROVIDER = "mock"/);
   assert.match(clientSmokeSource, /previousAiProvider/);
   assert.match(appShellSource, /href\.replace\("s74-preview", currentSessionId\)/);
+  assert.match(errorPageSource, /getSafeRouteErrorMessage\(error\)/);
+  assert.match(errorPageSource, /getRouteSessionRecoveryHref\(location\.pathname\)/);
+  assert.match(notFoundPageSource, /getRouteSessionRecoveryHref\(location\.pathname\)/);
+  assert.match(routeRecoverySource, /isRunnableSessionId\(sessionId\)/);
+  assert.match(routeRecoverySource, /return `\/game\/\$\{sessionId\}`/);
+  assert.doesNotMatch(routeRecoverySource, /statusText/);
   assert.doesNotMatch(clientSmokeSource, /\/legacy\.html|\/ink-client|\/api\/game\/state\/\$\{|\/api\/dev\/session-diagnostics/);
   assert.doesNotMatch(
     appShellSource,
     /localStorage|sessionStorage|data\/sessions|raw audit|provider payload|OPENAI_API_KEY|DEEPSEEK_API_KEY|MIMO_API_KEY|ANTHROPIC_API_KEY/
+  );
+  assert.doesNotMatch(
+    combinedRouteRecoverySource,
+    /\/api\/game\/state|\/api\/dev\/session-diagnostics|localStorage|sessionStorage|data\/sessions|raw audit|provider payload|OPENAI_API_KEY|DEEPSEEK_API_KEY|MIMO_API_KEY|ANTHROPIC_API_KEY/
   );
 });
 

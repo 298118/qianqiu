@@ -4,6 +4,7 @@ import { act, within } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { resetAssetRegistryCache, type InkUiManifest } from "../assets/assetRegistry";
 import { SurfaceHost } from "../components/SurfaceHost";
+import { ErrorPage } from "../pages/ErrorPage";
 import { routes } from "../router";
 import { useGameSessionStore } from "../state/gameSessionState";
 import { useUiStateStore } from "../state/uiState";
@@ -489,6 +490,57 @@ describe("S74.1 React client shell", () => {
     expect(mainLink.getAttribute("href")).toBe(`/game/${sessionId}`);
     expect(mainLink.getAttribute("aria-current")).toBeNull();
     expect(mainLink.className).not.toContain("active");
+  });
+
+  it("offers safe recovery from bad routes inside a runnable session", () => {
+    const sessionId = "11111111-2222-4333-8444-555555555555";
+
+    renderRoute(`/game/${sessionId}/unknown`);
+
+    expect(screen.getByRole("heading", { name: "无此卷页" })).toBeTruthy();
+    expect(screen.getByRole("link", { name: "回主卷" }).getAttribute("href")).toBe(`/game/${sessionId}`);
+    expect(screen.getByRole("link", { name: "归首页" }).getAttribute("href")).toBe("/");
+    expect(document.body.textContent || "").not.toMatch(/data\/sessions|raw audit|provider payload|OPENAI_API_KEY/i);
+  });
+
+  it("does not offer session recovery for preview or malformed bad routes", () => {
+    renderRoute("/game/s74-preview/unknown");
+
+    expect(screen.getByRole("heading", { name: "无此卷页" })).toBeTruthy();
+    expect(screen.queryByRole("link", { name: "回主卷" })).toBeNull();
+    expect(screen.getByRole("link", { name: "归首页" }).getAttribute("href")).toBe("/");
+  });
+
+  it("sanitizes route error diagnostics before rendering recovery links", async () => {
+    const sessionId = "11111111-2222-4333-8444-555555555555";
+    const consoleError = vi.spyOn(console, "error").mockImplementation(() => undefined);
+    const router = createMemoryRouter([
+      {
+        path: "/game/:sessionId",
+        element: <div>不应显示</div>,
+        hydrateFallbackElement: <div>载入中</div>,
+        errorElement: <ErrorPage />,
+        loader: () => {
+          throw {
+            status: 500,
+            statusText: "provider payload data/sessions OPENAI_API_KEY",
+            internal: true,
+            data: "raw audit"
+          };
+        }
+      }
+    ], { initialEntries: [`/game/${sessionId}`] });
+
+    try {
+      render(<RouterProvider router={router} />);
+
+      await screen.findByRole("heading", { name: "卷页受阻" });
+      expect(screen.getByText("案卷暂不可读。")).toBeTruthy();
+      expect(screen.getByRole("link", { name: "回主卷" }).getAttribute("href")).toBe(`/game/${sessionId}`);
+      expect(document.body.textContent || "").not.toMatch(/data\/sessions|raw audit|provider payload|OPENAI_API_KEY/i);
+    } finally {
+      consoleError.mockRestore();
+    }
   });
 
   it("keeps the session routes inside the React Router tree", () => {
