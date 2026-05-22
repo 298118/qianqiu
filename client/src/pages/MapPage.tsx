@@ -4,6 +4,7 @@ import type { MapRuntimeEventEffect, MapRuntimeRef, MapRuntimeView } from "../ap
 import { DomainConsequenceSection } from "../components/DomainConsequenceSection";
 import { InkMapRuntimeBridge } from "../components/InkMapRuntimeBridge";
 import { markOverlayTrigger } from "../components/overlayFocus";
+import { usePrefersReducedMotion } from "../hooks/usePrefersReducedMotion";
 import { isRunnableSessionId } from "../routes/sessionId";
 import { useGameSessionStore } from "../state/gameSessionState";
 import { useUiStateStore } from "../state/uiState";
@@ -106,6 +107,7 @@ export function MapPage() {
   const openSurfaceForSession = useUiStateStore((state) => state.openSurfaceForSession);
   const displayPreferences = useUiStateStore((state) => state.displayPreferences);
   const setActionDraft = useUiStateStore((state) => state.setActionDraft);
+  const prefersReducedMotion = usePrefersReducedMotion();
   const mapRuntimeView = currentSession?.sessionId === sessionId ? currentSession.mapRuntimeView : null;
   const domainConsequenceView = currentSession?.sessionId === sessionId ? currentSession.domainConsequenceView : null;
   const hasCurrentSession = currentSession?.sessionId === sessionId;
@@ -181,7 +183,7 @@ export function MapPage() {
       <div className="mapImmersiveLayout">
         <InkMapRuntimeBridge
           mapRuntimeView={mapRuntimeView}
-          mapMotionEnabled={displayPreferences.mapMotion && displayPreferences.motion === "full"}
+          mapMotionEnabled={displayPreferences.mapMotion && displayPreferences.motion === "full" && !prefersReducedMotion}
           visibleLayers={visibleLayers}
           onActionDraft={(text) => setActionDraft({ source: "map-runtime", targetPage: "game", text })}
         />

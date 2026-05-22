@@ -196,6 +196,12 @@ a {
   transition: none;
 }
 
+.appShell[data-motion="reduced"] .homeMist,
+.appShell[data-motion="reduced"] .rankingGoldenNotice::before,
+.appShell[data-motion="reduced"] .rankingGoldenTitle span {
+  animation: none !important;
+}
+
 button,
 a,
 input,
@@ -4027,6 +4033,7 @@ button:disabled {
 .aiSettingsPanel {
   display: grid;
   gap: 16px;
+  min-width: 0;
 }
 
 .routePanelHeader {
@@ -4083,11 +4090,13 @@ button:disabled {
 .aiTaskMatrix {
   display: grid;
   gap: 12px;
+  min-width: 0;
 }
 
 .aiTaskRoute {
   display: grid;
   gap: 12px;
+  min-width: 0;
   padding: 12px;
   border: 1px solid rgba(84, 60, 43, 0.22);
   background: rgba(255, 248, 230, 0.58);
@@ -4148,6 +4157,32 @@ button:disabled {
 .aiTaskRouteControls select,
 .aiSettingsSummary select {
   width: 100%;
+}
+
+.aiSettingsMatrixStatus {
+  display: grid;
+  gap: 5px;
+  min-width: 0;
+  border: 1px dashed rgba(84, 60, 43, 0.28);
+  background: rgba(255, 252, 238, 0.68);
+  padding: 12px;
+  color: #5f4f3d;
+  line-height: 1.65;
+}
+
+.aiSettingsMatrixStatus strong {
+  color: #7b241f;
+  overflow-wrap: anywhere;
+}
+
+.aiSettingsMatrixStatus span {
+  overflow-wrap: anywhere;
+}
+
+.aiSettingsMatrixStatus[data-state="error"] {
+  border-color: rgba(142, 47, 39, 0.4);
+  background: rgba(248, 229, 213, 0.68);
+  color: #6f352b;
 }
 
 .safeSummaryList {
@@ -4671,6 +4706,17 @@ button:disabled {
     flex-direction: column;
   }
 
+  .aiSettingsActions .paperButton,
+  .aiSettingsSummary .paperButton {
+    justify-content: center;
+    width: 100%;
+    min-height: 44px;
+  }
+
+  .aiSettingsSummary label {
+    width: 100%;
+  }
+
   .aiTaskRouteControls {
     grid-template-columns: 1fr;
   }
@@ -5115,7 +5161,9 @@ button:disabled {
 
   .homeStartSeal,
   .homeStartSeal::after,
-  .homeStartSeal[data-state="loading"]::before {
+  .homeStartSeal[data-state="loading"]::before,
+  .rankingGoldenNotice::before,
+  .rankingGoldenTitle span {
     animation: none !important;
     transition: none;
   }

@@ -730,7 +730,8 @@ async function assertBrowserLevelReducedMotion(browser, baseUrl, screenshotsDir)
   const context = await browser.newContext({ viewport: VIEWPORTS.desktop, reducedMotion: "reduce" });
   try {
     const page = await context.newPage();
-    const screenshot = await assertReactClientPage(page, baseUrl, "/", "s77-browser-reduced-motion-home", screenshotsDir);
+    const screenshots = [];
+    screenshots.push(await assertReactClientPage(page, baseUrl, "/", "s77-browser-reduced-motion-home", screenshotsDir));
     const snapshot = await page.evaluate(() => {
       const mist = document.querySelector(".homeMist");
       const seal = document.querySelector(".homeStartSeal");
@@ -750,7 +751,34 @@ async function assertBrowserLevelReducedMotion(browser, baseUrl, screenshotsDir)
     if (snapshot.mistAnimationName !== "none" && snapshot.mistAnimationDuration !== "0.01ms") {
       throw new Error(`S77.6 browser-level reduced motion did not calm home motion: ${JSON.stringify(snapshot)}`);
     }
-    return screenshot;
+    screenshots.push(await assertReactClientPage(page, baseUrl, "/game/s74-preview/ranking", "s88-9-browser-reduced-motion-ranking", screenshotsDir, {
+      readySelector: ".rankingFullScreen"
+    }));
+    const rankingSnapshot = await page.evaluate(() => {
+      const probe = document.createElement("div");
+      probe.className = "rankingGoldenNotice";
+      probe.innerHTML = '<div class="rankingGoldenTitle"><span>金榜题名</span></div>';
+      probe.style.position = "absolute";
+      probe.style.left = "-9999px";
+      probe.style.top = "0";
+      document.body.appendChild(probe);
+      const noticeAnimationName = window.getComputedStyle(probe, "::before").animationName;
+      const titleAnimationName = window.getComputedStyle(probe.querySelector(".rankingGoldenTitle span")).animationName;
+      probe.remove();
+      return {
+        mediaMatches: window.matchMedia("(prefers-reduced-motion: reduce)").matches,
+        noticeAnimationName,
+        titleAnimationName,
+        hasRankingShell: Boolean(document.querySelector(".rankingFullScreen"))
+      };
+    });
+    if (!rankingSnapshot.mediaMatches || !rankingSnapshot.hasRankingShell) {
+      throw new Error(`S88.9 browser-level reduced motion ranking setup failed: ${JSON.stringify(rankingSnapshot)}`);
+    }
+    if (rankingSnapshot.noticeAnimationName !== "none" || rankingSnapshot.titleAnimationName !== "none") {
+      throw new Error(`S88.9 browser-level reduced motion did not calm ranking ornament motion: ${JSON.stringify(rankingSnapshot)}`);
+    }
+    return screenshots;
   } finally {
     await context.close();
   }
@@ -2464,7 +2492,7 @@ async function runClientSmoke(options = {}) {
     screenshots.push(await assertReactClientPage(page, baseUrl, "/", "s74-react-home-mobile", options.screenshotsDir));
     await assertReviewedBackgroundVisual(page, ".homeBackdrop", "S77.3 mobile home backdrop");
     await assertBrowserStorageSafety(page, "S77.4 final mobile context");
-    screenshots.push(await assertBrowserLevelReducedMotion(browser, baseUrl, options.screenshotsDir));
+    screenshots.push(...(await assertBrowserLevelReducedMotion(browser, baseUrl, options.screenshotsDir)));
     await context.close();
 
     if (pageErrors.length) {

@@ -348,6 +348,68 @@ describe("S74.1 React client shell", () => {
     await waitFor(() => expect(useGameSessionStore.getState().currentSessionId).toBe("44444444-4444-4444-8444-444444444444"));
   });
 
+  it("keeps map runtime motion reduced when the browser requests reduced motion", async () => {
+    class MockMapRenderer {
+      options: { motionEnabled?: boolean; onRenderLabel?: (ref: unknown, position: { x: number; y: number }) => void };
+
+      constructor(
+        _container: HTMLElement,
+        options: { motionEnabled?: boolean; onRenderLabel?: (ref: unknown, position: { x: number; y: number }) => void } = {}
+      ) {
+        this.options = options;
+      }
+
+      update(view: { refs?: unknown[] }) {
+        view.refs?.forEach((ref, index) => this.options.onRenderLabel?.(ref, { x: 100 + index * 20, y: 120 }));
+      }
+
+      destroy() {
+      }
+
+      setMotionEnabled(enabled: boolean) {
+        this.options.motionEnabled = enabled;
+      }
+    }
+
+    vi.stubGlobal("PIXI", {});
+    vi.stubGlobal("MapRenderer", MockMapRenderer);
+    vi.stubGlobal("matchMedia", vi.fn((query: string) => ({
+      matches: query === "(prefers-reduced-motion: reduce)",
+      media: query,
+      onchange: null,
+      addEventListener: vi.fn(),
+      removeEventListener: vi.fn(),
+      addListener: vi.fn(),
+      removeListener: vi.fn(),
+      dispatchEvent: vi.fn()
+    })));
+    useUiStateStore.getState().setDisplayPreference("motion", "full");
+    useUiStateStore.getState().setDisplayPreference("mapMotion", true);
+    useGameSessionStore.setState({
+      currentSessionId: "s88-map-motion-session",
+      currentSession: {
+        sessionId: "s88-map-motion-session",
+        narrative: "山河已铺。",
+        worldState: { player: { name: "顾衡", role: "scholar" } },
+        mapRuntimeView: {
+          schemaVersion: 1,
+          refs: [{ mapEntityRef: "geo:exam-hall", label: "贡院", summary: "号舍灯火未歇。" }],
+          routes: [],
+          eventEffects: [],
+          actionDrafts: {}
+        }
+      },
+      status: "ready"
+    });
+
+    renderRoute("/game/s88-map-motion-session/map");
+
+    await screen.findByRole("heading", { name: "山河舆图" });
+    await screen.findByRole("button", { name: "贡院" });
+    expect(document.querySelector(".inkMapRuntimeBridge")?.getAttribute("data-map-motion")).toBe("reduced");
+    expect(document.body.textContent || "").not.toMatch(/\/api\/game\/turn|provider payload|raw audit|OPENAI_API_KEY|data\/sessions/i);
+  });
+
   it("hides scholar family choices for non-scholar starts and validates year locally", async () => {
     const fetchMock = vi.fn(async () => new Response(JSON.stringify({ saves: [], skipped: [] }), {
       status: 200,
@@ -2032,6 +2094,8 @@ describe("S74.1 React client shell", () => {
 
     await waitFor(() => expect(useUiStateStore.getState().currentSessionId).toBe(sessionId));
     fireEvent.click(screen.getByRole("button", { name: "打开印匣" }));
+    await screen.findByText("矩阵未载");
+    expect(screen.getByText("暂无 AI 任务矩阵；前端不会补造 provider、模型或工具权限。")).toBeTruthy();
     fireEvent.click(screen.getByRole("tab", { name: "旧案" }));
 
     await screen.findByText("当前案主");

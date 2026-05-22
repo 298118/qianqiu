@@ -187,6 +187,18 @@ export function AiSettingsPanel({ compact = false }: { readonly compact?: boolea
   const hasLoadedPayload = Boolean(savedSnapshot);
   const isSettingsRequestLoading = isSettingsLoading && !connectionBusy;
   const isConnectionLoading = connectionBusy || aiConnectionStatus === "loading";
+  const matrixState = form.routes.length
+    ? "ready"
+    : isSettingsRequestLoading
+      ? "loading"
+      : settingsStatus === "error" || saveState === "error"
+        ? "error"
+        : "empty";
+  const matrixStatusText = matrixState === "loading"
+    ? "正在整理服务端 AI 任务矩阵。"
+    : matrixState === "error"
+      ? "AI 任务矩阵暂不可用；前端不会补造 provider、模型或工具权限。"
+      : "暂无 AI 任务矩阵；前端不会补造 provider、模型或工具权限。";
 
   useEffect(() => {
     dirtyRef.current = dirty;
@@ -432,9 +444,10 @@ export function AiSettingsPanel({ compact = false }: { readonly compact?: boolea
             </p>
           </article>
         )) : (
-          <p className="statusLine">
-            {isSettingsRequestLoading ? "正在整理 AI 任务矩阵。" : "暂无 AI 任务矩阵；前端不会补造 provider、模型或工具权限。"}
-          </p>
+          <div className="aiSettingsMatrixStatus" data-state={matrixState} role={matrixState === "error" ? "alert" : "status"} aria-live="polite">
+            <strong>{matrixState === "loading" ? "候矩阵" : matrixState === "error" ? "矩阵受阻" : "矩阵未载"}</strong>
+            <span>{matrixStatusText}</span>
+          </div>
         )}
       </section>
     </form>

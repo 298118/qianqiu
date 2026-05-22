@@ -321,12 +321,15 @@ test("S77.6 display fonts and accessibility smoke guard text-heavy routes", () =
   assert.match(styleSource, /\.appShell\[data-body-font="kai-longcang"\]/);
   assert.match(styleSource, /rankingGoldenNotice/);
   assert.match(styleSource, /rankingGoldDust/);
+  assert.match(styleSource, /\.appShell\[data-motion="reduced"\] \.rankingGoldenNotice::before/);
+  assert.match(styleSource, /\.rankingGoldenTitle span/);
   assert.match(styleSource, /prefers-reduced-motion: reduce/);
   assert.match(rankingPageSource, /showGoldenNotice/);
   assert.match(rankingPageSource, /金榜题名/);
   assert.match(clientSmokeSource, /getTextOverflowFailures/);
   assert.match(clientSmokeSource, /assertNoVisibleTextOverflow/);
   assert.match(clientSmokeSource, /assertBrowserLevelReducedMotion/);
+  assert.match(clientSmokeSource, /s88-9-browser-reduced-motion-ranking/);
   assert.match(clientSmokeSource, /maxFontWoff2Requests: 6/);
   assert.match(buildBudgetSource, /maxWoff2FontBytes: 14_500_000/);
   assert.deepEqual(getTextOverflowFailures([
@@ -507,10 +510,11 @@ test("S75.7 display preferences persist only local safe whitelist fields", () =>
   const uiStateSource = readText("client/src/state/uiState.ts");
   const surfaceHostSource = readText("client/src/components/SurfaceHost.tsx");
   const appShellSource = readText("client/src/components/AppShell.tsx");
+  const reducedMotionHookSource = readText("client/src/hooks/usePrefersReducedMotion.ts");
   const mapPageSource = readText("client/src/pages/MapPage.tsx");
   const clientSmokeSource = readText("scripts/clientSmoke.js");
   const appTestSource = readText("client/src/state/uiState.test.ts");
-  const combined = `${storageSource}\n${uiStateSource}\n${surfaceHostSource}\n${appShellSource}\n${mapPageSource}\n${appTestSource}\n${clientSmokeSource}`;
+  const combined = `${storageSource}\n${uiStateSource}\n${surfaceHostSource}\n${appShellSource}\n${reducedMotionHookSource}\n${mapPageSource}\n${appTestSource}\n${clientSmokeSource}`;
   const storageSourceWithoutGuard = stripSafeGuardPatterns(storageSource);
 
   assert.match(storageSource, /displayPreferenceStorageKey = "qianqiu\.displayPreferences\.v1"/);
@@ -534,7 +538,9 @@ test("S75.7 display preferences persist only local safe whitelist fields", () =>
   assert.match(appShellSource, /data-text-size=\{displayPreferences\.textSize\}/);
   assert.match(appShellSource, /data-contrast=\{displayPreferences\.contrast\}/);
   assert.match(appShellSource, /data-body-font=\{displayPreferences\.bodyFont\}/);
-  assert.match(mapPageSource, /displayPreferences\.mapMotion && displayPreferences\.motion === "full"/);
+  assert.match(reducedMotionHookSource, /prefers-reduced-motion: reduce/);
+  assert.match(mapPageSource, /usePrefersReducedMotion/);
+  assert.match(mapPageSource, /displayPreferences\.mapMotion && displayPreferences\.motion === "full" && !prefersReducedMotion/);
   assert.match(clientSmokeSource, /assertDisplayPreferencesPersistence/);
   assert.match(clientSmokeSource, /qianqiu\.displayPreferences\.v1/);
   assert.match(clientSmokeSource, /data-body-font/);
@@ -589,8 +595,11 @@ test("S75.9 memorial composer uses safe AI quick actions as draft-only suggestio
   assert.match(stateSource, /aiConnectionRequestId/);
   assert.match(stateSource, /aiConnectionStatus/);
   assert.match(aiSettingsPanelSource, /未保存编辑已保留/);
-  assert.match(aiSettingsPanelSource, /正在整理 AI 任务矩阵/);
+  assert.match(aiSettingsPanelSource, /正在整理服务端 AI 任务矩阵/);
   assert.match(aiSettingsPanelSource, /暂无 AI 任务矩阵/);
+  assert.match(aiSettingsPanelSource, /aiSettingsMatrixStatus/);
+  assert.match(styleSource, /\.aiSettingsMatrixStatus/);
+  assert.match(styleSource, /\.aiSettingsActions \.paperButton,[\s\S]*\.aiSettingsSummary \.paperButton[\s\S]*min-height: 44px/);
   assert.match(aiSettingsPanelSource, /taskType: stringValue\(record\.taskType/);
   assert.match(aiSettingsPanelSource, /\$\{route\.label\}工具预算/);
   assert.match(quickActionSource, /getMemorialPlaceholder/);
@@ -1054,6 +1063,7 @@ test("S76.8 ranking page renders server-owned ranking views without widening aut
   assert.match(styleSource, /rankingDetailPanel/);
   assert.match(styleSource, /rankingDetailPanel:focus/);
   assert.match(styleSource, /rankingActionRow/);
+  assert.match(styleSource, /\.rankingGoldenNotice::before,[\s\S]*\.rankingGoldenTitle span[\s\S]*animation: none !important/);
   assert.match(styleSource, /\.rankingList button[\s\S]*grid-template-columns: minmax\(0, 1fr\)/);
   assert.match(styleSource, /\.rankingName[\s\S]*overflow-wrap: anywhere/);
   assert.match(styleSource, /\.rankingPlace,[\s\S]*\.rankingMeta,[\s\S]*\.rankingScore[\s\S]*overflow-wrap: anywhere/);

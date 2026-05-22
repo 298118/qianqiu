@@ -7,6 +7,7 @@ import type { GameRole } from "../api";
 import { useAssetRegistry } from "../assets/useAssetRegistry";
 import type { AssetRegistry, RuntimePortraitAsset } from "../assets/assetRegistry";
 import { Portrait } from "../components/Portrait";
+import { usePrefersReducedMotion } from "../hooks/usePrefersReducedMotion";
 import { SaveCaseList } from "../components/SaveCaseList";
 import { isRunnableSessionId } from "../routes/sessionId";
 
@@ -105,24 +106,6 @@ type CurrentPlayerPayload = NonNullable<ReturnType<typeof useUiStateStore.getSta
 function getContinueIdentity(payload: CurrentPlayerPayload) {
   const player = payload.player;
   return safeHomeSummaryText(player?.officeTitle || player?.examRank || (player?.role ? roleLabels[player.role] || player.role : ""), "身份未题");
-}
-
-function usePrefersReducedMotion() {
-  const [prefersReducedMotion, setPrefersReducedMotion] = useState(() => {
-    if (typeof window === "undefined" || !window.matchMedia) return false;
-    return window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-  });
-
-  useEffect(() => {
-    if (typeof window === "undefined" || !window.matchMedia) return undefined;
-    const query = window.matchMedia("(prefers-reduced-motion: reduce)");
-    const handleChange = () => setPrefersReducedMotion(query.matches);
-    handleChange();
-    query.addEventListener?.("change", handleChange);
-    return () => query.removeEventListener?.("change", handleChange);
-  }, []);
-
-  return prefersReducedMotion;
 }
 
 export function HomePage() {
