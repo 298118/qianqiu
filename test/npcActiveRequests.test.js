@@ -56,6 +56,9 @@ test("S85.3 resolving bribe and marriage proposals never applies frontend resour
   assert.equal(bribeResult.request.outcome.resolverTrace.boundaries.serverOwnsMarriageAndDiscipline, true);
   assert.ok(bribeResult.request.auditRefs.includes(bribeResult.request.outcome.resolverTrace.publicResolutionRef));
   assert.equal(bribeResult.request.outcome.resourceImpactView.applied, false);
+  assert.equal(bribeResult.request.outcome.followUpView.schemaVersion, "s88.7-npc-active-request-follow-up.v1");
+  assert.equal(bribeResult.request.outcome.followUpView.followUpKind, "integrity_risk_review");
+  assert.equal(bribeResult.request.outcome.followUpView.boundaries.resourcesNotApplied, true);
   assert.equal(worldState.player.gold, beforeGold);
 
   const marriage = createNpcActiveRequest(worldState, "marriage_proposal");
@@ -63,8 +66,61 @@ test("S85.3 resolving bribe and marriage proposals never applies frontend resour
   assert.equal(marriageResult.ok, true);
   assert.equal(marriageResult.request.status, "under_review");
   assert.equal(marriageResult.request.outcome.resolverTrace.disposition, "ritual_family_review");
+  assert.equal(marriageResult.request.outcome.followUpView.followUpKind, "ritual_family_review");
   assert.match(marriageResult.request.outcome.publicSummary, /未写入 spouseIds|尚未成婚/);
   assert.doesNotMatch(JSON.stringify(worldState), /acceptedMarriage|spouseIdsWritten":true/);
+  assertNoSensitiveLeak(buildNpcActiveRequestView(worldState, { includeResolved: true }));
+});
+
+test("S88.7 NPC active request follow-up view gives type-specific safe next actions", () => {
+  const worldState = createInitialState({ role: "magistrate", playerName: "来函后续" });
+  worldState.turnCount = 6;
+  const expectations = [
+    ["debt_collection", "investigate", "human_debt_review", /钱债|人情债/],
+    ["petition", "investigate", "petition_obligation_review", /请托|公私边界/],
+    ["bribe", "report", "integrity_risk_review", /廉政|禁收财物/],
+    ["impeachment", "investigate", "impeachment_evidence_review", /弹劾|证据/],
+    ["introduction", "accept", "network_introduction_review", /引荐|人脉/],
+    ["betrayal", "investigate", "betrayal_risk_review", /背叛|查证/]
+  ];
+
+  for (const [requestType, responseAction, followUpKind, expectedText] of expectations) {
+    const created = createNpcActiveRequest(worldState, requestType);
+    assert.equal(created.ok, true, requestType);
+    const beforeView = buildNpcActiveRequestView(worldState, { includeResolved: true });
+    const beforeItem = beforeView.items.find((item) => item.requestId === created.request.requestId);
+    assert.ok(beforeItem, requestType);
+    assert.ok(beforeItem.responseOptions.some((option) => option.responseAction === responseAction));
+    assert.match(JSON.stringify(beforeItem.responseOptions), /服务器裁决/);
+
+    const resolved = resolveNpcActiveRequest(worldState, created.request.requestId, responseAction);
+    assert.equal(resolved.ok, true, requestType);
+    const afterView = buildNpcActiveRequestView(worldState, { includeResolved: true });
+    const afterItem = afterView.items.find((item) => item.requestId === created.request.requestId);
+    assert.ok(afterItem, requestType);
+    assert.deepEqual(afterItem.responseOptions, []);
+    assert.deepEqual(afterItem.allowedResponseActions, []);
+    const followUp = resolved.request.outcome.followUpView;
+    assert.equal(followUp.followUpKind, followUpKind);
+    assert.equal(followUp.boundaries.serverOwnsFollowUp, true);
+    assert.equal(followUp.boundaries.browserDraftOnly, true);
+    assert.match(JSON.stringify(followUp), expectedText);
+    assert.doesNotMatch(
+      JSON.stringify(followUp),
+      /hiddenDossier|privateSignalTags|trueAssets|secretRelationships|rawProvider|statePatch|world_sessions|sk-[A-Za-z0-9_-]{6,}/
+    );
+  }
+
+  const deferred = createNpcActiveRequest(worldState, "help");
+  assert.equal(deferred.ok, true);
+  const deferredResult = resolveNpcActiveRequest(worldState, deferred.request.requestId, "defer");
+  assert.equal(deferredResult.request.status, "deferred");
+  const deferredItem = buildNpcActiveRequestView(worldState, { includeResolved: true })
+    .items.find((item) => item.requestId === deferred.request.requestId);
+  assert.equal(deferredItem.status, "deferred");
+  assert.ok(deferredItem.responseOptions.length > 0);
+  assert.ok(deferredItem.allowedResponseActions.includes("accept"));
+
   assertNoSensitiveLeak(buildNpcActiveRequestView(worldState, { includeResolved: true }));
 });
 

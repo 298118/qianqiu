@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useParams } from "react-router";
 import type { AssetRegistry, RuntimePortraitAsset } from "../assets/assetRegistry";
 import { useAssetRegistry } from "../assets/useAssetRegistry";
-import type { DelegatedTaskRecordView, NpcActiveRequestItemView, NpcDetailView, NpcRosterItem, PlayerSummary, TradeRecordView, WorldPeopleNpc, WorldPeopleRelationship } from "../api";
+import type { DelegatedTaskRecordView, NpcActiveRequestItemView, NpcActiveRequestResponseOptionView, NpcDetailView, NpcRosterItem, PlayerSummary, TradeRecordView, WorldPeopleNpc, WorldPeopleRelationship } from "../api";
 import { Portrait } from "../components/Portrait";
 import { markOverlayTrigger } from "../components/overlayFocus";
 import { isRunnableSessionId } from "../routes/sessionId";
@@ -509,10 +509,14 @@ export function PeoplePage() {
       </div>
       <NpcActiveRequestInbox
         requests={(session?.npcActiveRequestView?.items ?? []) as readonly NpcActiveRequestItemView[]}
-        onDraft={(request) => setActionDraft({
+        onDraft={(request, option) => setActionDraft({
           source: "role-surface",
           targetPage: "game",
-          text: `回应${safePeopleText(request.typeLabel, "请托", 20)}：先查证${safePeopleText(request.npc?.displayName, "来人", 32)}所言，凡资源、关系、婚姻、弹劾或背叛结果均候服务器裁决。`
+          text: safePeopleText(
+            option?.draftText,
+            `回应${safePeopleText(request.typeLabel, "请托", 20)}：先查证${safePeopleText(request.npc?.displayName, "来人", 32)}所言，凡资源、关系、婚姻、弹劾或背叛结果均候服务器裁决。`,
+            180
+          )
         })}
       />
       <section className="npcWorkbench" aria-label="NPC 名册工作台">
@@ -938,22 +942,41 @@ function NpcActiveRequestInbox({
   onDraft
 }: {
   readonly requests: readonly NpcActiveRequestItemView[];
-  readonly onDraft: (request: NpcActiveRequestItemView) => void;
+  readonly onDraft: (request: NpcActiveRequestItemView, option?: NpcActiveRequestResponseOptionView) => void;
 }) {
   const visible = requests.slice(0, 3);
   if (!visible.length) return null;
   return (
     <section className="npcActiveRequestInbox" aria-label="NPC 主动请求">
-      {visible.map((request) => (
-        <article className="inventoryMiniCard" key={request.requestId || request.title}>
-          <strong>{safePeopleText(request.title, "来函", 48)}</strong>
-          <span>{safePeopleText(request.ask, "请先查证来意。", 130)}</span>
-          <div className="buttonRow">
-            <button className="paperButton" type="button" onClick={() => onDraft(request)}>写入回应草稿</button>
-            <small>{safePeopleText(request.status, "active", 32)} · {request.turnsRemaining ?? 0} 旬</small>
-          </div>
-        </article>
-      ))}
+      {visible.map((request) => {
+        const canRespond = request.status === "active" || request.status === "deferred";
+        const options = canRespond ? (request.responseOptions ?? []).slice(0, 3) : [];
+        const followUp = request.outcome?.followUpView;
+        return (
+          <article className="inventoryMiniCard" key={request.requestId || request.title}>
+            <strong>{safePeopleText(request.title, "来函", 48)}</strong>
+            <span>{safePeopleText(request.ask, "请先查证来意。", 130)}</span>
+            {followUp ? (
+              <small>{safePeopleText(followUp.title || followUp.nextStep, "后续由服务器复核。", 90)}</small>
+            ) : null}
+            <div className="buttonRow">
+              {options.length ? options.map((option) => (
+                <button
+                  className="paperButton"
+                  key={option.responseAction || option.label || "response"}
+                  type="button"
+                  onClick={() => onDraft(request, option)}
+                >
+                  {safePeopleText(option.shortLabel || option.label, "回应", 18)}
+                </button>
+              )) : canRespond ? (
+                <button className="paperButton" type="button" onClick={() => onDraft(request)}>回应</button>
+              ) : null}
+              <small>{safePeopleText(request.status, "active", 32)} · {request.turnsRemaining ?? 0} 旬</small>
+            </div>
+          </article>
+        );
+      })}
     </section>
   );
 }

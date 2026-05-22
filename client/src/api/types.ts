@@ -393,11 +393,22 @@ export type NpcActiveRequestItemView = JsonObject & {
   readonly proposalBoundary?: string;
   readonly riskTags?: readonly string[];
   readonly allowedResponseActions?: readonly string[];
+  readonly responseOptions?: readonly NpcActiveRequestResponseOptionView[];
   readonly createdTurn?: number;
   readonly dueTurn?: number;
   readonly lastUpdatedTurn?: number;
   readonly turnsRemaining?: number;
-  readonly outcome?: JsonObject | null;
+  readonly outcome?: (JsonObject & {
+    readonly followUpView?: JsonObject;
+  }) | null;
+};
+
+export type NpcActiveRequestResponseOptionView = JsonObject & {
+  readonly responseAction?: string;
+  readonly label?: string;
+  readonly shortLabel?: string;
+  readonly draftText?: string;
+  readonly serverBoundary?: string;
 };
 
 export type NpcActiveRequestView = JsonObject & {

@@ -257,10 +257,13 @@ test("S88.7 event archive records safe NPC active request and relationship resol
 
   assert.equal(activeResolution.ok, true);
   assert.equal(relationshipAction.ok, true);
-  assert.ok(archive.items.some((item) =>
+  const activeArchiveItem = archive.items.find((item) =>
     item.sourceType === "npc_active_request" &&
     item.sourceId === activeResolution.request.outcome.resolverTrace.publicResolutionRef
-  ));
+  );
+  assert.ok(activeArchiveItem);
+  assert.match(activeArchiveItem.summary, /廉政|后续|服务器/);
+  assert.match(activeArchiveItem.riskLabel, /integrity_risk_review/);
   assert.ok(archive.items.some((item) =>
     item.sourceType === "npc_relationship_action" &&
     item.sourceId === relationshipAction.resolutionView.resolverTrace.publicResolutionRef

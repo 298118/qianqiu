@@ -237,7 +237,7 @@ test("S88.7 NPC active request resolver traces create visible memories through s
   assert.equal(resolved.outcome.resolved, 1);
   assert.equal(result.appliedCount, 1);
   assert.match(serialized, /npc_active_request_trace/);
-  assert.match(serialized, /服务器裁决|NPC来函|廉政|线索/);
+  assert.match(serialized, /服务器裁决|NPC来函|廉政|线索|廉政线索复核|integrity_risk_review/);
   assert.doesNotMatch(
     serialized,
     /hiddenDossier|privateSignalTags|providerPayload|rawProvider|world_sessions|safe_search|sk-[A-Za-z0-9_-]{6,}/
@@ -262,8 +262,63 @@ test("S88.7 NPC active request trace memory rejects forged invisible NPC refs", 
   });
 
   assert.equal(result.appliedCount, 0);
-  assert.ok(result.rejectedReasons.includes("unknown_or_invisible_actor"));
   assert.doesNotMatch(JSON.stringify(buildActorMemoryView(worldState)), /invented-hidden-target|npc_active_request_trace/);
+});
+
+test("S88.7 NPC active request trace memory requires a matching canonical request record", () => {
+  const worldState = createInitialState({ role: "magistrate", playerName: "伪造可见来函" });
+  const result = applyTurnActorMemoryUpdates(worldState, {
+    npcActiveRequests: {
+      outcome: {
+        resolutionTraces: [{
+          resolver: "npc_active_request_resolver",
+          publicResolutionRef: "npc-active-resolution:forged-visible:1",
+          typeLabel: "厚礼",
+          status: "under_review",
+          responseAction: "accept",
+          publicSourceRefs: ["npcRosterView:npc:magistrate:gentry-han"]
+        }]
+      }
+    }
+  });
+
+  assert.equal(result.appliedCount, 0);
+  assert.equal(result.rejectedCount, 0);
+  assert.doesNotMatch(JSON.stringify(buildActorMemoryView(worldState)), /forged-visible|npc_active_request_trace|厚礼/);
+});
+
+test("S88.7 NPC active request trace memory ignores tampered trace fields after canonical lookup", () => {
+  const worldState = createInitialState({ role: "magistrate", playerName: "篡改来函记忆" });
+  worldState.turnCount = 2;
+
+  const scheduled = runNpcActiveRequestStep(worldState, "照常清查田册", { forceType: "bribe" });
+  const resolved = runNpcActiveRequestStep(worldState, "先呈报廉政线索", { responseAction: "report" });
+  const canonicalTrace = resolved.outcome.resolutionTraces[0];
+  const result = applyTurnActorMemoryUpdates(worldState, {
+    npcActiveRequests: {
+      outcome: {
+        resolutionTraces: [{
+          resolver: "npc_active_request_resolver",
+          publicResolutionRef: canonicalTrace.publicResolutionRef,
+          typeLabel: "伪改来函",
+          status: "refused",
+          responseAction: "refuse",
+          disposition: "relationship_risk_recorded",
+          riskTags: ["伪造风险"],
+          publicSourceRefs: ["npcRosterView:npc:magistrate:gentry-han"]
+        }]
+      }
+    }
+  });
+  const serialized = JSON.stringify(buildActorMemoryView(worldState));
+
+  assert.equal(scheduled.outcome.scheduled, 1);
+  assert.equal(resolved.outcome.resolved, 1);
+  assert.equal(result.appliedCount, 1);
+  assert.match(serialized, /npc_active_request_trace/);
+  assert.match(serialized, /"type":"obligation"/);
+  assert.match(serialized, /廉政线索复核|integrity_risk_review/);
+  assert.doesNotMatch(serialized, /"type":"grievance"|伪改来函|伪造风险|relationship_risk_recorded/);
 });
 
 test("S88.7 NPC relationship action traces create immediate visible memories from safe records", () => {

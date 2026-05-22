@@ -743,15 +743,6 @@ function memoryProposalsFromActiveRequest(activeNpcRequest = {}) {
   }];
 }
 
-function npcIdFromTraceSourceRefs(trace = {}) {
-  const refs = Array.isArray(trace.publicSourceRefs) ? trace.publicSourceRefs : [];
-  for (const ref of refs) {
-    const text = cleanText(ref, "", 120);
-    if (text.startsWith("npcRosterView:")) return cleanId(text.slice("npcRosterView:".length), "");
-  }
-  return "";
-}
-
 function activeRequestTraceType(trace = {}, record = {}) {
   const status = cleanId(record.status || trace.status, "");
   const responseAction = cleanId(trace.responseAction, "");
@@ -763,11 +754,15 @@ function activeRequestTraceType(trace = {}, record = {}) {
 }
 
 function activeRequestTraceTags(trace = {}, record = {}) {
+  const followUp = isPlainObject(record.outcome?.followUpView) ? record.outcome.followUpView : {};
   return cleanList([
     "NPC来函",
     "服务器裁决",
     record.typeLabel || trace.typeLabel,
+    followUp.followUpKind,
+    followUp.title,
     ...(Array.isArray(record.riskTags) ? record.riskTags : []),
+    ...(Array.isArray(followUp.riskTags) ? followUp.riskTags : []),
     ...(Array.isArray(trace.riskTags) ? trace.riskTags : [])
   ], ACTOR_MEMORY_LIMITS.maxTags, 40);
 }
@@ -879,15 +874,26 @@ function memoryProposalsFromNpcActiveRequestTraces(worldState = {}, npcActiveReq
   return traces
     .map((trace) => {
       const traceRef = cleanId(trace.publicResolutionRef, "");
-      const record = recordsByTrace.get(traceRef) || {};
-      const npcId = cleanId(record.npc?.npcId || npcIdFromTraceSourceRefs(trace), "");
+      const record = recordsByTrace.get(traceRef);
+      if (!record) return null;
+      const sourceTrace = isPlainObject(record.outcome?.resolverTrace) ? record.outcome.resolverTrace : {};
+      const sourceTraceRef = cleanId(sourceTrace.publicResolutionRef, "");
+      if (sourceTrace.resolver !== "npc_active_request_resolver" || !sourceTraceRef || sourceTraceRef !== traceRef) {
+        return null;
+      }
+      const npcId = cleanId(record.npc?.npcId, "");
       const actorId = actorIdFromNpcRosterId(npcId);
       const name = cleanText(record.npc?.displayName || labels.get(actorId), "此人", 48);
-      const typeLabel = cleanText(record.typeLabel || trace.typeLabel, "来函", 40);
-      const type = activeRequestTraceType(trace, record);
+      const typeLabel = cleanText(record.typeLabel || sourceTrace.typeLabel, "来函", 40);
+      const type = activeRequestTraceType(sourceTrace, record);
       const outcomeSummary = cleanText(record.outcome?.publicSummary, "", 120);
+      const followUp = isPlainObject(record.outcome?.followUpView) ? record.outcome.followUpView : {};
+      const followUpTitle = cleanText(followUp.title, "", 60);
+      const followUpNextStep = cleanText(followUp.nextStep, "", 100);
       const summary = outcomeSummary
-        ? `${name}记得${typeLabel}已由服务器裁决：${outcomeSummary}`
+        ? `${name}记得${typeLabel}已由服务器裁决：${outcomeSummary}${followUpTitle ? `；后续为${followUpTitle}` : ""}`
+        : followUpNextStep
+          ? `${name}记得一桩${typeLabel}已入服务器后续复核：${followUpNextStep}`
         : `${name}记得一桩${typeLabel}已经服务器裁决，后续只按公开规则留痕。`;
       return {
         actorId,
@@ -901,14 +907,14 @@ function memoryProposalsFromNpcActiveRequestTraces(worldState = {}, npcActiveReq
         sourceType: "npc_active_request_trace",
         sourceLabel: "NPC 来函裁决",
         sourceRefs: [
-          npcMemorySourceRef("npcActiveRequestView", record.requestId || traceRef, typeLabel),
-          npcMemorySourceRef("npcActiveRequestResolverTrace", traceRef, "服务器裁决")
+          npcMemorySourceRef("npcActiveRequestView", record.requestId || sourceTraceRef, typeLabel),
+          npcMemorySourceRef("npcActiveRequestResolverTrace", sourceTraceRef, "服务器裁决")
         ],
-        tags: activeRequestTraceTags(trace, record),
+        tags: activeRequestTraceTags(sourceTrace, record),
         requireKnownActor: true
       };
     })
-    .filter((proposal) => proposal.actorId && proposal.summary);
+    .filter((proposal) => proposal?.actorId && proposal.summary);
 }
 
 function memoryProposalsFromMonthlyBriefing(playerMonthlyBriefing = {}) {

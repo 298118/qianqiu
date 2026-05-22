@@ -2,6 +2,9 @@ const { randomUUID } = require("node:crypto");
 
 const {
   NPC_ACTIVE_REQUEST_CONFIG,
+  NPC_ACTIVE_REQUEST_FOLLOW_UP_CONFIG,
+  NPC_ACTIVE_REQUEST_FOLLOW_UP_SCHEMA_VERSION,
+  NPC_ACTIVE_REQUEST_RESPONSE_ACTION_CONFIG,
   NPC_ACTIVE_REQUEST_RESPONSE_ACTIONS,
   NPC_ACTIVE_REQUEST_SCHEMA_VERSION,
   NPC_ACTIVE_REQUEST_STATUS,
@@ -241,6 +244,122 @@ function buildEvidenceRefs(npc = {}, requestType = "help", aiProposal = {}) {
     .filter((ref) => !containsPrivateSignalText(ref));
 }
 
+function responseActionConfig(responseAction = "") {
+  return NPC_ACTIVE_REQUEST_RESPONSE_ACTION_CONFIG[responseAction] || null;
+}
+
+function followUpConfigFor(requestType = "help") {
+  const type = normalizeRequestType(requestType, "help");
+  return NPC_ACTIVE_REQUEST_FOLLOW_UP_CONFIG[type] || NPC_ACTIVE_REQUEST_FOLLOW_UP_CONFIG.help;
+}
+
+function fillResponseTemplate(template = "", request = {}) {
+  const npcName = cleanPublicText(request.npcName, "来人", 40);
+  const typeLabel = cleanPublicText(
+    request.typeLabel,
+    (NPC_ACTIVE_REQUEST_TYPE_CONFIG[normalizeRequestType(request.type, "help")] || NPC_ACTIVE_REQUEST_TYPE_CONFIG.help).label,
+    40
+  );
+  return cleanPublicText(
+    String(template || "")
+      .replace(/\{npcName\}/g, npcName)
+      .replace(/\{typeLabel\}/g, typeLabel),
+    `回应${npcName}的${typeLabel}：先查证事实，后续由服务器裁决。`,
+    180
+  );
+}
+
+function buildResponseOptionsForRequest(request = {}) {
+  const followUpConfig = followUpConfigFor(request.type);
+  const preferred = Array.isArray(followUpConfig.preferredActions) ? followUpConfig.preferredActions : [];
+  return preferred
+    .filter((action) => NPC_ACTIVE_REQUEST_RESPONSE_ACTIONS.includes(action))
+    .map((action) => {
+      const config = responseActionConfig(action) || {};
+      return {
+        responseAction: action,
+        label: cleanPublicText(config.label, action, 32),
+        shortLabel: cleanPublicText(config.shortLabel, config.label || action, 20),
+        draftText: fillResponseTemplate(config.draftTemplate, request),
+        serverBoundary: "按钮只写行动草稿；来函后续、资源、关系、婚姻、弹劾、背叛和隐藏事实仍由普通回合服务器裁决。"
+      };
+    });
+}
+
+function isRequestResponseOpen(status = "") {
+  const normalized = normalizeStatus(status, "");
+  return normalized === "active" || normalized === "deferred";
+}
+
+function followUpTaskState(status = "", responseAction = "") {
+  if (responseAction === "expire") return "closed_as_expired";
+  if (status === "refused") return "closed_as_refused";
+  if (status === "deferred") return "pending_player_response";
+  if (["under_review", "reported", "converted_to_risk", "accepted_pending_server_resolution"].includes(status)) {
+    return "pending_server_follow_up";
+  }
+  return "recorded";
+}
+
+function followUpNextStep(config = {}, responseAction = "", status = "") {
+  const base = cleanPublicText(config.nextStep, "按公开证据进入普通回合或后续服务器规则复核。", 180);
+  if (responseAction === "expire") return "来函已逾期，只保留公开关系与风险回响，不执行隐藏后果。";
+  if (status === "refused") return "请求已拒绝，后续只按公开关系影响和普通回合行动重新推进。";
+  if (responseAction === "report") return "线索已呈报或上交，后续只能由服务器按权限、证据和制度规则复核。";
+  if (responseAction === "investigate") return "先查证身份、证据、契据、人物关系和管辖权限，再决定是否转入后续行动。";
+  if (responseAction === "defer") return "已暂缓，不承诺资源或关系结果；若再回应，仍需普通回合服务器裁决。";
+  return base;
+}
+
+function buildNpcActiveRequestFollowUpView(worldState = {}, request = {}, responseAction = "", outcome = {}, resolverTrace = {}) {
+  const requestType = normalizeRequestType(request.type, "help");
+  const config = followUpConfigFor(requestType);
+  const status = normalizeStatus(outcome.status || request.status, "under_review");
+  const actionConfig = responseActionConfig(responseAction) || {};
+  const responseLabel = cleanPublicText(
+    actionConfig.label,
+    responseAction === "expire" ? "逾期" : responseAction || "回应",
+    32
+  );
+  const resolutionRef = cleanId(resolverTrace.publicResolutionRef, "");
+  return {
+    schemaVersion: NPC_ACTIVE_REQUEST_FOLLOW_UP_SCHEMA_VERSION,
+    requestId: cleanId(request.requestId, ""),
+    requestType,
+    requestTypeLabel: cleanPublicText(request.typeLabel, config.title, 40),
+    responseAction: cleanPublicText(responseAction, "", 48),
+    responseLabel,
+    publicResolutionRef: resolutionRef,
+    followUpKind: cleanPublicText(config.followUpKind, "active_request_follow_up", 80),
+    title: cleanPublicText(config.title, "来函后续复核", 80),
+    publicSummary: cleanPublicText(config.publicSummary, "来函后续只保留为公开待裁线索。", 180),
+    disposition: cleanPublicText(resolverTrace.disposition, "server_follow_up", 80),
+    taskState: followUpTaskState(status, responseAction),
+    nextStep: followUpNextStep(config, responseAction, status),
+    recommendedResponseOptions: buildResponseOptionsForRequest(request),
+    evidenceRefs: uniqueCleanList([
+      ...(Array.isArray(request.evidenceRefs) ? request.evidenceRefs : []),
+      ...(Array.isArray(resolverTrace.publicSourceRefs) ? resolverTrace.publicSourceRefs : []),
+      resolutionRef ? `npcActiveRequestResolverTrace:${resolutionRef}` : ""
+    ], NPC_ACTIVE_REQUEST_CONFIG.maxEvidenceRefs, 120).filter((ref) => !containsPrivateSignalText(ref)),
+    riskTags: uniqueCleanList([
+      ...(Array.isArray(config.riskTags) ? config.riskTags : []),
+      ...(Array.isArray(request.riskTags) ? request.riskTags : []),
+      ...(Array.isArray(resolverTrace.riskTags) ? resolverTrace.riskTags : [])
+    ], NPC_ACTIVE_REQUEST_CONFIG.maxRiskTags, 40).filter((tag) => !containsPrivateSignalText(tag)),
+    boundaries: {
+      serverOwnsFollowUp: true,
+      proposalOnly: true,
+      resourcesNotApplied: true,
+      relationshipNotFinal: true,
+      marriageAndDisciplineNotFinal: true,
+      privateNpcDossierRedacted: true,
+      browserDraftOnly: true
+    },
+    generatedAtTurn: currentTurn(worldState)
+  };
+}
+
 function createNpcActiveRequest(worldState = {}, requestTypeInput = "help", options = {}) {
   const ledger = ensureNpcActiveRequestLedgerState(worldState);
   const requestType = normalizeRequestType(requestTypeInput, "help");
@@ -468,6 +587,7 @@ function resolveNpcActiveRequest(worldState = {}, requestId = "", responseAction
   const impact = relationshipImpactFor(request, responseAction);
   const relationshipUpdate = applyNpcRosterRelationshipImpact(worldState, request, impact);
   const resolverTrace = buildNpcActiveRequestResolverTrace(worldState, request, responseAction, outcome);
+  const followUpView = buildNpcActiveRequestFollowUpView(worldState, request, responseAction, outcome, resolverTrace);
   request.status = normalizeStatus(outcome.status, "under_review");
   request.responseAction = responseAction;
   request.lastUpdatedTurn = currentTurn(worldState);
@@ -476,6 +596,7 @@ function resolveNpcActiveRequest(worldState = {}, requestId = "", responseAction
     publicSummary: outcome.summary,
     serverDecision: "server_adjudicated",
     resolverTrace,
+    followUpView,
     resourceImpactView: {
       applied: false,
       reason: "NPC 主动请求不得由前端、AI 或即时按钮直接扣银、转物或写库。"
@@ -533,12 +654,16 @@ function expireNpcActiveRequests(worldState = {}) {
     const resolverTrace = buildNpcActiveRequestResolverTrace(worldState, request, "expire", {
       status: "expired"
     });
+    const followUpView = buildNpcActiveRequestFollowUpView(worldState, request, "expire", {
+      status: "expired"
+    }, resolverTrace);
     resolutionTraces.push(resolverTrace);
     request.outcome = {
       responseAction: "expire",
       publicSummary: "限期已过，服务器只记录情分与风险变化，不执行隐藏后果。",
       serverDecision: "server_adjudicated",
       resolverTrace,
+      followUpView,
       resourceImpactView: { applied: false },
       relationshipImpactView: { npcId: request.npcId, appliedBy: "server", closenessDelta: -1, hostilityDelta: 1 }
     };
@@ -640,15 +765,18 @@ function toRequestView(request = {}, worldState = {}) {
       180
     ),
     serverDecision: cleanPublicText(request.outcome.serverDecision, "server_adjudicated", 80),
+    followUpView: sanitizePublicViewValue(request.outcome.followUpView),
     resourceImpactView: sanitizePublicViewValue(request.outcome.resourceImpactView),
     relationshipImpactView: sanitizePublicViewValue(request.outcome.relationshipImpactView),
     resolverTrace: sanitizePublicViewValue(request.outcome.resolverTrace)
   } : null;
+  const publicStatus = normalizeStatus(request.status, "active");
+  const responseOpen = isRequestResponseOpen(publicStatus);
   return {
     requestId: cleanId(request.requestId, ""),
     type: requestType,
     typeLabel: publicTypeLabel,
-    status: normalizeStatus(request.status, "active"),
+    status: publicStatus,
     npc: {
       npcId,
       displayName: publicNpcName,
@@ -672,7 +800,8 @@ function toRequestView(request = {}, worldState = {}) {
       .filter((tag) => !containsPrivateSignalText(tag)),
     evidenceRefs: uniqueCleanList(request.evidenceRefs, NPC_ACTIVE_REQUEST_CONFIG.maxEvidenceRefs, 96)
       .filter((ref) => !containsPrivateSignalText(ref)),
-    allowedResponseActions: NPC_ACTIVE_REQUEST_RESPONSE_ACTIONS,
+    allowedResponseActions: responseOpen ? NPC_ACTIVE_REQUEST_RESPONSE_ACTIONS : [],
+    responseOptions: responseOpen ? buildResponseOptionsForRequest(request) : [],
     createdTurn: clampNumber(request.createdTurn, 0, Number.MAX_SAFE_INTEGER, 0),
     dueTurn: clampNumber(request.dueTurn, 0, Number.MAX_SAFE_INTEGER, 0),
     lastUpdatedTurn: clampNumber(request.lastUpdatedTurn, 0, Number.MAX_SAFE_INTEGER, clampNumber(request.createdTurn, 0, Number.MAX_SAFE_INTEGER, 0)),

@@ -681,10 +681,17 @@ function collectNpcActiveRequestItems(worldState, items, npcActiveRequestView) {
     .slice(0, MAX_NPC_ACTIVE_REQUEST_RECORDS)
     .forEach((record) => {
       const trace = record.outcome.resolverTrace;
+      const followUp = isPlainObject(record.outcome.followUpView) ? record.outcome.followUpView : {};
       const npcName = cleanArchiveText(record.npc?.displayName, "来人", 60);
       const typeLabel = cleanArchiveText(record.typeLabel || trace.typeLabel, "来函", 40);
+      const outcomeSummary = cleanArchiveText(record.outcome.publicSummary, "", 140);
+      const followUpSummary = cleanArchiveText(
+        followUp.publicSummary || followUp.nextStep,
+        "",
+        140
+      );
       const summary = cleanArchiveText(
-        record.outcome.publicSummary,
+        [outcomeSummary, followUpSummary].filter(Boolean).join("；"),
         `${npcName}的${typeLabel}已经服务器裁决。`
       );
       const watchStatuses = new Set([
@@ -701,12 +708,15 @@ function collectNpcActiveRequestItems(worldState, items, npcActiveRequestView) {
         summary,
         turn: record.lastUpdatedTurn,
         status: watchStatuses.has(record.status) ? "watch" : "recorded",
-        riskLabel: trace.disposition || record.status,
+        riskLabel: followUp.followUpKind || trace.disposition || record.status,
         relatedLabels: [
           npcName,
           typeLabel,
+          followUp.title,
+          followUp.taskState,
           trace.responseAction,
           ...(Array.isArray(record.riskTags) ? record.riskTags : []),
+          ...(Array.isArray(followUp.riskTags) ? followUp.riskTags : []),
           ...(Array.isArray(trace.riskTags) ? trace.riskTags : [])
         ]
       });

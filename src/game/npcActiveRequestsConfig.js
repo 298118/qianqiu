@@ -20,6 +20,34 @@ const NPC_ACTIVE_REQUEST_RESPONSE_ACTIONS = Object.freeze([
   "report"
 ]);
 
+const NPC_ACTIVE_REQUEST_RESPONSE_ACTION_CONFIG = Object.freeze({
+  accept: Object.freeze({
+    label: "应允受理",
+    shortLabel: "应允",
+    draftTemplate: "回应{npcName}的{typeLabel}：愿先受理此事，但资源、关系、婚姻、弹劾、背叛或后续任务均候服务器裁决。"
+  }),
+  refuse: Object.freeze({
+    label: "婉拒",
+    shortLabel: "拒绝",
+    draftTemplate: "回应{npcName}的{typeLabel}：暂且婉拒，并说明公私边界、证据不足或礼法未明之处。"
+  }),
+  defer: Object.freeze({
+    label: "暂缓",
+    shortLabel: "暂缓",
+    draftTemplate: "回应{npcName}的{typeLabel}：此事暂缓，先留书面摘要，不承诺资源、关系或制度后果。"
+  }),
+  investigate: Object.freeze({
+    label: "查证",
+    shortLabel: "查证",
+    draftTemplate: "回应{npcName}的{typeLabel}：先查证身份、证据、契据和牵连人物，再交由服务器裁决后续。"
+  }),
+  report: Object.freeze({
+    label: "呈报",
+    shortLabel: "呈报",
+    draftTemplate: "回应{npcName}的{typeLabel}：将线索上交或呈报，不私下收受财物、不私定罪责、不改隐藏事实。"
+  })
+});
+
 const NPC_ACTIVE_REQUEST_STATUS = Object.freeze([
   "active",
   "deferred",
@@ -124,6 +152,83 @@ const NPC_ACTIVE_REQUEST_TYPE_CONFIG = Object.freeze({
   })
 });
 
+const NPC_ACTIVE_REQUEST_FOLLOW_UP_SCHEMA_VERSION = "s88.7-npc-active-request-follow-up.v1";
+
+const NPC_ACTIVE_REQUEST_FOLLOW_UP_CONFIG = Object.freeze({
+  help: Object.freeze({
+    followUpKind: "social_help_review",
+    title: "求助后续核验",
+    publicSummary: "求助只登记为待核人情事项；身份、事实、资源和任务结果仍由服务器后续裁决。",
+    nextStep: "核明来意、所需资源与可公开证据，再决定是否转入委派、案牍或普通回合行动。",
+    preferredActions: Object.freeze(["investigate", "accept", "refuse"]),
+    riskTags: Object.freeze(["人情牵连", "需核事实"])
+  }),
+  debt_collection: Object.freeze({
+    followUpKind: "human_debt_review",
+    title: "钱债与人情债核验",
+    publicSummary: "索债不会即时扣银；旧账、借贷、人情债和契据须先形成服务器可复核线索。",
+    nextStep: "查契据、见证人与旧账来源，必要时转入囊箧、交易或人情月账的服务器结算。",
+    preferredActions: Object.freeze(["investigate", "defer", "refuse"]),
+    riskTags: Object.freeze(["钱债争执", "人情债"])
+  }),
+  advice: Object.freeze({
+    followUpKind: "advice_evidence_review",
+    title: "献策证据复核",
+    publicSummary: "献策只进入公开建议队列；政策、军务、案牍、科举或任免后果不因来函直接生效。",
+    nextStep: "把建议作为普通回合草稿或专题 evidence，由服务器按身份权限和公开证据裁决。",
+    preferredActions: Object.freeze(["investigate", "accept", "defer"]),
+    riskTags: Object.freeze(["需核证据", "夹带私意"])
+  }),
+  petition: Object.freeze({
+    followUpKind: "petition_obligation_review",
+    title: "请托与公私边界复核",
+    publicSummary: "请托只登记为待裁人情压力；官职、案件、钱粮、考试和任务不得被来函绕过。",
+    nextStep: "核对所托事项是否属于当前身份权限，必要时改写为公开案牍、奏议或普通行动。",
+    preferredActions: Object.freeze(["investigate", "defer", "refuse"]),
+    riskTags: Object.freeze(["人情压力", "公私边界"])
+  }),
+  bribe: Object.freeze({
+    followUpKind: "integrity_risk_review",
+    title: "廉政线索复核",
+    publicSummary: "行贿来函不会成为已收财物；只能转为廉政风险、证据线索、拒收或呈报记录。",
+    nextStep: "拒收并留痕，或把线索呈报/查证；不得让前端、AI 或按钮直接加银、转物或销案。",
+    preferredActions: Object.freeze(["report", "investigate", "refuse"]),
+    riskTags: Object.freeze(["廉政风险", "禁收财物"])
+  }),
+  impeachment: Object.freeze({
+    followUpKind: "impeachment_evidence_review",
+    title: "弹劾证据复核",
+    publicSummary: "弹劾线索只形成公开证据复核；成案、处分、任免和清白结论仍由官场规则裁决。",
+    nextStep: "核人证、物证与管辖权限，必要时写入奏议或官场行动，不能凭来函直接定罪。",
+    preferredActions: Object.freeze(["investigate", "report", "refuse"]),
+    riskTags: Object.freeze(["证据不足", "党争牵连"])
+  }),
+  introduction: Object.freeze({
+    followUpKind: "network_introduction_review",
+    title: "引荐人脉复核",
+    publicSummary: "引荐只成为可见人脉线索；关系落账、身份机会、座师同年与官场机会仍需服务器确认。",
+    nextStep: "核引荐对象、场合和可见关系来源，再作为拜会草稿、师友线索或官场 evidence 使用。",
+    preferredActions: Object.freeze(["investigate", "accept", "defer"]),
+    riskTags: Object.freeze(["门路待核", "名声牵连"])
+  }),
+  marriage_proposal: Object.freeze({
+    followUpKind: "ritual_family_review",
+    title: "礼法与亲族审查",
+    publicSummary: "议婚只进入礼法、身份、亲族与公开关系审查；不会即时写配偶、谱系或嫁娶事实。",
+    nextStep: "核年龄、亲族、婚姻状态和礼法障碍，后续只能通过服务器议婚流程推进。",
+    preferredActions: Object.freeze(["investigate", "defer", "refuse"]),
+    riskTags: Object.freeze(["礼法审查", "亲族意见"])
+  }),
+  betrayal: Object.freeze({
+    followUpKind: "betrayal_risk_review",
+    title: "背叛风险查证",
+    publicSummary: "背叛只作为风险线索；不得因 NPC、模型或前端输入直接定罪、抄家、处置人物或改 hidden truth。",
+    nextStep: "先查证行迹、证据和公开关系，再决定呈报、调查或暂置，不把风险直接写成事实。",
+    preferredActions: Object.freeze(["investigate", "report", "refuse"]),
+    riskTags: Object.freeze(["背约风险", "需查证"])
+  })
+});
+
 const NPC_ACTIVE_REQUEST_CONFIG = Object.freeze({
   maxActiveRequests: 3,
   maxViewItems: 12,
@@ -140,6 +245,9 @@ const NPC_ACTIVE_REQUEST_CONFIG = Object.freeze({
 
 module.exports = {
   NPC_ACTIVE_REQUEST_CONFIG,
+  NPC_ACTIVE_REQUEST_FOLLOW_UP_CONFIG,
+  NPC_ACTIVE_REQUEST_FOLLOW_UP_SCHEMA_VERSION,
+  NPC_ACTIVE_REQUEST_RESPONSE_ACTION_CONFIG,
   NPC_ACTIVE_REQUEST_RESPONSE_ACTIONS,
   NPC_ACTIVE_REQUEST_SCHEMA_VERSION,
   NPC_ACTIVE_REQUEST_STATUS,
