@@ -457,6 +457,40 @@ describe("S74.1 React client shell", () => {
     expect(screen.getAllByRole("link", { name: "史册" }).some((link) => link.getAttribute("href") === `/game/${sessionId}/archive`)).toBe(true);
   });
 
+  it("keeps the top navigation active state scoped to the current primary route", async () => {
+    const sessionId = "11111111-2222-4333-8444-555555555555";
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () => new Response(JSON.stringify({
+        source: "server_player_visible_state_projection",
+        sessionId,
+        worldState: { player: { name: "沈知微", role: "scholar" } },
+        mapRuntimeView: {
+          schemaVersion: 1,
+          refs: [],
+          routes: [],
+          eventEffects: [],
+          actionDrafts: {}
+        }
+      }), {
+        status: 200,
+        headers: { "Content-Type": "application/json" }
+      }))
+    );
+
+    renderRoute(`/game/${sessionId}/map`);
+
+    await screen.findByRole("heading", { name: "山河舆图" });
+    const topNav = screen.getByRole("navigation", { name: "页面" });
+    const mainLink = within(topNav).getByRole("link", { name: "主卷" });
+    const mapLink = within(topNav).getByRole("link", { name: "舆图" });
+
+    await waitFor(() => expect(mapLink.getAttribute("aria-current")).toBe("page"));
+    expect(mainLink.getAttribute("href")).toBe(`/game/${sessionId}`);
+    expect(mainLink.getAttribute("aria-current")).toBeNull();
+    expect(mainLink.className).not.toContain("active");
+  });
+
   it("keeps the session routes inside the React Router tree", () => {
     renderRoute("/game/smoke-session/map");
 

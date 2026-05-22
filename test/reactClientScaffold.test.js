@@ -388,6 +388,7 @@ test("S74.4 shell uses registry-backed overlays without widening data sources", 
   assert.match(appShellSource, /data-shell-version="s75-9"/);
   assert.match(appShellSource, /resolvePrimaryHref/);
   assert.match(appShellSource, /isRunnableSessionId/);
+  assert.match(appShellSource, /end=\{route\.id === "game"\}/);
   assert.match(appShellSource, /ScrollRestoration/);
   assert.match(appShellSource, /window\.scrollTo/);
   assert.match(surfaceHostSource, /drawerRegistry/);

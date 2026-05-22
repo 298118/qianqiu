@@ -39,7 +39,7 @@ export function AppShell() {
         </Link>
         <nav className="topNav" aria-label="页面">
           {primaryNav.map((route) => (
-            <NavLink key={route.id} to={resolvePrimaryHref(route.href, currentSessionId)}>
+            <NavLink key={route.id} to={resolvePrimaryHref(route.href, currentSessionId)} end={route.id === "game"}>
               {route.label}
             </NavLink>
           ))}
