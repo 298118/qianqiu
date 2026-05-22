@@ -2876,6 +2876,71 @@ button:disabled {
   gap: 12px;
 }
 
+.economyTraceSection {
+  display: grid;
+  gap: 12px;
+  border: 1px solid rgba(84, 60, 43, 0.22);
+  background:
+    linear-gradient(135deg, rgba(255, 252, 238, 0.74), rgba(244, 234, 210, 0.48)),
+    rgba(255, 252, 238, 0.64);
+  padding: 14px;
+}
+
+.economyTraceHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.economyTraceHeader h2 {
+  margin: 0;
+  font-size: 1.02rem;
+  color: #2f251d;
+}
+
+.economyTraceHeader > span {
+  flex: 0 0 auto;
+  border: 1px solid rgba(115, 82, 54, 0.22);
+  background: rgba(255, 248, 230, 0.7);
+  color: #6e5138;
+  font-size: 0.78rem;
+  font-weight: 900;
+  padding: 4px 8px;
+}
+
+.economyTraceSection > p {
+  margin: 0;
+  color: #5b4937;
+  line-height: 1.65;
+}
+
+.economyTraceGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 10px;
+}
+
+.economyTraceCard {
+  min-width: 0;
+}
+
+.economyTraceCard strong,
+.economyTraceCard span,
+.economyTraceCard small {
+  overflow-wrap: anywhere;
+}
+
+.economyTraceCard small {
+  color: #73563e;
+  line-height: 1.5;
+}
+
+.economyTraceCard .paperButton {
+  justify-self: start;
+  margin-top: 2px;
+}
+
 .inventoryLedgerBlock h2 {
   display: flex;
   align-items: center;

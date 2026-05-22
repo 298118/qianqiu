@@ -1,0 +1,204 @@
+import type { EconomyTraceItemView, EconomyTraceView } from "../api";
+
+type EconomyTraceSectionProps = {
+  readonly traceView?: EconomyTraceView | null;
+  readonly title?: string;
+  readonly summaryFallback?: string;
+  readonly idPrefix?: string;
+  readonly maxItems?: number;
+  readonly runnable?: boolean;
+  readonly onDraft?: (text: string) => void;
+};
+
+type SafeEconomyTraceItem = {
+  readonly id: string;
+  readonly title: string;
+  readonly groupLabel: string;
+  readonly statusLabel: string;
+  readonly summary: string;
+  readonly amountText?: string;
+  readonly affectedLabels: readonly string[];
+  readonly nextStep?: string;
+};
+
+const unsafeEconomyTraceFragments = [
+  "provider",
+  "proposal",
+  "raw",
+  "prompt",
+  "path",
+  "key",
+  "hidden",
+  "private",
+  "sqlite",
+  "sql",
+  "localstorage",
+  "sessionstorage",
+  "data/sessions",
+  "data\\sessions",
+  "stateDelta",
+  "state_delta",
+  "playerDelta",
+  "player_delta",
+  "evidenceRefs",
+  "evidence_refs",
+  "outcomeId",
+  "outcome_id",
+  "auditRecord",
+  "audit_record",
+  "statePatch",
+  "worldState",
+  "assetLedger",
+  "resourceLedger",
+  "inventoryLedger",
+  "tradeLedger",
+  "delegatedTaskLedger",
+  "marketPriceLedger",
+  "npcEconomyLedger",
+  "privateSignalTags",
+  "hiddenDossier",
+  "safe_search_index",
+  "world_sessions",
+  "world_state_json",
+  "api_key",
+  "apikey",
+  "sk-",
+  "tp-",
+  "完整提示词",
+  "本地路径",
+  "密钥",
+  "隐藏",
+  "私档",
+  "密档",
+  "原始返回",
+  "模型原文"
+] as const;
+
+function normalizeTraceScalar(value: unknown) {
+  if (typeof value !== "string" && typeof value !== "number" && typeof value !== "boolean") return "";
+  return String(value).replace(/\s+/g, " ").trim();
+}
+
+function isUnsafeEconomyTraceText(value: unknown) {
+  const text = normalizeTraceScalar(value);
+  if (!text) return false;
+  const lowered = text.toLowerCase();
+  return /[a-z]:[\\/]/i.test(text) ||
+    /(?:file|https?):\/\//i.test(text) ||
+    unsafeEconomyTraceFragments.some((fragment) => lowered.includes(fragment.toLowerCase()));
+}
+
+function cleanTraceText(value: unknown, fallback = "", maxLength = 132) {
+  const text = normalizeTraceScalar(value);
+  if (!text) return fallback;
+  if (isUnsafeEconomyTraceText(text)) return fallback;
+  return text.length > maxLength ? `${text.slice(0, maxLength)}...` : text;
+}
+
+function cleanList(values: unknown, maxItems = 3) {
+  return (Array.isArray(values) ? values : [])
+    .map((value) => cleanTraceText(value, "", 28))
+    .filter(Boolean)
+    .slice(0, maxItems) as string[];
+}
+
+function amountText(item: EconomyTraceItemView) {
+  const amount = item.amountView;
+  if (!amount) return "";
+  const label = cleanTraceText(amount.label, "数值", 24);
+  const unit = cleanTraceText(amount.unit, "", 10);
+  const after = typeof amount.after === "number" ? `${amount.after}${unit}` : "";
+  const before = typeof amount.before === "number" ? `${amount.before}${unit}` : "";
+  const delta = typeof amount.delta === "number" ? `${amount.delta > 0 ? "+" : ""}${amount.delta}${unit}` : "";
+  if (before && after && delta) return `${label} ${before} -> ${after} (${delta})`;
+  if (after) return `${label} ${after}`;
+  if (delta) return `${label} ${delta}`;
+  return "";
+}
+
+function safeItems(traceView: EconomyTraceView | null | undefined, maxItems: number): SafeEconomyTraceItem[] {
+  return ((traceView?.traceItems ?? []) as readonly EconomyTraceItemView[])
+    .map((item, index) => {
+      const title = cleanTraceText(item.title, "", 54);
+      const summary = cleanTraceText(item.publicSummary, "", 150);
+      const groupLabel = cleanTraceText(item.groupLabel, "经济解释", 24);
+      const statusLabel = cleanTraceText(item.statusLabel || item.status, "可阅", 24);
+      const nextStep = cleanTraceText(item.nextStep, "", 150);
+      const labels = cleanList(item.affectedLabels);
+      const amount = amountText(item);
+      const coreFields = [
+        item.title,
+        item.publicSummary,
+        item.groupLabel,
+        item.statusLabel,
+        item.status,
+        item.nextStep,
+        ...(Array.isArray(item.affectedLabels) ? item.affectedLabels : []),
+        item.amountView?.label,
+        item.amountView?.unit
+      ];
+      if (coreFields.some(isUnsafeEconomyTraceText) || (!title && !summary)) return null;
+      return {
+        id: cleanTraceText(item.traceId, `economy-trace-${index}`, 96),
+        title: title || "经济解释",
+        groupLabel,
+        statusLabel,
+        summary: summary || "此项只作公开解释，后续仍由服务器裁决。",
+        amountText: amount || undefined,
+        affectedLabels: labels,
+        nextStep: nextStep || undefined
+      };
+    })
+    .filter(Boolean)
+    .slice(0, maxItems) as SafeEconomyTraceItem[];
+}
+
+function draftFromItem(item: SafeEconomyTraceItem) {
+  return `复核${item.title}：${item.nextStep || item.summary}；资源、物品、交易、委派、人情债和关系变化仍由服务器裁决。`;
+}
+
+export function EconomyTraceSection({
+  traceView,
+  title = "经济解释",
+  summaryFallback = "资源、资产、囊箧、交易、委派和月账解释只来自服务器安全投影；前端不成交、不扣款、不转物。",
+  idPrefix = "economy-trace",
+  maxItems = 6,
+  runnable = true,
+  onDraft
+}: EconomyTraceSectionProps) {
+  const items = safeItems(traceView, maxItems);
+  if (!items.length) return null;
+  const canDraft = runnable !== false && Boolean(onDraft);
+  const titleId = `${idPrefix}-title`;
+
+  return (
+    <section className="economyTraceSection" aria-labelledby={titleId}>
+      <div className="economyTraceHeader">
+        <div>
+          <p className="eyebrow">服务器解释</p>
+          <h2 id={titleId}>{title}</h2>
+        </div>
+        <span>{items.length} 条</span>
+      </div>
+      <p>{cleanTraceText(traceView?.summary, summaryFallback, 160)}</p>
+      <div className="economyTraceGrid">
+        {items.map((item) => (
+          <article className="inventoryMiniCard economyTraceCard" key={item.id}>
+            <strong>{item.title}</strong>
+            <span>{item.summary}</span>
+            <small>{item.groupLabel} · {item.statusLabel}</small>
+            {item.amountText ? <small>{item.amountText}</small> : null}
+            {item.affectedLabels.length ? <small>关联：{item.affectedLabels.join("、")}</small> : null}
+            {item.nextStep ? <small>后续：{item.nextStep}</small> : null}
+            {onDraft ? (
+              <button className="paperButton" type="button" disabled={!canDraft} onClick={() => onDraft(draftFromItem(item))}>
+                拟复核
+              </button>
+            ) : null}
+          </article>
+        ))}
+      </div>
+      <p className="statusLine">这里只读公开解释；资源、物品、交易、委派、人情债和关系变化仍由服务器裁决。</p>
+    </section>
+  );
+}

@@ -202,7 +202,8 @@ export const useGameSessionStore = create<GameSessionState>((set) => ({
               sessionId: payload.sessionId,
               inventoryView: payload.inventoryView,
               resourceLedgerView: payload.resourceLedgerView,
-              assetLedgerView: payload.assetLedgerView
+              assetLedgerView: payload.assetLedgerView,
+              economyTraceView: payload.economyTraceView
             }
           : null,
         npcRoster: payload.npcRosterView
@@ -253,7 +254,8 @@ export const useGameSessionStore = create<GameSessionState>((set) => ({
               sessionId: payload.sessionId,
               inventoryView: payload.inventoryView,
               resourceLedgerView: payload.resourceLedgerView,
-              assetLedgerView: payload.assetLedgerView
+              assetLedgerView: payload.assetLedgerView,
+              economyTraceView: payload.economyTraceView
             }
           : null,
         npcRoster: payload.npcRosterView
@@ -466,12 +468,32 @@ export const useGameSessionStore = create<GameSessionState>((set) => ({
     set({ inventoryStatus: "loading", error: null });
     try {
       const payload = await qianqiuApi.transferInventoryItem(sessionId, input);
-      set((state) => ({
-        inventory: state.inventory
-          ? { ...state.inventory, inventoryView: payload.inventoryView }
-          : { sessionId, inventoryView: payload.inventoryView },
-        inventoryStatus: "ready"
-      }));
+      set((state) => {
+        const responseSessionId = payload.sessionId ?? sessionId;
+        const inventoryMatches = state.inventory?.sessionId === responseSessionId;
+        const sessionMatches = state.currentSessionId === responseSessionId || state.currentSession?.sessionId === responseSessionId;
+        if ((state.inventory && !inventoryMatches) || (!state.inventory && state.currentSessionId && !sessionMatches)) {
+          return {
+            inventory: state.inventory,
+            inventoryStatus: state.inventoryStatus
+          };
+        }
+        return {
+          inventory: state.inventory
+            ? {
+                ...state.inventory,
+                sessionId: responseSessionId,
+                inventoryView: payload.inventoryView,
+                economyTraceView: payload.economyTraceView ?? state.inventory.economyTraceView
+              }
+            : {
+                sessionId: responseSessionId,
+                inventoryView: payload.inventoryView,
+                economyTraceView: payload.economyTraceView
+              },
+          inventoryStatus: "ready"
+        };
+      });
       return payload;
     } catch (error) {
       set({ error: toErrorMessage(error), inventoryStatus: "error" });

@@ -101,6 +101,12 @@ test("S85 /api/game/turn runs monthly NPC economy and returns only safe views", 
   assert.ok(payload.npcEconomyView.recentEvents.length >= 1);
   assert.ok(["completed", "failed"].includes(payload.delegatedTaskView.items[0].status));
   assert.equal(payload.tradeLedgerView.items[0].status, "rejected");
+  assert.ok(payload.economyTraceView.traceItems.some((item) => item.traceType === "delegated_task_result"));
+  assert.ok(payload.economyTraceView.traceItems.some((item) => item.traceType === "trade_expiry"));
+  assert.doesNotMatch(
+    JSON.stringify(payload.economyTraceView),
+    /"marketPriceLedger":|"npcEconomyLedger":|"assetLedger":|"inventoryLedger":|"tradeLedger":|"delegatedTaskLedger":|"evidenceRefs":|"hiddenDossier":|"privateSignalTags":|"rawLedger":|sk-[A-Za-z0-9_-]{6,}/
+  );
   assert.equal(payload.worldState.marketPriceLedger, undefined);
   assert.equal(payload.worldState.npcEconomyLedger, undefined);
   assert.doesNotMatch(
@@ -119,6 +125,8 @@ test("S85 /api/game/turn runs monthly NPC economy and returns only safe views", 
   assert.equal(playerStateResponse.status, 200);
   assert.ok(playerStatePayload.marketPriceView.priceRows.length > 0);
   assert.ok(playerStatePayload.npcEconomyView.recentEvents.length >= 1);
+  assert.ok(playerStatePayload.economyTraceView.traceItems.length >= 1);
+  assert.doesNotMatch(JSON.stringify(playerStatePayload.economyTraceView), /"evidenceRefs":|"rawLedger":|"hiddenDossier":|"privateSignalTags":|sk-[A-Za-z0-9_-]{6,}/);
   assert.doesNotMatch(
     playerStateSerialized,
     /"marketPriceLedger":|"npcEconomyLedger":|"hiddenDossier":|"privateSignalTags":|"rawLedger":|sk-[A-Za-z0-9_-]{6,}/

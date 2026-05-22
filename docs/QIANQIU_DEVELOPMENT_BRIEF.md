@@ -132,6 +132,8 @@ S88.7 后续领域 evidence 补充：`npcActiveRequestView.followUpEvidence` 只
 
 S88.7 前端 evidence 体验补充：React `NpcFollowUpEvidenceSection` 只读消费 `npcActiveRequestView.followUpEvidence`，人物页展示“来函线索与风宪 watchlist”，史册页展示“来函证据追踪”；按钮只写本地草稿，不提交 turn、不调用 resolver、不结算资源/人情债/婚姻/弹劾/定罪/背叛/交易或 hidden facts。`SurfaceHost` 对 `npcActiveRequestView` 的材料标注“来函后续”，对 evidence checkbox 标注“来函证据 · 人物/月账/案牍”，这些标注仅帮助玩家识别安全来源，不扩大 topic surface 的写权限。
 
+S88.8 经济解释 trace 补充：`economyTraceView` 是服务器派生的只读公开解释投影，当前从 `resourceLedgerView`、`assetLedgerView`、`inventoryView`、`tradeLedgerView`、`delegatedTaskView`、`marketPriceView` 和 `npcEconomyView` 组装资源、资产、囊箧、交易、委派、市价与月账变化说明，并随 game/player-state/turn/SSE、囊箧读取和移置响应返回。该 view 只公开 trace type、分组、公开摘要、金额摘要、`sourceRefs`、下一步建议、AI read scope、工具权限、proposal 边界和 server adjudication；不暴露 raw ledger、raw evidence refs、provider payload、prompt、SQLite 行、本地路径、key、hidden/private 字段或 `evidenceRefs` 字段。React `EconomyTraceSection` 目前在囊箧页展示“账本为何变化”，过滤污染行与跨案卷 stale session，按钮只写本地行动草稿。资源扣减、物品流转、交易成交、委派结果、人情债和 NPC 关系变化仍由服务器 resolver/tick 审计后写入，AI 和浏览器都不能把解释项当作结算器。
+
 ## 3. 核心体验
 
 玩家没有固定选项，主要通过自由文本行动推进游戏。AI 作为世界引擎，负责叙事、意图理解、出题、评分、角色反馈和世界变化建议；服务器负责状态存储、数值边界、晋级规则、作弊惩罚、官场任免、长期事件、可见性过滤和持久化。

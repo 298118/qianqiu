@@ -129,6 +129,11 @@ test("S83/S84 safety APIs expose NPC, inventory, trade and delegated task views 
   const inventoryResponse = await fetch(`${server.baseUrl}/api/game/inventory/${worldState.sessionId}`);
   const inventoryPayload = await inventoryResponse.json();
   assert.equal(inventoryResponse.status, 200);
+  assert.ok(inventoryPayload.economyTraceView.traceItems.length >= 1);
+  assert.doesNotMatch(
+    JSON.stringify(inventoryPayload.economyTraceView),
+    /"assetLedger":|"resourceLedger":|"inventoryLedger":|"tradeLedger":|"delegatedTaskLedger":|"evidenceRefs":|"hiddenDossier":|"privateSignalTags":|"rawLedger":|sk-[A-Za-z0-9_-]{6,}/
+  );
   const movable = inventoryPayload.inventoryView.items.find((item) => item.transferPolicy === "tradeable");
   assert.ok(movable);
   const destination = inventoryPayload.inventoryView.containers.find((container) => container.containerId !== movable.containerId);
@@ -145,6 +150,8 @@ test("S83/S84 safety APIs expose NPC, inventory, trade and delegated task views 
   const transferPayload = await transferResponse.json();
   assert.equal(transferResponse.status, 200);
   assert.equal(transferPayload.accepted, true);
+  assert.ok(transferPayload.economyTraceView.traceItems.length >= 1);
+  assert.doesNotMatch(JSON.stringify(transferPayload.economyTraceView), /"evidenceRefs":|"hiddenDossier":|"privateSignalTags":|"rawLedger":|sk-[A-Za-z0-9_-]{6,}/);
 
   const tradeResponse = await fetch(`${server.baseUrl}/api/game/trade/${worldState.sessionId}`, {
     method: "POST",
@@ -202,6 +209,8 @@ test("S83/S84 safety APIs expose NPC, inventory, trade and delegated task views 
   assert.ok(playerStatePayload.npcRosterView.items.length > 0);
   assert.ok(playerStatePayload.delegatedTaskView.items.length > 0);
   assert.ok(playerStatePayload.npcActiveRequestView);
+  assert.ok(playerStatePayload.economyTraceView.traceItems.length >= 1);
+  assert.doesNotMatch(JSON.stringify(playerStatePayload.economyTraceView), /"evidenceRefs":|"hiddenDossier":|"privateSignalTags":|"rawLedger":|sk-[A-Za-z0-9_-]{6,}/);
   assert.doesNotMatch(
     serialized,
     /"hiddenDossier":|"privateSignalTags":|"trueAssets":|"secretRelationships":|"npcActiveRequestLedger":|"rawProviderPayload":|"providerPayload":|"rawLedger":|sk-[A-Za-z0-9_-]{6,}/

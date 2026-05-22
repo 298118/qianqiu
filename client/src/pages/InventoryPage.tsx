@@ -3,8 +3,10 @@ import { useEffect, useMemo, useState } from "react";
 import type { ReactNode } from "react";
 import { useParams } from "react-router";
 import type { InventoryContainerView, InventoryItemView } from "../api";
+import { EconomyTraceSection } from "../components/EconomyTraceSection";
 import { isRunnableSessionId } from "../routes/sessionId";
 import { useGameSessionStore } from "../state/gameSessionState";
+import { useUiStateStore } from "../state/uiState";
 
 const transferAllowedPolicies = new Set(["tradeable", "giftable", "lendable"]);
 
@@ -52,6 +54,7 @@ export function InventoryPage() {
   const session = useGameSessionStore((state) => state.currentSession);
   const inventoryStatus = useGameSessionStore((state) => state.inventoryStatus);
   const error = useGameSessionStore((state) => state.error);
+  const setActionDraft = useUiStateStore((state) => state.setActionDraft);
   const [selectedContainerId, setSelectedContainerId] = useState("");
   const [selectedItemId, setSelectedItemId] = useState("");
   const [targetContainerId, setTargetContainerId] = useState("");
@@ -63,21 +66,25 @@ export function InventoryPage() {
     void loadInventory(sessionId).catch(() => undefined);
   }, [loadInventory, runnable, sessionId]);
 
+  const activeSession = session?.sessionId === sessionId ? session : null;
   const inventoryView = inventoryPayload?.sessionId === sessionId
     ? inventoryPayload.inventoryView
-    : session?.sessionId === sessionId
-      ? session.inventoryView
+    : activeSession
+      ? activeSession.inventoryView
       : null;
   const resourceLedgerView = inventoryPayload?.sessionId === sessionId
     ? inventoryPayload.resourceLedgerView
-    : session?.sessionId === sessionId
-      ? session.resourceLedgerView
+    : activeSession
+      ? activeSession.resourceLedgerView
       : null;
   const assetLedgerView = inventoryPayload?.sessionId === sessionId
     ? inventoryPayload.assetLedgerView
-    : session?.sessionId === sessionId
-      ? session.assetLedgerView
+    : activeSession
+      ? activeSession.assetLedgerView
       : null;
+  const economyTraceView = inventoryPayload?.sessionId === sessionId
+    ? inventoryPayload.economyTraceView
+    : activeSession?.economyTraceView ?? null;
   const containers = inventoryView?.containers ?? [];
   const items = inventoryView?.items ?? [];
   const containersById = useMemo(
@@ -231,6 +238,14 @@ export function InventoryPage() {
         </button>
         {transferNotice ? <p className="statusLine" role="status">{transferNotice}</p> : null}
       </section>
+
+      <EconomyTraceSection
+        traceView={economyTraceView}
+        title="账本为何变化"
+        idPrefix="inventory-economy-trace"
+        runnable={runnable}
+        onDraft={(text) => setActionDraft({ source: "role-surface", targetPage: "game", text })}
+      />
 
       {inventoryView?.authorityBoundary ? <p className="statusLine">{inventoryView.authorityBoundary}</p> : null}
       {error ? <p className="statusLine" role="alert">{error}</p> : null}

@@ -3048,6 +3048,251 @@ describe("S74.1 React client shell", () => {
     expect(screen.queryByRole("button", { name: "拟复核" })).toBeNull();
   });
 
+  it("renders S88.8 inventory economy trace from safe server projections", async () => {
+    const sessionId = "33333333-3333-4333-8333-333333333333";
+    const inventoryView = {
+      containers: [
+        { containerId: "bag", label: "书箧", currentWeight: 1, capacityWeight: 10 },
+        { containerId: "store", label: "县署库房", currentWeight: 0, capacityWeight: 20 }
+      ],
+      items: [
+        {
+          itemId: "item:ledger",
+          name: "清丈册",
+          category: "文书",
+          condition: "需修补",
+          durability: 72,
+          transferPolicy: "tradeable",
+          legalStatus: "ordinary",
+          containerId: "bag",
+          quantity: 1,
+          unit: "册"
+        }
+      ],
+      importantCredentials: []
+    };
+    const resourceLedgerView = {
+      accounts: [{ accountId: "resource:silver", resourceId: "silver_liang", label: "银两", amount: 68, unit: "两" }]
+    };
+    const assetLedgerView = {
+      assets: [{ assetId: "asset:estate", name: "东乡薄田", assetType: "estate", typeLabel: "田产", condition: "可用" }]
+    };
+    const economyTraceView = {
+      schemaVersion: "s88.8-economy-trace.v1",
+      summary: "已整理3条资源、资产、交易、委派与月账解释。",
+      traceItems: [
+        {
+          traceId: "trade:safe",
+          traceType: "trade_negotiation",
+          groupLabel: "交易议价",
+          title: "交易议价留痕",
+          publicSummary: "议买纸张与粮价消息，尚待服务器确认。",
+          statusLabel: "待复议",
+          affectedLabels: ["韩员外"],
+          amountView: { label: "议价银两", delta: -4, unit: "两" },
+          nextStep: "交易仍需后续服务器结算路径确认，不视为已经成交。"
+        },
+        {
+          traceId: "task:safe",
+          traceType: "delegated_task_result",
+          groupLabel: "委派回禀",
+          title: "委派回禀",
+          publicSummary: "东乡鱼鳞册已核出两处错漏。",
+          statusLabel: "已办成",
+          affectedLabels: ["陆知事"],
+          nextStep: "查看回禀后可拟复核、奖惩或重派，仍由服务器裁决。"
+        },
+        {
+          traceId: "monthly:safe",
+          traceType: "human_debt_monthly",
+          groupLabel: "月账线索",
+          title: "人情债月账",
+          publicSummary: "韩员外因修桥垫付，公开人情债略增。",
+          statusLabel: "已登记",
+          affectedLabels: ["月账"],
+          nextStep: "月账只作公开解释；资源、人情债、交易和关系仍由服务器后续裁决。"
+        },
+        {
+          traceId: "polluted:1",
+          traceType: "resource_delta",
+          groupLabel: "资源变化",
+          title: "污染账目",
+          publicSummary: "表面安全",
+          statusLabel: "可阅",
+          affectedLabels: ["privateSignalTags"]
+        },
+        {
+          traceId: "polluted:2",
+          traceType: "resource_delta",
+          groupLabel: "资源变化",
+          title: "provider payload hiddenNotes data/sessions",
+          publicSummary: "sk-test-secret"
+        }
+      ]
+    };
+    const fetchMock = vi.fn(async (url: string) => {
+      if (url === "/assets/ui/ink-ui-runtime-manifest.json") {
+        return new Response(JSON.stringify(buildMockAssetManifest(0)), {
+          status: 200,
+          headers: { "Content-Type": "application/json" }
+        });
+      }
+      if (url === `/api/game/player-state/${sessionId}`) {
+        return new Response(JSON.stringify({
+          source: "server_player_visible_state_projection",
+          sessionId,
+          worldState: { player: { name: "清丈知县", role: "magistrate" } },
+          inventoryView,
+          resourceLedgerView,
+          assetLedgerView,
+          economyTraceView
+        }), {
+          status: 200,
+          headers: { "Content-Type": "application/json" }
+        });
+      }
+      if (url === `/api/game/inventory/${sessionId}`) {
+        return new Response(JSON.stringify({
+          sessionId,
+          inventoryView,
+          resourceLedgerView,
+          assetLedgerView,
+          economyTraceView
+        }), {
+          status: 200,
+          headers: { "Content-Type": "application/json" }
+        });
+      }
+      if (url === `/api/ai/quick-actions/${sessionId}`) {
+        return new Response(JSON.stringify({
+          schemaVersion: "s75.9-quick-actions.v1",
+          sessionId,
+          source: "mock-ai",
+          status: "ready",
+          quickActionSuggestions: []
+        }), {
+          status: 200,
+          headers: { "Content-Type": "application/json" }
+        });
+      }
+      throw new Error(`unexpected url: ${url}`);
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    renderRoute(`/game/${sessionId}/inventory`);
+
+    await screen.findByRole("heading", { name: "囊箧" });
+    await screen.findByText("账本为何变化");
+    expect(screen.getByText("交易议价留痕")).toBeTruthy();
+    expect(screen.getByText("委派回禀")).toBeTruthy();
+    expect(screen.getByText("人情债月账")).toBeTruthy();
+    expect(screen.getByText("3 条")).toBeTruthy();
+    expect(screen.queryByText("污染账目")).toBeNull();
+    expect(screen.queryByText(/provider payload|hiddenNotes|data\/sessions|privateSignalTags|sk-test-secret/i)).toBeNull();
+    expect(screen.getAllByRole("button", { name: "拟复核" })).toHaveLength(3);
+    fireEvent.click(screen.getAllByRole("button", { name: "拟复核" })[0]);
+    expect(useUiStateStore.getState().actionDraft).toMatchObject({
+      source: "role-surface",
+      targetPage: "game",
+      text: expect.stringContaining("服务器裁决")
+    });
+    expect(fetchMock.mock.calls.map(([url]) => String(url))).not.toContain("/api/game/turn");
+  });
+
+  it("does not render stale S88.8 economy trace on another inventory route", async () => {
+    const staleSessionId = "33333333-3333-4333-8333-333333333333";
+    const routeSessionId = "44444444-4444-4444-8444-444444444444";
+    const emptyInventoryView = { containers: [], items: [], importantCredentials: [] };
+    const fetchMock = vi.fn(async (url: string) => {
+      if (url === "/assets/ui/ink-ui-runtime-manifest.json") {
+        return new Response(JSON.stringify(buildMockAssetManifest(0)), {
+          status: 200,
+          headers: { "Content-Type": "application/json" }
+        });
+      }
+      if (url === `/api/game/player-state/${routeSessionId}`) {
+        return new Response(JSON.stringify({
+          source: "server_player_visible_state_projection",
+          sessionId: routeSessionId,
+          worldState: { player: { name: "新案主", role: "scholar" } },
+          inventoryView: emptyInventoryView,
+          resourceLedgerView: { accounts: [] },
+          assetLedgerView: { assets: [] }
+        }), {
+          status: 200,
+          headers: { "Content-Type": "application/json" }
+        });
+      }
+      if (url === `/api/game/inventory/${routeSessionId}`) {
+        return new Response(JSON.stringify({
+          sessionId: routeSessionId,
+          inventoryView: emptyInventoryView,
+          resourceLedgerView: { accounts: [] },
+          assetLedgerView: { assets: [] }
+        }), {
+          status: 200,
+          headers: { "Content-Type": "application/json" }
+        });
+      }
+      if (url === `/api/ai/quick-actions/${routeSessionId}`) {
+        return new Response(JSON.stringify({
+          schemaVersion: "s75.9-quick-actions.v1",
+          sessionId: routeSessionId,
+          source: "mock-ai",
+          status: "ready",
+          quickActionSuggestions: []
+        }), {
+          status: 200,
+          headers: { "Content-Type": "application/json" }
+        });
+      }
+      throw new Error(`unexpected url: ${url}`);
+    });
+    vi.stubGlobal("fetch", fetchMock);
+    useGameSessionStore.setState({
+      currentSessionId: staleSessionId,
+      currentSession: {
+        sessionId: staleSessionId,
+        worldState: { player: { name: "旧案主", role: "official" } },
+        inventoryView: emptyInventoryView,
+        resourceLedgerView: { accounts: [] },
+        assetLedgerView: { assets: [] },
+        economyTraceView: {
+          schemaVersion: "s88.8-economy-trace.v1",
+          traceItems: [{
+            traceId: "stale",
+            title: "旧案经济解释",
+            publicSummary: "此解释属于另一个案卷。",
+            groupLabel: "月账线索",
+            statusLabel: "可阅"
+          }]
+        }
+      } as unknown as ReturnType<typeof useGameSessionStore.getState>["currentSession"],
+      inventory: {
+        sessionId: staleSessionId,
+        inventoryView: emptyInventoryView,
+        economyTraceView: {
+          traceItems: [{
+            traceId: "stale-inventory",
+            title: "旧案账本为何变化",
+            publicSummary: "旧案库存解释。",
+            groupLabel: "月账线索",
+            statusLabel: "可阅"
+          }]
+        }
+      } as unknown as ReturnType<typeof useGameSessionStore.getState>["inventory"],
+      status: "ready"
+    });
+
+    renderRoute(`/game/${routeSessionId}/inventory`);
+
+    await screen.findByRole("heading", { name: "囊箧" });
+    await waitFor(() => expect(fetchMock.mock.calls.some(([url]) => String(url) === `/api/game/inventory/${routeSessionId}`)).toBe(true));
+    expect(screen.queryByText("旧案经济解释")).toBeNull();
+    expect(screen.queryByText("旧案账本为何变化")).toBeNull();
+    expect(screen.queryByRole("button", { name: "拟复核" })).toBeNull();
+  });
+
   it("caps the S76.10 people ledger at eighty public rows with the player first", async () => {
     const sessionId = "55555555-5555-4555-8555-555555555556";
     const payload = {

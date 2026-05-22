@@ -100,6 +100,8 @@ afterEach(() => {
     lastTurn: null,
     npcDetail: null,
     npcDetailStatus: "idle",
+    inventory: null,
+    inventoryStatus: "idle",
     npcMutationStatus: "idle",
     npcRoster: null,
     npcRosterStatus: "idle",
@@ -513,6 +515,48 @@ describe("S74.3 UI state store", () => {
       source: "exam-submit",
       player: { examRank: "秀才" }
     });
+  });
+
+  it("does not merge stale inventory transfer payloads into another session", async () => {
+    const activeSessionId = "55555555-5555-4555-8555-555555555555";
+    const staleSessionId = "66666666-6666-4666-8666-666666666666";
+    const activeInventory = {
+      sessionId: activeSessionId,
+      inventoryView: {
+        containers: [{ containerId: "active-container", label: "当前书箧" }],
+        items: [{ itemId: "active-item", name: "当前清册", containerId: "active-container" }],
+        importantCredentials: []
+      },
+      economyTraceView: {
+        traceItems: [{ traceId: "active-trace", title: "当前账本解释" }]
+      }
+    };
+    installFetchResponses({
+      sessionId: staleSessionId,
+      accepted: true,
+      inventoryView: {
+        containers: [{ containerId: "stale-container", label: "旧案书箧" }],
+        items: [{ itemId: "stale-item", name: "旧案清册", containerId: "stale-container" }],
+        importantCredentials: []
+      },
+      economyTraceView: {
+        traceItems: [{ traceId: "stale-trace", title: "旧案经济解释" }]
+      }
+    });
+    useGameSessionStore.setState({
+      currentSessionId: activeSessionId,
+      inventory: activeInventory,
+      inventoryStatus: "ready"
+    });
+
+    await useGameSessionStore.getState().transferInventoryItem(staleSessionId, {
+      itemId: "stale-item",
+      toContainerId: "stale-container"
+    });
+
+    const state = useGameSessionStore.getState();
+    expect(state.inventory).toEqual(activeInventory);
+    expect(JSON.stringify(state.inventory)).not.toMatch(/旧案清册|旧案经济解释|stale-trace/);
   });
 
   it("merges NPC interaction memory and archive views into the current session", async () => {

@@ -354,6 +354,7 @@ export type SafeRouteViews = {
   readonly delegatedTaskView?: JsonObject;
   readonly marketPriceView?: JsonObject;
   readonly npcEconomyView?: JsonObject;
+  readonly economyTraceView?: JsonObject;
   readonly npcActiveRequestView?: JsonObject;
   readonly roleCycleView?: RoleCycleView;
   readonly mapRuntimeView?: JsonObject;
@@ -435,6 +436,7 @@ export type InventoryResponse = RouteEnvelope & {
   readonly resourceLedgerView?: JsonObject;
   readonly assetLedgerView?: JsonObject;
   readonly inventoryView: JsonObject;
+  readonly economyTraceView?: JsonObject;
 };
 
 export type InventoryTransferResponse = RouteEnvelope & {
@@ -443,6 +445,7 @@ export type InventoryTransferResponse = RouteEnvelope & {
   readonly fromContainerId?: string | null;
   readonly toContainerId?: string | null;
   readonly inventoryView: JsonObject;
+  readonly economyTraceView?: JsonObject;
 };
 
 export type NpcListResponse = RouteEnvelope & {

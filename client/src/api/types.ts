@@ -292,6 +292,7 @@ export type SafeRouteViews = {
   readonly delegatedTaskView?: DelegatedTaskView;
   readonly marketPriceView?: MarketPriceView;
   readonly npcEconomyView?: NpcEconomyView;
+  readonly economyTraceView?: EconomyTraceView;
   readonly npcActiveRequestView?: NpcActiveRequestView;
   readonly roleCycleView?: RoleCycleView;
   readonly mapRuntimeView?: MapRuntimeView;
@@ -378,6 +379,54 @@ export type NpcEconomyView = JsonObject & {
   readonly recentEvents?: readonly string[];
   readonly lastOutcome?: JsonObject | null;
   readonly safeguards?: JsonObject;
+};
+
+export type EconomyTraceAmountView = {
+  readonly label?: string;
+  readonly before?: number;
+  readonly after?: number;
+  readonly delta?: number;
+  readonly unit?: string;
+};
+
+export type EconomyTraceEvidenceRef = {
+  readonly refId?: string;
+  readonly sourceView?: string;
+  readonly sourceId?: string;
+  readonly label?: string;
+};
+
+export type EconomyTraceItemView = JsonObject & {
+  readonly traceId?: string;
+  readonly traceType?: string;
+  readonly group?: string;
+  readonly groupLabel?: string;
+  readonly sourceView?: string;
+  readonly sourceRef?: string;
+  readonly title?: string;
+  readonly publicSummary?: string;
+  readonly status?: string;
+  readonly statusLabel?: string;
+  readonly affectedLabels?: readonly string[];
+  readonly amountView?: EconomyTraceAmountView | null;
+  readonly sourceRefs?: readonly EconomyTraceEvidenceRef[];
+  readonly nextStep?: string;
+  readonly boundaries?: JsonObject;
+};
+
+export type EconomyTraceView = JsonObject & {
+  readonly schemaVersion?: string;
+  readonly generatedAtTurn?: number;
+  readonly dateLabel?: string;
+  readonly summary?: string;
+  readonly traceItems?: readonly EconomyTraceItemView[];
+  readonly groups?: JsonObject;
+  readonly aiReadScope?: JsonObject;
+  readonly toolPermissions?: string;
+  readonly proposalBoundaries?: readonly string[];
+  readonly serverAdjudication?: string;
+  readonly safeguards?: JsonObject;
+  readonly caps?: JsonObject;
 };
 
 export type NpcActiveRequestItemView = JsonObject & {
@@ -611,6 +660,7 @@ export type InventoryResponse = {
   readonly resourceLedgerView?: ResourceLedgerView;
   readonly assetLedgerView?: AssetLedgerView;
   readonly inventoryView: InventoryView;
+  readonly economyTraceView?: EconomyTraceView;
 };
 
 export type InventoryTransferRequest = {
@@ -624,6 +674,7 @@ export type InventoryTransferResponse = {
   readonly accepted: boolean;
   readonly reason?: string;
   readonly inventoryView: InventoryView;
+  readonly economyTraceView?: EconomyTraceView;
 };
 
 export type NpcRosterItem = {

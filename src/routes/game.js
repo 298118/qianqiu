@@ -210,6 +210,7 @@ const {
   ensureNpcEconomyLedgerState,
   runNpcEconomyTickStep
 } = require("../game/npcEconomy");
+const { buildEconomyTraceView } = require("../game/economyTraceView");
 const { buildClientWorldState } = require("../game/clientWorldState");
 const {
   buildPlayerStateEnvelope,
@@ -527,6 +528,21 @@ function buildCommonTurnViews(worldState, options = {}) {
   const officialPostingsView = buildOfficialPostingsView(worldState);
   const mapContextView = buildMapContextView(worldState);
   const domainConsequenceView = buildDomainConsequenceView(worldState);
+  const assetLedgerView = buildAssetLedgerView(worldState, {
+    viewerActorId: worldState.player?.id || "player",
+    includeRoleLimited: true
+  });
+  const resourceLedgerView = buildResourceLedgerView(worldState, {
+    viewerActorId: worldState.player?.id || "player"
+  });
+  const inventoryView = buildInventoryView(worldState, {
+    viewerActorId: worldState.player?.id || "player",
+    includeRoleLimited: true
+  });
+  const tradeLedgerView = buildTradeLedgerView(worldState);
+  const delegatedTaskView = buildDelegatedTaskLedgerView(worldState);
+  const marketPriceView = buildMarketPriceView(worldState);
+  const npcEconomyView = buildNpcEconomyView(worldState);
   const { settings, routePolicy } = resolveAiSettingsForSession(worldState);
   const aiInvocationSummaryView = buildAiInvocationSummaryView(worldState, routePolicy);
   return defineCommonTurnViews({
@@ -568,23 +584,27 @@ function buildCommonTurnViews(worldState, options = {}) {
     actorMemoryView: buildActorMemoryView(worldState),
     sessionSummaryView: buildSessionSummaryView(worldState),
     openingBackgroundClaimsView: buildOpeningBackgroundClaimsView(worldState),
-    assetLedgerView: buildAssetLedgerView(worldState, {
-      viewerActorId: worldState.player?.id || "player",
-      includeRoleLimited: true
-    }),
-    resourceLedgerView: buildResourceLedgerView(worldState, {
-      viewerActorId: worldState.player?.id || "player"
-    }),
-    inventoryView: buildInventoryView(worldState, {
-      viewerActorId: worldState.player?.id || "player",
-      includeRoleLimited: true
-    }),
+    assetLedgerView,
+    resourceLedgerView,
+    inventoryView,
     npcRosterView: buildNpcRosterView(worldState),
     npcInteractionView: buildNpcInteractionLedgerView(worldState),
-    tradeLedgerView: buildTradeLedgerView(worldState),
-    delegatedTaskView: buildDelegatedTaskLedgerView(worldState),
-    marketPriceView: buildMarketPriceView(worldState),
-    npcEconomyView: buildNpcEconomyView(worldState),
+    tradeLedgerView,
+    delegatedTaskView,
+    marketPriceView,
+    npcEconomyView,
+    economyTraceView: buildEconomyTraceView(worldState, {
+      economyFeedback: options.economyFeedback,
+      views: {
+        assetLedgerView,
+        resourceLedgerView,
+        inventoryView,
+        tradeLedgerView,
+        delegatedTaskView,
+        marketPriceView,
+        npcEconomyView
+      }
+    }),
     npcActiveRequestView: buildNpcActiveRequestView(worldState),
     roleCycleView: buildRoleCycleView(worldState),
     eventArchiveView: buildEventArchiveView(worldState, options.eventArchive),
@@ -1244,7 +1264,7 @@ async function finalizeTurn(worldState, result, input, auditOptions = {}) {
       ...officialCareer.attributeChanges
     ],
     relationshipChanges: allRelationshipChanges,
-    ...buildCommonTurnViews(worldState),
+    ...buildCommonTurnViews(worldState, { economyFeedback: npcEconomy }),
     activeNpcRequestEvents: activeNpcRequest.events,
     officialCourtResponse: {
       schemaVersion: officialCourtResponse.schemaVersion,
@@ -1411,6 +1431,7 @@ async function streamTurn(res, sessionId, input, draftContext = null) {
       delegatedTaskView: payload.delegatedTaskView,
       marketPriceView: payload.marketPriceView,
       npcEconomyView: payload.npcEconomyView,
+      economyTraceView: payload.economyTraceView,
       npcActiveRequests: payload.npcActiveRequests,
       eventArchiveView: payload.eventArchiveView,
       informationPanelPageView: payload.informationPanelPageView,
@@ -1592,7 +1613,8 @@ router.get("/inventory/:sessionId", async (req, res, next) => {
       inventoryView: buildInventoryView(worldState, {
         viewerActorId: worldState.player?.id || "player",
         includeRoleLimited: true
-      })
+      }),
+      economyTraceView: buildEconomyTraceView(worldState)
     }));
   } catch (error) {
     next(error);
@@ -1623,7 +1645,8 @@ router.post("/inventory-transfer/:sessionId", async (req, res, next) => {
         inventoryView: buildInventoryView(worldState, {
           viewerActorId: worldState.player?.id || "player",
           includeRoleLimited: true
-        })
+        }),
+        economyTraceView: buildEconomyTraceView(worldState)
       });
     });
     res.status(payload.accepted ? 200 : 400).json(payload);
