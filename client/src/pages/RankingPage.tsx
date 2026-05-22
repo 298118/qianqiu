@@ -1,5 +1,5 @@
 import type { CSSProperties } from "react";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useParams } from "react-router";
 import { useAssetRegistry } from "../assets/useAssetRegistry";
 import { useGameSessionStore } from "../state/gameSessionState";
@@ -264,6 +264,10 @@ export function RankingPage() {
   const heroImagePath = sceneAsset?.path ?? "/assets/ui/scenes/scene-ranking-wall-v1.webp";
   const noticeImagePath = noticeAsset?.path ?? "/assets/ui/materials/imperial-notice-paper-v1.webp";
   const smudgeImagePath = smudgeAsset?.path ?? "/assets/ui/materials/red-ink-smudge-v1.webp";
+
+  useEffect(() => {
+    setSelectedId(null);
+  }, [sessionId]);
 
   return (
     <article

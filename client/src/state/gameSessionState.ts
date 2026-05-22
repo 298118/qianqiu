@@ -44,6 +44,7 @@ let inventoryTransferRequestId = 0;
 let npcRosterRequestId = 0;
 let npcDetailRequestId = 0;
 let npcMutationRequestId = 0;
+let examMutationRequestId = 0;
 
 type StartGameInput = {
   readonly playerName: string;
@@ -336,50 +337,91 @@ export const useGameSessionStore = create<GameSessionState>((set) => ({
   },
 
   async requestExamQuestion(sessionId, level) {
-    set({ status: "loading", error: null });
+    const requestId = ++examMutationRequestId;
+    set((state) => canApplyRouteSession(state, sessionId)
+      ? { status: "loading", error: null }
+      : {});
     try {
       const payload = await qianqiuApi.requestExamQuestion({ sessionId, level });
-      set({ activeExam: payload, currentSessionId: payload.sessionId, status: "ready" });
+      if (payload.sessionId !== sessionId) throw staleSessionResponseError();
+      set((state) => {
+        if (requestId !== examMutationRequestId || !canApplyRouteSession(state, payload.sessionId)) {
+          return { status: state.status };
+        }
+        return { activeExam: payload, currentSessionId: payload.sessionId, status: "ready" };
+      });
       return payload;
     } catch (error) {
-      set({ error: toErrorMessage(error), status: "error" });
+      if (requestId === examMutationRequestId) {
+        set((state) => canApplyRouteSession(state, sessionId)
+          ? { error: toErrorMessage(error), status: "error" }
+          : {});
+      }
       throw error;
     }
   },
 
   async progressExam(sessionId, examId, action) {
-    set({ status: "loading", error: null });
+    const requestId = ++examMutationRequestId;
+    set((state) => canApplyRouteSession(state, sessionId)
+      ? { status: "loading", error: null }
+      : {});
     try {
       const payload = await qianqiuApi.progressExam({ sessionId, examId, action });
-      set({ activeExam: payload, currentSessionId: payload.sessionId, status: "ready" });
+      if (payload.sessionId !== sessionId) throw staleSessionResponseError();
+      set((state) => {
+        if (requestId !== examMutationRequestId || !canApplyRouteSession(state, payload.sessionId)) {
+          return { status: state.status };
+        }
+        return { activeExam: payload, currentSessionId: payload.sessionId, status: "ready" };
+      });
       return payload;
     } catch (error) {
-      set({ error: toErrorMessage(error), status: "error" });
+      if (requestId === examMutationRequestId) {
+        set((state) => canApplyRouteSession(state, sessionId)
+          ? { error: toErrorMessage(error), status: "error" }
+          : {});
+      }
       throw error;
     }
   },
 
   async submitExam(sessionId, examId, essay) {
-    set({ status: "loading", error: null });
+    const requestId = ++examMutationRequestId;
+    set((state) => canApplyRouteSession(state, sessionId)
+      ? { status: "loading", error: null }
+      : {});
     try {
       const payload = await qianqiuApi.submitExam({ sessionId, examId, essay });
-      set({
-        activeExam: null,
-        lastExamResult: payload,
-        currentSessionId: payload.sessionId,
-        currentSession: payload,
-        quickActions: null,
-        quickActionStatus: "idle",
-        topicSurface: null,
-        topicDraft: null,
-        topicSurfaceStatus: "idle",
-        topicDraftStatus: "idle",
-        status: "ready"
+      if (payload.sessionId !== sessionId) throw staleSessionResponseError();
+      let applied = false;
+      set((state) => {
+        if (requestId !== examMutationRequestId || !canApplyRouteSession(state, payload.sessionId)) {
+          return { status: state.status };
+        }
+        applied = true;
+        return {
+          activeExam: null,
+          lastExamResult: payload,
+          currentSessionId: payload.sessionId,
+          currentSession: payload,
+          quickActions: null,
+          quickActionStatus: "idle",
+          topicSurface: null,
+          topicDraft: null,
+          topicSurfaceStatus: "idle",
+          topicDraftStatus: "idle",
+          status: "ready"
+        };
       });
-      useUiStateStore.getState().syncSessionPayload(payload, "exam-submit");
+      if (applied) useUiStateStore.getState().syncSessionPayload(payload, "exam-submit");
       return payload;
     } catch (error) {
-      set({ error: toErrorMessage(error), status: "error" });
+      if (requestId === examMutationRequestId) {
+        set((state) => canApplyRouteSession(state, sessionId)
+          ? { error: toErrorMessage(error), status: "error" }
+          : {});
+      }
       throw error;
     }
   },

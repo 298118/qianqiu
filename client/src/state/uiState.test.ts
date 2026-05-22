@@ -9,6 +9,7 @@ import {
 import { extractSafePlayerPayload, useUiStateStore } from "./uiState";
 import { useGameSessionStore } from "./gameSessionState";
 import type {
+  ExamQuestionResponse,
   ExamSubmitResponse,
   InventoryResponse,
   NpcCommandResponse,
@@ -506,7 +507,11 @@ describe("S74.3 UI state store", () => {
   });
 
   it("syncs UI safe payloads from game session async actions", async () => {
-    installFetchResponses(startPayload, playerStatePayload, turnPayload, examSubmitPayload);
+    const matchingExamSubmitPayload: ExamSubmitResponse = {
+      ...examSubmitPayload,
+      sessionId: turnPayload.sessionId
+    };
+    installFetchResponses(startPayload, playerStatePayload, turnPayload, matchingExamSubmitPayload);
 
     useUiStateStore.getState().setActionDraft({ source: "manual", targetPage: "game", text: "先写一封拜帖。" });
     await useGameSessionStore.getState().startNewGame({
@@ -538,12 +543,202 @@ describe("S74.3 UI state store", () => {
     });
     expect(useUiStateStore.getState().actionDraft).toBeNull();
 
-    await useGameSessionStore.getState().submitExam(examSubmitPayload.sessionId, examSubmitPayload.examId, "臣闻治世之要。");
+    await useGameSessionStore.getState().submitExam(matchingExamSubmitPayload.sessionId, matchingExamSubmitPayload.examId, "臣闻治世之要。");
     expect(useUiStateStore.getState().currentPlayerPayload).toMatchObject({
-      sessionId: examSubmitPayload.sessionId,
+      sessionId: matchingExamSubmitPayload.sessionId,
       source: "exam-submit",
       player: { examRank: "秀才" }
     });
+  });
+
+  it("does not apply stale exam question responses after the route changes", async () => {
+    const staleSessionId = "12121212-1212-4121-8121-121212121212";
+    const activeSessionId = "34343434-3434-4343-8343-343434343434";
+    const staleSession: PlayerStateResponse = {
+      ...playerStatePayload,
+      sessionId: staleSessionId,
+      worldState: { player: { name: "旧案士子", role: "scholar" } }
+    };
+    const activeSession: PlayerStateResponse = {
+      ...playerStatePayload,
+      sessionId: activeSessionId,
+      worldState: { player: { name: "当前士子", role: "scholar" } }
+    };
+    const activeExam: ExamQuestionResponse = {
+      sessionId: activeSessionId,
+      examId: "exam-active",
+      examName: "当前童试",
+      examQuestion: "当前案卷策问。"
+    };
+    const staleExam: ExamQuestionResponse = {
+      sessionId: staleSessionId,
+      examId: "exam-stale",
+      examName: "旧案童试",
+      examQuestion: "旧案策问不应回写。"
+    };
+    const deferred = deferredJsonResponse<ExamQuestionResponse>();
+    vi.stubGlobal("fetch", vi.fn((url: string) => {
+      if (url === "/api/exam/question") return deferred.response;
+      throw new Error(`unexpected url: ${url}`);
+    }));
+    useGameSessionStore.setState({
+      currentSessionId: staleSessionId,
+      currentSession: staleSession,
+      activeExam: null,
+      error: null,
+      status: "ready"
+    });
+
+    const request = useGameSessionStore.getState().requestExamQuestion(staleSessionId, "child_exam");
+    expect(useGameSessionStore.getState().status).toBe("loading");
+    useGameSessionStore.setState({
+      currentSessionId: activeSessionId,
+      currentSession: activeSession,
+      activeExam,
+      error: null,
+      status: "ready"
+    });
+    deferred.resolvePayload(staleExam);
+
+    await expect(request).resolves.toEqual(staleExam);
+    const state = useGameSessionStore.getState();
+    expect(state.currentSessionId).toBe(activeSessionId);
+    expect(state.currentSession).toEqual(activeSession);
+    expect(state.activeExam).toEqual(activeExam);
+    expect(state.error).toBeNull();
+    expect(state.status).toBe("ready");
+    expect(JSON.stringify(state)).not.toMatch(/旧案策问不应回写|旧案童试|旧案士子/);
+  });
+
+  it("ignores stale exam failures after the route moves to another session", async () => {
+    const staleSessionId = "45454545-4545-4545-8545-454545454545";
+    const activeSessionId = "56565656-5656-4565-8565-565656565656";
+    const staleSession: PlayerStateResponse = {
+      ...playerStatePayload,
+      sessionId: staleSessionId,
+      worldState: { player: { name: "旧案考生", role: "scholar" } }
+    };
+    const activeSession: PlayerStateResponse = {
+      ...playerStatePayload,
+      sessionId: activeSessionId,
+      worldState: { player: { name: "当前考生", role: "scholar" } }
+    };
+    const staleExam: ExamQuestionResponse = {
+      sessionId: staleSessionId,
+      examId: "exam-stale",
+      examName: "旧案童试",
+      examQuestion: "旧案题目。"
+    };
+    let rejectFetch!: (error: Error) => void;
+    const response = new Promise<Response>((_resolve, reject) => {
+      rejectFetch = reject;
+    });
+    vi.stubGlobal("fetch", vi.fn((url: string) => {
+      if (url === "/api/exam/progress") return response;
+      throw new Error(`unexpected url: ${url}`);
+    }));
+    useGameSessionStore.setState({
+      currentSessionId: staleSessionId,
+      currentSession: staleSession,
+      activeExam: staleExam,
+      error: null,
+      status: "ready"
+    });
+
+    const request = useGameSessionStore.getState().progressExam(staleSessionId, "exam-stale", "旧案推进。");
+    expect(useGameSessionStore.getState().status).toBe("loading");
+    useGameSessionStore.setState({
+      currentSessionId: activeSessionId,
+      currentSession: activeSession,
+      activeExam: null,
+      error: null,
+      status: "ready"
+    });
+    rejectFetch(new Error("旧案科举请求失败不应显示"));
+
+    await expect(request).rejects.toThrow(/旧案科举请求失败不应显示/);
+    const state = useGameSessionStore.getState();
+    expect(state.currentSessionId).toBe(activeSessionId);
+    expect(state.currentSession).toEqual(activeSession);
+    expect(state.activeExam).toBeNull();
+    expect(state.error).toBeNull();
+    expect(state.status).toBe("ready");
+    expect(JSON.stringify(state)).not.toMatch(/旧案科举请求失败不应显示|旧案考生|旧案题目/);
+  });
+
+  it("does not sync stale exam submit responses into the game or UI session payload", async () => {
+    const staleSessionId = "67676767-6767-4676-8676-676767676767";
+    const activeSessionId = "78787878-7878-4787-8787-787878787878";
+    const activeSession: PlayerStateResponse = {
+      ...playerStatePayload,
+      sessionId: activeSessionId,
+      worldState: { player: { name: "当前案主", role: "scholar", examRank: "童生" } }
+    };
+    const staleResult: ExamSubmitResponse = {
+      ...examSubmitPayload,
+      sessionId: staleSessionId,
+      examId: "exam-stale",
+      examName: "旧案童试",
+      worldState: {
+        player: {
+          name: "旧案案主",
+          role: "scholar",
+          examRank: "旧案秀才"
+        }
+      }
+    };
+    const deferred = deferredJsonResponse<ExamSubmitResponse>();
+    vi.stubGlobal("fetch", vi.fn((url: string) => {
+      if (url === "/api/exam/submit") return deferred.response;
+      throw new Error(`unexpected url: ${url}`);
+    }));
+    useGameSessionStore.setState({
+      currentSessionId: staleSessionId,
+      currentSession: {
+        ...playerStatePayload,
+        sessionId: staleSessionId,
+        worldState: { player: { name: "旧案案主", role: "scholar" } }
+      },
+      activeExam: {
+        sessionId: staleSessionId,
+        examId: "exam-stale",
+        examName: "旧案童试",
+        examQuestion: "旧案策问。"
+      },
+      lastExamResult: null,
+      error: null,
+      status: "ready"
+    });
+    useUiStateStore.getState().syncSessionPayload(activeSession, "player-state");
+
+    const request = useGameSessionStore.getState().submitExam(staleSessionId, "exam-stale", "旧案文章。");
+    expect(useGameSessionStore.getState().status).toBe("loading");
+    useGameSessionStore.setState({
+      currentSessionId: activeSessionId,
+      currentSession: activeSession,
+      activeExam: null,
+      lastExamResult: null,
+      error: null,
+      status: "ready"
+    });
+    deferred.resolvePayload(staleResult);
+
+    await expect(request).resolves.toEqual(staleResult);
+    const state = useGameSessionStore.getState();
+    expect(state.currentSessionId).toBe(activeSessionId);
+    expect(state.currentSession).toEqual(activeSession);
+    expect(state.activeExam).toBeNull();
+    expect(state.lastExamResult).toBeNull();
+    expect(state.error).toBeNull();
+    expect(state.status).toBe("ready");
+    expect(useUiStateStore.getState().currentPlayerPayload).toMatchObject({
+      sessionId: activeSessionId,
+      player: { name: "当前案主", examRank: "童生" }
+    });
+    expect(JSON.stringify({
+      game: state,
+      ui: useUiStateStore.getState().currentPlayerPayload
+    })).not.toMatch(/旧案秀才|旧案童试|旧案案主|exam-stale/);
   });
 
   it("does not let an older player-state load overwrite the latest session", async () => {

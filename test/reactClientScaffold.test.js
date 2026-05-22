@@ -946,6 +946,11 @@ test("S76.7 exam page renders immersive safe exam flow without widening authorit
   assert.match(examPageSource, /requestExamQuestion\(sessionId, level\)/);
   assert.match(examPageSource, /progressExam\(sessionId, examId, sceneAction\.trim\(\)\)/);
   assert.match(examPageSource, /submitExam\(sessionId, examId, essay\.trim\(\)\)/);
+  assert.match(examPageSource, /defaultExamLevel: ExamLevel = "child_exam"/);
+  assert.match(examPageSource, /setLevel\(defaultExamLevel\)/);
+  assert.match(examPageSource, /setSceneAction\(defaultSceneAction\)/);
+  assert.match(examPageSource, /setEssay\(defaultEssay\)/);
+  assert.match(examPageSource, /\}, \[sessionId\]\)/);
   assert.match(styleSource, /examFullScreen/);
   assert.match(styleSource, /examHero/);
   assert.match(styleSource, /examSealSubmitButton/);
@@ -998,6 +1003,8 @@ test("S76.8 ranking page renders server-owned ranking views without widening aut
   assert.match(rankingPageSource, /examAftermathView/);
   assert.match(rankingPageSource, /同年座师/);
   assert.match(rankingPageSource, /setActionDraft/);
+  assert.match(rankingPageSource, /setSelectedId\(null\)/);
+  assert.match(rankingPageSource, /\}, \[sessionId\]\)/);
   assert.doesNotMatch(rankingPageSource, /buildHonorFallbackRows|index \+ 1/);
   assert.match(rankingPageSource, /rankingTopThree/);
   assert.match(rankingPageSource, /服务器定榜名单/);
@@ -1142,6 +1149,9 @@ test("S76.9 map page is an independent safe map surface", () => {
   assert.match(mapPageSource, /mapFullScreen/);
   assert.match(mapPageSource, /山河舆图/);
   assert.match(mapPageSource, /visibleLayers/);
+  assert.match(mapPageSource, /defaultVisibleLayers/);
+  assert.match(mapPageSource, /setVisibleLayers\(defaultVisibleLayers\)/);
+  assert.match(mapPageSource, /\}, \[sessionId\]\)/);
   assert.match(mapPageSource, /入局势簿/);
   assert.match(mapPageSource, /据此拟稿/);
   assert.match(mapPageSource, /显示坐标只用于浏览器布局/);

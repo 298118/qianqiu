@@ -1,5 +1,5 @@
 import { Link, useParams } from "react-router";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import type { MapRuntimeEventEffect, MapRuntimeRef, MapRuntimeView } from "../api";
 import { DomainConsequenceSection } from "../components/DomainConsequenceSection";
 import { InkMapRuntimeBridge } from "../components/InkMapRuntimeBridge";
@@ -14,6 +14,12 @@ const mapLayerLabels: Record<MapLayerKey, string> = {
   places: "地点",
   routes: "驿路",
   events: "近事"
+};
+
+const defaultVisibleLayers: Record<MapLayerKey, boolean> = {
+  places: true,
+  routes: true,
+  events: true
 };
 
 const mapDomainConsequenceSourceTypes = ["city_policy", "military_diplomacy", "judicial_case"] as const;
@@ -94,11 +100,7 @@ function getMapEvents(view: MapRuntimeView | null | undefined) {
 
 export function MapPage() {
   const { sessionId = "s74-preview" } = useParams();
-  const [visibleLayers, setVisibleLayers] = useState<Record<MapLayerKey, boolean>>({
-    places: true,
-    routes: true,
-    events: true
-  });
+  const [visibleLayers, setVisibleLayers] = useState<Record<MapLayerKey, boolean>>(defaultVisibleLayers);
   const currentSession = useGameSessionStore((state) => state.currentSession);
   const status = useGameSessionStore((state) => state.status);
   const openSurface = useUiStateStore((state) => state.openSurface);
@@ -115,6 +117,10 @@ export function MapPage() {
   const activeLayerCount = (Object.keys(visibleLayers) as MapLayerKey[]).filter((key) => visibleLayers[key]).length;
   const archiveHref = `/game/${sessionId}/archive`;
   const gameHref = `/game/${sessionId}`;
+
+  useEffect(() => {
+    setVisibleLayers(defaultVisibleLayers);
+  }, [sessionId]);
 
   function toggleLayer(layer: MapLayerKey) {
     setVisibleLayers((current) => ({ ...current, [layer]: !current[layer] }));

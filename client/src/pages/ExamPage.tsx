@@ -1,5 +1,5 @@
 import type { CSSProperties, FormEvent } from "react";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useParams } from "react-router";
 import type { ExamLevel, JsonObject, JsonValue } from "../api";
 import { useAssetRegistry } from "../assets/useAssetRegistry";
@@ -13,6 +13,10 @@ const examLevels: { value: ExamLevel; label: string }[] = [
   { value: "metropolitan_exam", label: "会试" },
   { value: "palace_exam", label: "殿试" }
 ];
+
+const defaultExamLevel: ExamLevel = "child_exam";
+const defaultSceneAction = "整理号舍，审题立意。";
+const defaultEssay = "臣闻治世之要，在修己以安人，明法以养民。";
 
 const examStageCopy: Record<ExamLevel, { readonly place: string; readonly phase: string; readonly clock: string; readonly scene: string }> = {
   child_exam: { place: "县学试棚", phase: "入场点名", clock: "卯正至辰初", scene: "exam_cell" },
@@ -195,9 +199,9 @@ function getExamProcedure(activeExam: unknown) {
 export function ExamPage() {
   const { sessionId = "s74-preview" } = useParams();
   const { registry } = useAssetRegistry();
-  const [level, setLevel] = useState<ExamLevel>("child_exam");
-  const [sceneAction, setSceneAction] = useState("整理号舍，审题立意。");
-  const [essay, setEssay] = useState("臣闻治世之要，在修己以安人，明法以养民。");
+  const [level, setLevel] = useState<ExamLevel>(defaultExamLevel);
+  const [sceneAction, setSceneAction] = useState(defaultSceneAction);
+  const [essay, setEssay] = useState(defaultEssay);
   const requestExamQuestion = useGameSessionStore((state) => state.requestExamQuestion);
   const progressExam = useGameSessionStore((state) => state.progressExam);
   const submitExam = useGameSessionStore((state) => state.submitExam);
@@ -232,6 +236,12 @@ export function ExamPage() {
   const safeError = safeExamText(error, "科举接口暂不可用。", 160);
   const preparationPressure = getPreparationPressure(activeExamForSession);
   const procedure = getExamProcedure(activeExamForSession);
+
+  useEffect(() => {
+    setLevel(defaultExamLevel);
+    setSceneAction(defaultSceneAction);
+    setEssay(defaultEssay);
+  }, [sessionId]);
 
   async function handleQuestion(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
