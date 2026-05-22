@@ -4,6 +4,7 @@ const {
   NPC_ACTIVE_REQUEST_CONFIG,
   NPC_ACTIVE_REQUEST_FOLLOW_UP_CONFIG,
   NPC_ACTIVE_REQUEST_FOLLOW_UP_SCHEMA_VERSION,
+  NPC_ACTIVE_REQUEST_FOLLOW_UP_TASK_SCHEMA_VERSION,
   NPC_ACTIVE_REQUEST_RESPONSE_ACTION_CONFIG,
   NPC_ACTIVE_REQUEST_RESPONSE_ACTIONS,
   NPC_ACTIVE_REQUEST_SCHEMA_VERSION,
@@ -269,6 +270,20 @@ function fillResponseTemplate(template = "", request = {}) {
   );
 }
 
+function fillFollowUpTaskTemplate(template = "", record = {}, followUp = {}) {
+  const npcName = cleanPublicText(record.npc?.displayName, "来人", 40);
+  const typeLabel = cleanPublicText(record.typeLabel || followUp.requestTypeLabel, "来函", 40);
+  const nextStep = cleanPublicText(followUp.nextStep, "后续仍由服务器裁决。", 120);
+  return cleanPublicText(
+    String(template || "")
+      .replace(/\{npcName\}/g, npcName)
+      .replace(/\{typeLabel\}/g, typeLabel)
+      .replace(/\{nextStep\}/g, nextStep),
+    `续办${npcName}的${typeLabel}：${nextStep}`,
+    180
+  );
+}
+
 function buildResponseOptionsForRequest(request = {}) {
   const followUpConfig = followUpConfigFor(request.type);
   const preferred = Array.isArray(followUpConfig.preferredActions) ? followUpConfig.preferredActions : [];
@@ -299,6 +314,26 @@ function followUpTaskState(status = "", responseAction = "") {
     return "pending_server_follow_up";
   }
   return "recorded";
+}
+
+function followUpTaskStatus(status = "", responseAction = "") {
+  const normalizedStatus = normalizeStatus(status, "");
+  const action = cleanId(responseAction, "");
+  if (normalizedStatus === "reported" || action === "report") return "reported_for_review";
+  if (normalizedStatus === "converted_to_risk") return "risk_watch";
+  if (normalizedStatus === "under_review" || normalizedStatus === "accepted_pending_server_resolution") {
+    return "pending_server_follow_up";
+  }
+  return "recorded";
+}
+
+function isFollowUpTaskOpen(status = "") {
+  return [
+    "under_review",
+    "reported",
+    "converted_to_risk",
+    "accepted_pending_server_resolution"
+  ].includes(normalizeStatus(status, ""));
 }
 
 function followUpNextStep(config = {}, responseAction = "", status = "") {
@@ -817,6 +852,72 @@ function toRequestView(request = {}, worldState = {}) {
   };
 }
 
+function buildNpcActiveRequestFollowUpTasks(items = []) {
+  return (Array.isArray(items) ? items : [])
+    .filter((record) => isPlainObject(record) && record.requestId && isFollowUpTaskOpen(record.status))
+    .map((record) => {
+      const followUp = isPlainObject(record.outcome?.followUpView) ? record.outcome.followUpView : {};
+      const publicResolutionRef = cleanId(followUp.publicResolutionRef, "");
+      const config = followUpConfigFor(record.type);
+      const taskRoute = cleanPublicText(config.taskRoute, "active_request_follow_up", 80);
+      const status = followUpTaskStatus(record.status, followUp.responseAction || record.outcome?.responseAction);
+      if (!publicResolutionRef || !followUp.boundaries?.serverOwnsFollowUp) return null;
+      return {
+        schemaVersion: NPC_ACTIVE_REQUEST_FOLLOW_UP_TASK_SCHEMA_VERSION,
+        taskId: cleanId(`npc-active-follow-up:${record.requestId}:${taskRoute}`, ""),
+        sourceType: "npc_active_request_follow_up",
+        requestId: cleanId(record.requestId, ""),
+        requestType: normalizeRequestType(record.type, "help"),
+        requestTypeLabel: cleanPublicText(record.typeLabel || followUp.requestTypeLabel, "来函", 40),
+        publicResolutionRef,
+        followUpKind: cleanPublicText(followUp.followUpKind, config.followUpKind, 80),
+        taskRoute,
+        taskRouteLabel: cleanPublicText(config.taskRouteLabel, config.title, 40),
+        status,
+        statusLabel: status === "reported_for_review"
+          ? "已呈报待复核"
+          : status === "risk_watch"
+            ? "风险观察"
+            : "待服务器续办",
+        title: cleanPublicText(followUp.title || config.title, "来函后续", 80),
+        publicSummary: cleanPublicText(followUp.publicSummary, config.publicSummary, 180),
+        nextStep: cleanPublicText(followUp.nextStep, config.nextStep, 180),
+        draftText: fillFollowUpTaskTemplate(config.taskDraftTemplate, record, followUp),
+        npc: {
+          npcId: cleanId(record.npc?.npcId, ""),
+          displayName: cleanPublicText(record.npc?.displayName, "来人", 80),
+          title: cleanPublicText(record.npc?.title, "可见人物", 80)
+        },
+        evidenceRefs: uniqueCleanList([
+          ...(Array.isArray(followUp.evidenceRefs) ? followUp.evidenceRefs : []),
+          `npcActiveRequestView:${record.requestId}`,
+          `npcActiveRequestFollowUp:${publicResolutionRef}`
+        ], NPC_ACTIVE_REQUEST_CONFIG.maxEvidenceRefs, 120).filter((ref) => !containsPrivateSignalText(ref)),
+        riskTags: uniqueCleanList([
+          ...(Array.isArray(followUp.riskTags) ? followUp.riskTags : []),
+          ...(Array.isArray(record.riskTags) ? record.riskTags : [])
+        ], NPC_ACTIVE_REQUEST_CONFIG.maxRiskTags, 40).filter((tag) => !containsPrivateSignalText(tag)),
+        urgency: ["integrity_watchlist", "censorate_watchlist", "relationship_risk_watchlist"].includes(taskRoute)
+          ? "high"
+          : "normal",
+        createdTurn: clampNumber(followUp.generatedAtTurn || record.lastUpdatedTurn, 0, Number.MAX_SAFE_INTEGER, 0),
+        lastUpdatedTurn: clampNumber(record.lastUpdatedTurn, 0, Number.MAX_SAFE_INTEGER, 0),
+        boundaries: {
+          serverOwnsFollowUp: true,
+          proposalOnly: true,
+          browserDraftOnly: true,
+          resourcesNotApplied: true,
+          relationshipNotFinal: true,
+          marriageAndDisciplineNotFinal: true,
+          privateNpcDossierRedacted: true,
+          noHiddenTruthAdjudication: true
+        }
+      };
+    })
+    .filter(Boolean)
+    .slice(0, NPC_ACTIVE_REQUEST_CONFIG.maxFollowUpTasks);
+}
+
 function buildNpcActiveRequestView(worldState = {}, options = {}) {
   const ledger = ensureNpcActiveRequestLedgerState(worldState);
   const includeResolved = options.includeResolved === true;
@@ -828,11 +929,13 @@ function buildNpcActiveRequestView(worldState = {}, options = {}) {
     .slice(-NPC_ACTIVE_REQUEST_CONFIG.maxViewItems)
     .reverse()
     .map((request) => toRequestView(request, worldState));
+  const followUpTasks = buildNpcActiveRequestFollowUpTasks(items);
   return {
     schemaVersion: NPC_ACTIVE_REQUEST_SCHEMA_VERSION,
     ownerActorId: ledger.ownerActorId,
     totalItems: items.length,
     items,
+    followUpTasks,
     recentEvents: uniqueCleanList(ledger.events, NPC_ACTIVE_REQUEST_CONFIG.maxRecentEvents, 140)
       .map((event) => cleanPublicText(event, "", 140))
       .filter((event) => event && !containsPrivateSignalText(event)),

@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useParams } from "react-router";
 import type { AssetRegistry, RuntimePortraitAsset } from "../assets/assetRegistry";
 import { useAssetRegistry } from "../assets/useAssetRegistry";
-import type { DelegatedTaskRecordView, NpcActiveRequestItemView, NpcActiveRequestResponseOptionView, NpcDetailView, NpcRosterItem, PlayerSummary, TradeRecordView, WorldPeopleNpc, WorldPeopleRelationship } from "../api";
+import type { DelegatedTaskRecordView, NpcActiveRequestFollowUpTaskView, NpcActiveRequestItemView, NpcActiveRequestResponseOptionView, NpcDetailView, NpcRosterItem, PlayerSummary, TradeRecordView, WorldPeopleNpc, WorldPeopleRelationship } from "../api";
 import { Portrait } from "../components/Portrait";
 import { markOverlayTrigger } from "../components/overlayFocus";
 import { isRunnableSessionId } from "../routes/sessionId";
@@ -519,6 +519,18 @@ export function PeoplePage() {
           )
         })}
       />
+      <NpcActiveRequestFollowUpDocket
+        tasks={(session?.npcActiveRequestView?.followUpTasks ?? []) as readonly NpcActiveRequestFollowUpTaskView[]}
+        onDraft={(task) => setActionDraft({
+          source: "role-surface",
+          targetPage: "game",
+          text: safePeopleText(
+            task.draftText,
+            `续办${safePeopleText(task.title, "来函后续", 40)}：只作公开复核草稿，资源、婚姻、弹劾、背叛和隐藏事实仍由服务器裁决。`,
+            180
+          )
+        })}
+      />
       <section className="npcWorkbench" aria-label="NPC 名册工作台">
         <aside className="npcGroupList" aria-label="NPC 分组">
           {npcGroups.length ? npcGroups.map((group) => (
@@ -977,6 +989,36 @@ function NpcActiveRequestInbox({
           </article>
         );
       })}
+    </section>
+  );
+}
+
+function NpcActiveRequestFollowUpDocket({
+  tasks,
+  onDraft
+}: {
+  readonly tasks: readonly NpcActiveRequestFollowUpTaskView[];
+  readonly onDraft: (task: NpcActiveRequestFollowUpTaskView) => void;
+}) {
+  const visible = tasks.slice(0, 4);
+  if (!visible.length) return null;
+  return (
+    <section className="npcActiveRequestInbox" aria-label="NPC 来函后续簿">
+      {visible.map((task) => (
+        <article className="inventoryMiniCard" key={task.taskId || task.requestId || task.title}>
+          <strong>{safePeopleText(task.title, "来函后续", 48)}</strong>
+          <span>{safePeopleText(task.publicSummary || task.nextStep, "此事只作公开后续复核。", 140)}</span>
+          <small>
+            {safePeopleText(task.taskRouteLabel, "后续复核", 24)}
+            {" · "}
+            {safePeopleText(task.statusLabel || task.status, "待服务器续办", 32)}
+          </small>
+          <div className="buttonRow">
+            <button className="paperButton" type="button" onClick={() => onDraft(task)}>拟后续</button>
+            <small>{safePeopleText(task.npc?.displayName, "来人", 32)}</small>
+          </div>
+        </article>
+      ))}
     </section>
   );
 }

@@ -124,6 +124,8 @@ S68-S69 科举、读书、评卷与授官深化规划见 [IMPERIAL_EXAM_DEEPENIN
 
 S73.10.1 已完成全量立绘矩阵定稿：新增 [FRONTEND_PORTRAIT_MATRIX.md](FRONTEND_PORTRAIT_MATRIX.md)、`public/assets/ui/portraits/portrait-pool-matrix-v1.json`、`scripts/frontendPortraitMatrix.js` 和 `qa:portrait-matrix`，把后续生产池锁定为 336 张 planned 立绘，覆盖玩家身份阶段、通用 NPC、重要 NPC、状态姿态和场景锚点。矩阵只保存安全 `portraitRef`、目标路径、prompt 母版、fallback、懒加载和审核字段，矩阵本身不作为 runtime manifest。S73.10.2 已生成并审核 72 张玩家身份阶段立绘，新增 `scripts/frontendPlayerPortraitAssets.js`、`qa:player-portraits`、`public/assets/ui/portraits/portrait-player-pool-qa-v1.json`、主图、缩略图和低清占位，并保留 60 张已审核女性玩家风格补充与 60 张已审核男性玩家风格补充，使玩家可选池男女各 96 张；S73.10.3 已生成并审核 188 张通用 NPC 立绘，新增 `scripts/frontendGenericNpcPortraitAssets.js`、`qa:generic-npc-portraits`、`public/assets/ui/portraits/portrait-generic-npc-pool-qa-v1.json`，并把一开始的 120 张矩阵通用 NPC、20 张旧版 bonus 和 48 张宫装/唐装女性风格扩展全部登记为已审核通用池；S73.10.4 已生成并审核 72 张重要 NPC 专属立绘，新增 `scripts/frontendSignatureNpcPortraitAssets.js`、`qa:signature-npc-portraits`、`public/assets/ui/portraits/portrait-signature-npc-pool-qa-v1.json`，并用 `signature_npc_pool` 单独隔离皇帝、太后、摄政、首辅、御史、总督、名将、权臣、清流领袖、宿敌、知己、宫廷谋主和边地使者等核心模板；S73.10.5 已生成并审核 72 张状态/姿态与场景锚点立绘，新增 `scripts/frontendStateScenePortraitAssets.js`、`qa:state-scene-portraits`、`public/assets/ui/portraits/portrait-state-scene-pool-qa-v1.json`，并用 `state_variant_pool`、`scene_anchor_pool` 单独登记；S73.10.7 已生成并审核 48 张年轻成年女性补充立绘，新增 `scripts/frontendYoungFemalePortraitAssets.js`、`qa:young-female-portraits`、`public/assets/ui/portraits/portrait-young-female-pool-qa-v1.json`，并用 `young_female_style_pool` 单独登记；S73.10 单张覆盖新增 `scripts/frontendSinglePortraitOverrides.js`、`qa:single-portrait-overrides` 和 `public/assets/ui/portraits/portrait-single-override-qa-v1.json`，当前替换 60 张女性/偏女性画像为单张高清重制；S79.2 新增 `scripts/frontendRecoveredFemalePortraitAssets.js`、`qa:recovered-female-portraits` 和 `public/assets/ui/portraits/portrait-recovered-female-pool-qa-v1.json`，并用 `recovered_female_highres_pool` / `portrait_pool_recovered_female_s79_2` 单独登记 194 张 recovered 女性高清母版派生产物；S73.10.6 已新增 `scripts/frontendPortraitCompressionQa.js`、`qa:portrait-compression` 和 `public/assets/ui/portraits/portrait-compression-qa-v1.json`，当前统一校验 790 张 active 立绘的主图、缩略图、低清占位、safeArea、focalPoint、移动裁切、文件预算和禁止 eager load；S74-S79 可以通过 manifest 中已审核的玩家池、通用 NPC 池、重要 NPC 专属池、状态姿态池、场景锚点池、年轻女性补充池和 S79.2 recovered 女性高清池 `portraitRef` 按需懒加载使用。
 
+S88.7 主动来函后续簿补充：`npcActiveRequestView.followUpTasks` 只从已裁决的安全 `items` 派生，不读取 raw `npcActiveRequestLedger`；它把 `under_review`、`reported`、`converted_to_risk` 和 `accepted_pending_server_resolution` 的 follow-up 转成公开 taskRoute、状态、draftText、NPC 摘要、证据 refs、风险标签和 proposal-only/server-owned/browser-draft-only 边界，不收录 `active`、`deferred`、`refused` 或 `expired`。React 人物页“来函后续簿”只展示该安全 view 并写本地行动草稿，不提交普通回合、不调用 resolver，也不创建真实任务、扣资源、写婚姻、成弹劾/定罪、处置背叛或公开 hidden 私档。
+
 ## 3. 核心体验
 
 玩家没有固定选项，主要通过自由文本行动推进游戏。AI 作为世界引擎，负责叙事、意图理解、出题、评分、角色反馈和世界变化建议；服务器负责状态存储、数值边界、晋级规则、作弊惩罚、官场任免、长期事件、可见性过滤和持久化。
@@ -368,6 +370,8 @@ S54-S59 已完成的数据库拆表必须继续保持 JSON 默认可玩，并保
 ## 8. 当前领域账本与安全 View
 
 已落地的 server-owned / view-first 数据域：
+
+S88.7 补充：`npcActiveRequestView.followUpTasks` 是主动来函安全 view 的派生子视图，不是新持久账本。它只消费已清洗 `items[].outcome.followUpView` 和 public resolution ref，公开后续复核 route、状态、draftText、证据 refs、风险标签与服务器边界，供浏览器展示“来函后续簿”和写本地草稿；真实资源、婚姻、弹劾、定罪、背叛查证、人情债和持久关系结果仍由后续服务器 resolver 或普通回合裁决。
 
 - `worldEntities` / `worldEntityView`：朝廷衙门、地方士绅、书院、军镇、盐漕、赈务等制度实体压力。
 - `worldThreads` / `worldThreadView`：主动 NPC、长期事件、官场差事、身份联动和高压实体整理成世界议程。

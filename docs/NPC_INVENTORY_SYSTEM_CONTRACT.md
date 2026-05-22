@@ -110,6 +110,8 @@ S85.3-S85.4 新增 NPC 主动来函和礼法动作服务器裁决层：
 
 S88.7 起，主动来函回应和逾期结果还必须生成 `npc_active_request_resolver` 安全 trace，包含 request type、回应动作、状态、处置分层、公开风险标签、安全 source refs、public resolution ref 和服务器边界；该 trace 可进入请求 `auditRefs`、普通 turn feedback、`npcActiveRequestView.outcome.resolverTrace`、`worldThreadView` 和 `worldEntities` 公开压力，但不得包含 raw ledger path、hiddenDossier、privateSignalTags、provider payload、prompt、SQLite 行、资源 delta、配偶字段、弹劾成案或背叛真相。论道、切磋、求爱和议婚结果还必须生成 `npc_relationship_action_resolver` trace，记录 eligibility、blocker count、ignored client result fields、公开 source refs 和服务器边界，并随 `npcInteractionLedger` 安全记录返回。
 
+S88.7 后续簿切片新增 `npcActiveRequestView.followUpTasks`。该视图只从已清洗的 resolved active request item 与 `outcome.followUpView` 派生，公开 `taskRoute`、状态、`draftText`、NPC 摘要、证据 refs、风险标签和 proposal-only/server-owned/browser-draft-only 边界；`deferred`、`refused`、`expired` 和仍 active 的来函不得进入后续簿。浏览器“拟后续”只写本地行动草稿，不创建真实任务、不提交 resolver、不结算资源、婚姻、弹劾、背叛、人情债或 hidden 私档。
+
 普通回合、SSE、考试 payload 和 player-state 返回 `npcActiveRequestView`；NPC 详情返回 `relationshipActionEligibilityView`。兼容 `worldState`、redacted player API、SQLite 派生表和 prompt context 必须剥离 raw `npcActiveRequestLedger` 与 NPC 私档，只暴露安全标题、请求类型、NPC 公开名、期限、风险标签、允许回应、服务器边界、公开 outcome 和安全 resolver trace。
 
 ## 3. 安全 API

@@ -100,13 +100,19 @@ test("S88.7 NPC active request follow-up view gives type-specific safe next acti
     assert.ok(afterItem, requestType);
     assert.deepEqual(afterItem.responseOptions, []);
     assert.deepEqual(afterItem.allowedResponseActions, []);
+    const afterTask = afterView.followUpTasks.find((task) => task.requestId === created.request.requestId);
+    assert.ok(afterTask, requestType);
+    assert.equal(afterTask.boundaries.serverOwnsFollowUp, true);
+    assert.equal(afterTask.boundaries.proposalOnly, true);
+    assert.equal(afterTask.boundaries.browserDraftOnly, true);
+    assert.match(afterTask.draftText, /续办|核|登记|查/);
     const followUp = resolved.request.outcome.followUpView;
     assert.equal(followUp.followUpKind, followUpKind);
     assert.equal(followUp.boundaries.serverOwnsFollowUp, true);
     assert.equal(followUp.boundaries.browserDraftOnly, true);
     assert.match(JSON.stringify(followUp), expectedText);
     assert.doesNotMatch(
-      JSON.stringify(followUp),
+      JSON.stringify({ followUp, afterTask }),
       /hiddenDossier|privateSignalTags|trueAssets|secretRelationships|rawProvider|statePatch|world_sessions|sk-[A-Za-z0-9_-]{6,}/
     );
   }
@@ -120,6 +126,21 @@ test("S88.7 NPC active request follow-up view gives type-specific safe next acti
   assert.equal(deferredItem.status, "deferred");
   assert.ok(deferredItem.responseOptions.length > 0);
   assert.ok(deferredItem.allowedResponseActions.includes("accept"));
+  assert.equal(
+    buildNpcActiveRequestView(worldState, { includeResolved: true })
+      .followUpTasks.some((task) => task.requestId === deferred.request.requestId),
+    false
+  );
+
+  const refused = createNpcActiveRequest(worldState, "petition");
+  assert.equal(refused.ok, true);
+  const refusedResult = resolveNpcActiveRequest(worldState, refused.request.requestId, "refuse");
+  assert.equal(refusedResult.request.status, "refused");
+  assert.equal(
+    buildNpcActiveRequestView(worldState, { includeResolved: true })
+      .followUpTasks.some((task) => task.requestId === refused.request.requestId),
+    false
+  );
 
   assertNoSensitiveLeak(buildNpcActiveRequestView(worldState, { includeResolved: true }));
 });

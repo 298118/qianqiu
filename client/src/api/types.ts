@@ -411,11 +411,51 @@ export type NpcActiveRequestResponseOptionView = JsonObject & {
   readonly serverBoundary?: string;
 };
 
+export type NpcActiveRequestFollowUpTaskView = JsonObject & {
+  readonly schemaVersion?: string;
+  readonly taskId?: string;
+  readonly sourceType?: string;
+  readonly requestId?: string;
+  readonly requestType?: string;
+  readonly requestTypeLabel?: string;
+  readonly publicResolutionRef?: string;
+  readonly followUpKind?: string;
+  readonly taskRoute?: string;
+  readonly taskRouteLabel?: string;
+  readonly status?: string;
+  readonly statusLabel?: string;
+  readonly title?: string;
+  readonly publicSummary?: string;
+  readonly nextStep?: string;
+  readonly draftText?: string;
+  readonly npc?: JsonObject & {
+    readonly npcId?: string;
+    readonly displayName?: string;
+    readonly title?: string;
+  };
+  readonly evidenceRefs?: readonly string[];
+  readonly riskTags?: readonly string[];
+  readonly urgency?: string;
+  readonly createdTurn?: number;
+  readonly lastUpdatedTurn?: number;
+  readonly boundaries?: JsonObject & {
+    readonly serverOwnsFollowUp?: boolean;
+    readonly proposalOnly?: boolean;
+    readonly browserDraftOnly?: boolean;
+    readonly resourcesNotApplied?: boolean;
+    readonly relationshipNotFinal?: boolean;
+    readonly marriageAndDisciplineNotFinal?: boolean;
+    readonly privateNpcDossierRedacted?: boolean;
+    readonly noHiddenTruthAdjudication?: boolean;
+  };
+};
+
 export type NpcActiveRequestView = JsonObject & {
   readonly schemaVersion?: string;
   readonly ownerActorId?: string;
   readonly totalItems?: number;
   readonly items?: readonly NpcActiveRequestItemView[];
+  readonly followUpTasks?: readonly NpcActiveRequestFollowUpTaskView[];
   readonly recentEvents?: readonly string[];
   readonly allowedRequestTypes?: readonly string[];
   readonly allowedResponseActions?: readonly string[];
