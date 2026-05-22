@@ -2323,7 +2323,7 @@ describe("S74.1 React client shell", () => {
         expect(body).toMatchObject({
           surfaceId: "court-debate",
           draftKind: "balanced_debate",
-          selectedEvidenceRefs: ["eventArchiveView:event-1"]
+          selectedEvidenceRefs: ["eventArchiveView:event-1", "economyTraceView:trade:paper"]
         });
         return new Response(JSON.stringify({
           schemaVersion: "s78.topicDraft.v1",
@@ -2336,8 +2336,8 @@ describe("S74.1 React client shell", () => {
             surfaceId: "court-debate",
             draftKind: "balanced_debate",
             draftTitle: "折中议",
-            draftText: "请召诸臣廷议，先核边饷催报，再拟稳妥章程。",
-            evidenceRefs: ["eventArchiveView:event-1"],
+            draftText: "请召诸臣廷议，先核边饷催报与纸价议价解释，再拟稳妥章程。",
+            evidenceRefs: ["eventArchiveView:event-1", "economyTraceView:trade:paper"],
             riskNote: "粮饷不足时宜先复核。",
             nextStep: "写入底部奏折后呈上。",
             source: "mock-ai"
@@ -2369,14 +2369,22 @@ describe("S74.1 React client shell", () => {
     expect(dialog.textContent || "").toContain("经济解释 · 月账");
     expect(dialog.textContent || "").not.toContain("economyTraceView");
 
+    fireEvent.click(screen.getByLabelText(/纸价议价解释/));
     fireEvent.click(screen.getByRole("button", { name: "AI 拟稿" }));
-    await waitFor(() => expect((screen.getByLabelText("专题草稿正文") as HTMLTextAreaElement).value).toBe("请召诸臣廷议，先核边饷催报，再拟稳妥章程。"));
+    await waitFor(() => expect((screen.getByLabelText("专题草稿正文") as HTMLTextAreaElement).value).toBe("请召诸臣廷议，先核边饷催报与纸价议价解释，再拟稳妥章程。"));
     fireEvent.click(screen.getByRole("button", { name: "写入底部奏折" }));
 
     expect(useUiStateStore.getState().actionDraft).toMatchObject({
       source: "role-surface",
       targetPage: "game",
-      text: "请召诸臣廷议，先核边饷催报，再拟稳妥章程。"
+      text: "请召诸臣廷议，先核边饷催报与纸价议价解释，再拟稳妥章程。",
+      draftContext: {
+        surfaceId: "court-debate",
+        draftKind: "balanced_debate",
+        evidenceRefs: ["eventArchiveView:event-1", "economyTraceView:trade:paper"],
+        status: "client_hint",
+        generatedAtTurn: 3
+      }
     });
     const requestedUrls = fetchMock.mock.calls.map(([url]) => String(url));
     expect(requestedUrls).toContain(`/api/game/topic-surface/${sessionId}/court-debate`);

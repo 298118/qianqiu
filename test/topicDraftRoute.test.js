@@ -7,7 +7,10 @@ const path = require("node:path");
 process.env.AI_PROVIDER = "mock";
 
 const { createInitialState } = require("../src/game/initialState");
+const { createLandSurveyDelegatedTask } = require("../src/game/delegatedTasks");
+const { resolveTradeRequest } = require("../src/game/tradeLedger");
 const { buildTopicSurfaceView } = require("../src/game/topicSurfaceView");
+const { normalizeTopicDraftTurnContext } = require("../src/game/topicDrafts");
 const { writeSession } = require("../src/storage/sessionStore");
 const { createFetchSafeServer } = require("../test-helpers/fetchSafeServer");
 
@@ -101,6 +104,44 @@ function assertNoSensitiveText(payload) {
     serialized,
     /SEALED_|hidden[ _-]?(?:notes?|intent)?|raw[ _-]?(?:provider|payload|prompt|audit|table|ledger|state|row)|provider\s+payload|prompt|完整提示词|localPath|file:\/\/|data[\\/](?:sessions|audit)|[A-Za-z]:[\\/]|\/(?:mnt|home|Users|tmp|var|opt|workspace)\/|OPENAI_API_KEY|DEEPSEEK_API_KEY|MIMO_API_KEY|ANTHROPIC_API_KEY|sk-[A-Za-z0-9_-]{6,}|tp-[A-Za-z0-9_-]{6,}/i
   );
+}
+
+function assertNoRawEconomyText(payload) {
+  assert.doesNotMatch(
+    JSON.stringify(payload),
+    /assetLedger|resourceLedger|inventoryLedger|tradeLedger|delegatedTaskLedger|marketPriceLedger|npcEconomyLedger|resourceDelta|relationshipSignals|auditRecord|rawSql|SQLite|sqlite|SQL|safe_search_index|SEALED_|provider payload|sk-[A-Za-z0-9_-]{6,}/i
+  );
+}
+
+function seedEconomyTopicSignals(worldState = {}) {
+  worldState.turnCount = Math.max(Number(worldState.turnCount) || 0, 20);
+  worldState.player.localTreasury = 120;
+  worldState.npcEconomyLedger = {
+    ...(worldState.npcEconomyLedger || {}),
+    recentEvents: [
+      "人情债月账：韩员外为修桥垫付，公开人情债略增。",
+      "provider payload hiddenNotes data/sessions/secret.json"
+    ]
+  };
+  resolveTradeRequest(worldState, {
+    npcId: "npc:magistrate:gentry-han",
+    tradeId: "trade:topic:draft-economy",
+    silverDelta: 0,
+    offerSummary: "询问纸张与粟米行价。"
+  }, {
+    npcResponse: "可再议。",
+    proposal: {
+      status: "countered",
+      publicSummary: "韩员外交易议价：纸张与粮价消息尚待服务器确认。",
+      riskTags: ["议价"]
+    }
+  });
+  createLandSurveyDelegatedTask(worldState, {
+    assigneeActorId: "npc:magistrate:registrar-lu",
+    targetRef: "geo:county:qinghe:east-village",
+    commandText: "丈量东乡田亩，核对鱼鳞册与实耕。",
+    budget: 24
+  });
 }
 
 function assertTopicDraftEnvelope(payload, options = {}) {
@@ -374,6 +415,142 @@ test("S88.6 topic draft can cite domain consequence evidence safely", async (t) 
     JSON.stringify(payload),
     /SEALED_BROWSER|cityPolicyLedger|market:grain|stateDelta|playerDelta|auditRecord|rawSql|sk-browser-secret/
   );
+});
+
+test("S88.8 topic draft can cite economy trace evidence safely", async (t) => {
+  let providerContext = null;
+  let economyRef = null;
+  const provider = {
+    modelRoute: { provider: "openai" },
+    async draftTopicSurface(context) {
+      providerContext = context;
+      assert.equal(context.surfaceId, "memorial-review");
+      const providerEconomyRef = context.evidenceRefs.find((ref) => ref.refId === economyRef.refId);
+      assert.ok(providerEconomyRef);
+      assert.equal(providerEconomyRef.sourceView, "economyTraceView");
+      assert.equal(providerEconomyRef.sourceLabel, "经济解释");
+      assert.equal(providerEconomyRef.domainLabel, "月账");
+      assert.match(providerEconomyRef.adjudicationBoundary, /服务器裁决/);
+      assert.match(providerEconomyRef.adjudicationBoundary, /交易成交|资源扣减|委派结果|人情债/);
+      assertNoSensitiveText(context);
+      assertNoRawEconomyText(context);
+      return {
+        source: "provider-ai",
+        surfaceId: context.surfaceId,
+        draftKind: context.draftKind,
+        draftTitle: "月账复核",
+        draftText: "臣谨据公开经济解释陈明纸价与修桥垫付缘由，只请部院复核凭据，后果仍候服务器裁决。",
+        evidenceRefs: [economyRef.refId, "economyTraceView:forged-secret"],
+        riskNote: "经济解释只作账解，不定钱粮与人情债。",
+        nextStep: "写入底部草稿后再呈上。"
+      };
+    }
+  };
+  const server = createTestServerWithProvider(provider);
+  const worldState = await createStoredSession({ role: "magistrate", playerName: "经济拟稿" });
+  seedEconomyTopicSignals(worldState);
+  await writeSession(worldState);
+  const view = buildTopicSurfaceView(worldState, { surfaceId: "memorial-review" });
+  economyRef = view.evidenceRefs.find((ref) =>
+    ref.sourceView === "economyTraceView" && /交易议价|韩员外/.test(`${ref.label}${ref.summary}`)
+  );
+  t.after(async () => {
+    await removeSessionArtifacts(worldState.sessionId);
+    await server.close();
+  });
+
+  assert.ok(economyRef);
+  const { response, payload } = await postJson(`${server.baseUrl}/api/ai/topic-draft/${worldState.sessionId}`, {
+    surfaceId: "memorial-review",
+    draftKind: view.draftSlots[0].draftKind,
+    selectedEvidenceRefs: [economyRef.refId, "economyTraceView:browser-forged"],
+    providerPayload: "raw provider prompt sk-browser-secret-123456",
+    worldState: { tradeLedger: { hiddenNotes: "SEALED_BROWSER" } }
+  });
+
+  assert.equal(response.status, 200);
+  assert.ok(providerContext);
+  assertTopicDraftEnvelope(payload, {
+    sessionId: worldState.sessionId,
+    source: "provider-ai",
+    surfaceId: "memorial-review"
+  });
+  assert.deepEqual(providerContext.selectedEvidenceRefs, [economyRef.refId]);
+  assert.deepEqual(payload.topicDraft.evidenceRefs, [economyRef.refId]);
+  assert.doesNotMatch(JSON.stringify(payload), /browser-forged|forged-secret|SEALED_BROWSER|tradeLedger|sk-browser-secret/);
+  assertNoRawEconomyText(payload);
+});
+
+test("S88.8 local topic draft fallback explains economy evidence without settlement power", async (t) => {
+  const provider = {
+    modelRoute: { provider: "openai" },
+    async draftTopicSurface() {
+      throw new Error("raw provider payload sk-provider-secret-123456 data/sessions/private.json");
+    }
+  };
+  const server = createTestServerWithProvider(provider);
+  const worldState = await createStoredSession({ role: "magistrate", playerName: "经济降级" });
+  seedEconomyTopicSignals(worldState);
+  await writeSession(worldState);
+  const view = buildTopicSurfaceView(worldState, { surfaceId: "memorial-review" });
+  const economyRef = view.evidenceRefs.find((ref) =>
+    ref.sourceView === "economyTraceView" && /交易议价|韩员外/.test(`${ref.label}${ref.summary}`)
+  );
+  t.after(async () => {
+    await removeSessionArtifacts(worldState.sessionId);
+    await server.close();
+  });
+
+  assert.ok(economyRef);
+  const { response, payload } = await postJson(`${server.baseUrl}/api/ai/topic-draft/${worldState.sessionId}`, {
+    surfaceId: "memorial-review",
+    draftKind: view.draftSlots[0].draftKind,
+    selectedEvidenceRefs: [economyRef.refId]
+  });
+
+  assert.equal(response.status, 200);
+  assertTopicDraftEnvelope(payload, {
+    sessionId: worldState.sessionId,
+    source: "local-rule",
+    status: "fallback",
+    surfaceId: "memorial-review"
+  });
+  assert.deepEqual(payload.topicDraft.evidenceRefs, [economyRef.refId]);
+  assert.match(payload.topicDraft.draftText, /经济解释/);
+  assert.match(payload.topicDraft.draftText, /不视为交易成交|委派结算|服务器裁决/);
+  assert.doesNotMatch(payload.topicDraft.draftText, /已成交|已拨款|已结算|执行完毕/);
+  assertNoRawEconomyText(payload);
+});
+
+test("S88.8 turn draft context revalidates economy evidence hints against the current surface", () => {
+  const worldState = createInitialState({ role: "magistrate", playerName: "经济提示校验" });
+  seedEconomyTopicSignals(worldState);
+  const memorial = buildTopicSurfaceView(worldState, { surfaceId: "memorial-review" });
+  const economyRef = memorial.evidenceRefs.find((ref) =>
+    ref.sourceView === "economyTraceView" && /交易议价|韩员外/.test(`${ref.label}${ref.summary}`)
+  );
+
+  assert.ok(economyRef);
+  const verified = normalizeTopicDraftTurnContext(worldState, {
+    surfaceId: "memorial-review",
+    draftKind: memorial.draftSlots[0].draftKind,
+    evidenceRefs: [economyRef.refId, "economyTraceView:forged-secret"],
+    canonicalEchoRefs: ["domainConsequenceEcho:forged"],
+    generatedAtTurn: memorial.generatedAtTurn,
+    status: "client_hint"
+  });
+  const blockedOnTrial = normalizeTopicDraftTurnContext(worldState, {
+    surfaceId: "trial",
+    draftKind: "investigate_case",
+    evidenceRefs: [economyRef.refId]
+  });
+
+  assert.ok(verified);
+  assert.deepEqual(verified.evidenceRefs, [economyRef.refId]);
+  assert.deepEqual(verified.canonicalEchoRefs, []);
+  assert.equal(verified.status, "verified");
+  assert.equal(blockedOnTrial, null);
+  assert.doesNotMatch(JSON.stringify(verified), /forged-secret|domainConsequenceEcho:forged|tradeLedger|resourceDelta|relationshipSignals|auditRecord/);
 });
 
 test("POST /api/ai/topic-draft/:sessionId falls back for provider failure and unsafe drafts", async (t) => {

@@ -69,6 +69,35 @@ function canonicalEchoRefsForSelectedEvidence(evidenceRefs = [], context = {}) {
   return collectDomainConsequenceEchoRefs(refs).slice(0, TOPIC_DRAFT_MAX_SELECTED_REFS);
 }
 
+function topicDraftSourceLabel(sourceView) {
+  const text = cleanText(sourceView, "", 96);
+  if (text === "economyTraceView") return "经济解释";
+  if (text === "npcActiveRequestView") return "来函后续";
+  if (text === "domainConsequenceView") return "后果追踪";
+  if (text === "officialCareerView") return "官署材料";
+  if (text === "eventArchiveView") return "事件档案";
+  if (text === "mapContextView") return "舆图材料";
+  return text || "公开投影";
+}
+
+function topicDraftDomainLabel(domain) {
+  const text = cleanText(domain, "", 48);
+  if (text === "economy") return "月账";
+  if (text === "events") return "案牍";
+  if (text === "people") return "人物";
+  if (text === "military") return "军务";
+  if (text === "offices") return "官署";
+  if (text === "map" || text === "geography") return "舆图";
+  if (text === "memory") return "记忆";
+  if (text === "player") return "自身";
+  return text || "公开材料";
+}
+
+function topicDraftEvidenceBoundary(ref = {}) {
+  if (ref.sourceView !== "economyTraceView") return "";
+  return "经济解释只作公开账解和拟稿材料；交易成交、资源扣减、委派结果、人情债和关系变化仍由服务器裁决。";
+}
+
 function normalizeTopicDraftRequest(body = {}) {
   const input = isPlainObject(body) ? body : {};
   const surfaceId = normalizeSurfaceId(input.surfaceId || input.surfaceType);
@@ -128,9 +157,13 @@ function buildTopicDraftContext(worldState = {}, request = {}) {
         label: ref.label,
         summary: ref.summary,
         domain: ref.domain,
+        domainLabel: topicDraftDomainLabel(ref.domain),
         sourceView: ref.sourceView,
+        sourceLabel: topicDraftSourceLabel(ref.sourceView),
         confidence: ref.confidence
       };
+      const adjudicationBoundary = topicDraftEvidenceBoundary(ref);
+      if (adjudicationBoundary) evidence.adjudicationBoundary = adjudicationBoundary;
       const canonicalEchoRefs = collectDomainConsequenceEchoRefs(ref.canonicalEchoRefs, ref.sourceId, ref.refId);
       if (canonicalEchoRefs.length) evidence.canonicalEchoRefs = canonicalEchoRefs;
       return evidence;
@@ -149,14 +182,23 @@ function buildTopicDraftContext(worldState = {}, request = {}) {
 }
 
 function evidenceSummary(context = {}) {
-  const labels = asArray(context.evidenceRefs).slice(0, 3).map((ref) => cleanText(ref.label, "", 36)).filter(Boolean);
-  return labels.length ? labels.join("、") : "当前公开材料";
+  const evidenceRefs = asArray(context.evidenceRefs);
+  const labels = evidenceRefs.slice(0, 3).map((ref) => cleanText(ref.label, "", 36)).filter(Boolean);
+  const sourceLabels = evidenceRefs
+    .map((ref) => cleanText(ref.sourceLabel, "", 24))
+    .filter((label, index, values) => label && values.indexOf(label) === index);
+  const sourceSuffix = sourceLabels.includes("经济解释") ? "（含经济解释）" : "";
+  return labels.length ? `${labels.join("、")}${sourceSuffix}` : "当前公开材料";
 }
 
 function localDraftText(context = {}) {
   const material = evidenceSummary(context);
   const template = cleanText(context.draftTemplate, "据公开材料拟稿，先陈事实，再请服务器裁决后果。", 140);
   const note = context.playerNote ? `并附玩家按语：${context.playerNote}。` : "";
+  const hasEconomyEvidence = asArray(context.evidenceRefs).some((ref) => ref.sourceView === "economyTraceView");
+  const economyBoundary = hasEconomyEvidence
+    ? "其中经济解释仅作账解材料，不视为交易成交、资源扣减、委派结算、人情债或关系变化；"
+    : "";
   const surfaceLead = {
     "memorial-review": "臣谨阅所选奏报",
     "edict-draft": "拟谕中外有司",
@@ -165,7 +207,7 @@ function localDraftText(context = {}) {
     "war-council": "本营拟集军议",
     "npc-profile": "拟就公开谱牒先行问讯"
   }[context.surfaceId] || "据此拟稿";
-  return `${surfaceLead}，所据为${material}。${template}${note}请依公开证据、职分权限与后续服务器裁决办理。`;
+  return `${surfaceLead}，所据为${material}。${economyBoundary}${template}${note}请依公开证据、职分权限与后续服务器裁决办理。`;
 }
 
 function buildLocalTopicDraftResponse(worldState = {}, request = {}, options = {}) {
