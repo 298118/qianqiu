@@ -76,6 +76,11 @@ const RESOLVER_INPUT_SOURCE_COLLECTIONS = Object.freeze([
     collections: Object.freeze(["followUpEvidence.economy"])
   }),
   Object.freeze({
+    sourceView: "economyTraceView",
+    domain: "economy",
+    collections: Object.freeze(["traceItems"])
+  }),
+  Object.freeze({
     sourceView: "officialCareerView",
     domain: "player",
     collections: Object.freeze(["careerHistory", "recentAssignments", "activeDuties", "courtEntries", "courtEntryFollowUps"])

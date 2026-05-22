@@ -11,6 +11,8 @@ const {
   createNpcActiveRequest,
   resolveNpcActiveRequest
 } = require("../src/game/npcActiveRequests");
+const { createLandSurveyDelegatedTask } = require("../src/game/delegatedTasks");
+const { resolveTradeRequest } = require("../src/game/tradeLedger");
 const {
   buildTopicSurfaceView,
   buildTopicSurfaceViewIndex
@@ -253,6 +255,64 @@ test("S88.7 topic surfaces expose NPC follow-up evidence as read-only material",
     ref.sourceView === "npcActiveRequestView" && /引荐|拜会|师友|同年/.test(`${ref.label}${ref.summary}`)
   ), false);
   assertNoSensitiveText({ memorial, profile, trial });
+});
+
+test("S88.8 topic surfaces route economy trace evidence by safe topic allowlist", () => {
+  const worldState = createInitialState({
+    dynasty: "明",
+    year: 1644,
+    role: "magistrate",
+    playerName: "经济专题"
+  });
+  worldState.turnCount = 20;
+  worldState.player.localTreasury = 120;
+  worldState.npcEconomyLedger.recentEvents = [
+    "人情债月账：韩员外为修桥垫付，公开人情债略增。"
+  ];
+  resolveTradeRequest(worldState, {
+    npcId: "npc:magistrate:gentry-han",
+    tradeId: "trade:topic:economy",
+    silverDelta: 0,
+    offerSummary: "询问纸张与粟米行价。"
+  }, {
+    npcResponse: "可再议。",
+    proposal: {
+      status: "countered",
+      publicSummary: "韩员外交易议价：纸张与粮价消息尚待服务器确认。",
+      riskTags: ["议价"]
+    }
+  });
+  const delegated = createLandSurveyDelegatedTask(worldState, {
+    assigneeActorId: "npc:magistrate:registrar-lu",
+    targetRef: "geo:county:qinghe:east-village",
+    commandText: "丈量东乡田亩，核对鱼鳞册与实耕。",
+    budget: 24
+  });
+  assert.equal(delegated.ok, true);
+
+  const memorial = buildTopicSurfaceView(worldState, { surfaceId: "memorial-review" });
+  const profile = buildTopicSurfaceView(worldState, { surfaceId: "npc-profile" });
+  const trial = buildTopicSurfaceView(worldState, { surfaceId: "trial" });
+  const warCouncil = buildTopicSurfaceView(worldState, { surfaceId: "war-council" });
+
+  assert.ok(memorial.sourceViews.some((source) => source.sourceView === "economyTraceView"));
+  assert.ok(memorial.evidenceRefs.some((ref) =>
+    ref.sourceView === "economyTraceView" && /交易议价|韩员外/.test(`${ref.label}${ref.summary}`)
+  ));
+  assert.ok(memorial.evidenceRefs.some((ref) =>
+    ref.sourceView === "economyTraceView" && /丈量田亩|委派|预算/.test(`${ref.label}${ref.summary}`)
+  ));
+  assert.ok(profile.evidenceRefs.some((ref) =>
+    ref.sourceView === "economyTraceView" && /人情债|韩员外/.test(`${ref.label}${ref.summary}`)
+  ));
+  assert.equal(profile.evidenceRefs.some((ref) =>
+    ref.sourceView === "economyTraceView" && /资产维护|保养|库存/.test(`${ref.label}${ref.summary}`)
+  ), false);
+  assert.equal(trial.evidenceRefs.some((ref) => ref.sourceView === "economyTraceView"), false);
+  assert.ok(warCouncil.evidenceRefs.some((ref) =>
+    ref.sourceView === "economyTraceView" && /丈量田亩|预算|市价/.test(`${ref.label}${ref.summary}`)
+  ));
+  assertNoSensitiveText({ memorial, profile, trial, warCouncil });
 });
 
 test("GET /api/game/topic-surface/:sessionId/:surfaceId returns read-only safe projection", async (t) => {

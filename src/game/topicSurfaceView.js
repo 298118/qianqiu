@@ -27,6 +27,7 @@ const TOPIC_SURFACE_CONFIG = Object.freeze({
       "courtResponseView",
       "officialCareerView",
       "npcActiveRequestView",
+      "economyTraceView",
       "eventArchiveView",
       "playerMonthlyBriefingView",
       "localAffairsDocketView",
@@ -65,7 +66,8 @@ const TOPIC_SURFACE_CONFIG = Object.freeze({
       "worldThreadView",
       "mapContextView",
       "militaryDiplomacyView",
-      "economicFiscalView"
+      "economicFiscalView",
+      "economyTraceView"
     ]),
     draftSlots: Object.freeze([
       { id: "relief-edict", label: "赈济谕旨", draftKind: "relief_edict", template: "草拟赈济谕旨，要求先核公开灾情、仓储与地方官责。" },
@@ -90,6 +92,7 @@ const TOPIC_SURFACE_CONFIG = Object.freeze({
       "officialPostingsView",
       "npcActiveRequestView",
       "actorMemoryView",
+      "economyTraceView",
       "aiControlAuditView",
       "eventArchiveView",
       "worldThreadView"
@@ -136,6 +139,7 @@ const TOPIC_SURFACE_CONFIG = Object.freeze({
     sourceViews: Object.freeze([
       "militaryDiplomacyView",
       "domainConsequenceView",
+      "economyTraceView",
       "mapContextView",
       "eventArchiveView",
       "officialPostingsView",
@@ -154,13 +158,14 @@ const TOPIC_SURFACE_CONFIG = Object.freeze({
     label: "人物档案",
     title: "人物公开档案",
     summary: "展示玩家已经可见的人物履历、关系摘要和近期公开记忆，并给出拜访、试探、结交或弹劾草稿。",
-    domains: Object.freeze(["people", "memory", "offices", "events", "player"]),
+    domains: Object.freeze(["people", "memory", "offices", "events", "economy", "player"]),
     sourceViews: Object.freeze([
       "worldPeopleView",
       "actorMemoryView",
       "examNetwork",
       "relationshipView",
       "npcActiveRequestView",
+      "economyTraceView",
       "officialPostingsView"
     ]),
     draftSlots: Object.freeze([

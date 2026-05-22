@@ -6,11 +6,13 @@ const path = require("node:path");
 const { isBuiltin } = require("node:module");
 
 const { createInitialState } = require("../src/game/initialState");
+const { createLandSurveyDelegatedTask } = require("../src/game/delegatedTasks");
 const {
   createNpcActiveRequest,
   resolveNpcActiveRequest,
   runNpcActiveRequestStep
 } = require("../src/game/npcActiveRequests");
+const { resolveTradeRequest } = require("../src/game/tradeLedger");
 const { SAFE_WORLD_SEARCH_SOURCE } = require("../src/game/safeWorldSearch");
 const { createSessionRecord } = require("../src/storage/sessionRecord");
 const { createSqliteSessionAdapter } = require("../src/storage/sqliteSessionAdapter");
@@ -116,6 +118,34 @@ function createSearchWorldState() {
       appliedAtTurn: worldState.turnCount
     }]
   };
+  return worldState;
+}
+
+function addEconomyTraceFixtures(worldState) {
+  worldState.player.role = "magistrate";
+  worldState.player.localTreasury = 120;
+  worldState.npcEconomyLedger.recentEvents = [
+    "人情债月账：韩员外为修桥垫付，公开人情债略增。"
+  ];
+  resolveTradeRequest(worldState, {
+    npcId: "npc:magistrate:gentry-han",
+    tradeId: "trade:stored:economy",
+    silverDelta: 0,
+    offerSummary: "询问纸张与粟米行价。"
+  }, {
+    npcResponse: "可再议。",
+    proposal: {
+      status: "countered",
+      publicSummary: "韩员外交易议价：纸张与粮价消息尚待服务器确认。",
+      riskTags: ["议价"]
+    }
+  });
+  createLandSurveyDelegatedTask(worldState, {
+    assigneeActorId: "npc:magistrate:registrar-lu",
+    targetRef: "geo:county:qinghe:east-village",
+    commandText: "丈量东乡田亩，核对鱼鳞册与实耕。",
+    budget: 24
+  });
   return worldState;
 }
 
@@ -263,6 +293,48 @@ test("S88.7 SQLite safe search syncs NPC follow-up evidence rows", {
   assert.doesNotMatch(
     JSON.stringify({ result, storedRows }),
     /SEALED_|npcActiveRequestLedger|hiddenDossier|privateSignalTags|providerPayload|provider_payload|safe_search_index|safe_search_fts|state_patch|world_sessions|sk-[A-Za-z0-9_-]{6,}|\/mnt\/e/
+  );
+});
+
+test("S88.8 SQLite safe search syncs economy trace rows from world state projection", {
+  skip: hasNodeSqlite ? false : "node:sqlite is unavailable in this Node.js runtime"
+}, async (t) => {
+  const { adapter, dbPath } = createHarness(t);
+  const worldState = addEconomyTraceFixtures(createInitialState({
+    role: "magistrate",
+    playerName: "经济检索库"
+  }));
+  worldState.turnCount = 24;
+  await adapter.writeSession(clone(worldState));
+
+  const trade = await adapter.searchSafeSearchIndex(worldState.sessionId, {
+    query: "韩员外 交易议价",
+    domain: "reports",
+    pageSize: 5
+  });
+  const debt = await adapter.searchSafeSearchIndex(worldState.sessionId, {
+    query: "人情债 月账",
+    domain: "reports",
+    pageSize: 5
+  });
+  const storedRows = withSqliteDatabase(dbPath, (db) =>
+    db
+      .prepare("SELECT source_view, source_id, title, summary, search_text FROM safe_search_index WHERE session_id = ? AND source_view = ?")
+      .all(worldState.sessionId, "economyTraceView.traceItems")
+  );
+
+  assert.ok(trade.results.some((item) =>
+    item.sourceView === "economyTraceView.traceItems" && /交易议价|韩员外/.test(`${item.title}${item.snippet}`)
+  ));
+  assert.ok(debt.results.some((item) =>
+    item.sourceView === "economyTraceView.traceItems" && /人情债|月账/.test(`${item.title}${item.snippet}`)
+  ));
+  assert.ok(storedRows.some((row) => /交易议价|韩员外/.test(`${row.title}${row.summary}${row.search_text}`)));
+  assert.ok(storedRows.some((row) => /东乡清丈|委派预算/.test(`${row.title}${row.summary}${row.search_text}`)));
+  assert.ok(storedRows.some((row) => /粟米|市价/.test(`${row.title}${row.summary}${row.search_text}`)));
+  assert.doesNotMatch(
+    JSON.stringify({ trade, debt, storedRows }),
+    /SEALED_|assetLedger|resourceLedger|inventoryLedger|tradeLedger|delegatedTaskLedger|marketPriceLedger|npcEconomyLedger|evidenceRefs|resourceDelta|relationshipSignals|safe_search_index|safe_search_fts|world_sessions|sqlite|SQLite|SQL|sk-[A-Za-z0-9_-]{6,}|\/mnt\/e/
   );
 });
 

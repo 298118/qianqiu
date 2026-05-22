@@ -1,6 +1,7 @@
 const { buildActorMemoryView } = require("./actorMemoryLedger");
 const { buildPlayerAiActorProfile } = require("./aiActorProfiles");
 const { buildEconomicFiscalView } = require("./economicFiscal");
+const { buildEconomyTraceView } = require("./economyTraceView");
 const { buildDomainConsequenceView } = require("./domainConsequenceTrace");
 const { collectDomainConsequenceEchoRefs } = require("./domainConsequenceEchoRefs");
 const { buildEventArchiveView } = require("./eventArchive");
@@ -151,6 +152,7 @@ function buildSourceViews(worldState, options = {}) {
   return {
     actorMemoryView: buildActorMemoryView(worldState),
     economicFiscalView: buildEconomicFiscalView(worldState),
+    economyTraceView: buildEconomyTraceView(worldState),
     eventArchiveView: buildEventArchiveView(worldState, { pageSize: options.eventArchivePageSize || 50 }),
     historicalEventArchiveView: buildHistoricalEventArchiveView(worldState),
     intelligenceRumorView: buildIntelligenceRumorView(worldState),
@@ -209,6 +211,9 @@ function summaryForRow(row = {}, fallback = "") {
 function sourceIdForRow(row = {}, sourceView, collection, index) {
   return cleanId(
     row.sourceId ||
+    row.traceId ||
+    row.traceRef ||
+    row.sourceRef ||
     row.refId ||
     row.id ||
     row.chainId ||

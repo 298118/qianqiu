@@ -59,8 +59,9 @@ function cleanText(value, fallback = "", maxLength = ECONOMY_TRACE_CONFIG.maxSum
 }
 
 function cleanId(value, fallback = "") {
-  const text = cleanText(value, fallback, 120);
-  return text.replace(/[^A-Za-z0-9_.:-]+/g, "-").replace(/^-+|-+$/g, "") || fallback;
+  const safeFallback = String(fallback ?? "");
+  const text = String(cleanText(value, safeFallback, 120) || safeFallback);
+  return text.replace(/[^A-Za-z0-9_.:-]+/g, "-").replace(/^-+|-+$/g, "") || safeFallback;
 }
 
 function clampNumber(value, min, max, fallback = min) {
@@ -97,6 +98,52 @@ function statusLabel(status) {
 
 function groupForTrace(traceType) {
   return TRACE_GROUPS[traceType] || "monthly";
+}
+
+function confidenceForTrace(traceType) {
+  if (traceType === "human_debt_monthly") return 0.82;
+  if (traceType === "delegated_task_result" || traceType === "delegated_task_budget") return 0.81;
+  if (traceType === "trade_blocked") return 0.8;
+  if (traceType === "trade_negotiation" || traceType === "trade_expiry") return 0.8;
+  if (traceType === "resource_delta") return 0.79;
+  if (traceType === "npc_relationship_monthly") return 0.76;
+  if (traceType === "market_price_signal") return 0.73;
+  if (traceType === "resource_snapshot") return 0.68;
+  return 0.68;
+}
+
+function topicSurfaceIdsForTrace(traceType) {
+  if (traceType === "resource_delta" || traceType === "resource_snapshot") {
+    return ["memorial-review", "edict-draft", "court-debate"];
+  }
+  if (traceType === "asset_maintenance") return ["memorial-review", "edict-draft"];
+  if (traceType === "inventory_aging") return ["inventory-only"];
+  if (traceType === "trade_negotiation" || traceType === "trade_blocked" || traceType === "trade_expiry") {
+    return ["memorial-review", "court-debate", "npc-profile"];
+  }
+  if (traceType === "delegated_task_budget" || traceType === "delegated_task_result") {
+    return ["memorial-review", "court-debate", "war-council"];
+  }
+  if (traceType === "human_debt_monthly") return ["npc-profile", "memorial-review", "court-debate"];
+  if (traceType === "market_price_signal") return ["edict-draft", "memorial-review", "court-debate", "war-council"];
+  if (traceType === "npc_relationship_monthly") return ["npc-profile", "court-debate"];
+  return ["memorial-review", "court-debate"];
+}
+
+function traceRelatedRefs(traceType, group, affectedLabels = []) {
+  return [
+    `economy-trace-type:${traceType}`,
+    `economy-trace-group:${group}`,
+    ...affectedLabels.map((label) => `economy-label:${label}`)
+  ].map((ref) => cleanId(ref, "")).filter(Boolean).slice(0, ECONOMY_TRACE_CONFIG.maxEvidenceRefs + 2);
+}
+
+function traceScopeRefs(group) {
+  return [`economy-trace-group:${group}`].map((ref) => cleanId(ref, "")).filter(Boolean);
+}
+
+function sourceIdForTrace(traceId) {
+  return cleanId(String(traceId || "").replace(/_/g, "-"), traceId);
 }
 
 function boundary() {
@@ -149,15 +196,26 @@ function makeTraceItem(input = {}, index = 0) {
     ...(amountView ? [amountView.label, amountView.unit] : [])
   ];
   if (coreValues.some(isUnsafeTraceText) || (!title && !publicSummary)) return null;
+  const traceId = cleanId(input.traceId, `${traceType}:${sourceRef}:${index}`);
+  const sourceId = sourceIdForTrace(traceId);
+  const topicSurfaceIds = topicSurfaceIdsForTrace(traceType);
   return {
-    traceId: cleanId(input.traceId, `${traceType}:${sourceRef}:${index}`),
+    traceId,
+    sourceId,
     traceType,
     group,
     groupLabel: groupLabel(group),
     sourceView,
     sourceRef,
     title,
+    label: title,
     publicSummary,
+    summary: publicSummary,
+    visibility: "player_visible",
+    confidence: confidenceForTrace(traceType),
+    topicSurfaceIds,
+    relatedRefs: traceRelatedRefs(traceType, group, affectedLabels),
+    scopeRefs: traceScopeRefs(group),
     status: safeStatus,
     statusLabel: safeStatusLabel,
     affectedLabels,

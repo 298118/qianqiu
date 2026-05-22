@@ -8,11 +8,13 @@ process.env.AI_PROVIDER = "mock";
 
 const gameRoutes = require("../src/routes/game");
 const { createInitialState } = require("../src/game/initialState");
+const { createLandSurveyDelegatedTask } = require("../src/game/delegatedTasks");
 const {
   createNpcActiveRequest,
   resolveNpcActiveRequest,
   runNpcActiveRequestStep
 } = require("../src/game/npcActiveRequests");
+const { resolveTradeRequest } = require("../src/game/tradeLedger");
 const {
   SAFE_WORLD_SEARCH_MAX_PAGE_SIZE,
   SAFE_WORLD_SEARCH_MAX_QUERY_LENGTH,
@@ -98,6 +100,33 @@ function createSearchWorldState() {
   });
   worldState.worldGeography.cities[0].publicSummary =
     "京师为朝廷中枢，官缺与仓场公开可见。prompt_retrieval_index data/sessions/secret sk-safe-search-secret";
+  return worldState;
+}
+
+function addEconomyTraceFixtures(worldState) {
+  worldState.player.localTreasury = 120;
+  worldState.npcEconomyLedger.recentEvents = [
+    "人情债月账：韩员外为修桥垫付，公开人情债略增。"
+  ];
+  resolveTradeRequest(worldState, {
+    npcId: "npc:magistrate:gentry-han",
+    tradeId: "trade:safe-search:economy",
+    silverDelta: 0,
+    offerSummary: "询问纸张与粟米行价。"
+  }, {
+    npcResponse: "可再议。",
+    proposal: {
+      status: "countered",
+      publicSummary: "韩员外交易议价：纸张与粮价消息尚待服务器确认。",
+      riskTags: ["议价"]
+    }
+  });
+  createLandSurveyDelegatedTask(worldState, {
+    assigneeActorId: "npc:magistrate:registrar-lu",
+    targetRef: "geo:county:qinghe:east-village",
+    commandText: "丈量东乡田亩，核对鱼鳞册与实耕。",
+    budget: 24
+  });
   return worldState;
 }
 
@@ -272,6 +301,91 @@ test("S88.7 safe world search indexes NPC follow-up domain evidence without raw 
     serialized,
     /npcActiveRequestLedger|hiddenDossier|privateSignalTags|providerPayload|provider_payload|safe_search_index|safe_search_fts|state_patch|world_sessions|sk-[A-Za-z0-9_-]{6,}|\/mnt\/e/
   );
+});
+
+test("S88.8 safe world search indexes economy trace rows without raw ledger leaks", () => {
+  const worldState = addEconomyTraceFixtures(createInitialState({
+    role: "magistrate",
+    playerName: "经济检索"
+  }));
+  worldState.turnCount = 24;
+
+  const rows = buildSafeSearchRows(worldState);
+  const tradeSearch = searchSafeWorldIndex(worldState, { query: "韩员外 交易议价", domain: "reports", pageSize: 5 });
+  const delegatedSearch = searchSafeWorldIndex(worldState, { query: "东乡清丈 委派预算", domain: "reports", pageSize: 5 });
+  const debtSearch = searchSafeWorldIndex(worldState, { query: "人情债 月账", domain: "reports", pageSize: 5 });
+  const marketSearch = searchSafeWorldIndex(worldState, { query: "药材", domain: "reports", pageSize: 5 });
+  const serialized = JSON.stringify({ rows, tradeSearch, delegatedSearch, debtSearch, marketSearch });
+
+  assert.ok(rows.some((row) => row.sourceView === "economyTraceView.traceItems"));
+  assert.ok(tradeSearch.results.some((result) =>
+    result.sourceView === "economyTraceView.traceItems" && /交易议价|韩员外/.test(`${result.title}${result.snippet}`)
+  ));
+  assert.ok(delegatedSearch.results.some((result) =>
+    result.sourceView === "economyTraceView.traceItems" && /东乡清丈|委派预算/.test(`${result.title}${result.snippet}`)
+  ));
+  assert.ok(debtSearch.results.some((result) =>
+    result.sourceView === "economyTraceView.traceItems" && /人情债|月账/.test(`${result.title}${result.snippet}`)
+  ));
+  assert.ok(marketSearch.results.some((result) =>
+    result.sourceView === "economyTraceView.traceItems" && /药材|市价/.test(`${result.title}${result.snippet}`)
+  ));
+  assert.doesNotMatch(
+    serialized,
+    /assetLedger|resourceLedger|inventoryLedger|tradeLedger|delegatedTaskLedger|marketPriceLedger|npcEconomyLedger|evidenceRefs|resourceDelta|relationshipSignals|sqlite|SQLite|SQL|world_sessions|safe_search_index|providerPayload|hiddenDossier|privateSignalTags|sk-[A-Za-z0-9_-]{6,}|\/mnt\/e/
+  );
+});
+
+test("S88.8 safe world search preserves economy trace rows under global row cap", () => {
+  const worldState = addEconomyTraceFixtures(createInitialState({
+    role: "magistrate",
+    playerName: "经济检索上限"
+  }));
+  worldState.turnCount = 28;
+  const noisyCities = Array.from({ length: 1300 }, (_, index) => ({
+    id: `city-safe-search-economy-noisy-${index}`,
+    countryId: "country-ming",
+    name: `经济噪声城${index}`,
+    visibility: "public",
+    publicSummary: `普通经济噪声 ${index}`,
+    intelConfidence: 50
+  }));
+  const views = {
+    worldGeographyView: {
+      countries: [],
+      cities: noisyCities,
+      routes: [],
+      frontierZones: []
+    },
+    worldPeopleView: {
+      npcs: [],
+      households: [],
+      relationships: []
+    },
+    officialPostingsView: {
+      bureaus: [],
+      offices: [],
+      cityJurisdictions: [],
+      postings: [],
+      assessmentRecords: [],
+      transferRecords: []
+    }
+  };
+
+  const rows = buildSafeSearchRows(worldState, { views });
+  const view = searchSafeWorldIndex(worldState, {
+    query: "人情债 月账",
+    domain: "reports",
+    pageSize: 5,
+    views
+  });
+
+  assert.equal(rows.length, 1200);
+  assert.ok(rows.some((row) => row.sourceView === "economyTraceView.traceItems"));
+  assert.ok(view.results.some((result) =>
+    result.sourceView === "economyTraceView.traceItems" && /人情债|月账/.test(`${result.title}${result.snippet}`)
+  ));
+  assert.doesNotMatch(JSON.stringify(view), /tradeLedger|delegatedTaskLedger|npcEconomyLedger|safe_search_index|world_sessions/);
 });
 
 test("GET /api/game/search/:sessionId returns safe snippets from JSON storage", async (t) => {

@@ -1,5 +1,6 @@
 const { buildEventArchiveIndexItems } = require("./eventArchive");
 const { buildDomainConsequenceView } = require("./domainConsequenceTrace");
+const { buildEconomyTraceView } = require("./economyTraceView");
 const { buildEconomicFiscalRetrievalRows } = require("./economicFiscal");
 const { buildHistoricalEventRetrievalRows } = require("./historicalEventArchive");
 const { buildIntelligenceRumorRetrievalRows } = require("./intelligenceRumors");
@@ -18,6 +19,10 @@ const SAFE_WORLD_SEARCH_MAX_QUERY_LENGTH = 80;
 const SAFE_WORLD_SEARCH_MAX_SNIPPET_LENGTH = 180;
 const SAFE_WORLD_SEARCH_MAX_SEARCH_TEXT_LENGTH = 1400;
 const SAFE_WORLD_SEARCH_MAX_ROWS = 1200;
+const SAFE_WORLD_SEARCH_PROTECTED_SOURCE_VIEWS = new Set([
+  "domainConsequenceView.recentConsequences",
+  "economyTraceView.traceItems"
+]);
 
 const SAFE_SEARCH_DOMAINS = Object.freeze([
   "geography",
@@ -322,6 +327,7 @@ function rowName(rows = [], id, fallback = "") {
 function buildViews(worldState = {}, prebuiltViews = null) {
   const views = isPlainObject(prebuiltViews) ? prebuiltViews : {};
   return {
+    economyTraceView: views.economyTraceView || buildEconomyTraceView(worldState),
     worldGeographyView: views.worldGeographyView || buildWorldGeographyView(worldState),
     worldPeopleView: views.worldPeopleView || buildWorldPeopleView(worldState),
     officialPostingsView: views.officialPostingsView || buildOfficialPostingsView(worldState)
@@ -701,6 +707,51 @@ function buildNpcActiveRequestSearchRows(rows, worldState = {}, npcActiveRequest
   }
 }
 
+function amountMetric(trace = {}) {
+  const amount = isPlainObject(trace.amountView) ? trace.amountView : null;
+  if (!amount) return null;
+  const label = cleanSearchText(amount.label, "数值", 24);
+  const unit = cleanSearchText(amount.unit, "", 12);
+  const value = Number.isFinite(Number(amount.delta))
+    ? `变动${Number(amount.delta)}${unit}`
+    : Number.isFinite(Number(amount.after))
+      ? `当前${Number(amount.after)}${unit}`
+      : "";
+  if (!label || !value) return null;
+  return [label, value];
+}
+
+function buildEconomyTraceSearchRows(rows, economyTraceView = {}) {
+  const traceItems = Array.isArray(economyTraceView.traceItems) ? economyTraceView.traceItems : [];
+  for (const trace of traceItems) {
+    const metric = amountMetric(trace);
+    addSearchRow(rows, {
+      domain: trace.searchDomain || "reports",
+      sourceView: "economyTraceView.traceItems",
+      sourceId: trace.sourceId || trace.traceId,
+      title: trace.title || trace.label,
+      meta: `${trace.groupLabel || "经济解释"} ${trace.statusLabel || ""}`,
+      summary: trace.publicSummary || trace.summary,
+      confidence: Math.round((Number(trace.confidence) || 0.68) * 100),
+      visibility: trace.visibility || "player_visible",
+      extra: [
+        trace.nextStep,
+        ...(Array.isArray(trace.affectedLabels) ? trace.affectedLabels : [])
+      ].filter(Boolean).join(" "),
+      tags: [
+        trace.traceType,
+        trace.groupLabel,
+        ...(Array.isArray(trace.affectedLabels) ? trace.affectedLabels : [])
+      ],
+      metrics: metric ? [metric] : [],
+      relatedRefs: [
+        relatedRef("economy_trace", trace.sourceId || trace.traceId, trace.title || trace.label),
+        relatedRef("economy_group", trace.group, trace.groupLabel)
+      ]
+    });
+  }
+}
+
 function buildRumorSearchRows(rows, worldState = {}) {
   for (const rumor of buildIntelligenceRumorRetrievalRows(worldState)) {
     addSearchRow(rows, {
@@ -729,6 +780,7 @@ function buildSafeSearchRows(worldState = {}, options = {}) {
   buildOfficeSearchRows(rows, views.officialPostingsView, views.worldGeographyView);
   buildReportSearchRows(rows, worldState);
   buildEventSearchRows(rows, worldState);
+  buildEconomyTraceSearchRows(rows, views.economyTraceView);
   buildNpcActiveRequestSearchRows(rows, worldState, options.views?.npcActiveRequestView);
   buildRumorSearchRows(rows, worldState);
   return capSafeSearchRows(rows);
@@ -736,7 +788,7 @@ function buildSafeSearchRows(worldState = {}, options = {}) {
 
 function capSafeSearchRows(rows = []) {
   if (rows.length <= SAFE_WORLD_SEARCH_MAX_ROWS) return rows;
-  const protectedRows = rows.filter((row) => row.sourceView === "domainConsequenceView.recentConsequences");
+  const protectedRows = rows.filter((row) => SAFE_WORLD_SEARCH_PROTECTED_SOURCE_VIEWS.has(row.sourceView));
   if (!protectedRows.length) return rows.slice(0, SAFE_WORLD_SEARCH_MAX_ROWS);
   const protectedRowIds = new Set(protectedRows.map((row) => row.rowId));
   const available = Math.max(0, SAFE_WORLD_SEARCH_MAX_ROWS - protectedRows.length);

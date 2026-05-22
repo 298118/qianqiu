@@ -11,6 +11,7 @@ const {
   filterResolverInputForActor,
   summarizeResolverInputForAudit
 } = require("../src/game/resolverInputContext");
+const { buildEconomyTraceView } = require("../src/game/economyTraceView");
 const {
   RESOLVER_INPUT_DOMAIN_CONFIG,
   RESOLVER_INPUT_GLOBAL_CAPS,
@@ -271,6 +272,88 @@ test("S88.7 resolver input consumes NPC follow-up domain evidence from safe view
   assert.doesNotMatch(
     serializedPublicEvidence,
     /npcActiveRequestLedger|hiddenDossier|privateSignalTags|providerPayload|provider_payload|safe_search_index|state_patch|world_sessions|sk-[A-Za-z0-9_-]{6,}|\/mnt\/e/
+  );
+});
+
+test("S88.8 resolver input consumes economy trace evidence from safe view only", () => {
+  const worldState = createInitialState({ role: "magistrate", playerName: "经济证据" });
+  worldState.turnCount = 22;
+  const economyTraceView = buildEconomyTraceView(worldState, {
+    views: {
+      resourceLedgerView: {
+        accounts: [{
+          resourceId: "silver_liang",
+          label: "银两",
+          amount: 76,
+          unit: "两"
+        }]
+      },
+      assetLedgerView: { assets: [] },
+      inventoryView: { items: [] },
+      tradeLedgerView: {
+        items: [{
+          tradeId: "trade:resolver:economy",
+          npcName: "韩员外",
+          status: "countered",
+          publicSummary: "韩员外交易议价：纸张与粮价消息尚待服务器确认。",
+          requestedSilverDelta: -4,
+          riskTags: ["议价"]
+        }]
+      },
+      delegatedTaskView: {
+        items: [{
+          taskId: "delegated-task:resolver:economy",
+          title: "东乡清丈",
+          status: "active",
+          assignee: { displayName: "陆知事" },
+          budget: 24,
+          riskFactors: ["田册"]
+        }]
+      },
+      marketPriceView: {
+        priceRows: [{
+          priceId: "grain",
+          label: "粟米",
+          trend: "up",
+          trendLabel: "上行",
+          availability: "偏紧",
+          marketPressure: 70,
+          drivers: ["春荒", "转运迟滞"],
+          currentSilverLiang: 1.6
+        }]
+      },
+      npcEconomyView: {
+        recentEvents: ["人情债月账：韩员外为修桥垫付，公开人情债略增。"]
+      }
+    }
+  });
+
+  const context = buildResolverInputContext(worldState, {
+    generatedAt: FIXED_GENERATED_AT,
+    domainCaps: { economy: 24 },
+    views: { economyTraceView }
+  });
+  const serialized = JSON.stringify({
+    economy: context.economy,
+    sourceViews: context.sourceViews
+  });
+
+  assert.ok(context.sourceViews.some((source) => source.sourceView === "economyTraceView"));
+  assert.ok(context.economy.some((item) =>
+    item.sourceView === "economyTraceView" && /交易议价|韩员外/.test(`${item.label}${item.summary}`)
+  ));
+  assert.ok(context.economy.some((item) =>
+    item.sourceView === "economyTraceView" && /东乡清丈|委派预算/.test(`${item.label}${item.summary}`)
+  ));
+  assert.ok(context.economy.some((item) =>
+    item.sourceView === "economyTraceView" && /人情债|月账/.test(`${item.label}${item.summary}`)
+  ));
+  assert.ok(context.economy.some((item) =>
+    item.sourceView === "economyTraceView" && item.topicSurfaceIds?.includes("war-council") && /粟米|市价/.test(`${item.label}${item.summary}`)
+  ));
+  assert.doesNotMatch(
+    serialized,
+    /assetLedger|resourceLedger|inventoryLedger|tradeLedger|delegatedTaskLedger|marketPriceLedger|npcEconomyLedger|evidenceRefs|resourceDelta|relationshipSignals|sqlite|SQLite|SQL|world_sessions|safe_search_index|providerPayload|hiddenDossier|privateSignalTags|sk-[A-Za-z0-9_-]{6,}|\/mnt\/e/
   );
 });
 

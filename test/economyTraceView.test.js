@@ -123,8 +123,63 @@ test("S88.8 economyTraceView explains safe economy rows without exposing raw led
   assert.ok(traceTypes.has("human_debt_monthly"));
   assert.ok(view.traceItems.every((item) => Array.isArray(item.sourceRefs)));
   assert.ok(view.traceItems.every((item) => item.sourceRefs.every((ref) => ref.refId.startsWith("economy-trace:"))));
+  assert.ok(view.traceItems.every((item) => item.sourceId && !/_/.test(item.sourceId)));
+  assert.ok(view.traceItems.every((item) => item.label === item.title && item.summary === item.publicSummary));
+  assert.ok(view.traceItems.every((item) => item.visibility === "player_visible"));
+  assert.ok(view.traceItems.every((item) => item.confidence >= 0 && item.confidence <= 1));
+  assert.ok(view.traceItems.some((item) =>
+    item.traceType === "trade_negotiation" && item.topicSurfaceIds.includes("npc-profile")
+  ));
+  assert.ok(view.traceItems.some((item) =>
+    item.traceType === "inventory_aging" && item.topicSurfaceIds.includes("inventory-only")
+  ));
   assert.doesNotMatch(
     serialized,
     /"resourceLedger":|"assetLedger":|"inventoryLedger":|"tradeLedger":|"delegatedTaskLedger":|"npcEconomyLedger":|"marketPriceLedger":|"evidenceRefs":|"hiddenNotes"|provider payload|data\/sessions|sqlite|SQLite|SQL|sk-[A-Za-z0-9_-]{6,}/
   );
+});
+
+test("S88.8 economyTraceView tolerates polluted source ids without throwing", () => {
+  const worldState = createInitialState({ role: "magistrate", playerName: "旧账污染" });
+
+  assert.doesNotThrow(() => buildEconomyTraceView(worldState, {
+    views: {
+      resourceLedgerView: {
+        accounts: [{
+          resourceId: "safe_search_index",
+          label: "银两",
+          amount: 12,
+          unit: "两"
+        }]
+      },
+      assetLedgerView: { assets: [] },
+      inventoryView: { items: [] },
+      tradeLedgerView: { items: [] },
+      delegatedTaskView: { items: [] },
+      marketPriceView: { priceRows: [] },
+      npcEconomyView: { recentEvents: [] }
+    }
+  }));
+
+  const view = buildEconomyTraceView(worldState, {
+    views: {
+      resourceLedgerView: {
+        accounts: [{
+          resourceId: "safe_search_index",
+          label: "银两",
+          amount: 12,
+          unit: "两"
+        }]
+      },
+      assetLedgerView: { assets: [] },
+      inventoryView: { items: [] },
+      tradeLedgerView: { items: [] },
+      delegatedTaskView: { items: [] },
+      marketPriceView: { priceRows: [] },
+      npcEconomyView: { recentEvents: [] }
+    }
+  });
+
+  assert.ok(view.traceItems.some((item) => item.sourceId === "resource:0"));
+  assert.doesNotMatch(JSON.stringify(view), /safe_search_index|SQLite|sqlite|SQL/);
 });
