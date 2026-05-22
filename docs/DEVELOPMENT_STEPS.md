@@ -171,7 +171,7 @@
 - `npm run check:docs-governance`
 - `node --test test/documentationGovernance.test.js`
 - `npm test`（1126 项）
-- 提交前只读复审：Arendt 未发现代码或安全边界 P0/P1；指出复审状态与提交哈希占位需收口的 P2，本轮已回填复审结果，提交哈希将在实现提交完成后按低风险纯文档回填。
+- 提交前只读复审：Arendt 未发现代码或安全边界 P0/P1；指出复审状态与提交哈希占位需收口的 P2，本轮已回填复审结果，实现提交 `65868232`。
 
 本轮 S88.9 React 史册、皇榜和舆图移动端溢出打磨当前验证口径：
 
@@ -878,8 +878,8 @@ S84 前端专项额外验收入口：
 - 实现：新增 `client/src/hooks/usePrefersReducedMotion.ts`，首页与舆图共用浏览器 `prefers-reduced-motion: reduce` 监听；`MapPage` 只有在应用偏好 `motion=full`、舆图动效开启且浏览器未请求 reduced motion 时才向 S72 `InkMapRuntimeBridge` 传入动效开启。`global.css` 对应用低动效与浏览器 reduced-motion 都显式关闭皇榜金粉与“金榜题名”墨晕动画，并补设置页 `aiSettingsMatrixStatus` 状态块、移动端设置按钮/摘要全宽触控和任务矩阵 `min-width` 防线。`AiSettingsPanel` 在任务矩阵空、载入和错误时统一显示“候矩阵 / 矩阵受阻 / 矩阵未载”安全文案，说明前端不会补造 provider、模型或工具权限。
 - 回归：`client/src/__tests__/App.test.tsx` 新增系统级 reduced-motion 下舆图 runtime `data-map-motion="reduced"` 回归，并让旧案列表刷新回归断言空矩阵安全状态块；`test/reactClientScaffold.test.js` 增加共享 hook、皇榜低动效 CSS、设置页状态块/移动触控和 browser smoke 皇榜 reduced-motion 静态守门。`scripts/clientSmoke.js` 的 browser-level reduced-motion 检查现在除首页外还进入 `/game/s74-preview/ranking`，用临时皇榜装饰 probe 校验金粉与题名字样动画为 `none`。
 - 验证：已通过本节顶部对应验证口径；构建和 browser smoke 仅出现既有 runtime asset 解析、chunk size 与 npm `globalignorefile` 配置警告。
-- 子代理：Copernicus 只读探查指出皇榜低动效 smoke 缺口和设置页矩阵空/错态、窄屏操作效率是适合独立提交的 S88.9 小片；本轮采纳。Arendt 提交前只读复审最终 diff 与验证证据，未发现代码或安全边界 P0/P1；唯一 P2 是复审状态与提交哈希占位需收口，已回填复审结果，提交哈希将在实现提交完成后按低风险纯文档回填。
-- 提交：实现提交待本轮提交完成后回填哈希。
+- 子代理：Copernicus 只读探查指出皇榜低动效 smoke 缺口和设置页矩阵空/错态、窄屏操作效率是适合独立提交的 S88.9 小片；本轮采纳。Arendt 提交前只读复审最终 diff 与验证证据，未发现代码或安全边界 P0/P1；唯一 P2 是复审状态与提交哈希占位需收口，已回填复审结果。
+- 提交：实现提交 `65868232`。本次哈希回填为低风险纯文档记录，不改代码、API/schema、运行时行为、提示词或验证工具；按项目规则跳过额外子代理复审。
 
 ### 2026-05-22：推进 S88.9 史册、皇榜和舆图移动端溢出打磨
 
