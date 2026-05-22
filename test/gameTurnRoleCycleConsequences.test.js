@@ -76,7 +76,7 @@ function seedEconomyTopicSignals(worldState = {}) {
   worldState.year = 1644;
   worldState.month = 4;
   worldState.tenDayPeriod = 1;
-  worldState.turnCount = Math.max(Number(worldState.turnCount) || 0, 20);
+  worldState.turnCount = Math.max(Number(worldState.turnCount) || 0, 19);
   worldState.player.localTreasury = 120;
   worldState.npcEconomyLedger = {
     ...(worldState.npcEconomyLedger || {}),
@@ -125,9 +125,12 @@ function buildEconomyDraftContext(worldState = {}) {
 function snapshotEconomyLedgers(worldState = {}) {
   return {
     cityPolicyCount: worldState.cityPolicyLedger?.records?.length || 0,
+    militaryDiplomacyCount: worldState.militaryDiplomacyLedger?.records?.length || 0,
     tradeRecords: JSON.parse(JSON.stringify(worldState.tradeLedger?.records || [])),
     delegatedTasks: JSON.parse(JSON.stringify(worldState.delegatedTaskLedger?.tasks || [])),
+    resourceLedger: JSON.parse(JSON.stringify(worldState.resourceLedger || null)),
     npcEconomyRecentEvents: [...(worldState.npcEconomyLedger?.recentEvents || [])],
+    playerGold: worldState.player?.gold,
     localTreasury: worldState.player?.localTreasury
   };
 }
@@ -136,21 +139,27 @@ function assertEconomyDraftDidNotSettle(savedBefore = {}, savedAfter = {}) {
   const before = snapshotEconomyLedgers(savedBefore);
   const after = snapshotEconomyLedgers(savedAfter);
   assert.equal(after.cityPolicyCount, before.cityPolicyCount);
+  assert.equal(after.militaryDiplomacyCount, before.militaryDiplomacyCount);
   assert.deepEqual(after.tradeRecords, before.tradeRecords);
   assert.deepEqual(after.delegatedTasks, before.delegatedTasks);
+  assert.deepEqual(after.resourceLedger, before.resourceLedger);
   assert.deepEqual(after.npcEconomyRecentEvents, before.npcEconomyRecentEvents);
+  assert.equal(after.playerGold, before.playerGold);
   assert.equal(after.localTreasury, before.localTreasury);
 }
 
 function assertEconomyDraftResponseSafe(payload = {}) {
   const serialized = JSON.stringify(payload);
+  const relationshipChangesText = JSON.stringify(payload.relationshipChanges || []);
   const outcome = payload.roleCycleDomainAdjudication?.outcome;
   assert.equal(outcome?.status, "duplicate_recent");
   assert.equal(outcome?.resolver, "city_policy");
   assert.equal(outcome?.canonicalEchoRefs, undefined);
   assert.equal(outcome?.topicDraftContext, undefined);
+  assert.doesNotMatch(relationshipChangesText, /economyTraceView|tradeLedger|delegatedTaskLedger|resourceDelta|relationshipSignals|账解|交易|委派|人情债/);
   assert.equal(payload.worldState?.cityPolicyLedger, undefined);
   assert.equal(payload.worldState?.militaryDiplomacyLedger, undefined);
+  assert.equal(payload.worldState?.resourceLedger, undefined);
   assert.doesNotMatch(
     serialized,
     /domainConsequenceEcho:forged|economyTraceView:forged-secret|"tradeLedger":|"delegatedTaskLedger":|"marketPriceLedger":|"npcEconomyLedger":|"resourceDelta":|"relationshipSignals":|"stateDelta":|"playerDelta":|"auditRecord":|provider payload|hiddenNotes|data\/sessions|rawSql|SEALED_/
