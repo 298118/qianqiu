@@ -8,6 +8,7 @@ const { createInitialState } = require("../src/game/initialState");
 const { createLandSurveyDelegatedTask } = require("../src/game/delegatedTasks");
 const { resolveTradeRequest } = require("../src/game/tradeLedger");
 const { buildTopicSurfaceView } = require("../src/game/topicSurfaceView");
+const { buildMapRuntimeView } = require("../src/game/mapRuntimeView");
 const { readSession, writeSession } = require("../src/storage/sessionStore");
 const { createFetchSafeServer } = require("../test-helpers/fetchSafeServer");
 
@@ -199,6 +200,26 @@ function buildEconomyDraftContext(worldState = {}) {
     evidenceRefs: [economyRef.refId, "economyTraceView:forged-secret"],
     canonicalEchoRefs: ["domainConsequenceEcho:forged"],
     generatedAtTurn: topicView.generatedAtTurn,
+    status: "client_hint"
+  };
+}
+
+function buildMapRuntimeDraftContext(worldState = {}, entityType = "military_report") {
+  const view = buildMapRuntimeView(worldState);
+  const ref = view.refs.find((entry) => entry.entityType === entityType);
+  assert.ok(ref, `expected a safe ${entityType} map runtime ref`);
+  const [draftId] = Object.entries(view.actionDrafts || {}).find(([, draft]) => draft.targetRef === ref.mapEntityRef) || [];
+  assert.ok(draftId, `expected a safe ${entityType} map runtime action draft`);
+  return {
+    surfaceId: "map-runtime",
+    draftKind: "map_ref_action",
+    sourceView: "mapRuntimeView",
+    draftId,
+    evidenceRefs: [ref.mapEntityRef, ref.sourceRef, "map:forged:secret", "layoutPath", "mapBounds:0:1"],
+    sourceRefs: [ref.sourceRef, "viewportHint", "x:0.5", "domainConsequenceView:visual-only"],
+    targetRefs: [ref.mapEntityRef, "providerPayload"],
+    actionDraftRefs: [draftId, "draft-forged-secret"],
+    requiresServerTurn: true,
     status: "client_hint"
   };
 }
@@ -426,6 +447,74 @@ test("S88.8 true provider stream revalidates economy draftContext without settli
   assert.ok(finalState);
   assertEconomyDraftResponseSafe(finalState.data);
   assertEconomyDraftDidNotSettle(savedAfterFirst, savedAfterSecond);
+});
+
+test("S88.10 true provider stream revalidates map-runtime military draftContext", async (t) => {
+  const payload = makeTurnPayload("军议舆图草稿已随流式回合复核。");
+  let runTurnCalls = 0;
+  let streamTurnCalls = 0;
+  const provider = {
+    supportsStreaming: true,
+    async streamTurn(worldState, input, handlers) {
+      streamTurnCalls += 1;
+      const raw = JSON.stringify(payload);
+      for (let index = 0; index < raw.length; index += 8) {
+        handlers.onTextDelta(raw.slice(index, index + 8));
+      }
+      return payload;
+    },
+    async runTurn() {
+      runTurnCalls += 1;
+      return payload;
+    }
+  };
+  const server = createTestServer(provider);
+  t.after(server.close);
+
+  const worldState = createInitialState({ role: "general", playerName: "流式舆图将领" });
+  const draftContext = buildMapRuntimeDraftContext(worldState, "military_report");
+  t.after(() => removeSessionFile(worldState.sessionId));
+  await writeSession(worldState);
+
+  const input = "据舆图军议，遣哨侦察边报与粮道虚实，先呈公开军情。";
+  const events = await postTurnSse(server.baseUrl, worldState.sessionId, input, draftContext);
+  const narrative = events
+    .filter((event) => event.event === "narrative_chunk")
+    .map((event) => event.data.text)
+    .join("");
+  const finalState = events.find((event) => event.event === "final_state");
+  const saved = await readSession(worldState.sessionId);
+  const serialized = JSON.stringify({
+    roleCycleDomainAdjudication: finalState?.data?.roleCycleDomainAdjudication,
+    worldState: finalState?.data?.worldState,
+    attributeChanges: finalState?.data?.attributeChanges,
+    relationshipChanges: finalState?.data?.relationshipChanges
+  });
+  const outcome = finalState?.data?.roleCycleDomainAdjudication?.outcome;
+  const mapContext = outcome?.mapRuntimeDraftContext;
+
+  assert.equal(runTurnCalls, 0);
+  assert.equal(streamTurnCalls, 1);
+  assert.equal(narrative, payload.narrative);
+  assert.ok(finalState);
+  assert.equal(outcome.status, "accepted");
+  assert.equal(outcome.resolver, "military_diplomacy");
+  assert.equal(outcome.intent, "scout");
+  assert.equal(mapContext.surfaceId, "map-runtime");
+  assert.equal(mapContext.status, "verified");
+  assert.deepEqual(mapContext.targetRefs, draftContext.targetRefs.slice(0, 1));
+  assert.deepEqual(mapContext.actionDraftRefs, [draftContext.draftId]);
+  assert.equal(mapContext.evidenceRefs.includes("map:forged:secret"), false);
+  assert.equal(finalState.data.worldState?.militaryDiplomacyLedger, undefined);
+  assert.doesNotMatch(
+    serialized,
+    /map:forged:secret|draft-forged-secret|layoutPath|mapBounds|viewportHint|providerPayload|domainConsequenceView:visual-only|"militaryDiplomacyLedger":|"cityPolicyLedger":|"stateDelta":|"playerDelta":|"auditRecord":|rawSql|SEALED_/i
+  );
+  assert.equal(saved.militaryDiplomacyLedger.records.length, 1);
+  assert.equal(saved.militaryDiplomacyLedger.records[0].actionKind, "scout");
+  assert.equal(saved.militaryDiplomacyLedger.records[0].mapRuntimeDraftContext.surfaceId, "map-runtime");
+  assert.deepEqual(saved.militaryDiplomacyLedger.records[0].mapRuntimeDraftContext.targetRefs, draftContext.targetRefs.slice(0, 1));
+  assert.deepEqual(saved.militaryDiplomacyLedger.records[0].mapRuntimeDraftContext.actionDraftRefs, [draftContext.draftId]);
 });
 
 test("S88.12 no-key real provider falls back to Mock for economy draft JSON and SSE turns", async (t) => {
