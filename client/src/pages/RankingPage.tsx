@@ -2,6 +2,7 @@ import type { CSSProperties } from "react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useParams } from "react-router";
 import { useAssetRegistry } from "../assets/useAssetRegistry";
+import { isRouteLocalSessionId } from "../routes/sessionId";
 import { useGameSessionStore } from "../state/gameSessionState";
 import { useUiStateStore } from "../state/uiState";
 
@@ -187,8 +188,10 @@ export function RankingPage() {
   const currentSession = useGameSessionStore((state) => state.currentSession);
   const lastExamResult = useGameSessionStore((state) => state.lastExamResult);
   const setActionDraft = useUiStateStore((state) => state.setActionDraft);
-  const sessionRecord = asRecord(currentSession?.sessionId === sessionId ? currentSession : null);
-  const resultRecord = lastExamResult?.sessionId === sessionId ? asRecord(lastExamResult) : {};
+  const routeSessionSupported = isRouteLocalSessionId(sessionId);
+  const unsupportedRouteMessage = "此案卷编号暂不可用于浏览器皇榜；请从首页开卷或载入旧案。";
+  const sessionRecord = asRecord(routeSessionSupported && currentSession?.sessionId === sessionId ? currentSession : null);
+  const resultRecord = routeSessionSupported && lastExamResult?.sessionId === sessionId ? asRecord(lastExamResult) : {};
   const payload = Object.keys(resultRecord).length ? resultRecord : sessionRecord;
   const latestHistory = getLatestExamHistory(sessionRecord);
   const player = asRecord(asRecord(sessionRecord.worldState).player);
@@ -222,7 +225,7 @@ export function RankingPage() {
   );
   const publicSummary = safeRankingText(
     examHonorView.publicSummary || latestHistory.publicSummary || latestHonor.publicSummary,
-    rows.length ? "服务器已返回本场公开榜文。" : "榜文尚未张挂。交卷、评阅与放榜完成后，此处才会显示定榜结果。",
+    rows.length ? "服务器已返回本场公开榜文。" : routeSessionSupported ? "榜文尚未张挂。交卷、评阅与放榜完成后，此处才会显示定榜结果。" : unsupportedRouteMessage,
     150
   );
   const serverDecision = safeRankingText(
@@ -296,7 +299,7 @@ export function RankingPage() {
           <h1 id="ranking-title">皇榜</h1>
           <p>{examName} · {publicSummary}</p>
         </div>
-        <button className="paperLink rankingJumpLink" type="button" onClick={focusPlayerDetail}>跳至我名</button>
+        <button className="paperLink rankingJumpLink" type="button" disabled={!routeSessionSupported} onClick={focusPlayerDetail}>跳至我名</button>
       </section>
 
       <section className="rankingNoticeBoard" aria-label="服务器定榜皇榜">
@@ -344,7 +347,7 @@ export function RankingPage() {
                 ))}
               </ol>
             ) : (
-              <p className="rankingEmpty">榜文尚未张挂。交卷、评阅与放榜完成后，此处才会显示定榜结果。</p>
+              <p className="rankingEmpty">{routeSessionSupported ? "榜文尚未张挂。交卷、评阅与放榜完成后，此处才会显示定榜结果。" : unsupportedRouteMessage}</p>
             )}
           </section>
 

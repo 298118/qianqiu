@@ -7,7 +7,7 @@ import { EconomyTraceSection } from "../components/EconomyTraceSection";
 import { NpcFollowUpEvidenceSection } from "../components/NpcFollowUpEvidenceSection";
 import { Portrait } from "../components/Portrait";
 import { markOverlayTrigger } from "../components/overlayFocus";
-import { isRunnableSessionId } from "../routes/sessionId";
+import { isRouteLocalSessionId, isRunnableSessionId } from "../routes/sessionId";
 import { useGameSessionStore } from "../state/gameSessionState";
 import { useUiStateStore } from "../state/uiState";
 
@@ -393,7 +393,7 @@ function buildPersonRows(
 
 export function PeoplePage() {
   const { sessionId = "s74-preview" } = useParams();
-  const openSurface = useUiStateStore((state) => state.openSurface);
+  const openSurfaceForSession = useUiStateStore((state) => state.openSurfaceForSession);
   const setActionDraft = useUiStateStore((state) => state.setActionDraft);
   const session = useGameSessionStore((state) => state.currentSession);
   const loadNpcs = useGameSessionStore((state) => state.loadNpcs);
@@ -412,7 +412,8 @@ export function PeoplePage() {
   const npcMutationStatus = useGameSessionStore((state) => state.npcMutationStatus);
   const error = useGameSessionStore((state) => state.error);
   const { registry, status } = useAssetRegistry();
-  const activeSession = session?.sessionId === sessionId ? session : null;
+  const routeSessionSupported = isRouteLocalSessionId(sessionId);
+  const activeSession = routeSessionSupported && session?.sessionId === sessionId ? session : null;
   const latestSessionIdRef = useRef(sessionId);
   const [localPeopleSessionId, setLocalPeopleSessionId] = useState(sessionId);
   const [portraitPage, setPortraitPage] = useState(0);
@@ -425,12 +426,12 @@ export function PeoplePage() {
   const [commandTargetRef, setCommandTargetRef] = useState("");
   const [commandBudget, setCommandBudget] = useState("24");
   const [socialDraft, setSocialDraft] = useState("");
-  const runnable = isRunnableSessionId(sessionId);
+  const runnable = routeSessionSupported && isRunnableSessionId(sessionId);
   const localStateIsCurrent = localPeopleSessionId === sessionId;
-  const routeError = error && storeCurrentSessionId === sessionId ? error : null;
-  const routeNpcRosterStatus = storeCurrentSessionId === sessionId ? npcRosterStatus : "idle";
-  const routeNpcDetailStatus = storeCurrentSessionId === sessionId ? npcDetailStatus : "idle";
-  const routeNpcMutationStatus = storeCurrentSessionId === sessionId ? npcMutationStatus : "idle";
+  const routeError = routeSessionSupported && error && storeCurrentSessionId === sessionId ? error : null;
+  const routeNpcRosterStatus = routeSessionSupported && storeCurrentSessionId === sessionId ? npcRosterStatus : "idle";
+  const routeNpcDetailStatus = routeSessionSupported && storeCurrentSessionId === sessionId ? npcDetailStatus : "idle";
+  const routeNpcMutationStatus = routeSessionSupported && storeCurrentSessionId === sessionId ? npcMutationStatus : "idle";
   const activeDialogueDraft = localStateIsCurrent ? dialogueDraft : "";
   const activeTradeOffer = localStateIsCurrent ? tradeOffer : "";
   const activeTradeSilverDelta = localStateIsCurrent ? tradeSilverDelta : "0";
@@ -438,9 +439,10 @@ export function PeoplePage() {
   const activeCommandTargetRef = localStateIsCurrent ? commandTargetRef : "";
   const activeCommandBudget = localStateIsCurrent ? commandBudget : "24";
   const activeSocialDraft = localStateIsCurrent ? socialDraft : "";
-  const activeLastNpcInteraction = lastNpcInteraction?.sessionId === sessionId ? lastNpcInteraction : null;
-  const activeLastTrade = lastTrade?.sessionId === sessionId ? lastTrade : null;
-  const activeLastNpcCommand = lastNpcCommand?.sessionId === sessionId ? lastNpcCommand : null;
+  const activeLastNpcInteraction = routeSessionSupported && lastNpcInteraction?.sessionId === sessionId ? lastNpcInteraction : null;
+  const activeLastTrade = routeSessionSupported && lastTrade?.sessionId === sessionId ? lastTrade : null;
+  const activeLastNpcCommand = routeSessionSupported && lastNpcCommand?.sessionId === sessionId ? lastNpcCommand : null;
+  const unsupportedRouteMessage = "此案卷编号暂不可用于浏览器人物谱牒；请从首页开卷或载入旧案。";
 
   useEffect(() => {
     latestSessionIdRef.current = sessionId;
@@ -462,8 +464,8 @@ export function PeoplePage() {
     void loadNpcs(sessionId, { pageSize: 50 }).catch(() => undefined);
   }, [loadNpcs, runnable, sessionId]);
 
-  const activeNpcRosterPayload = npcRosterPayload?.sessionId === sessionId ? npcRosterPayload : null;
-  const activeNpcDetailPayload = npcDetailPayload?.sessionId === sessionId ? npcDetailPayload : null;
+  const activeNpcRosterPayload = routeSessionSupported && npcRosterPayload?.sessionId === sessionId ? npcRosterPayload : null;
+  const activeNpcDetailPayload = routeSessionSupported && npcDetailPayload?.sessionId === sessionId ? npcDetailPayload : null;
   const rosterView = activeNpcRosterPayload
     ? activeNpcRosterPayload.npcRosterView
     : activeSession
@@ -666,7 +668,7 @@ export function PeoplePage() {
                 </button>
               ))}
             </section>
-          )) : <p className="statusLine">等待服务器 NPC 名册安全视图。</p>}
+          )) : <p className="statusLine">{routeSessionSupported ? "等待服务器 NPC 名册安全视图。" : unsupportedRouteMessage}</p>}
         </aside>
         <section className="npcDetailWorkbench" aria-label="NPC 详情">
           {selectedNpc ? (
@@ -781,7 +783,7 @@ export function PeoplePage() {
                 <NpcRecordsTab interactions={interactionRecords} trades={tradeRecords} tasks={delegatedTasks} />
               ) : null}
             </>
-          ) : <p className="statusLine">请选择一名可见 NPC。</p>}
+          ) : <p className="statusLine">{routeSessionSupported ? "请选择一名可见 NPC。" : unsupportedRouteMessage}</p>}
         </section>
       </section>
       <section className="portraitLedger" aria-label="本局人物谱牒">
@@ -791,7 +793,7 @@ export function PeoplePage() {
             <p>
               {peopleRows.length
                 ? `当前入谱 ${peopleRows.length} 人，NPC ${npcCount} 人；本页 ${remasteredCount} 张使用高清重制。`
-                : "正在等待服务器公开人物视图。"}
+                : routeSessionSupported ? "正在等待服务器公开人物视图。" : unsupportedRouteMessage}
             </p>
           </div>
           {peopleRows.length ? <span>{safePortraitPage + 1} / {totalPages}</span> : null}
@@ -835,7 +837,7 @@ export function PeoplePage() {
             ))}
           </div>
         ) : (
-          <p className="statusLine">暂无可显示人物；本页不会从全量素材池补齐人物。</p>
+          <p className="statusLine">{routeSessionSupported ? "暂无可显示人物；本页不会从全量素材池补齐人物。" : unsupportedRouteMessage}</p>
         )}
         {peopleRows.length > portraitPageSize ? (
           <div className="buttonRow" aria-label="人物分页">
@@ -854,7 +856,16 @@ export function PeoplePage() {
           </div>
         ) : null}
       </section>
-      <button className="paperButton" type="button" onClick={(event) => { markOverlayTrigger(event.currentTarget); openSurface("npc-profile"); }}>
+      <button
+        className="paperButton"
+        type="button"
+        disabled={!routeSessionSupported}
+        onClick={(event) => {
+          if (!routeSessionSupported) return;
+          markOverlayTrigger(event.currentTarget);
+          openSurfaceForSession("npc-profile", sessionId);
+        }}
+      >
         打开人物档案
       </button>
       {routeError ? <p className="statusLine" role="alert">{routeError}</p> : null}

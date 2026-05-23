@@ -4,7 +4,7 @@ import type { ReactNode } from "react";
 import { useParams } from "react-router";
 import type { InventoryContainerView, InventoryItemView } from "../api";
 import { EconomyTraceSection } from "../components/EconomyTraceSection";
-import { isRunnableSessionId } from "../routes/sessionId";
+import { isRouteLocalSessionId, isRunnableSessionId } from "../routes/sessionId";
 import { useGameSessionStore } from "../state/gameSessionState";
 import { useUiStateStore } from "../state/uiState";
 
@@ -62,7 +62,9 @@ export function InventoryPage() {
   const [selectedItemId, setSelectedItemId] = useState("");
   const [targetContainerId, setTargetContainerId] = useState("");
   const [transferNotice, setTransferNotice] = useState("");
-  const runnable = isRunnableSessionId(sessionId);
+  const routeSessionSupported = isRouteLocalSessionId(sessionId);
+  const runnable = routeSessionSupported && isRunnableSessionId(sessionId);
+  const unsupportedRouteMessage = "此案卷编号暂不可用于浏览器囊箧；请从首页开卷或载入旧案。";
 
   useEffect(() => {
     latestSessionIdRef.current = sessionId;
@@ -78,23 +80,23 @@ export function InventoryPage() {
     void loadInventory(sessionId).catch(() => undefined);
   }, [loadInventory, runnable, sessionId]);
 
-  const activeSession = session?.sessionId === sessionId ? session : null;
-  const inventoryView = inventoryPayload?.sessionId === sessionId
+  const activeSession = routeSessionSupported && session?.sessionId === sessionId ? session : null;
+  const inventoryView = routeSessionSupported && inventoryPayload?.sessionId === sessionId
     ? inventoryPayload.inventoryView
     : activeSession
       ? activeSession.inventoryView
       : null;
-  const resourceLedgerView = inventoryPayload?.sessionId === sessionId
+  const resourceLedgerView = routeSessionSupported && inventoryPayload?.sessionId === sessionId
     ? inventoryPayload.resourceLedgerView
     : activeSession
       ? activeSession.resourceLedgerView
       : null;
-  const assetLedgerView = inventoryPayload?.sessionId === sessionId
+  const assetLedgerView = routeSessionSupported && inventoryPayload?.sessionId === sessionId
     ? inventoryPayload.assetLedgerView
     : activeSession
       ? activeSession.assetLedgerView
       : null;
-  const economyTraceView = inventoryPayload?.sessionId === sessionId
+  const economyTraceView = routeSessionSupported && inventoryPayload?.sessionId === sessionId
     ? inventoryPayload.economyTraceView
     : activeSession?.economyTraceView ?? null;
   const containers = inventoryView?.containers ?? [];
@@ -107,8 +109,8 @@ export function InventoryPage() {
   const activeSelectedContainerId = localStateIsCurrent ? selectedContainerId : "";
   const activeSelectedItemId = localStateIsCurrent ? selectedItemId : "";
   const activeTargetContainerId = localStateIsCurrent ? targetContainerId : "";
-  const routeInventoryStatus = storeCurrentSessionId === sessionId ? inventoryStatus : "idle";
-  const routeError = error && storeCurrentSessionId === sessionId ? error : null;
+  const routeInventoryStatus = routeSessionSupported && storeCurrentSessionId === sessionId ? inventoryStatus : "idle";
+  const routeError = routeSessionSupported && error && storeCurrentSessionId === sessionId ? error : null;
   const selectedContainer = activeSelectedContainerId && containersById.has(activeSelectedContainerId)
     ? activeSelectedContainerId
     : containers[0]?.containerId || "";
@@ -174,6 +176,7 @@ export function InventoryPage() {
         </div>
         <span>{routeInventoryStatus === "loading" ? "候账" : `${items.length} 件`}</span>
       </div>
+      {!routeSessionSupported ? <p className="statusLine" role="status">{unsupportedRouteMessage}</p> : null}
 
       <section className="inventorySummaryGrid" aria-label="资源与资产摘要">
         <LedgerBlock icon={<Briefcase size={18} aria-hidden="true" />} title="资源">
@@ -226,7 +229,7 @@ export function InventoryPage() {
               <span>{containerLabel(container)}</span>
               {container.locked ? <small>封存</small> : null}
             </button>
-          )) : <p className="statusLine">等待背包安全视图。</p>}
+          )) : <p className="statusLine">{routeSessionSupported ? "等待背包安全视图。" : unsupportedRouteMessage}</p>}
         </aside>
         <div className="inventoryItemList" aria-label="物品">
           <h2>{containerLabel(containersById.get(selectedContainer))}</h2>
@@ -244,7 +247,7 @@ export function InventoryPage() {
               </dl>
               {item.effects?.length ? <p className="peopleSummary">{item.effects.map((effect) => safeLabel(effect, "", 40)).filter(Boolean).join("；")}</p> : null}
             </article>
-          )) : <p className="statusLine">此处暂无可见物件。</p>}
+          )) : <p className="statusLine">{routeSessionSupported ? "此处暂无可见物件。" : unsupportedRouteMessage}</p>}
         </div>
       </section>
 
@@ -277,7 +280,7 @@ export function InventoryPage() {
             ))}
           </select>
         </label>
-        <button className="paperButton" type="button" disabled={!transferItem || !selectedTargetContainer || routeInventoryStatus === "loading"} onClick={handleTransfer}>
+        <button className="paperButton" type="button" disabled={!routeSessionSupported || !transferItem || !selectedTargetContainer || routeInventoryStatus === "loading"} onClick={handleTransfer}>
           呈请移置
         </button>
         {localStateIsCurrent && transferNotice ? <p className="statusLine" role="status">{transferNotice}</p> : null}

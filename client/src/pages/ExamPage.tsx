@@ -3,7 +3,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useParams } from "react-router";
 import type { ExamLevel, JsonObject, JsonValue } from "../api";
 import { useAssetRegistry } from "../assets/useAssetRegistry";
-import { isRunnableSessionId } from "../routes/sessionId";
+import { isRouteLocalSessionId, isRunnableSessionId } from "../routes/sessionId";
 import { useGameSessionStore } from "../state/gameSessionState";
 import { useUiStateStore } from "../state/uiState";
 
@@ -206,12 +206,17 @@ export function ExamPage() {
   const progressExam = useGameSessionStore((state) => state.progressExam);
   const submitExam = useGameSessionStore((state) => state.submitExam);
   const setActionDraft = useUiStateStore((state) => state.setActionDraft);
+  const storeCurrentSessionId = useGameSessionStore((state) => state.currentSessionId);
   const activeExam = useGameSessionStore((state) => state.activeExam);
   const lastExamResult = useGameSessionStore((state) => state.lastExamResult);
   const status = useGameSessionStore((state) => state.status);
   const error = useGameSessionStore((state) => state.error);
-  const canCallSessionApi = isRunnableSessionId(sessionId);
-  const activeExamForSession = activeExam?.sessionId === sessionId ? activeExam : null;
+  const routeSessionSupported = isRouteLocalSessionId(sessionId);
+  const canCallSessionApi = routeSessionSupported && isRunnableSessionId(sessionId);
+  const routeStatus = routeSessionSupported ? status : "idle";
+  const routeError = routeSessionSupported && storeCurrentSessionId === sessionId ? error : null;
+  const unsupportedRouteMessage = "此案卷编号暂不可用于浏览器科举；请从首页开卷或载入旧案。";
+  const activeExamForSession = routeSessionSupported && activeExam?.sessionId === sessionId ? activeExam : null;
   const examId = activeExamForSession?.examId;
   const visibleLevel = (activeExamForSession?.level && examLevels.some((item) => item.value === activeExamForSession.level)
     ? activeExamForSession.level
@@ -227,13 +232,13 @@ export function ExamPage() {
   const essayWordCount = countCjkAwareWords(essay);
   const wordCount = formatWordCountLabel(activeExamForSession?.wordCount);
   const draftState = essay.trim() ? "草稿已入卷，尚未交服务器裁决。" : "草稿未成篇。";
-  const latestSubmitForSession = lastExamResult?.sessionId === sessionId ? lastExamResult : null;
+  const latestSubmitForSession = routeSessionSupported && lastExamResult?.sessionId === sessionId ? lastExamResult : null;
   const safeRecentExamName = safeExamText(latestSubmitForSession?.examName, getExamLabel(latestSubmitForSession?.level), 64);
   const safeExamName = safeExamText(activeExamForSession?.examName, getExamLabel(visibleLevel), 64);
   const safeExamQuestion = safeExamText(activeExamForSession?.examQuestion, "试题已入卷。", 260);
   const safeDifficulty = safeExamText(activeExamForSession?.difficulty, "难度未署", 32);
   const safeSceneActionPreview = safeExamText(sceneAction, "尚无场内行动。", 80);
-  const safeError = safeExamText(error, "科举接口暂不可用。", 160);
+  const safeError = safeExamText(routeError, "科举接口暂不可用。", 160);
   const preparationPressure = getPreparationPressure(activeExamForSession);
   const procedure = getExamProcedure(activeExamForSession);
 
@@ -318,7 +323,7 @@ export function ExamPage() {
                   ))}
                 </select>
               </label>
-              <button className="paperButton examFetchButton" type="submit" disabled={status === "loading" || !canCallSessionApi}>
+              <button className="paperButton examFetchButton" type="submit" disabled={routeStatus === "loading" || !canCallSessionApi}>
                 取题
               </button>
             </form>
@@ -342,7 +347,7 @@ export function ExamPage() {
                   场内行动
                   <input value={sceneAction} onChange={(event) => setSceneAction(event.target.value)} />
                 </label>
-                <button className="paperButton" type="submit" disabled={status === "loading" || !canCallSessionApi}>
+                <button className="paperButton" type="submit" disabled={routeStatus === "loading" || !canCallSessionApi}>
                   推进考场
                 </button>
               </form>
@@ -356,7 +361,7 @@ export function ExamPage() {
                   <span>{essayWordCount} / {wordCount.label} 字</span>
                   <span>{draftState}</span>
                 </div>
-                <button className="paperButton examSealSubmitButton" type="submit" disabled={status === "loading" || !canCallSessionApi}>
+                <button className="paperButton examSealSubmitButton" type="submit" disabled={routeStatus === "loading" || !canCallSessionApi}>
                   交卷
                 </button>
               </form>
@@ -365,7 +370,7 @@ export function ExamPage() {
             <section className="examDesk examEmptyPaper" aria-label="中央试卷预览">
               <p className="eyebrow">中央试卷</p>
               <h2>案卷未启</h2>
-              <p>先择试别取题；预览案卷只展示界面，不向服务器请求考题。</p>
+              <p>{routeSessionSupported ? "先择试别取题；预览案卷只展示界面，不向服务器请求考题。" : unsupportedRouteMessage}</p>
             </section>
           )}
         </main>
@@ -421,7 +426,7 @@ export function ExamPage() {
 
           <section className="examPreviewPanel" aria-label="预览案卷提示">
             <p className="eyebrow">预览案卷</p>
-            <p>{canCallSessionApi ? "当前案卷可取题、推进考场并交卷。" : "预览案卷不取题；请先从首页新开一卷。"}</p>
+            <p>{canCallSessionApi ? "当前案卷可取题、推进考场并交卷。" : routeSessionSupported ? "预览案卷不取题；请先从首页新开一卷。" : unsupportedRouteMessage}</p>
           </section>
 
           <section className="examRecentSubmitPanel" aria-label="最近交卷提示">
@@ -484,7 +489,7 @@ export function ExamPage() {
         </p>
       </section>
 
-      {error ? <p className="statusLine" role="alert">{safeError}</p> : null}
+      {routeError ? <p className="statusLine" role="alert">{safeError}</p> : null}
     </article>
   );
 }

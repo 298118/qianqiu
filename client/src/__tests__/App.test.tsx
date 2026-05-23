@@ -678,6 +678,117 @@ describe("S74.1 React client shell", () => {
     expect(document.body.textContent || "").not.toMatch(/not-a-session|OPENAI_API_KEY|hiddenNotes|data\/sessions|provider payload/i);
   });
 
+  it("keeps unsupported people route session ids out of NPC surfaces and stale data", async () => {
+    const fetchMock = mockAssetManifestFetch(buildMockAssetManifest(0));
+    useGameSessionStore.setState({
+      currentSessionId: "11111111-2222-4333-8444-555555555555",
+      currentSession: {
+        sessionId: "11111111-2222-4333-8444-555555555555",
+        worldState: { player: { name: "provider payload data/sessions OPENAI_API_KEY hiddenNotes raw audit", role: "scholar" } }
+      }
+    });
+
+    renderRoute("/game/not-a-session/people");
+
+    expect(screen.getByRole("heading", { name: "人物" })).toBeTruthy();
+    await waitFor(() => expect(useUiStateStore.getState().currentSessionId).toBeNull());
+    expect(screen.getAllByText("此案卷编号暂不可用于浏览器人物谱牒；请从首页开卷或载入旧案。").length).toBeGreaterThan(0);
+    const profileButton = screen.getByRole("button", { name: "打开人物档案" });
+    expect(profileButton).toHaveProperty("disabled", true);
+    fireEvent.click(profileButton);
+
+    expect(useUiStateStore.getState().activeSurface).toBeNull();
+    expect([...document.querySelectorAll<HTMLAnchorElement>("a")].some((link) => (link.getAttribute("href") || "").includes("not-a-session"))).toBe(false);
+    expect(fetchMock.mock.calls.map((call) => String((call as unknown[])[0])).some((url) => url.startsWith("/api/game/"))).toBe(false);
+    expect(document.body.textContent || "").not.toMatch(/not-a-session|OPENAI_API_KEY|hiddenNotes|data\/sessions|provider payload|raw audit/i);
+  });
+
+  it("keeps unsupported inventory route session ids out of ledgers and transfer actions", async () => {
+    const fetchMock = vi.fn(async (url: string) => {
+      throw new Error(`unexpected url: ${url}`);
+    });
+    vi.stubGlobal("fetch", fetchMock);
+    useGameSessionStore.setState({
+      currentSessionId: "22222222-2222-4222-8222-222222222222",
+      currentSession: {
+        sessionId: "22222222-2222-4222-8222-222222222222",
+        worldState: { player: { name: "provider payload data/sessions", role: "scholar" } },
+        inventoryView: {
+          containers: [{ containerId: "bag", label: "provider payload", locked: false }],
+          items: [{ itemId: "item", name: "OPENAI_API_KEY", containerId: "bag", transferPolicy: "tradeable" }],
+          importantCredentials: []
+        },
+        resourceLedgerView: { accounts: [{ accountId: "silver", label: "raw audit", amount: 10, unit: "两" }] }
+      }
+    });
+
+    renderRoute("/game/not-a-session/inventory");
+
+    expect(screen.getByRole("heading", { name: "囊箧" })).toBeTruthy();
+    await waitFor(() => expect(useUiStateStore.getState().currentSessionId).toBeNull());
+    expect(screen.getAllByText("此案卷编号暂不可用于浏览器囊箧；请从首页开卷或载入旧案。").length).toBeGreaterThan(0);
+    expect(screen.getByRole("button", { name: "呈请移置" })).toHaveProperty("disabled", true);
+    expect(fetchMock.mock.calls.map((call) => String((call as unknown[])[0])).some((url) => url.startsWith("/api/game/"))).toBe(false);
+    expect(document.body.textContent || "").not.toMatch(/not-a-session|OPENAI_API_KEY|data\/sessions|provider payload|raw audit/i);
+  });
+
+  it("keeps unsupported exam route session ids from showing stale errors or calling exam APIs", async () => {
+    const fetchMock = mockAssetManifestFetch(buildMockAssetManifest(0));
+    useGameSessionStore.setState({
+      currentSessionId: "33333333-3333-4333-8333-333333333333",
+      error: "provider payload data/sessions OPENAI_API_KEY raw audit",
+      status: "loading",
+      activeExam: {
+        sessionId: "33333333-3333-4333-8333-333333333333",
+        examId: "exam-stale",
+        level: "child_exam",
+        examName: "旧案试卷",
+        examQuestion: "hiddenNotes",
+        requirements: [],
+        wordCount: 500
+      }
+    });
+
+    renderRoute("/game/not-a-session/exam");
+
+    expect(screen.getByRole("heading", { name: "科举" })).toBeTruthy();
+    await waitFor(() => expect(useUiStateStore.getState().currentSessionId).toBeNull());
+    expect(screen.getAllByText("此案卷编号暂不可用于浏览器科举；请从首页开卷或载入旧案。").length).toBeGreaterThan(0);
+    expect(screen.getByRole("button", { name: "取题" })).toHaveProperty("disabled", true);
+    expect(fetchMock.mock.calls.map((call) => String((call as unknown[])[0])).some((url) => url.startsWith("/api/exam/"))).toBe(false);
+    expect(document.body.textContent || "").not.toMatch(/not-a-session|OPENAI_API_KEY|hiddenNotes|data\/sessions|provider payload|raw audit/i);
+  });
+
+  it("keeps unsupported ranking route session ids from stale榜文 and current links", async () => {
+    const fetchMock = mockAssetManifestFetch(buildMockAssetManifest(0));
+    useGameSessionStore.setState({
+      currentSessionId: "44444444-4444-4444-8444-444444444444",
+      currentSession: {
+        sessionId: "44444444-4444-4444-8444-444444444444",
+        worldState: { player: { name: "OPENAI_API_KEY", role: "scholar" } },
+        examHonorView: { publicSummary: "provider payload data/sessions raw audit" }
+      },
+      lastExamResult: {
+        sessionId: "44444444-4444-4444-8444-444444444444",
+        examId: "exam-result-stale",
+        level: "child_exam",
+        examName: "hiddenNotes",
+        ranking: [{ name: "provider payload", place: 1, isPlayer: true }],
+        worldState: { player: { name: "OPENAI_API_KEY", role: "scholar" } }
+      }
+    });
+
+    renderRoute("/game/not-a-session/ranking");
+
+    expect(screen.getByRole("heading", { name: "皇榜" })).toBeTruthy();
+    await waitFor(() => expect(useUiStateStore.getState().currentSessionId).toBeNull());
+    expect(screen.getAllByText("此案卷编号暂不可用于浏览器皇榜；请从首页开卷或载入旧案。").length).toBeGreaterThan(0);
+    expect(screen.getByRole("button", { name: "跳至我名" })).toHaveProperty("disabled", true);
+    expect([...document.querySelectorAll<HTMLAnchorElement>("a")].some((link) => (link.getAttribute("href") || "").includes("not-a-session"))).toBe(false);
+    expect(fetchMock.mock.calls.map((call) => String((call as unknown[])[0])).some((url) => url.startsWith("/api/game/"))).toBe(false);
+    expect(document.body.textContent || "").not.toMatch(/not-a-session|OPENAI_API_KEY|hiddenNotes|data\/sessions|provider payload|raw audit/i);
+  });
+
   it("renders the S76.1 main game shell from safe player-state without leaking polluted text", async () => {
     const sessionId = "99999999-1111-4111-8111-111111111111";
     const manifest = buildMockAssetManifest(0);
