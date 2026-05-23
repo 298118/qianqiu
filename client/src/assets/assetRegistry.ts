@@ -2,6 +2,19 @@ export const ASSET_MANIFEST_URL = "/assets/ui/ink-ui-runtime-manifest.json";
 
 const DEFAULT_PORTRAIT_FALLBACK_REF = "fallback-role-silhouette-v1";
 const DEFAULT_PANEL_FALLBACK_REF = "fallback-paper-panel-v1";
+const HIGH_RES_SOURCE_FLAG = "kept_outside_public_manifest";
+const PORTRAIT_LAZY_LOAD_GROUP_SUBCATEGORY: Readonly<Record<string, string>> = Object.freeze({
+  portrait_baseline_s73_7: "portrait_style_baseline",
+  portrait_pool_generic_npc_s73_10: "generic_npc_pool",
+  portrait_pool_player_female_extra_s73_10: "player_female_style_pool",
+  portrait_pool_player_male_extra_s73_10: "player_male_style_pool",
+  portrait_pool_player_s73_10: "player_identity_stage_pool",
+  portrait_pool_recovered_female_s79_2: "recovered_female_highres_pool",
+  portrait_pool_scene_anchor_s73_10: "scene_anchor_pool",
+  portrait_pool_signature_npc_s73_10: "signature_npc_pool",
+  portrait_pool_state_variant_s73_10: "state_variant_pool",
+  portrait_pool_young_female_s73_10_7: "young_female_style_pool"
+});
 const forbiddenAssetPathPattern =
   /(OPENAI_API_KEY|DEEPSEEK_API_KEY|MIMO_API_KEY|ANTHROPIC_API_KEY|sk-[A-Za-z0-9_-]{6,}|tp-[A-Za-z0-9_-]{6,}|[A-Za-z]:[\\/]|file:\/\/|https?:\/\/|data:|data[\\/](?:sessions|audit)|artifacts[\\/])/i;
 
@@ -191,6 +204,7 @@ export async function loadAssetRegistry(options: { readonly fetcher?: typeof fet
 
 export function createAssetRegistry(manifest: InkUiManifest): AssetRegistry {
   validateManifestHeader(manifest);
+  validateManifestIdentityUniqueness(manifest);
 
   const runtimeReviewStatuses = new Set(manifest.runtimeUsableReviewStatuses);
   const fallbackByRef = new Map(
@@ -211,11 +225,17 @@ export function createAssetRegistry(manifest: InkUiManifest): AssetRegistry {
     }
 
     const runtimeAsset = sanitizeRuntimeAsset(asset, fallbackByRef, manifestOrder);
+    if (assetById.has(runtimeAsset.id)) {
+      throw new AssetRegistryError(`前端资产 manifest 存在重复 asset id：${runtimeAsset.id}`);
+    }
     assetById.set(runtimeAsset.id, runtimeAsset);
     runtimeAssets.push(runtimeAsset);
 
     if (runtimeAsset.category === "portrait") {
       const portrait = sanitizeRuntimePortrait(asset, runtimeAsset);
+      if (portraitByRef.has(portrait.portraitRef)) {
+        throw new AssetRegistryError(`前端资产 manifest 存在重复 portraitRef：${portrait.portraitRef}`);
+      }
       portraitByRef.set(portrait.portraitRef, portrait);
       runtimePortraits.push(portrait);
     }
@@ -230,7 +250,7 @@ export function createAssetRegistry(manifest: InkUiManifest): AssetRegistry {
   const getInitialPortraits = (query: PortraitQuery = {}, options: { readonly limit?: number } = {}) => {
     const matches = getPortraits(query);
     const manifestLimit = matches.reduce((limit, portrait) => Math.min(limit, portrait.lazyLoad.maxInitialPortraits), 8);
-    return applyLimit(matches, options.limit ?? manifestLimit);
+    return applyLimit(matches, Math.min(options.limit ?? manifestLimit, manifestLimit, 8));
   };
 
   return {
@@ -292,6 +312,27 @@ function validateManifestHeader(manifest: InkUiManifest) {
   }
 }
 
+function validateManifestIdentityUniqueness(manifest: InkUiManifest) {
+  const assetIds = new Set<string>();
+  const portraitRefs = new Set<string>();
+
+  for (const asset of manifest.assets) {
+    if (asset.id) {
+      if (assetIds.has(asset.id)) {
+        throw new AssetRegistryError(`前端资产 manifest 存在重复 asset id：${asset.id}`);
+      }
+      assetIds.add(asset.id);
+    }
+
+    if (asset.category === "portrait" && asset.portraitRef) {
+      if (portraitRefs.has(asset.portraitRef)) {
+        throw new AssetRegistryError(`前端资产 manifest 存在重复 portraitRef：${asset.portraitRef}`);
+      }
+      portraitRefs.add(asset.portraitRef);
+    }
+  }
+}
+
 function sanitizeRuntimeAsset(
   asset: InkUiAssetManifestEntry,
   fallbackByRef: ReadonlyMap<string, AssetFallback>,
@@ -301,6 +342,9 @@ function sanitizeRuntimeAsset(
   if (asset.thumbnailPath) assertSafeAssetPath(asset.thumbnailPath, `${asset.id}.thumbnailPath`);
   if (asset.source?.localHighResSourcePath) {
     throw new AssetRegistryError(`${asset.id} 不得在运行时 manifest 暴露本地高清母版路径。`);
+  }
+  if (asset.source?.localHighResSource && asset.source.localHighResSource !== HIGH_RES_SOURCE_FLAG) {
+    throw new AssetRegistryError(`${asset.id} 的高清母版标记不是允许的运行时占位值。`);
   }
 
   const fallbackRef = asset.fallbackRef ?? DEFAULT_PANEL_FALLBACK_REF;
@@ -340,9 +384,25 @@ function sanitizeRuntimePortrait(asset: InkUiAssetManifestEntry, runtimeAsset: R
     throw new AssetRegistryError(`${asset.id} 缺少缩略图或低清占位。`);
   }
   assertSafeAssetPath(asset.lowResPlaceholderPath, `${asset.id}.lowResPlaceholderPath`);
+  if (!asset.genderPresentation || !asset.statusVariant || !asset.ageBand) {
+    throw new AssetRegistryError(`${asset.id} 缺少显式立绘身份、状态或年龄元数据。`);
+  }
+  if (!asset.ageBand.startsWith("adult")) {
+    throw new AssetRegistryError(`${asset.id} 的 ageBand 必须明确为成年立绘。`);
+  }
+  if (!asset.lazyLoad?.group) {
+    throw new AssetRegistryError(`${asset.id} 缺少立绘懒加载分组。`);
+  }
+  const expectedSubcategory = PORTRAIT_LAZY_LOAD_GROUP_SUBCATEGORY[asset.lazyLoad.group];
+  if (expectedSubcategory && asset.subcategory !== expectedSubcategory) {
+    throw new AssetRegistryError(`${asset.id} 的立绘池分组与 subcategory 不一致。`);
+  }
 
   if (asset.lazyLoad?.allowEagerLoad !== false) {
     throw new AssetRegistryError(`${asset.id} 不允许进入 eager load 立绘池。`);
+  }
+  if (asset.lazyLoad.thumbnailFirst !== true || asset.lazyLoad.lowResPlaceholder !== true) {
+    throw new AssetRegistryError(`${asset.id} 必须使用缩略图优先和低清占位加载策略。`);
   }
 
   const maxInitialPortraits = asset.lazyLoad?.maxInitialPortraits ?? 8;
@@ -363,13 +423,13 @@ function sanitizeRuntimePortrait(asset: InkUiAssetManifestEntry, runtimeAsset: R
     emotionTags: [...(asset.emotionTags ?? [])],
     lowResPlaceholderPath: asset.lowResPlaceholderPath,
     lazyLoad: {
-      group: asset.lazyLoad?.group ?? "portrait_uncategorized",
+      group: asset.lazyLoad.group,
       allowEagerLoad: false,
-      thumbnailFirst: asset.lazyLoad?.thumbnailFirst !== false,
-      lowResPlaceholder: asset.lazyLoad?.lowResPlaceholder !== false,
+      thumbnailFirst: true,
+      lowResPlaceholder: true,
       maxInitialPortraits
     },
-    hasHighResOverride: asset.source?.localHighResSource === "kept_outside_public_manifest"
+    hasHighResOverride: asset.source?.localHighResSource === HIGH_RES_SOURCE_FLAG
   };
 }
 

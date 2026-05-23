@@ -219,6 +219,7 @@ function queryNpcPortraits(
 ) {
   return registry.getPortraits({
     usage: "people_page",
+    subcategory: "generic_npc_pool",
     lazyLoadGroup: "portrait_pool_generic_npc_s73_10",
     preferHighResOverridesForFeminine: true,
     ...query

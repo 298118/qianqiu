@@ -293,6 +293,8 @@ manifest 不保存：
 
 S88.11 起，精简 `ink-ui-runtime-manifest.json` 的生成脚本还会在写入前执行运行时安全 QA：只允许浏览器运行时字段，资产必须处于 runtime 可用审核状态并使用 `/assets/ui/` 安全路径，立绘必须明确成年、带稳定 `portraitRef`、缩略图、低清占位、fallback 和 `allowEagerLoad=false` 懒加载策略。未审核素材、作者侧字段、本地/远程/artifacts 路径、key、raw/provider/hidden/prompt/SQLite 污染、非成年立绘元数据或 eager-load 立绘不得进入 runtime manifest。
 
+React `assetRegistry` 是 runtime manifest 进入浏览器组件前的最后一道消费层 QA：它必须拒绝重复 `asset id` / `portraitRef`、缺成年/身份/状态/lazy-load 元数据的立绘、立绘池 lazy group 与 subcategory 不一致、调用方突破首屏懒加载上限，以及通用 NPC 查询误用 `signature_npc_pool`。重要 NPC 专属池只能通过明确 portraitRef 或专属查询使用，不能混入通用人物随机池。
+
 第三方来源在台账中必须区分 `reference-only`、`texture-source` 和 `direct-asset-candidate`。参考图不等于可入库资产；直接资产候选必须先确认许可，再通过 Codex 视觉审核。
 
 ## 15. S73.2-S73.10 交接要求

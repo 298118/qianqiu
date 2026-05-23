@@ -79,6 +79,17 @@ function manifestFixture(assets: readonly InkUiAssetManifestEntry[]): InkUiManif
   };
 }
 
+function lazyLoadFixture(overrides: Partial<NonNullable<InkUiAssetManifestEntry["lazyLoad"]>> = {}) {
+  return {
+    group: "portrait_pool_generic_npc_s73_10",
+    allowEagerLoad: false,
+    thumbnailFirst: true,
+    lowResPlaceholder: true,
+    maxInitialPortraits: 8,
+    ...overrides
+  };
+}
+
 describe("S74.5 asset registry", () => {
   it("filters unapproved assets and keeps all approved portrait refs addressable", () => {
     const approved = portraitFixture();
@@ -112,6 +123,91 @@ describe("S74.5 asset registry", () => {
     });
 
     expect(() => createAssetRegistry(manifestFixture([unsafe]))).toThrow(AssetRegistryError);
+  });
+
+  it("S88.11 rejects duplicate manifest identities before address maps can be overwritten", () => {
+    const first = portraitFixture();
+    const duplicateId = portraitFixture({
+      role: "teacher",
+      roleLabel: "塾师"
+    });
+    const blockedDuplicateId = portraitFixture({
+      reviewStatus: "review_pending",
+      path: "https://example.test/blocked-but-duplicate.webp"
+    });
+    const duplicatePortraitRef = portraitFixture({
+      id: "portrait-test-other-id-v1",
+      portraitRef: "portrait-test-female-v1",
+      path: "/assets/ui/portraits/portrait-test-other-id-v1.webp",
+      thumbnailPath: "/assets/ui/thumbs/thumb-portrait-test-other-id-v1.webp",
+      lowResPlaceholderPath: "/assets/ui/portraits/placeholders/placeholder-portrait-test-other-id-v1.webp"
+    });
+
+    expect(() => createAssetRegistry(manifestFixture([first, duplicateId]))).toThrow(/重复 asset id/);
+    expect(() => createAssetRegistry(manifestFixture([first, blockedDuplicateId]))).toThrow(/重复 asset id/);
+    expect(() => createAssetRegistry(manifestFixture([first, duplicatePortraitRef]))).toThrow(/重复 portraitRef/);
+  });
+
+  it("S88.11 rejects portraits without explicit adult metadata and thumbnail-first lazy loading", () => {
+    expect(() => createAssetRegistry(manifestFixture([portraitFixture({ ageBand: "teen" })]))).toThrow(/成年立绘/);
+    expect(() => createAssetRegistry(manifestFixture([portraitFixture({ statusVariant: undefined })]))).toThrow(/显式立绘/);
+    expect(() => createAssetRegistry(manifestFixture([portraitFixture({ lazyLoad: lazyLoadFixture({ thumbnailFirst: false }) })]))).toThrow(/缩略图优先/);
+    expect(() => createAssetRegistry(manifestFixture([portraitFixture({ lazyLoad: lazyLoadFixture({ lowResPlaceholder: false }) })]))).toThrow(/低清占位/);
+    expect(() => createAssetRegistry(manifestFixture([portraitFixture({ lazyLoad: lazyLoadFixture({ group: undefined }) })]))).toThrow(/懒加载分组/);
+  });
+
+  it("S88.11 keeps signature NPC portraits out of the generic NPC runtime pool", () => {
+    const generic = portraitFixture({
+      id: "portrait-test-generic-commoner-v1",
+      portraitRef: "portrait-test-generic-commoner-v1",
+      subcategory: "generic_npc_pool",
+      role: "commoner",
+      identityTags: ["generic_npc"]
+    });
+    const signature = portraitFixture({
+      id: "portrait-test-signature-emperor-v1",
+      portraitRef: "portrait-test-signature-emperor-v1",
+      subcategory: "signature_npc_pool",
+      usage: ["signature_npc", "people_page", "court_or_story_scene"],
+      role: "emperor",
+      identityTags: ["signature_npc", "important_npc"],
+      lazyLoad: lazyLoadFixture({ group: "portrait_pool_signature_npc_s73_10" })
+    });
+    const registry = createAssetRegistry(manifestFixture([generic, signature]));
+
+    expect(registry.getPortrait("portrait-test-signature-emperor-v1")?.subcategory).toBe("signature_npc_pool");
+    expect(registry.getPortraits({
+      usage: "people_page",
+      subcategory: "generic_npc_pool",
+      lazyLoadGroup: "portrait_pool_generic_npc_s73_10"
+    }).map((portrait) => portrait.portraitRef)).toEqual(["portrait-test-generic-commoner-v1"]);
+    expect(() => createAssetRegistry(manifestFixture([
+      portraitFixture({
+        id: "portrait-test-signature-leak-v1",
+        portraitRef: "portrait-test-signature-leak-v1",
+        subcategory: "signature_npc_pool",
+        lazyLoad: lazyLoadFixture()
+      })
+    ]))).toThrow(/分组与 subcategory 不一致/);
+  });
+
+  it("S88.11 clamps caller preload limits to the manifest portrait lazy-load budget", () => {
+    const first = portraitFixture({
+      id: "portrait-test-first-v1",
+      portraitRef: "portrait-test-first-v1",
+      lazyLoad: lazyLoadFixture({ maxInitialPortraits: 3 })
+    });
+    const portraits = Array.from({ length: 6 }, (_, index) => portraitFixture({
+      id: `portrait-test-extra-${index}-v1`,
+      portraitRef: `portrait-test-extra-${index}-v1`,
+      path: `/assets/ui/portraits/portrait-test-extra-${index}-v1.webp`,
+      thumbnailPath: `/assets/ui/thumbs/thumb-portrait-test-extra-${index}-v1.webp`,
+      lowResPlaceholderPath: `/assets/ui/portraits/placeholders/placeholder-portrait-test-extra-${index}-v1.webp`
+    }));
+    const registry = createAssetRegistry(manifestFixture([first, ...portraits]));
+
+    expect(registry.getInitialPortraits({ usage: "people_page" }, { limit: 20 })).toHaveLength(3);
+    expect(registry.getPreloadHints({ usage: "people_page" }, { limit: 20 })).toHaveLength(3);
   });
 
   it("prefers remastered feminine portraits while keeping original feminine portraits available", () => {

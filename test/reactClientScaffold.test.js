@@ -1173,11 +1173,18 @@ test("S74.5 asset registry gates manifest assets before React components render 
   assert.match(assetRegistrySource, /runtimeUsableReviewStatuses/);
   assert.match(assetRegistrySource, /reviewStatus/);
   assert.match(assetRegistrySource, /allowEagerLoad !== false/);
+  assert.match(assetRegistrySource, /PORTRAIT_LAZY_LOAD_GROUP_SUBCATEGORY/);
+  assert.match(assetRegistrySource, /validateManifestIdentityUniqueness/);
+  assert.match(assetRegistrySource, /重复 asset id/);
+  assert.match(assetRegistrySource, /重复 portraitRef/);
+  assert.match(assetRegistrySource, /Math\.min\(options\.limit \?\? manifestLimit, manifestLimit, 8\)/);
+  assert.match(assetRegistrySource, /ageBand\.startsWith\("adult"\)/);
   assert.match(assetRegistrySource, /lowResPlaceholderPath/);
   assert.match(assetRegistrySource, /getPreloadHints/);
   assert.match(assetRegistrySource, /kept_outside_public_manifest/);
   assert.match(peoplePageSource, /worldPeopleView/);
   assert.match(peoplePageSource, /getExistingPortraitRef/);
+  assert.match(peoplePageSource, /subcategory: "generic_npc_pool"/);
   assert.match(peoplePageSource, /portraitPageSize = 8/);
   assert.match(peoplePageSource, /fallbackPortraitRef/);
   assert.match(portraitSource, /loading="lazy"/);
