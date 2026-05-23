@@ -291,6 +291,8 @@ manifest 不保存：
 - 未公开 NPC 私档、资产真数、密档事件链或隐藏情报真值。
 - 第三方长许可证文本。许可证和来源细节进入 `docs/FRONTEND_ASSET_LEDGER.md`。
 
+S88.11 起，精简 `ink-ui-runtime-manifest.json` 的生成脚本还会在写入前执行运行时安全 QA：只允许浏览器运行时字段，资产必须处于 runtime 可用审核状态并使用 `/assets/ui/` 安全路径，立绘必须明确成年、带稳定 `portraitRef`、缩略图、低清占位、fallback 和 `allowEagerLoad=false` 懒加载策略。未审核素材、作者侧字段、本地/远程/artifacts 路径、key、raw/provider/hidden/prompt/SQLite 污染、非成年立绘元数据或 eager-load 立绘不得进入 runtime manifest。
+
 第三方来源在台账中必须区分 `reference-only`、`texture-source` 和 `direct-asset-candidate`。参考图不等于可入库资产；直接资产候选必须先确认许可，再通过 Codex 视觉审核。
 
 ## 15. S73.2-S73.10 交接要求

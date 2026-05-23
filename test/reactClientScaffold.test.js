@@ -21,6 +21,7 @@ const {
 const {
   buildRuntimeManifest,
   checkRuntimeManifest,
+  validateRuntimeManifestSafety,
   runtimeManifestPath,
   sourceManifestPath
 } = require("../scripts/frontendRuntimeManifest");
@@ -262,6 +263,61 @@ test("S77.5 runtime manifest is compact and strips authoring-only fields", () =>
   assert.doesNotMatch(runtimeText, /artifacts[\\/]|[A-Za-z]:[\\/]|file:\/\//);
   assert.equal(runtimeManifest.assets.some((asset) => asset.thumbnailPath), true);
   assert.equal(runtimeManifest.assets.some((asset) => asset.lowResPlaceholderPath), true);
+  assert.equal(validateRuntimeManifestSafety(runtimeManifest), true);
+});
+
+test("S88.11 runtime manifest QA rejects unsafe portrait and authoring metadata", () => {
+  const sourceManifest = JSON.parse(fs.readFileSync(sourceManifestPath, "utf8"));
+  const runtimeManifest = buildRuntimeManifest(sourceManifest);
+  const portraitIndex = runtimeManifest.assets.findIndex((asset) => asset.category === "portrait");
+  assert.notEqual(portraitIndex, -1);
+
+  const pollutedRuntimeManifest = JSON.parse(JSON.stringify(runtimeManifest));
+  pollutedRuntimeManifest.assets[portraitIndex] = {
+    ...pollutedRuntimeManifest.assets[portraitIndex],
+    reviewStatus: "review_pending",
+    ageBand: "teen",
+    promptSummary: "完整 prompt 原文：E:\\LSMNQ\\artifacts\\source.png",
+    identityTags: [
+      ...pollutedRuntimeManifest.assets[portraitIndex].identityTags,
+      "providerPayload",
+      "SQLite",
+      "safe_search_index"
+    ],
+    lazyLoad: {
+      ...pollutedRuntimeManifest.assets[portraitIndex].lazyLoad,
+      allowEagerLoad: true
+    },
+    source: {
+      localHighResSource: "kept_outside_public_manifest",
+      localHighResSourcePath: "E:\\LSMNQ\\artifacts\\portrait-source.png"
+    }
+  };
+  pollutedRuntimeManifest.fallbackCatalog[0] = {
+    ...pollutedRuntimeManifest.fallbackCatalog[0],
+    cssTokens: {
+      ...pollutedRuntimeManifest.fallbackCatalog[0].cssTokens,
+      providerPayload: "safe-looking"
+    }
+  };
+
+  assert.throws(() => validateRuntimeManifestSafety(pollutedRuntimeManifest), (error) => {
+    const message = error instanceof Error ? error.message : String(error);
+    for (const expectedFragment of [
+      "运行时安全校验失败",
+      "reviewStatus",
+      "promptSummary",
+      "ageBand",
+      "allowEagerLoad",
+      "localHighResSourcePath",
+      "providerPayload",
+      "SQLite",
+      "safe_search_index"
+    ]) {
+      assert.match(message, new RegExp(expectedFragment));
+    }
+    return true;
+  });
 });
 
 test("S77.5 client smoke resource budget classifies first-screen and lazy resources", () => {
