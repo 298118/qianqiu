@@ -1238,20 +1238,44 @@ test("S76.9 map page is an independent safe map surface", () => {
   assert.match(mapPageSource, /\}, \[sessionId\]\)/);
   assert.match(mapPageSource, /入局势簿/);
   assert.match(mapPageSource, /据此拟稿/);
+  assert.match(mapPageSource, /mapActionDeck/);
+  assert.match(mapPageSource, /舆图行动/);
+  assert.match(mapPageSource, /buildMapDraftContext/);
+  assert.match(mapPageSource, /targetRefs/);
+  assert.match(mapPageSource, /sourceRefs/);
+  assert.match(mapPageSource, /requiresServerTurn/);
+  assert.match(mapPageSource, /unsafeMapRefTokens/);
+  assert.match(mapPageSource, /mapbounds/);
+  assert.match(bridgeSource, /MapRuntimeDraftSelection/);
+  assert.match(bridgeSource, /unsafeMapRuntimeRefTokens/);
   assert.match(mapPageSource, /显示坐标只用于浏览器布局/);
   assert.match(bridgeSource, /filterMapRuntimeView/);
   assert.match(bridgeSource, /visibleLayers\.places/);
   assert.match(bridgeSource, /safeMapRuntimeText/);
   assert.match(styleSource, /\.mapImmersiveLayout/);
   assert.match(styleSource, /\.mapSituationLedger/);
+  assert.match(styleSource, /\.mapActionDeck/);
+  assert.match(styleSource, /\.mapActionList/);
   assert.match(styleSource, /\.inkMapTooltipClose/);
   assert.match(styleSource, /\.mapLayerControls,[\s\S]*\.mapCommandDeck \.buttonRow[\s\S]*repeat\(auto-fit, minmax\(96px, 1fr\)\)/);
   assert.match(styleSource, /\.mapLayerToggle span[\s\S]*overflow-wrap: anywhere/);
+  assert.match(styleSource, /\.mapActionList span,[\s\S]*\.mapActionList p,[\s\S]*\.mapActionList strong[\s\S]*overflow-wrap: anywhere/);
   assert.match(styleSource, /\.mapEventList strong[\s\S]*overflow-wrap: anywhere/);
   assert.match(styleSource, /\.inkMapLabel[\s\S]*text-overflow: ellipsis/);
   assert.match(clientSmokeSource, /s74-react-map-runtime-desktop/);
   assert.match(clientSmokeSource, /assertNoVisibleTextOverflow/);
   assert.match(clientSmokeSource, /s88-9-archive-mobile/);
+  const draftContextBuilder = mapPageSource.slice(
+    mapPageSource.indexOf("function buildMapDraftContext"),
+    mapPageSource.indexOf("function buildMapActionEntry")
+  );
+  const bridgeSelectionBuilder = bridgeSource.slice(
+    bridgeSource.indexOf("function buildMapRuntimeDraftSelection"),
+    bridgeSource.indexOf("function filterMapRuntimeView")
+  );
+  assert.doesNotMatch(draftContextBuilder, /layout|layoutPath|mapBounds|viewportHint|position|\.x|\.y/);
+  assert.doesNotMatch(bridgeSelectionBuilder, /layout|layoutPath|mapBounds|viewportHint|position|\.x|\.y/);
+  assert.doesNotMatch(`${bridgeSource}\n${mapPageSource}`, /submitTurn|\/api\/game\/turn|qianqiuApi/);
   assert.doesNotMatch(
     combined,
     /dangerouslySetInnerHTML|\/api\/game\/state|\/api\/dev\/session-diagnostics|public\/app\.js|#action-input|#information-panel|localStorage|sessionStorage|data\/sessions|raw audit|provider payload|OPENAI_API_KEY|DEEPSEEK_API_KEY|MIMO_API_KEY|ANTHROPIC_API_KEY/

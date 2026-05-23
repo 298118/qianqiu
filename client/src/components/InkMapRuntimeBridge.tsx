@@ -22,6 +22,15 @@ type ActiveTooltip = {
   readonly position: ScreenPosition;
 };
 
+export type MapRuntimeDraftSelection = {
+  readonly draftId: string;
+  readonly label: string;
+  readonly text: string;
+  readonly targetRef: string;
+  readonly sourceRefs: readonly string[];
+  readonly requiresServerTurn: boolean;
+};
+
 export type VisibleMapLayers = {
   readonly places?: boolean;
   readonly routes?: boolean;
@@ -77,6 +86,20 @@ const unsafeMapRuntimeTextFragments = [
   "私" + "档",
   "模型" + "原始"
 ] as const;
+
+const unsafeMapRuntimeRefTokens = new Set([
+  "layout",
+  "layoutpath",
+  "mapbounds",
+  "viewporthint",
+  "position",
+  "coordinate",
+  "coordinates",
+  "coord",
+  "coords",
+  "x",
+  "y"
+]);
 
 function isBrowserRuntime() {
   return typeof window !== "undefined" && typeof document !== "undefined";
@@ -153,6 +176,50 @@ function safeMapRuntimeText(value: unknown, fallback: string, maxLength = 80) {
   return text.slice(0, maxLength);
 }
 
+function safeMapRuntimeRefId(value: unknown, maxLength = 96) {
+  const text = safeMapRuntimeText(value, "", maxLength);
+  const compact = text.toLowerCase().replace(/[-_.:]/g, "");
+  if (
+    unsafeMapRuntimeRefTokens.has(compact) ||
+    /^(layout|layoutpath|mapbounds|viewporthint|position|coordinate|coordinates|coord|coords)[:_.-]/i.test(text) ||
+    /^[xy][:_\-.]?\d/i.test(text)
+  ) {
+    return "";
+  }
+  return /^[A-Za-z0-9_.:-]+$/.test(text) ? text : "";
+}
+
+function safeMapRuntimeRefList(values: readonly unknown[], maxItems = 8) {
+  const refs: string[] = [];
+  const seen = new Set<string>();
+  for (const value of values) {
+    const ref = safeMapRuntimeRefId(value);
+    if (!ref || seen.has(ref)) continue;
+    seen.add(ref);
+    refs.push(ref);
+    if (refs.length >= maxItems) break;
+  }
+  return refs;
+}
+
+function buildMapRuntimeDraftSelection(
+  draftId: string,
+  draft: MapRuntimeActionDraft & { readonly actionText: string },
+  ref: MapRuntimeRef
+): MapRuntimeDraftSelection | null {
+  const text = safeMapRuntimeText(draft.actionText, "", 140);
+  const targetRef = safeMapRuntimeRefId(draft.targetRef || ref.mapEntityRef || ref.sourceRef);
+  if (!text || !targetRef) return null;
+  return {
+    draftId: safeMapRuntimeRefId(draft.id || draftId, 96) || "map-draft",
+    label: safeMapRuntimeText(draft.label, "写入行动草稿", 32),
+    text,
+    targetRef,
+    sourceRefs: safeMapRuntimeRefList([...(draft.sourceRefs ?? []), ...(ref.sourceRefs ?? []), ref.sourceRef]),
+    requiresServerTurn: draft.requiresServerTurn !== false
+  };
+}
+
 function filterMapRuntimeView(view: MapRuntimeView | null | undefined, visibleLayers: VisibleMapLayers): MapRuntimeView | null | undefined {
   if (!isUsableMapRuntimeView(view)) return view;
   return {
@@ -167,7 +234,7 @@ type InkMapRuntimeBridgeProps = {
   readonly mapRuntimeView?: MapRuntimeView | null;
   readonly mapMotionEnabled: boolean;
   readonly visibleLayers?: VisibleMapLayers;
-  readonly onActionDraft: (text: string) => void;
+  readonly onActionDraft: (selection: MapRuntimeDraftSelection) => void;
 };
 
 export function InkMapRuntimeBridge({ mapRuntimeView, mapMotionEnabled, visibleLayers = {}, onActionDraft }: InkMapRuntimeBridgeProps) {
@@ -272,7 +339,9 @@ export function InkMapRuntimeBridge({ mapRuntimeView, mapMotionEnabled, visibleL
       .map((draftId) => ({ draftId, draft: drafts[draftId] }))
       .filter((entry): entry is { readonly draftId: string; readonly draft: MapRuntimeActionDraft & { readonly actionText: string } } =>
         isSafeActionDraft(entry.draft)
-      );
+      )
+      .map(({ draftId, draft }) => activeTooltip ? buildMapRuntimeDraftSelection(draftId, draft, activeTooltip.ref) : null)
+      .filter((entry): entry is MapRuntimeDraftSelection => Boolean(entry));
   }, [activeTooltip, mapRuntimeView]);
 
   const activeTooltipTitle = safeMapRuntimeText(activeTooltip?.ref.label, "地图近事", 40);
@@ -324,9 +393,9 @@ export function InkMapRuntimeBridge({ mapRuntimeView, mapMotionEnabled, visibleL
               <p>{activeTooltipSummary}</p>
               {activeDrafts.length ? (
                 <div className="buttonRow">
-                  {activeDrafts.map(({ draftId, draft }) => (
-                    <button className="paperButton" key={draftId} type="button" onClick={() => onActionDraft(safeMapRuntimeText(draft.actionText, "", 140))}>
-                      {safeMapRuntimeText(draft.label, "写入行动草稿", 32)}
+                  {activeDrafts.map((selection) => (
+                    <button className="paperButton" key={selection.draftId} type="button" onClick={() => onActionDraft(selection)}>
+                      {selection.label}
                     </button>
                   ))}
                 </div>

@@ -2196,6 +2196,7 @@ async function runClientSmoke(options = {}) {
         hasFullScreen: Boolean(document.querySelector(".mapFullScreen")),
         hasLayerControls: document.querySelectorAll(".mapLayerToggle").length >= 3,
         hasSituationLedger: Boolean(document.querySelector(".mapSituationLedger")),
+        hasActionDeck: Boolean(document.querySelector(".mapActionDeck")),
         hasArchiveJump: [...document.querySelectorAll(".mapFullScreen a")].some((link) => (link.textContent || "").includes("入局势簿")),
         hasBoundary: (document.body.innerText || "").includes("地图显示坐标只用于浏览器布局"),
         status: bridge?.getAttribute("data-map-status"),
@@ -2206,7 +2207,7 @@ async function runClientSmoke(options = {}) {
         forbiddenText: (document.body.innerText || "").match(/public\/app\.js|#action-input|#information-panel|provider payload|raw audit|hiddenNotes|OPENAI_API_KEY/gi) || []
       };
     });
-    if (!mapRuntime.hasFullScreen || !mapRuntime.hasLayerControls || !mapRuntime.hasSituationLedger || !mapRuntime.hasArchiveJump || !mapRuntime.hasBoundary) {
+    if (!mapRuntime.hasFullScreen || !mapRuntime.hasLayerControls || !mapRuntime.hasSituationLedger || !mapRuntime.hasActionDeck || !mapRuntime.hasArchiveJump || !mapRuntime.hasBoundary) {
       throw new Error(`React map runtime missing S76.9 independent map shell: ${JSON.stringify(mapRuntime)}`);
     }
     if (mapRuntime.motion !== "reduced") {
@@ -2472,13 +2473,14 @@ async function runClientSmoke(options = {}) {
         hasFullScreen: Boolean(document.querySelector(".mapFullScreen")),
         hasLayerControls: document.querySelectorAll(".mapLayerToggle").length >= 3,
         hasSituationLedger: Boolean(document.querySelector(".mapSituationLedger")),
+        hasActionDeck: Boolean(document.querySelector(".mapActionDeck")),
         stageHeight: stage?.height || 0,
         viewportHeight: window.innerHeight,
         horizontalOverflow: html.scrollWidth > html.clientWidth + 2,
         forbiddenText: (document.body.innerText || "").match(/public\/app\.js|#action-input|#information-panel|provider payload|raw audit|hiddenNotes|OPENAI_API_KEY/gi) || []
       };
     });
-    if (!mobileMap.hasFullScreen || !mobileMap.hasLayerControls || !mobileMap.hasSituationLedger || mobileMap.stageHeight < mobileMap.viewportHeight * 0.45) {
+    if (!mobileMap.hasFullScreen || !mobileMap.hasLayerControls || !mobileMap.hasSituationLedger || !mobileMap.hasActionDeck || mobileMap.stageHeight < mobileMap.viewportHeight * 0.45) {
       throw new Error(`S76.9 mobile map is missing the independent map layout: ${JSON.stringify(mobileMap)}`);
     }
     if (mobileMap.horizontalOverflow) {

@@ -955,7 +955,11 @@ export type TurnRequest = {
 export type TurnDraftContext = {
   readonly surfaceId?: string;
   readonly draftKind?: string;
+  readonly sourceView?: string;
   readonly evidenceRefs?: readonly string[];
+  readonly sourceRefs?: readonly string[];
+  readonly targetRefs?: readonly string[];
+  readonly requiresServerTurn?: boolean;
   readonly canonicalEchoRefs?: readonly string[];
   readonly generatedAtTurn?: number;
   readonly status?: string;
@@ -1295,6 +1299,10 @@ export type MapRuntimeRef = {
 export type MapRuntimeRoute = {
   readonly mapEntityRef?: string;
   readonly sourceRef?: string;
+  readonly sourceRefs?: string[];
+  readonly fromRef?: string;
+  readonly toRef?: string;
+  readonly controlRefs?: string[];
   readonly label?: string;
   readonly summary?: string;
   readonly layoutPath?: readonly (readonly [number, number])[];
@@ -1313,8 +1321,12 @@ export type MapRuntimeEventEffect = {
 };
 
 export type MapRuntimeActionDraft = {
+  readonly id?: string;
+  readonly targetRef?: string;
   readonly label?: string;
   readonly actionText?: string;
+  readonly sourceRefs?: string[];
+  readonly requiresServerTurn?: boolean;
   readonly [key: string]: unknown;
 };
 

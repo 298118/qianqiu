@@ -5176,6 +5176,7 @@ describe("S74.1 React client shell", () => {
               label: "贡院",
               summary: "号舍灯火未歇。",
               layout: { x: 0.5, y: 0.5 },
+              sourceRefs: ["mapContextView:geo:exam-hall", "layout", "mapBounds:0:1", "x"],
               actionDraftRefs: ["draft-exam-road"]
             },
             {
@@ -5186,12 +5187,37 @@ describe("S74.1 React client shell", () => {
               actionDraftRefs: ["draft-polluted"]
             }
           ],
-          routes: [],
-          eventEffects: [{ targetRef: "geo:exam-hall", label: "科场近讯", kind: "exam", severity: 0.78 }],
+          routes: [{
+            mapEntityRef: "map:route:exam-road",
+            label: "贡院驿路",
+            summary: "通往贡院的公开驿路。",
+            sourceRefs: ["mapContextView:route:exam-road", "viewportHint", "position:12:13"],
+            controlRefs: ["geo:exam-hall", "coordinates:0:0"],
+            layoutPath: [[0.42, 0.52], [0.5, 0.5]],
+            actionDraftRefs: ["draft-route-exam"]
+          }],
+          eventEffects: [{
+            targetRef: "geo:exam-hall",
+            label: "科场近讯",
+            kind: "exam",
+            severity: 0.78,
+            sourceRefs: ["eventArchiveView:exam-brief", "coordinates:0:0", "y"]
+          }],
           actionDrafts: {
             "draft-exam-road": {
+              id: "draft-exam-road",
+              targetRef: "geo:exam-hall",
               label: "写入赴试草稿",
-              actionText: "沿驿路赴贡院，查问近日考期。"
+              actionText: "沿驿路赴贡院，查问近日考期。",
+              requiresServerTurn: true
+            },
+            "draft-route-exam": {
+              id: "draft-route-exam",
+              targetRef: "map:route:exam-road",
+              label: "草拟循贡院驿路",
+              actionText: "循贡院驿路行进，沿途查问考期与驿传。",
+              sourceRefs: ["mapContextView:route:exam-road", "layoutPath", "x:0.5"],
+              requiresServerTurn: true
             },
             "draft-polluted": {
               label: "provider payload",
@@ -5231,9 +5257,11 @@ describe("S74.1 React client shell", () => {
 
     await screen.findByRole("heading", { name: "山河舆图" });
     await screen.findByRole("button", { name: "贡院" });
+    expect(screen.getByText("舆图行动")).toBeTruthy();
+    expect(screen.getByText("草拟循贡院驿路")).toBeTruthy();
     expect(screen.getByText("公开近事")).toBeTruthy();
     expect(screen.getByText("科场近讯")).toBeTruthy();
-    expect(screen.getByText(/已接入 2 处地点、0 条路线、1 项近事/)).toBeTruthy();
+    expect(screen.getByText(/已接入 2 处地点、1 条路线、1 项近事/)).toBeTruthy();
     fireEvent.click(screen.getByRole("button", { name: "贡院" }));
     expect(screen.getAllByText("号舍灯火未歇。").length).toBeGreaterThan(0);
 
@@ -5241,15 +5269,57 @@ describe("S74.1 React client shell", () => {
     expect(useUiStateStore.getState().actionDraft).toMatchObject({
       source: "map-runtime",
       targetPage: "game",
-      text: "沿驿路赴贡院，查问近日考期。"
+      text: "沿驿路赴贡院，查问近日考期。",
+      draftContext: {
+        surfaceId: "map-runtime",
+        draftKind: "map_ref_action",
+        sourceView: "mapRuntimeView",
+        evidenceRefs: ["mapContextView:geo:exam-hall", "geo:exam-hall"],
+        sourceRefs: ["mapContextView:geo:exam-hall"],
+        targetRefs: ["geo:exam-hall"],
+        requiresServerTurn: true,
+        status: "client_hint"
+      }
     });
+    expect(JSON.stringify(useUiStateStore.getState().actionDraft?.draftContext || {})).not.toMatch(/layout|layoutPath|mapBounds|viewportHint|coordinates|position|"x"|"y"|C:\\|path|provider|raw/i);
+
+    fireEvent.click(screen.getByRole("button", { name: "写入行动：草拟循贡院驿路" }));
+    expect(useUiStateStore.getState().actionDraft).toMatchObject({
+      source: "map-runtime",
+      targetPage: "game",
+      text: "循贡院驿路行进，沿途查问考期与驿传。",
+      draftContext: {
+        surfaceId: "map-runtime",
+        draftKind: "map_route_action",
+        sourceView: "mapRuntimeView",
+        targetRefs: ["map:route:exam-road"],
+        requiresServerTurn: true
+      }
+    });
+    expect(useUiStateStore.getState().actionDraft?.draftContext?.evidenceRefs).toEqual([
+      "mapContextView:route:exam-road",
+      "geo:exam-hall",
+      "map:route:exam-road"
+    ]);
+    expect(JSON.stringify(useUiStateStore.getState().actionDraft?.draftContext || {})).not.toMatch(/layout|layoutPath|mapBounds|viewportHint|coordinates|position|"x"|"y"|C:\\|path|provider|raw/i);
 
     fireEvent.click(screen.getByRole("button", { name: "据此拟稿" }));
     expect(useUiStateStore.getState().actionDraft).toMatchObject({
       source: "map-runtime",
       targetPage: "game",
-      text: expect.stringContaining("科场近讯")
+      text: expect.stringContaining("科场近讯"),
+      draftContext: {
+        surfaceId: "map-runtime",
+        draftKind: "map_event_action",
+        sourceView: "mapRuntimeView",
+        evidenceRefs: ["eventArchiveView:exam-brief", "geo:exam-hall"],
+        sourceRefs: ["eventArchiveView:exam-brief"],
+        targetRefs: ["geo:exam-hall"],
+        requiresServerTurn: true,
+        status: "client_hint"
+      }
     });
+    expect(JSON.stringify(useUiStateStore.getState().actionDraft?.draftContext || {})).not.toMatch(/layout|layoutPath|mapBounds|viewportHint|coordinates|position|"x"|"y"|C:\\|path|provider|raw/i);
 
     expect(screen.getByText("舆图后果追踪")).toBeTruthy();
     expect(screen.getByText("边镇调粮余波")).toBeTruthy();

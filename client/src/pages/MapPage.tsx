@@ -1,8 +1,8 @@
 import { Link, useParams } from "react-router";
 import { useEffect, useMemo, useState } from "react";
-import type { MapRuntimeEventEffect, MapRuntimeRef, MapRuntimeView } from "../api";
+import type { MapRuntimeActionDraft, MapRuntimeEventEffect, MapRuntimeRef, MapRuntimeRoute, MapRuntimeView, TurnDraftContext } from "../api";
 import { DomainConsequenceSection } from "../components/DomainConsequenceSection";
-import { InkMapRuntimeBridge } from "../components/InkMapRuntimeBridge";
+import { InkMapRuntimeBridge, type MapRuntimeDraftSelection } from "../components/InkMapRuntimeBridge";
 import { markOverlayTrigger } from "../components/overlayFocus";
 import { usePrefersReducedMotion } from "../hooks/usePrefersReducedMotion";
 import { isRouteLocalSessionId, isRunnableSessionId } from "../routes/sessionId";
@@ -10,6 +10,19 @@ import { useGameSessionStore } from "../state/gameSessionState";
 import { useUiStateStore } from "../state/uiState";
 
 type MapLayerKey = "places" | "routes" | "events";
+type MapActionDraftKind = "map_ref_action" | "map_route_action" | "map_event_action";
+
+type MapActionEntry = {
+  readonly id: string;
+  readonly label: string;
+  readonly summary: string;
+  readonly kindLabel: string;
+  readonly draftKind: MapActionDraftKind;
+  readonly text: string;
+  readonly targetRef: string;
+  readonly sourceRefs: readonly string[];
+  readonly requiresServerTurn: boolean;
+};
 
 const mapLayerLabels: Record<MapLayerKey, string> = {
   places: "地点",
@@ -51,6 +64,20 @@ const unsafeMapTextFragments = [
   "模型" + "原始"
 ] as const;
 
+const unsafeMapRefTokens = new Set([
+  "layout",
+  "layoutpath",
+  "mapbounds",
+  "viewporthint",
+  "position",
+  "coordinate",
+  "coordinates",
+  "coord",
+  "coords",
+  "x",
+  "y"
+]);
+
 function safeMapPageText(value: unknown, fallback: string, maxLength = 80) {
   const text = typeof value === "string" && value.trim() ? value.trim() : fallback;
   const normalized = text.toLowerCase();
@@ -59,8 +86,165 @@ function safeMapPageText(value: unknown, fallback: string, maxLength = 80) {
   return text.slice(0, maxLength);
 }
 
+function safeMapPageRefId(value: unknown, maxLength = 96) {
+  const text = safeMapPageText(value, "", maxLength);
+  const compact = text.toLowerCase().replace(/[-_.:]/g, "");
+  if (
+    unsafeMapRefTokens.has(compact) ||
+    /^(layout|layoutpath|mapbounds|viewporthint|position|coordinate|coordinates|coord|coords)[:_.-]/i.test(text) ||
+    /^[xy][:_\-.]?\d/i.test(text)
+  ) {
+    return "";
+  }
+  return /^[A-Za-z0-9_.:-]+$/.test(text) ? text : "";
+}
+
+function asStringArray(value: unknown): string[] {
+  return Array.isArray(value) ? value.filter((item): item is string => typeof item === "string") : [];
+}
+
+function safeMapPageRefList(values: readonly unknown[], maxItems = 8) {
+  const refs: string[] = [];
+  const seen = new Set<string>();
+  for (const value of values) {
+    const ref = safeMapPageRefId(value);
+    if (!ref || seen.has(ref)) continue;
+    seen.add(ref);
+    refs.push(ref);
+    if (refs.length >= maxItems) break;
+  }
+  return refs;
+}
+
 function getMapRefId(ref: MapRuntimeRef) {
-  return safeMapPageText(ref.mapEntityRef || ref.sourceRef, "", 96);
+  return safeMapPageRefId(ref.mapEntityRef || ref.sourceRef);
+}
+
+function getRouteRefId(route: MapRuntimeRoute) {
+  return safeMapPageRefId(route.mapEntityRef || route.sourceRef);
+}
+
+function isSafeMapActionDraft(draft: MapRuntimeActionDraft | undefined): draft is MapRuntimeActionDraft & { readonly actionText: string } {
+  return typeof draft?.actionText === "string" && safeMapPageText(draft.actionText, "", 140).length > 0;
+}
+
+function buildMapDraftContext(
+  draftKind: MapActionDraftKind,
+  targetRefs: readonly unknown[],
+  sourceRefs: readonly unknown[],
+  requiresServerTurn = true
+): TurnDraftContext | undefined {
+  const safeTargetRefs = safeMapPageRefList(targetRefs, 4);
+  const safeSourceRefs = safeMapPageRefList(sourceRefs, 8);
+  const evidenceRefs = safeMapPageRefList([...safeSourceRefs, ...safeTargetRefs], 10);
+  if (!evidenceRefs.length) return undefined;
+  return {
+    surfaceId: "map-runtime",
+    draftKind,
+    sourceView: "mapRuntimeView",
+    evidenceRefs,
+    ...(safeSourceRefs.length ? { sourceRefs: safeSourceRefs } : {}),
+    ...(safeTargetRefs.length ? { targetRefs: safeTargetRefs } : {}),
+    requiresServerTurn,
+    status: "client_hint"
+  };
+}
+
+function buildMapActionEntry({
+  draftId,
+  draft,
+  targetRef,
+  sourceRefs,
+  label,
+  summary,
+  kindLabel,
+  draftKind
+}: {
+  readonly draftId: string;
+  readonly draft: MapRuntimeActionDraft & { readonly actionText: string };
+  readonly targetRef: string;
+  readonly sourceRefs: readonly unknown[];
+  readonly label: string;
+  readonly summary: string;
+  readonly kindLabel: string;
+  readonly draftKind: MapActionDraftKind;
+}): MapActionEntry | null {
+  const safeDraftId = safeMapPageRefId(draft.id || draftId);
+  const safeTargetRef = safeMapPageRefId(draft.targetRef || targetRef);
+  const text = safeMapPageText(draft.actionText, "", 140);
+  if (!safeDraftId || !safeTargetRef || !text) return null;
+  return {
+    id: safeDraftId,
+    label: safeMapPageText(draft.label || label, "舆图行动", 40),
+    summary: safeMapPageText(summary, "此行动来自服务器安全舆图投影，写入主卷草稿后仍由服务器裁决。", 96),
+    kindLabel,
+    draftKind,
+    text,
+    targetRef: safeTargetRef,
+    sourceRefs: safeMapPageRefList([...(draft.sourceRefs ?? []), ...sourceRefs], 8),
+    requiresServerTurn: draft.requiresServerTurn !== false
+  };
+}
+
+function getMapActionEntries(view: MapRuntimeView | null | undefined) {
+  const drafts = view?.actionDrafts ?? {};
+  const entries: MapActionEntry[] = [];
+  const seenDrafts = new Set<string>();
+  const addEntry = (entry: MapActionEntry | null) => {
+    if (!entry || seenDrafts.has(entry.id)) return;
+    seenDrafts.add(entry.id);
+    entries.push(entry);
+  };
+
+  for (const ref of view?.refs ?? []) {
+    const targetRef = getMapRefId(ref);
+    if (!targetRef) continue;
+    const sourceRefs = [...(ref.sourceRefs ?? []), ref.sourceRef];
+    for (const draftId of ref.actionDraftRefs ?? []) {
+      if (!safeMapPageRefId(draftId)) continue;
+      const draft = drafts[draftId];
+      if (!isSafeMapActionDraft(draft)) continue;
+      addEntry(buildMapActionEntry({
+        draftId,
+        draft,
+        targetRef,
+        sourceRefs,
+        label: safeMapPageText(ref.label, "舆图地点", 36),
+        summary: safeMapPageText(ref.summary, "此地点可写入一段待裁决行动。", 96),
+        kindLabel: "地点行动",
+        draftKind: "map_ref_action"
+      }));
+    }
+  }
+
+  for (const route of view?.routes ?? []) {
+    const targetRef = getRouteRefId(route);
+    if (!targetRef) continue;
+    const sourceRefs = [
+      ...(route.sourceRefs ?? []),
+      route.sourceRef,
+      route.fromRef,
+      route.toRef,
+      ...asStringArray(route.controlRefs)
+    ];
+    for (const draftId of route.actionDraftRefs ?? []) {
+      if (!safeMapPageRefId(draftId)) continue;
+      const draft = drafts[draftId];
+      if (!isSafeMapActionDraft(draft)) continue;
+      addEntry(buildMapActionEntry({
+        draftId,
+        draft,
+        targetRef,
+        sourceRefs,
+        label: safeMapPageText(route.label, "舆图驿路", 36),
+        summary: safeMapPageText(route.summary, "此路线可写入一段待裁决行动。", 96),
+        kindLabel: "驿路行动",
+        draftKind: "map_route_action"
+      }));
+    }
+  }
+
+  return entries.slice(0, 6);
 }
 
 function getEventSeverity(event: MapRuntimeEventEffect) {
@@ -90,7 +274,10 @@ function getMapEvents(view: MapRuntimeView | null | undefined) {
       return {
         id: `${safeMapPageText(event.targetRef || event.label || "map-event", "map-event", 96)}-${index}`,
         label,
+        targetRef: targetId,
         targetLabel,
+        kind: safeMapPageRefId(event.kind, 32) || "map_event",
+        sourceRefs: safeMapPageRefList(event.sourceRefs ?? [], 8),
         summary,
         severity: getEventSeverity(event)
       };
@@ -117,6 +304,7 @@ export function MapPage() {
   const routeCount = mapRuntimeView?.routes?.length ?? 0;
   const eventCount = mapRuntimeView?.eventEffects?.length ?? 0;
   const mapEvents = useMemo(() => getMapEvents(mapRuntimeView), [mapRuntimeView]);
+  const mapActionEntries = useMemo(() => getMapActionEntries(mapRuntimeView), [mapRuntimeView]);
   const activeLayerCount = (Object.keys(visibleLayers) as MapLayerKey[]).filter((key) => visibleLayers[key]).length;
   const archiveHref = routeSessionSupported ? `/game/${sessionId}/archive` : "/";
   const gameHref = routeSessionSupported ? `/game/${sessionId}` : "/";
@@ -129,12 +317,34 @@ export function MapPage() {
     setVisibleLayers((current) => ({ ...current, [layer]: !current[layer] }));
   }
 
-  function draftFromEvent(label: string, targetLabel: string) {
+  function writeMapActionDraft(text: string, draftContext?: TurnDraftContext) {
     setActionDraft({
       source: "map-runtime",
       targetPage: "game",
-      text: `据舆图公开近事，先查问「${targetLabel}」附近的「${label}」，整理人证、驿路与官府文书后再定本旬行动。`
+      text,
+      ...(draftContext ? { draftContext } : {})
     });
+  }
+
+  function writeMapRuntimeSelection(selection: MapRuntimeDraftSelection) {
+    writeMapActionDraft(
+      selection.text,
+      buildMapDraftContext("map_ref_action", [selection.targetRef], selection.sourceRefs, selection.requiresServerTurn)
+    );
+  }
+
+  function writeMapActionEntry(entry: MapActionEntry) {
+    writeMapActionDraft(
+      entry.text,
+      buildMapDraftContext(entry.draftKind, [entry.targetRef], entry.sourceRefs, entry.requiresServerTurn)
+    );
+  }
+
+  function draftFromEvent(eventItem: ReturnType<typeof getMapEvents>[number]) {
+    writeMapActionDraft(
+      `据舆图公开近事，先查问「${eventItem.targetLabel}」附近的「${eventItem.label}」，整理人证、驿路与官府文书后再定本旬行动。`,
+      buildMapDraftContext("map_event_action", [eventItem.targetRef], eventItem.sourceRefs, true)
+    );
   }
 
   return (
@@ -195,13 +405,35 @@ export function MapPage() {
           mapRuntimeView={mapRuntimeView}
           mapMotionEnabled={displayPreferences.mapMotion && displayPreferences.motion === "full" && !prefersReducedMotion}
           visibleLayers={visibleLayers}
-          onActionDraft={(text) => setActionDraft({ source: "map-runtime", targetPage: "game", text })}
+          onActionDraft={writeMapRuntimeSelection}
         />
         <aside className="mapSituationLedger" aria-labelledby="map-ledger-title">
           <div>
             <p className="eyebrow">局势簿摘录</p>
             <h2 id="map-ledger-title">公开近事</h2>
           </div>
+          <section className="mapActionDeck" aria-labelledby="map-action-title">
+            <div>
+              <p className="eyebrow">行动入口</p>
+              <h3 id="map-action-title">舆图行动</h3>
+            </div>
+            {mapActionEntries.length ? (
+              <ol className="mapActionList">
+                {mapActionEntries.map((entry) => (
+                  <li key={entry.id}>
+                    <span>{entry.kindLabel} · 待主卷裁决</span>
+                    <strong>{entry.label}</strong>
+                    <p>{entry.summary}</p>
+                    <button className="paperButton" type="button" aria-label={`写入行动：${entry.label}`} onClick={() => writeMapActionEntry(entry)}>
+                      写入{entry.kindLabel}
+                    </button>
+                  </li>
+                ))}
+              </ol>
+            ) : (
+              <p className="mapEmptyLedger">暂无服务器预渲染舆图行动；可点击地图地点查看单点草稿，或回主卷自行落笔。</p>
+            )}
+          </section>
           {mapEvents.length ? (
             <ol className="mapEventList">
               {mapEvents.map((eventItem) => (
@@ -209,7 +441,7 @@ export function MapPage() {
                   <strong>{eventItem.label}</strong>
                   <span>{eventItem.targetLabel} · 警势 {eventItem.severity}</span>
                   <p>{eventItem.summary}</p>
-                  <button className="paperButton" type="button" onClick={() => draftFromEvent(eventItem.label, eventItem.targetLabel)}>
+                  <button className="paperButton" type="button" onClick={() => draftFromEvent(eventItem)}>
                     据此拟稿
                   </button>
                 </li>

@@ -2327,6 +2327,62 @@ button:disabled {
   margin: 0;
 }
 
+.mapActionDeck {
+  display: grid;
+  gap: 10px;
+  min-width: 0;
+  border-block: 1px solid rgba(84, 60, 43, 0.16);
+  padding-block: 12px;
+}
+
+.mapActionDeck h3 {
+  margin: 0;
+  font-size: 1rem;
+}
+
+.mapActionList {
+  display: grid;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.mapActionList li {
+  display: grid;
+  gap: 7px;
+  min-width: 0;
+  border: 1px solid rgba(142, 47, 39, 0.24);
+  background: rgba(255, 248, 230, 0.56);
+  padding: 10px;
+}
+
+.mapActionList span,
+.mapActionList p,
+.mapActionList strong {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.mapActionList span {
+  color: #7a6048;
+  font-size: 0.78rem;
+  font-weight: 800;
+}
+
+.mapActionList strong {
+  color: #7b241f;
+}
+
+.mapActionList p {
+  margin: 0;
+}
+
+.mapActionList .paperButton {
+  justify-self: start;
+  min-height: 36px;
+}
+
 .mapEventList {
   display: grid;
   gap: 10px;
