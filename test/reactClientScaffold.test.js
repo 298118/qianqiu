@@ -1322,6 +1322,7 @@ test("S74.7 client smoke verifies default UI start and safe route recovery", () 
   assert.match(errorPageSource, /getRouteSessionRecoveryHref\(location\.pathname\)/);
   assert.match(notFoundPageSource, /getRouteSessionRecoveryHref\(location\.pathname\)/);
   assert.match(routeRecoverySource, /isRunnableSessionId\(sessionId\)/);
+  assert.ok(routeRecoverySource.includes("pathname.match(/^\\/game\\/([^/]+)(\\/.+)$/)"));
   assert.match(routeRecoverySource, /return `\/game\/\$\{sessionId\}`/);
   assert.doesNotMatch(routeRecoverySource, /statusText/);
   assert.doesNotMatch(clientSmokeSource, /\/legacy\.html|\/ink-client|\/api\/game\/state\/\$\{|\/api\/dev\/session-diagnostics/);

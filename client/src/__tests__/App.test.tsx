@@ -509,6 +509,13 @@ describe("S74.1 React client shell", () => {
     expect(screen.getByRole("heading", { name: "无此卷页" })).toBeTruthy();
     expect(screen.queryByRole("link", { name: "回主卷" })).toBeNull();
     expect(screen.getByRole("link", { name: "归首页" }).getAttribute("href")).toBe("/");
+
+    cleanup();
+    renderRoute("/game/not-a-session/unknown");
+
+    expect(screen.getByRole("heading", { name: "无此卷页" })).toBeTruthy();
+    expect(screen.queryByRole("link", { name: "回主卷" })).toBeNull();
+    expect(screen.getByRole("link", { name: "归首页" }).getAttribute("href")).toBe("/");
   });
 
   it("sanitizes route error diagnostics before rendering recovery links", async () => {
@@ -516,7 +523,7 @@ describe("S74.1 React client shell", () => {
     const consoleError = vi.spyOn(console, "error").mockImplementation(() => undefined);
     const router = createMemoryRouter([
       {
-        path: "/game/:sessionId",
+        path: "/game/:sessionId/unknown",
         element: <div>不应显示</div>,
         hydrateFallbackElement: <div>载入中</div>,
         errorElement: <ErrorPage />,
@@ -529,7 +536,7 @@ describe("S74.1 React client shell", () => {
           };
         }
       }
-    ], { initialEntries: [`/game/${sessionId}`] });
+    ], { initialEntries: [`/game/${sessionId}/unknown`] });
 
     try {
       render(<RouterProvider router={router} />);
@@ -537,6 +544,38 @@ describe("S74.1 React client shell", () => {
       await screen.findByRole("heading", { name: "卷页受阻" });
       expect(screen.getByText("案卷暂不可读。")).toBeTruthy();
       expect(screen.getByRole("link", { name: "回主卷" }).getAttribute("href")).toBe(`/game/${sessionId}`);
+      expect(document.body.textContent || "").not.toMatch(/data\/sessions|raw audit|provider payload|OPENAI_API_KEY/i);
+    } finally {
+      consoleError.mockRestore();
+    }
+  });
+
+  it("does not offer a self-recovery link when the game root route errors", async () => {
+    const sessionId = "11111111-2222-4333-8444-555555555555";
+    const consoleError = vi.spyOn(console, "error").mockImplementation(() => undefined);
+    const router = createMemoryRouter([
+      {
+        path: "/game/:sessionId",
+        element: <div>不应显示</div>,
+        hydrateFallbackElement: <div>载入中</div>,
+        errorElement: <ErrorPage />,
+        loader: () => {
+          throw {
+            status: 500,
+            statusText: "provider payload data/sessions OPENAI_API_KEY",
+            data: "raw audit"
+          };
+        }
+      }
+    ], { initialEntries: [`/game/${sessionId}`] });
+
+    try {
+      render(<RouterProvider router={router} />);
+
+      await screen.findByRole("heading", { name: "卷页受阻" });
+      expect(screen.getByText("案卷暂不可读。")).toBeTruthy();
+      expect(screen.queryByRole("link", { name: "回主卷" })).toBeNull();
+      expect(screen.getByRole("link", { name: "归首页" }).getAttribute("href")).toBe("/");
       expect(document.body.textContent || "").not.toMatch(/data\/sessions|raw audit|provider payload|OPENAI_API_KEY/i);
     } finally {
       consoleError.mockRestore();

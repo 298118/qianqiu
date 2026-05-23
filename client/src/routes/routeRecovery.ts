@@ -2,7 +2,7 @@ import { isRouteErrorResponse } from "react-router";
 import { isRunnableSessionId } from "./sessionId";
 
 export function getRouteSessionRecoveryHref(pathname: string) {
-  const sessionMatch = pathname.match(/^\/game\/([^/]+)/);
+  const sessionMatch = pathname.match(/^\/game\/([^/]+)(\/.+)$/);
   const sessionId = sessionMatch?.[1] ?? "";
   if (!isRunnableSessionId(sessionId)) return null;
   return `/game/${sessionId}`;
