@@ -226,7 +226,8 @@ function filterMapRuntimeView(view: MapRuntimeView | null | undefined, visibleLa
     ...view,
     refs: visibleLayers.places === false ? [] : view.refs,
     routes: visibleLayers.routes === false ? [] : view.routes,
-    eventEffects: visibleLayers.events === false ? [] : view.eventEffects
+    eventEffects: visibleLayers.events === false ? [] : view.eventEffects,
+    npcActivityAnchors: visibleLayers.events === false ? [] : view.npcActivityAnchors
   };
 }
 

@@ -21,6 +21,7 @@ const MAP_RUNTIME_LIMITS = Object.freeze({
   maxRefs: 80,
   maxRoutes: 40,
   maxEventEffects: 12,
+  maxNpcActivityAnchors: 8,
   maxActionDrafts: 80,
   maxLabelLength: 80,
   maxSummaryLength: 160,
@@ -121,6 +122,21 @@ const MAP_RUNTIME_EVENT_EFFECTS = Object.freeze({
   })
 });
 
+const MAP_RUNTIME_NPC_ACTIVITY_ANCHORS = Object.freeze({
+  active_request: Object.freeze({
+    kind: "npc_active_request",
+    label: "人物来函",
+    animationToken: "ink_seal_pulse",
+    severityFloor: 0.34
+  }),
+  follow_up_evidence: Object.freeze({
+    kind: "npc_follow_up_evidence",
+    label: "续办线索",
+    animationToken: "ink_ripple_black",
+    severityFloor: 0.38
+  })
+});
+
 const MAP_RUNTIME_ACTION_DRAFT_TEMPLATES = Object.freeze({
   default_travel: Object.freeze({
     labelPrefix: "草拟前往",
@@ -173,6 +189,7 @@ module.exports = {
   MAP_RUNTIME_LAYER_IDS,
   MAP_RUNTIME_LAYOUT_VERSION,
   MAP_RUNTIME_LIMITS,
+  MAP_RUNTIME_NPC_ACTIVITY_ANCHORS,
   MAP_RUNTIME_ROUTE_STYLE_TOKENS,
   MAP_RUNTIME_SCHEMA_VERSION,
   MAP_RUNTIME_STYLE_TOKENS

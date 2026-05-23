@@ -2220,7 +2220,13 @@ button:disabled {
   overflow-wrap: anywhere;
 }
 
-.mapHeroStats,
+.mapHeroStats {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+  margin: 0;
+}
+
 .mapStatusRail {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -2423,6 +2429,59 @@ button:disabled {
 .mapEventList .paperButton {
   justify-self: start;
   min-height: 36px;
+}
+
+.mapNpcActivityDeck {
+  display: grid;
+  gap: 10px;
+  min-width: 0;
+  border-block: 1px solid rgba(84, 60, 43, 0.16);
+  padding-block: 12px;
+}
+
+.mapNpcActivityDeck h3 {
+  margin: 0;
+  font-size: 1rem;
+}
+
+.mapNpcActivityList {
+  display: grid;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.mapNpcActivityList li {
+  display: grid;
+  gap: 7px;
+  min-width: 0;
+  border: 1px solid rgba(47, 111, 94, 0.24);
+  background: rgba(249, 252, 241, 0.62);
+  padding: 12px;
+}
+
+.mapNpcActivityList strong,
+.mapNpcActivityList span,
+.mapNpcActivityList p {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.mapNpcActivityList strong {
+  color: #2f6f5e;
+}
+
+.mapNpcActivityList span,
+.mapNpcActivityList p {
+  margin: 0;
+  color: #604b38;
+  line-height: 1.6;
+}
+
+.mapNpcActivityList span {
+  font-size: 0.82rem;
+  font-weight: 800;
 }
 
 .mapSafetyBoundary {
@@ -4925,7 +4984,7 @@ button:disabled {
   }
 
   .mapHeroStats {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .archiveStats {

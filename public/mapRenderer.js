@@ -320,6 +320,65 @@
             }
          }
       });
+
+      const topNpcAnchors = [...(mapRuntimeView.npcActivityAnchors || [])]
+          .sort((a, b) => (b.severity || 0) - (a.severity || 0));
+
+      topNpcAnchors.forEach(anchor => {
+         const targetMarker = this.markers.get(anchor.targetRef);
+         if (targetMarker) {
+            const severity = Math.min(1, Math.max(0.2, anchor.severity || 0.34));
+            let anchorDisplay;
+            if (this.assets && this.assets !== 'fallback' && anchor.animationToken && this.assets[`effect_${anchor.animationToken}`]) {
+                anchorDisplay = new PIXI.Sprite(this.assets[`effect_${anchor.animationToken}`]);
+                anchorDisplay.anchor.set(0.5);
+                anchorDisplay.alpha = Math.min(0.86, 0.42 + severity * 0.4);
+                anchorDisplay.scale.set(0.32 + severity * 0.26);
+            } else {
+                anchorDisplay = new PIXI.Graphics();
+                anchorDisplay.lineStyle(2, 0x2f6f5e, 0.72);
+                anchorDisplay.beginFill(0xfff8e6, 0.76);
+                anchorDisplay.drawCircle(0, 0, 9 + severity * 8);
+                anchorDisplay.endFill();
+                anchorDisplay.lineStyle(1, 0x7b241f, 0.5);
+                anchorDisplay.drawCircle(0, 0, 4 + severity * 3);
+            }
+            anchorDisplay.x = targetMarker.x + 18;
+            anchorDisplay.y = targetMarker.y - 18;
+            anchorDisplay.hitArea = new PIXI.Circle(0, 0, 24 + severity * 10);
+
+            anchorDisplay.eventMode = 'static';
+            anchorDisplay.cursor = 'pointer';
+            anchorDisplay.on('pointertap', () => {
+               const targetRef = (mapRuntimeView.refs || []).find(r => r.mapEntityRef === anchor.targetRef);
+               const clickRef = {
+                 ...(targetRef || {}),
+                 mapEntityRef: targetRef?.mapEntityRef || anchor.targetRef,
+                 sourceRef: targetRef?.sourceRef || anchor.targetRef,
+                 sourceRefs: anchor.sourceRefs || [],
+                 label: anchor.label || "人物动向",
+                 summary: anchor.summary || (targetRef?.label ? `${targetRef.label}附近有人物动向。` : "人物动向只作舆图观察线索。"),
+                 actionDraftRefs: []
+               };
+               this.selectRef(clickRef, anchorDisplay.position);
+               if (this.options.onClickRef) this.options.onClickRef(clickRef, anchorDisplay.position);
+            });
+
+            this.layers.events.addChild(anchorDisplay);
+
+            // 人物锚点只以低调呼吸提示可见活动，不承载行动裁决。
+            if (!this.reducedMotion && anchor.animationToken && this.countAnimatedEffects("ripple") < EFFECT_ANIMATION_LIMIT) {
+                this.animatedEffects.push({
+                    type: 'ripple',
+                    sprite: anchorDisplay,
+                    baseScale: anchorDisplay.scale.x,
+                    baseAlpha: anchorDisplay.alpha,
+                    seed: Math.random() * 100,
+                    speed: 0.0025 + Math.random() * 0.0015
+                });
+            }
+         }
+      });
     }
     
     selectRef(ref, pos) {

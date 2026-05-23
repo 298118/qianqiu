@@ -73,6 +73,9 @@ test("S72.5 map frontend links selected refs to safe information-panel cards", (
   assert.match(rendererJs, /this\.selectRef\(ref, pos\)/);
   assert.match(rendererJs, /effectDisplay\.hitArea = new PIXI\.Circle/);
   assert.match(rendererJs, /sourceRefs: effect\.sourceRefs \|\| \[\]/);
+  assert.match(rendererJs, /mapRuntimeView\.npcActivityAnchors/);
+  assert.match(rendererJs, /sourceRefs: anchor\.sourceRefs \|\| \[\]/);
+  assert.match(rendererJs, /actionDraftRefs: \[\]/);
 
   const panelJs = readPublicFile("mapPanel.js");
   assert.match(panelJs, /function findInformationPanelCard\(ref\)/);

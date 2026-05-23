@@ -12,7 +12,7 @@ function assertSafeMapRuntimePayload(value) {
   const serialized = JSON.stringify(value);
   assert.doesNotMatch(
     serialized,
-    /SEALED_|hiddenNotes|hiddenIntent|raw provider|raw coordinate|coordinateTable|latitude|longitude|world_sessions|prompt_retrieval_index|event_log|E:\\LSMNQ|data\/sessions|file:\/\/|OPENAI_API_KEY|sk-[A-Za-z0-9_-]+|tp-[A-Za-z0-9_-]+/i
+    /SEALED_|hiddenNotes|hiddenIntent|hiddenDossier|privateSignalTags|trueAssets|npcActiveRequestLedger|raw provider|raw coordinate|coordinateTable|latitude|longitude|world_sessions|prompt_retrieval_index|event_log|E:\\LSMNQ|data\/sessions|file:\/\/|OPENAI_API_KEY|sk-[A-Za-z0-9_-]+|tp-[A-Za-z0-9_-]+/i
   );
 }
 
@@ -325,6 +325,103 @@ test("S88.6 map runtime event cap preserves visible domain consequence effects",
   assert.equal(view.eventEffects.length, 3);
   assert.equal(domainEffects.length, 1);
   assert.equal(domainEffects[0].targetRef, "map:economic:economic_report:grain-market");
+  assertSafeMapRuntimePayload(view);
+});
+
+test("S88.10 map runtime view adds read-only NPC activity anchors on public map refs", () => {
+  const mapContextView = {
+    schemaVersion: 1,
+    generatedAtTurn: 24,
+    mapEntityRefs: [{
+      refId: "map:geography:city:city-suzhou",
+      domain: "geography",
+      entityType: "city",
+      entityId: "city-suzhou",
+      label: "苏州",
+      summary: "公开府城节点。",
+      visibility: "public",
+      pressure: 25
+    }, {
+      refId: "map:geography:city:city-beijing",
+      domain: "geography",
+      entityType: "city",
+      entityId: "city-beijing",
+      label: "北京",
+      summary: "公开京师节点。",
+      visibility: "public",
+      pressure: 18
+    }],
+    mapEventHooks: []
+  };
+  const npcActiveRequestView = {
+    items: [{
+      requestId: "req-public",
+      status: "active",
+      typeLabel: "请托",
+      npc: { npcId: "npc-zhang", displayName: "张廷试" },
+      intentSummary: "张廷试在苏州递来请托，后果仍待服务器裁决。",
+      riskTags: ["relationship_risk_watchlist", "privateSignalTags"],
+      evidenceRefs: ["npcActiveRequestLedger:raw-secret"]
+    }, {
+      requestId: "req-hidden",
+      status: "active",
+      typeLabel: "密访",
+      npc: { npcId: "npc-hidden", displayName: "SEALED_NPC" },
+      intentSummary: "hiddenDossier privateSignalTags trueAssets"
+    }],
+    followUpEvidence: {
+      items: [{
+        evidenceId: "evi-public",
+        requestId: "req-public",
+        status: "pending_follow_up",
+        urgency: "high",
+        npc: { npcId: "npc-zhang", displayName: "张廷试" },
+        title: "续办线索：张廷试",
+        publicSummary: "请托续办材料在苏州公开流转；资源、关系与后续任务仍由服务器裁决。",
+        riskTags: ["censorate_watchlist"]
+      }]
+    }
+  };
+  const worldPeopleView = {
+    npcs: [{
+      id: "npc-zhang",
+      name: "张廷试",
+      currentCityId: "city-suzhou",
+      visibility: "relationship_visible",
+      knownToPlayer: true
+    }, {
+      id: "npc-hidden",
+      name: "密札人物",
+      currentCityId: "city-beijing",
+      visibility: "hidden",
+      knownToPlayer: false
+    }]
+  };
+
+  const view = buildMapRuntimeView({ turnCount: 24 }, {
+    mapContextView,
+    domainConsequenceView: { recentConsequences: [] },
+    npcActiveRequestView,
+    worldPeopleView
+  });
+  const refIds = new Set(view.refs.map((ref) => ref.mapEntityRef));
+
+  assert.equal(view.npcActivityAnchors.length, 2);
+  assert.ok(view.npcActivityAnchors.every((anchor) => anchor.visualOnly === true));
+  assert.ok(view.npcActivityAnchors.every((anchor) => refIds.has(anchor.targetRef)));
+  assert.ok(view.npcActivityAnchors.every((anchor) => anchor.targetRef === "map:geography:city:city-suzhou"));
+  assert.ok(view.npcActivityAnchors.some((anchor) => anchor.kind === "npc_active_request"));
+  assert.ok(view.npcActivityAnchors.some((anchor) => anchor.kind === "npc_follow_up_evidence"));
+  assert.ok(view.npcActivityAnchors.every((anchor) =>
+    anchor.sourceRefs.every((sourceRef) =>
+      sourceRef.startsWith("npcActiveRequestView:") ||
+      sourceRef.startsWith("npcActiveRequestFollowUpEvidence:")
+    )
+  ));
+  assert.equal(JSON.stringify(view.npcActivityAnchors).includes("npc-hidden"), false);
+  assert.equal(Object.values(view.actionDrafts).some((draft) =>
+    (draft.sourceRefs || []).some((ref) => ref.startsWith("npcActiveRequest"))
+  ), false);
   assertSafeMapRuntimePayload(view);
 });
 

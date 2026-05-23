@@ -1213,7 +1213,10 @@ test("S74.6 React map bridge wraps S72 renderer without old frontend globals", (
   assert.match(bridgeSource, /map-runtime/);
   assert.match(mapPageSource, /currentSession\?\.sessionId === sessionId/);
   assert.match(apiTypesSource, /export type MapRuntimeView/);
+  assert.match(apiTypesSource, /export type MapRuntimeNpcActivityAnchor/);
+  assert.match(apiTypesSource, /npcActivityAnchors/);
   assert.match(mapRendererSource, /motionEnabled/);
+  assert.match(mapRendererSource, /mapRuntimeView\.npcActivityAnchors/);
   assert.doesNotMatch(
     combined,
     /window\.QianqiuMapRenderer|public\/app\.js|#action-input|#information-panel|dangerouslySetInnerHTML|localStorage|sessionStorage|data\/sessions|raw audit|provider payload|OPENAI_API_KEY|DEEPSEEK_API_KEY|MIMO_API_KEY|ANTHROPIC_API_KEY/
@@ -1240,6 +1243,8 @@ test("S76.9 map page is an independent safe map surface", () => {
   assert.match(mapPageSource, /据此拟稿/);
   assert.match(mapPageSource, /mapActionDeck/);
   assert.match(mapPageSource, /舆图行动/);
+  assert.match(mapPageSource, /舆图人物动向/);
+  assert.match(mapPageSource, /getNpcActivityAnchors/);
   assert.match(mapPageSource, /buildMapDraftContext/);
   assert.match(mapPageSource, /targetRefs/);
   assert.match(mapPageSource, /sourceRefs/);
@@ -1250,6 +1255,7 @@ test("S76.9 map page is an independent safe map surface", () => {
   assert.match(bridgeSource, /unsafeMapRuntimeRefTokens/);
   assert.match(mapPageSource, /显示坐标只用于浏览器布局/);
   assert.match(bridgeSource, /filterMapRuntimeView/);
+  assert.match(bridgeSource, /npcActivityAnchors: visibleLayers\.events === false \? \[\] : view\.npcActivityAnchors/);
   assert.match(bridgeSource, /visibleLayers\.places/);
   assert.match(bridgeSource, /safeMapRuntimeText/);
   assert.match(styleSource, /\.mapImmersiveLayout/);

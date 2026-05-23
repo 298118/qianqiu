@@ -80,12 +80,24 @@ function uniqueFilteredRefs(values = [], allowedRefs = new Set(), limit = MAX_MA
 }
 
 function sourceRefAllowedForServer(ref = "") {
-  return !String(ref || "").startsWith("domainConsequenceView:");
+  const text = String(ref || "");
+  return ![
+    "domainConsequenceView:",
+    "npcActiveRequestView:",
+    "npcActiveRequestFollowUp:",
+    "npcActiveRequestFollowUpEvidence:",
+    "npcActivityAnchor:"
+  ].some((prefix) => text.startsWith(prefix));
 }
 
 function addRef(set, value) {
   const ref = cleanMapRuntimeDraftRef(value, "");
   if (ref) set.add(ref);
+}
+
+function addServerSourceRef(set, value) {
+  const ref = cleanMapRuntimeDraftRef(value, "");
+  if (ref && sourceRefAllowedForServer(ref)) set.add(ref);
 }
 
 function collectAllowedMapRuntimeDraftRefs(mapRuntimeView = {}) {
@@ -95,30 +107,28 @@ function collectAllowedMapRuntimeDraftRefs(mapRuntimeView = {}) {
 
   for (const ref of asArray(mapRuntimeView.refs)) {
     addRef(targetRefs, ref?.mapEntityRef);
-    addRef(sourceRefs, ref?.sourceRef);
-    for (const sourceRef of asArray(ref?.sourceRefs)) addRef(sourceRefs, sourceRef);
+    addServerSourceRef(sourceRefs, ref?.sourceRef);
+    for (const sourceRef of asArray(ref?.sourceRefs)) addServerSourceRef(sourceRefs, sourceRef);
   }
 
   for (const route of asArray(mapRuntimeView.routes)) {
     addRef(targetRefs, route?.mapEntityRef);
-    addRef(sourceRefs, route?.sourceRef);
-    addRef(sourceRefs, route?.fromRef);
-    addRef(sourceRefs, route?.toRef);
-    for (const sourceRef of asArray(route?.sourceRefs)) addRef(sourceRefs, sourceRef);
-    for (const controlRef of asArray(route?.controlRefs)) addRef(sourceRefs, controlRef);
+    addServerSourceRef(sourceRefs, route?.sourceRef);
+    addServerSourceRef(sourceRefs, route?.fromRef);
+    addServerSourceRef(sourceRefs, route?.toRef);
+    for (const sourceRef of asArray(route?.sourceRefs)) addServerSourceRef(sourceRefs, sourceRef);
+    for (const controlRef of asArray(route?.controlRefs)) addServerSourceRef(sourceRefs, controlRef);
   }
 
   for (const effect of asArray(mapRuntimeView.eventEffects)) {
     addRef(targetRefs, effect?.targetRef);
-    for (const sourceRef of asArray(effect?.sourceRefs)) {
-      if (sourceRefAllowedForServer(sourceRef)) addRef(sourceRefs, sourceRef);
-    }
+    for (const sourceRef of asArray(effect?.sourceRefs)) addServerSourceRef(sourceRefs, sourceRef);
   }
 
   for (const [draftId, draft] of Object.entries(isPlainObject(mapRuntimeView.actionDrafts) ? mapRuntimeView.actionDrafts : {})) {
     addRef(actionDraftRefs, draftId);
     addRef(targetRefs, draft?.targetRef);
-    for (const sourceRef of asArray(draft?.sourceRefs)) addRef(sourceRefs, sourceRef);
+    for (const sourceRef of asArray(draft?.sourceRefs)) addServerSourceRef(sourceRefs, sourceRef);
   }
 
   return {

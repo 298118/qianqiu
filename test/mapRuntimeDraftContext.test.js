@@ -25,7 +25,12 @@ test("S88.10 map-runtime draftContext is revalidated against current safe runtim
     eventEffects: [{
       id: "event-market",
       targetRef,
-      sourceRefs: [sourceRef, "domainConsequenceView:visual-only"]
+      sourceRefs: [
+        sourceRef,
+        "domainConsequenceView:visual-only",
+        "npcActiveRequestView:req-public",
+        "npcActiveRequestFollowUpEvidence:evi-public"
+      ]
     }],
     actionDrafts: {
       "draft-inspect-grain-market": {
@@ -41,8 +46,24 @@ test("S88.10 map-runtime draftContext is revalidated against current safe runtim
     surfaceId: "map-runtime",
     draftKind: "map_event_action",
     targetRefs: [targetRef, "layout", "mapBounds:0:1", "map:forged:secret"],
-    sourceRefs: [targetRef, "domainConsequenceView:visual-only", "viewportHint", "x", "providerPayload"],
-    evidenceRefs: [sourceRef, targetRef, "layoutPath", "coordinates:0:0", "raw provider"],
+    sourceRefs: [
+      targetRef,
+      "domainConsequenceView:visual-only",
+      "npcActiveRequestView:req-public",
+      "npcActiveRequestFollowUpEvidence:evi-public",
+      "viewportHint",
+      "x",
+      "providerPayload"
+    ],
+    evidenceRefs: [
+      sourceRef,
+      targetRef,
+      "npcActiveRequestView:req-public",
+      "npcActiveRequestFollowUpEvidence:evi-public",
+      "layoutPath",
+      "coordinates:0:0",
+      "raw provider"
+    ],
     actionDraftRefs: ["draft-inspect-grain-market", "layout"],
     requiresServerTurn: true
   }, { mapRuntimeView });
@@ -76,4 +97,59 @@ test("S88.10 map-runtime draftContext rejects unsupported surfaces and forged-on
     targetRefs: ["map:forged:secret"],
     evidenceRefs: ["layoutPath", "mapBounds:0:1", "x:0.5", "providerPayload"]
   }, { mapRuntimeView }), null);
+});
+
+test("S88.10 map-runtime draftContext rejects visual-only NPC refs from all source paths", () => {
+  const targetRef = "map:geography:city:city-suzhou";
+  const safeSourceRef = "mapContextView:public-suzhou";
+  const visualOnlyRefs = [
+    "npcActiveRequestView:req-public",
+    "npcActiveRequestFollowUp:follow-public",
+    "npcActiveRequestFollowUpEvidence:evi-public",
+    "npcActivityAnchor:anchor-public"
+  ];
+  const mapRuntimeView = {
+    schemaVersion: 1,
+    generatedAtTurn: 32,
+    refs: [{
+      mapEntityRef: targetRef,
+      sourceRef: visualOnlyRefs[0],
+      sourceRefs: [safeSourceRef, visualOnlyRefs[1]]
+    }],
+    routes: [{
+      mapEntityRef: "map:geography:route:route-suzhou-canal",
+      sourceRef: visualOnlyRefs[2],
+      fromRef: targetRef,
+      toRef: targetRef,
+      controlRefs: [visualOnlyRefs[3]]
+    }],
+    eventEffects: [{
+      id: "event-npc-activity",
+      targetRef,
+      sourceRefs: visualOnlyRefs
+    }],
+    actionDrafts: {
+      "draft-travel-city-suzhou": {
+        targetRef,
+        sourceRefs: visualOnlyRefs,
+        actionText: "前往苏州查问公开近事。",
+        requiresServerTurn: true
+      }
+    }
+  };
+
+  const context = normalizeMapRuntimeTurnContext({ turnCount: 32 }, {
+    surfaceId: "map-runtime",
+    targetRefs: [targetRef],
+    sourceRefs: [safeSourceRef, ...visualOnlyRefs],
+    evidenceRefs: [safeSourceRef, ...visualOnlyRefs],
+    actionDraftRefs: ["draft-travel-city-suzhou"]
+  }, { mapRuntimeView });
+
+  assert.ok(context);
+  assert.deepEqual(context.sourceRefs, [safeSourceRef]);
+  assert.deepEqual(context.evidenceRefs, [safeSourceRef, targetRef]);
+  assert.deepEqual(context.actionDraftRefs, ["draft-travel-city-suzhou"]);
+  assert.equal(visualOnlyRefs.some((ref) => JSON.stringify(context).includes(ref)), false);
+  assertNoMapDraftContextLeak(context);
 });

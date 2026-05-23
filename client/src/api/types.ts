@@ -1320,6 +1320,20 @@ export type MapRuntimeEventEffect = {
   readonly [key: string]: unknown;
 };
 
+export type MapRuntimeNpcActivityAnchor = {
+  readonly id?: string;
+  readonly targetRef?: string;
+  readonly sourceRefs?: string[];
+  readonly label?: string;
+  readonly summary?: string;
+  readonly kind?: string;
+  readonly severity?: number;
+  readonly animationToken?: string;
+  readonly visualOnly?: boolean;
+  readonly serverAdjudication?: string;
+  readonly [key: string]: unknown;
+};
+
 export type MapRuntimeActionDraft = {
   readonly id?: string;
   readonly targetRef?: string;
@@ -1336,6 +1350,7 @@ export type MapRuntimeView = {
   readonly refs?: MapRuntimeRef[];
   readonly routes?: MapRuntimeRoute[];
   readonly eventEffects?: MapRuntimeEventEffect[];
+  readonly npcActivityAnchors?: MapRuntimeNpcActivityAnchor[];
   readonly actionDrafts?: Record<string, MapRuntimeActionDraft>;
   readonly hiddenNotice?: string;
   readonly [key: string]: unknown;

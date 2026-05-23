@@ -1,5 +1,7 @@
 const { buildMapContextView } = require("./mapContext");
 const { buildDomainConsequenceView } = require("./domainConsequenceTrace");
+const { buildNpcActiveRequestView } = require("./npcActiveRequests");
+const { buildWorldPeopleView } = require("./worldPeople");
 const {
   MAP_RUNTIME_ACTION_DRAFT_TEMPLATES,
   MAP_RUNTIME_ASSET_SET_ID,
@@ -11,6 +13,7 @@ const {
   MAP_RUNTIME_LAYER_IDS,
   MAP_RUNTIME_LAYOUT_VERSION,
   MAP_RUNTIME_LIMITS,
+  MAP_RUNTIME_NPC_ACTIVITY_ANCHORS,
   MAP_RUNTIME_ROUTE_STYLE_TOKENS,
   MAP_RUNTIME_SCHEMA_VERSION,
   MAP_RUNTIME_STYLE_TOKENS
@@ -23,7 +26,7 @@ const {
 const MAP_REF_ID_PATTERN = /^[A-Za-z0-9_.:-]+$/;
 const SAFE_SOURCE_REF_PATTERN = /^[A-Za-z0-9_.:-]+$/;
 const SENSITIVE_MAP_RUNTIME_TEXT_PATTERN =
-  /(SEALED_[A-Z0-9_]+|hidden[_ -]?(?:notes?|intent)|hidden\s+(?:notes?|intent)|密档|私档|密札|密信|隐藏(?:意图|动机|事实|札记)|隐秘(?:意图|动机|事实)|raw(?:[_ -]?|(?=[A-Z]))(?:provider|audit|table|ledger|prompt|proposal|coordinate|coords?|layout|state)|coordinate[_ -]?table|coordinateTable|latitude|longitude|\b(?:statePatch|worldState|providerPayload|providerProposal|prompt|rawSql|SQL|sqlite|lat|lng)\b|api[_ -]?key|OPENAI_API_KEY|DEEPSEEK_API_KEY|MIMO_API_KEY|ANTHROPIC_API_KEY|data[\\/](?:sessions|audit)|ai_change_proposals|event_log|world_sessions|world_state_json|prompt_retrieval_index|event_archive_index|file:\/\/\/?(?:[A-Za-z]:[\\/]|(?:\/Users|\/home|\/tmp|\/var|\/mnt|\/opt|\/workspace)\/)[^\s"'<>]+|[A-Za-z]:[\\/][^\s"'<>]+|\b(?:\/Users|\/home|\/tmp|\/var|\/mnt|\/opt|\/workspace)\/[^\s"'<>]+|sk-[A-Za-z0-9_-]{6,}|tp-[A-Za-z0-9_-]{6,})/i;
+  /(SEALED_[A-Z0-9_]+|hidden[_ -]?(?:notes?|intent|dossier)|hidden\s+(?:notes?|intent|dossier)|hiddenDossier|privateSignalTags|trueAssets|secretRelationships|npcActiveRequestLedger|密档|私档|密札|密信|隐藏(?:意图|动机|事实|札记)|隐秘(?:意图|动机|事实)|raw(?:[_ -]?|(?=[A-Z]))(?:provider|audit|table|ledger|prompt|proposal|coordinate|coords?|layout|state)|coordinate[_ -]?table|coordinateTable|latitude|longitude|\b(?:statePatch|worldState|providerPayload|providerProposal|prompt|rawSql|SQL|sqlite|lat|lng)\b|api[_ -]?key|OPENAI_API_KEY|DEEPSEEK_API_KEY|MIMO_API_KEY|ANTHROPIC_API_KEY|data[\\/](?:sessions|audit)|ai_change_proposals|event_log|world_sessions|world_state_json|prompt_retrieval_index|event_archive_index|file:\/\/\/?(?:[A-Za-z]:[\\/]|(?:\/Users|\/home|\/tmp|\/var|\/mnt|\/opt|\/workspace)\/)[^\s"'<>]+|[A-Za-z]:[\\/][^\s"'<>]+|\b(?:\/Users|\/home|\/tmp|\/var|\/mnt|\/opt|\/workspace)\/[^\s"'<>]+|sk-[A-Za-z0-9_-]{6,}|tp-[A-Za-z0-9_-]{6,})/i;
 
 const DOMAIN_CONSEQUENCE_TARGET_TYPES = Object.freeze({
   city_policy: Object.freeze(["economic_report", "jurisdiction", "posting", "city", "region"]),
@@ -31,6 +34,16 @@ const DOMAIN_CONSEQUENCE_TARGET_TYPES = Object.freeze({
   judicial_case: Object.freeze(["docket", "jurisdiction", "posting", "city", "region"]),
   npc_economy: Object.freeze(["economic_report", "city", "posting", "region"])
 });
+
+const NPC_ACTIVITY_VISIBLE_STATUSES = new Set([
+  "active",
+  "deferred",
+  "under_review",
+  "reported",
+  "converted_to_risk",
+  "accepted_pending_server_resolution",
+  "server_follow_up_recorded"
+]);
 
 function isPlainObject(value) {
   return value !== null && typeof value === "object" && !Array.isArray(value);
@@ -644,6 +657,184 @@ function buildDomainConsequenceEventEffects(domainConsequenceView = {}, runtimeR
   return effects;
 }
 
+function worldPeopleViewForMapRuntime(worldState = {}, options = {}) {
+  if (Object.prototype.hasOwnProperty.call(options, "worldPeopleView")) {
+    return isPlainObject(options.worldPeopleView) ? options.worldPeopleView : null;
+  }
+  return buildWorldPeopleView(worldState);
+}
+
+function npcActiveRequestViewForMapRuntime(worldState = {}, options = {}) {
+  if (Object.prototype.hasOwnProperty.call(options, "npcActiveRequestView")) {
+    return isPlainObject(options.npcActiveRequestView) ? options.npcActiveRequestView : null;
+  }
+  if (!isPlainObject(worldState.npcActiveRequestLedger)) return null;
+  return buildNpcActiveRequestView(worldState, { includeResolved: true });
+}
+
+function buildVisibleNpcLocationIndex(worldPeopleView = {}) {
+  const index = new Map();
+  for (const npc of asArray(worldPeopleView.npcs)) {
+    if (!isPlainObject(npc)) continue;
+    const visibility = sanitizeMapRuntimeText(npc.visibility, "", 32);
+    if (visibility === "hidden" || (npc.knownToPlayer === false && !["public", "rumor"].includes(visibility))) continue;
+    const npcId = cleanId(npc.id || npc.npcId, "");
+    if (!npcId) continue;
+    index.set(npcId, {
+      npcId,
+      currentPostingId: cleanId(npc.currentPostingId, ""),
+      currentCityId: cleanId(npc.currentCityId, ""),
+      homeCityId: cleanId(npc.homeCityId, "")
+    });
+  }
+  return index;
+}
+
+function npcLocationTargetCandidates(npcLocation = {}) {
+  return unique([
+    npcLocation.currentPostingId ? `map:office:posting:${npcLocation.currentPostingId}` : "",
+    npcLocation.currentCityId ? `map:geography:city:${npcLocation.currentCityId}` : "",
+    npcLocation.homeCityId ? `map:geography:city:${npcLocation.homeCityId}` : ""
+  ], 4);
+}
+
+function chooseNpcActivityTarget(npcId = "", npcLocationById = new Map(), runtimeRefs = []) {
+  const npcLocation = npcLocationById.get(cleanId(npcId, ""));
+  if (!npcLocation) return null;
+  const runtimeRefById = new Map(runtimeRefs.map((ref) => [ref.mapEntityRef, ref]));
+  return npcLocationTargetCandidates(npcLocation)
+    .map((candidate) => runtimeRefById.get(candidate))
+    .find(Boolean) || null;
+}
+
+function npcActivitySeverity(source = {}, config = {}) {
+  const tags = asArray(source.riskTags).join(" ");
+  const status = sanitizeMapRuntimeText(source.status, "", 64);
+  const urgency = sanitizeMapRuntimeText(source.urgency, "", 32);
+  let severity = config.severityFloor || 0.34;
+  if (urgency === "high" || /risk|watchlist|censorate|integrity|betrayal|impeach|弹劾|背叛|廉政|风险/.test(tags)) {
+    severity = Math.max(severity, 0.62);
+  } else if (status === "under_review" || status === "converted_to_risk") {
+    severity = Math.max(severity, 0.52);
+  } else if (status === "deferred" || status === "reported") {
+    severity = Math.max(severity, 0.44);
+  }
+  return Number(clampNumber(severity, 0, 1, 0.34).toFixed(2));
+}
+
+function buildNpcActivityAnchor({
+  source = {},
+  sourceId = "",
+  sourceRefs = [],
+  config = MAP_RUNTIME_NPC_ACTIVITY_ANCHORS.active_request,
+  target = null,
+  fallbackSummary = "人物动向只作舆图观察线索；资源、关系、婚姻、弹劾、背叛事实和后续任务仍由服务器裁决。"
+} = {}) {
+  const safeSourceId = cleanSourceRef(sourceId, "");
+  const targetRef = cleanMapRefId(target?.mapEntityRef, "");
+  if (!safeSourceId || !targetRef) return null;
+  const npcName = sanitizeMapRuntimeText(source.npc?.displayName || source.npc?.name, "可见人物", 40);
+  const label = sanitizeMapRuntimeText(`${config.label}：${npcName}`, config.label, 36);
+  const summary = sanitizeMapRuntimeText(
+    source.publicSummary || source.summary || source.intentSummary || source.ask || source.stakes || fallbackSummary,
+    fallbackSummary,
+    MAP_RUNTIME_LIMITS.maxSummaryLength
+  );
+  if (!label || !summary) return null;
+  const safeSourceRefs = unique(sourceRefs, MAP_RUNTIME_LIMITS.maxSourceRefs);
+  if (!safeSourceRefs.length) return null;
+  return {
+    id: cleanId(`npc-activity-${config.kind}-${safeSourceId}`, `npc-activity-${safeSourceId}`),
+    targetRef,
+    kind: config.kind,
+    label,
+    summary,
+    severity: npcActivitySeverity(source, config),
+    animationToken: config.animationToken,
+    sourceRefs: safeSourceRefs,
+    visualOnly: true,
+    serverAdjudication: "只读舆图视觉锚点；NPC 行动、关系、资源、任务和隐藏事实仍由服务器回合裁决。"
+  };
+}
+
+function buildNpcActiveRequestAnchors(npcActiveRequestView = {}, npcLocationById = new Map(), runtimeRefs = [], options = {}) {
+  const anchors = [];
+  const seen = new Set();
+  const maxAnchors = options.maxNpcActivityAnchors || MAP_RUNTIME_LIMITS.maxNpcActivityAnchors;
+  const config = MAP_RUNTIME_NPC_ACTIVITY_ANCHORS.active_request;
+  for (const item of asArray(npcActiveRequestView.items)) {
+    if (!isPlainObject(item) || !NPC_ACTIVITY_VISIBLE_STATUSES.has(item.status)) continue;
+    const requestId = cleanSourceRef(item.requestId, "");
+    const npcId = cleanId(item.npc?.npcId, "");
+    if (!requestId || !npcId || seen.has(`request:${requestId}`)) continue;
+    const target = chooseNpcActivityTarget(npcId, npcLocationById, runtimeRefs);
+    if (!target) continue;
+    const anchor = buildNpcActivityAnchor({
+      source: item,
+      sourceId: requestId,
+      sourceRefs: [`npcActiveRequestView:${requestId}`],
+      config,
+      target
+    });
+    if (!anchor) continue;
+    anchors.push(anchor);
+    seen.add(`request:${requestId}`);
+    if (anchors.length >= maxAnchors) break;
+  }
+  return anchors;
+}
+
+function buildNpcFollowUpEvidenceAnchors(npcActiveRequestView = {}, npcLocationById = new Map(), runtimeRefs = [], options = {}) {
+  const anchors = [];
+  const seen = new Set();
+  const maxAnchors = options.maxNpcActivityAnchors || MAP_RUNTIME_LIMITS.maxNpcActivityAnchors;
+  const config = MAP_RUNTIME_NPC_ACTIVITY_ANCHORS.follow_up_evidence;
+  const evidenceView = isPlainObject(npcActiveRequestView.followUpEvidence) ? npcActiveRequestView.followUpEvidence : {};
+  for (const item of asArray(evidenceView.items)) {
+    if (!isPlainObject(item)) continue;
+    const evidenceId = cleanSourceRef(item.evidenceId || item.sourceId, "");
+    const requestId = cleanSourceRef(item.requestId, "");
+    const npcId = cleanId(item.npc?.npcId, "");
+    if (!evidenceId || !npcId || seen.has(`follow-up:${evidenceId}`)) continue;
+    const target = chooseNpcActivityTarget(npcId, npcLocationById, runtimeRefs);
+    if (!target) continue;
+    const anchor = buildNpcActivityAnchor({
+      source: item,
+      sourceId: evidenceId,
+      sourceRefs: [
+        `npcActiveRequestFollowUpEvidence:${evidenceId}`,
+        requestId ? `npcActiveRequestView:${requestId}` : ""
+      ],
+      config,
+      target
+    });
+    if (!anchor) continue;
+    anchors.push(anchor);
+    seen.add(`follow-up:${evidenceId}`);
+    if (anchors.length >= maxAnchors) break;
+  }
+  return anchors;
+}
+
+function buildNpcActivityAnchors(worldState = {}, runtimeRefs = [], options = {}) {
+  const npcActiveRequestView = npcActiveRequestViewForMapRuntime(worldState, options);
+  if (!npcActiveRequestView) return [];
+  const worldPeopleView = worldPeopleViewForMapRuntime(worldState, options);
+  const npcLocationById = buildVisibleNpcLocationIndex(worldPeopleView || {});
+  if (!npcLocationById.size) return [];
+  const maxAnchors = options.maxNpcActivityAnchors || MAP_RUNTIME_LIMITS.maxNpcActivityAnchors;
+  const anchors = [
+    ...buildNpcActiveRequestAnchors(npcActiveRequestView, npcLocationById, runtimeRefs, options),
+    ...buildNpcFollowUpEvidenceAnchors(npcActiveRequestView, npcLocationById, runtimeRefs, options)
+  ];
+  const seen = new Set();
+  return anchors.filter((anchor) => {
+    if (!anchor?.id || seen.has(anchor.id)) return false;
+    seen.add(anchor.id);
+    return true;
+  }).slice(0, maxAnchors);
+}
+
 function mergeEventEffectsWithDomainConsequences(eventEffects = [], domainEffects = [], options = {}) {
   const maxEventEffects = options.maxEventEffects || MAP_RUNTIME_LIMITS.maxEventEffects;
   if (!domainEffects.length) return eventEffects.slice(0, maxEventEffects);
@@ -705,6 +896,7 @@ function buildMapRuntimeView(worldState = {}, options = {}) {
     buildDomainConsequenceEventEffects(domainConsequenceView, finalRefs, options),
     options
   );
+  const npcActivityAnchors = buildNpcActivityAnchors(worldState, finalRefs, options);
 
   return {
     schemaVersion: MAP_RUNTIME_SCHEMA_VERSION,
@@ -722,6 +914,7 @@ function buildMapRuntimeView(worldState = {}, options = {}) {
     refs: finalRefs,
     routes: finalRoutes,
     eventEffects,
+    npcActivityAnchors,
     actionDrafts,
     hiddenNotice: MAP_RUNTIME_HIDDEN_NOTICE
   };
@@ -731,6 +924,7 @@ module.exports = {
   buildMapActionDrafts,
   buildDomainConsequenceEventEffects,
   buildMapEventEffects,
+  buildNpcActivityAnchors,
   buildMapRuntimeView,
   buildMapRoutes,
   mergeMapRefsWithLayout,

@@ -1,6 +1,14 @@
 import { Link, useParams } from "react-router";
 import { useEffect, useMemo, useState } from "react";
-import type { MapRuntimeActionDraft, MapRuntimeEventEffect, MapRuntimeRef, MapRuntimeRoute, MapRuntimeView, TurnDraftContext } from "../api";
+import type {
+  MapRuntimeActionDraft,
+  MapRuntimeEventEffect,
+  MapRuntimeNpcActivityAnchor,
+  MapRuntimeRef,
+  MapRuntimeRoute,
+  MapRuntimeView,
+  TurnDraftContext
+} from "../api";
 import { DomainConsequenceSection } from "../components/DomainConsequenceSection";
 import { InkMapRuntimeBridge, type MapRuntimeDraftSelection } from "../components/InkMapRuntimeBridge";
 import { markOverlayTrigger } from "../components/overlayFocus";
@@ -253,6 +261,12 @@ function getEventSeverity(event: MapRuntimeEventEffect) {
   return Math.max(0, Math.min(100, Math.round(normalized)));
 }
 
+function getNpcActivitySeverity(anchor: MapRuntimeNpcActivityAnchor) {
+  const value = typeof anchor.severity === "number" && Number.isFinite(anchor.severity) ? anchor.severity : 0.34;
+  const normalized = value <= 1 ? value * 100 : value;
+  return Math.max(0, Math.min(100, Math.round(normalized)));
+}
+
 function getMapEvents(view: MapRuntimeView | null | undefined) {
   const refsById = new Map<string, MapRuntimeRef>();
   (view?.refs ?? []).forEach((ref) => {
@@ -262,7 +276,7 @@ function getMapEvents(view: MapRuntimeView | null | undefined) {
 
   return [...(view?.eventEffects ?? [])]
     .map((event, index) => {
-      const targetId = safeMapPageText(event.targetRef, "", 96);
+      const targetId = safeMapPageRefId(event.targetRef, 96);
       const targetRef = targetId ? refsById.get(targetId) : undefined;
       const label = safeMapPageText(event.label || targetRef?.label, "地图近事", 36);
       const targetLabel = safeMapPageText(targetRef?.label || event.targetRef, "未标注地点", 36);
@@ -286,6 +300,41 @@ function getMapEvents(view: MapRuntimeView | null | undefined) {
     .slice(0, 5);
 }
 
+function getNpcActivityAnchors(view: MapRuntimeView | null | undefined) {
+  const refsById = new Map<string, MapRuntimeRef>();
+  (view?.refs ?? []).forEach((ref) => {
+    const id = getMapRefId(ref);
+    if (id) refsById.set(id, ref);
+  });
+
+  return [...(view?.npcActivityAnchors ?? [])]
+    .map((anchor, index) => {
+      const targetId = safeMapPageRefId(anchor.targetRef, 96);
+      if (!targetId) return null;
+      const targetRef = refsById.get(targetId);
+      const label = safeMapPageText(anchor.label, "人物动向", 36);
+      const targetLabel = safeMapPageText(targetRef?.label || anchor.targetRef, "未标注地点", 36);
+      const summary = safeMapPageText(
+        anchor.summary || "人物动向只作舆图观察线索；关系、资源与后续任务仍由服务器裁决。",
+        "人物动向只作舆图观察线索；关系、资源与后续任务仍由服务器裁决。",
+        96
+      );
+      return {
+        id: `${safeMapPageText(anchor.id || anchor.targetRef || "npc-activity", "npc-activity", 96)}-${index}`,
+        label,
+        targetRef: targetId,
+        targetLabel,
+        kind: safeMapPageRefId(anchor.kind, 40) || "npc_activity",
+        sourceRefs: safeMapPageRefList(anchor.sourceRefs ?? [], 6),
+        summary,
+        severity: getNpcActivitySeverity(anchor)
+      };
+    })
+    .filter((entry): entry is NonNullable<typeof entry> => Boolean(entry))
+    .sort((a, b) => b.severity - a.severity)
+    .slice(0, 4);
+}
+
 export function MapPage() {
   const { sessionId = "s74-preview" } = useParams();
   const [visibleLayers, setVisibleLayers] = useState<Record<MapLayerKey, boolean>>(defaultVisibleLayers);
@@ -303,7 +352,9 @@ export function MapPage() {
   const refCount = mapRuntimeView?.refs?.length ?? 0;
   const routeCount = mapRuntimeView?.routes?.length ?? 0;
   const eventCount = mapRuntimeView?.eventEffects?.length ?? 0;
+  const npcActivityCount = mapRuntimeView?.npcActivityAnchors?.length ?? 0;
   const mapEvents = useMemo(() => getMapEvents(mapRuntimeView), [mapRuntimeView]);
+  const npcActivityAnchors = useMemo(() => getNpcActivityAnchors(mapRuntimeView), [mapRuntimeView]);
   const mapActionEntries = useMemo(() => getMapActionEntries(mapRuntimeView), [mapRuntimeView]);
   const activeLayerCount = (Object.keys(visibleLayers) as MapLayerKey[]).filter((key) => visibleLayers[key]).length;
   const archiveHref = routeSessionSupported ? `/game/${sessionId}/archive` : "/";
@@ -367,6 +418,10 @@ export function MapPage() {
           <div>
             <dt>近事</dt>
             <dd>{eventCount}</dd>
+          </div>
+          <div>
+            <dt>人物</dt>
+            <dd>{npcActivityCount}</dd>
           </div>
         </dl>
       </header>
@@ -450,6 +505,23 @@ export function MapPage() {
           ) : (
             <p className="mapEmptyLedger">暂无公开近事；可保留地点与驿路图层，或回主卷推进一旬后再查看。</p>
           )}
+          {npcActivityAnchors.length ? (
+            <section className="mapNpcActivityDeck" aria-labelledby="map-npc-activity-title">
+              <div>
+                <p className="eyebrow">人物锚点</p>
+                <h3 id="map-npc-activity-title">舆图人物动向</h3>
+              </div>
+              <ol className="mapNpcActivityList">
+                {npcActivityAnchors.map((anchor) => (
+                  <li key={anchor.id}>
+                    <strong>{anchor.label}</strong>
+                    <span>{anchor.targetLabel} · 可见度 {anchor.severity}</span>
+                    <p>{anchor.summary}</p>
+                  </li>
+                ))}
+              </ol>
+            </section>
+          ) : null}
           <DomainConsequenceSection
             domainConsequenceView={domainConsequenceView}
             sourceTypes={mapDomainConsequenceSourceTypes}
@@ -464,7 +536,7 @@ export function MapPage() {
       </div>
       <p className="mapRuntimeNote">
         {mapRuntimeView
-          ? `已接入 ${refCount} 处地点、${routeCount} 条路线、${eventCount} 项近事，当前显示 ${activeLayerCount} 个图层；舆图只读服务器安全投影。`
+          ? `已接入 ${refCount} 处地点、${routeCount} 条路线、${eventCount} 项近事、${npcActivityCount} 条人物动向，当前显示 ${activeLayerCount} 个图层；舆图只读服务器安全投影。`
           : !routeSessionSupported
             ? "此案卷编号暂不可用于浏览器舆图；请从首页开卷或载入旧案。"
             : isRunnable && status === "loading"
@@ -472,7 +544,7 @@ export function MapPage() {
             : "预览案卷不请求后端舆图；从首页新开一卷后即可查看实时地图。"}
       </p>
       <section className="mapSafetyBoundary" aria-label="舆图安全边界">
-        <p>地图显示坐标只用于浏览器布局，不进入 prompt、AI 工具或服务器 resolver；移动、查案、调兵、财政、外交、任免和持久化仍由主卷普通回合提交后服务器裁决。</p>
+        <p>地图显示坐标只用于浏览器布局，不进入 prompt、AI 工具或服务器 resolver；移动、查案、调兵、财政、外交、NPC 行动、任免和持久化仍由主卷普通回合提交后服务器裁决。</p>
       </section>
     </article>
   );
