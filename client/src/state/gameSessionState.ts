@@ -765,7 +765,8 @@ export const useGameSessionStore = create<GameSessionState>((set) => ({
               ...state.currentSession,
               npcInteractionView: payload.npcInteractionView,
               actorMemoryView: payload.actorMemoryView ?? state.currentSession.actorMemoryView,
-              eventArchiveView: payload.eventArchiveView ?? state.currentSession.eventArchiveView
+              eventArchiveView: payload.eventArchiveView ?? state.currentSession.eventArchiveView,
+              worldEntityView: payload.worldEntityView ?? state.currentSession.worldEntityView
             }
           : state.currentSession;
         return {

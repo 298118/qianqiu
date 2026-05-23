@@ -108,6 +108,16 @@ type WorkbenchNpc = {
   readonly relationshipLabels: readonly string[];
 };
 
+type RelationshipEntitySignal = {
+  readonly id: string;
+  readonly name: string;
+  readonly categoryLabel: string;
+  readonly statusLabel: string;
+  readonly riskLabel: string;
+  readonly publicSummary: string;
+  readonly impactCount: number;
+};
+
 function safePeopleText(value: unknown, fallback: string, maxLength = 120) {
   const text = typeof value === "string" && value.trim() ? value.trim().replace(/\s+/g, " ") : fallback;
   const normalized = text.toLowerCase();
@@ -316,6 +326,70 @@ function groupNpcs(npcs: readonly WorkbenchNpc[]) {
   return Array.from(groups.entries()).map(([label, items]) => ({ label, items }));
 }
 
+function rowsFromViewKeys(source: unknown, keys: readonly string[]) {
+  if (!source || typeof source !== "object") return [] as Record<string, unknown>[];
+  const record = source as Record<string, unknown>;
+  return keys.flatMap((key) => {
+    const value = record[key];
+    return Array.isArray(value) ? value.filter((entry): entry is Record<string, unknown> => Boolean(entry && typeof entry === "object" && !Array.isArray(entry))) : [];
+  });
+}
+
+function entityLooksRelationshipRelevant(entity: Record<string, unknown>) {
+  const text = [
+    entity.id,
+    entity.category,
+    entity.categoryLabel,
+    entity.kind,
+    entity.kindLabel,
+    entity.name,
+    entity.publicSummary,
+    entity.riskLabel
+  ].map((value) => String(value ?? "")).join(" ");
+  return /(academy|local|censorate|military-wall|士林|书院|同年|地方|乡绅|人情|风宪|都察|台谏|武备|堡寨|关系|交游|来函|议婚|切磋|论道)/.test(text);
+}
+
+function buildRelationshipEntitySignals(worldEntityView: unknown, worldEntityImpacts: unknown) {
+  const directEntities = rowsFromViewKeys(worldEntityView, ["highlights", "entities", "items"]);
+  const groupedEntities = rowsFromViewKeys(worldEntityView, ["groups"]).flatMap((group) => rowsFromViewKeys(group, ["entities"]));
+  const impacts = Array.isArray(worldEntityImpacts)
+    ? worldEntityImpacts.filter((impact): impact is Record<string, unknown> => Boolean(impact && typeof impact === "object" && !Array.isArray(impact)))
+    : [];
+  const impactCounts = impacts.reduce<Map<string, number>>((counts, impact) => {
+    const sourceType = safePeopleText(impact.sourceType, "", 48);
+    if (sourceType !== "npc_relationship_action" && sourceType !== "active_npc_request") return counts;
+    const entityId = safePeopleText(impact.entityId, "", 96);
+    if (!entityId) return counts;
+    counts.set(entityId, (counts.get(entityId) ?? 0) + 1);
+    return counts;
+  }, new Map());
+  const seen = new Set<string>();
+  return [...directEntities, ...groupedEntities]
+    .filter((entity) => entityLooksRelationshipRelevant(entity) || impactCounts.has(safePeopleText(entity.id, "", 96)))
+    .map((entity): RelationshipEntitySignal | null => {
+      const id = safePeopleText(entity.id, "", 96);
+      if (!id || seen.has(id)) return null;
+      seen.add(id);
+      const publicSummary = safePeopleText(entity.publicSummary, "", 140);
+      if (!publicSummary) return null;
+      return {
+        id,
+        name: safePeopleText(entity.name, "关系网节点", 48),
+        categoryLabel: safePeopleText(entity.categoryLabel, "公开关系", 32),
+        statusLabel: safePeopleText(entity.statusLabel, "可观察", 32),
+        riskLabel: safePeopleText(entity.riskLabel, "可观察", 32),
+        publicSummary,
+        impactCount: impactCounts.get(id) ?? 0
+      };
+    })
+    .filter((entry): entry is RelationshipEntitySignal => Boolean(entry))
+    .sort((first, second) => {
+      if (second.impactCount !== first.impactCount) return second.impactCount - first.impactCount;
+      return first.name.localeCompare(second.name);
+    })
+    .slice(0, 4);
+}
+
 function statusLabel(status: unknown) {
   const text = safePeopleText(status, "待裁", 32);
   const labels: Record<string, string> = {
@@ -518,6 +592,10 @@ export function PeoplePage() {
     ?? activeLastTrade?.economyTraceView
     ?? activeLastNpcCommand?.economyTraceView
     ?? null;
+  const relationshipEntitySignals = useMemo(
+    () => buildRelationshipEntitySignals(activeSession?.worldEntityView, activeLastNpcInteraction?.worldEntityImpacts),
+    [activeLastNpcInteraction?.worldEntityImpacts, activeSession?.worldEntityView]
+  );
   const activeNpcDialogueView = activeLastNpcInteraction?.npcDialogueView?.npcId === selectedNpcIdForResults
     ? activeLastNpcInteraction.npcDialogueView
     : undefined;
@@ -628,6 +706,7 @@ export function PeoplePage() {
           text
         })}
       />
+      <NpcRelationshipEntitySignals signals={relationshipEntitySignals} />
       <EconomyTraceSection
         traceView={peopleEconomyTraceView}
         title="交易委派账本为何变化"
@@ -871,6 +950,43 @@ export function PeoplePage() {
       </button>
       {routeError ? <p className="statusLine" role="alert">{routeError}</p> : null}
     </article>
+  );
+}
+
+function NpcRelationshipEntitySignals({
+  signals
+}: {
+  readonly signals: readonly RelationshipEntitySignal[];
+}) {
+  return (
+    <section className="npcRelationshipEntitySignals" aria-label="NPC 关系网影响">
+      <div className="sectionTitleRow">
+        <div>
+          <h2>关系网影响</h2>
+          <p>论道、切磋、来函、求爱和议婚只会在服务器裁决后牵动公开实体压力；本页不读取服务器内账或未公开关系。</p>
+        </div>
+        <span>{signals.length ? `${signals.length} 条` : "待回响"}</span>
+      </div>
+      {signals.length ? (
+        <div className="npcRelationshipSignalGrid">
+          {signals.map((signal) => (
+            <article className="npcRelationshipSignalCard" key={signal.id}>
+              <div>
+                <p className="eyebrow">{signal.categoryLabel} · {signal.statusLabel}</p>
+                <h3>{signal.name}</h3>
+              </div>
+              <p>{signal.publicSummary}</p>
+              <div className="peopleMeta">
+                <span>{signal.riskLabel}</span>
+                {signal.impactCount ? <span>本次交游 {signal.impactCount} 项</span> : null}
+              </div>
+            </article>
+          ))}
+        </div>
+      ) : (
+        <p className="statusLine">暂无可见关系网回响；后续交游仍需普通回合或 NPC 互动由服务器裁决。</p>
+      )}
+    </section>
   );
 }
 

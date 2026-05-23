@@ -818,6 +818,8 @@ export type NpcInteractionResponse = {
   readonly actorMemory?: JsonObject;
   readonly actorMemoryView?: JsonObject;
   readonly eventArchiveView?: JsonObject;
+  readonly worldEntityView?: JsonObject;
+  readonly worldEntityImpacts?: readonly JsonValue[];
 };
 
 export type TradeRecordView = {

@@ -159,6 +159,32 @@ test("server-owned entity influences update metrics, status, and hidden notes sa
   assert.ok(worldState.worldEntities.recentNotes.includes("水灾赈册压来"));
 });
 
+test("server-owned entity impacts strip unsafe public source ids", () => {
+  const worldState = createInitialState({ playerName: "Source Guard" });
+
+  const impacts = applyWorldEntityInfluences(worldState, [
+    {
+      entityId: "court-censorate",
+      sourceType: "active_npc_request",
+      sourceId: "data/sessions/secret/rawLedger-safe_search_index-providerPayload",
+      metricsDelta: { pressure: 1 },
+      publicNote: "公开压力留痕"
+    },
+    {
+      entityId: "academy-same-year-circle",
+      sourceType: "npc_relationship_action",
+      sourceId: "npc-relationship-resolution:npc-scholar-peer-shen:debate:4",
+      metricsDelta: { trust: 1 },
+      publicNote: "论道余波"
+    }
+  ]);
+  const serialized = JSON.stringify(impacts);
+
+  assert.equal(impacts[0].sourceId, "");
+  assert.equal(impacts[1].sourceId, "npc-relationship-resolution:npc-scholar-peer-shen:debate:4");
+  assert.doesNotMatch(serialized, /data\/sessions|rawLedger|safe_search_index|providerPayload/);
+});
+
 test("deriveWorldEntityInfluences maps applied state, relationship, role, NPC, and official sources", () => {
   const before = createInitialState({ playerName: "Tester", role: "official" });
   const after = createInitialState({ playerName: "Tester", role: "official" });
@@ -229,6 +255,85 @@ test("S88.7 NPC active request resolver traces influence world entities without 
   ));
   assert.match(serialized, /npc-active-resolution/);
   assert.doesNotMatch(serialized, /npcActiveRequestLedger|hiddenDossier|privateSignalTags|rawProvider|sk-[A-Za-z0-9_-]{6,}/);
+});
+
+test("S88.7 NPC active request follow-up resolutions influence public entity pressure only", () => {
+  const worldState = createInitialState({ playerName: "后续实体", role: "magistrate" });
+  worldState.turnCount = 7;
+  createNpcActiveRequest(worldState, "impeachment");
+  runNpcActiveRequestStep(worldState, "呈报弹劾线索", { responseAction: "report" });
+  const followUp = runNpcActiveRequestStep(worldState, "续办弹劾证据，核人证物证与管辖权限");
+
+  const influences = deriveWorldEntityInfluences(worldState, { npcActiveRequests: followUp });
+  const serialized = JSON.stringify(influences);
+
+  assert.ok(influences.some((influence) =>
+    influence.sourceType === "active_npc_request" &&
+    influence.entityId === "court-censorate" &&
+    /风宪|证据/.test(influence.publicNote)
+  ));
+  assert.match(serialized, /npc-active-follow-up-resolution/);
+  assert.doesNotMatch(serialized, /npcActiveRequestLedger|hiddenDossier|privateSignalTags|providerPayload|safe_search_index|statePatch|rawProvider|sk-[A-Za-z0-9_-]{6,}/);
+});
+
+test("S88.7 NPC relationship action traces influence world entities without visual or hidden refs", () => {
+  const worldState = createInitialState({ playerName: "交游实体", role: "scholar" });
+  const influences = deriveWorldEntityInfluences(worldState, {
+    npcInteractionRecords: [{
+      recordId: "npc-interaction:public-duel",
+      actionType: "duel",
+      resolverTrace: {
+        resolver: "npc_relationship_action_resolver",
+        publicResolutionRef: "npc-relationship-resolution:npc-scholar-peer-shen:duel:4",
+        actionType: "duel",
+        status: "server_adjudicated",
+        publicSourceRefs: [
+          "npcInteractionView:npc-interaction:public-duel",
+          "npcRelationshipActionEligibilityView:npc-scholar-peer-shen:duel",
+          "npcInteractionLedger:raw-secret"
+        ],
+        boundaries: {
+          serverOwnsOutcome: true,
+          privateNpcDossierRedacted: true
+        }
+      }
+    }]
+  });
+  const serialized = JSON.stringify(influences);
+
+  assert.ok(influences.some((influence) =>
+    influence.sourceType === "npc_relationship_action" &&
+    influence.entityId === "military-wall-beacons"
+  ));
+  assert.ok(influences.some((influence) =>
+    influence.sourceType === "npc_relationship_action" &&
+    influence.entityId === "local-gentry-county"
+  ));
+  assert.match(serialized, /npc-relationship-resolution/);
+  assert.doesNotMatch(serialized, /npcInteractionLedger|npcRelationshipActionEligibilityView|hiddenDossier|privateSignalTags|rawProvider|providerPayload|sk-[A-Za-z0-9_-]{6,}/);
+});
+
+test("S88.7 blocked NPC relationship actions do not create entity pressure", () => {
+  const worldState = createInitialState({ playerName: "交游挡板", role: "magistrate" });
+  const influences = deriveWorldEntityInfluences(worldState, {
+    npcInteractionRecords: [{
+      recordId: "npc-interaction:blocked-marriage",
+      actionType: "marriage",
+      resolverTrace: {
+        resolver: "npc_relationship_action_resolver",
+        publicResolutionRef: "npc-relationship-resolution:npc-gentry:marriage:8",
+        actionType: "marriage",
+        status: "server_blocked",
+        disposition: "blocked_by_server_eligibility",
+        boundaries: {
+          serverOwnsOutcome: true,
+          privateNpcDossierRedacted: true
+        }
+      }
+    }]
+  });
+
+  assert.deepEqual(influences, []);
 });
 
 test("deriveWorldEntityInfluences respects scene and month-end cadence", () => {

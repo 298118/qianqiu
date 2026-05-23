@@ -1746,6 +1746,15 @@ router.post("/npc-interaction/:sessionId", async (req, res, next) => {
           rejectedCount: 0,
           rejectedReasons: []
         };
+      const worldEntityInfluences = relationshipAction
+        ? deriveWorldEntityInfluences(worldState, {
+            npcInteractionRecords: [recorded.record]
+          })
+        : [];
+      const worldEntityImpacts = applyWorldEntityInfluences(worldState, worldEntityInfluences);
+      if (worldEntityImpacts.length) {
+        ensureWorldEntityState(worldState);
+      }
       const responseErrors = [
         ...recorded.errors,
         ...(relationshipAction && !relationshipAction.ok ? relationshipAction.errors : [])
@@ -1773,7 +1782,9 @@ router.post("/npc-interaction/:sessionId", async (req, res, next) => {
           rejectedReasons: actorMemory.rejectedReasons
         },
         actorMemoryView: buildActorMemoryView(worldState),
-        eventArchiveView: buildEventArchiveView(worldState)
+        eventArchiveView: buildEventArchiveView(worldState),
+        worldEntityView: buildWorldEntityView(worldState),
+        worldEntityImpacts
       });
     });
     res.status(payload.accepted ? 200 : 400).json(payload);

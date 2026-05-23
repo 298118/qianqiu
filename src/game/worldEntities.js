@@ -22,6 +22,7 @@ const ENTITY_INFLUENCE_SOURCE_TYPES = new Set([
   "world_tick",
   "relationship",
   "active_npc_request",
+  "npc_relationship_action",
   "long_term_event",
   "official_career",
   "role_world_coupling"
@@ -53,6 +54,9 @@ const STATUS_LABELS = {
   strained: "吃紧",
   critical: "危急"
 };
+
+const UNSAFE_SOURCE_REF_PATTERN =
+  /(SEALED_|hidden|private|raw|provider|prompt|statePatch|worldState|ledger|sqlite|SQL|api[_ -]?key|OPENAI_API_KEY|DEEPSEEK_API_KEY|MIMO_API_KEY|ANTHROPIC_API_KEY|data[\\/](?:sessions|audit)|world_sessions|prompt_retrieval_index|event_archive_index|safe_search_(?:index|fts)|sk-[A-Za-z0-9_-]{6,}|tp-[A-Za-z0-9_-]{6,}|[A-Za-z]:[\\/]|(?:file:\/\/)?(?:\/Users|\/home|\/tmp|\/var|\/mnt|\/opt|\/workspace)\/)/i;
 
 const RISK_LABELS = {
   low: "可观察",
@@ -98,6 +102,12 @@ function cleanText(value, fallback = "", maxLength = MAX_TEXT_LENGTH) {
   const trimmed = value.trim();
   if (!trimmed) return fallback;
   return trimmed.slice(0, maxLength);
+}
+
+function cleanSourceId(value, fallback = "") {
+  const text = cleanText(value, fallback, 120);
+  if (!text || UNSAFE_SOURCE_REF_PATTERN.test(text)) return fallback;
+  return text.replace(/[^A-Za-z0-9_.:-]+/g, "-").replace(/^-+|-+$/g, "") || fallback;
 }
 
 function clampNumber(value, min, max, fallback) {
@@ -613,7 +623,7 @@ function normalizeEntityInfluence(raw) {
   return {
     entityId,
     sourceType,
-    sourceId: cleanText(raw.sourceId, "", 96),
+    sourceId: cleanSourceId(raw.sourceId, ""),
     publicNote: cleanText(raw.publicNote || raw.note, "", 96),
     hiddenNote: cleanText(raw.hiddenNote, "", 120),
     metricsDelta
@@ -1109,22 +1119,160 @@ function npcActiveRequestLedgerInfluences(npcActiveRequests) {
       influences.push(entityInfluence("court-censorate", "active_npc_request", {
         pressure: 1,
         trust: trace.responseAction === "report" ? 1 : 0
-      }, "行贿来函已转入服务器廉政复核", trace.publicResolutionRef));
+      }, "行贿来函已转入服务器廉政复核", cleanSourceId(trace.publicResolutionRef)));
     } else if (requestType === "impeachment" || disposition.includes("impeachment")) {
       influences.push(entityInfluence("court-censorate", "active_npc_request", {
         pressure: 1
-      }, "弹劾线索来函进入证据复核", trace.publicResolutionRef));
+      }, "弹劾线索来函进入证据复核", cleanSourceId(trace.publicResolutionRef)));
     } else if (requestType === "betrayal") {
       influences.push(entityInfluence("local-gentry-county", "active_npc_request", {
         pressure: 1,
         trust: -1
-      }, "背叛风险来函转入查证", trace.publicResolutionRef));
+      }, "背叛风险来函转入查证", cleanSourceId(trace.publicResolutionRef)));
     } else {
       influences.push(entityInfluence("academy-same-year-circle", "active_npc_request", {
         trust: trace.status === "refused" || trace.status === "expired" ? -1 : 1,
         pressure: trace.status === "deferred" ? 1 : 0
-      }, "NPC 来函回应已进入公开人情余波", trace.publicResolutionRef));
+      }, "NPC 来函回应已进入公开人情余波", cleanSourceId(trace.publicResolutionRef)));
     }
+  }
+  influences.push(...npcActiveRequestFollowUpInfluences(outcome.followUpResolutions));
+  return influences;
+}
+
+function npcActiveRequestFollowUpInfluences(followUpResolutions = []) {
+  const influences = [];
+  for (const resolution of Array.isArray(followUpResolutions) ? followUpResolutions.slice(0, 4) : []) {
+    if (!isPlainObject(resolution)) continue;
+    if (resolution.resolver !== "npc_active_request_follow_up_resolver") continue;
+    if (resolution.boundaries?.serverOwnsFollowUp !== true) continue;
+    const requestType = cleanText(resolution.requestType, "", 48);
+    const followUpKind = cleanText(resolution.followUpKind || resolution.taskRoute, "", 80);
+    const sourceId = cleanSourceId(resolution.resolutionId || resolution.publicResolutionRef, "");
+
+    if (requestType === "bribe" || /integrity|廉政/.test(followUpKind)) {
+      influences.push(entityInfluence("court-censorate", "active_npc_request", {
+        pressure: 1,
+        trust: 1
+      }, "来函后续已登记为廉政观察", sourceId));
+      continue;
+    }
+
+    if (requestType === "impeachment" || /impeachment|censorate|弹劾|风宪/.test(followUpKind)) {
+      influences.push(entityInfluence("court-censorate", "active_npc_request", {
+        pressure: 2
+      }, "来函后续已登记为风宪证据观察", sourceId));
+      continue;
+    }
+
+    if (requestType === "betrayal" || /betrayal|背叛/.test(followUpKind)) {
+      influences.push(
+        entityInfluence("local-gentry-county", "active_npc_request", {
+          pressure: 2,
+          trust: -1
+        }, "背叛风险后续进入公开人情观察", sourceId),
+        entityInfluence("court-censorate", "active_npc_request", {
+          pressure: 1
+        }, "背叛风险后续进入风宪观察", sourceId)
+      );
+      continue;
+    }
+
+    if (requestType === "debt_collection" || /debt|债/.test(followUpKind)) {
+      influences.push(
+        entityInfluence("fiscal-land-merchant-tax", "active_npc_request", {
+          pressure: 1,
+          deficit: 1
+        }, "人情债后续进入公开月账观察", sourceId),
+        entityInfluence("local-gentry-county", "active_npc_request", {
+          pressure: 1
+        }, "人情债后续牵动地方人情", sourceId)
+      );
+      continue;
+    }
+
+    if (requestType === "marriage_proposal" || /ritual|marriage|婚|礼法/.test(followUpKind)) {
+      influences.push(
+        entityInfluence("local-gentry-county", "active_npc_request", {
+          pressure: 1
+        }, "议婚后续只进入礼法人情观察", sourceId),
+        entityInfluence("academy-same-year-circle", "active_npc_request", {
+          pressure: 1
+        }, "议婚后续牵动师友声气", sourceId)
+      );
+      continue;
+    }
+
+    if (requestType === "introduction" || /introduction|network|引荐/.test(followUpKind)) {
+      influences.push(entityInfluence("academy-same-year-circle", "active_npc_request", {
+        trust: 1,
+        pressure: 1
+      }, "引荐后续进入公开人脉观察", sourceId));
+      continue;
+    }
+
+    influences.push(entityInfluence("academy-same-year-circle", "active_npc_request", {
+      pressure: 1
+    }, "来函后续进入公开关系观察", sourceId));
+  }
+  return influences;
+}
+
+function npcRelationshipActionInfluences(npcInteractionRecords = []) {
+  const influences = [];
+  for (const record of Array.isArray(npcInteractionRecords) ? npcInteractionRecords.slice(0, 4) : []) {
+    if (!isPlainObject(record)) continue;
+    const trace = isPlainObject(record.resolverTrace) ? record.resolverTrace : {};
+    if (trace.resolver !== "npc_relationship_action_resolver") continue;
+    if (trace.boundaries?.serverOwnsOutcome !== true) continue;
+    if (trace.status !== "server_adjudicated") continue;
+    const actionType = cleanText(trace.actionType || record.actionType || record.actionKind, "", 48);
+    const sourceId = cleanSourceId(trace.publicResolutionRef || record.recordId, "");
+
+    if (actionType === "debate") {
+      influences.push(
+        entityInfluence("academy-county-school", "npc_relationship_action", {
+          trust: 1,
+          pressure: -1
+        }, "论道裁决进入士林声气", sourceId),
+        entityInfluence("academy-same-year-circle", "npc_relationship_action", {
+          trust: 1,
+          pressure: 0
+        }, "论道余波进入同年文社", sourceId)
+      );
+      continue;
+    }
+
+    if (actionType === "duel") {
+      influences.push(
+        entityInfluence("military-wall-beacons", "npc_relationship_action", {
+          pressure: 1,
+          trust: 1
+        }, "切磋裁决进入武备声气", sourceId),
+        entityInfluence("local-gentry-county", "npc_relationship_action", {
+          pressure: 1
+        }, "切磋余波进入地方人情观察", sourceId)
+      );
+      continue;
+    }
+
+    if (actionType === "courtship" || actionType === "marriage") {
+      influences.push(
+        entityInfluence("local-gentry-county", "npc_relationship_action", {
+          pressure: 1,
+          trust: actionType === "marriage" ? 1 : 0
+        }, "求爱议婚裁决进入礼法人情观察", sourceId),
+        entityInfluence("academy-same-year-circle", "npc_relationship_action", {
+          pressure: 1,
+          trust: 1
+        }, "求爱议婚余波进入师友声气", sourceId)
+      );
+      continue;
+    }
+
+    influences.push(entityInfluence("academy-same-year-circle", "npc_relationship_action", {
+      pressure: 1
+    }, "NPC 交游裁决进入公开关系观察", sourceId));
   }
   return influences;
 }
@@ -1248,6 +1396,7 @@ function deriveWorldEntityInfluences(worldState = {}, context = {}) {
 
   influences.push(...activeRequestInfluences(context.activeNpcRequest));
   influences.push(...npcActiveRequestLedgerInfluences(context.npcActiveRequests));
+  influences.push(...npcRelationshipActionInfluences(context.npcInteractionRecords));
   if (completedMonth) {
     influences.push(...longTermEventInfluences(context.longTermEvents));
   }

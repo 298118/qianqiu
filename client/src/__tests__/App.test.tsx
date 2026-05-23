@@ -4021,6 +4021,34 @@ describe("S74.1 React client shell", () => {
             riskTags: ["privateSignalTags"]
           }]
         }
+      },
+      worldEntityView: {
+        highlights: [{
+          id: "academy-same-year-circle",
+          category: "academy",
+          categoryLabel: "士林",
+          kind: "academy_circle",
+          kindLabel: "书院同门",
+          name: "同年文社",
+          statusLabel: "吃紧",
+          riskLabel: "有牵连",
+          publicSummary: "引荐后续和论道余波进入公开人脉观察，后续仍由服务器裁决。"
+        }],
+        groups: [{
+          category: "local",
+          label: "地方",
+          entities: [{
+            id: "local-gentry-county",
+            category: "local",
+            categoryLabel: "地方",
+            kind: "local_gentry",
+            kindLabel: "地方士绅",
+            name: "地方士绅",
+            statusLabel: "可观察",
+            riskLabel: "可观察",
+            publicSummary: "来函后续牵动地方人情，但不代表资源、人情债或婚姻结果已经落账。"
+          }]
+        }]
       }
     };
     const fetchMock = vi.fn(async (url: string) => {
@@ -4063,6 +4091,9 @@ describe("S74.1 React client shell", () => {
     expect(screen.getByText("同年师友引荐拜会")).toBeTruthy();
     expect(screen.getByText("人情债月账解释")).toBeTruthy();
     expect(screen.getByText("廉政 watchlist 留痕")).toBeTruthy();
+    expect(screen.getByText("关系网影响")).toBeTruthy();
+    expect(screen.getByText("同年文社")).toBeTruthy();
+    expect(screen.getByText("地方士绅")).toBeTruthy();
     expect(screen.queryByText("provider-forged")).toBeNull();
     expect(screen.getAllByRole("button", { name: "拟复核" })).toHaveLength(3);
     fireEvent.click(screen.getAllByRole("button", { name: "拟复核" })[0]);

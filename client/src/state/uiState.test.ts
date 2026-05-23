@@ -1366,7 +1366,8 @@ describe("S74.3 UI state store", () => {
       ...playerStatePayload,
       npcInteractionView: { items: [] },
       actorMemoryView: { actors: [] },
-      eventArchiveView: { items: [] }
+      eventArchiveView: { items: [] },
+      worldEntityView: { highlights: [] }
     };
     const interactionPayload: NpcInteractionResponse = {
       sessionId: playerStatePayload.sessionId,
@@ -1400,7 +1401,15 @@ describe("S74.3 UI state store", () => {
       },
       eventArchiveView: {
         items: [{ sourceType: "actor_memory", summary: "周快手记得切磋已由服务器裁决。" }]
-      }
+      },
+      worldEntityView: {
+        highlights: [{ id: "military-wall-beacons", publicSummary: "切磋裁决进入武备声气。" }]
+      },
+      worldEntityImpacts: [{
+        sourceType: "npc_relationship_action",
+        entityId: "military-wall-beacons",
+        publicNote: "切磋裁决进入武备声气"
+      }]
     };
     installFetchResponses(interactionPayload);
     useGameSessionStore.setState({
@@ -1423,6 +1432,7 @@ describe("S74.3 UI state store", () => {
     expect(state.lastNpcInteraction?.actorMemory).toMatchObject({ appliedCount: 1 });
     expect(state.currentSession?.actorMemoryView).toEqual(interactionPayload.actorMemoryView);
     expect(state.currentSession?.eventArchiveView).toEqual(interactionPayload.eventArchiveView);
+    expect(state.currentSession?.worldEntityView).toEqual(interactionPayload.worldEntityView);
     expect(state.currentSession?.npcInteractionView).toEqual(interactionPayload.npcInteractionView);
     expect(state.npcRoster?.npcInteractionView).toEqual(interactionPayload.npcInteractionView);
     expect(JSON.stringify(state.currentSession)).not.toMatch(/hiddenDossier|providerPayload|rawLedger|OPENAI_API_KEY/);
@@ -1435,6 +1445,7 @@ describe("S74.3 UI state store", () => {
       sessionId: activeSessionId,
       actorMemoryView: { actors: [{ actorId: "npc:active", memories: [] }] },
       eventArchiveView: { items: [{ sourceType: "active_session" }] },
+      worldEntityView: { highlights: [{ id: "active-entity" }] },
       npcInteractionView: { items: [{ recordId: "active-record" }] }
     };
     const stalePayload: NpcInteractionResponse = {
@@ -1444,6 +1455,8 @@ describe("S74.3 UI state store", () => {
       actorMemory: { appliedCount: 1 },
       actorMemoryView: { actors: [{ actorId: "npc:stale", memories: [] }] },
       eventArchiveView: { items: [{ sourceType: "stale_session" }] },
+      worldEntityView: { highlights: [{ id: "stale-entity" }] },
+      worldEntityImpacts: [{ sourceType: "npc_relationship_action", entityId: "stale-entity" }],
       npcDetailView: {
         npcId: "npc:stale",
         displayName: "旧案 NPC"
@@ -1478,6 +1491,7 @@ describe("S74.3 UI state store", () => {
     expect(state.npcMutationStatus).toBe("ready");
     expect(state.currentSession?.actorMemoryView).toEqual(activeSession.actorMemoryView);
     expect(state.currentSession?.eventArchiveView).toEqual(activeSession.eventArchiveView);
+    expect(state.currentSession?.worldEntityView).toEqual(activeSession.worldEntityView);
     expect(state.currentSession?.npcInteractionView).toEqual(activeSession.npcInteractionView);
     expect(state.npcRoster?.npcInteractionView?.items?.[0]?.recordId).toBe("active-roster-record");
     expect(state.npcDetail?.npcDetailView.npcId).toBe("npc:active");

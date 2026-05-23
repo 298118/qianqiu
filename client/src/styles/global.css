@@ -2981,12 +2981,14 @@ button:disabled {
 }
 
 .npcActiveRequestInbox,
-.npcSocialGrid {
+.npcSocialGrid,
+.npcRelationshipSignalGrid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
   gap: 10px;
 }
 
+.npcRelationshipEntitySignals,
 .npcGroupList,
 .npcDetailWorkbench,
 .inventoryContainerList,
@@ -2998,6 +3000,30 @@ button:disabled {
   border: 1px solid rgba(84, 60, 43, 0.22);
   background: rgba(255, 248, 230, 0.62);
   padding: 12px;
+}
+
+.npcRelationshipEntitySignals {
+  display: grid;
+  gap: 12px;
+}
+
+.npcRelationshipSignalCard {
+  display: grid;
+  gap: 8px;
+  border: 1px solid rgba(84, 60, 43, 0.2);
+  background: rgba(255, 252, 238, 0.72);
+  padding: 12px;
+  min-height: 138px;
+}
+
+.npcRelationshipSignalCard h3,
+.npcRelationshipSignalCard p {
+  margin: 0;
+}
+
+.npcRelationshipSignalCard h3 {
+  color: #33261d;
+  font-size: 1rem;
 }
 
 .npcGroupList h2,

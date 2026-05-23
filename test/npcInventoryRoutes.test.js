@@ -198,6 +198,15 @@ test("S83/S84 safety APIs expose NPC, inventory, trade and delegated task views 
   assert.ok(socialPayload.npcActionResolutionView.ignoredClientResultFields.includes("winner"));
   assert.equal(socialPayload.npcInteractionView.items[0].resolverTrace.resolver, "npc_relationship_action_resolver");
   assert.ok(socialPayload.npcInteractionView.items[0].outcomeSummary);
+  assert.ok(socialPayload.worldEntityImpacts.some((impact) =>
+    impact.sourceType === "npc_relationship_action" &&
+    impact.entityId === "military-wall-beacons"
+  ));
+  assert.ok(
+    socialPayload.worldEntityView.groups.some((group) =>
+      group.entities.some((entity) => entity.id === "military-wall-beacons")
+    )
+  );
   assert.equal(socialPayload.actorMemory.appliedCount, 1);
   assert.ok(
     socialPayload.actorMemoryView.actors.some((actor) =>
@@ -330,6 +339,10 @@ test("S88.7 turn route records NPC active request follow-up resolutions without 
     true
   );
   assert.ok(followUpPayload.npcActiveRequestView.followUpTasks.some((entry) => entry.latestResolution));
+  assert.ok(followUpPayload.worldEntityImpacts.some((impact) =>
+    impact.sourceType === "active_npc_request" &&
+    /后续|观察|风宪|廉政|人情/.test(impact.publicNote)
+  ));
   assert.ok(
     followUpPayload.actorMemoryView.actors.some((actor) =>
       actor.memories.some((memory) => memory.sourceType === "npc_active_request_follow_up")
