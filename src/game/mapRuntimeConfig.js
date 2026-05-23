@@ -134,6 +134,12 @@ const MAP_RUNTIME_NPC_ACTIVITY_ANCHORS = Object.freeze({
     label: "续办线索",
     animationToken: "ink_ripple_black",
     severityFloor: 0.38
+  }),
+  relationship_action: Object.freeze({
+    kind: "npc_relationship_action",
+    label: "人物交游",
+    animationToken: "ink_seal_pulse",
+    severityFloor: 0.32
   })
 });
 

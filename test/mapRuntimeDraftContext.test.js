@@ -6,7 +6,7 @@ const { normalizeMapRuntimeTurnContext } = require("../src/game/mapRuntimeDraftC
 function assertNoMapDraftContextLeak(value) {
   assert.doesNotMatch(
     JSON.stringify(value),
-    /layout|layoutPath|mapBounds|viewportHint|coordinates|position|"x"|"y"|providerPayload|raw provider|hiddenNotes|privateSignalTags|npcActiveRequestLedger|data\/sessions|C:\\|\/mnt\/e|sk-[A-Za-z0-9_-]{6,}/i
+    /layout|layoutPath|mapBounds|viewportHint|coordinates|position|"x"|"y"|providerPayload|raw provider|hiddenNotes|privateSignalTags|npcActiveRequestLedger|npcInteractionLedger|data\/sessions|C:\\|\/mnt\/e|sk-[A-Za-z0-9_-]{6,}/i
   );
 }
 
@@ -29,7 +29,9 @@ test("S88.10 map-runtime draftContext is revalidated against current safe runtim
         sourceRef,
         "domainConsequenceView:visual-only",
         "npcActiveRequestView:req-public",
-        "npcActiveRequestFollowUpEvidence:evi-public"
+        "npcActiveRequestFollowUpEvidence:evi-public",
+        "npcInteractionView:npc-interaction:public-duel",
+        "npcRelationshipActionResolverTrace:npc-relationship-resolution:npc-zhang:duel:24"
       ]
     }],
     actionDrafts: {
@@ -51,6 +53,8 @@ test("S88.10 map-runtime draftContext is revalidated against current safe runtim
       "domainConsequenceView:visual-only",
       "npcActiveRequestView:req-public",
       "npcActiveRequestFollowUpEvidence:evi-public",
+      "npcInteractionView:npc-interaction:public-duel",
+      "npcRelationshipActionResolverTrace:npc-relationship-resolution:npc-zhang:duel:24",
       "viewportHint",
       "x",
       "providerPayload"
@@ -60,6 +64,8 @@ test("S88.10 map-runtime draftContext is revalidated against current safe runtim
       targetRef,
       "npcActiveRequestView:req-public",
       "npcActiveRequestFollowUpEvidence:evi-public",
+      "npcInteractionView:npc-interaction:public-duel",
+      "npcRelationshipActionResolverTrace:npc-relationship-resolution:npc-zhang:duel:24",
       "layoutPath",
       "coordinates:0:0",
       "raw provider"
@@ -106,7 +112,13 @@ test("S88.10 map-runtime draftContext rejects visual-only NPC refs from all sour
     "npcActiveRequestView:req-public",
     "npcActiveRequestFollowUp:follow-public",
     "npcActiveRequestFollowUpEvidence:evi-public",
-    "npcActivityAnchor:anchor-public"
+    "npcActivityAnchor:anchor-public",
+    "npcInteractionView:npc-interaction:public-duel",
+    "npcRelationshipActionResolverTrace:npc-relationship-resolution:npc-zhang:duel:24",
+    "npcRelationshipActionEligibilityView:npc-zhang:duel",
+    "npcRelationshipActionTrace:npc-relationship-resolution:npc-zhang:duel:24",
+    "npcRelationshipAction:legacy-public-duel",
+    "npcInteractionLedger:raw-secret"
   ];
   const mapRuntimeView = {
     schemaVersion: 1,

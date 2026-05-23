@@ -12,7 +12,7 @@ function assertSafeMapRuntimePayload(value) {
   const serialized = JSON.stringify(value);
   assert.doesNotMatch(
     serialized,
-    /SEALED_|hiddenNotes|hiddenIntent|hiddenDossier|privateSignalTags|trueAssets|npcActiveRequestLedger|raw provider|raw coordinate|coordinateTable|latitude|longitude|world_sessions|prompt_retrieval_index|event_log|E:\\LSMNQ|data\/sessions|file:\/\/|OPENAI_API_KEY|sk-[A-Za-z0-9_-]+|tp-[A-Za-z0-9_-]+/i
+    /SEALED_|hiddenNotes|hiddenIntent|hiddenDossier|privateSignalTags|trueAssets|npcActiveRequestLedger|npcInteractionLedger|raw provider|raw coordinate|coordinateTable|latitude|longitude|world_sessions|prompt_retrieval_index|event_log|E:\\LSMNQ|data\/sessions|file:\/\/|OPENAI_API_KEY|sk-[A-Za-z0-9_-]+|tp-[A-Za-z0-9_-]+/i
   );
 }
 
@@ -397,30 +397,77 @@ test("S88.10 map runtime view adds read-only NPC activity anchors on public map 
       knownToPlayer: false
     }]
   };
+  const npcInteractionView = {
+    items: [{
+      recordId: "npc-interaction:public-duel",
+      turn: 24,
+      npcId: "npc-zhang",
+      npcName: "张廷试",
+      actionType: "duel",
+      actionKind: "duel",
+      serverStatus: "recorded",
+      outcomeSummary: "张廷试与玩家切磋后已有公开裁决；胜负、伤势和关系后果仍由服务器裁决。",
+      riskTags: ["relationship_risk_watchlist"],
+      resolverTrace: {
+        resolver: "npc_relationship_action_resolver",
+        publicResolutionRef: "npc-relationship-resolution:npc-zhang:duel:24",
+        actionType: "duel",
+        actionLabel: "切磋",
+        status: "server_adjudicated",
+        disposition: "relationship_action_recorded",
+        publicSourceRefs: [
+          "npcRosterView:npc-zhang",
+          "npcRelationshipActionEligibilityView:npc-zhang:duel",
+          "privateSignalTags:hidden"
+        ],
+        riskTags: ["relationship_risk_watchlist"],
+        boundaries: { privateNpcDossierRedacted: true }
+      }
+    }, {
+      recordId: "npc-interaction:hidden-duel",
+      turn: 24,
+      npcId: "npc-hidden",
+      npcName: "密札人物",
+      actionType: "duel",
+      serverStatus: "recorded",
+      outcomeSummary: "hiddenDossier privateSignalTags trueAssets",
+      resolverTrace: {
+        resolver: "npc_relationship_action_resolver",
+        publicResolutionRef: "npc-relationship-resolution:npc-hidden:duel:24",
+        actionLabel: "切磋",
+        status: "server_adjudicated"
+      }
+    }]
+  };
 
   const view = buildMapRuntimeView({ turnCount: 24 }, {
     mapContextView,
     domainConsequenceView: { recentConsequences: [] },
     npcActiveRequestView,
+    npcInteractionView,
     worldPeopleView
   });
   const refIds = new Set(view.refs.map((ref) => ref.mapEntityRef));
 
-  assert.equal(view.npcActivityAnchors.length, 2);
+  assert.equal(view.npcActivityAnchors.length, 3);
   assert.ok(view.npcActivityAnchors.every((anchor) => anchor.visualOnly === true));
   assert.ok(view.npcActivityAnchors.every((anchor) => refIds.has(anchor.targetRef)));
   assert.ok(view.npcActivityAnchors.every((anchor) => anchor.targetRef === "map:geography:city:city-suzhou"));
   assert.ok(view.npcActivityAnchors.some((anchor) => anchor.kind === "npc_active_request"));
   assert.ok(view.npcActivityAnchors.some((anchor) => anchor.kind === "npc_follow_up_evidence"));
+  assert.ok(view.npcActivityAnchors.some((anchor) => anchor.kind === "npc_relationship_action"));
   assert.ok(view.npcActivityAnchors.every((anchor) =>
     anchor.sourceRefs.every((sourceRef) =>
       sourceRef.startsWith("npcActiveRequestView:") ||
-      sourceRef.startsWith("npcActiveRequestFollowUpEvidence:")
+      sourceRef.startsWith("npcActiveRequestFollowUpEvidence:") ||
+      sourceRef.startsWith("npcInteractionView:") ||
+      sourceRef.startsWith("npcRelationshipActionResolverTrace:")
     )
   ));
+  assert.equal(JSON.stringify(view.npcActivityAnchors).includes("npcRelationshipActionEligibilityView"), false);
   assert.equal(JSON.stringify(view.npcActivityAnchors).includes("npc-hidden"), false);
   assert.equal(Object.values(view.actionDrafts).some((draft) =>
-    (draft.sourceRefs || []).some((ref) => ref.startsWith("npcActiveRequest"))
+    (draft.sourceRefs || []).some((ref) => ref.startsWith("npcActiveRequest") || ref.startsWith("npcInteractionView"))
   ), false);
   assertSafeMapRuntimePayload(view);
 });

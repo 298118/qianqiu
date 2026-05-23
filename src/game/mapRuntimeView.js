@@ -1,6 +1,7 @@
 const { buildMapContextView } = require("./mapContext");
 const { buildDomainConsequenceView } = require("./domainConsequenceTrace");
 const { buildNpcActiveRequestView } = require("./npcActiveRequests");
+const { buildNpcInteractionLedgerView } = require("./npcInteractions");
 const { buildWorldPeopleView } = require("./worldPeople");
 const {
   MAP_RUNTIME_ACTION_DRAFT_TEMPLATES,
@@ -26,7 +27,7 @@ const {
 const MAP_REF_ID_PATTERN = /^[A-Za-z0-9_.:-]+$/;
 const SAFE_SOURCE_REF_PATTERN = /^[A-Za-z0-9_.:-]+$/;
 const SENSITIVE_MAP_RUNTIME_TEXT_PATTERN =
-  /(SEALED_[A-Z0-9_]+|hidden[_ -]?(?:notes?|intent|dossier)|hidden\s+(?:notes?|intent|dossier)|hiddenDossier|privateSignalTags|trueAssets|secretRelationships|npcActiveRequestLedger|密档|私档|密札|密信|隐藏(?:意图|动机|事实|札记)|隐秘(?:意图|动机|事实)|raw(?:[_ -]?|(?=[A-Z]))(?:provider|audit|table|ledger|prompt|proposal|coordinate|coords?|layout|state)|coordinate[_ -]?table|coordinateTable|latitude|longitude|\b(?:statePatch|worldState|providerPayload|providerProposal|prompt|rawSql|SQL|sqlite|lat|lng)\b|api[_ -]?key|OPENAI_API_KEY|DEEPSEEK_API_KEY|MIMO_API_KEY|ANTHROPIC_API_KEY|data[\\/](?:sessions|audit)|ai_change_proposals|event_log|world_sessions|world_state_json|prompt_retrieval_index|event_archive_index|file:\/\/\/?(?:[A-Za-z]:[\\/]|(?:\/Users|\/home|\/tmp|\/var|\/mnt|\/opt|\/workspace)\/)[^\s"'<>]+|[A-Za-z]:[\\/][^\s"'<>]+|\b(?:\/Users|\/home|\/tmp|\/var|\/mnt|\/opt|\/workspace)\/[^\s"'<>]+|sk-[A-Za-z0-9_-]{6,}|tp-[A-Za-z0-9_-]{6,})/i;
+  /(SEALED_[A-Z0-9_]+|hidden[_ -]?(?:notes?|intent|dossier)|hidden\s+(?:notes?|intent|dossier)|hiddenDossier|privateSignalTags|trueAssets|secretRelationships|npcActiveRequestLedger|npcInteractionLedger|密档|私档|密札|密信|隐藏(?:意图|动机|事实|札记)|隐秘(?:意图|动机|事实)|raw(?:[_ -]?|(?=[A-Z]))(?:provider|audit|table|ledger|prompt|proposal|coordinate|coords?|layout|state)|coordinate[_ -]?table|coordinateTable|latitude|longitude|\b(?:statePatch|worldState|providerPayload|providerProposal|prompt|rawSql|SQL|sqlite|lat|lng)\b|api[_ -]?key|OPENAI_API_KEY|DEEPSEEK_API_KEY|MIMO_API_KEY|ANTHROPIC_API_KEY|data[\\/](?:sessions|audit)|ai_change_proposals|event_log|world_sessions|world_state_json|prompt_retrieval_index|event_archive_index|file:\/\/\/?(?:[A-Za-z]:[\\/]|(?:\/Users|\/home|\/tmp|\/var|\/mnt|\/opt|\/workspace)\/)[^\s"'<>]+|[A-Za-z]:[\\/][^\s"'<>]+|\b(?:\/Users|\/home|\/tmp|\/var|\/mnt|\/opt|\/workspace)\/[^\s"'<>]+|sk-[A-Za-z0-9_-]{6,}|tp-[A-Za-z0-9_-]{6,})/i;
 
 const DOMAIN_CONSEQUENCE_TARGET_TYPES = Object.freeze({
   city_policy: Object.freeze(["economic_report", "jurisdiction", "posting", "city", "region"]),
@@ -672,6 +673,14 @@ function npcActiveRequestViewForMapRuntime(worldState = {}, options = {}) {
   return buildNpcActiveRequestView(worldState, { includeResolved: true });
 }
 
+function npcInteractionViewForMapRuntime(worldState = {}, options = {}) {
+  if (Object.prototype.hasOwnProperty.call(options, "npcInteractionView")) {
+    return isPlainObject(options.npcInteractionView) ? options.npcInteractionView : null;
+  }
+  if (!isPlainObject(worldState.npcInteractionLedger)) return null;
+  return buildNpcInteractionLedgerView(worldState);
+}
+
 function buildVisibleNpcLocationIndex(worldPeopleView = {}) {
   const index = new Map();
   for (const npc of asArray(worldPeopleView.npcs)) {
@@ -710,10 +719,13 @@ function chooseNpcActivityTarget(npcId = "", npcLocationById = new Map(), runtim
 function npcActivitySeverity(source = {}, config = {}) {
   const tags = asArray(source.riskTags).join(" ");
   const status = sanitizeMapRuntimeText(source.status, "", 64);
+  const serverStatus = sanitizeMapRuntimeText(source.serverStatus, "", 64);
   const urgency = sanitizeMapRuntimeText(source.urgency, "", 32);
   let severity = config.severityFloor || 0.34;
   if (urgency === "high" || /risk|watchlist|censorate|integrity|betrayal|impeach|弹劾|背叛|廉政|风险/.test(tags)) {
     severity = Math.max(severity, 0.62);
+  } else if (status === "server_blocked" || serverStatus === "rejected") {
+    severity = Math.max(severity, 0.5);
   } else if (status === "under_review" || status === "converted_to_risk") {
     severity = Math.max(severity, 0.52);
   } else if (status === "deferred" || status === "reported") {
@@ -736,7 +748,7 @@ function buildNpcActivityAnchor({
   const npcName = sanitizeMapRuntimeText(source.npc?.displayName || source.npc?.name, "可见人物", 40);
   const label = sanitizeMapRuntimeText(`${config.label}：${npcName}`, config.label, 36);
   const summary = sanitizeMapRuntimeText(
-    source.publicSummary || source.summary || source.intentSummary || source.ask || source.stakes || fallbackSummary,
+    source.publicSummary || source.summary || source.intentSummary || source.outcomeSummary || source.dialogueText || source.ask || source.stakes || fallbackSummary,
     fallbackSummary,
     MAP_RUNTIME_LIMITS.maxSummaryLength
   );
@@ -816,16 +828,79 @@ function buildNpcFollowUpEvidenceAnchors(npcActiveRequestView = {}, npcLocationB
   return anchors;
 }
 
+function relationshipActionAnchorSource(record = {}) {
+  const trace = isPlainObject(record.resolverTrace) ? record.resolverTrace : {};
+  const actionLabel = sanitizeMapRuntimeText(
+    trace.actionLabel || record.serverAdjudication?.actionLabel || record.actionKind || record.actionType,
+    "交游",
+    40
+  );
+  return {
+    npc: {
+      npcId: cleanId(record.npcId, ""),
+      displayName: sanitizeMapRuntimeText(record.npcName, "可见人物", 40)
+    },
+    publicSummary: sanitizeMapRuntimeText(
+      record.outcomeSummary || record.dialogueText,
+      `${sanitizeMapRuntimeText(record.npcName, "可见人物", 40)}的${actionLabel}已由服务器裁决；关系、婚姻、资源与后续任务仍候服务器回合裁决。`,
+      MAP_RUNTIME_LIMITS.maxSummaryLength
+    ),
+    status: sanitizeMapRuntimeText(trace.status, record.serverStatus, 64),
+    serverStatus: sanitizeMapRuntimeText(record.serverStatus, "", 64),
+    riskTags: [
+      ...asArray(record.riskTags),
+      ...asArray(trace.riskTags),
+      sanitizeMapRuntimeText(trace.disposition, "", 40)
+    ].filter(Boolean)
+  };
+}
+
+function buildNpcRelationshipActionAnchors(npcInteractionView = {}, npcLocationById = new Map(), runtimeRefs = [], options = {}) {
+  const anchors = [];
+  const seen = new Set();
+  const maxAnchors = options.maxNpcActivityAnchors || MAP_RUNTIME_LIMITS.maxNpcActivityAnchors;
+  const config = MAP_RUNTIME_NPC_ACTIVITY_ANCHORS.relationship_action;
+  for (const record of asArray(npcInteractionView.items)) {
+    if (!isPlainObject(record) || !isPlainObject(record.resolverTrace)) continue;
+    if (record.resolverTrace.resolver !== "npc_relationship_action_resolver") continue;
+    const recordId = cleanSourceRef(record.recordId, "");
+    const resolutionRef = cleanSourceRef(record.resolverTrace.publicResolutionRef, "");
+    const sourceId = resolutionRef || recordId;
+    const npcId = cleanId(record.npcId, "");
+    if (!sourceId || !npcId || seen.has(`relationship:${sourceId}`)) continue;
+    const target = chooseNpcActivityTarget(npcId, npcLocationById, runtimeRefs);
+    if (!target) continue;
+    const anchor = buildNpcActivityAnchor({
+      source: relationshipActionAnchorSource(record),
+      sourceId,
+      sourceRefs: [
+        recordId ? `npcInteractionView:${recordId}` : "",
+        resolutionRef ? `npcRelationshipActionResolverTrace:${resolutionRef}` : ""
+      ],
+      config,
+      target,
+      fallbackSummary: "人物交游只作舆图观察线索；关系、资源、婚姻与后续任务仍由服务器裁决。"
+    });
+    if (!anchor) continue;
+    anchors.push(anchor);
+    seen.add(`relationship:${sourceId}`);
+    if (anchors.length >= maxAnchors) break;
+  }
+  return anchors;
+}
+
 function buildNpcActivityAnchors(worldState = {}, runtimeRefs = [], options = {}) {
   const npcActiveRequestView = npcActiveRequestViewForMapRuntime(worldState, options);
-  if (!npcActiveRequestView) return [];
+  const npcInteractionView = npcInteractionViewForMapRuntime(worldState, options);
+  if (!npcActiveRequestView && !npcInteractionView) return [];
   const worldPeopleView = worldPeopleViewForMapRuntime(worldState, options);
   const npcLocationById = buildVisibleNpcLocationIndex(worldPeopleView || {});
   if (!npcLocationById.size) return [];
   const maxAnchors = options.maxNpcActivityAnchors || MAP_RUNTIME_LIMITS.maxNpcActivityAnchors;
   const anchors = [
-    ...buildNpcActiveRequestAnchors(npcActiveRequestView, npcLocationById, runtimeRefs, options),
-    ...buildNpcFollowUpEvidenceAnchors(npcActiveRequestView, npcLocationById, runtimeRefs, options)
+    ...buildNpcActiveRequestAnchors(npcActiveRequestView || {}, npcLocationById, runtimeRefs, options),
+    ...buildNpcFollowUpEvidenceAnchors(npcActiveRequestView || {}, npcLocationById, runtimeRefs, options),
+    ...buildNpcRelationshipActionAnchors(npcInteractionView || {}, npcLocationById, runtimeRefs, options)
   ];
   const seen = new Set();
   return anchors.filter((anchor) => {
