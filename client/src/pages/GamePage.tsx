@@ -9,7 +9,7 @@ import { MemorialComposer } from "../components/MemorialComposer";
 import { OfficialMinisterPanel } from "../components/OfficialMinisterPanel";
 import { ScholarPanel } from "../components/ScholarPanel";
 import { routeCatalog } from "../routes/routeCatalog";
-import { isRunnableSessionId } from "../routes/sessionId";
+import { isRouteLocalSessionId, isRunnableSessionId } from "../routes/sessionId";
 import { useGameSessionStore } from "../state/gameSessionState";
 import { useUiStateStore, type LocalSurface } from "../state/uiState";
 
@@ -167,16 +167,17 @@ export function GamePage() {
   const currentPlayerPayload = useUiStateStore((state) => state.currentPlayerPayload);
   const selectTab = useUiStateStore((state) => state.selectTab);
   const openSurface = useUiStateStore((state) => state.openSurface);
-  const sessionHref = (path: string) => path.replace("s74-preview", sessionId);
+  const routeSessionSupported = isRouteLocalSessionId(sessionId);
+  const sessionHref = (path: string) => path.replace("s74-preview", routeSessionSupported ? sessionId : "s74-preview");
   const resolveRoleCycleRouteHref = (routeId: string) => {
     if (!roleCycleRouteIds.has(routeId)) return null;
     const route = routeCatalog.find((entry) => entry.id === routeId);
     return route ? sessionHref(route.href) : null;
   };
   const openRoleCycleSurface = (surface: LocalSurface) => openSurface(surface);
-  const activeSession = session?.sessionId === sessionId ? session : null;
-  const activeLastTurn = lastTurn?.sessionId === sessionId ? lastTurn : null;
-  const activePlayerPayload = currentPlayerPayload?.sessionId === sessionId ? currentPlayerPayload : null;
+  const activeSession = routeSessionSupported && session?.sessionId === sessionId ? session : null;
+  const activeLastTurn = routeSessionSupported && lastTurn?.sessionId === sessionId ? lastTurn : null;
+  const activePlayerPayload = routeSessionSupported && currentPlayerPayload?.sessionId === sessionId ? currentPlayerPayload : null;
   const player = activeSession?.worldState?.player;
   const runnable = isRunnableSessionId(sessionId);
   const routeIsLoading = status === "loading" || (runnable && !activeSession);
@@ -192,6 +193,7 @@ export function GamePage() {
     [knownRole, registry]
   );
   const sceneImagePath = sceneAsset?.path ?? scene.assetPath;
+  const sessionDisplayLabel = routeSessionSupported ? sessionId : "暂不可读";
   const playerName = safeGameShellText(player?.name, "无名");
   const identityLine = getIdentityLine(player);
   const narrativeText = safeGameShellText(activeLastTurn?.narrative || activePlayerPayload?.narrativePreview, "风声入座，旧卷重开。堂案、舆图与人物谱牒各归其卷。");
@@ -260,7 +262,7 @@ export function GamePage() {
     <section className="gameSurface hasMemorialComposer" aria-labelledby="game-title">
       <div className="gameCommandBar" aria-label="主卷案头">
         <div>
-          <p className="eyebrow">案卷编号 {sessionId}</p>
+          <p className="eyebrow">案卷编号 {sessionDisplayLabel}</p>
           <h1 id="game-title">主卷</h1>
         </div>
         <dl className="gameStatusRail" aria-label="当前案卷摘要">

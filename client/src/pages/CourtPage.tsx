@@ -1,5 +1,6 @@
 import { useParams } from "react-router";
 import { markOverlayTrigger } from "../components/overlayFocus";
+import { isRouteLocalSessionId } from "../routes/sessionId";
 import { surfaceRegistry } from "../surfaces/surfaceRegistry";
 import type { LocalSurface } from "../state/uiState";
 import { useUiStateStore } from "../state/uiState";
@@ -29,6 +30,7 @@ const courtSurfaceGroups: readonly {
 export function CourtPage() {
   const { sessionId = "s74-preview" } = useParams();
   const openSurfaceForSession = useUiStateStore((state) => state.openSurfaceForSession);
+  const routeSessionSupported = isRouteLocalSessionId(sessionId);
 
   return (
     <article className="surfacePanel routePanel courtSurfacePage" aria-labelledby="court-title">
@@ -52,7 +54,9 @@ export function CourtPage() {
                     key={surface}
                     className="paperButton"
                     type="button"
+                    disabled={!routeSessionSupported}
                     onClick={(event) => {
+                      if (!routeSessionSupported) return;
                       markOverlayTrigger(event.currentTarget);
                       openSurfaceForSession(surface, sessionId);
                     }}
@@ -65,7 +69,11 @@ export function CourtPage() {
           </section>
         ))}
       </div>
-      <p className="statusLine">这些专题层只读安全 projection；AI 只拟草稿，不提交回合、不调用 resolver、不写 canonical state。</p>
+      <p className="statusLine">
+        {routeSessionSupported
+          ? "这些专题层只读安全 projection；AI 只拟草稿，不提交回合、不调用 resolver、不写 canonical state。"
+          : "此案卷编号暂不可用于浏览器专题层；请从首页开卷或载入旧案。"}
+      </p>
     </article>
   );
 }

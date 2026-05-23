@@ -3,7 +3,7 @@ import type { JsonObject, JsonValue } from "../api";
 import { DomainConsequenceSection } from "../components/DomainConsequenceSection";
 import { NpcFollowUpEvidenceSection } from "../components/NpcFollowUpEvidenceSection";
 import { markOverlayTrigger } from "../components/overlayFocus";
-import { isRunnableSessionId } from "../routes/sessionId";
+import { isRouteLocalSessionId, isRunnableSessionId } from "../routes/sessionId";
 import { useGameSessionStore } from "../state/gameSessionState";
 import { useUiStateStore } from "../state/uiState";
 
@@ -124,7 +124,8 @@ export function ArchivePage() {
   const status = useGameSessionStore((state) => state.status);
   const openSurfaceForSession = useUiStateStore((state) => state.openSurfaceForSession);
   const setActionDraft = useUiStateStore((state) => state.setActionDraft);
-  const sessionMatches = currentSession?.sessionId === sessionId;
+  const routeSessionSupported = isRouteLocalSessionId(sessionId);
+  const sessionMatches = routeSessionSupported && currentSession?.sessionId === sessionId;
   const archiveView = asRecord(sessionMatches ? currentSession?.eventArchiveView : null);
   const domainConsequenceView = sessionMatches ? currentSession?.domainConsequenceView ?? null : null;
   const npcFollowUpEvidence = sessionMatches ? currentSession?.npcActiveRequestView?.followUpEvidence ?? null : null;
@@ -136,6 +137,8 @@ export function ArchivePage() {
   const pageSize = numberValue(pagination.pageSize, archiveItems.length);
   const isRunnable = isRunnableSessionId(sessionId);
   const canDraft = sessionMatches || isRunnable;
+  const mapHref = routeSessionSupported ? `/game/${sessionId}/map` : "/";
+  const gameHref = routeSessionSupported ? `/game/${sessionId}` : "/";
 
   function draftFromArchive(item: ArchiveItem) {
     setActionDraft({
@@ -170,11 +173,20 @@ export function ArchivePage() {
       </header>
 
       <div className="archiveActionRow">
-        <button className="paperButton" type="button" onClick={(event) => { markOverlayTrigger(event.currentTarget); openSurfaceForSession("memorial-review", sessionId); }}>
+        <button
+          className="paperButton"
+          type="button"
+          disabled={!routeSessionSupported}
+          onClick={(event) => {
+            if (!routeSessionSupported) return;
+            markOverlayTrigger(event.currentTarget);
+            openSurfaceForSession("memorial-review", sessionId);
+          }}
+        >
           阅奏折
         </button>
-        <Link className="paperLink" to={`/game/${sessionId}/map`}>入舆图</Link>
-        <Link className="paperLink" to={`/game/${sessionId}`}>回主卷</Link>
+        <Link className="paperLink" to={mapHref}>入舆图</Link>
+        <Link className="paperLink" to={gameHref}>回主卷</Link>
       </div>
 
       <section className="archiveTraceGrid" aria-label="史册公开追踪">
@@ -202,7 +214,9 @@ export function ArchivePage() {
             </ol>
           ) : (
             <p className="archiveEmpty">
-              {isRunnable && status === "loading"
+              {!routeSessionSupported
+                ? "此案卷编号暂不可用于浏览器史册；请从首页开卷或载入旧案。"
+                : isRunnable && status === "loading"
                 ? "正在读取 player-state 中的安全史册投影。"
                 : "暂无可显示的公开归档；推进一旬或完成服务器裁决后会进入史册。"}
             </p>

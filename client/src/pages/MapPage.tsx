@@ -5,7 +5,7 @@ import { DomainConsequenceSection } from "../components/DomainConsequenceSection
 import { InkMapRuntimeBridge } from "../components/InkMapRuntimeBridge";
 import { markOverlayTrigger } from "../components/overlayFocus";
 import { usePrefersReducedMotion } from "../hooks/usePrefersReducedMotion";
-import { isRunnableSessionId } from "../routes/sessionId";
+import { isRouteLocalSessionId, isRunnableSessionId } from "../routes/sessionId";
 import { useGameSessionStore } from "../state/gameSessionState";
 import { useUiStateStore } from "../state/uiState";
 
@@ -108,17 +108,18 @@ export function MapPage() {
   const displayPreferences = useUiStateStore((state) => state.displayPreferences);
   const setActionDraft = useUiStateStore((state) => state.setActionDraft);
   const prefersReducedMotion = usePrefersReducedMotion();
-  const mapRuntimeView = currentSession?.sessionId === sessionId ? currentSession.mapRuntimeView : null;
-  const domainConsequenceView = currentSession?.sessionId === sessionId ? currentSession.domainConsequenceView : null;
-  const hasCurrentSession = currentSession?.sessionId === sessionId;
   const isRunnable = isRunnableSessionId(sessionId);
+  const routeSessionSupported = isRouteLocalSessionId(sessionId);
+  const hasCurrentSession = routeSessionSupported && currentSession?.sessionId === sessionId;
+  const mapRuntimeView = hasCurrentSession ? currentSession.mapRuntimeView : null;
+  const domainConsequenceView = hasCurrentSession ? currentSession.domainConsequenceView : null;
   const refCount = mapRuntimeView?.refs?.length ?? 0;
   const routeCount = mapRuntimeView?.routes?.length ?? 0;
   const eventCount = mapRuntimeView?.eventEffects?.length ?? 0;
   const mapEvents = useMemo(() => getMapEvents(mapRuntimeView), [mapRuntimeView]);
   const activeLayerCount = (Object.keys(visibleLayers) as MapLayerKey[]).filter((key) => visibleLayers[key]).length;
-  const archiveHref = `/game/${sessionId}/archive`;
-  const gameHref = `/game/${sessionId}`;
+  const archiveHref = routeSessionSupported ? `/game/${sessionId}/archive` : "/";
+  const gameHref = routeSessionSupported ? `/game/${sessionId}` : "/";
 
   useEffect(() => {
     setVisibleLayers(defaultVisibleLayers);
@@ -173,7 +174,16 @@ export function MapPage() {
           ))}
         </div>
         <div className="buttonRow">
-          <button className="paperButton" type="button" onClick={(event) => { markOverlayTrigger(event.currentTarget); openSurfaceForSession("map-filter", sessionId); }}>
+          <button
+            className="paperButton"
+            type="button"
+            disabled={!routeSessionSupported}
+            onClick={(event) => {
+              if (!routeSessionSupported) return;
+              markOverlayTrigger(event.currentTarget);
+              openSurfaceForSession("map-filter", sessionId);
+            }}
+          >
             筛舆图
           </button>
           <Link className="paperLink" to={archiveHref}>入局势簿</Link>
@@ -223,7 +233,9 @@ export function MapPage() {
       <p className="mapRuntimeNote">
         {mapRuntimeView
           ? `已接入 ${refCount} 处地点、${routeCount} 条路线、${eventCount} 项近事，当前显示 ${activeLayerCount} 个图层；舆图只读服务器安全投影。`
-          : isRunnable && status === "loading"
+          : !routeSessionSupported
+            ? "此案卷编号暂不可用于浏览器舆图；请从首页开卷或载入旧案。"
+            : isRunnable && status === "loading"
             ? "正在读取 player-state 中的安全舆图投影。"
             : "预览案卷不请求后端舆图；从首页新开一卷后即可查看实时地图。"}
       </p>

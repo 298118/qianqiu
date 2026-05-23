@@ -387,9 +387,9 @@ describe("S74.1 React client shell", () => {
     useUiStateStore.getState().setDisplayPreference("motion", "full");
     useUiStateStore.getState().setDisplayPreference("mapMotion", true);
     useGameSessionStore.setState({
-      currentSessionId: "s88-map-motion-session",
+      currentSessionId: "88888888-8888-4888-8888-888888888888",
       currentSession: {
-        sessionId: "s88-map-motion-session",
+        sessionId: "88888888-8888-4888-8888-888888888888",
         narrative: "山河已铺。",
         worldState: { player: { name: "顾衡", role: "scholar" } },
         mapRuntimeView: {
@@ -403,7 +403,7 @@ describe("S74.1 React client shell", () => {
       status: "ready"
     });
 
-    renderRoute("/game/s88-map-motion-session/map");
+    renderRoute("/game/88888888-8888-4888-8888-888888888888/map");
 
     await screen.findByRole("heading", { name: "山河舆图" });
     await screen.findByRole("button", { name: "贡院" });
@@ -587,7 +587,95 @@ describe("S74.1 React client shell", () => {
 
     expect(screen.getByRole("heading", { name: "山河舆图" })).toBeTruthy();
     expect(screen.queryByRole("heading", { name: "主卷" })).toBeNull();
+    const topNav = screen.getByRole("navigation", { name: "页面" });
+    expect(within(topNav).getByRole("link", { name: "主卷" }).getAttribute("href")).toBe("/game/smoke-session");
+    expect(within(topNav).getByRole("link", { name: "舆图" }).getAttribute("href")).toBe("/game/smoke-session/map");
     expect(document.body.textContent || "").not.toMatch(/OPENAI_API_KEY|hiddenNotes|data\/sessions|provider payload/i);
+  });
+
+  it("keeps unsupported map route session ids out of links and local surfaces", async () => {
+    const fetchMock = vi.fn(async (url: string) => {
+      if (url === "/assets/ui/ink-ui-runtime-manifest.json") {
+        return new Response(JSON.stringify(buildMockAssetManifest(0)), {
+          status: 200,
+          headers: { "Content-Type": "application/json" }
+        });
+      }
+      throw new Error(`unexpected url: ${url}`);
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    renderRoute("/game/not-a-session/map");
+
+    expect(screen.getByRole("heading", { name: "山河舆图" })).toBeTruthy();
+    await waitFor(() => expect(useUiStateStore.getState().currentSessionId).toBeNull());
+    const filterButton = screen.getByRole("button", { name: "筛舆图" });
+    expect(filterButton).toHaveProperty("disabled", true);
+    fireEvent.click(filterButton);
+
+    expect(useUiStateStore.getState().activeSurface).toBeNull();
+    expect(screen.getByRole("link", { name: "入局势簿" }).getAttribute("href")).toBe("/");
+    expect(screen.getByRole("link", { name: "回主卷" }).getAttribute("href")).toBe("/");
+    expect([...document.querySelectorAll<HTMLAnchorElement>("a")].some((link) => (link.getAttribute("href") || "").includes("not-a-session"))).toBe(false);
+    expect(fetchMock.mock.calls.map(([url]) => String(url)).some((url) => url.startsWith("/api/game/"))).toBe(false);
+    expect(document.body.textContent || "").not.toMatch(/not-a-session|OPENAI_API_KEY|hiddenNotes|data\/sessions|provider payload/i);
+  });
+
+  it("keeps unsupported archive route session ids out of shell links and surfaces", async () => {
+    const fetchMock = vi.fn(async (url: string) => {
+      if (url === "/assets/ui/ink-ui-runtime-manifest.json") {
+        return new Response(JSON.stringify(buildMockAssetManifest(0)), {
+          status: 200,
+          headers: { "Content-Type": "application/json" }
+        });
+      }
+      throw new Error(`unexpected url: ${url}`);
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    renderRoute("/game/not-a-session/archive");
+
+    expect(screen.getByRole("heading", { name: "主卷" })).toBeTruthy();
+    expect(screen.getByRole("heading", { name: "史册" })).toBeTruthy();
+    await waitFor(() => expect(useUiStateStore.getState().currentSessionId).toBeNull());
+    expect(screen.getByText("案卷编号 暂不可读")).toBeTruthy();
+    const memorialButton = screen.getByRole("button", { name: "阅奏折" });
+    expect(memorialButton).toHaveProperty("disabled", true);
+    fireEvent.click(memorialButton);
+
+    expect(useUiStateStore.getState().activeSurface).toBeNull();
+    expect(screen.getByRole("link", { name: "入舆图" }).getAttribute("href")).toBe("/");
+    expect(screen.getByRole("link", { name: "回主卷" }).getAttribute("href")).toBe("/");
+    expect([...document.querySelectorAll<HTMLAnchorElement>("a")].some((link) => (link.getAttribute("href") || "").includes("not-a-session"))).toBe(false);
+    expect(fetchMock.mock.calls.map(([url]) => String(url)).some((url) => url.startsWith("/api/game/"))).toBe(false);
+    expect(document.body.textContent || "").not.toMatch(/not-a-session|OPENAI_API_KEY|hiddenNotes|data\/sessions|provider payload/i);
+  });
+
+  it("keeps unsupported court route session ids from opening topic surfaces", async () => {
+    const fetchMock = vi.fn(async (url: string) => {
+      if (url === "/assets/ui/ink-ui-runtime-manifest.json") {
+        return new Response(JSON.stringify(buildMockAssetManifest(0)), {
+          status: 200,
+          headers: { "Content-Type": "application/json" }
+        });
+      }
+      throw new Error(`unexpected url: ${url}`);
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    renderRoute("/game/not-a-session/court");
+
+    expect(screen.getByRole("heading", { name: "朝议与官署" })).toBeTruthy();
+    await waitFor(() => expect(useUiStateStore.getState().currentSessionId).toBeNull());
+    const debateButton = screen.getByRole("button", { name: "朝议" });
+    expect(debateButton).toHaveProperty("disabled", true);
+    fireEvent.click(debateButton);
+
+    expect(useUiStateStore.getState().activeSurface).toBeNull();
+    expect(screen.queryByRole("dialog", { name: "朝议" })).toBeNull();
+    expect([...document.querySelectorAll<HTMLAnchorElement>("a")].some((link) => (link.getAttribute("href") || "").includes("not-a-session"))).toBe(false);
+    expect(fetchMock.mock.calls.map(([url]) => String(url)).some((url) => url.startsWith("/api/game/topic-surface/"))).toBe(false);
+    expect(document.body.textContent || "").not.toMatch(/not-a-session|OPENAI_API_KEY|hiddenNotes|data\/sessions|provider payload/i);
   });
 
   it("renders the S76.1 main game shell from safe player-state without leaking polluted text", async () => {
@@ -4964,9 +5052,9 @@ describe("S74.1 React client shell", () => {
     vi.stubGlobal("PIXI", {});
     vi.stubGlobal("MapRenderer", MockMapRenderer);
     useGameSessionStore.setState({
-      currentSessionId: "s74-map-session",
+      currentSessionId: "74747474-7474-4774-8774-747474747474",
       currentSession: {
-        sessionId: "s74-map-session",
+        sessionId: "74747474-7474-4774-8774-747474747474",
         narrative: "风过贡院。",
         worldState: { player: { name: "顾衡", role: "scholar" } },
         mapRuntimeView: {
@@ -5028,7 +5116,7 @@ describe("S74.1 React client shell", () => {
       status: "ready"
     });
 
-    renderRoute("/game/s74-map-session/map");
+    renderRoute("/game/74747474-7474-4774-8774-747474747474/map");
 
     await screen.findByRole("heading", { name: "山河舆图" });
     await screen.findByRole("button", { name: "贡院" });
@@ -5067,15 +5155,15 @@ describe("S74.1 React client shell", () => {
     fireEvent.click(screen.getByLabelText("地点"));
     await screen.findByRole("button", { name: "贡院" });
 
-    expect(screen.getByRole("link", { name: "入局势簿" }).getAttribute("href")).toBe("/game/s74-map-session/archive");
+    expect(screen.getByRole("link", { name: "入局势簿" }).getAttribute("href")).toBe("/game/74747474-7474-4774-8774-747474747474/archive");
     expect(document.body.textContent || "").not.toMatch(/raw audit|provider payload|hiddenNotes|OPENAI_API_KEY|data\/sessions|sk-test-secret|C:\\|path=/i);
   });
 
   it("renders archive route entries and domain consequence tracking from safe views", () => {
     useGameSessionStore.setState({
-      currentSessionId: "s74-archive-session",
+      currentSessionId: "74747474-1111-4111-8111-747474747474",
       currentSession: {
-        sessionId: "s74-archive-session",
+        sessionId: "74747474-1111-4111-8111-747474747474",
         narrative: "史册已启。",
         worldState: { player: { name: "顾衡", role: "official" } },
         eventArchiveView: {
@@ -5151,7 +5239,7 @@ describe("S74.1 React client shell", () => {
       status: "ready"
     });
 
-    renderRoute("/game/s74-archive-session/archive");
+    renderRoute("/game/74747474-1111-4111-8111-747474747474/archive");
 
     const archivePanel = document.querySelector(".archiveRoutePanel") as HTMLElement;
     expect(archivePanel).toBeTruthy();
@@ -5182,7 +5270,7 @@ describe("S74.1 React client shell", () => {
       targetPage: "game",
       text: expect.stringContaining("服务器裁决")
     });
-    expect(archive.getByRole("link", { name: "入舆图" }).getAttribute("href")).toBe("/game/s74-archive-session/map");
+    expect(archive.getByRole("link", { name: "入舆图" }).getAttribute("href")).toBe("/game/74747474-1111-4111-8111-747474747474/map");
     expect(archivePanel.textContent || "").not.toMatch(/raw audit|provider payload|hiddenNotes|privateSignalTags|OPENAI_API_KEY|data\/sessions|C:\\|path=|stateDelta|evidenceRefs|outcomeId|cityPolicyLedger/i);
   });
 });

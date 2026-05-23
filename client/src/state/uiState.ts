@@ -13,6 +13,7 @@ import {
   saveDisplayPreferences,
   type DisplayPreferences
 } from "./displayPreferenceStorage";
+import { isRouteLocalSessionId } from "../routes/sessionId";
 
 export type ClientEntryState = {
   readonly clientEntry: "react";
@@ -252,6 +253,7 @@ export const useUiStateStore = create<UiState>((set) => ({
   },
 
   openSurfaceForSession(surface, sessionId) {
+    if (!isRouteLocalSessionId(sessionId)) return;
     set((state) => ({
       currentSessionId: sessionId,
       currentPlayerPayload: state.currentPlayerPayload?.sessionId === sessionId ? state.currentPlayerPayload : null,

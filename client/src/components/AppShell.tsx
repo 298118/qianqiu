@@ -2,7 +2,7 @@ import { Archive } from "lucide-react";
 import { useEffect, useRef, type RefObject } from "react";
 import { Link, NavLink, Outlet, ScrollRestoration, useLocation } from "react-router";
 import { routeCatalog } from "../routes/routeCatalog";
-import { isRunnableSessionId } from "../routes/sessionId";
+import { isRouteLocalSessionId } from "../routes/sessionId";
 import type { PageSurface } from "../state/uiState";
 import { useUiStateStore } from "../state/uiState";
 import { markOverlayTrigger } from "./overlayFocus";
@@ -61,7 +61,7 @@ export function AppShell() {
 }
 
 function resolvePrimaryHref(href: string, currentSessionId: string | null) {
-  if (!currentSessionId || !isRunnableSessionId(currentSessionId)) return href;
+  if (!currentSessionId || !isRouteLocalSessionId(currentSessionId)) return href;
   return href.replace("s74-preview", currentSessionId);
 }
 
@@ -71,7 +71,11 @@ function UiRouteStateBridge({ pageFrameRef }: { readonly pageFrameRef: RefObject
 
   useEffect(() => {
     const sessionMatch = location.pathname.match(/^\/game\/([^/]+)/);
-    setCurrentPage(resolvePageSurface(location.pathname), sessionMatch?.[1] ?? null);
+    const routeSessionId = sessionMatch?.[1] ?? null;
+    setCurrentPage(
+      resolvePageSurface(location.pathname),
+      routeSessionId && isRouteLocalSessionId(routeSessionId) ? routeSessionId : null
+    );
   }, [location.pathname, setCurrentPage]);
 
   useEffect(() => {

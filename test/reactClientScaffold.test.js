@@ -380,6 +380,7 @@ test("S74.4 shell uses registry-backed overlays without widening data sources", 
   const courtPageSource = readText("client/src/pages/CourtPage.tsx");
   const archivePageSource = readText("client/src/pages/ArchivePage.tsx");
   const mapPageSource = readText("client/src/pages/MapPage.tsx");
+  const sessionIdSource = readText("client/src/routes/sessionId.ts");
   const routeCatalogSource = readText("client/src/routes/routeCatalog.ts");
   const styleSource = readText("client/src/styles/global.css");
   const clientSmokeSource = readText("scripts/clientSmoke.js");
@@ -387,7 +388,8 @@ test("S74.4 shell uses registry-backed overlays without widening data sources", 
 
   assert.match(appShellSource, /data-shell-version="s75-9"/);
   assert.match(appShellSource, /resolvePrimaryHref/);
-  assert.match(appShellSource, /isRunnableSessionId/);
+  assert.match(appShellSource, /isRouteLocalSessionId/);
+  assert.match(appShellSource, /resolvePrimaryHref[\s\S]*isRouteLocalSessionId\(currentSessionId\)/);
   assert.match(appShellSource, /end=\{route\.id === "game"\}/);
   assert.match(appShellSource, /ScrollRestoration/);
   assert.match(appShellSource, /window\.scrollTo/);
@@ -402,6 +404,16 @@ test("S74.4 shell uses registry-backed overlays without widening data sources", 
   assert.match(surfaceHostSource, /focusReturnTargetsRef/);
   assert.match(surfaceHostSource, /returningFromPortrait/);
   assert.match(uiStateSource, /openSurfaceForSession/);
+  assert.match(uiStateSource, /isRouteLocalSessionId\(sessionId\)/);
+  assert.match(sessionIdSource, /previewSessionIds/);
+  assert.match(sessionIdSource, /"s74-preview", "s76-preview", "smoke-session"/);
+  assert.match(sessionIdSource, /isRouteLocalSessionId/);
+  assert.match(courtPageSource, /disabled=\{!routeSessionSupported\}/);
+  assert.match(archivePageSource, /disabled=\{!routeSessionSupported\}/);
+  assert.match(mapPageSource, /disabled=\{!routeSessionSupported\}/);
+  assert.match(courtPageSource, /isRouteLocalSessionId\(sessionId\)/);
+  assert.match(archivePageSource, /isRouteLocalSessionId\(sessionId\)/);
+  assert.match(mapPageSource, /isRouteLocalSessionId\(sessionId\)/);
   assert.match(courtPageSource, /openSurfaceForSession\(surface, sessionId\)/);
   assert.match(archivePageSource, /openSurfaceForSession\("memorial-review", sessionId\)/);
   assert.match(mapPageSource, /openSurfaceForSession\("map-filter", sessionId\)/);
