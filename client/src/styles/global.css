@@ -1547,9 +1547,18 @@ button:disabled {
   background: rgba(248, 235, 219, 0.58);
 }
 
+.roleCycleMatrixHeading {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  min-width: 0;
+}
+
 .roleCycleMatrix strong,
 .roleCycleMatrix span,
-.roleCycleMatrix em {
+.roleCycleMatrix em,
+.roleCycleMatrix p {
   min-width: 0;
   overflow-wrap: anywhere;
 }
@@ -1563,6 +1572,46 @@ button:disabled {
   color: #6d5844;
   font-size: 0.78rem;
   line-height: 1.35;
+}
+
+.roleCycleMatrixHeading span {
+  flex: none;
+  color: #856348;
+  font-size: 0.72rem;
+  font-weight: 900;
+}
+
+.roleCycleMatrix p {
+  margin: 0;
+  color: #5c4939;
+  font-size: 0.76rem;
+  line-height: 1.45;
+}
+
+.roleCycleMatrixSources,
+.roleCycleMatrixStatus {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 5px;
+  min-width: 0;
+}
+
+.roleCycleMatrixSources span,
+.roleCycleMatrixPressure {
+  border: 1px solid rgba(84, 60, 43, 0.16);
+  background: rgba(255, 255, 248, 0.54);
+  color: #604d3d;
+  font-size: 0.7rem;
+  font-weight: 900;
+  line-height: 1.2;
+  padding: 3px 6px;
+}
+
+.roleCycleMatrixPressure {
+  border-color: rgba(142, 47, 39, 0.18);
+  background: rgba(142, 47, 39, 0.08);
+  color: #76372d;
 }
 
 .roleCycleMatrix em {

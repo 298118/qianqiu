@@ -5036,13 +5036,14 @@ describe("S74.1 React client shell", () => {
   it("renders the S88.5 six-role matrix from the safe role cycle view", () => {
     const fetchMock = mockAssetManifestFetch();
     const sessionId = "s74-preview";
+    const inactiveSummary = "详细案源只在对应身份的安全视野中展开。";
     const roleMatrix = [
-      { role: "scholar", roleLabel: "书生", loopLabel: "读书日课与科期", statusLabel: "待任后展开", enabled: false, itemCount: 0 },
-      { role: "magistrate", roleLabel: "地方官", loopLabel: "案牍钱粮与地方治理", statusLabel: "待任后展开", enabled: false, itemCount: 0 },
-      { role: "official", roleLabel: "入仕官员", loopLabel: "本职差使与考成", statusLabel: "署中承差", enabled: true, itemCount: 1 },
-      { role: "minister", roleLabel: "大臣", loopLabel: "票拟覆奏与部务朝议", statusLabel: "待任后展开", enabled: false, itemCount: 0 },
-      { role: "general", roleLabel: "将领", loopLabel: "军帐粮道与边患", statusLabel: "待任后展开", enabled: false, itemCount: 0 },
-      { role: "emperor", roleLabel: "皇帝", loopLabel: "御案奏议与天下调度", statusLabel: "待任后展开", enabled: false, itemCount: 0 }
+      { role: "scholar", roleLabel: "书生", authorityTier: "T1", loopLabel: "读书日课与科期", statusLabel: "待任后展开", summary: inactiveSummary, sourceViews: ["studyProfileView", "examCalendarView"], enabled: false, itemCount: 0, pressureScore: 0 },
+      { role: "magistrate", roleLabel: "地方官", authorityTier: "T3", loopLabel: "案牍钱粮与地方治理", statusLabel: "待任后展开", summary: inactiveSummary, sourceViews: ["localAffairsDocketView", "marketPriceView"], enabled: false, itemCount: 0, pressureScore: 0 },
+      { role: "official", roleLabel: "入仕官员", authorityTier: "T3", loopLabel: "本职差使与考成", statusLabel: "署中承差", summary: "本旬整理公开差使与考成凭据。", sourceViews: ["officialCareerView", "courtResponseView", "domainConsequenceView"], enabled: true, itemCount: 1, pressureScore: 37 },
+      { role: "minister", roleLabel: "大臣", authorityTier: "T4", loopLabel: "票拟覆奏与部务朝议", statusLabel: "待任后展开", summary: inactiveSummary, sourceViews: ["courtResponseView", "worldThreadView"], enabled: false, itemCount: 0, pressureScore: 0 },
+      { role: "general", roleLabel: "将领", authorityTier: "T4", loopLabel: "军帐粮道与边患", statusLabel: "待任后展开", summary: inactiveSummary, sourceViews: ["mapRuntimeView", "militaryDiplomacyView"], enabled: false, itemCount: 0, pressureScore: 0 },
+      { role: "emperor", roleLabel: "皇帝", authorityTier: "T5", loopLabel: "御案奏议与天下调度", statusLabel: "待任后展开", summary: inactiveSummary, sourceViews: ["courtResponseView", "officialPostingsView"], enabled: false, itemCount: 0, pressureScore: 0 }
     ];
     useGameSessionStore.setState({
       currentSessionId: sessionId,
@@ -5057,6 +5058,8 @@ describe("S74.1 React client shell", () => {
         },
         roleCycleView: {
           activeRole: "official",
+          dateLabel: "康熙元年上旬",
+          generatedAtTurn: 12,
           currentRole: {
             roleLabel: "入仕官员",
             loopLabel: "本职差使与考成",
@@ -5073,11 +5076,19 @@ describe("S74.1 React client shell", () => {
 
     renderRoute(`/game/${sessionId}`);
 
+    expect(screen.getByText(/康熙元年上旬/)).toBeTruthy();
+    expect(screen.getByText(/第12回合/)).toBeTruthy();
     const matrix = screen.getByRole("list", { name: "六身份矩阵" });
     expect(within(matrix).getByText("书生")).toBeTruthy();
     expect(within(matrix).getByText("地方官")).toBeTruthy();
     expect(within(matrix).getByText("入仕官员")).toBeTruthy();
     expect(within(matrix).getByText("皇帝")).toBeTruthy();
+    expect(within(matrix).getByText("职责层级 T5")).toBeTruthy();
+    expect(within(matrix).getByText("本旬整理公开差使与考成凭据。")).toBeTruthy();
+    expect(within(matrix).getAllByText(inactiveSummary).length).toBe(5);
+    expect(within(matrix).getByText("官职履历")).toBeTruthy();
+    expect(within(matrix).getAllByText("奏议回应").length).toBeGreaterThanOrEqual(1);
+    expect(within(matrix).getByText("警势 37")).toBeTruthy();
     expect(within(matrix).getByText("本身份 · 1 项可见事务")).toBeTruthy();
     expect(within(matrix).getAllByText("待任后展开").length).toBe(5);
     const matrixRequestedUrls = fetchMock.mock.calls.map((call) => String((call as unknown[])[0]));

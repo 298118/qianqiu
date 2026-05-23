@@ -46,8 +46,12 @@ type CycleEntryPoint = {
 type CycleRoleMatrixEntry = {
   readonly id: string;
   readonly roleLabel: string;
+  readonly authorityTier: string;
   readonly loopLabel: string;
   readonly statusLabel: string;
+  readonly summary: string;
+  readonly sourceLabels: readonly string[];
+  readonly pressureScore?: number;
   readonly itemCount: number;
   readonly active: boolean;
 };
@@ -91,6 +95,25 @@ const roleCycleSurfaceIds = new Set<LocalSurface>([
   "npc-profile",
   "map-filter"
 ]);
+const roleCycleSourceViewLabels: Record<string, string> = {
+  courtConsequenceView: "官场后果",
+  courtResponseView: "奏议回应",
+  domainConsequenceView: "领域后果",
+  economicFiscalView: "钱粮财政",
+  eventArchiveView: "事件档案",
+  examCalendarView: "科举日程",
+  examProcedureView: "科场流程",
+  localAffairsDocketView: "地方案牍",
+  mapRuntimeView: "舆图局势",
+  marketPriceView: "市价粮价",
+  militaryDiplomacyView: "军务外交",
+  npcEconomyView: "人物月账",
+  officialCareerView: "官职履历",
+  officialPostingsView: "官署任所",
+  playerMonthlyBriefingView: "官职月报",
+  studyProfileView: "读书簿",
+  worldThreadView: "天下议题"
+};
 
 function isRecord(value: JsonValue | unknown): value is JsonObject {
   return Boolean(value) && typeof value === "object" && !Array.isArray(value);
@@ -122,6 +145,11 @@ function cleanOptionalText(value: unknown, maxLength = 112) {
 function cleanNumber(value: unknown, fallback = 0) {
   const number = Number(value);
   return Number.isFinite(number) ? Math.max(0, Math.min(100, Math.round(number))) : fallback;
+}
+
+function cleanTurnNumber(value: unknown) {
+  const number = Number(value);
+  return Number.isFinite(number) ? Math.max(0, Math.min(99999, Math.round(number))) : undefined;
 }
 
 function cleanRouteId(value: unknown) {
@@ -238,6 +266,17 @@ function cycleMetrics(source: JsonObject) {
     .filter((item): item is { id: string; label: string; value: number; status: string } => item !== null);
 }
 
+function cycleSourceLabels(value: JsonValue | unknown) {
+  const labels: string[] = [];
+  for (const sourceView of asArray(value)) {
+    const sourceKey = cleanRoleCycleText(sourceView, "", 48);
+    const label = roleCycleSourceViewLabels[sourceKey];
+    if (label && !labels.includes(label)) labels.push(label);
+    if (labels.length >= 3) break;
+  }
+  return labels;
+}
+
 function cycleRoleMatrix(source: JsonObject): CycleRoleMatrixEntry[] {
   const activeRole = cleanRoleCycleText(source.activeRole, "", 32);
   return asArray(source.roleMatrix)
@@ -252,10 +291,18 @@ function cycleRoleMatrix(source: JsonObject): CycleRoleMatrixEntry[] {
       return {
         id: cleanRoleCycleText(item.role || `role-cycle-matrix-${index}`, `role-cycle-matrix-${index}`, 72),
         roleLabel,
+        authorityTier: cleanRoleCycleText(item.authorityTier, "T?", 12),
         loopLabel,
         statusLabel: active
           ? cleanRoleCycleText(item.statusLabel, "本身份", 24)
           : cleanRoleCycleText(item.statusLabel, "待任后展开", 24),
+        summary: cleanRoleCycleText(
+          item.summary,
+          active ? "当前身份事务已由服务器安全视图展开。" : "详细案源只在对应身份的安全视野中展开。",
+          96
+        ),
+        sourceLabels: cycleSourceLabels(item.sourceViews),
+        pressureScore: active && item.pressureScore !== undefined ? cleanNumber(item.pressureScore, 0) : undefined,
         itemCount: active ? cleanNumber(item.itemCount, 0) : 0,
         active
       };
@@ -322,6 +369,9 @@ export function RoleCycleSection({
   const roleLabel = cleanRoleCycleText(currentRole.roleLabel || view.activeRoleLabel, "本身份", 28);
   const loopLabel = cleanRoleCycleText(currentRole.loopLabel, "本旬事务", 40);
   const statusLabel = cleanRoleCycleText(currentRole.statusLabel, "候办", 24);
+  const dateLabel = cleanOptionalText(view.dateLabel, 32);
+  const turnNumber = cleanTurnNumber(view.generatedAtTurn);
+  const cycleMeta = [roleLabel, loopLabel, dateLabel, turnNumber === undefined ? undefined : `第${turnNumber}回合`].filter(Boolean).join(" · ");
   const summary = cleanRoleCycleText(currentRole.summary || view.summary, "本旬身份循环由服务器安全视图整理。", 148);
   const items = cycleItems(currentRole, "items", 5);
   const risks = cycleItems(currentRole, "riskSignals", 4);
@@ -335,7 +385,7 @@ export function RoleCycleSection({
       <div className="scholarPanelCardHeader">
         <div>
           <h3 id={titleId}>本旬身份循环</h3>
-          <p>{roleLabel} · {loopLabel}</p>
+          <p>{cycleMeta}</p>
         </div>
         <span>{statusLabel}</span>
       </div>
@@ -345,10 +395,24 @@ export function RoleCycleSection({
           <h4 id={`${idPrefix}-matrix-title`}>六身份矩阵</h4>
           <ul aria-label="六身份矩阵">
             {roleMatrix.map((entry) => (
-              <li key={entry.id} data-active={entry.active ? "true" : "false"}>
-                <strong>{entry.roleLabel}</strong>
+              <li key={entry.id} data-active={entry.active ? "true" : "false"} aria-current={entry.active ? "true" : undefined}>
+                <div className="roleCycleMatrixHeading">
+                  <strong>{entry.roleLabel}</strong>
+                  <span>职责层级 {entry.authorityTier}</span>
+                </div>
                 <span>{entry.loopLabel}</span>
-                <em>{entry.active ? `本身份 · ${entry.itemCount} 项可见事务` : entry.statusLabel}</em>
+                <p>{entry.summary}</p>
+                {entry.sourceLabels.length ? (
+                  <div className="roleCycleMatrixSources" aria-label={`${entry.roleLabel}取材域`}>
+                    {entry.sourceLabels.map((sourceLabel) => (
+                      <span key={sourceLabel}>{sourceLabel}</span>
+                    ))}
+                  </div>
+                ) : null}
+                <div className="roleCycleMatrixStatus">
+                  <em>{entry.active ? `本身份 · ${entry.itemCount} 项可见事务` : entry.statusLabel}</em>
+                  {entry.pressureScore !== undefined ? <span className="roleCycleMatrixPressure">警势 {entry.pressureScore}</span> : null}
+                </div>
               </li>
             ))}
           </ul>
