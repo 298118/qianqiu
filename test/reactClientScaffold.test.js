@@ -1374,6 +1374,7 @@ test("S88.7 archive consumes world entity impact evidence from safe projection",
   const eventArchiveSource = readText("src/game/eventArchive.js");
   const archivePageSource = readText("client/src/pages/ArchivePage.tsx");
   const appTestSource = readText("client/src/__tests__/App.test.tsx");
+  const clientSmokeSource = readText("scripts/clientSmoke.js");
   const styleSource = readText("client/src/styles/global.css");
   const collectorSource = eventArchiveSource.match(
     /function collectWorldEntityImpactItems[\s\S]*?\n}\n\nfunction collectMonthlyBriefingItems/
@@ -1390,8 +1391,14 @@ test("S88.7 archive consumes world entity impact evidence from safe projection",
   assert.doesNotMatch(collectorSource, /worldState\.worldEntities|worldEntities\.recentImpacts|sourceRef|relatedRefs|scopeRefs/);
   assert.match(archivePageSource, /entityImpactCount = numberValue\(counts\.world_entity_impact\)/);
   assert.match(archivePageSource, /<dt>实体<\/dt>/);
+  assert.match(archivePageSource, /data-source-type=\{item\.sourceType\}/);
   assert.match(appTestSource, /sourceType: "world_entity_impact"/);
   assert.match(appTestSource, /同年文社压力留痕/);
+  assert.match(clientSmokeSource, /assertArchiveWorldEntityImpactCanary/);
+  assert.match(clientSmokeSource, /\/api\/game\/npc-interaction\/\$\{sessionId\}/);
+  assert.match(clientSmokeSource, /sourceType === "world_entity_impact"/);
+  assert.match(clientSmokeSource, /li\[data-source-type='world_entity_impact'\]/);
+  assert.match(clientSmokeSource, /sourceRef\|relatedRefs\|scopeRefs/);
   assert.match(styleSource, /grid-template-columns: repeat\(4, minmax\(0, 1fr\)\)/);
   assert.doesNotMatch(
     runtimeCombined,

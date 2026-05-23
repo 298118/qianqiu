@@ -1032,6 +1032,91 @@ async function assertPeoplePortraitRuntimeSafety(page, label, resourceSnapshot) 
   }
 }
 
+async function assertArchiveWorldEntityImpactCanary(page, sessionId) {
+  const interactionResponsePromise = page.waitForResponse((response) => {
+    try {
+      const url = new URL(response.url());
+      return url.pathname === `/api/game/npc-interaction/${sessionId}` && response.request().method() === "POST";
+    } catch {
+      return false;
+    }
+  }, { timeout: 20000 });
+
+  await page.getByRole("button", { name: "礼法" }).click();
+  await page.getByLabel("交游呈词").fill("只作论道，胜负、资源、关系与后续均候服务器裁决。");
+  await clickStableButton(page, { name: "请论道" }, "S88.7 world entity archive NPC relationship canary");
+  const interactionResponse = await interactionResponsePromise;
+  await page.waitForFunction(() => {
+    const text = document.body.innerText || "";
+    return text.includes("服务器裁决") && text.includes("公开压力");
+  }, null, { timeout: 15000 });
+
+  const responsePayload = await interactionResponse.json().catch(() => null) || {};
+  const responseArchiveItems = Array.isArray(responsePayload.eventArchiveView?.items)
+    ? responsePayload.eventArchiveView.items
+    : [];
+  const responseImpacts = Array.isArray(responsePayload.worldEntityView?.recentImpacts)
+    ? responsePayload.worldEntityView.recentImpacts
+    : [];
+  const responseEntityArchiveItems = responseArchiveItems.filter((item) => item?.sourceType === "world_entity_impact");
+  const responseSafeViewFailures = getSafetyPollutionFailures(JSON.stringify({
+    archiveItems: responseEntityArchiveItems,
+    worldEntityImpacts: responsePayload.worldEntityImpacts
+  }), "S88.7 NPC relationship archive canary response items");
+  const responseFailures = [];
+  if (!interactionResponse.ok()) responseFailures.push(`NPC relationship response was not ok: ${interactionResponse.status()}`);
+  if (!responsePayload.accepted) responseFailures.push("NPC relationship response was not accepted");
+  if (!responseEntityArchiveItems.length) {
+    responseFailures.push("NPC relationship response did not return world_entity_impact archive item");
+  }
+  if (!responseImpacts.some((impact) => impact?.sourceType === "npc_relationship_action")) {
+    responseFailures.push("NPC relationship response did not return npc_relationship_action recent impact");
+  }
+  if (responseSafeViewFailures.length) {
+    responseFailures.push(responseSafeViewFailures.join("; "));
+  }
+  if (responseFailures.length) {
+    throw new Error(`S88.7 world entity archive response canary failed: ${responseFailures.join("; ")}`);
+  }
+
+  const archiveUrl = new URL(`/game/${sessionId}/archive`, page.url()).href;
+  await page.goto(archiveUrl, { waitUntil: "networkidle" });
+  await page.locator(".archiveItemList li[data-source-type='world_entity_impact']").first().waitFor({ timeout: 15000 });
+  const archiveSnapshot = await page.evaluate((id) => {
+    const panel = document.querySelector(".archiveRoutePanel");
+    const items = [...document.querySelectorAll(".archiveItemList li")].map((item) => ({
+      sourceType: item.getAttribute("data-source-type") || "",
+      text: item.textContent || "",
+      attrs: item.outerHTML.match(/\s(?:data-[a-z-]+|href|src|aria-label)="[^"]*"/g) || []
+    }));
+    const entityItems = items.filter((item) => item.sourceType === "world_entity_impact");
+    const text = panel?.textContent || "";
+    return {
+      path: window.location.pathname,
+      expectedPath: `/game/${id}/archive`,
+      hasEntityStat: text.includes("实体"),
+      entityItems,
+      forbiddenText: text.match(/\/api\/game\/state|\/api\/dev\/session-diagnostics|provider payload|raw audit|hiddenNotes|OPENAI_API_KEY|DEEPSEEK_API_KEY|MIMO_API_KEY|ANTHROPIC_API_KEY|data\/sessions|stateDelta|playerDelta|evidenceRefs|outcomeId|auditRecord|cityPolicyLedger|militaryDiplomacyLedger|judicialCaseLedger|npcEconomyLedger|event_archive_index|safe_search_index|prompt_retrieval_index|world_sessions|world_state_json|sourceRef|relatedRefs|scopeRefs|provider\b|prompt\b|hidden\b|key\b|path\b|sk-[a-z0-9_-]{6,}|[a-z]:[\\/]/gi) || [],
+      unsafeAttributes: items.flatMap((item) => item.attrs).filter((attr) =>
+        /sourceRef|relatedRefs|scopeRefs|provider|prompt|hidden|key|path|raw|sqlite|world_sessions|event_archive_index|safe_search_index|prompt_retrieval_index/i.test(attr)
+      )
+    };
+  }, sessionId);
+
+  const failures = [];
+  if (archiveSnapshot.path !== archiveSnapshot.expectedPath) failures.push(`path was ${archiveSnapshot.path}`);
+  if (!archiveSnapshot.hasEntityStat) failures.push("archive stat did not show entity count label");
+  if (!archiveSnapshot.entityItems.length) failures.push("archive DOM did not expose a world_entity_impact item");
+  if (!archiveSnapshot.entityItems.some((item) => /实体压力|压力|论道|同年|书院|士林/.test(item.text))) {
+    failures.push(`archive DOM world_entity_impact item lacked public pressure copy: ${JSON.stringify(archiveSnapshot.entityItems.slice(0, 2))}`);
+  }
+  if (archiveSnapshot.forbiddenText.length) failures.push(`archive DOM leaked forbidden text: ${archiveSnapshot.forbiddenText.join(", ")}`);
+  if (archiveSnapshot.unsafeAttributes.length) failures.push(`archive DOM exposed unsafe attributes: ${archiveSnapshot.unsafeAttributes.join(", ")}`);
+  if (failures.length) {
+    throw new Error(`S88.7 world entity archive DOM canary failed: ${failures.join("; ")}`);
+  }
+}
+
 async function waitForVisiblePortraitImages(page, selector, label) {
   const snapshot = await page.waitForFunction((targetSelector) => {
     const images = [...document.querySelectorAll(`${targetSelector} img`)];
@@ -2712,10 +2797,9 @@ async function runClientSmoke(options = {}) {
         readySelector: ".peopleLedgerList"
       })
     );
-    screenshots.push(await assertMapResourceFailureFallback(context, baseUrl, runtimeMapPath, options.screenshotsDir));
 
     const archivePath = `/game/${startedSessionId}/archive`;
-    await clickTopNavRoute(page, "史册", archivePath);
+    await assertArchiveWorldEntityImpactCanary(page, startedSessionId);
     screenshots.push(
       await assertCurrentReactClientPage(page, archivePath, "s74-react-archive-desktop", options.screenshotsDir, {
         readySelector: "#archive-title"
@@ -2726,6 +2810,7 @@ async function runClientSmoke(options = {}) {
         readySelector: "#archive-title"
       })
     );
+    screenshots.push(await assertMapResourceFailureFallback(context, baseUrl, runtimeMapPath, options.screenshotsDir));
 
     const examPath = `/game/${startedSessionId}/exam`;
     await clickSessionNavRoute(page, "科举", examPath);
