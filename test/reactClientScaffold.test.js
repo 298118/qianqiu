@@ -1370,6 +1370,35 @@ test("S88.7 people page consumes persistent world entity impact evidence as read
   );
 });
 
+test("S88.7 archive consumes world entity impact evidence from safe projection", () => {
+  const eventArchiveSource = readText("src/game/eventArchive.js");
+  const archivePageSource = readText("client/src/pages/ArchivePage.tsx");
+  const appTestSource = readText("client/src/__tests__/App.test.tsx");
+  const styleSource = readText("client/src/styles/global.css");
+  const collectorSource = eventArchiveSource.match(
+    /function collectWorldEntityImpactItems[\s\S]*?\n}\n\nfunction collectMonthlyBriefingItems/
+  )?.[0] || "";
+  const runtimeCombined = stripSafeGuardPatterns(`${archivePageSource}\n${styleSource}`);
+
+  assert.match(eventArchiveSource, /buildWorldEntityView/);
+  assert.match(eventArchiveSource, /MAX_WORLD_ENTITY_IMPACT_RECORDS = 6/);
+  assert.match(eventArchiveSource, /world_entity_impact: "实体压力"/);
+  assert.match(eventArchiveSource, /collectWorldEntityImpactItems\(worldState, items, worldEntityView\)/);
+  assert.match(collectorSource, /Array\.isArray\(worldEntityView\?\.recentImpacts\)/);
+  assert.match(collectorSource, /impact\.publicSummary/);
+  assert.match(collectorSource, /impact\.affectedMetricLabels/);
+  assert.doesNotMatch(collectorSource, /worldState\.worldEntities|worldEntities\.recentImpacts|sourceRef|relatedRefs|scopeRefs/);
+  assert.match(archivePageSource, /entityImpactCount = numberValue\(counts\.world_entity_impact\)/);
+  assert.match(archivePageSource, /<dt>实体<\/dt>/);
+  assert.match(appTestSource, /sourceType: "world_entity_impact"/);
+  assert.match(appTestSource, /同年文社压力留痕/);
+  assert.match(styleSource, /grid-template-columns: repeat\(4, minmax\(0, 1fr\)\)/);
+  assert.doesNotMatch(
+    runtimeCombined,
+    /\/api\/game\/state|\/api\/dev\/session-diagnostics|worldEntities\.recentImpacts|sourceRef|relatedRefs|scopeRefs|raw audit|provider payload|OPENAI_API_KEY|DEEPSEEK_API_KEY|MIMO_API_KEY|ANTHROPIC_API_KEY|resourcesApplied|marriageWritten|hiddenTruthChanged/
+  );
+});
+
 test("S74.6 React map bridge wraps S72 renderer without old frontend globals", () => {
   const bridgeSource = readText("client/src/components/InkMapRuntimeBridge.tsx");
   const mapPageSource = readText("client/src/pages/MapPage.tsx");

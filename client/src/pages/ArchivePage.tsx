@@ -133,6 +133,7 @@ export function ArchivePage() {
   const pagination = asRecord(archiveView.pagination);
   const counts = asRecord(archiveView.counts);
   const domainCount = numberValue(counts.domain_consequence);
+  const entityImpactCount = numberValue(counts.world_entity_impact);
   const totalItems = numberValue(pagination.totalItems ?? counts.total);
   const pageSize = numberValue(pagination.pageSize, archiveItems.length);
   const isRunnable = isRunnableSessionId(sessionId);
@@ -168,6 +169,10 @@ export function ArchivePage() {
           <div>
             <dt>后果</dt>
             <dd>{domainCount}</dd>
+          </div>
+          <div>
+            <dt>实体</dt>
+            <dd>{entityImpactCount}</dd>
           </div>
         </dl>
       </header>

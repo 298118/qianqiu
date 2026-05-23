@@ -17,6 +17,7 @@ const { buildWorldThreadView } = require("./worldThreads");
 const { isVisibleActorId } = require("./actorMemoryLedger");
 const { buildNpcActiveRequestView } = require("./npcActiveRequests");
 const { buildNpcInteractionLedgerView } = require("./npcInteractions");
+const { buildWorldEntityView } = require("./worldEntities");
 
 const EVENT_ARCHIVE_SCHEMA_VERSION = 1;
 const MAX_ARCHIVE_ITEMS = 24;
@@ -40,6 +41,7 @@ const MAX_EXAM_RECORDS = 5;
 const MAX_EXAM_NETWORK_RECORDS = 5;
 const MAX_NPC_ACTIVE_REQUEST_RECORDS = 6;
 const MAX_NPC_RELATIONSHIP_ACTION_RECORDS = 6;
+const MAX_WORLD_ENTITY_IMPACT_RECORDS = 6;
 const MAX_ACTOR_MEMORY_RECORDS = 6;
 const MAX_SESSION_SUMMARIES = 4;
 const MAX_TEXT_LENGTH = 180;
@@ -72,6 +74,7 @@ const SOURCE_LABELS = {
   appointment_result: "授官",
   npc_active_request: "来函",
   npc_relationship_action: "交游",
+  world_entity_impact: "实体压力",
   actor_memory: "记忆",
   session_summary: "经历"
 };
@@ -404,6 +407,30 @@ function collectDomainConsequenceItems(worldState, items) {
       relatedLabels: [
         ...(Array.isArray(consequence.affectedMetricLabels) ? consequence.affectedMetricLabels : []),
         ...(Array.isArray(consequence.consequenceRefs) ? consequence.consequenceRefs : [])
+      ]
+    });
+  });
+}
+
+function collectWorldEntityImpactItems(worldState, items, worldEntityView) {
+  const impacts = Array.isArray(worldEntityView?.recentImpacts)
+    ? worldEntityView.recentImpacts
+    : [];
+  impacts.slice(-MAX_WORLD_ENTITY_IMPACT_RECORDS).forEach((impact) => {
+    addItem(items, worldState, {
+      sourceType: "world_entity_impact",
+      kind: impact.sourceType || "world_entity_impact",
+      title: impact.title || `${impact.entityName || "实体"}压力留痕`,
+      summary: impact.publicSummary,
+      date: impact,
+      turn: impact.generatedAtTurn,
+      status: impact.status === "stable" ? "recorded" : "watch",
+      riskLabel: impact.riskLabel || impact.statusLabel || "",
+      relatedLabels: [
+        impact.entityName,
+        impact.sourceLabel,
+        impact.statusLabel,
+        ...(Array.isArray(impact.affectedMetricLabels) ? impact.affectedMetricLabels : [])
       ]
     });
   });
@@ -863,6 +890,7 @@ function buildEventArchiveIndexItems(worldState = {}) {
   const intelligenceRumorView = buildIntelligenceRumorView(worldState);
   const npcActiveRequestView = buildNpcActiveRequestView(worldState, { includeResolved: true });
   const npcInteractionView = buildNpcInteractionLedgerView(worldState);
+  const worldEntityView = buildWorldEntityView(worldState);
   const items = [];
 
   collectHistoryItems(worldState, items);
@@ -872,6 +900,7 @@ function buildEventArchiveIndexItems(worldState = {}) {
   collectOfficialCourtResponseItems(worldState, items);
   collectOfficialCourtConsequenceItems(worldState, items);
   collectDomainConsequenceItems(worldState, items);
+  collectWorldEntityImpactItems(worldState, items, worldEntityView);
   collectMonthlyBriefingItems(worldState, items);
   collectAppointmentTrackItems(worldState, items);
   collectOfficialAssessmentItems(worldState, items, officialPostingsView);

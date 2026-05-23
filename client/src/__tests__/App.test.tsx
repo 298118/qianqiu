@@ -5498,8 +5498,8 @@ describe("S74.1 React client shell", () => {
         worldState: { player: { name: "顾衡", role: "official" } },
         eventArchiveView: {
           schemaVersion: 1,
-          pagination: { page: 1, pageSize: 12, totalItems: 2 },
-          counts: { total: 2, domain_consequence: 1 },
+          pagination: { page: 1, pageSize: 12, totalItems: 3 },
+          counts: { total: 3, domain_consequence: 1, world_entity_impact: 1 },
           items: [{
             id: "EA-domain-1",
             sourceType: "domain_consequence",
@@ -5510,6 +5510,16 @@ describe("S74.1 React client shell", () => {
             statusLabel: "已记",
             riskLabel: "民心",
             relatedLabels: ["地方政策", "月报"]
+          }, {
+            id: "EA-entity-impact-1",
+            sourceType: "world_entity_impact",
+            sourceLabel: "实体压力",
+            title: "同年文社压力留痕",
+            summary: "论道余波已归入同年文社公开实体压力，仍回主卷提交。",
+            dateLabel: "明1644年三月中旬",
+            statusLabel: "留察",
+            riskLabel: "有牵连",
+            relatedLabels: ["同年文社", "NPC 关系行动", "信任上升"]
           }, {
             id: "EA-polluted",
             sourceType: "event_history",
@@ -5577,9 +5587,12 @@ describe("S74.1 React client shell", () => {
 
     expect(screen.getByRole("heading", { name: "史册" })).toBeTruthy();
     expect(archive.getAllByText("平粜余波").length).toBeGreaterThan(0);
+    expect(archive.getByText("同年文社压力留痕")).toBeTruthy();
+    expect(archive.getByText("论道余波已归入同年文社公开实体压力，仍回主卷提交。")).toBeTruthy();
     expect(archive.getByText("史册后果追踪")).toBeTruthy();
     expect(archive.getByText("来函证据追踪")).toBeTruthy();
     expect(archive.getAllByText("后果").length).toBeGreaterThan(0);
+    expect(archive.getAllByText("实体").length).toBeGreaterThan(0);
     expect(archive.getByText("同年拜会线索")).toBeTruthy();
     expect(archive.getByText("风宪 watchlist 留痕")).toBeTruthy();
     fireEvent.click(archive.getAllByRole("button", { name: "据此拟稿" })[0]);

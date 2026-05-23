@@ -4,6 +4,7 @@ const assert = require("node:assert/strict");
 const { buildEventArchiveView, cleanArchiveText } = require("../src/game/eventArchive");
 const { createInitialState } = require("../src/game/initialState");
 const { attachExamSceneTime } = require("../src/game/examSceneTime");
+const { applyWorldEntityInfluences } = require("../src/game/worldEntities");
 const {
   createNpcActiveRequest,
   resolveNpcActiveRequest,
@@ -278,6 +279,82 @@ test("S88.7 event archive records safe NPC active request and relationship resol
   assert.doesNotMatch(
     serialized,
     /providerPayload|rawProvider|hiddenDossier|privateSignalTags|world_sessions|safe_search|sk-testsecret|\/mnt\/e/
+  );
+});
+
+test("S88.7 event archive records safe world entity impact evidence", () => {
+  const worldState = createInitialState({ playerName: "实体归档", role: "scholar" });
+  worldState.turnCount = 31;
+
+  applyWorldEntityInfluences(worldState, [
+    {
+      entityId: "academy-same-year-circle",
+      sourceType: "npc_relationship_action",
+      sourceId: "npc-relationship-resolution:npc-scholar-peer-shen:debate:31",
+      metricsDelta: { trust: 2, pressure: 1 },
+      publicNote: "论道余波进入同年文社"
+    },
+    {
+      entityId: "court-censorate",
+      sourceType: "active_npc_request",
+      sourceId: "npc-request-public-integrity-31",
+      metricsDelta: { pressure: 2 },
+      publicNote: "来函后续已登记为风宪证据观察"
+    }
+  ]);
+  for (let index = 0; index < 4; index += 1) {
+    worldState.worldEntities.recentImpacts.push({
+      id: `world-entity-impact:cap-${index}`,
+      sourceType: "active_npc_request",
+      entityId: "local-gentry-county",
+      title: `地方士绅公开压力${index}`,
+      publicSummary: `地方士绅公开压力留痕 ${index}`,
+      affectedMetricLabels: ["压力上升"],
+      generatedAtTurn: 40 + index
+    });
+  }
+  worldState.worldEntities.recentImpacts.push({
+    id: "world-entity-impact:polluted-archive",
+    sourceType: "npc_relationship_action",
+    sourceLabel: "provider payload",
+    entityId: "academy-same-year-circle",
+    entityName: "同年文社",
+    title: "hiddenNotes raw prompt C:\\bad\\archive.json",
+    publicSummary: "OPENAI_API_KEY data/sessions provider payload safe_search_index",
+    affectedMetricLabels: ["privateSignalTags"],
+    relatedRefs: ["rawLedger:secret", "safe_search_index:secret"],
+    scopeRefs: ["world_sessions:secret"],
+    generatedAtTurn: 44
+  });
+  for (let index = 4; index < 8; index += 1) {
+    worldState.worldEntities.recentImpacts.push({
+      id: `world-entity-impact:cap-${index}`,
+      sourceType: "active_npc_request",
+      entityId: "local-gentry-county",
+      title: `地方士绅公开压力${index}`,
+      publicSummary: `地方士绅公开压力留痕 ${index}`,
+      affectedMetricLabels: ["压力上升"],
+      generatedAtTurn: 40 + index
+    });
+  }
+
+  const archive = buildEventArchiveView(worldState, { pageSize: 80 });
+  const impactItems = archive.items.filter((item) => item.sourceType === "world_entity_impact");
+  const serialized = JSON.stringify(archive);
+
+  assert.ok(impactItems.length > 0);
+  assert.ok(impactItems.length <= 6);
+  assert.equal(archive.counts.world_entity_impact, impactItems.length);
+  assert.ok(impactItems.some((item) =>
+    item.sourceLabel === "实体压力" &&
+    /地方士绅公开压力留痕|论道余波|风宪证据观察/.test(`${item.title}${item.summary}`) &&
+    /实体压力|NPC|吃紧|压力|信任|地方士绅|同年文社|都察院/.test(item.relatedLabels.join(""))
+  ));
+  assert.ok(impactItems.every((item) => item.visibility === "public"));
+  assert.ok(impactItems.every((item) => item.status === "watch" || item.status === "recorded"));
+  assert.doesNotMatch(
+    serialized,
+    /provider payload|hiddenNotes|raw prompt|privateSignalTags|OPENAI_API_KEY|data\/sessions|safe_search_index|world_sessions|rawLedger|sourceRef|relatedRefs|scopeRefs|npc-relationship-resolution|npc-request-public-integrity|C:\\/
   );
 });
 

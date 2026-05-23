@@ -16,6 +16,7 @@ const {
   buildWorldPeopleEventBatch,
   snapshotWorldPeopleForEvents
 } = require("../src/game/worldPeopleEvents");
+const { applyWorldEntityInfluences } = require("../src/game/worldEntities");
 const { createJsonSessionAdapter } = require("../src/storage/jsonSessionAdapter");
 const { createSqliteSessionAdapter } = require("../src/storage/sqliteSessionAdapter");
 
@@ -2049,6 +2050,26 @@ test("SQLite storage adapter syncs and repairs the safe event archive index", {
     "prompt provider proposal event_log data/audit sk-proj-event-index-secret-123456",
     "秋粮申报公开入档。"
   ];
+  applyWorldEntityInfluences(worldState, [{
+    entityId: "academy-same-year-circle",
+    sourceType: "npc_relationship_action",
+    sourceId: "npc-relationship-resolution:sqlite-secret-source",
+    metricsDelta: { trust: 1, pressure: 1 },
+    publicNote: "论道余波进入同年文社"
+  }]);
+  worldState.worldEntities.recentImpacts.push({
+    id: "world-entity-impact:sqlite-polluted",
+    sourceType: "npc_relationship_action",
+    sourceLabel: "provider payload",
+    entityId: "academy-same-year-circle",
+    entityName: "同年文社",
+    title: "hiddenNotes raw prompt C:\\bad\\sqlite.json",
+    publicSummary: "OPENAI_API_KEY data/sessions provider payload safe_search_index",
+    affectedMetricLabels: ["privateSignalTags"],
+    relatedRefs: ["rawLedger:sqlite"],
+    scopeRefs: ["world_sessions:sqlite"],
+    generatedAtTurn: 6
+  });
   await adapter.writeSession(worldState);
 
   const expectedArchive = buildEventArchiveView(worldState, { pageSize: 50 });
@@ -2056,7 +2077,7 @@ test("SQLite storage adapter syncs and repairs the safe event archive index", {
     const count = readSqliteEventArchiveCount(db, worldState.sessionId);
     const rows = db
       .prepare(`
-        SELECT row_id, source, visibility, source_type, summary, metadata_json
+        SELECT row_id, source, visibility, source_type, title, summary, related_labels_json, metadata_json
         FROM event_archive_index
         WHERE session_id = ?
         ORDER BY sort_turn DESC, sort_sequence ASC
@@ -2065,16 +2086,23 @@ test("SQLite storage adapter syncs and repairs the safe event archive index", {
     const serializedRows = JSON.stringify(rows);
 
     const eventHistoryRows = rows.filter((row) => row.source_type === "event_history");
+    const entityImpactRows = rows.filter((row) => row.source_type === "world_entity_impact");
 
     assert.equal(count, expectedArchive.pagination.totalItems);
     assert.equal(rows.length, expectedArchive.pagination.totalItems);
     assert.equal(eventHistoryRows.length, 2);
+    assert.ok(entityImpactRows.length > 0);
+    assert.ok(entityImpactRows.some((row) => /同年文社|论道余波/.test(`${row.title}${row.summary}${row.related_labels_json}`)));
     assert.ok(rows.every((row) => row.source === "event_archive_view"));
     assert.ok(rows.every((row) => row.visibility === "public"));
     assert.ok(rows.every((row) => JSON.parse(row.metadata_json).contentHash));
     assert.equal(serializedRows.includes("sk-proj-event-index-secret"), false);
     assert.equal(serializedRows.includes("event_log"), false);
     assert.equal(serializedRows.includes("provider"), false);
+    assert.equal(serializedRows.includes("npc-relationship-resolution:sqlite-secret-source"), false);
+    assert.equal(serializedRows.includes("sourceRef"), false);
+    assert.equal(serializedRows.includes("relatedRefs"), false);
+    assert.equal(serializedRows.includes("scopeRefs"), false);
 
     db
       .prepare("UPDATE event_archive_index SET summary = ? WHERE session_id = ? AND row_id = ?")
