@@ -3,6 +3,7 @@ const { collectVisibleDomainEvidenceRefs } = require("./domainToolResolvers");
 const { collectDomainConsequenceEchoRefs } = require("./domainConsequenceEchoRefs");
 const { resolveAndApplyCityPolicy } = require("./cityPolicyResolver");
 const { resolveAndApplyMilitaryDiplomacy } = require("./militaryDiplomacyResolver");
+const { MAP_RUNTIME_DRAFT_CONTEXT_SCHEMA_VERSION } = require("./mapRuntimeDraftContext");
 
 const ROLE_CYCLE_DOMAIN_ADJUDICATION_SCHEMA_VERSION = 1;
 const MAX_FEEDBACK_EVENTS = 2;
@@ -287,11 +288,45 @@ function sameEvidenceSet(left = [], right = []) {
 
 function normalizeDraftAuditContext(draftContext = {}) {
   if (!isPlainObject(draftContext)) return null;
+  const source = cleanRef(draftContext.source, "");
+  const surfaceId = cleanRef(draftContext.surfaceId, "");
+  if (source === "map_runtime_turn_context" || surfaceId === "map-runtime") {
+    const schemaVersion = cleanRef(draftContext.schemaVersion, "");
+    const status = cleanRef(draftContext.status, "");
+    if (
+      source !== "map_runtime_turn_context" ||
+      surfaceId !== "map-runtime" ||
+      schemaVersion !== MAP_RUNTIME_DRAFT_CONTEXT_SCHEMA_VERSION ||
+      status !== "verified"
+    ) {
+      return null;
+    }
+    const evidenceRefs = cleanRefList(draftContext.evidenceRefs, MAX_EVIDENCE_REFS);
+    const sourceRefs = cleanRefList(draftContext.sourceRefs, MAX_EVIDENCE_REFS);
+    const targetRefs = cleanRefList(draftContext.targetRefs, MAX_EVIDENCE_REFS);
+    const actionDraftRefs = cleanRefList(draftContext.actionDraftRefs, MAX_EVIDENCE_REFS);
+    if (!evidenceRefs.length && !sourceRefs.length && !targetRefs.length && !actionDraftRefs.length) return null;
+    return {
+      source: "map_runtime_turn_context",
+      surfaceId: "map-runtime",
+      draftKind: cleanRef(draftContext.draftKind, "map_ref_action"),
+      sourceView: "mapRuntimeView",
+      evidenceRefs,
+      sourceRefs,
+      targetRefs,
+      ...(actionDraftRefs.length ? { actionDraftRefs } : {}),
+      requiresServerTurn: draftContext.requiresServerTurn !== false,
+      generatedAtTurn: Number.isFinite(Number(draftContext.generatedAtTurn))
+        ? Math.max(0, Math.round(Number(draftContext.generatedAtTurn)))
+        : 0,
+      status: "verified"
+    };
+  }
   const canonicalEchoRefs = collectDomainConsequenceEchoRefs(draftContext.canonicalEchoRefs).slice(0, MAX_EVIDENCE_REFS);
   if (!canonicalEchoRefs.length) return null;
   return {
     source: "topic_draft_turn_context",
-    surfaceId: cleanRef(draftContext.surfaceId, ""),
+    surfaceId,
     draftKind: cleanRef(draftContext.draftKind, ""),
     evidenceRefs: cleanRefList(draftContext.evidenceRefs, MAX_EVIDENCE_REFS),
     canonicalEchoRefs,
@@ -303,7 +338,15 @@ function normalizeDraftAuditContext(draftContext = {}) {
 }
 
 function attachDraftAuditToOutcome(outcome = {}, draftAuditContext = null) {
-  if (!isPlainObject(outcome) || !draftAuditContext?.canonicalEchoRefs?.length) return outcome;
+  if (!isPlainObject(outcome) || !draftAuditContext) return outcome;
+  if (draftAuditContext.source === "map_runtime_turn_context") {
+    outcome.mapRuntimeDraftContext = draftAuditContext;
+    if (isPlainObject(outcome.auditRecord)) {
+      outcome.auditRecord.mapRuntimeDraftContext = draftAuditContext;
+    }
+    return outcome;
+  }
+  if (!draftAuditContext.canonicalEchoRefs?.length) return outcome;
   outcome.canonicalEchoRefs = draftAuditContext.canonicalEchoRefs;
   outcome.topicDraftContext = draftAuditContext;
   if (isPlainObject(outcome.auditRecord)) {
@@ -313,7 +356,7 @@ function attachDraftAuditToOutcome(outcome = {}, draftAuditContext = null) {
 }
 
 function attachDraftAuditToLedgerRecord(worldState = {}, resolver = "", outcome = {}, draftAuditContext = null) {
-  if (!draftAuditContext?.canonicalEchoRefs?.length || outcome.status !== "accepted") return;
+  if (!draftAuditContext || outcome.status !== "accepted") return;
   const records = resolver === "city_policy"
     ? worldState.cityPolicyLedger?.records
     : worldState.militaryDiplomacyLedger?.records;
@@ -322,8 +365,12 @@ function attachDraftAuditToLedgerRecord(worldState = {}, resolver = "", outcome 
   for (let index = records.length - 1; index >= 0; index -= 1) {
     const record = records[index];
     if (!isPlainObject(record) || cleanRef(record.outcomeId, "") !== outcomeId) continue;
-    record.canonicalEchoRefs = draftAuditContext.canonicalEchoRefs;
-    record.topicDraftContext = draftAuditContext;
+    if (draftAuditContext.source === "map_runtime_turn_context") {
+      record.mapRuntimeDraftContext = draftAuditContext;
+    } else if (draftAuditContext.canonicalEchoRefs?.length) {
+      record.canonicalEchoRefs = draftAuditContext.canonicalEchoRefs;
+      record.topicDraftContext = draftAuditContext;
+    }
     return;
   }
 }
@@ -395,6 +442,9 @@ function buildDuplicateFeedback({ resolver, intent, label, evidenceRefs, draftAu
   if (draftAuditContext?.canonicalEchoRefs?.length) {
     outcome.canonicalEchoRefs = draftAuditContext.canonicalEchoRefs;
     outcome.topicDraftContext = draftAuditContext;
+  }
+  if (draftAuditContext?.source === "map_runtime_turn_context") {
+    outcome.mapRuntimeDraftContext = draftAuditContext;
   }
   return {
     schemaVersion: ROLE_CYCLE_DOMAIN_ADJUDICATION_SCHEMA_VERSION,
@@ -579,6 +629,23 @@ function buildPublicOutcome(outcome = {}, resolver) {
         status: cleanRef(outcome.topicDraftContext.status, "verified")
       };
     }
+  }
+  if (isPlainObject(outcome.mapRuntimeDraftContext)) {
+    base.mapRuntimeDraftContext = {
+      source: cleanRef(outcome.mapRuntimeDraftContext.source, "map_runtime_turn_context"),
+      surfaceId: cleanRef(outcome.mapRuntimeDraftContext.surfaceId, "map-runtime"),
+      draftKind: cleanRef(outcome.mapRuntimeDraftContext.draftKind, "map_ref_action"),
+      sourceView: cleanRef(outcome.mapRuntimeDraftContext.sourceView, "mapRuntimeView"),
+      evidenceRefs: cleanRefList(outcome.mapRuntimeDraftContext.evidenceRefs, MAX_EVIDENCE_REFS),
+      sourceRefs: cleanRefList(outcome.mapRuntimeDraftContext.sourceRefs, MAX_EVIDENCE_REFS),
+      targetRefs: cleanRefList(outcome.mapRuntimeDraftContext.targetRefs, MAX_EVIDENCE_REFS),
+      actionDraftRefs: cleanRefList(outcome.mapRuntimeDraftContext.actionDraftRefs, MAX_EVIDENCE_REFS),
+      requiresServerTurn: outcome.mapRuntimeDraftContext.requiresServerTurn !== false,
+      generatedAtTurn: Number.isFinite(Number(outcome.mapRuntimeDraftContext.generatedAtTurn))
+        ? Math.max(0, Math.round(Number(outcome.mapRuntimeDraftContext.generatedAtTurn)))
+        : 0,
+      status: cleanRef(outcome.mapRuntimeDraftContext.status, "verified")
+    };
   }
 
   if (resolver === "city_policy") {

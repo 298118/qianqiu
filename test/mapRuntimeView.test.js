@@ -110,6 +110,62 @@ test("S72.2 map runtime view creates safe route paths and server-owned action dr
   assertSafeMapRuntimePayload(view);
 });
 
+test("S88.10 map runtime view builds domain-specific action drafts without unsafe commands", () => {
+  const mapContextView = {
+    schemaVersion: 1,
+    generatedAtTurn: 26,
+    mapEntityRefs: [{
+      refId: "map:local_affairs:docket:case-field-boundary",
+      domain: "local_affairs",
+      entityType: "docket",
+      entityId: "case-field-boundary",
+      label: "田界案",
+      summary: "县中田界词讼仍待复核。",
+      visibility: "role_visible",
+      pressure: 48
+    }, {
+      refId: "map:military:military_report:border-scouting",
+      domain: "military",
+      entityType: "military_report",
+      entityId: "border-scouting",
+      label: "边报",
+      summary: "边墙塘报牵动粮道。",
+      visibility: "military_visible",
+      pressure: 78
+    }, {
+      refId: "map:economic:economic_report:grain-market",
+      domain: "economic",
+      entityType: "economic_report",
+      entityId: "grain-market",
+      label: "粮市",
+      summary: "粮市牌价已入公开观察。",
+      visibility: "market_visible",
+      pressure: 52
+    }],
+    mapEventHooks: []
+  };
+
+  const view = buildMapRuntimeView({ turnCount: 26 }, { mapContextView });
+  const drafts = Object.values(view.actionDrafts);
+  const docketDraft = drafts.find((draft) => draft.targetRef.includes("case-field-boundary"));
+  const militaryDraft = drafts.find((draft) => draft.targetRef.includes("border-scouting"));
+  const economyDraft = drafts.find((draft) => draft.targetRef.includes("grain-market"));
+
+  assert.ok(docketDraft);
+  assert.match(docketDraft.actionText, /查验田界案案牍/);
+  assert.equal(docketDraft.domainIntentHint, "local_docket_review");
+  assert.ok(militaryDraft);
+  assert.match(militaryDraft.actionText, /遣哨侦察/);
+  assert.equal(militaryDraft.domainIntentHint, "military_scout");
+  assert.doesNotMatch(militaryDraft.actionText, /发兵|攻城|交战|奇袭|调兵|declare war|attack/i);
+  assert.ok(economyDraft);
+  assert.match(economyDraft.actionText, /市价|粮价|平粜|稳价|处置/);
+  assert.equal(economyDraft.domainIntentHint, "market_policy");
+  assert.ok(drafts.every((draft) => draft.requiresServerTurn === true));
+  assert.ok(drafts.every((draft) => Array.isArray(draft.sourceRefs) && draft.sourceRefs.every((ref) => ref.startsWith("map:"))));
+  assertSafeMapRuntimePayload(view);
+});
+
 test("S72.2 map runtime view turns visible map hooks into capped event effects", () => {
   const worldState = createInitialState({ role: "emperor", playerName: "舆图事势测试" });
   worldState.borderThreat = 88;

@@ -1,0 +1,79 @@
+const test = require("node:test");
+const assert = require("node:assert/strict");
+
+const { normalizeMapRuntimeTurnContext } = require("../src/game/mapRuntimeDraftContext");
+
+function assertNoMapDraftContextLeak(value) {
+  assert.doesNotMatch(
+    JSON.stringify(value),
+    /layout|layoutPath|mapBounds|viewportHint|coordinates|position|"x"|"y"|providerPayload|raw provider|hiddenNotes|privateSignalTags|npcActiveRequestLedger|data\/sessions|C:\\|\/mnt\/e|sk-[A-Za-z0-9_-]{6,}/i
+  );
+}
+
+test("S88.10 map-runtime draftContext is revalidated against current safe runtime refs", () => {
+  const targetRef = "map:economic:economic_report:grain-market";
+  const sourceRef = "economicFiscalView.marketIncidents:grain-market";
+  const mapRuntimeView = {
+    schemaVersion: 1,
+    generatedAtTurn: 31,
+    refs: [{
+      mapEntityRef: targetRef,
+      sourceRef: targetRef,
+      entityType: "economic_report"
+    }],
+    routes: [],
+    eventEffects: [{
+      id: "event-market",
+      targetRef,
+      sourceRefs: [sourceRef, "domainConsequenceView:visual-only"]
+    }],
+    actionDrafts: {
+      "draft-inspect-grain-market": {
+        targetRef,
+        sourceRefs: [targetRef],
+        actionText: "据粮市复核市价。",
+        requiresServerTurn: true
+      }
+    }
+  };
+
+  const context = normalizeMapRuntimeTurnContext({ turnCount: 31 }, {
+    surfaceId: "map-runtime",
+    draftKind: "map_event_action",
+    targetRefs: [targetRef, "layout", "mapBounds:0:1", "map:forged:secret"],
+    sourceRefs: [targetRef, "domainConsequenceView:visual-only", "viewportHint", "x", "providerPayload"],
+    evidenceRefs: [sourceRef, targetRef, "layoutPath", "coordinates:0:0", "raw provider"],
+    actionDraftRefs: ["draft-inspect-grain-market", "layout"],
+    requiresServerTurn: true
+  }, { mapRuntimeView });
+
+  assert.ok(context);
+  assert.equal(context.schemaVersion, "s88.10-map-runtime-draft-context.v1");
+  assert.equal(context.surfaceId, "map-runtime");
+  assert.equal(context.draftKind, "map_event_action");
+  assert.deepEqual(context.targetRefs, [targetRef]);
+  assert.deepEqual(context.sourceRefs, [targetRef]);
+  assert.deepEqual(context.evidenceRefs, [sourceRef, targetRef]);
+  assert.deepEqual(context.actionDraftRefs, ["draft-inspect-grain-market"]);
+  assert.equal(context.generatedAtTurn, 31);
+  assert.equal(context.status, "verified");
+  assertNoMapDraftContextLeak(context);
+});
+
+test("S88.10 map-runtime draftContext rejects unsupported surfaces and forged-only refs", () => {
+  const mapRuntimeView = {
+    schemaVersion: 1,
+    generatedAtTurn: 7,
+    refs: [{ mapEntityRef: "map:geography:city:city-suzhou", sourceRef: "map:geography:city:city-suzhou" }],
+    routes: [],
+    eventEffects: [],
+    actionDrafts: {}
+  };
+
+  assert.equal(normalizeMapRuntimeTurnContext({}, { surfaceId: "memorial-review", evidenceRefs: ["map:geography:city:city-suzhou"] }, { mapRuntimeView }), null);
+  assert.equal(normalizeMapRuntimeTurnContext({}, {
+    surfaceId: "map-runtime",
+    targetRefs: ["map:forged:secret"],
+    evidenceRefs: ["layoutPath", "mapBounds:0:1", "x:0.5", "providerPayload"]
+  }, { mapRuntimeView }), null);
+});

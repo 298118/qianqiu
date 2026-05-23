@@ -1,6 +1,7 @@
 const { buildMapContextView } = require("./mapContext");
 const { buildDomainConsequenceView } = require("./domainConsequenceTrace");
 const {
+  MAP_RUNTIME_ACTION_DRAFT_TEMPLATES,
   MAP_RUNTIME_ASSET_SET_ID,
   MAP_RUNTIME_BOUNDS,
   MAP_RUNTIME_EVENT_EFFECTS,
@@ -426,21 +427,50 @@ function buildMapRoutes(mapContextView = {}, runtimeRefs = [], options = {}) {
 
 function draftTextForRef(ref = {}) {
   const label = sanitizeMapRuntimeText(ref.label, "此处", MAP_RUNTIME_LIMITS.maxLabelLength);
-  if (ref.entityType === "exam_travel") {
-    return `整顿文具行装，依科期前往${label}，报名入场前再核对盘费与路引。`;
-  }
-  if (ref.entityType === "posting") {
-    return `整理文书，赴${label}报到，先访上官并查看辖内案牍。`;
-  }
-  if (["docket", "military_report", "economic_report"].includes(ref.entityType)) {
-    return `查看${label}相关舆图与近事，再拟处置奏报。`;
-  }
-  return `整束行装，前往${label}，沿途查问驿传与近事。`;
+  const template = MAP_RUNTIME_ACTION_DRAFT_TEMPLATES[ref.entityType] || MAP_RUNTIME_ACTION_DRAFT_TEMPLATES.default_travel;
+  return sanitizeMapRuntimeText(
+    template.actionText.replace("{label}", label),
+    "",
+    MAP_RUNTIME_LIMITS.maxActionTextLength
+  );
 }
 
 function draftTextForRoute(route = {}) {
   const label = sanitizeMapRuntimeText(route.label, "此路", MAP_RUNTIME_LIMITS.maxLabelLength);
-  return `循${label}行进，沿途查问驿传、水程与地方风声。`;
+  return sanitizeMapRuntimeText(
+    MAP_RUNTIME_ACTION_DRAFT_TEMPLATES.route.actionText.replace("{label}", label),
+    "",
+    MAP_RUNTIME_LIMITS.maxActionTextLength
+  );
+}
+
+function draftLabelForRef(ref = {}) {
+  const label = sanitizeMapRuntimeText(ref.label, "此处", MAP_RUNTIME_LIMITS.maxLabelLength);
+  const template = MAP_RUNTIME_ACTION_DRAFT_TEMPLATES[ref.entityType] || MAP_RUNTIME_ACTION_DRAFT_TEMPLATES.default_travel;
+  return sanitizeMapRuntimeText(`${template.labelPrefix}${label}`, "", MAP_RUNTIME_LIMITS.maxLabelLength);
+}
+
+function draftIntentForRef(ref = {}) {
+  const template = MAP_RUNTIME_ACTION_DRAFT_TEMPLATES[ref.entityType] || MAP_RUNTIME_ACTION_DRAFT_TEMPLATES.default_travel;
+  return cleanId(template.domainIntentHint, "map_travel");
+}
+
+function sourceRefsForRefDraft(ref = {}) {
+  return unique([
+    ref.sourceRef,
+    ...(Array.isArray(ref.sourceRefs) ? ref.sourceRefs : []),
+    ref.mapEntityRef
+  ], MAP_RUNTIME_LIMITS.maxSourceRefs);
+}
+
+function sourceRefsForRouteDraft(route = {}) {
+  return unique([
+    route.sourceRef,
+    route.fromRef,
+    route.toRef,
+    ...(Array.isArray(route.controlRefs) ? route.controlRefs : []),
+    route.mapEntityRef
+  ], MAP_RUNTIME_LIMITS.maxSourceRefs);
 }
 
 function addActionDraft(target, draft) {
@@ -448,12 +478,16 @@ function addActionDraft(target, draft) {
   const actionText = sanitizeMapRuntimeText(draft.actionText, "", MAP_RUNTIME_LIMITS.maxActionTextLength);
   const label = sanitizeMapRuntimeText(draft.label, "", MAP_RUNTIME_LIMITS.maxLabelLength);
   const targetRef = cleanMapRefId(draft.targetRef, "");
+  const sourceRefs = unique(draft.sourceRefs || [], MAP_RUNTIME_LIMITS.maxSourceRefs);
+  const domainIntentHint = cleanId(draft.domainIntentHint, "");
   if (!actionText || !label || !targetRef) return;
   target[draft.id] = {
     id: draft.id,
     targetRef,
     label,
     actionText,
+    ...(sourceRefs.length ? { sourceRefs } : {}),
+    ...(domainIntentHint ? { domainIntentHint } : {}),
     requiresServerTurn: true
   };
 }
@@ -467,8 +501,10 @@ function buildMapActionDrafts({ refs = [], routes = [] } = {}, options = {}) {
     addActionDraft(drafts, {
       id,
       targetRef: ref.mapEntityRef,
-      label: ref.entityType === "exam_travel" ? `草拟${ref.label}` : `草拟前往${ref.label}`,
-      actionText: draftTextForRef(ref)
+      label: draftLabelForRef(ref),
+      actionText: draftTextForRef(ref),
+      sourceRefs: sourceRefsForRefDraft(ref),
+      domainIntentHint: draftIntentForRef(ref)
     });
     if (Object.keys(drafts).length >= maxDrafts) return drafts;
   }
@@ -478,8 +514,10 @@ function buildMapActionDrafts({ refs = [], routes = [] } = {}, options = {}) {
     addActionDraft(drafts, {
       id,
       targetRef: route.mapEntityRef,
-      label: `草拟循${route.label}`,
-      actionText: draftTextForRoute(route)
+      label: `${MAP_RUNTIME_ACTION_DRAFT_TEMPLATES.route.labelPrefix}${route.label}`,
+      actionText: draftTextForRoute(route),
+      sourceRefs: sourceRefsForRouteDraft(route),
+      domainIntentHint: MAP_RUNTIME_ACTION_DRAFT_TEMPLATES.route.domainIntentHint
     });
     if (Object.keys(drafts).length >= maxDrafts) return drafts;
   }

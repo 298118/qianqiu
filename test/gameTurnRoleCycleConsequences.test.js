@@ -11,6 +11,7 @@ const { createInitialState } = require("../src/game/initialState");
 const { createLandSurveyDelegatedTask } = require("../src/game/delegatedTasks");
 const { resolveTradeRequest } = require("../src/game/tradeLedger");
 const { buildTopicSurfaceView } = require("../src/game/topicSurfaceView");
+const { buildMapRuntimeView } = require("../src/game/mapRuntimeView");
 const { readSession, writeSession } = require("../src/storage/sessionStore");
 const { createFetchSafeServer } = require("../test-helpers/fetchSafeServer");
 
@@ -122,6 +123,22 @@ function buildEconomyDraftContext(worldState = {}) {
   };
 }
 
+function buildMapRuntimeDraftContext(worldState = {}) {
+  const view = buildMapRuntimeView(worldState);
+  const ref = view.refs.find((entry) => entry.entityType === "economic_report");
+  assert.ok(ref, "expected a safe economic map runtime ref");
+  return {
+    surfaceId: "map-runtime",
+    draftKind: "map_ref_action",
+    sourceView: "mapRuntimeView",
+    evidenceRefs: [ref.mapEntityRef, "map:forged:secret", "layoutPath", "mapBounds:0:1"],
+    sourceRefs: [ref.sourceRef, "viewportHint", "x:0.5"],
+    targetRefs: [ref.mapEntityRef, "providerPayload"],
+    requiresServerTurn: true,
+    status: "client_hint"
+  };
+}
+
 function snapshotEconomyLedgers(worldState = {}) {
   return {
     cityPolicyCount: worldState.cityPolicyLedger?.records?.length || 0,
@@ -198,6 +215,40 @@ test("S88.5.3 turn resolves magistrate market role-cycle drafts without leaking 
   const saved = await readSession(worldState.sessionId);
   assert.equal(saved.cityPolicyLedger.records.length, 1);
   assert.equal(saved.cityPolicyLedger.records[0].policyType, "market_regulation");
+});
+
+test("S88.10 ordinary turn revalidates map-runtime draftContext before role-cycle adjudication", async (t) => {
+  const server = createTestServer();
+  t.after(server.close);
+
+  const worldState = createInitialState({ role: "magistrate", playerName: "舆图市价知县" });
+  t.after(() => removeSessionArtifacts(worldState.sessionId));
+  const draftContext = buildMapRuntimeDraftContext(worldState);
+  await writeSession(worldState);
+
+  const { response, payload } = await postJson(`${server.baseUrl}/api/game/turn`, {
+    sessionId: worldState.sessionId,
+    input: "据舆图市价，拟平粜稳价处置，钱粮与民心仍候服务器裁决。",
+    draftContext
+  });
+  const adjudicationSerialized = JSON.stringify(payload.roleCycleDomainAdjudication);
+
+  assert.equal(response.status, 200);
+  assert.equal(payload.roleCycleDomainAdjudication.outcome.status, "accepted");
+  assert.equal(payload.roleCycleDomainAdjudication.outcome.resolver, "city_policy");
+  assert.equal(payload.roleCycleDomainAdjudication.outcome.mapRuntimeDraftContext.surfaceId, "map-runtime");
+  assert.equal(payload.roleCycleDomainAdjudication.outcome.mapRuntimeDraftContext.status, "verified");
+  assert.deepEqual(payload.roleCycleDomainAdjudication.outcome.mapRuntimeDraftContext.targetRefs, draftContext.targetRefs.slice(0, 1));
+  assert.equal(payload.roleCycleDomainAdjudication.outcome.mapRuntimeDraftContext.evidenceRefs.includes("map:forged:secret"), false);
+  assert.doesNotMatch(
+    adjudicationSerialized,
+    /map:forged:secret|layoutPath|mapBounds|viewportHint|providerPayload|"cityPolicyLedger":|"militaryDiplomacyLedger":|"stateDelta":|"playerDelta":|"auditRecord":|rawSql|SEALED_/i
+  );
+
+  const saved = await readSession(worldState.sessionId);
+  assert.equal(saved.cityPolicyLedger.records.length, 1);
+  assert.equal(saved.cityPolicyLedger.records[0].mapRuntimeDraftContext.surfaceId, "map-runtime");
+  assert.deepEqual(saved.cityPolicyLedger.records[0].mapRuntimeDraftContext.targetRefs, draftContext.targetRefs.slice(0, 1));
 });
 
 test("S88.6 turn-level role-cycle duplicate guard does not reapply city policy consequences", async (t) => {

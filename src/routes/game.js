@@ -226,6 +226,7 @@ const {
 const { TIME_SKIP_ACTIONS } = require("../game/timeSkipConfig");
 const { buildTopicSurfaceView } = require("../game/topicSurfaceView");
 const { normalizeTopicDraftTurnContext } = require("../game/topicDrafts");
+const { normalizeMapRuntimeTurnContext } = require("../game/mapRuntimeDraftContext");
 const { redactSecrets } = require("../ai/diagnostics");
 const {
   getSessionStorageAdapter,
@@ -329,7 +330,9 @@ async function processTurn(sessionId, input, options = {}) {
     if (isWritingExam(worldState.activeExam)) {
       return finalizeExamSceneTurn(worldState, input, context);
     }
-    const draftContext = normalizeTopicDraftTurnContext(worldState, options.draftContext);
+    const draftContext =
+      normalizeTopicDraftTurnContext(worldState, options.draftContext) ||
+      normalizeMapRuntimeTurnContext(worldState, options.draftContext);
     const { routePolicy } = resolveAiSettingsForSession(worldState);
     const route = resolveModelForTask("narrator", routePolicy);
     const provider = getProvider({ routePolicy });
@@ -380,7 +383,9 @@ async function processStreamingTurn(sessionId, input, streamHandlers = {}, optio
     if (isWritingExam(worldState.activeExam)) {
       return finalizeExamSceneTurn(worldState, input, context);
     }
-    const draftContext = normalizeTopicDraftTurnContext(worldState, options.draftContext);
+    const draftContext =
+      normalizeTopicDraftTurnContext(worldState, options.draftContext) ||
+      normalizeMapRuntimeTurnContext(worldState, options.draftContext);
     const { routePolicy } = resolveAiSettingsForSession(worldState);
     const route = resolveModelForTask("narrator", routePolicy);
     const provider = getProvider({ routePolicy });

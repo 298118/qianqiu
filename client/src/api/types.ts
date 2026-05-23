@@ -1326,6 +1326,7 @@ export type MapRuntimeActionDraft = {
   readonly label?: string;
   readonly actionText?: string;
   readonly sourceRefs?: string[];
+  readonly domainIntentHint?: string;
   readonly requiresServerTurn?: boolean;
   readonly [key: string]: unknown;
 };

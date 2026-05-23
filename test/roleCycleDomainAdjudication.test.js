@@ -9,6 +9,7 @@ const {
   selectEvidenceRefs
 } = require("../src/game/roleCycleDomainAdjudication");
 const { buildPlayerAiActorProfile } = require("../src/game/aiActorProfiles");
+const { normalizeMapRuntimeTurnContext } = require("../src/game/mapRuntimeDraftContext");
 
 const HIGH_RISK_MILITARY_BYPASS_TERMS = [
   "接战",
@@ -275,6 +276,71 @@ test("S88.6 role-cycle adjudication records verified topic draft echo audit refs
   assert.equal(ledgerRecord.topicDraftContext.status, "verified");
   assert.equal(JSON.stringify(result).includes("forged-ref"), false);
   assert.doesNotMatch(serialized, /outcomeId|role-cycle:/);
+});
+
+test("S88.10 role-cycle adjudication records verified map-runtime draft context only after server rebuild", () => {
+  const worldState = createInitialState({ role: "magistrate", playerName: "舆图市价知县" });
+  const targetRef = "map:economic:economic_report:grain-market";
+  const draftContext = normalizeMapRuntimeTurnContext(worldState, {
+    surfaceId: "map-runtime",
+    draftKind: "map_ref_action",
+    targetRefs: [targetRef, "map:forged:secret"],
+    sourceRefs: [targetRef, "layout", "viewportHint"],
+    evidenceRefs: [targetRef, "mapBounds:0:1", "providerPayload"],
+    requiresServerTurn: true
+  }, {
+    mapRuntimeView: {
+      schemaVersion: 1,
+      generatedAtTurn: 0,
+      refs: [{ mapEntityRef: targetRef, sourceRef: targetRef }],
+      routes: [],
+      eventEffects: [],
+      actionDrafts: {
+        "draft-market-policy": { targetRef, sourceRefs: [targetRef] }
+      }
+    }
+  });
+
+  const result = runRoleCycleDomainAdjudicationStep(
+    worldState,
+    "据舆图市价，拟平粜稳价处置，钱粮与民心仍候服务器裁决。",
+    { draftContext }
+  );
+  const ledgerRecord = worldState.cityPolicyLedger.records[0];
+  const serialized = JSON.stringify(result);
+
+  assert.equal(result.outcome.status, "accepted");
+  assert.equal(result.outcome.resolver, "city_policy");
+  assert.equal(result.outcome.mapRuntimeDraftContext.surfaceId, "map-runtime");
+  assert.deepEqual(result.outcome.mapRuntimeDraftContext.targetRefs, [targetRef]);
+  assert.deepEqual(ledgerRecord.mapRuntimeDraftContext.targetRefs, [targetRef]);
+  assert.equal(ledgerRecord.mapRuntimeDraftContext.status, "verified");
+  assert.doesNotMatch(serialized, /map:forged:secret|layout|mapBounds|viewportHint|providerPayload|auditRecord|stateDelta|playerDelta|cityPolicyLedger/i);
+});
+
+test("S88.10 role-cycle ignores map-runtime draft context that lacks server verification schema", () => {
+  const worldState = createInitialState({ role: "magistrate", playerName: "伪造舆图知县" });
+  const targetRef = "map:economic:economic_report:grain-market";
+  const result = runRoleCycleDomainAdjudicationStep(
+    worldState,
+    "据舆图市价，拟平粜稳价处置，钱粮与民心仍候服务器裁决。",
+    {
+      draftContext: {
+        source: "map_runtime_turn_context",
+        surfaceId: "map-runtime",
+        schemaVersion: "forged-client-schema",
+        status: "client_hint",
+        targetRefs: [targetRef],
+        sourceRefs: [targetRef],
+        evidenceRefs: [targetRef]
+      }
+    }
+  );
+  const ledgerRecord = worldState.cityPolicyLedger.records[0];
+
+  assert.equal(result.outcome.status, "accepted");
+  assert.equal(result.outcome.mapRuntimeDraftContext, undefined);
+  assert.equal(ledgerRecord.mapRuntimeDraftContext, undefined);
 });
 
 test("S88.6 role-cycle city policy duplicate guard suppresses repeated ordinary-turn triggers", () => {
