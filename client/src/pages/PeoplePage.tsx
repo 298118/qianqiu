@@ -115,7 +115,18 @@ type RelationshipEntitySignal = {
   readonly statusLabel: string;
   readonly riskLabel: string;
   readonly publicSummary: string;
+  readonly recentImpactSummary: string;
+  readonly recentImpactMeta: string;
   readonly impactCount: number;
+};
+
+type RelationshipImpactRow = {
+  readonly entityId: string;
+  readonly title: string;
+  readonly publicSummary: string;
+  readonly sourceLabel: string;
+  readonly affectedMetricLabels: readonly string[];
+  readonly generatedAtTurn: number;
 };
 
 function safePeopleText(value: unknown, fallback: string, maxLength = 120) {
@@ -349,20 +360,69 @@ function entityLooksRelationshipRelevant(entity: Record<string, unknown>) {
   return /(academy|local|censorate|military-wall|士林|书院|同年|地方|乡绅|人情|风宪|都察|台谏|武备|堡寨|关系|交游|来函|议婚|切磋|论道)/.test(text);
 }
 
+function isRelationshipImpactSource(sourceType: string) {
+  return sourceType === "npc_relationship_action" || sourceType === "active_npc_request" || sourceType === "relationship";
+}
+
+function relationshipImpactAllowsNpcProfile(impact: Record<string, unknown>) {
+  const topicSurfaceIds = Array.isArray(impact.topicSurfaceIds)
+    ? impact.topicSurfaceIds.map((item) => safePeopleText(item, "", 48)).filter(Boolean)
+    : [];
+  return !topicSurfaceIds.length || topicSurfaceIds.includes("npc-profile");
+}
+
+function collectRelationshipImpactRows(worldEntityView: unknown) {
+  return rowsFromViewKeys(worldEntityView, ["recentImpacts"])
+    .flatMap((impact): RelationshipImpactRow[] => {
+      const sourceType = safePeopleText(impact.sourceType, "", 48);
+      if (!isRelationshipImpactSource(sourceType)) return [];
+      if (!relationshipImpactAllowsNpcProfile(impact)) return [];
+
+      const entityId = safePeopleText(impact.entityId, "", 96);
+      const publicSummary = safePeopleText(impact.publicSummary || impact.summary, "", 180);
+      const title = safePeopleText(impact.title, "", 80);
+      if (!entityId || (!publicSummary && !title)) return [];
+
+      const affectedMetricLabels = Array.isArray(impact.affectedMetricLabels)
+        ? impact.affectedMetricLabels.map((item) => safePeopleText(item, "", 24)).filter(Boolean).slice(0, 4)
+        : [];
+      const sourceLabel = safePeopleText(impact.sourceLabel, "公开压力", 32);
+      const generatedAtTurn = Number.isFinite(Number(impact.generatedAtTurn))
+        ? Number(impact.generatedAtTurn)
+        : 0;
+
+      return [{
+        entityId,
+        title,
+        publicSummary,
+        sourceLabel,
+        affectedMetricLabels,
+        generatedAtTurn
+      }];
+    });
+}
+
 function buildRelationshipEntitySignals(worldEntityView: unknown, worldEntityImpacts: unknown) {
   const directEntities = rowsFromViewKeys(worldEntityView, ["highlights", "entities", "items"]);
   const groupedEntities = rowsFromViewKeys(worldEntityView, ["groups"]).flatMap((group) => rowsFromViewKeys(group, ["entities"]));
+  const recentImpacts = collectRelationshipImpactRows(worldEntityView);
   const impacts = Array.isArray(worldEntityImpacts)
     ? worldEntityImpacts.filter((impact): impact is Record<string, unknown> => Boolean(impact && typeof impact === "object" && !Array.isArray(impact)))
     : [];
   const impactCounts = impacts.reduce<Map<string, number>>((counts, impact) => {
     const sourceType = safePeopleText(impact.sourceType, "", 48);
-    if (sourceType !== "npc_relationship_action" && sourceType !== "active_npc_request") return counts;
+    if (!isRelationshipImpactSource(sourceType)) return counts;
+    if (!relationshipImpactAllowsNpcProfile(impact)) return counts;
     const entityId = safePeopleText(impact.entityId, "", 96);
     if (!entityId) return counts;
     counts.set(entityId, (counts.get(entityId) ?? 0) + 1);
     return counts;
   }, new Map());
+  const latestImpactByEntity = new Map<string, typeof recentImpacts[number]>();
+  for (const impact of recentImpacts.slice().sort((first, second) => second.generatedAtTurn - first.generatedAtTurn)) {
+    impactCounts.set(impact.entityId, (impactCounts.get(impact.entityId) ?? 0) + 1);
+    if (!latestImpactByEntity.has(impact.entityId)) latestImpactByEntity.set(impact.entityId, impact);
+  }
   const seen = new Set<string>();
   return [...directEntities, ...groupedEntities]
     .filter((entity) => entityLooksRelationshipRelevant(entity) || impactCounts.has(safePeopleText(entity.id, "", 96)))
@@ -372,6 +432,10 @@ function buildRelationshipEntitySignals(worldEntityView: unknown, worldEntityImp
       seen.add(id);
       const publicSummary = safePeopleText(entity.publicSummary, "", 140);
       if (!publicSummary) return null;
+      const recentImpact = latestImpactByEntity.get(id);
+      const metricMeta = recentImpact?.affectedMetricLabels.length
+        ? ` · ${recentImpact.affectedMetricLabels.join("、")}`
+        : "";
       return {
         id,
         name: safePeopleText(entity.name, "关系网节点", 48),
@@ -379,6 +443,8 @@ function buildRelationshipEntitySignals(worldEntityView: unknown, worldEntityImp
         statusLabel: safePeopleText(entity.statusLabel, "可观察", 32),
         riskLabel: safePeopleText(entity.riskLabel, "可观察", 32),
         publicSummary,
+        recentImpactSummary: recentImpact?.publicSummary || "",
+        recentImpactMeta: recentImpact ? `${recentImpact.sourceLabel}${metricMeta}` : "",
         impactCount: impactCounts.get(id) ?? 0
       };
     })
@@ -976,9 +1042,13 @@ function NpcRelationshipEntitySignals({
                 <h3>{signal.name}</h3>
               </div>
               <p>{signal.publicSummary}</p>
+              {signal.recentImpactSummary ? (
+                <p className="npcRelationshipImpactSummary">{signal.recentImpactSummary}</p>
+              ) : null}
               <div className="peopleMeta">
                 <span>{signal.riskLabel}</span>
-                {signal.impactCount ? <span>本次交游 {signal.impactCount} 项</span> : null}
+                {signal.recentImpactMeta ? <span>{signal.recentImpactMeta}</span> : null}
+                {signal.impactCount ? <span>公开压力 {signal.impactCount} 项</span> : null}
               </div>
             </article>
           ))}

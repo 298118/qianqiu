@@ -1348,6 +1348,28 @@ test("S76.10 people portraits stay on public session people and safe portrait re
   );
 });
 
+test("S88.7 people page consumes persistent world entity impact evidence as read-only relationship signals", () => {
+  const peoplePageSource = readText("client/src/pages/PeoplePage.tsx");
+  const appTestSource = readText("client/src/__tests__/App.test.tsx");
+  const styleSource = readText("client/src/styles/global.css");
+  const peoplePageWithoutGuard = peoplePageSource.replace(/const unsafePeopleTextFragments[\s\S]*?\] as const;\r?\n/, "");
+  const runtimeCombined = `${peoplePageWithoutGuard}\n${styleSource}`;
+
+  assert.match(peoplePageSource, /collectRelationshipImpactRows/);
+  assert.match(peoplePageSource, /rowsFromViewKeys\(worldEntityView, \["recentImpacts"\]\)/);
+  assert.match(peoplePageSource, /topicSurfaceIds\.includes\("npc-profile"\)/);
+  assert.match(peoplePageSource, /recentImpactSummary/);
+  assert.match(peoplePageSource, /recentImpactMeta/);
+  assert.match(peoplePageSource, /公开压力/);
+  assert.match(appTestSource, /论道余波已作为同年文社公开压力留痕/);
+  assert.match(appTestSource, /world-entity-impact:polluted/);
+  assert.match(styleSource, /npcRelationshipImpactSummary/);
+  assert.doesNotMatch(
+    runtimeCombined,
+    /\/api\/game\/state|\/api\/dev\/session-diagnostics|npcActiveRequestLedger|npcInteractionLedger|relationshipLedger|raw audit|provider payload|OPENAI_API_KEY|DEEPSEEK_API_KEY|MIMO_API_KEY|ANTHROPIC_API_KEY|resourcesApplied|marriageWritten|hiddenTruthChanged/
+  );
+});
+
 test("S74.6 React map bridge wraps S72 renderer without old frontend globals", () => {
   const bridgeSource = readText("client/src/components/InkMapRuntimeBridge.tsx");
   const mapPageSource = readText("client/src/pages/MapPage.tsx");

@@ -4048,6 +4048,44 @@ describe("S74.1 React client shell", () => {
             riskLabel: "可观察",
             publicSummary: "来函后续牵动地方人情，但不代表资源、人情债或婚姻结果已经落账。"
           }]
+        }],
+        recentImpacts: [{
+          id: "world-entity-impact:12:academy",
+          sourceType: "npc_relationship_action",
+          sourceLabel: "NPC 关系行动",
+          entityId: "academy-same-year-circle",
+          entityName: "同年文社",
+          title: "同年文社压力留痕",
+          publicSummary: "论道余波已作为同年文社公开压力留痕，仍不结算关系终局。",
+          statusLabel: "吃紧",
+          riskLabel: "有牵连",
+          affectedMetricLabels: ["信任上升"],
+          topicSurfaceIds: ["npc-profile"],
+          generatedAtTurn: 12
+        }, {
+          id: "world-entity-impact:11:gentry",
+          sourceType: "active_npc_request",
+          sourceLabel: "NPC 来函",
+          entityId: "local-gentry-county",
+          entityName: "地方士绅",
+          title: "地方士绅压力留痕",
+          publicSummary: "来函后续已作为地方人情公开压力留痕，不代表人情债已经落账。",
+          statusLabel: "可观察",
+          riskLabel: "可观察",
+          affectedMetricLabels: ["压力上升"],
+          topicSurfaceIds: ["npc-profile"],
+          generatedAtTurn: 11
+        }, {
+          id: "world-entity-impact:polluted",
+          sourceType: "npc_relationship_action",
+          sourceLabel: "provider payload",
+          entityId: "academy-same-year-circle",
+          entityName: "同年文社",
+          title: "hiddenNotes raw prompt C:\\bad",
+          publicSummary: "OPENAI_API_KEY data/sessions provider payload",
+          affectedMetricLabels: ["privateSignalTags"],
+          topicSurfaceIds: ["npc-profile"],
+          generatedAtTurn: 13
         }]
       }
     };
@@ -4079,6 +4117,19 @@ describe("S74.1 React client shell", () => {
       throw new Error(`unexpected url: ${url}`);
     });
     vi.stubGlobal("fetch", fetchMock);
+    useGameSessionStore.setState({
+      lastNpcInteraction: {
+        sessionId,
+        accepted: true,
+        npcInteractionView: { items: [] },
+        worldEntityImpacts: [{
+          sourceType: "npc_relationship_action",
+          entityId: "academy-same-year-circle",
+          topicSurfaceIds: ["archive"],
+          publicSummary: "史册余波不应计入人物档案公开压力。"
+        }]
+      }
+    });
 
     renderRoute(`/game/${sessionId}/people`);
 
@@ -4094,7 +4145,12 @@ describe("S74.1 React client shell", () => {
     expect(screen.getByText("关系网影响")).toBeTruthy();
     expect(screen.getByText("同年文社")).toBeTruthy();
     expect(screen.getByText("地方士绅")).toBeTruthy();
+    expect(screen.getByText("论道余波已作为同年文社公开压力留痕，仍不结算关系终局。")).toBeTruthy();
+    expect(screen.getByText("NPC 关系行动 · 信任上升")).toBeTruthy();
+    expect(screen.getByText("来函后续已作为地方人情公开压力留痕，不代表人情债已经落账。")).toBeTruthy();
+    expect(screen.queryByText("公开压力 2 项")).toBeNull();
     expect(screen.queryByText("provider-forged")).toBeNull();
+    expect(screen.queryByText("world-entity-impact:polluted")).toBeNull();
     expect(screen.getAllByRole("button", { name: "拟复核" })).toHaveLength(3);
     fireEvent.click(screen.getAllByRole("button", { name: "拟复核" })[0]);
     expect(useUiStateStore.getState().actionDraft).toMatchObject({

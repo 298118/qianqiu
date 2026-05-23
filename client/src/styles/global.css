@@ -3026,6 +3026,12 @@ button:disabled {
   font-size: 1rem;
 }
 
+.npcRelationshipImpactSummary {
+  color: #6d372c;
+  font-size: 0.94rem;
+  line-height: 1.6;
+}
+
 .npcGroupList h2,
 .inventoryContainerList h2,
 .inventoryItemList h2,
