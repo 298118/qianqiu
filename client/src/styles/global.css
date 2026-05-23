@@ -1514,6 +1514,64 @@ button:disabled {
   padding: 4px 8px;
 }
 
+.roleCycleMatrix {
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+}
+
+.roleCycleMatrix h4 {
+  margin: 0;
+}
+
+.roleCycleMatrix ul {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.roleCycleMatrix li {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+  border: 1px solid rgba(84, 60, 43, 0.18);
+  background: rgba(255, 252, 238, 0.48);
+  padding: 8px;
+}
+
+.roleCycleMatrix li[data-active="true"] {
+  border-color: rgba(142, 47, 39, 0.34);
+  background: rgba(248, 235, 219, 0.58);
+}
+
+.roleCycleMatrix strong,
+.roleCycleMatrix span,
+.roleCycleMatrix em {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.roleCycleMatrix strong {
+  color: #3e2b1f;
+  font-size: 0.88rem;
+}
+
+.roleCycleMatrix span {
+  color: #6d5844;
+  font-size: 0.78rem;
+  line-height: 1.35;
+}
+
+.roleCycleMatrix em {
+  color: #5e382d;
+  font-size: 0.76rem;
+  font-style: normal;
+  font-weight: 900;
+}
+
 .roleCycleMetrics {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -5027,6 +5085,7 @@ button:disabled {
   .scholarPanelCompactDl,
   .scholarPlanSummary,
   .scholarPracticeGrid,
+  .roleCycleMatrix ul,
   .roleCycleMetrics,
   .roleCycleColumns {
     grid-template-columns: 1fr;

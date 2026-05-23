@@ -5033,6 +5033,57 @@ describe("S74.1 React client shell", () => {
     expect(fetchMock.mock.calls.map(([url]) => String(url))).not.toContain("/api/game/turn");
   });
 
+  it("renders the S88.5 six-role matrix from the safe role cycle view", () => {
+    const fetchMock = mockAssetManifestFetch();
+    const sessionId = "s74-preview";
+    const roleMatrix = [
+      { role: "scholar", roleLabel: "书生", loopLabel: "读书日课与科期", statusLabel: "待任后展开", enabled: false, itemCount: 0 },
+      { role: "magistrate", roleLabel: "地方官", loopLabel: "案牍钱粮与地方治理", statusLabel: "待任后展开", enabled: false, itemCount: 0 },
+      { role: "official", roleLabel: "入仕官员", loopLabel: "本职差使与考成", statusLabel: "署中承差", enabled: true, itemCount: 1 },
+      { role: "minister", roleLabel: "大臣", loopLabel: "票拟覆奏与部务朝议", statusLabel: "待任后展开", enabled: false, itemCount: 0 },
+      { role: "general", roleLabel: "将领", loopLabel: "军帐粮道与边患", statusLabel: "待任后展开", enabled: false, itemCount: 0 },
+      { role: "emperor", roleLabel: "皇帝", loopLabel: "御案奏议与天下调度", statusLabel: "待任后展开", enabled: false, itemCount: 0 }
+    ];
+    useGameSessionStore.setState({
+      currentSessionId: sessionId,
+      currentSession: {
+        sessionId,
+        worldState: {
+          player: {
+            name: "矩阵官",
+            role: "official",
+            officeTitle: "翰林院编修"
+          }
+        },
+        roleCycleView: {
+          activeRole: "official",
+          currentRole: {
+            roleLabel: "入仕官员",
+            loopLabel: "本职差使与考成",
+            statusLabel: "署中承差",
+            summary: "本旬整理公开差使与考成凭据。",
+            items: [{ title: "整理回署材料", publicSummary: "只读公开凭据。" }],
+            nextActions: [{ label: "拟呈报", text: "整理本职差遣的公开凭据。" }]
+          },
+          roleMatrix
+        }
+      } as unknown as ReturnType<typeof useGameSessionStore.getState>["currentSession"],
+      status: "ready"
+    });
+
+    renderRoute(`/game/${sessionId}`);
+
+    const matrix = screen.getByRole("list", { name: "六身份矩阵" });
+    expect(within(matrix).getByText("书生")).toBeTruthy();
+    expect(within(matrix).getByText("地方官")).toBeTruthy();
+    expect(within(matrix).getByText("入仕官员")).toBeTruthy();
+    expect(within(matrix).getByText("皇帝")).toBeTruthy();
+    expect(within(matrix).getByText("本身份 · 1 项可见事务")).toBeTruthy();
+    expect(within(matrix).getAllByText("待任后展开").length).toBe(5);
+    const matrixRequestedUrls = fetchMock.mock.calls.map((call) => String((call as unknown[])[0]));
+    expect(matrixRequestedUrls).not.toContain("/api/game/turn");
+  });
+
   it("keeps the main action draft in the UI store and clears it from the composer", () => {
     renderRoute("/game/s74-preview");
 

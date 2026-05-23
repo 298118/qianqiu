@@ -43,6 +43,15 @@ type CycleEntryPoint = {
   readonly targetSurfaceId?: LocalSurface;
 };
 
+type CycleRoleMatrixEntry = {
+  readonly id: string;
+  readonly roleLabel: string;
+  readonly loopLabel: string;
+  readonly statusLabel: string;
+  readonly itemCount: number;
+  readonly active: boolean;
+};
+
 const unsafeRoleCycleFragments = [
   "provider",
   "proposal",
@@ -229,6 +238,31 @@ function cycleMetrics(source: JsonObject) {
     .filter((item): item is { id: string; label: string; value: number; status: string } => item !== null);
 }
 
+function cycleRoleMatrix(source: JsonObject): CycleRoleMatrixEntry[] {
+  const activeRole = cleanRoleCycleText(source.activeRole, "", 32);
+  return asArray(source.roleMatrix)
+    .slice(0, 6)
+    .map((entry, index): CycleRoleMatrixEntry | null => {
+      const item = asRecord(entry);
+      const role = cleanRoleCycleText(item.role, "", 32);
+      const roleLabel = cleanRoleCycleText(item.roleLabel, "", 28);
+      const loopLabel = cleanRoleCycleText(item.loopLabel, "", 48);
+      if (!roleLabel || !loopLabel) return null;
+      const active = item.enabled === true || (!!activeRole && role === activeRole);
+      return {
+        id: cleanRoleCycleText(item.role || `role-cycle-matrix-${index}`, `role-cycle-matrix-${index}`, 72),
+        roleLabel,
+        loopLabel,
+        statusLabel: active
+          ? cleanRoleCycleText(item.statusLabel, "本身份", 24)
+          : cleanRoleCycleText(item.statusLabel, "待任后展开", 24),
+        itemCount: active ? cleanNumber(item.itemCount, 0) : 0,
+        active
+      };
+    })
+    .filter((item): item is CycleRoleMatrixEntry => item !== null);
+}
+
 function RoleCycleEntryPointButton({
   entry,
   resolveRouteHref,
@@ -294,6 +328,7 @@ export function RoleCycleSection({
   const metrics = cycleMetrics(currentRole);
   const entryPoints = cycleEntryPoints(currentRole);
   const actions = cycleActions(currentRole);
+  const roleMatrix = cycleRoleMatrix(view);
 
   return (
     <article className="scholarPanelCard roleCycleSection" aria-labelledby={titleId}>
@@ -305,6 +340,20 @@ export function RoleCycleSection({
         <span>{statusLabel}</span>
       </div>
       <p>{summary}</p>
+      {roleMatrix.length ? (
+        <section className="roleCycleMatrix" aria-labelledby={`${idPrefix}-matrix-title`}>
+          <h4 id={`${idPrefix}-matrix-title`}>六身份矩阵</h4>
+          <ul aria-label="六身份矩阵">
+            {roleMatrix.map((entry) => (
+              <li key={entry.id} data-active={entry.active ? "true" : "false"}>
+                <strong>{entry.roleLabel}</strong>
+                <span>{entry.loopLabel}</span>
+                <em>{entry.active ? `本身份 · ${entry.itemCount} 项可见事务` : entry.statusLabel}</em>
+              </li>
+            ))}
+          </ul>
+        </section>
+      ) : null}
       {metrics.length ? (
         <dl className="roleCycleMetrics" aria-label="身份循环指标">
           {metrics.map((metric) => (

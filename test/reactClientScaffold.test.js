@@ -987,11 +987,18 @@ test("S88.5 role cycle section is wired to all six identity panels as draft-only
     assert.match(source, /source: "role-surface", targetPage: "game"|onDraft=\{onDraft\}/);
   }
   assert.match(roleCycleSource, /本旬身份循环/);
+  assert.match(roleCycleSource, /cycleRoleMatrix/);
+  assert.match(roleCycleSource, /roleMatrix/);
+  assert.match(roleCycleSource, /六身份矩阵/);
+  assert.match(roleCycleSource, /data-active=\{entry\.active \? "true" : "false"\}/);
+  assert.match(roleCycleSource, /本身份 · \$\{entry\.itemCount\} 项可见事务/);
+  assert.match(roleCycleSource, /待任后展开/);
   assert.match(roleCycleSource, /本旬事务/);
   assert.match(roleCycleSource, /风险/);
   assert.match(roleCycleSource, /aria-label="可查入口"/);
   assert.match(roleCycleSource, /aria-label="可拟草稿"/);
   assert.match(roleCycleSource, /onClick=\{\(\) => onDraft\(action\.text\)\}/);
+  assert.match(roleCycleSource, /roleCycleMatrix/);
   assert.match(roleCycleSource, /roleCycleEvidenceRefs/);
   assert.match(roleCycleSource, /targetRouteId/);
   assert.match(roleCycleSource, /markOverlayTrigger/);
@@ -1001,6 +1008,7 @@ test("S88.5 role cycle section is wired to all six identity panels as draft-only
   assert.match(typeSource, /roleCycleView\?: RoleCycleView/);
   assert.match(stateSource, /hasRoleCycleView: Boolean\(payload\.roleCycleView\)/);
   assert.match(styleSource, /roleCycleSection/);
+  assert.match(styleSource, /roleCycleMatrix/);
   assert.match(styleSource, /roleCycleMetrics/);
   assert.match(styleSource, /roleCycleColumns/);
   assert.match(styleSource, /roleCycleEvidenceRefs/);
