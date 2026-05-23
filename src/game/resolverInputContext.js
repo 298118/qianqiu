@@ -20,6 +20,7 @@ const { buildRelationshipInspectionView } = require("./relationships");
 const { buildRoleCycleView } = require("./roleCycleView");
 const { buildSessionSummaryView } = require("./sessionSummary");
 const { buildWorldGeographyView } = require("./worldGeography");
+const { buildWorldEntityView } = require("./worldEntities");
 const { buildWorldPeopleView } = require("./worldPeople");
 const { buildWorldThreadView } = require("./worldThreads");
 const {
@@ -169,6 +170,7 @@ function buildSourceViews(worldState, options = {}) {
     relationshipView: buildRelationshipInspectionView(worldState),
     roleCycleView: buildRoleCycleView(worldState),
     sessionSummaryView: buildSessionSummaryView(worldState),
+    worldEntityView: buildWorldEntityView(worldState),
     worldGeographyView,
     worldPeopleView,
     worldThreadView: buildWorldThreadView(worldState)

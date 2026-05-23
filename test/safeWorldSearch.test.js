@@ -14,6 +14,7 @@ const {
   resolveNpcActiveRequest,
   runNpcActiveRequestStep
 } = require("../src/game/npcActiveRequests");
+const { applyWorldEntityInfluences } = require("../src/game/worldEntities");
 const { resolveTradeRequest } = require("../src/game/tradeLedger");
 const {
   SAFE_WORLD_SEARCH_MAX_PAGE_SIZE,
@@ -386,6 +387,102 @@ test("S88.8 safe world search preserves economy trace rows under global row cap"
     result.sourceView === "economyTraceView.traceItems" && /人情债|月账/.test(`${result.title}${result.snippet}`)
   ));
   assert.doesNotMatch(JSON.stringify(view), /tradeLedger|delegatedTaskLedger|npcEconomyLedger|safe_search_index|world_sessions/);
+});
+
+test("S88.7 safe world search indexes world entity impact evidence without raw leaks", () => {
+  const worldState = createSearchWorldState();
+  worldState.turnCount = 27;
+  applyWorldEntityInfluences(worldState, [
+    {
+      entityId: "academy-same-year-circle",
+      sourceType: "npc_relationship_action",
+      sourceId: "npc-relationship-resolution:npc-scholar-peer-shen:debate:27",
+      metricsDelta: { trust: 2, pressure: -1 },
+      publicNote: "论道余波进入同年文社"
+    },
+    {
+      entityId: "court-censorate",
+      sourceType: "active_npc_request",
+      sourceId: "data/sessions/rawLedger-providerPayload-safe_search_index",
+      metricsDelta: { pressure: 2 },
+      publicNote: "来函后续已登记为风宪证据观察"
+    }
+  ]);
+
+  const rows = buildSafeSearchRows(worldState);
+  const debateSearch = searchSafeWorldIndex(worldState, { query: "论道 同年文社", domain: "events", pageSize: 5 });
+  const censorSearch = searchSafeWorldIndex(worldState, { query: "风宪 证据观察", domain: "events", pageSize: 5 });
+  const serialized = JSON.stringify({ rows, debateSearch, censorSearch });
+
+  assert.ok(rows.some((row) => row.sourceView === "worldEntityView.recentImpacts"));
+  assert.ok(debateSearch.results.some((result) =>
+    result.sourceView === "worldEntityView.recentImpacts" && /论道余波|同年文社/.test(`${result.title}${result.snippet}`)
+  ));
+  assert.ok(censorSearch.results.some((result) =>
+    result.sourceView === "worldEntityView.recentImpacts" && /风宪|证据观察/.test(`${result.title}${result.snippet}`)
+  ));
+  assert.doesNotMatch(
+    serialized,
+    /data\/sessions|rawLedger|providerPayload|safe_search_index|safe_search_fts|hiddenDossier|privateSignalTags|provider_payload|state_patch|world_sessions|sk-[A-Za-z0-9_-]{6,}|\/mnt\/e/
+  );
+});
+
+test("S88.7 safe world search preserves world entity impact rows under global row cap", () => {
+  const worldState = createSearchWorldState();
+  worldState.turnCount = 28;
+  applyWorldEntityInfluences(worldState, [
+    {
+      entityId: "academy-same-year-circle",
+      sourceType: "npc_relationship_action",
+      sourceId: "npc-relationship-resolution:npc-scholar-peer-shen:debate:28",
+      metricsDelta: { trust: 2, pressure: -1 },
+      publicNote: "论道余波进入同年文社"
+    }
+  ]);
+  const noisyCities = Array.from({ length: 1300 }, (_, index) => ({
+    id: `city-safe-search-entity-noisy-${index}`,
+    countryId: "country-ming",
+    name: `实体噪声城${index}`,
+    visibility: "public",
+    publicSummary: `普通实体噪声 ${index}`,
+    intelConfidence: 50
+  }));
+  const views = {
+    worldGeographyView: {
+      countries: [],
+      cities: noisyCities,
+      routes: [],
+      frontierZones: []
+    },
+    worldPeopleView: {
+      npcs: [],
+      households: [],
+      relationships: []
+    },
+    officialPostingsView: {
+      bureaus: [],
+      offices: [],
+      cityJurisdictions: [],
+      postings: [],
+      assessmentRecords: [],
+      transferRecords: []
+    }
+  };
+
+  const rows = buildSafeSearchRows(worldState, { views });
+  const view = searchSafeWorldIndex(worldState, {
+    query: "论道 同年文社",
+    domain: "events",
+    pageSize: 5,
+    views
+  });
+
+  assert.equal(rows.length, 1200);
+  assert.ok(rows.some((row) => row.sourceView === "worldEntityView.recentImpacts"));
+  assert.ok(view.results.some((result) =>
+    result.sourceView === "worldEntityView.recentImpacts" && /论道余波|同年文社/.test(`${result.title}${result.snippet}`)
+  ));
+  assert.doesNotMatch(JSON.stringify(view), /safe_search_index|world_sessions|rawLedger|providerPayload/);
 });
 
 test("GET /api/game/search/:sessionId returns safe snippets from JSON storage", async (t) => {

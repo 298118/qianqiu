@@ -28,6 +28,10 @@ const {
   resolveNpcActiveRequest,
   runNpcActiveRequestStep
 } = require("../src/game/npcActiveRequests");
+const {
+  applyWorldEntityInfluences,
+  buildWorldEntityView
+} = require("../src/game/worldEntities");
 const { buildWorldThreadView, ensureWorldThreadState } = require("../src/game/worldThreads");
 const { createJsonSessionAdapter } = require("../src/storage/jsonSessionAdapter");
 const { createSqliteSessionAdapter } = require("../src/storage/sqliteSessionAdapter");
@@ -354,6 +358,53 @@ test("S88.8 resolver input consumes economy trace evidence from safe view only",
   assert.doesNotMatch(
     serialized,
     /assetLedger|resourceLedger|inventoryLedger|tradeLedger|delegatedTaskLedger|marketPriceLedger|npcEconomyLedger|evidenceRefs|resourceDelta|relationshipSignals|sqlite|SQLite|SQL|world_sessions|safe_search_index|providerPayload|hiddenDossier|privateSignalTags|sk-[A-Za-z0-9_-]{6,}|\/mnt\/e/
+  );
+});
+
+test("S88.7 resolver input consumes world entity impact evidence from safe view only", () => {
+  const worldState = createInitialState({ role: "official", playerName: "实体证据上下文" });
+  worldState.turnCount = 25;
+  applyWorldEntityInfluences(worldState, [
+    {
+      entityId: "academy-same-year-circle",
+      sourceType: "npc_relationship_action",
+      sourceId: "npc-relationship-resolution:npc-scholar-peer-shen:debate:25",
+      metricsDelta: { trust: 2, pressure: -1 },
+      publicNote: "论道余波进入同年文社"
+    },
+    {
+      entityId: "court-censorate",
+      sourceType: "active_npc_request",
+      sourceId: "data/sessions/rawLedger-providerPayload-safe_search_index",
+      metricsDelta: { pressure: 2 },
+      publicNote: "来函后续已登记为风宪证据观察"
+    }
+  ]);
+
+  const worldEntityView = buildWorldEntityView(worldState);
+  const context = buildResolverInputContext(worldState, {
+    generatedAt: FIXED_GENERATED_AT,
+    domainCaps: { events: 24 },
+    views: { worldEntityView }
+  });
+  const serialized = JSON.stringify({
+    events: context.events,
+    sourceViews: context.sourceViews
+  });
+
+  assert.ok(context.sourceViews.some((source) => source.sourceView === "worldEntityView"));
+  assert.ok(context.events.some((item) =>
+    item.sourceView === "worldEntityView" &&
+    item.topicSurfaceIds?.includes("npc-profile") &&
+    /论道余波|同年文社|信任/.test(`${item.label}${item.summary}`)
+  ));
+  assert.ok(context.events.some((item) =>
+    item.sourceView === "worldEntityView" &&
+    /风宪证据观察|都察院|压力/.test(`${item.label}${item.summary}`)
+  ));
+  assert.doesNotMatch(
+    serialized,
+    /data\/sessions|rawLedger|providerPayload|safe_search_index|sourceRef|hiddenDossier|privateSignalTags|provider_payload|state_patch|world_sessions|sk-[A-Za-z0-9_-]{6,}|\/mnt\/e/
   );
 });
 

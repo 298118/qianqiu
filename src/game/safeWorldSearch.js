@@ -8,6 +8,7 @@ const { buildLocalAffairsDocketView } = require("./localAffairsDockets");
 const { buildMilitaryDiplomacyRetrievalRows } = require("./militaryDiplomacy");
 const { buildNpcActiveRequestView } = require("./npcActiveRequests");
 const { buildOfficialPostingsView } = require("./officialPostings");
+const { buildWorldEntityView } = require("./worldEntities");
 const { buildWorldGeographyView } = require("./worldGeography");
 const { buildWorldPeopleView } = require("./worldPeople");
 
@@ -21,7 +22,8 @@ const SAFE_WORLD_SEARCH_MAX_SEARCH_TEXT_LENGTH = 1400;
 const SAFE_WORLD_SEARCH_MAX_ROWS = 1200;
 const SAFE_WORLD_SEARCH_PROTECTED_SOURCE_VIEWS = new Set([
   "domainConsequenceView.recentConsequences",
-  "economyTraceView.traceItems"
+  "economyTraceView.traceItems",
+  "worldEntityView.recentImpacts"
 ]);
 
 const SAFE_SEARCH_DOMAINS = Object.freeze([
@@ -328,6 +330,7 @@ function buildViews(worldState = {}, prebuiltViews = null) {
   const views = isPlainObject(prebuiltViews) ? prebuiltViews : {};
   return {
     economyTraceView: views.economyTraceView || buildEconomyTraceView(worldState),
+    worldEntityView: views.worldEntityView || buildWorldEntityView(worldState),
     worldGeographyView: views.worldGeographyView || buildWorldGeographyView(worldState),
     worldPeopleView: views.worldPeopleView || buildWorldPeopleView(worldState),
     officialPostingsView: views.officialPostingsView || buildOfficialPostingsView(worldState)
@@ -752,6 +755,42 @@ function buildEconomyTraceSearchRows(rows, economyTraceView = {}) {
   }
 }
 
+function buildWorldEntityImpactSearchRows(rows, worldEntityView = {}) {
+  const recentImpacts = Array.isArray(worldEntityView.recentImpacts) ? worldEntityView.recentImpacts : [];
+  for (const impact of recentImpacts) {
+    addSearchRow(rows, {
+      domain: "events",
+      sourceView: "worldEntityView.recentImpacts",
+      sourceId: impact.sourceId || impact.id,
+      title: impact.title || `${impact.entityName || "实体"}压力留痕`,
+      meta: `${impact.sourceLabel || "实体压力"} ${impact.statusLabel || ""} ${impact.riskLabel || ""}`,
+      summary: impact.publicSummary,
+      confidence: Math.round((Number(impact.confidence) || 0.72) * 100),
+      visibility: impact.visibility || "public",
+      extra: [
+        impact.entityName,
+        ...(Array.isArray(impact.affectedMetricLabels) ? impact.affectedMetricLabels : []),
+        ...(Array.isArray(impact.topicSurfaceIds) ? impact.topicSurfaceIds : [])
+      ].filter(Boolean).join(" "),
+      tags: [
+        impact.sourceType,
+        impact.sourceLabel,
+        impact.riskLabel,
+        ...(Array.isArray(impact.affectedMetricLabels) ? impact.affectedMetricLabels : [])
+      ],
+      metrics: [
+        ["状态", impact.statusLabel],
+        ["风险", impact.riskLabel],
+        ["发生旬", impact.generatedAtTurn]
+      ],
+      relatedRefs: [
+        relatedRef("world_entity_impact", impact.id || impact.sourceId, impact.title),
+        relatedRef("world_entity", impact.entityId, impact.entityName)
+      ]
+    });
+  }
+}
+
 function buildRumorSearchRows(rows, worldState = {}) {
   for (const rumor of buildIntelligenceRumorRetrievalRows(worldState)) {
     addSearchRow(rows, {
@@ -780,6 +819,7 @@ function buildSafeSearchRows(worldState = {}, options = {}) {
   buildOfficeSearchRows(rows, views.officialPostingsView, views.worldGeographyView);
   buildReportSearchRows(rows, worldState);
   buildEventSearchRows(rows, worldState);
+  buildWorldEntityImpactSearchRows(rows, views.worldEntityView);
   buildEconomyTraceSearchRows(rows, views.economyTraceView);
   buildNpcActiveRequestSearchRows(rows, worldState, options.views?.npcActiveRequestView);
   buildRumorSearchRows(rows, worldState);

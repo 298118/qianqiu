@@ -27,6 +27,7 @@ const TOPIC_SURFACE_CONFIG = Object.freeze({
       "courtResponseView",
       "officialCareerView",
       "npcActiveRequestView",
+      "worldEntityView",
       "economyTraceView",
       "eventArchiveView",
       "playerMonthlyBriefingView",
@@ -64,6 +65,7 @@ const TOPIC_SURFACE_CONFIG = Object.freeze({
       "officialPostingsView",
       "eventArchiveView",
       "worldThreadView",
+      "worldEntityView",
       "mapContextView",
       "militaryDiplomacyView",
       "economicFiscalView",
@@ -92,6 +94,7 @@ const TOPIC_SURFACE_CONFIG = Object.freeze({
       "officialPostingsView",
       "npcActiveRequestView",
       "actorMemoryView",
+      "worldEntityView",
       "economyTraceView",
       "aiControlAuditView",
       "eventArchiveView",
@@ -165,6 +168,7 @@ const TOPIC_SURFACE_CONFIG = Object.freeze({
       "examNetwork",
       "relationshipView",
       "npcActiveRequestView",
+      "worldEntityView",
       "economyTraceView",
       "officialPostingsView"
     ]),
@@ -268,6 +272,11 @@ function flattenEvidence(context = {}, config = {}, surfaceId = "") {
         freshness: cleanText(item.freshness, "recent", 24),
         scopeRefs: asArray(item.scopeRefs).map((ref) => cleanId(ref, "")).filter(Boolean).slice(0, 6)
       };
+      const topicSurfaceIds = asArray(item.topicSurfaceIds)
+        .map((id) => cleanId(id, ""))
+        .filter(Boolean)
+        .slice(0, 8);
+      if (topicSurfaceIds.length) row.topicSurfaceIds = topicSurfaceIds;
       if (canonicalEchoRefs.length) row.canonicalEchoRefs = canonicalEchoRefs;
       rows.push(row);
       order += 1;

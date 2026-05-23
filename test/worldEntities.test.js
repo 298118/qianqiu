@@ -185,6 +185,123 @@ test("server-owned entity impacts strip unsafe public source ids", () => {
   assert.doesNotMatch(serialized, /data\/sessions|rawLedger|safe_search_index|providerPayload/);
 });
 
+test("S88.7 world entity impact source refs strip configured secret fragments", () => {
+  const previousSecret = process.env.QIANQIU_TEST_SECRET_KEY;
+  process.env.QIANQIU_TEST_SECRET_KEY = "secret-fragment-12345";
+  try {
+    const worldState = createInitialState({ playerName: "Secret Source Guard" });
+    worldState.turnCount = 20;
+
+    const impacts = applyWorldEntityInfluences(worldState, [
+      {
+        entityId: "court-censorate",
+        sourceType: "active_npc_request",
+        sourceId: "npc-request-secret-fragment-12345-public",
+        metricsDelta: { pressure: 1 },
+        publicNote: "公开压力留痕"
+      }
+    ]);
+    const view = buildWorldEntityView(worldState);
+    const serialized = JSON.stringify({ impacts, view });
+
+    assert.equal(impacts[0].sourceId, "");
+    assert.ok(view.recentImpacts.some((impact) =>
+      impact.entityId === "court-censorate" && impact.sourceRef === ""
+    ));
+    assert.doesNotMatch(serialized, /secret-fragment-12345|fragment-12345|secret-fragment/);
+  } finally {
+    if (previousSecret === undefined) {
+      delete process.env.QIANQIU_TEST_SECRET_KEY;
+    } else {
+      process.env.QIANQIU_TEST_SECRET_KEY = previousSecret;
+    }
+  }
+});
+
+test("S88.7 world entity impacts persist capped public evidence rows", () => {
+  const worldState = createInitialState({ playerName: "实体证据", role: "scholar" });
+  worldState.turnCount = 21;
+
+  const impacts = applyWorldEntityInfluences(worldState, [
+    {
+      entityId: "academy-same-year-circle",
+      sourceType: "npc_relationship_action",
+      sourceId: "npc-relationship-resolution:npc-scholar-peer-shen:debate:21",
+      metricsDelta: { trust: 2, pressure: -1 },
+      publicNote: "论道余波进入同年文社"
+    },
+    {
+      entityId: "court-censorate",
+      sourceType: "active_npc_request",
+      sourceId: "data/sessions/rawLedger-providerPayload-safe_search_index",
+      metricsDelta: { pressure: 2 },
+      publicNote: "来函后续已登记为风宪证据观察"
+    },
+    {
+      entityId: "local-gentry-county",
+      sourceType: "npc_relationship_action",
+      sourceId: "npc-relationship-resolution:npc-gentry:marriage:21",
+      metricsDelta: { pressure: 1 },
+      publicNote: "hidden_dossier provider_payload /mnt/e/secret"
+    }
+  ]);
+  const view = buildWorldEntityView(worldState);
+  const promptSummary = summarizeWorldEntitiesForPrompt(worldState);
+  const serialized = JSON.stringify({ impacts, view, promptSummary });
+
+  assert.equal(impacts.length, 3);
+  assert.ok(view.recentImpacts.length >= 2);
+  assert.ok(view.recentImpacts.some((impact) =>
+    impact.sourceType === "npc_relationship_action" &&
+    impact.sourceRef === "npc-relationship-resolution:npc-scholar-peer-shen:debate:21" &&
+    impact.topicSurfaceIds.includes("npc-profile") &&
+    /论道余波|同年文社|信任/.test(`${impact.title}${impact.publicSummary}${impact.affectedMetricLabels.join("")}`)
+  ));
+  assert.ok(view.recentImpacts.some((impact) =>
+    impact.sourceType === "active_npc_request" &&
+    impact.entityId === "court-censorate" &&
+    impact.sourceRef === "" &&
+    impact.relatedRefs.some((ref) => ref === "worldEntity:court-censorate")
+  ));
+  assert.equal(view.recentImpacts.some((impact) => /hidden_dossier|provider_payload|\/mnt\/e/.test(impact.publicSummary)), false);
+  assert.ok(promptSummary.recentImpacts.some((impact) => /论道余波|同年文社/.test(impact.publicSummary)));
+  assert.doesNotMatch(serialized, /data\/sessions|rawLedger|providerPayload|provider_payload|safe_search_index|hidden_dossier|\/mnt\/e|sk-[A-Za-z0-9_-]{6,}/);
+});
+
+test("S88.7 world entity recent impact normalization caps and filters hidden legacy rows", () => {
+  const worldState = createInitialState({ playerName: "实体证据上限" });
+  worldState.turnCount = 32;
+  worldState.worldEntities.recentImpacts = Array.from({ length: 30 }, (_, index) => ({
+    id: `legacy-impact-${index}`,
+    sourceType: "npc_relationship_action",
+    entityId: index === 0 ? "hidden-entity" : "academy-same-year-circle",
+    title: `旧关系压力${index}`,
+    publicSummary: `旧公开关系压力 ${index}`,
+    affectedMetricLabels: ["压力上升"],
+    generatedAtTurn: index
+  }));
+  worldState.worldEntities.entities.push({
+    id: "hidden-entity",
+    category: "academy",
+    kind: "academy_circle",
+    name: "SEALED_HIDDEN_ENTITY",
+    status: "critical",
+    visibility: "hidden",
+    metrics: { influence: 90, pressure: 90, capacity: 10, trust: 10, deficit: 0 },
+    publicSummary: "SEALED_HIDDEN_SUMMARY"
+  });
+
+  const normalized = normalizeWorldEntityState(worldState);
+  const view = buildWorldEntityView({ ...worldState, worldEntities: normalized });
+  const serialized = JSON.stringify(view);
+
+  assert.equal(normalized.recentImpacts.length, 24);
+  assert.equal(normalized.recentImpacts.some((impact) => impact.entityId === "hidden-entity"), false);
+  assert.equal(normalized.recentImpacts[0].id, "legacy-impact-6");
+  assert.equal(normalized.recentImpacts.at(-1).id, "legacy-impact-29");
+  assert.doesNotMatch(serialized, /SEALED_HIDDEN_ENTITY|SEALED_HIDDEN_SUMMARY/);
+});
+
 test("deriveWorldEntityInfluences maps applied state, relationship, role, NPC, and official sources", () => {
   const before = createInitialState({ playerName: "Tester", role: "official" });
   const after = createInitialState({ playerName: "Tester", role: "official" });

@@ -17,6 +17,7 @@ const {
   buildTopicSurfaceView,
   buildTopicSurfaceViewIndex
 } = require("../src/game/topicSurfaceView");
+const { applyWorldEntityInfluences } = require("../src/game/worldEntities");
 const { buildOfficialCareerView } = require("../src/game/officialCareer");
 const { ensureWorldThreadState } = require("../src/game/worldThreads");
 const { writeSession } = require("../src/storage/sessionStore");
@@ -313,6 +314,53 @@ test("S88.8 topic surfaces route economy trace evidence by safe topic allowlist"
     ref.sourceView === "economyTraceView" && /丈量田亩|预算|市价/.test(`${ref.label}${ref.summary}`)
   ));
   assertNoSensitiveText({ memorial, profile, trial, warCouncil });
+});
+
+test("S88.7 topic surfaces expose world entity impact evidence as read-only material", () => {
+  const worldState = createInitialState({
+    dynasty: "明",
+    year: 1644,
+    role: "official",
+    playerName: "实体专题"
+  });
+  worldState.turnCount = 26;
+  applyWorldEntityInfluences(worldState, [
+    {
+      entityId: "academy-same-year-circle",
+      sourceType: "npc_relationship_action",
+      sourceId: "npc-relationship-resolution:npc-scholar-peer-shen:debate:26",
+      metricsDelta: { trust: 2, pressure: -1 },
+      publicNote: "论道余波进入同年文社"
+    },
+    {
+      entityId: "court-censorate",
+      sourceType: "active_npc_request",
+      sourceId: "data/sessions/rawLedger-providerPayload-safe_search_index",
+      metricsDelta: { pressure: 2 },
+      publicNote: "来函后续已登记为风宪证据观察"
+    }
+  ]);
+
+  const memorial = buildTopicSurfaceView(worldState, { surfaceId: "memorial-review" });
+  const edict = buildTopicSurfaceView(worldState, { surfaceId: "edict-draft" });
+  const debate = buildTopicSurfaceView(worldState, { surfaceId: "court-debate" });
+  const profile = buildTopicSurfaceView(worldState, { surfaceId: "npc-profile" });
+  const trial = buildTopicSurfaceView(worldState, { surfaceId: "trial" });
+
+  assert.ok(memorial.sourceViews.some((source) => source.sourceView === "worldEntityView"));
+  assert.ok(edict.evidenceRefs.some((ref) =>
+    ref.sourceView === "worldEntityView" && /风宪证据观察|都察院|压力/.test(`${ref.label}${ref.summary}`)
+  ));
+  assert.ok(debate.evidenceRefs.some((ref) =>
+    ref.sourceView === "worldEntityView" && /论道余波|同年文社|信任/.test(`${ref.label}${ref.summary}`)
+  ));
+  assert.ok(profile.evidenceRefs.some((ref) =>
+    ref.sourceView === "worldEntityView" &&
+    ref.topicSurfaceIds?.includes("npc-profile") &&
+    /论道余波|同年文社/.test(`${ref.label}${ref.summary}`)
+  ));
+  assert.equal(trial.evidenceRefs.some((ref) => ref.sourceView === "worldEntityView"), false);
+  assertNoSensitiveText({ memorial, edict, debate, profile, trial });
 });
 
 test("GET /api/game/topic-surface/:sessionId/:surfaceId returns read-only safe projection", async (t) => {

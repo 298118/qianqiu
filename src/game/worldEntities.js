@@ -3,6 +3,7 @@ const { getBureau, getOffice } = require("./officialCatalog");
 const WORLD_ENTITY_SCHEMA_VERSION = 1;
 const MAX_ENTITIES = 24;
 const MAX_RECENT_NOTES = 8;
+const MAX_RECENT_IMPACTS = 24;
 const MAX_TEXT_LENGTH = 160;
 
 const ENTITY_CATEGORIES = new Set(["court", "local", "academy", "military", "fiscal", "relief"]);
@@ -93,6 +94,34 @@ const METRIC_LABELS = {
   "factions.militaryLords": "边镇武臣"
 };
 
+const ENTITY_METRIC_LABELS = {
+  influence: "影响",
+  pressure: "压力",
+  capacity: "承载",
+  trust: "信任",
+  deficit: "亏缺"
+};
+
+const SOURCE_LABELS = {
+  provider_state: "叙事结算",
+  world_tick: "旬度推演",
+  relationship: "关系账本",
+  active_npc_request: "NPC 来函",
+  npc_relationship_action: "NPC 关系行动",
+  long_term_event: "长期事件",
+  official_career: "官场差事",
+  role_world_coupling: "身份事务"
+};
+
+const WORLD_ENTITY_IMPACT_TOPIC_SURFACES = new Set([
+  "memorial-review",
+  "edict-draft",
+  "court-debate",
+  "npc-profile"
+]);
+
+const SECRET_ENV_NAME_PATTERN = /(KEY|TOKEN|SECRET|PASSWORD|CREDENTIAL)/i;
+
 function isPlainObject(value) {
   return value !== null && typeof value === "object" && !Array.isArray(value);
 }
@@ -104,10 +133,37 @@ function cleanText(value, fallback = "", maxLength = MAX_TEXT_LENGTH) {
   return trimmed.slice(0, maxLength);
 }
 
+function textContainsSecret(value) {
+  const text = String(value || "");
+  if (!text) return false;
+  for (const [envName, secret] of Object.entries(process.env)) {
+    if (!SECRET_ENV_NAME_PATTERN.test(envName) || !secret || String(secret).length < 8) continue;
+    const raw = String(secret);
+    if (text.includes(raw) || text.includes(raw.slice(0, 8)) || text.includes(raw.slice(-8))) return true;
+  }
+  return false;
+}
+
+function cleanPublicText(value, fallback = "", maxLength = MAX_TEXT_LENGTH) {
+  const fallbackText = cleanText(fallback, "", maxLength);
+  const safeFallback = fallbackText && !UNSAFE_SOURCE_REF_PATTERN.test(fallbackText) && !textContainsSecret(fallbackText)
+    ? fallbackText
+    : "";
+  const text = cleanText(value, safeFallback, maxLength);
+  if (!text || UNSAFE_SOURCE_REF_PATTERN.test(text) || textContainsSecret(text)) return safeFallback;
+  return text;
+}
+
 function cleanSourceId(value, fallback = "") {
-  const text = cleanText(value, fallback, 120);
-  if (!text || UNSAFE_SOURCE_REF_PATTERN.test(text)) return fallback;
-  return text.replace(/[^A-Za-z0-9_.:-]+/g, "-").replace(/^-+|-+$/g, "") || fallback;
+  const normalizedFallback = cleanText(fallback, "", 120);
+  const safeFallback = normalizedFallback &&
+    !UNSAFE_SOURCE_REF_PATTERN.test(normalizedFallback) &&
+    !textContainsSecret(normalizedFallback)
+    ? normalizedFallback.replace(/[^A-Za-z0-9_.:-]+/g, "-").replace(/^-+|-+$/g, "")
+    : "";
+  const text = cleanText(value, safeFallback, 120);
+  if (!text || UNSAFE_SOURCE_REF_PATTERN.test(text) || textContainsSecret(text)) return safeFallback;
+  return text.replace(/[^A-Za-z0-9_.:-]+/g, "-").replace(/^-+|-+$/g, "") || safeFallback;
 }
 
 function clampNumber(value, min, max, fallback) {
@@ -137,12 +193,51 @@ function metric(value, fallback = 50) {
   return clampNumber(value, 0, 100, fallback);
 }
 
+function normalizeConfidence(value, fallback = 0.72) {
+  const numeric = Number(value);
+  if (!Number.isFinite(numeric)) return fallback;
+  if (numeric > 1) return clampNumber(numeric, 0, 100, fallback * 100) / 100;
+  return Math.max(0, Math.min(1, numeric));
+}
+
 function normalizeStringList(value, limit = 6) {
   if (!Array.isArray(value)) return [];
   return value
     .map((entry) => cleanText(entry, "", 80))
     .filter(Boolean)
     .slice(0, limit);
+}
+
+function normalizeSafeStringList(value, limit = 6, maxLength = 80) {
+  if (!Array.isArray(value)) return [];
+  return value
+    .map((entry) => cleanPublicText(entry, "", maxLength))
+    .filter(Boolean)
+    .slice(0, limit);
+}
+
+function normalizeSafeRefList(value, limit = 8) {
+  if (!Array.isArray(value)) return [];
+  const result = [];
+  const seen = new Set();
+  for (const entry of value) {
+    const ref = cleanSourceId(entry, "");
+    if (!ref || seen.has(ref)) continue;
+    seen.add(ref);
+    result.push(ref);
+    if (result.length >= limit) break;
+  }
+  return result;
+}
+
+function shortPublicHash(value) {
+  const text = cleanPublicText(value, "", 240);
+  let hash = 2166136261;
+  for (let index = 0; index < text.length; index += 1) {
+    hash ^= text.charCodeAt(index);
+    hash = Math.imul(hash, 16777619) >>> 0;
+  }
+  return hash.toString(36).slice(0, 6) || "0";
 }
 
 function normalizeRelated(raw) {
@@ -566,6 +661,122 @@ function normalizeRecentNotes(value) {
     .slice(-MAX_RECENT_NOTES);
 }
 
+function topicSurfaceIdsForImpact(sourceType) {
+  const base = ["memorial-review", "edict-draft", "court-debate"];
+  if (["active_npc_request", "npc_relationship_action", "relationship"].includes(sourceType)) {
+    base.push("npc-profile");
+  }
+  return base;
+}
+
+function normalizeTopicSurfaceIds(value, sourceType) {
+  const candidates = Array.isArray(value) && value.length
+    ? value
+    : topicSurfaceIdsForImpact(sourceType);
+  const result = [];
+  const seen = new Set();
+  for (const candidate of candidates) {
+    const id = cleanSourceId(candidate, "");
+    if (!id || !WORLD_ENTITY_IMPACT_TOPIC_SURFACES.has(id) || seen.has(id)) continue;
+    seen.add(id);
+    result.push(id);
+  }
+  return result;
+}
+
+function metricChangeLabels(changes = {}) {
+  return Object.entries(isPlainObject(changes) ? changes : {})
+    .map(([key, change]) => {
+      const label = ENTITY_METRIC_LABELS[key];
+      if (!label || !isPlainObject(change)) return "";
+      const delta = Number(change.delta);
+      if (!Number.isFinite(delta) || delta === 0) return label;
+      return `${label}${delta > 0 ? "上升" : "下降"}`;
+    })
+    .filter(Boolean)
+    .slice(0, 6);
+}
+
+function impactPublicSummary(entity, impact, affectedMetricLabels) {
+  const note = cleanPublicText(impact.publicNote, "服务器已登记公开实体压力", 96);
+  const metricText = affectedMetricLabels.length ? `；${affectedMetricLabels.join("、")}` : "";
+  const statusLabel = STATUS_LABELS[impact.status || entity.status] || impact.status || entity.status;
+  return cleanPublicText(
+    `${entity.name}：${note}；当前${statusLabel}${metricText}。`,
+    `${entity.name}：服务器已登记公开实体压力。`,
+    180
+  );
+}
+
+function normalizeRecentImpact(raw, entityById = new Map(), index = 0, worldState = {}) {
+  if (!isPlainObject(raw)) return null;
+  const entityId = cleanText(raw.entityId, "", 96);
+  const entity = entityById.get(entityId);
+  if (!entity || entity.visibility === "hidden") return null;
+  const sourceType = ENTITY_INFLUENCE_SOURCE_TYPES.has(raw.sourceType)
+    ? raw.sourceType
+    : "long_term_event";
+  const fallbackId = `world-entity-impact:${currentTurn(worldState)}:${entityId}:${sourceType}:${index}`;
+  const id = cleanSourceId(raw.id || raw.sourceId, cleanSourceId(fallbackId, `world-entity-impact-${index}`));
+  if (!id) return null;
+  const status = ENTITY_STATUSES.has(raw.status) ? raw.status : entity.status;
+  const tone = riskTone({ ...entity, status });
+  const affectedMetricLabels = normalizeSafeStringList(raw.affectedMetricLabels, 6, 40);
+  const publicSummary = cleanPublicText(
+    raw.publicSummary || raw.summary,
+    impactPublicSummary(entity, { ...raw, status }, affectedMetricLabels),
+    180
+  );
+  if (!publicSummary) return null;
+  const sourceRef = cleanSourceId(raw.sourceRef || raw.publicSourceId, "");
+  const relatedRefs = normalizeSafeRefList([
+    ...(Array.isArray(raw.relatedRefs) ? raw.relatedRefs : []),
+    `worldEntity:${entityId}`,
+    sourceRef ? `${sourceType}:${sourceRef}` : ""
+  ], 8);
+  const scopeRefs = normalizeSafeRefList([
+    ...(Array.isArray(raw.scopeRefs) ? raw.scopeRefs : []),
+    `worldEntity:${entityId}`
+  ], 8);
+  return {
+    id,
+    sourceId: id,
+    sourceType,
+    sourceLabel: cleanPublicText(raw.sourceLabel, SOURCE_LABELS[sourceType] || "实体影响", 40),
+    sourceRef,
+    entityId,
+    entityName: cleanPublicText(raw.entityName, entity.name, 80),
+    title: cleanPublicText(raw.title, `${entity.name}压力留痕`, 96),
+    publicSummary,
+    status,
+    statusLabel: STATUS_LABELS[status] || status,
+    riskTone: tone,
+    riskLabel: RISK_LABELS[tone],
+    affectedMetricLabels,
+    visibility: "public",
+    confidence: Math.min(normalizeConfidence(raw.confidence, 0.66), 0.66),
+    topicSurfaceIds: normalizeTopicSurfaceIds(raw.topicSurfaceIds, sourceType),
+    relatedRefs,
+    scopeRefs,
+    generatedAtTurn: clampNumber(raw.generatedAtTurn ?? raw.turn, 0, Number.MAX_SAFE_INTEGER, currentTurn(worldState)),
+    lastUpdatedTurn: clampNumber(raw.lastUpdatedTurn ?? raw.generatedAtTurn ?? raw.turn, 0, Number.MAX_SAFE_INTEGER, currentTurn(worldState))
+  };
+}
+
+function normalizeRecentImpacts(value, entityById = new Map(), worldState = {}) {
+  if (!Array.isArray(value)) return [];
+  const rows = [];
+  const seen = new Set();
+  for (let index = value.length - 1; index >= 0; index -= 1) {
+    const normalized = normalizeRecentImpact(value[index], entityById, index, worldState);
+    if (!normalized || seen.has(normalized.id)) continue;
+    seen.add(normalized.id);
+    rows.push(normalized);
+    if (rows.length >= MAX_RECENT_IMPACTS) break;
+  }
+  return rows.reverse();
+}
+
 function normalizeWorldEntityState(worldState = {}) {
   const source = isPlainObject(worldState.worldEntities) ? worldState.worldEntities : {};
   const rawById = new Map(
@@ -593,10 +804,12 @@ function normalizeWorldEntityState(worldState = {}) {
     if (entities.length >= MAX_ENTITIES) break;
   }
 
+  const cappedEntities = entities.slice(0, MAX_ENTITIES);
   return {
     schemaVersion: WORLD_ENTITY_SCHEMA_VERSION,
-    entities: entities.slice(0, MAX_ENTITIES),
-    recentNotes: normalizeRecentNotes(source.recentNotes)
+    entities: cappedEntities,
+    recentNotes: normalizeRecentNotes(source.recentNotes),
+    recentImpacts: normalizeRecentImpacts(source.recentImpacts, new Map(cappedEntities.map((entity) => [entity.id, entity])), worldState)
   };
 }
 
@@ -624,7 +837,7 @@ function normalizeEntityInfluence(raw) {
     entityId,
     sourceType,
     sourceId: cleanSourceId(raw.sourceId, ""),
-    publicNote: cleanText(raw.publicNote || raw.note, "", 96),
+    publicNote: cleanPublicText(raw.publicNote || raw.note, "", 96),
     hiddenNote: cleanText(raw.hiddenNote, "", 120),
     metricsDelta
   };
@@ -648,6 +861,38 @@ function applyMetricDelta(entity, metricsDelta) {
     metrics: nextMetrics,
     changes
   };
+}
+
+function recentImpactFromApplied(impact, entity, index, worldState) {
+  if (!entity) return null;
+  const turn = currentTurn(worldState);
+  const sourceType = ENTITY_INFLUENCE_SOURCE_TYPES.has(impact.sourceType)
+    ? impact.sourceType
+    : "long_term_event";
+  const affectedMetricLabels = metricChangeLabels(impact.metrics);
+  const sourceRef = cleanSourceId(impact.sourceId, "");
+  const publicSuffix = shortPublicHash([
+    sourceRef,
+    impact.publicNote,
+    affectedMetricLabels.join(",")
+  ].filter(Boolean).join("|"));
+  const id = cleanSourceId(
+    `world-entity-impact:${turn}:${index}:${entity.id}:${sourceType}:${publicSuffix}`,
+    `world-entity-impact-${turn}-${index}`
+  );
+  return normalizeRecentImpact({
+    id,
+    sourceType,
+    sourceRef,
+    entityId: entity.id,
+    entityName: entity.name,
+    title: `${entity.name}压力留痕`,
+    publicSummary: impactPublicSummary(entity, impact, affectedMetricLabels),
+    status: impact.status,
+    affectedMetricLabels,
+    generatedAtTurn: turn,
+    lastUpdatedTurn: turn
+  }, new Map([[entity.id, entity]]), index, worldState);
 }
 
 function applyWorldEntityInfluences(worldState, influences = []) {
@@ -684,7 +929,9 @@ function applyWorldEntityInfluences(worldState, influences = []) {
       entityId: entity.id,
       name: entity.name,
       status: nextEntity.status,
+      statusLabel: STATUS_LABELS[nextEntity.status] || nextEntity.status,
       metrics: changes,
+      affectedMetricLabels: metricChangeLabels(changes),
       publicNote: influence.publicNote
     });
   }
@@ -694,17 +941,27 @@ function applyWorldEntityInfluences(worldState, influences = []) {
     return [];
   }
 
+  const nextEntities = state.entities.map((entity) => byId.get(entity.id) || entity);
+  const nextEntityById = new Map(nextEntities.map((entity) => [entity.id, entity]));
+  const nextRecentImpacts = applied
+    .map((impact, index) => recentImpactFromApplied(impact, nextEntityById.get(impact.entityId), index, worldState))
+    .filter(Boolean);
+
   worldState.worldEntities = normalizeWorldEntityState({
     ...worldState,
     worldEntities: {
       ...state,
-      entities: state.entities.map((entity) => byId.get(entity.id) || entity),
+      entities: nextEntities,
       recentNotes: [
         ...(state.recentNotes || []),
         ...applied
           .map((impact) => impact.publicNote)
           .filter(Boolean)
-      ].slice(-MAX_RECENT_NOTES)
+      ].slice(-MAX_RECENT_NOTES),
+      recentImpacts: [
+        ...(state.recentImpacts || []),
+        ...nextRecentImpacts
+      ].slice(-MAX_RECENT_IMPACTS)
     }
   });
   return applied;
@@ -1501,7 +1758,8 @@ function buildWorldEntityView(worldState = {}) {
     schemaVersion: WORLD_ENTITY_SCHEMA_VERSION,
     generatedAtTurn: currentTurn(worldState),
     groups,
-    highlights: visibleEntities.slice().sort(compareEntityPressure).slice(0, 6)
+    highlights: visibleEntities.slice().sort(compareEntityPressure).slice(0, 6),
+    recentImpacts: state.recentImpacts
   };
 }
 
@@ -1525,6 +1783,16 @@ function summarizeWorldEntitiesForPrompt(worldState = {}) {
       count: group.entities.length,
       names: group.entities.slice(0, 4).map((entity) => entity.name),
       strained: group.entities.filter((entity) => entity.status !== "stable").length
+    })),
+    recentImpacts: view.recentImpacts.slice(-6).map((impact) => ({
+      id: impact.id,
+      sourceType: impact.sourceType,
+      entityId: impact.entityId,
+      entityName: impact.entityName,
+      statusLabel: impact.statusLabel,
+      riskLabel: impact.riskLabel,
+      affectedMetricLabels: impact.affectedMetricLabels,
+      publicSummary: impact.publicSummary
     }))
   };
 }

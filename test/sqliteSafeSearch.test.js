@@ -12,6 +12,7 @@ const {
   resolveNpcActiveRequest,
   runNpcActiveRequestStep
 } = require("../src/game/npcActiveRequests");
+const { applyWorldEntityInfluences } = require("../src/game/worldEntities");
 const { resolveTradeRequest } = require("../src/game/tradeLedger");
 const { SAFE_WORLD_SEARCH_SOURCE } = require("../src/game/safeWorldSearch");
 const { createSessionRecord } = require("../src/storage/sessionRecord");
@@ -293,6 +294,52 @@ test("S88.7 SQLite safe search syncs NPC follow-up evidence rows", {
   assert.doesNotMatch(
     JSON.stringify({ result, storedRows }),
     /SEALED_|npcActiveRequestLedger|hiddenDossier|privateSignalTags|providerPayload|provider_payload|safe_search_index|safe_search_fts|state_patch|world_sessions|sk-[A-Za-z0-9_-]{6,}|\/mnt\/e/
+  );
+});
+
+test("S88.7 SQLite safe search syncs world entity impact rows from safe projection", {
+  skip: hasNodeSqlite ? false : "node:sqlite is unavailable in this Node.js runtime"
+}, async (t) => {
+  const { adapter, dbPath } = createHarness(t);
+  const worldState = createSearchWorldState();
+  worldState.turnCount = 27;
+  applyWorldEntityInfluences(worldState, [
+    {
+      entityId: "academy-same-year-circle",
+      sourceType: "npc_relationship_action",
+      sourceId: "npc-relationship-resolution:npc-scholar-peer-shen:debate:27",
+      metricsDelta: { trust: 2, pressure: -1 },
+      publicNote: "论道余波进入同年文社"
+    },
+    {
+      entityId: "court-censorate",
+      sourceType: "active_npc_request",
+      sourceId: "data/sessions/rawLedger-providerPayload-safe_search_index",
+      metricsDelta: { pressure: 2 },
+      publicNote: "来函后续已登记为风宪证据观察"
+    }
+  ]);
+  await adapter.writeSession(clone(worldState));
+
+  const result = await adapter.searchSafeSearchIndex(worldState.sessionId, {
+    query: "论道 同年文社",
+    domain: "events",
+    pageSize: 5
+  });
+  const storedRows = withSqliteDatabase(dbPath, (db) =>
+    db
+      .prepare("SELECT source_view, source_id, title, summary, search_text FROM safe_search_index WHERE session_id = ? AND source_view = ?")
+      .all(worldState.sessionId, "worldEntityView.recentImpacts")
+  );
+
+  assert.ok(result.results.some((item) =>
+    item.sourceView === "worldEntityView.recentImpacts" && /论道余波|同年文社/.test(`${item.title}${item.snippet}`)
+  ));
+  assert.ok(storedRows.some((row) => /论道余波|同年文社/.test(`${row.title}${row.summary}${row.search_text}`)));
+  assert.ok(storedRows.some((row) => /风宪|证据观察/.test(`${row.title}${row.summary}${row.search_text}`)));
+  assert.doesNotMatch(
+    JSON.stringify({ result, storedRows }),
+    /SEALED_|data\/sessions|rawLedger|providerPayload|provider_payload|hiddenDossier|privateSignalTags|safe_search_index|safe_search_fts|state_patch|world_sessions|sk-[A-Za-z0-9_-]{6,}|\/mnt\/e/
   );
 });
 
