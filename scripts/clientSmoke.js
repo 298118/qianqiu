@@ -57,6 +57,88 @@ const visualOverlapIgnoreSelectors = Object.freeze([
 
 const runnableSessionIdPattern = /^[a-f0-9-]{36}$/i;
 const runtimeAssetManifestPath = "/assets/ui/ink-ui-runtime-manifest.json";
+const sourceAssetManifestPath = "/assets/ui/ink-ui-manifest.json";
+const safeRuntimeAssetPathPrefix = "/assets/ui/";
+const runtimeHighResSourceFlag = "kept_outside_public_manifest";
+const runtimeManifestTopLevelKeys = Object.freeze(new Set([
+  "schemaVersion",
+  "assetSetId",
+  "assetRoot",
+  "runtimeUsableReviewStatuses",
+  "runtimeBlockedReviewStatuses",
+  "fallbackCatalog",
+  "assets"
+]));
+const runtimeFallbackKeys = Object.freeze(new Set([
+  "id",
+  "category",
+  "type",
+  "usage",
+  "cssTokens",
+  "reviewStatus",
+  "ledgerId"
+]));
+const runtimeAssetKeys = Object.freeze(new Set([
+  "id",
+  "category",
+  "subcategory",
+  "usage",
+  "role",
+  "roleLabel",
+  "scene",
+  "path",
+  "thumbnailPath",
+  "lowResPlaceholderPath",
+  "fallbackRef",
+  "reviewStatus",
+  "portraitRef",
+  "genderPresentation",
+  "ageBand",
+  "roleStage",
+  "statusVariant",
+  "emotionVariant",
+  "identityTags",
+  "emotionTags",
+  "lazyLoad",
+  "source"
+]));
+const runtimeNonPortraitOnlyKeys = Object.freeze([
+  "portraitRef",
+  "genderPresentation",
+  "ageBand",
+  "roleStage",
+  "statusVariant",
+  "emotionVariant",
+  "identityTags",
+  "emotionTags",
+  "lowResPlaceholderPath",
+  "lazyLoad",
+  "source"
+]);
+const runtimeLazyLoadKeys = Object.freeze(new Set([
+  "group",
+  "allowEagerLoad",
+  "thumbnailFirst",
+  "lowResPlaceholder",
+  "maxInitialPortraits"
+]));
+const runtimeSourceKeys = Object.freeze(new Set(["localHighResSource"]));
+const runtimePortraitGroupSubcategory = Object.freeze({
+  portrait_baseline_s73_7: "portrait_style_baseline",
+  portrait_pool_generic_npc_s73_10: "generic_npc_pool",
+  portrait_pool_player_female_extra_s73_10: "player_female_style_pool",
+  portrait_pool_player_male_extra_s73_10: "player_male_style_pool",
+  portrait_pool_player_s73_10: "player_identity_stage_pool",
+  portrait_pool_recovered_female_s79_2: "recovered_female_highres_pool",
+  portrait_pool_scene_anchor_s73_10: "scene_anchor_pool",
+  portrait_pool_signature_npc_s73_10: "signature_npc_pool",
+  portrait_pool_state_variant_s73_10: "state_variant_pool",
+  portrait_pool_young_female_s73_10_7: "young_female_style_pool"
+});
+const runtimeManifestUnsafeTextPattern =
+  /(OPENAI_API_KEY|DEEPSEEK_API_KEY|MIMO_API_KEY|ANTHROPIC_API_KEY|sk-[A-Za-z0-9_-]{6,}|tp-[A-Za-z0-9_-]{6,}|[A-Za-z]:[\\/]|file:\/\/|https?:\/\/|data:|data[\\/](?:sessions|audit)|artifacts[\\/]|world[_ -]?sessions|prompt[_ -]?retrieval[_ -]?index|event[_ -]?log|ai[_ -]?change[_ -]?proposals|provider(?:Payload|Response|Raw|Name|Id|(?:\s+|[_ -])payload)?|prompt(?:Summary|Text|Payload|Raw|Template)?|raw(?:Audit|State|Prompt|Provider|Payload|Table|Ledger|[_ -]?(?:audit|state|prompt|provider|payload|table|ledger))?|\braw\b|hidden(?:Notes|Intent|Dossier|Truth|Ledger)|hidden[_ -]?(?:notes|intent|dossier|truth|ledger)|private[_ -]?signal|secret[_ -]?relationships|state[_ -]?patch|safe[_ -]?search[_ -]?index|local[_ -]?high[_ -]?res[_ -]?source[_ -]?path|source[_ -]?path|api[_ -]?key|secret[_ -]?key|sqlite|SQL|完整\s*prompt|本地\s*路径|密\s*钥)/i;
+const unsafePortraitRefTokenPattern =
+  /signature_npc_pool|portrait_pool_signature_npc_s73_10|important_npc|(?:^|[-_])(raw|provider|prompt|hidden|private|secret|token|key|path|file|data|http)(?:$|[-_])/i;
 const unsafeClientApiPathPatterns = Object.freeze([
   /^\/api\/game\/state\//,
   /^\/api\/dev\//
@@ -155,6 +237,214 @@ function getSafetyPollutionFailures(text, label = "page") {
   return [...new Set(matches)].map((match) => `${label} exposed safety pollution: ${match}`);
 }
 
+function collectUnexpectedRuntimeKeys(value, allowedKeys, label, failures) {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return;
+  for (const key of Object.keys(value)) {
+    if (!allowedKeys.has(key)) failures.push(`${label} exposed unexpected runtime manifest key: ${key}`);
+  }
+}
+
+function collectRuntimeManifestUnsafeText(value, label, failures) {
+  if (value == null) return;
+  if (typeof value === "string") {
+    if (runtimeManifestUnsafeTextPattern.test(value)) {
+      failures.push(`${label} exposed unsafe runtime manifest text: ${value}`);
+    }
+    return;
+  }
+  if (Array.isArray(value)) {
+    value.forEach((item, index) => collectRuntimeManifestUnsafeText(item, `${label}[${index}]`, failures));
+    return;
+  }
+  if (typeof value === "object") {
+    for (const [key, nestedValue] of Object.entries(value)) {
+      collectRuntimeManifestUnsafeText(key, `${label}.${key} key`, failures);
+      collectRuntimeManifestUnsafeText(nestedValue, `${label}.${key}`, failures);
+    }
+  }
+}
+
+function isSafeRuntimeAssetPath(assetPath) {
+  return (
+    typeof assetPath === "string" &&
+    assetPath.startsWith(safeRuntimeAssetPathPrefix) &&
+    !assetPath.includes("..") &&
+    !runtimeManifestUnsafeTextPattern.test(assetPath)
+  );
+}
+
+function validateRuntimeAssetPath(assetPath, label, failures) {
+  if (!isSafeRuntimeAssetPath(assetPath)) {
+    failures.push(`${label} must stay under ${safeRuntimeAssetPathPrefix}`);
+  }
+}
+
+function validateRuntimeManifestFallback(fallback, context, index, failures) {
+  const label = `fallbackCatalog[${index}]`;
+  if (!fallback || typeof fallback !== "object" || Array.isArray(fallback)) {
+    failures.push(`${label} is not an object`);
+    return;
+  }
+
+  collectUnexpectedRuntimeKeys(fallback, runtimeFallbackKeys, label, failures);
+  if (!context.usableStatuses.has(fallback.reviewStatus)) {
+    failures.push(`${label} reviewStatus is not runtime usable: ${fallback.reviewStatus}`);
+  }
+  if (context.blockedStatuses.has(fallback.reviewStatus)) {
+    failures.push(`${label} reviewStatus is runtime blocked: ${fallback.reviewStatus}`);
+  }
+  if (fallback.category !== "fallback") failures.push(`${label} category must be fallback`);
+  if (fallback.type !== "css_token") failures.push(`${label} type must be css_token`);
+}
+
+function validateRuntimeManifestAsset(asset, context, index, failures) {
+  const label = `assets[${index}] ${asset?.id || "(missing id)"}`;
+  if (!asset || typeof asset !== "object" || Array.isArray(asset)) {
+    failures.push(`${label} is not an object`);
+    return;
+  }
+
+  collectUnexpectedRuntimeKeys(asset, runtimeAssetKeys, label, failures);
+  if (!asset.id || typeof asset.id !== "string") failures.push(`${label} is missing stable id`);
+  if (!context.usableStatuses.has(asset.reviewStatus)) {
+    failures.push(`${label} reviewStatus is not runtime usable: ${asset.reviewStatus}`);
+  }
+  if (context.blockedStatuses.has(asset.reviewStatus)) {
+    failures.push(`${label} reviewStatus is runtime blocked: ${asset.reviewStatus}`);
+  }
+  validateRuntimeAssetPath(asset.path, `${label}.path`, failures);
+  if (asset.thumbnailPath) validateRuntimeAssetPath(asset.thumbnailPath, `${label}.thumbnailPath`, failures);
+  if (asset.fallbackRef && !context.fallbackIds.has(asset.fallbackRef)) {
+    failures.push(`${label}.fallbackRef does not point to a runtime fallback: ${asset.fallbackRef}`);
+  }
+
+  if (asset.category === "portrait") {
+    validateRuntimeManifestPortraitAsset(asset, label, failures);
+    return;
+  }
+
+  for (const key of runtimeNonPortraitOnlyKeys) {
+    if (asset[key] !== undefined) failures.push(`${label} non-portrait asset exposed portrait-only key: ${key}`);
+  }
+}
+
+function validateRuntimeManifestPortraitAsset(asset, label, failures) {
+  const requiredKeys = [
+    "portraitRef",
+    "genderPresentation",
+    "ageBand",
+    "statusVariant",
+    "thumbnailPath",
+    "lowResPlaceholderPath",
+    "fallbackRef",
+    "lazyLoad"
+  ];
+  for (const key of requiredKeys) {
+    if (asset[key] === undefined || asset[key] === null || asset[key] === "") {
+      failures.push(`${label} is missing required portrait runtime key: ${key}`);
+    }
+  }
+  if (asset.portraitRef !== asset.id) failures.push(`${label}.portraitRef must match id`);
+  validateRuntimeAssetPath(asset.lowResPlaceholderPath, `${label}.lowResPlaceholderPath`, failures);
+  if (!String(asset.ageBand || "").startsWith("adult")) {
+    failures.push(`${label}.ageBand must be explicitly adult: ${asset.ageBand}`);
+  }
+
+  const lazyLoad = asset.lazyLoad || {};
+  collectUnexpectedRuntimeKeys(lazyLoad, runtimeLazyLoadKeys, `${label}.lazyLoad`, failures);
+  if (lazyLoad.allowEagerLoad !== false) failures.push(`${label}.lazyLoad.allowEagerLoad must be false`);
+  if (lazyLoad.thumbnailFirst !== true) failures.push(`${label}.lazyLoad.thumbnailFirst must be true`);
+  if (lazyLoad.lowResPlaceholder !== true) failures.push(`${label}.lazyLoad.lowResPlaceholder must be true`);
+  if (!Number.isFinite(lazyLoad.maxInitialPortraits) || lazyLoad.maxInitialPortraits < 1 || lazyLoad.maxInitialPortraits > 8) {
+    failures.push(`${label}.lazyLoad.maxInitialPortraits must be within 1..8`);
+  }
+  if (!lazyLoad.group || typeof lazyLoad.group !== "string") {
+    failures.push(`${label}.lazyLoad.group is missing`);
+  }
+  const expectedSubcategory = runtimePortraitGroupSubcategory[lazyLoad.group];
+  if (expectedSubcategory && asset.subcategory !== expectedSubcategory) {
+    failures.push(`${label}.lazyLoad.group does not match subcategory`);
+  }
+
+  if (asset.source !== undefined) {
+    collectUnexpectedRuntimeKeys(asset.source, runtimeSourceKeys, `${label}.source`, failures);
+    if (asset.source?.localHighResSource !== runtimeHighResSourceFlag) {
+      failures.push(`${label}.source can only expose ${runtimeHighResSourceFlag}`);
+    }
+  }
+}
+
+function getRuntimeManifestSafetyFailures(manifest) {
+  const failures = [];
+  if (!manifest || typeof manifest !== "object" || Array.isArray(manifest)) {
+    return ["runtime manifest is not an object"];
+  }
+
+  collectUnexpectedRuntimeKeys(manifest, runtimeManifestTopLevelKeys, "runtime manifest", failures);
+  collectRuntimeManifestUnsafeText(manifest, "runtime manifest", failures);
+  if (manifest.schemaVersion !== 1) failures.push("runtime manifest schemaVersion must be 1");
+  if (manifest.assetSetId !== "ink-ui-v1") failures.push("runtime manifest assetSetId must be ink-ui-v1");
+  if (manifest.assetRoot !== safeRuntimeAssetPathPrefix) {
+    failures.push(`runtime manifest assetRoot must be ${safeRuntimeAssetPathPrefix}`);
+  }
+  if (!Array.isArray(manifest.runtimeUsableReviewStatuses) || manifest.runtimeUsableReviewStatuses.length === 0) {
+    failures.push("runtime manifest is missing runtimeUsableReviewStatuses");
+  }
+
+  const usableStatuses = new Set(manifest.runtimeUsableReviewStatuses || []);
+  const blockedStatuses = new Set(manifest.runtimeBlockedReviewStatuses || []);
+  for (const blockedStatus of blockedStatuses) {
+    if (usableStatuses.has(blockedStatus)) {
+      failures.push(`runtime manifest status is both usable and blocked: ${blockedStatus}`);
+    }
+  }
+
+  const fallbackIds = new Set();
+  if (!Array.isArray(manifest.fallbackCatalog)) {
+    failures.push("runtime manifest fallbackCatalog is not an array");
+  } else {
+    manifest.fallbackCatalog.forEach((fallback, index) => {
+      validateRuntimeManifestFallback(fallback, { usableStatuses, blockedStatuses }, index, failures);
+      if (fallback?.id) fallbackIds.add(fallback.id);
+    });
+  }
+
+  const assetIds = new Set();
+  const portraitRefs = new Set();
+  const context = { usableStatuses, blockedStatuses, fallbackIds };
+  if (!Array.isArray(manifest.assets)) {
+    failures.push("runtime manifest assets is not an array");
+  } else {
+    manifest.assets.forEach((asset, index) => {
+      validateRuntimeManifestAsset(asset, context, index, failures);
+      if (asset?.id) {
+        if (assetIds.has(asset.id)) failures.push(`runtime manifest duplicate asset id: ${asset.id}`);
+        assetIds.add(asset.id);
+      }
+      if (asset?.portraitRef) {
+        if (portraitRefs.has(asset.portraitRef)) failures.push(`runtime manifest duplicate portraitRef: ${asset.portraitRef}`);
+        portraitRefs.add(asset.portraitRef);
+      }
+    });
+  }
+
+  return failures;
+}
+
+function assertRuntimeManifestRequestOnly(manifestRequests, label = "page") {
+  const uniqueRequests = [...new Set(manifestRequests || [])];
+  const failures = [];
+  if (!uniqueRequests.includes(runtimeAssetManifestPath)) {
+    failures.push(`did not request runtime manifest ${runtimeAssetManifestPath}`);
+  }
+  if (uniqueRequests.includes(sourceAssetManifestPath)) {
+    failures.push(`requested full source manifest ${sourceAssetManifestPath}`);
+  }
+  if (failures.length) {
+    throw new Error(`${label} manifest request boundary failed: ${failures.join("; ")}; requests=${uniqueRequests.join(", ")}`);
+  }
+}
+
 function getPlayerFacingCopyLeakFailures(text, label = "page") {
   const matches = String(text || "").match(playerFacingCopyLeakPattern) || [];
   return [...new Set(matches)].map((match) => `${label} exposed player-facing development copy: ${match}`);
@@ -246,72 +536,72 @@ async function assertBrowserStorageSafety(page, label) {
   }
 }
 
-async function assertManifestRuntimeSafety(page, baseUrl) {
-  const snapshot = await page.evaluate(async (url) => {
-    const response = await fetch(`${url}/assets/ui/ink-ui-runtime-manifest.json`, { cache: "no-store" });
-    const manifest = await response.json();
-    const localSourcePathCount = (manifest.assets || []).filter((asset) => Boolean(asset.source?.localHighResSourcePath)).length;
-    const runtimeEnvelope = {
-      schemaVersion: manifest?.schemaVersion,
-      assetSetId: manifest?.assetSetId,
-      assetRoot: manifest?.assetRoot,
-      runtimeUsableReviewStatuses: manifest?.runtimeUsableReviewStatuses,
-      runtimeBlockedReviewStatuses: manifest?.runtimeBlockedReviewStatuses,
-      fallbackCatalog: (manifest?.fallbackCatalog || []).map((fallback) => ({
-        id: fallback.id,
-        category: fallback.category,
-        type: fallback.type,
-        usage: fallback.usage,
-        cssTokens: fallback.cssTokens,
-        reviewStatus: fallback.reviewStatus,
-        ledgerId: fallback.ledgerId
-      })),
-      assets: (manifest?.assets || []).map((asset) => ({
-        id: asset.id,
-        category: asset.category,
-        subcategory: asset.subcategory,
-        usage: asset.usage,
-        role: asset.role,
-        roleLabel: asset.roleLabel,
-        scene: asset.scene,
-        path: asset.path,
-        thumbnailPath: asset.thumbnailPath,
-        lowResPlaceholderPath: asset.lowResPlaceholderPath,
-        fallbackRef: asset.fallbackRef,
-        reviewStatus: asset.reviewStatus,
-        visualReviewStatus: asset.visualReview?.status,
-        safetyReviewStatus: asset.safetyReview?.status,
-        dimensions: asset.dimensions,
-        safeArea: asset.safeArea,
-        focalPoint: asset.focalPoint,
-        mobileCrop: asset.mobileCrop,
-        portraitRef: asset.portraitRef,
-        genderPresentation: asset.genderPresentation,
-        ageBand: asset.ageBand,
-        roleStage: asset.roleStage,
-        statusVariant: asset.statusVariant,
-        emotionVariant: asset.emotionVariant,
-        identityTags: asset.identityTags,
-        emotionTags: asset.emotionTags,
-        lazyLoad: asset.lazyLoad,
-        sourceRuntimeFlag: asset.source?.localHighResSource
-      }))
-    };
-    return {
-      ok: response.ok,
-      assetCount: manifest.assets?.length || 0,
-      localSourcePathCount,
-      runtimeEnvelope
-    };
-  }, baseUrl);
+async function assertManifestRuntimeSafety(baseUrl) {
+  const response = await fetch(`${baseUrl}${runtimeAssetManifestPath}`, { cache: "no-store" });
+  const manifest = await response.json();
+  const localSourcePathCount = (manifest.assets || []).filter((asset) => Boolean(asset.source?.localHighResSourcePath)).length;
+  const runtimeEnvelope = {
+    schemaVersion: manifest?.schemaVersion,
+    assetSetId: manifest?.assetSetId,
+    assetRoot: manifest?.assetRoot,
+    runtimeUsableReviewStatuses: manifest?.runtimeUsableReviewStatuses,
+    runtimeBlockedReviewStatuses: manifest?.runtimeBlockedReviewStatuses,
+    fallbackCatalog: (manifest?.fallbackCatalog || []).map((fallback) => ({
+      id: fallback.id,
+      category: fallback.category,
+      type: fallback.type,
+      usage: fallback.usage,
+      cssTokens: fallback.cssTokens,
+      reviewStatus: fallback.reviewStatus,
+      ledgerId: fallback.ledgerId
+    })),
+    assets: (manifest?.assets || []).map((asset) => ({
+      id: asset.id,
+      category: asset.category,
+      subcategory: asset.subcategory,
+      usage: asset.usage,
+      role: asset.role,
+      roleLabel: asset.roleLabel,
+      scene: asset.scene,
+      path: asset.path,
+      thumbnailPath: asset.thumbnailPath,
+      lowResPlaceholderPath: asset.lowResPlaceholderPath,
+      fallbackRef: asset.fallbackRef,
+      reviewStatus: asset.reviewStatus,
+      visualReviewStatus: asset.visualReview?.status,
+      safetyReviewStatus: asset.safetyReview?.status,
+      dimensions: asset.dimensions,
+      safeArea: asset.safeArea,
+      focalPoint: asset.focalPoint,
+      mobileCrop: asset.mobileCrop,
+      portraitRef: asset.portraitRef,
+      genderPresentation: asset.genderPresentation,
+      ageBand: asset.ageBand,
+      roleStage: asset.roleStage,
+      statusVariant: asset.statusVariant,
+      emotionVariant: asset.emotionVariant,
+      identityTags: asset.identityTags,
+      emotionTags: asset.emotionTags,
+      lazyLoad: asset.lazyLoad,
+      sourceRuntimeFlag: asset.source?.localHighResSource
+    }))
+  };
+  const snapshot = {
+    ok: response.ok,
+    assetCount: manifest.assets?.length || 0,
+    localSourcePathCount,
+    manifest,
+    runtimeEnvelope
+  };
 
   const failures = [];
   if (!snapshot.ok) failures.push("manifest request failed");
   if (snapshot.assetCount < 1) failures.push("manifest had no assets");
   if (snapshot.localSourcePathCount > 0) failures.push(`manifest exposed localHighResSourcePath ${snapshot.localSourcePathCount} time(s)`);
+  failures.push(...getRuntimeManifestSafetyFailures(snapshot.manifest));
   failures.push(...getSafetyPollutionFailures(JSON.stringify(snapshot.runtimeEnvelope), "runtime manifest"));
   if (failures.length) {
-    throw new Error(`S77.4 manifest pollution smoke failed: ${failures.join("; ")}`);
+    throw new Error(`S88.11 runtime manifest browser smoke failed: ${failures.join("; ")}`);
   }
 }
 
@@ -348,7 +638,7 @@ function getResourceBudgetSnapshot(entries) {
     summary.resourcePaths.push(pathname);
 
     if (pathname === runtimeAssetManifestPath) summary.runtimeManifestBytes += bytes;
-    if (pathname === "/assets/ui/ink-ui-manifest.json") summary.fullManifestRequests += 1;
+    if (pathname === sourceAssetManifestPath) summary.fullManifestRequests += 1;
     if (pathname === "/mapRenderer.js" || pathname === "/vendor/pixi.min.js") summary.mapRuntimeRequests += 1;
     if (pathname.endsWith(".woff2")) summary.fontWoff2Requests += 1;
     if (pathname.startsWith("/assets/ui/") && /\.(?:webp|png|jpg|jpeg)$/i.test(pathname)) summary.uiImageBytes += bytes;
@@ -646,6 +936,99 @@ async function assertPortraitImagesLoaded(page, selector, label) {
   const badResources = snapshot.resourceChecks.filter((resource) => !resource.ok || resource.bytes < 1000);
   if (badResources.length) {
     throw new Error(`${label} has unavailable portrait thumbnail resource(s): ${JSON.stringify(badResources)}`);
+  }
+}
+
+async function assertPeoplePortraitRuntimeSafety(page, label, resourceSnapshot) {
+  const snapshot = await page.evaluate(async (runtimePath) => {
+    const grid = document.querySelector(".peopleLedgerList");
+    const scopedFigures = [...document.querySelectorAll(".peopleLedgerList [data-portrait-ref]")];
+    const scopedImages = [...document.querySelectorAll(".peopleLedgerList img")];
+    const pagePortraitRefs = [...document.querySelectorAll("[data-portrait-ref]")]
+      .map((element) => element.getAttribute("data-portrait-ref") || "")
+      .filter(Boolean);
+    const scopedPortraitRefs = scopedFigures
+      .map((element) => element.getAttribute("data-portrait-ref") || "")
+      .filter(Boolean);
+    const response = await fetch(runtimePath, { cache: "no-store" });
+    const manifest = await response.json();
+    const signaturePortraitRefs = (manifest.assets || [])
+      .filter((asset) => {
+        if (asset?.category !== "portrait") return false;
+        const tags = [...(asset.identityTags || []), ...(asset.emotionTags || [])].join(" ");
+        return (
+          asset.subcategory === "signature_npc_pool" ||
+          asset.lazyLoad?.group === "portrait_pool_signature_npc_s73_10" ||
+          /signature[_-]?npc|important[_-]?npc/i.test(tags)
+        );
+      })
+      .map((asset) => asset.portraitRef || asset.id)
+      .filter(Boolean);
+    return {
+      manifestOk: response.ok,
+      signaturePortraitRefs,
+      visiblePeople: Number(grid?.getAttribute("data-visible-people") || 0),
+      totalPeople: Number(grid?.getAttribute("data-total-people") || 0),
+      visiblePortraits: Number(grid?.getAttribute("data-visible-portraits") || 0),
+      scopedFigureCount: scopedFigures.length,
+      scopedImageCount: scopedImages.length,
+      scopedPortraitRefs,
+      pagePortraitRefs,
+      eagerImages: scopedImages.filter((image) => image.getAttribute("loading") !== "lazy").length,
+      fullPoolCount: Number(grid?.getAttribute("data-total-portraits") || 0)
+    };
+  }, runtimeAssetManifestPath);
+
+  const failures = [];
+  if (!snapshot.manifestOk) failures.push("could not fetch runtime manifest for portrait isolation");
+  if (!snapshot.signaturePortraitRefs.length) failures.push("runtime manifest had no signature NPC portrait refs to guard against");
+  if (snapshot.visiblePeople <= 0 || snapshot.visiblePeople > 8) {
+    failures.push(`visible people count escaped lazy page size: ${snapshot.visiblePeople}`);
+  }
+  if (snapshot.visiblePortraits !== snapshot.visiblePeople) {
+    failures.push(`visible portrait count did not match visible people: ${snapshot.visiblePortraits} !== ${snapshot.visiblePeople}`);
+  }
+  if (snapshot.scopedFigureCount !== snapshot.visiblePeople) {
+    failures.push(`rendered portrait figure count did not match visible people: ${snapshot.scopedFigureCount} !== ${snapshot.visiblePeople}`);
+  }
+  if (snapshot.scopedImageCount > snapshot.visiblePeople) {
+    failures.push(`rendered more portrait images than visible people: ${snapshot.scopedImageCount} > ${snapshot.visiblePeople}`);
+  }
+  if (snapshot.totalPeople <= 0 || snapshot.totalPeople > 80) {
+    failures.push(`people page left current public people bounds: ${snapshot.totalPeople}`);
+  }
+  if (snapshot.fullPoolCount > 0) {
+    failures.push(`people page exposed full portrait pool count: ${snapshot.fullPoolCount}`);
+  }
+  if (snapshot.eagerImages > 0) {
+    failures.push(`people page rendered non-lazy portrait images: ${snapshot.eagerImages}`);
+  }
+
+  const signatureRefSet = new Set(snapshot.signaturePortraitRefs);
+  const unsafeRefs = snapshot.pagePortraitRefs.filter((portraitRef) => unsafePortraitRefTokenPattern.test(portraitRef));
+  const signatureRefsInDom = snapshot.pagePortraitRefs.filter((portraitRef) => signatureRefSet.has(portraitRef));
+  const malformedScopedRefs = snapshot.scopedPortraitRefs.filter((portraitRef) => !/^portrait-[a-z0-9][a-z0-9_-]{0,160}$/i.test(portraitRef));
+  if (unsafeRefs.length) failures.push(`page exposed unsafe portraitRef token(s): ${[...new Set(unsafeRefs)].join(", ")}`);
+  if (signatureRefsInDom.length) failures.push(`page rendered signature NPC portrait ref(s): ${[...new Set(signatureRefsInDom)].join(", ")}`);
+  if (malformedScopedRefs.length) failures.push(`people ledger rendered malformed portraitRef(s): ${[...new Set(malformedScopedRefs)].join(", ")}`);
+
+  if (resourceSnapshot) {
+    if (resourceSnapshot.fullManifestRequests > 0) {
+      failures.push(`people page requested full source manifest ${resourceSnapshot.fullManifestRequests} time(s)`);
+    }
+    if (resourceSnapshot.portraitMainRequests > 8) {
+      failures.push(`people page requested too many main portraits: ${resourceSnapshot.portraitMainRequests}`);
+    }
+    if (resourceSnapshot.portraitThumbRequests > 8) {
+      failures.push(`people page requested too many portrait thumbnails: ${resourceSnapshot.portraitThumbRequests}`);
+    }
+    if (resourceSnapshot.portraitPlaceholderRequests > 8) {
+      failures.push(`people page requested too many portrait placeholders: ${resourceSnapshot.portraitPlaceholderRequests}`);
+    }
+  }
+
+  if (failures.length) {
+    throw new Error(`${label} portrait runtime isolation failed: ${failures.join("; ")}`);
   }
 }
 
@@ -2146,6 +2529,7 @@ async function runClientSmoke(options = {}) {
   });
   const pageErrors = [];
   const unsafeApiRequests = [];
+  const manifestRequests = [];
   const screenshots = [];
 
   try {
@@ -2158,6 +2542,9 @@ async function runClientSmoke(options = {}) {
         if (unsafeClientApiPathPatterns.some((pattern) => pattern.test(pathname))) {
           unsafeApiRequests.push(pathname);
         }
+        if (pathname === runtimeAssetManifestPath || pathname === sourceAssetManifestPath) {
+          manifestRequests.push(pathname);
+        }
       } catch {
       }
     });
@@ -2165,7 +2552,8 @@ async function runClientSmoke(options = {}) {
     screenshots.push(await assertReactClientPage(page, baseUrl, "/", "s74-react-home-desktop", options.screenshotsDir));
     await assertReviewedBackgroundVisual(page, ".homeBackdrop", "S77.3 desktop home backdrop");
     await assertClientResourceBudget(page, "S77.5 desktop home", CLIENT_RESOURCE_BUDGETS.home);
-    await assertManifestRuntimeSafety(page, baseUrl);
+    await assertManifestRuntimeSafety(baseUrl);
+    assertRuntimeManifestRequestOnly(manifestRequests, "S88.11 desktop home");
     const mockStart = await startMockGameThroughHome(page, options.screenshotsDir);
     const startedSessionId = mockStart.sessionId;
     screenshots.push(mockStart.screenshot);
@@ -2247,7 +2635,8 @@ async function runClientSmoke(options = {}) {
     );
     await page.locator(".peopleLedgerList").scrollIntoViewIfNeeded();
     await waitForVisiblePortraitImages(page, ".peopleLedgerList", "S77.5 desktop people ledger");
-    await assertClientResourceBudget(page, "S77.5 desktop people", CLIENT_RESOURCE_BUDGETS.people);
+    const peopleResourceSnapshot = await assertClientResourceBudget(page, "S77.5 desktop people", CLIENT_RESOURCE_BUDGETS.people);
+    assertRuntimeManifestRequestOnly(manifestRequests, "S88.11 desktop people");
     const portraitLedger = await page.evaluate(() => {
       const grid = document.querySelector(".peopleLedgerList");
       const images = [...document.querySelectorAll(".peopleLedgerList img")];
@@ -2274,6 +2663,7 @@ async function runClientSmoke(options = {}) {
     if (portraitLedger.localOrRawLeaks.length) {
       throw new Error(`People ledger leaked forbidden text: ${portraitLedger.localOrRawLeaks.join(", ")}`);
     }
+    await assertPeoplePortraitRuntimeSafety(page, "S88.11 desktop people ledger", peopleResourceSnapshot);
     await assertPortraitImagesLoaded(page, ".peopleLedgerList", "S77.3 desktop people ledger");
     await page.getByRole("button", { name: /查看.*高清立绘/ }).first().click();
     await page.locator("[data-portrait-viewer='true']").waitFor({ timeout: 10000 });
@@ -2604,9 +2994,11 @@ if (require.main === module) {
 
 module.exports = {
   CLIENT_RESOURCE_BUDGETS,
+  assertRuntimeManifestRequestOnly,
   getResourceBudgetFailures,
   getResourceBudgetSnapshot,
   getPlayerFacingCopyLeakFailures,
+  getRuntimeManifestSafetyFailures,
   getSafetyPollutionFailures,
   getTextOverlapFailures,
   getTextOverflowFailures,

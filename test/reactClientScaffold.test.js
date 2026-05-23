@@ -10,9 +10,11 @@ const {
 const { resolveClientBuildStatus } = require("../scripts/ensureClientBuild");
 const {
   CLIENT_RESOURCE_BUDGETS,
+  assertRuntimeManifestRequestOnly,
   getResourceBudgetFailures,
   getResourceBudgetSnapshot,
   getPlayerFacingCopyLeakFailures,
+  getRuntimeManifestSafetyFailures,
   getSafetyPollutionFailures,
   getTextOverlapFailures,
   getTextOverflowFailures,
@@ -318,6 +320,68 @@ test("S88.11 runtime manifest QA rejects unsafe portrait and authoring metadata"
     }
     return true;
   });
+});
+
+test("S88.11 client smoke verifies runtime manifest and people portrait isolation", () => {
+  const clientSmokeSource = readText("scripts/clientSmoke.js");
+  const committedRuntimeManifest = JSON.parse(fs.readFileSync(runtimeManifestPath, "utf8"));
+  const portraitIndex = committedRuntimeManifest.assets.findIndex((asset) => asset.category === "portrait");
+  assert.notEqual(portraitIndex, -1);
+
+  assert.deepEqual(getRuntimeManifestSafetyFailures(committedRuntimeManifest), []);
+  assert.doesNotThrow(() => assertRuntimeManifestRequestOnly(["/assets/ui/ink-ui-runtime-manifest.json"], "fixture"));
+  assert.throws(
+    () => assertRuntimeManifestRequestOnly(["/assets/ui/ink-ui-runtime-manifest.json", "/assets/ui/ink-ui-manifest.json"], "fixture"),
+    /full source manifest/
+  );
+  assert.throws(
+    () => assertRuntimeManifestRequestOnly([], "fixture"),
+    /did not request runtime manifest/
+  );
+
+  const pollutedRuntimeManifest = JSON.parse(JSON.stringify(committedRuntimeManifest));
+  pollutedRuntimeManifest.assets[portraitIndex] = {
+    ...pollutedRuntimeManifest.assets[portraitIndex],
+    reviewStatus: "review_pending",
+    promptSummary: "完整 prompt 原文：E:\\LSMNQ\\artifacts\\source.png",
+    lazyLoad: {
+      ...pollutedRuntimeManifest.assets[portraitIndex].lazyLoad,
+      allowEagerLoad: true
+    },
+    source: {
+      localHighResSourcePath: "E:\\LSMNQ\\artifacts\\portrait-source.png"
+    }
+  };
+  const failures = getRuntimeManifestSafetyFailures(pollutedRuntimeManifest).join("\n");
+  for (const expectedFragment of [
+    "reviewStatus",
+    "promptSummary",
+    "allowEagerLoad",
+    "localHighResSourcePath",
+    "artifacts"
+  ]) {
+    assert.match(failures, new RegExp(expectedFragment));
+  }
+
+  assert.match(clientSmokeSource, /sourceAssetManifestPath = "\/assets\/ui\/ink-ui-manifest\.json"/);
+  assert.match(clientSmokeSource, /assertRuntimeManifestRequestOnly/);
+  assert.match(clientSmokeSource, /getRuntimeManifestSafetyFailures/);
+  assert.match(clientSmokeSource, /fetch\(`\$\{baseUrl\}\$\{runtimeAssetManifestPath\}`/);
+  assert.doesNotMatch(clientSmokeSource, /assertManifestRuntimeSafety\(page,\s*baseUrl\)/);
+  assert.match(clientSmokeSource, /runtimeManifestUnsafeTextPattern/);
+  assert.match(clientSmokeSource, /raw.*provider.*prompt|provider.*prompt.*raw/s);
+  assert.match(clientSmokeSource, /localHighResSourcePath/);
+  assert.match(clientSmokeSource, /source\[_ -\]\?path/);
+  assert.match(clientSmokeSource, /api\[_ -\]\?key/);
+  assert.match(clientSmokeSource, /assertPeoplePortraitRuntimeSafety/);
+  assert.match(clientSmokeSource, /data-portrait-ref/);
+  assert.match(clientSmokeSource, /data-visible-portraits/);
+  assert.match(clientSmokeSource, /signature_npc_pool/);
+  assert.match(clientSmokeSource, /portrait_pool_signature_npc_s73_10/);
+  assert.match(clientSmokeSource, /important_npc/);
+  assert.match(clientSmokeSource, /portraitMainRequests > 8/);
+  assert.match(clientSmokeSource, /portraitThumbRequests > 8/);
+  assert.match(clientSmokeSource, /portraitPlaceholderRequests > 8/);
 });
 
 test("S77.5 client smoke resource budget classifies first-screen and lazy resources", () => {
