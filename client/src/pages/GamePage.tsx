@@ -1,5 +1,5 @@
 import { Link, NavLink, Outlet, useLocation, useParams } from "react-router";
-import { BookOpen, FileText, Landmark, Map, Package, ScrollText, Settings, Users } from "lucide-react";
+import { BookOpen, FileText, Home, Landmark, Map, Package, ScrollText, Users } from "lucide-react";
 import { useEffect, useMemo, type CSSProperties } from "react";
 import { useAssetRegistry } from "../assets/useAssetRegistry";
 import { EmperorPanel } from "../components/EmperorPanel";
@@ -116,8 +116,7 @@ const gameTabs = [
   { id: "archive", label: "史册", icon: ScrollText },
   { id: "exam", label: "科举", icon: BookOpen },
   { id: "ranking", label: "皇榜", icon: FileText },
-  { id: "court", label: "朝议", icon: Landmark },
-  { id: "settings", label: "印匣", icon: Settings }
+  { id: "court", label: "朝议", icon: Landmark }
 ] as const;
 
 const independentSessionRouteIds = new Set(["people", "inventory", "archive", "exam", "ranking", "court", "settings"]);
@@ -219,7 +218,7 @@ export function GamePage() {
   ];
   const activeSafeViewCount = safeViewItems.filter((item) => item.ready).length;
   const isIndependentMapRoute = location.pathname.endsWith("/map");
-  const independentRouteId = gameTabs.find((tab) => location.pathname.endsWith(`/${tab.id}`) && independentSessionRouteIds.has(tab.id))?.id ?? "";
+  const independentRouteId = getIndependentSessionRouteId(location.pathname);
   const isGameRootRoute = location.pathname.replace(/\/+$/, "") === `/game/${sessionId}`;
 
   useEffect(() => {
@@ -262,13 +261,19 @@ export function GamePage() {
 
   if (!routeSessionSupported && isGameRootRoute) {
     return (
-      <section className="plainPage routeRecoveryPage" aria-labelledby="game-route-recovery-title">
-        <p className="eyebrow">案卷未载</p>
-        <h1 id="game-route-recovery-title">主卷不可读</h1>
-        <p>此案卷编号不在本地可读范围内。请从首页新开一卷，或续读已保存案卷。</p>
-        <div className="buttonRow" aria-label="案卷去处">
+      <section className="plainPage routeRecoveryPage statePage" aria-labelledby="game-route-recovery-title">
+        <div className="statePageSeal" aria-hidden="true">
+          <ScrollText size={30} />
+        </div>
+        <div className="statePageCopy">
+          <p className="eyebrow">案卷未载</p>
+          <h1 id="game-route-recovery-title">主卷不可读</h1>
+          <p>此案卷编号不在本地可读范围内。请从首页新开一卷，或续读已保存案卷。</p>
+        </div>
+        <div className="buttonRow statePageActions" aria-label="案卷去处">
           <Link className="paperLink" to="/">
-            归首页
+            <Home size={16} aria-hidden="true" />
+            <span>归首页</span>
           </Link>
         </div>
       </section>
@@ -492,6 +497,11 @@ export function GamePage() {
       />
     </section>
   );
+}
+
+function getIndependentSessionRouteId(pathname: string) {
+  const routeId = pathname.replace(/\/+$/, "").split("/").at(-1) ?? "";
+  return independentSessionRouteIds.has(routeId) ? routeId : "";
 }
 
 function SessionRouteNav({

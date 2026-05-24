@@ -887,17 +887,17 @@ function LocalSurfaceHost({ activeSurface }: { readonly activeSurface: LocalSurf
         <p className="eyebrow">{entry.eyebrow}</p>
         <h2 id={`${entry.id}-title`}>{entry.title}</h2>
         <p>{entry.description}</p>
-        <dl className="surfaceSafetyList" aria-label={`${entry.title}安全边界`}>
+        <dl className="surfaceSafetyList" aria-label={`${entry.title}案卷口径`}>
           <div>
-            <dt>数据来源</dt>
+            <dt>卷宗取材</dt>
             <dd>{topicView ? topicSourceSummary(topicView) : entry.dataSource}</dd>
           </div>
           <div>
-            <dt>{topicView ? "材料状态" : "占位状态"}</dt>
+            <dt>{topicView ? "材料进度" : "案卷状态"}</dt>
             <dd>{topicView ? topicMaterialSummary(topicView) : entry.emptyState}</dd>
           </div>
           <div>
-            <dt>裁决边界</dt>
+            <dt>回批口径</dt>
             <dd>{safeSurfaceText(topicView?.authorityBoundary || entry.safetyNote, entry.safetyNote, 140)}</dd>
           </div>
         </dl>

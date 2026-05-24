@@ -2510,6 +2510,9 @@ describe("S74.1 React client shell", () => {
 
     renderRoute(`/game/${sessionId}/settings`);
 
+    expect(await screen.findByRole("article", { name: "案头工具" })).toBeTruthy();
+    expect(screen.queryByDisplayValue("900")).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: "打开推演设置" }));
     await screen.findByDisplayValue("900");
     expect(screen.getByRole("button", { name: /保存全局设置/ })).toHaveProperty("disabled", true);
     fireEvent.change(screen.getByDisplayValue("900"), { target: { value: "1200" } });
@@ -2583,6 +2586,7 @@ describe("S74.1 React client shell", () => {
 
     renderRoute(`/game/${sessionId}/settings`);
 
+    fireEvent.click(await screen.findByRole("button", { name: "打开推演设置" }));
     await screen.findByDisplayValue("900");
     fireEvent.click(screen.getByRole("button", { name: /重新载入/ }));
     await waitFor(() => expect(screen.getByRole("button", { name: /载入中/ })).toBeTruthy());
@@ -2598,14 +2602,14 @@ describe("S74.1 React client shell", () => {
     expect(document.body.textContent || "").not.toMatch(/OPENAI_API_KEY|raw prompt|data\/sessions|base URL/i);
   });
 
-  it("keeps a superseded settings panel save editable when another mounted panel saves later", async () => {
+  it("keeps the settings route as a directory into one inkbox tool surface", async () => {
     const sessionId = "89898989-8989-4898-8989-898989898989";
-    const aiPayload = (tokens: number, preset = "balanced") => ({
+    const aiPayload = (tokens: number) => ({
       sessionId: "global",
       scope: "global",
       updatedAt: "2026-05-22T12:00:00.000Z",
       aiSettingsView: {
-        preset,
+        preset: "balanced",
         presets: [
           { id: "balanced", label: "均衡" },
           { id: "fast", label: "迅捷" }
@@ -2632,14 +2636,7 @@ describe("S74.1 React client shell", () => {
       },
       aiInvocationSummaryView: { safe: true }
     });
-    const firstSave = deferredResponse<ReturnType<typeof aiPayload>>();
-    const secondSave = deferredResponse<ReturnType<typeof aiPayload>>();
-    let saveCalls = 0;
-    const fetchMock = vi.fn((url: string, options?: RequestInit) => {
-      if (url === "/api/ai/settings/global" && options?.method === "POST") {
-        saveCalls += 1;
-        return saveCalls === 1 ? firstSave.response : secondSave.response;
-      }
+    const fetchMock = vi.fn((url: string) => {
       if (url === "/api/ai/settings/global") {
         return Promise.resolve(new Response(JSON.stringify(aiPayload(900)), {
           status: 200,
@@ -2659,36 +2656,25 @@ describe("S74.1 React client shell", () => {
 
     renderRoute(`/game/${sessionId}/settings`);
 
-    await screen.findByDisplayValue("900");
-    const routePanel = screen.getByRole("article", { name: "推演设置" });
-    const routeScope = within(routePanel);
-    fireEvent.change(routeScope.getByDisplayValue("900"), { target: { value: "1200" } });
-    fireEvent.click(routeScope.getByRole("button", { name: /保存全局设置/ }));
-    expect(routeScope.getByRole("button", { name: /保存中/ })).toHaveProperty("disabled", true);
+    const routePanel = await screen.findByRole("article", { name: "案头工具" });
+    expect(within(routePanel).getByText("推演设置")).toBeTruthy();
+    expect(within(routePanel).getByText("显示偏好")).toBeTruthy();
+    expect(within(routePanel).getByText("旧案卷")).toBeTruthy();
+    expect(within(routePanel).getByText("案卷摘要")).toBeTruthy();
+    expect(screen.queryByDisplayValue("900")).toBeNull();
+    expect(fetchMock.mock.calls.filter(([url]) => url === "/api/ai/settings/global")).toHaveLength(0);
 
-    fireEvent.click(screen.getByRole("button", { name: "打开印匣" }));
+    fireEvent.click(within(routePanel).getByRole("button", { name: "打开显示偏好" }));
     expect(screen.getByRole("complementary", { name: "印匣" })).toBeTruthy();
-    const supersedingSave = useGameSessionStore.getState().updateGlobalAiSettings({
-      preset: "fast",
-      taskRoutes: {
-        narrator: {
-          provider: "mock",
-          model: "mock",
-          maxOutputTokens: 1300,
-          toolBudget: 1,
-          temperature: 0.35
-        }
-      }
-    });
-    secondSave.resolvePayload(aiPayload(1300, "fast"));
-    await supersedingSave;
+    expect(screen.getByRole("tab", { name: "显示", selected: true })).toBeTruthy();
+    expect(screen.getByLabelText("动效")).toBeTruthy();
+    fireEvent.keyDown(document, { key: "Escape" });
+    await waitFor(() => expect(useUiStateStore.getState().activeDrawer).toBeNull());
 
-    firstSave.resolvePayload(aiPayload(1200, "balanced"));
-    await routeScope.findByText(/保存请求已被新的设置请求取代/);
-    expect(routeScope.getByDisplayValue("1200")).toBeTruthy();
-    expect(routeScope.getByText("未保存")).toBeTruthy();
-    expect(routeScope.getByRole("button", { name: /保存全局设置/ })).toHaveProperty("disabled", false);
-    expect(routeScope.queryByText("保存中")).toBeNull();
+    fireEvent.click(within(routePanel).getByRole("button", { name: "打开推演设置" }));
+    await screen.findByDisplayValue("900");
+    expect(fetchMock.mock.calls.filter(([url]) => url === "/api/ai/settings/global")).toHaveLength(1);
+    expect(document.querySelectorAll(".aiSettingsPanel")).toHaveLength(1);
     expect(document.body.textContent || "").not.toMatch(/OPENAI_API_KEY|raw prompt|data\/sessions|base URL/i);
   });
 
@@ -2852,9 +2838,10 @@ describe("S74.1 React client shell", () => {
     fireEvent.click(trigger);
 
     const dialog = screen.getByRole("dialog", { name: "拟圣旨" });
-    expect(dialog.textContent || "").toContain("数据来源");
-    expect(dialog.textContent || "").toContain("占位状态");
+    expect(dialog.textContent || "").toContain("卷宗取材");
+    expect(dialog.textContent || "").toContain("案卷状态");
     expect(dialog.textContent || "").toContain("候案卷回批");
+    expect(dialog.textContent || "").not.toMatch(/数据来源|裁决边界|服务器裁决|draftContext|schema|manifest/i);
     expect(dialog.textContent || "").not.toMatch(/raw audit|provider payload|hiddenNotes|data\/sessions|OPENAI_API_KEY/i);
     const closeSurfaceButton = screen.getByRole("button", { name: "关闭专题" });
     const writeDraftButton = screen.getByRole("button", { name: "写入奏折草稿" });

@@ -917,6 +917,80 @@ button:disabled:hover {
     radial-gradient(circle at 86% 26%, rgba(31, 67, 65, 0.1), transparent 26%);
 }
 
+.statePage {
+  position: relative;
+  isolation: isolate;
+  justify-items: start;
+  width: min(760px, calc(100% - 32px));
+  min-height: min(680px, calc(100vh - 66px));
+  margin-top: clamp(18px, 7vh, 72px);
+  margin-bottom: clamp(18px, 7vh, 72px);
+  padding: clamp(26px, 5vw, 46px);
+  overflow: hidden;
+  border: 1px solid rgba(84, 60, 43, 0.24);
+  background:
+    var(--qq-material-red-smudge) right -38px top -34px / 160px 160px no-repeat,
+    var(--qq-material-ink-corner) left -16px bottom -18px / 132px 132px no-repeat,
+    linear-gradient(135deg, rgba(255, 252, 238, 0.9), rgba(230, 211, 178, 0.78)),
+    var(--qq-material-folded) center / cover no-repeat;
+  box-shadow:
+    var(--qq-shadow-paper-lift),
+    inset 0 0 0 1px rgba(255, 252, 238, 0.42);
+  animation: statePageArrive 420ms cubic-bezier(0.2, 0.82, 0.22, 1) both;
+}
+
+.statePage::before {
+  position: absolute;
+  inset: 16px;
+  border: 1px solid rgba(142, 47, 39, 0.16);
+  content: "";
+  pointer-events: none;
+}
+
+.statePage::after {
+  position: absolute;
+  right: clamp(18px, 6vw, 56px);
+  bottom: clamp(16px, 5vw, 42px);
+  width: clamp(92px, 18vw, 142px);
+  aspect-ratio: 1;
+  border: 2px solid rgba(142, 47, 39, 0.18);
+  background: rgba(165, 58, 47, 0.06);
+  content: "";
+  filter: blur(0.2px);
+  transform: rotate(-8deg);
+  pointer-events: none;
+}
+
+.statePageSeal {
+  display: grid;
+  width: 58px;
+  height: 58px;
+  place-items: center;
+  border: 1px solid rgba(142, 47, 39, 0.44);
+  background:
+    linear-gradient(135deg, rgba(255, 248, 230, 0.82), rgba(218, 190, 148, 0.62)),
+    url("/assets/ui/materials/seal-box-texture-v1.webp") center / cover no-repeat;
+  color: #7b241f;
+  box-shadow:
+    0 12px 24px rgba(42, 29, 20, 0.12),
+    inset 0 0 0 4px rgba(255, 236, 211, 0.18);
+}
+
+.statePageCopy {
+  display: grid;
+  gap: 8px;
+  max-width: 640px;
+}
+
+.statePageCopy h1,
+.statePageCopy p {
+  margin: 0;
+}
+
+.statePageActions {
+  margin-top: 6px;
+}
+
 .gameSurface.hasMemorialComposer {
   padding-bottom: clamp(230px, 28vh, 300px);
 }
@@ -4733,6 +4807,117 @@ button:disabled:hover {
   min-width: 0;
 }
 
+.settingsDirectoryRoute {
+  gap: clamp(18px, 3vw, 26px);
+}
+
+.settingsDirectoryHeader {
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: 16px;
+}
+
+.settingsDirectorySeal,
+.settingsDirectoryCardIcon {
+  display: grid;
+  place-items: center;
+  color: #7b241f;
+}
+
+.settingsDirectorySeal {
+  width: 64px;
+  height: 64px;
+  border: 1px solid rgba(142, 47, 39, 0.48);
+  background:
+    linear-gradient(135deg, rgba(255, 252, 238, 0.86), rgba(220, 194, 154, 0.7)),
+    url("/assets/ui/materials/seal-box-texture-v1.webp") center / cover no-repeat;
+  box-shadow:
+    0 14px 26px rgba(42, 29, 20, 0.12),
+    inset 0 0 0 4px rgba(255, 236, 211, 0.18);
+}
+
+.settingsDirectoryGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.settingsDirectoryCard {
+  position: relative;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 12px;
+  min-width: 0;
+  overflow: hidden;
+  border: 1px solid rgba(84, 60, 43, 0.2);
+  background:
+    linear-gradient(135deg, rgba(255, 252, 238, 0.72), rgba(225, 205, 171, 0.54)),
+    var(--qq-material-xuan) center / 520px repeat;
+  padding: 14px;
+  box-shadow:
+    0 12px 26px rgba(42, 29, 20, 0.08),
+    inset 0 0 0 1px rgba(255, 252, 238, 0.34);
+  transition: border-color 160ms ease, box-shadow 160ms ease, transform 160ms ease;
+}
+
+.settingsDirectoryCard:hover,
+.settingsDirectoryCard:focus-within {
+  border-color: rgba(142, 47, 39, 0.42);
+  box-shadow:
+    0 16px 32px rgba(42, 29, 20, 0.12),
+    inset 0 0 0 1px rgba(255, 252, 238, 0.46);
+  transform: translateY(-1px);
+}
+
+.settingsDirectoryCard::after {
+  position: absolute;
+  right: -28px;
+  top: -30px;
+  width: 88px;
+  aspect-ratio: 1;
+  border: 1px solid rgba(142, 47, 39, 0.12);
+  background: rgba(165, 58, 47, 0.04);
+  content: "";
+  transform: rotate(10deg);
+  pointer-events: none;
+}
+
+.settingsDirectoryCardIcon {
+  width: 38px;
+  height: 38px;
+  border: 1px solid rgba(142, 47, 39, 0.28);
+  background: rgba(255, 248, 230, 0.68);
+}
+
+.settingsDirectoryCard h2,
+.settingsDirectoryCard p,
+.settingsDirectoryFooter p {
+  margin: 0;
+}
+
+.settingsDirectoryCard h2 {
+  color: #3b271d;
+  font-size: 1.05rem;
+}
+
+.settingsDirectoryCard p,
+.settingsDirectoryFooter p {
+  color: #5e4a37;
+  line-height: 1.65;
+}
+
+.settingsDirectoryCard .paperButton {
+  grid-column: 1 / -1;
+  justify-self: start;
+}
+
+.settingsDirectoryFooter {
+  display: grid;
+  gap: 12px;
+  border-top: 1px solid rgba(84, 60, 43, 0.16);
+  padding-top: 14px;
+}
+
 .routePanelHeader {
   display: grid;
   gap: 6px;
@@ -5491,6 +5676,24 @@ button:disabled:hover {
     padding: 12px;
   }
 
+  .settingsDirectoryHeader,
+  .settingsDirectoryGrid,
+  .settingsDirectoryCard {
+    grid-template-columns: 1fr;
+  }
+
+  .settingsDirectorySeal {
+    width: 54px;
+    height: 54px;
+  }
+
+  .statePage {
+    width: min(100% - 28px, 760px);
+    margin-top: 16px;
+    margin-bottom: 16px;
+    padding: 24px 18px;
+  }
+
   .topNav a,
   .sessionNav a,
   .paperLink {
@@ -5950,6 +6153,7 @@ button:disabled:hover {
   .homeStartSeal,
   .homeStartSeal::after,
   .homeStartSeal[data-state="loading"]::before,
+  .statePage,
   .sessionRouteShell > .examFullScreen,
   .sessionRouteShell > .courtSurfacePage,
   .sessionRouteShell > .surfacePanel,
@@ -5997,6 +6201,20 @@ button:disabled:hover {
     filter: blur(0);
     opacity: 1;
     transform: translateY(0);
+  }
+}
+
+@keyframes statePageArrive {
+  from {
+    filter: blur(1px);
+    opacity: 0;
+    transform: translateY(10px) scale(0.992);
+  }
+
+  to {
+    filter: blur(0);
+    opacity: 1;
+    transform: translateY(0) scale(1);
   }
 }
 

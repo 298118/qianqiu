@@ -98,7 +98,7 @@ const unsafeRoleCycleFragments = [
   "开发诊断"
 ] as const;
 
-const roleCycleRouteIds = new Set(["game", "map", "people", "inventory", "archive", "exam", "ranking", "court", "settings"]);
+const roleCycleRouteIds = new Set(["game", "map", "people", "inventory", "archive", "exam", "ranking", "court"]);
 const roleCycleSurfaceIds = new Set<LocalSurface>([
   "memorial-review",
   "edict-draft",

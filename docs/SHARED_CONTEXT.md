@@ -20,7 +20,7 @@
 - Frontend: React + TypeScript + Vite 在 `client/`，生产构建在 `dist/client/`，Express 默认 `/` 服务 React SPA。React Router Data Mode 管理首页、主卷、舆图、人物、囊箧、史册、科举、皇榜、朝议和设置。旧 `public/index.html`、`public/app.js`、`public/styles.css`、`public/mapPanel.js` 只作迁移参考；`public/assets/`、`public/vendor/`、`public/mapRenderer.js` 继续提供已审核素材和 S72 地图 runtime。
 - Backend: Node.js + Express，当前以 CommonJS JavaScript 为主。S86 已建立渐进 TypeScript 检查地基，`npm run typecheck:server` 覆盖契约、API/view 类型、安全 projection、AI schema/provider facade、storage adapter 和核心 resolver 的首批边界；S87 已完成 route/API response shape 首轮覆盖，`src/contracts/serverContracts.ts` 固定 public response，`src/routes/routeResponses.js` 用局部 `@ts-check` helper 接入大型 route 并运行时拒绝 public `worldState` raw ledger key。不得为了启用类型检查一次性 whole-file `@ts-check` 大型 route 文件，也不得放宽 raw ledger 剥离、Ajv/runtime 校验或服务器裁决。
 - Storage: 默认 JSON session files under `data/sessions/`；可选 `STORAGE_ADAPTER=sqlite` 使用本地 `schema_migrations`、`world_sessions`、audit tables、`geo_*`、`people_*`、`office_*`、`event_archive_index`、`prompt_retrieval_index` 和 `safe_search_index`。SQLite 派生行只从 `world_sessions.world_state_json` 单向修复，不是玩家 API、prompt 或服务器裁决的 raw truth source。
-- Roadmap status: S49-S87 已完成并归档或压缩记录。S88 全面系统打磨已从活动台账长表迁出，阶段性归档见 `docs/QIANQIU_POLISHING_ARCHIVE.md`，原规划见 `docs/QIANQIU_POLISHING_ROADMAP.md`；S89.1 已完成 React 玩家可见文案与移动端覆盖层润色，S89.2 已完成 React 视觉矩阵、轻量专题页壳与高清立绘查看器公开说明，活动台账见 `docs/DEVELOPMENT_STEPS.md`。若继续 S88/S89 残余方向，应继续新开可审查小步骤，而不是把 S88 长流水复制回活动台账。
+- Roadmap status: S49-S87 已完成并归档或压缩记录。S88 全面系统打磨已从活动台账长表迁出，阶段性归档见 `docs/QIANQIU_POLISHING_ARCHIVE.md`，原规划见 `docs/QIANQIU_POLISHING_ROADMAP.md`；S89.1 已完成 React 玩家可见文案与移动端覆盖层润色，S89.2 已完成 React 视觉矩阵、轻量专题页壳与高清立绘查看器公开说明，S89.3 已完成 React 设置入口、专题文案与错误空态收束，活动台账见 `docs/DEVELOPMENT_STEPS.md`。若继续 S88/S89 残余方向，应继续新开可审查小步骤，而不是把 S88 长流水复制回活动台账。
 - Current collaboration: 2026-05-14 起停止 Gemini CLI 协作。后续开发、素材生成/审核、验证、文档同步和 Git 提交由 Codex 负责；用户已授权本仓库使用 Codex 子代理，实施子代理不得提交，提交前复审子代理必须只读。
 - Current local `.env`: 可能含用户 provider keys。`.env` 被 Git 忽略，不能打印、复制到文档或提交。
 
@@ -65,24 +65,22 @@
 
 ## Current Work Note
 
-2026-05-24：S89.2 完成 React 视觉矩阵、轻量专题页壳与高清立绘查看器公开说明，实现提交 `b8a564514498c7de6c6d7183597df51bbab5e662`。`npm run smoke:browser:visual` 现在是产品视觉矩阵便捷入口，会在默认 React browser smoke 基线上写出 `artifacts/browser-visual-matrix`，并要求首页、主卷、舆图、人物、囊箧、史册、科举、皇榜、朝议、设置和移动端印匣截图标签完整；脚本新增囊箧桌面/移动截图、囊箧摘要/工作台/移置/账解 section 检查、首页朱印中文字体守门和视觉矩阵 artifact 完整性检查。
+2026-05-24：S89.3 完成 React 设置入口、专题文案与错误空态收束。主卷和轻量专题壳不再把“印匣”作为显眼功能页签；右上角仍是唯一自然设置入口，`/game/:sessionId/settings` 只保留为刷新/旧路由可达的“案头工具”目录，四张卡片分别打开同一个印匣抽屉中的推演、显示、旧案和摘要 tab。角色循环入口同步移除 settings route，避免从身份循环重新把设置当作玩法路由。
 
-人物、囊箧、史册现在与科举/皇榜/朝议/设置一样使用轻量 `sessionRouteShell`，不再在独立专题页重复渲染主卷案头和底部奏折；史册标题提升为页面级 `h1`。高清立绘查看器补齐外貌介绍、公开传略和当前情况，文本只来自已审阅 runtime 画像元数据和人物安全摘要。本轮同时收束纸按钮伪元素，避免装饰红印撑大按钮滚动尺寸，修复地图页“筛舆图/写入行动”在真实浏览器文本溢出守门中的误报。样式层补齐专题壳、囊箧、账解、纸按钮的宣纸/折纸/朱印反馈，但不新增素材 manifest 条目。
+专题层案卷口径改为玩家可读表达：`SurfaceHost` 现在显示“卷宗取材 / 材料进度或案卷状态 / 回批口径”，并由 React 测试与 browser smoke 阻断“数据来源、裁决边界、服务器裁决、draftContext、schema、manifest”等玩家可见工程词。错误页、404 和畸形主卷恢复页统一使用 `statePage` 案卷空态壳，补图章、宣纸、墨角、动作按钮图标、进入动效、移动端单列和低动效降级。设置目录卡片补宣纸/朱印材质、hover/focus 抬升与安全污染守门。
 
-本轮只改 React 路由壳、前端样式、客户端 smoke/视觉矩阵脚本、前端测试 canary 和验收文档；不改后端 API/schema、AI 权限矩阵、prompt、provider facade、SQLite schema、存档格式、runtime manifest 字段或服务器裁决。人物、囊箧、史册仍只消费安全 view 和本地草稿；所有资产、交易、NPC、地图行动和专题入口继续由服务器复核。
+本轮只改 React 路由入口、前端样式、专题层文案、客户端 smoke、前端测试 canary 和验收文档；不改后端 API/schema、AI 权限矩阵、prompt、provider facade、SQLite schema、存档格式、runtime manifest 字段、素材 manifest 或服务器裁决。设置、专题、错误空态和角色循环入口仍只消费安全 view 或本地 UI 状态，不创建真实行动、交易、任免、考试、地图或 NPC 后果。
 
 本轮验证结果：
 
-- 已通过 `node --check scripts/clientSmoke.js`、`npm run typecheck:client`、`node --test test/reactClientScaffold.test.js`。
-- `npm run test:client` 本机多次命中 Vitest fork worker 启动超时，已用 `npx vitest --config vitest.config.mjs run --pool=vmThreads --fileParallelism=false --maxWorkers=1` 通过同一套客户端断言（6 files / 126 tests）；focused `people ledger|portrait viewer|inventory` 通过 7 tests。
-- 已通过 `npm run smoke:browser:visual`，串联完成 `npm run qa:runtime-manifest`、`npm run build:client`、`npm run budget:client` 和 React browser smoke；已目检首页、人物、囊箧桌面/移动、史册等关键截图。Vite 仍输出既有 `/assets/ui/...` runtime asset 与 chunk size warnings。
-- 已通过 `npm run check:docs-governance`、`node --test test/documentationGovernance.test.js`、`git diff --check`；`git diff --check` 只报告仓库既有 CRLF 提示。
-- 已通过完整 `npm test`（1159 tests）。
-- 提交前只读子代理复审已通过；复审指出囊箧边界文案清洗需补本地路径和 `manifest/schema/draftContext` 等工程词，本轮已补 `safeLabel()`、React 断言和 browser smoke 桌面/移动守门，复核后未发现阻断问题。
-- 实现提交后的哈希回填仅修改 `docs/DEVELOPMENT_STEPS.md` 与本文件，属于低风险纯文档改动，跳过子代理复审。
+- 已通过 `npm run typecheck:client`、`node --check scripts/clientSmoke.js`、`node --test test/reactClientScaffold.test.js`、`git diff --check`。
+- `npm run test:client` 本机仍命中既有 Vitest fork worker 启动超时：4 files / 84 tests 已通过，`client/src/state/uiState.test.ts` 与 `client/src/api/qianqiuClient.test.ts` worker 未启动；已用 `npx vitest --config vitest.config.mjs run --pool=vmThreads --fileParallelism=false --maxWorkers=1` 通过同一客户端套件（6 files / 126 tests）。Focused `App.test.tsx` 的 settings route、local surfaces 和 global AI settings 三组用例已通过。
+- 已通过 `npm run smoke:browser:visual`，串联完成 `npm run qa:runtime-manifest`、`npm run build:client`、`npm run budget:client` 和 React browser smoke；smoke 已覆盖单一右上角印匣入口、settings 目录刷新路由、专题层“卷宗取材/回批口径”文案和玩家可见污染守门，并写出 `artifacts/browser-visual-matrix`。Vite 仍输出既有 `/assets/ui/...` runtime asset 与 chunk size warnings。
+- 已通过 `npm run check:docs-governance`、`node --test test/documentationGovernance.test.js`、`git diff --check` 和完整 `npm test`（1160 tests）。
+- 开工前只读子代理已指出 S89.3 缺口；提交前最终只读 diff 复审已通过，未发现阻断问题。
 
 ## Next Recommended Step
 
-若继续前端产品化打磨，建议新开 S89.3，优先做首页旧案 loading/empty 细节、错误页/空态插画化、专题层 drawer/modal 过渡统一、史册大空白区域信息密度优化和更多页面的移动端长文本审查。若转向系统深度，优先候选包括更深关系后果、真实 keyed provider 长跑证据和视觉素材 QA 消费层巡检。
+若继续前端产品化打磨，建议新开 S89.4，优先做首页旧案 loading/empty 细节、史册大空白区域信息密度优化、专题层 drawer/modal 切换过渡统一、移动端长文本二轮审查和地图 tooltip/筛选动效进一步细化。若转向系统深度，优先候选包括更深关系后果、真实 keyed provider 长跑证据和视觉素材 QA 消费层巡检。
 
 无论下一步是什么，都必须继续从安全 view 重建 evidence，保持 proposal-only、browser-draft-only 和服务器裁决，不让浏览器 task、地图 layout、visual-only effect、NPC anchor、runtime manifest 元数据、world entity impact/recent impact、交游 evidence、world thread 或 draftContext 变成真实任务队列、资源结算器、关系/婚姻/弹劾/定罪/背叛裁决器。

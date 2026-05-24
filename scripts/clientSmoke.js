@@ -1363,7 +1363,8 @@ async function startMockGameThroughHome(page, screenshotsDir) {
       exam: byText.get("科举"),
       ranking: byText.get("皇榜"),
       court: byText.get("朝议"),
-      settings: byText.get("印匣"),
+      inkboxButtonCount: document.querySelectorAll("button[aria-label='打开印匣']").length,
+      settingsSessionLinks: allLinks.filter((link) => link.text === "印匣" || link.path.endsWith("/settings")),
       previewLinks: allLinks.filter((link) => link.path.includes("s74-preview")).map((link) => link.text),
       expected: {
         map: `/game/${id}/map`,
@@ -1371,8 +1372,7 @@ async function startMockGameThroughHome(page, screenshotsDir) {
         archive: `/game/${id}/archive`,
         exam: `/game/${id}/exam`,
         ranking: `/game/${id}/ranking`,
-        court: `/game/${id}/court`,
-        settings: `/game/${id}/settings`
+        court: `/game/${id}/court`
       }
     };
   }, sessionId);
@@ -1384,7 +1384,10 @@ async function startMockGameThroughHome(page, screenshotsDir) {
   if (entrypoints.exam !== entrypoints.expected.exam) failures.push(`exam link was ${entrypoints.exam}`);
   if (entrypoints.ranking !== entrypoints.expected.ranking) failures.push(`ranking link was ${entrypoints.ranking}`);
   if (entrypoints.court !== entrypoints.expected.court) failures.push(`court link was ${entrypoints.court}`);
-  if (entrypoints.settings !== entrypoints.expected.settings) failures.push(`settings link was ${entrypoints.settings}`);
+  if (entrypoints.inkboxButtonCount !== 1) failures.push(`inkbox button count was ${entrypoints.inkboxButtonCount}`);
+  if (entrypoints.settingsSessionLinks.length) {
+    failures.push(`settings still appeared as a session nav link: ${entrypoints.settingsSessionLinks.map((link) => `${link.text}:${link.path}`).join(", ")}`);
+  }
   if (entrypoints.previewLinks.length) failures.push(`runnable game shell still linked preview routes: ${entrypoints.previewLinks.join(", ")}`);
   if (failures.length) {
     throw new Error(`Default entry session links are not bound to the started Mock session: ${failures.join("; ")}`);
@@ -2599,32 +2602,32 @@ async function assertTopicSurfaces(page, sessionId, screenshotsDir) {
       return {
         dialogText,
         hasTitle: dialogText.includes(expectedLabel),
-        hasDataSource: dialogText.includes("数据来源"),
+        hasLedgerSource: dialogText.includes("卷宗取材"),
         hasMaterials: dialogText.includes("材料"),
         hasDeliberation: dialogText.includes("筹议"),
         hasDraft: dialogText.includes("草稿"),
-        hasResolverBoundary:
+        hasReplyBoundary:
+          dialogText.includes("回批口径") ||
           dialogText.includes("主卷定夺") ||
           dialogText.includes("案卷回批") ||
           dialogText.includes("案卷复核") ||
-          dialogText.includes("裁决权") ||
-          dialogText.includes("不写 canonical") ||
-          dialogText.includes("裁决") ||
           dialogText.includes("不直接") ||
           dialogText.includes("不能调用"),
         hiddenLeaks: tokens.filter((token) => bodyText.includes(token)),
+        playerFacingLeaks: dialogText.match(/数据来源|裁决边界|服务器裁决|draftContext|schema|manifest|provider payload|raw audit|hiddenNotes|OPENAI_API_KEY|data\/sessions|完整提示词|本地路径|密钥|sk-[a-z0-9_-]{6,}|[a-z]:[\\/]/gi) || [],
         forbiddenText: bodyText.match(/\/api\/game\/state|\/api\/dev\/session-diagnostics|provider payload|raw audit|hiddenNotes|OPENAI_API_KEY|data\/sessions|完整提示词|本地路径|密钥|sk-[a-z0-9_-]{6,}|[a-z]:[\\/]/gi) || []
       };
     }, { expectedLabel: label, tokens: hiddenTextTokens });
 
     const perSurfaceFailures = [];
     if (!dialogSnapshot.hasTitle) perSurfaceFailures.push("missing title");
-    if (!dialogSnapshot.hasDataSource) perSurfaceFailures.push("missing data source note");
+    if (!dialogSnapshot.hasLedgerSource) perSurfaceFailures.push("missing player-facing source note");
     if (!dialogSnapshot.hasMaterials) perSurfaceFailures.push("missing materials column");
     if (!dialogSnapshot.hasDeliberation) perSurfaceFailures.push("missing deliberation column");
     if (!dialogSnapshot.hasDraft) perSurfaceFailures.push("missing draft column");
-    if (!dialogSnapshot.hasResolverBoundary) perSurfaceFailures.push("missing resolver boundary");
+    if (!dialogSnapshot.hasReplyBoundary) perSurfaceFailures.push("missing player-facing reply boundary");
     if (dialogSnapshot.hiddenLeaks.length) perSurfaceFailures.push(`hidden text leaked: ${dialogSnapshot.hiddenLeaks.join(", ")}`);
+    if (dialogSnapshot.playerFacingLeaks.length) perSurfaceFailures.push(`player-facing topic terms leaked: ${dialogSnapshot.playerFacingLeaks.join(", ")}`);
     if (dialogSnapshot.forbiddenText.length) perSurfaceFailures.push(`unsafe text leaked: ${dialogSnapshot.forbiddenText.join(", ")}`);
     if (perSurfaceFailures.length) {
       throw new Error(`S76.12 topic surface ${label} smoke failed: ${perSurfaceFailures.join("; ")}`);
@@ -2961,17 +2964,38 @@ async function runClientSmoke(options = {}) {
     );
 
     const sessionRouteChecks = [
-      { label: "朝议", path: `/game/${startedSessionId}/court`, selector: "#court-title", screenshot: "s74-react-court-refresh-desktop" },
-      { label: "印匣", path: `/game/${startedSessionId}/settings`, selector: "#settings-title", screenshot: "s74-react-settings-refresh-desktop" }
+      { label: "朝议", path: `/game/${startedSessionId}/court`, selector: "#court-title", screenshot: "s74-react-court-refresh-desktop", viaNav: true },
+      { label: "印匣页", path: `/game/${startedSessionId}/settings`, selector: "#settings-title", screenshot: "s74-react-settings-refresh-desktop", viaNav: false }
     ];
     for (const route of sessionRouteChecks) {
-      await clickSessionNavRoute(page, route.label, route.path);
+      if (route.viaNav) {
+        await clickSessionNavRoute(page, route.label, route.path);
+      } else {
+        await page.goto(`${baseUrl}${route.path}`, { waitUntil: "networkidle" });
+      }
       await assertCurrentReactClientPage(page, route.path, route.screenshot.replace("-refresh", ""), null, {
         readySelector: route.selector
       });
       await assertIndependentSessionRouteShell(page, `S79.1 ${route.label}`);
       if (route.label === "朝议") {
         screenshots.push(await assertTopicSurfaces(page, startedSessionId, options.screenshotsDir));
+      } else {
+        const settingsRouteSnapshot = await page.evaluate(() => {
+          const text = document.body.innerText || "";
+          return {
+            hasDirectory: Boolean(document.querySelector(".settingsDirectoryRoute")),
+            hasCards: document.querySelectorAll(".settingsDirectoryCard").length,
+            hasAiSettingsPanel: Boolean(document.querySelector(".aiSettingsPanel")),
+            hasInkboxButton: Boolean(document.querySelector("button[aria-label='打开印匣']")),
+            forbiddenText: text.match(/数据来源|裁决边界|服务器裁决|draftContext|schema|manifest|provider payload|raw audit|hiddenNotes|OPENAI_API_KEY|data\/sessions|完整提示词|本地路径|密钥|sk-[a-z0-9_-]{6,}|[a-z]:[\\/]/gi) || []
+          };
+        });
+        if (!settingsRouteSnapshot.hasDirectory || settingsRouteSnapshot.hasCards !== 4 || settingsRouteSnapshot.hasAiSettingsPanel || !settingsRouteSnapshot.hasInkboxButton) {
+          throw new Error(`S89.3 settings directory route regressed: ${JSON.stringify(settingsRouteSnapshot)}`);
+        }
+        if (settingsRouteSnapshot.forbiddenText.length) {
+          throw new Error(`S89.3 settings route leaked unsafe/player-facing terms: ${settingsRouteSnapshot.forbiddenText.join(", ")}`);
+        }
       }
       screenshots.push(
         await assertRouteRefresh(page, route.path, route.screenshot, options.screenshotsDir, {

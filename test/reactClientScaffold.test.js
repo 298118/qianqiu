@@ -1292,9 +1292,12 @@ test("S79.1 session feature routes use a lightweight shell outside the main卷",
   const appTestSource = readText("client/src/__tests__/App.test.tsx");
   const clientSmokeSource = readText("scripts/clientSmoke.js");
   const styleSource = readText("client/src/styles/global.css");
+  const gameTabsBlock = gamePageSource.match(/const gameTabs = \[[\s\S]*?\] as const;/)?.[0] || "";
 
   assert.match(gamePageSource, /independentSessionRouteIds/);
   assert.match(gamePageSource, /"people", "inventory", "archive", "exam", "ranking", "court", "settings"/);
+  assert.match(gamePageSource, /getIndependentSessionRouteId/);
+  assert.doesNotMatch(gameTabsBlock, /settings|印匣/);
   assert.match(gamePageSource, /sessionRouteShell/);
   assert.match(gamePageSource, /SessionRouteNav/);
   assert.match(styleSource, /sessionRouteShell/);
@@ -1305,6 +1308,41 @@ test("S79.1 session feature routes use a lightweight shell outside the main卷",
   assert.match(clientSmokeSource, /rendered bottom memorial composer/);
   assert.match(appTestSource, /document\.querySelector\("\.gameCommandBar"\)\)\.toBeFalsy/);
   assert.match(appTestSource, /document\.querySelector\("\.gameMainDeck"\)\)\.toBeFalsy/);
+});
+
+test("S89.3 settings route is a directory into the single inkbox surface", () => {
+  const gamePageSource = readText("client/src/pages/GamePage.tsx");
+  const roleCycleSource = readText("client/src/components/RoleCycleSection.tsx");
+  const settingsPageSource = readText("client/src/pages/SettingsPage.tsx");
+  const surfaceHostSource = readText("client/src/components/SurfaceHost.tsx");
+  const appTestSource = readText("client/src/__tests__/App.test.tsx");
+  const clientSmokeSource = readText("scripts/clientSmoke.js");
+  const styleSource = readText("client/src/styles/global.css");
+  const roleCycleRouteSet = roleCycleSource.match(/const roleCycleRouteIds = new Set\([\s\S]*?\);/)?.[0] || "";
+
+  assert.match(settingsPageSource, /settingsDirectoryRoute/);
+  assert.match(settingsPageSource, /settingsCards/);
+  assert.match(settingsPageSource, /openInkbox\(tab\)/);
+  assert.match(settingsPageSource, /markOverlayTrigger/);
+  assert.match(settingsPageSource, /案头工具/);
+  assert.match(settingsPageSource, /此页只作案头整理/);
+  assert.doesNotMatch(settingsPageSource, /<AiSettingsPanel/);
+  assert.match(surfaceHostSource, /<AiSettingsPanel \/>/);
+  assert.match(surfaceHostSource, /aria-label="印匣分栏"/);
+  assert.match(gamePageSource, /independentSessionRouteIds = new Set\(\["people", "inventory", "archive", "exam", "ranking", "court", "settings"\]\)/);
+  assert.doesNotMatch(roleCycleRouteSet, /settings/);
+  assert.match(clientSmokeSource, /settings still appeared as a session nav link/);
+  assert.match(clientSmokeSource, /label: "印匣页"/);
+  assert.match(clientSmokeSource, /viaNav: false/);
+  assert.match(clientSmokeSource, /settingsDirectoryRoute/);
+  assert.match(clientSmokeSource, /hasAiSettingsPanel/);
+  assert.match(appTestSource, /keeps the settings route as a directory into one inkbox tool surface/);
+  assert.match(styleSource, /\.settingsDirectoryCard/);
+  assert.match(styleSource, /\.statePage/);
+  assert.doesNotMatch(
+    settingsPageSource,
+    /数据来源|裁决边界|服务器裁决|draftContext|schema|manifest|provider payload|raw audit|hiddenNotes|OPENAI_API_KEY|data\/sessions|完整提示词|本地路径|密钥/
+  );
 });
 
 test("S76.8 ranking page renders server-owned ranking views without widening authority", () => {
@@ -1698,7 +1736,7 @@ test("S74.7 client smoke verifies default UI start and safe route recovery", () 
   assert.match(clientSmokeSource, /clickSessionNavRoute\(page, "皇榜"/);
   assert.match(clientSmokeSource, /assertRankingFullScreen\(page, startedSessionId/);
   assert.match(clientSmokeSource, /label: "朝议"/);
-  assert.match(clientSmokeSource, /label: "印匣"/);
+  assert.match(clientSmokeSource, /label: "印匣页"/);
   assert.match(clientSmokeSource, /startMockMagistrateThroughHome/);
   assert.match(clientSmokeSource, /startMockOfficialThroughHome/);
   assert.match(clientSmokeSource, /startMockMinisterThroughHome/);

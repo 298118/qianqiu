@@ -1,4 +1,5 @@
 import { Link, useLocation } from "react-router";
+import { Home, RotateCcw, ScrollText } from "lucide-react";
 import { getRouteSessionRecoveryHref } from "../routes/routeRecovery";
 
 export function NotFoundPage() {
@@ -6,17 +7,25 @@ export function NotFoundPage() {
   const recoveryHref = getRouteSessionRecoveryHref(location.pathname);
 
   return (
-    <section className="plainPage" aria-labelledby="not-found-title">
-      <h1 id="not-found-title">无此卷页</h1>
-      <p>案上未载此页。</p>
-      <div className="buttonRow" aria-label="卷页去处">
+    <section className="plainPage statePage" aria-labelledby="not-found-title">
+      <div className="statePageSeal" aria-hidden="true">
+        <ScrollText size={30} />
+      </div>
+      <div className="statePageCopy">
+        <p className="eyebrow">空卷</p>
+        <h1 id="not-found-title">无此卷页</h1>
+        <p>案上未载此页，可回主卷续看当前案卷，或归首页另开一卷。</p>
+      </div>
+      <div className="buttonRow statePageActions" aria-label="卷页去处">
         {recoveryHref ? (
           <Link className="paperLink" to={recoveryHref}>
-            回主卷
+            <RotateCcw size={16} aria-hidden="true" />
+            <span>回主卷</span>
           </Link>
         ) : null}
         <Link className="paperLink" to="/">
-          归首页
+          <Home size={16} aria-hidden="true" />
+          <span>归首页</span>
         </Link>
       </div>
     </section>
