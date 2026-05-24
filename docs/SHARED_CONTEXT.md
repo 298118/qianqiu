@@ -65,7 +65,7 @@
 
 ## Current Work Note
 
-2026-05-24：S89.2 完成 React 视觉矩阵、轻量专题页壳与高清立绘查看器公开说明。`npm run smoke:browser:visual` 现在是产品视觉矩阵便捷入口，会在默认 React browser smoke 基线上写出 `artifacts/browser-visual-matrix`，并要求首页、主卷、舆图、人物、囊箧、史册、科举、皇榜、朝议、设置和移动端印匣截图标签完整；脚本新增囊箧桌面/移动截图、囊箧摘要/工作台/移置/账解 section 检查、首页朱印中文字体守门和视觉矩阵 artifact 完整性检查。
+2026-05-24：S89.2 完成 React 视觉矩阵、轻量专题页壳与高清立绘查看器公开说明，实现提交 `b8a564514498c7de6c6d7183597df51bbab5e662`。`npm run smoke:browser:visual` 现在是产品视觉矩阵便捷入口，会在默认 React browser smoke 基线上写出 `artifacts/browser-visual-matrix`，并要求首页、主卷、舆图、人物、囊箧、史册、科举、皇榜、朝议、设置和移动端印匣截图标签完整；脚本新增囊箧桌面/移动截图、囊箧摘要/工作台/移置/账解 section 检查、首页朱印中文字体守门和视觉矩阵 artifact 完整性检查。
 
 人物、囊箧、史册现在与科举/皇榜/朝议/设置一样使用轻量 `sessionRouteShell`，不再在独立专题页重复渲染主卷案头和底部奏折；史册标题提升为页面级 `h1`。高清立绘查看器补齐外貌介绍、公开传略和当前情况，文本只来自已审阅 runtime 画像元数据和人物安全摘要。本轮同时收束纸按钮伪元素，避免装饰红印撑大按钮滚动尺寸，修复地图页“筛舆图/写入行动”在真实浏览器文本溢出守门中的误报。样式层补齐专题壳、囊箧、账解、纸按钮的宣纸/折纸/朱印反馈，但不新增素材 manifest 条目。
 
@@ -79,6 +79,7 @@
 - 已通过 `npm run check:docs-governance`、`node --test test/documentationGovernance.test.js`、`git diff --check`；`git diff --check` 只报告仓库既有 CRLF 提示。
 - 已通过完整 `npm test`（1159 tests）。
 - 提交前只读子代理复审已通过；复审指出囊箧边界文案清洗需补本地路径和 `manifest/schema/draftContext` 等工程词，本轮已补 `safeLabel()`、React 断言和 browser smoke 桌面/移动守门，复核后未发现阻断问题。
+- 实现提交后的哈希回填仅修改 `docs/DEVELOPMENT_STEPS.md` 与本文件，属于低风险纯文档改动，跳过子代理复审。
 
 ## Next Recommended Step
 
