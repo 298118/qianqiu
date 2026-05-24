@@ -2,6 +2,7 @@ import type { CSSProperties, MouseEvent } from "react";
 import { useMemo, useState } from "react";
 import { Maximize2 } from "lucide-react";
 import type { AssetFallback, AssetRegistry, RuntimePortraitAsset } from "../assets/assetRegistry";
+import type { PortraitViewerProfile } from "../state/uiState";
 import { useUiStateStore } from "../state/uiState";
 import { markOverlayTrigger } from "./overlayFocus";
 
@@ -11,14 +12,16 @@ type PortraitProps = {
   readonly label?: string;
   readonly className?: string;
   readonly viewerEnabled?: boolean;
+  readonly profile?: PortraitViewerProfile;
 };
 
-export function Portrait({ registry, portraitRef, label, className = "", viewerEnabled = true }: PortraitProps) {
+export function Portrait({ registry, portraitRef, label, className = "", viewerEnabled = true, profile }: PortraitProps) {
   const [imageFailed, setImageFailed] = useState(false);
   const openPortraitViewer = useUiStateStore((state) => state.openPortraitViewer);
   const portrait = registry.getPortrait(portraitRef);
   const fallback = registry.getFallback(portrait?.fallbackRef);
-  const resolvedLabel = label ?? portrait?.roleLabel ?? portrait?.role ?? "人物立绘";
+  const rawResolvedLabel = label ?? portrait?.roleLabel ?? portrait?.role ?? "人物立绘";
+  const resolvedLabel = cleanPortraitProfileText(rawResolvedLabel, 48) || "人物立绘";
   const imageSource = portrait?.path ?? portrait?.thumbnailPath ?? portrait?.lowResPlaceholderPath ?? null;
   const fallbackStyle = useMemo(() => buildFallbackStyle(fallback, portrait), [fallback, portrait]);
 
@@ -27,9 +30,11 @@ export function Portrait({ registry, portraitRef, label, className = "", viewerE
     event.stopPropagation();
     if (!portrait) return;
     markOverlayTrigger(event.currentTarget);
+    const safeProfile = normalizePortraitViewerProfile(profile);
     openPortraitViewer({
       portraitRef: portrait.portraitRef,
-      label: resolvedLabel
+      label: resolvedLabel,
+      ...(safeProfile ? { profile: safeProfile } : {})
     });
   }
 
@@ -75,6 +80,55 @@ export function Portrait({ registry, portraitRef, label, className = "", viewerE
       ) : null}
     </figure>
   );
+}
+
+const unsafePortraitProfileFragments = [
+  "/api/game/" + "state",
+  "/api/dev/" + "session-diagnostics",
+  "data" + "/" + "sessions",
+  "data" + "\\" + "sessions",
+  "file" + "://",
+  "raw",
+  "prov" + "ider",
+  "pro" + "mpt",
+  "hid" + "den",
+  "key",
+  "path",
+  "manifest",
+  "schema",
+  "draft" + "Context",
+  "server" + " adjudication",
+  "服务器",
+  "本地" + "路径",
+  "密" + "钥",
+  "隐" + "藏",
+  "完整" + "清单",
+  "完整" + "提示词"
+] as const;
+
+const localPortraitProfilePathPattern = /(?:^|[\s"'`(（:：,;，。；、【《“‘])(?:[a-z]:[\\/]|~[\\/]|\.{1,2}[\\/]|\/(?:home|mnt|tmp|var|etc|usr|opt|workspace|workspaces|root|data|src|client|server|dist|public|node_modules)(?:[\\/]|$)|(?:data|src|client|server|dist|public|node_modules)[\\/][^\s，。；、]+)/i;
+
+function cleanPortraitProfileText(value: unknown, maxLength: number) {
+  const text = typeof value === "string" ? value.trim().replace(/\s+/g, " ") : "";
+  if (!text) return "";
+  const normalized = text.toLowerCase();
+  if (localPortraitProfilePathPattern.test(text) || /sk-[a-z0-9_-]{6,}/i.test(text)) return "";
+  if (unsafePortraitProfileFragments.some((fragment) => normalized.includes(fragment.toLowerCase()))) return "";
+  return text.length > maxLength ? `${text.slice(0, maxLength)}...` : text;
+}
+
+function normalizePortraitViewerProfile(profile: PortraitViewerProfile | undefined) {
+  if (!profile) return null;
+  const safeProfile: PortraitViewerProfile = {
+    name: cleanPortraitProfileText(profile.name, 32),
+    identity: cleanPortraitProfileText(profile.identity, 48),
+    summary: cleanPortraitProfileText(profile.summary, 180),
+    current: cleanPortraitProfileText(profile.current, 160),
+    tags: (profile.tags ?? []).map((tag) => cleanPortraitProfileText(tag, 24)).filter(Boolean).slice(0, 8)
+  };
+  return safeProfile.name || safeProfile.identity || safeProfile.summary || safeProfile.current || safeProfile.tags?.length
+    ? safeProfile
+    : null;
 }
 
 function buildFallbackStyle(fallback: AssetFallback | null, portrait: RuntimePortraitAsset | null): CSSProperties {

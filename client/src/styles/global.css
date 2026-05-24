@@ -9,6 +9,17 @@
   --qq-font-art-heading: "ZCOOL XiaoWei", "Noto Serif SC", "Songti SC", serif;
   --qq-font-art-flow: "Long Cang", "Noto Serif SC", "Songti SC", serif;
   --qq-font-art-seal: "Ma Shan Zheng", "Noto Serif SC", "Songti SC", serif;
+  --qq-material-xuan: url("/assets/ui/materials/paper-xuan-base-v1.webp");
+  --qq-material-folded: url("/assets/ui/materials/memorial-folded-paper-v1.webp");
+  --qq-material-torn: url("/assets/ui/materials/torn-paper-card-v1.webp");
+  --qq-material-edge: url("/assets/ui/materials/paper-edge-shadow-v1.webp");
+  --qq-material-ink-line: url("/assets/ui/materials/ink-divider-line-v1.webp");
+  --qq-material-ink-corner: url("/assets/ui/materials/ink-corner-brush-v1.webp");
+  --qq-material-red-smudge: url("/assets/ui/materials/red-ink-smudge-v1.webp");
+  --qq-material-seal-button: url("/assets/ui/materials/vermilion-seal-button-v1.webp");
+  --qq-material-seal-pressed: url("/assets/ui/materials/vermilion-seal-button-pressed-v1.webp");
+  --qq-shadow-paper-lift: 0 18px 44px rgba(43, 32, 22, 0.13);
+  --qq-shadow-ink-focus: 0 0 0 3px rgba(142, 47, 39, 0.16);
   font-family: var(--qq-font-body);
   font-synthesis: none;
   text-rendering: optimizeLegibility;
@@ -198,6 +209,9 @@ a {
 }
 
 .appShell[data-motion="reduced"] .homeMist,
+.appShell[data-motion="reduced"] .sessionRouteShell > .examFullScreen,
+.appShell[data-motion="reduced"] .sessionRouteShell > .courtSurfacePage,
+.appShell[data-motion="reduced"] .sessionRouteShell > .surfacePanel,
 .appShell[data-motion="reduced"] .rankingGoldenNotice::before,
 .appShell[data-motion="reduced"] .rankingGoldenTitle span {
   animation: none !important;
@@ -460,6 +474,9 @@ h2 {
   min-width: 108px;
   overflow: hidden;
   padding: 10px 20px;
+  font-family: var(--qq-font-serif-classic);
+  font-size: 0.96rem;
+  letter-spacing: 0;
   box-shadow:
     inset 0 0 0 3px rgba(255, 236, 211, 0.18),
     0 8px 18px rgba(101, 31, 27, 0.2);
@@ -728,14 +745,65 @@ textarea {
 }
 
 .paperButton {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  isolation: isolate;
   min-height: 40px;
+  min-width: 0;
+  overflow: hidden;
   border: 1px solid rgba(142, 47, 39, 0.58);
-  background: rgba(255, 248, 230, 0.78);
+  background:
+    linear-gradient(180deg, rgba(255, 252, 238, 0.88), rgba(236, 218, 184, 0.72)),
+    var(--qq-material-xuan) center / 420px repeat;
   color: #7b241f;
   font: inherit;
   font-weight: 700;
+  line-height: 1.35;
   padding: 8px 12px;
-  transition: border-color 160ms ease, background 160ms ease, color 160ms ease, transform 160ms ease, box-shadow 160ms ease;
+  text-align: center;
+  text-shadow: 0 1px 0 rgba(255, 248, 230, 0.52);
+  overflow-wrap: anywhere;
+  white-space: normal;
+  transition:
+    border-color 160ms ease,
+    background 160ms ease,
+    color 160ms ease,
+    filter 160ms ease,
+    transform 160ms ease,
+    box-shadow 160ms ease;
+}
+
+.paperButton::before,
+.paperButton::after {
+  position: absolute;
+  pointer-events: none;
+  content: "";
+}
+
+.paperButton::before {
+  inset: 0;
+  z-index: -1;
+  background:
+    linear-gradient(90deg, transparent, rgba(255, 248, 230, 0.34), transparent),
+    var(--qq-material-ink-line) center bottom / 100% 4px repeat-x;
+  opacity: 0;
+  transform: translateX(-24%);
+  transition: opacity 180ms ease, transform 220ms ease;
+}
+
+.paperButton::after {
+  right: 4px;
+  bottom: 4px;
+  z-index: -1;
+  width: 28px;
+  aspect-ratio: 1;
+  background: var(--qq-material-red-smudge) center / contain no-repeat;
+  opacity: 0;
+  transform: rotate(-16deg) scale(0.72);
+  transition: opacity 180ms ease, transform 180ms ease;
 }
 
 .topNav a:hover,
@@ -744,15 +812,43 @@ textarea {
 .sessionNav a:focus-visible,
 .paperLink:hover,
 .paperLink:focus-visible,
-.paperButton:hover,
-.paperButton:focus-visible {
+.paperButton:hover:not(:disabled),
+.paperButton:focus-visible:not(:disabled) {
   border-color: #7b241f;
-  background: rgba(255, 248, 230, 0.92);
-  box-shadow: 0 8px 18px rgba(54, 37, 24, 0.1);
+  background:
+    linear-gradient(180deg, rgba(255, 253, 242, 0.94), rgba(241, 222, 187, 0.82)),
+    var(--qq-material-xuan) center / 420px repeat;
+  box-shadow:
+    var(--qq-shadow-ink-focus),
+    0 10px 22px rgba(54, 37, 24, 0.13);
   color: #7b241f;
   outline: 2px solid rgba(123, 36, 31, 0.18);
   outline-offset: 2px;
   transform: translateY(-1px);
+}
+
+.paperButton:hover:not(:disabled)::before,
+.paperButton:focus-visible:not(:disabled)::before {
+  opacity: 0.72;
+  transform: translateX(0);
+}
+
+.paperButton:hover:not(:disabled)::after,
+.paperButton:focus-visible:not(:disabled)::after {
+  opacity: 0.24;
+  transform: rotate(-10deg) scale(1);
+}
+
+.paperButton:active:not(:disabled) {
+  border-color: rgba(95, 24, 21, 0.82);
+  background:
+    linear-gradient(180deg, rgba(224, 197, 161, 0.82), rgba(255, 248, 230, 0.76)),
+    var(--qq-material-seal-pressed) center / cover no-repeat;
+  box-shadow:
+    inset 0 2px 8px rgba(75, 43, 28, 0.18),
+    0 4px 12px rgba(54, 37, 24, 0.12);
+  filter: saturate(0.96);
+  transform: translateY(1px);
 }
 
 button:disabled {
@@ -760,10 +856,26 @@ button:disabled {
   opacity: 0.58;
 }
 
-button:disabled:hover,
-button:disabled:focus-visible {
-  box-shadow: none;
+button:disabled:hover {
   transform: none;
+}
+
+.paperButton:disabled,
+.paperButton[aria-disabled="true"] {
+  border-color: rgba(84, 60, 43, 0.24);
+  background:
+    linear-gradient(180deg, rgba(240, 230, 210, 0.62), rgba(215, 199, 171, 0.48)),
+    var(--qq-material-xuan) center / 420px repeat;
+  box-shadow: inset 0 0 0 1px rgba(255, 248, 230, 0.3);
+  color: rgba(92, 74, 55, 0.76);
+  text-shadow: none;
+}
+
+.paperButton:disabled::before,
+.paperButton:disabled::after,
+.paperButton[aria-disabled="true"]::before,
+.paperButton[aria-disabled="true"]::after {
+  opacity: 0;
 }
 
 .statusLine {
@@ -810,21 +922,55 @@ button:disabled:focus-visible {
 }
 
 .sessionRouteShell {
+  position: relative;
   display: grid;
   gap: 14px;
+  min-height: calc(100vh - 66px);
   padding: 18px 0 44px;
+  overflow: clip;
+  background:
+    radial-gradient(circle at 16% 10%, rgba(142, 47, 39, 0.1), transparent 26%),
+    radial-gradient(circle at 84% 18%, rgba(31, 67, 65, 0.12), transparent 28%),
+    linear-gradient(180deg, rgba(246, 235, 212, 0.44), rgba(220, 199, 164, 0.2)),
+    var(--qq-material-xuan) center / 720px repeat;
+}
+
+.sessionRouteShell::before {
+  position: absolute;
+  inset: 0 0 auto;
+  height: 156px;
+  background:
+    linear-gradient(180deg, rgba(255, 248, 230, 0.52), transparent),
+    var(--qq-material-edge) center top / 100% 156px no-repeat;
+  content: "";
+  opacity: 0.5;
+  pointer-events: none;
 }
 
 .sessionRouteShell > .sessionNav {
+  position: sticky;
+  top: 74px;
+  z-index: 5;
   width: min(1120px, calc(100% - 32px));
   margin: 0 auto;
+  padding: 10px;
+  border: 1px solid rgba(84, 60, 43, 0.18);
+  background:
+    linear-gradient(135deg, rgba(255, 252, 238, 0.78), rgba(228, 208, 174, 0.58)),
+    var(--qq-material-xuan) center / 520px repeat;
+  box-shadow:
+    0 14px 34px rgba(42, 29, 20, 0.1),
+    inset 0 0 0 1px rgba(255, 252, 238, 0.36);
+  backdrop-filter: blur(10px);
 }
 
 .sessionRouteShell > .examFullScreen,
 .sessionRouteShell > .courtSurfacePage,
 .sessionRouteShell > .surfacePanel {
+  position: relative;
   width: min(1120px, calc(100% - 32px));
   margin: 0 auto;
+  animation: routePanelRise 420ms cubic-bezier(0.2, 0.82, 0.22, 1) both;
 }
 
 .surfaceHeader,
@@ -2453,7 +2599,31 @@ button:disabled:focus-visible {
 }
 
 .routePanel {
+  position: relative;
+  overflow: hidden;
   border-color: rgba(142, 47, 39, 0.28);
+  background:
+    linear-gradient(135deg, rgba(255, 252, 238, 0.88), rgba(231, 211, 180, 0.74)),
+    var(--qq-material-folded) center / cover no-repeat;
+  box-shadow:
+    var(--qq-shadow-paper-lift),
+    inset 0 0 0 1px rgba(255, 252, 238, 0.42);
+}
+
+.surfacePanel.routePanel::before {
+  position: absolute;
+  inset: 0;
+  background:
+    var(--qq-material-ink-corner) left top / 92px 92px no-repeat,
+    var(--qq-material-red-smudge) right -24px top -28px / 136px 136px no-repeat;
+  content: "";
+  opacity: 0.16;
+  pointer-events: none;
+}
+
+.surfacePanel.routePanel > * {
+  position: relative;
+  z-index: 1;
 }
 
 .mapFullScreen {
@@ -2782,6 +2952,7 @@ button:disabled:focus-visible {
   min-width: 0;
 }
 
+.archiveRouteHeader h1,
 .archiveRouteHeader h2 {
   margin: 0 0 8px;
 }
@@ -3143,6 +3314,19 @@ button:disabled:focus-visible {
   align-items: start;
 }
 
+.inventoryRoutePanel {
+  display: grid;
+  gap: 16px;
+}
+
+.inventoryRoutePanel .routePanelHeader {
+  padding-bottom: 14px;
+  border-bottom: 1px solid rgba(84, 60, 43, 0.18);
+  background:
+    linear-gradient(90deg, rgba(255, 248, 230, 0.46), transparent 72%),
+    var(--qq-material-ink-line) left bottom / 70% 18px no-repeat;
+}
+
 .npcActiveRequestInbox,
 .npcSocialGrid,
 .npcRelationshipSignalGrid,
@@ -3239,13 +3423,65 @@ button:disabled:focus-visible {
 }
 
 .inventoryContainerButton {
+  position: relative;
   grid-template-columns: 20px minmax(0, 1fr) auto;
+  overflow: hidden;
+  background:
+    linear-gradient(135deg, rgba(255, 252, 238, 0.78), rgba(235, 219, 190, 0.58)),
+    var(--qq-material-torn) center / cover no-repeat;
+  box-shadow: inset 0 0 0 1px rgba(255, 252, 238, 0.42);
+  transition:
+    border-color 160ms ease,
+    background 160ms ease,
+    box-shadow 160ms ease,
+    color 160ms ease,
+    transform 160ms ease;
+}
+
+.inventoryContainerButton::after {
+  position: absolute;
+  inset: auto -20px -24px auto;
+  width: 64px;
+  aspect-ratio: 1;
+  background: var(--qq-material-red-smudge) center / contain no-repeat;
+  content: "";
+  opacity: 0;
+  transform: rotate(-12deg) scale(0.7);
+  transition: opacity 180ms ease, transform 180ms ease;
 }
 
 .npcListButton[aria-pressed="true"],
 .inventoryContainerButton[aria-pressed="true"] {
   border-color: rgba(142, 47, 39, 0.72);
-  background: rgba(244, 226, 194, 0.82);
+  background:
+    linear-gradient(135deg, rgba(248, 229, 198, 0.9), rgba(255, 252, 238, 0.66)),
+    var(--qq-material-seal-button) right center / 92px auto no-repeat,
+    var(--qq-material-torn) center / cover no-repeat;
+  box-shadow:
+    var(--qq-shadow-ink-focus),
+    inset 0 0 0 1px rgba(255, 252, 238, 0.46);
+  color: #6f1f1a;
+  transform: translateY(-1px);
+}
+
+.inventoryContainerButton:hover,
+.inventoryContainerButton:focus-visible,
+.inventoryItemCard:hover,
+.inventoryMiniCard:hover,
+.compactLedgerRow:hover,
+.economyTraceCard:hover {
+  border-color: rgba(142, 47, 39, 0.52);
+  box-shadow:
+    0 10px 22px rgba(54, 37, 24, 0.1),
+    inset 0 0 0 1px rgba(255, 252, 238, 0.42);
+  transform: translateY(-1px);
+}
+
+.inventoryContainerButton:hover::after,
+.inventoryContainerButton:focus-visible::after,
+.inventoryContainerButton[aria-pressed="true"]::after {
+  opacity: 0.2;
+  transform: rotate(-8deg) scale(1);
 }
 
 .npcListButton strong,
@@ -3322,8 +3558,15 @@ button:disabled:focus-visible {
 .inventoryItemCard,
 .npcResultCard {
   border: 1px solid rgba(84, 60, 43, 0.2);
-  background: rgba(255, 252, 238, 0.62);
+  background:
+    linear-gradient(135deg, rgba(255, 252, 238, 0.72), rgba(239, 224, 196, 0.5)),
+    var(--qq-material-torn) center / cover no-repeat;
   padding: 10px;
+  box-shadow: inset 0 0 0 1px rgba(255, 252, 238, 0.36);
+  transition:
+    border-color 160ms ease,
+    box-shadow 160ms ease,
+    transform 160ms ease;
 }
 
 .npcFactGrid dt,
@@ -3377,13 +3620,31 @@ button:disabled:focus-visible {
 }
 
 .economyTraceSection {
+  position: relative;
   display: grid;
   gap: 12px;
   border: 1px solid rgba(84, 60, 43, 0.22);
   background:
-    linear-gradient(135deg, rgba(255, 252, 238, 0.74), rgba(244, 234, 210, 0.48)),
+    linear-gradient(135deg, rgba(255, 252, 238, 0.78), rgba(244, 234, 210, 0.5)),
+    var(--qq-material-folded) center / cover no-repeat,
     rgba(255, 252, 238, 0.64);
   padding: 14px;
+  box-shadow:
+    0 12px 28px rgba(42, 29, 20, 0.09),
+    inset 0 0 0 1px rgba(255, 252, 238, 0.4);
+  backdrop-filter: blur(6px);
+}
+
+.economyTraceSection::after {
+  position: absolute;
+  right: 10px;
+  bottom: 8px;
+  width: 116px;
+  aspect-ratio: 1;
+  background: var(--qq-material-red-smudge) center / contain no-repeat;
+  content: "";
+  opacity: 0.1;
+  pointer-events: none;
 }
 
 .economyTraceHeader {
@@ -4790,6 +5051,13 @@ button:disabled:focus-visible {
   padding: clamp(20px, 3vw, 30px);
 }
 
+.portraitViewerInfo {
+  display: grid;
+  align-content: center;
+  gap: 14px;
+  min-width: 0;
+}
+
 .portraitViewerHeader {
   display: grid;
   align-content: center;
@@ -4809,6 +5077,36 @@ button:disabled:focus-visible {
 .portraitViewerHeader p {
   color: #5d4937;
   line-height: 1.75;
+}
+
+.portraitViewerProfile {
+  display: grid;
+  gap: 10px;
+}
+
+.portraitViewerProfile section {
+  display: grid;
+  gap: 5px;
+  min-width: 0;
+  border: 1px solid rgba(84, 60, 43, 0.18);
+  background: rgba(255, 252, 238, 0.5);
+  padding: 10px 11px;
+}
+
+.portraitViewerProfile h3,
+.portraitViewerProfile p {
+  margin: 0;
+}
+
+.portraitViewerProfile h3 {
+  color: #5e382d;
+  font-size: 0.9rem;
+}
+
+.portraitViewerProfile p {
+  color: #45382b;
+  line-height: 1.62;
+  overflow-wrap: anywhere;
 }
 
 .portraitViewerFigure {
@@ -5652,6 +5950,9 @@ button:disabled:focus-visible {
   .homeStartSeal,
   .homeStartSeal::after,
   .homeStartSeal[data-state="loading"]::before,
+  .sessionRouteShell > .examFullScreen,
+  .sessionRouteShell > .courtSurfacePage,
+  .sessionRouteShell > .surfacePanel,
   .rankingGoldenNotice::before,
   .rankingGoldenTitle span {
     animation: none !important;
@@ -5682,6 +5983,20 @@ button:disabled:focus-visible {
     filter: blur(0);
     opacity: 1;
     transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes routePanelRise {
+  from {
+    filter: blur(1px);
+    opacity: 0;
+    transform: translateY(12px);
+  }
+
+  to {
+    filter: blur(0);
+    opacity: 1;
+    transform: translateY(0);
   }
 }
 

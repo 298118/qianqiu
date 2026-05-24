@@ -9,7 +9,7 @@ import { Portrait } from "../components/Portrait";
 import { markOverlayTrigger } from "../components/overlayFocus";
 import { isRouteLocalSessionId, isRunnableSessionId } from "../routes/sessionId";
 import { useGameSessionStore } from "../state/gameSessionState";
-import { useUiStateStore } from "../state/uiState";
+import { useUiStateStore, type PortraitViewerProfile } from "../state/uiState";
 import { rewritePlayerFacingWorldText } from "../text/worldText";
 
 const portraitPageSize = 8;
@@ -211,6 +211,22 @@ function getPlayerPortraitRole(player: PlayerSummary | undefined | null) {
   if (/秀才|生员|院试/.test(rankText)) return "xiucai";
   if (/童生|童试|县试|府试/.test(rankText)) return "child-exam-candidate";
   return "scholar";
+}
+
+function buildPortraitProfile(options: {
+  readonly name: string;
+  readonly identity: string;
+  readonly summary?: string;
+  readonly current?: string;
+  readonly tags?: readonly string[];
+}): PortraitViewerProfile {
+  return {
+    name: safePeopleText(options.name, "未题人物", 40),
+    identity: safePeopleText(options.identity, "公开人物", 56),
+    summary: safePeopleText(options.summary, "公开传略未详，案卷只载其姓名与身份。", 180),
+    current: safePeopleText(options.current, "当前情况案卷未载，候复核。", 160),
+    tags: (options.tags ?? []).map((tag) => safePeopleText(tag, "", 28)).filter(Boolean).slice(0, 8)
+  };
 }
 
 function resolvePlayerPortraitRef(registry: AssetRegistry | null, player: PlayerSummary | undefined | null, sessionId: string) {
@@ -580,7 +596,7 @@ function buildPersonRows(
       kind: "player",
       name: safePeopleText(player.name, "无名", 40),
       identity: getPlayerIdentity(player),
-      summary: "案主立绘只使用已审核 portraitRef；若未选立绘，则按身份取公开占位。",
+      summary: "案主画像只取已审阅画卷；若未定画卷，则按身份取公开占位。",
       portraitRef: playerPortraitRef,
       meta: ["案主", roleLabels[player.role ?? ""] || "本局人物"],
       remastered: Boolean(registry?.getPortrait(playerPortraitRef)?.hasHighResOverride)
@@ -926,7 +942,19 @@ export function PeoplePage() {
                   }}
                 >
                   {registry ? (
-                    <Portrait registry={registry} portraitRef={npc.portraitRef} label={`${npc.displayName}立绘`} className="npcListPortrait" />
+                    <Portrait
+                      registry={registry}
+                      portraitRef={npc.portraitRef}
+                      label={`${npc.displayName}立绘`}
+                      className="npcListPortrait"
+                      profile={buildPortraitProfile({
+                        name: npc.displayName,
+                        identity: npc.title,
+                        summary: npc.summary,
+                        current: "此处只载公开名册近况；详况候复核。",
+                        tags: [...npc.stageTags, ...npc.roleTags, ...npc.relationshipLabels]
+                      })}
+                    />
                   ) : <span className="npcListPortraitFallback" aria-hidden="true">人</span>}
                   <span>
                     <strong>{npc.displayName}</strong>
@@ -942,7 +970,21 @@ export function PeoplePage() {
             <>
               <div className="npcDetailHeader">
                 {registry ? (
-                  <Portrait registry={registry} portraitRef={selectedNpc.portraitRef} label={`${selectedNpc.displayName}立绘`} className="peoplePortrait" />
+                  <Portrait
+                    registry={registry}
+                    portraitRef={selectedNpc.portraitRef}
+                    label={`${selectedNpc.displayName}立绘`}
+                    className="peoplePortrait"
+                    profile={buildPortraitProfile({
+                      name: selectedNpc.displayName,
+                      identity: selectedNpc.title,
+                      summary: npcDetail?.publicProfile?.summary || selectedNpc.summary,
+                      current: npcDetail?.publicProfile?.posting
+                        ? `当前见于${safePeopleText(npcDetail.publicProfile.posting, "公开任所", 48)}；其余行止候复核。`
+                        : "当前任所或行止案卷未载，候复核。",
+                      tags: [...selectedNpc.stageTags, ...selectedNpc.roleTags, ...selectedNpc.relationshipLabels]
+                    })}
+                  />
                 ) : null}
                 <div>
                   <p className="eyebrow">{selectedNpc.tier}</p>
@@ -1081,6 +1123,13 @@ export function PeoplePage() {
                     portraitRef={person.portraitRef}
                     label={`${person.name}立绘`}
                     className="peoplePortrait"
+                    profile={buildPortraitProfile({
+                      name: person.name,
+                      identity: person.identity,
+                      summary: person.summary,
+                      current: person.relationshipNote || (person.kind === "player" ? "案主当前身份见于公开案卷。" : "当前情况案卷未载，候复核。"),
+                      tags: person.meta
+                    })}
                   />
                 ) : (
                   <figure className="portraitFrame portraitFrameFallback peoplePortrait" aria-label={`${person.name}，纸底占位`}>

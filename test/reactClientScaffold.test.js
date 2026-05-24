@@ -69,6 +69,7 @@ test("S74.1 package scripts expose the React client workflow", () => {
   assert.equal(packageJson.scripts["qa:runtime-manifest:write"], "node scripts/frontendRuntimeManifest.js --write");
   assert.equal(packageJson.scripts["budget:client"], "node scripts/clientBuildBudget.js");
   assert.equal(packageJson.scripts["smoke:browser"], "npm run qa:runtime-manifest && npm run build:client && npm run budget:client && node scripts/clientSmoke.js");
+  assert.equal(packageJson.scripts["smoke:browser:visual"], "npm run smoke:browser -- --screenshots artifacts/browser-visual-matrix");
   assert.equal(packageJson.scripts["smoke:browser:legacy"], "node scripts/browserSmoke.js");
 });
 
@@ -1293,13 +1294,17 @@ test("S79.1 session feature routes use a lightweight shell outside the main卷",
   const styleSource = readText("client/src/styles/global.css");
 
   assert.match(gamePageSource, /independentSessionRouteIds/);
-  assert.match(gamePageSource, /"exam", "ranking", "court", "settings"/);
+  assert.match(gamePageSource, /"people", "inventory", "archive", "exam", "ranking", "court", "settings"/);
   assert.match(gamePageSource, /sessionRouteShell/);
   assert.match(gamePageSource, /SessionRouteNav/);
   assert.match(styleSource, /sessionRouteShell/);
+  assert.match(styleSource, /routePanelRise/);
+  assert.match(styleSource, /\.appShell\[data-motion="reduced"\] \.sessionRouteShell > \.surfacePanel/);
+  assert.match(styleSource, /prefers-reduced-motion: reduce[\s\S]*\.sessionRouteShell > \.surfacePanel/);
   assert.match(clientSmokeSource, /assertIndependentSessionRouteShell/);
   assert.match(clientSmokeSource, /rendered bottom memorial composer/);
   assert.match(appTestSource, /document\.querySelector\("\.gameCommandBar"\)\)\.toBeFalsy/);
+  assert.match(appTestSource, /document\.querySelector\("\.gameMainDeck"\)\)\.toBeFalsy/);
 });
 
 test("S76.8 ranking page renders server-owned ranking views without widening authority", () => {
@@ -1390,8 +1395,10 @@ test("S79.3 portrait viewer stays read-only and uses audited runtime portrait pa
   const runtimeCombined = stripSafeGuardPatterns(`${uiStateSource}\n${portraitSource}\n${surfaceHostSource}\n${styleSource}`);
 
   assert.match(uiStateSource, /activePortraitViewer/);
+  assert.match(uiStateSource, /PortraitViewerProfile/);
   assert.match(uiStateSource, /openPortraitViewer/);
   assert.match(uiStateSource, /closePortraitViewer/);
+  assert.match(portraitSource, /profile\?: PortraitViewerProfile/);
   assert.match(portraitSource, /portraitZoomButton/);
   assert.match(portraitSource, /Maximize2/);
   assert.match(portraitSource, /markOverlayTrigger/);
@@ -1399,9 +1406,14 @@ test("S79.3 portrait viewer stays read-only and uses audited runtime portrait pa
   assert.match(surfaceHostSource, /registry\.getPortrait\(viewer\.portraitRef\)/);
   assert.match(surfaceHostSource, /portrait\?\.path/);
   assert.match(surfaceHostSource, /data-portrait-viewer="true"/);
+  assert.match(surfaceHostSource, /外貌介绍/);
+  assert.match(surfaceHostSource, /公开传略/);
+  assert.match(surfaceHostSource, /当前情况/);
   assert.match(surfaceHostSource, /NpcProfilePortraitStrip/);
   assert.match(surfaceHostSource, /safeSurfacePortraitRef/);
+  assert.match(readText("scripts/clientSmoke.js"), /hasAppearance[\s\S]*hasBiography[\s\S]*hasCurrent/);
   assert.match(styleSource, /portraitViewerPanel/);
+  assert.match(styleSource, /portraitViewerProfile/);
   assert.match(styleSource, /npcProfilePortraitStrip/);
   assert.match(styleSource, /object-fit: contain/);
   assert.doesNotMatch(
@@ -1674,6 +1686,11 @@ test("S74.7 client smoke verifies default UI start and safe route recovery", () 
   assert.match(clientSmokeSource, /clickTopNavRoute\(page, "舆图"/);
   assert.match(clientSmokeSource, /assertRouteRefresh\(page, runtimeMapPath/);
   assert.match(clientSmokeSource, /assertRouteRefresh\(page, peoplePath/);
+  assert.match(clientSmokeSource, /s89-2-inventory-desktop/);
+  assert.match(clientSmokeSource, /s89-2-inventory-mobile/);
+  assert.match(clientSmokeSource, /"s79-3-portrait-viewer-desktop"/);
+  assert.match(clientSmokeSource, /assertClientVisualMatrixCoverage/);
+  assert.match(clientSmokeSource, /requiredVisualMatrixScreenshotLabels/);
   assert.match(clientSmokeSource, /assertRouteRefresh\(page, archivePath/);
   assert.match(clientSmokeSource, /clickSessionNavRoute/);
   assert.match(clientSmokeSource, /clickSessionNavRoute\(page, "科举"/);
@@ -1745,6 +1762,7 @@ test("S75.3 home start seal guards repeated submits and reduced motion", () => {
   assert.match(homePageSource, /aria-live="polite"/);
   assert.match(styleSource, /homeSealStamp/);
   assert.match(styleSource, /sealLoadingSweep/);
+  assert.match(styleSource, /\.homeStartSeal[\s\S]*font-family: var\(--qq-font-serif-classic\)/);
   assert.match(styleSource, /prefers-reduced-motion: reduce/);
   assert.match(styleSource, /\.appShell\[data-motion="reduced"\] \.homeStartSeal/);
   assert.doesNotMatch(

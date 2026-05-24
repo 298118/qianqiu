@@ -29,9 +29,17 @@ export type PageSurface = "home" | "game" | "map" | "people" | "inventory" | "ar
 export type DrawerSurface = "settings" | "saves" | "display-preferences";
 export type InkboxTab = "ai-settings" | "saves" | "display" | "safe-summary";
 export type ModalSurface = "safe-summary" | "exam-result" | "confirm-navigation";
+export type PortraitViewerProfile = {
+  readonly name?: string;
+  readonly identity?: string;
+  readonly summary?: string;
+  readonly current?: string;
+  readonly tags?: readonly string[];
+};
 export type PortraitViewerState = {
   readonly portraitRef: string;
   readonly label?: string;
+  readonly profile?: PortraitViewerProfile;
 };
 export type LocalSurface =
   | "memorial-review"

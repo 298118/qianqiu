@@ -113,6 +113,7 @@
 
 | ID | 状态 | 目标 | 范围 / 下一步 |
 | --- | --- | --- | --- |
+| S89.2 | DONE | React 视觉矩阵与轻量专题页壳打磨 | 承接 S89.1 后续建议，补真实浏览器视觉回归截图矩阵便捷入口，覆盖首页、主卷、舆图、人物、囊箧、史册、科举、皇榜、朝议、设置和移动端印匣；人物/囊箧/史册改用轻量案卷专题页壳，避免独立页重复渲染主卷案头和底部奏折；强化囊箧与专题页材质、按钮反馈、移动端截图、安全污染守门和高清立绘查看器公开说明。不改后端 API/schema、AI 权限、prompt、存档格式、素材 manifest 或服务器裁决。提交：随本次 S89.2 提交完成。 |
 | S89.1 | DONE | React 玩家可见文案与移动端覆盖层润色 | 承接 S88.9 残余方向，清理首页、主卷、舆图、人物、囊箧、史册、科举、皇榜、朝议、身份循环、推演设置和专题层中的工程词外露；抽屉增加遮罩与外点关闭，人物/囊箧工作台和推演矩阵补窄屏单列；不改后端 API/schema、AI 权限、prompt、存档格式或服务器裁决。提交：随本次 S89.1 提交完成。 |
 | DOCS-2026-05-24-S88-ARCHIVE | DONE | 压缩当前上下文并归档 S88 台账 | 新增 S88 专题归档，压缩 `docs/SHARED_CONTEXT.md` 与本文件，活动台账不再展开 S88.0-S88.12 长表。纯文档维护，不改代码、API/schema、运行时行为、提示词、验证工具或素材 manifest；按低风险纯文档规则跳过子代理复审。 |
 
@@ -122,7 +123,8 @@
 
 - 2026-05-24：完成上下文压缩与 S88 台账归档。`docs/QIANQIU_POLISHING_ARCHIVE.md` 现在是 S88.0-S88.12 阶段性打磨的追溯入口，记录已完成/已推进范围、稳定边界、验证锚点和后续候选方向；`docs/SHARED_CONTEXT.md` 与本文件改为短交接板，删除 S88 长流水和重复哈希回填串。`docs/ACTIVITY_LEDGER_COMPLETED_ARCHIVE.md` 已补 S86-S88 完成阶段索引。
 - 2026-05-24：S89.1 完成 React 玩家可见文案与移动端覆盖层润色。前端继续只消费安全 view，所有草稿、人物/囊箧操作、地图和专题入口仍由服务器复核；本步不新增 API 字段、不改变 provider/AI schema、不调整存档或 SQLite schema。
-- 前一轮 S88 归档是低风险纯文档维护；S89.1 已进入前端代码与样式改动，提交前必须按子代理复审规则执行。
+- 2026-05-24：S89.2 完成 React 视觉矩阵、轻量专题页壳与高清立绘查看器公开说明。当前范围仅限 React 路由壳、前端样式、browser smoke/视觉矩阵脚本、前端测试 canary 和验收文档；人物/囊箧/史册与立绘查看器仍只消费安全 view、runtime manifest 安全字段和本地草稿，不新增服务器裁决入口。
+- 前一轮 S88 归档是低风险纯文档维护；S89.2 涉及前端代码、样式、验证脚本和文档，提交前按子代理复审规则执行。
 
 ## 6. 最近完整验证口径
 
@@ -139,11 +141,29 @@ S89.1 前端润色验证结果：
 - 已通过 `npm run smoke:browser`，并串联通过 `npm run qa:runtime-manifest`、`npm run build:client` 和 `npm run budget:client`。
 - 已通过 `npm run check:docs-governance`、`node --test test/documentationGovernance.test.js`、`git diff --check`；`git diff --check` 仅输出仓库既有 CRLF warning，非本次修改文件。
 - 已通过 `node --test test/reactClientScaffold.test.js` 与完整 `npm test`（1159 tests），源码 canary 已同步到本轮玩家可见文案新口径。
-- 待最终提交前完成修复后只读子代理复审。
+- 最终只读子代理复审已通过。
 
 S89.1 包含前端代码、样式和行为改动，提交前必须完成只读子代理复审。未改后端 API/schema、prompt、AI 权限、SQLite schema 或服务器 resolver，因此不要求 `npm run typecheck:server` 作为本步必跑项；若后续继续触碰跨端契约再补跑。
 
+S89.2 前端视觉矩阵验证结果：
+
+- 已通过 `node --check scripts/clientSmoke.js`、`npm run typecheck:client`、`node --test test/reactClientScaffold.test.js`。
+- `npm run test:client` 本机多次命中 Vitest fork worker 启动超时，已用 `npx vitest --config vitest.config.mjs run --pool=vmThreads --fileParallelism=false --maxWorkers=1` 通过同一套客户端断言（6 files / 126 tests）；focused `people ledger|portrait viewer|inventory` 通过 7 tests。
+- 已通过 `npm run smoke:browser:visual`，并复核 `artifacts/browser-visual-matrix` 中首页、人物、囊箧桌面/移动和史册截图；该命令串联通过 `npm run qa:runtime-manifest`、`npm run build:client`、`npm run budget:client` 和 React browser smoke。Vite 仍输出既有 `/assets/ui/...` runtime asset 与 chunk size warnings。
+- 已通过 `npm run check:docs-governance`、`node --test test/documentationGovernance.test.js`、`git diff --check`；`git diff --check` 只报告仓库既有 CRLF 提示。
+- 已通过完整 `npm test`（1159 tests）。
+- 提交前只读子代理复审已通过；复审指出囊箧 `authorityBoundary` 清洗需补本地路径、`manifest/schema/draftContext` 等边缘工程词，本轮已补 `safeLabel()`、React 断言和 browser smoke 桌面/移动守门，并由同一只读子代理复核确认无阻断问题。
+
 ## 7. 近期进度记录
+
+### 2026-05-24：S89.2 React 视觉矩阵、轻量专题页壳与立绘查看器公开说明
+
+- 范围：新增 `smoke:browser:visual`，在默认 React browser smoke 上写出产品视觉矩阵截图，并要求首页、主卷、舆图、人物、囊箧、史册、科举、皇榜、朝议、设置和移动端印匣标签完整；脚本新增囊箧桌面/移动截图、section 完整性、安全污染和首页朱印字体守门。
+- 体验：人物、囊箧、史册改用轻量 `sessionRouteShell`，独立页不再重复主卷案头和底部奏折；史册标题提升为页面级 `h1`；囊箧、账解、专题页壳和纸按钮补齐宣纸/折纸/朱印质感与按钮反馈；高清立绘查看器显示外貌介绍、公开传略和当前情况，文本来自已审阅画像元数据与人物安全摘要。
+- 修复：纸按钮红印伪元素收回按钮内部，避免伪元素撑大 `scrollWidth` 导致地图页“筛舆图/写入行动”在真实浏览器文本溢出守门中误报；囊箧 `authorityBoundary` 统一经过玩家可见清洗，污染时退回世界内回批口径，并阻断本地路径、密钥、`manifest/schema/draftContext`、`hidden/raw` 和“服务器裁决”等工程词外露。
+- 边界：只改 React 路由壳、样式、客户端 smoke/视觉矩阵脚本、前端测试 canary 和验收文档；不改后端 API/schema、AI 权限矩阵、prompt、provider facade、SQLite schema、存档格式、runtime manifest 字段、素材 manifest 或服务器裁决。
+- 子代理：已委派只读子代理巡检 S89.2 缺口，指出高清立绘查看器缺少人物说明；提交前只读复审又指出囊箧边界文案清洗缺本地路径和若干工程词覆盖，均已补齐并由同一复审子代理确认无阻断问题。
+- 验证：按第 6 节 S89.2 口径通过；`artifacts/browser-visual-matrix` 产物目录仅作本地 artifact，不提交。
 
 ### 2026-05-24：S89.1 React 玩家可见文案与移动端覆盖层润色
 

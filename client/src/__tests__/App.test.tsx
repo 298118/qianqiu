@@ -635,10 +635,12 @@ describe("S74.1 React client shell", () => {
 
     renderRoute("/game/not-a-session/archive");
 
-    expect(screen.getByRole("heading", { name: "主卷" })).toBeTruthy();
     expect(screen.getByRole("heading", { name: "史册" })).toBeTruthy();
+    expect(document.querySelector(".sessionRouteShell")).toBeTruthy();
+    expect(document.querySelector(".gameMainDeck")).toBeFalsy();
+    expect(document.querySelector(".memorialComposer")).toBeFalsy();
     await waitFor(() => expect(useUiStateStore.getState().currentSessionId).toBeNull());
-    expect(screen.getByText("案卷编号 暂不可读")).toBeTruthy();
+    expect(screen.getByText("此案卷编号暂不可用于浏览器史册；请从首页开卷或载入旧案。")).toBeTruthy();
     const memorialButton = screen.getByRole("button", { name: "阅奏折" });
     expect(memorialButton).toHaveProperty("disabled", true);
     fireEvent.click(memorialButton);
@@ -691,6 +693,10 @@ describe("S74.1 React client shell", () => {
     renderRoute("/game/not-a-session/people");
 
     expect(screen.getByRole("heading", { name: "人物" })).toBeTruthy();
+    expect(document.querySelector(".sessionRouteShell")).toBeTruthy();
+    expect(document.querySelector(".gameCommandBar")).toBeFalsy();
+    expect(document.querySelector(".gameMainDeck")).toBeFalsy();
+    expect(document.querySelector(".memorialComposer")).toBeFalsy();
     await waitFor(() => expect(useUiStateStore.getState().currentSessionId).toBeNull());
     expect(screen.getAllByText("此案卷编号暂不可用于浏览器人物谱牒；请从首页开卷或载入旧案。").length).toBeGreaterThan(0);
     const profileButton = screen.getByRole("button", { name: "打开人物档案" });
@@ -3984,6 +3990,19 @@ describe("S74.1 React client shell", () => {
             knownToPlayer: true,
             intelConfidence: 60,
             publicSummary: "OPENAI_API_KEY hiddenNotes data/sessions"
+          },
+          {
+            id: "C03",
+            name: "密钥私档顾问",
+            rankLabel: "完整提示词掌柜",
+            genderLabel: "本地路径女",
+            portraitRef: "portrait-test-male-4-v1",
+            visibility: "public",
+            knownToPlayer: true,
+            intelConfidence: 60,
+            influence: 12,
+            publicSummary: "隐藏私档密钥本地路径不应进入画像说明。",
+            currentGoal: "完整提示词与本地路径也不应成为当前情况。"
           }
         ],
         relationships: [
@@ -4200,6 +4219,10 @@ describe("S74.1 React client shell", () => {
     renderRoute(`/game/${sessionId}/people`);
 
     expect(screen.getByRole("heading", { name: "人物" })).toBeTruthy();
+    expect(document.querySelector(".sessionRouteShell")).toBeTruthy();
+    expect(document.querySelector(".gameCommandBar")).toBeFalsy();
+    expect(document.querySelector(".gameMainDeck")).toBeFalsy();
+    expect(document.querySelector(".memorialComposer")).toBeFalsy();
     await screen.findByText("人物谱牒");
     await waitFor(() => expect(screen.getAllByText("陆清远").length).toBeGreaterThan(0));
     expect(screen.getAllByText("顾文衡").length).toBeGreaterThan(0);
@@ -4227,6 +4250,7 @@ describe("S74.1 React client shell", () => {
     expect(screen.queryByText("旁注 /home/zzz/project/.env 只应视作污染路径。")).toBeNull();
     expect(screen.queryByText("交游记录，/home/zzz/project/.env")).toBeNull();
     expect(screen.queryByText("旁注、/mnt/e/LSMNQ/.env 也应视作污染路径。")).toBeNull();
+    expect(document.body.textContent || "").not.toMatch(/密钥私档顾问|完整提示词掌柜|本地路径女|隐藏私档密钥本地路径/);
     expect(screen.getAllByRole("button", { name: "拟复核" })).toHaveLength(3);
     expect(screen.getAllByRole("button", { name: "拟跟进" })).toHaveLength(1);
     fireEvent.click(screen.getByRole("button", { name: "拟跟进" }));
@@ -4245,7 +4269,7 @@ describe("S74.1 React client shell", () => {
 
     const firstPageImages = screen.getAllByRole("img");
     expect(firstPageImages.every((image) => image.getAttribute("loading") === "lazy")).toBe(true);
-    expect(document.querySelector(".peopleLedgerList")?.getAttribute("data-total-people")).toBe("3");
+    expect(document.querySelector(".peopleLedgerList")?.getAttribute("data-total-people")).toBe("4");
     expect(document.querySelector(".peopleLedgerList")?.getAttribute("data-total-portraits")).toBeNull();
     expect(document.querySelector("[data-portrait-remastered='true']")).toBeTruthy();
 
@@ -4253,11 +4277,26 @@ describe("S74.1 React client shell", () => {
     fireEvent.click(zoomButton);
     const viewer = await screen.findByRole("dialog", { name: "陆清远立绘" });
     expect(viewer.getAttribute("data-portrait-viewer")).toBe("true");
+    expect(within(viewer).getByRole("heading", { name: "外貌介绍" })).toBeTruthy();
+    expect(within(viewer).getByRole("heading", { name: "公开传略" })).toBeTruthy();
+    expect(within(viewer).getByRole("heading", { name: "当前情况" })).toBeTruthy();
+    expect(viewer.textContent || "").toContain("据已审阅画卷题记判断");
+    expect(viewer.textContent || "").toContain("案卷外观小传");
+    expect(viewer.textContent || "").toContain("案主画像只取已审阅画卷；若未定画卷，则按身份取公开占位。");
+    expect(viewer.textContent || "").toContain("案主当前身份见于公开案卷。");
     expect(screen.getByRole("img", { name: "陆清远立绘高清主图" }).getAttribute("src")).toBe("/assets/ui/portraits/portrait-test-female-1-v1.webp");
-    expect(JSON.stringify(useUiStateStore.getState().activePortraitViewer)).toBe(JSON.stringify({
+    expect(useUiStateStore.getState().activePortraitViewer).toMatchObject({
       portraitRef: "portrait-test-female-1-v1",
-      label: "陆清远立绘"
-    }));
+      label: "陆清远立绘",
+      profile: expect.objectContaining({
+        name: "陆清远",
+        identity: expect.any(String),
+        summary: expect.any(String),
+        current: expect.any(String)
+      })
+    });
+    expect(JSON.stringify(useUiStateStore.getState().activePortraitViewer)).not.toMatch(/hidden|provider|prompt|\/mnt\/|\/home\//i);
+    expect(viewer.textContent || "").not.toMatch(/portraitRef|运行时|manifest|schema|draftContext|server adjudication|provider|raw|hidden|\/mnt\/|\/home\//i);
     expect(window.localStorage.length).toBe(0);
     expect(window.sessionStorage.length).toBe(0);
     fireEvent.keyDown(document, { key: "Escape" });
@@ -4266,6 +4305,7 @@ describe("S74.1 React client shell", () => {
 
     act(() => useUiStateStore.getState().openSurface("npc-profile"));
     const npcProfileDialog = await screen.findByRole("dialog", { name: "人物档案" });
+    expect(npcProfileDialog.textContent || "").not.toMatch(/密钥私档顾问|完整提示词掌柜|本地路径女|隐藏私档密钥本地路径/);
     const profileZoomButton = within(npcProfileDialog).getByRole("button", { name: "查看陆清远立绘高清立绘" });
     fireEvent.click(profileZoomButton);
     await screen.findByRole("dialog", { name: "陆清远立绘" });
@@ -4867,7 +4907,8 @@ describe("S74.1 React client shell", () => {
           unit: "册"
         }
       ],
-      importantCredentials: []
+      importantCredentials: [],
+      authorityBoundary: "囊箧、仓库、器物、绑定凭证和转移结果由服务器裁决；未公开 hidden/raw 字段；draftContext manifest schema C:\\secret\\inventory.json /home/user/.env。"
     };
     const resourceLedgerView = {
       accounts: [{ accountId: "resource:silver", resourceId: "silver_liang", label: "银两", amount: 68, unit: "两" }]
@@ -4980,6 +5021,9 @@ describe("S74.1 React client shell", () => {
     renderRoute(`/game/${sessionId}/inventory`);
 
     await screen.findByRole("heading", { name: "囊箧" });
+    expect(document.querySelector(".sessionRouteShell")).toBeTruthy();
+    expect(document.querySelector(".gameMainDeck")).toBeFalsy();
+    expect(document.querySelector(".memorialComposer")).toBeFalsy();
     const inventoryTraceHeading = await screen.findByText("账本为何变化");
     const inventoryTraceSection = within(inventoryTraceHeading.closest("section") as HTMLElement);
     expect(inventoryTraceSection.getByText("交易议价留痕")).toBeTruthy();
@@ -4988,6 +5032,8 @@ describe("S74.1 React client shell", () => {
     expect(inventoryTraceSection.getByText("3 条")).toBeTruthy();
     expect(inventoryTraceSection.queryByText("污染账目")).toBeNull();
     expect(inventoryTraceSection.queryByText(/provider payload|hiddenNotes|data\/sessions|privateSignalTags|sk-test-secret/i)).toBeNull();
+    expect(document.body.textContent || "").toContain("囊箧、仓库、器物、账约、绑定凭证和移转结果均候案卷回批复核。");
+    expect(document.body.textContent || "").not.toMatch(/hidden\/raw|hidden\b|raw\b|服务器裁决|draftContext|manifest|schema|C:\\secret|\/home\/user/i);
     expect(inventoryTraceSection.getAllByRole("button", { name: "拟复核" })).toHaveLength(3);
     fireEvent.click(inventoryTraceSection.getAllByRole("button", { name: "拟复核" })[0]);
     expect(useUiStateStore.getState().actionDraft).toMatchObject({

@@ -29,6 +29,32 @@ const hiddenTextTokens = Object.freeze([
   "prompt_retrieval_index"
 ]);
 
+const requiredVisualMatrixScreenshotLabels = Object.freeze([
+  "s74-react-home-desktop",
+  "s74-react-home-mobile",
+  "s74-react-mock-start-desktop",
+  "s76-scholar-panel-desktop",
+  "s74-react-map-runtime-desktop",
+  "s76-map-fullscreen-mobile",
+  "s76-people-ledger-desktop",
+  "s79-3-portrait-viewer-desktop",
+  "s89-2-inventory-desktop",
+  "s89-2-inventory-refresh-desktop",
+  "s89-2-inventory-mobile",
+  "s74-react-archive-desktop",
+  "s88-9-archive-mobile",
+  "s76-exam-fullscreen-desktop",
+  "s76-exam-fullscreen-mobile",
+  "s76-ranking-fullscreen-desktop",
+  "s76-ranking-fullscreen-mobile",
+  "s78-topic-surfaces-desktop",
+  "s74-react-court-refresh-desktop",
+  "s74-react-settings-refresh-desktop",
+  "s75-inkbox-mobile"
+]);
+
+const inventoryPlayerFacingLeakPattern = /provider payload|raw audit|hiddenNotes|OPENAI_API_KEY|data\/sessions|hidden\/raw|(?:^|\b)hidden\b|(?:^|\b)raw\b|服务器裁决|draftContext|manifest|schema|[a-z]:[\\/]|\/(?:home|mnt|tmp|var|etc|usr|opt|workspace|workspaces|root|data|src|client|server|dist|public|node_modules)(?:[\\/]|$)/gi;
+
 const safetyPollutionPattern = /\/api\/game\/state|\/api\/dev\/session-diagnostics|OPENAI_API_KEY|DEEPSEEK_API_KEY|MIMO_API_KEY|ANTHROPIC_API_KEY|sk-[a-z0-9_-]{6,}|tp-[a-z0-9_-]{6,}|data[\\/]+sessions|world_sessions|prompt_retrieval_index|event_log|ai_change_proposals|provider\s+payload|raw\s+(?:audit|state|prompt|provider|payload)|hiddenNotes|hiddenIntent|hidden\s+(?:notes|intent|ledger|truth)|完整\s*(?:prompt|提示词)|本地\s*路径|密\s*钥|模型\s*原始|内部审计原文|弥封身份映射|考官隐藏意图|未采纳评语|[a-z]:[\\/]|file:\/{2}|(?<![A-Za-z0-9_-])\/(?:home|Users|tmp|var|mnt|etc)\/[^\s"'<>)]*/gi;
 const playerFacingCopyLeakPattern = /\bTODO\b|\bFIXME\b|\bsmoke\b|\bartifacts?\b|\bS7[0-9](?:\.\d+)?\b|\bdebug\b|\bstub\b|\bplaceholder\b|验收|测试截图|开发注释|实现说明|fallback token|data-client-entry|React Router|Vite/gi;
 const visualTextSelectors = Object.freeze([
@@ -706,6 +732,61 @@ async function assertScreenshotArtifactsSafety(screenshots) {
   const failures = getSafetyPollutionFailures(artifactText, "screenshot artifact names");
   if (failures.length) {
     throw new Error(failures.join("; "));
+  }
+}
+
+async function assertClientVisualMatrixCoverage(screenshots, options = {}) {
+  const screenshotByLabel = new Map(screenshots.map((screenshot) => [screenshot.label, screenshot]));
+  const labels = new Set(screenshotByLabel.keys());
+  const missing = requiredVisualMatrixScreenshotLabels.filter((label) => !labels.has(label));
+  if (missing.length) {
+    throw new Error(`S89.2 visual screenshot matrix missed key route(s): ${missing.join(", ")}`);
+  }
+  if (!options.requireFiles) return;
+
+  const missingFiles = [];
+  for (const label of requiredVisualMatrixScreenshotLabels) {
+    const screenshot = screenshotByLabel.get(label);
+    if (!screenshot?.filePath) {
+      missingFiles.push(`${label}: no written PNG`);
+      continue;
+    }
+    try {
+      const stat = await fs.stat(screenshot.filePath);
+      if (!stat.isFile() || stat.size < 256) {
+        missingFiles.push(`${label}: invalid PNG artifact`);
+      }
+    } catch {
+      missingFiles.push(`${label}: missing PNG artifact`);
+    }
+  }
+  if (missingFiles.length) {
+    throw new Error(`S89.2 visual screenshot matrix did not write required artifact(s): ${missingFiles.join(", ")}`);
+  }
+}
+
+async function assertHomeStartSealTypography(page, label) {
+  const seal = await page.evaluate(() => {
+    const button = document.querySelector(".homeStartSeal");
+    const style = button ? window.getComputedStyle(button) : null;
+    return {
+      exists: Boolean(button),
+      text: button?.textContent?.trim() || "",
+      fontFamily: style?.fontFamily || "",
+      clientWidth: button?.clientWidth || 0,
+      scrollWidth: button?.scrollWidth || 0,
+      clientHeight: button?.clientHeight || 0,
+      scrollHeight: button?.scrollHeight || 0
+    };
+  });
+  if (!seal.exists || !seal.text.includes("新开一卷")) {
+    throw new Error(`${label} did not expose a readable home seal label: ${JSON.stringify(seal)}`);
+  }
+  if (!/Noto Serif SC|Songti SC|Microsoft YaHei|serif/i.test(seal.fontFamily)) {
+    throw new Error(`${label} home seal used an unstable glyph font: ${JSON.stringify(seal)}`);
+  }
+  if (seal.scrollWidth > seal.clientWidth + 2 || seal.scrollHeight > seal.clientHeight + 2) {
+    throw new Error(`${label} home seal text overflowed its cinnabar button: ${JSON.stringify(seal)}`);
   }
 }
 
@@ -2636,6 +2717,7 @@ async function runClientSmoke(options = {}) {
     });
 
     screenshots.push(await assertReactClientPage(page, baseUrl, "/", "s74-react-home-desktop", options.screenshotsDir));
+    await assertHomeStartSealTypography(page, "S89.2 desktop home");
     await assertReviewedBackgroundVisual(page, ".homeBackdrop", "S77.3 desktop home backdrop");
     await assertClientResourceBudget(page, "S77.5 desktop home", CLIENT_RESOURCE_BUDGETS.home);
     await assertManifestRuntimeSafety(baseUrl);
@@ -2719,6 +2801,7 @@ async function runClientSmoke(options = {}) {
         readySelector: ".peopleLedgerList"
       })
     );
+    await assertIndependentSessionRouteShell(page, "S89.2 人物");
     await page.locator(".peopleLedgerList").scrollIntoViewIfNeeded();
     await waitForVisiblePortraitImages(page, ".peopleLedgerList", "S77.5 desktop people ledger");
     const peopleResourceSnapshot = await assertClientResourceBudget(page, "S77.5 desktop people", CLIENT_RESOURCE_BUDGETS.people);
@@ -2756,18 +2839,25 @@ async function runClientSmoke(options = {}) {
     const portraitViewer = await page.evaluate(() => {
       const viewer = document.querySelector("[data-portrait-viewer='true']");
       const image = viewer?.querySelector("img");
+      const viewerText = viewer?.textContent || "";
       return {
         portraitRef: viewer?.querySelector("[data-portrait-ref]")?.getAttribute("data-portrait-ref") || "",
         imageSrc: image?.getAttribute("src") || "",
+        hasAppearance: viewerText.includes("外貌介绍"),
+        hasBiography: viewerText.includes("公开传略"),
+        hasCurrent: viewerText.includes("当前情况"),
         storageKeys: [
           ...Array.from({ length: localStorage.length }, (_, index) => localStorage.key(index) || ""),
           ...Array.from({ length: sessionStorage.length }, (_, index) => sessionStorage.key(index) || "")
         ],
-        unsafeText: (viewer?.textContent || "").match(/artifacts|provider payload|raw audit|hiddenNotes|OPENAI_API_KEY|data\/sessions|localStorage|sessionStorage/gi) || []
+        unsafeText: viewerText.match(/artifacts|provider payload|raw audit|hiddenNotes|OPENAI_API_KEY|data\/sessions|localStorage|sessionStorage|portraitRef|运行时|manifest|schema|draftContext|server adjudication/gi) || []
       };
     });
     if (!portraitViewer.portraitRef || !portraitViewer.imageSrc.startsWith("/assets/ui/portraits/")) {
       throw new Error(`S79.3 portrait viewer did not use an audited runtime portrait path: ${JSON.stringify(portraitViewer)}`);
+    }
+    if (!portraitViewer.hasAppearance || !portraitViewer.hasBiography || !portraitViewer.hasCurrent) {
+      throw new Error(`S89.2 portrait viewer missed player-facing profile sections: ${JSON.stringify(portraitViewer)}`);
     }
     if (portraitViewer.storageKeys.some((key) => /portrait|viewer|image/i.test(key)) || portraitViewer.unsafeText.length) {
       throw new Error(`S79.3 portrait viewer widened storage or text safety: ${JSON.stringify(portraitViewer)}`);
@@ -2801,14 +2891,52 @@ async function runClientSmoke(options = {}) {
 
     const archivePath = `/game/${startedSessionId}/archive`;
     await assertArchiveWorldEntityImpactCanary(page, startedSessionId);
+    await clickTopNavRoute(page, "史册", archivePath);
     screenshots.push(
       await assertCurrentReactClientPage(page, archivePath, "s74-react-archive-desktop", options.screenshotsDir, {
         readySelector: "#archive-title"
       })
     );
+    await assertIndependentSessionRouteShell(page, "S89.2 史册");
     screenshots.push(
       await assertRouteRefresh(page, archivePath, "s74-react-archive-refresh-desktop", options.screenshotsDir, {
         readySelector: "#archive-title"
+      })
+    );
+
+    const inventoryPath = `/game/${startedSessionId}/inventory`;
+    await clickTopNavRoute(page, "囊箧", inventoryPath);
+    screenshots.push(
+      await assertCurrentReactClientPage(page, inventoryPath, "s89-2-inventory-desktop", options.screenshotsDir, {
+        readySelector: ".inventoryRoutePanel"
+      })
+    );
+    await assertIndependentSessionRouteShell(page, "S89.2 囊箧");
+    const inventorySnapshot = await page.evaluate((inventoryLeakPatternSource) => {
+      const html = document.documentElement;
+      const text = document.body.innerText || "";
+      const inventoryLeakPattern = new RegExp(inventoryLeakPatternSource, "gi");
+      return {
+        hasSummary: Boolean(document.querySelector(".inventorySummaryGrid")),
+        hasWorkbench: Boolean(document.querySelector(".inventoryWorkbench")),
+        hasTransferPanel: Boolean(document.querySelector(".inventoryTransferPanel")),
+        hasEconomyTrace: Boolean(document.querySelector(".economyTraceSection")),
+        horizontalOverflow: html.scrollWidth > html.clientWidth + 4,
+        forbiddenText: text.match(inventoryLeakPattern) || []
+      };
+    }, inventoryPlayerFacingLeakPattern.source);
+    if (!inventorySnapshot.hasSummary || !inventorySnapshot.hasWorkbench || !inventorySnapshot.hasTransferPanel || !inventorySnapshot.hasEconomyTrace) {
+      throw new Error(`S89.2 desktop inventory is missing product matrix sections: ${JSON.stringify(inventorySnapshot)}`);
+    }
+    if (inventorySnapshot.horizontalOverflow) {
+      throw new Error(`S89.2 desktop inventory caused horizontal overflow: ${JSON.stringify(inventorySnapshot)}`);
+    }
+    if (inventorySnapshot.forbiddenText.length) {
+      throw new Error(`S89.2 desktop inventory leaked forbidden text: ${inventorySnapshot.forbiddenText.join(", ")}`);
+    }
+    screenshots.push(
+      await assertRouteRefresh(page, inventoryPath, "s89-2-inventory-refresh-desktop", options.screenshotsDir, {
+        readySelector: ".inventoryRoutePanel"
       })
     );
     screenshots.push(await assertMapResourceFailureFallback(context, baseUrl, runtimeMapPath, options.screenshotsDir));
@@ -2924,7 +3052,7 @@ async function runClientSmoke(options = {}) {
         hasTraceGrid: Boolean(document.querySelector(".archiveTraceGrid")),
         hasListOrEmpty: Boolean(document.querySelector(".archiveItemList")) || text.includes("暂无可显示的公开归档"),
         horizontalOverflow: html.scrollWidth > html.clientWidth + 2,
-        forbiddenText: text.match(/provider payload|raw audit|hiddenNotes|OPENAI_API_KEY|data\/sessions/gi) || []
+        forbiddenText: text.match(/provider payload|raw audit|hiddenNotes|OPENAI_API_KEY|data\/sessions|hidden\/raw|(?:^|\b)hidden\b|(?:^|\b)raw\b|服务器裁决/gi) || []
       };
     });
     if (!mobileArchive.hasRoutePanel || !mobileArchive.hasTraceGrid || !mobileArchive.hasListOrEmpty) {
@@ -2935,6 +3063,34 @@ async function runClientSmoke(options = {}) {
     }
     if (mobileArchive.forbiddenText.length) {
       throw new Error(`S88.9 mobile archive leaked forbidden text: ${mobileArchive.forbiddenText.join(", ")}`);
+    }
+    await page.goto(`${baseUrl}${inventoryPath}`, { waitUntil: "networkidle" });
+    screenshots.push(
+      await assertCurrentReactClientPage(page, inventoryPath, "s89-2-inventory-mobile", options.screenshotsDir, {
+        readySelector: ".inventoryRoutePanel"
+      })
+    );
+    const mobileInventory = await page.evaluate((inventoryLeakPatternSource) => {
+      const html = document.documentElement;
+      const text = document.body.innerText || "";
+      const inventoryLeakPattern = new RegExp(inventoryLeakPatternSource, "gi");
+      return {
+        hasSummary: Boolean(document.querySelector(".inventorySummaryGrid")),
+        hasWorkbench: Boolean(document.querySelector(".inventoryWorkbench")),
+        hasTransferPanel: Boolean(document.querySelector(".inventoryTransferPanel")),
+        hasEconomyTrace: Boolean(document.querySelector(".economyTraceSection")),
+        horizontalOverflow: html.scrollWidth > html.clientWidth + 2,
+        forbiddenText: text.match(inventoryLeakPattern) || []
+      };
+    }, inventoryPlayerFacingLeakPattern.source);
+    if (!mobileInventory.hasSummary || !mobileInventory.hasWorkbench || !mobileInventory.hasTransferPanel || !mobileInventory.hasEconomyTrace) {
+      throw new Error(`S89.2 mobile inventory is missing product matrix sections: ${JSON.stringify(mobileInventory)}`);
+    }
+    if (mobileInventory.horizontalOverflow) {
+      throw new Error(`S89.2 mobile inventory caused horizontal overflow: ${JSON.stringify(mobileInventory)}`);
+    }
+    if (mobileInventory.forbiddenText.length) {
+      throw new Error(`S89.2 mobile inventory leaked forbidden text: ${mobileInventory.forbiddenText.join(", ")}`);
     }
     await page.goto(`${baseUrl}${runtimeMapPath}`, { waitUntil: "networkidle" });
     screenshots.push(
@@ -2968,6 +3124,7 @@ async function runClientSmoke(options = {}) {
     await assertCanvasHasInkPixels(page, ".inkMapRuntimeBridge canvas", "S77.3 mobile map runtime");
     screenshots.push(await assertMobileInkbox(page, options.screenshotsDir));
     screenshots.push(await assertReactClientPage(page, baseUrl, "/", "s74-react-home-mobile", options.screenshotsDir));
+    await assertHomeStartSealTypography(page, "S89.2 mobile home");
     await assertReviewedBackgroundVisual(page, ".homeBackdrop", "S77.3 mobile home backdrop");
     await assertBrowserStorageSafety(page, "S77.4 final mobile context");
     screenshots.push(...(await assertBrowserLevelReducedMotion(browser, baseUrl, options.screenshotsDir)));
@@ -2980,6 +3137,7 @@ async function runClientSmoke(options = {}) {
       throw new Error(`React client smoke touched unsafe API path(s): ${[...new Set(unsafeApiRequests)].join(", ")}`);
     }
     await assertScreenshotArtifactsSafety(screenshots);
+    await assertClientVisualMatrixCoverage(screenshots, { requireFiles: Boolean(options.screenshotsDir) });
 
     return {
       baseUrl,
@@ -3000,6 +3158,7 @@ async function runClientSmoke(options = {}) {
         "desktop-map-resource-fallback",
         "desktop-people-assets",
         "desktop-people-refresh",
+        "desktop-inventory",
         "desktop-archive-refresh",
         "desktop-exam-fullscreen",
         "desktop-exam-fullscreen-refresh",
@@ -3017,6 +3176,7 @@ async function runClientSmoke(options = {}) {
         "mobile-exam-fullscreen",
         "mobile-ranking-fullscreen",
         "mobile-archive",
+        "mobile-inventory",
         "mobile-map-fullscreen",
         "mobile-inkbox-tabs",
         "mobile-home",

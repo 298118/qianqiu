@@ -168,7 +168,7 @@ export function ArchivePage() {
       <header className="archiveRouteHeader">
         <div>
           <p className="eyebrow">史册</p>
-          <h2 id="archive-title">史册</h2>
+          <h1 id="archive-title">史册</h1>
           <p>风闻、案牍、朝报、后果与旧事归入公开卷宗；这里只读已载档案，行动仍回主卷呈上。</p>
         </div>
         <dl className="archiveStats" aria-label="史册统计">

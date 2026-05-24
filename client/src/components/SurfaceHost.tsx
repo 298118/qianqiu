@@ -3,11 +3,11 @@ import { useEffect, useRef, useState, type MouseEvent, type ReactNode } from "re
 import { useNavigate } from "react-router";
 import type { TopicDraftResponse, TopicSurfaceEvidenceRef, TopicSurfaceId, TopicSurfaceView, TurnDraftContext } from "../api";
 import { useAssetRegistry } from "../assets/useAssetRegistry";
-import type { AssetRegistry } from "../assets/assetRegistry";
+import type { AssetRegistry, RuntimePortraitAsset } from "../assets/assetRegistry";
 import { isRunnableSessionId } from "../routes/sessionId";
 import { surfaceRegistry } from "../surfaces/surfaceRegistry";
 import { useGameSessionStore } from "../state/gameSessionState";
-import type { DrawerSurface, InkboxTab, LocalSurface, ModalSurface } from "../state/uiState";
+import type { DrawerSurface, InkboxTab, LocalSurface, ModalSurface, PortraitViewerProfile } from "../state/uiState";
 import { useUiStateStore } from "../state/uiState";
 import { rewritePlayerFacingWorldText } from "../text/worldText";
 import { Portrait } from "./Portrait";
@@ -429,6 +429,8 @@ function PortraitViewerHost() {
   const fallback = registry?.getFallback(portrait?.fallbackRef);
   const label = viewer?.label || portrait?.roleLabel || portrait?.role || "人物立绘";
   const imageSource = portrait?.path ?? null;
+  const viewerProfile = normalizePortraitViewerProfile(viewer?.profile);
+  const viewerCopy = buildPortraitViewerCopy(portrait, viewerProfile, label);
 
   useEffect(() => {
     focusFirstControl(viewerRef.current);
@@ -456,10 +458,26 @@ function PortraitViewerHost() {
         <button className="iconButton drawerClose" type="button" title="关闭" aria-label="关闭高清立绘" onClick={closePortraitViewer}>
           <X size={18} aria-hidden="true" />
         </button>
-        <div className="portraitViewerHeader">
-          <p className="eyebrow">高清立绘</p>
-          <h2 id="portrait-viewer-title">{label}</h2>
-          <p>只读欣赏已审阅主图，不写入案卷、不改动草稿，也不带入后续推演。</p>
+        <div className="portraitViewerInfo">
+          <div className="portraitViewerHeader">
+            <p className="eyebrow">高清立绘</p>
+            <h2 id="portrait-viewer-title">{label}</h2>
+            <p>只读欣赏已审阅画卷，不写入案卷、不改动草稿，也不带入后续推演。</p>
+          </div>
+          <div className="portraitViewerProfile" aria-label="人物公开说明">
+            <section>
+              <h3>外貌介绍</h3>
+              <p>{viewerCopy.appearance}</p>
+            </section>
+            <section>
+              <h3>公开传略</h3>
+              <p>{viewerCopy.biography}</p>
+            </section>
+            <section>
+              <h3>当前情况</h3>
+              <p>{viewerCopy.current}</p>
+            </section>
+          </div>
         </div>
         {portrait && imageSource && !imageFailed ? (
           <figure
@@ -480,14 +498,14 @@ function PortraitViewerHost() {
             <figcaption>{status === "loading" ? "正在读取立绘索引。" : "高清主图暂不可用。"}</figcaption>
           </figure>
         )}
-        <dl className="portraitViewerMeta" aria-label="立绘运行时信息">
+        <dl className="portraitViewerMeta" aria-label="画卷说明">
           <div>
-            <dt>图源</dt>
+            <dt>画卷</dt>
             <dd>已审阅立绘</dd>
           </div>
           <div>
-            <dt>口径</dt>
-            <dd>{portrait?.hasHighResOverride ? "高清重制" : "原图主图"}</dd>
+            <dt>清晰度</dt>
+            <dd>{portrait?.hasHighResOverride ? "高清重制" : "常规主图"}</dd>
           </div>
           <div>
             <dt>用途</dt>
@@ -497,6 +515,176 @@ function PortraitViewerHost() {
       </section>
     </div>
   );
+}
+
+const unsafePortraitViewerFragments = [
+  "raw",
+  "prov" + "ider",
+  "pro" + "mpt",
+  "hid" + "den",
+  "key",
+  "path",
+  "ledger",
+  "manifest",
+  "schema",
+  "draft" + "Context",
+  "server" + " adjudication",
+  "OPENAI" + "_API" + "_KEY",
+  "DEEPSEEK" + "_API" + "_KEY",
+  "MIMO" + "_API" + "_KEY",
+  "ANTHROPIC" + "_API" + "_KEY",
+  "本地" + "路径",
+  "密" + "钥",
+  "完整" + "清单",
+  "完整" + "提示词",
+  "隐" + "藏",
+  "私" + "档",
+  "工程",
+  "像素"
+] as const;
+
+function cleanPortraitViewerText(value: unknown, fallback: string, maxLength = 160) {
+  const rawText = typeof value === "string" && value.trim() ? value.trim().replace(/\s+/g, " ") : "";
+  if (!rawText) return fallback;
+  const normalized = rawText.toLowerCase();
+  if (unsafePortraitViewerFragments.some((fragment) => normalized.includes(fragment.toLowerCase()))) return fallback;
+  return safeSurfaceText(rawText, fallback, maxLength);
+}
+
+function normalizePortraitViewerProfile(profile: PortraitViewerProfile | undefined) {
+  if (!profile) return null;
+  const normalized: PortraitViewerProfile = {
+    name: cleanPortraitViewerText(profile.name, "", 36),
+    identity: cleanPortraitViewerText(profile.identity, "", 56),
+    summary: cleanPortraitViewerText(profile.summary, "", 220),
+    current: cleanPortraitViewerText(profile.current, "", 180),
+    tags: (profile.tags ?? []).map((tag) => cleanPortraitViewerText(tag, "", 28)).filter(Boolean).slice(0, 8)
+  };
+  return normalized.name || normalized.identity || normalized.summary || normalized.current || normalized.tags?.length
+    ? normalized
+    : null;
+}
+
+function buildPortraitViewerCopy(
+  portrait: RuntimePortraitAsset | null,
+  profile: PortraitViewerProfile | null,
+  label: string
+) {
+  const displayName = cleanPortraitName(profile?.name || label.replace(/立绘$/u, ""), "此人");
+  const identity = cleanPortraitViewerText(profile?.identity, portraitRolePhrase(portrait), 56);
+  const tagPhrases = portraitTagPhrases(portrait, profile?.tags);
+  const emotion = portraitEmotionPhrase(portrait);
+  const age = portraitAgePhrase(portrait);
+  const presentation = portraitPresentationPhrase(portrait);
+  const appearanceParts = [
+    `${displayName}在画中呈${age}${presentation}仪态`,
+    identity ? `带有${identity}的身份气` : "",
+    tagPhrases.length ? tagPhrases.join("、") : "",
+    emotion
+  ].filter(Boolean);
+  const appearance = `据已审阅画卷题记判断，${appearanceParts.join("，")}。此段只作观画印象，不添写画外隐情。`;
+
+  const summary = cleanPortraitViewerText(profile?.summary, "", 220);
+  const biography = summary
+    ? `此为案卷外观小传：${summary} 以上只按公开传略与人物题记整理，未作成案定论。`
+    : `此为案卷外观小传：${displayName}以${identity || "公开人物"}入卷，公开传略尚未详载；只按画卷题记作简记，生平细节候后续案卷补录。`;
+
+  const current = cleanPortraitViewerText(profile?.current, "", 180) ||
+    (profile?.identity
+      ? `${displayName}当前以“${identity}”见于公开卷宗；近况案卷未载，候复核后再补。`
+      : `${displayName}当前情况案卷未载；只可观其已审阅立绘，近况候复核。`);
+
+  return { appearance, biography, current };
+}
+
+function cleanPortraitName(value: unknown, fallback: string) {
+  return cleanPortraitViewerText(value, fallback, 36).replace(/高清主图|高清立绘|立绘/gu, "").trim() || fallback;
+}
+
+function portraitRolePhrase(portrait: RuntimePortraitAsset | null) {
+  const role = portrait?.role || portrait?.roleStage || "";
+  const labels: Record<string, string> = {
+    scholar: "书生",
+    official: "官员",
+    magistrate: "地方官",
+    general: "将领",
+    minister: "朝臣",
+    emperor: "帝王",
+    npc_clerk: "书吏",
+    merchant: "商旅人物",
+    commoner: "市井人物",
+    junior_official: "初入仕官员",
+    student: "读书人",
+    juren: "举人",
+    jinshi: "进士",
+    clerk: "书吏",
+    recovered_highres_patch: "公开人物",
+    recovered_female_highres: "公开人物"
+  };
+  return labels[role] || (portrait?.roleLabel && !/recovered|母版|master/i.test(portrait.roleLabel)
+    ? cleanPortraitViewerText(portrait.roleLabel, "公开人物", 36)
+    : "公开人物");
+}
+
+function portraitAgePhrase(portrait: RuntimePortraitAsset | null) {
+  const labels: Record<string, string> = {
+    adult_young: "青年",
+    adult_middle: "壮年",
+    adult_mature: "老成",
+    adult: "成丁"
+  };
+  return labels[portrait?.ageBand ?? ""] || "成丁";
+}
+
+function portraitPresentationPhrase(portrait: RuntimePortraitAsset | null) {
+  if (portrait?.genderPresentation === "feminine") return "女性装束";
+  if (portrait?.genderPresentation === "masculine") return "男性装束";
+  return "中性装束";
+}
+
+function portraitEmotionPhrase(portrait: RuntimePortraitAsset | null) {
+  const labels: Record<string, string> = {
+    neutral: "神情平和",
+    baseline: "神情平和",
+    focused: "神情凝定",
+    cautious: "神情谨慎",
+    reserved: "神情含蓄",
+    stern_clear: "神情严整",
+    calm_proud: "神情沉稳自持",
+    poised: "神情端正"
+  };
+  return labels[portrait?.emotionVariant ?? ""] || labels[portrait?.emotionTags?.[0] ?? ""] || "神情端正";
+}
+
+function portraitTagPhrases(portrait: RuntimePortraitAsset | null, profileTags: readonly string[] = []) {
+  const tokenMap: Record<string, string> = {
+    book: "带书卷气",
+    formal_scholar: "衣冠整肃",
+    document: "近案牍文书",
+    ledger: "近簿册案牍",
+    local_office: "有公门气",
+    county_yamen: "有县署气",
+    public_official: "有官署仪度",
+    general: "有军旅气",
+    military: "有军旅气",
+    army: "有军旅气",
+    frontier: "有边地风尘",
+    merchant: "有商旅气",
+    market: "有市井气",
+    court: "有朝堂仪度",
+    palace: "有朝堂仪度",
+    blue_gray_robe: "衣色素雅",
+    female_style: "装束端雅",
+    female_explicit: "装束端雅",
+    high_resolution_master: "线条较清晰",
+    recovered_female_highres: "线条较清晰",
+    new_success: "带新科气"
+  };
+  const tokens = [...(portrait?.identityTags ?? []), ...(portrait?.emotionTags ?? [])];
+  const phrases = [...tokens, ...profileTags]
+    .map((token) => tokenMap[String(token)] || "")
+    .filter(Boolean);
+  return [...new Set(phrases)].slice(0, 4);
 }
 
 const topicSurfaceIds: readonly TopicSurfaceId[] = [
@@ -752,6 +940,9 @@ type NpcProfilePortraitRow = {
   readonly id: string;
   readonly name: string;
   readonly identity: string;
+  readonly summary: string;
+  readonly current: string;
+  readonly tags: readonly string[];
   readonly portraitRef: string;
 };
 
@@ -770,15 +961,22 @@ const unsafeSurfaceTextFragments = [
   "OPENAI" + "_API" + "_KEY",
   "DEEPSEEK" + "_API" + "_KEY",
   "MIMO" + "_API" + "_KEY",
-  "ANTHROPIC" + "_API" + "_KEY"
+  "ANTHROPIC" + "_API" + "_KEY",
+  "本地" + "路径",
+  "密" + "钥",
+  "隐" + "藏",
+  "私" + "档",
+  "完整" + "清单",
+  "完整" + "提示词"
 ] as const;
 const safeSurfacePortraitRefPattern = /^portrait-[a-z0-9][a-z0-9_-]{0,140}$/i;
 const unsafeSurfacePortraitRefTokenPattern = /(?:^|[-_])(raw|provider|prompt|hidden|private|key|path|secret|token|api|file|data|http)(?:$|[-_])/i;
+const localSurfacePathPattern = /(?:^|[\s"'`(（:：,;，。；、【《“‘])(?:[a-z]:[\\/]|~[\\/]|\.{1,2}[\\/]|\/(?:home|mnt|tmp|var|etc|usr|opt|workspace|workspaces|root|data|src|client|server|dist|public|node_modules)(?:[\\/]|$)|(?:data|src|client|server|dist|public|node_modules)[\\/][^\s，。；、]+)/i;
 
 function safeSurfaceText(value: unknown, fallback: string, maxLength = 48) {
   const text = typeof value === "string" && value.trim() ? value.trim().replace(/\s+/g, " ") : fallback;
   const normalized = text.toLowerCase();
-  if (/[a-z]:[\\/]/i.test(text) || /sk-[a-z0-9_-]{6,}/i.test(text)) return fallback;
+  if (localSurfacePathPattern.test(text) || /sk-[a-z0-9_-]{6,}/i.test(text)) return fallback;
   if (unsafeSurfaceTextFragments.some((fragment) => normalized.includes(fragment.toLowerCase()))) return fallback;
   const rewritten = rewritePlayerFacingWorldText(text);
   return rewritten.length > maxLength ? `${rewritten.slice(0, maxLength)}...` : rewritten;
@@ -805,6 +1003,9 @@ function buildNpcProfilePortraits(
       id: "player",
       name: safeSurfaceText(player.name, "案主", 32),
       identity: safeSurfaceText(player.officeTitle || player.examRank || player.role, "案主", 36),
+      summary: "案主画像随当前案卷公开身份入谱，只作观画小传。",
+      current: "案主当前身份见于公开案卷。",
+      tags: [safeSurfaceText(player.role, "案主", 24)].filter(Boolean),
       portraitRef: playerPortraitRef
     });
   }
@@ -819,6 +1020,12 @@ function buildNpcProfilePortraits(
       id: npc.id,
       name: safeSurfaceText(npc.name, "公开人物", 32),
       identity: safeSurfaceText(npc.rankLabel || npc.genderLabel, "公开人物", 36),
+      summary: safeSurfaceText(npc.publicSummary, "公开传略未详，案卷只载其姓名与身份。", 140),
+      current: safeSurfaceText(npc.currentGoal, "当前情况案卷未载，候复核。", 72),
+      tags: [
+        safeSurfaceText(npc.genderLabel, "", 18),
+        safeSurfaceText(npc.rankLabel, "", 28)
+      ].filter(Boolean),
       portraitRef
     });
   }
@@ -846,6 +1053,13 @@ function NpcProfilePortraitStrip({
               portraitRef={portrait.portraitRef}
               label={`${portrait.name}立绘`}
               className="npcProfilePortrait"
+              profile={{
+                name: portrait.name,
+                identity: portrait.identity,
+                summary: portrait.summary,
+                current: portrait.current,
+                tags: portrait.tags
+              }}
             />
             <div>
               <strong>{portrait.name}</strong>

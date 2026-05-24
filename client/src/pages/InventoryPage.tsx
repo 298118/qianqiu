@@ -41,6 +41,10 @@ const unsafeInventoryTextFragments = [
   "hid" + "den",
   "key",
   "path",
+  "manifest",
+  "schema",
+  "draft" + "Context",
+  "server" + " adjudication",
   "hidden" + "Notes",
   "OPENAI" + "_API" + "_KEY",
   "DEEPSEEK" + "_API" + "_KEY",
@@ -54,9 +58,12 @@ const unsafeInventoryTextFragments = [
   "模型" + "原始"
 ] as const;
 
+const localInventoryPathPattern = /(?:^|[\s"'`(（:：,;，。；、【《“‘])(?:[a-z]:[\\/]|~[\\/]|\.{1,2}[\\/]|\/(?:home|mnt|tmp|var|etc|usr|opt|workspace|workspaces|root|data|src|client|server|dist|public|node_modules)(?:[\\/]|$)|(?:data|src|client|server|dist|public|node_modules)[\\/][^\s，。；、]+)/i;
+
 function safeLabel(value: unknown, fallback: string, maxLength = 80) {
   const text = typeof value === "string" && value.trim() ? value.trim().replace(/\s+/g, " ") : fallback;
   const lowered = text.toLowerCase();
+  if (localInventoryPathPattern.test(text) || /sk-[a-z0-9_-]{6,}/i.test(text)) return fallback;
   if (unsafeInventoryTextFragments.some((fragment) => lowered.includes(fragment.toLowerCase()))) return fallback;
   const rewritten = rewritePlayerFacingWorldText(text);
   return rewritten.length > maxLength ? `${rewritten.slice(0, maxLength)}...` : rewritten;
@@ -342,7 +349,11 @@ export function InventoryPage() {
         onDraft={(text) => setActionDraft({ source: "role-surface", targetPage: "game", text })}
       />
 
-      {inventoryView?.authorityBoundary ? <p className="statusLine">{inventoryView.authorityBoundary}</p> : null}
+      {inventoryView?.authorityBoundary ? (
+        <p className="statusLine">
+          {safeLabel(inventoryView.authorityBoundary, "囊箧、仓库、器物、账约、绑定凭证和移转结果均候案卷回批复核。", 120)}
+        </p>
+      ) : null}
       {routeError ? <p className="statusLine" role="alert">{routeError}</p> : null}
     </article>
   );

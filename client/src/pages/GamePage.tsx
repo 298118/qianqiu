@@ -120,7 +120,7 @@ const gameTabs = [
   { id: "settings", label: "印匣", icon: Settings }
 ] as const;
 
-const independentSessionRouteIds = new Set(["exam", "ranking", "court", "settings"]);
+const independentSessionRouteIds = new Set(["people", "inventory", "archive", "exam", "ranking", "court", "settings"]);
 const roleCycleRouteIds = new Set(["game", ...gameTabs.map((tab) => tab.id)]);
 
 function safeGameShellText(value: unknown, fallback: string) {
