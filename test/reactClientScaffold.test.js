@@ -1135,6 +1135,56 @@ test("S88.8 economy trace view is wired into magistrate and official main panels
   );
 });
 
+test("S88.7 topic surfaces label NPC relationship action evidence as read-only interaction records", () => {
+  const resolverConfigSource = readText("src/game/resolverInputConfig.js");
+  const resolverContextSource = readText("src/game/resolverInputContext.js");
+  const npcInteractionSource = readText("src/game/npcInteractions.js");
+  const safeSearchSource = readText("src/game/safeWorldSearch.js");
+  const topicSurfaceSource = readText("src/game/topicSurfaceView.js");
+  const surfaceHostSource = readText("client/src/components/SurfaceHost.tsx");
+  const appTestSource = readText("client/src/__tests__/App.test.tsx");
+  const topicSourceLabelSnippet = surfaceHostSource.slice(
+    surfaceHostSource.indexOf("function topicSourceLabel"),
+    surfaceHostSource.indexOf("function TopicSurfaceWorkbench")
+  );
+  const npcEvidenceBuilderSnippet = npcInteractionSource.slice(
+    npcInteractionSource.indexOf("function buildNpcRelationshipActionEvidenceRowsFromRecords"),
+    npcInteractionSource.indexOf("function buildNpcInteractionLedgerView")
+  );
+  const trialTopicSnippet = topicSurfaceSource.slice(
+    topicSurfaceSource.indexOf("trial: Object.freeze"),
+    topicSurfaceSource.indexOf('"war-council": Object.freeze')
+  );
+
+  assert.match(npcInteractionSource, /relationshipActionEvidence/);
+  assert.match(npcInteractionSource, /npc_relationship_action_resolver/);
+  assert.match(npcInteractionSource, /NPC_RELATIONSHIP_ACTION_TOPIC_SURFACES/);
+  assert.match(npcInteractionSource, /"npc-profile"/);
+  assert.match(npcInteractionSource, /"court-debate"/);
+  assert.match(npcInteractionSource, /"memorial-review"/);
+  assert.match(resolverConfigSource, /sourceView: "npcInteractionView"/);
+  assert.match(resolverConfigSource, /collections: Object\.freeze\(\["relationshipActionEvidence"\]\)/);
+  assert.match(resolverContextSource, /buildNpcInteractionLedgerView/);
+  assert.match(safeSearchSource, /npcInteractionView\.relationshipActionEvidence/);
+  assert.match(topicSurfaceSource, /"memorial-review": Object\.freeze\([\s\S]*?"npcInteractionView"/);
+  assert.match(topicSurfaceSource, /"court-debate": Object\.freeze\([\s\S]*?"npcInteractionView"/);
+  assert.match(topicSurfaceSource, /"npc-profile": Object\.freeze\([\s\S]*?"npcInteractionView"/);
+  assert.doesNotMatch(trialTopicSnippet, /"npcInteractionView"/);
+  assert.match(surfaceHostSource, /交游记录/);
+  assert.match(surfaceHostSource, /交游记录 · \$\{domain\}/);
+  assert.match(appTestSource, /交游记录 1 条/);
+  assert.match(appTestSource, /交游记录 · 案牍/);
+  assert.match(npcEvidenceBuilderSnippet, /sourceType: "npc_relationship_action"/);
+  assert.match(npcEvidenceBuilderSnippet, /sourceLabel: "交游记录"/);
+  assert.match(npcEvidenceBuilderSnippet, /visibility: "player_visible"/);
+  assert.match(npcEvidenceBuilderSnippet, /boundary: "交游记录只作只读证据/);
+  assert.match(npcEvidenceBuilderSnippet, /serverOwnsOutcome/);
+  assert.doesNotMatch(
+    `${topicSourceLabelSnippet}\n${npcEvidenceBuilderSnippet}`,
+    /fetch\(|submitTurn\(|\/api\/game\/state|\/api\/dev\/session-diagnostics|\/api\/game\/turn|npcInteractionLedger|relationshipImpactView|resourceImpactView|worldPeopleImpactView|dangerouslySetInnerHTML|localStorage|sessionStorage|data\/sessions|raw audit|provider payload|OPENAI_API_KEY|DEEPSEEK_API_KEY|MIMO_API_KEY|ANTHROPIC_API_KEY/
+  );
+});
+
 test("S76.7 exam page renders immersive safe exam flow without widening authority", () => {
   const examPageSource = readText("client/src/pages/ExamPage.tsx");
   const styleSource = readText("client/src/styles/global.css");

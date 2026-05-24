@@ -12,6 +12,8 @@ const {
   resolveNpcActiveRequest,
   runNpcActiveRequestStep
 } = require("../src/game/npcActiveRequests");
+const { recordNpcInteraction } = require("../src/game/npcInteractions");
+const { resolveNpcRelationshipAction } = require("../src/game/npcRelationshipActions");
 const { applyWorldEntityInfluences } = require("../src/game/worldEntities");
 const { resolveTradeRequest } = require("../src/game/tradeLedger");
 const { SAFE_WORLD_SEARCH_SOURCE } = require("../src/game/safeWorldSearch");
@@ -340,6 +342,60 @@ test("S88.7 SQLite safe search syncs world entity impact rows from safe projecti
   assert.doesNotMatch(
     JSON.stringify({ result, storedRows }),
     /SEALED_|data\/sessions|rawLedger|providerPayload|provider_payload|hiddenDossier|privateSignalTags|safe_search_index|safe_search_fts|state_patch|world_sessions|sk-[A-Za-z0-9_-]{6,}|\/mnt\/e/
+  );
+});
+
+test("S88.7 SQLite safe search syncs NPC relationship action evidence rows", {
+  skip: hasNodeSqlite ? false : "node:sqlite is unavailable in this Node.js runtime"
+}, async (t) => {
+  const { adapter, dbPath } = createHarness(t);
+  const worldState = createInitialState({
+    role: "scholar",
+    playerName: "交游检索库"
+  });
+  worldState.turnCount = 30;
+  const relationshipAction = resolveNpcRelationshipAction(worldState, {
+    npcId: "npc:scholar:peer-shen",
+    actionType: "duel",
+    winner: "player",
+    injury: "npc_injured"
+  }, {
+    dialogueText: "沈砚秋愿以射艺和步法切磋，胜负仍候裁断。",
+    mood: "昂然"
+  });
+  assert.equal(relationshipAction.ok, true);
+  const recorded = recordNpcInteraction(worldState, {
+    npcId: "npc:scholar:peer-shen",
+    actionType: "duel",
+    utterance: "只作公开切磋，不许伤人。",
+    winner: "player",
+    injury: "npc_injured"
+  }, {
+    dialogueText: "沈砚秋愿以射艺和步法切磋，胜负仍候裁断。"
+  }, {
+    resolutionView: relationshipAction.resolutionView
+  });
+  recorded.record.outcomeSummary = "provider_payload hidden_dossier /mnt/e/secret safe_search_index";
+  await adapter.writeSession(clone(worldState));
+
+  const result = await adapter.searchSafeSearchIndex(worldState.sessionId, {
+    query: "沈砚秋 切磋",
+    domain: "events",
+    pageSize: 5
+  });
+  const storedRows = withSqliteDatabase(dbPath, (db) =>
+    db
+      .prepare("SELECT source_view, source_id, title, summary, search_text FROM safe_search_index WHERE session_id = ? AND source_view = ?")
+      .all(worldState.sessionId, "npcInteractionView.relationshipActionEvidence")
+  );
+
+  assert.ok(result.results.some((item) =>
+    item.sourceView === "npcInteractionView.relationshipActionEvidence" && /沈砚秋|切磋/.test(`${item.title}${item.snippet}`)
+  ));
+  assert.ok(storedRows.some((row) => /沈砚秋|切磋|服务器裁决/.test(`${row.title}${row.summary}${row.search_text}`)));
+  assert.doesNotMatch(
+    JSON.stringify({ result, storedRows }),
+    /SEALED_|provider_payload|hidden_dossier|npcInteractionLedger|npcRelationshipActionEligibilityView|relationshipImpactView|resourceImpactView|worldPeopleImpactView|safe_search_index|safe_search_fts|state_patch|world_sessions|sk-[A-Za-z0-9_-]{6,}|\/mnt\/e/
   );
 });
 

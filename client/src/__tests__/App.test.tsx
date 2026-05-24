@@ -2923,6 +2923,7 @@ describe("S74.1 React client shell", () => {
             sourceViews: [
               { sourceView: "eventArchiveView", domain: "events", count: 1 },
               { sourceView: "npcActiveRequestView", domain: "events", count: 1 },
+              { sourceView: "npcInteractionView", domain: "events", count: 1 },
               { sourceView: "economyTraceView", domain: "economy", count: 1 }
             ],
             filters: [],
@@ -2956,6 +2957,17 @@ describe("S74.1 React client shell", () => {
               visibility: "public",
               confidence: 0.7,
               freshness: "current"
+            }, {
+              refId: "npcInteractionView:npc-relationship-action-evidence:duel",
+              sourceView: "npcInteractionView",
+              sourceId: "npc-relationship-resolution:npc-scholar-peer-shen:duel:29",
+              domain: "events",
+              label: "交游记录：沈砚秋切磋",
+              summary: "沈砚秋切磋已由服务器裁决，只作公开交游材料引用。",
+              visibility: "player_visible",
+              confidence: 0.7,
+              freshness: "current",
+              topicSurfaceIds: ["npc-profile", "court-debate", "memorial-review"]
             }, {
               refId: "economyTraceView:trade:paper",
               sourceView: "economyTraceView",
@@ -3041,6 +3053,9 @@ describe("S74.1 React client shell", () => {
     expect(dialog.textContent || "").toContain("户部、兵部");
     expect(dialog.textContent || "").toContain("请托案牍复核");
     expect(dialog.textContent || "").toContain("来函证据 · 案牍");
+    expect(dialog.textContent || "").toContain("交游记录：沈砚秋切磋");
+    expect(dialog.textContent || "").toContain("交游记录 1 条");
+    expect(dialog.textContent || "").toContain("交游记录 · 案牍");
     expect(dialog.textContent || "").toContain("纸价议价解释");
     expect(dialog.textContent || "").toContain("经济解释 1 条");
     expect(dialog.textContent || "").toContain("经济解释 · 月账");

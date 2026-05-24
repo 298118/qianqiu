@@ -7,6 +7,7 @@ const { buildIntelligenceRumorRetrievalRows } = require("./intelligenceRumors");
 const { buildLocalAffairsDocketView } = require("./localAffairsDockets");
 const { buildMilitaryDiplomacyRetrievalRows } = require("./militaryDiplomacy");
 const { buildNpcActiveRequestView } = require("./npcActiveRequests");
+const { buildNpcInteractionLedgerView } = require("./npcInteractions");
 const { buildOfficialPostingsView } = require("./officialPostings");
 const { buildWorldEntityView } = require("./worldEntities");
 const { buildWorldGeographyView } = require("./worldGeography");
@@ -23,6 +24,7 @@ const SAFE_WORLD_SEARCH_MAX_ROWS = 1200;
 const SAFE_WORLD_SEARCH_PROTECTED_SOURCE_VIEWS = new Set([
   "domainConsequenceView.recentConsequences",
   "economyTraceView.traceItems",
+  "npcInteractionView.relationshipActionEvidence",
   "worldEntityView.recentImpacts"
 ]);
 
@@ -330,6 +332,7 @@ function buildViews(worldState = {}, prebuiltViews = null) {
   const views = isPlainObject(prebuiltViews) ? prebuiltViews : {};
   return {
     economyTraceView: views.economyTraceView || buildEconomyTraceView(worldState),
+    npcInteractionView: views.npcInteractionView || buildNpcInteractionLedgerView(worldState),
     worldEntityView: views.worldEntityView || buildWorldEntityView(worldState),
     worldGeographyView: views.worldGeographyView || buildWorldGeographyView(worldState),
     worldPeopleView: views.worldPeopleView || buildWorldPeopleView(worldState),
@@ -710,6 +713,44 @@ function buildNpcActiveRequestSearchRows(rows, worldState = {}, npcActiveRequest
   }
 }
 
+function buildNpcInteractionSearchRows(rows, npcInteractionView = {}) {
+  const evidenceItems = Array.isArray(npcInteractionView.relationshipActionEvidence)
+    ? npcInteractionView.relationshipActionEvidence
+    : [];
+  for (const evidence of evidenceItems) {
+    addSearchRow(rows, {
+      domain: "events",
+      sourceView: "npcInteractionView.relationshipActionEvidence",
+      sourceId: evidence.evidenceId || evidence.sourceId,
+      title: evidence.title || evidence.actionLabel || "交游记录",
+      meta: `${evidence.sourceLabel || "交游记录"} ${evidence.statusLabel || ""} ${evidence.disposition || ""}`,
+      summary: evidence.publicSummary || evidence.summary,
+      confidence: Math.round((Number(evidence.confidence) || 0.7) * 100),
+      visibility: evidence.visibility || "player_visible",
+      extra: [
+        evidence.boundary,
+        evidence.npc?.displayName,
+        ...(Array.isArray(evidence.topicSurfaceIds) ? evidence.topicSurfaceIds : [])
+      ].filter(Boolean).join(" "),
+      tags: [
+        evidence.actionType,
+        evidence.actionLabel,
+        evidence.statusLabel,
+        ...(Array.isArray(evidence.riskTags) ? evidence.riskTags : [])
+      ],
+      metrics: [
+        ["动作", evidence.actionLabel],
+        ["状态", evidence.statusLabel],
+        ["发生旬", evidence.generatedAtTurn]
+      ],
+      relatedRefs: [
+        relatedRef("npc_relationship_action", evidence.sourceId, evidence.title),
+        relatedRef("npc", evidence.npc?.npcId, evidence.npc?.displayName)
+      ]
+    });
+  }
+}
+
 function amountMetric(trace = {}) {
   const amount = isPlainObject(trace.amountView) ? trace.amountView : null;
   if (!amount) return null;
@@ -822,6 +863,7 @@ function buildSafeSearchRows(worldState = {}, options = {}) {
   buildWorldEntityImpactSearchRows(rows, views.worldEntityView);
   buildEconomyTraceSearchRows(rows, views.economyTraceView);
   buildNpcActiveRequestSearchRows(rows, worldState, options.views?.npcActiveRequestView);
+  buildNpcInteractionSearchRows(rows, views.npcInteractionView);
   buildRumorSearchRows(rows, worldState);
   return capSafeSearchRows(rows);
 }

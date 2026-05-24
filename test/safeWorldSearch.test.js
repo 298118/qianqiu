@@ -14,6 +14,8 @@ const {
   resolveNpcActiveRequest,
   runNpcActiveRequestStep
 } = require("../src/game/npcActiveRequests");
+const { recordNpcInteraction } = require("../src/game/npcInteractions");
+const { resolveNpcRelationshipAction } = require("../src/game/npcRelationshipActions");
 const { applyWorldEntityInfluences } = require("../src/game/worldEntities");
 const { resolveTradeRequest } = require("../src/game/tradeLedger");
 const {
@@ -424,6 +426,51 @@ test("S88.7 safe world search indexes world entity impact evidence without raw l
   assert.doesNotMatch(
     serialized,
     /data\/sessions|rawLedger|providerPayload|safe_search_index|safe_search_fts|hiddenDossier|privateSignalTags|provider_payload|state_patch|world_sessions|sk-[A-Za-z0-9_-]{6,}|\/mnt\/e/
+  );
+});
+
+test("S88.7 safe world search indexes NPC relationship action evidence without raw leaks", () => {
+  const worldState = createInitialState({ role: "scholar", playerName: "交游检索" });
+  worldState.turnCount = 29;
+  const relationshipAction = resolveNpcRelationshipAction(worldState, {
+    npcId: "npc:scholar:peer-shen",
+    actionType: "duel",
+    winner: "player",
+    injury: "npc_injured"
+  }, {
+    dialogueText: "沈砚秋愿以射艺和步法切磋，胜负仍候裁断。",
+    mood: "昂然"
+  });
+  assert.equal(relationshipAction.ok, true);
+  const recorded = recordNpcInteraction(worldState, {
+    npcId: "npc:scholar:peer-shen",
+    actionType: "duel",
+    utterance: "只作公开切磋，不许伤人。",
+    winner: "player",
+    injury: "npc_injured"
+  }, {
+    dialogueText: "沈砚秋愿以射艺和步法切磋，胜负仍候裁断。"
+  }, {
+    resolutionView: relationshipAction.resolutionView
+  });
+  recorded.record.outcomeSummary = "provider_payload hidden_dossier /mnt/e/secret safe_search_index";
+
+  const rows = buildSafeSearchRows(worldState);
+  const view = searchSafeWorldIndex(worldState, {
+    query: "沈砚秋 切磋",
+    domain: "events",
+    pageSize: 5
+  });
+  const serialized = JSON.stringify({ rows, view });
+
+  assert.ok(rows.some((row) => row.sourceView === "npcInteractionView.relationshipActionEvidence"));
+  assert.ok(view.results.some((result) =>
+    result.sourceView === "npcInteractionView.relationshipActionEvidence" &&
+    /沈砚秋|切磋|服务器裁决/.test(`${result.title}${result.snippet}`)
+  ));
+  assert.doesNotMatch(
+    serialized,
+    /provider_payload|hidden_dossier|npcInteractionLedger|npcRelationshipActionEligibilityView|relationshipImpactView|resourceImpactView|worldPeopleImpactView|safe_search_index|safe_search_fts|state_patch|world_sessions|sk-[A-Za-z0-9_-]{6,}|\/mnt\/e/
   );
 });
 

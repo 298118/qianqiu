@@ -27,6 +27,7 @@ const TOPIC_SURFACE_CONFIG = Object.freeze({
       "courtResponseView",
       "officialCareerView",
       "npcActiveRequestView",
+      "npcInteractionView",
       "worldEntityView",
       "economyTraceView",
       "eventArchiveView",
@@ -93,6 +94,7 @@ const TOPIC_SURFACE_CONFIG = Object.freeze({
       "officialCareerView",
       "officialPostingsView",
       "npcActiveRequestView",
+      "npcInteractionView",
       "actorMemoryView",
       "worldEntityView",
       "economyTraceView",
@@ -168,6 +170,7 @@ const TOPIC_SURFACE_CONFIG = Object.freeze({
       "examNetwork",
       "relationshipView",
       "npcActiveRequestView",
+      "npcInteractionView",
       "worldEntityView",
       "economyTraceView",
       "officialPostingsView"

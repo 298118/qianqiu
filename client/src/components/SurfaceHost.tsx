@@ -871,6 +871,7 @@ function topicDomainLabel(domain: unknown) {
 function topicSourceLabel(sourceView: unknown) {
   const text = String(sourceView || "").trim();
   if (text === "npcActiveRequestView") return "来函后续";
+  if (text === "npcInteractionView") return "交游记录";
   if (text === "economyTraceView") return "经济解释";
   return text || "公开投影";
 }
@@ -879,6 +880,7 @@ function topicEvidenceMeta(ref: TopicSurfaceEvidenceRef) {
   const source = topicSourceLabel(ref.sourceView);
   const domain = topicDomainLabel(ref.domain);
   if (source === "经济解释") return `经济解释 · ${domain}`;
+  if (source === "交游记录") return `交游记录 · ${domain}`;
   return source === "来函后续" ? `来函证据 · ${domain}` : domain || source;
 }
 

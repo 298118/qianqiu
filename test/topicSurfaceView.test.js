@@ -11,6 +11,8 @@ const {
   createNpcActiveRequest,
   resolveNpcActiveRequest
 } = require("../src/game/npcActiveRequests");
+const { recordNpcInteraction } = require("../src/game/npcInteractions");
+const { resolveNpcRelationshipAction } = require("../src/game/npcRelationshipActions");
 const { createLandSurveyDelegatedTask } = require("../src/game/delegatedTasks");
 const { resolveTradeRequest } = require("../src/game/tradeLedger");
 const {
@@ -361,6 +363,57 @@ test("S88.7 topic surfaces expose world entity impact evidence as read-only mate
   ));
   assert.equal(trial.evidenceRefs.some((ref) => ref.sourceView === "worldEntityView"), false);
   assertNoSensitiveText({ memorial, edict, debate, profile, trial });
+});
+
+test("S88.7 topic surfaces expose NPC relationship action evidence as read-only material", () => {
+  const worldState = createInitialState({
+    dynasty: "明",
+    year: 1644,
+    role: "scholar",
+    playerName: "交游专题"
+  });
+  worldState.turnCount = 29;
+  const relationshipAction = resolveNpcRelationshipAction(worldState, {
+    npcId: "npc:scholar:peer-shen",
+    actionType: "duel",
+    winner: "player",
+    injury: "npc_injured"
+  }, {
+    dialogueText: "沈砚秋愿以射艺和步法切磋，胜负仍候裁断。",
+    mood: "昂然"
+  });
+  assert.equal(relationshipAction.ok, true);
+  const recorded = recordNpcInteraction(worldState, {
+    npcId: "npc:scholar:peer-shen",
+    actionType: "duel",
+    utterance: "只作公开切磋，不许伤人。",
+    winner: "player",
+    injury: "npc_injured"
+  }, {
+    dialogueText: "沈砚秋愿以射艺和步法切磋，胜负仍候裁断。"
+  }, {
+    resolutionView: relationshipAction.resolutionView
+  });
+  recorded.record.outcomeSummary = "provider_payload hidden_dossier /mnt/e/secret safe_search_index";
+
+  const profile = buildTopicSurfaceView(worldState, { surfaceId: "npc-profile" });
+  const debate = buildTopicSurfaceView(worldState, { surfaceId: "court-debate" });
+  const trial = buildTopicSurfaceView(worldState, { surfaceId: "trial" });
+
+  for (const view of [profile, debate]) {
+    assert.ok(view.sourceViews.some((source) => source.sourceView === "npcInteractionView"));
+    assert.ok(view.evidenceRefs.some((ref) =>
+      ref.sourceView === "npcInteractionView" &&
+      ref.topicSurfaceIds?.includes(view.surfaceId) &&
+      /交游记录|沈砚秋|切磋|服务器裁决/.test(`${ref.label}${ref.summary}`)
+    ));
+    assert.ok(view.items.some((item) =>
+      item.sourceView === "npcInteractionView" &&
+      /沈砚秋|切磋/.test(`${item.title}${item.summary}`)
+    ));
+  }
+  assert.equal(trial.evidenceRefs.some((ref) => ref.sourceView === "npcInteractionView"), false);
+  assertNoSensitiveText({ profile, debate, trial });
 });
 
 test("GET /api/game/topic-surface/:sessionId/:surfaceId returns read-only safe projection", async (t) => {

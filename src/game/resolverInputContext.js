@@ -11,6 +11,7 @@ const { buildLocalAffairsDocketView } = require("./localAffairsDockets");
 const { buildMapContextView } = require("./mapContext");
 const { buildMilitaryDiplomacyView } = require("./militaryDiplomacy");
 const { buildNpcActiveRequestView } = require("./npcActiveRequests");
+const { buildNpcInteractionLedgerView } = require("./npcInteractions");
 const { buildOfficialCareerView } = require("./officialCareer");
 const { buildOfficialCourtConsequenceView } = require("./officialCourtConsequences");
 const { buildOfficialCourtResponseView } = require("./officialCourtResponse");
@@ -161,6 +162,7 @@ function buildSourceViews(worldState, options = {}) {
     mapContextView: buildMapContextView(worldState, options.actorProfile || null),
     militaryDiplomacyView: buildMilitaryDiplomacyView(worldState),
     npcActiveRequestView: buildNpcActiveRequestView(worldState, { includeResolved: true }),
+    npcInteractionView: buildNpcInteractionLedgerView(worldState),
     officialCareerView: buildOfficialCareerView(worldState),
     courtConsequenceView: buildOfficialCourtConsequenceView(worldState),
     domainConsequenceView: buildDomainConsequenceView(worldState),

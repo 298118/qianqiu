@@ -13,6 +13,12 @@ const {
 
 const UNSAFE_TEXT_PATTERN =
   /(hidden[_ -]?(?:notes|intent|dossier)|private[_ -]?signal[_ -]?tags|true[_ -]?assets|secret[_ -]?relationships|unrevealed[_ -]?tasks|provider[_ -]?payload|raw[_ -]?(?:provider|audit|table|ledger|prompt|payload|state)|retrieval[_ -]?context|state[_ -]?patch|world[_ -]?state|provider|proposal|prompt|api[_ -]?key|OPENAI_API_KEY|DEEPSEEK_API_KEY|MIMO_API_KEY|ANTHROPIC_API_KEY|data[\\/](?:sessions|audit)|sqlite|world_sessions|prompt_retrieval_index|event_archive_index|safe_search_index|safe_search_fts|ai_change_proposals|event_log|sk-[A-Za-z0-9_-]{6,}|tp-[A-Za-z0-9_-]{6,}|[A-Za-z]:[\\/][^\s"'<>]+|(?:file:\/\/)?(?:\/Users|\/home|\/tmp|\/var|\/mnt|\/opt)\/[^\s"'<>]+)/i;
+const MAX_RELATIONSHIP_ACTION_EVIDENCE = 8;
+const NPC_RELATIONSHIP_ACTION_TOPIC_SURFACES = Object.freeze([
+  "npc-profile",
+  "court-debate",
+  "memorial-review"
+]);
 
 function isPlainObject(value) {
   return value !== null && typeof value === "object" && !Array.isArray(value);
@@ -43,6 +49,19 @@ function sanitizePublicViewValue(value, maxLength = NPC_INTERACTION_CONFIG.maxTe
     publicValue[key] = sanitizePublicViewValue(entry, maxLength);
     return publicValue;
   }, {});
+}
+
+function uniqueSafeList(values = [], limit = 8, maxLength = 80) {
+  const result = [];
+  const seen = new Set();
+  for (const value of Array.isArray(values) ? values : []) {
+    const text = cleanText(value, "", maxLength);
+    if (!text || seen.has(text)) continue;
+    seen.add(text);
+    result.push(text);
+    if (result.length >= limit) break;
+  }
+  return result;
 }
 
 function clampNumber(value, min, max, fallback = min) {
@@ -215,6 +234,82 @@ function recordNpcInteraction(worldState = {}, request = {}, aiResult = {}, opti
   };
 }
 
+function relationshipActionEvidenceSummary(record = {}, trace = {}, npcName = "此人", actionLabel = "交游") {
+  const outcome = cleanText(record.outcomeSummary, "", 180);
+  if (outcome) return outcome;
+  const dialogue = cleanText(record.dialogueText, "", 180);
+  if (dialogue) return dialogue;
+  if (trace.status === "server_blocked") {
+    return `${npcName}${actionLabel}已由服务器挡下，只留下公开复核记录。`;
+  }
+  return `${npcName}${actionLabel}已由服务器裁决，后续只作公开交游材料引用。`;
+}
+
+function buildNpcRelationshipActionEvidenceRowsFromRecords(records = [], worldState = {}) {
+  const rows = [];
+  for (const record of Array.isArray(records) ? records : []) {
+    if (!isPlainObject(record)) continue;
+    const trace = isPlainObject(record.resolverTrace) ? record.resolverTrace : {};
+    if (trace.resolver !== "npc_relationship_action_resolver") continue;
+    if (!["server_adjudicated", "server_blocked"].includes(trace.status)) continue;
+    if (trace.boundaries?.serverOwnsOutcome !== true) continue;
+
+    const sourceId = cleanId(trace.publicResolutionRef || record.recordId, "");
+    if (!sourceId) continue;
+    const npcId = cleanId(record.npcId, "");
+    const npcName = cleanText(record.npcName, "此人", 60);
+    const actionLabel = cleanText(
+      trace.actionLabel || record.serverAdjudication?.actionLabel || record.actionKind || record.actionType,
+      "交游",
+      40
+    );
+    const title = cleanText(`交游记录：${npcName}${actionLabel}`, "交游记录", 90);
+    const publicSummary = relationshipActionEvidenceSummary(record, trace, npcName, actionLabel);
+    if (!title || !publicSummary) continue;
+
+    rows.push({
+      evidenceId: cleanId(`npc-relationship-action-evidence:${sourceId}`, sourceId),
+      id: cleanId(`npc-relationship-action-evidence:${sourceId}`, sourceId),
+      sourceId,
+      sourceType: "npc_relationship_action",
+      sourceLabel: "交游记录",
+      title,
+      publicSummary,
+      summary: publicSummary,
+      npc: {
+        npcId,
+        displayName: npcName
+      },
+      actionType: cleanText(trace.actionType || record.actionKind || record.actionType, "", 48),
+      actionLabel,
+      status: cleanText(trace.status, "server_adjudicated", 48),
+      statusLabel: trace.status === "server_blocked" ? "服务器挡下" : "服务器裁决",
+      disposition: cleanText(trace.disposition, "relationship_action_recorded", 80),
+      riskTags: uniqueSafeList([
+        ...(Array.isArray(record.riskTags) ? record.riskTags : []),
+        ...(Array.isArray(trace.riskTags) ? trace.riskTags : [])
+      ], 6, 40),
+      visibility: "player_visible",
+      confidence: trace.status === "server_blocked" ? 0.62 : 0.7,
+      topicSurfaceIds: NPC_RELATIONSHIP_ACTION_TOPIC_SURFACES,
+      relatedRefs: uniqueSafeList([
+        npcId ? `npcRosterView:${npcId}` : "",
+        `npcInteractionView:${cleanId(record.recordId, sourceId)}`,
+        `npcRelationshipActionResolverTrace:${sourceId}`
+      ], 6, 120),
+      scopeRefs: uniqueSafeList([
+        npcId ? `npc:${npcId}` : "",
+        sourceId ? `npcRelationshipAction:${sourceId}` : ""
+      ], 6, 120),
+      generatedAtTurn: clampNumber(record.turn, 0, Number.MAX_SAFE_INTEGER, clampNumber(worldState.turnCount, 0, Number.MAX_SAFE_INTEGER, 0)),
+      lastUpdatedTurn: clampNumber(record.turn, 0, Number.MAX_SAFE_INTEGER, clampNumber(worldState.turnCount, 0, Number.MAX_SAFE_INTEGER, 0)),
+      boundary: "交游记录只作只读证据；资源、关系终局、婚姻谱系、伤损、弹劾、定罪、背叛和 NPC 行动仍由服务器裁决。"
+    });
+    if (rows.length >= MAX_RELATIONSHIP_ACTION_EVIDENCE) break;
+  }
+  return rows;
+}
+
 function buildNpcInteractionLedgerView(worldState = {}, options = {}) {
   const ledger = ensureNpcInteractionLedger(worldState);
   const npcId = cleanId(options.npcId, "");
@@ -230,30 +325,31 @@ function buildNpcInteractionLedgerView(worldState = {}, options = {}) {
         month: record.month,
         tenDayPeriod: record.tenDayPeriod
       },
-      npcId: record.npcId,
-      npcName: record.npcName,
-      actionType: record.actionType,
-      serverStatus: record.serverStatus,
-      serverReasons: record.serverReasons,
-      dialogueText: record.dialogueText,
-      mood: record.mood,
-      followUpSuggestions: record.followUpSuggestions,
-      actionKind: record.actionKind,
-      outcomeSummary: record.outcomeSummary,
-      serverAdjudication: record.serverAdjudication,
-      riskTags: record.riskTags,
+      npcId: cleanId(record.npcId, ""),
+      npcName: cleanText(record.npcName, "未知人物", 80),
+      actionType: normalizeInteractionType(record.actionType),
+      serverStatus: cleanText(record.serverStatus, "recorded", 56),
+      serverReasons: uniqueSafeList(record.serverReasons, 8, 80),
+      dialogueText: cleanText(record.dialogueText, "", 360),
+      mood: cleanText(record.mood, "", 40),
+      followUpSuggestions: uniqueSafeList(record.followUpSuggestions, 4, 80),
+      actionKind: cleanText(record.actionKind, normalizeInteractionType(record.actionType), 48),
+      outcomeSummary: cleanText(record.outcomeSummary, "", 220),
+      serverAdjudication: sanitizePublicViewValue(record.serverAdjudication),
+      riskTags: uniqueSafeList(record.riskTags, 6, 40),
       resolverTrace: sanitizePublicViewValue(record.resolverTrace),
-      eligibilityView: record.eligibilityView,
-      relationshipImpactView: record.relationshipImpactView,
-      resourceImpactView: record.resourceImpactView,
-      worldPeopleImpactView: record.worldPeopleImpactView,
-      ignoredClientResultFields: record.ignoredClientResultFields
+      eligibilityView: sanitizePublicViewValue(record.eligibilityView),
+      relationshipImpactView: sanitizePublicViewValue(record.relationshipImpactView),
+      resourceImpactView: sanitizePublicViewValue(record.resourceImpactView),
+      worldPeopleImpactView: sanitizePublicViewValue(record.worldPeopleImpactView),
+      ignoredClientResultFields: uniqueSafeList(record.ignoredClientResultFields, 8, 60)
     }));
   return {
     schemaVersion: NPC_INTERACTION_LEDGER_SCHEMA_VERSION,
     ownerActorId: ledger.ownerActorId,
     totalItems: records.length,
     items: records,
+    relationshipActionEvidence: buildNpcRelationshipActionEvidenceRowsFromRecords(records, worldState),
     safeguards: {
       hiddenDossierRedacted: true,
       rawAiPayloadRedacted: true,
@@ -265,6 +361,7 @@ function buildNpcInteractionLedgerView(worldState = {}, options = {}) {
 module.exports = {
   buildNpcDialogueContext,
   buildNpcInteractionLedgerView,
+  buildNpcRelationshipActionEvidenceRowsFromRecords,
   createInitialNpcInteractionLedger,
   ensureNpcInteractionLedger,
   recordNpcInteraction,
