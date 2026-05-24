@@ -65,7 +65,7 @@
 
 ## Current Work Note
 
-2026-05-24：S89.5 完成 React 全局材质、覆盖层过渡与交互反馈 polish，实现提交待提交。主壳、顶栏/右上角印匣、专题层 drawer/modal/surface、高清立绘查看器、舆图行动面板和设置目录已补 S89.5 材质/覆盖层/交互反馈标记；`scripts/clientSmoke.js` 新增 `assertS895MaterialFeedbackPolish()`，源码 canary 覆盖材质样式、低动效禁用、地图草稿反馈、立绘查看器、设置目录和污染词守门。
+2026-05-24：S89.5 完成 React 全局材质、覆盖层过渡与交互反馈 polish，实现提交 `b3237606ffa3abc7fbeb396d89c5c9eb8605f8f9`。主壳、顶栏/右上角印匣、专题层 drawer/modal/surface、高清立绘查看器、舆图行动面板和设置目录已补 S89.5 材质/覆盖层/交互反馈标记；`scripts/clientSmoke.js` 新增 `assertS895MaterialFeedbackPolish()`，源码 canary 覆盖材质样式、低动效禁用、地图草稿反馈、立绘查看器、设置目录和污染词守门。
 
 舆图页新增本地 `lastWrittenMapDraftId`，只在玩家把 runtime 选择、行动牌或公开近事写入主卷行动草稿后，把对应行标为 `data-draft-state="written"` 形成短反馈；切换案卷会清空。该状态不进入服务器、不扩大 `draftContext`、不复核 evidence、不裁决地图行动。浏览器仍只能消费安全 view 与本地 UI 草稿，不能把地图 layout、visual-only effect、NPC anchor、runtime manifest 元数据或 draftContext 变成真实任务、资源、关系、婚姻、弹劾、定罪、背叛、考试、官职或 hidden 裁决。
 
@@ -77,7 +77,7 @@
 - `npm run test:client` 本机命中已知 Vitest fork worker 启动超时：5 files / 126 tests 已通过，未见断言失败；已用 `npx vitest --config vitest.config.mjs run --pool=vmThreads --fileParallelism=false --maxWorkers=1` 通过同一客户端套件（6 files / 129 tests）。
 - 已通过 `npm run qa:runtime-manifest`、`npm run build:client`、`npm run budget:client`；最终预算输出为 `CSS 97.5 KiB`，仍在硬性预算内。
 - `npm run smoke:browser:visual` 在 240s 限时内已完成 runtime manifest QA、client build 和 budget，但进入 `clientSmoke.js` 后超时；随后直接运行 `node scripts/clientSmoke.js --screenshots artifacts/browser-visual-matrix` 通过，覆盖 S89.5 首页材质、印匣/低动效覆盖层、地图草稿反馈、高清立绘查看器、设置目录和安全污染守门，并写出 `artifacts/browser-visual-matrix`。Vite 仍输出既有 `/assets/ui/...` runtime asset 与 chunk size warnings。
-- 已通过 `npm run check:docs-governance`、`node --test test/documentationGovernance.test.js`。提交前只读子代理首轮发现空 keyframes 与 `.mapEventList` 写入反馈样式缺口；本轮已改为真实短动画、行动/事件共享写入反馈与低动效覆盖，并强化 browser smoke/source canary。最终只读复审已通过，未发现阻断问题。实现提交后的哈希回填仅修改 `docs/DEVELOPMENT_STEPS.md` 与本文件时，可按低风险纯文档规则跳过子代理复审。
+- 已通过 `npm run check:docs-governance`、`node --test test/documentationGovernance.test.js`。提交前只读子代理首轮发现空 keyframes 与 `.mapEventList` 写入反馈样式缺口；本轮已改为真实短动画、行动/事件共享写入反馈与低动效覆盖，并强化 browser smoke/source canary。最终只读复审已通过，未发现阻断问题。实现提交后的哈希回填仅修改 `docs/DEVELOPMENT_STEPS.md` 与本文件，属于低风险纯文档改动，跳过子代理复审。
 
 ## Next Recommended Step
 
