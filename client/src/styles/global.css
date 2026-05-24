@@ -5502,6 +5502,17 @@ li[data-draft-state="written"] {
   gap: 10px;
 }
 
+.portraitViewerProfileHeader {
+  border-left: 3px solid rgba(142, 47, 39, 0.52);
+  padding-left: 10px;
+}
+
+.portraitViewerTags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
 .portraitViewerProfile section {
   display: grid;
   gap: 5px;

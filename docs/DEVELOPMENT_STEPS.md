@@ -113,6 +113,7 @@
 
 | ID | 状态 | 目标 | 范围 / 下一步 |
 | --- | --- | --- | --- |
+| S89.6 | DONE | 高清立绘查看器人物小传与当前情况 polish | 承接 S89.5，点击高清立绘后查看器显示“观画印象”人物头、公开标签、外貌介绍、人物小传和当前情况；人物页画像 profile 补案主/名册/详情/谱牒当前情况，均只来自已审阅 runtime 画像元数据和人物页安全摘要。`scripts/clientSmoke.js` 与源码 canary 已覆盖 `s89-6-portrait-life` 标记、人物小传/公开近况文案、存储禁写和污染词守门；CSS 仅保留轻量结构样式并通过预算。未改后端 API/schema、AI 权限、prompt、provider facade、SQLite schema、存档格式、runtime manifest 字段、素材 manifest 或服务器裁决。实现提交：待本次提交生成后回填。 |
 | S89.5 | DONE | React 全局材质、覆盖层过渡与交互反馈 polish | 主壳、右上角印匣、专题层 drawer/modal/surface、地图行动面板、高清立绘查看器与设置目录已补 S89.5 材质/覆盖层/交互反馈标记和低动效守门；舆图行动只增加本地“已写入草稿”反馈，不提交、不裁决、不扩大 `draftContext` 权限。`scripts/clientSmoke.js` 与源码 canary 已覆盖材质样式、覆盖层标记、地图草稿反馈、立绘查看器和设置目录安全污染守门。范围限 React 前端、样式、客户端 smoke/canary、前端测试和文档；未改后端 API/schema、AI 权限、prompt、provider facade、SQLite schema、存档格式、runtime manifest 字段、素材 manifest 或服务器裁决。实现提交：`b3237606ffa3abc7fbeb396d89c5c9eb8605f8f9`。 |
 | S89.4 | DONE | React 首页旧案状态与史册信息密度 polish | 承接 S89.3 后续建议，补首页旧案卷 loading/empty/error 的案架状态、数量与安全兜底文案，旧案读取失败不再串到开卷表单或回显底层错误；异常 `sessionId` 旧案只显示“暂不可读”，不生成 `/game/...` 读档链接；史册页补“案卷索引/近次线索”导读和更紧凑的公开条目密度，继续只消费 `eventArchiveView`、`domainConsequenceView` 与来函 follow-up 安全投影。只改 React 前端、样式、客户端 smoke/源码 canary、前端测试和文档；不改后端 API/schema、AI 权限、prompt、provider facade、SQLite schema、存档格式、runtime manifest 字段、素材 manifest 或服务器裁决。实现提交：`3a600b82f86855a563c64563251eec7081724d71`。 |
 | S89.3 | DONE | React 设置入口、专题文案与错误空态收束 | 承接 S89.2 后续建议，删除主卷功能页签中的重复“印匣”入口，把 `/game/:sessionId/settings` 保留为刷新/旧路由可达的案头工具目录并导向右上角唯一印匣抽屉；专题层把“数据来源/裁决边界”等工程口径改为“卷宗取材/回批口径”；错误页、404 和畸形主卷恢复页改用统一案卷空态视觉。只改 React 路由壳、专题层文案、前端样式、客户端 smoke/源码 canary 和验收文档；不改后端 API/schema、AI 权限、prompt、provider facade、SQLite schema、存档格式、runtime manifest 字段、素材 manifest 或服务器裁决。实现提交：`efa507aa729c8acb9503ba8f8e45a67e6b265969`。 |
@@ -130,7 +131,8 @@
 - 2026-05-24：S89.3 完成设置/印匣重复入口收束、专题层玩家可见口径和错误空态视觉。当前范围仍限 React 前端、样式、客户端 smoke/canary 与验收文档，不新增浏览器裁决权，不改后端 API/schema、AI 权限、prompt、provider、SQLite 或素材 manifest。
 - 2026-05-24：S89.4 完成首页旧案 loading/empty/error 案架状态、异常旧案案号链接防线和史册案卷索引/导读密度 polish。当前范围仍限 React 前端、样式、客户端 smoke/canary、前端测试和文档，不新增浏览器裁决权，不改后端 API/schema、AI 权限、prompt、provider、SQLite、存档或素材 manifest。
 - 2026-05-24：S89.5 完成 React 全局材质、覆盖层过渡、地图/立绘/设置目录交互反馈与对应 smoke/canary 文档同步。当前范围仍限 React 前端、样式、客户端 smoke/canary、前端测试和文档；不新增浏览器裁决权，不改后端 API/schema、AI 权限、prompt、provider、SQLite、存档或素材 manifest。
-- 前一轮 S88 归档是低风险纯文档维护；S89.3-S89.5 涉及前端代码、样式、验证脚本和文档，提交前按子代理复审规则执行。
+- 2026-05-24：S89.6 完成高清立绘查看器人物小传与当前情况 polish。当前范围仍限 React 前端、样式、客户端 smoke/source canary、前端测试和文档；不新增浏览器裁决权，不改后端 API/schema、AI 权限、prompt、provider、SQLite、存档或素材 manifest。
+- 前一轮 S88 归档是低风险纯文档维护；S89.3-S89.6 涉及前端代码、样式、验证脚本和文档，提交前按子代理复审规则执行。
 
 ## 6. 最近完整验证口径
 
@@ -187,7 +189,25 @@ S89.5 React 全局材质、覆盖层过渡与交互反馈验证结果：
 - `npm run smoke:browser:visual` 在 240s 限时内已完成 runtime manifest QA、client build 和 budget，但进入 `clientSmoke.js` 后超时；随后直接运行 `node scripts/clientSmoke.js --screenshots artifacts/browser-visual-matrix` 通过，覆盖 S89.5 首页材质、印匣/低动效覆盖层、地图草稿反馈、高清立绘查看器、设置目录和安全污染守门，并写出 `artifacts/browser-visual-matrix`。
 - 已通过 `npm run check:docs-governance`、`node --test test/documentationGovernance.test.js`。提交前只读子代理复审已通过；实现提交哈希已回填。
 
+S89.6 高清立绘查看器人物小传与当前情况 polish 验证结果：
+
+- 已通过 `npm run typecheck:client`、`node --check scripts/clientSmoke.js`、`node --test test/reactClientScaffold.test.js`、focused `npx vitest --config vitest.config.mjs run client/src/__tests__/App.test.tsx -t "current people ledger" --pool=vmThreads --fileParallelism=false --maxWorkers=1`；只读复审指出 `/Users`、`/private` 与 `tp-...` token 形态未被本轮 portrait profile 路径显式覆盖后，已补 `Portrait.tsx`、`PeoplePage.tsx`、`SurfaceHost.tsx` 三处清洗和 portrait viewer smoke/source canary，并重跑通过上述检查。
+- 已通过 `npm run qa:runtime-manifest`、`npm run build:client`、`npm run budget:client`；本轮新增样式一度超过 CSS 硬预算，已裁剪为轻量结构样式，最终预算输出为 `CSS 97.6 KiB`。
+- 已通过直接浏览器验收 `node scripts/clientSmoke.js --screenshots artifacts/browser-visual-matrix`，覆盖 S89.6 立绘查看器人物小传/当前情况 polish、runtime 画像路径、浏览器存储禁写和安全污染守门，并写出 `artifacts/browser-visual-matrix`。Vite 仍输出既有 `/assets/ui/...` runtime asset 与 chunk size warnings。
+- 已通过完整串行客户端套件 `npx vitest --config vitest.config.mjs run --pool=vmThreads --fileParallelism=false --maxWorkers=1`（6 files / 129 tests）。
+- 已通过 `git diff --check`、`npm run check:docs-governance`、`node --test test/documentationGovernance.test.js`。提交前只读子代理首轮发现的路径/key 清洗缺口已修复，最终只读复审已通过，未发现阻断问题。
+
 ## 7. 近期进度记录
+
+### 2026-05-24：S89.6 高清立绘查看器人物小传与当前情况 polish
+
+- 范围：高清立绘查看器新增 `data-polish-profile="s89-6-portrait-life"` 人物说明标记，打开后显示“观画印象”人物头、公开标签、外貌介绍、人物小传和当前情况；人物页画像 profile 为案主、名册、详情和谱牒补更具体的公开近况说明。
+- 体验：小传文案改为“人物小传据公开传略整理”，外貌文案强调只作观画印象，当前情况明确来自公开案卷/人物页近况；查看器只读已审阅 runtime 画像字段和人物页传入的安全 `PortraitViewerProfile`，不读取完整素材清单，不写浏览器存储、行动草稿、URL 或服务器状态。
+- Smoke/canary：`scripts/clientSmoke.js` 现检查 S89.6 profile 标记、人物小传、当前情况、观画印象/公开近况强化文案、存储禁写和 `/Users`、`/private`、`tp-...` 等路径/key 污染；`test/reactClientScaffold.test.js` 与 `App.test.tsx` 同步覆盖新 heading、标记、公开近况文案和污染词守门。
+- 边界：本步不改后端 API/schema、AI 权限矩阵、prompt、provider facade、SQLite schema、存档格式、runtime manifest 字段、素材 manifest 或服务器裁决；人物近况与小传只作公开卷宗摘要，不生成隐藏事实或真实人物行动。
+- 复审：提交前只读子代理指出 portrait profile 路径未显式覆盖 `/Users`、`/private` 与 `tp-...` token 形态；本轮已补三处前端清洗、browser smoke 和源码 canary，最终只读复审确认不阻塞提交。
+- 验证：按第 6 节 S89.6 口径通过；`artifacts/browser-visual-matrix` 产物目录仅作本地 artifact，不提交。
+- 提交：待本次提交生成后回填。
 
 ### 2026-05-24：S89.5 React 全局材质、覆盖层过渡与交互反馈 polish
 

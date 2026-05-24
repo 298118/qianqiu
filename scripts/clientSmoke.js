@@ -3031,21 +3031,23 @@ async function runClientSmoke(options = {}) {
       return {
         portraitRef: viewer?.querySelector("[data-portrait-ref]")?.getAttribute("data-portrait-ref") || "",
         imageSrc: image?.getAttribute("src") || "",
+        polishProfile: viewer?.querySelector("[data-polish-profile='s89-6-portrait-life']") ? "yes" : "",
         hasAppearance: viewerText.includes("外貌介绍"),
-        hasBiography: viewerText.includes("公开传略"),
+        hasBiography: viewerText.includes("人物小传"),
         hasCurrent: viewerText.includes("当前情况"),
+        hasRicherCopy: /观画印象|公开小传|公开近况/.test(viewerText),
         storageKeys: [
           ...Array.from({ length: localStorage.length }, (_, index) => localStorage.key(index) || ""),
           ...Array.from({ length: sessionStorage.length }, (_, index) => sessionStorage.key(index) || "")
         ],
-        unsafeText: viewerText.match(/artifacts|provider payload|raw audit|hiddenNotes|OPENAI_API_KEY|data\/sessions|localStorage|sessionStorage|portraitRef|运行时|manifest|schema|draftContext|server adjudication/gi) || []
+        unsafeText: viewerText.match(/artifacts|provider payload|raw audit|hiddenNotes|OPENAI_API_KEY|data\/sessions|localStorage|sessionStorage|portraitRef|运行时|manifest|schema|draftContext|server adjudication|file:\/{2}|sk-[a-z0-9_-]{6,}|tp-[a-z0-9_-]{6,}|[a-z]:[\\/]|\/(?:home|Users|private|mnt|tmp|var|etc)\/[^\s"'<>)]*/gi) || []
       };
     });
     if (!portraitViewer.portraitRef || !portraitViewer.imageSrc.startsWith("/assets/ui/portraits/")) {
       throw new Error(`S79.3 portrait viewer did not use an audited runtime portrait path: ${JSON.stringify(portraitViewer)}`);
     }
-    if (!portraitViewer.hasAppearance || !portraitViewer.hasBiography || !portraitViewer.hasCurrent) {
-      throw new Error(`S89.2 portrait viewer missed player-facing profile sections: ${JSON.stringify(portraitViewer)}`);
+    if (!portraitViewer.polishProfile || !portraitViewer.hasAppearance || !portraitViewer.hasBiography || !portraitViewer.hasCurrent || !portraitViewer.hasRicherCopy) {
+      throw new Error(`S89.6 portrait viewer missed player-facing life/current profile polish: ${JSON.stringify(portraitViewer)}`);
     }
     if (portraitViewer.storageKeys.some((key) => /portrait|viewer|image/i.test(key)) || portraitViewer.unsafeText.length) {
       throw new Error(`S79.3 portrait viewer widened storage or text safety: ${JSON.stringify(portraitViewer)}`);

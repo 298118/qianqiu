@@ -479,15 +479,25 @@ function PortraitViewerHost() {
           <div className="portraitViewerHeader">
             <p className="eyebrow">高清立绘</p>
             <h2 id="portrait-viewer-title">{label}</h2>
-            <p>只读欣赏已审阅画卷，不写入案卷、不改动草稿，也不带入后续推演。</p>
+            <p>只读欣赏已审阅画卷，旁读公开小传与近况，不写入案卷、不改动草稿，也不带入后续推演。</p>
           </div>
-          <div className="portraitViewerProfile" aria-label="人物公开说明">
+          <div className="portraitViewerProfile" aria-label="人物公开说明" data-polish-profile="s89-6-portrait-life">
+            <div className="portraitViewerProfileHeader">
+              <span>观画印象</span>
+              <strong>{viewerCopy.displayName}</strong>
+              <small>{viewerCopy.identity}</small>
+            </div>
+            {viewerCopy.tags.length ? (
+              <div className="portraitViewerTags" aria-label="人物公开标签">
+                {viewerCopy.tags.map((tag) => <span key={tag}>{tag}</span>)}
+              </div>
+            ) : null}
             <section>
               <h3>外貌介绍</h3>
               <p>{viewerCopy.appearance}</p>
             </section>
             <section>
-              <h3>公开传略</h3>
+              <h3>人物小传</h3>
               <p>{viewerCopy.biography}</p>
             </section>
             <section>
@@ -593,25 +603,26 @@ function buildPortraitViewerCopy(
   const emotion = portraitEmotionPhrase(portrait);
   const age = portraitAgePhrase(portrait);
   const presentation = portraitPresentationPhrase(portrait);
+  const tags = buildPortraitViewerTags(identity, tagPhrases, profile?.tags);
   const appearanceParts = [
     `${displayName}在画中呈${age}${presentation}仪态`,
-    identity ? `带有${identity}的身份气` : "",
-    tagPhrases.length ? tagPhrases.join("、") : "",
+    identity ? `衣冠与姿态带出${identity}的身份气` : "",
+    tagPhrases.length ? `题记可见${tagPhrases.join("、")}` : "",
     emotion
   ].filter(Boolean);
-  const appearance = `据已审阅画卷题记判断，${appearanceParts.join("，")}。此段只作观画印象，不添写画外隐情。`;
+  const appearance = `据已审阅画卷题记判断，${appearanceParts.join("，")}。此段只作观画印象，不添写画外未载之事。`;
 
   const summary = cleanPortraitViewerText(profile?.summary, "", 220);
   const biography = summary
-    ? `此为案卷外观小传：${summary} 以上只按公开传略与人物题记整理，未作成案定论。`
-    : `此为案卷外观小传：${displayName}以${identity || "公开人物"}入卷，公开传略尚未详载；只按画卷题记作简记，生平细节候后续案卷补录。`;
+    ? `人物小传据公开传略整理：${summary} 若有未详生平，只以后续公开案卷补录为准。`
+    : `人物小传据公开传略整理：${displayName}以${identity || "公开人物"}入卷，生平细节尚未详载；此处只按画卷题记作简记。`;
 
   const current = cleanPortraitViewerText(profile?.current, "", 180) ||
     (profile?.identity
-      ? `${displayName}当前以“${identity}”见于公开卷宗；近况案卷未载，候复核后再补。`
-      : `${displayName}当前情况案卷未载；只可观其已审阅立绘，近况候复核。`);
+      ? `${displayName}当前以“${identity}”见于公开卷宗；公开近况未详，候复核后再补。`
+      : `${displayName}当前情况案卷未载；只可观其已审阅立绘，公开近况候复核。`);
 
-  return { appearance, biography, current };
+  return { appearance, biography, current, displayName, identity, tags };
 }
 
 function cleanPortraitName(value: unknown, fallback: string) {
@@ -702,6 +713,13 @@ function portraitTagPhrases(portrait: RuntimePortraitAsset | null, profileTags: 
     .map((token) => tokenMap[String(token)] || "")
     .filter(Boolean);
   return [...new Set(phrases)].slice(0, 4);
+}
+
+function buildPortraitViewerTags(identity: string, tagPhrases: readonly string[], profileTags: readonly string[] = []) {
+  const tags = [identity, ...profileTags, ...tagPhrases]
+    .map((tag) => cleanPortraitViewerText(tag, "", 24))
+    .filter(Boolean);
+  return [...new Set(tags)].slice(0, 5);
 }
 
 const topicSurfaceIds: readonly TopicSurfaceId[] = [
@@ -997,12 +1015,12 @@ const unsafeSurfaceTextFragments = [
 ] as const;
 const safeSurfacePortraitRefPattern = /^portrait-[a-z0-9][a-z0-9_-]{0,140}$/i;
 const unsafeSurfacePortraitRefTokenPattern = /(?:^|[-_])(raw|provider|prompt|hidden|private|key|path|secret|token|api|file|data|http)(?:$|[-_])/i;
-const localSurfacePathPattern = /(?:^|[\s"'`(（:：,;，。；、【《“‘])(?:[a-z]:[\\/]|~[\\/]|\.{1,2}[\\/]|\/(?:home|mnt|tmp|var|etc|usr|opt|workspace|workspaces|root|data|src|client|server|dist|public|node_modules)(?:[\\/]|$)|(?:data|src|client|server|dist|public|node_modules)[\\/][^\s，。；、]+)/i;
+const localSurfacePathPattern = /(?:^|[\s"'`(（:：,;，。；、【《“‘])(?:[a-z]:[\\/]|~[\\/]|\.{1,2}[\\/]|\/(?:home|Users|private|mnt|tmp|var|etc|usr|opt|workspace|workspaces|root|data|src|client|server|dist|public|node_modules)(?:[\\/]|$)|(?:data|src|client|server|dist|public|node_modules)[\\/][^\s，。；、]+)/i;
 
 function safeSurfaceText(value: unknown, fallback: string, maxLength = 48) {
   const text = typeof value === "string" && value.trim() ? value.trim().replace(/\s+/g, " ") : fallback;
   const normalized = text.toLowerCase();
-  if (localSurfacePathPattern.test(text) || /sk-[a-z0-9_-]{6,}/i.test(text)) return fallback;
+  if (localSurfacePathPattern.test(text) || /(?:sk|tp)-[a-z0-9_-]{6,}/i.test(text)) return fallback;
   if (unsafeSurfaceTextFragments.some((fragment) => normalized.includes(fragment.toLowerCase()))) return fallback;
   const rewritten = rewritePlayerFacingWorldText(text);
   return rewritten.length > maxLength ? `${rewritten.slice(0, maxLength)}...` : rewritten;

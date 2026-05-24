@@ -109,13 +109,13 @@ const unsafePortraitProfileFragments = [
   "完整" + "提示词"
 ] as const;
 
-const localPortraitProfilePathPattern = /(?:^|[\s"'`(（:：,;，。；、【《“‘])(?:[a-z]:[\\/]|~[\\/]|\.{1,2}[\\/]|\/(?:home|mnt|tmp|var|etc|usr|opt|workspace|workspaces|root|data|src|client|server|dist|public|node_modules)(?:[\\/]|$)|(?:data|src|client|server|dist|public|node_modules)[\\/][^\s，。；、]+)/i;
+const localPortraitProfilePathPattern = /(?:^|[\s"'`(（:：,;，。；、【《“‘])(?:[a-z]:[\\/]|~[\\/]|\.{1,2}[\\/]|\/(?:home|Users|private|mnt|tmp|var|etc|usr|opt|workspace|workspaces|root|data|src|client|server|dist|public|node_modules)(?:[\\/]|$)|(?:data|src|client|server|dist|public|node_modules)[\\/][^\s，。；、]+)/i;
 
 function cleanPortraitProfileText(value: unknown, maxLength: number) {
   const text = typeof value === "string" ? value.trim().replace(/\s+/g, " ") : "";
   if (!text) return "";
   const normalized = text.toLowerCase();
-  if (localPortraitProfilePathPattern.test(text) || /sk-[a-z0-9_-]{6,}/i.test(text)) return "";
+  if (localPortraitProfilePathPattern.test(text) || /(?:sk|tp)-[a-z0-9_-]{6,}/i.test(text)) return "";
   if (unsafePortraitProfileFragments.some((fragment) => normalized.includes(fragment.toLowerCase()))) return "";
   return text.length > maxLength ? `${text.slice(0, maxLength)}...` : text;
 }

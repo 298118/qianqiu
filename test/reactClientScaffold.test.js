@@ -1231,7 +1231,7 @@ test("S88.7 topic surfaces label NPC relationship action evidence as read-only i
   assert.match(surfaceHostSource, /交游记录/);
   assert.match(surfaceHostSource, /交游记录 · \$\{domain\}/);
   assert.match(peoplePageSource, /localPeoplePathPattern/);
-  assert.match(peoplePageSource, /home\|mnt\|tmp\|var\|etc\|usr\|opt/);
+  assert.match(peoplePageSource, /home\|Users\|private\|mnt\|tmp\|var\|etc\|usr\|opt/);
   assert.match(peopleRelationshipAgendaSnippet, /sourceType !== "npc_relationship_action"/);
   assert.match(peopleRelationshipAgendaSnippet, /peopleTextLooksUnsafe/);
   assert.match(peoplePageSource, /<h2>交游议题<\/h2>/);
@@ -1491,8 +1491,9 @@ test("S79.3 portrait viewer stays read-only and uses audited runtime portrait pa
   const uiStateSource = readText("client/src/state/uiState.ts");
   const portraitSource = readText("client/src/components/Portrait.tsx");
   const surfaceHostSource = readText("client/src/components/SurfaceHost.tsx");
+  const peoplePageSource = readText("client/src/pages/PeoplePage.tsx");
   const styleSource = readText("client/src/styles/global.css");
-  const runtimeCombined = stripSafeGuardPatterns(`${uiStateSource}\n${portraitSource}\n${surfaceHostSource}\n${styleSource}`);
+  const runtimeCombined = stripSafeGuardPatterns(`${uiStateSource}\n${portraitSource}\n${surfaceHostSource}\n${peoplePageSource}\n${styleSource}`);
 
   assert.match(uiStateSource, /activePortraitViewer/);
   assert.match(uiStateSource, /PortraitViewerProfile/);
@@ -1509,14 +1510,21 @@ test("S79.3 portrait viewer stays read-only and uses audited runtime portrait pa
   assert.match(surfaceHostSource, /portrait\?\.path/);
   assert.match(surfaceHostSource, /data-portrait-viewer="true"/);
   assert.match(surfaceHostSource, /data-polish-overlay="s89-5-portrait-gallery"/);
+  assert.match(surfaceHostSource, /data-polish-profile="s89-6-portrait-life"/);
+  assert.match(surfaceHostSource, /buildPortraitViewerTags/);
+  assert.match(`${portraitSource}\n${surfaceHostSource}\n${peoplePageSource}`, /home\|Users\|private\|mnt\|tmp\|var\|etc/);
+  assert.match(`${portraitSource}\n${surfaceHostSource}\n${peoplePageSource}`, /\(\?:sk\|tp\)-\[a-z0-9_-/);
   assert.match(surfaceHostSource, /外貌介绍/);
-  assert.match(surfaceHostSource, /公开传略/);
+  assert.match(surfaceHostSource, /人物小传/);
   assert.match(surfaceHostSource, /当前情况/);
+  assert.match(surfaceHostSource, /公开近况/);
   assert.match(surfaceHostSource, /NpcProfilePortraitStrip/);
   assert.match(surfaceHostSource, /safeSurfacePortraitRef/);
-  assert.match(readText("scripts/clientSmoke.js"), /hasAppearance[\s\S]*hasBiography[\s\S]*hasCurrent/);
+  assert.match(readText("scripts/clientSmoke.js"), /s89-6-portrait-life[\s\S]*hasAppearance[\s\S]*hasBiography[\s\S]*hasCurrent[\s\S]*hasRicherCopy/);
   assert.match(styleSource, /portraitViewerPanel/);
   assert.match(styleSource, /portraitViewerProfile/);
+  assert.match(styleSource, /portraitViewerProfileHeader/);
+  assert.match(styleSource, /portraitViewerTags/);
   assert.match(styleSource, /npcProfilePortraitStrip/);
   assert.match(styleSource, /object-fit: contain/);
   assert.doesNotMatch(

@@ -90,6 +90,7 @@ type PersonRow = {
   readonly name: string;
   readonly identity: string;
   readonly summary: string;
+  readonly current: string;
   readonly portraitRef: string;
   readonly meta: readonly string[];
   readonly relationshipNote?: string;
@@ -143,14 +144,14 @@ type RelationshipAgendaThread = {
   readonly relatedLabels: readonly string[];
 };
 
-const localPeoplePathPattern = /(?:^|[\s"'`(（:：,;，。；、【《“‘])(?:[a-z]:[\\/]|~[\\/]|\.{1,2}[\\/]|\/(?:home|mnt|tmp|var|etc|usr|opt|workspace|workspaces|root|data|src|client|server|dist|public|node_modules)(?:[\\/]|$)|(?:data|src|client|server|dist|public|node_modules)[\\/][^\s，。；、]+)/i;
+const localPeoplePathPattern = /(?:^|[\s"'`(（:：,;，。；、【《“‘])(?:[a-z]:[\\/]|~[\\/]|\.{1,2}[\\/]|\/(?:home|Users|private|mnt|tmp|var|etc|usr|opt|workspace|workspaces|root|data|src|client|server|dist|public|node_modules)(?:[\\/]|$)|(?:data|src|client|server|dist|public|node_modules)[\\/][^\s，。；、]+)/i;
 
 function peopleTextLooksUnsafe(value: unknown) {
   if (typeof value !== "string" || !value.trim()) return false;
   const text = value.trim();
   const normalized = text.toLowerCase();
   return localPeoplePathPattern.test(text) ||
-    /sk-[a-z0-9_-]{6,}/i.test(text) ||
+    /(?:sk|tp)-[a-z0-9_-]{6,}/i.test(text) ||
     unsafePeopleTextFragments.some((fragment) => normalized.includes(fragment.toLowerCase()));
 }
 
@@ -591,12 +592,14 @@ function buildPersonRows(
   const player = session.worldState?.player;
   const playerPortraitRef = resolvePlayerPortraitRef(registry, player, sessionId) || fallbackPortraitRef;
   if (player) {
+    const playerIdentity = getPlayerIdentity(player);
     rows.push({
       id: "player",
       kind: "player",
       name: safePeopleText(player.name, "无名", 40),
-      identity: getPlayerIdentity(player),
-      summary: "案主画像只取已审阅画卷；若未定画卷，则按身份取公开占位。",
+      identity: playerIdentity,
+      summary: "案主本局画像只取已审阅画卷；若未定画卷，则按身份取公开占位。",
+      current: `案主当前以${playerIdentity}见于公开案卷；下一步行止仍随主卷回批推进。`,
       portraitRef: playerPortraitRef,
       meta: ["案主", roleLabels[player.role ?? ""] || "本局人物"],
       remastered: Boolean(registry?.getPortrait(playerPortraitRef)?.hasHighResOverride)
@@ -609,12 +612,17 @@ function buildPersonRows(
     if (!isNpcPublicForLedger(npc)) continue;
     const portraitRef = resolveNpcPortraitRef(registry, npc) || fallbackPortraitRef;
     const relationshipNote = relationshipTone(relationForNpc(relationships, npc.id));
+    const npcName = safePeopleText(npc.name, "无名人物", 40);
+    const npcIdentity = safePeopleText(npc.rankLabel || npc.genderLabel, "公开人物", 40);
     rows.push({
       id: npc.id,
       kind: "npc",
-      name: safePeopleText(npc.name, "无名人物", 40),
-      identity: safePeopleText(npc.rankLabel || npc.genderLabel, "公开人物", 40),
+      name: npcName,
+      identity: npcIdentity,
       summary: safePeopleText(npc.publicSummary, "暂无公开小传。", 120),
+      current: relationshipNote
+        ? `${relationshipNote}；其余近况候公开案卷复核。`
+        : `${npcName}当前以${npcIdentity}列于人物谱牒；公开近况未详。`,
       portraitRef,
       meta: [
         safePeopleText(npc.genderLabel, "未详", 20),
@@ -951,7 +959,7 @@ export function PeoplePage() {
                         name: npc.displayName,
                         identity: npc.title,
                         summary: npc.summary,
-                        current: "此处只载公开名册近况；详况候复核。",
+                        current: `${npc.displayName}列于公开人物名册，身份为${npc.title}；详况候复核。`,
                         tags: [...npc.stageTags, ...npc.roleTags, ...npc.relationshipLabels]
                       })}
                     />
@@ -980,8 +988,8 @@ export function PeoplePage() {
                       identity: selectedNpc.title,
                       summary: npcDetail?.publicProfile?.summary || selectedNpc.summary,
                       current: npcDetail?.publicProfile?.posting
-                        ? `当前见于${safePeopleText(npcDetail.publicProfile.posting, "公开任所", 48)}；其余行止候复核。`
-                        : "当前任所或行止案卷未载，候复核。",
+                        ? `当前见于${safePeopleText(npcDetail.publicProfile.posting, "公开任所", 48)}；人物页只补公开近况，其余行止候复核。`
+                        : `${selectedNpc.displayName}当前以${selectedNpc.title}见于人物页；任所或行止未详，候复核。`,
                       tags: [...selectedNpc.stageTags, ...selectedNpc.roleTags, ...selectedNpc.relationshipLabels]
                     })}
                   />
@@ -1127,7 +1135,7 @@ export function PeoplePage() {
                       name: person.name,
                       identity: person.identity,
                       summary: person.summary,
-                      current: person.relationshipNote || (person.kind === "player" ? "案主当前身份见于公开案卷。" : "当前情况案卷未载，候复核。"),
+                      current: person.current,
                       tags: person.meta
                     })}
                   />
