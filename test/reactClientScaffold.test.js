@@ -486,9 +486,12 @@ test("S74.3 UI state store keeps only safe UI summaries and preferences", () => 
   assert.match(uiStateSource, /activeDrawer/);
   assert.match(uiStateSource, /activeModal/);
   assert.match(uiStateSource, /actionDraft/);
+  assert.match(uiStateSource, /sessionId: state\.currentSessionId/);
+  assert.match(uiStateSource, /keepActionDraftForSession/);
   assert.match(uiStateSource, /displayPreferences/);
   assert.match(uiStateSource, /extractSafePlayerPayload/);
   assert.match(gamePageSource, /clearActionDraft/);
+  assert.match(gamePageSource, /activeActionDraft/);
   assert.doesNotMatch(combined, /localStorage|sessionStorage|data\/sessions|raw audit|provider payload|OPENAI_API_KEY|DEEPSEEK_API_KEY|MIMO_API_KEY|ANTHROPIC_API_KEY/);
 });
 
@@ -497,6 +500,7 @@ test("S74.4 shell uses registry-backed overlays without widening data sources", 
   const surfaceHostSource = readText("client/src/components/SurfaceHost.tsx");
   const surfaceRegistrySource = readText("client/src/surfaces/surfaceRegistry.tsx");
   const uiStateSource = readText("client/src/state/uiState.ts");
+  const gamePageSource = readText("client/src/pages/GamePage.tsx");
   const courtPageSource = readText("client/src/pages/CourtPage.tsx");
   const archivePageSource = readText("client/src/pages/ArchivePage.tsx");
   const mapPageSource = readText("client/src/pages/MapPage.tsx");
@@ -555,9 +559,11 @@ test("S74.4 shell uses registry-backed overlays without widening data sources", 
   assert.match(archivePageSource, /openSurfaceForSession\("memorial-review", sessionId\)/);
   assert.match(mapPageSource, /openSurfaceForSession\("map-filter", sessionId\)/);
   assert.match(peoplePageSource, /openSurfaceForSession\("npc-profile", sessionId\)/);
+  assert.match(gamePageSource, /openSurfaceForSession\(surface, sessionId\)/);
   assert.doesNotMatch(courtPageSource, /openSurface\(surface\)/);
   assert.doesNotMatch(archivePageSource, /openSurface\("memorial-review"\)/);
   assert.doesNotMatch(mapPageSource, /openSurface\("map-filter"\)/);
+  assert.doesNotMatch(gamePageSource, /openSurface\(surface\)/);
   assert.match(styleSource, /\.archiveTraceGrid/);
   assert.match(styleSource, /\.archiveActionRow/);
   assert.match(styleSource, /\.archiveItemList strong/);

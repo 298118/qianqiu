@@ -70,6 +70,7 @@ export type SafePlayerPayload = {
 
 export type ActionDraft = {
   readonly id: string;
+  readonly sessionId: string;
   readonly source: ActionDraftSource;
   readonly text: string;
   readonly targetPage?: PageSurface;
@@ -141,6 +142,11 @@ function toActionDraftId(text: string, source: ActionDraftSource) {
   return `draft-${source}-${normalized || "empty"}`;
 }
 
+function keepActionDraftForSession(actionDraft: ActionDraft | null, sessionId: string | null) {
+  if (!actionDraft || !sessionId || !isRouteLocalSessionId(sessionId)) return null;
+  return actionDraft.sessionId === sessionId ? actionDraft : null;
+}
+
 function getPayloadSource(payload: StartGameResponse | PlayerStateResponse | TurnResponse | ExamSubmitResponse): SafePlayerPayload["source"] {
   if ("source" in payload && payload.source === "server_player_visible_state_projection") return "player-state";
   if ("examId" in payload && "score" in payload) return "exam-submit";
@@ -194,22 +200,29 @@ export const useUiStateStore = create<UiState>((set) => ({
   setCurrentPage(page, sessionId = undefined) {
     set((state) => {
       const nextSessionId = sessionId === undefined || (page === "home" && sessionId === null) ? state.currentSessionId : sessionId;
+      const sessionChanged = nextSessionId !== state.currentSessionId;
       return {
         currentPage: page,
         currentSessionId: nextSessionId,
         currentPlayerPayload: nextSessionId && state.currentPlayerPayload?.sessionId === nextSessionId
           ? state.currentPlayerPayload
-          : null
+          : null,
+        activeSurface: sessionChanged ? null : state.activeSurface,
+        activePortraitViewer: sessionChanged ? null : state.activePortraitViewer,
+        actionDraft: keepActionDraftForSession(state.actionDraft, nextSessionId)
       };
     });
   },
 
   syncSessionPayload(payload, sourceOverride) {
     const safePayload = extractSafePlayerPayload(payload, sourceOverride);
-    set({
+    set((state) => ({
       currentSessionId: safePayload.sessionId,
-      currentPlayerPayload: safePayload
-    });
+      currentPlayerPayload: safePayload,
+      activeSurface: state.currentSessionId && state.currentSessionId !== safePayload.sessionId ? null : state.activeSurface,
+      activePortraitViewer: state.currentSessionId && state.currentSessionId !== safePayload.sessionId ? null : state.activePortraitViewer,
+      actionDraft: keepActionDraftForSession(state.actionDraft, safePayload.sessionId)
+    }));
   },
 
   returnHome() {
@@ -260,7 +273,8 @@ export const useUiStateStore = create<UiState>((set) => ({
       activeDrawer: null,
       activeModal: null,
       activeSurface: surface,
-      activePortraitViewer: null
+      activePortraitViewer: null,
+      actionDraft: keepActionDraftForSession(state.actionDraft, sessionId)
     }));
   },
 
@@ -291,16 +305,18 @@ export const useUiStateStore = create<UiState>((set) => ({
       set({ actionDraft: null });
       return;
     }
-    const source = draft.source ?? "manual";
-    const nextDraft: ActionDraft = {
-      id: draft.id ?? toActionDraftId(text, source),
-      source,
-      text,
-      ...(draft.targetPage ? { targetPage: draft.targetPage } : {}),
-      ...(draft.draftContext ? { draftContext: draft.draftContext } : {})
-    };
-    set({
-      actionDraft: nextDraft
+    set((state) => {
+      if (!state.currentSessionId || !isRouteLocalSessionId(state.currentSessionId)) return { actionDraft: null };
+      const source = draft.source ?? "manual";
+      const nextDraft: ActionDraft = {
+        id: draft.id ?? toActionDraftId(text, source),
+        sessionId: state.currentSessionId,
+        source,
+        text,
+        ...(draft.targetPage ? { targetPage: draft.targetPage } : {}),
+        ...(draft.draftContext ? { draftContext: draft.draftContext } : {})
+      };
+      return { actionDraft: nextDraft };
     });
   },
 

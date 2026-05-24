@@ -172,7 +172,7 @@ describe("S75.9 MemorialComposer", () => {
     rerender(
       <MemorialComposer
         {...defaultProps}
-        actionDraft={{ id: "draft-manual-study", source: "manual", targetPage: "game", text: "  拜师问学。  " }}
+        actionDraft={{ id: "draft-manual-study", sessionId: "s74-preview", source: "manual", targetPage: "game", text: "  拜师问学。  " }}
         player={{ role: "scholar" }}
         onDraftChange={onDraftChange}
         onSubmit={onSubmit}
@@ -189,7 +189,7 @@ describe("S75.9 MemorialComposer", () => {
 
   it("marks a local-rule suggestion once it is already in the draft", () => {
     const text = buildQuickActionSuggestions({ role: "general" })[0].text;
-    const actionDraft: ActionDraft = { id: "draft-role-surface-general", source: "role-surface", targetPage: "game", text };
+    const actionDraft: ActionDraft = { id: "draft-role-surface-general", sessionId: "s74-preview", source: "role-surface", targetPage: "game", text };
 
     render(
       <MemorialComposer

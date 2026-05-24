@@ -307,14 +307,50 @@ describe("S74.3 UI state store", () => {
     store.closePortraitViewer();
     expect(useUiStateStore.getState().activePortraitViewer).toBeNull();
 
+    store.setCurrentPage("game", startPayload.sessionId);
     store.setActionDraft({ text: "拜访座师，请教经义。", targetPage: "game" });
     expect(useUiStateStore.getState().actionDraft).toMatchObject({
+      sessionId: startPayload.sessionId,
       source: "manual",
       text: "拜访座师，请教经义。",
       targetPage: "game"
     });
     store.clearActionDraft();
     expect(useUiStateStore.getState().actionDraft).toBeNull();
+  });
+
+  it("binds action drafts and local surfaces to the current route session", () => {
+    const store = useUiStateStore.getState();
+
+    store.setCurrentPage("game", startPayload.sessionId);
+    store.openSurfaceForSession("court-debate", startPayload.sessionId);
+    store.setActionDraft({ source: "role-surface", targetPage: "game", text: "旧案草稿。" });
+    expect(useUiStateStore.getState().actionDraft).toMatchObject({
+      sessionId: startPayload.sessionId,
+      text: "旧案草稿。"
+    });
+
+    store.setCurrentPage("game", playerStatePayload.sessionId);
+
+    expect(useUiStateStore.getState()).toMatchObject({
+      currentSessionId: playerStatePayload.sessionId,
+      activeSurface: null,
+      activePortraitViewer: null,
+      actionDraft: null
+    });
+
+    store.setActionDraft({ source: "manual", targetPage: "game", text: "新案草稿。" });
+    expect(useUiStateStore.getState().actionDraft).toMatchObject({
+      sessionId: playerStatePayload.sessionId,
+      source: "manual",
+      text: "新案草稿。"
+    });
+
+    store.syncSessionPayload(startPayload, "player-state");
+    expect(useUiStateStore.getState()).toMatchObject({
+      currentSessionId: startPayload.sessionId,
+      actionDraft: null
+    });
   });
 
   it("opens local surfaces against the current route session and drops stale safe payloads", () => {
@@ -349,6 +385,7 @@ describe("S74.3 UI state store", () => {
   it("clears topic draft context when a user rewrites the memorial manually", () => {
     const store = useUiStateStore.getState();
 
+    store.setCurrentPage("game", startPayload.sessionId);
     store.setActionDraft({
       source: "role-surface",
       targetPage: "game",
@@ -373,6 +410,7 @@ describe("S74.3 UI state store", () => {
     });
 
     expect(useUiStateStore.getState().actionDraft).toMatchObject({
+      sessionId: startPayload.sessionId,
       source: "manual",
       text: "改为另写一札，不再引用原堂审草稿。",
       targetPage: "game"

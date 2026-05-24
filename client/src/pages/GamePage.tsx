@@ -166,7 +166,7 @@ export function GamePage() {
   const clearActionDraft = useUiStateStore((state) => state.clearActionDraft);
   const currentPlayerPayload = useUiStateStore((state) => state.currentPlayerPayload);
   const selectTab = useUiStateStore((state) => state.selectTab);
-  const openSurface = useUiStateStore((state) => state.openSurface);
+  const openSurfaceForSession = useUiStateStore((state) => state.openSurfaceForSession);
   const routeSessionSupported = isRouteLocalSessionId(sessionId);
   const sessionHref = (path: string) => path.replace("s74-preview", routeSessionSupported ? sessionId : "s74-preview");
   const resolveRoleCycleRouteHref = (routeId: string) => {
@@ -174,10 +174,11 @@ export function GamePage() {
     const route = routeCatalog.find((entry) => entry.id === routeId);
     return route ? sessionHref(route.href) : null;
   };
-  const openRoleCycleSurface = (surface: LocalSurface) => openSurface(surface);
+  const openRoleCycleSurface = (surface: LocalSurface) => openSurfaceForSession(surface, sessionId);
   const activeSession = routeSessionSupported && session?.sessionId === sessionId ? session : null;
   const activeLastTurn = routeSessionSupported && lastTurn?.sessionId === sessionId ? lastTurn : null;
   const activePlayerPayload = routeSessionSupported && currentPlayerPayload?.sessionId === sessionId ? currentPlayerPayload : null;
+  const activeActionDraft = routeSessionSupported && actionDraft?.sessionId === sessionId ? actionDraft : null;
   const player = activeSession?.worldState?.player;
   const runnable = isRunnableSessionId(sessionId);
   const routeIsLoading = status === "loading" || (runnable && !activeSession);
@@ -237,7 +238,7 @@ export function GamePage() {
   async function handleTurn(text: string) {
     if (!text.trim() || !runnable) return;
     try {
-      await submitTurn(sessionId, text.trim(), actionDraft?.draftContext);
+      await submitTurn(sessionId, text.trim(), activeActionDraft?.draftContext);
     } catch {
     }
   }
@@ -450,7 +451,7 @@ export function GamePage() {
       {routeError ? <p className="statusLine" role="alert">{routeError}</p> : null}
       <Outlet />
       <MemorialComposer
-        actionDraft={actionDraft}
+        actionDraft={activeActionDraft}
         player={activePlayerPayload?.player ?? player}
         routeViews={activePlayerPayload?.routeViews}
         aiSuggestions={quickActions?.sessionId === sessionId ? quickActions.quickActionSuggestions : null}
@@ -467,7 +468,7 @@ export function GamePage() {
         onRefreshQuickActions={() => {
           void refreshQuickActions(sessionId, {
             page: "game",
-            draftPreview: actionDraft?.text.slice(0, 80) || "",
+            draftPreview: activeActionDraft?.text.slice(0, 80) || "",
             count: 3
           }).catch(() => undefined);
         }}

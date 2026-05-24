@@ -5195,6 +5195,19 @@ describe("S74.1 React client shell", () => {
       status: "ready"
     });
     useUiStateStore.getState().syncSessionPayload(stalePayload as never, "player-state");
+    useUiStateStore.getState().setActionDraft({
+      source: "role-surface",
+      targetPage: "game",
+      text: "旧案草稿不应带入新案。",
+      draftContext: {
+        surfaceId: "court-debate",
+        draftKind: "court_response",
+        evidenceRefs: ["evidence:events:stale-draft"],
+        canonicalEchoRefs: ["domainConsequenceEcho:stale"],
+        generatedAtTurn: 3,
+        status: "client_hint"
+      }
+    });
 
     renderRoute(`/game/${routeSessionId}`);
 
@@ -5207,6 +5220,8 @@ describe("S74.1 React client shell", () => {
 
     expect(document.body.textContent || "").not.toMatch(/旧案主|旧案官职|旧案叙事|旧案回合叙事|旧案事务|旧案错误/);
     expect(useUiStateStore.getState().currentPlayerPayload).toBeNull();
+    expect(useUiStateStore.getState().actionDraft).toBeNull();
+    expect(screen.getByLabelText("本回合行动")).toHaveProperty("value", "");
     expect(fetchMock.mock.calls.map(([url]) => String(url))).not.toContain("/api/game/turn");
   });
 
@@ -5317,6 +5332,61 @@ describe("S74.1 React client shell", () => {
     expect(useUiStateStore.getState().actionDraft).toBeNull();
     const matrixRequestedUrls = fetchMock.mock.calls.map((call) => String((call as unknown[])[0]));
     expect(matrixRequestedUrls).not.toContain("/api/game/turn");
+  });
+
+  it("opens S88.9 role-cycle surfaces against the route session and drops stale main drafts", async () => {
+    mockAssetManifestFetch(buildMockAssetManifest(0));
+    const sessionId = "s74-preview";
+    const staleSessionId = "12121212-1212-4121-8121-121212121212";
+    useGameSessionStore.setState({
+      currentSessionId: sessionId,
+      currentSession: {
+        sessionId,
+        worldState: {
+          player: {
+            name: "入口官",
+            role: "official",
+            officeTitle: "翰林院编修"
+          }
+        },
+        roleCycleView: {
+          activeRole: "official",
+          dateLabel: "康熙元年下旬",
+          currentRole: {
+            roleLabel: "入仕官员",
+            loopLabel: "本职差使与考成",
+            statusLabel: "署中承差",
+            summary: "从安全视图进入人物专题。",
+            entryPoints: [{ id: "npc-surface", label: "开人物档案", targetSurfaceId: "npc-profile", publicSummary: "只打开当前案卷专题层。" }],
+            nextActions: [{ label: "拟呈报", text: "整理当前案卷差使。" }]
+          },
+          roleMatrix: []
+        }
+      } as unknown as ReturnType<typeof useGameSessionStore.getState>["currentSession"],
+      status: "ready"
+    });
+    useUiStateStore.setState({
+      currentSessionId: staleSessionId,
+      actionDraft: {
+        id: "draft-stale-main",
+        sessionId: staleSessionId,
+        source: "manual",
+        targetPage: "game",
+        text: "旧案主卷草稿不应残留。"
+      }
+    });
+
+    renderRoute(`/game/${sessionId}`);
+
+    fireEvent.click(await screen.findByRole("button", { name: "开人物档案" }));
+
+    expect(useUiStateStore.getState()).toMatchObject({
+      currentSessionId: sessionId,
+      activeSurface: "npc-profile",
+      actionDraft: null
+    });
+    expect(screen.getByLabelText("本回合行动")).toHaveProperty("value", "");
+    expect(document.body.textContent || "").not.toContain("旧案主卷草稿");
   });
 
   it("keeps the main action draft in the UI store and clears it from the composer", () => {
