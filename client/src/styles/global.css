@@ -212,6 +212,8 @@ a {
 .appShell[data-motion="reduced"] .sessionRouteShell > .examFullScreen,
 .appShell[data-motion="reduced"] .sessionRouteShell > .courtSurfacePage,
 .appShell[data-motion="reduced"] .sessionRouteShell > .surfacePanel,
+.appShell[data-motion="reduced"] .drawerHost,
+.appShell[data-motion="reduced"] li[data-draft-state="written"],
 .appShell[data-motion="reduced"] .rankingGoldenNotice::before,
 .appShell[data-motion="reduced"] .rankingGoldenTitle span {
   animation: none !important;
@@ -2963,6 +2965,10 @@ button:disabled:hover {
   padding: 10px;
 }
 
+li[data-draft-state="written"] {
+  animation: s895S .36s;
+}
+
 .mapActionList span,
 .mapActionList p,
 .mapActionList strong {
@@ -4907,6 +4913,7 @@ button:disabled:hover {
     linear-gradient(180deg, rgba(255, 248, 230, 0.95), rgba(231, 211, 180, 0.94)),
     url("/assets/ui/materials/seal-box-texture-v1.webp") center / cover no-repeat;
   box-shadow: -18px 0 42px rgba(39, 29, 21, 0.18);
+  animation: s895D .22s;
 }
 
 .drawerClose {
@@ -6418,11 +6425,20 @@ button:disabled:hover {
   .sessionRouteShell > .examFullScreen,
   .sessionRouteShell > .courtSurfacePage,
   .sessionRouteShell > .surfacePanel,
+  li[data-draft-state="written"],
   .rankingGoldenNotice::before,
   .rankingGoldenTitle span {
     animation: none !important;
     transition: none;
   }
+}
+
+@keyframes s895D {
+  from { opacity: .9; }
+}
+
+@keyframes s895S {
+  from { outline: 2px solid #8e2f2738; }
 }
 
 @keyframes rankingGoldDust {

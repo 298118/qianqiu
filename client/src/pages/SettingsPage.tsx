@@ -57,7 +57,11 @@ export function SettingsPage() {
   }
 
   return (
-    <article className="surfacePanel routePanel settingsRoutePanel settingsDirectoryRoute" aria-labelledby="settings-title">
+    <article
+      className="surfacePanel routePanel settingsRoutePanel settingsDirectoryRoute"
+      aria-labelledby="settings-title"
+      data-polish-surface="s89-5-settings-directory"
+    >
       <div className="routePanelHeader settingsDirectoryHeader">
         <div className="settingsDirectorySeal" aria-hidden="true">
           <Archive size={24} />
@@ -70,7 +74,7 @@ export function SettingsPage() {
       </div>
       <div className="settingsDirectoryGrid" aria-label="印匣分栏入口">
         {settingsCards.map((card) => (
-          <section className="settingsDirectoryCard" key={card.tab}>
+          <section className="settingsDirectoryCard" key={card.tab} data-polish-card="s89-5-settings-card">
             <span className="settingsDirectoryCardIcon" aria-hidden="true">{card.icon}</span>
             <div>
               <h2>{card.title}</h2>

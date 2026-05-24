@@ -858,6 +858,105 @@ async function assertArchiveDigestPolish(page, label) {
   }
 }
 
+async function assertS895MaterialFeedbackPolish(page, label, expected = {}) {
+  const snapshot = await page.evaluate((expectedSelectors) => {
+    const styleOf = (selector, pseudo = null) => {
+      const element = document.querySelector(selector);
+      if (!element) return null;
+      const style = window.getComputedStyle(element, pseudo);
+      return {
+        animationName: style.animationName,
+        backdropFilter: style.backdropFilter || style.webkitBackdropFilter || "",
+        backgroundImage: style.backgroundImage,
+        boxShadow: style.boxShadow,
+        opacity: style.opacity,
+        transform: style.transform,
+        transitionDuration: style.transitionDuration
+      };
+    };
+    const keyframesOf = (name) => {
+      for (const sheet of [...document.styleSheets]) {
+        let rules;
+        try {
+          rules = sheet.cssRules;
+        } catch {
+          continue;
+        }
+        for (const rule of [...rules]) {
+          if ("name" in rule && rule.name === name) return rule.cssText;
+        }
+      }
+      return "";
+    };
+    const shell = document.querySelector(".appShell");
+    const writtenRows = [...document.querySelectorAll(".mapActionList li[data-draft-state='written'], .mapEventList li[data-draft-state='written']")];
+    return {
+      shellPolish: shell?.getAttribute("data-polish-surface") || "",
+      shellMotion: shell?.getAttribute("data-motion") || "",
+      topBar: styleOf(".topBar"),
+      topBarSheen: styleOf(".topBar", "::after"),
+      inkboxButton: styleOf(".inkboxButton"),
+      inkboxButtonSheen: styleOf(".inkboxButton", "::before"),
+      drawer: styleOf("[data-polish-overlay='s89-5-drawer-mica']"),
+      keyframes: {
+        drawer: keyframesOf("s895D"),
+        draft: keyframesOf("s895S")
+      },
+      modal: styleOf("[data-polish-overlay='s89-5-modal-paper'], [data-polish-overlay='s89-5-surface-paper'], [data-polish-overlay='s89-5-portrait-gallery']"),
+      mapSurface: Boolean(document.querySelector("[data-polish-surface='s89-5-map-command']")),
+      mapLedger: styleOf("[data-polish-card='s89-5-map-ledger']"),
+      mapLayerCount: document.querySelectorAll("[data-polish-action='s89-5-map-layer']").length,
+      mapWrittenCount: writtenRows.length,
+      mapWrittenAnimation: writtenRows.map((row) => window.getComputedStyle(row).animationName),
+      portraitFrameCount: document.querySelectorAll("[data-polish-card='s89-5-portrait-frame']").length,
+      portraitZoomCount: document.querySelectorAll("[data-polish-action='s89-5-portrait-zoom']").length,
+      portraitViewer: styleOf("[data-polish-overlay='s89-5-portrait-gallery']"),
+      settingsSurface: Boolean(document.querySelector("[data-polish-surface='s89-5-settings-directory']")),
+      settingsCardCount: document.querySelectorAll("[data-polish-card='s89-5-settings-card']").length,
+      expected: expectedSelectors,
+      unsafeText: (document.body.innerText || "").match(/provider payload|raw audit|hiddenNotes|OPENAI_API_KEY|data\/sessions|draftContext|schema|manifest|server adjudication|完整提示词|本地路径|密钥|sk-[a-z0-9_-]{6,}|[a-z]:[\\/]/gi) || []
+    };
+  }, expected);
+
+  const failures = [];
+  if (snapshot.shellPolish !== "s89-5-material-feedback") failures.push(`shell polish marker was ${snapshot.shellPolish}`);
+  if (!snapshot.topBar?.backgroundImage.includes("linear-gradient")) failures.push("top bar did not use layered material background");
+  if (!snapshot.topBarSheen || snapshot.topBarSheen.opacity === "0") failures.push("top bar sheen was absent");
+  if (!snapshot.inkboxButton?.boxShadow || snapshot.inkboxButton.boxShadow === "none") failures.push("inkbox button lacked material shadow");
+  if (expected.drawer && !snapshot.drawer) failures.push("open drawer lacked S89.5 overlay marker");
+  if (expected.drawer && snapshot.shellMotion !== "reduced" && snapshot.drawer?.animationName !== "s895D") {
+    failures.push(`drawer animation was ${snapshot.drawer?.animationName}`);
+  }
+  if (expected.drawer && snapshot.shellMotion !== "reduced" && !/transform|opacity/i.test(snapshot.keyframes.drawer)) {
+    failures.push("drawer keyframes lacked a visible transform/opacity delta");
+  }
+  if (expected.reducedOverlay && snapshot.drawer && snapshot.drawer.animationName !== "none") {
+    failures.push(`reduced drawer animation was ${snapshot.drawer.animationName}`);
+  }
+  if (expected.modal && !snapshot.modal) failures.push("open modal/surface lacked S89.5 overlay marker");
+  if (expected.map && (!snapshot.mapSurface || !snapshot.mapLedger || snapshot.mapLayerCount < 3)) {
+    failures.push(`map polish hooks incomplete: ${JSON.stringify({ mapSurface: snapshot.mapSurface, mapLedger: Boolean(snapshot.mapLedger), mapLayerCount: snapshot.mapLayerCount })}`);
+  }
+  if (expected.mapWritten && snapshot.mapWrittenCount < 1) failures.push("map draft feedback row was not marked written");
+  if (expected.mapWritten && snapshot.shellMotion !== "reduced" && !snapshot.mapWrittenAnimation.includes("s895S")) {
+    failures.push(`map written animation missing: ${snapshot.mapWrittenAnimation.join(", ")}`);
+  }
+  if (expected.mapWritten && snapshot.shellMotion !== "reduced" && !/outline|box-shadow|transform|opacity|background/i.test(snapshot.keyframes.draft)) {
+    failures.push("map draft keyframes lacked a visible feedback delta");
+  }
+  if (expected.portrait && (snapshot.portraitFrameCount < 1 || snapshot.portraitZoomCount < 1)) {
+    failures.push(`portrait polish hooks incomplete: ${JSON.stringify({ portraitFrameCount: snapshot.portraitFrameCount, portraitZoomCount: snapshot.portraitZoomCount })}`);
+  }
+  if (expected.portraitViewer && !snapshot.portraitViewer) failures.push("portrait viewer lacked S89.5 overlay marker");
+  if (expected.settings && (!snapshot.settingsSurface || snapshot.settingsCardCount !== 4)) {
+    failures.push(`settings polish hooks incomplete: ${JSON.stringify({ settingsSurface: snapshot.settingsSurface, settingsCardCount: snapshot.settingsCardCount })}`);
+  }
+  if (snapshot.unsafeText.length) failures.push(`S89.5 polish surface leaked unsafe text: ${snapshot.unsafeText.join(", ")}`);
+  if (failures.length) {
+    throw new Error(`${label} S89.5 material feedback polish failed: ${failures.join("; ")}`);
+  }
+}
+
 async function assertNoVisibleTextOverlap(page, label) {
   const rects = await page.evaluate(({ selectors, ignoreSelectors }) => {
     const elements = [...document.querySelectorAll(selectors.join(","))];
@@ -2276,6 +2375,7 @@ async function assertInkboxTabsAndSaveLoad(page, sessionId, screenshotsDir) {
   await page.getByRole("button", { name: "打开印匣" }).click();
   const drawer = page.locator("aside.drawerHost[aria-label='印匣']");
   await drawer.waitFor({ timeout: 10000 });
+  await assertS895MaterialFeedbackPolish(page, "S89.5 desktop inkbox", { drawer: true });
 
   await assertInkboxTab(page, drawer, "推演", "推演设置");
   const narratorRoute = drawer.locator(".aiTaskRoute").filter({ hasText: "叙事" }).first();
@@ -2423,6 +2523,7 @@ async function assertDisplayPreferencesPersistence(page, gamePath) {
   await page.getByRole("combobox", { name: "正文字体" }).selectOption("kai-longcang");
   await page.getByRole("checkbox", { name: "自动滚动新回合" }).uncheck();
   await page.getByRole("checkbox", { name: "舆图动效" }).uncheck();
+  await assertS895MaterialFeedbackPolish(page, "S89.5 reduced inkbox", { drawer: true, reducedOverlay: true });
   await page.getByRole("button", { name: "关闭抽屉" }).click();
 
   const storedBeforeReload = await page.evaluate(() => {
@@ -2797,6 +2898,7 @@ async function runClientSmoke(options = {}) {
     });
 
     screenshots.push(await assertReactClientPage(page, baseUrl, "/", "s74-react-home-desktop", options.screenshotsDir));
+    await assertS895MaterialFeedbackPolish(page, "S89.5 desktop home");
     await assertHomeStartSealTypography(page, "S89.2 desktop home");
     await assertHomeSaveShelfPolish(page, "S89.4 desktop home");
     await assertReviewedBackgroundVisual(page, ".homeBackdrop", "S77.3 desktop home backdrop");
@@ -2859,7 +2961,12 @@ async function runClientSmoke(options = {}) {
     if (mapRuntime.forbiddenText.length) {
       throw new Error(`React map runtime leaked forbidden text: ${mapRuntime.forbiddenText.join(", ")}`);
     }
+    await assertS895MaterialFeedbackPolish(page, "S89.5 desktop map", { map: true });
     await assertCanvasHasInkPixels(page, ".inkMapRuntimeBridge canvas", "S77.3 desktop map runtime");
+    const mapDraftButton = page.locator(".mapActionList button, .mapEventList button").first();
+    await mapDraftButton.waitFor({ state: "visible", timeout: 10000 });
+    await mapDraftButton.click();
+    await assertS895MaterialFeedbackPolish(page, "S89.5 desktop map draft feedback", { map: true, mapWritten: true });
     await page.getByLabel("地点").uncheck();
     await page.waitForFunction(() => document.querySelectorAll(".inkMapLabel").length === 0);
     await page.getByLabel("地点").check();
@@ -2943,6 +3050,7 @@ async function runClientSmoke(options = {}) {
     if (portraitViewer.storageKeys.some((key) => /portrait|viewer|image/i.test(key)) || portraitViewer.unsafeText.length) {
       throw new Error(`S79.3 portrait viewer widened storage or text safety: ${JSON.stringify(portraitViewer)}`);
     }
+    await assertS895MaterialFeedbackPolish(page, "S89.5 portrait viewer", { portrait: true, portraitViewer: true });
     screenshots.push(await captureScreenshot(page, options.screenshotsDir, "s79-3-portrait-viewer-desktop"));
     await page.keyboard.press("Escape");
     await page.locator("[data-portrait-viewer='true']").waitFor({ state: "detached", timeout: 10000 });
@@ -3075,6 +3183,7 @@ async function runClientSmoke(options = {}) {
         if (settingsRouteSnapshot.forbiddenText.length) {
           throw new Error(`S89.3 settings route leaked unsafe/player-facing terms: ${settingsRouteSnapshot.forbiddenText.join(", ")}`);
         }
+        await assertS895MaterialFeedbackPolish(page, "S89.5 settings directory", { settings: true });
       }
       screenshots.push(
         await assertRouteRefresh(page, route.path, route.screenshot, options.screenshotsDir, {
@@ -3228,6 +3337,7 @@ async function runClientSmoke(options = {}) {
     await assertCanvasHasInkPixels(page, ".inkMapRuntimeBridge canvas", "S77.3 mobile map runtime");
     screenshots.push(await assertMobileInkbox(page, options.screenshotsDir));
     screenshots.push(await assertReactClientPage(page, baseUrl, "/", "s74-react-home-mobile", options.screenshotsDir));
+    await assertS895MaterialFeedbackPolish(page, "S89.5 mobile home");
     await assertHomeStartSealTypography(page, "S89.2 mobile home");
     await assertHomeSaveShelfPolish(page, "S89.4 mobile home");
     await assertReviewedBackgroundVisual(page, ".homeBackdrop", "S77.3 mobile home backdrop");

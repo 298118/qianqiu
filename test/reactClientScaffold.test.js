@@ -1351,12 +1351,59 @@ test("S89.3 settings route is a directory into the single inkbox surface", () =>
   assert.match(clientSmokeSource, /viaNav: false/);
   assert.match(clientSmokeSource, /settingsDirectoryRoute/);
   assert.match(clientSmokeSource, /hasAiSettingsPanel/);
+  assert.match(clientSmokeSource, /assertS895MaterialFeedbackPolish/);
+  assert.match(settingsPageSource, /data-polish-surface="s89-5-settings-directory"/);
+  assert.match(settingsPageSource, /data-polish-card="s89-5-settings-card"/);
   assert.match(appTestSource, /keeps the settings route as a directory into one inkbox tool surface/);
   assert.match(styleSource, /\.settingsDirectoryCard/);
+  assert.match(styleSource, /\.settingsDirectoryCard::after/);
   assert.match(styleSource, /\.statePage/);
   assert.doesNotMatch(
     settingsPageSource,
     /数据来源|裁决边界|服务器裁决|draftContext|schema|manifest|provider payload|raw audit|hiddenNotes|OPENAI_API_KEY|data\/sessions|完整提示词|本地路径|密钥/
+  );
+});
+
+test("S89.5 material polish stays frontend-only and reduced-motion aware", () => {
+  const appShellSource = readText("client/src/components/AppShell.tsx");
+  const surfaceHostSource = readText("client/src/components/SurfaceHost.tsx");
+  const mapPageSource = readText("client/src/pages/MapPage.tsx");
+  const settingsPageSource = readText("client/src/pages/SettingsPage.tsx");
+  const portraitSource = readText("client/src/components/Portrait.tsx");
+  const styleSource = readText("client/src/styles/global.css");
+  const clientSmokeSource = readText("scripts/clientSmoke.js");
+  const runtimeCombined = stripSafeGuardPatterns(`${appShellSource}\n${surfaceHostSource}\n${mapPageSource}\n${settingsPageSource}\n${portraitSource}\n${styleSource}`);
+
+  assert.match(appShellSource, /data-polish-surface="s89-5-material-feedback"/);
+  assert.match(surfaceHostSource, /data-polish-overlay="s89-5-drawer-mica"/);
+  assert.match(surfaceHostSource, /data-polish-overlay="s89-5-modal-paper"/);
+  assert.match(surfaceHostSource, /data-polish-overlay="s89-5-surface-paper"/);
+  assert.match(surfaceHostSource, /data-polish-overlay="s89-5-portrait-gallery"/);
+  assert.match(mapPageSource, /lastWrittenMapDraftId/);
+  assert.match(mapPageSource, /data-polish-surface="s89-5-map-command"/);
+  assert.match(mapPageSource, /data-polish-action="s89-5-map-layer"/);
+  assert.match(mapPageSource, /data-polish-card="s89-5-map-ledger"/);
+  assert.match(mapPageSource, /data-draft-state=\{lastWrittenMapDraftId === entry\.id \? "written" : "idle"\}/);
+  assert.match(mapPageSource, /data-draft-state=\{lastWrittenMapDraftId === eventItem\.id \? "written" : "idle"\}/);
+  assert.match(appShellSource, /topBarPolishStyle/);
+  assert.match(appShellSource, /inkboxButtonPolishStyle/);
+  assert.match(appShellSource, /backgroundImage: "linear-gradient\(#fff, #eee\)"/);
+  assert.match(styleSource, /@keyframes s895D/);
+  assert.match(styleSource, /@keyframes s895S/);
+  assert.match(styleSource, /li\[data-draft-state="written"\]/);
+  assert.match(styleSource, /@keyframes s895D[\s\S]*opacity: \.9/);
+  assert.match(styleSource, /@keyframes s895S[\s\S]*outline: 2px solid #8e2f2738/);
+  assert.doesNotMatch(styleSource, /@keyframes s895D\s*\{\s*\}/);
+  assert.doesNotMatch(styleSource, /@keyframes s895S\s*\{\s*\}/);
+  assert.doesNotMatch(styleSource, /s895OverlayFade|s895PanelEnter|settingsDirectoryCard:hover::after|portraitViewerFigure::after/);
+  assert.match(styleSource, /\.appShell\[data-motion="reduced"\][\s\S]*li\[data-draft-state="written"\]/);
+  assert.match(styleSource, /\.appShell\[data-motion="reduced"\][\s\S]*\.drawerHost/);
+  assert.match(clientSmokeSource, /assertS895MaterialFeedbackPolish/);
+  assert.match(clientSmokeSource, /S89\.5 desktop map draft feedback/);
+  assert.match(clientSmokeSource, /S89\.5 reduced inkbox/);
+  assert.doesNotMatch(
+    runtimeCombined,
+    /\/api\/game\/state|\/api\/dev\/session-diagnostics|ink-ui-manifest|dangerouslySetInnerHTML|data\/sessions|raw audit|provider payload|OPENAI_API_KEY|DEEPSEEK_API_KEY|MIMO_API_KEY|ANTHROPIC_API_KEY/
   );
 });
 
@@ -1453,12 +1500,15 @@ test("S79.3 portrait viewer stays read-only and uses audited runtime portrait pa
   assert.match(uiStateSource, /closePortraitViewer/);
   assert.match(portraitSource, /profile\?: PortraitViewerProfile/);
   assert.match(portraitSource, /portraitZoomButton/);
+  assert.match(portraitSource, /data-polish-card="s89-5-portrait-frame"/);
+  assert.match(portraitSource, /data-polish-action="s89-5-portrait-zoom"/);
   assert.match(portraitSource, /Maximize2/);
   assert.match(portraitSource, /markOverlayTrigger/);
   assert.match(surfaceHostSource, /PortraitViewerHost/);
   assert.match(surfaceHostSource, /registry\.getPortrait\(viewer\.portraitRef\)/);
   assert.match(surfaceHostSource, /portrait\?\.path/);
   assert.match(surfaceHostSource, /data-portrait-viewer="true"/);
+  assert.match(surfaceHostSource, /data-polish-overlay="s89-5-portrait-gallery"/);
   assert.match(surfaceHostSource, /外貌介绍/);
   assert.match(surfaceHostSource, /公开传略/);
   assert.match(surfaceHostSource, /当前情况/);

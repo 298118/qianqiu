@@ -45,6 +45,7 @@ export function Portrait({ registry, portraitRef, label, className = "", viewerE
         aria-label={`${resolvedLabel}，纸底占位`}
         data-portrait-ref={portraitRef}
         data-asset-fallback={fallback?.id ?? "fallback-paper-panel-v1"}
+        data-polish-card="s89-5-portrait-frame"
         style={fallbackStyle}
       >
         <span aria-hidden="true">人</span>
@@ -58,6 +59,7 @@ export function Portrait({ registry, portraitRef, label, className = "", viewerE
       aria-label={resolvedLabel}
       data-portrait-ref={portrait.portraitRef}
       data-portrait-remastered={portrait.hasHighResOverride ? "true" : "false"}
+      data-polish-card="s89-5-portrait-frame"
       style={fallbackStyle}
     >
       <img
@@ -73,6 +75,7 @@ export function Portrait({ registry, portraitRef, label, className = "", viewerE
           type="button"
           title="查看高清立绘"
           aria-label={`查看${resolvedLabel}高清立绘`}
+          data-polish-action="s89-5-portrait-zoom"
           onClick={handleOpenViewer}
         >
           <Maximize2 size={15} aria-hidden="true" />

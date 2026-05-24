@@ -1,5 +1,5 @@
 import { Archive } from "lucide-react";
-import { useEffect, useRef, type RefObject } from "react";
+import { useEffect, useRef, type CSSProperties, type RefObject } from "react";
 import { Link, NavLink, Outlet, ScrollRestoration, useLocation } from "react-router";
 import { routeCatalog } from "../routes/routeCatalog";
 import { isRouteLocalSessionId } from "../routes/sessionId";
@@ -9,6 +9,12 @@ import { markOverlayTrigger } from "./overlayFocus";
 import { SurfaceHost } from "./SurfaceHost";
 
 const primaryNav = routeCatalog.filter((route) => route.surface === "primary");
+const topBarPolishStyle: CSSProperties = {
+  backgroundImage: "linear-gradient(#fff, #eee)"
+};
+const inkboxButtonPolishStyle: CSSProperties = {
+  boxShadow: "0 10px 26px #56281f24"
+};
 
 export function AppShell() {
   const displayPreferences = useUiStateStore((state) => state.displayPreferences);
@@ -23,13 +29,14 @@ export function AppShell() {
       data-client-entry="react"
       data-router-mode="data"
       data-shell-version="s75-9"
+      data-polish-surface="s89-5-material-feedback"
       data-motion={displayPreferences.motion}
       data-text-size={displayPreferences.textSize}
       data-contrast={displayPreferences.contrast}
       data-body-font={displayPreferences.bodyFont}
     >
       <UiRouteStateBridge pageFrameRef={pageFrameRef} />
-      <header className="topBar" aria-label="千秋主导航">
+      <header className="topBar" aria-label="千秋主导航" style={topBarPolishStyle}>
         <Link className="brandMark" to="/" aria-label="返回千秋首页" onClick={returnHome}>
           <span className="brandSeal" aria-hidden="true" />
           <span>
@@ -45,7 +52,7 @@ export function AppShell() {
           ))}
         </nav>
         <div className="topTools" aria-label="案头工具">
-          <button className="inkboxButton" type="button" title="印匣" aria-label="打开印匣" onClick={(event) => { markOverlayTrigger(event.currentTarget); openInkbox(); }}>
+          <button className="inkboxButton" type="button" title="印匣" aria-label="打开印匣" style={inkboxButtonPolishStyle} onClick={(event) => { markOverlayTrigger(event.currentTarget); openInkbox(); }}>
             <Archive size={18} aria-hidden="true" />
             <span>印匣</span>
           </button>

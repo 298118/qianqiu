@@ -339,6 +339,7 @@ function getNpcActivityAnchors(view: MapRuntimeView | null | undefined) {
 export function MapPage() {
   const { sessionId = "s74-preview" } = useParams();
   const [visibleLayers, setVisibleLayers] = useState<Record<MapLayerKey, boolean>>(defaultVisibleLayers);
+  const [lastWrittenMapDraftId, setLastWrittenMapDraftId] = useState<string | null>(null);
   const currentSession = useGameSessionStore((state) => state.currentSession);
   const status = useGameSessionStore((state) => state.status);
   const openSurfaceForSession = useUiStateStore((state) => state.openSurfaceForSession);
@@ -363,6 +364,7 @@ export function MapPage() {
 
   useEffect(() => {
     setVisibleLayers(defaultVisibleLayers);
+    setLastWrittenMapDraftId(null);
   }, [sessionId]);
 
   function toggleLayer(layer: MapLayerKey) {
@@ -379,6 +381,7 @@ export function MapPage() {
   }
 
   function writeMapRuntimeSelection(selection: MapRuntimeDraftSelection) {
+    setLastWrittenMapDraftId("runtime-selection");
     writeMapActionDraft(
       selection.text,
       buildMapDraftContext("map_ref_action", [selection.targetRef], selection.sourceRefs, selection.requiresServerTurn)
@@ -386,6 +389,7 @@ export function MapPage() {
   }
 
   function writeMapActionEntry(entry: MapActionEntry) {
+    setLastWrittenMapDraftId(entry.id);
     writeMapActionDraft(
       entry.text,
       buildMapDraftContext(entry.draftKind, [entry.targetRef], entry.sourceRefs, entry.requiresServerTurn)
@@ -393,6 +397,7 @@ export function MapPage() {
   }
 
   function draftFromEvent(eventItem: ReturnType<typeof getMapEvents>[number]) {
+    setLastWrittenMapDraftId(eventItem.id);
     writeMapActionDraft(
       `据舆图公开近事，先查问「${eventItem.targetLabel}」附近的「${eventItem.label}」，整理人证、驿路与官府文书后再定本旬行动。`,
       buildMapDraftContext("map_event_action", [eventItem.targetRef], eventItem.sourceRefs, true)
@@ -400,7 +405,7 @@ export function MapPage() {
   }
 
   return (
-    <article className="mapFullScreen routePanel" aria-labelledby="map-title">
+    <article className="mapFullScreen routePanel" aria-labelledby="map-title" data-polish-surface="s89-5-map-command">
       <header className="mapHero">
         <div>
           <p className="eyebrow">独立舆图</p>
@@ -429,7 +434,7 @@ export function MapPage() {
       <section className="mapCommandDeck" aria-label="舆图操作">
         <div className="mapLayerControls" aria-label="图层筛选">
           {(Object.keys(mapLayerLabels) as MapLayerKey[]).map((layer) => (
-            <label className="mapLayerToggle" key={layer}>
+            <label className="mapLayerToggle" key={layer} data-polish-action="s89-5-map-layer">
               <input
                 type="checkbox"
                 checked={visibleLayers[layer]}
@@ -463,7 +468,7 @@ export function MapPage() {
           visibleLayers={visibleLayers}
           onActionDraft={writeMapRuntimeSelection}
         />
-        <aside className="mapSituationLedger" aria-labelledby="map-ledger-title">
+        <aside className="mapSituationLedger" aria-labelledby="map-ledger-title" data-polish-card="s89-5-map-ledger">
           <div>
             <p className="eyebrow">局势簿摘录</p>
             <h2 id="map-ledger-title">公开近事</h2>
@@ -476,7 +481,7 @@ export function MapPage() {
             {mapActionEntries.length ? (
               <ol className="mapActionList">
                 {mapActionEntries.map((entry) => (
-                  <li key={entry.id}>
+                  <li key={entry.id} data-draft-state={lastWrittenMapDraftId === entry.id ? "written" : "idle"}>
                     <span>{entry.kindLabel} · 待主卷复核</span>
                     <strong>{entry.label}</strong>
                     <p>{entry.summary}</p>
@@ -493,7 +498,7 @@ export function MapPage() {
           {mapEvents.length ? (
             <ol className="mapEventList">
               {mapEvents.map((eventItem) => (
-                <li key={eventItem.id}>
+                <li key={eventItem.id} data-draft-state={lastWrittenMapDraftId === eventItem.id ? "written" : "idle"}>
                   <strong>{eventItem.label}</strong>
                   <span>{eventItem.targetLabel} · 警势 {eventItem.severity}</span>
                   <p>{eventItem.summary}</p>

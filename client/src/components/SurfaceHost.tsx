@@ -187,7 +187,14 @@ function DrawerHost({ activeDrawer }: { readonly activeDrawer: DrawerSurface }) 
         if (event.target === event.currentTarget) closeDrawer();
       }}
     >
-      <aside ref={drawerRef} className="drawerHost" aria-label={drawerRegistry[activeDrawer].label} tabIndex={-1} data-overlay-kind="drawer">
+      <aside
+        ref={drawerRef}
+        className="drawerHost"
+        aria-label={drawerRegistry[activeDrawer].label}
+        tabIndex={-1}
+        data-overlay-kind="drawer"
+        data-polish-overlay="s89-5-drawer-mica"
+      >
         <button className="iconButton drawerClose" type="button" title="关闭" aria-label="关闭抽屉" onClick={closeDrawer}>
           <X size={18} aria-hidden="true" />
         </button>
@@ -406,7 +413,16 @@ function ModalHost({ activeModal }: { readonly activeModal: ModalSurface }) {
 
   return (
     <div className="modalScrim" role="presentation">
-      <section ref={modalRef} className="modalPanel" role="dialog" aria-modal="true" aria-labelledby={`${activeModal}-title`} tabIndex={-1} data-overlay-kind="modal">
+      <section
+        ref={modalRef}
+        className="modalPanel"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby={`${activeModal}-title`}
+        tabIndex={-1}
+        data-overlay-kind="modal"
+        data-polish-overlay="s89-5-modal-paper"
+      >
         <button className="iconButton drawerClose" type="button" title="关闭" aria-label="关闭弹窗" onClick={closeModal}>
           <X size={18} aria-hidden="true" />
         </button>
@@ -454,6 +470,7 @@ function PortraitViewerHost() {
         tabIndex={-1}
         data-portrait-viewer="true"
         data-overlay-kind="portrait"
+        data-polish-overlay="s89-5-portrait-gallery"
       >
         <button className="iconButton drawerClose" type="button" title="关闭" aria-label="关闭高清立绘" onClick={closePortraitViewer}>
           <X size={18} aria-hidden="true" />
@@ -880,7 +897,16 @@ function LocalSurfaceHost({ activeSurface }: { readonly activeSurface: LocalSurf
 
   return (
     <div className="modalScrim surfaceScrim" role="presentation">
-      <section ref={surfaceRef} className="modalPanel localSurfacePanel" role="dialog" aria-modal="true" aria-labelledby={`${entry.id}-title`} tabIndex={-1} data-overlay-kind="surface">
+      <section
+        ref={surfaceRef}
+        className="modalPanel localSurfacePanel"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby={`${entry.id}-title`}
+        tabIndex={-1}
+        data-overlay-kind="surface"
+        data-polish-overlay="s89-5-surface-paper"
+      >
         <button className="iconButton drawerClose" type="button" title="关闭" aria-label="关闭专题" onClick={closeSurface}>
           <X size={18} aria-hidden="true" />
         </button>
