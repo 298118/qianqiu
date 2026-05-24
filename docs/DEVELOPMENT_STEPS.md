@@ -1165,7 +1165,7 @@ S84 前端专项额外验收入口：
 - 回归：`client/src/state/uiState.test.ts` 新增旧案卷囊箧、NPC 名册、NPC 详情读取成功或失败晚到后不污染当前案卷的 store 回归；`client/src/__tests__/App.test.tsx` 新增同案卷旧 NPC 对话回执晚到时保留当前 NPC 对话草稿、同 NPC 已继续编辑草稿的 App 回归；`test/reactClientScaffold.test.js` 守住三个 route-local read guard、`latestSelectedNpcIdRef` 与草稿快照清空条件接线。
 - 验证：已通过 `npm run typecheck:client`、focused `uiState`、focused `App.test.tsx`、完整 React scaffold、完整 client Vitest（125 项）、`npm run build:client`、`AI_PROVIDER=mock npm run smoke:browser`、`npm run check:docs-governance`、`node --test test/documentationGovernance.test.js`、完整 `npm test`（1159 项）和 `git diff --check`。`smoke:browser` 首次 300 秒包装超时发生在 manifest/build/budget 后，发现本机已有两个旧 `node server.js` 进程但未擅自终止，随后用 600 秒超时重跑通过；client build / browser smoke 仅出现既有 runtime `/assets/ui/...` build-time 解析提示、chunk size/plugin timing 和 npm `globalignorefile` 警告。
 - 子代理：Ptolemy 只读探索指出 `loadNpcs()`、`loadNpcDetail()` 成功/失败路径缺少当前 route session 二次复核，以及同案卷切换 NPC 时本地草稿存在旧回执清空风险；本轮采纳并一并扩展到 `loadInventory()`。Harvey 提交前只读复审未发现 P0/P1/P2，并指出同 NPC 同 tab 继续编辑时旧回执仍可清新草稿的非阻断风险；主代理已补提交时草稿快照匹配，Harvey 窄复核确认该风险关闭且最终 diff 可提交。
-- 提交：待回填。
+- 提交：实现提交 `c0501ec0`。本次哈希回填为低风险纯文档同步，不改代码、API/schema、运行时行为、提示词或验证工具；按项目规则跳过额外子代理复审。
 
 ### 2026-05-24：推进 S88.9 主卷草稿与身份循环专题层案卷绑定
 
