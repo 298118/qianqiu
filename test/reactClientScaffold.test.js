@@ -539,6 +539,8 @@ test("S74.4 shell uses registry-backed overlays without widening data sources", 
   assert.match(stateSource, /loadNpcDetail[\s\S]*canApplyRouteSession\(state, payload\.sessionId\)/);
   assert.match(peoplePageSource, /latestSelectedNpcIdRef/);
   assert.match(peoplePageSource, /current\.trim\(\) === requestUtterance/);
+  assert.match(inventoryPageSource, /latestTransferSelectionRef/);
+  assert.match(inventoryPageSource, /isLatestTransferSelection\(requestItemId, requestTargetContainerId\)/);
   assert.match(sessionIdSource, /previewSessionIds/);
   assert.match(sessionIdSource, /"s74-preview", "s76-preview", "smoke-session"/);
   assert.match(sessionIdSource, /isRouteLocalSessionId/);

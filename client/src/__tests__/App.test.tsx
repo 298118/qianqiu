@@ -5231,6 +5231,132 @@ describe("S74.1 React client shell", () => {
     expect(document.body.textContent || "").not.toMatch(/旧案清册|旧案书箧|旧案库房|服务器已校验并更新物件位置。|未入容器/);
   });
 
+  it("keeps S88.9 inventory transfer selections when an older same-session response returns", async () => {
+    const sessionId = "91919191-9191-4919-8919-919191919191";
+    const inventoryView = {
+      containers: [
+        { containerId: "desk-box", label: "书案小箧", currentWeight: 2, capacityWeight: 10 },
+        { containerId: "archive-chest", label: "文库木柜", currentWeight: 1, capacityWeight: 20 },
+        { containerId: "side-box", label: "侧房竹箱", currentWeight: 1, capacityWeight: 12 }
+      ],
+      items: [
+        {
+          itemId: "draft-item",
+          name: "待移旧稿",
+          category: "文书",
+          condition: "可阅",
+          transferPolicy: "tradeable",
+          legalStatus: "ordinary",
+          containerId: "desk-box",
+          quantity: 1,
+          unit: "册"
+        },
+        {
+          itemId: "receipt-item",
+          name: "待选收据",
+          category: "凭据",
+          condition: "完整",
+          transferPolicy: "tradeable",
+          legalStatus: "ordinary",
+          containerId: "side-box",
+          quantity: 1,
+          unit: "张"
+        }
+      ],
+      importantCredentials: []
+    };
+    const transferredInventoryView = {
+      ...inventoryView,
+      items: inventoryView.items.map((item) => (
+        item.itemId === "draft-item" ? { ...item, containerId: "archive-chest" } : item
+      ))
+    };
+    const transferDeferred = deferredResponse<{
+      sessionId: string;
+      accepted: boolean;
+      inventoryView: typeof inventoryView;
+    }>();
+    const fetchMock = vi.fn(async (url: string, options?: RequestInit) => {
+      const requestUrl = String(url);
+      if (requestUrl === "/assets/ui/ink-ui-runtime-manifest.json") {
+        return new Response(JSON.stringify(buildMockAssetManifest(0)), {
+          status: 200,
+          headers: { "Content-Type": "application/json" }
+        });
+      }
+      if (requestUrl === `/api/game/player-state/${sessionId}`) {
+        return new Response(JSON.stringify({
+          source: "server_player_visible_state_projection",
+          sessionId,
+          worldState: { player: { name: "林慎", role: "magistrate" } },
+          inventoryView,
+          resourceLedgerView: { accounts: [] },
+          assetLedgerView: { assets: [] }
+        }), {
+          status: 200,
+          headers: { "Content-Type": "application/json" }
+        });
+      }
+      if (requestUrl === `/api/game/inventory/${sessionId}`) {
+        return new Response(JSON.stringify({
+          sessionId,
+          inventoryView,
+          resourceLedgerView: { accounts: [] },
+          assetLedgerView: { assets: [] }
+        }), {
+          status: 200,
+          headers: { "Content-Type": "application/json" }
+        });
+      }
+      if (requestUrl === `/api/game/inventory-transfer/${sessionId}` && options?.method === "POST") {
+        return transferDeferred.response;
+      }
+      if (requestUrl === `/api/ai/quick-actions/${sessionId}`) {
+        return new Response(JSON.stringify({
+          schemaVersion: "s75.9-quick-actions.v1",
+          sessionId,
+          source: "mock-ai",
+          status: "ready",
+          quickActionSuggestions: []
+        }), {
+          status: 200,
+          headers: { "Content-Type": "application/json" }
+        });
+      }
+      throw new Error(`unexpected url: ${requestUrl}`);
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    renderRoute(`/game/${sessionId}/inventory`);
+
+    await screen.findByText("待移旧稿");
+    const transferButton = screen.getByRole("button", { name: "呈请移置" });
+    await waitFor(() => expect(transferButton).toHaveProperty("disabled", false));
+    const itemSelect = screen.getByLabelText("物件") as HTMLSelectElement;
+    const targetSelect = screen.getByLabelText("去处") as HTMLSelectElement;
+    expect(itemSelect.value).toBe("draft-item");
+    expect(targetSelect.value).toBe("archive-chest");
+
+    fireEvent.click(transferButton);
+    await waitFor(() => expect(fetchMock.mock.calls.some(([url, options]) => (
+      String(url) === `/api/game/inventory-transfer/${sessionId}` && (options as RequestInit | undefined)?.method === "POST"
+    ))).toBe(true));
+    fireEvent.change(itemSelect, { target: { value: "receipt-item" } });
+    fireEvent.change(targetSelect, { target: { value: "desk-box" } });
+    expect((screen.getByLabelText("物件") as HTMLSelectElement).value).toBe("receipt-item");
+    expect((screen.getByLabelText("去处") as HTMLSelectElement).value).toBe("desk-box");
+
+    transferDeferred.resolvePayload({
+      sessionId,
+      accepted: true,
+      inventoryView: transferredInventoryView
+    });
+    await waitFor(() => expect(useGameSessionStore.getState().inventory?.inventoryView.items.find((item) => item.itemId === "draft-item")?.containerId).toBe("archive-chest"));
+    expect((screen.getByLabelText("物件") as HTMLSelectElement).value).toBe("receipt-item");
+    expect((screen.getByLabelText("去处") as HTMLSelectElement).value).toBe("desk-box");
+    expect(screen.queryByText("服务器已校验并更新物件位置。")).toBeNull();
+  });
+
   it("caps the S76.10 people ledger at eighty public rows with the player first", async () => {
     const sessionId = "55555555-5555-4555-8555-555555555556";
     const payload = {

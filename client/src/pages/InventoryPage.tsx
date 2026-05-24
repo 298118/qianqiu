@@ -65,6 +65,16 @@ export function InventoryPage() {
   const routeSessionSupported = isRouteLocalSessionId(sessionId);
   const runnable = routeSessionSupported && isRunnableSessionId(sessionId);
   const unsupportedRouteMessage = "此案卷编号暂不可用于浏览器囊箧；请从首页开卷或载入旧案。";
+  const latestTransferSelectionRef = useRef({ itemId: "", targetContainerId: "" });
+
+  function syncTransferSelection(itemId: string, targetContainerId: string) {
+    latestTransferSelectionRef.current = { itemId, targetContainerId };
+  }
+
+  function isLatestTransferSelection(itemId: string, targetContainerId: string) {
+    const latestSelection = latestTransferSelectionRef.current;
+    return latestSelection.itemId === itemId && latestSelection.targetContainerId === targetContainerId;
+  }
 
   useEffect(() => {
     latestSessionIdRef.current = sessionId;
@@ -73,6 +83,7 @@ export function InventoryPage() {
     setSelectedItemId("");
     setTargetContainerId("");
     setTransferNotice("");
+    syncTransferSelection("", "");
   }, [sessionId]);
 
   useEffect(() => {
@@ -148,19 +159,25 @@ export function InventoryPage() {
   async function handleTransfer() {
     if (!transferItem || !selectedTargetContainer || !runnable) return;
     const requestSessionId = sessionId;
+    const requestItemId = transferItem.itemId;
+    const requestTargetContainerId = selectedTargetContainer;
+    syncTransferSelection(requestItemId, requestTargetContainerId);
     try {
       const payload = await transferInventoryItem(requestSessionId, {
-        itemId: transferItem.itemId,
-        toContainerId: selectedTargetContainer
+        itemId: requestItemId,
+        toContainerId: requestTargetContainerId
       });
       if (latestSessionIdRef.current !== requestSessionId || payload.sessionId !== requestSessionId) return;
+      if (!isLatestTransferSelection(requestItemId, requestTargetContainerId)) return;
       setLocalInventorySessionId(requestSessionId);
       setTransferNotice(payload.accepted ? "服务器已校验并更新物件位置。" : `服务器未准：${payload.reason || "规则不许"}`);
-      setSelectedContainerId(selectedTargetContainer);
+      setSelectedContainerId(requestTargetContainerId);
       setSelectedItemId("");
       setTargetContainerId("");
+      syncTransferSelection("", "");
     } catch {
       if (latestSessionIdRef.current !== requestSessionId) return;
+      if (!isLatestTransferSelection(requestItemId, requestTargetContainerId)) return;
       setLocalInventorySessionId(requestSessionId);
       setTransferNotice("转移请求未能完成。");
     }
@@ -261,6 +278,7 @@ export function InventoryPage() {
           物件
           <select value={transferItem?.itemId || ""} onChange={(event) => {
             setLocalInventorySessionId(sessionId);
+            syncTransferSelection(event.target.value, selectedTargetContainer);
             setSelectedItemId(event.target.value);
           }} disabled={!transferableItems.length}>
             {transferableItems.map((item) => (
@@ -273,6 +291,7 @@ export function InventoryPage() {
           去处
           <select value={selectedTargetContainer} onChange={(event) => {
             setLocalInventorySessionId(sessionId);
+            syncTransferSelection(transferItem?.itemId || "", event.target.value);
             setTargetContainerId(event.target.value);
           }} disabled={!targetContainers.length}>
             {targetContainers.map((container) => (
