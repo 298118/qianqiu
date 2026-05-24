@@ -472,6 +472,7 @@ export type NpcInteractionResponse = RouteEnvelope & {
   readonly actorMemoryView?: JsonObject;
   readonly eventArchiveView?: JsonObject;
   readonly worldEntityView?: JsonObject;
+  readonly worldThreadView?: JsonObject;
   readonly worldEntityImpacts?: readonly JsonValue[];
 };
 

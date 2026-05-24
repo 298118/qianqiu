@@ -215,9 +215,45 @@ test("S83/S84 safety APIs expose NPC, inventory, trade and delegated task views 
   );
   assert.ok(socialPayload.eventArchiveView.counts.npc_relationship_action >= 1);
   assert.ok(socialPayload.eventArchiveView.counts.actor_memory >= 1);
+  assert.ok(
+    socialPayload.worldThreadView.activeThreads.some((thread) =>
+      thread.sourceType === "npc_relationship_action" &&
+      thread.sourceLabel === "交游记录" &&
+      /切磋|服务器|交游/.test(`${thread.title}${thread.summary}${thread.followUpHint}`)
+    )
+  );
   assert.doesNotMatch(
     JSON.stringify(socialPayload),
-    /"hiddenDossier":|"privateSignalTags":|"trueAssets":|"secretRelationships":|"rawProviderPayload":|"providerPayload":|"rawLedger":|"resourceDelta":|sk-[A-Za-z0-9_-]{6,}/
+    /"hiddenDossier":|"privateSignalTags":|"trueAssets":|"secretRelationships":|"rawProviderPayload":|"providerPayload":|"rawLedger":|"resourceDelta":|"npcInteractionLedger":|"statePatch":|safe_search_index|world_sessions|sk-[A-Za-z0-9_-]{6,}|\/mnt\/e/
+  );
+
+  const blockedRelationshipResponse = await fetch(`${server.baseUrl}/api/game/npc-interaction/${worldState.sessionId}`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      npcId: "npc:magistrate:gentry-han",
+      actionType: "marriage",
+      utterance: "以婚姻相结。",
+      spouseIds: ["npc:hidden-spouse"],
+      statePatch: { treasury: 99999 }
+    })
+  });
+  const blockedRelationshipPayload = await blockedRelationshipResponse.json();
+  assert.equal(blockedRelationshipResponse.status, 200);
+  assert.equal(blockedRelationshipPayload.accepted, false);
+  assert.equal(blockedRelationshipPayload.npcActionResolutionView.serverStatus, "server_blocked");
+  assert.equal(blockedRelationshipPayload.npcActionResolutionView.resolverTrace.status, "server_blocked");
+  assert.ok(
+    blockedRelationshipPayload.worldThreadView.activeThreads.some((thread) =>
+      thread.sourceType === "npc_relationship_action" &&
+      thread.sourceLabel === "交游记录" &&
+      thread.status === "watch" &&
+      /服务器|交游|婚姻|议婚/.test(`${thread.title}${thread.summary}${thread.followUpHint}`)
+    )
+  );
+  assert.doesNotMatch(
+    JSON.stringify(blockedRelationshipPayload),
+    /"hiddenDossier":|"privateSignalTags":|"trueAssets":|"secretRelationships":|"rawProviderPayload":|"providerPayload":|"rawLedger":|"resourceDelta":|"npcInteractionLedger":|"statePatch":|safe_search_index|world_sessions|npc:hidden-spouse|sk-[A-Za-z0-9_-]{6,}|\/mnt\/e/
   );
 
   const playerStateResponse = await fetch(`${server.baseUrl}/api/game/player-state/${worldState.sessionId}`);

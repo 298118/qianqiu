@@ -1367,7 +1367,8 @@ describe("S74.3 UI state store", () => {
       npcInteractionView: { items: [] },
       actorMemoryView: { actors: [] },
       eventArchiveView: { items: [] },
-      worldEntityView: { highlights: [] }
+      worldEntityView: { highlights: [] },
+      worldThreadView: { activeThreads: [] }
     };
     const interactionPayload: NpcInteractionResponse = {
       sessionId: playerStatePayload.sessionId,
@@ -1405,6 +1406,9 @@ describe("S74.3 UI state store", () => {
       worldEntityView: {
         highlights: [{ id: "military-wall-beacons", publicSummary: "切磋裁决进入武备声气。" }]
       },
+      worldThreadView: {
+        activeThreads: [{ sourceType: "npc_relationship_action", sourceLabel: "交游记录" }]
+      },
       worldEntityImpacts: [{
         sourceType: "npc_relationship_action",
         entityId: "military-wall-beacons",
@@ -1433,8 +1437,68 @@ describe("S74.3 UI state store", () => {
     expect(state.currentSession?.actorMemoryView).toEqual(interactionPayload.actorMemoryView);
     expect(state.currentSession?.eventArchiveView).toEqual(interactionPayload.eventArchiveView);
     expect(state.currentSession?.worldEntityView).toEqual(interactionPayload.worldEntityView);
+    expect(state.currentSession?.worldThreadView).toEqual(interactionPayload.worldThreadView);
     expect(state.currentSession?.npcInteractionView).toEqual(interactionPayload.npcInteractionView);
     expect(state.npcRoster?.npcInteractionView).toEqual(interactionPayload.npcInteractionView);
+    expect(JSON.stringify(state.currentSession)).not.toMatch(/hiddenDossier|providerPayload|rawLedger|OPENAI_API_KEY/);
+  });
+
+  it("merges server-blocked NPC relationship payloads while keeping mutation status in error", async () => {
+    const currentSession: PlayerStateResponse = {
+      ...playerStatePayload,
+      npcInteractionView: { items: [] },
+      eventArchiveView: { items: [] },
+      worldThreadView: { activeThreads: [] }
+    };
+    const blockedPayload: NpcInteractionResponse = {
+      sessionId: playerStatePayload.sessionId,
+      accepted: false,
+      errors: ["marriage_status_unavailable"],
+      npcActionResolutionView: {
+        serverStatus: "server_blocked",
+        resolverTrace: { status: "server_blocked" }
+      },
+      npcInteractionView: {
+        items: [{
+          recordId: "npc-interaction:blocked-marriage",
+          npcId: "npc:magistrate:gentry-han",
+          npcName: "韩员外",
+          actionType: "marriage",
+          outcomeSummary: "服务器挡下此项议婚。"
+        }]
+      },
+      eventArchiveView: {
+        items: [{ sourceType: "npc_relationship_action", summary: "服务器挡下此项议婚。" }]
+      },
+      worldThreadView: {
+        activeThreads: [{ sourceType: "npc_relationship_action", sourceLabel: "交游记录", status: "watch" }]
+      }
+    };
+    installFetchResponses(blockedPayload);
+    useGameSessionStore.setState({
+      currentSession,
+      currentSessionId: playerStatePayload.sessionId,
+      npcRoster: {
+        sessionId: playerStatePayload.sessionId,
+        npcRosterView: { items: [] },
+        npcInteractionView: { items: [] }
+      }
+    });
+
+    const result = await useGameSessionStore.getState().interactWithNpc(playerStatePayload.sessionId, {
+      npcId: "npc:magistrate:gentry-han",
+      actionType: "marriage",
+      utterance: "以婚姻相结。"
+    });
+
+    const state = useGameSessionStore.getState();
+    expect(result.accepted).toBe(false);
+    expect(state.npcMutationStatus).toBe("error");
+    expect(state.error).toBeNull();
+    expect(state.lastNpcInteraction).toEqual(blockedPayload);
+    expect(state.currentSession?.worldThreadView).toEqual(blockedPayload.worldThreadView);
+    expect(state.currentSession?.eventArchiveView).toEqual(blockedPayload.eventArchiveView);
+    expect(state.currentSession?.npcInteractionView).toEqual(blockedPayload.npcInteractionView);
     expect(JSON.stringify(state.currentSession)).not.toMatch(/hiddenDossier|providerPayload|rawLedger|OPENAI_API_KEY/);
   });
 
@@ -1446,6 +1510,7 @@ describe("S74.3 UI state store", () => {
       actorMemoryView: { actors: [{ actorId: "npc:active", memories: [] }] },
       eventArchiveView: { items: [{ sourceType: "active_session" }] },
       worldEntityView: { highlights: [{ id: "active-entity" }] },
+      worldThreadView: { activeThreads: [{ sourceType: "active_session" }] },
       npcInteractionView: { items: [{ recordId: "active-record" }] }
     };
     const stalePayload: NpcInteractionResponse = {
@@ -1456,6 +1521,7 @@ describe("S74.3 UI state store", () => {
       actorMemoryView: { actors: [{ actorId: "npc:stale", memories: [] }] },
       eventArchiveView: { items: [{ sourceType: "stale_session" }] },
       worldEntityView: { highlights: [{ id: "stale-entity" }] },
+      worldThreadView: { activeThreads: [{ sourceType: "stale_session" }] },
       worldEntityImpacts: [{ sourceType: "npc_relationship_action", entityId: "stale-entity" }],
       npcDetailView: {
         npcId: "npc:stale",
@@ -1492,6 +1558,7 @@ describe("S74.3 UI state store", () => {
     expect(state.currentSession?.actorMemoryView).toEqual(activeSession.actorMemoryView);
     expect(state.currentSession?.eventArchiveView).toEqual(activeSession.eventArchiveView);
     expect(state.currentSession?.worldEntityView).toEqual(activeSession.worldEntityView);
+    expect(state.currentSession?.worldThreadView).toEqual(activeSession.worldThreadView);
     expect(state.currentSession?.npcInteractionView).toEqual(activeSession.npcInteractionView);
     expect(state.npcRoster?.npcInteractionView?.items?.[0]?.recordId).toBe("active-roster-record");
     expect(state.npcDetail?.npcDetailView.npcId).toBe("npc:active");

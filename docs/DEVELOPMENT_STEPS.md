@@ -175,7 +175,22 @@
 
 ## 6. 最近完整验证口径
 
-本轮 S88.7 交游记录 evidence 接线当前验证口径：
+本轮 S88.7 交游记录世界议题接线当前验证口径：
+
+- `node --check src/game/worldThreads.js`
+- `node --check src/routes/game.js`
+- `node --test --test-reporter=spec test/worldThreads.test.js`
+- `node --test --test-reporter=spec test/npcInventoryRoutes.test.js`
+- `npm run typecheck:server`
+- `npm run typecheck:client`
+- `npm run test:client -- --pool=vmForks --maxWorkers=1 client/src/state/uiState.test.ts --reporter=verbose`
+- `npm run check:docs-governance`
+- `node --test test/documentationGovernance.test.js`
+- `npm test`
+- `git diff --check`
+- 提交前只读子代理复审最终 diff 与验证证据。
+
+上一轮 S88.7 交游记录 evidence 接线当前验证口径：
 
 - `node --check src/game/npcInteractions.js && node --check src/game/resolverInputContext.js && node --check src/game/resolverInputConfig.js && node --check src/game/safeWorldSearch.js && node --check src/game/topicSurfaceView.js`
 - `node --test --test-reporter=spec test/resolverInputContext.test.js test/topicSurfaceView.test.js test/safeWorldSearch.test.js`
@@ -1092,6 +1107,14 @@ S84 前端专项额外验收入口：
 - `npm test`
 
 ## 7. 近期进度记录
+
+### 2026-05-24：推进 S88.7 交游记录世界议题接线
+
+- 范围：继续 S88.7 NPC 与关系深化，把上一片 `npcInteractionView.relationshipActionEvidence` 推进到 `worldThreadView` 的公开议题层。本轮只让已由服务器裁决的论道、切磋、求爱和议婚交游记录成为可追踪的“交游记录”议题，并让 `/api/game/npc-interaction/:sessionId` 在关系行动后即时返回安全 `worldThreadView`；不新增写 API、AI 工具、SQLite schema、真实任务队列或资源/关系/婚姻/伤损/弹劾/定罪/背叛/NPC 行动结算器。
+- 实现：`src/game/worldThreads.js` 新增 `npc_relationship_action` thread kind/source label，最多从安全 `buildNpcInteractionLedgerView(worldState).relationshipActionEvidence` 取 3 条当前公开证据，派生标题、摘要、风险、关联实体/指标、goal/intervention/follow-up 文案和 prompt summary；关系议题使用短哈希 stable id/source ref，并在 `makeThread()` 规范化后按最终 `thread.id` 去重，避免长 public ref 截断碰撞。`src/routes/game.js` 在 `/npc-interaction` 关系行动写入安全交互记录、可见记忆和实体压力后同步 `ensureWorldThreadState()`，响应新增 `worldThreadView`。`src/contracts/serverContracts.ts`、`client/src/api/types.ts` 与 `client/src/state/gameSessionState.ts` 同步 `NpcInteractionResponse.worldThreadView`，React store 只在同案卷响应中合并该安全 view。
+- 回归：`test/worldThreads.test.js` 覆盖交游记录进入 `worldThreadView` 与 prompt summary，并用污染 `outcomeSummary` 验证 provider payload、hidden dossier、本地路径、SQLite/search-index、raw ledger、statePatch 和内部 impact view 不泄漏；同文件新增长安全 public ref 截断碰撞回归，确认 `activeThreads[].id` 与 `sourceId` 保持唯一；`test/npcInventoryRoutes.test.js` 覆盖真实 `/npc-interaction` 响应即时返回 `worldThreadView`，并加严 forbidden text；`client/src/state/uiState.test.ts` 覆盖同案卷合并与旧案卷 stale 响应不覆盖 `worldThreadView`。
+- 验证：已通过 `node --check src/game/worldThreads.js`、`node --check src/routes/game.js`、`node --test --test-reporter=spec test/worldThreads.test.js`（11 项）、`node --test --test-reporter=spec test/npcInventoryRoutes.test.js`（4 项）、`npm run typecheck:server`、`npm run typecheck:client`、受控 `npm run test:client -- --pool=vmForks --maxWorkers=1 client/src/state/uiState.test.ts --reporter=verbose`（34 项）、`npm run check:docs-governance`、`node --test test/documentationGovernance.test.js`、完整 `npm test`（1159 项）和 `git diff --check`。一次 `npm run test:client -- --pool=vmForks --maxWorkers=2 client/src/state/uiState.test.ts --reporter=verbose` 在 120 秒包装超时未出断言结果，随后同目标受控 worker 重跑通过。Darwin 提交前只读初审发现同回合同 NPC/同动作重复 thread id 和 `server_blocked` 关系行动 400 响应无法被前端即时合并两个 P2；James 复审又发现长 public ref 经 `normalizeThread()` 截断后仍可能撞最终 id；本轮已按短哈希 id/source ref 与最终 `thread.id` 去重修复，并让被服务器挡下但已写入安全记录的关系行动返回 200 + `accepted:false` 安全 payload，补 world thread、route 与 store 回归。
+- 提交：待本轮提交后回填。
 
 ### 2026-05-23：推进 S88.7 交游记录 evidence 接线
 

@@ -1,5 +1,7 @@
+const { createHash } = require("node:crypto");
 const { buildActiveNpcRequestView } = require("./activeRequests");
 const { buildNpcActiveRequestView: buildNpcActiveRequestLedgerView } = require("./npcActiveRequests");
+const { buildNpcInteractionLedgerView } = require("./npcInteractions");
 const { buildLongTermEventView } = require("./longTermEvents");
 const { buildOfficialCareerView } = require("./officialCareer");
 const { buildOfficialCourtConsequenceView } = require("./officialCourtConsequences");
@@ -15,6 +17,7 @@ const MAX_THREADS = 12;
 const MAX_RECENT_RESOLVED = 8;
 const MAX_TEXT_LENGTH = 180;
 const MAX_NPC_ACTIVE_REQUEST_THREADS = 3;
+const MAX_NPC_RELATIONSHIP_ACTION_THREADS = 3;
 
 const THREAD_STATUSES = new Set(["active", "watch", "resolved"]);
 const THREAD_KINDS = new Set([
@@ -32,10 +35,12 @@ const THREAD_KINDS = new Set([
   "domain_consequence",
   "official_outcome",
   "role_impact",
+  "npc_relationship_action",
   "world_entity_pressure"
 ]);
 const SOURCE_TYPES = new Set([
   "active_npc_request",
+  "npc_relationship_action",
   "long_term_event",
   "official_assignment",
   "official_court_follow_up",
@@ -53,6 +58,7 @@ const VISIBILITY_VALUES = new Set(["public", "relationship_visible", "hidden"]);
 
 const SOURCE_LABELS = {
   active_npc_request: "人脉请托",
+  npc_relationship_action: "交游记录",
   long_term_event: "长期大势",
   official_assignment: "官场差遣",
   official_court_follow_up: "奏议批复",
@@ -100,6 +106,11 @@ const THREAD_KIND_DETAILS = {
     goal: "回应来函，权衡人情、名声与利害。",
     interventions: ["回信表态", "拜会相关人物", "暂缓也会留下余波"],
     followUp: "请托成败仍由主动 NPC 请托模块归档。"
+  },
+  npc_relationship_action: {
+    goal: "追踪已由服务器裁决的交游余波，只把公开关系线索留作下一步行动参考。",
+    interventions: ["拜会相关人物", "观察师友与乡绅反应", "以公开礼法或声望材料补证"],
+    followUp: "交游记录只是公开议题线索；关系终局、婚姻谱系、伤损、弹劾、背叛和 NPC 行动仍由服务器裁决。"
   },
   seasonal: {
     goal: "顺着岁时处置钱粮、民生与例行公事。",
@@ -174,6 +185,7 @@ const THREAD_KIND_DETAILS = {
 };
 const SOURCE_INTERVENTION_HINTS = {
   active_npc_request: ["回应或拒绝请托"],
+  npc_relationship_action: ["顺着公开交游记录谨慎跟进"],
   long_term_event: ["围绕大势连续行动"],
   official_assignment: ["把行动写成差事办理"],
   official_court_follow_up: ["顺着批复补证或覆奏"],
@@ -225,6 +237,24 @@ const NPC_ACTIVE_REQUEST_RELATED = {
     metrics: ["corruption", "publicOrder"]
   }
 };
+const NPC_RELATIONSHIP_ACTION_RELATED = {
+  debate: {
+    entities: ["academy-county-school", "academy-same-year-circle"],
+    metrics: ["player.performanceMerit", "player.promotionProspect"]
+  },
+  duel: {
+    entities: ["military-wall-beacons", "local-gentry-county"],
+    metrics: ["armyMorale", "publicOrder"]
+  },
+  courtship: {
+    entities: ["local-gentry-county", "academy-same-year-circle"],
+    metrics: ["player.gentryRelations", "publicOrder"]
+  },
+  marriage: {
+    entities: ["local-gentry-county", "academy-same-year-circle"],
+    metrics: ["player.gentryRelations", "player.impeachmentRisk"]
+  }
+};
 
 function isPlainObject(value) {
   return value !== null && typeof value === "object" && !Array.isArray(value);
@@ -241,6 +271,17 @@ function cleanText(value, fallback = "", maxLength = MAX_TEXT_LENGTH) {
   const trimmed = value.trim();
   if (!trimmed) return fallback;
   return trimmed.slice(0, maxLength);
+}
+
+function shortPublicHash(value) {
+  return createHash("sha256").update(String(value || "")).digest("hex").slice(0, 12);
+}
+
+function cleanIdSegment(value, fallback = "ref", maxLength = 32) {
+  const text = cleanText(value, fallback, maxLength)
+    .replace(/[^A-Za-z0-9_.:-]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+  return text || fallback;
 }
 
 function currentTurn(worldState) {
@@ -711,6 +752,78 @@ function npcActiveRequestRelated(request = {}) {
   };
 }
 
+function npcRelationshipActionRelated(evidence = {}) {
+  const actionType = cleanText(evidence.actionType, "", 48);
+  const related = NPC_RELATIONSHIP_ACTION_RELATED[actionType] || NPC_RELATIONSHIP_ACTION_RELATED.debate;
+  return {
+    entities: related.entities,
+    metrics: related.metrics
+  };
+}
+
+function npcRelationshipActionSeverity(evidence = {}) {
+  const actionType = cleanText(evidence.actionType, "", 48);
+  const tags = Array.isArray(evidence.riskTags) ? evidence.riskTags.join(" ") : "";
+  if (actionType === "marriage" || /媒妁|亲族|身份差距|礼法/.test(tags)) return 2;
+  if (actionType === "duel" || /伤损|禁忌/.test(tags)) return 2;
+  if (evidence.status === "server_blocked") return 2;
+  return 1;
+}
+
+function npcRelationshipActionStatus(evidence = {}) {
+  return evidence.status === "server_blocked" ? "watch" : "active";
+}
+
+function npcRelationshipActionSourceRef(evidence = {}) {
+  const rawSourceRef = cleanText(evidence.sourceId || evidence.evidenceId, "", 160);
+  if (!rawSourceRef) return "";
+  if (rawSourceRef.length <= 80) return rawSourceRef;
+  const actionType = cleanIdSegment(evidence.actionType, "action", 32);
+  return `npcRelationshipAction:${actionType}:${shortPublicHash(rawSourceRef)}`;
+}
+
+function npcRelationshipActionThreadId(evidence = {}, sourceRef = "") {
+  const actionType = cleanIdSegment(evidence.actionType, "action", 32);
+  return `WT-npc-rel-${actionType}-${shortPublicHash(sourceRef || evidence.sourceId || evidence.evidenceId)}`;
+}
+
+function deriveNpcRelationshipActionThreads(worldState) {
+  const view = buildNpcInteractionLedgerView(worldState);
+  const evidenceItems = Array.isArray(view.relationshipActionEvidence)
+    ? view.relationshipActionEvidence
+    : [];
+  const threads = [];
+  const seenThreadIds = new Set();
+  for (const evidence of evidenceItems) {
+    if (threads.length >= MAX_NPC_RELATIONSHIP_ACTION_THREADS) break;
+    const sourceId = npcRelationshipActionSourceRef(evidence);
+    if (!sourceId) continue;
+    const thread = makeThread(worldState, {
+      id: npcRelationshipActionThreadId(evidence, sourceId),
+      sourceType: "npc_relationship_action",
+      sourceId,
+      kind: "npc_relationship_action",
+      status: npcRelationshipActionStatus(evidence),
+      title: cleanText(evidence.title, "交游记录", 120),
+      summary: cleanText(
+        `${evidence.publicSummary || evidence.summary || ""} ${evidence.boundary || ""}`.trim(),
+        "交游记录只作公开关系议题，真实后果仍由服务器裁决。",
+        180
+      ),
+      severity: npcRelationshipActionSeverity(evidence),
+      createdTurn: evidence.generatedAtTurn,
+      lastUpdatedTurn: evidence.lastUpdatedTurn || evidence.generatedAtTurn || currentTurn(worldState),
+      related: npcRelationshipActionRelated(evidence),
+      visibility: "relationship_visible"
+    });
+    if (!thread) continue;
+    if (seenThreadIds.has(thread.id)) continue;
+    seenThreadIds.add(thread.id);
+    threads.push(thread);
+  }
+  return threads;
+}
+
 function latestNpcFollowUpResolution(request = {}) {
   const followUp = isPlainObject(request.outcome?.followUpView) ? request.outcome.followUpView : {};
   if (isPlainObject(followUp.latestResolution)) return followUp.latestResolution;
@@ -1066,6 +1179,7 @@ function deriveWorldThreads(worldState = {}) {
   const threads = [
     deriveActiveRequestThread(worldState),
     ...deriveNpcActiveRequestLedgerThreads(worldState),
+    ...deriveNpcRelationshipActionThreads(worldState),
     ...deriveLongTermEventThreads(worldState),
     ...deriveOfficialAssignmentThreads(worldState),
     ...deriveOfficialCourtFollowUpThreads(worldState),

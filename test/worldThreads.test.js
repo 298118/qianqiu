@@ -7,6 +7,8 @@ const {
   resolveNpcActiveRequest,
   runNpcActiveRequestStep
 } = require("../src/game/npcActiveRequests");
+const { recordNpcInteraction } = require("../src/game/npcInteractions");
+const { resolveNpcRelationshipAction } = require("../src/game/npcRelationshipActions");
 const {
   buildWorldThreadView,
   ensureWorldThreadState,
@@ -67,6 +69,115 @@ test("S88.7 world threads consume the dedicated NPC active request ledger safely
     JSON.stringify(followUpView),
     /npcActiveRequestLedger|hiddenDossier|privateSignalTags|求财|亲族压力|rawProvider|sk-[A-Za-z0-9_-]{6,}/
   );
+});
+
+test("S88.7 world threads consume NPC relationship action evidence as read-only public agenda", () => {
+  const worldState = createInitialState({ playerName: "交游议题", role: "scholar" });
+  worldState.turnCount = 29;
+  const relationshipAction = resolveNpcRelationshipAction(worldState, {
+    npcId: "npc:scholar:peer-shen",
+    actionType: "duel",
+    winner: "player",
+    injury: "npc_injured",
+    statePatch: { treasury: 99999 }
+  }, {
+    dialogueText: "沈砚秋只许作公开切磋，胜负仍候服务器留痕。"
+  });
+  assert.equal(relationshipAction.ok, true);
+  const recorded = recordNpcInteraction(worldState, {
+    npcId: "npc:scholar:peer-shen",
+    actionType: "duel",
+    utterance: "只作切磋，不许伤人。",
+    winner: "player",
+    injury: "npc_injured"
+  }, {
+    dialogueText: "沈砚秋只许作公开切磋，胜负仍候服务器留痕。"
+  }, {
+    resolutionView: relationshipAction.resolutionView
+  });
+  recorded.record.outcomeSummary = "provider_payload hidden_dossier /mnt/e/secret safe_search_index";
+  const duplicateRecorded = recordNpcInteraction(worldState, {
+    npcId: "npc:scholar:peer-shen",
+    actionType: "duel",
+    utterance: "同旬再作切磋复核。",
+    winner: "player",
+    injury: "npc_injured"
+  }, {
+    dialogueText: "沈砚秋再应一回切磋，仍候服务器留痕。"
+  }, {
+    resolutionView: relationshipAction.resolutionView
+  });
+  duplicateRecorded.record.outcomeSummary = "provider_payload hidden_dossier /mnt/e/secret safe_search_index";
+
+  ensureWorldThreadState(worldState);
+  const view = buildWorldThreadView(worldState);
+  const promptSummary = summarizeWorldThreadsForPrompt(worldState);
+  const relationshipThreads = view.activeThreads.filter((item) => item.sourceType === "npc_relationship_action");
+  const thread = relationshipThreads[0];
+  const serialized = JSON.stringify({ view, promptSummary, worldThreads: worldState.worldThreads });
+
+  assert.ok(thread);
+  assert.equal(relationshipThreads.length, 1);
+  assert.equal(new Set(relationshipThreads.map((item) => item.id)).size, relationshipThreads.length);
+  assert.equal(thread.kind, "npc_relationship_action");
+  assert.equal(thread.sourceLabel, "交游记录");
+  assert.equal(thread.status, "active");
+  assert.equal(thread.severity, 2);
+  assert.match(`${thread.title}${thread.summary}`, /交游记录|沈砚秋|切磋|服务器裁决|服务器/);
+  assert.match(thread.goal, /交游余波|公开关系线索/);
+  assert.ok(thread.interventionHints.some((hint) => /交游|拜会|礼法|声望/.test(hint)));
+  assert.ok(thread.relatedLabels.entities.some((label) => /烽燧|地方士绅/.test(label)));
+  assert.ok(promptSummary.activeThreads.some((item) =>
+    item.sourceLabel === "交游记录" &&
+    /沈砚秋|切磋/.test(`${item.title}${item.summary}`)
+  ));
+  assert.doesNotMatch(
+    serialized,
+    /provider_payload|hidden_dossier|safe_search_index|npcInteractionLedger|npcRelationshipActionEligibilityView|relationshipImpactView|resourceImpactView|worldPeopleImpactView|statePatch|world_sessions|sk-[A-Za-z0-9_-]{6,}|\/mnt\/e/
+  );
+});
+
+test("S88.7 NPC relationship world thread ids stay unique for long safe public refs", () => {
+  const worldState = createInitialState({ playerName: "长引用议题", role: "scholar" });
+  worldState.turnCount = 30;
+  const relationshipAction = resolveNpcRelationshipAction(worldState, {
+    npcId: "npc:scholar:peer-shen",
+    actionType: "duel",
+    winner: "player"
+  }, {
+    dialogueText: "沈砚秋同意只作公开切磋。"
+  });
+  assert.equal(relationshipAction.ok, true);
+  const collisionPrefix = `npc-relationship-resolution:${"safe-ref-".repeat(6)}`;
+
+  [`${collisionPrefix}alpha`, `${collisionPrefix}bravo`].forEach((publicResolutionRef, index) => {
+    recordNpcInteraction(worldState, {
+      npcId: "npc:scholar:peer-shen",
+      actionType: "duel",
+      utterance: `长引用切磋复核 ${index + 1}`,
+      winner: "player"
+    }, {
+      dialogueText: "沈砚秋仍按服务器裁决留痕。"
+    }, {
+      resolutionView: {
+        ...relationshipAction.resolutionView,
+        resolverTrace: {
+          ...relationshipAction.resolutionView.resolverTrace,
+          publicResolutionRef
+        }
+      }
+    });
+  });
+
+  ensureWorldThreadState(worldState);
+  const relationshipThreads = buildWorldThreadView(worldState).activeThreads
+    .filter((item) => item.sourceType === "npc_relationship_action");
+
+  assert.equal(relationshipThreads.length, 2);
+  assert.equal(new Set(relationshipThreads.map((item) => item.id)).size, relationshipThreads.length);
+  assert.equal(new Set(relationshipThreads.map((item) => item.sourceId)).size, relationshipThreads.length);
+  assert.ok(relationshipThreads.every((item) => /^WT-npc-rel-duel-[a-f0-9]{12}$/.test(item.id)));
+  assert.ok(relationshipThreads.every((item) => /^npcRelationshipAction:duel:[a-f0-9]{12}$/.test(item.sourceId)));
 });
 
 test("world thread view filters hidden thread notes and normalizes legacy rows", () => {

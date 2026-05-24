@@ -1755,6 +1755,9 @@ router.post("/npc-interaction/:sessionId", async (req, res, next) => {
       if (worldEntityImpacts.length) {
         ensureWorldEntityState(worldState);
       }
+      if (relationshipAction) {
+        ensureWorldThreadState(worldState);
+      }
       const responseErrors = [
         ...recorded.errors,
         ...(relationshipAction && !relationshipAction.ok ? relationshipAction.errors : [])
@@ -1784,10 +1787,13 @@ router.post("/npc-interaction/:sessionId", async (req, res, next) => {
         actorMemoryView: buildActorMemoryView(worldState),
         eventArchiveView: buildEventArchiveView(worldState),
         worldEntityView: buildWorldEntityView(worldState),
+        worldThreadView: relationshipAction ? buildWorldThreadView(worldState) : undefined,
         worldEntityImpacts
       });
     });
-    res.status(payload.accepted ? 200 : 400).json(payload);
+    const relationshipResolutionStatus = payload.npcActionResolutionView?.serverStatus;
+    const hasServerBlockedRelationshipResolution = relationshipResolutionStatus === "server_blocked";
+    res.status(payload.accepted || hasServerBlockedRelationshipResolution ? 200 : 400).json(payload);
   } catch (error) {
     next(error);
   }
