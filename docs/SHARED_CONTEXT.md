@@ -65,7 +65,7 @@
 
 ## Current Work Note
 
-2026-05-24：S89.3 完成 React 设置入口、专题文案与错误空态收束。主卷和轻量专题壳不再把“印匣”作为显眼功能页签；右上角仍是唯一自然设置入口，`/game/:sessionId/settings` 只保留为刷新/旧路由可达的“案头工具”目录，四张卡片分别打开同一个印匣抽屉中的推演、显示、旧案和摘要 tab。角色循环入口同步移除 settings route，避免从身份循环重新把设置当作玩法路由。
+2026-05-24：S89.3 完成 React 设置入口、专题文案与错误空态收束，实现提交 `efa507aa729c8acb9503ba8f8e45a67e6b265969`。主卷和轻量专题壳不再把“印匣”作为显眼功能页签；右上角仍是唯一自然设置入口，`/game/:sessionId/settings` 只保留为刷新/旧路由可达的“案头工具”目录，四张卡片分别打开同一个印匣抽屉中的推演、显示、旧案和摘要 tab。角色循环入口同步移除 settings route，避免从身份循环重新把设置当作玩法路由。
 
 专题层案卷口径改为玩家可读表达：`SurfaceHost` 现在显示“卷宗取材 / 材料进度或案卷状态 / 回批口径”，并由 React 测试与 browser smoke 阻断“数据来源、裁决边界、服务器裁决、draftContext、schema、manifest”等玩家可见工程词。错误页、404 和畸形主卷恢复页统一使用 `statePage` 案卷空态壳，补图章、宣纸、墨角、动作按钮图标、进入动效、移动端单列和低动效降级。设置目录卡片补宣纸/朱印材质、hover/focus 抬升与安全污染守门。
 
@@ -77,7 +77,7 @@
 - `npm run test:client` 本机仍命中既有 Vitest fork worker 启动超时：4 files / 84 tests 已通过，`client/src/state/uiState.test.ts` 与 `client/src/api/qianqiuClient.test.ts` worker 未启动；已用 `npx vitest --config vitest.config.mjs run --pool=vmThreads --fileParallelism=false --maxWorkers=1` 通过同一客户端套件（6 files / 126 tests）。Focused `App.test.tsx` 的 settings route、local surfaces 和 global AI settings 三组用例已通过。
 - 已通过 `npm run smoke:browser:visual`，串联完成 `npm run qa:runtime-manifest`、`npm run build:client`、`npm run budget:client` 和 React browser smoke；smoke 已覆盖单一右上角印匣入口、settings 目录刷新路由、专题层“卷宗取材/回批口径”文案和玩家可见污染守门，并写出 `artifacts/browser-visual-matrix`。Vite 仍输出既有 `/assets/ui/...` runtime asset 与 chunk size warnings。
 - 已通过 `npm run check:docs-governance`、`node --test test/documentationGovernance.test.js`、`git diff --check` 和完整 `npm test`（1160 tests）。
-- 开工前只读子代理已指出 S89.3 缺口；提交前最终只读 diff 复审已通过，未发现阻断问题。
+- 开工前只读子代理已指出 S89.3 缺口；提交前最终只读 diff 复审已通过，未发现阻断问题。实现提交后的哈希回填仅修改 `docs/DEVELOPMENT_STEPS.md` 与本文件，属于低风险纯文档改动，跳过子代理复审。
 
 ## Next Recommended Step
 
