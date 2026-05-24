@@ -5243,9 +5243,33 @@ describe("S74.1 React client shell", () => {
             statusLabel: "署中承差",
             summary: "本旬整理公开差使与考成凭据。",
             items: [{ title: "整理回署材料", publicSummary: "只读公开凭据。" }],
+            riskSignals: [{ title: "考成压力", publicSummary: "需补公开凭据。" }],
+            entryPoints: [{ id: "court-entry", label: "入朝议", targetRouteId: "court", publicSummary: "只读进入朝议页。" }],
+            evidenceRefs: [
+              {
+                id: "official-evidence",
+                label: "官署差使",
+                sourceView: "officialCareerView",
+                sourceId: "official-source-ref-should-not-render"
+              }
+            ],
             nextActions: [{ label: "拟呈报", text: "整理本职差遣的公开凭据。" }]
           },
-          roleMatrix
+          roleMatrix,
+          aiReadScope: {
+            allowedSourceViews: ["officialCareerView", "courtResponseView", "providerPayload", "/Users/alice/project/.env"]
+          },
+          toolPermissions: "AI 只读身份循环安全材料，生成待裁决建议。",
+          proposalBoundaries: [
+            "只整理当前身份公开事务。",
+            "旁注、/Users/alice/project/.env"
+          ],
+          serverAdjudication: "资源、官职和事务结果仍由服务器裁决。",
+          safety: {
+            readOnlyView: true,
+            draftOnlyFrontend: true,
+            serverAdjudicatedOutcomes: true
+          }
         }
       } as unknown as ReturnType<typeof useGameSessionStore.getState>["currentSession"],
       status: "ready"
@@ -5255,6 +5279,25 @@ describe("S74.1 React client shell", () => {
 
     expect(screen.getByText(/康熙元年上旬/)).toBeTruthy();
     expect(screen.getByText(/第12回合/)).toBeTruthy();
+    const focusStrip = document.querySelector("[aria-label='本身份速览']");
+    expect(focusStrip?.textContent || "").toContain("事务1");
+    expect(focusStrip?.textContent || "").toContain("风险1");
+    expect(focusStrip?.textContent || "").toContain("入口1");
+    expect(focusStrip?.textContent || "").toContain("草稿1");
+    const currentEvidence = document.querySelector("[aria-label='本身份公开取材']");
+    expect(currentEvidence?.textContent || "").toContain("证据：官署差使");
+    expect(document.body.textContent || "").not.toContain("official-source-ref-should-not-render");
+    const boundary = document.querySelector("[aria-label='可读材料与裁决边界']");
+    expect(boundary?.textContent || "").toContain("可读材料");
+    expect(boundary?.textContent || "").toContain("官职履历");
+    expect(boundary?.textContent || "").toContain("奏议回应");
+    expect(boundary?.textContent || "").toContain("只读视图");
+    expect(boundary?.textContent || "").toContain("前端草稿");
+    expect(boundary?.textContent || "").toContain("服务器裁决");
+    expect(boundary?.textContent || "").toContain("AI 只读身份循环安全材料");
+    expect(boundary?.textContent || "").toContain("只整理当前身份公开事务");
+    expect(boundary?.textContent || "").toContain("资源、官职和事务结果仍由服务器裁决");
+    expect(document.body.textContent || "").not.toMatch(/providerPayload|\/Users\/alice|\.env/);
     const matrix = screen.getByRole("list", { name: "六身份矩阵" });
     expect(within(matrix).getByText("书生")).toBeTruthy();
     expect(within(matrix).getByText("地方官")).toBeTruthy();
@@ -5268,6 +5311,10 @@ describe("S74.1 React client shell", () => {
     expect(within(matrix).getByText("警势 37")).toBeTruthy();
     expect(within(matrix).getByText("本身份 · 1 项可见事务")).toBeTruthy();
     expect(within(matrix).getAllByText("待任后展开").length).toBe(5);
+    const draftButton = screen.getByRole("button", { name: "拟呈报" });
+    expect(draftButton).toHaveProperty("disabled", true);
+    fireEvent.click(draftButton);
+    expect(useUiStateStore.getState().actionDraft).toBeNull();
     const matrixRequestedUrls = fetchMock.mock.calls.map((call) => String((call as unknown[])[0]));
     expect(matrixRequestedUrls).not.toContain("/api/game/turn");
   });
@@ -5588,8 +5635,8 @@ describe("S74.1 React client shell", () => {
         worldState: { player: { name: "顾衡", role: "official" } },
         eventArchiveView: {
           schemaVersion: 1,
-          pagination: { page: 1, pageSize: 12, totalItems: 3 },
-          counts: { total: 3, domain_consequence: 1, world_entity_impact: 1 },
+          pagination: { page: 1, pageSize: 12, totalItems: 16 },
+          counts: { total: 16, domain_consequence: 1, world_entity_impact: 2 },
           items: [{
             id: "EA-domain-1",
             sourceType: "domain_consequence",
@@ -5600,7 +5647,28 @@ describe("S74.1 React client shell", () => {
             statusLabel: "已记",
             riskLabel: "民心",
             relatedLabels: ["地方政策", "月报"]
-          }, {
+          },
+          ...Array.from({ length: 11 }, (_, index) => ({
+            id: `EA-filler-${index + 1}`,
+            sourceType: "event_history",
+            sourceLabel: "近事",
+            title: `近事留痕${index + 1}`,
+            summary: `公开近事第${index + 1}条。`,
+            dateLabel: "明1644年三月中旬",
+            statusLabel: "已记"
+          })),
+          {
+            id: "EA-entity-impact-polluted",
+            sourceType: "world_entity_impact",
+            sourceLabel: "实体压力",
+            title: "/Users/alice/project/.env",
+            summary: "/home/alice/archive.txt",
+            dateLabel: "明1644年三月中旬",
+            statusLabel: "留察",
+            riskLabel: "有牵连",
+            relatedLabels: ["同年文社"]
+          },
+          {
             id: "EA-entity-impact-1",
             sourceType: "world_entity_impact",
             sourceLabel: "实体压力",
@@ -5610,7 +5678,8 @@ describe("S74.1 React client shell", () => {
             statusLabel: "留察",
             riskLabel: "有牵连",
             relatedLabels: ["同年文社", "NPC 关系行动", "信任上升"]
-          }, {
+          },
+          {
             id: "EA-polluted",
             sourceType: "event_history",
             sourceLabel: "近事",
@@ -5679,6 +5748,8 @@ describe("S74.1 React client shell", () => {
     expect(archive.getAllByText("平粜余波").length).toBeGreaterThan(0);
     expect(archive.getByText("同年文社压力留痕")).toBeTruthy();
     expect(archive.getByText("论道余波已归入同年文社公开实体压力，仍回主卷提交。")).toBeTruthy();
+    expect(archivePanel.querySelectorAll("li[data-source-type='world_entity_impact']").length).toBe(1);
+    expect(archivePanel.textContent || "").not.toMatch(/\/Users\/alice|\/home\/alice|\.env|archive\.txt/);
     expect(archive.getByText("史册后果追踪")).toBeTruthy();
     expect(archive.getByText("来函证据追踪")).toBeTruthy();
     expect(archive.getAllByText("后果").length).toBeGreaterThan(0);

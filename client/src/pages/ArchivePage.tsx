@@ -19,6 +19,8 @@ type ArchiveItem = {
   readonly relatedLabels: readonly string[];
 };
 
+const archiveVisibleItemLimit = 12;
+
 const unsafeArchiveFragments = [
   "provider",
   "proposal",
@@ -59,6 +61,7 @@ const unsafeArchiveFragments = [
   "私档",
   "密档"
 ] as const;
+const localArchivePathPattern = /(?:^|[\s"'`(（:：,;，。；、【《“‘])(?:[a-z]:[\\/]|~[\\/]|\.{1,2}[\\/]|\/(?:home|mnt|users|private|tmp|var|etc|usr|opt|workspace|workspaces|root|data|src|client|server|dist|public|node_modules)(?:[\\/]|$)|(?:data|src|client|server|dist|public|node_modules)[\\/][^\s，。；、]+)/i;
 
 function isRecord(value: JsonValue | unknown): value is JsonObject {
   return Boolean(value) && typeof value === "object" && !Array.isArray(value);
@@ -77,7 +80,7 @@ function cleanArchivePageText(value: unknown, fallback = "未载", maxLength = 1
   const text = String(value).replace(/\s+/g, " ").trim();
   if (!text) return fallback;
   const lowered = text.toLowerCase();
-  if (/[a-z]:[\\/]/i.test(text) || /sk-[a-z0-9_-]{6,}|tp-[a-z0-9_-]{6,}/i.test(text)) return fallback;
+  if (localArchivePathPattern.test(text) || /sk-[a-z0-9_-]{6,}|tp-[a-z0-9_-]{6,}/i.test(text)) return fallback;
   if (unsafeArchiveFragments.some((fragment) => lowered.includes(fragment.toLowerCase()))) return fallback;
   return text.length > maxLength ? `${text.slice(0, maxLength)}…` : text;
 }
@@ -92,8 +95,17 @@ function numberValue(value: unknown, fallback = 0) {
   return Number.isFinite(number) ? Math.max(0, Math.round(number)) : fallback;
 }
 
+function prioritizeArchiveItems(items: ArchiveItem[]) {
+  const visible = items.slice(0, archiveVisibleItemLimit);
+  if (visible.some((item) => item.sourceType === "world_entity_impact")) return visible;
+  const entityImpact = items.find((item) => item.sourceType === "world_entity_impact");
+  if (!entityImpact) return visible;
+  if (visible.length < archiveVisibleItemLimit) return [...visible, entityImpact];
+  return [...visible.slice(0, archiveVisibleItemLimit - 1), entityImpact];
+}
+
 function buildArchiveItems(view: JsonObject): ArchiveItem[] {
-  return asArray(view.items)
+  const items = asArray(view.items)
     .map(asRecord)
     .map((item, index) => {
       const sourceType = cleanArchivePageText(item.sourceType, "event_history", 48);
@@ -114,8 +126,8 @@ function buildArchiveItems(view: JsonObject): ArchiveItem[] {
           .slice(0, 4) as string[]
       };
     })
-    .filter((item) => item.summary)
-    .slice(0, 12);
+    .filter((item) => item.summary);
+  return prioritizeArchiveItems(items);
 }
 
 export function ArchivePage() {

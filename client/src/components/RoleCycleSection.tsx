@@ -56,6 +56,18 @@ type CycleRoleMatrixEntry = {
   readonly active: boolean;
 };
 
+type CycleFocusStat = {
+  readonly id: string;
+  readonly label: string;
+  readonly value: number;
+};
+
+type CycleBoundarySummary = {
+  readonly sourceLabels: readonly string[];
+  readonly safetyLabels: readonly string[];
+  readonly notes: readonly string[];
+};
+
 const unsafeRoleCycleFragments = [
   "provider",
   "proposal",
@@ -95,6 +107,7 @@ const roleCycleSurfaceIds = new Set<LocalSurface>([
   "npc-profile",
   "map-filter"
 ]);
+const localRoleCyclePathPattern = /(?:^|[\s"'`(（:：,;，。；、【《“‘])(?:[a-z]:[\\/]|~[\\/]|\.{1,2}[\\/]|\/(?:home|mnt|users|private|tmp|var|etc|usr|opt|workspace|workspaces|root|data|src|client|server|dist|public|node_modules)(?:[\\/]|$)|(?:data|src|client|server|dist|public|node_modules)[\\/][^\s，。；、]+)/i;
 const roleCycleSourceViewLabels: Record<string, string> = {
   courtConsequenceView: "官场后果",
   courtResponseView: "奏议回应",
@@ -132,7 +145,7 @@ function cleanRoleCycleText(value: unknown, fallback = "未载", maxLength = 112
   const text = String(value).replace(/\s+/g, " ").trim();
   if (!text) return fallback;
   const lowered = text.toLowerCase();
-  if (/[a-z]:[\\/]/i.test(text) || /(?:file|https?):\/\//i.test(text)) return fallback;
+  if (localRoleCyclePathPattern.test(text) || /(?:file|https?):\/\//i.test(text)) return fallback;
   if (unsafeRoleCycleFragments.some((fragment) => lowered.includes(fragment.toLowerCase()))) return fallback;
   return text.length > maxLength ? `${text.slice(0, maxLength)}…` : text;
 }
@@ -178,6 +191,19 @@ function cycleEvidenceRefs(value: JsonValue | unknown): CycleEvidenceRef[] {
       };
     })
     .filter((item): item is CycleEvidenceRef => item !== null);
+}
+
+function dedupeCycleEvidenceRefs(refs: readonly CycleEvidenceRef[]) {
+  const seen = new Set<string>();
+  const items: CycleEvidenceRef[] = [];
+  for (const ref of refs) {
+    const key = `${ref.sourceView}:${ref.sourceId}:${ref.label}`;
+    if (seen.has(key)) continue;
+    seen.add(key);
+    items.push(ref);
+    if (items.length >= 3) break;
+  }
+  return items;
 }
 
 function cycleEntryPoints(source: JsonObject): CycleEntryPoint[] {
@@ -264,6 +290,47 @@ function cycleMetrics(source: JsonObject) {
       };
     })
     .filter((item): item is { id: string; label: string; value: number; status: string } => item !== null);
+}
+
+function cycleFocusStats({
+  items,
+  risks,
+  entryPoints,
+  actions
+}: {
+  readonly items: readonly CycleItem[];
+  readonly risks: readonly CycleItem[];
+  readonly entryPoints: readonly CycleEntryPoint[];
+  readonly actions: readonly CycleAction[];
+}): CycleFocusStat[] {
+  return [
+    { id: "items", label: "事务", value: items.length },
+    { id: "risks", label: "风险", value: risks.length },
+    { id: "entry-points", label: "入口", value: entryPoints.length },
+    { id: "actions", label: "草稿", value: actions.length }
+  ];
+}
+
+function cycleBoundarySummary(view: JsonObject, currentRole: JsonObject): CycleBoundarySummary {
+  const aiReadScope = asRecord(view.aiReadScope);
+  const readScopeLabels = cycleSourceLabels(aiReadScope.allowedSourceViews);
+  const sourceLabels = readScopeLabels.length ? readScopeLabels : cycleSourceLabels(currentRole.sourceViews);
+  const safety = asRecord(view.safety);
+  const safetyLabels = [
+    safety.readOnlyView === true ? "只读视图" : undefined,
+    safety.draftOnlyFrontend === true ? "前端草稿" : undefined,
+    safety.serverAdjudicatedOutcomes === true ? "服务器裁决" : undefined
+  ].filter((item): item is string => Boolean(item));
+  const notes = [
+    cleanOptionalText(view.toolPermissions, 96),
+    ...asArray(view.proposalBoundaries).slice(0, 2).map((entry) => cleanOptionalText(entry, 88)),
+    cleanOptionalText(view.serverAdjudication || view.authorityBoundary, 108)
+  ].filter((item): item is string => Boolean(item));
+  return {
+    sourceLabels,
+    safetyLabels,
+    notes: [...new Set(notes)].slice(0, 4)
+  };
 }
 
 function cycleSourceLabels(value: JsonValue | unknown) {
@@ -379,6 +446,9 @@ export function RoleCycleSection({
   const entryPoints = cycleEntryPoints(currentRole);
   const actions = cycleActions(currentRole);
   const roleMatrix = cycleRoleMatrix(view);
+  const focusStats = cycleFocusStats({ items, risks, entryPoints, actions });
+  const currentEvidenceRefs = dedupeCycleEvidenceRefs(cycleEvidenceRefs(currentRole.evidenceRefs));
+  const boundary = cycleBoundarySummary(view, currentRole);
 
   return (
     <article className="scholarPanelCard roleCycleSection" aria-labelledby={titleId}>
@@ -390,6 +460,52 @@ export function RoleCycleSection({
         <span>{statusLabel}</span>
       </div>
       <p>{summary}</p>
+      <div className="roleCycleFocusStrip" aria-label="本身份速览">
+        {focusStats.map((stat) => (
+          <span key={stat.id}>
+            {stat.label}
+            <strong>{stat.value}</strong>
+          </span>
+        ))}
+      </div>
+      {currentEvidenceRefs.length ? (
+        <div className="roleCycleCurrentEvidence" aria-label="本身份公开取材">
+          <span>本身份取材</span>
+          <div>
+            {currentEvidenceRefs.map((ref) => (
+              <span key={ref.id}>证据：{ref.label}</span>
+            ))}
+          </div>
+        </div>
+      ) : null}
+      {boundary.sourceLabels.length || boundary.safetyLabels.length || boundary.notes.length ? (
+        <div className="roleCycleBoundary" aria-label="可读材料与裁决边界">
+          {boundary.sourceLabels.length ? (
+            <div className="roleCycleBoundarySources" aria-label="身份循环可读材料">
+              <span>可读材料</span>
+              <div>
+                {boundary.sourceLabels.map((label) => (
+                  <span key={label}>{label}</span>
+                ))}
+              </div>
+            </div>
+          ) : null}
+          {boundary.safetyLabels.length ? (
+            <div className="roleCycleBoundaryChips" aria-label="身份循环安全边界">
+              {boundary.safetyLabels.map((label) => (
+                <span key={label}>{label}</span>
+              ))}
+            </div>
+          ) : null}
+          {boundary.notes.length ? (
+            <ul>
+              {boundary.notes.map((note) => (
+                <li key={note}>{note}</li>
+              ))}
+            </ul>
+          ) : null}
+        </div>
+      ) : null}
       {roleMatrix.length ? (
         <section className="roleCycleMatrix" aria-labelledby={`${idPrefix}-matrix-title`}>
           <h4 id={`${idPrefix}-matrix-title`}>六身份矩阵</h4>
