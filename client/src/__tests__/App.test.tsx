@@ -4560,6 +4560,175 @@ describe("S74.1 React client shell", () => {
     }
   });
 
+  it("keeps the current NPC dialogue draft when an older same-session NPC reply returns", async () => {
+    const sessionId = "68686868-6868-4686-8686-686868686868";
+    const firstNpc = {
+      npcId: "npc:magistrate:bailiff-zhou",
+      displayName: "周快手",
+      publicProfile: { title: "捕快", summary: "在县署听差。" },
+      roleTags: ["yamen"],
+      stageTags: ["office"],
+      availableInteractions: ["talk"]
+    };
+    const secondNpc = {
+      npcId: "npc:magistrate:clerk-han",
+      displayName: "韩主簿",
+      publicProfile: { title: "主簿", summary: "掌县中簿册。" },
+      roleTags: ["office"],
+      stageTags: ["yamen"],
+      availableInteractions: ["talk"]
+    };
+    const rosterView = { items: [firstNpc, secondNpc] };
+    const playerPayload = {
+      source: "server_player_visible_state_projection",
+      sessionId,
+      worldState: { player: { name: "陆县令", role: "magistrate" } },
+      worldPeopleView: { npcs: [], relationships: [] },
+      npcRosterView: rosterView,
+      npcInteractionView: { items: [] },
+      tradeLedgerView: { items: [] },
+      delegatedTaskView: { items: [] },
+      npcActiveRequestView: { items: [], followUpTasks: [], followUpEvidence: { counts: { total: 0 }, people: [], events: [], economy: [] } }
+    };
+    const firstInteraction = deferredResponse();
+    const secondInteraction = deferredResponse();
+    let npcInteractionRequestCount = 0;
+    const fetchMock = vi.fn(async (url: string, options?: RequestInit) => {
+      const requestUrl = String(url);
+      if (requestUrl === "/assets/ui/ink-ui-runtime-manifest.json") {
+        return new Response(JSON.stringify(buildMockAssetManifest(0)), {
+          status: 200,
+          headers: { "Content-Type": "application/json" }
+        });
+      }
+      if (requestUrl === `/api/game/player-state/${sessionId}`) {
+        return new Response(JSON.stringify(playerPayload), {
+          status: 200,
+          headers: { "Content-Type": "application/json" }
+        });
+      }
+      if (requestUrl === `/api/game/npcs/${sessionId}?pageSize=50`) {
+        return new Response(JSON.stringify({
+          sessionId,
+          npcRosterView: rosterView,
+          npcInteractionView: { items: [] },
+          delegatedTaskView: { items: [] }
+        }), {
+          status: 200,
+          headers: { "Content-Type": "application/json" }
+        });
+      }
+      if (
+        requestUrl === `/api/game/npc/${sessionId}/${encodeURIComponent(firstNpc.npcId)}` ||
+        requestUrl === `/api/game/npc/${sessionId}/${encodeURIComponent(secondNpc.npcId)}`
+      ) {
+        const npc = requestUrl.endsWith(encodeURIComponent(firstNpc.npcId)) ? firstNpc : secondNpc;
+        return new Response(JSON.stringify({
+          sessionId,
+          npcDetailView: {
+            npcId: npc.npcId,
+            displayName: npc.displayName,
+            publicProfile: npc.publicProfile
+          },
+          npcInteractionView: { items: [] },
+          tradeLedgerView: { items: [] },
+          delegatedTaskView: { items: [] }
+        }), {
+          status: 200,
+          headers: { "Content-Type": "application/json" }
+        });
+      }
+      if (requestUrl === `/api/game/npc-interaction/${sessionId}` && options?.method === "POST") {
+        npcInteractionRequestCount += 1;
+        expect(JSON.parse(String(options.body))).toMatchObject({
+          npcId: firstNpc.npcId,
+          actionType: "talk"
+        });
+        return npcInteractionRequestCount === 1 ? firstInteraction.response : secondInteraction.response;
+      }
+      if (requestUrl === `/api/ai/quick-actions/${sessionId}`) {
+        return new Response(JSON.stringify({
+          schemaVersion: "s75.9-quick-actions.v1",
+          sessionId,
+          source: "mock-ai",
+          status: "ready",
+          quickActionSuggestions: []
+        }), {
+          status: 200,
+          headers: { "Content-Type": "application/json" }
+        });
+      }
+      throw new Error(`unexpected url: ${requestUrl}`);
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    renderRoute(`/game/${sessionId}/people`);
+
+    await screen.findByRole("button", { name: /周快手/ });
+    fireEvent.click(screen.getByRole("button", { name: "对话" }));
+    fireEvent.change(screen.getByLabelText("对话"), { target: { value: "先问城中治安。" } });
+    fireEvent.click(screen.getByRole("button", { name: "问话" }));
+    await waitFor(() => expect(fetchMock.mock.calls.some(([url]) => String(url) === `/api/game/npc-interaction/${sessionId}`)).toBe(true));
+    fireEvent.change(screen.getByLabelText("对话"), { target: { value: "续问巡捕名册。" } });
+
+    await act(async () => {
+      firstInteraction.resolvePayload({
+        sessionId,
+        accepted: true,
+        npcDialogueView: {
+          npcId: firstNpc.npcId,
+          dialogueText: "周快手回报第一问。",
+          mood: "谨慎"
+        },
+        npcInteractionView: {
+          items: [{
+            recordId: "npc-interaction:first",
+            npcId: firstNpc.npcId,
+            npcName: firstNpc.displayName,
+            actionType: "talk",
+            dialogueText: "周快手回报第一问。"
+          }]
+        }
+      });
+    });
+    await waitFor(() => {
+      expect((screen.getByLabelText("对话") as HTMLTextAreaElement).value).toBe("续问巡捕名册。");
+    });
+
+    fireEvent.click(screen.getByRole("button", { name: "问话" }));
+    await waitFor(() => expect(npcInteractionRequestCount).toBe(2));
+
+    fireEvent.click(screen.getByRole("button", { name: /韩主簿/ }));
+    fireEvent.click(screen.getByRole("button", { name: "对话" }));
+    fireEvent.change(screen.getByLabelText("对话"), { target: { value: "再问粮册底稿。" } });
+
+    await act(async () => {
+      secondInteraction.resolvePayload({
+        sessionId,
+        accepted: true,
+        npcDialogueView: {
+          npcId: firstNpc.npcId,
+          dialogueText: "周快手回报第二问。",
+          mood: "谨慎"
+        },
+        npcInteractionView: {
+          items: [{
+            recordId: "npc-interaction:second",
+            npcId: firstNpc.npcId,
+            npcName: firstNpc.displayName,
+            actionType: "talk",
+            dialogueText: "周快手回报第二问。"
+          }]
+        }
+      });
+    });
+
+    await waitFor(() => {
+      expect((screen.getByLabelText("对话") as HTMLTextAreaElement).value).toBe("再问粮册底稿。");
+    });
+    expect(document.body.textContent || "").not.toMatch(/周快手回报第二问/);
+  });
+
   it("renders S88.8 economy trace in the people trade and delegation workspace", async () => {
     const sessionId = "77777777-7777-4777-8777-777777777777";
     const economyTraceView = {

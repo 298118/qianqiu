@@ -663,6 +663,7 @@ export function PeoplePage() {
   const activeLastTrade = routeSessionSupported && lastTrade?.sessionId === sessionId ? lastTrade : null;
   const activeLastNpcCommand = routeSessionSupported && lastNpcCommand?.sessionId === sessionId ? lastNpcCommand : null;
   const unsupportedRouteMessage = "此案卷编号暂不可用于浏览器人物谱牒；请从首页开卷或载入旧案。";
+  const latestSelectedNpcIdRef = useRef("");
 
   useEffect(() => {
     latestSessionIdRef.current = sessionId;
@@ -701,8 +702,13 @@ export function PeoplePage() {
   const selectedNpcIdForResults = selectedNpc?.npcId ?? "";
 
   useEffect(() => {
+    latestSelectedNpcIdRef.current = selectedNpcIdForResults;
+  }, [selectedNpcIdForResults]);
+
+  useEffect(() => {
     if (rosterNpcs[0] && (!activeSelectedNpcId || !rosterNpcs.some((npc) => npc.npcId === activeSelectedNpcId))) {
       setLocalPeopleSessionId(sessionId);
+      latestSelectedNpcIdRef.current = rosterNpcs[0].npcId;
       setSelectedNpcId(rosterNpcs[0].npcId);
     }
   }, [activeSelectedNpcId, rosterNpcs, sessionId]);
@@ -762,52 +768,68 @@ export function PeoplePage() {
   async function handleDialogueSubmit() {
     if (!selectedNpc || !activeDialogueDraft.trim() || !runnable) return;
     const requestSessionId = sessionId;
+    const requestNpcId = selectedNpc.npcId;
+    const requestUtterance = activeDialogueDraft.trim();
     await interactWithNpc(requestSessionId, {
-      npcId: selectedNpc.npcId,
+      npcId: requestNpcId,
       actionType: "talk",
-      utterance: activeDialogueDraft.trim()
+      utterance: requestUtterance
     }).then(() => {
-      if (latestSessionIdRef.current === requestSessionId) setDialogueDraft("");
+      if (latestSessionIdRef.current === requestSessionId && latestSelectedNpcIdRef.current === requestNpcId) {
+        setDialogueDraft((current) => current.trim() === requestUtterance ? "" : current);
+      }
     }).catch(() => undefined);
   }
 
   async function handleTradeSubmit() {
     if (!selectedNpc || !activeTradeOffer.trim() || !runnable) return;
     const requestSessionId = sessionId;
+    const requestNpcId = selectedNpc.npcId;
+    const requestOffer = activeTradeOffer.trim();
     await submitTrade(requestSessionId, {
-      npcId: selectedNpc.npcId,
-      tradeId: `trade:${selectedNpc.npcId}:${Date.now()}`,
+      npcId: requestNpcId,
+      tradeId: `trade:${requestNpcId}:${Date.now()}`,
       silverDelta: Number.parseInt(activeTradeSilverDelta, 10) || 0,
-      offerSummary: activeTradeOffer.trim()
+      offerSummary: requestOffer
     }).then(() => {
-      if (latestSessionIdRef.current === requestSessionId) setTradeOffer("");
+      if (latestSessionIdRef.current === requestSessionId && latestSelectedNpcIdRef.current === requestNpcId) {
+        setTradeOffer((current) => current.trim() === requestOffer ? "" : current);
+      }
     }).catch(() => undefined);
   }
 
   async function handleCommandSubmit() {
     if (!selectedNpc || !activeCommandText.trim() || !runnable) return;
     const requestSessionId = sessionId;
+    const requestNpcId = selectedNpc.npcId;
+    const requestCommandText = activeCommandText.trim();
     await submitNpcCommand(requestSessionId, {
-      assigneeActorId: selectedNpc.npcId,
+      assigneeActorId: requestNpcId,
       taskType: "land_survey",
       authoritySource: "yamen_authority",
       targetRef: activeCommandTargetRef.trim() || "geo:county:current",
-      commandText: activeCommandText.trim(),
+      commandText: requestCommandText,
       budget: Number.parseInt(activeCommandBudget, 10) || 0
     }).then(() => {
-      if (latestSessionIdRef.current === requestSessionId) setCommandText("");
+      if (latestSessionIdRef.current === requestSessionId && latestSelectedNpcIdRef.current === requestNpcId) {
+        setCommandText((current) => current.trim() === requestCommandText ? "" : current);
+      }
     }).catch(() => undefined);
   }
 
   async function handleSocialSubmit(actionType: string) {
     if (!selectedNpc || !runnable) return;
     const requestSessionId = sessionId;
+    const requestNpcId = selectedNpc.npcId;
+    const requestSocialDraft = activeSocialDraft.trim();
     await interactWithNpc(requestSessionId, {
-      npcId: selectedNpc.npcId,
+      npcId: requestNpcId,
       actionType,
-      utterance: activeSocialDraft.trim() || `${actionLabel(actionType)}${selectedNpc.displayName}，请服务器按礼法与身份裁决。`
+      utterance: requestSocialDraft || `${actionLabel(actionType)}${selectedNpc.displayName}，请服务器按礼法与身份裁决。`
     }).then(() => {
-      if (latestSessionIdRef.current === requestSessionId) setSocialDraft("");
+      if (latestSessionIdRef.current === requestSessionId && latestSelectedNpcIdRef.current === requestNpcId) {
+        setSocialDraft((current) => current.trim() === requestSocialDraft ? "" : current);
+      }
     }).catch(() => undefined);
   }
 
@@ -896,6 +918,7 @@ export function PeoplePage() {
                   aria-pressed={selectedNpc?.npcId === npc.npcId}
                   onClick={() => {
                     setLocalPeopleSessionId(sessionId);
+                    latestSelectedNpcIdRef.current = npc.npcId;
                     setSelectedNpcId(npc.npcId);
                     setActiveTab("profile");
                   }}

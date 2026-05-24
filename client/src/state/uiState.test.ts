@@ -15,6 +15,7 @@ import type {
   ExamSubmitResponse,
   InventoryResponse,
   NpcCommandResponse,
+  NpcDetailResponse,
   NpcInteractionResponse,
   NpcListResponse,
   PlayerStateResponse,
@@ -145,6 +146,14 @@ function deferredJsonResponse<T>() {
     };
   });
   return { response, resolvePayload };
+}
+
+function deferredRejectedResponse() {
+  let rejectResponse!: (error: Error) => void;
+  const response = new Promise<Response>((_resolve, reject) => {
+    rejectResponse = reject;
+  });
+  return { response, rejectResponse };
 }
 
 beforeEach(() => {
@@ -1144,6 +1153,161 @@ describe("S74.3 UI state store", () => {
     });
     expect(useUiStateStore.getState().currentPlayerPayload).toBeNull();
     expect(JSON.stringify(useUiStateStore.getState())).not.toMatch(/错案主|错案官职/);
+  });
+
+  it("does not apply stale route-local inventory or NPC read payloads after another session becomes current", async () => {
+    const staleSessionId = "56565656-5656-4656-8656-565656565656";
+    const activeSessionId = "78787878-7878-4787-8787-787878787878";
+    const staleInventory: InventoryResponse = {
+      sessionId: staleSessionId,
+      inventoryView: {
+        containers: [{ containerId: "stale-container", label: "旧案书箧" }],
+        items: [{ itemId: "stale-item", name: "旧案清册", containerId: "stale-container" }],
+        importantCredentials: []
+      }
+    };
+    const activeInventory: InventoryResponse = {
+      sessionId: activeSessionId,
+      inventoryView: {
+        containers: [{ containerId: "active-container", label: "当前书箧" }],
+        items: [{ itemId: "active-item", name: "当前清册", containerId: "active-container" }],
+        importantCredentials: []
+      }
+    };
+    const staleRoster: NpcListResponse = {
+      sessionId: staleSessionId,
+      npcRosterView: { items: [{ npcId: "stale-npc", displayName: "旧案幕友" }] },
+      npcInteractionView: { items: [{ recordId: "stale-roster-record", dialogueText: "旧案名册记录" }] }
+    };
+    const activeRoster: NpcListResponse = {
+      sessionId: activeSessionId,
+      npcRosterView: { items: [{ npcId: "active-npc", displayName: "当前幕友" }] },
+      npcInteractionView: { items: [{ recordId: "active-roster-record", dialogueText: "当前名册记录" }] }
+    };
+    const staleDetail: NpcDetailResponse = {
+      sessionId: staleSessionId,
+      npcDetailView: { npcId: "stale-npc", displayName: "旧案 NPC" },
+      npcInteractionView: { items: [{ recordId: "stale-detail-record", dialogueText: "旧案详情记录" }] }
+    };
+    const activeDetail: NpcDetailResponse = {
+      sessionId: activeSessionId,
+      npcDetailView: { npcId: "active-npc", displayName: "当前 NPC" },
+      npcInteractionView: { items: [{ recordId: "active-detail-record", dialogueText: "当前详情记录" }] }
+    };
+    const inventoryDeferred = deferredJsonResponse<InventoryResponse>();
+    const rosterDeferred = deferredJsonResponse<NpcListResponse>();
+    const detailDeferred = deferredJsonResponse<NpcDetailResponse>();
+    vi.stubGlobal("fetch", vi.fn((url: string) => {
+      const requestUrl = String(url);
+      if (requestUrl === `/api/game/inventory/${staleSessionId}`) return inventoryDeferred.response;
+      if (requestUrl === `/api/game/npcs/${staleSessionId}?pageSize=50`) return rosterDeferred.response;
+      if (requestUrl === `/api/game/npc/${staleSessionId}/stale-npc`) return detailDeferred.response;
+      throw new Error(`unexpected url: ${requestUrl}`);
+    }));
+
+    const inventoryRequest = useGameSessionStore.getState().loadInventory(staleSessionId);
+    const rosterRequest = useGameSessionStore.getState().loadNpcs(staleSessionId, { pageSize: 50 });
+    const detailRequest = useGameSessionStore.getState().loadNpcDetail(staleSessionId, "stale-npc");
+    useGameSessionStore.setState({
+      currentSessionId: activeSessionId,
+      currentSession: {
+        ...playerStatePayload,
+        sessionId: activeSessionId,
+        worldState: { player: { name: "当前案主", role: "magistrate" } }
+      },
+      inventory: activeInventory,
+      inventoryStatus: "ready",
+      npcRoster: activeRoster,
+      npcRosterStatus: "ready",
+      npcDetail: activeDetail,
+      npcDetailStatus: "ready",
+      error: null
+    });
+
+    inventoryDeferred.resolvePayload(staleInventory);
+    rosterDeferred.resolvePayload(staleRoster);
+    detailDeferred.resolvePayload(staleDetail);
+
+    await expect(inventoryRequest).resolves.toEqual(staleInventory);
+    await expect(rosterRequest).resolves.toEqual(staleRoster);
+    await expect(detailRequest).resolves.toEqual(staleDetail);
+    const state = useGameSessionStore.getState();
+    expect(state.currentSessionId).toBe(activeSessionId);
+    expect(state.inventory).toEqual(activeInventory);
+    expect(state.npcRoster).toEqual(activeRoster);
+    expect(state.npcDetail).toEqual(activeDetail);
+    expect(state.inventoryStatus).toBe("ready");
+    expect(state.npcRosterStatus).toBe("ready");
+    expect(state.npcDetailStatus).toBe("ready");
+    expect(JSON.stringify(state)).not.toMatch(/旧案书箧|旧案幕友|旧案 NPC|stale-roster-record|stale-detail-record/);
+  });
+
+  it("ignores stale route-local inventory and NPC read failures after another session becomes current", async () => {
+    const staleSessionId = "56565656-5656-4656-8656-565656565656";
+    const activeSessionId = "78787878-7878-4787-8787-787878787878";
+    const activeInventory: InventoryResponse = {
+      sessionId: activeSessionId,
+      inventoryView: {
+        containers: [{ containerId: "active-container", label: "当前书箧" }],
+        items: [{ itemId: "active-item", name: "当前清册", containerId: "active-container" }],
+        importantCredentials: []
+      }
+    };
+    const activeRoster: NpcListResponse = {
+      sessionId: activeSessionId,
+      npcRosterView: { items: [{ npcId: "active-npc", displayName: "当前幕友" }] }
+    };
+    const activeDetail: NpcDetailResponse = {
+      sessionId: activeSessionId,
+      npcDetailView: { npcId: "active-npc", displayName: "当前 NPC" }
+    };
+    const inventoryFailure = deferredRejectedResponse();
+    const rosterFailure = deferredRejectedResponse();
+    const detailFailure = deferredRejectedResponse();
+    vi.stubGlobal("fetch", vi.fn((url: string) => {
+      const requestUrl = String(url);
+      if (requestUrl === `/api/game/inventory/${staleSessionId}`) return inventoryFailure.response;
+      if (requestUrl === `/api/game/npcs/${staleSessionId}?pageSize=50`) return rosterFailure.response;
+      if (requestUrl === `/api/game/npc/${staleSessionId}/stale-npc`) return detailFailure.response;
+      throw new Error(`unexpected url: ${requestUrl}`);
+    }));
+
+    const inventoryRequest = useGameSessionStore.getState().loadInventory(staleSessionId);
+    const rosterRequest = useGameSessionStore.getState().loadNpcs(staleSessionId, { pageSize: 50 });
+    const detailRequest = useGameSessionStore.getState().loadNpcDetail(staleSessionId, "stale-npc");
+    useGameSessionStore.setState({
+      currentSessionId: activeSessionId,
+      currentSession: {
+        ...playerStatePayload,
+        sessionId: activeSessionId,
+        worldState: { player: { name: "当前案主", role: "magistrate" } }
+      },
+      inventory: activeInventory,
+      inventoryStatus: "ready",
+      npcRoster: activeRoster,
+      npcRosterStatus: "ready",
+      npcDetail: activeDetail,
+      npcDetailStatus: "ready",
+      error: null
+    });
+
+    inventoryFailure.rejectResponse(new Error("旧案囊箧读取失败不应显示"));
+    rosterFailure.rejectResponse(new Error("旧案人物名册失败不应显示"));
+    detailFailure.rejectResponse(new Error("旧案人物详情失败不应显示"));
+
+    await expect(inventoryRequest).rejects.toThrow(/旧案囊箧读取失败/);
+    await expect(rosterRequest).rejects.toThrow(/旧案人物名册失败/);
+    await expect(detailRequest).rejects.toThrow(/旧案人物详情失败/);
+    const state = useGameSessionStore.getState();
+    expect(state.currentSessionId).toBe(activeSessionId);
+    expect(state.error).toBeNull();
+    expect(state.inventory).toEqual(activeInventory);
+    expect(state.npcRoster).toEqual(activeRoster);
+    expect(state.npcDetail).toEqual(activeDetail);
+    expect(state.inventoryStatus).toBe("ready");
+    expect(state.npcRosterStatus).toBe("ready");
+    expect(state.npcDetailStatus).toBe("ready");
+    expect(JSON.stringify(state)).not.toMatch(/旧案囊箧读取失败|旧案人物名册失败|旧案人物详情失败/);
   });
 
   it("does not merge stale inventory transfer payloads into another session", async () => {

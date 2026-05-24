@@ -632,11 +632,15 @@ export const useGameSessionStore = create<GameSessionState>((set) => ({
       const payload = await qianqiuApi.loadInventory(sessionId);
       if (requestId !== inventoryRequestId) throw supersededRequestError();
       if (payload.sessionId !== sessionId) throw staleSessionResponseError();
-      set({ inventory: payload, currentSessionId: payload.sessionId, inventoryStatus: "ready" });
+      set((state) => canApplyRouteSession(state, payload.sessionId)
+        ? { inventory: payload, currentSessionId: payload.sessionId, inventoryStatus: "ready" }
+        : { inventory: state.inventory, inventoryStatus: state.inventoryStatus });
       return payload;
     } catch (error) {
       if (requestId === inventoryRequestId) {
-        set({ error: toErrorMessage(error), inventoryStatus: "error" });
+        set((state) => canApplyRouteSession(state, sessionId)
+          ? { error: toErrorMessage(error), inventoryStatus: "error" }
+          : {});
       }
       throw error;
     }
@@ -711,11 +715,15 @@ export const useGameSessionStore = create<GameSessionState>((set) => ({
       });
       if (requestId !== npcRosterRequestId) throw supersededRequestError();
       if (payload.sessionId !== sessionId) throw staleSessionResponseError();
-      set({ npcRoster: payload, currentSessionId: payload.sessionId, npcRosterStatus: "ready" });
+      set((state) => canApplyRouteSession(state, payload.sessionId)
+        ? { npcRoster: payload, currentSessionId: payload.sessionId, npcRosterStatus: "ready" }
+        : { npcRoster: state.npcRoster, npcRosterStatus: state.npcRosterStatus });
       return payload;
     } catch (error) {
       if (requestId === npcRosterRequestId) {
-        set({ error: toErrorMessage(error), npcRosterStatus: "error" });
+        set((state) => canApplyRouteSession(state, sessionId)
+          ? { error: toErrorMessage(error), npcRosterStatus: "error" }
+          : {});
       }
       throw error;
     }
@@ -729,11 +737,15 @@ export const useGameSessionStore = create<GameSessionState>((set) => ({
       if (requestId !== npcDetailRequestId) throw supersededRequestError();
       if (payload.sessionId !== sessionId) throw staleSessionResponseError();
       if (payload.npcDetailView.npcId !== npcId) throw staleNpcDetailResponseError();
-      set({ npcDetail: payload, currentSessionId: payload.sessionId, npcDetailStatus: "ready" });
+      set((state) => canApplyRouteSession(state, payload.sessionId)
+        ? { npcDetail: payload, currentSessionId: payload.sessionId, npcDetailStatus: "ready" }
+        : { npcDetail: state.npcDetail, npcDetailStatus: state.npcDetailStatus });
       return payload;
     } catch (error) {
       if (requestId === npcDetailRequestId) {
-        set({ error: toErrorMessage(error), npcDetailStatus: "error" });
+        set((state) => canApplyRouteSession(state, sessionId)
+          ? { error: toErrorMessage(error), npcDetailStatus: "error" }
+          : {});
       }
       throw error;
     }

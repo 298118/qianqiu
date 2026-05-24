@@ -500,6 +500,7 @@ test("S74.4 shell uses registry-backed overlays without widening data sources", 
   const surfaceHostSource = readText("client/src/components/SurfaceHost.tsx");
   const surfaceRegistrySource = readText("client/src/surfaces/surfaceRegistry.tsx");
   const uiStateSource = readText("client/src/state/uiState.ts");
+  const stateSource = readText("client/src/state/gameSessionState.ts");
   const gamePageSource = readText("client/src/pages/GamePage.tsx");
   const courtPageSource = readText("client/src/pages/CourtPage.tsx");
   const archivePageSource = readText("client/src/pages/ArchivePage.tsx");
@@ -533,6 +534,11 @@ test("S74.4 shell uses registry-backed overlays without widening data sources", 
   assert.match(surfaceHostSource, /returningFromPortrait/);
   assert.match(uiStateSource, /openSurfaceForSession/);
   assert.match(uiStateSource, /isRouteLocalSessionId\(sessionId\)/);
+  assert.match(stateSource, /loadInventory[\s\S]*canApplyRouteSession\(state, payload\.sessionId\)/);
+  assert.match(stateSource, /loadNpcs[\s\S]*canApplyRouteSession\(state, payload\.sessionId\)/);
+  assert.match(stateSource, /loadNpcDetail[\s\S]*canApplyRouteSession\(state, payload\.sessionId\)/);
+  assert.match(peoplePageSource, /latestSelectedNpcIdRef/);
+  assert.match(peoplePageSource, /current\.trim\(\) === requestUtterance/);
   assert.match(sessionIdSource, /previewSessionIds/);
   assert.match(sessionIdSource, /"s74-preview", "s76-preview", "smoke-session"/);
   assert.match(sessionIdSource, /isRouteLocalSessionId/);
