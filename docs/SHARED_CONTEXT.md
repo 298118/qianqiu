@@ -20,7 +20,7 @@
 - Frontend: React + TypeScript + Vite 在 `client/`，生产构建在 `dist/client/`，Express 默认 `/` 服务 React SPA。React Router Data Mode 管理首页、主卷、舆图、人物、囊箧、史册、科举、皇榜、朝议和设置。旧 `public/index.html`、`public/app.js`、`public/styles.css`、`public/mapPanel.js` 只作迁移参考；`public/assets/`、`public/vendor/`、`public/mapRenderer.js` 继续提供已审核素材和 S72 地图 runtime。
 - Backend: Node.js + Express，当前以 CommonJS JavaScript 为主。S86 已建立渐进 TypeScript 检查地基，`npm run typecheck:server` 覆盖契约、API/view 类型、安全 projection、AI schema/provider facade、storage adapter 和核心 resolver 的首批边界；S87 已完成 route/API response shape 首轮覆盖，`src/contracts/serverContracts.ts` 固定 public response，`src/routes/routeResponses.js` 用局部 `@ts-check` helper 接入大型 route 并运行时拒绝 public `worldState` raw ledger key。不得为了启用类型检查一次性 whole-file `@ts-check` 大型 route 文件，也不得放宽 raw ledger 剥离、Ajv/runtime 校验或服务器裁决。
 - Storage: 默认 JSON session files under `data/sessions/`；可选 `STORAGE_ADAPTER=sqlite` 使用本地 `schema_migrations`、`world_sessions`、audit tables、`geo_*`、`people_*`、`office_*`、`event_archive_index`、`prompt_retrieval_index` 和 `safe_search_index`。SQLite 派生行只从 `world_sessions.world_state_json` 单向修复，不是玩家 API、prompt 或服务器裁决的 raw truth source。
-- Roadmap status: S49-S87 已完成并归档或压缩记录。S88 全面系统打磨已从活动台账长表迁出，阶段性归档见 `docs/QIANQIU_POLISHING_ARCHIVE.md`，原规划见 `docs/QIANQIU_POLISHING_ROADMAP.md`；`docs/DEVELOPMENT_STEPS.md` 当前没有活动中的 `TODO` / `IN_PROGRESS` 小步骤。若继续 S88 残余方向，应新开 S89/S90 或更具体的小步骤，而不是把 S88 长流水复制回活动台账。
+- Roadmap status: S49-S87 已完成并归档或压缩记录。S88 全面系统打磨已从活动台账长表迁出，阶段性归档见 `docs/QIANQIU_POLISHING_ARCHIVE.md`，原规划见 `docs/QIANQIU_POLISHING_ROADMAP.md`；S89.1 已完成 React 玩家可见文案与移动端覆盖层润色，活动台账见 `docs/DEVELOPMENT_STEPS.md`。若继续 S88/S89 残余方向，应继续新开可审查小步骤，而不是把 S88 长流水复制回活动台账。
 - Current collaboration: 2026-05-14 起停止 Gemini CLI 协作。后续开发、素材生成/审核、验证、文档同步和 Git 提交由 Codex 负责；用户已授权本仓库使用 Codex 子代理，实施子代理不得提交，提交前复审子代理必须只读。
 - Current local `.env`: 可能含用户 provider keys。`.env` 被 Git 忽略，不能打印、复制到文档或提交。
 
@@ -65,16 +65,21 @@
 
 ## Current Work Note
 
-2026-05-24：按用户要求完成当前上下文压缩，并把 `docs/DEVELOPMENT_STEPS.md` 中 S88 长表归档到 `docs/QIANQIU_POLISHING_ARCHIVE.md`。本轮只改文档，不改代码、API/schema、SQLite schema、存档格式、AI 权限、prompt、验证工具、素材 manifest 或运行时行为；按低风险纯文档规则跳过提交前子代理复审。
+2026-05-24：S89.1 完成 React 玩家可见文案与移动端覆盖层润色。范围包括首页继续本局、主卷畸形案卷恢复页、舆图/史册/人物/囊箧/科举/皇榜/朝议/身份循环/推演设置/专题层文案清理，避免把 `AI`、provider/model、服务器、安全视图、projection、resolver、ref 等工程词直接暴露给玩家；抽屉增加统一遮罩和外点关闭，人物/囊箧工作台、统计格与推演矩阵在窄屏单列化，常用纸按钮/纸链接补齐焦点与悬停反馈。囊箧可见标签过滤补上 provider/prompt/path/key/hidden 等污染兜底。
 
-本轮验证口径：
+本轮只改 React 前端文案、样式、route recovery 和本地安全过滤；不改后端 API/schema、AI 权限矩阵、prompt、provider facade、SQLite schema、存档格式、runtime manifest 字段或服务器裁决。开工前已委派只读子代理巡检 React polish 缺口；提交前只读复审指出专题层动态字段、少量固定文案、角色面板空态、快捷行动来源标签、舆图无障碍名称和朝议页专题入口 aria 仍有工程词泄漏，已补 `rewritePlayerFacingWorldText()` 覆盖、专题材料/证据/错误文案清洗、角色面板空态改写、快捷行动玩家语汇映射、舆图 aria 名称清理、朝议页 aria 清理和玩家可见 canary。最终只读子代理复审已通过，未发现阻断或应修复项。
 
-- `npm run check:docs-governance`
-- `node --test test/documentationGovernance.test.js`
-- `git diff --check`
+本轮验证结果：
+
+- 已通过 `npm run typecheck:client`。
+- 已通过 `npm run test:client`（6 files / 126 tests）；此前本机曾遇到 Vitest worker 启动超时，另以 `npx vitest --config vitest.config.mjs run --pool=vmThreads --fileParallelism=false` 串行池完整复核过同一批断言。
+- 已通过 `npm run smoke:browser`，并串联通过 `npm run qa:runtime-manifest`、`npm run build:client` 和 `npm run budget:client`；Vite 仍输出既有 `/assets/ui/...` runtime asset 与 chunk size warnings。
+- 已通过 `npm run check:docs-governance`、`node --test test/documentationGovernance.test.js`、`git diff --check`；`git diff --check` 仅输出仓库既有 CRLF warning，非本次修改文件。
+- 已通过 `node --test test/reactClientScaffold.test.js` 与完整 `npm test`（1159 tests），源码 canary 已同步到本轮玩家可见文案新口径；修复朝议页 aria 后又补跑 `npm run typecheck:client`、`npm run test:client` 和 `node --test test/reactClientScaffold.test.js` 通过。
+- 修复后最终只读子代理复审已通过，未要求再补跑验证。
 
 ## Next Recommended Step
 
-先由用户或下一轮 Codex 明确新专项。若继续 S88 残余方向，请新开 S89/S90 小步骤并引用 S88 归档，优先候选包括：S88.9 loading/empty/error/mobile/operation polish、S88.7 更深关系后果、S88.12 真实 keyed provider 长跑证据、S88.11 视觉素材 QA 消费层巡检。
+若继续前端产品化打磨，建议新开 S89.2，优先做真实浏览器视觉回归截图矩阵、首页旧案 loading/empty 细节、错误页/空态插画化、专题层 drawer/modal 过渡统一和更多页面的移动端长文本审查。若转向系统深度，优先候选包括更深关系后果、真实 keyed provider 长跑证据和视觉素材 QA 消费层巡检。
 
 无论下一步是什么，都必须继续从安全 view 重建 evidence，保持 proposal-only、browser-draft-only 和服务器裁决，不让浏览器 task、地图 layout、visual-only effect、NPC anchor、runtime manifest 元数据、world entity impact/recent impact、交游 evidence、world thread 或 draftContext 变成真实任务队列、资源结算器、关系/婚姻/弹劾/定罪/背叛裁决器。

@@ -6,6 +6,7 @@ import { markOverlayTrigger } from "../components/overlayFocus";
 import { isRouteLocalSessionId, isRunnableSessionId } from "../routes/sessionId";
 import { useGameSessionStore } from "../state/gameSessionState";
 import { useUiStateStore } from "../state/uiState";
+import { rewritePlayerFacingWorldText } from "../text/worldText";
 
 type ArchiveItem = {
   readonly id: string;
@@ -82,7 +83,8 @@ function cleanArchivePageText(value: unknown, fallback = "未载", maxLength = 1
   const lowered = text.toLowerCase();
   if (localArchivePathPattern.test(text) || /sk-[a-z0-9_-]{6,}|tp-[a-z0-9_-]{6,}/i.test(text)) return fallback;
   if (unsafeArchiveFragments.some((fragment) => lowered.includes(fragment.toLowerCase()))) return fallback;
-  return text.length > maxLength ? `${text.slice(0, maxLength)}…` : text;
+  const rewritten = rewritePlayerFacingWorldText(text);
+  return rewritten.length > maxLength ? `${rewritten.slice(0, maxLength)}…` : rewritten;
 }
 
 function cleanOptionalArchiveText(value: unknown, maxLength = 96) {
@@ -167,7 +169,7 @@ export function ArchivePage() {
         <div>
           <p className="eyebrow">史册</p>
           <h2 id="archive-title">史册</h2>
-          <p>风闻、案牍、朝报、后果与旧事归入公开卷宗；这里只读安全档案，行动仍回主卷提交。</p>
+          <p>风闻、案牍、朝报、后果与旧事归入公开卷宗；这里只读已载档案，行动仍回主卷呈上。</p>
         </div>
         <dl className="archiveStats" aria-label="史册统计">
           <div>
@@ -234,8 +236,8 @@ export function ArchivePage() {
               {!routeSessionSupported
                 ? "此案卷编号暂不可用于浏览器史册；请从首页开卷或载入旧案。"
                 : isRunnable && status === "loading"
-                ? "正在读取 player-state 中的安全史册投影。"
-                : "暂无可显示的公开归档；推进一旬或完成服务器裁决后会进入史册。"}
+                ? "正在读取本局史册。"
+                : "暂无可显示的公开归档；推进一旬或有回批后会进入史册。"}
             </p>
           )}
         </div>
@@ -243,7 +245,7 @@ export function ArchivePage() {
         <DomainConsequenceSection
           domainConsequenceView={domainConsequenceView}
           title="史册后果追踪"
-          summaryFallback="史册页只显示服务器已裁决的公开领域后果；内部账本、证据链和审计原文不会进入玩家视图。"
+          summaryFallback="史册页只显示已经入卷的公开后果；内账、私记和未公开证据不会进入玩家视野。"
           emptyText="暂无公开领域后果归档。"
           maxItems={4}
           runnable={canDraft}
@@ -252,8 +254,8 @@ export function ArchivePage() {
         <NpcFollowUpEvidenceSection
           evidence={npcFollowUpEvidence}
           title="来函证据追踪"
-          summaryFallback="史册页只读展示主动来函后续 evidence；引荐拜会、人情债月账、请托案牍和风宪 watchlist 仍要回主卷提交，由服务器裁决。"
-          boundaryText="史册页只显示服务器安全投影中的来函线索；按钮只写草稿，不结算资源、人情债、婚姻、弹劾、定罪、背叛或未公开事实。"
+          summaryFallback="史册页只读展示主动来函后续线索；引荐拜会、人情债月账、请托案牍和风宪关注仍要回主卷呈上候复。"
+          boundaryText="史册页只显示已公开来函线索；按钮只写草稿，不结算资源、人情债、婚姻、弹劾、定罪、背叛或未公开事实。"
           idPrefix="archive-follow-up-evidence"
           maxItems={4}
           runnable={canDraft}
@@ -261,7 +263,7 @@ export function ArchivePage() {
         />
       </section>
 
-      <p className="archiveBoundary">史册条目只来自服务器整理后的公开卷宗；内部材料、密档、私记和原始账簿不会进入玩家视图。</p>
+      <p className="archiveBoundary">史册条目只来自已公开卷宗；内廷材料、密档、私记和底账不会进入玩家视野。</p>
     </article>
   );
 }

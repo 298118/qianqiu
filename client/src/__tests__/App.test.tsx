@@ -1336,7 +1336,7 @@ describe("S74.1 React client shell", () => {
     expect(screen.getByText("钱粮仓储")).toBeTruthy();
     expect(screen.getByText("基础市价")).toBeTruthy();
     expect(screen.getByText("粮食一石")).toBeTruthy();
-    expect(screen.getByText("NPC 月账")).toBeTruthy();
+    expect(screen.getByText("人物月账")).toBeTruthy();
     expect(screen.getByText("交易月账：1条未结议价已转为逾期作废。")).toBeTruthy();
     expect(screen.getByText("钱粮与市价为何变化")).toBeTruthy();
     expect(screen.getByText("粮食一石上扬")).toBeTruthy();
@@ -1348,8 +1348,8 @@ describe("S74.1 React client shell", () => {
     expect(screen.getByText("人物经济月账")).toBeTruthy();
     expect(screen.getByText("水利盗警")).toBeTruthy();
     expect(screen.getByText("士绅乡约")).toBeTruthy();
-    expect(screen.getByText("审案、征税、开仓、水利、缉捕、任免、考成和持久化都由服务器裁决。")).toBeTruthy();
-    expect(screen.getByText("基础市价和 NPC 月账由后端旬更/月结；前端只显示，不成交、不改账。")).toBeTruthy();
+    expect(screen.getByText("审案、征税、开仓、水利、缉捕、任免和考成都须候案卷回批。")).toBeTruthy();
+    expect(screen.getByText("基础市价和人物月账按旬更/月结入卷；本页只显示，不成交、不改账。")).toBeTruthy();
 
     fireEvent.click(screen.getByRole("button", { name: "升堂核案" }));
     expect(useUiStateStore.getState().actionDraft).toMatchObject({
@@ -1361,13 +1361,13 @@ describe("S74.1 React client shell", () => {
     expect(useUiStateStore.getState().actionDraft).toMatchObject({
       source: "role-surface",
       targetPage: "game",
-      text: "把清河县平抑米价余波列入月报，后续财政民情仍由服务器逐旬结算。"
+      text: "把清河县平抑米价余波列入月报，后续财政民情仍由主卷逐旬结算。"
     });
     fireEvent.click(screen.getAllByRole("button", { name: "拟复核" })[0]);
     expect(useUiStateStore.getState().actionDraft).toMatchObject({
       source: "role-surface",
       targetPage: "game",
-      text: expect.stringContaining("资源、物品、交易、委派、人情债和关系变化仍由服务器裁决")
+      text: expect.stringContaining("资源、物品、交易、委派、人情债和关系变化仍候案卷回批")
     });
     expect(fetchMock.mock.calls.filter(([url]) => url === "/api/game/turn")).toHaveLength(0);
     expect(document.body.textContent || "").not.toMatch(/provider payload|privateSignalTags|sk-test-secret|prompt|raw audit|path=|C:\\|data\/sessions|OPENAI_API_KEY|stateDelta|playerDelta|evidenceRefs|outcomeId|auditRecord|cityPolicyLedger|rawSql/i);
@@ -1741,7 +1741,7 @@ describe("S74.1 React client shell", () => {
     expect(screen.queryByText("砚台保养")).toBeNull();
     expect(screen.queryByText("污染委派解释")).toBeNull();
     expect(screen.getByText("首月回署：馆阁讲章校订")).toBeTruthy();
-    expect(screen.getByText(/近次裁决：准入复核：馆阁讲章校订已入奏折队列服务器裁决/)).toBeTruthy();
+    expect(screen.getByText(/近次裁决：准入复核：馆阁讲章校订已入奏折队列主卷定夺/)).toBeTruthy();
     expect(screen.getByText(/朝议跟进：部院覆奏 · 部院待覆/)).toBeTruthy();
     expect(screen.getAllByText("翰林院").length).toBeGreaterThan(0);
     expect(screen.getByText("同年座师与人脉")).toBeTruthy();
@@ -1774,7 +1774,7 @@ describe("S74.1 React client shell", () => {
     expect(useUiStateStore.getState().actionDraft?.text).toContain("清河县粮价余波");
     const economyButtons = screen.getAllByRole("button", { name: "拟复核" });
     fireEvent.click(economyButtons[economyButtons.length - 1]);
-    expect(useUiStateStore.getState().actionDraft?.text).toContain("服务器裁决");
+    expect(useUiStateStore.getState().actionDraft?.text).toContain("案卷回批");
     expect(fetchMock.mock.calls.filter(([url]) => url === "/api/game/turn")).toHaveLength(0);
     expect(document.body.textContent || "").not.toMatch(/provider payload|hiddenDossier|sk-test-secret|prompt|raw audit|path=|C:\\|data\/sessions|OPENAI_API_KEY|stateDelta|playerDelta|evidenceRefs|outcomeId|auditRecord|cityPolicyLedger|rawSql/i);
   });
@@ -1945,7 +1945,7 @@ describe("S74.1 React client shell", () => {
     expect(screen.getByText("辽西粮道受阻余波")).toBeTruthy();
     expect(screen.getByRole("link", { name: "入舆图页" }).getAttribute("href")).toBe(`/game/${sessionId}/map`);
     expect(screen.getByRole("link", { name: "查史册" }).getAttribute("href")).toBe(`/game/${sessionId}/archive`);
-    expect(screen.getByText("战役胜负、调兵遣将、外交和战、统帅任免、粮饷拨付、赏罚与持久化都由服务器裁决。")).toBeTruthy();
+    expect(screen.getByText("战役胜负、调兵遣将、外交和战、统帅任免、粮饷拨付与赏罚都须候案卷回批。")).toBeTruthy();
 
     fireEvent.click(screen.getByRole("button", { name: "遣出斥候" }));
     expect(useUiStateStore.getState().actionDraft).toMatchObject({
@@ -1957,6 +1957,7 @@ describe("S74.1 React client shell", () => {
     expect(useUiStateStore.getState().actionDraft?.text).toContain("辽西粮道受阻余波");
     expect(fetchMock.mock.calls.filter(([url]) => url === "/api/game/turn")).toHaveLength(0);
     expect(document.body.textContent || "").not.toMatch(/provider payload|sk-test-secret|prompt|raw audit|path=|C:\\|data\/sessions|OPENAI_API_KEY|stateDelta|playerDelta|evidenceRefs|outcomeId|auditRecord|militaryDiplomacyLedger|rawSql/i);
+    expect(document.body.textContent || "").not.toMatch(/投影|安全地图运行时|后端裁决|resolver|safe view|\bserver\b|provider|model/i);
   });
 
   it("renders the S76.6 emperor panel from safe court views as draft-only edicts", async () => {
@@ -2159,7 +2160,7 @@ describe("S74.1 React client shell", () => {
     expect(screen.getByRole("link", { name: "入朝议页" }).getAttribute("href")).toBe(`/game/${sessionId}/court`);
     expect(screen.getByRole("link", { name: "查史册" }).getAttribute("href")).toBe(`/game/${sessionId}/archive`);
     expect(screen.queryByRole("button", { name: "不应显示污染后果" })).toBeNull();
-    expect(screen.getByText("任免、赏罚、处分、朱批成案、圣旨生效、时间推进和持久化都由服务器裁决。")).toBeTruthy();
+    expect(screen.getByText("任免、赏罚、处分、朱批成案、圣旨生效和时间推进都须候案卷回批。")).toBeTruthy();
 
     fireEvent.click(screen.getByRole("button", { name: "拟旨" }));
     expect(useUiStateStore.getState().actionDraft).toMatchObject({
@@ -2171,7 +2172,7 @@ describe("S74.1 React client shell", () => {
     expect(useUiStateStore.getState().actionDraft).toMatchObject({
       source: "role-surface",
       targetPage: "game",
-      text: "朱批留览部院覆奏：河工清册，令部院据公开凭据覆奏，此稿只候服务器裁决。"
+      text: "朱批留览部院覆奏：河工清册，令部院据公开凭据覆奏，此稿只候主卷定夺。"
     });
     fireEvent.click(screen.getByRole("button", { name: "月报摘录" }));
     expect(useUiStateStore.getState().actionDraft?.text).toContain("官职月报");
@@ -2179,6 +2180,7 @@ describe("S74.1 React client shell", () => {
     expect(useUiStateStore.getState().actionDraft?.text).toContain("山海关边警余波");
     expect(fetchMock.mock.calls.filter(([url]) => url === "/api/game/turn")).toHaveLength(0);
     expect(document.body.textContent || "").not.toMatch(/provider payload|sk-test-secret|prompt|raw audit|path=|C:\\|data\/sessions|OPENAI_API_KEY|stateDelta|playerDelta|evidenceRefs|outcomeId|auditRecord|judicialCaseLedger|rawSql/i);
+    expect(document.body.textContent || "").not.toMatch(/投影|后端裁决|resolver|safe view|\bserver\b|provider|model/i);
   });
 
   it("tracks route-derived UI page state and closes safe drawers with Esc while restoring focus", async () => {
@@ -2304,7 +2306,7 @@ describe("S74.1 React client shell", () => {
 
     await waitFor(() => expect(useUiStateStore.getState().currentSessionId).toBe(sessionId));
     fireEvent.click(screen.getByRole("button", { name: "打开印匣" }));
-    expect(screen.getByRole("tab", { name: "AI 设置" }).getAttribute("aria-selected")).toBe("true");
+    expect(screen.getByRole("tab", { name: "推演" }).getAttribute("aria-selected")).toBe("true");
     await screen.findByText(/已保存/);
     expect(screen.getByText("叙事")).toBeTruthy();
     expect(screen.getByText("快捷建议")).toBeTruthy();
@@ -2318,8 +2320,8 @@ describe("S74.1 React client shell", () => {
     expect(screen.getByText("贡院春寒，案上仍有未竟策问。")).toBeTruthy();
     expect(screen.getByRole("button", { name: "刷新" })).toBeTruthy();
 
-    fireEvent.click(screen.getByRole("tab", { name: "安全" }));
-    expect(screen.getAllByText(/安全视图/).length).toBeGreaterThan(0);
+    fireEvent.click(screen.getByRole("tab", { name: "摘要" }));
+    expect(screen.getAllByText(/公开卷宗|案卷摘要/).length).toBeGreaterThan(0);
     expect(document.body.textContent || "").not.toMatch(/OPENAI_API_KEY|base URL|raw prompt|raw audit|provider payload|data\/sessions/i);
 
     fireEvent.click(screen.getByRole("tab", { name: "旧案" }));
@@ -2419,7 +2421,7 @@ describe("S74.1 React client shell", () => {
     await waitFor(() => expect(useUiStateStore.getState().currentSessionId).toBe(sessionId));
     fireEvent.click(screen.getByRole("button", { name: "打开印匣" }));
     await screen.findByText("矩阵未载");
-    expect(screen.getByText("暂无 AI 任务矩阵；前端不会补造 provider、模型或工具权限。")).toBeTruthy();
+    expect(screen.getByText("暂无推演分工；本页不会自行补造叙事来源或复核权限。")).toBeTruthy();
     fireEvent.click(screen.getByRole("tab", { name: "旧案" }));
 
     await screen.findByText("当前案主");
@@ -2652,7 +2654,7 @@ describe("S74.1 React client shell", () => {
     renderRoute(`/game/${sessionId}/settings`);
 
     await screen.findByDisplayValue("900");
-    const routePanel = screen.getByRole("article", { name: "AI 设置" });
+    const routePanel = screen.getByRole("article", { name: "推演设置" });
     const routeScope = within(routePanel);
     fireEvent.change(routeScope.getByDisplayValue("900"), { target: { value: "1200" } });
     fireEvent.click(routeScope.getByRole("button", { name: /保存全局设置/ }));
@@ -2846,7 +2848,7 @@ describe("S74.1 React client shell", () => {
     const dialog = screen.getByRole("dialog", { name: "拟圣旨" });
     expect(dialog.textContent || "").toContain("数据来源");
     expect(dialog.textContent || "").toContain("占位状态");
-    expect(dialog.textContent || "").toContain("服务器裁决");
+    expect(dialog.textContent || "").toContain("候案卷回批");
     expect(dialog.textContent || "").not.toMatch(/raw audit|provider payload|hiddenNotes|data\/sessions|OPENAI_API_KEY/i);
     const closeSurfaceButton = screen.getByRole("button", { name: "关闭专题" });
     const writeDraftButton = screen.getByRole("button", { name: "写入奏折草稿" });
@@ -2870,7 +2872,7 @@ describe("S74.1 React client shell", () => {
     const trialTrigger = screen.getByRole("button", { name: "堂审" });
     fireEvent.click(trialTrigger);
     const trialDialog = screen.getByRole("dialog", { name: "堂审" });
-    expect(trialDialog.textContent || "").toContain("localAffairsDocketView");
+    expect(trialDialog.textContent || "").toContain("地方案牍");
     expect(trialDialog.textContent || "").toContain("不补造犯供");
     fireEvent.click(screen.getByRole("button", { name: "写入奏折草稿" }));
     expect(useUiStateStore.getState().actionDraft?.text).toContain("公开案牍");
@@ -3043,6 +3045,7 @@ describe("S74.1 React client shell", () => {
     renderRoute(`/game/${sessionId}/court`);
 
     await screen.findByRole("heading", { name: "朝议与官署" });
+    expect(document.body.textContent || "").not.toMatch(/安全专题投影|后端裁决|resolver|safe view|\bserver\b|provider|model/i);
     fireEvent.click(screen.getByRole("button", { name: "朝议" }));
 
     const dialog = await screen.findByRole("dialog", { name: "朝议" });
@@ -3060,9 +3063,10 @@ describe("S74.1 React client shell", () => {
     expect(dialog.textContent || "").toContain("经济解释 1 条");
     expect(dialog.textContent || "").toContain("经济解释 · 月账");
     expect(dialog.textContent || "").not.toContain("economyTraceView");
+    expect(dialog.textContent || "").not.toMatch(/AI|NPC|安全投影|安全视图|后端裁决|resolver|safe view|\bserver\b|provider|model/i);
 
     fireEvent.click(screen.getByLabelText(/纸价议价解释/));
-    fireEvent.click(screen.getByRole("button", { name: "AI 拟稿" }));
+    fireEvent.click(screen.getByRole("button", { name: "推演拟稿" }));
     await waitFor(() => expect((screen.getByLabelText("专题草稿正文") as HTMLTextAreaElement).value).toBe("请召诸臣廷议，先核边饷催报与纸价议价解释，再拟稳妥章程。"));
     fireEvent.click(screen.getByRole("button", { name: "写入底部奏折" }));
 
@@ -3291,7 +3295,7 @@ describe("S74.1 React client shell", () => {
     const mapTrigger = screen.getByRole("button", { name: "筛舆图" });
     fireEvent.click(mapTrigger);
     const mapDialog = await screen.findByRole("dialog", { name: "舆图筛选" });
-    expect(mapDialog.textContent || "").toContain("mapRuntimeView");
+    expect(mapDialog.textContent || "").toContain("舆图地点");
     expect(useUiStateStore.getState().currentSessionId).toBe(routeSessionId);
     expect(screen.getByRole("button", { name: "关闭专题" })).toBe(document.activeElement);
     fireEvent.keyDown(document, { key: "Escape" });
@@ -3578,7 +3582,7 @@ describe("S74.1 React client shell", () => {
     renderRoute(`/game/${sessionId}/exam`);
 
     await screen.findByRole("heading", { name: "科举" });
-    expect(screen.getByText("贡院号舍")).toBeTruthy();
+    expect(screen.getAllByText("县学试棚").length).toBeGreaterThan(0);
     expect(document.querySelector(".examFullScreen")).toBeTruthy();
     expect(document.querySelector(".examStageRail")).toBeTruthy();
     expect(document.querySelector(".sessionRouteShell")).toBeTruthy();
@@ -3586,7 +3590,7 @@ describe("S74.1 React client shell", () => {
     expect(document.querySelector(".gameMainDeck")).toBeFalsy();
     expect(document.querySelector(".memorialComposer")).toBeFalsy();
     expect(screen.getByLabelText("试别")).toBeTruthy();
-    expect(screen.getByText(/交卷、评分、舞弊、放榜、晋级和授官都由服务器裁决/)).toBeTruthy();
+    expect(screen.getByText(/交卷、评分、舞弊、放榜、晋级和授官都回主卷定夺/)).toBeTruthy();
 
     fireEvent.change(screen.getByLabelText("试别"), { target: { value: "provincial_exam" } });
     fireEvent.click(screen.getByRole("button", { name: "取题" }));
@@ -3599,7 +3603,7 @@ describe("S74.1 React client shell", () => {
     expect(screen.getByText("备考吃紧：盘费与旅途压力偏高。")).toBeTruthy();
     expect(screen.getByText(/入场后反馈：题纸既发/)).toBeTruthy();
     expect(screen.getByText(/发题审题：题纸既发/)).toBeTruthy();
-    expect(screen.getByText(/虚拟考生、阅卷官与榜单只显示安全占位/)).toBeTruthy();
+    expect(screen.getByText(/同场考生、阅卷官与榜单只显示公开占位/)).toBeTruthy();
 
     const fetchCountBeforeFeedbackDraft = fetchMock.mock.calls.length;
     fireEvent.click(screen.getByRole("button", { name: "拟行动：审题立意" }));
@@ -3779,7 +3783,7 @@ describe("S74.1 React client shell", () => {
     expect(document.querySelector(".gameMainDeck")).toBeFalsy();
     expect(document.querySelector(".memorialComposer")).toBeFalsy();
     expect(document.querySelector(".rankingTopThree")).toBeTruthy();
-    expect(screen.getByText("服务器定榜名单")).toBeTruthy();
+    expect(screen.getByText("金榜名单")).toBeTruthy();
     expect(screen.getByText("金榜题名")).toBeTruthy();
     expect(screen.getAllByText("顾衡").length).toBeGreaterThan(0);
     expect(document.querySelector(".rankingGoldenNotice")).toBeTruthy();
@@ -3796,7 +3800,7 @@ describe("S74.1 React client shell", () => {
     expect(screen.getByText(/具帖拜谢许读卷官/)).toBeTruthy();
     fireEvent.click(screen.getAllByRole("button", { name: /拟行动/ })[0]);
     expect(useUiStateStore.getState().actionDraft?.text).toContain("许读卷官");
-    expect(screen.getByText(/本榜只录服务器定榜结果/)).toBeTruthy();
+    expect(screen.getByText(/本榜只录已经张挂的定榜结果/)).toBeTruthy();
     expect(fetchMock.mock.calls.map(([url]) => String(url))).not.toContain("/api/game/turn");
     expect(fetchMock.mock.calls.map(([url]) => String(url)).some((url) => /\/api\/game\/state|\/api\/dev/.test(url))).toBe(false);
     expect(document.body.textContent || "").not.toMatch(/provider payload|raw audit|hiddenNotes|sk-test-secret|path=|C:\\|OPENAI_API_KEY|data\/sessions/i);
@@ -3935,8 +3939,8 @@ describe("S74.1 React client shell", () => {
     renderRoute(`/game/${sessionId}/ranking`);
 
     await screen.findByRole("heading", { name: "皇榜" });
-    expect(screen.getByText("服务器定榜名单")).toBeTruthy();
-    expect(screen.getByText("服务器只公开同名榜行。")).toBeTruthy();
+    expect(screen.getByText("金榜名单")).toBeTruthy();
+    expect(screen.getByText(/只公开同名榜行/)).toBeTruthy();
     expect(document.querySelector(".rankingGoldenNotice")).toBeFalsy();
     expect(document.querySelector(".rankingList li.isPlayer")).toBeFalsy();
     expect(screen.queryByText("我名在此")).toBeNull();
@@ -4208,11 +4212,11 @@ describe("S74.1 React client shell", () => {
     expect(screen.getAllByText("同年文社").length).toBeGreaterThan(0);
     expect(screen.getByText("地方士绅")).toBeTruthy();
     expect(screen.getByText("论道余波已作为同年文社公开压力留痕，仍不结算关系终局。")).toBeTruthy();
-    expect(screen.getByText("NPC 关系行动 · 信任上升")).toBeTruthy();
+    expect(screen.getByText("人物关系行动 · 信任上升")).toBeTruthy();
     expect(screen.getByText("来函后续已作为地方人情公开压力留痕，不代表人情债已经落账。")).toBeTruthy();
     expect(screen.getByText("交游议题")).toBeTruthy();
     expect(screen.getByText("交游记录：沈砚秋论道")).toBeTruthy();
-    expect(screen.getByText("沈砚秋论道已由服务器裁决，只作公开交游材料引用。")).toBeTruthy();
+    expect(screen.getByText("沈砚秋论道已由主卷定夺，只作公开交游材料引用。")).toBeTruthy();
     expect(screen.getByText("交游记录 · 可跟进")).toBeTruthy();
     expect(screen.queryByText("不属于人物交游的议题")).toBeNull();
     expect(screen.queryByText("公开压力 2 项")).toBeNull();
@@ -4235,7 +4239,7 @@ describe("S74.1 React client shell", () => {
     expect(useUiStateStore.getState().actionDraft).toMatchObject({
       source: "role-surface",
       targetPage: "game",
-      text: expect.stringContaining("服务器裁决")
+      text: expect.stringContaining("案卷回批")
     });
     expect(fetchMock).toHaveBeenCalledWith("/assets/ui/ink-ui-runtime-manifest.json", expect.objectContaining({ headers: { Accept: "application/json" } }));
 
@@ -4837,7 +4841,7 @@ describe("S74.1 React client shell", () => {
     expect(useUiStateStore.getState().actionDraft).toMatchObject({
       source: "role-surface",
       targetPage: "game",
-      text: expect.stringContaining("服务器裁决")
+      text: expect.stringContaining("案卷回批")
     });
     expect(fetchMock.mock.calls.map(([url]) => String(url))).not.toContain("/api/game/turn");
   });
@@ -4989,7 +4993,7 @@ describe("S74.1 React client shell", () => {
     expect(useUiStateStore.getState().actionDraft).toMatchObject({
       source: "role-surface",
       targetPage: "game",
-      text: expect.stringContaining("服务器裁决")
+      text: expect.stringContaining("案卷回批")
     });
     expect(fetchMock.mock.calls.map(([url]) => String(url))).not.toContain("/api/game/turn");
   });
@@ -5220,7 +5224,7 @@ describe("S74.1 React client shell", () => {
     const transferButton = screen.getByRole("button", { name: "呈请移置" });
     await waitFor(() => expect(transferButton).toHaveProperty("disabled", false));
     fireEvent.click(transferButton);
-    await screen.findByText("服务器已校验并更新物件位置。");
+    await screen.findByText("案卷已复核并更新物件位置。");
 
     await act(async () => {
       await router.navigate(`/game/${secondSessionId}/inventory`);
@@ -5228,7 +5232,7 @@ describe("S74.1 React client shell", () => {
 
     await screen.findByText("新案清册");
     await waitFor(() => expect(useGameSessionStore.getState().inventory?.sessionId).toBe(secondSessionId));
-    expect(document.body.textContent || "").not.toMatch(/旧案清册|旧案书箧|旧案库房|服务器已校验并更新物件位置。|未入容器/);
+    expect(document.body.textContent || "").not.toMatch(/旧案清册|旧案书箧|旧案库房|案卷已复核并更新物件位置。|未入容器/);
   });
 
   it("keeps S88.9 inventory transfer selections when an older same-session response returns", async () => {
@@ -5354,7 +5358,7 @@ describe("S74.1 React client shell", () => {
     await waitFor(() => expect(useGameSessionStore.getState().inventory?.inventoryView.items.find((item) => item.itemId === "draft-item")?.containerId).toBe("archive-chest"));
     expect((screen.getByLabelText("物件") as HTMLSelectElement).value).toBe("receipt-item");
     expect((screen.getByLabelText("去处") as HTMLSelectElement).value).toBe("desk-box");
-    expect(screen.queryByText("服务器已校验并更新物件位置。")).toBeNull();
+    expect(screen.queryByText("案卷已复核并更新物件位置。")).toBeNull();
   });
 
   it("caps the S76.10 people ledger at eighty public rows with the player first", async () => {
@@ -5601,12 +5605,12 @@ describe("S74.1 React client shell", () => {
     expect(boundary?.textContent || "").toContain("可读材料");
     expect(boundary?.textContent || "").toContain("官职履历");
     expect(boundary?.textContent || "").toContain("奏议回应");
-    expect(boundary?.textContent || "").toContain("只读视图");
-    expect(boundary?.textContent || "").toContain("前端草稿");
-    expect(boundary?.textContent || "").toContain("服务器裁决");
-    expect(boundary?.textContent || "").toContain("AI 只读身份循环安全材料");
+    expect(boundary?.textContent || "").toContain("只读公开卷");
+    expect(boundary?.textContent || "").toContain("案头草稿");
+    expect(boundary?.textContent || "").toContain("主卷定夺");
+    expect(boundary?.textContent || "").toContain("推演 只读身份循环安全材料");
     expect(boundary?.textContent || "").toContain("只整理当前身份公开事务");
-    expect(boundary?.textContent || "").toContain("资源、官职和事务结果仍由服务器裁决");
+    expect(boundary?.textContent || "").toContain("资源、官职和事务结果仍由主卷定夺");
     expect(document.body.textContent || "").not.toMatch(/providerPayload|\/Users\/alice|\.env/);
     const matrix = screen.getByRole("list", { name: "六身份矩阵" });
     expect(within(matrix).getByText("书生")).toBeTruthy();
@@ -5757,13 +5761,13 @@ describe("S74.1 React client shell", () => {
 
     await waitFor(() => expect(useUiStateStore.getState().currentSessionId).toBe(sessionId));
     expect(screen.getByRole("button", { name: "可行事" }).getAttribute("aria-expanded")).toBe("true");
-    await screen.findByRole("button", { name: /温书 mock-ai 写入草稿/ });
+    await screen.findByRole("button", { name: /温书 本地推演 写入草稿/ });
     const quickCallsAfterLoad = fetchMock.mock.calls.filter(([url]) => url === `/api/ai/quick-actions/${sessionId}`).length;
     fireEvent.change(screen.getByLabelText("本回合行动"), { target: { value: "先自拟一段行动，不刷新快捷建议。" } });
     await new Promise((resolve) => window.setTimeout(resolve, 0));
     expect(fetchMock.mock.calls.filter(([url]) => url === `/api/ai/quick-actions/${sessionId}`)).toHaveLength(quickCallsAfterLoad);
 
-    fireEvent.click(screen.getByRole("button", { name: /温书 mock-ai 写入草稿/ }));
+    fireEvent.click(screen.getByRole("button", { name: /温书 本地推演 写入草稿/ }));
     expect(useUiStateStore.getState().actionDraft).toMatchObject({
       source: "role-surface",
       targetPage: "game",
@@ -5989,6 +5993,7 @@ describe("S74.1 React client shell", () => {
 
     expect(screen.getByRole("link", { name: "入局势簿" }).getAttribute("href")).toBe("/game/74747474-7474-4774-8774-747474747474/archive");
     expect(document.body.textContent || "").not.toMatch(/raw audit|provider payload|hiddenNotes|OPENAI_API_KEY|data\/sessions|sk-test-secret|C:\\|path=/i);
+    expect(document.body.textContent || "").not.toMatch(/安全投影|安全专题投影|舆图投影摘要|后端裁决|resolver|safe view|\bserver\b|provider|model/i);
   });
 
   it("renders archive route entries and domain consequence tracking from safe views", () => {
@@ -6137,7 +6142,7 @@ describe("S74.1 React client shell", () => {
     expect(useUiStateStore.getState().actionDraft).toMatchObject({
       source: "archive-view",
       targetPage: "game",
-      text: expect.stringContaining("服务器裁决")
+      text: expect.stringContaining("案卷回批")
     });
     expect(archive.getByRole("link", { name: "入舆图" }).getAttribute("href")).toBe("/game/74747474-1111-4111-8111-747474747474/map");
     expect(archivePanel.textContent || "").not.toMatch(/raw audit|provider payload|hiddenNotes|privateSignalTags|OPENAI_API_KEY|data\/sessions|C:\\|path=|stateDelta|evidenceRefs|outcomeId|cityPolicyLedger/i);

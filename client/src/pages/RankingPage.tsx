@@ -5,6 +5,7 @@ import { useAssetRegistry } from "../assets/useAssetRegistry";
 import { isRouteLocalSessionId } from "../routes/sessionId";
 import { useGameSessionStore } from "../state/gameSessionState";
 import { useUiStateStore } from "../state/uiState";
+import { rewritePlayerFacingWorldText } from "../text/worldText";
 
 type AnyRecord = Record<string, unknown>;
 
@@ -86,7 +87,8 @@ function safeRankingText(value: unknown, fallback: string, maxLength = 140) {
   const normalized = text.toLowerCase();
   if (/[a-z]:[\\/]/i.test(text) || /sk-[a-z0-9_-]{6,}/i.test(text)) return fallback;
   if (unsafeRankingFragments.some((fragment) => normalized.includes(fragment.toLowerCase()))) return fallback;
-  return text.length > maxLength ? `${text.slice(0, maxLength)}……` : text;
+  const rewritten = rewritePlayerFacingWorldText(text);
+  return rewritten.length > maxLength ? `${rewritten.slice(0, maxLength)}……` : rewritten;
 }
 
 function readNumber(value: unknown, fallback: number | null = null) {
@@ -151,7 +153,7 @@ function readAntiCheat(authenticityCheck: AnyRecord) {
     return {
       label: safeRankingText(flag.label, "复核事项", 48),
       severity: safeRankingText(flag.severity, "notice", 24),
-      detail: safeRankingText(flag.detail || flag.publicSummary, "服务器已留档。", 96)
+      detail: safeRankingText(flag.detail || flag.publicSummary, "已留档。", 96)
     };
   }).slice(0, 3);
   return flags;
@@ -165,9 +167,9 @@ function readAftermathContacts(items: unknown, fallbackRole: string): readonly A
       name: safeRankingText(contact.name, fallbackRole, 48),
       role: safeRankingText(contact.role, fallbackRole, 48),
       stance: safeRankingText(contact.stance, "公开往来", 72),
-      summary: safeRankingText(contact.publicSummary || contact.summary, "只显示服务器公开关系摘要。", 120)
+      summary: safeRankingText(contact.publicSummary || contact.summary, "只显示公开关系摘要。", 120)
     };
-  }).filter((contact) => contact.name !== fallbackRole || contact.summary !== "只显示服务器公开关系摘要。").slice(0, 4);
+  }).filter((contact) => contact.name !== fallbackRole || contact.summary !== "只显示公开关系摘要。").slice(0, 4);
 }
 
 function readAftermathActions(items: unknown) {
@@ -225,32 +227,32 @@ export function RankingPage() {
   );
   const publicSummary = safeRankingText(
     examHonorView.publicSummary || latestHistory.publicSummary || latestHonor.publicSummary,
-    rows.length ? "服务器已返回本场公开榜文。" : routeSessionSupported ? "榜文尚未张挂。交卷、评阅与放榜完成后，此处才会显示定榜结果。" : unsupportedRouteMessage,
+    rows.length ? "本场公开榜文已经张挂。" : routeSessionSupported ? "榜文尚未张挂。交卷、评阅与放榜完成后，此处才会显示定榜结果。" : unsupportedRouteMessage,
     150
   );
   const serverDecision = safeRankingText(
     examinerPanelView.serverDecision,
-    "榜次、评语、晋级与授官均由服务器裁决。",
+    "榜次、评语、晋级与授官均由案卷回批。",
     140
   );
   const appointmentHint = safeRankingText(
     latestDecision.officeTitle || asRecord(appointmentTrackView.latestTrack).officeTitle || promotionResult.officeTitle,
-    "暂无授官提示；后续铨选仍由服务器裁决。",
+    "暂无授官提示；后续铨选仍候案卷回批。",
     64
   );
   const aftermathSummary = safeRankingText(
     examAftermathView.publicSummary,
     sameYearContacts.length || examinerContacts.length
-      ? "同年座师关系已由服务器公开整理。"
-      : "同年座师关系待服务器放榜后公开整理。",
+      ? "同年座师关系已公开整理。"
+      : "同年座师关系待放榜后公开整理。",
     150
   );
-  const passedText = promotionResult.passed === true ? "已取中" : promotionResult.passed === false ? "未取中" : "候服务器定档";
+  const passedText = promotionResult.passed === true ? "已取中" : promotionResult.passed === false ? "未取中" : "候定档";
   const showGoldenNotice = Boolean(playerRankingEntry || promotionResult.passed === true);
   const goldenNoticeRank = playerRankingEntry?.honorTitle || playerRankingEntry?.rankLabel || passedText;
   const goldenNoticeSummary = safeRankingText(
     latestHonor.publicSummary || latestDecision.publicSummary || publicSummary,
-    `${playerName}已由服务器公开定榜。`,
+    `${playerName}已公开定榜。`,
     96
   );
   const sceneAsset = useMemo(
@@ -302,7 +304,7 @@ export function RankingPage() {
         <button className="paperLink rankingJumpLink" type="button" disabled={!routeSessionSupported} onClick={focusPlayerDetail}>跳至我名</button>
       </section>
 
-      <section className="rankingNoticeBoard" aria-label="服务器定榜皇榜">
+      <section className="rankingNoticeBoard" aria-label="皇榜">
         {showGoldenNotice ? (
           <section className="rankingGoldenNotice" aria-label="金榜题名">
             <div className="rankingGoldenTitle">
@@ -321,7 +323,7 @@ export function RankingPage() {
               <div className="rankingTopSeal" key={place} data-empty={entry ? "false" : "true"}>
                 <span>{readTopSealLabel(place, entry, examName)}</span>
                 <strong>{entry?.name ?? "未张挂"}</strong>
-                <em>{entry?.rankLabel ?? "待服务器定榜"}</em>
+                <em>{entry?.rankLabel ?? "待定榜"}</em>
               </div>
             );
           })}
@@ -331,7 +333,7 @@ export function RankingPage() {
           <section className="rankingListPanel" aria-label="正榜名单">
             <div className="rankingSectionHeading">
               <p className="eyebrow">正榜</p>
-              <h2>服务器定榜名单</h2>
+              <h2>金榜名单</h2>
             </div>
             {rows.length ? (
               <ol className="rankingList">
@@ -385,7 +387,7 @@ export function RankingPage() {
                   ))}
                 </div>
               ) : (
-                <p>暂无公开分项；服务器仍保留最终定分。</p>
+                <p>暂无公开分项；最终定分尚未张榜。</p>
               )}
             </section>
             <section>
@@ -400,7 +402,7 @@ export function RankingPage() {
                   ))}
                 </ul>
               ) : (
-                <p>暂无公开防弊复核结果；待服务器公开后显示。</p>
+                <p>暂无公开防弊复核结果；待放榜后显示。</p>
               )}
             </section>
             <section>
@@ -416,7 +418,7 @@ export function RankingPage() {
                   ))}
                 </ul>
               ) : (
-                <p>暂无公开同年或座师；前端不从姓名、名次或评语自行推断关系。</p>
+                <p>暂无公开同年或座师；本页不从姓名、名次或评语自行推断关系。</p>
               )}
               {aftermathActions.length ? (
                 <div className="rankingActionRow" aria-label="放榜后行动草稿">
@@ -446,7 +448,7 @@ export function RankingPage() {
 
       <section className="rankingBoundary" aria-label="皇榜安全边界">
         <p>{serverDecision}</p>
-        <p>本榜只录服务器定榜结果；前端不改名次、不补评分、不推断授官，只呈现已公开的榜文、评语与授官提示。</p>
+        <p>本榜只录已经张挂的定榜结果；不改名次、不补评分、不推断授官，只呈现已公开的榜文、评语与授官提示。</p>
       </section>
     </article>
   );

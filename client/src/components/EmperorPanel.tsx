@@ -2,6 +2,7 @@ import type { CSSProperties } from "react";
 import { Link } from "react-router";
 import type { JsonObject, JsonValue, PlayerSummary } from "../api";
 import type { LocalSurface } from "../state/uiState";
+import { rewritePlayerFacingWorldText } from "../text/worldText";
 import { DomainConsequenceSection } from "./DomainConsequenceSection";
 import { RoleCycleSection } from "./RoleCycleSection";
 
@@ -100,7 +101,8 @@ function cleanEmperorText(value: unknown, fallback = "未载", maxLength = 112) 
   const lowered = text.toLowerCase();
   if (/[a-z]:[\\/]/i.test(text) || /(?:file|https?):\/\//i.test(text)) return fallback;
   if (unsafeEmperorFragments.some((fragment) => lowered.includes(fragment.toLowerCase()))) return fallback;
-  return text.length > maxLength ? `${text.slice(0, maxLength)}…` : text;
+  const rewritten = rewritePlayerFacingWorldText(text);
+  return rewritten.length > maxLength ? `${rewritten.slice(0, maxLength)}…` : rewritten;
 }
 
 function cleanOptionalText(value: unknown, maxLength = 112) {
@@ -187,7 +189,7 @@ function getEmperorDesk(player: PlayerSummary | null | undefined, officialPostin
     date: cleanEmperorText(eventArchive.dateLabel || officialPostings.dateLabel || court.dateLabel, "时令未载", 36),
     summary: cleanEmperorText(
       court.publicSummary || eventArchive.publicSummary || officialPostings.publicSummary,
-      "御案只读奏折、官职、人事、朝议和审计摘要的安全投影；朱批、圣旨、任免与赏罚只先落成草稿。",
+      "御案只读奏折、官职、人事、朝议和复核摘要；朱批、圣旨、任免与赏罚只先落成草稿。",
       156
     )
   };
@@ -224,7 +226,7 @@ function getCourtResponseAgenda(courtResponse: JsonObject) {
     active: courtResponse.active === true && items.length > 0,
     summary: cleanEmperorText(
       courtResponse.summary,
-      "奏议回应只读服务器公开投影；朱批、覆奏、补据与考成观察只先写成草稿。",
+      "奏议回应只读公开卷宗；朱批、覆奏、补据与考成观察只先写成草稿。",
       148
     ),
     items,
@@ -250,7 +252,7 @@ function getCourtConsequenceAgenda(courtConsequence: JsonObject) {
     active: courtConsequence.active === true && (items.length > 0 || actions.length > 0),
     summary: cleanEmperorText(
       courtConsequence.summary,
-      "官场长期后果只读服务器公开投影；考成、风宪、月报和世界议程只先作观察。",
+      "官场长期后果只读公开卷宗；考成、风宪、月报和天下议程只先作观察。",
       148
     ),
     items,
@@ -389,10 +391,10 @@ export function EmperorPanel({
         />
         <article className="scholarPanelCard emperorPanelMemorials" aria-labelledby="emperor-memorials-title">
           <h3 id="emperor-memorials-title">奏折队列</h3>
-          <p>案头奏折来自服务器公开投影，只能帮助组织询问顺序，不写成已经裁决的朝廷事实。</p>
-          <EmperorPanelList items={memorials} emptyText="暂无奏折投影，可先命内阁录入钱粮、边防、吏治与民生四项。" />
+          <p>案头奏折来自公开卷宗，只能帮助组织询问顺序，不写成已经定夺的朝廷事实。</p>
+          <EmperorPanelList items={memorials} emptyText="暂无奏折材料，可先命内阁录入钱粮、边防、吏治与民生四项。" />
           <div className="scholarPanelActions">
-            {draftButtonText("朱批奏折", "朱批近日奏折，逐条询问钱粮、边防、吏治与民生，只写成行动草稿候服务器裁决。", canDraft, onDraft)}
+            {draftButtonText("朱批奏折", "朱批近日奏折，逐条询问钱粮、边防、吏治与民生，只写成行动草稿候案卷回批。", canDraft, onDraft)}
             {archiveHref ? <Link to={archiveHref}>查史册</Link> : null}
           </div>
         </article>
@@ -411,7 +413,7 @@ export function EmperorPanel({
               </button>
             ))}
             {!responseAgenda.actions.length
-              ? draftButtonText("拟奏议回应", "朱批奏议回应，令部院只据公开材料覆奏，后果仍候服务器裁决。", canDraft, onDraft)
+              ? draftButtonText("拟奏议回应", "朱批奏议回应，令部院只据公开材料覆奏，后果仍候案卷回批。", canDraft, onDraft)
               : null}
           </div>
         </article>
@@ -440,7 +442,7 @@ export function EmperorPanel({
               <em>待察</em>
             </li>
           </ul>
-          <p>朱批按钮只把问政文字写入底部奏折；真正的生效、反响和持久化仍在回合提交后由服务器处理。</p>
+          <p>朱批按钮只把问政文字写入底部奏折；真正的生效、反响和留痕仍在回合提交后回批。</p>
           {draftButtonText("批问四务", "朱批问政：请中枢分别具奏钱粮、边防、吏治、民生四务，列明证据与可裁事项。", canDraft, onDraft)}
         </article>
 
@@ -470,14 +472,14 @@ export function EmperorPanel({
         <article className="scholarPanelCard emperorPanelCourt" aria-labelledby="emperor-court-title">
           <h3 id="emperor-court-title">朝议</h3>
           <p>朝臣发言只显示公开摘要；立场、私议和未公开动机不会在前端定论。</p>
-          <EmperorPanelList items={courtDebate} emptyText="暂无朝议投影，可先召内阁、六部、言官各陈所见。" />
+          <EmperorPanelList items={courtDebate} emptyText="暂无朝议材料，可先召内阁、六部、言官各陈所见。" />
           {draftButtonText("召集朝议", "召集朝议，命内阁、六部、言官就奏折队列分别陈奏，先形成问政草稿。", canDraft, onDraft)}
         </article>
 
         <article className="scholarPanelCard emperorPanelAppointments" aria-labelledby="emperor-appointments-title">
           <h3 id="emperor-appointments-title">任免候选</h3>
           <p>候选列表只是官职与人事安全摘要，不能在前端直接任官、罢官或改写考成。</p>
-          <EmperorPanelList items={candidates} emptyText="暂无任免候选投影，可先命吏部具名列缺、资历和考成。" />
+          <EmperorPanelList items={candidates} emptyText="暂无任免候选材料，可先命吏部具名列缺、资历和考成。" />
           {draftButtonText("审看任免", "审看任免候选，命吏部列明资历、缺额、考成和争议，只拟成候裁草稿。", canDraft, onDraft)}
         </article>
 
@@ -489,7 +491,7 @@ export function EmperorPanel({
               <p>官场后果：{consequenceAgenda.summary}</p>
               <EmperorPanelList
                 items={consequenceAgenda.items}
-                emptyText="暂无官场后果信号；考成和风宪仍候服务器规则。"
+                emptyText="暂无官场后果信号；考成和风宪仍候案卷规则。"
               />
             </>
           ) : null}
@@ -507,7 +509,7 @@ export function EmperorPanel({
         <DomainConsequenceSection
           domainConsequenceView={domainConsequenceView}
           title="天下余波"
-          summaryFallback="天下余波只读服务器已裁决的地方、军务、刑名和人物经济公开后果；问责、赏罚、调兵、拨款和处分仍候普通回合裁决。"
+          summaryFallback="天下余波只读已经入卷的地方、军务、刑名和人物经济公开后果；问责、赏罚、调兵、拨款和处分仍候普通回合回批。"
           emptyText="暂无公开领域后果；不得从内廷私档、隐藏证据或模型提案补造事实。"
           runnable={runnable}
           onDraft={onDraft}
@@ -516,9 +518,9 @@ export function EmperorPanel({
         <article className="scholarPanelCard emperorPanelBoundary" aria-labelledby="emperor-boundary-title">
           <h3 id="emperor-boundary-title">御案边界</h3>
           <ul className="scholarPanelBoundary">
-            <li>本面板只读服务器清洗后的公开朝廷视图，不展示内部推演细节、连接凭据或私密宫档。</li>
+            <li>本面板只读公开朝廷卷宗，不展示内部推演细节、连接凭据或私密宫档。</li>
             <li>按钮只把朱批、拟旨、朝议、任免审看和赏罚预留写入底部行动草稿。</li>
-            <li>任免、赏罚、处分、朱批成案、圣旨生效、时间推进和持久化都由服务器裁决。</li>
+            <li>任免、赏罚、处分、朱批成案、圣旨生效和时间推进都须候案卷回批。</li>
           </ul>
         </article>
       </div>

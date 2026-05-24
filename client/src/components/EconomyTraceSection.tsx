@@ -1,4 +1,5 @@
 import type { EconomyTraceItemView, EconomyTraceView } from "../api";
+import { rewritePlayerFacingWorldText } from "../text/worldText";
 
 type EconomyTraceSectionProps = {
   readonly traceView?: EconomyTraceView | null;
@@ -99,7 +100,8 @@ function cleanTraceText(value: unknown, fallback = "", maxLength = 132) {
   const text = normalizeTraceScalar(value);
   if (!text) return fallback;
   if (isUnsafeEconomyTraceText(text)) return fallback;
-  return text.length > maxLength ? `${text.slice(0, maxLength)}...` : text;
+  const rewritten = rewritePlayerFacingWorldText(text);
+  return rewritten.length > maxLength ? `${rewritten.slice(0, maxLength)}...` : rewritten;
 }
 
 function cleanList(values: unknown, maxItems = 3) {
@@ -162,7 +164,7 @@ function safeItems(
         title: title || "经济解释",
         groupLabel,
         statusLabel,
-        summary: summary || "此项只作公开解释，后续仍由服务器裁决。",
+        summary: summary || "此项只作公开解释，后续仍候案卷回批。",
         amountText: amount || undefined,
         affectedLabels: labels,
         nextStep: nextStep || undefined
@@ -173,13 +175,13 @@ function safeItems(
 }
 
 function draftFromItem(item: SafeEconomyTraceItem) {
-  return `复核${item.title}：${item.nextStep || item.summary}；资源、物品、交易、委派、人情债和关系变化仍由服务器裁决。`;
+  return `复核${item.title}：${item.nextStep || item.summary}；资源、物品、交易、委派、人情债和关系变化仍候案卷回批。`;
 }
 
 export function EconomyTraceSection({
   traceView,
   title = "经济解释",
-  summaryFallback = "资源、资产、囊箧、交易、委派和月账解释只来自服务器安全投影；前端不成交、不扣款、不转物。",
+  summaryFallback = "资源、资产、囊箧、交易、委派和月账解释只来自已公开卷宗；本页不成交、不扣款、不转物。",
   idPrefix = "economy-trace",
   maxItems = 6,
   traceTypes,
@@ -196,7 +198,7 @@ export function EconomyTraceSection({
     <section className="economyTraceSection" aria-labelledby={titleId}>
       <div className="economyTraceHeader">
         <div>
-          <p className="eyebrow">服务器解释</p>
+          <p className="eyebrow">账本解释</p>
           <h2 id={titleId}>{title}</h2>
         </div>
         <span>{items.length} 条</span>
@@ -219,7 +221,7 @@ export function EconomyTraceSection({
           </article>
         ))}
       </div>
-      <p className="statusLine">这里只读公开解释；资源、物品、交易、委派、人情债和关系变化仍由服务器裁决。</p>
+      <p className="statusLine">这里只读公开解释；资源、物品、交易、委派、人情债和关系变化仍候案卷回批。</p>
     </section>
   );
 }

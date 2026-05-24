@@ -2,6 +2,7 @@ import type { CSSProperties } from "react";
 import { Link } from "react-router";
 import type { JsonObject, JsonValue, PlayerSummary } from "../api";
 import type { LocalSurface } from "../state/uiState";
+import { rewritePlayerFacingWorldText } from "../text/worldText";
 import { DomainConsequenceSection } from "./DomainConsequenceSection";
 import { RoleCycleSection } from "./RoleCycleSection";
 
@@ -90,7 +91,8 @@ function cleanGeneralText(value: unknown, fallback = "未载", maxLength = 108) 
   const lowered = text.toLowerCase();
   if (/[a-z]:[\\/]/i.test(text) || /(?:file|https?):\/\//i.test(text)) return fallback;
   if (unsafeGeneralFragments.some((fragment) => lowered.includes(fragment.toLowerCase()))) return fallback;
-  return text.length > maxLength ? `${text.slice(0, maxLength)}…` : text;
+  const rewritten = rewritePlayerFacingWorldText(text);
+  return rewritten.length > maxLength ? `${rewritten.slice(0, maxLength)}…` : rewritten;
 }
 
 function cleanOptionalText(value: unknown, maxLength = 108) {
@@ -187,7 +189,7 @@ function getCommandSummary(player: PlayerSummary | null | undefined, posting: Js
     date: cleanGeneralText(militaryDiplomacy.dateLabel || command.dateLabel || posting.startedAt, "时令未载", 36),
     summary: cleanGeneralText(
       command.publicSummary || militaryDiplomacy.publicSummary || posting.publicSummary,
-      "军务、外交、地图和战报均为服务器整理后的安全投影；战役、粮饷、调兵与任免仍由服务器裁决。",
+      "军务、外交、舆图和战报均为已公开卷宗；战役、粮饷、调兵与任免仍候案卷回批。",
       152
     )
   };
@@ -325,7 +327,7 @@ export function GeneralPanel({
         <div>
           <p className="scholarPanelEyebrow">军帐 · {command.date}</p>
           <h2 id="general-panel-title">将领军务</h2>
-          <p>{playerName}署理{command.office}，坐镇{command.theater}，只读军务外交、舆图、史册和人事记忆的安全投影。</p>
+          <p>{playerName}署理{command.office}，坐镇{command.theater}，只读军务外交、舆图、史册和人事记忆的公开卷宗。</p>
           <p>{command.summary}</p>
         </div>
         <dl className="scholarPanelStatus" aria-label="将领摘要">
@@ -339,7 +341,7 @@ export function GeneralPanel({
           </div>
           <div>
             <dt>边界</dt>
-            <dd>只写草稿，战事由服务器裁决</dd>
+            <dd>只写草稿，战事候回批</dd>
           </div>
         </dl>
       </header>
@@ -399,19 +401,19 @@ export function GeneralPanel({
 
         <article className="scholarPanelCard generalPanelFrontier" aria-labelledby="general-frontier-title">
           <h3 id="general-frontier-title">边患与舆图</h3>
-          <GeneralPanelList items={frontier} emptyText="暂无边患投影；若需观势，可入舆图页查看安全地图运行时。" />
+          <GeneralPanelList items={frontier} emptyText="暂无边患材料；若需观势，可入舆图页查看公开舆图。" />
           <div className="scholarPanelActions">
-            {draftButtonText("巡边布防", "按舆图公开投影巡边布防，先拟哨探、粮道与守备次序，不直接调兵结算。", canDraft, onDraft)}
+            {draftButtonText("巡边布防", "按舆图公开材料巡边布防，先拟哨探、粮道与守备次序，不直接调兵结算。", canDraft, onDraft)}
             {mapHref ? <Link to={mapHref}>入舆图页</Link> : null}
           </div>
         </article>
 
         <article className="scholarPanelCard generalPanelReports" aria-labelledby="general-reports-title">
           <h3 id="general-reports-title">战报与边议</h3>
-          <p>战报、边议和外交风声只显示服务器清洗后的公开摘录；胜负、和战、封赏和处分仍待回合裁决。</p>
+          <p>战报、边议和外交风声只显示已公开摘录；胜负、和战、封赏和处分仍待回批。</p>
           <GeneralPanelList items={reports} emptyText="暂无新战报，可先核对旧牍、塘报与使节来文。" />
           <div className="scholarPanelActions">
-            {draftButtonText("草拟战报", `臣${playerName}谨就${command.theater}边患、粮饷、斥候与军心草拟战报，请服务器裁决后果。`, canDraft, onDraft)}
+            {draftButtonText("草拟战报", `臣${playerName}谨就${command.theater}边患、粮饷、斥候与军心草拟战报，请案卷回批后果。`, canDraft, onDraft)}
             {archiveHref ? <Link to={archiveHref}>查史册</Link> : null}
           </div>
         </article>
@@ -420,7 +422,7 @@ export function GeneralPanel({
           domainConsequenceView={domainConsequenceView}
           sourceTypes={["military_diplomacy"]}
           title="军务后果追踪"
-          summaryFallback="军务后果只读服务器已裁决的公开余波；侦察、调粮、战险、和战与赏罚仍须普通回合裁决。"
+          summaryFallback="军务后果只读已经入卷的公开余波；侦察、调粮、战险、和战与赏罚仍须回合候批。"
           emptyText="暂无公开军务后果；不得从隐藏军情、内部账簿或模型提案补造战果。"
           runnable={runnable}
           onDraft={onDraft}
@@ -429,9 +431,9 @@ export function GeneralPanel({
         <article className="scholarPanelCard generalPanelBoundary" aria-labelledby="general-boundary-title">
           <h3 id="general-boundary-title">军令边界</h3>
           <ul className="scholarPanelBoundary">
-            <li>本面板只读服务器整理后的公开军务视图，不展示内部推演细节、连接凭据或私密军情。</li>
+            <li>本面板只读已公开军务卷宗，不展示内部推演细节、连接凭据或私密军情。</li>
             <li>按钮只把军议、战报、斥候、巡边和粮饷安排写入底部行动草稿。</li>
-            <li>战役胜负、调兵遣将、外交和战、统帅任免、粮饷拨付、赏罚与持久化都由服务器裁决。</li>
+            <li>战役胜负、调兵遣将、外交和战、统帅任免、粮饷拨付与赏罚都须候案卷回批。</li>
           </ul>
           <dl className="scholarPanelCompactDl">
             <div>

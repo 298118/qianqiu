@@ -156,7 +156,7 @@ function getPreparationPressure(activeExam: unknown) {
   return {
     label: safeExamText(pressure.label, "从容", 24),
     score: cleanNumber(pressure.score, 0),
-    summary: safeExamText(pressure.summary, "备考压力由服务器整理。", 132),
+    summary: safeExamText(pressure.summary, "备考压力已入卷整理。", 132),
     studyFocus: safeExamText(pressure.studyFocus, "经义根柢", 48),
     causes: asArray(pressure.causes).slice(0, 4).map((item) => safeExamText(item, "", 88)).filter(Boolean),
     suggestedActions: asArray(pressure.suggestedActions).slice(0, 4).map((item) => safeExamText(item, "", 88)).filter(Boolean)
@@ -174,14 +174,14 @@ function getExamProcedure(activeExam: unknown) {
     phaseFeedback: Object.keys(phaseFeedback).length ? {
       phaseLabel: safeExamText(phaseFeedback.phaseLabel, safeExamText(procedure.phaseLabel, "候场", 32), 32),
       pressureLabel: safeExamText(phaseFeedback.pressureLabel, "从容", 24),
-      publicSummary: safeExamText(phaseFeedback.publicSummary, "入场后反馈由服务器整理。", 132),
-      environmentSummary: safeExamText(phaseFeedback.environmentSummary, "场内反馈不替代服务器裁决。", 132),
+      publicSummary: safeExamText(phaseFeedback.publicSummary, "入场后反馈已入卷整理。", 132),
+      environmentSummary: safeExamText(phaseFeedback.environmentSummary, "场内反馈不替代最终回批。", 132),
       actionEcho: safeExamText(phaseFeedback.actionEcho, "", 72),
       riskNotes: asArray(phaseFeedback.riskNotes).slice(0, 3).map((item) => safeExamText(item, "", 88)).filter(Boolean),
       visibleNextActions: asArray(phaseFeedback.visibleNextActions).slice(0, 3).map((item) => safeExamText(item, "", 72)).filter(Boolean),
       authorityBoundary: safeExamText(
         phaseFeedback.authorityBoundary,
-        "入场后反馈由服务器派生；前端只读展示或写草稿。",
+        "入场后反馈只读展示，可留作草稿。",
         132
       )
     } : null,
@@ -231,7 +231,7 @@ export function ExamPage() {
     : "/assets/ui/scenes/scene-exam-cell-v1.webp");
   const essayWordCount = countCjkAwareWords(essay);
   const wordCount = formatWordCountLabel(activeExamForSession?.wordCount);
-  const draftState = essay.trim() ? "草稿已入卷，尚未交服务器裁决。" : "草稿未成篇。";
+  const draftState = essay.trim() ? "草稿已入卷，尚未交卷候批。" : "草稿未成篇。";
   const latestSubmitForSession = routeSessionSupported && lastExamResult?.sessionId === sessionId ? lastExamResult : null;
   const safeRecentExamName = safeExamText(latestSubmitForSession?.examName, getExamLabel(latestSubmitForSession?.level), 64);
   const safeExamName = safeExamText(activeExamForSession?.examName, getExamLabel(visibleLevel), 64);
@@ -286,8 +286,8 @@ export function ExamPage() {
         <div className="examHeroCopy">
           <p className="eyebrow">{stage.place}</p>
           <h1 id="exam-title">科举</h1>
-          <h2>贡院号舍</h2>
-          <p>卷帘垂下，号舍灯明。取题、推进考场与交卷仍接现有服务器考试接口。</p>
+          <h2>{stage.place}</h2>
+          <p>卷帘垂下，灯影照卷。取题、推进考场与交卷都须按当前案卷流程呈递。</p>
         </div>
         <dl className="examStageRail" aria-label="考试阶段与局部时间">
           <div>
@@ -370,7 +370,7 @@ export function ExamPage() {
             <section className="examDesk examEmptyPaper" aria-label="中央试卷预览">
               <p className="eyebrow">中央试卷</p>
               <h2>案卷未启</h2>
-              <p>{routeSessionSupported ? "先择试别取题；预览案卷只展示界面，不向服务器请求考题。" : unsupportedRouteMessage}</p>
+              <p>{routeSessionSupported ? "先择试别取题；预览案卷只展示界面，不启封考题。" : unsupportedRouteMessage}</p>
             </section>
           )}
         </main>
@@ -421,7 +421,7 @@ export function ExamPage() {
               <span />
               <span />
             </div>
-            <p>虚拟考生、阅卷官与榜单只显示安全占位；名次、同年与座师关系待服务器放榜。</p>
+            <p>同场考生、阅卷官与榜单只显示公开占位；名次、同年与座师关系待金榜张挂。</p>
           </section>
 
           <section className="examPreviewPanel" aria-label="预览案卷提示">
@@ -485,7 +485,7 @@ export function ExamPage() {
 
       <section className="examSafetyBoundary" aria-label="科举安全边界">
         <p>
-          交卷、评分、舞弊、放榜、晋级和授官都由服务器裁决；本页只呈现已公开的考试快照与考场记录。
+          交卷、评分、舞弊、放榜、晋级和授官都回主卷定夺；本页只呈现已公开的考试快照与考场记录。
         </p>
       </section>
 

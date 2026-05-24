@@ -598,10 +598,10 @@ test("S75.4 top-right inkbox unifies safe tools without widening data sources", 
   assert.match(uiStateSource, /export type InkboxTab = "ai-settings" \| "saves" \| "display" \| "safe-summary"/);
   assert.match(uiStateSource, /activeInkboxTab/);
   assert.match(surfaceHostSource, /role="tablist"/);
-  assert.match(surfaceHostSource, /AI 设置/);
+  assert.match(surfaceHostSource, /推演/);
   assert.match(surfaceHostSource, /旧案/);
   assert.match(surfaceHostSource, /显示/);
-  assert.match(surfaceHostSource, /安全/);
+  assert.match(surfaceHostSource, /摘要/);
   assert.match(surfaceHostSource, /loadSession\(sessionId\)/);
   assert.match(surfaceHostSource, /navigate\("\/"\)/);
   assert.match(styleSource, /inkboxButton/);
@@ -748,11 +748,13 @@ test("S75.9 memorial composer uses safe AI quick actions as draft-only suggestio
   assert.match(composerSource, /data-draft-state=\{applied \? "written" : "idle"\}/);
   assert.match(composerSource, /aria-label=\{quickActionStatus === "loading" \? "快捷建议生成中" : "刷新快捷建议"\}/);
   assert.match(quickActionSource, /export type QuickActionSource = "local-rule" \| "mock-ai" \| "provider-ai" \| "map-runtime" \| "surface"/);
-  assert.match(quickActionSource, /sourceLabel: "local-rule"/);
+  assert.match(quickActionSource, /"local-rule": "本地建议"/);
+  assert.match(quickActionSource, /"mock-ai": "本地推演"/);
+  assert.match(quickActionSource, /sourceLabel: playerFacingQuickActionSourceLabel\(source\)/);
   assert.match(quickActionSource, /normalizeAiSuggestions/);
   assert.match(quickActionSource, /quickActionStatus === "error" \? "failed"/);
   assert.match(surfaceHostSource, /<AiSettingsPanel \/>/);
-  assert.match(aiSettingsPanelSource, /服务端全局/);
+  assert.match(aiSettingsPanelSource, /推演设置/);
   assert.match(aiSettingsPanelSource, /updateGlobalAiSettings\(formSnapshot\(form\)\)/);
   assert.match(stateSource, /aiSettingsReadRequestId/);
   assert.match(stateSource, /aiSettingsWriteRequestId/);
@@ -760,13 +762,13 @@ test("S75.9 memorial composer uses safe AI quick actions as draft-only suggestio
   assert.match(stateSource, /aiConnectionRequestId/);
   assert.match(stateSource, /aiConnectionStatus/);
   assert.match(aiSettingsPanelSource, /未保存编辑已保留/);
-  assert.match(aiSettingsPanelSource, /正在整理服务端 AI 任务矩阵/);
-  assert.match(aiSettingsPanelSource, /暂无 AI 任务矩阵/);
+  assert.match(aiSettingsPanelSource, /正在整理推演分工/);
+  assert.match(aiSettingsPanelSource, /暂无推演分工/);
   assert.match(aiSettingsPanelSource, /aiSettingsMatrixStatus/);
   assert.match(styleSource, /\.aiSettingsMatrixStatus/);
   assert.match(styleSource, /\.aiSettingsActions \.paperButton,[\s\S]*\.aiSettingsSummary \.paperButton[\s\S]*min-height: 44px/);
   assert.match(aiSettingsPanelSource, /taskType: stringValue\(record\.taskType/);
-  assert.match(aiSettingsPanelSource, /\$\{route\.label\}工具预算/);
+  assert.match(aiSettingsPanelSource, /\$\{route\.label\}辅佐次数/);
   assert.match(quickActionSource, /getMemorialPlaceholder/);
   assert.match(quickActionSource, /buildQuickActionSuggestions/);
   assert.match(styleSource, /memorialComposer/);
@@ -793,7 +795,7 @@ test("S75.10 client smoke exercises the inkbox browser acceptance path", () => {
   assert.match(clientSmokeSource, /getByRole\("button", \{ name: "关闭抽屉" \}\)/);
   assert.match(clientSmokeSource, /AI_GLOBAL_SETTINGS_PATH/);
   assert.match(clientSmokeSource, /\/api\/ai\/settings\/global/);
-  assert.match(clientSmokeSource, /快捷建议工具预算/);
+  assert.match(clientSmokeSource, /快捷建议辅佐次数/);
   assert.match(clientSmokeSource, /\/api\/game\/player-state\/\$\{sessionId\}/);
   assert.match(clientSmokeSource, /desktop-inkbox-tabs/);
   assert.match(clientSmokeSource, /mobile-inkbox-tabs/);
@@ -819,8 +821,8 @@ test("S76.2 scholar panel uses safe study and exam projections as draft-only UI"
   assert.match(scholarPanelSource, /dailyRhythm/);
   assert.match(scholarPanelSource, /scholarPlanTimeline/);
   assert.match(scholarPanelSource, /执行首课/);
-  assert.match(scholarPanelSource, /只写草稿，结果由服务器裁决/);
-  assert.match(scholarPanelSource, /赶考、入场、评卷、放榜、晋级和授官都由服务器按规则裁决/);
+  assert.match(scholarPanelSource, /本页只写草稿/);
+  assert.match(scholarPanelSource, /赶考、入场、评卷、放榜、晋级和授官都按案卷规则回批/);
   assert.match(styleSource, /scholarPanel/);
   assert.match(styleSource, /scholarPlanSummary/);
   assert.match(clientSmokeSource, /hasDeepPlan/);
@@ -849,8 +851,8 @@ test("S76.3 magistrate panel uses safe local affairs projections as draft-only U
   assert.match(magistratePanelSource, /localAffairsDocketView/);
   assert.match(magistratePanelSource, /officialPostingsView/);
   assert.match(magistratePanelSource, /economicFiscalView/);
-  assert.match(magistratePanelSource, /只写草稿，结果由服务器裁决/);
-  assert.match(magistratePanelSource, /审案、征税、开仓、水利、缉捕、任免、考成和持久化都由服务器裁决/);
+  assert.match(magistratePanelSource, /堂审只能形成行动意图/);
+  assert.match(magistratePanelSource, /审案、征税、开仓、水利、缉捕、任免和考成都须候案卷回批/);
   assert.match(styleSource, /magistratePanel/);
   assert.match(appTestSource, /renders the S76\.3 magistrate panel from safe local affairs and fiscal views as draft-only actions/);
   assert.doesNotMatch(
@@ -923,7 +925,7 @@ test("S76.5 general panel uses safe military projections as draft-only UI", () =
   assert.match(generalPanelSource, /斥候与情报/);
   assert.match(generalPanelSource, /边患与舆图/);
   assert.match(generalPanelSource, /战报与边议/);
-  assert.match(generalPanelSource, /战役胜负、调兵遣将、外交和战、统帅任免、粮饷拨付、赏罚与持久化都由服务器裁决/);
+  assert.match(generalPanelSource, /战役胜负、调兵遣将、外交和战、统帅任免、粮饷拨付与赏罚都须候案卷回批/);
   assert.match(styleSource, /generalPanel/);
   assert.match(typeSource, /militaryDiplomacyView\?: JsonObject/);
   assert.match(appTestSource, /renders the S76\.5 general panel from safe military views as draft-only actions/);
@@ -961,7 +963,7 @@ test("S76.6 emperor panel uses safe court projections as draft-only edict UI", (
   assert.match(emperorPanelSource, /朝议/);
   assert.match(emperorPanelSource, /任免候选/);
   assert.match(emperorPanelSource, /赏罚预留/);
-  assert.match(emperorPanelSource, /任免、赏罚、处分、朱批成案、圣旨生效、时间推进和持久化都由服务器裁决/);
+  assert.match(emperorPanelSource, /任免、赏罚、处分、朱批成案、圣旨生效和时间推进都须候案卷回批/);
   assert.match(styleSource, /emperorPanel/);
   assert.match(typeSource, /worldEntityView\?: JsonObject/);
   assert.match(typeSource, /worldThreadView\?: JsonObject/);
@@ -1116,7 +1118,7 @@ test("S88.6 domain consequence view is wired into authority role panels as draft
   assert.match(appTestSource, /续记军务后果/);
   assert.match(appTestSource, /续记跨域后果/);
   assert.match(appTestSource, /御览天下余波/);
-  assert.match(surfaceRegistrySource, /domainConsequenceView/);
+  assert.match(surfaceRegistrySource, /公开后果/);
   assert.match(smokeSource, /hasDomainConsequence/);
   assert.doesNotMatch(
     runtimeCombined,
@@ -1252,12 +1254,12 @@ test("S76.7 exam page renders immersive safe exam flow without widening authorit
   assert.match(examPageSource, /examImmersiveLayout/);
   assert.match(examPageSource, /examQuestionText/);
   assert.match(examPageSource, /写作区字数与草稿状态/);
-  assert.match(examPageSource, /虚拟考生、阅卷官与榜单只显示安全占位/);
+  assert.match(examPageSource, /同场考生、阅卷官与榜单只显示公开占位/);
   assert.match(examPageSource, /入场后反馈/);
   assert.match(examPageSource, /phaseFeedback/);
   assert.match(examPageSource, /setActionDraft/);
   assert.match(examPageSource, /source: "exam", targetPage: "game"/);
-  assert.match(examPageSource, /交卷、评分、舞弊、放榜、晋级和授官都由服务器裁决/);
+  assert.match(examPageSource, /交卷、评分、舞弊、放榜、晋级和授官都回主卷定夺/);
   assert.match(examPageSource, /requestExamQuestion\(sessionId, level\)/);
   assert.match(examPageSource, /progressExam\(sessionId, examId, sceneAction\.trim\(\)\)/);
   assert.match(examPageSource, /submitExam\(sessionId, examId, essay\.trim\(\)\)/);
@@ -1326,10 +1328,10 @@ test("S76.8 ranking page renders server-owned ranking views without widening aut
   assert.match(rankingPageSource, /\}, \[sessionId\]\)/);
   assert.doesNotMatch(rankingPageSource, /buildHonorFallbackRows|index \+ 1/);
   assert.match(rankingPageSource, /rankingTopThree/);
-  assert.match(rankingPageSource, /服务器定榜名单/);
+  assert.match(rankingPageSource, /金榜名单/);
   assert.match(rankingPageSource, /暂无公开防弊复核结果/);
-  assert.match(rankingPageSource, /本榜只录服务器定榜结果/);
-  assert.match(rankingPageSource, /前端不改名次、不补评分、不推断授官/);
+  assert.match(rankingPageSource, /本榜只录已经张挂的定榜结果/);
+  assert.match(rankingPageSource, /不改名次、不补评分、不推断授官/);
   assert.match(styleSource, /rankingFullScreen/);
   assert.match(styleSource, /rankingTopThree/);
   assert.match(styleSource, /rankingDetailPanel/);
@@ -1521,6 +1523,7 @@ test("S74.6 React map bridge wraps S72 renderer without old frontend globals", (
   assert.match(bridgeSource, /mapRendererScriptSrc = "\/mapRenderer\.js"/);
   assert.match(bridgeSource, /new window\.MapRenderer/);
   assert.match(bridgeSource, /setActionDraft|onActionDraft/);
+  assert.match(bridgeSource, /aria-label="山河舆图"/);
   assert.match(bridgeSource, /map-runtime/);
   assert.match(mapPageSource, /currentSession\?\.sessionId === sessionId/);
   assert.match(apiTypesSource, /export type MapRuntimeView/);
@@ -1564,7 +1567,7 @@ test("S76.9 map page is an independent safe map surface", () => {
   assert.match(mapPageSource, /mapbounds/);
   assert.match(bridgeSource, /MapRuntimeDraftSelection/);
   assert.match(bridgeSource, /unsafeMapRuntimeRefTokens/);
-  assert.match(mapPageSource, /显示坐标只用于浏览器布局/);
+  assert.match(mapPageSource, /地图显示坐标只用于画面排布/);
   assert.match(bridgeSource, /filterMapRuntimeView/);
   assert.match(bridgeSource, /npcActivityAnchors: visibleLayers\.events === false \? \[\] : view\.npcActivityAnchors/);
   assert.match(bridgeSource, /visibleLayers\.places/);
@@ -1638,7 +1641,7 @@ test("S78 topic surfaces are safe workbenches and draft-only", () => {
   assert.match(surfaceHostSource, /requestTopicDraft\(requestSessionId/);
   assert.match(surfaceHostSource, /topicSurface\?\.sessionId === currentSessionId/);
   assert.match(surfaceHostSource, /topicDraft\?\.sessionId === currentSessionId/);
-  assert.match(surfaceHostSource, /AI 拟稿/);
+  assert.match(surfaceHostSource, /推演拟稿/);
   assert.match(surfaceHostSource, /写入底部奏折/);
   assert.match(styleSource, /topicSurfaceLayout/);
   assert.match(styleSource, /topicDraftTextarea/);
@@ -1647,8 +1650,9 @@ test("S78 topic surfaces are safe workbenches and draft-only", () => {
   assert.match(courtPageSource, /"trial", "war-council"/);
   assert.match(courtPageSource, /"npc-profile"/);
   assert.match(courtPageSource, /openSurfaceForSession\(surface, sessionId\)/);
+  assert.doesNotMatch(courtPageSource, /aria-label="[^"]*(?:surface|mock-ai|local-rule|provider-ai|map-runtime|S72 PixiJS)[^"]*"/);
   assert.match(appTestSource, /奏折队列", "拟圣旨", "朝议", "堂审", "军议", "人物档案"/);
-  assert.match(appTestSource, /AI 拟稿/);
+  assert.match(appTestSource, /推演拟稿/);
 
   assert.doesNotMatch(
     runtimeCombined,

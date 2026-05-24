@@ -32,9 +32,21 @@ type QuickActionTemplate = Omit<QuickActionSuggestion, "source" | "sourceLabel" 
   readonly sourceLabel?: string;
 };
 
+const quickActionSourceLabels: Record<QuickActionSource, string> = {
+  "local-rule": "本地建议",
+  "mock-ai": "本地推演",
+  "provider-ai": "远端推演",
+  "map-runtime": "舆图",
+  surface: "专题"
+};
+
+function playerFacingQuickActionSourceLabel(source: QuickActionSource) {
+  return quickActionSourceLabels[source] ?? quickActionSourceLabels["local-rule"];
+}
+
 const localRuleSource = {
   source: "local-rule" as const,
-  sourceLabel: "local-rule"
+  sourceLabel: playerFacingQuickActionSourceLabel("local-rule")
 };
 
 const roleSuggestions: Record<GameRole, readonly Omit<QuickActionTemplate, "source" | "sourceLabel">[]> = {
@@ -73,7 +85,7 @@ const roleSuggestions: Record<GameRole, readonly Omit<QuickActionTemplate, "sour
 const mapRuntimeSuggestion: QuickActionTemplate = {
   id: "route-map-scan",
   source: "map-runtime",
-  sourceLabel: "map-runtime",
+  sourceLabel: playerFacingQuickActionSourceLabel("map-runtime"),
   title: "先看舆图",
   label: "先看舆图",
   text: "先查阅舆图与公开局势，再回到案前决定本旬行动。",
@@ -83,7 +95,7 @@ const mapRuntimeSuggestion: QuickActionTemplate = {
 const surfaceSuggestion: QuickActionTemplate = {
   id: "route-surface-draft",
   source: "surface",
-  sourceLabel: "surface",
+  sourceLabel: playerFacingQuickActionSourceLabel("surface"),
   title: "拟草稿",
   label: "拟草稿",
   text: "先按本页公开线索拟一段行动草稿，再回主卷呈上。",
@@ -160,7 +172,7 @@ function normalizeAiSuggestions(
       return {
         id: cleanText(suggestion.id, 80) || `quick-${source}-${index + 1}`,
         source,
-        sourceLabel: source,
+        sourceLabel: playerFacingQuickActionSourceLabel(source),
         title,
         label,
         text,

@@ -39,7 +39,7 @@ type AiSettingsFormState = {
 type SaveState = "idle" | "dirty" | "saving" | "saved" | "error";
 
 const providerLabels: Record<string, string> = {
-  mock: "Mock",
+  mock: "本地样例",
   openai: "OpenAI",
   deepseek: "DeepSeek",
   mimo: "MiMo",
@@ -100,8 +100,8 @@ function readFormState(payload: AiSettingsResponse | null): AiSettingsFormState 
       const record = asRecord(item);
       return {
         taskType: stringValue(record.taskType, "narrator"),
-        label: stringValue(record.label, stringValue(record.taskType, "AI 任务")),
-        purpose: stringValue(record.purpose, "按服务器任务契约调用。"),
+        label: stringValue(record.label, stringValue(record.taskType, "推演分工")),
+        purpose: stringValue(record.purpose, "按案卷分工推演。"),
         provider: stringValue(record.provider, "mock"),
         providerAvailable: record.providerAvailable !== false,
         requiresKey: Boolean(record.requiresKey),
@@ -148,9 +148,9 @@ function statusLabel(status: SaveState, dirty: boolean, updatedAt?: string | nul
 }
 
 function routeStatusLabel(route: TaskRouteForm) {
-  if (route.effectiveStatus === "missing_provider_key" || !route.providerAvailable) return "缺少 key";
+  if (route.effectiveStatus === "missing_provider_key" || !route.providerAvailable) return "未接通";
   if (route.effectiveStatus === "review_only" || route.reviewerOnly) return "只复核";
-  if (route.effectiveStatus === "no_tool" || !route.mayUseTools) return "无工具";
+  if (route.effectiveStatus === "no_tool" || !route.mayUseTools) return "只叙事";
   return "生效";
 }
 
@@ -195,10 +195,10 @@ export function AiSettingsPanel({ compact = false }: { readonly compact?: boolea
         ? "error"
         : "empty";
   const matrixStatusText = matrixState === "loading"
-    ? "正在整理服务端 AI 任务矩阵。"
+    ? "正在整理推演分工。"
     : matrixState === "error"
-      ? "AI 任务矩阵暂不可用；前端不会补造 provider、模型或工具权限。"
-      : "暂无 AI 任务矩阵；前端不会补造 provider、模型或工具权限。";
+      ? "推演分工暂不可用；本页不会自行补造叙事来源或复核权限。"
+      : "暂无推演分工；本页不会自行补造叙事来源或复核权限。";
 
   useEffect(() => {
     dirtyRef.current = dirty;
@@ -206,7 +206,7 @@ export function AiSettingsPanel({ compact = false }: { readonly compact?: boolea
 
   function applyPayload(payload: AiSettingsResponse, source: "load" | "reload" | "save") {
     if (source !== "save" && dirtyRef.current && savedSnapshot) {
-      setLocalNotice("服务器设置已刷新，当前未保存编辑已保留；保存后仍由服务器校验。");
+      setLocalNotice("案头设置已刷新，当前未保存编辑已保留；保存后仍会复核。");
       return false;
     }
     const nextForm = readFormState(payload);
@@ -234,7 +234,7 @@ export function AiSettingsPanel({ compact = false }: { readonly compact?: boolea
     }).catch((error) => {
       if (cancelled || requestId !== panelRequestIdRef.current || isSupersededRequestError(error)) return;
       if (!dirtyRef.current) setSaveState("error");
-      setLocalError(error instanceof Error ? error.message : "AI 设置载入失败。");
+      setLocalError(error instanceof Error ? error.message : "推演设置载入失败。");
     });
     return () => {
       cancelled = true;
@@ -268,7 +268,7 @@ export function AiSettingsPanel({ compact = false }: { readonly compact?: boolea
     } catch (error) {
       if (requestId !== panelRequestIdRef.current || isSupersededRequestError(error)) return;
       setSaveState("error");
-      setLocalError(error instanceof Error ? error.message : "AI 设置重新载入失败。");
+      setLocalError(error instanceof Error ? error.message : "推演设置重新载入失败。");
     }
   }
 
@@ -292,7 +292,7 @@ export function AiSettingsPanel({ compact = false }: { readonly compact?: boolea
         return;
       }
       setSaveState("error");
-      setLocalError(error instanceof Error ? error.message : "AI 设置保存失败。");
+      setLocalError(error instanceof Error ? error.message : "推演设置保存失败。");
     }
   }
 
@@ -315,9 +315,9 @@ export function AiSettingsPanel({ compact = false }: { readonly compact?: boolea
     <form className={compact ? "aiSettingsPanel aiSettingsPanelCompact" : "aiSettingsPanel"} onSubmit={handleSave}>
       <div className="aiSettingsToolbar" aria-live="polite">
         <div>
-          <p className="eyebrow">服务端全局</p>
-          <h3>AI 设置</h3>
-          <p>{!hasLoadedPayload && isSettingsRequestLoading ? "正在载入服务端设置" : statusLabel(saveState, dirty, aiSettings?.updatedAt)}</p>
+          <p className="eyebrow">全局推演</p>
+          <h3>推演设置</h3>
+          <p>{!hasLoadedPayload && isSettingsRequestLoading ? "正在载入案头设置" : statusLabel(saveState, dirty, aiSettings?.updatedAt)}</p>
         </div>
         <div className="aiSettingsActions">
           <button className="paperButton" type="button" onClick={() => void handleReload()} disabled={isSaving || isSettingsLoading}>
@@ -331,7 +331,7 @@ export function AiSettingsPanel({ compact = false }: { readonly compact?: boolea
         </div>
       </div>
 
-      <section className="aiSettingsSummary" aria-label="AI 设置摘要">
+      <section className="aiSettingsSummary" aria-label="推演设置摘要">
         <label>
           推演预设
           <select
@@ -345,7 +345,7 @@ export function AiSettingsPanel({ compact = false }: { readonly compact?: boolea
           </select>
         </label>
         <label>
-          试连 Provider
+          试连来源
           <select
             value={connectionProvider}
             disabled={!hasLoadedPayload && isSettingsRequestLoading}
@@ -353,7 +353,7 @@ export function AiSettingsPanel({ compact = false }: { readonly compact?: boolea
           >
             {providerOptions.map((option) => (
               <option key={option.provider} value={option.provider} disabled={!option.available}>
-                {providerLabels[option.provider] || option.provider}{option.available ? "" : "（缺 key）"}
+                {providerLabels[option.provider] || "未知来源"}{option.available ? "" : "（未接通）"}
               </option>
             ))}
           </select>
@@ -366,14 +366,14 @@ export function AiSettingsPanel({ compact = false }: { readonly compact?: boolea
 
       {unavailableRoutes.length ? (
         <p className="statusLine" role="alert">
-          {unavailableRoutes.length} 类任务选择了缺少 key 的 provider，请改回 Mock 或先配置对应环境变量后再保存。
+          {unavailableRoutes.length} 类分工选择了尚未接通的来源，请改回本地样例或先在本机接通后再保存。
         </p>
       ) : null}
-      {aiConnection ? <p className="statusLine">连接结果：{aiConnection.ok ? "可用" : "不可用"}（{String(aiConnection.provider || connectionProvider)}）</p> : null}
+      {aiConnection ? <p className="statusLine">试连结果：{aiConnection.ok ? "可用" : "暂不可用"}（{providerLabels[String(aiConnection.provider || connectionProvider)] || "未知来源"}）</p> : null}
       {localNotice ? <p className="statusLine">{localNotice}</p> : null}
       {localError || storeError ? <p className="statusLine" role="alert">{localError || storeError}</p> : null}
 
-      <section className="aiTaskMatrix" aria-label="AI 任务路由矩阵">
+      <section className="aiTaskMatrix" aria-label="推演分工">
         {form.routes.length ? form.routes.map((route) => (
           <article className="aiTaskRoute" key={route.taskType} data-effective-status={route.effectiveStatus}>
             <div className="aiTaskRouteHeader">
@@ -385,20 +385,20 @@ export function AiSettingsPanel({ compact = false }: { readonly compact?: boolea
             </div>
             <div className="aiTaskRouteControls">
               <label>
-                Provider
+                来源
                 <select
                   value={route.provider}
                   onChange={(event) => updateRoute(route.taskType, { provider: event.target.value })}
                 >
                   {providerOptions.map((option) => (
                     <option key={option.provider} value={option.provider} disabled={!option.available}>
-                      {providerLabels[option.provider] || option.provider}{option.available ? "" : "（缺 key）"}
+                      {providerLabels[option.provider] || "未知来源"}{option.available ? "" : "（未接通）"}
                     </option>
                   ))}
                 </select>
               </label>
               <label>
-                Model
+                卷式
                 <input
                   value={route.model}
                   maxLength={96}
@@ -427,20 +427,20 @@ export function AiSettingsPanel({ compact = false }: { readonly compact?: boolea
                 />
               </label>
               <label>
-                工具
+                辅佐
                 <input
                   type="number"
                   min={0}
                   max={20}
                   value={route.mayUseTools ? route.toolBudget : 0}
                   disabled={!route.mayUseTools}
-                  aria-label={`${route.label}工具预算`}
+                  aria-label={`${route.label}辅佐次数`}
                   onChange={(event) => updateRoute(route.taskType, { toolBudget: numberValue(event.target.value, route.toolBudget, 0, 20) })}
                 />
               </label>
             </div>
             <p>
-              {route.reviewerOnly ? "此任务只做复核，不会执行玩法方法。" : route.mayRequestAdjudication ? "可提交待服务器裁决的 proposal。" : "不直接裁决世界状态。"}
+              {route.reviewerOnly ? "此项只做复核，不会改写案卷。" : route.mayRequestAdjudication ? "可提交候复事项，仍需案卷回批。" : "只铺陈文字，不直接改写世界。"}
             </p>
           </article>
         )) : (

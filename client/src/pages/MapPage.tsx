@@ -16,6 +16,7 @@ import { usePrefersReducedMotion } from "../hooks/usePrefersReducedMotion";
 import { isRouteLocalSessionId, isRunnableSessionId } from "../routes/sessionId";
 import { useGameSessionStore } from "../state/gameSessionState";
 import { useUiStateStore } from "../state/uiState";
+import { rewritePlayerFacingWorldText } from "../text/worldText";
 
 type MapLayerKey = "places" | "routes" | "events";
 type MapActionDraftKind = "map_ref_action" | "map_route_action" | "map_event_action";
@@ -91,7 +92,7 @@ function safeMapPageText(value: unknown, fallback: string, maxLength = 80) {
   const normalized = text.toLowerCase();
   if (/[a-z]:[\\/]/i.test(text) || /sk-[a-z0-9_-]{6,}/i.test(text)) return fallback;
   if (unsafeMapTextFragments.some((fragment) => normalized.includes(fragment.toLowerCase()))) return fallback;
-  return text.slice(0, maxLength);
+  return rewritePlayerFacingWorldText(text).slice(0, maxLength);
 }
 
 function safeMapPageRefId(value: unknown, maxLength = 96) {
@@ -184,7 +185,7 @@ function buildMapActionEntry({
   return {
     id: safeDraftId,
     label: safeMapPageText(draft.label || label, "舆图行动", 40),
-    summary: safeMapPageText(summary, "此行动来自服务器安全舆图投影，写入主卷草稿后仍由服务器裁决。", 96),
+    summary: safeMapPageText(summary, "此行动来自公开舆图，写入主卷草稿后仍须候复。", 96),
     kindLabel,
     draftKind,
     text,
@@ -218,7 +219,7 @@ function getMapActionEntries(view: MapRuntimeView | null | undefined) {
         targetRef,
         sourceRefs,
         label: safeMapPageText(ref.label, "舆图地点", 36),
-        summary: safeMapPageText(ref.summary, "此地点可写入一段待裁决行动。", 96),
+        summary: safeMapPageText(ref.summary, "此地点可写入一段候复行动。", 96),
         kindLabel: "地点行动",
         draftKind: "map_ref_action"
       }));
@@ -245,7 +246,7 @@ function getMapActionEntries(view: MapRuntimeView | null | undefined) {
         targetRef,
         sourceRefs,
         label: safeMapPageText(route.label, "舆图驿路", 36),
-        summary: safeMapPageText(route.summary, "此路线可写入一段待裁决行动。", 96),
+        summary: safeMapPageText(route.summary, "此路线可写入一段候复行动。", 96),
         kindLabel: "驿路行动",
         draftKind: "map_route_action"
       }));
@@ -281,8 +282,8 @@ function getMapEvents(view: MapRuntimeView | null | undefined) {
       const label = safeMapPageText(event.label || targetRef?.label, "地图近事", 36);
       const targetLabel = safeMapPageText(targetRef?.label || event.targetRef, "未标注地点", 36);
       const summary = safeMapPageText(
-        targetRef?.summary || event.kind || "此为服务器公开舆图投影中的近事，只作玩家观察线索。",
-        "此为服务器公开舆图投影中的近事，只作玩家观察线索。",
+        targetRef?.summary || event.kind || "此为公开舆图中的近事，只作玩家观察线索。",
+        "此为公开舆图中的近事，只作玩家观察线索。",
         96
       );
       return {
@@ -315,8 +316,8 @@ function getNpcActivityAnchors(view: MapRuntimeView | null | undefined) {
       const label = safeMapPageText(anchor.label, "人物动向", 36);
       const targetLabel = safeMapPageText(targetRef?.label || anchor.targetRef, "未标注地点", 36);
       const summary = safeMapPageText(
-        anchor.summary || "人物动向只作舆图观察线索；关系、资源与后续任务仍由服务器裁决。",
-        "人物动向只作舆图观察线索；关系、资源与后续任务仍由服务器裁决。",
+        anchor.summary || "人物动向只作舆图观察线索；关系、资源与后续差事仍须候复。",
+        "人物动向只作舆图观察线索；关系、资源与后续差事仍须候复。",
         96
       );
       return {
@@ -404,9 +405,9 @@ export function MapPage() {
         <div>
           <p className="eyebrow">独立舆图</p>
           <h1 id="map-title">山河舆图</h1>
-          <p>山川、府县、驿路与公开近事铺成一卷；只观势、拟稿与跳转，不替服务器裁决事实。</p>
+          <p>山川、府县、驿路与公开近事铺成一卷；只观势、拟稿与跳转，不替案卷定夺事实。</p>
         </div>
-        <dl className="mapHeroStats" aria-label="舆图投影摘要">
+        <dl className="mapHeroStats" aria-label="舆图摘要">
           <div>
             <dt>地点</dt>
             <dd>{refCount}</dd>
@@ -476,7 +477,7 @@ export function MapPage() {
               <ol className="mapActionList">
                 {mapActionEntries.map((entry) => (
                   <li key={entry.id}>
-                    <span>{entry.kindLabel} · 待主卷裁决</span>
+                    <span>{entry.kindLabel} · 待主卷复核</span>
                     <strong>{entry.label}</strong>
                     <p>{entry.summary}</p>
                     <button className="paperButton" type="button" aria-label={`写入行动：${entry.label}`} onClick={() => writeMapActionEntry(entry)}>
@@ -486,7 +487,7 @@ export function MapPage() {
                 ))}
               </ol>
             ) : (
-              <p className="mapEmptyLedger">暂无服务器预渲染舆图行动；可点击地图地点查看单点草稿，或回主卷自行落笔。</p>
+              <p className="mapEmptyLedger">暂无舆图预备行动；可点击地图地点查看单点草稿，或回主卷自行落笔。</p>
             )}
           </section>
           {mapEvents.length ? (
@@ -526,7 +527,7 @@ export function MapPage() {
             domainConsequenceView={domainConsequenceView}
             sourceTypes={mapDomainConsequenceSourceTypes}
             title="舆图后果追踪"
-            summaryFallback="舆图页只并列显示公开领域后果与地图近事；坐标仍不进入 prompt、AI 工具或服务器裁决。"
+            summaryFallback="舆图页只并列显示公开后果与地图近事；画面坐标不作为行军、查案或任免凭据。"
             emptyText="暂无可与舆图并列追踪的公开领域后果。"
             maxItems={3}
             runnable={hasCurrentSession}
@@ -536,15 +537,15 @@ export function MapPage() {
       </div>
       <p className="mapRuntimeNote">
         {mapRuntimeView
-          ? `已接入 ${refCount} 处地点、${routeCount} 条路线、${eventCount} 项近事、${npcActivityCount} 条人物动向，当前显示 ${activeLayerCount} 个图层；舆图只读服务器安全投影。`
+          ? `已接入 ${refCount} 处地点、${routeCount} 条路线、${eventCount} 项近事、${npcActivityCount} 条人物动向，当前显示 ${activeLayerCount} 个图层；舆图只读公开卷宗。`
           : !routeSessionSupported
             ? "此案卷编号暂不可用于浏览器舆图；请从首页开卷或载入旧案。"
             : isRunnable && status === "loading"
-            ? "正在读取 player-state 中的安全舆图投影。"
-            : "预览案卷不请求后端舆图；从首页新开一卷后即可查看实时地图。"}
+            ? "正在读取本局舆图卷宗。"
+            : "预览案卷不读取实时舆图；从首页新开一卷后即可查看。"}
       </p>
       <section className="mapSafetyBoundary" aria-label="舆图安全边界">
-        <p>地图显示坐标只用于浏览器布局，不进入 prompt、AI 工具或服务器 resolver；移动、查案、调兵、财政、外交、NPC 行动、任免和持久化仍由主卷普通回合提交后服务器裁决。</p>
+        <p>地图显示坐标只用于画面排布，不作为行军、查案、调兵、财政、外交、人物行动或任免凭据；相关后果仍须回主卷呈上候复。</p>
       </section>
     </article>
   );

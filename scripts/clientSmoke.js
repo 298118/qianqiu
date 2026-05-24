@@ -1043,12 +1043,12 @@ async function assertArchiveWorldEntityImpactCanary(page, sessionId) {
   }, { timeout: 20000 });
 
   await page.getByRole("button", { name: "礼法" }).click();
-  await page.getByLabel("交游呈词").fill("只作论道，胜负、资源、关系与后续均候服务器裁决。");
+  await page.getByLabel("交游呈词").fill("只作论道，胜负、资源、关系与后续均候案卷回批。");
   await clickStableButton(page, { name: "请论道" }, "S88.7 world entity archive NPC relationship canary");
   const interactionResponse = await interactionResponsePromise;
   await page.waitForFunction(() => {
     const text = document.body.innerText || "";
-    return text.includes("服务器裁决") && text.includes("公开压力");
+    return (text.includes("案卷回批") || text.includes("主卷定夺")) && text.includes("公开压力");
   }, null, { timeout: 15000 });
 
   const responsePayload = await interactionResponse.json().catch(() => null) || {};
@@ -1337,7 +1337,7 @@ async function assertScholarPanel(page, sessionId, screenshotsDir) {
       hasPractice: text.includes("文章练习"),
       hasRoleCycle: text.includes("本旬身份循环") && text.includes("本旬事务") && text.includes("风险") && text.includes("可查入口") && text.includes("证据："),
       hasDeepPlan: text.includes("晨课") && text.includes("复盘") && text.includes("执行首课"),
-      hasBoundary: text.includes("只写草稿，结果由服务器裁决"),
+      hasBoundary: text.includes("写成草稿") && text.includes("按案卷规则回批"),
       examPath: examLink ? new URL(examLink.href).pathname : "",
       rankingPath: rankingLink ? new URL(rankingLink.href).pathname : "",
       buttons,
@@ -1415,7 +1415,7 @@ async function assertExamFullScreen(page, sessionId, screenshotsDir, screenshotN
       hasHero: Boolean(hero),
       hasRail: Boolean(rail),
       hasQuestionPanel: Boolean(document.querySelector(".examQuestionPanel")),
-      hasSafetyBoundary: text.includes("交卷、评分、舞弊、放榜、晋级和授官都由服务器裁决"),
+      hasSafetyBoundary: text.includes("交卷、评分、舞弊、放榜、晋级和授官都回主卷定夺"),
       hasMainGameShell: Boolean(document.querySelector(".gameCommandBar") || document.querySelector(".gameMainDeck") || document.querySelector(".memorialComposer")),
       background,
       horizontalOverflow: html.scrollWidth > html.clientWidth + 4,
@@ -1474,7 +1474,7 @@ async function assertExamFullScreen(page, sessionId, screenshotsDir, screenshotN
       hasQuestion: Boolean(document.querySelector(".examQuestionText")),
       hasEssay: Boolean(textarea),
       hasDraftBar: Boolean(document.querySelector(".examDraftBar")),
-      hasPeerPanel: text.includes("虚拟考生、阅卷官与榜单只显示安全占位"),
+      hasPeerPanel: text.includes("同场考生、阅卷官与榜单只显示公开占位"),
       hasPhaseFeedback: text.includes("入场后反馈"),
       hasFeedbackDraftButton: [...document.querySelectorAll("button")].some((button) => (button.textContent || "").trim() === "拟行动"),
       hasSubmit: [...document.querySelectorAll("button")].some((button) => (button.textContent || "").trim() === "交卷" && !button.disabled),
@@ -1534,8 +1534,8 @@ async function assertRankingFullScreen(page, sessionId, screenshotsDir, screensh
       hasHero: Boolean(hero),
       hasTopThree: Boolean(document.querySelector(".rankingTopThree")),
       hasBoard: Boolean(board),
-      hasBoundary: text.includes("本榜只录服务器定榜结果"),
-      hasServerList: text.includes("服务器定榜名单"),
+      hasBoundary: text.includes("本榜只录已经张挂的定榜结果"),
+      hasServerList: text.includes("金榜名单"),
       hasListOrEmpty: Boolean(document.querySelector(".rankingList")) || text.includes("榜文尚未张挂"),
       hasPlayerRow: Boolean(document.querySelector(".rankingList li.isPlayer")),
       hasGoldenNotice: Boolean(document.querySelector(".rankingGoldenNotice")),
@@ -1600,7 +1600,7 @@ async function assertMagistratePanel(page, sessionId, screenshotsDir) {
       hasGentry: text.includes("士绅乡约"),
       hasDomainConsequence: text.includes("领域后果追踪"),
       hasRoleCycle: text.includes("本旬身份循环") && text.includes("本旬事务") && text.includes("风险") && text.includes("可查入口") && text.includes("证据："),
-      hasBoundary: text.includes("审案、征税、开仓、水利、缉捕、任免、考成和持久化都由服务器裁决"),
+      hasBoundary: text.includes("审案、征税、开仓、水利、缉捕、任免和考成都须候案卷回批"),
       buttons,
       background: computedBackground,
       path: window.location.pathname,
@@ -1798,7 +1798,7 @@ async function assertGeneralPanel(page, sessionId, screenshotsDir) {
       hasReports: text.includes("战报与边议"),
       hasDomainConsequence: text.includes("军务后果追踪"),
       hasRoleCycle: text.includes("本旬身份循环") && text.includes("本旬事务") && text.includes("风险") && text.includes("可查入口") && text.includes("证据："),
-      hasBoundary: text.includes("战役胜负、调兵遣将、外交和战、统帅任免、粮饷拨付、赏罚与持久化都由服务器裁决"),
+      hasBoundary: text.includes("战役胜负、调兵遣将、外交和战、统帅任免、粮饷拨付与赏罚都须候案卷回批"),
       buttons,
       background: computedBackground,
       mapPath: mapLink ? new URL(mapLink.href).pathname : "",
@@ -1896,7 +1896,7 @@ async function assertEmperorPanel(page, sessionId, screenshotsDir) {
       hasRewards: text.includes("赏罚预留"),
       hasDomainConsequence: text.includes("天下余波"),
       hasRoleCycle: text.includes("本旬身份循环") && text.includes("本旬事务") && text.includes("风险") && text.includes("可查入口") && text.includes("证据："),
-      hasBoundary: text.includes("任免、赏罚、处分、朱批成案、圣旨生效、时间推进和持久化都由服务器裁决"),
+      hasBoundary: text.includes("任免、赏罚、处分、朱批成案、圣旨生效和时间推进都须候案卷回批"),
       buttons,
       background: computedBackground,
       courtPath: courtLink ? new URL(courtLink.href).pathname : "",
@@ -2116,7 +2116,7 @@ async function assertInkboxTabsAndSaveLoad(page, sessionId, screenshotsDir) {
   const drawer = page.locator("aside.drawerHost[aria-label='印匣']");
   await drawer.waitFor({ timeout: 10000 });
 
-  await assertInkboxTab(page, drawer, "AI 设置", "服务端全局");
+  await assertInkboxTab(page, drawer, "推演", "推演设置");
   const narratorRoute = drawer.locator(".aiTaskRoute").filter({ hasText: "叙事" }).first();
   await narratorRoute.waitFor({ timeout: 10000 });
   const narratorOutput = narratorRoute.getByLabel("输出");
@@ -2139,12 +2139,12 @@ async function assertInkboxTabsAndSaveLoad(page, sessionId, screenshotsDir) {
   await drawer.waitFor({ state: "detached", timeout: 10000 });
   await page.getByRole("button", { name: "打开印匣" }).click();
   await drawer.waitFor({ timeout: 10000 });
-  await assertInkboxTab(page, drawer, "AI 设置", "服务端全局");
+  await assertInkboxTab(page, drawer, "推演", "推演设置");
   const reloadedNarratorValue = await drawer.locator(".aiTaskRoute").filter({ hasText: "叙事" }).first().getByLabel("输出").inputValue();
   if (reloadedNarratorValue !== String(savedNarratorTokens)) {
     throw new Error(`Global AI settings did not persist after drawer reload: ${reloadedNarratorValue}`);
   }
-  const quickBudget = await drawer.getByLabel("快捷建议工具预算").evaluate((input) => ({
+  const quickBudget = await drawer.getByLabel("快捷建议辅佐次数").evaluate((input) => ({
     value: input instanceof HTMLInputElement ? input.value : "",
     disabled: input instanceof HTMLInputElement ? input.disabled : false
   }));
@@ -2153,7 +2153,7 @@ async function assertInkboxTabsAndSaveLoad(page, sessionId, screenshotsDir) {
   }
 
   await assertInkboxTab(page, drawer, "显示", "显示偏好");
-  await assertInkboxTab(page, drawer, "安全", "安全摘要");
+  await assertInkboxTab(page, drawer, "摘要", "案卷摘要");
   await drawer.getByRole("button", { name: "关闭抽屉" }).click();
   await drawer.waitFor({ state: "detached", timeout: 10000 });
   await page.waitForFunction(() => document.activeElement?.getAttribute("aria-label") === "打开印匣", null, { timeout: 5000 });
@@ -2215,10 +2215,10 @@ async function assertMobileInkbox(page, screenshotsDir) {
   const drawer = page.locator("aside.drawerHost[aria-label='印匣']");
   await drawer.waitFor({ timeout: 10000 });
 
-  await assertInkboxTab(page, drawer, "AI 设置", "服务端全局");
+  await assertInkboxTab(page, drawer, "推演", "推演设置");
   await assertInkboxTab(page, drawer, "旧案", "旧案");
   await assertInkboxTab(page, drawer, "显示", "显示偏好");
-  await assertInkboxTab(page, drawer, "安全", "安全摘要");
+  await assertInkboxTab(page, drawer, "摘要", "案卷摘要");
 
   const metrics = await page.evaluate((tokens) => {
     const drawerElement = document.querySelector("aside.drawerHost[aria-label='印匣']");
@@ -2479,7 +2479,7 @@ async function assertTopicSurfaces(page, sessionId, screenshotsDir) {
       path: window.location.pathname,
       hasSurfacePage: Boolean(document.querySelector(".courtSurfacePage")),
       labels: labels.filter((label) => [...document.querySelectorAll(".courtSurfacePage button")].some((button) => (button.textContent || "").trim() === label)),
-      hasBoundary: bodyText.includes("AI 只拟草稿，不提交回合、不调用 resolver、不写 canonical state"),
+      hasBoundary: bodyText.includes("推演只拟草稿") || bodyText.includes("专题草稿") || bodyText.includes("案卷回批"),
       hiddenLeaks: tokens.filter((token) => bodyText.includes(token)),
       forbiddenText: bodyText.match(/\/api\/game\/state|\/api\/dev\/session-diagnostics|provider payload|raw audit|hiddenNotes|OPENAI_API_KEY|data\/sessions|完整提示词|本地路径|密钥|sk-[a-z0-9_-]{6,}|[a-z]:[\\/]/gi) || []
     };
@@ -2523,8 +2523,9 @@ async function assertTopicSurfaces(page, sessionId, screenshotsDir) {
         hasDeliberation: dialogText.includes("筹议"),
         hasDraft: dialogText.includes("草稿"),
         hasResolverBoundary:
-          dialogText.includes("服务器裁决") ||
-          dialogText.includes("归服务器") ||
+          dialogText.includes("主卷定夺") ||
+          dialogText.includes("案卷回批") ||
+          dialogText.includes("案卷复核") ||
           dialogText.includes("裁决权") ||
           dialogText.includes("不写 canonical") ||
           dialogText.includes("裁决") ||
@@ -2554,8 +2555,8 @@ async function assertTopicSurfaces(page, sessionId, screenshotsDir) {
 
   await page.locator(".courtSurfacePage button", { hasText: /^朝议$/ }).click();
   await page.getByRole("dialog", { name: "朝议" }).waitFor({ timeout: 10000 });
-  await page.getByRole("button", { name: "AI 拟稿" }).waitFor({ timeout: 10000 });
-  await page.getByRole("button", { name: "AI 拟稿" }).click();
+  await page.getByRole("button", { name: "推演拟稿" }).waitFor({ timeout: 10000 });
+  await page.getByRole("button", { name: "推演拟稿" }).click();
   await page.waitForFunction(() => {
     const textarea = document.querySelector('textarea[aria-label="专题草稿正文"]');
     return Boolean(textarea && textarea.value.includes("廷议"));
@@ -2671,7 +2672,7 @@ async function runClientSmoke(options = {}) {
         hasSituationLedger: Boolean(document.querySelector(".mapSituationLedger")),
         hasActionDeck: Boolean(document.querySelector(".mapActionDeck")),
         hasArchiveJump: [...document.querySelectorAll(".mapFullScreen a")].some((link) => (link.textContent || "").includes("入局势簿")),
-        hasBoundary: (document.body.innerText || "").includes("地图显示坐标只用于浏览器布局"),
+        hasBoundary: (document.body.innerText || "").includes("地图显示坐标只用于画面排布"),
         status: bridge?.getAttribute("data-map-status"),
         motion: bridge?.getAttribute("data-map-motion"),
         canvasWidth: canvas?.clientWidth || 0,

@@ -37,9 +37,9 @@ export function CourtPage() {
       <div className="surfaceHeader">
         <p className="eyebrow">官署专题</p>
         <h1 id="court-title">朝议与官署</h1>
-        <p>百官班列，章奏如潮。奏折、圣旨、朝议、堂审、军议与人物档案现在会从安全专题投影里整理材料、筹议证据并生成可编辑草稿。</p>
+        <p>百官班列，章奏如潮。奏折、圣旨、朝议、堂审、军议与人物档案现在会从公开专题材料里整理案情、筹议线索并生成可编辑草稿。</p>
       </div>
-      <div className="courtSurfaceGrid" aria-label="专题 surface 扩展位">
+      <div className="courtSurfaceGrid" aria-label="官署专题入口">
         {courtSurfaceGroups.map((group) => (
           <section key={group.title} className="courtSurfaceGroup" aria-label={group.title}>
             <div>
@@ -71,7 +71,7 @@ export function CourtPage() {
       </div>
       <p className="statusLine">
         {routeSessionSupported
-          ? "这些专题层只读安全 projection；AI 只拟草稿，不提交回合、不调用 resolver、不写 canonical state。"
+          ? "这些专题只读已公开卷宗；推演只拟草稿，不递交回合、不定夺任免赏罚。"
           : "此案卷编号暂不可用于浏览器专题层；请从首页开卷或载入旧案。"}
       </p>
     </article>

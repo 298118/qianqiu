@@ -10,6 +10,7 @@ import { markOverlayTrigger } from "../components/overlayFocus";
 import { isRouteLocalSessionId, isRunnableSessionId } from "../routes/sessionId";
 import { useGameSessionStore } from "../state/gameSessionState";
 import { useUiStateStore } from "../state/uiState";
+import { rewritePlayerFacingWorldText } from "../text/worldText";
 
 const portraitPageSize = 8;
 const maxPeopleRows = 80;
@@ -156,7 +157,8 @@ function peopleTextLooksUnsafe(value: unknown) {
 function safePeopleText(value: unknown, fallback: string, maxLength = 120) {
   const text = typeof value === "string" && value.trim() ? value.trim().replace(/\s+/g, " ") : fallback;
   if (peopleTextLooksUnsafe(text)) return fallback;
-  return text.length > maxLength ? `${text.slice(0, maxLength)}...` : text;
+  const rewritten = rewritePlayerFacingWorldText(text);
+  return rewritten.length > maxLength ? `${rewritten.slice(0, maxLength)}...` : rewritten;
 }
 
 function safePortraitRef(value: unknown) {
@@ -509,7 +511,7 @@ function collectRelationshipAgendaThreads(worldThreadView: unknown) {
       const title = safePeopleText(thread.title, "交游议题", 72);
       const summary = safePeopleText(
         thread.summary,
-        "交游记录只作公开关系议题，资源、婚姻、伤损、弹劾、定罪、背叛和 NPC 行动仍由服务器裁决。",
+        "交游记录只作公开关系议题，资源、婚姻、伤损、弹劾、定罪、背叛和人物行动仍候案卷回批。",
         188
       );
       if (!id || !title || !summary || seen.has(id)) return [];
@@ -527,7 +529,7 @@ function collectRelationshipAgendaThreads(worldThreadView: unknown) {
         riskLabel: safePeopleText(thread.riskLabel, Number(thread.severity) >= 2 ? "中风险" : "可观察", 28),
         summary,
         goal: safePeopleText(thread.goal, "只追踪公开交游余波，不裁决关系终局。", 112),
-        followUpHint: safePeopleText(thread.followUpHint, "后续仍需普通回合或 NPC 互动由服务器裁决。", 128),
+        followUpHint: safePeopleText(thread.followUpHint, "后续仍需主卷或人物互动候复。", 128),
         interventionHints,
         relatedLabels: collectThreadRelatedLabels(thread)
       }];
@@ -546,7 +548,7 @@ function statusLabel(status: unknown) {
     overdue: "逾期",
     completed: "已成",
     failed: "未成",
-    server_blocked: "服务器挡下"
+    server_blocked: "暂未准行"
   };
   return labels[text] || text;
 }
@@ -825,7 +827,7 @@ export function PeoplePage() {
     await interactWithNpc(requestSessionId, {
       npcId: requestNpcId,
       actionType,
-      utterance: requestSocialDraft || `${actionLabel(actionType)}${selectedNpc.displayName}，请服务器按礼法与身份裁决。`
+      utterance: requestSocialDraft || `${actionLabel(actionType)}${selectedNpc.displayName}，请按礼法与身份候复。`
     }).then(() => {
       if (latestSessionIdRef.current === requestSessionId && latestSelectedNpcIdRef.current === requestNpcId) {
         setSocialDraft((current) => current.trim() === requestSocialDraft ? "" : current);
@@ -837,9 +839,9 @@ export function PeoplePage() {
     <article className="surfacePanel routePanel peopleWorkbenchPanel" aria-labelledby="people-title">
       <div className="routePanelHeader">
         <div>
-          <p className="eyebrow">NPC 工作台</p>
+          <p className="eyebrow">人物案牍</p>
           <h1 id="people-title">人物</h1>
-          <p>名册、详情、对话、交易和委派均来自服务器安全视图；本页不读取私档、底价、模型上下文或内部账本。</p>
+          <p>名册、详情、对话、交易和委派均来自已公开卷宗；本页不窥私档、底价、未公开心迹或内账。</p>
         </div>
         <span>{routeNpcRosterStatus === "loading" ? "候谱" : `${rosterNpcs.length || npcCount} 人`}</span>
       </div>
@@ -850,7 +852,7 @@ export function PeoplePage() {
           targetPage: "game",
           text: safePeopleText(
             option?.draftText,
-            `回应${safePeopleText(request.typeLabel, "请托", 20)}：先查证${safePeopleText(request.npc?.displayName, "来人", 32)}所言，凡资源、关系、婚姻、弹劾或背叛结果均候服务器裁决。`,
+            `回应${safePeopleText(request.typeLabel, "请托", 20)}：先查证${safePeopleText(request.npc?.displayName, "来人", 32)}所言，凡资源、关系、婚姻、弹劾或背叛结果均候复。`,
             180
           )
         })}
@@ -862,14 +864,14 @@ export function PeoplePage() {
           targetPage: "game",
           text: safePeopleText(
             task.draftText,
-            `续办${safePeopleText(task.title, "来函后续", 40)}：只作公开复核草稿，资源、婚姻、弹劾、背叛和隐藏事实仍由服务器裁决。`,
+            `续办${safePeopleText(task.title, "来函后续", 40)}：只作公开复核草稿，资源、婚姻、弹劾、背叛和未公开事实仍候案卷回批。`,
             180
           )
         })}
       />
       <NpcFollowUpEvidenceSection
         evidence={activeSession?.npcActiveRequestView?.followUpEvidence ?? null}
-        boundaryText="这里展示的线索只来自服务器安全 view；按钮只写草稿，不结算资源、人情债、婚姻、弹劾、定罪、背叛或未公开事实。"
+        boundaryText="这里展示的线索只来自已公开卷宗；按钮只写草稿，不结算资源、人情债、婚姻、弹劾、定罪、背叛或未公开事实。"
         idPrefix="people-follow-up-evidence"
         onDraft={(text) => setActionDraft({
           source: "role-surface",
@@ -885,8 +887,8 @@ export function PeoplePage() {
           source: "role-surface",
           targetPage: "game",
           text: safePeopleText(
-            `续记${thread.title}：只据公开交游议题拟拜会或补证；资源、婚姻、伤损、关系终局、弹劾、定罪、背叛和 NPC 行动仍由服务器裁决。`,
-            "续记交游议题：只作公开复核草稿，真实后果仍由服务器裁决。",
+            `续记${thread.title}：只据公开交游议题拟拜会或补证；资源、婚姻、伤损、关系终局、弹劾、定罪、背叛和人物行动仍候案卷回批。`,
+            "续记交游议题：只作公开复核草稿，真实后果仍候案卷回批。",
             188
           )
         })}
@@ -894,7 +896,7 @@ export function PeoplePage() {
       <EconomyTraceSection
         traceView={peopleEconomyTraceView}
         title="交易委派账本为何变化"
-        summaryFallback="交易、委派、人情债、市价和月账解释只来自服务器安全投影；人物页不成交、不扣款、不改任务结果。"
+        summaryFallback="交易、委派、人情债、市价和月账解释只来自已公开卷宗；人物页不成交、不扣款、不改差事结果。"
         idPrefix="people-economy-trace"
         traceTypes={peopleEconomyTraceTypes}
         maxItems={6}
@@ -905,8 +907,8 @@ export function PeoplePage() {
           text
         })}
       />
-      <section className="npcWorkbench" aria-label="NPC 名册工作台">
-        <aside className="npcGroupList" aria-label="NPC 分组">
+      <section className="npcWorkbench" aria-label="人物名册">
+        <aside className="npcGroupList" aria-label="人物分组">
           {npcGroups.length ? npcGroups.map((group) => (
             <section key={group.label}>
               <h2>{group.label}</h2>
@@ -933,9 +935,9 @@ export function PeoplePage() {
                 </button>
               ))}
             </section>
-          )) : <p className="statusLine">{routeSessionSupported ? "等待服务器 NPC 名册安全视图。" : unsupportedRouteMessage}</p>}
+          )) : <p className="statusLine">{routeSessionSupported ? "等待人物名册。" : unsupportedRouteMessage}</p>}
         </aside>
-        <section className="npcDetailWorkbench" aria-label="NPC 详情">
+        <section className="npcDetailWorkbench" aria-label="人物详情">
           {selectedNpc ? (
             <>
               <div className="npcDetailHeader">
@@ -1048,7 +1050,7 @@ export function PeoplePage() {
                 <NpcRecordsTab interactions={interactionRecords} trades={tradeRecords} tasks={delegatedTasks} />
               ) : null}
             </>
-          ) : <p className="statusLine">{routeSessionSupported ? "请选择一名可见 NPC。" : unsupportedRouteMessage}</p>}
+          ) : <p className="statusLine">{routeSessionSupported ? "请选择一名可见人物。" : unsupportedRouteMessage}</p>}
         </section>
       </section>
       <section className="portraitLedger" aria-label="本局人物谱牒">
@@ -1057,8 +1059,8 @@ export function PeoplePage() {
             <h3>人物谱牒</h3>
             <p>
               {peopleRows.length
-                ? `当前入谱 ${peopleRows.length} 人，NPC ${npcCount} 人；本页 ${remasteredCount} 张使用高清重制。`
-                : routeSessionSupported ? "正在等待服务器公开人物视图。" : unsupportedRouteMessage}
+                ? `当前入谱 ${peopleRows.length} 人，相识人物 ${npcCount} 人；本页 ${remasteredCount} 张使用高清重制。`
+                : routeSessionSupported ? "正在等待公开人物名册。" : unsupportedRouteMessage}
             </p>
           </div>
           {peopleRows.length ? <span>{safePortraitPage + 1} / {totalPages}</span> : null}
@@ -1144,11 +1146,11 @@ function NpcRelationshipEntitySignals({
   readonly signals: readonly RelationshipEntitySignal[];
 }) {
   return (
-    <section className="npcRelationshipEntitySignals" aria-label="NPC 关系网影响">
+    <section className="npcRelationshipEntitySignals" aria-label="人物关系网影响">
       <div className="sectionTitleRow">
         <div>
           <h2>关系网影响</h2>
-          <p>论道、切磋、来函、求爱和议婚只会在服务器裁决后牵动公开实体压力；本页不读取服务器内账或未公开关系。</p>
+          <p>论道、切磋、来函、求爱和议婚只有在入卷后才会牵动公开关系压力；本页不读取内账或未公开关系。</p>
         </div>
         <span>{signals.length ? `${signals.length} 条` : "待回响"}</span>
       </div>
@@ -1173,7 +1175,7 @@ function NpcRelationshipEntitySignals({
           ))}
         </div>
       ) : (
-        <p className="statusLine">暂无可见关系网回响；后续交游仍需普通回合或 NPC 互动由服务器裁决。</p>
+        <p className="statusLine">暂无可见关系网回响；后续交游仍需主卷或人物互动候复。</p>
       )}
     </section>
   );
@@ -1189,11 +1191,11 @@ function NpcRelationshipAgenda({
   readonly onDraft: (thread: RelationshipAgendaThread) => void;
 }) {
   return (
-    <section className="npcRelationshipAgenda" aria-label="NPC 交游议题">
+    <section className="npcRelationshipAgenda" aria-label="人物交游议题">
       <div className="sectionTitleRow">
         <div>
           <h2>交游议题</h2>
-          <p>这里仅展示已由服务器裁决的论道、切磋、求爱或议婚公开余波；真实关系、资源、婚姻、伤损和 NPC 行动仍由服务器裁决。</p>
+          <p>这里仅展示已入卷的论道、切磋、求爱或议婚公开余波；真实关系、资源、婚姻、伤损和人物行动仍候案卷回批。</p>
         </div>
         <span>{threads.length ? `${threads.length} 条` : "待留痕"}</span>
       </div>
@@ -1219,7 +1221,7 @@ function NpcRelationshipAgenda({
           ))}
         </div>
       ) : (
-        <p className="statusLine">暂无可见交游议题；交游记录必须先经服务器裁决并写入安全议题。</p>
+        <p className="statusLine">暂无可见交游议题；交游记录须先入卷，才会留下可续办线索。</p>
       )}
     </section>
   );
@@ -1330,7 +1332,7 @@ function NpcTradeTab({
       {latestTrade ? (
         <article className="npcResultCard">
           <strong>{statusLabel(latestTrade.status)}</strong>
-          <p>{safePeopleText(latestTrade.publicSummary || latestTrade.npcResponse, "交易已回传服务器裁决。", 180)}</p>
+          <p>{safePeopleText(latestTrade.publicSummary || latestTrade.npcResponse, "交易已回批。", 180)}</p>
         </article>
       ) : null}
       <RecordList title="交易簿" items={records.slice(0, 5).map((record) => ({
@@ -1373,8 +1375,8 @@ function NpcCommandTab({
           <textarea value={commandText} rows={4} maxLength={220} onChange={(event) => onCommandTextChange(event.target.value)} placeholder="如：丈量东乡田亩，核对鱼鳞册。" />
         </label>
         <label>
-          目标 ref
-          <input value={targetRef} onChange={(event) => onTargetRefChange(event.target.value)} placeholder="geo:county:current" />
+          去处线索
+          <input value={targetRef} onChange={(event) => onTargetRefChange(event.target.value)} placeholder="如：本县东乡、河堤、官仓" />
         </label>
         <label>
           经费
@@ -1430,18 +1432,18 @@ function NpcSocialTab({
           return (
             <article className="inventoryMiniCard" key={actionType || action.label}>
               <strong>{safePeopleText(action.label, actionLabel(actionType), 32)}</strong>
-              <span>{available ? "可呈请服务器裁决" : blockers.join("；") || "暂不可用"}</span>
+              <span>{available ? "可呈请复核" : blockers.join("；") || "暂不可用"}</span>
               <button className="paperButton" type="button" disabled={!available || busy} onClick={() => onSubmit(actionType)}>
                 {safePeopleText(action.requestLabel, "呈请", 24)}
               </button>
             </article>
           );
-        }) : <p className="statusLine">等待服务器礼法扩展位。</p>}
+        }) : <p className="statusLine">等待礼法条目入卷。</p>}
       </div>
       {resolution ? (
         <article className="npcResultCard">
-          <strong>{safePeopleText(resolution.actionLabel, "服务器裁决", 32)}</strong>
-          <p>{safePeopleText(resolution.outcomeSummary, "交游结果已由服务器返回。", 220)}</p>
+          <strong>{safePeopleText(resolution.actionLabel, "案卷回批", 32)}</strong>
+          <p>{safePeopleText(resolution.outcomeSummary, "交游结果已回批。", 220)}</p>
         </article>
       ) : null}
     </section>
@@ -1458,7 +1460,7 @@ function NpcActiveRequestInbox({
   const visible = requests.slice(0, 3);
   if (!visible.length) return null;
   return (
-    <section className="npcActiveRequestInbox" aria-label="NPC 主动请求">
+    <section className="npcActiveRequestInbox" aria-label="人物主动请求">
       {visible.map((request) => {
         const canRespond = request.status === "active" || request.status === "deferred";
         const options = canRespond ? (request.responseOptions ?? []).slice(0, 3) : [];
@@ -1468,7 +1470,7 @@ function NpcActiveRequestInbox({
             <strong>{safePeopleText(request.title, "来函", 48)}</strong>
             <span>{safePeopleText(request.ask, "请先查证来意。", 130)}</span>
             {followUp ? (
-              <small>{safePeopleText(followUp.title || followUp.nextStep, "后续由服务器复核。", 90)}</small>
+              <small>{safePeopleText(followUp.title || followUp.nextStep, "后续待复核。", 90)}</small>
             ) : null}
             <div className="buttonRow">
               {options.length ? options.map((option) => (
@@ -1502,7 +1504,7 @@ function NpcActiveRequestFollowUpDocket({
   const visible = tasks.slice(0, 4);
   if (!visible.length) return null;
   return (
-    <section className="npcActiveRequestInbox" aria-label="NPC 来函后续簿">
+    <section className="npcActiveRequestInbox" aria-label="来函后续簿">
       {visible.map((task) => {
         const latestResolution = task.latestResolution && typeof task.latestResolution === "object"
           ? task.latestResolution as Record<string, unknown>
@@ -1526,7 +1528,7 @@ function NpcActiveRequestFollowUpDocket({
                 typeof latestResolution?.statusLabel === "string"
                   ? latestResolution.statusLabel
                   : task.statusLabel || task.status,
-                "待服务器续办",
+                "待续办",
                 32
               )}
             </small>

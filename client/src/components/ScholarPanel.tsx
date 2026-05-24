@@ -2,6 +2,7 @@ import type { CSSProperties } from "react";
 import { Link } from "react-router";
 import type { JsonObject, JsonValue, PlayerSummary } from "../api";
 import type { LocalSurface } from "../state/uiState";
+import { rewritePlayerFacingWorldText } from "../text/worldText";
 import { RoleCycleSection } from "./RoleCycleSection";
 
 type ScholarPanelProps = {
@@ -106,7 +107,8 @@ function cleanScholarText(value: unknown, fallback = "未载", maxLength = 96) {
   const lowered = text.toLowerCase();
   if (/[a-z]:[\\/]/i.test(text) || /(?:file|https?):\/\//i.test(text)) return fallback;
   if (unsafeScholarFragments.some((fragment) => lowered.includes(fragment.toLowerCase()))) return fallback;
-  return text.length > maxLength ? `${text.slice(0, maxLength)}…` : text;
+  const rewritten = rewritePlayerFacingWorldText(text);
+  return rewritten.length > maxLength ? `${rewritten.slice(0, maxLength)}…` : rewritten;
 }
 
 function cleanOptionalText(value: unknown, maxLength = 96) {
@@ -213,7 +215,7 @@ function getAcademyNetwork(studyProfile: JsonObject) {
       name: cleanScholarText(teacher.name, "乡中塾师", 28),
       style: cleanScholarText(teacher.style, "谨守经义，先端章法", 48),
       status: cleanScholarText(teacher.relationshipStatus, "初识", 24),
-      summary: cleanScholarText(teacher.publicSummary, "老师可点评文章；师承事实与保结仍由服务器裁决。", 112)
+      summary: cleanScholarText(teacher.publicSummary, "老师可点评文章；师承事实与保结仍候案卷回批。", 112)
     },
     academy: {
       name: cleanScholarText(academy.name, "县学讲席", 32),
@@ -244,7 +246,7 @@ function getNextPlan(studyProfile: JsonObject) {
       return {
         id: cleanScholarText(item.id || `${key}-${index}`, `${key}-${index}`, 48),
         label: label || "读书节点",
-        detail: detail || "按服务器读书计划执行。"
+        detail: detail || "按读书计划执行。"
       };
     })
     .filter((item): item is StudyPlanDetail => item !== null);
@@ -253,12 +255,12 @@ function getNextPlan(studyProfile: JsonObject) {
     focus: cleanScholarText(plan.focus, "经义根柢", 28),
     items: asArray(plan.items).slice(0, 4).map((item) => cleanScholarText(item, "温书", 64)),
     books: asArray(plan.bookList).slice(0, 4).map((item) => cleanScholarText(item, "书目未载", 32)),
-    serverDecision: cleanScholarText(plan.serverDecision, "读书计划由服务器按可见画像派生。", 96),
+    serverDecision: cleanScholarText(plan.serverDecision, "读书计划已按可见画像入卷。", 96),
     intensity: {
       label: cleanScholarText(intensity.label, "稳进", 20),
       currentScore: cleanNumber(intensity.currentScore, 0),
       targetScore: cleanNumber(intensity.targetScore, 0),
-      summary: cleanScholarText(intensity.summary, "按服务器读书计划稳步推进。", 96)
+      summary: cleanScholarText(intensity.summary, "按读书计划稳步推进。", 96)
     },
     window: {
       startLabel: cleanScholarText(planningWindow.startLabel, "本旬", 36),
@@ -268,7 +270,7 @@ function getNextPlan(studyProfile: JsonObject) {
     checkpoints: readPlanDetails("checkpoints", 3),
     risks: asArray(plan.riskNotes).slice(0, 3).map((item) => cleanScholarText(item, "", 88)).filter(Boolean),
     actions: asArray(plan.nextActions).slice(0, 3).map((item) => cleanScholarText(item, "", 88)).filter(Boolean),
-    authorityBoundary: cleanScholarText(plan.authorityBoundary, "读书计划由服务器裁决，前端只写草稿。", 120)
+    authorityBoundary: cleanScholarText(plan.authorityBoundary, "读书计划以案卷回批为准，本页只写草稿。", 120)
   };
 }
 
@@ -279,7 +281,7 @@ function getExamPreparation(studyProfile: JsonObject) {
     examName: cleanScholarText(preparation.examName, "当前考试", 36),
     label: cleanScholarText(preparation.label, "从容", 24),
     score: cleanNumber(preparation.score, 0),
-    summary: cleanScholarText(preparation.summary, "备考压力由服务器整理。", 128),
+    summary: cleanScholarText(preparation.summary, "备考压力已入卷整理。", 128),
     studyFocus: cleanScholarText(preparation.studyFocus, "经义根柢", 40),
     causes: asArray(preparation.causes).slice(0, 4).map((item) => cleanScholarText(item, "", 88)).filter(Boolean),
     actions: asArray(preparation.suggestedActions).slice(0, 4).map((item) => cleanScholarText(item, "", 88)).filter(Boolean)
@@ -301,9 +303,9 @@ function getNextExam(examCalendar: JsonObject) {
     window: cleanScholarText(nextExam.windowLabel, "常科待定", 48),
     monthsUntil: cleanScholarText(nextExam.monthsUntil, "未计", 12),
     travelMonths: cleanScholarText(nextExam.travelMonths, "0", 12),
-    recommendation: cleanScholarText(nextExam.teacherRecommendation, "入场资格仍由服务器按声望、师友和科期裁决。", 112),
+    recommendation: cleanScholarText(nextExam.teacherRecommendation, "入场资格仍按声望、师友和科期候批。", 112),
     funding: cleanScholarText(nextExam.funding, "盘费行程只作公开提示，不能直接入场。", 112),
-    quota: cleanScholarText(nextExam.localQuota, "名额与取舍以服务器定榜为准。", 112)
+    quota: cleanScholarText(nextExam.localQuota, "名额与取舍以放榜为准。", 112)
   };
 }
 
@@ -356,7 +358,7 @@ export function ScholarPanel({
         <div>
           <p className="scholarPanelEyebrow">书斋 · {dateLabel}</p>
           <h2 id="scholar-panel-title">寒窗书斋</h2>
-          <p>{playerName}的读书簿、师友与科期只读服务器安全投影。</p>
+          <p>{playerName}的读书簿、师友与科期只读已公开卷宗。</p>
           <p>{summary}</p>
         </div>
         <dl className="scholarPanelStatus" aria-label="书生摘要">
@@ -370,7 +372,7 @@ export function ScholarPanel({
           </div>
           <div>
             <dt>边界</dt>
-            <dd>只写草稿，结果由服务器裁决</dd>
+            <dd>只写草稿，结果候回批</dd>
           </div>
         </dl>
       </header>
@@ -489,7 +491,7 @@ export function ScholarPanel({
               <li>
                 <strong>同窗未载</strong>
                 <span>可先参加讲会</span>
-                <p>讲会、互评和求保结都只生成行动草稿，关系事实由服务器写定。</p>
+                <p>讲会、互评和求保结都只生成行动草稿，关系事实候案卷写定。</p>
               </li>
             )}
           </ul>
@@ -520,7 +522,7 @@ export function ScholarPanel({
               <p>{nextExam.quota}</p>
             </section>
           ) : (
-            <p>眼下暂无下一科安全快照；若已入仕，皇榜与履历仍由服务器定档。</p>
+            <p>眼下暂无下一科公开快照；若已入仕，皇榜与履历仍由案卷定档。</p>
           )}
           {examPreparation ? (
             <section className="scholarPanelSubsection" aria-labelledby="scholar-preparation-title">
@@ -538,7 +540,7 @@ export function ScholarPanel({
               ) : null}
               {draftButtonText(
                 "稳住临考",
-                `按服务器备考摘要处理${examPreparation.examName}入场压力：先守${examPreparation.studyFocus}，并${examPreparation.actions[0] || "整理盘费、保结与心神"}。`,
+                `按备考摘要处理${examPreparation.examName}入场压力：先守${examPreparation.studyFocus}，并${examPreparation.actions[0] || "整理盘费、保结与心神"}。`,
                 canDraft,
                 onDraft
               )}
@@ -546,7 +548,7 @@ export function ScholarPanel({
           ) : null}
           <ScholarPanelList items={missedWindows.length ? missedWindows : recentSessions} emptyText="暂无误期或近科记录。" />
           <div className="scholarPanelActions">
-            {draftButtonText("整备赴考", "整理盘费、行李、保结与温书计划，候服务器复核赶考时机。", canDraft, onDraft)}
+            {draftButtonText("整备赴考", "整理盘费、行李、保结与温书计划，候案卷复核赶考时机。", canDraft, onDraft)}
             {examHref ? <Link to={examHref}>入科举页</Link> : null}
             {rankingHref ? <Link to={rankingHref}>看皇榜</Link> : null}
           </div>
@@ -571,7 +573,7 @@ export function ScholarPanel({
           <ul>
             <li>本面板只读学业画像、科期和案主公开摘要。</li>
             <li>按钮只把玩家意图写成草稿，不取题、不交卷、不推进时间。</li>
-            <li>赶考、入场、评卷、放榜、晋级和授官都由服务器按规则裁决。</li>
+            <li>赶考、入场、评卷、放榜、晋级和授官都按案卷规则回批。</li>
           </ul>
         </article>
       </div>

@@ -119,6 +119,7 @@ a {
   cursor: pointer;
   font: inherit;
   text-decoration: none;
+  transition: border-color 160ms ease, background 160ms ease, color 160ms ease, transform 160ms ease, box-shadow 160ms ease;
 }
 
 .topNav a.active,
@@ -734,11 +735,35 @@ textarea {
   font: inherit;
   font-weight: 700;
   padding: 8px 12px;
+  transition: border-color 160ms ease, background 160ms ease, color 160ms ease, transform 160ms ease, box-shadow 160ms ease;
+}
+
+.topNav a:hover,
+.topNav a:focus-visible,
+.sessionNav a:hover,
+.sessionNav a:focus-visible,
+.paperLink:hover,
+.paperLink:focus-visible,
+.paperButton:hover,
+.paperButton:focus-visible {
+  border-color: #7b241f;
+  background: rgba(255, 248, 230, 0.92);
+  box-shadow: 0 8px 18px rgba(54, 37, 24, 0.1);
+  color: #7b241f;
+  outline: 2px solid rgba(123, 36, 31, 0.18);
+  outline-offset: 2px;
+  transform: translateY(-1px);
 }
 
 button:disabled {
   cursor: not-allowed;
   opacity: 0.58;
+}
+
+button:disabled:hover,
+button:disabled:focus-visible {
+  box-shadow: none;
+  transform: none;
 }
 
 .statusLine {
@@ -760,6 +785,24 @@ button:disabled {
   width: min(1120px, calc(100% - 32px));
   margin: 0 auto;
   padding: 40px 0 64px;
+}
+
+.plainPage {
+  min-height: calc(100vh - 66px);
+  align-content: center;
+  display: grid;
+  gap: 16px;
+}
+
+.plainPage p {
+  max-width: 620px;
+}
+
+.routeRecoveryPage,
+.plainPage {
+  background:
+    radial-gradient(circle at 12% 16%, rgba(142, 47, 39, 0.1), transparent 24%),
+    radial-gradient(circle at 86% 26%, rgba(31, 67, 65, 0.1), transparent 26%);
 }
 
 .gameSurface.hasMemorialComposer {
@@ -4318,11 +4361,18 @@ button:disabled {
   overflow-wrap: anywhere;
 }
 
-.drawerHost {
+.drawerScrim {
   position: fixed;
-  top: 0;
-  right: 0;
   z-index: 30;
+  inset: 0;
+  display: grid;
+  justify-items: end;
+  background: rgba(34, 26, 20, 0.18);
+  backdrop-filter: blur(1.5px);
+}
+
+.drawerHost {
+  position: relative;
   width: min(440px, 100%);
   min-height: 100vh;
   max-height: 100vh;
@@ -5107,6 +5157,16 @@ button:disabled {
     grid-template-columns: 1fr;
   }
 
+  .drawerScrim {
+    justify-items: stretch;
+  }
+
+  .drawerHost {
+    width: 100%;
+    padding: 54px 16px 18px;
+    border-left: 0;
+  }
+
   .portraitViewerPanel {
     max-height: calc(100vh - 24px);
     grid-template-columns: 1fr;
@@ -5391,6 +5451,48 @@ button:disabled {
 
   .peoplePortrait {
     min-height: 108px;
+  }
+
+  .npcWorkbench,
+  .inventoryWorkbench,
+  .npcDetailHeader,
+  .npcTradeForm,
+  .npcCommandForm,
+  .inventoryTransferPanel,
+  .npcRecordsGrid,
+  .inventorySummaryGrid,
+  .npcFactGrid,
+  .inventoryItemStats {
+    grid-template-columns: 1fr;
+  }
+
+  .npcWorkbench,
+  .inventoryWorkbench {
+    gap: 12px;
+  }
+
+  .npcGroupList,
+  .npcDetailWorkbench,
+  .inventoryContainerList,
+  .inventoryItemList,
+  .inventoryLedgerBlock,
+  .inventoryTransferPanel {
+    padding: 10px;
+  }
+
+  .npcListButton {
+    grid-template-columns: 40px minmax(0, 1fr);
+  }
+
+  .inventoryContainerButton {
+    grid-template-columns: 20px minmax(0, 1fr);
+  }
+
+  .npcTradeForm .paperButton,
+  .npcCommandForm .paperButton,
+  .inventoryTransferPanel .paperButton {
+    justify-self: stretch;
+    min-height: 44px;
   }
 
   .examHero {

@@ -1,4 +1,4 @@
-import { NavLink, Outlet, useLocation, useParams } from "react-router";
+import { Link, NavLink, Outlet, useLocation, useParams } from "react-router";
 import { BookOpen, FileText, Landmark, Map, Package, ScrollText, Settings, Users } from "lucide-react";
 import { useEffect, useMemo, type CSSProperties } from "react";
 import { useAssetRegistry } from "../assets/useAssetRegistry";
@@ -86,7 +86,7 @@ const sceneByRole: Record<string, { readonly title: string; readonly assetPath: 
     title: "部院公文",
     assetPath: "/assets/ui/scenes/scene-bureau-documents-v1.webp",
     sceneKey: "bureau_documents",
-    note: "朝局牵一发而动全身，奏疏仍须由服务器裁决。"
+    note: "朝局牵一发而动全身，奏疏仍须候主卷回批。"
   },
   general: {
     title: "军帐筹谋",
@@ -98,7 +98,7 @@ const sceneByRole: Record<string, { readonly title: string; readonly assetPath: 
     title: "御案临朝",
     assetPath: "/assets/ui/scenes/scene-imperial-desk-v1.webp",
     sceneKey: "imperial_desk",
-    note: "圣旨、朝议与任免仍是提案入口，不直接生效。"
+    note: "圣旨、朝议与任免仍先留作草稿，不直接生效。"
   }
 };
 
@@ -215,11 +215,12 @@ export function GamePage() {
     { label: "身份", ready: Boolean(routeViews?.hasRoleCycleView) },
     { label: "后果", ready: Boolean(routeViews?.hasDomainConsequenceView) },
     { label: "科期", ready: Boolean(routeViews?.hasExamCalendarView) },
-    { label: "审计", ready: Boolean(routeViews?.hasAuditSummaryView) }
+    { label: "复核", ready: Boolean(routeViews?.hasAuditSummaryView) }
   ];
   const activeSafeViewCount = safeViewItems.filter((item) => item.ready).length;
   const isIndependentMapRoute = location.pathname.endsWith("/map");
   const independentRouteId = gameTabs.find((tab) => location.pathname.endsWith(`/${tab.id}`) && independentSessionRouteIds.has(tab.id))?.id ?? "";
+  const isGameRootRoute = location.pathname.replace(/\/+$/, "") === `/game/${sessionId}`;
 
   useEffect(() => {
     if (!isRunnableSessionId(sessionId)) return;
@@ -259,6 +260,21 @@ export function GamePage() {
     );
   }
 
+  if (!routeSessionSupported && isGameRootRoute) {
+    return (
+      <section className="plainPage routeRecoveryPage" aria-labelledby="game-route-recovery-title">
+        <p className="eyebrow">案卷未载</p>
+        <h1 id="game-route-recovery-title">主卷不可读</h1>
+        <p>此案卷编号不在本地可读范围内。请从首页新开一卷，或续读已保存案卷。</p>
+        <div className="buttonRow" aria-label="案卷去处">
+          <Link className="paperLink" to="/">
+            归首页
+          </Link>
+        </div>
+      </section>
+    );
+  }
+
   return (
     <section className="gameSurface hasMemorialComposer" aria-labelledby="game-title">
       <div className="gameCommandBar" aria-label="主卷案头">
@@ -276,7 +292,7 @@ export function GamePage() {
             <dd>{identityLine}</dd>
           </div>
           <div>
-            <dt>安全视图</dt>
+            <dt>已载卷宗</dt>
             <dd>{activeSafeViewCount} / {safeViewItems.length}</dd>
           </div>
         </dl>
@@ -306,7 +322,7 @@ export function GamePage() {
           </div>
           <p>{narrativeText}</p>
         </article>
-        <aside className="gameSideLedger" aria-label="安全投影">
+        <aside className="gameSideLedger" aria-label="案头索引">
           <h2>案头索引</h2>
           <div className="safeViewGrid">
             {safeViewItems.map((item) => (
@@ -315,7 +331,7 @@ export function GamePage() {
               </span>
             ))}
           </div>
-          <p>主卷只读服务器清洗后的公开视图；行动、移动、任免、审案与考试后果仍由普通回合接口裁决。</p>
+          <p>主卷只读玩家已见的公开卷宗；行动、移动、任免、审案与考试后果仍须呈上后候复。</p>
         </aside>
       </div>
       {openingClaimsView?.status === "processed" ? (
@@ -323,7 +339,7 @@ export function GamePage() {
           <div>
             <p className="eyebrow">开局裁决</p>
             <h2 id="opening-claim-title">身世与家计已入案</h2>
-            <p>{safeGameShellText(openingClaimsView.publicSummary, "开局背景已由服务器裁决。")}</p>
+            <p>{safeGameShellText(openingClaimsView.publicSummary, "开局背景已入案复核。")}</p>
           </div>
           <dl className="openingClaimCounts" aria-label="开局背景裁决统计">
             <div>
@@ -344,7 +360,7 @@ export function GamePage() {
               {openingClaimDecisions.slice(0, 3).map((decision) => (
                 <article key={decision.claimId || decision.publicSummary} className="openingClaimItem">
                   <strong>{safeGameShellText(decision.publicSummary, "背景宣称已裁决。")}</strong>
-                  <span>{safeGameShellText(decision.serverReason, "资源、名位与凭证以后端裁决为准。")}</span>
+                  <span>{safeGameShellText(decision.serverReason, "资源、名位与凭证以主卷定夺为准。")}</span>
                 </article>
               ))}
             </div>

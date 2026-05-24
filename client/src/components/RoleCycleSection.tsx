@@ -1,6 +1,7 @@
 import { Link } from "react-router";
 import type { JsonObject, JsonValue, RoleCycleView } from "../api";
 import type { LocalSurface } from "../state/uiState";
+import { rewritePlayerFacingWorldText } from "../text/worldText";
 import { markOverlayTrigger } from "./overlayFocus";
 
 type RoleCycleSectionProps = {
@@ -147,7 +148,8 @@ function cleanRoleCycleText(value: unknown, fallback = "未载", maxLength = 112
   const lowered = text.toLowerCase();
   if (localRoleCyclePathPattern.test(text) || /(?:file|https?):\/\//i.test(text)) return fallback;
   if (unsafeRoleCycleFragments.some((fragment) => lowered.includes(fragment.toLowerCase()))) return fallback;
-  return text.length > maxLength ? `${text.slice(0, maxLength)}…` : text;
+  const rewritten = rewritePlayerFacingWorldText(text);
+  return rewritten.length > maxLength ? `${rewritten.slice(0, maxLength)}…` : rewritten;
 }
 
 function cleanOptionalText(value: unknown, maxLength = 112) {
@@ -317,9 +319,9 @@ function cycleBoundarySummary(view: JsonObject, currentRole: JsonObject): CycleB
   const sourceLabels = readScopeLabels.length ? readScopeLabels : cycleSourceLabels(currentRole.sourceViews);
   const safety = asRecord(view.safety);
   const safetyLabels = [
-    safety.readOnlyView === true ? "只读视图" : undefined,
-    safety.draftOnlyFrontend === true ? "前端草稿" : undefined,
-    safety.serverAdjudicatedOutcomes === true ? "服务器裁决" : undefined
+    safety.readOnlyView === true ? "只读公开卷" : undefined,
+    safety.draftOnlyFrontend === true ? "案头草稿" : undefined,
+    safety.serverAdjudicatedOutcomes === true ? "主卷定夺" : undefined
   ].filter((item): item is string => Boolean(item));
   const notes = [
     cleanOptionalText(view.toolPermissions, 96),
@@ -365,7 +367,7 @@ function cycleRoleMatrix(source: JsonObject): CycleRoleMatrixEntry[] {
           : cleanRoleCycleText(item.statusLabel, "待任后展开", 24),
         summary: cleanRoleCycleText(
           item.summary,
-          active ? "当前身份事务已由服务器安全视图展开。" : "详细案源只在对应身份的安全视野中展开。",
+          active ? "当前身份事务已按公开卷宗展开。" : "详细案源只在对应身份可见时展开。",
           96
         ),
         sourceLabels: cycleSourceLabels(item.sourceViews),
@@ -439,7 +441,7 @@ export function RoleCycleSection({
   const dateLabel = cleanOptionalText(view.dateLabel, 32);
   const turnNumber = cleanTurnNumber(view.generatedAtTurn);
   const cycleMeta = [roleLabel, loopLabel, dateLabel, turnNumber === undefined ? undefined : `第${turnNumber}回合`].filter(Boolean).join(" · ");
-  const summary = cleanRoleCycleText(currentRole.summary || view.summary, "本旬身份循环由服务器安全视图整理。", 148);
+  const summary = cleanRoleCycleText(currentRole.summary || view.summary, "本旬身份循环由公开卷宗整理。", 148);
   const items = cycleItems(currentRole, "items", 5);
   const risks = cycleItems(currentRole, "riskSignals", 4);
   const metrics = cycleMetrics(currentRole);

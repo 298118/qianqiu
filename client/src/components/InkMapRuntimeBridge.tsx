@@ -349,7 +349,7 @@ export function InkMapRuntimeBridge({ mapRuntimeView, mapMotionEnabled, visibleL
   const activeTooltipSummary = safeMapRuntimeText(activeTooltip?.ref.summary, "暂无更多公开摘要。", 120);
 
   const fallbackText = useMemo(() => {
-    if (status === "loading") return "正在铺开安全舆图投影...";
+    if (status === "loading") return "正在铺开公开舆图...";
     if (status === "error") return "舆图运行时暂不可用，文字主流程不受影响。";
     if (status === "fallback") return "地图素材未完全载入，已保留静态舆图降级。";
     return "舆图资料待生成。";
@@ -358,7 +358,7 @@ export function InkMapRuntimeBridge({ mapRuntimeView, mapMotionEnabled, visibleL
   return (
     <section
       className="inkMapRuntimeBridge"
-      aria-label="S72 PixiJS 水墨舆图"
+      aria-label="山河舆图"
       data-map-status={status}
       data-map-motion={mapMotionEnabled ? "enabled" : "reduced"}
     >
@@ -411,8 +411,8 @@ export function InkMapRuntimeBridge({ mapRuntimeView, mapMotionEnabled, visibleL
         </div>
       </div>
       <div className="inkMapMeta">
-        <span>只读 mapRuntimeView</span>
-        <span>显示坐标不入 prompt 或裁决</span>
+        <span>只读公开舆图</span>
+        <span>画面坐标不作凭据</span>
         <span>{mapMotionEnabled ? "水墨动效开启" : "水墨动效降级"}</span>
       </div>
     </section>

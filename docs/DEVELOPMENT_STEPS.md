@@ -109,10 +109,11 @@
 
 ## 4. 活动路线图总览
 
-当前没有活动中的 `TODO` / `IN_PROGRESS` 小步骤。S88 全面系统打磨长表已于 2026-05-24 迁出本台账，归档入口为 [QIANQIU_POLISHING_ARCHIVE.md](QIANQIU_POLISHING_ARCHIVE.md)，原规划仍见 [QIANQIU_POLISHING_ROADMAP.md](QIANQIU_POLISHING_ROADMAP.md)。
+当前活动小步骤只保留最新可接手状态。S88 全面系统打磨长表已于 2026-05-24 迁出本台账，归档入口为 [QIANQIU_POLISHING_ARCHIVE.md](QIANQIU_POLISHING_ARCHIVE.md)，原规划仍见 [QIANQIU_POLISHING_ROADMAP.md](QIANQIU_POLISHING_ROADMAP.md)。
 
 | ID | 状态 | 目标 | 范围 / 下一步 |
 | --- | --- | --- | --- |
+| S89.1 | DONE | React 玩家可见文案与移动端覆盖层润色 | 承接 S88.9 残余方向，清理首页、主卷、舆图、人物、囊箧、史册、科举、皇榜、朝议、身份循环、推演设置和专题层中的工程词外露；抽屉增加遮罩与外点关闭，人物/囊箧工作台和推演矩阵补窄屏单列；不改后端 API/schema、AI 权限、prompt、存档格式或服务器裁决。提交：随本次 S89.1 提交完成。 |
 | DOCS-2026-05-24-S88-ARCHIVE | DONE | 压缩当前上下文并归档 S88 台账 | 新增 S88 专题归档，压缩 `docs/SHARED_CONTEXT.md` 与本文件，活动台账不再展开 S88.0-S88.12 长表。纯文档维护，不改代码、API/schema、运行时行为、提示词、验证工具或素材 manifest；按低风险纯文档规则跳过子代理复审。 |
 
 后续建议：由用户或下一轮 Codex 明确新专项后再加入本表。若继续 S88 残余方向，优先转为新的 S89/S90 小步骤，并继续沿用 S88 归档中的安全边界：安全 view 重建 evidence、浏览器 draft-only、AI proposal-only、服务器裁决、Mock/no-key 可玩、完整书生路径不破坏。
@@ -120,7 +121,8 @@
 ## 5. 最新状态
 
 - 2026-05-24：完成上下文压缩与 S88 台账归档。`docs/QIANQIU_POLISHING_ARCHIVE.md` 现在是 S88.0-S88.12 阶段性打磨的追溯入口，记录已完成/已推进范围、稳定边界、验证锚点和后续候选方向；`docs/SHARED_CONTEXT.md` 与本文件改为短交接板，删除 S88 长流水和重复哈希回填串。`docs/ACTIVITY_LEDGER_COMPLETED_ARCHIVE.md` 已补 S86-S88 完成阶段索引。
-- 本轮是低风险纯文档维护，不改代码、API/schema、SQLite schema、存档格式、AI 权限、prompt、验证工具、素材 manifest 或运行时行为；按项目规则跳过提交前子代理复审，并在共享上下文记录。
+- 2026-05-24：S89.1 完成 React 玩家可见文案与移动端覆盖层润色。前端继续只消费安全 view，所有草稿、人物/囊箧操作、地图和专题入口仍由服务器复核；本步不新增 API 字段、不改变 provider/AI schema、不调整存档或 SQLite schema。
+- 前一轮 S88 归档是低风险纯文档维护；S89.1 已进入前端代码与样式改动，提交前必须按子代理复审规则执行。
 
 ## 6. 最近完整验证口径
 
@@ -130,9 +132,26 @@
 - `node --test test/documentationGovernance.test.js`
 - `git diff --check`
 
-代码、测试、运行时行为、API/schema、提示词和验证工具均未变更，因此不需要运行 `npm test` 或子代理提交前复审。下一次包含代码或行为改动的 coherent change，仍必须按本文件第 1 节执行相关验证与只读复审。
+S89.1 前端润色验证结果：
+
+- 已通过 `npm run typecheck:client`。
+- 已通过 `npm run test:client`（6 files / 126 tests）；此前本机曾遇到 Vitest worker 启动超时，另以 `npx vitest --config vitest.config.mjs run --pool=vmThreads --fileParallelism=false` 串行池完整复核过同一批断言。
+- 已通过 `npm run smoke:browser`，并串联通过 `npm run qa:runtime-manifest`、`npm run build:client` 和 `npm run budget:client`。
+- 已通过 `npm run check:docs-governance`、`node --test test/documentationGovernance.test.js`、`git diff --check`；`git diff --check` 仅输出仓库既有 CRLF warning，非本次修改文件。
+- 已通过 `node --test test/reactClientScaffold.test.js` 与完整 `npm test`（1159 tests），源码 canary 已同步到本轮玩家可见文案新口径。
+- 待最终提交前完成修复后只读子代理复审。
+
+S89.1 包含前端代码、样式和行为改动，提交前必须完成只读子代理复审。未改后端 API/schema、prompt、AI 权限、SQLite schema 或服务器 resolver，因此不要求 `npm run typecheck:server` 作为本步必跑项；若后续继续触碰跨端契约再补跑。
 
 ## 7. 近期进度记录
+
+### 2026-05-24：S89.1 React 玩家可见文案与移动端覆盖层润色
+
+- 范围：清理 React 页面和专题层中面向玩家的 `AI`、provider/model、服务器、安全视图、projection、resolver、ref 等工程词外露，改成“推演、案卷、公开卷宗、回批、复核、线索”等世界内用语；主卷畸形案卷根路由改为固定安全恢复页。
+- 体验：抽屉加入遮罩、外点关闭和移动端满宽布局；常用纸按钮/纸链接补齐焦点、悬停和禁用状态；人物、囊箧、推演分工和统计格在窄屏降为单列，避免表单挤压和长文本溢出。
+- 边界：只改浏览器文案、样式和 route recovery；不改后端 API/schema、存档格式、AI 权限矩阵、prompt、provider facade、SQLite schema、runtime manifest 字段或服务器裁决。
+- 子代理：开工前已委派只读子代理巡检 React polish 缺口；提交前只读复审指出专题层动态字段、少量固定文案、角色面板空态、快捷行动来源标签、舆图无障碍名称和朝议页专题入口 aria 仍有工程词泄漏，已补专题材料/证据/错误文案清洗、角色面板空态改写、快捷行动玩家语汇映射、舆图/朝议页 aria 名称清理和玩家可见 canary；修复后最终只读子代理复审已通过，未发现阻断或应修复项。
+- 验证：已通过客户端类型检查、React 单测、脚手架 canary、串行 Vitest、browser smoke/runtime manifest/build/budget；朝议页 aria 修复后又补跑 `npm run typecheck:client`、`npm run test:client`、`node --test test/reactClientScaffold.test.js` 通过，治理与 diff check 按第 6 节提交前收尾。
 
 ### 2026-05-24：完成 S88 台账归档与上下文压缩
 

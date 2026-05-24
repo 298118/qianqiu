@@ -9,6 +9,7 @@ import { surfaceRegistry } from "../surfaces/surfaceRegistry";
 import { useGameSessionStore } from "../state/gameSessionState";
 import type { DrawerSurface, InkboxTab, LocalSurface, ModalSurface } from "../state/uiState";
 import { useUiStateStore } from "../state/uiState";
+import { rewritePlayerFacingWorldText } from "../text/worldText";
 import { Portrait } from "./Portrait";
 import { SaveCaseList } from "./SaveCaseList";
 import { AiSettingsPanel } from "./AiSettingsPanel";
@@ -42,7 +43,7 @@ const drawerRegistry: Record<DrawerSurface, DrawerRegistryEntry> = {
 };
 
 const modalRegistry: Record<ModalSurface, ModalRegistryEntry> = {
-  "safe-summary": { label: "安全摘要", title: "安全摘要" },
+  "safe-summary": { label: "案卷摘要", title: "案卷摘要" },
   "exam-result": { label: "科举结果", title: "科举结果" },
   "confirm-navigation": { label: "离卷确认", title: "离卷确认" }
 };
@@ -179,12 +180,20 @@ function DrawerHost({ activeDrawer }: { readonly activeDrawer: DrawerSurface }) 
   }, [activeDrawer]);
 
   return (
-    <aside ref={drawerRef} className="drawerHost" aria-label={drawerRegistry[activeDrawer].label} tabIndex={-1} data-overlay-kind="drawer">
-      <button className="iconButton drawerClose" type="button" title="关闭" aria-label="关闭抽屉" onClick={closeDrawer}>
-        <X size={18} aria-hidden="true" />
-      </button>
-      {drawerRegistry[activeDrawer].render()}
-    </aside>
+    <div
+      className="drawerScrim"
+      role="presentation"
+      onMouseDown={(event) => {
+        if (event.target === event.currentTarget) closeDrawer();
+      }}
+    >
+      <aside ref={drawerRef} className="drawerHost" aria-label={drawerRegistry[activeDrawer].label} tabIndex={-1} data-overlay-kind="drawer">
+        <button className="iconButton drawerClose" type="button" title="关闭" aria-label="关闭抽屉" onClick={closeDrawer}>
+          <X size={18} aria-hidden="true" />
+        </button>
+        {drawerRegistry[activeDrawer].render()}
+      </aside>
+    </div>
   );
 }
 
@@ -193,10 +202,10 @@ const inkboxTabs: readonly {
   readonly label: string;
   readonly icon: ReactNode;
 }[] = [
-  { id: "ai-settings", label: "AI 设置", icon: <BrainCircuit size={16} aria-hidden="true" /> },
+  { id: "ai-settings", label: "推演", icon: <BrainCircuit size={16} aria-hidden="true" /> },
   { id: "saves", label: "旧案", icon: <Save size={16} aria-hidden="true" /> },
   { id: "display", label: "显示", icon: <SlidersHorizontal size={16} aria-hidden="true" /> },
-  { id: "safe-summary", label: "安全", icon: <ShieldCheck size={16} aria-hidden="true" /> }
+  { id: "safe-summary", label: "摘要", icon: <ShieldCheck size={16} aria-hidden="true" /> }
 ];
 
 function InkboxDrawer() {
@@ -362,7 +371,7 @@ function SafeSummaryPanel() {
 
   return (
     <div className="inkboxTabBody">
-      <h3>安全摘要</h3>
+      <h3>案卷摘要</h3>
       <p>{payload?.player?.name ? `${payload.player.name}，${payload.player.officeTitle || payload.player.examRank || payload.player.role || "未题身份"}。` : "暂无已载入案卷。"}</p>
       {payload ? (
         <dl className="safeSummaryList">
@@ -375,12 +384,12 @@ function SafeSummaryPanel() {
             <dd>{payload.source}</dd>
           </div>
           <div>
-            <dt>安全视图</dt>
+            <dt>已载卷宗</dt>
             <dd>{Object.values(payload.routeViews).filter(Boolean).length} 项可用</dd>
           </div>
         </dl>
       ) : null}
-      <p>印匣只读取安全玩家投影和前端 UI 状态，不展示内部推演细节、连接凭据或私密材料。</p>
+      <p>印匣只显示玩家已见的案卷摘要，不展示内廷私记、连接凭据或未公开材料。</p>
     </div>
   );
 }
@@ -401,10 +410,10 @@ function ModalHost({ activeModal }: { readonly activeModal: ModalSurface }) {
         <button className="iconButton drawerClose" type="button" title="关闭" aria-label="关闭弹窗" onClick={closeModal}>
           <X size={18} aria-hidden="true" />
         </button>
-        <p className="eyebrow">只读投影</p>
+        <p className="eyebrow">只读案卷</p>
         <h2 id={`${activeModal}-title`}>{entry.title}</h2>
-        <p>{payload ? `当前案卷 ${payload.sessionId} 已载入安全玩家投影。` : "尚未载入安全玩家投影。"}</p>
-        <p>此处只显示前端 UI 摘要，不展示内部推演细节、连接凭据或私密材料。</p>
+        <p>{payload ? "当前案卷已载入玩家可见摘要。" : "尚未载入可读案卷。"}</p>
+        <p>此处只显示案头摘要，不展示内廷私记、连接凭据或未公开材料。</p>
       </section>
     </div>
   );
@@ -450,7 +459,7 @@ function PortraitViewerHost() {
         <div className="portraitViewerHeader">
           <p className="eyebrow">高清立绘</p>
           <h2 id="portrait-viewer-title">{label}</h2>
-          <p>只读查看已审核运行时主图，不写入案卷、网址、浏览器存储或 AI 上下文。</p>
+          <p>只读欣赏已审阅主图，不写入案卷、不改动草稿，也不带入后续推演。</p>
         </div>
         {portrait && imageSource && !imageFailed ? (
           <figure
@@ -474,7 +483,7 @@ function PortraitViewerHost() {
         <dl className="portraitViewerMeta" aria-label="立绘运行时信息">
           <div>
             <dt>图源</dt>
-            <dd>已审核运行时索引</dd>
+            <dd>已审阅立绘</dd>
           </div>
           <div>
             <dt>口径</dt>
@@ -701,7 +710,7 @@ function LocalSurfaceHost({ activeSurface }: { readonly activeSurface: LocalSurf
           </div>
           <div>
             <dt>裁决边界</dt>
-            <dd>{topicView?.authorityBoundary || entry.safetyNote}</dd>
+            <dd>{safeSurfaceText(topicView?.authorityBoundary || entry.safetyNote, entry.safetyNote, 140)}</dd>
           </div>
         </dl>
         {activeSurface === "npc-profile" && registry && npcProfilePortraits.length ? (
@@ -771,7 +780,8 @@ function safeSurfaceText(value: unknown, fallback: string, maxLength = 48) {
   const normalized = text.toLowerCase();
   if (/[a-z]:[\\/]/i.test(text) || /sk-[a-z0-9_-]{6,}/i.test(text)) return fallback;
   if (unsafeSurfaceTextFragments.some((fragment) => normalized.includes(fragment.toLowerCase()))) return fallback;
-  return text.length > maxLength ? `${text.slice(0, maxLength)}...` : text;
+  const rewritten = rewritePlayerFacingWorldText(text);
+  return rewritten.length > maxLength ? `${rewritten.slice(0, maxLength)}...` : rewritten;
 }
 
 function safeSurfacePortraitRef(registry: AssetRegistry, value: unknown) {
@@ -852,11 +862,11 @@ function topicSourceSummary(topicView: TopicSurfaceView) {
   const sources = (topicView.sourceViews || [])
     .map((source) => `${topicSourceLabel(source.sourceView)} ${String(source.count || 0)} 条`)
     .slice(0, 4);
-  return sources.length ? sources.join("；") : "当前专题由服务器安全投影生成。";
+  return sources.length ? sources.join("；") : "当前专题由已公开案卷生成。";
 }
 
 function topicMaterialSummary(topicView: TopicSurfaceView) {
-  if (!topicView.items.length) return topicView.emptyState;
+  if (!topicView.items.length) return safeSurfaceText(topicView.emptyState, "尚未载入专题材料。", 96);
   return `${topicView.items.length} 条材料，${topicView.evidenceRefs.length} 枚可引用证据。`;
 }
 
@@ -865,15 +875,20 @@ function topicDomainLabel(domain: unknown) {
   if (text === "people") return "人物";
   if (text === "economy") return "月账";
   if (text === "events") return "案牍";
-  return text || "公开材料";
+  return safeSurfaceText(text, "公开材料", 32);
 }
 
 function topicSourceLabel(sourceView: unknown) {
   const text = String(sourceView || "").trim();
+  if (text === "eventArchiveView") return "案牍索引";
   if (text === "npcActiveRequestView") return "来函后续";
   if (text === "npcInteractionView") return "交游记录";
   if (text === "economyTraceView") return "经济解释";
-  return text || "公开投影";
+  if (text === "mapRuntimeView" || text === "mapContextView") return "舆图材料";
+  if (text === "domainConsequenceView") return "后果追踪";
+  if (text === "officialCareerView") return "官职履历";
+  if (text === "roleCycleView") return "身份卷宗";
+  return safeSurfaceText(text, "公开材料", 36);
 }
 
 function topicEvidenceMeta(ref: TopicSurfaceEvidenceRef) {
@@ -922,15 +937,15 @@ function TopicSurfaceWorkbench({
   readonly onWriteDraft: () => void;
 }) {
   const evidenceByRef = new Map((topicView?.evidenceRefs || []).map((ref) => [ref.refId, ref]));
-  const selectedLabels = selectedEvidenceRefs.map((refId) => evidenceByRef.get(refId)?.label || refId);
+  const selectedLabels = selectedEvidenceRefs.map((refId) => safeSurfaceText(evidenceByRef.get(refId)?.label || refId, "线索", 36));
   const hasMaterials = Boolean(topicView && (topicView.items.length || topicView.evidenceRefs.length));
-  const draftSource = topicView ? "AI 拟稿" : "本地草稿";
+  const draftSource = topicView ? "推演拟稿" : "本地草稿";
   const finalDraftText = draftText;
 
   if (!canLoad) {
     return (
       <div className="topicSurfaceFallback">
-        <p>预览案卷只显示专题模板；真实案卷会载入公开材料、证据引用和 AI 草稿。</p>
+        <p>预览案卷只显示专题模板；开卷后会载入公开材料、可引线索和推演草稿。</p>
         {entryDraft ? (
           <button className="paperButton" type="button" onClick={onWriteDraft}>
             写入奏折草稿
@@ -952,16 +967,16 @@ function TopicSurfaceWorkbench({
             {topicView.items.map((item) => (
               <article className="topicSurfaceItem" key={item.id}>
                 <div>
-                  <strong>{item.title}</strong>
-                  <span>{item.statusLabel || "可阅"}</span>
+                  <strong>{safeSurfaceText(item.title, "公开材料", 48)}</strong>
+                  <span>{safeSurfaceText(item.statusLabel, "可阅", 24)}</span>
                 </div>
-                <p>{item.summary}</p>
+                <p>{safeSurfaceText(item.summary, "此材料只作公开线索。", 120)}</p>
                 <small>{topicSourceLabel(item.sourceView)}</small>
               </article>
             ))}
           </div>
         ) : (
-          <p>{status === "loading" ? "正在整理公开材料。" : topicView?.emptyState || "尚未载入专题材料。"}</p>
+          <p>{status === "loading" ? "正在整理公开材料。" : safeSurfaceText(topicView?.emptyState, "尚未载入专题材料。", 96)}</p>
         )}
       </section>
 
@@ -980,7 +995,7 @@ function TopicSurfaceWorkbench({
                 aria-pressed={(draftKind || topicView.draftSlots[0]?.draftKind) === slot.draftKind}
                 onClick={() => onDraftKindChange(slot.draftKind)}
               >
-                {slot.label}
+                {safeSurfaceText(slot.label, "草稿", 24)}
               </button>
             ))}
           </div>
@@ -994,7 +1009,7 @@ function TopicSurfaceWorkbench({
                 onChange={() => onToggleEvidenceRef(ref.refId)}
               />
               <span>
-                <strong>{ref.label}</strong>
+                <strong>{safeSurfaceText(ref.label, "公开线索", 48)}</strong>
                 <small>{topicEvidenceMeta(ref)}</small>
               </span>
             </label>
@@ -1006,10 +1021,10 @@ function TopicSurfaceWorkbench({
         </label>
         {topicView?.scenePreview ? (
           <p className="topicSurfaceMeta">
-            参议：{topicView.scenePreview.participantLabels?.length ? topicView.scenePreview.participantLabels.join("、") : "候公开角色入席"}
+            参议：{topicView.scenePreview.participantLabels?.length ? topicView.scenePreview.participantLabels.map((label) => safeSurfaceText(label, "公开角色", 28)).join("、") : "候公开角色入席"}
           </p>
         ) : null}
-        <p className="topicSurfaceMeta">{selectedLabels.length ? `已引：${selectedLabels.join("、")}` : "未勾选证据时，将由服务器选取公开材料。"}</p>
+        <p className="topicSurfaceMeta">{selectedLabels.length ? `已引：${selectedLabels.join("、")}` : "未勾选线索时，将按公开材料自行取用。"}</p>
       </section>
 
       <section className="topicSurfaceColumn topicDraftColumn" aria-label="草稿栏">
@@ -1024,7 +1039,7 @@ function TopicSurfaceWorkbench({
           onClick={onRequestDraft}
         >
           <Sparkles size={16} aria-hidden="true" />
-          <span>{draftStatus === "loading" ? "拟稿中" : "AI 拟稿"}</span>
+          <span>{draftStatus === "loading" ? "拟稿中" : "推演拟稿"}</span>
         </button>
         <textarea
           className="topicDraftTextarea"
@@ -1033,7 +1048,7 @@ function TopicSurfaceWorkbench({
           rows={8}
           aria-label="专题草稿正文"
         />
-        {draftStatus === "error" ? <p className="statusLine">{error || "专题拟稿已降级为本地草稿。"}</p> : null}
+        {draftStatus === "error" ? <p className="statusLine">{safeSurfaceText(error, "专题拟稿已降级为本地草稿。", 96)}</p> : null}
         <button className="paperButton" type="button" disabled={!finalDraftText.trim()} onClick={onWriteDraft}>
           写入底部奏折
         </button>

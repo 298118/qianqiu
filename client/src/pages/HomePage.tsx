@@ -372,7 +372,7 @@ export function HomePage() {
               </div>
               <div>
                 <dt>来源</dt>
-                <dd>{sourceLabels[currentPlayerPayload.source] || "安全视图"}</dd>
+                <dd>{sourceLabels[currentPlayerPayload.source] || "已载卷宗"}</dd>
               </div>
             </dl>
             <Link className="paperButton continueButton" to={`/game/${currentSessionId}`}>

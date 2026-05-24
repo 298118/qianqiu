@@ -183,7 +183,7 @@ export function MemorialComposer({
         </div>
       </div>
       <div className="memorialFooter">
-        <p id="memorial-help">Enter 呈上，Shift+Enter 换行。快捷建议只写入草稿，不会自动提交。</p>
+        <p id="memorial-help">Enter 呈上，Shift+Enter 换行。快捷建议只留作草稿，不会自动呈递。</p>
         <p id="memorial-status" role={submitError || !runnable ? "alert" : "status"}>
           {!runnable ? "预览案卷不提交行动；从首页新开一卷后即可落笔。" : submitError ? "请先写下本回合行动。" : "\u00a0"}
         </p>

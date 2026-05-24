@@ -7,6 +7,7 @@ import { EconomyTraceSection } from "../components/EconomyTraceSection";
 import { isRouteLocalSessionId, isRunnableSessionId } from "../routes/sessionId";
 import { useGameSessionStore } from "../state/gameSessionState";
 import { useUiStateStore } from "../state/uiState";
+import { rewritePlayerFacingWorldText } from "../text/worldText";
 
 const transferAllowedPolicies = new Set(["tradeable", "giftable", "lendable"]);
 
@@ -25,12 +26,40 @@ const transferPolicyLabels: Record<string, string> = {
   lendable: "可借用",
   bound_to_office: "系官署",
   bound_to_actor: "系其人",
-  server_only: "仅裁决"
+  server_only: "仅回批"
 };
+
+const unsafeInventoryTextFragments = [
+  "/api/game/" + "state",
+  "/api/dev/" + "session-diagnostics",
+  "data" + "/" + "sessions",
+  "data" + "\\" + "sessions",
+  "file" + "://",
+  "raw",
+  "prov" + "ider",
+  "pro" + "mpt",
+  "hid" + "den",
+  "key",
+  "path",
+  "hidden" + "Notes",
+  "OPENAI" + "_API" + "_KEY",
+  "DEEPSEEK" + "_API" + "_KEY",
+  "MIMO" + "_API" + "_KEY",
+  "ANTHROPIC" + "_API" + "_KEY",
+  "完整" + "提示词",
+  "本地" + "路径",
+  "密" + "钥",
+  "隐" + "藏",
+  "私" + "档",
+  "模型" + "原始"
+] as const;
 
 function safeLabel(value: unknown, fallback: string, maxLength = 80) {
   const text = typeof value === "string" && value.trim() ? value.trim().replace(/\s+/g, " ") : fallback;
-  return text.length > maxLength ? `${text.slice(0, maxLength)}...` : text;
+  const lowered = text.toLowerCase();
+  if (unsafeInventoryTextFragments.some((fragment) => lowered.includes(fragment.toLowerCase()))) return fallback;
+  const rewritten = rewritePlayerFacingWorldText(text);
+  return rewritten.length > maxLength ? `${rewritten.slice(0, maxLength)}...` : rewritten;
 }
 
 function itemLabel(item: InventoryItemView) {
@@ -170,7 +199,7 @@ export function InventoryPage() {
       if (latestSessionIdRef.current !== requestSessionId || payload.sessionId !== requestSessionId) return;
       if (!isLatestTransferSelection(requestItemId, requestTargetContainerId)) return;
       setLocalInventorySessionId(requestSessionId);
-      setTransferNotice(payload.accepted ? "服务器已校验并更新物件位置。" : `服务器未准：${payload.reason || "规则不许"}`);
+      setTransferNotice(payload.accepted ? "案卷已复核并更新物件位置。" : `暂未准行：${payload.reason || "规则不许"}`);
       setSelectedContainerId(requestTargetContainerId);
       setSelectedItemId("");
       setTargetContainerId("");
@@ -187,9 +216,9 @@ export function InventoryPage() {
     <article className="surfacePanel routePanel inventoryRoutePanel" aria-labelledby="inventory-title">
       <div className="routePanelHeader">
         <div>
-          <p className="eyebrow">安全账本</p>
+          <p className="eyebrow">案头账本</p>
           <h1 id="inventory-title">囊箧</h1>
-          <p>这里只读服务器生成的资源、资产、容器和物品视图；流转结果由服务器校验后回写。</p>
+          <p>这里只读玩家已见的资源、资产、容器和物品卷宗；流转结果须呈请后复核回写。</p>
         </div>
         <span>{routeInventoryStatus === "loading" ? "候账" : `${items.length} 件`}</span>
       </div>
@@ -221,7 +250,7 @@ export function InventoryPage() {
             inventoryView?.importantCredentials.map((credential) => (
               <article className="inventoryMiniCard" key={credential.itemId}>
                 <strong>{safeLabel(credential.name, "凭证", 40)}</strong>
-                <span>{safeLabel(credential.authorityBoundary, "以服务器裁决为准", 64)}</span>
+                <span>{safeLabel(credential.authorityBoundary, "以案卷回批为准", 64)}</span>
               </article>
             ))
           ) : <p className="statusLine">暂无重要凭证。</p>}
@@ -246,7 +275,7 @@ export function InventoryPage() {
               <span>{containerLabel(container)}</span>
               {container.locked ? <small>封存</small> : null}
             </button>
-          )) : <p className="statusLine">{routeSessionSupported ? "等待背包安全视图。" : unsupportedRouteMessage}</p>}
+          )) : <p className="statusLine">{routeSessionSupported ? "等待囊箧卷宗。" : unsupportedRouteMessage}</p>}
         </aside>
         <div className="inventoryItemList" aria-label="物品">
           <h2>{containerLabel(containersById.get(selectedContainer))}</h2>
@@ -270,9 +299,9 @@ export function InventoryPage() {
 
       <section className="inventoryTransferPanel" aria-label="物品转移">
         <div>
-          <p className="eyebrow">服务器校验</p>
+          <p className="eyebrow">案卷复核</p>
           <h2>移置物件</h2>
-          <p>选择可流转物件和目标容器；绑定凭证、官物、禁物和容量限制仍以后端返回为准。</p>
+          <p>选择可流转物件和目标容器；绑定凭证、官物、禁物和容量限制仍以回批为准。</p>
         </div>
         <label>
           物件

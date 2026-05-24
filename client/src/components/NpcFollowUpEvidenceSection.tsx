@@ -1,4 +1,5 @@
 import type { JsonObject, JsonValue, NpcActiveRequestFollowUpEvidenceGroupView, NpcActiveRequestFollowUpEvidenceView } from "../api";
+import { rewritePlayerFacingWorldText } from "../text/worldText";
 
 type NpcFollowUpEvidenceSectionProps = {
   readonly evidence?: NpcActiveRequestFollowUpEvidenceGroupView | null;
@@ -104,7 +105,8 @@ function cleanNpcEvidenceText(value: unknown, fallback = "未载", maxLength = 1
   const text = normalizeEvidenceScalar(value);
   if (!text) return fallback;
   if (isUnsafeNpcEvidenceText(text)) return fallback;
-  return text.length > maxLength ? `${text.slice(0, maxLength)}…` : text;
+  const rewritten = rewritePlayerFacingWorldText(text);
+  return rewritten.length > maxLength ? `${rewritten.slice(0, maxLength)}…` : rewritten;
 }
 
 function cleanOptionalText(value: unknown, maxLength = 96) {
@@ -168,14 +170,14 @@ function totalEvidenceCount(evidence: NpcActiveRequestFollowUpEvidenceGroupView 
 }
 
 function draftTextFromEvidence(item: SafeFollowUpEvidenceItem) {
-  return `复核${item.kindLabel}：${item.nextStep || item.summary}；只据公开材料拟成后续呈词，资源、人情债、婚姻、弹劾、定罪、背叛和未公开事实仍由服务器裁决。`;
+  return `复核${item.kindLabel}：${item.nextStep || item.summary}；只据公开材料拟成后续呈词，资源、人情债、婚姻、弹劾、定罪、背叛和未公开事实仍候案卷回批。`;
 }
 
 export function NpcFollowUpEvidenceSection({
   evidence,
   title = "来函线索与风宪 watchlist",
-  summaryFallback = "主动来函后续证据只来自服务器安全投影，可用于拟稿、查证和公开复核；资源、关系、婚姻、弹劾、定罪、背叛和未公开事实仍由服务器裁决。",
-  boundaryText = "这里只读公开线索；后续结果仍回主卷由服务器裁决。",
+  summaryFallback = "主动来函后续线索只来自已公开卷宗，可用于拟稿、查证和公开复核；资源、关系、婚姻、弹劾、定罪、背叛和未公开事实仍候案卷回批。",
+  boundaryText = "这里只读公开线索；后续结果仍回主卷候复。",
   idPrefix = "npc-follow-up-evidence",
   maxItems = 8,
   runnable = true,
@@ -216,7 +218,7 @@ export function NpcFollowUpEvidenceSection({
           </article>
         ))}
       </div>
-      <p className="npcFollowUpEvidenceBoundary">{cleanNpcEvidenceText(boundaryText, "这里只读公开线索；后续结果仍回主卷由服务器裁决。", 172)}</p>
+      <p className="npcFollowUpEvidenceBoundary">{cleanNpcEvidenceText(boundaryText, "这里只读公开线索；后续结果仍回主卷候复。", 172)}</p>
     </article>
   );
 }

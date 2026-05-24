@@ -87,7 +87,7 @@ describe("S75.9 MemorialComposer", () => {
       />
     );
 
-    const aiButton = screen.getByRole("button", { name: /温书 mock-ai 写入草稿/ });
+    const aiButton = screen.getByRole("button", { name: /温书 本地推演 写入草稿/ });
     expect(aiButton.getAttribute("data-source")).toBe("mock-ai");
     fireEvent.click(screen.getByRole("button", { name: "刷新快捷建议" }));
     expect(onRefreshQuickActions).toHaveBeenCalledTimes(1);
@@ -101,7 +101,7 @@ describe("S75.9 MemorialComposer", () => {
       />
     );
     expect(screen.getByRole("button", { name: "快捷建议生成中" })).toHaveProperty("disabled", true);
-    expect(screen.getByRole("button", { name: /温书 provider-ai 旧建议/ }).getAttribute("data-state")).toBe("stale");
+    expect(screen.getByRole("button", { name: /温书 远端推演 旧建议/ }).getAttribute("data-state")).toBe("stale");
 
     rerender(
       <MemorialComposer
@@ -111,7 +111,7 @@ describe("S75.9 MemorialComposer", () => {
         onRefreshQuickActions={onRefreshQuickActions}
       />
     );
-    expect(screen.getByRole("button", { name: /研读 local-rule 降级建议/ }).getAttribute("data-state")).toBe("failed");
+    expect(screen.getByRole("button", { name: /研读 本地建议 降级建议/ }).getAttribute("data-state")).toBe("failed");
 
     rerender(
       <MemorialComposer
@@ -121,7 +121,7 @@ describe("S75.9 MemorialComposer", () => {
         onRefreshQuickActions={onRefreshQuickActions}
       />
     );
-    expect(screen.getByRole("button", { name: /温书 local-rule 降级建议/ }).getAttribute("data-state")).toBe("failed");
+    expect(screen.getByRole("button", { name: /温书 本地建议 降级建议/ }).getAttribute("data-state")).toBe("failed");
   });
 
   it("writes quick actions to a draft callback without submitting a turn", () => {
@@ -138,7 +138,7 @@ describe("S75.9 MemorialComposer", () => {
     );
 
     expect(screen.getByRole("button", { name: "可行事" }).getAttribute("aria-expanded")).toBe("true");
-    const suggestion = screen.getByRole("button", { name: /审案 local-rule 写入草稿/ });
+    const suggestion = screen.getByRole("button", { name: /审案 本地建议 写入草稿/ });
     expect(suggestion.getAttribute("data-source")).toBe("local-rule");
 
     fireEvent.click(suggestion);
@@ -199,7 +199,7 @@ describe("S75.9 MemorialComposer", () => {
       />
     );
 
-    const written = screen.getByRole("button", { name: /遣将 local-rule 已入草稿/ });
+    const written = screen.getByRole("button", { name: /遣将 本地建议 已入草稿/ });
     expect(written.getAttribute("data-draft-state")).toBe("written");
   });
 });

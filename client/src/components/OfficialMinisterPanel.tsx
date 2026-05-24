@@ -2,6 +2,7 @@ import type { CSSProperties } from "react";
 import { Link } from "react-router";
 import type { EconomyTraceView, JsonObject, JsonValue, PlayerSummary } from "../api";
 import type { LocalSurface } from "../state/uiState";
+import { rewritePlayerFacingWorldText } from "../text/worldText";
 import { DomainConsequenceSection } from "./DomainConsequenceSection";
 import { EconomyTraceSection } from "./EconomyTraceSection";
 import { RoleCycleSection } from "./RoleCycleSection";
@@ -121,7 +122,8 @@ function cleanOfficialMinisterText(value: unknown, fallback = "未载", maxLengt
   const lowered = text.toLowerCase();
   if (/[a-z]:[\\/]/i.test(text) || /(?:file|https?):\/\//i.test(text)) return fallback;
   if (unsafeOfficialMinisterFragments.some((fragment) => lowered.includes(fragment.toLowerCase()))) return fallback;
-  return text.length > maxLength ? `${text.slice(0, maxLength)}…` : text;
+  const rewritten = rewritePlayerFacingWorldText(text);
+  return rewritten.length > maxLength ? `${rewritten.slice(0, maxLength)}…` : rewritten;
 }
 
 function cleanOptionalText(value: unknown, maxLength = 108) {
@@ -232,7 +234,7 @@ function getBureauSummary(officialCareer: JsonObject, officialPostings: JsonObje
   return {
     name: cleanOfficialMinisterText(bureau.name || bureauRow.name, "部院未明", 36),
     officeTitle: cleanOfficialMinisterText(bureau.officeTitle || posting.officeTitle, "候选观政", 42),
-    summary: cleanOfficialMinisterText(bureau.summary || bureauRow.publicSummary, "部院职掌只读安全投影，差遣、升降和处分仍由服务器裁决。", 142),
+    summary: cleanOfficialMinisterText(bureau.summary || bureauRow.publicSummary, "部院职掌只读公开卷宗，差遣、升降和处分仍候案卷回批。", 142),
     duties
   };
 }
@@ -250,7 +252,7 @@ function getCareerLedger(officialCareer: JsonObject, appointmentTrack: JsonObjec
     latestTrack: cleanOfficialMinisterText(latestTrack.honorTitle || latestTrack.trackLabel || latestDecision.trackLabel, "授官未详", 42),
     latestOffice: cleanOfficialMinisterText(latestTrack.officeTitle || latestDecision.officeTitle || posting.officeTitle, "官缺未详", 42),
     lastOutcome: cleanOfficialMinisterText(lastOutcome.label || lastOutcome.type, "暂无近次履历结果", 52),
-    appointmentSummary: cleanOfficialMinisterText(appointmentTrack.publicSummary, "授官、回避、补缺和升转仍由服务器裁决。", 132),
+    appointmentSummary: cleanOfficialMinisterText(appointmentTrack.publicSummary, "授官、回避、补缺和升转仍候案卷回批。", 132),
     recentOutcomes,
     trackRecords
   };
@@ -312,8 +314,8 @@ function getFactionRisk(officialCareer: JsonObject, actorMemory: JsonObject, aiA
   return {
     risk,
     impeachmentStage: cleanOfficialMinisterText(procedure.impeachmentStage, "未成案", 24),
-    notice: cleanOfficialMinisterText(procedure.visibleNotice, "朝局与弹劾只作公开风险提示，成案与处分仍由服务器裁决。", 132),
-    auditSummary: cleanOfficialMinisterText(auditPanel.summary, "AI 调动只显示服务器整理后的公开摘要。", 132),
+    notice: cleanOfficialMinisterText(procedure.visibleNotice, "朝局与弹劾只作公开风险提示，成案与处分仍候案卷回批。", 132),
+    auditSummary: cleanOfficialMinisterText(auditPanel.summary, "推演调度只显示已整理的公开摘要。", 132),
     items: recentUpdates.length ? recentUpdates : publicResults
   };
 }
@@ -327,7 +329,7 @@ function getAssessment(officialCareer: JsonObject, assessmentRecord: JsonObject,
     reputation: cleanNumber(posting.publicReputation, 50),
     recommendation: cleanOfficialMinisterText(assessment.pendingRecommendation || assessmentRecord.recommendation, "候考成", 28),
     nextReview: cleanOfficialMinisterText(assessment.nextReviewInMonths ?? officialCareer.nextReviewInMonths, "未计", 16),
-    finding: cleanOfficialMinisterText(assessmentRecord.publicFinding || assessmentRecord.publicSummary, "考成簿只读公开摘要；荐举、降调、弹劾和留任仍由服务器裁决。", 142),
+    finding: cleanOfficialMinisterText(assessmentRecord.publicFinding || assessmentRecord.publicSummary, "考成簿只读公开摘要；荐举、降调、弹劾和留任仍候案卷回批。", 142),
     notes: asArray(assessment.notes).slice(-3).map((note) => cleanOfficialMinisterText(note, "考语未载", 72))
   };
 }
@@ -355,7 +357,7 @@ function getFirstMonthExperience(officialCareer: JsonObject, monthlyBriefing: Js
     progress: cleanNumber(assignment.progress, 0),
     riskScore: cleanNumber(assignment.risk, 0),
     deadline: cleanOfficialMinisterText(assignment.deadlineLabel, "限期未明", 36),
-    summary: cleanOfficialMinisterText(assignment.visibleSummary || receipt.publicSummary, "首月差事由服务器按公开官场投影派生。", 142),
+    summary: cleanOfficialMinisterText(assignment.visibleSummary || receipt.publicSummary, "首月差事已按公开官场材料入卷。", 142),
     receiptTitle: cleanOfficialMinisterText(receipt.title, "官署回执", 40),
     receiptSummary: cleanOfficialMinisterText(receipt.publicSummary, "回执只确认公开进度与请裁事项。", 142),
     superiorFeedback: cleanOfficialMinisterText(receipt.superiorFeedback, "上官反馈只读公开摘要。", 112),
@@ -431,7 +433,7 @@ function getCourtEntry(officialCareer: JsonObject) {
     latestResolution: latestResolution.id || latestResolution.publicSummary
       ? {
         status: cleanOfficialMinisterText(latestResolution.statusLabel, "近次裁决", 32),
-        summary: cleanOfficialMinisterText(latestResolution.publicSummary, "近次呈上已由服务器记录，后续仍候普通回合。", 156),
+        summary: cleanOfficialMinisterText(latestResolution.publicSummary, "近次呈上已入卷，后续仍候普通回合。", 156),
         nextStep: cleanOfficialMinisterText(latestResolution.nextStep, "后续仍按普通回合补证、复核和考成结算。", 116)
       }
       : null,
@@ -439,7 +441,7 @@ function getCourtEntry(officialCareer: JsonObject) {
       ? {
         stage: cleanOfficialMinisterText(latestFollowUp.stageLabel, "朝议跟进", 32),
         status: cleanOfficialMinisterText(latestFollowUp.statusLabel, "批复", 32),
-        summary: cleanOfficialMinisterText(latestFollowUp.publicSummary, "奏议后续已由服务器记录，后续仍候普通回合。", 156),
+        summary: cleanOfficialMinisterText(latestFollowUp.publicSummary, "奏议后续已入卷，后续仍候普通回合。", 156),
         nextStep: cleanOfficialMinisterText(latestFollowUp.nextStep, "后续仍按普通回合补证、复核和考成结算。", 116)
       }
       : null,
@@ -571,7 +573,7 @@ export function OfficialMinisterPanel({
         <div>
           <p className="scholarPanelEyebrow">{roleLabel} · {dateLabel}</p>
           <h2 id="official-minister-panel-title">部院官署</h2>
-          <p>{playerName}现任{officeTitle}，官职履历、部院公文、同年座师、朝局风险和考成只读服务器安全投影。</p>
+          <p>{playerName}现任{officeTitle}，官职履历、部院公文、同年座师、朝局风险和考成只读公开卷宗。</p>
           <p>{bureau.summary}</p>
         </div>
         <dl className="scholarPanelStatus" aria-label="入仕官员摘要">
@@ -585,7 +587,7 @@ export function OfficialMinisterPanel({
           </div>
           <div>
             <dt>边界</dt>
-            <dd>只写草稿，结果由服务器裁决</dd>
+            <dd>只写草稿，结果候回批</dd>
           </div>
         </dl>
       </header>
@@ -756,7 +758,7 @@ export function OfficialMinisterPanel({
         <DomainConsequenceSection
           domainConsequenceView={domainConsequenceView}
           title="领域后果"
-          summaryFallback="跨域后果只读服务器已裁决的地方、军务、刑名和人物经济公开余波；考成、弹劾、财政和世界议程仍由服务器继续裁决。"
+          summaryFallback="跨域后果只读已经入卷的地方、军务、刑名和人物经济公开余波；考成、弹劾、财政和天下议程仍继续回响。"
           emptyText="暂无可公开追踪的跨域后果；不得从内部账本、隐藏证据或模型提案补造事实。"
           runnable={runnable}
           onDraft={onDraft}
@@ -765,7 +767,7 @@ export function OfficialMinisterPanel({
         <EconomyTraceSection
           traceView={economyTraceView}
           title="经济线索与官署材料"
-          summaryFallback="交易议价、委派预算/回禀、人情债和市价解释只作奏折、考成或朝议材料；资源、关系和成交仍由服务器裁决。"
+          summaryFallback="交易议价、委派预算/回禀、人情债和市价解释只作奏折、考成或朝议材料；资源、关系和成交仍候案卷回批。"
           idPrefix="official-economy-trace"
           maxItems={5}
           traceTypes={officialEconomyTraceTypes}
@@ -826,11 +828,11 @@ export function OfficialMinisterPanel({
                   id: `court-entry-signal-${index}`,
                   title: signal
                 }))}
-                emptyText="长期考成追踪只读取服务器公开功绩、风险和回署材料。"
+                emptyText="长期考成追踪只读取公开功绩、风险和回署材料。"
               />
             </>
           ) : (
-            <p>此处只把上疏、回堂官、请核考成或辨弹劾写入底部奏折草稿；呈上回合、时间推进、任免奖惩和处分仍走服务器裁决。</p>
+            <p>此处只把上疏、回堂官、请核考成或辨弹劾写入底部奏折草稿；呈上回合、时间推进、任免奖惩和处分仍候案卷回批。</p>
           )}
           <div className="scholarPanelActions">
             {courtEntry.nextActions.slice(0, 3).map((action) => (
@@ -849,14 +851,14 @@ export function OfficialMinisterPanel({
               </button>
             ))}
             {!courtEntry.nextActions.length
-              ? draftButtonText("拟具奏疏", `臣${playerName}谨就${officeTitle}本职差遣、考成风险与朝局风声拟具奏疏，请服务器裁决后果。`, canDraft, onDraft)
+              ? draftButtonText("拟具奏疏", `臣${playerName}谨就${officeTitle}本职差遣、考成风险与朝局风声拟具奏疏，请案卷回批后果。`, canDraft, onDraft)
               : null}
             {courtHref ? <Link to={courtHref}>入朝议页</Link> : null}
           </div>
           <ul className="scholarPanelBoundary">
-            <li>本面板不提交回合、不调用 resolver、不推进时间。</li>
+            <li>本面板不提交回合、不推进时间。</li>
             <li>不得在前端直接任免、奖惩、处分、弹劾成案或改写考成。</li>
-            <li>官缺、派系、人脉记忆和 AI 调动摘要只显示清洗后的公开 view。</li>
+            <li>官缺、派系、人脉记忆和推演调度只显示已公开摘要。</li>
           </ul>
         </article>
       </div>

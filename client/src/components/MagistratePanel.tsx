@@ -1,6 +1,7 @@
 import type { CSSProperties } from "react";
 import type { EconomyTraceView, JsonObject, JsonValue, MarketPriceView, NpcEconomyView, PlayerSummary } from "../api";
 import type { LocalSurface } from "../state/uiState";
+import { rewritePlayerFacingWorldText } from "../text/worldText";
 import { DomainConsequenceSection } from "./DomainConsequenceSection";
 import { EconomyTraceSection } from "./EconomyTraceSection";
 import { RoleCycleSection } from "./RoleCycleSection";
@@ -104,7 +105,8 @@ function cleanMagistrateText(value: unknown, fallback = "未载", maxLength = 10
   const lowered = text.toLowerCase();
   if (/[a-z]:[\\/]/i.test(text) || /(?:file|https?):\/\//i.test(text)) return fallback;
   if (unsafeMagistrateFragments.some((fragment) => lowered.includes(fragment.toLowerCase()))) return fallback;
-  return text.length > maxLength ? `${text.slice(0, maxLength)}…` : text;
+  const rewritten = rewritePlayerFacingWorldText(text);
+  return rewritten.length > maxLength ? `${rewritten.slice(0, maxLength)}…` : rewritten;
 }
 
 function cleanOptionalText(value: unknown, maxLength = 104) {
@@ -206,14 +208,14 @@ function getFiscalReports(economicFiscal: JsonObject) {
       status: cleanMagistrateText(localTreasury.statusLabel, "候核", 18),
       capacity: cleanNumber(localTreasury.localTreasuryCapacity, 45),
       reliefPressure: cleanNumber(localTreasury.reliefPressure, 40),
-      summary: cleanMagistrateText(localTreasury.publicSummary, "钱粮、库银与赈济只读服务器财赋投影。", 132)
+      summary: cleanMagistrateText(localTreasury.publicSummary, "钱粮、库银与赈济只读已公开财赋卷宗。", 132)
     },
     grainMarket: {
       title: cleanMagistrateText(grainMarket.title, "粮储市价", 44),
       status: cleanMagistrateText(grainMarket.statusLabel, "候核", 18),
       grainStock: cleanNumber(grainMarket.grainStock, 55),
       marketPressure: cleanNumber(grainMarket.marketPressure ?? grainMarket.pressureScore, 40),
-      summary: cleanMagistrateText(grainMarket.publicSummary, "粮价仓储待巡查，开仓平粜仍由服务器裁决。", 132)
+      summary: cleanMagistrateText(grainMarket.publicSummary, "粮价仓储待巡查，开仓平粜仍候回批。", 132)
     },
     incidents
   };
@@ -249,7 +251,7 @@ function getEconomyEvents(npcEconomy: JsonObject) {
   return asArray(npcEconomy.recentEvents)
     .map((entry, index) => ({
       id: `economy-event-${index}`,
-      title: cleanMagistrateText(entry, "NPC 月账", 72)
+      title: cleanMagistrateText(entry, "人物月账", 72)
     }))
     .slice(0, 3);
 }
@@ -261,7 +263,7 @@ function getPostingSummary(posting: JsonObject, player: PlayerSummary | null | u
     performance: cleanNumber(posting.performanceScore, 50),
     risk: cleanNumber(posting.impeachmentRisk, 0),
     reputation: cleanNumber(posting.publicReputation, 50),
-    summary: cleanMagistrateText(posting.publicSummary, "任所、考成、弹劾和升降仍由服务器官场规则裁决。", 132)
+    summary: cleanMagistrateText(posting.publicSummary, "任所、考成、弹劾和升降仍按官场规则候批。", 132)
   };
 }
 
@@ -324,7 +326,7 @@ export function MagistratePanel({
         <div>
           <p className="scholarPanelEyebrow">县衙 · {dateLabel}</p>
           <h2 id="magistrate-panel-title">地方官署</h2>
-          <p>{playerName}署理{postingSummary.office}，案牍、钱粮、水利、盗警和士绅关系只读服务器安全投影。</p>
+          <p>{playerName}署理{postingSummary.office}，案牍、钱粮、水利、盗警和士绅关系只读已公开卷宗。</p>
           <p>{postingSummary.summary}</p>
         </div>
         <dl className="scholarPanelStatus" aria-label="地方官摘要">
@@ -338,7 +340,7 @@ export function MagistratePanel({
           </div>
           <div>
             <dt>边界</dt>
-            <dd>只写草稿，结果由服务器裁决</dd>
+            <dd>只写草稿，结果候回批</dd>
           </div>
         </dl>
       </header>
@@ -372,7 +374,7 @@ export function MagistratePanel({
 
         <article className="scholarPanelCard magistratePanelTrial" aria-labelledby="magistrate-trial-title">
           <h3 id="magistrate-trial-title">公堂词讼</h3>
-          <p>堂审只能形成行动意图；证据采信、成案、刑名处分和长期影响继续由服务器 resolver 裁决。</p>
+          <p>堂审只能形成行动意图；证据采信、成案、刑名处分和长期影响继续候案卷回批。</p>
           <MagistratePanelList items={judicialDockets} emptyText="暂无刑名急件，可先核对旧案口供与案卷。" />
           {draftButtonText("升堂核案", "升堂核问积案，核对公开证词、案卷日期与里甲呈报，不自行结案。", canDraft, onDraft)}
         </article>
@@ -406,13 +408,13 @@ export function MagistratePanel({
           <MagistratePanelList items={fiscalReports.incidents} emptyText="暂无财赋预警。" />
           <section className="scholarPanelSubsection" aria-labelledby="magistrate-market-title">
             <h4 id="magistrate-market-title">基础市价</h4>
-            <MagistratePanelList items={marketRows} emptyText="市价待服务器刷新。" />
+            <MagistratePanelList items={marketRows} emptyText="市价待入卷刷新。" />
           </section>
           <section className="scholarPanelSubsection" aria-labelledby="magistrate-economy-title">
-            <h4 id="magistrate-economy-title">NPC 月账</h4>
+            <h4 id="magistrate-economy-title">人物月账</h4>
             <MagistratePanelList items={economyEvents} emptyText="暂无月结事件。" />
           </section>
-          {draftButtonText("清厘钱粮", "会同典吏清厘钱粮、仓储与赈济簿册，具明疑点候服务器裁决。", canDraft, onDraft)}
+          {draftButtonText("清厘钱粮", "会同典吏清厘钱粮、仓储与赈济簿册，具明疑点候案卷回批。", canDraft, onDraft)}
         </article>
 
         <article className="scholarPanelCard magistratePanelPatrol" aria-labelledby="magistrate-patrol-title">
@@ -426,7 +428,7 @@ export function MagistratePanel({
 
         <article className="scholarPanelCard magistratePanelGentry" aria-labelledby="magistrate-gentry-title">
           <h3 id="magistrate-gentry-title">士绅乡约</h3>
-          <p>士绅、里甲、胥吏与民情只作公开关系线索；捐输、施压、弹劾和声望变化仍由服务器写定。</p>
+          <p>士绅、里甲、胥吏与民情只作公开关系线索；捐输、施压、弹劾和声望变化仍候案卷写定。</p>
           <MagistratePanelList items={gentryDockets} emptyText="暂无士绅急件，可先召集乡约听取公议。" />
           {draftButtonText("调停乡约", "召集士绅、里甲与胥吏公议，调停词讼和徭役争执，先写成行动草稿。", canDraft, onDraft)}
         </article>
@@ -435,7 +437,7 @@ export function MagistratePanel({
           domainConsequenceView={domainConsequenceView}
           sourceTypes={["city_policy", "judicial_case", "npc_economy"]}
           title="领域后果追踪"
-          summaryFallback="地方后果只读服务器已裁决的政策、刑名和人物经济公开余波；库银、案牍、NPC 资产与关系变化仍由服务器逐旬或月结裁决。"
+          summaryFallback="地方后果只读已经入卷的政策、刑名和人物经济公开余波；库银、案牍、人物资产与关系变化仍逐旬或月结回响。"
           emptyText="暂无地方公开后果；不得从内部案卷、隐藏证据或模型提案补造事实。"
           runnable={runnable}
           onDraft={onDraft}
@@ -444,7 +446,7 @@ export function MagistratePanel({
         <EconomyTraceSection
           traceView={economyTraceView}
           title="钱粮与市价为何变化"
-          summaryFallback="本县经济解释只读服务器安全投影；市价、交易、委派、人情债和关系变化仍由服务器逐旬或月结裁决。"
+          summaryFallback="本县经济解释只读已公开卷宗；市价、交易、委派、人情债和关系变化仍逐旬或月结回响。"
           idPrefix="magistrate-economy-trace"
           maxItems={5}
           traceTypes={magistrateEconomyTraceTypes}
@@ -455,10 +457,10 @@ export function MagistratePanel({
         <article className="scholarPanelCard magistratePanelBoundary" aria-labelledby="magistrate-boundary-title">
           <h3 id="magistrate-boundary-title">裁决边界</h3>
           <ul className="scholarPanelBoundary">
-            <li>本面板只读地方案牍、官职任所和财赋市场安全 projection。</li>
-            <li>按钮只把玩家意图写入奏折草稿，不提交回合、不调用 resolver。</li>
-            <li>审案、征税、开仓、水利、缉捕、任免、考成和持久化都由服务器裁决。</li>
-            <li>基础市价和 NPC 月账由后端旬更/月结；前端只显示，不成交、不改账。</li>
+            <li>本面板只读地方案牍、官职任所和财赋市场公开卷宗。</li>
+            <li>按钮只把玩家意图写入奏折草稿，不直接呈递本回合。</li>
+            <li>审案、征税、开仓、水利、缉捕、任免和考成都须候案卷回批。</li>
+            <li>基础市价和人物月账按旬更/月结入卷；本页只显示，不成交、不改账。</li>
           </ul>
           <dl className="scholarPanelCompactDl">
             <div>

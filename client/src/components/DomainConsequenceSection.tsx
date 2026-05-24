@@ -1,4 +1,5 @@
 import type { JsonObject, JsonValue } from "../api";
+import { rewritePlayerFacingWorldText } from "../text/worldText";
 
 type DomainConsequenceSectionProps = {
   readonly domainConsequenceView?: JsonObject | null;
@@ -96,7 +97,8 @@ function cleanDomainConsequenceText(value: unknown, fallback = "未载", maxLeng
   const lowered = text.toLowerCase();
   if (/[a-z]:[\\/]/i.test(text) || /(?:file|https?):\/\//i.test(text)) return fallback;
   if (unsafeDomainConsequenceFragments.some((fragment) => lowered.includes(fragment.toLowerCase()))) return fallback;
-  return text.length > maxLength ? `${text.slice(0, maxLength)}…` : text;
+  const rewritten = rewritePlayerFacingWorldText(text);
+  return rewritten.length > maxLength ? `${rewritten.slice(0, maxLength)}…` : rewritten;
 }
 
 function cleanOptionalText(value: unknown, maxLength = 124) {
@@ -192,7 +194,7 @@ function capSummaryText(view: JsonObject) {
   const candidates = cleanNumber(caps.publicCandidates, visible);
   if (!visible && !candidates) return undefined;
   if (caps.capped === true && candidates > visible) {
-    return `当前显示近次 ${visible} 条，较早 ${candidates - visible} 条已由服务器按公开上限收束。`;
+    return `当前显示近次 ${visible} 条，较早 ${candidates - visible} 条已按公开上限收束。`;
   }
   return `当前公开追踪 ${visible} 条。`;
 }
@@ -201,7 +203,7 @@ export function DomainConsequenceSection({
   domainConsequenceView,
   sourceTypes,
   title = "领域后果追踪",
-  summaryFallback = "领域后果只读服务器已裁决的公开余波；财政、军务、刑名、人物经济和关系变化仍由服务器逐旬或月结裁决。",
+  summaryFallback = "领域后果只读已经入卷的公开余波；财政、军务、刑名、人物经济和关系变化仍逐旬或月结回响。",
   emptyText = "暂无公开领域后果；不得从内部账本、隐藏证据或模型提案补造事实。",
   maxItems = 4,
   runnable = true,
@@ -239,7 +241,7 @@ export function DomainConsequenceSection({
           </button>
         ))}
       </div>
-      <p className="domainConsequenceBoundary">只写草稿，不直接结案、调兵、拨款、成交交易、改 NPC 资产或写入状态。</p>
+      <p className="domainConsequenceBoundary">只写草稿，不直接结案、调兵、拨款、成交交易、改人物资产或写入后果。</p>
     </article>
   );
 }
