@@ -2982,13 +2982,15 @@ button:disabled {
 
 .npcActiveRequestInbox,
 .npcSocialGrid,
-.npcRelationshipSignalGrid {
+.npcRelationshipSignalGrid,
+.npcRelationshipAgendaGrid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
   gap: 10px;
 }
 
 .npcRelationshipEntitySignals,
+.npcRelationshipAgenda,
 .npcGroupList,
 .npcDetailWorkbench,
 .inventoryContainerList,
@@ -3002,12 +3004,14 @@ button:disabled {
   padding: 12px;
 }
 
-.npcRelationshipEntitySignals {
+.npcRelationshipEntitySignals,
+.npcRelationshipAgenda {
   display: grid;
   gap: 12px;
 }
 
-.npcRelationshipSignalCard {
+.npcRelationshipSignalCard,
+.npcRelationshipAgendaCard {
   display: grid;
   gap: 8px;
   border: 1px solid rgba(84, 60, 43, 0.2);
@@ -3017,13 +3021,21 @@ button:disabled {
 }
 
 .npcRelationshipSignalCard h3,
-.npcRelationshipSignalCard p {
+.npcRelationshipSignalCard p,
+.npcRelationshipAgendaCard h3,
+.npcRelationshipAgendaCard p {
   margin: 0;
 }
 
-.npcRelationshipSignalCard h3 {
+.npcRelationshipSignalCard h3,
+.npcRelationshipAgendaCard h3 {
   color: #33261d;
   font-size: 1rem;
+  overflow-wrap: anywhere;
+}
+
+.npcRelationshipAgendaCard button {
+  justify-self: start;
 }
 
 .npcRelationshipImpactSummary {

@@ -4102,6 +4102,53 @@ describe("S74.1 React client shell", () => {
           topicSurfaceIds: ["npc-profile"],
           generatedAtTurn: 13
         }]
+      },
+      worldThreadView: {
+        activeThreads: [{
+          id: "WT-npc-rel-debate-safe",
+          sourceType: "npc_relationship_action",
+          sourceLabel: "交游记录",
+          status: "active",
+          kind: "npc_relationship_action",
+          title: "交游记录：沈砚秋论道",
+          summary: "沈砚秋论道已由服务器裁决，只作公开交游材料引用。",
+          riskLabel: "中风险",
+          severity: 2,
+          goal: "追踪公开交游余波，不裁决关系终局。",
+          followUpHint: "后续可拜会师友或补充公开声望材料，真实后果仍由服务器裁决。",
+          interventionHints: ["拜会相关人物", "以公开礼法材料补证"],
+          relatedLabels: {
+            entities: ["同年文社"],
+            metrics: ["信任上升"]
+          }
+        }, {
+          id: "WT-npc-rel-polluted",
+          sourceType: "npc_relationship_action",
+          sourceLabel: "provider payload",
+          status: "active",
+          title: "hiddenNotes raw prompt C:\\bad",
+          summary: "OPENAI_API_KEY data/sessions provider payload"
+        }, {
+          id: "WT-npc-rel-posix-path",
+          sourceType: "npc_relationship_action",
+          sourceLabel: "交游记录",
+          status: "active",
+          title: "交游记录：/mnt/e/LSMNQ/.env",
+          summary: "旁注 /home/zzz/project/.env 只应视作污染路径。"
+        }, {
+          id: "WT-npc-rel-cjk-punct-path",
+          sourceType: "npc_relationship_action",
+          sourceLabel: "交游记录",
+          status: "active",
+          title: "交游记录，/home/zzz/project/.env",
+          summary: "旁注、/mnt/e/LSMNQ/.env 也应视作污染路径。"
+        }, {
+          id: "WT-domain-visible",
+          sourceType: "domain_consequence",
+          sourceLabel: "领域后果",
+          title: "不属于人物交游的议题",
+          summary: "人物页不应展示非交游来源的 world thread。"
+        }]
       }
     };
     const fetchMock = vi.fn(async (url: string) => {
@@ -4158,15 +4205,32 @@ describe("S74.1 React client shell", () => {
     expect(screen.getByText("人情债月账解释")).toBeTruthy();
     expect(screen.getByText("廉政 watchlist 留痕")).toBeTruthy();
     expect(screen.getByText("关系网影响")).toBeTruthy();
-    expect(screen.getByText("同年文社")).toBeTruthy();
+    expect(screen.getAllByText("同年文社").length).toBeGreaterThan(0);
     expect(screen.getByText("地方士绅")).toBeTruthy();
     expect(screen.getByText("论道余波已作为同年文社公开压力留痕，仍不结算关系终局。")).toBeTruthy();
     expect(screen.getByText("NPC 关系行动 · 信任上升")).toBeTruthy();
     expect(screen.getByText("来函后续已作为地方人情公开压力留痕，不代表人情债已经落账。")).toBeTruthy();
+    expect(screen.getByText("交游议题")).toBeTruthy();
+    expect(screen.getByText("交游记录：沈砚秋论道")).toBeTruthy();
+    expect(screen.getByText("沈砚秋论道已由服务器裁决，只作公开交游材料引用。")).toBeTruthy();
+    expect(screen.getByText("交游记录 · 可跟进")).toBeTruthy();
+    expect(screen.queryByText("不属于人物交游的议题")).toBeNull();
     expect(screen.queryByText("公开压力 2 项")).toBeNull();
     expect(screen.queryByText("provider-forged")).toBeNull();
     expect(screen.queryByText("world-entity-impact:polluted")).toBeNull();
+    expect(screen.queryByText("WT-npc-rel-polluted")).toBeNull();
+    expect(screen.queryByText("交游记录：/mnt/e/LSMNQ/.env")).toBeNull();
+    expect(screen.queryByText("旁注 /home/zzz/project/.env 只应视作污染路径。")).toBeNull();
+    expect(screen.queryByText("交游记录，/home/zzz/project/.env")).toBeNull();
+    expect(screen.queryByText("旁注、/mnt/e/LSMNQ/.env 也应视作污染路径。")).toBeNull();
     expect(screen.getAllByRole("button", { name: "拟复核" })).toHaveLength(3);
+    expect(screen.getAllByRole("button", { name: "拟跟进" })).toHaveLength(1);
+    fireEvent.click(screen.getByRole("button", { name: "拟跟进" }));
+    expect(useUiStateStore.getState().actionDraft).toMatchObject({
+      source: "role-surface",
+      targetPage: "game",
+      text: expect.stringContaining("交游记录：沈砚秋论道")
+    });
     fireEvent.click(screen.getAllByRole("button", { name: "拟复核" })[0]);
     expect(useUiStateStore.getState().actionDraft).toMatchObject({
       source: "role-surface",
@@ -4275,6 +4339,15 @@ describe("S74.1 React client shell", () => {
             groupLabel: "交易议价",
             statusLabel: "可阅"
           }]
+        },
+        worldThreadView: {
+          activeThreads: [{
+            id: "WT-stale-npc-rel",
+            sourceType: "npc_relationship_action",
+            sourceLabel: "交游记录",
+            title: "跨案卷交游议题",
+            summary: "此议题属于另一个案卷，不应在当前人物页出现。"
+          }]
         }
       } as unknown as ReturnType<typeof useGameSessionStore.getState>["currentSession"],
       status: "ready"
@@ -4286,7 +4359,9 @@ describe("S74.1 React client shell", () => {
     await waitFor(() => expect(fetchMock.mock.calls.some(([url]) => String(url) === `/api/game/npcs/${routeSessionId}?pageSize=50`)).toBe(true));
     expect(screen.queryByText("跨案卷来函线索")).toBeNull();
     expect(screen.queryByText("旧案交易解释")).toBeNull();
+    expect(screen.queryByText("跨案卷交游议题")).toBeNull();
     expect(screen.queryByRole("button", { name: "拟复核" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "拟跟进" })).toBeNull();
   });
 
   it("does not render stale S88.9 NPC workbench results on another people route", async () => {

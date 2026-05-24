@@ -129,11 +129,33 @@ type RelationshipImpactRow = {
   readonly generatedAtTurn: number;
 };
 
+type RelationshipAgendaThread = {
+  readonly id: string;
+  readonly title: string;
+  readonly sourceLabel: string;
+  readonly statusLabel: string;
+  readonly riskLabel: string;
+  readonly summary: string;
+  readonly goal: string;
+  readonly followUpHint: string;
+  readonly interventionHints: readonly string[];
+  readonly relatedLabels: readonly string[];
+};
+
+const localPeoplePathPattern = /(?:^|[\s"'`(（:：,;，。；、【《“‘])(?:[a-z]:[\\/]|~[\\/]|\.{1,2}[\\/]|\/(?:home|mnt|tmp|var|etc|usr|opt|workspace|workspaces|root|data|src|client|server|dist|public|node_modules)(?:[\\/]|$)|(?:data|src|client|server|dist|public|node_modules)[\\/][^\s，。；、]+)/i;
+
+function peopleTextLooksUnsafe(value: unknown) {
+  if (typeof value !== "string" || !value.trim()) return false;
+  const text = value.trim();
+  const normalized = text.toLowerCase();
+  return localPeoplePathPattern.test(text) ||
+    /sk-[a-z0-9_-]{6,}/i.test(text) ||
+    unsafePeopleTextFragments.some((fragment) => normalized.includes(fragment.toLowerCase()));
+}
+
 function safePeopleText(value: unknown, fallback: string, maxLength = 120) {
   const text = typeof value === "string" && value.trim() ? value.trim().replace(/\s+/g, " ") : fallback;
-  const normalized = text.toLowerCase();
-  if (/[a-z]:[\\/]/i.test(text) || /sk-[a-z0-9_-]{6,}/i.test(text)) return fallback;
-  if (unsafePeopleTextFragments.some((fragment) => normalized.includes(fragment.toLowerCase()))) return fallback;
+  if (peopleTextLooksUnsafe(text)) return fallback;
   return text.length > maxLength ? `${text.slice(0, maxLength)}...` : text;
 }
 
@@ -456,6 +478,63 @@ function buildRelationshipEntitySignals(worldEntityView: unknown, worldEntityImp
     .slice(0, 4);
 }
 
+function collectThreadRelatedLabels(thread: Record<string, unknown>) {
+  const relatedLabels = thread.relatedLabels && typeof thread.relatedLabels === "object" && !Array.isArray(thread.relatedLabels)
+    ? thread.relatedLabels as Record<string, unknown>
+    : {};
+  return ["characters", "factions", "offices", "entities", "metrics"]
+    .flatMap((key) => Array.isArray(relatedLabels[key]) ? relatedLabels[key] : [])
+    .map((item) => safePeopleText(item, "", 28))
+    .filter(Boolean)
+    .slice(0, 5);
+}
+
+function collectRelationshipAgendaThreads(worldThreadView: unknown) {
+  const seen = new Set<string>();
+  return rowsFromViewKeys(worldThreadView, ["activeThreads"])
+    .flatMap((thread): RelationshipAgendaThread[] => {
+      const sourceType = safePeopleText(thread.sourceType, "", 48);
+      if (sourceType !== "npc_relationship_action") return [];
+      if ([
+        thread.id,
+        thread.sourceId,
+        thread.sourceLabel,
+        thread.title,
+        thread.summary,
+        thread.goal,
+        thread.followUpHint
+      ].some(peopleTextLooksUnsafe)) return [];
+
+      const id = safePeopleText(thread.id || thread.sourceId, "", 96);
+      const title = safePeopleText(thread.title, "交游议题", 72);
+      const summary = safePeopleText(
+        thread.summary,
+        "交游记录只作公开关系议题，资源、婚姻、伤损、弹劾、定罪、背叛和 NPC 行动仍由服务器裁决。",
+        188
+      );
+      if (!id || !title || !summary || seen.has(id)) return [];
+      seen.add(id);
+      const rawStatus = safePeopleText(thread.status, "active", 32);
+      const status = rawStatus === "watch" ? "待观察" : rawStatus === "resolved" ? "已归档" : "可跟进";
+      const interventionHints = Array.isArray(thread.interventionHints)
+        ? thread.interventionHints.map((item) => safePeopleText(item, "", 36)).filter(Boolean).slice(0, 3)
+        : [];
+      return [{
+        id,
+        title,
+        sourceLabel: safePeopleText(thread.sourceLabel, "交游记录", 28),
+        statusLabel: status,
+        riskLabel: safePeopleText(thread.riskLabel, Number(thread.severity) >= 2 ? "中风险" : "可观察", 28),
+        summary,
+        goal: safePeopleText(thread.goal, "只追踪公开交游余波，不裁决关系终局。", 112),
+        followUpHint: safePeopleText(thread.followUpHint, "后续仍需普通回合或 NPC 互动由服务器裁决。", 128),
+        interventionHints,
+        relatedLabels: collectThreadRelatedLabels(thread)
+      }];
+    })
+    .slice(0, 4);
+}
+
 function statusLabel(status: unknown) {
   const text = safePeopleText(status, "待裁", 32);
   const labels: Record<string, string> = {
@@ -662,6 +741,10 @@ export function PeoplePage() {
     () => buildRelationshipEntitySignals(activeSession?.worldEntityView, activeLastNpcInteraction?.worldEntityImpacts),
     [activeLastNpcInteraction?.worldEntityImpacts, activeSession?.worldEntityView]
   );
+  const relationshipAgendaThreads = useMemo(
+    () => collectRelationshipAgendaThreads(activeSession?.worldThreadView),
+    [activeSession?.worldThreadView]
+  );
   const activeNpcDialogueView = activeLastNpcInteraction?.npcDialogueView?.npcId === selectedNpcIdForResults
     ? activeLastNpcInteraction.npcDialogueView
     : undefined;
@@ -773,6 +856,19 @@ export function PeoplePage() {
         })}
       />
       <NpcRelationshipEntitySignals signals={relationshipEntitySignals} />
+      <NpcRelationshipAgenda
+        threads={relationshipAgendaThreads}
+        runnable={runnable}
+        onDraft={(thread) => setActionDraft({
+          source: "role-surface",
+          targetPage: "game",
+          text: safePeopleText(
+            `续记${thread.title}：只据公开交游议题拟拜会或补证；资源、婚姻、伤损、关系终局、弹劾、定罪、背叛和 NPC 行动仍由服务器裁决。`,
+            "续记交游议题：只作公开复核草稿，真实后果仍由服务器裁决。",
+            188
+          )
+        })}
+      />
       <EconomyTraceSection
         traceView={peopleEconomyTraceView}
         title="交易委派账本为何变化"
@@ -1055,6 +1151,52 @@ function NpcRelationshipEntitySignals({
         </div>
       ) : (
         <p className="statusLine">暂无可见关系网回响；后续交游仍需普通回合或 NPC 互动由服务器裁决。</p>
+      )}
+    </section>
+  );
+}
+
+function NpcRelationshipAgenda({
+  threads,
+  runnable,
+  onDraft
+}: {
+  readonly threads: readonly RelationshipAgendaThread[];
+  readonly runnable: boolean;
+  readonly onDraft: (thread: RelationshipAgendaThread) => void;
+}) {
+  return (
+    <section className="npcRelationshipAgenda" aria-label="NPC 交游议题">
+      <div className="sectionTitleRow">
+        <div>
+          <h2>交游议题</h2>
+          <p>这里仅展示已由服务器裁决的论道、切磋、求爱或议婚公开余波；真实关系、资源、婚姻、伤损和 NPC 行动仍由服务器裁决。</p>
+        </div>
+        <span>{threads.length ? `${threads.length} 条` : "待留痕"}</span>
+      </div>
+      {threads.length ? (
+        <div className="npcRelationshipAgendaGrid">
+          {threads.map((thread) => (
+            <article className="npcRelationshipAgendaCard" key={thread.id}>
+              <div>
+                <p className="eyebrow">{thread.sourceLabel} · {thread.statusLabel}</p>
+                <h3>{thread.title}</h3>
+              </div>
+              <p>{thread.summary}</p>
+              <p className="npcRelationshipImpactSummary">{thread.followUpHint}</p>
+              <div className="peopleMeta">
+                <span>{thread.riskLabel}</span>
+                {thread.relatedLabels.slice(0, 2).map((label) => <span key={label}>{label}</span>)}
+                {thread.interventionHints[0] ? <span>{thread.interventionHints[0]}</span> : null}
+              </div>
+              <button type="button" disabled={!runnable} onClick={() => onDraft(thread)}>
+                拟跟进
+              </button>
+            </article>
+          ))}
+        </div>
+      ) : (
+        <p className="statusLine">暂无可见交游议题；交游记录必须先经服务器裁决并写入安全议题。</p>
       )}
     </section>
   );

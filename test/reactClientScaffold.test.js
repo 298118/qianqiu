@@ -1142,6 +1142,7 @@ test("S88.7 topic surfaces label NPC relationship action evidence as read-only i
   const safeSearchSource = readText("src/game/safeWorldSearch.js");
   const topicSurfaceSource = readText("src/game/topicSurfaceView.js");
   const surfaceHostSource = readText("client/src/components/SurfaceHost.tsx");
+  const peoplePageSource = readText("client/src/pages/PeoplePage.tsx");
   const appTestSource = readText("client/src/__tests__/App.test.tsx");
   const topicSourceLabelSnippet = surfaceHostSource.slice(
     surfaceHostSource.indexOf("function topicSourceLabel"),
@@ -1154,6 +1155,10 @@ test("S88.7 topic surfaces label NPC relationship action evidence as read-only i
   const trialTopicSnippet = topicSurfaceSource.slice(
     topicSurfaceSource.indexOf("trial: Object.freeze"),
     topicSurfaceSource.indexOf('"war-council": Object.freeze')
+  );
+  const peopleRelationshipAgendaSnippet = peoplePageSource.slice(
+    peoplePageSource.indexOf("function collectRelationshipAgendaThreads"),
+    peoplePageSource.indexOf("function statusLabel")
   );
 
   assert.match(npcInteractionSource, /relationshipActionEvidence/);
@@ -1172,15 +1177,24 @@ test("S88.7 topic surfaces label NPC relationship action evidence as read-only i
   assert.doesNotMatch(trialTopicSnippet, /"npcInteractionView"/);
   assert.match(surfaceHostSource, /交游记录/);
   assert.match(surfaceHostSource, /交游记录 · \$\{domain\}/);
+  assert.match(peoplePageSource, /localPeoplePathPattern/);
+  assert.match(peoplePageSource, /home\|mnt\|tmp\|var\|etc\|usr\|opt/);
+  assert.match(peopleRelationshipAgendaSnippet, /sourceType !== "npc_relationship_action"/);
+  assert.match(peopleRelationshipAgendaSnippet, /peopleTextLooksUnsafe/);
+  assert.match(peoplePageSource, /<h2>交游议题<\/h2>/);
+  assert.match(peoplePageSource, /拟跟进/);
   assert.match(appTestSource, /交游记录 1 条/);
   assert.match(appTestSource, /交游记录 · 案牍/);
+  assert.match(appTestSource, /交游记录：沈砚秋论道/);
+  assert.match(appTestSource, /\/mnt\/e\/LSMNQ\/\.env/);
+  assert.match(appTestSource, /交游记录，\/home\/zzz\/project\/\.env/);
   assert.match(npcEvidenceBuilderSnippet, /sourceType: "npc_relationship_action"/);
   assert.match(npcEvidenceBuilderSnippet, /sourceLabel: "交游记录"/);
   assert.match(npcEvidenceBuilderSnippet, /visibility: "player_visible"/);
   assert.match(npcEvidenceBuilderSnippet, /boundary: "交游记录只作只读证据/);
   assert.match(npcEvidenceBuilderSnippet, /serverOwnsOutcome/);
   assert.doesNotMatch(
-    `${topicSourceLabelSnippet}\n${npcEvidenceBuilderSnippet}`,
+    `${topicSourceLabelSnippet}\n${npcEvidenceBuilderSnippet}\n${peopleRelationshipAgendaSnippet}`,
     /fetch\(|submitTurn\(|\/api\/game\/state|\/api\/dev\/session-diagnostics|\/api\/game\/turn|npcInteractionLedger|relationshipImpactView|resourceImpactView|worldPeopleImpactView|dangerouslySetInnerHTML|localStorage|sessionStorage|data\/sessions|raw audit|provider payload|OPENAI_API_KEY|DEEPSEEK_API_KEY|MIMO_API_KEY|ANTHROPIC_API_KEY/
   );
 });
