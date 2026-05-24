@@ -37,6 +37,9 @@
 | S79 | 前端修复、194 张 recovered 女性高清立绘入库、runtime manifest 刷新和只读高清立绘查看器。 | `docs/DEVELOPMENT_STEPS.md` 历史记录、Git history |
 | S80 | 服务端全局 AI 设置、设置页/印匣共享矩阵、保存状态反馈、provider key 可用性提示和旧 session 设置入口兼容。 | `docs/DEVELOPMENT_STEPS.md` 历史记录、Git history |
 | S81-S85 | NPC、资产、储物、交易、委派、经济 tick、NPC 主动来函、论道/切磋/求爱/婚姻扩展位和总验收。 | [NPC_INVENTORY_SYSTEM_ARCHIVE.md](NPC_INVENTORY_SYSTEM_ARCHIVE.md) |
+| S86 | 后端 TypeScript 渐进迁移首轮，建立 server typecheck/probe、contracts、runtime guards 和高风险模块选择性 `@ts-check`。 | [TYPESCRIPT_BACKEND_MIGRATION_ARCHIVE.md](TYPESCRIPT_BACKEND_MIGRATION_ARCHIVE.md) |
+| S87 | route/API response shape 首轮覆盖，固定 game/exam/AI/inventory/NPC/trade/delegation public response，并以局部 helper 守住 raw ledger 剥离。 | [TYPESCRIPT_ROUTE_RESPONSE_COVERAGE_ARCHIVE.md](TYPESCRIPT_ROUTE_RESPONSE_COVERAGE_ARCHIVE.md) |
+| S88 | 全面系统打磨阶段性归档：书生主线、六身份循环、官场/领域后果、NPC/关系、经济解释、React 状态、PixiJS 舆图、视觉立绘和 provider 验收首轮。 | [QIANQIU_POLISHING_ARCHIVE.md](QIANQIU_POLISHING_ARCHIVE.md) |
 
 ## S73-S78 历史台账压缩
 
