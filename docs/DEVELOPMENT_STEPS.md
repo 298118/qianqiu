@@ -1166,7 +1166,7 @@ S84 前端专项额外验收入口：
 - 回归：`client/src/state/uiState.test.ts` 覆盖草稿绑定当前案卷、切案卷清空草稿/surface、payload 同步清空旧草稿，以及手写改稿会清掉旧 topic draft context。`client/src/__tests__/App.test.tsx` 在主卷 stale shell 回归中加入旧案草稿和 `draftContext`，断言新案卷底部奏折为空且不触发 turn；新增身份循环 surface 入口回归，确认旧案草稿被丢弃并打开当前 route session 的 `npc-profile`。`client/src/components/MemorialComposer.test.tsx` 同步 `ActionDraft.sessionId` fixture；`test/reactClientScaffold.test.js` 守住 `keepActionDraftForSession`、`activeActionDraft` 和主卷身份循环 `openSurfaceForSession(surface, sessionId)`。
 - 验证：已通过 `npm run typecheck:client`、focused `uiState`、focused `App.test.tsx`、`MemorialComposer.test.tsx`、完整 React scaffold、完整 client Vitest（122 项）、`npm run build:client`、`AI_PROVIDER=mock npm run smoke:browser`、`npm run check:docs-governance`、`node --test test/documentationGovernance.test.js`、完整 `npm test`（1159 项）和 `git diff --check`。client build / browser smoke 仅出现既有 runtime `/assets/ui/...` build-time 解析提示、chunk size/plugin timing 和 npm `globalignorefile` 警告。
 - 子代理：Copernicus 只读探索指出全局 `actionDraft` 与主卷身份循环 `openSurface()` 是当前 S88.9 的 P2 风险；本轮采纳其建议。Leibniz 提交前只读复审未发现代码侧 P0/P1/P2；唯一 P2 是本条和共享上下文仍写“仍需完成验证”的文档口径，已修正。
-- 提交：本轮 coherent change 提交后回填。
+- 提交：实现提交 `ae0f65db`。本次哈希回填为低风险纯文档同步，不改代码、API/schema、运行时行为、提示词或验证工具；按项目规则跳过额外子代理复审。
 
 ### 2026-05-24：推进 S88.7 人物页交游议题消费层
 
