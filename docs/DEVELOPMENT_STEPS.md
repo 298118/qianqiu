@@ -113,7 +113,7 @@
 
 | ID | 状态 | 目标 | 范围 / 下一步 |
 | --- | --- | --- | --- |
-| S89.6 | DONE | 高清立绘查看器人物小传与当前情况 polish | 承接 S89.5，点击高清立绘后查看器显示“观画印象”人物头、公开标签、外貌介绍、人物小传和当前情况；人物页画像 profile 补案主/名册/详情/谱牒当前情况，均只来自已审阅 runtime 画像元数据和人物页安全摘要。`scripts/clientSmoke.js` 与源码 canary 已覆盖 `s89-6-portrait-life` 标记、人物小传/公开近况文案、存储禁写和污染词守门；CSS 仅保留轻量结构样式并通过预算。未改后端 API/schema、AI 权限、prompt、provider facade、SQLite schema、存档格式、runtime manifest 字段、素材 manifest 或服务器裁决。实现提交：待本次提交生成后回填。 |
+| S89.6 | DONE | 高清立绘查看器人物小传与当前情况 polish | 承接 S89.5，点击高清立绘后查看器显示“观画印象”人物头、公开标签、外貌介绍、人物小传和当前情况；人物页画像 profile 补案主/名册/详情/谱牒当前情况，均只来自已审阅 runtime 画像元数据和人物页安全摘要。`scripts/clientSmoke.js` 与源码 canary 已覆盖 `s89-6-portrait-life` 标记、人物小传/公开近况文案、存储禁写和污染词守门；CSS 仅保留轻量结构样式并通过预算。未改后端 API/schema、AI 权限、prompt、provider facade、SQLite schema、存档格式、runtime manifest 字段、素材 manifest 或服务器裁决。实现提交：`d476d41d747afc6e650ed8a6fa5041b23d01c87c`。 |
 | S89.5 | DONE | React 全局材质、覆盖层过渡与交互反馈 polish | 主壳、右上角印匣、专题层 drawer/modal/surface、地图行动面板、高清立绘查看器与设置目录已补 S89.5 材质/覆盖层/交互反馈标记和低动效守门；舆图行动只增加本地“已写入草稿”反馈，不提交、不裁决、不扩大 `draftContext` 权限。`scripts/clientSmoke.js` 与源码 canary 已覆盖材质样式、覆盖层标记、地图草稿反馈、立绘查看器和设置目录安全污染守门。范围限 React 前端、样式、客户端 smoke/canary、前端测试和文档；未改后端 API/schema、AI 权限、prompt、provider facade、SQLite schema、存档格式、runtime manifest 字段、素材 manifest 或服务器裁决。实现提交：`b3237606ffa3abc7fbeb396d89c5c9eb8605f8f9`。 |
 | S89.4 | DONE | React 首页旧案状态与史册信息密度 polish | 承接 S89.3 后续建议，补首页旧案卷 loading/empty/error 的案架状态、数量与安全兜底文案，旧案读取失败不再串到开卷表单或回显底层错误；异常 `sessionId` 旧案只显示“暂不可读”，不生成 `/game/...` 读档链接；史册页补“案卷索引/近次线索”导读和更紧凑的公开条目密度，继续只消费 `eventArchiveView`、`domainConsequenceView` 与来函 follow-up 安全投影。只改 React 前端、样式、客户端 smoke/源码 canary、前端测试和文档；不改后端 API/schema、AI 权限、prompt、provider facade、SQLite schema、存档格式、runtime manifest 字段、素材 manifest 或服务器裁决。实现提交：`3a600b82f86855a563c64563251eec7081724d71`。 |
 | S89.3 | DONE | React 设置入口、专题文案与错误空态收束 | 承接 S89.2 后续建议，删除主卷功能页签中的重复“印匣”入口，把 `/game/:sessionId/settings` 保留为刷新/旧路由可达的案头工具目录并导向右上角唯一印匣抽屉；专题层把“数据来源/裁决边界”等工程口径改为“卷宗取材/回批口径”；错误页、404 和畸形主卷恢复页改用统一案卷空态视觉。只改 React 路由壳、专题层文案、前端样式、客户端 smoke/源码 canary 和验收文档；不改后端 API/schema、AI 权限、prompt、provider facade、SQLite schema、存档格式、runtime manifest 字段、素材 manifest 或服务器裁决。实现提交：`efa507aa729c8acb9503ba8f8e45a67e6b265969`。 |
@@ -207,7 +207,7 @@ S89.6 高清立绘查看器人物小传与当前情况 polish 验证结果：
 - 边界：本步不改后端 API/schema、AI 权限矩阵、prompt、provider facade、SQLite schema、存档格式、runtime manifest 字段、素材 manifest 或服务器裁决；人物近况与小传只作公开卷宗摘要，不生成隐藏事实或真实人物行动。
 - 复审：提交前只读子代理指出 portrait profile 路径未显式覆盖 `/Users`、`/private` 与 `tp-...` token 形态；本轮已补三处前端清洗、browser smoke 和源码 canary，最终只读复审确认不阻塞提交。
 - 验证：按第 6 节 S89.6 口径通过；`artifacts/browser-visual-matrix` 产物目录仅作本地 artifact，不提交。
-- 提交：待本次提交生成后回填。
+- 提交：实现提交 `d476d41d747afc6e650ed8a6fa5041b23d01c87c`；本次哈希回填仅修改本文件与 [SHARED_CONTEXT.md](SHARED_CONTEXT.md)，属于低风险纯文档改动，跳过子代理复审。
 
 ### 2026-05-24：S89.5 React 全局材质、覆盖层过渡与交互反馈 polish
 

@@ -65,7 +65,7 @@
 
 ## Current Work Note
 
-2026-05-24：S89.6 完成高清立绘查看器人物小传与当前情况 polish。点击人物页画像的高清查看按钮后，`PortraitViewerHost` 现在显示 `data-polish-profile="s89-6-portrait-life"` 人物说明区，包含“观画印象”人物头、公开标签、外貌介绍、人物小传和当前情况；人物页为案主、名册人物、详情人物和谱牒人物传入更具体的安全 `PortraitViewerProfile.current`。
+2026-05-24：S89.6 完成高清立绘查看器人物小传与当前情况 polish，实现提交 `d476d41d747afc6e650ed8a6fa5041b23d01c87c`。点击人物页画像的高清查看按钮后，`PortraitViewerHost` 现在显示 `data-polish-profile="s89-6-portrait-life"` 人物说明区，包含“观画印象”人物头、公开标签、外貌介绍、人物小传和当前情况；人物页为案主、名册人物、详情人物和谱牒人物传入更具体的安全 `PortraitViewerProfile.current`。
 
 查看器仍只读取已审阅 runtime 画像主图路径、画像元数据和人物页传入的安全摘要；不读取完整素材清单，不写 URL、localStorage/sessionStorage、行动草稿、canonical state、prompt 或服务器状态。人物小传和当前情况只作公开卷宗摘要，不生成 hidden 事实、真实人物行动、关系终局、婚姻、弹劾、定罪、背叛、交易、委派、考试或官职裁决。
 
@@ -77,7 +77,7 @@
 - 已通过 `npm run qa:runtime-manifest`、`npm run build:client`、`npm run budget:client`；本轮新增样式一度超过 CSS 硬预算，已裁剪为轻量结构样式，最终预算输出为 `CSS 97.6 KiB`。
 - 已通过直接浏览器验收 `node scripts/clientSmoke.js --screenshots artifacts/browser-visual-matrix`，覆盖 S89.6 立绘查看器人物小传/当前情况 polish、runtime 画像路径、浏览器存储禁写和安全污染守门，并写出 `artifacts/browser-visual-matrix`。Vite 仍输出既有 `/assets/ui/...` runtime asset 与 chunk size warnings。
 - 已通过完整串行客户端套件 `npx vitest --config vitest.config.mjs run --pool=vmThreads --fileParallelism=false --maxWorkers=1`（6 files / 129 tests）。
-- 已通过 `git diff --check`、`npm run check:docs-governance`、`node --test test/documentationGovernance.test.js`。提交前只读子代理首轮发现的路径/key 清洗缺口已修复，最终只读复审已通过，未发现阻断问题；实现提交后的哈希回填预计仅修改 `docs/DEVELOPMENT_STEPS.md` 与本文件，属于低风险纯文档改动，可跳过子代理复审并记录。
+- 已通过 `git diff --check`、`npm run check:docs-governance`、`node --test test/documentationGovernance.test.js`。提交前只读子代理首轮发现的路径/key 清洗缺口已修复，最终只读复审已通过，未发现阻断问题。实现提交后的哈希回填仅修改 `docs/DEVELOPMENT_STEPS.md` 与本文件，属于低风险纯文档改动，跳过子代理复审。
 
 ## Next Recommended Step
 
