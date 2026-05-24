@@ -65,7 +65,7 @@
 
 ## Current Work Note
 
-2026-05-24：S89.4 完成 React 首页旧案状态与史册信息密度 polish，实现提交待回填。首页旧案区现在是独立案架状态：loading/empty/error/ready 互斥显示，提供旧案数量、案架状态、骨架占位、空态说明和“重翻旧案”安全重试；`refreshSaves()` 只更新 `savesStatus/saves`，失败不再写共享 `error`，因此不会把开卷朱印置为错误态、覆盖既有开卷错误或回显底层旧案读取错误。`SaveCaseList` 生成读档 action 前校验 `isRunnableSessionId()`，异常 `sessionId` 只显示“暂不可读”，不把 `/api/game/state`、本地路径、raw/provider/hidden/key 等污染案号写入链接或载入回调。
+2026-05-24：S89.4 完成 React 首页旧案状态与史册信息密度 polish，实现提交 `3a600b82f86855a563c64563251eec7081724d71`。首页旧案区现在是独立案架状态：loading/empty/error/ready 互斥显示，提供旧案数量、案架状态、骨架占位、空态说明和“重翻旧案”安全重试；`refreshSaves()` 只更新 `savesStatus/saves`，失败不再写共享 `error`，因此不会把开卷朱印置为错误态、覆盖既有开卷错误或回显底层旧案读取错误。`SaveCaseList` 生成读档 action 前校验 `isRunnableSessionId()`，异常 `sessionId` 只显示“暂不可读”，不把 `/api/game/state`、本地路径、raw/provider/hidden/key 等污染案号写入链接或载入回调。
 
 史册页新增“案卷索引 / 近次线索”导读带，展示入册条目、后果线索、实体余波和前三条公开线索；仍只读 `eventArchiveView`、`domainConsequenceView` 与来函 follow-up evidence。`scripts/clientSmoke.js` 新增首页案架和史册索引 DOM 守门；sticky 二级页签 `.sessionNav` 只从重叠检查中排除，避免与同名页面标题误判，页签文字仍接受溢出检查。按钮继续只写本地草稿，不结算资源、NPC 行动、交易、人情债、婚姻、弹劾、定罪、背叛、经济、考试、官职、地图或 hidden 信息。
 
@@ -80,6 +80,7 @@
 - 已通过 `npm run smoke:browser:visual`，串联完成 runtime manifest QA、client build、budget 和 React browser smoke；smoke 已覆盖首页旧案案架、史册案卷索引、移动端史册不溢出和安全污染守门，并写出 `artifacts/browser-visual-matrix`。Vite 仍输出既有 `/assets/ui/...` runtime asset 与 chunk size warnings。
 - 已通过 `npm run check:docs-governance`、`node --test test/documentationGovernance.test.js` 和完整 `npm test`（1160 tests）。
 - 开工中只读子代理已指出 S89.4 缺口；提交前最终只读 diff 复审发现 `refreshSaves()` 仍会在已有开卷错误后覆盖共享 `error`，本轮已改为旧案读取失败只更新 `savesStatus`，并补 UI 回归测试。修复后最终只读复审已通过，未发现新的阻断问题。
+- 实现提交后的哈希回填仅修改 `docs/DEVELOPMENT_STEPS.md` 与本文件，属于低风险纯文档改动，按规则跳过子代理复审。
 
 ## Next Recommended Step
 
