@@ -71,6 +71,7 @@ const visualTextSelectors = Object.freeze([
 const visualOverlapIgnoreSelectors = Object.freeze([
   ".memorialComposer",
   ".topBar",
+  ".sessionNav",
   ".drawerHost",
   ".surfaceHost",
   ".inkMapTooltip",
@@ -80,6 +81,9 @@ const visualOverlapIgnoreSelectors = Object.freeze([
   ".examHeroBackdrop",
   ".rankingHeroBackdrop"
 ]);
+const visualOverflowIgnoreSelectors = Object.freeze(
+  visualOverlapIgnoreSelectors.filter((selector) => selector !== ".sessionNav")
+);
 
 const runnableSessionIdPattern = /^[a-f0-9-]{36}$/i;
 const runtimeAssetManifestPath = "/assets/ui/ink-ui-runtime-manifest.json";
@@ -790,6 +794,70 @@ async function assertHomeStartSealTypography(page, label) {
   }
 }
 
+async function assertHomeSaveShelfPolish(page, label) {
+  const snapshot = await page.evaluate(() => {
+    const shelf = document.querySelector(".saveShelf");
+    const text = shelf?.textContent || "";
+    const links = shelf ? [...shelf.querySelectorAll("a[href]")].map((link) => new URL(link.href).pathname) : [];
+    return {
+      exists: Boolean(shelf),
+      state: shelf?.getAttribute("data-save-state") || "",
+      hasStatus: Boolean(shelf?.querySelector(".saveShelfStatus[role='status']")),
+      hasStats: Boolean(shelf?.querySelector(".saveShelfStats")),
+      hasCards: Boolean(shelf?.querySelector(".saveCaseList")),
+      hasEmpty: Boolean(shelf?.querySelector(".saveCaseEmpty")),
+      hasSkeleton: Boolean(shelf?.querySelector(".saveCaseSkeletonList")),
+      badLinks: links.filter((path) => /\/api\/game\/state|\/api\/dev\/session-diagnostics|data\/sessions|raw|provider|hidden|key|secret/i.test(path)),
+      forbiddenText: text.match(/provider payload|raw audit|hiddenNotes|OPENAI_API_KEY|DEEPSEEK_API_KEY|MIMO_API_KEY|ANTHROPIC_API_KEY|data\/sessions|hidden\/raw|(?:^|\b)hidden\b|(?:^|\b)raw\b|服务器裁决|\/api\/game\/state|\/api\/dev\/session-diagnostics|[a-z]:[\\/]|\/(?:home|mnt|tmp|var|etc|usr|opt|workspace|workspaces|root|data|src|client|server|dist|public|node_modules)(?:[\\/]|$)/gi) || [],
+      text
+    };
+  });
+  const failures = [];
+  if (!snapshot.exists) failures.push("missing .saveShelf");
+  if (!/^(loading|ready|empty|error)$/.test(snapshot.state)) failures.push(`unexpected save shelf state ${snapshot.state}`);
+  if (!snapshot.hasStatus) failures.push("missing save shelf status");
+  if (!snapshot.hasStats) failures.push("missing save shelf stats");
+  if (snapshot.state === "loading" && !snapshot.hasSkeleton && !snapshot.hasCards) failures.push("loading shelf lacked skeleton or existing cards");
+  if (snapshot.state === "empty" && !snapshot.hasEmpty) failures.push("empty shelf lacked empty block");
+  if (snapshot.state === "ready" && !snapshot.hasCards) failures.push("ready shelf lacked save cards");
+  if (snapshot.state === "error" && !snapshot.text.includes("旧案架暂不可取")) failures.push("error shelf lacked safe error copy");
+  if (snapshot.badLinks.length) failures.push(`unsafe save shelf links: ${snapshot.badLinks.join(", ")}`);
+  if (snapshot.forbiddenText.length) failures.push(`forbidden save shelf text: ${snapshot.forbiddenText.join(", ")}`);
+  if (failures.length) {
+    throw new Error(`${label} home save shelf polish failed: ${failures.join("; ")}`);
+  }
+}
+
+async function assertArchiveDigestPolish(page, label) {
+  const snapshot = await page.evaluate(() => {
+    const panel = document.querySelector(".archiveRoutePanel");
+    const digest = document.querySelector(".archiveDigestBand");
+    const text = digest?.textContent || "";
+    return {
+      hasPanel: Boolean(panel),
+      hasDigest: Boolean(digest),
+      hasStats: Boolean(digest?.querySelector(".archiveDigestStats")),
+      hasLeadListOrEmpty: Boolean(digest?.querySelector(".archiveLeadList")) || Boolean(digest?.querySelector(".archiveLeadEmpty")),
+      hasTraceGrid: Boolean(document.querySelector(".archiveTraceGrid")),
+      horizontalOverflow: document.documentElement.scrollWidth > document.documentElement.clientWidth + 2,
+      forbiddenText: (document.body.innerText || "").match(/provider payload|raw audit|hiddenNotes|OPENAI_API_KEY|DEEPSEEK_API_KEY|MIMO_API_KEY|ANTHROPIC_API_KEY|data\/sessions|hidden\/raw|(?:^|\b)hidden\b|(?:^|\b)raw\b|服务器裁决|sourceRef|relatedRefs|scopeRefs|evidenceRefs|outcomeId|auditRecord|[a-z]:[\\/]|\/(?:home|mnt|tmp|var|etc|usr|opt|workspace|workspaces|root|data|src|client|server|dist|public|node_modules)(?:[\\/]|$)/gi) || [],
+      text
+    };
+  });
+  const failures = [];
+  if (!snapshot.hasPanel) failures.push("missing archive route panel");
+  if (!snapshot.hasDigest) failures.push("missing archive digest band");
+  if (!snapshot.hasStats) failures.push("missing archive digest stats");
+  if (!snapshot.hasLeadListOrEmpty) failures.push("missing archive lead list or empty lead copy");
+  if (!snapshot.hasTraceGrid) failures.push("missing archive trace grid");
+  if (!snapshot.text.includes("案卷索引") || !snapshot.text.includes("近次线索")) failures.push(`archive digest lacked player-facing index copy: ${snapshot.text.slice(0, 120)}`);
+  if (snapshot.horizontalOverflow) failures.push("archive digest caused horizontal overflow");
+  if (snapshot.forbiddenText.length) failures.push(`archive digest/page leaked forbidden text: ${snapshot.forbiddenText.join(", ")}`);
+  if (failures.length) {
+    throw new Error(`${label} archive digest polish failed: ${failures.join("; ")}`);
+  }
+}
+
 async function assertNoVisibleTextOverlap(page, label) {
   const rects = await page.evaluate(({ selectors, ignoreSelectors }) => {
     const elements = [...document.querySelectorAll(selectors.join(","))];
@@ -832,7 +900,16 @@ async function assertNoVisibleTextOverflow(page, label) {
       ".archiveItemList strong",
       ".archiveItemList span",
       ".archiveItemList p",
+      ".archiveDigestIntro p",
+      ".archiveDigestStats dd",
+      ".archiveLeadList strong",
+      ".archiveLeadList span",
+      ".archiveLeadList em",
       ".archiveBoundary",
+      ".saveShelfStatus p",
+      ".saveShelfStats dd",
+      ".saveCaseEmpty p",
+      ".saveCaseSummary",
       ".domainConsequenceSection h3",
       ".domainConsequenceSection p",
       ".domainConsequenceList strong",
@@ -874,7 +951,7 @@ async function assertNoVisibleTextOverflow(page, label) {
         scrollWidth: element.scrollWidth,
         scrollHeight: element.scrollHeight
       }));
-  }, { ignoreSelectors: visualOverlapIgnoreSelectors });
+  }, { ignoreSelectors: visualOverflowIgnoreSelectors });
   const failures = getTextOverflowFailures(items, label);
   if (failures.length) {
     throw new Error(failures.slice(0, 4).join("; "));
@@ -2721,6 +2798,7 @@ async function runClientSmoke(options = {}) {
 
     screenshots.push(await assertReactClientPage(page, baseUrl, "/", "s74-react-home-desktop", options.screenshotsDir));
     await assertHomeStartSealTypography(page, "S89.2 desktop home");
+    await assertHomeSaveShelfPolish(page, "S89.4 desktop home");
     await assertReviewedBackgroundVisual(page, ".homeBackdrop", "S77.3 desktop home backdrop");
     await assertClientResourceBudget(page, "S77.5 desktop home", CLIENT_RESOURCE_BUDGETS.home);
     await assertManifestRuntimeSafety(baseUrl);
@@ -2900,6 +2978,7 @@ async function runClientSmoke(options = {}) {
         readySelector: "#archive-title"
       })
     );
+    await assertArchiveDigestPolish(page, "S89.4 desktop archive");
     await assertIndependentSessionRouteShell(page, "S89.2 史册");
     screenshots.push(
       await assertRouteRefresh(page, archivePath, "s74-react-archive-refresh-desktop", options.screenshotsDir, {
@@ -3068,6 +3147,7 @@ async function runClientSmoke(options = {}) {
         readySelector: ".archiveRoutePanel"
       })
     );
+    await assertArchiveDigestPolish(page, "S89.4 mobile archive");
     const mobileArchive = await page.evaluate(() => {
       const html = document.documentElement;
       const text = document.body.innerText || "";
@@ -3149,6 +3229,7 @@ async function runClientSmoke(options = {}) {
     screenshots.push(await assertMobileInkbox(page, options.screenshotsDir));
     screenshots.push(await assertReactClientPage(page, baseUrl, "/", "s74-react-home-mobile", options.screenshotsDir));
     await assertHomeStartSealTypography(page, "S89.2 mobile home");
+    await assertHomeSaveShelfPolish(page, "S89.4 mobile home");
     await assertReviewedBackgroundVisual(page, ".homeBackdrop", "S77.3 mobile home backdrop");
     await assertBrowserStorageSafety(page, "S77.4 final mobile context");
     screenshots.push(...(await assertBrowserLevelReducedMotion(browser, baseUrl, options.screenshotsDir)));

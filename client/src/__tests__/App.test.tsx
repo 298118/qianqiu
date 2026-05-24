@@ -2709,6 +2709,103 @@ describe("S74.1 React client shell", () => {
     expect(document.body.textContent || "").not.toMatch(/worldState|raw audit|provider payload|data\/sessions|OPENAI_API_KEY/i);
   });
 
+  it("keeps S89.4 home save shelf loading and empty states mutually exclusive", async () => {
+    const savesRequest = deferredResponse<{ saves: unknown[]; skipped: unknown[] }>();
+    vi.stubGlobal("fetch", vi.fn(async (url: string) => {
+      if (url === "/assets/ui/ink-ui-runtime-manifest.json") {
+        return new Response(JSON.stringify(buildMockAssetManifest()), {
+          status: 200,
+          headers: { "Content-Type": "application/json" }
+        });
+      }
+      if (url === "/api/game/saves") return savesRequest.response;
+      throw new Error(`unexpected url: ${url}`);
+    }));
+
+    renderRoute("/");
+
+    await waitFor(() => expect(screen.getByText("正在翻检旧案架。")).toBeTruthy());
+    expect(screen.queryByText("暂无可读旧卷")).toBeNull();
+    expect(document.querySelector(".saveCaseSkeletonList")).toBeTruthy();
+
+    savesRequest.resolvePayload({ saves: [], skipped: [] });
+    await screen.findByText("案架暂空，新卷保存后会在此列出。");
+    expect(screen.getByText("暂无可读旧卷")).toBeTruthy();
+    expect(screen.queryByText("正在翻检旧案架。")).toBeNull();
+  });
+
+  it("keeps S89.4 home save errors inside the save shelf with safe retry copy", async () => {
+    let saveRequests = 0;
+    vi.stubGlobal("fetch", vi.fn(async (url: string) => {
+      if (url === "/assets/ui/ink-ui-runtime-manifest.json") {
+        return new Response(JSON.stringify(buildMockAssetManifest()), {
+          status: 200,
+          headers: { "Content-Type": "application/json" }
+        });
+      }
+      if (url === "/api/game/saves") {
+        saveRequests += 1;
+        if (saveRequests === 1) {
+          throw new Error("raw audit /mnt/e/LSMNQ/data/sessions/secret.json OPENAI_API_KEY");
+        }
+        return new Response(JSON.stringify({ saves: [], skipped: [] }), {
+          status: 200,
+          headers: { "Content-Type": "application/json" }
+        });
+      }
+      throw new Error(`unexpected url: ${url}`);
+    }));
+
+    renderRoute("/");
+
+    await screen.findByText("旧案架暂不可取，新开案卷不受影响。");
+    expect(screen.getByRole("button", { name: "新开一卷" })).toBeTruthy();
+    expect(screen.queryByRole("button", { name: "重整朱印" })).toBeNull();
+    expect(screen.getByRole("button", { name: "重翻旧案" })).toBeTruthy();
+    expect(document.body.textContent || "").not.toMatch(/raw audit|OPENAI_API_KEY|data\/sessions|\/mnt\/e|secret\.json/i);
+
+    fireEvent.click(screen.getByRole("button", { name: "重翻旧案" }));
+    await screen.findByText("案架暂空，新卷保存后会在此列出。");
+    expect(saveRequests).toBe(2);
+  });
+
+  it("keeps S89.4 save retry failures from replacing an existing start error", async () => {
+    let saveRequests = 0;
+    vi.stubGlobal("fetch", vi.fn(async (url: string) => {
+      if (url === "/assets/ui/ink-ui-runtime-manifest.json") {
+        return new Response(JSON.stringify(buildMockAssetManifest()), {
+          status: 200,
+          headers: { "Content-Type": "application/json" }
+        });
+      }
+      if (url === "/api/game/saves") {
+        saveRequests += 1;
+        throw new Error(`raw audit /mnt/e/LSMNQ/data/sessions/save-${saveRequests}.json OPENAI_API_KEY`);
+      }
+      if (url === "/api/game/start") {
+        return new Response(JSON.stringify({ error: "案主名册暂未合拢。" }), {
+          status: 500,
+          headers: { "Content-Type": "application/json" }
+        });
+      }
+      throw new Error(`unexpected url: ${url}`);
+    }));
+
+    renderRoute("/");
+
+    await screen.findByText("旧案架暂不可取，新开案卷不受影响。");
+    fireEvent.click(screen.getByRole("button", { name: "新开一卷" }));
+
+    await screen.findByText("案主名册暂未合拢。");
+    expect(screen.getByRole("button", { name: "重整朱印" })).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: "重翻旧案" }));
+
+    await waitFor(() => expect(saveRequests).toBe(2));
+    expect(screen.getByText("案主名册暂未合拢。")).toBeTruthy();
+    expect(screen.getByText("旧案架暂不可取，新开案卷不受影响。")).toBeTruthy();
+    expect(document.body.textContent || "").not.toMatch(/raw audit|OPENAI_API_KEY|data\/sessions|\/mnt\/e|save-\d+\.json/i);
+  });
+
   it("drops polluted S75.5 save metadata before rendering", async () => {
     vi.stubGlobal("fetch", vi.fn(async (url: string) => {
       if (url === "/api/game/saves") {
@@ -2719,6 +2816,12 @@ describe("S74.1 React client shell", () => {
               playerName: "S74 smoke 验收官 data/sessions/secret.json",
               roleLabel: "raw audit placeholder debug",
               summary: "provider payload sk-test-secret 开发注释 fallback token"
+            },
+            {
+              sessionId: "/api/game/state/data/sessions/secret",
+              playerName: "案号污染",
+              roleLabel: "书生",
+              summary: "案号异常时不应生成读档链接。"
             }
           ],
           skipped: []
@@ -2736,6 +2839,10 @@ describe("S74.1 React client shell", () => {
     expect(screen.getByText("无名")).toBeTruthy();
     expect(screen.getByText("身份未题")).toBeTruthy();
     expect(screen.getByText("此卷暂无公开摘要。")).toBeTruthy();
+    expect(screen.getByText("案 unknown")).toBeTruthy();
+    expect(screen.getByRole("button", { name: "暂不可读" })).toBeTruthy();
+    const saveLinks = [...document.querySelectorAll("a")].map((link) => link.getAttribute("href") || "");
+    expect(saveLinks.join("\n")).not.toMatch(/\/api\/game\/state|data\/sessions|secret/i);
     expect(document.body.textContent || "").not.toMatch(/data\/sessions|raw audit|provider payload|sk-test-secret|S74|验收|placeholder|debug|开发注释|fallback token/i);
   });
 
@@ -6148,6 +6255,13 @@ describe("S74.1 React client shell", () => {
     const archive = within(archivePanel);
 
     expect(screen.getByRole("heading", { name: "史册" })).toBeTruthy();
+    expect(archive.getByText("案卷索引")).toBeTruthy();
+    expect(archive.getByText("近次线索")).toBeTruthy();
+    expect(archive.getByText("入册条目")).toBeTruthy();
+    expect(archive.getByText("后果线索")).toBeTruthy();
+    expect(archive.getByText("实体余波")).toBeTruthy();
+    expect(archive.getByText("本页列 12/12 条")).toBeTruthy();
+    expect(archive.getByRole("list", { name: "史册近次线索" })).toBeTruthy();
     expect(archive.getAllByText("平粜余波").length).toBeGreaterThan(0);
     expect(archive.getByText("同年文社压力留痕")).toBeTruthy();
     expect(archive.getByText("论道余波已归入同年文社公开实体压力，仍回主卷提交。")).toBeTruthy();

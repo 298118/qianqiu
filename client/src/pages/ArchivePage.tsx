@@ -132,6 +132,33 @@ function buildArchiveItems(view: JsonObject): ArchiveItem[] {
   return prioritizeArchiveItems(items);
 }
 
+function buildArchiveDigestCards(input: {
+  readonly totalItems: number;
+  readonly visibleItems: number;
+  readonly pageSize: number;
+  readonly domainCount: number;
+  readonly entityImpactCount: number;
+}) {
+  const pageSize = input.pageSize || input.visibleItems;
+  return [
+    {
+      label: "入册条目",
+      value: String(input.totalItems),
+      detail: pageSize ? `本页列 ${input.visibleItems}/${pageSize} 条` : "本页等待归档"
+    },
+    {
+      label: "后果线索",
+      value: String(input.domainCount),
+      detail: input.domainCount ? "已接入公开后果追踪" : "暂无公开后果"
+    },
+    {
+      label: "实体余波",
+      value: String(input.entityImpactCount),
+      detail: input.entityImpactCount ? "保留人物与机构回响" : "暂无实体余波"
+    }
+  ];
+}
+
 export function ArchivePage() {
   const { sessionId = "s74-preview" } = useParams();
   const currentSession = useGameSessionStore((state) => state.currentSession);
@@ -150,6 +177,14 @@ export function ArchivePage() {
   const entityImpactCount = numberValue(counts.world_entity_impact);
   const totalItems = numberValue(pagination.totalItems ?? counts.total);
   const pageSize = numberValue(pagination.pageSize, archiveItems.length);
+  const digestCards = buildArchiveDigestCards({
+    totalItems,
+    visibleItems: archiveItems.length,
+    pageSize,
+    domainCount,
+    entityImpactCount
+  });
+  const leadItems = archiveItems.slice(0, 3);
   const isRunnable = isRunnableSessionId(sessionId);
   const canDraft = sessionMatches || isRunnable;
   const mapHref = routeSessionSupported ? `/game/${sessionId}/map` : "/";
@@ -207,6 +242,42 @@ export function ArchivePage() {
         <Link className="paperLink" to={mapHref}>入舆图</Link>
         <Link className="paperLink" to={gameHref}>回主卷</Link>
       </div>
+
+      <section className="archiveDigestBand" aria-label="史册案卷索引">
+        <div className="archiveDigestIntro">
+          <p className="eyebrow">案卷索引</p>
+          <h2>近次线索</h2>
+          <p>
+            {archiveItems.length
+              ? "先看近次公开条目、后果线索与实体余波；拟稿仍只回主卷候复。"
+              : routeSessionSupported
+              ? "当前史册尚待入卷，推进一旬或有回批后会留下公开线索。"
+              : "案卷索引暂不可取材；请先回首页选择可读案卷。"}
+          </p>
+        </div>
+        <dl className="archiveDigestStats">
+          {digestCards.map((card) => (
+            <div key={card.label}>
+              <dt>{card.label}</dt>
+              <dd>{card.value}</dd>
+              <dd className="archiveDigestDetail">{card.detail}</dd>
+            </div>
+          ))}
+        </dl>
+        {leadItems.length ? (
+          <ol className="archiveLeadList" aria-label="史册近次线索">
+            {leadItems.map((item) => (
+              <li key={`lead-${item.id}`}>
+                <span>{item.sourceLabel}</span>
+                <strong>{item.title}</strong>
+                <em>{item.statusLabel}</em>
+              </li>
+            ))}
+          </ol>
+        ) : (
+          <p className="archiveLeadEmpty">暂无近次线索；本页不会补入未公开材料。</p>
+        )}
+      </section>
 
       <section className="archiveTraceGrid" aria-label="史册公开追踪">
         <div className="archiveColumn">

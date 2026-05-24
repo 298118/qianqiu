@@ -1,6 +1,7 @@
 import { Link } from "react-router";
 import type { ReactNode } from "react";
 import type { SaveMetadata } from "../api";
+import { isRunnableSessionId } from "../routes/sessionId";
 
 const tenDayLabels: Record<number, string> = {
   1: "上旬",
@@ -81,16 +82,25 @@ export function getSaveUpdatedLabel(save: SaveMetadata) {
 }
 
 function renderAction(save: SaveMetadata, actionLabel: string, onLoad?: (sessionId: string) => void): ReactNode {
+  const sessionId = textOrFallback(save.sessionId, "");
+  if (!isRunnableSessionId(sessionId)) {
+    return (
+      <button className="paperButton saveCaseAction" type="button" disabled>
+        暂不可读
+      </button>
+    );
+  }
+
   if (onLoad) {
     return (
-      <button className="paperButton saveCaseAction" type="button" onClick={() => onLoad(save.sessionId)}>
+      <button className="paperButton saveCaseAction" type="button" onClick={() => onLoad(sessionId)}>
         {actionLabel}
       </button>
     );
   }
 
   return (
-    <Link className="paperButton saveCaseAction" to={`/game/${save.sessionId}`}>
+    <Link className="paperButton saveCaseAction" to={`/game/${sessionId}`}>
       {actionLabel}
     </Link>
   );

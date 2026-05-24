@@ -617,24 +617,39 @@ test("S75.5 save cases show redacted metadata and load through player-state", ()
   const homePageSource = readText("client/src/pages/HomePage.tsx");
   const surfaceHostSource = readText("client/src/components/SurfaceHost.tsx");
   const saveCaseSource = readText("client/src/components/SaveCaseList.tsx");
+  const gameSessionStateSource = readText("client/src/state/gameSessionState.ts");
   const apiTypesSource = readText("client/src/api/types.ts");
   const styleSource = readText("client/src/styles/global.css");
-  const combined = `${homePageSource}\n${surfaceHostSource}\n${saveCaseSource}\n${apiTypesSource}\n${styleSource}`;
+  const combined = `${homePageSource}\n${surfaceHostSource}\n${saveCaseSource}\n${gameSessionStateSource}\n${apiTypesSource}\n${styleSource}`;
   const runtimeSourcesWithoutSanitizerPattern = stripSafeGuardPatterns(`${homePageSource}\n${surfaceHostSource}\n${apiTypesSource}\n${styleSource}`);
 
   assert.match(homePageSource, /<SaveCaseList saves=\{saves\} maxItems=\{5\}/);
+  assert.match(homePageSource, /saveShelfState/);
+  assert.match(homePageSource, /data-save-state=\{saveShelfState\}/);
+  assert.match(homePageSource, /saveShelfStatus/);
+  assert.match(homePageSource, /saveCaseSkeletonList/);
+  assert.match(homePageSource, /旧案架暂不可取，新开案卷不受影响/);
+  assert.match(homePageSource, /status === "error" \? error : null/);
   assert.match(surfaceHostSource, /<SaveCaseList saves=\{saves\} maxItems=\{6\}/);
   assert.match(surfaceHostSource, /loadSession\(sessionId\)/);
   assert.match(saveCaseSource, /getSaveShortCode/);
   assert.match(saveCaseSource, /getSaveDateLabel/);
   assert.match(saveCaseSource, /getSaveTurnLabel/);
   assert.match(saveCaseSource, /getSaveUpdatedLabel/);
+  assert.match(saveCaseSource, /isRunnableSessionId\(sessionId\)/);
+  assert.match(saveCaseSource, /暂不可读/);
   assert.match(saveCaseSource, /unsafeSaveTextPattern/);
   assert.match(saveCaseSource, /safeTextOrFallback/);
   assert.match(saveCaseSource, /此卷暂无公开摘要/);
+  assert.match(gameSessionStateSource, /async refreshSaves\(\)/);
+  assert.match(gameSessionStateSource, /set\(\{ savesStatus: "loading" \}\)/);
+  assert.doesNotMatch(gameSessionStateSource, /set\(\{ error: toErrorMessage\(error\), savesStatus: "error" \}\)/);
   assert.match(apiTypesSource, /readonly turnCount\?: number/);
   assert.match(apiTypesSource, /readonly summary\?: string \| null/);
   assert.match(styleSource, /saveCaseItem/);
+  assert.match(styleSource, /saveShelfStatus/);
+  assert.match(styleSource, /saveCaseEmpty/);
+  assert.match(styleSource, /saveCaseSkeletonSweep/);
   assert.doesNotMatch(
     runtimeSourcesWithoutSanitizerPattern,
     /\/api\/game\/state|\/api\/dev\/session-diagnostics|localStorage|sessionStorage|data\/sessions|raw audit|provider payload|OPENAI_API_KEY|DEEPSEEK_API_KEY|MIMO_API_KEY|ANTHROPIC_API_KEY/
@@ -1548,14 +1563,24 @@ test("S88.7 archive consumes world entity impact evidence from safe projection",
   assert.match(archivePageSource, /entityImpactCount = numberValue\(counts\.world_entity_impact\)/);
   assert.match(archivePageSource, /<dt>实体<\/dt>/);
   assert.match(archivePageSource, /data-source-type=\{item\.sourceType\}/);
+  assert.match(archivePageSource, /buildArchiveDigestCards/);
+  assert.match(archivePageSource, /archiveDigestBand/);
+  assert.match(archivePageSource, /archiveLeadList/);
+  assert.match(archivePageSource, /案卷索引/);
+  assert.match(archivePageSource, /拟稿仍只回主卷候复/);
   assert.match(appTestSource, /sourceType: "world_entity_impact"/);
   assert.match(appTestSource, /同年文社压力留痕/);
+  assert.match(appTestSource, /史册近次线索/);
   assert.match(clientSmokeSource, /assertArchiveWorldEntityImpactCanary/);
+  assert.match(clientSmokeSource, /archiveDigestBand/);
   assert.match(clientSmokeSource, /\/api\/game\/npc-interaction\/\$\{sessionId\}/);
   assert.match(clientSmokeSource, /sourceType === "world_entity_impact"/);
   assert.match(clientSmokeSource, /li\[data-source-type='world_entity_impact'\]/);
   assert.match(clientSmokeSource, /sourceRef\|relatedRefs\|scopeRefs/);
   assert.match(styleSource, /grid-template-columns: repeat\(4, minmax\(0, 1fr\)\)/);
+  assert.match(styleSource, /archiveDigestBand/);
+  assert.match(styleSource, /archiveDigestStats/);
+  assert.match(styleSource, /archiveLeadList/);
   assert.doesNotMatch(
     runtimeCombined,
     /\/api\/game\/state|\/api\/dev\/session-diagnostics|worldEntities\.recentImpacts|sourceRef|relatedRefs|scopeRefs|raw audit|provider payload|OPENAI_API_KEY|DEEPSEEK_API_KEY|MIMO_API_KEY|ANTHROPIC_API_KEY|resourcesApplied|marriageWritten|hiddenTruthChanged/
@@ -1794,9 +1819,10 @@ test("S75.3 home start seal guards repeated submits and reduced motion", () => {
   assert.match(homePageSource, /usePrefersReducedMotion/);
   assert.match(homePageSource, /submitLockRef/);
   assert.match(homePageSource, /status === "loading"/);
+  assert.match(homePageSource, /const startError = status === "error" \? error : null/);
   assert.match(homePageSource, /motionAllowed/);
   assert.match(homePageSource, /aria-busy=\{isStarting\}/);
-  assert.match(homePageSource, /data-state=\{error \|\| formError \? "error" : isStarting \? "loading" : "idle"\}/);
+  assert.match(homePageSource, /data-state=\{startError \|\| formError \? "error" : isStarting \? "loading" : "idle"\}/);
   assert.match(homePageSource, /aria-live="polite"/);
   assert.match(styleSource, /homeSealStamp/);
   assert.match(styleSource, /sealLoadingSweep/);

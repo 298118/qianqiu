@@ -212,12 +212,12 @@ export const useGameSessionStore = create<GameSessionState>((set) => ({
   error: null,
 
   async refreshSaves() {
-    set({ savesStatus: "loading", error: null });
+    set({ savesStatus: "loading" });
     try {
       const payload = await qianqiuApi.listSaves();
       set({ saves: payload.saves, savesStatus: "ready" });
-    } catch (error) {
-      set({ error: toErrorMessage(error), savesStatus: "error" });
+    } catch {
+      set({ savesStatus: "error" });
     }
   },
 

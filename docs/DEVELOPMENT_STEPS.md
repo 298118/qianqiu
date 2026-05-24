@@ -113,6 +113,7 @@
 
 | ID | 状态 | 目标 | 范围 / 下一步 |
 | --- | --- | --- | --- |
+| S89.4 | DONE | React 首页旧案状态与史册信息密度 polish | 承接 S89.3 后续建议，补首页旧案卷 loading/empty/error 的案架状态、数量与安全兜底文案，旧案读取失败不再串到开卷表单或回显底层错误；异常 `sessionId` 旧案只显示“暂不可读”，不生成 `/game/...` 读档链接；史册页补“案卷索引/近次线索”导读和更紧凑的公开条目密度，继续只消费 `eventArchiveView`、`domainConsequenceView` 与来函 follow-up 安全投影。只改 React 前端、样式、客户端 smoke/源码 canary、前端测试和文档；不改后端 API/schema、AI 权限、prompt、provider facade、SQLite schema、存档格式、runtime manifest 字段、素材 manifest 或服务器裁决。实现提交：待提交后回填。 |
 | S89.3 | DONE | React 设置入口、专题文案与错误空态收束 | 承接 S89.2 后续建议，删除主卷功能页签中的重复“印匣”入口，把 `/game/:sessionId/settings` 保留为刷新/旧路由可达的案头工具目录并导向右上角唯一印匣抽屉；专题层把“数据来源/裁决边界”等工程口径改为“卷宗取材/回批口径”；错误页、404 和畸形主卷恢复页改用统一案卷空态视觉。只改 React 路由壳、专题层文案、前端样式、客户端 smoke/源码 canary 和验收文档；不改后端 API/schema、AI 权限、prompt、provider facade、SQLite schema、存档格式、runtime manifest 字段、素材 manifest 或服务器裁决。实现提交：`efa507aa729c8acb9503ba8f8e45a67e6b265969`。 |
 | S89.2 | DONE | React 视觉矩阵与轻量专题页壳打磨 | 承接 S89.1 后续建议，补真实浏览器视觉回归截图矩阵便捷入口，覆盖首页、主卷、舆图、人物、囊箧、史册、科举、皇榜、朝议、设置和移动端印匣；人物/囊箧/史册改用轻量案卷专题页壳，避免独立页重复渲染主卷案头和底部奏折；强化囊箧与专题页材质、按钮反馈、移动端截图、安全污染守门和高清立绘查看器公开说明。不改后端 API/schema、AI 权限、prompt、存档格式、素材 manifest 或服务器裁决。实现提交：`b8a564514498c7de6c6d7183597df51bbab5e662`。 |
 | S89.1 | DONE | React 玩家可见文案与移动端覆盖层润色 | 承接 S88.9 残余方向，清理首页、主卷、舆图、人物、囊箧、史册、科举、皇榜、朝议、身份循环、推演设置和专题层中的工程词外露；抽屉增加遮罩与外点关闭，人物/囊箧工作台和推演矩阵补窄屏单列；不改后端 API/schema、AI 权限、prompt、存档格式或服务器裁决。提交：随本次 S89.1 提交完成。 |
@@ -126,7 +127,8 @@
 - 2026-05-24：S89.1 完成 React 玩家可见文案与移动端覆盖层润色。前端继续只消费安全 view，所有草稿、人物/囊箧操作、地图和专题入口仍由服务器复核；本步不新增 API 字段、不改变 provider/AI schema、不调整存档或 SQLite schema。
 - 2026-05-24：S89.2 完成 React 视觉矩阵、轻量专题页壳与高清立绘查看器公开说明，实现提交 `b8a564514498c7de6c6d7183597df51bbab5e662`。当前范围仅限 React 路由壳、前端样式、browser smoke/视觉矩阵脚本、前端测试 canary 和验收文档；人物/囊箧/史册与立绘查看器仍只消费安全 view、runtime manifest 安全字段和本地草稿，不新增服务器裁决入口。
 - 2026-05-24：S89.3 完成设置/印匣重复入口收束、专题层玩家可见口径和错误空态视觉。当前范围仍限 React 前端、样式、客户端 smoke/canary 与验收文档，不新增浏览器裁决权，不改后端 API/schema、AI 权限、prompt、provider、SQLite 或素材 manifest。
-- 前一轮 S88 归档是低风险纯文档维护；S89.3 涉及前端代码、样式、验证脚本和文档，提交前按子代理复审规则执行。
+- 2026-05-24：S89.4 完成首页旧案 loading/empty/error 案架状态、异常旧案案号链接防线和史册案卷索引/导读密度 polish。当前范围仍限 React 前端、样式、客户端 smoke/canary、前端测试和文档，不新增浏览器裁决权，不改后端 API/schema、AI 权限、prompt、provider、SQLite、存档或素材 manifest。
+- 前一轮 S88 归档是低风险纯文档维护；S89.3 与 S89.4 涉及前端代码、样式、验证脚本和文档，提交前按子代理复审规则执行。
 
 ## 6. 最近完整验证口径
 
@@ -166,6 +168,15 @@ S89.3 设置入口、专题文案与错误空态收束验证结果：
 - 已通过完整 `npm test`（1160 tests）。
 - 提交前只读子代理复审已通过；复审未发现阻断问题，仅提示把复审完成状态写回文档。
 
+S89.4 首页旧案状态与史册信息密度验证结果：
+
+- 已通过 `node --check scripts/clientSmoke.js`、`npm run typecheck:client`、`node --test test/reactClientScaffold.test.js`、`git diff --check`。
+- 已通过 focused React 验收：`unsupported archive route|S89.4|archive route entries`（5 tests），覆盖首页旧案 loading/empty 互斥、旧案读取失败安全重试、开卷错误后旧案重试失败不覆盖开卷错误、异常旧案案号不生成读档链接、史册案卷索引和近次线索导读。
+- 已通过 `npm run test:client`（6 files / 129 tests）；此前同机曾命中 Vitest fork worker 启动超时，本轮修复后又以 `npx vitest --config vitest.config.mjs run --pool=vmThreads --fileParallelism=false --maxWorkers=1` 通过同一客户端套件（6 files / 129 tests）。
+- 已通过 `npm run qa:runtime-manifest`、`npm run build:client`、`npm run budget:client`。
+- 已通过 `npm run smoke:browser:visual`，该命令串联 runtime manifest QA、client build、budget 和 React browser smoke，并写出 `artifacts/browser-visual-matrix`；smoke 现覆盖首页旧案案架结构、史册案卷索引、移动端史册不溢出、异常/工程词污染守门。Vite 仍输出既有 `/assets/ui/...` runtime asset 与 chunk size warnings。
+- 已通过 `npm run check:docs-governance`、`node --test test/documentationGovernance.test.js` 和完整 `npm test`（1160 tests）。
+
 ## 7. 近期进度记录
 
 ### 2026-05-24：S89.2 React 视觉矩阵、轻量专题页壳与立绘查看器公开说明
@@ -187,6 +198,17 @@ S89.3 设置入口、专题文案与错误空态收束验证结果：
 - 子代理：开工前已委派只读子代理巡检 S89.3 缺口，指出设置入口重复、专题层工程口径、错误/404 空态和 smoke canary 缺口；提交前只读 diff 复审已通过，未发现阻断问题。
 - 验证：按第 6 节 S89.3 口径通过；`artifacts/browser-visual-matrix` 产物目录仅作本地 artifact，不提交。
 - 提交：实现提交 `efa507aa729c8acb9503ba8f8e45a67e6b265969`；后续哈希回填仅修改本文件与 [SHARED_CONTEXT.md](SHARED_CONTEXT.md)，属于低风险纯文档改动，跳过子代理复审。
+
+### 2026-05-24：S89.4 React 首页旧案状态与史册信息密度 polish
+
+- 范围：首页旧案区改为独立案架状态，提供 loading/empty/error/ready 互斥呈现、可读旧案数量、案架状态、骨架占位、空态说明和“重翻旧案”安全重试；旧案读取失败只更新 `savesStatus`，不再让开卷朱印进入错误态、覆盖既有开卷错误或回显底层错误。
+- 安全：`SaveCaseList` 在生成读档 action 前校验 `isRunnableSessionId()`；异常 `sessionId` 只显示“暂不可读”，不把 `/api/game/state`、本地路径、raw/provider/hidden/key 等污染案号写入链接或载入回调。
+- 体验：史册页新增“案卷索引 / 近次线索”导读带，展示入册条目、后果线索、实体余波和前三条公开线索；仍只读 `eventArchiveView`、`domainConsequenceView` 与来函后续 evidence，按钮继续只写本地草稿。
+- Smoke：`scripts/clientSmoke.js` 新增首页案架与史册索引 DOM 守门；`.sessionNav` 仅从重叠检查中排除，避免 sticky 二级导航与同名页面标题误判，页签文字仍接受溢出检查。
+- 边界：本步只改 React 前端、样式、客户端 smoke/source canary、前端测试和文档；不改后端 API/schema、AI 权限矩阵、prompt、provider facade、SQLite schema、存档格式、runtime manifest 字段、素材 manifest 或服务器裁决。
+- 子代理：开工中委派只读子代理巡检 S89.4 缺口，指出首页旧案状态互斥、旧案错误隔离、异常案号链接防线、史册密度和 smoke canary 缺口；提交前只读复审又指出 `refreshSaves()` 在已有开卷错误后仍可能覆盖共享 `error`，本轮已改为旧案读取失败只更新 `savesStatus`，并补 UI 回归测试。
+- 验证：按第 6 节 S89.4 口径通过；`artifacts/browser-visual-matrix` 产物目录仅作本地 artifact，不提交。
+- 提交：实现提交待回填；提交前按规则执行只读 diff 复审。
 
 ### 2026-05-24：S89.1 React 玩家可见文案与移动端覆盖层润色
 

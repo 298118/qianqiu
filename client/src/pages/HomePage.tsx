@@ -136,6 +136,23 @@ export function HomePage() {
   const isStarting = status === "loading" || submitLockRef.current;
   const parsedYear = Number(year);
   const yearIsValid = Number.isInteger(parsedYear) && parsedYear >= 1 && parsedYear <= 9999;
+  const startError = status === "error" ? error : null;
+  const saveShelfState = savesStatus === "loading"
+    ? "loading"
+    : savesStatus === "error"
+    ? "error"
+    : saves.length
+    ? "ready"
+    : "empty";
+  const saveShelfStatusText = saveShelfState === "loading" && !saves.length
+    ? "正在翻检旧案架。"
+    : saveShelfState === "loading"
+    ? "正在校对案架，已列旧卷仍可先读。"
+    : saveShelfState === "error"
+    ? "旧案架暂不可取，新开案卷不受影响。"
+    : saveShelfState === "ready"
+    ? `案架上有 ${saves.length} 卷可读旧案。`
+    : "案架暂空，新卷保存后会在此列出。";
   const canContinueCurrentSession = Boolean(
     currentSessionId &&
     currentPlayerPayload &&
@@ -246,7 +263,7 @@ export function HomePage() {
             </div>
           </div>
           <form
-            className={`startDesk${error || formError ? " startDeskError" : ""}`}
+            className={`startDesk${startError || formError ? " startDeskError" : ""}`}
             onSubmit={handleStart}
             aria-label="新开案卷"
             aria-busy={isStarting}
@@ -347,16 +364,16 @@ export function HomePage() {
               type="submit"
               disabled={isStarting}
               aria-describedby="start-seal-status"
-              data-state={error || formError ? "error" : isStarting ? "loading" : "idle"}
+              data-state={startError || formError ? "error" : isStarting ? "loading" : "idle"}
             >
-              <span>{isStarting ? "开卷中" : error || formError ? "重整朱印" : "新开一卷"}</span>
+              <span>{isStarting ? "开卷中" : startError || formError ? "重整朱印" : "新开一卷"}</span>
             </button>
           </form>
           <p className="sealStatus" id="start-seal-status" aria-live="polite">
-            {isStarting ? "朱印已落，正在开卷。" : error || formError ? "朱印未成，请校正案头信息。" : "按下朱印，新卷即启。"}
+            {isStarting ? "朱印已落，正在开卷。" : startError || formError ? "朱印未成，请校正案头信息。" : "按下朱印，新卷即启。"}
           </p>
           {formError ? <p className="statusLine" role="alert">{formError}</p> : null}
-          {error ? <p className="statusLine" role="alert">{error}</p> : null}
+          {startError ? <p className="statusLine" role="alert">{startError}</p> : null}
         </div>
         {canContinueCurrentSession && currentSessionId && currentPlayerPayload ? (
           <section className="continueShelf" aria-label="当前本局">
@@ -380,13 +397,49 @@ export function HomePage() {
             </Link>
           </section>
         ) : null}
-        <section className="saveShelf" aria-label="旧案卷">
-          <h2>旧案卷</h2>
-          {savesStatus === "loading" ? <p>正在翻检案卷。</p> : null}
+        <section className="saveShelf" aria-labelledby="home-save-title" data-save-state={saveShelfState}>
+          <div className="saveShelfHeader">
+            <div>
+              <p className="eyebrow">案架</p>
+              <h2 id="home-save-title">旧案卷</h2>
+            </div>
+            <dl className="saveShelfStats" aria-label="旧案统计">
+              <div>
+                <dt>可读</dt>
+                <dd>{saves.length}</dd>
+              </div>
+              <div>
+                <dt>案架</dt>
+                <dd>{saveShelfState === "loading" ? "翻检" : saveShelfState === "error" ? "暂缓" : saves.length ? "有卷" : "空架"}</dd>
+              </div>
+            </dl>
+          </div>
+          <div className="saveShelfStatus" role="status" aria-live="polite" data-tone={saveShelfState}>
+            <span aria-hidden="true" />
+            <p>{saveShelfStatusText}</p>
+            {savesStatus === "error" ? (
+              <button className="paperButton saveShelfRefresh" type="button" onClick={() => void refreshSaves()}>
+                重翻旧案
+              </button>
+            ) : null}
+          </div>
           {saves.length ? (
             <SaveCaseList saves={saves} maxItems={5} className="homeSaveCases" />
+          ) : saveShelfState === "loading" ? (
+            <div className="saveCaseSkeletonList" aria-hidden="true">
+              <span className="saveCaseSkeleton" />
+              <span className="saveCaseSkeleton" />
+              <span className="saveCaseSkeleton" />
+            </div>
           ) : (
-            <p>暂无可读旧卷。</p>
+            <div className="saveCaseEmpty">
+              <strong>{saveShelfState === "error" ? "旧案架暂不可取" : "暂无可读旧卷"}</strong>
+              <p>
+                {saveShelfState === "error"
+                  ? "可先新开一卷；旧案只从公开案卷目录读取，不影响当前开卷。"
+                  : "新卷保存后会在此列出，可从右上角印匣继续翻检。"}
+              </p>
+            </div>
           )}
         </section>
       </div>
