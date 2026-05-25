@@ -5978,8 +5978,8 @@ describe("S74.1 React client shell", () => {
             },
             {
               mapEntityRef: "geo:polluted",
-              label: "provider payload sk-test-secret path=C:\\secret\\map.json",
-              summary: "hiddenNotes raw audit",
+              label: "provider payload sk-test-secret tp-test-secret path=C:\\secret\\map.json",
+              summary: "hiddenNotes raw audit /Users/me/map.json",
               layout: { x: 0.45, y: 0.48 },
               actionDraftRefs: ["draft-polluted"]
             }
@@ -6058,11 +6058,16 @@ describe("S74.1 React client shell", () => {
     expect(screen.getByText("草拟循贡院驿路")).toBeTruthy();
     expect(screen.getByText("公开近事")).toBeTruthy();
     expect(screen.getByText("科场近讯")).toBeTruthy();
+    expect(screen.getByText("地点、驿路、近事三层全开；筛选只改卷上显示，不改变案卷事实。")).toBeTruthy();
     expect(screen.getByText(/已接入 2 处地点、1 条路线、1 项近事/)).toBeTruthy();
+    expect(document.querySelector(".mapFullScreen")?.getAttribute("data-polish-map")).toBe("s89-7-layer-tooltip");
     fireEvent.click(screen.getByRole("button", { name: "贡院" }));
     expect(screen.getAllByText("号舍灯火未歇。").length).toBeGreaterThan(0);
+    expect(document.querySelector(".inkMapTooltip")?.getAttribute("data-polish-tooltip")).toBe("s89-7-map-note");
+    expect(screen.getByText("单点札记 · 写入后仍须回主卷候复")).toBeTruthy();
 
     fireEvent.click(screen.getByRole("button", { name: "写入赴试草稿" }));
+    expect(document.querySelector(".inkMapTooltip .paperButton[data-draft-state='written']")?.getAttribute("aria-label")).toContain("已写入主卷草稿");
     expect(useUiStateStore.getState().actionDraft).toMatchObject({
       source: "map-runtime",
       targetPage: "game",
@@ -6130,11 +6135,13 @@ describe("S74.1 React client shell", () => {
 
     fireEvent.click(screen.getByLabelText("地点"));
     await waitFor(() => expect(screen.queryByRole("button", { name: "贡院" })).toBeNull());
+    expect(screen.getByText("现显 驿路、近事；暂隐 地点。筛选只改卷上显示，不改变案卷事实。")).toBeTruthy();
+    expect(document.querySelector(".mapLayerToggle[data-layer-state='hidden']")).toBeTruthy();
     fireEvent.click(screen.getByLabelText("地点"));
     await screen.findByRole("button", { name: "贡院" });
 
     expect(screen.getByRole("link", { name: "入局势簿" }).getAttribute("href")).toBe("/game/74747474-7474-4774-8774-747474747474/archive");
-    expect(document.body.textContent || "").not.toMatch(/raw audit|provider payload|hiddenNotes|OPENAI_API_KEY|data\/sessions|sk-test-secret|C:\\|path=/i);
+    expect(document.body.textContent || "").not.toMatch(/raw audit|provider payload|hiddenNotes|OPENAI_API_KEY|data\/sessions|sk-test-secret|tp-test-secret|\/Users|C:\\|path=/i);
     expect(document.body.textContent || "").not.toMatch(/安全投影|安全专题投影|舆图投影摘要|后端裁决|resolver|safe view|\bserver\b|provider|model/i);
   });
 

@@ -113,6 +113,7 @@
 
 | ID | 状态 | 目标 | 范围 / 下一步 |
 | --- | --- | --- | --- |
+| S89.7 | DONE | 舆图交互与筛选提示 polish | 承接 S89.6，舆图页新增 `data-polish-map="s89-7-layer-tooltip"`、当前图层显隐摘要、tooltip 单点札记、tooltip 草稿已写入状态和移动端长文本守门；舆图清洗补 `/Users`、`/private`、常见 Unix 本地目录和 `tp-...` token 形态。范围限 React 前端、样式、客户端 smoke/source canary、前端测试和文档。地图 layout/坐标/tooltip/visual-only effect/NPC anchor 仍只作浏览器显示，行动草稿仍为 `map-runtime` 本地 hint，普通回合由服务器从当前安全 view 重建复核；不改后端 API/schema、AI 权限、prompt、provider facade、SQLite schema、存档格式、runtime manifest 字段、素材 manifest 或服务器裁决。实现提交待回填。 |
 | S89.6 | DONE | 高清立绘查看器人物小传与当前情况 polish | 承接 S89.5，点击高清立绘后查看器显示“观画印象”人物头、公开标签、外貌介绍、人物小传和当前情况；人物页画像 profile 补案主/名册/详情/谱牒当前情况，均只来自已审阅 runtime 画像元数据和人物页安全摘要。`scripts/clientSmoke.js` 与源码 canary 已覆盖 `s89-6-portrait-life` 标记、人物小传/公开近况文案、存储禁写和污染词守门；CSS 仅保留轻量结构样式并通过预算。未改后端 API/schema、AI 权限、prompt、provider facade、SQLite schema、存档格式、runtime manifest 字段、素材 manifest 或服务器裁决。实现提交：`d476d41d747afc6e650ed8a6fa5041b23d01c87c`。 |
 | S89.5 | DONE | React 全局材质、覆盖层过渡与交互反馈 polish | 主壳、右上角印匣、专题层 drawer/modal/surface、地图行动面板、高清立绘查看器与设置目录已补 S89.5 材质/覆盖层/交互反馈标记和低动效守门；舆图行动只增加本地“已写入草稿”反馈，不提交、不裁决、不扩大 `draftContext` 权限。`scripts/clientSmoke.js` 与源码 canary 已覆盖材质样式、覆盖层标记、地图草稿反馈、立绘查看器和设置目录安全污染守门。范围限 React 前端、样式、客户端 smoke/canary、前端测试和文档；未改后端 API/schema、AI 权限、prompt、provider facade、SQLite schema、存档格式、runtime manifest 字段、素材 manifest 或服务器裁决。实现提交：`b3237606ffa3abc7fbeb396d89c5c9eb8605f8f9`。 |
 | S89.4 | DONE | React 首页旧案状态与史册信息密度 polish | 承接 S89.3 后续建议，补首页旧案卷 loading/empty/error 的案架状态、数量与安全兜底文案，旧案读取失败不再串到开卷表单或回显底层错误；异常 `sessionId` 旧案只显示“暂不可读”，不生成 `/game/...` 读档链接；史册页补“案卷索引/近次线索”导读和更紧凑的公开条目密度，继续只消费 `eventArchiveView`、`domainConsequenceView` 与来函 follow-up 安全投影。只改 React 前端、样式、客户端 smoke/源码 canary、前端测试和文档；不改后端 API/schema、AI 权限、prompt、provider facade、SQLite schema、存档格式、runtime manifest 字段、素材 manifest 或服务器裁决。实现提交：`3a600b82f86855a563c64563251eec7081724d71`。 |
@@ -132,7 +133,8 @@
 - 2026-05-24：S89.4 完成首页旧案 loading/empty/error 案架状态、异常旧案案号链接防线和史册案卷索引/导读密度 polish。当前范围仍限 React 前端、样式、客户端 smoke/canary、前端测试和文档，不新增浏览器裁决权，不改后端 API/schema、AI 权限、prompt、provider、SQLite、存档或素材 manifest。
 - 2026-05-24：S89.5 完成 React 全局材质、覆盖层过渡、地图/立绘/设置目录交互反馈与对应 smoke/canary 文档同步。当前范围仍限 React 前端、样式、客户端 smoke/canary、前端测试和文档；不新增浏览器裁决权，不改后端 API/schema、AI 权限、prompt、provider、SQLite、存档或素材 manifest。
 - 2026-05-24：S89.6 完成高清立绘查看器人物小传与当前情况 polish。当前范围仍限 React 前端、样式、客户端 smoke/source canary、前端测试和文档；不新增浏览器裁决权，不改后端 API/schema、AI 权限、prompt、provider、SQLite、存档或素材 manifest。
-- 前一轮 S88 归档是低风险纯文档维护；S89.3-S89.6 涉及前端代码、样式、验证脚本和文档，提交前按子代理复审规则执行。
+- 2026-05-24：S89.7 完成舆图交互与筛选提示 polish。当前范围仍限 React 前端、样式、客户端 smoke/source canary、前端测试和文档；不新增浏览器裁决权，不改后端 API/schema、AI 权限、prompt、provider、SQLite、存档、runtime manifest 或素材 manifest。
+- 前一轮 S88 归档是低风险纯文档维护；S89.3-S89.7 涉及前端代码、样式、验证脚本和文档，提交前按子代理复审规则执行。
 
 ## 6. 最近完整验证口径
 
@@ -197,7 +199,27 @@ S89.6 高清立绘查看器人物小传与当前情况 polish 验证结果：
 - 已通过完整串行客户端套件 `npx vitest --config vitest.config.mjs run --pool=vmThreads --fileParallelism=false --maxWorkers=1`（6 files / 129 tests）。
 - 已通过 `git diff --check`、`npm run check:docs-governance`、`node --test test/documentationGovernance.test.js`。提交前只读子代理首轮发现的路径/key 清洗缺口已修复，最终只读复审已通过，未发现阻断问题。
 
+S89.7 舆图交互与筛选提示 polish 验证结果：
+
+- 已通过 `node --check scripts/clientSmoke.js`、`npm run typecheck:client`、`node --test test/reactClientScaffold.test.js`、focused `npx vitest --config vitest.config.mjs run client/src/__tests__/App.test.tsx -t "wraps the S72 map renderer with safe React action drafts" --pool=vmThreads --fileParallelism=false --maxWorkers=1`。
+- 已通过完整串行客户端套件 `npx vitest --config vitest.config.mjs run --pool=vmThreads --fileParallelism=false --maxWorkers=1`（6 files / 129 tests）。此前同一完整串行套件曾出现一次首页画像选择 jsdom 抖动，focused 重跑该用例通过，最终完整串行重跑通过。
+- 已通过 `npm run qa:runtime-manifest`、`npm run build:client`、`npm run budget:client`；本轮初版样式一度超过 CSS 硬预算，已改成少样式、多状态文案并删除未使用 `.mapStatusRail`，最终预算输出为 `CSS 97.5 KiB`。
+- 已通过直接浏览器验收 `node scripts/clientSmoke.js --screenshots artifacts/browser-visual-matrix`，覆盖 S89.7 舆图图层摘要、隐藏图层反馈、tooltip 单点札记、tooltip 草稿写入状态、移动端舆图摘要、runtime 画布像素、浏览器存储禁写和安全污染守门，并写出 `artifacts/browser-visual-matrix`。Vite 仍输出既有 `/assets/ui/...` runtime asset 与 chunk size warnings。
+- 已通过 `git diff --check`。提交前只读子代理开工巡检指出舆图 `/Users`、`/private`、`tp-...` 清洗、图层反馈、tooltip 层级、移动端长文本和 CSS 预算风险，本轮已按这些建议收束；最终只读复审通过，未发现阻断问题。
+
 ## 7. 近期进度记录
+
+### 2026-05-24：S89.7 舆图交互与筛选提示 polish
+
+- 范围：舆图页新增 `data-polish-map="s89-7-layer-tooltip"`、图层显隐摘要和 tooltip `data-polish-tooltip="s89-7-map-note"` 单点札记；地图 tooltip 草稿按钮写入后会显示“已写入主卷草稿”的本地状态。
+- 体验：图层区显示“地点、驿路、近事三层全开”或“现显/暂隐”摘要，明确筛选只改卷上显示，不改变案卷事实；tooltip 显示“单点札记 · 写入后仍须回主卷候复”，从地图标签写入草稿后只标记对应 `draftId`。
+- 安全：`MapPage` 与 `InkMapRuntimeBridge` 的公开文本清洗补 `/Users`、`/private`、常见 Unix 本地目录和 `tp-...` token 形态；`layout`、`layoutPath`、`mapBounds`、`viewportHint`、`position`、`coordinate`、`x/y` 等 visual-only refs 仍被排除出草稿上下文。
+- Smoke/canary：`scripts/clientSmoke.js` 现覆盖 S89.7 舆图标记、图层摘要、隐藏图层反馈、tooltip 札记、tooltip 草稿写入状态、移动端舆图摘要和路径/key 污染；`test/reactClientScaffold.test.js` 与 `App.test.tsx` 同步覆盖新标记、清洗、draft-only 和无 turn API 边界。
+- CSS：初版新增样式超过硬预算，已删除未使用 `.mapStatusRail` 并改成少样式、多状态文案；最终 `npm run budget:client` 输出 `CSS 97.5 KiB`。
+- 边界：本步不改后端 API/schema、AI 权限矩阵、prompt、provider facade、SQLite schema、存档格式、runtime manifest 字段、素材 manifest 或服务器裁决；地图 tooltip、图层、坐标、visual-only effect 和 NPC anchor 只作浏览器显示，不成为真实行动、资源、关系、任免或地理事实。
+- 复审：开工中只读子代理提出舆图路径/token 清洗、图层反馈、tooltip 层级、移动端长文本和 CSS 预算建议；本轮已按建议收束。提交前最终只读复审通过，未发现阻断问题。
+- 验证：按第 6 节 S89.7 口径通过；`artifacts/browser-visual-matrix` 产物目录仅作本地 artifact，不提交。
+- 提交：实现提交待回填；后续哈希回填预计仅修改本文件与 [SHARED_CONTEXT.md](SHARED_CONTEXT.md)，属于低风险纯文档改动，可按规则跳过子代理复审并说明。
 
 ### 2026-05-24：S89.6 高清立绘查看器人物小传与当前情况 polish
 

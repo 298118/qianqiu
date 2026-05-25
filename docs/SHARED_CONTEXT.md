@@ -20,7 +20,7 @@
 - Frontend: React + TypeScript + Vite 在 `client/`，生产构建在 `dist/client/`，Express 默认 `/` 服务 React SPA。React Router Data Mode 管理首页、主卷、舆图、人物、囊箧、史册、科举、皇榜、朝议和设置。旧 `public/index.html`、`public/app.js`、`public/styles.css`、`public/mapPanel.js` 只作迁移参考；`public/assets/`、`public/vendor/`、`public/mapRenderer.js` 继续提供已审核素材和 S72 地图 runtime。
 - Backend: Node.js + Express，当前以 CommonJS JavaScript 为主。S86 已建立渐进 TypeScript 检查地基，`npm run typecheck:server` 覆盖契约、API/view 类型、安全 projection、AI schema/provider facade、storage adapter 和核心 resolver 的首批边界；S87 已完成 route/API response shape 首轮覆盖，`src/contracts/serverContracts.ts` 固定 public response，`src/routes/routeResponses.js` 用局部 `@ts-check` helper 接入大型 route 并运行时拒绝 public `worldState` raw ledger key。不得为了启用类型检查一次性 whole-file `@ts-check` 大型 route 文件，也不得放宽 raw ledger 剥离、Ajv/runtime 校验或服务器裁决。
 - Storage: 默认 JSON session files under `data/sessions/`；可选 `STORAGE_ADAPTER=sqlite` 使用本地 `schema_migrations`、`world_sessions`、audit tables、`geo_*`、`people_*`、`office_*`、`event_archive_index`、`prompt_retrieval_index` 和 `safe_search_index`。SQLite 派生行只从 `world_sessions.world_state_json` 单向修复，不是玩家 API、prompt 或服务器裁决的 raw truth source。
-- Roadmap status: S49-S87 已完成并归档或压缩记录。S88 全面系统打磨已从活动台账长表迁出，阶段性归档见 `docs/QIANQIU_POLISHING_ARCHIVE.md`，原规划见 `docs/QIANQIU_POLISHING_ROADMAP.md`；S89.1 已完成 React 玩家可见文案与移动端覆盖层润色，S89.2 已完成 React 视觉矩阵、轻量专题页壳与高清立绘查看器公开说明，S89.3 已完成 React 设置入口、专题文案与错误空态收束，S89.4 已完成 React 首页旧案状态与史册信息密度 polish，S89.5 已完成 React 全局材质、覆盖层过渡与交互反馈 polish，S89.6 已完成高清立绘查看器人物小传与当前情况 polish，活动台账见 `docs/DEVELOPMENT_STEPS.md`。若继续 S88/S89 残余方向，应继续新开可审查小步骤，而不是把 S88 长流水复制回活动台账。
+- Roadmap status: S49-S87 已完成并归档或压缩记录。S88 全面系统打磨已从活动台账长表迁出，阶段性归档见 `docs/QIANQIU_POLISHING_ARCHIVE.md`，原规划见 `docs/QIANQIU_POLISHING_ROADMAP.md`；S89.1 已完成 React 玩家可见文案与移动端覆盖层润色，S89.2 已完成 React 视觉矩阵、轻量专题页壳与高清立绘查看器公开说明，S89.3 已完成 React 设置入口、专题文案与错误空态收束，S89.4 已完成 React 首页旧案状态与史册信息密度 polish，S89.5 已完成 React 全局材质、覆盖层过渡与交互反馈 polish，S89.6 已完成高清立绘查看器人物小传与当前情况 polish，S89.7 已完成舆图交互与筛选提示 polish，活动台账见 `docs/DEVELOPMENT_STEPS.md`。若继续 S88/S89 残余方向，应继续新开可审查小步骤，而不是把 S88 长流水复制回活动台账。
 - Current collaboration: 2026-05-14 起停止 Gemini CLI 协作。后续开发、素材生成/审核、验证、文档同步和 Git 提交由 Codex 负责；用户已授权本仓库使用 Codex 子代理，实施子代理不得提交，提交前复审子代理必须只读。
 - Current local `.env`: 可能含用户 provider keys。`.env` 被 Git 忽略，不能打印、复制到文档或提交。
 
@@ -65,22 +65,24 @@
 
 ## Current Work Note
 
-2026-05-24：S89.6 完成高清立绘查看器人物小传与当前情况 polish，实现提交 `d476d41d747afc6e650ed8a6fa5041b23d01c87c`。点击人物页画像的高清查看按钮后，`PortraitViewerHost` 现在显示 `data-polish-profile="s89-6-portrait-life"` 人物说明区，包含“观画印象”人物头、公开标签、外貌介绍、人物小传和当前情况；人物页为案主、名册人物、详情人物和谱牒人物传入更具体的安全 `PortraitViewerProfile.current`。
+2026-05-24：S89.7 完成舆图交互与筛选提示 polish，实现提交待本轮完成后回填。舆图页现在带 `data-polish-map="s89-7-layer-tooltip"`，图层区新增“筛选只改卷上显示，不改变案卷事实”的当前显隐摘要；关闭地点图层后，摘要会明确“现显/暂隐”，地图标签随显示层过滤，不改变 `mapRuntimeView`、案卷事实或服务器裁决。
 
-查看器仍只读取已审阅 runtime 画像主图路径、画像元数据和人物页传入的安全摘要；不读取完整素材清单，不写 URL、localStorage/sessionStorage、行动草稿、canonical state、prompt 或服务器状态。人物小传和当前情况只作公开卷宗摘要，不生成 hidden 事实、真实人物行动、关系终局、婚姻、弹劾、定罪、背叛、交易、委派、考试或官职裁决。
+地图 tooltip 现在标记为 `data-polish-tooltip="s89-7-map-note"`，显示“单点札记 · 写入后仍须回主卷候复”；从 tooltip 写入行动草稿后，只把对应 `draftId` 标成已写入，并通过 aria 文案提示“已写入主卷草稿”。该反馈仍只是浏览器本地 `map-runtime` 草稿 hint，不调用 turn API，不提交回合，不写 URL、localStorage/sessionStorage、canonical state、prompt 或服务器状态。
+
+本轮同时把舆图公开文本清洗补齐到 `/Users`、`/private`、常见 Unix 本地目录和 `tp-...` token 形态；`MapPage` 与 `InkMapRuntimeBridge` 继续过滤 layout、layoutPath、mapBounds、viewportHint、position、coordinate、x/y 等 visual-only refs，不让显示坐标、tooltip、NPC anchor 或 visual-only effect 成为 resolver evidence。新增样式控制在轻量范围内，并删除未使用 `.mapStatusRail` 以守住 CSS 预算。
 
 本轮只改 React 前端、前端样式、客户端 smoke/source canary、前端测试和验收文档；不改后端 API/schema、AI 权限矩阵、prompt、provider facade、SQLite schema、存档格式、runtime manifest 字段、素材 manifest 或服务器裁决。
 
 本轮验证结果：
 
-- 已通过 `npm run typecheck:client`、`node --check scripts/clientSmoke.js`、`node --test test/reactClientScaffold.test.js`、focused `npx vitest --config vitest.config.mjs run client/src/__tests__/App.test.tsx -t "current people ledger" --pool=vmThreads --fileParallelism=false --maxWorkers=1`；只读复审指出 `/Users`、`/private` 与 `tp-...` token 形态未被本轮 portrait profile 路径显式覆盖后，已补 `Portrait.tsx`、`PeoplePage.tsx`、`SurfaceHost.tsx` 三处清洗和 portrait viewer smoke/source canary，并重跑通过上述检查。
-- 已通过 `npm run qa:runtime-manifest`、`npm run build:client`、`npm run budget:client`；本轮新增样式一度超过 CSS 硬预算，已裁剪为轻量结构样式，最终预算输出为 `CSS 97.6 KiB`。
-- 已通过直接浏览器验收 `node scripts/clientSmoke.js --screenshots artifacts/browser-visual-matrix`，覆盖 S89.6 立绘查看器人物小传/当前情况 polish、runtime 画像路径、浏览器存储禁写和安全污染守门，并写出 `artifacts/browser-visual-matrix`。Vite 仍输出既有 `/assets/ui/...` runtime asset 与 chunk size warnings。
-- 已通过完整串行客户端套件 `npx vitest --config vitest.config.mjs run --pool=vmThreads --fileParallelism=false --maxWorkers=1`（6 files / 129 tests）。
-- 已通过 `git diff --check`、`npm run check:docs-governance`、`node --test test/documentationGovernance.test.js`。提交前只读子代理首轮发现的路径/key 清洗缺口已修复，最终只读复审已通过，未发现阻断问题。实现提交后的哈希回填仅修改 `docs/DEVELOPMENT_STEPS.md` 与本文件，属于低风险纯文档改动，跳过子代理复审。
+- 已通过 `node --check scripts/clientSmoke.js`、`npm run typecheck:client`、`node --test test/reactClientScaffold.test.js`、focused `npx vitest --config vitest.config.mjs run client/src/__tests__/App.test.tsx -t "wraps the S72 map renderer with safe React action drafts" --pool=vmThreads --fileParallelism=false --maxWorkers=1`。
+- 已通过完整串行客户端套件 `npx vitest --config vitest.config.mjs run --pool=vmThreads --fileParallelism=false --maxWorkers=1`（6 files / 129 tests）。此前同一完整串行套件曾出现一次首页画像选择 jsdom 抖动，focused 重跑该用例通过，最终完整串行重跑通过。
+- 已通过 `npm run qa:runtime-manifest`、`npm run build:client`、`npm run budget:client`；本轮初版样式一度超过 CSS 硬预算，已改成少样式、多状态文案并删除未使用 `.mapStatusRail`，最终预算输出为 `CSS 97.5 KiB`。
+- 已通过直接浏览器验收 `node scripts/clientSmoke.js --screenshots artifacts/browser-visual-matrix`，覆盖 S89.7 舆图图层摘要、隐藏图层反馈、tooltip 单点札记、tooltip 草稿写入状态、移动端舆图摘要、runtime 画布像素、浏览器存储禁写和安全污染守门，并写出 `artifacts/browser-visual-matrix`。Vite 仍输出既有 `/assets/ui/...` runtime asset 与 chunk size warnings。
+- 已通过 `git diff --check`。提交前只读子代理开工巡检指出舆图 `/Users`、`/private`、`tp-...` 清洗、图层反馈、tooltip 层级、移动端长文本和 CSS 预算风险，本轮已按这些建议收束；最终只读复审通过，未发现阻断问题。
 
 ## Next Recommended Step
 
-若继续前端产品化打磨，建议新开 S89.7 或 S90，优先做移动端长文本二轮审查、地图 tooltip/筛选动效进一步细化、史册右侧空白区域跨列信息密度压缩，或把 S89 系列 polish 归档为前端产品化阶段小结。若转向系统深度，优先候选包括更深关系后果、真实 keyed provider 长跑证据和视觉素材 QA 消费层巡检。
+若继续前端产品化打磨，建议新开 S89.8 或 S90，优先做移动端长文本二轮审查、史册右侧空白区域跨列信息密度压缩、S89 polish 阶段归档，或更深入的地图全关图层空态/筛选专题层体验。若转向系统深度，优先候选包括更深关系后果、真实 keyed provider 长跑证据和视觉素材 QA 消费层巡检。
 
 无论下一步是什么，都必须继续从安全 view 重建 evidence，保持 proposal-only、browser-draft-only 和服务器裁决，不让浏览器 task、地图 layout、visual-only effect、NPC anchor、runtime manifest 元数据、world entity impact/recent impact、交游 evidence、world thread 或 draftContext 变成真实任务队列、资源结算器、关系/婚姻/弹劾/定罪/背叛裁决器。

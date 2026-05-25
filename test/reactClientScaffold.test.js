@@ -1407,6 +1407,39 @@ test("S89.5 material polish stays frontend-only and reduced-motion aware", () =>
   );
 });
 
+test("S89.7 map interaction polish stays draft-only and safe", () => {
+  const mapPageSource = readText("client/src/pages/MapPage.tsx");
+  const bridgeSource = readText("client/src/components/InkMapRuntimeBridge.tsx");
+  const styleSource = readText("client/src/styles/global.css");
+  const clientSmokeSource = readText("scripts/clientSmoke.js");
+  const combined = stripSafeGuardPatterns(`${mapPageSource}\n${bridgeSource}\n${styleSource}`);
+
+  assert.match(mapPageSource, /data-polish-map="s89-7-layer-tooltip"/);
+  assert.match(mapPageSource, /data-polish-map="s89-7-layer-summary"/);
+  assert.match(mapPageSource, /data-layer-state=\{visibleLayers\[layer\] \? "shown" : "hidden"\}/);
+  assert.match(mapPageSource, /筛选只改卷上显示，不改变案卷事实/);
+  assert.match(mapPageSource, /setLastWrittenMapDraftId\(selection\.draftId\)/);
+  assert.match(mapPageSource, /writtenDraftId=\{lastWrittenMapDraftId\}/);
+  assert.match(mapPageSource, /localMapPagePathPattern/);
+  assert.match(mapPageSource, /\(\?:sk\|tp\)-\[a-z0-9_-\]\{6,\}/);
+  assert.match(bridgeSource, /data-polish-tooltip="s89-7-map-note"/);
+  assert.match(bridgeSource, /单点札记 · 写入后仍须回主卷候复/);
+  assert.match(bridgeSource, /data-draft-state=\{writtenDraftId === selection\.draftId \? "written" : "idle"\}/);
+  assert.match(bridgeSource, /已写入主卷草稿/);
+  assert.match(bridgeSource, /localMapRuntimePathPattern/);
+  assert.match(bridgeSource, /\(\?:sk\|tp\)-\[a-z0-9_-\]\{6,\}/);
+  assert.match(styleSource, /\.mapLayerSummary[\s\S]*overflow-wrap: anywhere/);
+  assert.doesNotMatch(styleSource, /\.inkMapTooltip \.paperButton\[data-draft-state="written"\][\s\S]*animation/);
+  assert.match(clientSmokeSource, /S89\.7 map layer summary/);
+  assert.match(clientSmokeSource, /S89\.7 map tooltip draft feedback/);
+  assert.match(clientSmokeSource, /tp-\[a-z0-9_-\]\{6,\}/);
+  assert.doesNotMatch(`${mapPageSource}\n${bridgeSource}`, /submitTurn|\/api\/game\/turn|qianqiuApi|localStorage|sessionStorage/);
+  assert.doesNotMatch(
+    combined,
+    /dangerouslySetInnerHTML|\/api\/game\/state|\/api\/dev\/session-diagnostics|ink-ui-manifest|data\/sessions|raw audit|provider payload|hiddenNotes|OPENAI_API_KEY|DEEPSEEK_API_KEY|MIMO_API_KEY|ANTHROPIC_API_KEY/
+  );
+});
+
 test("S76.8 ranking page renders server-owned ranking views without widening authority", () => {
   const rankingPageSource = readText("client/src/pages/RankingPage.tsx");
   const styleSource = readText("client/src/styles/global.css");

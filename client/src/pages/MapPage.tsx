@@ -86,11 +86,12 @@ const unsafeMapRefTokens = new Set([
   "x",
   "y"
 ]);
+const localMapPagePathPattern = /(?:^|[\s"'`(（:：,;，。；、【《“‘])(?:[a-z]:[\\/]|~[\\/]|\.{1,2}[\\/]|\/(?:home|Users|private|mnt|tmp|var|etc|usr|opt|workspace|workspaces|root|data|src|client|server|dist|public|node_modules)(?:[\\/]|$)|(?:data|src|client|server|dist|public|node_modules)[\\/][^\s，。；、]+)/i;
 
 function safeMapPageText(value: unknown, fallback: string, maxLength = 80) {
   const text = typeof value === "string" && value.trim() ? value.trim() : fallback;
   const normalized = text.toLowerCase();
-  if (/[a-z]:[\\/]/i.test(text) || /sk-[a-z0-9_-]{6,}/i.test(text)) return fallback;
+  if (localMapPagePathPattern.test(text) || /(?:sk|tp)-[a-z0-9_-]{6,}/i.test(text)) return fallback;
   if (unsafeMapTextFragments.some((fragment) => normalized.includes(fragment.toLowerCase()))) return fallback;
   return rewritePlayerFacingWorldText(text).slice(0, maxLength);
 }
@@ -336,6 +337,10 @@ function getNpcActivityAnchors(view: MapRuntimeView | null | undefined) {
     .slice(0, 4);
 }
 
+function joinMapLayerLabels(layers: readonly MapLayerKey[]) {
+  return layers.length ? layers.map((layer) => mapLayerLabels[layer]).join("、") : "无";
+}
+
 export function MapPage() {
   const { sessionId = "s74-preview" } = useParams();
   const [visibleLayers, setVisibleLayers] = useState<Record<MapLayerKey, boolean>>(defaultVisibleLayers);
@@ -358,7 +363,14 @@ export function MapPage() {
   const mapEvents = useMemo(() => getMapEvents(mapRuntimeView), [mapRuntimeView]);
   const npcActivityAnchors = useMemo(() => getNpcActivityAnchors(mapRuntimeView), [mapRuntimeView]);
   const mapActionEntries = useMemo(() => getMapActionEntries(mapRuntimeView), [mapRuntimeView]);
-  const activeLayerCount = (Object.keys(visibleLayers) as MapLayerKey[]).filter((key) => visibleLayers[key]).length;
+  const activeLayers = (Object.keys(visibleLayers) as MapLayerKey[]).filter((key) => visibleLayers[key]);
+  const hiddenLayers = (Object.keys(visibleLayers) as MapLayerKey[]).filter((key) => !visibleLayers[key]);
+  const activeLayerCount = activeLayers.length;
+  const activeLayerText = joinMapLayerLabels(activeLayers);
+  const hiddenLayerText = joinMapLayerLabels(hiddenLayers);
+  const layerSummary = hiddenLayers.length
+    ? `现显 ${activeLayerText}；暂隐 ${hiddenLayerText}。筛选只改卷上显示，不改变案卷事实。`
+    : `地点、驿路、近事三层全开；筛选只改卷上显示，不改变案卷事实。`;
   const archiveHref = routeSessionSupported ? `/game/${sessionId}/archive` : "/";
   const gameHref = routeSessionSupported ? `/game/${sessionId}` : "/";
 
@@ -381,7 +393,7 @@ export function MapPage() {
   }
 
   function writeMapRuntimeSelection(selection: MapRuntimeDraftSelection) {
-    setLastWrittenMapDraftId("runtime-selection");
+    setLastWrittenMapDraftId(selection.draftId);
     writeMapActionDraft(
       selection.text,
       buildMapDraftContext("map_ref_action", [selection.targetRef], selection.sourceRefs, selection.requiresServerTurn)
@@ -405,7 +417,7 @@ export function MapPage() {
   }
 
   return (
-    <article className="mapFullScreen routePanel" aria-labelledby="map-title" data-polish-surface="s89-5-map-command">
+    <article className="mapFullScreen routePanel" aria-labelledby="map-title" data-polish-surface="s89-5-map-command" data-polish-map="s89-7-layer-tooltip">
       <header className="mapHero">
         <div>
           <p className="eyebrow">独立舆图</p>
@@ -434,7 +446,7 @@ export function MapPage() {
       <section className="mapCommandDeck" aria-label="舆图操作">
         <div className="mapLayerControls" aria-label="图层筛选">
           {(Object.keys(mapLayerLabels) as MapLayerKey[]).map((layer) => (
-            <label className="mapLayerToggle" key={layer} data-polish-action="s89-5-map-layer">
+            <label className="mapLayerToggle" key={layer} data-polish-action="s89-5-map-layer" data-layer-state={visibleLayers[layer] ? "shown" : "hidden"}>
               <input
                 type="checkbox"
                 checked={visibleLayers[layer]}
@@ -444,6 +456,7 @@ export function MapPage() {
             </label>
           ))}
         </div>
+        <p className="mapLayerSummary" data-polish-map="s89-7-layer-summary">{layerSummary}</p>
         <div className="buttonRow">
           <button
             className="paperButton"
@@ -466,6 +479,7 @@ export function MapPage() {
           mapRuntimeView={mapRuntimeView}
           mapMotionEnabled={displayPreferences.mapMotion && displayPreferences.motion === "full" && !prefersReducedMotion}
           visibleLayers={visibleLayers}
+          writtenDraftId={lastWrittenMapDraftId}
           onActionDraft={writeMapRuntimeSelection}
         />
         <aside className="mapSituationLedger" aria-labelledby="map-ledger-title" data-polish-card="s89-5-map-ledger">
@@ -542,7 +556,7 @@ export function MapPage() {
       </div>
       <p className="mapRuntimeNote">
         {mapRuntimeView
-          ? `已接入 ${refCount} 处地点、${routeCount} 条路线、${eventCount} 项近事、${npcActivityCount} 条人物动向，当前显示 ${activeLayerCount} 个图层；舆图只读公开卷宗。`
+          ? `已接入 ${refCount} 处地点、${routeCount} 条路线、${eventCount} 项近事、${npcActivityCount} 条人物动向，当前显示 ${activeLayerCount} 个图层（${activeLayerText}）；舆图只读公开卷宗。`
           : !routeSessionSupported
             ? "此案卷编号暂不可用于浏览器舆图；请从首页开卷或载入旧案。"
             : isRunnable && status === "loading"

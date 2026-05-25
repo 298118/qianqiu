@@ -1026,8 +1026,11 @@ async function assertNoVisibleTextOverflow(page, label) {
       ".mapEventList strong",
       ".mapEventList span",
       ".mapEventList p",
+      ".mapLayerSummary",
       ".mapRuntimeNote",
       ".mapSafetyBoundary p",
+      ".inkMapTooltip p",
+      ".inkMapTooltipNote",
       ".inkMapMeta span"
     ];
     const elements = [...document.querySelectorAll(overflowSelectors.join(","))];
@@ -2934,6 +2937,8 @@ async function runClientSmoke(options = {}) {
       return {
         hasFullScreen: Boolean(document.querySelector(".mapFullScreen")),
         hasLayerControls: document.querySelectorAll(".mapLayerToggle").length >= 3,
+        polishMarker: document.querySelector(".mapFullScreen")?.getAttribute("data-polish-map") || "",
+        layerSummary: document.querySelector(".mapLayerSummary")?.textContent || "",
         hasSituationLedger: Boolean(document.querySelector(".mapSituationLedger")),
         hasActionDeck: Boolean(document.querySelector(".mapActionDeck")),
         hasArchiveJump: [...document.querySelectorAll(".mapFullScreen a")].some((link) => (link.textContent || "").includes("入局势簿")),
@@ -2943,11 +2948,14 @@ async function runClientSmoke(options = {}) {
         canvasWidth: canvas?.clientWidth || 0,
         canvasHeight: canvas?.clientHeight || 0,
         labelCount: labels.length,
-        forbiddenText: (document.body.innerText || "").match(/public\/app\.js|#action-input|#information-panel|provider payload|raw audit|hiddenNotes|OPENAI_API_KEY/gi) || []
+        forbiddenText: (document.body.innerText || "").match(/public\/app\.js|#action-input|#information-panel|provider payload|raw audit|hiddenNotes|OPENAI_API_KEY|tp-[a-z0-9_-]{6,}|\/Users|\/private|file:\/\//gi) || []
       };
     });
-    if (!mapRuntime.hasFullScreen || !mapRuntime.hasLayerControls || !mapRuntime.hasSituationLedger || !mapRuntime.hasActionDeck || !mapRuntime.hasArchiveJump || !mapRuntime.hasBoundary) {
+    if (!mapRuntime.hasFullScreen || !mapRuntime.hasLayerControls || !mapRuntime.hasSituationLedger || !mapRuntime.hasActionDeck || !mapRuntime.hasArchiveJump || !mapRuntime.hasBoundary || mapRuntime.polishMarker !== "s89-7-layer-tooltip") {
       throw new Error(`React map runtime missing S76.9 independent map shell: ${JSON.stringify(mapRuntime)}`);
+    }
+    if (!/三层全开|筛选只改卷上显示/.test(mapRuntime.layerSummary)) {
+      throw new Error(`S89.7 map layer summary missing safe player-facing copy: ${JSON.stringify(mapRuntime)}`);
     }
     if (mapRuntime.motion !== "reduced") {
       throw new Error(`React map runtime ignored reduced display preference: ${JSON.stringify(mapRuntime)}`);
@@ -2968,11 +2976,38 @@ async function runClientSmoke(options = {}) {
     await mapDraftButton.click();
     await assertS895MaterialFeedbackPolish(page, "S89.5 desktop map draft feedback", { map: true, mapWritten: true });
     await page.getByLabel("地点").uncheck();
+    const hiddenLayer = await page.evaluate(() => ({
+      state: document.querySelector(".mapLayerToggle[data-layer-state='hidden']")?.getAttribute("data-layer-state") || "",
+      summary: document.querySelector(".mapLayerSummary")?.textContent || ""
+    }));
+    if (hiddenLayer.state !== "hidden" || !/暂隐 地点/.test(hiddenLayer.summary)) {
+      throw new Error(`S89.7 map hidden layer feedback missing: ${JSON.stringify(hiddenLayer)}`);
+    }
     await page.waitForFunction(() => document.querySelectorAll(".inkMapLabel").length === 0);
     await page.getByLabel("地点").check();
     await page.locator(".inkMapLabel").first().waitFor({ timeout: 10000 });
     await page.locator(".inkMapLabel").first().click();
     await page.locator(".inkMapTooltip").waitFor({ timeout: 10000 });
+    const tooltipBeforeDraft = await page.evaluate(() => ({
+      marker: document.querySelector(".inkMapTooltip")?.getAttribute("data-polish-tooltip") || "",
+      note: document.querySelector(".inkMapTooltipNote")?.textContent || "",
+      writtenCount: document.querySelectorAll(".inkMapTooltip .paperButton[data-draft-state='written']").length,
+      unsafeText: (document.querySelector(".inkMapTooltip")?.textContent || "").match(/provider payload|raw audit|hiddenNotes|OPENAI_API_KEY|tp-[a-z0-9_-]{6,}|\/Users|\/private|file:\/\//gi) || []
+    }));
+    if (tooltipBeforeDraft.marker !== "s89-7-map-note" || !/单点札记/.test(tooltipBeforeDraft.note) || tooltipBeforeDraft.unsafeText.length) {
+      throw new Error(`S89.7 map tooltip polish missing safe note: ${JSON.stringify(tooltipBeforeDraft)}`);
+    }
+    const tooltipDraftButton = page.locator(".inkMapTooltip .paperButton").first();
+    if (await tooltipDraftButton.count()) {
+      await tooltipDraftButton.click();
+      const tooltipAfterDraft = await page.evaluate(() => ({
+        writtenCount: document.querySelectorAll(".inkMapTooltip .paperButton[data-draft-state='written']").length,
+        label: document.querySelector(".inkMapTooltip .paperButton[data-draft-state='written']")?.getAttribute("aria-label") || ""
+      }));
+      if (tooltipAfterDraft.writtenCount < 1 || !/已写入主卷草稿/.test(tooltipAfterDraft.label)) {
+        throw new Error(`S89.7 map tooltip draft feedback missing: ${JSON.stringify(tooltipAfterDraft)}`);
+      }
+    }
     await page.getByRole("button", { name: "收起地图近事" }).click();
     await page.locator(".inkMapTooltip").waitFor({ state: "detached", timeout: 10000 });
     screenshots.push(
@@ -3319,15 +3354,16 @@ async function runClientSmoke(options = {}) {
       return {
         hasFullScreen: Boolean(document.querySelector(".mapFullScreen")),
         hasLayerControls: document.querySelectorAll(".mapLayerToggle").length >= 3,
+        hasLayerSummary: /筛选只改卷上显示/.test(document.querySelector(".mapLayerSummary")?.textContent || ""),
         hasSituationLedger: Boolean(document.querySelector(".mapSituationLedger")),
         hasActionDeck: Boolean(document.querySelector(".mapActionDeck")),
         stageHeight: stage?.height || 0,
         viewportHeight: window.innerHeight,
         horizontalOverflow: html.scrollWidth > html.clientWidth + 2,
-        forbiddenText: (document.body.innerText || "").match(/public\/app\.js|#action-input|#information-panel|provider payload|raw audit|hiddenNotes|OPENAI_API_KEY/gi) || []
+        forbiddenText: (document.body.innerText || "").match(/public\/app\.js|#action-input|#information-panel|provider payload|raw audit|hiddenNotes|OPENAI_API_KEY|tp-[a-z0-9_-]{6,}|\/Users|\/private|file:\/\//gi) || []
       };
     });
-    if (!mobileMap.hasFullScreen || !mobileMap.hasLayerControls || !mobileMap.hasSituationLedger || !mobileMap.hasActionDeck || mobileMap.stageHeight < mobileMap.viewportHeight * 0.45) {
+    if (!mobileMap.hasFullScreen || !mobileMap.hasLayerControls || !mobileMap.hasLayerSummary || !mobileMap.hasSituationLedger || !mobileMap.hasActionDeck || mobileMap.stageHeight < mobileMap.viewportHeight * 0.45) {
       throw new Error(`S76.9 mobile map is missing the independent map layout: ${JSON.stringify(mobileMap)}`);
     }
     if (mobileMap.horizontalOverflow) {

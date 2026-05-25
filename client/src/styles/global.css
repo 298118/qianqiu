@@ -2829,13 +2829,6 @@ button:disabled:hover {
   margin: 0;
 }
 
-.mapStatusRail {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 8px;
-  margin: 0;
-}
-
 .mapHeroStats div {
   min-width: 0;
   border: 1px solid rgba(84, 60, 43, 0.24);
@@ -3020,7 +3013,8 @@ li[data-draft-state="written"] {
 
 .mapEventList span,
 .mapEventList p,
-.mapEmptyLedger {
+.mapEmptyLedger,
+.mapLayerSummary {
   margin: 0;
   color: #604b38;
   line-height: 1.6;

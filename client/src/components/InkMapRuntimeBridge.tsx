@@ -100,6 +100,7 @@ const unsafeMapRuntimeRefTokens = new Set([
   "x",
   "y"
 ]);
+const localMapRuntimePathPattern = /(?:^|[\s"'`(（:：,;，。；、【《“‘])(?:[a-z]:[\\/]|~[\\/]|\.{1,2}[\\/]|\/(?:home|Users|private|mnt|tmp|var|etc|usr|opt|workspace|workspaces|root|data|src|client|server|dist|public|node_modules)(?:[\\/]|$)|(?:data|src|client|server|dist|public|node_modules)[\\/][^\s，。；、]+)/i;
 
 function isBrowserRuntime() {
   return typeof window !== "undefined" && typeof document !== "undefined";
@@ -171,7 +172,7 @@ function isSafeActionDraft(draft: MapRuntimeActionDraft | undefined): draft is M
 function safeMapRuntimeText(value: unknown, fallback: string, maxLength = 80) {
   const text = typeof value === "string" && value.trim() ? value.trim() : fallback;
   const normalized = text.toLowerCase();
-  if (/[a-z]:[\\/]/i.test(text) || /sk-[a-z0-9_-]{6,}/i.test(text)) return fallback;
+  if (localMapRuntimePathPattern.test(text) || /(?:sk|tp)-[a-z0-9_-]{6,}/i.test(text)) return fallback;
   if (unsafeMapRuntimeTextFragments.some((fragment) => normalized.includes(fragment.toLowerCase()))) return fallback;
   return text.slice(0, maxLength);
 }
@@ -235,10 +236,11 @@ type InkMapRuntimeBridgeProps = {
   readonly mapRuntimeView?: MapRuntimeView | null;
   readonly mapMotionEnabled: boolean;
   readonly visibleLayers?: VisibleMapLayers;
+  readonly writtenDraftId?: string | null;
   readonly onActionDraft: (selection: MapRuntimeDraftSelection) => void;
 };
 
-export function InkMapRuntimeBridge({ mapRuntimeView, mapMotionEnabled, visibleLayers = {}, onActionDraft }: InkMapRuntimeBridgeProps) {
+export function InkMapRuntimeBridge({ mapRuntimeView, mapMotionEnabled, visibleLayers = {}, writtenDraftId = null, onActionDraft }: InkMapRuntimeBridgeProps) {
   const canvasHostRef = useRef<HTMLDivElement | null>(null);
   const rendererRef = useRef<MapRendererInstance | null>(null);
   const filteredMapRuntimeView = useMemo(() => filterMapRuntimeView(mapRuntimeView, visibleLayers), [mapRuntimeView, visibleLayers]);
@@ -379,6 +381,7 @@ export function InkMapRuntimeBridge({ mapRuntimeView, mapMotionEnabled, visibleL
           {activeTooltip ? (
             <aside
               className="inkMapTooltip"
+              data-polish-tooltip="s89-7-map-note"
               role="status"
               style={{
                 left: `${clampTooltipPosition(activeTooltip.position.x)}px`,
@@ -391,11 +394,19 @@ export function InkMapRuntimeBridge({ mapRuntimeView, mapMotionEnabled, visibleL
                   收
                 </button>
               </div>
+              <span className="inkMapTooltipNote">单点札记 · 写入后仍须回主卷候复</span>
               <p>{activeTooltipSummary}</p>
               {activeDrafts.length ? (
                 <div className="buttonRow">
                   {activeDrafts.map((selection) => (
-                    <button className="paperButton" key={selection.draftId} type="button" onClick={() => onActionDraft(selection)}>
+                    <button
+                      className="paperButton"
+                      key={selection.draftId}
+                      type="button"
+                      data-draft-state={writtenDraftId === selection.draftId ? "written" : "idle"}
+                      aria-label={`${selection.label}${writtenDraftId === selection.draftId ? "，已写入主卷草稿" : ""}`}
+                      onClick={() => onActionDraft(selection)}
+                    >
                       {selection.label}
                     </button>
                   ))}
