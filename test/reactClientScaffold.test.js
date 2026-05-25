@@ -2138,6 +2138,18 @@ test("S89.19 settings and route recovery states stay player-facing and local", (
   );
 });
 
+test("S89.20 CSS budget guard keeps polish styles compact and material-backed", () => {
+  const styleSource = readText("client/src/styles/global.css");
+
+  assert.ok(styleSource.length < 130_000);
+  assert.doesNotMatch(styleSource, /rgba\(/);
+  assert.doesNotMatch(styleSource, /\.actionPanel\b/);
+  assert.match(styleSource, /--qq-material-seal-box: url\("\/assets\/ui\/materials\/seal-box-texture-v1\.webp"\)/);
+  assert.match(styleSource, /var\(--qq-material-folded\) center \/ cover no-repeat/);
+  assert.match(styleSource, /var\(--qq-material-torn\) center \/ cover no-repeat/);
+  assert.match(styleSource, /var\(--qq-material-seal-box\) center \/ cover no-repeat/);
+});
+
 test("S74.7 client smoke verifies default UI start and safe route recovery", () => {
   const clientSmokeSource = readText("scripts/clientSmoke.js");
   const appShellSource = readText("client/src/components/AppShell.tsx");

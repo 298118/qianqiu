@@ -113,6 +113,7 @@
 
 | ID | 状态 | 目标 | 范围 / 下一步 |
 | --- | --- | --- | --- |
+| S89.20 | DONE | 前端 CSS 预算瘦身与材质变量清理 | 承接 S89.19 后 CSS 预算贴近硬门的状态，已专项瘦身 `client/src/styles/global.css`：把全局 601 处 `rgba(...)` 改为等价现代 `rgb(... / ...)` 写法，复用已定义材质变量补齐宣纸、折纸、破纸、朱痕、朱印、印匣纹理和墨线背景引用，删除唯一确认无 React 源码引用的 `.actionPanel`，并合并移动端重复的单列/双列 grid 与竖排 flex 规则。`test/reactClientScaffold.test.js` 新增 S89.20 source canary，守住 CSS 源码体积、禁止 `rgba(` / `.actionPanel` 回归，并确认材质背景走变量复用。范围限全局 CSS 与源码 canary、文档；不新增依赖或素材，不改 React 组件行为、后端 API/schema、AI 权限、prompt、provider、SQLite、存档、runtime manifest 或素材 manifest。浏览器仍只消费安全 view 和本地草稿，不裁决资源、身份、交易、NPC 行动、经济、考试、官职、关系或隐藏信息。实现提交：待本轮提交。 |
 | S89.19 | DONE | 设置与断卷状态读法 polish | 承接 S89.18 后 CSS 预算仍紧的状态，已打磨 `/game/:sessionId/settings`、右上角印匣中的推演设置矩阵、404/错误页和畸形主卷恢复页：设置目录新增四类工具状态簿，逐项说明眼下可做与候复边界；AI 设置面板新增“推演设置状态簿”，并清洗污染的预设、分工 label/purpose/model、错误信息和状态枚举；断卷、空卷与畸形主卷恢复页新增只给安全归路、不显示底层诊断的 S89.19 标记。范围限 React `SettingsPage` / `AiSettingsPanel` / `ErrorPage` / `NotFoundPage` / `GamePage`、客户端 smoke/source canary、前端测试和文档；零新增 CSS，不新增依赖或素材，不改后端 API/schema、AI 权限、prompt、provider、SQLite、存档、runtime manifest 或素材 manifest。浏览器仍只打开本地印匣、写既有全局 AI settings API 或本地显示偏好，不裁决资源、身份、交易、NPC 行动、经济、考试、官职、关系或隐藏信息；畸形案卷不读取主卷接口、不打开专题层、不写行动草稿。实现提交：`bf23677e`。 |
 | S89.18 | DONE | 科举与皇榜仪式读法 polish | 承接 S89.17 后 CSS 预算仍紧的状态，已打磨 `/game/:sessionId/exam` 与 `/game/:sessionId/ranking`：科举页新增“科举仪程”案头索引，按取题启封、场内推进、交卷候批、候榜回音说明当前可做与候复边界；皇榜页新增“放榜仪程”案头索引，按张榜取材、我名、同年座师、授官过渡说明公开榜文读法，并把“防弊检测”玩家化为“弥封复核”。范围限 React `ExamPage` / `RankingPage`、客户端 smoke/source canary、前端测试和文档；零新增 CSS，不新增依赖或素材，不改后端 API/schema、AI 权限、prompt、provider、SQLite、存档、runtime manifest 或素材 manifest。浏览器不裁决取题、评分、舞弊、放榜、晋级、授官、同年座师关系、官职任免或隐藏信息；“拟行动”仍只写本地草稿，回主卷候批。实现提交：`060d0c8c`。 |
 | S89.17 | DONE | 朝议专题目录与官署案头索引 polish | 承接 S89.16 后 CSS 预算仍紧的状态，已打磨 `/game/:sessionId/court` 朝议页，把六个专题入口整理为“官署案头索引”：每个专题展示卷宗取材、可拟草稿、候复边界和案卷未载不补造提示，入口仍保持唯一按钮并继续打开既有 `SurfaceHost` 专题层。范围限 React `CourtPage`、客户端 smoke/source canary、前端测试和文档；零新增 CSS，不新增依赖或素材，不改后端 API/schema、AI 权限、prompt、provider、SQLite、存档、runtime manifest 或素材 manifest。浏览器不递交回合、不裁决资源、身份、交易、NPC 行动、经济、考试、官职、任免、赏罚、定罪、战和、关系、婚姻、弹劾、背叛或隐藏信息。实现提交：`b9e23f11`。 |
@@ -157,7 +158,8 @@
 - 2026-05-25：S89.16 完成全局壳与基础控件交互反馈 polish。当前范围限 React `AppShell`、全局 CSS、客户端 smoke/source canary、前端测试和文档；不新增浏览器裁决权，不改后端 API/schema、AI 权限、prompt、provider、SQLite、存档、runtime manifest 或素材 manifest。
 - 2026-05-25：S89.18 完成科举与皇榜仪式读法 polish。当前范围限 React `ExamPage` / `RankingPage`、客户端 smoke/source canary、前端测试和文档；零新增 CSS，不新增浏览器裁决权，不改后端 API/schema、AI 权限、prompt、provider、SQLite、存档、runtime manifest 或素材 manifest。
 - 2026-05-25：S89.19 完成设置与断卷状态读法 polish。当前范围限 React `SettingsPage` / `AiSettingsPanel` / `ErrorPage` / `NotFoundPage` / `GamePage`、客户端 smoke/source canary、前端测试和文档；零新增 CSS，不新增浏览器裁决权，不改后端 API/schema、AI 权限、prompt、provider、SQLite、存档、runtime manifest 或素材 manifest。
-- 前一轮 S88 归档是低风险纯文档维护；S89.3-S89.19 涉及前端代码、样式、验证脚本和文档，提交前按子代理复审规则执行。
+- 2026-05-25：S89.20 完成前端 CSS 预算瘦身与材质变量清理。当前范围限全局 CSS、source canary 和文档；不新增浏览器裁决权，不改 React 组件行为、后端 API/schema、AI 权限、prompt、provider、SQLite、存档、runtime manifest 或素材 manifest。
+- 前一轮 S88 归档是低风险纯文档维护；S89.3-S89.20 涉及前端代码、样式、验证脚本和文档，提交前按子代理复审规则执行。
 
 ## 6. 最近完整验证口径
 
@@ -239,6 +241,14 @@ S89.8 高清立绘查看器画中所见 polish 验证结果：
 - 已通过 `npm run check:docs-governance`、`node --test test/documentationGovernance.test.js`、`git diff --check`。提交前只读子代理复审已通过，未发现阻断问题；非阻断建议为后续可给题签格补专门材质样式。
 
 ## 7. 近期进度记录
+
+### 2026-05-25：S89.20 前端 CSS 预算瘦身与材质变量清理
+
+- 范围：专项瘦身 `client/src/styles/global.css`，不改 React 组件结构和运行时契约。全局 `rgba(...)` 统一改为等价 `rgb(... / ...)` 写法；已定义材质变量继续承载宣纸、折纸、破纸、朱痕、朱印、印匣纹理和墨线背景；移动端重复的单列 grid、双列 grid 和竖排 flex 规则合并；删除唯一静态确认无 React 源码引用的 `.actionPanel`。
+- 安全：本步不新增依赖或素材，不改后端 API/schema、AI 权限矩阵、prompt、provider facade、SQLite schema、存档格式、runtime manifest 或素材 manifest。浏览器仍只消费安全 view、route/surface 状态和本地草稿，不裁决资源、身份、交易、NPC 行动、经济、考试、官职、关系、婚姻、弹劾、定罪、背叛或 hidden 信息。
+- Smoke/canary：`test/reactClientScaffold.test.js` 新增 S89.20 source canary，守住 `global.css` 源码体积低于 `130_000`、禁止 `rgba(` 和 `.actionPanel` 回归，并确认折纸、破纸、印匣纹理等材质背景走变量复用。
+- 验证：已通过 `node --check scripts/clientSmoke.js`、`npm run typecheck:client`、`node --test test/reactClientScaffold.test.js`（56 tests）、`npm run build:client && npm run budget:client`（最终 `JS 624.7 KiB / CSS 99.0 KiB / fonts 26288.4 KiB / client-assets 27012.1 KiB`）、`npm run test:client`（6 files / 134 tests）、`npm run qa:runtime-manifest`、直接 `node scripts/clientSmoke.js`、`npm run check:docs-governance`、`node --test test/documentationGovernance.test.js`。`npm run smoke:browser` 的组成步骤已逐项通过：runtime manifest、build、budget 和同一 `clientSmoke.js` 浏览器段。
+- 复审：开工只读子代理 Heisenberg 确认当前 CSS class 静态扫描无明显大块废弃选择器，建议优先做移动端重复规则合并、材质变量复用和 `.actionPanel` 回归守门；本轮按建议补第二轮移动端合并。提交前只读复审已通过，未发现阻断问题；非阻断建议指出 `form.actionPanel` 仍作为 smoke 负向查询存在，用于确认旧表单未残留，不影响删除 CSS 选择器。
 
 ### 2026-05-25：S89.19 设置与断卷状态读法 polish
 
