@@ -229,6 +229,7 @@ export function RankingPage() {
   const sameYearContacts = readAftermathContacts(examAftermathView.sameYearContacts, "同年");
   const examinerContacts = readAftermathContacts(examAftermathView.examinerContacts, "座师");
   const aftermathActions = readAftermathActions(examAftermathView.nextActions);
+  const rankingCeremonyState = !routeSessionSupported ? "unsupported" : rows.length ? "posted" : "pending";
   const latestHonor = asRecord(examHonorView.latestHonor || examHonorView.currentHonor || latestHistory.examHonor);
   const latestDecision = asRecord(appointmentTrackView.latestDecision || asRecord(appointmentTrackView.latestTrack).latestDecision);
   const examName = safeRankingText(
@@ -292,6 +293,24 @@ export function RankingPage() {
       text: appointmentHint
     }
   ] as const;
+  const rankingCeremonyBand = [
+    {
+      label: "张榜",
+      text: rows.length ? `${examName}已张 ${rows.length} 名。` : routeSessionSupported ? "榜纸未张，仍候回批。" : "案卷暂不可张榜。"
+    },
+    {
+      label: "我名",
+      text: playerRankingEntry ? `${playerRankingEntry.name}在榜，列${playerRankingEntry.honorTitle || playerRankingEntry.rankLabel}。` : "未见我名，不以同名补认。"
+    },
+    {
+      label: "同年",
+      text: sameYearContacts.length || examinerContacts.length ? `同年 ${sameYearContacts.length}，座师考官 ${examinerContacts.length}。` : "同年座师待公开整理。"
+    },
+    {
+      label: "授官",
+      text: appointmentHint
+    }
+  ] as const;
   const sceneAsset = useMemo(
     () => registry?.getAssets({ category: "scene", usage: "ranking_page", scene: "ranking_wall" }).at(0),
     [registry]
@@ -326,13 +345,14 @@ export function RankingPage() {
       className="rankingFullScreen routePanel"
       aria-labelledby="ranking-title"
       data-polish-ranking="s89-18-ranking-ceremony-ledger"
+      data-polish-ranking-ceremony="s89-33-ranking-golden-board"
       style={{
         "--ranking-hero-image": `url(${heroImagePath})`,
         "--ranking-notice-image": `url(${noticeImagePath})`,
         "--ranking-smudge-image": `url(${smudgeImagePath})`
       } as CSSProperties}
     >
-      <section className="rankingHero">
+      <section className="rankingHero" data-polish-ranking-hero="s89-33-ranking-golden-board">
         <div className="rankingHeroBackdrop" aria-hidden="true" />
         <div className="rankingHeroCopy">
           <p className="eyebrow">贡院外放榜</p>
@@ -342,7 +362,27 @@ export function RankingPage() {
         <button className="paperLink rankingJumpLink" type="button" disabled={!routeSessionSupported} onClick={focusPlayerDetail}>跳至我名</button>
       </section>
 
-      <section className="rankingNoticeBoard" aria-label="皇榜">
+      <section className="rankingNoticeBoard" aria-label="皇榜" data-polish-ranking-board="s89-33-ranking-golden-board">
+        <section
+          className="rankingCeremonyBand"
+          aria-label="金榜仪轨"
+          data-polish-ranking-ceremony-band="s89-33-ranking-golden-board"
+          data-ranking-state={rankingCeremonyState}
+        >
+          <div>
+            <p className="eyebrow">金榜仪轨</p>
+            <strong>{rows.length ? "黄纸已张，循榜细读。" : "榜墙候纸，先待定榜。"}</strong>
+          </div>
+          <ol>
+            {rankingCeremonyBand.map((item) => (
+              <li key={item.label}>
+                <span>{item.label}</span>
+                <p>{item.text}</p>
+              </li>
+            ))}
+          </ol>
+        </section>
+
         {showGoldenNotice ? (
           <section className="rankingGoldenNotice" aria-label="金榜题名">
             <div className="rankingGoldenTitle">
@@ -375,16 +415,24 @@ export function RankingPage() {
             </div>
             {rows.length ? (
               <ol className="rankingList">
-                {rows.map((entry) => (
-                  <li key={entry.id} className={entry.isPlayer ? "isPlayer" : ""}>
-                    <button type="button" onClick={() => setSelectedId(entry.id)}>
-                      <span className="rankingPlace">{entry.place !== null ? `第 ${entry.place} 名` : "名次未公开"}</span>
-                      <span className="rankingName">{entry.name}</span>
-                      <span className="rankingMeta">{entry.honorTitle || entry.rankLabel}</span>
-                      {entry.score !== null ? <span className="rankingScore">{entry.score} 分</span> : null}
-                    </button>
-                  </li>
-                ))}
+                {rows.map((entry) => {
+                  const isSelected = selectedEntry?.id === entry.id;
+                  return (
+                    <li key={entry.id} className={entry.isPlayer ? "isPlayer" : ""}>
+                      <button
+                        type="button"
+                        aria-pressed={isSelected}
+                        data-selected={isSelected ? "true" : "false"}
+                        onClick={() => setSelectedId(entry.id)}
+                      >
+                        <span className="rankingPlace">{entry.place !== null ? `第 ${entry.place} 名` : "名次未公开"}</span>
+                        <span className="rankingName">{entry.name}</span>
+                        <span className="rankingMeta">{entry.honorTitle || entry.rankLabel}</span>
+                        {entry.score !== null ? <span className="rankingScore">{entry.score} 分</span> : null}
+                      </button>
+                    </li>
+                  );
+                })}
               </ol>
             ) : (
               <p className="rankingEmpty">{routeSessionSupported ? "榜文尚未张挂。交卷、评阅与放榜完成后，此处才会显示定榜结果。" : unsupportedRouteMessage}</p>

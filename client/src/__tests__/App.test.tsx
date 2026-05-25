@@ -3989,6 +3989,9 @@ describe("S74.1 React client shell", () => {
     expect(screen.getAllByText("县学试棚").length).toBeGreaterThan(0);
     expect(document.querySelector(".examFullScreen")).toBeTruthy();
     expect(document.querySelector('[data-polish-exam="s89-18-exam-ritual-ledger"]')).toBeTruthy();
+    expect(document.querySelector('[data-polish-exam-ceremony="s89-33-exam-ceremony-material"]')).toBeTruthy();
+    expect(document.querySelector('[data-polish-exam-hero="s89-33-exam-ceremony-material"]')).toBeTruthy();
+    expect(document.querySelector('[data-polish-exam-ceremony-band="s89-33-exam-ceremony-material"]')?.getAttribute("data-exam-state")).toBe("ready");
     expect(document.querySelector('[data-polish-exam-ledger="s89-18-exam-ritual"]')).toBeTruthy();
     expect(document.querySelector(".examStageRail")).toBeTruthy();
     expect(document.querySelector(".sessionRouteShell")).toBeTruthy();
@@ -3996,6 +3999,11 @@ describe("S74.1 React client shell", () => {
     expect(document.querySelector(".gameMainDeck")).toBeFalsy();
     expect(document.querySelector(".memorialComposer")).toBeFalsy();
     expect(screen.getByLabelText("试别")).toBeTruthy();
+    expect(screen.getByText("科场仪幕")).toBeTruthy();
+    expect(screen.getByText("肃场候题，先定试别。")).toBeTruthy();
+    expect(screen.getByText("肃场")).toBeTruthy();
+    expect(screen.getByText("启封")).toBeTruthy();
+    expect(screen.getByText("落墨")).toBeTruthy();
     expect(screen.getByText("科举仪程")).toBeTruthy();
     expect(screen.getByText("取题启封")).toBeTruthy();
     expect(screen.getByText("场内推进")).toBeTruthy();
@@ -4007,6 +4015,9 @@ describe("S74.1 React client shell", () => {
     fireEvent.click(screen.getByRole("button", { name: "取题" }));
 
     await screen.findByText("试论荒政与教化并行之道。");
+    expect(document.querySelector('[data-polish-exam-ceremony-band="s89-33-exam-ceremony-material"]')?.getAttribute("data-exam-state")).toBe("active");
+    expect(document.querySelector('[data-polish-exam-paper="s89-33-exam-ceremony-material"]')).toBeTruthy();
+    expect(screen.getByText("题纸既启，落墨候批。")).toBeTruthy();
     expect(screen.getByLabelText("场内行动")).toBeTruthy();
     expect(screen.getByLabelText("文章")).toBeTruthy();
     expect(screen.getAllByText(/600-900 字/).length).toBeGreaterThan(0);
@@ -4191,6 +4202,10 @@ describe("S74.1 React client shell", () => {
     await screen.findByRole("heading", { name: "皇榜" });
     expect(document.querySelector(".rankingFullScreen")).toBeTruthy();
     expect(document.querySelector('[data-polish-ranking="s89-18-ranking-ceremony-ledger"]')).toBeTruthy();
+    expect(document.querySelector('[data-polish-ranking-ceremony="s89-33-ranking-golden-board"]')).toBeTruthy();
+    expect(document.querySelector('[data-polish-ranking-hero="s89-33-ranking-golden-board"]')).toBeTruthy();
+    expect(document.querySelector('[data-polish-ranking-board="s89-33-ranking-golden-board"]')).toBeTruthy();
+    expect(document.querySelector('[data-polish-ranking-ceremony-band="s89-33-ranking-golden-board"]')?.getAttribute("data-ranking-state")).toBe("posted");
     expect(document.querySelector('[data-polish-ranking-ledger="s89-18-ranking-ceremony"]')).toBeTruthy();
     expect(document.querySelector(".sessionRouteShell")).toBeTruthy();
     expect(document.querySelector(".gameCommandBar")).toBeFalsy();
@@ -4199,13 +4214,23 @@ describe("S74.1 React client shell", () => {
     expect(document.querySelector(".rankingTopThree")).toBeTruthy();
     expect(screen.getByText("金榜名单")).toBeTruthy();
     expect(screen.getByText("金榜题名")).toBeTruthy();
+    expect(screen.getByText("金榜仪轨")).toBeTruthy();
+    expect(screen.getByText("黄纸已张，循榜细读。")).toBeTruthy();
+    expect(screen.getByText("张榜")).toBeTruthy();
+    expect(screen.getByText("授官")).toBeTruthy();
     expect(screen.getByText("放榜仪程")).toBeTruthy();
     expect(screen.getByText("张榜取材")).toBeTruthy();
-    expect(screen.getByText("我名")).toBeTruthy();
+    expect(screen.getAllByText("我名").length).toBeGreaterThan(0);
     expect(screen.getByText("授官过渡")).toBeTruthy();
     expect(screen.getAllByText("顾衡").length).toBeGreaterThan(0);
     expect(document.querySelector(".rankingGoldenNotice")).toBeTruthy();
     expect(document.querySelector(".rankingList li.isPlayer")).toBeTruthy();
+    const rankingButtons = Array.from(document.querySelectorAll<HTMLButtonElement>(".rankingList button"));
+    expect(rankingButtons[0]?.getAttribute("aria-pressed")).toBe("true");
+    expect(rankingButtons[0]?.getAttribute("data-selected")).toBe("true");
+    fireEvent.click(rankingButtons[1]);
+    expect(rankingButtons[1]?.getAttribute("aria-pressed")).toBe("true");
+    expect(rankingButtons[1]?.getAttribute("data-selected")).toBe("true");
     const rankingDetail = screen.getByRole("complementary", { name: "榜名详情" });
     expect(rankingDetail.getAttribute("tabindex")).toBe("-1");
     fireEvent.click(screen.getByRole("button", { name: "跳至我名" }));

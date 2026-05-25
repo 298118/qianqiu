@@ -113,6 +113,7 @@
 
 | ID | 状态 | 目标 | 范围 / 下一步 |
 | --- | --- | --- | --- |
+| S89.33 | DONE | 科举与皇榜二轮仪式材质动效 polish | 承接 S89.32 后继续做产品级前端 polish，已在 `/game/:sessionId/exam` 新增“科场仪幕”、科举 hero/试卷纸卷 marker、题纸启封/落墨/候榜状态和纸卷展开动效；在 `/game/:sessionId/ranking` 新增“金榜仪轨”、皇榜 hero/榜纸 marker、金榜张榜/我名/同年/授官读法和榜行选中反馈。范围限 React `ExamPage` / `RankingPage`、全局 CSS、客户端 smoke/source canary、前端测试、brief 与交接文档；不新增依赖或素材，不改后端 API/schema、AI 权限、prompt、provider、SQLite、存档、runtime manifest 或素材 manifest。浏览器仍只消费安全 view、既有科举 API、route/local 状态和本地草稿，不裁决取题、评分、舞弊、放榜、晋级、授官、同年座师关系、官职任免或 hidden 信息。实现提交：待提交后回填。 |
 | S89.32 | DONE | 首页与全局壳材质动效及入口收束 polish | 承接 S89.31 后继续做产品级前端 polish，已在首页新增“开卷路径”读法，把题名、立身、候复三步收进新开案卷表单，并把样卷入口降权为“试阅样卷 / 样卷舆图”；全局壳新增顶栏、导航和右上角工具区玻璃纸层 marker，右上角印匣与设置目录同步新增可检测入口标记。范围限 React `HomePage`、`AppShell`、`SurfaceHost`、`SettingsPage`、全局 CSS、客户端 smoke/source canary、前端测试、brief 与交接文档；不新增依赖或素材，不改后端 API/schema、AI 权限、prompt、provider、SQLite、存档、runtime manifest 或素材 manifest。浏览器仍只消费安全 view、route/surface 状态、本地显示偏好和旧案列表，不请求诊断接口，不读取 raw 存档，不裁决资源、身份、交易、NPC 行动、经济、考试、官职、地图行动、关系或 hidden 信息。实现提交：`111566ee`。 |
 | S89.31 | DONE | 舆图态势罗盘与移动单点札记 polish | 承接 S89.30 后继续做舆图产品级打磨，已在 `/game/:sessionId/map` 新增只读“舆图态势罗盘”，按近事、人物、后果、可拟四类整理当前公开图层与本地候复草稿；PixiJS runtime tooltip 新增“地点/近事/人物/驿路札记”、可见度条、候复边界和移动端底部札记读法。范围限 React `MapPage`、`InkMapRuntimeBridge`、全局 CSS、客户端 smoke/source canary、brief 与交接文档；不新增 API，不改 `mapRuntimeView` 契约、后端 schema、AI 权限、prompt、provider、SQLite、存档、runtime manifest 或素材 manifest。浏览器仍只消费安全 view、图层状态和本地草稿，不把坐标、layout、点击位置、visual-only effect、NPC anchor 或 tooltip 变成资源、NPC、经济、关系、地图行动、官职、考试或 hidden 裁决依据。实现提交：`88a5253c`。 |
 | S89.30 | DONE | 共享案卷材质与错落动效 polish | 承接 S89.29 后继续做跨页产品级视觉打磨，已在 React 壳层新增 `data-polish-atmosphere="s89-30-shared-material-motion"`，并用共享 CSS 增强首页案桌/旧案架、主卷案头、舆图簿、人物卡、囊箧、史册、科举、皇榜、朝议、设置目录、专题层与状态提示的宣纸层次、轻浮起、错落进入、朱印选中、草稿已写入和空态纸底反馈；低动效偏好与系统 `prefers-reduced-motion` 均关闭强动画但保留清晰状态。范围限 `AppShell` 标记、全局 CSS、客户端 smoke/source canary、CSS 构建预算脚本和文档；不新增依赖或素材，不改后端 API/schema、AI 权限、prompt、provider、SQLite、存档、runtime manifest 或素材 manifest。浏览器仍只消费安全 view、route/surface 状态和本地草稿，不裁决资源、身份、交易、NPC 行动、经济、考试、官职、关系或 hidden 信息。实现提交：`76bdb67c`。 |
@@ -183,7 +184,8 @@
 - 2026-05-25：S89.30 完成共享案卷材质与错落动效 polish。当前范围限 React `AppShell` 壳层标记、全局 CSS、客户端 smoke/source canary、CSS 构建预算脚本、brief 和开发文档；新增共享宣纸层次、卡片轻浮起、错落进入、朱印选中、草稿已写入和空态纸底反馈，并把低动效偏好与系统 `prefers-reduced-motion` 纳入同一关闭动画边界。不新增依赖或素材，不新增浏览器裁决权，不改后端 API/schema、AI 权限、prompt、provider、SQLite、存档、runtime manifest 或素材 manifest。
 - 2026-05-25：S89.31 完成舆图态势罗盘与移动单点札记 polish。当前范围限 React `MapPage` / `InkMapRuntimeBridge`、全局 CSS、客户端 smoke/source canary、brief 和开发文档；新增罗盘读法、tooltip 读法、移动端底部札记和对应守门，不新增浏览器裁决权，不改后端 API/schema、AI 权限、prompt、provider、SQLite、存档、runtime manifest 或素材 manifest。
 - 2026-05-25：S89.32 完成首页与全局壳材质动效及入口收束 polish。当前范围限 React `HomePage` / `AppShell` / `SurfaceHost` / `SettingsPage`、全局 CSS、客户端 smoke/source canary、前端测试、brief 和开发文档；新增首页开卷路径、样卷入口降权、顶栏/右上角工具区玻璃纸层、印匣面板材质和设置目录入口守门，不新增浏览器裁决权，不改后端 API/schema、AI 权限、prompt、provider、SQLite、存档、runtime manifest 或素材 manifest。
-- 前一轮 S88 归档是低风险纯文档维护；S89.3-S89.32 涉及前端代码、样式、验证脚本和文档，提交前按子代理复审规则执行。
+- 2026-05-25：S89.33 完成科举与皇榜二轮仪式材质动效 polish。当前范围限 React `ExamPage` / `RankingPage`、全局 CSS、客户端 smoke/source canary、前端测试、brief 和开发文档；新增科场仪幕、金榜仪轨、科举纸卷展开、皇榜金光/榜行选中反馈和低动效关闭守门，不新增浏览器裁决权，不改后端 API/schema、AI 权限、prompt、provider、SQLite、存档、runtime manifest 或素材 manifest。
+- 前一轮 S88 归档是低风险纯文档维护；S89.3-S89.33 涉及前端代码、样式、验证脚本和文档，提交前按子代理复审规则执行。
 
 ## 6. 最近完整验证口径
 
@@ -265,6 +267,17 @@ S89.8 高清立绘查看器画中所见 polish 验证结果：
 - 已通过 `npm run check:docs-governance`、`node --test test/documentationGovernance.test.js`、`git diff --check`。提交前只读子代理复审已通过，未发现阻断问题；非阻断建议为后续可给题签格补专门材质样式。
 
 ## 7. 近期进度记录
+
+### 2026-05-25：S89.33 科举与皇榜二轮仪式材质动效 polish
+
+- 范围：`ExamPage` 新增 `data-polish-exam-ceremony="s89-33-exam-ceremony-material"`、`data-polish-exam-hero="s89-33-exam-ceremony-material"`、`data-polish-exam-ceremony-band="s89-33-exam-ceremony-material"` 和 `data-polish-exam-paper="s89-33-exam-ceremony-material"`；`RankingPage` 新增 `data-polish-ranking-ceremony="s89-33-ranking-golden-board"`、`data-polish-ranking-hero="s89-33-ranking-golden-board"`、`data-polish-ranking-board="s89-33-ranking-golden-board"`、`data-polish-ranking-ceremony-band="s89-33-ranking-golden-board"`，榜行按钮新增 `aria-pressed` 与 `data-selected`。
+- 内容：科举页新增“科场仪幕”，按肃场、启封、落墨、候榜整理当前试别、题纸、草稿字数和候榜状态；皇榜页新增“金榜仪轨”，按张榜、我名、同年、授官整理公开榜文读法。所有状态都只来自 route session、既有科举 API 回包、`lastExamResult`、当前安全榜文 view 和本地表单状态，不新增服务器请求，不自行推断名次、关系、晋级或授官。
+- 样式与低动效：`global.css` 新增科举 hero 轻墨光、科场仪幕、试卷纸纹、交卷朱印反馈、皇榜 hero 金光、金榜仪轨、榜行选中反馈和榜名详情纸层；新增 `s8933ExamPaperUnfurl`、`s8933ExamInkSettle`、`s8933RankingGoldSheen`、`s8933RankingRowSelect`。本地 `data-motion="reduced"` 和系统 `prefers-reduced-motion` 均关闭强动画，但保留边框、阴影和选中态。
+- 安全边界：本步不新增依赖或素材，不改后端 API/schema、AI 权限矩阵、prompt、provider facade、SQLite schema、存档格式、runtime manifest 或素材 manifest。浏览器仍只消费安全 view、既有科举 API、route/local 状态和本地草稿，不请求诊断接口，不读取 raw 存档，不裁决取题、评分、舞弊、放榜、晋级、授官、同年座师关系、官职任免、资源、交易、NPC 行动、经济、关系、婚姻、弹劾、定罪、背叛或 hidden 信息。
+- Smoke/canary：`App.test.tsx` 覆盖科场仪幕、金榜仪轨、S89.33 marker、科举 active/ready 状态、试卷纸卷 marker 和榜行选中状态；`scripts/clientSmoke.js` 在桌面/移动科举和皇榜 smoke 中检查 S89.33 marker、仪幕/仪轨文案、榜行选中态、无横向溢出和安全污染守门；`test/reactClientScaffold.test.js` 新增 S89.33 source canary，确认组件 marker、CSS keyframes、低动效关闭和无 `/api/game/turn`、诊断、raw/provider/path/key/hidden、`draftContext`、`schema`、`manifest` 污染。
+- 验证：已通过 `node --check scripts/clientSmoke.js`、`npm run typecheck:client`、`node --test test/reactClientScaffold.test.js`（67 tests）、focused `npx vitest --config vitest.config.mjs run client/src/__tests__/App.test.tsx -t "exam page|ranking page" --pool=vmThreads --fileParallelism=false --maxWorkers=1`（2 tests / 72 skipped）、完整串行客户端套件 `npx vitest --config vitest.config.mjs run --pool=vmThreads --fileParallelism=false --maxWorkers=1`（6 files / 134 tests）、`npm run qa:runtime-manifest`、`npm run build:client`、`npm run budget:client`、`npm run smoke:browser`、`npm run check:docs-governance`、`node --test test/documentationGovernance.test.js` 和 `git diff --check`。`npm run test:client` 复现既有 Vitest fork worker 启动超时：5 files / 129 tests 已通过，但 `client/src/api/qianqiuClient.test.ts` worker 未启动；已用上述串行池完整复核同一客户端套件。预算输出为 `JS 646.8 KiB / CSS 125.7 KiB / fonts 26288.4 KiB / client-assets 27060.9 KiB`；构建与 smoke 仍输出既有 npm `globalignorefile` warning、Vite `/assets/ui/...` runtime asset resolution warning 和 plugin timing warning。
+- 复审：开工只读子代理 Laplace 建议此步聚焦科举/皇榜仪式二轮 polish、补 S89.33 marker、科场仪幕、金榜仪轨、榜行选中反馈、低动效、smoke 和 source canary；本轮按建议实施。提交前只读复审 Hegel 通过，未发现阻断问题；非阻断建议为后续可把榜行选中断言收紧到“只有一个 true 且旧选中行变 false”，并可在后续截图发现遮挡时给科举 hero 光效伪元素补显式层级。
+- 提交：待提交后回填。
 
 ### 2026-05-25：S89.32 首页与全局壳材质动效及入口收束 polish
 

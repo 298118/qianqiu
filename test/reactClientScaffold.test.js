@@ -2272,7 +2272,50 @@ test("S89.18 exam and ranking ceremony ledgers stay player-facing and server-own
   assert.match(appTestSource, /s89-18-ranking-ceremony-ledger/);
   assert.match(clientSmokeSource, /s89-18-exam-ritual/);
   assert.match(clientSmokeSource, /s89-18-ranking-ceremony/);
-  assert.doesNotMatch(styleSource, /s89-18|data-polish-exam|data-polish-ranking/);
+  assert.doesNotMatch(styleSource, /s89-18/);
+  assert.doesNotMatch(
+    `${examWithoutGuard}\n${rankingWithoutGuard}`,
+    /submitTurn|\/api\/game\/turn|\/api\/game\/state|\/api\/dev\/session-diagnostics|dangerouslySetInnerHTML|localStorage|sessionStorage|data\/sessions|raw audit|provider payload|OPENAI_API_KEY|DEEPSEEK_API_KEY|MIMO_API_KEY|ANTHROPIC_API_KEY|draftContext|schema|manifest|server adjudication|AI read scope|proposal boundary|safe view|resolver/
+  );
+});
+
+test("S89.33 exam and ranking ceremony material stays visual-only", () => {
+  const examPageSource = readText("client/src/pages/ExamPage.tsx");
+  const rankingPageSource = readText("client/src/pages/RankingPage.tsx");
+  const appTestSource = readText("client/src/__tests__/App.test.tsx");
+  const clientSmokeSource = readText("scripts/clientSmoke.js");
+  const styleSource = readText("client/src/styles/global.css");
+  const examWithoutGuard = examPageSource.replace(/const unsafeExamFragments[\s\S]*?\] as const;\r?\n/, "");
+  const rankingWithoutGuard = rankingPageSource.replace(/const unsafeRankingFragments[\s\S]*?\] as const;\r?\n/, "");
+
+  assert.match(examPageSource, /data-polish-exam-ceremony="s89-33-exam-ceremony-material"/);
+  assert.match(examPageSource, /data-polish-exam-hero="s89-33-exam-ceremony-material"/);
+  assert.match(examPageSource, /data-polish-exam-ceremony-band="s89-33-exam-ceremony-material"/);
+  assert.match(examPageSource, /data-polish-exam-paper="s89-33-exam-ceremony-material"/);
+  assert.match(examPageSource, /科场仪幕/);
+  assert.match(examPageSource, /题纸既启，落墨候批/);
+  assert.match(examPageSource, /肃场候题，先定试别/);
+  assert.match(rankingPageSource, /data-polish-ranking-ceremony="s89-33-ranking-golden-board"/);
+  assert.match(rankingPageSource, /data-polish-ranking-hero="s89-33-ranking-golden-board"/);
+  assert.match(rankingPageSource, /data-polish-ranking-board="s89-33-ranking-golden-board"/);
+  assert.match(rankingPageSource, /data-polish-ranking-ceremony-band="s89-33-ranking-golden-board"/);
+  assert.match(rankingPageSource, /aria-pressed=\{isSelected\}/);
+  assert.match(rankingPageSource, /data-selected=\{isSelected \? "true" : "false"\}/);
+  assert.match(rankingPageSource, /金榜仪轨/);
+  assert.match(rankingPageSource, /黄纸已张，循榜细读/);
+  assert.match(styleSource, /@keyframes s8933ExamPaperUnfurl/);
+  assert.match(styleSource, /@keyframes s8933ExamInkSettle/);
+  assert.match(styleSource, /@keyframes s8933RankingGoldSheen/);
+  assert.match(styleSource, /@keyframes s8933RankingRowSelect/);
+  assert.match(styleSource, /\.examCeremonyBand/);
+  assert.match(styleSource, /\.rankingCeremonyBand/);
+  assert.match(styleSource, /\.rankingList button\[aria-pressed="true"\]/);
+  assert.match(styleSource, /\.appShell\[data-motion="reduced"\][\s\S]*s89-33-exam-ceremony-material/);
+  assert.match(styleSource, /@media \(prefers-reduced-motion: reduce\)[\s\S]*s89-33-ranking-golden-board/);
+  assert.match(appTestSource, /s89-33-exam-ceremony-material/);
+  assert.match(appTestSource, /s89-33-ranking-golden-board/);
+  assert.match(clientSmokeSource, /S89\.33 exam ceremony/);
+  assert.match(clientSmokeSource, /S89\.33 selected ranking row state/);
   assert.doesNotMatch(
     `${examWithoutGuard}\n${rankingWithoutGuard}`,
     /submitTurn|\/api\/game\/turn|\/api\/game\/state|\/api\/dev\/session-diagnostics|dangerouslySetInnerHTML|localStorage|sessionStorage|data\/sessions|raw audit|provider payload|OPENAI_API_KEY|DEEPSEEK_API_KEY|MIMO_API_KEY|ANTHROPIC_API_KEY|draftContext|schema|manifest|server adjudication|AI read scope|proposal boundary|safe view|resolver/

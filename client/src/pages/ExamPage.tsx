@@ -255,6 +255,7 @@ export function ExamPage() {
   const safeError = safeExamText(routeError, "科场回音暂不可用。", 160);
   const preparationPressure = getPreparationPressure(activeExamForSession);
   const procedure = getExamProcedure(activeExamForSession);
+  const examCeremonyState = !routeSessionSupported ? "unsupported" : activeExamForSession ? "active" : "ready";
   const examRitualLedger = [
     {
       label: "取题启封",
@@ -283,6 +284,24 @@ export function ExamPage() {
       text: hasLatestExamEvaluation
         ? `${safeRecentExamName}已有评定，可转皇榜查看公开榜文。`
         : "尚无本案卷交卷评定；名次、同年与授官不在本页补造。"
+    }
+  ] as const;
+  const examCeremonyBand = [
+    {
+      label: "肃场",
+      text: `${stage.place} · ${stage.clock}`
+    },
+    {
+      label: "启封",
+      text: activeExamForSession ? `${safeExamName}题纸已启。` : routeSessionSupported ? `候取${getExamLabel(level)}题纸。` : "案卷暂不可启封。"
+    },
+    {
+      label: "落墨",
+      text: activeExamForSession ? `已成 ${essayWordCount} 字，目标约 ${wordCount.label} 字。` : "未启封前不落卷。"
+    },
+    {
+      label: "候榜",
+      text: hasLatestExamEvaluation ? `${safeRecentExamName}可往皇榜细看。` : "交卷后仍待评阅与张榜。"
     }
   ] as const;
 
@@ -324,8 +343,13 @@ export function ExamPage() {
   }
 
   return (
-    <article className="examFullScreen routePanel" aria-labelledby="exam-title" data-polish-exam="s89-18-exam-ritual-ledger">
-      <section className="examHero" style={{ "--exam-hero-image": `url(${heroImagePath})` } as CSSProperties}>
+    <article
+      className="examFullScreen routePanel"
+      aria-labelledby="exam-title"
+      data-polish-exam="s89-18-exam-ritual-ledger"
+      data-polish-exam-ceremony="s89-33-exam-ceremony-material"
+    >
+      <section className="examHero" data-polish-exam-hero="s89-33-exam-ceremony-material" style={{ "--exam-hero-image": `url(${heroImagePath})` } as CSSProperties}>
         <div className="examHeroBackdrop" aria-hidden="true" />
         <div className="examHeroCopy">
           <p className="eyebrow">{stage.place}</p>
@@ -347,6 +371,26 @@ export function ExamPage() {
             <dd>{activeExamForSession ? "已取题" : "候取题"}</dd>
           </div>
         </dl>
+      </section>
+
+      <section
+        className="examCeremonyBand"
+        aria-label="科场仪幕"
+        data-polish-exam-ceremony-band="s89-33-exam-ceremony-material"
+        data-exam-state={examCeremonyState}
+      >
+        <div>
+          <p className="eyebrow">科场仪幕</p>
+          <strong>{activeExamForSession ? "题纸既启，落墨候批。" : "肃场候题，先定试别。"}</strong>
+        </div>
+        <ol>
+          {examCeremonyBand.map((item) => (
+            <li key={item.label}>
+              <span>{item.label}</span>
+              <p>{item.text}</p>
+            </li>
+          ))}
+        </ol>
       </section>
 
       <div className="examImmersiveLayout">
@@ -374,7 +418,7 @@ export function ExamPage() {
           </section>
 
           {activeExamForSession ? (
-            <section className="examDesk" aria-label="当前试卷">
+            <section className="examDesk" aria-label="当前试卷" data-polish-exam-paper="s89-33-exam-ceremony-material">
               <div className="examPaperHeader">
                 <p className="eyebrow">考题</p>
                 <p className="examPaperMeta">
@@ -411,7 +455,7 @@ export function ExamPage() {
               </form>
             </section>
           ) : (
-            <section className="examDesk examEmptyPaper" aria-label="中央试卷预览">
+            <section className="examDesk examEmptyPaper" aria-label="中央试卷预览" data-polish-exam-paper="s89-33-exam-ceremony-material">
               <p className="eyebrow">中央试卷</p>
               <h2>案卷未启</h2>
               <p>{routeSessionSupported ? "先择试别取题；预览案卷只展示界面，不启封考题。" : unsupportedRouteMessage}</p>
