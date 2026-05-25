@@ -4324,10 +4324,10 @@ describe("S74.1 React client shell", () => {
     await waitFor(() => expect(screen.getAllByText("陆清远").length).toBeGreaterThan(0));
     expect(screen.getAllByText("顾文衡").length).toBeGreaterThan(0);
     expect(screen.getAllByText("王氏").length).toBeGreaterThan(0);
-    expect(screen.getByText("来函线索与风宪 watchlist")).toBeTruthy();
+    expect(screen.getByText("来函线索与风宪留察")).toBeTruthy();
     expect(screen.getByText("同年师友引荐拜会")).toBeTruthy();
     expect(screen.getByText("人情债月账解释")).toBeTruthy();
-    expect(screen.getByText("廉政 watchlist 留痕")).toBeTruthy();
+    expect(screen.getByText("廉政 留察名单 留痕")).toBeTruthy();
     expect(screen.getByText("关系网影响")).toBeTruthy();
     expect(screen.getAllByText("同年文社").length).toBeGreaterThan(0);
     expect(screen.getByText("地方士绅")).toBeTruthy();
@@ -6220,14 +6220,14 @@ describe("S74.1 React client shell", () => {
         domainConsequenceView: {
           schemaVersion: 1,
           active: true,
-          summary: "当前有1条公开领域后果可追踪，已接入史册。",
+          summary: "draftContext schema manifest server adjudication AI read scope proposal boundary",
           recentConsequences: [{
             id: "DC-archive-1",
             sourceType: "city_policy",
             sourceLabel: "地方政策",
             kindLabel: "政策后果",
             title: "平粜余波",
-            publicSummary: "县中平粜后米价稍稳，已入公开后果追踪。",
+            publicSummary: "draftContext schema manifest server adjudication AI read scope proposal boundary",
             statusLabel: "已记",
             generatedAtTurn: 18,
             severity: 1,
@@ -6270,6 +6270,10 @@ describe("S74.1 React client shell", () => {
 
     const archivePanel = document.querySelector(".archiveRoutePanel") as HTMLElement;
     expect(archivePanel).toBeTruthy();
+    expect(archivePanel.getAttribute("data-polish-archive")).toBe("s89-10-chronicle-density");
+    expect(archivePanel.querySelector("[data-archive-layout='ledger-rail']")).toBeTruthy();
+    expect(archivePanel.querySelector("[data-polish-archive-trace='s89-10-chronicle-density']")).toBeTruthy();
+    expect(archivePanel.querySelector(".archiveEvidenceStack")).toBeTruthy();
     const archive = within(archivePanel);
 
     expect(screen.getByRole("heading", { name: "史册" })).toBeTruthy();
@@ -6290,7 +6294,9 @@ describe("S74.1 React client shell", () => {
     expect(archive.getAllByText("后果").length).toBeGreaterThan(0);
     expect(archive.getAllByText("实体").length).toBeGreaterThan(0);
     expect(archive.getByText("同年拜会线索")).toBeTruthy();
-    expect(archive.getByText("风宪 watchlist 留痕")).toBeTruthy();
+    expect(archive.getByText("风宪 留察名单 留痕")).toBeTruthy();
+    expect(archivePanel.textContent || "").toContain("人物关系行动");
+    expect(archivePanel.textContent || "").not.toMatch(/\bNPC\b|watchlist/);
     fireEvent.click(archive.getAllByRole("button", { name: "据此拟稿" })[0]);
     expect(useUiStateStore.getState().actionDraft).toMatchObject({
       source: "archive-view",
@@ -6310,6 +6316,6 @@ describe("S74.1 React client shell", () => {
       text: expect.stringContaining("案卷回批")
     });
     expect(archive.getByRole("link", { name: "入舆图" }).getAttribute("href")).toBe("/game/74747474-1111-4111-8111-747474747474/map");
-    expect(archivePanel.textContent || "").not.toMatch(/raw audit|provider payload|hiddenNotes|privateSignalTags|OPENAI_API_KEY|data\/sessions|C:\\|path=|stateDelta|evidenceRefs|outcomeId|cityPolicyLedger/i);
+    expect(archivePanel.textContent || "").not.toMatch(/raw audit|provider payload|hiddenNotes|privateSignalTags|OPENAI_API_KEY|data\/sessions|C:\\|path=|stateDelta|evidenceRefs|outcomeId|cityPolicyLedger|draftContext|schema|manifest|server adjudication|AI read scope|proposal boundary/i);
   });
 });

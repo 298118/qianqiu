@@ -29,8 +29,14 @@ const unsafeArchiveFragments = [
   "prompt",
   "path",
   "key",
+  "draftContext",
+  "schema",
+  "manifest",
   "hidden",
   "sealed",
+  "server adjudication",
+  "ai read scope",
+  "proposal boundary",
   "sqlite",
   "sql",
   "stateDelta",
@@ -199,7 +205,7 @@ export function ArchivePage() {
   }
 
   return (
-    <article className="surfacePanel routePanel archiveRoutePanel" aria-labelledby="archive-title">
+    <article className="surfacePanel routePanel archiveRoutePanel" aria-labelledby="archive-title" data-polish-archive="s89-10-chronicle-density">
       <header className="archiveRouteHeader">
         <div>
           <p className="eyebrow">史册</p>
@@ -279,7 +285,12 @@ export function ArchivePage() {
         )}
       </section>
 
-      <section className="archiveTraceGrid" aria-label="史册公开追踪">
+      <section
+        className="archiveTraceGrid"
+        aria-label="史册公开追踪"
+        data-archive-layout="ledger-rail"
+        data-polish-archive-trace="s89-10-chronicle-density"
+      >
         <div className="archiveColumn">
           <h3>近次归档</h3>
           {archiveItems.length ? (
@@ -313,25 +324,27 @@ export function ArchivePage() {
           )}
         </div>
 
-        <DomainConsequenceSection
-          domainConsequenceView={domainConsequenceView}
-          title="史册后果追踪"
-          summaryFallback="史册页只显示已经入卷的公开后果；内账、私记和未公开证据不会进入玩家视野。"
-          emptyText="暂无公开领域后果归档。"
-          maxItems={4}
-          runnable={canDraft}
-          onDraft={(text) => setActionDraft({ source: "archive-view", targetPage: "game", text })}
-        />
-        <NpcFollowUpEvidenceSection
-          evidence={npcFollowUpEvidence}
-          title="来函证据追踪"
-          summaryFallback="史册页只读展示主动来函后续线索；引荐拜会、人情债月账、请托案牍和风宪关注仍要回主卷呈上候复。"
-          boundaryText="史册页只显示已公开来函线索；按钮只写草稿，不结算资源、人情债、婚姻、弹劾、定罪、背叛或未公开事实。"
-          idPrefix="archive-follow-up-evidence"
-          maxItems={4}
-          runnable={canDraft}
-          onDraft={(text) => setActionDraft({ source: "archive-view", targetPage: "game", text })}
-        />
+        <aside className="archiveEvidenceStack" aria-label="史册旁注证据">
+          <DomainConsequenceSection
+            domainConsequenceView={domainConsequenceView}
+            title="史册后果追踪"
+            summaryFallback="史册页只显示已经入卷的公开后果；内账、私记和未公开证据不会进入玩家视野。"
+            emptyText="暂无公开领域后果归档。"
+            maxItems={4}
+            runnable={canDraft}
+            onDraft={(text) => setActionDraft({ source: "archive-view", targetPage: "game", text })}
+          />
+          <NpcFollowUpEvidenceSection
+            evidence={npcFollowUpEvidence}
+            title="来函证据追踪"
+            summaryFallback="史册页只读展示主动来函后续线索；引荐拜会、人情债月账、请托案牍和风宪关注仍要回主卷呈上候复。"
+            boundaryText="史册页只显示已公开来函线索；按钮只写草稿，不结算资源、人情债、婚姻、弹劾、定罪、背叛或未公开事实。"
+            idPrefix="archive-follow-up-evidence"
+            maxItems={4}
+            runnable={canDraft}
+            onDraft={(text) => setActionDraft({ source: "archive-view", targetPage: "game", text })}
+          />
+        </aside>
       </section>
 
       <p className="archiveBoundary">史册条目只来自已公开卷宗；内廷材料、密档、私记和底账不会进入玩家视野。</p>

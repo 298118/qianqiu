@@ -574,11 +574,15 @@ test("S74.4 shell uses registry-backed overlays without widening data sources", 
   assert.doesNotMatch(mapPageSource, /openSurface\("map-filter"\)/);
   assert.doesNotMatch(gamePageSource, /openSurface\(surface\)/);
   assert.match(styleSource, /\.archiveTraceGrid/);
+  assert.match(styleSource, /grid-template-columns: minmax\(340px, 1\.08fr\) minmax\(300px, 0\.92fr\)/);
+  assert.match(styleSource, /\.archiveEvidenceStack/);
   assert.match(styleSource, /\.archiveActionRow/);
   assert.match(styleSource, /\.archiveItemList strong/);
   assert.match(styleSource, /\.domainConsequenceSection h3/);
   assert.match(styleSource, /\.npcFollowUpEvidenceGrid/);
   assert.match(clientSmokeSource, /s88-9-archive-mobile/);
+  assert.match(clientSmokeSource, /data-archive-layout/);
+  assert.match(clientSmokeSource, /ledger-rail/);
   assert.match(surfaceRegistrySource, /"npc-profile"/);
   assert.match(surfaceRegistrySource, /"edict-draft"/);
   assert.match(surfaceRegistrySource, /"memorial-review"/);
@@ -1123,6 +1127,10 @@ test("S88.6 domain consequence view is wired into authority role panels as draft
   assert.match(domainConsequenceSource, /evidenceRefs/);
   assert.match(domainConsequenceSource, /outcomeId/);
   assert.match(domainConsequenceSource, /auditRecord/);
+  assert.match(domainConsequenceSource, /draftContext/);
+  assert.match(domainConsequenceSource, /server adjudication/);
+  assert.match(domainConsequenceSource, /AI read scope/i);
+  assert.match(domainConsequenceSource, /proposal boundary/);
   assert.match(domainConsequenceSource, /cityPolicyLedger/);
   assert.match(domainConsequenceSource, /militaryDiplomacyLedger/);
   assert.match(domainConsequenceSource, /judicialCaseLedger/);
@@ -1680,11 +1688,20 @@ test("S88.7 archive consumes world entity impact evidence from safe projection",
   assert.match(archivePageSource, /archiveLeadList/);
   assert.match(archivePageSource, /案卷索引/);
   assert.match(archivePageSource, /拟稿仍只回主卷候复/);
+  assert.match(archivePageSource, /data-polish-archive="s89-10-chronicle-density"/);
+  assert.match(archivePageSource, /data-archive-layout="ledger-rail"/);
+  assert.match(archivePageSource, /archiveEvidenceStack/);
+  assert.match(archivePageSource, /draftContext/);
+  assert.match(archivePageSource, /proposal boundary/);
   assert.match(appTestSource, /sourceType: "world_entity_impact"/);
   assert.match(appTestSource, /同年文社压力留痕/);
   assert.match(appTestSource, /史册近次线索/);
+  assert.match(appTestSource, /风宪 留察名单 留痕/);
   assert.match(clientSmokeSource, /assertArchiveWorldEntityImpactCanary/);
   assert.match(clientSmokeSource, /archiveDigestBand/);
+  assert.match(clientSmokeSource, /s89-10-chronicle-density/);
+  assert.match(clientSmokeSource, /archiveEvidenceStack/);
+  assert.match(clientSmokeSource, /draftContext\|schema\|manifest\|server adjudication\|AI read scope\|proposal boundary\|watchlist\|NPC/);
   assert.match(clientSmokeSource, /\/api\/game\/npc-interaction\/\$\{sessionId\}/);
   assert.match(clientSmokeSource, /sourceType === "world_entity_impact"/);
   assert.match(clientSmokeSource, /li\[data-source-type='world_entity_impact'\]/);
@@ -1693,9 +1710,11 @@ test("S88.7 archive consumes world entity impact evidence from safe projection",
   assert.match(styleSource, /archiveDigestBand/);
   assert.match(styleSource, /archiveDigestStats/);
   assert.match(styleSource, /archiveLeadList/);
+  assert.match(styleSource, /grid-template-columns: minmax\(340px, 1\.08fr\) minmax\(300px, 0\.92fr\)/);
+  assert.match(styleSource, /archiveEvidenceStack/);
   assert.doesNotMatch(
     runtimeCombined,
-    /\/api\/game\/state|\/api\/dev\/session-diagnostics|worldEntities\.recentImpacts|sourceRef|relatedRefs|scopeRefs|raw audit|provider payload|OPENAI_API_KEY|DEEPSEEK_API_KEY|MIMO_API_KEY|ANTHROPIC_API_KEY|resourcesApplied|marriageWritten|hiddenTruthChanged/
+    /\/api\/game\/state|\/api\/dev\/session-diagnostics|worldEntities\.recentImpacts|sourceRef|relatedRefs|scopeRefs|raw audit|provider payload|OPENAI_API_KEY|DEEPSEEK_API_KEY|MIMO_API_KEY|ANTHROPIC_API_KEY|resourcesApplied|marriageWritten|hiddenTruthChanged|\/api\/game\/turn/
   );
 });
 

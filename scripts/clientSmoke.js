@@ -832,24 +832,38 @@ async function assertArchiveDigestPolish(page, label) {
   const snapshot = await page.evaluate(() => {
     const panel = document.querySelector(".archiveRoutePanel");
     const digest = document.querySelector(".archiveDigestBand");
+    const traceGrid = document.querySelector(".archiveTraceGrid");
+    const evidenceStack = document.querySelector(".archiveEvidenceStack");
     const text = digest?.textContent || "";
     return {
       hasPanel: Boolean(panel),
+      polishMarker: panel?.getAttribute("data-polish-archive") || "",
       hasDigest: Boolean(digest),
       hasStats: Boolean(digest?.querySelector(".archiveDigestStats")),
       hasLeadListOrEmpty: Boolean(digest?.querySelector(".archiveLeadList")) || Boolean(digest?.querySelector(".archiveLeadEmpty")),
-      hasTraceGrid: Boolean(document.querySelector(".archiveTraceGrid")),
+      hasTraceGrid: Boolean(traceGrid),
+      tracePolishMarker: traceGrid?.getAttribute("data-polish-archive-trace") || "",
+      traceLayout: traceGrid?.getAttribute("data-archive-layout") || "",
+      traceColumns: traceGrid ? window.getComputedStyle(traceGrid).gridTemplateColumns : "",
+      hasEvidenceStack: Boolean(evidenceStack),
+      evidenceText: evidenceStack?.textContent || "",
       horizontalOverflow: document.documentElement.scrollWidth > document.documentElement.clientWidth + 2,
-      forbiddenText: (document.body.innerText || "").match(/provider payload|raw audit|hiddenNotes|OPENAI_API_KEY|DEEPSEEK_API_KEY|MIMO_API_KEY|ANTHROPIC_API_KEY|data\/sessions|hidden\/raw|(?:^|\b)hidden\b|(?:^|\b)raw\b|服务器裁决|sourceRef|relatedRefs|scopeRefs|evidenceRefs|outcomeId|auditRecord|[a-z]:[\\/]|\/(?:home|mnt|tmp|var|etc|usr|opt|workspace|workspaces|root|data|src|client|server|dist|public|node_modules)(?:[\\/]|$)/gi) || [],
+      forbiddenText: (document.body.innerText || "").match(/provider payload|raw audit|hiddenNotes|OPENAI_API_KEY|DEEPSEEK_API_KEY|MIMO_API_KEY|ANTHROPIC_API_KEY|data\/sessions|hidden\/raw|(?:^|\b)hidden\b|(?:^|\b)raw\b|服务器裁决|sourceRef|relatedRefs|scopeRefs|evidenceRefs|outcomeId|auditRecord|draftContext|schema|manifest|server adjudication|AI read scope|proposal boundary|watchlist|NPC\b|[a-z]:[\\/]|\/(?:home|mnt|tmp|var|etc|usr|opt|workspace|workspaces|root|data|src|client|server|dist|public|node_modules)(?:[\\/]|$)/gi) || [],
       text
     };
   });
   const failures = [];
   if (!snapshot.hasPanel) failures.push("missing archive route panel");
+  if (snapshot.polishMarker !== "s89-10-chronicle-density") failures.push(`missing S89.10 archive polish marker: ${snapshot.polishMarker}`);
   if (!snapshot.hasDigest) failures.push("missing archive digest band");
   if (!snapshot.hasStats) failures.push("missing archive digest stats");
   if (!snapshot.hasLeadListOrEmpty) failures.push("missing archive lead list or empty lead copy");
   if (!snapshot.hasTraceGrid) failures.push("missing archive trace grid");
+  if (snapshot.tracePolishMarker !== "s89-10-chronicle-density") failures.push(`missing S89.10 archive trace marker: ${snapshot.tracePolishMarker}`);
+  if (snapshot.traceLayout !== "ledger-rail") failures.push(`archive trace did not use ledger-rail layout: ${snapshot.traceLayout}`);
+  if (!snapshot.traceColumns) failures.push("archive trace grid columns were not computed");
+  if (!snapshot.hasEvidenceStack) failures.push("missing archive evidence stack");
+  if (!snapshot.evidenceText.includes("史册后果追踪")) failures.push(`archive evidence stack lacked consequence tracking: ${snapshot.evidenceText.slice(0, 120)}`);
   if (!snapshot.text.includes("案卷索引") || !snapshot.text.includes("近次线索")) failures.push(`archive digest lacked player-facing index copy: ${snapshot.text.slice(0, 120)}`);
   if (snapshot.horizontalOverflow) failures.push("archive digest caused horizontal overflow");
   if (snapshot.forbiddenText.length) failures.push(`archive digest/page leaked forbidden text: ${snapshot.forbiddenText.join(", ")}`);
@@ -3329,15 +3343,26 @@ async function runClientSmoke(options = {}) {
     const mobileArchive = await page.evaluate(() => {
       const html = document.documentElement;
       const text = document.body.innerText || "";
+      const traceGrid = document.querySelector(".archiveTraceGrid");
       return {
         hasRoutePanel: Boolean(document.querySelector(".archiveRoutePanel")),
-        hasTraceGrid: Boolean(document.querySelector(".archiveTraceGrid")),
+        polishMarker: document.querySelector(".archiveRoutePanel")?.getAttribute("data-polish-archive") || "",
+        hasTraceGrid: Boolean(traceGrid),
+        traceLayout: traceGrid?.getAttribute("data-archive-layout") || "",
+        hasEvidenceStack: Boolean(document.querySelector(".archiveEvidenceStack")),
         hasListOrEmpty: Boolean(document.querySelector(".archiveItemList")) || text.includes("暂无可显示的公开归档"),
         horizontalOverflow: html.scrollWidth > html.clientWidth + 2,
-        forbiddenText: text.match(/provider payload|raw audit|hiddenNotes|OPENAI_API_KEY|data\/sessions|hidden\/raw|(?:^|\b)hidden\b|(?:^|\b)raw\b|服务器裁决/gi) || []
+        forbiddenText: text.match(/provider payload|raw audit|hiddenNotes|OPENAI_API_KEY|data\/sessions|hidden\/raw|(?:^|\b)hidden\b|(?:^|\b)raw\b|服务器裁决|draftContext|schema|manifest|server adjudication|AI read scope|proposal boundary|watchlist|NPC\b/gi) || []
       };
     });
-    if (!mobileArchive.hasRoutePanel || !mobileArchive.hasTraceGrid || !mobileArchive.hasListOrEmpty) {
+    if (
+      !mobileArchive.hasRoutePanel ||
+      mobileArchive.polishMarker !== "s89-10-chronicle-density" ||
+      !mobileArchive.hasTraceGrid ||
+      mobileArchive.traceLayout !== "ledger-rail" ||
+      !mobileArchive.hasEvidenceStack ||
+      !mobileArchive.hasListOrEmpty
+    ) {
       throw new Error(`S88.9 mobile archive is missing safe archive layout: ${JSON.stringify(mobileArchive)}`);
     }
     if (mobileArchive.horizontalOverflow) {

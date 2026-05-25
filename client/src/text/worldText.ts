@@ -1,6 +1,7 @@
 const playerFacingWorldTextReplacements: readonly [RegExp, string][] = [
   [/\bAI\b/g, "推演"],
   [/\bNPC\b/g, "人物"],
+  [/\bwatchlist\b/gi, "留察名单"],
   [/服务器安全视图/g, "公开卷宗"],
   [/安全视图/g, "公开卷宗"],
   [/安全投影/g, "公开卷宗"],

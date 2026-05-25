@@ -113,6 +113,7 @@
 
 | ID | 状态 | 目标 | 范围 / 下一步 |
 | --- | --- | --- | --- |
+| S89.10 | DONE | 史册信息密度与移动端长文本二轮 polish | 承接 S89.9，史册公开追踪区已从三列重排为近次归档主列 + 证据侧栏，侧栏叠放后果追踪和来函证据；补 `s89-10-chronicle-density` 标记、`ledger-rail` 布局守门、移动端长文本 smoke、玩家可见工程词清洗和 source canary。范围限 React 前端结构、CSS、客户端 smoke/source canary、前端测试和文档；不新增依赖、素材、后端 API/schema、AI 权限、prompt、provider、SQLite、存档、runtime manifest 或素材 manifest；按钮仍只写本地草稿并等待服务器回合裁决。实现提交：待提交后回填。 |
 | S89.9 | DONE | 人物页与立绘查看器材质题签 polish | 承接 S89.8 和提交前复审建议，人物页谱牒、人物卡、人物工作台和高清立绘查看器题签格已补宣纸、朱线、绢帛、轻浮起与低动效降级材质；复用已审核 `paper-aged-silk-v1.webp` 和既有材质 token，不新增依赖、不新增素材、不改 runtime manifest 字段。范围限 React 前端标记、CSS、客户端 smoke/source canary、前端测试、预算校准和文档；不新增后端 API/schema，不写浏览器存储、URL、草稿、prompt、canonical state 或服务器状态，不扩大人物、交易、委派、关系、资源或隐藏信息裁决权。实现提交：`8a7654ee9c5b7daa1c6790859ee885795f95928c`。 |
 | S89.8 | DONE | 高清立绘查看器画中所见 polish | 承接 S89.7，高清立绘查看器新增 `data-polish-portrait="s89-8-life-scroll"`，把已审阅 runtime 立绘元数据与人物页安全摘要整理成“画中所见 / 身世线索 / 眼下处境”三段式说明、画卷题签、衣饰、仪态和神采线索；人物页画像 profile 补案主经历线索与 NPC 公开近事。范围限 React 前端、客户端 smoke/source canary、前端测试和文档；不新增样式，不新增后端 API/schema，不调用模型生成小传，不写浏览器存储、URL、草稿、prompt、canonical state 或服务器状态；不读取完整 source manifest、本地路径、raw/provider/hidden 或未审核素材。实现提交：`2476a12c4d77e598b65ba74931361edb362e2b6c`。 |
 | S89.7 | DONE | 舆图交互与筛选提示 polish | 承接 S89.6，舆图页新增 `data-polish-map="s89-7-layer-tooltip"`、当前图层显隐摘要、tooltip 单点札记、tooltip 草稿已写入状态和移动端长文本守门；舆图清洗补 `/Users`、`/private`、常见 Unix 本地目录和 `tp-...` token 形态。范围限 React 前端、样式、客户端 smoke/source canary、前端测试和文档。地图 layout/坐标/tooltip/visual-only effect/NPC anchor 仍只作浏览器显示，行动草稿仍为 `map-runtime` 本地 hint，普通回合由服务器从当前安全 view 重建复核；不改后端 API/schema、AI 权限、prompt、provider facade、SQLite schema、存档格式、runtime manifest 字段、素材 manifest 或服务器裁决。实现提交：`b7bbeb04327f4d379dfd10729547e740958467d3`。 |
@@ -138,7 +139,8 @@
 - 2026-05-24：S89.7 完成舆图交互与筛选提示 polish。当前范围仍限 React 前端、样式、客户端 smoke/source canary、前端测试和文档；不新增浏览器裁决权，不改后端 API/schema、AI 权限、prompt、provider、SQLite、存档、runtime manifest 或素材 manifest。
 - 2026-05-25：S89.8 完成高清立绘查看器画中所见 polish。当前范围仍限 React 前端、客户端 smoke/source canary、前端测试和文档；不新增样式，不新增后端 API/schema，不调用模型生成小传，不扩大浏览器裁决权。
 - 2026-05-25：S89.9 完成人物页与立绘查看器材质题签 polish。当前范围限 React 前端标记、CSS、客户端 smoke/source canary、前端测试、CSS 预算校准和文档；不新增依赖或素材，不改后端 API/schema、AI 权限、prompt、provider、SQLite、存档、runtime manifest 或素材 manifest。
-- 前一轮 S88 归档是低风险纯文档维护；S89.3-S89.9 涉及前端代码、样式、验证脚本和文档，提交前按子代理复审规则执行。
+- 2026-05-25：S89.10 完成史册信息密度与移动端长文本二轮 polish。当前范围限 React 前端结构、CSS、客户端 smoke/source canary、前端测试和文档；不新增浏览器裁决权，不改后端 API/schema、AI 权限、prompt、provider、SQLite、存档、runtime manifest 或素材 manifest。
+- 前一轮 S88 归档是低风险纯文档维护；S89.3-S89.10 涉及前端代码、样式、验证脚本和文档，提交前按子代理复审规则执行。
 
 ## 6. 最近完整验证口径
 
@@ -220,6 +222,17 @@ S89.8 高清立绘查看器画中所见 polish 验证结果：
 - 已通过 `npm run check:docs-governance`、`node --test test/documentationGovernance.test.js`、`git diff --check`。提交前只读子代理复审已通过，未发现阻断问题；非阻断建议为后续可给题签格补专门材质样式。
 
 ## 7. 近期进度记录
+
+### 2026-05-25：S89.10 史册信息密度与移动端长文本二轮 polish
+
+- 范围：史册页新增 `data-polish-archive="s89-10-chronicle-density"`；公开追踪区新增 `data-archive-layout="ledger-rail"` 与 `data-polish-archive-trace="s89-10-chronicle-density"`，由三列改为“近次归档主列 + 证据侧栏”。
+- 体验：`.archiveEvidenceStack` 将“史册后果追踪”和“来函证据追踪”叠放在右侧，避免来函证据为空时仍占桌面第三列；移动端继续由既有 media query 收束为单列，browser smoke 守住史册无横向溢出。
+- 文案与安全：史册清洗与来函证据清洗补 `draftContext`、`schema`、`manifest`、`server adjudication`、`AI read scope`、`proposal boundary`；通用玩家文案改写把 `watchlist` 转为“留察名单”，`NPC` 继续转为“人物”，人物页默认来函标题也改为“来函线索与风宪留察”。
+- Smoke/canary：`scripts/clientSmoke.js` 现检查 S89.10 史册标记、`ledger-rail` 布局、证据侧栏、史册后果追踪、移动端侧栏存在、无横向溢出和扩展禁词；`test/reactClientScaffold.test.js` 与 `App.test.tsx` 同步覆盖 DOM 标记、两列 CSS、移动端布局守门、玩家化 `watchlist/NPC` 文案、domain consequence 污染清洗和 draft-only 行动。
+- 边界：本步不新增依赖或素材，不改 runtime manifest、素材 manifest、后端 API/schema、AI 权限矩阵、prompt、provider facade、SQLite schema、存档格式或服务器裁决；史册仍只读 `eventArchiveView`、`domainConsequenceView` 与 `npcActiveRequestView.followUpEvidence` 安全 view。`据此拟稿`、`续记后果`、`拟复核` 仍只写本地草稿，普通回合由服务器从当前安全 view 重建复核。
+- 验证：已通过 `npm run typecheck:client`、`node --check scripts/clientSmoke.js`、`node --test test/reactClientScaffold.test.js`、focused `npx vitest --config vitest.config.mjs run client/src/__tests__/App.test.tsx -t "renders archive route entries and domain consequence tracking from safe views" --pool=vmThreads --fileParallelism=false --maxWorkers=1`、focused `npx vitest --config vitest.config.mjs run client/src/__tests__/App.test.tsx -t "loads the S76.10 current people ledger without exposing the full portrait pool" --pool=vmThreads --fileParallelism=false --maxWorkers=1`、完整串行 `npx vitest --config vitest.config.mjs run --pool=vmThreads --fileParallelism=false --maxWorkers=1`（6 files / 129 tests）、`npm run qa:runtime-manifest`、`npm run build:client`、`npm run budget:client`、`npm run smoke:browser`、`npm run check:docs-governance`、`node --test test/documentationGovernance.test.js` 和 `git diff --check`。预算输出 `CSS 98.5 KiB`。
+- 复审：开工只读子代理建议主列 + 证据侧栏、移动端长文本、`watchlist/NPC` 玩家化和禁词扩展；提交前只读复审指出 `DomainConsequenceSection` 未同步 S89.10 新增工程词，已补共享组件禁词、史册 domain consequence 污染 fixture 和 source canary 后重跑验证。最终只读复审通过，未发现阻断问题；非阻断建议为后续抽共享文本清洗 helper，降低 unsafe 词表漂移风险。
+- 提交：实现提交待回填。
 
 ### 2026-05-25：S89.9 人物页与立绘查看器材质题签 polish
 
