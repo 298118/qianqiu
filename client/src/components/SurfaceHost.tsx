@@ -471,6 +471,7 @@ function PortraitViewerHost() {
         data-portrait-viewer="true"
         data-overlay-kind="portrait"
         data-polish-overlay="s89-5-portrait-gallery"
+        data-polish-portrait="s89-8-life-scroll"
       >
         <button className="iconButton drawerClose" type="button" title="关闭" aria-label="关闭高清立绘" onClick={closePortraitViewer}>
           <X size={18} aria-hidden="true" />
@@ -479,7 +480,7 @@ function PortraitViewerHost() {
           <div className="portraitViewerHeader">
             <p className="eyebrow">高清立绘</p>
             <h2 id="portrait-viewer-title">{label}</h2>
-            <p>只读欣赏已审阅画卷，旁读公开小传与近况，不写入案卷、不改动草稿，也不带入后续推演。</p>
+            <p>{viewerCopy.caption}</p>
           </div>
           <div className="portraitViewerProfile" aria-label="人物公开说明" data-polish-profile="s89-6-portrait-life">
             <div className="portraitViewerProfileHeader">
@@ -492,12 +493,20 @@ function PortraitViewerHost() {
                 {viewerCopy.tags.map((tag) => <span key={tag}>{tag}</span>)}
               </div>
             ) : null}
+            <div className="portraitViewerTags portraitViewerCueGrid" aria-label="画卷题签">
+              {viewerCopy.cues.map((cue) => (
+                <span key={`${cue.label}-${cue.value}`}>
+                  <b>{cue.label}</b>
+                  {cue.value}
+                </span>
+              ))}
+            </div>
             <section>
               <h3>外貌介绍</h3>
               <p>{viewerCopy.appearance}</p>
             </section>
             <section>
-              <h3>人物小传</h3>
+              <h3>生平介绍</h3>
               <p>{viewerCopy.biography}</p>
             </section>
             <section>
@@ -603,26 +612,34 @@ function buildPortraitViewerCopy(
   const emotion = portraitEmotionPhrase(portrait);
   const age = portraitAgePhrase(portrait);
   const presentation = portraitPresentationPhrase(portrait);
+  const posture = portraitPosturePhrase(portrait, tagPhrases, identity);
+  const dress = portraitDressPhrase(portrait, tagPhrases);
+  const setting = portraitSettingPhrase(portrait, tagPhrases, identity);
   const tags = buildPortraitViewerTags(identity, tagPhrases, profile?.tags);
-  const appearanceParts = [
-    `${displayName}在画中呈${age}${presentation}仪态`,
-    identity ? `衣冠与姿态带出${identity}的身份气` : "",
-    tagPhrases.length ? `题记可见${tagPhrases.join("、")}` : "",
-    emotion
-  ].filter(Boolean);
-  const appearance = `据已审阅画卷题记判断，${appearanceParts.join("，")}。此段只作观画印象，不添写画外未载之事。`;
+  const cues = [
+    { label: "画卷题签", value: setting },
+    { label: "仪态", value: `${age}${presentation}` },
+    { label: "衣饰", value: dress },
+    { label: "神采", value: emotion }
+  ];
+  const caption = `${displayName} · ${identity || "公开人物"}。只读观画，旁读公开小传与近况。`;
+  const appearance = [
+    `画中所见：${displayName}呈${age}${presentation}仪态，${dress}，${posture}`,
+    `${setting}；${emotion}，可作观画印象，不添写画外未载之事。`
+  ].join("。");
 
   const summary = cleanPortraitViewerText(profile?.summary, "", 220);
   const biography = summary
-    ? `人物小传据公开传略整理：${summary} 若有未详生平，只以后续公开案卷补录为准。`
-    : `人物小传据公开传略整理：${displayName}以${identity || "公开人物"}入卷，生平细节尚未详载；此处只按画卷题记作简记。`;
+    ? `身世线索据公开传略整理：${summary} 其师友、任所、家世或旧事若未入卷，只以后续公开案卷补录。`
+    : `身世线索据画卷题签整理：${displayName}以${identity || "公开人物"}入卷，约可见${dress}与${posture}；生平细节尚未详载。`;
 
-  const current = cleanPortraitViewerText(profile?.current, "", 180) ||
+  const currentSummary = cleanPortraitViewerText(profile?.current, "", 180);
+  const current = (currentSummary ? `眼下处境：${currentSummary}` : "") ||
     (profile?.identity
-      ? `${displayName}当前以“${identity}”见于公开卷宗；公开近况未详，候复核后再补。`
-      : `${displayName}当前情况案卷未载；只可观其已审阅立绘，公开近况候复核。`);
+      ? `眼下处境：${displayName}当前以“${identity}”见于公开卷宗；公开近况未详，候复后再补。`
+      : `眼下处境：${displayName}当前情况案卷未载；只可观其已审阅立绘，公开近况候复。`);
 
-  return { appearance, biography, current, displayName, identity, tags };
+  return { appearance, biography, caption, cues, current, displayName, identity, tags };
 }
 
 function cleanPortraitName(value: unknown, fallback: string) {
@@ -682,6 +699,32 @@ function portraitEmotionPhrase(portrait: RuntimePortraitAsset | null) {
     poised: "神情端正"
   };
   return labels[portrait?.emotionVariant ?? ""] || labels[portrait?.emotionTags?.[0] ?? ""] || "神情端正";
+}
+
+function portraitDressPhrase(portrait: RuntimePortraitAsset | null, tagPhrases: readonly string[]) {
+  if (tagPhrases.includes("装束端雅")) return "衣褶端雅，发饰与襟袖收束清楚";
+  if (tagPhrases.includes("有军旅气")) return "衣甲或束带带军旅气，轮廓利落";
+  if (tagPhrases.includes("有朝堂仪度")) return "冠服层次整肃，有朝堂仪度";
+  if (tagPhrases.includes("有公门气") || tagPhrases.includes("有官署仪度")) return "衣冠近案牍公门，色调沉稳";
+  if (tagPhrases.includes("有商旅气") || tagPhrases.includes("有市井气")) return "衣料朴实，带行旅市井之色";
+  if (portrait?.hasHighResOverride) return "线条较清，衣纹与面部轮廓可细看";
+  return "衣冠轮廓分明，墨色收束";
+}
+
+function portraitPosturePhrase(portrait: RuntimePortraitAsset | null, tagPhrases: readonly string[], identity: string) {
+  if (/帝王|朝臣|官员|地方官|入仕/.test(identity)) return "身姿端正，像是待入公堂或朝班";
+  if (/书生|读书|举人|进士/.test(identity) || tagPhrases.includes("带书卷气")) return "肩背收敛，带寒窗读卷后的清谨";
+  if (tagPhrases.includes("有军旅气") || tagPhrases.includes("有边地风尘")) return "站姿较稳，带边地风尘与军中戒备";
+  if (portrait?.genderPresentation === "feminine") return "姿态端庄，目光含蓄而不失精神";
+  return "身姿平稳，面目可辨";
+}
+
+function portraitSettingPhrase(portrait: RuntimePortraitAsset | null, tagPhrases: readonly string[], identity: string) {
+  if (tagPhrases.includes("近案牍文书") || tagPhrases.includes("近簿册案牍")) return "画面气息近书案文牍";
+  if (tagPhrases.includes("有朝堂仪度") || /帝王|朝臣/.test(identity)) return "画面气息近朝堂仪仗";
+  if (tagPhrases.includes("有军旅气") || tagPhrases.includes("有边地风尘")) return "画面气息近营垒边关";
+  if (tagPhrases.includes("有商旅气") || tagPhrases.includes("有市井气")) return "画面气息近市井行旅";
+  return portrait?.hasHighResOverride ? "画面线条较清，适合细看衣纹与神采" : "画面以水墨人物为主";
 }
 
 function portraitTagPhrases(portrait: RuntimePortraitAsset | null, profileTags: readonly string[] = []) {

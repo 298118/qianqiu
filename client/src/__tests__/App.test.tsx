@@ -4371,15 +4371,19 @@ describe("S74.1 React client shell", () => {
     fireEvent.click(zoomButton);
     const viewer = await screen.findByRole("dialog", { name: "陆清远立绘" });
     expect(viewer.getAttribute("data-portrait-viewer")).toBe("true");
+    expect(viewer.getAttribute("data-polish-portrait")).toBe("s89-8-life-scroll");
     expect(viewer.querySelector("[data-polish-profile='s89-6-portrait-life']")).toBeTruthy();
     expect(within(viewer).getByRole("heading", { name: "外貌介绍" })).toBeTruthy();
-    expect(within(viewer).getByRole("heading", { name: "人物小传" })).toBeTruthy();
+    expect(within(viewer).getByRole("heading", { name: "生平介绍" })).toBeTruthy();
     expect(within(viewer).getByRole("heading", { name: "当前情况" })).toBeTruthy();
-    expect(viewer.textContent || "").toContain("据已审阅画卷题记判断");
+    expect(viewer.textContent || "").toContain("画卷题签");
+    expect(viewer.textContent || "").toContain("画中所见");
+    expect(viewer.textContent || "").toContain("衣饰");
+    expect(viewer.textContent || "").toContain("神采");
     expect(viewer.textContent || "").toContain("观画印象");
-    expect(viewer.textContent || "").toContain("人物小传据公开传略整理");
-    expect(viewer.textContent || "").toContain("案主本局画像只取已审阅画卷；若未定画卷，则按身份取公开占位。");
-    expect(viewer.textContent || "").toContain("案主当前以书生见于公开案卷；下一步行止仍随主卷回批推进。");
+    expect(viewer.textContent || "").toContain("身世线索据公开传略整理");
+    expect(viewer.textContent || "").toContain("案主本局画像据已审阅画卷与公开身份整理");
+    expect(viewer.textContent || "").toContain("案主当前以书生见于公开案卷；下一步读书、应考、任事或交游仍随主卷回批推进。");
     expect(screen.getByRole("img", { name: "陆清远立绘高清主图" }).getAttribute("src")).toBe("/assets/ui/portraits/portrait-test-female-1-v1.webp");
     expect(useUiStateStore.getState().activePortraitViewer).toMatchObject({
       portraitRef: "portrait-test-female-1-v1",

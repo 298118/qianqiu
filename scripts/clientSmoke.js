@@ -3067,10 +3067,12 @@ async function runClientSmoke(options = {}) {
         portraitRef: viewer?.querySelector("[data-portrait-ref]")?.getAttribute("data-portrait-ref") || "",
         imageSrc: image?.getAttribute("src") || "",
         polishProfile: viewer?.querySelector("[data-polish-profile='s89-6-portrait-life']") ? "yes" : "",
+        polishPortrait: viewer?.getAttribute("data-polish-portrait") || "",
         hasAppearance: viewerText.includes("外貌介绍"),
-        hasBiography: viewerText.includes("人物小传"),
+        hasBiography: viewerText.includes("生平介绍"),
         hasCurrent: viewerText.includes("当前情况"),
-        hasRicherCopy: /观画印象|公开小传|公开近况/.test(viewerText),
+        hasCueGrid: /画卷题签|衣饰|神采/.test(viewerText),
+        hasRicherCopy: /观画印象|画中所见|身世线索|眼下处境/.test(viewerText),
         storageKeys: [
           ...Array.from({ length: localStorage.length }, (_, index) => localStorage.key(index) || ""),
           ...Array.from({ length: sessionStorage.length }, (_, index) => sessionStorage.key(index) || "")
@@ -3081,8 +3083,8 @@ async function runClientSmoke(options = {}) {
     if (!portraitViewer.portraitRef || !portraitViewer.imageSrc.startsWith("/assets/ui/portraits/")) {
       throw new Error(`S79.3 portrait viewer did not use an audited runtime portrait path: ${JSON.stringify(portraitViewer)}`);
     }
-    if (!portraitViewer.polishProfile || !portraitViewer.hasAppearance || !portraitViewer.hasBiography || !portraitViewer.hasCurrent || !portraitViewer.hasRicherCopy) {
-      throw new Error(`S89.6 portrait viewer missed player-facing life/current profile polish: ${JSON.stringify(portraitViewer)}`);
+    if (portraitViewer.polishPortrait !== "s89-8-life-scroll" || !portraitViewer.polishProfile || !portraitViewer.hasAppearance || !portraitViewer.hasBiography || !portraitViewer.hasCurrent || !portraitViewer.hasCueGrid || !portraitViewer.hasRicherCopy) {
+      throw new Error(`S89.8 portrait viewer missed player-facing life/current profile polish: ${JSON.stringify(portraitViewer)}`);
     }
     if (portraitViewer.storageKeys.some((key) => /portrait|viewer|image/i.test(key)) || portraitViewer.unsafeText.length) {
       throw new Error(`S79.3 portrait viewer widened storage or text safety: ${JSON.stringify(portraitViewer)}`);

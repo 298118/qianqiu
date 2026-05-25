@@ -230,6 +230,18 @@ function buildPortraitProfile(options: {
   };
 }
 
+function buildPlayerPortraitSummary(player: PlayerSummary | undefined | null, identity: string) {
+  const roleLabel = roleLabels[player?.role ?? ""] || identity || "本局人物";
+  return `案主本局画像据已审阅画卷与公开身份整理：以${roleLabel}入卷，读书、应考、入仕或任事经历随主卷回批逐步成篇。`;
+}
+
+function buildNpcPortraitCurrent(npcName: string, npcIdentity: string, currentGoal: unknown, relationshipNote: string) {
+  const publicGoal = safePeopleText(currentGoal, "", 112);
+  if (publicGoal) return `${npcName}眼下以${npcIdentity}见于人物谱牒；近事为“${publicGoal}”。其余行止仍候公开案卷回音。`;
+  if (relationshipNote) return `${relationshipNote}；${npcName}其余近况候公开案卷回音。`;
+  return `${npcName}当前以${npcIdentity}列于人物谱牒；公开近况未详，候回音。`;
+}
+
 function resolvePlayerPortraitRef(registry: AssetRegistry | null, player: PlayerSummary | undefined | null, sessionId: string) {
   const explicitRef = getExistingPortraitRef(registry, player?.portraitRef);
   if (explicitRef) return explicitRef;
@@ -598,8 +610,8 @@ function buildPersonRows(
       kind: "player",
       name: safePeopleText(player.name, "无名", 40),
       identity: playerIdentity,
-      summary: "案主本局画像只取已审阅画卷；若未定画卷，则按身份取公开占位。",
-      current: `案主当前以${playerIdentity}见于公开案卷；下一步行止仍随主卷回批推进。`,
+      summary: buildPlayerPortraitSummary(player, playerIdentity),
+      current: `案主当前以${playerIdentity}见于公开案卷；下一步读书、应考、任事或交游仍随主卷回批推进。`,
       portraitRef: playerPortraitRef,
       meta: ["案主", roleLabels[player.role ?? ""] || "本局人物"],
       remastered: Boolean(registry?.getPortrait(playerPortraitRef)?.hasHighResOverride)
@@ -620,9 +632,7 @@ function buildPersonRows(
       name: npcName,
       identity: npcIdentity,
       summary: safePeopleText(npc.publicSummary, "暂无公开小传。", 120),
-      current: relationshipNote
-        ? `${relationshipNote}；其余近况候公开案卷复核。`
-        : `${npcName}当前以${npcIdentity}列于人物谱牒；公开近况未详。`,
+      current: buildNpcPortraitCurrent(npcName, npcIdentity, npc.currentGoal, relationshipNote),
       portraitRef,
       meta: [
         safePeopleText(npc.genderLabel, "未详", 20),
