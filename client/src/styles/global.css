@@ -357,6 +357,9 @@ a {
 .appShell[data-motion="reduced"] .drawerHost,
 .appShell[data-motion="reduced"] li[data-draft-state="written"],
 .appShell[data-motion="reduced"] .portraitViewerCueGrid span,
+.appShell[data-motion="reduced"] .portraitViewerDossierRail,
+.appShell[data-motion="reduced"] .peopleGalleryBand[data-polish-people-gallery-band="s89-35-people-portrait-gallery"],
+.appShell[data-motion="reduced"] .peopleGalleryReadout dl,
 .appShell[data-motion="reduced"] .peopleCard,
 .appShell[data-motion="reduced"] .rankingGoldenNotice::before,
 .appShell[data-motion="reduced"] .rankingGoldenTitle span,
@@ -4440,27 +4443,169 @@ li[data-draft-state="written"] {
   text-align: center;
 }
 
+.peopleGalleryBand[data-polish-people-gallery-band="s89-35-people-portrait-gallery"] {
+  position: relative;
+  display: grid;
+  gap: 12px;
+  overflow: hidden;
+  border: 1px solid rgb(84 60 43 / .24);
+  background:
+    linear-gradient(135deg, rgb(255 252 238 / .82), rgb(229 210 178 / .64)),
+    var(--qq-material-silk) center / 520px repeat;
+  padding: 14px;
+  box-shadow:
+    0 16px 36px rgb(43 32 22 / .11),
+    inset 0 0 0 1px rgb(255 252 238 / .42);
+  animation: s8935GalleryUnroll 520ms ease both;
+}
+
+.peopleGalleryBand[data-polish-people-gallery-band="s89-35-people-portrait-gallery"]::before {
+  position: absolute;
+  inset: 0;
+  background:
+    var(--qq-material-red-smudge) right -38px top -36px / 142px 142px no-repeat,
+    linear-gradient(90deg, transparent, rgb(204 156 72 / .14), transparent);
+  content: "";
+  opacity: 0.42;
+  pointer-events: none;
+}
+
+.peopleGalleryBand > * {
+  position: relative;
+  z-index: 1;
+}
+
+.peopleGalleryReadout {
+  display: grid;
+  grid-template-columns: minmax(150px, 0.82fr) minmax(220px, 1.18fr) minmax(180px, 0.9fr);
+  gap: 10px;
+  min-width: 0;
+}
+
+.peopleGalleryReadout > div,
+.peopleGalleryReadout dl {
+  min-width: 0;
+  border: 1px solid rgb(84 60 43 / .2);
+  background: rgb(255 252 238 / .58);
+  padding: 10px;
+  box-shadow: inset 0 0 0 1px rgb(255 252 238 / .34);
+}
+
+.peopleGalleryReadout > div {
+  display: grid;
+  align-content: start;
+  gap: 6px;
+}
+
+.peopleGalleryReadout span,
+.peopleGalleryReadout dt {
+  color: #7b5b42;
+  font-size: 0.74rem;
+  font-weight: 900;
+}
+
+.peopleGalleryReadout strong,
+.peopleGalleryReadout p,
+.peopleGalleryReadout small,
+.peopleGalleryReadout dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.peopleGalleryReadout strong {
+  color: #2f251d;
+  font-size: 1.12rem;
+}
+
+.peopleGalleryReadout p,
+.peopleGalleryReadout small {
+  color: #4c3c2e;
+  line-height: 1.58;
+}
+
+.peopleGalleryReadout dl {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 8px;
+  margin: 0;
+  animation: s8935SlipRise 420ms ease both;
+}
+
+.peopleGalleryReadout dl div {
+  min-width: 0;
+  border-left: 2px solid rgb(142 47 39 / .38);
+  padding-left: 8px;
+}
+
+.peopleGalleryReadout dd {
+  color: #30251c;
+  font-weight: 900;
+}
+
 .peopleLedgerList {
   display: grid;
   gap: 12px;
 }
 
 .peopleCard {
+  position: relative;
   display: grid;
   grid-template-columns: minmax(86px, 118px) minmax(0, 1fr);
   gap: 12px;
   align-items: stretch;
   min-width: 0;
   border: 1px solid rgb(84 60 43 / .22);
-  background: linear-gradient(135deg, rgb(255 252 238 / .78), rgb(238 221 190 / .56));
+  overflow: hidden;
+  background:
+    linear-gradient(135deg, rgb(255 252 238 / .78), rgb(238 221 190 / .56)),
+    var(--qq-material-torn) center / cover no-repeat;
   padding: 10px;
   transition: border-color 160ms ease, box-shadow 160ms ease, transform 160ms ease;
+}
+
+.peopleCard::after {
+  position: absolute;
+  inset: auto -22px -28px auto;
+  width: 78px;
+  aspect-ratio: 1;
+  background: var(--qq-material-red-smudge) center / contain no-repeat;
+  content: "";
+  opacity: 0;
+  transform: rotate(-14deg) scale(0.68);
+  transition: opacity 180ms ease, transform 180ms ease;
 }
 
 .peopleCard:hover,
 .peopleCard:focus-within {
   border-color: rgb(142 47 39 / .44);
+  box-shadow: 0 12px 24px rgb(54 37 24 / .12);
   transform: translateY(-1px);
+}
+
+.peopleCard:hover::after,
+.peopleCard:focus-within::after,
+.peopleCard[data-selected="true"]::after {
+  opacity: 0.18;
+  transform: rotate(-9deg) scale(1);
+}
+
+.peopleCard[data-selected="true"] {
+  border-color: rgb(142 47 39 / .68);
+  box-shadow:
+    var(--qq-shadow-ink-focus),
+    0 14px 28px rgb(54 37 24 / .14);
+}
+
+.peopleCard[data-remastered="true"] .portraitFrame::before,
+.portraitFrame[data-polish-portrait-card="s89-35-people-portrait-gallery"][data-portrait-remastered="true"]::before {
+  position: absolute;
+  inset: 7px;
+  z-index: 1;
+  border: 1px solid rgb(204 156 72 / .44);
+  content: "";
+  opacity: 0.7;
+  pointer-events: none;
 }
 
 .peoplePortrait {
@@ -4635,6 +4780,32 @@ li[data-draft-state="written"] {
   text-align: left;
 }
 
+.npcListButton {
+  position: relative;
+  overflow: hidden;
+  background:
+    linear-gradient(135deg, rgb(255 252 238 / .76), rgb(235 219 190 / .52)),
+    var(--qq-material-torn) center / cover no-repeat;
+  box-shadow: inset 0 0 0 1px rgb(255 252 238 / .32);
+  transition:
+    border-color 160ms ease,
+    box-shadow 160ms ease,
+    color 160ms ease,
+    transform 160ms ease;
+}
+
+.npcListButton::after {
+  position: absolute;
+  inset: auto -18px -24px auto;
+  width: 58px;
+  aspect-ratio: 1;
+  background: var(--qq-material-red-smudge) center / contain no-repeat;
+  content: "";
+  opacity: 0;
+  transform: rotate(-14deg) scale(0.7);
+  transition: opacity 180ms ease, transform 180ms ease;
+}
+
 .inventoryContainerButton {
   position: relative;
   grid-template-columns: 20px minmax(0, 1fr) auto;
@@ -4664,6 +4835,7 @@ li[data-draft-state="written"] {
 }
 
 .npcListButton[aria-pressed="true"],
+.npcListButton[data-gallery-selected="true"],
 .inventoryContainerButton[aria-pressed="true"] {
   border-color: rgb(142 47 39 / .72);
   background:
@@ -4677,6 +4849,8 @@ li[data-draft-state="written"] {
   transform: translateY(-1px);
 }
 
+.npcListButton:hover,
+.npcListButton:focus-visible,
 .inventoryContainerButton:hover,
 .inventoryContainerButton:focus-visible,
 .inventoryItemCard:hover,
@@ -4690,6 +4864,9 @@ li[data-draft-state="written"] {
   transform: translateY(-1px);
 }
 
+.npcListButton:hover::after,
+.npcListButton:focus-visible::after,
+.npcListButton[data-gallery-selected="true"]::after,
 .inventoryContainerButton:hover::after,
 .inventoryContainerButton:focus-visible::after,
 .inventoryContainerButton[aria-pressed="true"]::after {
@@ -4946,6 +5123,12 @@ li[data-draft-state="written"] {
   background-position: center;
   background-size: cover;
   color: var(--portrait-fallback-text, #241f18);
+}
+
+.portraitFrame[data-polish-portrait-card="s89-35-people-portrait-gallery"] {
+  box-shadow:
+    inset 0 0 0 1px rgb(255 252 238 / .28),
+    0 8px 18px rgb(43 32 22 / .12);
 }
 
 .portraitFrame img {
@@ -6833,6 +7016,37 @@ li[data-draft-state="written"] {
   overflow-wrap: anywhere;
 }
 
+.portraitViewerDossierRail {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+  margin: 2px 0 0;
+  animation: s8935SlipRise 420ms ease both;
+}
+
+.portraitViewerDossierRail div {
+  min-width: 0;
+  border: 1px solid rgb(84 60 43 / .2);
+  background:
+    linear-gradient(135deg, rgb(255 252 238 / .7), rgb(235 218 188 / .48)),
+    var(--qq-material-xuan) center / 420px repeat;
+  padding: 8px 9px;
+}
+
+.portraitViewerDossierRail dt {
+  color: #7a6048;
+  font-size: 0.72rem;
+  font-weight: 900;
+}
+
+.portraitViewerDossierRail dd {
+  margin: 2px 0 0;
+  color: #2d251d;
+  font-size: 0.82rem;
+  font-weight: 900;
+  overflow-wrap: anywhere;
+}
+
 .portraitViewerFigure {
   display: grid;
   width: min(480px, 100%);
@@ -7154,6 +7368,7 @@ li[data-draft-state="written"] {
   .portraitViewerPanel,
   .portraitViewerMeta,
   .portraitViewerCueGrid,
+  .portraitViewerDossierRail,
   .courtSurfaceGrid,
   .topicSurfaceLayout,
   .settingsDirectoryHeader,
@@ -7194,6 +7409,8 @@ li[data-draft-state="written"] {
   .startDesk,
   .inlineForm,
   .npcWorkbench,
+  .peopleGalleryReadout,
+  .peopleGalleryReadout dl,
   .inventoryWorkbench,
   .npcDetailHeader,
   .npcTradeForm,
@@ -7691,6 +7908,9 @@ li[data-draft-state="written"] {
   .sessionRouteShell > .surfacePanel,
   li[data-draft-state="written"],
   .portraitViewerCueGrid span,
+  .portraitViewerDossierRail,
+  .peopleGalleryBand[data-polish-people-gallery-band="s89-35-people-portrait-gallery"],
+  .peopleGalleryReadout dl,
   .peopleCard,
   .rankingGoldenNotice::before,
   .rankingGoldenTitle span,
@@ -7962,6 +8182,34 @@ li[data-draft-state="written"] {
   to {
     opacity: .74;
     transform: translateX(8px);
+  }
+}
+
+@keyframes s8935GalleryUnroll {
+  from {
+    clip-path: inset(0 2% 10% 2%);
+    filter: blur(1px);
+    opacity: 0;
+    transform: translateY(9px) scale(.995);
+  }
+
+  to {
+    clip-path: inset(0);
+    filter: blur(0);
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes s8935SlipRise {
+  from {
+    opacity: 0;
+    transform: translateY(7px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
   }
 }
 

@@ -15,6 +15,8 @@ type PortraitProps = {
   readonly profile?: PortraitViewerProfile;
 };
 
+const portraitGalleryPolishId = "s89-35-people-portrait-gallery";
+
 export function Portrait({ registry, portraitRef, label, className = "", viewerEnabled = true, profile }: PortraitProps) {
   const [imageFailed, setImageFailed] = useState(false);
   const openPortraitViewer = useUiStateStore((state) => state.openPortraitViewer);
@@ -44,8 +46,10 @@ export function Portrait({ registry, portraitRef, label, className = "", viewerE
         className={`portraitFrame portraitFrameFallback ${className}`.trim()}
         aria-label={`${resolvedLabel}，纸底占位`}
         data-portrait-ref={portraitRef}
+        data-portrait-state="fallback"
         data-asset-fallback={fallback?.id ?? "fallback-paper-panel-v1"}
         data-polish-card="s89-5-portrait-frame"
+        data-polish-portrait-card={portraitGalleryPolishId}
         style={fallbackStyle}
       >
         <span aria-hidden="true">人</span>
@@ -59,7 +63,9 @@ export function Portrait({ registry, portraitRef, label, className = "", viewerE
       aria-label={resolvedLabel}
       data-portrait-ref={portrait.portraitRef}
       data-portrait-remastered={portrait.hasHighResOverride ? "true" : "false"}
+      data-portrait-state={viewerEnabled ? "zoomable" : "ready"}
       data-polish-card="s89-5-portrait-frame"
+      data-polish-portrait-card={portraitGalleryPolishId}
       style={fallbackStyle}
     >
       <img

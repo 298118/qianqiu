@@ -16,6 +16,7 @@ import { rewritePlayerFacingWorldText } from "../text/worldText";
 const portraitPageSize = 8;
 const maxPeopleRows = 80;
 const fallbackPortraitRef = "portrait-public-fallback-s76-10";
+const peoplePortraitGalleryPolishId = "s89-35-people-portrait-gallery";
 const safePortraitRefPattern = /^portrait-[a-z0-9][a-z0-9_-]{0,140}$/i;
 const unsafePeopleTextFragments = [
   "/api/game/" + "state",
@@ -813,6 +814,9 @@ export function PeoplePage() {
   const visiblePeople = peopleRows.slice(safePortraitPage * portraitPageSize, safePortraitPage * portraitPageSize + portraitPageSize);
   const npcCount = peopleRows.filter((row) => row.kind === "npc").length;
   const remasteredCount = visiblePeople.filter((row) => row.remastered).length;
+  const totalRemasteredCount = peopleRows.filter((row) => row.remastered).length;
+  const selectedPersonInLedger = selectedNpc ? peopleRows.find((row) => row.kind === "npc" && row.id === selectedNpc.npcId) : null;
+  const activePortraitLedgerState = peopleRows.length ? "ready" : routeSessionSupported ? "empty" : "unsupported";
   const npcDetail = activeNpcDetailPayload && selectedNpc && activeNpcDetailPayload.npcDetailView.npcId === selectedNpc.npcId
     ? activeNpcDetailPayload.npcDetailView
     : null;
@@ -842,6 +846,11 @@ export function PeoplePage() {
   const economyTraceCount = countVisiblePeopleEconomyTrace(peopleEconomyTraceView);
   const hasLocalDraft = actionDraft?.sessionId === sessionId;
   const selectedNpcName = safePeopleText(selectedNpc?.displayName, "尚未选中人物", 40);
+  const selectedNpcTitle = safePeopleText(selectedNpc?.title, "可见人物", 48);
+  const selectedNpcSummary = safePeopleText(npcDetail?.publicProfile?.summary || selectedNpc?.summary, "公开小传候载。", 150);
+  const selectedNpcTags = selectedNpc
+    ? [...selectedNpc.stageTags, ...selectedNpc.roleTags, ...selectedNpc.relationshipLabels].slice(0, 5)
+    : [];
   const activeNpcDialogueView = activeLastNpcInteraction?.npcDialogueView?.npcId === selectedNpcIdForResults
     ? activeLastNpcInteraction.npcDialogueView
     : undefined;
@@ -925,7 +934,13 @@ export function PeoplePage() {
   }
 
   return (
-    <article className="surfacePanel routePanel peopleWorkbenchPanel" aria-labelledby="people-title" data-polish-people="s89-9-portrait-material">
+    <article
+      className="surfacePanel routePanel peopleWorkbenchPanel"
+      aria-labelledby="people-title"
+      data-polish-people="s89-9-portrait-material"
+      data-polish-people-gallery={peoplePortraitGalleryPolishId}
+      data-portrait-ledger-state={activePortraitLedgerState}
+    >
       <div className="routePanelHeader">
         <div>
           <p className="eyebrow">人物案牍</p>
@@ -969,6 +984,46 @@ export function PeoplePage() {
             <dd>所有按钮都只写案头草稿或读取公开卷宗；资源、身份、NPC 行动、经济、关系和未公开事实仍由案卷回批。</dd>
           </div>
         </dl>
+      </section>
+      <section
+        className="peopleGalleryBand"
+        aria-labelledby="people-gallery-title"
+        data-polish-people-gallery-band={peoplePortraitGalleryPolishId}
+        data-gallery-state={activePortraitLedgerState}
+      >
+        <div className="sectionTitleRow">
+          <div>
+            <p className="eyebrow">人物画屏</p>
+            <h2 id="people-gallery-title">入谱照面</h2>
+            <p>以当前案卷公开人物排成画屏；只看姓名、身份、题签、近况与候复线索。</p>
+          </div>
+          <span>{peopleRows.length ? `本页 ${visiblePeople.length} / 入谱 ${peopleRows.length}` : "候载"}</span>
+        </div>
+        <div className="peopleGalleryReadout" aria-label="人物画屏案读">
+          <div>
+            <span>当前照面</span>
+            <strong>{selectedNpcName}</strong>
+            <small>{selectedNpc ? selectedNpcTitle : "人物名册候载"}</small>
+          </div>
+          <div>
+            <span>公开小传</span>
+            <p>{selectedNpc ? selectedNpcSummary : "尚未选中可见人物；画屏不会从全量素材池补造人名或画像。"}</p>
+          </div>
+          <div>
+            <span>题签</span>
+            <div className="peopleMeta">
+              {selectedNpcTags.length ? selectedNpcTags.map((tag) => <span key={tag}>{tag}</span>) : <span>待入谱</span>}
+              <span>{selectedPersonInLedger?.remastered ? "高清重制" : selectedPersonInLedger ? "常规画幅" : "候载"}</span>
+            </div>
+          </div>
+          <dl>
+            <div><dt>页签</dt><dd>{activeTabLabel}</dd></div>
+            <div><dt>高清</dt><dd>{totalRemasteredCount} 张</dd></div>
+            <div><dt>来函</dt><dd>{followUpEvidenceCount} 条</dd></div>
+            <div><dt>账解</dt><dd>{economyTraceCount} 条</dd></div>
+            <div><dt>草稿</dt><dd>{hasLocalDraft ? "已写" : "未写"}</dd></div>
+          </dl>
+        </div>
       </section>
       <NpcActiveRequestInbox
         requests={(activeSession?.npcActiveRequestView?.items ?? []) as readonly NpcActiveRequestItemView[]}
@@ -1032,7 +1087,7 @@ export function PeoplePage() {
           text
         })}
       />
-      <section className="npcWorkbench" aria-label="人物名册" data-polish-people-workbench="s89-9-portrait-material">
+      <section className="npcWorkbench" aria-label="人物名册" data-polish-people-workbench="s89-9-portrait-material" data-polish-people-gallery-workbench={peoplePortraitGalleryPolishId}>
         <aside className="npcGroupList" aria-label="人物分组">
           {npcGroups.length ? npcGroups.map((group) => (
             <section key={group.label}>
@@ -1043,6 +1098,7 @@ export function PeoplePage() {
                   className="npcListButton"
                   type="button"
                   aria-pressed={selectedNpc?.npcId === npc.npcId}
+                  data-gallery-selected={selectedNpc?.npcId === npc.npcId ? "true" : "false"}
                   onClick={() => {
                     setLocalPeopleSessionId(sessionId);
                     latestSelectedNpcIdRef.current = npc.npcId;
@@ -1074,7 +1130,7 @@ export function PeoplePage() {
             </section>
           )) : <p className="statusLine">{routeSessionSupported ? "等待人物名册。" : unsupportedRouteMessage}</p>}
         </aside>
-        <section className="npcDetailWorkbench" aria-label="人物详情" data-polish-people-detail="s89-9-portrait-material">
+        <section className="npcDetailWorkbench" aria-label="人物详情" data-polish-people-detail="s89-9-portrait-material" data-polish-people-gallery-detail={peoplePortraitGalleryPolishId}>
           {selectedNpc ? (
             <>
               <div className="npcDetailHeader">
@@ -1204,7 +1260,13 @@ export function PeoplePage() {
           ) : <p className="statusLine">{routeSessionSupported ? "请选择一名可见人物。" : unsupportedRouteMessage}</p>}
         </section>
       </section>
-      <section className="portraitLedger" aria-label="本局人物谱牒" data-polish-people-ledger="s89-9-portrait-material">
+      <section
+        className="portraitLedger"
+        aria-label="本局人物谱牒"
+        data-polish-people-ledger="s89-9-portrait-material"
+        data-polish-people-gallery-ledger={peoplePortraitGalleryPolishId}
+        data-portrait-ledger-state={activePortraitLedgerState}
+      >
         <div className="portraitLedgerHeader">
           <div>
             <h3>人物谱牒</h3>
@@ -1225,7 +1287,15 @@ export function PeoplePage() {
             data-visible-portraits={visiblePeople.length}
           >
             {visiblePeople.map((person) => (
-              <article className="peopleCard" key={`${person.kind}-${person.id}`} data-person-kind={person.kind} data-polish-people-card="s89-9-portrait-material">
+              <article
+                className="peopleCard"
+                key={`${person.kind}-${person.id}`}
+                data-person-kind={person.kind}
+                data-polish-people-card="s89-9-portrait-material"
+                data-polish-people-gallery-card={peoplePortraitGalleryPolishId}
+                data-selected={person.kind === "npc" && person.id === selectedNpc?.npcId ? "true" : "false"}
+                data-remastered={person.remastered ? "true" : "false"}
+              >
                 {registry ? (
                   <Portrait
                     registry={registry}

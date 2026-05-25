@@ -49,6 +49,8 @@ const modalRegistry: Record<ModalSurface, ModalRegistryEntry> = {
   "confirm-navigation": { label: "离卷确认", title: "离卷确认" }
 };
 
+const portraitGalleryPolishId = "s89-35-people-portrait-gallery";
+
 export function SurfaceHost() {
   const activeDrawer = useUiStateStore((state) => state.activeDrawer);
   const activeModal = useUiStateStore((state) => state.activeModal);
@@ -554,6 +556,7 @@ function PortraitViewerHost() {
   const imageSource = portrait?.path ?? null;
   const viewerProfile = normalizePortraitViewerProfile(viewer?.profile);
   const viewerCopy = buildPortraitViewerCopy(portrait, viewerProfile, label);
+  const viewerState = portrait && imageSource && !imageFailed ? "ready" : "fallback";
 
   useEffect(() => {
     focusFirstControl(viewerRef.current);
@@ -580,6 +583,8 @@ function PortraitViewerHost() {
         data-polish-overlay="s89-5-portrait-gallery"
         data-polish-depth="s89-25-liquid-glass"
         data-polish-portrait="s89-8-life-scroll"
+        data-polish-portrait-viewer={portraitGalleryPolishId}
+        data-viewer-state={viewerState}
       >
         <button className="iconButton drawerClose" type="button" title="关闭" aria-label="关闭高清立绘" onClick={closePortraitViewer}>
           <X size={18} aria-hidden="true" />
@@ -621,6 +626,24 @@ function PortraitViewerHost() {
               <h3>当前情况</h3>
               <p>{viewerCopy.current}</p>
             </section>
+            <dl className="portraitViewerDossierRail" aria-label="画屏案读" data-polish-portrait-dossier={portraitGalleryPolishId}>
+              <div>
+                <dt>画屏案读</dt>
+                <dd>{viewerCopy.displayName}</dd>
+              </div>
+              <div>
+                <dt>身份</dt>
+                <dd>{viewerCopy.identity || "公开人物"}</dd>
+              </div>
+              <div>
+                <dt>题签</dt>
+                <dd>{viewerCopy.tags.slice(0, 3).join("、") || "题签候载"}</dd>
+              </div>
+              <div>
+                <dt>观画</dt>
+                <dd>{portrait?.hasHighResOverride ? "高清重制" : portrait ? "常规画幅" : "纸底占位"}</dd>
+              </div>
+            </dl>
           </div>
         </div>
         {portrait && imageSource && !imageFailed ? (

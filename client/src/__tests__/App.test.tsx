@@ -4737,6 +4737,16 @@ describe("S74.1 React client shell", () => {
     expect(peopleDocket.getByText("本地草稿 · 暂无候复稿")).toBeTruthy();
     expect(peopleDocket.getByText("候复边界 · 只作草稿")).toBeTruthy();
     expect(peopleDocket.getByText(/不成交、不扣银、不改关系/)).toBeTruthy();
+    const peopleGallery = document.querySelector("[data-polish-people-gallery-band='s89-35-people-portrait-gallery']") as HTMLElement;
+    expect(document.querySelector("[data-polish-people-gallery='s89-35-people-portrait-gallery']")).toBeTruthy();
+    expect(peopleGallery).toBeTruthy();
+    expect(peopleGallery.getAttribute("data-gallery-state")).toBe("ready");
+    expect(within(peopleGallery).getByRole("heading", { name: "入谱照面" })).toBeTruthy();
+    expect(peopleGallery.textContent || "").toContain("人物画屏");
+    expect(peopleGallery.textContent || "").toContain("本页 4 / 入谱 4");
+    expect(peopleGallery.textContent || "").toContain("公开小传");
+    expect(peopleGallery.textContent || "").toContain("高清");
+    expect(peopleGallery.textContent || "").toContain("草稿");
     expect(screen.getByText("来函线索与风宪留察")).toBeTruthy();
     expect(document.querySelector("[data-polish-evidence='s89-15-follow-up-reader']")).toBeTruthy();
     expect(document.querySelector("[data-polish-evidence-boundary='s89-15-follow-up-boundary']")).toBeTruthy();
@@ -4791,6 +4801,9 @@ describe("S74.1 React client shell", () => {
     expect(firstPageImages.every((image) => image.getAttribute("loading") === "lazy")).toBe(true);
     expect(document.querySelector(".peopleLedgerList")?.getAttribute("data-total-people")).toBe("4");
     expect(document.querySelectorAll("[data-polish-people-card='s89-9-portrait-material']").length).toBeGreaterThan(0);
+    expect(document.querySelector("[data-polish-people-gallery-ledger='s89-35-people-portrait-gallery']")?.getAttribute("data-portrait-ledger-state")).toBe("ready");
+    expect(document.querySelectorAll("[data-polish-people-gallery-card='s89-35-people-portrait-gallery']").length).toBeGreaterThan(0);
+    expect(document.querySelector("[data-polish-portrait-card='s89-35-people-portrait-gallery']")).toBeTruthy();
     expect(document.querySelector(".peopleLedgerList")?.getAttribute("data-total-portraits")).toBeNull();
     expect(document.querySelector("[data-portrait-remastered='true']")).toBeTruthy();
 
@@ -4799,8 +4812,11 @@ describe("S74.1 React client shell", () => {
     const viewer = await screen.findByRole("dialog", { name: "陆清远立绘" });
     expect(viewer.getAttribute("data-portrait-viewer")).toBe("true");
     expect(viewer.getAttribute("data-polish-portrait")).toBe("s89-8-life-scroll");
+    expect(viewer.getAttribute("data-polish-portrait-viewer")).toBe("s89-35-people-portrait-gallery");
+    expect(viewer.getAttribute("data-viewer-state")).toBe("ready");
     expect(viewer.querySelector("[data-polish-profile='s89-6-portrait-life']")).toBeTruthy();
     expect(viewer.querySelector("[data-polish-cue='s89-9-portrait-cue-material']")).toBeTruthy();
+    expect(viewer.querySelector("[data-polish-portrait-dossier='s89-35-people-portrait-gallery']")).toBeTruthy();
     expect(within(viewer).getByRole("heading", { name: "外貌介绍" })).toBeTruthy();
     expect(within(viewer).getByRole("heading", { name: "生平介绍" })).toBeTruthy();
     expect(within(viewer).getByRole("heading", { name: "当前情况" })).toBeTruthy();
@@ -4809,6 +4825,8 @@ describe("S74.1 React client shell", () => {
     expect(viewer.textContent || "").toContain("衣饰");
     expect(viewer.textContent || "").toContain("神采");
     expect(viewer.textContent || "").toContain("观画印象");
+    expect(viewer.textContent || "").toContain("画屏案读");
+    expect(viewer.textContent || "").toContain("观画");
     expect(viewer.textContent || "").toContain("身世线索据公开传略整理");
     expect(viewer.textContent || "").toContain("案主本局画像据已审阅画卷与公开身份整理");
     expect(viewer.textContent || "").toContain("案主当前以书生见于公开案卷；下一步读书、应考、任事或交游仍随主卷回批推进。");

@@ -1943,6 +1943,8 @@ test("S79.3 portrait viewer stays read-only and uses audited runtime portrait pa
   assert.match(portraitSource, /portraitZoomButton/);
   assert.match(portraitSource, /data-polish-card="s89-5-portrait-frame"/);
   assert.match(portraitSource, /data-polish-action="s89-5-portrait-zoom"/);
+  assert.match(portraitSource, /data-polish-portrait-card=\{portraitGalleryPolishId\}/);
+  assert.match(portraitSource, /data-portrait-state=\{viewerEnabled \? "zoomable" : "ready"\}/);
   assert.match(portraitSource, /Maximize2/);
   assert.match(portraitSource, /markOverlayTrigger/);
   assert.match(surfaceHostSource, /PortraitViewerHost/);
@@ -1951,6 +1953,10 @@ test("S79.3 portrait viewer stays read-only and uses audited runtime portrait pa
   assert.match(surfaceHostSource, /data-portrait-viewer="true"/);
   assert.match(surfaceHostSource, /data-polish-overlay="s89-5-portrait-gallery"/);
   assert.match(surfaceHostSource, /data-polish-portrait="s89-8-life-scroll"/);
+  assert.match(surfaceHostSource, /data-polish-portrait-viewer=\{portraitGalleryPolishId\}/);
+  assert.match(surfaceHostSource, /data-viewer-state=\{viewerState\}/);
+  assert.match(surfaceHostSource, /data-polish-portrait-dossier=\{portraitGalleryPolishId\}/);
+  assert.match(surfaceHostSource, /画屏案读/);
   assert.match(surfaceHostSource, /data-polish-cue="s89-9-portrait-cue-material"/);
   assert.match(surfaceHostSource, /data-polish-profile="s89-6-portrait-life"/);
   assert.match(surfaceHostSource, /portraitViewerCueGrid/);
@@ -1969,6 +1975,12 @@ test("S79.3 portrait viewer stays read-only and uses audited runtime portrait pa
   assert.match(peoplePageSource, /data-polish-people-card="s89-9-portrait-material"/);
   assert.match(peoplePageSource, /data-polish-people-workbench="s89-9-portrait-material"/);
   assert.match(peoplePageSource, /data-polish-people-ledger="s89-9-portrait-material"/);
+  assert.match(peoplePageSource, /peoplePortraitGalleryPolishId = "s89-35-people-portrait-gallery"/);
+  assert.match(peoplePageSource, /data-polish-people-gallery=\{peoplePortraitGalleryPolishId\}/);
+  assert.match(peoplePageSource, /data-polish-people-gallery-band=\{peoplePortraitGalleryPolishId\}/);
+  assert.match(peoplePageSource, /data-polish-people-gallery-card=\{peoplePortraitGalleryPolishId\}/);
+  assert.match(peoplePageSource, /人物画屏/);
+  assert.match(peoplePageSource, /入谱照面/);
   assert.match(peoplePageSource, /案主本局画像据已审阅画卷与公开身份整理/);
   assert.match(surfaceHostSource, /当前情况/);
   assert.match(surfaceHostSource, /公开近况/);
@@ -1983,6 +1995,14 @@ test("S79.3 portrait viewer stays read-only and uses audited runtime portrait pa
   assert.match(styleSource, /--qq-material-silk: url\("\/assets\/ui\/materials\/paper-aged-silk-v1\.webp"\)/);
   assert.match(styleSource, /portraitViewerPanel[\s\S]*var\(--qq-material-silk\)/);
   assert.match(styleSource, /portraitViewerCueGrid[\s\S]*@media \(max-width: 760px\)[\s\S]*portraitViewerCueGrid[\s\S]*grid-template-columns: 1fr/);
+  assert.match(styleSource, /peopleGalleryBand\[data-polish-people-gallery-band="s89-35-people-portrait-gallery"\]/);
+  assert.match(styleSource, /portraitViewerDossierRail/);
+  assert.match(styleSource, /@keyframes s8935GalleryUnroll/);
+  assert.match(styleSource, /@keyframes s8935SlipRise/);
+  assert.match(styleSource, /\.appShell\[data-motion="reduced"\][\s\S]*s89-35-people-portrait-gallery/);
+  assert.match(styleSource, /@media \(prefers-reduced-motion: reduce\)[\s\S]*s89-35-people-portrait-gallery/);
+  assert.match(readText("scripts/clientSmoke.js"), /S89\.35 people portrait gallery readout/);
+  assert.match(readText("scripts/clientSmoke.js"), /S89\.35 portrait viewer dossier rail/);
   assert.match(styleSource, /@keyframes s899CueLift[\s\S]*translateY\(8px\)/);
   assert.match(styleSource, /\.appShell\[data-motion="reduced"\][\s\S]*\.portraitViewerCueGrid span/);
   assert.match(styleSource, /peopleCard:hover[\s\S]*transform: translateY\(-1px\)/);

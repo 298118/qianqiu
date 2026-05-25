@@ -3586,6 +3586,11 @@ async function runClientSmoke(options = {}) {
       const ledger = document.querySelector("[data-polish-people-ledger='s89-9-portrait-material']");
       const workbench = document.querySelector("[data-polish-people-workbench='s89-9-portrait-material']");
       const reader = document.querySelector("[data-polish-people-reader='s89-26-people-docket-reader']");
+      const galleryShell = document.querySelector("[data-polish-people-gallery='s89-35-people-portrait-gallery']");
+      const galleryBand = document.querySelector("[data-polish-people-gallery-band='s89-35-people-portrait-gallery']");
+      const galleryReadout = galleryBand?.querySelector(".peopleGalleryReadout");
+      const galleryReadoutStyle = galleryReadout ? window.getComputedStyle(galleryReadout) : null;
+      const galleryBandStyle = galleryBand ? window.getComputedStyle(galleryBand) : null;
       const firstCard = document.querySelector("[data-polish-people-card='s89-9-portrait-material']");
       const firstCardStyle = firstCard ? window.getComputedStyle(firstCard) : null;
       const images = [...document.querySelectorAll(".peopleLedgerList img")];
@@ -3596,6 +3601,19 @@ async function runClientSmoke(options = {}) {
         polishReader: Boolean(reader),
         readerRows: reader?.querySelectorAll("dt").length || 0,
         readerText: reader?.textContent || "",
+        galleryShell: Boolean(galleryShell),
+        galleryBand: Boolean(galleryBand),
+        galleryState: galleryBand?.getAttribute("data-gallery-state") || "",
+        galleryLedgerState: galleryShell?.getAttribute("data-portrait-ledger-state") || "",
+        galleryReadoutText: galleryReadout?.textContent || "",
+        galleryReadoutGrid: galleryReadoutStyle?.display || "",
+        galleryReadoutColumns: galleryReadoutStyle?.gridTemplateColumns || "",
+        galleryAnimation: galleryBandStyle?.animationName || "",
+        galleryReadoutRows: galleryReadout?.querySelectorAll("dt").length || 0,
+        gallerySelectedButtons: document.querySelectorAll(".npcListButton[data-gallery-selected='true']").length,
+        gallerySelectedCards: document.querySelectorAll("[data-polish-people-gallery-card='s89-35-people-portrait-gallery'][data-selected='true']").length,
+        galleryCardCount: document.querySelectorAll("[data-polish-people-gallery-card='s89-35-people-portrait-gallery']").length,
+        galleryPortraitCards: document.querySelectorAll("[data-polish-portrait-card='s89-35-people-portrait-gallery']").length,
         polishCardCount: document.querySelectorAll("[data-polish-people-card='s89-9-portrait-material']").length,
         cardBackground: firstCardStyle?.backgroundImage || "",
         cardTransition: firstCardStyle?.transitionProperty || "",
@@ -3614,6 +3632,9 @@ async function runClientSmoke(options = {}) {
     }
     if (!portraitLedger.polishShell || !portraitLedger.polishLedger || !portraitLedger.polishWorkbench || portraitLedger.polishCardCount < 1 || !portraitLedger.cardBackground.includes("linear-gradient") || !/transform|box-shadow|border-color/i.test(portraitLedger.cardTransition)) {
       throw new Error(`S89.9 people portrait material polish hooks were incomplete: ${JSON.stringify(portraitLedger)}`);
+    }
+    if (!portraitLedger.galleryShell || !portraitLedger.galleryBand || portraitLedger.galleryState !== "ready" || portraitLedger.galleryLedgerState !== "ready" || portraitLedger.galleryCardCount < 1 || portraitLedger.galleryPortraitCards < 1 || portraitLedger.gallerySelectedButtons !== 1 || !/人物画屏|入谱照面|画屏|公开小传|草稿|候复线索/.test(portraitLedger.galleryReadoutText) || portraitLedger.galleryReadoutRows < 5 || portraitLedger.galleryReadoutGrid !== "grid" || !portraitLedger.galleryReadoutColumns || (portraitLedger.galleryAnimation !== "s8935GalleryUnroll" && portraitLedger.galleryAnimation !== "none")) {
+      throw new Error(`S89.35 people portrait gallery readout missing or unsafe: ${JSON.stringify(portraitLedger)}`);
     }
     if (portraitLedger.total <= 0 || portraitLedger.total > 80) {
       throw new Error(`People ledger did not stay on the current public person view: ${portraitLedger.total}`);
@@ -3640,10 +3661,14 @@ async function runClientSmoke(options = {}) {
         imageSrc: image?.getAttribute("src") || "",
         polishProfile: viewer?.querySelector("[data-polish-profile='s89-6-portrait-life']") ? "yes" : "",
         polishPortrait: viewer?.getAttribute("data-polish-portrait") || "",
+        polishGalleryViewer: viewer?.getAttribute("data-polish-portrait-viewer") || "",
+        viewerState: viewer?.getAttribute("data-viewer-state") || "",
         polishCue: viewer?.querySelector("[data-polish-cue='s89-9-portrait-cue-material']") ? "yes" : "",
+        polishDossier: viewer?.querySelector("[data-polish-portrait-dossier='s89-35-people-portrait-gallery']") ? "yes" : "",
         hasAppearance: viewerText.includes("外貌介绍"),
         hasBiography: viewerText.includes("生平介绍"),
         hasCurrent: viewerText.includes("当前情况"),
+        hasDossierRail: /画屏案读|身份|题签|观画/.test(viewerText),
         hasCueGrid: /画卷题签|衣饰|神采/.test(viewerText),
         cueGrid: (() => {
           const cue = viewer?.querySelector("[data-polish-cue='s89-9-portrait-cue-material']");
@@ -3673,6 +3698,9 @@ async function runClientSmoke(options = {}) {
     const cueAnimationExpected = portraitViewer.cueGrid.shellMotion !== "reduced" && !portraitViewer.cueGrid.reducedMotion;
     if (portraitViewer.polishPortrait !== "s89-8-life-scroll" || portraitViewer.polishCue !== "yes" || !portraitViewer.polishProfile || !portraitViewer.hasAppearance || !portraitViewer.hasBiography || !portraitViewer.hasCurrent || !portraitViewer.hasCueGrid || !portraitViewer.hasRicherCopy || portraitViewer.cueGrid.count < 4 || portraitViewer.cueGrid.display !== "grid" || !portraitViewer.cueGrid.background.includes("linear-gradient") || (cueAnimationExpected ? portraitViewer.cueGrid.animation !== "s899CueLift" : portraitViewer.cueGrid.animation !== "none")) {
       throw new Error(`S89.8 portrait viewer missed player-facing life/current profile polish: ${JSON.stringify(portraitViewer)}`);
+    }
+    if (portraitViewer.polishGalleryViewer !== "s89-35-people-portrait-gallery" || portraitViewer.viewerState !== "ready" || portraitViewer.polishDossier !== "yes" || !portraitViewer.hasDossierRail) {
+      throw new Error(`S89.35 portrait viewer dossier rail missing: ${JSON.stringify(portraitViewer)}`);
     }
     if (portraitViewer.storageKeys.some((key) => /portrait|viewer|image/i.test(key)) || portraitViewer.unsafeText.length) {
       throw new Error(`S79.3 portrait viewer widened storage or text safety: ${JSON.stringify(portraitViewer)}`);

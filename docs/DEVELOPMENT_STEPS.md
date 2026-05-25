@@ -113,6 +113,7 @@
 
 | ID | 状态 | 目标 | 范围 / 下一步 |
 | --- | --- | --- | --- |
+| S89.35 | DONE | 人物页与高清立绘查看器二轮高级展示 polish | 承接 S89.34 后继续做产品级前端 polish，已在 `/game/:sessionId/people` 新增“人物画屏 / 入谱照面”、画屏案读、人物名册选中态、人物谱牒卡选中/高清状态和 S89.35 可检测 marker；高清立绘查看器新增“画屏案读”只读栏、viewer 状态和画像卡 zoomable/ready/fallback 状态。范围限 React `PeoplePage` / `Portrait` / `SurfaceHost`、全局 CSS、客户端 smoke/source canary、前端测试、brief 与交接文档；不新增依赖或素材，不改后端 API/schema、AI 权限、prompt、provider、SQLite、存档、runtime manifest 或素材 manifest。浏览器仍只消费 `worldPeopleView`、`npcRosterView`、`npcDetailView.publicProfile`、既有 follow-up/economy/relationship 安全 view、route/local 状态和已审核 runtime 画像字段，不读取 raw 存档、本地路径、source manifest 或完整 manifest，不裁决资源、身份、交易、委派、NPC 行动、经济、考试、官职、地图行动、关系或 hidden 信息。实现提交：待回填。 |
 | S89.34 | DONE | 主卷与朝议案头中枢二轮材质动效 polish | 承接 S89.33 后继续做产品级前端 polish，已在 `/game/:sessionId` 新增“案头中枢 / 本卷案桌”、主卷命令栏/场景带 marker、场景/卷宗/草稿/去处读法和行旅/人物/账解/科举复核分组计数；在 `/game/:sessionId/court` 新增“官署议程 / 御案传签”、章奏/谕旨/朝议/堂审军议读法、议程状态和六个既有专题入口状态。范围限 React `GamePage` / `CourtPage`、全局 CSS、客户端 smoke/source canary、前端测试、brief 与交接文档；不新增依赖或素材，不改后端 API/schema、AI 权限、prompt、provider、SQLite、存档、runtime manifest 或素材 manifest。浏览器仍只消费安全 view、route/local 状态和本地草稿状态，不裁决资源、身份、交易、NPC 行动、经济、考试、官职、地图行动、关系或 hidden 信息。实现提交：`0bae6c8f`。 |
 | S89.33 | DONE | 科举与皇榜二轮仪式材质动效 polish | 承接 S89.32 后继续做产品级前端 polish，已在 `/game/:sessionId/exam` 新增“科场仪幕”、科举 hero/试卷纸卷 marker、题纸启封/落墨/候榜状态和纸卷展开动效；在 `/game/:sessionId/ranking` 新增“金榜仪轨”、皇榜 hero/榜纸 marker、金榜张榜/我名/同年/授官读法和榜行选中反馈。范围限 React `ExamPage` / `RankingPage`、全局 CSS、客户端 smoke/source canary、前端测试、brief 与交接文档；不新增依赖或素材，不改后端 API/schema、AI 权限、prompt、provider、SQLite、存档、runtime manifest 或素材 manifest。浏览器仍只消费安全 view、既有科举 API、route/local 状态和本地草稿，不裁决取题、评分、舞弊、放榜、晋级、授官、同年座师关系、官职任免或 hidden 信息。实现提交：`dd47cb17`。 |
 | S89.32 | DONE | 首页与全局壳材质动效及入口收束 polish | 承接 S89.31 后继续做产品级前端 polish，已在首页新增“开卷路径”读法，把题名、立身、候复三步收进新开案卷表单，并把样卷入口降权为“试阅样卷 / 样卷舆图”；全局壳新增顶栏、导航和右上角工具区玻璃纸层 marker，右上角印匣与设置目录同步新增可检测入口标记。范围限 React `HomePage`、`AppShell`、`SurfaceHost`、`SettingsPage`、全局 CSS、客户端 smoke/source canary、前端测试、brief 与交接文档；不新增依赖或素材，不改后端 API/schema、AI 权限、prompt、provider、SQLite、存档、runtime manifest 或素材 manifest。浏览器仍只消费安全 view、route/surface 状态、本地显示偏好和旧案列表，不请求诊断接口，不读取 raw 存档，不裁决资源、身份、交易、NPC 行动、经济、考试、官职、地图行动、关系或 hidden 信息。实现提交：`111566ee`。 |
@@ -187,7 +188,8 @@
 - 2026-05-25：S89.32 完成首页与全局壳材质动效及入口收束 polish。当前范围限 React `HomePage` / `AppShell` / `SurfaceHost` / `SettingsPage`、全局 CSS、客户端 smoke/source canary、前端测试、brief 和开发文档；新增首页开卷路径、样卷入口降权、顶栏/右上角工具区玻璃纸层、印匣面板材质和设置目录入口守门，不新增浏览器裁决权，不改后端 API/schema、AI 权限、prompt、provider、SQLite、存档、runtime manifest 或素材 manifest。
 - 2026-05-25：S89.33 完成科举与皇榜二轮仪式材质动效 polish。当前范围限 React `ExamPage` / `RankingPage`、全局 CSS、客户端 smoke/source canary、前端测试、brief 和开发文档；新增科场仪幕、金榜仪轨、科举纸卷展开、皇榜金光/榜行选中反馈和低动效关闭守门，不新增浏览器裁决权，不改后端 API/schema、AI 权限、prompt、provider、SQLite、存档、runtime manifest 或素材 manifest。
 - 2026-05-25：S89.34 完成主卷与朝议案头中枢二轮材质动效 polish。当前范围限 React `GamePage` / `CourtPage`、全局 CSS、客户端 smoke/source canary、前端测试、brief 和开发文档；新增主卷案头中枢、官署议程、草稿状态 marker、朝议入口状态、材质动效和低动效关闭守门，不新增浏览器裁决权，不改后端 API/schema、AI 权限、prompt、provider、SQLite、存档、runtime manifest 或素材 manifest。
-- 前一轮 S88 归档是低风险纯文档维护；S89.3-S89.34 涉及前端代码、样式、验证脚本和文档，提交前按子代理复审规则执行。
+- 2026-05-25：S89.35 完成人物页与高清立绘查看器二轮高级展示 polish。当前范围限 React `PeoplePage` / `Portrait` / `SurfaceHost`、全局 CSS、客户端 smoke/source canary、前端测试、brief 和开发文档；新增人物画屏、入谱照面、名册/谱牒选中态、画像卡状态、高清标记和查看器案读栏，不新增浏览器裁决权，不改后端 API/schema、AI 权限、prompt、provider、SQLite、存档、runtime manifest 或素材 manifest。
+- 前一轮 S88 归档是低风险纯文档维护；S89.3-S89.35 涉及前端代码、样式、验证脚本和文档，提交前按子代理复审规则执行。
 
 ## 6. 最近完整验证口径
 
@@ -269,6 +271,17 @@ S89.8 高清立绘查看器画中所见 polish 验证结果：
 - 已通过 `npm run check:docs-governance`、`node --test test/documentationGovernance.test.js`、`git diff --check`。提交前只读子代理复审已通过，未发现阻断问题；非阻断建议为后续可给题签格补专门材质样式。
 
 ## 7. 近期进度记录
+
+### 2026-05-25：S89.35 人物页与高清立绘查看器二轮高级展示 polish
+
+- 范围：`PeoplePage` 保留 S89.9/S89.26 marker，并新增 `data-polish-people-gallery="s89-35-people-portrait-gallery"`、`data-polish-people-gallery-band`、`data-portrait-ledger-state`、人物名册 `data-gallery-selected`、人物谱牒 `data-polish-people-gallery-ledger` 和人物卡 `data-selected` / `data-remastered`；`Portrait` 新增 `data-polish-portrait-card` 与 `data-portrait-state="zoomable|ready|fallback"`；`SurfaceHost` 高清立绘查看器新增 `data-polish-portrait-viewer`、`data-viewer-state` 和 `data-polish-portrait-dossier`。
+- 内容：人物页新增“人物画屏 / 入谱照面”，只读整理当前案卷公开人物、本页/入谱计数、当前照面、公开小传、题签、高清数、来函证据数、账解数和本地草稿有无；人物名册与谱牒卡强化当前选中和高清重制读法。高清立绘查看器新增“画屏案读”栏，复用已清洗的查看器文案显示人物、身份、题签和观画状态。所有读法只来自当前 route session 的安全 view、已审核 runtime 画像字段和本地草稿状态，不展示草稿正文、内部来源枚举、完整素材池或全量立绘池。
+- 样式与低动效：`global.css` 新增人物画屏绢帛/朱痕材质、画屏案读网格、人物卡选中/高清框线、名册按钮朱印反馈、viewer 案读栏、`s8935GalleryUnroll` 与 `s8935SlipRise`。本地 `data-motion="reduced"` 和系统 `prefers-reduced-motion` 均关闭强动画，但保留材质、边框、选中态和可读状态。
+- 安全边界：本步不新增依赖或素材，不改后端 API/schema、AI 权限矩阵、prompt、provider facade、SQLite schema、存档格式、runtime manifest 或素材 manifest。浏览器仍只消费 `worldPeopleView`、`npcRosterView`、`npcDetailView.publicProfile`、既有 follow-up/economy/relationship 安全 view、route/local 状态和已审核 runtime 画像字段，不请求诊断接口，不读取 raw 存档、本地路径、source manifest 或完整 manifest，不裁决资源、身份、交易、委派、NPC 行动、经济、考试、官职、地图行动、关系、婚姻、弹劾、定罪、背叛或 hidden 信息。
+- Smoke/canary：`App.test.tsx` 覆盖 S89.35 人物画屏 root/band/ledger/card/portrait marker、ready 状态、入谱照面文案、公开小传、高清/草稿计数和高清查看器案读栏；`scripts/clientSmoke.js` 在人物页与 portrait viewer smoke 中检查画屏 marker、ready 状态、选中名册按钮、选中人物卡、画像卡 marker、画屏 grid/动效或低动效关闭、viewer ready 状态、案读栏和安全污染守门；`test/reactClientScaffold.test.js` 新增 S89.35 source canary，确认组件 marker、CSS keyframes、低动效关闭和 smoke 文案同步存在。
+- 验证：已通过 `node --check scripts/clientSmoke.js`、`npm run typecheck:client`、`node --test test/reactClientScaffold.test.js`（68 tests）、focused `npx vitest --config vitest.config.mjs run client/src/__tests__/App.test.tsx -t "current people ledger" --pool=vmThreads --fileParallelism=false --maxWorkers=1`（1 test / 73 skipped）、完整串行客户端套件 `npx vitest --config vitest.config.mjs run --pool=vmThreads --fileParallelism=false --maxWorkers=1`（6 files / 134 tests）、`npm run qa:runtime-manifest`、`npm run build:client`、`npm run budget:client`、`npm run smoke:browser`、`npm run check:docs-governance`、`node --test test/documentationGovernance.test.js` 和 `git diff --check`。`npm run test:client` 复现既有 Vitest fork worker 启动超时：5 files / 131 tests 已通过，但 `client/src/components/Portrait.test.tsx` worker 未启动；已用上述串行池完整复核同一客户端套件。最终预算输出为 `JS 653.5 KiB / CSS 138.1 KiB / fonts 26288.4 KiB / client-assets 27080.0 KiB`；构建与 smoke 仍输出既有 npm `globalignorefile` warning、Vite `/assets/ui/...` runtime asset resolution warning 和 plugin timing warning。
+- 复审：开工只读探索子代理 Huygens 建议聚焦人物画屏、名册/卡片状态、viewer 案读栏、低动效和 frontend-only safety，本轮按建议实施。提交前只读复审 Darwin 通过，未发现阻断问题；非阻断风险为 `Portrait` fallback 分支仍会把传入 `portraitRef` 写入 `data-portrait-ref`，本轮调用链来自安全 ref / registry，后续若新增调用方可考虑让 `Portrait` 自身只输出已解析安全 ref 或空值；CSS-heavy polish 仍有组合视口残余风险，但移动端单列、低动效、browser smoke、source canary 和预算检查已覆盖主要回归。
+- 提交：实现提交待回填。
 
 ### 2026-05-25：S89.34 主卷与朝议案头中枢二轮材质动效 polish
 
