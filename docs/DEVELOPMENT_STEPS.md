@@ -113,7 +113,7 @@
 
 | ID | 状态 | 目标 | 范围 / 下一步 |
 | --- | --- | --- | --- |
-| S89.7 | DONE | 舆图交互与筛选提示 polish | 承接 S89.6，舆图页新增 `data-polish-map="s89-7-layer-tooltip"`、当前图层显隐摘要、tooltip 单点札记、tooltip 草稿已写入状态和移动端长文本守门；舆图清洗补 `/Users`、`/private`、常见 Unix 本地目录和 `tp-...` token 形态。范围限 React 前端、样式、客户端 smoke/source canary、前端测试和文档。地图 layout/坐标/tooltip/visual-only effect/NPC anchor 仍只作浏览器显示，行动草稿仍为 `map-runtime` 本地 hint，普通回合由服务器从当前安全 view 重建复核；不改后端 API/schema、AI 权限、prompt、provider facade、SQLite schema、存档格式、runtime manifest 字段、素材 manifest 或服务器裁决。实现提交待回填。 |
+| S89.7 | DONE | 舆图交互与筛选提示 polish | 承接 S89.6，舆图页新增 `data-polish-map="s89-7-layer-tooltip"`、当前图层显隐摘要、tooltip 单点札记、tooltip 草稿已写入状态和移动端长文本守门；舆图清洗补 `/Users`、`/private`、常见 Unix 本地目录和 `tp-...` token 形态。范围限 React 前端、样式、客户端 smoke/source canary、前端测试和文档。地图 layout/坐标/tooltip/visual-only effect/NPC anchor 仍只作浏览器显示，行动草稿仍为 `map-runtime` 本地 hint，普通回合由服务器从当前安全 view 重建复核；不改后端 API/schema、AI 权限、prompt、provider facade、SQLite schema、存档格式、runtime manifest 字段、素材 manifest 或服务器裁决。实现提交：`b7bbeb04327f4d379dfd10729547e740958467d3`。 |
 | S89.6 | DONE | 高清立绘查看器人物小传与当前情况 polish | 承接 S89.5，点击高清立绘后查看器显示“观画印象”人物头、公开标签、外貌介绍、人物小传和当前情况；人物页画像 profile 补案主/名册/详情/谱牒当前情况，均只来自已审阅 runtime 画像元数据和人物页安全摘要。`scripts/clientSmoke.js` 与源码 canary 已覆盖 `s89-6-portrait-life` 标记、人物小传/公开近况文案、存储禁写和污染词守门；CSS 仅保留轻量结构样式并通过预算。未改后端 API/schema、AI 权限、prompt、provider facade、SQLite schema、存档格式、runtime manifest 字段、素材 manifest 或服务器裁决。实现提交：`d476d41d747afc6e650ed8a6fa5041b23d01c87c`。 |
 | S89.5 | DONE | React 全局材质、覆盖层过渡与交互反馈 polish | 主壳、右上角印匣、专题层 drawer/modal/surface、地图行动面板、高清立绘查看器与设置目录已补 S89.5 材质/覆盖层/交互反馈标记和低动效守门；舆图行动只增加本地“已写入草稿”反馈，不提交、不裁决、不扩大 `draftContext` 权限。`scripts/clientSmoke.js` 与源码 canary 已覆盖材质样式、覆盖层标记、地图草稿反馈、立绘查看器和设置目录安全污染守门。范围限 React 前端、样式、客户端 smoke/canary、前端测试和文档；未改后端 API/schema、AI 权限、prompt、provider facade、SQLite schema、存档格式、runtime manifest 字段、素材 manifest 或服务器裁决。实现提交：`b3237606ffa3abc7fbeb396d89c5c9eb8605f8f9`。 |
 | S89.4 | DONE | React 首页旧案状态与史册信息密度 polish | 承接 S89.3 后续建议，补首页旧案卷 loading/empty/error 的案架状态、数量与安全兜底文案，旧案读取失败不再串到开卷表单或回显底层错误；异常 `sessionId` 旧案只显示“暂不可读”，不生成 `/game/...` 读档链接；史册页补“案卷索引/近次线索”导读和更紧凑的公开条目密度，继续只消费 `eventArchiveView`、`domainConsequenceView` 与来函 follow-up 安全投影。只改 React 前端、样式、客户端 smoke/源码 canary、前端测试和文档；不改后端 API/schema、AI 权限、prompt、provider facade、SQLite schema、存档格式、runtime manifest 字段、素材 manifest 或服务器裁决。实现提交：`3a600b82f86855a563c64563251eec7081724d71`。 |
@@ -219,7 +219,7 @@ S89.7 舆图交互与筛选提示 polish 验证结果：
 - 边界：本步不改后端 API/schema、AI 权限矩阵、prompt、provider facade、SQLite schema、存档格式、runtime manifest 字段、素材 manifest 或服务器裁决；地图 tooltip、图层、坐标、visual-only effect 和 NPC anchor 只作浏览器显示，不成为真实行动、资源、关系、任免或地理事实。
 - 复审：开工中只读子代理提出舆图路径/token 清洗、图层反馈、tooltip 层级、移动端长文本和 CSS 预算建议；本轮已按建议收束。提交前最终只读复审通过，未发现阻断问题。
 - 验证：按第 6 节 S89.7 口径通过；`artifacts/browser-visual-matrix` 产物目录仅作本地 artifact，不提交。
-- 提交：实现提交待回填；后续哈希回填预计仅修改本文件与 [SHARED_CONTEXT.md](SHARED_CONTEXT.md)，属于低风险纯文档改动，可按规则跳过子代理复审并说明。
+- 提交：实现提交 `b7bbeb04327f4d379dfd10729547e740958467d3`；本次哈希回填仅修改本文件与 [SHARED_CONTEXT.md](SHARED_CONTEXT.md)，属于低风险纯文档改动，跳过子代理复审。
 
 ### 2026-05-24：S89.6 高清立绘查看器人物小传与当前情况 polish
 

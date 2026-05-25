@@ -65,7 +65,7 @@
 
 ## Current Work Note
 
-2026-05-24：S89.7 完成舆图交互与筛选提示 polish，实现提交待本轮完成后回填。舆图页现在带 `data-polish-map="s89-7-layer-tooltip"`，图层区新增“筛选只改卷上显示，不改变案卷事实”的当前显隐摘要；关闭地点图层后，摘要会明确“现显/暂隐”，地图标签随显示层过滤，不改变 `mapRuntimeView`、案卷事实或服务器裁决。
+2026-05-24：S89.7 完成舆图交互与筛选提示 polish，实现提交 `b7bbeb04327f4d379dfd10729547e740958467d3`。舆图页现在带 `data-polish-map="s89-7-layer-tooltip"`，图层区新增“筛选只改卷上显示，不改变案卷事实”的当前显隐摘要；关闭地点图层后，摘要会明确“现显/暂隐”，地图标签随显示层过滤，不改变 `mapRuntimeView`、案卷事实或服务器裁决。
 
 地图 tooltip 现在标记为 `data-polish-tooltip="s89-7-map-note"`，显示“单点札记 · 写入后仍须回主卷候复”；从 tooltip 写入行动草稿后，只把对应 `draftId` 标成已写入，并通过 aria 文案提示“已写入主卷草稿”。该反馈仍只是浏览器本地 `map-runtime` 草稿 hint，不调用 turn API，不提交回合，不写 URL、localStorage/sessionStorage、canonical state、prompt 或服务器状态。
 
@@ -79,7 +79,7 @@
 - 已通过完整串行客户端套件 `npx vitest --config vitest.config.mjs run --pool=vmThreads --fileParallelism=false --maxWorkers=1`（6 files / 129 tests）。此前同一完整串行套件曾出现一次首页画像选择 jsdom 抖动，focused 重跑该用例通过，最终完整串行重跑通过。
 - 已通过 `npm run qa:runtime-manifest`、`npm run build:client`、`npm run budget:client`；本轮初版样式一度超过 CSS 硬预算，已改成少样式、多状态文案并删除未使用 `.mapStatusRail`，最终预算输出为 `CSS 97.5 KiB`。
 - 已通过直接浏览器验收 `node scripts/clientSmoke.js --screenshots artifacts/browser-visual-matrix`，覆盖 S89.7 舆图图层摘要、隐藏图层反馈、tooltip 单点札记、tooltip 草稿写入状态、移动端舆图摘要、runtime 画布像素、浏览器存储禁写和安全污染守门，并写出 `artifacts/browser-visual-matrix`。Vite 仍输出既有 `/assets/ui/...` runtime asset 与 chunk size warnings。
-- 已通过 `git diff --check`。提交前只读子代理开工巡检指出舆图 `/Users`、`/private`、`tp-...` 清洗、图层反馈、tooltip 层级、移动端长文本和 CSS 预算风险，本轮已按这些建议收束；最终只读复审通过，未发现阻断问题。
+- 已通过 `git diff --check`。提交前只读子代理开工巡检指出舆图 `/Users`、`/private`、`tp-...` 清洗、图层反馈、tooltip 层级、移动端长文本和 CSS 预算风险，本轮已按这些建议收束；最终只读复审通过，未发现阻断问题。实现提交后的哈希回填仅修改 `docs/DEVELOPMENT_STEPS.md` 与本文件，属于低风险纯文档改动，跳过子代理复审。
 
 ## Next Recommended Step
 
