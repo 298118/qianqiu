@@ -22,6 +22,8 @@ type ActiveTooltip = {
   readonly position: ScreenPosition;
 };
 
+type MapTooltipTone = "place" | "event" | "people" | "route";
+
 export type MapRuntimeDraftSelection = {
   readonly draftId: string;
   readonly label: string;
@@ -78,6 +80,14 @@ const unsafeMapRuntimeTextFragments = [
   "DEEPSEEK" + "_API" + "_KEY",
   "MIMO" + "_API" + "_KEY",
   "ANTHROPIC" + "_API" + "_KEY",
+  "draft" + "Context",
+  "schema",
+  "manifest",
+  "server" + " adjudication",
+  "AI" + " read scope",
+  "proposal" + " boundary",
+  "safe" + " view",
+  "resolver",
   "完整" + "提示词",
   "提示" + "词",
   "本地" + "路径",
@@ -98,8 +108,17 @@ const unsafeMapRuntimeRefTokens = new Set([
   "coord",
   "coords",
   "x",
-  "y"
+  "y",
+  "draftcontext",
+  "schema",
+  "manifest",
+  "serveradjudication",
+  "aireadscope",
+  "proposalboundary",
+  "safeview",
+  "resolver"
 ]);
+const unsafeMapRuntimeRefPrefixPattern = /^(?:layout|layoutpath|mapbounds|viewporthint|position|coordinate|coordinates|coord|coords|draft[-_.:]?context|schema|manifest|server[-_.:]?adjudication|ai[-_.:]?read[-_.:]?scope|proposal[-_.:]?boundary|safe[-_.:]?view|resolver)[:_.-]/i;
 const localMapRuntimePathPattern = /(?:^|[\s"'`(（:：,;，。；、【《“‘])(?:[a-z]:[\\/]|~[\\/]|\.{1,2}[\\/]|\/(?:home|Users|private|mnt|tmp|var|etc|usr|opt|workspace|workspaces|root|data|src|client|server|dist|public|node_modules)(?:[\\/]|$)|(?:data|src|client|server|dist|public|node_modules)[\\/][^\s，。；、]+)/i;
 
 function isBrowserRuntime() {
@@ -172,8 +191,16 @@ function isSafeActionDraft(draft: MapRuntimeActionDraft | undefined): draft is M
 function safeMapRuntimeText(value: unknown, fallback: string, maxLength = 80) {
   const text = typeof value === "string" && value.trim() ? value.trim() : fallback;
   const normalized = text.toLowerCase();
+  const compact = normalized.replace(/[-_.:\s]/g, "");
   if (localMapRuntimePathPattern.test(text) || /(?:sk|tp)-[a-z0-9_-]{6,}/i.test(text)) return fallback;
-  if (unsafeMapRuntimeTextFragments.some((fragment) => normalized.includes(fragment.toLowerCase()))) return fallback;
+  if (
+    unsafeMapRuntimeTextFragments.some((fragment) => {
+      const lowerFragment = fragment.toLowerCase();
+      return normalized.includes(lowerFragment) || compact.includes(lowerFragment.replace(/[-_.:\s]/g, ""));
+    })
+  ) {
+    return fallback;
+  }
   return text.slice(0, maxLength);
 }
 
@@ -182,7 +209,7 @@ function safeMapRuntimeRefId(value: unknown, maxLength = 96) {
   const compact = text.toLowerCase().replace(/[-_.:]/g, "");
   if (
     unsafeMapRuntimeRefTokens.has(compact) ||
-    /^(layout|layoutpath|mapbounds|viewporthint|position|coordinate|coordinates|coord|coords)[:_.-]/i.test(text) ||
+    unsafeMapRuntimeRefPrefixPattern.test(text) ||
     /^[xy][:_\-.]?\d/i.test(text)
   ) {
     return "";
@@ -201,6 +228,48 @@ function safeMapRuntimeRefList(values: readonly unknown[], maxItems = 8) {
     if (refs.length >= maxItems) break;
   }
   return refs;
+}
+
+function readNumericMapRuntimeField(value: unknown, fallback: number) {
+  const numberValue = typeof value === "number" && Number.isFinite(value) ? value : fallback;
+  const normalized = numberValue <= 1 ? numberValue * 100 : numberValue;
+  return Math.max(0, Math.min(100, Math.round(normalized)));
+}
+
+function getMapRuntimeTooltipTone(ref: MapRuntimeRef): MapTooltipTone {
+  const styleLayer = safeMapRuntimeText(ref.style?.layer, "", 28).toLowerCase();
+  const styleToken = safeMapRuntimeText(ref.style?.token, "", 32).toLowerCase();
+  const sourceJoined = safeMapRuntimeRefList([...(ref.sourceRefs ?? []), ref.sourceRef, ref.mapEntityRef], 8).join(" ").toLowerCase();
+  const labelSummary = safeMapRuntimeText(`${ref.label ?? ""} ${ref.summary ?? ""}`, "", 140).toLowerCase();
+  if (/route|road|驿路|路线/.test(`${styleLayer} ${styleToken} ${sourceJoined} ${labelSummary}`)) return "route";
+  if (ref.actionDraftRefs?.length) return "place";
+  if (/npc|people|person|relationship|人物|来函|交游/.test(`${styleLayer} ${styleToken} ${sourceJoined} ${labelSummary}`)) return "people";
+  if (/event|archive|consequence|近事|警|余波|后果/.test(`${styleLayer} ${styleToken} ${sourceJoined} ${labelSummary}`)) return "event";
+  return "place";
+}
+
+function getMapRuntimeTooltipReading(ref: MapRuntimeRef, hasDrafts: boolean) {
+  const tone = getMapRuntimeTooltipTone(ref);
+  const severity = readNumericMapRuntimeField(ref["severity"], tone === "event" ? 62 : tone === "people" ? 54 : tone === "route" ? 48 : 42);
+  const labels: Record<MapTooltipTone, string> = {
+    place: "地点札记",
+    event: "近事札记",
+    people: "人物札记",
+    route: "驿路札记"
+  };
+  const captions: Record<MapTooltipTone, string> = {
+    place: "公开地点",
+    event: "公开近事",
+    people: "人物动向",
+    route: "公开驿路"
+  };
+  return {
+    tone,
+    label: labels[tone],
+    caption: captions[tone],
+    meter: severity,
+    boundary: hasDrafts ? "可写入本地草稿，仍回主卷候复。" : "只作舆图旁读，不生成行动事实。"
+  };
 }
 
 function buildMapRuntimeDraftSelection(
@@ -359,6 +428,7 @@ export function InkMapRuntimeBridge({
 
   const activeTooltipTitle = safeMapRuntimeText(activeTooltip?.ref.label, "地图近事", 40);
   const activeTooltipSummary = safeMapRuntimeText(activeTooltip?.ref.summary, "暂无更多公开摘要。", 120);
+  const activeTooltipReading = activeTooltip ? getMapRuntimeTooltipReading(activeTooltip.ref, activeDrafts.length > 0) : null;
 
   const fallbackText = useMemo(() => {
     if (status === "loading") return "正在铺开公开舆图...";
@@ -393,6 +463,8 @@ export function InkMapRuntimeBridge({
             <aside
               className="inkMapTooltip"
               data-polish-tooltip="s89-7-map-note"
+              data-polish-tooltip-reading="s89-31-mobile-map-note"
+              data-tooltip-tone={activeTooltipReading?.tone ?? "place"}
               role="status"
               style={{
                 left: `${clampTooltipPosition(activeTooltip.position.x)}px`,
@@ -400,13 +472,22 @@ export function InkMapRuntimeBridge({
               }}
             >
               <div className="inkMapTooltipHeader">
-                <strong>{activeTooltipTitle}</strong>
+                <div>
+                  <span className="inkMapTooltipSeal">{activeTooltipReading?.label ?? "单点札记"}</span>
+                  <strong>{activeTooltipTitle}</strong>
+                </div>
                 <button className="inkMapTooltipClose" type="button" aria-label="收起地图近事" onClick={() => setActiveTooltip(null)}>
                   收
                 </button>
               </div>
               <span className="inkMapTooltipNote">单点札记 · 写入后仍须回主卷候复</span>
+              <div className="inkMapTooltipReading" data-meter={activeTooltipReading?.meter ?? 0}>
+                <span>{activeTooltipReading?.caption ?? "公开舆图"}</span>
+                <i style={{ width: `${activeTooltipReading?.meter ?? 0}%` }} aria-hidden="true" />
+                <em>可见度 {activeTooltipReading?.meter ?? 0}</em>
+              </div>
               <p>{activeTooltipSummary}</p>
+              <small>{activeTooltipReading?.boundary}</small>
               {activeDrafts.length ? (
                 <div className="buttonRow">
                   {activeDrafts.map((selection) => (

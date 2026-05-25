@@ -113,6 +113,7 @@
 
 | ID | 状态 | 目标 | 范围 / 下一步 |
 | --- | --- | --- | --- |
+| S89.31 | DONE | 舆图态势罗盘与移动单点札记 polish | 承接 S89.30 后继续做舆图产品级打磨，已在 `/game/:sessionId/map` 新增只读“舆图态势罗盘”，按近事、人物、后果、可拟四类整理当前公开图层与本地候复草稿；PixiJS runtime tooltip 新增“地点/近事/人物/驿路札记”、可见度条、候复边界和移动端底部札记读法。范围限 React `MapPage`、`InkMapRuntimeBridge`、全局 CSS、客户端 smoke/source canary、brief 与交接文档；不新增 API，不改 `mapRuntimeView` 契约、后端 schema、AI 权限、prompt、provider、SQLite、存档、runtime manifest 或素材 manifest。浏览器仍只消费安全 view、图层状态和本地草稿，不把坐标、layout、点击位置、visual-only effect、NPC anchor 或 tooltip 变成资源、NPC、经济、关系、地图行动、官职、考试或 hidden 裁决依据。实现提交：待回填。 |
 | S89.30 | DONE | 共享案卷材质与错落动效 polish | 承接 S89.29 后继续做跨页产品级视觉打磨，已在 React 壳层新增 `data-polish-atmosphere="s89-30-shared-material-motion"`，并用共享 CSS 增强首页案桌/旧案架、主卷案头、舆图簿、人物卡、囊箧、史册、科举、皇榜、朝议、设置目录、专题层与状态提示的宣纸层次、轻浮起、错落进入、朱印选中、草稿已写入和空态纸底反馈；低动效偏好与系统 `prefers-reduced-motion` 均关闭强动画但保留清晰状态。范围限 `AppShell` 标记、全局 CSS、客户端 smoke/source canary、CSS 构建预算脚本和文档；不新增依赖或素材，不改后端 API/schema、AI 权限、prompt、provider、SQLite、存档、runtime manifest 或素材 manifest。浏览器仍只消费安全 view、route/surface 状态和本地草稿，不裁决资源、身份、交易、NPC 行动、经济、考试、官职、关系或 hidden 信息。实现提交：`76bdb67c`。 |
 | S89.29 | DONE | 史册证据读法与旁注空态 polish | 承接 S89.28 后继续做零 CSS 前端产品化打磨，已在 `/game/:sessionId/archive` 新增“史册追索笺 / 史册证据读法”，把近次入册、公开后果、实体余波、来函线索和拟稿候复边界整理为玩家可读旁注。范围限 React `ArchivePage`、客户端 smoke/source canary、前端测试和文档；不新增 CSS、依赖或素材，不改后端 API/schema、AI 权限、prompt、provider、SQLite、存档、runtime manifest 或素材 manifest。浏览器仍只消费 `eventArchiveView`、`domainConsequenceView`、`npcActiveRequestView.followUpEvidence`、route/local 状态和本地草稿，不裁决资源、身份、交易、NPC 行动、经济、考试、官职、关系或 hidden 信息。实现提交：`4bf06317`。 |
 | S89.28 | DONE | 前端 JS 分包预算稳定 | 承接 S89.27 后 JS 总量仍贴近总预算、且主应用 chunk 已多次靠近 `maxSingleJsBytes: 650_000` 的状态，已通过 Vite `manualChunks` 把 React/React Router、Zustand、Lucide 和其余 npm vendor 拆成稳定 vendor chunks，保护单 chunk 预算和浏览器缓存命中。范围限 `vite.config.mjs`、source canary 和开发文档；不引入 `React.lazy` / route lazy loading，不新增依赖或素材，不改 React 运行时数据来源、玩家可见 UI、后端 API/schema、AI 权限、prompt、provider、SQLite、存档、runtime manifest 或素材 manifest。浏览器仍只消费安全 view、route/surface 状态和本地草稿，不裁决资源、身份、交易、NPC 行动、经济、考试、官职、关系或 hidden 信息。实现提交：`81d0ac0b`。 |
@@ -179,7 +180,8 @@
 - 2026-05-25：S89.28 完成前端 JS 分包预算稳定。当前范围限 `vite.config.mjs`、source canary 和开发文档；Vite 生产构建仅按 `node_modules` 拆出 `vendor-react`、`vendor-state`、`vendor-icons` 与通用 `vendor`，不引入 route lazy loading 或运行时页面行为变更，不新增依赖、素材、CSS 或浏览器裁决权，不改后端 API/schema、AI 权限、prompt、provider、SQLite、存档、runtime manifest 或素材 manifest。
 - 2026-05-25：S89.29 完成史册证据读法与旁注空态 polish。当前范围限 React `ArchivePage`、客户端 smoke/source canary、前端测试、brief 和开发文档；零新增 CSS，不新增浏览器裁决权，不改后端 API/schema、AI 权限、prompt、provider、SQLite、存档、runtime manifest 或素材 manifest。
 - 2026-05-25：S89.30 完成共享案卷材质与错落动效 polish。当前范围限 React `AppShell` 壳层标记、全局 CSS、客户端 smoke/source canary、CSS 构建预算脚本、brief 和开发文档；新增共享宣纸层次、卡片轻浮起、错落进入、朱印选中、草稿已写入和空态纸底反馈，并把低动效偏好与系统 `prefers-reduced-motion` 纳入同一关闭动画边界。不新增依赖或素材，不新增浏览器裁决权，不改后端 API/schema、AI 权限、prompt、provider、SQLite、存档、runtime manifest 或素材 manifest。
-- 前一轮 S88 归档是低风险纯文档维护；S89.3-S89.30 涉及前端代码、样式、验证脚本和文档，提交前按子代理复审规则执行。
+- 2026-05-25：S89.31 完成舆图态势罗盘与移动单点札记 polish。当前范围限 React `MapPage` / `InkMapRuntimeBridge`、全局 CSS、客户端 smoke/source canary、brief 和开发文档；新增罗盘读法、tooltip 读法、移动端底部札记和对应守门，不新增浏览器裁决权，不改后端 API/schema、AI 权限、prompt、provider、SQLite、存档、runtime manifest 或素材 manifest。
+- 前一轮 S88 归档是低风险纯文档维护；S89.3-S89.31 涉及前端代码、样式、验证脚本和文档，提交前按子代理复审规则执行。
 
 ## 6. 最近完整验证口径
 
@@ -261,6 +263,17 @@ S89.8 高清立绘查看器画中所见 polish 验证结果：
 - 已通过 `npm run check:docs-governance`、`node --test test/documentationGovernance.test.js`、`git diff --check`。提交前只读子代理复审已通过，未发现阻断问题；非阻断建议为后续可给题签格补专门材质样式。
 
 ## 7. 近期进度记录
+
+### 2026-05-25：S89.31 舆图态势罗盘与移动单点札记 polish
+
+- 范围：`MapPage` 右侧舆图簿新增带 `data-polish-map-tide="s89-31-map-tide-compass"` 的“舆图态势罗盘”，按近事、人物、后果、可拟四类整理当前公开舆图读法；`InkMapRuntimeBridge` 的 tooltip 新增 `data-polish-tooltip-reading="s89-31-mobile-map-note"`、札记类型、可见度条、候复边界和移动端底部札记布局。`global.css`、`scripts/clientSmoke.js`、`test/reactClientScaffold.test.js` 和 `App.test.tsx` 同步守门。
+- 内容：罗盘四个 tab 只从当前安全 `mapRuntimeView` 派生后的地点/近事、NPC visual-only 活动锚点、公开后果追踪和已预渲染行动草稿中取材；“据罗盘拟稿”只写本地 `map-runtime` 草稿，携带当前安全 target/source refs 作为服务器重建复核 hint。tooltip 会按地点、近事、人物、驿路给出玩家读法和可见度；舆图页与 runtime tooltip 的文本/ref sanitizer 同步过滤 `draftContext`、`schema`、`manifest`、`server adjudication`、`AI read scope`、`proposal boundary`、`safe view`、`resolver` 及其连字符/冒号 ref 形态，不把 tooltip、画面坐标、layout、点击位置、route path、visual-only effect 或 NPC anchor 变成事实。
+- 样式与移动端：新增 `.mapTideCompass*` 与 `.inkMapTooltipReading` 局部样式，补 `s8931MapTideGlow`、`s8931MapNoteIn`、`s8931MapNoteSheetIn`；移动端 tooltip 固定为底部札记 sheet，低动效偏好和系统 `prefers-reduced-motion` 均关闭强动画。未新增依赖、素材、runtime manifest 字段或素材 manifest 字段。
+- 安全边界：本步不新增 API，不改 `mapRuntimeView` 契约、后端 schema、AI 权限、prompt、provider facade、SQLite schema、存档格式、runtime manifest 或素材 manifest。浏览器仍只消费安全 view、图层状态和本地草稿，不请求诊断接口，不读取 raw 存档，不裁决资源、身份、交易、NPC 行动、经济、关系、地图行动、官职、考试、婚姻、弹劾、定罪、背叛或 hidden 信息。
+- Smoke/canary：`App.test.tsx` 覆盖罗盘四类读法、近事/人物罗盘拟稿、局势轴合并 event+npc refs、tooltip 新札记 marker、可见度和候复边界，并把 `schema/manifest/resolver/draftContext/safe-view/proposal-boundary` 等污染 ref 加入 fixture，断言实际 `draftContext` 只保留安全 refs；`scripts/clientSmoke.js` 桌面舆图检查罗盘 marker/tab/copy/草稿反馈与 tooltip 读法，移动端检查罗盘、tooltip fixed bottom-sheet、无横向溢出和安全污染守门；`test/reactClientScaffold.test.js` 新增 S89.31 source canary，确认文本/ref sanitizer 覆盖工程词，且未引入 `/api/game/turn`、诊断、raw/provider/path/key/hidden、`draftContext`、`schema` 或 `manifest` 玩家可见污染。
+- 验证：当前已通过 `node --check scripts/clientSmoke.js`、`npm run typecheck:client`、`node --test test/reactClientScaffold.test.js`（65 tests）、focused `npx vitest --config vitest.config.mjs run client/src/__tests__/App.test.tsx -t "map renderer" --pool=vmThreads --fileParallelism=false --maxWorkers=1`、完整串行客户端套件 `npx vitest --config vitest.config.mjs run --pool=vmThreads --fileParallelism=false --maxWorkers=1`（6 files / 134 tests）、`npm run qa:runtime-manifest`、`npm run build:client`、`npm run budget:client`、直接 browser smoke `node scripts/clientSmoke.js`、`npm run check:docs-governance`、`node --test test/documentationGovernance.test.js` 和 `git diff --check`。`npm run test:client` 本轮复现既有 Vitest fork worker 启动超时：4 files / 119 tests 已通过，但 `client/src/assets/assetRegistry.test.ts` 与 `client/src/api/qianqiuClient.test.ts` worker 未启动；已用上述串行池完整复核同一客户端套件。`npm run smoke:browser` 串联 wrapper 完成 manifest/build/budget 后，在 browser 段首页 `networkidle` 等待超时；已用直接 `node scripts/clientSmoke.js` 通过同一浏览器段。预算输出为 `JS 643.0 KiB / CSS 111.4 KiB / fonts 26288.4 KiB / client-assets 27042.9 KiB`；Vite 仍输出既有 `/assets/ui/...` runtime asset resolution warning 和 plugin timing warning，npm 仍输出既有 `globalignorefile` warning。
+- 复审：开工只读子代理 Euler 建议将本步收窄为“舆图态势罗盘与移动单点札记 polish”，保持前端-only、draft-only、安全 view-only，并提醒 tooltip 与罗盘不得扩大 `mapRuntimeView` 契约或服务器裁决权；本轮按建议实施。提交前只读复审 Confucius 首轮发现 `draftContext/schema/manifest/server adjudication/AI read scope/proposal boundary/safe view/resolver` 未进入舆图页与 runtime tooltip sanitizer、source canary 也未完全守住；本轮已补文本/ref 双层清洗、污染 ref fixture 和 source canary。Confucius 复核通过，未发现新的阻断问题；非阻断建议为后续可另补 label/summary 污染 UI fixture，当前 sanitizer/ref guard 与 `draftContext` 结果断言已覆盖本轮风险。
+- 提交：实现提交待回填。
 
 ### 2026-05-25：S89.30 共享案卷材质与错落动效 polish
 

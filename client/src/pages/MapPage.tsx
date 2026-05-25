@@ -41,6 +41,21 @@ type MapSituationEntry = {
   readonly detail: string;
 };
 
+type MapCompassFocus = "events" | "people" | "consequence" | "drafts";
+
+type MapCompassEntry = {
+  readonly id: MapCompassFocus;
+  readonly label: string;
+  readonly title: string;
+  readonly meta: string;
+  readonly detail: string;
+  readonly tone: "event" | "people" | "consequence" | "drafts";
+  readonly draftKind?: MapActionDraftKind;
+  readonly draftText?: string;
+  readonly targetRefs: readonly string[];
+  readonly sourceRefs: readonly string[];
+};
+
 const mapLayerLabels: Record<MapLayerKey, string> = {
   places: "地点",
   routes: "驿路",
@@ -51,6 +66,17 @@ const defaultVisibleLayers: Record<MapLayerKey, boolean> = {
   places: true,
   routes: true,
   events: true
+};
+
+const fallbackMapCompassEntry: MapCompassEntry = {
+  id: "events",
+  label: "近事",
+  title: "暂无警势",
+  meta: "舆图眼下平静",
+  detail: "罗盘只整理公开线索，案卷未载者不补造。",
+  tone: "event",
+  targetRefs: [],
+  sourceRefs: []
 };
 
 const mapDomainConsequenceSourceTypes = ["city_policy", "military_diplomacy", "judicial_case"] as const;
@@ -72,6 +98,14 @@ const unsafeMapTextFragments = [
   "DEEPSEEK" + "_API" + "_KEY",
   "MIMO" + "_API" + "_KEY",
   "ANTHROPIC" + "_API" + "_KEY",
+  "draft" + "Context",
+  "schema",
+  "manifest",
+  "server" + " adjudication",
+  "AI" + " read scope",
+  "proposal" + " boundary",
+  "safe" + " view",
+  "resolver",
   "完整" + "提示词",
   "提示" + "词",
   "本地" + "路径",
@@ -92,15 +126,32 @@ const unsafeMapRefTokens = new Set([
   "coord",
   "coords",
   "x",
-  "y"
+  "y",
+  "draftcontext",
+  "schema",
+  "manifest",
+  "serveradjudication",
+  "aireadscope",
+  "proposalboundary",
+  "safeview",
+  "resolver"
 ]);
+const unsafeMapRefPrefixPattern = /^(?:layout|layoutpath|mapbounds|viewporthint|position|coordinate|coordinates|coord|coords|draft[-_.:]?context|schema|manifest|server[-_.:]?adjudication|ai[-_.:]?read[-_.:]?scope|proposal[-_.:]?boundary|safe[-_.:]?view|resolver)[:_.-]/i;
 const localMapPagePathPattern = /(?:^|[\s"'`(（:：,;，。；、【《“‘])(?:[a-z]:[\\/]|~[\\/]|\.{1,2}[\\/]|\/(?:home|Users|private|mnt|tmp|var|etc|usr|opt|workspace|workspaces|root|data|src|client|server|dist|public|node_modules)(?:[\\/]|$)|(?:data|src|client|server|dist|public|node_modules)[\\/][^\s，。；、]+)/i;
 
 function safeMapPageText(value: unknown, fallback: string, maxLength = 80) {
   const text = typeof value === "string" && value.trim() ? value.trim() : fallback;
   const normalized = text.toLowerCase();
+  const compact = normalized.replace(/[-_.:\s]/g, "");
   if (localMapPagePathPattern.test(text) || /(?:sk|tp)-[a-z0-9_-]{6,}/i.test(text)) return fallback;
-  if (unsafeMapTextFragments.some((fragment) => normalized.includes(fragment.toLowerCase()))) return fallback;
+  if (
+    unsafeMapTextFragments.some((fragment) => {
+      const lowerFragment = fragment.toLowerCase();
+      return normalized.includes(lowerFragment) || compact.includes(lowerFragment.replace(/[-_.:\s]/g, ""));
+    })
+  ) {
+    return fallback;
+  }
   return rewritePlayerFacingWorldText(text).slice(0, maxLength);
 }
 
@@ -109,7 +160,7 @@ function safeMapPageRefId(value: unknown, maxLength = 96) {
   const compact = text.toLowerCase().replace(/[-_.:]/g, "");
   if (
     unsafeMapRefTokens.has(compact) ||
-    /^(layout|layoutpath|mapbounds|viewporthint|position|coordinate|coordinates|coord|coords)[:_.-]/i.test(text) ||
+    unsafeMapRefPrefixPattern.test(text) ||
     /^[xy][:_\-.]?\d/i.test(text)
   ) {
     return "";
@@ -410,6 +461,73 @@ function getMapSituationEntries({
   ];
 }
 
+function getMapCompassEntries({
+  visibleMapEvents,
+  visibleNpcActivityAnchors,
+  visibleMapActionEntries,
+  visibleDomainConsequences
+}: {
+  readonly visibleMapEvents: ReturnType<typeof getMapEvents>;
+  readonly visibleNpcActivityAnchors: ReturnType<typeof getNpcActivityAnchors>;
+  readonly visibleMapActionEntries: readonly MapActionEntry[];
+  readonly visibleDomainConsequences: ReturnType<typeof getVisibleDomainConsequences>;
+}): MapCompassEntry[] {
+  const topEvent = visibleMapEvents[0];
+  const topNpcActivity = visibleNpcActivityAnchors[0];
+  const topConsequence = visibleDomainConsequences[0];
+  const topDraft = visibleMapActionEntries[0];
+  return [
+    {
+      id: "events",
+      label: "近事",
+      title: topEvent?.label ?? "暂无警势",
+      meta: topEvent ? `${topEvent.targetLabel} · 警势 ${topEvent.severity}` : "近事图层眼下平静",
+      detail: topEvent?.summary ?? "未见新的公开近事，仍可保留地点与驿路读法。",
+      tone: "event",
+      draftText: topEvent
+        ? `据舆图罗盘近事，先核「${topEvent.targetLabel}」附近的「${topEvent.label}」，整理人证、驿路与官府文书后回主卷呈上候复。`
+        : undefined,
+      targetRefs: topEvent?.targetRef ? [topEvent.targetRef] : [],
+      sourceRefs: topEvent?.sourceRefs ?? []
+    },
+    {
+      id: "people",
+      label: "人物",
+      title: topNpcActivity?.label ?? "暂无人物锚点",
+      meta: topNpcActivity ? `${topNpcActivity.targetLabel} · 可见度 ${topNpcActivity.severity}` : "人物动向未在图上聚集",
+      detail: topNpcActivity?.summary ?? "人物线索只取公开来函、交游与地点锚点，未载者不补造。",
+      tone: "people",
+      draftText: topNpcActivity
+        ? `据舆图罗盘人物动向，先查「${topNpcActivity.label}」与「${topNpcActivity.targetLabel}」的公开线索，回主卷呈上候复。`
+        : undefined,
+      targetRefs: topNpcActivity?.targetRef ? [topNpcActivity.targetRef] : [],
+      sourceRefs: topNpcActivity?.sourceRefs ?? []
+    },
+    {
+      id: "consequence",
+      label: "后果",
+      title: topConsequence?.title ?? "暂无公开后果",
+      meta: topConsequence ? `${topConsequence.kindLabel} · ${topConsequence.statusLabel}` : "后果追踪未见舆图牵连",
+      detail: topConsequence ? "此条只作舆图旁读，后续仍以主卷回音为准。" : "案卷未载公开后果，舆图不补造余波。",
+      tone: "consequence",
+      targetRefs: [],
+      sourceRefs: []
+    },
+    {
+      id: "drafts",
+      label: "可拟",
+      title: topDraft?.label ?? "暂无可拟行动",
+      meta: topDraft ? `${topDraft.kindLabel} · ${visibleMapActionEntries.length} 条可写入` : "单点或主卷可另行落笔",
+      detail: topDraft?.summary ?? "可拟行动未出现时，罗盘只作读法提示，不生成行动事实。",
+      tone: "drafts",
+      draftKind: topDraft?.draftKind,
+      draftText: topDraft?.text,
+      targetRefs: topDraft?.targetRef ? [topDraft.targetRef] : [],
+      sourceRefs: topDraft?.sourceRefs ?? []
+    }
+  ];
+}
+
 function joinMapLayerLabels(layers: readonly MapLayerKey[]) {
   return layers.length ? layers.map((layer) => mapLayerLabels[layer]).join("、") : "无";
 }
@@ -418,6 +536,7 @@ export function MapPage() {
   const { sessionId = "s74-preview" } = useParams();
   const [visibleLayers, setVisibleLayers] = useState<Record<MapLayerKey, boolean>>(defaultVisibleLayers);
   const [lastWrittenMapDraftId, setLastWrittenMapDraftId] = useState<string | null>(null);
+  const [mapCompassFocus, setMapCompassFocus] = useState<MapCompassFocus>("events");
   const currentSession = useGameSessionStore((state) => state.currentSession);
   const status = useGameSessionStore((state) => state.status);
   const openSurfaceForSession = useUiStateStore((state) => state.openSurfaceForSession);
@@ -471,13 +590,32 @@ export function MapPage() {
     visibleMapActionEntries,
     visibleDomainConsequences
   });
+  const mapCompassEntries = getMapCompassEntries({
+    visibleMapEvents,
+    visibleNpcActivityAnchors,
+    visibleMapActionEntries,
+    visibleDomainConsequences
+  });
+  const selectedMapCompassEntry = mapCompassEntries.find((entry) => entry.id === mapCompassFocus) ?? mapCompassEntries[0] ?? fallbackMapCompassEntry;
   const archiveHref = routeSessionSupported ? `/game/${sessionId}/archive` : "/";
   const gameHref = routeSessionSupported ? `/game/${sessionId}` : "/";
 
   useEffect(() => {
     setVisibleLayers(defaultVisibleLayers);
     setLastWrittenMapDraftId(null);
+    setMapCompassFocus("events");
   }, [sessionId]);
+
+  useEffect(() => {
+    if (allLayersHidden) return;
+    if (mapCompassFocus === "events" && !visibleMapEvents.length && visibleNpcActivityAnchors.length) {
+      setMapCompassFocus("people");
+      return;
+    }
+    if (mapCompassFocus === "people" && !visibleNpcActivityAnchors.length && visibleMapEvents.length) {
+      setMapCompassFocus("events");
+    }
+  }, [allLayersHidden, mapCompassFocus, visibleMapEvents.length, visibleNpcActivityAnchors.length]);
 
   function toggleLayer(layer: MapLayerKey) {
     setVisibleLayers((current) => ({ ...current, [layer]: !current[layer] }));
@@ -533,6 +671,15 @@ export function MapPage() {
     writeMapActionDraft(
       `据舆图局势，先核「${title}」相关地点、人物与公开后果，整理可查线索后回主卷呈上候复。`,
       buildMapDraftContext("map_event_action", targetRefs, sourceRefs, true)
+    );
+  }
+
+  function draftFromMapCompass(entry: MapCompassEntry) {
+    if (!entry.draftText) return;
+    setLastWrittenMapDraftId(`s89-31-map-compass-${entry.id}`);
+    writeMapActionDraft(
+      entry.draftText,
+      buildMapDraftContext(entry.id === "drafts" ? entry.draftKind ?? "map_ref_action" : "map_event_action", entry.targetRefs, entry.sourceRefs, true)
     );
   }
 
@@ -675,6 +822,55 @@ export function MapPage() {
               ))}
             </dl>
             <p className="mapSituationBoundary">局势轴只合读公开图层、人物锚点和后果追踪；坐标、画面层级与视觉特效不进入主卷裁决。</p>
+          </section>
+          <section
+            className="mapTideCompass"
+            aria-label="舆图态势罗盘"
+            data-polish-map-tide="s89-31-map-tide-compass"
+            data-compass-focus={selectedMapCompassEntry.id}
+          >
+            <div className="mapTideCompassHeader">
+              <div>
+                <p className="eyebrow">舆图态势罗盘</p>
+                <h3>先看何处</h3>
+              </div>
+              <span>{allLayersHidden ? "三层暂收" : `显 ${activeLayerCount} 层`}</span>
+            </div>
+            <div className="mapTideCompassTabs" role="tablist" aria-label="舆图态势焦点">
+              {mapCompassEntries.map((entry) => (
+                <button
+                  key={entry.id}
+                  type="button"
+                  role="tab"
+                  aria-selected={selectedMapCompassEntry.id === entry.id}
+                  className="mapTideCompassTab"
+                  data-compass-tone={entry.tone}
+                  onClick={() => setMapCompassFocus(entry.id)}
+                >
+                  <span>{entry.label}</span>
+                  <strong>{entry.meta}</strong>
+                </button>
+              ))}
+            </div>
+            <article className="mapTideCompassReadout" data-compass-tone={selectedMapCompassEntry.tone}>
+              <span>{selectedMapCompassEntry.label}</span>
+              <strong>{selectedMapCompassEntry.title}</strong>
+              <p>{selectedMapCompassEntry.detail}</p>
+              <div className="mapTideCompassFooter">
+                <em>{selectedMapCompassEntry.draftText ? "可写入本地草稿，仍须主卷回音。" : "只作卷上读法，不生成行动事实。"}</em>
+                {selectedMapCompassEntry.draftText ? (
+                  <button
+                    className="paperButton"
+                    type="button"
+                    disabled={!routeSessionSupported || allLayersHidden}
+                    data-draft-state={lastWrittenMapDraftId === `s89-31-map-compass-${selectedMapCompassEntry.id}` ? "written" : "idle"}
+                    onClick={() => draftFromMapCompass(selectedMapCompassEntry)}
+                  >
+                    据罗盘拟稿
+                  </button>
+                ) : null}
+              </div>
+            </article>
           </section>
           <section className="mapActionDeck" aria-labelledby="map-action-title">
             <div>

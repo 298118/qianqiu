@@ -45,6 +45,11 @@ function stripSafeGuardPatterns(source) {
     .replace(/const unsafePeopleTextFragments[\s\S]*?\] as const;\r?\n/, "")
     .replace(/const unsafeArchiveFragments[\s\S]*?\] as const;\r?\n/, "")
     .replace(/const unsafeMapTextFragments[\s\S]*?\] as const;\r?\n/, "")
+    .replace(/const unsafeMapRuntimeTextFragments[\s\S]*?\] as const;\r?\n/, "")
+    .replace(/const unsafeMapRefTokens = new Set\([\s\S]*?\]\);\r?\n/, "")
+    .replace(/const unsafeMapRuntimeRefTokens = new Set\([\s\S]*?\]\);\r?\n/, "")
+    .replace(/const unsafeMapRefPrefixPattern = .*?;\r?\n/, "")
+    .replace(/const unsafeMapRuntimeRefPrefixPattern = .*?;\r?\n/, "")
     .replace(/const unsafeAiSettingsFragments[\s\S]*?\] as const;\r?\n/, "")
     .replace(/const unsafeGameShellFragments[\s\S]*?\] as const;\r?\n/, "")
     .replace(/const unsafeMagistrateFragments[\s\S]*?\] as const;\r?\n/, "")
@@ -1612,6 +1617,75 @@ test("S89.21 map situation reader stays player-facing and draft-only", () => {
   assert.doesNotMatch(
     mapPageWithoutGuard,
     /provider payload|raw audit|hiddenNotes|OPENAI_API_KEY|DEEPSEEK_API_KEY|MIMO_API_KEY|ANTHROPIC_API_KEY|完整提示词|本地路径|密钥/
+  );
+});
+
+test("S89.31 map tide compass and mobile tooltip stay draft-only and safe", () => {
+  const mapPageSource = readText("client/src/pages/MapPage.tsx");
+  const bridgeSource = readText("client/src/components/InkMapRuntimeBridge.tsx");
+  const styleSource = readText("client/src/styles/global.css");
+  const appTestSource = readText("client/src/__tests__/App.test.tsx");
+  const clientSmokeSource = readText("scripts/clientSmoke.js");
+  const runtimeCombined = stripSafeGuardPatterns(`${mapPageSource}\n${bridgeSource}\n${styleSource}`);
+  const unsafeMapList = mapPageSource.match(/const unsafeMapTextFragments[\s\S]*?\] as const;/)?.[0] || "";
+  const unsafeBridgeList = bridgeSource.match(/const unsafeMapRuntimeTextFragments[\s\S]*?\] as const;/)?.[0] || "";
+  const unsafeMapRefGuards = [
+    mapPageSource.match(/const unsafeMapRefTokens = new Set\([\s\S]*?\]\);/)?.[0] || "",
+    mapPageSource.match(/const unsafeMapRefPrefixPattern = .*?;/)?.[0] || "",
+    bridgeSource.match(/const unsafeMapRuntimeRefTokens = new Set\([\s\S]*?\]\);/)?.[0] || "",
+    bridgeSource.match(/const unsafeMapRuntimeRefPrefixPattern = .*?;/)?.[0] || ""
+  ].join("\n");
+
+  assert.match(mapPageSource, /data-polish-map-tide="s89-31-map-tide-compass"/);
+  assert.match(mapPageSource, /getMapCompassEntries/);
+  assert.match(mapPageSource, /mapCompassFocus/);
+  assert.match(mapPageSource, /draftFromMapCompass/);
+  assert.match(mapPageSource, /舆图态势罗盘/);
+  assert.match(mapPageSource, /据罗盘拟稿/);
+  assert.match(mapPageSource, /只作卷上读法，不生成行动事实/);
+  assert.match(mapPageSource, /buildMapDraftContext\(entry\.id === "drafts" \? entry\.draftKind/);
+  assert.match(bridgeSource, /data-polish-tooltip-reading="s89-31-mobile-map-note"/);
+  assert.match(bridgeSource, /getMapRuntimeTooltipTone/);
+  assert.match(bridgeSource, /getMapRuntimeTooltipReading/);
+  assert.match(bridgeSource, /地点札记/);
+  assert.match(bridgeSource, /人物札记/);
+  assert.match(bridgeSource, /驿路札记/);
+  assert.match(bridgeSource, /只作舆图旁读，不生成行动事实/);
+  assert.match(styleSource, /\.mapTideCompass/);
+  assert.match(styleSource, /\.mapTideCompassTabs/);
+  assert.match(styleSource, /\.mapTideCompassReadout/);
+  assert.match(styleSource, /\.inkMapTooltipReading/);
+  assert.match(styleSource, /@keyframes s8931MapTideGlow/);
+  assert.match(styleSource, /@keyframes s8931MapNoteIn/);
+  assert.match(styleSource, /@keyframes s8931MapNoteSheetIn/);
+  assert.match(styleSource, /\.appShell\[data-motion="reduced"\][\s\S]*\.mapTideCompass::before/);
+  assert.match(styleSource, /@media \(prefers-reduced-motion: reduce\)[\s\S]*\.inkMapTooltip::before/);
+  assert.match(appTestSource, /s89-31-map-tide-compass/);
+  assert.match(appTestSource, /据舆图罗盘人物动向/);
+  assert.match(clientSmokeSource, /S89\.31 map tide compass/);
+  assert.match(clientSmokeSource, /s89-31-mobile-map-note/);
+  for (const guardSource of [unsafeMapList, unsafeBridgeList]) {
+    assert.match(guardSource, /"draft"\s*\+\s*"Context"/);
+    assert.match(guardSource, /"schema"/);
+    assert.match(guardSource, /"manifest"/);
+    assert.match(guardSource, /"server"\s*\+\s*" adjudication"/);
+    assert.match(guardSource, /"AI"\s*\+\s*" read scope"/);
+    assert.match(guardSource, /"proposal"\s*\+\s*" boundary"/);
+    assert.match(guardSource, /"safe"\s*\+\s*" view"/);
+    assert.match(guardSource, /"resolver"/);
+  }
+  assert.match(unsafeMapRefGuards, /draftcontext/);
+  assert.match(unsafeMapRefGuards, /schema/);
+  assert.match(unsafeMapRefGuards, /manifest/);
+  assert.match(unsafeMapRefGuards, /server\[-_\.:\]\?adjudication/);
+  assert.match(unsafeMapRefGuards, /ai\[-_\.:\]\?read\[-_\.:\]\?scope/);
+  assert.match(unsafeMapRefGuards, /proposal\[-_\.:\]\?boundary/);
+  assert.match(unsafeMapRefGuards, /safe\[-_\.:\]\?view/);
+  assert.match(unsafeMapRefGuards, /resolver/);
+  assert.doesNotMatch(`${mapPageSource}\n${bridgeSource}`, /submitTurn|\/api\/game\/turn|qianqiuApi|localStorage|sessionStorage|dangerouslySetInnerHTML/);
+  assert.doesNotMatch(
+    runtimeCombined,
+    /\/api\/game\/state|\/api\/dev\/session-diagnostics|ink-ui-manifest|data\/sessions|raw audit|provider payload|hiddenNotes|OPENAI_API_KEY|DEEPSEEK_API_KEY|MIMO_API_KEY|ANTHROPIC_API_KEY|server adjudication|AI read scope|proposal boundary|safe view|resolver|完整提示词|本地路径|密钥/
   );
 });
 

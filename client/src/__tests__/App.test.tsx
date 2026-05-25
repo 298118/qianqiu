@@ -6344,7 +6344,7 @@ describe("S74.1 React client shell", () => {
               label: "贡院",
               summary: "号舍灯火未歇。",
               layout: { x: 0.5, y: 0.5 },
-              sourceRefs: ["mapContextView:geo:exam-hall", "layout", "mapBounds:0:1", "x"],
+              sourceRefs: ["mapContextView:geo:exam-hall", "layout", "mapBounds:0:1", "x", "schema:map", "manifest:runtime", "resolver:map", "draftContext:map"],
               actionDraftRefs: ["draft-exam-road"]
             },
             {
@@ -6359,7 +6359,7 @@ describe("S74.1 React client shell", () => {
             mapEntityRef: "map:route:exam-road",
             label: "贡院驿路",
             summary: "通往贡院的公开驿路。",
-            sourceRefs: ["mapContextView:route:exam-road", "viewportHint", "position:12:13"],
+            sourceRefs: ["mapContextView:route:exam-road", "viewportHint", "position:12:13", "safe-view:route", "proposal-boundary:route"],
             controlRefs: ["geo:exam-hall", "coordinates:0:0"],
             layoutPath: [[0.42, 0.52], [0.5, 0.5]],
             actionDraftRefs: ["draft-route-exam"]
@@ -6369,7 +6369,16 @@ describe("S74.1 React client shell", () => {
             label: "科场近讯",
             kind: "exam",
             severity: 0.78,
-            sourceRefs: ["eventArchiveView:exam-brief", "coordinates:0:0", "y"]
+            sourceRefs: ["eventArchiveView:exam-brief", "coordinates:0:0", "y", "schema:event", "manifest:event", "server-adjudication:event"]
+          }],
+          npcActivityAnchors: [{
+            id: "npc-anchor-exam",
+            targetRef: "geo:exam-hall",
+            label: "同年问讯",
+            summary: "同年托人问贡院动静。",
+            kind: "npc_follow_up",
+            severity: 0.66,
+            sourceRefs: ["npcActiveRequestView:req-1", "layoutPath", "resolver:npc", "AI-read-scope:npc", "draftContext:npc"]
           }],
           actionDrafts: {
             "draft-exam-road": {
@@ -6384,7 +6393,7 @@ describe("S74.1 React client shell", () => {
               targetRef: "map:route:exam-road",
               label: "草拟循贡院驿路",
               actionText: "循贡院驿路行进，沿途查问考期与驿传。",
-              sourceRefs: ["mapContextView:route:exam-road", "layoutPath", "x:0.5"],
+              sourceRefs: ["mapContextView:route:exam-road", "layoutPath", "x:0.5", "schema:route", "manifest:route", "resolver:route"],
               requiresServerTurn: true
             },
             "draft-polluted": {
@@ -6428,22 +6437,31 @@ describe("S74.1 React client shell", () => {
     expect(screen.getByText("舆图行动")).toBeTruthy();
     expect(screen.getByText("草拟循贡院驿路")).toBeTruthy();
     expect(screen.getByText("公开近事")).toBeTruthy();
-    expect(screen.getByText("科场近讯")).toBeTruthy();
+    expect(screen.getAllByText("科场近讯").length).toBeGreaterThan(0);
     expect(screen.getByText("山河局势轴")).toBeTruthy();
     expect(screen.getByText("本卷读法")).toBeTruthy();
     expect(screen.getByText("科场近讯 · 警势 78")).toBeTruthy();
     expect(screen.getByText("边镇调粮余波 · 已记入后果追踪")).toBeTruthy();
     expect(screen.getByText("2 条行动")).toBeTruthy();
+    const mapCompass = document.querySelector("[data-polish-map-tide='s89-31-map-tide-compass']") as HTMLElement;
+    expect(mapCompass).toBeTruthy();
+    expect(within(mapCompass).getByText("舆图态势罗盘")).toBeTruthy();
+    expect(within(mapCompass).getByText("先看何处")).toBeTruthy();
+    expect(within(mapCompass).getByText("贡院 · 警势 78")).toBeTruthy();
+    expect(within(mapCompass).getByText("人物")).toBeTruthy();
+    expect(within(mapCompass).getByText("贡院 · 可见度 66")).toBeTruthy();
+    expect(within(mapCompass).getByText("可写入本地草稿，仍须主卷回音。")).toBeTruthy();
     expect(screen.getByText("地点、驿路、近事三层全开；筛选只改卷上显示，不改变案卷事实。")).toBeTruthy();
     expect(screen.getByText(/已接入 2 处地点、1 条路线、1 项近事/)).toBeTruthy();
     expect(document.querySelector(".mapFullScreen")?.getAttribute("data-polish-map")).toBe("s89-7-layer-tooltip");
     expect(document.querySelector("[data-polish-map-situation='s89-21-situation-index']")).toBeTruthy();
     expect(document.querySelector("[data-polish-map-reading='s89-21-situation-reader']")).toBeTruthy();
-    fireEvent.click(screen.getByRole("button", { name: "据局势拟稿" }));
+    const unsafeMapDraftContextPattern = /layout|layoutPath|mapBounds|viewportHint|coordinates|position|"x"|"y"|C:\\|path|provider|raw|draftContext|schema|manifest|server[- ]adjudication|AI[- ]read[- ]scope|proposal[- ]boundary|safe[- ]view|resolver/i;
+    fireEvent.click(within(mapCompass).getByRole("button", { name: "据罗盘拟稿" }));
     expect(useUiStateStore.getState().actionDraft).toMatchObject({
       source: "map-runtime",
       targetPage: "game",
-      text: "据舆图局势，先核「科场近讯」相关地点、人物与公开后果，整理可查线索后回主卷呈上候复。",
+      text: "据舆图罗盘近事，先核「贡院」附近的「科场近讯」，整理人证、驿路与官府文书后回主卷呈上候复。",
       draftContext: {
         surfaceId: "map-runtime",
         draftKind: "map_event_action",
@@ -6455,10 +6473,54 @@ describe("S74.1 React client shell", () => {
         status: "client_hint"
       }
     });
-    expect(JSON.stringify(useUiStateStore.getState().actionDraft?.draftContext || {})).not.toMatch(/layout|layoutPath|mapBounds|viewportHint|coordinates|position|"x"|"y"|C:\\|path|provider|raw/i);
+    expect(JSON.stringify(useUiStateStore.getState().actionDraft?.draftContext || {})).not.toMatch(unsafeMapDraftContextPattern);
+    fireEvent.click(within(mapCompass).getByRole("tab", { name: /人物.*可见度 66/ }));
+    expect(mapCompass.getAttribute("data-compass-focus")).toBe("people");
+    expect(within(mapCompass).getByText("同年问讯")).toBeTruthy();
+    expect(within(mapCompass).getByText("同年托人问贡院动静。")).toBeTruthy();
+    fireEvent.click(within(mapCompass).getByRole("button", { name: "据罗盘拟稿" }));
+    expect(useUiStateStore.getState().actionDraft).toMatchObject({
+      source: "map-runtime",
+      targetPage: "game",
+      text: "据舆图罗盘人物动向，先查「同年问讯」与「贡院」的公开线索，回主卷呈上候复。",
+      draftContext: {
+        surfaceId: "map-runtime",
+        draftKind: "map_event_action",
+        sourceView: "mapRuntimeView",
+        evidenceRefs: ["npcActiveRequestView:req-1", "geo:exam-hall"],
+        sourceRefs: ["npcActiveRequestView:req-1"],
+        targetRefs: ["geo:exam-hall"],
+        requiresServerTurn: true,
+        status: "client_hint"
+      }
+    });
+    expect(JSON.stringify(useUiStateStore.getState().actionDraft?.draftContext || {})).not.toMatch(unsafeMapDraftContextPattern);
+    fireEvent.click(screen.getByRole("button", { name: "据局势拟稿" }));
+    expect(useUiStateStore.getState().actionDraft).toMatchObject({
+      source: "map-runtime",
+      targetPage: "game",
+      text: "据舆图局势，先核「科场近讯」相关地点、人物与公开后果，整理可查线索后回主卷呈上候复。",
+      draftContext: {
+        surfaceId: "map-runtime",
+        draftKind: "map_event_action",
+        sourceView: "mapRuntimeView",
+        evidenceRefs: ["eventArchiveView:exam-brief", "npcActiveRequestView:req-1", "geo:exam-hall"],
+        sourceRefs: ["eventArchiveView:exam-brief", "npcActiveRequestView:req-1"],
+        targetRefs: ["geo:exam-hall"],
+        requiresServerTurn: true,
+        status: "client_hint"
+      }
+    });
+    expect(JSON.stringify(useUiStateStore.getState().actionDraft?.draftContext || {})).not.toMatch(unsafeMapDraftContextPattern);
     fireEvent.click(screen.getByRole("button", { name: "贡院" }));
     expect(screen.getAllByText("号舍灯火未歇。").length).toBeGreaterThan(0);
     expect(document.querySelector(".inkMapTooltip")?.getAttribute("data-polish-tooltip")).toBe("s89-7-map-note");
+    expect(document.querySelector(".inkMapTooltip")?.getAttribute("data-polish-tooltip-reading")).toBe("s89-31-mobile-map-note");
+    expect(document.querySelector(".inkMapTooltip")?.getAttribute("data-tooltip-tone")).toBe("place");
+    expect(screen.getByText("地点札记")).toBeTruthy();
+    expect(screen.getByText("公开地点")).toBeTruthy();
+    expect(screen.getByText("可见度 42")).toBeTruthy();
+    expect(screen.getByText("可写入本地草稿，仍回主卷候复。")).toBeTruthy();
     expect(screen.getByText("单点札记 · 写入后仍须回主卷候复")).toBeTruthy();
 
     fireEvent.click(screen.getByRole("button", { name: "写入赴试草稿" }));
@@ -6478,7 +6540,7 @@ describe("S74.1 React client shell", () => {
         status: "client_hint"
       }
     });
-    expect(JSON.stringify(useUiStateStore.getState().actionDraft?.draftContext || {})).not.toMatch(/layout|layoutPath|mapBounds|viewportHint|coordinates|position|"x"|"y"|C:\\|path|provider|raw/i);
+    expect(JSON.stringify(useUiStateStore.getState().actionDraft?.draftContext || {})).not.toMatch(unsafeMapDraftContextPattern);
 
     fireEvent.click(screen.getByRole("button", { name: "写入行动：草拟循贡院驿路" }));
     expect(useUiStateStore.getState().actionDraft).toMatchObject({
@@ -6498,7 +6560,7 @@ describe("S74.1 React client shell", () => {
       "geo:exam-hall",
       "map:route:exam-road"
     ]);
-    expect(JSON.stringify(useUiStateStore.getState().actionDraft?.draftContext || {})).not.toMatch(/layout|layoutPath|mapBounds|viewportHint|coordinates|position|"x"|"y"|C:\\|path|provider|raw/i);
+    expect(JSON.stringify(useUiStateStore.getState().actionDraft?.draftContext || {})).not.toMatch(unsafeMapDraftContextPattern);
 
     fireEvent.click(screen.getByRole("button", { name: "据此拟稿" }));
     expect(useUiStateStore.getState().actionDraft).toMatchObject({
@@ -6516,7 +6578,7 @@ describe("S74.1 React client shell", () => {
         status: "client_hint"
       }
     });
-    expect(JSON.stringify(useUiStateStore.getState().actionDraft?.draftContext || {})).not.toMatch(/layout|layoutPath|mapBounds|viewportHint|coordinates|position|"x"|"y"|C:\\|path|provider|raw/i);
+    expect(JSON.stringify(useUiStateStore.getState().actionDraft?.draftContext || {})).not.toMatch(unsafeMapDraftContextPattern);
 
     expect(screen.getByText("舆图后果追踪")).toBeTruthy();
     expect(screen.getByText("边镇调粮余波")).toBeTruthy();

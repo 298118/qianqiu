@@ -3136,6 +3136,11 @@ async function runClientSmoke(options = {}) {
         situationMarker: document.querySelector("[data-polish-map-situation]")?.getAttribute("data-polish-map-situation") || "",
         readingMarker: document.querySelector("[data-polish-map-reading]")?.getAttribute("data-polish-map-reading") || "",
         situationText: document.querySelector("[data-polish-map-situation]")?.textContent || "",
+        tideMarker: document.querySelector("[data-polish-map-tide]")?.getAttribute("data-polish-map-tide") || "",
+        tideFocus: document.querySelector("[data-polish-map-tide]")?.getAttribute("data-compass-focus") || "",
+        tideText: document.querySelector("[data-polish-map-tide]")?.textContent || "",
+        tideTabCount: document.querySelectorAll(".mapTideCompassTab[role='tab']").length,
+        tideDraftButtonCount: document.querySelectorAll(".mapTideCompass .paperButton").length,
         hasActionDeck: Boolean(document.querySelector(".mapActionDeck")),
         hasArchiveJump: [...document.querySelectorAll(".mapFullScreen a")].some((link) => (link.textContent || "").includes("入局势簿")),
         hasBoundary: (document.body.innerText || "").includes("地图显示坐标只用于画面排布"),
@@ -3153,6 +3158,15 @@ async function runClientSmoke(options = {}) {
     if (mapRuntime.situationMarker !== "s89-21-situation-index" || mapRuntime.readingMarker !== "s89-21-situation-reader" || !/山河局势轴|本卷读法|据局势拟稿|不进入主卷裁决/.test(mapRuntime.situationText)) {
       throw new Error(`S89.21 map situation index missing safe player-facing copy: ${JSON.stringify(mapRuntime)}`);
     }
+    if (
+      mapRuntime.tideMarker !== "s89-31-map-tide-compass" ||
+      !/events|people|consequence|drafts/.test(mapRuntime.tideFocus) ||
+      mapRuntime.tideTabCount !== 4 ||
+      !/舆图态势罗盘|先看何处|近事|人物|后果|可拟|只作卷上读法|本地草稿/.test(mapRuntime.tideText) ||
+      mapRuntime.tideDraftButtonCount < 1
+    ) {
+      throw new Error(`S89.31 map tide compass missing safe player-facing copy: ${JSON.stringify(mapRuntime)}`);
+    }
     if (!/三层全开|筛选只改卷上显示/.test(mapRuntime.layerSummary)) {
       throw new Error(`S89.7 map layer summary missing safe player-facing copy: ${JSON.stringify(mapRuntime)}`);
     }
@@ -3167,6 +3181,18 @@ async function runClientSmoke(options = {}) {
     }
     if (mapRuntime.forbiddenText.length) {
       throw new Error(`React map runtime leaked forbidden text: ${mapRuntime.forbiddenText.join(", ")}`);
+    }
+    const tideDraftButton = page.locator(".mapTideCompass .paperButton").first();
+    if (await tideDraftButton.count()) {
+      await tideDraftButton.click();
+      const tideAfterDraft = await page.evaluate(() => ({
+        writtenCount: document.querySelectorAll(".mapTideCompass .paperButton[data-draft-state='written']").length,
+        text: document.querySelector("[data-polish-map-tide]")?.textContent || "",
+        forbiddenText: (document.querySelector("[data-polish-map-tide]")?.textContent || "").match(/\/api\/game\/turn|draftContext|schema|manifest|server adjudication|AI read scope|proposal boundary|provider payload|raw audit|hiddenNotes|OPENAI_API_KEY|tp-[a-z0-9_-]{6,}|\/Users|\/private|file:\/\//gi) || []
+      }));
+      if (tideAfterDraft.writtenCount < 1 || !/主卷回音|候复/.test(tideAfterDraft.text) || tideAfterDraft.forbiddenText.length) {
+        throw new Error(`S89.31 map tide compass draft feedback unsafe or missing: ${JSON.stringify(tideAfterDraft)}`);
+      }
     }
     await page.getByRole("button", { name: "筛舆图" }).click();
     await page.getByRole("dialog", { name: "舆图筛选" }).waitFor({ timeout: 10000 });
@@ -3247,12 +3273,25 @@ async function runClientSmoke(options = {}) {
     await page.locator(".inkMapTooltip").waitFor({ timeout: 10000 });
     const tooltipBeforeDraft = await page.evaluate(() => ({
       marker: document.querySelector(".inkMapTooltip")?.getAttribute("data-polish-tooltip") || "",
+      readingMarker: document.querySelector(".inkMapTooltip")?.getAttribute("data-polish-tooltip-reading") || "",
+      tone: document.querySelector(".inkMapTooltip")?.getAttribute("data-tooltip-tone") || "",
       note: document.querySelector(".inkMapTooltipNote")?.textContent || "",
+      readingText: document.querySelector(".inkMapTooltipReading")?.textContent || "",
+      boundaryText: document.querySelector(".inkMapTooltip small")?.textContent || "",
       writtenCount: document.querySelectorAll(".inkMapTooltip .paperButton[data-draft-state='written']").length,
-      unsafeText: (document.querySelector(".inkMapTooltip")?.textContent || "").match(/provider payload|raw audit|hiddenNotes|OPENAI_API_KEY|tp-[a-z0-9_-]{6,}|\/Users|\/private|file:\/\//gi) || []
+      unsafeText: (document.querySelector(".inkMapTooltip")?.textContent || "").match(/provider payload|raw audit|hiddenNotes|OPENAI_API_KEY|draftContext|schema|manifest|server adjudication|AI read scope|proposal boundary|tp-[a-z0-9_-]{6,}|\/Users|\/private|file:\/\//gi) || []
     }));
-    if (tooltipBeforeDraft.marker !== "s89-7-map-note" || !/单点札记/.test(tooltipBeforeDraft.note) || tooltipBeforeDraft.unsafeText.length) {
-      throw new Error(`S89.7 map tooltip polish missing safe note: ${JSON.stringify(tooltipBeforeDraft)}`);
+    if (
+      tooltipBeforeDraft.marker !== "s89-7-map-note" ||
+      tooltipBeforeDraft.readingMarker !== "s89-31-mobile-map-note" ||
+      !/place|event|people|route/.test(tooltipBeforeDraft.tone) ||
+      !/单点札记/.test(tooltipBeforeDraft.note) ||
+      !/公开地点|公开近事|人物动向|公开驿路/.test(tooltipBeforeDraft.readingText) ||
+      !/可见度/.test(tooltipBeforeDraft.readingText) ||
+      !/候复|行动事实/.test(tooltipBeforeDraft.boundaryText) ||
+      tooltipBeforeDraft.unsafeText.length
+    ) {
+      throw new Error(`S89.31 map tooltip polish missing safe reading: ${JSON.stringify(tooltipBeforeDraft)}`);
     }
     const tooltipDraftButton = page.locator(".inkMapTooltip .paperButton").first();
     if (await tooltipDraftButton.count()) {
@@ -3703,6 +3742,9 @@ async function runClientSmoke(options = {}) {
         hasLayerControls: document.querySelectorAll(".mapLayerToggle").length >= 3,
         hasLayerSummary: /筛选只改卷上显示/.test(document.querySelector(".mapLayerSummary")?.textContent || ""),
         hasSituationLedger: Boolean(document.querySelector(".mapSituationLedger")),
+        tideMarker: document.querySelector("[data-polish-map-tide]")?.getAttribute("data-polish-map-tide") || "",
+        tideText: document.querySelector("[data-polish-map-tide]")?.textContent || "",
+        tideTabCount: document.querySelectorAll(".mapTideCompassTab[role='tab']").length,
         hasActionDeck: Boolean(document.querySelector(".mapActionDeck")),
         stageHeight: stage?.height || 0,
         viewportHeight: window.innerHeight,
@@ -3710,7 +3752,17 @@ async function runClientSmoke(options = {}) {
         forbiddenText: (document.body.innerText || "").match(/public\/app\.js|#action-input|#information-panel|provider payload|raw audit|hiddenNotes|OPENAI_API_KEY|tp-[a-z0-9_-]{6,}|\/Users|\/private|file:\/\//gi) || []
       };
     });
-    if (!mobileMap.hasFullScreen || !mobileMap.hasLayerControls || !mobileMap.hasLayerSummary || !mobileMap.hasSituationLedger || !mobileMap.hasActionDeck || mobileMap.stageHeight < mobileMap.viewportHeight * 0.45) {
+    if (
+      !mobileMap.hasFullScreen ||
+      !mobileMap.hasLayerControls ||
+      !mobileMap.hasLayerSummary ||
+      !mobileMap.hasSituationLedger ||
+      mobileMap.tideMarker !== "s89-31-map-tide-compass" ||
+      mobileMap.tideTabCount !== 4 ||
+      !/舆图态势罗盘|先看何处|近事|人物|后果|可拟/.test(mobileMap.tideText) ||
+      !mobileMap.hasActionDeck ||
+      mobileMap.stageHeight < mobileMap.viewportHeight * 0.45
+    ) {
       throw new Error(`S76.9 mobile map is missing the independent map layout: ${JSON.stringify(mobileMap)}`);
     }
     if (mobileMap.horizontalOverflow) {
@@ -3760,6 +3812,37 @@ async function runClientSmoke(options = {}) {
     }
     await page.getByRole("button", { name: "展开三层" }).first().click();
     await page.locator(".inkMapLabel").first().waitFor({ timeout: 10000 });
+    await page.locator(".inkMapLabel").first().click();
+    await page.locator(".inkMapTooltip").waitFor({ timeout: 10000 });
+    const mobileMapTooltip = await page.evaluate(() => {
+      const tooltip = document.querySelector(".inkMapTooltip");
+      const style = tooltip ? window.getComputedStyle(tooltip) : null;
+      const html = document.documentElement;
+      return {
+        marker: tooltip?.getAttribute("data-polish-tooltip") || "",
+        readingMarker: tooltip?.getAttribute("data-polish-tooltip-reading") || "",
+        tone: tooltip?.getAttribute("data-tooltip-tone") || "",
+        position: style?.position || "",
+        bottom: style?.bottom || "",
+        transform: style?.transform || "",
+        text: tooltip?.textContent || "",
+        horizontalOverflow: html.scrollWidth > html.clientWidth + 2,
+        forbiddenText: (tooltip?.textContent || "").match(/provider payload|raw audit|hiddenNotes|OPENAI_API_KEY|draftContext|schema|manifest|server adjudication|AI read scope|proposal boundary|tp-[a-z0-9_-]{6,}|\/Users|\/private|file:\/\//gi) || []
+      };
+    });
+    if (
+      mobileMapTooltip.marker !== "s89-7-map-note" ||
+      mobileMapTooltip.readingMarker !== "s89-31-mobile-map-note" ||
+      !/place|event|people|route/.test(mobileMapTooltip.tone) ||
+      mobileMapTooltip.position !== "fixed" ||
+      !/单点札记|可见度|候复|行动事实/.test(mobileMapTooltip.text) ||
+      mobileMapTooltip.horizontalOverflow ||
+      mobileMapTooltip.forbiddenText.length
+    ) {
+      throw new Error(`S89.31 mobile map tooltip sheet unsafe or overflowing: ${JSON.stringify(mobileMapTooltip)}`);
+    }
+    await page.getByRole("button", { name: "收起地图近事" }).click();
+    await page.locator(".inkMapTooltip").waitFor({ state: "detached", timeout: 10000 });
     screenshots.push(await assertMobileInkbox(page, options.screenshotsDir));
     screenshots.push(await assertReactClientPage(page, baseUrl, "/", "s74-react-home-mobile", options.screenshotsDir));
     await assertS895MaterialFeedbackPolish(page, "S89.5 mobile home");
