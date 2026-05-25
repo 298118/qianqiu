@@ -2989,7 +2989,7 @@ async function runClientSmoke(options = {}) {
     await mapDraftButton.waitFor({ state: "visible", timeout: 10000 });
     await mapDraftButton.click();
     await assertS895MaterialFeedbackPolish(page, "S89.5 desktop map draft feedback", { map: true, mapWritten: true });
-    await page.getByLabel("地点").uncheck();
+    await page.getByRole("checkbox", { name: "地点" }).uncheck();
     const hiddenLayer = await page.evaluate(() => ({
       state: document.querySelector(".mapLayerToggle[data-layer-state='hidden']")?.getAttribute("data-layer-state") || "",
       summary: document.querySelector(".mapLayerSummary")?.textContent || ""
@@ -2998,7 +2998,42 @@ async function runClientSmoke(options = {}) {
       throw new Error(`S89.7 map hidden layer feedback missing: ${JSON.stringify(hiddenLayer)}`);
     }
     await page.waitForFunction(() => document.querySelectorAll(".inkMapLabel").length === 0);
-    await page.getByLabel("地点").check();
+    await page.getByRole("checkbox", { name: "地点" }).check();
+    await page.locator(".inkMapLabel").first().waitFor({ timeout: 10000 });
+    await page.getByRole("checkbox", { name: "地点" }).uncheck();
+    await page.getByRole("checkbox", { name: "驿路" }).uncheck();
+    await page.getByRole("checkbox", { name: "近事" }).uncheck();
+    await page.waitForFunction(() => document.querySelectorAll(".inkMapLabel").length === 0);
+    const allHiddenLayer = await page.evaluate(() => {
+      const html = document.documentElement;
+      return {
+        shellVisibility: document.querySelector(".mapFullScreen")?.getAttribute("data-layer-visibility") || "",
+        bridgeVisibility: document.querySelector(".inkMapRuntimeBridge")?.getAttribute("data-layer-visibility") || "",
+        overlayMarker: document.querySelector(".inkMapLayerEmptyOverlay")?.getAttribute("data-polish-map-empty") || "",
+        digestMarker: document.querySelector(".mapVisibleLayerDigest")?.getAttribute("data-polish-map-empty") || "",
+        labelCount: document.querySelectorAll(".inkMapLabel").length,
+        digestText: document.querySelector(".mapVisibleLayerDigest")?.textContent || "",
+        actionText: document.querySelector(".mapActionDeck")?.textContent || "",
+        eventText: document.querySelector(".mapEventList")?.textContent || "",
+        horizontalOverflow: html.scrollWidth > html.clientWidth + 2,
+        forbiddenText: (document.body.innerText || "").match(/\/api\/game\/state|\/api\/dev\/session-diagnostics|provider payload|raw audit|hiddenNotes|OPENAI_API_KEY|draftContext|schema|manifest|server adjudication|AI read scope|proposal boundary|tp-[a-z0-9_-]{6,}|\/Users|\/private|file:\/\//gi) || []
+      };
+    });
+    if (
+      allHiddenLayer.shellVisibility !== "all-hidden" ||
+      allHiddenLayer.bridgeVisibility !== "all-hidden" ||
+      allHiddenLayer.overlayMarker !== "s89-11-runtime-empty" ||
+      allHiddenLayer.digestMarker !== "s89-11-ledger-digest" ||
+      allHiddenLayer.labelCount !== 0 ||
+      !/暂无可见舆图线索/.test(allHiddenLayer.digestText) ||
+      !/暂无可见舆图预备行动/.test(allHiddenLayer.actionText) ||
+      allHiddenLayer.eventText ||
+      allHiddenLayer.horizontalOverflow ||
+      allHiddenLayer.forbiddenText.length
+    ) {
+      throw new Error(`S89.11 map all layers hidden state unsafe or incomplete: ${JSON.stringify(allHiddenLayer)}`);
+    }
+    await page.getByRole("button", { name: "展开三层" }).first().click();
     await page.locator(".inkMapLabel").first().waitFor({ timeout: 10000 });
     await page.locator(".inkMapLabel").first().click();
     await page.locator(".inkMapTooltip").waitFor({ timeout: 10000 });
@@ -3430,6 +3465,26 @@ async function runClientSmoke(options = {}) {
       throw new Error(`S76.9 mobile map leaked forbidden text: ${mobileMap.forbiddenText.join(", ")}`);
     }
     await assertCanvasHasInkPixels(page, ".inkMapRuntimeBridge canvas", "S77.3 mobile map runtime");
+    await page.getByRole("checkbox", { name: "地点" }).uncheck();
+    await page.getByRole("checkbox", { name: "驿路" }).uncheck();
+    await page.getByRole("checkbox", { name: "近事" }).uncheck();
+    await page.waitForFunction(() => document.querySelectorAll(".inkMapLabel").length === 0);
+    const mobileHiddenMap = await page.evaluate(() => {
+      const html = document.documentElement;
+      return {
+        shellVisibility: document.querySelector(".mapFullScreen")?.getAttribute("data-layer-visibility") || "",
+        overlayMarker: document.querySelector(".inkMapLayerEmptyOverlay")?.getAttribute("data-polish-map-empty") || "",
+        digestText: document.querySelector(".mapVisibleLayerDigest")?.textContent || "",
+        restoreButtons: [...document.querySelectorAll("button")].filter((button) => (button.textContent || "").includes("展开三层")).length,
+        horizontalOverflow: html.scrollWidth > html.clientWidth + 2,
+        forbiddenText: (document.body.innerText || "").match(/\/api\/game\/state|\/api\/dev\/session-diagnostics|provider payload|raw audit|hiddenNotes|OPENAI_API_KEY|draftContext|schema|manifest|server adjudication|AI read scope|proposal boundary|tp-[a-z0-9_-]{6,}|\/Users|\/private|file:\/\//gi) || []
+      };
+    });
+    if (mobileHiddenMap.shellVisibility !== "all-hidden" || mobileHiddenMap.overlayMarker !== "s89-11-runtime-empty" || !/暂无可见舆图线索/.test(mobileHiddenMap.digestText) || mobileHiddenMap.restoreButtons < 1 || mobileHiddenMap.horizontalOverflow || mobileHiddenMap.forbiddenText.length) {
+      throw new Error(`S89.11 mobile map all layers hidden state unsafe or overflowing: ${JSON.stringify(mobileHiddenMap)}`);
+    }
+    await page.getByRole("button", { name: "展开三层" }).first().click();
+    await page.locator(".inkMapLabel").first().waitFor({ timeout: 10000 });
     screenshots.push(await assertMobileInkbox(page, options.screenshotsDir));
     screenshots.push(await assertReactClientPage(page, baseUrl, "/", "s74-react-home-mobile", options.screenshotsDir));
     await assertS895MaterialFeedbackPolish(page, "S89.5 mobile home");

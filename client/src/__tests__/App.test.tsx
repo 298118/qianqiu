@@ -6148,6 +6148,22 @@ describe("S74.1 React client shell", () => {
     expect(document.querySelector(".mapLayerToggle[data-layer-state='hidden']")).toBeTruthy();
     fireEvent.click(screen.getByLabelText("地点"));
     await screen.findByRole("button", { name: "贡院" });
+    fireEvent.click(screen.getByLabelText("地点"));
+    fireEvent.click(screen.getByLabelText("驿路"));
+    fireEvent.click(screen.getByLabelText("近事"));
+    await waitFor(() => expect(document.querySelectorAll(".inkMapLabel").length).toBe(0));
+    expect(document.querySelector(".mapFullScreen")?.getAttribute("data-layer-visibility")).toBe("all-hidden");
+    expect(document.querySelector(".inkMapRuntimeBridge")?.getAttribute("data-layer-visibility")).toBe("all-hidden");
+    expect(document.querySelector(".inkMapLayerEmptyOverlay")?.getAttribute("data-polish-map-empty")).toBe("s89-11-runtime-empty");
+    expect(screen.getByText("暂无可见舆图线索")).toBeTruthy();
+    expect(screen.getByText("三层暂收，暂无可见舆图预备行动；展开图层后再写入候复草稿。")).toBeTruthy();
+    expect(screen.getByText("近事图层暂收，局势簿不显示公开近事。")).toBeTruthy();
+    expect(screen.queryByText("草拟循贡院驿路")).toBeNull();
+    expect(screen.queryByText("科场近讯")).toBeNull();
+    fireEvent.click(screen.getAllByRole("button", { name: "展开三层" })[0]);
+    await screen.findByRole("button", { name: "贡院" });
+    expect(screen.getByText("草拟循贡院驿路")).toBeTruthy();
+    expect(screen.getByText("科场近讯")).toBeTruthy();
 
     expect(screen.getByRole("link", { name: "入局势簿" }).getAttribute("href")).toBe("/game/74747474-7474-4774-8774-747474747474/archive");
     expect(document.body.textContent || "").not.toMatch(/raw audit|provider payload|hiddenNotes|OPENAI_API_KEY|data\/sessions|sk-test-secret|tp-test-secret|\/Users|C:\\|path=/i);

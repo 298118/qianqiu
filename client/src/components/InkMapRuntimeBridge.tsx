@@ -237,10 +237,20 @@ type InkMapRuntimeBridgeProps = {
   readonly mapMotionEnabled: boolean;
   readonly visibleLayers?: VisibleMapLayers;
   readonly writtenDraftId?: string | null;
+  readonly allLayersHidden?: boolean;
+  readonly onRestoreLayers?: () => void;
   readonly onActionDraft: (selection: MapRuntimeDraftSelection) => void;
 };
 
-export function InkMapRuntimeBridge({ mapRuntimeView, mapMotionEnabled, visibleLayers = {}, writtenDraftId = null, onActionDraft }: InkMapRuntimeBridgeProps) {
+export function InkMapRuntimeBridge({
+  mapRuntimeView,
+  mapMotionEnabled,
+  visibleLayers = {},
+  writtenDraftId = null,
+  allLayersHidden = false,
+  onRestoreLayers,
+  onActionDraft
+}: InkMapRuntimeBridgeProps) {
   const canvasHostRef = useRef<HTMLDivElement | null>(null);
   const rendererRef = useRef<MapRendererInstance | null>(null);
   const filteredMapRuntimeView = useMemo(() => filterMapRuntimeView(mapRuntimeView, visibleLayers), [mapRuntimeView, visibleLayers]);
@@ -363,6 +373,7 @@ export function InkMapRuntimeBridge({ mapRuntimeView, mapMotionEnabled, visibleL
       aria-label="山河舆图"
       data-map-status={status}
       data-map-motion={mapMotionEnabled ? "enabled" : "reduced"}
+      data-layer-visibility={allLayersHidden ? "all-hidden" : "visible"}
     >
       <div className="inkMapStage">
         <div ref={canvasHostRef} className="inkMapCanvasHost" aria-hidden="true" />
@@ -417,6 +428,17 @@ export function InkMapRuntimeBridge({ mapRuntimeView, mapMotionEnabled, visibleL
           {status !== "ready" ? (
             <div className="inkMapRuntimeFallback" role="status">
               {fallbackText}
+            </div>
+          ) : null}
+          {status === "ready" && allLayersHidden ? (
+            <div className="inkMapLayerEmptyOverlay" data-polish-map-empty="s89-11-runtime-empty" role="status">
+              <strong>卷上三层皆暂收</strong>
+              <p>山河底图仍在，地点、驿路与近事只是在浏览器卷面暂隐。</p>
+              {onRestoreLayers ? (
+                <button className="paperButton" type="button" onClick={onRestoreLayers}>
+                  展开三层
+                </button>
+              ) : null}
             </div>
           ) : null}
         </div>

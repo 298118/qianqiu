@@ -3029,6 +3029,57 @@ li[data-draft-state="written"] {
   font-weight: 800;
 }
 
+.mapLayerSummary {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px 10px;
+  min-width: 0;
+}
+
+.mapLayerSummary p {
+  flex: 1 1 260px;
+  margin: 0;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.mapLayerSummary[data-layer-mode="all-hidden"] {
+  color: #6f352b;
+  font-weight: 800;
+}
+
+.mapLayerRestore {
+  flex: 0 0 auto;
+  min-height: 34px;
+}
+
+.mapVisibleLayerDigest {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+  border: 1px solid rgba(142, 47, 39, 0.24);
+  background: rgba(255, 248, 230, 0.58);
+  padding: 10px;
+}
+
+.mapVisibleLayerDigest span,
+.mapVisibleLayerDigest p {
+  margin: 0;
+  color: #604b38;
+  overflow-wrap: anywhere;
+}
+
+.mapVisibleLayerDigest span {
+  font-size: 0.78rem;
+  font-weight: 800;
+}
+
+.mapVisibleLayerDigest strong {
+  color: #7b241f;
+  overflow-wrap: anywhere;
+}
+
 .mapEventList .paperButton {
   justify-self: start;
   min-height: 36px;
@@ -3447,6 +3498,25 @@ li[data-draft-state="written"] {
   color: #6c4f39;
   text-align: center;
   padding: 18px;
+}
+
+.inkMapLayerEmptyOverlay {
+  position: absolute;
+  inset: auto 18px 18px;
+  pointer-events: auto;
+  display: grid;
+  gap: 8px;
+  max-width: 420px;
+  border: 1px solid rgba(142, 47, 39, 0.34);
+  background: rgba(255, 248, 230, 0.88);
+  color: #493526;
+  padding: 12px;
+  box-shadow: 0 16px 32px rgba(37, 26, 18, 0.16);
+}
+
+.inkMapLayerEmptyOverlay p {
+  margin: 0;
+  overflow-wrap: anywhere;
 }
 
 .inkMapMeta {

@@ -368,9 +368,27 @@ export function MapPage() {
   const activeLayerCount = activeLayers.length;
   const activeLayerText = joinMapLayerLabels(activeLayers);
   const hiddenLayerText = joinMapLayerLabels(hiddenLayers);
-  const layerSummary = hiddenLayers.length
+  const allLayersHidden = activeLayerCount === 0;
+  const layerState = allLayersHidden ? "all-hidden" : hiddenLayers.length ? "partial" : "all-shown";
+  const layerSummary = allLayersHidden
+    ? "地点、驿路、近事三层暂隐；卷面收作素绢空图，局势簿同步收起可见线索。"
+    : hiddenLayers.length
     ? `现显 ${activeLayerText}；暂隐 ${hiddenLayerText}。筛选只改卷上显示，不改变案卷事实。`
     : `地点、驿路、近事三层全开；筛选只改卷上显示，不改变案卷事实。`;
+  const visibleMapEvents = visibleLayers.events ? mapEvents : [];
+  const visibleNpcActivityAnchors = visibleLayers.events ? npcActivityAnchors : [];
+  const visibleMapActionEntries = mapActionEntries.filter((entry) => {
+    if (entry.draftKind === "map_ref_action") return visibleLayers.places;
+    if (entry.draftKind === "map_route_action") return visibleLayers.routes;
+    return visibleLayers.events;
+  });
+  const visibleRefCount = visibleLayers.places ? refCount : 0;
+  const visibleRouteCount = visibleLayers.routes ? routeCount : 0;
+  const visibleEventCount = visibleLayers.events ? eventCount : 0;
+  const visibleNpcActivityCount = visibleLayers.events ? npcActivityCount : 0;
+  const visibleLayerDigest = allLayersHidden
+    ? "暂无可见舆图线索"
+    : `${visibleRefCount} 处地点 · ${visibleRouteCount} 条驿路 · ${visibleEventCount} 项近事`;
   const archiveHref = routeSessionSupported ? `/game/${sessionId}/archive` : "/";
   const gameHref = routeSessionSupported ? `/game/${sessionId}` : "/";
 
@@ -381,6 +399,10 @@ export function MapPage() {
 
   function toggleLayer(layer: MapLayerKey) {
     setVisibleLayers((current) => ({ ...current, [layer]: !current[layer] }));
+  }
+
+  function restoreAllLayers() {
+    setVisibleLayers(defaultVisibleLayers);
   }
 
   function writeMapActionDraft(text: string, draftContext?: TurnDraftContext) {
@@ -417,7 +439,14 @@ export function MapPage() {
   }
 
   return (
-    <article className="mapFullScreen routePanel" aria-labelledby="map-title" data-polish-surface="s89-5-map-command" data-polish-map="s89-7-layer-tooltip">
+    <article
+      className="mapFullScreen routePanel"
+      aria-labelledby="map-title"
+      data-polish-surface="s89-5-map-command"
+      data-polish-map="s89-7-layer-tooltip"
+      data-polish-map-empty="s89-11-layer-empty"
+      data-layer-visibility={layerState}
+    >
       <header className="mapHero">
         <div>
           <p className="eyebrow">独立舆图</p>
@@ -456,7 +485,19 @@ export function MapPage() {
             </label>
           ))}
         </div>
-        <p className="mapLayerSummary" data-polish-map="s89-7-layer-summary">{layerSummary}</p>
+        <div
+          className="mapLayerSummary"
+          data-layer-mode={layerState}
+          data-polish-map="s89-7-layer-summary"
+          data-polish-map-layers="s89-11-layer-empty"
+        >
+          <p>{layerSummary}</p>
+          {allLayersHidden ? (
+            <button className="paperButton mapLayerRestore" type="button" onClick={restoreAllLayers}>
+              展开三层
+            </button>
+          ) : null}
+        </div>
         <div className="buttonRow">
           <button
             className="paperButton"
@@ -480,6 +521,8 @@ export function MapPage() {
           mapMotionEnabled={displayPreferences.mapMotion && displayPreferences.motion === "full" && !prefersReducedMotion}
           visibleLayers={visibleLayers}
           writtenDraftId={lastWrittenMapDraftId}
+          allLayersHidden={allLayersHidden}
+          onRestoreLayers={restoreAllLayers}
           onActionDraft={writeMapRuntimeSelection}
         />
         <aside className="mapSituationLedger" aria-labelledby="map-ledger-title" data-polish-card="s89-5-map-ledger">
@@ -487,14 +530,28 @@ export function MapPage() {
             <p className="eyebrow">局势簿摘录</p>
             <h2 id="map-ledger-title">公开近事</h2>
           </div>
+          <section className="mapVisibleLayerDigest" aria-label="卷上可见舆图线索" data-polish-map-empty="s89-11-ledger-digest">
+            <span>卷上可见</span>
+            <strong>{visibleLayerDigest}</strong>
+            <p>
+              {allLayersHidden
+                ? "三层暂收时，局势簿只作恢复入口；重开图层后再看点位、路线与近事。"
+                : `人物动向 ${visibleNpcActivityCount} 条；筛选只改卷上显示，不改变案卷事实。`}
+            </p>
+            {allLayersHidden ? (
+              <button className="paperButton" type="button" onClick={restoreAllLayers}>
+                展开三层
+              </button>
+            ) : null}
+          </section>
           <section className="mapActionDeck" aria-labelledby="map-action-title">
             <div>
               <p className="eyebrow">行动入口</p>
               <h3 id="map-action-title">舆图行动</h3>
             </div>
-            {mapActionEntries.length ? (
+            {visibleMapActionEntries.length ? (
               <ol className="mapActionList">
-                {mapActionEntries.map((entry) => (
+                {visibleMapActionEntries.map((entry) => (
                   <li key={entry.id} data-draft-state={lastWrittenMapDraftId === entry.id ? "written" : "idle"}>
                     <span>{entry.kindLabel} · 待主卷复核</span>
                     <strong>{entry.label}</strong>
@@ -506,12 +563,12 @@ export function MapPage() {
                 ))}
               </ol>
             ) : (
-              <p className="mapEmptyLedger">暂无舆图预备行动；可点击地图地点查看单点草稿，或回主卷自行落笔。</p>
+              <p className="mapEmptyLedger">{allLayersHidden ? "三层暂收，暂无可见舆图预备行动；展开图层后再写入候复草稿。" : "暂无舆图预备行动；可点击地图地点查看单点草稿，或回主卷自行落笔。"}</p>
             )}
           </section>
-          {mapEvents.length ? (
+          {visibleMapEvents.length ? (
             <ol className="mapEventList">
-              {mapEvents.map((eventItem) => (
+              {visibleMapEvents.map((eventItem) => (
                 <li key={eventItem.id} data-draft-state={lastWrittenMapDraftId === eventItem.id ? "written" : "idle"}>
                   <strong>{eventItem.label}</strong>
                   <span>{eventItem.targetLabel} · 警势 {eventItem.severity}</span>
@@ -523,16 +580,16 @@ export function MapPage() {
               ))}
             </ol>
           ) : (
-            <p className="mapEmptyLedger">暂无公开近事；可保留地点与驿路图层，或回主卷推进一旬后再查看。</p>
+            <p className="mapEmptyLedger">{allLayersHidden ? "近事图层暂收，局势簿不显示公开近事。" : "暂无公开近事；可保留地点与驿路图层，或回主卷推进一旬后再查看。"}</p>
           )}
-          {npcActivityAnchors.length ? (
+          {visibleNpcActivityAnchors.length ? (
             <section className="mapNpcActivityDeck" aria-labelledby="map-npc-activity-title">
               <div>
                 <p className="eyebrow">人物锚点</p>
                 <h3 id="map-npc-activity-title">舆图人物动向</h3>
               </div>
               <ol className="mapNpcActivityList">
-                {npcActivityAnchors.map((anchor) => (
+                {visibleNpcActivityAnchors.map((anchor) => (
                   <li key={anchor.id}>
                     <strong>{anchor.label}</strong>
                     <span>{anchor.targetLabel} · 可见度 {anchor.severity}</span>
@@ -556,7 +613,9 @@ export function MapPage() {
       </div>
       <p className="mapRuntimeNote">
         {mapRuntimeView
-          ? `已接入 ${refCount} 处地点、${routeCount} 条路线、${eventCount} 项近事、${npcActivityCount} 条人物动向，当前显示 ${activeLayerCount} 个图层（${activeLayerText}）；舆图只读公开卷宗。`
+          ? allLayersHidden
+            ? `已接入 ${refCount} 处地点、${routeCount} 条路线、${eventCount} 项近事、${npcActivityCount} 条人物动向，三层暂收为素绢空图；舆图只读公开卷宗，案卷事实未改。`
+            : `已接入 ${refCount} 处地点、${routeCount} 条路线、${eventCount} 项近事、${npcActivityCount} 条人物动向，当前显示 ${activeLayerCount} 个图层（${activeLayerText}）；舆图只读公开卷宗。`
           : !routeSessionSupported
             ? "此案卷编号暂不可用于浏览器舆图；请从首页开卷或载入旧案。"
             : isRunnable && status === "loading"

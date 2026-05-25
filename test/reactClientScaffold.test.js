@@ -1424,6 +1424,11 @@ test("S89.7 map interaction polish stays draft-only and safe", () => {
 
   assert.match(mapPageSource, /data-polish-map="s89-7-layer-tooltip"/);
   assert.match(mapPageSource, /data-polish-map="s89-7-layer-summary"/);
+  assert.match(mapPageSource, /data-polish-map-empty="s89-11-layer-empty"/);
+  assert.match(mapPageSource, /allLayersHidden/);
+  assert.match(mapPageSource, /restoreAllLayers/);
+  assert.match(mapPageSource, /mapVisibleLayerDigest/);
+  assert.match(mapPageSource, /visibleMapActionEntries/);
   assert.match(mapPageSource, /data-layer-state=\{visibleLayers\[layer\] \? "shown" : "hidden"\}/);
   assert.match(mapPageSource, /筛选只改卷上显示，不改变案卷事实/);
   assert.match(mapPageSource, /setLastWrittenMapDraftId\(selection\.draftId\)/);
@@ -1431,14 +1436,21 @@ test("S89.7 map interaction polish stays draft-only and safe", () => {
   assert.match(mapPageSource, /localMapPagePathPattern/);
   assert.match(mapPageSource, /\(\?:sk\|tp\)-\[a-z0-9_-\]\{6,\}/);
   assert.match(bridgeSource, /data-polish-tooltip="s89-7-map-note"/);
+  assert.match(bridgeSource, /data-polish-map-empty="s89-11-runtime-empty"/);
+  assert.match(bridgeSource, /inkMapLayerEmptyOverlay/);
+  assert.match(bridgeSource, /onRestoreLayers/);
   assert.match(bridgeSource, /单点札记 · 写入后仍须回主卷候复/);
   assert.match(bridgeSource, /data-draft-state=\{writtenDraftId === selection\.draftId \? "written" : "idle"\}/);
   assert.match(bridgeSource, /已写入主卷草稿/);
   assert.match(bridgeSource, /localMapRuntimePathPattern/);
   assert.match(bridgeSource, /\(\?:sk\|tp\)-\[a-z0-9_-\]\{6,\}/);
   assert.match(styleSource, /\.mapLayerSummary[\s\S]*overflow-wrap: anywhere/);
+  assert.match(styleSource, /\.mapVisibleLayerDigest/);
+  assert.match(styleSource, /\.inkMapLayerEmptyOverlay/);
   assert.doesNotMatch(styleSource, /\.inkMapTooltip \.paperButton\[data-draft-state="written"\][\s\S]*animation/);
   assert.match(clientSmokeSource, /S89\.7 map layer summary/);
+  assert.match(clientSmokeSource, /S89\.11 map all layers hidden/);
+  assert.match(clientSmokeSource, /s89-11-runtime-empty/);
   assert.match(clientSmokeSource, /S89\.7 map tooltip draft feedback/);
   assert.match(clientSmokeSource, /tp-\[a-z0-9_-\]\{6,\}/);
   assert.doesNotMatch(`${mapPageSource}\n${bridgeSource}`, /submitTurn|\/api\/game\/turn|qianqiuApi|localStorage|sessionStorage/);

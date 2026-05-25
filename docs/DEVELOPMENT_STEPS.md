@@ -113,6 +113,7 @@
 
 | ID | 状态 | 目标 | 范围 / 下一步 |
 | --- | --- | --- | --- |
+| S89.11 | DONE | 舆图全关图层空态与筛选交互 polish | 承接 S89.10，舆图地点/驿路/近事三层全隐时新增世界内“素绢空图”空态、一键恢复三层、图层状态标记、侧栏可见线索摘要、移动端长文本守门和 smoke/source canary；范围限 React 舆图页结构、CSS、客户端 smoke/source canary、前端测试和文档。不新增依赖、素材、后端 API/schema、AI 权限、prompt、provider、SQLite、存档、runtime manifest 或素材 manifest；坐标与图层仍只作浏览器显示，行动只写本地草稿并等待服务器回合裁决。实现提交：待提交后回填。 |
 | S89.10 | DONE | 史册信息密度与移动端长文本二轮 polish | 承接 S89.9，史册公开追踪区已从三列重排为近次归档主列 + 证据侧栏，侧栏叠放后果追踪和来函证据；补 `s89-10-chronicle-density` 标记、`ledger-rail` 布局守门、移动端长文本 smoke、玩家可见工程词清洗和 source canary。范围限 React 前端结构、CSS、客户端 smoke/source canary、前端测试和文档；不新增依赖、素材、后端 API/schema、AI 权限、prompt、provider、SQLite、存档、runtime manifest 或素材 manifest；按钮仍只写本地草稿并等待服务器回合裁决。实现提交：`283b2c0a`。 |
 | S89.9 | DONE | 人物页与立绘查看器材质题签 polish | 承接 S89.8 和提交前复审建议，人物页谱牒、人物卡、人物工作台和高清立绘查看器题签格已补宣纸、朱线、绢帛、轻浮起与低动效降级材质；复用已审核 `paper-aged-silk-v1.webp` 和既有材质 token，不新增依赖、不新增素材、不改 runtime manifest 字段。范围限 React 前端标记、CSS、客户端 smoke/source canary、前端测试、预算校准和文档；不新增后端 API/schema，不写浏览器存储、URL、草稿、prompt、canonical state 或服务器状态，不扩大人物、交易、委派、关系、资源或隐藏信息裁决权。实现提交：`8a7654ee9c5b7daa1c6790859ee885795f95928c`。 |
 | S89.8 | DONE | 高清立绘查看器画中所见 polish | 承接 S89.7，高清立绘查看器新增 `data-polish-portrait="s89-8-life-scroll"`，把已审阅 runtime 立绘元数据与人物页安全摘要整理成“画中所见 / 身世线索 / 眼下处境”三段式说明、画卷题签、衣饰、仪态和神采线索；人物页画像 profile 补案主经历线索与 NPC 公开近事。范围限 React 前端、客户端 smoke/source canary、前端测试和文档；不新增样式，不新增后端 API/schema，不调用模型生成小传，不写浏览器存储、URL、草稿、prompt、canonical state 或服务器状态；不读取完整 source manifest、本地路径、raw/provider/hidden 或未审核素材。实现提交：`2476a12c4d77e598b65ba74931361edb362e2b6c`。 |
@@ -140,7 +141,8 @@
 - 2026-05-25：S89.8 完成高清立绘查看器画中所见 polish。当前范围仍限 React 前端、客户端 smoke/source canary、前端测试和文档；不新增样式，不新增后端 API/schema，不调用模型生成小传，不扩大浏览器裁决权。
 - 2026-05-25：S89.9 完成人物页与立绘查看器材质题签 polish。当前范围限 React 前端标记、CSS、客户端 smoke/source canary、前端测试、CSS 预算校准和文档；不新增依赖或素材，不改后端 API/schema、AI 权限、prompt、provider、SQLite、存档、runtime manifest 或素材 manifest。
 - 2026-05-25：S89.10 完成史册信息密度与移动端长文本二轮 polish。当前范围限 React 前端结构、CSS、客户端 smoke/source canary、前端测试和文档；不新增浏览器裁决权，不改后端 API/schema、AI 权限、prompt、provider、SQLite、存档、runtime manifest 或素材 manifest。
-- 前一轮 S88 归档是低风险纯文档维护；S89.3-S89.10 涉及前端代码、样式、验证脚本和文档，提交前按子代理复审规则执行。
+- 2026-05-25：S89.11 完成舆图全关图层空态与筛选交互 polish。当前范围限 React 舆图页结构、CSS、客户端 smoke/source canary、前端测试和文档；不新增浏览器裁决权，不改后端 API/schema、AI 权限、prompt、provider、SQLite、存档、runtime manifest 或素材 manifest。
+- 前一轮 S88 归档是低风险纯文档维护；S89.3-S89.11 涉及前端代码、样式、验证脚本和文档，提交前按子代理复审规则执行。
 
 ## 6. 最近完整验证口径
 
@@ -222,6 +224,16 @@ S89.8 高清立绘查看器画中所见 polish 验证结果：
 - 已通过 `npm run check:docs-governance`、`node --test test/documentationGovernance.test.js`、`git diff --check`。提交前只读子代理复审已通过，未发现阻断问题；非阻断建议为后续可给题签格补专门材质样式。
 
 ## 7. 近期进度记录
+
+### 2026-05-25：S89.11 舆图全关图层空态与筛选交互 polish
+
+- 范围：舆图页新增 `data-polish-map-empty="s89-11-layer-empty"` 与 `data-layer-visibility`，运行时桥新增 `data-polish-map-empty="s89-11-runtime-empty"`；地点、驿路、近事三层全隐时显示“素绢空图”空态与“展开三层”恢复入口。
+- 体验：`.mapLayerSummary` 从单段改为可换行摘要 + 恢复按钮；`.mapVisibleLayerDigest` 在局势簿说明当前可见线索。三层全隐时地图标签归零，局势簿同步收起舆图行动、近事和人物锚点，只保留恢复入口；恢复后三层、地图标签、行动入口和近事列表回到原状态。
+- Smoke/canary：`scripts/clientSmoke.js` 现检查桌面和移动端全隐状态、运行时空态标记、局势簿摘要、恢复按钮、无横向溢出和扩展禁词；`test/reactClientScaffold.test.js` 与 `App.test.tsx` 同步覆盖 `allLayersHidden`、`restoreAllLayers`、`visibleMapActionEntries`、空态 overlay、侧栏 digest 和恢复后列表回归。
+- 边界：本步不新增依赖或素材，不改 runtime manifest、素材 manifest、后端 API/schema、AI 权限矩阵、prompt、provider facade、SQLite schema、存档格式或服务器裁决；图层筛选只改浏览器卷面显示，不写浏览器存储、URL、prompt、canonical state 或服务器状态。舆图行动仍只写 `map-runtime` 本地草稿并等待服务器普通回合从当前安全 view 重建复核。
+- 验证：已通过 `npm run typecheck:client`、`node --check scripts/clientSmoke.js`、`node --test test/reactClientScaffold.test.js`、focused `npx vitest --config vitest.config.mjs run client/src/__tests__/App.test.tsx -t "wraps the S72 map renderer with safe React action drafts" --pool=vmThreads --fileParallelism=false --maxWorkers=1`、`npm run test:client`（6 files / 129 tests）、完整串行 `npx vitest --config vitest.config.mjs run client/src/__tests__/App.test.tsx client/src/components/__tests__/ client/src/pages/__tests__/ --pool=vmThreads --fileParallelism=false --maxWorkers=1`（1 file / 69 tests）、`npm run qa:runtime-manifest`、`npm run build:client`、`npm run budget:client` 和 `npm run smoke:browser`。预算输出 `CSS 99.4 KiB`；Vite 仍输出既有 `/assets/ui/...` runtime asset 与 chunk size warnings。
+- 复审：开工只读子代理建议增加全隐空态、恢复按钮、侧栏可见线索摘要、移动端 smoke 和 source canary；本轮按建议实现。提交前只读复审已通过，未发现阻断问题；残余风险是 `CSS 99.4 KiB` 余量很小，后续样式新增仍需先跑预算。
+- 提交：实现提交待回填。
 
 ### 2026-05-25：S89.10 史册信息密度与移动端长文本二轮 polish
 
