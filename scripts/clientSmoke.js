@@ -53,7 +53,7 @@ const requiredVisualMatrixScreenshotLabels = Object.freeze([
   "s75-inkbox-mobile"
 ]);
 
-const inventoryPlayerFacingLeakPattern = /provider payload|raw audit|hiddenNotes|OPENAI_API_KEY|data\/sessions|hidden\/raw|(?:^|\b)hidden\b|(?:^|\b)raw\b|服务器裁决|draftContext|manifest|schema|[a-z]:[\\/]|\/(?:home|mnt|tmp|var|etc|usr|opt|workspace|workspaces|root|data|src|client|server|dist|public|node_modules)(?:[\\/]|$)/gi;
+const inventoryPlayerFacingLeakPattern = /provider payload|raw audit|hiddenNotes|OPENAI_API_KEY|data\/sessions|hidden\/raw|(?:^|\b)hidden\b|(?:^|\b)raw\b|服务器裁决|draftContext|manifest|schema|server adjudication|AI read scope|proposal boundary|safe view|resolver|sourceRef|relatedRefs|scopeRefs|[a-z]:[\\/]|\/(?:home|mnt|tmp|var|etc|usr|opt|workspace|workspaces|root|data|src|client|server|dist|public|node_modules)(?:[\\/]|$)/gi;
 
 const safetyPollutionPattern = /\/api\/game\/state|\/api\/dev\/session-diagnostics|OPENAI_API_KEY|DEEPSEEK_API_KEY|MIMO_API_KEY|ANTHROPIC_API_KEY|sk-[a-z0-9_-]{6,}|tp-[a-z0-9_-]{6,}|data[\\/]+sessions|world_sessions|prompt_retrieval_index|event_log|ai_change_proposals|provider\s+payload|raw\s+(?:audit|state|prompt|provider|payload)|hiddenNotes|hiddenIntent|hidden\s+(?:notes|intent|ledger|truth)|完整\s*(?:prompt|提示词)|本地\s*路径|密\s*钥|模型\s*原始|内部审计原文|弥封身份映射|考官隐藏意图|未采纳评语|[a-z]:[\\/]|file:\/{2}|(?<![A-Za-z0-9_-])\/(?:home|Users|tmp|var|mnt|etc)\/[^\s"'<>)]*/gi;
 const playerFacingCopyLeakPattern = /\bTODO\b|\bFIXME\b|\bsmoke\b|\bartifacts?\b|\bS7[0-9](?:\.\d+)?\b|\bdebug\b|\bstub\b|\bplaceholder\b|验收|测试截图|开发注释|实现说明|fallback token|data-client-entry|React Router|Vite/gi;
@@ -848,7 +848,7 @@ async function assertArchiveDigestPolish(page, label) {
       hasEvidenceStack: Boolean(evidenceStack),
       evidenceText: evidenceStack?.textContent || "",
       horizontalOverflow: document.documentElement.scrollWidth > document.documentElement.clientWidth + 2,
-      forbiddenText: (document.body.innerText || "").match(/provider payload|raw audit|hiddenNotes|OPENAI_API_KEY|DEEPSEEK_API_KEY|MIMO_API_KEY|ANTHROPIC_API_KEY|data\/sessions|hidden\/raw|(?:^|\b)hidden\b|(?:^|\b)raw\b|服务器裁决|sourceRef|relatedRefs|scopeRefs|evidenceRefs|outcomeId|auditRecord|draftContext|schema|manifest|server adjudication|AI read scope|proposal boundary|watchlist|NPC\b|[a-z]:[\\/]|\/(?:home|mnt|tmp|var|etc|usr|opt|workspace|workspaces|root|data|src|client|server|dist|public|node_modules)(?:[\\/]|$)/gi) || [],
+      forbiddenText: (document.body.innerText || "").match(/provider payload|raw audit|hiddenNotes|OPENAI_API_KEY|DEEPSEEK_API_KEY|MIMO_API_KEY|ANTHROPIC_API_KEY|data\/sessions|hidden\/raw|(?:^|\b)hidden\b|(?:^|\b)raw\b|服务器裁决|sourceRef|relatedRefs|scopeRefs|evidenceRefs|outcomeId|auditRecord|draftContext|schema|manifest|server adjudication|AI read scope|proposal boundary|safe view|resolver|runtime manifest|visual-only|watchlist|NPC\b|[a-z]:[\\/]|\/(?:home|mnt|tmp|var|etc|usr|opt|workspace|workspaces|root|data|src|client|server|dist|public|node_modules)(?:[\\/]|$)/gi) || [],
       text
     };
   });
@@ -3297,12 +3297,17 @@ async function runClientSmoke(options = {}) {
         hasWorkbench: Boolean(document.querySelector(".inventoryWorkbench")),
         hasTransferPanel: Boolean(document.querySelector(".inventoryTransferPanel")),
         hasEconomyTrace: Boolean(document.querySelector(".economyTraceSection")),
+        economyTraceMarker: document.querySelector(".economyTraceSection")?.getAttribute("data-polish-evidence") || "",
+        economyBoundaryMarker: document.querySelector(".economyTraceSection [data-polish-evidence-boundary]")?.getAttribute("data-polish-evidence-boundary") || "",
         horizontalOverflow: html.scrollWidth > html.clientWidth + 4,
         forbiddenText: text.match(inventoryLeakPattern) || []
       };
     }, inventoryPlayerFacingLeakPattern.source);
     if (!inventorySnapshot.hasSummary || !inventorySnapshot.hasWorkbench || !inventorySnapshot.hasTransferPanel || !inventorySnapshot.hasEconomyTrace) {
       throw new Error(`S89.2 desktop inventory is missing product matrix sections: ${JSON.stringify(inventorySnapshot)}`);
+    }
+    if (inventorySnapshot.economyTraceMarker !== "s89-15-economy-reader" || inventorySnapshot.economyBoundaryMarker !== "s89-15-economy-boundary") {
+      throw new Error(`S89.15 desktop inventory economy reader marker missing: ${JSON.stringify(inventorySnapshot)}`);
     }
     if (inventorySnapshot.horizontalOverflow) {
       throw new Error(`S89.2 desktop inventory caused horizontal overflow: ${JSON.stringify(inventorySnapshot)}`);
@@ -3457,7 +3462,7 @@ async function runClientSmoke(options = {}) {
         hasEvidenceStack: Boolean(document.querySelector(".archiveEvidenceStack")),
         hasListOrEmpty: Boolean(document.querySelector(".archiveItemList")) || text.includes("暂无可显示的公开归档"),
         horizontalOverflow: html.scrollWidth > html.clientWidth + 2,
-        forbiddenText: text.match(/provider payload|raw audit|hiddenNotes|OPENAI_API_KEY|data\/sessions|hidden\/raw|(?:^|\b)hidden\b|(?:^|\b)raw\b|服务器裁决|draftContext|schema|manifest|server adjudication|AI read scope|proposal boundary|watchlist|NPC\b/gi) || []
+        forbiddenText: text.match(/provider payload|raw audit|hiddenNotes|OPENAI_API_KEY|data\/sessions|hidden\/raw|(?:^|\b)hidden\b|(?:^|\b)raw\b|服务器裁决|draftContext|schema|manifest|server adjudication|AI read scope|proposal boundary|safe view|resolver|sourceRef|relatedRefs|scopeRefs|runtime manifest|visual-only|watchlist|NPC\b/gi) || []
       };
     });
     if (
@@ -3491,12 +3496,17 @@ async function runClientSmoke(options = {}) {
         hasWorkbench: Boolean(document.querySelector(".inventoryWorkbench")),
         hasTransferPanel: Boolean(document.querySelector(".inventoryTransferPanel")),
         hasEconomyTrace: Boolean(document.querySelector(".economyTraceSection")),
+        economyTraceMarker: document.querySelector(".economyTraceSection")?.getAttribute("data-polish-evidence") || "",
+        economyBoundaryMarker: document.querySelector(".economyTraceSection [data-polish-evidence-boundary]")?.getAttribute("data-polish-evidence-boundary") || "",
         horizontalOverflow: html.scrollWidth > html.clientWidth + 2,
         forbiddenText: text.match(inventoryLeakPattern) || []
       };
     }, inventoryPlayerFacingLeakPattern.source);
     if (!mobileInventory.hasSummary || !mobileInventory.hasWorkbench || !mobileInventory.hasTransferPanel || !mobileInventory.hasEconomyTrace) {
       throw new Error(`S89.2 mobile inventory is missing product matrix sections: ${JSON.stringify(mobileInventory)}`);
+    }
+    if (mobileInventory.economyTraceMarker !== "s89-15-economy-reader" || mobileInventory.economyBoundaryMarker !== "s89-15-economy-boundary") {
+      throw new Error(`S89.15 mobile inventory economy reader marker missing: ${JSON.stringify(mobileInventory)}`);
     }
     if (mobileInventory.horizontalOverflow) {
       throw new Error(`S89.2 mobile inventory caused horizontal overflow: ${JSON.stringify(mobileInventory)}`);

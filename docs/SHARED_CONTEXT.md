@@ -65,6 +65,12 @@
 
 ## Current Work Note
 
+2026-05-25：S89.15 已完成来函与账解证据读法 polish。`NpcFollowUpEvidenceSection` 现在带 `s89-15-follow-up-reader` / `s89-15-follow-up-boundary` 标记并把 `human_debt_monthly`、`accepted_pending_server_resolution`、`integrity_watchlist` 等来函后续枚举转为中文读法；`EconomyTraceSection` 带 `s89-15-economy-reader` / `s89-15-economy-boundary` 标记并把 `trade_negotiation`、`under_review` 等账解标签玩家化，账本数值变化改为中文“至”；人物页交游议题同步把 `npc_relationship_action` 等来源标签转为“交游记录”。
+
+本步范围限 React 前端 `NpcFollowUpEvidenceSection` / `EconomyTraceSection` / `PeoplePage`、`App.test.tsx`、`scripts/clientSmoke.js`、source canary 和文档；未新增 CSS、依赖或素材，不改后端 API/schema、AI 权限矩阵、prompt、provider facade、SQLite schema、存档格式、runtime manifest 或素材 manifest。来函 evidence、经济 trace 和人物交游议题补 POSIX/Windows 本地路径、`draftContext`、`schema`、`manifest`、`safe view`、`resolver`、`sourceRef`、`relatedRefs`、`scopeRefs` 等工程词清洗；浏览器仍只读服务器安全 view 并写本地草稿，不裁决资源、身份、交易、NPC 行动、经济、考试、官职、关系、婚姻、弹劾、定罪、背叛或隐藏信息。
+
+当前已通过：`npm run typecheck:client`、`node --check scripts/clientSmoke.js`、`node --test test/reactClientScaffold.test.js`（52 tests）、focused `npx vitest --config vitest.config.mjs run client/src/__tests__/App.test.tsx -t "current people ledger|economy trace" --pool=vmThreads --fileParallelism=false --maxWorkers=1`、完整串行 `npx vitest --config vitest.config.mjs run --pool=vmThreads --fileParallelism=false --maxWorkers=1`（6 files / 129 tests）、`npm run qa:runtime-manifest`、`npm run build:client`、`npm run budget:client`、`npm run smoke:browser`、`npm run check:docs-governance`、`node --test test/documentationGovernance.test.js` 和 `git diff --check`。最终预算输出 `JS 617.1 KiB / CSS 99.9 KiB`，仍需继续谨慎控制 CSS。`npm run test:client` 两次命中既有 Vitest fork worker 启动超时，5 files / 60 tests 已通过但 `App.test.tsx` worker 未启动；已用串行池完整复核同一客户端套件。提交前只读复审已通过，未发现阻断问题；复审建议的 raw risk tag 边缘情况已补中文映射并由同一子代理复核确认。实现提交待回填。
+
 2026-05-25：S89.14 已完成玩家身份标签中文化与 CSS 预算缓冲 polish。`client/src/text/playerLabels.ts` 统一前端玩家身份标签，首页续局、主卷案头、人物页、旧案架、右上角印匣、人物档案专题层和高清立绘标题不再把 `scholar` / `official` / `general` 等 role 枚举作为玩家可见兜底；设置目录短章法标签复用 `.peopleMeta`，舆图图层摘要规则小幅合并。
 
 本步范围限 React 前端文本 helper、`HomePage` / `GamePage` / `PeoplePage` / `SaveCaseList` / `SurfaceHost` 身份显示、`SettingsPage` 标签样式复用、客户端 smoke/source canary、前端测试和文档；不新增依赖或素材，不改后端 API/schema、AI 权限矩阵、prompt、provider facade、SQLite schema、存档格式、runtime manifest 或素材 manifest。浏览器不裁决资源、身份、交易、NPC 行动、经济、考试、官职或隐藏信息。

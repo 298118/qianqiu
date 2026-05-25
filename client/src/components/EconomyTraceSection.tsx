@@ -36,8 +36,17 @@ const unsafeEconomyTraceFragments = [
   "prompt",
   "path",
   "key",
+  "draftContext",
+  "schema",
+  "manifest",
   "hidden",
   "private",
+  "sealed",
+  "server adjudication",
+  "ai read scope",
+  "proposal boundary",
+  "safe view",
+  "resolver",
   "sqlite",
   "sql",
   "localstorage",
@@ -73,6 +82,7 @@ const unsafeEconomyTraceFragments = [
   "sk-",
   "tp-",
   "完整提示词",
+  "提示词",
   "本地路径",
   "密钥",
   "隐藏",
@@ -81,6 +91,29 @@ const unsafeEconomyTraceFragments = [
   "原始返回",
   "模型原文"
 ] as const;
+const localEconomyTracePathPattern = /(?:^|[\s"'`(（:：,;，。；、【《“‘])(?:[a-z]:[\\/]|~[\\/]|\.{1,2}[\\/]|\/(?:home|mnt|users|private|tmp|var|etc|usr|opt|workspace|workspaces|root|data|src|client|server|dist|public|node_modules)(?:[\\/]|$)|(?:data|src|client|server|dist|public|node_modules)[\\/][^\s，。；、]+)/i;
+
+const economyTraceLabelMap: Record<string, string> = {
+  asset_maintenance: "资产维护",
+  delegated_task_budget: "委派预算",
+  delegated_task_result: "委派回禀",
+  human_debt_monthly: "人情债月账",
+  inventory_condition: "囊箧保养",
+  inventory_transfer: "物件移置",
+  market_price_signal: "市价线索",
+  monthly_economy_event: "月账事件",
+  npc_relationship_monthly: "人物月账",
+  resource_delta: "钱粮变化",
+  resource_snapshot: "钱粮账面",
+  trade_blocked: "交易未准",
+  trade_expiry: "交易过期",
+  trade_negotiation: "交易议价",
+  under_review: "待复核",
+  pending: "待复核",
+  active: "可阅",
+  resolved: "已归档",
+  blocked: "暂未准行"
+};
 
 function normalizeTraceScalar(value: unknown) {
   if (typeof value !== "string" && typeof value !== "number" && typeof value !== "boolean") return "";
@@ -91,7 +124,8 @@ function isUnsafeEconomyTraceText(value: unknown) {
   const text = normalizeTraceScalar(value);
   if (!text) return false;
   const lowered = text.toLowerCase();
-  return /[a-z]:[\\/]/i.test(text) ||
+  return localEconomyTracePathPattern.test(text) ||
+    /[a-z]:[\\/]/i.test(text) ||
     /(?:file|https?):\/\//i.test(text) ||
     unsafeEconomyTraceFragments.some((fragment) => lowered.includes(fragment.toLowerCase()));
 }
@@ -102,6 +136,17 @@ function cleanTraceText(value: unknown, fallback = "", maxLength = 132) {
   if (isUnsafeEconomyTraceText(text)) return fallback;
   const rewritten = rewritePlayerFacingWorldText(text);
   return rewritten.length > maxLength ? `${rewritten.slice(0, maxLength)}...` : rewritten;
+}
+
+function cleanTraceLabel(value: unknown, fallback = "", maxLength = 32) {
+  const text = normalizeTraceScalar(value);
+  if (!text) return fallback;
+  if (isUnsafeEconomyTraceText(text)) return fallback;
+  const key = text
+    .replace(/([a-z])([A-Z])/g, "$1_$2")
+    .replace(/[\s-]+/g, "_")
+    .toLowerCase();
+  return cleanTraceText(economyTraceLabelMap[key] || text, fallback, maxLength);
 }
 
 function cleanList(values: unknown, maxItems = 3) {
@@ -119,7 +164,7 @@ function amountText(item: EconomyTraceItemView) {
   const after = typeof amount.after === "number" ? `${amount.after}${unit}` : "";
   const before = typeof amount.before === "number" ? `${amount.before}${unit}` : "";
   const delta = typeof amount.delta === "number" ? `${amount.delta > 0 ? "+" : ""}${amount.delta}${unit}` : "";
-  if (before && after && delta) return `${label} ${before} -> ${after} (${delta})`;
+  if (before && after && delta) return `${label} ${before} 至 ${after}（${delta}）`;
   if (after) return `${label} ${after}`;
   if (delta) return `${label} ${delta}`;
   return "";
@@ -140,8 +185,8 @@ function safeItems(
       if (groupFilter.size && !groupFilter.has(group)) return null;
       const title = cleanTraceText(item.title, "", 54);
       const summary = cleanTraceText(item.publicSummary, "", 150);
-      const groupLabel = cleanTraceText(item.groupLabel, "经济解释", 24);
-      const statusLabel = cleanTraceText(item.statusLabel || item.status, "可阅", 24);
+      const groupLabel = cleanTraceLabel(item.groupLabel || item.traceType, "经济解释", 24);
+      const statusLabel = cleanTraceLabel(item.statusLabel || item.status, "可阅", 24);
       const nextStep = cleanTraceText(item.nextStep, "", 150);
       const labels = cleanList(item.affectedLabels);
       const amount = amountText(item);
@@ -195,7 +240,7 @@ export function EconomyTraceSection({
   const titleId = `${idPrefix}-title`;
 
   return (
-    <section className="economyTraceSection" aria-labelledby={titleId}>
+    <section className="economyTraceSection" aria-labelledby={titleId} data-polish-evidence="s89-15-economy-reader">
       <div className="economyTraceHeader">
         <div>
           <p className="eyebrow">账本解释</p>
@@ -221,7 +266,9 @@ export function EconomyTraceSection({
           </article>
         ))}
       </div>
-      <p className="statusLine">这里只读公开解释；资源、物品、交易、委派、人情债和关系变化仍候案卷回批。</p>
+      <p className="statusLine" data-polish-evidence-boundary="s89-15-economy-boundary">
+        这里只读公开解释；拟复核只写案头草稿，资源、物品、交易、委派、人情债和关系变化仍候案卷回批。
+      </p>
     </section>
   );
 }

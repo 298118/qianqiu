@@ -26,6 +26,19 @@ const unsafePeopleTextFragments = [
   "raw",
   "prov" + "ider",
   "pro" + "mpt",
+  "draftContext",
+  "schema",
+  "manifest",
+  "server adjudication",
+  "ai read scope",
+  "proposal boundary",
+  "safe view",
+  "resolver",
+  "sourceRef",
+  "relatedRefs",
+  "scopeRefs",
+  "visual-only",
+  "runtime manifest",
   "hid" + "den",
   "key",
   "path",
@@ -43,6 +56,18 @@ const unsafePeopleTextFragments = [
   "模型" + "原始"
 ] as const;
 const unsafePortraitRefTokenPattern = /(?:^|[-_])(raw|provider|prompt|hidden|private|key|path|secret|token|api|file|data|http)(?:$|[-_])/i;
+
+const relationshipAgendaLabelMap: Record<string, string> = {
+  active: "可跟进",
+  active_npc_request: "来函线索",
+  npc_active_request: "来函线索",
+  npc_relationship_action: "交游记录",
+  relationship_action: "交游记录",
+  resolved: "已归档",
+  under_review: "待复核",
+  watch: "待观察",
+  world_thread: "公开议题"
+};
 
 const playerPortraitRoleByGameRole: Record<string, string> = {
   scholar: "scholar",
@@ -152,6 +177,16 @@ function safePeopleText(value: unknown, fallback: string, maxLength = 120) {
   if (peopleTextLooksUnsafe(text)) return fallback;
   const rewritten = rewritePlayerFacingWorldText(text);
   return rewritten.length > maxLength ? `${rewritten.slice(0, maxLength)}...` : rewritten;
+}
+
+function safePeopleLabel(value: unknown, fallback: string, maxLength = 40) {
+  const text = typeof value === "string" && value.trim() ? value.trim().replace(/\s+/g, " ") : fallback;
+  if (peopleTextLooksUnsafe(text)) return fallback;
+  const key = text
+    .replace(/([a-z])([A-Z])/g, "$1_$2")
+    .replace(/[\s-]+/g, "_")
+    .toLowerCase();
+  return safePeopleText(relationshipAgendaLabelMap[key] || text, fallback, maxLength);
 }
 
 function safePortraitRef(value: unknown) {
@@ -532,15 +567,14 @@ function collectRelationshipAgendaThreads(worldThreadView: unknown) {
       );
       if (!id || !title || !summary || seen.has(id)) return [];
       seen.add(id);
-      const rawStatus = safePeopleText(thread.status, "active", 32);
-      const status = rawStatus === "watch" ? "待观察" : rawStatus === "resolved" ? "已归档" : "可跟进";
+      const status = safePeopleLabel(thread.status, "可跟进", 32);
       const interventionHints = Array.isArray(thread.interventionHints)
         ? thread.interventionHints.map((item) => safePeopleText(item, "", 36)).filter(Boolean).slice(0, 3)
         : [];
       return [{
         id,
         title,
-        sourceLabel: safePeopleText(thread.sourceLabel, "交游记录", 28),
+        sourceLabel: safePeopleLabel(thread.sourceLabel, "交游记录", 28),
         statusLabel: status,
         riskLabel: safePeopleText(thread.riskLabel, Number(thread.severity) >= 2 ? "中风险" : "可观察", 28),
         summary,

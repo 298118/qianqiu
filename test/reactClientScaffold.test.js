@@ -41,6 +41,8 @@ function stripSafeGuardPatterns(source) {
     .replace(/const unsafePreferenceTextPattern = .*?;\r?\n/, "")
     .replace(/const unsafeDomainConsequenceFragments[\s\S]*?\] as const;\r?\n/, "")
     .replace(/const unsafeEconomyTraceFragments[\s\S]*?\] as const;\r?\n/, "")
+    .replace(/const unsafeNpcEvidenceFragments[\s\S]*?\] as const;\r?\n/, "")
+    .replace(/const unsafePeopleTextFragments[\s\S]*?\] as const;\r?\n/, "")
     .replace(/const unsafeArchiveFragments[\s\S]*?\] as const;\r?\n/, "")
     .replace(/const unsafeMapTextFragments[\s\S]*?\] as const;\r?\n/, "")
     .replace(/const unsafeMagistrateFragments[\s\S]*?\] as const;\r?\n/, "")
@@ -1443,6 +1445,50 @@ test("S89.14 player identity labels stay Chinese and centralized", () => {
   assert.doesNotMatch(combined, /\|\|\s*(?:player|payload\?\.player|portrait)\.role\b/);
 });
 
+test("S89.15 follow-up and economy evidence readers keep player-facing labels", () => {
+  const npcEvidenceSource = readText("client/src/components/NpcFollowUpEvidenceSection.tsx");
+  const economyTraceSource = readText("client/src/components/EconomyTraceSection.tsx");
+  const peoplePageSource = readText("client/src/pages/PeoplePage.tsx");
+  const appTestSource = readText("client/src/__tests__/App.test.tsx");
+  const clientSmokeSource = readText("scripts/clientSmoke.js");
+  const styleSource = readText("client/src/styles/global.css");
+  const runtimeCombined = stripSafeGuardPatterns(`${npcEvidenceSource}\n${economyTraceSource}\n${peoplePageSource}`);
+
+  assert.match(npcEvidenceSource, /data-polish-evidence="s89-15-follow-up-reader"/);
+  assert.match(npcEvidenceSource, /data-polish-evidence-boundary="s89-15-follow-up-boundary"/);
+  assert.match(npcEvidenceSource, /npcEvidenceLabelMap/);
+  assert.match(npcEvidenceSource, /accepted_pending_server_resolution:\s*"已收呈待复核"/);
+  assert.match(npcEvidenceSource, /human_debt_monthly:\s*"人情债月账"/);
+  assert.match(npcEvidenceSource, /relationship_risk_watchlist:\s*"关系风险留察"/);
+  assert.match(npcEvidenceSource, /riskTags: \(item\.riskTags \?\? \[\]\)/);
+  assert.match(npcEvidenceSource, /\.map\(\(tag\) => cleanNpcEvidenceLabel\(tag, "", 24\)\)/);
+  assert.match(npcEvidenceSource, /localNpcEvidencePathPattern/);
+  assert.match(npcEvidenceSource, /safe view/);
+  assert.match(economyTraceSource, /data-polish-evidence="s89-15-economy-reader"/);
+  assert.match(economyTraceSource, /data-polish-evidence-boundary="s89-15-economy-boundary"/);
+  assert.match(economyTraceSource, /economyTraceLabelMap/);
+  assert.match(economyTraceSource, /trade_negotiation:\s*"交易议价"/);
+  assert.match(economyTraceSource, /under_review:\s*"待复核"/);
+  assert.match(economyTraceSource, /localEconomyTracePathPattern/);
+  assert.match(economyTraceSource, /safe view/);
+  assert.match(peoplePageSource, /relationshipAgendaLabelMap/);
+  assert.match(peoplePageSource, /npc_relationship_action:\s*"交游记录"/);
+  assert.match(peoplePageSource, /safePeopleLabel/);
+  assert.match(peoplePageSource, /sourceRef/);
+  assert.match(appTestSource, /s89-15-follow-up-reader/);
+  assert.match(appTestSource, /s89-15-economy-reader/);
+  assert.match(appTestSource, /accepted_pending_server_resolution/);
+  assert.match(appTestSource, /human_debt_monthly/);
+  assert.match(appTestSource, /relationship_risk_watchlist/);
+  assert.match(appTestSource, /trade_negotiation/);
+  assert.match(appTestSource, /under_review/);
+  assert.match(clientSmokeSource, /s89-15-economy-reader/);
+  assert.match(clientSmokeSource, /s89-15-economy-boundary/);
+  assert.match(clientSmokeSource, /safe view\|resolver\|sourceRef\|relatedRefs\|scopeRefs/);
+  assert.doesNotMatch(styleSource, /s89-15/);
+  assert.doesNotMatch(runtimeCombined, /fetch\(|submitTurn\(|\/api\/game\/turn|dangerouslySetInnerHTML|localStorage|sessionStorage/);
+});
+
 test("S89.5 material polish stays frontend-only and reduced-motion aware", () => {
   const appShellSource = readText("client/src/components/AppShell.tsx");
   const surfaceHostSource = readText("client/src/components/SurfaceHost.tsx");
@@ -1812,7 +1858,7 @@ test("S88.7 archive consumes world entity impact evidence from safe projection",
   assert.match(clientSmokeSource, /archiveDigestBand/);
   assert.match(clientSmokeSource, /s89-10-chronicle-density/);
   assert.match(clientSmokeSource, /archiveEvidenceStack/);
-  assert.match(clientSmokeSource, /draftContext\|schema\|manifest\|server adjudication\|AI read scope\|proposal boundary\|watchlist\|NPC/);
+  assert.match(clientSmokeSource, /draftContext\|schema\|manifest\|server adjudication\|AI read scope\|proposal boundary\|safe view\|resolver\|runtime manifest\|visual-only\|watchlist\|NPC/);
   assert.match(clientSmokeSource, /\/api\/game\/npc-interaction\/\$\{sessionId\}/);
   assert.match(clientSmokeSource, /sourceType === "world_entity_impact"/);
   assert.match(clientSmokeSource, /li\[data-source-type='world_entity_impact'\]/);

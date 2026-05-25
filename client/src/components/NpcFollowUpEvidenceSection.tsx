@@ -30,6 +30,24 @@ const followUpEvidenceGroups = [
   { key: "events", label: "案牍与风宪" }
 ] as const;
 
+const npcEvidenceLabelMap: Record<string, string> = {
+  accepted_pending_server_resolution: "已收呈待复核",
+  betrayal_risk: "背叛风险",
+  converted_to_risk: "转作风险留察",
+  deferred: "暂缓候复",
+  human_debt: "人情债月账",
+  human_debt_monthly: "人情债月账",
+  integrity_watchlist: "廉政留察",
+  introduction: "引荐拜会",
+  petition_case: "请托案牍",
+  referral_meeting: "引荐拜会",
+  relationship_risk_watchlist: "关系风险留察",
+  reported: "已呈报",
+  strategy_evidence: "献策证据",
+  under_review: "待复核",
+  watchlist: "留察名单"
+};
+
 const unsafeNpcEvidenceFragments = [
   "provider",
   "proposal",
@@ -46,6 +64,8 @@ const unsafeNpcEvidenceFragments = [
   "server adjudication",
   "ai read scope",
   "proposal boundary",
+  "safe view",
+  "resolver",
   "sqlite",
   "sql",
   "localstorage",
@@ -88,6 +108,7 @@ const unsafeNpcEvidenceFragments = [
   "模型原文",
   "开发诊断"
 ] as const;
+const localNpcEvidencePathPattern = /(?:^|[\s"'`(（:：,;，。；、【《“‘])(?:[a-z]:[\\/]|~[\\/]|\.{1,2}[\\/]|\/(?:home|mnt|users|private|tmp|var|etc|usr|opt|workspace|workspaces|root|data|src|client|server|dist|public|node_modules)(?:[\\/]|$)|(?:data|src|client|server|dist|public|node_modules)[\\/][^\s，。；、]+)/i;
 
 function isRecord(value: JsonValue | unknown): value is JsonObject {
   return Boolean(value) && typeof value === "object" && !Array.isArray(value);
@@ -102,7 +123,8 @@ function isUnsafeNpcEvidenceText(value: unknown) {
   const text = normalizeEvidenceScalar(value);
   if (!text) return false;
   const lowered = text.toLowerCase();
-  return /[a-z]:[\\/]/i.test(text) ||
+  return localNpcEvidencePathPattern.test(text) ||
+    /[a-z]:[\\/]/i.test(text) ||
     /(?:file|https?):\/\//i.test(text) ||
     unsafeNpcEvidenceFragments.some((fragment) => lowered.includes(fragment.toLowerCase()));
 }
@@ -113,6 +135,17 @@ function cleanNpcEvidenceText(value: unknown, fallback = "未载", maxLength = 1
   if (isUnsafeNpcEvidenceText(text)) return fallback;
   const rewritten = rewritePlayerFacingWorldText(text);
   return rewritten.length > maxLength ? `${rewritten.slice(0, maxLength)}…` : rewritten;
+}
+
+function cleanNpcEvidenceLabel(value: unknown, fallback = "未载", maxLength = 40) {
+  const text = normalizeEvidenceScalar(value);
+  if (!text) return fallback;
+  if (isUnsafeNpcEvidenceText(text)) return fallback;
+  const key = text
+    .replace(/([a-z])([A-Z])/g, "$1_$2")
+    .replace(/[\s-]+/g, "_")
+    .toLowerCase();
+  return cleanNpcEvidenceText(npcEvidenceLabelMap[key] || text, fallback, maxLength);
 }
 
 function cleanOptionalText(value: unknown, maxLength = 96) {
@@ -126,8 +159,8 @@ function groupedEvidence(evidence: NpcActiveRequestFollowUpEvidenceGroupView | n
       .map((item, index) => {
         const npc = isRecord(item.npc) ? item.npc : {};
         const title = cleanNpcEvidenceText(item.title, "来函线索", 58);
-        const kindLabel = cleanNpcEvidenceText(item.evidenceKindLabel || item.taskRouteLabel, "后续证据", 30);
-        const statusLabel = cleanNpcEvidenceText(item.statusLabel || item.status, "待复核", 30);
+        const kindLabel = cleanNpcEvidenceLabel(item.evidenceKindLabel || item.taskRouteLabel, "后续证据", 30);
+        const statusLabel = cleanNpcEvidenceLabel(item.statusLabel || item.status, "待复核", 30);
         const summary = cleanNpcEvidenceText(item.publicSummary || item.summary || item.nextStep, "此线索只供公开后续复核。", 156);
         const nextStep = cleanOptionalText(item.nextStep, 168);
         const npcName = cleanNpcEvidenceText(npc.displayName, "来人", 36);
@@ -158,7 +191,7 @@ function groupedEvidence(evidence: NpcActiveRequestFollowUpEvidenceGroupView | n
           nextStep,
           npcName,
           riskTags: (item.riskTags ?? [])
-            .map((tag) => cleanOptionalText(tag, 24))
+            .map((tag) => cleanNpcEvidenceLabel(tag, "", 24))
             .filter(Boolean)
             .slice(0, 3) as string[]
         };
@@ -196,7 +229,7 @@ export function NpcFollowUpEvidenceSection({
   const titleId = `${idPrefix}-title`;
 
   return (
-    <article className="scholarPanelCard npcFollowUpEvidenceSection" aria-labelledby={titleId}>
+    <article className="scholarPanelCard npcFollowUpEvidenceSection" aria-labelledby={titleId} data-polish-evidence="s89-15-follow-up-reader">
       <div className="npcFollowUpEvidenceHeader">
         <div>
           <p className="eyebrow">来函线索</p>
@@ -225,6 +258,9 @@ export function NpcFollowUpEvidenceSection({
         ))}
       </div>
       <p className="npcFollowUpEvidenceBoundary">{cleanNpcEvidenceText(boundaryText, "这里只读公开线索；后续结果仍回主卷候复。", 172)}</p>
+      <p className="statusLine" data-polish-evidence-boundary="s89-15-follow-up-boundary">
+        只读公开线索；拟复核只写案头草稿，不结算人情债、关系终局或未公开事实。
+      </p>
     </article>
   );
 }

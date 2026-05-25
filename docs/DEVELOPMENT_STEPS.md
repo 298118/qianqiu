@@ -113,6 +113,7 @@
 
 | ID | 状态 | 目标 | 范围 / 下一步 |
 | --- | --- | --- | --- |
+| S89.15 | DONE | 来函与账解证据读法 polish | 承接 S89.14 CSS 预算风险和 S89.10/S88.7/S88.8 证据组件后续建议，集中打磨 `NpcFollowUpEvidenceSection` 与 `EconomyTraceSection` 的玩家可见读法、内部术语清洗和只读/草稿边界提示；人物页与史册页继续消费安全 follow-up evidence，人物/囊箧/主卷继续消费安全 economy trace。范围限 React 前端证据组件、相关 App 测试、客户端 smoke/source canary 和文档；未新增 CSS，复用既有 `.statusLine` / `.inventoryMiniCard` / `.peopleMeta` 等样式。不新增依赖或素材，不改后端 API/schema、AI 权限、prompt、provider、SQLite、存档、runtime manifest 或素材 manifest；浏览器不裁决资源、身份、交易、NPC 行动、经济、考试、官职、关系、婚姻、弹劾、定罪、背叛或隐藏信息。实现提交：待回填。 |
 | S89.14 | DONE | 玩家身份标签中文化与 CSS 预算缓冲 polish | 承接 S89.13 残余建议，集中前端玩家身份显示 helper，避免 `scholar` / `official` / `general` 等 role 枚举在印匣、首页续局、主卷案头、人物页和旧案架中作为兜底文案露出；设置目录短章法标签复用既有标签样式，释放少量 CSS 预算缓冲。范围限 React 前端文本 helper、相关页面/组件接线、少量 CSS 复用、客户端 smoke/source canary、前端测试和文档；不新增依赖或素材，不改后端 API/schema、AI 权限、prompt、provider、SQLite、存档、runtime manifest 或素材 manifest。浏览器不裁决资源、身份、交易、NPC 行动、经济、考试、官职或隐藏信息。实现提交：`0739b7f9`。 |
 | S89.13 | DONE | 右上角印匣与设置目录信息架构 polish | 承接 S89.12，右上角仍是唯一显眼印匣入口，设置目录只作入口整理；印匣总览显示当前案卷和显示章法，显示偏好整理为动效/舆图/正文/对比四项读法，案卷摘要把内部来源改写为“新卷开局 / 主卷载入 / 本旬回音 / 科场回音”。范围限 React `SurfaceHost` / `SettingsPage`、少量前端样式、客户端 smoke/source canary、前端测试和文档；不新增依赖、素材、后端 API/schema、AI 权限、prompt、provider、SQLite、存档、runtime manifest 或素材 manifest。显示偏好仍只写本地白名单，AI 设置仍走既有全局设置 API，浏览器不裁决资源、身份、交易、NPC 行动、经济、考试、官职或隐藏信息。实现提交：`54a6186d`。 |
 | S89.12 | DONE | 舆图筛选专题层体验 polish | 承接 S89.11，点击“筛舆图”打开的专题层已改为只读舆图筛选说明，地点/驿路/近事/人物动向/后果追踪以世界内口径呈现为卷上图层、筛看方法和候复边界；`map-filter` 继续是本地 surface，不进入后端 topic surface，不请求专题 API 或 AI 拟稿，不写草稿，只提供“回舆图勾选”。范围限 React SurfaceHost/registry、客户端 smoke/source canary、前端测试和文档。不新增依赖、素材、后端 API/schema、AI 权限、prompt、provider、SQLite、存档、runtime manifest 或素材 manifest；专题层不提交回合、不写服务器状态，图层与坐标仍只作浏览器显示。实现提交：`b658a1a3`。 |
@@ -148,6 +149,7 @@
 - 2026-05-25：S89.13 完成右上角印匣与设置目录信息架构 polish。当前范围限 React 设置/印匣前端、少量样式、客户端 smoke/source canary、前端测试和文档；不新增浏览器裁决权，不改后端 API/schema、AI 权限、prompt、provider、SQLite、存档、runtime manifest 或素材 manifest。
 - 2026-05-25：S89.14 启动玩家身份标签中文化与 CSS 预算缓冲 polish。当前范围限 React 前端文本 helper、首页/主卷/人物/旧案/印匣身份显示、设置目录标签样式复用、客户端 smoke/source canary、前端测试和文档；不新增浏览器裁决权，不改后端 API/schema、AI 权限、prompt、provider、SQLite、存档、runtime manifest 或素材 manifest。
 - 2026-05-25：S89.12 完成舆图筛选专题层体验 polish。当前范围限 React SurfaceHost/registry、客户端 smoke/source canary、前端测试和文档；不新增浏览器裁决权，不改后端 API/schema、AI 权限、prompt、provider、SQLite、存档、runtime manifest 或素材 manifest。
+- 2026-05-25：S89.15 启动来函与账解证据读法 polish。当前范围限 React 前端证据组件、人物/史册/囊箧/主卷既有消费路径、客户端 smoke/source canary、前端测试和文档；原则上不新增 CSS，不新增浏览器裁决权，不改后端 API/schema、AI 权限、prompt、provider、SQLite、存档、runtime manifest 或素材 manifest。
 - 前一轮 S88 归档是低风险纯文档维护；S89.3-S89.14 涉及前端代码、样式、验证脚本和文档，提交前按子代理复审规则执行。
 
 ## 6. 最近完整验证口径
@@ -230,6 +232,17 @@ S89.8 高清立绘查看器画中所见 polish 验证结果：
 - 已通过 `npm run check:docs-governance`、`node --test test/documentationGovernance.test.js`、`git diff --check`。提交前只读子代理复审已通过，未发现阻断问题；非阻断建议为后续可给题签格补专门材质样式。
 
 ## 7. 近期进度记录
+
+### 2026-05-25：S89.15 来函与账解证据读法 polish
+
+- 范围：`NpcFollowUpEvidenceSection` 新增来函后续 evidence 标签映射和 `s89-15-follow-up-reader` / `s89-15-follow-up-boundary` 标记；`EconomyTraceSection` 新增账解 trace 标签映射和 `s89-15-economy-reader` / `s89-15-economy-boundary` 标记；人物页交游议题同步把 `npc_relationship_action` 等来源/status 读作“交游记录 / 可跟进”等玩家口径。
+- 体验：`human_debt_monthly`、`accepted_pending_server_resolution`、`integrity_watchlist`、`trade_negotiation`、`under_review` 等内部枚举不会再作为玩家可见标签露出；账本数值变化从 `->` 改为中文“至”；边界提示明确“只写案头草稿”，不把证据、账解或交游议题误解成真实结算。
+- 安全：来函 evidence、经济 trace 和人物交游议题补 POSIX/Windows 本地路径、`draftContext`、`schema`、`manifest`、`server adjudication`、`AI read scope`、`proposal boundary`、`safe view`、`resolver`、`sourceRef`、`relatedRefs`、`scopeRefs` 等工程词清洗；浏览器仍只消费服务器安全 projection，不结算资源、交易、委派、人情债、关系、婚姻、弹劾、定罪、背叛或 hidden 事实。
+- Smoke/canary：`client/src/__tests__/App.test.tsx` 补来函后续、交游议题和人物经济 trace 污染 fixture 与 S89.15 标记断言；`scripts/clientSmoke.js` 在桌面/移动囊箧 economy trace smoke 中守住 S89.15 reader/boundary 标记，并扩展史册/囊箧工程词禁词；`test/reactClientScaffold.test.js` 新增 S89.15 source canary，确认未新增 S89.15 CSS。
+- 边界：本步只改 React 前端证据组件、人物页标签清洗、客户端 smoke/source canary、前端测试和文档；不新增 CSS、依赖或素材，不改 runtime manifest、素材 manifest、后端 API/schema、AI 权限矩阵、prompt、provider facade、SQLite schema、存档格式或服务器裁决。
+- 验证：已通过 `npm run typecheck:client`、`node --check scripts/clientSmoke.js`、`node --test test/reactClientScaffold.test.js`（52 tests）、focused `npx vitest --config vitest.config.mjs run client/src/__tests__/App.test.tsx -t "current people ledger|economy trace" --pool=vmThreads --fileParallelism=false --maxWorkers=1`（4 tests）、完整串行 `npx vitest --config vitest.config.mjs run --pool=vmThreads --fileParallelism=false --maxWorkers=1`（6 files / 129 tests）、`npm run qa:runtime-manifest`、`npm run build:client`、`npm run budget:client`、`npm run smoke:browser`、`npm run check:docs-governance`、`node --test test/documentationGovernance.test.js` 和 `git diff --check`。最终预算输出 `JS 617.1 KiB / CSS 99.9 KiB`；Vite 仍输出既有 `/assets/ui/...` runtime asset 与 chunk size warnings。`npm run test:client` 两次命中既有 Vitest fork worker 启动超时，5 files / 60 tests 已通过但 `App.test.tsx` worker 未启动；已用串行池完整复核同一客户端套件。
+- 复审：开工只读子代理建议把 S89.15 收窄为来函/交游/账解术语清洗，重点补 POSIX 路径、工程词和 raw status/route label 风险，并保持 CSS 零新增；本轮按建议实现。提交前只读复审已通过，未发现阻断问题；复审建议的 raw risk tag 边缘情况已补 `relationship_risk_watchlist` 中文映射并由同一子代理复核确认无阻断。
+- 提交：实现提交待回填。
 
 ### 2026-05-25：S89.14 玩家身份标签中文化与 CSS 预算缓冲 polish
 

@@ -4166,28 +4166,28 @@ describe("S74.1 React client shell", () => {
           }],
           economy: [{
             evidenceId: "npc-follow-up-evidence:debt",
-            evidenceKindLabel: "人情债月账",
+            evidenceKindLabel: "human_debt_monthly",
             title: "人情债月账解释",
             publicSummary: "王氏旧账只作为公开月账解释，不直接结债。",
             nextStep: "查验契据、见证人与旧账来源。",
-            statusLabel: "待复核",
+            statusLabel: "accepted_pending_server_resolution",
             npc: { displayName: "王氏" },
-            riskTags: ["人情债"]
+            riskTags: ["relationship_risk_watchlist"]
           }],
           events: [{
             evidenceId: "npc-follow-up-evidence:watch",
-            evidenceKindLabel: "廉政 watchlist",
+            evidenceKindLabel: "integrity_watchlist",
             title: "廉政 watchlist 留痕",
             publicSummary: "有人试探财物往来，应只作公开风宪线索。",
             nextStep: "拒收留痕并呈报公开线索。",
-            statusLabel: "待呈报",
+            statusLabel: "reported",
             npc: { displayName: "顾文衡" },
             riskTags: ["廉政", "风宪"]
           }, {
             evidenceId: "npc-follow-up-evidence:polluted",
             evidenceKindLabel: "provider payload",
-            title: "hiddenNotes raw prompt C:\\bad",
-            publicSummary: "OPENAI_API_KEY data/sessions provider payload",
+            title: "hiddenNotes raw prompt C:\\bad /mnt/e/LSMNQ/.env",
+            publicSummary: "OPENAI_API_KEY data/sessions provider payload draftContext schema manifest resolver safe view",
             npc: { displayName: "provider-forged" },
             riskTags: ["privateSignalTags"]
           }]
@@ -4263,7 +4263,7 @@ describe("S74.1 React client shell", () => {
         activeThreads: [{
           id: "WT-npc-rel-debate-safe",
           sourceType: "npc_relationship_action",
-          sourceLabel: "交游记录",
+          sourceLabel: "npc_relationship_action",
           status: "active",
           kind: "npc_relationship_action",
           title: "交游记录：沈砚秋论道",
@@ -4298,6 +4298,13 @@ describe("S74.1 React client shell", () => {
           status: "active",
           title: "交游记录，/home/zzz/project/.env",
           summary: "旁注、/mnt/e/LSMNQ/.env 也应视作污染路径。"
+        }, {
+          id: "WT-npc-rel-engineering",
+          sourceType: "npc_relationship_action",
+          sourceLabel: "交游记录",
+          status: "active",
+          title: "交游记录：draftContext schema manifest",
+          summary: "safe view resolver sourceRef relatedRefs scopeRefs 不应显示。"
         }, {
           id: "WT-domain-visible",
           sourceType: "domain_consequence",
@@ -4361,9 +4368,14 @@ describe("S74.1 React client shell", () => {
     expect(screen.getAllByText("顾文衡").length).toBeGreaterThan(0);
     expect(screen.getAllByText("王氏").length).toBeGreaterThan(0);
     expect(screen.getByText("来函线索与风宪留察")).toBeTruthy();
+    expect(document.querySelector("[data-polish-evidence='s89-15-follow-up-reader']")).toBeTruthy();
+    expect(document.querySelector("[data-polish-evidence-boundary='s89-15-follow-up-boundary']")).toBeTruthy();
     expect(screen.getByText("同年师友引荐拜会")).toBeTruthy();
     expect(screen.getByText("人情债月账解释")).toBeTruthy();
     expect(screen.getByText("廉政 留察名单 留痕")).toBeTruthy();
+    expect(screen.getByText("月账与人情 · 人情债月账 · 已收呈待复核")).toBeTruthy();
+    expect(screen.getByText("案牍与风宪 · 廉政留察 · 已呈报")).toBeTruthy();
+    expect(screen.getByText("标记：关系风险留察")).toBeTruthy();
     expect(screen.getByText("关系网影响")).toBeTruthy();
     expect(screen.getAllByText("同年文社").length).toBeGreaterThan(0);
     expect(screen.getByText("地方士绅")).toBeTruthy();
@@ -4383,7 +4395,10 @@ describe("S74.1 React client shell", () => {
     expect(screen.queryByText("旁注 /home/zzz/project/.env 只应视作污染路径。")).toBeNull();
     expect(screen.queryByText("交游记录，/home/zzz/project/.env")).toBeNull();
     expect(screen.queryByText("旁注、/mnt/e/LSMNQ/.env 也应视作污染路径。")).toBeNull();
+    expect(screen.queryByText("交游记录：draftContext schema manifest")).toBeNull();
+    expect(screen.queryByText(/safe view|resolver|sourceRef|relatedRefs|scopeRefs/i)).toBeNull();
     expect(document.body.textContent || "").not.toMatch(/密钥私档顾问|完整提示词掌柜|本地路径女|隐藏私档密钥本地路径/);
+    expect(document.body.textContent || "").not.toMatch(/human_debt_monthly|accepted_pending_server_resolution|integrity_watchlist|relationship_risk_watchlist|draftContext|schema|manifest|resolver|safe view|provider payload|\/mnt\/e\/LSMNQ|\/home\/zzz/i);
     expect(screen.getAllByRole("button", { name: "拟复核" })).toHaveLength(3);
     expect(screen.getAllByRole("button", { name: "拟跟进" })).toHaveLength(1);
     fireEvent.click(screen.getByRole("button", { name: "拟跟进" }));
@@ -4923,10 +4938,10 @@ describe("S74.1 React client shell", () => {
         {
           traceId: "people-trade:safe",
           traceType: "trade_negotiation",
-          groupLabel: "交易议价",
+          groupLabel: "trade_negotiation",
           title: "韩员外交易议价",
           publicSummary: "议买纸张与粮价消息，尚待服务器确认。",
-          statusLabel: "待复议",
+          statusLabel: "under_review",
           affectedLabels: ["韩员外"],
           amountView: { label: "议价银两", delta: -4, unit: "两" },
           nextStep: "交易仍需后续服务器结算路径确认，不视为已经成交。"
@@ -4963,7 +4978,7 @@ describe("S74.1 React client shell", () => {
           traceType: "trade_negotiation",
           groupLabel: "交易议价",
           title: "污染交易解释",
-          publicSummary: "privateSignalTags provider payload data/sessions sk-test-secret",
+          publicSummary: "privateSignalTags provider payload data/sessions sk-test-secret draftContext schema manifest resolver safe view /home/user/.env",
           statusLabel: "可阅"
         }
       ]
@@ -5013,9 +5028,13 @@ describe("S74.1 React client shell", () => {
     expect(peopleTraceSection.getByText("韩员外交易议价")).toBeTruthy();
     expect(peopleTraceSection.getByText("东乡清丈委派")).toBeTruthy();
     expect(peopleTraceSection.getByText("纸价小涨")).toBeTruthy();
+    expect(peopleTraceSection.getByText("交易议价 · 待复核")).toBeTruthy();
     expect(peopleTraceSection.queryByText("银两账面")).toBeNull();
     expect(peopleTraceSection.queryByText("污染交易解释")).toBeNull();
-    expect(peopleTraceSection.queryByText(/provider payload|privateSignalTags|data\/sessions|sk-test-secret/i)).toBeNull();
+    expect(peopleTraceSection.queryByText(/provider payload|privateSignalTags|data\/sessions|sk-test-secret|draftContext|schema|manifest|resolver|safe view|\/home\/user/i)).toBeNull();
+    expect(peopleTraceSection.queryByText(/trade_negotiation|under_review/)).toBeNull();
+    expect(document.querySelector("[data-polish-evidence='s89-15-economy-reader']")).toBeTruthy();
+    expect(document.querySelector("[data-polish-evidence-boundary='s89-15-economy-boundary']")).toBeTruthy();
     expect(peopleTraceSection.getByText("3 条")).toBeTruthy();
     expect(peopleTraceSection.getAllByRole("button", { name: "拟复核" })).toHaveLength(3);
     fireEvent.click(peopleTraceSection.getAllByRole("button", { name: "拟复核" })[0]);
