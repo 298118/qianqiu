@@ -5,6 +5,8 @@ import { surfaceRegistry } from "../surfaces/surfaceRegistry";
 import type { LocalSurface } from "../state/uiState";
 import { useUiStateStore } from "../state/uiState";
 
+const mainCourtDeskPolishId = "s89-34-main-court-desk";
+
 const courtSurfaceGroups: readonly {
   readonly title: string;
   readonly note: string;
@@ -36,18 +38,54 @@ const courtSurfaceDraftUses: Partial<Record<LocalSurface, string>> = {
   "npc-profile": "查阅已见人物与来函线索，只拟拜会、问询或复核草稿。"
 };
 
+const courtAgendaItems = [
+  { label: "章奏", value: "奏折队列", note: "先读公开章奏，择要成稿。" },
+  { label: "谕旨", value: "拟圣旨", note: "只落初稿，候案卷回批。" },
+  { label: "朝议", value: "廷议题目", note: "汇总利害，不定终局。" },
+  { label: "堂审军议", value: "证据与边患", note: "列明风险，不造判词战果。" }
+] as const;
+
 export function CourtPage() {
   const { sessionId = "s74-preview" } = useParams();
   const openSurfaceForSession = useUiStateStore((state) => state.openSurfaceForSession);
   const routeSessionSupported = isRouteLocalSessionId(sessionId);
+  const agendaState = routeSessionSupported ? "ready" : "unsupported";
 
   return (
-    <article className="surfacePanel routePanel courtSurfacePage" aria-labelledby="court-title" data-polish-court="s89-17-court-directory">
+    <article
+      className="surfacePanel routePanel courtSurfacePage"
+      aria-labelledby="court-title"
+      data-polish-court="s89-17-court-directory"
+      data-polish-court-agenda={mainCourtDeskPolishId}
+    >
       <div className="surfaceHeader">
         <p className="eyebrow">官署专题</p>
         <h1 id="court-title">朝议与官署</h1>
         <p>百官班列，章奏如潮。此页只作官署案头索引：奏折、圣旨、朝议、堂审、军议与人物档案各按公开卷宗取材，整理可拟草稿，最后仍候案卷回批。</p>
       </div>
+      <section
+        className="courtAgendaBand"
+        aria-labelledby="court-agenda-title"
+        data-polish-court-agenda-band={mainCourtDeskPolishId}
+        data-agenda-state={agendaState}
+      >
+        <div className="sectionTitleRow">
+          <div>
+            <p className="eyebrow">官署议程</p>
+            <h2 id="court-agenda-title">御案传签</h2>
+          </div>
+          <span>{routeSessionSupported ? "六署可查" : "案卷未载"}</span>
+        </div>
+        <ol className="courtAgendaSteps" aria-label="官署议程读法">
+          {courtAgendaItems.map((item) => (
+            <li key={item.label}>
+              <span>{item.label}</span>
+              <strong>{item.value}</strong>
+              <p>{item.note}</p>
+            </li>
+          ))}
+        </ol>
+      </section>
       <div className="courtSurfaceGrid" aria-label="官署专题入口">
         {courtSurfaceGroups.map((group) => (
           <section key={group.title} className="courtSurfaceGroup" aria-label={group.title}>
@@ -59,7 +97,13 @@ export function CourtPage() {
               {group.surfaces.map((surface) => {
                 const entry = surfaceRegistry[surface];
                 return (
-                  <article key={surface} data-court-surface={surface} aria-label={`${entry.label}案头索引`}>
+                  <article
+                    key={surface}
+                    className="courtSurfaceEntry"
+                    data-court-surface={surface}
+                    data-court-state={routeSessionSupported ? "ready" : "unsupported"}
+                    aria-label={`${entry.label}案头索引`}
+                  >
                     <div className="peopleMeta" aria-label={`${entry.label}章法`}>
                       <span>{entry.eyebrow}</span>
                       <span>可拟草稿</span>

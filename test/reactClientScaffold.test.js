@@ -1719,10 +1719,72 @@ test("S89.22 main ledger reader stays player-facing and draft-status-only", () =
   assert.match(appTestSource, /s89-22-main-ledger-reader/);
   assert.match(appTestSource, /来处：案头摘录/);
   assert.match(clientSmokeSource, /S89\.22 main ledger/);
-  assert.doesNotMatch(styleSource, /s89-22|data-polish-game/);
+  assert.doesNotMatch(styleSource, /s89-22/);
   assert.doesNotMatch(readerBlock, /activeActionDraft\?\.text|activeActionDraft\.text/);
   assert.doesNotMatch(readerBlock, /manual|role-surface|map-runtime|archive-view|draftContext|schema|manifest|provider payload|raw audit|resolver|sourceRef|relatedRefs|scopeRefs|worldState|payload/);
   assert.doesNotMatch(gamePageWithoutGuard, /\/api\/game\/state|\/api\/dev\/session-diagnostics|dangerouslySetInnerHTML|localStorage|sessionStorage|data\/sessions|provider payload|raw audit|hiddenNotes|OPENAI_API_KEY|DEEPSEEK_API_KEY|MIMO_API_KEY|ANTHROPIC_API_KEY|完整提示词|本地路径|密钥/);
+});
+
+test("S89.34 main desk and court agenda material polish stays safe-view-only", () => {
+  const gamePageSource = readText("client/src/pages/GamePage.tsx");
+  const courtPageSource = readText("client/src/pages/CourtPage.tsx");
+  const styleSource = readText("client/src/styles/global.css");
+  const appTestSource = readText("client/src/__tests__/App.test.tsx");
+  const clientSmokeSource = readText("scripts/clientSmoke.js");
+  const gameCenterStart = gamePageSource.indexOf('data-polish-game-center={mainCourtDeskPolishId}');
+  const gameCenterEnd = gamePageSource.indexOf('<nav className="sessionNav gameFeatureTabs"', gameCenterStart);
+  const gameCenterBlock = gameCenterStart >= 0 && gameCenterEnd > gameCenterStart
+    ? gamePageSource.slice(gameCenterStart, gameCenterEnd)
+    : "";
+  const courtAgendaStart = courtPageSource.indexOf('data-polish-court-agenda={mainCourtDeskPolishId}');
+  const courtAgendaEnd = courtPageSource.indexOf('<div className="courtSurfaceGrid"', courtAgendaStart);
+  const courtAgendaBlock = courtAgendaStart >= 0 && courtAgendaEnd > courtAgendaStart
+    ? courtPageSource.slice(courtAgendaStart, courtAgendaEnd)
+    : "";
+  const combinedPageSource = `${gameCenterBlock}\n${courtAgendaBlock}`;
+  const runtimeCombined = `${gamePageSource}\n${courtPageSource}`;
+
+  assert.ok(gameCenterStart >= 0 && gameCenterEnd > gameCenterStart);
+  assert.ok(courtAgendaStart >= 0 && courtAgendaEnd > courtAgendaStart);
+  assert.match(gamePageSource, /const mainCourtDeskPolishId = "s89-34-main-court-desk"/);
+  assert.match(gamePageSource, /data-polish-game-command=\{mainCourtDeskPolishId\}/);
+  assert.match(gamePageSource, /data-polish-game-scene=\{mainCourtDeskPolishId\}/);
+  assert.match(gamePageSource, /data-polish-game-center-band=\{mainCourtDeskPolishId\}/);
+  assert.match(gamePageSource, /data-desk-state=\{deskState\}/);
+  assert.match(gamePageSource, /gameDeskGroups/);
+  assert.match(gamePageSource, /案头中枢/);
+  assert.match(gamePageSource, /本卷案桌/);
+  assert.match(gamePageSource, /本地草稿候呈/);
+  assert.match(gamePageSource, /尚未落稿/);
+  assert.match(gamePageSource, /未载不补造/);
+  assert.match(courtPageSource, /data-polish-court-agenda=\{mainCourtDeskPolishId\}/);
+  assert.match(courtPageSource, /data-polish-court-agenda-band=\{mainCourtDeskPolishId\}/);
+  assert.match(courtPageSource, /data-agenda-state=\{agendaState\}/);
+  assert.match(courtPageSource, /data-court-state=\{routeSessionSupported \? "ready" : "unsupported"\}/);
+  assert.match(courtPageSource, /courtSurfaceEntry/);
+  assert.match(courtPageSource, /官署议程/);
+  assert.match(courtPageSource, /御案传签/);
+  assert.match(courtPageSource, /堂审军议/);
+  assert.match(appTestSource, /s89-34-main-court-desk/);
+  assert.match(appTestSource, /data-desk-state/);
+  assert.match(appTestSource, /data-court-state/);
+  assert.match(clientSmokeSource, /S89\.34 main desk/);
+  assert.match(clientSmokeSource, /S89\.34 court agenda/);
+  assert.match(styleSource, /data-polish-game-command="s89-34-main-court-desk"/);
+  assert.match(styleSource, /\.gameDeskCenter/);
+  assert.match(styleSource, /data-polish-court-agenda="s89-34-main-court-desk"/);
+  assert.match(styleSource, /\.courtAgendaBand/);
+  for (const keyframe of ["s8934DeskUnroll", "s8934SlipRise", "s8934InkPulse", "s8934SceneSheen", "s8934SealSettle", "s8934LedgerGlow", "s8934CourtSealGlow"]) {
+    assert.match(styleSource, new RegExp(`@keyframes ${keyframe}`));
+    assert.match(styleSource, new RegExp(keyframe));
+  }
+  assert.match(styleSource, /\.appShell\[data-motion="reduced"\][\s\S]*gameDeskCenter/);
+  assert.match(styleSource, /@media \(prefers-reduced-motion: reduce\)[\s\S]*courtAgendaBand/);
+  assert.doesNotMatch(combinedPageSource, /activeActionDraft\?\.text|activeActionDraft\.text|draftContext|schema|manifest|provider payload|raw audit|safe view|resolver|sourceRef|relatedRefs|scopeRefs|worldState|payload|ledger/);
+  assert.doesNotMatch(
+    runtimeCombined,
+    /qianqiuApi|\/api\/game\/state|\/api\/dev\/session-diagnostics|dangerouslySetInnerHTML|localStorage|sessionStorage|data\/sessions|provider payload|raw audit|hiddenNotes|OPENAI_API_KEY|DEEPSEEK_API_KEY|MIMO_API_KEY|ANTHROPIC_API_KEY|完整提示词|本地路径|密钥/
+  );
 });
 
 test("S89.23 inventory transfer reader stays player-facing and CSS-neutral", () => {
@@ -2232,11 +2294,12 @@ test("S89.17 court directory keeps topic entries player-facing and draft-only", 
     assert.match(courtPageSource, new RegExp(surfaceId));
   }
   assert.match(appTestSource, /s89-17-court-directory/);
-  assert.match(appTestSource, /document\.querySelectorAll\("\[data-court-surface\]"\)\)\.toHaveLength\(6\)/);
+  assert.match(appTestSource, /courtSurfaceEntries\)\.toHaveLength\(6\)/);
+  assert.match(appTestSource, /data-court-surface/);
   assert.match(clientSmokeSource, /s89-17-court-directory/);
   assert.match(clientSmokeSource, /court directory index entry count/);
   assert.match(clientSmokeSource, /court directory lacked player-facing index copy/);
-  assert.doesNotMatch(styleSource, /s89-17|data-polish-court/);
+  assert.doesNotMatch(styleSource, /s89-17/);
   assert.doesNotMatch(
     courtPageSource,
     /submitTurn|\/api\/game\/turn|\/api\/game\/state|\/api\/dev\/session-diagnostics|dangerouslySetInnerHTML|localStorage|sessionStorage|data\/sessions|raw audit|provider payload|OPENAI_API_KEY|DEEPSEEK_API_KEY|MIMO_API_KEY|ANTHROPIC_API_KEY|draftContext|schema|manifest|server adjudication|AI read scope|proposal boundary|safe view|resolver/

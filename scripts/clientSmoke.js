@@ -1771,6 +1771,9 @@ async function startMockGameThroughHome(page, screenshotsDir) {
     const byText = new Map(allLinks.map((link) => [link.text, link.path]));
     const mainLedger = document.querySelector('[data-polish-game="s89-22-main-ledger-reader"]');
     const mainLedgerText = mainLedger?.textContent || "";
+    const deskCenter = document.querySelector('[data-polish-game-center-band="s89-34-main-court-desk"]');
+    const deskStyle = deskCenter ? window.getComputedStyle(deskCenter) : null;
+    const deskText = deskCenter?.textContent || "";
     return {
       topMap: byText.get("舆图"),
       topPeople: byText.get("人物"),
@@ -1783,7 +1786,17 @@ async function startMockGameThroughHome(page, screenshotsDir) {
       previewLinks: allLinks.filter((link) => link.path.includes("s74-preview")).map((link) => link.text),
       mainLedgerMarker: mainLedger?.getAttribute("data-polish-game") || "",
       mainLedgerBoundary: mainLedger?.querySelector('[data-polish-game-boundary="s89-22-main-ledger-boundary"]')?.getAttribute("data-polish-game-boundary") || "",
+      mainLedgerDraftState: mainLedger?.getAttribute("data-draft-state") || "",
       mainLedgerText,
+      deskRootMarker: document.querySelector(".gameSurface")?.getAttribute("data-polish-game-center") || "",
+      deskCommandMarker: document.querySelector(".gameCommandBar")?.getAttribute("data-polish-game-command") || "",
+      deskSceneMarker: document.querySelector(".gameSceneBand")?.getAttribute("data-polish-game-scene") || "",
+      deskBandMarker: deskCenter?.getAttribute("data-polish-game-center-band") || "",
+      deskState: deskCenter?.getAttribute("data-desk-state") || "",
+      deskText,
+      deskAnimation: deskStyle?.animationName || "",
+      deskBackground: deskStyle?.backgroundImage || "",
+      deskUnsafeText: deskText.match(/manual|role-surface|map-runtime|archive-view|draftContext|schema|manifest|provider payload|raw audit|safe view|resolver|sourceRef|relatedRefs|scopeRefs|worldState|payload|ledger|\/api\/game\/state|\/api\/dev\/session-diagnostics|OPENAI_API_KEY|本地路径|密钥|sk-[a-z0-9_-]{6,}|tp-[a-z0-9_-]{6,}|[a-z]:[\\/]|\/(?:home|mnt|tmp|var|etc|usr|opt|workspace|workspaces|root|data|src|client|server|dist|public|node_modules)(?:[\\/]|$)/gi) || [],
       mainLedgerUnsafeText: mainLedgerText.match(/manual|role-surface|map-runtime|archive-view|draftContext|schema|manifest|provider payload|raw audit|safe view|resolver|sourceRef|relatedRefs|scopeRefs|worldState|payload|ledger|\/api\/game\/state|\/api\/dev\/session-diagnostics|OPENAI_API_KEY|本地路径|密钥|sk-[a-z0-9_-]{6,}|tp-[a-z0-9_-]{6,}|[a-z]:[\\/]|\/(?:home|mnt|tmp|var|etc|usr|opt|workspace|workspaces|root|data|src|client|server|dist|public|node_modules)(?:[\\/]|$)/gi) || [],
       horizontalOverflow: document.documentElement.scrollWidth > document.documentElement.clientWidth + 4,
       expected: {
@@ -1811,11 +1824,25 @@ async function startMockGameThroughHome(page, screenshotsDir) {
   if (entrypoints.previewLinks.length) failures.push(`runnable game shell still linked preview routes: ${entrypoints.previewLinks.join(", ")}`);
   if (entrypoints.mainLedgerMarker !== "s89-22-main-ledger-reader") failures.push(`missing S89.22 main ledger marker: ${entrypoints.mainLedgerMarker}`);
   if (entrypoints.mainLedgerBoundary !== "s89-22-main-ledger-boundary") failures.push(`missing S89.22 main ledger boundary: ${entrypoints.mainLedgerBoundary}`);
+  if (entrypoints.mainLedgerDraftState !== "empty") failures.push(`unexpected S89.34 main ledger draft state: ${entrypoints.mainLedgerDraftState}`);
+  if (entrypoints.deskRootMarker !== "s89-34-main-court-desk") failures.push(`missing S89.34 game root marker: ${entrypoints.deskRootMarker}`);
+  if (entrypoints.deskCommandMarker !== "s89-34-main-court-desk") failures.push(`missing S89.34 game command marker: ${entrypoints.deskCommandMarker}`);
+  if (entrypoints.deskSceneMarker !== "s89-34-main-court-desk") failures.push(`missing S89.34 game scene marker: ${entrypoints.deskSceneMarker}`);
+  if (entrypoints.deskBandMarker !== "s89-34-main-court-desk") failures.push(`missing S89.34 game desk band marker: ${entrypoints.deskBandMarker}`);
+  if (!["ready", "quiet"].includes(entrypoints.deskState)) failures.push(`unexpected S89.34 game desk state: ${entrypoints.deskState}`);
+  for (const requiredCopy of ["案头中枢", "本卷案桌", "场景", "卷宗", "草稿", "去处", "行旅", "人物", "账解", "科举复核", "未载不补造"]) {
+    if (!entrypoints.deskText.includes(requiredCopy)) {
+      failures.push(`S89.34 main desk lacked ${requiredCopy}: ${entrypoints.deskText.slice(0, 180)}`);
+    }
+  }
+  if (!entrypoints.deskBackground.includes("linear-gradient")) failures.push("S89.34 main desk material background missing");
+  if (!entrypoints.deskAnimation.includes("s8934DeskUnroll")) failures.push(`S89.34 main desk animation was ${entrypoints.deskAnimation}`);
   for (const requiredCopy of ["本旬行止笺", "本卷取材", "暂无草稿", "未起稿", "主卷回批", "公开卷宗", "未载卷宗不补造"]) {
     if (!entrypoints.mainLedgerText.includes(requiredCopy)) {
       failures.push(`S89.22 main ledger lacked ${requiredCopy}: ${entrypoints.mainLedgerText.slice(0, 160)}`);
     }
   }
+  if (entrypoints.deskUnsafeText.length) failures.push(`S89.34 main desk leaked internal copy: ${entrypoints.deskUnsafeText.join(", ")}`);
   if (entrypoints.mainLedgerUnsafeText.length) failures.push(`S89.22 main ledger leaked internal copy: ${entrypoints.mainLedgerUnsafeText.join(", ")}`);
   if (entrypoints.horizontalOverflow) failures.push("main game shell has horizontal overflow");
   if (failures.length) {
@@ -1910,10 +1937,23 @@ async function assertScholarPanel(page, sessionId, screenshotsDir) {
   }
   const mainLedgerDraftState = await page.evaluate(() => {
     const ledger = document.querySelector('[data-polish-game="s89-22-main-ledger-reader"]');
-    return ledger?.textContent || "";
+    const desk = document.querySelector('[data-polish-game-center-band="s89-34-main-court-desk"]');
+    return {
+      ledgerText: ledger?.textContent || "",
+      ledgerDraftState: ledger?.getAttribute("data-draft-state") || "",
+      deskState: desk?.getAttribute("data-desk-state") || "",
+      deskText: desk?.textContent || ""
+    };
   });
-  if (!mainLedgerDraftState.includes("已有本地草稿") || !mainLedgerDraftState.includes("来处：案头摘录") || /manual|role-surface|map-runtime|archive-view|draftContext|schema|manifest|provider payload|raw audit|safe view|resolver|sourceRef|relatedRefs|scopeRefs/i.test(mainLedgerDraftState)) {
-    throw new Error(`S89.22 main ledger draft state was unsafe or unreadable: ${mainLedgerDraftState.slice(0, 200)}`);
+  if (
+    !mainLedgerDraftState.ledgerText.includes("已有本地草稿") ||
+    !mainLedgerDraftState.ledgerText.includes("来处：案头摘录") ||
+    mainLedgerDraftState.ledgerDraftState !== "written" ||
+    mainLedgerDraftState.deskState !== "draft" ||
+    !mainLedgerDraftState.deskText.includes("本地草稿候呈") ||
+    /manual|role-surface|map-runtime|archive-view|draftContext|schema|manifest|provider payload|raw audit|safe view|resolver|sourceRef|relatedRefs|scopeRefs/i.test(`${mainLedgerDraftState.ledgerText} ${mainLedgerDraftState.deskText}`)
+  ) {
+    throw new Error(`S89.22/S89.34 main draft state was unsafe or unreadable: ${JSON.stringify(mainLedgerDraftState).slice(0, 280)}`);
   }
   await page.getByLabel("本回合行动").fill("");
 
@@ -3096,11 +3136,28 @@ async function assertTopicSurfaces(page, sessionId, screenshotsDir) {
   const initialSnapshot = await page.evaluate((tokens) => {
     const labels = ["奏折队列", "拟圣旨", "朝议", "堂审", "军议", "人物档案"];
     const bodyText = document.body.innerText || "";
+    const agendaBand = document.querySelector('[data-polish-court-agenda-band="s89-34-main-court-desk"]');
+    const agendaStyle = agendaBand ? window.getComputedStyle(agendaBand) : null;
+    const surfaceEntries = [...document.querySelectorAll(".courtSurfacePage [data-court-surface]")];
+    const surfaceIds = surfaceEntries.map((entry) => entry.getAttribute("data-court-surface") || "").sort();
+    const buttonCounts = Object.fromEntries(labels.map((label) => [
+      label,
+      [...document.querySelectorAll(".courtSurfacePage button")].filter((button) => (button.textContent || "").trim() === label).length
+    ]));
     return {
       path: window.location.pathname,
+      shellMotion: document.querySelector(".appShell")?.getAttribute("data-motion") || "",
       hasSurfacePage: Boolean(document.querySelector(".courtSurfacePage")),
       polishMarker: document.querySelector(".courtSurfacePage")?.getAttribute("data-polish-court") || "",
+      agendaMarker: document.querySelector(".courtSurfacePage")?.getAttribute("data-polish-court-agenda") || "",
+      agendaBandMarker: agendaBand?.getAttribute("data-polish-court-agenda-band") || "",
+      agendaState: agendaBand?.getAttribute("data-agenda-state") || "",
+      agendaText: agendaBand?.textContent || "",
+      agendaAnimation: agendaStyle?.animationName || "",
       indexEntryCount: document.querySelectorAll(".courtSurfacePage [data-court-surface]").length,
+      surfaceIds,
+      surfaceStates: surfaceEntries.map((entry) => entry.getAttribute("data-court-state") || ""),
+      buttonCounts,
       labels: labels.filter((label) => [...document.querySelectorAll(".courtSurfacePage button")].some((button) => (button.textContent || "").trim() === label)),
       hasIndexCopy:
         bodyText.includes("官署案头索引") &&
@@ -3119,8 +3176,30 @@ async function assertTopicSurfaces(page, sessionId, screenshotsDir) {
   if (initialSnapshot.path !== `/game/${sessionId}/court`) failures.push(`path was ${initialSnapshot.path}`);
   if (!initialSnapshot.hasSurfacePage) failures.push("missing court surface page");
   if (initialSnapshot.polishMarker !== "s89-17-court-directory") failures.push(`missing S89.17 court marker: ${initialSnapshot.polishMarker}`);
+  if (initialSnapshot.agendaMarker !== "s89-34-main-court-desk") failures.push(`missing S89.34 court agenda marker: ${initialSnapshot.agendaMarker}`);
+  if (initialSnapshot.agendaBandMarker !== "s89-34-main-court-desk") failures.push(`missing S89.34 court agenda band marker: ${initialSnapshot.agendaBandMarker}`);
+  if (initialSnapshot.agendaState !== "ready") failures.push(`unexpected S89.34 court agenda state: ${initialSnapshot.agendaState}`);
+  for (const requiredCopy of ["官署议程", "御案传签", "章奏", "谕旨", "朝议", "堂审军议", "六署可查"]) {
+    if (!initialSnapshot.agendaText.includes(requiredCopy)) failures.push(`S89.34 court agenda lacked ${requiredCopy}`);
+  }
+  if (initialSnapshot.shellMotion !== "reduced" && !initialSnapshot.agendaAnimation.includes("s8934DeskUnroll")) {
+    failures.push(`S89.34 court agenda animation was ${initialSnapshot.agendaAnimation}`);
+  }
+  if (initialSnapshot.shellMotion === "reduced" && initialSnapshot.agendaAnimation !== "none") {
+    failures.push(`S89.34 reduced court agenda animation was ${initialSnapshot.agendaAnimation}`);
+  }
   if (initialSnapshot.indexEntryCount !== 6) failures.push(`court directory index entry count was ${initialSnapshot.indexEntryCount}`);
+  const expectedSurfaceIds = ["court-debate", "edict-draft", "memorial-review", "npc-profile", "trial", "war-council"];
+  if (initialSnapshot.surfaceIds.join("|") !== expectedSurfaceIds.join("|")) {
+    failures.push(`court surface exact set was ${initialSnapshot.surfaceIds.join(", ")}`);
+  }
+  if (initialSnapshot.surfaceStates.some((state) => state !== "ready")) {
+    failures.push(`court surface states were ${initialSnapshot.surfaceStates.join(", ")}`);
+  }
   if (initialSnapshot.labels.length !== 6) failures.push(`missing topic surface labels: ${initialSnapshot.labels.join(", ")}`);
+  for (const [label, count] of Object.entries(initialSnapshot.buttonCounts)) {
+    if (count !== 1) failures.push(`court button ${label} count was ${count}`);
+  }
   if (!initialSnapshot.hasIndexCopy) failures.push("court directory lacked player-facing index copy");
   if (!initialSnapshot.hasBoundary) failures.push("missing draft-only surface boundary");
   if (initialSnapshot.hiddenLeaks.length) failures.push(`hidden text leaked: ${initialSnapshot.hiddenLeaks.join(", ")}`);

@@ -717,10 +717,19 @@ describe("S74.1 React client shell", () => {
     renderRoute("/game/not-a-session/court");
 
     expect(screen.getByRole("heading", { name: "朝议与官署" })).toBeTruthy();
+    expect(document.querySelector("[data-polish-court-agenda='s89-34-main-court-desk']")).toBeTruthy();
+    expect(document.querySelector("[data-polish-court-agenda-band='s89-34-main-court-desk']")?.getAttribute("data-agenda-state")).toBe("unsupported");
+    expect(document.body.textContent || "").toContain("官署议程");
+    expect(document.body.textContent || "").toContain("案卷未载");
     await waitFor(() => expect(useUiStateStore.getState().currentSessionId).toBeNull());
-    const debateButton = screen.getByRole("button", { name: "朝议" });
-    expect(debateButton).toHaveProperty("disabled", true);
-    fireEvent.click(debateButton);
+    const courtButtons = ["奏折队列", "拟圣旨", "朝议", "堂审", "军议", "人物档案"].map((label) => screen.getByRole("button", { name: label }));
+    for (const button of courtButtons) {
+      expect(button).toHaveProperty("disabled", true);
+    }
+    for (const entry of document.querySelectorAll("[data-court-surface]")) {
+      expect(entry.getAttribute("data-court-state")).toBe("unsupported");
+    }
+    fireEvent.click(screen.getByRole("button", { name: "朝议" }));
 
     expect(useUiStateStore.getState().activeSurface).toBeNull();
     expect(screen.queryByRole("dialog", { name: "朝议" })).toBeNull();
@@ -948,12 +957,34 @@ describe("S74.1 React client shell", () => {
     renderRoute(`/game/${sessionId}`);
 
     await screen.findByRole("heading", { name: "主卷" });
-    await screen.findByText("军帐筹谋");
+    await screen.findByRole("heading", { name: "军帐筹谋" });
     expect(screen.getByText("无名")).toBeTruthy();
     expect(screen.getAllByText("身份未题").length).toBeGreaterThan(0);
-    expect(screen.getByText("2 / 13")).toBeTruthy();
+    expect(screen.getAllByText("2 / 13").length).toBeGreaterThan(0);
+    expect(document.querySelector("[data-polish-game-center='s89-34-main-court-desk']")).toBeTruthy();
+    expect(document.querySelector("[data-polish-game-command='s89-34-main-court-desk']")).toBeTruthy();
+    expect(document.querySelector("[data-polish-game-scene='s89-34-main-court-desk']")).toBeTruthy();
+    const deskCenter = document.querySelector("[data-polish-game-center-band='s89-34-main-court-desk']");
+    expect(deskCenter).toBeTruthy();
+    expect(deskCenter?.getAttribute("data-desk-state")).toBe("ready");
+    const deskText = deskCenter?.textContent || "";
+    expect(deskText).toContain("案头中枢");
+    expect(deskText).toContain("本卷案桌");
+    expect(deskText).toContain("场景");
+    expect(deskText).toContain("军帐筹谋");
+    expect(deskText).toContain("卷宗");
+    expect(deskText).toContain("已载 2 / 13 类");
+    expect(deskText).toContain("草稿");
+    expect(deskText).toContain("尚未落稿");
+    expect(deskText).toContain("行旅");
+    expect(deskText).toContain("人物");
+    expect(deskText).toContain("账解");
+    expect(deskText).toContain("科举复核");
+    expect(deskText).toContain("未载不补造");
+    expect(deskText).not.toMatch(/manual|role-surface|map-runtime|archive-view|draftContext|schema|manifest|provider payload|raw audit|safe view|resolver|sourceRef|relatedRefs|scopeRefs|\/mnt\/|\/home\//i);
     const mainLedgerReader = document.querySelector("[data-polish-game='s89-22-main-ledger-reader']");
     expect(mainLedgerReader).toBeTruthy();
+    expect(mainLedgerReader?.getAttribute("data-draft-state")).toBe("empty");
     const mainLedgerText = mainLedgerReader?.textContent || "";
     expect(mainLedgerText).toContain("本旬行止笺");
     expect(mainLedgerText).toContain("本卷取材：已载 2 / 13 类公开卷宗");
@@ -1138,6 +1169,11 @@ describe("S74.1 React client shell", () => {
     });
     const mainLedgerReader = document.querySelector("[data-polish-game='s89-22-main-ledger-reader']");
     const mainLedgerText = mainLedgerReader?.textContent || "";
+    const deskCenter = document.querySelector("[data-polish-game-center-band='s89-34-main-court-desk']");
+    expect(deskCenter?.getAttribute("data-desk-state")).toBe("draft");
+    expect(deskCenter?.textContent || "").toContain("本地草稿候呈");
+    expect(deskCenter?.textContent || "").not.toContain("今日先做");
+    expect(mainLedgerReader?.getAttribute("data-draft-state")).toBe("written");
     expect(mainLedgerText).toContain("已有本地草稿");
     expect(mainLedgerText).toContain("来处：案头摘录");
     expect(mainLedgerText).not.toMatch(/manual|role-surface|map-runtime|archive-view|draftContext|schema|manifest|provider payload|raw audit|safe view|resolver|sourceRef|relatedRefs|scopeRefs/i);
@@ -3225,7 +3261,28 @@ describe("S74.1 React client shell", () => {
     expect(document.querySelector(".gameMainDeck")).toBeFalsy();
     expect(document.querySelector(".memorialComposer")).toBeFalsy();
     expect(document.querySelector("[data-polish-court='s89-17-court-directory']")).toBeTruthy();
-    expect(document.querySelectorAll("[data-court-surface]")).toHaveLength(6);
+    expect(document.querySelector("[data-polish-court-agenda='s89-34-main-court-desk']")).toBeTruthy();
+    const agendaBand = document.querySelector("[data-polish-court-agenda-band='s89-34-main-court-desk']");
+    expect(agendaBand).toBeTruthy();
+    expect(agendaBand?.getAttribute("data-agenda-state")).toBe("ready");
+    expect(agendaBand?.textContent || "").toContain("官署议程");
+    expect(agendaBand?.textContent || "").toContain("御案传签");
+    expect(agendaBand?.textContent || "").toContain("章奏");
+    expect(agendaBand?.textContent || "").toContain("谕旨");
+    expect(agendaBand?.textContent || "").toContain("堂审军议");
+    const courtSurfaceEntries = [...document.querySelectorAll("[data-court-surface]")];
+    expect(courtSurfaceEntries).toHaveLength(6);
+    expect(courtSurfaceEntries.map((entry) => entry.getAttribute("data-court-surface")).sort()).toEqual([
+      "court-debate",
+      "edict-draft",
+      "memorial-review",
+      "npc-profile",
+      "trial",
+      "war-council"
+    ]);
+    for (const entry of courtSurfaceEntries) {
+      expect(entry.getAttribute("data-court-state")).toBe("ready");
+    }
     expect(document.body.textContent || "").toContain("官署案头索引");
     expect(screen.getAllByText("卷宗取材")).toHaveLength(6);
     expect(screen.getAllByText("可拟草稿")).toHaveLength(12);

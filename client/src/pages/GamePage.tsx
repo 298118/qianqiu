@@ -113,6 +113,13 @@ const gameTabs = [
 
 const independentSessionRouteIds = new Set(["people", "inventory", "archive", "exam", "ranking", "court", "settings"]);
 const roleCycleRouteIds = new Set(["game", ...gameTabs.map((tab) => tab.id)]);
+const mainCourtDeskPolishId = "s89-34-main-court-desk";
+const gameDeskGroups = [
+  { label: "行旅", items: ["舆图", "史册", "局势", "后果"] },
+  { label: "人物", items: ["人物", "来函", "身份"] },
+  { label: "账解", items: ["囊箧", "市价", "月账", "账解"] },
+  { label: "科举复核", items: ["科期", "复核"] }
+] as const;
 
 function safeGameShellText(value: unknown, fallback: string) {
   const text = typeof value === "string" && value.trim() ? value.trim() : fallback;
@@ -227,6 +234,23 @@ export function GamePage() {
   const actionDraftStateLabel = activeActionDraft ? "已有本地草稿" : "暂无草稿";
   const actionDraftSourceLabel = activeActionDraft ? getActionDraftSourceLabel(activeActionDraft.source) : "未起稿";
   const safeViewReading = getSafeViewReading(safeViewItems);
+  const readySafeViewLabels = new Set(safeViewItems.filter((item) => item.ready).map((item) => item.label));
+  const deskState = routeIsLoading ? "loading" : activeActionDraft ? "draft" : activeSafeViewCount > 0 ? "ready" : "quiet";
+  const deskStateItems = [
+    { label: "场景", value: scene.title },
+    { label: "卷宗", value: `已载 ${activeSafeViewCount} / ${safeViewItems.length} 类` },
+    { label: "草稿", value: activeActionDraft ? "本地草稿候呈" : "尚未落稿" },
+    { label: "去处", value: routeSessionSupported ? "各页可查，主卷候复" : "只可预览，先回首页" }
+  ];
+  const deskGroups = gameDeskGroups.map((group) => {
+    const readyCount = group.items.filter((label) => readySafeViewLabels.has(label)).length;
+    return {
+      ...group,
+      readyCount,
+      totalCount: group.items.length,
+      ready: readyCount > 0
+    };
+  });
   const isIndependentMapRoute = location.pathname.endsWith("/map");
   const independentRouteId = getIndependentSessionRouteId(location.pathname);
   const isGameRootRoute = location.pathname.replace(/\/+$/, "") === `/game/${sessionId}`;
@@ -292,8 +316,8 @@ export function GamePage() {
   }
 
   return (
-    <section className="gameSurface hasMemorialComposer" aria-labelledby="game-title">
-      <div className="gameCommandBar" aria-label="主卷案头">
+    <section className="gameSurface hasMemorialComposer" aria-labelledby="game-title" data-polish-game-center={mainCourtDeskPolishId}>
+      <div className="gameCommandBar" aria-label="主卷案头" data-polish-game-command={mainCourtDeskPolishId}>
         <div>
           <p className="eyebrow">案卷编号 {sessionDisplayLabel}</p>
           <h1 id="game-title">主卷</h1>
@@ -313,7 +337,7 @@ export function GamePage() {
           </div>
         </dl>
       </div>
-      <div className="gameSceneBand" style={{ "--scene-image": `url(${sceneImagePath})` } as CSSProperties}>
+      <div className="gameSceneBand" style={{ "--scene-image": `url(${sceneImagePath})` } as CSSProperties} data-polish-game-scene={mainCourtDeskPolishId}>
         <div className="gameSceneImage" aria-hidden="true" />
         <div className="gameSceneCopy">
           <p className="eyebrow">当前场景</p>
@@ -321,6 +345,38 @@ export function GamePage() {
           <p>{scene.note}</p>
         </div>
       </div>
+      <section
+        className="gameDeskCenter"
+        aria-labelledby="game-desk-center-title"
+        data-polish-game-center-band={mainCourtDeskPolishId}
+        data-desk-state={deskState}
+      >
+        <div className="sectionTitleRow">
+          <div>
+            <p className="eyebrow">案头中枢</p>
+            <h2 id="game-desk-center-title">本卷案桌</h2>
+          </div>
+          <span>{activeActionDraft ? "朱签待呈" : routeIsLoading ? "候讯" : "可拟行动"}</span>
+        </div>
+        <ol className="gameDeskCompass" aria-label="主卷案头状态">
+          {deskStateItems.map((item) => (
+            <li key={item.label}>
+              <span>{item.label}</span>
+              <strong>{item.value}</strong>
+            </li>
+          ))}
+        </ol>
+        <div className="gameDeskMaterialGrid" aria-label="公开卷宗分组读法">
+          {deskGroups.map((group) => (
+            <article key={group.label} className="gameDeskMaterialCard" data-ready={group.ready ? "true" : "false"}>
+              <span>{group.label}</span>
+              <strong>{group.readyCount} / {group.totalCount}</strong>
+              <p>{group.ready ? "已有公开材料入卷，可据此拟稿。" : "尚无公开材料，未载不补造。"}</p>
+            </article>
+          ))}
+        </div>
+        <p className="statusLine gameDeskBoundary">未载不补造；行动仍回主卷候复。</p>
+      </section>
       <nav className="sessionNav gameFeatureTabs" aria-label="案卷功能页签">
         <SessionRouteNavItems
           selectTab={selectTab}
@@ -338,7 +394,7 @@ export function GamePage() {
           </div>
           <p>{narrativeText}</p>
         </article>
-        <aside className="gameSideLedger" aria-label="案头索引" data-polish-game="s89-22-main-ledger-reader">
+        <aside className="gameSideLedger" aria-label="案头索引" data-polish-game="s89-22-main-ledger-reader" data-draft-state={activeActionDraft ? "written" : "empty"}>
           <h2>案头索引</h2>
           <div className="safeViewGrid">
             {safeViewItems.map((item) => (

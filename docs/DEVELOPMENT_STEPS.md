@@ -113,6 +113,7 @@
 
 | ID | 状态 | 目标 | 范围 / 下一步 |
 | --- | --- | --- | --- |
+| S89.34 | DONE | 主卷与朝议案头中枢二轮材质动效 polish | 承接 S89.33 后继续做产品级前端 polish，已在 `/game/:sessionId` 新增“案头中枢 / 本卷案桌”、主卷命令栏/场景带 marker、场景/卷宗/草稿/去处读法和行旅/人物/账解/科举复核分组计数；在 `/game/:sessionId/court` 新增“官署议程 / 御案传签”、章奏/谕旨/朝议/堂审军议读法、议程状态和六个既有专题入口状态。范围限 React `GamePage` / `CourtPage`、全局 CSS、客户端 smoke/source canary、前端测试、brief 与交接文档；不新增依赖或素材，不改后端 API/schema、AI 权限、prompt、provider、SQLite、存档、runtime manifest 或素材 manifest。浏览器仍只消费安全 view、route/local 状态和本地草稿状态，不裁决资源、身份、交易、NPC 行动、经济、考试、官职、地图行动、关系或 hidden 信息。实现提交：`待回填`。 |
 | S89.33 | DONE | 科举与皇榜二轮仪式材质动效 polish | 承接 S89.32 后继续做产品级前端 polish，已在 `/game/:sessionId/exam` 新增“科场仪幕”、科举 hero/试卷纸卷 marker、题纸启封/落墨/候榜状态和纸卷展开动效；在 `/game/:sessionId/ranking` 新增“金榜仪轨”、皇榜 hero/榜纸 marker、金榜张榜/我名/同年/授官读法和榜行选中反馈。范围限 React `ExamPage` / `RankingPage`、全局 CSS、客户端 smoke/source canary、前端测试、brief 与交接文档；不新增依赖或素材，不改后端 API/schema、AI 权限、prompt、provider、SQLite、存档、runtime manifest 或素材 manifest。浏览器仍只消费安全 view、既有科举 API、route/local 状态和本地草稿，不裁决取题、评分、舞弊、放榜、晋级、授官、同年座师关系、官职任免或 hidden 信息。实现提交：`dd47cb17`。 |
 | S89.32 | DONE | 首页与全局壳材质动效及入口收束 polish | 承接 S89.31 后继续做产品级前端 polish，已在首页新增“开卷路径”读法，把题名、立身、候复三步收进新开案卷表单，并把样卷入口降权为“试阅样卷 / 样卷舆图”；全局壳新增顶栏、导航和右上角工具区玻璃纸层 marker，右上角印匣与设置目录同步新增可检测入口标记。范围限 React `HomePage`、`AppShell`、`SurfaceHost`、`SettingsPage`、全局 CSS、客户端 smoke/source canary、前端测试、brief 与交接文档；不新增依赖或素材，不改后端 API/schema、AI 权限、prompt、provider、SQLite、存档、runtime manifest 或素材 manifest。浏览器仍只消费安全 view、route/surface 状态、本地显示偏好和旧案列表，不请求诊断接口，不读取 raw 存档，不裁决资源、身份、交易、NPC 行动、经济、考试、官职、地图行动、关系或 hidden 信息。实现提交：`111566ee`。 |
 | S89.31 | DONE | 舆图态势罗盘与移动单点札记 polish | 承接 S89.30 后继续做舆图产品级打磨，已在 `/game/:sessionId/map` 新增只读“舆图态势罗盘”，按近事、人物、后果、可拟四类整理当前公开图层与本地候复草稿；PixiJS runtime tooltip 新增“地点/近事/人物/驿路札记”、可见度条、候复边界和移动端底部札记读法。范围限 React `MapPage`、`InkMapRuntimeBridge`、全局 CSS、客户端 smoke/source canary、brief 与交接文档；不新增 API，不改 `mapRuntimeView` 契约、后端 schema、AI 权限、prompt、provider、SQLite、存档、runtime manifest 或素材 manifest。浏览器仍只消费安全 view、图层状态和本地草稿，不把坐标、layout、点击位置、visual-only effect、NPC anchor 或 tooltip 变成资源、NPC、经济、关系、地图行动、官职、考试或 hidden 裁决依据。实现提交：`88a5253c`。 |
@@ -185,7 +186,8 @@
 - 2026-05-25：S89.31 完成舆图态势罗盘与移动单点札记 polish。当前范围限 React `MapPage` / `InkMapRuntimeBridge`、全局 CSS、客户端 smoke/source canary、brief 和开发文档；新增罗盘读法、tooltip 读法、移动端底部札记和对应守门，不新增浏览器裁决权，不改后端 API/schema、AI 权限、prompt、provider、SQLite、存档、runtime manifest 或素材 manifest。
 - 2026-05-25：S89.32 完成首页与全局壳材质动效及入口收束 polish。当前范围限 React `HomePage` / `AppShell` / `SurfaceHost` / `SettingsPage`、全局 CSS、客户端 smoke/source canary、前端测试、brief 和开发文档；新增首页开卷路径、样卷入口降权、顶栏/右上角工具区玻璃纸层、印匣面板材质和设置目录入口守门，不新增浏览器裁决权，不改后端 API/schema、AI 权限、prompt、provider、SQLite、存档、runtime manifest 或素材 manifest。
 - 2026-05-25：S89.33 完成科举与皇榜二轮仪式材质动效 polish。当前范围限 React `ExamPage` / `RankingPage`、全局 CSS、客户端 smoke/source canary、前端测试、brief 和开发文档；新增科场仪幕、金榜仪轨、科举纸卷展开、皇榜金光/榜行选中反馈和低动效关闭守门，不新增浏览器裁决权，不改后端 API/schema、AI 权限、prompt、provider、SQLite、存档、runtime manifest 或素材 manifest。
-- 前一轮 S88 归档是低风险纯文档维护；S89.3-S89.33 涉及前端代码、样式、验证脚本和文档，提交前按子代理复审规则执行。
+- 2026-05-25：S89.34 完成主卷与朝议案头中枢二轮材质动效 polish。当前范围限 React `GamePage` / `CourtPage`、全局 CSS、客户端 smoke/source canary、前端测试、brief 和开发文档；新增主卷案头中枢、官署议程、草稿状态 marker、朝议入口状态、材质动效和低动效关闭守门，不新增浏览器裁决权，不改后端 API/schema、AI 权限、prompt、provider、SQLite、存档、runtime manifest 或素材 manifest。
+- 前一轮 S88 归档是低风险纯文档维护；S89.3-S89.34 涉及前端代码、样式、验证脚本和文档，提交前按子代理复审规则执行。
 
 ## 6. 最近完整验证口径
 
@@ -267,6 +269,17 @@ S89.8 高清立绘查看器画中所见 polish 验证结果：
 - 已通过 `npm run check:docs-governance`、`node --test test/documentationGovernance.test.js`、`git diff --check`。提交前只读子代理复审已通过，未发现阻断问题；非阻断建议为后续可给题签格补专门材质样式。
 
 ## 7. 近期进度记录
+
+### 2026-05-25：S89.34 主卷与朝议案头中枢二轮材质动效 polish
+
+- 范围：`GamePage` 新增 `data-polish-game-center="s89-34-main-court-desk"`、主卷命令栏 `data-polish-game-command`、场景带 `data-polish-game-scene` 和案头中枢 `data-polish-game-center-band`；`CourtPage` 保留 `data-polish-court="s89-17-court-directory"`，新增 `data-polish-court-agenda="s89-34-main-court-desk"`、议程带 `data-polish-court-agenda-band`，六个既有专题入口新增 `className="courtSurfaceEntry"` 与 `data-court-state`。
+- 内容：主卷新增“案头中枢 / 本卷案桌”，把场景、已载卷宗数量、本地草稿有无和可去处整理成四格读法，并按行旅、人物、账解、科举复核显示当前公开材料计数；固定提示“未载不补造；行动仍回主卷候复。”。右侧既有“本旬行止笺”只新增 `data-draft-state="written|empty"`，仍只显示草稿状态与中文来处，不展示草稿正文。朝议页新增“官署议程 / 御案传签”，按章奏、谕旨、朝议、堂审军议说明可读材料和候复边界；六个既有专题按钮保持唯一入口，畸形案卷继续禁用并显示 unsupported 状态。
+- 样式与低动效：`global.css` 新增 `--qq-material-aged`、主卷命令栏纸层、场景带微光、案头中枢纸卷、公开材料卡、侧栏草稿状态、官署议程和朝议入口 hover/focus 样式；新增 `s8934DeskUnroll`、`s8934SlipRise`、`s8934InkPulse`、`s8934SceneSheen`、`s8934SealSettle`、`s8934LedgerGlow`、`s8934CourtSealGlow`。本地 `data-motion="reduced"` 和系统 `prefers-reduced-motion` 均关闭强动画，但保留材质、边框、阴影和状态。
+- 安全边界：本步不新增依赖或素材，不改后端 API/schema、AI 权限矩阵、prompt、provider facade、SQLite schema、存档格式、runtime manifest 或素材 manifest。浏览器仍只消费安全 view、route/local 状态和本地草稿状态，不请求诊断接口，不读取 raw 存档，不裁决资源、身份、交易、NPC 行动、经济、考试、官职、地图行动、关系、婚姻、弹劾、定罪、背叛或 hidden 信息。
+- Smoke/canary：`App.test.tsx` 覆盖主卷 S89.34 root/command/scene/desk marker、案头文案、材料分组、无草稿正文泄漏、草稿状态、朝议议程 marker、六个专题 exact set、入口状态和 unsupported 禁用；`scripts/clientSmoke.js` 在主卷和朝议 smoke 中检查 S89.34 marker、文案、材质、动效或低动效关闭、草稿状态、六个唯一按钮、专题 exact set 和安全污染守门；`test/reactClientScaffold.test.js` 新增 S89.34 source canary，并把旧 S89.22/S89.17 marker guard 收窄到对应阶段自身，避免新阶段复用 `data-polish-game` / `data-polish-court` 时误判。
+- 验证：已通过 `node --check scripts/clientSmoke.js`、`npm run typecheck:client`、`node --test test/reactClientScaffold.test.js`（68 tests）、focused `npx vitest --config vitest.config.mjs run client/src/__tests__/App.test.tsx -t "main game shell|registry-backed local surfaces|unsupported court" --pool=vmThreads --fileParallelism=false --maxWorkers=1`（3 tests / 71 skipped）、完整串行客户端套件 `npx vitest --config vitest.config.mjs run --pool=vmThreads --fileParallelism=false --maxWorkers=1`（6 files / 134 tests）、`npm run test:client`（6 files / 134 tests）、`npm run qa:runtime-manifest`、`npm run build:client`、`npm run budget:client`、`npm run smoke:browser`、`npm run check:docs-governance`、`node --test test/documentationGovernance.test.js` 和 `git diff --check`。预算输出为 `JS 650.0 KiB / CSS 133.4 KiB / fonts 26288.4 KiB / client-assets 27071.8 KiB`；构建与 smoke 仍输出既有 npm `globalignorefile` warning、Vite `/assets/ui/...` runtime asset resolution warning 和 plugin timing warning。
+- 复审：开工只读子代理 Jason 建议此步聚焦主卷案头中枢、朝议议程、低动效、smoke/source canary，并保持 frontend-only、safe-view-only、browser-draft-only。本轮按建议实施。提交前只读复审 Volta 通过，未发现阻断问题；残余风险仅为 CSS-heavy polish 仍可能有视口组合细节，但 browser smoke、overflow 与低动效检查已覆盖主要回归。
+- 提交：实现提交 `待回填`。
 
 ### 2026-05-25：S89.33 科举与皇榜二轮仪式材质动效 polish
 
