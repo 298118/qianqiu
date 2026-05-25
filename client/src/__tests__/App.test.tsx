@@ -2204,10 +2204,15 @@ describe("S74.1 React client shell", () => {
     expect(screen.getByRole("complementary", { name: "印匣" })).toBeTruthy();
     expect(useUiStateStore.getState().activeDrawer).toBe("settings");
     expect(screen.getByRole("button", { name: "关闭抽屉" })).toBe(document.activeElement);
+    expect(document.querySelector("[data-polish-settings='s89-13-inkbox-overview']")).toBeTruthy();
 
     fireEvent.click(screen.getByRole("tab", { name: "显示" }));
+    expect(document.querySelector("[data-polish-settings='s89-13-display-panel']")).toBeTruthy();
+    expect(document.querySelector(".displayPreferenceLedger")).toBeTruthy();
     fireEvent.change(screen.getByLabelText("动效"), { target: { value: "reduced" } });
     fireEvent.change(screen.getByLabelText("正文字体"), { target: { value: "brush-mashan" } });
+    expect(screen.getAllByText("静读").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("榜书墨笔").length).toBeGreaterThan(0);
     expect(document.querySelector(".appShell")?.getAttribute("data-motion")).toBe("reduced");
     expect(document.querySelector(".appShell")?.getAttribute("data-body-font")).toBe("brush-mashan");
 
@@ -2322,7 +2327,7 @@ describe("S74.1 React client shell", () => {
     expect(screen.queryByDisplayValue("deep")).toBeNull();
 
     fireEvent.click(screen.getByRole("tab", { name: "旧案" }));
-    await screen.findByText("顾衡");
+    expect((await screen.findAllByText("顾衡")).length).toBeGreaterThan(0);
     expect(screen.getByText("案 55555555")).toBeTruthy();
     expect(screen.getByText("明1600年5月中旬")).toBeTruthy();
     expect(screen.getByText("第 7 回合")).toBeTruthy();
@@ -2330,8 +2335,11 @@ describe("S74.1 React client shell", () => {
     expect(screen.getByRole("button", { name: "刷新" })).toBeTruthy();
 
     fireEvent.click(screen.getByRole("tab", { name: "摘要" }));
+    expect(document.querySelector("[data-polish-settings='s89-13-safe-summary']")).toBeTruthy();
     expect(screen.getAllByText(/公开卷宗|案卷摘要/).length).toBeGreaterThan(0);
-    expect(document.body.textContent || "").not.toMatch(/OPENAI_API_KEY|base URL|raw prompt|raw audit|provider payload|data\/sessions/i);
+    expect(screen.getByText("主卷载入")).toBeTruthy();
+    expect(screen.getByText("已载材料")).toBeTruthy();
+    expect(document.body.textContent || "").not.toMatch(/OPENAI_API_KEY|base URL|raw prompt|raw audit|provider payload|data\/sessions|player-state|exam-submit/i);
 
     fireEvent.click(screen.getByRole("tab", { name: "旧案" }));
     fireEvent.click(screen.getByRole("button", { name: "载入" }));
@@ -2433,7 +2441,7 @@ describe("S74.1 React client shell", () => {
     expect(screen.getByText("暂无推演分工；本页不会自行补造叙事来源或复核权限。")).toBeTruthy();
     fireEvent.click(screen.getByRole("tab", { name: "旧案" }));
 
-    await screen.findByText("当前案主");
+    expect((await screen.findAllByText("当前案主")).length).toBeGreaterThan(0);
     expect(screen.getByText("案 3c09daca")).toBeTruthy();
     expect(screen.getByText("当前案卷已写入本地存档。")).toBeTruthy();
     await waitFor(() => expect(fetchMock.mock.calls.filter(([url]) => url === "/api/game/saves")).toHaveLength(2));
@@ -2649,7 +2657,7 @@ describe("S74.1 React client shell", () => {
       return Promise.resolve(new Response(JSON.stringify({
         source: "server_player_visible_state_projection",
         sessionId,
-        worldState: { player: { name: "许慎", role: "scholar" } }
+        worldState: {}
       }), {
         status: 200,
         headers: { "Content-Type": "application/json" }
@@ -2660,12 +2668,29 @@ describe("S74.1 React client shell", () => {
     renderRoute(`/game/${sessionId}/settings`);
 
     const routePanel = await screen.findByRole("article", { name: "案头工具" });
+    expect(routePanel.getAttribute("data-polish-settings")).toBe("s89-13-settings-directory");
     expect(within(routePanel).getByText("推演设置")).toBeTruthy();
     expect(within(routePanel).getByText("显示偏好")).toBeTruthy();
     expect(within(routePanel).getByText("旧案卷")).toBeTruthy();
     expect(within(routePanel).getByText("案卷摘要")).toBeTruthy();
+    expect(within(routePanel).getByText("全局生效")).toBeTruthy();
+    expect(within(routePanel).getByText("低动效可用")).toBeTruthy();
+    expect(within(routePanel).getByText("不载私记")).toBeTruthy();
     expect(screen.queryByDisplayValue("900")).toBeNull();
     expect(fetchMock.mock.calls.filter(([url]) => url === "/api/ai/settings/global")).toHaveLength(0);
+    await waitFor(() => expect(useUiStateStore.getState().currentPlayerPayload?.sessionId).toBe(sessionId));
+    expect(useUiStateStore.getState().currentPlayerPayload?.player).toBeNull();
+
+    fireEvent.click(within(routePanel).getByRole("button", { name: "查看案卷摘要" }));
+    expect(screen.getByRole("complementary", { name: "印匣" })).toBeTruthy();
+    await waitFor(() => expect(document.querySelector("[data-polish-settings='s89-13-safe-summary']")).toBeTruthy());
+    const safeSummaryPanel = document.querySelector("[data-polish-settings='s89-13-safe-summary']");
+    expect(safeSummaryPanel?.textContent || "").toContain("未题名");
+    expect(safeSummaryPanel?.textContent || "").toContain("身份未题");
+    expect(safeSummaryPanel?.textContent || "").toContain("主卷载入");
+    expect(document.body.textContent || "").not.toMatch(/player-state|exam-submit|provider payload|raw audit|data\/sessions/i);
+    fireEvent.keyDown(document, { key: "Escape" });
+    await waitFor(() => expect(useUiStateStore.getState().activeDrawer).toBeNull());
 
     fireEvent.click(within(routePanel).getByRole("button", { name: "打开显示偏好" }));
     expect(screen.getByRole("complementary", { name: "印匣" })).toBeTruthy();

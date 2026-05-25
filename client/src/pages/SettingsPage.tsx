@@ -10,6 +10,7 @@ type SettingsCard = {
   readonly tab: InkboxTab;
   readonly title: string;
   readonly text: string;
+  readonly badges: readonly string[];
   readonly icon: ReactNode;
   readonly actionLabel: string;
 };
@@ -19,6 +20,7 @@ const settingsCards: readonly SettingsCard[] = [
     tab: "ai-settings",
     title: "推演设置",
     text: "整理叙事、科举、政务、人物与复核等推演分工，保存后用于当前和以后打开的案卷。",
+    badges: ["全局生效", "保存后复核"],
     icon: <BrainCircuit size={18} aria-hidden="true" />,
     actionLabel: "打开推演设置"
   },
@@ -26,6 +28,7 @@ const settingsCards: readonly SettingsCard[] = [
     tab: "display",
     title: "显示偏好",
     text: "调整动效、舆图动效、字号、对比度与正文字体；低动效会保留清晰状态。",
+    badges: ["本地保存", "低动效可用"],
     icon: <SlidersHorizontal size={18} aria-hidden="true" />,
     actionLabel: "打开显示偏好"
   },
@@ -33,6 +36,7 @@ const settingsCards: readonly SettingsCard[] = [
     tab: "saves",
     title: "旧案卷",
     text: "检点本地可读旧卷并续入主卷；旧案只显示公开摘要和可读时间。",
+    badges: ["本机旧卷", "公开摘要"],
     icon: <Save size={18} aria-hidden="true" />,
     actionLabel: "查看旧案"
   },
@@ -40,6 +44,7 @@ const settingsCards: readonly SettingsCard[] = [
     tab: "safe-summary",
     title: "案卷摘要",
     text: "核对当前案主、身份与已载卷宗，只看玩家已见的公开材料。",
+    badges: ["只读摘要", "不载私记"],
     icon: <ShieldCheck size={18} aria-hidden="true" />,
     actionLabel: "查看案卷摘要"
   }
@@ -61,6 +66,7 @@ export function SettingsPage() {
       className="surfacePanel routePanel settingsRoutePanel settingsDirectoryRoute"
       aria-labelledby="settings-title"
       data-polish-surface="s89-5-settings-directory"
+      data-polish-settings="s89-13-settings-directory"
     >
       <div className="routePanelHeader settingsDirectoryHeader">
         <div className="settingsDirectorySeal" aria-hidden="true">
@@ -79,6 +85,9 @@ export function SettingsPage() {
             <div>
               <h2>{card.title}</h2>
               <p>{card.text}</p>
+              <div className="settingsDirectoryBadges" aria-label={`${card.title}章法`}>
+                {card.badges.map((badge) => <span key={badge}>{badge}</span>)}
+              </div>
             </div>
             <button className="paperButton" type="button" onClick={(event) => openInkboxTab(card.tab, event)}>
               {card.actionLabel}

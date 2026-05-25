@@ -634,7 +634,8 @@ test("S75.5 save cases show redacted metadata and load through player-state", ()
   assert.match(homePageSource, /saveCaseSkeletonList/);
   assert.match(homePageSource, /旧案架暂不可取，新开案卷不受影响/);
   assert.match(homePageSource, /status === "error" \? error : null/);
-  assert.match(surfaceHostSource, /<SaveCaseList saves=\{saves\} maxItems=\{6\}/);
+  assert.match(surfaceHostSource, /prioritizeCurrentSaveCase\(saves, currentSessionId\)/);
+  assert.match(surfaceHostSource, /<SaveCaseList saves=\{prioritizeCurrentSaveCase\(saves, currentSessionId\)\} maxItems=\{6\}/);
   assert.match(surfaceHostSource, /loadSession\(sessionId\)/);
   assert.match(saveCaseSource, /getSaveShortCode/);
   assert.match(saveCaseSource, /getSaveDateLabel/);
@@ -1369,6 +1370,41 @@ test("S89.3 settings route is a directory into the single inkbox surface", () =>
   assert.doesNotMatch(
     settingsPageSource,
     /数据来源|裁决边界|服务器裁决|draftContext|schema|manifest|provider payload|raw audit|hiddenNotes|OPENAI_API_KEY|data\/sessions|完整提示词|本地路径|密钥/
+  );
+});
+
+test("S89.13 inkbox settings polish stays player-facing and local", () => {
+  const settingsPageSource = readText("client/src/pages/SettingsPage.tsx");
+  const surfaceHostSource = readText("client/src/components/SurfaceHost.tsx");
+  const appTestSource = readText("client/src/__tests__/App.test.tsx");
+  const clientSmokeSource = readText("scripts/clientSmoke.js");
+  const styleSource = readText("client/src/styles/global.css");
+  const combined = stripSafeGuardPatterns(`${settingsPageSource}\n${surfaceHostSource}\n${styleSource}`);
+
+  assert.match(settingsPageSource, /data-polish-settings="s89-13-settings-directory"/);
+  assert.match(settingsPageSource, /settingsDirectoryBadges/);
+  assert.match(settingsPageSource, /全局生效/);
+  assert.match(settingsPageSource, /低动效可用/);
+  assert.match(settingsPageSource, /不载私记/);
+  assert.match(surfaceHostSource, /data-polish-settings="s89-13-inkbox-overview"/);
+  assert.match(surfaceHostSource, /data-polish-settings="s89-13-display-panel"/);
+  assert.match(surfaceHostSource, /data-polish-settings="s89-13-safe-summary"/);
+  assert.match(surfaceHostSource, /buildDisplayPreferenceLedger/);
+  assert.match(surfaceHostSource, /safePayloadSourceLabel/);
+  assert.match(surfaceHostSource, /prioritizeCurrentSaveCase/);
+  assert.match(surfaceHostSource, /主卷载入/);
+  assert.doesNotMatch(surfaceHostSource, /<dd>\{payload\.source\}<\/dd>/);
+  assert.match(styleSource, /\.inkboxOverview/);
+  assert.match(styleSource, /\.displayPreferenceLedger/);
+  assert.match(styleSource, /\.settingsDirectoryBadges/);
+  assert.match(appTestSource, /s89-13-inkbox-overview/);
+  assert.match(appTestSource, /主卷载入/);
+  assert.match(clientSmokeSource, /S89\.13 display preference polish/);
+  assert.match(clientSmokeSource, /S89\.13 safe summary polish/);
+  assert.match(clientSmokeSource, /hasS8913Marker/);
+  assert.doesNotMatch(
+    combined,
+    /\/api\/game\/state|\/api\/dev\/session-diagnostics|dangerouslySetInnerHTML|provider payload|raw audit|hiddenNotes|OPENAI_API_KEY|DEEPSEEK_API_KEY|MIMO_API_KEY|ANTHROPIC_API_KEY|data\/sessions|完整提示词|本地路径|密钥/
   );
 });
 

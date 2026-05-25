@@ -113,6 +113,7 @@
 
 | ID | 状态 | 目标 | 范围 / 下一步 |
 | --- | --- | --- | --- |
+| S89.13 | DONE | 右上角印匣与设置目录信息架构 polish | 承接 S89.12，右上角仍是唯一显眼印匣入口，设置目录只作入口整理；印匣总览显示当前案卷和显示章法，显示偏好整理为动效/舆图/正文/对比四项读法，案卷摘要把内部来源改写为“新卷开局 / 主卷载入 / 本旬回音 / 科场回音”。范围限 React `SurfaceHost` / `SettingsPage`、少量前端样式、客户端 smoke/source canary、前端测试和文档；不新增依赖、素材、后端 API/schema、AI 权限、prompt、provider、SQLite、存档、runtime manifest 或素材 manifest。显示偏好仍只写本地白名单，AI 设置仍走既有全局设置 API，浏览器不裁决资源、身份、交易、NPC 行动、经济、考试、官职或隐藏信息。实现提交：待提交后回填。 |
 | S89.12 | DONE | 舆图筛选专题层体验 polish | 承接 S89.11，点击“筛舆图”打开的专题层已改为只读舆图筛选说明，地点/驿路/近事/人物动向/后果追踪以世界内口径呈现为卷上图层、筛看方法和候复边界；`map-filter` 继续是本地 surface，不进入后端 topic surface，不请求专题 API 或 AI 拟稿，不写草稿，只提供“回舆图勾选”。范围限 React SurfaceHost/registry、客户端 smoke/source canary、前端测试和文档。不新增依赖、素材、后端 API/schema、AI 权限、prompt、provider、SQLite、存档、runtime manifest 或素材 manifest；专题层不提交回合、不写服务器状态，图层与坐标仍只作浏览器显示。实现提交：`b658a1a3`。 |
 | S89.11 | DONE | 舆图全关图层空态与筛选交互 polish | 承接 S89.10，舆图地点/驿路/近事三层全隐时新增世界内“素绢空图”空态、一键恢复三层、图层状态标记、侧栏可见线索摘要、移动端长文本守门和 smoke/source canary；范围限 React 舆图页结构、CSS、客户端 smoke/source canary、前端测试和文档。不新增依赖、素材、后端 API/schema、AI 权限、prompt、provider、SQLite、存档、runtime manifest 或素材 manifest；坐标与图层仍只作浏览器显示，行动只写本地草稿并等待服务器回合裁决。实现提交：`0285f36e`。 |
 | S89.10 | DONE | 史册信息密度与移动端长文本二轮 polish | 承接 S89.9，史册公开追踪区已从三列重排为近次归档主列 + 证据侧栏，侧栏叠放后果追踪和来函证据；补 `s89-10-chronicle-density` 标记、`ledger-rail` 布局守门、移动端长文本 smoke、玩家可见工程词清洗和 source canary。范围限 React 前端结构、CSS、客户端 smoke/source canary、前端测试和文档；不新增依赖、素材、后端 API/schema、AI 权限、prompt、provider、SQLite、存档、runtime manifest 或素材 manifest；按钮仍只写本地草稿并等待服务器回合裁决。实现提交：`283b2c0a`。 |
@@ -143,8 +144,9 @@
 - 2026-05-25：S89.9 完成人物页与立绘查看器材质题签 polish。当前范围限 React 前端标记、CSS、客户端 smoke/source canary、前端测试、CSS 预算校准和文档；不新增依赖或素材，不改后端 API/schema、AI 权限、prompt、provider、SQLite、存档、runtime manifest 或素材 manifest。
 - 2026-05-25：S89.10 完成史册信息密度与移动端长文本二轮 polish。当前范围限 React 前端结构、CSS、客户端 smoke/source canary、前端测试和文档；不新增浏览器裁决权，不改后端 API/schema、AI 权限、prompt、provider、SQLite、存档、runtime manifest 或素材 manifest。
 - 2026-05-25：S89.11 完成舆图全关图层空态与筛选交互 polish。当前范围限 React 舆图页结构、CSS、客户端 smoke/source canary、前端测试和文档；不新增浏览器裁决权，不改后端 API/schema、AI 权限、prompt、provider、SQLite、存档、runtime manifest 或素材 manifest。
+- 2026-05-25：S89.13 完成右上角印匣与设置目录信息架构 polish。当前范围限 React 设置/印匣前端、少量样式、客户端 smoke/source canary、前端测试和文档；不新增浏览器裁决权，不改后端 API/schema、AI 权限、prompt、provider、SQLite、存档、runtime manifest 或素材 manifest。
 - 2026-05-25：S89.12 完成舆图筛选专题层体验 polish。当前范围限 React SurfaceHost/registry、客户端 smoke/source canary、前端测试和文档；不新增浏览器裁决权，不改后端 API/schema、AI 权限、prompt、provider、SQLite、存档、runtime manifest 或素材 manifest。
-- 前一轮 S88 归档是低风险纯文档维护；S89.3-S89.12 涉及前端代码、样式、验证脚本和文档，提交前按子代理复审规则执行。
+- 前一轮 S88 归档是低风险纯文档维护；S89.3-S89.13 涉及前端代码、样式、验证脚本和文档，提交前按子代理复审规则执行。
 
 ## 6. 最近完整验证口径
 
@@ -226,6 +228,17 @@ S89.8 高清立绘查看器画中所见 polish 验证结果：
 - 已通过 `npm run check:docs-governance`、`node --test test/documentationGovernance.test.js`、`git diff --check`。提交前只读子代理复审已通过，未发现阻断问题；非阻断建议为后续可给题签格补专门材质样式。
 
 ## 7. 近期进度记录
+
+### 2026-05-25：S89.13 右上角印匣与设置目录信息架构 polish
+
+- 范围：右上角仍是唯一显眼印匣入口；`/game/:sessionId/settings` 继续只是目录页，新增 `data-polish-settings="s89-13-settings-directory"`，不把设置恢复成主功能入口。范围限 React `SurfaceHost` / `SettingsPage`、少量 CSS、客户端 smoke/source canary、前端测试和文档。
+- 体验：印匣新增 `data-polish-settings="s89-13-inkbox-overview"` 总览，显示当前案卷和显示章法；显示偏好新增 `data-polish-settings="s89-13-display-panel"`，把动效、舆图、正文、对比整理成四项读法；设置目录卡片增加“全局生效 / 本地保存 / 只读摘要”等短章法标签。旧案页会在本地列表中优先显示当前案卷，避免旧卷较多时当前本局被前 6 条截断。
+- 文案与安全：案卷摘要新增 `data-polish-settings="s89-13-safe-summary"`，不再直接显示 `player-state` / `exam-submit` 等内部来源，而改为“新卷开局 / 主卷载入 / 本旬回音 / 科场回音”；空 `player` 也显示“未题名 / 身份未题”安全兜底。显示偏好仍只写本地白名单，AI 设置仍使用既有全局设置 API。
+- Smoke/canary：`scripts/clientSmoke.js` 现检查桌面和移动印匣的 S89.13 overview/display/summary 标记、设置目录标记和章法标签，并扩展 `player-state`、`exam-submit`、`server adjudication`、`AI read scope`、`proposal boundary`、`safe view`、`resolver`、`/Users`、`/private`、`tp-...` 等污染词守门；`test/reactClientScaffold.test.js` 新增 S89.13 source canary。
+- 边界：不新增依赖或素材，不改 runtime manifest、素材 manifest、后端 API/schema、AI 权限矩阵、prompt、provider facade、SQLite schema、存档格式或服务器裁决；浏览器不裁决资源、身份、交易、NPC 行动、经济、考试、官职或隐藏信息。
+- 验证：已通过 `npm run typecheck:client`、`node --check scripts/clientSmoke.js`、`node --test test/reactClientScaffold.test.js`、focused `npx vitest --config vitest.config.mjs run client/src/__tests__/App.test.tsx -t "opens the S75.4 inkbox tabs|refreshes the old-case list once|keeps the settings route" --pool=vmThreads --fileParallelism=false --maxWorkers=1`、完整串行 `npx vitest --config vitest.config.mjs run --pool=vmThreads --fileParallelism=false --maxWorkers=1`（6 files / 129 tests）、`npm run test:client`（6 files / 129 tests）、`npm run qa:runtime-manifest`、`npm run build:client`、`npm run budget:client`、直接 `node scripts/clientSmoke.js`、`npm run check:docs-governance` 和 `node --test test/documentationGovernance.test.js`。预算输出 `JS 613.6 KiB / CSS 100.0 KiB`；CSS 正贴 100 KiB 硬门，后续样式新增前应优先瘦身。`npm run smoke:browser` 串联 wrapper 在 240s 内完成 manifest/build/budget 后超时，直接 browser smoke 已通过。
+- 复审：开工只读子代理指出 `payload.player` 可为空、设置目录禁词和 CSS 预算风险；本轮已修复空案主兜底、扩展 smoke 禁词并裁剪新增 CSS 至预算内。提交前最终只读复审已通过，未发现阻断问题；残余建议是后续可把 `role` 枚举兜底统一映射为中文身份标签，CSS 正贴 100 KiB 硬门需继续先瘦身再增样式。
+- 提交：实现提交待回填。
 
 ### 2026-05-25：S89.12 舆图筛选专题层体验 polish
 

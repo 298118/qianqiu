@@ -2431,7 +2431,31 @@ async function assertInkboxTabsAndSaveLoad(page, sessionId, screenshotsDir) {
   }
 
   await assertInkboxTab(page, drawer, "显示", "显示偏好");
+  const displayPanelSnapshot = await drawer.evaluate(() => {
+    const text = document.querySelector(".inkboxPanel")?.textContent || "";
+    return {
+      hasMarker: Boolean(document.querySelector("[data-polish-settings='s89-13-display-panel']")),
+      hasLedger: Boolean(document.querySelector(".displayPreferenceLedger")),
+      hasReadableState: text.includes("显示章法") || (text.includes("动效") && text.includes("舆图") && text.includes("正文") && text.includes("对比")),
+      hiddenTerms: text.match(/player-state|exam-submit|draftContext|schema|manifest|server adjudication|AI read scope|proposal boundary|safe view|resolver|provider payload|raw audit|hiddenNotes|OPENAI_API_KEY|data\/sessions|\/Users|\/private|tp-[a-z0-9_-]{6,}|完整提示词|本地路径|密钥|sk-[a-z0-9_-]{6,}|[a-z]:[\\/]/gi) || []
+    };
+  });
+  if (!displayPanelSnapshot.hasMarker || !displayPanelSnapshot.hasLedger || !displayPanelSnapshot.hasReadableState || displayPanelSnapshot.hiddenTerms.length) {
+    throw new Error(`S89.13 display preference polish regressed: ${JSON.stringify(displayPanelSnapshot)}`);
+  }
   await assertInkboxTab(page, drawer, "摘要", "案卷摘要");
+  const safeSummarySnapshot = await drawer.evaluate(() => {
+    const text = document.querySelector(".inkboxPanel")?.textContent || "";
+    return {
+      hasMarker: Boolean(document.querySelector("[data-polish-settings='s89-13-safe-summary']")),
+      hasSourceLabel: text.includes("主卷载入") || text.includes("新卷开局") || text.includes("本旬回音") || text.includes("科场回音"),
+      hasLoadedMaterials: text.includes("已载材料"),
+      hiddenTerms: text.match(/player-state|exam-submit|draftContext|schema|manifest|server adjudication|AI read scope|proposal boundary|safe view|resolver|provider payload|raw audit|hiddenNotes|OPENAI_API_KEY|data\/sessions|\/Users|\/private|tp-[a-z0-9_-]{6,}|完整提示词|本地路径|密钥|sk-[a-z0-9_-]{6,}|[a-z]:[\\/]/gi) || []
+    };
+  });
+  if (!safeSummarySnapshot.hasMarker || !safeSummarySnapshot.hasSourceLabel || !safeSummarySnapshot.hasLoadedMaterials || safeSummarySnapshot.hiddenTerms.length) {
+    throw new Error(`S89.13 safe summary polish regressed: ${JSON.stringify(safeSummarySnapshot)}`);
+  }
   await drawer.getByRole("button", { name: "关闭抽屉" }).click();
   await drawer.waitFor({ state: "detached", timeout: 10000 });
   await page.waitForFunction(() => document.activeElement?.getAttribute("aria-label") === "打开印匣", null, { timeout: 5000 });
@@ -2496,7 +2520,26 @@ async function assertMobileInkbox(page, screenshotsDir) {
   await assertInkboxTab(page, drawer, "推演", "推演设置");
   await assertInkboxTab(page, drawer, "旧案", "旧案");
   await assertInkboxTab(page, drawer, "显示", "显示偏好");
+  const mobileDisplaySnapshot = await drawer.evaluate(() => ({
+    hasMarker: Boolean(document.querySelector("[data-polish-settings='s89-13-display-panel']")),
+    hasLedger: Boolean(document.querySelector(".displayPreferenceLedger")),
+    text: (document.querySelector(".inkboxPanel")?.textContent || "").slice(0, 600)
+  }));
+  if (!mobileDisplaySnapshot.hasMarker || !mobileDisplaySnapshot.hasLedger || !mobileDisplaySnapshot.text.includes("舆图")) {
+    throw new Error(`S89.13 mobile display panel incomplete: ${JSON.stringify(mobileDisplaySnapshot)}`);
+  }
   await assertInkboxTab(page, drawer, "摘要", "案卷摘要");
+  const mobileSafeSummarySnapshot = await drawer.evaluate(() => {
+    const text = document.querySelector(".inkboxPanel")?.textContent || "";
+    return {
+      hasMarker: Boolean(document.querySelector("[data-polish-settings='s89-13-safe-summary']")),
+      hasLoadedMaterials: text.includes("已载材料"),
+      unsafeText: text.match(/player-state|exam-submit|draftContext|schema|manifest|server adjudication|AI read scope|proposal boundary|safe view|resolver|provider payload|raw audit|hiddenNotes|OPENAI_API_KEY|data\/sessions|\/Users|\/private|tp-[a-z0-9_-]{6,}|完整提示词|本地路径|密钥|sk-[a-z0-9_-]{6,}|[a-z]:[\\/]/gi) || []
+    };
+  });
+  if (!mobileSafeSummarySnapshot.hasMarker || !mobileSafeSummarySnapshot.hasLoadedMaterials || mobileSafeSummarySnapshot.unsafeText.length) {
+    throw new Error(`S89.13 mobile safe summary incomplete: ${JSON.stringify(mobileSafeSummarySnapshot)}`);
+  }
 
   const metrics = await page.evaluate((tokens) => {
     const drawerElement = document.querySelector("aside.drawerHost[aria-label='印匣']");
@@ -3312,13 +3355,15 @@ async function runClientSmoke(options = {}) {
           const text = document.body.innerText || "";
           return {
             hasDirectory: Boolean(document.querySelector(".settingsDirectoryRoute")),
+            hasS8913Marker: Boolean(document.querySelector("[data-polish-settings='s89-13-settings-directory']")),
             hasCards: document.querySelectorAll(".settingsDirectoryCard").length,
+            hasBadges: text.includes("全局生效") && text.includes("低动效可用") && text.includes("不载私记"),
             hasAiSettingsPanel: Boolean(document.querySelector(".aiSettingsPanel")),
             hasInkboxButton: Boolean(document.querySelector("button[aria-label='打开印匣']")),
-            forbiddenText: text.match(/数据来源|裁决边界|服务器裁决|draftContext|schema|manifest|provider payload|raw audit|hiddenNotes|OPENAI_API_KEY|data\/sessions|完整提示词|本地路径|密钥|sk-[a-z0-9_-]{6,}|[a-z]:[\\/]/gi) || []
+            forbiddenText: text.match(/数据来源|裁决边界|服务器裁决|player-state|exam-submit|draftContext|schema|manifest|server adjudication|AI read scope|proposal boundary|safe view|resolver|provider payload|raw audit|hiddenNotes|OPENAI_API_KEY|data\/sessions|\/Users|\/private|tp-[a-z0-9_-]{6,}|完整提示词|本地路径|密钥|sk-[a-z0-9_-]{6,}|[a-z]:[\\/]/gi) || []
           };
         });
-        if (!settingsRouteSnapshot.hasDirectory || settingsRouteSnapshot.hasCards !== 4 || settingsRouteSnapshot.hasAiSettingsPanel || !settingsRouteSnapshot.hasInkboxButton) {
+        if (!settingsRouteSnapshot.hasDirectory || !settingsRouteSnapshot.hasS8913Marker || settingsRouteSnapshot.hasCards !== 4 || !settingsRouteSnapshot.hasBadges || settingsRouteSnapshot.hasAiSettingsPanel || !settingsRouteSnapshot.hasInkboxButton) {
           throw new Error(`S89.3 settings directory route regressed: ${JSON.stringify(settingsRouteSnapshot)}`);
         }
         if (settingsRouteSnapshot.forbiddenText.length) {

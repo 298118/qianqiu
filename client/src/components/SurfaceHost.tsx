@@ -218,8 +218,13 @@ const inkboxTabs: readonly {
 function InkboxDrawer() {
   const activeTab = useUiStateStore((state) => state.activeInkboxTab);
   const selectInkboxTab = useUiStateStore((state) => state.selectInkboxTab);
+  const displayPreferences = useUiStateStore((state) => state.displayPreferences);
+  const payload = useUiStateStore((state) => state.currentPlayerPayload);
   const returnHome = useUiStateStore((state) => state.returnHome);
   const navigate = useNavigate();
+  const loadedRouteCount = payload ? Object.values(payload.routeViews).filter(Boolean).length : 0;
+  const playerName = safePayloadPlayerName(payload);
+  const playerTitle = safePayloadPlayerTitle(payload);
 
   function handleReturnHome() {
     returnHome();
@@ -238,6 +243,18 @@ function InkboxDrawer() {
           <span>返回首页</span>
         </button>
       </div>
+      <section className="inkboxOverview" aria-label="印匣总览" data-polish-settings="s89-13-inkbox-overview">
+        <article>
+          <span>当前案卷</span>
+          <strong>{payload ? playerName : "未载入"}</strong>
+          <small>{payload ? `${playerTitle} · ${loadedRouteCount} 类材料` : "开卷后显示公开摘要"}</small>
+        </article>
+        <article>
+          <span>显示章法</span>
+          <strong>{displayModeTitle(displayPreferences)}</strong>
+          <small>{displayModeDetail(displayPreferences)}</small>
+        </article>
+      </section>
       <div className="inkboxTabs" role="tablist" aria-label="印匣分栏">
         {inkboxTabs.map((tab) => (
           <button
@@ -268,10 +285,20 @@ function InkboxDrawer() {
 function DisplayPreferencesPanel() {
   const preferences = useUiStateStore((state) => state.displayPreferences);
   const setDisplayPreference = useUiStateStore((state) => state.setDisplayPreference);
+  const displayLedger = buildDisplayPreferenceLedger(preferences);
 
   return (
-    <div className="inkboxTabBody">
+    <div className="inkboxTabBody" data-polish-settings="s89-13-display-panel">
       <h3>显示偏好</h3>
+      <section className="displayPreferenceLedger" aria-label="当前显示章法">
+        {displayLedger.map((item) => (
+          <article key={item.label}>
+            <span>{item.label}</span>
+            <strong>{item.value}</strong>
+            <small>{item.detail}</small>
+          </article>
+        ))}
+      </section>
       <label>
         动效
         <select value={preferences.motion} onChange={(event) => setDisplayPreference("motion", event.target.value === "reduced" ? "reduced" : "full")}>
@@ -323,6 +350,50 @@ function DisplayPreferencesPanel() {
   );
 }
 
+function displayModeTitle(preferences: ReturnType<typeof useUiStateStore.getState>["displayPreferences"]) {
+  if (preferences.motion === "reduced") return "静读卷面";
+  if (preferences.contrast === "high") return "浓墨清读";
+  return "水墨卷面";
+}
+
+function displayModeDetail(preferences: ReturnType<typeof useUiStateStore.getState>["displayPreferences"]) {
+  const motion = preferences.motion === "reduced" ? "低动效" : "水墨动效";
+  const font = bodyFontLabel(preferences.bodyFont);
+  return `${motion} · ${font}`;
+}
+
+function bodyFontLabel(value: ReturnType<typeof useUiStateStore.getState>["displayPreferences"]["bodyFont"]) {
+  if (value === "song-xiaowei") return "案卷宋刻";
+  if (value === "kai-longcang") return "山房行楷";
+  if (value === "brush-mashan") return "榜书墨笔";
+  return "典籍明晰";
+}
+
+function buildDisplayPreferenceLedger(preferences: ReturnType<typeof useUiStateStore.getState>["displayPreferences"]) {
+  return [
+    {
+      label: "动效",
+      value: preferences.motion === "reduced" ? "静读" : "水墨",
+      detail: preferences.motion === "reduced" ? "纸页与浮层保留状态，不走强动画。" : "卷轴、墨晕和按钮回弹保持轻动效。"
+    },
+    {
+      label: "舆图",
+      value: preferences.mapMotion ? "流云" : "静图",
+      detail: preferences.mapMotion && preferences.motion === "full" ? "舆图标记和流云可动。" : "舆图保留清楚标记，不强行动画。"
+    },
+    {
+      label: "正文",
+      value: bodyFontLabel(preferences.bodyFont),
+      detail: preferences.textSize === "large" ? "大字读卷，长文更易辨认。" : "标准字号，适合常规案牍密度。"
+    },
+    {
+      label: "对比",
+      value: preferences.contrast === "high" ? "浓墨" : "宣纸",
+      detail: preferences.autoScroll ? "新回合会随卷面自动移至近处。" : "新回合后保留当前阅读位置。"
+    }
+  ] as const;
+}
+
 function SavePanel() {
   const saves = useGameSessionStore((state) => state.saves);
   const savesStatus = useGameSessionStore((state) => state.savesStatus);
@@ -367,38 +438,71 @@ function SavePanel() {
         </button>
       </div>
       {saves.length ? (
-        <SaveCaseList saves={saves} maxItems={6} actionLabel="载入" onLoad={(sessionId) => void handleLoad(sessionId)} />
+        <SaveCaseList saves={prioritizeCurrentSaveCase(saves, currentSessionId)} maxItems={6} actionLabel="载入" onLoad={(sessionId) => void handleLoad(sessionId)} />
       ) : <p>{savesStatus === "loading" ? "正在检点旧案。" : "暂无可读旧卷。"}</p>}
     </div>
   );
 }
 
+function prioritizeCurrentSaveCase<T extends { readonly sessionId: string }>(saves: readonly T[], currentSessionId: string | null) {
+  if (!currentSessionId) return saves;
+  const currentSave = saves.find((save) => save.sessionId === currentSessionId);
+  if (!currentSave) return saves;
+  return [currentSave, ...saves.filter((save) => save.sessionId !== currentSessionId)];
+}
+
 function SafeSummaryPanel() {
   const payload = useUiStateStore((state) => state.currentPlayerPayload);
+  const loadedRouteCount = payload ? Object.values(payload.routeViews).filter(Boolean).length : 0;
+  const playerName = safePayloadPlayerName(payload);
+  const playerTitle = safePayloadPlayerTitle(payload);
 
   return (
-    <div className="inkboxTabBody">
+    <div className="inkboxTabBody" data-polish-settings="s89-13-safe-summary">
       <h3>案卷摘要</h3>
-      <p>{payload?.player?.name ? `${payload.player.name}，${payload.player.officeTitle || payload.player.examRank || payload.player.role || "未题身份"}。` : "暂无已载入案卷。"}</p>
+      <p>{payload ? `${playerName}，${playerTitle}。` : "暂无已载入案卷。"}</p>
       {payload ? (
         <dl className="safeSummaryList">
           <div>
-            <dt>案卷</dt>
+            <dt>案主</dt>
+            <dd>{playerName}</dd>
+          </div>
+          <div>
+            <dt>身份</dt>
+            <dd>{playerTitle}</dd>
+          </div>
+          <div>
+            <dt>案号</dt>
             <dd>{payload.sessionId.slice(0, 8)}</dd>
           </div>
           <div>
-            <dt>来源</dt>
-            <dd>{payload.source}</dd>
+            <dt>来处</dt>
+            <dd>{safePayloadSourceLabel(payload.source)}</dd>
           </div>
           <div>
-            <dt>已载卷宗</dt>
-            <dd>{Object.values(payload.routeViews).filter(Boolean).length} 项可用</dd>
+            <dt>已载材料</dt>
+            <dd>{loadedRouteCount} 类可读</dd>
           </div>
         </dl>
       ) : null}
       <p>印匣只显示玩家已见的案卷摘要，不展示内廷私记、连接凭据或未公开材料。</p>
     </div>
   );
+}
+
+function safePayloadPlayerName(payload: ReturnType<typeof useUiStateStore.getState>["currentPlayerPayload"]) {
+  return payload?.player?.name || "未题名";
+}
+
+function safePayloadPlayerTitle(payload: ReturnType<typeof useUiStateStore.getState>["currentPlayerPayload"]) {
+  return payload?.player?.officeTitle || payload?.player?.examRank || payload?.player?.role || "身份未题";
+}
+
+function safePayloadSourceLabel(source: string) {
+  if (source === "start") return "新卷开局";
+  if (source === "turn") return "本旬回音";
+  if (source === "exam-submit") return "科场回音";
+  return "主卷载入";
 }
 
 function ModalHost({ activeModal }: { readonly activeModal: ModalSurface }) {
