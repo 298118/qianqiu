@@ -1510,11 +1510,18 @@ test("S89.5 material polish stays frontend-only and reduced-motion aware", () =>
   assert.match(mapPageSource, /data-polish-card="s89-5-map-ledger"/);
   assert.match(mapPageSource, /data-draft-state=\{lastWrittenMapDraftId === entry\.id \? "written" : "idle"\}/);
   assert.match(mapPageSource, /data-draft-state=\{lastWrittenMapDraftId === eventItem\.id \? "written" : "idle"\}/);
-  assert.match(appShellSource, /topBarPolishStyle/);
-  assert.match(appShellSource, /inkboxButtonPolishStyle/);
-  assert.match(appShellSource, /backgroundImage: "linear-gradient\(#fff, #eee\)"/);
+  assert.match(appShellSource, /data-polish-controls="s89-16-shell-controls"/);
+  assert.match(appShellSource, /data-polish-controls="s89-16-inkbox-button"/);
+  assert.doesNotMatch(appShellSource, /topBarPolishStyle|inkboxButtonPolishStyle|CSSProperties|style=\{topBarPolishStyle\}|style=\{inkboxButtonPolishStyle\}/);
   assert.match(styleSource, /@keyframes s895D/);
   assert.match(styleSource, /@keyframes s895S/);
+  assert.match(styleSource, /\.topBar::after/);
+  assert.match(styleSource, /backdrop-filter: blur\(14px\) saturate\(1\.08\)/);
+  assert.match(styleSource, /\.topNav a\[aria-current="page"\]/);
+  assert.match(styleSource, /\.inkboxButton::before/);
+  assert.match(styleSource, /\.inkboxButton::after/);
+  assert.match(styleSource, /\.inkboxButton:active/);
+  assert.match(styleSource, /\.paperLink:hover:not\(:disabled\):not\(\[aria-disabled="true"\]\)/);
   assert.match(styleSource, /li\[data-draft-state="written"\]/);
   assert.match(styleSource, /@keyframes s895D[\s\S]*opacity: \.9/);
   assert.match(styleSource, /@keyframes s895S[\s\S]*outline: 2px solid #8e2f2738/);
@@ -1524,6 +1531,8 @@ test("S89.5 material polish stays frontend-only and reduced-motion aware", () =>
   assert.match(styleSource, /\.appShell\[data-motion="reduced"\][\s\S]*li\[data-draft-state="written"\]/);
   assert.match(styleSource, /\.appShell\[data-motion="reduced"\][\s\S]*\.drawerHost/);
   assert.match(clientSmokeSource, /assertS895MaterialFeedbackPolish/);
+  assert.match(clientSmokeSource, /s89-16-shell-controls/);
+  assert.match(clientSmokeSource, /s89-16-inkbox-button/);
   assert.match(clientSmokeSource, /S89\.5 desktop map draft feedback/);
   assert.match(clientSmokeSource, /S89\.5 reduced inkbox/);
   assert.doesNotMatch(

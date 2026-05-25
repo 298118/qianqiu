@@ -907,10 +907,14 @@ async function assertS895MaterialFeedbackPolish(page, label, expected = {}) {
     return {
       shellPolish: shell?.getAttribute("data-polish-surface") || "",
       shellMotion: shell?.getAttribute("data-motion") || "",
+      shellControlMarker: document.querySelector(".topBar")?.getAttribute("data-polish-controls") || "",
       topBar: styleOf(".topBar"),
       topBarSheen: styleOf(".topBar", "::after"),
+      activeTopNav: styleOf(".topNav a[aria-current='page'], .topNav a.active"),
+      inkboxControlMarker: document.querySelector(".inkboxButton")?.getAttribute("data-polish-controls") || "",
       inkboxButton: styleOf(".inkboxButton"),
       inkboxButtonSheen: styleOf(".inkboxButton", "::before"),
+      inkboxButtonSeal: styleOf(".inkboxButton", "::after"),
       drawer: styleOf("[data-polish-overlay='s89-5-drawer-mica']"),
       keyframes: {
         drawer: keyframesOf("s895D"),
@@ -934,9 +938,16 @@ async function assertS895MaterialFeedbackPolish(page, label, expected = {}) {
 
   const failures = [];
   if (snapshot.shellPolish !== "s89-5-material-feedback") failures.push(`shell polish marker was ${snapshot.shellPolish}`);
+  if (snapshot.shellControlMarker !== "s89-16-shell-controls") failures.push(`S89.16 shell control marker was ${snapshot.shellControlMarker}`);
   if (!snapshot.topBar?.backgroundImage.includes("linear-gradient")) failures.push("top bar did not use layered material background");
   if (!snapshot.topBarSheen || snapshot.topBarSheen.opacity === "0") failures.push("top bar sheen was absent");
+  if (snapshot.activeTopNav && (!snapshot.activeTopNav.boxShadow || snapshot.activeTopNav.boxShadow === "none")) {
+    failures.push("active top navigation lacked selected-state material shadow");
+  }
+  if (snapshot.inkboxControlMarker !== "s89-16-inkbox-button") failures.push(`S89.16 inkbox control marker was ${snapshot.inkboxControlMarker}`);
   if (!snapshot.inkboxButton?.boxShadow || snapshot.inkboxButton.boxShadow === "none") failures.push("inkbox button lacked material shadow");
+  if (!snapshot.inkboxButtonSheen?.backgroundImage.includes("linear-gradient")) failures.push("inkbox button lacked sheen pseudo material");
+  if (!snapshot.inkboxButtonSeal?.backgroundImage || snapshot.inkboxButtonSeal.backgroundImage === "none") failures.push("inkbox button lacked red seal pseudo material");
   if (expected.drawer && !snapshot.drawer) failures.push("open drawer lacked S89.5 overlay marker");
   if (expected.drawer && snapshot.shellMotion !== "reduced" && snapshot.drawer?.animationName !== "s895D") {
     failures.push(`drawer animation was ${snapshot.drawer?.animationName}`);

@@ -2197,8 +2197,10 @@ describe("S74.1 React client shell", () => {
 
     await waitFor(() => expect(useUiStateStore.getState().currentPage).toBe("map"));
     expect(useUiStateStore.getState().currentSessionId).toBe("smoke-session");
+    expect(document.querySelector("[data-polish-controls='s89-16-shell-controls']")).toBeTruthy();
 
     const trigger = screen.getByRole("button", { name: "打开印匣" });
+    expect(trigger.getAttribute("data-polish-controls")).toBe("s89-16-inkbox-button");
     trigger.focus();
     fireEvent.click(trigger);
     expect(screen.getByRole("complementary", { name: "印匣" })).toBeTruthy();

@@ -113,6 +113,7 @@
 
 | ID | 状态 | 目标 | 范围 / 下一步 |
 | --- | --- | --- | --- |
+| S89.16 | DONE | 全局壳与基础控件交互反馈 polish | 承接 S89.15 后 CSS 预算仍紧的状态，已打磨顶部主导航、右上角印匣按钮、纸按钮/纸链接的材质、hover/focus/active/disabled/selected 反馈和低动效降级；同时移除 AppShell 内联临时视觉样式，改为 CSS 统一承载并保留可检测标记。范围限 React `AppShell`、全局 CSS、客户端 smoke/source canary、前端测试和文档；不新增依赖或素材，不改后端 API/schema、AI 权限、prompt、provider、SQLite、存档、runtime manifest 或素材 manifest。浏览器不裁决资源、身份、交易、NPC 行动、经济、考试、官职、关系、婚姻、弹劾、定罪、背叛或隐藏信息。实现提交：待回填。 |
 | S89.15 | DONE | 来函与账解证据读法 polish | 承接 S89.14 CSS 预算风险和 S89.10/S88.7/S88.8 证据组件后续建议，集中打磨 `NpcFollowUpEvidenceSection` 与 `EconomyTraceSection` 的玩家可见读法、内部术语清洗和只读/草稿边界提示；人物页与史册页继续消费安全 follow-up evidence，人物/囊箧/主卷继续消费安全 economy trace。范围限 React 前端证据组件、相关 App 测试、客户端 smoke/source canary 和文档；未新增 CSS，复用既有 `.statusLine` / `.inventoryMiniCard` / `.peopleMeta` 等样式。不新增依赖或素材，不改后端 API/schema、AI 权限、prompt、provider、SQLite、存档、runtime manifest 或素材 manifest；浏览器不裁决资源、身份、交易、NPC 行动、经济、考试、官职、关系、婚姻、弹劾、定罪、背叛或隐藏信息。实现提交：`99072f6e`。 |
 | S89.14 | DONE | 玩家身份标签中文化与 CSS 预算缓冲 polish | 承接 S89.13 残余建议，集中前端玩家身份显示 helper，避免 `scholar` / `official` / `general` 等 role 枚举在印匣、首页续局、主卷案头、人物页和旧案架中作为兜底文案露出；设置目录短章法标签复用既有标签样式，释放少量 CSS 预算缓冲。范围限 React 前端文本 helper、相关页面/组件接线、少量 CSS 复用、客户端 smoke/source canary、前端测试和文档；不新增依赖或素材，不改后端 API/schema、AI 权限、prompt、provider、SQLite、存档、runtime manifest 或素材 manifest。浏览器不裁决资源、身份、交易、NPC 行动、经济、考试、官职或隐藏信息。实现提交：`0739b7f9`。 |
 | S89.13 | DONE | 右上角印匣与设置目录信息架构 polish | 承接 S89.12，右上角仍是唯一显眼印匣入口，设置目录只作入口整理；印匣总览显示当前案卷和显示章法，显示偏好整理为动效/舆图/正文/对比四项读法，案卷摘要把内部来源改写为“新卷开局 / 主卷载入 / 本旬回音 / 科场回音”。范围限 React `SurfaceHost` / `SettingsPage`、少量前端样式、客户端 smoke/source canary、前端测试和文档；不新增依赖、素材、后端 API/schema、AI 权限、prompt、provider、SQLite、存档、runtime manifest 或素材 manifest。显示偏好仍只写本地白名单，AI 设置仍走既有全局设置 API，浏览器不裁决资源、身份、交易、NPC 行动、经济、考试、官职或隐藏信息。实现提交：`54a6186d`。 |
@@ -150,7 +151,8 @@
 - 2026-05-25：S89.14 启动玩家身份标签中文化与 CSS 预算缓冲 polish。当前范围限 React 前端文本 helper、首页/主卷/人物/旧案/印匣身份显示、设置目录标签样式复用、客户端 smoke/source canary、前端测试和文档；不新增浏览器裁决权，不改后端 API/schema、AI 权限、prompt、provider、SQLite、存档、runtime manifest 或素材 manifest。
 - 2026-05-25：S89.12 完成舆图筛选专题层体验 polish。当前范围限 React SurfaceHost/registry、客户端 smoke/source canary、前端测试和文档；不新增浏览器裁决权，不改后端 API/schema、AI 权限、prompt、provider、SQLite、存档、runtime manifest 或素材 manifest。
 - 2026-05-25：S89.15 启动来函与账解证据读法 polish。当前范围限 React 前端证据组件、人物/史册/囊箧/主卷既有消费路径、客户端 smoke/source canary、前端测试和文档；原则上不新增 CSS，不新增浏览器裁决权，不改后端 API/schema、AI 权限、prompt、provider、SQLite、存档、runtime manifest 或素材 manifest。
-- 前一轮 S88 归档是低风险纯文档维护；S89.3-S89.14 涉及前端代码、样式、验证脚本和文档，提交前按子代理复审规则执行。
+- 2026-05-25：S89.16 完成全局壳与基础控件交互反馈 polish。当前范围限 React `AppShell`、全局 CSS、客户端 smoke/source canary、前端测试和文档；不新增浏览器裁决权，不改后端 API/schema、AI 权限、prompt、provider、SQLite、存档、runtime manifest 或素材 manifest。
+- 前一轮 S88 归档是低风险纯文档维护；S89.3-S89.16 涉及前端代码、样式、验证脚本和文档，提交前按子代理复审规则执行。
 
 ## 6. 最近完整验证口径
 
@@ -232,6 +234,17 @@ S89.8 高清立绘查看器画中所见 polish 验证结果：
 - 已通过 `npm run check:docs-governance`、`node --test test/documentationGovernance.test.js`、`git diff --check`。提交前只读子代理复审已通过，未发现阻断问题；非阻断建议为后续可给题签格补专门材质样式。
 
 ## 7. 近期进度记录
+
+### 2026-05-25：S89.16 全局壳与基础控件交互反馈 polish
+
+- 范围：`AppShell` 移除 `topBarPolishStyle` / `inkboxButtonPolishStyle` 内联临时样式，顶部主导航与右上角印匣入口改用 `s89-16-shell-controls` / `s89-16-inkbox-button` 可检测标记；`global.css` 承载顶栏绢帛材质、主导航 selected 状态、印匣按钮光泽/朱痕/按压反馈，以及纸按钮/纸链接 active/disabled 状态。
+- 体验：顶部栏有更稳定的宣绢层次、底线光泽与 active 导航阴影；印匣按钮的 hover/focus/active 反馈从 React 内联样式迁回 CSS；纸链接与纸按钮共用不可用态和按压态，禁用按钮不再吃到 hover 浮起。低动效仍由既有 `.appShell[data-motion="reduced"]` 全局规则压低 transition/animation。
+- CSS 预算：首次构建预算因本轮新增样式升至 `CSS 101.9 KiB` 而失败；随后删除确认未被 React 源码引用的旧 `.gameGrid`、旧书生练习面板样式、旧画像网格/画像卡片样式及其移动端残留，最终预算回落到 `CSS 99.8 KiB`。这些删除只移除孤立 CSS，不删除仍在用的 `scholarPanel`、人物页、画像 frame 或当前主卷结构。
+- Smoke/canary：`scripts/clientSmoke.js` 扩展 S89.5 材质检查，守住 S89.16 顶栏/印匣标记、active 顶部导航阴影、印匣按钮 pseudo 光泽与朱痕；`test/reactClientScaffold.test.js` 更新旧 S89.5 内联样式断言，改为要求 AppShell 无 `CSSProperties` 临时样式且 CSS 含 S89.16 交互规则；`App.test.tsx` 在印匣 Esc/focus 流程中守住顶栏与印匣标记。
+- 边界：本步只改 React `AppShell`、全局 CSS、客户端 smoke/source canary、前端测试和文档；不新增依赖或素材，不改 runtime manifest、素材 manifest、后端 API/schema、AI 权限矩阵、prompt、provider facade、SQLite schema、存档格式或服务器裁决。浏览器仍只负责导航、显示偏好、本地草稿和安全 view 展示，不裁决资源、身份、交易、NPC 行动、经济、考试、官职、关系、婚姻、弹劾、定罪、背叛或 hidden 事实。
+- 验证：已通过 `node --check scripts/clientSmoke.js`、`npm run typecheck:client`、`node --test test/reactClientScaffold.test.js`（52 tests）、focused `npx vitest --config vitest.config.mjs run client/src/__tests__/App.test.tsx -t "route-derived UI page state|settings route as a directory" --pool=vmThreads --fileParallelism=false --maxWorkers=1`（2 tests）、完整串行 `npx vitest --config vitest.config.mjs run --pool=vmThreads --fileParallelism=false --maxWorkers=1`（6 files / 129 tests）、`npm run test:client`（6 files / 129 tests）、`npm run build:client`、`npm run budget:client`、直接 `node scripts/clientSmoke.js`、`npm run check:docs-governance`、`node --test test/documentationGovernance.test.js` 和 `git diff --check`。`npm run smoke:browser` 在 300s 外层限时内完成 runtime manifest、build 和 budget 后进入 browser smoke 被截断；随后直接 `node scripts/clientSmoke.js` 通过完整 React routes。
+- 复审：开工只读子代理建议把 S89.16 收窄到全局控件反馈与 CSS 预算瘦身，指出 AppShell 已有 S89.16 半步标记但 source canary 仍守旧断言，并建议优先复用/合并按钮链接反馈、删除确认不用的旧 CSS。提交前只读复审已通过，未发现阻断问题；非阻断建议为后续可把 active 顶部导航 smoke 从条件式检查收紧为必须存在。
+- 提交：实现提交待回填。
 
 ### 2026-05-25：S89.15 来函与账解证据读法 polish
 
