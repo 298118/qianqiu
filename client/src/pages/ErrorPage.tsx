@@ -9,7 +9,7 @@ export function ErrorPage() {
   const message = getSafeRouteErrorMessage(error);
 
   return (
-    <section className="plainPage statePage" aria-labelledby="error-title">
+    <section className="plainPage statePage" aria-labelledby="error-title" data-polish-route-state="s89-19-route-recovery">
       <div className="statePageSeal" aria-hidden="true">
         <ScrollText size={30} />
       </div>
@@ -17,6 +17,7 @@ export function ErrorPage() {
         <p className="eyebrow">断卷</p>
         <h1 id="error-title">卷页受阻</h1>
         <p>{message}</p>
+        <p>此页只给安全归路，不显示底层诊断、推演原文或本机路径。</p>
       </div>
       <div className="buttonRow statePageActions" aria-label="卷页去处">
         {recoveryHref ? (

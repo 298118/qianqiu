@@ -113,6 +113,7 @@
 
 | ID | 状态 | 目标 | 范围 / 下一步 |
 | --- | --- | --- | --- |
+| S89.19 | DONE | 设置与断卷状态读法 polish | 承接 S89.18 后 CSS 预算仍紧的状态，已打磨 `/game/:sessionId/settings`、右上角印匣中的推演设置矩阵、404/错误页和畸形主卷恢复页：设置目录新增四类工具状态簿，逐项说明眼下可做与候复边界；AI 设置面板新增“推演设置状态簿”，并清洗污染的预设、分工 label/purpose/model、错误信息和状态枚举；断卷、空卷与畸形主卷恢复页新增只给安全归路、不显示底层诊断的 S89.19 标记。范围限 React `SettingsPage` / `AiSettingsPanel` / `ErrorPage` / `NotFoundPage` / `GamePage`、客户端 smoke/source canary、前端测试和文档；零新增 CSS，不新增依赖或素材，不改后端 API/schema、AI 权限、prompt、provider、SQLite、存档、runtime manifest 或素材 manifest。浏览器仍只打开本地印匣、写既有全局 AI settings API 或本地显示偏好，不裁决资源、身份、交易、NPC 行动、经济、考试、官职、关系或隐藏信息；畸形案卷不读取主卷接口、不打开专题层、不写行动草稿。实现提交：待本次提交回填。 |
 | S89.18 | DONE | 科举与皇榜仪式读法 polish | 承接 S89.17 后 CSS 预算仍紧的状态，已打磨 `/game/:sessionId/exam` 与 `/game/:sessionId/ranking`：科举页新增“科举仪程”案头索引，按取题启封、场内推进、交卷候批、候榜回音说明当前可做与候复边界；皇榜页新增“放榜仪程”案头索引，按张榜取材、我名、同年座师、授官过渡说明公开榜文读法，并把“防弊检测”玩家化为“弥封复核”。范围限 React `ExamPage` / `RankingPage`、客户端 smoke/source canary、前端测试和文档；零新增 CSS，不新增依赖或素材，不改后端 API/schema、AI 权限、prompt、provider、SQLite、存档、runtime manifest 或素材 manifest。浏览器不裁决取题、评分、舞弊、放榜、晋级、授官、同年座师关系、官职任免或隐藏信息；“拟行动”仍只写本地草稿，回主卷候批。实现提交：`060d0c8c`。 |
 | S89.17 | DONE | 朝议专题目录与官署案头索引 polish | 承接 S89.16 后 CSS 预算仍紧的状态，已打磨 `/game/:sessionId/court` 朝议页，把六个专题入口整理为“官署案头索引”：每个专题展示卷宗取材、可拟草稿、候复边界和案卷未载不补造提示，入口仍保持唯一按钮并继续打开既有 `SurfaceHost` 专题层。范围限 React `CourtPage`、客户端 smoke/source canary、前端测试和文档；零新增 CSS，不新增依赖或素材，不改后端 API/schema、AI 权限、prompt、provider、SQLite、存档、runtime manifest 或素材 manifest。浏览器不递交回合、不裁决资源、身份、交易、NPC 行动、经济、考试、官职、任免、赏罚、定罪、战和、关系、婚姻、弹劾、背叛或隐藏信息。实现提交：`b9e23f11`。 |
 | S89.16 | DONE | 全局壳与基础控件交互反馈 polish | 承接 S89.15 后 CSS 预算仍紧的状态，已打磨顶部主导航、右上角印匣按钮、纸按钮/纸链接的材质、hover/focus/active/disabled/selected 反馈和低动效降级；同时移除 AppShell 内联临时视觉样式，改为 CSS 统一承载并保留可检测标记。范围限 React `AppShell`、全局 CSS、客户端 smoke/source canary、前端测试和文档；不新增依赖或素材，不改后端 API/schema、AI 权限、prompt、provider、SQLite、存档、runtime manifest 或素材 manifest。浏览器不裁决资源、身份、交易、NPC 行动、经济、考试、官职、关系、婚姻、弹劾、定罪、背叛或隐藏信息。实现提交：`ad2cbab4`。 |
@@ -155,7 +156,8 @@
 - 2026-05-25：S89.15 启动来函与账解证据读法 polish。当前范围限 React 前端证据组件、人物/史册/囊箧/主卷既有消费路径、客户端 smoke/source canary、前端测试和文档；原则上不新增 CSS，不新增浏览器裁决权，不改后端 API/schema、AI 权限、prompt、provider、SQLite、存档、runtime manifest 或素材 manifest。
 - 2026-05-25：S89.16 完成全局壳与基础控件交互反馈 polish。当前范围限 React `AppShell`、全局 CSS、客户端 smoke/source canary、前端测试和文档；不新增浏览器裁决权，不改后端 API/schema、AI 权限、prompt、provider、SQLite、存档、runtime manifest 或素材 manifest。
 - 2026-05-25：S89.18 完成科举与皇榜仪式读法 polish。当前范围限 React `ExamPage` / `RankingPage`、客户端 smoke/source canary、前端测试和文档；零新增 CSS，不新增浏览器裁决权，不改后端 API/schema、AI 权限、prompt、provider、SQLite、存档、runtime manifest 或素材 manifest。
-- 前一轮 S88 归档是低风险纯文档维护；S89.3-S89.18 涉及前端代码、样式、验证脚本和文档，提交前按子代理复审规则执行。
+- 2026-05-25：S89.19 完成设置与断卷状态读法 polish。当前范围限 React `SettingsPage` / `AiSettingsPanel` / `ErrorPage` / `NotFoundPage` / `GamePage`、客户端 smoke/source canary、前端测试和文档；零新增 CSS，不新增浏览器裁决权，不改后端 API/schema、AI 权限、prompt、provider、SQLite、存档、runtime manifest 或素材 manifest。
+- 前一轮 S88 归档是低风险纯文档维护；S89.3-S89.19 涉及前端代码、样式、验证脚本和文档，提交前按子代理复审规则执行。
 
 ## 6. 最近完整验证口径
 
@@ -237,6 +239,17 @@ S89.8 高清立绘查看器画中所见 polish 验证结果：
 - 已通过 `npm run check:docs-governance`、`node --test test/documentationGovernance.test.js`、`git diff --check`。提交前只读子代理复审已通过，未发现阻断问题；非阻断建议为后续可给题签格补专门材质样式。
 
 ## 7. 近期进度记录
+
+### 2026-05-25：S89.19 设置与断卷状态读法 polish
+
+- 范围：完成 `/game/:sessionId/settings` 设置目录、`AiSettingsPanel` 推演设置矩阵、404/错误页和畸形主卷恢复页的状态读法 polish。设置目录新增 `s89-19-settings-card-state` / `s89-19-settings-directory-state` / `s89-19-settings-route-recovery` 标记，四类工具逐项说明眼下可做、候复边界和畸形案卷只打开安全工具；推演设置面板新增 `s89-19-ai-state-ledger` 状态簿，清洗预设、分工 label/purpose/model、状态枚举和错误信息；断卷、空卷与畸形主卷恢复页新增 `s89-19-route-recovery` / `s89-19-game-route-recovery` 标记。
+- 体验：设置目录不再只列四张入口卡，而是说明“推演只改分工、显示只改本地章法、旧案只看公开摘要、案卷摘要不补私记”；AI 设置矩阵在候载、未载、受阻、未接通来源和未保存保留时给出案头读法，污染 payload 不会把 provider 原文、本地路径、key、schema/manifest 或底层错误直接显示给玩家。
+- CSS 预算：本步零新增 CSS，复用 `.surfaceSafetyList`、`.statusLine`、`.settingsDirectoryCard`、`.aiSettingsMatrixStatus` 和既有案卷空态壳。CSS 仍贴近硬门，后续新增视觉样式前应继续优先复用或瘦身。
+- Smoke/canary：`App.test.tsx` 新增 S89.19 设置目录、AI 设置污染 payload/API error、404/错误页和畸形主卷恢复断言；`scripts/clientSmoke.js` 的设置页快照守住 S89.19 状态簿标记、四类状态卡、玩家化文案和禁词；`test/reactClientScaffold.test.js` 新增 S89.19 source canary，并确认本步没有新增 S89.19 CSS 或回合提交入口。
+- 边界：本步只改 React `SettingsPage` / `AiSettingsPanel` / `ErrorPage` / `NotFoundPage` / `GamePage`、客户端 smoke/source canary、前端测试和文档；不新增依赖或素材，不改 runtime manifest、素材 manifest、后端 API/schema、AI 权限矩阵、prompt、provider facade、SQLite schema、存档格式或服务器裁决。浏览器仍只打开本地印匣、既有全局 AI settings API 或本地显示偏好，不裁决资源、身份、交易、NPC 行动、经济、考试、官职、关系、婚姻、弹劾、定罪、背叛或 hidden 事实；畸形案卷不读取主卷接口、不打开专题层、不写行动草稿。
+- 验证：已通过 `node --check scripts/clientSmoke.js`、`npm run typecheck:client`、`node --test test/reactClientScaffold.test.js`（55 tests）、focused `npx vitest --config vitest.config.mjs run client/src/__tests__/App.test.tsx -t "settings route|global AI settings|S89.19|bad routes|game root recovery|malformed settings" --pool=vmThreads --fileParallelism=false --maxWorkers=1`（9 tests）、完整串行 `npx vitest --config vitest.config.mjs run --pool=vmThreads --fileParallelism=false --maxWorkers=1`（6 files / 134 tests）、`npm run test:client`（6 files / 134 tests）、`npm run qa:runtime-manifest`、`npm run build:client`、`npm run budget:client`、直接 `node scripts/clientSmoke.js`、`npm run check:docs-governance`、`node --test test/documentationGovernance.test.js` 和 `git diff --check`。最终预算输出为 `JS 624.7 KiB / CSS 99.8 KiB / fonts 26288.4 KiB / client-assets 27013.0 KiB`。`npm run smoke:browser` 在 360s 外层限时内完成 runtime manifest、build 和 budget 后进入 browser smoke 被截断；已用直接 browser smoke 覆盖同一浏览器段。
+- 复审：开工只读子代理建议将 S89.19 收窄为设置、推演矩阵与断卷恢复空态 polish，重点清洗 AI settings label/purpose/model/preset/error、增加设置目录状态读法和恢复页只给归路标记；本轮按建议实现。提交前只读复审首轮发现 active preset id 仍可能被污染 payload 原样回写，本轮已改为读取和保存都用安全 id并对齐清洗后的预设列表，补污染 preset 保存测试和畸形 settings route 测试；复审子代理复核通过，无阻断问题，非阻断建议为后续若要更严可前端维护已知 preset 白名单或让契约声明动态 preset。
+- 提交：实现提交待本次提交后回填。
 
 ### 2026-05-25：S89.18 科举与皇榜仪式读法 polish
 

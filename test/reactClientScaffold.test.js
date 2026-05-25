@@ -45,6 +45,7 @@ function stripSafeGuardPatterns(source) {
     .replace(/const unsafePeopleTextFragments[\s\S]*?\] as const;\r?\n/, "")
     .replace(/const unsafeArchiveFragments[\s\S]*?\] as const;\r?\n/, "")
     .replace(/const unsafeMapTextFragments[\s\S]*?\] as const;\r?\n/, "")
+    .replace(/const unsafeAiSettingsFragments[\s\S]*?\] as const;\r?\n/, "")
     .replace(/const unsafeMagistrateFragments[\s\S]*?\] as const;\r?\n/, "")
     .replace(/const unsafeOfficialMinisterFragments[\s\S]*?\] as const;\r?\n/, "")
     .replace(/const unsafeClientApiPathPatterns = Object\.freeze\(\[[\s\S]*?\]\);\r?\n/, "");
@@ -790,7 +791,7 @@ test("S75.9 memorial composer uses safe AI quick actions as draft-only suggestio
   assert.match(aiSettingsPanelSource, /aiSettingsMatrixStatus/);
   assert.match(styleSource, /\.aiSettingsMatrixStatus/);
   assert.match(styleSource, /\.aiSettingsActions \.paperButton,[\s\S]*\.aiSettingsSummary \.paperButton[\s\S]*min-height: 44px/);
-  assert.match(aiSettingsPanelSource, /taskType: stringValue\(record\.taskType/);
+  assert.match(aiSettingsPanelSource, /const taskType = idValue\(record\.taskType/);
   assert.match(aiSettingsPanelSource, /\$\{route\.label\}辅佐次数/);
   assert.match(quickActionSource, /getMemorialPlaceholder/);
   assert.match(quickActionSource, /buildQuickActionSuggestions/);
@@ -2093,6 +2094,47 @@ test("S89.18 exam and ranking ceremony ledgers stay player-facing and server-own
   assert.doesNotMatch(
     `${examWithoutGuard}\n${rankingWithoutGuard}`,
     /submitTurn|\/api\/game\/turn|\/api\/game\/state|\/api\/dev\/session-diagnostics|dangerouslySetInnerHTML|localStorage|sessionStorage|data\/sessions|raw audit|provider payload|OPENAI_API_KEY|DEEPSEEK_API_KEY|MIMO_API_KEY|ANTHROPIC_API_KEY|draftContext|schema|manifest|server adjudication|AI read scope|proposal boundary|safe view|resolver/
+  );
+});
+
+test("S89.19 settings and route recovery states stay player-facing and local", () => {
+  const settingsPageSource = readText("client/src/pages/SettingsPage.tsx");
+  const aiSettingsPanelSource = readText("client/src/components/AiSettingsPanel.tsx");
+  const errorPageSource = readText("client/src/pages/ErrorPage.tsx");
+  const notFoundPageSource = readText("client/src/pages/NotFoundPage.tsx");
+  const gamePageSource = readText("client/src/pages/GamePage.tsx");
+  const appTestSource = readText("client/src/__tests__/App.test.tsx");
+  const clientSmokeSource = readText("scripts/clientSmoke.js");
+  const styleSource = readText("client/src/styles/global.css");
+  const gameRouteRecoveryBlock = gamePageSource.match(/if \(!routeSessionSupported && isGameRootRoute\)[\s\S]*?return \(/)?.[0] || "";
+  const combined = stripSafeGuardPatterns(`${settingsPageSource}\n${aiSettingsPanelSource}\n${errorPageSource}\n${notFoundPageSource}\n${gameRouteRecoveryBlock}`);
+
+  assert.match(settingsPageSource, /data-polish-settings-state="s89-19-settings-card-state"/);
+  assert.match(settingsPageSource, /data-polish-settings-state="s89-19-settings-directory-state"/);
+  assert.match(settingsPageSource, /data-polish-settings-state="s89-19-settings-route-recovery"/);
+  assert.match(settingsPageSource, /只改推演分工/);
+  assert.match(settingsPageSource, /异常旧卷只示暂不可读/);
+  assert.match(settingsPageSource, /不读取主卷、不打开专题、不写行动草稿/);
+  assert.match(aiSettingsPanelSource, /data-polish-ai-settings="s89-19-ai-state-ledger"/);
+  assert.match(aiSettingsPanelSource, /data-polish-ai-settings-ledger="s89-19-ai-state-ledger"/);
+  assert.match(aiSettingsPanelSource, /safeAiSettingsLine/);
+  assert.match(aiSettingsPanelSource, /safeEffectiveStatus/);
+  assert.match(aiSettingsPanelSource, /preset: idValue\(payload\?\.aiSettingsView\.preset, "balanced"\)/);
+  assert.match(aiSettingsPanelSource, /preset: idValue\(form\.preset, "balanced"\)/);
+  assert.match(aiSettingsPanelSource, /推演设置暂不可用；请稍后重试/);
+  assert.match(errorPageSource, /data-polish-route-state="s89-19-route-recovery"/);
+  assert.match(notFoundPageSource, /data-polish-route-state="s89-19-route-recovery"/);
+  assert.match(gamePageSource, /data-polish-route-state="s89-19-game-route-recovery"/);
+  assert.match(appTestSource, /cleans polluted S89\.19 AI settings labels/);
+  assert.match(appTestSource, /does not write polluted S89\.19 AI preset ids back on save/);
+  assert.match(appTestSource, /keeps S89\.19 AI settings errors redacted/);
+  assert.match(appTestSource, /keeps malformed settings routes local and diagnostic-free/);
+  assert.match(clientSmokeSource, /s89-19-settings-card-state/);
+  assert.match(clientSmokeSource, /s89-19-settings-route-recovery/);
+  assert.doesNotMatch(styleSource, /s89-19|data-polish-ai-settings|data-polish-settings-state|data-polish-route-state/);
+  assert.doesNotMatch(
+    combined,
+    /submitTurn|\/api\/game\/turn|\/api\/game\/state|\/api\/dev\/session-diagnostics|dangerouslySetInnerHTML|localStorage|sessionStorage|data\/sessions|raw audit|provider payload|OPENAI_API_KEY|DEEPSEEK_API_KEY|MIMO_API_KEY|ANTHROPIC_API_KEY|draftContext|schema|manifest|server adjudication|AI read scope|proposal boundary|safe view|resolver|hiddenNotes|完整提示词|本地路径|密钥/
   );
 });
 

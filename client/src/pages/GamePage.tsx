@@ -249,7 +249,7 @@ export function GamePage() {
 
   if (!routeSessionSupported && isGameRootRoute) {
     return (
-      <section className="plainPage routeRecoveryPage statePage" aria-labelledby="game-route-recovery-title">
+      <section className="plainPage routeRecoveryPage statePage" aria-labelledby="game-route-recovery-title" data-polish-route-state="s89-19-game-route-recovery">
         <div className="statePageSeal" aria-hidden="true">
           <ScrollText size={30} />
         </div>
@@ -257,6 +257,7 @@ export function GamePage() {
           <p className="eyebrow">案卷未载</p>
           <h1 id="game-route-recovery-title">主卷不可读</h1>
           <p>此案卷编号不在本地可读范围内。请从首页新开一卷，或续读已保存案卷。</p>
+          <p>未读取主卷接口，未打开专题层，也未写入行动草稿。</p>
         </div>
         <div className="buttonRow statePageActions" aria-label="案卷去处">
           <Link className="paperLink" to="/">

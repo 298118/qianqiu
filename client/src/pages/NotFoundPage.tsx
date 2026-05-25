@@ -7,7 +7,7 @@ export function NotFoundPage() {
   const recoveryHref = getRouteSessionRecoveryHref(location.pathname);
 
   return (
-    <section className="plainPage statePage" aria-labelledby="not-found-title">
+    <section className="plainPage statePage" aria-labelledby="not-found-title" data-polish-route-state="s89-19-route-recovery">
       <div className="statePageSeal" aria-hidden="true">
         <ScrollText size={30} />
       </div>
@@ -15,6 +15,7 @@ export function NotFoundPage() {
         <p className="eyebrow">空卷</p>
         <h1 id="not-found-title">无此卷页</h1>
         <p>案上未载此页，可回主卷续看当前案卷，或归首页另开一卷。</p>
+        <p>空卷只指路，不补造案卷内容，也不回显底层诊断。</p>
       </div>
       <div className="buttonRow statePageActions" aria-label="卷页去处">
         {recoveryHref ? (

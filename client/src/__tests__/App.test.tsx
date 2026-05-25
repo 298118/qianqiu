@@ -498,6 +498,8 @@ describe("S74.1 React client shell", () => {
     renderRoute(`/game/${sessionId}/unknown`);
 
     expect(screen.getByRole("heading", { name: "无此卷页" })).toBeTruthy();
+    expect(document.querySelector("[data-polish-route-state='s89-19-route-recovery']")).toBeTruthy();
+    expect(screen.getByText("空卷只指路，不补造案卷内容，也不回显底层诊断。")).toBeTruthy();
     expect(screen.getByRole("link", { name: "回主卷" }).getAttribute("href")).toBe(`/game/${sessionId}`);
     expect(screen.getByRole("link", { name: "归首页" }).getAttribute("href")).toBe("/");
     expect(document.body.textContent || "").not.toMatch(/data\/sessions|raw audit|provider payload|OPENAI_API_KEY/i);
@@ -507,6 +509,7 @@ describe("S74.1 React client shell", () => {
     renderRoute("/game/s74-preview/unknown");
 
     expect(screen.getByRole("heading", { name: "无此卷页" })).toBeTruthy();
+    expect(document.querySelector("[data-polish-route-state='s89-19-route-recovery']")).toBeTruthy();
     expect(screen.queryByRole("link", { name: "回主卷" })).toBeNull();
     expect(screen.getByRole("link", { name: "归首页" }).getAttribute("href")).toBe("/");
 
@@ -543,6 +546,8 @@ describe("S74.1 React client shell", () => {
 
       await screen.findByRole("heading", { name: "卷页受阻" });
       expect(screen.getByText("案卷暂不可读。")).toBeTruthy();
+      expect(document.querySelector("[data-polish-route-state='s89-19-route-recovery']")).toBeTruthy();
+      expect(screen.getByText("此页只给安全归路，不显示底层诊断、推演原文或本机路径。")).toBeTruthy();
       expect(screen.getByRole("link", { name: "回主卷" }).getAttribute("href")).toBe(`/game/${sessionId}`);
       expect(document.body.textContent || "").not.toMatch(/data\/sessions|raw audit|provider payload|OPENAI_API_KEY/i);
     } finally {
@@ -574,12 +579,49 @@ describe("S74.1 React client shell", () => {
 
       await screen.findByRole("heading", { name: "卷页受阻" });
       expect(screen.getByText("案卷暂不可读。")).toBeTruthy();
+      expect(document.querySelector("[data-polish-route-state='s89-19-route-recovery']")).toBeTruthy();
       expect(screen.queryByRole("link", { name: "回主卷" })).toBeNull();
       expect(screen.getByRole("link", { name: "归首页" }).getAttribute("href")).toBe("/");
       expect(document.body.textContent || "").not.toMatch(/data\/sessions|raw audit|provider payload|OPENAI_API_KEY/i);
     } finally {
       consoleError.mockRestore();
     }
+  });
+
+  it("keeps malformed game root recovery local and diagnostic-free", async () => {
+    const fetchMock = vi.fn(async (_url: string) => {
+      throw new Error("should not fetch malformed game root");
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    renderRoute("/game/not-a-session");
+
+    expect(screen.getByRole("heading", { name: "主卷不可读" })).toBeTruthy();
+    expect(document.querySelector("[data-polish-route-state='s89-19-game-route-recovery']")).toBeTruthy();
+    expect(screen.getByText("未读取主卷接口，未打开专题层，也未写入行动草稿。")).toBeTruthy();
+    expect(screen.getByRole("link", { name: "归首页" }).getAttribute("href")).toBe("/");
+    expect(fetchMock.mock.calls.map(([url]) => String(url)).some((url) => url.startsWith("/api/game/"))).toBe(false);
+    expect(document.body.textContent || "").not.toMatch(/not-a-session|data\/sessions|raw audit|provider payload|OPENAI_API_KEY/i);
+  });
+
+  it("keeps malformed settings routes local and diagnostic-free", async () => {
+    const fetchMock = vi.fn(async (_url: string) => {
+      return new Response(JSON.stringify(buildMockAssetManifest(0)), {
+        status: 200,
+        headers: { "Content-Type": "application/json" }
+      });
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    renderRoute("/game/not-a-session/settings");
+
+    const routePanel = await screen.findByRole("article", { name: "案头工具" });
+    expect(routePanel.querySelector("[data-polish-settings-state='s89-19-settings-route-recovery']")).toBeTruthy();
+    expect(screen.getByText("当前案卷编号暂不可读；印匣仍可打开本地显示偏好、全局推演设置和旧案入口，不读取主卷、不打开专题、不写行动草稿。")).toBeTruthy();
+    expect(screen.getByRole("link", { name: "回首页择卷" }).getAttribute("href")).toBe("/");
+    expect(fetchMock.mock.calls.map(([url]) => String(url)).some((url) => url.startsWith("/api/game/"))).toBe(false);
+    expect([...document.querySelectorAll<HTMLAnchorElement>("a")].some((link) => (link.getAttribute("href") || "").includes("not-a-session"))).toBe(false);
+    expect(document.body.textContent || "").not.toMatch(/not-a-session|data\/sessions|raw audit|provider payload|OPENAI_API_KEY/i);
   });
 
   it("keeps the session routes inside the React Router tree", () => {
@@ -2443,7 +2485,7 @@ describe("S74.1 React client shell", () => {
     await waitFor(() => expect(useUiStateStore.getState().currentSessionId).toBe(sessionId));
     fireEvent.click(screen.getByRole("button", { name: "打开印匣" }));
     await screen.findByText("矩阵未载");
-    expect(screen.getByText("暂无推演分工；本页不会自行补造叙事来源或复核权限。")).toBeTruthy();
+    expect(screen.getAllByText("暂无推演分工；本页不会自行补造叙事来源或复核权限。").length).toBeGreaterThan(0);
     fireEvent.click(screen.getByRole("tab", { name: "旧案" }));
 
     expect((await screen.findAllByText("当前案主")).length).toBeGreaterThan(0);
@@ -2674,6 +2716,7 @@ describe("S74.1 React client shell", () => {
 
     const routePanel = await screen.findByRole("article", { name: "案头工具" });
     expect(routePanel.getAttribute("data-polish-settings")).toBe("s89-13-settings-directory");
+    expect(routePanel.querySelector("[data-polish-settings-state='s89-19-settings-directory-state']")).toBeTruthy();
     expect(within(routePanel).getByText("推演设置")).toBeTruthy();
     expect(within(routePanel).getByText("显示偏好")).toBeTruthy();
     expect(within(routePanel).getByText("旧案卷")).toBeTruthy();
@@ -2681,6 +2724,9 @@ describe("S74.1 React client shell", () => {
     expect(within(routePanel).getByText("全局生效")).toBeTruthy();
     expect(within(routePanel).getByText("低动效可用")).toBeTruthy();
     expect(within(routePanel).getByText("不载私记")).toBeTruthy();
+    expect(within(routePanel).getByText("只改推演分工；叙事、工具与复核仍由主卷回批。")).toBeTruthy();
+    expect(within(routePanel).getByText("异常旧卷只示暂不可读，不回显底层错因。")).toBeTruthy();
+    expect(within(routePanel).getByText("案卷未载的身份、关系、授官或后果不在此补造。")).toBeTruthy();
     expect(screen.queryByDisplayValue("900")).toBeNull();
     expect(fetchMock.mock.calls.filter(([url]) => url === "/api/ai/settings/global")).toHaveLength(0);
     await waitFor(() => expect(useUiStateStore.getState().currentPlayerPayload?.sessionId).toBe(sessionId));
@@ -2706,9 +2752,190 @@ describe("S74.1 React client shell", () => {
 
     fireEvent.click(within(routePanel).getByRole("button", { name: "打开推演设置" }));
     await screen.findByDisplayValue("900");
+    expect(document.querySelector("[data-polish-ai-settings='s89-19-ai-state-ledger']")).toBeTruthy();
+    expect(document.querySelector("[data-polish-ai-settings-ledger='s89-19-ai-state-ledger']")).toBeTruthy();
+    expect(screen.getByText("1 类推演分工已载入。")).toBeTruthy();
+    expect(screen.getByText("保存只改全局推演偏好；案卷事实仍候主卷回批。")).toBeTruthy();
     expect(fetchMock.mock.calls.filter(([url]) => url === "/api/ai/settings/global")).toHaveLength(1);
     expect(document.querySelectorAll(".aiSettingsPanel")).toHaveLength(1);
     expect(document.body.textContent || "").not.toMatch(/OPENAI_API_KEY|raw prompt|data\/sessions|base URL/i);
+  });
+
+  it("cleans polluted S89.19 AI settings labels before rendering the matrix", async () => {
+    const sessionId = "91919191-9191-4919-8919-919191919191";
+    const fetchMock = vi.fn((url: string) => {
+      if (url === "/api/ai/settings/global") {
+        return Promise.resolve(new Response(JSON.stringify({
+          sessionId: "global",
+          scope: "global",
+          updatedAt: "2026-05-25T12:00:00.000Z",
+          aiSettingsView: {
+            preset: "balanced",
+            presets: [{ id: "balanced", label: "OPENAI_API_KEY provider payload" }],
+            providerOptions: [{ provider: "mock", available: true, requiresKey: false }],
+            taskRoutes: [
+              {
+                taskType: "narrator",
+                label: "provider payload OPENAI_API_KEY",
+                purpose: "draftContext schema manifest /home/dev/data/sessions/raw prompt",
+                provider: "mock",
+                providerAvailable: true,
+                requiresKey: false,
+                effectiveStatus: "statePatch",
+                model: "C:\\data\\sessions\\secret",
+                maxOutputTokens: 900,
+                toolBudget: 1,
+                temperature: 0.35,
+                reviewerOnly: false,
+                mayUseTools: true,
+                mayRequestAdjudication: false
+              }
+            ]
+          },
+          aiInvocationSummaryView: { safe: true }
+        }), {
+          status: 200,
+          headers: { "Content-Type": "application/json" }
+        }));
+      }
+      return Promise.resolve(new Response(JSON.stringify({
+        source: "server_player_visible_state_projection",
+        sessionId,
+        worldState: { player: { name: "许慎", role: "scholar" } }
+      }), {
+        status: 200,
+        headers: { "Content-Type": "application/json" }
+      }));
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    renderRoute(`/game/${sessionId}/settings`);
+
+    const routePanel = await screen.findByRole("article", { name: "案头工具" });
+    fireEvent.click(within(routePanel).getByRole("button", { name: "打开推演设置" }));
+
+    await screen.findByText("叙事");
+    expect(screen.getByText("按案卷分工推演。")).toBeTruthy();
+    expect(screen.getByDisplayValue("mock")).toBeTruthy();
+    expect(screen.getByText("生效")).toBeTruthy();
+    expect(document.body.textContent || "").not.toMatch(/OPENAI_API_KEY|provider payload|raw prompt|draftContext|schema|manifest|data\/sessions|C:\\data|\/home\/dev/i);
+  });
+
+  it("does not write polluted S89.19 AI preset ids back on save", async () => {
+    const sessionId = "92929292-9292-4929-8929-929292929292";
+    const aiPayload = (tokens: number, preset = "OPENAI_API_KEY provider payload data/sessions") => ({
+      sessionId: "global",
+      scope: "global",
+      updatedAt: "2026-05-25T12:00:00.000Z",
+      aiSettingsView: {
+        preset,
+        presets: [
+          { id: "balanced", label: "均衡" },
+          { id: "fast", label: "迅捷" }
+        ],
+        providerOptions: [{ provider: "mock", available: true, requiresKey: false }],
+        taskRoutes: [
+          {
+            taskType: "narrator",
+            label: "叙事",
+            purpose: "普通叙事。",
+            provider: "mock",
+            providerAvailable: true,
+            requiresKey: false,
+            effectiveStatus: "active",
+            model: "mock",
+            maxOutputTokens: tokens,
+            toolBudget: 1,
+            temperature: 0.35,
+            reviewerOnly: false,
+            mayUseTools: true,
+            mayRequestAdjudication: false
+          }
+        ]
+      },
+      aiInvocationSummaryView: { safe: true }
+    });
+    const fetchMock = vi.fn((url: string, options?: RequestInit) => {
+      if (url === "/api/ai/settings/global" && options?.method === "POST") {
+        const body = JSON.parse(String(options.body));
+        expect(body).toMatchObject({
+          settings: {
+            preset: "balanced",
+            taskRoutes: {
+              narrator: {
+                maxOutputTokens: 1000
+              }
+            }
+          }
+        });
+        expect(String(options.body)).not.toMatch(/OPENAI_API_KEY|provider payload|data\/sessions/i);
+        return Promise.resolve(new Response(JSON.stringify(aiPayload(1000, "balanced")), {
+          status: 200,
+          headers: { "Content-Type": "application/json" }
+        }));
+      }
+      if (url === "/api/ai/settings/global") {
+        return Promise.resolve(new Response(JSON.stringify(aiPayload(900)), {
+          status: 200,
+          headers: { "Content-Type": "application/json" }
+        }));
+      }
+      return Promise.resolve(new Response(JSON.stringify({
+        source: "server_player_visible_state_projection",
+        sessionId,
+        worldState: { player: { name: "许慎", role: "scholar" } }
+      }), {
+        status: 200,
+        headers: { "Content-Type": "application/json" }
+      }));
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    renderRoute(`/game/${sessionId}/settings`);
+
+    const routePanel = await screen.findByRole("article", { name: "案头工具" });
+    fireEvent.click(within(routePanel).getByRole("button", { name: "打开推演设置" }));
+    await screen.findByDisplayValue("900");
+    expect(screen.getByLabelText("推演预设")).toHaveProperty("value", "balanced");
+    fireEvent.change(screen.getByDisplayValue("900"), { target: { value: "1000" } });
+    fireEvent.click(screen.getByRole("button", { name: /保存全局设置/ }));
+
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledWith("/api/ai/settings/global", expect.objectContaining({ method: "POST" })));
+    expect(document.body.textContent || "").not.toMatch(/OPENAI_API_KEY|provider payload|data\/sessions/i);
+  });
+
+  it("keeps S89.19 AI settings errors redacted and player-facing", async () => {
+    const sessionId = "90909090-9090-4909-8909-909090909090";
+    const fetchMock = vi.fn((url: string) => {
+      if (url === "/api/ai/settings/global") {
+        return Promise.resolve(new Response(JSON.stringify({
+          error: "provider payload leaked OPENAI_API_KEY at data/sessions/demo.json with raw prompt"
+        }), {
+          status: 503,
+          headers: { "Content-Type": "application/json" }
+        }));
+      }
+      return Promise.resolve(new Response(JSON.stringify({
+        source: "server_player_visible_state_projection",
+        sessionId,
+        worldState: { player: { name: "许慎", role: "scholar" } }
+      }), {
+        status: 200,
+        headers: { "Content-Type": "application/json" }
+      }));
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    renderRoute(`/game/${sessionId}/settings`);
+
+    const routePanel = await screen.findByRole("article", { name: "案头工具" });
+    fireEvent.click(within(routePanel).getByRole("button", { name: "打开推演设置" }));
+
+    await screen.findByText("推演设置暂不可用；请稍后重试。");
+    expect(document.querySelector("[data-polish-ai-settings='s89-19-ai-state-ledger']")).toBeTruthy();
+    expect(document.querySelector("[data-polish-ai-settings-ledger='s89-19-ai-state-ledger']")).toBeTruthy();
+    expect(screen.getAllByText("推演分工暂不可用；本页不会自行补造叙事来源或复核权限。").length).toBeGreaterThan(0);
+    expect(document.body.textContent || "").not.toMatch(/OPENAI_API_KEY|provider payload|raw prompt|data\/sessions|demo\.json/i);
   });
 
   it("renders S75.5 home save cases with metadata fallbacks", async () => {

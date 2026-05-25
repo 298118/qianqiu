@@ -47,12 +47,53 @@ const providerLabels: Record<string, string> = {
   anthropic: "Anthropic"
 };
 
+const unsafeAiSettingsFragments = [
+  "/api/game/" + "state",
+  "/api/dev/" + "session-diagnostics",
+  "data" + "/" + "sessions",
+  "data" + "\\" + "sessions",
+  "file" + "://",
+  "raw",
+  "prov" + "ider",
+  "pro" + "mpt",
+  "hid" + "den",
+  "key",
+  "path",
+  "Qianqiu API request failed",
+  "Failed to fetch",
+  "NetworkError",
+  "http",
+  "draft" + "Context",
+  "schema",
+  "manifest",
+  "safe" + " view",
+  "resolver",
+  "server" + " adjudication",
+  "AI" + " read scope",
+  "proposal" + " boundary",
+  "OPENAI" + "_API" + "_KEY",
+  "DEEPSEEK" + "_API" + "_KEY",
+  "MIMO" + "_API" + "_KEY",
+  "ANTHROPIC" + "_API" + "_KEY",
+  "完整" + "提示词",
+  "提示" + "词",
+  "本地" + "路径",
+  "密" + "钥",
+  "隐" + "藏",
+  "模型" + "原始"
+] as const;
+
 function asRecord(value: unknown): Record<string, unknown> {
   return value && typeof value === "object" && !Array.isArray(value) ? value as Record<string, unknown> : {};
 }
 
 function stringValue(value: unknown, fallback = "") {
   return typeof value === "string" && value.trim() ? value.trim() : fallback;
+}
+
+function idValue(value: unknown, fallback: string) {
+  const text = stringValue(value, fallback);
+  return /^[a-z0-9_-]{1,64}$/i.test(text) ? text : fallback;
 }
 
 function numberValue(value: unknown, fallback: number, min: number, max: number) {
@@ -66,8 +107,8 @@ function readPresetOptions(payload: AiSettingsResponse | null): readonly PresetO
   const parsed = presets.map((item) => {
     const record = asRecord(item);
     return {
-      id: stringValue(record.id),
-      label: stringValue(record.label)
+      id: idValue(record.id, ""),
+      label: safeAiSettingsLine(record.label, "未题预设")
     };
   }).filter((item) => item.id && item.label);
   return parsed.length ? parsed : [
@@ -84,7 +125,7 @@ function readProviderOptions(payload: AiSettingsResponse | null): readonly Provi
   const parsed = options.map((item) => {
     const record = asRecord(item);
     return {
-      provider: stringValue(record.provider),
+      provider: idValue(record.provider, ""),
       available: record.available !== false,
       requiresKey: Boolean(record.requiresKey)
     };
@@ -95,18 +136,19 @@ function readProviderOptions(payload: AiSettingsResponse | null): readonly Provi
 function readFormState(payload: AiSettingsResponse | null): AiSettingsFormState {
   const routes = Array.isArray(payload?.aiSettingsView.taskRoutes) ? payload.aiSettingsView.taskRoutes : [];
   return {
-    preset: stringValue(payload?.aiSettingsView.preset, "balanced"),
+    preset: idValue(payload?.aiSettingsView.preset, "balanced"),
     routes: routes.map((item) => {
       const record = asRecord(item);
+      const taskType = idValue(record.taskType, "narrator");
       return {
-        taskType: stringValue(record.taskType, "narrator"),
-        label: stringValue(record.label, stringValue(record.taskType, "推演分工")),
-        purpose: stringValue(record.purpose, "按案卷分工推演。"),
-        provider: stringValue(record.provider, "mock"),
+        taskType,
+        label: safeAiSettingsLine(record.label, taskType === "narrator" ? "叙事" : "推演分工"),
+        purpose: safeAiSettingsLine(record.purpose, "按案卷分工推演。"),
+        provider: idValue(record.provider, "mock"),
         providerAvailable: record.providerAvailable !== false,
         requiresKey: Boolean(record.requiresKey),
-        effectiveStatus: stringValue(record.effectiveStatus, "active"),
-        model: stringValue(record.model, "mock"),
+        effectiveStatus: safeEffectiveStatus(record.effectiveStatus),
+        model: safeAiSettingsLine(record.model, "mock").slice(0, 96),
         maxOutputTokens: numberValue(record.maxOutputTokens, 900, 128, 16000),
         toolBudget: numberValue(record.toolBudget, 0, 0, 20),
         temperature: numberValue(record.temperature, 0.35, 0, 1),
@@ -130,7 +172,7 @@ function formSnapshot(form: AiSettingsFormState): JsonObject {
     };
   }
   return {
-    preset: form.preset || "balanced",
+    preset: idValue(form.preset, "balanced"),
     taskRoutes
   };
 }
@@ -156,6 +198,18 @@ function routeStatusLabel(route: TaskRouteForm) {
 
 function isSupersededRequestError(error: unknown) {
   return error instanceof Error && /旧请求/.test(error.message);
+}
+
+function safeAiSettingsLine(value: unknown, fallback: string) {
+  const text = typeof value === "string" && value.trim() ? value.trim() : fallback;
+  const normalized = text.toLowerCase();
+  if (/[a-z]:[\\/]/i.test(text) || /\/(?:users|private|home|mnt|var|tmp)\//i.test(text) || /sk-[a-z0-9_-]{6,}/i.test(text) || /tp-[a-z0-9_-]{6,}/i.test(text)) return fallback;
+  return unsafeAiSettingsFragments.some((fragment) => normalized.includes(fragment.toLowerCase())) ? fallback : text;
+}
+
+function safeEffectiveStatus(value: unknown) {
+  const status = stringValue(value, "active");
+  return ["active", "missing_provider_key", "review_only", "no_tool"].includes(status) ? status : "active";
 }
 
 export function AiSettingsPanel({ compact = false }: { readonly compact?: boolean }) {
@@ -199,6 +253,22 @@ export function AiSettingsPanel({ compact = false }: { readonly compact?: boolea
     : matrixState === "error"
       ? "推演分工暂不可用；本页不会自行补造叙事来源或复核权限。"
       : "暂无推演分工；本页不会自行补造叙事来源或复核权限。";
+  const redactedError = safeAiSettingsLine(localError || storeError, "推演设置暂不可用；请稍后重试。");
+  const hasSettingsError = Boolean(localError || storeError);
+  const stateLedgerRows = [
+    {
+      label: "分工",
+      value: form.routes.length ? `${form.routes.length} 类推演分工已载入。` : matrixStatusText
+    },
+    {
+      label: "来源",
+      value: providerOptions.length ? `可选 ${providerOptions.length} 个来源；未接通来源会标明，不会伪装可用。` : "暂无可选来源；本页不会补造来源。"
+    },
+    {
+      label: "候复",
+      value: unavailableRoutes.length ? `${unavailableRoutes.length} 类分工需改回已接通来源或先在本机接通。` : "保存只改全局推演偏好；案卷事实仍候主卷回批。"
+    }
+  ];
 
   useEffect(() => {
     dirtyRef.current = dirty;
@@ -209,8 +279,13 @@ export function AiSettingsPanel({ compact = false }: { readonly compact?: boolea
       setLocalNotice("案头设置已刷新，当前未保存编辑已保留；保存后仍会复核。");
       return false;
     }
-    const nextForm = readFormState(payload);
+    const rawForm = readFormState(payload);
     const nextProviderOptions = readProviderOptions(payload);
+    const nextPresetOptions = readPresetOptions(payload);
+    const nextPreset = nextPresetOptions.some((preset) => preset.id === rawForm.preset)
+      ? rawForm.preset
+      : nextPresetOptions[0]?.id || "balanced";
+    const nextForm = { ...rawForm, preset: nextPreset };
     setForm(nextForm);
     setSavedSnapshot(snapshotKey(nextForm));
     setConnectionProvider((current) => nextProviderOptions.some((option) => option.provider === current) ? current : nextForm.routes[0]?.provider || "mock");
@@ -312,7 +387,7 @@ export function AiSettingsPanel({ compact = false }: { readonly compact?: boolea
   }
 
   return (
-    <form className={compact ? "aiSettingsPanel aiSettingsPanelCompact" : "aiSettingsPanel"} onSubmit={handleSave}>
+    <form className={compact ? "aiSettingsPanel aiSettingsPanelCompact" : "aiSettingsPanel"} data-polish-ai-settings="s89-19-ai-state-ledger" onSubmit={handleSave}>
       <div className="aiSettingsToolbar" aria-live="polite">
         <div>
           <p className="eyebrow">全局推演</p>
@@ -371,7 +446,16 @@ export function AiSettingsPanel({ compact = false }: { readonly compact?: boolea
       ) : null}
       {aiConnection ? <p className="statusLine">试连结果：{aiConnection.ok ? "可用" : "暂不可用"}（{providerLabels[String(aiConnection.provider || connectionProvider)] || "未知来源"}）</p> : null}
       {localNotice ? <p className="statusLine">{localNotice}</p> : null}
-      {localError || storeError ? <p className="statusLine" role="alert">{localError || storeError}</p> : null}
+      {hasSettingsError ? <p className="statusLine" role="alert">{redactedError}</p> : null}
+
+      <dl className="surfaceSafetyList" aria-label="推演设置状态簿" data-polish-ai-settings-ledger="s89-19-ai-state-ledger">
+        {stateLedgerRows.map((row) => (
+          <div key={row.label}>
+            <dt>{row.label}</dt>
+            <dd>{row.value}</dd>
+          </div>
+        ))}
+      </dl>
 
       <section className="aiTaskMatrix" aria-label="推演分工">
         {form.routes.length ? form.routes.map((route) => (

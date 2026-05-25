@@ -3399,14 +3399,18 @@ async function runClientSmoke(options = {}) {
           return {
             hasDirectory: Boolean(document.querySelector(".settingsDirectoryRoute")),
             hasS8913Marker: Boolean(document.querySelector("[data-polish-settings='s89-13-settings-directory']")),
+            hasS8919Footer: Boolean(document.querySelector("[data-polish-settings-state='s89-19-settings-directory-state']")),
+            hasS8919RouteRecovery: Boolean(document.querySelector("[data-polish-settings-state='s89-19-settings-route-recovery']")),
             hasCards: document.querySelectorAll(".settingsDirectoryCard").length,
+            hasS8919Cards: document.querySelectorAll("[data-polish-settings-state='s89-19-settings-card-state']").length,
             hasBadges: text.includes("全局生效") && text.includes("低动效可用") && text.includes("不载私记"),
+            hasStateCopy: text.includes("只改推演分工") && text.includes("异常旧卷只示暂不可读") && text.includes("案卷未载的身份、关系、授官或后果不在此补造"),
             hasAiSettingsPanel: Boolean(document.querySelector(".aiSettingsPanel")),
             hasInkboxButton: Boolean(document.querySelector("button[aria-label='打开印匣']")),
             forbiddenText: text.match(/数据来源|裁决边界|服务器裁决|player-state|exam-submit|draftContext|schema|manifest|server adjudication|AI read scope|proposal boundary|safe view|resolver|provider payload|raw audit|hiddenNotes|OPENAI_API_KEY|data\/sessions|\/Users|\/private|tp-[a-z0-9_-]{6,}|完整提示词|本地路径|密钥|sk-[a-z0-9_-]{6,}|[a-z]:[\\/]/gi) || []
           };
         });
-        if (!settingsRouteSnapshot.hasDirectory || !settingsRouteSnapshot.hasS8913Marker || settingsRouteSnapshot.hasCards !== 4 || !settingsRouteSnapshot.hasBadges || settingsRouteSnapshot.hasAiSettingsPanel || !settingsRouteSnapshot.hasInkboxButton) {
+        if (!settingsRouteSnapshot.hasDirectory || !settingsRouteSnapshot.hasS8913Marker || !settingsRouteSnapshot.hasS8919Footer || settingsRouteSnapshot.hasS8919RouteRecovery || settingsRouteSnapshot.hasCards !== 4 || settingsRouteSnapshot.hasS8919Cards !== 4 || !settingsRouteSnapshot.hasBadges || !settingsRouteSnapshot.hasStateCopy || settingsRouteSnapshot.hasAiSettingsPanel || !settingsRouteSnapshot.hasInkboxButton) {
           throw new Error(`S89.3 settings directory route regressed: ${JSON.stringify(settingsRouteSnapshot)}`);
         }
         if (settingsRouteSnapshot.forbiddenText.length) {
