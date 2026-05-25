@@ -3228,6 +3228,7 @@ async function runClientSmoke(options = {}) {
       const shell = document.querySelector("[data-polish-people='s89-9-portrait-material']");
       const ledger = document.querySelector("[data-polish-people-ledger='s89-9-portrait-material']");
       const workbench = document.querySelector("[data-polish-people-workbench='s89-9-portrait-material']");
+      const reader = document.querySelector("[data-polish-people-reader='s89-26-people-docket-reader']");
       const firstCard = document.querySelector("[data-polish-people-card='s89-9-portrait-material']");
       const firstCardStyle = firstCard ? window.getComputedStyle(firstCard) : null;
       const images = [...document.querySelectorAll(".peopleLedgerList img")];
@@ -3235,6 +3236,9 @@ async function runClientSmoke(options = {}) {
         polishShell: Boolean(shell),
         polishLedger: Boolean(ledger),
         polishWorkbench: Boolean(workbench),
+        polishReader: Boolean(reader),
+        readerRows: reader?.querySelectorAll("dt").length || 0,
+        readerText: reader?.textContent || "",
         polishCardCount: document.querySelectorAll("[data-polish-people-card='s89-9-portrait-material']").length,
         cardBackground: firstCardStyle?.backgroundImage || "",
         cardTransition: firstCardStyle?.transitionProperty || "",
@@ -3247,6 +3251,9 @@ async function runClientSmoke(options = {}) {
     });
     if (portraitLedger.visible > 8 || portraitLedger.visible <= 0) {
       throw new Error(`People ledger loaded an unsafe initial person count: ${portraitLedger.visible}`);
+    }
+    if (!portraitLedger.polishReader || portraitLedger.readerRows < 5 || !/交游候复笺|人物案头索引|候复边界|不成交/.test(portraitLedger.readerText)) {
+      throw new Error(`S89.26 people docket reader missing: ${JSON.stringify({ polishReader: portraitLedger.polishReader, readerRows: portraitLedger.readerRows, readerText: portraitLedger.readerText })}`);
     }
     if (!portraitLedger.polishShell || !portraitLedger.polishLedger || !portraitLedger.polishWorkbench || portraitLedger.polishCardCount < 1 || !portraitLedger.cardBackground.includes("linear-gradient") || !/transform|box-shadow|border-color/i.test(portraitLedger.cardTransition)) {
       throw new Error(`S89.9 people portrait material polish hooks were incomplete: ${JSON.stringify(portraitLedger)}`);

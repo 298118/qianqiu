@@ -587,6 +587,34 @@ function collectRelationshipAgendaThreads(worldThreadView: unknown) {
     .slice(0, 4);
 }
 
+function countVisibleFollowUpEvidence(followUpEvidence: unknown) {
+  const seen = new Set<string>();
+  return rowsFromViewKeys(followUpEvidence, ["items", "people", "events", "economy"]).filter((row, index) => {
+    if ([
+      row.title,
+      row.publicSummary,
+      row.summary,
+      row.evidenceKindLabel,
+      row.statusLabel,
+      row.npc && typeof row.npc === "object" && !Array.isArray(row.npc) ? (row.npc as Record<string, unknown>).displayName : ""
+    ].some(peopleTextLooksUnsafe)) return false;
+    const id = safePeopleText(row.evidenceId, `evidence-${index}`, 80);
+    if (seen.has(id)) return false;
+    seen.add(id);
+    return true;
+  }).length;
+}
+
+function countVisiblePeopleEconomyTrace(traceView: unknown) {
+  return rowsFromViewKeys(traceView, ["traceItems"])
+    .filter((item) => {
+      const traceType = safePeopleText(item.traceType, "", 48);
+      if (!peopleEconomyTraceTypes.includes(traceType as typeof peopleEconomyTraceTypes[number])) return false;
+      return ![item.title, item.publicSummary, item.summary, item.groupLabel, item.statusLabel].some(peopleTextLooksUnsafe);
+    })
+    .length;
+}
+
 function statusLabel(status: unknown) {
   const text = safePeopleText(status, "待裁", 32);
   const labels: Record<string, string> = {
@@ -672,6 +700,7 @@ export function PeoplePage() {
   const { sessionId = "s74-preview" } = useParams();
   const openSurfaceForSession = useUiStateStore((state) => state.openSurfaceForSession);
   const setActionDraft = useUiStateStore((state) => state.setActionDraft);
+  const actionDraft = useUiStateStore((state) => state.actionDraft);
   const session = useGameSessionStore((state) => state.currentSession);
   const loadNpcs = useGameSessionStore((state) => state.loadNpcs);
   const loadNpcDetail = useGameSessionStore((state) => state.loadNpcDetail);
@@ -808,6 +837,11 @@ export function PeoplePage() {
     () => collectRelationshipAgendaThreads(activeSession?.worldThreadView),
     [activeSession?.worldThreadView]
   );
+  const activeTabLabel = npcWorkbenchTabs.find((tab) => tab.id === activeTab)?.label ?? "档案";
+  const followUpEvidenceCount = countVisibleFollowUpEvidence(activeSession?.npcActiveRequestView?.followUpEvidence);
+  const economyTraceCount = countVisiblePeopleEconomyTrace(peopleEconomyTraceView);
+  const hasLocalDraft = actionDraft?.sessionId === sessionId;
+  const selectedNpcName = safePeopleText(selectedNpc?.displayName, "尚未选中人物", 40);
   const activeNpcDialogueView = activeLastNpcInteraction?.npcDialogueView?.npcId === selectedNpcIdForResults
     ? activeLastNpcInteraction.npcDialogueView
     : undefined;
@@ -900,6 +934,42 @@ export function PeoplePage() {
         </div>
         <span>{routeNpcRosterStatus === "loading" ? "候谱" : `${rosterNpcs.length || npcCount} 人`}</span>
       </div>
+      <section aria-labelledby="people-docket-title" data-polish-people-reader="s89-26-people-docket-reader">
+        <div className="sectionTitleRow">
+          <div>
+            <p className="eyebrow">交游候复笺</p>
+            <h2 id="people-docket-title">人物案头索引</h2>
+            <p>先看入谱、当前人物、来函后续、交游账解和候复边界，再入各簿细读。</p>
+          </div>
+          <span>{routeSessionSupported ? "只读索引" : "归路"}</span>
+        </div>
+        <dl className="surfaceSafetyList">
+          <div>
+            <dt>卷上人物 · 入谱 {peopleRows.length} 人 · 相识 {npcCount} 人</dt>
+            <dd>{peopleRows.length ? `人物谱牒只列当前案卷公开人物；当前案头人物为${selectedNpcName}。` : "人物谱牒正在候载；本页不会从全量立绘池补造人物。"}</dd>
+          </div>
+          <div>
+            <dt>当前案头 · 当前页签：{activeTabLabel}</dt>
+            <dd>档案、对话、交易、委派、礼法和记录只读当前人物工作台；可写草稿，真实结果仍候主卷回批。</dd>
+          </div>
+          <div>
+            <dt>候复线索 · 来函 {activeSession?.npcActiveRequestView?.items?.length ?? 0} 件 · 后续 {activeSession?.npcActiveRequestView?.followUpTasks?.length ?? 0} 件 · 证据 {followUpEvidenceCount} 条</dt>
+            <dd>来函、后续簿和风宪留察只作公开线索，不直接生成人情债、婚姻、弹劾、定罪或背叛结果。</dd>
+          </div>
+          <div>
+            <dt>交游账解 · 关系网 {relationshipEntitySignals.length} 条 · 交游议题 {relationshipAgendaThreads.length} 条 · 账解 {economyTraceCount} 条</dt>
+            <dd>论道、切磋、求爱、交易和委派只在入卷后成为可追踪材料；不成交、不扣银、不改关系。</dd>
+          </div>
+          <div>
+            <dt>本地草稿 · {hasLocalDraft ? "已有候复稿" : "暂无候复稿"}</dt>
+            <dd>{hasLocalDraft ? "案头已有本地候复稿；索引只提示有无，不展示正文、来处枚举或内部复核线索。" : "当前尚无本地候复稿；人物页按钮仍只写草稿，不直接递交主卷。"}</dd>
+          </div>
+          <div>
+            <dt>候复边界 · 只作草稿</dt>
+            <dd>所有按钮都只写案头草稿或读取公开卷宗；资源、身份、NPC 行动、经济、关系和未公开事实仍由案卷回批。</dd>
+          </div>
+        </dl>
+      </section>
       <NpcActiveRequestInbox
         requests={(activeSession?.npcActiveRequestView?.items ?? []) as readonly NpcActiveRequestItemView[]}
         onDraft={(request, option) => setActionDraft({

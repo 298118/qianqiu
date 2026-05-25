@@ -113,6 +113,7 @@
 
 | ID | 状态 | 目标 | 范围 / 下一步 |
 | --- | --- | --- | --- |
+| S89.26 | DONE | 人物交游候复笺与案头索引 polish | 承接 S89.25 后 CSS 预算仍紧的状态，已在 `/game/:sessionId/people` 顶部新增 `data-polish-people-reader="s89-26-people-docket-reader"` 的“交游候复笺 / 人物案头索引”，把入谱人数、相识人物、当前人物页签、来函、后续簿、公开证据、关系网、交游议题、账解数量和本地候复稿有无整理成首屏读法；索引只显示草稿有无，不展示草稿正文、来处枚举、`draftContext` 或内部复核线索。本步零新增 CSS，复用 `sectionTitleRow`、`surfaceSafetyList`、`statusLine` 和现有人物页材质。范围限 React `PeoplePage`、客户端 smoke/source canary、前端测试和文档；不新增依赖或素材，不改后端 API/schema、AI 权限、prompt、provider、SQLite、存档、runtime manifest 或素材 manifest。浏览器仍只消费安全 view、route/local 状态和本地草稿，不裁决资源、身份、交易、委派、NPC 行动、经济、关系、婚姻、弹劾、定罪、背叛或 hidden 信息。实现提交：待本轮提交。 |
 | S89.25 | DONE | 覆盖层液态玻璃与共享纵深 polish | 承接 S89.24 后 CSS 预算仍紧的状态，已把印匣抽屉、普通弹窗、本地专题层和高清立绘查看器统一标记为 `data-polish-depth="s89-25-liquid-glass"`，并用少量共享 CSS 增强宣纸毛玻璃、半透明层、阴影纵深和内沿高光；同步折叠三列统计网格重复规则，保持源码体积 guard。范围限 `SurfaceHost` 覆盖层标记、全局 CSS、browser smoke/source canary 和文档；不新增依赖或素材，不改后端 API/schema、AI 权限、prompt、provider、SQLite、存档、runtime manifest 或素材 manifest。浏览器仍只消费安全 view、route/surface 状态和本地草稿，不裁决资源、身份、交易、NPC 行动、经济、考试、官职、关系或 hidden 信息。实现提交：`bbc2c4e3`。 |
 | S89.24 | DONE | 前端 CSS 重复规则折叠与预算缓冲 polish | 承接 S89.23 后单 CSS 产物只剩约 182 bytes 硬门余量的状态，已专项折叠 `client/src/styles/global.css` 中静态确认重复的舆图右侧簿、四列统计网格和书生 compact 卡片基础规则；不删除任何仍有 React/runtime 源码命中的 class，不触碰 `.portraitViewerCueGrid` 顺序覆盖依赖。`test/reactClientScaffold.test.js` 新增 S89.24 source canary，守住合并 selector 和 `global.css` 源码体积阈值。范围限全局 CSS、source canary 和文档；不新增依赖或素材，不改 React 组件行为、后端 API/schema、AI 权限、prompt、provider、SQLite、存档、runtime manifest 或素材 manifest。浏览器仍只消费安全 view、route/surface 状态和本地草稿，不裁决资源、身份、交易、NPC 行动、经济、考试、官职、关系或 hidden 信息。实现提交：`25a29f8c`。 |
 | S89.23 | DONE | 囊箧流转候批笺与移置候批读法 polish | 承接 S89.22 后 CSS 预算只剩极小余量的状态，已打磨 `/game/:sessionId/inventory` 囊箧页：新增带 `data-polish-inventory="s89-23-inventory-ledger-reader"` 的“流转候批笺”，把资源、资产、物件、凭证数量、可流转物件数、当前移置选择和候批边界整理为玩家可读状态；未获案卷回批前，不写成已入账、已移置、已成交或已影响关系。范围限 React `InventoryPage`、客户端 smoke/source canary、前端测试和文档；零新增 CSS，不新增依赖或素材，不改后端 API/schema、AI 权限、prompt、provider、SQLite、存档、runtime manifest 或素材 manifest。浏览器仍只消费安全囊箧、资源、资产、经济 trace 和 route-local 选择状态，不裁决资源扣减、物品转移、交易、赠予、借用、NPC 行动、经济、关系、考试、官职或 hidden 信息。实现提交：`73903bff`。 |
@@ -165,11 +166,12 @@
 - 2026-05-25：S89.19 完成设置与断卷状态读法 polish。当前范围限 React `SettingsPage` / `AiSettingsPanel` / `ErrorPage` / `NotFoundPage` / `GamePage`、客户端 smoke/source canary、前端测试和文档；零新增 CSS，不新增浏览器裁决权，不改后端 API/schema、AI 权限、prompt、provider、SQLite、存档、runtime manifest 或素材 manifest。
 - 2026-05-25：S89.20 完成前端 CSS 预算瘦身与材质变量清理。当前范围限全局 CSS、source canary 和文档；不新增浏览器裁决权，不改 React 组件行为、后端 API/schema、AI 权限、prompt、provider、SQLite、存档、runtime manifest 或素材 manifest。
 - 2026-05-25：S89.21 完成舆图局势读法与行动线索 polish。当前范围限 React `MapPage`、少量复用既有舆图摘要底座的 CSS、客户端 smoke/source canary、前端测试和文档；不新增浏览器裁决权，不改后端 API/schema、AI 权限、prompt、provider、SQLite、存档、runtime manifest 或素材 manifest。
+- 2026-05-25：S89.26 完成人物交游候复笺与案头索引 polish。当前范围限 React `PeoplePage`、客户端 smoke/source canary、前端测试和文档；零新增 CSS，不新增浏览器裁决权，不改后端 API/schema、AI 权限、prompt、provider、SQLite、存档、runtime manifest 或素材 manifest。
 - 2026-05-25：S89.25 完成覆盖层液态玻璃与共享纵深 polish。当前范围限 `SurfaceHost` 覆盖层标记、全局 CSS、browser smoke/source canary 和文档；不新增浏览器裁决权，不改后端 API/schema、AI 权限、prompt、provider、SQLite、存档、runtime manifest 或素材 manifest。
 - 2026-05-25：S89.24 完成前端 CSS 重复规则折叠与预算缓冲 polish。当前范围限全局 CSS、source canary 和文档；不删除仍有源码命中的 class，不新增浏览器裁决权，不改 React 组件行为、后端 API/schema、AI 权限、prompt、provider、SQLite、存档、runtime manifest 或素材 manifest。
 - 2026-05-25：S89.23 完成囊箧流转候批笺与移置候批读法 polish。当前范围限 React `InventoryPage`、客户端 smoke/source canary、前端测试和文档；零新增 CSS，不新增浏览器裁决权，不改后端 API/schema、AI 权限、prompt、provider、SQLite、存档、runtime manifest 或素材 manifest。
 - 2026-05-25：S89.22 完成主卷本旬行止笺与草稿状态读法 polish。当前范围限 React `GamePage`、客户端 smoke/source canary、前端测试和文档；零新增 CSS，不新增浏览器裁决权，不改后端 API/schema、AI 权限、prompt、provider、SQLite、存档、runtime manifest 或素材 manifest。
-- 前一轮 S88 归档是低风险纯文档维护；S89.3-S89.25 涉及前端代码、样式、验证脚本和文档，提交前按子代理复审规则执行。
+- 前一轮 S88 归档是低风险纯文档维护；S89.3-S89.26 涉及前端代码、样式、验证脚本和文档，提交前按子代理复审规则执行。
 
 ## 6. 最近完整验证口径
 
@@ -251,6 +253,15 @@ S89.8 高清立绘查看器画中所见 polish 验证结果：
 - 已通过 `npm run check:docs-governance`、`node --test test/documentationGovernance.test.js`、`git diff --check`。提交前只读子代理复审已通过，未发现阻断问题；非阻断建议为后续可给题签格补专门材质样式。
 
 ## 7. 近期进度记录
+
+### 2026-05-25：S89.26 人物交游候复笺与案头索引 polish
+
+- 范围：`PeoplePage` 顶部新增“交游候复笺 / 人物案头索引”，带 `data-polish-people-reader="s89-26-people-docket-reader"`。索引汇总入谱人数、相识人物、当前人物页签、来函、后续簿、公开证据、关系网、交游议题、账解数量和本地候复稿有无；草稿状态只显示“已有 / 暂无候复稿”，不展示草稿正文、来处枚举、`draftContext` 或内部复核线索。
+- 安全边界：本步不新增后端 API/schema、AI 权限、prompt、provider、SQLite、存档、runtime manifest 或素材 manifest；零新增 CSS，不新增依赖或素材。浏览器仍只消费当前案卷安全 view、route/local 状态和本地草稿布尔状态，不请求诊断接口，不读取 raw 存档，不裁决资源、身份、交易、委派、NPC 行动、经济、关系、婚姻、弹劾、定罪、背叛或 hidden 信息。
+- Smoke/canary：`App.test.tsx` 扩展人物页用例，断言 S89.26 marker、索引中文读法、证据计数清洗、本地草稿只显示有无且不显示草稿全文；`scripts/clientSmoke.js` 在桌面人物页检查 S89.26 marker、索引行数和候复边界文案；`test/reactClientScaffold.test.js` 新增 S89.26 source canary，守住零 CSS、`global.css` 源码体积低于 129300 bytes、reader block 不读取 `actionDraft.text` / `draftContext` / `sourceRef`，以及无 `/api/game/turn`、raw/provider/path/key/hidden 等污染。
+- 验证：当前已通过 `node --check scripts/clientSmoke.js`、`npm run typecheck:client`、`node --test test/reactClientScaffold.test.js`（62 tests）、focused `npx vitest --config vitest.config.mjs run client/src/__tests__/App.test.tsx -t "current people ledger|S88.8 economy trace in the people" --pool=vmThreads --fileParallelism=false --maxWorkers=1`（2 tests / 72 skipped）、`npm run test:client`（6 files / 134 tests）、`npm run qa:runtime-manifest`、`npm run build:client`、`npm run budget:client`、`npm run smoke:browser`、`npm run check:docs-governance`、`node --test test/documentationGovernance.test.js` 和 `git diff --check`。最终预算输出为 `JS 634.2 KiB / CSS 99.5 KiB / fonts 26288.4 KiB / client-assets 27022.2 KiB`；首次 budget 因最大 JS chunk `635.3 KiB > 634.8 KiB` 失败，本轮已压缩 S89.26 helper 并复跑通过。browser smoke 覆盖 desktop-people-assets、desktop-people-refresh、desktop-history-forward-people 和既有桌面/移动关键路由。
+- 复审：开工只读子代理 Hypatia 确认本步适合做零 CSS 人物页读法切片，建议把索引放在人物页顶部、只消费安全 view 与本地草稿布尔状态、不要展示草稿正文或工程词；本轮按建议实施。提交前只读复审 Archimedes 已通过，无阻断问题；非阻断提示为来函/后续计数未像公开证据计数一样逐项 unsafe 过滤、账解计数字段集少于 `EconomyTraceSection`，但二者只暴露数量不暴露文本，且预算余量极窄，本轮接受该残余风险并建议后续若做预算专项时再统一计数 helper。
+- 提交：待本轮提交。
 
 ### 2026-05-25：S89.25 覆盖层液态玻璃与共享纵深 polish
 

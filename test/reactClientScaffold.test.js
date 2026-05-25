@@ -2280,6 +2280,33 @@ test("S89.25 overlay glass polish stays shared and safe", () => {
   );
 });
 
+test("S89.26 people docket reader stays player-facing and CSS-neutral", () => {
+  const peoplePageSource = readText("client/src/pages/PeoplePage.tsx");
+  const styleSource = readText("client/src/styles/global.css");
+  const clientSmokeSource = readText("scripts/clientSmoke.js");
+  const runtimeCombined = stripSafeGuardPatterns(`${peoplePageSource}\n${styleSource}`);
+  const readerBlock = peoplePageSource.slice(
+    peoplePageSource.indexOf("data-polish-people-reader=\"s89-26-people-docket-reader\""),
+    peoplePageSource.indexOf("<NpcActiveRequestInbox")
+  );
+
+  assert.ok(styleSource.length < 129_300);
+  assert.match(peoplePageSource, /data-polish-people-reader="s89-26-people-docket-reader"/);
+  assert.match(peoplePageSource, /交游候复笺/);
+  assert.match(peoplePageSource, /人物案头索引/);
+  assert.match(peoplePageSource, /不成交、不扣银、不改关系/);
+  assert.match(peoplePageSource, /已有候复稿/);
+  assert.match(peoplePageSource, /countVisibleFollowUpEvidence/);
+  assert.match(peoplePageSource, /countVisiblePeopleEconomyTrace/);
+  assert.match(clientSmokeSource, /S89\.26 people docket reader missing/);
+  assert.doesNotMatch(readerBlock, /actionDraft\.text|draftContext|sourceRef/);
+  assert.doesNotMatch(styleSource, /s89-26/);
+  assert.doesNotMatch(
+    runtimeCombined,
+    /submitTurn|\/api\/game\/turn|\/api\/game\/state|\/api\/dev\/session-diagnostics|dangerouslySetInnerHTML|localStorage|sessionStorage|data\/sessions|raw audit|provider payload|OPENAI_API_KEY|DEEPSEEK_API_KEY|MIMO_API_KEY|ANTHROPIC_API_KEY|hiddenNotes|完整提示词|本地路径|密钥/
+  );
+});
+
 test("S74.7 client smoke verifies default UI start and safe route recovery", () => {
   const clientSmokeSource = readText("scripts/clientSmoke.js");
   const appShellSource = readText("client/src/components/AppShell.tsx");

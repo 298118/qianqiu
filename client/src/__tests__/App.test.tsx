@@ -4639,6 +4639,15 @@ describe("S74.1 React client shell", () => {
     await waitFor(() => expect(screen.getAllByText("陆清远").length).toBeGreaterThan(0));
     expect(screen.getAllByText("顾文衡").length).toBeGreaterThan(0);
     expect(screen.getAllByText("王氏").length).toBeGreaterThan(0);
+    const peopleDocket = within(document.querySelector("[data-polish-people-reader='s89-26-people-docket-reader']") as HTMLElement);
+    expect(peopleDocket.getByText("人物案头索引")).toBeTruthy();
+    expect(peopleDocket.getByText("卷上人物 · 入谱 4 人 · 相识 3 人")).toBeTruthy();
+    expect(peopleDocket.getByText("当前案头 · 当前页签：档案")).toBeTruthy();
+    expect(peopleDocket.getByText("候复线索 · 来函 0 件 · 后续 0 件 · 证据 3 条")).toBeTruthy();
+    expect(peopleDocket.getByText("交游账解 · 关系网 2 条 · 交游议题 1 条 · 账解 0 条")).toBeTruthy();
+    expect(peopleDocket.getByText("本地草稿 · 暂无候复稿")).toBeTruthy();
+    expect(peopleDocket.getByText("候复边界 · 只作草稿")).toBeTruthy();
+    expect(peopleDocket.getByText(/不成交、不扣银、不改关系/)).toBeTruthy();
     expect(screen.getByText("来函线索与风宪留察")).toBeTruthy();
     expect(document.querySelector("[data-polish-evidence='s89-15-follow-up-reader']")).toBeTruthy();
     expect(document.querySelector("[data-polish-evidence-boundary='s89-15-follow-up-boundary']")).toBeTruthy();
@@ -4674,6 +4683,8 @@ describe("S74.1 React client shell", () => {
     expect(screen.getAllByRole("button", { name: "拟复核" })).toHaveLength(3);
     expect(screen.getAllByRole("button", { name: "拟跟进" })).toHaveLength(1);
     fireEvent.click(screen.getByRole("button", { name: "拟跟进" }));
+    expect(peopleDocket.getByText("本地草稿 · 已有候复稿")).toBeTruthy();
+    expect(peopleDocket.queryByText(/续记交游记录：沈砚秋论道/)).toBeNull();
     expect(useUiStateStore.getState().actionDraft).toMatchObject({
       source: "role-surface",
       targetPage: "game",
