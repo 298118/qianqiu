@@ -832,15 +832,22 @@ async function assertArchiveDigestPolish(page, label) {
   const snapshot = await page.evaluate(() => {
     const panel = document.querySelector(".archiveRoutePanel");
     const digest = document.querySelector(".archiveDigestBand");
+    const reader = document.querySelector("[data-polish-archive-reader='s89-29-evidence-reader']");
+    const readerBoundary = reader?.querySelector("[data-polish-archive-boundary]");
     const traceGrid = document.querySelector(".archiveTraceGrid");
     const evidenceStack = document.querySelector(".archiveEvidenceStack");
     const text = digest?.textContent || "";
+    const readerText = reader?.textContent || "";
     return {
       hasPanel: Boolean(panel),
       polishMarker: panel?.getAttribute("data-polish-archive") || "",
       hasDigest: Boolean(digest),
       hasStats: Boolean(digest?.querySelector(".archiveDigestStats")),
       hasLeadListOrEmpty: Boolean(digest?.querySelector(".archiveLeadList")) || Boolean(digest?.querySelector(".archiveLeadEmpty")),
+      hasReader: Boolean(reader),
+      readerRows: reader ? reader.querySelectorAll(".surfaceSafetyList > div").length : 0,
+      readerBoundaryMarker: readerBoundary?.getAttribute("data-polish-archive-boundary") || "",
+      readerBoundaryText: readerBoundary?.textContent || "",
       hasTraceGrid: Boolean(traceGrid),
       tracePolishMarker: traceGrid?.getAttribute("data-polish-archive-trace") || "",
       traceLayout: traceGrid?.getAttribute("data-archive-layout") || "",
@@ -849,7 +856,8 @@ async function assertArchiveDigestPolish(page, label) {
       evidenceText: evidenceStack?.textContent || "",
       horizontalOverflow: document.documentElement.scrollWidth > document.documentElement.clientWidth + 2,
       forbiddenText: (document.body.innerText || "").match(/provider payload|raw audit|hiddenNotes|OPENAI_API_KEY|DEEPSEEK_API_KEY|MIMO_API_KEY|ANTHROPIC_API_KEY|data\/sessions|hidden\/raw|(?:^|\b)hidden\b|(?:^|\b)raw\b|服务器裁决|sourceRef|relatedRefs|scopeRefs|evidenceRefs|outcomeId|auditRecord|draftContext|schema|manifest|server adjudication|AI read scope|proposal boundary|safe view|resolver|runtime manifest|visual-only|watchlist|NPC\b|[a-z]:[\\/]|\/(?:home|mnt|tmp|var|etc|usr|opt|workspace|workspaces|root|data|src|client|server|dist|public|node_modules)(?:[\\/]|$)/gi) || [],
-      text
+      text,
+      readerText
     };
   });
   const failures = [];
@@ -858,6 +866,15 @@ async function assertArchiveDigestPolish(page, label) {
   if (!snapshot.hasDigest) failures.push("missing archive digest band");
   if (!snapshot.hasStats) failures.push("missing archive digest stats");
   if (!snapshot.hasLeadListOrEmpty) failures.push("missing archive lead list or empty lead copy");
+  if (!snapshot.hasReader) failures.push("missing S89.29 archive evidence reader");
+  if (snapshot.readerRows < 4) failures.push(`archive evidence reader had too few rows: ${snapshot.readerRows}`);
+  if (snapshot.readerBoundaryMarker !== "s89-29-evidence-boundary") failures.push(`missing S89.29 archive boundary marker: ${snapshot.readerBoundaryMarker}`);
+  if (!snapshot.readerText.includes("史册追索笺") || !snapshot.readerText.includes("史册证据读法")) {
+    failures.push(`archive reader lacked player-facing title copy: ${snapshot.readerText.slice(0, 120)}`);
+  }
+  if (!snapshot.readerBoundaryText.includes("按钮只写案头草稿") || !snapshot.readerBoundaryText.includes("回主卷候复")) {
+    failures.push(`archive reader lacked draft boundary copy: ${snapshot.readerBoundaryText.slice(0, 120)}`);
+  }
   if (!snapshot.hasTraceGrid) failures.push("missing archive trace grid");
   if (snapshot.tracePolishMarker !== "s89-10-chronicle-density") failures.push(`missing S89.10 archive trace marker: ${snapshot.tracePolishMarker}`);
   if (snapshot.traceLayout !== "ledger-rail") failures.push(`archive trace did not use ledger-rail layout: ${snapshot.traceLayout}`);

@@ -6675,6 +6675,8 @@ describe("S74.1 React client shell", () => {
     expect(archivePanel.getAttribute("data-polish-archive")).toBe("s89-10-chronicle-density");
     expect(archivePanel.querySelector("[data-archive-layout='ledger-rail']")).toBeTruthy();
     expect(archivePanel.querySelector("[data-polish-archive-trace='s89-10-chronicle-density']")).toBeTruthy();
+    expect(archivePanel.querySelector("[data-polish-archive-reader='s89-29-evidence-reader']")).toBeTruthy();
+    expect(archivePanel.querySelector("[data-polish-archive-boundary='s89-29-evidence-boundary']")).toBeTruthy();
     expect(archivePanel.querySelector(".archiveEvidenceStack")).toBeTruthy();
     const archive = within(archivePanel);
 
@@ -6685,6 +6687,17 @@ describe("S74.1 React client shell", () => {
     expect(archive.getByText("后果线索")).toBeTruthy();
     expect(archive.getByText("实体余波")).toBeTruthy();
     expect(archive.getByText("本页列 12/12 条")).toBeTruthy();
+    expect(archive.getByText("史册追索笺")).toBeTruthy();
+    expect(archive.getByText("史册证据读法")).toBeTruthy();
+    expect(archive.getByText("主列")).toBeTruthy();
+    expect(archive.getByText("近次 12 条已入册")).toBeTruthy();
+    expect(archive.getByText("旁注")).toBeTruthy();
+    expect(archive.getByText("1 条后果，2 条来函")).toBeTruthy();
+    expect(archive.getByText("追索")).toBeTruthy();
+    expect(archive.getByText("2 条实体余波已留痕")).toBeTruthy();
+    expect(archive.getByText("拟稿")).toBeTruthy();
+    expect(archive.getByText("可留作草稿")).toBeTruthy();
+    expect(archive.getByText("按钮只写案头草稿，仍回主卷候复。", { exact: false })).toBeTruthy();
     expect(archive.getByRole("list", { name: "史册近次线索" })).toBeTruthy();
     expect(archive.getAllByText("平粜余波").length).toBeGreaterThan(0);
     expect(archive.getByText("同年文社压力留痕")).toBeTruthy();

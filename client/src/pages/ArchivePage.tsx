@@ -20,6 +20,12 @@ type ArchiveItem = {
   readonly relatedLabels: readonly string[];
 };
 
+type ArchiveReaderRow = {
+  readonly label: string;
+  readonly value: string;
+  readonly detail: string;
+};
+
 const archiveVisibleItemLimit = 12;
 
 const unsafeArchiveFragments = [
@@ -165,6 +171,55 @@ function buildArchiveDigestCards(input: {
   ];
 }
 
+function countFollowUpEvidence(evidence: JsonValue | unknown) {
+  const view = asRecord(evidence);
+  const counts = asRecord(view.counts);
+  const total = counts.total;
+  if (typeof total === "number" && Number.isFinite(total)) return Math.max(0, Math.round(total));
+  if (typeof total === "string" && /^\d+$/.test(total)) return Number.parseInt(total, 10);
+  return ["people", "economy", "events"].reduce((sum, key) => sum + asArray(view[key]).length, 0);
+}
+
+function buildArchiveReaderRows(input: {
+  readonly visibleItems: number;
+  readonly totalItems: number;
+  readonly domainCount: number;
+  readonly entityImpactCount: number;
+  readonly followUpCount: number;
+  readonly canDraft: boolean;
+  readonly routeSessionSupported: boolean;
+}): ArchiveReaderRow[] {
+  const archiveCount = input.visibleItems || input.totalItems;
+  return [
+    {
+      label: "主列",
+      value: input.routeSessionSupported
+        ? archiveCount
+          ? `近次 ${archiveCount} 条已入册`
+          : "暂待入册"
+        : "案卷暂不可读",
+      detail: "只读公开条目；据此拟稿仍回主卷候复。"
+    },
+    {
+      label: "旁注",
+      value: input.domainCount || input.followUpCount
+        ? `${input.domainCount} 条后果，${input.followUpCount} 条来函`
+        : "旁注暂待留痕",
+      detail: "旁注只看公开后果与来函线索。"
+    },
+    {
+      label: "追索",
+      value: input.entityImpactCount ? `${input.entityImpactCount} 条实体余波已留痕` : "实体余波未载",
+      detail: "案卷未载者不补造。"
+    },
+    {
+      label: "拟稿",
+      value: input.canDraft ? "可留作草稿" : "先择可读案卷",
+      detail: "不结算资源、关系、任免或未公开事实。"
+    }
+  ];
+}
+
 export function ArchivePage() {
   const { sessionId = "s74-preview" } = useParams();
   const currentSession = useGameSessionStore((state) => state.currentSession);
@@ -181,6 +236,7 @@ export function ArchivePage() {
   const counts = asRecord(archiveView.counts);
   const domainCount = numberValue(counts.domain_consequence);
   const entityImpactCount = numberValue(counts.world_entity_impact);
+  const followUpCount = countFollowUpEvidence(npcFollowUpEvidence);
   const totalItems = numberValue(pagination.totalItems ?? counts.total);
   const pageSize = numberValue(pagination.pageSize, archiveItems.length);
   const digestCards = buildArchiveDigestCards({
@@ -193,6 +249,15 @@ export function ArchivePage() {
   const leadItems = archiveItems.slice(0, 3);
   const isRunnable = isRunnableSessionId(sessionId);
   const canDraft = sessionMatches || isRunnable;
+  const archiveReaderRows = buildArchiveReaderRows({
+    visibleItems: archiveItems.length,
+    totalItems,
+    domainCount,
+    entityImpactCount,
+    followUpCount,
+    canDraft,
+    routeSessionSupported
+  });
   const mapHref = routeSessionSupported ? `/game/${sessionId}/map` : "/";
   const gameHref = routeSessionSupported ? `/game/${sessionId}` : "/";
 
@@ -283,6 +348,27 @@ export function ArchivePage() {
         ) : (
           <p className="archiveLeadEmpty">暂无近次线索；本页不会补入未公开材料。</p>
         )}
+      </section>
+
+      <section
+        className="scholarPanelCard"
+        aria-label="史册证据读法"
+        data-polish-archive-reader="s89-29-evidence-reader"
+      >
+        <p className="eyebrow">史册追索笺</p>
+        <h2>史册证据读法</h2>
+        <dl className="surfaceSafetyList">
+          {archiveReaderRows.map((row) => (
+            <div key={row.label}>
+              <dt>{row.label}</dt>
+              <dd>{row.value}</dd>
+              <dd>{row.detail}</dd>
+            </div>
+          ))}
+        </dl>
+        <p className="statusLine" data-polish-archive-boundary="s89-29-evidence-boundary">
+          主列看已入册公开条目，旁注看公开后果与来函线索；按钮只写案头草稿，仍回主卷候复。
+        </p>
       </section>
 
       <section

@@ -1956,13 +1956,24 @@ test("S88.7 archive consumes world entity impact evidence from safe projection",
   assert.match(archivePageSource, /archiveEvidenceStack/);
   assert.match(archivePageSource, /draftContext/);
   assert.match(archivePageSource, /proposal boundary/);
+  assert.match(archivePageSource, /countFollowUpEvidence/);
+  assert.match(archivePageSource, /buildArchiveReaderRows/);
+  assert.match(archivePageSource, /data-polish-archive-reader="s89-29-evidence-reader"/);
+  assert.match(archivePageSource, /data-polish-archive-boundary="s89-29-evidence-boundary"/);
+  assert.match(archivePageSource, /史册追索笺/);
+  assert.match(archivePageSource, /史册证据读法/);
+  assert.match(archivePageSource, /按钮只写案头草稿/);
   assert.match(appTestSource, /sourceType: "world_entity_impact"/);
   assert.match(appTestSource, /同年文社压力留痕/);
   assert.match(appTestSource, /史册近次线索/);
   assert.match(appTestSource, /风宪 留察名单 留痕/);
+  assert.match(appTestSource, /s89-29-evidence-reader/);
+  assert.match(appTestSource, /史册追索笺/);
   assert.match(clientSmokeSource, /assertArchiveWorldEntityImpactCanary/);
   assert.match(clientSmokeSource, /archiveDigestBand/);
   assert.match(clientSmokeSource, /s89-10-chronicle-density/);
+  assert.match(clientSmokeSource, /s89-29-evidence-reader/);
+  assert.match(clientSmokeSource, /S89\.29 archive evidence reader/);
   assert.match(clientSmokeSource, /archiveEvidenceStack/);
   assert.match(clientSmokeSource, /draftContext\|schema\|manifest\|server adjudication\|AI read scope\|proposal boundary\|safe view\|resolver\|runtime manifest\|visual-only\|watchlist\|NPC/);
   assert.match(clientSmokeSource, /\/api\/game\/npc-interaction\/\$\{sessionId\}/);
@@ -1975,6 +1986,7 @@ test("S88.7 archive consumes world entity impact evidence from safe projection",
   assert.match(styleSource, /archiveLeadList/);
   assert.match(styleSource, /grid-template-columns: minmax\(340px, 1\.08fr\) minmax\(300px, 0\.92fr\)/);
   assert.match(styleSource, /archiveEvidenceStack/);
+  assert.doesNotMatch(styleSource, /s89-29/);
   assert.doesNotMatch(
     runtimeCombined,
     /\/api\/game\/state|\/api\/dev\/session-diagnostics|worldEntities\.recentImpacts|sourceRef|relatedRefs|scopeRefs|raw audit|provider payload|OPENAI_API_KEY|DEEPSEEK_API_KEY|MIMO_API_KEY|ANTHROPIC_API_KEY|resourcesApplied|marriageWritten|hiddenTruthChanged|\/api\/game\/turn/
